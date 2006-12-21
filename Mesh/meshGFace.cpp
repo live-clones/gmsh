@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.44 2006-12-21 09:33:41 remacle Exp $
+// $Id: meshGFace.cpp,v 1.45 2006-12-21 17:10:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -580,36 +580,37 @@ bool gmsh2DMeshGenerator ( GFace *gf )
   //  fprintf(fdeb,"surface %d\n" ,gf->tag());
   int count = 0;
   SBoundingBox3d bbox;
-  while(itv != all_vertices.end())
-    {
-      MVertex *here     = *itv;
-      SPoint2 param;
-      if (here->onWhat()->dim() == 0)
-	{
-	  GVertex *gv = (GVertex*)here->onWhat();
-	  param=gv->reparamOnFace (gf,1);
-	}
-      else if (here->onWhat()->dim() == 1)
-	{
-	  GEdge *ge = (GEdge*)here->onWhat();
-	  double UU;
-	  here->getParameter(0,UU);
-	  param=ge->reparamOnFace (gf,UU,1);
-	}
-      else
-	param =  gf->parFromPoint (SPoint3(here->x(),here->y(),here->z()));
-       //    fprintf(fdeb,"%d %g %g %g\n" ,here->getNum(),here->x(),here->y(),here->z());
-      U_[count] = param.x();
-      V_[count] = param.y();
-      (*itv)->setNum(count);
-      numbered_vertices[(*itv)->getNum()] = *itv;
-      bbox += SPoint3 ( param.x(), param.y() , 0);      
-      count ++;
-      ++itv;
+  while(itv != all_vertices.end()){
+    MVertex *here = *itv;
+    SPoint2 param;
+    if(here->onWhat()->dim() == 0){
+      GVertex *gv = (GVertex*)here->onWhat();
+      param = gv->reparamOnFace(gf,1);
     }
-
+    else if(here->onWhat()->dim() == 1){
+      GEdge *ge = (GEdge*)here->onWhat();
+      double UU;
+      here->getParameter(0, UU);
+      param = ge->reparamOnFace(gf, UU, 1);
+    }
+    else{
+      double UU, VV;
+      if(here->onWhat() == gf && here->getParameter(0, UU) && here->getParameter(1, VV))
+	param = SPoint2(UU, VV);
+      else
+	param = gf->parFromPoint(SPoint3(here->x(), here->y(), here->z()));
+    }
+    // fprintf(fdeb,"%d %g %g %g\n" ,here->getNum(),here->x(),here->y(),here->z());
+    U_[count] = param.x();
+    V_[count] = param.y();
+    (*itv)->setNum(count);
+    numbered_vertices[(*itv)->getNum()] = *itv;
+    bbox += SPoint3 ( param.x(), param.y() , 0);      
+    count ++;
+    ++itv;
+  }
+  
   //  fclose (fdeb);
-
 
   // compute the bounding box in parametric space
   // I do not have SBoundingBox, so I use a 3D one...
@@ -719,7 +720,7 @@ bool gmsh2DMeshGenerator ( GFace *gf )
     {
       if (!recover_medge ( m, *it))
 	{
-	  Msg(WARNING,"Face not meshed");
+	  Msg(GERROR,"Face not meshed");
 	  return false;
 	}
       ++it;

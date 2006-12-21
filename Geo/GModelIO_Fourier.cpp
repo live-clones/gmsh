@@ -85,10 +85,27 @@ public:
   void operator() (GFace *gf)
   {  
     int M = (int)(30. / CTX.mesh.lc_factor), N = (int)(30. / CTX.mesh.lc_factor);
+
+    //if(gf->tag() == 2){
+    //M = 9;
+    //N = 15;
+    //}
+
     for(int i = 0; i < M; i++){
       for(int j = 0; j < N; j++){
 	double u = i/(double)(M - 1);
 	double v = j/(double)(N - 1);
+
+	//if(gf->tag() == 2){
+	  // hack for sttr report 2 (ship model, top right patch)
+	  // XYZ_values_ship_Top(u,v=0) = 
+	  // XYZ_values_ship_Med(u*matching_const1_+matching_const2_,v=1)
+	  // where 0=<u=<1, 
+	  //       matching_const1_=0.523540136032613,
+	  //       matching_const2_=0.475747890863610. 
+	//u = u * 0.5268 + 0.475;
+	//}
+
 	GPoint p = gf->point(u, v);
 	double pou=1;
 	//FM->GetPou(gf->tag(), u, v, pou);
@@ -106,6 +123,21 @@ public:
 	gf->quadrangles.push_back(q);
       }
     }
+  }
+};
+
+class meshGmsh{
+public:
+  void operator() (GFace *gf)
+  {  
+    fourierFace *ff = dynamic_cast<fourierFace*>(gf);
+    if(!ff) {
+      Msg(GERROR, "face %d is not Fourier", gf->tag());
+      return;
+    }
+    ff->meshBoundary();
+    meshGFace mesh; 
+    mesh(ff);
   }
 };
 
@@ -586,6 +618,87 @@ fourierFace::~fourierFace()
   }
 }
 
+void fourierFace::meshBoundary()
+{
+  _discrete = 0;
+
+  int nu=0, nv=0;
+  FM->GetNum(tag(), nu, nv);
+
+  std::vector<double> u, v;
+  FM->GetBoundary_Points(tag(), u, v);
+
+  if(2*nu+2*nv != u.size()){
+    Msg(INFO, "Special patch from youngae: %d", tag());
+    GPoint p0 = point(u[0], v[0]);
+    GPoint p1 = point(u[1], v[1]);
+    MVertex *v0 = new MFaceVertex(p0.x(), p0.y(), p0.z(), this, u[0], v[0]);
+    MVertex *v1 = new MFaceVertex(p1.x(), p1.y(), p1.z(), this, u[1], v[1]);
+    _v[0] = new fourierVertex(model(), v0);
+    _v[1] = new fourierVertex(model(), v1);
+    _e[0] = new fourierEdge(model(), 1, _v[0], _v[1]);
+    _e[0]->addFace(this);
+    _e[1] = new fourierEdge(model(), 2, _v[1], _v[0]);
+    _e[1]->addFace(this);
+    for(unsigned int i = 2; i < u.size() - 1; i++){
+      if(u[i] != u[i-1] || v[i] != v[i-1]){
+	GPoint p = point(u[i], v[i]);
+	MVertex *vv = new MFaceVertex(p.x(), p.y(), p.z(), this, u[i], v[i]);
+	_e[1]->mesh_vertices.push_back(vv);
+      }
+    }
+    l_edges.push_back(_e[0]); l_dirs.push_back(1);
+    l_edges.push_back(_e[1]); l_dirs.push_back(1);
+    return;
+  }
+  
+  int corners[4] = {0, nu, nu + nv, 2 * nu + nv};
+  for(int i = 0; i < 4; i++){
+    double uu = u[corners[i]], vv = v[corners[i]];
+    GPoint p = point(uu, vv);
+    MVertex *newv = new MFaceVertex(p.x(), p.y(), p.z(), this, uu, vv);
+    _v[i] = new fourierVertex(model(), newv);
+  }
+  
+  meshAttributes.Method = TRANSFINI;
+  meshAttributes.recombine = 1;
+  meshAttributes.transfiniteArrangement = 1;
+  meshAttributes.corners.clear();
+  for(int i = 0; i < 4; i++)
+    meshAttributes.corners.push_back(_v[i]);
+      
+  _e[0] = new fourierEdge(model(), 1, _v[0], _v[1]);
+  _e[0]->addFace(this);
+  _e[1] = new fourierEdge(model(), 2, _v[1], _v[2]);
+  _e[1]->addFace(this);
+  _e[2] = new fourierEdge(model(), 3, _v[2], _v[3]);
+  _e[2]->addFace(this);
+  _e[3] = new fourierEdge(model(), 4, _v[3], _v[0]);
+  _e[3]->addFace(this);
+
+  for(unsigned int i = corners[0] + 1; i < corners[1] - 1; i++){
+    GPoint p = point(u[i], v[i]);
+    _e[0]->mesh_vertices.push_back(new MFaceVertex(p.x(), p.y(), p.z(), this, u[i], v[i]));
+  }
+  for(unsigned int i = corners[1] + 1; i < corners[2] - 1; i++){
+    GPoint p = point(u[i], v[i]);
+    _e[1]->mesh_vertices.push_back(new MFaceVertex(p.x(), p.y(), p.z(), this, u[i], v[i]));
+  }
+  for(unsigned int i = corners[2] + 1; i < corners[3] - 1; i++){
+    GPoint p = point(u[i], v[i]);
+    _e[2]->mesh_vertices.push_back(new MFaceVertex(p.x(), p.y(), p.z(), this, u[i], v[i]));
+  }
+  for(unsigned int i = corners[3] + 1; i < u.size() - 1; i++){
+    GPoint p = point(u[i], v[i]);
+    _e[3]->mesh_vertices.push_back(new MFaceVertex(p.x(), p.y(), p.z(), this, u[i], v[i]));
+  }
+
+  l_edges.push_back(_e[0]); l_dirs.push_back(1);
+  l_edges.push_back(_e[1]); l_dirs.push_back(1);
+  l_edges.push_back(_e[2]); l_dirs.push_back(1);
+  l_edges.push_back(_e[3]); l_dirs.push_back(1);
+}
+
 Range<double> fourierFace::parBounds(int i) const
 {
   double min, max;
@@ -656,8 +769,12 @@ int GModel::readFourier(const std::string &name)
     add(new fourierFace(this, i));
 
   // mesh each face with quads
-  std::for_each(firstFace(), lastFace(), meshCartesian());
+  //std::for_each(firstFace(), lastFace(), meshCartesian());
+  //return 1;
 
+  // mesh each face using the standard gmsh algorithms
+  setMeshSize(0.1);
+  std::for_each(firstFace(), lastFace(), meshGmsh());
   return 1;
 
   // compute partition of unity

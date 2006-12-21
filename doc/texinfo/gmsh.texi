@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.223 2006-12-03 20:41:46 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.224 2006-12-21 17:10:15 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 @c
@@ -314,12 +314,14 @@ modules is given hereafter.
 @node Geometry, Mesh, Overview, Overview
 @section Geometry: geometrical entity definition
 
-Geometries are created in a bottom-up flow by successively defining points,
+Gmsh uses a boundary representation (``b-rep'') to describe geometries.
+Models are created in a bottom-up flow by successively defining points,
 oriented lines (line segments, circles, ellipses, splines, @dots{}),
-oriented surfaces (plane surfaces, ruled surfaces, triangulated surfaces,
-@dots{}) and volumes. Compound groups of geometrical entities can be
-defined, based on these elementary geometric entities. Gmsh's scripting
-language allows all geometrical entities to be fully parameterized.
+oriented surfaces (plane surfaces, ruled surfaces, triangulated
+surfaces, @dots{}) and volumes. Compound groups of geometrical entities
+(called ``physical groups'') can also be defined, based on these
+elementary geometric entities. Gmsh's scripting language allows all
+geometrical entities to be fully parameterized.
 
 @c -------------------------------------------------------------------------
 @c Mesh: finite element mesh generation
@@ -329,74 +331,54 @@ language allows all geometrical entities to be fully parameterized.
 @section Mesh: finite element mesh generation
 
 A finite element mesh is a tessellation of a given subset of the
-three-dimensional space by elementary geometrical elements of various shapes
-(in Gmsh's case: lines, triangles, quadrangles, tetrahedra, prisms,
-hexahedra and pyramids), arranged in such a way that if two of them
-intersect, they do so along a face, an edge or a node, and never
-otherwise. All the finite element meshes produced by Gmsh are considered as
-``unstructured'', even if they were generated in a ``structured'' way
-(e.g., by extrusion). This implies that the elementary geometrical elements
-are defined only by an ordered list of their nodes but that no predefined
-order relation is assumed between any two elements.
+three-dimensional space by elementary geometrical elements of various
+shapes (in Gmsh's case: lines, triangles, quadrangles, tetrahedra,
+prisms, hexahedra and pyramids), arranged in such a way that if two of
+them intersect, they do so along a face, an edge or a node, and never
+otherwise. All the finite element meshes produced by Gmsh are considered
+as ``unstructured'', even if they were generated in a ``structured'' way
+(e.g., by extrusion). This implies that the elementary geometrical
+elements are defined only by an ordered list of their nodes but that no
+predefined order relation is assumed between any two elements.
 
-The mesh generation is performed in the same bottom-up flow as the geometry
-creation: lines are discretized first; the mesh of the lines is then used to
-mesh the surfaces; then the mesh of the surfaces is used to mesh the
-volumes. In this process, the mesh of an entity is only constrained by the
-mesh of its boundary@footnote{For example, in three dimensions:
+The mesh generation is performed in the same bottom-up flow as the
+geometry creation: lines are discretized first; the mesh of the lines is
+then used to mesh the surfaces; then the mesh of the surfaces is used to
+mesh the volumes. In this process, the mesh of an entity is only
+constrained by the mesh of its boundary@footnote{For example, in three
+dimensions:
 
 @itemize @bullet
 @item
 the triangles discretizing a surface will be forced to be faces of
-tetrahedra in the final 3D mesh only if the surface is part of the boundary
-of a volume;
+tetrahedra in the final 3D mesh only if the surface is part of the
+boundary of a volume;
 @item
 the line elements discretizing a curve will be forced to be edges of
-tetrahedra in the final 3D mesh only if the curve is part of the boundary of
-a surface, itself part of the boundary of a volume;
+tetrahedra in the final 3D mesh only if the curve is part of the
+boundary of a surface, itself part of the boundary of a volume;
 @item
-a single node discretizing a point in the middle of a volume will be forced
-to be a vertex of one of the tetrahedra in the final 3D mesh only if this
-point is connected to a curve, itself part of the boundary of a surface,
-itself part of the boundary of a volume...
+a single node discretizing a point in the middle of a volume will be
+forced to be a vertex of one of the tetrahedra in the final 3D mesh only
+if this point is connected to a curve, itself part of the boundary of a
+surface, itself part of the boundary of a volume...
 @end itemize
-}. This automatically assures the conformity of the mesh when, for example,
-two surfaces share a common line. But this also implies that the
-discretization of an ``isolated'' (@var{n}-1)-th dimensional entity inside
-an @var{n}-th dimensional entity does @emph{not} constrain the @var{n}-th
-dimensional mesh.  Every meshing step is constrained by the characteristic
-length field, which can be uniform, specified by characteristic lengths
-associated with elementary geometrical entities, or associated with another
-mesh (the background mesh).
+}. This automatically assures the conformity of the mesh when, for
+example, two surfaces share a common line. But this also implies that
+the discretization of an ``isolated'' (@var{n}-1)-th dimensional entity
+inside an @var{n}-th dimensional entity does @emph{not} constrain the
+@var{n}-th dimensional mesh.  Every meshing step is constrained by the
+characteristic length field, which can be uniform, specified by
+characteristic lengths associated with elementary geometrical entities,
+or associated with another mesh (the ``background mesh'').
 
 For each meshing step, all structured mesh directives are executed
 first, and serve as additional constraints for the unstructured parts
 @footnote{Note that mixing structured volume grids with unstructured
 volume grids generated with the default 3D isotropic Delaunay algorithm
 can result, in certain cases, to non-conform surface meshes on their
-shared boudary. If this happens, you may consider using the Netgen
-algorithm for the unstructured part.}. The implemented Delaunay
-algorithm is subdivided in the following five steps for surface/volume
-discretization:
-
-@enumerate
-@item
-trivial meshing of a box including the convex polygon/polyhedron defined by
-the boundary nodes resulting from the discretization of the lines/surfaces;
-@item
-creation of the initial mesh by insertion of all the nodes on the
-lines/surfaces thanks to the Bowyer algorithm;
-@item
-boundary restoration to force all the edges/faces of the lines/surfaces to
-be present in the initial mesh;
-@item
-suppression of all the unwanted triangles/tetrahedra (in particular those
-containing the nodes of the initial box);
-@item
-insertion of new nodes by the Bowyer algorithm until the characteristic size
-of each simplex is lower or equal to the characteristic length field
-evaluated at the center of its circumscribed circle/sphere.
-@end enumerate
+shared boundary. If this happens, you may consider using the Netgen
+algorithm for the unstructured part.}.
 
 @c -------------------------------------------------------------------------
 @c Solver: external solver interface
@@ -405,13 +387,13 @@ evaluated at the center of its circumscribed circle/sphere.
 @node Solver, Post-processing, Mesh, Overview
 @section Solver: external solver interface
 
-External solvers can be interfaced with Gmsh through Unix or TCP/IP sockets,
-which permits to easily launch external computations and to collect and
-exploit the simulation results within Gmsh's post-processing module. The
-default solver interfaced with Gmsh is GetDP
-(@uref{http://www.geuz.org/getdp/}). Small examples of solvers written in C,
-C++, Perl and Python are available in the source distribution (in the
-@file{utils/solvers/} directory).
+External solvers can be interfaced with Gmsh through Unix or TCP/IP
+sockets, which permits to launch external computations and to collect
+and process the results directly from within Gmsh's post-processing
+module. The default solver interfaced with Gmsh is GetDP
+(@uref{http://www.geuz.org/getdp/}). Examples on how to interface
+solvers written in C, C++, Perl and Python are available in the source
+distribution (in the @file{utils/solvers/} directory).
 
 @c -------------------------------------------------------------------------
 @c Post-processing: scalar, vector and tensor field visualization
@@ -420,17 +402,18 @@ C++, Perl and Python are available in the source distribution (in the
 @node Post-processing, What Gmsh is pretty good at, Solver, Overview
 @section Post-processing: scalar, vector and tensor field visualization
 
-Multiple post-processing scalar, vector or tensor maps can be loaded and
-manipulated (globally or individually) along with the geometry and the
-mesh. Scalar fields are represented by iso-value lines/surfaces or color
-maps, while vector fields are represented by three-dimensional arrows or
-displacement maps. Post-processing functions include section computation,
-offset, elevation, boundary and component extraction, color map and range
-modification, animation, vector graphic output, etc. All post-processing
-options can be accessed either interactively or through the input ASCII text
-files. Scripting permits to automate all post-processing operations, e.g.,
-for the creation of animations. User-defined operations can also be
-performed on post-processing views through dynamically loadable plugins.
+Gmsh can load and manipulate multiple post-processing scalar, vector or
+tensor maps along with the geometry and the mesh. Scalar fields are
+represented by iso-value lines/surfaces or color maps, while vector
+fields are represented by three-dimensional arrows or displacement
+maps. Post-processing functions include section computation, offset,
+elevation, boundary and component extraction, color map and range
+modification, animation, vector graphic output, etc. All the
+post-processing options can be accessed either interactively or through
+the input ASCII text files. Scripting permits to automate all
+post-processing operations, as for example to create
+animations. User-defined operations can also be performed on
+post-processing views through dynamically loadable plugins.
 
 @c -------------------------------------------------------------------------
 @c What Gmsh is pretty good at...
@@ -454,6 +437,8 @@ commands});
 parameterize these geometries. Gmsh's scripting language enables all
 commands and command arguments to depend on previous calculations (see
 @ref{Expressions}, and @ref{Geometry commands});
+@item
+import complex models in industry-standard formats like STEP or IGES;
 @item
 generate 1D, 2D and 3D simplicial (i.e., using line segments, triangles and
 tetrahedra) finite element meshes. The performance of the 1D and 2D
@@ -480,10 +465,10 @@ PostScript, LaTeX, PNG, JPEG, @dots{} (@pxref{General options});
 @item
 generate complex animations (see @ref{General tools}, and @ref{t8.geo});
 @item
-run on low end machines and/or machines with no graphic system. Gmsh can be
-compiled with or without the graphical user interface, and all versions can
-be used either interactively or not, directly from the command line
-(@pxref{Running Gmsh});
+run on low end machines and/or machines with no graphical
+interface. Gmsh can be compiled with or without the GUI, and all
+versions can be used either interactively or directly from the command
+line (@pxref{Running Gmsh});
 @item
 configure your preferred options. Gmsh has a large number of configuration
 options that can be set interactively using the GUI, scattered inside
@@ -509,11 +494,12 @@ also some (a lot of?) weaknesses:
 
 @itemize @bullet
 @item
-the bottom-up approach for describing geometries can become inconvenient for
+the b-rep approach for describing geometries can become inconvenient for
 complex models;
 @item
-there is no support for NURBS and only very limited support for trimmed
-surfaces;
+there is no support for Nurbs and only very limited support for trimmed
+surfaces in Gmsh's scripting language (however you can import STEP or
+IGES models with such features);
 @item
 Gmsh is not primarily a structured mesh generator: no automatic
 quadrilateral or hexahedral meshing algorithm is provided. If you want

@@ -60,6 +60,9 @@ class fourierFace : public GFace {
   fourierFace(GModel *m, int num);
   fourierFace(GFace *f, std::vector<MVertex*> &loop, std::vector<MVertex*> &hole);
   virtual ~fourierFace();
+
+  void meshBoundary();
+
   Range<double> parBounds(int i) const; 
   virtual int paramDegeneracies(int dir, double *par) { return 0; }
   

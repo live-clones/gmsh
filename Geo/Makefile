@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.122 2006-12-20 15:50:57 remacle Exp $
+# $Id: Makefile,v 1.123 2006-12-21 17:10:15 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -104,12 +104,18 @@ GRegion.o: GRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
   ExtrudeParams.h GFace.h GEdgeLoop.h Pair.h GRegion.h \
   ../Common/SmoothNormals.h
-gmshEdge.o: gmshEdge.cpp gmshEdge.h Geo.h ../Common/GmshDefines.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ExtrudeParams.h \
-  GEdge.h GEntity.h Range.h SPoint3.h SBoundingBox3d.h GVertex.h \
-  MVertex.h GPoint.h SPoint2.h SVector3.h MElement.h MEdge.h \
-  ../Common/Hash.h MFace.h ../Numeric/Numeric.h ../Common/Context.h \
-  gmshVertex.h GeoInterpolation.h
+gmshVertex.o: gmshVertex.cpp GFace.h GPoint.h GEntity.h Range.h SPoint3.h \
+  SBoundingBox3d.h ../Common/GmshDefines.h GEdgeLoop.h GEdge.h GVertex.h \
+  MVertex.h SPoint2.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \
+  MFace.h ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
+  ExtrudeParams.h Pair.h gmshVertex.h Geo.h ../DataStr/Tree.h \
+  ../DataStr/avl.h GeoInterpolation.h
+gmshEdge.o: gmshEdge.cpp GFace.h GPoint.h GEntity.h Range.h SPoint3.h \
+  SBoundingBox3d.h ../Common/GmshDefines.h GEdgeLoop.h GEdge.h GVertex.h \
+  MVertex.h SPoint2.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \
+  MFace.h ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
+  ExtrudeParams.h Pair.h gmshEdge.h Geo.h ../DataStr/Tree.h \
+  ../DataStr/avl.h gmshVertex.h GeoInterpolation.h
 gmshFace.o: gmshFace.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h SPoint2.h \
   GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h MFace.h \
@@ -239,7 +245,7 @@ MVertex.o: MVertex.cpp MVertex.h SPoint3.h
 MElement.o: MElement.cpp MElement.h ../Common/GmshDefines.h MVertex.h \
   SPoint3.h MEdge.h SVector3.h ../Common/Hash.h MFace.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h GEntity.h \
-  Range.h SBoundingBox3d.h
+  Range.h SBoundingBox3d.h ../Common/Message.h
 SVector3.o: SVector3.cpp SVector3.h SPoint3.h
 projectionFace.o: projectionFace.cpp projectionFace.h GFace.h GPoint.h \
   GEntity.h Range.h SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h \

@@ -10,6 +10,7 @@ Line Loop(4) = {1,-3,-2};
 Plane Surface(5) = {4};
 
 Transfinite Line{1,2,3} = 20;
+//Transfinite Surface{5} = {3,1,2};
 //Transfinite Surface{5} = {2,1,3};
 Transfinite Surface{5} = {1,2,3};
 

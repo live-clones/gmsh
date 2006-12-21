@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.14 2006-12-21 09:33:41 remacle Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.15 2006-12-21 17:10:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -103,23 +103,24 @@ int MeshTransfiniteSurface( GFace *gf)
 	return 0;
       }
     }
-
     SPoint2 param;
-    if (v->onWhat()->dim() == 0)
-      {
-	GVertex *gv = (GVertex*)v->onWhat();
-	param=gv->reparamOnFace (gf,1);
-      }
-    else if (v->onWhat()->dim() == 1)
-	{
-	  GEdge *ge = (GEdge*)v->onWhat();
-	  double UU;
-	  v->getParameter(0,UU);
-	  param=ge->reparamOnFace (gf,UU,1);
-	}
-    else
-      param =  gf->parFromPoint (SPoint3(v->x(),v->y(),v->z()));
-
+    if(v->onWhat()->dim() == 0){
+      GVertex *gv = (GVertex*)v->onWhat();
+      param = gv->reparamOnFace(gf, 1);
+    }
+    else if(v->onWhat()->dim() == 1){
+      GEdge *ge = (GEdge*)v->onWhat();
+      double UU;
+      v->getParameter(0, UU);
+      param = ge->reparamOnFace(gf, UU, 1);
+    }
+    else{
+      double UU, VV;
+      if(v->onWhat() == gf && v->getParameter(0, UU) && v->getParameter(1, VV))
+	param = SPoint2(UU, VV);
+      else
+	param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+    }
     U.push_back(param.x());
     V.push_back(param.y());
   }
@@ -248,29 +249,8 @@ int MeshTransfiniteSurface( GFace *gf)
 	int iP1 = N1 + i;
 	int iP2 = N2 + j;
 	int iP3 = ((N3 + N2) - i) % m_vertices.size();
-#if 0 // FIXME: this is buggy, so let's just do it in real space instead for now
 	double Up = TRAN_TRI(U[iP1], U[iP2], U[iP3], UC1, UC2, UC3, u, v);
 	double Vp = TRAN_TRI(V[iP1], V[iP2], V[iP3], VC1, VC2, VC3, u, v);
-#else
-	double xp = TRAN_TRI(m_vertices[iP1]->x(), m_vertices[iP2]->x(), 
-			     m_vertices[iP3]->x(), m_vertices[N1]->x(),
-			     m_vertices[N2]->x(), m_vertices[N3]->x(), u, v);
-	double yp = TRAN_TRI(m_vertices[iP1]->y(), m_vertices[iP2]->y(), 
-			     m_vertices[iP3]->y(), m_vertices[N1]->y(),
-			     m_vertices[N2]->y(), m_vertices[N3]->y(), u, v);
-	double zp = TRAN_TRI(m_vertices[iP1]->z(), m_vertices[iP2]->z(), 
-			     m_vertices[iP3]->z(), m_vertices[N1]->z(),
-			     m_vertices[N2]->z(), m_vertices[N3]->z(), u, v);
-	double Up, Vp;
-	if(gf->geomType() == GEntity::Plane){
-	  SPoint2 param = gf->parFromPoint(SPoint3(xp, yp, zp));
-	  Up = param.x();
-	  Vp = param.y();
-	}
-	else{ // xp, yp, zp is usually not on the surface
-	  gf->XYZtoUV(xp, yp, zp, Up, Vp, 1.0, false);
-	}
-#endif
 	GPoint gp = gf->point(SPoint2(Up, Vp));
 	MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
 	gf->mesh_vertices.push_back(newv);

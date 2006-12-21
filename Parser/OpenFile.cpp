@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.135 2006-12-16 18:38:52 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.136 2006-12-21 17:10:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -248,7 +248,7 @@ void SetProjectName(char *name)
 int MergeFile(char *name, int warn_if_missing)
 {
 #if defined(HAVE_FOURIER_MODEL)
-  if(!strcmp(name, "falcon")){
+  if(!strcmp(name, "falcon") || !strcmp(name, "ship")){
     GMODEL->readFourier(name);
     SetBoundingBox();
     CTX.mesh.changed = ENT_ALL;
