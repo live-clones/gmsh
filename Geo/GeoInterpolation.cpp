@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.7 2006-12-20 15:50:57 remacle Exp $
+// $Id: GeoInterpolation.cpp,v 1.8 2006-12-21 09:33:41 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -452,9 +452,32 @@ Vertex InterpolateRuledSurface(Surface * s, double u, double v,
     S[0] = C[0]->beg;
     S[1] = C[1]->beg;
     S[2] = C[2]->beg;
-    V[0] = InterpolateCurve(C[0], u, 0);
-    V[1] = InterpolateCurve(C[1], v, 0);
-    V[2] = InterpolateCurve(C[2], 1. - u, 0);
+
+    if (C[0]->Num < 0)
+      {
+	Curve *C0 = FindCurve(-C[0]->Num);
+	V[0] = InterpolateCurve(C0, C0->ubeg + (C0->uend - C0->ubeg) * (1.-u), 0);
+      }
+    else
+      V[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * u, 0);
+    if (C[1]->Num < 0)
+      {
+	Curve *C1 = FindCurve(-C[1]->Num);
+	V[1] = InterpolateCurve(C1, C1->ubeg + (C1->uend - C1->ubeg) * (1.-v), 0);
+      }
+    else
+      V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
+    if (C[2]->Num < 0)
+      {
+	Curve *C2 = FindCurve(-C[2]->Num);
+	V[2] = InterpolateCurve(C2, C2->ubeg + (C2->uend - C2->ubeg) * u, 0);
+      }
+    else
+      V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1.-u), 0);
+
+//     V[0] = InterpolateCurve(C[0], u, 0);
+//     V[1] = InterpolateCurve(C[1], v, 0);
+//     V[2] = InterpolateCurve(C[2], 1. - u, 0);
     
     T = TransfiniteTri(V[0], V[1], V[2], *S[0], *S[1], *S[2], u, v);
     if(issphere)

@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.43 2006-12-20 15:50:57 remacle Exp $
+// $Id: meshGFace.cpp,v 1.44 2006-12-21 09:33:41 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -541,7 +541,7 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge)
 bool gmsh2DMeshGenerator ( GFace *gf )
 {
 
-  //  if (gf->tag() != 575)return true;
+  //if (gf->tag() != 16)return true;
 
   typedef std::set<MVertex*> v_container ;
   v_container all_vertices;

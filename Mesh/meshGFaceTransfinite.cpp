@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.13 2006-12-03 03:12:59 geuzaine Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.14 2006-12-21 09:33:41 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -103,7 +103,23 @@ int MeshTransfiniteSurface( GFace *gf)
 	return 0;
       }
     }
-    SPoint2 param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+
+    SPoint2 param;
+    if (v->onWhat()->dim() == 0)
+      {
+	GVertex *gv = (GVertex*)v->onWhat();
+	param=gv->reparamOnFace (gf,1);
+      }
+    else if (v->onWhat()->dim() == 1)
+	{
+	  GEdge *ge = (GEdge*)v->onWhat();
+	  double UU;
+	  v->getParameter(0,UU);
+	  param=ge->reparamOnFace (gf,UU,1);
+	}
+    else
+      param =  gf->parFromPoint (SPoint3(v->x(),v->y(),v->z()));
+
     U.push_back(param.x());
     V.push_back(param.y());
   }
