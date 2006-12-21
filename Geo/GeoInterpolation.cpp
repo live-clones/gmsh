@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.8 2006-12-21 09:33:41 remacle Exp $
+// $Id: GeoInterpolation.cpp,v 1.9 2006-12-21 09:35:46 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -425,8 +425,8 @@ Vertex InterpolateRuledSurface(Surface * s, double u, double v,
 // 	printf("%g %g %g for %g %g\n",T.Pos.X,T.Pos.Y,T.Pos.Z,u,v);
 //       }
     
-    //    if(issphere)
-  //      TransfiniteSph(*S[0], *c1, &T);
+    if(issphere)
+      TransfiniteSph(*S[0], *c1, &T);
     
     return (T);
     
