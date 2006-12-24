@@ -90,6 +90,7 @@ struct _Surf{
   struct _Surf *Support;
   ExtrudeParams *Extrude;
   DrawingColor Color;
+  void print_info ();
 };
 
 typedef struct _Surf Surface;

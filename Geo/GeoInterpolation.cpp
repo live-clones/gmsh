@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.9 2006-12-21 09:35:46 remacle Exp $
+// $Id: GeoInterpolation.cpp,v 1.10 2006-12-24 13:37:20 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -495,13 +495,14 @@ Vertex InterpolateSurface(Surface * s, double u, double v,
   int i, issphere;
   double eps = 1.e-6;
 
-  if(s->Extrude && s->Extrude->geo.Mode == EXTRUDED_ENTITY &&
-     s->Typ != MSH_SURF_PLAN) {
-    Curve *c = FindCurve(s->Extrude->geo.Source);
-    Vertex v1 = InterpolateCurve(c, u, 0);
-    s->Extrude->Extrude(v, v1.Pos.X, v1.Pos.Y, v1.Pos.Z);
-    return v1;
-  }
+//   if(s->Extrude && s->Extrude->geo.Mode == EXTRUDED_ENTITY &&
+//      s->Typ != MSH_SURF_PLAN) {
+//     Curve *c = FindCurve(s->Extrude->geo.Source);
+//     Vertex v1 = InterpolateCurve(c, u, 0);
+//     s->Extrude->Extrude(v, v1.Pos.X, v1.Pos.Y, v1.Pos.Z);
+//     //    Msg(INFO,"COUCOUCOUCOUC");
+//     return v1;
+//   }
 
   
   if(derivee) {

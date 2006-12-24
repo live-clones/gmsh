@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.67 2006-12-20 15:50:57 remacle Exp $
+// $Id: Geo.cpp,v 1.68 2006-12-24 13:37:20 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3302,4 +3302,19 @@ void Projette(Vertex * v, double mat[3][3])
   v->Pos.X = X;
   v->Pos.Y = Y;
   v->Pos.Z = Z;
+}
+
+
+void Surface::print_info ()
+{
+  Msg(INFO,"Surface %d of type %d",Num,Typ);
+  Msg(INFO,"Generatrices : ");
+  Curve *C;
+  for(int i = 0; i < List_Nbr(Generatrices); i++) {
+    List_Read(Generatrices, i, &C);
+    Msg(INFO,"%d of type %d begin %d end %d ",C->Num,C->Typ,C->beg->Num,C->end->Num);  
+    Msg(INFO,"CircleParams : %g %g %g %g %g %g %g %g",
+	C->Circle.t1,C->Circle.t2,C->Circle.f1,C->Circle.f2,C->Circle.incl,C->Circle.n[0],C->Circle.n[1],C->Circle.n[2]);
+  }
+  
 }
