@@ -629,6 +629,11 @@ void fourierFace::meshBoundary()
   int nu=0, nv=0;
   FM->GetNum(tag(), nu, nv);
 
+  printf("patch=%d  nu=%d  nv=%d\n", tag(), nu, nv);
+  // youngae bug when not using chebyshev refinement:
+  //if(tag() == 6) nu = 36;
+  
+
   std::vector<double> u, v;
   FM->GetBoundary_Points(tag(), u, v);
 
@@ -636,8 +641,13 @@ void fourierFace::meshBoundary()
     Msg(INFO, "Special planar patch from YoungAe: %d", tag());
 #if 1 // transfinite, by hand -- WARNING
     _plane = 1; // to enable smoothing of transfinite meshes
-    nu = 14;
-    nv = 9;
+    // coarse:
+    //nu = 14; nv = 9;
+    // finer:
+    //nu = 24; nv = 14;
+    // fine:
+    nu = 52; nv = 28;
+
     // remove duplicates
     std::vector<MVertex*> verts;
     for(unsigned int i = 0; i < u.size() - 1; i++){

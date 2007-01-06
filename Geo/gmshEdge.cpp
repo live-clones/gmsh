@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.24 2006-12-21 09:33:41 remacle Exp $
+// $Id: gmshEdge.cpp,v 1.25 2007-01-06 22:44:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 #include "gmshEdge.h"
 #include "Geo.h"
 #include "GeoInterpolation.h"
+#include "Message.h"
 #include "Context.h"
 
 extern Context_T CTX;
@@ -137,125 +138,91 @@ int gmshEdge::minimumDrawSegments () const
   else
     return 10 * n;
 }
+
 SPoint2 gmshEdge::reparamOnFace(GFace *face, double epar,int dir) const
 {
   Surface *s = (Surface*) face->getNativePtr();
-  if (s->Typ ==  MSH_SURF_REGL)
-    {
-      double U,V;
-      Curve *C[4];
-      int iPos;
-      for(int i = 0; i < 4; i++) {
-	List_Read(s->Generatrices, i, &C[i]);
-      }
 
-      if (C[0]->Num== c->Num) {
-	U = (epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg) ;
-	V = 0;
-	iPos = 0;
-      }
-      else if (C[0]->Num== -c->Num) {
-	U = (C[0]->uend - epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg) ;
-	V = 0;
-	iPos = 0;
-      }
-      else if (C[1]->Num== c->Num) {
-	V = (epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg) ;
-	U = 1;
-	iPos = 1;
-      }
-      else if (C[1]->Num== - c->Num ) {
-	V = (C[1]->uend - epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg) ;
-	U = 1;
-	iPos = 1;
-      }
-      else if (C[2]->Num== c->Num) {
-	U =  1 - (epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
-	V   = 1;
-	iPos = 2;
-      }
-      else if (C[2]->Num== -c->Num) {
-	U =  1 - ( C[2]->uend -epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
-	V   = 1;
-	iPos = 2;
-      }
-      else if (C[3]->Num== c->Num) {
-	V = 1-(epar - C[3]->ubeg) / (C[3]->uend - C[3]->ubeg) ;
-	U   = 0;
-	iPos = 3;
-      }
-      else if (C[3]->Num== -c->Num) {
-	V = 1-(C[3]->uend - epar - C[3]->ubeg) / (C[3]->uend - C[3]->ubeg) ;
-	U   = 0;
-	iPos = 3;
-      }
-      else throw;
+  if (s->Typ ==  MSH_SURF_REGL){
+    Curve *C[4];
+    for(int i = 0; i < 4; i++)
+      List_Read(s->Generatrices, i, &C[i]);
 
-//       GPoint p1 = point(epar);
-//       GPoint p2 = face->point(U,V);
-
-//       printf("iPos %1d face %2d (%2d %2d %2d %2d) (%8.3f %8.3f) curve %2d (%8.3f) %8.3f %8.3f %8.3f vs %8.3f %8.3f %8.3f D = %8.3f\n",
-// 	     iPos,face->tag(),C[0]->Num,C[1]->Num,C[2]->Num,C[3]->Num,U,V,
-// 	     tag(),epar,
-// 	     p1.x(),p1.y(),p1.z(),p2.x(),p2.y(),p2.z(),
-// 	     sqrt((p1.x()-p2.x())*(p1.x()-p2.x())+(p1.y()-p2.y())*(p1.y()-p2.y())+(p1.z()-p2.z())*(p1.z()-p2.z())));
-
-      return SPoint2(U,V);
+    double U, V;
+    if (C[0]->Num == c->Num) {
+      U = (epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg) ;
+      V = 0;
     }
-  else if (s->Typ ==  MSH_SURF_TRIC)
-    {
-      double U,V;
-      Curve *C[3];
-      int iPos;
-      for(int i = 0; i < 3; i++) {
-	List_Read(s->Generatrices, i, &C[i]);
-      }
-
-      if (C[0]->Num == c->Num) {
-	U = (epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg) ;
-	V = 0;
-	iPos = 0;
-      }
-      else if (C[0]->Num== -c->Num) {
-	U = (C[0]->uend - epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg) ;
-	V = 0;
-	iPos = 0;
-      }
-      else if (C[1]->Num == c->Num) {
-	V = (epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg) ;
-	U = 1;
-	iPos = 1;
-      }
-      else if (C[1]->Num== -c->Num ) {
-	V = (C[1]->uend - epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg) ;
-	U = 1;
-	iPos = 1;
-      }
-      else if (C[2]->Num== c->Num) {
-	U = 1-(epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
-	V   = 1;
-	iPos = 2;
-      }
-      else if (C[2]->Num== -c->Num) {
-	U = 1-(C[2]->uend - epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
-	V   = 1;
-	iPos = 2;
-      }
-      else throw;
-
-//         GPoint p1 = point(epar);
-//         GPoint p2 = face->point(U,V);
-
-//         printf("iPos %1d face %2d (%2d %2d %2d) (%8.3f %8.3f) curve %2d (%8.3f) %8.3f %8.3f %8.3f vs %8.3f %8.3f %8.3f D = %8.3f\n",
-//   	     iPos,face->tag(),C[0]->Num,C[1]->Num,C[2]->Num,U,V,
-//   	     tag(),epar,
-//   	     p1.x(),p1.y(),p1.z(),p2.x(),p2.y(),p2.z(),
-//   	     sqrt((p1.x()-p2.x())*(p1.x()-p2.x())+(p1.y()-p2.y())*(p1.y()-p2.y())+(p1.z()-p2.z())*(p1.z()-p2.z())));
-
-      return SPoint2(U,V);
+    else if (C[0]->Num == -c->Num) {
+      U = (C[0]->uend - epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg) ;
+      V = 0;
     }
+    else if (C[1]->Num == c->Num) {
+      V = (epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg) ;
+      U = 1;
+    }
+    else if (C[1]->Num == -c->Num) {
+      V = (C[1]->uend - epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg) ;
+      U = 1;
+    }
+    else if (C[2]->Num == c->Num) {
+      U =  1 - (epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
+      V = 1;
+    }
+    else if (C[2]->Num == -c->Num) {
+      U =  1 - ( C[2]->uend -epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
+      V = 1;
+    }
+    else if (C[3]->Num == c->Num) {
+      V = 1-(epar - C[3]->ubeg) / (C[3]->uend - C[3]->ubeg) ;
+      U = 0;
+    }
+    else if (C[3]->Num == -c->Num) {
+      V = 1-(C[3]->uend - epar - C[3]->ubeg) / (C[3]->uend - C[3]->ubeg) ;
+      U = 0;
+    }
+    else{
+      Msg(INFO, "Reparameterizing edge %d on face %d", c->Num, s->Num);
+      return GEdge::reparamOnFace(face, epar, dir);
+    }
+    return SPoint2(U, V);
+  }
+  else if (s->Typ ==  MSH_SURF_TRIC){
+    Curve *C[3];
+    for(int i = 0; i < 3; i++)
+      List_Read(s->Generatrices, i, &C[i]);
+
+    double U, V;    
+    if (C[0]->Num == c->Num) {
+      U = (epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg) ;
+      V = 0;
+    }
+    else if (C[0]->Num == -c->Num) {
+      U = (C[0]->uend - epar - C[0]->ubeg) / (C[0]->uend - C[0]->ubeg) ;
+      V = 0;
+    }
+    else if (C[1]->Num == c->Num) {
+      V = (epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg) ;
+      U = 1;
+    }
+    else if (C[1]->Num == -c->Num) {
+      V = (C[1]->uend - epar - C[1]->ubeg) / (C[1]->uend - C[1]->ubeg) ;
+      U = 1;
+    }
+    else if (C[2]->Num == c->Num) {
+      U = 1-(epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
+      V = 1;
+    }
+    else if (C[2]->Num == -c->Num) {
+      U = 1-(C[2]->uend - epar - C[2]->ubeg) / (C[2]->uend - C[2]->ubeg) ;
+      V = 1;
+    }
+    else{
+      Msg(INFO, "Reparameterizing edge %d on face %d", c->Num, s->Num);
+      return GEdge::reparamOnFace(face, epar, dir);
+    }
+    return SPoint2(U, V);
+  }
   else
-    return GEdge::reparamOnFace(face,epar,dir);
-  
-
+    return GEdge::reparamOnFace(face, epar, dir);
 }
