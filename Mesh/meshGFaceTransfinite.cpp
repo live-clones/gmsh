@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.15 2006-12-21 17:10:15 geuzaine Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.16 2007-01-07 10:52:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -29,17 +29,30 @@
 #include "Context.h"
 #include "Message.h"
 
-#define TRAN_TRI(c1,c2,c3,s1,s2,s3,u,v) u*c2+(1.-v)*c1+v*c3-(u*(1.-v)*s2+u*v*s3)
+/*
+   s4 +-----c3-----+ s3
+      |            |
+      |            |
+     c4            c2
+      |            |
+      |            |
+   s1 +-----c1-----+ s2
+*/
 
+// f(u,v) = (1-u) c4(v) + u c2(v) + (1-v) c1(u) + v c3(u)
+//          - [ (1-u)(1-v) s1 + u(1-v) s2 + uv s3 + (1-u)v s4 ]
 #define TRAN_QUA(c1,c2,c3,c4,s1,s2,s3,s4,u,v) \
    (1.-u)*c4+u*c2+(1.-v)*c1+v*c3-((1.-u)*(1.-v)*s1+u*(1.-v)*s2+u*v*s3+(1.-u)*v*s4)
 
-int MeshTransfiniteSurface( GFace *gf)
+// s1=s4=c4
+// f(u,v) = u c2 (v) + (1-v) c1(u) + v c3(u) - u(1-v) s2 - uv s3
+#define TRAN_TRI(c1,c2,c3,s1,s2,s3,u,v) u*c2+(1.-v)*c1+v*c3-(u*(1.-v)*s2+u*v*s3)
+
+int MeshTransfiniteSurface(GFace *gf)
 {
   if(gf->meshAttributes.Method != TRANSFINI) return 0;
 
-  std::vector <MVertex *> corners;
-  std::vector <MVertex *> d_vertices;
+  std::vector <MVertex *> corners, d_vertices;
   std::vector <int> indices;
 
   for(unsigned int i = 0; i < gf->meshAttributes.corners.size(); i++)
@@ -249,9 +262,29 @@ int MeshTransfiniteSurface( GFace *gf)
 	int iP1 = N1 + i;
 	int iP2 = N2 + j;
 	int iP3 = ((N3 + N2) - i) % m_vertices.size();
-	double Up = TRAN_TRI(U[iP1], U[iP2], U[iP3], UC1, UC2, UC3, u, v);
-	double Vp = TRAN_TRI(V[iP1], V[iP2], V[iP3], VC1, VC2, VC3, u, v);
-	GPoint gp = gf->point(SPoint2(Up, Vp));
+	double Up, Vp;
+	if(gf->geomType() != GEntity::RuledSurface){
+	  Up = TRAN_TRI(U[iP1], U[iP2], U[iP3], UC1, UC2, UC3, u, v);
+	  Vp = TRAN_TRI(V[iP1], V[iP2], V[iP3], VC1, VC2, VC3, u, v);
+	}
+	else{
+	  // FIXME: to get nice meshes we would need to make the u,v
+	  // coords match with the (degenerate) coordinates of the
+	  // underlying ruled surface; so instead we just interpolate
+	  // in real space
+	  double xp = TRAN_TRI(m_vertices[iP1]->x(), m_vertices[iP2]->x(), 	 
+			       m_vertices[iP3]->x(), m_vertices[N1]->x(), 	 
+			       m_vertices[N2]->x(), m_vertices[N3]->x(), u, v); 	 
+	  double yp = TRAN_TRI(m_vertices[iP1]->y(), m_vertices[iP2]->y(), 	 
+			       m_vertices[iP3]->y(), m_vertices[N1]->y(), 	 
+			       m_vertices[N2]->y(), m_vertices[N3]->y(), u, v); 	 
+	  double zp = TRAN_TRI(m_vertices[iP1]->z(), m_vertices[iP2]->z(), 	 
+			       m_vertices[iP3]->z(), m_vertices[N1]->z(), 	 
+			       m_vertices[N2]->z(), m_vertices[N3]->z(), u, v); 	 
+	  // xp,yp,zp can be off the surface so we cannot use parFromPoint
+	  gf->XYZtoUV(xp, yp, zp, Up, Vp, 1.0, false); 	 
+	}
+ 	GPoint gp = gf->point(SPoint2(Up, Vp));
 	MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
 	gf->mesh_vertices.push_back(newv);
 	tab[std::make_pair(i,j)] = newv;

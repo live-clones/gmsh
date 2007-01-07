@@ -7,12 +7,12 @@ Line(1) = {2,3};
 Line(2) = {2,1};
 Line(3) = {1,3};
 Line Loop(4) = {1,-3,-2};
-Plane Surface(5) = {4};
+Ruled Surface(5) = {4};
 
 Transfinite Line{1,2,3} = 20;
 //Transfinite Surface{5} = {3,1,2};
-//Transfinite Surface{5} = {2,1,3};
-Transfinite Surface{5} = {1,2,3};
+Transfinite Surface{5} = {2,1,3};
+//Transfinite Surface{5} = {1,2,3};
 
 /*
 Point(10)={3+0,0,0,1};

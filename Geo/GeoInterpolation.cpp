@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.11 2007-01-06 22:44:19 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.12 2007-01-07 10:52:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -30,10 +30,15 @@
 
 Vertex InterpolateCurve(Curve * c, double u, int derivee)
 {
-  // we still call this in graphics
-  //if(c->Num < 0)
-  // Msg(GERROR, "FIXME: should never interpolate negative curves!");
-
+  if(c->Num < 0) {
+    Curve *C0 = FindCurve(-c->Num);
+    if(!C0){
+      Msg(GERROR, "Unknown curve %d", -c->Num);
+      return Vertex(0., 0., 0.);
+    }
+    return InterpolateCurve(C0, C0->ubeg + (C0->uend - C0->ubeg) * (1.-u), derivee);
+  }
+  
   Vertex V;
   V.u = u;
 
@@ -50,7 +55,7 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
 
   int N, i, j;
   Vertex *v[5];
-  double T[4], W, teta, t1, t2, t;
+  double T[4], W, theta, t1, t2, t;
   double vec[4];
   Vertex temp1, temp2;
 
@@ -91,17 +96,14 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
       V.u = 1. - u;
       u = V.u;
     }
-
-    teta = c->Circle.t1 - (c->Circle.t1 - c->Circle.t2) * u;
-    /* pour les ellipses */
-    teta -= c->Circle.incl;
-
+    theta = c->Circle.t1 - (c->Circle.t1 - c->Circle.t2) * u;
+    theta -= c->Circle.incl; // for ellipses
     V.Pos.X =
-      c->Circle.f1 * cos(teta) * cos(c->Circle.incl) -
-      c->Circle.f2 * sin(teta) * sin(c->Circle.incl);
+      c->Circle.f1 * cos(theta) * cos(c->Circle.incl) -
+      c->Circle.f2 * sin(theta) * sin(c->Circle.incl);
     V.Pos.Y =
-      c->Circle.f1 * cos(teta) * sin(c->Circle.incl) +
-      c->Circle.f2 * sin(teta) * cos(c->Circle.incl);
+      c->Circle.f1 * cos(theta) * sin(c->Circle.incl) +
+      c->Circle.f2 * sin(theta) * cos(c->Circle.incl);
     V.Pos.Z = 0.0;
     Projette(&V, c->Circle.invmat);
     V.Pos.X += c->Circle.v[1]->Pos.X;
@@ -113,10 +115,10 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
 
   case MSH_SEGM_BSPLN:
   case MSH_SEGM_BEZIER:
-    return InterpolateUBS(c, u, derivee);
+    return InterpolateUBS(c, u, 0);
 
   case MSH_SEGM_NURBS:
-    return InterpolateNurbs(c, u, derivee);
+    return InterpolateNurbs(c, u, 0);
 
   case MSH_SEGM_SPLN:
     N = List_Nbr(c->Control_Points);
@@ -174,18 +176,10 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
       List_Read(c->Control_Points, i + 2, &v[3]);
     }
 
-    if(derivee) {
-      T[3] = 0.;
-      T[2] = 1.;
-      T[1] = 2. * t;
-      T[0] = 3. * t * t;
-    }
-    else {
-      T[3] = 1.;
-      T[2] = t;
-      T[1] = t * t;
-      T[0] = t * t * t;
-    }
+    T[3] = 1.;
+    T[2] = t;
+    T[1] = t * t;
+    T[0] = t * t * t;
 
     V.Pos.X = V.Pos.Y = V.Pos.Z = W = 0.0;
     for(i = 0; i < 4; i++) {
@@ -236,23 +230,10 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
     for(j = 0; j < 4; j++) {
       W += T[j] * vec[j];
     }
-
-    if(derivee) {
-      V.Pos.X /= (t2 - t1);
-      V.Pos.Y /= (t2 - t1);
-      V.Pos.Z /= (t2 - t1);
-    }
-    else {
-      // V.Pos.X /= W;
-      // V.Pos.Y /= W;
-      // V.Pos.Z /= W;
-    }
     return V;
 
   default:
     Msg(GERROR, "Unknown curve type in interpolation");
-    V.Pos.X = V.Pos.Y = V.Pos.Z = 0.0;
-    V.w = V.lc = 1.0;
     return V;
   }
 
@@ -266,10 +247,6 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
 
 #define TRAN_QUA(c1,c2,c3,c4,s1,s2,s3,s4,u,v) \
    (1.-u)*c4+u*c2+(1.-v)*c1+v*c3-((1.-u)*(1.-v)*s1+u*(1.-v)*s2+u*v*s3+(1.-u)*v*s4)
-#define DUTRAN_QUA(c1,c2,c3,c4,s1,s2,s3,s4,u,v) \
-    (-1.)*c4  +c2               -( (-1.)*(1.-v)*s1+  (1.-v)*s2+  v*s3       -v*s4)
-#define DVTRAN_QUA(c1,c2,c3,c4,s1,s2,s3,s4,u,v) \
-                   (-1.)*c1+  c3-( (-1.)*(1.-u)*s1       -u*s2+  u*s3+  (1.-u)*s4)
 
 Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
                       Vertex s1, Vertex s2, Vertex s3, Vertex s4,
@@ -292,9 +269,7 @@ Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
 /* Interpolation transfinie sur un triangle : TRAN_QUA avec s1=s4=c4
    f(u,v) = u c2 (v) + (1-v) c1(u) + v c3(u) - u(1-v) s2 - uv s3 */
 
-#define   TRAN_TRI(c1,c2,c3,s1,s2,s3,u,v) u*c2+(1.-v)*c1+v*c3-(u*(1.-v)*s2+u*v*s3);
-#define DUTRAN_TRI(c1,c2,c3,s1,s2,s3,u,v)   c2+              -(  (1.-v)*s2+  v*s3);
-#define DVTRAN_TRI(c1,c2,c3,s1,s2,s3,u,v)       (-1.)*c1+  c3-(u*(-1)  *s2+  u*s3);
+#define TRAN_TRI(c1,c2,c3,s1,s2,s3,u,v) u*c2+(1.-v)*c1+v*c3-(u*(1.-v)*s2+u*v*s3);
 
 Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
                       Vertex s1, Vertex s2, Vertex s3, double u, double v)
@@ -331,8 +306,7 @@ void TransfiniteSph(Vertex S, Vertex center, Vertex * T)
   T->Pos.Z = center.Pos.Z + r * dirz;
 }
 
-Vertex InterpolateRuledSurface(Surface * s, double u, double v,
-				int derivee, int u_v)
+Vertex InterpolateRuledSurface(Surface * s, double u, double v)
 {
   Vertex *c1, *c2, T, D[4], V[4], *S[4];
   Curve *C[4];
@@ -365,33 +339,10 @@ Vertex InterpolateRuledSurface(Surface * s, double u, double v,
     S[2] = C[2]->beg;
     S[3] = C[3]->beg;
 
-    if (C[0]->Num < 0){
-      Curve *C0 = FindCurve(-C[0]->Num);
-      V[0] = InterpolateCurve(C0, C0->ubeg + (C0->uend - C0->ubeg) * (1.-u), 0);
-    }
-    else
-      V[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * u, 0);
-
-    if (C[1]->Num < 0){
-      Curve *C1 = FindCurve(-C[1]->Num);
-      V[1] = InterpolateCurve(C1, C1->ubeg + (C1->uend - C1->ubeg) * (1.-v), 0);
-    }
-    else
-      V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
-
-    if (C[2]->Num < 0){
-      Curve *C2 = FindCurve(-C[2]->Num);
-      V[2] = InterpolateCurve(C2, C2->ubeg + (C2->uend - C2->ubeg) * u, 0);
-    }
-    else
-      V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
-
-    if (C[3]->Num < 0){
-      Curve *C3 = FindCurve(-C[3]->Num);
-      V[3] = InterpolateCurve(C3, C3->ubeg + (C3->uend - C3->ubeg) * v, 0);
-    }
-    else     
-      V[3] = InterpolateCurve(C[3], C[3]->ubeg + (C[3]->uend - C[3]->ubeg) * (1. - v), 0);
+    V[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * u, 0);
+    V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
+    V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
+    V[3] = InterpolateCurve(C[3], C[3]->ubeg + (C[3]->uend - C[3]->ubeg) * (1. - v), 0);
     
     T = TransfiniteQua(V[0], V[1], V[2], V[3], *S[0], *S[1], *S[2], *S[3], u, v);
     if(issphere)
@@ -421,26 +372,9 @@ Vertex InterpolateRuledSurface(Surface * s, double u, double v,
     S[1] = C[1]->beg;
     S[2] = C[2]->beg;
 
-    if (C[0]->Num < 0){
-      Curve *C0 = FindCurve(-C[0]->Num);
-      V[0] = InterpolateCurve(C0, C0->ubeg + (C0->uend - C0->ubeg) * (1.-u), 0);
-    }
-    else
-      V[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * u, 0);
-
-    if (C[1]->Num < 0){
-      Curve *C1 = FindCurve(-C[1]->Num);
-      V[1] = InterpolateCurve(C1, C1->ubeg + (C1->uend - C1->ubeg) * (1.-v), 0);
-    }
-    else
-      V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
-
-    if (C[2]->Num < 0){
-      Curve *C2 = FindCurve(-C[2]->Num);
-      V[2] = InterpolateCurve(C2, C2->ubeg + (C2->uend - C2->ubeg) * u, 0);
-    }
-    else
-      V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1.-u), 0);
+    V[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * u, 0);
+    V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
+    V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1.-u), 0);
     
     T = TransfiniteTri(V[0], V[1], V[2], *S[0], *S[1], *S[2], u, v);
     if(issphere)
@@ -449,59 +383,39 @@ Vertex InterpolateRuledSurface(Surface * s, double u, double v,
   }
 }
 
-Vertex InterpolateExtrudedSurface(Surface * s, double u, double v,
-				  int derivee, int u_v)
+Vertex InterpolateExtrudedSurface(Surface * s, double u, double v)
 {
   Curve *c = FindCurve(s->Extrude->geo.Source);
 
   // find position of c in the list of generatrices
-  Curve *C[4];  
   int num = -1;
   for(int i = 0; i < List_Nbr(s->Generatrices); i++){
-    List_Read(s->Generatrices, i, &C[i]);
-    if(c == C[i]) num = i;
+    if(c == *(Curve**)List_Pointer(s->Generatrices, i)){
+      num = i;
+      break;
+    }
   }
 
   if(num < 0)
     Msg(GERROR, "Unknown curve in extruded surface");
-
+  
   Vertex T;
 
   switch(num){
   case 0: 
-    if (c->Num < 0){
-      Curve *C0 = FindCurve(-c->Num);
-      T = InterpolateCurve(C0, C0->ubeg + (C0->uend - C0->ubeg) * (1. - u), 0);
-    }
-    else
-      T = InterpolateCurve(c, c->ubeg + (c->uend - c->ubeg) * u, 0);
+    T = InterpolateCurve(c, c->ubeg + (c->uend - c->ubeg) * u, 0);
     s->Extrude->Extrude(v, T.Pos.X, T.Pos.Y, T.Pos.Z);
     return T;
   case 1:
-    if (c->Num < 0){
-      Curve *C0 = FindCurve(-c->Num);
-      T = InterpolateCurve(C0, C0->ubeg + (C0->uend - C0->ubeg) * (1. - v), 0);
-    }
-    else
-      T = InterpolateCurve(c, c->ubeg + (c->uend - c->ubeg) * v, 0);
+    T = InterpolateCurve(c, c->ubeg + (c->uend - c->ubeg) * v, 0);
     s->Extrude->Extrude(1. - u, T.Pos.X, T.Pos.Y, T.Pos.Z);
     return T;
   case 2:
-    if (c->Num < 0){
-      Curve *C0 = FindCurve(-c->Num);
-      T = InterpolateCurve(C0, C0->ubeg + (C0->uend - C0->ubeg) * u, 0);
-    }
-    else
-      T = InterpolateCurve(c, c->ubeg + (c->uend - c->ubeg) * (1. - u), 0);
+    T = InterpolateCurve(c, c->ubeg + (c->uend - c->ubeg) * (1. - u), 0);
     s->Extrude->Extrude(1. - v, T.Pos.X, T.Pos.Y, T.Pos.Z);
     return T;
   default:
-    if (c->Num < 0){
-      Curve *C0 = FindCurve(-c->Num);
-      T = InterpolateCurve(C0, C0->ubeg + (C0->uend - C0->ubeg) * v, 0);
-    }
-    else
-      T = InterpolateCurve(c, c->ubeg + (c->uend - c->ubeg) * (1. - v), 0);
+    T = InterpolateCurve(c, c->ubeg + (c->uend - c->ubeg) * (1. - v), 0);
     s->Extrude->Extrude(u, T.Pos.X, T.Pos.Y, T.Pos.Z);
     return T;
   }
@@ -522,7 +436,7 @@ Vertex InterpolateSurface(Surface * s, double u, double v, int derivee, int u_v)
         D[1] = InterpolateSurface(s, u, v, 0, 0);
       }
     }
-    else if(u_v == 2) {
+    else {
       if(v - eps < 0.0) {
         D[0] = InterpolateSurface(s, u, v, 0, 0);
         D[1] = InterpolateSurface(s, u, v + eps, 0, 0);
@@ -531,9 +445,6 @@ Vertex InterpolateSurface(Surface * s, double u, double v, int derivee, int u_v)
         D[0] = InterpolateSurface(s, u, v - eps, 0, 0);
         D[1] = InterpolateSurface(s, u, v, 0, 0);
       }
-    }
-    else {
-      Msg(WARNING, "Arbitrary InterpolateSurface for derivative not done");
     }
     T.Pos.X = (D[1].Pos.X - D[0].Pos.X) / eps;
     T.Pos.Y = (D[1].Pos.Y - D[0].Pos.Y) / eps;
@@ -544,12 +455,12 @@ Vertex InterpolateSurface(Surface * s, double u, double v, int derivee, int u_v)
   // use the exact extrusion formula if the surface is extruded
   if(s->Extrude && s->Extrude->geo.Mode == EXTRUDED_ENTITY && 
      s->Typ != MSH_SURF_PLAN)
-    return InterpolateExtrudedSurface(s, u, v, derivee, u_v);
+    return InterpolateExtrudedSurface(s, u, v);
   
   switch (s->Typ) {
   case MSH_SURF_REGL:
   case MSH_SURF_TRIC: 
-    return InterpolateRuledSurface(s, u, v, derivee, u_v);
+    return InterpolateRuledSurface(s, u, v);
   case MSH_SURF_NURBS:
     return InterpolateNurbsSurface(s, u, v);
   case MSH_SURF_PLAN:
