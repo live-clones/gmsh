@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.50 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.51 2007-01-08 16:42:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -176,19 +176,17 @@ double GMSH_CutPlanePlugin::levelset(double x, double y, double z, double val) c
     CutPlaneOptions_Number[2].def * z + CutPlaneOptions_Number[3].def;
 }
 
-bool GMSH_CutPlanePlugin::geometrical_filter ( Double_Matrix * geometrical_nodes_positions ) const
+bool GMSH_CutPlanePlugin::geometrical_filter(Double_Matrix *geometrical_nodes_positions) const
 {
-    const double l0 = levelset((*geometrical_nodes_positions)(0,0),
-			       (*geometrical_nodes_positions)(0,1),
-			       (*geometrical_nodes_positions)(0,2),1);
-    for (int i=1;i<geometrical_nodes_positions->size1();i++)
-	if (levelset((*geometrical_nodes_positions)(i,0),
-		     (*geometrical_nodes_positions)(i,1),
-		     (*geometrical_nodes_positions)(i,2),1) * l0 < 0) return true;
-    return false;
+  const double l0 = levelset((*geometrical_nodes_positions)(0,0),
+			     (*geometrical_nodes_positions)(0,1),
+			     (*geometrical_nodes_positions)(0,2),1);
+  for (int i=1;i<geometrical_nodes_positions->size1();i++)
+    if (levelset((*geometrical_nodes_positions)(i,0),
+		 (*geometrical_nodes_positions)(i,1),
+		 (*geometrical_nodes_positions)(i,2),1) * l0 < 0) return true;
+  return false;
 }
-
-
 
 Post_View *GMSH_CutPlanePlugin::execute(Post_View * v)
 {
@@ -205,11 +203,11 @@ Post_View *GMSH_CutPlanePlugin::execute(Post_View * v)
   _targetError = CutPlaneOptions_Number[6].def;
   
   if(iView < 0)
-      iView = v ? v->Index : 0;
+    iView = v ? v->Index : 0;
   
   if(!List_Pointer_Test(CTX.post.list, iView)) {
-      Msg(GERROR, "View[%d] does not exist", iView);
-      return v;
+    Msg(GERROR, "View[%d] does not exist", iView);
+    return v;
   }
   
   Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);

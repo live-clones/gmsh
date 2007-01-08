@@ -110,12 +110,11 @@ StringXString MeshOptions_String[] = {
 } ;
 
 StringXString SolverOptions_String[] = {
+  { F|O, "SocketName" , opt_solver_socket_name , 
 #if defined(WIN32) && !defined(__CYGWIN__)
-  // use TCP/IP sockets by default on "pure" Windows
-  { F|O, "SocketName" , opt_solver_socket_name , "127.0.0.1:44122" ,
+    "127.0.0.1:44122" , // use TCP/IP sockets by default on "pure" Windows
 #else
-  // use Unix sockets by default otherwise
-  { F|O, "SocketName" , opt_solver_socket_name , ".gmshsock" ,
+    ".gmshsock" , // otherwise use Unix sockets by default
 #endif
     "Name of socket (TCP/IP if it contains the `:' character, UNIX otherwise)" },
 
@@ -839,7 +838,12 @@ StringXNumber GeometryOptions_Number[] = {
 StringXNumber MeshOptions_Number[] = {
   { F|O, "Algorithm" , opt_mesh_algo2d , DELAUNAY_ISO ,
     "2D mesh algorithm (1=isotropic, 2=anisotropic, 3=triangle)" }, 
-  { F|O, "Algorithm3D" , opt_mesh_algo3d , DELAUNAY_ISO /* FRONTAL_NETGEN */ ,
+  { F|O, "Algorithm3D" , opt_mesh_algo3d ,
+#if defined(HAVE_TETGEN)
+    DELAUNAY_ISO,
+#else
+    FRONTAL_NETGEN,
+#endif
     "3D mesh algorithm (1=isotropic, 4=netgen, 5=tetgen)" }, 
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" }, 

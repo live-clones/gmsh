@@ -1,17 +1,16 @@
-$Id: VERSIONS,v 1.369 2006-11-29 03:11:20 geuzaine Exp $
+$Id: VERSIONS,v 1.370 2007-01-08 16:42:42 geuzaine Exp $
 
 2.0: new geometry and mesh databases, with support for STEP and IGES
 input via OpenCascade; complete rewrite of geometry and mesh drawing
-code; complete rewrite of the input/output code (with new native
-binary MSH format and full support for import/export of I-deas UNV,
-Nastran BDF, STL, Medit MESH and VRML 1.0 files); added support for
-incomplete second order elements; new 2D mesh algorithm; removed
-anisotropic algorithm (as well as attractors); removed explicit region
-number specification in extrusions; option changes in the graphical
-interface are now applied instantenously; added support for offscreen
-rendering using OSMesa; added support for SVG output; added string
-labels for Physical entities; lots of other improvements all over the
-place.
+code; complete rewrite of mesh I/O layer (with new native binary MSH
+format and support for import/export of I-deas UNV, Nastran BDF, STL,
+Medit MESH and VRML 1.0 files); added support for incomplete second
+order elements; new 2D mesh algorithm; removed anisotropic algorithm
+(as well as attractors); removed explicit region number specification
+in extrusions; option changes in the graphical interface are now
+applied instantaneously; added support for offscreen rendering using
+OSMesa; added support for SVG output; added string labels for Physical
+entities; lots of other improvements all over the place.
 
 1.65 (May 15, 2006): new Plugin(ExtractEdges); fixed compilation
 errors with gcc4.1; replaced Plugin(DisplacementRaise) and

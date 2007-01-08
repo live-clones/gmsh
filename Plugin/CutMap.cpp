@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.51 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.52 2007-01-08 16:42:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -176,5 +176,3 @@ Post_View *GMSH_CutMapPlugin::execute(Post_View * v)
   
   return GMSH_LevelsetPlugin::execute(v1);
 }
-
-

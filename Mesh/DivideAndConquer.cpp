@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.7 2006-12-01 16:16:50 remacle Exp $
+// $Id: DivideAndConquer.cpp,v 1.8 2007-01-08 16:42:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,33 +22,22 @@
 /*
    A L G O R I T H M E    D I V I D E    A N D     C O N Q U E R   
 
-   le noeud de cette methode est de pouvoir fusionner
-   deux triangulations de Delaunay en une seule (routine merge)
-   on procede alors recursivement en separant les points en deux
-   groupes puis en separant les groupes en 2 ... jusqu'a n'obtenir
-   que 1 2 ou 3 points (la triangulation est alors triviale)
+   le noeud de cette methode est de pouvoir fusionner deux
+   triangulations de Delaunay en une seule (routine merge) on procede
+   alors recursivement en separant les points en deux groupes puis en
+   separant les groupes en 2 ... jusqu'a n'obtenir que 1 2 ou 3 points
+   (la triangulation est alors triviale)
 
-   Dans le mailleur, on utilise cet algorithme pour construire 
-   le maillage initial 
+   Dans le mailleur, on utilise cet algorithme pour construire le
+   maillage initial
 
-   !!! il faut PERTURBER les points d'une faible valeur aleatoire
-   pour eviter d'avoir 3 points alignes ou 4 points cocycliques !!!
-
-   doc : structure contenant la triangulation
+   !!! il faut PERTURBER les points d'une faible valeur aleatoire pour
+   eviter d'avoir 3 points alignes ou 4 points cocycliques !!!
 */
 
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "DivideAndConquer.h"
-#include "Context.h"
-
-#define EXTERN    1
-#define INTERN    2
-
-#define NOTTOLINK 1
-#define TOLINK    2
-
-extern Context_T CTX;
 
 static PointRecord *pPointArray;
 
@@ -114,8 +103,10 @@ int Is_left_of(PointNumero x, PointNumero y, PointNumero check)
   double pa[2] = {(double)pPointArray[x].where.h, (double)pPointArray[x].where.v};
   double pb[2] = {(double)pPointArray[y].where.h, (double)pPointArray[y].where.v};
   double pc[2] = {(double)pPointArray[check].where.h, (double)pPointArray[check].where.v};
+
   // we use robust predicates here
   double result = gmsh::orient2d(pa, pb, pc);
+
   return result > 0;
 }
 
@@ -129,8 +120,8 @@ Segment LowerCommonTangent(DT vl, DT vr)
   PointNumero x, y, z, z1, z2, temp;
   Segment s;
 
-  x = vl.end;   /* vu le tri, c'est le point le + a droite     */
-  y = vr.begin; /* idem, le + a gauche     */
+  x = vl.end;   // vu le tri, c'est le point le + a droite
+  y = vr.begin; // idem, le + a gauche
   z = First(y);
   z1 = First(x);
   z2 = Predecessor(x, z1);
@@ -158,8 +149,8 @@ Segment UpperCommonTangent(DT vl, DT vr)
   PointNumero x, y, z, z1, z2, temp;
   Segment s;
 
-  x = vl.end;   /* vu le tri, c'est le point le + a droite     */
-  y = vr.begin; /* idem, le + a gauche     */
+  x = vl.end;   // vu le tri, c'est le point le + a droite
+  y = vr.begin; // idem, le + a gauche
   z = First(y);
   z1 = First(x);
   z2 = Predecessor(y, z);
@@ -182,13 +173,12 @@ Segment UpperCommonTangent(DT vl, DT vr)
   }
 }
 
-/* return 1 if the point k is NOT in the circumcircle of triangle
-   hij */
+// return 1 if the point k is NOT in the circumcircle of triangle  hij
 int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
 {
   if((h == i) && (h == j) && (h == k)) {
     Msg(GERROR, "3 identical points in Qtest");
-    return 0; /* returning 1 will cause looping for ever */
+    return 0;
   }
   
   double pa[2] = {(double)pPointArray[h].where.h, (double)pPointArray[h].where.v};
@@ -210,8 +200,8 @@ int merge(DT vl, DT vr)
 
   bt = LowerCommonTangent(vl, vr);
   ut = UpperCommonTangent(vl, vr);
-  l = bt.from;  /* left endpoint of BT     */
-  r = bt.to;    /* right endpoint of BT     */
+  l = bt.from;  // left endpoint of BT
+  r = bt.to;    // right endpoint of BT
 
   while((l != ut.from) || (r != ut.to)) {
     a = b = 0;
@@ -296,20 +286,20 @@ DT recur_trig(PointNumero left, PointNumero right)
 
   dt.begin = left;
   dt.end = right;
-  n = right - left + 1; /* nombre de points a triangulariser */
+  n = right - left + 1; // nombre de points a triangulariser
   switch (n) {
   case 0:
   case 1:
-    /* 0 ou 1 points -> rien a faire */
+    // 0 ou 1 points -> rien a faire
     break;
 
-  case 2:      /* deux points : cas trivial     */
+  case 2: // deux points : cas trivial
     Insert(left, right);
     FixFirst(left, right);
     FixFirst(right, left);
     break;
 
-  case 3:      /* trois points : cas trivial     */
+  case 3: // trois points : cas trivial
     Insert(left, right);
     Insert(left, left + 1);
     Insert(left + 1, right);
@@ -325,10 +315,9 @@ DT recur_trig(PointNumero left, PointNumero right)
     }
     break;
 
-  default:     /* plus de trois points : cas recursif     */
+  default: // plus de trois points : cas recursif
     m = (left + right) >> 1;
     if(!merge(recur_trig(left, m), recur_trig(m + 1, right)))
-
       break;
   }
   return dt;
@@ -347,8 +336,8 @@ int comparePoints(const void *i, const void *j)
     return (x < 0.) ? -1 : 1;
 }
 
-/*  this fonction builds the delaunay triangulation and the voronoi
-    for a window. All error handling is done here. */
+// this fonction builds the delaunay triangulation and the voronoi for
+// a window. All error handling is done here
 int DelaunayAndVoronoi(DocPeek doc)
 {
   pPointArray = doc->points;
@@ -362,8 +351,8 @@ int DelaunayAndVoronoi(DocPeek doc)
   return 1;
 }
 
-/* This routine insert the point 'newPoint' in the list dlist,
-   respecting the clock-wise orientation. */
+// This routine insert the point 'newPoint' in the list dlist,
+// respecting the clock-wise orientation
 int DListInsert(DListRecord ** dlist, MPoint center, PointNumero newPoint)
 {
   DListRecord *p, *newp;
@@ -386,18 +375,19 @@ int DListInsert(DListRecord ** dlist, MPoint center, PointNumero newPoint)
     Succ(newp) = *dlist;
     return 1;
   }
-  /*  If we are here, the double-linked circular list has 2 or more
-     elements, so we have to calculate where to put the new one. */
+
+  // If we are here, the double-linked circular list has 2 or more
+  // elements, so we have to calculate where to put the new one
 
   p = *dlist;
   first = p->point_num;
 
-  /* first, compute polar coord. of the first point. */
+  // first, compute polar coord. of the first point
   yy = (double)(pPointArray[first].where.v - center.v);
   xx = (double)(pPointArray[first].where.h - center.h);
   alpha1 = atan2(yy, xx);
 
-  /* compute polar coord of the point to insert. */
+  // compute polar coord of the point to insert
   yy = (double)(pPointArray[newPoint].where.v - center.v);
   xx = (double)(pPointArray[newPoint].where.h - center.h);
   beta = atan2(yy, xx) - alpha1;
@@ -420,20 +410,16 @@ int DListInsert(DListRecord ** dlist, MPoint center, PointNumero newPoint)
     p = Succ(p);
   } while(p != *dlist);
 
-  /* never here! */
+  // never here!
   return 0;
 }
 
+// This routine inserts the point 'a' in the adjency list of 'b' and
+// the point 'b' in the adjency list of 'a'
 int Insert(PointNumero a, PointNumero b)
 {
-  int rslt;
-
-  /* This routine inserts the point 'a' in the adjency list of 'b' and
-     the point 'b' in the adjency list of 'a'.          */
-
-  rslt = DListInsert(&pPointArray[a].adjacent, pPointArray[a].where, b);
+  int rslt = DListInsert(&pPointArray[a].adjacent, pPointArray[a].where, b);
   rslt &= DListInsert(&pPointArray[b].adjacent, pPointArray[b].where, a);
-
   return rslt;
 }
 
@@ -469,21 +455,16 @@ int DListDelete(DListPeek * dlist, PointNumero oldPoint)
   return 0;
 }
 
-/* This routine removes the point 'a' in the adjency list of 'b' and
-   the point 'b' in the adjency list of 'a'.          */
-
+// This routine removes the point 'a' in the adjency list of 'b' and
+// the point 'b' in the adjency list of 'a'
 int Delete(PointNumero a, PointNumero b)
 {
-  int rslt;
-
-  rslt = DListDelete(&pPointArray[a].adjacent, b);
+  int rslt = DListDelete(&pPointArray[a].adjacent, b);
   rslt &= DListDelete(&pPointArray[b].adjacent, a);
-
   return rslt;
 }
 
-/* compte les points sur le polygone convexe */
-
+// compte les points sur le polygone convexe
 int CountPointsOnHull(int n, PointRecord * pPointArray)
 {
   PointNumero p, p2, temp;
@@ -541,11 +522,10 @@ void filldel(Delaunay * deladd, int aa, int bb, int cc,
   deladd->v.voisin3 = NULL;
 }
 
-/* Convertir les listes d'adjacence en triangles */
-
+// Convertir les listes d'adjacence en triangles
 int Conversion(DocPeek doc)
 {
-  /* on suppose que n >= 3      gPointArray est suppose OK. */
+  // on suppose que n >= 3. gPointArray est suppose OK.
 
   Striangle *striangle;
   int n, i, j;
@@ -559,7 +539,7 @@ int Conversion(DocPeek doc)
   striangle = (Striangle *) Malloc(n * sizeof(Striangle));
   count2 = (int)CountPointsOnHull(n, doc->points);
 
-  /* nombre de triangles que l'on doit obtenir */
+  // nombre de triangles que l'on doit obtenir
   count2 = 2 * (n - 1) - count2;
 
   if(doc->delaunay)
@@ -568,14 +548,15 @@ int Conversion(DocPeek doc)
   doc->delaunay = (Delaunay *) Malloc(2 * count2 * sizeof(Delaunay));
 
   for(i = 0; i < n; i++) {
-    /* on cree une liste de points connectes au point i (t) + nombre de points (t_length) */
-    striangle[i].t =
-      ConvertDlistToArray(&gPointArray[i].adjacent, &striangle[i].t_length);
+    // on cree une liste de points connectes au point i (t) + nombre
+    // de points (t_length)
+    striangle[i].t = ConvertDlistToArray(&gPointArray[i].adjacent,
+					 &striangle[i].t_length);
     striangle[i].info = NULL;
     striangle[i].info_length = 0;
   }
 
-  /* on balaye les noeuds de gauche a droite -> on cree les triangles  */
+  // on balaye les noeuds de gauche a droite -> on cree les triangles
   count = 0;
   for(i = 0; i < n; i++) {
     for(j = 0; j < striangle[i].t_length; j++) {
@@ -597,8 +578,7 @@ int Conversion(DocPeek doc)
   return 1;
 }
 
-/*  Cette routine efface toutes les listes d'adjacence du pPointArray. */
-
+//  Cette routine efface toutes les listes d'adjacence du pPointArray
 void remove_all_dlist(int n, PointRecord * pPointArray)
 {
   int i;

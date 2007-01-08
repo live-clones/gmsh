@@ -52,7 +52,10 @@ For jj In {1:nn}
 
    EndFor      
 
-Coherence;
+//BoundingBox;
+
+//FIXME: this is buggy -- investigate
+//Coherence;
 
 b = rayon ; 
 L = 2*nn ;    
