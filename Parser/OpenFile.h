@@ -31,5 +31,6 @@ void SetBoundingBox(double xmin, double xmax,
 		    double ymin, double ymax, 
 		    double zmin, double zmax);
 void SetBoundingBox(void);
+void AddToTemporaryBoundingBox(double x, double y, double z);
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.12 2007-01-07 10:52:46 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.13 2007-01-10 13:48:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -55,7 +55,7 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
 
   int N, i, j;
   Vertex *v[5];
-  double T[4], W, theta, t1, t2, t;
+  double theta, t1, t2, t;
   double vec[4];
   Vertex temp1, temp2;
 
@@ -122,40 +122,16 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
 
   case MSH_SEGM_SPLN:
     N = List_Nbr(c->Control_Points);
-
-    /* 
-       0                   i    P     i+1                  N-1
-       vfirst*---------*---------*----X-----*----------*----------* vlast
-       0                  t1   absc   t2                    1
-       0    t     1
-
-       Splines uniformes -> Le point se trouve entre v[1] et v[2] 
-       -> Calcul de l'abcisse curviligne locale t ( entre 0 et 1 )
-
-       0           -> t1 
-       1           -> t2
-       u -> t
-
-       Splines Lineiques -> Multilines
-     */
-
     i = (int)((double)(N - 1) * u);
     if(i < 0)
       i = 0;
     if(i >= N - 1)
       i = N - 2;
-
     t1 = (double)(i) / (double)(N - 1);
     t2 = (double)(i + 1) / (double)(N - 1);
-
     t = (u - t1) / (t2 - t1);
-
     List_Read(c->Control_Points, i, &v[1]);
     List_Read(c->Control_Points, i + 1, &v[2]);
-
-    V.lc = (1. - t) * v[1]->lc + t * v[2]->lc;
-    V.w = (1. - t) * v[1]->w + t * v[2]->w;
-
     if(!i) {
       v[0] = &temp1;
       v[0]->Pos.X = 2. * v[1]->Pos.X - v[2]->Pos.X;
@@ -165,7 +141,6 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
     else {
       List_Read(c->Control_Points, i - 1, &v[0]);
     }
-
     if(i == N - 2) {
       v[3] = &temp2;
       v[3]->Pos.X = 2. * v[2]->Pos.X - v[1]->Pos.X;
@@ -175,62 +150,7 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
     else {
       List_Read(c->Control_Points, i + 2, &v[3]);
     }
-
-    T[3] = 1.;
-    T[2] = t;
-    T[1] = t * t;
-    T[0] = t * t * t;
-
-    V.Pos.X = V.Pos.Y = V.Pos.Z = W = 0.0;
-    for(i = 0; i < 4; i++) {
-      vec[i] = 0.0;
-    }
-
-    /* X */
-    for(i = 0; i < 4; i++) {
-      for(j = 0; j < 4; j++) {
-        vec[i] += c->mat[i][j] * v[j]->Pos.X;
-      }
-    }
-
-    for(j = 0; j < 4; j++) {
-      V.Pos.X += T[j] * vec[j];
-      vec[j] = 0.0;
-    }
-
-    /* Y */
-    for(i = 0; i < 4; i++) {
-      for(j = 0; j < 4; j++) {
-        vec[i] += c->mat[i][j] * v[j]->Pos.Y;
-      }
-    }
-
-    for(j = 0; j < 4; j++) {
-      V.Pos.Y += T[j] * vec[j];
-      vec[j] = 0.0;
-    }
-
-    /* Z */
-    for(i = 0; i < 4; i++) {
-      for(j = 0; j < 4; j++) {
-        vec[i] += c->mat[i][j] * v[j]->Pos.Z;
-      }
-    }
-    for(j = 0; j < 4; j++) {
-      V.Pos.Z += T[j] * vec[j];
-      vec[j] = 0.0;
-    }
-
-    /* W */
-    for(i = 0; i < 4; i++) {
-      for(j = 0; j < 4; j++) {
-        vec[i] += c->mat[i][j] * v[j]->lc;
-      }
-    }
-    for(j = 0; j < 4; j++) {
-      W += T[j] * vec[j];
-    }
-    return V;
+    return InterpolateCubicSpline(v, t, c->mat, 0, t1, t2);
 
   default:
     Msg(GERROR, "Unknown curve type in interpolation");

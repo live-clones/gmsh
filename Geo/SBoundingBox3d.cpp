@@ -1,4 +1,4 @@
-// $Id: SBoundingBox3d.cpp,v 1.4 2006-11-27 22:22:14 geuzaine Exp $
+// $Id: SBoundingBox3d.cpp,v 1.5 2007-01-10 13:48:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,12 @@ SBoundingBox3d::SBoundingBox3d()
 SBoundingBox3d::SBoundingBox3d(const SPoint3 & pt)
 : MinPt(pt), MaxPt(pt)
 {}
+
+void SBoundingBox3d::reset()
+{
+  MinPt = SPoint3(DBL_MAX,DBL_MAX,DBL_MAX);
+  MaxPt = SPoint3(-DBL_MAX,-DBL_MAX,-DBL_MAX);
+}
 
 bool SBoundingBox3d::empty()
 {

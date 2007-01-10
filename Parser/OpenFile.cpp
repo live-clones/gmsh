@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.136 2006-12-21 17:10:15 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.137 2007-01-10 13:48:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -162,6 +162,27 @@ void SetBoundingBox(void)
   CTX.min[0] = bb.min().x(); CTX.max[0] = bb.max().x();
   CTX.min[1] = bb.min().y(); CTX.max[1] = bb.max().y();
   CTX.min[2] = bb.min().z(); CTX.max[2] = bb.max().z();
+  FinishUpBoundingBox();
+}
+
+// FIXME: this is necessary for now to have an approximate CTX.lc
+// *while* parsing input files (it's important since some of the
+// geometrical operations use a tolerance that depends on
+// CTX.lc). This will be removed once the new database is filled
+// directly during the parsing step
+static SBoundingBox3d temp_bb;
+
+void ResetTemporaryBoundingBox()
+{
+  temp_bb.reset();
+}
+
+void AddToTemporaryBoundingBox(double x, double y, double z)
+{
+  temp_bb += SPoint3(x, y, z);
+  CTX.min[0] = temp_bb.min().x(); CTX.max[0] = temp_bb.max().x();
+  CTX.min[1] = temp_bb.min().y(); CTX.max[1] = temp_bb.max().y();
+  CTX.min[2] = temp_bb.min().z(); CTX.max[2] = temp_bb.max().z();
   FinishUpBoundingBox();
 }
 
@@ -388,6 +409,9 @@ void OpenProject(char *name)
 
   // Initialize pseudo random mesh generator to the same seed
   srand(1);
+
+  // temporary hack until we fill GMODEL on the fly during parsing
+  ResetTemporaryBoundingBox();
 
   SetProjectName(name);
   MergeFile(name);

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.252 2006-12-16 15:44:30 geuzaine Exp $
+// $Id: Gmsh.y,v 1.253 2007-01-10 13:48:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1029,11 +1029,13 @@ Shape :
 	yymsg(GERROR, "Point %d already exists", num);
       }
       else{
-	Vertex *v = Create_Vertex(num, CTX.geom.scaling_factor * $6[0],
-				  CTX.geom.scaling_factor * $6[1],
-				  CTX.geom.scaling_factor * $6[2],
-				  CTX.geom.scaling_factor * $6[3], 1.0);
+	double x = CTX.geom.scaling_factor * $6[0];
+	double y = CTX.geom.scaling_factor * $6[1];
+	double z = CTX.geom.scaling_factor * $6[2];
+	double lc = CTX.geom.scaling_factor * $6[3];
+	Vertex *v = Create_Vertex(num, x, y, z, lc, 1.0);
 	Tree_Add(THEM->Points, &v);
+	AddToTemporaryBoundingBox(x, y, z);
       }
       $$.Type = MSH_POINT;
       $$.Num = num;

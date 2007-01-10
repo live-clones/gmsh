@@ -29,6 +29,7 @@ class SBoundingBox3d {
   SBoundingBox3d();
   SBoundingBox3d(const SPoint3 &);
   bool empty();
+  void reset();
   void operator+=(const SPoint3 &pt);
   void operator+=(const SBoundingBox3d &pt);
   void operator*=(double scale);
