@@ -70,10 +70,12 @@ void normal3points(double x0, double y0, double z0,
 int sys2x2(double mat[2][2], double b[2], double res[2]);
 int sys3x3(double mat[3][3], double b[3], double res[3], double *det);
 int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det);
+double det2x2(double mat[2][2]);
 double det3x3(double mat[3][3]);
 double trace3x3(double mat[3][3]);
 double trace2 (double mat[3][3]);
 double inv3x3(double mat[3][3], double inv[3][3]);
+double inv2x2(double mat[2][2], double inv[2][2]);
 void invert_singular_matrix3x3(double MM[3][3], double II[3][3]);
 double angle_02pi(double A3);
 double angle_plan(double V[3], double P1[3], double P2[3], double n[3]);

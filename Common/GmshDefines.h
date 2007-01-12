@@ -66,6 +66,8 @@
 #define DELAUNAY_TRIANGLE 3
 #define FRONTAL_NETGEN 4
 #define DELAUNAY_TETGEN 5
+#define MESHADAPT 6
+#define DELAUNAY2D 7
 
 #define TRANSFINI 1
 #define LIBRE     2

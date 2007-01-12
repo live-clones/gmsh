@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.25 2006-12-16 15:48:51 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.26 2007-01-12 13:16:59 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -56,6 +56,7 @@ double F_Lc(double t)
   else
     lc_here    = BGM_MeshSize(_myGEdge, t , 0 , p.x(),p.y(),p.z());
   SVector3 der      = _myGEdge -> firstDer(t) ;
+
   const double d    = norm(der);  
   return d/lc_here;
 }

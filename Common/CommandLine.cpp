@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.87 2006-12-16 15:44:27 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.88 2007-01-12 13:16:59 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -406,8 +406,10 @@ void Get_Options(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "algo")) {
         i++;
         if(argv[i] != NULL) {
-          if(!strncmp(argv[i], "iso", 3))
-            CTX.mesh.algo2d = DELAUNAY_ISO;
+          if(!strncmp(argv[i], "bds", 3))
+            CTX.mesh.algo2d = MESHADAPT;
+          else if(!strncmp(argv[i], "del", 3))
+            CTX.mesh.algo2d = DELAUNAY2D;
           else if(!strncmp(argv[i], "tri", 3))
             CTX.mesh.algo2d = DELAUNAY_TRIANGLE;
           else if(!strncmp(argv[i], "netgen", 6))

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.158 2006-12-21 17:10:15 geuzaine Exp $
+# $Id: Makefile,v 1.159 2007-01-12 13:16:59 remacle Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -36,6 +36,7 @@ SRC = Generator.cpp \
         meshGFace.cpp \
         meshGFaceTransfinite.cpp \
         meshGFaceExtruded.cpp \
+        meshGFaceDelaunayInsertion.cpp \
         meshGRegion.cpp \
         meshGRegionDelaunayInsertion.cpp \
         meshGRegionTransfinite.cpp \

@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.137 2007-01-10 13:48:50 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.138 2007-01-12 13:17:00 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -386,8 +386,8 @@ int MergeFile(char *name, int warn_if_missing)
 
   SBoundingBox3d bb;
   bb = GMODEL->bounds();
-
-  GMODEL->setMeshSize(0.1 * norm( SVector3 ( bb.max() , bb.min() )));
+  if (GMODEL->getMeshSize() < 0)
+    GMODEL->setMeshSize(0.1 * norm( SVector3 ( bb.max() , bb.min() )));
   
   CTX.geom.draw = 1;
   CTX.mesh.changed = ENT_ALL;

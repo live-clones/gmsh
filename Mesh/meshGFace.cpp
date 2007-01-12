@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.45 2006-12-21 17:10:15 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.46 2007-01-12 13:16:59 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "meshGFace.h"
+#include "meshGFaceDelaunayInsertion.h"
 #include "DivideAndConquer.h"
 #include "BackgroundMesh.h"
 #include "GVertex.h"
@@ -807,16 +808,14 @@ bool gmsh2DMeshGenerator ( GFace *gf )
   m->del_point(m->find_point(-3));
   m->del_point(m->find_point(-4));
 
-  // goto hhh;
-   // start mesh generation
-
-  RefineMesh (gf,*m,100);
-  //  OptimizeMesh (gf,*m,2);
-
-
-  if (gf->meshAttributes.recombine)
+  // start mesh generation
+  //  if (CTX.mesh.algo2d == MESHADAPT)
     {
-      m->recombineIntoQuads (gf->meshAttributes.recombineAngle,gf);
+      RefineMesh (gf,*m,100);
+      if (gf->meshAttributes.recombine)
+	{
+	  m->recombineIntoQuads (gf->meshAttributes.recombineAngle,gf);
+	}
     }
 
   // fill the small gmsh structures
@@ -829,7 +828,6 @@ bool gmsh2DMeshGenerator ( GFace *gf )
 	if (numbered_vertices.find(p->iD)  == numbered_vertices.end())
 	  {
 	    MVertex *v = new MFaceVertex (p->X,p->Y,p->Z,gf,p->u,p->v);
-	    //MVertex *v = new MFaceVertex (p->u,p->v,0,gf,p->u,p->v);
 	    numbered_vertices[p->iD]=v;
 	    gf->mesh_vertices.push_back(v);
 	  }
@@ -861,10 +859,18 @@ bool gmsh2DMeshGenerator ( GFace *gf )
       }
   }
 
+  // the delaunay algo is based directly on internal gmsh structures
+  // BDS mesh is passed in order not to recompute local coordinates
+  // of vertices
+//   if (CTX.mesh.algo2d == DELAUNAY2D ||CTX.mesh.algo2d == DELAUNAY_ISO)
+//     {
+//       insertVerticesInFace (gf,m) ;
+//     }
 
   // delete the mesh
 
   delete m;
+
 
   delete [] U_;
   delete [] V_;
@@ -1260,9 +1266,6 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
 
   m->cleanup();
 
- 
-
-
   {
     std::list<BDS_Edge*>::iterator ite = m->edges.begin();
     while (ite != m->edges.end())
@@ -1291,16 +1294,14 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   // goto hhh;
   // start mesh generation
   
-  RefineMesh (gf,*m,100);
-  //  OptimizeMesh (gf,*m,2);
-
-
-
-  if (gf->meshAttributes.recombine)
+  //  if (CTX.mesh.algo2d == MESHADAPT)
     {
-      m->recombineIntoQuads (gf->meshAttributes.recombineAngle,gf);
+      RefineMesh (gf,*m,100);
+      if (gf->meshAttributes.recombine)
+	{
+	  m->recombineIntoQuads (gf->meshAttributes.recombineAngle,gf);
+	}
     }
-  
   // fill the small gmsh structures
   
   {
@@ -1344,11 +1345,17 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   
   
   // delete the mesh
-    char name[245];
-   sprintf(name,"param%d.pos",gf->tag());
+  //    char name[245];
+    //   sprintf(name,"param%d.pos",gf->tag());
    //outputScalarField(m->triangles, name,1);
-    sprintf(name,"real%d.pos",gf->tag());
+   //    sprintf(name,"real%d.pos",gf->tag());
     //outputScalarField(m->triangles, name,0);
+
+//   if (CTX.mesh.algo2d == DELAUNAY2D ||CTX.mesh.algo2d == DELAUNAY_ISO)
+//     {
+//       insertVerticesInFace (gf,m) ;
+//     }
+
   
   delete m; 
   return true;
@@ -1390,8 +1397,11 @@ void meshGFace :: operator() (GFace *gf)
 
   Msg(DEBUG1, "Generating the mesh");
   // temp fix until we create MEdgeLoops in gmshFace:
-  if(gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty())
-    gmsh2DMeshGenerator ( gf ) ;
+  if(gf->getNativeType() == GEntity::GmshModel || 
+     gf->edgeLoops.empty() )
+    {
+      gmsh2DMeshGenerator ( gf );
+    }
   else
     {
       if (!gmsh2DMeshGeneratorPeriodic ( gf ))

@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.9 2006-12-01 16:16:50 remacle Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.10 2007-01-12 13:16:59 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -319,7 +319,7 @@ void insertVerticesInRegion (GRegion *gr)
   gr->tetrahedra.clear();
   connectTets ( allTets.begin(), allTets.end() );      
 
-  Msg(INFO,"All %d tets were connected",allTets.size());
+  Msg(DEBUG,"All %d tets were connected",allTets.size());
 
   // here the classification should be done
 
@@ -339,7 +339,7 @@ void insertVerticesInRegion (GRegion *gr)
       else
 	{
 	  if(ITER++%5000 ==0)
-	    Msg(INFO,"%d points created -- Worst tet radius is %g",vSizes.size(),worst->getRadius());
+	    Msg(DEBUG,"%d points created -- Worst tet radius is %g",vSizes.size(),worst->getRadius());
 	  if (worst->getRadius() < 1) break;
 	  double center[3];
 	  worst->tet()->circumcenter(center);

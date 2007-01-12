@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.10 2006-12-05 14:22:05 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.11 2007-01-12 13:16:59 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -173,6 +173,7 @@ double BGM_MeshSize ( GEntity *ge, double U, double V , double X, double Y, doub
   double l3 = ge->model()->getMeshSize();
   double l4 = LC_MVertex_BGM ( ge, X, Y , Z );
   if (ge->dim() < 2) l2 = LC_MVertex_PNTS ( ge, U, V );
+  //  printf("ge->dim() %d l2 = %g l4 = %g l3 = %g\n",ge->dim(),l2,l3,l4);
   double l = std::min(std::min(l2,l4),l3);
 
   l *= CTX.mesh.lc_factor ;

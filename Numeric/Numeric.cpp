@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.30 2006-11-27 22:22:17 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.31 2007-01-12 13:16:59 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -255,6 +255,30 @@ int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det)
   }
 
   return out;
+}
+
+double det2x2(double mat[2][2])
+{
+  return mat[0][0] *mat[1][1] -mat[1][0] *mat[0][1];
+}
+
+double inv2x2(double mat[2][2], double inv[2][2])
+{
+  const double det = det2x2 ( mat );
+  if(det){
+    double ud = 1. / det;
+    inv[0][0] =  ( mat[1][1] ) * ud ;
+    inv[1][0] = -( mat[1][0] ) * ud ;
+    inv[0][1] = -( mat[0][1] ) * ud ;
+    inv[1][1] =  ( mat[0][0] ) * ud ;
+  }
+  else{
+    Msg(GERROR, "Singular matrix");
+    for(int i = 0; i < 2; i++)
+      for(int j = 0; j < 2; j++)
+	inv[i][j] = 0.;
+  }
+  return det;
 }
 
 double inv3x3(double mat[3][3], double inv[3][3])

@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.25 2006-12-20 15:50:57 remacle Exp $
+// $Id: MElement.cpp,v 1.26 2007-01-12 13:16:59 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -412,6 +412,7 @@ bool MTriangle::invertmappingXY(double *p, double *uv, double tol)
   b[0] = p[0] - getVertex(0)->x();
   b[1] = p[1] - getVertex(0)->y();
   sys2x2(mat, b, uv);
+
   if(uv[0] >= -tol && 
      uv[1] >= -tol && 
      uv[0] <= 1. + tol && 
@@ -463,6 +464,8 @@ void MTriangle::circumcenterXY(double *res) const
   a3 = x3 * x3 + y3 * y3;
   res[0] = (double)((a1 * (y3 - y2) + a2 * (y1 - y3) + a3 * (y2 - y1)) / d);
   res[1] = (double)((a1 * (x2 - x3) + a2 * (x3 - x1) + a3 * (x1 - x2)) / d);
+
+  //  printf("%g %g - %g %g - %g %g cc %g %g\n",x1,y1,x2,y2,x3,y3,res[0],res[1]);
 
   return ;
 }
