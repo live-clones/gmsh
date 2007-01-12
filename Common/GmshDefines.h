@@ -60,14 +60,15 @@
 #define ENT_VOLUME   (1<<3)
 #define ENT_ALL      (ENT_POINT | ENT_LINE | ENT_SURFACE | ENT_VOLUME)
 
-// Mesh algorithms
-#define DELAUNAY_ISO 1
-#define DELAUNAY_ANISO 2
-#define DELAUNAY_TRIANGLE 3
-#define FRONTAL_NETGEN 4
-#define DELAUNAY_TETGEN 5
-#define MESHADAPT 6
-#define DELAUNAY2D 7
+// 2D mesh algorithms
+#define ALGO_2D_MESHADAPT 1
+#define ALGO_2D_DELAUNAY  2
+#define ALGO_2D_TRIANGLE  3
+
+// 3D mesh algorithms
+#define ALGO_3D_DELAUNAY  1
+#define ALGO_3D_NETGEN    4
+#define ALGO_3D_TETGEN    5
 
 #define TRANSFINI 1
 #define LIBRE     2

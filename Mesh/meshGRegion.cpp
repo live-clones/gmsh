@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.21 2006-12-15 16:06:16 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.22 2007-01-12 19:47:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -451,7 +451,7 @@ void meshGRegion::operator() (GRegion *gr)
     }
   }
 
-  if(CTX.mesh.algo3d == DELAUNAY_TETGEN || CTX.mesh.algo3d == DELAUNAY_ISO){
+  if(CTX.mesh.algo3d == ALGO_3D_DELAUNAY || CTX.mesh.algo3d == ALGO_3D_TETGEN){
 #if !defined(HAVE_TETGEN)
     Msg(GERROR, "Tetgen is not compiled in this version of Gmsh");
 #else
@@ -485,7 +485,7 @@ void meshGRegion::operator() (GRegion *gr)
 #endif
   }
   
-  if(CTX.mesh.algo3d == FRONTAL_NETGEN ){
+  if(CTX.mesh.algo3d == ALGO_3D_NETGEN ){
 #if !defined(HAVE_NETGEN)
     Msg(GERROR, "Netgen is not compiled in this version of Gmsh");
 #else

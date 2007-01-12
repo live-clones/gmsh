@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.501 2007-01-12 13:49:38 remacle Exp $
+// $Id: Callbacks.cpp,v 1.502 2007-01-12 19:47:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1092,11 +1092,13 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
 
   opt_mesh_point_type(0, GMSH_SET, WID->mesh_choice[0]->value());
   opt_mesh_algo2d(0, GMSH_SET,
-		  (WID->mesh_choice[2]->value() == 0) ? MESHADAPT : DELAUNAY2D );
+		  (WID->mesh_choice[2]->value() == 0) ? ALGO_2D_MESHADAPT : 
+		  ALGO_2D_DELAUNAY);
+  opt_mesh_algo3d(0, GMSH_SET,
+		  (WID->mesh_choice[3]->value() == 0) ? ALGO_3D_DELAUNAY : 
+		  ALGO_3D_NETGEN);
   opt_mesh_recombine_algo(0, GMSH_SET,
 		  (WID->mesh_choice[5]->value() == 0) ? 1 : 2);
-  opt_mesh_algo3d(0, GMSH_SET,
-		  (WID->mesh_choice[3]->value() == 0) ? DELAUNAY_ISO : FRONTAL_NETGEN );
   opt_mesh_color_carousel(0, GMSH_SET, WID->mesh_choice[4]->value());
   opt_mesh_quality_type(0, GMSH_SET, WID->mesh_choice[6]->value());
   opt_mesh_label_type(0, GMSH_SET, WID->mesh_choice[7]->value());

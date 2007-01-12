@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.46 2007-01-12 13:16:59 remacle Exp $
+// $Id: meshGFace.cpp,v 1.47 2007-01-12 19:47:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -809,7 +809,7 @@ bool gmsh2DMeshGenerator ( GFace *gf )
   m->del_point(m->find_point(-4));
 
   // start mesh generation
-  //  if (CTX.mesh.algo2d == MESHADAPT)
+  //  if (CTX.mesh.algo2d == ALGO_2D_MESHADAPT)
     {
       RefineMesh (gf,*m,100);
       if (gf->meshAttributes.recombine)
@@ -862,7 +862,7 @@ bool gmsh2DMeshGenerator ( GFace *gf )
   // the delaunay algo is based directly on internal gmsh structures
   // BDS mesh is passed in order not to recompute local coordinates
   // of vertices
-//   if (CTX.mesh.algo2d == DELAUNAY2D ||CTX.mesh.algo2d == DELAUNAY_ISO)
+//   if (CTX.mesh.algo2d == ALGO_2D_DELAUNAY || CTX.mesh.algo2d == ALGO_2D_DELAUNAY)
 //     {
 //       insertVerticesInFace (gf,m) ;
 //     }
@@ -1294,7 +1294,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   // goto hhh;
   // start mesh generation
   
-  //  if (CTX.mesh.algo2d == MESHADAPT)
+  //  if (CTX.mesh.algo2d == ALGO_2D_MESHADAPT)
     {
       RefineMesh (gf,*m,100);
       if (gf->meshAttributes.recombine)
@@ -1351,7 +1351,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
    //    sprintf(name,"real%d.pos",gf->tag());
     //outputScalarField(m->triangles, name,0);
 
-//   if (CTX.mesh.algo2d == DELAUNAY2D ||CTX.mesh.algo2d == DELAUNAY_ISO)
+//   if (CTX.mesh.algo2d == ALGO_2D_DELAUNAY)
 //     {
 //       insertVerticesInFace (gf,m) ;
 //     }
