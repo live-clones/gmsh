@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.88 2007-01-12 13:16:59 remacle Exp $
+// $Id: CommandLine.cpp,v 1.89 2007-01-12 15:47:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -406,7 +406,7 @@ void Get_Options(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "algo")) {
         i++;
         if(argv[i] != NULL) {
-          if(!strncmp(argv[i], "bds", 3))
+          if(!strncmp(argv[i], "bds", 3) || !strncmp(argv[i], "iso", 3))
             CTX.mesh.algo2d = MESHADAPT;
           else if(!strncmp(argv[i], "del", 3))
             CTX.mesh.algo2d = DELAUNAY2D;
@@ -415,9 +415,7 @@ void Get_Options(int argc, char *argv[])
           else if(!strncmp(argv[i], "netgen", 6))
             CTX.mesh.algo3d = FRONTAL_NETGEN;
           else if(!strncmp(argv[i], "tetgen", 6))
-	    {
-	      CTX.mesh.algo3d = DELAUNAY_TETGEN;
-	    }
+	    CTX.mesh.algo3d = DELAUNAY_TETGEN;
           else {
             fprintf(stderr, ERROR_STR "Unknown mesh algorithm\n");
             exit(1);
