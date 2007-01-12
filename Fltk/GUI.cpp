@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.589 2007-01-12 13:16:59 remacle Exp $
+// $Id: GUI.cpp,v 1.590 2007-01-12 13:49:38 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2231,13 +2231,11 @@ void GUI::create_option_window()
       static Fl_Menu_Item menu_2d_algo[] = {
         {"MeshAdapt", 0, 0, 0},
         {"Delaunay", 0, 0, 0},
-        {"Triangle", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_3d_algo[] = {
-        {"Isotropic", 0, 0, 0},
+        {"Delaunay", 0, 0, 0},
         {"Netgen", 0, 0, 0},
-        {"Tetgen", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_recombine_algo[] = {
