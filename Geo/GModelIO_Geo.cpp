@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.4 2006-12-16 01:25:58 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.5 2007-01-12 08:10:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -245,19 +245,17 @@ class writeGFaceGEO {
       return;
     
     int NUMLOOP = s->Num + 1000000;
-    if(s->Typ != MSH_SURF_NURBS) {
-      if(List_Nbr(s->Generatrices)){
-	fprintf(geo, "Line Loop (%d) = ", NUMLOOP);
-	for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
-	  Curve *c;
-	  List_Read(s->Generatrices, i, &c);
-	  if(i)
-	    fprintf(geo, ", %d", c->Num);
-	  else
-	    fprintf(geo, "{%d", c->Num);
-	}
-	fprintf(geo, "};\n");
+    if(List_Nbr(s->Generatrices)){
+      fprintf(geo, "Line Loop (%d) = ", NUMLOOP);
+      for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
+	Curve *c;
+	List_Read(s->Generatrices, i, &c);
+	if(i)
+	  fprintf(geo, ", %d", c->Num);
+	else
+	  fprintf(geo, "{%d", c->Num);
       }
+      fprintf(geo, "};\n");
     }
     
     switch (s->Typ) {
@@ -267,47 +265,6 @@ class writeGFaceGEO {
       break;
     case MSH_SURF_PLAN:
       fprintf(geo, "Plane Surface (%d) = {%d};\n", s->Num, NUMLOOP);
-      break;
-    case MSH_SURF_TRIMMED:
-      fprintf(geo, "Trimmed Surface (%d) = %d {%d};\n", s->Num,
-	      s->Support->Num, NUMLOOP);
-      break;
-    case MSH_SURF_NURBS:
-      fprintf(geo, "Nurbs Surface (%d) = {\n", s->Num);
-      for(int i = 0; i < s->Nv; i++) {
-	fprintf(geo, "  {");
-	for(int j = 0; j < s->Nu; j++) {
-	  Vertex *v;
-	  List_Read(s->Control_Points, j + s->Nu * i, &v);
-	  if(!j)
-	    fprintf(geo, "%d", v->Num);
-	  else
-	    fprintf(geo, ", %d", v->Num);
-	}
-	if(i != s->Nv - 1)
-	  fprintf(geo, "},\n");
-	else
-	  fprintf(geo, "}}\n");
-      }
-      fprintf(geo, "  Knots\n  {");
-      for(int j = 0; j < s->Nu + s->OrderU + 1; j++) {
-	if(!j)
-	  fprintf(geo, "%.16g", s->ku[j]);
-	else
-	  fprintf(geo, ", %.16g", s->ku[j]);
-	if(j % 5 == 4 && j != s->Nu + s->OrderU)
-	  fprintf(geo, "\n  ");
-      }
-      fprintf(geo, "}\n  {");
-      for(int j = 0; j < s->Nv + s->OrderV + 1; j++) {
-	if(!j)
-	  fprintf(geo, "%.16g", s->kv[j]);
-	else
-	  fprintf(geo, ", %.16g", s->kv[j]);
-	if(j % 5 == 4 && j != s->Nv + s->OrderV)
-	  fprintf(geo, "\n  ");
-      }
-      fprintf(geo, "}\n  Order %d %d;\n", s->OrderU, s->OrderV);
       break;
     }
   }

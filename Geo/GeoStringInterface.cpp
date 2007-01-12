@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.3 2006-12-16 01:25:58 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.4 2007-01-12 08:10:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -359,11 +359,8 @@ void add_surf(List_T *list, char *fich, int support, int typ)
   if(typ == 1) {
     snprintf(text, BUFFSIZE, "Ruled Surface(%d) = {", NEWSURFACE());
   }
-  else if(typ == 2) {
-    snprintf(text, BUFFSIZE, "Plane Surface(%d) = {", NEWSURFACE());
-  }
   else {
-    snprintf(text, BUFFSIZE, "Trimmed Surface(%d) = %d {", NEWSURFACE(), support);
+    snprintf(text, BUFFSIZE, "Plane Surface(%d) = {", NEWSURFACE());
   }
   strncat_list(text, list);
   strncat(text, "};", BUFFSIZE-strlen(text));

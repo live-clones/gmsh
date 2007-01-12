@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.68 2006-12-24 13:37:20 remacle Exp $
+// $Id: Geo.cpp,v 1.69 2007-01-12 08:10:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -61,108 +61,76 @@ void Mesh::free_all()
 
 int compareVertex(const void *a, const void *b)
 {
-  int i, j;
-  Vertex **q, **w;
-
-  q = (Vertex **) a;
-  w = (Vertex **) b;
-  i = abs((*q)->Num);
-  j = abs((*w)->Num);
+  Vertex **q = (Vertex **) a;
+  Vertex **w = (Vertex **) b;
+  int i = abs((*q)->Num);
+  int j = abs((*w)->Num);
   return (i - j);
 }
 
 int comparePosition(const void *a, const void *b)
 {
-  int i, j;
-  Vertex **q, **w;
-  // TOLERANCE ! WARNING WARNING
+  // Warning: tolerance! (before 1.61, it was set to 1.e-10 * CTX.lc)
   double eps = 1.e-6 * CTX.lc; 
-  // the above tol was changed in 1.61 (before 1.61, it was set to
-  // double eps = 1.e-10 * CTX.lc;
 
-  q = (Vertex **) a;
-  w = (Vertex **) b;
-  i = ((*q)->Num);
-  j = ((*w)->Num);
+  Vertex **q = (Vertex **) a;
+  Vertex **w = (Vertex **) b;
 
   if((*q)->Pos.X - (*w)->Pos.X > eps)
-    return (1);
+    return 1;
   if((*q)->Pos.X - (*w)->Pos.X < -eps)
-    return (-1);
+    return -1;
   if((*q)->Pos.Y - (*w)->Pos.Y > eps)
-    return (1);
+    return 1;
   if((*q)->Pos.Y - (*w)->Pos.Y < -eps)
-    return (-1);
+    return -1;
   if((*q)->Pos.Z - (*w)->Pos.Z > eps)
-    return (1);
+    return 1;
   if((*q)->Pos.Z - (*w)->Pos.Z < -eps)
-    return (-1);
-
-  if(i != j) {
-    /*
-     *w = *q;
-     printf("Les points %d et %d sont a la meme position\n",i,j);
-     printf("%12.5E %12.5E %12.5E\n",(*w)->Pos.X,(*w)->Pos.Y,(*w)->Pos.Z);
-     printf("%12.5E %12.5E %12.5E\n",(*q)->Pos.X,(*q)->Pos.Y,(*q)->Pos.Z);
-     */
-  }
+    return -1;
   return 0;
-
 }
 
 int compareSurfaceLoop(const void *a, const void *b)
 {
-  SurfaceLoop **q, **w;
-
-  q = (SurfaceLoop **) a;
-  w = (SurfaceLoop **) b;
+  SurfaceLoop **q = (SurfaceLoop **) a;
+  SurfaceLoop **w = (SurfaceLoop **) b;
   return ((*q)->Num - (*w)->Num);
 }
 
 int compareEdgeLoop(const void *a, const void *b)
 {
-  EdgeLoop **q, **w;
-
-  q = (EdgeLoop **) a;
-  w = (EdgeLoop **) b;
+  EdgeLoop **q = (EdgeLoop **) a;
+  EdgeLoop **w = (EdgeLoop **) b;
   return ((*q)->Num - (*w)->Num);
 }
 
 int compareCurve(const void *a, const void *b)
 {
-  Curve **q, **w;
-
-  q = (Curve **) a;
-  w = (Curve **) b;
+  Curve **q = (Curve **) a;
+  Curve **w = (Curve **) b;
   return ((*q)->Num - (*w)->Num);
 }
 
 int compareSurface(const void *a, const void *b)
 {
-  Surface **q, **w;
-
-  q = (Surface **) a;
-  w = (Surface **) b;
+  Surface **q = (Surface **) a;
+  Surface **w = (Surface **) b;
   return ((*q)->Num - (*w)->Num);
 }
 
 int compareVolume(const void *a, const void *b)
 {
-  Volume **q, **w;
-
-  q = (Volume **) a;
-  w = (Volume **) b;
+  Volume **q = (Volume **) a;
+  Volume **w = (Volume **) b;
   return ((*q)->Num - (*w)->Num);
 }
 
 int comparePhysicalGroup(const void *a, const void *b)
 {
-  PhysicalGroup *q, *w;
-  int cmp;
-
-  q = *(PhysicalGroup **) a;
-  w = *(PhysicalGroup **) b;
-  cmp = q->Typ - w->Typ;
+  PhysicalGroup *q = *(PhysicalGroup **) a;
+  PhysicalGroup *w = *(PhysicalGroup **) b;
+  int cmp = q->Typ - w->Typ;
 
   if(cmp)
     return cmp;
@@ -175,9 +143,7 @@ int comparePhysicalGroup(const void *a, const void *b)
 Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc,
                       double u)
 {
-  Vertex *pV;
-
-  pV = new Vertex(X, Y, Z, lc);
+  Vertex *pV = new Vertex(X, Y, Z, lc);
   pV->w = 1.0;
   pV->Num = Num;
   THEM->MaxPointNum = IMAX(THEM->MaxPointNum, Num);
@@ -266,6 +232,13 @@ void Free_SurfaceLoop(void *a, void *b)
     Free(l);
     l = NULL;
   }
+}
+
+static void direction(Vertex * v1, Vertex * v2, double d[3])
+{
+  d[0] = v2->Pos.X - v1->Pos.X;
+  d[1] = v2->Pos.Y - v1->Pos.Y;
+  d[2] = v2->Pos.Z - v1->Pos.Z;
 }
 
 void End_Curve(Curve * c)
@@ -377,11 +350,15 @@ void End_Curve(Curve * c)
     R = sqrt(v0.Pos.X * v0.Pos.X + v0.Pos.Y * v0.Pos.Y);
     R2 = sqrt(v2.Pos.X * v2.Pos.X + v2.Pos.Y * v2.Pos.Y);
 
-    if(!R || !R2)       // check radius
+    if(!R || !R2){
+      // check radius
       Msg(GERROR, "Zero radius in Circle/Ellipse %d", c->Num);
-    else if(!v[3] && fabs((R - R2) / (R + R2)) > 0.1)   // check cocircular pts (allow 10% error)
+    }
+    else if(!v[3] && fabs((R - R2) / (R + R2)) > 0.1){
+      // check cocircular pts (allow 10% error)
       Msg(GERROR, "Control points of Circle %d are not cocircular %g %g",
           c->Num, R, R2);
+    }
 
     // A1 = angle first pt
     // A3 = angle last pt
@@ -434,9 +411,6 @@ void End_Curve(Curve * c)
     if(A1 >= A3)
       A3 += 2 * Pi;
 
-    //printf("f1=%g f2=%g a1=%g a3=%g a4=%g\n", 
-    //     f1, f2, A1*180./M_PI, A3*180./Pi, A4*180./Pi);
-
     Curve->Circle.t1 = A1;
     Curve->Circle.t2 = A3;
     Curve->Circle.incl = A4;
@@ -455,46 +429,13 @@ void End_Curve(Curve * c)
     }
 
   }
-
-  if(c->cp){
-    Free(c->cp);
-    c->cp = NULL;
-  }
-
-  if(List_Nbr(c->Control_Points)){
-    c->cp = (float *)Malloc(4 * List_Nbr(c->Control_Points) * sizeof(float));
-    for(i = 0; i < List_Nbr(c->Control_Points); i++) {
-      List_Read(c->Control_Points, i, &v[0]);
-      c->cp[4 * i] = v[0]->Pos.X;
-      c->cp[4 * i + 1] = v[0]->Pos.Y;
-      c->cp[4 * i + 2] = v[0]->Pos.Z;
-      c->cp[4 * i + 3] = v[0]->w;
-    }
-  }
 }
 
 void End_Surface(Surface * s, int reset_orientations)
 {
-  int i;
-  Vertex *v;
-  
   if(reset_orientations) 
     List_Reset(s->Orientations);
-
-  if(!s->Control_Points || !List_Nbr(s->Control_Points))
-    return;
-
-  s->cp = (float *)Malloc(4 * List_Nbr(s->Control_Points) * sizeof(float));
-  for(i = 0; i < List_Nbr(s->Control_Points); i++) {
-    List_Read(s->Control_Points, i, &v);
-    s->cp[4 * i] = v->Pos.X;
-    s->cp[4 * i + 1] = v->Pos.Y;
-    s->cp[4 * i + 2] = v->Pos.Z;
-    s->cp[4 * i + 3] = v->w;
-  }
-
 }
-
 
 Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
                     List_T * Knots, int p1, int p2, double u1, double u2)
@@ -515,7 +456,6 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
   Curve *pC = (Curve *) Malloc(sizeof(Curve));
   pC->Color.type = 0;
   pC->Visible = 1;
-  pC->cp = NULL;
   pC->Extrude = NULL;
   pC->Typ = Typ;
   pC->Num = Num;
@@ -618,7 +558,6 @@ void Free_Curve(void *a, void *b)
   if(pC) {
     Free(pC->k);
     List_Delete(pC->Control_Points);
-    Free(pC->cp);
     Free(pC);
     pC = NULL;
   }
@@ -641,220 +580,12 @@ Surface *Create_Surface(int Num, int Typ)
   pS->TrsfPoints = List_Create(4, 4, sizeof(Vertex *));
   pS->Contours = List_Create(1, 1, sizeof(List_T *));
   pS->Orientations = List_Create(20, 2, sizeof(Vertex));
-  pS->Support = pS;
   pS->Control_Points = List_Create(1, 10, sizeof(Vertex *));
   pS->Generatrices = NULL;
   pS->EmbeddedPoints = NULL;
   pS->EmbeddedCurves = NULL;
   pS->Extrude = NULL;
   return (pS);
-}
-
-void CreateNurbsSurfaceSupport(int Num, int Order1, int Order2,
-                               List_T * List, List_T * ku, List_T * kv)
-{
-  // This routine has been heavily modified to fit the new interfaces,
-  // but has not been tested since then. It's probably full of bugs
-  // now.
-  List_T *ListOfDouble_L;
-  List_T *ListCP = List_Create(2, 2, sizeof(int));
-
-  for(int j = 0; j < List_Nbr(List); j++) {
-    List_Read(List, j, &ListOfDouble_L);
-    for(int i = 0; i < List_Nbr(ListOfDouble_L); i++) {
-      double d;
-      List_Read(ListOfDouble_L, i, &d);
-      int N = (int)d;
-      List_Add(ListCP, &N);
-    }
-  }
-  List_Read(List, 0, &ListOfDouble_L);
-  int Nu = List_Nbr(List);
-  int Nv = List_Nbr(ListOfDouble_L);
-
-  Surface *s = Create_Surface(Num, MSH_SURF_NURBS);
-  s->Support = NULL;
-  s->Control_Points = List_Create(4, 1, sizeof(Vertex *));
-  s->OrderU = Order1;
-  s->OrderV = Order2;
-  s->Nu = Nu;
-  s->Nv = Nv;
-  for(int i = 0; i < List_Nbr(ListCP); i++) {
-    int j;
-    List_Read(ListCP, i, &j);
-    Vertex *v = FindPoint(j);
-    if(v){
-      List_Add(s->Control_Points, &v);
-    }
-    else{
-      Msg(GERROR, "Unknown control point %d in nurbs surface", j);
-    }
-  }
-
-  s->ku = (float *)malloc(List_Nbr(ku) * sizeof(float));
-  s->kv = (float *)malloc(List_Nbr(kv) * sizeof(float));
-
-  double kumin = 0., kumax = 1.;
-  double kvmin = 0., kvmax = 1.;
-
-  for(int i = 0; i < List_Nbr(ku); i++) {
-    double d;
-    List_Read(ku, i, &d);
-    float f = (float)((d - kumin) / (kumax - kumin));
-    s->ku[i] = f;
-  }
-  for(int i = 0; i < List_Nbr(kv); i++) {
-    double d;
-    List_Read(kv, i, &d);
-    float f = (float)((d - kvmin) / (kvmax - kvmin));
-    s->kv[i] = f;
-  }
-
-  List_Delete(ListCP);
-
-  End_Surface(s);
-  Tree_Add(THEM->Surfaces, &s);
-}
-
-void CreateNurbsSurface(int Num, int Order1, int Order2, List_T * List,
-                        List_T * ku, List_T * kv)
-{
-  // This routine has been heavily modified to fit the new interfaces,
-  // but has not been tested since then. It's probably full of bugs
-  // now.
-
-  List_T *ListOfDouble_L, *Listint, *ListCP;
-  int Loop[4];
-
-  ListCP = List_Create(2, 2, sizeof(int));
-
-  double kumin, kumax;
-  List_Read(ku, 0, &kumin);
-  List_Read(ku, List_Nbr(ku) - 1, &kumax);
-  double kvmin, kvmax;
-  List_Read(kv, 0, &kvmin);
-  List_Read(kv, List_Nbr(kv) - 1, &kvmax);
-  for(int j = 0; j < List_Nbr(List); j++) {
-    List_Read(List, j, &ListOfDouble_L);
-    for(int i = 0; i < List_Nbr(ListOfDouble_L); i++) {
-      double d;
-      List_Read(ListOfDouble_L, i, &d);
-      int N = (int)d;
-      List_Add(ListCP, &N);
-    }
-  }
-
-  // 1st and 3rd gen
-  List_Read(List, 0, &ListOfDouble_L);
-  Listint = ListOfDouble2ListOfInt(ListOfDouble_L);
-  if(recognize_seg(MSH_SEGM_NURBS, Listint, &Loop[0])) {
-  }
-  else {
-    Loop[0] = NEWREG();
-    Curve *c = Create_Curve(Loop[0], MSH_SEGM_NURBS, Order1, Listint, NULL, 
-			    -1, -1, kumin, kumax);
-    Tree_Add(THEM->Curves, &c);
-    CreateReversedCurve(c);
-    c->k = (float *)malloc(4 * List_Nbr(ku) * sizeof(float));
-    for(int i = 0; i < List_Nbr(ku); i++) {
-      double d;
-      List_Read(ku, i, &d);
-      c->k[i] = (float)d /*((d-kumin)/(kumax-kumin)) */ ;
-    }
-  }
-  List_Delete(Listint);
-
-  List_Read(List, List_Nbr(List) - 1, &ListOfDouble_L);
-  Listint = ListOfDouble2ListOfInt(ListOfDouble_L);
-  if(recognize_seg(MSH_SEGM_NURBS, Listint, &Loop[2])) {
-  }
-  else {
-    Loop[2] = NEWREG();
-    Curve *c = Create_Curve(Loop[2], MSH_SEGM_NURBS, Order1, Listint, NULL, 
-			    -1, -1, kumin, kumax);
-    Tree_Add(THEM->Curves, &c);
-    CreateReversedCurve(c);
-    c->k = (float *)malloc(4 * List_Nbr(ku) * sizeof(float));
-    for(int i = 0; i < List_Nbr(ku); i++) {
-      double d;
-      List_Read(ku, i, &d);
-      c->k[i] = (float)d /*((d-kumin)/(kumax-kumin)) */ ;
-    }
-  }
-  List_Delete(Listint);
-
-  // 2nd and 4th gen
-  List_T *List1 = List_Create(List_Nbr(List), 1, sizeof(double));
-  List_T *List2 = List_Create(List_Nbr(List), 1, sizeof(double));
-  for(int i = 0; i < List_Nbr(List); i++) {
-    List_Read(List, i, &ListOfDouble_L);
-    List_Add(List1, List_Pointer(ListOfDouble_L, 0));
-    List_Add(List2, List_Pointer(ListOfDouble_L, List_Nbr(ListOfDouble_L) - 1));
-  }
-
-  Listint = ListOfDouble2ListOfInt(List1);
-  if(recognize_seg(MSH_SEGM_NURBS, Listint, &Loop[1])) {
-  }
-  else {
-    Loop[1] = NEWREG();
-    Curve *c = Create_Curve(Loop[1], MSH_SEGM_NURBS, Order2, Listint, NULL, 
-			    -1, -1, kumin, kumax);
-    Tree_Add(THEM->Curves, &c);
-    CreateReversedCurve(c);
-    c->k = (float *)malloc(4 * List_Nbr(kv) * sizeof(float));
-    for(int i = 0; i < List_Nbr(kv); i++) {
-      double d;
-      List_Read(kv, i, &d);
-      c->k[i] = (float)d /*((d-kvmin)/(kvmax-kvmin)) */ ;
-    }
-  }
-  List_Delete(Listint);
-
-  Listint = ListOfDouble2ListOfInt(List2);
-  if(recognize_seg(MSH_SEGM_NURBS, Listint, &Loop[3])) {
-  }
-  else {
-    Loop[3] = NEWREG();
-    Curve *c = Create_Curve(Loop[3], MSH_SEGM_NURBS, Order2, Listint, NULL,
-			    -1, -1, kumin, kumax);
-    Tree_Add(THEM->Curves, &c);
-    CreateReversedCurve(c);
-    c->k = (float *)malloc(4 * List_Nbr(kv) * sizeof(float));
-    for(int i = 0; i < List_Nbr(kv); i++) {
-      double d;
-      List_Read(kv, i, &d);
-      c->k[i] = (float)d /*((d-kvmin)/(kvmax-kvmin)) */ ;
-    }
-  }
-  List_Delete(Listint);
-  List_Delete(List1);
-  List_Delete(List2);
-
-  Listint = List_Create(10, 10, sizeof(int));
-  int l0 = -Loop[0];
-  List_Add(Listint, &l0);
-  List_Add(Listint, &Loop[1]);
-  List_Add(Listint, &Loop[2]);
-  int l3 = -Loop[3];
-  List_Add(Listint, &l3);
-
-  int topnew = NEWREG();
-  CreateNurbsSurfaceSupport(topnew, Order1, Order2, List, ku, kv);
-
-  int il = NEWREG();
-  SurfaceLoop *l = Create_SurfaceLoop(il, Listint);
-  Tree_Add(THEM->SurfaceLoops, &l);
-  List_Reset(Listint);
-  List_Add(Listint, &il);
-
-  Surface *s = Create_Surface(NEWREG(), MSH_SURF_TRIMMED);
-  setSurfaceGeneratrices(s, Listint);
-  s->Support = s;
-  End_Surface(s);
-  Tree_Add(THEM->Surfaces, &s);
-
-  List_Delete(Listint);
-  List_Delete(ListCP);
 }
 
 void Free_Surface(void *a, void *b)
@@ -892,11 +623,6 @@ Volume *Create_Volume(int Num, int Typ)
 }
 
 void Free_Volume(void *a, void *b)
-{
-  Free_Volume_But_Not_Elements(a, b);
-}
-
-void Free_Volume_But_Not_Elements(void *a, void *b)
 {
   Volume *pV = *(Volume **) a;
   if(pV) {
@@ -971,9 +697,6 @@ int NEWREG(void)
                                    THEM->MaxPhysicalNum)))))
           + 1);
 }
-
-
-
 
 int compare2Lists(List_T * List1, List_T * List2,
                   int (*fcmp) (const void *a, const void *b))
@@ -1175,8 +898,6 @@ void CopySurface(Surface * s, Surface * ss)
   //ss->RecombineAngle = s->RecombineAngle;
   for(i = 0; i < 4; i++)
     ss->ipar[i] = s->ipar[i];
-  ss->Nu = s->Nu;
-  ss->Nv = s->Nv;
   ss->a = s->a;
   ss->b = s->b;
   ss->c = s->c;
@@ -1255,7 +976,6 @@ void CopyShape(int Type, int Num, int *New)
     newc = DuplicateCurve(c);
     *New = newc->Num;
     break;
-  case MSH_SURF_NURBS:
   case MSH_SURF_TRIC:
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
@@ -1371,7 +1091,6 @@ void DeleteShape(int Type, int Num)
     DeleteCurve(Num);
     DeleteCurve(-Num);
     break;
-  case MSH_SURF_NURBS:
   case MSH_SURF_TRIC:
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
@@ -1431,7 +1150,6 @@ void ColorShape(int Type, int Num, unsigned int Color)
   case MSH_SEGM_DISCRETE:
     ColorCurve(Num, Color);
     break;
-  case MSH_SURF_NURBS:
   case MSH_SURF_TRIC:
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
@@ -1477,7 +1195,6 @@ void VisibilityShape(int Type, int Num, int Mode)
     else
       Msg(WARNING, "Unknown line %d (use '*' to hide/show all lines)", Num);
     break;
-  case MSH_SURF_NURBS:
   case MSH_SURF_TRIC:
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
@@ -1547,13 +1264,12 @@ Curve *CreateReversedCurve(Curve * c)
   }
 
   if(c->Typ == MSH_SEGM_NURBS && c->k) {
-    newc->k =
-      (float *)malloc((c->degre + List_Nbr(c->Control_Points) + 1) *
-                      sizeof(float));
+    newc->k = (float *)malloc((c->degre + List_Nbr(c->Control_Points) + 1) *
+			      sizeof(float));
     for(i = 0; i < c->degre + List_Nbr(c->Control_Points) + 1; i++)
       newc->k[c->degre + List_Nbr(c->Control_Points) - i] = c->k[i];
   }
-
+  
   if(c->Typ == MSH_SEGM_CIRC)
     newc->Typ = MSH_SEGM_CIRC_INV;
   if(c->Typ == MSH_SEGM_CIRC_INV)
@@ -1563,7 +1279,6 @@ Curve *CreateReversedCurve(Curve * c)
   if(c->Typ == MSH_SEGM_ELLI_INV)
     newc->Typ = MSH_SEGM_ELLI;
 
-
   newc->beg = c->end;
   newc->end = c->beg;
   newc->Method = c->Method;
@@ -1572,9 +1287,7 @@ Curve *CreateReversedCurve(Curve * c)
   newc->uend = 1. - c->ubeg;
   End_Curve(newc);
 
-
   Curve **pc;
-
   if((pc = (Curve **) Tree_PQuery(THEM->Curves, &newc))) {
     Free_Curve(&newc, NULL);
     return *pc;
@@ -1913,7 +1626,7 @@ void ApplyTransformationToSurface(double matrix[4][4], Surface * s)
 
   for(i = 0; i < List_Nbr(s->Generatrices); i++) {
     List_Read(s->Generatrices, i, &c);
-    // FIXME: this fixes benchmarks/bug/transfo_neg_curves.geo, but is
+    // FIXME: this fixes benchmarks/2d/transfo_neg_curves.geo, but is
     // it the correct fix?
     //ApplyTransformationToCurve(matrix, c);
     Curve *cc = FindCurve(abs(c->Num));
@@ -1962,7 +1675,6 @@ void ApplicationOnShapes(double matrix[4][4], List_T * ListShapes)
       else
         Msg(GERROR, "Unknown curve %d", O.Num);
       break;
-    case MSH_SURF_NURBS:
     case MSH_SURF_REGL:
     case MSH_SURF_TRIC:
     case MSH_SURF_PLAN:
@@ -2648,7 +2360,6 @@ void ExtrudeShapes(int type, List_T *in,
 	List_Add(out, &TheShape);
       }
       break;
-    case MSH_SURF_NURBS:
     case MSH_SURF_REGL:
     case MSH_SURF_TRIC:
     case MSH_SURF_PLAN:
@@ -3003,7 +2714,7 @@ void ReplaceAllDuplicates()
 }
 
 
-// Projection of point on curve or surface
+// Projection of a point on a curve or a surface
 
 static Curve *CURVE;
 static Surface *SURFACE;
@@ -3037,43 +2748,14 @@ static void projectPS(int N, double x[], double res[])
 
 static double projectPC(double u)
 {
-  //x[1] = u x[2] = v
   if(u < CURVE->ubeg)
     u = CURVE->ubeg;
   if(u < CURVE->ubeg)
     u = CURVE->ubeg;
-  Vertex c;
-  c = InterpolateCurve(CURVE, u, 0);
+  Vertex c = InterpolateCurve(CURVE, u, 0);
   return sqrt(DSQR(c.Pos.X - VERTEX->Pos.X) +
-              DSQR(c.Pos.Y - VERTEX->Pos.Y) + DSQR(c.Pos.Z - VERTEX->Pos.Z));
-}
-
-static int UFIXED = 0;
-static double FIX;
-static double projectPCS(double u)
-{
-  //x[1] = u x[2] = v
-  double tmin, tmax;
-  if(UFIXED) {
-    tmin = SURFACE->kv[0];
-    tmax = SURFACE->kv[SURFACE->Nv + SURFACE->OrderV];
-  }
-  else {
-    tmin = SURFACE->ku[0];
-    tmax = SURFACE->ku[SURFACE->Nu + SURFACE->OrderU];
-  }
-
-  if(u < tmin)
-    u = tmin;
-  if(u > tmax)
-    u = tmax;
-  Vertex c;
-  if(UFIXED)
-    c = InterpolateSurface(SURFACE, FIX, u, 0, 0);
-  else
-    c = InterpolateSurface(SURFACE, u, FIX, 0, 0);
-  return sqrt(DSQR(c.Pos.X - VERTEX->Pos.X) +
-              DSQR(c.Pos.Y - VERTEX->Pos.Y) + DSQR(c.Pos.Z - VERTEX->Pos.Z));
+              DSQR(c.Pos.Y - VERTEX->Pos.Y) + 
+	      DSQR(c.Pos.Z - VERTEX->Pos.Z));
 }
 
 bool ProjectPointOnCurve(Curve * c, Vertex * v, Vertex * RES, Vertex * DER)
@@ -3095,81 +2777,6 @@ bool ProjectPointOnCurve(Curve * c, Vertex * v, Vertex * RES, Vertex * DER)
     *DER = InterpolateCurve(CURVE, c->ubeg, 1);
   }  
   return true;
-}
-
-bool search_in_boundary(Surface * s, Vertex * p, double t, int Fixu,
-                        double *uu, double *vv)
-{
-  double l, umin = 0., vmin = 0., lmin = 1.e200;
-  int i, N;
-  Vertex vr;
-  double tmin, tmax, u, v;
-
-  if(Fixu) {
-    tmin = s->kv[0];
-    tmax = s->kv[s->Nv + s->OrderV];
-    N = 3 * s->Nu;
-  }
-  else {
-    tmin = s->ku[0];
-    tmax = s->ku[s->Nu + s->OrderU];
-    N = 3 * s->Nv;
-  }
-  for(i = 0; i < N; i++) {
-    if(Fixu) {
-      u = t;
-      v = tmin + (tmax - tmin) * (double)(i) / (double)(N - 1);
-    }
-    else {
-      v = t;
-      u = tmin + (tmax - tmin) * (double)(i) / (double)(N - 1);
-    }
-    vr = InterpolateSurface(SURFACE, u, v, 0, 0);
-    l = sqrt(DSQR(vr.Pos.X - p->Pos.X) +
-             DSQR(vr.Pos.Y - p->Pos.Y) + DSQR(vr.Pos.Z - p->Pos.Z));
-    if(l < lmin) {
-      lmin = l;
-      umin = u;
-      vmin = v;
-    }
-  }
-
-  FIX = t;
-  UFIXED = Fixu;
-  double xm;
-  if(Fixu)
-    xm = vmin;
-  else
-    xm = umin;
-  if(lmin > 1.e-3)
-    min1d(projectPCS, &xm);
-  if(Fixu) {
-    *uu = t;
-    *vv = xm;
-  }
-  else {
-    *vv = t;
-    *uu = xm;
-  }
-  vr = InterpolateSurface(SURFACE, *uu, *vv, 0, 0);
-  l = sqrt(DSQR(vr.Pos.X - p->Pos.X) +
-           DSQR(vr.Pos.Y - p->Pos.Y) + DSQR(vr.Pos.Z - p->Pos.Z));
-  if(l < 1.e-3)
-    return true;
-  return false;
-}
-
-bool try_a_value(Surface * s, Vertex * p, double u, double v, double *uu,
-                 double *vv)
-{
-  Vertex vr = InterpolateSurface(s, u, v, 0, 0);
-  double l = sqrt(DSQR(vr.Pos.X - p->Pos.X) +
-                  DSQR(vr.Pos.Y - p->Pos.Y) + DSQR(vr.Pos.Z - p->Pos.Z));
-  *uu = u;
-  *vv = v;
-  if(l < 1.e-3)
-    return true;
-  return false;
 }
 
 bool ProjectPointOnSurface(Surface * s, Vertex & p)
@@ -3202,96 +2809,6 @@ bool ProjectPointOnSurface(Surface * s, Vertex & p)
   return true;
 }
 
-bool ProjectPointOnSurface(Surface * s, Vertex * p, double *u, double *v)
-{
-  static double x[3];
-  int check;
-  static int deb = 1;
-  double VMIN, VMAX, UMIN, UMAX, l, lmin;
-  Vertex vv;
-
-  SURFACE = s;
-  VERTEX = p;
-  lmin = 1.e24;
-  UMAX = s->ku[s->Nu + s->OrderU];
-  UMIN = s->ku[0];
-  VMAX = s->kv[s->Nv + s->OrderV];
-  VMIN = s->kv[0];
-  if(deb) {
-    x[1] = UMIN + (UMAX - UMIN) * ((rand() % 10000) / 10000.);
-    x[2] = VMIN + (VMAX - VMIN) * ((rand() % 10000) / 10000.);
-    deb = 0;
-  }
-
-  if(try_a_value(SURFACE, VERTEX, SURFACE->ku[0] + VERTEX->u,
-                 SURFACE->kv[0], u, v))
-    return true;
-  if(try_a_value(SURFACE, VERTEX, SURFACE->ku[0] + VERTEX->u,
-                 SURFACE->kv[SURFACE->Nv + SURFACE->OrderV], u, v))
-    return true;
-  if(try_a_value
-     (SURFACE, VERTEX, SURFACE->ku[SURFACE->Nu + SURFACE->OrderU] - VERTEX->u,
-      SURFACE->kv[0], u, v))
-    return true;
-  if(try_a_value
-     (SURFACE, VERTEX, SURFACE->ku[SURFACE->Nu + SURFACE->OrderU] - VERTEX->u,
-      SURFACE->kv[SURFACE->Nv + SURFACE->OrderV], u, v))
-    return true;
-  if(try_a_value
-     (SURFACE, VERTEX, SURFACE->ku[0], SURFACE->kv[0] + VERTEX->u, u, v))
-    return true;
-  if(try_a_value(SURFACE, VERTEX, SURFACE->ku[0],
-                 SURFACE->kv[SURFACE->Nv + SURFACE->OrderV] - VERTEX->u, u,
-                 v))
-    return true;
-  if(try_a_value(SURFACE, VERTEX, SURFACE->ku[SURFACE->Nu + SURFACE->OrderU],
-                 SURFACE->kv[0] + VERTEX->u, u, v))
-    return true;
-  if(try_a_value(SURFACE, VERTEX, SURFACE->ku[SURFACE->Nu + SURFACE->OrderU],
-                 SURFACE->kv[SURFACE->Nv + SURFACE->OrderV] - VERTEX->u, u,
-                 v))
-    return true;
-
-
-  if(search_in_boundary(SURFACE, VERTEX, SURFACE->kv[0], 0, u, v))
-    return true;
-  if(search_in_boundary
-     (SURFACE, VERTEX, SURFACE->kv[SURFACE->Nv + SURFACE->OrderV], 0, u, v))
-    return true;
-  if(search_in_boundary(SURFACE, VERTEX, SURFACE->ku[0], 1, u, v))
-    return true;
-  if(search_in_boundary
-     (SURFACE, VERTEX, SURFACE->ku[SURFACE->Nu + SURFACE->OrderU], 1, u, v))
-    return true;
-
-  while(1) {
-    newt(x, 2, &check, projectPS);
-    vv = InterpolateSurface(s, x[1], x[2], 0, 0);
-    l = sqrt(DSQR(vv.Pos.X - p->Pos.X) +
-             DSQR(vv.Pos.Y - p->Pos.Y) + DSQR(vv.Pos.Z - p->Pos.Z));
-    if(l < 1.e-1)
-      break;
-    else {
-      x[1] = UMIN + (UMAX - UMIN) * ((rand() % 10000) / 10000.);
-      x[2] = VMIN + (VMAX - VMIN) * ((rand() % 10000) / 10000.);
-    }
-  }
-  *u = x[1];
-  *v = x[2];
-
-  if(!check) {
-    return false;
-  }
-  return true;
-}
-
-void direction(Vertex * v1, Vertex * v2, double d[3])
-{
-  d[0] = v2->Pos.X - v1->Pos.X;
-  d[1] = v2->Pos.Y - v1->Pos.Y;
-  d[2] = v2->Pos.Z - v1->Pos.Z;
-}
-
 void Projette(Vertex * v, double mat[3][3])
 {
   double X, Y, Z;
@@ -3302,19 +2819,4 @@ void Projette(Vertex * v, double mat[3][3])
   v->Pos.X = X;
   v->Pos.Y = Y;
   v->Pos.Z = Z;
-}
-
-
-void Surface::print_info ()
-{
-  Msg(INFO,"Surface %d of type %d",Num,Typ);
-  Msg(INFO,"Generatrices : ");
-  Curve *C;
-  for(int i = 0; i < List_Nbr(Generatrices); i++) {
-    List_Read(Generatrices, i, &C);
-    Msg(INFO,"%d of type %d begin %d end %d ",C->Num,C->Typ,C->beg->Num,C->end->Num);  
-    Msg(INFO,"CircleParams : %g %g %g %g %g %g %g %g",
-	C->Circle.t1,C->Circle.t2,C->Circle.f1,C->Circle.f2,C->Circle.incl,C->Circle.n[0],C->Circle.n[1],C->Circle.n[2]);
-  }
-  
 }

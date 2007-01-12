@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.224 2006-12-21 17:10:15 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.225 2007-01-12 08:10:32 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 @c
@@ -1573,12 +1573,6 @@ elementary lines in the saved mesh.
 @cindex Surfaces, physical
 
 @ftable @code
-@c todo:
-@c @item Nurbs Surface ( @var{expression} ) = @{ @var{expression-list-list} @} Knots @{ @{ @var{expression-list} @}, @{ @var{expression-list} @} @} Order @{ @var{expression}, @var{expression} @};
-
-@c todo:
-@c @item Nurbs Surface With Bounds ( @var{expression} ) = @{ @var{expression-list-list} @} Knots @{ @{ @var{expression-list} @}, @{ @var{expression-list} @} @} Order @{ @var{expression}, @var{expression} @};
-
 @item Plane Surface ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a plane surface. The @var{expression} inside the parentheses is the
 plane surface's identification number; the @var{expression-list} on the
@@ -1597,9 +1591,6 @@ transfinite interpolation. The @var{expression} inside the parentheses is
 the ruled surface's identification number; the @var{expression-list} on the
 right hand side should the identification number of a single line loop,
 composed of either three or four elementary lines.
-
-@c todo:
-@c @item Trimmed Surface ( @var{expression} ) = @{ @var{expression}, @{ @var{expression-list} @} @};
 
 @item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a surface loop (a shell). The @var{expression} inside the
@@ -1805,10 +1796,6 @@ Show the entities listed in @var{expression-list}, if
 Show the entity @var{char-expression}, if @code{General.VisibilityMode} is
 set to @code{0} or @code{1} (@var{char-expression} can for example be
 @code{"*"}).
-
-@c todo:
-@c @item Intersect;
-@c Intersects all lines.
 @end ftable
 
 @c -------------------------------------------------------------------------

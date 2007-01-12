@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.32 2006-12-24 13:37:20 remacle Exp $
+// $Id: gmshFace.cpp,v 1.33 2007-01-12 08:10:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -217,7 +217,6 @@ SPoint2 gmshFace::parFromPoint(const SPoint3 &qp) const
 GEntity::GeomType gmshFace::geomType() const
 {
   switch(s->Typ){
-  case MSH_SURF_NURBS: return Nurb;
   case MSH_SURF_PLAN: return Plane;
   case MSH_SURF_REGL:
   case MSH_SURF_TRIC: return RuledSurface;

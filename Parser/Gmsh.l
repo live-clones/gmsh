@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.81 2006-11-27 22:22:17 geuzaine Exp $
+// $Id: Gmsh.l,v 1.82 2007-01-12 08:10:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -171,7 +171,6 @@ Hypot                   return tHypot;
 
 In                      return tIn;
 If                      return tIf;
-Intersect               return tIntersect;
 
 Knots			return tKnots;
 
@@ -222,7 +221,6 @@ Transfinite             return tTransfinite;
 Translate               return tTranslate;
 Tanh                    return tTanh;
 Tan                     return tTan;
-Trimmed			return tTrimmed;
 Today                   return tToday;
 
 Using                   return tUsing;

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.253 2007-01-10 13:48:49 geuzaine Exp $
+// $Id: Gmsh.y,v 1.254 2007-01-12 08:10:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -97,12 +97,12 @@ int CheckViewErrorFlags(Post_View *v);
 %token tPlane tRuled tTransfinite tComplex tPhysical
 %token tUsing tBump tProgression tPlugin 
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
-%token tLoop tRecombine tDelete tCoherence tIntersect
+%token tLoop tRecombine tDelete tCoherence
 %token tAttractor tLayers tAlias tAliasWithOptions
 %token tText2D tText3D tInterpolationScheme tTime tGrain tCombine
 %token tBSpline tBezier tNurbs tOrder tWith tBounds tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
-%token tReturn tCall tFunction tTrimmed tShow tHide tGetValue
+%token tReturn tCall tFunction tShow tHide tGetValue
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 
 %type <d> FExpr FExpr_Single 
@@ -1357,7 +1357,6 @@ Shape :
 	List_T *temp = ListOfDouble2ListOfInt($7);
 	setSurfaceGeneratrices(s, temp);
 	List_Delete(temp);
-	s->Support = s;
 	End_Surface(s);
 	Tree_Add(THEM->Surfaces, &s);
       }
@@ -1395,76 +1394,12 @@ Shape :
 	  List_T *temp = ListOfDouble2ListOfInt($7);
 	  setSurfaceGeneratrices(s, temp);
 	  List_Delete(temp);
-	  s->Support = s;
 	  End_Surface(s);
 	  Tree_Add(THEM->Surfaces, &s);
 	}
       }
       List_Delete($7);
       $$.Type = type;
-      $$.Num = num;
-    }
-  | tTrimmed tSurface '(' FExpr ')' tAFFECT '{' FExpr ',' ListOfDouble '}' tEND
-    {
-      int num = (int)$4;
-      Surface *support = FindSurface((int)$8);
-      if(!support){
-	yymsg(GERROR, "Unknown support surface %d", (int)$8);
-      }
-      else{
-	if(FindSurface(num)){
-	  yymsg(GERROR, "Surface %d already exists", num);
-	}
-	else{
-	  Surface *s = Create_Surface(num, MSH_SURF_TRIMMED);
-	  List_T *temp = ListOfDouble2ListOfInt($10);
-	  setSurfaceGeneratrices(s, temp);
-	  List_Delete(temp);
-	  s->Support = support;
-	  End_Surface(s);
-	  Tree_Add(THEM->Surfaces, &s);
-	}
-      }
-      List_Delete($10);
-      $$.Type = MSH_SURF_TRIMMED;
-      $$.Num = num;
-    }
-  | tNurbs tSurface tWith tBounds '(' FExpr ')' tAFFECT 
-       ListOfListOfDouble tKnots  '{' ListOfDouble ',' ListOfDouble '}'
-       tOrder '{' FExpr ',' FExpr '}' tEND
-    {
-      int num = (int)$6;
-      if(FindSurface(num)){
-	yymsg(GERROR, "Surface %d already exists", num);
-      }
-      else{
-	CreateNurbsSurface(num, (int)$18, (int)$20, $9, $12, $14);
-      }
-      for(int i = 0; i < List_Nbr($9); i++)
-	List_Delete((List_T*)List_Pointer($9, i));
-      List_Delete($9);
-      List_Delete($12);
-      List_Delete($14);
-      $$.Type = MSH_SURF_NURBS;
-      $$.Num = num;
-    }
-  | tNurbs  tSurface '(' FExpr ')' tAFFECT 
-       ListOfListOfDouble tKnots  '{' ListOfDouble ',' ListOfDouble '}'
-       tOrder '{' FExpr ',' FExpr '}' tEND
-    {
-      int num = (int)$4;
-      if(FindSurface(num)){
-	yymsg(GERROR, "Surface %d already exists", num);
-      }
-      else{
-	CreateNurbsSurfaceSupport(num, (int)$16, (int)$18, $7, $10, $12);
-      }
-      for(int i = 0; i < List_Nbr($7); i++)
-	List_Delete((List_T*)List_Pointer($7, i));
-      List_Delete($7);
-      List_Delete($10);
-      List_Delete($12);
-      $$.Type = MSH_SURF_NURBS;
       $$.Num = num;
     }
   | tSurface tLoop '(' FExpr ')' tAFFECT ListOfDouble tEND
@@ -2615,16 +2550,14 @@ Embedding :
     {
     }
 ;
+
+
 //  C O H E R E N C E
 
 Coherence : 
     tCoherence tEND
     { 
       ReplaceAllDuplicates();
-    }
-  | tIntersect tEND
-    { 
-      yymsg(GERROR, "Intersect is deprecated");
     }
 ;
 

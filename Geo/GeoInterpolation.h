@@ -27,20 +27,4 @@ Vertex InterpolateCurve (Curve * Curve, double u, int derivee);
 Vertex InterpolateSurface (Surface * s, double u, double v, 
                            int derivee, int u_v);
 
-Vertex TransfiniteQua (Vertex c1, Vertex c2, Vertex c3, Vertex c4,
-                       Vertex s1, Vertex s2, Vertex s3, Vertex s4,
-                       double u, double v);
-
-Vertex TransfiniteTri (Vertex c1, Vertex c2, Vertex c3,
-                       Vertex s1, Vertex s2, Vertex s3,
-                       double u, double v);
-
-void TransfiniteSph (Vertex S, Vertex center, Vertex * T);
-
-Vertex InterpolateCubicSpline (Vertex * v[4], double t, double mat[4][4],
-                               int derivee, double t1, double t2);
-Vertex InterpolateUBS (Curve * Curve, double u, int derivee);
-Vertex InterpolateNurbs (Curve * Curve, double u, int derivee);
-Vertex InterpolateNurbsSurface (Surface * s, double u, double v);
-
 #endif

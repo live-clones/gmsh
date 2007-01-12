@@ -37,7 +37,6 @@
 #define MSH_SEGM_ELLI_INV    7
 #define MSH_SEGM_LOOP        8
 #define MSH_SEGM_BSPLN       15
-#define MSH_SEGM_URBS        16
 #define MSH_SEGM_NURBS       17
 #define MSH_SEGM_BEZIER      18
 #define MSH_SEGM_PARAMETRIC  19
@@ -46,9 +45,7 @@
 #define MSH_SURF_PLAN        9
 #define MSH_SURF_REGL        10
 #define MSH_SURF_TRIC        11
-#define MSH_SURF_NURBS       12
 #define MSH_SURF_LOOP        13
-#define MSH_SURF_TRIMMED     21
 #define MSH_SURF_DISCRETE    102
 
 #define MSH_VOLUME           14
@@ -59,78 +56,12 @@
 #define MSH_PHYSICAL_SURFACE 320
 #define MSH_PHYSICAL_VOLUME  330
 
-class DrawingColor{
- public:
-  int type;
-  unsigned int geom, mesh;
-};
-
-struct _Surf{
-  int Num;
-  int Typ;
-  char Visible;
-  int Method;
-  int Recombine;
-  int Recombine_Dir; // -1 is left, +1 is right, 0 is alternated
-  double RecombineAngle;
-  int ipar[5];
-  int Nu, Nv;
-  List_T *Generatrices;
-  List_T *EmbeddedCurves;
-  List_T *EmbeddedPoints;
-  List_T *Control_Points;
-  List_T *TrsfPoints;
-  double plan[3][3];
-  double invplan[3][3];
-  double a, b, c, d;
-  List_T *Orientations;
-  List_T *Contours;
-  int OrderU, OrderV;
-  float *ku, *kv, *cp;
-  struct _Surf *Support;
-  ExtrudeParams *Extrude;
-  DrawingColor Color;
-  void print_info ();
-};
-
-typedef struct _Surf Surface;
-
-typedef struct{
-  int Num;
-  List_T *Curves;
-}EdgeLoop;
-
-typedef struct{
-  int Num;
-  List_T *Surfaces;
-}SurfaceLoop;
-
-typedef struct{
-  int Num;
-  int Typ;
-  char Visible;
-  List_T *Entities;
-}PhysicalGroup;
-
-typedef struct {
-  int Num;
-  int Typ;
-  char Visible;
-  int Method;
-  int ipar[8];
-  ExtrudeParams *Extrude;
-  List_T *TrsfPoints;
-  List_T *Surfaces;
-  List_T *SurfacesOrientations;
-  DrawingColor Color;
-}Volume;
-
 struct Coord{
   double X,Y,Z;
 };
 
 class Vertex {
-  public :
+ public :
   int Num;
   char Visible;
   double lc, u, us[3], w;
@@ -170,6 +101,12 @@ class Vertex {
   }
 };
 
+class DrawingColor{
+ public:
+  int type;
+  unsigned int geom, mesh;
+};
+
 typedef struct{
   double t1, t2, f1, f2, incl;
   Vertex *v[4];
@@ -190,18 +127,71 @@ typedef struct{
   double ubeg, uend;
   List_T *Control_Points;
   ExtrudeParams *Extrude;
-  float *k, *cp;
+  float *k;
   int degre;
   CircParam Circle;
   char functu[256], functv[256], functw[256];
   DrawingColor Color;
 }Curve;
 
+typedef struct{
+  int Num;
+  List_T *Curves;
+}EdgeLoop;
+
+typedef struct{
+  int Num;
+  int Typ;
+  char Visible;
+  int Method;
+  int Recombine;
+  int Recombine_Dir; // -1 is left, +1 is right, 0 is alternated
+  double RecombineAngle;
+  int ipar[5];
+  List_T *Generatrices;
+  List_T *EmbeddedCurves;
+  List_T *EmbeddedPoints;
+  List_T *Control_Points;
+  List_T *TrsfPoints;
+  double plan[3][3];
+  double invplan[3][3];
+  double a, b, c, d;
+  List_T *Orientations;
+  List_T *Contours;
+  ExtrudeParams *Extrude;
+  DrawingColor Color;
+}Surface;
+
+typedef struct{
+  int Num;
+  List_T *Surfaces;
+}SurfaceLoop;
+
+typedef struct {
+  int Num;
+  int Typ;
+  char Visible;
+  int Method;
+  int ipar[8];
+  ExtrudeParams *Extrude;
+  List_T *TrsfPoints;
+  List_T *Surfaces;
+  List_T *SurfacesOrientations;
+  DrawingColor Color;
+}Volume;
+
+typedef struct{
+  int Num;
+  int Typ;
+  char Visible;
+  List_T *Entities;
+}PhysicalGroup;
+
 class Mesh{
-private:
+ private:
   void alloc_all();
   void free_all();
-public:
+ public:
   Tree_T *Points;
   Tree_T *Curves;
   Tree_T *Surfaces;
@@ -219,49 +209,38 @@ public:
 typedef struct {
   int Type;
   int Num;
-  union {
-    int I;
-    double F;
-    double V[4];
-    List_T *ListDouble;
-  } obj;
 } Shape;
 
-int compareVertex (const void *a, const void *b);
-int comparePosition (const void *a, const void *b);
-int compareSurfaceLoop(const void *a, const void *b);
-int compareEdgeLoop(const void *a, const void *b);
-int compareQuality(const void *a, const void *b);
+int comparePosition(const void *a, const void *b);
+int compareVertex(const void *a, const void *b);
 int compareCurve(const void *a, const void *b);
+int compareEdgeLoop(const void *a, const void *b);
 int compareSurface(const void *a, const void *b);
+int compareSurfaceLoop(const void *a, const void *b);
 int compareVolume(const void *a, const void *b);
-int compareSxF(const void *a, const void *b);
 int comparePhysicalGroup(const void *a, const void *b);
 
-Vertex        *Create_Vertex (int Num, double X, double Y, double Z, double lc, double u);
+Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc, double u);
+Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
+		    List_T * Knots, int p1, int p2, double u1, double u2);
+Surface *Create_Surface(int Num, int Typ);
+Volume *Create_Volume(int Num, int Typ);
+EdgeLoop *Create_EdgeLoop(int Num, List_T * intlist);
+SurfaceLoop *Create_SurfaceLoop(int Num, List_T * intlist);
 PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T * intlist);
-Curve         *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
-			    List_T * Knots, int p1, int p2, double u1, double u2);
-Surface       *Create_Surface(int Num, int Typ);
-Volume        *Create_Volume(int Num, int Typ);
-EdgeLoop      *Create_EdgeLoop(int Num, List_T * intlist);
-SurfaceLoop   *Create_SurfaceLoop(int Num, List_T * intlist);
 
-void CreateNurbsSurface (int Num, int Order1, int Order2, List_T *, List_T *, List_T *);
-void CreateNurbsSurfaceSupport (int Num, int Order2, int Order1, 
-                                List_T * List, List_T *, List_T *);
-
-void Free_Vertex (void *a, void *b);
-void Free_PhysicalGroup(void *a, void *b);
-void Free_Surface(void *a, void *b);
-void Free_Volume(void *a, void *b);
-void Free_Volume_But_Not_Elements(void *a, void *b);
-void Free_Curve(void *a, void *b);
-void Free_EdgeLoop(void *a, void *b);
-void Free_SurfaceLoop(void *a, void *b);
+Curve *CreateReversedCurve(Curve *c);
 
 void End_Curve(Curve * c);
 void End_Surface(Surface * s, int reset_orientations=1);
+
+void Free_Vertex (void *a, void *b);
+void Free_Curve(void *a, void *b);
+void Free_EdgeLoop(void *a, void *b);
+void Free_Surface(void *a, void *b);
+void Free_SurfaceLoop(void *a, void *b);
+void Free_Volume(void *a, void *b);
+void Free_PhysicalGroup(void *a, void *b);
 
 int NEWPOINT(void);
 int NEWLINE(void);
@@ -274,13 +253,12 @@ int NEWREG(void);
 
 Vertex *FindPoint(int inum);
 Curve *FindCurve(int inum);
-Surface *FindSurface(int inum);
-Volume *FindVolume(int inum);
 EdgeLoop *FindEdgeLoop(int inum);
+Surface *FindSurface(int inum);
 SurfaceLoop *FindSurfaceLoop(int inum);
+Volume *FindVolume(int inum);
 PhysicalGroup *FindPhysicalGroup(int inum, int type);
 
-Curve *CreateReversedCurve(Curve *c);
 void ModifyLcPoint(int ip, double lc);
 
 void TranslateShapes(double X,double Y,double Z,
@@ -316,13 +294,11 @@ void ReplaceAllDuplicates();
 
 bool ProjectPointOnCurve(Curve *c, Vertex *v, Vertex *RES, Vertex *DER);
 bool ProjectPointOnSurface(Surface *s, Vertex &p);
-bool ProjectPointOnSurface(Surface *s, Vertex *p,double *u, double *v);
 
 int recognize_seg(int typ, List_T *liste, int *seg);
 int recognize_loop(List_T *liste, int *loop);
 int recognize_surfloop(List_T *liste, int *loop);
 
-void direction(Vertex * v1, Vertex * v2, double d[3]);
 void Projette(Vertex * v, double mat[3][3]);
 
 #endif
