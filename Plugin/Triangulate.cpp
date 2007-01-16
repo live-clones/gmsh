@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.33 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.34 2007-01-16 11:31:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -151,13 +151,13 @@ static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
   in.holelist = NULL;
 
   j = 0;
-  for(int i = 0; i < points.size(); i++) {
+  for(unsigned int i = 0; i < points.size(); i++) {
     in.pointlist[j] = points[i]->x();
     in.pointlist[j + 1] = points[i]->y();
     j += 2;
   }
 
-  for(int i = 0; i < points.size(); i++) 
+  for(unsigned int i = 0; i < points.size(); i++) 
     delete points[i];
 
   struct triangulateio out;

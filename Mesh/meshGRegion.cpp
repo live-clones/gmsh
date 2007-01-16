@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.22 2007-01-12 19:47:52 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.23 2007-01-16 11:31:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -431,6 +431,10 @@ void meshGRegion::operator() (GRegion *gr)
 {  
   if(gr->geomType() == GEntity::DiscreteVolume) return;
 
+  ExtrudeParams *ep = gr->meshAttributes.extrude;
+
+  if(ep && ep->mesh.ExtrudeMesh) return;
+
   // Send a messsage to the GMSH environment
   Msg(STATUS2, "Meshing volume %d", gr->tag());
 
@@ -439,7 +443,6 @@ void meshGRegion::operator() (GRegion *gr)
   dem(gr);
 
   if(MeshTransfiniteVolume(gr)) return;
-  if(MeshExtrudedVolume(gr)) return;
 
   std::list<GFace*> faces = gr->faces();
 

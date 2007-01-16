@@ -51,8 +51,8 @@ class GModel
   std::map<int, std::string> physicalNames;
 
  public:
-  GModel() : modelName("Untitled"), normals(0), meshSize(-1.) {}
-  GModel(const std::string &name) : modelName(name), normals(0), meshSize(-1.) {}
+  GModel() : meshSize(-1.), modelName("Untitled"), normals(0) {}
+  GModel(const std::string &name) : meshSize(-1.), modelName(name), normals(0) {}
   virtual ~GModel(){ deleteOCCInternals(); destroy(); }
   
   typedef std::set<GRegion*, GEntityLessThan>::iterator riter;
@@ -149,7 +149,7 @@ class GModel
   // Get or set the global mesh size for the model (default value is a
   // tenth of the size of the domain)
   double getMeshSize();
-  void setMeshSize(const double s) {meshSize = s;}
+  void setMeshSize(const double s) { meshSize = s; }
 
   // A container for smooth normals
   smooth_normals *normals;

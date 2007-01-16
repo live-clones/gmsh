@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.26 2007-01-12 13:16:59 remacle Exp $
+// $Id: MElement.cpp,v 1.27 2007-01-16 11:31:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -407,7 +407,7 @@ void MElement::writeBDF(FILE *fp, int format, int elementary)
 bool MTriangle::invertmappingXY(double *p, double *uv, double tol)
 {
   double mat[2][2];
-  double b[2], dum;
+  double b[2];
   getMat(mat);
   b[0] = p[0] - getVertex(0)->x();
   b[1] = p[1] - getVertex(0)->y();

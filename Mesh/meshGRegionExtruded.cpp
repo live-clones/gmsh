@@ -1,4 +1,4 @@
-// $Id: meshGRegionExtruded.cpp,v 1.7 2006-12-03 02:05:47 geuzaine Exp $
+// $Id: meshGRegionExtruded.cpp,v 1.8 2007-01-16 11:31:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,8 @@
 #include <set>
 #include "ExtrudeParams.h"
 #include "GModel.h"
+#include "meshGFace.h"
+#include "meshGRegion.h"
 #include "Context.h"
 #include "Message.h"
 
@@ -83,6 +85,40 @@ void createHexPri(std::vector<MVertex*> &v, GRegion *to)
   }
 }
 
+void createTet(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, GRegion *to)
+{
+  if(v1 != v2 && v1 != v3 && v1 != v4 && v2 != v3 && v2 != v4 && v3 != v4)
+    to->tetrahedra.push_back(new MTetrahedron(v1, v2, v3, v4));
+}
+
+int getExtrudedVertices(MElement *ele, ExtrudeParams *ep, int j, int k, 
+			std::set<MVertex*, MVertexLessThanLexicographic> &pos,
+			std::vector<MVertex*> &verts)
+{
+  std::set<MVertex*, MVertexLessThanLexicographic>::iterator itp;
+  double x[8], y[8], z[8];
+  int n = ele->getNumVertices();
+  for(int p = 0; p < n; p++){
+    MVertex *v = ele->getVertex(p);
+    x[p] = x[p + n] = v->x();
+    y[p] = y[p + n] = v->y();
+    z[p] = z[p + n] = v->z();
+  }
+  for(int p = 0; p < n; p++){
+    ep->Extrude(j, k, x[p], y[p], z[p]);
+    ep->Extrude(j, k + 1, x[p + n], y[p + n], z[p + n]);
+  }
+  for(int p = 0; p < 2 * n; p++){
+    MVertex tmp(x[p], y[p], z[p], 0, -1);
+    itp = pos.find(&tmp);
+    if(itp == pos.end())
+      Msg(GERROR, "Could not find extruded vertex");
+    else
+      verts.push_back(*itp);
+  }
+  return verts.size();
+}
+
 void extrudeMesh(GFace *from, GRegion *to,
 		 std::set<MVertex*, MVertexLessThanLexicographic> &pos)
 {
@@ -107,91 +143,35 @@ void extrudeMesh(GFace *from, GRegion *to,
   // create elements (note that it would be faster to access the
   // *interior* nodes by direct indexing, but it's just simpler to
   // query everything by position)
-  std::set<MVertex*, MVertexLessThanLexicographic>::iterator itp;
   for(unsigned int i = 0; i < from->triangles.size(); i++){
-    MVertex *v0 = from->triangles[i]->getVertex(0);
-    MVertex *v1 = from->triangles[i]->getVertex(1);
-    MVertex *v2 = from->triangles[i]->getVertex(2);
     for(int j = 0; j < ep->mesh.NbLayer; j++) {
       for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
 	std::vector<MVertex*> verts;
-	double x[6] = {v0->x(), v1->x(), v2->x(), v0->x(), v1->x(), v2->x()};
-	double y[6] = {v0->y(), v1->y(), v2->y(), v0->y(), v1->y(), v2->y()};
-	double z[6] = {v0->z(), v1->z(), v2->z(), v0->z(), v1->z(), v2->z()};
-	for(int p = 0; p < 3; p++){
-	  ep->Extrude(j, k, x[p], y[p], z[p]);
-	  ep->Extrude(j, k + 1, x[p + 3], y[p + 3], z[p + 3]);
-	}
-	for(int p = 0; p < 6; p++){
-	  MVertex tmp(x[p], y[p], z[p], 0, -1);
-	  itp = pos.find(&tmp);
-	  if(itp == pos.end()) {
-	    Msg(GERROR, "Could not find extruded vertex in volume %d", to->tag());
-	    return;
-	  }
-	  verts.push_back(*itp);
-	}
-	createPriPyrTet(verts, to);
+	if(getExtrudedVertices(from->triangles[i], ep, j, k, pos, verts) == 6)
+	  createPriPyrTet(verts, to);
       }
     }
   }
   for(unsigned int i = 0; i < from->quadrangles.size(); i++){
-    MVertex *v0 = from->quadrangles[i]->getVertex(0);
-    MVertex *v1 = from->quadrangles[i]->getVertex(1);
-    MVertex *v2 = from->quadrangles[i]->getVertex(2);
-    MVertex *v3 = from->quadrangles[i]->getVertex(3);
     for(int j = 0; j < ep->mesh.NbLayer; j++) {
       for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
 	std::vector<MVertex*> verts;
-	double x[8] = {v0->x(), v1->x(), v2->x(), v3->x(), 
-		       v0->x(), v1->x(), v2->x(), v3->x()};
-	double y[8] = {v0->y(), v1->y(), v2->y(), v3->y(), 
-		       v0->y(), v1->y(), v2->y(), v3->y()};
-	double z[8] = {v0->z(), v1->z(), v2->z(), v3->z(), 
-		       v0->z(), v1->z(), v2->z(), v3->z()};
-	for(int p = 0; p < 4; p++){
-	  ep->Extrude(j, k, x[p], y[p], z[p]);
-	  ep->Extrude(j, k + 1, x[p + 4], y[p + 4], z[p + 4]);
-	}
-	for(int p = 0; p < 8; p++){
-	  MVertex tmp(x[p], y[p], z[p], 0, -1);
-	  itp = pos.find(&tmp);
-	  if(itp == pos.end()) {
-	    Msg(GERROR, "Could not find extruded vertex in volume %d", to->tag());
-	    return;
-	  }
-	  verts.push_back(*itp);
-	}
-	createHexPri(verts, to);
+	if(getExtrudedVertices(from->quadrangles[i], ep, j, k, pos, verts) == 8)
+	  createHexPri(verts, to);
       }
     }
   }
 }
 
-int MeshExtrudedVolume(GRegion *gr)
+void insertAllVertices(GRegion *gr, 
+		       std::set<MVertex*, MVertexLessThanLexicographic> &pos)
 {
-  ExtrudeParams *ep = gr->meshAttributes.extrude;
-
-  if(!ep || !ep->mesh.ExtrudeMesh || ep->geo.Mode != EXTRUDED_ENTITY)
-    return 0;
-
-  // FIXME
-  static bool warn_recombine = 1;
-  if(!ep->mesh.Recombine && warn_recombine){
-    Msg(WARNING, "Non-recombined volume extrusion has not been reimplemented yet");
-    warn_recombine = false;
-  }
-
-
-  // build a set with all the vertices on the boundary of gr
-  double old_tol = MVertexLessThanLexicographic::tolerance; 
-  MVertexLessThanLexicographic::tolerance = 1.e-12 * CTX.lc;
-  std::set<MVertex*, MVertexLessThanLexicographic> pos;
+  pos.insert(gr->mesh_vertices.begin(), gr->mesh_vertices.end());
   std::list<GFace*> faces = gr->faces();
-  std::list<GFace*>::iterator it = faces.begin();
-  while(it != faces.end()){
-    pos.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
-    std::list<GEdge*> edges = (*it)->edges();
+  std::list<GFace*>::iterator itf = faces.begin();
+  while(itf != faces.end()){
+    pos.insert((*itf)->mesh_vertices.begin(), (*itf)->mesh_vertices.end());
+    std::list<GEdge*> edges = (*itf)->edges();
     std::list<GEdge*>::iterator ite = edges.begin();
     while(ite != edges.end()){
       pos.insert((*ite)->mesh_vertices.begin(), (*ite)->mesh_vertices.end());
@@ -201,16 +181,297 @@ int MeshExtrudedVolume(GRegion *gr)
 		 (*ite)->getEndVertex()->mesh_vertices.end());
       ++ite;
     }
-    ++it;
+    ++itf;
   }
+}
+
+void meshGRegionExtruded::operator() (GRegion *gr) 
+{  
+  if(gr->geomType() == GEntity::DiscreteVolume) return;
+
+  ExtrudeParams *ep = gr->meshAttributes.extrude;
+
+  if(!ep || !ep->mesh.ExtrudeMesh || ep->geo.Mode != EXTRUDED_ENTITY) return;
+
+  // Send a messsage to the GMSH environment
+  Msg(STATUS2, "Meshing volume %d (extruded)", gr->tag());
+
+  // destroy the mesh if it exists
+  deMeshGRegion dem;
+  dem(gr);
+
+  // build a set with all the vertices on the boundary of gr
+  double old_tol = MVertexLessThanLexicographic::tolerance; 
+  MVertexLessThanLexicographic::tolerance = 1.e-12 * CTX.lc;
+  std::set<MVertex*, MVertexLessThanLexicographic> pos;
+  insertAllVertices(gr, pos);
 
   // volume is extruded from a surface
   GFace *from = gr->model()->faceByTag(std::abs(ep->geo.Source));
-  if(!from) return 0;
+  if(!from){
+    Msg(GERROR, "Unknown source surface %d for extrusion", ep->geo.Source);
+    return;
+  }
 
   extrudeMesh(from, gr, pos);
 
   MVertexLessThanLexicographic::tolerance = old_tol; 
+}
 
-  return 1;
+int edgeExists(MVertex *v1, MVertex *v2, 
+	      std::set<std::pair<MVertex*, MVertex*> > &edges)
+{
+  std::pair<MVertex*, MVertex*> p(std::min(v1, v2), std::max(v1, v2));
+  return edges.count(p);
+}
+
+void createEdge(MVertex *v1, MVertex *v2, 
+	      std::set<std::pair<MVertex*, MVertex*> > &edges)
+{
+  std::pair<MVertex*, MVertex*> p(std::min(v1, v2), std::max(v1, v2));
+  edges.insert(p);
+}
+
+void deleteEdge(MVertex *v1, MVertex *v2, 
+	      std::set<std::pair<MVertex*, MVertex*> > &edges)
+{
+  std::pair<MVertex*, MVertex*> p(std::min(v1, v2), std::max(v1, v2));
+  edges.erase(p);
+}
+
+// subdivide the 3 lateral faces of each prism
+void phase1(GRegion *gr,
+	    std::set<MVertex*, MVertexLessThanLexicographic> &pos,
+	    std::set<std::pair<MVertex*, MVertex*> > &edges)
+{
+  ExtrudeParams *ep = gr->meshAttributes.extrude;
+  GFace *from = gr->model()->faceByTag(std::abs(ep->geo.Source));
+  if(!from) return;
+
+  for(unsigned int i = 0; i < from->triangles.size(); i++){
+    for(int j = 0; j < ep->mesh.NbLayer; j++) {
+      for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
+	std::vector<MVertex*> v;
+	if(getExtrudedVertices(from->triangles[i], ep, j, k, pos, v) == 6){
+	  if(!edgeExists(v[0], v[4], edges))
+	    createEdge(v[1], v[3], edges);
+	  if(!edgeExists(v[4], v[2], edges))
+	    createEdge(v[1], v[5], edges);
+	  if(!edgeExists(v[3], v[2], edges))
+	    createEdge(v[0], v[5], edges);
+	}
+      }
+    }
+  }
+}
+
+// modify lateral edges to make them "tet-compatible"
+void phase2(GRegion *gr,
+	    std::set<MVertex*, MVertexLessThanLexicographic> &pos,
+	    std::set<std::pair<MVertex*, MVertex*> > &edges,
+	    std::set<std::pair<MVertex*, MVertex*> > &edges_swap,
+	    int &swap)
+{
+  ExtrudeParams *ep = gr->meshAttributes.extrude;
+  GFace *from = gr->model()->faceByTag(std::abs(ep->geo.Source));
+  if(!from) return;
+
+  for(unsigned int i = 0; i < from->triangles.size(); i++){
+    for(int j = 0; j < ep->mesh.NbLayer; j++) {
+      for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
+	std::vector<MVertex*> v;
+	if(getExtrudedVertices(from->triangles[i], ep, j, k, pos, v) == 6){
+	  if(edgeExists(v[3], v[1], edges) &&
+	     edgeExists(v[4], v[2], edges) && 
+	     edgeExists(v[0], v[5], edges)) {
+	    swap++;
+	    if(!edgeExists(v[3], v[1], edges_swap)) {
+	      deleteEdge(v[3], v[1], edges);
+	      createEdge(v[0], v[4], edges);
+	      createEdge(v[0], v[4], edges_swap);
+	      createEdge(v[3], v[1], edges_swap);
+	    }
+	    else if(!edgeExists(v[4], v[2], edges_swap)) {
+	      deleteEdge(v[4], v[2], edges);
+	      createEdge(v[1], v[5], edges);
+	      createEdge(v[4], v[2], edges_swap);
+	      createEdge(v[1], v[5], edges_swap);
+	    }
+	    else if(!edgeExists(v[0], v[5], edges_swap)) {
+	      deleteEdge(v[0], v[5], edges);
+	      createEdge(v[3], v[2], edges);
+	      createEdge(v[0], v[5], edges_swap);
+	      createEdge(v[3], v[2], edges_swap);
+	    }
+	  }
+	  else if(edgeExists(v[0], v[4], edges) &&
+		  edgeExists(v[1], v[5], edges) &&
+		  edgeExists(v[3], v[2], edges)) {
+	    swap++;
+	    if(!edgeExists(v[0], v[4], edges_swap)) {
+	      deleteEdge(v[0], v[4], edges);
+	      createEdge(v[3], v[1], edges);
+	      createEdge(v[0], v[4], edges_swap);
+	      createEdge(v[3], v[1], edges_swap);
+	    }
+	    else if(!edgeExists(v[1], v[5], edges_swap)) {
+	      deleteEdge(v[1], v[5], edges);
+	      createEdge(v[4], v[2], edges);
+	      createEdge(v[4], v[2], edges_swap);
+	      createEdge(v[1], v[5], edges_swap);
+	    }
+	    else if(!edgeExists(v[3], v[2], edges_swap)) {
+	      deleteEdge(v[3], v[2], edges);
+	      createEdge(v[0], v[5], edges);
+	      createEdge(v[0], v[5], edges_swap);
+	      createEdge(v[3], v[2], edges_swap);
+	    }
+	  }
+	}
+      }
+    }
+  }
+}
+ 
+// create tets
+void phase3(GRegion *gr,
+	    std::set<MVertex*, MVertexLessThanLexicographic> &pos,
+	    std::set<std::pair<MVertex*, MVertex*> > &edges)
+{
+  ExtrudeParams *ep = gr->meshAttributes.extrude;
+  GFace *from = gr->model()->faceByTag(std::abs(ep->geo.Source));
+  if(!from) return;
+
+  for(unsigned int i = 0; i < from->triangles.size(); i++){
+    for(int j = 0; j < ep->mesh.NbLayer; j++) {
+      for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
+	std::vector<MVertex*> v;
+	if(getExtrudedVertices(from->triangles[i], ep, j, k, pos, v) == 6){
+	  if(edgeExists(v[3], v[1], edges) &&
+	     edgeExists(v[4], v[2], edges) &&
+	     edgeExists(v[3], v[2], edges)) {
+	    createTet(v[0], v[1], v[2], v[3], gr);
+	    createTet(v[3], v[4], v[5], v[2], gr);
+	    createTet(v[1], v[3], v[4], v[2], gr);
+	  }
+	  else if(edgeExists(v[3], v[1], edges) &&
+		  edgeExists(v[1], v[5], edges) &&
+		  edgeExists(v[3], v[2], edges)) {
+	    createTet(v[0], v[1], v[2], v[3], gr);
+	    createTet(v[3], v[4], v[5], v[1], gr);
+	    createTet(v[3], v[1], v[5], v[2], gr);
+	  }
+	  else if(edgeExists(v[3], v[1], edges) &&
+		  edgeExists(v[1], v[5], edges) &&
+		  edgeExists(v[5], v[0], edges)) {
+	    createTet(v[0], v[1], v[2], v[5], gr);
+	    createTet(v[3], v[4], v[5], v[1], gr);
+	    createTet(v[1], v[3], v[5], v[0], gr);
+	  }
+	  else if(edgeExists(v[4], v[0], edges) &&
+		  edgeExists(v[4], v[2], edges) &&
+		  edgeExists(v[3], v[2], edges)) {
+	    createTet(v[0], v[1], v[2], v[4], gr);
+	    createTet(v[3], v[4], v[5], v[2], gr);
+	    createTet(v[0], v[3], v[4], v[2], gr);
+	  }
+	  else if(edgeExists(v[4], v[0], edges) &&
+		  edgeExists(v[4], v[2], edges) &&
+		  edgeExists(v[5], v[0], edges)) {
+	    createTet(v[0], v[1], v[2], v[4], gr);
+	    createTet(v[3], v[4], v[5], v[0], gr);
+	    createTet(v[0], v[2], v[4], v[5], gr);
+	  }
+	  else if(edgeExists(v[4], v[0], edges) &&
+		  edgeExists(v[1], v[5], edges) &&
+		  edgeExists(v[5], v[0], edges)) {
+	    createTet(v[0], v[1], v[2], v[5], gr);
+	    createTet(v[3], v[4], v[5], v[0], gr);
+	    createTet(v[0], v[1], v[4], v[5], gr);
+	  }
+	}
+      }
+    }
+  }
+}
+
+int SubdivideExtrudedMesh(GModel *m)
+{
+  // get all non-recombined extruded regions and vertices
+  std::vector<GRegion*> regions;
+  double old_tol = MVertexLessThanLexicographic::tolerance; 
+  MVertexLessThanLexicographic::tolerance = 1.e-12 * CTX.lc;
+  std::set<MVertex*, MVertexLessThanLexicographic> pos;
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
+    ExtrudeParams *ep = (*it)->meshAttributes.extrude;
+    if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY && 
+       !ep->mesh.Recombine){
+      regions.push_back(*it);
+      insertAllVertices(*it, pos);
+    }
+  }
+
+  if(regions.empty()) return 0;
+
+  Msg(INFO, "Subdividing extruded mesh");
+
+  // create edges on lateral sides of "prisms"
+  std::set<std::pair<MVertex*, MVertex*> > edges;
+  for(unsigned int i = 0; i < regions.size(); i++)
+    phase1(regions[i], pos, edges);
+
+  // swap lateral edges to make them "tet-compatible"
+  int j = 0, swap;
+  std::set<std::pair<MVertex*, MVertex*> > edges_swap;
+  do {
+    swap = 0;
+    for(unsigned int i = 0; i < regions.size(); i++)
+      phase2(regions[i], pos, edges, edges_swap, swap);
+    Msg(INFO, "Swapping %d", swap);
+    if(j && j == swap) {
+      Msg(GERROR, "Unable to subdivide extruded mesh: use 'Recombine' instead");
+      return -1;
+    }
+    j = swap;
+  } while(swap);
+
+  // delete "recombined" volume elements and create tetrahedra instead
+  for(unsigned int i = 0; i < regions.size(); i++){
+    GRegion *gr = regions[i];
+    for(unsigned int i = 0; i < gr->hexahedra.size(); i++) 
+      delete gr->hexahedra[i];
+    gr->hexahedra.clear();
+    for(unsigned int i = 0; i < gr->prisms.size(); i++) 
+      delete gr->prisms[i];
+    gr->prisms.clear();
+    for(unsigned int i = 0; i < gr->pyramids.size(); i++)
+      delete gr->pyramids[i];
+    gr->pyramids.clear();
+    phase3(gr, pos, edges);
+  }
+
+  // re-Extrude bounding surfaces using edges as constraint
+  std::set<GFace*> faces;
+  for(unsigned int i = 0; i < regions.size(); i++){
+    std::list<GFace*> f = regions[i]->faces();
+    faces.insert(f.begin(), f.end());
+  }
+  for(std::set<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
+    ExtrudeParams *ep = (*it)->meshAttributes.extrude;
+    if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY && 
+       !ep->mesh.Recombine){
+      GFace *gf = *it;
+      Msg(INFO, "Remeshing surface %d", gf->tag());
+      for(unsigned int i = 0; i < gf->triangles.size(); i++) 
+	delete gf->triangles[i];
+      gf->triangles.clear();
+      for(unsigned int i = 0; i < gf->quadrangles.size(); i++) 
+	delete gf->quadrangles[i];
+      gf->quadrangles.clear();
+      MeshExtrudedSurface(gf, &edges);
+    }
+  }
+
+  MVertexLessThanLexicographic::tolerance = old_tol;   
+  return 0;
 }

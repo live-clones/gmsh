@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.71 2006-12-11 20:12:33 remacle Exp $
+// $Id: BDS.cpp,v 1.72 2007-01-16 11:31:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -802,8 +802,8 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
 int BDS_Edge :: numTriangles() const 
 {
   int NT = 0;
-  for (int i=0;i<_faces.size();i++) 
-    if (faces (i)->numEdges() == 3) NT++ ;
+  for (unsigned int i=0;i<_faces.size();i++) 
+    if (faces(i)->numEdges() == 3) NT++ ;
   return NT;
 }
 
@@ -894,9 +894,6 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge * e, BDS_Point * p)
 
   if(o->g != p->g)
     return false;
-
-  double u = p->u;
-  double v = p->v;
 
   // printf("collapsing an edge :");
   // print_edge(e);

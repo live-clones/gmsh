@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.8 2007-01-08 16:42:42 geuzaine Exp $
+// $Id: DivideAndConquer.cpp,v 1.9 2007-01-16 11:31:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -531,8 +531,6 @@ int Conversion(DocPeek doc)
   int n, i, j;
   int count = 0, count2 = 0;
   PointNumero aa, bb, cc;
-  PointRecord *ptemp;
-
   PointRecord *gPointArray = doc->points;
 
   n = doc->numPoints;

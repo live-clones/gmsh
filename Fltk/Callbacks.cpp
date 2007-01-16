@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.502 2007-01-12 19:47:52 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.503 2007-01-16 11:31:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3758,8 +3758,6 @@ void mesh_remesh_cb(CALLBACK_ARGS)
 
 void mesh_inspect_cb(CALLBACK_ARGS)
 {
-  char *str = (char*)data;
-
   std::vector<GVertex*> vertices;
   std::vector<GEdge*> edges;
   std::vector<GFace*> faces;

@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.15 2006-12-11 20:12:33 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.16 2007-01-16 11:31:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -42,20 +42,17 @@ OCCEdge::OCCEdge(GModel *model, TopoDS_Edge edge, int num, GVertex *v1, GVertex 
 
 Range<double> OCCEdge::parBounds(int i) const
 { 
-  //  double a,b;
-  //  BRep_Tool::Range (c,a,b); 
   return(Range<double>(s0,s1));
 }
 
 void OCCEdge::setTrimmed (OCCFace *f)
 {
-  if (!trimmed)
-    {
-      trimmed = f;
-      const TopoDS_Face *s = (TopoDS_Face*) trimmed->getNativePtr();
-      curve2d = BRep_Tool::CurveOnSurface(c, *s, s0, s1);
-      if (curve2d.IsNull())  trimmed = 0;
-    }
+  if (!trimmed){
+    trimmed = f;
+    const TopoDS_Face *s = (TopoDS_Face*) trimmed->getNativePtr();
+    curve2d = BRep_Tool::CurveOnSurface(c, *s, s0, s1);
+    if (curve2d.IsNull())  trimmed = 0;
+  }
 }
 
 SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar,int dir) const
@@ -63,46 +60,41 @@ SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar,int dir) const
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
   double t0,t1;
   Handle(Geom2d_Curve) c2d = BRep_Tool::CurveOnSurface(c, *s, t0, t1);
-  if (c2d.IsNull())
-    {
-      Msg(GERROR,"Reparam on face failed : curve %d is not on surface %d\n",tag(),face->tag());
-      return GEdge::reparamOnFace(face, epar,dir);
-    }
+  if(c2d.IsNull()){
+    Msg(GERROR,"Reparam on face failed : curve %d is not on surface %d\n",tag(),face->tag());
+    return GEdge::reparamOnFace(face, epar,dir);
+  }
   double u,v;
   c2d->Value(epar).Coord(u,v);
 
-  if (! isSeam ( face ) )
-    {
-      // sometimes OCC miserably fails ...
-      GPoint p1 = point(epar);
-      GPoint p2 = face->point(u,v);
-      const double dx = p1.x()-p2.x();
-      const double dy = p1.y()-p2.y();
-      const double dz = p1.z()-p2.z();
-      if (sqrt(dx*dx+dy*dy+dz*dz) > 1.e-7 * CTX.lc)
-	{
-	  GPoint ppp = face->closestPoint(SPoint3(p1.x(),p1.y(),p1.z()));
-	  return SPoint2(ppp.u(),ppp.v());
-	}
-      return SPoint2 (u,v);
+  if (!isSeam(face)){
+    // sometimes OCC miserably fails ...
+    GPoint p1 = point(epar);
+    GPoint p2 = face->point(u,v);
+    const double dx = p1.x()-p2.x();
+    const double dy = p1.y()-p2.y();
+    const double dz = p1.z()-p2.z();
+    if(sqrt(dx*dx+dy*dy+dz*dz) > 1.e-7 * CTX.lc){
+      GPoint ppp = face->closestPoint(SPoint3(p1.x(),p1.y(),p1.z()));
+      return SPoint2(ppp.u(),ppp.v());
     }
-  else
-    {
-      BRepAdaptor_Surface surface( *s );
-      if ( surface.IsUPeriodic() )
-	{
-	  if (dir == -1) 
-	    return SPoint2(surface.FirstUParameter(), v);
-	  else
-	    return SPoint2(surface.LastUParameter(), v);
-	}
-      else {
-	if (dir == -1) 
-	  return SPoint2(u , surface.FirstVParameter());
-	else
-	  return SPoint2(u , surface.LastVParameter());
-      }
+    return SPoint2(u,v);
+  }
+  else{
+    BRepAdaptor_Surface surface(*s);
+    if(surface.IsUPeriodic()){
+      if (dir == -1) 
+	return SPoint2(surface.FirstUParameter(), v);
+      else
+	return SPoint2(surface.LastUParameter(), v);
     }
+    else{
+      if (dir == -1) 
+	return SPoint2(u , surface.FirstVParameter());
+      else
+	return SPoint2(u , surface.LastVParameter());
+    }
+  }
 }
 
 /** True if the edge is a seam for the given face. */
@@ -110,32 +102,27 @@ int OCCEdge::isSeam(GFace *face) const
 {
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
   BRepAdaptor_Surface surface( *s );
-  if ( surface.IsUPeriodic() || surface.IsVPeriodic() )
-    {
-      return BRep_Tool::IsClosed( c, *s );
-    }
+  if(surface.IsUPeriodic() || surface.IsVPeriodic()){
+    return BRep_Tool::IsClosed( c, *s );
+  }
   return 0;
 }
 
-
 GPoint OCCEdge::point(double par) const
 {
-  if (!curve.IsNull())
-    {
-      gp_Pnt pnt = curve->Value (par);
-      return GPoint(pnt.X(),pnt.Y(),pnt.Z());
-    }
-  else if (trimmed)
-    {
-      double u,v;
-      curve2d->Value(par).Coord(u,v);
-      return trimmed->point(u,v);
-    }
-  else
-    {
-      Msg(WARNING,"OCC Curve %d is neither a 3D curve not a trimmed curve",tag());
-      return GPoint (0,0,0);
-    }
+  if(!curve.IsNull()){
+    gp_Pnt pnt = curve->Value (par);
+    return GPoint(pnt.X(),pnt.Y(),pnt.Z());
+  }
+  else if(trimmed){
+    double u,v;
+    curve2d->Value(par).Coord(u,v);
+    return trimmed->point(u,v);
+  }
+  else{
+    Msg(WARNING,"OCC Curve %d is neither a 3D curve not a trimmed curve",tag());
+    return GPoint (0,0,0);
+  }
 }
 
 GPoint OCCEdge::closestPoint(const SPoint3 & qp)
@@ -165,47 +152,41 @@ double OCCEdge::parFromPoint(const SPoint3 &pt) const
 
 GEntity::GeomType OCCEdge::geomType() const
 {
-  if (curve.IsNull())
-    {
-      if (curve2d->DynamicType() == STANDARD_TYPE(Geom_Circle))
-	return Circle;
-      else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_Line))
-	return Line;
-      else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_Ellipse))
-	return Ellipse;
-      else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve))
-	return BSpline;
-      else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
-	return Bezier;
-      //   else if (occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
-      //     return Cone;
-      return Unknown;
-    }
-  else
-    {
-      if (curve->DynamicType() == STANDARD_TYPE(Geom_Circle))
-	return Circle;
-      else if (curve->DynamicType() == STANDARD_TYPE(Geom_Line))
-	return Line;
-      else if (curve->DynamicType() == STANDARD_TYPE(Geom_Ellipse))
-	return Ellipse;
-      else if (curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve))
-	return BSpline;
-      else if (curve->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
-	return Bezier;
-      //   else if (occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
-      //     return Cone;
-      return Unknown;
-    }
+  if(curve.IsNull()){
+    if (curve2d->DynamicType() == STANDARD_TYPE(Geom_Circle))
+      return Circle;
+    else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_Line))
+      return Line;
+    else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_Ellipse))
+      return Ellipse;
+    else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve))
+      return BSpline;
+    else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
+      return Bezier;
+    //   else if (occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
+    //     return Cone;
+    return Unknown;
+  }
+  else{
+    if (curve->DynamicType() == STANDARD_TYPE(Geom_Circle))
+      return Circle;
+    else if (curve->DynamicType() == STANDARD_TYPE(Geom_Line))
+      return Line;
+    else if (curve->DynamicType() == STANDARD_TYPE(Geom_Ellipse))
+      return Ellipse;
+    else if (curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve))
+      return BSpline;
+    else if (curve->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
+      return Bezier;
+    //   else if (occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
+    //     return Cone;
+    return Unknown;
+  }
 }
 
 int OCCEdge::minimumMeshSegments () const
 {
-//   if(geomType() == Circle || geomType() == Ellipse)
-//     return (int)(fabs(s1 - s0) *
-// 		 (double)CTX.mesh.min_circ_points / Pi) - 1;
-//   else
-    return GEdge::minimumMeshSegments () ;
+  return GEdge::minimumMeshSegments () ;
 }
 
 int OCCEdge::minimumDrawSegments () const
@@ -220,43 +201,41 @@ int OCCEdge::minimumDrawSegments () const
     return 20 * n;
 }
 
-
 double OCCEdge::curvature(double par) const 
 {
   const double eps = 1.e-15;
   Standard_Real Crv;
-  if (curve.IsNull())
-    {
-      Geom2dLProp_CLProps2d aCLProps(curve2d, 2, eps);
-      aCLProps.SetParameter (par);
-      if(!aCLProps.IsTangentDefined())
-	Crv =eps;
-      else
-	Crv = aCLProps.Curvature();
-    }
-  else
-    {
-      BRepAdaptor_Curve brepc(c);
-      BRepLProp_CLProps prop(brepc, 2, eps);
-      prop.SetParameter (par); 
-      if (!prop.IsTangentDefined())
-	Crv = eps;
-      else
-	Crv = prop.Curvature();
-    }
+  if (curve.IsNull()){
+    Geom2dLProp_CLProps2d aCLProps(curve2d, 2, eps);
+    aCLProps.SetParameter (par);
+    if(!aCLProps.IsTangentDefined())
+      Crv =eps;
+    else
+      Crv = aCLProps.Curvature();
+  }
+  else{
+    BRepAdaptor_Curve brepc(c);
+    BRepLProp_CLProps prop(brepc, 2, eps);
+    prop.SetParameter (par); 
+    if (!prop.IsTangentDefined())
+      Crv = eps;
+    else
+      Crv = prop.Curvature();
+  }
   if (Crv <= eps)Crv = eps;
+  
+  // std::list<GFace*> ff = faces();
+  // std::list<GFace *>::iterator it =  ff.begin();
+  // while (it != ff.end()){
+  //   SPoint2 par2 = reparamOnFace((*it),par,1);
+  //   const double cc = (*it)->curvature ( par2 );
+  //   if (cc > 0)
+  //     Crv = std::max( Crv, cc);  
+  //   ++it;
+  // }  
+  // printf("curvature = %12.5E\n",Crv); 
 
-//   std::list<GFace*> ff = faces();
-//   std::list<GFace *>::iterator it =  ff.begin();
-//   while (it != ff.end())
-//     {
-//       SPoint2 par2 = reparamOnFace((*it),par,1);
-//       const double cc = (*it)->curvature ( par2 );
-//       if (cc > 0)
-//     Crv = std::max( Crv, cc);  
-//     ++it;
-// }  
-// printf("curvature = %12.5E\n",Crv); 
-return Crv;
+  return Crv;
 }
+
 #endif

@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.85 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.86 2007-01-16 11:31:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -185,8 +185,10 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		      ("Extract", GMSH_RegisterExtractPlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("ExtractElements", GMSH_RegisterExtractElementsPlugin()));
+#if 0 // waiting for BDS rewrite
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("ExtractEdges", GMSH_RegisterExtractEdgesPlugin()));
+#endif
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("DecomposeInSimplex", GMSH_RegisterDecomposeInSimplexPlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >

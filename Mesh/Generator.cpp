@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.111 2006-12-17 12:44:27 geuzaine Exp $
+// $Id: Generator.cpp,v 1.112 2007-01-16 11:31:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -202,7 +202,9 @@ void Mesh1D()
   if(TooManyElements(1)) return;
   Msg(STATUS1, "Meshing 1D...");
   double t1 = Cpu();
+
   std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), meshGEdge());
+
   double t2 = Cpu();
   CTX.mesh_timer[0] = t2 - t1;
   Msg(INFO, "Mesh 1D complete (%g s)", CTX.mesh_timer[0]);
@@ -214,7 +216,9 @@ void Mesh2D()
   if(TooManyElements(2)) return;
   Msg(STATUS1, "Meshing 2D...");
   double t1 = Cpu();
+
   std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), meshGFace());
+
   double t2 = Cpu();
   CTX.mesh_timer[1] = t2 - t1;
   Msg(INFO, "Mesh 2D complete (%g s)", CTX.mesh_timer[1]);
@@ -226,7 +230,15 @@ void Mesh3D()
   if(TooManyElements(3)) return;
   Msg(STATUS1, "Meshing 3D...");
   double t1 = Cpu();
+
+  // mesh the extruded volumes first
+  std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), meshGRegionExtruded());
+  // then subdivide if necessary (unfortunately the subdivision is a
+  // global operation, which can require changing the surface mesh!)
+  SubdivideExtrudedMesh(GMODEL);
+  // then mesh the rest
   std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), meshGRegion());
+
   double t2 = Cpu();
   CTX.mesh_timer[2] = t2 - t1;
   Msg(INFO, "Mesh 3D complete (%g s)", CTX.mesh_timer[2]);
@@ -237,7 +249,9 @@ void OptimizeMesh()
 {
   Msg(STATUS1, "Optimizing 3D...");
   double t1 = Cpu();
+
   std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), optimizeMeshGRegion());
+
   double t2 = Cpu();
   Msg(INFO, "Mesh 3D optimization complete (%g s)", t2 - t1);
   Msg(STATUS1, "Mesh");

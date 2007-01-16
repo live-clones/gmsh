@@ -22,9 +22,7 @@
 
 #include "Geo.h"
 
-Vertex InterpolateCurve (Curve * Curve, double u, int derivee);
-
-Vertex InterpolateSurface (Surface * s, double u, double v, 
-                           int derivee, int u_v);
+Vertex InterpolateCurve(Curve *Curve, double u, int derivee);
+Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v);
 
 #endif

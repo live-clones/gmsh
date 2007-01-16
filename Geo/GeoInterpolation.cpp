@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.14 2007-01-12 08:10:32 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.15 2007-01-16 11:31:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -217,10 +217,9 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
     return V;
   }
 
-  int N, i, j;
+  int N, i;
   Vertex *v[5];
   double theta, t1, t2, t;
-  double vec[4];
   Vertex temp1, temp2;
 
   switch (c->Typ) {
@@ -392,79 +391,51 @@ void TransfiniteSph(Vertex S, Vertex center, Vertex * T)
 
 Vertex InterpolateRuledSurface(Surface * s, double u, double v)
 {
-  Vertex *c1, *c2, T, D[4], V[4], *S[4];
   Curve *C[4];
-  int i, issphere;
-  double eps = 1.e-6;
-
-  switch (s->Typ) {
-
-  case MSH_SURF_REGL:
-    issphere = 1;
-    for(i = 0; i < 4; i++) {
-      List_Read(s->Generatrices, i, &C[i]);
-      if(C[i]->Typ != MSH_SEGM_CIRC && C[i]->Typ != MSH_SEGM_CIRC_INV) {
-        issphere = 0;
+  Vertex *c1, *c2;
+  int issphere = 1;
+  for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
+    List_Read(s->Generatrices, i, &C[i]);
+    if(C[i]->Typ != MSH_SEGM_CIRC && C[i]->Typ != MSH_SEGM_CIRC_INV) {
+      issphere = 0;
+    }
+    else if(issphere) {
+      if(!i) {
+	List_Read(C[i]->Control_Points, 1, &c1);
       }
-      else if(issphere) {
-        if(!i) {
-          List_Read(C[i]->Control_Points, 1, &c1);
-        }
-        else {
-          List_Read(C[i]->Control_Points, 1, &c2);
-          if(compareVertex(&c1, &c2))
-            issphere = 0;
-        }
+      else {
+	List_Read(C[i]->Control_Points, 1, &c2);
+	if(compareVertex(&c1, &c2))
+	  issphere = 0;
       }
     }
+  }
 
+  Vertex *S[4], V[4], T;
+
+  if(s->Typ == MSH_SURF_REGL){
     S[0] = C[0]->beg;
     S[1] = C[1]->beg;
     S[2] = C[2]->beg;
     S[3] = C[3]->beg;
-
     V[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * u, 0);
     V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
     V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
     V[3] = InterpolateCurve(C[3], C[3]->ubeg + (C[3]->uend - C[3]->ubeg) * (1. - v), 0);
-    
     T = TransfiniteQua(V[0], V[1], V[2], V[3], *S[0], *S[1], *S[2], *S[3], u, v);
-    if(issphere)
-      TransfiniteSph(*S[0], *c1, &T);
-    return T;
-    
-  case MSH_SURF_TRIC:
-    issphere = 1;
-    for(i = 0; i < 3; i++) {
-      List_Read(s->Generatrices, i, &C[i]);
-      if(C[i]->Typ != MSH_SEGM_CIRC && C[i]->Typ != MSH_SEGM_CIRC_INV) {
-	issphere = 0;
-      }
-      else if(issphere) {
-	if(!i) {
-          List_Read(C[i]->Control_Points, 1, &c1);
-        }
-        else {
-          List_Read(C[i]->Control_Points, 1, &c2);
-          if(compareVertex(&c1, &c2))
-            issphere = 0;
-        }
-      }
-    }
-    
+  }
+  else{
     S[0] = C[0]->beg;
     S[1] = C[1]->beg;
     S[2] = C[2]->beg;
-
     V[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * u, 0);
     V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
     V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1.-u), 0);
-    
     T = TransfiniteTri(V[0], V[1], V[2], *S[0], *S[1], *S[2], u, v);
-    if(issphere)
-      TransfiniteSph(*S[0], *c1, &T);    
-    return T;
   }
+
+  if(issphere) TransfiniteSph(*S[0], *c1, &T);
+  return T;
 }
 
 Vertex InterpolateExtrudedSurface(Surface * s, double u, double v)

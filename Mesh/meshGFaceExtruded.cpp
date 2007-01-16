@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.14 2006-12-03 02:05:47 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.15 2007-01-16 11:31:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -27,34 +27,58 @@
 
 extern Context_T CTX;
 
-void createQuaTri(std::vector<MVertex*> &v, GFace *to)
+void createQuaTri(std::vector<MVertex*> &v, GFace *to,
+		  std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
 {
+  ExtrudeParams *ep = to->meshAttributes.extrude;
+
   if(v[0] == v[1] || v[1] == v[3])
     to->triangles.push_back(new MTriangle(v[0], v[3], v[2]));
   else if(v[0] == v[2] || v[2] == v[3])
     to->triangles.push_back(new MTriangle(v[0], v[1], v[3]));
   else if(v[0] == v[3] || v[1] == v[2])
     Msg(GERROR, "Uncoherent extruded quadrangle in surface %d", to->tag());
-  else
-    to->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[3], v[2]));
+  else{
+    if(ep->mesh.Recombine){
+      to->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[3], v[2]));
+    }
+    else if(!constrainedEdges){
+      to->triangles.push_back(new MTriangle(v[0], v[1], v[3]));
+      to->triangles.push_back(new MTriangle(v[0], v[3], v[2]));
+    }
+    else{
+      std::pair<MVertex*, MVertex*> p(std::min(v[1], v[2]), std::max(v[1], v[2]));
+      if(constrainedEdges->count(p)){
+	to->triangles.push_back(new MTriangle(v[2], v[1], v[0]));
+	to->triangles.push_back(new MTriangle(v[2], v[3], v[1]));
+      }
+      else {
+	to->triangles.push_back(new MTriangle(v[2], v[3], v[0]));
+	to->triangles.push_back(new MTriangle(v[0], v[3], v[1]));
+      }
+    }
+  }
 }
 
 void extrudeMesh(GEdge *from, GFace *to,
-		 std::set<MVertex*, MVertexLessThanLexicographic> &pos)
+		 std::set<MVertex*, MVertexLessThanLexicographic> &pos,
+		 std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
-  // create vertices
-  for(unsigned int i = 0; i < from->mesh_vertices.size(); i++){
-    MVertex *v = from->mesh_vertices[i];
-    for(int j = 0; j < ep->mesh.NbLayer; j++) {
-      for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
-	double x = v->x(), y = v->y(), z = v->z();
-	ep->Extrude(j, k + 1, x, y, z);
-	if(j != ep->mesh.NbLayer - 1 || k != ep->mesh.NbElmLayer[j] - 1){
-	  MVertex *newv = new MVertex(x, y, z, to);
-	  to->mesh_vertices.push_back(newv);
-	  pos.insert(newv);
+  // create vertices (if the edges are constrained, they already exist)
+  if(!constrainedEdges){
+    for(unsigned int i = 0; i < from->mesh_vertices.size(); i++){
+      MVertex *v = from->mesh_vertices[i];
+      for(int j = 0; j < ep->mesh.NbLayer; j++) {
+	for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
+	  double x = v->x(), y = v->y(), z = v->z();
+	  ep->Extrude(j, k + 1, x, y, z);
+	  if(j != ep->mesh.NbLayer - 1 || k != ep->mesh.NbElmLayer[j] - 1){
+	    MVertex *newv = new MVertex(x, y, z, to);
+	    to->mesh_vertices.push_back(newv);
+	    pos.insert(newv);
+	  }
 	}
       }
     }
@@ -86,7 +110,7 @@ void extrudeMesh(GEdge *from, GFace *to,
 	  }
 	  verts.push_back(*itp);
 	}
-	createQuaTri(verts, to);
+	createQuaTri(verts, to, constrainedEdges);
       }
     }
   }
@@ -144,19 +168,13 @@ void copyMesh(GFace *from, GFace *to,
   }
 }
 
-int MeshExtrudedSurface(GFace *gf)
+int MeshExtrudedSurface(GFace *gf, 
+			std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
 {
   ExtrudeParams *ep = gf->meshAttributes.extrude;
 
   if(!ep || !ep->mesh.ExtrudeMesh)
     return 0;
-
-  // FIXME
-  static bool warn_recombine = 1;
-  if(!ep->mesh.Recombine && warn_recombine){
-    Msg(WARNING, "Non-recombined surface extrusion has not been reimplemented yet");
-    warn_recombine = false;
-  }
 
   // build a set with all the vertices on the boundary of gf
   double old_tol = MVertexLessThanLexicographic::tolerance; 
@@ -173,16 +191,27 @@ int MeshExtrudedSurface(GFace *gf)
     ++it;
   }
 
+  // if the edges are constrained, the vertices already exist on the
+  // face--so we add them to the set
+  if(constrainedEdges)
+    pos.insert(gf->mesh_vertices.begin(), gf->mesh_vertices.end());
+  
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
     // surface is extruded from a curve
     GEdge *from = gf->model()->edgeByTag(std::abs(ep->geo.Source));
-    if(!from) return 0;
-    extrudeMesh(from, gf, pos);
+    if(!from){
+      Msg(GERROR, "Unknown source curve %d for extrusion", ep->geo.Source);
+      return 0;
+    }
+    extrudeMesh(from, gf, pos, constrainedEdges);
   }
   else {
     // surface is a copy of another surface (the "top" of the extrusion)
     GFace *from = gf->model()->faceByTag(std::abs(ep->geo.Source));
-    if(!from) return 0;
+    if(!from){ 
+      Msg(GERROR, "Unknown source surface %d for extrusion", ep->geo.Source);
+      return 0;
+    }
     copyMesh(from, gf, pos);
   }
 

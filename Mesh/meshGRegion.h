@@ -20,10 +20,16 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+class GModel;
 class GRegion;
 
 // Create the mesh of the region
 class meshGRegion {
+ public :
+  void operator () (GRegion *);
+};
+
+class meshGRegionExtruded {
  public :
   void operator () (GRegion *);
 };
@@ -36,11 +42,11 @@ class optimizeMeshGRegion {
 
 // destroy the mesh of the region
 class deMeshGRegion {
-public :
+ public :
   void operator () (GRegion *);
 };
 
 int MeshTransfiniteVolume(GRegion *gr);
-int MeshExtrudedVolume(GRegion *gr);
+int SubdivideExtrudedMesh(GModel *m);
 
 #endif

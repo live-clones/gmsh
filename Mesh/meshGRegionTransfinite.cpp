@@ -1,4 +1,4 @@
-// $Id: meshGRegionTransfinite.cpp,v 1.3 2006-12-02 21:16:49 geuzaine Exp $
+// $Id: meshGRegionTransfinite.cpp,v 1.4 2007-01-16 11:31:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -162,8 +162,8 @@ MVertex *transfiniteHex(MVertex *f1, MVertex *f2, MVertex *f3, MVertex *f4,
 class GOrientedTransfiniteFace {
 private:
   GFace *_gf;
-  int _permutation, _index;
   int _L, _H;
+  int _permutation, _index;
   std::vector<MVertex*> _list;
 
 public:
@@ -269,8 +269,8 @@ public:
     case 7: index = (m + M * n); break;
     }
     MVertex *v = 0;
-    if(index >= 0 && index < _list.size()) v = _list[index];
-    if(index < 0 || index >= _list.size() || !v){
+    if(index >= 0 && index < (int)_list.size()) v = _list[index];
+    if(index < 0 || index >= (int)_list.size() || !v){
       Msg(GERROR, "Wrong index in transfinite mesh of surface %d: "
 	  "m=%d n=%d M=%d N=%d perm=%d", _gf->tag(), m, n, M, N, _permutation);
       return _list[0];

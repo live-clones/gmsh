@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.47 2007-01-12 19:47:52 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.48 2007-01-16 11:31:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -795,7 +795,7 @@ bool gmsh2DMeshGenerator ( GFace *gf )
       }
   }
 
-   char name[245];
+  //char name[245];
    //sprintf(name,"param%d.pos",gf->tag());
    //outputScalarField(m->triangles, name,1);
    //   sprintf(name,"real%d.pos",gf->tag());
@@ -1088,11 +1088,11 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
      result.insert(result.end(),edgeLoop_BDS.begin(),edgeLoop_BDS.end());	         
    }
 
-  if (gf->tag() == 280)
-    for (int i=0;i<result.size();i++)
-      {
-        printf("point %3d (%8.5f %8.5f) (%2d,%2d)\n",i,result[i]->u,result[i]->v,result[i]->g->classif_tag,result[i]->g->classif_degree);
-      }
+//   if (gf->tag() == 280)
+//     for (unsigned int i=0;i<result.size();i++)
+//       {
+//         printf("point %3d (%8.5f %8.5f) (%2d,%2d)\n",i,result[i]->u,result[i]->v,result[i]->g->classif_tag,result[i]->g->classif_degree);
+//       }
 
   return true;
 }

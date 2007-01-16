@@ -170,7 +170,7 @@ public:
       else{
 	double allPou = 0.;
 	for(unsigned int i = 0; i < param.size(); i++){
-	  double u2 = param[i].second[0], v2 = param[i].second[1];
+	  //double u2 = param[i].second[0], v2 = param[i].second[1];
 	  double pou2=1;
 	  //FM->GetPou(param[i].first->tag(), u2, v2, pou2);
 	  allPou += pou2;
@@ -637,7 +637,7 @@ void fourierFace::meshBoundary()
   std::vector<double> u, v;
   FM->GetBoundary_Points(tag(), u, v);
 
-  if(2*nu+2*nv != u.size()){
+  if(2*nu+2*nv != (int)u.size()){
     Msg(INFO, "Special planar patch from YoungAe: %d", tag());
 #if 1 // transfinite, by hand -- WARNING
     _plane = 1; // to enable smoothing of transfinite meshes
@@ -673,13 +673,13 @@ void fourierFace::meshBoundary()
     _e[2]->addFace(this);
     _e[3] = new fourierEdge(model(), 4, _v[3], _v[0]);
     _e[3]->addFace(this);
-    for(unsigned int i = corners[0] + 1; i < corners[1]; i++)
+    for(int i = corners[0] + 1; i < corners[1]; i++)
       _e[0]->mesh_vertices.push_back(verts[i]);
-    for(unsigned int i = corners[1] + 1; i < corners[2]; i++)
+    for(int i = corners[1] + 1; i < corners[2]; i++)
       _e[1]->mesh_vertices.push_back(verts[i]);
-    for(unsigned int i = corners[2] + 1; i < corners[3]; i++)
+    for(int i = corners[2] + 1; i < corners[3]; i++)
       _e[2]->mesh_vertices.push_back(verts[i]);
-    for(unsigned int i = corners[3] + 1; i < verts.size(); i++)
+    for(int i = corners[3] + 1; i < (int)verts.size(); i++)
       _e[3]->mesh_vertices.push_back(verts[i]);
     l_edges.push_back(_e[0]); l_dirs.push_back(1);
     l_edges.push_back(_e[1]); l_dirs.push_back(1);
@@ -733,19 +733,19 @@ void fourierFace::meshBoundary()
   _e[3] = new fourierEdge(model(), 4, _v[3], _v[0]);
   _e[3]->addFace(this);
 
-  for(unsigned int i = corners[0] + 1; i < corners[1] - 1; i++){
+  for(int i = corners[0] + 1; i < corners[1] - 1; i++){
     GPoint p = point(u[i], v[i]);
     _e[0]->mesh_vertices.push_back(new MFaceVertex(p.x(), p.y(), p.z(), this, u[i], v[i]));
   }
-  for(unsigned int i = corners[1] + 1; i < corners[2] - 1; i++){
+  for(int i = corners[1] + 1; i < corners[2] - 1; i++){
     GPoint p = point(u[i], v[i]);
     _e[1]->mesh_vertices.push_back(new MFaceVertex(p.x(), p.y(), p.z(), this, u[i], v[i]));
   }
-  for(unsigned int i = corners[2] + 1; i < corners[3] - 1; i++){
+  for(int i = corners[2] + 1; i < corners[3] - 1; i++){
     GPoint p = point(u[i], v[i]);
     _e[2]->mesh_vertices.push_back(new MFaceVertex(p.x(), p.y(), p.z(), this, u[i], v[i]));
   }
-  for(unsigned int i = corners[3] + 1; i < u.size() - 1; i++){
+  for(int i = corners[3] + 1; i < (int)u.size() - 1; i++){
     GPoint p = point(u[i], v[i]);
     _e[3]->mesh_vertices.push_back(new MFaceVertex(p.x(), p.y(), p.z(), this, u[i], v[i]));
   }

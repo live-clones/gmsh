@@ -1,4 +1,4 @@
-// $Id: OCCRegion.cpp,v 1.4 2006-11-27 22:22:14 geuzaine Exp $
+// $Id: OCCRegion.cpp,v 1.5 2007-01-16 11:31:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -32,21 +32,19 @@ OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num, TopTools_IndexedMapOfS
   : GRegion(m, num), s(_s)
 {
   TopExp_Explorer exp0, exp01, exp1, exp2, exp3;
-  for (exp2.Init (s, TopAbs_SHELL); exp2.More(); exp2.Next())
-    {
-      TopoDS_Shape shell = exp2.Current();
-      Msg(INFO,"OCC Region %d - New Shell",num);
-      for (exp3.Init (shell, TopAbs_FACE); exp3.More(); exp3.Next())
-	{	  
-	  TopoDS_Face face = TopoDS::Face (exp3.Current());
-	  int index = fmap.FindIndex(face);
-	  GFace *f = m->faceByTag(index);
-	  if(!f) throw;
-	  l_faces.push_back(f);
-	  f->addRegion(this);
-	}      
-    }
-  Msg(INFO,"OCC Region %d with %d edges",num,l_faces.size());
+  for(exp2.Init(s, TopAbs_SHELL); exp2.More(); exp2.Next()){
+    TopoDS_Shape shell = exp2.Current();
+    Msg(INFO,"OCC Region %d - New Shell",num);
+    for(exp3.Init(shell, TopAbs_FACE); exp3.More(); exp3.Next()){	  
+      TopoDS_Face face = TopoDS::Face(exp3.Current());
+      int index = fmap.FindIndex(face);
+      GFace *f = m->faceByTag(index);
+      if(!f) throw;
+      l_faces.push_back(f);
+      f->addRegion(this);
+    }      
+  }
+  Msg(INFO, "OCC Region %d with %d edges", num, l_faces.size());
 }
 
 GEntity::GeomType OCCRegion::geomType() const

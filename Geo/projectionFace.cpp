@@ -136,11 +136,6 @@ SPoint2 parabolicCylinder::parFromPoint(const SPoint3 &p) const
   pos = rotatePoint(pos,rot);
   pos = scalePoint(pos, scalar);
   
-  // since the y co-ordinate is completely dependent on u, I actually
-  // don't need it to compute the u-v point?
-  double u = pos[0] + .5;
-  double v = pos[1] + .5;
-  
   SPoint2 q(pos[0],pos[1]);	
   return q;
 }

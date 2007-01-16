@@ -21,6 +21,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <vector>
+#include <set>
 
 class MVertex;
 class GFace;
@@ -55,6 +56,7 @@ void computeEdgeLoops(const GFace *gf,
 		      std::vector<int> &indices);
 
 int MeshTransfiniteSurface(GFace *gf);
-int MeshExtrudedSurface(GFace *gf);
+int MeshExtrudedSurface(GFace *gf, 
+			std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges=0);
 
 #endif
