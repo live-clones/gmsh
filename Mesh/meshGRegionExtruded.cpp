@@ -1,4 +1,4 @@
-// $Id: meshGRegionExtruded.cpp,v 1.8 2007-01-16 11:31:42 geuzaine Exp $
+// $Id: meshGRegionExtruded.cpp,v 1.9 2007-01-16 14:15:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -429,7 +429,8 @@ int SubdivideExtrudedMesh(GModel *m)
       phase2(regions[i], pos, edges, edges_swap, swap);
     Msg(INFO, "Swapping %d", swap);
     if(j && j == swap) {
-      Msg(GERROR, "Unable to subdivide extruded mesh: use 'Recombine' instead");
+      Msg(GERROR, "Unable to subdivide extruded mesh: change surface mesh or");
+      Msg(GERROR, "recombine extrusion instead");
       return -1;
     }
     j = swap;
