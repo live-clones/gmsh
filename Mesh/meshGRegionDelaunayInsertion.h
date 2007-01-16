@@ -32,13 +32,18 @@ class MTet4
   double circum_radius;
   MTetrahedron *base;
   MTet4 *neigh[4];
+  GRegion *gr;
  public :
+
+  inline GRegion * onWhat () const {return gr;}
+  inline void      setOnWhat (GRegion *g) {gr=g;}
   
   bool isDeleted () const {return deleted;}
   void   forceRadius (double r){circum_radius=r;}
   double getRadius ()const {return circum_radius;}
   
-  MTet4 ( MTetrahedron * t, std::vector<double> & sizes) : deleted(false), base (t)
+
+  MTet4 ( MTetrahedron * t, std::vector<double> & sizes) : deleted(false), base (t), gr(0)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
     double center[3];

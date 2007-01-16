@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.48 2007-01-16 11:31:41 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.49 2007-01-16 14:19:31 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -314,7 +314,8 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	      double lone = NewGetLc ( *it);
 
 	      const double coord = 0.5;
-	      if (lone < 1.e-12 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
+	      // take care with seams :
+	      if (lone < 1.e-10 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
 	      if ((*it)->numfaces() == 2 && (lone >  1.3))
 		{
 		  BDS_Point *mid ;
@@ -364,7 +365,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	{
 	  if (NN2++ >= NN1)break;
 	  double lone = NewGetLc ( *it);
-	  if (lone < 1.e-12 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
+	  if (lone < 1.e-10 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
 
 	  if (!(*it)->deleted && (*it)->numfaces() == 2 && lone < 0.6 )
 	    {
@@ -920,6 +921,9 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
      std::vector<SPoint2> mesh1d_seam;
 
      bool seam = ges.ge->isSeam(gf);
+     
+     printf("face %d edge %d seam %d (%d %d)\n",gf->tag(),ges.ge->tag(),seam,ges.ge->getBeginVertex()->tag(),ges.ge->getEndVertex()->tag());
+     
      Range<double> range = ges.ge->parBounds(0);
 
      MVertex *here = ges.ge->getBeginVertex()->mesh_vertices[0];
@@ -1196,6 +1200,9 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   free (doc.points);
   free (doc.delaunay);
 
+  char name[245];
+  sprintf(name,"param%d.pos",gf->tag());
+  outputScalarField(m->triangles, name,1);
 
  
   // Recover the boundary edges
@@ -1332,7 +1339,12 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
 	    MVertex *v2 = recover_map[n[1]];
 	    MVertex *v3 = recover_map[n[2]];
 	    if (!n[3])
-	      gf->triangles.push_back(new MTriangle (v1,v2,v3) );	
+	      {
+		// when a singular point is present, degenerated triangles may be created,
+		// for example on a sphere that contains one pole 
+		if (v1 != v2 && v1 != v3 && v2 != v3)
+		  gf->triangles.push_back(new MTriangle (v1,v2,v3) );	
+	      }
 	    else
 	      {
 		MVertex *v4 = recover_map[n[3]];
@@ -1345,9 +1357,6 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   
   
   // delete the mesh
-  //    char name[245];
-    //   sprintf(name,"param%d.pos",gf->tag());
-   //outputScalarField(m->triangles, name,1);
    //    sprintf(name,"real%d.pos",gf->tag());
     //outputScalarField(m->triangles, name,0);
 

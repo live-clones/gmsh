@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.23 2007-01-16 11:31:42 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.24 2007-01-16 14:19:31 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -111,7 +111,9 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
   }   
 }
 
-void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out, 
+void TransferTetgenMesh(GRegion *gr, 
+			tetgenio &in, 
+			tetgenio &out, 
 			std::vector<MVertex*> &numberedV)
 {
   for(int i = numberedV.size(); i < out.numberofpoints; i++){
@@ -439,10 +441,13 @@ void meshGRegion::operator() (GRegion *gr)
   Msg(STATUS2, "Meshing volume %d", gr->tag());
 
   // destroy the mesh if it exists
-  deMeshGRegion dem;
-  dem(gr);
-
-  if(MeshTransfiniteVolume(gr)) return;
+  if(gr->meshAttributes.Method == TRANSFINI)
+    {
+      deMeshGRegion dem;
+      dem(gr);
+      MeshTransfiniteVolume(gr);
+      return;
+    }
 
   std::list<GFace*> faces = gr->faces();
 
@@ -458,9 +463,15 @@ void meshGRegion::operator() (GRegion *gr)
 #if !defined(HAVE_TETGEN)
     Msg(GERROR, "Tetgen is not compiled in this version of Gmsh");
 #else
-    // put all the faces in the same model
+    // delete the mesh for all regions
     GModel::riter rit = gr->model()->firstRegion() ;
     if (gr != *rit)return;    
+    for (; rit != gr->model()->lastRegion();++rit)
+      {
+	deMeshGRegion dem;
+	dem(*rit);
+      }
+    // put all the faces in the same model
     std::list<GFace*> allFaces;
     GModel::fiter fit = gr->model()->firstFace() ;
     while (fit != gr->model()->lastFace()){
@@ -476,14 +487,24 @@ void meshGRegion::operator() (GRegion *gr)
     sprintf(opts, "pe%c", (CTX.verbosity < 3) ? 'Q': (CTX.verbosity > 6)? 'V': '\0');
     tetrahedralize(opts, &in, &out);
     TransferTetgenMesh(gr, in, out, numberedV);
+    // sort triangles in all model faces in order to be able to search in vectors
+    {
+      std::list<GFace*>::iterator itf =  allFaces.begin();
+      while(itf!=allFaces.end())
+	{
+	  compareMTriangleLexicographic cmp;
+	  std::sort((*itf)->triangles.begin(),
+		    (*itf)->triangles.end(),
+		    cmp);
+	  ++itf;
+	}
+    }
 
-    // FIXME: all the volume nodes+tets now belong to the first
-    // region--we need to recategorize them into each separate region
+    // restore the initial set of faces
+    gr->set(faces);
 
     // now do insertion of points
     insertVerticesInRegion(gr); 
-    // restore the initial set of faces
-    gr->set(faces);
     //    meshNormalsPointOutOfTheRegion(gr);
 #endif
   }
@@ -492,6 +513,8 @@ void meshGRegion::operator() (GRegion *gr)
 #if !defined(HAVE_NETGEN)
     Msg(GERROR, "Netgen is not compiled in this version of Gmsh");
 #else
+    deMeshGRegion dem;
+    dem(gr);
     // orient the triangles of with respect to this region
     meshNormalsPointOutOfTheRegion(gr);
     std::vector<MVertex*> numberedV;

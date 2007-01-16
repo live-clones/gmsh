@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.10 2007-01-12 13:16:59 remacle Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.11 2007-01-16 14:19:31 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,6 +21,7 @@
 
 #include "BackgroundMesh.h"
 #include "meshGRegionDelaunayInsertion.h"
+#include "GModel.h"
 #include "GRegion.h"
 #include "Numeric.h"
 #include "Message.h"
@@ -38,7 +39,7 @@ int MTet4::inCircumSphere ( const double *p ) const
   return (result > 0) ? 1 : 0;
 }
 
-int faces[4][3] = {{0,1,2},{0,2,3},{0,1,3},{1,2,3}};
+static int faces[4][3] = {{0,1,2},{0,2,3},{0,1,3},{1,2,3}};
 
 struct faceXtet
 {
@@ -116,10 +117,10 @@ void recurFindCavity ( std::list<faceXtet> & shell,
       MTet4 *neigh =  t->getNeigh(i) ;
       if (!neigh)
 	  shell.push_back ( faceXtet ( t, i ) );
-      else  if (!neigh->isDeleted())
+      else  if (!neigh->isDeleted() )
 	{
 	  int circ =  neigh->inCircumSphere ( v );
-	  if (circ)
+	  if (circ && (neigh->onWhat() == t->onWhat()))
 	    recurFindCavity ( shell, cavity,v , neigh);
 	  else
 	    shell.push_back ( faceXtet ( t, i ) );
@@ -203,10 +204,10 @@ bool insertVertex (MVertex *v ,
 
   while (it != shell.end())
     {
-      MTetrahedron *t = new MTetrahedron ( it->v[0],
-					   it->v[1],
-					   it->v[2],
-					   v);
+      MTetrahedron *tr = new MTetrahedron ( it->v[0],
+					    it->v[1],
+					    it->v[2],
+					    v);
       //      Msg(INFO,"shell %d %d %d",it->v[0]->getNum(),it->v[1]->getNum(),it->v[2]->getNum());
 //            fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {0,0,0};\n",
 // 		   it->v[0]->x(),
@@ -219,7 +220,8 @@ bool insertVertex (MVertex *v ,
 // 		   it->v[2]->y(),
 // 		   it->v[2]->z());
       
-      MTet4 *t4 = new MTet4 ( t , vSizes); 
+      MTet4 *t4 = new MTet4 ( tr , vSizes); 
+      t4->setOnWhat(t->onWhat());
       newTets[k++]=t4;
       // all new tets are pushed front in order to
       // ba able to destroy them if the cavity is not
@@ -297,6 +299,80 @@ static void setLcs ( MTetrahedron *t, std::map<MVertex*,double> &vSizes)
 // }
 
 
+bool find_triangle_in_model ( GModel *model , MTriangle *tri, GFace **gfound)
+{ 
+  GModel::fiter fit = model->firstFace() ;
+  compareMTriangleLexicographic cmp;
+  while (fit != model->lastFace()){
+
+    bool found = binary_search((*fit)->triangles.begin(), 
+			       (*fit)->triangles.end(), 
+			       tri,cmp);
+    if (found )
+      {
+	*gfound = *fit;
+	return true;
+      }
+    ++fit;
+  }
+  return false;
+
+}
+
+GRegion *getRegionFromBoundingFaces (GModel *model, 		      
+				    std::set<GFace *> &faces_bound)
+{
+  GModel::riter git = model->firstRegion() ;
+  while (git != model->lastRegion()){
+
+    std::list <GFace *> _faces = (*git)->faces();
+    if (_faces.size() == faces_bound.size())
+      {
+	bool ok = true;
+	for (std::list <GFace *>::iterator it = _faces.begin();it != _faces.end();++it)
+	  {
+	    if (faces_bound.find (*it) == faces_bound.end())ok = false;
+	  }
+	if (ok)return *git;
+      }    
+    ++git;
+  }
+  return 0;
+}
+
+ 
+void recur_classify ( MTet4 *t ,
+		      std::set<MTet4*,compareTet4Ptr> &theRegion,		      
+		      std::set<GFace *> &faces_bound,
+		      GRegion *bidon ,
+		      GModel *model)
+{
+  if (!t) Msg (GERROR,"a tet is not connected by a boundary face");
+  if (t->onWhat())return;
+  theRegion.insert(t);
+  t->setOnWhat(bidon);
+  
+  for (int i=0;i<4;i++)
+    {
+      MTriangle tri ( t->tet()->getVertex ( faces[i][0] ),
+		      t->tet()->getVertex ( faces[i][1] ),
+		      t->tet()->getVertex ( faces[i][2] ) );
+      GFace     *gfound;
+      bool found = find_triangle_in_model ( model , &tri, &gfound);
+
+      //      Msg(INFO,"found ? %d",found);
+      if (found)
+	{
+	  faces_bound.insert(gfound);	  
+	}
+      else
+	{
+	  recur_classify ( t->getNeigh(i) , theRegion, faces_bound, bidon, model );
+	}
+    }
+
+}
+
 void insertVerticesInRegion (GRegion *gr) 
 {
 
@@ -318,6 +394,23 @@ void insertVerticesInRegion (GRegion *gr)
 
   gr->tetrahedra.clear();
   connectTets ( allTets.begin(), allTets.end() );      
+
+  // classify the tets on the right region
+  Msg (INFO,"reclassifying %d tets",allTets.size());
+  for (std::set<MTet4*,compareTet4Ptr>::iterator it = allTets.begin();it!=allTets.end();++it)
+    {
+      if (!(*it)->onWhat())
+	{
+	  std::set<MTet4*,compareTet4Ptr> theRegion;
+	  std::set<GFace *> faces_bound;
+	  GRegion *bidon;
+	  recur_classify ( *it , theRegion, faces_bound, bidon , gr->model());
+	  GRegion *myGRegion = getRegionFromBoundingFaces (gr->model() , faces_bound ); 
+	  Msg (INFO,"found a region with %d tets %p",theRegion.size(),myGRegion);
+	  for (std::set<MTet4*,compareTet4Ptr>::iterator it2 = theRegion.begin();it2!=theRegion.end();++it2)(*it2)->setOnWhat(myGRegion);
+	}
+    }
+
 
   Msg(DEBUG,"All %d tets were connected",allTets.size());
 
@@ -389,7 +482,7 @@ void insertVerticesInRegion (GRegion *gr)
 	}
       else
 	{
-	  gr->tetrahedra.push_back(worst->tet());
+	  worst->onWhat()->tetrahedra.push_back(worst->tet());
 	}
       delete worst;
       allTets.erase(allTets.begin());      
