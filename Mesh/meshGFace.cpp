@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.49 2007-01-16 14:19:31 remacle Exp $
+// $Id: meshGFace.cpp,v 1.50 2007-01-16 16:56:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1200,9 +1200,9 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   free (doc.points);
   free (doc.delaunay);
 
-  char name[245];
-  sprintf(name,"param%d.pos",gf->tag());
-  outputScalarField(m->triangles, name,1);
+  //char name[245];
+  //sprintf(name,"param%d.pos",gf->tag());
+  //outputScalarField(m->triangles, name,1);
 
  
   // Recover the boundary edges
