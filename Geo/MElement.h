@@ -347,14 +347,39 @@ class MTriangle6 : public MTriangle {
   }
 };
 
+template <class T> 
+void sort3 ( T * t [3])
+{
+  T *temp;
+  if (t[0] > t[1])
+    {
+      temp = t[1];
+      t[1] = t[0];
+      t[0] = temp;
+    }
+  if (t[1] > t[2])
+    {
+      temp = t[2];
+      t[2] = t[1];
+      t[1] = temp;
+    }
+  if (t[0] > t[1])
+    {
+      temp = t[1];
+      t[1] = t[0];
+      t[0] = temp;
+    }
+}
+
 struct compareMTriangleLexicographic
 {
   bool operator () ( MTriangle *t1 , MTriangle *t2 ) const
   {
     MVertex *_v1[3] = {t1->getVertex(0),t1->getVertex(1),t1->getVertex(2)};
     MVertex *_v2[3] = {t2->getVertex(0),t2->getVertex(1),t2->getVertex(2)};
-    std::sort(_v1,_v1+3);
-    std::sort(_v2,_v2+3);
+
+    sort3(_v1);
+    sort3(_v2);
     if (_v1[0] < _v2[0]) return true;
     if (_v1[0] > _v2[0]) return false;
     if (_v1[1] < _v2[1]) return true;

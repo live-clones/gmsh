@@ -40,7 +40,7 @@ class MTet4
   
   bool isDeleted () const {return deleted;}
   void   forceRadius (double r){circum_radius=r;}
-  double getRadius ()const {return circum_radius;}
+  inline double getRadius ()const {return circum_radius;}
   
 
   MTet4 ( MTetrahedron * t, std::vector<double> & sizes) : deleted(false), base (t), gr(0)
