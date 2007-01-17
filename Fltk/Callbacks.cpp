@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.503 2007-01-16 11:31:40 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.504 2007-01-17 08:14:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1008,6 +1008,7 @@ void geometry_options_ok_cb(CALLBACK_ARGS)
 
   opt_geometry_normals(0, GMSH_SET, WID->geo_value[0]->value());
   opt_geometry_tangents(0, GMSH_SET, WID->geo_value[1]->value());
+  opt_geometry_tolerance(0, GMSH_SET, WID->geo_value[2]->value());
   opt_geometry_point_size(0, GMSH_SET, WID->geo_value[3]->value());
   opt_geometry_line_width(0, GMSH_SET, WID->geo_value[4]->value());
   opt_geometry_point_sel_size(0, GMSH_SET, WID->geo_value[5]->value());

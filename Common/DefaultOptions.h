@@ -826,6 +826,8 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "Tangents" , opt_geometry_tangents , 0. ,
     "Display size of tangent vectors (in pixels)" },
+  { F|O, "Tolerance" , opt_geometry_tolerance, 1.e-6 ,
+    "Geometrical tolerance" },
 
   { F|O, "Volumes" , opt_geometry_volumes , 0. , 
     "Display geometry volumes? (not implemented yet)" },
@@ -885,9 +887,6 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. , 
     "Display mesh hexahedra?" },
 
-  { F|O, "InitialOnly" , opt_mesh_initial_only , 0. ,
-    "Only contruct the n-dimensional initial mesh (no refinement)" },
-
   { F|O, "LabelType" , opt_mesh_label_type , 0. , 
     "Type of element label (0=element number, 1=elementary entity number, 2=physical entity number, 3=partition number, 4=coordinates)" },
   { F|O, "Light" , opt_mesh_light , 1. , 
@@ -930,8 +929,6 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Optimize" , opt_mesh_optimize , 0. , 
     "Optimize the mesh using Netgen to improve the quality of tetrahedral elements" },
 
-  { F|O, "Partitioning" , opt_mesh_nb_partitions , 1. ,
-    "Number of partitions applied to the final mesh" },
   { F|O, "Points" , opt_mesh_points , 0. , 
     "Display mesh vertices (nodes)?" },
   { F|O, "PointNumbers" , opt_mesh_points_num , 0. , 
@@ -947,8 +944,6 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "Quadrangles" , opt_mesh_quadrangles , 1. , 
     "Display mesh quadrangles?" },
-  { F|O, "Quality" , opt_mesh_quality , 1.0 ,
-    "Target quality for tetrahedral elements (currently only used by Tetgen)" },
   { F|O, "QualityInf" , opt_mesh_quality_inf , 0.0 , 
     "Only display elements whose quality measure is greater than QualityInf" },
   { F|O, "QualitySup" , opt_mesh_quality_sup , 0.0 , 
@@ -960,7 +955,7 @@ StringXNumber MeshOptions_Number[] = {
     "Only display elements whose longest edge is greater than RadiusInf" },
   { F|O, "RadiusSup" , opt_mesh_radius_sup , 0.0 , 
     "Only display elements whose longest edge is smaller than RadiusSup" },
-  { F|O, "RandomFactor" , opt_mesh_rand_factor , 1.e-10 ,
+  { F|O, "RandomFactor" , opt_mesh_rand_factor , 1.e-9 ,
     "Random factor used in 2D and 3D meshing algorithm (test other values when the algorithm fails)" },
   { F|O, "RecombineAlgo" , opt_mesh_recombine_algo , 1 ,
     "Recombine algorithm (1=mixed triangles-quadrangles, 2=all quadrangles)" }, 
@@ -979,8 +974,6 @@ StringXNumber MeshOptions_Number[] = {
     "Number of smoothing steps applied to the final mesh" },
   { F|O, "SmoothNormals" , opt_mesh_smooth_normals , 0. , 
     "Smooth the mesh normals?" },
-  { F|O, "StlDistanceTol" , opt_mesh_stl_distance_tol, 5.e-7 ,
-    "Distance tolerance between two distinct vertices in STL meshes" },
   { F|O, "StlBinary" , opt_mesh_stl_binary , 0. , 
     "Save STL files in binary format?" },
   { F|O, "SurfaceEdges" , opt_mesh_surfaces_edges , 1. , 

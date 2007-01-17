@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.50 2007-01-16 16:56:25 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.51 2007-01-17 08:14:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -922,7 +922,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 
      bool seam = ges.ge->isSeam(gf);
      
-     printf("face %d edge %d seam %d (%d %d)\n",gf->tag(),ges.ge->tag(),seam,ges.ge->getBeginVertex()->tag(),ges.ge->getEndVertex()->tag());
+     //printf("face %d edge %d seam %d (%d %d)\n",gf->tag(),ges.ge->tag(),seam,ges.ge->getBeginVertex()->tag(),ges.ge->getEndVertex()->tag());
      
      Range<double> range = ges.ge->parBounds(0);
 

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.590 2007-01-12 13:49:38 remacle Exp $
+// $Id: GUI.cpp,v 1.591 2007-01-17 08:14:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2081,9 +2081,14 @@ void GUI::create_option_window()
     {
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "General");
       o->hide();
+
       geo_butt[8] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Remove duplicate entities automatically");
       geo_butt[8]->type(FL_TOGGLE_BUTTON);
       geo_butt[8]->callback(geometry_options_ok_cb);
+
+      geo_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Geometrical tolerance");
+      geo_value[2]->align(FL_ALIGN_RIGHT);
+      geo_value[2]->callback(geometry_options_ok_cb);
 
       o->end();
     }

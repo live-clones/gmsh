@@ -124,6 +124,11 @@ Display size of tangent vectors (in pixels)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.Tolerance
+Geometrical tolerance@*
+Default value: @code{1e-06}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.Volumes
 Display geometry volumes? (not implemented yet)@*
 Default value: @code{0}@*

@@ -1,4 +1,4 @@
-$Id: TODO,v 1.35 2007-01-08 16:42:42 geuzaine Exp $
+$Id: TODO,v 1.36 2007-01-17 08:14:24 geuzaine Exp $
 
 ********************************************************************
 
@@ -7,14 +7,6 @@ introduce Right/Left/Alternate for extruded meshes
 ********************************************************************
 
 fix second order mesh for periodic surfaces
-
-********************************************************************
-
-reimplement subdivision of extruded meshes
-
-********************************************************************
-
-reclassify volumes in new/tetgen 3D mesh
 
 ********************************************************************
 

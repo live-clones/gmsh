@@ -3,6 +3,8 @@
 @ftable @code
 @item -0
 Output unrolled geometry, then exit
+@item -tol float
+Set geometrical tolerance
 @end ftable
 
 @sp 1 

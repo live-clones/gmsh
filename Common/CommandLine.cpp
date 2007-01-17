@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.90 2007-01-12 19:47:52 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.91 2007-01-17 08:14:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -76,6 +76,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "Usage: %s [options] [files]", name);
   Msg(DIRECT, "Geometry options:");
   Msg(DIRECT, "  -0                    Output unrolled geometry, then exit");
+  Msg(DIRECT, "  -tol float            Set geometrical tolerance");
   Msg(DIRECT, "Mesh options:");
   Msg(DIRECT, "  -1, -2, -3            Perform 1D, 2D or 3D mesh generation, then exit");
   Msg(DIRECT, "  -saveall              Save all elements (discard physical group definitions)");
@@ -295,19 +296,10 @@ void Get_Options(int argc, char *argv[])
           fprintf(stderr, "Usage: %s -convert file file\n", argv[0]);
         exit(1);
       }
-      else if(!strcmp(argv[i] + 1, "initial")) {
+      else if(!strcmp(argv[i] + 1, "tol")) {
         i++;
         if(argv[i] != NULL)
-          CTX.mesh.initial_only = atoi(argv[i++]);
-        else {
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
-      }
-      else if(!strcmp(argv[i] + 1, "quality")) {
-        i++;
-        if(argv[i] != NULL)
-          CTX.mesh.quality = atof(argv[i++]);
+          CTX.geom.tolerance = atof(argv[i++]);
         else {
           fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);

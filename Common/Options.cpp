@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.326 2007-01-12 19:47:52 geuzaine Exp $
+// $Id: Options.cpp,v 1.327 2007-01-17 08:14:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3761,6 +3761,17 @@ double opt_geometry_auto_coherence(OPT_ARGS_NUM)
   return CTX.geom.auto_coherence;
 }
 
+double opt_geometry_tolerance(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.geom.tolerance = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->geo_value[2]->value(CTX.geom.tolerance);
+#endif
+  return CTX.geom.tolerance;
+}
+
 double opt_geometry_normals(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -4030,13 +4041,6 @@ double opt_mesh_optimize(OPT_ARGS_NUM)
     WID->mesh_butt[2]->value(CTX.mesh.optimize);
 #endif
   return CTX.mesh.optimize;
-}
-
-double opt_mesh_quality(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.quality = val;
-  return CTX.mesh.quality;
 }
 
 double opt_mesh_normals(OPT_ARGS_NUM)
@@ -4572,13 +4576,6 @@ double opt_mesh_format(OPT_ARGS_NUM)
   return CTX.mesh.format;
 }
 
-double opt_mesh_stl_distance_tol(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.stl_distance_tol = val;
-  return CTX.mesh.stl_distance_tol;
-}
-
 double opt_mesh_msh_file_version(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -4620,13 +4617,6 @@ double opt_mesh_nb_smoothing(OPT_ARGS_NUM)
     WID->mesh_value[0]->value(CTX.mesh.nb_smoothing);
 #endif
   return CTX.mesh.nb_smoothing;
-}
-
-double opt_mesh_nb_partitions(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.nbPartitions = (int)val;
-  return CTX.mesh.nbPartitions;
 }
 
 double opt_mesh_algo2d(OPT_ARGS_NUM)
@@ -4748,13 +4738,6 @@ double opt_mesh_dual(OPT_ARGS_NUM)
     CTX.mesh.dual = (int)val;
   }
   return CTX.mesh.dual;
-}
-
-double opt_mesh_initial_only(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.initial_only = (int)val;
-  return CTX.mesh.initial_only;
 }
 
 double opt_mesh_use_cut_plane(OPT_ARGS_NUM)

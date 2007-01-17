@@ -1,4 +1,4 @@
-.\" $Id: gmsh.1,v 1.74 2006-11-30 14:09:07 geuzaine Exp $
+.\" $Id: gmsh.1,v 1.75 2007-01-17 08:14:24 geuzaine Exp $
 .TH Gmsh 1 "09 March 2006" "Gmsh 2.0" "Gmsh Manual Pages"
 .UC 4
 .\" ********************************************************************
@@ -24,6 +24,9 @@ ASCII text files using \fIGmsh\fR's own scripting language.
 .TP 4
 .B \-0
 parse all input files, output unrolled geometry, and exit. 
+.TP 4
+.B \-tol float
+set geometrical tolerance. 
 .\" ********************************************************************
 .SH MESH OPTIONS
 .TP 4
@@ -75,9 +78,6 @@ load the post-processing view in file as the current background mesh.
 .B \-constrain
 constrain the background mesh with the characteristic lengths of the
 model.
-.TP 4
-.B \-histogram
-print mesh quality histogram.
 .\" ********************************************************************
 .SH POST-PROCESSING OPTIONS
 .TP 4

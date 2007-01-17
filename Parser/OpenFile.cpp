@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.138 2007-01-12 13:17:00 remacle Exp $
+// $Id: OpenFile.cpp,v 1.139 2007-01-17 08:14:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -315,7 +315,7 @@ int MergeFile(char *name, int warn_if_missing)
   CTX.geom.draw = 0; // don't try to draw the model while reading
   int status = 0;
   if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL")){
-    status = GMODEL->readSTL(name, CTX.mesh.stl_distance_tol);
+    status = GMODEL->readSTL(name, CTX.geom.tolerance);
   }
   else if(!strcmp(ext, ".brep") || !strcmp(ext, ".rle") ||
 	  !strcmp(ext, ".brp") || !strcmp(ext, ".BRP")){

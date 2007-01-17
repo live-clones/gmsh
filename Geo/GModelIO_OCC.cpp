@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.15 2007-01-16 11:31:41 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.16 2007-01-17 08:14:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,11 +21,14 @@
 
 #include "GModel.h"
 #include "Message.h"
+#include "Context.h"
 #include "OCCIncludes.h"
 #include "OCCVertex.h"
 #include "OCCEdge.h"
 #include "OCCFace.h"
 #include "OCCRegion.h"
+
+extern Context_T CTX;
 
 #if defined(HAVE_OCC)
 
@@ -53,7 +56,7 @@ public:
     wmap.Clear();
     emap.Clear();
     vmap.Clear();
-    tolerance = 1.e-3;
+    tolerance = CTX.geom.tolerance;
   }
   void HealGeometry(bool fixsmalledges = true, bool fixspotstripfaces = true,
 		    bool sewfaces = false, bool makesolids = false);
@@ -251,7 +254,7 @@ void OCC_Internals::HealGeometry(bool fixsmalledges, bool fixspotstripfaces,
       TopExp_Explorer exp1;
       for(exp1.Init(fmap(i), TopAbs_WIRE); exp1.More(); exp1.Next()){
 	TopoDS_Wire oldwire = TopoDS::Wire(exp1.Current());
-	sfw = new ShapeFix_Wire(oldwire, TopoDS::Face(fmap(i)),tolerance);
+	sfw = new ShapeFix_Wire(oldwire, TopoDS::Face(fmap(i)), tolerance);
 	sfw->ModifyTopologyMode() = Standard_True;
 	
 	if(sfw->FixSmall(false, tolerance)){

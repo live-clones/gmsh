@@ -151,6 +151,7 @@ public :
     double normals, tangents;
     double scaling_factor;
     int auto_coherence;
+    double tolerance;
     double snap[3];
   } geom;
 
@@ -165,17 +166,15 @@ public :
     int point_type; // flat or 3D
     double point_size, line_width;
     int optimize;
-    double quality;
     int quality_type, label_type;
     double quality_inf, quality_sup, radius_inf, radius_sup;
     double scaling_factor, lc_factor, rand_factor;
     int dual;
     int light, light_two_side, light_lines;
-    int format, nbPartitions, nb_smoothing, algo2d, algo3d, algo_recombine;
+    int format, nb_smoothing, algo2d, algo3d, algo_recombine;
     int order, second_order_linear, second_order_incomplete;
     int min_circ_points;
     int bgmesh_type, constrained_bgmesh, lc_from_curvature;
-    int initial_only;
     double normals, tangents, explode;
     int color_carousel;
     int use_cut_plane, cut_plane_draw_intersect, cut_plane_only_volume;
@@ -188,10 +187,6 @@ public :
     char *triangle_options;
     int smooth_normals, reverse_all_normals;
     double angle_smooth_normals;
-    double stl_distance_tol, dihedral_angle_tol;
-    int edge_prolongation_threshold, do_not_coarsen;
-    double  nb_elem_per_rc, min_elem_size_fact, target_elem_size_fact, beta_smooth_metric;
-    //    int use_curvature_control_for_mesh_size;
   } mesh;
 
   // post processing options 

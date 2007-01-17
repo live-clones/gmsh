@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.69 2007-01-12 08:10:32 geuzaine Exp $
+// $Id: Geo.cpp,v 1.70 2007-01-17 08:14:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -71,7 +71,7 @@ int compareVertex(const void *a, const void *b)
 int comparePosition(const void *a, const void *b)
 {
   // Warning: tolerance! (before 1.61, it was set to 1.e-10 * CTX.lc)
-  double eps = 1.e-6 * CTX.lc; 
+  double eps = CTX.geom.tolerance * CTX.lc; 
 
   Vertex **q = (Vertex **) a;
   Vertex **w = (Vertex **) b;

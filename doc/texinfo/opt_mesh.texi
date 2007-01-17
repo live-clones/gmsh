@@ -10,13 +10,13 @@ Default value: @code{"praqzBPY"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm
-2D mesh algorithm (1=isotropic, 2=anisotropic, 3=triangle)@*
+2D mesh algorithm (1=meshadapt, 2=delaunay)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm3D
-3D mesh algorithm (1=isotropic, 4=netgen, 5=tetgen)@*
-Default value: @code{1}@*
+3D mesh algorithm (1=delaunay, 4=netgen)@*
+Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.AngleSmoothNormals
@@ -114,11 +114,6 @@ Display mesh hexahedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.InitialOnly
-Only contruct the n-dimensional initial mesh (no refinement)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.LabelType
 Type of element label (0=element number, 1=elementary entity number, 2=physical entity number, 3=partition number, 4=coordinates)@*
 Default value: @code{0}@*
@@ -214,11 +209,6 @@ Optimize the mesh using Netgen to improve the quality of tetrahedral elements@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Partitioning
-Number of partitions applied to the final mesh@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.Points
 Display mesh vertices (nodes)?@*
 Default value: @code{0}@*
@@ -254,11 +244,6 @@ Display mesh quadrangles?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Quality
-Target quality for tetrahedral elements (currently only used by Tetgen)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.QualityInf
 Only display elements whose quality measure is greater than QualityInf@*
 Default value: @code{0}@*
@@ -286,7 +271,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RandomFactor
 Random factor used in 2D and 3D meshing algorithm (test other values when the algorithm fails)@*
-Default value: @code{1e-10}@*
+Default value: @code{1e-09}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombineAlgo
@@ -327,11 +312,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.SmoothNormals
 Smooth the mesh normals?@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.StlDistanceTol
-Distance tolerance between two distinct vertices in STL meshes@*
-Default value: @code{5e-07}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.StlBinary
