@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.24 2007-01-16 14:19:31 remacle Exp $
+// $Id: meshGRegion.cpp,v 1.25 2007-01-18 10:18:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 #include "GRegion.h"
 #include "GFace.h"
 #include "GEdge.h"
+#include "gmshRegion.h"
 #include "MRep.h"
 #include "BDS.h"
 #include "Message.h"
@@ -182,6 +183,53 @@ void TransferTetgenMesh(GRegion *gr,
 }
 
 #endif
+
+void MeshDelaunayVolume(std::vector<GRegion*> &regions)
+{
+  if(regions.empty()) return;
+
+#if !defined(HAVE_TETGEN)
+  Msg(GERROR, "Tetgen is not compiled in this version of Gmsh");
+#else
+
+  // put all the faces in the same model
+  GRegion *gr = regions[0];
+  std::list<GFace*> faces = gr->faces();
+
+  std::set<GFace*> allFacesSet;
+  for(unsigned int i = 0; i < regions.size(); i++){
+    std::list<GFace*> f = regions[i]->faces();
+    allFacesSet.insert(f.begin(), f.end());
+  }
+  std::list<GFace*> allFaces;
+  for(std::set<GFace*>::iterator it = allFacesSet.begin(); it != allFacesSet.end(); it++)
+    allFaces.push_back(*it);
+  gr->set(allFaces);
+
+  // mesh with tetgen, possibly changing the mesh on boundaries
+  tetgenio in, out;
+  std::vector<MVertex*> numberedV;
+  char opts[128];
+  buildTetgenStructure(gr, in, numberedV);
+  sprintf(opts, "pe%c", (CTX.verbosity < 3) ? 'Q': (CTX.verbosity > 6)? 'V': '\0');
+  tetrahedralize(opts, &in, &out);
+  TransferTetgenMesh(gr, in, out, numberedV);
+
+  // sort triangles in all model faces in order to be able to search in vectors
+  std::list<GFace*>::iterator itf =  allFaces.begin();
+  while(itf != allFaces.end()){
+    compareMTriangleLexicographic cmp;
+    std::sort((*itf)->triangles.begin(), (*itf)->triangles.end(), cmp);
+    ++itf;
+  }
+
+  // restore the initial set of faces
+  gr->set(faces);
+
+  // now do insertion of points
+  insertVerticesInRegion(gr); 
+#endif
+}
 
 #if defined(HAVE_NETGEN)
 
@@ -441,14 +489,14 @@ void meshGRegion::operator() (GRegion *gr)
   Msg(STATUS2, "Meshing volume %d", gr->tag());
 
   // destroy the mesh if it exists
-  if(gr->meshAttributes.Method == TRANSFINI)
-    {
-      deMeshGRegion dem;
-      dem(gr);
-      MeshTransfiniteVolume(gr);
-      return;
-    }
+  deMeshGRegion dem;
+  dem(gr);
 
+  if(gr->meshAttributes.Method == TRANSFINI){
+    MeshTransfiniteVolume(gr);
+    return;
+  }
+  
   std::list<GFace*> faces = gr->faces();
 
   // sanity check
@@ -460,61 +508,12 @@ void meshGRegion::operator() (GRegion *gr)
   }
 
   if(CTX.mesh.algo3d == ALGO_3D_DELAUNAY || CTX.mesh.algo3d == ALGO_3D_TETGEN){
-#if !defined(HAVE_TETGEN)
-    Msg(GERROR, "Tetgen is not compiled in this version of Gmsh");
-#else
-    // delete the mesh for all regions
-    GModel::riter rit = gr->model()->firstRegion() ;
-    if (gr != *rit)return;    
-    for (; rit != gr->model()->lastRegion();++rit)
-      {
-	deMeshGRegion dem;
-	dem(*rit);
-      }
-    // put all the faces in the same model
-    std::list<GFace*> allFaces;
-    GModel::fiter fit = gr->model()->firstFace() ;
-    while (fit != gr->model()->lastFace()){
-      allFaces.push_back(*fit);
-      ++fit;
-    }
-    gr->set(allFaces);
-    // mesh with tetgen, possibly changing the mesh on boundaries
-    tetgenio in, out;
-    std::vector<MVertex*> numberedV;
-    char opts[128];
-    buildTetgenStructure(gr, in, numberedV);
-    sprintf(opts, "pe%c", (CTX.verbosity < 3) ? 'Q': (CTX.verbosity > 6)? 'V': '\0');
-    tetrahedralize(opts, &in, &out);
-    TransferTetgenMesh(gr, in, out, numberedV);
-    // sort triangles in all model faces in order to be able to search in vectors
-    {
-      std::list<GFace*>::iterator itf =  allFaces.begin();
-      while(itf!=allFaces.end())
-	{
-	  compareMTriangleLexicographic cmp;
-	  std::sort((*itf)->triangles.begin(),
-		    (*itf)->triangles.end(),
-		    cmp);
-	  ++itf;
-	}
-    }
-
-    // restore the initial set of faces
-    gr->set(faces);
-
-    // now do insertion of points
-    insertVerticesInRegion(gr); 
-    //    meshNormalsPointOutOfTheRegion(gr);
-#endif
+    delaunay.push_back(gr);
   }
-  
-  if(CTX.mesh.algo3d == ALGO_3D_NETGEN ){
+  else if(CTX.mesh.algo3d == ALGO_3D_NETGEN ){
 #if !defined(HAVE_NETGEN)
     Msg(GERROR, "Netgen is not compiled in this version of Gmsh");
 #else
-    deMeshGRegion dem;
-    dem(gr);
     // orient the triangles of with respect to this region
     meshNormalsPointOutOfTheRegion(gr);
     std::vector<MVertex*> numberedV;

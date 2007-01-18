@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.112 2007-01-16 11:31:41 geuzaine Exp $
+// $Id: Generator.cpp,v 1.113 2007-01-18 10:18:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -236,8 +236,11 @@ void Mesh3D()
   // then subdivide if necessary (unfortunately the subdivision is a
   // global operation, which can require changing the surface mesh!)
   SubdivideExtrudedMesh(GMODEL);
-  // then mesh the rest
-  std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), meshGRegion());
+  // then mesh all the non-delaunay regions
+  std::vector<GRegion*> delaunay;
+  std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), meshGRegion(delaunay));
+  // and finally mesh the delaunay regions (again, this is global)
+  MeshDelaunayVolume(delaunay);
 
   double t2 = Cpu();
   CTX.mesh_timer[2] = t2 - t1;

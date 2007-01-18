@@ -20,12 +20,16 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <vector>
+
 class GModel;
 class GRegion;
 
 // Create the mesh of the region
 class meshGRegion {
  public :
+  std::vector<GRegion*> &delaunay;
+  meshGRegion(std::vector<GRegion*> &d) : delaunay(d) {}
   void operator () (GRegion *);
 };
 
@@ -46,6 +50,7 @@ class deMeshGRegion {
   void operator () (GRegion *);
 };
 
+void MeshDelaunayVolume(std::vector<GRegion*> &delaunay);
 int MeshTransfiniteVolume(GRegion *gr);
 int SubdivideExtrudedMesh(GModel *m);
 
