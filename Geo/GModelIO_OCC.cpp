@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.16 2007-01-17 08:14:23 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.17 2007-01-18 13:18:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -46,7 +46,6 @@ extern Context_T CTX;
 class OCC_Internals {
   TopoDS_Shape shape;
   TopTools_IndexedMapOfShape fmap, emap, vmap, somap, shmap, wmap;
-  double tolerance;
 public:
   OCC_Internals()
   {
@@ -56,10 +55,10 @@ public:
     wmap.Clear();
     emap.Clear();
     vmap.Clear();
-    tolerance = CTX.geom.tolerance;
   }
-  void HealGeometry(bool fixsmalledges = true, bool fixspotstripfaces = true,
-		    bool sewfaces = false, bool makesolids = false);
+  void HealGeometry(double tolerance, bool fixsmalledges, 
+		    bool fixspotstripfaces, bool sewfaces, 
+		    bool makesolids=false);
   void loadSTEP(const char *);
   void loadIGES(const char *);
   void loadBREP(const char *);  
@@ -225,8 +224,9 @@ void OCC_Internals::buildLists()
   
 }
 
-void OCC_Internals::HealGeometry(bool fixsmalledges, bool fixspotstripfaces, 
-				 bool sewfaces, bool makesolids)
+void OCC_Internals::HealGeometry(double tolerance, bool fixsmalledges, 
+				 bool fixspotstripfaces, bool sewfaces, 
+				 bool makesolids)
 {
   int nrc = 0, nrcs = 0;
   TopExp_Explorer e;
@@ -392,7 +392,10 @@ void OCC_Internals::loadBREP(const char *fn)
   BRepTools::Read(shape, (char*)fn, aBuilder);
   BRepTools::Clean(shape);
   buildLists();
-  HealGeometry();
+  HealGeometry(CTX.geom.tolerance, 
+	       CTX.geom.occ_fix_small_edges,
+	       CTX.geom.occ_fix_small_faces,
+	       CTX.geom.occ_sew_faces);
   BRepTools::Clean(shape);
 }
 
@@ -405,7 +408,10 @@ void OCC_Internals::loadSTEP(const char *fn)
   shape = reader.OneShape();  
   BRepTools::Clean(shape);
   buildLists();
-  HealGeometry();
+  HealGeometry(CTX.geom.tolerance, 
+	       CTX.geom.occ_fix_small_edges,
+	       CTX.geom.occ_fix_small_faces,
+	       CTX.geom.occ_sew_faces);
   BRepTools::Clean(shape);
 }
 
@@ -418,10 +424,10 @@ void OCC_Internals::loadIGES(const char *fn)
   shape = reader.OneShape();  
   BRepTools::Clean(shape);
   buildLists();
-  HealGeometry();
-  BRepTools::Clean(shape);
-  buildLists();
-  HealGeometry();
+  HealGeometry(CTX.geom.tolerance, 
+	       CTX.geom.occ_fix_small_edges,
+	       CTX.geom.occ_fix_small_faces,
+	       CTX.geom.occ_sew_faces);
   BRepTools::Clean(shape);
 }
 

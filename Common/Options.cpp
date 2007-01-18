@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.328 2007-01-18 09:12:44 geuzaine Exp $
+// $Id: Options.cpp,v 1.329 2007-01-18 13:18:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3976,6 +3976,27 @@ double opt_geometry_light(OPT_ARGS_NUM)
   }
 #endif
   return CTX.geom.light;
+}
+
+double opt_geometry_occ_fix_small_edges(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.geom.occ_fix_small_edges = val ? 1 : 0;
+  return CTX.geom.occ_fix_small_edges;
+}
+
+double opt_geometry_occ_fix_small_faces(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.geom.occ_fix_small_faces = val ? 1 : 0;
+  return CTX.geom.occ_fix_small_faces;
+}
+
+double opt_geometry_occ_sew_faces(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.geom.occ_sew_faces = val ? 1 : 0;
+  return CTX.geom.occ_sew_faces;
 }
 
 double opt_geometry_old_circle(OPT_ARGS_NUM)

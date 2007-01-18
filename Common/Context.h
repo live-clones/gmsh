@@ -153,6 +153,7 @@ public :
     int auto_coherence;
     double tolerance;
     double snap[3];
+    int occ_fix_small_edges, occ_fix_small_faces, occ_sew_faces;
   } geom;
 
   // mesh options 

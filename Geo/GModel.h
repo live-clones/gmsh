@@ -39,7 +39,6 @@ class GModel
  private:
   void deleteOCCInternals();
   OCC_Internals *occ_internals;
-  double meshSize;
 
  protected:
   std::string modelName;
@@ -51,8 +50,8 @@ class GModel
   std::map<int, std::string> physicalNames;
 
  public:
-  GModel() : meshSize(-1.), modelName("Untitled"), normals(0) {}
-  GModel(const std::string &name) : meshSize(-1.), modelName(name), normals(0) {}
+  GModel() : modelName("Untitled"), normals(0) {}
+  GModel(const std::string &name) : modelName(name), normals(0) {}
   virtual ~GModel(){ deleteOCCInternals(); destroy(); }
   
   typedef std::set<GRegion*, GEntityLessThan>::iterator riter;
@@ -145,11 +144,6 @@ class GModel
 
   // Deletes all the partitions
   virtual void deleteMeshPartitions();
-
-  // Get or set the global mesh size for the model (default value is a
-  // tenth of the size of the domain)
-  double getMeshSize();
-  void setMeshSize(const double s) { meshSize = s; }
 
   // A container for smooth normals
   smooth_normals *normals;

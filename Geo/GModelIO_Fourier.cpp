@@ -835,7 +835,6 @@ int GModel::readFourier(const std::string &name)
   //return 1;
 
   // mesh each face using the standard gmsh algorithms
-  setMeshSize(0.05);
   std::for_each(firstFace(), lastFace(), meshGmsh());
   return 1;
 

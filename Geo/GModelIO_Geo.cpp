@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.6 2007-01-12 13:16:59 remacle Exp $
+// $Id: GModelIO_Geo.cpp,v 1.7 2007-01-18 13:18:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -129,8 +129,6 @@ int GModel::importTHEM()
     }
   }
 
-  meshSize = 1.e22;
-  
   Msg(DEBUG, "Gmsh model imported:");
   Msg(DEBUG, "%d Vertices", vertices.size());
   Msg(DEBUG, "%d Edges", edges.size());

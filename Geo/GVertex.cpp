@@ -1,4 +1,4 @@
-// $Id: GVertex.cpp,v 1.11 2006-12-16 14:37:20 geuzaine Exp $
+// $Id: GVertex.cpp,v 1.12 2007-01-18 13:18:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,7 @@ void GVertex::delEdge(GEdge *e)
 
 SPoint2 GVertex::reparamOnFace ( GFace *gf , int) const
 {
-  return gf->parFromPoint ( SPoint3(x(),y(),z() ));
+  return gf->parFromPoint(SPoint3(x(), y(), z()));
 }
 
 std::string GVertex::getAdditionalInfoString()

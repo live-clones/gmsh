@@ -797,6 +797,12 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "Normals" , opt_geometry_normals , 0. , 
     "Display size of normal vectors (in pixels)" }, 
 
+  { F|O, "OCCFixSmallEdges" , opt_geometry_occ_fix_small_edges , 1. , 
+    "Fix small edges in OpenCascade models" },
+  { F|O, "OCCFixSmallFaces" , opt_geometry_occ_fix_small_faces , 1. , 
+    "Fix small faces in OpenCascade models" },
+  { F|O, "OCCSewFaces" , opt_geometry_occ_sew_faces , 0. , 
+    "Sew faces in OpenCascade models" },
   { F|O, "OldCircle" , opt_geometry_old_circle , 0. , 
     "Use old circle description (compatibility option for old Gmsh geometries)" },
   { F|O, "OldNewReg" , opt_geometry_old_newreg , 1. , 
