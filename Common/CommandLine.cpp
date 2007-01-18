@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.91 2007-01-17 08:14:22 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.92 2007-01-18 09:12:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -82,7 +82,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -saveall              Save all elements (discard physical group definitions)");
   Msg(DIRECT, "  -o file               Specify mesh output file name");
   Msg(DIRECT, "  -format string        Set output mesh format (msh, unv, bdf, mesh, stl, vrml)");
-  Msg(DIRECT, "  -algo string          Select mesh algorithm (iso, tri, netgen, tetgen)");
+  Msg(DIRECT, "  -algo string          Select mesh algorithm (iso, netgen, tetgen)");
   Msg(DIRECT, "  -smooth int           Set number of mesh smoothing steps");
   Msg(DIRECT, "  -optimize             Optimize quality of tetrahedral elements");
   Msg(DIRECT, "  -order int            Set mesh order (1, 2)");
@@ -398,16 +398,20 @@ void Get_Options(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "algo")) {
         i++;
         if(argv[i] != NULL) {
-          if(!strncmp(argv[i], "bds", 3) || !strncmp(argv[i], "iso", 3))
-            CTX.mesh.algo2d = ALGO_2D_MESHADAPT;
-          else if(!strncmp(argv[i], "del", 3))
-            CTX.mesh.algo2d = ALGO_2D_DELAUNAY;
-          else if(!strncmp(argv[i], "tri", 3))
-            CTX.mesh.algo2d = ALGO_2D_TRIANGLE;
+          if(!strncmp(argv[i], "del3d", 5))
+            CTX.mesh.algo2d = ALGO_3D_DELAUNAY;
           else if(!strncmp(argv[i], "netgen", 6))
             CTX.mesh.algo3d = ALGO_3D_NETGEN;
           else if(!strncmp(argv[i], "tetgen", 6))
 	    CTX.mesh.algo3d = ALGO_3D_TETGEN;
+          else if(!strncmp(argv[i], "del2d", 5) ||
+		  !strncmp(argv[i], "del", 3))
+            CTX.mesh.algo2d = ALGO_2D_DELAUNAY;
+          else if(!strncmp(argv[i], "bds", 3) || 
+		  !strncmp(argv[i], "iso", 3))
+            CTX.mesh.algo2d = ALGO_2D_MESHADAPT;
+          else if(!strncmp(argv[i], "tri", 3))
+            CTX.mesh.algo2d = ALGO_2D_TRIANGLE;
           else {
             fprintf(stderr, ERROR_STR "Unknown mesh algorithm\n");
             exit(1);

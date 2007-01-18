@@ -440,6 +440,8 @@ StringXString PrintOptions_String[] = {
 StringXNumber GeneralOptions_Number[] = {
   { F|O, "AlphaBlending" , opt_general_alpha_blending , 1. ,
     "Enable alpha blending (transparency) in post-processing views" },
+  { F|O, "Antialiasing" , opt_general_antialiasing , 0. ,
+    "Use multisample antialiasing (will slow down rendering)" },
   { F|O, "ArrowHeadRadius" , opt_general_arrow_head_radius , 0.12 ,
     "Relative radius of arrow head" },
   { F|O, "ArrowStemLength" , opt_general_arrow_stem_length , 0.56 ,

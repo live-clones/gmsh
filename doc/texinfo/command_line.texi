@@ -21,7 +21,7 @@ Specify mesh output file name
 @item -format string
 Set output mesh format (msh, unv, bdf, mesh, stl, vrml)
 @item -algo string
-Select mesh algorithm (iso, tri, netgen, tetgen)
+Select mesh algorithm (iso, netgen, tetgen)
 @item -smooth int
 Set number of mesh smoothing steps
 @item -optimize

@@ -1,4 +1,4 @@
-$Id: TODO,v 1.36 2007-01-17 08:14:24 geuzaine Exp $
+$Id: TODO,v 1.37 2007-01-18 09:12:45 geuzaine Exp $
 
 ********************************************************************
 
@@ -67,19 +67,6 @@ surface.)
 
 add a min_recursion option for adaptve views (to force at least a 
 certain number of subdivisions)
-
-********************************************************************
-
-pfgshield-freebsd@yahoo.com:
-
-On the FreeBSD port, unfortunately, the licensing issues prohibit us from
-redistributing gmsh with tetgen and triangle. Of course this is a problem
-derived from the license in both utilities and not really gmsh's fault. 
-One thing could be done to alleviate the problem though: Adding exceptions to
-the GPL for linking with these libraries as explained in the GPL FAQ would
-permit people to make distributions of the package and libraries, although
-without charging any fee with it.
-http://www.gnu.org/licenses/gpl-faq.html#GPLIncompatibleLibs
 
 ********************************************************************
 

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.591 2007-01-17 08:14:23 geuzaine Exp $
+// $Id: GUI.cpp,v 1.592 2007-01-18 09:12:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1443,12 +1443,10 @@ void GUI::create_graphic_window()
   g_window->resizable(resize_box);
 
   // opengl window
-
   g_opengl_window = new Opengl_Window(0, 0, width, glheight);
-  if(!opt_general_double_buffer(0, GMSH_GET, 0)) {
-    Msg(INFO, "Setting OpenGL visual to single buffered");
-    g_opengl_window->mode(FL_RGB | FL_DEPTH | FL_SINGLE);
-  }
+  int mode = FL_RGB | FL_DEPTH | (CTX.db ? FL_DOUBLE : FL_SINGLE);
+  if(CTX.antialiasing) mode |= FL_MULTISAMPLE;
+  g_opengl_window->mode(mode);
   g_opengl_window->end();
 
   g_window->position(CTX.gl_position[0], CTX.gl_position[1]);
@@ -1739,22 +1737,26 @@ void GUI::create_option_window()
       gen_butt[3]->type(FL_TOGGLE_BUTTON);
       gen_butt[3]->callback(general_options_ok_cb);
 
-      gen_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Use trackball rotation mode instead of Euler angles");
+      gen_butt[12] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Enable antialiasing");
+      gen_butt[12]->type(FL_TOGGLE_BUTTON);
+      gen_butt[12]->callback(general_options_ok_cb);
+
+      gen_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Use trackball rotation mode instead of Euler angles");
       gen_butt[5]->type(FL_TOGGLE_BUTTON);
       gen_butt[5]->callback(general_options_ok_cb);
 
-      gen_butt[15] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Rotate around pseudo center of mass");
+      gen_butt[15] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Rotate around pseudo center of mass");
       gen_butt[15]->type(FL_TOGGLE_BUTTON);
       gen_butt[15]->callback(general_options_ok_cb, (void*)"rotation_center");
 
-      gen_push_butt[0] = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 8 * BH, BB, BH, "Select");
+      gen_push_butt[0] = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 9 * BH, BB, BH, "Select");
       gen_push_butt[0]->callback(general_options_rotation_center_select_cb);
 
-      gen_value[8] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW / 3, BH);
+      gen_value[8] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 3, BH);
       gen_value[8]->callback(general_options_ok_cb, (void*)"rotation_center_coord");
-      gen_value[9] = new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 8 * BH, IW / 3, BH);
+      gen_value[9] = new Fl_Value_Input(L + 2 * WB + IW / 3, 2 * WB + 9 * BH, IW / 3, BH);
       gen_value[9]->callback(general_options_ok_cb, (void*)"rotation_center_coord");
-      gen_value[10] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 8 * BH, IW / 3, BH, "Rotation center");
+      gen_value[10] = new Fl_Value_Input(L + 2 * WB + 2 * IW / 3, 2 * WB + 9 * BH, IW / 3, BH, "Rotation center");
       gen_value[10]->align(FL_ALIGN_RIGHT);
       gen_value[10]->callback(general_options_ok_cb, (void*)"rotation_center_coord");
 

@@ -1,4 +1,4 @@
-// $Id: License.cpp,v 1.7 2006-11-27 22:22:07 geuzaine Exp $
+// $Id: License.cpp,v 1.8 2007-01-18 09:12:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,7 @@ void print_license(void)
   Msg(DIRECT, "		       Version 2, June 1991");
   Msg(DIRECT, " ");
   Msg(DIRECT, " Copyright (C) 1989, 1991 Free Software Foundation, Inc.");
-  Msg(DIRECT, "                       59 Temple Place, Suite 330, Boston, MA  02111-1307  USA");
+  Msg(DIRECT, " 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA");
   Msg(DIRECT, " Everyone is permitted to copy and distribute verbatim copies");
   Msg(DIRECT, " of this license document, but changing it is not allowed.");
   Msg(DIRECT, " ");

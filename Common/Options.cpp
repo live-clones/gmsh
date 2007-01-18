@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.327 2007-01-17 08:14:22 geuzaine Exp $
+// $Id: Options.cpp,v 1.328 2007-01-18 09:12:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3008,14 +3008,9 @@ double opt_general_double_buffer(OPT_ARGS_NUM)
     CTX.db = (int)val;
 #if defined(HAVE_FLTK)
     if(WID) {
-      if(CTX.db) {
-        Msg(INFO, "Setting OpenGL visual to double buffered");
-        WID->g_opengl_window->mode(FL_RGB | FL_DEPTH | FL_DOUBLE);
-      }
-      else {
-        Msg(INFO, "Setting OpenGL visual to single buffered");
-        WID->g_opengl_window->mode(FL_RGB | FL_DEPTH | FL_SINGLE);
-      }
+      int mode = FL_RGB | FL_DEPTH | (CTX.db ? FL_DOUBLE : FL_SINGLE);
+      if(CTX.antialiasing) mode |= FL_MULTISAMPLE;
+      WID->g_opengl_window->mode(mode);
     }
 #endif
   }
@@ -3024,6 +3019,25 @@ double opt_general_double_buffer(OPT_ARGS_NUM)
     WID->gen_butt[3]->value(CTX.db);
 #endif
   return CTX.db;
+}
+
+double opt_general_antialiasing(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX.antialiasing = (int)val;
+#if defined(HAVE_FLTK)
+    if(WID) {
+      int mode = FL_RGB | FL_DEPTH | (CTX.db ? FL_DOUBLE : FL_SINGLE);
+      if(CTX.antialiasing) mode |= FL_MULTISAMPLE;
+      WID->g_opengl_window->mode(mode);
+    }
+#endif
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_butt[12]->value(CTX.antialiasing);
+#endif
+  return CTX.antialiasing;
 }
 
 double opt_general_alpha_blending(OPT_ARGS_NUM)

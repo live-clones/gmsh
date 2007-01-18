@@ -25,7 +25,7 @@ generator with built-in pre- and post-processing facilities</h1>
 <p>
 <h3 align="center">Christophe Geuzaine and Jean-François Remacle</h3>
 <p>
-<h3 align=center>Version 2.0, ? 2006</h3>
+<h3 align=center>Version 2.0, January XX 2006</h3>
 <p>
 <center>
   <a href="#Description">Description</a> |
@@ -122,7 +122,7 @@ archives.
 <ul>
 <li><a href="/gmsh/bin/Windows/gmsh-2.0.0-Windows.zip">Windows (95/98/NT/2000/XP)</a>
 <li><a href="/gmsh/bin/Linux/gmsh-2.0.0-Linux.tgz">Linux (i386, glibc 2.3 and above)</a> 
-<li><a href="/gmsh/bin/MacOSX/gmsh-2.0.0-MacOSX.tgz">Mac OS X (10.3.9 and above)</a>
+<li><a href="/gmsh/bin/MacOSX/gmsh-2.0.0-MacOSX.tgz">Mac OS X (Intel, 10.4.x)</a>
 <li><a href="/gmsh/src/gmsh-2.0.0-source.tgz">Source (all platforms)</a>
     <a href="#build-footnote" name="build-footmark"><sup>2</sup></a>
 </ul>
@@ -136,9 +136,9 @@ work (books, articles, reports, etc.).
 
 <h2><a name="Authors"></a>Authors and credits</h2>
 
-Gmsh is developed by Christophe Geuzaine (currently
-with <a href="http://www.case.edu/">Case Western Reserve
-University</a>) and Jean-François Remacle (currently with
+Gmsh is developed by Christophe Geuzaine (currently with
+the <a href="http://www.ulg.ac.be/">University of Li&egrave;ge</a>)
+and Jean-François Remacle (currently with
 the <a href="http://www.ucl.ac.be/">Catholic University of
 Louvain</a>).  The <a href="doc/CREDITS">CREDITS file</a> has more
 information.
@@ -251,23 +251,13 @@ thumbnail"></a>
 
 <h2><a name="Links"></a>Links</h2>
 
-Check out <a href="/getdp/">GetDP</a>, a scientific computation
-software for the numerical solution of integro-differential equations,
-using finite element and integral type methods.
-
-<!--
-<p>
-The mesh database that will be used by Gmsh in the future has its
-own webpage: take a look at <a href="http://www.scorec.rpi.edu/AOMD/">AOMD,
-the Algorithm Oriented Mesh Database</a>.
--->
-
-<p>
-Gmsh can use Jonathan Shewchuk's <a
-href="http://www-2.cs.cmu.edu/~quake/triangle.html">Triangle</a> as an
-alternative 2D mesh generator and Joachim Sch&ouml;berl's
-<a href="http://www.hpfem.jku.at/netgen/">Netgen</a> as an alternative
-3D mesh generator/optimizer.
+Gmsh can be linked
+with <a href="http://www.opencascade.org">OpenCascade</a> to provide
+support for STEP, IGES and BREP files. Gmsh can also be linked with several
+external mesh generators (currently 
+<!-- a href="http://www-2.cs.cmu.edu/~quake/triangle.html">Triangle</a> from Jonathan Shewchuk,--> 
+<a href="http://www.hpfem.jku.at/netgen/">Netgen</a> from Joachim Sch&ouml;berl and 
+<a href="http://tetgen.berlios.de/index.html">TetGen</a> from Hang Si).
 
 <p>
 Gmsh's high quality vector PostScript and PDF output is produced by <a
@@ -277,6 +267,12 @@ href="/gl2ps/">GL2PS</a>.
 Gmsh's cross-platform graphical user interface is based on <a
 href="http://www.fltk.org/">FLTK</a> and <a
 href="http://www.opengl.org/">OpenGL</a>.
+
+<p>
+Make sure to also check out <a href="/getdp/">GetDP</a>, a rather
+general finite element code that can be used right from Gmsh's
+graphical user interface.
+
 
 <p>
 <form action="https://www.paypal.com/cgi-bin/webscr" method="post">

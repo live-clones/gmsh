@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.27 2007-01-16 11:31:41 geuzaine Exp $
+// $Id: MElement.cpp,v 1.28 2007-01-18 09:12:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -454,7 +454,7 @@ void MTriangle::circumcenterXY(double *res) const
 
   d = 2. * (double)(y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
   if(d == 0.0) {
-    Msg(WARNING, "Colinear points in circum circle computation");
+    Msg(GERROR, "Colinear points in circum circle computation");
     res[0] = res[1] = -99999.;
     return ;
   }

@@ -1,8 +1,29 @@
+Gmsh is provided under the terms of the GNU General Public License
+(GPL) with the following exception:
+
+  The copyright holders of Gmsh give you permission to combine Gmsh
+  with with code included in the standard release of Triangle (written
+  by Jonathan Shewchuk) and TetGen (written by Hang Si) under their
+  respective licenses. You may copy and distribute such a system
+  following the terms of the GNU GPL for Gmsh and the licenses of the
+  other code concerned, provided that you include the source code of
+  that other code when and as the GNU GPL requires distribution of
+  source code.
+
+  Note that people who make modified versions of Gmsh are not
+  obligated to grant this special exception for their modified
+  versions; it is their choice whether to do so. The GNU General
+  Public License gives permission to release a modified version
+  without this exception; this exception also makes it possible to
+  release a modified version which carries forward this exception.
+
+End of exception.
+
 		    GNU GENERAL PUBLIC LICENSE
 		       Version 2, June 1991
 
  Copyright (C) 1989, 1991 Free Software Foundation, Inc.
-                       59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  Everyone is permitted to copy and distribute verbatim copies
  of this license document, but changing it is not allowed.
 

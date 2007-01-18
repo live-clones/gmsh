@@ -89,7 +89,7 @@ public :
   double lc;                  // characteristic length for the whole problem (never
                               // used in mesh generation ->only for geo/post) 
 
-  int db;                     // double buffer? 
+  int db, antialiasing;       // double buffer? antialiasing?
   int ortho;                  // orthogonal projection? 
   int draw_bbox, draw_rotation_center; // draw the bounding boxes and the rot center?
   int fast_redraw;            // draw simplified model during user interaction

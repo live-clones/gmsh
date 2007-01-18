@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.12 2007-01-17 21:44:49 remacle Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.13 2007-01-18 09:12:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -448,7 +448,7 @@ void insertVerticesInRegion (GRegion *gr)
       else
 	{
 	  if(ITER++%5000 ==0)
-	    Msg(DEBUG,"%d points created -- Worst tet radius is %g",vSizes.size(),worst->getRadius());
+	    Msg(INFO,"%d points created -- Worst tet radius is %g",vSizes.size(),worst->getRadius());
 	  if (worst->getRadius() < 1) break;
 	  double center[3];
 	  worst->tet()->circumcenter(center);

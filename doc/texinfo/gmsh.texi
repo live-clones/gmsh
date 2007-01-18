@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.225 2007-01-12 08:10:32 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.226 2007-01-18 09:12:45 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 @c
@@ -438,7 +438,8 @@ parameterize these geometries. Gmsh's scripting language enables all
 commands and command arguments to depend on previous calculations (see
 @ref{Expressions}, and @ref{Geometry commands});
 @item
-import complex models in industry-standard formats like STEP or IGES;
+import complex models in industry-standard formats like STEP or IGES
+(when Gmsh is built with OpenCascade support);
 @item
 generate 1D, 2D and 3D simplicial (i.e., using line segments, triangles and
 tetrahedra) finite element meshes. The performance of the 1D and 2D
@@ -499,7 +500,8 @@ complex models;
 @item
 there is no support for Nurbs and only very limited support for trimmed
 surfaces in Gmsh's scripting language (however you can import STEP or
-IGES models with such features);
+IGES models with such features when Gmsh is built with OpenCascade
+support);
 @item
 Gmsh is not primarily a structured mesh generator: no automatic
 quadrilateral or hexahedral meshing algorithm is provided. If you want
