@@ -94,6 +94,11 @@ Enable alpha blending (transparency) in post-processing views@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.Antialiasing
+Use multisample antialiasing (will slow down rendering)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.ArrowHeadRadius
 Relative radius of arrow head@*
 Default value: @code{0.12}@*

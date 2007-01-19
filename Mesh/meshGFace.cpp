@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.51 2007-01-17 08:14:23 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.52 2007-01-19 15:34:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1444,6 +1444,10 @@ bool shouldRevert(MEdge &reference, std::vector<T*> &elements)
 void orientMeshGFace::operator()(GFace *gf)
 {
   if(gf->geomType() == GEntity::ProjectionSurface) return;
+
+  // orientation of opencascade surfaces are not consistent with
+  // orientation of bounding edges: should do something else
+  //if(gf->getNativeType() == GEntity::OpenCascadeModel) return;
 
   // in old versions we did not reorient transfinite surface meshes;
   // we could add the following to provide backward compatibility:

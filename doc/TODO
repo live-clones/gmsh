@@ -1,8 +1,13 @@
-$Id: TODO,v 1.37 2007-01-18 09:12:45 geuzaine Exp $
+$Id: TODO,v 1.38 2007-01-19 15:34:05 geuzaine Exp $
 
 ********************************************************************
 
 introduce Right/Left/Alternate for extruded meshes
+
+********************************************************************
+
+color edges depending on number of adjacent surfaces (to check face
+sewing w/ tolerance)
 
 ********************************************************************
 

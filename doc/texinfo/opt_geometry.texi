@@ -54,6 +54,21 @@ Display size of normal vectors (in pixels)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCFixSmallEdges
+Fix small edges in OpenCascade models@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCFixSmallFaces
+Fix small faces in OpenCascade models@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCSewFaces
+Sew faces in OpenCascade models@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OldCircle
 Use old circle description (compatibility option for old Gmsh geometries)@*
 Default value: @code{0}@*

@@ -1,4 +1,4 @@
-// $Id: GEdgeLoop.cpp,v 1.4 2006-11-27 22:22:12 geuzaine Exp $
+// $Id: GEdgeLoop.cpp,v 1.5 2007-01-19 15:34:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -28,28 +28,25 @@ void GEdgeSigned::print() const
       ge->tag(), _sign, getBeginVertex()->tag(), getEndVertex()->tag());
 }
 
-int countInList ( std::list<GEdge*> &wire , GEdge *ge)
+int countInList(std::list<GEdge*> &wire, GEdge *ge)
 {
   std::list<GEdge*>::iterator it = wire.begin();
   std::list<GEdge*>::iterator ite = wire.end();
   int count = 0;
-  while (it != ite)
-    {
-      if (*it == ge) count++; 
-      ++it;
-    }
+  while(it != ite){
+    if(*it == ge) count++; 
+    ++it;
+  }
   return count;
 }
 
-GEdgeSigned nextOne ( GEdgeSigned *thisOne, std::list<GEdge*> &wire)
+GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge*> &wire)
 {
-
-  if (!thisOne)
-    {
-      GEdge *ge = *(wire.begin());
-      wire.erase(wire.begin());
-      return GEdgeSigned ( 1 , ge );   
-    }
+  if(!thisOne){
+    GEdge *ge = *(wire.begin());
+    wire.erase(wire.begin());
+    return GEdgeSigned(1, ge);   
+  }
 
   GVertex *gv = thisOne->getEndVertex();
 
@@ -57,80 +54,79 @@ GEdgeSigned nextOne ( GEdgeSigned *thisOne, std::list<GEdge*> &wire)
 
   std::list<GEdge*>::iterator it = wire.begin();
   std::list<GEdge*>::iterator ite = wire.end();
-  while (it != ite)
-    {
-      GEdge *ge = *it;
+  while(it != ite){
+    GEdge *ge = *it;
+    GVertex *v1 = ge->getBeginVertex();
+    GVertex *v2 = ge->getEndVertex();
+    if(v1 == gv || v2 == gv) possibleChoices.push_back(ge);
+    ++it;
+  }
+  it = possibleChoices.begin();
+  ite = possibleChoices.end();
+  while(it != ite){
+    GEdge *ge = *it;
+    if(countInList(possibleChoices, ge) == 2){
+      wire.erase(std::remove_if(wire.begin(), wire.end(), 
+				std::bind2nd(std::equal_to<GEdge*>(), ge)), 
+		 wire.end());
+      wire.push_back(ge);
       GVertex *v1 = ge->getBeginVertex();
       GVertex *v2 = ge->getEndVertex();
-      if (v1 == gv || v2 == gv)possibleChoices.push_back(ge);
-      ++it;
+      if(v1 == gv) return GEdgeSigned(1, ge);   
+      if(v2 == gv) return GEdgeSigned(-1, ge);   
+      throw;
     }
+    ++it;
+  }
   it = possibleChoices.begin();
   ite = possibleChoices.end();
-  while (it != ite)
-    {
-      GEdge *ge = *it;
-      if (countInList (possibleChoices , ge) == 2)
-	{
-	  wire.erase(std::remove_if(wire.begin(),wire.end() , std::bind2nd(std::equal_to<GEdge*>(), ge)) , 
+  while(it != ite){
+    GEdge *ge = *it;
+    if(ge != thisOne->ge){
+      wire.erase(std::remove_if(wire.begin(),wire.end(), 
+				std::bind2nd(std::equal_to<GEdge*>(), ge)), 
 		 wire.end());
-	  wire.push_back(ge);
-	  GVertex *v1 = ge->getBeginVertex();
-	  GVertex *v2 = ge->getEndVertex();
-	  if (v1 == gv)return GEdgeSigned ( 1  , ge );   
-	  if (v2 == gv)return GEdgeSigned ( -1 , ge );   
-	  throw;
-	}
-      ++it;
-    }
-  it = possibleChoices.begin();
-  ite = possibleChoices.end();
-  while (it != ite)
-    {
-      GEdge *ge = *it;
-      if (ge != thisOne->ge)
-	{
-	  wire.erase(std::remove_if(wire.begin(),wire.end() , std::bind2nd(std::equal_to<GEdge*>(), ge)) , 
-		     wire.end());
-	  GVertex *v1 = ge->getBeginVertex();
-	  GVertex *v2 = ge->getEndVertex();
-	  if (v1 == gv)return GEdgeSigned ( 1  , ge );   
-	  if (v2 == gv)return GEdgeSigned ( -1 , ge );
-	  throw;
-	}   
-      ++it;
-    }
+      GVertex *v1 = ge->getBeginVertex();
+      GVertex *v2 = ge->getEndVertex();
+      if(v1 == gv) return GEdgeSigned(1, ge);   
+      if(v2 == gv) return GEdgeSigned(-1, ge);
+      throw;
+    }   
+    ++it;
+  }
+  
+  // should never end up here
+  return GEdgeSigned(0, 0);
 }
 
-int  GEdgeLoop::count (GEdge* ge) const
+int GEdgeLoop::count(GEdge* ge) const
 {
   GEdgeLoop::citer it = begin();
   GEdgeLoop::citer ite = end();
   int count = 0;
-  while (it != ite)
-    {
-      if (it->ge == ge) count++; 
-      ++it;
-    }
+  while(it != ite){
+    if(it->ge == ge) count++; 
+    ++it;
+  }
   return count;
 }
 
-GEdgeLoop::GEdgeLoop ( const std::list<GEdge*> & cwire )
+GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
 {
-
-  std::list<GEdge*> wire (cwire);
+  std::list<GEdge*> wire(cwire);
 
   GEdgeSigned *prevOne = 0;
 
   Msg(INFO,"Building a wire");
   GEdgeSigned ges(0,0);
-  while (wire.size())
-    {
-      ges = nextOne ( prevOne , wire );
-      
-      prevOne = &ges;
-      ges.print();
-      loop.push_back(ges);
+  while(wire.size()){
+    ges = nextOne(prevOne, wire);
+    if(ges.getSign() == 0){ // oops
+      Msg(WARNING, "Something wrong in edge loop?");
+      break;
     }
-
+    prevOne = &ges;
+    ges.print();
+    loop.push_back(ges);
+  }
 }
