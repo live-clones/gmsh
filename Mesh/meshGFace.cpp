@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.52 2007-01-19 15:34:05 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.53 2007-01-20 14:06:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -37,75 +37,70 @@
 
 extern Context_T CTX;
 
-void computeEdgeLoops (const GFace *gf,
-		       std::vector<MVertex*> & all_mvertices,
-		       std::vector<int> &indices)
+void computeEdgeLoops(const GFace *gf,
+		      std::vector<MVertex*> &all_mvertices,
+		      std::vector<int> &indices)
 {
-  {
-    std::list<GEdge*> edges = gf->edges();
-    std::list<int> ori   = gf->orientations();
-    std::list<GEdge*>::iterator it = edges.begin();
-    std::list<int>::iterator ito    = ori.begin();
+  std::list<GEdge*> edges = gf->edges();
+  std::list<int> ori = gf->orientations();
+  std::list<GEdge*>::iterator it = edges.begin();
+  std::list<int>::iterator ito = ori.begin();
     
-    indices.push_back(0);
-    GVertex *start = ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
-    GVertex *v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
-    all_mvertices.push_back(start->mesh_vertices[0]);
-    if (*ito == 1)
-      for (unsigned int i=0;i<(*it)->mesh_vertices.size();i++)
+  indices.push_back(0);
+  GVertex *start = ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
+  GVertex *v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
+  all_mvertices.push_back(start->mesh_vertices[0]);
+  if (*ito == 1)
+    for (unsigned int i=0;i<(*it)->mesh_vertices.size();i++)
+      all_mvertices.push_back((*it)->mesh_vertices[i]);
+  else
+    for (int i=(*it)->mesh_vertices.size()-1;i>=0;i--)
+      all_mvertices.push_back((*it)->mesh_vertices[i]);
+  
+  GVertex *v_start = start;
+  while(1){		
+    ++it;
+    ++ito;
+    if(v_end == start){
+      indices.push_back(all_mvertices.size());
+      if(it == edges.end ()) break;
+      start = ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
+      v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
+      v_start = start;
+    }
+    else{	
+      if(it == edges.end ()) throw;
+      v_start = ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
+      if(v_start != v_end) throw;
+      v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
+    }
+    all_mvertices.push_back(v_start->mesh_vertices[0]);
+    if(*ito == 1)
+      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
 	all_mvertices.push_back((*it)->mesh_vertices[i]);
     else
-      for (int i=(*it)->mesh_vertices.size()-1;i>=0;i--)
+      for (int i = (*it)->mesh_vertices.size()-1; i >= 0; i--)
 	all_mvertices.push_back((*it)->mesh_vertices[i]);
-
-    GVertex *v_start = start;
-    while(1)
-      {		
-	++it;
-	++ito;
-	if (v_end == start)
-	  {
-	    indices.push_back(all_mvertices.size());
-	    if (it == edges.end ())break;
-	    start = ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
-	    v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
-	    v_start = start;
-	  }
-	else
-	  {	
-	    if (it == edges.end ())throw;
-	    v_start = ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
-	    if(v_start != v_end)throw;
-	    v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
-	  }
-	all_mvertices.push_back(v_start->mesh_vertices[0]);
-	if (*ito == 1)
-	  for (unsigned int i=0;i<(*it)->mesh_vertices.size();i++)
-	    all_mvertices.push_back((*it)->mesh_vertices[i]);
-	else
-	  for (int i=(*it)->mesh_vertices.size()-1;i>=0;i--)
-	    all_mvertices.push_back((*it)->mesh_vertices[i]);
-      }
-  }  
-
+  }
 }
 
 extern double F_LC_ANALY (double xx, double yy, double zz);
 
-double NewGetLc ( BDS_Point *p  )
+double NewGetLc(BDS_Point *p)
 {
   return p->lc();
 }
 
-inline double computeEdgeLinearLength ( BDS_Point *p1, BDS_Point *p2)
+inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2)
 {
   const double dx = p1->X-p2->X;
   const double dy = p1->Y-p2->Y;
   const double dz = p1->Z-p2->Z;
-  const double l = sqrt (dx*dx+dy*dy+dz*dz);
+  const double l = sqrt(dx*dx+dy*dy+dz*dz);
   return l;
 }
-inline double computeParametricEdgeLength ( BDS_Point *p1, BDS_Point *p2)
+
+inline double computeParametricEdgeLength(BDS_Point *p1, BDS_Point *p2)
 {
   const double dx = p1->u-p2->u;
   const double dy = p1->v-p2->v;
@@ -113,85 +108,65 @@ inline double computeParametricEdgeLength ( BDS_Point *p1, BDS_Point *p2)
   return l;
 }
 
-double NewGetLc ( BDS_Edge *e  )
+double NewGetLc(BDS_Edge *e)
 {
   double linearLength = e->length();
-  double l1 = NewGetLc ( e->p1  );
-  double l2 = NewGetLc ( e->p2  );
+  double l1 = NewGetLc(e->p1);
+  double l2 = NewGetLc(e->p2);
   return 2*linearLength / (l1 + l2);
 }
 
-
 bool edgeSwapTest(BDS_Edge *e)
 {
-   BDS_Point *op[2];
+  BDS_Point *op[2];
+  
+  if(!e->p1->config_modified && ! e->p2->config_modified) return false;
 
-   if (!e->p1->config_modified && ! e->p2->config_modified) return false;   
-
-  if (e->numfaces() != 2)return false;
+  if(e->numfaces() != 2) return false;
 
   e->oppositeof (op);
   
   double edgeLength1, edgeLength2;
 
   edgeLength1 = e->length();
-  edgeLength2 = computeEdgeLinearLength ( op[0],op[1]);
-  double lp1 =  NewGetLc ( e->p1 );
-  double lp2 =  NewGetLc ( e->p1 );
-  double lo1 =  NewGetLc ( op[0] );
-  double lo2 =  NewGetLc ( op[1] );
+  edgeLength2 = computeEdgeLinearLength(op[0], op[1]);
+  double lp1 = NewGetLc(e->p1);
+  double lp2 = NewGetLc(e->p1);
+  double lo1 = NewGetLc(op[0]);
+  double lo2 = NewGetLc(op[1]);
 
 
-  double el1 = 2*edgeLength1 / ( lp1 + lp2 );
-  double el2 = 2*edgeLength2 / ( lo1 + lo2 );
+  double el1 = 2*edgeLength1 / (lp1 + lp2);
+  double el2 = 2*edgeLength2 / (lo1 + lo2);
 
-  double q1  = fabs (1-el1);
-  double q2  = fabs (1-el2);
+  double q1 = fabs(1-el1);
+  double q2 = fabs(1-el2);
 
   return q2 < 0.5*q1;
-//  BDS_Point *op[2];
-
-//   if (e->numfaces() != 2)return false;
-
-//   e->oppositeof (op);
-
-//   double qa1 = quality_triangle ( e->p1 , e->p2 , op[0] );
-//   double qa2 = quality_triangle ( e->p1 , e->p2 , op[1] );
-//   double qb1 = quality_triangle ( e->p1 , op[0] , op[1] );
-//   double qb2 = quality_triangle ( e->p2 , op[0] , op[1] );
-//   double qa = (qa1<qa2)?qa1:qa2; 
-//   double qb = (qb1<qb2)?qb1:qb2; 
-  
-//   return (qb > 1.1*qa);
 }
-
-
 
 int edgeSwapTestQuality(BDS_Edge *e, double fact = 1.1)
 {
-   BDS_Point *op[2];
-
-   if (!e->p1->config_modified && ! e->p2->config_modified) return false;   
-   
-   if (e->numfaces() != 2)return false;
-
-   e->oppositeof (op);
+  BDS_Point *op[2];
   
-   double qa1 = quality_triangle ( e->p1 , e->p2 , op[0] );
-   double qa2 = quality_triangle ( e->p1 , e->p2 , op[1] );
-   double qb1 = quality_triangle ( e->p1 , op[0] , op[1] );
-   double qb2 = quality_triangle ( e->p2 , op[0] , op[1] );
-   double qa = (qa1<qa2)?qa1:qa2; 
-   double qb = (qb1<qb2)?qb1:qb2;   
-   if (qb > fact*qa) return 1;
-   if (qb < qa/fact) return -1;
-   return 0;
-   
+  if(!e->p1->config_modified && ! e->p2->config_modified) return false;
+  
+  if(e->numfaces() != 2) return false;
+  
+  e->oppositeof (op);
+  
+  double qa1 = quality_triangle(e->p1, e->p2, op[0]);
+  double qa2 = quality_triangle(e->p1, e->p2, op[1]);
+  double qb1 = quality_triangle(e->p1, op[0], op[1]);
+  double qb2 = quality_triangle(e->p2, op[0], op[1]);
+  double qa = (qa1<qa2) ? qa1 : qa2;
+  double qb = (qb1<qb2) ? qb1 : qb2;
+  if(qb > fact*qa) return 1;
+  if(qb < qa/fact) return -1;
+  return 0;
 }
 
-
-
-void OptimizeMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
+void OptimizeMesh(GFace *gf, BDS_Mesh &m, const int NIT)
 {
   // optimize
   for(int i = 0 ; i < NIT ; i++){
@@ -1445,9 +1420,9 @@ void orientMeshGFace::operator()(GFace *gf)
 {
   if(gf->geomType() == GEntity::ProjectionSurface) return;
 
-  // orientation of opencascade surfaces are not consistent with
-  // orientation of bounding edges: should do something else
-  //if(gf->getNativeType() == GEntity::OpenCascadeModel) return;
+  // surface orientions in OCC are not consistent with the orientation
+  // of the bounding edges, so just leave them unchanged:
+  if(gf->getNativeType() == GEntity::OpenCascadeModel) return;
 
   // in old versions we did not reorient transfinite surface meshes;
   // we could add the following to provide backward compatibility:

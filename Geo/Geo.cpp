@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.70 2007-01-17 08:14:23 geuzaine Exp $
+// $Id: Geo.cpp,v 1.71 2007-01-20 14:06:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1296,13 +1296,6 @@ Curve *CreateReversedCurve(Curve * c)
     Tree_Add(THEM->Curves, &newc);
     return newc;
   }
-}
-
-void ModifyLcPoint(int ip, double lc)
-{
-  Vertex *v = FindPoint(ip);
-  if(v)
-    v->lc = lc;
 }
 
 int recognize_seg(int typ, List_T * liste, int *seg)

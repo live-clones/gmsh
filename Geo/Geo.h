@@ -57,7 +57,7 @@
 #define MSH_PHYSICAL_VOLUME  330
 
 struct Coord{
-  double X,Y,Z;
+  double X, Y, Z;
 };
 
 class Vertex {
@@ -66,16 +66,7 @@ class Vertex {
   char Visible;
   double lc, u, us[3], w;
   Coord Pos;
-  Vertex()
-  {
-    Visible = 1;
-    Pos.X = 0.0;
-    Pos.Y = 0.0;
-    Pos.Z = 0.0;
-    w = 1.0;
-    lc = 1.0;
-  }
-  Vertex(double X,double Y,double Z=0.0, double l=1.0, double W=1.0)
+  Vertex(double X=0., double Y=0., double Z=0., double l=1., double W=1.)
   {
     Visible = 1;
     Pos.X = X;
@@ -87,14 +78,13 @@ class Vertex {
   void norme()
   {
     double d = sqrt(Pos.X * Pos.X + Pos.Y * Pos.Y + Pos.Z * Pos.Z);
-    if(d == 0.0)
-      return;
+    if(d == 0.0) return;
     Pos.X /= d;
     Pos.Y /= d;
     Pos.Z /= d;
   }
-  Vertex operator %(Vertex & autre)
-  {       // cross product
+  Vertex operator % (Vertex & autre) // cross product
+  {       
     return Vertex(Pos.Y * autre.Pos.Z - Pos.Z * autre.Pos.Y,
 		  -(Pos.X * autre.Pos.Z - Pos.Z * autre.Pos.X),
 		  Pos.X * autre.Pos.Y - Pos.Y * autre.Pos.X, lc, w);
@@ -223,13 +213,12 @@ int comparePhysicalGroup(const void *a, const void *b);
 Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc, double u);
 Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
 		    List_T * Knots, int p1, int p2, double u1, double u2);
+Curve *CreateReversedCurve(Curve *c);
 Surface *Create_Surface(int Num, int Typ);
 Volume *Create_Volume(int Num, int Typ);
 EdgeLoop *Create_EdgeLoop(int Num, List_T * intlist);
 SurfaceLoop *Create_SurfaceLoop(int Num, List_T * intlist);
 PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T * intlist);
-
-Curve *CreateReversedCurve(Curve *c);
 
 void End_Curve(Curve * c);
 void End_Surface(Surface * s, int reset_orientations=1);
@@ -258,8 +247,6 @@ Surface *FindSurface(int inum);
 SurfaceLoop *FindSurfaceLoop(int inum);
 Volume *FindVolume(int inum);
 PhysicalGroup *FindPhysicalGroup(int inum, int type);
-
-void ModifyLcPoint(int ip, double lc);
 
 void TranslateShapes(double X,double Y,double Z,
                      List_T *ListShapes, int final);
