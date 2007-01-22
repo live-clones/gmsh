@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.53 2007-01-20 14:06:37 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.54 2007-01-22 16:31:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -84,7 +84,16 @@ void computeEdgeLoops(const GFace *gf,
   }
 }
 
-extern double F_LC_ANALY (double xx, double yy, double zz);
+double F_LC_ANALY(double xx, double yy, double zz)
+{
+  //  return 0.005 + 0.05*fabs (sin(5*xx) + sin(15*yy) + sin(15*zz));
+  //  return 0.02;
+  //  return 0.002 + 0.04*fabs (sin(6*xx) + sin(6*yy) + sin(6*zz));
+  return 0.003 + 0.05*fabs(sin(8*xx) + sin(8*yy) + sin(8*zz));
+  return 0.02 + 0.1*fabs(sin(3*xx) + sin(3*yy) + sin(3*zz));
+  return 0.01 + 0.1*fabs(sin((xx*xx+(zz-0.7)*(zz-0.7)-.25))); 
+  return 0.05 + 0.1*fabs(xx*yy);
+}
 
 double NewGetLc(BDS_Point *p)
 {

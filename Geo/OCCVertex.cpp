@@ -1,4 +1,4 @@
-// $Id: OCCVertex.cpp,v 1.10 2007-01-16 11:31:41 geuzaine Exp $
+// $Id: OCCVertex.cpp,v 1.11 2007-01-22 16:31:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -85,6 +85,9 @@ SPoint2 OCCVertex::reparamOnFace(GFace *gf, int dir) const
     }
     ++it;
   }
+
+  // normally never here
+  return GVertex::reparamOnFace(gf, dir);
 }
 
 #endif

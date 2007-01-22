@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.28 2007-01-18 13:18:42 geuzaine Exp $
+// $Id: GModel.cpp,v 1.29 2007-01-22 16:31:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -296,3 +296,90 @@ void GModel::deleteMeshPartitions()
   meshPartitions.clear();
 }
 
+static int checkVertices(std::vector<MVertex*> &vertices,
+			 std::set<MVertex*, MVertexLessThanLexicographic> &pos)
+{
+  int num = 0;
+  for(unsigned int i = 0; i < vertices.size(); i++){
+    MVertex *v = vertices[i];
+    std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = pos.find(v);
+    if(it == pos.end()){
+      pos.insert(v);
+    }
+    else{
+      Msg(INFO, "Vertices %d and %d have identical position (%g, %g, %g)", 
+	  (*it)->getNum(), v->getNum(), v->x(), v->y(), v->z());
+      num++;
+    }
+  }
+  return num;
+}
+
+template <class T>
+static int checkElements(std::vector<T*> &elements,
+			 std::set<MElement*, MElementLessThanLexicographic> &pos)
+{
+  int num = 0;
+  for(unsigned int i = 0; i < elements.size(); i++){
+    MElement *e = elements[i];
+    std::set<MElement*, MVertexLessThanLexicographic>::iterator it = pos.find(e);
+    if(it == pos.end()){
+      pos.insert(e);
+    }
+    else{
+      Msg(INFO, "Elements %d and %d have identical barycenter",
+	  (*it)->getNum(), e->getNum());
+      num++;
+    }
+  }
+  return num;
+}
+
+void GModel::checkMeshCoherence()
+{
+  int numEle = numElement();
+  if(!numEle) return;
+
+  Msg(INFO, "Checking mesh coherence (%d elements)", numEle);
+
+  // check for duplicate mesh vertices
+  {
+    double old_tol = MVertexLessThanLexicographic::tolerance; 
+    MVertexLessThanLexicographic::tolerance = CTX.geom.tolerance;
+    std::set<MVertex*, MVertexLessThanLexicographic> pos;
+    int num = 0;
+    for(viter it = firstVertex(); it != lastVertex(); ++it)
+      num += checkVertices((*it)->mesh_vertices, pos);
+    for(eiter it = firstEdge(); it != lastEdge(); ++it)
+      num += checkVertices((*it)->mesh_vertices, pos);
+    for(fiter it = firstFace(); it != lastFace(); ++it)
+      num += checkVertices((*it)->mesh_vertices, pos);
+    for(riter it = firstRegion(); it != lastRegion(); ++it)
+      num += checkVertices((*it)->mesh_vertices, pos);
+    if(num) Msg(WARNING, "%d duplicate vertices", num);
+    MVertexLessThanLexicographic::tolerance = old_tol;
+  }
+
+  // check for duplicate elements
+  {
+    double old_tol = MElementLessThanLexicographic::tolerance; 
+    MElementLessThanLexicographic::tolerance = CTX.geom.tolerance;
+    std::set<MElement*, MElementLessThanLexicographic> pos;
+    int num = 0;
+    for(eiter it = firstEdge(); it != lastEdge(); ++it)
+      num += checkElements((*it)->lines, pos);
+    for(fiter it = firstFace(); it != lastFace(); ++it){
+      num += checkElements((*it)->triangles, pos);
+      num += checkElements((*it)->quadrangles, pos);
+    }
+    for(riter it = firstRegion(); it != lastRegion(); ++it){
+      num += checkElements((*it)->tetrahedra, pos);
+      num += checkElements((*it)->hexahedra, pos);
+      num += checkElements((*it)->prisms, pos);
+      num += checkElements((*it)->pyramids, pos);
+    }
+    if(num) Msg(WARNING, "%d duplicate elements", num);
+    MElementLessThanLexicographic::tolerance = old_tol;
+  }
+
+}

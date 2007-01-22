@@ -145,6 +145,9 @@ class GModel
   // Deletes all the partitions
   virtual void deleteMeshPartitions();
 
+  // Performs various coherence tests on the mesh
+  virtual void checkMeshCoherence();
+
   // A container for smooth normals
   smooth_normals *normals;
 

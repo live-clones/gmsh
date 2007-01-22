@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.15 2007-01-16 11:31:42 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.16 2007-01-22 16:31:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -52,7 +52,7 @@ void createQuaTri(std::vector<MVertex*> &v, GFace *to,
 	to->triangles.push_back(new MTriangle(v[2], v[1], v[0]));
 	to->triangles.push_back(new MTriangle(v[2], v[3], v[1]));
       }
-      else {
+      else{
 	to->triangles.push_back(new MTriangle(v[2], v[3], v[0]));
 	to->triangles.push_back(new MTriangle(v[0], v[3], v[1]));
       }

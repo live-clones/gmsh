@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.102 2006-12-16 15:44:28 geuzaine Exp $
+// $Id: Main.cpp,v 1.103 2007-01-22 16:31:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -138,6 +138,8 @@ int main(int argc, char *argv[])
       }
       else if(CTX.batch == -1)
         CreateOutputFile(CTX.output_filename, FORMAT_GEO);
+      else if(CTX.batch == -2)
+	GMODEL->checkMeshCoherence();
       exit(0);
     }
   }

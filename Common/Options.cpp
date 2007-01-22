@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.329 2007-01-18 13:18:42 geuzaine Exp $
+// $Id: Options.cpp,v 1.330 2007-01-22 16:31:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3775,6 +3775,17 @@ double opt_geometry_auto_coherence(OPT_ARGS_NUM)
   return CTX.geom.auto_coherence;
 }
 
+double opt_geometry_highlight_orphans(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.geom.highlight_orphans = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->geo_butt[10]->value(CTX.geom.highlight_orphans);
+#endif
+  return CTX.geom.highlight_orphans;
+}
+
 double opt_geometry_tolerance(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -4764,6 +4775,10 @@ double opt_mesh_second_order_incomplete(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.mesh.second_order_incomplete = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[4]->value(CTX.mesh.second_order_incomplete);
+#endif
   return CTX.mesh.second_order_incomplete;
 }
 

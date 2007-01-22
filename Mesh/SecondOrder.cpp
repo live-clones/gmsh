@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.48 2006-11-27 22:22:17 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.49 2007-01-22 16:31:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -417,9 +417,12 @@ void Degre2(bool linear, bool incomplete)
   Msg(STATUS1, "Meshing second order...");
   double t1 = Cpu();
 
+  // first, make sure to remove any existsing second order vertices/elements
+  Degre1();
+
+  // then create new second order vertices/elements
   std::map<std::pair<MVertex*,MVertex*>, MVertex* > edgeVertices;
   std::map<std::vector<MVertex*>, MVertex* > faceVertices;
-
   for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); ++it)
     setSecondOrder(*it, edgeVertices, linear);
   for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); ++it)

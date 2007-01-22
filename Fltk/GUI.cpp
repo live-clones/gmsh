@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.592 2007-01-18 09:12:45 geuzaine Exp $
+// $Id: GUI.cpp,v 1.593 2007-01-22 16:31:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2210,10 +2210,14 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Color");
       o->hide();
 
-      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 2 * WB + 1 * BH, IW + 20, height - 4 * WB - 1 * BH);
+      geo_butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Highlight orphan entities");
+      geo_butt[10]->type(FL_TOGGLE_BUTTON);
+      geo_butt[10]->callback(geometry_options_ok_cb);
+
+      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 2 * WB + 2 * BH, IW + 20, height - 4 * WB - 2 * BH);
       int i = 0;
       while(GeometryOptions_Color[i].str) {
-        geo_col[i] = new Fl_Button(L + 2 * WB, 2 * WB + (1 + i) * BH, IW, BH, GeometryOptions_Color[i].str);
+        geo_col[i] = new Fl_Button(L + 2 * WB, 2 * WB + (2 + i) * BH, IW, BH, GeometryOptions_Color[i].str);
         geo_col[i]->callback(color_cb, (void *)GeometryOptions_Color[i].function);
         i++;
       }
@@ -2302,6 +2306,10 @@ void GUI::create_option_window()
       mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Generate second order elements");
       mesh_butt[3]->type(FL_TOGGLE_BUTTON);
       mesh_butt[3]->callback(mesh_options_ok_cb);
+
+      mesh_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW, BH, "Use incomplete second order elements (8-node quads, etc.)");
+      mesh_butt[4]->type(FL_TOGGLE_BUTTON);
+      mesh_butt[4]->callback(mesh_options_ok_cb);
 
       o->end();
     }

@@ -1,4 +1,4 @@
-$Id: TODO,v 1.38 2007-01-19 15:34:05 geuzaine Exp $
+$Id: TODO,v 1.39 2007-01-22 16:31:44 geuzaine Exp $
 
 ********************************************************************
 
@@ -6,17 +6,20 @@ introduce Right/Left/Alternate for extruded meshes
 
 ********************************************************************
 
-color edges depending on number of adjacent surfaces (to check face
-sewing w/ tolerance)
+fix second order mesh for periodic surfaces
 
 ********************************************************************
 
-fix second order mesh for periodic surfaces
+recode full-quad recombine algo
 
 ********************************************************************
 
 bug: quads orientation is wrong after recombine + quads wrong in some
 cases
+
+********************************************************************
+
+recode BDS::extract edges
 
 ********************************************************************
 

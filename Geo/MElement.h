@@ -160,6 +160,22 @@ class MElement
   virtual char *getStringForBDF() = 0;
 };
 
+class MElementLessThanLexicographic{
+ public:
+  static double tolerance;
+  bool operator()(MElement *e1, MElement *e2) const
+  {
+    SPoint3 b1 = e1->barycenter();
+    SPoint3 b2 = e2->barycenter();
+    if(b1.x() - b2.x() >  tolerance) return true;
+    if(b1.x() - b2.x() < -tolerance) return false;
+    if(b1.y() - b2.y() >  tolerance) return true;
+    if(b1.y() - b2.y() < -tolerance) return false;
+    if(b1.z() - b2.z() >  tolerance) return true;
+    return false;
+  }
+};
+
 class MLine : public MElement {
  protected:
   MVertex *_v[2];
@@ -348,47 +364,42 @@ class MTriangle6 : public MTriangle {
 };
 
 template <class T> 
-void sort3 ( T * t [3])
+void sort3(T *t[3])
 {
   T *temp;
-  if (t[0] > t[1])
-    {
-      temp = t[1];
-      t[1] = t[0];
-      t[0] = temp;
-    }
-  if (t[1] > t[2])
-    {
-      temp = t[2];
-      t[2] = t[1];
-      t[1] = temp;
-    }
-  if (t[0] > t[1])
-    {
-      temp = t[1];
-      t[1] = t[0];
-      t[0] = temp;
-    }
+  if(t[0] > t[1]){
+    temp = t[1];
+    t[1] = t[0];
+    t[0] = temp;
+  }
+  if(t[1] > t[2]){
+    temp = t[2];
+    t[2] = t[1];
+    t[1] = temp;
+  }
+  if(t[0] > t[1]){
+    temp = t[1];
+    t[1] = t[0];
+    t[0] = temp;
+  }
 }
 
 struct compareMTriangleLexicographic
 {
-  bool operator () ( MTriangle *t1 , MTriangle *t2 ) const
+  bool operator () (MTriangle *t1, MTriangle *t2) const
   {
-    MVertex *_v1[3] = {t1->getVertex(0),t1->getVertex(1),t1->getVertex(2)};
-    MVertex *_v2[3] = {t2->getVertex(0),t2->getVertex(1),t2->getVertex(2)};
-
+    MVertex *_v1[3] = {t1->getVertex(0), t1->getVertex(1), t1->getVertex(2)};
+    MVertex *_v2[3] = {t2->getVertex(0), t2->getVertex(1), t2->getVertex(2)};
     sort3(_v1);
     sort3(_v2);
-    if (_v1[0] < _v2[0]) return true;
-    if (_v1[0] > _v2[0]) return false;
-    if (_v1[1] < _v2[1]) return true;
-    if (_v1[1] > _v2[1]) return false;
-    if (_v1[2] < _v2[2]) return true;
+    if(_v1[0] < _v2[0]) return true;
+    if(_v1[0] > _v2[0]) return false;
+    if(_v1[1] < _v2[1]) return true;
+    if(_v1[1] > _v2[1]) return false;
+    if(_v1[2] < _v2[2]) return true;
     return false;
   }
 };
-
 
 class MQuadrangle : public MElement {
  protected:

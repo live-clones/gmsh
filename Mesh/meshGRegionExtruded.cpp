@@ -1,4 +1,4 @@
-// $Id: meshGRegionExtruded.cpp,v 1.9 2007-01-16 14:15:18 geuzaine Exp $
+// $Id: meshGRegionExtruded.cpp,v 1.10 2007-01-22 16:31:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -288,8 +288,8 @@ void phase2(GRegion *gr,
 	    if(!edgeExists(v[3], v[1], edges_swap)) {
 	      deleteEdge(v[3], v[1], edges);
 	      createEdge(v[0], v[4], edges);
-	      createEdge(v[0], v[4], edges_swap);
 	      createEdge(v[3], v[1], edges_swap);
+	      createEdge(v[0], v[4], edges_swap);
 	    }
 	    else if(!edgeExists(v[4], v[2], edges_swap)) {
 	      deleteEdge(v[4], v[2], edges);
@@ -317,14 +317,14 @@ void phase2(GRegion *gr,
 	    else if(!edgeExists(v[1], v[5], edges_swap)) {
 	      deleteEdge(v[1], v[5], edges);
 	      createEdge(v[4], v[2], edges);
-	      createEdge(v[4], v[2], edges_swap);
 	      createEdge(v[1], v[5], edges_swap);
+	      createEdge(v[4], v[2], edges_swap);
 	    }
 	    else if(!edgeExists(v[3], v[2], edges_swap)) {
 	      deleteEdge(v[3], v[2], edges);
 	      createEdge(v[0], v[5], edges);
-	      createEdge(v[0], v[5], edges_swap);
 	      createEdge(v[3], v[2], edges_swap);
+	      createEdge(v[0], v[5], edges_swap);
 	    }
 	  }
 	}
@@ -474,5 +474,5 @@ int SubdivideExtrudedMesh(GModel *m)
   }
 
   MVertexLessThanLexicographic::tolerance = old_tol;   
-  return 0;
+  return 1;
 }

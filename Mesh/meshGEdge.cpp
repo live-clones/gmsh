@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.26 2007-01-12 13:16:59 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.27 2007-01-22 16:31:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,68 +25,55 @@
 #include "GFace.h"
 #include "MRep.h"
 #include "BackgroundMesh.h"
-#include "Context.h"
 #include "Message.h"
 
-extern Context_T CTX;
-
-static GEdge * _myGEdge;
-static double  _myGEdgeLength, t_begin, t_end, lc_begin, lc_end;
-static Range<double> _myGEdgeBounds;
-
-double F_LC_ANALY (double xx, double yy, double zz)
+double F_Lc(GEdge *ge, double t)
 {
-  //  return 0.005 + 0.05*fabs (sin(5*xx) + sin(15*yy) + sin(15*zz));
-  //  return 0.02;
-  //  return 0.002 + 0.04*fabs (sin(6*xx) + sin(6*yy) + sin(6*zz));
-  return 0.003 + 0.05*fabs(sin(8*xx) + sin(8*yy) + sin(8*zz));
-  return 0.02 + 0.1*fabs(sin(3*xx) + sin(3*yy) + sin(3*zz));
-  return 0.01 + 0.1*fabs(sin((xx*xx+(zz-0.7)*(zz-0.7)-.25))); 
-  return 0.05 + 0.1*fabs(xx*yy);
-}
-
-double F_Lc(double t)
-{
-  GPoint p = _myGEdge -> point (t);
+  GPoint p = ge->point(t);
   double lc_here;
-  if (t == t_begin)
-    lc_here    = BGM_MeshSize(_myGEdge->getBeginVertex(), t , 0 , p.x(),p.y(),p.z());
-  else if (t == t_end)
-    lc_here    = BGM_MeshSize(_myGEdge->getEndVertex(), t , 0 , p.x(),p.y(),p.z());
-  else
-    lc_here    = BGM_MeshSize(_myGEdge, t , 0 , p.x(),p.y(),p.z());
-  SVector3 der      = _myGEdge -> firstDer(t) ;
 
-  const double d    = norm(der);  
-  return d/lc_here;
+  Range<double> bounds = ge->parBounds(0);
+  double t_begin = bounds.low();
+  double t_end = bounds.high();
+
+  if(t == t_begin)
+    lc_here = BGM_MeshSize(ge->getBeginVertex(), t, 0, p.x(), p.y(), p.z());
+  else if(t == t_end)
+    lc_here = BGM_MeshSize(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
+  else
+    lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
+
+  SVector3 der = ge->firstDer(t);
+  const double d = norm(der);
+  return d / lc_here;
 }
 
-double F_Transfinite(double t)
+double F_Transfinite(GEdge *ge, double t)
 {
   double val, r;
 
-  SVector3 der = _myGEdge->firstDer(t) ;
+  SVector3 der = ge->firstDer(t) ;
   double d = norm(der);
 
-  double coef = _myGEdge->meshAttributes.coeffTransfinite;
-  int type = _myGEdge->meshAttributes.typeTransfinite;
-  int nbpt = _myGEdge->meshAttributes.nbPointsTransfinite;
+  double coef = ge->meshAttributes.coeffTransfinite;
+  int type = ge->meshAttributes.typeTransfinite;
+  int nbpt = ge->meshAttributes.nbPointsTransfinite;
 
   if(coef <= 0.0 || coef == 1.0) {
     // coef < 0 should never happen
-    val = d * coef / _myGEdgeLength;
+    val = d * coef / ge->length();
   }
   else {
     switch (abs(type)) {
 
-    case 1: // Geometric progression ar^i; Sum of n terms = THEC->l = a (r^n-1)/(r-1)
+    case 1: // Geometric progression ar^i; Sum of n terms = length = a (r^n-1)/(r-1)
       {
 	if(sign(type) >= 0)
 	  r = coef;
 	else
 	  r = 1. / coef;
-	double a = _myGEdgeLength * (r - 1.) / (pow(r, nbpt - 1.) - 1.);
-	int i = (int)(log(t * _myGEdgeLength / a * (r - 1.) + 1.) / log(r));
+	double a = ge->length() * (r - 1.) / (pow(r, nbpt - 1.) - 1.);
+	int i = (int)(log(t * ge->length() / a * (r - 1.) + 1.) / log(r));
 	val = d / (a * pow(r, (double)i));
       }
       break;
@@ -97,30 +84,31 @@ double F_Transfinite(double t)
 	if(coef > 1.0) {
 	  a = -4. * sqrt(coef - 1.) *
 	    atan2(1., sqrt(coef - 1.)) /
-	    ((double)nbpt *  _myGEdgeLength);
+	    ((double)nbpt *  ge->length());
 	}
 	else {
 	  a = 2. * sqrt(1. - coef) *
 	    log(fabs((1. + 1. / sqrt(1. - coef))
 		     / (1. - 1. / sqrt(1. - coef))))
-	    / ((double)nbpt * _myGEdgeLength);
+	    / ((double)nbpt * ge->length());
 	}
-	double b = -a * _myGEdgeLength * _myGEdgeLength / (4. * (coef - 1.));
-	val = d / (-a * DSQR(t * _myGEdgeLength - (_myGEdgeLength) * 0.5) + b);
+	double b = -a * ge->length() * ge->length() / (4. * (coef - 1.));
+	val = d / (-a * DSQR(t * ge->length() - (ge->length()) * 0.5) + b);
       }
       break;
       
     default:
       Msg(WARNING, "Unknown case in Transfinite Line mesh");
       val = 1.;
+      break;
     }
   }
   return val;
 }
 
-double F_One(double t)
+double F_One(GEdge *ge, double t)
 {
-  SVector3 der = _myGEdge->firstDer(t) ;
+  SVector3 der = ge->firstDer(t) ;
   return norm(der);
 }
 
@@ -134,24 +122,22 @@ double trapezoidal(IntPoint * P1, IntPoint * P2)
   return (0.5 * (P1->lc + P2->lc) * (P2->t - P1->t));
 }
 
-void RecursiveIntegration(IntPoint * from, IntPoint * to,
-                          double (*f) (double X), List_T * pPoints,
+void RecursiveIntegration(GEdge *ge, IntPoint * from, IntPoint * to,
+                          double (*f) (GEdge *e, double X), List_T * pPoints,
                           double Prec, int *depth)
 {
   IntPoint P, p1;
-  double err, val1, val2, val3;
 
   (*depth)++;
 
   P.t = 0.5 * (from->t + to->t);
-  P.lc = f(P.t);
+  P.lc = f(ge, P.t);
 
-  val1 = trapezoidal(from, to);
-  val2 = trapezoidal(from, &P);
-  val3 = trapezoidal(&P, to);
+  double val1 = trapezoidal(from, to);
+  double val2 = trapezoidal(from, &P);
+  double val3 = trapezoidal(&P, to);
+  double err = fabs(val1 - val2 - val3);
 
-  err = fabs(val1 - val2 - val3);
-  //  Msg(INFO,"Int %22.15 E %22.15 E %22.15 E\n", val1,val2,val3);
   if(((err < Prec) && (*depth > 1)) || (*depth > 25)) {
     List_Read(pPoints, List_Nbr(pPoints) - 1, &p1);
     P.p = p1.p + val2;
@@ -162,43 +148,46 @@ void RecursiveIntegration(IntPoint * from, IntPoint * to,
     List_Add(pPoints, to);
   }
   else {
-    RecursiveIntegration(from, &P, f, pPoints, Prec, depth);
-    RecursiveIntegration(&P, to, f, pPoints, Prec, depth);
+    RecursiveIntegration(ge, from, &P, f, pPoints, Prec, depth);
+    RecursiveIntegration(ge, &P, to, f, pPoints, Prec, depth);
   }
+
   (*depth)--;
 }
 
-double Integration(double t1, double t2, double (*f) (double X),
+double Integration(GEdge *ge, double t1, double t2, 
+		   double (*f) (GEdge *e, double X),
                    List_T * pPoints, double Prec)
 {
-  int depth;
   IntPoint from, to;
 
-  depth = 0;
+  int depth = 0;
 
   from.t = t1;
-  from.lc = f(from.t);
+  from.lc = f(ge, from.t);
   from.p = 0.0;
   List_Add(pPoints, &from);
 
   to.t = t2;
-  to.lc = f(to.t);
-  RecursiveIntegration(&from, &to, f, pPoints, Prec, &depth);
+  to.lc = f(ge, to.t);
+  RecursiveIntegration(ge, &from, &to, f, pPoints, Prec, &depth);
 
   List_Read(pPoints, List_Nbr(pPoints) - 1, &to);
-  return (to.p);
+  return to.p;
 }
 
-void deMeshGEdge :: operator() (GEdge *ge) 
+void deMeshGEdge::operator() (GEdge *ge) 
 {
-  for (unsigned int i=0;i<ge->mesh_vertices.size();i++) delete ge->mesh_vertices[i];
+  for (unsigned int i = 0; i < ge->mesh_vertices.size(); i++) 
+    delete ge->mesh_vertices[i];
   ge->mesh_vertices.clear();
-  for (unsigned int i=0;i<ge->lines.size();i++) delete ge->lines[i];
+  for (unsigned int i = 0; i < ge->lines.size(); i++) 
+    delete ge->lines[i];
   ge->lines.clear();
   if(ge->meshRep) ge->meshRep->destroy();
 }
 
-void meshGEdge :: operator() (GEdge *ge) 
+void meshGEdge::operator() (GEdge *ge) 
 {  
   if(ge->geomType() == GEntity::DiscreteCurve) return;
 
@@ -213,37 +202,26 @@ void meshGEdge :: operator() (GEdge *ge)
   // Create a list of integration points
   List_T *Points = List_Create(10, 10, sizeof(IntPoint));
 
-  // For avoiding the global variable :
-  // We have to change the Integration function in order
-  // to pass an extra argument... 
-  _myGEdge = ge;
-    
   // compute bounds
-  _myGEdgeBounds = ge->parBounds(0) ;
-  t_begin = _myGEdgeBounds.low();
-  t_end = _myGEdgeBounds.high();
+  Range<double> bounds = ge->parBounds(0);
+  double t_begin = bounds.low();
+  double t_end = bounds.high();
   
   // first compute the length of the curve by integrating one
-  _myGEdgeLength = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), 
-			       F_One, Points, 1.e-8);
-  ge->setLength (_myGEdgeLength);
+  double length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-8);
+  ge->setLength(length);
 
   List_Reset(Points);
-
-  lc_begin = _myGEdge->getBeginVertex()->prescribedMeshSizeAtVertex();
-  lc_end = _myGEdge->getEndVertex()->prescribedMeshSizeAtVertex();
     
   // Integrate detJ/lc du 
   double a;
   int N;
   if(ge->meshAttributes.Method == TRANSFINI){
-    a = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), 
-		    F_Transfinite, Points, 1.e-8);
+    a = Integration(ge, t_begin, t_end, F_Transfinite, Points, 1.e-8);
     N = ge->meshAttributes.nbPointsTransfinite;
   }
   else{
-    a = Integration(_myGEdgeBounds.low(), _myGEdgeBounds.high(), 
-		    F_Lc, Points, 1.e-8);
+    a = Integration(ge, t_begin, t_end, F_Lc, Points, 1.e-8);
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
   const double b = a / (double)(N - 1);
@@ -251,9 +229,8 @@ void meshGEdge :: operator() (GEdge *ge)
   int count = 1, NUMP = 1;
   IntPoint P1, P2;
 
-  // do not consider the first and the last vertex 
-  // those are not classified on this mesh edge
-
+  // do not consider the first and the last vertex (those are not
+  // classified on this mesh edge)
   if(N > 2){
     ge->mesh_vertices.resize(N - 2);
     while(NUMP < N - 1) {

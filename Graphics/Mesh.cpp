@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.191 2006-12-05 18:34:58 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.192 2007-01-22 16:31:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,6 @@
 #include "MRep.h"
 #include "OS.h"
 #include "gl2ps.h"
-#include "tc.h"
 
 extern GModel *GMODEL;
 extern Context_T CTX;
@@ -178,14 +177,7 @@ static void drawElementLabels(GEntity *e, std::vector<T*> &elements,
 	sprintf(str, "%d", e->tag());
       else
 	sprintf(str, "%d", ele->getNum());
-      if(e->dim() == 1){
-	double offset = 0.3 * (CTX.mesh.line_width + CTX.gl_fontsize) * CTX.pixel_equiv_x;
-	glRasterPos3d(pc.x() + offset / CTX.s[0], 
-		      pc.y() + offset / CTX.s[1], 
-		      pc.z() + offset / CTX.s[2]);
-      }
-      else
-	glRasterPos3d(pc.x(), pc.y(), pc.z());
+      glRasterPos3d(pc.x(), pc.y(), pc.z());
       Draw_String(str);
     }
   }
@@ -244,10 +236,7 @@ static void drawVertexLabel(GEntity *e, MVertex *v, int partition=-1)
     sprintf(str, "%d", e->tag());
   else
     sprintf(str, "%d", v->getNum());
-  double offset = 0.3 * (CTX.mesh.point_size + CTX.gl_fontsize) * CTX.pixel_equiv_x;
-  glRasterPos3d(v->x() + offset / CTX.s[0],
-		v->y() + offset / CTX.s[1],
-		v->z() + offset / CTX.s[2]);
+  glRasterPos3d(v->x(), v->y(), v->z());
   Draw_String(str);
 }
 

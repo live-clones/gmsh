@@ -150,7 +150,7 @@ public :
     int extrude_spline_points, old_newreg;
     double normals, tangents;
     double scaling_factor;
-    int auto_coherence;
+    int auto_coherence, highlight_orphans;
     double tolerance;
     double snap[3];
     int occ_fix_small_edges, occ_fix_small_faces, occ_sew_faces;

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.505 2007-01-18 09:12:44 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.506 2007-01-22 16:31:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1006,6 +1006,7 @@ void geometry_options_ok_cb(CALLBACK_ARGS)
   opt_geometry_surfaces_num(0, GMSH_SET, WID->geo_butt[6]->value());
   opt_geometry_volumes_num(0, GMSH_SET, WID->geo_butt[7]->value());
   opt_geometry_auto_coherence(0, GMSH_SET, WID->geo_butt[8]->value());
+  opt_geometry_highlight_orphans(0, GMSH_SET, WID->geo_butt[10]->value());
   opt_geometry_light(0, GMSH_SET, WID->geo_butt[9]->value());
 
   opt_geometry_normals(0, GMSH_SET, WID->geo_value[0]->value());
@@ -1046,8 +1047,11 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
     }
   }
 
+  opt_mesh_reverse_all_normals(0, GMSH_SET, WID->mesh_butt[0]->value());
+  opt_mesh_lc_from_curvature(0, GMSH_SET, WID->mesh_butt[1]->value());
   opt_mesh_optimize(0, GMSH_SET, WID->mesh_butt[2]->value());
   opt_mesh_order(0, GMSH_SET, WID->mesh_butt[3]->value()? 2 : 1);
+  opt_mesh_second_order_incomplete(0, GMSH_SET, WID->mesh_butt[4]->value());
   opt_mesh_constrained_bgmesh(0, GMSH_SET, WID->mesh_butt[5]->value());
   opt_mesh_points(0, GMSH_SET, WID->mesh_butt[6]->value());
   opt_mesh_lines(0, GMSH_SET, WID->mesh_butt[7]->value());
@@ -1070,10 +1074,8 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_cut_plane_only_volume(0, GMSH_SET, WID->mesh_butt[23]->value());
   opt_mesh_light(0, GMSH_SET, WID->mesh_butt[17]->value());
   opt_mesh_light_two_side(0, GMSH_SET, WID->mesh_butt[18]->value());
-  opt_mesh_reverse_all_normals(0, GMSH_SET, WID->mesh_butt[0]->value());
   opt_mesh_smooth_normals(0, GMSH_SET, WID->mesh_butt[19]->value());
   opt_mesh_light_lines(0, GMSH_SET, WID->mesh_butt[20]->value());
-  opt_mesh_lc_from_curvature(0, GMSH_SET, WID->mesh_butt[1]->value());
 
   opt_mesh_nb_smoothing(0, GMSH_SET, WID->mesh_value[0]->value());
   opt_mesh_lc_factor(0, GMSH_SET, WID->mesh_value[2]->value());

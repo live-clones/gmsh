@@ -781,6 +781,9 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "ExtrudeSplinePoints" , opt_geometry_extrude_spline_points, 5. ,
     "Number of control points for splines created during extrusion" },
 
+  { F|O, "HighlightOrphans" , opt_geometry_highlight_orphans, 0. , 
+    "Highlight orphan entities (lines connected to a single surface, etc.)?" }, 
+
   { F|O, "Light" , opt_geometry_light , 1. , 
     "Enable lighting for the geometry" },
   { F|O, "Lines" , opt_geometry_lines , 1. , 
@@ -849,7 +852,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_MESHADAPT ,
     "2D mesh algorithm (1=meshadapt, 2=delaunay)" }, 
   { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_NETGEN ,
-    "3D mesh algorithm (1=delaunay, 4=netgen)" }, 
+    "3D mesh algorithm (1=delaunay, 4=netgen, 5=tetgen)" }, 
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" }, 
 

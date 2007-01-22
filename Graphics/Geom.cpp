@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.127 2006-12-15 03:15:32 geuzaine Exp $
+// $Id: Geom.cpp,v 1.128 2007-01-22 16:31:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -52,6 +52,14 @@ class drawGVertex {
       glColor4ubv((GLubyte *) & CTX.color.geom.point);
     }
     
+    if(CTX.geom.highlight_orphans){
+      std::list<GEdge*> edges = v->edges();
+      if(edges.size() == 0)
+	glColor3d(1., 0., 0.);
+      else if(edges.size() == 1)
+	glColor3d(1., 0.6, 0.);
+    }
+
     if(CTX.geom.points) {
       if(CTX.geom.point_type > 0) {
 	if(v->getSelection())
@@ -109,6 +117,14 @@ class drawGEdge {
       glColor4ubv((GLubyte *) & CTX.color.geom.line);
     }
     
+    if(CTX.geom.highlight_orphans){
+      std::list<GFace*> faces = e->faces();
+      if(faces.size() == 0)
+	glColor3d(1., 0., 0.);
+      else if(faces.size() == 1)
+	glColor3d(1., 0.6, 0.);
+    }
+
     Range<double> t_bounds = e->parBounds(0);
     double t_min = t_bounds.low();
     double t_max = t_bounds.high();
@@ -386,7 +402,7 @@ public :
       gl2psLineWidth(CTX.geom.line_width / 2. * CTX.print.eps_line_width_factor);
       glColor4ubv((GLubyte *) & CTX.color.geom.surface);
     }
-    
+
     if(f->geomType() == GEntity::Plane)
       _drawPlaneGFace(f);
     else if(f->geomType() == GEntity::ProjectionSurface)

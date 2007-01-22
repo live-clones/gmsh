@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.28 2007-01-18 09:12:45 geuzaine Exp $
+// $Id: MElement.cpp,v 1.29 2007-01-22 16:31:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -118,6 +118,7 @@ int quadfaces_pyramid[1][4] = {
 };
 
 int MElement::_globalNum = 0;
+double MElementLessThanLexicographic::tolerance = 1.e-6;
 
 double MElement::minEdge()
 {

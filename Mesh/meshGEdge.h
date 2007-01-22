@@ -21,16 +21,15 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 class GEdge;
+
 // Create the mesh of the edge
-class meshGEdge 
-{
+class meshGEdge {
  public :
   void operator () ( GEdge * );
 };
 
 // destroy the mesh of the edge
-class deMeshGEdge 
-{
+class deMeshGEdge {
  public :
   void operator () ( GEdge * );
 };

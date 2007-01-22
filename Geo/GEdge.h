@@ -98,11 +98,11 @@ class GEdge : public GEntity {
   virtual std::string getAdditionalInfoString();
 
   // tells if the edge is a 3D edge (in opposition with a trimmed curve on a surface)
-  virtual bool is3D () const {return true;}
+  virtual bool is3D() const {return true;}
 
   // the length of the model edge
-  inline double length () const {return _length;}
-  inline void   setLength (const double l) {_length = l;}
+  inline double length() const {return _length;}
+  inline void setLength(const double l) {_length = l;}
 
   // one can impose the mesh size at an edge
   virtual double prescribedMeshSizeAtVertex() const {return meshAttributes.meshSize;}
