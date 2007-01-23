@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.16 2007-01-16 11:31:41 geuzaine Exp $
+// $Id: OCCEdge.cpp,v 1.17 2007-01-23 08:52:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -184,12 +184,15 @@ GEntity::GeomType OCCEdge::geomType() const
   }
 }
 
-int OCCEdge::minimumMeshSegments () const
+int OCCEdge::minimumMeshSegments() const
 {
-  return GEdge::minimumMeshSegments () ;
+  if(geomType() == Circle || geomType() == Ellipse)
+    return 2;
+  else
+    return GEdge::minimumMeshSegments();
 }
 
-int OCCEdge::minimumDrawSegments () const
+int OCCEdge::minimumDrawSegments() const
 {
   int n = GEdge::minimumDrawSegments();
 
