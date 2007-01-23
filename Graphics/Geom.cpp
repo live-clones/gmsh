@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.128 2007-01-22 16:31:43 geuzaine Exp $
+// $Id: Geom.cpp,v 1.129 2007-01-23 08:01:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -44,7 +44,7 @@ class drawGVertex {
     if(v->getSelection()) {
       glPointSize(CTX.geom.point_sel_size);
       gl2psPointSize(CTX.geom.point_sel_size * CTX.print.eps_point_size_factor);
-      glColor4ubv((GLubyte *) & CTX.color.geom.point_sel);
+      glColor4ubv((GLubyte *) & CTX.color.geom.selection);
     }
     else {
       glPointSize(CTX.geom.point_size);
@@ -55,9 +55,9 @@ class drawGVertex {
     if(CTX.geom.highlight_orphans){
       std::list<GEdge*> edges = v->edges();
       if(edges.size() == 0)
-	glColor3d(1., 0., 0.);
+	glColor4ubv((GLubyte *) & CTX.color.geom.highlight[0]);
       else if(edges.size() == 1)
-	glColor3d(1., 0.6, 0.);
+	glColor4ubv((GLubyte *) & CTX.color.geom.highlight[1]);
     }
 
     if(CTX.geom.points) {
@@ -109,7 +109,7 @@ class drawGEdge {
     if(e->getSelection()) {
       glLineWidth(CTX.geom.line_sel_width);
       gl2psLineWidth(CTX.geom.line_sel_width * CTX.print.eps_line_width_factor);
-      glColor4ubv((GLubyte *) & CTX.color.geom.line_sel);
+      glColor4ubv((GLubyte *) & CTX.color.geom.selection);
     }
     else {
       glLineWidth(CTX.geom.line_width);
@@ -120,9 +120,9 @@ class drawGEdge {
     if(CTX.geom.highlight_orphans){
       std::list<GFace*> faces = e->faces();
       if(faces.size() == 0)
-	glColor3d(1., 0., 0.);
+	glColor4ubv((GLubyte *) & CTX.color.geom.highlight[0]);
       else if(faces.size() == 1)
-	glColor3d(1., 0.6, 0.);
+	glColor4ubv((GLubyte *) & CTX.color.geom.highlight[1]);
     }
 
     Range<double> t_bounds = e->parBounds(0);
@@ -252,7 +252,7 @@ class drawGFace {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     //glEnable(GL_LIGHTING);
     //glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-    glColor4ubv((GLubyte *) & CTX.color.geom.surface_sel);
+    glColor4ubv((GLubyte *) & CTX.color.geom.selection);
     glBegin(GL_QUADS);
     for(int i = 1; i < N; i++){
       for(int j = 1; j < N; j++){
@@ -395,7 +395,7 @@ public :
       glLineWidth(CTX.geom.line_sel_width / 2.);
       gl2psLineWidth(CTX.geom.line_sel_width / 2. *
 		     CTX.print.eps_line_width_factor);
-      glColor4ubv((GLubyte *) & CTX.color.geom.surface_sel);
+      glColor4ubv((GLubyte *) & CTX.color.geom.selection);
     }
     else {
       glLineWidth(CTX.geom.line_width / 2.);
@@ -431,7 +431,7 @@ class drawGRegion {
     }
     
     if(r->getSelection())
-      glColor4ubv((GLubyte *) & CTX.color.geom.volume_sel);
+      glColor4ubv((GLubyte *) & CTX.color.geom.selection);
     else
       glColor4ubv((GLubyte *) & CTX.color.geom.volume);
     

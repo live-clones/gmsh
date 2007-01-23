@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.192 2007-01-22 16:31:43 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.193 2007-01-23 08:01:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -36,12 +36,7 @@ extern Context_T CTX;
 static unsigned int getColorByEntity(GEntity *e)
 {
   if(e->getSelection()){ // selection
-    switch(e->dim()){
-    case 0: return CTX.color.geom.point_sel;
-    case 1: return CTX.color.geom.line_sel;
-    case 2: return CTX.color.geom.surface_sel;
-    default: return CTX.color.geom.volume_sel;
-    }
+    return CTX.color.geom.selection;
   }
   else if(e->useColor()){ // forced from a script
     return e->getColor();
@@ -62,12 +57,7 @@ static unsigned int getColorByEntity(GEntity *e)
 static unsigned int getColorByElement(MElement *ele)
 {
   if(ele->getVisibility() > 1){ // selection
-    switch(ele->getDim()){
-    case 0: return CTX.color.geom.point_sel;
-    case 1: return CTX.color.geom.line_sel;
-    case 2: return CTX.color.geom.surface_sel;
-    default: return CTX.color.geom.volume_sel;
-    }
+    return CTX.color.geom.selection;
   }
   else if(CTX.mesh.color_carousel == 0){ // by element type
     switch(ele->getNumEdges()){

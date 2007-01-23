@@ -19,6 +19,11 @@ Number of control points for splines created during extrusion@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.HighlightOrphans
+Highlight orphan entities (lines connected to a single surface, etc.)?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.Light
 Enable lighting for the geometry@*
 Default value: @code{1}@*
@@ -174,24 +179,24 @@ Normal geometry volume color@*
 Default value: @code{@{255,255,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.Color.PointsSelect
-Selected geometry point color@*
+@item Geometry.Color.Selection
+Selected geometry color@*
 Default value: @code{@{255,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.Color.LinesSelect
-Selected geometry curve color@*
+@item Geometry.Color.HighlightZero
+Highlight 0 color@*
 Default value: @code{@{255,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.Color.SurfacesSelect
-Selected geometry surface color@*
-Default value: @code{@{255,0,0@}}@*
+@item Geometry.Color.HighlightOne
+Highlight 1 color@*
+Default value: @code{@{255,150,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.Color.VolumesSelect
-Selected geometry volume color@*
-Default value: @code{@{255,0,0@}}@*
+@item Geometry.Color.HighlightTwo
+Highlight 2 color@*
+Default value: @code{@{255,255,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.Tangents

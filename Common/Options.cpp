@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.330 2007-01-22 16:31:42 geuzaine Exp $
+// $Id: Options.cpp,v 1.331 2007-01-23 08:01:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -7105,46 +7105,46 @@ unsigned int opt_geometry_color_volumes(OPT_ARGS_COL)
   return CTX.color.geom.volume;
 }
 
-unsigned int opt_geometry_color_points_select(OPT_ARGS_COL)
+unsigned int opt_geometry_color_selection(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
-    CTX.color.geom.point_sel = val;
+    CTX.color.geom.selection = val;
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.geom.point_sel, WID->geo_col[4]);
+  CCC(CTX.color.geom.selection, WID->geo_col[4]);
 #endif
-  return CTX.color.geom.point_sel;
+  return CTX.color.geom.selection;
 }
 
-unsigned int opt_geometry_color_lines_select(OPT_ARGS_COL)
+unsigned int opt_geometry_color_highlight0(OPT_ARGS_COL)
 {
   if(action & GMSH_SET){
-    CTX.color.geom.line_sel = val;
+    CTX.color.geom.highlight[0] = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.geom.line_sel, WID->geo_col[5]);
+  CCC(CTX.color.geom.highlight[0], WID->geo_col[5]);
 #endif
-  return CTX.color.geom.line_sel;
+  return CTX.color.geom.highlight[0];
 }
 
-unsigned int opt_geometry_color_surfaces_select(OPT_ARGS_COL)
+unsigned int opt_geometry_color_highlight1(OPT_ARGS_COL)
 {
   if(action & GMSH_SET){
-    CTX.color.geom.surface_sel = val;
+    CTX.color.geom.highlight[1] = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.geom.surface_sel, WID->geo_col[6]);
+  CCC(CTX.color.geom.highlight[1], WID->geo_col[6]);
 #endif
-  return CTX.color.geom.surface_sel;
+  return CTX.color.geom.highlight[1];
 }
 
-unsigned int opt_geometry_color_volumes_select(OPT_ARGS_COL)
+unsigned int opt_geometry_color_highlight2(OPT_ARGS_COL)
 {
   if(action & GMSH_SET)
-    CTX.color.geom.volume_sel = val;
+    CTX.color.geom.highlight[2] = val;
 #if defined(HAVE_FLTK)
-  CCC(CTX.color.geom.volume_sel, WID->geo_col[7]);
+  CCC(CTX.color.geom.highlight[2], WID->geo_col[7]);
 #endif
-  return CTX.color.geom.volume_sel;
+  return CTX.color.geom.highlight[2];
 }
 
 unsigned int opt_geometry_color_tangents(OPT_ARGS_COL)
