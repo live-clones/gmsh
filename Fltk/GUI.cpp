@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.593 2007-01-22 16:31:42 geuzaine Exp $
+// $Id: GUI.cpp,v 1.594 2007-01-24 10:53:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2084,14 +2084,31 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "General");
       o->hide();
 
-      geo_butt[8] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Remove duplicate entities automatically");
-      geo_butt[8]->type(FL_TOGGLE_BUTTON);
-      geo_butt[8]->callback(geometry_options_ok_cb);
-
-      geo_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Geometrical tolerance");
+      geo_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Geometrical tolerance");
       geo_value[2]->align(FL_ALIGN_RIGHT);
       geo_value[2]->callback(geometry_options_ok_cb);
 
+      geo_butt[8] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Remove duplicate entities in GEO models");
+      geo_butt[8]->type(FL_TOGGLE_BUTTON);
+      geo_butt[8]->callback(geometry_options_ok_cb);
+
+      geo_butt[11] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Remove small edges in STEP, IGES and BRep models");
+      geo_butt[11]->type(FL_TOGGLE_BUTTON);
+      geo_butt[11]->callback(geometry_options_ok_cb);
+
+      geo_butt[12] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Remove small faces in STEP, IGES and BRep models");
+      geo_butt[12]->type(FL_TOGGLE_BUTTON);
+      geo_butt[12]->callback(geometry_options_ok_cb);
+
+      geo_butt[13] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Sew faces in STEP, IGES and BRep models");
+      geo_butt[13]->type(FL_TOGGLE_BUTTON);
+      geo_butt[13]->callback(geometry_options_ok_cb);
+
+#if !defined(HAVE_OCC)
+      geo_butt[11]->deactivate();
+      geo_butt[12]->deactivate();
+      geo_butt[13]->deactivate();
+#endif
       o->end();
     }
     {

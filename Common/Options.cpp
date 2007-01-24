@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.331 2007-01-23 08:01:07 geuzaine Exp $
+// $Id: Options.cpp,v 1.332 2007-01-24 10:53:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3993,6 +3993,11 @@ double opt_geometry_occ_fix_small_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.geom.occ_fix_small_edges = val ? 1 : 0;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)) {
+    WID->geo_butt[11]->value(CTX.geom.occ_fix_small_edges);
+  }
+#endif
   return CTX.geom.occ_fix_small_edges;
 }
 
@@ -4000,6 +4005,11 @@ double opt_geometry_occ_fix_small_faces(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.geom.occ_fix_small_faces = val ? 1 : 0;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)) {
+    WID->geo_butt[12]->value(CTX.geom.occ_fix_small_faces);
+  }
+#endif
   return CTX.geom.occ_fix_small_faces;
 }
 
@@ -4007,6 +4017,11 @@ double opt_geometry_occ_sew_faces(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.geom.occ_sew_faces = val ? 1 : 0;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)) {
+    WID->geo_butt[13]->value(CTX.geom.occ_sew_faces);
+  }
+#endif
   return CTX.geom.occ_sew_faces;
 }
 

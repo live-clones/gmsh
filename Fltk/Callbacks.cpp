@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.506 2007-01-22 16:31:42 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.507 2007-01-24 10:53:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1006,8 +1006,11 @@ void geometry_options_ok_cb(CALLBACK_ARGS)
   opt_geometry_surfaces_num(0, GMSH_SET, WID->geo_butt[6]->value());
   opt_geometry_volumes_num(0, GMSH_SET, WID->geo_butt[7]->value());
   opt_geometry_auto_coherence(0, GMSH_SET, WID->geo_butt[8]->value());
-  opt_geometry_highlight_orphans(0, GMSH_SET, WID->geo_butt[10]->value());
   opt_geometry_light(0, GMSH_SET, WID->geo_butt[9]->value());
+  opt_geometry_highlight_orphans(0, GMSH_SET, WID->geo_butt[10]->value());
+  opt_geometry_occ_fix_small_edges(0, GMSH_SET, WID->geo_butt[11]->value());
+  opt_geometry_occ_fix_small_faces(0, GMSH_SET, WID->geo_butt[12]->value());
+  opt_geometry_occ_sew_faces(0, GMSH_SET, WID->geo_butt[13]->value());
 
   opt_geometry_normals(0, GMSH_SET, WID->geo_value[0]->value());
   opt_geometry_tangents(0, GMSH_SET, WID->geo_value[1]->value());
