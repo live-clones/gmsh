@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.6 2006-12-18 19:47:38 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.7 2007-01-24 08:57:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -933,9 +933,17 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
 
 static int skipUntil(FILE *fp, char *key)
 {
-  char str[256];
+  char str[256], key_bracket[256];
+  strcpy(key_bracket, key);
+  strcat(key_bracket, "[");
   while(fscanf(fp, "%s", str)){
-    if(!strcmp(str, key)) return 1;
+    if(!strcmp(str, key)){ 
+      while(!feof(fp) && fgetc(fp) != '['){}
+      return 1; 
+    }
+    if(!strcmp(str, key_bracket)){
+      return 1;
+    }
   }
   return 0;
 }
@@ -944,7 +952,7 @@ static int readVerticesVRML(FILE *fp, std::vector<MVertex*> &vertexVector,
 			    std::vector<MVertex*> &allVertexVector)
 {
   double x, y, z;
-  if(fscanf(fp, " [ %lf %lf %lf", &x, &y, &z) != 3) return 0;
+  if(fscanf(fp, "%lf %lf %lf", &x, &y, &z) != 3) return 0;
   vertexVector.push_back(new MVertex(x, y, z));
   while(fscanf(fp, " , %lf %lf %lf", &x, &y, &z) == 3)
     vertexVector.push_back(new MVertex(x, y, z));
@@ -960,7 +968,7 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
 {
   int i;
   std::vector<int> idx;
-  if(fscanf(fp, " [ %d", &i) != 1) return 0;
+  if(fscanf(fp, "%d", &i) != 1) return 0;
   idx.push_back(i);
 
   // check if vertex indices are separated by commas
