@@ -60,17 +60,17 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCFixSmallEdges
-Fix small edges in OpenCascade models@*
+Fix small edges in STEP, IGES and BRep models@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCFixSmallFaces
-Fix small faces in OpenCascade models@*
+Fix small faces in STEP, IGES and BRep models@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCSewFaces
-Sew faces in OpenCascade models@*
+Sew faces in STEP, IGES and BRep models@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
