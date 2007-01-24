@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.32 2006-11-27 22:22:17 geuzaine Exp $
+# $Id: Makefile,v 1.33 2007-01-24 15:12:34 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -22,7 +22,7 @@
 include ../variables
 
 LIB     = ../lib/libGmshNumeric.a
-INCLUDE = -I../Common -I../DataStr
+INCLUDE = -I../Common -I../DataStr -I../contrib/NR
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
 
 SRC = Numeric.cpp\
