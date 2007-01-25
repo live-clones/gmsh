@@ -122,6 +122,9 @@ class VisibilityManager {
   // get the number of entities in the manager
   int getNumEntities() { return _entities.size(); }
 
+  // get the number of entities in the manager
+  Vis *getEntity(int i) { return _entities[i]; }
+
   // get the visibility information for the nth entity in the manager
   char getVisibility(int n){ return _entities[n]->getVisibility(); }
 

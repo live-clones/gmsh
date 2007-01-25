@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.507 2007-01-24 10:53:04 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.508 2007-01-25 08:56:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1915,8 +1915,8 @@ void visibility_cb(CALLBACK_ARGS)
     if(VisibilityManager::instance()->getVisibility(i))
       WID->vis_browser->select(i + 1);
   }
-  // active the delete button for physicals and partitions only!
-  if(type == 1 || type == 2)
+  // active the delete button for physicals only!
+  if(type == 1)
     WID->vis_push_butt[0]->activate();
   else
     WID->vis_push_butt[0]->deactivate();
@@ -1954,7 +1954,6 @@ void visibility_ok_cb(CALLBACK_ARGS)
 
 void visibility_save_cb(CALLBACK_ARGS)
 {
-  visibility_ok_cb(NULL, NULL);
   std::string str = VisibilityManager::instance()->getStringForGEO();
   add_infile((char*)str.c_str(), CTX.filename);
 }
@@ -1962,10 +1961,27 @@ void visibility_save_cb(CALLBACK_ARGS)
 void visibility_delete_cb(CALLBACK_ARGS)
 {
   int type = WID->vis_type->value();
-  if(type == 1)
+  if(type != 1) return; // delete only available for physicals
+
+  bool all = true;
+  for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++){
+    if(!WID->vis_browser->selected(i + 1)){
+      all = false;
+      break;
+    }
+  }
+  if(all){
     GMODEL->deletePhysicalGroups();
-  else if(type == 2)
-    GMODEL->deleteMeshPartitions();
+  }
+  else{
+    for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++){
+      if(WID->vis_browser->selected(i + 1)){
+	Vis *v = VisibilityManager::instance()->getEntity(i);
+	GMODEL->deletePhysicalGroup(v->getDim(), v->getTag());
+      }
+    }
+  }
+
   visibility_cb(NULL, (void*)"redraw_only");
 }
 

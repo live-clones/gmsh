@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.594 2007-01-24 10:53:04 geuzaine Exp $
+// $Id: GUI.cpp,v 1.595 2007-01-25 08:56:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3923,7 +3923,7 @@ void GUI::create_visibility_window(bool redraw_only)
     Fl_Button *o5 = new Fl_Button(width - 4 * WB, 3 * WB + 2 * BH, 2 * WB, BH, "+");
     o5->tooltip("Add parameter name for first selected item");
     o5->callback(visibility_sort_cb, (void *)"+");
-    
+
     {
       Fl_Group *o = new Fl_Group(2 * WB, 3 * WB + 3 * BH, brw, height - 7 * WB - 5 * BH);
       
@@ -3935,14 +3935,11 @@ void GUI::create_visibility_window(bool redraw_only)
       Fl_Group::current()->resizable(o);
     }
 
-    vis_push_butt[0] = new Fl_Button(width - 3 * BB - 4 * WB, height - 2 * BH - 3 * WB, BB, BH, "Delete");
+    vis_push_butt[0] = new Fl_Button(width - 2 * BB - 3 * WB, height - 2 * BH - 3 * WB, BB, BH, "Delete");
     vis_push_butt[0]->callback(visibility_delete_cb);
 
-    Fl_Return_Button *b1 = new Fl_Return_Button(width - 2 * BB - 3 * WB, height - 2 * BH - 3 * WB, BB, BH, "Apply");
+    Fl_Return_Button *b1 = new Fl_Return_Button(width - 1 * BB - 2 * WB, height - 2 * BH - 3 * WB, BB, BH, "Apply");
     b1->callback(visibility_ok_cb);
-
-    Fl_Button *b2 = new Fl_Button(width - BB - 2 * WB, height - 2 * BH - 3 * WB, BB, BH, "Save");
-    b2->callback(visibility_save_cb);
 
     vis_group[0]->end();
     Fl_Group::current()->resizable(vis_group[0]);
@@ -4032,8 +4029,11 @@ void GUI::create_visibility_window(bool redraw_only)
   vis_window->size_range(width, 9 * BH + 6 * WB, width);
 
   {
-    Fl_Button *o = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-    o->callback(cancel_cb, (void *)vis_window);
+    Fl_Button *o1 = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Save");
+    o1->callback(visibility_save_cb);
+
+    Fl_Button *o2 = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
+    o2->callback(cancel_cb, (void *)vis_window);
   }
 
   vis_window->position(CTX.vis_position[0], CTX.vis_position[1]);

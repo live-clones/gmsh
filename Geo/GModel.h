@@ -110,8 +110,9 @@ class GModel
   // Returns all physical groups (one map per dimension: 0-D to 3-D)
   void getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]);
 
-  // Deletes all physical groups in the model
+  // Deletes physical groups in the model
   void deletePhysicalGroups();
+  void deletePhysicalGroup(int dim, int num);
 
   // Returns the highest number associated with a physical entity
   int maxPhysicalNumber();

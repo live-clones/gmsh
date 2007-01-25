@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.29 2007-01-22 16:31:43 geuzaine Exp $
+// $Id: GModel.cpp,v 1.30 2007-01-25 08:56:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -183,6 +183,44 @@ void GModel::deletePhysicalGroups()
     (*it)->physicals.clear();
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     (*it)->physicals.clear();
+}
+
+void GModel::deletePhysicalGroup(int dim, int num)
+{
+  switch(dim){
+  case 0:
+    for(viter it = firstVertex(); it != lastVertex(); ++it){
+      std::vector<int> p;
+      for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
+	if((*it)->physicals[i] != num) p.push_back((*it)->physicals[i]);
+      (*it)->physicals = p;
+    }
+    break;
+  case 1:
+    for(eiter it = firstEdge(); it != lastEdge(); ++it){
+      std::vector<int> p;
+      for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
+	if((*it)->physicals[i] != num) p.push_back((*it)->physicals[i]);
+      (*it)->physicals = p;
+    }
+    break;
+  case 2:
+    for(fiter it = firstFace(); it != lastFace(); ++it){
+      std::vector<int> p;
+      for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
+	if((*it)->physicals[i] != num) p.push_back((*it)->physicals[i]);
+      (*it)->physicals = p;
+    }
+    break;
+  case 3:
+    for(riter it = firstRegion(); it != lastRegion(); ++it){
+      std::vector<int> p;
+      for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
+	if((*it)->physicals[i] != num) p.push_back((*it)->physicals[i]);
+      (*it)->physicals = p;
+    }
+    break;
+  }
 }
 
 int GModel::maxPhysicalNumber()

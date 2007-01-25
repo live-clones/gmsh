@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.193 2007-01-23 08:01:08 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.194 2007-01-25 08:56:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -562,14 +562,14 @@ class drawMeshGEdge {
   {  
     if(!e->getVisibility()) return;
     
+    MRep *m = e->meshRep;
+
+    if(!m) return;
+
     if(CTX.render_mode == GMSH_SELECT) {
       glPushName(1);
       glPushName(e->tag());
     }
-
-    MRep *m = e->meshRep;
-
-    if(!m) return;
 
     if(CTX.mesh.lines)
       drawArrays(e, m->va_lines, GL_LINES, false);
@@ -785,14 +785,14 @@ class drawMeshGRegion {
   {  
     if(!r->getVisibility()) return;
 
+    MRep *m = r->meshRep;
+
+    if(!m) return;
+
     if(CTX.render_mode == GMSH_SELECT) {
       glPushName(3);
       glPushName(r->tag());
     }
-
-    MRep *m = r->meshRep;
-
-    if(!m) return;
 
     if(CTX.mesh.volumes_edges){
       if(m->va_lines && m->va_lines->getNumVertices()){
@@ -880,7 +880,7 @@ void Draw_Mesh()
     CTX.threads_lock = 1; 
     int status = GMODEL->getMeshStatus();
     if(CTX.mesh.changed) {
-      Msg(DEBUG, "Mesh has changed: reinitializing drawing data");
+      Msg(DEBUG, "Mesh has changed: reinitializing drawing data", CTX.mesh.changed);
       if(status >= 1 && CTX.mesh.changed & ENT_LINE)
 	std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), initMeshGEdge());
       if(status >= 2 && CTX.mesh.changed & ENT_SURFACE){
