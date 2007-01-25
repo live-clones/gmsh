@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.78 2006-12-03 21:13:24 geuzaine Exp $
+$Id: FAQ,v 1.79 2007-01-25 15:51:04 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -152,7 +152,7 @@ by explicitly specifying their identification tags. In the
 
 4.4 When compiled with OpenCascade support, Gmsh crashes at startup
 
-Try setting these environment variables, which govern how OpenCascade
+Try changing these environment variables, which govern how OpenCascade
 allocates memory:
 
 export MMGT_OPT=0

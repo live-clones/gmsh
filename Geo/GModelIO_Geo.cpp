@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.7 2007-01-18 13:18:42 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.8 2007-01-25 15:50:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,7 @@
 #include "gmshFace.h"
 #include "gmshEdge.h"
 #include "gmshRegion.h"
+#include "Parser.h" // for Symbol_T
 
 extern Mesh *THEM;
 
@@ -147,6 +148,8 @@ class writeGVertexGEO {
   {
     if(gv->getNativeType() != GEntity::GmshModel) return;
     Vertex *v = (Vertex*)gv->getNativePtr();
+    if(!v) return;
+
     fprintf(geo, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n",
 	    v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc);
   }
@@ -161,9 +164,7 @@ class writeGEdgeGEO {
   {
     if(ge->getNativeType() != GEntity::GmshModel) return;
     Curve *c = (Curve *)ge->getNativePtr();
-    
-    if(c->Num < 0 || c->Typ == MSH_SEGM_DISCRETE)
-      return;
+    if(!c || c->Num < 0 || c->Typ == MSH_SEGM_DISCRETE) return;
 
     switch (c->Typ) {
     case MSH_SEGM_LINE:
@@ -240,9 +241,7 @@ class writeGFaceGEO {
   {
     if(gf->getNativeType() != GEntity::GmshModel) return;
     Surface *s = (Surface *)gf->getNativePtr();
-    
-    if(s->Typ == MSH_SURF_DISCRETE)
-      return;
+    if(!s || s->Typ == MSH_SURF_DISCRETE) return;
     
     int NUMLOOP = s->Num + 1000000;
     if(List_Nbr(s->Generatrices)){
@@ -279,9 +278,7 @@ class writeGRegionGEO {
   {
     if(gr->getNativeType() != GEntity::GmshModel) return;
     Volume *vol = (Volume *)gr->getNativePtr();
-    
-    if(vol->Typ == MSH_VOLUME_DISCRETE)
-      return;
+    if(!vol || vol->Typ == MSH_VOLUME_DISCRETE) return;
     
     int NUMLOOP = vol->Num + 1000000;
     
@@ -309,17 +306,39 @@ class writePhysicalGroupGEO {
  private :
   FILE *geo;
   int dim;
+  std::map<int, std::string> &oldLabels, &newLabels;
  public :
-  writePhysicalGroupGEO(FILE *fp, int i) : dim(i) { geo = fp ? fp : stdout; }
+  writePhysicalGroupGEO(FILE *fp, int i, 
+			std::map<int, std::string> &o,
+			std::map<int, std::string> &n)
+    : dim(i), oldLabels(o), newLabels(n)
+  { 
+    geo = fp ? fp : stdout; 
+  }
   void operator () (std::pair<const int, std::vector<GEntity *> > &g)
   {
+    std::string oldName, newName;
+    if(oldLabels.count(g.first)) {
+      oldName = oldLabels[g.first];
+      fprintf(geo, "%s = %d;\n", oldName.c_str(), g.first);
+    }
+    else if(newLabels.count(g.first)) {
+      newName = newLabels[g.first];
+    }
+
     switch (dim) {
     case 0: fprintf(geo, "Physical Point"); break;
     case 1: fprintf(geo, "Physical Line"); break;
     case 2: fprintf(geo, "Physical Surface"); break;
     case 3: fprintf(geo, "Physical Volume"); break;
     }
-    fprintf(geo, " (%d) = {", g.first);
+
+    if(oldName.size())
+      fprintf(geo, " (%s) = {", oldName.c_str());
+    else if(newName.size())
+      fprintf(geo, " (\"%s\") = {", newName.c_str());
+    else
+      fprintf(geo, " (%d) = {", g.first);
     for(unsigned int i = 0; i < g.second.size(); i++) {
       if(i) fprintf(geo, ", ");
       fprintf(geo, "%d", g.second[i]->tag());
@@ -337,10 +356,24 @@ int GModel::writeGEO(const std::string &name)
   std::for_each(firstFace(), lastFace(), writeGFaceGEO(fp));
   std::for_each(firstRegion(), lastRegion(), writeGRegionGEO(fp));
 
+  // get "old-style" labels from parser
+  std::map<int, std::string> labels;
+  List_T *old = Tree2List(Symbol_T);
+  for(int i = 0; i < List_Nbr(old); i++) {
+    Symbol *s = (Symbol *)List_Pointer(old, i);
+    for(int j = 0; j < List_Nbr(s->val); j++) {
+      double tag;
+      List_Read(s->val, j, &tag);
+      labels[(int)tag] = std::string(s->Name);
+    }
+  }
+  List_Delete(old);
+
   std::map<int, std::vector<GEntity*> > groups[4];
   getPhysicalGroups(groups);
   for(int i = 0; i < 4; i++)
-    std::for_each(groups[i].begin(), groups[i].end(), writePhysicalGroupGEO(fp, i));
+    std::for_each(groups[i].begin(), groups[i].end(), 
+		  writePhysicalGroupGEO(fp, i, labels, physicalNames));
 
   if(fp) fclose(fp);
   return 1;

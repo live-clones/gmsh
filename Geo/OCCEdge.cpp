@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.17 2007-01-23 08:52:04 geuzaine Exp $
+// $Id: OCCEdge.cpp,v 1.18 2007-01-25 15:50:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -97,7 +97,7 @@ SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar,int dir) const
   }
 }
 
-/** True if the edge is a seam for the given face. */
+// True if the edge is a seam for the given face
 int OCCEdge::isSeam(GFace *face) const
 {
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
@@ -163,8 +163,6 @@ GEntity::GeomType OCCEdge::geomType() const
       return BSpline;
     else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
       return Bezier;
-    //   else if (occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
-    //     return Cone;
     return Unknown;
   }
   else{
@@ -178,18 +176,16 @@ GEntity::GeomType OCCEdge::geomType() const
       return BSpline;
     else if (curve->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
       return Bezier;
-    //   else if (occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
-    //     return Cone;
     return Unknown;
   }
 }
 
 int OCCEdge::minimumMeshSegments() const
 {
-  if(geomType() == Circle || geomType() == Ellipse)
-    return 2;
-  else
+  if(geomType() == Line || geomType() == Unknown)
     return GEdge::minimumMeshSegments();
+  else
+    return 2; // always put at least one mid-point on non-straight lines
 }
 
 int OCCEdge::minimumDrawSegments() const

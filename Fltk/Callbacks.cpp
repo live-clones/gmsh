@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.508 2007-01-25 08:56:13 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.509 2007-01-25 15:50:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1915,7 +1915,8 @@ void visibility_cb(CALLBACK_ARGS)
     if(VisibilityManager::instance()->getVisibility(i))
       WID->vis_browser->select(i + 1);
   }
-  // active the delete button for physicals only!
+
+  // activate the delete button for physicals only!
   if(type == 1)
     WID->vis_push_butt[0]->activate();
   else

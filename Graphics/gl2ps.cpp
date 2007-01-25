@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.110 2006-10-31 20:20:22 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.111 2007-01-25 15:50:57 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2006 Christophe Geuzaine <geuz@geuz.org>
@@ -4729,6 +4729,7 @@ static void gl2psPrintPDFFooter(void)
   
   /* Free auxiliary lists and arrays */    
   gl2psFree(gl2ps->xreflist);
+  gl2psListAction(gl2ps->pdfprimlist, gl2psFreePrimitive);
   gl2psListDelete(gl2ps->pdfprimlist);
   gl2psPDFgroupListDelete();
   
@@ -4870,8 +4871,8 @@ static void gl2psPrintSVGHeader(void)
   gl2psPrintf("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n");
   gl2psPrintf("<svg xmlns=\"http://www.w3.org/2000/svg\"\n");
   gl2psPrintf("     xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"
-	      "     width=\"%dpx\" height=\"%dpx\" viewBox=\"%d %d %d %d\">\n",
-	      width, height, x, y, width, height);
+              "     width=\"%dpx\" height=\"%dpx\" viewBox=\"%d %d %d %d\">\n",
+              width, height, x, y, width, height);
   gl2psPrintf("<title>%s</title>\n", gl2ps->title);
   gl2psPrintf("<desc>\n");
   gl2psPrintf("Creator: GL2PS %d.%d.%d%s, %s\n"

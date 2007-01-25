@@ -1,4 +1,4 @@
-/* $Id: gl2ps.h,v 1.68 2006-08-11 18:48:39 geuzaine Exp $ */
+/* $Id: gl2ps.h,v 1.69 2007-01-25 15:50:58 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2006 Christophe Geuzaine <geuz@geuz.org>
@@ -78,7 +78,7 @@
 
 #define GL2PS_MAJOR_VERSION 1
 #define GL2PS_MINOR_VERSION 3
-#define GL2PS_PATCH_VERSION 1
+#define GL2PS_PATCH_VERSION 2
 #define GL2PS_EXTRA_VERSION "-cvs"
 
 #define GL2PS_VERSION (GL2PS_MAJOR_VERSION + \

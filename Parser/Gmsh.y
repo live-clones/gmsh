@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.254 2007-01-12 08:10:32 geuzaine Exp $
+// $Id: Gmsh.y,v 1.255 2007-01-25 15:51:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -100,7 +100,7 @@ int CheckViewErrorFlags(Post_View *v);
 %token tLoop tRecombine tDelete tCoherence
 %token tAttractor tLayers tAlias tAliasWithOptions
 %token tText2D tText3D tInterpolationScheme tTime tGrain tCombine
-%token tBSpline tBezier tNurbs tOrder tWith tBounds tKnots
+%token tBSpline tBezier tNurbs tOrder tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
 %token tReturn tCall tFunction tShow tHide tGetValue
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
@@ -111,7 +111,7 @@ int CheckViewErrorFlags(Post_View *v);
 %type <u> ColorExpr
 %type <c> StringExpr SendToFile
 %type <l> FExpr_Multi ListOfDouble RecursiveListOfDouble
-%type <l> ListOfListOfDouble RecursiveListOfListOfDouble 
+%type <l> RecursiveListOfListOfDouble 
 %type <l> ListOfColor RecursiveListOfColor 
 %type <l> ListOfShapes Duplicata Transform Extrude MultipleShape
 %type <s> Shape
@@ -126,10 +126,10 @@ int CheckViewErrorFlags(Post_View *v);
 %right   '?' tDOTS
 %left    tOR
 %left    tAND
-%left    tEQUAL tNOTEQUAL tAPPROXEQUAL
+%left    tEQUAL tNOTEQUAL
 %left    '<' tLESSOREQUAL  '>' tGREATEROREQUAL
 %left    '+' '-'
-%left    '*' '/' '%' tCROSSPRODUCT
+%left    '*' '/' '%'
 %right   '!' tPLUSPLUS tMINUSMINUS UNARYPREC
 %right   '^'
 %left    '(' ')' '[' ']' '.' '#'
@@ -1665,6 +1665,7 @@ Delete :
       else if(!strcmp($2, "Physicals")){
 	List_Action(THEM->PhysicalGroups, Free_PhysicalGroup);
 	List_Reset(THEM->PhysicalGroups);
+	GMODEL->deletePhysicalGroups();
       }
       else{
 	yymsg(GERROR, "Unknown command 'Delete %s'", $2);
@@ -2871,20 +2872,6 @@ VExpr_Single :
   | '(' FExpr ',' FExpr ',' FExpr ')'
     {
       $$[0] = $2;  $$[1] = $4;  $$[2] = $6;  $$[3] = 0.0; $$[4] = 1.0;
-    }
-;
-
-ListOfListOfDouble :
-    // nothing
-    {
-    }
-  | '{' RecursiveListOfListOfDouble '}'
-    {
-       $$ = $2;
-    }
-  | '(' RecursiveListOfListOfDouble ')'
-    {
-       $$ = $2;
     }
 ;
 

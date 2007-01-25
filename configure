@@ -4592,8 +4592,9 @@ fi
       GMSH_LIBS="${GMSH_LIBS} ${OCC_LIBS}"
       FLAGS="${FLAGS} -DHAVE_OCC"
     else
-      GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib ${OCC_LIBS}"
+      GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib -I${OCC_PREFIX}/${UNAME}/lib ${OCC_LIBS}"
       FLAGS="${FLAGS} -DHAVE_OCC -I${OCC_PREFIX}/include -I${OCC_PREFIX}/inc"
+      FLAGS="${FLAGS} -I${OCC_PREFIX}/${UNAME}/include -I${OCC_PREFIX}/${UNAME}/inc"
     fi
   fi
 fi

@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.116 2006-11-29 03:11:18 geuzaine Exp $
+dnl $Id: configure.in,v 1.117 2007-01-25 15:50:57 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 dnl
@@ -574,7 +574,7 @@ if test "x$enable_occ" = "xyes"; then
       GMSH_LIBS="${GMSH_LIBS} ${OCC_LIBS}"
       FLAGS="${FLAGS} -DHAVE_OCC"
     else
-      GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib ${OCC_LIBS}"
+      GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib -I${OCC_PREFIX}/${UNAME}/lib ${OCC_LIBS}"
       FLAGS="${FLAGS} -DHAVE_OCC -I${OCC_PREFIX}/include -I${OCC_PREFIX}/inc"
       FLAGS="${FLAGS} -I${OCC_PREFIX}/${UNAME}/include -I${OCC_PREFIX}/${UNAME}/inc"
     fi

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.82 2007-01-12 08:10:32 geuzaine Exp $
+// $Id: Gmsh.l,v 1.83 2007-01-25 15:50:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -99,14 +99,12 @@ string	{alpha}({alpha}|{digit})*
 "/="                    return tAFFECTDIVIDE;
 ":"                     return tDOTS;
 "..."                   return tDOTS;
-"/\\"                   return tCROSSPRODUCT;
 "||"                    return tOR;
 "&&"                    return tAND;
 "++"                    return tPLUSPLUS;
 "--"                    return tMINUSMINUS;
 "=="                    return tEQUAL;
 "!="                    return tNOTEQUAL;
-"~="                    return tAPPROXEQUAL;
 "<="                    return tLESSOREQUAL;
 ">="                    return tGREATEROREQUAL;
 
@@ -125,7 +123,6 @@ Attractor		return tAttractor;
 Bezier			return tBezier;
 Bump                    return tBump;
 BSpline			return tBSpline;
-Bounds			return tBounds;
 BoundingBox             return tBoundingBox;
 
 Ceil                    return tCeil;
@@ -226,8 +223,6 @@ Today                   return tToday;
 Using                   return tUsing;
 
 Volume                  return tVolume;
-
-With			return tWith;
 
 T2                      return tText2D;
 T3                      return tText3D;
