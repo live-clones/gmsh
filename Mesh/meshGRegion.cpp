@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.25 2007-01-18 10:18:30 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.26 2007-01-25 20:41:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -422,7 +422,7 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
   while(it != faces.end()){
     GFace *gf = (*it);      
     int nb_intersect = 0;
-    for(unsigned int i = 0; i< gf->triangles.size(); i++){
+    for(unsigned int i = 0; i < gf->triangles.size(); i++){
       MTriangle *t = gf->triangles[i];
       double X[3] = {t->getVertex(0)->x(), t->getVertex(1)->x(), t->getVertex(2)->x()};
       double Y[3] = {t->getVertex(0)->y(), t->getVertex(1)->y(), t->getVertex(2)->y()};
@@ -451,30 +451,37 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
 			     t_b->getVertex(2)->y()};
 	    double Z_b[3] = {t_b->getVertex(0)->z(), t_b->getVertex(1)->z(),
 			     t_b->getVertex(2)->z()};
-	    int inters = intersect_line_triangle( X_b, Y_b, Z_b, P, N);
+	    int inters = intersect_line_triangle(X_b, Y_b, Z_b, P, N);
 	    nb_intersect += inters;
 	  }
 	}
 	++it_b;
       }
-      Msg (INFO,"Region %d Face %d, %d intersect",
-	   gr->tag(), gf->tag(), nb_intersect);
-      if (nb_intersect >= 0) break; // negative value means intersection is not "robust"
+      Msg(INFO,"Region %d Face %d, %d intersect", gr->tag(), gf->tag(), nb_intersect);
+      if(nb_intersect >= 0) break; // negative value means intersection is not "robust"
     }
     
-    if (nb_intersect < 0){
+    if(nb_intersect < 0){
       setRand(rrr);
     }
     else{
       if(nb_intersect % 2 == 1){ 
 	// odd nb of intersections: the normal points inside the region 
-	for (unsigned int i = 0; i< gf->triangles.size(); i++){
+	for (unsigned int i = 0; i < gf->triangles.size(); i++){
 	  gf->triangles[i]->revert();
 	}
       }
       ++it;
     }
   }
+
+  // FILE *fp = fopen("debug.pos", "w");
+  // fprintf(fp, "View \"debug\" {\n");
+  // for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++)
+  //   for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+  //     (*it)->triangles[i]->writePOS(fp, 1., (*it)->tag());
+  // fprintf(fp, "};\n");
+  // fclose(fp);
 }
 
 void meshGRegion::operator() (GRegion *gr) 
