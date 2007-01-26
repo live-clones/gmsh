@@ -656,6 +656,7 @@ unsigned int opt_geometry_color_highlight2(OPT_ARGS_COL);
 unsigned int opt_geometry_color_tangents(OPT_ARGS_COL);
 unsigned int opt_geometry_color_normals(OPT_ARGS_COL);
 unsigned int opt_mesh_color_points(OPT_ARGS_COL); 
+unsigned int opt_mesh_color_points_sup(OPT_ARGS_COL); 
 unsigned int opt_mesh_color_lines(OPT_ARGS_COL); 
 unsigned int opt_mesh_color_triangles(OPT_ARGS_COL);
 unsigned int opt_mesh_color_quadrangles(OPT_ARGS_COL);

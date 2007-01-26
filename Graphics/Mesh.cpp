@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.194 2007-01-25 08:56:14 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.195 2007-01-26 17:51:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -129,6 +129,14 @@ static bool areAllElementsVisible(std::vector<T*> &elements)
   return true;
 }
 
+template<class T>
+static bool areSomeElementsCurved(std::vector<T*> &elements)
+{
+  for(unsigned int i = 0; i < elements.size(); i++)
+    if(elements[i]->getPolynomialOrder() > 1 ) return true;
+  return false;
+}
+
 static int getLabelStep(int total)
 {
   int step;
@@ -226,19 +234,26 @@ static void drawVertexLabel(GEntity *e, MVertex *v, int partition=-1)
     sprintf(str, "%d", e->tag());
   else
     sprintf(str, "%d", v->getNum());
+
+  if(v->getOrder() > 1)
+    glColor4ubv((GLubyte *) & CTX.color.mesh.vertex_sup);
+  else
+    glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);	
   glRasterPos3d(v->x(), v->y(), v->z());
   Draw_String(str);
 }
 
 static void drawVerticesPerEntity(GEntity *e)
 {
-  glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);
-
   if(CTX.mesh.points) {
     if(CTX.mesh.point_type) {
       for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
 	MVertex *v = e->mesh_vertices[i];
 	if(!v->getVisibility()) continue;
+	if(v->getOrder() > 1)
+	  glColor4ubv((GLubyte *) & CTX.color.mesh.vertex_sup);
+	else
+	  glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);	
 	Draw_Sphere(CTX.mesh.point_size, v->x(), v->y(), v->z(), CTX.mesh.light);
       }
     }
@@ -247,6 +262,10 @@ static void drawVerticesPerEntity(GEntity *e)
       for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
 	MVertex *v = e->mesh_vertices[i];
 	if(!v->getVisibility()) continue;
+	if(v->getOrder() > 1)
+	  glColor4ubv((GLubyte *) & CTX.color.mesh.vertex_sup);
+	else
+	  glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);	
 	glVertex3d(v->x(), v->y(), v->z());
       }
       glEnd();
@@ -262,14 +281,16 @@ static void drawVerticesPerEntity(GEntity *e)
 template<class T>
 static void drawVerticesPerElement(GEntity *e, std::vector<T*> &elements)
 {
-  glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);
-  
   for(unsigned int i = 0; i < elements.size(); i++){
     MElement *ele = elements[i];
     for(int j = 0; j < ele->getNumVertices(); j++){
       MVertex *v = ele->getVertex(j);
       if(isElementVisible(ele) && v->getVisibility()){
 	if(CTX.mesh.points) {
+	  if(v->getOrder() > 1)
+	    glColor4ubv((GLubyte *) & CTX.color.mesh.vertex_sup);
+	  else
+	    glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);	
 	  if(CTX.mesh.point_type)
 	    Draw_Sphere(CTX.mesh.point_size, v->x(), v->y(), v->z(), CTX.mesh.light);
 	  else{
@@ -423,7 +444,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements)
 	}
       }
     }
-    else{
+    if(!ele->getNumFacesRep() || ele->getPolynomialOrder() > 1){
       SPoint3 pc;
       if(CTX.mesh.explode != 1.) pc = ele->barycenter();
       for(int j = 0; j < ele->getNumEdgesRep(); j++){
@@ -619,14 +640,14 @@ class initMeshGFace {
       CTX.mesh.triangles && areAllElementsVisible(f->triangles) && 
       CTX.mesh.quadrangles && areAllElementsVisible(f->quadrangles);
 
-    bool useEdges = CTX.mesh.surfaces_edges ? true : false;
-    if(CTX.mesh.surfaces_faces /*this will change!*/ || 
-       CTX.mesh.explode != 1. || !m->allElementsVisible)
-      useEdges = false;
+    bool curvedElements = 
+      areSomeElementsCurved(f->triangles) || 
+      areSomeElementsCurved(f->quadrangles);
 
-    // mouse selection of individual elements is complicated if we
-    // don't draw everything per element
-    if(CTX.pick_elements) useEdges = false;
+    bool useEdges = CTX.mesh.surfaces_edges ? true : false;
+    if(CTX.mesh.surfaces_faces || CTX.mesh.explode != 1. || 
+       CTX.pick_elements || !m->allElementsVisible)
+      useEdges = false; // cannot use edges in these cases
 
     // Further optimizations are possible when useEdges is true:
     // 1) store the unique vertices in the vertex array and use
@@ -643,6 +664,9 @@ class initMeshGFace {
       addEdgesInArrays(f);
     }
     else if(CTX.mesh.surfaces_edges || CTX.mesh.surfaces_faces){
+      if(curvedElements) // cannot simply draw polygon outlines!
+	m->va_lines = new VertexArray(2, 6 * f->triangles.size() 
+				      + 8 * f->quadrangles.size());
       m->va_triangles = new VertexArray(3, f->triangles.size());
       m->va_quads = new VertexArray(4, f->quadrangles.size());
       if(CTX.mesh.triangles) addElementsInArrays(f, f->triangles);
@@ -736,20 +760,20 @@ class initMeshGRegion {
       CTX.mesh.pyramids && areAllElementsVisible(r->pyramids);
 
     bool useEdges = CTX.mesh.volumes_edges ? true : false;
-    if(CTX.mesh.volumes_faces /*this will change!*/ || 
-       CTX.mesh.explode != 1. || !m->allElementsVisible)
-      useEdges = false;
-    
-    // mouse selection of individual elements is complicated if we
-    // don't draw everything per element
-    if(CTX.pick_elements) useEdges = false;
+    if(CTX.mesh.volumes_faces || CTX.mesh.explode != 1. || 
+       CTX.pick_elements || !m->allElementsVisible)
+      useEdges = false; // cannot use edges in these cases
+
+    bool curvedElements = 
+      areSomeElementsCurved(r->tetrahedra) || 
+      areSomeElementsCurved(r->hexahedra) ||
+      areSomeElementsCurved(r->prisms) ||
+      areSomeElementsCurved(r->pyramids);
 
     bool useSkin = CTX.mesh.volumes_faces ? true : false;
     if(CTX.mesh.explode != 1. || !m->allElementsVisible)
       useSkin = false;
-
-    // TODO
-    useSkin = false;
+    useSkin = false; // FIXME: to do
     
     if(useSkin){ 
       Msg(DEBUG, "Using boundary faces to draw volume %d", r->tag());
@@ -765,6 +789,11 @@ class initMeshGRegion {
       addEdgesInArrays(r);
     }
     else if(CTX.mesh.volumes_edges || CTX.mesh.volumes_faces){
+      if(curvedElements) // cannot simply draw polygon outlines!
+	m->va_lines = new VertexArray(2, 12 * r->tetrahedra.size() +
+				      24 * r->hexahedra.size() +
+				      18 * r->prisms.size() +
+				      16 * r->pyramids.size());
       m->va_triangles = new VertexArray(3, 4 * r->tetrahedra.size() +
 					2 * r->prisms.size() + 
 					4 * r->pyramids.size());

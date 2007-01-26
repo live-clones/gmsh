@@ -1,4 +1,9 @@
-$Id: TODO,v 1.39 2007-01-22 16:31:44 geuzaine Exp $
+$Id: TODO,v 1.40 2007-01-26 17:51:56 geuzaine Exp $
+
+********************************************************************
+
+better drawing of 2nd order elements (no extra edges in the middle, 
+2nd order nodes in different color)
 
 ********************************************************************
 

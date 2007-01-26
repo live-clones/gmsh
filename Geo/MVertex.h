@@ -56,6 +56,9 @@ class MVertex{
   virtual char getVisibility(){ return _visible; }
   virtual void setVisibility(char val){ _visible = val; }
   
+  // get the "order" of the vertex
+  virtual int getOrder(){ return 1; }
+
   // get/set the coordinates
   inline double x() const {return _x;}
   inline double y() const {return _y;}
@@ -99,6 +102,13 @@ class MVertex{
   void writeBDF(FILE *fp, int format=0, double scalingFactor=1.0);
 };
 
+class MVertex2 : public MVertex {
+ public:
+  MVertex2(double x, double y, double z, GEntity *ge=0, int num=0) 
+    : MVertex(x, y, z, ge, num){}
+  virtual int getOrder(){ return 2; }
+};
+
 class MEdgeVertex : public MVertex{
  protected:
   double _u;
@@ -107,9 +117,16 @@ class MEdgeVertex : public MVertex{
     : MVertex(x, y, z, ge), _u(u)
   {
   }
-  ~MEdgeVertex(){}
+  virtual ~MEdgeVertex(){}
   virtual bool getParameter(int i, double &par){ par = _u; return true; }
   virtual bool setParameter(int i, double par){ _u = par; return true; }
+};
+
+class MEdgeVertex2 : public MEdgeVertex{
+ public:
+  MEdgeVertex2(double x, double y, double z, GEntity *ge, double u) 
+    : MEdgeVertex(x, y, z, ge, u) {}
+  virtual int getOrder(){ return 2; }
 };
 
 class MFaceVertex : public MVertex{
@@ -120,9 +137,16 @@ class MFaceVertex : public MVertex{
     : MVertex(x, y, z, ge), _u(u), _v(v)
   {
   }
-  ~MFaceVertex(){}
+  virtual ~MFaceVertex(){}
   virtual bool getParameter(int i, double &par){ par = (i ? _v : _u); return true; }
   virtual bool setParameter(int i, double par){ if(!i) _u = par; else _v = par; return true; }
+};
+
+class MFaceVertex2 : public MFaceVertex{
+ public:
+  MFaceVertex2(double x, double y, double z, GEntity *ge, double u, double v) 
+    : MFaceVertex(x, y, z, ge, u, v){}
+  virtual int getOrder(){ return 2; }
 };
 
 template<class T>
@@ -134,7 +158,7 @@ class MDataFaceVertex : public MFaceVertex{
     : MFaceVertex(x, y, z, ge, u, v), _data(data)
   {
   }
-  ~MDataFaceVertex(){}
+  virtual ~MDataFaceVertex(){}
   virtual bool getData(T &data){ data = _data; return true; }
   virtual void *getData(){ return (void*)&_data; }
 };
