@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.50 2007-01-26 17:51:56 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.51 2007-01-28 17:26:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -43,7 +43,7 @@ void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
       MVertex *v, *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);
       if(linear || ge->geomType() == GEntity::DiscreteCurve){
 	SPoint3 pc = edge.barycenter();
-	v = new MVertex2(pc.x(), pc.y(), pc.z(), ge);
+	v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
       }
       else{
 	double u0 = 1e6, u1 = 1e6;
@@ -63,12 +63,12 @@ void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
 	if(u0 < 1e6 && u1 < 1e6){
 	  double uc = 0.5 * (u0 + u1);
 	  GPoint pc = ge->point(uc);
-	  v = new MEdgeVertex2(pc.x(), pc.y(), pc.z(), ge, uc);
+	  v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, uc);
 	}
 	else{
 	  // we should normally never end up here
 	  SPoint3 pc = edge.barycenter();
-	  v = new MVertex2(pc.x(), pc.y(), pc.z(), ge);
+	  v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
 	}
       }
       edgeVertices[p] = v;
@@ -92,7 +92,7 @@ void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
       MVertex *v, *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);
       if(linear || gf->geomType() == GEntity::DiscreteSurface){
 	SPoint3 pc = edge.barycenter();
-	v = new MVertex2(pc.x(), pc.y(), pc.z(), gf);
+	v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
       }
       else{
 	SPoint2 p0 = gf->parFromPoint(SPoint3(v0->x(), v0->y(), v0->z()));
@@ -100,7 +100,7 @@ void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
 	double uc = 0.5 * (p0[0] + p1[0]);
 	double vc = 0.5 * (p0[1] + p1[1]);
 	GPoint pc = gf->point(uc, vc);
-	v = new MFaceVertex2(pc.x(), pc.y(), pc.z(), gf, uc, vc);
+	v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
       }
       edgeVertices[p] = v;
       gf->mesh_vertices.push_back(v);
@@ -121,7 +121,7 @@ void getEdgeVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &ve,
     }
     else{
       SPoint3 pc = edge.barycenter();
-      MVertex *v = new MVertex2(pc.x(), pc.y(), pc.z(), gr);
+      MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
       edgeVertices[p] = v;
       gr->mesh_vertices.push_back(v);
       ve.push_back(v);
@@ -145,7 +145,7 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
       MVertex *v;
       if(linear || gf->geomType() == GEntity::DiscreteSurface){
 	SPoint3 pc = face.barycenter();
-	v = new MVertex2(pc.x(), pc.y(), pc.z(), gf);
+	v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
       }
       else{
 	SPoint2 p0 = gf->parFromPoint(SPoint3(p[0]->x(), p[0]->y(), p[0]->z()));
@@ -155,7 +155,7 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
 	double uc = 0.25 * (p0[0] + p1[0] + p2[0] + p3[0]);
 	double vc = 0.25 * (p0[1] + p1[1] + p2[1] + p3[1]);
 	GPoint pc = gf->point(uc, vc);
-	v = new MFaceVertex2(pc.x(), pc.y(), pc.z(), gf, uc, vc);
+	v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
       }
       faceVertices[p] = v;
       gf->mesh_vertices.push_back(v);
@@ -178,7 +178,7 @@ void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
     }
     else{
       SPoint3 pc = face.barycenter();
-      MVertex *v = new MVertex2(pc.x(), pc.y(), pc.z(), gr);
+      MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
       faceVertices[p] = v;
       gr->mesh_vertices.push_back(v);
       vf.push_back(v);
@@ -343,8 +343,7 @@ void setFirstOrder(GEntity *e, std::vector<T*> &elements)
   std::vector<T*> elements1;
   for(unsigned int i = 0; i < elements.size(); i++){
     T *ele = elements[i];
-    int n = ele->getNumVertices() - ele->getNumEdgeVertices() - 
-      ele->getNumFaceVertices() - ele->getNumVolumeVertices();
+    int n = ele->getNumPrimaryVertices();
     std::vector<MVertex*> v1;
     for(int j = 0; j < n; j++)
       v1.push_back(ele->getVertex(j));

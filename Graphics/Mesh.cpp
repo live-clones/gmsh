@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.195 2007-01-26 17:51:55 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.196 2007-01-28 17:26:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -235,7 +235,7 @@ static void drawVertexLabel(GEntity *e, MVertex *v, int partition=-1)
   else
     sprintf(str, "%d", v->getNum());
 
-  if(v->getOrder() > 1)
+  if(v->getPolynomialOrder() > 1)
     glColor4ubv((GLubyte *) & CTX.color.mesh.vertex_sup);
   else
     glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);	
@@ -250,7 +250,7 @@ static void drawVerticesPerEntity(GEntity *e)
       for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
 	MVertex *v = e->mesh_vertices[i];
 	if(!v->getVisibility()) continue;
-	if(v->getOrder() > 1)
+	if(v->getPolynomialOrder() > 1)
 	  glColor4ubv((GLubyte *) & CTX.color.mesh.vertex_sup);
 	else
 	  glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);	
@@ -262,7 +262,7 @@ static void drawVerticesPerEntity(GEntity *e)
       for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
 	MVertex *v = e->mesh_vertices[i];
 	if(!v->getVisibility()) continue;
-	if(v->getOrder() > 1)
+	if(v->getPolynomialOrder() > 1)
 	  glColor4ubv((GLubyte *) & CTX.color.mesh.vertex_sup);
 	else
 	  glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);	
@@ -287,7 +287,7 @@ static void drawVerticesPerElement(GEntity *e, std::vector<T*> &elements)
       MVertex *v = ele->getVertex(j);
       if(isElementVisible(ele) && v->getVisibility()){
 	if(CTX.mesh.points) {
-	  if(v->getOrder() > 1)
+	  if(v->getPolynomialOrder() > 1)
 	    glColor4ubv((GLubyte *) & CTX.color.mesh.vertex_sup);
 	  else
 	    glColor4ubv((GLubyte *) & CTX.color.mesh.vertex);	

@@ -1,4 +1,4 @@
-// $Id: License.cpp,v 1.8 2007-01-18 09:12:44 geuzaine Exp $
+// $Id: License.cpp,v 1.9 2007-01-28 17:26:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,27 @@
 
 void print_license(void)
 {
+  Msg(DIRECT, "Gmsh is provided under the terms of the GNU General Public License");
+  Msg(DIRECT, "(GPL) with the following exception:");
+  Msg(DIRECT, " ");
+  Msg(DIRECT, "  The copyright holders of Gmsh give you permission to combine Gmsh");
+  Msg(DIRECT, "  with code included in the standard release of Triangle (written by");
+  Msg(DIRECT, "  Jonathan Shewchuk), TetGen (written by Hang Si) and Netgen (written");
+  Msg(DIRECT, "  by Joachim Schoberl) under their respective licenses. You may copy");
+  Msg(DIRECT, "  and distribute such a system following the terms of the GNU GPL for");
+  Msg(DIRECT, "  Gmsh and the licenses of the other code concerned, provided that you");
+  Msg(DIRECT, "  include the source code of that other code when and as the GNU GPL");
+  Msg(DIRECT, "  requires distribution of source code.");
+  Msg(DIRECT, " ");
+  Msg(DIRECT, "  Note that people who make modified versions of Gmsh are not");
+  Msg(DIRECT, "  obligated to grant this special exception for their modified");
+  Msg(DIRECT, "  versions; it is their choice whether to do so. The GNU General");
+  Msg(DIRECT, "  Public License gives permission to release a modified version");
+  Msg(DIRECT, "  without this exception; this exception also makes it possible to");
+  Msg(DIRECT, "  release a modified version which carries forward this exception.");
+  Msg(DIRECT, " ");
+  Msg(DIRECT, "End of exception.");
+  Msg(DIRECT, " ");
   Msg(DIRECT, "		    GNU GENERAL PUBLIC LICENSE");
   Msg(DIRECT, "		       Version 2, June 1991");
   Msg(DIRECT, " ");

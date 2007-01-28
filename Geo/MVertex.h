@@ -31,13 +31,13 @@ class MVertex{
  private:
   static int _globalNum;
   int _num;
-  char _visible;
+  char _visible, _order;
   double _x, _y, _z;
   GEntity *_ge;
 
  public :
   MVertex(double x, double y, double z, GEntity *ge=0, int num=0) 
-    : _visible(true), _x(x), _y(y), _z(z), _ge(ge)
+    : _visible(true), _order(1), _x(x), _y(y), _z(z), _ge(ge)
   {
     if(num){
       _num = num;
@@ -56,24 +56,25 @@ class MVertex{
   virtual char getVisibility(){ return _visible; }
   virtual void setVisibility(char val){ _visible = val; }
   
-  // get the "order" of the vertex
-  virtual int getOrder(){ return 1; }
+  // get the "polynomial order" of the vertex
+  inline int getPolynomialOrder(){ return _order; }
+  inline int setPolynomialOrder(char order){ _order = order; }
 
   // get/set the coordinates
-  inline double x() const {return _x;}
-  inline double y() const {return _y;}
-  inline double z() const {return _z;}
-  inline double & x() {return _x;}
-  inline double & y() {return _y;}
-  inline double & z() {return _z;}
+  inline double x() const { return _x; }
+  inline double y() const { return _y; }
+  inline double z() const { return _z; }
+  inline double & x() { return _x; }
+  inline double & y() { return _y; }
+  inline double & z() { return _z; }
   inline SPoint3 point() { return SPoint3(_x, _y, _z); }
 
   // get/set the parent entity
-  inline GEntity* onWhat() const {return _ge;}
+  inline GEntity* onWhat() const { return _ge; }
   inline void setEntity(GEntity *ge) { _ge = ge; }
 
   // get/set the number
-  inline int getNum() const {return _num;}
+  inline int getNum() const { return _num; }
   inline void setNum(int num) { _num = num; }
 
   // get/set ith parameter
@@ -102,13 +103,6 @@ class MVertex{
   void writeBDF(FILE *fp, int format=0, double scalingFactor=1.0);
 };
 
-class MVertex2 : public MVertex {
- public:
-  MVertex2(double x, double y, double z, GEntity *ge=0, int num=0) 
-    : MVertex(x, y, z, ge, num){}
-  virtual int getOrder(){ return 2; }
-};
-
 class MEdgeVertex : public MVertex{
  protected:
   double _u;
@@ -122,13 +116,6 @@ class MEdgeVertex : public MVertex{
   virtual bool setParameter(int i, double par){ _u = par; return true; }
 };
 
-class MEdgeVertex2 : public MEdgeVertex{
- public:
-  MEdgeVertex2(double x, double y, double z, GEntity *ge, double u) 
-    : MEdgeVertex(x, y, z, ge, u) {}
-  virtual int getOrder(){ return 2; }
-};
-
 class MFaceVertex : public MVertex{
  protected:
   double _u, _v;
@@ -140,13 +127,6 @@ class MFaceVertex : public MVertex{
   virtual ~MFaceVertex(){}
   virtual bool getParameter(int i, double &par){ par = (i ? _v : _u); return true; }
   virtual bool setParameter(int i, double par){ if(!i) _u = par; else _v = par; return true; }
-};
-
-class MFaceVertex2 : public MFaceVertex{
- public:
-  MFaceVertex2(double x, double y, double z, GEntity *ge, double u, double v) 
-    : MFaceVertex(x, y, z, ge, u, v){}
-  virtual int getOrder(){ return 2; }
 };
 
 template<class T>

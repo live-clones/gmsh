@@ -128,9 +128,6 @@ class GEntity {
   // Spatial dimension of the entity 
   virtual int dim() const { throw; }
 
-  // Returns true if ent is in the closure of this entity
-  virtual int inClosure(GEntity *ent) const { throw; } 
-
   // Regions that bound this entity or that this entity bounds.
   virtual std::list<GRegion*> regions() const { throw; }
 
