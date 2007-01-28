@@ -27,19 +27,17 @@ struct GEdgeSigned
 {
   int _sign;
   GEdge *ge;
-  GEdgeSigned ( int i, GEdge*g ) 
-    : _sign(i) , ge(g)
-  {}
-  GVertex * getBeginVertex() const
+  GEdgeSigned(int i, GEdge *g) : _sign(i), ge(g) {}
+  GVertex *getBeginVertex() const
   {
-    return (_sign==1)?ge->getBeginVertex():ge->getEndVertex();
+    return (_sign == 1) ? ge->getBeginVertex() : ge->getEndVertex();
   }
-  GVertex * getEndVertex() const
+  GVertex *getEndVertex() const
   {
-    return (_sign!=1)?ge->getBeginVertex():ge->getEndVertex();
+    return (_sign != 1) ? ge->getBeginVertex() : ge->getEndVertex();
   }
   void print() const;
-  int getSign(){return _sign;}
+  int getSign(){ return _sign; }
 };
 
 class GEdgeLoop 
@@ -47,18 +45,15 @@ class GEdgeLoop
 public:
   typedef std::list<GEdgeSigned>::iterator iter;
   typedef std::list<GEdgeSigned>::const_iterator citer;
-  GEdgeLoop ( const std::list<GEdge*> &);
-  inline iter begin () {return loop.begin();}
-  inline iter end   () {return loop.end();}
-  inline citer begin () const {return loop.begin();}
-  inline citer end   () const {return loop.end();}
-  int  count (GEdge*) const;
-  int  count () const {return loop.size();}
+  GEdgeLoop(const std::list<GEdge*> &);
+  inline iter begin() { return loop.begin(); }
+  inline iter end() { return loop.end(); }
+  inline citer begin() const { return loop.begin(); }
+  inline citer end() const { return loop.end(); }
+  int count(GEdge*) const;
+  int count() const { return loop.size(); }
 private:
-  std::list< GEdgeSigned > loop ;
+  std::list<GEdgeSigned> loop;
 };
-
-
-
 
 #endif

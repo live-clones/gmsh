@@ -61,6 +61,8 @@ class GFace : public GEntity
   GFace(GModel *model, int tag);
   virtual ~GFace();
 
+  std::list<GEdgeLoop> edgeLoops;
+
   void addRegion(GRegion *r){ r1 ? r2 = r : r1 = r; }
   void delRegion(GRegion *r){ if(r1 == r) r1 = r2; r2=0; }
 
@@ -90,7 +92,7 @@ class GFace : public GEntity
 
   // Return the point on the face corresponding to the given parameter.
   virtual GPoint point(double par1, double par2) const = 0;
-  virtual GPoint point(const SPoint2 &pt) const = 0;
+  virtual GPoint point(const SPoint2 &pt) const { return point(pt.x(), pt.y()); }
 
   // Return the parmater location on the face given a point in space
   // that is on the face.
@@ -165,7 +167,6 @@ class GFace : public GEntity
 
   std::vector<MTriangle*> triangles;
   std::vector<MQuadrangle*> quadrangles;
-  std::list<GEdgeLoop> edgeLoops;
 };
 
 #endif

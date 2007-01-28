@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.18 2007-01-16 11:31:41 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.19 2007-01-28 12:55:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -113,11 +113,6 @@ Pair<SVector3,SVector3> OCCFace::firstDer(const SPoint2 &param) const
 
   return Pair<SVector3,SVector3>(SVector3(du.X(), du.Y(), du.Z()),
 				 SVector3(dv.X(), dv.Y(), dv.Z()));
-}
-
-GPoint OCCFace::point(const SPoint2 &pt) const
-{   
-  return point(pt.x(), pt.y()); 
 }
 
 GPoint OCCFace::point(double par1, double par2) const

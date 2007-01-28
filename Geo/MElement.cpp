@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.29 2007-01-22 16:31:43 geuzaine Exp $
+// $Id: MElement.cpp,v 1.30 2007-01-28 12:55:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,98 +24,6 @@
 #include "GEntity.h"
 #include "Numeric.h"
 #include "Message.h"
-
-int edges_tetra[6][2] = {
-  {0, 1},
-  {1, 2},
-  {2, 0},
-  {3, 0},
-  {3, 2},
-  {3, 1}
-};
-
-int edges_quad[4][2] = {
-  {0, 1},
-  {1, 2},
-  {2, 3},
-  {3, 0}
-};
-
-int edges_hexa[12][2] = {
-  {0, 1},
-  {0, 3},
-  {0, 4},
-  {1, 2},
-  {1, 5},
-  {2, 3},
-  {2, 6},
-  {3, 7},
-  {4, 5},
-  {4, 7},
-  {5, 6},
-  {6, 7}
-};
-
-int edges_prism[9][2] = {
-  {0, 1},
-  {0, 2},
-  {0, 3},
-  {1, 2},
-  {1, 4},
-  {2, 5},
-  {3, 4},
-  {3, 5},
-  {4, 5}
-};
-
-int edges_pyramid[8][2] = {
-  {0, 1},
-  {0, 3},
-  {0, 4},
-  {1, 2},
-  {1, 4},
-  {2, 3},
-  {2, 4},
-  {3, 4}
-};
-
-int trifaces_tetra[4][3] = {
-  {0, 2, 1},
-  {0, 1, 3},
-  {0, 3, 2},
-  {3, 1, 2}
-};
-
-int trifaces_prism[2][3] = {
-  {0, 2, 1},
-  {3, 4, 5}
-};
-
-int trifaces_pyramid[4][3] = {
-  {0, 1, 4},
-  {3, 0, 4},
-  {1, 2, 4},
-  {2, 3, 4}
-};
-
-int quadfaces_hexa[6][4] = {
-  {0, 3, 2, 1},
-  {0, 1, 5, 4},
-  {0, 4, 7, 3},
-  {1, 2, 6, 5},
-  {2, 3, 7, 6},
-  {4, 5, 6, 7}
-};
-
-int quadfaces_prism[3][4] = {
-  {0, 1, 4, 3},
-  {0, 3, 5, 2},
-  {1, 2, 5, 4}
-};
-
-int quadfaces_pyramid[1][4] = {
-  {0, 3, 2, 1}
-};
 
 int MElement::_globalNum = 0;
 double MElementLessThanLexicographic::tolerance = 1.e-6;
@@ -424,34 +332,32 @@ bool MTriangle::invertmappingXY(double *p, double *uv, double tol)
   return false; 
 }
 
-
 double MTriangle::getSurfaceXY() const
 {
-  const double x1 =_v[0]->x();
-  const double x2 =_v[1]->x();
-  const double x3 =_v[2]->x();
-  const double y1 =_v[0]->y();
-  const double y2 =_v[1]->y();
-  const double y3 =_v[2]->y();
+  const double x1 = _v[0]->x();
+  const double x2 = _v[1]->x();
+  const double x3 = _v[2]->x();
+  const double y1 = _v[0]->y();
+  const double y2 = _v[1]->y();
+  const double y3 = _v[2]->y();
 
-  const double v1 [2] = {x2-x1,y2-y1};
-  const double v2 [2] = {x3-x1,y3-y1};
+  const double v1 [2] = {x2 - x1, y2 - y1};
+  const double v2 [2] = {x3 - x1, y3 - y1};
 
-  double s = v1[0]*v2[1] - v1[1]*v2[0]; 
-  return s*0.5;
-  
+  double s = v1[0] * v2[1] - v1[1] * v2[0]; 
+  return s * 0.5;
 }
 
 void MTriangle::circumcenterXY(double *res) const
 {
   double d, a1, a2, a3;
 
-  const double x1 =_v[0]->x();
-  const double x2 =_v[1]->x();
-  const double x3 =_v[2]->x();
-  const double y1 =_v[0]->y();
-  const double y2 =_v[1]->y();
-  const double y3 =_v[2]->y();
+  const double x1 = _v[0]->x();
+  const double x2 = _v[1]->x();
+  const double x3 = _v[2]->x();
+  const double y1 = _v[0]->y();
+  const double y2 = _v[1]->y();
+  const double y3 = _v[2]->y();
 
   d = 2. * (double)(y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
   if(d == 0.0) {
@@ -465,9 +371,4 @@ void MTriangle::circumcenterXY(double *res) const
   a3 = x3 * x3 + y3 * y3;
   res[0] = (double)((a1 * (y3 - y2) + a2 * (y1 - y3) + a3 * (y2 - y1)) / d);
   res[1] = (double)((a1 * (x2 - x3) + a2 * (x3 - x1) + a3 * (x1 - x2)) / d);
-
-  //  printf("%g %g - %g %g - %g %g cc %g %g\n",x1,y1,x2,y2,x3,y3,res[0],res[1]);
-
-  return ;
 }
-

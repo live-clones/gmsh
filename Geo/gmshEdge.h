@@ -47,10 +47,10 @@ class gmshEdge : public GEdge {
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return c; }
   virtual double parFromPoint(const SPoint3 &pt) const;
-  virtual int minimumMeshSegments () const;
-  virtual int minimumDrawSegments () const;
-  virtual void resetMeshAttributes ();
-  virtual SPoint2 reparamOnFace(GFace *face, double epar,int dir) const ;
+  virtual int minimumMeshSegments() const;
+  virtual int minimumDrawSegments() const;
+  virtual void resetMeshAttributes();
+  virtual SPoint2 reparamOnFace(GFace *face, double epar, int dir) const ;
 };
 
 #endif

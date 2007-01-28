@@ -126,58 +126,58 @@ class GEntity {
   virtual ~GEntity();
 
   // Spatial dimension of the entity 
-  virtual int dim() const {throw;}
+  virtual int dim() const { throw; }
 
   // Returns true if ent is in the closure of this entity
-  virtual int inClosure(GEntity *ent) const {throw;} 
+  virtual int inClosure(GEntity *ent) const { throw; } 
 
   // Regions that bound this entity or that this entity bounds.
-  virtual std::list<GRegion*> regions() const{throw;}
+  virtual std::list<GRegion*> regions() const { throw; }
 
   // Faces that bound this entity or that this entity bounds.
-  virtual std::list<GFace*> faces() const{throw;}
+  virtual std::list<GFace*> faces() const { throw; }
 
   // Edges that bound this entity or that this entity bounds.
-  virtual std::list<GEdge*> edges() const{throw;}
+  virtual std::list<GEdge*> edges() const { throw; }
 
   // Vertices that bound this entity.
-  virtual std::list<GVertex*> vertices() const{throw;}
+  virtual std::list<GVertex*> vertices() const { throw; }
 
   /// Underlying geometric representation of this entity.
-  virtual GeomType geomType() const {throw;}
+  virtual GeomType geomType() const { throw; }
 
   // True if parametric space is continuous in the "dim" direction.
-  virtual bool continuous(int dim) const {return true;}
+  virtual bool continuous(int dim) const { return true; }
 
   // True if entity is periodic in the "dim" direction.
-  virtual bool periodic(int dim) const {return false;}
+  virtual bool periodic(int dim) const { return false; }
 
   // True if there are parametric degeneracies in the "dim" direction.
-  virtual bool degenerate(int dim) const {return false;}
+  virtual bool degenerate(int dim) const { return false; }
 
   // Parametric bounds of the entity in the "i" direction.
-  virtual Range<double> parBounds(int i) const{throw;}
+  virtual Range<double> parBounds(int i) const { throw; }
 
   // Modeler tolerance for the entity.
-  virtual double tolerance() const {return 1.e-14;}
+  virtual double tolerance() const { return 1.e-14; }
 
   // True if the entity contains the given point to within tolerance.
-  virtual int containsPoint(const SPoint3 &pt) const{throw;}
+  virtual int containsPoint(const SPoint3 &pt) const { throw; }
 
   // Get the native type of the particular representation
   virtual ModelType getNativeType() const { return UnknownModel;}
 
   // Get the native pointer of the particular representation
-  virtual void * getNativePtr() const {throw;}
+  virtual void * getNativePtr() const { throw; }
 
   // The model owning this entity.
-  GModel *model() const {return _model;}
+  GModel *model() const { return _model; }
 
   // The tag of the entity
-  int tag() const {return _tag;}
+  int tag() const { return _tag; }
 
   // The bounding box
-  virtual SBoundingBox3d bounds() const{throw;}
+  virtual SBoundingBox3d bounds() const { throw; }
 
   // Get the visibility flag
   virtual char getVisibility(){ return _visible; }

@@ -117,13 +117,6 @@ GPoint parabolicCylinder::point(double par1, double par2) const
   return gp;
 }
 
-GPoint parabolicCylinder::point(const SPoint2 &pt) const
-{
-  double par1 = pt[0];
-  double par2 = pt[1];
-  return point(par1,par2);
-}
-
 SPoint2 parabolicCylinder::parFromPoint(const SPoint3 &p) const
 {
   // ok...first we need to untranslate, unrotate and unscale it

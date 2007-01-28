@@ -42,7 +42,6 @@ class OCCFace : public GFace {
   virtual int paramDegeneracies(int dir, double *par) { return 0; }
   
   virtual GPoint point(double par1, double par2) const; 
-  virtual GPoint point(const SPoint2 &pt) const; 
   virtual GPoint closestPoint(const SPoint3 & queryPoint) const; 
   
   virtual int containsPoint(const SPoint3 &pt) const;  
@@ -50,8 +49,6 @@ class OCCFace : public GFace {
   
   virtual SVector3 normal(const SPoint2 &param) const; 
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const; 
-  virtual double * nthDerivative(const SPoint2 &param, int n,  
- 				 double *array) const {throw;}
   
   virtual GEntity::GeomType geomType() const; 
   virtual int geomDirection() const { return 1; }

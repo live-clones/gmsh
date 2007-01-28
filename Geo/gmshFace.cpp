@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.33 2007-01-12 08:10:32 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.34 2007-01-28 12:55:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -119,11 +119,11 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
 
     // FIXME: move this test at the end of the MeanPlane computation
     // routine--and store the correct normal, damn it!
-    GPoint p = point(param);
+
     double n[3] = {meanPlane.a, meanPlane.b, meanPlane.c};
     norme(n);
     double angle = 0.;
-    GPoint pt = point(param);
+    GPoint pt = point(param.x(), param.y());
     double v[3] = {pt.x(), pt.y(), pt.z()};
     for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
       Curve *c;
@@ -152,11 +152,6 @@ Pair<SVector3,SVector3> gmshFace::firstDer(const SPoint2 &param) const
   Vertex vv = InterpolateSurface(s, param[0], param[1], 1, 2);
   return Pair<SVector3,SVector3>(SVector3(vu.Pos.X, vu.Pos.Y, vu.Pos.Z),
 				 SVector3(vv.Pos.X, vv.Pos.Y, vv.Pos.Z));
-}
-
-GPoint gmshFace::point(const SPoint2 &pt) const
-{   
-  return point(pt.x(), pt.y()); 
 }
 
 GPoint gmshFace::point(double par1, double par2) const

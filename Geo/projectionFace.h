@@ -29,14 +29,11 @@ class projectionFace : public GFace {
   Range<double> parBounds(int i) const {throw;} 
   virtual int paramDegeneracies(int dir, double *par) { return 0; }
   virtual GPoint point(double par1, double par2) const {throw;} 
-  virtual GPoint point(const SPoint2 &pt) const {throw;} 
   virtual GPoint closestPoint(const SPoint3 & queryPoint) const {throw;}
   virtual int containsPoint(const SPoint3 &pt) const {throw;}  
   virtual int containsParam(const SPoint2 &pt) const {throw;} 
   virtual SVector3 normal(const SPoint2 &param) const {throw;} 
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const {throw;} 
-  virtual double * nthDerivative(const SPoint2 &param, int n,  
- 				 double *array) const {throw;}
   virtual GEntity::GeomType geomType() const { return GEntity::ProjectionSurface; }
   virtual int geomDirection() const { return 1; }
   virtual bool continuous(int dim) const { return true; }
@@ -57,7 +54,6 @@ class parabolicCylinder : public projectionFace {
   ~parabolicCylinder();
   Range<double> parBounds(int i) const;
   GPoint point(double par1, double par2) const; 
-  GPoint point(const SPoint2 &pt) const; 
   SVector3 normal(const SPoint2 &param) const; 
   Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const; 
   SPoint2 parFromPoint(const SPoint3 &) const;

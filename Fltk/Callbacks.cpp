@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.509 2007-01-25 15:50:57 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.510 2007-01-28 12:55:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -594,10 +594,37 @@ void file_new_cb(CALLBACK_ARGS)
   }
 }
 
+static char *input_formats =
+  "*"
+  "\tGmsh geometry (*.geo)"
+  "\tGmsh mesh (*.msh)"
+  "\tGmsh post-processing view (*.pos)"
+#if defined(HAVE_OCC)
+  "\tSTEP model (*.step)"
+  "\tIGES model (*.iges)"
+  "\tBRep model (*.brep)"
+#endif
+  "\tI-deas universal mesh (*.unv)"
+  "\tMedit mesh (*.mesh)"
+  "\tNastran bulk data file (*.bdf)"
+  "\tSTL surface mesh (*.stl)"
+  "\tVRML surface mesh (*.wrl)"
+#if defined(HAVE_LIBJPEG)
+  "\tJPEG (*.png)"
+#endif
+#if defined(HAVE_LIBPNG)
+  "\tPNG (*.png)"
+#endif
+  "\tBMP (*.bmp)"
+  "\tPPM (*.ppm)"
+  "\tPGM (*.pgm)"
+  "\tPBM (*.pbm)"
+  "\tPNM (*.pnm)";
+
 void file_open_cb(CALLBACK_ARGS)
 {
   int n = List_Nbr(CTX.post.list);
-  if(file_chooser(0, 0, "Open", "*")) {
+  if(file_chooser(0, 0, "Open", input_formats)) {
     OpenProject(file_chooser_get_name(1));
     Draw();
   }
@@ -608,7 +635,7 @@ void file_open_cb(CALLBACK_ARGS)
 void file_merge_cb(CALLBACK_ARGS)
 {
   int n = List_Nbr(CTX.post.list);
-  int f = file_chooser(1, 0, "Merge", "*");
+  int f = file_chooser(1, 0, "Merge", input_formats);
   if(f) {
     for(int i = 1; i <= f; i++)
       MergeFile(file_chooser_get_name(i));
@@ -679,12 +706,10 @@ void file_save_as_cb(CALLBACK_ARGS)
   static char *pat = NULL;
   static patXfunc formats[] = {
     {"Guess from extension (*.*)", _save_auto},
-    {" ", _save_auto},
     {"Gmsh mesh (*.msh)", _save_msh},
     {"Gmsh mesh statistics (*.pos)", _save_pos},
     {"Gmsh options (*.opt)", _save_options},
     {"Gmsh unrolled geometry (*.geo)", _save_geo},
-    {"  ", _save_auto},
     {"I-deas universal mesh (*.unv)", _save_unv},
     {"Medit mesh (*.mesh)", _save_mesh},
     {"Nastran bulk data file (*.bdf)", _save_bdf},
@@ -693,7 +718,6 @@ void file_save_as_cb(CALLBACK_ARGS)
 #if defined(HAVE_LIBCGNS)
     {"CGNS (*.cgns)", _save_cgns},
 #endif
-    {"   ", _save_auto},
     {"Encapsulated PostScript (*.eps)", _save_eps},
     {"GIF (*.gif)", _save_gif},
 #if defined(HAVE_LIBJPEG)
@@ -708,7 +732,6 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"PPM (*.ppm)", _save_ppm},
     {"SVG (*.svg)", _save_svg},
     {"YUV (*.yuv)", _save_yuv},
-    {"    ", _save_auto},
   };
 
   nbformats = sizeof(formats) / sizeof(formats[0]);

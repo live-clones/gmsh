@@ -48,7 +48,6 @@ class GVertex : public GEntity
   virtual SPoint2 reparamOnFace ( GFace *gf , int) const;
   virtual std::string getAdditionalInfoString();
   virtual std::list<GEdge*> edges() const{return l_edges;}
-
 };
 
 #endif
