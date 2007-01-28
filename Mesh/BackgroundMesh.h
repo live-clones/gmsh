@@ -20,9 +20,6 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#define ONFILE      2
-#define WITHPOINTS  3
-
 class GEntity;
 double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double Z);
 int BGMExists();

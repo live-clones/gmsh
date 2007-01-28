@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.192 2006-11-27 22:22:08 geuzaine Exp $
+// $Id: Views.cpp,v 1.193 2007-01-28 13:56:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -86,8 +86,10 @@ Post_View *BeginView(int allocate)
   else {
     v->Num = CTX.post.force_num;
     List_Replace(CTX.post.list, &v, fcmpPostViewNum);
+    // invalidate the background mesh
+    if(v->Num == CTX.mesh.bgmesh_view_num) CTX.mesh.bgmesh_view_num = -1;
   }
-
+  
   int i = List_ISearch(CTX.post.list, &v, fcmpPostViewNum);
   List_Read(CTX.post.list, i, &v);
 

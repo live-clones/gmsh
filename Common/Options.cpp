@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.333 2007-01-26 17:51:55 geuzaine Exp $
+// $Id: Options.cpp,v 1.334 2007-01-28 13:56:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -144,7 +144,7 @@ void Init_Options(int num)
   CTX.post.force_num = 0;
   CTX.threads_lock = 0; // very primitive locking
   CTX.mesh.changed = 0;
-  CTX.mesh.bgmesh_type = WITHPOINTS;
+  CTX.mesh.bgmesh_view_num = -1;
   CTX.post.combine_time = 0; // try to combine_time views at startup
   CTX.post.plugin_draw_function = NULL;
 #if defined(HAVE_FLTK)

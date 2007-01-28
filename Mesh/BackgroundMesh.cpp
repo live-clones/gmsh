@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.13 2007-01-18 13:18:42 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.14 2007-01-28 13:56:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -33,7 +33,6 @@
 extern Context_T CTX;
 
 static OctreePost *BGM_OCTREE = NULL;
-static double BGM_MAX = 0.;
 
 const double MAX_LC = 1.e22;
 
@@ -42,50 +41,20 @@ int BGMWithView(Post_View * ErrView)
   Msg(INFO, "Applying '%s' as background mesh", ErrView->Name);
   if(BGM_OCTREE) delete BGM_OCTREE;
   BGM_OCTREE = new OctreePost(ErrView);
-  BGM_MAX = ErrView->Max;
-  CTX.mesh.bgmesh_type = ONFILE;
+  CTX.mesh.bgmesh_view_num = ErrView->Num; // view numbers are unique
   return 1 ;
 }
 
 int BGMExists()
 {
-  return BGM_OCTREE != 0;
-}
+  if(!BGM_OCTREE || CTX.mesh.bgmesh_view_num < 0) return 0;
 
-double BGMXYZ(double X, double Y, double Z)
-{
-  if(!BGM_OCTREE){
-    Msg(GERROR, "Missing background mesh");
-    CTX.mesh.bgmesh_type = WITHPOINTS;
-    return 1.;
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++){
+    Post_View *v = *(Post_View**)List_Pointer_Fast(CTX.post.list, i);
+    if(v->Num == CTX.mesh.bgmesh_view_num) return 1;
   }
-
-  double l = 0.;
-  double fact[9] = {0.001, 0.0025, 0.005, 0.0075, 0.01, 0.025, 0.05, 0.075, 0.1};
-
-  if(!BGM_OCTREE->searchScalar(X, Y, Z, &l, 0)){
-    // try really hard to find an element around the point
-    for(int i = 0; i < 9; i++){
-      double eps = CTX.lc * fact[i];
-      if(BGM_OCTREE->searchScalar(X + eps, Y, Z, &l, 0)) break;
-      if(BGM_OCTREE->searchScalar(X - eps, Y, Z, &l, 0)) break;
-      if(BGM_OCTREE->searchScalar(X, Y + eps, Z, &l, 0)) break;
-      if(BGM_OCTREE->searchScalar(X, Y - eps, Z, &l, 0)) break;
-      if(BGM_OCTREE->searchScalar(X, Y, Z + eps, &l, 0)) break;
-      if(BGM_OCTREE->searchScalar(X, Y, Z - eps, &l, 0)) break;
-      if(BGM_OCTREE->searchScalar(X + eps, Y - eps, Z - eps, &l, 0)) break;
-      if(BGM_OCTREE->searchScalar(X + eps, Y + eps, Z - eps, &l, 0)) break;
-      if(BGM_OCTREE->searchScalar(X - eps, Y - eps, Z - eps, &l, 0)) break;
-      if(BGM_OCTREE->searchScalar(X - eps, Y + eps, Z - eps, &l, 0)) break;
-      if(BGM_OCTREE->searchScalar(X + eps, Y - eps, Z + eps, &l, 0)) break;
-      if(BGM_OCTREE->searchScalar(X + eps, Y + eps, Z + eps, &l, 0)) break;
-      if(BGM_OCTREE->searchScalar(X - eps, Y - eps, Z + eps, &l, 0)) break;
-      if(BGM_OCTREE->searchScalar(X - eps, Y + eps, Z + eps, &l, 0)) break;
-    }
-  }
-  if(l <= 0) return MAX_LC;
-
-  return l;
+  CTX.mesh.bgmesh_view_num = -1;
+  return 0;
 }
 
 // computes the characteristic length of the mesh at a vertex in order
@@ -158,15 +127,37 @@ double LC_MVertex_CURV(GEntity *ge, double U, double V)
   else return MAX_LC;
 }
 
-// compute the mesh size at a given vertex due to prescribed sizes at
-// mesh vertices
-
+// compute the mesh size at a given point in space using a background
+// mesh on file
 double LC_MVertex_BGM(GEntity *ge, double X, double Y, double Z)
 {
-  if(BGMExists())
-    return BGMXYZ(X,Y,Z);
-  else
-    return MAX_LC;
+  if(!BGMExists()) return MAX_LC;
+
+  double l = 0.;
+  double fact[9] = {0.001, 0.0025, 0.005, 0.0075, 0.01, 0.025, 0.05, 0.075, 0.1};
+
+  if(!BGM_OCTREE->searchScalar(X, Y, Z, &l, 0)){
+    // try really hard to find an element around the point
+    for(int i = 0; i < 9; i++){
+      double eps = CTX.lc * fact[i];
+      if(BGM_OCTREE->searchScalar(X + eps, Y, Z, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X - eps, Y, Z, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X, Y + eps, Z, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X, Y - eps, Z, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X, Y, Z + eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X, Y, Z - eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X + eps, Y - eps, Z - eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X + eps, Y + eps, Z - eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X - eps, Y - eps, Z - eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X - eps, Y + eps, Z - eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X + eps, Y - eps, Z + eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X + eps, Y + eps, Z + eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X - eps, Y - eps, Z + eps, &l, 0)) break;
+      if(BGM_OCTREE->searchScalar(X - eps, Y + eps, Z + eps, &l, 0)) break;
+    }
+  }
+  if(l <= 0) return MAX_LC;
+  return l;
 }
 
 // compute the mesh size at a given vertex due to prescribed sizes at
@@ -197,20 +188,20 @@ double LC_MVertex_PNTS(GEntity *ge, double U, double V)
 
 double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double Z)
 {
-  // unconstrained background mesh
-  if(CTX.mesh.bgmesh_type == ONFILE && !CTX.mesh.constrained_bgmesh){
-    return CTX.mesh.lc_factor * BGMXYZ(X, Y, Z);
-  }
-
   double l2 = MAX_LC;
   double l3 = CTX.lc / 10.;
   double l4 = LC_MVertex_BGM(ge, X, Y, Z);
+
+  if(l4 < MAX_LC && !CTX.mesh.constrained_bgmesh)
+    return l4 * CTX.mesh.lc_factor;
+
   if(ge->dim() < 2) l2 = LC_MVertex_PNTS(ge, U, V);
+
   double l = std::min(std::min(l2, l4), l3);
 
   l *= CTX.mesh.lc_factor ;
-  double l1 = MAX_LC;
 
+  double l1 = MAX_LC;
   if(CTX.mesh.lc_from_curvature && ge->dim() < 3)
     l1 = std::max(l3/100, LC_MVertex_CURV(ge, U, V));
 

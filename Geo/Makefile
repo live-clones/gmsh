@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.124 2007-01-22 16:31:43 geuzaine Exp $
+# $Id: Makefile,v 1.125 2007-01-28 13:56:19 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -178,7 +178,7 @@ GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
   ../Common/SmoothNormals.h Geo.h ../DataStr/Tree.h ../DataStr/avl.h \
   ../Parser/OpenFile.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h ../Common/Message.h gmshVertex.h gmshFace.h \
-  gmshEdge.h gmshRegion.h
+  gmshEdge.h gmshRegion.h ../Parser/Parser.h
 GModelIO_Mesh.o: GModelIO_Mesh.cpp ../Common/Message.h \
   ../Common/GmshDefines.h GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h MVertex.h GPoint.h SPoint2.h GEdge.h SVector3.h \
