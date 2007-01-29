@@ -13,7 +13,7 @@
 #include "GFace.h"
 #include "Message.h"
 
-#if defined(HAVE_LIBMED)
+#if defined(HAVE_MED)
 
 extern "C"
 {

@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.1 2007-01-29 14:52:57 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.2 2007-01-29 17:16:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,19 +19,19 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "GModel.h"
-#include "MVertex.h"
-#include "MEdge.h"
-#include "Message.h"
-
-#if defined(HAVE_LIBMED)
-
 #include <map>
 #include <string>
 #include <vector>
 #include <iostream>
 #include <sstream>
+
+#include "GModel.h"
 #include "GModelIO_MED.h"
+#include "MVertex.h"
+#include "MEdge.h"
+#include "Message.h"
+
+#if defined(HAVE_MED)
 
 extern "C" {
 #include "med.h"

@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.92 2007-01-18 09:12:44 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.93 2007-01-29 17:16:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -160,6 +160,9 @@ char *Get_BuildOptions(void)
 #endif
 #if defined(HAVE_OCC)
     strcat(opt, "OCC ");
+#endif
+#if defined(HAVE_MED)
+    strcat(opt, "MED ");
 #endif
     first = 0;
   }

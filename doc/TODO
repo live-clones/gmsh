@@ -1,8 +1,13 @@
-$Id: TODO,v 1.41 2007-01-26 17:52:26 geuzaine Exp $
+$Id: TODO,v 1.42 2007-01-29 17:16:03 geuzaine Exp $
 
 ********************************************************************
 
 introduce Right/Left/Alternate for extruded meshes
+
+********************************************************************
+
+make sure to check for zlib in configure for med (even in non-gui
+case)
 
 ********************************************************************
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.126 2007-01-29 14:52:57 geuzaine Exp $
+# $Id: Makefile,v 1.127 2007-01-29 17:16:02 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -210,6 +210,12 @@ GModelIO_CGNS.o: GModelIO_CGNS.cpp GModel.h GVertex.h GEntity.h Range.h \
   MFace.h ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
   ExtrudeParams.h GFace.h GEdgeLoop.h Pair.h GRegion.h \
   ../Common/SmoothNormals.h ../Common/Message.h MNeighbour.h
+GModelIO_MED.o: GModelIO_MED.cpp GModel.h GVertex.h GEntity.h Range.h \
+  SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h \
+  SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \
+  MFace.h ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
+  ExtrudeParams.h GFace.h GEdgeLoop.h Pair.h GRegion.h \
+  ../Common/SmoothNormals.h GModelIO_MED.h ../Common/Message.h
 ExtrudeParams.o: ExtrudeParams.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \

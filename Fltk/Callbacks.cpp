@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.511 2007-01-29 14:52:57 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.512 2007-01-29 17:16:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -720,7 +720,7 @@ void file_save_as_cb(CALLBACK_ARGS)
 #if defined(HAVE_LIBCGNS)
     {"CGNS (*.cgns)", _save_cgns},
 #endif
-#if defined(HAVE_LIBMED)
+#if defined(HAVE_MED)
     {"MED (*.med)", _save_med},
 #endif
     {"Encapsulated PostScript (*.eps)", _save_eps},

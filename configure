@@ -3593,25 +3593,82 @@ fi
     fi
   fi
 
-    if test "x${ZLIB}" = "xyes"; then
-        if test "x${FL_ZLIB}" = "xyes"; then
-      FLAGS="-DHAVE_LIBZ ${FLAGS}"
-    else
-      FLAGS="-DHAVE_LIBZ ${FLAGS}"
-      if test "x${ZLIB_PREFIX}" = "x"; then
-        GMSH_LIBS="${GMSH_LIBS} -lz"
-      else
-                GMSH_LIBS="${GMSH_LIBS} -L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib -lz"
-        FLAGS="${FLAGS} -I${ZLIB_PREFIX} -I${ZLIB_PREFIX}/include"
-      fi
-    fi
-  fi
-
 else
 
   GMSH_DIRS="${GMSH_DIRS} Box"
   GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshPlugin"
   GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshDataStr -lGmshNumeric -lGmshParallel"
+
+    ZLIB=""
+  if test "x$enable_zlib" != "xno"; then
+    if test "x${ZLIB_PREFIX}" != "x"; then
+      LDFLAGS="-L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib ${LDFLAGS}"
+    fi
+    echo "$as_me:$LINENO: checking for main in -lz" >&5
+echo $ECHO_N "checking for main in -lz... $ECHO_C" >&6
+if test "${ac_cv_lib_z_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lz  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_z_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_z_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_z_main" >&5
+echo "${ECHO_T}$ac_cv_lib_z_main" >&6
+if test $ac_cv_lib_z_main = yes; then
+  ZLIB="yes"
+else
+  ZLIB="no"
+fi
+
+  fi
 
 fi
 
@@ -4619,11 +4676,12 @@ fi
   fi
 fi
 
-if test "x$enable_med" != "xno"; then
-  if test "x${HDF5_PREFIX}" != "x"; then
-    LDFLAGS="-L${HDF5_PREFIX}/lib ${LDFLAGS}"
-  fi
-  echo "$as_me:$LINENO: checking for main in -lhdf5" >&5
+if test "x${ZLIB}" = "xyes"; then
+  if test "x$enable_med" != "xno"; then
+    if test "x${HDF5_PREFIX}" != "x"; then
+      LDFLAGS="-L${HDF5_PREFIX}/lib ${LDFLAGS}"
+    fi
+    echo "$as_me:$LINENO: checking for main in -lhdf5" >&5
 echo $ECHO_N "checking for main in -lhdf5... $ECHO_C" >&6
 if test "${ac_cv_lib_hdf5_main+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -4687,12 +4745,13 @@ else
   HDF5="no"
 fi
 
-  if test "x${HDF5}" = "xyes"; then
-    if test "x${HDF5_PREFIX}" = "x"; then
-      GMSH_LIBS="${GMSH_LIBS} -lhdf5"
-    else
-      GMSH_LIBS="${GMSH_LIBS} -L${HDF5_PREFIX}/lib -lhdf5"
-      FLAGS="${FLAGS} -I${HDF5_PREFIX}/include"
+    if test "x${HDF5}" = "xyes"; then
+      if test "x${HDF5_PREFIX}" = "x"; then
+        GMSH_LIBS="${GMSH_LIBS} -lhdf5"
+      else
+        GMSH_LIBS="${GMSH_LIBS} -L${HDF5_PREFIX}/lib -lhdf5"
+        FLAGS="${FLAGS} -I${HDF5_PREFIX}/include"
+      fi
     fi
   fi
 fi
@@ -4769,11 +4828,25 @@ fi
     if test "x${MED}" = "xyes"; then
       if test "x${MED_PREFIX}" = "x"; then
         GMSH_LIBS="${GMSH_LIBS} -lmed"
-        FLAGS="${FLAGS} -DHAVE_LIBMED"
+        FLAGS="${FLAGS} -DHAVE_MED"
       else
         GMSH_LIBS="${GMSH_LIBS} -L${MED_PREFIX}/lib -lmed"
-        FLAGS="${FLAGS} -DHAVE_LIBMED -I${MED_PREFIX}/include"
+        FLAGS="${FLAGS} -DHAVE_MED -I${MED_PREFIX}/include"
       fi
+    fi
+  fi
+fi
+
+if test "x${ZLIB}" = "xyes"; then
+    if test "x${FL_ZLIB}" = "xyes"; then
+    FLAGS="-DHAVE_LIBZ ${FLAGS}"
+  else
+    FLAGS="-DHAVE_LIBZ ${FLAGS}"
+    if test "x${ZLIB_PREFIX}" = "x"; then
+      GMSH_LIBS="${GMSH_LIBS} -lz"
+    else
+            GMSH_LIBS="${GMSH_LIBS} -L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib -lz"
+      FLAGS="${FLAGS} -I${ZLIB_PREFIX} -I${ZLIB_PREFIX}/include"
     fi
   fi
 fi

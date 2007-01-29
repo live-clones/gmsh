@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.118 2007-01-29 14:52:57 geuzaine Exp $
+dnl $Id: configure.in,v 1.119 2007-01-29 17:16:01 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 dnl
@@ -281,28 +281,20 @@ if test "x$enable_gui" != "xno"; then
     fi 
   fi
 
-  dnl Complete zlib link line (zlib must be linked in after libpng)
-  if test "x${ZLIB}" = "xyes"; then
-    dnl If provided by FLTK, use that one; otherwise, look for it
-    if test "x${FL_ZLIB}" = "xyes"; then
-      FLAGS="-DHAVE_LIBZ ${FLAGS}"
-    else
-      FLAGS="-DHAVE_LIBZ ${FLAGS}"
-      if test "x${ZLIB_PREFIX}" = "x"; then
-        GMSH_LIBS="${GMSH_LIBS} -lz"
-      else
-        dnl Find the libs/includes even if libz is _not_ properly installed (ugly hack!)
-        GMSH_LIBS="${GMSH_LIBS} -L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib -lz"
-        FLAGS="${FLAGS} -I${ZLIB_PREFIX} -I${ZLIB_PREFIX}/include"
-      fi
-    fi
-  fi 
-
 else
 
   GMSH_DIRS="${GMSH_DIRS} Box"
   GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshPlugin"
   GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshDataStr -lGmshNumeric -lGmshParallel"
+
+  dnl Check for libz
+  ZLIB=""
+  if test "x$enable_zlib" != "xno"; then
+    if test "x${ZLIB_PREFIX}" != "x"; then
+      LDFLAGS="-L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib ${LDFLAGS}"
+    fi
+    AC_CHECK_LIB(z,main,ZLIB="yes",ZLIB="no")
+  fi
 
 fi
 
@@ -592,23 +584,25 @@ if test "x$enable_occ" = "xyes"; then
   fi
 fi
 
-dnl Check for HDF5 (required by MED)
-if test "x$enable_med" != "xno"; then
-  if test "x${HDF5_PREFIX}" != "x"; then
-    LDFLAGS="-L${HDF5_PREFIX}/lib ${LDFLAGS}"
-  fi
-  AC_CHECK_LIB(hdf5,main,HDF5="yes",HDF5="no")
-  if test "x${HDF5}" = "xyes"; then
-    if test "x${HDF5_PREFIX}" = "x"; then
-      GMSH_LIBS="${GMSH_LIBS} -lhdf5"
-    else
-      GMSH_LIBS="${GMSH_LIBS} -L${HDF5_PREFIX}/lib -lhdf5"
-      FLAGS="${FLAGS} -I${HDF5_PREFIX}/include"
+dnl Check for HDF5 (required by MED, needs zlib)
+if test "x${ZLIB}" = "xyes"; then
+  if test "x$enable_med" != "xno"; then
+    if test "x${HDF5_PREFIX}" != "x"; then
+      LDFLAGS="-L${HDF5_PREFIX}/lib ${LDFLAGS}"
+    fi
+    AC_CHECK_LIB(hdf5,main,HDF5="yes",HDF5="no")
+    if test "x${HDF5}" = "xyes"; then
+      if test "x${HDF5_PREFIX}" = "x"; then
+        GMSH_LIBS="${GMSH_LIBS} -lhdf5"
+      else
+        GMSH_LIBS="${GMSH_LIBS} -L${HDF5_PREFIX}/lib -lhdf5"
+        FLAGS="${FLAGS} -I${HDF5_PREFIX}/include"
+      fi
     fi
   fi
 fi
 
-dnl Check for MED
+dnl Check for MED (needs hdf5)
 if test "x${HDF5}" = "xyes"; then
   if test "x$enable_med" != "xno"; then
     if test "x${MED_PREFIX}" != "x"; then
@@ -618,14 +612,31 @@ if test "x${HDF5}" = "xyes"; then
     if test "x${MED}" = "xyes"; then
       if test "x${MED_PREFIX}" = "x"; then
         GMSH_LIBS="${GMSH_LIBS} -lmed"
-        FLAGS="${FLAGS} -DHAVE_LIBMED"
+        FLAGS="${FLAGS} -DHAVE_MED"
       else
         GMSH_LIBS="${GMSH_LIBS} -L${MED_PREFIX}/lib -lmed"
-        FLAGS="${FLAGS} -DHAVE_LIBMED -I${MED_PREFIX}/include"
+        FLAGS="${FLAGS} -DHAVE_MED -I${MED_PREFIX}/include"
       fi
     fi
   fi
 fi
+
+dnl Complete zlib link line (zlib must be linked in after libpng and libhdf5)
+if test "x${ZLIB}" = "xyes"; then
+  dnl If provided by FLTK, use that one; otherwise, look for it
+  if test "x${FL_ZLIB}" = "xyes"; then
+    FLAGS="-DHAVE_LIBZ ${FLAGS}"
+  else
+    FLAGS="-DHAVE_LIBZ ${FLAGS}"
+    if test "x${ZLIB_PREFIX}" = "x"; then
+      GMSH_LIBS="${GMSH_LIBS} -lz"
+    else
+      dnl Find the libs/includes even if libz is _not_ properly installed (ugly hack!)
+      GMSH_LIBS="${GMSH_LIBS} -L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib -lz"
+      FLAGS="${FLAGS} -I${ZLIB_PREFIX} -I${ZLIB_PREFIX}/include"
+    fi
+  fi
+fi 
 
 dnl Check if we should build the parallel version
 if test "x$enable_parallel" = "xyes"; then

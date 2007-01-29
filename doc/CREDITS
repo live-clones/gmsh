@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.42 2007-01-18 09:12:45 geuzaine Exp $
+$Id: CREDITS,v 1.43 2007-01-29 17:16:03 geuzaine Exp $
 
              Gmsh is copyright (C) 1997-2007
 
@@ -12,8 +12,9 @@ $Id: CREDITS,v 1.42 2007-01-18 09:12:45 geuzaine Exp $
 
 Major code contributions to Gmsh have been provided by Nicolas Tardieu
 <ntardieu at giref.ulaval.ca> (help with the GSL integration, new "STL
-to elementary geometry" interface, Netgen integration) and Stephen
-Guzik <sguzik at utias.utoronto.ca> (CGNS integration).
+to elementary geometry" interface, Netgen integration), Stephen Guzik
+<sguzik at utias.utoronto.ca> (CGNS integration) and Pascale Noyret
+(MED integration).
 
 Other code contributors include: David Colignon <David.Colignon at
 ulg.ac.be> for new colormaps; Patrick Dular <patrick.dular at
