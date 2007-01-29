@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.140 2007-01-18 13:18:42 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.141 2007-01-29 08:22:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -250,6 +250,7 @@ void ParseString(char *str)
     fprintf(fp, "\n");
     fclose(fp);
     ParseFile(CTX.tmp_filename_fullpath, 1);
+    if(GMODEL) GMODEL->importTHEM();
   }
 }
 

@@ -469,18 +469,15 @@ class MQuadrangle8 : public MQuadrangle {
     };
     return MEdge(getVertex(edges_qua8[num][0]), getVertex(edges_qua8[num][1]));
   }
-  virtual int getNumFacesRep(){ return 5; }
+  virtual int getNumFacesRep(){ return 6; }
   virtual MFace getFaceRep(int num)
   { 
-    static const int trifaces_qua8[4][3] = {
-      {0, 4, 7}, {1, 5, 4}, {2, 6, 5}, {3, 7, 6}
+    static const int trifaces_qua8[6][3] = {
+      {0, 4, 7}, {1, 5, 4}, {2, 6, 5}, {3, 7, 6}, {4, 5, 6}, {4, 6, 7}
     };
-    if(num < 4)
-      return MFace(getVertex(trifaces_qua8[num][0]),
-		   getVertex(trifaces_qua8[num][1]),
-		   getVertex(trifaces_qua8[num][2]));
-    else
-      return MFace(_vs[0], _vs[1], _vs[2], _vs[3]);
+    return MFace(getVertex(trifaces_qua8[num][0]),
+		 getVertex(trifaces_qua8[num][1]),
+		 getVertex(trifaces_qua8[num][2]));
   }
   virtual int getTypeForMSH(){ return MSH_QUA_8; }
   virtual int getTypeForUNV(){ return 95; } // shell parabolic quadrilateral
@@ -529,16 +526,16 @@ class MQuadrangle9 : public MQuadrangle {
     };
     return MEdge(getVertex(edges_qua9[num][0]), getVertex(edges_qua9[num][1]));
   }
-  virtual int getNumFacesRep(){ return 4; }
+  virtual int getNumFacesRep(){ return 8; }
   virtual MFace getFaceRep(int num)
   { 
-    static const int quadfaces_qua9[4][4] = {
-      {0, 4, 8, 7}, {1, 5, 8, 4}, {2, 6, 8, 5}, {3, 7, 8, 6}
+    static const int trifaces_qua9[8][4] = {
+      {0, 4, 8}, {0, 8, 7}, {1, 5, 8}, {1, 8, 4}, 
+      {2, 6, 8}, {2, 8, 5}, {3, 7, 8}, {3, 8, 6}
     };
-    return MFace(getVertex(quadfaces_qua9[num][0]),
-		 getVertex(quadfaces_qua9[num][1]),
-		 getVertex(quadfaces_qua9[num][2]),
-		 getVertex(quadfaces_qua9[num][3]));
+    return MFace(getVertex(trifaces_qua9[num][0]),
+		 getVertex(trifaces_qua9[num][1]),
+		 getVertex(trifaces_qua9[num][2]));
   }
   virtual int getTypeForMSH(){ return MSH_QUA_9; }
   virtual int getTypeForUNV(){ return 0; } // not available
@@ -883,34 +880,20 @@ class MHexahedron20 : public MHexahedron {
     };
     return MEdge(getVertex(edges_hexa20[num][0]), getVertex(edges_hexa20[num][1]));
   }
-  virtual int getNumFacesRep(){ return 30; }
+  virtual int getNumFacesRep(){ return 36; }
   virtual MFace getFaceRep(int num)
   { 
-    static const int trifaces_hexa20[24][3] = {
-      {0, 9, 8}, {3, 13, 9}, {2, 11, 13}, {1, 8, 11},
-      {0, 8, 10}, {1, 12, 8}, {5, 16, 12}, {4, 10, 16},
-      {0, 10, 9}, {4, 17, 10}, {7, 15, 17}, {3, 9, 7},
-      {1, 11, 12}, {2, 14, 11}, {6, 18, 14}, {5, 12, 18},
-      {2, 13, 14}, {3, 15, 13}, {7, 19, 15}, {6, 14, 19},
-      {4, 16, 17}, {5, 18, 16}, {6, 19, 18}, {7, 17, 19}
+    static const int trifaces_hexa20[36][3] = {
+      {0, 9, 8}, {3, 13, 9}, {2, 11, 13}, {1, 8, 11}, {8, 9, 13}, {8, 13, 11},
+      {0, 8, 10}, {1, 12, 8}, {5, 16, 12}, {4, 10, 16}, {8, 12, 16}, {8, 16, 10},
+      {0, 10, 9}, {4, 17, 10}, {7, 15, 17}, {3, 9, 7}, {9, 10, 17}, {9, 17, 15},
+      {1, 11, 12}, {2, 14, 11}, {6, 18, 14}, {5, 12, 18}, {11, 14, 18}, {11, 18, 12},
+      {2, 13, 14}, {3, 15, 13}, {7, 19, 15}, {6, 14, 19}, {13, 15, 19}, {13, 19, 14},
+      {4, 16, 17}, {5, 18, 16}, {6, 19, 18}, {7, 17, 19}, {16, 18, 19}, {16, 19, 17}
     };
-    static const int quadfaces_hexa20[6][4] = {
-      {8, 9, 13, 11},
-      {8, 12, 16, 10},
-      {9, 10, 17, 15},
-      {11, 14, 18, 12},
-      {13, 15, 19, 14},
-      {16, 18, 19, 17}
-    };
-    if(num < 24)
-      return MFace(getVertex(trifaces_hexa20[num][0]),
-	  	   getVertex(trifaces_hexa20[num][1]),
-		   getVertex(trifaces_hexa20[num][2]));
-    else
-      return MFace(getVertex(quadfaces_hexa20[num - 24][0]),
-	  	   getVertex(quadfaces_hexa20[num - 24][1]),
-		   getVertex(quadfaces_hexa20[num - 24][2]),
-                   getVertex(quadfaces_hexa20[num - 24][3]));
+    return MFace(getVertex(trifaces_hexa20[num][0]),
+		 getVertex(trifaces_hexa20[num][1]),
+		 getVertex(trifaces_hexa20[num][2]));
   }
   virtual int getTypeForMSH(){ return MSH_HEX_20; }
   virtual int getTypeForUNV(){ return 116; } // solid parabolic brick
@@ -980,21 +963,26 @@ class MHexahedron27 : public MHexahedron {
     };
     return MEdge(getVertex(edges_hexa27[num][0]), getVertex(edges_hexa27[num][1]));
   }
-  virtual int getNumFacesRep(){ return 24; }
+  virtual int getNumFacesRep(){ return 48; }
   virtual MFace getFaceRep(int num)
   { 
-    static const int quadfaces_hexa27[24][4] = {
-      {0, 9, 20, 8}, {3, 13, 20, 9}, {2, 11, 20, 13}, {1, 8, 20, 11},
-      {0, 8, 21, 10}, {1, 12, 21, 8}, {5, 16, 21, 12}, {4, 10, 21, 16},
-      {0, 10, 22, 9}, {4, 17, 22, 10}, {7, 15, 22, 17}, {3, 9, 22, 15},
-      {1, 11, 23, 12}, {2, 14, 23, 11}, {6, 18, 23, 14}, {5, 12, 23, 18},
-      {2, 13, 24, 14}, {3, 15, 24, 13}, {7, 19, 24, 15}, {6, 14, 24, 19},
-      {4, 16, 25, 17}, {5, 18, 25, 16}, {6, 19, 25, 18}, {7, 17, 25, 19}
+    static const int trifaces_hexa27[48][3] = {
+      {0, 9, 20}, {0, 20, 8}, {3, 13, 20}, {3, 20, 9}, 
+      {2, 11, 20}, {2, 20, 13}, {1, 8, 20}, {1, 20, 11},
+      {0, 8, 21}, {0, 21, 10}, {1, 12, 21}, {1, 21, 8}, 
+      {5, 16, 21}, {5, 21, 12}, {4, 10, 21}, {4, 21, 16}, 
+      {0, 10, 22}, {0, 22, 9}, {4, 17, 22}, {4, 22, 10}, 
+      {7, 15, 22}, {7, 22, 17}, {3, 9, 22}, {3, 22, 15},  
+      {1, 11, 23}, {1, 23, 12}, {2, 14, 23}, {2, 23, 11}, 
+      {6, 18, 23}, {6, 23, 14}, {5, 12, 23}, {5, 23, 18}, 
+      {2, 13, 24}, {2, 24, 14}, {3, 15, 24}, {3, 24, 13}, 
+      {7, 19, 24}, {7, 24, 15}, {6, 14, 24}, {6, 24, 19}, 
+      {4, 16, 25}, {4, 25, 17}, {5, 18, 25}, {5, 25, 16}, 
+      {6, 19, 25}, {6, 25, 18}, {7, 17, 25}, {7, 25, 19}  
     };
-    return MFace(getVertex(quadfaces_hexa27[num][0]),
-		 getVertex(quadfaces_hexa27[num][1]),
-		 getVertex(quadfaces_hexa27[num][2]),
-		 getVertex(quadfaces_hexa27[num][3]));
+    return MFace(getVertex(trifaces_hexa27[num][0]),
+		 getVertex(trifaces_hexa27[num][1]),
+		 getVertex(trifaces_hexa27[num][2]));
   }
   virtual int getTypeForMSH(){ return MSH_HEX_27; }
   virtual int getTypeForUNV(){ return 0; } // not available
@@ -1149,30 +1137,19 @@ class MPrism15 : public MPrism {
     };
     return MEdge(getVertex(edges_prism15[num][0]), getVertex(edges_prism15[num][1]));
   }
-  virtual int getNumFacesRep(){ return 23; }
+  virtual int getNumFacesRep(){ return 26; }
   virtual MFace getFaceRep(int num)
   { 
-    static const int trifaces_prism15[20][3] = {
+    static const int trifaces_prism15[26][3] = {
       {0, 7, 6}, {2, 9, 7}, {1, 6, 9}, {6, 7, 9},
       {3, 12, 13}, {4, 14, 12}, {5, 13, 14}, {12, 14, 13},
-      {0, 6, 8}, {1, 10, 6}, {4, 12, 10}, {3, 8, 12},
-      {0, 8, 7}, {3, 13, 8}, {5, 11, 13}, {2, 7, 11},
-      {1, 9, 10}, {2, 11, 9}, {5, 14, 11}, {4, 10, 14}
+      {0, 6, 8}, {1, 10, 6}, {4, 12, 10}, {3, 8, 12}, {6, 10, 12}, {6, 12, 8},
+      {0, 8, 7}, {3, 13, 8}, {5, 11, 13}, {2, 7, 11}, {7, 8, 13}, {7, 13, 11},
+      {1, 9, 10}, {2, 11, 9}, {5, 14, 11}, {4, 10, 14}, {9, 11, 14}, {9, 14, 10}
     };
-    static const int quadfaces_prism15[3][4] = {
-      {6, 10, 12, 8},
-      {7, 8, 13, 11},
-      {9, 11, 14, 10}
-    };
-    if(num < 20)
-      return MFace(getVertex(trifaces_prism15[num][0]),
-	  	   getVertex(trifaces_prism15[num][1]),
-		   getVertex(trifaces_prism15[num][2]));
-    else
-      return MFace(getVertex(quadfaces_prism15[num - 20][0]),
-	  	   getVertex(quadfaces_prism15[num - 20][1]),
-		   getVertex(quadfaces_prism15[num - 20][2]),
-                   getVertex(quadfaces_prism15[num - 20][3]));
+    return MFace(getVertex(trifaces_prism15[num][0]),
+		 getVertex(trifaces_prism15[num][1]),
+		 getVertex(trifaces_prism15[num][2]));
   }
   virtual int getTypeForMSH(){ return MSH_PRI_15; }
   virtual int getTypeForUNV(){ return 113; } // solid parabolic wedge
@@ -1232,27 +1209,22 @@ class MPrism18 : public MPrism {
     };
     return MEdge(getVertex(edges_prism18[num][0]), getVertex(edges_prism18[num][1]));
   }
-  virtual int getNumFacesRep(){ return 20; }
+  virtual int getNumFacesRep(){ return 32; }
   virtual MFace getFaceRep(int num)
   { 
-    static const int trifaces_prism18[8][3] = {
+    static const int trifaces_prism18[32][3] = {
       {0, 7, 6}, {2, 9, 7}, {1, 6, 9}, {6, 7, 9},
       {3, 12, 13}, {4, 14, 12}, {5, 13, 14}, {12, 14, 13},
+      {0, 6, 15}, {0, 15, 8}, {1, 10, 15}, {1, 15, 6},  
+      {4, 12, 15}, {4, 15, 10}, {3, 8, 15}, {3, 15, 12},  
+      {0, 8, 16}, {0, 16, 7}, {3, 13, 16}, {3, 16, 8},  
+      {5, 11, 16}, {5, 16, 13}, {2, 7, 16}, {2, 16, 11},  
+      {1, 9, 17}, {1, 17, 10}, {2, 11, 17}, {2, 17, 9},  
+      {5, 14, 17}, {5, 17, 11}, {4, 10, 17}, {4, 17, 14}
     };
-    static const int quadfaces_prism18[12][4] = {
-      {0, 6, 15, 8}, {1, 10, 15, 6}, {4, 12, 15, 10}, {3, 8, 15, 12},
-      {0, 8, 16, 7}, {3, 13, 16, 8}, {5, 11, 16, 13}, {2, 7, 16, 11},
-      {1, 9, 17, 10}, {2, 11, 17, 9}, {5, 14, 17, 11}, {4, 10, 17, 14}
-    };
-    if(num < 8)
-      return MFace(getVertex(trifaces_prism18[num][0]),
-	  	   getVertex(trifaces_prism18[num][1]),
-		   getVertex(trifaces_prism18[num][2]));
-    else
-      return MFace(getVertex(quadfaces_prism18[num - 8][0]),
-	  	   getVertex(quadfaces_prism18[num - 8][1]),
-		   getVertex(quadfaces_prism18[num - 8][2]),
-                   getVertex(quadfaces_prism18[num - 8][3]));
+    return MFace(getVertex(trifaces_prism18[num][0]),
+		 getVertex(trifaces_prism18[num][1]),
+		 getVertex(trifaces_prism18[num][2]));
   }
   virtual int getTypeForMSH(){ return MSH_PRI_18; }
   virtual int getTypeForUNV(){ return 0; } // not available
@@ -1312,18 +1284,12 @@ class MPyramid : public MElement {
       {1, 2, 4},
       {2, 3, 4}
     };
-    static const int quadfaces_pyramid[1][4] = {
-      {0, 3, 2, 1}
-    };
     if(num < 4)
       return MFace(_v[trifaces_pyramid[num][0]],
 		   _v[trifaces_pyramid[num][1]],
 		   _v[trifaces_pyramid[num][2]]);
     else
-      return MFace(_v[quadfaces_pyramid[num - 4][0]],
-		   _v[quadfaces_pyramid[num - 4][1]],
-		   _v[quadfaces_pyramid[num - 4][2]],
-		   _v[quadfaces_pyramid[num - 4][3]]);
+      return MFace(_v[0], _v[3], _v[2], _v[1]);
   }
   virtual int getTypeForMSH(){ return MSH_PYR_5; }
   virtual int getTypeForUNV(){ return 0; } // not available
@@ -1388,28 +1354,19 @@ class MPyramid13 : public MPyramid {
     };
     return MEdge(getVertex(edges_pyramid13[num][0]), getVertex(edges_pyramid13[num][1]));
   }
-  virtual int getNumFacesRep(){ return 21; }
+  virtual int getNumFacesRep(){ return 22; }
   virtual MFace getFaceRep(int num)
   { 
-    static const int trifaces_pyramid13[20][3] = {
+    static const int trifaces_pyramid13[22][3] = {
       {0, 5, 7}, {1, 9, 5}, {4, 7, 9}, {5, 9, 7},
       {3, 6, 12}, {0, 7, 6}, {4, 12, 7}, {6, 7, 12},
       {1, 8, 9}, {2, 11, 8}, {4, 9, 11}, {8, 11, 9},
       {2, 10, 11}, {3, 12, 10}, {4, 11, 12}, {10, 12, 11},
-      {0, 6, 5}, {3, 10, 6}, {2, 8, 10}, {1, 5, 8}
+      {0, 6, 5}, {3, 10, 6}, {2, 8, 10}, {1, 5, 8}, {5, 6, 10}, {5, 10, 8}
     };
-    static const int quadfaces_pyramid13[1][4] = {
-      {5, 6, 10, 8}
-    };
-    if(num < 20)
-      return MFace(getVertex(trifaces_pyramid13[num][0]),
-	  	   getVertex(trifaces_pyramid13[num][1]),
-		   getVertex(trifaces_pyramid13[num][2]));
-    else
-      return MFace(getVertex(quadfaces_pyramid13[num - 20][0]),
-	  	   getVertex(quadfaces_pyramid13[num - 20][1]),
-		   getVertex(quadfaces_pyramid13[num - 20][2]),
-                   getVertex(quadfaces_pyramid13[num - 20][3]));
+    return MFace(getVertex(trifaces_pyramid13[num][0]),
+		 getVertex(trifaces_pyramid13[num][1]),
+		 getVertex(trifaces_pyramid13[num][2]));
   }
   virtual int getTypeForMSH(){ return MSH_PYR_13; }
   virtual int getTypeForUNV(){ return 0; } // not available
@@ -1466,27 +1423,20 @@ class MPyramid14 : public MPyramid {
     };
     return MEdge(getVertex(edges_pyramid14[num][0]), getVertex(edges_pyramid14[num][1]));
   }
-  virtual int getNumFacesRep(){ return 20; }
+  virtual int getNumFacesRep(){ return 24; }
   virtual MFace getFaceRep(int num)
   { 
-    static const int trifaces_pyramid14[16][3] = {
+    static const int trifaces_pyramid14[24][3] = {
       {0, 5, 7}, {1, 9, 5}, {4, 7, 9}, {5, 9, 7},
       {3, 6, 12}, {0, 7, 6}, {4, 12, 7}, {6, 7, 12},
       {1, 8, 9}, {2, 11, 8}, {4, 9, 11}, {8, 11, 9},
-      {2, 10, 11}, {3, 12, 10}, {4, 11, 12}, {10, 12, 11}
+      {2, 10, 11}, {3, 12, 10}, {4, 11, 12}, {10, 12, 11},
+      {0, 6, 13}, {0, 13, 5}, {3, 10, 13}, {3, 13, 6}, 
+      {2, 8, 13}, {2, 13, 10}, {1, 5, 13}, {1, 13, 8}
     };
-    static const int quadfaces_pyramid14[4][4] = {
-      {0, 6, 13, 5}, {3, 10, 13, 6}, {2, 8, 13, 10}, {1, 5, 13, 8}
-    };
-    if(num < 16)
-      return MFace(getVertex(trifaces_pyramid14[num][0]),
-	  	   getVertex(trifaces_pyramid14[num][1]),
-		   getVertex(trifaces_pyramid14[num][2]));
-    else
-      return MFace(getVertex(quadfaces_pyramid14[num - 16][0]),
-	  	   getVertex(quadfaces_pyramid14[num - 16][1]),
-		   getVertex(quadfaces_pyramid14[num - 16][2]),
-                   getVertex(quadfaces_pyramid14[num - 16][3]));
+    return MFace(getVertex(trifaces_pyramid14[num][0]),
+		 getVertex(trifaces_pyramid14[num][1]),
+		 getVertex(trifaces_pyramid14[num][2]));
   }
   virtual int getTypeForMSH(){ return MSH_PYR_14; }
   virtual int getTypeForUNV(){ return 0; } // not available
