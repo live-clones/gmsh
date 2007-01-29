@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.125 2007-01-28 13:56:19 geuzaine Exp $
+# $Id: Makefile,v 1.126 2007-01-29 14:52:57 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -37,6 +37,7 @@ SRC = GEntity.cpp\
         GModelIO_Fourier.cpp\
         GModelIO_OCC.cpp\
         GModelIO_CGNS.cpp\
+        GModelIO_MED.cpp\
       ExtrudeParams.cpp \
       Geo.cpp \
 	GeoStringInterface.cpp GeoInterpolation.cpp\

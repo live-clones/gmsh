@@ -209,6 +209,9 @@ class GModel
   // CFD General Notation System files
   int readCGNS(const std::string &name);
   int writeCGNS(const std::string &name, double scalingFactor=1.0);
+
+  // Med interface ("Modele d'Echange de Donnees")
+  int writeMED(const std::string &name);
 };
 
 #endif

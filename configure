@@ -865,6 +865,7 @@ Optional Features:
   --enable-osmesa         use OSMesa for offscreen rendering (default=no)
   --enable-cgns           enable CGNS output (default=no)
   --enable-occ            enable OpenCascade support (default=no)
+  --enable-med            enable MED support (default=yes)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -881,6 +882,8 @@ Optional Packages:
                           prefix where OSMesa is installed
   --with-cgns-prefix=PFX  prefix where CGNS is installed
   --with-occ-prefix=PFX   prefix where OpenCascade is installed
+  --with-hdf5-prefix=PFX  prefix where OpenCascade is installed
+  --with-med-prefix=PFX   prefix where OpenCascade is installed
 
 Some influential environment variables:
   CC          C compiler command
@@ -1381,6 +1384,18 @@ if test "${with_occ_prefix+set}" = set; then
   OCC_PREFIX=$withval
 fi;
 
+# Check whether --with-hdf5-prefix or --without-hdf5-prefix was given.
+if test "${with_hdf5_prefix+set}" = set; then
+  withval="$with_hdf5_prefix"
+  HDF5_PREFIX=$withval
+fi;
+
+# Check whether --with-med-prefix or --without-med-prefix was given.
+if test "${with_med_prefix+set}" = set; then
+  withval="$with_med_prefix"
+  MED_PREFIX=$withval
+fi;
+
 # Check whether --enable-gsl or --disable-gsl was given.
 if test "${enable_gsl+set}" = set; then
   enableval="$enable_gsl"
@@ -1464,6 +1479,11 @@ fi;
 # Check whether --enable-occ or --disable-occ was given.
 if test "${enable_occ+set}" = set; then
   enableval="$enable_occ"
+
+fi;
+# Check whether --enable-med or --disable-med was given.
+if test "${enable_med+set}" = set; then
+  enableval="$enable_med"
 
 fi;
 
@@ -4595,6 +4615,165 @@ fi
       GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib -I${OCC_PREFIX}/${UNAME}/lib ${OCC_LIBS}"
       FLAGS="${FLAGS} -DHAVE_OCC -I${OCC_PREFIX}/include -I${OCC_PREFIX}/inc"
       FLAGS="${FLAGS} -I${OCC_PREFIX}/${UNAME}/include -I${OCC_PREFIX}/${UNAME}/inc"
+    fi
+  fi
+fi
+
+if test "x$enable_med" != "xno"; then
+  if test "x${HDF5_PREFIX}" != "x"; then
+    LDFLAGS="-L${HDF5_PREFIX}/lib ${LDFLAGS}"
+  fi
+  echo "$as_me:$LINENO: checking for main in -lhdf5" >&5
+echo $ECHO_N "checking for main in -lhdf5... $ECHO_C" >&6
+if test "${ac_cv_lib_hdf5_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lhdf5  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_hdf5_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_hdf5_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_hdf5_main" >&5
+echo "${ECHO_T}$ac_cv_lib_hdf5_main" >&6
+if test $ac_cv_lib_hdf5_main = yes; then
+  HDF5="yes"
+else
+  HDF5="no"
+fi
+
+  if test "x${HDF5}" = "xyes"; then
+    if test "x${HDF5_PREFIX}" = "x"; then
+      GMSH_LIBS="${GMSH_LIBS} -lhdf5"
+    else
+      GMSH_LIBS="${GMSH_LIBS} -L${HDF5_PREFIX}/lib -lhdf5"
+      FLAGS="${FLAGS} -I${HDF5_PREFIX}/include"
+    fi
+  fi
+fi
+
+if test "x${HDF5}" = "xyes"; then
+  if test "x$enable_med" != "xno"; then
+    if test "x${MED_PREFIX}" != "x"; then
+      LDFLAGS="-L${MED_PREFIX}/lib ${LDFLAGS}"
+    fi
+    echo "$as_me:$LINENO: checking for main in -lmed" >&5
+echo $ECHO_N "checking for main in -lmed... $ECHO_C" >&6
+if test "${ac_cv_lib_med_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmed  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_med_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_med_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_med_main" >&5
+echo "${ECHO_T}$ac_cv_lib_med_main" >&6
+if test $ac_cv_lib_med_main = yes; then
+  MED="yes"
+else
+  MED="no"
+fi
+
+    if test "x${MED}" = "xyes"; then
+      if test "x${MED_PREFIX}" = "x"; then
+        GMSH_LIBS="${GMSH_LIBS} -lmed"
+        FLAGS="${FLAGS} -DHAVE_LIBMED"
+      else
+        GMSH_LIBS="${GMSH_LIBS} -L${MED_PREFIX}/lib -lmed"
+        FLAGS="${FLAGS} -DHAVE_LIBMED -I${MED_PREFIX}/include"
+      fi
     fi
   fi
 fi

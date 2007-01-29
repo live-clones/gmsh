@@ -30,6 +30,7 @@
 #define FORMAT_MESH          30
 #define FORMAT_BDF           31
 #define FORMAT_CGNS          32
+#define FORMAT_MED           33
 
 // Element types in .msh file format
 #define MSH_LIN_2  1

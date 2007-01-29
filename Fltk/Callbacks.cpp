@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.510 2007-01-28 12:55:00 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.511 2007-01-29 14:52:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -655,6 +655,7 @@ int _save_bdf(char *name){ return bdf_dialog(name); }
 int _save_stl(char *name){ return stl_dialog(name); }
 int _save_vrml(char *name){ return generic_mesh_dialog(name, "VRML Options", FORMAT_VRML); }
 int _save_cgns(char *name){ CreateOutputFile(name, FORMAT_CGNS); return 1; }
+int _save_med(char *name){ return generic_mesh_dialog(name, "MED Options", FORMAT_MED); }
 int _save_eps(char *name){ return gl2ps_dialog(name, "EPS Options", FORMAT_EPS); }
 int _save_gif(char *name){ return gif_dialog(name); }
 int _save_jpeg(char *name){ return jpeg_dialog(name); }
@@ -679,6 +680,7 @@ int _save_auto(char *name)
   case FORMAT_STL  : return _save_stl(name);
   case FORMAT_VRML : return _save_vrml(name);
   case FORMAT_CGNS : return _save_cgns(name);
+  case FORMAT_MED  : return _save_med(name);
   case FORMAT_EPS  : return _save_eps(name);
   case FORMAT_GIF  : return _save_gif(name);
   case FORMAT_JPEG : return _save_jpeg(name);
@@ -717,6 +719,9 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"VRML surface mesh (*.wrl)", _save_vrml},
 #if defined(HAVE_LIBCGNS)
     {"CGNS (*.cgns)", _save_cgns},
+#endif
+#if defined(HAVE_LIBMED)
+    {"MED (*.med)", _save_med},
 #endif
     {"Encapsulated PostScript (*.eps)", _save_eps},
     {"GIF (*.gif)", _save_gif},
