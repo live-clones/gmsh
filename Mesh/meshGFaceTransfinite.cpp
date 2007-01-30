@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.16 2007-01-07 10:52:46 geuzaine Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.17 2007-01-30 08:56:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -329,6 +329,15 @@ int MeshTransfiniteSurface(GFace *gf)
 			    2. * beta * (v33->z() - v13->z() -
 					 v31->z() + v11->z())) / (alpha + gamma);
 	}
+      }
+    }
+    // recompute corresponding u,v coordinates (necessary e.g. for 2nd order algo)
+    for(int i = 1; i < L; i++){
+      for(int j = 1; j < H; j++){
+	MVertex *v = tab[std::make_pair(i,j)];
+	SPoint2 param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+	v->setParameter(0, param[0]);
+	v->setParameter(1, param[1]);
       }
     }
   }

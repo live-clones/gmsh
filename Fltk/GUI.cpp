@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.596 2007-01-29 08:22:33 geuzaine Exp $
+// $Id: GUI.cpp,v 1.597 2007-01-30 08:56:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -18,52 +18,6 @@
 // USA.
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
-
-// Some GUI guidelines:
-//
-// 1) To make the interface as visually consistent as possible, please:
-// - use the IW, BB, BH, BW and WB values
-// - examine what's already done before adding something new...
-//
-// 2) Use the following rule for buttons on dialog windows:
-// - "OK" is to agree with what is in the dialog *AND* close the dialog
-// - "Apply" is to apply the current values selected in the dialog, but
-//   leave the dialog open
-// - "Cancel" is to close (hide) the dialog and *NOT* apply the
-//   changes that might have been made in the dialog
-// The "Cancel" button, if present, should always be the last (-> at
-// right)
-//
-// 3) Only 'title-capitalize' titles and menus (Rules: 1. Always
-// capitalize the first and the last word. 2. Capitalize all nouns,
-// pronouns, adjectives, verbs, adverbs, and subordinate
-// conjunctions. 3. Lowercase all articles, coordinate conjunctions,
-// and prepositions, when they are other than the first or last
-// word. 4. Lowercase the "to" in an infinitive.) Capitalize everything
-// else like normal english sentences
-//
-// 4) Use an ellipsis character in a menu item for
-// - an action that requires further user input to complete or
-//   presents an alert allowing the user to cancel the action
-//   Examples: Find, Go To, Open, Page Setup, and Print.
-// - an action that opens a settings window. Examples: Set Title,
-//   Preferences, and Options.
-// Don't use en allipsis for:
-// - an action that requires no further user input to complete and
-//   does not present an alert.
-// - an action that opens an informational, accessory, or tool window.
-//   These windows can be implemented as either utility windows (as 
-//   in the case of a color palette) or modeless windows. These windows
-//   provide tools that help create or manage the content in the main
-//   window and are frequently left open to assist in accomplishing the
-//   task of the main window. Examples: Info and Show Tools.
-//
-// 5) The title of a window opened from a meny should be exactly the
-// same as the label of the menu item (without the ellipsis character if
-// there is one)
-
-// Don't indent this file
-// *INDENT-OFF*
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -169,6 +123,7 @@ Fl_Menu_Item m_sys_menubar_table[] = {
     {0},
   {0}
 };
+
 #endif
 
 Fl_Menu_Item m_module_table[] = {
@@ -1071,7 +1026,7 @@ void GUI::create_menu_window()
   m_window->size(width, MH);
   m_window->position(CTX.position[0], CTX.position[1]);
   
-  // force always on on top
+  // force always on top
   //m_window->set_non_modal();
 
   m_window->end();

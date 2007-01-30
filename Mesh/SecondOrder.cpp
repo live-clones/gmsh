@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.51 2007-01-28 17:26:53 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.52 2007-01-30 08:56:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,38 @@
 #include "OS.h"
 
 extern GModel *GMODEL;
+
+bool reparamOnFace(MVertex *v, GFace *gf, SPoint2 &param)
+{
+  if(v->onWhat()->dim() == 0){
+    GVertex *gv = (GVertex*)v->onWhat();
+
+    // abort if we could be on a seam
+    std::list<GEdge*> ed = gv->edges();
+    for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++)
+      if((*it)->isSeam(gf)) return false;
+
+    param = gv->reparamOnFace(gf, 1);
+  }
+  else if(v->onWhat()->dim() == 1){
+    GEdge *ge = (GEdge*)v->onWhat();
+
+    // abort if we are on a seam (todo: try dir=-1 and compare)
+    if(ge->isSeam(gf)) return false;
+
+    double UU;
+    v->getParameter(0, UU);
+    param = ge->reparamOnFace(gf, UU, 1);
+  }
+  else{
+    double UU, VV;
+    if(v->onWhat() == gf && v->getParameter(0, UU) && v->getParameter(1, VV))
+      param = SPoint2(UU, VV);
+    else
+      param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+  }
+  return true;
+}
 
 void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
 		     std::map<std::pair<MVertex*,MVertex*>, MVertex* > &edgeVertices,
@@ -60,13 +92,14 @@ void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
 	  u1 = bounds.high();
 	else 
 	  v1->getParameter(0, u1);
-	if(u0 < 1e6 && u1 < 1e6){
-	  double uc = 0.5 * (u0 + u1);
+	double uc = 0.5 * (u0 + u1);
+	if(u0 < 1e6 && u1 < 1e6 && uc > u0 && uc < u1){
 	  GPoint pc = ge->point(uc);
 	  v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, uc);
 	}
 	else{
-	  // we should normally never end up here
+	  // normally never here, but we don't treat periodic curves
+	  // properly, so we can get uc < u0 or uc > u1...
 	  SPoint3 pc = edge.barycenter();
 	  v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
 	}
@@ -95,12 +128,18 @@ void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
 	v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
       }
       else{
-	SPoint2 p0 = gf->parFromPoint(SPoint3(v0->x(), v0->y(), v0->z()));
-	SPoint2 p1 = gf->parFromPoint(SPoint3(v1->x(), v1->y(), v1->z()));
-	double uc = 0.5 * (p0[0] + p1[0]);
-	double vc = 0.5 * (p0[1] + p1[1]);
-	GPoint pc = gf->point(uc, vc);
-	v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
+	SPoint2 p0, p1;
+	if(reparamOnFace(v0, gf, p0) && reparamOnFace(v1, gf, p1)){
+	  double uc = 0.5 * (p0[0] + p1[0]);
+	  double vc = 0.5 * (p0[1] + p1[1]);
+	  GPoint pc = gf->point(uc, vc);
+	  v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
+	}
+	else{
+	  // need to treat seams correctly!
+	  SPoint3 pc = edge.barycenter();
+	  v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
+	}
       }
       edgeVertices[p] = v;
       gf->mesh_vertices.push_back(v);
@@ -148,14 +187,19 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
 	v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
       }
       else{
-	SPoint2 p0 = gf->parFromPoint(SPoint3(p[0]->x(), p[0]->y(), p[0]->z()));
-	SPoint2 p1 = gf->parFromPoint(SPoint3(p[1]->x(), p[1]->y(), p[1]->z()));
-	SPoint2 p2 = gf->parFromPoint(SPoint3(p[2]->x(), p[2]->y(), p[2]->z()));
-	SPoint2 p3 = gf->parFromPoint(SPoint3(p[3]->x(), p[3]->y(), p[3]->z()));
-	double uc = 0.25 * (p0[0] + p1[0] + p2[0] + p3[0]);
-	double vc = 0.25 * (p0[1] + p1[1] + p2[1] + p3[1]);
-	GPoint pc = gf->point(uc, vc);
-	v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
+	SPoint2 p0, p1, p2, p3;
+	if(reparamOnFace(p[0], gf, p0) && reparamOnFace(p[1], gf, p1) &&
+	   reparamOnFace(p[2], gf, p2) && reparamOnFace(p[3], gf, p3)){
+	  double uc = 0.25 * (p0[0] + p1[0] + p2[0] + p3[0]);
+	  double vc = 0.25 * (p0[1] + p1[1] + p2[1] + p3[1]);
+	  GPoint pc = gf->point(uc, vc);
+	  v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
+	}
+	else{
+	  // need to treat seams correctly!
+	  SPoint3 pc = face.barycenter();
+	  v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
+	}
       }
       faceVertices[p] = v;
       gf->mesh_vertices.push_back(v);

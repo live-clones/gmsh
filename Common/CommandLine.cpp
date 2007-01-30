@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.93 2007-01-29 17:16:02 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.94 2007-01-30 08:56:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -81,7 +81,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -1, -2, -3            Perform 1D, 2D or 3D mesh generation, then exit");
   Msg(DIRECT, "  -saveall              Save all elements (discard physical group definitions)");
   Msg(DIRECT, "  -o file               Specify mesh output file name");
-  Msg(DIRECT, "  -format string        Set output mesh format (msh, unv, bdf, mesh, stl, vrml)");
+  Msg(DIRECT, "  -format string        Set output mesh format (msh, unv, vrml, stl, mesh, bdf, cgns, med)");
   Msg(DIRECT, "  -algo string          Select mesh algorithm (iso, netgen, tetgen)");
   Msg(DIRECT, "  -smooth int           Set number of mesh smoothing steps");
   Msg(DIRECT, "  -optimize             Optimize quality of tetrahedral elements");
@@ -375,18 +375,30 @@ void Get_Options(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "format") || !strcmp(argv[i] + 1, "f")) {
         i++;
         if(argv[i] != NULL) {
-          if(!strcmp(argv[i], "msh"))
+          if(!strcmp(argv[i], "msh1")){
+            CTX.mesh.format = FORMAT_MSH;
+	    CTX.mesh.msh_file_version = 1.0;
+	  }
+          else if(!strcmp(argv[i], "msh2")){
+            CTX.mesh.format = FORMAT_MSH;
+	    CTX.mesh.msh_file_version = 2.0;
+	  }
+          else if(!strcmp(argv[i], "msh"))
             CTX.mesh.format = FORMAT_MSH;
           else if(!strcmp(argv[i], "unv"))
             CTX.mesh.format = FORMAT_UNV;
-          else if(!strcmp(argv[i], "bdf"))
-            CTX.mesh.format = FORMAT_BDF;
-          else if(!strcmp(argv[i], "mesh"))
-            CTX.mesh.format = FORMAT_MESH;
-	  else if(!strcmp(argv[i], "stl"))
-            CTX.mesh.format = FORMAT_STL;
           else if(!strcmp(argv[i], "vrml"))
             CTX.mesh.format = FORMAT_VRML;
+	  else if(!strcmp(argv[i], "stl"))
+            CTX.mesh.format = FORMAT_STL;
+          else if(!strcmp(argv[i], "mesh"))
+            CTX.mesh.format = FORMAT_MESH;
+          else if(!strcmp(argv[i], "bdf"))
+            CTX.mesh.format = FORMAT_BDF;
+          else if(!strcmp(argv[i], "cgns"))
+            CTX.mesh.format = FORMAT_CGNS;
+          else if(!strcmp(argv[i], "med"))
+            CTX.mesh.format = FORMAT_MED;
           else {
             fprintf(stderr, ERROR_STR "Unknown mesh format\n");
             exit(1);

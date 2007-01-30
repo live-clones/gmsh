@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.26 2007-01-25 20:41:40 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.27 2007-01-30 08:56:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -161,8 +161,7 @@ void TransferTetgenMesh(GRegion *gr,
 	  (std::find(v[j]->onWhat()->mesh_vertices.begin(),
 		     v[j]->onWhat()->mesh_vertices.end(),
 		     v[j]));
-	MFaceVertex *v1b = new MFaceVertex(v[j]->x(), v[j]->y(), v[j]->z(), 
-					   gf, 0., 0.);
+	MVertex *v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
 	gf->mesh_vertices.push_back(v1b);
 	numberedV[out.trifacelist[i * 3 + j] - 1] = v1b;
 	delete v[j];
