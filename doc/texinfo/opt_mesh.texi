@@ -105,7 +105,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Format
-Mesh output format (1=msh, 2=unv, 19=vrml, 27=stl, 30=mesh, 31=bdf)@*
+Mesh output format (1=msh, 2=unv, 19=vrml, 27=stl, 30=mesh, 31=bdf, 32=cgns, 33=med)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
