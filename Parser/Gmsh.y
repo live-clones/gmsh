@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.255 2007-01-25 15:51:03 geuzaine Exp $
+// $Id: Gmsh.y,v 1.256 2007-01-31 12:27:20 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -43,6 +43,7 @@
 #include "ColorTable.h"
 #include "OS.h"
 #include "CreateFile.h"
+#include "gmshSurface.h"
 
 Tree_T *Symbol_T = NULL;
 
@@ -92,7 +93,7 @@ int CheckViewErrorFlags(Post_View *v);
 %token tFmod tModulo tHypot 
 %token tPrintf tSprintf tStrCat tStrPrefix tStrRelative
 %token tBoundingBox tDraw tToday
-%token tPoint tCircle tEllipse tLine tSurface tSpline tVolume
+%token tPoint tCircle tEllipse tLine tSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical
 %token tUsing tBump tProgression tPlugin 
@@ -1018,6 +1019,9 @@ PhysicalId :
     }
 ;
 
+
+Surface :
+
 Shape :
 
   // Points
@@ -1036,6 +1040,29 @@ Shape :
 	Vertex *v = Create_Vertex(num, x, y, z, lc, 1.0);
 	Tree_Add(THEM->Points, &v);
 	AddToTemporaryBoundingBox(x, y, z);
+      }
+      $$.Type = MSH_POINT;
+      $$.Num = num;
+    }
+    | tPoint '(' FExpr ')' tIn tSurface '(' FExpr ')' tAFFECT VExpr tEND
+    {
+      int num = (int)$3;
+      if(FindPoint(num)){
+	yymsg(GERROR, "Point %d already exists", num);
+      }
+      else{
+	double u = CTX.geom.scaling_factor * $11[0];
+	double v = CTX.geom.scaling_factor * $11[1];
+	double lc = CTX.geom.scaling_factor * $11[2];
+
+	gmshSurface *surf = gmshSurface::surfaceByTag ( (int) $8 );
+
+	if (!surf)
+	  yymsg(GERROR, "gmshSurface %d does not exist", (int) $8);
+
+	Vertex *vt = Create_Vertex(num, u, v, surf, lc);
+	Tree_Add(THEM->Points, &vt);
+	AddToTemporaryBoundingBox(vt->Pos.X,vt->Pos.Y,vt->Pos.Z);
       }
       $$.Type = MSH_POINT;
       $$.Num = num;
@@ -1402,6 +1429,32 @@ Shape :
       $$.Type = type;
       $$.Num = num;
     }
+// This is the definition of a sphere
+// it requires 2 point numbers (Center + a point of the sphere)
+  
+  | tSphere '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$3, type = 0;
+
+      if (List_Nbr($6) != 2){
+	yymsg(GERROR, "Sphere %d has to be defined using 2 points (center + any point) and not %d", num,List_Nbr($6));
+      }
+      else
+      {
+	double p1,p2;
+	List_Read($6, 0, &p1);
+	List_Read($6, 1, &p2);
+	Vertex *v1 = FindPoint((int)p1);
+	Vertex *v2 = FindPoint((int)p2);
+	if (!v1)yymsg(GERROR, "Sphere %d : unknown point %d", num,(int)p1);
+	if (!v2)yymsg(GERROR, "Sphere %d : unknown point %d", num,(int)p2);
+	gmshSurface *myGmshSurface = gmshSphere::NewSphere ( num , v1->Pos.X , v1->Pos.Y , v1->Pos.Z ,
+							     sqrt ( ( v2->Pos.X - v1->Pos.X) *( v2->Pos.X - v1->Pos.X) +
+								    ( v2->Pos.Y - v1->Pos.Y) *( v2->Pos.Y - v1->Pos.Y) +
+								    ( v2->Pos.Z - v1->Pos.Z) *( v2->Pos.Z - v1->Pos.Z) ) );								    
+      }      
+    } 
+
   | tSurface tLoop '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;

@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.54 2007-01-22 16:31:43 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.55 2007-01-31 12:27:18 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -109,6 +109,35 @@ inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2)
   return l;
 }
 
+inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2, GFace *f)
+{
+
+  GPoint GP = f->point (SPoint2(0.5*(p1->u+p2->u),0.5*(p1->v+p2->v)));
+
+  const double dx1 = p1->X-GP.x();
+  const double dy1 = p1->Y-GP.y();
+  const double dz1 = p1->Z-GP.z();
+  const double l1 = sqrt(dx1*dx1+dy1*dy1+dz1*dz1);
+  const double dx2 = p2->X-GP.x();
+  const double dy2 = p2->Y-GP.y();
+  const double dz2 = p2->Z-GP.z();
+  const double l2 = sqrt(dx2*dx2+dy2*dy2+dz2*dz2);
+  //  printf("%g %g\n",l1,l2);
+  return l1+l2;
+}
+
+inline double computeEdgeLinearLength(BDS_Edge *e, GFace *f)
+{
+  if (f->geomType() == GEntity::Plane)
+    return e->length();
+  else
+    {
+      double l = computeEdgeLinearLength(e->p1, e->p2,f); 
+      //      printf ("%g %g \n",e->length(),l);
+      return l;
+    } 
+}
+
 inline double computeParametricEdgeLength(BDS_Point *p1, BDS_Point *p2)
 {
   const double dx = p1->u-p2->u;
@@ -117,15 +146,15 @@ inline double computeParametricEdgeLength(BDS_Point *p1, BDS_Point *p2)
   return l;
 }
 
-double NewGetLc(BDS_Edge *e)
+double NewGetLc(BDS_Edge *e, GFace *f)
 {
-  double linearLength = e->length();
+  double linearLength = computeEdgeLinearLength(e,f);
   double l1 = NewGetLc(e->p1);
   double l2 = NewGetLc(e->p2);
   return 2*linearLength / (l1 + l2);
 }
 
-bool edgeSwapTest(BDS_Edge *e)
+bool edgeSwapTest(BDS_Edge *e,GFace *gf)
 {
   BDS_Point *op[2];
   
@@ -137,8 +166,8 @@ bool edgeSwapTest(BDS_Edge *e)
   
   double edgeLength1, edgeLength2;
 
-  edgeLength1 = e->length();
-  edgeLength2 = computeEdgeLinearLength(op[0], op[1]);
+  edgeLength1 = computeEdgeLinearLength(e,gf);
+  edgeLength2 = computeEdgeLinearLength(op[0], op[1],gf);
   double lp1 = NewGetLc(e->p1);
   double lp2 = NewGetLc(e->p1);
   double lo1 = NewGetLc(op[0]);
@@ -274,7 +303,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	    {
 	      (*it)->p1->config_modified = false;
 	      (*it)->p2->config_modified = false;
-	      double lone = NewGetLc ( *it);	      
+	      double lone = NewGetLc ( *it,gf);	      
 	      maxL = std::max(maxL,lone);
 	      minL = std::min(minL,lone);
 	    }
@@ -295,11 +324,11 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	  if (NN2++ >= NN1)break;
 	  if (!(*it)->deleted)
 	    {
-	      double lone = NewGetLc ( *it);
+	      double lone = NewGetLc ( *it,gf);
 
 	      const double coord = 0.5;
 	      // take care with seams :
-	      if (lone < 1.e-10 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
+	      //	      if (lone < 1.e-10 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
 	      if ((*it)->numfaces() == 2 && (lone >  1.3))
 		{
 		  BDS_Point *mid ;
@@ -334,7 +363,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	    {
 	      int result = edgeSwapTestQuality(*it,3);
 	      if (result >= 0)
-		if(edgeSwapTest(*it) || result > 0)
+		if(edgeSwapTest(*it,gf) || result > 0)
 		  if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))
 		    nb_swap++;
 	      ++it;
@@ -348,8 +377,8 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
       while (1)
 	{
 	  if (NN2++ >= NN1)break;
-	  double lone = NewGetLc ( *it);
-	  if (lone < 1.e-10 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
+	  double lone = NewGetLc ( *it,gf);
+	  //	  if (lone < 1.e-10 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
 
 	  if (!(*it)->deleted && (*it)->numfaces() == 2 && lone < 0.6 )
 	    {
@@ -375,7 +404,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	    {
 	      int result = edgeSwapTestQuality(*it,3);
 	      if (result >= 0)
-		if(edgeSwapTest(*it) || result > 0)
+		if(edgeSwapTest(*it,gf) || result > 0)
 		  if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))
 		    nb_swap++;
 	      ++it;
@@ -696,6 +725,13 @@ bool gmsh2DMeshGenerator ( GFace *gf )
   free (doc.delaunay);
   for ( int ip = 0 ; ip<4 ; ip++ ) delete bb[ip];
 
+
+//   char name[245];
+//   sprintf(name,"param%d.pos",gf->tag());
+//   outputScalarField(m->triangles, name,1);
+//   sprintf(name,"real%d.pos",gf->tag());
+//   outputScalarField(m->triangles, name,0);
+
   // Recover the boundary edges
   // and compute characteristic lenghts using mesh edge spacing
 
@@ -780,11 +816,6 @@ bool gmsh2DMeshGenerator ( GFace *gf )
       }
   }
 
-  //char name[245];
-   //sprintf(name,"param%d.pos",gf->tag());
-   //outputScalarField(m->triangles, name,1);
-   //   sprintf(name,"real%d.pos",gf->tag());
-   //   outputScalarField(m->triangles, name,0);
 
 
   m->cleanup();
@@ -906,7 +937,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 
      bool seam = ges.ge->isSeam(gf);
      
-     //printf("face %d edge %d seam %d (%d %d)\n",gf->tag(),ges.ge->tag(),seam,ges.ge->getBeginVertex()->tag(),ges.ge->getEndVertex()->tag());
+     //     printf("face %d edge %d seam %d (%d %d)\n",gf->tag(),ges.ge->tag(),seam,ges.ge->getBeginVertex()->tag(),ges.ge->getEndVertex()->tag());
      
      Range<double> range = ges.ge->parBounds(0);
 
@@ -924,11 +955,8 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
      here = ges.ge->getEndVertex()->mesh_vertices[0];
      mesh1d.push_back(ges.ge->reparamOnFace(gf,range.high(),1));
      if ( seam ) mesh1d_seam.push_back(ges.ge->reparamOnFace(gf,range.high(),-1));
-
      meshes.insert(std::pair<GEntity*,std::vector<SPoint2> > (ges.ge,mesh1d) );
-     if(seam)meshes_seam.insert(std::pair<GEntity*,std::vector<SPoint2> > (ges.ge,mesh1d_seam) );
-
-     
+     if(seam)meshes_seam.insert(std::pair<GEntity*,std::vector<SPoint2> > (ges.ge,mesh1d_seam) );     
      it++;
    }
 
@@ -940,6 +968,8 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 
   SPoint2 last_coord(0,0);  
   int counter = 0;
+
+  double tol = 1.e-7;
 
   while (unordered.size())
    {
@@ -971,7 +1001,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	     SPoint2 first_coord         = mesh1d[0];
 	     double d = dist2(last_coord,first_coord);
 	     //	     printf("d = %12.5E %d\n",d, coords.size());
-	     if (d < 1.e-6) 
+	     if (d < tol) 
 	       {
 		 coords.clear();
 		 coords = mesh1d;
@@ -982,7 +1012,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	     SPoint2 first_coord_reversed = mesh1d_reversed[0];
 	     double d_reversed = dist2(last_coord,first_coord_reversed);
 	     //	     printf("d_r = %12.5E\n",d_reversed);
-	     if (d_reversed < 1.e-6) 
+	     if (d_reversed < tol) 
 	       {
 		 //		 printf("d_r = %12.5E\n",d_reversed);
 		 coords.clear();
@@ -997,7 +1027,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 		 SPoint2 first_coord_seam_reversed = mesh1d_seam_reversed[0];
 		 double d_seam = dist2(last_coord,first_coord_seam);
 		 //		 printf("d_seam = %12.5E\n",d_seam);
-		 if (d_seam < 1.e-6)
+		 if (d_seam < tol)
 		   {
 		     coords.clear();
 		     coords = mesh1d_seam;
@@ -1007,7 +1037,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 		   }
 		 double d_seam_reversed = dist2(last_coord,first_coord_seam_reversed);
 		 //		 printf("d_seam_reversed = %12.5E\n",d_seam_reversed);
-		 if (d_seam_reversed < 1.e-6)
+		 if (d_seam_reversed < tol)
 		   {
 		     coords.clear();
 		     coords = mesh1d_seam_reversed;
@@ -1021,6 +1051,8 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	 ++it;
        }
    Finalize:
+
+
 
      if (coords.size() == 0)return false;
      
@@ -1074,6 +1106,11 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
      last_coord = coords[coords.size()-1];
      //     printf("last coord %g %g\n",last_coord.x(),last_coord.y());
      result.insert(result.end(),edgeLoop_BDS.begin(),edgeLoop_BDS.end());	         
+//    for (unsigned int i=0;i<result.size();i++)
+//      {
+//        printf("point %3d (%8.5f %8.5f) (%2d,%2d)\n",i,result[i]->u,result[i]->v,result[i]->g->classif_tag,result[i]->g->classif_degree);
+//      }
+
    }
 
 //   if (gf->tag() == 280)
@@ -1184,9 +1221,6 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   free (doc.points);
   free (doc.delaunay);
 
-  //char name[245];
-  //sprintf(name,"param%d.pos",gf->tag());
-  //outputScalarField(m->triangles, name,1);
 
  
   // Recover the boundary edges
@@ -1343,6 +1377,9 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   // delete the mesh
    //    sprintf(name,"real%d.pos",gf->tag());
     //outputScalarField(m->triangles, name,0);
+//    char name[245];
+//    sprintf(name,"param%d.pos",gf->tag());
+//    outputScalarField(m->triangles, name,1);
 
 //   if (CTX.mesh.algo2d == ALGO_2D_DELAUNAY)
 //     {

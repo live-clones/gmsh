@@ -32,6 +32,7 @@ class OCCFace;
 class OCCEdge : public GEdge {
  protected:
   TopoDS_Edge c;
+  TopoDS_Edge c_rev;
   double s0,s1;
   Handle(Geom_Curve) curve;
   mutable Handle(Geom2d_Curve) curve2d;

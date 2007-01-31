@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.13 2007-01-18 09:12:45 geuzaine Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.14 2007-01-31 12:27:18 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -298,13 +298,50 @@ static void setLcs ( MTetrahedron *t, std::map<MVertex*,double> &vSizes)
 //     }
 // }
 
+// 4th argument will disappear when the reclassification of vertices will be done
+bool find_triangle_in_model ( GModel *model , MTriangle *tri, GFace **gfound, bool force)
+{  
 
-bool find_triangle_in_model ( GModel *model , MTriangle *tri, GFace **gfound)
-{ 
-  GModel::fiter fit = model->firstFace() ;
   static compareMTriangleLexicographic cmp;
-  while (fit != model->lastFace()){
 
+  GEntity *g1 = tri->getVertex(0)->onWhat();
+  GEntity *g2 = tri->getVertex(1)->onWhat();
+  GEntity *g3 = tri->getVertex(2)->onWhat();
+
+//   if (g1 && g2 && g3 && !force)
+//     {
+//       // 3 vertices classified on different model faces => not a triangle on a model face 
+//       if (g1->dim()  == 2 && g2->dim()  == 2 && g3->dim()  == 2)
+// 	{
+// 	  if (g1 != g2 || g1 != g3) return false;
+// 	}
+//       else if ( g1->dim() == 2)
+// 	{
+// 	  *gfound = (GFace*)g1;
+// 	  return std::binary_search((*gfound)->triangles.begin(), 
+// 				    (*gfound)->triangles.end(), 
+// 				    tri,cmp);
+// 	}
+//       else if ( g2->dim() == 2)
+// 	{
+// 	  *gfound = (GFace*)g2;
+// 	  return std::binary_search((*gfound)->triangles.begin(), 
+// 				    (*gfound)->triangles.end(), 
+// 				    tri,cmp);
+// 	}
+//       else if ( g3->dim() == 2)
+// 	{
+// 	  *gfound = (GFace*)g3;
+// 	  return std::binary_search((*gfound)->triangles.begin(), 
+// 				    (*gfound)->triangles.end(), 
+// 				    tri,cmp);
+// 	}
+//    }
+
+
+  GModel::fiter fit = model->firstFace() ;
+  while (fit != model->lastFace()){
+    
     bool found = std::binary_search((*fit)->triangles.begin(), 
 				    (*fit)->triangles.end(), 
 				    tri,cmp);
@@ -358,7 +395,11 @@ void recur_classify ( MTet4 *t ,
 		      t->tet()->getVertex ( faces[i][1] ),
 		      t->tet()->getVertex ( faces[i][2] ) );
       GFace     *gfound;
-      bool found = find_triangle_in_model ( model , &tri, &gfound);
+      
+       bool found = find_triangle_in_model ( model , &tri, &gfound, false);
+//       if (!t->getNeigh(i) && !found) 
+//	bool found = find_triangle_in_model ( model , &tri, &gfound, true);
+      
       if (found)
 	{
 	  if (faces_bound.find(gfound) == faces_bound.end())
@@ -407,9 +448,9 @@ void insertVerticesInRegion (GRegion *gr)
 	  std::list<MTet4*> theRegion;
 	  std::set<GFace *> faces_bound;
 	  GRegion *bidon = (GRegion*)123;
-	  //	  Msg (INFO,"start with a non classified tet");
+	  Msg (DEBUG2,"start with a non classified tet");
 	  recur_classify ( *it , theRegion, faces_bound, bidon , gr->model());
-	  //	  Msg (INFO,"found %d tets with %d faces",theRegion.size(),faces_bound.size());
+	  Msg (DEBUG2,"found %d tets with %d faces",theRegion.size(),faces_bound.size());
 	  GRegion *myGRegion = getRegionFromBoundingFaces (gr->model() , faces_bound ); 
 	  //	  Msg (INFO,"a region is found %p",myGRegion);
 	  if (myGRegion) // a geometrical region associated to the list of faces has been found	    

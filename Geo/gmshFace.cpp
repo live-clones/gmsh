@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.34 2007-01-28 12:55:00 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.35 2007-01-31 12:27:18 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -173,13 +173,14 @@ GPoint gmshFace::point(double par1, double par2) const
 GPoint gmshFace::closestPoint(const SPoint3 & qp) const
 {
   Vertex v;
+  double u[2];
   v.Pos.X = qp.x();
   v.Pos.Y = qp.y();
   v.Pos.Z = qp.z();
 
   if(s->Typ != MSH_SURF_PLAN)
-    ProjectPointOnSurface(s, v);
-  return GPoint(v.Pos.X, v.Pos.Y, v.Pos.Z, this, v.us);
+    ProjectPointOnSurface(s, v, u);
+  return GPoint(v.Pos.X, v.Pos.Y, v.Pos.Z, this, u);
 }
 
 int gmshFace::containsParam(const SPoint2 &pt) const

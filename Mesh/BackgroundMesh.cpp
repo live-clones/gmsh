@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.14 2007-01-28 13:56:19 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.15 2007-01-31 12:27:18 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -186,6 +186,7 @@ double LC_MVertex_PNTS(GEntity *ge, double U, double V)
   }
 }
 
+// This is the only function that is used by the meshers
 double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double Z)
 {
   double l2 = MAX_LC;

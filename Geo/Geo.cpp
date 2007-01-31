@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.71 2007-01-20 14:06:36 geuzaine Exp $
+// $Id: Geo.cpp,v 1.72 2007-01-31 12:27:18 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -148,6 +148,20 @@ Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc,
   pV->Num = Num;
   THEM->MaxPointNum = IMAX(THEM->MaxPointNum, Num);
   pV->u = u;
+  pV->geometry = 0;
+  return pV;
+}
+
+Vertex *Create_Vertex(int Num, double u, double v, gmshSurface *surf, double lc)
+{
+  SPoint3 p = surf->point(u,v);
+  Vertex *pV = new Vertex(p.x(),p.y(),p.z(),lc);
+  pV->w = 1.0;
+  pV->Num = Num;
+  THEM->MaxPointNum = IMAX(THEM->MaxPointNum, Num);
+  pV->u = u;
+  pV->geometry = surf;
+  pV->pntOnGeometry = SPoint2(u,v);
   return pV;
 }
 
@@ -585,6 +599,7 @@ Surface *Create_Surface(int Num, int Typ)
   pS->EmbeddedPoints = NULL;
   pS->EmbeddedCurves = NULL;
   pS->Extrude = NULL;
+  pS->geometry = NULL;
   return (pS);
 }
 
@@ -2772,7 +2787,7 @@ bool ProjectPointOnCurve(Curve * c, Vertex * v, Vertex * RES, Vertex * DER)
   return true;
 }
 
-bool ProjectPointOnSurface(Surface * s, Vertex & p)
+bool ProjectPointOnSurface(Surface * s, Vertex & p, double u[2])
 {
   double x[3] = { 0.5, 0.5, 0.5 };
   Vertex vv;
@@ -2794,8 +2809,8 @@ bool ProjectPointOnSurface(Surface * s, Vertex & p)
   p.Pos.X = vv.Pos.X;
   p.Pos.Y = vv.Pos.Y;
   p.Pos.Z = vv.Pos.Z;
-  p.us[0] = x[1];
-  p.us[1] = x[2];
+  u[0] = x[1];
+  u[1] = x[2];
   if(!check) {
     return false;
   }

@@ -20,10 +20,13 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <map>
 #include <math.h>
 #include "GmshDefines.h"
+#include "gmshSurface.h"
 #include "List.h"
 #include "Tree.h"
+#include "SPoint2.h"
 #include "ExtrudeParams.h"
 
 #define MSH_POINT            1
@@ -62,9 +65,15 @@ struct Coord{
 
 class Vertex {
  public :
+  // a model vertex is usually defined in the euclidian coordinates. Yet,
+  // it can be defined in the parametric coordinates of a surface
+  // this data structure stores local coodinates of the vertex in 
+  // the gmshSurface it belongs to.
+  gmshSurface *geometry;
+  SPoint2  pntOnGeometry;
   int Num;
   char Visible;
-  double lc, u, us[3], w;
+  double lc, u, w;
   Coord Pos;
   Vertex(double X=0., double Y=0., double Z=0., double l=1., double W=1.)
   {
@@ -84,7 +93,7 @@ class Vertex {
     Pos.Z /= d;
   }
   Vertex operator % (Vertex & autre) // cross product
-  {       
+  {
     return Vertex(Pos.Y * autre.Pos.Z - Pos.Z * autre.Pos.Y,
 		  -(Pos.X * autre.Pos.Z - Pos.Z * autre.Pos.X),
 		  Pos.X * autre.Pos.Y - Pos.Y * autre.Pos.X, lc, w);
@@ -150,6 +159,13 @@ typedef struct{
   List_T *Contours;
   ExtrudeParams *Extrude;
   DrawingColor Color;
+  // A surface is defined topologically by its
+  // Generatrices i.e. curves that are the closure of it
+  // The geometry of the surface is defined hereafter.
+  // Note that this representation should be the only 
+  // one in gmsh, so parameter "Type" should disappear
+  // from the class Surface. 
+  gmshSurface *geometry;
 }Surface;
 
 typedef struct{
@@ -211,6 +227,7 @@ int compareVolume(const void *a, const void *b);
 int comparePhysicalGroup(const void *a, const void *b);
 
 Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc, double u);
+Vertex *Create_Vertex(int Num, double u, double v, gmshSurface *s, double lc);
 Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
 		    List_T * Knots, int p1, int p2, double u1, double u2);
 Curve *CreateReversedCurve(Curve *c);
@@ -280,7 +297,7 @@ void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e);
 void ReplaceAllDuplicates();
 
 bool ProjectPointOnCurve(Curve *c, Vertex *v, Vertex *RES, Vertex *DER);
-bool ProjectPointOnSurface(Surface *s, Vertex &p);
+bool ProjectPointOnSurface(Surface *s, Vertex &p, double u[2]);
 
 int recognize_seg(int typ, List_T *liste, int *seg);
 int recognize_loop(List_T *liste, int *loop);

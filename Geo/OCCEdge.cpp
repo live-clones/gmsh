@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.18 2007-01-25 15:50:57 geuzaine Exp $
+// $Id: OCCEdge.cpp,v 1.19 2007-01-31 12:27:18 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -38,6 +38,9 @@ OCCEdge::OCCEdge(GModel *model, TopoDS_Edge edge, int num, GVertex *v1, GVertex 
   : GEdge(model, num, v1, v2), c(edge), trimmed(0)
 {
   curve = BRep_Tool::Curve(c, s0, s1);
+  // build the reverse curve
+  c_rev = c;
+  c_rev.Reverse();
 }
 
 Range<double> OCCEdge::parBounds(int i) const
@@ -59,15 +62,26 @@ SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar,int dir) const
 {
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
   double t0,t1;
-  Handle(Geom2d_Curve) c2d = BRep_Tool::CurveOnSurface(c, *s, t0, t1);
-  if(c2d.IsNull()){
-    Msg(GERROR,"Reparam on face failed : curve %d is not on surface %d\n",tag(),face->tag());
-    return GEdge::reparamOnFace(face, epar,dir);
-  }
-  double u,v;
-  c2d->Value(epar).Coord(u,v);
+  Handle(Geom2d_Curve) c2d;
 
-  if (!isSeam(face)){
+  if(dir == 1)
+    {
+      c2d = BRep_Tool::CurveOnSurface(c, *s, t0, t1);
+    }
+  else
+    {
+      c2d = BRep_Tool::CurveOnSurface(c_rev, *s, t0, t1);
+    }
+  
+  if(c2d.IsNull()){
+    Msg(FATAL,"Reparam on face failed : curve %d is not on surface %d",tag(),face->tag());
+  }
+
+  double u,v;
+  gp_Pnt2d pnt = c2d->Value(epar);
+  pnt.Coord(u,v);
+
+  {
     // sometimes OCC miserably fails ...
     GPoint p1 = point(epar);
     GPoint p2 = face->point(u,v);
@@ -75,26 +89,15 @@ SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar,int dir) const
     const double dy = p1.y()-p2.y();
     const double dz = p1.z()-p2.z();
     if(sqrt(dx*dx+dy*dy+dz*dz) > 1.e-7 * CTX.lc){
+      //      return reparamOnFace(face, epar,-1);      
+      Msg(WARNING,"Reparam on face partially failed for curve %d surface %d at point %g",tag(),face->tag(),epar);
+      Msg(WARNING,"On the face %d local (%g %g) global (%g %g %g)",face->tag(),u,v,p2.x(),p2.y(),p2.z());
+      Msg(WARNING,"On the edge %d local (%g) global (%g %g %g)",tag(),epar,p1.x(),p1.y(),p1.z());
       GPoint ppp = face->closestPoint(SPoint3(p1.x(),p1.y(),p1.z()));
       return SPoint2(ppp.u(),ppp.v());
     }
-    return SPoint2(u,v);
   }
-  else{
-    BRepAdaptor_Surface surface(*s);
-    if(surface.IsUPeriodic()){
-      if (dir == -1) 
-	return SPoint2(surface.FirstUParameter(), v);
-      else
-	return SPoint2(surface.LastUParameter(), v);
-    }
-    else{
-      if (dir == -1) 
-	return SPoint2(u , surface.FirstVParameter());
-      else
-	return SPoint2(u , surface.LastVParameter());
-    }
-  }
+  return SPoint2(u,v);
 }
 
 // True if the edge is a seam for the given face

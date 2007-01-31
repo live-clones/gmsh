@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.83 2007-01-25 15:50:58 geuzaine Exp $
+// $Id: Gmsh.l,v 1.84 2007-01-31 12:27:18 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -205,6 +205,7 @@ Return                  return tReturn;
 Sqrt                    return tSqrt;
 Sin                     return tSin;
 Sinh                    return tSinh;
+Sphere                  return tSphere;
 Spline                  return tSpline;
 Surface                 return tSurface;
 Symmetry                return tSymmetry;

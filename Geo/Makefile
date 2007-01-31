@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.127 2007-01-29 17:16:02 geuzaine Exp $
+# $Id: Makefile,v 1.128 2007-01-31 12:27:18 remacle Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -28,9 +28,9 @@ CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = GEntity.cpp\
       GVertex.cpp GEdge.cpp GEdgeLoop.cpp GFace.cpp GRegion.cpp\
-      gmshVertex.cpp gmshEdge.cpp gmshFace.cpp gmshRegion.cpp\
+      gmshVertex.cpp gmshEdge.cpp gmshFace.cpp gmshRegion.cpp gmshSurface.cpp\
       OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp\
-        projectionFace.cpp\
+      projectionFace.cpp\
       GModel.cpp\
         GModelIO_Geo.cpp\
         GModelIO_Mesh.cpp\
