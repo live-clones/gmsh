@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.25 2007-01-06 22:44:19 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.26 2007-01-31 14:33:05 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -131,7 +131,7 @@ int gmshEdge::minimumDrawSegments () const
   int n = List_Nbr(c->Control_Points) - 1;
   if(!n) n = GEdge::minimumDrawSegments();
 
-  if(geomType() == Line)
+  if(geomType() == Line  && ! c->geometry)
     return n;
   else if(geomType() == Circle || geomType() == Ellipse)
     return CTX.geom.circle_points;
@@ -142,6 +142,15 @@ int gmshEdge::minimumDrawSegments () const
 SPoint2 gmshEdge::reparamOnFace(GFace *face, double epar,int dir) const
 {
   Surface *s = (Surface*) face->getNativePtr();
+
+  if (s->geometry)
+    {
+      Vertex *v[3];
+      List_Read(c->Control_Points, 0, &v[1]);
+      List_Read(c->Control_Points, 1, &v[2]);
+      SPoint2 p =  v[1] -> pntOnGeometry +  (v[2] -> pntOnGeometry - v[1] -> pntOnGeometry) * epar;
+      return p;
+    }
 
   if (s->Typ ==  MSH_SURF_REGL){
     Curve *C[4];

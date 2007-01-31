@@ -131,6 +131,7 @@ typedef struct{
   CircParam Circle;
   char functu[256], functv[256], functw[256];
   DrawingColor Color;
+  gmshSurface *geometry;
 }Curve;
 
 typedef struct{

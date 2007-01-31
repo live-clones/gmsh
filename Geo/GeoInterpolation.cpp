@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.15 2007-01-16 11:31:41 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.16 2007-01-31 14:33:05 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -236,11 +236,22 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
     t = (u - t1) / (t2 - t1);
     List_Read(c->Control_Points, i, &v[1]);
     List_Read(c->Control_Points, i + 1, &v[2]);
-    V.Pos.X = v[1]->Pos.X + t * (v[2]->Pos.X - v[1]->Pos.X);
-    V.Pos.Y = v[1]->Pos.Y + t * (v[2]->Pos.Y - v[1]->Pos.Y);
-    V.Pos.Z = v[1]->Pos.Z + t * (v[2]->Pos.Z - v[1]->Pos.Z);
-    V.w = (1. - t) * v[1]->w + t * v[2]->w;
-    V.lc = (1. - t) * v[1]->lc + t * v[2]->lc;
+    if (!c->geometry)
+      {
+	V.Pos.X = v[1]->Pos.X + t * (v[2]->Pos.X - v[1]->Pos.X);
+	V.Pos.Y = v[1]->Pos.Y + t * (v[2]->Pos.Y - v[1]->Pos.Y);
+	V.Pos.Z = v[1]->Pos.Z + t * (v[2]->Pos.Z - v[1]->Pos.Z);
+	V.w = (1. - t) * v[1]->w + t * v[2]->w;
+	V.lc = (1. - t) * v[1]->lc + t * v[2]->lc;
+      }
+    else
+      {
+	SPoint2 p =  v[1] -> pntOnGeometry +  (v[2] -> pntOnGeometry - v[1] -> pntOnGeometry) * t;
+	SPoint3 pp  = c->geometry->point ( p );
+	V.Pos.X = pp.x();
+	V.Pos.Y = pp.y();
+	V.Pos.Z = pp.z();
+      }
     return V;
 
   case MSH_SEGM_PARAMETRIC:
@@ -478,6 +489,7 @@ Vertex InterpolateExtrudedSurface(Surface * s, double u, double v)
 
 Vertex InterpolateSurface(Surface * s, double u, double v, int derivee, int u_v)
 {
+
   if(derivee) {
     double eps = 1.e-6;
     Vertex D[4], T;
@@ -506,6 +518,16 @@ Vertex InterpolateSurface(Surface * s, double u, double v, int derivee, int u_v)
     T.Pos.Z = (D[1].Pos.Z - D[0].Pos.Z) / eps;
     return T;
   }
+
+  if (s->geometry)
+    {
+      Vertex T;
+      SPoint3 p = s->geometry->point(u,v);
+      T.Pos.X = p.x();
+      T.Pos.Y = p.y();
+      T.Pos.Z = p.z();
+      return T;
+    }
 
   // use the exact extrusion formula if the surface is extruded
   if(s->Extrude && s->Extrude->geo.Mode == EXTRUDED_ENTITY && 

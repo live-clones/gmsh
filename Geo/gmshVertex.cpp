@@ -8,7 +8,10 @@
 SPoint2 gmshVertex::reparamOnFace(GFace *face, int dir) const
 {
   Surface *s = (Surface*) face->getNativePtr();
-
+  if (s->geometry)
+    {
+      return v -> pntOnGeometry;
+    }
   if (s->Typ ==  MSH_SURF_REGL){
     Curve *C[4];
     for(int i = 0; i < 4; i++)

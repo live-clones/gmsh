@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.35 2007-01-31 12:27:18 remacle Exp $
+// $Id: gmshFace.cpp,v 1.36 2007-01-31 14:33:05 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -157,7 +157,7 @@ Pair<SVector3,SVector3> gmshFace::firstDer(const SPoint2 &param) const
 GPoint gmshFace::point(double par1, double par2) const
 {
   double pp[2] = {par1, par2};
-  if(s->Typ == MSH_SURF_PLAN){
+  if(s->Typ == MSH_SURF_PLAN && !s->geometry){
     double x, y, z, VX[3], VY[3];
     getMeanPlaneData(VX, VY, x, y, z);
     return GPoint(x + VX[0] * par1 + VY[0] * par2,

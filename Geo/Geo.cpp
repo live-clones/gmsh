@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.72 2007-01-31 12:27:18 remacle Exp $
+// $Id: Geo.cpp,v 1.73 2007-01-31 14:33:05 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -258,11 +258,32 @@ static void direction(Vertex * v1, Vertex * v2, double d[3])
 void End_Curve(Curve * c)
 {
   double R2, mat[3][3], R, A3, A1, A4;
-  Vertex *v[4], v0, v2, v3;
+  Vertex *v[4], v0, v2, v3,*pV;
   double f1, f2, dir32[3], dir12[3], n[3], m[3], dir42[3];
   double rhs[2], sys[2][2], sol[2];
   int i;
   Curve *Curve;
+
+  ///-----------------------------------------------------------------
+  // this is something new : if all control points of a curve
+  // are on the same geometry, then the curve is also on the geometry
+  if (c->Control_Points)
+    {
+      int NN = List_Nbr(c->Control_Points);
+      List_Read (c->Control_Points, 0, &pV);
+      c->geometry = pV->geometry;
+      for (int i=1;i<NN;i++)
+	{
+	  List_Read (c->Control_Points, i, &pV);
+	  if (c->geometry != pV->geometry)
+	    {
+	      c->geometry = 0;
+	      break;
+	    }	
+	}
+    }
+  // thats'it             JFR
+  ///-----------------------------------------------------------------
 
   if(c->Typ == MSH_SEGM_CIRC || c->Typ == MSH_SEGM_CIRC_INV ||
      c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV) {
@@ -447,6 +468,28 @@ void End_Curve(Curve * c)
 
 void End_Surface(Surface * s, int reset_orientations)
 {
+
+  ///-----------------------------------------------------------------
+  // this is something new : if all generatrices of a surface
+  // are on the same geometry, then the surface is also on the geometry
+  Curve *c;
+  int NN = List_Nbr(s->Generatrices);
+  List_Read (s->Generatrices, 0, &c);
+  s->geometry = c->geometry;
+  for (int i=1;i<NN;i++)
+    {
+      List_Read (s->Generatrices, i, &c);
+      if (c->geometry != s->geometry)
+	{
+	  s->geometry = 0;
+	  break;
+	}	
+    }
+  printf("Surface %d's geoetry is %p\n",s->Num,s->geometry);
+  // thats'it             JFR
+  ///-----------------------------------------------------------------
+
+
   if(reset_orientations) 
     List_Reset(s->Orientations);
 }
@@ -479,6 +522,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
   pC->Circle.n[0] = 0.0;
   pC->Circle.n[1] = 0.0;
   pC->Circle.n[2] = 1.0;
+  pC->geometry = 0;
   for(int i = 0; i < 4; i++) {
     pC->ipar[i] = 0;
     pC->dpar[i] = 0.0;
@@ -583,6 +627,8 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Color.type = 0;
   pS->Visible = 1;
   pS->Num = Num;
+  pS->geometry = 0;
+
   THEM->MaxSurfaceNum = IMAX(THEM->MaxSurfaceNum, Num);
   pS->Typ = Typ;
   pS->Method = LIBRE;

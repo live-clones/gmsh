@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.55 2007-01-31 12:27:18 remacle Exp $
+// $Id: meshGFace.cpp,v 1.56 2007-01-31 14:33:05 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -726,9 +726,6 @@ bool gmsh2DMeshGenerator ( GFace *gf )
   for ( int ip = 0 ; ip<4 ; ip++ ) delete bb[ip];
 
 
-//   char name[245];
-//   sprintf(name,"param%d.pos",gf->tag());
-//   outputScalarField(m->triangles, name,1);
 //   sprintf(name,"real%d.pos",gf->tag());
 //   outputScalarField(m->triangles, name,0);
 
@@ -834,6 +831,9 @@ bool gmsh2DMeshGenerator ( GFace *gf )
 	}
     }
 
+//    char name[245];
+//    sprintf(name,"param%d.pos",gf->tag());
+//    outputScalarField(m->triangles, name,1);
   // fill the small gmsh structures
 
   {
