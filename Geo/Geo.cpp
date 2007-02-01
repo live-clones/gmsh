@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.74 2007-02-01 21:05:52 geuzaine Exp $
+// $Id: Geo.cpp,v 1.75 2007-02-01 21:55:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -264,26 +264,20 @@ void End_Curve(Curve * c)
   int i;
   Curve *Curve;
 
-  ///-----------------------------------------------------------------
-  // this is something new : if all control points of a curve
-  // are on the same geometry, then the curve is also on the geometry
-  if (c->Control_Points)
-    {
-      int NN = List_Nbr(c->Control_Points);
-      List_Read (c->Control_Points, 0, &pV);
-      c->geometry = pV->geometry;
-      for (int i=1;i<NN;i++)
-	{
-	  List_Read (c->Control_Points, i, &pV);
-	  if (c->geometry != pV->geometry)
-	    {
-	      c->geometry = 0;
-	      break;
-	    }	
-	}
+  // if all control points of a curve are on the same geometry, then
+  // the curve is also on the geometry
+  if(c->Control_Points){
+    int NN = List_Nbr(c->Control_Points);
+    List_Read (c->Control_Points, 0, &pV);
+    c->geometry = pV->geometry;
+    for(int i = 1; i < NN; i++){
+      List_Read (c->Control_Points, i, &pV);
+      if(c->geometry != pV->geometry){
+	c->geometry = 0;
+	break;
+      }	
     }
-  // thats'it             JFR
-  ///-----------------------------------------------------------------
+  }
 
   if(c->Typ == MSH_SEGM_CIRC || c->Typ == MSH_SEGM_CIRC_INV ||
      c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV) {

@@ -65,10 +65,10 @@ struct Coord{
 
 class Vertex {
  public :
-  // a model vertex is usually defined in the euclidian coordinates. Yet,
-  // it can be defined in the parametric coordinates of a surface
-  // this data structure stores local coodinates of the vertex in 
-  // the gmshSurface it belongs to.
+  // a model vertex is usually defined in the euclidian coordinates.
+  // Yet, it can be defined in the parametric coordinates of a surface
+  // this data structure stores local coodinates of the vertex in the
+  // gmshSurface it belongs to.
   gmshSurface *geometry;
   SPoint2  pntOnGeometry;
   int Num;
@@ -76,13 +76,11 @@ class Vertex {
   double lc, u, w;
   Coord Pos;
   Vertex(double X=0., double Y=0., double Z=0., double l=1., double W=1.)
+    : geometry(0), Visible(1), lc(l), w(W)
   {
-    Visible = 1;
     Pos.X = X;
     Pos.Y = Y;
     Pos.Z = Z;
-    w = W;
-    lc = l;
   }
   void norme()
   {
@@ -159,12 +157,11 @@ typedef struct{
   List_T *Contours;
   ExtrudeParams *Extrude;
   DrawingColor Color;
-  // A surface is defined topologically by its
-  // Generatrices i.e. curves that are the closure of it
-  // The geometry of the surface is defined hereafter.
-  // Note that this representation should be the only 
-  // one in gmsh, so parameter "Type" should disappear
-  // from the class Surface. 
+  // A surface is defined topologically by its Generatrices
+  // i.e. curves that are the closure of it.  The geometry of the
+  // surface is defined hereafter.  Note that this representation
+  // should be the only one in gmsh, so parameter "Type" should
+  // disappear from the class Surface.
   gmshSurface *geometry;
 }Surface;
 

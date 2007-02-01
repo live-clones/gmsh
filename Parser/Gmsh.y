@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.256 2007-01-31 12:27:20 remacle Exp $
+// $Id: Gmsh.y,v 1.257 2007-02-01 21:55:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1020,8 +1020,6 @@ PhysicalId :
 ;
 
 
-Surface :
-
 Shape :
 
   // Points
@@ -1044,7 +1042,7 @@ Shape :
       $$.Type = MSH_POINT;
       $$.Num = num;
     }
-    | tPoint '(' FExpr ')' tIn tSurface '(' FExpr ')' tAFFECT VExpr tEND
+  | tPoint '(' FExpr ')' tIn tSurface '{' FExpr '}' tAFFECT VExpr tEND
     {
       int num = (int)$3;
       if(FindPoint(num)){
@@ -1054,12 +1052,9 @@ Shape :
 	double u = CTX.geom.scaling_factor * $11[0];
 	double v = CTX.geom.scaling_factor * $11[1];
 	double lc = CTX.geom.scaling_factor * $11[2];
-
-	gmshSurface *surf = gmshSurface::surfaceByTag ( (int) $8 );
-
-	if (!surf)
-	  yymsg(GERROR, "gmshSurface %d does not exist", (int) $8);
-
+	gmshSurface *surf = gmshSurface::surfaceByTag((int)$8);
+	if(!surf)
+	  yymsg(GERROR, "gmshSurface %d does not exist", (int)$8);
 	Vertex *vt = Create_Vertex(num, u, v, surf, lc);
 	Tree_Add(THEM->Points, &vt);
 	AddToTemporaryBoundingBox(vt->Pos.X,vt->Pos.Y,vt->Pos.Z);
@@ -1429,32 +1424,28 @@ Shape :
       $$.Type = type;
       $$.Num = num;
     }
-// This is the definition of a sphere
-// it requires 2 point numbers (Center + a point of the sphere)
-  
   | tSphere '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3, type = 0;
-
       if (List_Nbr($6) != 2){
-	yymsg(GERROR, "Sphere %d has to be defined using 2 points (center + any point) and not %d", num,List_Nbr($6));
+	yymsg(GERROR, "Sphere %d has to be defined using 2 points (center + "
+	      "any point) and not %d", num, List_Nbr($6));
       }
-      else
-      {
+      else{
 	double p1,p2;
 	List_Read($6, 0, &p1);
 	List_Read($6, 1, &p2);
 	Vertex *v1 = FindPoint((int)p1);
 	Vertex *v2 = FindPoint((int)p2);
-	if (!v1)yymsg(GERROR, "Sphere %d : unknown point %d", num,(int)p1);
-	if (!v2)yymsg(GERROR, "Sphere %d : unknown point %d", num,(int)p2);
-	gmshSurface *myGmshSurface = gmshSphere::NewSphere ( num , v1->Pos.X , v1->Pos.Y , v1->Pos.Z ,
-							     sqrt ( ( v2->Pos.X - v1->Pos.X) *( v2->Pos.X - v1->Pos.X) +
-								    ( v2->Pos.Y - v1->Pos.Y) *( v2->Pos.Y - v1->Pos.Y) +
-								    ( v2->Pos.Z - v1->Pos.Z) *( v2->Pos.Z - v1->Pos.Z) ) );								    
+	if(!v1) yymsg(GERROR, "Sphere %d : unknown point %d", num, (int)p1);
+	if(!v2) yymsg(GERROR, "Sphere %d : unknown point %d", num, (int)p2);
+	gmshSurface *myGmshSurface = gmshSphere::NewSphere
+	  (num, v1->Pos.X, v1->Pos.Y, v1->Pos.Z,
+	   sqrt((v2->Pos.X - v1->Pos.X) * (v2->Pos.X - v1->Pos.X) +
+		(v2->Pos.Y - v1->Pos.Y) * (v2->Pos.Y - v1->Pos.Y) +
+		(v2->Pos.Z - v1->Pos.Z) * (v2->Pos.Z - v1->Pos.Z)));
       }      
-    } 
-
+    }
   | tSurface tLoop '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
@@ -2585,22 +2576,22 @@ Transfinite :
 //    A N D   V O L U M E S
 
 Embedding : 
-    tPoint ListOfDouble tIn tSurface FExpr tEND
+    tPoint '{' RecursiveListOfDouble '}' tIn tSurface '{' FExpr '}' tEND
     { 
-      Surface *s = FindSurface((int)$5);
+      Surface *s = FindSurface((int)$8);
       if(s)
-	setSurfaceEmbeddedPoints(s, $2);
+	setSurfaceEmbeddedPoints(s, $3);
     }
-  | tLine ListOfDouble tIn tSurface FExpr tEND
+  | tLine '{' RecursiveListOfDouble '}' tIn tSurface '{' FExpr '}' tEND
     {
-      Surface *s = FindSurface((int)$5);
+      Surface *s = FindSurface((int)$8);
       if(s)
-	setSurfaceEmbeddedCurves(s, $2);
+	setSurfaceEmbeddedCurves(s, $3);
     }
-  | tLine ListOfDouble tIn tVolume FExpr tEND
+  | tLine '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
     {
     }
-  | tSurface ListOfDouble tIn tVolume FExpr tEND
+  | tSurface '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
     {
     }
 ;
