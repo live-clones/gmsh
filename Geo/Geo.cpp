@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.73 2007-01-31 14:33:05 remacle Exp $
+// $Id: Geo.cpp,v 1.74 2007-02-01 21:05:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -466,32 +466,21 @@ void End_Curve(Curve * c)
   }
 }
 
-void End_Surface(Surface * s, int reset_orientations)
+void End_Surface(Surface * s)
 {
-
-  ///-----------------------------------------------------------------
-  // this is something new : if all generatrices of a surface
-  // are on the same geometry, then the surface is also on the geometry
+  // if all the generatrices of a surface are on the same geometry,
+  // then the surface is also on the geometry
   Curve *c;
   int NN = List_Nbr(s->Generatrices);
   List_Read (s->Generatrices, 0, &c);
   s->geometry = c->geometry;
-  for (int i=1;i<NN;i++)
-    {
-      List_Read (s->Generatrices, i, &c);
-      if (c->geometry != s->geometry)
-	{
-	  s->geometry = 0;
-	  break;
-	}	
-    }
-  printf("Surface %d's geoetry is %p\n",s->Num,s->geometry);
-  // thats'it             JFR
-  ///-----------------------------------------------------------------
-
-
-  if(reset_orientations) 
-    List_Reset(s->Orientations);
+  for(int i = 1; i < NN; i++){
+    List_Read (s->Generatrices, i, &c);
+    if(c->geometry != s->geometry){
+      s->geometry = 0;
+      break;
+    }	
+  }
 }
 
 Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
@@ -639,7 +628,6 @@ Surface *Create_Surface(int Num, int Typ)
   pS->RecombineAngle = 75;
   pS->TrsfPoints = List_Create(4, 4, sizeof(Vertex *));
   pS->Contours = List_Create(1, 1, sizeof(List_T *));
-  pS->Orientations = List_Create(20, 2, sizeof(Vertex));
   pS->Control_Points = List_Create(1, 10, sizeof(Vertex *));
   pS->Generatrices = NULL;
   pS->EmbeddedPoints = NULL;
@@ -655,7 +643,6 @@ void Free_Surface(void *a, void *b)
   if(pS) {
     List_Delete(pS->TrsfPoints);
     List_Delete(pS->Contours);
-    List_Delete(pS->Orientations);
     List_Delete(pS->Control_Points);
     List_Delete(pS->Generatrices);
     List_Delete(pS->EmbeddedCurves);

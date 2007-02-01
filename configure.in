@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.119 2007-01-29 17:16:01 geuzaine Exp $
+dnl $Id: configure.in,v 1.120 2007-02-01 21:05:52 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 dnl
@@ -156,14 +156,22 @@ OPTIM="${CXXFLAGS}"
 
 dnl Check for various programs
 AC_PROG_CPP
-AC_PROG_RANLIB
 
 dnl How to build static libraries?
-AC_PATH_PROG(AR, ar)
-if test "x${AR}" = "x:"; then
-  AC_MSG_ERROR([Could not find the library archiver, aborting.])
-fi
-AR="${AR} ruvs"
+case "$UNAME" in
+  Darwin*)
+    RANLIB=true
+    AR="libtool -o"
+    ;;
+  *)
+    AC_PROG_RANLIB
+    AC_PATH_PROG(AR, ar)
+    if test "x${AR}" = "x:"; then
+      AC_MSG_ERROR([Could not find the library archiver, aborting.])
+    fi
+    AR="${AR} ruvs"
+    ;;
+esac
 
 dnl See if we need a .exe extension on executables
 AC_EXEEXT
@@ -577,9 +585,8 @@ if test "x$enable_occ" = "xyes"; then
       GMSH_LIBS="${GMSH_LIBS} ${OCC_LIBS}"
       FLAGS="${FLAGS} -DHAVE_OCC"
     else
-      GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib -I${OCC_PREFIX}/${UNAME}/lib ${OCC_LIBS}"
-      FLAGS="${FLAGS} -DHAVE_OCC -I${OCC_PREFIX}/include -I${OCC_PREFIX}/inc"
-      FLAGS="${FLAGS} -I${OCC_PREFIX}/${UNAME}/include -I${OCC_PREFIX}/${UNAME}/inc"
+      GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib ${OCC_LIBS}"
+      FLAGS="${FLAGS} -DHAVE_OCC -I${OCC_PREFIX}/inc"
     fi
   fi
 fi

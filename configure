@@ -3030,7 +3030,14 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-if test -n "$ac_tool_prefix"; then
+
+case "$UNAME" in
+  Darwin*)
+    RANLIB=true
+    AR="libtool -o"
+    ;;
+  *)
+    if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
 set dummy ${ac_tool_prefix}ranlib; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -3110,8 +3117,7 @@ else
   RANLIB="$ac_cv_prog_RANLIB"
 fi
 
-
-# Extract the first word of "ar", so it can be a program name with args.
+    # Extract the first word of "ar", so it can be a program name with args.
 set dummy ar; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
@@ -3150,12 +3156,14 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-if test "x${AR}" = "x:"; then
-  { { echo "$as_me:$LINENO: error: Could not find the library archiver, aborting." >&5
+    if test "x${AR}" = "x:"; then
+      { { echo "$as_me:$LINENO: error: Could not find the library archiver, aborting." >&5
 echo "$as_me: error: Could not find the library archiver, aborting." >&2;}
    { (exit 1); exit 1; }; }
-fi
-AR="${AR} ruvs"
+    fi
+    AR="${AR} ruvs"
+    ;;
+esac
 
 
 
@@ -4669,9 +4677,8 @@ fi
       GMSH_LIBS="${GMSH_LIBS} ${OCC_LIBS}"
       FLAGS="${FLAGS} -DHAVE_OCC"
     else
-      GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib -I${OCC_PREFIX}/${UNAME}/lib ${OCC_LIBS}"
-      FLAGS="${FLAGS} -DHAVE_OCC -I${OCC_PREFIX}/include -I${OCC_PREFIX}/inc"
-      FLAGS="${FLAGS} -I${OCC_PREFIX}/${UNAME}/include -I${OCC_PREFIX}/${UNAME}/inc"
+      GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib ${OCC_LIBS}"
+      FLAGS="${FLAGS} -DHAVE_OCC -I${OCC_PREFIX}/inc"
     fi
   fi
 fi

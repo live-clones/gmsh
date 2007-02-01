@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.130 2007-02-01 15:09:43 geuzaine Exp $
+# $Id: Makefile,v 1.131 2007-02-01 21:05:53 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -45,7 +45,6 @@ SRC = GEntity.cpp\
       MVertex.cpp \
       MElement.cpp \
       SVector3.cpp\
-      projectionFace.cpp\
       SBoundingBox3d.cpp
 
 OBJ = ${SRC:.cpp=.o}
@@ -264,9 +263,4 @@ MElement.o: MElement.cpp MElement.h ../Common/GmshDefines.h MVertex.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h GEntity.h \
   Range.h SBoundingBox3d.h ../Common/Message.h
 SVector3.o: SVector3.cpp SVector3.h SPoint3.h
-projectionFace.o: projectionFace.cpp projectionFace.h GFace.h GPoint.h \
-  GEntity.h Range.h SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h \
-  GEdgeLoop.h GEdge.h GVertex.h MVertex.h SPoint2.h SVector3.h MElement.h \
-  MEdge.h ../Common/Hash.h MFace.h ../Numeric/Numeric.h \
-  ../Common/Context.h ../DataStr/List.h ExtrudeParams.h Pair.h
 SBoundingBox3d.o: SBoundingBox3d.cpp SBoundingBox3d.h SPoint3.h

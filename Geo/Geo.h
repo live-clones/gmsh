@@ -156,7 +156,6 @@ typedef struct{
   double plan[3][3];
   double invplan[3][3];
   double a, b, c, d;
-  List_T *Orientations;
   List_T *Contours;
   ExtrudeParams *Extrude;
   DrawingColor Color;
@@ -239,7 +238,7 @@ SurfaceLoop *Create_SurfaceLoop(int Num, List_T * intlist);
 PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T * intlist);
 
 void End_Curve(Curve * c);
-void End_Surface(Surface * s, int reset_orientations=1);
+void End_Surface(Surface * s);
 
 void Free_Vertex (void *a, void *b);
 void Free_Curve(void *a, void *b);
