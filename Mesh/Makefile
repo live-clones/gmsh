@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.160 2007-01-22 16:31:43 geuzaine Exp $
+# $Id: Makefile,v 1.161 2007-02-01 15:09:43 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -202,13 +202,15 @@ meshGRegion.o: meshGRegion.cpp meshGRegion.h \
   ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GRegion.h ../Geo/GEntity.h \
   ../Geo/MElement.h ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h \
   ../Common/SmoothNormals.h ../Geo/gmshRegion.h ../Geo/Geo.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../Geo/ExtrudeParams.h \
-  ../Geo/GRegion.h ../Geo/MRep.h ../Geo/GEdge.h ../Geo/GFace.h \
-  ../Geo/GRegion.h ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MElement.h \
-  ../Common/VertexArray.h ../Common/Message.h ../Common/OS.h BDS.h \
-  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothNormals.h ../Common/AdaptiveViews.h \
-  ../Common/GmshMatrix.h
+  ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SBoundingBox3d.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
+  ../Geo/ExtrudeParams.h ../Geo/GRegion.h ../Geo/MRep.h ../Geo/GEdge.h \
+  ../Geo/GFace.h ../Geo/GRegion.h ../Geo/MVertex.h ../Geo/MEdge.h \
+  ../Geo/MElement.h ../Common/VertexArray.h ../Common/Message.h \
+  ../Common/OS.h BDS.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/VertexArray.h ../Common/SmoothNormals.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
 meshGRegionDelaunayInsertion.o: meshGRegionDelaunayInsertion.cpp \
   BackgroundMesh.h meshGRegionDelaunayInsertion.h ../Geo/MElement.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint3.h \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.117 2006-11-27 22:22:32 geuzaine Exp $
+# $Id: Makefile,v 1.118 2007-02-01 15:09:44 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -157,17 +157,20 @@ Triangulate.o: Triangulate.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h Triangulate.h \
   ../Common/Context.h ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/gmshFace.h \
-  ../Geo/Geo.h ../Common/GmshDefines.h ../Geo/ExtrudeParams.h \
-  ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/Range.h \
+  ../Geo/Geo.h ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
+  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/MVertex.h ../Geo/GPoint.h ../Geo/SPoint2.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/MElement.h ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Geo/ExtrudeParams.h ../Geo/MElement.h \
-  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h \
-  ../Geo/gmshVertex.h ../Geo/Geo.h ../Geo/GVertex.h ../Geo/Range.h
+  ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Geo/GFace.h ../Geo/GPoint.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/MVertex.h \
+  ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h ../Geo/MEdge.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Hash.h ../Geo/MFace.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/ExtrudeParams.h \
+  ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/ExtrudeParams.h ../Geo/gmshVertex.h ../Geo/Geo.h \
+  ../Geo/GVertex.h ../Geo/Range.h
 Warp.o: Warp.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothNormals.h ../Numeric/Numeric.h \
