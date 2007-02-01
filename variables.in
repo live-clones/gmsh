@@ -1,4 +1,4 @@
-# $Id: variables.in,v 1.14 2006-11-27 22:22:06 geuzaine Exp $
+# $Id: variables.in,v 1.15 2007-02-01 15:46:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -33,8 +33,12 @@ CXX=@CXX@
 # environement variable or use the 'ldconfig' program.
 LINKER=@LINKER@
 
-# Compiler flags
+# All compiler flags except optimization flags
 FLAGS=@FLAGS@
+
+# FLAGS+=-arch i386 -arch ppc
+
+# Compiler optimization flags
 OPTIM=@OPTIM@
 
 # Gmsh subdirectories and libraries
