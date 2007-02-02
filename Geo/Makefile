@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.132 2007-02-02 17:16:46 remacle Exp $
+# $Id: Makefile,v 1.133 2007-02-02 23:50:33 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -172,8 +172,11 @@ GModel.o: GModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h MFace.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
   ExtrudeParams.h GFace.h GEdgeLoop.h Pair.h GRegion.h \
-  ../Common/SmoothNormals.h MRep.h ../Common/VertexArray.h \
-  ../Common/Message.h ../Common/OS.h
+  ../Common/SmoothNormals.h gmshSurface.h ../Mesh/Attractors.h \
+  ../Geo/SPoint3.h ../Geo/Geo.h ../Geo/gmshSurface.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
+  ../Common/Message.h ../Geo/GEdge.h MRep.h ../Common/VertexArray.h \
+  ../Common/OS.h
 GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h \
   SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \
@@ -236,9 +239,10 @@ GeoStringInterface.o: GeoStringInterface.cpp ../Common/Gmsh.h \
   ../DataStr/Tree.h ../Numeric/Numeric.h Geo.h ../Common/GmshDefines.h \
   gmshSurface.h Pair.h Range.h SPoint2.h SPoint3.h SVector3.h \
   SBoundingBox3d.h ExtrudeParams.h GeoStringInterface.h \
-  ../Parser/Parser.h ../Common/Context.h GModel.h GVertex.h GEntity.h \
-  MVertex.h GPoint.h GEdge.h MElement.h MEdge.h ../Common/Hash.h MFace.h \
-  GFace.h GEdgeLoop.h GRegion.h ../Common/SmoothNormals.h
+  ../Parser/Parser.h ../Parser/OpenFile.h ../Common/Context.h GModel.h \
+  GVertex.h GEntity.h MVertex.h GPoint.h GEdge.h MElement.h MEdge.h \
+  ../Common/Hash.h MFace.h GFace.h GEdgeLoop.h GRegion.h \
+  ../Common/SmoothNormals.h
 GeoInterpolation.o: GeoInterpolation.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \

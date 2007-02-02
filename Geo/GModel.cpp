@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.31 2007-02-02 17:16:46 remacle Exp $
+// $Id: GModel.cpp,v 1.32 2007-02-02 23:50:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -120,6 +120,9 @@ void GModel::removeInvisibleElements()
     removeInvisible((*it)->lines, all);
     if((*it)->meshRep) (*it)->meshRep->destroy();
   }
+
+  // FIXME: loop over all mesh vertices in edges, faces and regions
+  // and remove all unused (nonconnected) vertices
 }
 
 int GModel::renumberMeshVertices()

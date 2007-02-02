@@ -1,4 +1,9 @@
-$Id: TODO,v 1.43 2007-01-30 08:56:36 geuzaine Exp $
+$Id: TODO,v 1.44 2007-02-02 23:50:38 geuzaine Exp $
+
+********************************************************************
+
+when we mesh->edit->delete elements (or maybe when we save meshes)
+we should delete any unused vertices [for akash]
 
 ********************************************************************
 

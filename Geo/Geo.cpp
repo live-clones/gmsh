@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.76 2007-02-02 17:16:46 remacle Exp $
+// $Id: Geo.cpp,v 1.77 2007-02-02 23:50:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -462,30 +462,22 @@ void End_Curve(Curve * c)
 
 void End_Surface(Surface * s)
 {
-  ///-----------------------------------------------------------------
-  // this is something new : if all generatrices of a surface
-  // are on the same geometry, then the surface is also on the geometry
-  if (s->Generatrices)
-    {
-      Curve *c;
-      int NN = List_Nbr(s->Generatrices);
-      List_Read (s->Generatrices, 0, &c);
-      s->geometry = c->geometry;
-      for (int i=1;i<NN;i++)
-	{
-	  List_Read (s->Generatrices, i, &c);
-	  if (c->geometry != s->geometry)
-	    {
-	      s->geometry = 0;
-	      break;
-	    }	
-	}
-      printf("Surface %d's geoetry is %p\n",s->Num,s->geometry);
+  // if all generatrices of a surface are on the same geometry, then
+  // the surface is also on the geometry
+  if(s->Generatrices){
+    Curve *c;
+    int NN = List_Nbr(s->Generatrices);
+    List_Read (s->Generatrices, 0, &c);
+    s->geometry = c->geometry;
+    for (int i = 1; i < NN; i++){
+      List_Read (s->Generatrices, i, &c);
+      if (c->geometry != s->geometry){
+	s->geometry = 0;
+	break;
+      }	
     }
-  // thats'it             JFR
-  ///-----------------------------------------------------------------
+  }
 }
-
 
 Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
                     List_T * Knots, int p1, int p2, double u1, double u2)

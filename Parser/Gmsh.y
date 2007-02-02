@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.258 2007-02-02 17:16:48 remacle Exp $
+// $Id: Gmsh.y,v 1.259 2007-02-02 23:50:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1054,11 +1054,14 @@ Shape :
 	double v = CTX.geom.scaling_factor * $11[1];
 	double lc = CTX.geom.scaling_factor * $11[2];
 	gmshSurface *surf = gmshSurface::surfaceByTag((int)$8);
-	if(!surf)
+	if(!surf){
 	  yymsg(GERROR, "gmshSurface %d does not exist", (int)$8);
-	Vertex *vt = Create_Vertex(num, u, v, surf, lc);
-	Tree_Add(THEM->Points, &vt);
-	AddToTemporaryBoundingBox(vt->Pos.X,vt->Pos.Y,vt->Pos.Z);
+	}
+	else{
+	  Vertex *vt = Create_Vertex(num, u, v, surf, lc);
+	  Tree_Add(THEM->Points, &vt);
+	  AddToTemporaryBoundingBox(vt->Pos.X,vt->Pos.Y,vt->Pos.Z);
+	}
       }
       $$.Type = MSH_POINT;
       $$.Num = num;
@@ -1081,25 +1084,20 @@ Shape :
     }
   | tAttractor tPoint ListOfDouble tAFFECT ListOfDouble  tEND
     {
-      double pars[] = { CTX.lc/10 , CTX.lc/100. , CTX.lc/20, 10 , 3 };
-
-      for (int i=0;i<List_Nbr($5);i++)
-	{
-	  if (i > 4) 
-	    yymsg(GERROR, "Too many paramaters for attractor line (max = 5)");	  
-	  else
-	    List_Read($5,i,&pars[i]);
-	}
-
-      Attractor *att = tresholdAttractor::New ( pars[0], pars[1],pars[2], pars[4] );
-
+      double pars[] = { CTX.lc/10, CTX.lc/100., CTX.lc/20, 10, 3 };
+      for(int i = 0; i < List_Nbr($5); i++){
+	if(i > 4) 
+	  yymsg(GERROR, "Too many paramaters for attractor line (max = 5)");	  
+	else
+	  List_Read($5, i, &pars[i]);
+      }
+      // treshold attractor: first parameter is the treshold, next two
+      // are the in and out size fields, last is transition factor
+      Attractor *att = tresholdAttractor::New(pars[0], pars[1], pars[2], pars[4]);
       for(int i = 0; i < List_Nbr($3); i++){
 	double d;
 	List_Read($3, i, &d);
 	Vertex *v = FindPoint((int)d); 
-	
-	// treshold attractor, the first parameter is the treshold and the
-	// two other parameters are the in and out size fields
 	if(v)
 	  att->addPoint(v->Pos.X,v->Pos.Y,v->Pos.Z);
 	else{
@@ -1114,35 +1112,28 @@ Shape :
     }
   | tAttractor tLine ListOfDouble tAFFECT ListOfDouble tEND
     {
-      double pars[] = { CTX.lc/10 , CTX.lc/100. , CTX.lc/20, 10 , 3 };
-
-      for (int i=0;i<List_Nbr($5);i++)
-	{
-	  if (i > 4) 
-	    yymsg(GERROR, "Too many paramaters for attractor line (max = 5)");	  
-	  else
-	    List_Read($5,i,&pars[i]);
-	}
-
-      Attractor *att = tresholdAttractor::New ( pars[0], pars[1],pars[2], pars[4]);
-
+      double pars[] = { CTX.lc/10, CTX.lc/100., CTX.lc/20, 10, 3 };
+      for(int i = 0; i < List_Nbr($5); i++){
+	if(i > 4) 
+	  yymsg(GERROR, "Too many paramaters for attractor line (max = 5)");	  
+	else
+	  List_Read($5, i, &pars[i]);
+      }
+      // treshold attractor: first parameter is the treshold, next two
+      // are the in and out size fields, last is transition factor
+      Attractor *att = tresholdAttractor::New(pars[0], pars[1], pars[2], pars[4]);
       for(int i = 0; i < List_Nbr($3); i++){
 	double d;
 	List_Read($3, i, &d);
 	Curve *c = FindCurve((int)d); 
-	
-	// treshold attractor, the first parameter is the treshold and the
-	// two other parameters are the in and out size fields
-	if(c)
-	  {
-	    buildListOfPoints( att , c , (int) pars[3] );
-	  }
+	if(c){
+	  buildListOfPoints( att , c , (int) pars[3] );
+	}
 	else{
 	  GEdge *ge = GMODEL->edgeByTag((int)d);
-	  if(ge) 
-	    {
-	      buildListOfPoints( att , ge , (int) pars[3] );
-	    }
+	  if(ge){
+	    buildListOfPoints( att , ge , (int) pars[3] );
+	  }
 	}
       }
       att->buildFastSearchStructures();

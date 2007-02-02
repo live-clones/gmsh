@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.31 2006-12-20 15:50:57 remacle Exp $
+// $Id: GFace.cpp,v 1.32 2007-02-02 23:50:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -144,14 +144,16 @@ void GFace::computeMeanPlane()
   }
 
   if(pts.size() < 3){
-    Msg(INFO, "Adding middle edge points to compute mean plane of face %d", tag());
+    Msg(INFO, "Adding edge points to compute mean plane of face %d", tag());
     std::list<GEdge*> edg = edges();
     std::list<GEdge*>::const_iterator ite = edg.begin();
     for(; ite != edg.end(); ite++){
       const GEdge *e = *ite; 
-      Range<double> t_bounds = e->parBounds(0);
-      GPoint p = e->point((t_bounds.low() + t_bounds.high()) / 2.);
-      pts.push_back(SPoint3(p.x(), p.y(), p.z()));
+      Range<double> b = e->parBounds(0);
+      GPoint p1 = e->point(b.low() + 0.333 * (b.high() - b.low()));
+      pts.push_back(SPoint3(p1.x(), p1.y(), p1.z()));
+      GPoint p2 = e->point(b.low() + 0.666 * (b.high() - b.low()));
+      pts.push_back(SPoint3(p2.x(), p2.y(), p2.z()));
     }
   }
 

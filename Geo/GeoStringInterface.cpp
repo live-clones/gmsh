@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.4 2007-01-12 08:10:32 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.5 2007-02-02 23:50:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,7 @@
 #include "Geo.h"
 #include "GeoStringInterface.h"
 #include "Parser.h"
+#include "OpenFile.h"
 #include "Context.h"
 #include "GModel.h"
 
@@ -79,16 +80,11 @@ double evaluate_scalarfunction(char *var, double val, char *funct)
 
 void add_infile(char *text, char *fich, bool deleted_something)
 {
-  FILE *file;
-
   if(!(yyin = fopen(CTX.tmp_filename_fullpath, "w"))) {
     Msg(GERROR, "Unable to open temporary file '%s'", CTX.tmp_filename_fullpath);
     return;
   }
-  if(!(file = fopen(fich, "a"))) {
-    Msg(GERROR, "Unable to open file '%s'", fich);
-    return;
-  }
+
   fprintf(yyin, "%s\n", text);
   Msg(STATUS2, "%s", text);
   fclose(yyin);
@@ -97,8 +93,6 @@ void add_infile(char *text, char *fich, bool deleted_something)
     yyparse();
   }
   fclose(yyin);
-  fprintf(file, "%s\n", text);
-  fclose(file);
 
   if(deleted_something){
     // we need to start from scratch since the command just parsed
@@ -107,6 +101,34 @@ void add_infile(char *text, char *fich, bool deleted_something)
   }
   GMODEL->importTHEM();
   CTX.mesh.changed = ENT_ALL;
+
+  FILE *file;
+  if(!(file = fopen(fich, "a"))) {
+    Msg(GERROR, "Unable to open file '%s'", fich);
+    return;
+  }
+  
+  if(!CTX.expert_mode) {
+    char base[256], ext[256];
+    SplitFileName(fich, base, ext);
+    if(strlen(ext) && strcmp(ext, ".geo") && strcmp(ext, ".GEO")){
+      char question[1024];
+      sprintf(question, 
+	      "Are you sure you want to append a scripting command\n"
+	      "to a non-geometry (`.geo') file?\n\n"
+	      "If not, you should create a `.geo' file and merge\n"
+	      "`%s' in it first.\n\n"
+	      "(To disable this warning in the future, select `Enable\n"
+	      "expert mode' in the option dialog.)", fich);
+      if(!GetBinaryAnswer(question, "Append", "Cancel", false)){
+	fclose(file);
+	return;
+      }
+    }
+  }
+
+  fprintf(file, "%s\n", text);
+  fclose(file);
 }
 
 void coherence(char *fich)

@@ -858,7 +858,7 @@ Optional Features:
   --enable-contrib        enable contrib packages (default=yes)
   --enable-triangle       compile Triangle if available (default=yes)
   --enable-netgen         compile Netgen if available (default=yes)
-  --enable-ann            compile ANN if available (default=no)
+  --enable-ann            compile ANN if available (default=yes)
   --enable-metis          compile METIS if available (default=no)
   --enable-tetgen         compile Tetgen if available (default=yes)
   --enable-matheval       compile MathEval if available (default=yes)
@@ -4068,8 +4068,8 @@ else
   ANN="no"
 fi
 
-  if test "x${ANN}" = "xyes"; then
-    if test "x$enable_ann" = "xyes"; then
+  if test "x${ANN}" != "xno"; then
+    if test "x$enable_ann" != "xno"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/ANN"
        GMSH_LIBS="${GMSH_LIBS} -lGmshANN"
        FLAGS="-DHAVE_ANN_ ${FLAGS}"
@@ -4083,7 +4083,7 @@ fi
        echo "********************************************************************"
     fi
   else
-    if test "x$enable_ann" = "xyes"; then
+    if test "x$enable_ann" != "xno"; then
        echo "********************************************************************"
        echo "If you want to use ANN for doing fast geometrical searchs in the"
        echo "STL mesher, please download ANN from the author's web site at"
