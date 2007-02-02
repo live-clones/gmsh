@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.57 2007-02-02 17:16:47 remacle Exp $
+// $Id: meshGFace.cpp,v 1.58 2007-02-02 23:51:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -251,7 +251,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 {
   int IT =0;
 
-  printf("lc (1,1) = %g\n",Attractor::lc(1,1,0));
+  //printf("lc (1,1) = %g\n",Attractor::lc(1,1,0));
 
   int MAXNP = m.MAXPOINTNUMBER;
 
