@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.15 2007-01-31 12:27:18 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.16 2007-02-02 17:16:46 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,7 @@
 #include "GEdge.h"
 #include "GFace.h"
 #include "GModel.h"
+#include "Attractors.h"
 
 extern Context_T CTX;
 
@@ -192,13 +193,14 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
   double l2 = MAX_LC;
   double l3 = CTX.lc / 10.;
   double l4 = LC_MVertex_BGM(ge, X, Y, Z);
+  double l5 = Attractor::lc (X,Y,Z);
 
   if(l4 < MAX_LC && !CTX.mesh.constrained_bgmesh)
     return l4 * CTX.mesh.lc_factor;
 
   if(ge->dim() < 2) l2 = LC_MVertex_PNTS(ge, U, V);
 
-  double l = std::min(std::min(l2, l4), l3);
+  double l = std::min(std::min(std::min(l2, l4), l3), l5);
 
   l *= CTX.mesh.lc_factor ;
 

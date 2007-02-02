@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.19 2007-01-28 12:55:00 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.20 2007-02-02 17:16:46 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -69,14 +69,16 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
   _periodic[0] = surface.IsUPeriodic();
   _periodic[1] = surface.IsVPeriodic();
 
-  Msg(INFO, "OCC Face %d with %d edges", num, l_edges.size());
   ShapeAnalysis::GetFaceUVBounds(s, umin, umax, vmin, vmax);
+  Msg(INFO, "OCC Face %d with %d edges bounds (%g,%g)(%g,%g)", num, l_edges.size(),umin,umax,vmin,vmax);
   // we do that for the projections to converge on the 
   // borders of the surface
-  umin -= fabs(umax-umin)/100.0;
-  vmin -= fabs(vmax-vmin)/100.0;
-  umax += fabs(umax-umin)/100.0;
-  vmax += fabs(vmax-vmin)/100.0;
+  const double du = umax-umin;
+  const double dv = vmax-vmin;
+  umin -= fabs(du)/100.0;
+  vmin -= fabs(dv)/100.0;
+  umax += fabs(du)/100.0;
+  vmax += fabs(dv)/100.0;
   occface = BRep_Tool::Surface(s);
 }
 

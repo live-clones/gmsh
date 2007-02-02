@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.17 2007-02-01 21:05:53 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.18 2007-02-02 17:16:46 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -99,6 +99,37 @@ Vertex InterpolateCubicSpline(Vertex * v[4], double t, double mat[4][4],
 
   return V;
 }
+
+// interpolation in the parametric space !
+SPoint2 InterpolateCubicSpline(Vertex * v[4], double t, double mat[4][4],
+                              int derivee, double t1, double t2, gmshSurface *s)
+{
+  Vertex V;
+  int i, j;
+  double T[4];
+
+  if(derivee) throw;
+
+  T[3] = 1.;
+  T[2] = t;
+  T[1] = t * t;
+  T[0] = t * t * t;
+  
+  SPoint2 coord [4], p;
+
+  for(i = 0; i < 4; i++) {
+    for(j = 0; j < 4; j++) {
+      coord[i] +=  v[j]->pntOnGeometry * mat[i][j] ;
+    }
+  }
+
+  for(j = 0; j < 4; j++) {
+    p += coord[j] * T[j] ;
+  }
+  return p;
+
+}
+
 
 // Uniform BSplines
 Vertex InterpolateUBS(Curve * Curve, double u, int derivee)
@@ -309,6 +340,7 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
       v[0]->Pos.X = 2. * v[1]->Pos.X - v[2]->Pos.X;
       v[0]->Pos.Y = 2. * v[1]->Pos.Y - v[2]->Pos.Y;
       v[0]->Pos.Z = 2. * v[1]->Pos.Z - v[2]->Pos.Z;
+      v[0]->pntOnGeometry = v[1]->pntOnGeometry * 2. - v[2]->pntOnGeometry;
     }
     else {
       List_Read(c->Control_Points, i - 1, &v[0]);
@@ -318,11 +350,22 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
       v[3]->Pos.X = 2. * v[2]->Pos.X - v[1]->Pos.X;
       v[3]->Pos.Y = 2. * v[2]->Pos.Y - v[1]->Pos.Y;
       v[3]->Pos.Z = 2. * v[2]->Pos.Z - v[1]->Pos.Z;
+      v[3]->pntOnGeometry = v[2]->pntOnGeometry * 2. - v[1]->pntOnGeometry;
     }
     else {
       List_Read(c->Control_Points, i + 2, &v[3]);
     }
-    return InterpolateCubicSpline(v, t, c->mat, 0, t1, t2);
+    if (c->geometry)
+      {
+	SPoint2 pp =  InterpolateCubicSpline(v, t, c->mat, 0, t1, t2,c->geometry);
+	SPoint3 pt = c->geometry->point(pp);
+	V.Pos.X = pt.x();
+	V.Pos.Y = pt.y();
+	V.Pos.Z = pt.z();
+	return V;
+      }
+    else
+      return InterpolateCubicSpline(v, t, c->mat, 0, t1, t2);
 
   default:
     Msg(GERROR, "Unknown curve type in interpolation");

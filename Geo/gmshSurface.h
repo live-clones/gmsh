@@ -34,7 +34,12 @@ class gmshSurface
 protected:  
   static std::map<int,gmshSurface*> allGmshSurfaces;
 public:
-
+  static void reset () {
+    std::map<int,gmshSurface*>::iterator it = allGmshSurfaces.begin();
+    for ( ; it != allGmshSurfaces.end();++it)
+      delete it->second;
+    allGmshSurfaces.clear();
+  };
   static gmshSurface* surfaceByTag ( int tag ) ;
   virtual Range<double> parBounds(int i) const = 0;
   /// Underlying geometric representation of this entity.
@@ -71,15 +76,7 @@ public:
   }
   /// Underlying geometric representation of this entity.
   virtual gmshSurface::gmshSurfaceType geomType() const {return gmshSurface::Sphere;}
-  virtual SPoint3  point       (double par1, double par2) const 
-  {
-
-    const double x = xc + r * sin ( par2 ) * cos ( par1 );
-    const double y = yc + r * sin ( par2 ) * sin ( par1 );
-    const double z = zc + r * cos ( par2 );
-    //    printf("%g %g - %g %g %g\n",par1,par2,x,y,z);
-    return SPoint3 (x,y,z);
-  }
+  virtual SPoint3  point       (double par1, double par2) const ;
   virtual SPoint2 parFromPoint(double x, double y, double z) const 
   {
     // 2 be done 

@@ -1,7 +1,7 @@
 scale = 1 ;
 
-lc1 = .004 * scale ;
-lc2 = .004 * scale ;
+lc1 = .04 * scale ;
+lc2 = .1 * scale ;
 lc3 = 10 * scale ;
 
 Point(3895) = {1.177410e-02*scale,-2.768003e-03*scale,0,lc1};
@@ -623,4 +623,5 @@ Circle(407) = {4352,4351,4355};
 Circle(408) = {4355,4351,4354};
 Circle(409) = {4354,4351,4353};
 Circle(410) = {4353,4351,4352};
-Line {407,408,409,410} In Surface 406;
+//Line {407,408,409,410} In Surface {406};
+Attractor Line {1 ... 12} = {0.1,lc4/50,lc3/5,200,10};

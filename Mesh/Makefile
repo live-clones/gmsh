@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.161 2007-02-01 15:09:43 geuzaine Exp $
+# $Id: Makefile,v 1.162 2007-02-02 17:16:46 remacle Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -31,6 +31,7 @@ INCLUDE = -I../Numeric -I../Common -I../DataStr -I../Geo -I../Mesh\
 CFLAGS  =  ${OPTIM} ${FLAGS} ${INCLUDE} 
 
 SRC = Generator.cpp \
+      Attractors.cpp\
         meshGEdge.cpp \
         meshGEdgeExtruded.cpp \
         meshGFace.cpp \

@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.30 2007-01-25 08:56:14 geuzaine Exp $
+// $Id: GModel.cpp,v 1.31 2007-02-02 17:16:46 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,8 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GModel.h"
+#include "gmshSurface.h"
+#include "Attractors.h"
 #include "MRep.h"
 
 void GModel::destroy()
@@ -40,8 +42,9 @@ void GModel::destroy()
   normals = 0;
   MVertex::resetGlobalNumber();
   MElement::resetGlobalNumber();
+  gmshSurface::reset();
+  Attractor::reset();
 }
-
 GRegion * GModel::regionByTag(int n) const
 {
   GEntity tmp((GModel*)this, n);

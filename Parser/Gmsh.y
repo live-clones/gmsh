@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.257 2007-02-01 21:55:11 geuzaine Exp $
+// $Id: Gmsh.y,v 1.258 2007-02-02 17:16:48 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -44,6 +44,7 @@
 #include "OS.h"
 #include "CreateFile.h"
 #include "gmshSurface.h"
+#include "Attractors.h"
 
 Tree_T *Symbol_T = NULL;
 
@@ -1078,11 +1079,74 @@ Shape :
       $$.Type = MSH_PHYSICAL_POINT;
       $$.Num = num;
     }
-  | tAttractor tPoint ListOfDouble tAFFECT '{' FExpr ',' FExpr ',' FExpr '}'  tEND
+  | tAttractor tPoint ListOfDouble tAFFECT ListOfDouble  tEND
     {
-      yymsg(WARNING, "Attractors are deprecated");
-      List_Delete($3);
-      $$.Type = 0;
+      double pars[] = { CTX.lc/10 , CTX.lc/100. , CTX.lc/20, 10 , 3 };
+
+      for (int i=0;i<List_Nbr($5);i++)
+	{
+	  if (i > 4) 
+	    yymsg(GERROR, "Too many paramaters for attractor line (max = 5)");	  
+	  else
+	    List_Read($5,i,&pars[i]);
+	}
+
+      Attractor *att = tresholdAttractor::New ( pars[0], pars[1],pars[2], pars[4] );
+
+      for(int i = 0; i < List_Nbr($3); i++){
+	double d;
+	List_Read($3, i, &d);
+	Vertex *v = FindPoint((int)d); 
+	
+	// treshold attractor, the first parameter is the treshold and the
+	// two other parameters are the in and out size fields
+	if(v)
+	  att->addPoint(v->Pos.X,v->Pos.Y,v->Pos.Z);
+	else{
+	  GVertex *gv = GMODEL->vertexByTag((int)d);
+	  if(gv) 
+	    att->addPoint(gv->x(),gv->y(),gv->z());
+	}
+      }
+      att->buildFastSearchStructures();
+      $$.Type = MSH_POINT_ATTRACTOR;
+      $$.Num = 0;
+    }
+  | tAttractor tLine ListOfDouble tAFFECT ListOfDouble tEND
+    {
+      double pars[] = { CTX.lc/10 , CTX.lc/100. , CTX.lc/20, 10 , 3 };
+
+      for (int i=0;i<List_Nbr($5);i++)
+	{
+	  if (i > 4) 
+	    yymsg(GERROR, "Too many paramaters for attractor line (max = 5)");	  
+	  else
+	    List_Read($5,i,&pars[i]);
+	}
+
+      Attractor *att = tresholdAttractor::New ( pars[0], pars[1],pars[2], pars[4]);
+
+      for(int i = 0; i < List_Nbr($3); i++){
+	double d;
+	List_Read($3, i, &d);
+	Curve *c = FindCurve((int)d); 
+	
+	// treshold attractor, the first parameter is the treshold and the
+	// two other parameters are the in and out size fields
+	if(c)
+	  {
+	    buildListOfPoints( att , c , (int) pars[3] );
+	  }
+	else{
+	  GEdge *ge = GMODEL->edgeByTag((int)d);
+	  if(ge) 
+	    {
+	      buildListOfPoints( att , ge , (int) pars[3] );
+	    }
+	}
+      }
+      att->buildFastSearchStructures();
+      $$.Type = MSH_LINE_ATTRACTOR;
       $$.Num = 0;
     }
   | tCharacteristic tLength ListOfDouble tAFFECT FExpr tEND
@@ -1341,13 +1405,6 @@ Shape :
       List_Delete($7);
       $$.Type = MSH_SEGM_LOOP;
       $$.Num = num;
-    }
-  | tAttractor tLine ListOfDouble tAFFECT '{' FExpr ',' FExpr ',' FExpr '}'  tEND
-    {
-      yymsg(WARNING, "Attractors are deprecated");
-      List_Delete($3);
-      $$.Type = 0;
-      $$.Num = 0;
     }
   | tPhysical tLine '(' PhysicalId ')' tAFFECT ListOfDouble tEND
     {

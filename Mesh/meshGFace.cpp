@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.56 2007-01-31 14:33:05 remacle Exp $
+// $Id: meshGFace.cpp,v 1.57 2007-02-02 17:16:47 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -34,6 +34,7 @@
 #include "Message.h"
 #include "Numeric.h"
 #include "BDS.h"
+#include "Attractors.h"
 
 extern Context_T CTX;
 
@@ -97,6 +98,7 @@ double F_LC_ANALY(double xx, double yy, double zz)
 
 double NewGetLc(BDS_Point *p)
 {
+  //  double l = Attractor::lc (p->X,p->Y,p->Z);
   return p->lc();
 }
 
@@ -249,25 +251,29 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 {
   int IT =0;
 
+  printf("lc (1,1) = %g\n",Attractor::lc(1,1,0));
+
   int MAXNP = m.MAXPOINTNUMBER;
 
   // computecharacteristic lengths using mesh edge spacing
-  
-  std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
-  while (itp != m.points.end())
+  // separate attractors & 
+  if (!Attractor::size())
     {
-      std::list<BDS_Edge*>::iterator it  = (*itp)->edges.begin();
-      std::list<BDS_Edge*>::iterator ite = (*itp)->edges.end();
-      double L = 1.e22;
-      while(it!=ite){
-	double l = (*it)->length();
-	if (l<L && (*it)->g && (*it)->g->classif_degree == 1)L=l;
-	++it;
-      }
-      (*itp)->lc() = std::max(L,(*itp)->lc());
-      ++itp;
+      std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
+      while (itp != m.points.end())
+	{
+	  std::list<BDS_Edge*>::iterator it  = (*itp)->edges.begin();
+	  std::list<BDS_Edge*>::iterator ite = (*itp)->edges.end();
+	  double L = 1.e22;
+	  while(it!=ite){
+	    double l = (*it)->length();
+	    if (l<L && (*it)->g && (*it)->g->classif_degree == 1)L=l;
+	    ++it;
+	  }
+	  (*itp)->lc() = std::max(L,(*itp)->lc());
+	  ++itp;
+	}
     }
-
 
   double OLDminL=1.E22,OLDmaxL=0;
   while (1)
@@ -335,12 +341,14 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 		  mid  = m.add_point(++m.MAXPOINTNUMBER,
 				     coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
 				     coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v,gf);
-		  double l1 = 0.5 * ( (*it)->p1->lc() +  (*it)->p2->lc() );
-// 		  double l2 = BGM_MeshSize(gf,
-//  					   (coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u)*m.scalingU,
-//  					   (coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v)*m.scalingV,
-// 					   mid->X,mid->Y,mid->Z);
-//		  mid->lc() = std::min(l1,l2);
+  		  double l1;
+		  if (Attractor::size())
+		    l1 = BGM_MeshSize(gf,
+				      (coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u)*m.scalingU,
+				      (coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v)*m.scalingV,
+				      mid->X,mid->Y,mid->Z);
+		  else l1 = 0.5 * ( (*it)->p1->lc() +  (*it)->p2->lc() );
+
 		  mid->lc() = l1;
 		  m.split_edge ( *it, mid );
 		  nb_split++;
@@ -424,7 +432,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	}
 	// recompute mesh sizes takin into account curvature , BGMESH & co
 	m.cleanup();  
-	if (IT == 5 && (CTX.mesh.lc_from_curvature || BGMExists()))
+	if (0 && IT % 5 == 0)
 	{
 	  std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
 	  while (itp != m.points.end())
@@ -831,9 +839,11 @@ bool gmsh2DMeshGenerator ( GFace *gf )
 	}
     }
 
-//    char name[245];
-//    sprintf(name,"param%d.pos",gf->tag());
-//    outputScalarField(m->triangles, name,1);
+    char name[245];
+    sprintf(name,"param%d.pos",gf->tag());
+    outputScalarField(m->triangles, name,1);
+    sprintf(name,"real%d.pos",gf->tag());
+    outputScalarField(m->triangles, name,0);
   // fill the small gmsh structures
 
   {

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.131 2007-02-01 21:05:53 geuzaine Exp $
+# $Id: Makefile,v 1.132 2007-02-02 17:16:46 remacle Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,7 @@ include ../variables
 
 LIB     = ../lib/libGmshGeo.a
 INCLUDE = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Numeric\
-          -I../Parser -I../Fltk -I../contrib/NR -I../contrib/FourierModel
+          -I../Parser -I../Fltk -I../contrib/NR -I../contrib/FourierModel -I../contrib/ANN/include
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
 
 SRC = GEntity.cpp\

@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.26 2007-01-31 14:33:05 remacle Exp $
+// $Id: gmshEdge.cpp,v 1.27 2007-02-02 17:16:46 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -122,6 +122,8 @@ int gmshEdge::minimumMeshSegments () const
   if(geomType() == Circle || geomType() == Ellipse)
     return (int)(fabs(c->Circle.t1 - c->Circle.t2) *
 		 (double)CTX.mesh.min_circ_points / Pi) - 1;
+  else if(geomType() == BSpline)
+    return 3;
   else
     return GEdge::minimumMeshSegments () ;
 }
@@ -145,13 +147,52 @@ SPoint2 gmshEdge::reparamOnFace(GFace *face, double epar,int dir) const
 
   if (s->geometry)
     {
-      Vertex *v[3];
-      List_Read(c->Control_Points, 0, &v[1]);
-      List_Read(c->Control_Points, 1, &v[2]);
-      SPoint2 p =  v[1] -> pntOnGeometry +  (v[2] -> pntOnGeometry - v[1] -> pntOnGeometry) * epar;
-      return p;
+      switch (c->Typ) {
+      case MSH_SEGM_LINE:
+	{
+	  Vertex *v[3];
+	  List_Read(c->Control_Points, 0, &v[1]);
+	  List_Read(c->Control_Points, 1, &v[2]);
+	  SPoint2 p =  v[1] -> pntOnGeometry +  (v[2] -> pntOnGeometry - v[1] -> pntOnGeometry) * epar;
+	  return p;
+	}
+	break;
+      case  MSH_SEGM_SPLN :
+	  {
+	    Vertex *v[4];
+	    Vertex temp1, temp2;
+	    int N = List_Nbr(c->Control_Points);
+	    int i = (int)((double)(N - 1) * epar);
+	    if(i < 0)
+	      i = 0;
+	    if(i >= N - 1)
+	      i = N - 2;
+	    double t1 = (double)(i) / (double)(N - 1);
+	    double t2 = (double)(i + 1) / (double)(N - 1);
+	    double t = (epar - t1) / (t2 - t1);
+	    List_Read(c->Control_Points, i, &v[1]);
+	    List_Read(c->Control_Points, i + 1, &v[2]);
+	    if(!i) {
+	      v[0] = &temp1;
+	      v[0]->pntOnGeometry = v[1]->pntOnGeometry * 2. - v[2]->pntOnGeometry;
+	    }
+	    else {
+	      List_Read(c->Control_Points, i - 1, &v[0]);
+	    }
+	    if(i == N - 2) {
+	      v[3] = &temp2;
+	      v[3]->pntOnGeometry = v[2]->pntOnGeometry * 2. - v[1]->pntOnGeometry;
+	    }
+	    else {
+	      List_Read(c->Control_Points, i + 2, &v[3]);
+	    }
+	    return  InterpolateCubicSpline(v, t, c->mat, 0, t1, t2,c->geometry);
+	  }
+      default :
+	throw;
+      }
     }
-
+  
   if (s->Typ ==  MSH_SURF_REGL){
     Curve *C[4];
     for(int i = 0; i < 4; i++)

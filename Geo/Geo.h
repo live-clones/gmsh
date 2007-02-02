@@ -59,6 +59,9 @@
 #define MSH_PHYSICAL_SURFACE 320
 #define MSH_PHYSICAL_VOLUME  330
 
+#define MSH_POINT_ATTRACTOR  400
+#define MSH_LINE_ATTRACTOR   401
+
 struct Coord{
   double X, Y, Z;
 };
