@@ -58,7 +58,7 @@ class MVertex{
   
   // get the "polynomial order" of the vertex
   inline int getPolynomialOrder(){ return _order; }
-  inline int setPolynomialOrder(char order){ _order = order; }
+  inline void setPolynomialOrder(char order){ _order = order; }
 
   // get/set the coordinates
   inline double x() const { return _x; }

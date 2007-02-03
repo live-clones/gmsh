@@ -1,4 +1,4 @@
-// $Id: gmshSurface.cpp,v 1.3 2007-02-02 17:16:46 remacle Exp $
+// $Id: gmshSurface.cpp,v 1.4 2007-02-03 13:06:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,35 +24,34 @@
 
 std::map<int,gmshSurface*> gmshSurface::allGmshSurfaces;
 
-gmshSurface * gmshSphere :: NewSphere ( int iSphere , double x, double y, double z, double r )
+gmshSurface * gmshSphere::NewSphere(int iSphere, double x, double y, double z, double r)
 {
-  gmshSphere *sph = new gmshSphere ( x,y,z,r );
+  gmshSphere *sph = new gmshSphere(x, y, z, r);
   
-  if (allGmshSurfaces.find(iSphere) != allGmshSurfaces.end())
-    {
-      Msg(GERROR,"gmshSurface %d already exists",iSphere);
-    }
-
-  allGmshSurfaces [iSphere] = sph;
+  if(allGmshSurfaces.find(iSphere) != allGmshSurfaces.end()){
+    Msg(GERROR,"gmshSurface %d already exists",iSphere);
+  }
+  
+  allGmshSurfaces[iSphere] = sph;
+  return sph;
 }
 
-gmshSurface * gmshSurface :: surfaceByTag ( int iSurface ) 
+gmshSurface * gmshSurface::surfaceByTag(int iSurface)
 {
-  std::map<int,gmshSurface*>::iterator it = allGmshSurfaces.find(iSurface);
-  if (it == allGmshSurfaces.end())
-    {
-      Msg(GERROR,"gmshSurface %d does not exist",iSurface);
-      return 0;
-    }
+  std::map<int, gmshSurface*>::iterator it = allGmshSurfaces.find(iSurface);
+  if(it == allGmshSurfaces.end()){
+    Msg(GERROR,"gmshSurface %d does not exist",iSurface);
+    return 0;
+  }
   return it->second;
 }
 
-SPoint3  gmshSphere::point       (double par1, double par2) const 
+SPoint3  gmshSphere::point (double par1, double par2) const
 {
-  par2+= M_PI*.5;
-  const double x = xc + r * sin ( par2 ) * cos ( par1 ); 
-  const double y = yc + r * sin ( par2 ) * sin ( par1 ); 
-  const double z = zc - r * cos ( par2 ); 
-  //    printf("%g %g - %g %g %g\n",par1,par2,x,y,z);
-  return SPoint3 (x,y,z);
+  par2 += M_PI*.5;
+  const double x = xc + r * sin(par2) * cos(par1);
+  const double y = yc + r * sin(par2) * sin(par1);
+  const double z = zc - r * cos(par2); 
+  // printf("%g %g - %g %g %g\n",par1,par2,x,y,z);
+  return SPoint3(x, y, z);
 }

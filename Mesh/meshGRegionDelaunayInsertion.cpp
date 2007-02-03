@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.14 2007-01-31 12:27:18 remacle Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.15 2007-02-03 13:06:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -304,9 +304,9 @@ bool find_triangle_in_model ( GModel *model , MTriangle *tri, GFace **gfound, bo
 
   static compareMTriangleLexicographic cmp;
 
-  GEntity *g1 = tri->getVertex(0)->onWhat();
-  GEntity *g2 = tri->getVertex(1)->onWhat();
-  GEntity *g3 = tri->getVertex(2)->onWhat();
+//   GEntity *g1 = tri->getVertex(0)->onWhat();
+//   GEntity *g2 = tri->getVertex(1)->onWhat();
+//   GEntity *g3 = tri->getVertex(2)->onWhat();
 
 //   if (g1 && g2 && g3 && !force)
 //     {

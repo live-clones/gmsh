@@ -79,7 +79,7 @@ class Vertex {
   double lc, u, w;
   Coord Pos;
   Vertex(double X=0., double Y=0., double Z=0., double l=1., double W=1.)
-    : geometry(0), Visible(1), lc(l), w(W)
+    : geometry(0), Num(0), Visible(1), lc(l), u(0.), w(W)
   {
     Pos.X = X;
     Pos.Y = Y;
