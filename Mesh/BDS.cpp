@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.72 2007-01-16 11:31:41 geuzaine Exp $
+// $Id: BDS.cpp,v 1.73 2007-02-03 15:40:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -32,6 +32,7 @@ bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS
 void outputScalarField(std::list < BDS_Face * >t, const char *iii, int param)
 {
   FILE *f = fopen(iii, "w");
+  if(!f) return;
   fprintf(f, "View \"scalar\" {\n");
   std::list < BDS_Face * >::iterator tit = t.begin();
   std::list < BDS_Face * >::iterator tite = t.end();
