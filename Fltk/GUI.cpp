@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.597 2007-01-30 08:56:36 geuzaine Exp $
+// $Id: GUI.cpp,v 1.598 2007-02-03 19:29:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1785,14 +1785,14 @@ void GUI::create_option_window()
       gen_butt[1]->callback(general_options_ok_cb, (void*)"general_small_axes");
 
       gen_value[26] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
-      gen_value[26]->minimum(-1024);
-      gen_value[26]->maximum(1024);
+      gen_value[26]->minimum(-2000);
+      gen_value[26]->maximum(2000);
       gen_value[26]->step(1);
       gen_value[26]->callback(general_options_ok_cb);
       gen_value[27] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "Small axes position");
       gen_value[27]->align(FL_ALIGN_RIGHT);
-      gen_value[27]->minimum(-1024);
-      gen_value[27]->maximum(1024);
+      gen_value[27]->minimum(-2000);
+      gen_value[27]->maximum(2000);
       gen_value[27]->step(1);
       gen_value[27]->callback(general_options_ok_cb);
 
@@ -2840,26 +2840,26 @@ void GUI::create_option_window()
       view_butt[7]->callback(view_options_ok_cb, (void*)"view_axes_auto_2d");
       
       view_value[20] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
-      view_value[20]->minimum(-1024);
-      view_value[20]->maximum(1024);
+      view_value[20]->minimum(-2000);
+      view_value[20]->maximum(2000);
       view_value[20]->step(1);
       view_value[20]->callback(view_options_ok_cb);
       view_value[21] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "2D axes or value scale position");
       view_value[21]->align(FL_ALIGN_RIGHT);
-      view_value[21]->minimum(-1024);
-      view_value[21]->maximum(1024);
+      view_value[21]->minimum(-2000);
+      view_value[21]->maximum(2000);
       view_value[21]->step(1);
       view_value[21]->callback(view_options_ok_cb);
 
       view_value[22] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH);
       view_value[22]->minimum(0);
-      view_value[22]->maximum(1024);
+      view_value[22]->maximum(2000);
       view_value[22]->step(1);
       view_value[22]->callback(view_options_ok_cb);
       view_value[23] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH, "2D axes or value scale size");
       view_value[23]->align(FL_ALIGN_RIGHT);
       view_value[23]->minimum(0);
-      view_value[23]->maximum(1024);
+      view_value[23]->maximum(2000);
       view_value[23]->step(1);
       view_value[23]->callback(view_options_ok_cb);
 
