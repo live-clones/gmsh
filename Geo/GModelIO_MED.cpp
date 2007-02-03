@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.2 2007-01-29 17:16:02 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.3 2007-02-03 11:21:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -18,6 +18,9 @@
 // USA.
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
+//
+// Contributor(s):
+//   Pascale Noyret
 
 #include <map>
 #include <string>
