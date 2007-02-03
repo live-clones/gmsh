@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.77 2007-02-02 23:50:33 geuzaine Exp $
+// $Id: Geo.cpp,v 1.78 2007-02-03 22:04:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -449,8 +449,8 @@ void End_Curve(Curve * c)
     for(i = 0; i < 4; i++)
       Curve->Circle.v[i] = v[i];
 
-    if(!CTX.expert_mode && Curve->Num > 0 && A3-A1 >= Pi){
-      Msg(GERROR1, "Circle or ellipse arc %d greater than/equal to Pi (angle=%g)",
+    if(!CTX.expert_mode && Curve->Num > 0 && A3 - A1 > 1.01 * Pi){
+      Msg(GERROR1, "Circle or ellipse arc %d greater than Pi (angle=%g)",
 	  Curve->Num, A3-A1);
       Msg(GERROR2, "(If you understand what this implies, you can disable this error");
       Msg(GERROR2, "message by selecting `Enable expert mode' in the option dialog.");

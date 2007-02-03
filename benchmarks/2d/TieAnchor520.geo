@@ -326,9 +326,9 @@ PS122005=news;	Plane Surface(PS122005) =	{LL122005};
 // __________
 // ATTRACTORS
 //
-Attractor Line{L201100} = {.5, .5, .1}; 
-Attractor Line{L201110} = {.5, .5, .1}; 
-Attractor Line{L201125} = {.5, .5, .1}; 
+// Attractor Line{L201100} = {.5, .5, .1}; 
+// Attractor Line{L201110} = {.5, .5, .1}; 
+// Attractor Line{L201125} = {.5, .5, .1}; 
 //
 //
 /********************************************************************* 
@@ -611,11 +611,11 @@ PS136014=news;	Plane Surface(PS136014) =	{LL136014};
 // __________
 // ATTRACTORS
 //
-Attractor Line{L202100} = {.5, .5, .1}; 
-Attractor Line{L202110} = {.5, .5, .1}; 
-Attractor Line{L202210} = {.5, .5, .1}; 
-Attractor Line{L202410} = {.5, .5, .1}; 
-Attractor Line{L202125} = {.5, .5, .1}; 
+// Attractor Line{L202100} = {.5, .5, .1}; 
+// Attractor Line{L202110} = {.5, .5, .1}; 
+// Attractor Line{L202210} = {.5, .5, .1}; 
+// Attractor Line{L202410} = {.5, .5, .1}; 
+// Attractor Line{L202125} = {.5, .5, .1}; 
 //
 //Attractor Point{L236000} = {.25, .25, .1}; 
 //
@@ -830,31 +830,31 @@ PS103905=news;	Plane Surface(PS103905) =	{LL103905};
 // ATTRACTORS
 //
 //
-Attractor Line{L103100} = {.5, .5, .1}; 
-Attractor Line{L103108} = {.5, .5, .1}; 
-Attractor Line{L103110} = {.5, .5, .1}; 
-Attractor Line{L103112} = {.5, .5, .1}; 
+// Attractor Line{L103100} = {.5, .5, .1}; 
+// Attractor Line{L103108} = {.5, .5, .1}; 
+// Attractor Line{L103110} = {.5, .5, .1}; 
+// Attractor Line{L103112} = {.5, .5, .1}; 
 //
-Attractor Line{L103400} = {.5, .5, .1}; 
-Attractor Line{L103405} = {.5, .5, .1}; 
-Attractor Line{L103408} = {.5, .5, .1}; 
-Attractor Line{L103410} = {.5, .5, .1}; 
-Attractor Line{L103412} = {.5, .5, .1}; 
-Attractor Line{L103418} = {.5, .5, .1}; 
+// Attractor Line{L103400} = {.5, .5, .1}; 
+// Attractor Line{L103405} = {.5, .5, .1}; 
+// Attractor Line{L103408} = {.5, .5, .1}; 
+// Attractor Line{L103410} = {.5, .5, .1}; 
+// Attractor Line{L103412} = {.5, .5, .1}; 
+// Attractor Line{L103418} = {.5, .5, .1}; 
 //
 //
-//Attractor Line{L203100} = {.5, .5, .1};
-Attractor Line{L203200} = {.25, .25, .05}; 
-//Attractor Line{L203300} = {.5, .5, .1};
-Attractor Line{L203205} = {.5, .5, .1}; 
-Attractor Line{L203305} = {.5, .5, .1}; 
-Attractor Line{L203110} = {.5, .5, .1}; 
-Attractor Line{L203210} = {.5, .5, .1}; 
-Attractor Line{L203310} = {.5, .5, .1}; 
-Attractor Line{L203215} = {.5, .5, .1}; 
-Attractor Line{L203315} = {.5, .5, .1}; 
+//// Attractor Line{L203100} = {.5, .5, .1};
+// Attractor Line{L203200} = {.25, .25, .05}; 
+//// Attractor Line{L203300} = {.5, .5, .1};
+// Attractor Line{L203205} = {.5, .5, .1}; 
+// Attractor Line{L203305} = {.5, .5, .1}; 
+// Attractor Line{L203110} = {.5, .5, .1}; 
+// Attractor Line{L203210} = {.5, .5, .1}; 
+// Attractor Line{L203310} = {.5, .5, .1}; 
+// Attractor Line{L203215} = {.5, .5, .1}; 
+// Attractor Line{L203315} = {.5, .5, .1}; 
 //Attractor Line{L203125} = {.5, .5, .1};
-Attractor Line{L203225} = {.25, .25, .05}; 
+// Attractor Line{L203225} = {.25, .25, .05}; 
 //Attractor Line{L203325} = {.5, .5, .1}; 
 //
 //
@@ -1318,32 +1318,32 @@ PS104010=news;	Plane Surface(PS104010) =	{LL104010};
 // ATTRACTORS
 //
 //
-Attractor Line{L104100} = {.5, .5, .1}; 
-Attractor Line{L104108} = {.5, .5, .1}; 
-Attractor Line{L104110} = {.5, .5, .1}; 
-Attractor Line{L104112} = {.5, .5, .1}; 
+// Attractor Line{L104100} = {.5, .5, .1}; 
+// Attractor Line{L104108} = {.5, .5, .1}; 
+// Attractor Line{L104110} = {.5, .5, .1}; 
+// Attractor Line{L104112} = {.5, .5, .1}; 
 //
-Attractor Line{L104400} = {.5, .5, .1}; 
-Attractor Line{L104405} = {.5, .5, .1}; 
-Attractor Line{L104408} = {.5, .5, .1}; 
-Attractor Line{L104410} = {.5, .5, .1}; 
-Attractor Line{L104412} = {.5, .5, .1}; 
-Attractor Line{L104415} = {.5, .5, .1}; 
-Attractor Line{L104420} = {.5, .5, .1}; 
+// Attractor Line{L104400} = {.5, .5, .1}; 
+// Attractor Line{L104405} = {.5, .5, .1}; 
+// Attractor Line{L104408} = {.5, .5, .1}; 
+// Attractor Line{L104410} = {.5, .5, .1}; 
+// Attractor Line{L104412} = {.5, .5, .1}; 
+// Attractor Line{L104415} = {.5, .5, .1}; 
+// Attractor Line{L104420} = {.5, .5, .1}; 
 //
 //
-//Attractor Line{L204100} = {.5, .5, .1};
-Attractor Line{L204200} = {.25, .25, .05}; 
-//Attractor Line{L204300} = {.5, .5, .1};
-Attractor Line{L204205} = {.5, .5, .1}; 
-Attractor Line{L204305} = {.5, .5, .1}; 
-Attractor Line{L204110} = {.5, .5, .1}; 
-Attractor Line{L204210} = {.5, .5, .1}; 
-Attractor Line{L204310} = {.5, .5, .1}; 
-Attractor Line{L204220} = {.5, .5, .1}; 
-Attractor Line{L204320} = {.5, .5, .1}; 
-//Attractor Line{L204125} = {.5, .5, .1};
-Attractor Line{L204225} = {.25, .25, .05}; 
+//// Attractor Line{L204100} = {.5, .5, .1};
+// Attractor Line{L204200} = {.25, .25, .05}; 
+//// Attractor Line{L204300} = {.5, .5, .1};
+// Attractor Line{L204205} = {.5, .5, .1}; 
+// Attractor Line{L204305} = {.5, .5, .1}; 
+// Attractor Line{L204110} = {.5, .5, .1}; 
+// Attractor Line{L204210} = {.5, .5, .1}; 
+// Attractor Line{L204310} = {.5, .5, .1}; 
+// Attractor Line{L204220} = {.5, .5, .1}; 
+// Attractor Line{L204320} = {.5, .5, .1}; 
+//// Attractor Line{L204125} = {.5, .5, .1};
+// Attractor Line{L204225} = {.25, .25, .05}; 
 //Attractor Line{L204325} = {.5, .5, .1}; 
 //
 //
@@ -1526,41 +1526,41 @@ PS106024=news;	Plane Surface(PS106024) =	{LL106024};
 //
 // __________
 // ATTRACTORS
-Attractor Line{L106200} = {.5, .5, .1}; 
-Attractor Line{L106220} = {.5, .5, .1}; 
-Attractor Line{L106300} = {.5, .5, .1}; 
-Attractor Line{L106310} = {.5, .5, .1}; 
-Attractor Line{L106315} = {.5, .5, .1}; 
-Attractor Line{L106320} = {.5, .5, .1}; 
-Attractor Line{L106325} = {.5, .5, .1}; 
-Attractor Line{L106330} = {.5, .5, .1}; 
-Attractor Line{L106400} = {.5, .5, .1}; 
-Attractor Line{L106410} = {.5, .5, .1}; 
-Attractor Line{L106415} = {.5, .5, .1}; 
-Attractor Line{L106420} = {.5, .5, .1}; 
-Attractor Line{L106425} = {.5, .5, .1}; 
-Attractor Line{L106430} = {.5, .5, .1}; 
-Attractor Line{L106500} = {.5, .5, .1}; 
-Attractor Line{L106520} = {.5, .5, .1}; 
+// Attractor Line{L106200} = {.5, .5, .1}; 
+// Attractor Line{L106220} = {.5, .5, .1}; 
+// Attractor Line{L106300} = {.5, .5, .1}; 
+// Attractor Line{L106310} = {.5, .5, .1}; 
+// Attractor Line{L106315} = {.5, .5, .1}; 
+// Attractor Line{L106320} = {.5, .5, .1}; 
+// Attractor Line{L106325} = {.5, .5, .1}; 
+// Attractor Line{L106330} = {.5, .5, .1}; 
+// Attractor Line{L106400} = {.5, .5, .1}; 
+// Attractor Line{L106410} = {.5, .5, .1}; 
+// Attractor Line{L106415} = {.5, .5, .1}; 
+// Attractor Line{L106420} = {.5, .5, .1}; 
+// Attractor Line{L106425} = {.5, .5, .1}; 
+// Attractor Line{L106430} = {.5, .5, .1}; 
+// Attractor Line{L106500} = {.5, .5, .1}; 
+// Attractor Line{L106520} = {.5, .5, .1}; 
 //
-Attractor Line{L206100} = {.5, .5, .1}; 
-Attractor Line{L206200} = {.5, .5, .1}; 
-Attractor Line{L206300} = {.5, .5, .1}; 
-Attractor Line{L206400} = {.5, .5, .1}; 
+// Attractor Line{L206100} = {.5, .5, .1}; 
+// Attractor Line{L206200} = {.5, .5, .1}; 
+// Attractor Line{L206300} = {.5, .5, .1}; 
+// Attractor Line{L206400} = {.5, .5, .1}; 
 //
-Attractor Line{L206120} = {.5, .5, .1}; 
-Attractor Line{L206151} = {.5, .5, .1}; 
-Attractor Line{L206220} = {.5, .5, .1}; 
-Attractor Line{L206252} = {.5, .5, .1}; 
-Attractor Line{L206320} = {.5, .5, .1}; 
-Attractor Line{L206352} = {.5, .5, .1}; 
-Attractor Line{L206362} = {.5, .5, .1}; 
-Attractor Line{L206420} = {.5, .5, .1}; 
+// Attractor Line{L206120} = {.5, .5, .1}; 
+// Attractor Line{L206151} = {.5, .5, .1}; 
+// Attractor Line{L206220} = {.5, .5, .1}; 
+// Attractor Line{L206252} = {.5, .5, .1}; 
+// Attractor Line{L206320} = {.5, .5, .1}; 
+// Attractor Line{L206352} = {.5, .5, .1}; 
+// Attractor Line{L206362} = {.5, .5, .1}; 
+// Attractor Line{L206420} = {.5, .5, .1}; 
 //
-Attractor Line{L206140} = {.5, .5, .1}; 
-Attractor Line{L206240} = {.5, .5, .1}; 
-Attractor Line{L206340} = {.5, .5, .1}; 
-Attractor Line{L206440} = {.5, .5, .1}; 
+// Attractor Line{L206140} = {.5, .5, .1}; 
+// Attractor Line{L206240} = {.5, .5, .1}; 
+// Attractor Line{L206340} = {.5, .5, .1}; 
+// Attractor Line{L206440} = {.5, .5, .1}; 
 //
 //
 /********************************************************************* 
@@ -1670,31 +1670,31 @@ PS107008=news;	Plane Surface(PS107008) =	{LL107008};
 //
 // __________
 // ATTRACTORS
-Attractor Line{L107200} = {.5, .5, .1}; 
-Attractor Line{L107220} = {.5, .5, .1}; 
-Attractor Line{L107300} = {.5, .5, .1}; 
-Attractor Line{L107310} = {.5, .5, .1}; 
-Attractor Line{L107320} = {.5, .5, .1}; 
-Attractor Line{L107330} = {.5, .5, .1}; 
-Attractor Line{L107400} = {.5, .5, .1}; 
-Attractor Line{L107410} = {.5, .5, .1}; 
-Attractor Line{L107420} = {.5, .5, .1}; 
-Attractor Line{L107430} = {.5, .5, .1}; 
-Attractor Line{L107500} = {.25, .25, .05}; 
-Attractor Line{L107520} = {.25, .25, .05}; 
+// Attractor Line{L107200} = {.5, .5, .1}; 
+// Attractor Line{L107220} = {.5, .5, .1}; 
+// Attractor Line{L107300} = {.5, .5, .1}; 
+// Attractor Line{L107310} = {.5, .5, .1}; 
+// Attractor Line{L107320} = {.5, .5, .1}; 
+// Attractor Line{L107330} = {.5, .5, .1}; 
+// Attractor Line{L107400} = {.5, .5, .1}; 
+// Attractor Line{L107410} = {.5, .5, .1}; 
+// Attractor Line{L107420} = {.5, .5, .1}; 
+// Attractor Line{L107430} = {.5, .5, .1}; 
+// Attractor Line{L107500} = {.25, .25, .05}; 
+// Attractor Line{L107520} = {.25, .25, .05}; 
 //
-Attractor Line{L207100} = {.5, .5, .1}; 
-Attractor Line{L207200} = {.5, .5, .1}; 
-Attractor Line{L207300} = {.5, .5, .1}; 
-Attractor Line{L207400} = {.5, .5, .1}; 
-Attractor Line{L207120} = {.5, .5, .1}; 
-Attractor Line{L207220} = {.5, .5, .1}; 
-Attractor Line{L207320} = {.5, .5, .1}; 
-Attractor Line{L207420} = {.5, .5, .1}; 
-Attractor Line{L207140} = {.5, .5, .1}; 
-Attractor Line{L207240} = {.5, .5, .1}; 
-Attractor Line{L207340} = {.5, .5, .1}; 
-Attractor Line{L207440} = {.5, .5, .1}; 
+// Attractor Line{L207100} = {.5, .5, .1}; 
+// Attractor Line{L207200} = {.5, .5, .1}; 
+// Attractor Line{L207300} = {.5, .5, .1}; 
+// Attractor Line{L207400} = {.5, .5, .1}; 
+// Attractor Line{L207120} = {.5, .5, .1}; 
+// Attractor Line{L207220} = {.5, .5, .1}; 
+// Attractor Line{L207320} = {.5, .5, .1}; 
+// Attractor Line{L207420} = {.5, .5, .1}; 
+// Attractor Line{L207140} = {.5, .5, .1}; 
+// Attractor Line{L207240} = {.5, .5, .1}; 
+// Attractor Line{L207340} = {.5, .5, .1}; 
+// Attractor Line{L207440} = {.5, .5, .1}; 
 //
 //
 /********************************************************************* 
@@ -1806,20 +1806,20 @@ PS105006=news;	Plane Surface(PS105006) =	{LL105006};
 // __________
 // ATTRACTORS
 //
-Attractor Line{L105215} = {.5, .5, .1}; 
-Attractor Line{L105415} = {.5, .5, .1}; 
+// Attractor Line{L105215} = {.5, .5, .1}; 
+// Attractor Line{L105415} = {.5, .5, .1}; 
 //
-Attractor Line{L205115} = {.5, .5, .1}; 
-Attractor Line{L205215} = {.5, .5, .1}; 
-Attractor Line{L205315} = {.5, .5, .1}; 
-Attractor Line{L205415} = {.5, .5, .1}; 
+// Attractor Line{L205115} = {.5, .5, .1}; 
+// Attractor Line{L205215} = {.5, .5, .1}; 
+// Attractor Line{L205315} = {.5, .5, .1}; 
+// Attractor Line{L205415} = {.5, .5, .1}; 
 //Attractor Line{L205220} = {.25, .25, .1}; 
 //Attractor Line{L205320} = {.25, .25, .1}; 
 //
-Attractor Line{L205130} = {.5, .5, .1}; 
-Attractor Line{L205140} = {.5, .5, .1}; 
-Attractor Line{L205150} = {.5, .5, .1}; 
-Attractor Line{L303000} = {.5, .5, .1}; 
+// Attractor Line{L205130} = {.5, .5, .1}; 
+// Attractor Line{L205140} = {.5, .5, .1}; 
+// Attractor Line{L205150} = {.5, .5, .1}; 
+// Attractor Line{L303000} = {.5, .5, .1}; 
 //
 //
 /********************************************************************* 
@@ -1901,10 +1901,10 @@ PS114100=news;	Plane Surface(PS114100) =	{LL114100};
 //
 // __________
 // ATTRACTORS
-Attractor Line{L211110} = {.5, .5, .1}; 
-Attractor Line{L212110} = {.5, .5, .1}; 
-Attractor Line{L213110} = {.5, .5, .1}; 
-Attractor Line{L214110} = {.5, .5, .1}; 
+// Attractor Line{L211110} = {.5, .5, .1}; 
+// Attractor Line{L212110} = {.5, .5, .1}; 
+// Attractor Line{L213110} = {.5, .5, .1}; 
+// Attractor Line{L214110} = {.5, .5, .1}; 
 //
 //
 /********************************************************************* 
@@ -1946,10 +1946,10 @@ PS117100=news;	Plane Surface(PS117100) =	{LL117100};
 //
 // __________
 // ATTRACTORS
-Attractor Line{L117100} = {.25, .25, .15}; 
-Attractor Line{L117110} = {.25, .25, .15}; 
-Attractor Line{L217100} = {.25, .25, .15}; 
-Attractor Line{L217200} = {.25, .25, .15}; 
+// Attractor Line{L117100} = {.25, .25, .15}; 
+// Attractor Line{L117110} = {.25, .25, .15}; 
+// Attractor Line{L217100} = {.25, .25, .15}; 
+// Attractor Line{L217200} = {.25, .25, .15}; 
 //
 //
 /********************************************************************* 
@@ -1991,10 +1991,10 @@ PS118100=news;	Plane Surface(PS118100) =	{LL118100};
 //
 // __________
 // ATTRACTORS
-Attractor Line{L118100} = {.25, .25, .15}; 
-Attractor Line{L118110} = {.25, .25, .15}; 
-Attractor Line{L218100} = {.25, .25, .15}; 
-Attractor Line{L218200} = {.25, .25, .15}; 
+// Attractor Line{L118100} = {.25, .25, .15}; 
+// Attractor Line{L118110} = {.25, .25, .15}; 
+// Attractor Line{L218100} = {.25, .25, .15}; 
+// Attractor Line{L218200} = {.25, .25, .15}; 
 //
 //
 /********************************************************************* 
@@ -2036,8 +2036,8 @@ PS115100=news;	Plane Surface(PS115100) =	{LL115100};
 //
 // __________
 // ATTRACTORS
-Attractor Line{L215100} = {.25, .25, .15}; 
-Attractor Line{L215110} = {.25, .25, .15}; 
+// Attractor Line{L215100} = {.25, .25, .15}; 
+// Attractor Line{L215110} = {.25, .25, .15}; 
 //
 //
 /********************************************************************* 
@@ -2079,8 +2079,8 @@ PS116100=news;	Plane Surface(PS116100) =	{LL116100};
 //
 // __________
 // ATTRACTORS
-Attractor Line{L216100} = {.25, .25, .15}; 
-Attractor Line{L216110} = {.25, .25, .15}; 
+// Attractor Line{L216100} = {.25, .25, .15}; 
+// Attractor Line{L216110} = {.25, .25, .15}; 
 //
 //
 /********************************************************************* 
@@ -2138,10 +2138,10 @@ PS108100=news;	Plane Surface(PS108100) =	{LL108100};
 //
 // __________
 // ATTRACTORS
-Attractor Line{L108101} = {.5, .5, .1}; 
-Attractor Line{L108102} = {.5, .5, .1}; 
-Attractor Line{L108105} = {.5, .5, .1}; 
-Attractor Line{L108106} = {.5, .5, .1}; 
+// Attractor Line{L108101} = {.5, .5, .1}; 
+// Attractor Line{L108102} = {.5, .5, .1}; 
+// Attractor Line{L108105} = {.5, .5, .1}; 
+// Attractor Line{L108106} = {.5, .5, .1}; 
 //
 //
 /********************************************************************* 
@@ -2193,10 +2193,10 @@ PS109100=news;	Plane Surface(PS109100) =	{LL109100};
 //
 // __________
 // ATTRACTORS
-Attractor Line{L109101} = {.5, .5, .1}; 
-Attractor Line{L109102} = {.5, .5, .1}; 
-Attractor Line{L109106} = {.5, .5, .1}; 
-Attractor Line{L109107} = {.5, .5, .1}; 
+// Attractor Line{L109101} = {.5, .5, .1}; 
+// Attractor Line{L109102} = {.5, .5, .1}; 
+// Attractor Line{L109106} = {.5, .5, .1}; 
+// Attractor Line{L109107} = {.5, .5, .1}; 
 //
 //
 /********************************************************************* 
@@ -2272,19 +2272,19 @@ PS110101=news;	Plane Surface(PS110101) =	{LL110101,LL110102};
 //
 // __________
 // ATTRACTORS
-Attractor Line{L110102} = {.5, .5, .10}; 
-Attractor Line{L110104} = {.5, .5, .10}; 
-Attractor Line{L110106} = {.5, .5, .10}; 
-Attractor Line{L110109} = {.5, .5, .10}; 
+// Attractor Line{L110102} = {.5, .5, .10}; 
+// Attractor Line{L110104} = {.5, .5, .10}; 
+// Attractor Line{L110106} = {.5, .5, .10}; 
+// Attractor Line{L110109} = {.5, .5, .10}; 
 //
-Attractor Line{L110601} = {.25, .25, .15}; 
-Attractor Line{L110602} = {.25, .25, .15}; 
-Attractor Line{L110603} = {.25, .25, .15}; 
-Attractor Line{L110604} = {.25, .25, .15}; 
-Attractor Line{L110605} = {.25, .25, .15}; 
-Attractor Line{L110606} = {.25, .25, .15}; 
-Attractor Line{L110607} = {.25, .25, .15}; 
-Attractor Line{L110608} = {.25, .25, .15}; 
+// Attractor Line{L110601} = {.25, .25, .15}; 
+// Attractor Line{L110602} = {.25, .25, .15}; 
+// Attractor Line{L110603} = {.25, .25, .15}; 
+// Attractor Line{L110604} = {.25, .25, .15}; 
+// Attractor Line{L110605} = {.25, .25, .15}; 
+// Attractor Line{L110606} = {.25, .25, .15}; 
+// Attractor Line{L110607} = {.25, .25, .15}; 
+// Attractor Line{L110608} = {.25, .25, .15}; 
 //
 //
 /********************************************************************* 
