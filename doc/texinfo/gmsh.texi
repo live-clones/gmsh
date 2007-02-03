@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.226 2007-01-18 09:12:45 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.227 2007-02-03 00:24:44 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 @c
@@ -370,7 +370,8 @@ inside an @var{n}-th dimensional entity does @emph{not} constrain the
 @var{n}-th dimensional mesh.  Every meshing step is constrained by the
 characteristic length field, which can be uniform, specified by
 characteristic lengths associated with elementary geometrical entities,
-or associated with another mesh (the ``background mesh'').
+associated with another mesh (the ``background mesh''), or defined by
+point or line ``attractors''.
 
 For each meshing step, all structured mesh directives are executed
 first, and serve as additional constraints for the unstructured parts
@@ -448,8 +449,8 @@ algorithms is pretty good; the 3D algorithm is still experimental and slow
 @item
 specify target element sizes accurately. Gmsh provides several
 mechanisms to control the size of the elements in the final mesh:
-through interpolation from geometrical point characteristic lengths or
-from user-defined background meshes (@pxref{Mesh commands});
+through interpolation from sizes specified at geometry points or on a
+background mesh, or using attractors (@pxref{Mesh commands});
 @item
 create simple extruded geometries and meshes (see @ref{Geometry commands},
 and @ref{Mesh commands});
@@ -1942,12 +1943,12 @@ ways to specify the size of the mesh elements for a given geometry:
 @enumerate
 @item
 You can specify characteristic lengths at the points of the geometrical
-model (with the @code{Point} command: see @ref{Points}). The actual size of
-the mesh elements will be computed by linearly interpolating these
+model (with the @code{Point} command: see @ref{Points}). The size of the
+mesh elements will then be computed by linearly interpolating these
 characteristic lengths on the initial mesh (see @ref{Mesh}). This might
-sometimes lead to over-refinement in some areas, so that you may have to add
-``dummy'' geometrical entities in the model in order to get the desired
-element sizes.
+sometimes lead to over-refinement in some areas, so that you may have to
+add ``dummy'' geometrical entities in the model in order to get the
+desired element sizes.
 
 This method works with all the algorithms implemented in the mesh
 module. The final element sizes are of course constrained by the structured
@@ -1970,6 +1971,8 @@ command in a script (@pxref{Post-processing commands}).
 
 Background meshes are supported by all algorithms except the algorithms
 based on Netgen.
+@item
+You can define point or line attractors. [More to come here later.]
 @end enumerate
 
 Here are the mesh commands that are related to the specification of
@@ -1980,6 +1983,10 @@ characteristic lengths:
 Modifies the characteristic length of the points whose identification
 numbers are listed in @var{expression-list}. The new value is given by
 @var{expression}.
+@item Attractor Point @{ @var{expression-list} @} = @{ @var{expression-list} @};
+[More to come here later.]
+@item Attractor Line @{ @var{expression-list} @} = @{ @var{expression-list} @};
+[More to come here later.]
 @end ftable
 
 @c .........................................................................
