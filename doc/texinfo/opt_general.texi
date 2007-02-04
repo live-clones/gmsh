@@ -54,6 +54,11 @@ Current project file name (read-only)@*
 Default value: @code{""}@*
 Saved in: @code{-}
 
+@item General.FltkTheme
+FLTK user interface theme (try e.g. plastic or gtk+)@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.GraphicsFont
 Font used in the graphic window@*
 Default value: @code{"Helvetica"}@*
@@ -68,11 +73,6 @@ Saved in: @code{General.SessionFileName}
 Option file into which session specific information is saved; automatically read on startup@*
 Default value: @code{".gmshrc"}@*
 Saved in: @code{-}
-
-@item General.FltkTheme
-FLTK user interface theme (try e.g. plastic or gtk+)@*
-Default value: @code{""}@*
-Saved in: @code{General.OptionsFileName}
 
 @item General.TextEditor
 System command to launch a text editor@*

@@ -62,6 +62,8 @@ StringXString GeneralOptions_String[] = {
 
   { F,   "FileName" , opt_general_filename , "" , 
     "Current project file name (read-only)" },
+  { F|O, "FltkTheme" , opt_general_gui_theme , "" ,
+    "FLTK user interface theme (try e.g. plastic or gtk+)" },
 
   { F|O, "GraphicsFont" , opt_general_graphics_font , "Helvetica" ,
     "Font used in the graphic window" }, 
@@ -71,8 +73,6 @@ StringXString GeneralOptions_String[] = {
 
   { 0,   "SessionFileName" , opt_general_session_filename , ".gmshrc" ,
     "Option file into which session specific information is saved; automatically read on startup" },
-  { F|O, "FltkTheme" , opt_general_gui_theme , "" ,
-    "FLTK user interface theme (try e.g. plastic or gtk+)" },
 
   { F|O, "TextEditor" , opt_general_editor , 
 #if defined(WIN32)
@@ -470,8 +470,10 @@ StringXNumber GeneralOptions_Number[] = {
     "Number of tics on the Y-axis" },
   { F|O, "AxesTicsZ" , opt_general_axes_tics2 , 5. ,
     "Number of tics on the Z-axis" },
+
   { F|O, "BackgroundGradient" , opt_general_background_gradient , 1. ,
     "Draw background gradient (0=none, 1=vertical, 2=horizontal, 3=radial)" },
+
   { F,   "Clip0" , opt_general_clip0 , 0. ,
     "Enable clipping plane 0 (Geometry=2^0, Mesh=2^1, View[i]=2^(2+i))" },
   { F,   "Clip0A" , opt_general_clip0a , 1.0 ,
@@ -898,6 +900,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. , 
     "Display mesh hexahedra?" },
 
+  { F|O, "LabelsFrequency" , opt_mesh_label_frequency , 100. , 
+    "Labels display frequency?" },
   { F|O, "LabelType" , opt_mesh_label_type , 0. , 
     "Type of element label (0=element number, 1=elementary entity number, 2=physical entity number, 3=partition number, 4=coordinates)" },
   { F|O, "Light" , opt_mesh_light , 1. , 
@@ -1008,9 +1012,6 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "VolumeNumbers" , opt_mesh_volumes_num , 0. , 
     "Display volume mesh element numbers?" },
 
-  { F|O, "LabelsFrequency" , opt_mesh_label_frequency , 100. , 
-    "Labels display frequency?" },
-
   { 0, NULL , NULL , 0. , NULL }
 } ;
 
@@ -1018,16 +1019,32 @@ StringXNumber SolverOptions_Number[] = {
   { F|O, "AlwaysListen" , opt_solver_listen , 0. ,
     "Always listen to incoming connection requests?" },
 
+  { F|O, "ClientServer0" , opt_solver_client_server0 , 1. ,
+    "Connect solver 0 to the Gmsh server" },
+  { F|O, "ClientServer1" , opt_solver_client_server1 , 0. ,
+    "Connect solver 1 to the Gmsh server" },
+  { F|O, "ClientServer2" , opt_solver_client_server2 , 0. ,
+    "Connect solver 2 to the Gmsh server" },
+  { F|O, "ClientServer3" , opt_solver_client_server3 , 0. ,
+    "Connect solver 3 to the Gmsh server" },
+  { F|O, "ClientServer4" , opt_solver_client_server4 , 0. ,
+    "Connect solver 4 to the Gmsh server" },
+
   { F|O, "MaximumDelay" , opt_solver_max_delay , 4.0 ,
     "Maximum delay (in seconds) allowed for solver response" },
+  { F|O, "MergeViews0" , opt_solver_merge_views0 , 1. , 
+    "Automatically merge any post-processing view created by solver 0" },
+  { F|O, "MergeViews1" , opt_solver_merge_views1 , 1. , 
+    "Automatically merge any post-processing view created by solver 1" },
+  { F|O, "MergeViews2" , opt_solver_merge_views2 , 1. , 
+    "Automatically merge any post-processing view created by solver 2" },
+  { F|O, "MergeViews3" , opt_solver_merge_views3 , 1. , 
+    "Automatically merge any post-processing view created by solver 3" },
+  { F|O, "MergeViews4" , opt_solver_merge_views4 , 1. , 
+    "Automatically merge any post-processing view created by solver 4" },
 
   { F|O, "Plugins" , opt_solver_plugins , 0. ,
     "Enable default solver plugins?" },
-
-  { F|O, "ClientServer0" , opt_solver_client_server0 , 1. ,
-    "Connect solver 0 to the Gmsh server" },
-  { F|O, "MergeViews0" , opt_solver_merge_views0 , 1. , 
-    "Automatically merge any post-processing view created by solver 0" },
   { F|O, "PopupMessages0" , opt_solver_popup_messages0 , 
 #if defined(WIN32)
     0. , // we already have the transient DOS window
@@ -1035,32 +1052,12 @@ StringXNumber SolverOptions_Number[] = {
     1. ,
 #endif
     "Automatically display messages produced by solver 0" },
-
-  { F|O, "ClientServer1" , opt_solver_client_server1 , 0. ,
-    "Connect solver 1 to the Gmsh server" },
-  { F|O, "MergeViews1" , opt_solver_merge_views1 , 1. , 
-    "Automatically merge any post-processing view created by solver 1" },
   { F|O, "PopupMessages1" , opt_solver_popup_messages1 , 1. ,
     "Automatically display messages produced by solver 1" },
-
-  { F|O, "ClientServer2" , opt_solver_client_server2 , 0. ,
-    "Connect solver 2 to the Gmsh server" },
-  { F|O, "MergeViews2" , opt_solver_merge_views2 , 1. , 
-    "Automatically merge any post-processing view created by solver 2" },
   { F|O, "PopupMessages2" , opt_solver_popup_messages2 , 1. ,
     "Automatically display messages produced by solver 2" },
-
-  { F|O, "ClientServer3" , opt_solver_client_server3 , 0. ,
-    "Connect solver 3 to the Gmsh server" },
-  { F|O, "MergeViews3" , opt_solver_merge_views3 , 1. , 
-    "Automatically merge any post-processing view created by solver 3" },
   { F|O, "PopupMessages3" , opt_solver_popup_messages3 , 1. ,
     "Automatically display messages produced by solver 3" },
-
-  { F|O, "ClientServer4" , opt_solver_client_server4 , 0. ,
-    "Connect solver 4 to the Gmsh server" },
-  { F|O, "MergeViews4" , opt_solver_merge_views4 , 1. , 
-    "Automatically merge any post-processing view created by solver 4" },
   { F|O, "PopupMessages4" , opt_solver_popup_messages4 , 1. ,
     "Automatically display messages produced by solver 4" },
 
@@ -1159,7 +1156,6 @@ StringXNumber ViewOptions_Number[] = {
     "Incremental colormap rotation" },
   { F|O, "ColormapSwap" , opt_view_colormap_swap , 0. ,
     "Swap the min/max values in the colormap?" },
-
   { F,   "CustomMax" , opt_view_custom_max , 0. , 
     "User-defined maximum value to be displayed" },
   { F,   "CustomMin" , opt_view_custom_min , 0. , 
@@ -1312,7 +1308,7 @@ StringXNumber ViewOptions_Number[] = {
     "Element (3,2) of the 3x3 coordinate transformation matrix" },
   { F,   "Transform33" , opt_view_transform22 , 1. ,
     "Element (3,3) of the 3x3 coordinate transformation matrix" },
-  { F, "Type" , opt_view_type , DRAW_POST_3D ,
+  { F,   "Type" , opt_view_type , DRAW_POST_3D ,
     "Type of plot (1=3D, 2=2D space, 3=2D time)" },
 
   { F|O, "UseGeneralizedRaise" , opt_view_use_gen_raise , 0 ,

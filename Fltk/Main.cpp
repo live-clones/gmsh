@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.103 2007-01-22 16:31:42 geuzaine Exp $
+// $Id: Main.cpp,v 1.104 2007-02-04 11:24:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -31,7 +31,6 @@
 #include "Draw.h"
 #include "Context.h"
 #include "Options.h"
-#include "ColorTable.h"
 #include "Parser.h"
 #include "OpenFile.h"
 #include "CommandLine.h"

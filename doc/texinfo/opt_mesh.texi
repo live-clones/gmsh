@@ -114,6 +114,11 @@ Display mesh hexahedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.LabelsFrequency
+Labels display frequency?@*
+Default value: @code{100}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.LabelType
 Type of element label (0=element number, 1=elementary entity number, 2=physical entity number, 3=partition number, 4=coordinates)@*
 Default value: @code{0}@*
@@ -362,11 +367,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.VolumeNumbers
 Display volume mesh element numbers?@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.LabelsFrequency
-Labels display frequency?@*
-Default value: @code{100}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Points

@@ -618,28 +618,8 @@ Always listen to incoming connection requests?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Solver.MaximumDelay
-Maximum delay (in seconds) allowed for solver response@*
-Default value: @code{4}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Solver.Plugins
-Enable default solver plugins?@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Solver.ClientServer0
 Connect solver 0 to the Gmsh server@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Solver.MergeViews0
-Automatically merge any post-processing view created by solver 0@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Solver.PopupMessages0
-Automatically display messages produced by solver 0@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -648,8 +628,58 @@ Connect solver 1 to the Gmsh server@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Solver.ClientServer2
+Connect solver 2 to the Gmsh server@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.ClientServer3
+Connect solver 3 to the Gmsh server@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.ClientServer4
+Connect solver 4 to the Gmsh server@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.MaximumDelay
+Maximum delay (in seconds) allowed for solver response@*
+Default value: @code{4}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.MergeViews0
+Automatically merge any post-processing view created by solver 0@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Solver.MergeViews1
 Automatically merge any post-processing view created by solver 1@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.MergeViews2
+Automatically merge any post-processing view created by solver 2@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.MergeViews3
+Automatically merge any post-processing view created by solver 3@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.MergeViews4
+Automatically merge any post-processing view created by solver 4@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.Plugins
+Enable default solver plugins?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.PopupMessages0
+Automatically display messages produced by solver 0@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -658,43 +688,13 @@ Automatically display messages produced by solver 1@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Solver.ClientServer2
-Connect solver 2 to the Gmsh server@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Solver.MergeViews2
-Automatically merge any post-processing view created by solver 2@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Solver.PopupMessages2
 Automatically display messages produced by solver 2@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Solver.ClientServer3
-Connect solver 3 to the Gmsh server@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Solver.MergeViews3
-Automatically merge any post-processing view created by solver 3@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Solver.PopupMessages3
 Automatically display messages produced by solver 3@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Solver.ClientServer4
-Connect solver 4 to the Gmsh server@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Solver.MergeViews4
-Automatically merge any post-processing view created by solver 4@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
