@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.11 2006-12-16 20:52:37 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.12 2007-02-04 15:59:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -63,7 +63,7 @@ bool ProcessSelectionBuffer(int entityType,
 
   // In our case the selection buffer size is equal to between 5 and 7
   // times the maximum number of possible hits
-  int eles = (meshSelection && CTX.pick_elements) ? 4 * GMODEL->numElement() : 0;
+  int eles = (meshSelection && CTX.pick_elements) ? 4 * GMODEL->numElements() : 0;
   int size = 7 * (GMODEL->numVertex() + GMODEL->numEdge() + GMODEL->numFace() + 
 		  GMODEL->numRegion() + eles) + 1000 ;
 

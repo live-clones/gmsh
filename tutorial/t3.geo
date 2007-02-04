@@ -40,14 +40,13 @@ out[] = Extrude { {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , Pi/2 } {
   Surface{news-1}; Layers{10}; Recombine; 
 };
 
-// In this last extrusion command we retrieved the volume
-// number programatically by saving the output of the command
-// into an array. This array will contain the "top" of the extruded
-// surface (in out[0]) as well as the newly created volume (in
-// out[1]).
+// In this last extrusion command we retrieved the volume number
+// programatically by saving the output of the command into a
+// list. This list will contain the "top" of the extruded surface (in
+// out[0]) as well as the newly created volume (in out[1]).
 
-// We can then define a new physical volume to save all
-// the tetrahedra with a common region number (101):
+// We can then define a new physical volume to save all the tetrahedra
+// with a common region number (101):
 
 Physical Volume(101) = {1, 2, out[1]};
 
@@ -74,5 +73,5 @@ Geometry.Color.Surfaces = Geometry.Color.Points;
 // window to see the current values of all options. To save all the
 // options in a file, you can use the `File->Save as->Gmsh options'
 // menu. To save the current options as the default options for all
-// future Gmsh sessions, you should use the `Tools->Options->Save'
-// button.
+// future Gmsh sessions, you should use the `Tools->Options->Save as
+// defaults' button.

@@ -73,7 +73,7 @@ Extrude {0, 0, h} { Surface{11}; }
 
 // All these geometrical transformations automatically generate new
 // elementary entities. The following command permits to manually
-// specify a characteristic length for some of the new points:
+// assign a characteristic length to some of the new points:
 
 Characteristic Length {tmp[0], 2, 12, 3, 16, 6, 22} = lc * 4;
 

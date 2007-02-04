@@ -136,8 +136,11 @@ class GModel
   // Returns the mesh status for the entire model.
   virtual int getMeshStatus();
 
+  // Returns the total number of vertices in the mesh
+  virtual int numVertices();
+
   // Returns the total number of elements in the mesh
-  virtual int numElement();
+  virtual int numElements();
 
   // The list of partitions
   virtual std::set<int> &getMeshPartitions() { return meshPartitions; }

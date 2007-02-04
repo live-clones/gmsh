@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.113 2007-01-18 10:18:30 geuzaine Exp $
+// $Id: Generator.cpp,v 1.114 2007-02-04 15:59:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -302,6 +302,8 @@ void GenerateMesh(int ask)
   // Create second order elements
   if(GMODEL->getMeshStatus() && CTX.mesh.order == 2) 
     Degre2(CTX.mesh.second_order_linear, CTX.mesh.second_order_incomplete);
+
+  Msg(INFO, "%d vertices %d elements", GMODEL->numVertices(), GMODEL->numElements());
 
   CTX.threads_lock = 0;
   CTX.mesh.changed = ENT_ALL;

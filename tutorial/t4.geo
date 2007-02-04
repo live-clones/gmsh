@@ -55,28 +55,28 @@ Point(25)= {  0 , h1+h3-R2,    0.0 , Lc2};
 Line(1)  = {1 ,17};
 Line(2)  = {17,16};
 
-// Since not all curves are straight lines, Gmsh provides many other
-// curve primitives: splines, B-splines, circle arcs, ellipse arcs,
-// etc. Here we define a new circle arc, starting at point 14 and
-// ending at point 16, with the circle's center being the point 15:
+// Gmsh provides other curve primitives than stright lines: splines,
+// B-splines, circle arcs, ellipse arcs, etc. Here we define a new
+// circle arc, starting at point 14 and ending at point 16, with the
+// circle's center being the point 15:
 
 Circle(3) = {14,15,16};
  
-// Note that, in Gmsh, circle arcs should always be stricly smaller
-// than Pi. We can then define additional lines and circles, as well
-// as a new surface:
+// Note that, in Gmsh, circle arcs should always be smaller than
+// Pi. We can then define additional lines and circles, as well as a
+// new surface:
 
 Line(4)  = {14,13};
 Line(5)  = {13,12};
 Line(6)  = {12,11};
 Line(7)  = {11,10};
-Circle(8) = { 8, 9,10};
-Line(9)  = { 8, 7};
-Line(10) = { 7, 6};
-Line(11) = { 6, 5};
-Circle(12) = { 3, 4, 5};
-Line(13) = { 3, 2};
-Line(14) = { 2, 1};
+Circle(8) = {8,9,10};
+Line(9)  = {8,7};
+Line(10) = {7,6};
+Line(11) = {6,5};
+Circle(12) = {3,4,5};
+Line(13) = {3,2};
+Line(14) = {2,1};
 Line(15) = {18,19};
 Circle(16) = {21,20,24};
 Circle(17) = {24,20,19};
@@ -87,8 +87,8 @@ Line(20) = {21,22};
 Line Loop(21) = {17,-15,18,19,-20,16};
 Plane Surface(22) = {21};
 
-// But we still need to define the exterior surface. Since it has a
-// hole, its definition now requires two lines loops:
+// But we still need to define the exterior surface. Since this
+// surface has a hole, its definition now requires two lines loops:
 
 Line Loop(23) = {11,-12,13,14,1,2,-3,4,5,6,7,-8,9,10};
 Plane Surface(24) = {23,21};

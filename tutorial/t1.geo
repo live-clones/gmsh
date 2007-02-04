@@ -7,29 +7,22 @@
  *
  *********************************************************************/
 
-// The simplest construction of Gmsh's scripting language is the
+// The simplest construction in Gmsh's scripting language is the
 // `affectation'. The following command defines a new variable `lc':
 
 lc = 0.009;
 
-// This variable can then for example be used in the definition of
-// Gmsh's simplest `elementary entity', a `Point'. A Point is defined
-// by a list of four numbers: its three coordinates (X, Y and Z), and
-// a characteristic length which sets the target element size at the
-// point:
+// This variable can then be used in the definition of Gmsh's simplest
+// `elementary entity', a `Point'. A Point is defined by a list of
+// four numbers: three coordinates (X, Y and Z), and a characteristic
+// length (lc) that sets the target element size at the point:
 
-Point(1) = {0, 0, 0, 9.e-1 * lc};
+Point(1) = {0, 0, 0, lc};
 
-// The actual distribution of the mesh element sizes is then obtained
-// by interpolation of these characteristic lengths throughout the
-// geometry. Another method to specify characteristic lengths is to use
-// a background mesh (see `t7.geo' and `bgmesh.pos').
-
-// As can be seen in the previous definition, more complex expressions
-// can be constructed from variables and floating point
-// constants. Here, the product of the variable `lc' by the constant
-// 9.e-1 is given as the fourth argument of the list defining the
-// point.
+// The distribution of the mesh element sizes is then obtained by
+// interpolation of these characteristic lengths throughout the
+// geometry. Another method to specify characteristic lengths is to
+// use a background mesh (see `t7.geo' and `bgmesh.pos').
 
 // We can then define some additional points as well as our first
 // curve.  Curves are Gmsh's second type of elementery entities, and,
@@ -74,8 +67,8 @@ Plane Surface(6) = {5} ;
 Physical Point(1) = {1,2} ;
 
 // Consequently, two punctual elements will be saved in the output
-// files, both with the region number 1. The mechanism is identical
-// for line or surface elements:
+// mesh file, both with the region number 1. The mechanism is
+// identical for line or surface elements:
 
 MyLine = 99;
 Physical Line(MyLine) = {1,2,4} ;
@@ -83,11 +76,11 @@ Physical Line(MyLine) = {1,2,4} ;
 Physical Surface("My fancy surface label") = {6} ;
 
 // All the line elements created during the meshing of lines 1, 2 and
-// 4 will be saved in the output file with the region number 99; and
-// all the triangular elements resulting from the discretization of
-// surface 6 will be given an automatic region number (100).
+// 4 will be saved in the output mesh file with the region number 99;
+// and all the triangular elements resulting from the discretization
+// of surface 6 will be given an automatic region number (100,
+// associated with the label "My fancy surface label").
 
-// Note that, if no physical entities are defined, all the elements in
-// the mesh will be directly saved with their default orientation and
-// with a region number equal to the number of the elementary entity
-// they discretize.
+// Note that if no physical entities are defined, then all the
+// elements in the mesh will be saved "as is", with their default
+// orientation.

@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.32 2007-02-02 23:50:33 geuzaine Exp $
+// $Id: GModel.cpp,v 1.33 2007-02-04 15:59:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -300,7 +300,21 @@ int GModel::getMeshStatus()
   return -1;
 }
 
-int GModel::numElement()
+int GModel::numVertices()
+{
+  int n = 0;
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    n += (*it)->mesh_vertices.size();
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    n += (*it)->mesh_vertices.size();
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    n += (*it)->mesh_vertices.size();
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    n += (*it)->mesh_vertices.size();
+  return n;
+}
+
+int GModel::numElements()
 {
   int n = 0;
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
@@ -381,7 +395,7 @@ static int checkElements(std::vector<T*> &elements,
 
 void GModel::checkMeshCoherence()
 {
-  int numEle = numElement();
+  int numEle = numElements();
   if(!numEle) return;
 
   Msg(INFO, "Checking mesh coherence (%d elements)", numEle);
