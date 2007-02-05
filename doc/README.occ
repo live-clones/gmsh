@@ -44,7 +44,7 @@ How to build OpenCascade 6.1 for Gmsh:
 
 *************************************************************************
 
-MINGW: too many patches to list here: 
+MINGW: 
 
 1) export CC="gcc -mno-cygwin -DWNT=1 -DWIN32"
    export CXX="g++ -mno-cygwin -DWNT=1 -DWIN32"
@@ -54,32 +54,15 @@ MINGW: too many patches to list here:
 
 3) remove ALL the dllimport/dllexport stuff
 
-4) apply same uname patch as for APPLE (see below)
-
-I will try to consolidate all these patches in a single one and submit
-it to the OCC folks, but it's not easy: we must first find a way to
-uniquely identify gcc on mingw.
+4) add __MINGW32__ case in OSD/OSD_Path.cxx (to avoid call to uname())
 
 *************************************************************************
 
 APPLE: 
 
-1) add dummy "malloc.h" in inc/
+1) guard all #include<malloc.h> with #ifdef HAVE_MALLOC_H
 
-2) comment out 'uname' stuff in OSD/OSD_Path.cxx
-
-#else
-/*
-  struct utsname info;
-  uname(&info);
-  cout << info.sysname << endl;
-  cout << info.nodename << endl;
-  cout << info.release << endl;
-  cout << info.version << endl;
-  cout << info.machine << endl;
-*/
-  return OSD_Default;
-}
+2) add __APPLE__ case in OSD/OSD_Path.cxx (to avoid call to uname())
 
 3) IMPORTANT (mmap crashes): add this in Standard/Standard.cxx
 
@@ -90,5 +73,8 @@ APPLE:
 #endif
 
 *************************************************************************
+
+The above patches have been submitted to the OCC folks. Hopefully they
+will be integrated in their next release.
 
 PS: to strip static libaries of debug symbols, use "strip -S *.a"

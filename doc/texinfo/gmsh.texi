@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.227 2007-02-03 00:24:44 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.228 2007-02-05 08:59:31 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 @c
@@ -2721,8 +2721,8 @@ In the following, for a 2 button mouse, @kbd{Middle button} =
 @kbd{Move the mouse}:
 @itemize @bullet
 @item
-Highlight the elementary geometrical entity currently under the mouse
-pointer and display its properties in the status bar
+Highlight the entity under the mouse pointer and display its properties
+in the status bar
 @item
 Resize a lasso zoom or a lasso selection/unselection started with
 @kbd{Ctrl+Left button}

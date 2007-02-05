@@ -1,4 +1,13 @@
-$Id: TODO,v 1.44 2007-02-02 23:50:38 geuzaine Exp $
+$Id: TODO,v 1.45 2007-02-05 08:59:31 geuzaine Exp $
+
+********************************************************************
+
+add parameter to geo transforms to copy the meshes--this would allow
+us to do symmetries and periodic meshes
+
+********************************************************************
+
+add transformations on volumes
 
 ********************************************************************
 
@@ -8,10 +17,6 @@ we should delete any unused vertices [for akash]
 ********************************************************************
 
 introduce Right/Left/Alternate for extruded meshes
-
-********************************************************************
-
-fix second order mesh for periodic surfaces
 
 ********************************************************************
 
@@ -38,10 +43,9 @@ extruded+recombined surfaces to create Transfinite Volumes?
 
 ********************************************************************
 
-BDF todo: 
-- parse CORDxx entries to get coordinate system definitions
-- use them when reading GRID
-- parse GRIDxx for axisym points
+parse CORDxx entries in Nastran files to get coordinate system
+definitions and use them when reading GRID + parse GRIDxx for axisym
+points
 
 ********************************************************************
 
@@ -54,13 +58,16 @@ add Mesh>Edit>Change orientation>Lines & Surfaces
 
 ********************************************************************
 
-- option to fl_beep() when mesh is done
-- warning+error counter (display counters on Exit())
+add option to fl_beep() when mesh is done
 
 ********************************************************************
 
-should implement a better algo to determine which axes to draw 
-(cf. mathematica or qwt3dplot)
+add warning+error counter/buffer (display counter/buffer on Exit())
+
+********************************************************************
+
+implement better algo to determine which axes to draw
+(cf. mathematica)
 
 ********************************************************************
 
@@ -92,10 +99,8 @@ add option to draw "filled isos" using 1D textures?
 
 ********************************************************************
 
-add GUI for 
-
-- translate+rotate extrusions
-- mesh extrusion (layer stuff)
+add GUI for translate+rotate extrusions and for mesh extrusion (layer
+stuff)
 
 ********************************************************************
 
@@ -133,14 +138,6 @@ index-based format)
 
 ********************************************************************
 
-add parameter to transformation operations to copy the meshes
-
-********************************************************************
-
-add transformations on volumes
-
-********************************************************************
-
 add/restore Parametric curve type (use MathEval!)
 
 ********************************************************************
@@ -160,11 +157,7 @@ be solved if we had dynamic labels?)
 
 ********************************************************************
 
-The "Symmetry" operation should be renamed "Reflection" (?)
-
-********************************************************************
-
-Rewrite the View and ColorTable interface in C++
+rewrite the View and ColorTable interface in C++
 
 ********************************************************************
 
@@ -176,7 +169,7 @@ post-processing file format:
 
 ********************************************************************
 
-Create "Volume visualization" range type? (interpolate on regular grid
+create "Volume visualization" range type? (interpolate on regular grid
 + create cut planes // to viewpoint with transparency; can be done in
 a straightforward way or using 3D textures)
 

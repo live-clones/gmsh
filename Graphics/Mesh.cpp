@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.196 2007-01-28 17:26:53 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.197 2007-02-05 08:59:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -74,7 +74,10 @@ static unsigned int getColorByElement(MElement *ele)
   else if(CTX.mesh.color_carousel == 3){ // by partition
     return CTX.color.mesh.carousel[abs(ele->getPartition() % 20)];
   }
-  else{ // by entity
+  else{ // by elementary or physical entity
+    // this is not perfect (e.g. a triangle can have no vertices
+    // categorized on a surface), but it's the best we can do "fast"
+    // since we don't store the associated entity in the element
     for(int i = 0; i < ele->getNumVertices(); i++){
       GEntity *e = ele->getVertex(i)->onWhat();
       if(e && (e->dim() == ele->getDim()))

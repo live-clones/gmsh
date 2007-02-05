@@ -120,9 +120,9 @@ Linux and Mac OS X. The tutorial and demo files are included in the
 archives.
 
 <ul>
-<li><a href="/gmsh/bin/Windows/gmsh-2.0.0-Windows.zip">Windows (95/98/NT/2000/XP)</a>
-<li><a href="/gmsh/bin/Linux/gmsh-2.0.0-Linux.tgz">Linux (i386, glibc 2.3 and above)</a> 
-<li><a href="/gmsh/bin/MacOSX/gmsh-2.0.0-MacOSX.tgz">Mac OS X (Intel, 10.4.x)</a>
+<li><a href="/gmsh/bin/Windows/gmsh-2.0.0-Windows.zip">Windows (NT, 2000, XP)</a>
+<li><a href="/gmsh/bin/Linux/gmsh-2.0.0-Linux.tgz">Linux (Intel, glibc 2.3)</a> 
+<li><a href="/gmsh/bin/MacOSX/gmsh-2.0.0-MacOSX.tgz">Mac OS X (Intel, 10.4)</a>
 <li><a href="/gmsh/src/gmsh-2.0.0-source.tgz">Source (all platforms)</a>
     <a href="#build-footnote" name="build-footmark"><sup>2</sup></a>
 </ul>
@@ -132,16 +132,16 @@ Older versions are also still available: <a
 href="/gmsh/src/">sources</a>, <a href="/gmsh/bin/">binaries</a>.
 
 If you use Gmsh, we would appreciate if you could mention it in your
-work (books, articles, reports, etc.).
+work (books, articles, reports, etc.). Cite the web site for now; a
+paper is in preparation, but is not yet ready.
 
 <h2><a name="Authors"></a>Authors and credits</h2>
 
-Gmsh is developed by Christophe Geuzaine (currently with
-the <a href="http://www.ulg.ac.be/">University of Li&egrave;ge</a>)
-and Jean-François Remacle (currently with
-the <a href="http://www.ucl.ac.be/">Catholic University of
-Louvain</a>).  The <a href="doc/CREDITS">CREDITS file</a> has more
-information.
+Gmsh is developed by Christophe Geuzaine
+(<a href="http://www.ulg.ac.be/">University of Li&egrave;ge</a>) and
+Jean-François Remacle (<a href="http://www.ucl.ac.be/">Catholic
+University of Louvain</a>). The <a href="doc/CREDITS">CREDITS</a> file
+has more information.
 <p>
 Please use <a HREF="mailto:gmsh@geuz.org">gmsh@geuz.org</a> to send
 questions or bug reports.
@@ -149,9 +149,10 @@ questions or bug reports.
 <h2><a name="Licensing"></a>Licensing</h2>
 
 Gmsh is copyright (C) 1997-2007 by C. Geuzaine and J.-F. Remacle and
-is distributed under the terms of the <a
-href="http://www.gnu.org/copyleft/gpl.html">GNU General Public License
-(GPL)</a>.
+is distributed under the terms of
+the <a href="http://www.gnu.org/copyleft/gpl.html">GNU General Public
+License (GPL)</a> (with an exception to allow for easier linking with
+external mesh generators).
 
 <p>
 In short, this means that everyone is free to use Gmsh and to
@@ -177,14 +178,10 @@ thumbnail"></a>
 
 <ul>
 <li>Various screen captures:
-    <a href="/gmsh/gallery/screenshot1.gif">pict1</a> 
-    (<a href="/gmsh/gallery/screenshot1-small.gif">small</a>),
-    <a href="/gmsh/gallery/screenshot2.gif">pict2</a>
-    (<a href="/gmsh/gallery/screenshot2-small.gif">small</a>),
-    <a href="/gmsh/gallery/screenshot3.gif">pict3</a>
-    (<a href="/gmsh/gallery/screenshot3-small.gif">small</a>),
-    <a href="/gmsh/gallery/screenshot4.gif">pict4</a>
-    (<a href="/gmsh/gallery/screenshot4-small.gif">small</a>).
+    <a href="/gmsh/gallery/screenshot1.gif">pict1</a>,
+    <a href="/gmsh/gallery/screenshot2.gif">pict2</a>,
+    <a href="/gmsh/gallery/screenshot3.gif">pict3</a>,
+    <a href="/gmsh/gallery/screenshot4.gif">pict4</a>.
 <li>Sample STEP models:
     <a href="/gmsh/gallery/linkrods.png">pict1</a>,
     <a href="/gmsh/gallery/hammer.png">pict2</a>,
@@ -195,19 +192,25 @@ thumbnail"></a>
 <li>Mesh selection and on-screen info:
     <a href="/gmsh/gallery/select.png">pict1</a>,
     <a href="/gmsh/gallery/runner.png">pict2</a>.
-<li>Mesh cut:
+<li>Mesh cuts and clipping planes:
     <a href="/gmsh/gallery/cut2.png">pict1</a>,
     <a href="/gmsh/gallery/sphere.gif">pict2</a>,
-    <a href="/gmsh/gallery/spiranim.gif">pict3</a>.
-<li>Streamlines:
-    <a href="/gmsh/gallery/f16_stream.jpg">pict1</a>,
-    <a href="/gmsh/gallery/f18_stream.jpg">pict2</a>
-    (P. Geuzaine).
+    <a href="/gmsh/gallery/spiranim.gif">pict3</a>,
+    <a href="/gmsh/gallery/clip1.png">pict4</a>,
+    <a href="/gmsh/gallery/clip2.gif">pict5</a>.
 <li>Lenna as background mesh:
     <a href="/gmsh/gallery/lenna.gif">pict1</a>.
-<li>Turbomachine:
-    <a href="/gmsh/gallery/pressure-ring.png">pict1</a>
-    (P. Geuzaine).
+<li>Mechanical part and log-periodic antenna from the bundled demo files: 
+    <a href="/gmsh/gallery/piece1.gif">pict1</a>, 
+    <a href="/gmsh/gallery/piece2.gif">pict2</a>, 
+    <a href="/gmsh/gallery/piece3.gif">pict3</a>,
+    <a href="/gmsh/gallery/antenna.gif">pict4</a>.
+<li>Various colormaps:
+    <a href="/gmsh/gallery/blob.gif">pict1</a>,
+    <a href="/gmsh/gallery/contact.png">pict2</a>,
+    <a href="/gmsh/gallery/cmap.png">pict3</a>.
+<li>Structured and unstructured grids of an extruded geometry:
+    <a href="/gmsh/gallery/spirale.gif">pict1</a>.
 <li>Parts of a magnetron: 
     <a href="/gmsh/gallery/magnetron1.gif">pict1</a>,
     <a href="/gmsh/gallery/magnetron2.gif">pict2</a>,
@@ -225,31 +228,19 @@ thumbnail"></a>
 <li>Circuit breaker: 
     <a href="/gmsh/gallery/breaker.gif">pict1</a>
     (S. K. Choi).
-<li>Clipping planes:
-    <a href="/gmsh/gallery/clip1.png">pict1</a>,
-    <a href="/gmsh/gallery/clip2.gif">pict2</a>.
-<li>Mechanical part in the demo files: 
-    <a href="/gmsh/gallery/piece1.gif">pict1</a>, 
-    <a href="/gmsh/gallery/piece2.gif">pict2</a>, 
-    <a href="/gmsh/gallery/piece3.gif">pict3</a>.
 <li>Electrical machine:
     <a href="/gmsh/gallery/machine.gif">pict1</a>
     (J. Gyselinck).
-<li>Mach number on a Boeing 747:
-    <a href="/gmsh/gallery/boeing.jpg">pict1</a>
+<li>CFD applications:
+    <a href="/gmsh/gallery/f16_stream.jpg">pict1</a>,
+    <a href="/gmsh/gallery/f18_stream.jpg">pict2</a>,
+    <a href="/gmsh/gallery/pressure-ring.png">pict3</a>,
+    <a href="/gmsh/gallery/boeing.jpg">pict4</a>
     (P. Geuzaine).
-<li>Log-periodic antenna in the demo files:
-    <a href="/gmsh/gallery/antenna.gif">pict1</a>.
 <li>Braids: 
     <a href="/gmsh/gallery/tresse1.gif">pict1</a>,
     <a href="/gmsh/gallery/tresse2.gif">pict2</a>
     (D. Colignon).
-<li>Various colormaps:
-    <a href="/gmsh/gallery/blob.gif">pict1</a>,
-    <a href="/gmsh/gallery/contact.png">pict2</a>,
-    <a href="/gmsh/gallery/cmap.png">pict3</a>.
-<li>Structured and unstructured grids of an extruded geometry:
-    <a href="/gmsh/gallery/spirale.gif">pict1</a>.
 </ul>
 
 <h2><a name="Links"></a>Links</h2>
