@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.7 2007-02-04 11:24:55 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.8 2007-02-07 13:06:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -114,13 +114,13 @@ void add_infile(char *text, char *fich, bool deleted_something)
     if(strlen(ext) && strcmp(ext, ".geo") && strcmp(ext, ".GEO")){
       char question[1024];
       sprintf(question, 
-	      "Are you sure you want to append a scripting command to a\n"
-	      "non-`.geo' file? If not, create a `.geo' file containing\n\n"
+	      "A scripting command is going to be appended to a non-`.geo' file.\n\n"
+	      "Are you sure you want to proceed?\n\n"
+	      "(You might want to create a new `.geo' file containing the command\n\n"
 	      "Merge \"%s\";\n\n"
-	      "and use that file instead.\n\n"
-	      "(To disable this warning in the future, select `Enable expert\n"
-	      "mode' in the option dialog.)", fich);
-      if(!GetBinaryAnswer(question, "Append", "Cancel", false)){
+	      "and use that file instead. To disable this warning in the future, select\n"
+	      "`Enable expert mode' in the option dialog.)", fich);
+      if(!GetBinaryAnswer(question, "Proceed", "Cancel", false)){
 	fclose(file);
 	return;
       }
