@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.425 2007-01-25 15:50:57 geuzaine Exp $
+# $Id: Makefile,v 1.426 2007-02-09 08:38:04 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,7 @@ include variables
 
 GMSH_MAJOR_VERSION = 2
 GMSH_MINOR_VERSION = 0
-GMSH_PATCH_VERSION = 0
+GMSH_PATCH_VERSION = 1
 GMSH_EXTRA_VERSION = "-cvs"
 
 GMSH_VERSION = ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}
@@ -41,6 +41,12 @@ compile: variables initialtag
 link: variables
 	${LINKER} ${OPTIM} -o bin/gmsh ${GMSH_LIBS}
 	${POSTBUILD}
+
+link-mac-universal: variables
+	${LINKER} -arch i386 ${OPTIM} -o bin/gmsh_i386 ${GMSH_LIBS}
+	${LINKER} -arch ppc ${OPTIM} -o bin/gmsh_ppc ${GMSH_LIBS}
+	lipo -create bin/gmsh_i386 bin/gmsh_ppc -output bin/gmsh
+	rm -f bin/gmsh_i386 bin/gmsh_ppc
 
 install: variables
 	mkdir -p ${bindir}
@@ -311,7 +317,7 @@ distrib-win:
 
 distrib-mac:
 	make distrib-pre
-	make all
+	make variables initialtag compile link-mac-universal
 	make package-mac
 	make distrib-post
 	${POSTBUILD}

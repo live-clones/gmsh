@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.259 2007-02-02 23:50:37 geuzaine Exp $
+// $Id: Gmsh.y,v 1.260 2007-02-09 08:38:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1587,22 +1587,22 @@ Shape :
 Transform :
     tTranslate VExpr '{' MultipleShape '}'
     {
-      TranslateShapes($2[0], $2[1], $2[2], $4, 1);
+      TranslateShapes($2[0], $2[1], $2[2], $4);
       $$ = $4;
     }
   | tRotate '{' VExpr ',' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
-      RotateShapes($3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $7, $10, 1);
+      RotateShapes($3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $7, $10);
       $$ = $10;
     }
   | tSymmetry  VExpr   '{' MultipleShape '}'
     {
-      SymmetryShapes($2[0], $2[1], $2[2], $2[3], $4, 1);
+      SymmetryShapes($2[0], $2[1], $2[2], $2[3], $4);
       $$ = $4;
     }
   | tDilate '{' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
-      DilatShapes($3[0], $3[1], $3[2], $5, $8, 1);
+      DilatShapes($3[0], $3[1], $3[2], $5, $8);
       $$ = $8;
     }
 ;

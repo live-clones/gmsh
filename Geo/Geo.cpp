@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.78 2007-02-03 22:04:42 geuzaine Exp $
+// $Id: Geo.cpp,v 1.79 2007-02-09 08:38:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1731,8 +1731,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T * ListShapes)
   List_Reset(ListOfTransformedPoints);
 }
 
-void TranslateShapes(double X, double Y, double Z,
-                     List_T * ListShapes, int final)
+void TranslateShapes(double X, double Y, double Z, List_T * ListShapes)
 {
   double T[3], matrix[4][4];
 
@@ -1742,12 +1741,11 @@ void TranslateShapes(double X, double Y, double Z,
   SetTranslationMatrix(matrix, T);
   ApplicationOnShapes(matrix, ListShapes);
 
-  if(CTX.geom.auto_coherence && final)
+  if(CTX.geom.auto_coherence)
     ReplaceAllDuplicates();
 }
 
-void DilatShapes(double X, double Y, double Z, double A,
-                 List_T * ListShapes, int final)
+void DilatShapes(double X, double Y, double Z, double A, List_T * ListShapes)
 {
   double T[3], matrix[4][4];
 
@@ -1757,13 +1755,13 @@ void DilatShapes(double X, double Y, double Z, double A,
   SetDilatationMatrix(matrix, T, A);
   ApplicationOnShapes(matrix, ListShapes);
 
-  if(CTX.geom.auto_coherence && final)
+  if(CTX.geom.auto_coherence)
     ReplaceAllDuplicates();
 }
 
 void RotateShapes(double Ax, double Ay, double Az,
                   double Px, double Py, double Pz,
-                  double alpha, List_T * ListShapes, int final)
+                  double alpha, List_T * ListShapes)
 {
   double A[3], T[3], matrix[4][4];
 
@@ -1785,19 +1783,18 @@ void RotateShapes(double Ax, double Ay, double Az,
   SetTranslationMatrix(matrix, T);
   ApplicationOnShapes(matrix, ListShapes);
 
-  if(CTX.geom.auto_coherence && final)
+  if(CTX.geom.auto_coherence)
     ReplaceAllDuplicates();
 }
 
-void SymmetryShapes(double A, double B, double C,
-                    double D, List_T * ListShapes, int final)
+void SymmetryShapes(double A, double B, double C, double D, List_T * ListShapes)
 {
   double matrix[4][4];
 
   SetSymmetryMatrix(matrix, A, B, C, D);
   ApplicationOnShapes(matrix, ListShapes);
 
-  if(CTX.geom.auto_coherence && final)
+  if(CTX.geom.auto_coherence)
     ReplaceAllDuplicates();
 }
 

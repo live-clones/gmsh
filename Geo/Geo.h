@@ -266,14 +266,14 @@ Volume *FindVolume(int inum);
 PhysicalGroup *FindPhysicalGroup(int inum, int type);
 
 void TranslateShapes(double X,double Y,double Z,
-                     List_T *ListShapes, int final);
+                     List_T *ListShapes);
 void DilatShapes(double X,double Y,double Z, double A,
-                 List_T *ListShapes, int final);
+                 List_T *ListShapes);
 void RotateShapes(double Ax,double Ay,double Az,
 		  double Px,double Py, double Pz,
-		  double alpha, List_T *ListShapes, int final);
+		  double alpha, List_T *ListShapes);
 void SymmetryShapes(double A,double B,double C,
-		    double D, List_T *ListShapes, int final);
+		    double D, List_T *ListShapes);
 void CopyShape(int Type, int Num, int *New);
 void DeleteShape(int Type, int Num);
 void ColorShape(int Type, int Num, unsigned int Color);
