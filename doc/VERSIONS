@@ -1,4 +1,6 @@
-$Id: VERSIONS,v 1.374 2007-02-08 08:49:26 geuzaine Exp $
+$Id: VERSIONS,v 1.375 2007-02-12 08:36:14 geuzaine Exp $
+
+since 2.0: volumes can now be defined from external CAD surfaces;
 
 2.0 (February 5, 2007): new geometry and mesh databases, with support
 for STEP and IGES import via OpenCascade; complete rewrite of geometry

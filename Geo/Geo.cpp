@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.79 2007-02-09 08:38:04 geuzaine Exp $
+// $Id: Geo.cpp,v 1.80 2007-02-12 08:36:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,12 +22,13 @@
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Geo.h"
-#include "GeoUtils.h"
+#include "GModel.h"
 #include "GeoInterpolation.h"
 #include "Context.h"
 
 extern Mesh *THEM;
 extern Context_T CTX;
+extern GModel *GMODEL;
 
 static List_T *ListOfTransformedPoints = NULL;
 
@@ -662,6 +663,7 @@ Volume *Create_Volume(int Num, int Typ)
   pV->TrsfPoints = List_Create(6, 6, sizeof(Vertex *));
   pV->Surfaces = List_Create(1, 2, sizeof(Surface *));
   pV->SurfacesOrientations = List_Create(1, 2, sizeof(int));
+  pV->SurfacesByTag = List_Create(1, 2, sizeof(int));
   pV->Extrude = NULL;
   return pV;
 }
@@ -673,6 +675,7 @@ void Free_Volume(void *a, void *b)
     List_Delete(pV->TrsfPoints);
     List_Delete(pV->Surfaces);
     List_Delete(pV->SurfacesOrientations);
+    List_Delete(pV->SurfacesByTag);
     Free(pV);
     pV = NULL;
   }
@@ -2226,7 +2229,7 @@ int Extrude_ProtudeSurface(int type, int is,
     Extrude_ProtudeCurve(type, c->Num, T0, T1, T2, A0, A1, A2, X0, X1, X2,
 			 alpha, &s, 0, e);
     if(s){
-      if(c < 0)
+      if(c->Num < 0)
 	ori = -1;
       else
 	ori = 1;
@@ -2694,7 +2697,7 @@ void ReplaceDuplicateSurfaces()
   start = Tree_Nbr(THEM->Surfaces);
 
   All = Tree2List(THEM->Surfaces);
-  allNonDuplicatedSurfaces = Tree_Create(sizeof(Curve *), compareTwoSurfaces);
+  allNonDuplicatedSurfaces = Tree_Create(sizeof(Surface *), compareTwoSurfaces);
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &s);
     if(s->Num > 0) {
@@ -2853,4 +2856,185 @@ void Projette(Vertex * v, double mat[3][3])
   v->Pos.X = X;
   v->Pos.Y = Y;
   v->Pos.Z = Z;
+}
+
+void sortEdgesInLoop(int num, List_T *edges)
+{
+  // This function sorts the edges in an EdgeLoop and detects any
+  // subloops. Warning: the input edges are supposed to be *oriented*
+  // (Without this sort, it is very difficult to write general
+  // scriptable surface generation in complex cases)
+  Curve *c, *c0, *c1, *c2;
+  int nbEdges = List_Nbr(edges);
+  List_T *temp = List_Create(nbEdges, 1, sizeof(Curve *));
+
+  for(int i = 0; i < nbEdges; i++) {
+    int j;
+    List_Read(edges, i, &j);
+    if((c = FindCurve(j)))
+      List_Add(temp, &c);
+    else
+      Msg(GERROR, "Unknown curve %d in line loop %d", j, num);
+  }
+  List_Reset(edges);
+
+  int j = 0, k = 0;
+  c0 = c1 = *(Curve **) List_Pointer(temp, 0);
+  List_Add(edges, &c1->Num);
+  List_PSuppress(temp, 0);
+  while(List_Nbr(edges) < nbEdges) {
+    for(int i = 0; i < List_Nbr(temp); i++) {
+      c2 = *(Curve **) List_Pointer(temp, i);
+      if(c1->end == c2->beg) {
+	List_Add(edges, &c2->Num);
+	List_PSuppress(temp, i);
+	c1 = c2;
+	if(c2->end == c0->beg) {
+	  if(List_Nbr(temp)) {
+	    Msg(INFO, "Starting subloop %d in Line Loop %d (are you sure about this?)",
+		++k, num);
+	    c0 = c1 = *(Curve **) List_Pointer(temp, 0);
+	    List_Add(edges, &c1->Num);
+	    List_PSuppress(temp, 0);
+	  }
+	}
+	break;
+      }
+    }
+    if(j++ > nbEdges) {
+      Msg(GERROR, "Line Loop %d is wrong", num);
+      break;
+    }
+  }
+  List_Delete(temp);
+}
+
+void setSurfaceEmbeddedPoints(Surface *s, List_T *points)
+{
+  if (! s->EmbeddedPoints )
+    s->EmbeddedPoints = List_Create(4, 4, sizeof(Vertex *));
+  int nbPoints = List_Nbr(points);
+  for(int i = 0; i < nbPoints; i++) {
+    double iPoint;
+    List_Read(points, i, &iPoint);
+    Vertex *v = FindPoint((int)iPoint);
+    if(v)
+      List_Add (s->EmbeddedPoints,&v);
+    else
+      Msg(GERROR, "Unknown point %d", iPoint);
+  }
+}
+
+void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
+{
+  if (! s->EmbeddedCurves )
+    s->EmbeddedCurves = List_Create(4, 4, sizeof(Curve *));
+  int nbCurves = List_Nbr(curves);
+  for(int i = 0; i < nbCurves; i++) {
+    double iCurve;
+    List_Read(curves, i, &iCurve);
+    Curve *c = FindCurve((int)iCurve);
+    if(c)
+      List_Add (s->EmbeddedCurves,&c);
+    else
+      Msg(GERROR, "Unknown curve %d", iCurve);
+  }
+}
+
+// Fills in the generatrices for a given surface, given the indices of
+// edge loops
+void setSurfaceGeneratrices(Surface *s, List_T *loops)
+{
+  int nbLoop = List_Nbr(loops);
+  s->Generatrices = List_Create(4, 4, sizeof(Curve *));
+  for(int i = 0; i < nbLoop; i++) {
+    int iLoop;
+    List_Read(loops, i, &iLoop);
+    EdgeLoop *el;
+    if(!(el = FindEdgeLoop(abs(iLoop)))) {
+      Msg(GERROR, "Unknown line loop %d", iLoop);
+      List_Delete(s->Generatrices);
+      s->Generatrices = NULL;
+      return;
+    }
+    else {
+      int ic;
+      Curve *c;
+      if((i == 0 && iLoop > 0) || // exterior boundary
+	 (i != 0 && iLoop < 0)){  // hole
+	for(int j = 0; j < List_Nbr(el->Curves); j++) {
+	  List_Read(el->Curves, j, &ic);
+	  ic *= sign(iLoop);
+	  if(i != 0) ic *= -1; // hole
+	  if(!(c = FindCurve(ic))) {
+	    Msg(GERROR, "Unknown curve %d", ic);
+	    List_Delete(s->Generatrices);
+	    s->Generatrices = NULL;
+	    return;
+	  }
+	  else
+	    List_Add(s->Generatrices, &c);
+	}
+      }
+      else{
+	for(int j = List_Nbr(el->Curves)-1; j >= 0; j--) {
+	  List_Read(el->Curves, j, &ic);
+	  ic *= sign(iLoop);
+	  if(i != 0) ic *= -1; // hole
+	  if(!(c = FindCurve(ic))) {
+	    Msg(GERROR, "Unknown curve %d", ic);
+	    List_Delete(s->Generatrices);
+	    s->Generatrices = NULL;
+	    return;
+	  }
+	  else
+	    List_Add(s->Generatrices, &c);
+	}
+      }
+    }
+  }
+}
+
+// Fills in the boundary of a volume, given the indices of surface
+// loops
+void setVolumeSurfaces(Volume *v, List_T * loops)
+{
+  List_Reset(v->Surfaces);
+  List_Reset(v->SurfacesOrientations);
+  List_Reset(v->SurfacesByTag);
+  for(int i = 0; i < List_Nbr(loops); i++) {
+    int il;
+    List_Read(loops, i, &il);
+    SurfaceLoop *sl;
+    if(!(sl = FindSurfaceLoop(abs(il)))) {
+      Msg(GERROR, "Unknown surface loop %d", il);
+      return;
+    }
+    else {
+      for(int j = 0; j < List_Nbr(sl->Surfaces); j++) {
+	int is;
+        List_Read(sl->Surfaces, j, &is);
+	Surface *s = FindSurface(abs(is));
+        if(s) {
+	  // contrary to curves in edge loops, we don't actually
+	  // create "negative" surfaces. So we just store the signs in
+	  // another list
+          List_Add(v->Surfaces, &s);
+	  int tmp = sign(is) * sign(il);
+	  if(i > 0) tmp *= -1; // this is a hole
+	  List_Add(v->SurfacesOrientations, &tmp);
+	}
+	else{
+	  GFace *gf = GMODEL->faceByTag(abs(is));
+	  if(gf) {
+	    List_Add(v->SurfacesByTag, &is);
+	  }
+	  else{
+	    Msg(GERROR, "Unknown surface %d", is);
+	    return;
+	  }
+	}
+      }
+    }
+  }
 }

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.133 2007-02-02 23:50:33 geuzaine Exp $
+# $Id: Makefile,v 1.134 2007-02-12 08:36:10 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -41,7 +41,7 @@ SRC = GEntity.cpp\
       ExtrudeParams.cpp \
       Geo.cpp \
 	GeoStringInterface.cpp GeoInterpolation.cpp\
-        GeoUtils.cpp GeoExtractContour.cpp\
+        GeoExtractContour.cpp\
       MVertex.cpp \
       MElement.cpp \
       SVector3.cpp\
@@ -231,8 +231,10 @@ Geo.o: Geo.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Geo.h \
   ../Common/GmshDefines.h gmshSurface.h Pair.h Range.h SPoint2.h \
-  SPoint3.h SVector3.h SBoundingBox3d.h ExtrudeParams.h GeoUtils.h \
-  GeoInterpolation.h ../Common/Context.h
+  SPoint3.h SVector3.h SBoundingBox3d.h ExtrudeParams.h GModel.h \
+  GVertex.h GEntity.h MVertex.h GPoint.h GEdge.h MElement.h MEdge.h \
+  ../Common/Hash.h MFace.h ../Common/Context.h GFace.h GEdgeLoop.h \
+  GRegion.h ../Common/SmoothNormals.h GeoInterpolation.h
 GeoStringInterface.o: GeoStringInterface.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
@@ -248,19 +250,13 @@ GeoInterpolation.o: GeoInterpolation.cpp ../Common/Gmsh.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h Geo.h ../Common/GmshDefines.h gmshSurface.h Pair.h \
   Range.h SPoint2.h SPoint3.h SVector3.h SBoundingBox3d.h ExtrudeParams.h \
-  GeoInterpolation.h GeoStringInterface.h GeoUtils.h ../Numeric/Numeric.h
-GeoUtils.o: GeoUtils.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Geo.h ../Common/GmshDefines.h gmshSurface.h Pair.h Range.h SPoint2.h \
-  SPoint3.h SVector3.h SBoundingBox3d.h ExtrudeParams.h \
-  ../Numeric/Numeric.h
+  GeoInterpolation.h GeoStringInterface.h ../Numeric/Numeric.h
 GeoExtractContour.o: GeoExtractContour.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h Geo.h ../Common/GmshDefines.h gmshSurface.h Pair.h \
   Range.h SPoint2.h SPoint3.h SVector3.h SBoundingBox3d.h ExtrudeParams.h \
-  GeoUtils.h ../Numeric/Numeric.h
+  ../Numeric/Numeric.h
 MVertex.o: MVertex.cpp MVertex.h SPoint3.h
 MElement.o: MElement.cpp MElement.h ../Common/GmshDefines.h MVertex.h \
   SPoint3.h MEdge.h SVector3.h ../Common/Hash.h MFace.h \

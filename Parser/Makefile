@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.114 2007-02-04 11:24:55 geuzaine Exp $
+# $Id: Makefile,v 1.115 2007-02-12 08:36:13 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -98,10 +98,10 @@ Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Geo/SBoundingBox3d.h ../Geo/Geo.h ../Geo/gmshSurface.h ../Geo/Pair.h \
   ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
-  ../Geo/GeoInterpolation.h ../Geo/Geo.h ../Geo/GeoUtils.h ../Geo/Geo.h \
-  ../Mesh/Generator.h ../Graphics/Draw.h ../Common/Colors.h \
-  ../Common/Options.h Parser.h OpenFile.h ../Common/CommandLine.h \
-  FunctionManager.h ../Common/OS.h CreateFile.h ../Mesh/Attractors.h
+  ../Geo/GeoInterpolation.h ../Geo/Geo.h ../Mesh/Generator.h \
+  ../Graphics/Draw.h ../Common/Colors.h ../Common/Options.h Parser.h \
+  OpenFile.h ../Common/CommandLine.h FunctionManager.h ../Common/OS.h \
+  CreateFile.h ../Mesh/Attractors.h
 Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \

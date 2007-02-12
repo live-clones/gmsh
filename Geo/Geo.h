@@ -183,6 +183,7 @@ typedef struct {
   List_T *TrsfPoints;
   List_T *Surfaces;
   List_T *SurfacesOrientations;
+  List_T *SurfacesByTag;
   DrawingColor Color;
 }Volume;
 
@@ -304,5 +305,11 @@ int recognize_loop(List_T *liste, int *loop);
 int recognize_surfloop(List_T *liste, int *loop);
 
 void Projette(Vertex * v, double mat[3][3]);
+
+void sortEdgesInLoop(int num, List_T *edges);
+void setSurfaceGeneratrices(Surface *s, List_T *loops);
+void setVolumeSurfaces(Volume *v, List_T * loops);
+void setSurfaceEmbeddedPoints(Surface *s, List_T *points);
+void setSurfaceEmbeddedCurves(Surface *s, List_T *curves);
 
 #endif

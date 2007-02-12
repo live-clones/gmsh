@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.36 2007-01-31 14:33:05 remacle Exp $
+// $Id: gmshFace.cpp,v 1.37 2007-02-12 08:36:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -37,12 +37,15 @@ gmshFace::gmshFace(GModel *m, Surface *face)
     Curve *c;
     List_Read(s->Generatrices, i, &c);
     GEdge *e = m->edgeByTag(abs(c->Num));
-    if(!e) throw;
-    l_edges.push_back(e);
-    e->addFace(this);
-    if(c->Num > 0) l_dirs.push_back(1);
-    else l_dirs.push_back(-1);
+    if(e){
+      l_edges.push_back(e);
+      e->addFace(this);
+      l_dirs.push_back((c->Num > 0) ? 1 : -1);
+    }
+    else
+      Msg(GERROR, "Unknown curve %d", c->Num);
   }
+
   // always compute and store the mean plane for plane surfaces
   // (simply using the bounding vertices)
   if(s->Typ == MSH_SURF_PLAN) computeMeanPlane();
@@ -52,8 +55,10 @@ gmshFace::gmshFace(GModel *m, Surface *face)
       Curve *c;
       List_Read(s->EmbeddedCurves, i, &c);
       GEdge *e = m->edgeByTag(abs(c->Num));
-      if(!e) throw;
-      embedded_edges.push_back(e);
+      if(e)
+	embedded_edges.push_back(e);
+      else
+	Msg(GERROR, "Unknown curve %d", c->Num);
     }
   }
   if(s->EmbeddedPoints){
@@ -61,8 +66,10 @@ gmshFace::gmshFace(GModel *m, Surface *face)
       Vertex *v;
       List_Read(s->EmbeddedPoints, i, &v);
       GVertex *gv = m->vertexByTag(v->Num);
-      if(!gv) throw;
-      embedded_vertices.push_back(gv);
+      if(gv)
+	embedded_vertices.push_back(gv);
+      else
+	Msg(GERROR, "Unknown point %d", v->Num);
     }
   }
   //  face->print_info();
@@ -249,6 +256,6 @@ int gmshFace::containsPoint(const SPoint3 &pt) const
       return true;
     return false;
   }
-  else
-    throw;
+
+  return false;
 }

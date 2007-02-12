@@ -1,4 +1,4 @@
-// $Id: GeoExtractContour.cpp,v 1.2 2006-11-27 22:22:13 geuzaine Exp $
+// $Id: GeoExtractContour.cpp,v 1.3 2007-02-12 08:36:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,6 @@
 
 #include "Gmsh.h"
 #include "Geo.h"
-#include "GeoUtils.h"
 #include "Numeric.h"
 
 // Note: we use List_ISearchSeq so that the input lists don't get

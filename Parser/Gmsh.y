@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.260 2007-02-09 08:38:04 geuzaine Exp $
+// $Id: Gmsh.y,v 1.261 2007-02-12 08:36:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,6 @@
 #include "GModel.h"
 #include "Geo.h"
 #include "GeoInterpolation.h"
-#include "GeoUtils.h"
 #include "Generator.h"
 #include "Draw.h"
 #include "Views.h"

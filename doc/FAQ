@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.80 2007-01-25 20:41:40 geuzaine Exp $
+$Id: FAQ,v 1.81 2007-02-12 08:36:14 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -158,6 +158,15 @@ allocates memory:
 export MMGT_OPT=0
 export MMGT_MMAP=0
 
+4.5 Can I edit STEP/IGES/BRep models?
+
+Not yet. At the moment you can only change characteristic lengths and
+define physical groups. The easiest way to do this is to merge the
+model in a .geo file using 'Merge "file.step";' and add the relevant
+scripting command after that. We plan to add more advanced editing
+features in the future (to delete entities, to create "mixed" surfaces
+and volumes, to export in .geo format, etc.).
+
 ********************************************************************
 
 Section 5: Mesh module
@@ -187,17 +196,22 @@ The swapping algorithm is not very clever at the moment. Try to change
 the surface mesh a bit, or recombine your mesh to generate prisms or
 hexahedra instead of tetrahedra.
 
-* 5.5 Can I explicitly assign region numbers to extruded layers?
+* 5.5 Does Gmsh automatically couple unstructured tetrahedral meshes
+and structured hexahedral meshed using pyramids?
+
+No. We need you help to implement this.
+
+* 5.6 Can I explicitly assign region numbers to extruded layers?
 
 No, this feature has been removed in Gmsh 2.0. You must use the
 standard entity number instead.
 
-* 5.6 Did you remove the elliptic mesh generator in Gmsh 2.0?
+* 5.7 Did you remove the elliptic mesh generator in Gmsh 2.0?
 
 Yes. You can achieve the same result by using the transfinite
 algorithm with smoothing (e.g., with "Mesh.Smoothing = 10").
 
-* 5.7 Does Gmsh support curved elements?
+* 5.8 Does Gmsh support curved elements?
 
 Yes, Gmsh can generate both 1st order and 2nd order elements. To
 generate second order elements, click on 'Second order' in the mesh
@@ -205,14 +219,14 @@ menu after the mesh is completed. To always generate 2nd order
 elements, select 'Generate second order elements' in the mesh option
 panel. From the command line, you can also use '-order 2'.
 
-* 5.8 Can I import an existing surface mesh in Gmsh and use it to
+* 5.9 Can I import an existing surface mesh in Gmsh and use it to
 build a 3D mesh?
 
 Yes, you can import a surface mesh in any one of the supported mesh
 file formats, define a volume, and mesh it. For an example see
 'demos/sphere-discrete.geo'.
 
-* 5.9 How do I define boundary conditions or material properties in
+* 5.10 How do I define boundary conditions or material properties in
 Gmsh?
 
 By design, Gmsh does not try to incorporate every possible definition
@@ -225,12 +239,12 @@ Lines, Physical Surfaces and Physical Volumes). See the reference
 manual as well as the tutorials (in particular 'tutorial/t1.geo') for
 a detailed description and some examples.
 
-* 5.10 How can I display only the mesh associated with selected
+* 5.11 How can I display only the mesh associated with selected
 geometrical entities?
 
 See question 4.3.
 
-* 5.11 How can I "explore" a mesh (for example, to see inside a
+* 5.12 How can I "explore" a mesh (for example, to see inside a
 complex structure)?
 
 You can use 'Tools->Clipping Planes' to clip the region of
@@ -244,7 +258,7 @@ fields. There is also one additional clipping plane available for
 "cutting" only the mesh (by keeping entire elements), in
 'Tools->Options->Mesh->Cut Plane'.
 
-* 5.12 What is the signification of Rho, Eta and Gamma in 
+* 5.13 What is the signification of Rho, Eta and Gamma in 
 Tools->Statistics?
 
 They measure the quality of the tetrahedra in a mesh:
@@ -434,7 +448,7 @@ line option.
 
 * 7.14 How can I see "inside" a complicated post-processing view?
 
-See question 5.11. 
+See question 5.12. 
 
 When viewing 3D scalar fields, you can also modify the colormap
 ('Tools->Options->View->Map') to make the iso-surfaces "transparent":

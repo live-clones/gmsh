@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.18 2007-02-02 17:16:46 remacle Exp $
+// $Id: GeoInterpolation.cpp,v 1.19 2007-02-12 08:36:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,6 @@
 #include "Geo.h"
 #include "GeoInterpolation.h"
 #include "GeoStringInterface.h"
-#include "GeoUtils.h"
 #include "Numeric.h"
 
 // Curves

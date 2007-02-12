@@ -1,4 +1,4 @@
-// $Id: gmshRegion.cpp,v 1.13 2006-12-16 01:25:58 geuzaine Exp $
+// $Id: gmshRegion.cpp,v 1.14 2007-02-12 08:36:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -30,15 +30,29 @@ extern Mesh *THEM;
 gmshRegion::gmshRegion(GModel *m, ::Volume * volume)
   : GRegion(m, volume->Num), v(volume)
 {
-  Surface *s;
-  int ori;
   for(int i = 0; i < List_Nbr(v->Surfaces); i++){
+    Surface *s;
     List_Read(v->Surfaces, i, &s);
+    int ori;
     List_Read(v->SurfacesOrientations, i, &ori);
     GFace *f = m->faceByTag(abs(s->Num));
-    if(!f) throw;
-    l_faces.push_back(f);
-    l_dirs.push_back(ori);
+    if(f){
+      l_faces.push_back(f);
+      l_dirs.push_back(ori);
+    }
+    else
+      Msg(GERROR, "Unknown surface %d", s->Num);
+  }
+  for(int i = 0; i < List_Nbr(v->SurfacesByTag); i++){
+    int is;
+    List_Read(v->SurfacesByTag, i, &is);
+    GFace *f = m->faceByTag(abs(is));
+    if(f){
+      l_faces.push_back(f);
+      l_dirs.push_back(sign(is));
+    }
+    else
+      Msg(GERROR, "Unknown surface %d", is);
   }
 
   resetMeshAttributes();
