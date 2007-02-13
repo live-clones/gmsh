@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.228 2007-02-05 08:59:31 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.229 2007-02-13 07:51:48 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 @c
@@ -1354,7 +1354,7 @@ is shut down. This permits for example to automatically remember the size
 and location of the windows or which fonts to use. Other options can be
 saved in a per-user ``option'' file (@code{General.OptionsFileName}),
 automatically loaded by Gmsh every time it starts up, by using the
-`Tools->Options->Save' menu.
+`Tools->Options->Save as defaults' menu.
 
 @c All the opt_XXX.texi files are generated automatically with `gmsh -doc'
 
@@ -2661,7 +2661,7 @@ specified in the ASCII input files. All available options, with their
 current values, can be saved into a file by selecting `File->Save As->Gmsh
 options', or simply viewed by pressing the `?' button in the status bar. To
 save the current options as your default preferences for all future Gmsh
-sessions, use the `Tools->Options->Save' button.
+sessions, use the `Tools->Options->Save as defaults' button.
 
 @c -------------------------------------------------------------------------
 @c Non-interactive mode
@@ -3975,10 +3975,10 @@ your @code{.emacs} file: @code{(setq auto-mode-alist (append '(("\\.geo$"
 Define common geometrical objects and options in separate files, reusable in
 all your problem definition structures.
 @item
-Save your preferred options with `Tools->Options->Save'. To reset default
-options, erase the @code{General.OptionsFileName} (usually
-@file{.gmsh-options} in your home directory) or use the `Restore default
-options' button in `Tools->Options->General->Output'.
+Save your preferred options with `Tools->Options->Save as defaults'. To
+reset the default options, erase the @code{General.OptionsFileName}
+(usually @file{.gmsh-options} in your home directory) or use the
+`Restore default options' button in `Tools->Options->General->Output'.
 @item
 In the graphical user interface:
 

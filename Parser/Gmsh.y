@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.261 2007-02-12 08:36:13 geuzaine Exp $
+// $Id: Gmsh.y,v 1.262 2007-02-13 07:51:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1850,6 +1850,10 @@ Command :
       }
       else if(!strcmp($1, "Print")){
 #if defined(HAVE_FLTK)
+	// make sure we have the latest data from THEM in GModel
+	// (fixes bug where we would have no geometry in the picture if
+	// the print command is in the same file as the geometry)
+	GMODEL->importTHEM();
 	char tmpstring[1024];
 	FixRelativePath($2, tmpstring);
 	CreateOutputFile(tmpstring, CTX.print.format);
@@ -1857,6 +1861,7 @@ Command :
       }
       else if(!strcmp($1, "Save")){
 #if defined(HAVE_FLTK)
+	GMODEL->importTHEM();
 	char tmpstring[1024];
 	FixRelativePath($2, tmpstring);
 	CreateOutputFile(tmpstring, CTX.mesh.format);
