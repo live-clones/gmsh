@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.598 2007-02-03 19:29:25 geuzaine Exp $
+// $Id: GUI.cpp,v 1.599 2007-02-14 14:54:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3476,9 +3476,12 @@ void GUI::create_statistics_window()
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 11 * BH, IW, BH, "Time for 2D mesh");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 12 * BH, IW, BH, "Time for 3D mesh");
 
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 13 * BH, IW, BH, "Gamma");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 14 * BH, IW, BH, "Eta");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "Rho");
+      stat_value[num] = new Fl_Output(2 * WB, 2 * WB + 13 * BH, IW, BH, "Gamma"); 
+      stat_value[num]->tooltip("~ volume / sum_face_area / max_edge_length"); num++;
+      stat_value[num] = new Fl_Output(2 * WB, 2 * WB + 14 * BH, IW, BH, "Eta");
+      stat_value[num]->tooltip("~ volume^(2/3) / sum_edge_length^2"); num++;
+      stat_value[num] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "Rho");
+      stat_value[num]->tooltip("~ min_edge_length / max_edge_length"); num++;
 
       stat_butt[0] = new Fl_Button(width - BB - 5 * WB, 2 * WB + 13 * BH, BB, BH, "Graph");
       stat_butt[0]->callback(statistics_histogram_cb, (void *)"Gamma");
