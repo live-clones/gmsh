@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.15 2007-02-03 13:06:44 geuzaine Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.16 2007-02-14 11:07:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -497,7 +497,7 @@ void insertVerticesInRegion (GRegion *gr)
 	  bool inside = worst->tet()->invertmapping(center,uvw);
 	  if (inside)
 	    {
-	      MVertex *v = new MVertex (center[0],center[1],center[2]);
+	      MVertex *v = new MVertex (center[0],center[1],center[2], worst->onWhat());
 	      v->setNum(NUM++);
  	      double lc1 = 
  		(1-uvw[0]-uvw[1]-uvw[2])*vSizes[worst->tet()->getVertex(0)->getNum()] +
@@ -516,7 +516,7 @@ void insertVerticesInRegion (GRegion *gr)
 		}
 	      else 
 		{
-		  gr->mesh_vertices.push_back(v);
+		  v->onWhat()->mesh_vertices.push_back(v);
 		}
 	    }
 	  else
