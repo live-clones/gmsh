@@ -1,5 +1,5 @@
-#ifndef _GEO_EXTRACT_CONTOUR_H_
-#define _GEO_EXTRACT_CONTOUR_H_
+#ifndef _FIND_LINKS_H_
+#define _FIND_LINKS_H_
 
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,7 +22,7 @@
 
 #include "List.h"
 
-int allEdgesLinked(int ed, List_T * Liste);
-int allFacesLinked(int iz, List_T * Liste);
+int allEdgesLinked(int ed, List_T *edges);
+int allFacesLinked(int fac, List_T *faces);
 
 #endif

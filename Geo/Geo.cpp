@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.80 2007-02-12 08:36:10 geuzaine Exp $
+// $Id: Geo.cpp,v 1.81 2007-02-15 08:26:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -955,12 +955,10 @@ void CopySurface(Surface * s, Surface * ss)
   for(i = 0; i < 3; i++)
     for(j = 0; j < 3; j++)
       ss->invplan[i][j] = s->invplan[i][j];
-  ss->Generatrices =
-    List_Create(List_Nbr(s->Generatrices), 1, sizeof(Curve *));
+  ss->Generatrices = List_Create(List_Nbr(s->Generatrices), 1, sizeof(Curve *));
   List_Copy(s->Generatrices, ss->Generatrices);
   if(s->Control_Points) {
-    ss->Control_Points =
-      List_Create(List_Nbr(s->Control_Points), 1, sizeof(Vertex *));
+    ss->Control_Points = List_Create(List_Nbr(s->Control_Points), 1, sizeof(Vertex *));
     List_Copy(s->Control_Points, ss->Control_Points);
   }
   End_Surface(ss);

@@ -1,9 +1,4 @@
-$Id: TODO,v 1.48 2007-02-12 08:36:14 geuzaine Exp $
-
-********************************************************************
-
-interface GModel in surface/volume creation in the parser (so we can
-define a volume from iges surfaces, etc.)
+$Id: TODO,v 1.49 2007-02-15 08:26:46 geuzaine Exp $
 
 ********************************************************************
 
@@ -20,7 +15,7 @@ reinterface Triangle for plane surfaces
 
 ********************************************************************
 
-interface GModel in surface/volume creation in the parser
+interface GModel in surface creation in the parser
 
 ********************************************************************
 
@@ -56,6 +51,10 @@ cases
 ********************************************************************
 
 recode BDS::extract edges
+
+********************************************************************
+
+recode BDS::remesh (for STL remeshing)
 
 ********************************************************************
 
