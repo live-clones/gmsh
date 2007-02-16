@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.335 2007-02-05 08:59:31 geuzaine Exp $
+// $Id: Options.cpp,v 1.336 2007-02-16 08:54:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2819,6 +2819,36 @@ double opt_general_draw_bounding_box(OPT_ARGS_NUM)
     WID->gen_butt[6]->value(CTX.draw_bbox);
 #endif
   return CTX.draw_bbox;
+}
+
+double opt_general_xmin(OPT_ARGS_NUM)
+{
+  return CTX.min[0];
+}
+
+double opt_general_xmax(OPT_ARGS_NUM)
+{
+  return CTX.max[0];
+}
+
+double opt_general_ymin(OPT_ARGS_NUM)
+{
+  return CTX.min[1];
+}
+
+double opt_general_ymax(OPT_ARGS_NUM)
+{
+  return CTX.max[1];
+}
+
+double opt_general_zmin(OPT_ARGS_NUM)
+{
+  return CTX.min[2];
+}
+
+double opt_general_zmax(OPT_ARGS_NUM)
+{
+  return CTX.max[2];
 }
 
 double opt_general_axes(OPT_ARGS_NUM)

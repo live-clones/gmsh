@@ -589,6 +589,21 @@ Vertical position (in pixels) of the upper left corner of the manipulator window
 Default value: @code{150}@*
 Saved in: @code{General.SessionFileName}
 
+@item General.MaxX
+Maximum model coordinate along the X-axis (read-only)@*
+Default value: @code{1}@*
+Saved in: @code{-}
+
+@item General.MaxY
+Maximum model coordinate along the Y-axis (read-only)@*
+Default value: @code{1}@*
+Saved in: @code{-}
+
+@item General.MaxZ
+Maximum model coordinate along the Z-axis (read-only)@*
+Default value: @code{1}@*
+Saved in: @code{-}
+
 @item General.MenuPositionX
 Horizontal position (in pixels) of the upper left corner of the menu window@*
 Default value: @code{800}@*
@@ -618,6 +633,21 @@ Saved in: @code{General.SessionFileName}
 Width (in pixels) of the message window@*
 Default value: @code{450}@*
 Saved in: @code{General.SessionFileName}
+
+@item General.MinX
+Minimum model coordinate along the X-axis (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.MinY
+Minimum model coordinate along the Y-axis (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item General.MinZ
+Minimum model coordinate along the Z-axis (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
 
 @item General.MouseSelection
 Mouse hover and selection mode (0=none, 1=hover and select geometry but only select mesh, 2=hover and select geometry and mesh)@*

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.262 2007-02-13 07:51:48 geuzaine Exp $
+// $Id: Gmsh.y,v 1.263 2007-02-16 08:54:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1696,9 +1696,7 @@ Duplicata :
       for(int i = 0; i < List_Nbr($3); i++){
 	Shape TheShape;
 	List_Read($3, i, &TheShape);
-	int j;
-	CopyShape(TheShape.Type, TheShape.Num, &j);
-	TheShape.Num = j;
+	CopyShape(TheShape.Type, TheShape.Num, &TheShape.Num);
 	List_Add($$, &TheShape);
       }
       List_Delete($3);
