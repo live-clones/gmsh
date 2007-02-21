@@ -1,5 +1,5 @@
 
-Merge "linkrods.step";
+Merge "A319.brep";
 
 xmin = General.MinX;
 xmax = General.MaxX;
@@ -8,8 +8,9 @@ ymax = General.MaxY;
 zmin = General.MinZ;
 zmax = General.MaxZ;
 
-lc = 1;
 l = Sqrt((xmax - xmin)^2 + (ymax - ymin)^2 + (zmax - zmin)^2) / 5;
+lc = l;
+
 Point(10001) = { xmin - l, ymin - l, zmin - l, lc};
 Point(10002) = { xmax + l, ymin - l, zmin - l, lc};
 Point(10003) = { xmax + l, ymax + l, zmin - l, lc};
@@ -26,8 +27,9 @@ tmp[] = Extrude {0, 0, (zmax - zmin) + 2 * l} {
 };
 Delete { Volume{tmp[1]}; }
 
-Surface Loop(10029) = {10027,10006,10015,10019,10023,10028};
-Surface Loop(10030) = {7,9,10,11,8,6,28,26,36,15,2,4,5,12,3,1,13,24,23,14,16,22,21,18,20,37,34,19,17,35,31,33,32,30,29,27,25};
-Volume(10031) = {10029,10030};
+Characteristic Length{1:1000} = lc / 20;
 
-Mesh.CharacteristicLengthFactor = 0.3;
+//created in the gui:
+Surface Loop(10029) = {10028,10015,10006,10019,10023,10027};
+Surface Loop(10030) = {36,82,72,65,40,46,37,43,42,39,38,41,49,45,48,47,44,35,34,19,13,12,31,29,11,30,10,7,8,9,21,22,23,15,20,18,16,14,17,25,24,27,28,26,33,32,62,56,50,58,54,71,1,6,66,57,68,53,55,61,69,64,4,52,5,51,2,3,67,63,60,70,59,81,78,79,83,75,80,73,74,77,76};
+Volume(10031) = {10029,10030};
