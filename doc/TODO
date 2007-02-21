@@ -1,4 +1,4 @@
-$Id: TODO,v 1.50 2007-02-21 08:17:16 geuzaine Exp $
+$Id: TODO,v 1.51 2007-02-21 17:24:00 geuzaine Exp $
 
 ********************************************************************
 
@@ -41,7 +41,8 @@ introduce Right/Left/Alternate for extruded meshes
 
 ********************************************************************
 
-recode full-quad recombine algo
+recode full-quad recombine algo + add full-hexa recombine by simply
+doing barycentric subdivision on tets
 
 ********************************************************************
 
@@ -202,6 +203,14 @@ post-processing file format:
 create "Volume visualization" range type? (interpolate on regular grid
 + create cut planes // to viewpoint with transparency; can be done in
 a straightforward way or using 3D textures)
+
+********************************************************************
+
+"first order" quad/hexa/prism/pyramid mesh visu can actually be wrong,
+as we assume the faces are plane--which they don't have to be. We
+should subdivide in 2 triangles. And remove the va_quad vertex array
+altogether! (ps: should be careful about element boundary drawing;
+should then be done like we do it for 2nd order elements)
 
 ********************************************************************
 
