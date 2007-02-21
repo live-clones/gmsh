@@ -622,6 +622,7 @@ fourierFace::~fourierFace()
 
 void fourierFace::meshBoundary()
 {
+  /*
   const double tol = 1.e-6;
 
   _discrete = 0;
@@ -754,6 +755,7 @@ void fourierFace::meshBoundary()
   l_edges.push_back(_e[1]); l_dirs.push_back(1);
   l_edges.push_back(_e[2]); l_dirs.push_back(1);
   l_edges.push_back(_e[3]); l_dirs.push_back(1);
+  */
 }
 
 Range<double> fourierFace::parBounds(int i) const
@@ -826,12 +828,12 @@ int GModel::readFourier(const std::string &name)
     add(new fourierFace(this, i));
 
   // mesh each face with quads
-  //std::for_each(firstFace(), lastFace(), meshCartesian());
-  //return 1;
+  std::for_each(firstFace(), lastFace(), meshCartesian());
+  return 1;
 
   // mesh each face using the standard gmsh algorithms
-  std::for_each(firstFace(), lastFace(), meshGmsh());
-  return 1;
+  //std::for_each(firstFace(), lastFace(), meshGmsh());
+  //return 1;
 
   // compute partition of unity
   std::for_each(firstFace(), lastFace(), computePartitionOfUnity());

@@ -155,9 +155,7 @@ typedef struct{
   List_T *Control_Points;
   List_T *TrsfPoints;
   double plan[3][3];
-  double invplan[3][3];
   double a, b, c, d;
-  List_T *Contours;
   ExtrudeParams *Extrude;
   DrawingColor Color;
   // A surface is defined topologically by its Generatrices

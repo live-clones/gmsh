@@ -1,4 +1,4 @@
-$Id: TODO,v 1.49 2007-02-15 08:26:46 geuzaine Exp $
+$Id: TODO,v 1.50 2007-02-21 08:17:16 geuzaine Exp $
 
 ********************************************************************
 
@@ -55,6 +55,11 @@ recode BDS::extract edges
 ********************************************************************
 
 recode BDS::remesh (for STL remeshing)
+
+********************************************************************
+
+create pyramids on quad surfaces inside unstructured volume before
+tetrahedralizing (to enable hex/tet hybrid grids)
 
 ********************************************************************
 

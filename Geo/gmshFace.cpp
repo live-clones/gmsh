@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.37 2007-02-12 08:36:11 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.38 2007-02-21 08:17:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -48,8 +48,17 @@ gmshFace::gmshFace(GModel *m, Surface *face)
 
   // always compute and store the mean plane for plane surfaces
   // (simply using the bounding vertices)
-  if(s->Typ == MSH_SURF_PLAN) computeMeanPlane();
-
+  if(s->Typ == MSH_SURF_PLAN){
+    computeMeanPlane();
+    for(int i = 0; i < 3; i++)
+      for(int j = 0; j < 3; j++)
+	s->plan[i][j] = meanPlane.plan[i][j];
+    s->a = meanPlane.a;
+    s->b = meanPlane.b;
+    s->c = meanPlane.c;
+    s->d = meanPlane.d;
+  }
+  
   if(s->EmbeddedCurves){
     for(int i = 0 ; i < List_Nbr(s->EmbeddedCurves); i++){
       Curve *c;
@@ -184,9 +193,7 @@ GPoint gmshFace::closestPoint(const SPoint3 & qp) const
   v.Pos.X = qp.x();
   v.Pos.Y = qp.y();
   v.Pos.Z = qp.z();
-
-  if(s->Typ != MSH_SURF_PLAN)
-    ProjectPointOnSurface(s, v, u);
+  ProjectPointOnSurface(s, v, u);
   return GPoint(v.Pos.X, v.Pos.Y, v.Pos.Z, this, u);
 }
 
@@ -204,12 +211,11 @@ int gmshFace::containsParam(const SPoint2 &pt) const
 SPoint2 gmshFace::parFromPoint(const SPoint3 &qp) const
 {
   if(s->Typ == MSH_SURF_PLAN){
-    double u,v;
-    double x,y,z,VX[3],VY[3];
+    double x, y, z, VX[3], VY[3];
     getMeanPlaneData(VX, VY, x, y, z);
-    double vec[3] = {qp.x()-x,qp.y()-y,qp.z()-z};
-    prosca(vec,VX,&u);
-    prosca(vec,VY,&v);
+    double u, v, vec[3] = {qp.x()-x, qp.y()-y, qp.z()-z};
+    prosca(vec, VX, &u);
+    prosca(vec, VY, &v);
     return SPoint2(u, v); 
   }
   else{

@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.81 2007-02-15 08:26:45 geuzaine Exp $
+// $Id: Geo.cpp,v 1.82 2007-02-21 08:17:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -624,7 +624,6 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Recombine_Dir = -1;
   pS->RecombineAngle = 75;
   pS->TrsfPoints = List_Create(4, 4, sizeof(Vertex *));
-  pS->Contours = List_Create(1, 1, sizeof(List_T *));
   pS->Control_Points = List_Create(1, 10, sizeof(Vertex *));
   pS->Generatrices = NULL;
   pS->EmbeddedPoints = NULL;
@@ -639,7 +638,6 @@ void Free_Surface(void *a, void *b)
   Surface *pS = *(Surface **) a;
   if(pS) {
     List_Delete(pS->TrsfPoints);
-    List_Delete(pS->Contours);
     List_Delete(pS->Control_Points);
     List_Delete(pS->Generatrices);
     List_Delete(pS->EmbeddedCurves);
@@ -952,9 +950,6 @@ void CopySurface(Surface * s, Surface * ss)
   for(i = 0; i < 3; i++)
     for(j = 0; j < 3; j++)
       ss->plan[i][j] = s->plan[i][j];
-  for(i = 0; i < 3; i++)
-    for(j = 0; j < 3; j++)
-      ss->invplan[i][j] = s->invplan[i][j];
   ss->Generatrices = List_Create(List_Nbr(s->Generatrices), 1, sizeof(Curve *));
   List_Copy(s->Generatrices, ss->Generatrices);
   if(s->Control_Points) {
@@ -2856,6 +2851,8 @@ void Projette(Vertex * v, double mat[3][3])
   v->Pos.Z = Z;
 }
 
+// Bunch of utility routines
+
 void sortEdgesInLoop(int num, List_T *edges)
 {
   // This function sorts the edges in an EdgeLoop and detects any
@@ -2909,7 +2906,7 @@ void sortEdgesInLoop(int num, List_T *edges)
 
 void setSurfaceEmbeddedPoints(Surface *s, List_T *points)
 {
-  if (! s->EmbeddedPoints )
+  if(!s->EmbeddedPoints)
     s->EmbeddedPoints = List_Create(4, 4, sizeof(Vertex *));
   int nbPoints = List_Nbr(points);
   for(int i = 0; i < nbPoints; i++) {
@@ -2917,7 +2914,7 @@ void setSurfaceEmbeddedPoints(Surface *s, List_T *points)
     List_Read(points, i, &iPoint);
     Vertex *v = FindPoint((int)iPoint);
     if(v)
-      List_Add (s->EmbeddedPoints,&v);
+      List_Add(s->EmbeddedPoints, &v);
     else
       Msg(GERROR, "Unknown point %d", iPoint);
   }
@@ -2925,7 +2922,7 @@ void setSurfaceEmbeddedPoints(Surface *s, List_T *points)
 
 void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
 {
-  if (! s->EmbeddedCurves )
+  if (!s->EmbeddedCurves)
     s->EmbeddedCurves = List_Create(4, 4, sizeof(Curve *));
   int nbCurves = List_Nbr(curves);
   for(int i = 0; i < nbCurves; i++) {
@@ -2933,14 +2930,12 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
     List_Read(curves, i, &iCurve);
     Curve *c = FindCurve((int)iCurve);
     if(c)
-      List_Add (s->EmbeddedCurves,&c);
+      List_Add(s->EmbeddedCurves, &c);
     else
       Msg(GERROR, "Unknown curve %d", iCurve);
   }
 }
 
-// Fills in the generatrices for a given surface, given the indices of
-// edge loops
 void setSurfaceGeneratrices(Surface *s, List_T *loops)
 {
   int nbLoop = List_Nbr(loops);
@@ -2993,9 +2988,7 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
   }
 }
 
-// Fills in the boundary of a volume, given the indices of surface
-// loops
-void setVolumeSurfaces(Volume *v, List_T * loops)
+void setVolumeSurfaces(Volume *v, List_T *loops)
 {
   List_Reset(v->Surfaces);
   List_Reset(v->SurfacesOrientations);

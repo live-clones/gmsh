@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.17 2007-01-30 08:56:36 geuzaine Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.18 2007-02-21 08:17:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,8 @@
 #include "MElement.h"
 #include "Context.h"
 #include "Message.h"
+
+extern Context_T CTX;
 
 /*
    s4 +-----c3-----+ s3

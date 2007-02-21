@@ -1,8 +1,8 @@
-$Id: VERSIONS,v 1.378 2007-02-15 08:26:46 geuzaine Exp $
+$Id: VERSIONS,v 1.379 2007-02-21 08:17:16 geuzaine Exp $
 
-since 2.0: volumes can now be defined from external CAD surfaces; use
-Delaunay/Tetgen algorithm by default when available; fixed various
-bugs.
+since 2.0: volumes can now be defined from external CAD surfaces;
+Delaunay/Tetgen algorithm is now used by default when available; fixed
+various bugs.
 
 2.0 (February 5, 2007): new geometry and mesh databases, with support
 for STEP and IGES import via OpenCascade; complete rewrite of geometry
