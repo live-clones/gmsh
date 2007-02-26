@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.229 2007-02-13 07:51:48 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.230 2007-02-26 08:25:46 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 @c
@@ -2037,6 +2037,9 @@ Extrudes both the geometry and the mesh using a rotation
 Extrudes both the geometry and the mesh using a combined translation and
 rotation (@pxref{Extrusions}). The @var{layers} option is defined as
 above.
+
+@item Extrude @{ Surface @{ @var{expression-list} @}; @var{layers} @}
+Extrudes a boundary layer along the normals of the specified surfaces.
 
 @item Transfinite Line @{ @var{expression-list} @} = @var{expression} < Using Progression | Bump @var{expression} >;
 Selects the lines in @var{expression-list} to be meshed with the 1D

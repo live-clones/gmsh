@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.263 2007-02-16 08:54:06 geuzaine Exp $
+// $Id: Gmsh.y,v 1.264 2007-02-26 08:25:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2192,6 +2192,18 @@ Extrude :
 		    $3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $7[0], $7[1], $7[2], $9,
 		    &extr, $$);
       List_Delete($12);
+    }
+  | tExtrude '{' ListOfShapes 
+    {
+      extr.mesh.ExtrudeMesh = false;
+      extr.mesh.Recombine = false;
+    }
+                       ExtrudeParameters '}'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      ExtrudeShapes(BOUNDARY_LAYER, $3, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+		    &extr, $$);
+      List_Delete($3);
     }
 
   // Deprecated extrude commands (for backward compatibility)

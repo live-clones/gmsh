@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.59 2007-02-02 23:53:04 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.60 2007-02-26 08:25:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1401,10 +1401,10 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   return true;
 }
 
-
-
-void deMeshGFace :: operator() (GFace *gf) 
+void deMeshGFace::operator() (GFace *gf) 
 {
+  if(gf->geomType() == GEntity::DiscreteSurface) return;
+
   for (unsigned int i=0;i<gf->mesh_vertices.size();i++) delete gf->mesh_vertices[i];
   gf->mesh_vertices.clear();
   for (unsigned int i=0;i<gf->triangles.size();i++) delete gf->triangles[i];
@@ -1414,12 +1414,13 @@ void deMeshGFace :: operator() (GFace *gf)
   if(gf->meshRep) gf->meshRep->destroy();
 }
 
-void meshGFace :: operator() (GFace *gf) 
+void meshGFace::operator() (GFace *gf) 
 {  
   if(gf->geomType() == GEntity::DiscreteSurface) return;
+  if(gf->geomType() == GEntity::BoundaryLayerSurface) return;
   if(gf->geomType() == GEntity::ProjectionSurface) return;
 
-  Msg(STATUS2, "Meshing surface %d (%s)", gf->tag(),gf->getTypeString().c_str());
+  Msg(STATUS2, "Meshing surface %d (%s)", gf->tag(), gf->getTypeString().c_str());
 
   // destroy the mesh if it exists
   deMeshGFace dem;
@@ -1428,29 +1429,25 @@ void meshGFace :: operator() (GFace *gf)
   if(MeshTransfiniteSurface(gf)) return;
   if(MeshExtrudedSurface(gf)) return;
 
-  std::vector<MVertex*> points;
-  std::vector<int> indices;
   // compute loops on the fly (indices indicate start and end points
   // of a loop; loops are not yet oriented)
   Msg(DEBUG1, "Computing edge loops");
+  std::vector<MVertex*> points;
+  std::vector<int> indices;
   computeEdgeLoops(gf, points, indices);
 
+  // temp fix until we create MEdgeLoops in gmshFace
   Msg(DEBUG1, "Generating the mesh");
-  // temp fix until we create MEdgeLoops in gmshFace:
-  if(gf->getNativeType() == GEntity::GmshModel || 
-     gf->edgeLoops.empty() )
-    {
-      gmsh2DMeshGenerator ( gf );
-    }
-  else
-    {
-      if (!gmsh2DMeshGeneratorPeriodic ( gf ))
-	Msg(GERROR, "Impossible to mesh face %d",gf->tag());
-    }
-
+  if(gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
+    gmsh2DMeshGenerator(gf);
+  }
+  else{
+    if(!gmsh2DMeshGeneratorPeriodic(gf))
+      Msg(GERROR, "Impossible to mesh face %d", gf->tag());
+  }
+  
   Msg(DEBUG1, "type %d %d triangles generated, %d internal vertices",
-      gf->geomType(),gf->triangles.size(),gf->mesh_vertices.size());
-
+      gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 }  
 
 template<class T>

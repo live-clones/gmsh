@@ -1,4 +1,4 @@
-// $Id: SmoothNormals.cpp,v 1.8 2006-11-27 22:22:08 geuzaine Exp $
+// $Id: SmoothData.cpp,v 1.1 2007-02-26 08:25:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,89 @@
 
 #include "Gmsh.h"
 #include "Numeric.h"
-#include "SmoothNormals.h"
+#include "SmoothData.h"
+
+// Basic coordinate-based floting point value averager
+
+double xyzv::eps = 1.e-12;
+
+xyzv::xyzv(const xyzv &other)
+{ 
+  x = other.x;
+  y = other.y;
+  z = other.z;
+  nbvals = other.nbvals;
+  nboccurences = other.nboccurences;
+  if(other.vals && other.nbvals) {
+    vals = new double[other.nbvals];
+    for(int i = 0; i < nbvals; i++)
+      vals[i] = other.vals[i];
+  }
+}
+
+xyzv &xyzv::operator = (const xyzv &other)
+{
+  if(this != &other) {
+    x = other.x;
+    y = other.y;
+    z = other.z;
+    nbvals = other.nbvals;
+    nboccurences = other.nboccurences;
+    if(other.vals && other.nbvals) {
+      vals = new double[other.nbvals];
+      for(int i = 0; i < nbvals; i++)
+	vals[i] = other.vals[i];
+    }
+  }
+  return *this;
+}
+
+void xyzv::update(int n, double *v) 
+{
+  if(!vals) {
+    vals = new double[n];
+    for(int i = 0; i < n; i++)
+      vals[i] = 0.0;
+    nbvals = n;
+    nboccurences = 0;
+  }
+  else if(nbvals != n) {
+    throw n;
+  }
+  double x1 = (double)(nboccurences) / (double)(nboccurences + 1);
+  double x2 = 1. / (double)(nboccurences + 1);
+  for(int i = 0; i < nbvals; i++)
+    vals[i] = (x1 * vals[i] + x2 * v[i]);
+  nboccurences++;
+}
+
+void smooth_data::add(double x, double y, double z, int n, double *vals)
+{
+  xyzv xyz(x, y, z);
+  std::set<xyzv, lessthanxyzv>::const_iterator it = c.find(xyz);
+  if(it == c.end()) {
+    xyz.update(n, vals);
+    c.insert(xyz);
+  }
+  else {
+    // we can do this because we know that it will not destroy the set
+    // ordering
+    xyzv *p = (xyzv *) & (*it);
+    p->update(n, vals);
+  }
+}
+
+bool smooth_data::get(double x, double y, double z, int n, double *vals)
+{
+  std::set<xyzv, lessthanxyzv>::const_iterator it = c.find(xyzv(x, y, z));
+  if(it == c.end())
+    return false;
+  for(int k = 0; k < n; k++)
+    vals[k] = (*it).vals[k];
+  return true;
+}
+
+// Normal smoother
 
 float xyzn::eps = 1.e-6;
 
@@ -81,19 +163,16 @@ void smooth_normals::add(double x, double y, double z,
 			 double nx, double ny, double nz)
 {
   xyzn xyz(x, y, z);
-
   std::set<xyzn, lessthanxyzn>::const_iterator it = c.find(xyz);
   if(it == c.end()) {
-    xyz.update(float2char(nx), 
-	       float2char(ny), 
-	       float2char(nz), tol);
+    xyz.update(float2char(nx), float2char(ny), float2char(nz), tol);
     c.insert(xyz);
   }
   else {
+    // we can do this because we know that it will not destroy the set
+    // ordering
     xyzn *p = (xyzn *) & (*it);
-    p->update(float2char(nx), 
-	      float2char(ny), 
-	      float2char(nz), tol);
+    p->update(float2char(nx), float2char(ny), float2char(nz), tol);
   }    
 }
 

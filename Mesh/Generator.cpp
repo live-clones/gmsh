@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.114 2007-02-04 15:59:18 geuzaine Exp $
+// $Id: Generator.cpp,v 1.115 2007-02-26 08:25:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,7 @@
 #include "meshGFace.h"
 #include "meshGRegion.h"
 #include "BackgroundMesh.h"
+#include "BoundaryLayer.h"
 #include "SecondOrder.h"
 
 extern Context_T CTX;
@@ -217,7 +218,12 @@ void Mesh2D()
   Msg(STATUS1, "Meshing 2D...");
   double t1 = Cpu();
 
-  std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), meshGFace());
+  std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), meshGFace());  
+
+  // boundary layers are special: their definition (including vertices
+  // and curve meshes) relies on the surface mesh--and it is global
+  // since we use a smooth normal field
+  MeshBoundaryLayerFaces(GMODEL);
 
   double t2 = Cpu();
   CTX.mesh_timer[1] = t2 - t1;
@@ -233,12 +239,15 @@ void Mesh3D()
 
   // mesh the extruded volumes first
   std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), meshGRegionExtruded());
+
   // then subdivide if necessary (unfortunately the subdivision is a
   // global operation, which can require changing the surface mesh!)
   SubdivideExtrudedMesh(GMODEL);
+
   // then mesh all the non-delaunay regions
   std::vector<GRegion*> delaunay;
   std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), meshGRegion(delaunay));
+
   // and finally mesh the delaunay regions (again, this is global)
   MeshDelaunayVolume(delaunay);
 
@@ -268,10 +277,10 @@ void GenerateMesh(int ask)
   }
   CTX.threads_lock = 1;
 
-  int old = GMODEL->getMeshStatus();
+  int old = GMODEL->getMeshStatus(false);
 
   // Change any high order elements back into first order ones
-  Degre1();
+  Degre1(GMODEL);
 
   // 1D mesh
   if(ask == 1 || (ask > 1 && old < 1)) {
@@ -294,14 +303,14 @@ void GenerateMesh(int ask)
   // Orient the surface mesh so that it matches the geometry
   if(GMODEL->getMeshStatus() >= 2)
     std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), orientMeshGFace());
-
+  
   // Optimize quality
   if(GMODEL->getMeshStatus() == 3 && CTX.mesh.optimize)
     OptimizeMesh();
   
   // Create second order elements
   if(GMODEL->getMeshStatus() && CTX.mesh.order == 2) 
-    Degre2(CTX.mesh.second_order_linear, CTX.mesh.second_order_incomplete);
+    Degre2(GMODEL, CTX.mesh.second_order_linear, CTX.mesh.second_order_incomplete);
 
   Msg(INFO, "%d vertices %d elements", GMODEL->numVertices(), GMODEL->numElements());
 

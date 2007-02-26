@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.27 2007-01-30 08:56:36 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.28 2007-02-26 08:25:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -340,6 +340,8 @@ void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh,
 
 void deMeshGRegion::operator() (GRegion *gr)
 {
+  if(gr->geomType() == GEntity::DiscreteVolume) return;
+
   for(unsigned int i = 0; i < gr->mesh_vertices.size(); i++)
     delete gr->mesh_vertices[i];
   gr->mesh_vertices.clear();
@@ -539,6 +541,10 @@ void meshGRegion::operator() (GRegion *gr)
 void optimizeMeshGRegion::operator() (GRegion *gr) 
 {  
   if(gr->geomType() == GEntity::DiscreteVolume) return;
+  
+  // don't optimize extruded meshes
+  ExtrudeParams *ep = gr->meshAttributes.extrude;
+  if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
   
 #if !defined(HAVE_NETGEN)
   Msg(GERROR, "Netgen is not compiled in this version of Gmsh");

@@ -65,12 +65,14 @@ class GEntity {
   enum GeomType {
     Unknown,
     Point,
+    BoundaryLayerPoint,
     Line,
     Circle,
     Ellipse,
     BSpline,
     Bezier,
     ParametricCurve,
+    BoundaryLayerCurve,
     DiscreteCurve,
     Plane,
     Nurb,
@@ -82,6 +84,7 @@ class GEntity {
     ParametricSurface,
     ProjectionSurface,
     BSplineSurface,
+    BoundaryLayerSurface,
     DiscreteSurface,
     Volume,
     DiscreteVolume
@@ -93,12 +96,14 @@ class GEntity {
     char *name[] = {
       "Unknown",
       "Point",
+      "Boundary layer point",
       "Line",
       "Circle",
       "Ellipse",
       "BSpline",
       "Bezier",
       "Parametric curve",
+      "Boundary layer curve",
       "Discrete curve",
       "Plane",
       "Nurb",
@@ -110,6 +115,7 @@ class GEntity {
       "Parametric surface",
       "Projection surface",
       "BSpline surface",
+      "Boundary layer surface",
       "Discrete surface",
       "Volume",
       "Discrete volume"
@@ -172,6 +178,7 @@ class GEntity {
 
   // The tag of the entity
   int tag() const { return _tag; }
+  void setTag(int tag) { _tag = tag; }
 
   // The bounding box
   virtual SBoundingBox3d bounds() const { throw; }

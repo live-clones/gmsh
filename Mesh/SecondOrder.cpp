@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.52 2007-01-30 08:56:36 geuzaine Exp $
+// $Id: SecondOrder.cpp,v 1.53 2007-02-26 08:25:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,15 +19,11 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "GModel.h"
-#include "GFace.h"
-#include "GEdge.h"
+#include "SecondOrder.h"
 #include "MElement.h"
 #include "MRep.h"
 #include "Message.h"
 #include "OS.h"
-
-extern GModel *GMODEL;
 
 bool reparamOnFace(MVertex *v, GFace *gf, SPoint2 &param)
 {
@@ -413,18 +409,18 @@ void removeSecondOrderVertices(GEntity *e)
   e->mesh_vertices = v1;
 }
 
-void Degre1()
+void Degre1(GModel *m)
 {
   // replace all elements with first order elements and mark all
   // unused vertices with a -1 visibility flag
-  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); ++it){
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
     setFirstOrder(*it, (*it)->lines);
   }
-  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); ++it){
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
     setFirstOrder(*it, (*it)->triangles);
     setFirstOrder(*it, (*it)->quadrangles);
   }
-  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); ++it){
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
     setFirstOrder(*it, (*it)->tetrahedra);
     setFirstOrder(*it, (*it)->hexahedra);
     setFirstOrder(*it, (*it)->prisms);
@@ -432,15 +428,15 @@ void Degre1()
   }
 
   // remove all vertices with a -1 visibility flag
-  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); ++it)
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
     removeSecondOrderVertices(*it);
-  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); ++it)
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
     removeSecondOrderVertices(*it);
-  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); ++it)
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     removeSecondOrderVertices(*it);
 }
 
-void Degre2(bool linear, bool incomplete)
+void Degre2(GModel *m, bool linear, bool incomplete)
 {
   // replace all the elements in the mesh with second order elements
   // by creating unique vertices on the edges/faces of the mesh:
@@ -461,16 +457,16 @@ void Degre2(bool linear, bool incomplete)
   double t1 = Cpu();
 
   // first, make sure to remove any existsing second order vertices/elements
-  Degre1();
+  Degre1(m);
 
   // then create new second order vertices/elements
   std::map<std::pair<MVertex*,MVertex*>, MVertex* > edgeVertices;
   std::map<std::vector<MVertex*>, MVertex* > faceVertices;
-  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); ++it)
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
     setSecondOrder(*it, edgeVertices, linear);
-  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); ++it)
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
     setSecondOrder(*it, edgeVertices, faceVertices, linear, incomplete);
-  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); ++it)
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     setSecondOrder(*it, edgeVertices, faceVertices, linear, incomplete);
 
   double t2 = Cpu();

@@ -1,5 +1,6 @@
 #include "GModel.h"
 #include "fourierFace.h"
+#include "gmshFace.h"
 #include "Message.h"
 #include "Context.h"
 #include "Views.h"
@@ -115,12 +116,33 @@ public:
     }
     for(int i = 0; i < M - 1; i++){
       for(int j = 0; j < N - 1; j++){
+#if 0
 	MQuadrangle *q = new MQuadrangle(gf->mesh_vertices[i * N + j],
 					 gf->mesh_vertices[(i + 1) * N + j],
 					 gf->mesh_vertices[(i + 1) * N + (j + 1)],
 					 gf->mesh_vertices[i * N + (j + 1)]);
 	//if(FM->GetOrientation(gf->tag()) < 0) q->revert();
 	gf->quadrangles.push_back(q);
+#else
+	MVertex *v1 = gf->mesh_vertices[i * N + j];
+	MVertex *v2 = gf->mesh_vertices[(i + 1) * N + j];
+	MVertex *v3 = gf->mesh_vertices[(i + 1) * N + (j + 1)];
+	MVertex *v4 = gf->mesh_vertices[i * N + (j + 1)];
+
+	const double tol = 1.e-6;
+	//if(v1->distance(v2) > tol && v1->distance(v3) > tol && v2->distance(v3) > tol)
+	{
+	  MTriangle *t = new MTriangle(v1, v2, v3);
+	  t->revert();
+	  gf->triangles.push_back(t);
+	}
+	//if(v1->distance(v3) > tol && v1->distance(v4) > tol && v3->distance(v4) > tol)
+	{
+	  MTriangle *t = new MTriangle(v1, v3, v4);
+	  t->revert();
+	  gf->triangles.push_back(t);
+	}
+#endif
       }
     }
   }
@@ -815,6 +837,39 @@ SPoint2 fourierFace::parFromPoint(const SPoint3 &p) const
   return SPoint2(u, v);
 }
 
+void cleanUpAndMergeAllFaces(GModel *m)
+{
+  GFace *newgf = new gmshFace(m, 1);
+  std::set<MVertex*, MVertexLessThanLexicographic> pos;
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
+    GFace *gf = *it;
+    pos.insert(gf->mesh_vertices.begin(), gf->mesh_vertices.end());
+    gf->mesh_vertices.clear();
+  }
+  std::set<MVertex*, MVertexLessThanLexicographic>::iterator itp;
+  for(itp = pos.begin(); itp != pos.end(); itp++)
+    newgf->mesh_vertices.push_back(*itp);
+
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
+    GFace *gf = *it;
+    for(unsigned int i = 0; i < gf->triangles.size(); i++){
+      std::vector<MVertex*> v(3);
+      for(int j = 0; j < 3; j++){
+	itp = pos.find(gf->triangles[i]->getVertex(j));
+	if(itp == pos.end())
+	  Msg(GERROR, "Could not find vertex");
+	else
+	  v[j] = *itp;
+      }
+      delete gf->triangles[i];
+      if(v[0] != v[1] && v[0] != v[2] && v[1] != v[2])
+	newgf->triangles.push_back(new MTriangle(v));
+    }
+    m->remove(gf);
+  }
+  m->add(newgf);
+}
+
 int GModel::readFourier(const std::string &name)
 {
   FM = new model(name);
@@ -829,6 +884,8 @@ int GModel::readFourier(const std::string &name)
 
   // mesh each face with quads
   std::for_each(firstFace(), lastFace(), meshCartesian());
+  cleanUpAndMergeAllFaces(this);
+
   return 1;
 
   // mesh each face using the standard gmsh algorithms

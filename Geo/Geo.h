@@ -30,6 +30,7 @@
 #include "ExtrudeParams.h"
 
 #define MSH_POINT            1
+#define MSH_POINT_BND_LAYER  20
 #define MSH_POINT_DISCRETE   100
 
 #define MSH_SEGM_LINE        2
@@ -40,6 +41,7 @@
 #define MSH_SEGM_ELLI_INV    7
 #define MSH_SEGM_LOOP        8
 #define MSH_SEGM_BSPLN       15
+#define MSH_SEGM_BND_LAYER   16
 #define MSH_SEGM_NURBS       17
 #define MSH_SEGM_BEZIER      18
 #define MSH_SEGM_PARAMETRIC  19
@@ -48,6 +50,7 @@
 #define MSH_SURF_PLAN        9
 #define MSH_SURF_REGL        10
 #define MSH_SURF_TRIC        11
+#define MSH_SURF_BND_LAYER   12
 #define MSH_SURF_LOOP        13
 #define MSH_SURF_DISCRETE    102
 
@@ -68,19 +71,21 @@ struct Coord{
 
 class Vertex {
  public :
-  // a model vertex is usually defined in the euclidian coordinates.
-  // Yet, it can be defined in the parametric coordinates of a surface
-  // this data structure stores local coodinates of the vertex in the
-  // gmshSurface it belongs to.
-  gmshSurface *geometry;
-  SPoint2  pntOnGeometry;
   int Num;
+  int Typ;
   char Visible;
   double lc, u, w;
   Coord Pos;
+  // a model vertex is usually defined in the euclidian coordinates
+  // (Pos). Yet, it can also be defined in the parametric coordinates
+  // of a surface: pntOnGeometry stores the local coodinates of the
+  // vertex in the gmshSurface it belongs to.
+  gmshSurface *geometry;
+  SPoint2  pntOnGeometry;
   Vertex(double X=0., double Y=0., double Z=0., double l=1., double W=1.)
-    : geometry(0), Num(0), Visible(1), lc(l), u(0.), w(W)
+    : Num(0), Visible(1), lc(l), u(0.), w(W), geometry(0)
   {
+    Typ = MSH_POINT;
     Pos.X = X;
     Pos.Y = Y;
     Pos.Z = Z;

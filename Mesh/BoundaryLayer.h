@@ -1,5 +1,5 @@
-#ifndef _SECOND_ORDER_H_
-#define _SECOND_ORDER_H_
+#ifndef _BOUNDARY_LAYER_H_
+#define _BOUNDARY_LAYER_H_
 
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,7 +22,6 @@
 
 #include "GModel.h"
 
-void Degre1(GModel *m);
-void Degre2(GModel *m, bool linear=true, bool incomplete=false);
+int MeshBoundaryLayerFaces(GModel *m);
 
 #endif

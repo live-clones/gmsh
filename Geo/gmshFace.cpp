@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.38 2007-02-21 08:17:16 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.39 2007-02-26 08:25:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -230,6 +230,7 @@ GEntity::GeomType gmshFace::geomType() const
   case MSH_SURF_REGL:
   case MSH_SURF_TRIC: return RuledSurface;
   case MSH_SURF_DISCRETE: return DiscreteSurface;
+  case MSH_SURF_BND_LAYER: return BoundaryLayerSurface;
   default: return Unknown;
   }
 }

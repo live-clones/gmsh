@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.28 2007-02-02 17:16:47 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.29 2007-02-26 08:25:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -178,6 +178,8 @@ double Integration(GEdge *ge, double t1, double t2,
 
 void deMeshGEdge::operator() (GEdge *ge) 
 {
+  if(ge->geomType() == GEntity::DiscreteCurve) return;
+
   for (unsigned int i = 0; i < ge->mesh_vertices.size(); i++) 
     delete ge->mesh_vertices[i];
   ge->mesh_vertices.clear();
@@ -190,6 +192,7 @@ void deMeshGEdge::operator() (GEdge *ge)
 void meshGEdge::operator() (GEdge *ge) 
 {  
   if(ge->geomType() == GEntity::DiscreteCurve) return;
+  if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
 
   // Send a messsage to the GMSH environment
   Msg(INFO, "Meshing curve %d", ge->tag());

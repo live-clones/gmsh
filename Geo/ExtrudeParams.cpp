@@ -1,4 +1,4 @@
-// $Id: ExtrudeParams.cpp,v 1.22 2006-11-27 22:22:11 geuzaine Exp $
+// $Id: ExtrudeParams.cpp,v 1.23 2007-02-26 08:25:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,8 @@
 #include "Gmsh.h"
 #include "Geo.h"
 #include "ExtrudeParams.h"
+
+smooth_data* ExtrudeParams::normals = 0;
 
 void Projette(double p[3], double mat[3][3])
 {
@@ -79,6 +81,7 @@ void ExtrudeParams::Rotate(double matr[3][3])
 void ExtrudeParams::Extrude(double t, double &x, double &y, double &z)
 {
   double dx, dy, dz, angle;
+  double n[3] = {0., 0., 0.};
 
   switch (geo.Type) {
   case TRANSLATE:
@@ -106,6 +109,12 @@ void ExtrudeParams::Extrude(double t, double &x, double &y, double &z)
     x += dx;
     y += dy;
     z += dz;
+    break;
+  case BOUNDARY_LAYER:
+    if(normals) normals->get(x, y, z, 3, n);
+    x += n[0] * t;
+    y += n[1] * t;
+    z += n[2] * t;
     break;
   default:
     Msg(GERROR, "Unknown extrusion type");

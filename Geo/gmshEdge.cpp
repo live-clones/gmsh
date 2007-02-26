@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.28 2007-02-03 00:02:16 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.29 2007-02-26 08:25:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -112,6 +112,7 @@ GEntity::GeomType gmshEdge::geomType() const
   case MSH_SEGM_BEZIER: 
   case MSH_SEGM_NURBS:
   case MSH_SEGM_SPLN: return Nurb; 
+  case MSH_SEGM_BND_LAYER: return BoundaryLayerCurve; 
   case MSH_SEGM_DISCRETE: return DiscreteCurve; 
   default : return Unknown;
   }

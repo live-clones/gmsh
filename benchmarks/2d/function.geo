@@ -52,8 +52,6 @@ loop5 = theloop;
 
 Plane Surface(newreg) = {loop5,loop4,loop3,loop2,loop1};
 Line(10000) = {6,11};
-Attractor Line {10000} = {1,.03,1};
-
-Mesh.Algorithm = 2 ; // This is the new 2D anisotropic algorithm
+Attractor Line {10000} = {0.5,0.05,5,5,100};
 
 

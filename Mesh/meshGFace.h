@@ -46,7 +46,7 @@ class deMeshGFace {
 //    orientation
 class orientMeshGFace {
   public :
-  void operator () ( GFace * );
+  void operator () (GFace *);
 };
 
 // Compute edge loops of the face, all_mvertices are the vertices of

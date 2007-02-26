@@ -59,6 +59,7 @@ class gmshVertex : public GVertex {
   {
     return v ? v->Pos.Z : mesh_vertices.size() ? mesh_vertices[0]->z() : 0.;
   }
+  virtual GeomType geomType() const;
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return v; }
   virtual void setPrescribedMeshSizeAtVertex(double l) 

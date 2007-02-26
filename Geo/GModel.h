@@ -28,7 +28,7 @@
 #include "GFace.h"
 #include "GRegion.h"
 #include "SBoundingBox3d.h"
-#include "SmoothNormals.h"
+#include "SmoothData.h"
 
 // OCC Internals have to be stored in the model
 class OCC_Internals;
@@ -133,8 +133,8 @@ class GModel
   // The bounding box
   virtual SBoundingBox3d bounds();
 
-  // Returns the mesh status for the entire model.
-  virtual int getMeshStatus();
+  // Returns the mesh status for the entire model
+  virtual int getMeshStatus(bool countDiscrete=true);
 
   // Returns the total number of vertices in the mesh
   virtual int numVertices();

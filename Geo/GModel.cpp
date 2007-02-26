@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.33 2007-02-04 15:59:18 geuzaine Exp $
+// $Id: GModel.cpp,v 1.34 2007-02-26 08:25:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -286,15 +286,18 @@ SBoundingBox3d GModel::bounds()
   return bb;
 }
 
-int GModel::getMeshStatus()
+int GModel::getMeshStatus(bool countDiscrete)
 {
   for(riter it = firstRegion(); it != lastRegion(); ++it)
-    if((*it)->tetrahedra.size() ||(*it)->hexahedra.size() || 
-       (*it)->prisms.size() || (*it)->pyramids.size()) return 3;
+    if((countDiscrete || (*it)->geomType() != GEntity::DiscreteVolume) && 
+       ((*it)->tetrahedra.size() ||(*it)->hexahedra.size() || 
+	(*it)->prisms.size() || (*it)->pyramids.size())) return 3;
   for(fiter it = firstFace(); it != lastFace(); ++it)
-    if((*it)->triangles.size() || (*it)->quadrangles.size()) return 2;
+    if((countDiscrete || (*it)->geomType() != GEntity::DiscreteSurface) && 
+       ((*it)->triangles.size() || (*it)->quadrangles.size())) return 2;
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    if((*it)->lines.size()) return 1;
+    if((countDiscrete || (*it)->geomType() != GEntity::DiscreteCurve) && 
+       (*it)->lines.size()) return 1;
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     if((*it)->mesh_vertices.size()) return 0;
   return -1;

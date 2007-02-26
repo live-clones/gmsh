@@ -1,5 +1,5 @@
-#ifndef _SMOOTH_NORMALS_H_
-#define _SMOOTH_NORMALS_H_
+#ifndef _SMOOTH_DATA_H_
+#define _SMOOTH_DATA_H_
 
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,52 @@
 #include <vector>
 #include "Numeric.h"
 
+// Basic coordinate-based floating point data averager
+
+struct xyzv {
+  double x, y, z, *vals;
+  int nbvals;
+  int nboccurences;
+  static double eps;
+  xyzv(double xx, double yy, double zz)
+    : x(xx), y(yy), z(zz), vals(0), nbvals(0), nboccurences(0) {}
+  ~xyzv(){ if(vals) delete [] vals; }
+  // these are needed for set<> operations since the default copy
+  // constructor won't allocate *vals
+  xyzv(const xyzv & other);
+  xyzv & operator = (const xyzv &other);
+  void update(int n, double *v);
+};
+
+struct lessthanxyzv {
+  bool operator () (const xyzv &p2, const xyzv &p1) const
+  {
+    if(p1.x - p2.x > xyzv::eps)
+      return true;
+    if(p1.x - p2.x < -xyzv::eps)
+      return false;
+    if(p1.y - p2.y > xyzv::eps)
+      return true;
+    if(p1.y - p2.y < -xyzv::eps)
+      return false;
+    if(p1.z - p2.z > xyzv::eps)
+      return true;
+    return false;
+  }
+};
+
+class smooth_data{
+ private:
+  std::set<xyzv, lessthanxyzv> c;  
+ public:
+  smooth_data() {}
+  void add(double x, double y, double z, int n, double *vals);
+  bool get(double x, double y, double z, int n, double *vals);
+};
+
+// Normal smoother with threshold (saves memory by storing normals as
+// chars and coordinates as floats)
+
 struct nnb
 {
   char nx, ny, nz;
@@ -43,7 +89,7 @@ struct xyzn
 
 struct lessthanxyzn
 {
-  bool operator () (const xyzn & p2, const xyzn & p1)const
+  bool operator () (const xyzn &p2, const xyzn &p1) const
   {
     if(p1.x - p2.x > xyzn::eps)
       return true;

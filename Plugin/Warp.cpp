@@ -1,4 +1,4 @@
-// $Id: Warp.cpp,v 1.5 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: Warp.cpp,v 1.6 2007-02-26 08:25:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,7 +25,7 @@
 #include "Views.h"
 #include "Context.h"
 #include "Numeric.h"
-#include "SmoothNormals.h"
+#include "SmoothData.h"
 
 extern Context_T CTX;
 

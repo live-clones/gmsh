@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.129 2007-01-23 08:01:08 geuzaine Exp $
+// $Id: Geom.cpp,v 1.130 2007-02-26 08:25:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -35,6 +35,7 @@ class drawGVertex {
   void operator () (GVertex *v)
   {
     if(!v->getVisibility()) return;
+    if(v->geomType() == GEntity::BoundaryLayerPoint) return;
 
     if(CTX.render_mode == GMSH_SELECT) {
       glPushName(0);
@@ -98,8 +99,9 @@ class drawGEdge {
  public :
   void operator () (GEdge *e)
   {
-    if(!e->getVisibility() || e->geomType() == GEntity::DiscreteCurve)
-      return;
+    if(!e->getVisibility()) return;
+    if(e->geomType() == GEntity::DiscreteCurve) return;
+    if(e->geomType() == GEntity::BoundaryLayerCurve) return;
     
     if(CTX.render_mode == GMSH_SELECT) {
       glPushName(1);
@@ -383,8 +385,9 @@ class drawGFace {
 public :
   void operator () (GFace *f)
   {
-    if(!f->getVisibility() || f->geomType() == GEntity::DiscreteSurface)
-      return;
+    if(!f->getVisibility()) return;
+    if(f->geomType() == GEntity::DiscreteSurface) return;
+    if(f->geomType() == GEntity::BoundaryLayerSurface) return;
     
     if(CTX.render_mode == GMSH_SELECT) {
       glPushName(2);
@@ -422,8 +425,8 @@ class drawGRegion {
  public :
   void operator () (GRegion *r)
   {
-    if(!r->getVisibility() || r->geomType() == GEntity::DiscreteVolume)
-      return;
+    if(!r->getVisibility()) return;
+    if(r->geomType() == GEntity::DiscreteVolume) return;
     
     if(CTX.render_mode == GMSH_SELECT) {
       glPushName(3);

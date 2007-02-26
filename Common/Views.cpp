@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.193 2007-01-28 13:56:19 geuzaine Exp $
+// $Id: Views.cpp,v 1.194 2007-02-26 08:25:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@
 #include "Context.h"
 #include "Options.h"
 #include "ColorTable.h"
-#include "SmoothNormals.h"
+#include "SmoothData.h"
 
 #if defined(HAVE_MATH_EVAL)
 #include "matheval.h"
@@ -926,90 +926,33 @@ void Post_View::splitCurvedElements()
 
 // Smoothing
 
-struct xyzv {
-  double x, y, z, *vals;
-  int nbvals;
-  int nboccurences;
-  static double eps;
-  xyzv(double xx, double yy, double zz)
-    : x(xx), y(yy), z(zz), vals(0), nbvals(0), nboccurences(0) {}
-  ~xyzv(){ if(vals) delete [] vals; }
-  // the following two are needed for set<> operations, since the
-  // default copy ctor won't allocate *vals
-  xyzv(const xyzv & other)
-  { 
-    x = other.x;
-    y = other.y;
-    z = other.z;
-    nbvals = other.nbvals;
-    nboccurences = other.nboccurences;
-    if(other.vals && other.nbvals) {
-      vals = new double[other.nbvals];
-      for(int i = 0; i < nbvals; i++)
-	vals[i] = other.vals[i];
-    }
-  }
-  xyzv & operator =(const xyzv &other)
-  {
-    if(this != &other) {
-      x = other.x;
-      y = other.y;
-      z = other.z;
-      nbvals = other.nbvals;
-      nboccurences = other.nboccurences;
-      if(other.vals && other.nbvals) {
-	vals = new double[other.nbvals];
-	for(int i = 0; i < nbvals; i++)
-	  vals[i] = other.vals[i];
-      }
-    }
-    return *this;
-  }
-  void update(int n, double *v) 
-  {
-    if(!vals) {
-      vals = new double[n];
-      for(int i = 0; i < n; i++)
-	vals[i] = 0.0;
-      nbvals = n;
-      nboccurences = 0;
-    }
-    else if(nbvals != n) {
-      throw n;
-    }
-    double x1 = (double)(nboccurences) / (double)(nboccurences + 1);
-    double x2 = 1. / (double)(nboccurences + 1);
-    for(int i = 0; i < nbvals; i++)
-      vals[i] = (x1 * vals[i] + x2 * v[i]);
-    nboccurences++;
-  }
-};
-
-struct lessthanxyzv {
-  bool operator () (const xyzv & p2, const xyzv & p1)const
-  {
-    if(p1.x - p2.x > xyzv::eps)
-      return true;
-    if(p1.x - p2.x < -xyzv::eps)
-      return false;
-    if(p1.y - p2.y > xyzv::eps)
-      return true;
-    if(p1.y - p2.y < -xyzv::eps)
-      return false;
-    if(p1.z - p2.z > xyzv::eps)
-      return true;
-    return false;
-  }
-};
-
-double xyzv::eps = 1.e-12;
-typedef std::set < xyzv, lessthanxyzv > xyzv_cont;
-typedef xyzv_cont::const_iterator xyzv_iter;
-
-void generate_connectivities(List_T * list, int nbList, int nbTimeStep, int nbVert,
-                             xyzv_cont & connectivities)
+void generate_connectivities(List_T *list, int nbList, 
+			     int nbTimeStep, int nbVert, smooth_data &data)
 {
   if(!nbList) return;
+
+  double *vals = new double[nbTimeStep];
+  int nb = List_Nbr(list) / nbList;
+  for(int i = 0; i < List_Nbr(list); i += nb) {
+    double *x = (double *)List_Pointer_Fast(list, i);
+    double *y = (double *)List_Pointer_Fast(list, i + nbVert);
+    double *z = (double *)List_Pointer_Fast(list, i + 2 * nbVert);
+    double *v = (double *)List_Pointer_Fast(list, i + 3 * nbVert);
+    for(int j = 0; j < nbVert; j++) {
+      for(int k = 0; k < nbTimeStep; k++)
+        vals[k] = v[j + k * nbVert];
+      data.add(x[j], y[j], z[j], nbTimeStep, vals);
+    }
+  }
+  delete [] vals;
+}
+
+void smooth_list(List_T *list, int nbList,
+		 double *min, double *max, double *tsmin, double *tsmax, 
+                 int nbTimeStep, int nbVert, smooth_data &data)
+{
+  if(!nbList)
+    return;
 
   double *vals = new double[nbTimeStep];
   int nb = List_Nbr(list)/nbList;
@@ -1018,68 +961,28 @@ void generate_connectivities(List_T * list, int nbList, int nbTimeStep, int nbVe
     double *y = (double *)List_Pointer_Fast(list, i + nbVert);
     double *z = (double *)List_Pointer_Fast(list, i + 2 * nbVert);
     double *v = (double *)List_Pointer_Fast(list, i + 3 * nbVert);
-
     for(int j = 0; j < nbVert; j++) {
-      for(int k = 0; k < nbTimeStep; k++)
-        vals[k] = v[j + k * nbVert];
-      xyzv xyz(x[j], y[j], z[j]);
-      xyzv_iter it = connectivities.find(xyz);
-      if(it == connectivities.end()) {
-        xyz.update(nbTimeStep, vals);
-        connectivities.insert(xyz);
-      }
-      else {
-        // a little weird ... because we know that this will not
-        // destroy the set ordering
-        xyzv *xx = (xyzv *) & (*it);
-        xx->update(nbTimeStep, vals);
-      }
-    }
-  }
-  delete[]vals;
-}
-
-void smooth_list(List_T * list, int nbList,
-		 double *min, double *max, double *tsmin, double *tsmax, 
-                 int nbTimeStep, int nbVert, xyzv_cont & connectivities)
-{
-  if(!nbList)
-    return;
-
-  int nb = List_Nbr(list)/nbList;
-  for(int i = 0; i < List_Nbr(list); i += nb) {
-    double *x = (double *)List_Pointer_Fast(list, i);
-    double *y = (double *)List_Pointer_Fast(list, i + nbVert);
-    double *z = (double *)List_Pointer_Fast(list, i + 2 * nbVert);
-    double *v = (double *)List_Pointer_Fast(list, i + 3 * nbVert);
-    for(int j = 0; j < nbVert; j++) {
-      xyzv xyz(x[j], y[j], z[j]);
-      xyzv_iter it = connectivities.find(xyz);
-      if(it != connectivities.end()) {
-        for(int k = 0; k < nbTimeStep; k++) {
-	  double dd = (*it).vals[k];
+      if(data.get(x[j], y[j], z[j], nbTimeStep, vals)){
+	for(int k = 0; k < nbTimeStep; k++) {
+	  double dd = vals[k];
           v[j + k * nbVert] = dd;
-          if(dd < *min)
-            *min = dd;
-          if(dd > *max)
-            *max = dd;
-	  if(dd < tsmin[k])
-	    tsmin[k] = dd;
-	  if(dd > tsmax[k])
-	    tsmax[k] = dd;
+          if(dd < *min) *min = dd;
+          if(dd > *max) *max = dd;
+	  if(dd < tsmin[k]) tsmin[k] = dd;
+	  if(dd > tsmax[k]) tsmax[k] = dd;
         }
       }
     }
   }
+  delete [] vals;
 }
 
 void Post_View::smooth()
 {
   double old_eps = xyzv::eps;
   xyzv::eps = CTX.lc * 1.e-8;
-
+  
   if(NbSL || NbST || NbSQ || NbSS || NbSH || NbSI || NbSY) {
-    xyzv_cont con;
     Msg(INFO, "Smoothing scalar primitives in View[%d]", Index);
     Min = VAL_INF;
     Max = -VAL_INF;
@@ -1087,20 +990,21 @@ void Post_View::smooth()
       TimeStepMin[k] = VAL_INF;
       TimeStepMax[k] = -VAL_INF;
     }
-    generate_connectivities(SL, NbSL, NbTimeStep, 2, con);
-    generate_connectivities(ST, NbST, NbTimeStep, 3, con);
-    generate_connectivities(SQ, NbSQ, NbTimeStep, 4, con);
-    generate_connectivities(SS, NbSS, NbTimeStep, 4, con);
-    generate_connectivities(SH, NbSH, NbTimeStep, 8, con);
-    generate_connectivities(SI, NbSI, NbTimeStep, 6, con);
-    generate_connectivities(SY, NbSY, NbTimeStep, 5, con);
-    smooth_list(SL, NbSL, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 2, con);
-    smooth_list(ST, NbST, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 3, con);
-    smooth_list(SQ, NbSQ, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 4, con);
-    smooth_list(SS, NbSS, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 4, con);
-    smooth_list(SH, NbSH, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 8, con);
-    smooth_list(SI, NbSI, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 6, con);
-    smooth_list(SY, NbSY, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 5, con);
+    smooth_data data;
+    generate_connectivities(SL, NbSL, NbTimeStep, 2, data);
+    generate_connectivities(ST, NbST, NbTimeStep, 3, data);
+    generate_connectivities(SQ, NbSQ, NbTimeStep, 4, data);
+    generate_connectivities(SS, NbSS, NbTimeStep, 4, data);
+    generate_connectivities(SH, NbSH, NbTimeStep, 8, data);
+    generate_connectivities(SI, NbSI, NbTimeStep, 6, data);
+    generate_connectivities(SY, NbSY, NbTimeStep, 5, data);
+    smooth_list(SL, NbSL, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 2, data);
+    smooth_list(ST, NbST, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 3, data);
+    smooth_list(SQ, NbSQ, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 4, data);
+    smooth_list(SS, NbSS, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 4, data);
+    smooth_list(SH, NbSH, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 8, data);
+    smooth_list(SI, NbSI, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 6, data);
+    smooth_list(SY, NbSY, &Min, &Max, TimeStepMin, TimeStepMax, NbTimeStep, 5, data);
     Changed = 1;
   }
 

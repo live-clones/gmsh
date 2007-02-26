@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.16 2007-01-22 16:31:44 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.17 2007-02-26 08:25:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -219,3 +219,4 @@ int MeshExtrudedSurface(GFace *gf,
 
   return 1;
 }
+

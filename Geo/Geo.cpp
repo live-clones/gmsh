@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.82 2007-02-21 08:17:16 geuzaine Exp $
+// $Id: Geo.cpp,v 1.83 2007-02-26 08:25:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -71,24 +71,18 @@ int compareVertex(const void *a, const void *b)
 
 int comparePosition(const void *a, const void *b)
 {
+  Vertex *q = *(Vertex **)a;
+  Vertex *w = *(Vertex **)b;
+
   // Warning: tolerance! (before 1.61, it was set to 1.e-10 * CTX.lc)
   double eps = CTX.geom.tolerance * CTX.lc; 
 
-  Vertex **q = (Vertex **) a;
-  Vertex **w = (Vertex **) b;
-
-  if((*q)->Pos.X - (*w)->Pos.X > eps)
-    return 1;
-  if((*q)->Pos.X - (*w)->Pos.X < -eps)
-    return -1;
-  if((*q)->Pos.Y - (*w)->Pos.Y > eps)
-    return 1;
-  if((*q)->Pos.Y - (*w)->Pos.Y < -eps)
-    return -1;
-  if((*q)->Pos.Z - (*w)->Pos.Z > eps)
-    return 1;
-  if((*q)->Pos.Z - (*w)->Pos.Z < -eps)
-    return -1;
+  if(q->Pos.X - w->Pos.X > eps) return 1;
+  if(q->Pos.X - w->Pos.X < -eps) return -1;
+  if(q->Pos.Y - w->Pos.Y > eps) return 1;
+  if(q->Pos.Y - w->Pos.Y < -eps) return -1;
+  if(q->Pos.Z - w->Pos.Z > eps) return 1;
+  if(q->Pos.Z - w->Pos.Z < -eps) return -1;
   return 0;
 }
 
@@ -465,7 +459,7 @@ void End_Surface(Surface * s)
 {
   // if all generatrices of a surface are on the same geometry, then
   // the surface is also on the geometry
-  if(s->Generatrices){
+  if(List_Nbr(s->Generatrices)){
     Curve *c;
     int NN = List_Nbr(s->Generatrices);
     List_Read (s->Generatrices, 0, &c);
@@ -1797,7 +1791,7 @@ void SymmetryShapes(double A, double B, double C, double D, List_T * ListShapes)
 
 // Extrusion routines
 
-void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams * e)
+void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e)
 {
   double matrix[4][4];
   double T[3];
@@ -1832,8 +1826,8 @@ int Extrude_ProtudePoint(int type, int ip,
 			 double T0, double T1, double T2,
 			 double A0, double A1, double A2,
 			 double X0, double X1, double X2, double alpha,
-			 Curve ** pc, Curve ** prc, int final, 
-			 ExtrudeParams * e)
+			 Curve **pc, Curve **prc, int final, 
+			 ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3], d;
   Vertex V, *pv, *newp, *chapeau;
@@ -1851,7 +1845,6 @@ int Extrude_ProtudePoint(int type, int ip,
   chapeau = DuplicateVertex(pv);
 
   switch (type) {
-
   case TRANSLATE:
     T[0] = T0;
     T[1] = T1;
@@ -1859,7 +1852,6 @@ int Extrude_ProtudePoint(int type, int ip,
     SetTranslationMatrix(matrix, T);
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToPoint(matrix, chapeau);
-
     if(!comparePosition(&pv, &chapeau))
       return pv->Num;
     c = Create_Curve(NEWLINE(), MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1.);
@@ -1868,13 +1860,24 @@ int Extrude_ProtudePoint(int type, int ip,
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
     if(e)
       c->Extrude->mesh = e->mesh;
-
     List_Add(c->Control_Points, &pv);
     List_Add(c->Control_Points, &chapeau);
     c->beg = pv;
     c->end = chapeau;
     break;
-
+  case BOUNDARY_LAYER:
+    chapeau->Typ = MSH_POINT_BND_LAYER;
+    c = Create_Curve(NEWLINE(), MSH_SEGM_BND_LAYER, 1, NULL, NULL, -1, -1, 0., 1.);
+    c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
+    c->Extrude = new ExtrudeParams;
+    c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
+    if(e)
+      c->Extrude->mesh = e->mesh;
+    List_Add(c->Control_Points, &pv);
+    List_Add(c->Control_Points, &chapeau);
+    c->beg = pv;
+    c->end = chapeau;
+    break;
   case ROTATE:
     T[0] = -X0;
     T[1] = -X1;
@@ -1882,21 +1885,18 @@ int Extrude_ProtudePoint(int type, int ip,
     SetTranslationMatrix(matrix, T);
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToPoint(matrix, chapeau);
-
     Ax[0] = A0;
     Ax[1] = A1;
     Ax[2] = A2;
     SetRotationMatrix(matrix, Ax, alpha);
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToPoint(matrix, chapeau);
-
     T[0] = X0;
     T[1] = X1;
     T[2] = X2;
     SetTranslationMatrix(matrix, T);
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToPoint(matrix, chapeau);
-
     if(!comparePosition(&pv, &chapeau))
       return pv->Num;
     c = Create_Curve(NEWLINE(), MSH_SEGM_CIRC, 1, NULL, NULL, -1, -1, 0., 1.);
@@ -1924,7 +1924,6 @@ int Extrude_ProtudePoint(int type, int ip,
     c->beg = pv;
     c->end = chapeau;
     break;
-
   case TRANSLATE_ROTATE:
     d = CTX.geom.extrude_spline_points;
     d = d ? d : 1;
@@ -1940,40 +1939,34 @@ int Extrude_ProtudePoint(int type, int ip,
     for(i = 0; i < CTX.geom.extrude_spline_points; i++) {
       if(i)
         chapeau = DuplicateVertex(chapeau);
-
       T[0] = -X0;
       T[1] = -X1;
       T[2] = -X2;
       SetTranslationMatrix(matrix, T);
       List_Reset(ListOfTransformedPoints);
       ApplyTransformationToPoint(matrix, chapeau);
-
       Ax[0] = A0;
       Ax[1] = A1;
       Ax[2] = A2;
       SetRotationMatrix(matrix, Ax, alpha / d);
       List_Reset(ListOfTransformedPoints);
       ApplyTransformationToPoint(matrix, chapeau);
-
       T[0] = X0;
       T[1] = X1;
       T[2] = X2;
       SetTranslationMatrix(matrix, T);
       List_Reset(ListOfTransformedPoints);
       ApplyTransformationToPoint(matrix, chapeau);
-
       T[0] = T0 / d;
       T[1] = T1 / d;
       T[2] = T2 / d;
       SetTranslationMatrix(matrix, T);
       List_Reset(ListOfTransformedPoints);
       ApplyTransformationToPoint(matrix, chapeau);
-
       List_Add(c->Control_Points, &chapeau);
     }
     c->end = chapeau;
     break;
-
   default:
     Msg(GERROR, "Unknown extrusion type");
     return pv->Num;
@@ -2038,6 +2031,13 @@ int Extrude_ProtudeCurve(int type, int ic,
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToCurve(matrix, chapeau);
     break;
+  case BOUNDARY_LAYER:
+    chapeau->Typ = MSH_SEGM_BND_LAYER;
+    if(chapeau->beg) chapeau->beg->Typ = MSH_POINT_BND_LAYER;
+    if(chapeau->end) chapeau->end->Typ = MSH_POINT_BND_LAYER;
+    revpc = FindCurve(-chapeau->Num);
+    if(revpc) revpc->Typ = MSH_SEGM_BND_LAYER;
+    break;
   case ROTATE:
     T[0] = -X0;
     T[1] = -X1;
@@ -2045,14 +2045,12 @@ int Extrude_ProtudeCurve(int type, int ic,
     SetTranslationMatrix(matrix, T);
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToCurve(matrix, chapeau);
-
     Ax[0] = A0;
     Ax[1] = A1;
     Ax[2] = A2;
     SetRotationMatrix(matrix, Ax, alpha);
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToCurve(matrix, chapeau);
-
     T[0] = X0;
     T[1] = X1;
     T[2] = X2;
@@ -2067,21 +2065,18 @@ int Extrude_ProtudeCurve(int type, int ic,
     SetTranslationMatrix(matrix, T);
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToCurve(matrix, chapeau);
-
     Ax[0] = A0;
     Ax[1] = A1;
     Ax[2] = A2;
     SetRotationMatrix(matrix, Ax, alpha);
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToCurve(matrix, chapeau);
-
     T[0] = X0;
     T[1] = X1;
     T[2] = X2;
     SetTranslationMatrix(matrix, T);
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToCurve(matrix, chapeau);
-
     T[0] = T0;
     T[1] = T1;
     T[2] = T2;
@@ -2105,7 +2100,9 @@ int Extrude_ProtudeCurve(int type, int ic,
     return pc->Num;
   }
 
-  if(!CurveBeg || !CurveEnd)
+  if(type == BOUNDARY_LAYER)
+    s = Create_Surface(NEWSURFACE(), MSH_SURF_BND_LAYER);
+  else if(!CurveBeg || !CurveEnd)
     s = Create_Surface(NEWSURFACE(), MSH_SURF_TRIC);
   else
     s = Create_Surface(NEWSURFACE(), MSH_SURF_REGL);
@@ -2240,6 +2237,17 @@ int Extrude_ProtudeSurface(int type, int is,
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToSurface(matrix, chapeau);
     break;
+  case BOUNDARY_LAYER:
+    chapeau->Typ = MSH_SURF_BND_LAYER;
+    for(int i = 0; i < List_Nbr(chapeau->Generatrices); i++) {
+      List_Read(chapeau->Generatrices, i, &c);
+      c->Typ = MSH_SEGM_BND_LAYER;
+      c = FindCurve(-c->Num);
+      c->Typ = MSH_SEGM_BND_LAYER;
+      if(c->beg) c->beg->Typ = MSH_POINT_BND_LAYER;
+      if(c->end) c->end->Typ = MSH_POINT_BND_LAYER;
+    }
+    break;
   case ROTATE:
     T[0] = -X0;
     T[1] = -X1;
@@ -2247,14 +2255,12 @@ int Extrude_ProtudeSurface(int type, int is,
     SetTranslationMatrix(matrix, T);
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToSurface(matrix, chapeau);
-
     Ax[0] = A0;
     Ax[1] = A1;
     Ax[2] = A2;
     SetRotationMatrix(matrix, Ax, alpha);
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToSurface(matrix, chapeau);
-
     T[0] = X0;
     T[1] = X1;
     T[2] = X2;
@@ -2269,21 +2275,18 @@ int Extrude_ProtudeSurface(int type, int is,
     SetTranslationMatrix(matrix, T);
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToSurface(matrix, chapeau);
-
     Ax[0] = A0;
     Ax[1] = A1;
     Ax[2] = A2;
     SetRotationMatrix(matrix, Ax, alpha);
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToSurface(matrix, chapeau);
-
     T[0] = X0;
     T[1] = X1;
     T[2] = X2;
     SetTranslationMatrix(matrix, T);
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToSurface(matrix, chapeau);
-
     T[0] = T0;
     T[1] = T1;
     T[2] = T2;
@@ -2296,7 +2299,8 @@ int Extrude_ProtudeSurface(int type, int is,
     return ps->Num;
   }
 
-  // FIXME: why do we do this? only for backward compatibility?
+  // this is done only for backward compatibility with the old
+  // numbering scheme
   Tree_Suppress(THEM->Surfaces, &chapeau);
   chapeau->Num = NEWSURFACE();
   THEM->MaxSurfaceNum = chapeau->Num;
@@ -2393,6 +2397,7 @@ void ExtrudeShapes(int type, List_T *in,
     case MSH_SURF_REGL:
     case MSH_SURF_TRIC:
     case MSH_SURF_PLAN:
+    case MSH_SURF_DISCRETE:
       TheShape.Num = Extrude_ProtudeSurface(type, O.Num, T0, T1, T2,
 					    A0, A1, A2, X0, X1, X2, alpha,
 					    &pv, e);
@@ -2421,10 +2426,20 @@ void ExtrudeShapes(int type, List_T *in,
 
 // Duplicate removal
 
+int compareTwoPoints(const void *a, const void *b)
+{
+  Vertex *q = *(Vertex **)a;
+  Vertex *w = *(Vertex **)b;
+
+  if(q->Typ != w->Typ) return q->Typ - w->Typ;
+
+  return comparePosition(a, b);
+}
+
 int compareTwoCurves(const void *a, const void *b)
 {
-  Curve *c1 = *(Curve **) a;
-  Curve *c2 = *(Curve **) b;
+  Curve *c1 = *(Curve **)a;
+  Curve *c2 = *(Curve **)b;
   int comp;
 
   if(c1->Typ != c2->Typ){
@@ -2471,6 +2486,19 @@ int compareTwoSurfaces(const void *a, const void *b)
 {
   Surface *s1 = *(Surface **) a;
   Surface *s2 = *(Surface **) b;
+
+  // checking types is the "right thing" to do (see e.g. compareTwoCurves)
+  // but it would break backward compatibility (see e.g. tutorial/t2.geo),
+  // so let's just do it for boundary layer surfaces for now:
+  if(s1->Typ == MSH_SURF_BND_LAYER || s2->Typ == MSH_SURF_BND_LAYER){
+    if(s1->Typ != s2->Typ) return s1->Typ - s2->Typ;
+  }
+  
+  // if both surfaces have no generatrices, stay on the safe side and
+  // assume they are different
+  if(!List_Nbr(s1->Generatrices) && !List_Nbr(s2->Generatrices))
+    return 1;
+
   return compare2Lists(s1->Generatrices, s2->Generatrices, compareAbsCurve);
 }
 
@@ -2509,7 +2537,7 @@ void ReplaceDuplicatePoints()
   start = Tree_Nbr(THEM->Points);
 
   All = Tree2List(THEM->Points);
-  allNonDuplicatedPoints = Tree_Create(sizeof(Vertex *), comparePosition);
+  allNonDuplicatedPoints = Tree_Create(sizeof(Vertex *), compareTwoPoints);
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &v);
     if(!Tree_Search(allNonDuplicatedPoints, &v)) {

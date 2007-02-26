@@ -21,6 +21,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <vector>
+#include "SmoothData.h"
 
 // geo.Mode
 #define EXTRUDED_ENTITY 1
@@ -30,9 +31,11 @@
 #define TRANSLATE 1
 #define ROTATE 2
 #define TRANSLATE_ROTATE 3
+#define BOUNDARY_LAYER 4
 
 class ExtrudeParams{
 public :
+  static smooth_data *normals;
   ExtrudeParams(int Mode = EXTRUDED_ENTITY);
   void fill(int type,
 	    double T0, double T1, double T2,

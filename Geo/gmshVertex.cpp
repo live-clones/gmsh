@@ -55,3 +55,11 @@ SPoint2 gmshVertex::reparamOnFace(GFace *face, int dir) const
     return GVertex::reparamOnFace(face,dir);
   }
 }
+
+GEntity::GeomType gmshVertex::geomType() const
+{
+  if(v && v->Typ == MSH_POINT_BND_LAYER)
+    return BoundaryLayerPoint;
+  else
+    return Point;
+}
