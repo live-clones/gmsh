@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.19 2007-02-12 08:36:10 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.20 2007-02-27 22:01:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -256,6 +256,11 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
 
   case MSH_SEGM_LINE:
     N = List_Nbr(c->Control_Points);
+
+    // FIXME: CG added 27/02/07 - why/how/when do we have HUGE |u| here?
+    //if(u < c->ubeg) u = c->ubeg;
+    //if(u > c->uend) u = c->uend;
+
     i = (int)((double)(N - 1) * u);
     while(i >= N - 1)
       i--;

@@ -247,15 +247,15 @@ class MLineN : public MLine {
   MLineN(MVertex *v0, MVertex *v1, const std::vector<MVertex*> &vs, int num=0, int part=0) 
     : MLine(v0, v1, num, part), _vs(vs)
   {
-    for (int i=0;i<_vs.size();i++)
+    for(unsigned int i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_vs.size() + 1);
   }
   MLineN(const std::vector<MVertex*> &v, int num=0, int part=0) 
     : MLine(v[0] , v[1], num, part)
   {
-    for (int i=2;i<v.size();i++)
+    for(unsigned int i = 2; i < v.size(); i++)
       _vs.push_back(v[i]);
-    for (int i=0;i<_vs.size();i++)
+    for(unsigned int i = 0 ; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_vs.size() + 1);
   }
   ~MLineN(){}
@@ -265,7 +265,7 @@ class MLineN : public MLine {
   virtual MVertex *getVertexUNV(int num)
   {
     if(num == 0) return _v[0];
-    if(num == _vs.size() + 1)return _v[1];
+    if(num == (int)_vs.size() + 1) return _v[1];
     return  _vs[num-1];
   }
   virtual int getNumEdgeVertices(){ return _vs.size(); }
@@ -407,19 +407,19 @@ class MTriangleN : public MTriangle {
 	     std::vector<MVertex*> &v, int order, int num=0, int part=0) 
     : MTriangle(v0, v1, v2, num, part) , _vs (v), _order(order)
   {
-    for(int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
+    for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
   }
   MTriangleN(std::vector<MVertex*> &v, int order, int num=0, int part=0) 
     : MTriangle(v[0], v[1], v[2], num, part) , _order(order)
   {
-    for(int i = 3; i < v.size(); i++) _vs.push_back(v[i]);
-    for(int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
+    for(unsigned int i = 3; i < v.size(); i++) _vs.push_back(v[i]);
+    for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
   }
   ~MTriangleN(){}
   virtual int getPolynomialOrder(){
     return _order;
   }
-  virtual int getNumVertices(){ return 3 +_vs.size() ; }
+  virtual int getNumVertices(){ return 3 + _vs.size() ; }
   virtual MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
   virtual MVertex *getVertexUNV(int num)
   {
