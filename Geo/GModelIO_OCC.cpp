@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.17 2007-01-18 13:18:42 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.18 2007-02-27 17:15:46 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -392,11 +392,11 @@ void OCC_Internals::loadBREP(const char *fn)
   BRepTools::Read(shape, (char*)fn, aBuilder);
   BRepTools::Clean(shape);
   buildLists();
-  HealGeometry(CTX.geom.tolerance, 
-	       CTX.geom.occ_fix_small_edges,
-	       CTX.geom.occ_fix_small_faces,
-	       CTX.geom.occ_sew_faces);
-  BRepTools::Clean(shape);
+//   HealGeometry(CTX.geom.tolerance, 
+// 	       CTX.geom.occ_fix_small_edges,
+// 	       CTX.geom.occ_fix_small_faces,
+// 	       CTX.geom.occ_sew_faces);
+//  BRepTools::Clean(shape);
 }
 
 void OCC_Internals::loadSTEP(const char *fn)
@@ -409,9 +409,10 @@ void OCC_Internals::loadSTEP(const char *fn)
   BRepTools::Clean(shape);
   buildLists();
   HealGeometry(CTX.geom.tolerance, 
-	       CTX.geom.occ_fix_small_edges,
-	       CTX.geom.occ_fix_small_faces,
-	       CTX.geom.occ_sew_faces);
+ 	       CTX.geom.occ_fix_small_edges,
+ 	       CTX.geom.occ_fix_small_faces,
+ 	       CTX.geom.occ_sew_faces);
+  buildLists();
   BRepTools::Clean(shape);
 }
 

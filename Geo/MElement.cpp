@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.30 2007-01-28 12:55:00 geuzaine Exp $
+// $Id: MElement.cpp,v 1.31 2007-02-27 17:15:46 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -112,6 +112,7 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
 			int elementary, int physical)
 {
   int type = getTypeForMSH();
+
   if(!type) return;
 
   // if necessary, change the ordering of the vertices to get positive
@@ -371,4 +372,20 @@ void MTriangle::circumcenterXY(double *res) const
   a3 = x3 * x3 + y3 * y3;
   res[0] = (double)((a1 * (y3 - y2) + a2 * (y1 - y3) + a3 * (y2 - y1)) / d);
   res[1] = (double)((a1 * (x2 - x3) + a2 * (x3 - x1) + a3 * (x1 - x2)) / d);
+}
+
+int MTriangleN::getNumFacesRep(){ return 1; }
+MFace MTriangleN::getFaceRep(int num)
+{ 
+  return MFace(_v[0],_v[1],_v[2]);
+}
+
+int MTriangleN::getNumFaceVertices(){
+  if (_order == 3 && _vs.size() == 6) return 0; 
+  if (_order == 3 && _vs.size() == 7) return 1; 
+  if (_order == 4 && _vs.size() == 9) return 0; 
+  if (_order == 4 && _vs.size() == 12) return 3; 
+  if (_order == 5 && _vs.size() == 12) return 0; 
+  if (_order == 5 && _vs.size() == 18) return 6;
+  throw;
 }

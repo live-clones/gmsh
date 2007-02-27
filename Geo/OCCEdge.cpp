@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.20 2007-02-03 00:02:16 geuzaine Exp $
+// $Id: OCCEdge.cpp,v 1.21 2007-02-27 17:15:47 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -86,7 +86,7 @@ SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar,int dir) const
     const double dx = p1.x()-p2.x();
     const double dy = p1.y()-p2.y();
     const double dz = p1.z()-p2.z();
-    if(sqrt(dx*dx+dy*dy+dz*dz) > 1.e-7 * CTX.lc){
+    if(sqrt(dx*dx+dy*dy+dz*dz) > 1.e-4 * CTX.lc){
       // return reparamOnFace(face, epar,-1);      
       Msg(WARNING, "Reparam on face partially failed for curve %d surface %d at point %g",
 	  tag(), face->tag(), epar);

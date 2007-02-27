@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.7 2007-01-24 08:57:16 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.8 2007-02-27 17:15:46 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -211,8 +211,17 @@ static int getNumVerticesForElementTypeMSH(int type)
   case MSH_PNT    : return 1;
   case MSH_LIN_2  : return 2;
   case MSH_LIN_3  : return 2 + 1;
+  case MSH_LIN_4  : return 2 + 2;
+  case MSH_LIN_5  : return 2 + 3;
+  case MSH_LIN_6  : return 2 + 4;
   case MSH_TRI_3  : return 3;
   case MSH_TRI_6  : return 3 + 3;
+  case MSH_TRI_9  : return 3 + 6;
+  case MSH_TRI_10  : return 3 + 6 + 1;
+  case MSH_TRI_12  : return 3 + 9;
+  case MSH_TRI_15  : return 3 + 9 + 3;
+  case MSH_TRI_15I : return 3 + 12;
+  case MSH_TRI_21 : return 3 + 12 + 6;
   case MSH_QUA_4  : return 4;
   case MSH_QUA_8  : return 4 + 4;
   case MSH_QUA_9  : return 4 + 4 + 1;
@@ -245,8 +254,17 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
   case MSH_PNT:    points[reg].push_back(v[0]); dim = 0; break;
   case MSH_LIN_2:  elem[0][reg].push_back(new MLine(v, num, part)); dim = 1; break;
   case MSH_LIN_3:  elem[0][reg].push_back(new MLine3(v, num, part)); dim = 1; break;
+  case MSH_LIN_4:  elem[0][reg].push_back(new MLineN(v, num, part)); dim = 1; break;
+  case MSH_LIN_5:  elem[0][reg].push_back(new MLineN(v, num, part)); dim = 1; break;
+  case MSH_LIN_6:  elem[0][reg].push_back(new MLineN(v, num, part)); dim = 1; break;
   case MSH_TRI_3:  elem[1][reg].push_back(new MTriangle(v, num, part)); dim = 2; break;
   case MSH_TRI_6:  elem[1][reg].push_back(new MTriangle6(v, num, part)); dim = 2; break;
+  case MSH_TRI_9:  elem[1][reg].push_back(new MTriangleN(v, 3, num, part)); dim = 2; break;  
+  case MSH_TRI_10: elem[1][reg].push_back(new MTriangleN(v, 3, num, part)); dim = 2; break; 
+  case MSH_TRI_12: elem[1][reg].push_back(new MTriangleN(v, 4, num, part)); dim = 2; break; 
+  case MSH_TRI_15: elem[1][reg].push_back(new MTriangleN(v, 4, num, part)); dim = 2; break; 
+  case MSH_TRI_15I:elem[1][reg].push_back(new MTriangleN(v, 5, num, part)); dim = 2; break;  
+  case MSH_TRI_21: elem[1][reg].push_back(new MTriangleN(v, 5, num, part)); dim = 2; break;     
   case MSH_QUA_4:  elem[2][reg].push_back(new MQuadrangle(v, num, part)); dim = 2; break;
   case MSH_QUA_8:  elem[2][reg].push_back(new MQuadrangle8(v, num, part)); dim = 2; break;
   case MSH_QUA_9:  elem[2][reg].push_back(new MQuadrangle9(v, num, part)); dim = 2; break;
@@ -522,7 +540,8 @@ int GModel::readMSH(const std::string &name)
 }
 
 static void writeElementHeaderMSH(bool binary, FILE *fp, std::map<int,int> &elements,
-				  int t1, int t2=0, int t3=0)
+				  int t1, int t2=0, int t3=0, int t4=0, 
+				  int t5=0, int t6=0, int t7=0, int t8=0)
 {
   if(!binary) return;
 
@@ -538,6 +557,26 @@ static void writeElementHeaderMSH(bool binary, FILE *fp, std::map<int,int> &elem
   }
   else if(t3 && elements.count(t3)){
     data[0] = t3;  data[1] = elements[t3];  data[2] = numTags;
+    fwrite(data, sizeof(int), 3, fp);
+  }
+  else if(t4 && elements.count(t4)){
+    data[0] = t4;  data[1] = elements[t4];  data[2] = numTags;
+    fwrite(data, sizeof(int), 3, fp);
+  }
+  else if(t5 && elements.count(t5)){
+    data[0] = t5;  data[1] = elements[t5];  data[2] = numTags;
+    fwrite(data, sizeof(int), 3, fp);
+  }
+  else if(t6 && elements.count(t6)){
+    data[0] = t6;  data[1] = elements[t6];  data[2] = numTags;
+    fwrite(data, sizeof(int), 3, fp);
+  }
+  else if(t7 && elements.count(t7)){
+    data[0] = t7;  data[1] = elements[t7];  data[2] = numTags;
+    fwrite(data, sizeof(int), 3, fp);
+  }
+  else if(t8 && elements.count(t8)){
+    data[0] = t8;  data[1] = elements[t8];  data[2] = numTags;
     fwrite(data, sizeof(int), 3, fp);
   }
 }
@@ -667,11 +706,12 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     writeElementsMSH(fp, (*it)->mesh_vertices, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-  writeElementHeaderMSH(binary, fp, elements, MSH_LIN_2, MSH_LIN_3);
+  writeElementHeaderMSH(binary, fp, elements, MSH_LIN_2, MSH_LIN_3,MSH_LIN_4,MSH_LIN_5);
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     writeElementsMSH(fp, (*it)->lines, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-  writeElementHeaderMSH(binary, fp, elements, MSH_TRI_3, MSH_TRI_6);
+  writeElementHeaderMSH(binary, fp, elements, MSH_TRI_3, MSH_TRI_6, MSH_TRI_9, 
+			MSH_TRI_10, MSH_TRI_12, MSH_TRI_15, MSH_TRI_15I,MSH_TRI_21);
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->triangles, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);

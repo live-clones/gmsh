@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.20 2007-02-02 17:16:46 remacle Exp $
+// $Id: OCCFace.cpp,v 1.21 2007-02-27 17:15:47 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -69,7 +69,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
   _periodic[0] = surface.IsUPeriodic();
   _periodic[1] = surface.IsVPeriodic();
 
-  ShapeAnalysis::GetFaceUVBounds(s, umin, umax, vmin, vmax);
+  ShapeAnalysis::GetFaceUVBounds(_s, umin, umax, vmin, vmax);
   Msg(INFO, "OCC Face %d with %d edges bounds (%g,%g)(%g,%g)", num, l_edges.size(),umin,umax,vmin,vmax);
   // we do that for the projections to converge on the 
   // borders of the surface
@@ -128,13 +128,23 @@ GPoint OCCFace::closestPoint(const SPoint3 & qp) const
 {
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
   GeomAPI_ProjectPointOnSurf proj(pnt, occface, umin, umax, vmin, vmax);
-  if(!proj.NbPoints()){
-    Msg(GERROR,"OCC Project Point on Surface FAIL");
-    return GPoint(0, 0);
-  }
-  pnt = proj.NearestPoint();
+
+   if(!proj.NbPoints()){
+     Msg(GERROR,"OCC Project Point on Surface FAIL");
+     return GPoint(0, 0);
+   }
+   
   double pp[2];
   proj.LowerDistanceParameters (pp[0], pp[1]);
+
+  Msg(INFO,"projection lower distance parameters %g %g",pp[0],pp[1]);
+
+  if((pp[0]<umin || umax<pp[0]) || (pp[1]<vmin || vmax<pp[1])){
+    Msg(GERROR,"Point projection is out of face bounds");
+    return GPoint(0, 0);
+  }
+
+  pnt = proj.NearestPoint();
   return GPoint(pnt.X(), pnt.Y(), pnt.Z(), this, pp);
 }
 

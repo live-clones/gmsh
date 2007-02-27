@@ -240,6 +240,51 @@ class MLine3 : public MLine {
   virtual char *getStringForBDF(){ return 0; } // not available
 };
 
+class MLineN : public MLine {
+ protected:
+  std::vector<MVertex *> _vs;
+ public :
+  MLineN(MVertex *v0, MVertex *v1, const std::vector<MVertex*> &vs, int num=0, int part=0) 
+    : MLine(v0, v1, num, part), _vs(vs)
+  {
+    for (int i=0;i<_vs.size();i++)
+      _vs[i]->setPolynomialOrder(_vs.size() + 1);
+  }
+  MLineN(const std::vector<MVertex*> &v, int num=0, int part=0) 
+    : MLine(v[0] , v[1], num, part)
+  {
+    for (int i=2;i<v.size();i++)
+      _vs.push_back(v[i]);
+    for (int i=0;i<_vs.size();i++)
+      _vs[i]->setPolynomialOrder(_vs.size() + 1);
+  }
+  ~MLineN(){}
+  virtual int getPolynomialOrder(){ return _vs.size() + 1; }
+  virtual int getNumVertices(){ return _vs.size() + 2; }
+  virtual MVertex *getVertex(int num){ return num < 2 ? _v[num] : _vs[num - 2]; }
+  virtual MVertex *getVertexUNV(int num)
+  {
+    if(num == 0) return _v[0];
+    if(num == _vs.size() + 1)return _v[1];
+    return  _vs[num-1];
+  }
+  virtual int getNumEdgeVertices(){ return _vs.size(); }
+  virtual int getNumEdgesRep(){ return _vs.size() + 1; }
+  virtual MEdge getEdgeRep(int num)
+  { 
+    return MEdge(getVertexUNV(num),getVertexUNV(num+1));
+  }
+  virtual int getTypeForMSH(){ 
+    if(_vs.size() == 2) return  MSH_LIN_4; 
+    if(_vs.size() == 3) return  MSH_LIN_5; 
+    if(_vs.size() == 4) return  MSH_LIN_6; 
+    throw;
+  }
+  virtual int getTypeForUNV(){ throw; } // not available
+  virtual char *getStringForPOS(){ return 0; } // not available
+  virtual char *getStringForBDF(){ return 0; } // not available
+};
+
 class MTriangle : public MElement {
  protected:
   MVertex *_v[3];
@@ -340,7 +385,8 @@ class MTriangle6 : public MTriangle {
 		 getVertex(trifaces_tri2[num][1]),
 		 getVertex(trifaces_tri2[num][2]));
   }
-  virtual int getTypeForMSH(){ return MSH_TRI_6; }
+  virtual int getTypeForMSH(){ 
+    return MSH_TRI_6; }
   virtual int getTypeForUNV(){ return 92; } // thin shell parabolic triangle
   virtual char *getStringForPOS(){ return "ST2"; }
   virtual char *getStringForBDF(){ return "CTRIA6"; }
@@ -351,6 +397,71 @@ class MTriangle6 : public MTriangle {
     tmp = _vs[0]; _vs[0] = _vs[2]; _vs[2] = tmp;
   }
 };
+
+class MTriangleN : public MTriangle {
+ protected:
+  std::vector<MVertex *> _vs;
+  const short _order;
+ public:
+  MTriangleN(MVertex *v0, MVertex *v1, MVertex *v2, 
+	     std::vector<MVertex*> &v, int order, int num=0, int part=0) 
+    : MTriangle(v0, v1, v2, num, part) , _vs (v), _order(order)
+  {
+    for(int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
+  }
+  MTriangleN(std::vector<MVertex*> &v, int order, int num=0, int part=0) 
+    : MTriangle(v[0], v[1], v[2], num, part) , _order(order)
+  {
+    for(int i = 3; i < v.size(); i++) _vs.push_back(v[i]);
+    for(int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
+  }
+  ~MTriangleN(){}
+  virtual int getPolynomialOrder(){
+    return _order;
+  }
+  virtual int getNumVertices(){ return 3 +_vs.size() ; }
+  virtual MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
+  virtual MVertex *getVertexUNV(int num)
+  {
+    if (num == 0) return _v[0];
+    if (num  < _order ) return _vs[num - 1];
+    if (num  == _order ) return _v[1];
+    if (num  < 2* _order ) return _vs[num - 2];
+    if (num  == 2*_order ) return _v[2];
+    return _vs[num - 3];
+  }
+  virtual int getNumFaceVertices();
+  virtual int getNumEdgeVertices(){ return _order - 1; }
+  virtual int getNumEdgesRep(){ return 3 * _order ; }
+  virtual MEdge getEdgeRep(int num)
+  { 
+    return MEdge(getVertexUNV(num), getVertexUNV((num+1)%(3*_order)));
+  }
+  virtual int getNumFacesRep();
+  virtual MFace getFaceRep(int num);
+  virtual int getTypeForMSH(){
+    if (_order == 3 && _vs.size() == 6) return MSH_TRI_9; 
+    if (_order == 3 && _vs.size() == 7) return MSH_TRI_10; 
+    if (_order == 4 && _vs.size() == 9) return MSH_TRI_12; 
+    if (_order == 4 && _vs.size() == 12) return MSH_TRI_15; 
+    if (_order == 5 && _vs.size() == 12) return MSH_TRI_15I; 
+    if (_order == 5 && _vs.size() == 18) return MSH_TRI_21;
+    throw;
+  }
+  virtual int getTypeForUNV(){ throw; } // thin shell parabolic triangle
+  virtual char *getStringForPOS(){ return 0; }
+  virtual char *getStringForBDF(){ return 0; }
+  virtual void revert() 
+  {
+    MVertex *tmp;
+    tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
+    std::vector<MVertex*> inv;
+    inv.insert (inv.begin(),_vs.rbegin(),_vs.rend());
+    _vs = inv;
+  }
+};
+
+
 
 template <class T> 
 void sort3(T *t[3])

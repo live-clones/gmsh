@@ -52,6 +52,15 @@
 #define MSH_HEX_20 17
 #define MSH_PRI_15 18
 #define MSH_PYR_13 19
+#define MSH_TRI_9  20
+#define MSH_TRI_10 21
+#define MSH_TRI_12 22
+#define MSH_TRI_15 23
+#define MSH_TRI_15I 24
+#define MSH_TRI_21 25
+#define MSH_LIN_4  26
+#define MSH_LIN_5  27
+#define MSH_LIN_6  28
 
 // Geometric entities
 #define ENT_NONE     0

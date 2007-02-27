@@ -40,19 +40,22 @@ class Attractor {
   ANNdistArray dist;
 #endif
   std::list <SPoint3> attractorPoints;  
-  static std::list <Attractor *> allAttractors;
+  std::list <SPoint3> lcs;  
+  static std::list <Attractor *>  allAttractors;  
 public :
   Attractor();
   virtual ~Attractor();
-  virtual double operator () (const double & distance) = 0;
-  void addPoint(double X, double Y, double Z);
-  void buildFastSearchStructures();
-  static void reset(); 
-  static double lc(double X, double Y, double Z);
-  static bool size() { return allAttractors.size(); }
+  virtual double operator () ( const double & distance ) = 0;
+  // adds a point in the attractor.
+  void addPoint ( double X, double Y, double Z, double lc = -1.0);
+  void buildFastSearchStructures() ;
+  static void reset (); 
+  static double lc (double X, double Y, double Z) ;
+  static bool size () {return allAttractors.size();}
 };
 
-class tresholdAttractor : public Attractor {
+class tresholdAttractor : public Attractor
+{
   double treshold, meshSizeIn, meshSizeOut, factor;
   tresholdAttractor(double _tres, double _In, double _Out, double _fact) 
     : treshold(_tres), meshSizeIn(_In), meshSizeOut(_Out), factor(_fact) {}
@@ -69,6 +72,14 @@ class tresholdAttractor : public Attractor {
   }
   virtual double operator () (const double & distance);
 };
+
+// this attractor uses the 1D mesh for propagating the edge lengths
+// inside the 2D and 3D domain. This attra
+
+class mesh1DAttractor : public Attractor
+{  
+};
+
 
 // build a list of points for the attractor on a model edge
 // presently, the function is duplicated (internals of gmsh and GMODEL)

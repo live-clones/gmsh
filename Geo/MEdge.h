@@ -57,11 +57,15 @@ class MEdge {
     t.normalize();
     return t;
   }
-  SPoint3 barycenter() const
+  inline SPoint3 barycenter() const
   {
-    return SPoint3(0.5 * (_v[0]->x() + _v[1]->x()), 
-		   0.5 * (_v[0]->y() + _v[1]->y()), 
-		   0.5 * (_v[0]->z() + _v[1]->z()));
+    return interpolate(0.5);
+  }
+  inline SPoint3 interpolate(const double &t) const
+  {
+    return SPoint3(t * _v[1]->x() + (1.-t)* _v[0]->x(), 
+                   t * _v[1]->y() + (1.-t)* _v[0]->y(), 
+		   t * _v[1]->z() + (1.-t)* _v[0]->z());
   }
 };
 

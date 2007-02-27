@@ -1,4 +1,4 @@
-// $Id: Attractors.cpp,v 1.2 2007-02-02 23:50:34 geuzaine Exp $
+// $Id: Attractors.cpp,v 1.3 2007-02-27 17:15:47 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,9 +26,10 @@
 
 std::list <Attractor *> Attractor::allAttractors;  
 
-void Attractor::addPoint(double X, double Y, double Z)
+void Attractor::addPoint ( double X, double Y, double Z, double lc)
 {
   attractorPoints.push_back(SPoint3(X,Y,Z));
+  //  lcs.push_back(lc);
 }
 
 Attractor::~Attractor()
@@ -71,8 +72,8 @@ void Attractor::buildFastSearchStructures()
   for(std::list <Attractor *>::iterator it = allAttractors.begin();
       it != allAttractors.end(); ++it)
     totpoints += (*it)->attractorPoints.size();
-  if(totpoints)
-    zeronodes = annAllocPts(totpoints, 3);
+  if (totpoints)
+    zeronodes = annAllocPts(totpoints, 4);
   int k = 0;
   for(std::list <Attractor *>::iterator it = allAttractors.begin();
       it != allAttractors.end(); ++it){
