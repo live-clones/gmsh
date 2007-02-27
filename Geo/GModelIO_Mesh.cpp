@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.8 2007-02-27 17:15:46 remacle Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.9 2007-02-27 22:09:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -706,12 +706,12 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     writeElementsMSH(fp, (*it)->mesh_vertices, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
-  writeElementHeaderMSH(binary, fp, elements, MSH_LIN_2, MSH_LIN_3,MSH_LIN_4,MSH_LIN_5);
+  writeElementHeaderMSH(binary, fp, elements, MSH_LIN_2, MSH_LIN_3, MSH_LIN_4, MSH_LIN_5);
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     writeElementsMSH(fp, (*it)->lines, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);
   writeElementHeaderMSH(binary, fp, elements, MSH_TRI_3, MSH_TRI_6, MSH_TRI_9, 
-			MSH_TRI_10, MSH_TRI_12, MSH_TRI_15, MSH_TRI_15I,MSH_TRI_21);
+			MSH_TRI_10, MSH_TRI_12, MSH_TRI_15, MSH_TRI_15I, MSH_TRI_21);
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->triangles, saveAll, version, binary, num,
 		     (*it)->tag(), (*it)->physicals);

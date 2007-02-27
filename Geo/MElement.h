@@ -385,8 +385,7 @@ class MTriangle6 : public MTriangle {
 		 getVertex(trifaces_tri2[num][1]),
 		 getVertex(trifaces_tri2[num][2]));
   }
-  virtual int getTypeForMSH(){ 
-    return MSH_TRI_6; }
+  virtual int getTypeForMSH(){ return MSH_TRI_6; }
   virtual int getTypeForUNV(){ return 92; } // thin shell parabolic triangle
   virtual char *getStringForPOS(){ return "ST2"; }
   virtual char *getStringForBDF(){ return "CTRIA6"; }
