@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.60 2007-02-26 08:25:39 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.61 2007-02-27 22:00:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -704,8 +704,21 @@ bool gmsh2DMeshGenerator ( GFace *gf )
     {
       MVertex *here = (MVertex *)doc.points[i].data;
       int num = here->getNum();
-      double U = U_[num];      
-      double V = V_[num];      
+
+      double U, V;
+      // This test was missing in 2.0.0 and led to the seemingly
+      // random Windows/Mac slowdowns (we were passing random numbers
+      // to curve interpolation, and straight line interpol does
+      // "while(not in bounds) i--" which would take forever to get
+      // back into a reasonnable interval)
+      if(num < 0){ // fake bbox points 
+	U = V = 0;
+      }
+      else{
+	U = U_[num];
+	V = V_[num];
+      }
+
       BDS_Point *pp = m->add_point ( num, U,V, gf);
       //      printf("here->onWhat = %p dim = %d\n",here->onWhat(),here->onWhat()->dim());
 
