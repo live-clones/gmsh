@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.3 2007-02-28 13:00:57 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.4 2007-02-28 13:36:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -140,8 +140,7 @@ void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
 	}
       }
       else{
-	// using get{Min,Max}Vertex here is wrong! --CG
-	MVertex *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);
+	MVertex *v0 = edge.getMinVertex(), *v1 = edge.getMaxVertex();            
 	for(int j = 0; j < nPts; j++){
 	  MVertex *v;
 	  double t = (double)(j + 1)/(nPts + 1);
@@ -165,13 +164,15 @@ void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
 	    else 
 	      v1->getParameter(0, u1);
 	    double uc = (1.-t) * u0 + t * u1;
-	    if(u0 < 1e6 && u1 < 1e6 && uc > u0 && uc < u1){
+	    if(u0 < 1e6 && u1 < 1e6 && 
+	       ((edge.getMinVertex() == edge.getVertex(0) && uc > u0 && uc < u1) ||
+		(edge.getMinVertex() == edge.getVertex(1) && uc < u0 && uc > u1))){
 	      GPoint pc = ge->point(uc);
 	      v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, uc);
 	    }
 	    else{
 	      // normally never here, but we don't treat periodic curves
-	      // properly, so we can get uc < u0 or uc > u1...
+	      // properly, so we can get uc outside u0,u1
 	      SPoint3 pc = edge.interpolate(t);
 	      v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
 	    }
