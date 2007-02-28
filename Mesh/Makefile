@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.166 2007-02-27 22:01:25 geuzaine Exp $
+# $Id: Makefile,v 1.167 2007-02-28 06:58:46 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -46,7 +46,7 @@ SRC = Generator.cpp \
         BackgroundMesh.cpp \
         BoundaryLayer.cpp \
         BDS.cpp \
-        SecondOrder.cpp
+        HighOrder.cpp
 
 OBJ = ${SRC:.cpp=.o}
 
@@ -90,7 +90,7 @@ Generator.o: Generator.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GRegion.h ../Geo/GEntity.h \
   ../Geo/MElement.h ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h \
   meshGEdge.h meshGFace.h meshGRegion.h BackgroundMesh.h BoundaryLayer.h \
-  SecondOrder.h
+  HighOrder.h
 Attractors.o: Attractors.cpp Attractors.h ../Geo/SPoint3.h ../Geo/Geo.h \
   ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
   ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
@@ -333,8 +333,8 @@ BDS.o: BDS.cpp ../Numeric/Numeric.h ../Common/GmshMatrix.h BDS.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothData.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
   ../Common/Message.h
-SecondOrder.o: SecondOrder.cpp SecondOrder.h ../Geo/GModel.h \
-  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+HighOrder.o: HighOrder.cpp HighOrder.h ../Geo/GModel.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
   ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h \
   ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h \

@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.116 2007-02-27 17:15:47 remacle Exp $
+// $Id: Generator.cpp,v 1.117 2007-02-28 06:58:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,7 @@
 #include "meshGRegion.h"
 #include "BackgroundMesh.h"
 #include "BoundaryLayer.h"
-#include "SecondOrder.h"
+#include "HighOrder.h"
 
 extern Context_T CTX;
 extern GModel *GMODEL;
@@ -280,7 +280,7 @@ void GenerateMesh(int ask)
   int old = GMODEL->getMeshStatus(false);
 
   // Change any high order elements back into first order ones
-  Degre1(GMODEL);
+  SetOrder1(GMODEL);
 
   // 1D mesh
   if(ask == 1 || (ask > 1 && old < 1)) {
@@ -310,7 +310,8 @@ void GenerateMesh(int ask)
   
   // Create second order elements
   if(GMODEL->getMeshStatus() && CTX.mesh.order > 1) 
-    Degre2(GMODEL,CTX.mesh.second_order_linear, CTX.mesh.second_order_incomplete);
+    SetOrderN(GMODEL, CTX.mesh.order, 
+	      CTX.mesh.second_order_linear, CTX.mesh.second_order_incomplete);
 
   Msg(INFO, "%d vertices %d elements", GMODEL->numVertices(), GMODEL->numElements());
 

@@ -133,29 +133,27 @@ class MFace {
   {
     SPoint3 p(0., 0., 0.);
     int n = getNumVertices();
-    if (n==3)
-      {
-	const double ff[3] = {1.-u-v,u,v};
-	for(int i = 0; i < n; i++) {
-	  MVertex *v = getVertex(i);
-	  p[0] += v->x() * ff[i];
-	  p[1] += v->y() * ff[i];
-	  p[2] += v->z() * ff[i];
-	}
+    if(n == 3){
+      const double ff[3] = {1. - u - v, u, v};
+      for(int i = 0; i < n; i++) {
+	MVertex *v = getVertex(i);
+	p[0] += v->x() * ff[i];
+	p[1] += v->y() * ff[i];
+	p[2] += v->z() * ff[i];
       }
-    else if (n==4)
-      {
-	const double ff[4] = {(1-u)*(1.-v),
-			      (1-u)*(1.+v),
-			      (1+u)*(1.+v),
-			      (1+u)*(1.-v)};	
-	for(int i = 0; i < n; i++) {
-	  MVertex *v = getVertex(i);
-	  p[0] += v->x() * ff[i] * .25;
-	  p[1] += v->y() * ff[i] * .25;
-	  p[2] += v->z() * ff[i] * .25;
-	}	
-      }
+    }
+    else if(n == 4){
+      const double ff[4] = {(1 - u) * (1. - v),
+			    (1 - u) * (1. + v),
+			    (1 + u) * (1. + v),
+			    (1 + u) * (1. - v)};	
+      for(int i = 0; i < n; i++) {
+	MVertex *v = getVertex(i);
+	p[0] += v->x() * ff[i] * .25;
+	p[1] += v->y() * ff[i] * .25;
+	p[2] += v->z() * ff[i] * .25;
+      }	
+    }
     else throw;
     return p;
   }

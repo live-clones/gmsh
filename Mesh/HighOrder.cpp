@@ -1,4 +1,4 @@
-// $Id: SecondOrder.cpp,v 1.54 2007-02-27 17:15:47 remacle Exp $
+// $Id: HighOrder.cpp,v 1.1 2007-02-28 06:58:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,58 +19,42 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "SecondOrder.h"
+#include "HighOrder.h"
 #include "MElement.h"
 #include "MRep.h"
 #include "Message.h"
 #include "OS.h"
 
+// consider 2 points with their tangent
+// x(t) = x(0) * H1(t) + dx(0) * H2(t) + x(1) * H3(t) + dx(1) * H4(t) 
 
-/*
-  consider 2 points with their tangent
-
-  x(t) = x(0) * H1(t) + dx(0) * H2(t) + x(1) * H3(t) + dx(1) * H4(t) 
-
-*/
-
-void Hermite2D_C1 ( SPoint3  &p1 , 
-		    SPoint3  &p2 , 
-		    SPoint3  &t1 , 
-		    SPoint3  &t2 ,
-		    SPoint3  &one_third, 
-		    SPoint3  &two_third )
+void Hermite2D_C1(SPoint3 &p1, SPoint3 &p2, SPoint3 &t1, SPoint3 &t2,
+		  SPoint3 &one_third, SPoint3 &two_third)
 {
-
-//   double L = sqrt((p1.x()-p2.x())*(p1.x()-p2.x()) + (p1.y()-p2.y()) * (p1.y()-p2.y()));
-
-//   SVector3 p1p2 (p2,p1);
-//   SVector3 tt1  (t1.x(),t1.y(),0);
-//   SVector3 tt2  (t2.x(),t2.y(),0);
-//   const double cost1 = p1p2 * tt1;
-//   const double cost2 = p1p2 * tt2;
-  
-
-//   const double ts[2] = { 1./3.,2./3.};
-//   for (int i=0 ; i < 2; i++)
-//     {
-//       const double t = ts[i];
-//       const double H1 = (2*t+1)*(t-1)*(t-1);
-//       const double H2 = L*t*(t-1)*(t-1);
-//       const double H3 = t*t*(-2*t+3);
-//       const double H4 = -L*(1-t)*t*t;
-//       if (i == 0)one_third = p1*H1 + t1*H2 + p2*H3 + t2*H4;
-//       else two_third = p1*H1 + t1*H2 + p2*H3 + t2*H4;
-//     }  
+  // double L = sqrt((p1.x()-p2.x())*(p1.x()-p2.x()) + (p1.y()-p2.y()) * (p1.y()-p2.y()));
+  // SVector3 p1p2 (p2,p1);
+  // SVector3 tt1  (t1.x(),t1.y(),0);
+  // SVector3 tt2  (t2.x(),t2.y(),0);
+  // const double cost1 = p1p2 * tt1;
+  // const double cost2 = p1p2 * tt2;
+  // const double ts[2] = { 1./3.,2./3.};
+  // for (int i=0 ; i < 2; i++){
+  //   const double t = ts[i];
+  //   const double H1 = (2*t+1)*(t-1)*(t-1);
+  //   const double H2 = L*t*(t-1)*(t-1);
+  //   const double H3 = t*t*(-2*t+3);
+  //   const double H4 = -L*(1-t)*t*t;
+  //   if (i == 0)one_third = p1*H1 + t1*H2 + p2*H3 + t2*H4;
+  //   else two_third = p1*H1 + t1*H2 + p2*H3 + t2*H4;
+  // }  
 }
 
-
-extern GModel *GMODEL;
-
-// for each pair of vertices (an edge), we build a list of vertices that
-// are the high order representation of the edge
+// for each pair of vertices (an edge), we build a list of vertices
+// that are the high order representation of the edge
 typedef std::map<std::pair<MVertex*,MVertex*>, std::vector<MVertex*> > edgeContainer;
-// for each face (a list of vertices) we build a list of vertices that are
-// the high order representation of the face
+
+// for each face (a list of vertices) we build a list of vertices that
+// are the high order representation of the face
 typedef std::map<std::vector<MVertex*>, std::vector<MVertex*> > faceContainer;
 
 bool reparamOnFace(MVertex *v, GFace *gf, SPoint2 &param)
@@ -105,10 +89,8 @@ bool reparamOnFace(MVertex *v, GFace *gf, SPoint2 &param)
   return true;
 }
 
-void getEdgeVertices(GEdge *ge, MElement *ele, 
-		     std::vector<MVertex*> &ve,
-		     edgeContainer &edgeVertices,
-		     bool linear, int nPts = 1)
+void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
+		     edgeContainer &edgeVertices, bool linear, int nPts = 1)
 {
   bool hermite = false;
 
@@ -116,12 +98,11 @@ void getEdgeVertices(GEdge *ge, MElement *ele,
     MEdge edge = ele->getEdge(i);
     std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
     if(edgeVertices.count(p)){
-      ve.insert(ve.end(),edgeVertices[p].begin(),edgeVertices[p].end());
+      ve.insert(ve.end(), edgeVertices[p].begin(), edgeVertices[p].end());
     }
     else{
-      MVertex *v0 = edge.getMinVertex(), *v1 = edge.getMaxVertex();            
-      if (nPts == 2 && hermite){
-
+      if(nPts == 2 && hermite){
+	MVertex *v0 = edge.getMinVertex(), *v1 = edge.getMaxVertex();            
 	double u0 = 1e6, u1 = 1e6;
 	Range<double> bounds = ge->parBounds(0);
 	if(ge->getBeginVertex() && ge->getBeginVertex()->mesh_vertices[0] == v0) 
@@ -136,82 +117,76 @@ void getEdgeVertices(GEdge *ge, MElement *ele,
 	  u1 = bounds.high();
 	else 
 	  v1->getParameter(0, u1);
-
 	SVector3 tv1 = ge->firstDer(u0);
 	SVector3 tv2 = ge->firstDer(u1);
-	
 	tv1.normalize();
 	tv2.normalize();
-
-	SPoint3 t1(tv1.x(),tv1.y(),0), t2(tv2.x(),tv2.y(),0), 
-	  one_third, two_third,vv0(v0->x(),v0->y(),0),vv1(v1->x(),v1->y(),0);
-
-	Hermite2D_C1 ( vv0,vv1,t1 ,t2 ,one_third,two_third );	
-
+	SPoint3 t1(tv1.x(), tv1.y(), 0), t2(tv2.x(), tv2.y(), 0);
+	SPoint3 vv0(v0->x(), v0->y(), 0), vv1(v1->x(), v1->y(), 0);
+	SPoint3 one_third, two_third;
+	Hermite2D_C1(vv0, vv1, t1, t2, one_third, two_third);
 	printf("points (%g,%g) (%g,%g) tg (%g,%g) (%g,%g) int (%g,%g) and (%g,%g)\n",
 	       v0->x(),v0->y(),v1->x(),v1->y(),tv1.x(),tv1.y(),tv2.x(),tv2.y(),
 	       one_third.x(),one_third.y(),two_third.x(),two_third.y());
-
-	
-
-	MVertex *v1 = new MVertex(one_third.x(),one_third.y(),0);
-	MVertex *v2 = new MVertex(two_third.x(),two_third.y(),0);
-	edgeVertices[p].push_back(v1);
-	ge->mesh_vertices.push_back(v1);
-	ve.push_back(v1);
-	edgeVertices[p].push_back(v2);
-	ge->mesh_vertices.push_back(v2);
-	ve.push_back(v2);	
+	{
+	  MVertex *v1 = new MVertex(one_third.x(), one_third.y(), 0);
+	  MVertex *v2 = new MVertex(two_third.x(), two_third.y(), 0);
+	  edgeVertices[p].push_back(v1);
+	  ge->mesh_vertices.push_back(v1);
+	  ve.push_back(v1);
+	  edgeVertices[p].push_back(v2);
+	  ge->mesh_vertices.push_back(v2);
+	  ve.push_back(v2);	
+	}
       }
       else{
-	for (int j=0;j<nPts;j++)
-	  {
-	    MVertex *v;
-	    double t = (double)(j+1)/(nPts+1);
-	    if(linear || ge->geomType() == GEntity::DiscreteCurve){
+	// using get{Min,Max}Vertex here is wrong! --CG
+	MVertex *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);
+	for(int j = 0; j < nPts; j++){
+	  MVertex *v;
+	  double t = (double)(j + 1)/(nPts + 1);
+	  if(linear || ge->geomType() == GEntity::DiscreteCurve){
+	    SPoint3 pc = edge.interpolate(t);
+	    v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
+	  }
+	  else {
+	    double u0 = 1e6, u1 = 1e6;
+	    Range<double> bounds = ge->parBounds(0);
+	    if(ge->getBeginVertex() && ge->getBeginVertex()->mesh_vertices[0] == v0) 
+	      u0 = bounds.low();
+	    else if(ge->getEndVertex() && ge->getEndVertex()->mesh_vertices[0] == v0) 
+	      u0 = bounds.high();
+	    else 
+	      v0->getParameter(0, u0);
+	    if(ge->getBeginVertex() && ge->getBeginVertex()->mesh_vertices[0] == v1) 
+	      u1 = bounds.low();
+	    else if(ge->getEndVertex() && ge->getEndVertex()->mesh_vertices[0] == v1) 
+	      u1 = bounds.high();
+	    else 
+	      v1->getParameter(0, u1);
+	    double uc = (1.-t) * u0 + t * u1;
+	    if(u0 < 1e6 && u1 < 1e6 && uc > u0 && uc < u1){
+	      GPoint pc = ge->point(uc);
+	      v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, uc);
+	    }
+	    else{
+	      // normally never here, but we don't treat periodic curves
+	      // properly, so we can get uc < u0 or uc > u1...
 	      SPoint3 pc = edge.interpolate(t);
 	      v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
 	    }
-	    else {
-	      double u0 = 1e6, u1 = 1e6;
-	      Range<double> bounds = ge->parBounds(0);
-	      if(ge->getBeginVertex() && ge->getBeginVertex()->mesh_vertices[0] == v0) 
-		u0 = bounds.low();
-	      else if(ge->getEndVertex() && ge->getEndVertex()->mesh_vertices[0] == v0) 
-		u0 = bounds.high();
-	      else 
-		v0->getParameter(0, u0);
-	      if(ge->getBeginVertex() && ge->getBeginVertex()->mesh_vertices[0] == v1) 
-		u1 = bounds.low();
-	      else if(ge->getEndVertex() && ge->getEndVertex()->mesh_vertices[0] == v1) 
-		u1 = bounds.high();
-	      else 
-		v1->getParameter(0, u1);
-	      double uc = (1.-t) * u0 + t * u1;
-	      if(u0 < 1e6 && u1 < 1e6 && uc > u0 && uc < u1){
-		GPoint pc = ge->point(uc);
-		v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, uc);
-	      }
-	      else{
-		// normally never here, but we don't treat periodic curves
-		// properly, so we can get uc < u0 or uc > u1...
-		SPoint3 pc = edge.interpolate(t);
-		v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
-	      }
-	    }
-	    edgeVertices[p].push_back(v);
-	    ge->mesh_vertices.push_back(v);
-	    ve.push_back(v);
+	  }
+	  edgeVertices[p].push_back(v);
+	  ge->mesh_vertices.push_back(v);
+	  ve.push_back(v);
 	}
       }
     }
   }
 }
 
-void getEdgeVertices(GFace *gf, MElement *ele, 
-		     std::vector<MVertex*> &ve,
-		     edgeContainer &edgeVertices,
-		     bool linear, int nPts = 1)
+void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
+		     edgeContainer &edgeVertices, bool linear, int nPts = 1)
 {
   for(int i = 0; i < ele->getNumEdges(); i++){
     MEdge edge = ele->getEdge(i);    
@@ -222,208 +197,183 @@ void getEdgeVertices(GFace *gf, MElement *ele,
     }
     else{
       MVertex *v0 = edge.getMinVertex(), *v1 = edge.getMaxVertex();
-      for (int j=0;j<nPts;j++)
-	{
-	  const double t = (double)(j+1)/(nPts+1);
-	  MVertex *v;
-	  if(1 && (linear || gf->geomType() == GEntity::DiscreteSurface)){
+      for(int j = 0; j < nPts; j++){
+	const double t = (double)(j + 1) / (nPts + 1);
+	MVertex *v;
+	if(linear || gf->geomType() == GEntity::DiscreteSurface){
+	  SPoint3 pc = edge.interpolate(t);
+	  v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
+	}
+	else{
+	  SPoint2 p0, p1;
+	  if(reparamOnFace(v0, gf, p0) && reparamOnFace(v1, gf, p1)){
+	    double uc = (1.-t) * p0[0] + t * p1[0];
+	    double vc = (1.-t) * p0[1] + t * p1[1];
+	    GPoint pc = gf->point(uc, vc);
+	    v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
+	  }
+	  else{
+	    // need to treat seams correctly!
 	    SPoint3 pc = edge.interpolate(t);
 	    v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
 	  }
-	  else{
-	    SPoint2 p0, p1;
-	    if(reparamOnFace(v0, gf, p0) && reparamOnFace(v1, gf, p1)){
-	      double uc = (1.-t) * p0[0] + t * p1[0];
-	      double vc = (1.-t) * p0[1] + t * p1[1];
-	      GPoint pc = gf->point(uc, vc);
-	      v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
-	    }
-	    else{
-	      // need to treat seams correctly!
-	      SPoint3 pc = edge.interpolate(t);
-	      v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
-	    }
-	  }
-	  edgeVertices[p].push_back(v);
-	  gf->mesh_vertices.push_back(v);
-	  temp.push_back(v);
 	}
+	edgeVertices[p].push_back(v);
+	gf->mesh_vertices.push_back(v);
+	temp.push_back(v);
+      }
     }
-    if (edge.getMinVertex() == edge.getVertex(0))
-      ve.insert(ve.end(),temp.begin(),temp.end());
+    if(edge.getMinVertex() == edge.getVertex(0))
+      ve.insert(ve.end(), temp.begin(), temp.end());
     else
-      ve.insert(ve.end(),temp.rbegin(),temp.rend());
+      ve.insert(ve.end(), temp.rbegin(), temp.rend());
   }
 }
 
-void getEdgeVertices(GRegion *gr, MElement *ele, 
-		     std::vector<MVertex*> &ve,
-		     edgeContainer &edgeVertices,
-		     bool linear, int nPts = 1)
+void getEdgeVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &ve,
+		     edgeContainer &edgeVertices, bool linear, int nPts = 1)
 {
   for(int i = 0; i < ele->getNumEdges(); i++){
     MEdge edge = ele->getEdge(i);
     std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
     if(edgeVertices.count(p)){
-      ve.insert (ve.end(),edgeVertices[p].begin(),edgeVertices[p].end());
+      ve.insert(ve.end(), edgeVertices[p].begin(), edgeVertices[p].end());
     }
     else{
-      for (int j=0;j<nPts;j++)
-	{
-	  double t = (double)(j+1)/(nPts+1);
-	  SPoint3 pc = edge.interpolate(t);
-	  MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
-	  edgeVertices[p].push_back(v);
-	  gr->mesh_vertices.push_back(v);
-	  ve.push_back(v);
-	}
+      for(int j = 0; j <nPts; j++){
+	double t = (double)(j + 1) / (nPts + 1);
+	SPoint3 pc = edge.interpolate(t);
+	MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
+	edgeVertices[p].push_back(v);
+	gr->mesh_vertices.push_back(v);
+	ve.push_back(v);
+      }
     }
   }
 }
 
 void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
-		     faceContainer &faceVertices,
-		     bool linear, int nPts = 1)
-{
-  for(int i = 0; i < ele->getNumFaces(); i++){
-    MFace face = ele->getFace(i);
-    // triangles
-    if(face.getNumVertices() == 3)
-      {
-	std::vector<MVertex*> p;
-	face.getOrderedVertices(p);
-	if(faceVertices.count(p)){
-	  vf.insert(vf.begin(),faceVertices[p].begin(),faceVertices[p].end());
-	}
-	else{
-	  for (int j = 0 ; j < nPts ; j++ )
-	    {
-	      for (int k = 0 ; k < nPts-j-1 ; k++ )
-		{
-		  MVertex *v;
-		  double t1 = (double)(j+1)/(nPts+1);
-		  double t2 = (double)(k+1)/(nPts+1);
-		  if(linear || gf->geomType() == GEntity::DiscreteSurface){
-		    SPoint3 pc = face.interpolate(t1,t2);
-		    v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
-		  }
-		  else{
-		    SPoint2 p0, p1, p2;
-		    if(reparamOnFace(p[0], gf, p0) && reparamOnFace(p[1], gf, p1) &&
-		       reparamOnFace(p[2], gf, p2)){
-		      double uc = (1.-t1-t2)*p0[0] + t1*p1[0] + t2*p2[0];
-		      double vc = (1.-t1-t2)*p0[1] + t1*p1[1] + t2*p2[1];
-		      GPoint pc = gf->point(uc, vc);
-		      v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
-		    }
-		    else{
-		      // need to treat seams correctly!
-		      SPoint3 pc = face.interpolate(t1,t2);
-		      v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
-		    }
-		  }
-		  faceVertices[p].push_back(v);
-		  gf->mesh_vertices.push_back(v);
-		  vf.push_back(v);
-		}
-	    }
-	}
-      }
-    // quadrangles
-    else if(face.getNumVertices() == 4)
-      {
-	std::vector<MVertex*> p;
-	face.getOrderedVertices(p);
-	if(faceVertices.count(p)){
-	  vf.insert(vf.begin(),faceVertices[p].begin(),faceVertices[p].end());
-	}
-	else{
-	  for (int j = 0 ; j < nPts ; j++ )
-	    {
-	      for (int k = 0 ; k < nPts ; k++ )
-		{
-		  MVertex *v;
-		  double t1 = (double)(j+1)/(nPts+1);
-		  double t2 = (double)(k+1)/(nPts+1);
-		  if(linear || gf->geomType() == GEntity::DiscreteSurface){
-		    SPoint3 pc = face.interpolate(t1,t2);
-		    v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
-		  }
-		  else{
-		    SPoint2 p0, p1, p2, p3;
-		    if(reparamOnFace(p[0], gf, p0) && reparamOnFace(p[1], gf, p1) &&
-		       reparamOnFace(p[2], gf, p2) && reparamOnFace(p[3], gf, p3)){
-		      double uc = 0.25*((1-t1)*(1-t2)* p0[0] + 
-					(1-t1)*(1+t2)* p0[0] + 
-					(1-t1)*(1+t2)* p0[0] + 
-					(1+t1)*(1-t2)* p0[0] ); 
-		      double vc = 0.25*((1-t1)*(1-t2)* p0[1] + 
-					(1-t1)*(1+t2)* p0[1] + 
-					(1-t1)*(1+t2)* p0[1] + 
-					(1+t1)*(1-t2)* p0[1] ); 
-		      GPoint pc = gf->point(uc, vc);
-		      v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
-		    }
-		    else{
-		      // need to treat seams correctly!
-		      SPoint3 pc = face.interpolate(t1,t2);
-		      v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
-		    }
-		  }
-		  faceVertices[p].push_back(v);
-		  gf->mesh_vertices.push_back(v);
-		  vf.push_back(v);
-		}
-	    }
-	}
-      }
-    else throw;
-  }
-}
-
-void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
-		     faceContainer &faceVertices,
-		     bool linear, int nPts = 1)
+		     faceContainer &faceVertices, bool linear, int nPts = 1)
 {
   for(int i = 0; i < ele->getNumFaces(); i++){
     MFace face = ele->getFace(i);
     std::vector<MVertex*> p;
     face.getOrderedVertices(p);
     if(faceVertices.count(p)){
-      vf.insert(vf.begin(),faceVertices[p].begin(),faceVertices[p].end());
+      vf.insert(vf.begin(), faceVertices[p].begin(), faceVertices[p].end());
     }
-    else{      
-	{
-	  for (int j = 0 ; j < nPts ; j++ )
-	    {
-	      int st = nPts;
-	      if(face.getNumVertices() == 3)st=j;
-	      for (int k = 0 ; k < st ; k++ )
-		{
-		  double t1 = (double)(j+1)/(nPts+1);
-		  double t2 = (double)(k+1)/(nPts+1);
-		  SPoint3 pc = face.interpolate(t1,t2);
-		  MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
-		  faceVertices[p].push_back(v);
-		  gr->mesh_vertices.push_back(v);
-		  vf.push_back(v);
-		}
+    else{
+      if(face.getNumVertices() == 3){ // triangles
+	for(int j = 0; j < nPts; j++){
+	  for (int k = 0 ; k < nPts - j - 1; k++){
+	    MVertex *v;
+	    double t1 = (double)(j + 1) / (nPts + 1);
+	    double t2 = (double)(k + 1) / (nPts + 1);
+	    if(linear || gf->geomType() == GEntity::DiscreteSurface){
+	      SPoint3 pc = face.interpolate(t1,t2);
+	      v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
 	    }
+	    else{
+	      SPoint2 p0, p1, p2;
+	      if(reparamOnFace(p[0], gf, p0) && 
+		 reparamOnFace(p[1], gf, p1) &&
+		 reparamOnFace(p[2], gf, p2)){
+		double uc = (1. - t1 - t2) * p0[0] + t1 * p1[0] + t2 * p2[0];
+		double vc = (1. - t1 - t2) * p0[1] + t1 * p1[1] + t2 * p2[1];
+		GPoint pc = gf->point(uc, vc);
+		v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
+	      }
+	      else{
+		// need to treat seams correctly!
+		SPoint3 pc = face.interpolate(t1,t2);
+		v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
+	      }
+	    }
+	    faceVertices[p].push_back(v);
+	    gf->mesh_vertices.push_back(v);
+	    vf.push_back(v);
+	  }
 	}
+      }
+      else if(face.getNumVertices() == 4){ // quadrangles
+	for(int j = 0; j < nPts; j++){
+	  for(int k = 0; k < nPts; k++ ){
+	    MVertex *v;
+	    double t1 = (double)(j + 1) / (nPts + 1);
+	    double t2 = (double)(k + 1) / (nPts + 1);
+	    if(linear || gf->geomType() == GEntity::DiscreteSurface){
+	      SPoint3 pc = face.interpolate(t1,t2);
+	      v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
+	    }
+	    else{
+	      SPoint2 p0, p1, p2, p3;
+	      if(reparamOnFace(p[0], gf, p0) && reparamOnFace(p[1], gf, p1) &&
+		 reparamOnFace(p[2], gf, p2) && reparamOnFace(p[3], gf, p3)){
+		double uc = 0.25 * ((1 - t1) * (1 - t2) * p0[0] + 
+				    (1 - t1) * (1 + t2) * p0[0] + 
+				    (1 + t1) * (1 + t2) * p0[0] + 
+				    (1 + t1) * (1 - t2) * p0[0]); 
+		double vc = 0.25 * ((1 - t1) * (1 - t2) * p0[1] + 
+				    (1 - t1) * (1 + t2) * p0[1] + 
+				    (1 + t1) * (1 + t2) * p0[1] + 
+				    (1 + t1) * (1 - t2) * p0[1]); 
+		GPoint pc = gf->point(uc, vc);
+		v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
+	      }
+	      else{
+		// need to treat seams correctly!
+		SPoint3 pc = face.interpolate(t1,t2);
+		v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
+	      }
+	    }
+	    faceVertices[p].push_back(v);
+	    gf->mesh_vertices.push_back(v);
+	    vf.push_back(v);
+	  }
+	}
+      }
+      else throw; // not tri or quad
     }
   }
 }
 
-void setSecondOrder(GEdge *ge,
-		    edgeContainer &edgeVertices,
-		    bool linear, int nbPts = 1)
+void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
+		     faceContainer &faceVertices, bool linear, int nPts = 1)
+{
+  for(int i = 0; i < ele->getNumFaces(); i++){
+    MFace face = ele->getFace(i);
+    std::vector<MVertex*> p;
+    face.getOrderedVertices(p);
+    if(faceVertices.count(p)){
+      vf.insert(vf.begin(), faceVertices[p].begin(), faceVertices[p].end());
+    }
+    else{      
+      for(int j = 0; j < nPts; j++){
+	int st = nPts;
+	if(face.getNumVertices() == 3) st = j;
+	for(int k = 0; k < st; k++){
+	  double t1 = (double)(j + 1) / (nPts + 1);
+	  double t2 = (double)(k + 1) / (nPts + 1);
+	  SPoint3 pc = face.interpolate(t1, t2);
+	  MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
+	  faceVertices[p].push_back(v);
+	  gr->mesh_vertices.push_back(v);
+	  vf.push_back(v);
+	}
+      }
+    }
+  }
+}
+
+void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear, 
+		  int nbPts = 1)
 {
   std::vector<MLine*> lines2;
   for(unsigned int i = 0; i < ge->lines.size(); i++){
     MLine *l = ge->lines[i];
     std::vector<MVertex*> ve;
     getEdgeVertices(ge, l, ve, edgeVertices, linear,nbPts);
-    if ( nbPts == 1)
+    if(nbPts == 1)
       lines2.push_back(new MLine3(l->getVertex(0), l->getVertex(1), ve[0]));
     else
       lines2.push_back(new MLineN(l->getVertex(0), l->getVertex(1), ve));      
@@ -434,38 +384,38 @@ void setSecondOrder(GEdge *ge,
   if(ge->meshRep) ge->meshRep->destroy();
 }
 
-void setSecondOrder(GFace *gf,
-		    edgeContainer &edgeVertices,
-		    faceContainer &faceVertices,
-		    bool linear, bool incomplete, int nPts = 1)
+void setHighOrder(GFace *gf, edgeContainer &edgeVertices, 
+		  faceContainer &faceVertices, bool linear, bool incomplete,
+		  int nPts = 1)
 {
   std::vector<MTriangle*> triangles2;
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
     MTriangle *t = gf->triangles[i];
-    std::vector<MVertex*> ve,vf;
-    getEdgeVertices(gf, t, ve, edgeVertices, linear,nPts);
-    if (nPts == 1)
+    std::vector<MVertex*> ve, vf;
+    getEdgeVertices(gf, t, ve, edgeVertices, linear, nPts);
+    if(nPts == 1){
       triangles2.push_back
 	(new MTriangle6(t->getVertex(0), t->getVertex(1), t->getVertex(2),
 			ve[0], ve[1], ve[2]));
-    else
+    }
+    else{
       if(incomplete){
 	triangles2.push_back
 	  (new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-			  ve,nPts+1));
+			  ve, nPts + 1));
       }
-      else
-	{
-	  getFaceVertices(gf, t, vf, faceVertices, linear,nPts);
-	  ve.insert(ve.end(),vf.begin(),vf.end());
-	  triangles2.push_back
-	    (new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-			    ve,nPts+1));
-	}      
+      else{
+	getFaceVertices(gf, t, vf, faceVertices, linear, nPts);
+	ve.insert(ve.end(), vf.begin(), vf.end());
+	triangles2.push_back
+	  (new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
+			  ve, nPts + 1));
+      }
+    }
     delete t;
   }
   gf->triangles = triangles2;
-
+  
   std::vector<MQuadrangle*> quadrangles2;
   for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
     MQuadrangle *q = gf->quadrangles[i];
@@ -489,10 +439,9 @@ void setSecondOrder(GFace *gf,
   if(gf->meshRep) gf->meshRep->destroy();
 }
 
-void setSecondOrder(GRegion *gr,
-		    edgeContainer &edgeVertices,
-		    faceContainer &faceVertices,
-		    bool linear, bool incomplete, int nPts = 1)
+void setHighOrder(GRegion *gr, edgeContainer &edgeVertices, 
+		  faceContainer &faceVertices, bool linear, bool incomplete,
+		  int nPts = 1)
 {
   std::vector<MTetrahedron*> tetrahedra2;
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
@@ -603,7 +552,7 @@ void setFirstOrder(GEntity *e, std::vector<T*> &elements)
   if(e->meshRep) e->meshRep->destroy();
 }
 
-void removeSecondOrderVertices(GEntity *e)
+void removeHighOrderVertices(GEntity *e)
 {
   std::vector<MVertex*> v1;
   for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
@@ -615,7 +564,7 @@ void removeSecondOrderVertices(GEntity *e)
   e->mesh_vertices = v1;
 }
 
-void Degre1(GModel *m)
+void SetOrder1(GModel *m)
 {
   // replace all elements with first order elements and mark all
   // unused vertices with a -1 visibility flag
@@ -635,14 +584,14 @@ void Degre1(GModel *m)
 
   // remove all vertices with a -1 visibility flag
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
-    removeSecondOrderVertices(*it);
+    removeHighOrderVertices(*it);
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
-    removeSecondOrderVertices(*it);
+    removeHighOrderVertices(*it);
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
-    removeSecondOrderVertices(*it);
+    removeHighOrderVertices(*it);
 }
 
-void Degre2(GModel *m, bool linear, bool incomplete)
+void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
 {
   // replace all the elements in the mesh with second order elements
   // by creating unique vertices on the edges/faces of the mesh:
@@ -659,23 +608,23 @@ void Degre2(GModel *m, bool linear, bool incomplete)
   //   edges (creating 8-node quads, 20-node hexas, etc., instead of
   //   9-node quads, 27-node hexas, etc.)
 
-  int nPts = CTX.mesh.order - 1;
+  int nPts = order - 1;
 
   Msg(STATUS1, "Meshing second order...");
   double t1 = Cpu();
 
   // first, make sure to remove any existsing second order vertices/elements
-  Degre1(m);
+  SetOrder1(m);
 
   // then create new second order vertices/elements
   edgeContainer edgeVertices;
   faceContainer faceVertices;
-  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); ++it)
-    setSecondOrder(*it, edgeVertices, linear, nPts);
-  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); ++it)
-    setSecondOrder(*it, edgeVertices, faceVertices, linear, incomplete,nPts);
-  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); ++it)
-    setSecondOrder(*it, edgeVertices, faceVertices, linear, incomplete,nPts);
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
+    setHighOrder(*it, edgeVertices, linear, nPts);
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+    setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+    setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
 
   double t2 = Cpu();
   Msg(INFO, "Mesh second order complete (%g s)", t2 - t1);

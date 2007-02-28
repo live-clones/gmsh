@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.515 2007-02-26 08:25:37 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.516 2007-02-28 06:58:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@
 #include "GeoStringInterface.h"
 #include "findLinks.h"
 #include "Generator.h"
-#include "SecondOrder.h"
+#include "HighOrder.h"
 #include "Draw.h"
 #include "SelectBuffer.h"
 #include "Views.h"
@@ -3864,9 +3864,9 @@ void mesh_inspect_cb(CALLBACK_ARGS)
 void mesh_degree_cb(CALLBACK_ARGS)
 {
   if((long)data == 2)
-    Degre2(GMODEL, CTX.mesh.second_order_linear, CTX.mesh.second_order_incomplete);
+    SetOrderN(GMODEL, 2, CTX.mesh.second_order_linear, CTX.mesh.second_order_incomplete);
   else
-    Degre1(GMODEL);
+    SetOrder1(GMODEL);
   CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
   Draw();
   Msg(STATUS2N, " ");
