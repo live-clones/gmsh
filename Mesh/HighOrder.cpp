@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.2 2007-02-28 11:39:32 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.3 2007-02-28 13:00:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -260,7 +260,7 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
     std::vector<MVertex*> p;
     face.getOrderedVertices(p);
     if(faceVertices.count(p)){
-      vf.insert(vf.begin(), faceVertices[p].begin(), faceVertices[p].end());
+      vf.insert(vf.end(), faceVertices[p].begin(), faceVertices[p].end());
     }
     else{
       if(face.getNumVertices() == 3){ // triangles
@@ -345,11 +345,10 @@ void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
     std::vector<MVertex*> p;
     face.getOrderedVertices(p);
     if(faceVertices.count(p)){
-      vf.insert(vf.begin(), faceVertices[p].begin(), faceVertices[p].end());
+      vf.insert(vf.end(), faceVertices[p].begin(), faceVertices[p].end());
     }
     else{      
       if(face.getNumVertices() == 3){ // triangles
-	/*
 	for(int j = 0; j < nPts; j++){
 	  for(int k = 0 ; k < nPts - j - 1; k++){
 	    double t1 = (double)(j + 1) / (nPts + 1);
@@ -361,7 +360,6 @@ void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
 	    vf.push_back(v);
 	  }
 	}
-	*/
       }
       else if(face.getNumVertices() == 4){ // quadrangles
 	for(int j = 0; j < nPts; j++){
