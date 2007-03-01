@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.4 2007-02-28 13:36:57 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.5 2007-03-01 12:02:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -89,6 +89,21 @@ bool reparamOnFace(MVertex *v, GFace *gf, SPoint2 &param)
   return true;
 }
 
+bool reparamOnEdge(MVertex *v, GEdge *ge, double &param)
+{
+  param = 1.e6;
+  Range<double> bounds = ge->parBounds(0);
+  if(ge->getBeginVertex() && ge->getBeginVertex()->mesh_vertices[0] == v) 
+    param = bounds.low();
+  else if(ge->getEndVertex() && ge->getEndVertex()->mesh_vertices[0] == v) 
+    param = bounds.high();
+  else 
+    v->getParameter(0, param);
+
+  if(param < 1.e6) return true;
+  return false;
+}
+
 void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
 		     edgeContainer &edgeVertices, bool linear, int nPts = 1)
 {
@@ -98,25 +113,20 @@ void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
     MEdge edge = ele->getEdge(i);
     std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
     if(edgeVertices.count(p)){
-      ve.insert(ve.end(), edgeVertices[p].begin(), edgeVertices[p].end());
+      if(edge.getVertex(0) == edge.getMinVertex())
+	ve.insert(ve.end(), edgeVertices[p].begin(), edgeVertices[p].end());
+      else
+	ve.insert(ve.end(), edgeVertices[p].rbegin(), edgeVertices[p].rend());
     }
     else{
+      MVertex *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);            
+      double u0 = 0., u1 = 0.;
+      bool reparamOK = true;
+      if(hermite || (!linear && ge->geomType() != GEntity::DiscreteCurve)){
+	reparamOK &= reparamOnEdge(v0, ge, u0);
+	reparamOK &= reparamOnEdge(v1, ge, u1);
+      }
       if(nPts == 2 && hermite){
-	MVertex *v0 = edge.getMinVertex(), *v1 = edge.getMaxVertex();            
-	double u0 = 1e6, u1 = 1e6;
-	Range<double> bounds = ge->parBounds(0);
-	if(ge->getBeginVertex() && ge->getBeginVertex()->mesh_vertices[0] == v0) 
-	  u0 = bounds.low();
-	else if(ge->getEndVertex() && ge->getEndVertex()->mesh_vertices[0] == v0) 
-	  u0 = bounds.high();
-	else 
-	  v0->getParameter(0, u0);
-	if(ge->getBeginVertex() && ge->getBeginVertex()->mesh_vertices[0] == v1) 
-	  u1 = bounds.low();
-	else if(ge->getEndVertex() && ge->getEndVertex()->mesh_vertices[0] == v1) 
-	  u1 = bounds.high();
-	else 
-	  v1->getParameter(0, u1);
 	SVector3 tv1 = ge->firstDer(u0);
 	SVector3 tv2 = ge->firstDer(u1);
 	tv1.normalize();
@@ -125,62 +135,44 @@ void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
 	SPoint3 vv0(v0->x(), v0->y(), 0), vv1(v1->x(), v1->y(), 0);
 	SPoint3 one_third, two_third;
 	Hermite2D_C1(vv0, vv1, t1, t2, one_third, two_third);
-	printf("points (%g,%g) (%g,%g) tg (%g,%g) (%g,%g) int (%g,%g) and (%g,%g)\n",
-	       v0->x(),v0->y(),v1->x(),v1->y(),tv1.x(),tv1.y(),tv2.x(),tv2.y(),
-	       one_third.x(),one_third.y(),two_third.x(),two_third.y());
-	{
-	  MVertex *v1 = new MVertex(one_third.x(), one_third.y(), 0);
-	  MVertex *v2 = new MVertex(two_third.x(), two_third.y(), 0);
+	MVertex *v1 = new MVertex(one_third.x(), one_third.y(), 0);
+	MVertex *v2 = new MVertex(two_third.x(), two_third.y(), 0);
+	ge->mesh_vertices.push_back(v1);
+	ve.push_back(v1);
+	ge->mesh_vertices.push_back(v2);
+	ve.push_back(v2);	
+	if(edge.getVertex(0) == edge.getMinVertex()){
 	  edgeVertices[p].push_back(v1);
-	  ge->mesh_vertices.push_back(v1);
-	  ve.push_back(v1);
 	  edgeVertices[p].push_back(v2);
-	  ge->mesh_vertices.push_back(v2);
-	  ve.push_back(v2);	
+	}
+	else{
+	  edgeVertices[p].push_back(v2);
+	  edgeVertices[p].push_back(v1);
 	}
       }
       else{
-	MVertex *v0 = edge.getMinVertex(), *v1 = edge.getMaxVertex();            
+	std::vector<MVertex*> temp;
 	for(int j = 0; j < nPts; j++){
-	  MVertex *v;
 	  double t = (double)(j + 1)/(nPts + 1);
-	  if(linear || ge->geomType() == GEntity::DiscreteCurve){
+	  double uc = (1. - t) * u0 + t * u1;
+	  MVertex *v;
+	  if(!reparamOK || linear || ge->geomType() == GEntity::DiscreteCurve || 
+	     uc < u0 || uc > u1){ // need to treat periodic curves properly!
 	    SPoint3 pc = edge.interpolate(t);
 	    v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
 	  }
 	  else {
-	    double u0 = 1e6, u1 = 1e6;
-	    Range<double> bounds = ge->parBounds(0);
-	    if(ge->getBeginVertex() && ge->getBeginVertex()->mesh_vertices[0] == v0) 
-	      u0 = bounds.low();
-	    else if(ge->getEndVertex() && ge->getEndVertex()->mesh_vertices[0] == v0) 
-	      u0 = bounds.high();
-	    else 
-	      v0->getParameter(0, u0);
-	    if(ge->getBeginVertex() && ge->getBeginVertex()->mesh_vertices[0] == v1) 
-	      u1 = bounds.low();
-	    else if(ge->getEndVertex() && ge->getEndVertex()->mesh_vertices[0] == v1) 
-	      u1 = bounds.high();
-	    else 
-	      v1->getParameter(0, u1);
-	    double uc = (1.-t) * u0 + t * u1;
-	    if(u0 < 1e6 && u1 < 1e6 && 
-	       ((edge.getMinVertex() == edge.getVertex(0) && uc > u0 && uc < u1) ||
-		(edge.getMinVertex() == edge.getVertex(1) && uc < u0 && uc > u1))){
-	      GPoint pc = ge->point(uc);
-	      v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, uc);
-	    }
-	    else{
-	      // normally never here, but we don't treat periodic curves
-	      // properly, so we can get uc outside u0,u1
-	      SPoint3 pc = edge.interpolate(t);
-	      v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
-	    }
+	    GPoint pc = ge->point(uc);
+	    v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, uc);
 	  }
-	  edgeVertices[p].push_back(v);
+	  temp.push_back(v);
 	  ge->mesh_vertices.push_back(v);
 	  ve.push_back(v);
 	}
+	if(edge.getVertex(0) == edge.getMinVertex())
+	  edgeVertices[p].insert(edgeVertices[p].end(), temp.begin(), temp.end());
+	else
+	  edgeVertices[p].insert(edgeVertices[p].end(), temp.rbegin(), temp.rend());
       }
     }
   }
@@ -191,43 +183,44 @@ void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
 {
   for(int i = 0; i < ele->getNumEdges(); i++){
     MEdge edge = ele->getEdge(i);    
-    std::vector<MVertex*> temp;    
     std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
     if(edgeVertices.count(p)){
-      temp = edgeVertices[p];
+      if(edge.getVertex(0) == edge.getMinVertex())
+	ve.insert(ve.end(), edgeVertices[p].begin(), edgeVertices[p].end());
+      else
+	ve.insert(ve.end(), edgeVertices[p].rbegin(), edgeVertices[p].rend());
     }
     else{
-      MVertex *v0 = edge.getMinVertex(), *v1 = edge.getMaxVertex();
+      MVertex *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);
+      SPoint2 p0, p1;
+      bool reparamOK = true;
+      if(!linear && gf->geomType() != GEntity::DiscreteSurface){
+	reparamOK &= reparamOnFace(v0, gf, p0);
+	reparamOK &= reparamOnFace(v1, gf, p1);
+      }
+      std::vector<MVertex*> temp;
       for(int j = 0; j < nPts; j++){
 	const double t = (double)(j + 1) / (nPts + 1);
 	MVertex *v;
-	if(linear || gf->geomType() == GEntity::DiscreteSurface){
+	if(!reparamOK || linear || gf->geomType() == GEntity::DiscreteSurface){
 	  SPoint3 pc = edge.interpolate(t);
 	  v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
 	}
 	else{
-	  SPoint2 p0, p1;
-	  if(reparamOnFace(v0, gf, p0) && reparamOnFace(v1, gf, p1)){
-	    double uc = (1. - t) * p0[0] + t * p1[0];
-	    double vc = (1. - t) * p0[1] + t * p1[1];
-	    GPoint pc = gf->point(uc, vc);
-	    v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
-	  }
-	  else{
-	    // need to treat seams correctly!
-	    SPoint3 pc = edge.interpolate(t);
-	    v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
-	  }
+	  double uc = (1. - t) * p0[0] + t * p1[0];
+	  double vc = (1. - t) * p0[1] + t * p1[1];
+	  GPoint pc = gf->point(uc, vc);
+	  v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
 	}
-	edgeVertices[p].push_back(v);
-	gf->mesh_vertices.push_back(v);
 	temp.push_back(v);
+	gf->mesh_vertices.push_back(v);
+	ve.push_back(v);
       }
+      if(edge.getVertex(0) == edge.getMinVertex())
+	edgeVertices[p].insert(edgeVertices[p].end(), temp.begin(), temp.end());
+      else
+	edgeVertices[p].insert(edgeVertices[p].end(), temp.rbegin(), temp.rend());
     }
-    if(edge.getMinVertex() == edge.getVertex(0))
-      ve.insert(ve.end(), temp.begin(), temp.end());
-    else
-      ve.insert(ve.end(), temp.rbegin(), temp.rend());
   }
 }
 
@@ -238,17 +231,25 @@ void getEdgeVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &ve,
     MEdge edge = ele->getEdge(i);
     std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
     if(edgeVertices.count(p)){
-      ve.insert(ve.end(), edgeVertices[p].begin(), edgeVertices[p].end());
+      if(edge.getVertex(0) == edge.getMinVertex())
+	ve.insert(ve.end(), edgeVertices[p].begin(), edgeVertices[p].end());
+      else
+	ve.insert(ve.end(), edgeVertices[p].rbegin(), edgeVertices[p].rend());
     }
     else{
+      std::vector<MVertex*> temp;
       for(int j = 0; j < nPts; j++){
 	double t = (double)(j + 1) / (nPts + 1);
 	SPoint3 pc = edge.interpolate(t);
 	MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
-	edgeVertices[p].push_back(v);
+	temp.push_back(v);
 	gr->mesh_vertices.push_back(v);
 	ve.push_back(v);
       }
+      if(edge.getVertex(0) == edge.getMinVertex())
+	edgeVertices[p].insert(edgeVertices[p].end(), temp.begin(), temp.end());
+      else
+	edgeVertices[p].insert(edgeVertices[p].end(), temp.rbegin(), temp.rend());
     }
   }
 }
@@ -264,30 +265,30 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
       vf.insert(vf.end(), faceVertices[p].begin(), faceVertices[p].end());
     }
     else{
+      SPoint2 p0, p1, p2, p3;
+      bool reparamOK = true;
+      if(!linear && gf->geomType() != GEntity::DiscreteSurface){
+	reparamOK &= reparamOnFace(p[0], gf, p0);
+	reparamOK &= reparamOnFace(p[1], gf, p1);
+	reparamOK &= reparamOnFace(p[2], gf, p2);
+	if(face.getNumVertices() == 4)
+	  reparamOK &= reparamOnFace(p[3], gf, p3);
+      }
       if(face.getNumVertices() == 3){ // triangles
 	for(int j = 0; j < nPts; j++){
 	  for(int k = 0 ; k < nPts - j - 1; k++){
 	    MVertex *v;
 	    double t1 = (double)(j + 1) / (nPts + 1);
 	    double t2 = (double)(k + 1) / (nPts + 1);
-	    if(linear || gf->geomType() == GEntity::DiscreteSurface){
+	    if(!reparamOK || linear || gf->geomType() == GEntity::DiscreteSurface){
 	      SPoint3 pc = face.interpolate(t1, t2);
 	      v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
 	    }
 	    else{
-	      SPoint2 p0, p1, p2;
-	      if(reparamOnFace(p[0], gf, p0) && reparamOnFace(p[1], gf, p1) &&
-		 reparamOnFace(p[2], gf, p2)){
-		double uc = (1. - t1 - t2) * p0[0] + t1 * p1[0] + t2 * p2[0];
-		double vc = (1. - t1 - t2) * p0[1] + t1 * p1[1] + t2 * p2[1];
-		GPoint pc = gf->point(uc, vc);
-		v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
-	      }
-	      else{
-		// need to treat seams correctly!
-		SPoint3 pc = face.interpolate(t1, t2);
-		v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
-	      }
+	      double uc = (1. - t1 - t2) * p0[0] + t1 * p1[0] + t2 * p2[0];
+	      double vc = (1. - t1 - t2) * p0[1] + t1 * p1[1] + t2 * p2[1];
+	      GPoint pc = gf->point(uc, vc);
+	      v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
 	    }
 	    faceVertices[p].push_back(v);
 	    gf->mesh_vertices.push_back(v);
@@ -302,30 +303,21 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
 	    // parameters are between -1 and 1
 	    double t1 = 2. * (double)(j + 1) / (nPts + 1) - 1.;
 	    double t2 = 2. * (double)(k + 1) / (nPts + 1) - 1.;
-	    if(linear || gf->geomType() == GEntity::DiscreteSurface){
+	    if(!reparamOK || linear || gf->geomType() == GEntity::DiscreteSurface){
 	      SPoint3 pc = face.interpolate(t1, t2);
 	      v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
 	    }
 	    else{
-	      SPoint2 p0, p1, p2, p3;
-	      if(reparamOnFace(p[0], gf, p0) && reparamOnFace(p[1], gf, p1) &&
-		 reparamOnFace(p[2], gf, p2) && reparamOnFace(p[3], gf, p3)){
-		double uc = 0.25 * ((1 - t1) * (1 - t2) * p0[0] + 
-				    (1 + t1) * (1 - t2) * p1[0] + 
-				    (1 + t1) * (1 + t2) * p2[0] + 
-				    (1 - t1) * (1 + t2) * p3[0]); 
-		double vc = 0.25 * ((1 - t1) * (1 - t2) * p0[1] + 
-				    (1 + t1) * (1 - t2) * p1[1] + 
-				    (1 + t1) * (1 + t2) * p2[1] + 
-				    (1 - t1) * (1 + t2) * p3[1]); 
-		GPoint pc = gf->point(uc, vc);
-		v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
-	      }
-	      else{
-		// need to treat seams correctly!
-		SPoint3 pc = face.interpolate(t1, t2);
-		v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
-	      }
+	      double uc = 0.25 * ((1 - t1) * (1 - t2) * p0[0] + 
+				  (1 + t1) * (1 - t2) * p1[0] + 
+				  (1 + t1) * (1 + t2) * p2[0] + 
+				  (1 - t1) * (1 + t2) * p3[0]); 
+	      double vc = 0.25 * ((1 - t1) * (1 - t2) * p0[1] + 
+				  (1 + t1) * (1 - t2) * p1[1] + 
+				  (1 + t1) * (1 + t2) * p2[1] + 
+				  (1 - t1) * (1 + t2) * p3[1]); 
+	      GPoint pc = gf->point(uc, vc);
+	      v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
 	    }
 	    faceVertices[p].push_back(v);
 	    gf->mesh_vertices.push_back(v);
