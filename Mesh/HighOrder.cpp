@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.5 2007-03-01 12:02:02 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.6 2007-03-01 14:21:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -50,7 +50,9 @@ void Hermite2D_C1(SPoint3 &p1, SPoint3 &p2, SPoint3 &t1, SPoint3 &t2,
 }
 
 // for each pair of vertices (an edge), we build a list of vertices
-// that are the high order representation of the edge
+// that are the high order representation of the edge. The ordering of
+// vertices in the list is supposed to be (by construction) consistent
+// with the ordering of the pair.
 typedef std::map<std::pair<MVertex*,MVertex*>, std::vector<MVertex*> > edgeContainer;
 
 // for each face (a list of vertices) we build a list of vertices that
@@ -153,7 +155,7 @@ void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
       else{
 	std::vector<MVertex*> temp;
 	for(int j = 0; j < nPts; j++){
-	  double t = (double)(j + 1)/(nPts + 1);
+	  const double t = (double)(j + 1)/(nPts + 1);
 	  double uc = (1. - t) * u0 + t * u1;
 	  MVertex *v;
 	  if(!reparamOK || linear || ge->geomType() == GEntity::DiscreteCurve || 
