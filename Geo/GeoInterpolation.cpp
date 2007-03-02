@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.21 2007-02-27 22:01:59 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.22 2007-03-02 14:54:25 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -335,21 +335,29 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
     List_Read(c->Control_Points, i, &v[1]);
     List_Read(c->Control_Points, i + 1, &v[2]);
     if(!i) {
-      v[0] = &temp1;
-      v[0]->Pos.X = 2. * v[1]->Pos.X - v[2]->Pos.X;
-      v[0]->Pos.Y = 2. * v[1]->Pos.Y - v[2]->Pos.Y;
-      v[0]->Pos.Z = 2. * v[1]->Pos.Z - v[2]->Pos.Z;
-      v[0]->pntOnGeometry = v[1]->pntOnGeometry * 2. - v[2]->pntOnGeometry;
+			if(c->beg==c->end){
+				List_Read(c->Control_Points, N - 2, &v[0]);
+			}else{
+				v[0] = &temp1;
+				v[0]->Pos.X = 2. * v[1]->Pos.X - v[2]->Pos.X;
+				v[0]->Pos.Y = 2. * v[1]->Pos.Y - v[2]->Pos.Y;
+				v[0]->Pos.Z = 2. * v[1]->Pos.Z - v[2]->Pos.Z;
+				v[0]->pntOnGeometry = v[1]->pntOnGeometry * 2. - v[2]->pntOnGeometry;
+			}
     }
     else {
       List_Read(c->Control_Points, i - 1, &v[0]);
     }
     if(i == N - 2) {
-      v[3] = &temp2;
-      v[3]->Pos.X = 2. * v[2]->Pos.X - v[1]->Pos.X;
-      v[3]->Pos.Y = 2. * v[2]->Pos.Y - v[1]->Pos.Y;
-      v[3]->Pos.Z = 2. * v[2]->Pos.Z - v[1]->Pos.Z;
-      v[3]->pntOnGeometry = v[2]->pntOnGeometry * 2. - v[1]->pntOnGeometry;
+			if(c->beg==c->end){
+				List_Read(c->Control_Points, 1, &v[3]);
+			}else{
+				v[3] = &temp2;
+				v[3]->Pos.X = 2. * v[2]->Pos.X - v[1]->Pos.X;
+				v[3]->Pos.Y = 2. * v[2]->Pos.Y - v[1]->Pos.Y;
+				v[3]->Pos.Z = 2. * v[2]->Pos.Z - v[1]->Pos.Z;
+				v[3]->pntOnGeometry = v[2]->pntOnGeometry * 2. - v[1]->pntOnGeometry;
+			}
     }
     else {
       List_Read(c->Control_Points, i + 2, &v[3]);
