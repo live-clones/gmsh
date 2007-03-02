@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.112 2007-03-02 08:44:55 geuzaine Exp $
+# $Id: Makefile,v 1.113 2007-03-02 08:48:25 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -223,4 +223,3 @@ gl2yuv.o: gl2yuv.cpp gl2yuv.h PixelBuffer.h ../Common/Gmsh.h \
   ../DataStr/Tree.h ../Common/GmshUI.h Draw.h ../Common/Views.h \
   ../Common/ColorTable.h ../Common/VertexArray.h ../Common/SmoothData.h \
   ../Numeric/Numeric.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
-tc.o: tc.cpp tc.h
