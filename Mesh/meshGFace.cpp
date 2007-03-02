@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.62 2007-03-02 09:20:21 remacle Exp $
+// $Id: meshGFace.cpp,v 1.63 2007-03-02 09:55:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -849,9 +849,9 @@ bool gmsh2DMeshGenerator ( GFace *gf )
 	  m->recombineIntoQuads (gf->meshAttributes.recombineAngle,gf);
 	}
     }
-     char name[245];
-     sprintf(name,"param%d.pos",gf->tag());
-     outputScalarField(m->triangles, name,1);
+    //     char name[245];
+    //     sprintf(name,"param%d.pos",gf->tag());
+    //     outputScalarField(m->triangles, name,1);
 //     sprintf(name,"real%d.pos",gf->tag());
 //     outputScalarField(m->triangles, name,0);
   // fill the small gmsh structures
