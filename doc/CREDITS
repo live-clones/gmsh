@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.43 2007-01-29 17:16:03 geuzaine Exp $
+$Id: CREDITS,v 1.44 2007-03-02 08:44:55 geuzaine Exp $
 
              Gmsh is copyright (C) 1997-2007
 
@@ -11,20 +11,21 @@ $Id: CREDITS,v 1.43 2007-01-29 17:16:03 geuzaine Exp $
                <remacle at gce.ucl.ac.be>
 
 Major code contributions to Gmsh have been provided by Nicolas Tardieu
-<ntardieu at giref.ulaval.ca> (help with the GSL integration, new "STL
-to elementary geometry" interface, Netgen integration), Stephen Guzik
-<sguzik at utias.utoronto.ca> (CGNS integration) and Pascale Noyret
-(MED integration).
+<ntardieu at giref.ulaval.ca> (help with the GSL and Netgen
+integration), Stephen Guzik <sguzik at utias.utoronto.ca> (CGNS
+integration) and Pascale Noyret <pascale.noyret et edf.fr> (MED
+integration).
 
 Other code contributors include: David Colignon <David.Colignon at
-ulg.ac.be> for new colormaps; Patrick Dular <patrick.dular at
-ulg.ac.be> for transfinite mesh bug fixes; Laurent Stainier
-<l.stainier at ulg.ac.be> for the eigenvalue solvers and for help with
-the MacOS port and the tensor display code; Pierre Badel <badel at
-freesurf.fr> for help with the GSL integration; Marc Ume <Marc.Ume at
-digitalgraphics.be> for the original list code; Matt Gundry <mjgundry
-at faa-engineers.com> for the Plot3d mesh format; Jozef Vesely <vesely
-at gjh.sk> for the Tetgen integration.
+ulg.ac.be> for new colormaps and lots of testing and bug reports;
+Patrick Dular <patrick.dular at ulg.ac.be> for transfinite mesh bug
+fixes; Laurent Stainier <l.stainier at ulg.ac.be> for the eigenvalue
+solvers and for help with the MacOS port and the tensor display code;
+Pierre Badel <badel at freesurf.fr> for help with the GSL integration;
+Marc Ume <Marc.Ume at digitalgraphics.be> for the original list code;
+Matt Gundry <mjgundry at faa-engineers.com> for the Plot3d mesh
+format; Jozef Vesely <vesely at gjh.sk> for help with the Tetgen
+integration.
 
 The AVL tree code (DataStr/avl.*) and the YUV image code
 (Graphics/gl2yuv.*) are copyright (C) 1988-1993, 1995 The Regents of
@@ -35,12 +36,12 @@ notice appear in all copies and that both that copyright notice and
 this permission notice appear in supporting documentation, and that
 the name of the University of California not be used in advertising or
 publicity pertaining to distribution of the software without specific,
-written prior permission.  The University of California makes no
+written prior permission. The University of California makes no
 representations about the suitability of this software for any
-purpose.  It is provided "as is" without express or implied warranty.
+purpose. It is provided "as is" without express or implied warranty.
 
 The trackball code (Common/Trackball.*) is copyright (C) 1993, 1994,
-Silicon Graphics, Inc.  ALL RIGHTS RESERVED. Permission to use, copy,
+Silicon Graphics, Inc. ALL RIGHTS RESERVED. Permission to use, copy,
 modify, and distribute this software for any purpose and without fee
 is hereby granted, provided that the above copyright notice appear in
 all copies and that both the copyright notice and this permission
@@ -56,9 +57,6 @@ purpose and without fee is hereby granted, provided that the above
 copyright notice appear in all copies and that both that copyright
 notice and this permission notice appear in supporting documentation.
 This software is provided "as is" without express or implied warranty.
-
-This product includes software developed by Brad Grantham and
-Applied Conjecture. (Graphics/tp.*)
 
 The colorbar widget (Fltk/Colorbar_Window.cpp) was inspired by code
 from the Vis5d program for visualizing five dimensional gridded data
@@ -121,4 +119,5 @@ Krishna Mohan Gundu <gkmohan at gmail.com>, Christopher Stott <C.Stott
 at surrey.ac.uk>, Timmy Schumacher <Tim.Schumacher at colorado.edu>,
 Carl Osterwisch <osterwischc at asme.org>, Bruno Frackowiak
 <bruno.frackowiak at onecert.fr>, Philip Kelleners <P.H.Kelleners at
-ctw.utwente.nl>, Romuald Conty <conty@phimeca.com>.
+ctw.utwente.nl>, Romuald Conty <conty at phimeca.com>, Ruth Sabariego
+<r.sabariego at ulg.ac.be>.

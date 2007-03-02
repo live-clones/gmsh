@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.111 2007-02-26 08:25:38 geuzaine Exp $
+# $Id: Makefile,v 1.112 2007-03-02 08:44:55 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -43,8 +43,7 @@ SRC = Draw.cpp \
       gl2jpeg.cpp\
       gl2png.cpp\
       gl2ppm.cpp\
-      gl2yuv.cpp\
-      tc.cpp
+      gl2yuv.cpp
 
 OBJ = ${SRC:.cpp=.o}
 

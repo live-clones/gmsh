@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.34 2007-02-26 08:25:38 geuzaine Exp $
+// $Id: GModel.cpp,v 1.35 2007-03-02 08:44:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -127,6 +127,12 @@ void GModel::removeInvisibleElements()
 
 int GModel::renumberMeshVertices()
 {
+  // FIXME: here, we should first:
+  // 1) loop over all elements, and tag all unused vertices in a
+  // special way (I think the best would be to set their associated
+  // entity to 0)
+  // 2) delete all untagged (i.e., unused) vertices
+
   int numVertices = 0;
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 

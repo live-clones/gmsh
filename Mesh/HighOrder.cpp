@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.6 2007-03-01 14:21:02 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.7 2007-03-02 08:44:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -382,7 +382,7 @@ void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear,
   for(unsigned int i = 0; i < ge->lines.size(); i++){
     MLine *l = ge->lines[i];
     std::vector<MVertex*> ve;
-    getEdgeVertices(ge, l, ve, edgeVertices, linear,nbPts);
+    getEdgeVertices(ge, l, ve, edgeVertices, linear, nbPts);
     if(nbPts == 1)
       lines2.push_back(new MLine3(l->getVertex(0), l->getVertex(1), ve[0]));
     else
