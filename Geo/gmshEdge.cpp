@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.30 2007-02-27 17:15:47 remacle Exp $
+// $Id: gmshEdge.cpp,v 1.31 2007-03-02 18:20:56 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -174,15 +174,23 @@ SPoint2 gmshEdge::reparamOnFace(GFace *face, double epar,int dir) const
 	List_Read(c->Control_Points, i, &v[1]);
 	List_Read(c->Control_Points, i + 1, &v[2]);
 	if(!i) {
-	  v[0] = &temp1;
-	  v[0]->pntOnGeometry = v[1]->pntOnGeometry * 2. - v[2]->pntOnGeometry;
+		if(c->beg == c->end){
+			List_Read(c->Control_Points,N-2,&v[0]);
+		}else{
+			v[0] = &temp1;
+			v[0]->pntOnGeometry = v[1]->pntOnGeometry * 2. - v[2]->pntOnGeometry;
+		}
 	}
 	else {
 	  List_Read(c->Control_Points, i - 1, &v[0]);
 	}
 	if(i == N - 2) {
-	  v[3] = &temp2;
-	  v[3]->pntOnGeometry = v[2]->pntOnGeometry * 2. - v[1]->pntOnGeometry;
+		if(c->beg == c->end){
+			List_Read(c->Control_Points,1,&v[3]);
+		}else{
+			v[3] = &temp2;
+			v[3]->pntOnGeometry = v[2]->pntOnGeometry * 2. - v[1]->pntOnGeometry;
+		}
 	}
 	else {
 	  List_Read(c->Control_Points, i + 2, &v[3]);
