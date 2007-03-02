@@ -1,4 +1,4 @@
-// $Id: gmshSurface.cpp,v 1.6 2007-03-02 09:33:36 remacle Exp $
+// $Id: gmshSurface.cpp,v 1.7 2007-03-02 14:36:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -123,10 +123,14 @@ gmshParametricSurface ::~gmshParametricSurface()
 }
 SPoint3 gmshParametricSurface ::point(double par1, double par2) const
 {
+#if !defined(HAVE_MATH_EVAL)
+  Msg(GERROR, "MathEval is not compiled in this version of Gmsh");
+#else
   char *names[2] = {"u","v"};
   double values [2] = {par1,par2};
   const double x = evaluator_evaluate(evalX, 2, names, values);
   const double y = evaluator_evaluate(evalY, 2, names, values);
   const double z = evaluator_evaluate(evalZ, 2, names, values);
   return SPoint3(x,y,z);
+#endif
 }
