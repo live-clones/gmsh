@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.61 2007-02-27 22:00:56 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.62 2007-03-02 09:20:21 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -834,8 +834,6 @@ bool gmsh2DMeshGenerator ( GFace *gf )
       }
   }
 
-
-
   m->cleanup();
   m->del_point(m->find_point(-1));
   m->del_point(m->find_point(-2));
@@ -845,16 +843,15 @@ bool gmsh2DMeshGenerator ( GFace *gf )
   // start mesh generation
   //  if (CTX.mesh.algo2d == ALGO_2D_MESHADAPT)
     {
-      RefineMesh (gf,*m,100);
+      RefineMesh (gf,*m,20);
       if (gf->meshAttributes.recombine)
 	{
 	  m->recombineIntoQuads (gf->meshAttributes.recombineAngle,gf);
 	}
     }
-
-//     char name[245];
-//     sprintf(name,"param%d.pos",gf->tag());
-//     outputScalarField(m->triangles, name,1);
+     char name[245];
+     sprintf(name,"param%d.pos",gf->tag());
+     outputScalarField(m->triangles, name,1);
 //     sprintf(name,"real%d.pos",gf->tag());
 //     outputScalarField(m->triangles, name,0);
   // fill the small gmsh structures

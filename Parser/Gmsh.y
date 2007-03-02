@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.264 2007-02-26 08:25:42 geuzaine Exp $
+// $Id: Gmsh.y,v 1.265 2007-03-02 09:20:21 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -62,6 +62,7 @@ static int ViewErrorFlags[VIEW_NB_ELEMENT_TYPES];
 
 #define MAX_RECUR_LOOPS 100
 static int ImbricatedLoop = 0;
+static gmshSurface *myGmshSurface = 0;
 static fpos_t yyposImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static int yylinenoImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
@@ -87,13 +88,13 @@ int CheckViewErrorFlags(Post_View *v);
 %token <d> tDOUBLE
 %token <c> tSTRING tBIGSTR
 
-%token tEND tAFFECT tDOTS tPi tMPI_Rank tMPI_Size
+%token tEND tAFFECT tDOTS tPi tMPI_Rank tMPI_Size tEuclidian tCoordinates
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil
 %token tFmod tModulo tHypot 
 %token tPrintf tSprintf tStrCat tStrPrefix tStrRelative
 %token tBoundingBox tDraw tToday
-%token tPoint tCircle tEllipse tLine tSphere tSurface tSpline tVolume
+%token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical
 %token tUsing tBump tProgression tPlugin 
@@ -1035,32 +1036,14 @@ Shape :
 	double y = CTX.geom.scaling_factor * $6[1];
 	double z = CTX.geom.scaling_factor * $6[2];
 	double lc = CTX.geom.scaling_factor * $6[3];
-	Vertex *v = Create_Vertex(num, x, y, z, lc, 1.0);
+	Vertex *v;
+	if (!myGmshSurface)
+	  v = Create_Vertex(num, x, y, z, lc, 1.0);
+	else
+	  v = Create_Vertex(num, x, y, myGmshSurface, lc);
+
 	Tree_Add(THEM->Points, &v);
-	AddToTemporaryBoundingBox(x, y, z);
-      }
-      $$.Type = MSH_POINT;
-      $$.Num = num;
-    }
-  | tPoint '(' FExpr ')' tIn tSurface '{' FExpr '}' tAFFECT VExpr tEND
-    {
-      int num = (int)$3;
-      if(FindPoint(num)){
-	yymsg(GERROR, "Point %d already exists", num);
-      }
-      else{
-	double u = CTX.geom.scaling_factor * $11[0];
-	double v = CTX.geom.scaling_factor * $11[1];
-	double lc = CTX.geom.scaling_factor * $11[2];
-	gmshSurface *surf = gmshSurface::surfaceByTag((int)$8);
-	if(!surf){
-	  yymsg(GERROR, "gmshSurface %d does not exist", (int)$8);
-	}
-	else{
-	  Vertex *vt = Create_Vertex(num, u, v, surf, lc);
-	  Tree_Add(THEM->Points, &vt);
-	  AddToTemporaryBoundingBox(vt->Pos.X,vt->Pos.Y,vt->Pos.Z);
-	}
+	AddToTemporaryBoundingBox(v->Pos.X,v->Pos.Y,v->Pos.Z);
       }
       $$.Type = MSH_POINT;
       $$.Num = num;
@@ -1471,6 +1454,23 @@ Shape :
       $$.Type = type;
       $$.Num = num;
     }
+
+  | tEuclidian tCoordinates tEND
+  {
+    myGmshSurface = 0;
+  }  
+
+  | tCoordinates tSurface FExpr tEND
+  {
+    myGmshSurface = gmshSurface :: surfaceByTag ( (int) $3);
+  }  
+
+  | tParametric tSurface '(' FExpr ')' tAFFECT tBIGSTR tBIGSTR tBIGSTR tEND
+  {
+    int num = (int)$4, type = 0;
+    myGmshSurface = gmshParametricSurface::NewParametricSurface ((int)$4,$7,$8,$9);
+  }
+
   | tSphere '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3, type = 0;
@@ -1486,7 +1486,29 @@ Shape :
 	Vertex *v2 = FindPoint((int)p2);
 	if(!v1) yymsg(GERROR, "Sphere %d : unknown point %d", num, (int)p1);
 	if(!v2) yymsg(GERROR, "Sphere %d : unknown point %d", num, (int)p2);
-	gmshSurface *myGmshSurface = gmshSphere::NewSphere
+	myGmshSurface = gmshSphere::NewSphere
+	  (num, v1->Pos.X, v1->Pos.Y, v1->Pos.Z,
+	   sqrt((v2->Pos.X - v1->Pos.X) * (v2->Pos.X - v1->Pos.X) +
+		(v2->Pos.Y - v1->Pos.Y) * (v2->Pos.Y - v1->Pos.Y) +
+		(v2->Pos.Z - v1->Pos.Z) * (v2->Pos.Z - v1->Pos.Z)));
+      }      
+    }
+  | tPolarSphere '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$3, type = 0;
+      if (List_Nbr($6) != 2){
+	yymsg(GERROR, "PolarSphere %d has to be defined using 2 points (center + "
+	      "any point) and not %d", num, List_Nbr($6));
+      }
+      else{
+	double p1,p2;
+	List_Read($6, 0, &p1);
+	List_Read($6, 1, &p2);
+	Vertex *v1 = FindPoint((int)p1);
+	Vertex *v2 = FindPoint((int)p2);
+	if(!v1) yymsg(GERROR, "PolarSphere %d : unknown point %d", num, (int)p1);
+	if(!v2) yymsg(GERROR, "PolarSphere %d : unknown point %d", num, (int)p2);
+	myGmshSurface = gmshPolarSphere::NewPolarSphere
 	  (num, v1->Pos.X, v1->Pos.Y, v1->Pos.Z,
 	   sqrt((v2->Pos.X - v1->Pos.X) * (v2->Pos.X - v1->Pos.X) +
 		(v2->Pos.Y - v1->Pos.Y) * (v2->Pos.Y - v1->Pos.Y) +

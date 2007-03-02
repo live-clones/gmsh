@@ -51,7 +51,9 @@ public:
     Cylinder,
     Sphere,
     Cone,
-    Torus
+    Torus,
+    ParametricSurface,
+    PolarSphere
   };
   virtual gmshSurface::gmshSurfaceType geomType() const = 0;
   virtual SPoint3 point(double par1, double par2) const = 0;
@@ -99,5 +101,75 @@ public:
     throw;
   }  
 };
+class gmshPolarSphere : public gmshSurface
+{
+  double xc, yc, zc, r;
+  gmshPolarSphere(double _x, double _y, double _z, double _r) : xc(_x), yc(_y), zc(_z), r(_r){}
+public:
+  static gmshSurface *NewPolarSphere(int _iSphere, double _x, double _y, double _z, double _r);
+  virtual Range<double> parBounds(int i) const 
+  { 
+    if(i == 0) return Range<double>(-M_PI, M_PI);
+    if(i == 1) return Range<double>(-M_PI, M_PI);
+    throw;
+  }
+  // Underlying geometric representation of this entity.
+  virtual gmshSurface::gmshSurfaceType geomType() const { return gmshSurface::PolarSphere; }
+  virtual SPoint3 point(double par1, double par2) const;
+  virtual SPoint2 parFromPoint(double x, double y, double z) const 
+  {
+    // 2 be done 
+    throw;
+  }
+  // Return the normal to the face at the given parameter location.
+  virtual SVector3 normal(const SPoint2 &param) const
+  {
+    SPoint3  p1 = gmshSurface::point(param);
+    SPoint3  p2(xc, yc, zc);
+    SVector3 n(p1, p2);
+    n.normalize();
+    return n;
+  }
+  // Return the first derivate of the face at the parameter location.
+  virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const
+  {
+    // 2 be done
+    throw;
+  }  
+};
+
+
+class gmshParametricSurface : public gmshSurface
+{
+  void *evalX, *evalY, *evalZ;
+  gmshParametricSurface(char*, char*, char*);
+  ~gmshParametricSurface();
+public:
+  static gmshSurface *NewParametricSurface(int iSurf, char*, char*, char*);
+  virtual Range<double> parBounds(int i) const 
+  { 
+    throw;
+  }
+  // Underlying geometric representation of this entity.
+  virtual gmshSurface::gmshSurfaceType geomType() const { return gmshSurface::ParametricSurface; }
+  virtual SPoint3 point(double par1, double par2) const;
+  virtual SPoint2 parFromPoint(double x, double y, double z) const 
+  {
+    // 2 be done 
+    throw;
+  }
+  // Return the normal to the face at the given parameter location.
+  virtual SVector3 normal(const SPoint2 &param) const
+  {
+    throw;
+  }
+  // Return the first derivate of the face at the parameter location.
+  virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const
+  {
+    // 2 be done
+    throw;
+  }  
+};
+
 
 #endif

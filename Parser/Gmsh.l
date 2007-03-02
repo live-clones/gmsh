@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.84 2007-01-31 12:27:18 remacle Exp $
+// $Id: Gmsh.l,v 1.85 2007-03-02 09:20:21 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -135,6 +135,7 @@ Coherence               return tCoherence;
 Complex                 return tComplex;
 Color                   return tColor;
 ColorTable              return tColorTable;
+Coordinates             return tCoordinates;
 CatmullRom		return tSpline;
 Call                    return tCall;
 
@@ -150,6 +151,7 @@ Extrude                 return tExtrude;
 Elliptic		return tElliptic;
 EndFor                  return tEndFor;
 EndIf                   return tEndIf;
+Euclidian               return tEuclidian;
 Exit                    return tExit;
 
 Fabs                    return tFabs;
@@ -193,6 +195,7 @@ Point                   return tPoint;
 Power                   return tProgression;
 Progression             return tProgression;
 Parametric		return tParametric;
+PolarSphere             return tPolarSphere;
 Printf                  return tPrintf;
 Plugin                  return tPlugin;
 
