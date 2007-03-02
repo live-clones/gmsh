@@ -1,4 +1,4 @@
-// $Id: gmshSurface.cpp,v 1.5 2007-03-02 09:20:21 remacle Exp $
+// $Id: gmshSurface.cpp,v 1.6 2007-03-02 09:33:36 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -73,7 +73,7 @@ gmshSurface * gmshPolarSphere::NewPolarSphere(int iSphere, double x, double y, d
 
 SPoint3  gmshPolarSphere::point (double parA, double parB) const
 {
-	double ra,phi;
+	/*double ra,phi;
 	ra=hypot(parA,parB);
 	phi=2*atan((parB/ra)/(1+parA/ra));
 	double par1=-phi;	
@@ -83,8 +83,9 @@ SPoint3  gmshPolarSphere::point (double parA, double parB) const
   const double x = xc + r * sin(par2) * cos(par1);
   const double y = yc + r * sin(par2) * sin(par1);
   const double z = zc - r * cos(par2); 
-  // printf("%g %g - %g %g %g\n",par1,par2,x,y,z);
-  return SPoint3(x, y, z);
+  // printf("%g %g - %g %g %g\n",par1,par2,x,y,z);*/
+	double f=2*r/(parA*parA+parB*parB+4*r*r);
+  return SPoint3(f*2*parA*r, f*2*parB*r, f*(parA*parA+parB*parB));
 }
 
 
