@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.266 2007-03-05 09:30:57 geuzaine Exp $
+// $Id: Gmsh.y,v 1.267 2007-03-05 11:01:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2473,7 +2473,7 @@ ExtrudeParameter :
     {
       extr.mesh.Recombine = true;
     }
-  | tHole '(' FExpr ')' tAFFECT '{' ListOfDouble '}' tUsing FExpr tEND
+  | tHole '(' FExpr ')' tAFFECT ListOfDouble tUsing FExpr tEND
     {
       int num = (int)$3;
       if(FindSurface(num)){
@@ -2482,15 +2482,15 @@ ExtrudeParameter :
       else{
 	Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
 	Tree_Add(THEM->Surfaces, &s);
-	extr.mesh.Holes[num].first = $10;
+	extr.mesh.Holes[num].first = $8;
 	extr.mesh.Holes[num].second.clear();
-	for(int i = 0; i < List_Nbr($7); i++){
+	for(int i = 0; i < List_Nbr($6); i++){
 	  double d;
-	  List_Read($7, i, &d);
+	  List_Read($6, i, &d);
 	  extr.mesh.Holes[num].second.push_back((int)d);
 	}
       }
-      List_Delete($7);
+      List_Delete($6);
     }
 ;
 
