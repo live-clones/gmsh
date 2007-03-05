@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.22 2006-12-16 14:37:19 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.23 2007-03-05 09:10:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -69,7 +69,7 @@ SBoundingBox3d GEdge::bounds() const
 {
   Range<double> tr = parBounds(0);
   SBoundingBox3d bbox;
-  if(geomType() != DiscreteCurve){
+  if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve){
     const int N = 10;
     for(int i = 0; i < N; i++){
       double t = tr.low() + (double)i/(double)(N - 1) * (tr.high() - tr.low());
