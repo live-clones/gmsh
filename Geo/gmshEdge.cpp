@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.31 2007-03-02 18:20:56 remacle Exp $
+// $Id: gmshEdge.cpp,v 1.32 2007-03-05 11:07:14 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -158,6 +158,36 @@ SPoint2 gmshEdge::reparamOnFace(GFace *face, double epar,int dir) const
 	return p;
       }
       break;
+  case MSH_SEGM_BSPLN:
+  case MSH_SEGM_BEZIER:
+		int NbControlPoints, NbCurves, iCurve;
+		double t, t1, t2;
+		Vertex *v[4];
+
+		NbControlPoints = List_Nbr(c->Control_Points);
+		NbCurves = NbControlPoints - (c->beg==c->end ? 1 : 3);
+
+		iCurve = (int)(epar * (double)NbCurves) + 1;
+
+		if(iCurve > NbCurves)
+			iCurve = NbCurves;
+		else if (iCurve < 1)
+			iCurve = 1;
+
+		t1 = (double)(iCurve - 1) / (double)(NbCurves);
+		t2 = (double)(iCurve) / (double)(NbCurves);
+
+		t = (epar - t1) / (t2 - t1);
+
+		for(int j = 0; j < 4; j ++ ){
+			int k=iCurve - (c->beg==c->end ? 2 : 1) + j;
+			if(k<0)
+				k += NbControlPoints - 1;
+			if(k>=NbControlPoints)
+				k -= NbControlPoints - 1;
+			List_Read(c->Control_Points,k, &v[j]);
+		}
+		return InterpolateCubicSpline(v, t, c->mat, 0, t1, t2,c->geometry);
     case MSH_SEGM_SPLN :
       {
 	Vertex *v[4];
