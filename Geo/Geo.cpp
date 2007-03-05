@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.84 2007-03-05 09:30:53 geuzaine Exp $
+// $Id: Geo.cpp,v 1.85 2007-03-05 15:00:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -62,11 +62,9 @@ void Mesh::free_all()
 
 int compareVertex(const void *a, const void *b)
 {
-  Vertex **q = (Vertex **) a;
-  Vertex **w = (Vertex **) b;
-  int i = abs((*q)->Num);
-  int j = abs((*w)->Num);
-  return (i - j);
+  Vertex *q = *(Vertex **)a;
+  Vertex *w = *(Vertex **)b;
+  return abs(q->Num) - abs(w->Num);
 }
 
 int comparePosition(const void *a, const void *b)
@@ -88,55 +86,53 @@ int comparePosition(const void *a, const void *b)
 
 int compareSurfaceLoop(const void *a, const void *b)
 {
-  SurfaceLoop **q = (SurfaceLoop **) a;
-  SurfaceLoop **w = (SurfaceLoop **) b;
-  return ((*q)->Num - (*w)->Num);
+  SurfaceLoop *q = *(SurfaceLoop **)a;
+  SurfaceLoop *w = *(SurfaceLoop **)b;
+  return q->Num - w->Num;
 }
 
 int compareEdgeLoop(const void *a, const void *b)
 {
-  EdgeLoop **q = (EdgeLoop **) a;
-  EdgeLoop **w = (EdgeLoop **) b;
-  return ((*q)->Num - (*w)->Num);
+  EdgeLoop *q = *(EdgeLoop **)a;
+  EdgeLoop *w = *(EdgeLoop **)b;
+  return q->Num - w->Num;
 }
 
 int compareCurve(const void *a, const void *b)
 {
-  Curve **q = (Curve **) a;
-  Curve **w = (Curve **) b;
-  return ((*q)->Num - (*w)->Num);
+  Curve *q = *(Curve **)a;
+  Curve *w = *(Curve **)b;
+  return q->Num - w->Num;
 }
 
 int compareSurface(const void *a, const void *b)
 {
-  Surface **q = (Surface **) a;
-  Surface **w = (Surface **) b;
-  return ((*q)->Num - (*w)->Num);
+  Surface *q = *(Surface **)a;
+  Surface *w = *(Surface **)b;
+  return q->Num - w->Num;
 }
 
 int compareVolume(const void *a, const void *b)
 {
-  Volume **q = (Volume **) a;
-  Volume **w = (Volume **) b;
-  return ((*q)->Num - (*w)->Num);
+  Volume *q = *(Volume **)a;
+  Volume *w = *(Volume **)b;
+  return q->Num - w->Num;
 }
 
 int comparePhysicalGroup(const void *a, const void *b)
 {
-  PhysicalGroup *q = *(PhysicalGroup **) a;
-  PhysicalGroup *w = *(PhysicalGroup **) b;
+  PhysicalGroup *q = *(PhysicalGroup **)a;
+  PhysicalGroup *w = *(PhysicalGroup **)b;
   int cmp = q->Typ - w->Typ;
-
   if(cmp)
     return cmp;
   else
-    return (q->Num - w->Num);
+    return q->Num - w->Num;
 }
 
 // Basic entity creation/deletion functions
 
-Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc,
-                      double u)
+Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc, double u)
 {
   Vertex *pV = new Vertex(X, Y, Z, lc);
   pV->w = 1.0;
@@ -162,7 +158,7 @@ Vertex *Create_Vertex(int Num, double u, double v, gmshSurface *surf, double lc)
 
 void Free_Vertex(void *a, void *b)
 {
-  Vertex *v = *(Vertex **) a;
+  Vertex *v = *(Vertex **)a;
   if(v) {
     delete v;
     v = NULL;
@@ -171,7 +167,7 @@ void Free_Vertex(void *a, void *b)
 
 PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T *intlist)
 {
-  PhysicalGroup *p = (PhysicalGroup *) Malloc(sizeof(PhysicalGroup));
+  PhysicalGroup *p = (PhysicalGroup *)Malloc(sizeof(PhysicalGroup));
   p->Entities = List_Create(List_Nbr(intlist), 1, sizeof(int));
   p->Num = Num;
   THEM->MaxPhysicalNum = IMAX(THEM->MaxPhysicalNum, Num);
@@ -187,7 +183,7 @@ PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T *intlist)
 
 void Free_PhysicalGroup(void *a, void *b)
 {
-  PhysicalGroup *p = *(PhysicalGroup **) a;
+  PhysicalGroup *p = *(PhysicalGroup **)a;
   if(p) {
     List_Delete(p->Entities);
     Free(p);
@@ -197,7 +193,7 @@ void Free_PhysicalGroup(void *a, void *b)
 
 EdgeLoop *Create_EdgeLoop(int Num, List_T *intlist)
 {
-  EdgeLoop *l = (EdgeLoop *) Malloc(sizeof(EdgeLoop));
+  EdgeLoop *l = (EdgeLoop *)Malloc(sizeof(EdgeLoop));
   l->Curves = List_Create(List_Nbr(intlist), 1, sizeof(int));
   l->Num = Num;
   THEM->MaxLineLoopNum = IMAX(THEM->MaxLineLoopNum, Num);
@@ -211,7 +207,7 @@ EdgeLoop *Create_EdgeLoop(int Num, List_T *intlist)
 
 void Free_EdgeLoop(void *a, void *b)
 {
-  EdgeLoop *l = *(EdgeLoop **) a;
+  EdgeLoop *l = *(EdgeLoop **)a;
   if(l) {
     List_Delete(l->Curves);
     Free(l);
@@ -221,7 +217,7 @@ void Free_EdgeLoop(void *a, void *b)
 
 SurfaceLoop *Create_SurfaceLoop(int Num, List_T *intlist)
 {
-  SurfaceLoop *l = (SurfaceLoop *) Malloc(sizeof(SurfaceLoop));
+  SurfaceLoop *l = (SurfaceLoop *)Malloc(sizeof(SurfaceLoop));
   l->Surfaces = List_Create(List_Nbr(intlist), 1, sizeof(int));
   l->Num = Num;
   THEM->MaxSurfaceLoopNum = IMAX(THEM->MaxSurfaceLoopNum, Num);
@@ -235,7 +231,7 @@ SurfaceLoop *Create_SurfaceLoop(int Num, List_T *intlist)
 
 void Free_SurfaceLoop(void *a, void *b)
 {
-  SurfaceLoop *l = *(SurfaceLoop **) a;
+  SurfaceLoop *l = *(SurfaceLoop **)a;
   if(l) {
     List_Delete(l->Surfaces);
     Free(l);
@@ -490,7 +486,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
 			  {-3, 3.0, 0, 0.0},
 			  {1, 0, 0, 0.0} };
 
-  Curve *pC = (Curve *) Malloc(sizeof(Curve));
+  Curve *pC = (Curve *)Malloc(sizeof(Curve));
   pC->Color.type = 0;
   pC->Visible = 1;
   pC->Extrude = NULL;
@@ -592,7 +588,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
 
 void Free_Curve(void *a, void *b)
 {
-  Curve *pC = *(Curve **) a;
+  Curve *pC = *(Curve **)a;
   if(pC) {
     Free(pC->k);
     List_Delete(pC->Control_Points);
@@ -603,7 +599,7 @@ void Free_Curve(void *a, void *b)
 
 Surface *Create_Surface(int Num, int Typ)
 {
-  Surface *pS = (Surface *) Malloc(sizeof(Surface));
+  Surface *pS = (Surface *)Malloc(sizeof(Surface));
   pS->Color.type = 0;
   pS->Visible = 1;
   pS->Num = Num;
@@ -629,7 +625,7 @@ Surface *Create_Surface(int Num, int Typ)
 
 void Free_Surface(void *a, void *b)
 {
-  Surface *pS = *(Surface **) a;
+  Surface *pS = *(Surface **)a;
   if(pS) {
     List_Delete(pS->TrsfPoints);
     List_Delete(pS->Control_Points);
@@ -643,7 +639,7 @@ void Free_Surface(void *a, void *b)
 
 Volume *Create_Volume(int Num, int Typ)
 {
-  Volume *pV = (Volume *) Malloc(sizeof(Volume));
+  Volume *pV = (Volume *)Malloc(sizeof(Volume));
   pV->Color.type = 0;
   pV->Visible = 1;
   pV->Num = Num;
@@ -662,7 +658,7 @@ Volume *Create_Volume(int Num, int Typ)
 
 void Free_Volume(void *a, void *b)
 {
-  Volume *pV = *(Volume **) a;
+  Volume *pV = *(Volume **)a;
   if(pV) {
     List_Delete(pV->TrsfPoints);
     List_Delete(pV->Surfaces);
@@ -841,8 +837,8 @@ PhysicalGroup *FindPhysicalGroup(int num, int type)
   pp = &P;
   pp->Num = num;
   pp->Typ = type;
-  if((ppp = (PhysicalGroup **) List_PQuery(THEM->PhysicalGroups, &pp,
-                                           comparePhysicalGroup))) {
+  if((ppp = (PhysicalGroup **)List_PQuery(THEM->PhysicalGroups, &pp,
+					  comparePhysicalGroup))) {
     return *ppp;
   }
   return NULL;
@@ -868,11 +864,9 @@ Vertex *DuplicateVertex(Vertex *v)
 
 int compareAbsCurve(const void *a, const void *b)
 {
-  Curve **q, **w;
-
-  q = (Curve **) a;
-  w = (Curve **) b;
-  return (abs((*q)->Num) - abs((*w)->Num));
+  Curve *q = *(Curve **)a;
+  Curve *w = *(Curve **)b;
+  return abs(q->Num) - abs(w->Num);
 }
 
 void CopyCurve(Curve *c, Curve *cc)
@@ -1251,10 +1245,10 @@ void VisibilityShape(int Type, int Num, int Mode)
 }
 
 static int vmode;
-static void vis_nod(void *a, void *b){ (*(Vertex **) a)->Visible = vmode; }
-static void vis_cur(void *a, void *b){ (*(Curve **) a)->Visible = vmode; }
-static void vis_sur(void *a, void *b){ (*(Surface **) a)->Visible = vmode; }
-static void vis_vol(void *a, void *b){ (*(Volume **) a)->Visible = vmode; }
+static void vis_nod(void *a, void *b){ (*(Vertex **)a)->Visible = vmode; }
+static void vis_cur(void *a, void *b){ (*(Curve **)a)->Visible = vmode; }
+static void vis_sur(void *a, void *b){ (*(Surface **)a)->Visible = vmode; }
+static void vis_vol(void *a, void *b){ (*(Volume **)a)->Visible = vmode; }
 
 void VisibilityShape(char *str, int Type, int Mode)
 {
@@ -1322,7 +1316,7 @@ Curve *CreateReversedCurve(Curve *c)
   End_Curve(newc);
 
   Curve **pc;
-  if((pc = (Curve **) Tree_PQuery(THEM->Curves, &newc))) {
+  if((pc = (Curve **)Tree_PQuery(THEM->Curves, &newc))) {
     Free_Curve(&newc, NULL);
     return *pc;
   }
@@ -1602,7 +1596,7 @@ void ApplyTransformationToPoint(double matrix[4][4], Vertex *v,
       Curve *c;
       List_Read(All, i, &c);
       for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
-	Vertex *pv = *(Vertex **) List_Pointer(c->Control_Points, j);
+	Vertex *pv = *(Vertex **)List_Pointer(c->Control_Points, j);
 	if(pv->Num == v->Num){
 	  End_Curve(c);
 	  break;
@@ -1615,7 +1609,7 @@ void ApplyTransformationToPoint(double matrix[4][4], Vertex *v,
       Surface *s;
       List_Read(All, i, &s);
       for(int j = 0; j < List_Nbr(s->Control_Points); j++) {
-	Vertex *pv = *(Vertex **) List_Pointer(s->Control_Points, j);
+	Vertex *pv = *(Vertex **)List_Pointer(s->Control_Points, j);
 	if(pv->Num == v->Num){
 	  End_Surface(s);
 	  break;
@@ -2484,8 +2478,8 @@ int compareTwoCurves(const void *a, const void *b)
 
 int compareTwoSurfaces(const void *a, const void *b)
 {
-  Surface *s1 = *(Surface **) a;
-  Surface *s2 = *(Surface **) b;
+  Surface *s1 = *(Surface **)a;
+  Surface *s2 = *(Surface **)b;
 
   // checking types is the "right thing" to do (see e.g. compareTwoCurves)
   // but it would break backward compatibility (see e.g. tutorial/t2.geo),
@@ -2504,19 +2498,19 @@ int compareTwoSurfaces(const void *a, const void *b)
 
 void MaxNumPoint(void *a, void *b)
 {
-  Vertex *v = *(Vertex **) a;
+  Vertex *v = *(Vertex **)a;
   THEM->MaxPointNum = MAX(THEM->MaxPointNum, v->Num);
 }
 
 void MaxNumCurve(void *a, void *b)
 {
-  Curve *c = *(Curve **) a;
+  Curve *c = *(Curve **)a;
   THEM->MaxLineNum = MAX(THEM->MaxLineNum, c->Num);
 }
 
 void MaxNumSurface(void *a, void *b)
 {
-  Surface *s = *(Surface **) a;
+  Surface *s = *(Surface **)a;
   THEM->MaxSurfaceNum = MAX(THEM->MaxSurfaceNum, s->Num);
 }
 
@@ -2575,8 +2569,8 @@ void ReplaceDuplicatePoints()
     if(!Tree_Query(allNonDuplicatedPoints, &c->end))
       Msg(GERROR, "Weird point %d in Coherence", c->end->Num);
     for(j = 0; j < List_Nbr(c->Control_Points); j++) {
-      pv = (Vertex **) List_Pointer(c->Control_Points, j);
-      if(!(pv2 = (Vertex **) Tree_PQuery(allNonDuplicatedPoints, pv)))
+      pv = (Vertex **)List_Pointer(c->Control_Points, j);
+      if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
         Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
       else
         List_Write(c->Control_Points, j, pv2);
@@ -2590,15 +2584,15 @@ void ReplaceDuplicatePoints()
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &s);
     for(j = 0; j < List_Nbr(s->Control_Points); j++) {
-      pv = (Vertex **) List_Pointer(s->Control_Points, j);
-      if(!(pv2 = (Vertex **) Tree_PQuery(allNonDuplicatedPoints, pv)))
+      pv = (Vertex **)List_Pointer(s->Control_Points, j);
+      if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
         Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
       else
         List_Write(s->Control_Points, j, pv2);
     }
     for(j = 0; j < List_Nbr(s->TrsfPoints); j++){
-      pv = (Vertex **) List_Pointer(s->TrsfPoints, j);
-      if(!(pv2 = (Vertex **) Tree_PQuery(allNonDuplicatedPoints, pv)))
+      pv = (Vertex **)List_Pointer(s->TrsfPoints, j);
+      if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
 	Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
       else
 	List_Write(s->TrsfPoints, j, pv2);
@@ -2612,8 +2606,8 @@ void ReplaceDuplicatePoints()
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &vol);
     for(j = 0; j < List_Nbr(vol->TrsfPoints); j++){
-      pv = (Vertex **) List_Pointer(vol->TrsfPoints, j);
-      if(!(pv2 = (Vertex **) Tree_PQuery(allNonDuplicatedPoints, pv)))
+      pv = (Vertex **)List_Pointer(vol->TrsfPoints, j);
+      if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
 	Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
       else
 	List_Write(vol->TrsfPoints, j, pv2);
@@ -2690,8 +2684,8 @@ void ReplaceDuplicateCurves()
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &s);
     for(j = 0; j < List_Nbr(s->Generatrices); j++) {
-      pc = (Curve **) List_Pointer(s->Generatrices, j);
-      if(!(pc2 = (Curve **) Tree_PQuery(allNonDuplicatedCurves, pc)))
+      pc = (Curve **)List_Pointer(s->Generatrices, j);
+      if(!(pc2 = (Curve **)Tree_PQuery(allNonDuplicatedCurves, pc)))
         Msg(GERROR, "Weird curve %d in Coherence", (*pc)->Num);
       else {
         List_Write(s->Generatrices, j, pc2);
@@ -2752,8 +2746,8 @@ void ReplaceDuplicateSurfaces()
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &vol);
     for(j = 0; j < List_Nbr(vol->Surfaces); j++) {
-      ps = (Surface **) List_Pointer(vol->Surfaces, j);
-      if(!(ps2 = (Surface **) Tree_PQuery(allNonDuplicatedSurfaces, ps)))
+      ps = (Surface **)List_Pointer(vol->Surfaces, j);
+      if(!(ps2 = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, ps)))
         Msg(GERROR, "Weird surface %d in Coherence", (*ps)->Num);
       else
         List_Write(vol->Surfaces, j, ps2);
@@ -2902,12 +2896,12 @@ void sortEdgesInLoop(int num, List_T *edges)
   List_Reset(edges);
 
   int j = 0, k = 0;
-  c0 = c1 = *(Curve **) List_Pointer(temp, 0);
+  c0 = c1 = *(Curve **)List_Pointer(temp, 0);
   List_Add(edges, &c1->Num);
   List_PSuppress(temp, 0);
   while(List_Nbr(edges) < nbEdges) {
     for(int i = 0; i < List_Nbr(temp); i++) {
-      c2 = *(Curve **) List_Pointer(temp, i);
+      c2 = *(Curve **)List_Pointer(temp, i);
       if(c1->end == c2->beg) {
 	List_Add(edges, &c2->Num);
 	List_PSuppress(temp, i);
@@ -2916,7 +2910,7 @@ void sortEdgesInLoop(int num, List_T *edges)
 	  if(List_Nbr(temp)) {
 	    Msg(INFO, "Starting subloop %d in Line Loop %d (are you sure about this?)",
 		++k, num);
-	    c0 = c1 = *(Curve **) List_Pointer(temp, 0);
+	    c0 = c1 = *(Curve **)List_Pointer(temp, 0);
 	    List_Add(edges, &c1->Num);
 	    List_PSuppress(temp, 0);
 	  }
