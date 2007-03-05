@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.83 2007-02-26 08:25:38 geuzaine Exp $
+// $Id: Geo.cpp,v 1.84 2007-03-05 09:30:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -169,7 +169,7 @@ void Free_Vertex(void *a, void *b)
   }
 }
 
-PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T * intlist)
+PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T *intlist)
 {
   PhysicalGroup *p = (PhysicalGroup *) Malloc(sizeof(PhysicalGroup));
   p->Entities = List_Create(List_Nbr(intlist), 1, sizeof(int));
@@ -195,7 +195,7 @@ void Free_PhysicalGroup(void *a, void *b)
   }
 }
 
-EdgeLoop *Create_EdgeLoop(int Num, List_T * intlist)
+EdgeLoop *Create_EdgeLoop(int Num, List_T *intlist)
 {
   EdgeLoop *l = (EdgeLoop *) Malloc(sizeof(EdgeLoop));
   l->Curves = List_Create(List_Nbr(intlist), 1, sizeof(int));
@@ -219,7 +219,7 @@ void Free_EdgeLoop(void *a, void *b)
   }
 }
 
-SurfaceLoop *Create_SurfaceLoop(int Num, List_T * intlist)
+SurfaceLoop *Create_SurfaceLoop(int Num, List_T *intlist)
 {
   SurfaceLoop *l = (SurfaceLoop *) Malloc(sizeof(SurfaceLoop));
   l->Surfaces = List_Create(List_Nbr(intlist), 1, sizeof(int));
@@ -243,14 +243,14 @@ void Free_SurfaceLoop(void *a, void *b)
   }
 }
 
-static void direction(Vertex * v1, Vertex * v2, double d[3])
+static void direction(Vertex *v1, Vertex *v2, double d[3])
 {
   d[0] = v2->Pos.X - v1->Pos.X;
   d[1] = v2->Pos.Y - v1->Pos.Y;
   d[2] = v2->Pos.Z - v1->Pos.Z;
 }
 
-void End_Curve(Curve * c)
+void End_Curve(Curve *c)
 {
   double R2, mat[3][3], R, A3, A1, A4;
   Vertex *v[4], v0, v2, v3,*pV;
@@ -455,7 +455,7 @@ void End_Curve(Curve * c)
   }
 }
 
-void End_Surface(Surface * s)
+void End_Surface(Surface *s)
 {
   // if all generatrices of a surface are on the same geometry, then
   // the surface is also on the geometry
@@ -474,8 +474,8 @@ void End_Surface(Surface * s)
   }
 }
 
-Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
-                    List_T * Knots, int p1, int p2, double u1, double u2)
+Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
+                    List_T *Knots, int p1, int p2, double u1, double u2)
 {
   double matcr[4][4] = { {-0.5, 1.5, -1.5, 0.5},
 			 {1.0, -2.5, 2.0, -0.5},
@@ -737,7 +737,7 @@ int NEWREG(void)
           + 1);
 }
 
-int compare2Lists(List_T * List1, List_T * List2,
+int compare2Lists(List_T *List1, List_T *List2,
                   int (*fcmp) (const void *a, const void *b))
 {
   int i, found;
@@ -848,7 +848,7 @@ PhysicalGroup *FindPhysicalGroup(int num, int type)
   return NULL;
 }
 
-void CopyVertex(Vertex * v, Vertex * vv)
+void CopyVertex(Vertex *v, Vertex *vv)
 {
   vv->lc = v->lc;
   vv->u = v->u;
@@ -857,7 +857,7 @@ void CopyVertex(Vertex * v, Vertex * vv)
   vv->Pos.Z = v->Pos.Z;
 }
 
-Vertex *DuplicateVertex(Vertex * v)
+Vertex *DuplicateVertex(Vertex *v)
 {
   if(!v) return NULL;
   Vertex *pv = Create_Vertex(NEWPOINT(), 0, 0, 0, 0, 0);
@@ -875,7 +875,7 @@ int compareAbsCurve(const void *a, const void *b)
   return (abs((*q)->Num) - abs((*w)->Num));
 }
 
-void CopyCurve(Curve * c, Curve * cc)
+void CopyCurve(Curve *c, Curve *cc)
 {
   int i, j;
   cc->Typ = c->Typ;
@@ -907,7 +907,7 @@ void CopyCurve(Curve * c, Curve * cc)
   Tree_Insert(THEM->Curves, &cc);
 }
 
-Curve *DuplicateCurve(Curve * c)
+Curve *DuplicateCurve(Curve *c)
 {
   Curve *pc;
   Vertex *v, *newv;
@@ -925,7 +925,7 @@ Curve *DuplicateCurve(Curve * c)
   return pc;
 }
 
-void CopySurface(Surface * s, Surface * ss)
+void CopySurface(Surface *s, Surface *ss)
 {
   int i, j;
   ss->Typ = s->Typ;
@@ -954,7 +954,7 @@ void CopySurface(Surface * s, Surface * ss)
   Tree_Insert(THEM->Surfaces, &ss);
 }
 
-Surface *DuplicateSurface(Surface * s)
+Surface *DuplicateSurface(Surface *s)
 {
   Surface *ps;
   Curve *c, *newc;
@@ -1273,7 +1273,7 @@ void VisibilityShape(char *str, int Type, int Mode)
   }
 }
 
-Curve *CreateReversedCurve(Curve * c)
+Curve *CreateReversedCurve(Curve *c)
 {
   Curve *newc;
   Vertex *e1, *e2, *e3, *e4;
@@ -1332,7 +1332,7 @@ Curve *CreateReversedCurve(Curve * c)
   }
 }
 
-int recognize_seg(int typ, List_T * liste, int *seg)
+int recognize_seg(int typ, List_T *liste, int *seg)
 {
   int i, beg, end;
   Curve *pc;
@@ -1352,7 +1352,7 @@ int recognize_seg(int typ, List_T * liste, int *seg)
   return 0;
 }
 
-int recognize_loop(List_T * liste, int *loop)
+int recognize_loop(List_T *liste, int *loop)
 {
   int i, res;
   EdgeLoop *pe;
@@ -1372,7 +1372,7 @@ int recognize_loop(List_T * liste, int *loop)
   return res;
 }
 
-int recognize_surfloop(List_T * liste, int *loop)
+int recognize_surfloop(List_T *liste, int *loop)
 {
   int i, res;
   EdgeLoop *pe;
@@ -1542,7 +1542,7 @@ static void vecmat4x4(double mat[4][4], double vec[4], double res[4])
   }
 }
 
-void printCurve(Curve * c)
+void printCurve(Curve *c)
 {
   Vertex *v;
   int N = List_Nbr(c->Control_Points);
@@ -1554,7 +1554,7 @@ void printCurve(Curve * c)
   }
 }
 
-void printSurface(Surface * s)
+void printSurface(Surface *s)
 {
   Curve *c;
   int N = List_Nbr(s->Generatrices);
@@ -1566,7 +1566,7 @@ void printSurface(Surface * s)
   }
 }
 
-void ApplyTransformationToPoint(double matrix[4][4], Vertex * v,
+void ApplyTransformationToPoint(double matrix[4][4], Vertex *v,
 				bool end_curve_surface=false)
 {
   double pos[4], vec[4];
@@ -1626,7 +1626,7 @@ void ApplyTransformationToPoint(double matrix[4][4], Vertex * v,
   }
 }
 
-void ApplyTransformationToCurve(double matrix[4][4], Curve * c)
+void ApplyTransformationToCurve(double matrix[4][4], Curve *c)
 {
   Vertex *v;
 
@@ -1645,7 +1645,7 @@ void ApplyTransformationToCurve(double matrix[4][4], Curve * c)
   End_Curve(c);
 }
 
-void ApplyTransformationToSurface(double matrix[4][4], Surface * s)
+void ApplyTransformationToSurface(double matrix[4][4], Surface *s)
 {
   Curve *c;
   Vertex *v;
@@ -1666,7 +1666,7 @@ void ApplyTransformationToSurface(double matrix[4][4], Surface * s)
   End_Surface(s);
 }
 
-void ApplicationOnShapes(double matrix[4][4], List_T * ListShapes)
+void ApplicationOnShapes(double matrix[4][4], List_T *ListShapes)
 {
   int i;
   Shape O;
@@ -1721,7 +1721,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T * ListShapes)
   List_Reset(ListOfTransformedPoints);
 }
 
-void TranslateShapes(double X, double Y, double Z, List_T * ListShapes)
+void TranslateShapes(double X, double Y, double Z, List_T *ListShapes)
 {
   double T[3], matrix[4][4];
 
@@ -1735,7 +1735,7 @@ void TranslateShapes(double X, double Y, double Z, List_T * ListShapes)
     ReplaceAllDuplicates();
 }
 
-void DilatShapes(double X, double Y, double Z, double A, List_T * ListShapes)
+void DilatShapes(double X, double Y, double Z, double A, List_T *ListShapes)
 {
   double T[3], matrix[4][4];
 
@@ -1751,7 +1751,7 @@ void DilatShapes(double X, double Y, double Z, double A, List_T * ListShapes)
 
 void RotateShapes(double Ax, double Ay, double Az,
                   double Px, double Py, double Pz,
-                  double alpha, List_T * ListShapes)
+                  double alpha, List_T *ListShapes)
 {
   double A[3], T[3], matrix[4][4];
 
@@ -1777,7 +1777,7 @@ void RotateShapes(double Ax, double Ay, double Az,
     ReplaceAllDuplicates();
 }
 
-void SymmetryShapes(double A, double B, double C, double D, List_T * ListShapes)
+void SymmetryShapes(double A, double B, double C, double D, List_T *ListShapes)
 {
   double matrix[4][4];
 
@@ -1990,8 +1990,8 @@ int Extrude_ProtudeCurve(int type, int ic,
 			 double T0, double T1, double T2,
 			 double A0, double A1, double A2,
 			 double X0, double X1, double X2, double alpha,
-			 Surface ** ps, int final, 
-			 ExtrudeParams * e)
+			 Surface **ps, int final, 
+			 ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3];
   Curve *CurveBeg, *CurveEnd;
@@ -2150,7 +2150,7 @@ int Extrude_ProtudeSurface(int type, int is,
 			   double T0, double T1, double T2,
 			   double A0, double A1, double A2,
 			   double X0, double X1, double X2, double alpha,
-			   Volume **pv, ExtrudeParams * e)
+			   Volume **pv, ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3];
   Curve *c, *c2;
@@ -2816,7 +2816,7 @@ static double projectPC(double u)
 	      DSQR(c.Pos.Z - VERTEX->Pos.Z));
 }
 
-bool ProjectPointOnCurve(Curve * c, Vertex * v, Vertex * RES, Vertex * DER)
+bool ProjectPointOnCurve(Curve *c, Vertex *v, Vertex *RES, Vertex *DER)
 {
   double xmin;
   CURVE = c;
@@ -2837,7 +2837,7 @@ bool ProjectPointOnCurve(Curve * c, Vertex * v, Vertex * RES, Vertex * DER)
   return true;
 }
 
-bool ProjectPointOnSurface(Surface * s, Vertex & p, double u[2])
+bool ProjectPointOnSurface(Surface *s, Vertex &p, double u[2])
 {
   double x[3] = { 0.5, 0.5, 0.5 };
   Vertex vv;
@@ -2867,7 +2867,7 @@ bool ProjectPointOnSurface(Surface * s, Vertex & p, double u[2])
   return true;
 }
 
-void Projette(Vertex * v, double mat[3][3])
+void Projette(Vertex *v, double mat[3][3])
 {
   double X, Y, Z;
 

@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.30 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.31 2007-03-05 09:30:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -434,7 +434,7 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
     double *y = (double *)List_Pointer_Fast(iList, i + nbNod);
     double *z = (double *)List_Pointer_Fast(iList, i + 2 * nbNod);
 
-    if(nbNod == 2 || nbNod == 3 || (nbNod == 4 && nbEdg == 6)) {
+    if(nbNod == 1 || nbNod == 2 || nbNod == 3 || (nbNod == 4 && nbEdg == 6)) {
       // easy for simplices: at most one element is created per time step 
       for(int iTS = 0; iTS < iView->NbTimeStep; iTS++) {
 	int dTS = (dTimeStep < 0) ? iTS : dTimeStep;
@@ -586,6 +586,27 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   // To avoid surprising results, we don't try to plot values of
   // different types on the levelset if the value view (w) is the same
   // as the levelset view (v).
+
+  // points
+  executeList(v, v->SP, v->NbSP, 1, w, w->SP, w->NbSP, 1, 1, 0, 0, out);
+  if(v != w) {
+    executeList(v, v->SP, v->NbSP, 1, w, w->VP, w->NbVP, 3, 1, 0, 0, out);
+    executeList(v, v->SP, v->NbSP, 1, w, w->TP, w->NbTP, 9, 1, 0, 0, out);
+  }
+
+  if(v != w) {
+    executeList(v, v->VP, v->NbVP, 3, w, w->SP, w->NbSP, 1, 1, 0, 0, out);
+  }
+  executeList(v, v->VP, v->NbVP, 3, w, w->VP, w->NbVP, 3, 1, 0, 0, out);
+  if(v != w) {
+    executeList(v, v->VP, v->NbVP, 3, w, w->TP, w->NbTP, 9, 1, 0, 0, out);
+  }
+
+  if(v != w) {
+    executeList(v, v->TP, v->NbTP, 9, w, w->SP, w->NbSP, 1, 1, 0, 0, out);
+    executeList(v, v->TP, v->NbTP, 9, w, w->VP, w->NbVP, 3, 1, 0, 0, out);
+  }
+  executeList(v, v->TP, v->NbTP, 9, w, w->TP, w->NbTP, 9, 1, 0, 0, out);
 
   // lines
   int exnLin[12][2] = {{0,1}};

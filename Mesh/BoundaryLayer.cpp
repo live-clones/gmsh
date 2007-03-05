@@ -1,4 +1,4 @@
-// $Id: BoundaryLayer.cpp,v 1.1 2007-02-26 08:25:39 geuzaine Exp $
+// $Id: BoundaryLayer.cpp,v 1.2 2007-03-05 09:30:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,7 @@
 #include "meshGEdge.h"
 #include "meshGFace.h"
 #include "Message.h"
+#include "Views.h"
 
 template<class T>
 static void addExtrudeNormals(std::vector<T*> &elements)
@@ -62,8 +63,7 @@ int MeshBoundaryLayerFaces(GModel *m)
   // we use the normals for the extrusion)
   std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
 
-  // compute a smooth normal field on all the surfaces giving rise to
-  // boundary layers
+  // compute a normal field for the extrusion
   if(ExtrudeParams::normals) delete ExtrudeParams::normals;
   ExtrudeParams::normals = new smooth_data();
   ExtrudeParams *myep = 0;
@@ -72,16 +72,34 @@ int MeshBoundaryLayerFaces(GModel *m)
     if(gf->geomType() == GEntity::BoundaryLayerSurface){
       ExtrudeParams *ep = myep = gf->meshAttributes.extrude;
       if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY){
-	GFace *from = gf->model()->faceByTag(std::abs(ep->geo.Source));
-	if(!from){
-	  Msg(GERROR, "Unknown source face %d for boundary layer", ep->geo.Source);
-	  continue;
+	if(ep->mesh.ViewIndex >= 0 && ep->mesh.ViewIndex < List_Nbr(CTX.post.list)){ 
+	  // use external vector point post-pro view to get normals
+	  // FIXME: should use an octree on a general view instead
+	  xyzv::eps = 1.e-4;
+	  Post_View *v = *(Post_View**)List_Pointer(CTX.post.list, ep->mesh.ViewIndex);
+	  if(v->NbVP){
+	    int nb = List_Nbr(v->VP) / v->NbVP;
+	    for(int i = 0; i < List_Nbr(v->VP); i += nb){
+	      double *data = (double*)List_Pointer_Fast(v->VP, i);
+	      ExtrudeParams::normals->add(data[0], data[1], data[2], 3, &data[3]);
+	    }
+	  }
 	}
-	addExtrudeNormals(from->triangles);
-	addExtrudeNormals(from->quadrangles);
+	else{ 
+	  // compute smooth normal field from surfaces
+	  GFace *from = gf->model()->faceByTag(std::abs(ep->geo.Source));
+	  if(!from){
+	    Msg(GERROR, "Unknown source face %d for boundary layer", ep->geo.Source);
+	    continue;
+	  }
+	  addExtrudeNormals(from->triangles);
+	  addExtrudeNormals(from->quadrangles);
+	}
       }
     }
   }
+  ExtrudeParams::normals->normalize();
+  //ExtrudeParams::normals->exportview("normals.pos");
   if(!myep) return 0;
 
   // set the position of bounding points (FIXME: should check

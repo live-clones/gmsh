@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.142 2007-02-04 11:24:55 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.143 2007-03-05 09:30:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -148,11 +148,17 @@ void SetBoundingBox(void)
   if(bb.empty() && List_Nbr(CTX.post.list)) {
     for(int i = 0; i < List_Nbr(CTX.post.list); i++){
       Post_View *v = *(Post_View **)List_Pointer(CTX.post.list, i);
-      bb += SPoint3(v->BBox[0], v->BBox[2], v->BBox[4]);
+      if(fabs(v->BBox[0]) != VAL_INF && 
+	 fabs(v->BBox[2]) != VAL_INF &&
+	 fabs(v->BBox[4]) != VAL_INF)
+	bb += SPoint3(v->BBox[0], v->BBox[2], v->BBox[4]);
+      if(fabs(v->BBox[1]) != VAL_INF && 
+	 fabs(v->BBox[3]) != VAL_INF &&
+	 fabs(v->BBox[5]) != VAL_INF)
       bb += SPoint3(v->BBox[1], v->BBox[3], v->BBox[5]);
     }
   }
-  
+
   if(bb.empty()){
     bb += SPoint3(-1., -1., -1.);
     bb += SPoint3(1., 1., 1.);

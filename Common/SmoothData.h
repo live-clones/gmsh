@@ -22,6 +22,7 @@
 
 #include <set>
 #include <vector>
+#include <string>
 #include "Numeric.h"
 
 // Basic coordinate-based floating point data averager
@@ -65,6 +66,8 @@ class smooth_data{
   smooth_data() {}
   void add(double x, double y, double z, int n, double *vals);
   bool get(double x, double y, double z, int n, double *vals);
+  void normalize();
+  bool exportview(std::string filename);
 };
 
 // Normal smoother with threshold (saves memory by storing normals as

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.167 2007-02-28 06:58:46 geuzaine Exp $
+# $Id: Makefile,v 1.168 2007-03-05 09:30:53 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -317,7 +317,9 @@ BoundaryLayer.o: BoundaryLayer.cpp BoundaryLayer.h ../Geo/GModel.h \
   ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/ExtrudeParams.h ../Geo/GRegion.h ../Geo/GEntity.h \
   ../Geo/MElement.h ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h \
-  meshGEdge.h meshGFace.h ../Common/Message.h
+  meshGEdge.h meshGFace.h ../Common/Message.h ../Common/Views.h \
+  ../Common/ColorTable.h ../Common/VertexArray.h ../Common/SmoothData.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
 BDS.o: BDS.cpp ../Numeric/Numeric.h ../Common/GmshMatrix.h BDS.h \
   ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/Range.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \

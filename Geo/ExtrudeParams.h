@@ -21,6 +21,8 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <vector>
+#include <map>
+#include <string>
 #include "SmoothData.h"
 
 // geo.Mode
@@ -52,6 +54,8 @@ public :
     int NbLayer;
     std::vector<int> NbElmLayer;
     std::vector<double> hLayer;
+    std::map<int, std::pair<double, std::vector<int> > > Holes;
+    int ViewIndex;
   }mesh;
   struct{
     int Mode;
@@ -60,7 +64,6 @@ public :
     double trans[3];
     double axe[3], pt[3], angle;
   }geo;
-  
 };
 
 #endif

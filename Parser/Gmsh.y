@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.265 2007-03-02 09:20:21 remacle Exp $
+// $Id: Gmsh.y,v 1.266 2007-03-05 09:30:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -97,10 +97,10 @@ int CheckViewErrorFlags(Post_View *v);
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical
-%token tUsing tBump tProgression tPlugin 
+%token tUsing tBump tProgression tPlugin
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
 %token tLoop tRecombine tDelete tCoherence
-%token tAttractor tLayers tAlias tAliasWithOptions
+%token tAttractor tLayers tHole tAlias tAliasWithOptions
 %token tText2D tText3D tInterpolationScheme tTime tGrain tCombine
 %token tBSpline tBezier tNurbs tOrder tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
@@ -2178,8 +2178,7 @@ Extrude :
     }
   | tExtrude VExpr '{' ListOfShapes 
     {
-      extr.mesh.ExtrudeMesh = false;
-      extr.mesh.Recombine = false;
+      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
     }
                        ExtrudeParameters '}'
     {
@@ -2191,8 +2190,7 @@ Extrude :
     }
   | tExtrude '{' VExpr ',' VExpr ',' FExpr '}' '{' ListOfShapes 
     {
-      extr.mesh.ExtrudeMesh = false;
-      extr.mesh.Recombine = false;
+      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
     }
                                                    ExtrudeParameters '}'
     {
@@ -2204,8 +2202,7 @@ Extrude :
     }
   | tExtrude '{' VExpr ',' VExpr ',' VExpr ',' FExpr '}' '{' ListOfShapes
     {
-      extr.mesh.ExtrudeMesh = false;
-      extr.mesh.Recombine = false;
+      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
     }
                                                              ExtrudeParameters '}'
     {
@@ -2217,8 +2214,7 @@ Extrude :
     }
   | tExtrude '{' ListOfShapes 
     {
-      extr.mesh.ExtrudeMesh = false;
-      extr.mesh.Recombine = false;
+      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
     }
                        ExtrudeParameters '}'
     {
@@ -2226,6 +2222,20 @@ Extrude :
       ExtrudeShapes(BOUNDARY_LAYER, $3, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
 		    &extr, $$);
       List_Delete($3);
+    }
+  | tExtrude tSTRING '[' FExpr ']' '{' ListOfShapes 
+    {
+      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
+    }
+                       ExtrudeParameters '}'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      extr.mesh.ViewIndex = $4;
+      ExtrudeShapes(BOUNDARY_LAYER, $7, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+		    &extr, $$);
+      extr.mesh.ViewIndex = -1;
+      Free($2);
+      List_Delete($7);
     }
 
   // Deprecated extrude commands (for backward compatibility)
@@ -2294,8 +2304,7 @@ Extrude :
     }
   | tExtrude tPoint '{' FExpr ',' VExpr '}' 
     {
-      extr.mesh.ExtrudeMesh = false;
-      extr.mesh.Recombine = false;
+      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
     }
                     '{' ExtrudeParameters '}' tEND
     {
@@ -2306,8 +2315,7 @@ Extrude :
     }
   | tExtrude tLine '{' FExpr ',' VExpr '}'
     {
-      extr.mesh.ExtrudeMesh = false;
-      extr.mesh.Recombine = false;
+      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
     }
                    '{' ExtrudeParameters '}' tEND
     {
@@ -2318,8 +2326,7 @@ Extrude :
     }
   | tExtrude tSurface '{' FExpr ',' VExpr '}' 
     {
-      extr.mesh.ExtrudeMesh = false;
-      extr.mesh.Recombine = false;
+      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
     }
                       '{' ExtrudeParameters '}' tEND
     {
@@ -2330,8 +2337,7 @@ Extrude :
     }
   | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
-      extr.mesh.ExtrudeMesh = false;
-      extr.mesh.Recombine = false;
+      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
     }
                     '{' ExtrudeParameters '}' tEND
     {
@@ -2342,8 +2348,7 @@ Extrude :
     }
   | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
-      extr.mesh.ExtrudeMesh = false;
-      extr.mesh.Recombine = false;
+      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
     }
                    '{' ExtrudeParameters '}' tEND
     {
@@ -2354,8 +2359,7 @@ Extrude :
     }
   | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
     {
-      extr.mesh.ExtrudeMesh = false;
-      extr.mesh.Recombine = false;
+      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
     }
                       '{' ExtrudeParameters '}' tEND
     {
@@ -2366,8 +2370,7 @@ Extrude :
     }
   | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr'}' 
     {
-      extr.mesh.ExtrudeMesh = false;
-      extr.mesh.Recombine = false;
+      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
     }
                     '{' ExtrudeParameters '}' tEND
     {
@@ -2378,8 +2381,7 @@ Extrude :
     }
   | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}' 
     {
-      extr.mesh.ExtrudeMesh = false;
-      extr.mesh.Recombine = false;
+      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
     }
                    '{' ExtrudeParameters '}' tEND
     {
@@ -2390,8 +2392,7 @@ Extrude :
     }
   | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}' 
     {
-      extr.mesh.ExtrudeMesh = false;
-      extr.mesh.Recombine = false;
+      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
     }
                       '{' ExtrudeParameters '}' tEND
     {
@@ -2471,6 +2472,25 @@ ExtrudeParameter :
   | tRecombine tEND
     {
       extr.mesh.Recombine = true;
+    }
+  | tHole '(' FExpr ')' tAFFECT '{' ListOfDouble '}' tUsing FExpr tEND
+    {
+      int num = (int)$3;
+      if(FindSurface(num)){
+	yymsg(GERROR, "Surface %d already exists", num);
+      }
+      else{
+	Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
+	Tree_Add(THEM->Surfaces, &s);
+	extr.mesh.Holes[num].first = $10;
+	extr.mesh.Holes[num].second.clear();
+	for(int i = 0; i < List_Nbr($7); i++){
+	  double d;
+	  List_Read($7, i, &d);
+	  extr.mesh.Holes[num].second.push_back((int)d);
+	}
+      }
+      List_Delete($7);
     }
 ;
 
@@ -3038,16 +3058,39 @@ ListOfDouble :
   | '-' '{' RecursiveListOfDouble '}'
     {
       $$ = $3;
-      double *pd;
       for(int i = 0; i < List_Nbr($$); i++){
-	pd = (double*)List_Pointer($$, i);
+	double *pd = (double*)List_Pointer($$, i);
 	(*pd) = - (*pd);
+      }
+    }
+  | FExpr '*' '{' RecursiveListOfDouble '}'
+    {
+      $$ = $4;
+      for(int i = 0; i < List_Nbr($$); i++){
+	double *pd = (double*)List_Pointer($$, i);
+	(*pd) *= $1;
       }
     }
 ;
 
 FExpr_Multi :
-    FExpr tDOTS FExpr
+    '-' FExpr_Multi %prec UNARYPREC
+    {
+      $$ = $2;
+      for(int i = 0; i < List_Nbr($$); i++){
+	double *pd = (double*)List_Pointer($$, i);
+	(*pd) = - (*pd);
+      }
+    }
+  | FExpr '*' FExpr_Multi
+    {
+      $$ = $3;
+      for(int i = 0; i < List_Nbr($$); i++){
+	double *pd = (double*)List_Pointer($$, i);
+	(*pd) *= $1;
+      }
+    }
+  | FExpr tDOTS FExpr
     { 
       $$ = List_Create(2, 1, sizeof(double)); 
       for(double d = $1; ($1 < $3) ? (d <= $3) : (d >= $3); ($1 < $3) ? (d += 1.) : (d -= 1.)) 
@@ -3131,25 +3174,6 @@ FExpr_Multi :
       }
       Free($1);
     }
-  | '-' tSTRING '[' ']'
-    {
-      $$ = List_Create(2, 1, sizeof(double));
-      Symbol TheSymbol;
-      TheSymbol.Name = $2;
-      Symbol *pSymbol;
-      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
-	yymsg(GERROR, "Unknown variable '%s'", $2);
-	double d = 0.0;
-	List_Add($$, &d);
-      }
-      else{
-	for(int i = 0; i < List_Nbr(pSymbol->val); i++){
-	  double d = - *(double*)List_Pointer_Fast(pSymbol->val, i);
-	  List_Add($$, &d);
-	}
-      }
-      Free($2);
-    }
   | tSTRING '[' '{' RecursiveListOfDouble '}' ']'
     {
       $$ = List_Create(2, 1, sizeof(double));
@@ -3173,32 +3197,6 @@ FExpr_Multi :
       }
       Free($1);
       List_Delete($4);
-    }
-  | '-' tSTRING '[' '{' RecursiveListOfDouble '}' ']'
-    {
-      $$ = List_Create(2, 1, sizeof(double));
-      Symbol TheSymbol;
-      TheSymbol.Name = $2;
-      Symbol *pSymbol;
-      if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
-	yymsg(GERROR, "Unknown variable '%s'", $2);
-	double d = 0.0;
-	List_Add($$, &d);
-      }
-      else{
-	for(int i = 0; i < List_Nbr($5); i++){
-	  int j = (int)(*(double*)List_Pointer_Fast($5, i));
-	  double *pd;
-	  if((pd = (double*)List_Pointer_Test(pSymbol->val, j))){
-	    double d = - *pd;
-	    List_Add($$, &d);
-	  }
-	  else
-	    yymsg(GERROR, "Uninitialized variable '%s[%d]'", $2, j);	  
-	}
-      }
-      Free($2);
-      List_Delete($5);
     }
 ;
 

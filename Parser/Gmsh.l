@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.85 2007-03-02 09:20:21 remacle Exp $
+// $Id: Gmsh.l,v 1.86 2007-03-05 09:30:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -166,6 +166,7 @@ GMSH_MINOR_VERSION      return tGMSH_MINOR_VERSION;
 GMSH_PATCH_VERSION      return tGMSH_PATCH_VERSION;
 
 Hide                    return tHide;
+Hole                    return tHole;
 Hypot                   return tHypot;
 
 In                      return tIn;

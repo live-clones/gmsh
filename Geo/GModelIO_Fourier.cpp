@@ -87,10 +87,17 @@ public:
   {  
     int M = (int)(30. / CTX.mesh.lc_factor), N = (int)(30. / CTX.mesh.lc_factor);
 
-    //if(gf->tag() == 2){
-    //M = 9;
-    //N = 15;
-    //}
+#if 1
+    switch(gf->tag()){
+    case 0: M = 30; N = 30; break; // falcon front
+    case 1: M = 30; N = 120; break; // falcon back
+    case 2: break; // wing front
+    case 3: M = 25; N = 30; break; // wing top (N along the fuselage)
+    case 4: M = 25; N = 30; break; // wing bottom
+    }
+    //M /= 2 ;
+    //N /= 2 ;
+#endif
 
     for(int i = 0; i < M; i++){
       for(int j = 0; j < N; j++){
@@ -884,8 +891,8 @@ int GModel::readFourier(const std::string &name)
 
   // mesh each face with quads
   std::for_each(firstFace(), lastFace(), meshCartesian());
-  cleanUpAndMergeAllFaces(this);
 
+  cleanUpAndMergeAllFaces(this);
   return 1;
 
   // mesh each face using the standard gmsh algorithms
@@ -893,7 +900,8 @@ int GModel::readFourier(const std::string &name)
   //return 1;
 
   // compute partition of unity
-  std::for_each(firstFace(), lastFace(), computePartitionOfUnity());
+  //std::for_each(firstFace(), lastFace(), computePartitionOfUnity());
+  //return 1;
 
   // create grooves
   std::for_each(firstFace(), lastFace(), createGroove());

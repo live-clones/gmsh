@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.77 2006-11-27 22:22:16 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.78 2007-03-05 09:30:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1241,7 +1241,7 @@ void Draw_VectorPyramid(ARGS)
 
 // Tensor Elements
 
-static int state = -1;
+static int state = -1; // WTF? This is completely wrong when you have multiple view --CG
 
 void Draw_TensorElement(int type, Post_View * View, int preproNormals,
                         double ValMin, double ValMax,
@@ -1263,7 +1263,7 @@ void Draw_TensorElement(int type, Post_View * View, int preproNormals,
 
   int ts = View->TimeStep;
 
-  if(View->TensorType == DRAW_POST_VONMISES){
+  if(View->TensorType == DRAW_POST_VONMISES || !View->NbTP){
 
     View->TimeStep = 0;
     double V_VonMises[8];
@@ -1283,6 +1283,8 @@ void Draw_TensorElement(int type, Post_View * View, int preproNormals,
 	  View->TensorType == DRAW_POST_LMGC90_DEPZ || 
 	  View->TensorType == DRAW_POST_LMGC90_DEPAV || 
 	  View->TensorType == DRAW_POST_LMGC90_DEPNORM){
+    
+    // FIXME: need to clean up this mess! --CG
     
     static double zmin[3], zmax[3];
     int it;

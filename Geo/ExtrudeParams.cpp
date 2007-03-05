@@ -1,4 +1,4 @@
-// $Id: ExtrudeParams.cpp,v 1.23 2007-02-26 08:25:38 geuzaine Exp $
+// $Id: ExtrudeParams.cpp,v 1.24 2007-03-05 09:30:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -43,6 +43,7 @@ ExtrudeParams::ExtrudeParams(int ModeEx)
   geo.Source = -1;
   mesh.ExtrudeMesh = false;
   mesh.Recombine = false;
+  mesh.ViewIndex = -1;
 }
 
 void ExtrudeParams::fill(int type,

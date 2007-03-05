@@ -1,4 +1,4 @@
-// $Id: SmoothData.cpp,v 1.1 2007-02-26 08:25:36 geuzaine Exp $
+// $Id: SmoothData.cpp,v 1.2 2007-03-05 09:30:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -99,7 +99,40 @@ bool smooth_data::get(double x, double y, double z, int n, double *vals)
   if(it == c.end())
     return false;
   for(int k = 0; k < n; k++)
-    vals[k] = (*it).vals[k];
+    vals[k] = it->vals[k];
+  return true;
+}
+
+void smooth_data::normalize()
+{
+  std::set<xyzv, lessthanxyzv>::iterator it = c.begin();
+  while(it != c.end()){
+    if(it->nbvals == 3) norme(it->vals);
+    it++;
+  }
+}
+
+bool smooth_data::exportview(std::string filename)
+{
+  FILE *fp = fopen(filename.c_str(), "w");
+  if(!fp) return false;
+  fprintf(fp, "View \"data\" {\n");
+  std::set<xyzv, lessthanxyzv>::iterator it = c.begin();
+  while(it != c.end()){
+    switch(it->nbvals){
+    case 1: 
+      fprintf(fp, "SP(%.16g,%.16g,%.16g){%.16g};\n", 
+	      it->x, it->y, it->z, it->vals[0]);
+      break;
+    case 3:
+      fprintf(fp, "VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",
+	      it->x, it->y, it->z, it->vals[0], it->vals[1], it->vals[2]);
+      break;
+    }
+    it++;
+  }
+  fprintf(fp, "};\n");
+  fclose(fp);
   return true;
 }
 
