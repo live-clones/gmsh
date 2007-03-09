@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.63 2007-03-02 09:55:01 remacle Exp $
+// $Id: meshGFace.cpp,v 1.64 2007-03-09 14:57:06 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -37,6 +37,8 @@
 #include "Attractors.h"
 
 extern Context_T CTX;
+
+static double SCALINGU=1,SCALINGV=1;
 
 void computeEdgeLoops(const GFace *gf,
 		      std::vector<MVertex*> &all_mvertices,
@@ -114,7 +116,7 @@ inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2)
 inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2, GFace *f)
 {
 
-  GPoint GP = f->point (SPoint2(0.5*(p1->u+p2->u),0.5*(p1->v+p2->v)));
+  GPoint GP = f->point (SPoint2(0.5*(p1->u+p2->u)*SCALINGU,0.5*(p1->v+p2->v)*SCALINGV));
 
   const double dx1 = p1->X-GP.x();
   const double dy1 = p1->Y-GP.y();
@@ -217,15 +219,17 @@ void OptimizeMesh(GFace *gf, BDS_Mesh &m, const int NIT)
 	{
 	  std::list < BDS_Face * >t;
 	  (*itp)->getTriangles(t);
-	  if ((t.size()==3 && (*itp)->edges.size() == 3)||
-	      (t.size()==4 && (*itp)->edges.size() == 4))
-	    m.collapse_edge_parametric ( *(*itp)->edges.begin(), (*itp));
+	  if (t.size()==(*itp)->edges.size()  &&  t.size() < 5)
+	    for (std::list<BDS_Edge*>::iterator ite = (*itp)->edges.begin();ite!=(*itp)->edges.end();++ite)
+	      {
+		if(m.collapse_edge_parametric ( (*ite), (*itp)))break;
+	      }
 	  else
-	    m.smooth_point_parametric(*itp,gf);
+	    m.smooth_point_parametric(*itp,gf);		
 	  ++itp;
 	}
     }
-    {
+    if(0){
       // swap edges that provide a better configuration
       int NN1 = m.edges.size();
       int NN2 = 0;
@@ -235,10 +239,23 @@ void OptimizeMesh(GFace *gf, BDS_Mesh &m, const int NIT)
 	  if (NN2++ >= NN1)break;
 	  if (!(*it)->deleted && (*it)->numfaces() == 2)
 	    {
+
 	      BDS_Point *op[2];
 	      (*it)->oppositeof(op);	      
-	      if ( edgeSwapTestQuality(*it) == 1) 
+	      BDS_Point *p1 = (*it)->p1;
+	      BDS_Point *p2 = (*it)->p2;
+	      std::list < BDS_Face * >t1,t2,to1,to2;
+	      p1->getTriangles(t1);
+	      p2->getTriangles(t2);
+	      op[0]->getTriangles(to1);
+	      op[1]->getTriangles(to2);
+	      
+	      if (t1.size() == 7 && t2.size() == 7 && to1.size() == 5 && to2.size() == 5) 
 		m.swap_edge ( *it , BDS_SwapEdgeTestParametric());
+	      else if (t1.size() == 5 && t2.size() == 5 && to1.size() == 7 && to2.size() == 7) 
+		m.swap_edge ( *it , BDS_SwapEdgeTestParametric());	      
+	      //	      else if ( edgeSwapTestQuality(*it) == 1) 
+	      //		m.swap_edge ( *it , BDS_SwapEdgeTestParametric());
 	    }	
 	  ++it;
 	}
@@ -257,7 +274,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 
   // computecharacteristic lengths using mesh edge spacing
   // separate attractors & 
-  if (!Attractor::size())
+  if (NIT > 0 && !Attractor::size())
     {
       std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
       while (itp != m.points.end())
@@ -276,6 +293,8 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
     }
 
   double OLDminL=1.E22,OLDmaxL=0;
+
+  const double MINE_ = 0.7, MAXE_=1.4;
   while (1)
     {
     //   double stot = 0;
@@ -318,8 +337,8 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 
       if (OLDminL == minL && OLDmaxL == maxL)break;
       OLDminL = minL;OLDmaxL = maxL;
-
-      if ((minL > 1./sqrt(2.0) && maxL < sqrt(2.0)) || IT > NIT)break;
+      
+      if ((minL > MINE_ && maxL < MAXE_) || IT > (abs(NIT)))break;
 
 
       NN1 = m.edges.size();
@@ -332,11 +351,13 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	    {
 	      double lone = NewGetLc ( *it,gf);
 
-	      const double coord = 0.5;
 	      // take care with seams :
 	      //	      if (lone < 1.e-10 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
-	      if ((*it)->numfaces() == 2 && (lone >  1.3))
+	      if ((*it)->numfaces() == 2 && (lone >  MAXE_))
 		{
+
+		  const double coord = 0.5;
+
 		  BDS_Point *mid ;
 		  mid  = m.add_point(++m.MAXPOINTNUMBER,
 				     coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
@@ -388,7 +409,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	  double lone = NewGetLc ( *it,gf);
 	  //	  if (lone < 1.e-10 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
 
-	  if (!(*it)->deleted && (*it)->numfaces() == 2 && lone < 0.6 )
+	  if (!(*it)->deleted && (*it)->numfaces() == 2 && lone < MINE_ )
 	    {
 	      bool res = false;
 	      if ( (*it)->p1->iD > MAXNP )
@@ -464,8 +485,8 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	  }
 	}
 	IT++;
-
 	Msg(DEBUG1," iter %3d minL %8.3f maxL %8.3f : %6d splits, %6d swaps, %6d collapses, %6d moves",IT,minL,maxL,nb_split,nb_swap,nb_collaps,nb_smooth);
+
 	if (nb_split==0 && nb_collaps == 0)break;
     }  
 }
@@ -843,7 +864,9 @@ bool gmsh2DMeshGenerator ( GFace *gf )
   // start mesh generation
   //  if (CTX.mesh.algo2d == ALGO_2D_MESHADAPT)
     {
-      RefineMesh (gf,*m,20);
+      RefineMesh (gf,*m,10);
+      OptimizeMesh(gf, *m, 3);
+      RefineMesh (gf,*m,-10);
       if (gf->meshAttributes.recombine)
 	{
 	  m->recombineIntoQuads (gf->meshAttributes.recombineAngle,gf);
@@ -1143,7 +1166,9 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 }
 
 
-bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
+
+
+bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
 {
   //  if(gf->tag() != 6)return true;
 
@@ -1162,8 +1187,10 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
 
   // Buid a BDS_Mesh structure that is convenient for doing the actual meshing procedure    
   BDS_Mesh *m = new BDS_Mesh;
-  //  m->scalingU = fabs(du);
-  //  m->scalingV = fabs(dv);
+   m->scalingU = fabs(du);
+   m->scalingV = fabs(dv);
+   SCALINGU = m->scalingU;
+   SCALINGV = m->scalingV;
   std::vector< std::vector<BDS_Point* > > edgeLoops_BDS;
   SBoundingBox3d bbox;
   int nbPointsTotal = 0;
@@ -1250,6 +1277,16 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   BDS_GeomEntity CLASS_E (1,1);
   
 
+  if (debug)
+    {
+      char name[245];
+      sprintf(name,"surface%d-initial-real.pos",gf->tag());
+      outputScalarField(m->triangles, name,0);
+      sprintf(name,"surface%d-initial-param.pos",gf->tag());
+      outputScalarField(m->triangles, name,1);
+    }
+
+
   for (unsigned int i=0;i<edgeLoops_BDS.size();i++)
     {
       std::vector<BDS_Point*> &edgeLoop_BDS = edgeLoops_BDS[i];
@@ -1259,6 +1296,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
 	  if (!e)
 	    {
 	      Msg(GERROR,"impossible to recover the edge %d %d\n",edgeLoop_BDS[j]->iD,edgeLoop_BDS[(j+1)%edgeLoop_BDS.size()]->iD);
+	      SCALINGU = SCALINGV = 1;
 	      return false;
 	    }
 	  else e->g = &CLASS_E;
@@ -1335,13 +1373,25 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   m->del_point(m->find_point(-4));
     
 
+  if (debug)
+    {
+      char name[245];
+      sprintf(name,"surface%d-recovered-real.pos",gf->tag());
+      outputScalarField(m->triangles, name,0);
+      sprintf(name,"surface%d-recovered-param.pos",gf->tag());
+      outputScalarField(m->triangles, name,1);
+    }
 
   // goto hhh;
   // start mesh generation
   
   //  if (CTX.mesh.algo2d == ALGO_2D_MESHADAPT)
     {
-      RefineMesh (gf,*m,100);
+      RefineMesh (gf,*m,10);
+      OptimizeMesh(gf, *m, 5);
+      RefineMesh (gf,*m,-10);
+      OptimizeMesh(gf, *m, 1);
+
       if (gf->meshAttributes.recombine)
 	{
 	  m->recombineIntoQuads (gf->meshAttributes.recombineAngle,gf);
@@ -1349,6 +1399,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
     }
   // fill the small gmsh structures
   
+
   {
     std::set<BDS_Point*,PointLessThan>::iterator itp =  m->points.begin(); 
     while (itp != m->points.end())
@@ -1395,11 +1446,14 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
   
   
   // delete the mesh
-   //    sprintf(name,"real%d.pos",gf->tag());
-    //outputScalarField(m->triangles, name,0);
-//    char name[245];
-//    sprintf(name,"param%d.pos",gf->tag());
-//    outputScalarField(m->triangles, name,1);
+  if (debug)
+    {
+      char name[245];
+      sprintf(name,"surface%d-final-real.pos",gf->tag());
+      outputScalarField(m->triangles, name,0);
+      sprintf(name,"surface%d-final-param.pos",gf->tag());
+      outputScalarField(m->triangles, name,1);
+    }
 
 //   if (CTX.mesh.algo2d == ALGO_2D_DELAUNAY)
 //     {
@@ -1408,6 +1462,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf )
 
   
   delete m; 
+  SCALINGU = SCALINGV = 1;
   return true;
 }
 

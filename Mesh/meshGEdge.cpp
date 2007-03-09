@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.29 2007-02-26 08:25:39 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.30 2007-03-09 14:57:06 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -262,4 +262,22 @@ void meshGEdge::operator() (GEdge *ge)
       ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
     ge->lines.push_back(new MLine(v0, v1));
   }
+
+  // if the curve is periodic and if the begin vertex is identical to the end vertex
+  // and if this vertex has only one model curve adjacent to it, then the vertex is
+  // not connecting any other curve. So, the mesh vertex and its associated  geom vertex
+  // are not necessary at the same location
+
+
+  //  printf("%p %p %d\n",ge->getBeginVertex(),ge->getEndVertex(),ge->getBeginVertex()->edges().size());    
+
+  if (ge->getBeginVertex() == ge->getEndVertex() && ge->getBeginVertex()->edges().size() == 1)
+    {
+      MVertex *v0 =  ge->getBeginVertex()->mesh_vertices[0];
+      GPoint gp = ge->point (t_begin);
+      v0->x() = gp.x();
+      v0->y() = gp.y();
+      v0->z() = gp.z();
+    }
+
 }

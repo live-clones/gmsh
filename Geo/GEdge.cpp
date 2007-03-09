@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.23 2007-03-05 09:10:54 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.24 2007-03-09 14:57:06 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@ GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
   : GEntity(model, tag), v0(_v0), v1(_v1)
 {
   if(v0) v0->addEdge(this);
-  if(v1) v1->addEdge(this);
+  if(v1 && v1 != v0) v1->addEdge(this);
   resetMeshAttributes();
 }
 
