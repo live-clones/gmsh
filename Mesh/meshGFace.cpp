@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.64 2007-03-09 14:57:06 remacle Exp $
+// $Id: meshGFace.cpp,v 1.65 2007-03-10 13:42:05 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -582,7 +582,7 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge)
 // domain, including embedded points 
 // and surfaces
 
-bool gmsh2DMeshGenerator ( GFace *gf )
+bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
 {
 
   //if (gf->tag() != 16)return true;
@@ -629,7 +629,15 @@ bool gmsh2DMeshGenerator ( GFace *gf )
     SPoint2 param;
     if(here->onWhat()->dim() == 0){
       GVertex *gv = (GVertex*)here->onWhat();
-      param = gv->reparamOnFace(gf,1);
+      if (gv->edges().size() == 1)
+	{
+	  GEdge *ge = *(gv->edges().begin());
+	  Range<double> bb = ge->parBounds(0);
+	  param = ge->reparamOnFace(gf, bb.low(), 1);	  
+	}
+      else
+	param = gv->reparamOnFace(gf,1);
+      
     }
     else if(here->onWhat()->dim() == 1){
       GEdge *ge = (GEdge*)here->onWhat();
@@ -928,6 +936,13 @@ bool gmsh2DMeshGenerator ( GFace *gf )
 
   // delete the mesh
 
+  if (debug){
+    char name[256];
+    sprintf(name,"real%d.pos",gf->tag());
+    outputScalarField(m->triangles, name,0);
+    sprintf(name,"param%d.pos",gf->tag());
+    outputScalarField(m->triangles, name,1);
+  }
   delete m;
 
 
@@ -1504,10 +1519,10 @@ void meshGFace::operator() (GFace *gf)
   // temp fix until we create MEdgeLoops in gmshFace
   Msg(DEBUG1, "Generating the mesh");
   if(gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
-    gmsh2DMeshGenerator(gf);
+    gmsh2DMeshGenerator(gf,false);
   }
   else{
-    if(!gmsh2DMeshGeneratorPeriodic(gf))
+    if(!gmsh2DMeshGeneratorPeriodic(gf,false))
       Msg(GERROR, "Impossible to mesh face %d", gf->tag());
   }
   
