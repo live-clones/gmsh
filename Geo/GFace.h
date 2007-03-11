@@ -67,15 +67,15 @@ class GFace : public GEntity
   void delRegion(GRegion *r){ if(r1 == r) r1 = r2; r2=0; }
 
   // edge orientations.
-  virtual std::list<int> orientations() const{return l_dirs;}
+  virtual std::list<int> orientations() const { return l_dirs; }
   // Edges that bound this entity or that this entity bounds.
-  virtual std::list<GEdge*> edges() const{return l_edges;}
+  virtual std::list<GEdge*> edges() const { return l_edges; }
   // Edges that are embedded in this face.
-  virtual std::list<GEdge*> emb_edges() const{return embedded_edges;}
+  virtual std::list<GEdge*> emb_edges() const { return embedded_edges; }
   // Vertices that bound this entity or that this entity bounds.
   virtual std::list<GVertex*> vertices() const;
 
-  virtual int dim() const {return 2;}
+  virtual int dim() const { return 2; }
   virtual void setVisibility(char val, bool recursive=false);
 
   // compute the parameters UV from a point XYZ
@@ -162,8 +162,9 @@ class GFace : public GEntity
   // of start/end points
   std::vector<SPoint3> cross;
 
-  // a map for accessing the transfinite vertices using a pair of indices
-  std::map<std::pair<int, int>, MVertex*> transfinite_vertices;
+  // a array for accessing the transfinite vertices using a pair of
+  // indices
+  std::vector<std::vector<MVertex*> > transfinite_vertices;
 
   std::vector<MTriangle*> triangles;
   std::vector<MQuadrangle*> quadrangles;

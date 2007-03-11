@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.516 2007-02-28 06:58:46 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.517 2007-03-11 20:18:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -607,6 +607,7 @@ static char *input_formats =
   "\tI-deas universal mesh (*.unv)"
   "\tMedit mesh (*.mesh)"
   "\tNastran bulk data file (*.bdf)"
+  "\tPlot3D structured mesh (*.p3d)"
   "\tSTL surface mesh (*.stl)"
   "\tVRML surface mesh (*.wrl)"
 #if defined(HAVE_LIBJPEG)
@@ -649,13 +650,14 @@ int _save_msh(char *name){ return msh_dialog(name); }
 int _save_pos(char *name){ return generic_mesh_dialog(name, "POS Options", FORMAT_POS); }
 int _save_options(char *name){ return options_dialog(name); }
 int _save_geo(char *name){ CreateOutputFile(name, FORMAT_GEO); return 1; }
+int _save_cgns(char *name){ CreateOutputFile(name, FORMAT_CGNS); return 1; }
 int _save_unv(char *name){ return generic_mesh_dialog(name, "UNV Options", FORMAT_UNV); }
+int _save_med(char *name){ return generic_mesh_dialog(name, "MED Options", FORMAT_MED); }
 int _save_mesh(char *name){ return generic_mesh_dialog(name, "MESH Options", FORMAT_MESH); }
 int _save_bdf(char *name){ return bdf_dialog(name); }
+int _save_p3d(char *name){ return generic_mesh_dialog(name, "P3D Options", FORMAT_P3D); }
 int _save_stl(char *name){ return stl_dialog(name); }
 int _save_vrml(char *name){ return generic_mesh_dialog(name, "VRML Options", FORMAT_VRML); }
-int _save_cgns(char *name){ CreateOutputFile(name, FORMAT_CGNS); return 1; }
-int _save_med(char *name){ return generic_mesh_dialog(name, "MED Options", FORMAT_MED); }
 int _save_eps(char *name){ return gl2ps_dialog(name, "EPS Options", FORMAT_EPS); }
 int _save_gif(char *name){ return gif_dialog(name); }
 int _save_jpeg(char *name){ return jpeg_dialog(name); }
@@ -674,13 +676,14 @@ int _save_auto(char *name)
   case FORMAT_POS  : return _save_pos(name);
   case FORMAT_OPT  : return _save_options(name);
   case FORMAT_GEO  : return _save_geo(name);
+  case FORMAT_CGNS : return _save_cgns(name);
   case FORMAT_UNV  : return _save_unv(name);
+  case FORMAT_MED  : return _save_med(name);
   case FORMAT_MESH : return _save_mesh(name);
   case FORMAT_BDF  : return _save_bdf(name);
+  case FORMAT_P3D  : return _save_p3d(name);
   case FORMAT_STL  : return _save_stl(name);
   case FORMAT_VRML : return _save_vrml(name);
-  case FORMAT_CGNS : return _save_cgns(name);
-  case FORMAT_MED  : return _save_med(name);
   case FORMAT_EPS  : return _save_eps(name);
   case FORMAT_GIF  : return _save_gif(name);
   case FORMAT_JPEG : return _save_jpeg(name);
@@ -712,17 +715,18 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"Gmsh mesh statistics (*.pos)", _save_pos},
     {"Gmsh options (*.opt)", _save_options},
     {"Gmsh unrolled geometry (*.geo)", _save_geo},
-    {"I-deas universal mesh (*.unv)", _save_unv},
-    {"Medit mesh (*.mesh)", _save_mesh},
-    {"Nastran bulk data file (*.bdf)", _save_bdf},
-    {"STL surface mesh (*.stl)", _save_stl},
-    {"VRML surface mesh (*.wrl)", _save_vrml},
 #if defined(HAVE_LIBCGNS)
     {"CGNS (*.cgns)", _save_cgns},
 #endif
+    {"I-deas universal mesh (*.unv)", _save_unv},
 #if defined(HAVE_MED)
     {"MED (*.med)", _save_med},
 #endif
+    {"Medit mesh (*.mesh)", _save_mesh},
+    {"Nastran bulk data file (*.bdf)", _save_bdf},
+    {"Plot3D structured mesh (*.p3d)", _save_p3d},
+    {"STL surface mesh (*.stl)", _save_stl},
+    {"VRML surface mesh (*.wrl)", _save_vrml},
     {"Encapsulated PostScript (*.eps)", _save_eps},
     {"GIF (*.gif)", _save_gif},
 #if defined(HAVE_LIBJPEG)

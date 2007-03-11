@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.94 2007-01-30 08:56:36 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.95 2007-03-11 20:18:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -81,7 +81,8 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -1, -2, -3            Perform 1D, 2D or 3D mesh generation, then exit");
   Msg(DIRECT, "  -saveall              Save all elements (discard physical group definitions)");
   Msg(DIRECT, "  -o file               Specify mesh output file name");
-  Msg(DIRECT, "  -format string        Set output mesh format (msh, unv, vrml, stl, mesh, bdf, cgns, med)");
+  Msg(DIRECT, "  -format string        Set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh");
+  Msg(DIRECT, "                        bdf, p3d, cgns, med)");
   Msg(DIRECT, "  -algo string          Select mesh algorithm (iso, netgen, tetgen)");
   Msg(DIRECT, "  -smooth int           Set number of mesh smoothing steps");
   Msg(DIRECT, "  -optimize             Optimize quality of tetrahedral elements");
@@ -395,6 +396,8 @@ void Get_Options(int argc, char *argv[])
             CTX.mesh.format = FORMAT_MESH;
           else if(!strcmp(argv[i], "bdf"))
             CTX.mesh.format = FORMAT_BDF;
+          else if(!strcmp(argv[i], "p3d"))
+            CTX.mesh.format = FORMAT_P3D;
           else if(!strcmp(argv[i], "cgns"))
             CTX.mesh.format = FORMAT_CGNS;
           else if(!strcmp(argv[i], "med"))

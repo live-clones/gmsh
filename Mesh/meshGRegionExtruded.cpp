@@ -1,4 +1,4 @@
-// $Id: meshGRegionExtruded.cpp,v 1.11 2007-03-05 09:30:53 geuzaine Exp $
+// $Id: meshGRegionExtruded.cpp,v 1.12 2007-03-11 20:18:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -112,7 +112,8 @@ int getExtrudedVertices(MElement *ele, ExtrudeParams *ep, int j, int k,
     MVertex tmp(x[p], y[p], z[p], 0, -1);
     itp = pos.find(&tmp);
     if(itp == pos.end())
-      Msg(GERROR, "Could not find extruded vertex");
+      Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g)",
+	  tmp.x(), tmp.y(), tmp.z());
     else
       verts.push_back(*itp);
   }

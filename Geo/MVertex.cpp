@@ -1,4 +1,4 @@
-// $Id: MVertex.cpp,v 1.10 2006-11-27 22:22:14 geuzaine Exp $
+// $Id: MVertex.cpp,v 1.11 2007-03-11 20:18:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -75,9 +75,7 @@ void MVertex::writeUNV(FILE *fp, double scalingFactor)
   char tmp[128];
   sprintf(tmp, "%25.16E%25.16E%25.16E\n", x() * scalingFactor, 
 	  y() * scalingFactor, z() * scalingFactor);
-  tmp[21] = 'D';
-  tmp[46] = 'D';
-  tmp[71] = 'D';
+  for(int i = 0; i < strlen(tmp); i++) if(tmp[i] == 'E') tmp[i] = 'D';
   fprintf(fp, tmp);
 }
 

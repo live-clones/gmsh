@@ -1,4 +1,4 @@
-$Id: TODO,v 1.52 2007-03-02 13:59:00 geuzaine Exp $
+$Id: TODO,v 1.53 2007-03-11 20:19:06 geuzaine Exp $
 
 ********************************************************************
 
@@ -15,8 +15,8 @@ reinterface Triangle for plane surfaces
 
 ********************************************************************
 
-Bug: need to better understand how Netgen deals with char lenghts: a
-larger geometry (with appropriately scaled lcs) leads to a larger
+Bug: need to better understand how Netgen deals with charact. lengths:
+a larger geometry (with appropriately scaled lcs) leads to a larger
 mesh!
 
 ********************************************************************
@@ -75,8 +75,9 @@ a surface should add it with reverse orientation?
 
 ********************************************************************
 
-fill transfinite_vertices in meshGFaceExtrude so that we can use
-extruded+recombined surfaces to create Transfinite Volumes?
+fill transfinite_vertices in meshGFaceExtrude/meshGRegionExtrude when
+it makes sense (so that we can use extruded+recombined surfaces to
+create Transfinite Volumes, or use the P3D output format)
 
 ********************************************************************
 
@@ -108,8 +109,7 @@ implement better algo to determine which axes to draw
 
 ********************************************************************
 
-extrude along a given function (e.g. radius to extrude a sphere) or
-along a parametric curve
+extrude along a given function or along a parametric curve
 
 ********************************************************************
 

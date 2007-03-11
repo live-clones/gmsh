@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.23 2007-03-05 11:07:14 remacle Exp $
+// $Id: GeoInterpolation.cpp,v 1.24 2007-03-11 20:18:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -347,42 +347,43 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
     List_Read(c->Control_Points, i, &v[1]);
     List_Read(c->Control_Points, i + 1, &v[2]);
     if(!i) {
-			if(c->beg==c->end){
-				List_Read(c->Control_Points, N - 2, &v[0]);
-			}else{
-				v[0] = &temp1;
-				v[0]->Pos.X = 2. * v[1]->Pos.X - v[2]->Pos.X;
-				v[0]->Pos.Y = 2. * v[1]->Pos.Y - v[2]->Pos.Y;
-				v[0]->Pos.Z = 2. * v[1]->Pos.Z - v[2]->Pos.Z;
-				v[0]->pntOnGeometry = v[1]->pntOnGeometry * 2. - v[2]->pntOnGeometry;
-			}
+      if(c->beg == c->end){
+	List_Read(c->Control_Points, N - 2, &v[0]);
+      }
+      else{
+	v[0] = &temp1;
+	v[0]->Pos.X = 2. * v[1]->Pos.X - v[2]->Pos.X;
+	v[0]->Pos.Y = 2. * v[1]->Pos.Y - v[2]->Pos.Y;
+	v[0]->Pos.Z = 2. * v[1]->Pos.Z - v[2]->Pos.Z;
+	v[0]->pntOnGeometry = v[1]->pntOnGeometry * 2. - v[2]->pntOnGeometry;
+      }
     }
     else {
       List_Read(c->Control_Points, i - 1, &v[0]);
     }
     if(i == N - 2) {
-			if(c->beg==c->end){
-				List_Read(c->Control_Points, 1, &v[3]);
-			}else{
-				v[3] = &temp2;
-				v[3]->Pos.X = 2. * v[2]->Pos.X - v[1]->Pos.X;
-				v[3]->Pos.Y = 2. * v[2]->Pos.Y - v[1]->Pos.Y;
-				v[3]->Pos.Z = 2. * v[2]->Pos.Z - v[1]->Pos.Z;
-				v[3]->pntOnGeometry = v[2]->pntOnGeometry * 2. - v[1]->pntOnGeometry;
-			}
+      if(c->beg == c->end){
+	List_Read(c->Control_Points, 1, &v[3]);
+      }
+      else{
+	v[3] = &temp2;
+	v[3]->Pos.X = 2. * v[2]->Pos.X - v[1]->Pos.X;
+	v[3]->Pos.Y = 2. * v[2]->Pos.Y - v[1]->Pos.Y;
+	v[3]->Pos.Z = 2. * v[2]->Pos.Z - v[1]->Pos.Z;
+	v[3]->pntOnGeometry = v[2]->pntOnGeometry * 2. - v[1]->pntOnGeometry;
+      }
     }
     else {
       List_Read(c->Control_Points, i + 2, &v[3]);
     }
-    if (c->geometry)
-      {
-	SPoint2 pp =  InterpolateCubicSpline(v, t, c->mat, 0, t1, t2,c->geometry);
-	SPoint3 pt = c->geometry->point(pp);
-	V.Pos.X = pt.x();
-	V.Pos.Y = pt.y();
-	V.Pos.Z = pt.z();
-	return V;
-      }
+    if(c->geometry){
+      SPoint2 pp = InterpolateCubicSpline(v, t, c->mat, 0, t1, t2,c->geometry);
+      SPoint3 pt = c->geometry->point(pp);
+      V.Pos.X = pt.x();
+      V.Pos.Y = pt.y();
+      V.Pos.Z = pt.z();
+      return V;
+    }
     else
       return InterpolateCubicSpline(v, t, c->mat, 0, t1, t2);
 

@@ -34,11 +34,11 @@ class GRegion : public GEntity {
   GRegion(GModel *model, int tag);
   virtual ~GRegion();
 
-  virtual int dim() const {return 3;}
+  virtual int dim() const { return 3; }
   virtual void setVisibility(char val, bool recursive=false);
-  virtual std::list<GFace*> faces() const{return l_faces;}
+  virtual std::list<GFace*> faces() const{ return l_faces; }
   virtual std::list<GEdge*> edges() const;
-  void set(std::list<GFace*> &f) {l_faces= f;}
+  void set(std::list<GFace*> &f) { l_faces= f; }
 
   // The bounding box
   virtual SBoundingBox3d bounds() const; 
@@ -59,6 +59,10 @@ class GRegion : public GEntity {
     // corners of the transfinite interpolation
     std::vector<GVertex*> corners;
   } meshAttributes ;
+
+  // a array for accessing the transfinite vertices using a triplet of
+  // indices
+  std::vector<std::vector<std::vector<MVertex*> > > transfinite_vertices;
 
   std::vector<MTetrahedron*> tetrahedra;
   std::vector<MHexahedron*> hexahedra;

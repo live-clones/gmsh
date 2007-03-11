@@ -41,7 +41,7 @@ Complex Volume(28) = {27};
 Transfinite Line {1,2,3,4,5,6} = 10 ;
 Transfinite Line {-8,-10,-12} = 5 Using Power 1.6 ;
 
-Transfinite Surface {22} = {4,7,6,3};
+Transfinite Surface {22} = {4,7,6,3} Right;
 Transfinite Surface {20} = {3,2,5,6};
 Transfinite Surface {18} = {4,2,5,7};
 
@@ -49,8 +49,6 @@ Transfinite Surface {24} = {3,4,2};
 Transfinite Surface {26} = {6,7,5};
 
 Recombine Surface {18,20,22};
-/*
-Recombine Surface {24,26};
-*/
-Transfinite Volume {28} = {3,4,2,6,7,5};
+//Recombine Surface {24,26};
 
+Transfinite Volume {28} = {3,4,2,6,7,5};

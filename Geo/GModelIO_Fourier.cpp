@@ -89,8 +89,8 @@ public:
 
 #if 1
     switch(gf->tag()){
-    case 0: M = 30; N = 30; break; // falcon front
-    case 1: M = 30; N = 120; break; // falcon back
+    case 0: M = 30; N = 22; break; // falcon front
+    case 1: M = 30; N = 70; break; // falcon back
     case 2: break; // wing front
     case 3: M = 25; N = 30; break; // wing top (N along the fuselage)
     case 4: M = 25; N = 30; break; // wing bottom
@@ -103,6 +103,9 @@ public:
       for(int j = 0; j < N; j++){
 	double u = i/(double)(M - 1);
 	double v = j/(double)(N - 1);
+	if(gf->tag()==0){
+	  v = sin(M_PI/2.*v - M_PI/2.) + 1.; 
+	}
 
 	//if(gf->tag() == 2){
 	  // hack for sttr report 2 (ship model, top right patch)
@@ -123,12 +126,13 @@ public:
     }
     for(int i = 0; i < M - 1; i++){
       for(int j = 0; j < N - 1; j++){
-#if 0
+#if 1
 	MQuadrangle *q = new MQuadrangle(gf->mesh_vertices[i * N + j],
 					 gf->mesh_vertices[(i + 1) * N + j],
 					 gf->mesh_vertices[(i + 1) * N + (j + 1)],
 					 gf->mesh_vertices[i * N + (j + 1)]);
-	//if(FM->GetOrientation(gf->tag()) < 0) q->revert();
+	//if(FM->GetOrientation(gf->tag()) < 0) 
+	q->revert();
 	gf->quadrangles.push_back(q);
 #else
 	MVertex *v1 = gf->mesh_vertices[i * N + j];
@@ -871,6 +875,20 @@ void cleanUpAndMergeAllFaces(GModel *m)
       delete gf->triangles[i];
       if(v[0] != v[1] && v[0] != v[2] && v[1] != v[2])
 	newgf->triangles.push_back(new MTriangle(v));
+    }
+    for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
+      std::vector<MVertex*> v(4);
+      for(int j = 0; j < 4; j++){
+	itp = pos.find(gf->quadrangles[i]->getVertex(j));
+	if(itp == pos.end())
+	  Msg(GERROR, "Could not find vertex");
+	else
+	  v[j] = *itp;
+      }
+      delete gf->quadrangles[i];
+      //if(v[0] != v[1] && v[0] != v[2] && v[0] != v[3] && 
+      // v[1] != v[2] && v[1] != v[3] && v[2] != v[3])
+	newgf->quadrangles.push_back(new MQuadrangle(v));
     }
     m->remove(gf);
   }

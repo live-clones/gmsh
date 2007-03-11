@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.28 2007-02-26 08:25:39 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.29 2007-03-11 20:18:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -345,6 +345,7 @@ void deMeshGRegion::operator() (GRegion *gr)
   for(unsigned int i = 0; i < gr->mesh_vertices.size(); i++)
     delete gr->mesh_vertices[i];
   gr->mesh_vertices.clear();
+  gr->transfinite_vertices.clear();
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++)
     delete gr->tetrahedra[i];
   gr->tetrahedra.clear();

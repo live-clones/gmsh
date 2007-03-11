@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.8 2007-01-25 15:50:57 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.9 2007-03-11 20:18:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -146,12 +146,17 @@ class writeGVertexGEO {
   writeGVertexGEO(FILE *fp) { geo = fp ? fp : stdout; }
   void operator() (GVertex *gv)
   {
-    if(gv->getNativeType() != GEntity::GmshModel) return;
-    Vertex *v = (Vertex*)gv->getNativePtr();
-    if(!v) return;
-
-    fprintf(geo, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n",
-	    v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc);
+    if(gv->getNativeType() == GEntity::GmshModel){
+      Vertex *v = (Vertex*)gv->getNativePtr();
+      if(!v) return;
+      fprintf(geo, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n",
+	      v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc);
+    }
+    else{
+      fprintf(geo, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n",
+	      gv->tag(), gv->x(), gv->y(), gv->z(), 
+	      gv->prescribedMeshSizeAtVertex());
+    }
   }
 };
 
@@ -162,73 +167,98 @@ class writeGEdgeGEO {
   writeGEdgeGEO(FILE *fp) { geo = fp ? fp : stdout; }
   void operator () (GEdge *ge)
   {
-    if(ge->getNativeType() != GEntity::GmshModel) return;
-    Curve *c = (Curve *)ge->getNativePtr();
-    if(!c || c->Num < 0 || c->Typ == MSH_SEGM_DISCRETE) return;
-
-    switch (c->Typ) {
-    case MSH_SEGM_LINE:
-      fprintf(geo, "Line (%d) = ", c->Num);
-      break;
-    case MSH_SEGM_CIRC:
-    case MSH_SEGM_CIRC_INV:
-      fprintf(geo, "Circle (%d) = ", c->Num);
-      break;
-    case MSH_SEGM_ELLI:
-    case MSH_SEGM_ELLI_INV:
-      fprintf(geo, "Ellipse (%d) = ", c->Num);
-      break;
-    case MSH_SEGM_NURBS:
-      fprintf(geo, "Nurbs (%d) = {", c->Num);
+    if(ge->geomType() == GEntity::DiscreteCurve) return;
+    
+    if(ge->getNativeType() == GEntity::GmshModel){
+      Curve *c = (Curve *)ge->getNativePtr();
+      if(!c || c->Num < 0) return;
+      switch (c->Typ) {
+      case MSH_SEGM_LINE:
+	fprintf(geo, "Line (%d) = ", c->Num);
+	break;
+      case MSH_SEGM_CIRC:
+      case MSH_SEGM_CIRC_INV:
+	fprintf(geo, "Circle (%d) = ", c->Num);
+	break;
+      case MSH_SEGM_ELLI:
+      case MSH_SEGM_ELLI_INV:
+	fprintf(geo, "Ellipse (%d) = ", c->Num);
+	break;
+      case MSH_SEGM_NURBS:
+	fprintf(geo, "Nurbs (%d) = {", c->Num);
+	for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
+	  Vertex *v;
+	  List_Read(c->Control_Points, i, &v);
+	  if(!i)
+	    fprintf(geo, "%d", v->Num);
+	  else
+	    fprintf(geo, ", %d", v->Num);
+	  if(i % 8 == 7 && i != List_Nbr(c->Control_Points) - 1)
+	    fprintf(geo, "\n");
+	}
+	fprintf(geo, "}\n");
+	fprintf(geo, "  Knots {");
+	for(int j = 0; j < List_Nbr(c->Control_Points) + c->degre + 1; j++) {
+	  if(!j)
+	    fprintf(geo, "%.16g", c->k[j]);
+	  else
+	    fprintf(geo, ", %.16g", c->k[j]);
+	  if(j % 5 == 4 && j != List_Nbr(c->Control_Points) + c->degre)
+	    fprintf(geo, "\n        ");
+	}
+	fprintf(geo, "}\n");
+	fprintf(geo, "  Order %d;\n", c->degre);
+	return;
+      case MSH_SEGM_SPLN:
+	fprintf(geo, "CatmullRom (%d) = ", c->Num);
+	break;
+      case MSH_SEGM_BSPLN:
+	fprintf(geo, "BSpline (%d) = ", c->Num);
+	break;
+      case MSH_SEGM_BEZIER:
+	fprintf(geo, "Bezier (%d) = ", c->Num);
+	break;
+      default:
+	Msg(GERROR, "Unknown curve type %d", c->Typ);
+	return;
+      }
       for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
 	Vertex *v;
 	List_Read(c->Control_Points, i, &v);
-	if(!i)
-	  fprintf(geo, "%d", v->Num);
-	else
+	if(i)
 	  fprintf(geo, ", %d", v->Num);
-	if(i % 8 == 7 && i != List_Nbr(c->Control_Points) - 1)
+	else
+	  fprintf(geo, "{%d", v->Num);
+	if(i % 6 == 7)
 	  fprintf(geo, "\n");
       }
-      fprintf(geo, "}\n");
-      fprintf(geo, "  Knots {");
-      for(int j = 0; j < List_Nbr(c->Control_Points) + c->degre + 1; j++) {
-	if(!j)
-	  fprintf(geo, "%.16g", c->k[j]);
-	else
-	  fprintf(geo, ", %.16g", c->k[j]);
-	if(j % 5 == 4 && j != List_Nbr(c->Control_Points) + c->degre)
-	  fprintf(geo, "\n        ");
+      fprintf(geo, "};\n");
+    }
+    else{
+      if(ge->getBeginVertex() && ge->getEndVertex()){
+	if(ge->geomType() == GEntity::Line){
+	  fprintf(geo, "Line (%d) = {%d, %d};\n", 
+		  ge->tag(), ge->getBeginVertex()->tag(), ge->getEndVertex()->tag());
+	}
+	else{
+	  // approximate all other curves by splines
+	  Range<double> bounds = ge->parBounds(0);
+	  double umin = bounds.low();
+	  double umax = bounds.high();
+	  fprintf(geo, "p%d = newp;\n", ge->tag());
+	  for(int i = 1; i < ge->minimumDrawSegments(); i++){
+	    double u = umin + (double)i / ge->minimumDrawSegments() * (umax - umin);
+	    GPoint p = ge->point(u);
+	    fprintf(geo, "Point(p%d + %d) = {%.16g, %.16g, %.16g, 1.e+22};\n", 
+		    ge->tag(), i, p.x(), p.y(), p.z());
+	  }
+	  fprintf(geo, "CatmullRom (%d) = {%d", ge->tag(), ge->getBeginVertex()->tag());
+	  for(int i = 1; i < ge->minimumDrawSegments(); i++)
+	    fprintf(geo, ", p%d + %d", ge->tag(), i);
+	  fprintf(geo, ", %d};\n", ge->getEndVertex()->tag());
+	}
       }
-      fprintf(geo, "}\n");
-      fprintf(geo, "  Order %d;\n", c->degre);
-      return;
-    case MSH_SEGM_SPLN:
-      fprintf(geo, "CatmullRom (%d) = ", c->Num);
-      break;
-    case MSH_SEGM_BSPLN:
-      fprintf(geo, "BSpline (%d) = ", c->Num);
-      break;
-    case MSH_SEGM_BEZIER:
-      fprintf(geo, "Bezier (%d) = ", c->Num);
-      break;
-    default:
-      Msg(GERROR, "Unknown curve type %d", c->Typ);
-      return;
     }
-
-    for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
-      Vertex *v;
-      List_Read(c->Control_Points, i, &v);
-      if(i)
-	fprintf(geo, ", %d", v->Num);
-      else
-	fprintf(geo, "{%d", v->Num);
-      if(i % 6 == 7)
-	fprintf(geo, "\n");
-    }
-    
-    fprintf(geo, "};\n");
   }
 };
 
@@ -239,32 +269,34 @@ class writeGFaceGEO {
   writeGFaceGEO(FILE *fp) { geo = fp ? fp : stdout; }
   void operator () (GFace *gf)
   {
-    if(gf->getNativeType() != GEntity::GmshModel) return;
-    Surface *s = (Surface *)gf->getNativePtr();
-    if(!s || s->Typ == MSH_SURF_DISCRETE) return;
-    
-    int NUMLOOP = s->Num + 1000000;
-    if(List_Nbr(s->Generatrices)){
+    if(gf->geomType() == GEntity::DiscreteSurface) return;
+
+    std::list<GEdge*> edges = gf->edges();
+    std::list<int> orientations = gf->orientations();
+    if(edges.size() && orientations.size() == edges.size()){
+      std::vector<int> num, ori;
+      for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++)
+	num.push_back((*it)->tag());
+      for(std::list<int>::iterator it = orientations.begin(); it != orientations.end(); it++)
+	ori.push_back((*it) > 0 ? 1 : -1);
+      int NUMLOOP = gf->tag() + 1000000;
       fprintf(geo, "Line Loop (%d) = ", NUMLOOP);
-      for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
-	Curve *c;
-	List_Read(s->Generatrices, i, &c);
+      for(unsigned int i = 0; i < num.size(); i++){
 	if(i)
-	  fprintf(geo, ", %d", c->Num);
+	  fprintf(geo, ", %d", num[i] * ori[i]);
 	else
-	  fprintf(geo, "{%d", c->Num);
+	  fprintf(geo, "{%d", num[i] * ori[i]);
       }
       fprintf(geo, "};\n");
-    }
-    
-    switch (s->Typ) {
-    case MSH_SURF_REGL:
-    case MSH_SURF_TRIC:
-      fprintf(geo, "Ruled Surface (%d) = {%d};\n", s->Num, NUMLOOP);
-      break;
-    case MSH_SURF_PLAN:
-      fprintf(geo, "Plane Surface (%d) = {%d};\n", s->Num, NUMLOOP);
-      break;
+      if(gf->geomType() == GEntity::Plane){
+	fprintf(geo, "Plane Surface (%d) = {%d};\n", gf->tag(), NUMLOOP);
+      }
+      else if(edges.size() == 3 || edges.size() == 4){
+	fprintf(geo, "Ruled Surface (%d) = {%d};\n", gf->tag(), NUMLOOP);
+      }
+      else{
+	Msg(GERROR, "Skipping surface %d in export", gf->tag());
+      }
     }
   }
 };
@@ -276,28 +308,20 @@ class writeGRegionGEO {
   writeGRegionGEO(FILE *fp) { geo = fp ? fp : stdout; }
   void operator () (GRegion *gr)
   {
-    if(gr->getNativeType() != GEntity::GmshModel) return;
-    Volume *vol = (Volume *)gr->getNativePtr();
-    if(!vol || vol->Typ == MSH_VOLUME_DISCRETE) return;
-    
-    int NUMLOOP = vol->Num + 1000000;
-    
-    fprintf(geo, "Surface Loop (%d) = ", NUMLOOP);
-    
-    for(int i = 0; i < List_Nbr(vol->Surfaces); i++) {
-      Surface *s;
-      List_Read(vol->Surfaces, i, &s);
-      if(i)
-	fprintf(geo, ", %d", s->Num);
-      else
-	fprintf(geo, "{%d", s->Num);
-    }
-    fprintf(geo, "};\n");
-    
-    switch (vol->Typ) {
-    case MSH_VOLUME:
-      fprintf(geo, "Volume (%d) = {%d};\n", vol->Num, NUMLOOP);
-      break;
+    if(gr->geomType() == GEntity::DiscreteVolume) return;
+
+    std::list<GFace*> faces = gr->faces();
+    if(faces.size()){
+      int NUMLOOP = gr->tag() + 1000000;
+      fprintf(geo, "Surface Loop (%d) = ", NUMLOOP);
+      for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++) {
+	if(it != faces.begin())
+	  fprintf(geo, ", %d", (*it)->tag());
+	else
+	  fprintf(geo, "{%d", (*it)->tag());
+      }
+      fprintf(geo, "};\n");
+      fprintf(geo, "Volume (%d) = {%d};\n", gr->tag(), NUMLOOP);
     }
   }
 };

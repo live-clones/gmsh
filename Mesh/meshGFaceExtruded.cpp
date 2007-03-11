@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.17 2007-02-26 08:25:39 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.18 2007-03-11 20:18:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -105,7 +105,8 @@ void extrudeMesh(GEdge *from, GFace *to,
 	  MVertex tmp(x[p], y[p], z[p], 0, -1);
 	  itp = pos.find(&tmp);
 	  if(itp == pos.end()) {
-	    Msg(GERROR, "Could not find extruded vertex in surface %d", to->tag());
+	    Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
+		tmp.x(), tmp.y(), tmp.z(), to->tag());
 	    return;
 	  }
 	  verts.push_back(*itp);
@@ -143,7 +144,8 @@ void copyMesh(GFace *from, GFace *to,
 		  tmp.x(), tmp.y(), tmp.z());
       itp = pos.find(&tmp);
       if(itp == pos.end()) {
-	Msg(GERROR, "Could not find extruded vertex in surface %d", to->tag());
+	Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
+	    tmp.x(), tmp.y(), tmp.z(), to->tag());
 	return;
       }
       verts.push_back(*itp);
@@ -159,7 +161,8 @@ void copyMesh(GFace *from, GFace *to,
 		  tmp.x(), tmp.y(), tmp.z());
       itp = pos.find(&tmp);
       if(itp == pos.end()) {
-	Msg(GERROR, "Could not find extruded vertex in surface %d", to->tag());
+	Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d", 
+	    tmp.x(), tmp.y(), tmp.z(), to->tag());
 	return;
       }
       verts.push_back(*itp);

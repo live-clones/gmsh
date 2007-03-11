@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.143 2007-03-05 09:30:57 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.144 2007-03-11 20:19:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -349,6 +349,9 @@ int MergeFile(char *name, int warn_if_missing)
   else if(!strcmp(ext, ".bdf") || !strcmp(ext, ".BDF") ||
 	  !strcmp(ext, ".nas") || !strcmp(ext, ".NAS")){
     status = GMODEL->readBDF(name);
+  }
+  else if(!strcmp(ext, ".p3d") || !strcmp(ext, ".P3D")){
+    status = GMODEL->readP3D(name);
   }
 #if defined(HAVE_FLTK)
   else if(!strcmp(ext, ".pnm") || !strcmp(ext, ".PNM") ||

@@ -52,7 +52,7 @@ class GModel
  public:
   GModel() : modelName("Untitled"), normals(0) {}
   GModel(const std::string &name) : modelName(name), normals(0) {}
-  virtual ~GModel(){ deleteOCCInternals(); destroy(); }
+  ~GModel(){ deleteOCCInternals(); destroy(); }
   
   typedef std::set<GRegion*, GEntityLessThan>::iterator riter;
   typedef std::set<GFace*, GEntityLessThan>::iterator fiter;
@@ -61,10 +61,10 @@ class GModel
   typedef std::map<int, std::string>::iterator piter;
 
   // Deletes everything in a GModel 
-  virtual void destroy();
+  void destroy();
 
   // Returns the geometric tolerance for the entire model.
-  virtual double tolerance() const { return 1.e-14; }
+  double tolerance() const { return 1.e-14; }
 
   // Get the number of regions in this model.
   int numRegion() const { return regions.size(); }
@@ -83,10 +83,10 @@ class GModel
   viter lastVertex() { return vertices.end(); }
 
   // Find the region with the given tag.
-  virtual GRegion *regionByTag(int n) const;
-  virtual GFace *faceByTag(int n) const;
-  virtual GEdge *edgeByTag(int n) const;
-  virtual GVertex *vertexByTag(int n) const;
+  GRegion *regionByTag(int n) const;
+  GFace *faceByTag(int n) const;
+  GEdge *edgeByTag(int n) const;
+  GVertex *vertexByTag(int n) const;
 
   void add(GRegion *r) { regions.insert(r); }
   void add(GFace *f) { faces.insert(f); }
@@ -131,26 +131,26 @@ class GModel
   std::string getPhysicalName(int number);
 
   // The bounding box
-  virtual SBoundingBox3d bounds();
+  SBoundingBox3d bounds();
 
   // Returns the mesh status for the entire model
-  virtual int getMeshStatus(bool countDiscrete=true);
+  int getMeshStatus(bool countDiscrete=true);
 
   // Returns the total number of vertices in the mesh
-  virtual int numVertices();
+  int numVertices();
 
   // Returns the total number of elements in the mesh
-  virtual int numElements();
+  int numElements();
 
   // The list of partitions
-  virtual std::set<int> &getMeshPartitions() { return meshPartitions; }
-  virtual std::set<int> &recomputeMeshPartitions();
+  std::set<int> &getMeshPartitions() { return meshPartitions; }
+  std::set<int> &recomputeMeshPartitions();
 
   // Deletes all the partitions
-  virtual void deleteMeshPartitions();
+  void deleteMeshPartitions();
 
   // Performs various coherence tests on the mesh
-  virtual void checkMeshCoherence();
+  void checkMeshCoherence();
 
   // A container for smooth normals
   smooth_normals *normals;
@@ -159,12 +159,12 @@ class GModel
   // =========================================
 
   // Gmsh native CAD format
-  virtual int importTHEM();
-  virtual int readGEO(const std::string &name);
-  virtual int writeGEO(const std::string &name);
+  int importTHEM();
+  int readGEO(const std::string &name);
+  int writeGEO(const std::string &name);
 
   // Fourier model
-  virtual int readFourier(const std::string &name);
+  int readFourier(const std::string &name);
 
   // OCC model
   int readOCCBREP(const std::string &name);
@@ -207,6 +207,11 @@ class GModel
   // Nastran Bulk Data File format
   int readBDF(const std::string &name);
   int writeBDF(const std::string &name, int format=0,
+	       bool saveAll=false, double scalingFactor=1.0);
+
+  // Plot3D structured mesh format
+  int readP3D(const std::string &name);
+  int writeP3D(const std::string &name, 
 	       bool saveAll=false, double scalingFactor=1.0);
 
   // CFD General Notation System files

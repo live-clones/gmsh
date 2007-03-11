@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.267 2007-03-05 11:01:21 geuzaine Exp $
+// $Id: Gmsh.y,v 1.268 2007-03-11 20:19:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1037,13 +1037,12 @@ Shape :
 	double z = CTX.geom.scaling_factor * $6[2];
 	double lc = CTX.geom.scaling_factor * $6[3];
 	Vertex *v;
-	if (!myGmshSurface)
+	if(!myGmshSurface)
 	  v = Create_Vertex(num, x, y, z, lc, 1.0);
 	else
 	  v = Create_Vertex(num, x, y, myGmshSurface, lc);
-
 	Tree_Add(THEM->Points, &v);
-	AddToTemporaryBoundingBox(v->Pos.X,v->Pos.Y,v->Pos.Z);
+	AddToTemporaryBoundingBox(v->Pos.X, v->Pos.Y, v->Pos.Z);
       }
       $$.Type = MSH_POINT;
       $$.Num = num;
@@ -1081,15 +1080,16 @@ Shape :
 	List_Read($3, i, &d);
 	Vertex *v = FindPoint((int)d); 
 	if(v)
-	  att->addPoint(v->Pos.X,v->Pos.Y,v->Pos.Z);
+	  att->addPoint(v->Pos.X, v->Pos.Y, v->Pos.Z);
 	else{
 	  GVertex *gv = GMODEL->vertexByTag((int)d);
 	  if(gv) 
-	    att->addPoint(gv->x(),gv->y(),gv->z());
+	    att->addPoint(gv->x(), gv->y(), gv->z());
 	}
       }
       att->buildFastSearchStructures();
-      $$.Type = MSH_POINT_ATTRACTOR;
+      // dummy values
+      $$.Type = 0;
       $$.Num = 0;
     }
   | tAttractor tLine ListOfDouble tAFFECT ListOfDouble tEND
@@ -1109,17 +1109,18 @@ Shape :
 	List_Read($3, i, &d);
 	Curve *c = FindCurve((int)d); 
 	if(c){
-	  buildListOfPoints( att , c , (int) pars[3] );
+	  buildListOfPoints(att, c, (int)pars[3]);
 	}
 	else{
 	  GEdge *ge = GMODEL->edgeByTag((int)d);
 	  if(ge){
-	    buildListOfPoints( att , ge , (int) pars[3] );
+	    buildListOfPoints(att, ge, (int)pars[3]);
 	  }
 	}
       }
       att->buildFastSearchStructures();
-      $$.Type = MSH_LINE_ATTRACTOR;
+      // dummy values
+      $$.Type = 0;
       $$.Num = 0;
     }
   | tCharacteristic tLength ListOfDouble tAFFECT FExpr tEND
@@ -1651,11 +1652,18 @@ ListOfShapes :
 	Shape TheShape;
 	TheShape.Num = (int)d;
 	Vertex *v = FindPoint(TheShape.Num);
-	if(!v)
-	  yymsg(WARNING, "Unknown point %d", TheShape.Num);
-	else{
+	if(v){
 	  TheShape.Type = MSH_POINT;
 	  List_Add($$, &TheShape);
+	}
+	else{
+	  GVertex *gv = GMODEL->vertexByTag(TheShape.Num);
+	  if(gv){
+	    TheShape.Type = MSH_POINT_FROM_GMODEL;
+	    List_Add($$, &TheShape);
+	  }
+	  else
+	    yymsg(WARNING, "Unknown point %d", TheShape.Num);
 	}
       }
     }
@@ -1667,11 +1675,18 @@ ListOfShapes :
 	Shape TheShape;
 	TheShape.Num = (int)d;
 	Curve *c = FindCurve(TheShape.Num);
-	if(!c)
-	  yymsg(WARNING, "Unknown curve %d", TheShape.Num);
-	else{
+	if(c){
 	  TheShape.Type = c->Typ;
 	  List_Add($$, &TheShape);
+	}
+	else{
+	  GEdge *ge = GMODEL->edgeByTag(TheShape.Num);
+	  if(ge){
+	    TheShape.Type = MSH_SEGM_FROM_GMODEL;
+	    List_Add($$, &TheShape);
+	  }
+	  else
+	    yymsg(WARNING, "Unknown curve %d", TheShape.Num);
 	}
       }
     }
@@ -1683,11 +1698,18 @@ ListOfShapes :
 	Shape TheShape;
 	TheShape.Num = (int)d;
 	Surface *s = FindSurface(TheShape.Num);
-	if(!s)
-	  yymsg(WARNING, "Unknown surface %d", TheShape.Num);
-	else{
+	if(s){
 	  TheShape.Type = s->Typ;
 	  List_Add($$, &TheShape);
+	}
+	else{
+	  GFace *gf = GMODEL->faceByTag(TheShape.Num);
+	  if(gf){
+	    TheShape.Type = MSH_SURF_FROM_GMODEL;
+	    List_Add($$, &TheShape);
+	  }
+	  else
+	    yymsg(WARNING, "Unknown surface %d", TheShape.Num);
 	}
       }
     }
@@ -1699,11 +1721,18 @@ ListOfShapes :
 	Shape TheShape;
 	TheShape.Num = (int)d;
 	Volume *v = FindVolume(TheShape.Num);
-	if(!v)
-	  yymsg(WARNING, "Unknown volume %d", TheShape.Num);
-	else{
+	if(v){
 	  TheShape.Type = v->Typ;
 	  List_Add($$, &TheShape);
+	}
+	else{
+	  GRegion *gr = GMODEL->regionByTag(TheShape.Num);
+	  if(gr){
+	    TheShape.Type = MSH_VOLUME_FROM_GMODEL;
+	    List_Add($$, &TheShape);
+	  }
+	  else
+	    yymsg(WARNING, "Unknown volume %d", TheShape.Num);
 	}
       }
     }

@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.65 2007-03-10 13:42:05 remacle Exp $
+// $Id: meshGFace.cpp,v 1.66 2007-03-11 20:18:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1487,6 +1487,7 @@ void deMeshGFace::operator() (GFace *gf)
 
   for (unsigned int i=0;i<gf->mesh_vertices.size();i++) delete gf->mesh_vertices[i];
   gf->mesh_vertices.clear();
+  gf->transfinite_vertices.clear();
   for (unsigned int i=0;i<gf->triangles.size();i++) delete gf->triangles[i];
   gf->triangles.clear();
   for (unsigned int i=0;i<gf->quadrangles.size();i++) delete gf->quadrangles[i];

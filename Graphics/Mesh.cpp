@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.197 2007-02-05 08:59:31 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.198 2007-03-11 20:18:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -224,7 +224,7 @@ static void drawVertexLabel(GEntity *e, MVertex *v, int partition=-1)
   int physical = np ? e->physicals[np - 1] : 0;
   char str[256];
   if(CTX.mesh.label_type == 4)
-    sprintf(str, "(%g,%g,%g)", v->x(), v->y(), v->z());
+    sprintf(str, "(%.16g,%.16g,%.16g)", v->x(), v->y(), v->z());
   else if(CTX.mesh.label_type == 3){
     if(partition < 0)
       sprintf(str, "NA");

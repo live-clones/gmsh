@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.85 2007-03-05 15:00:28 geuzaine Exp $
+// $Id: Geo.cpp,v 1.86 2007-03-11 20:18:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1126,6 +1126,12 @@ void DeleteShape(int Type, int Num)
     break;
   case MSH_VOLUME:
     DeleteVolume(Num);
+    break;
+  case MSH_POINT_FROM_GMODEL:
+  case MSH_SEGM_FROM_GMODEL:
+  case MSH_SURF_FROM_GMODEL:
+  case MSH_VOLUME_FROM_GMODEL:
+    Msg(GERROR, "Deletion of external CAD entities not implemented yet");
     break;
   default:
     Msg(GERROR, "Impossible to delete entity %d (of type %d)", Num, Type);
