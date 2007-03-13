@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.10 2007-03-11 20:18:58 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.11 2007-03-13 09:25:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -217,10 +217,10 @@ static int getNumVerticesForElementTypeMSH(int type)
   case MSH_TRI_3  : return 3;
   case MSH_TRI_6  : return 3 + 3;
   case MSH_TRI_9  : return 3 + 6;
-  case MSH_TRI_10  : return 3 + 6 + 1;
-  case MSH_TRI_12  : return 3 + 9;
-  case MSH_TRI_15  : return 3 + 9 + 3;
-  case MSH_TRI_15I : return 3 + 12;
+  case MSH_TRI_10 : return 3 + 6 + 1;
+  case MSH_TRI_12 : return 3 + 9;
+  case MSH_TRI_15 : return 3 + 9 + 3;
+  case MSH_TRI_15I: return 3 + 12;
   case MSH_TRI_21 : return 3 + 12 + 6;
   case MSH_QUA_4  : return 4;
   case MSH_QUA_8  : return 4 + 4;
@@ -259,12 +259,12 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
   case MSH_LIN_6:  elem[0][reg].push_back(new MLineN(v, num, part)); dim = 1; break;
   case MSH_TRI_3:  elem[1][reg].push_back(new MTriangle(v, num, part)); dim = 2; break;
   case MSH_TRI_6:  elem[1][reg].push_back(new MTriangle6(v, num, part)); dim = 2; break;
-  case MSH_TRI_9:  elem[1][reg].push_back(new MTriangleN(v, 3, num, part)); dim = 2; break;  
-  case MSH_TRI_10: elem[1][reg].push_back(new MTriangleN(v, 3, num, part)); dim = 2; break; 
-  case MSH_TRI_12: elem[1][reg].push_back(new MTriangleN(v, 4, num, part)); dim = 2; break; 
-  case MSH_TRI_15: elem[1][reg].push_back(new MTriangleN(v, 4, num, part)); dim = 2; break; 
-  case MSH_TRI_15I:elem[1][reg].push_back(new MTriangleN(v, 5, num, part)); dim = 2; break;  
-  case MSH_TRI_21: elem[1][reg].push_back(new MTriangleN(v, 5, num, part)); dim = 2; break;     
+  case MSH_TRI_9:  elem[1][reg].push_back(new MTriangleN(v, 3, num, part)); dim = 2; break;
+  case MSH_TRI_10: elem[1][reg].push_back(new MTriangleN(v, 3, num, part)); dim = 2; break;
+  case MSH_TRI_12: elem[1][reg].push_back(new MTriangleN(v, 4, num, part)); dim = 2; break;
+  case MSH_TRI_15: elem[1][reg].push_back(new MTriangleN(v, 4, num, part)); dim = 2; break;
+  case MSH_TRI_15I:elem[1][reg].push_back(new MTriangleN(v, 5, num, part)); dim = 2; break;
+  case MSH_TRI_21: elem[1][reg].push_back(new MTriangleN(v, 5, num, part)); dim = 2; break;
   case MSH_QUA_4:  elem[2][reg].push_back(new MQuadrangle(v, num, part)); dim = 2; break;
   case MSH_QUA_8:  elem[2][reg].push_back(new MQuadrangle8(v, num, part)); dim = 2; break;
   case MSH_QUA_9:  elem[2][reg].push_back(new MQuadrangle9(v, num, part)); dim = 2; break;
@@ -1959,7 +1959,7 @@ int GModel::readP3D(const std::string &name)
 	  for(int j = 0; j < Nj[n]; j++){
 	    for(int k = 0; k < Nk[n]; k++){
 	      double d;
-	      if(fscanf(fp, "%lf", &d) != 1){printf("aaa\n"); return 0;}
+	      if(fscanf(fp, "%lf", &d) != 1) return 0;
 	      if(coord == 0){
 		MVertex *v = new MVertex(d, 0., 0., gr);
 		gr->transfinite_vertices[i][j][k] = v;

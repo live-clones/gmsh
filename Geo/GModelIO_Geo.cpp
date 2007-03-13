@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.9 2007-03-11 20:18:58 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.10 2007-03-13 09:25:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -279,8 +279,7 @@ class writeGFaceGEO {
 	num.push_back((*it)->tag());
       for(std::list<int>::iterator it = orientations.begin(); it != orientations.end(); it++)
 	ori.push_back((*it) > 0 ? 1 : -1);
-      int NUMLOOP = gf->tag() + 1000000;
-      fprintf(geo, "Line Loop (%d) = ", NUMLOOP);
+      fprintf(geo, "Line Loop (%d) = ", gf->tag());
       for(unsigned int i = 0; i < num.size(); i++){
 	if(i)
 	  fprintf(geo, ", %d", num[i] * ori[i]);
@@ -289,10 +288,10 @@ class writeGFaceGEO {
       }
       fprintf(geo, "};\n");
       if(gf->geomType() == GEntity::Plane){
-	fprintf(geo, "Plane Surface (%d) = {%d};\n", gf->tag(), NUMLOOP);
+	fprintf(geo, "Plane Surface (%d) = {%d};\n", gf->tag(), gf->tag());
       }
       else if(edges.size() == 3 || edges.size() == 4){
-	fprintf(geo, "Ruled Surface (%d) = {%d};\n", gf->tag(), NUMLOOP);
+	fprintf(geo, "Ruled Surface (%d) = {%d};\n", gf->tag(), gf->tag());
       }
       else{
 	Msg(GERROR, "Skipping surface %d in export", gf->tag());
@@ -312,8 +311,7 @@ class writeGRegionGEO {
 
     std::list<GFace*> faces = gr->faces();
     if(faces.size()){
-      int NUMLOOP = gr->tag() + 1000000;
-      fprintf(geo, "Surface Loop (%d) = ", NUMLOOP);
+      fprintf(geo, "Surface Loop (%d) = ", gr->tag());
       for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++) {
 	if(it != faces.begin())
 	  fprintf(geo, ", %d", (*it)->tag());
@@ -321,7 +319,7 @@ class writeGRegionGEO {
 	  fprintf(geo, "{%d", (*it)->tag());
       }
       fprintf(geo, "};\n");
-      fprintf(geo, "Volume (%d) = {%d};\n", gr->tag(), NUMLOOP);
+      fprintf(geo, "Volume (%d) = {%d};\n", gr->tag(), gr->tag());
     }
   }
 };
