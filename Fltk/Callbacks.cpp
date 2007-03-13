@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.517 2007-03-11 20:18:57 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.518 2007-03-13 16:11:42 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1085,7 +1085,8 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_reverse_all_normals(0, GMSH_SET, WID->mesh_butt[0]->value());
   opt_mesh_lc_from_curvature(0, GMSH_SET, WID->mesh_butt[1]->value());
   opt_mesh_optimize(0, GMSH_SET, WID->mesh_butt[2]->value());
-  opt_mesh_order(0, GMSH_SET, WID->mesh_butt[3]->value()? 2 : 1);
+  opt_mesh_order(0, GMSH_SET, WID->mesh_value[3]->value());
+  opt_mesh_smooth_internal_edges(0, GMSH_SET, WID->mesh_butt[3]->value());
   opt_mesh_second_order_incomplete(0, GMSH_SET, WID->mesh_butt[4]->value());
   opt_mesh_constrained_bgmesh(0, GMSH_SET, WID->mesh_butt[5]->value());
   opt_mesh_points(0, GMSH_SET, WID->mesh_butt[6]->value());

@@ -313,6 +313,12 @@ class MTriangle : public MElement {
   bool invertmappingXY(double *p, double *uv, double tol = 1.e-8);
   virtual int getNumVertices(){ return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual MVertex *getOtherVertex(MVertex *v1, MVertex *v2){ 
+    if( _v[0] != v1 && _v[0] != v2 ) return _v[0];
+    if( _v[1] != v1 && _v[1] != v2 ) return _v[1];
+    if( _v[2] != v1 && _v[2] != v2 ) return _v[2];
+    throw;
+  }
   virtual int getNumEdges(){ return 3; }
   virtual MEdge getEdge(int num)
   {

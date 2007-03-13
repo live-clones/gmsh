@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.336 2007-02-16 08:54:03 geuzaine Exp $
+// $Id: Options.cpp,v 1.337 2007-03-13 16:11:42 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4804,9 +4804,20 @@ double opt_mesh_order(OPT_ARGS_NUM)
     CTX.mesh.order = (int)val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[3]->value(CTX.mesh.order == 2);
+    WID->mesh_value[3]->value(CTX.mesh.order);
 #endif
   return CTX.mesh.order;
+}
+
+double opt_mesh_smooth_internal_edges(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.smooth_internal_edges = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[3]->value(CTX.mesh.smooth_internal_edges);
+#endif
+  return CTX.mesh.smooth_internal_edges;
 }
 
 double opt_mesh_second_order_linear(OPT_ARGS_NUM)

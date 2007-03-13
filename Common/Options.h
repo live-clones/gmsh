@@ -468,6 +468,7 @@ double opt_mesh_recombine_algo(OPT_ARGS_NUM);
 double opt_mesh_min_circ_points(OPT_ARGS_NUM);
 double opt_mesh_constrained_bgmesh(OPT_ARGS_NUM);
 double opt_mesh_order(OPT_ARGS_NUM);
+double opt_mesh_smooth_internal_edges(OPT_ARGS_NUM);
 double opt_mesh_second_order_linear(OPT_ARGS_NUM);
 double opt_mesh_second_order_incomplete(OPT_ARGS_NUM);
 double opt_mesh_dual(OPT_ARGS_NUM);

@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.32 2007-03-05 11:07:14 remacle Exp $
+// $Id: gmshEdge.cpp,v 1.33 2007-03-13 16:11:43 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -123,8 +123,6 @@ int gmshEdge::minimumMeshSegments () const
   if(geomType() == Circle || geomType() == Ellipse)
     return (int)(fabs(c->Circle.t1 - c->Circle.t2) *
 		 (double)CTX.mesh.min_circ_points / Pi) - 1;
-  else if(geomType() == Nurb)
-    return 5;
   else
     return GEdge::minimumMeshSegments () ;
 }

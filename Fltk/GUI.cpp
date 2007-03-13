@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.600 2007-02-21 08:17:16 geuzaine Exp $
+// $Id: GUI.cpp,v 1.601 2007-03-13 16:11:42 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2253,33 +2253,40 @@ void GUI::create_option_window()
       mesh_value[0]->align(FL_ALIGN_RIGHT);
       mesh_value[0]->callback(mesh_options_ok_cb);
 
-      mesh_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Characteristic length factor");
+      mesh_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Element orders (1-5)");
+      mesh_value[3]->minimum(1);
+      mesh_value[3]->maximum(5);
+      mesh_value[3]->step(1);
+      mesh_value[3]->align(FL_ALIGN_RIGHT);
+      mesh_value[3]->callback(mesh_options_ok_cb);
+
+      mesh_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Characteristic length factor");
       mesh_value[2]->minimum(0.001);
       mesh_value[2]->maximum(1000);
       mesh_value[2]->step(0.01);
       mesh_value[2]->align(FL_ALIGN_RIGHT);
       mesh_value[2]->callback(mesh_options_ok_cb);
 
-      mesh_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Compute characteritic lenghts automatically from curvatures" );
+      mesh_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Compute characteritic lenghts automatically from curvatures" );
       mesh_butt[1]->type(FL_TOGGLE_BUTTON);
       mesh_butt[1]->callback(mesh_options_ok_cb);
 
-      mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Constrain background mesh with characteristic length field");
+      mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Constrain background mesh with characteristic length field");
       mesh_butt[5]->type(FL_TOGGLE_BUTTON);
       mesh_butt[5]->callback(mesh_options_ok_cb);
 
-      mesh_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Optimize quality of tetrahedra");
+      mesh_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Optimize quality of tetrahedra");
       mesh_butt[2]->type(FL_TOGGLE_BUTTON);
 #if !defined(HAVE_NETGEN)
       mesh_butt[2]->deactivate();
 #endif
       mesh_butt[2]->callback(mesh_options_ok_cb);
 
-      mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Generate second order elements");
+      mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW, BH, "Optimize high order mesh (currently for 2D - plane)");
       mesh_butt[3]->type(FL_TOGGLE_BUTTON);
       mesh_butt[3]->callback(mesh_options_ok_cb);
 
-      mesh_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW, BH, "Use incomplete second order elements (8-node quads, etc.)");
+      mesh_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 11 * BH, BW, BH, "Use incomplete second order elements (8-node quads, etc.)");
       mesh_butt[4]->type(FL_TOGGLE_BUTTON);
       mesh_butt[4]->callback(mesh_options_ok_cb);
 

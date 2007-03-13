@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.7 2007-03-02 08:44:55 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.8 2007-03-13 16:11:43 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -601,6 +601,137 @@ void SetOrder1(GModel *m)
     removeHighOrderVertices(*it);
 }
 
+bool straightLine ( std::vector<MVertex *> &l , MVertex *n1, MVertex *n2)
+{
+  // x = a * t + b
+  // x1 = b
+  // x2 = a + b
+  for (int i=0;i<l.size();i++)
+    {
+      MVertex *v = l[i];
+      double b = n1->x();
+      double a = n2->x() - b;
+      double t = (v->x() - b)/a;
+      double by = n1->y();
+      double ay = n2->y() - by;
+      double y = ay * t + by;
+      if (fabs(y-v->y()) > 1.e-11 * CTX.lc)
+	{
+	  //	  printf("coucou %g %g\n",y,v->y());
+	  return false;      
+	}
+    }
+
+  return true;
+  
+}
+
+void smoothInternalEdges ( GFace *gf , edgeContainer &edgeVertices)
+{
+  typedef std::map<std::pair<MVertex*, MVertex*> , std::vector<MElement*> > edge2tris;
+  edge2tris e2t;
+  for(unsigned int i = 0; i < gf->triangles.size(); i++){
+    MTriangle *t = gf->triangles[i];
+    for(int j = 0; j < t->getNumEdges(); j++){
+      MEdge edge = t->getEdge(j);
+      std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
+      e2t[p].push_back(t);
+    }
+  }
+  for (  edge2tris::iterator it = e2t.begin() ; it != e2t.end() ; ++it)
+    {
+      std::pair<MVertex*, MVertex*> edge = it->first;
+      std::vector<MVertex*> e1,e2,e3,e4,e;
+      std::vector<MElement*> triangles = it->second;
+
+      if (triangles.size() == 2)
+	{
+	  MVertex *n2 = edge.first; 
+	  MVertex *n4 = edge.second;
+	  MTriangle *t1 = (MTriangle*)triangles[0];
+	  MTriangle *t2 = (MTriangle*)triangles[1];
+	  MVertex *n1 = t1->getOtherVertex (n2,n4);
+	  MVertex *n3 = t2->getOtherVertex (n2,n4);
+	  if (n1<n2)
+	    e1 = edgeVertices[std::make_pair<MVertex*, MVertex*> (n1,n2)];
+	  else
+	    e1 = edgeVertices[std::make_pair<MVertex*, MVertex*> (n2,n1)];
+	  if (n2<n3)
+	    e2 = edgeVertices[std::make_pair<MVertex*, MVertex*> (n2,n3)];
+	  else
+	    e2 = edgeVertices[std::make_pair<MVertex*, MVertex*> (n3,n2)];
+	  if (n3<n4)
+	    e3 = edgeVertices[std::make_pair<MVertex*, MVertex*> (n3,n4)];
+	  else
+	    e3 = edgeVertices[std::make_pair<MVertex*, MVertex*> (n4,n3)];
+	  if (n4<n1)
+	    e4 = edgeVertices[std::make_pair<MVertex*, MVertex*> (n4,n1)];
+	  else
+	    e4 = edgeVertices[std::make_pair<MVertex*, MVertex*> (n1,n4)];
+	  if (n2<n4)
+	    e = edgeVertices[std::make_pair<MVertex*, MVertex*> (n2,n4)];
+	  else
+	    e = edgeVertices[std::make_pair<MVertex*, MVertex*> (n4,n2)];
+	  
+	  if ((!straightLine ( e1,n1,n2) ||
+	       !straightLine ( e2,n2,n3) ||
+	       !straightLine ( e3,n3,n4) ||
+	       !straightLine ( e4,n4,n1) ))
+	      //	      &&  straightLine ( e,n2,n4))
+	    {
+	      for (int i=0 ; i < e.size() ; i++)
+		{
+		  double v = (double)(i+1) / (e.size()+1);
+		  double u = 1.-v;
+		  
+// 		  printf("%g %g\n",u,v);
+ 
+ 		  MVertex *vert  = (n2<n4)?e[i]:e[e.size()-i-1];
+ 		  MVertex *vert1 = (n1<n2)?e1[e1.size()-i-1]:e1[i];
+ 		  MVertex *vert3 = (n3<n4)?e3[i]:e3[e3.size()-i-1];
+		  MVertex *vert4 = (n4<n1)?e4[e4.size()-i-1]:e4[i];
+ 		  MVertex *vert2 = (n2<n3)?e2[i]:e2[e2.size()-i-1];
+		  
+		  
+// 		  printf("n1 %g %g\n",n1->x(),n1->y());
+// 		  printf("n2 %g %g\n",n2->x(),n2->y());
+// 		  printf("n3 %g %g\n",n3->x(),n3->y());
+// 		  printf("n4 %g %g\n",n4->x(),n4->y());
+		  
+// 		  printf("vert1 %g %g\n",vert1->x(),vert1->y());
+// 		  printf("vert2 %g %g\n",vert2->x(),vert2->y());
+// 		  printf("vert3 %g %g\n",vert3->x(),vert3->y());
+// 		  printf("vert4 %g %g\n",vert4->x(),vert4->y());
+		  
+// 		  printf("vert %g %g\n",vert->x(),vert->y());
+		  
+		  
+		  vert->x() = vert->x() + 0.05 * ( 
+		    (1.-u) * vert4->x() + u * vert2->x() +
+		    (1.-v) * vert1->x() + v * vert3->x() -
+		    ( (1.-u)*(1.-v) * n1->x() 
+		      + u * (1.-v) * n2->x() 
+		      + u*v*n3->x() 
+		      + (1.-u) * v * n4->x()) - vert->x());
+		    vert->y() = vert->y() + 0.05 * (
+		    (1.-u) * vert4->y() + u * vert2->y() +
+		    (1.-v) * vert1->y() + v * vert3->y() -
+		    ( (1.-u)*(1.-v) * n1->y() 
+		      + u * (1.-v) * n2->y() 
+		      + u*v*n3->y() 
+		      + (1.-u) * v * n4->y()) - vert->y());
+		  
+		    //		  printf("vert %g %g\n\n",vert->x(),vert->y());
+		}
+	      
+	    }
+	}
+    }
+  
+  
+}
+
+
 void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
 {
   // replace all the elements in the mesh with second order elements
@@ -635,6 +766,13 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
+
+
+  if (CTX.mesh.smooth_internal_edges)
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+      {
+	for (int i=0;i<10;i++)smoothInternalEdges ( *it , edgeVertices);
+      }  
 
   double t2 = Cpu();
   Msg(INFO, "Mesh second order complete (%g s)", t2 - t1);

@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.95 2007-03-11 20:18:57 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.96 2007-03-13 16:11:42 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -86,7 +86,8 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -algo string          Select mesh algorithm (iso, netgen, tetgen)");
   Msg(DIRECT, "  -smooth int           Set number of mesh smoothing steps");
   Msg(DIRECT, "  -optimize             Optimize quality of tetrahedral elements");
-  Msg(DIRECT, "  -order int            Set mesh order (1, 2)");
+  Msg(DIRECT, "  -order int            Set mesh order (1, ..., 5)");
+  Msg(DIRECT, "  -optimize_hom         Optimize higher order meshes (in 2D)");
   Msg(DIRECT, "  -clscale float        Set characteristic length scaling factor");
   Msg(DIRECT, "  -clcurv               Compute characteristic lengths from curvatures");
   Msg(DIRECT, "  -rand float           Set random perturbation factor");
@@ -372,6 +373,10 @@ void Get_Options(int argc, char *argv[])
           fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
+      }
+      else if(!strcmp(argv[i] + 1, "optimize_hom")) {
+        i++;
+	opt_mesh_smooth_internal_edges(0, GMSH_SET, 1);
       }
       else if(!strcmp(argv[i] + 1, "format") || !strcmp(argv[i] + 1, "f")) {
         i++;

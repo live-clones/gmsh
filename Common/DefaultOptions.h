@@ -907,7 +907,9 @@ StringXNumber MeshOptions_Number[] = {
     "Display the dual mesh obtained by barycentric subdivision" },
 
   { F|O, "ElementOrder" , opt_mesh_order , 1. , // "Order" is a reserved token in the parser
-    "Element order (1=linear elements, 2=quadratic elements)" },
+    "Element order (1=linear elements, N (<6) = elements of higher order)" },
+  { F|O, "SmoothInternalEdges" , opt_mesh_smooth_internal_edges , 0 , // "Order" is a reserved token in the parser
+    "Number of smoothing steps of internal edges for high order meshes" },
   { F|O, "Explode" , opt_mesh_explode , 1.0 ,
     "Element shrinking factor (between 0 and 1)" },
 

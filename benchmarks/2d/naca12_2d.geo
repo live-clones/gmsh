@@ -1,4 +1,4 @@
-lc = 0.001;
+lc = 0.2;
 lc2 = 0.2;
 lc3 = 0.05;
 Point(1) =  {1.000000e+00,0.000000e+00,0.000000e+00,lc}; 
@@ -224,5 +224,5 @@ Line Loop(10) = {2,3,4,1};
 Plane Surface(11) = {9,10};
 
 //Attractor Point{101,200} = {0.04,0.04,2};
-Attractor Line{1,2,3,4} = {1,.05,3};
+//Attractor Line{1,2,3,4} = {1,.05,3};
 Mesh.Algorithm = 2;
