@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.8 2007-03-13 16:11:43 remacle Exp $
+// $Id: HighOrder.cpp,v 1.9 2007-03-14 15:47:49 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -626,6 +626,20 @@ bool straightLine ( std::vector<MVertex *> &l , MVertex *n1, MVertex *n2)
   
 }
 
+void getMinMaxJac (MTriangle *t, double &minJ, double &maxJ) 
+{
+  double u[7] = {0,1,0,.5,0,.5,.3333};
+  double v[7] = {0,0,1,.5,.5,0,.3333};
+  double j[2][2];  
+  for (int i=0;i<7;i++)
+    {
+      t->jac ( u[i], v[i] , j );
+      double det = det2x2 ( j );
+      minJ = std::min ( det , minJ );
+      maxJ = std::max ( det , maxJ );
+    }
+}
+
 void smoothInternalEdges ( GFace *gf , edgeContainer &edgeVertices)
 {
   typedef std::map<std::pair<MVertex*, MVertex*> , std::vector<MElement*> > edge2tris;
@@ -638,6 +652,7 @@ void smoothInternalEdges ( GFace *gf , edgeContainer &edgeVertices)
       e2t[p].push_back(t);
     }
   }
+
   for (  edge2tris::iterator it = e2t.begin() ; it != e2t.end() ; ++it)
     {
       std::pair<MVertex*, MVertex*> edge = it->first;
@@ -650,6 +665,7 @@ void smoothInternalEdges ( GFace *gf , edgeContainer &edgeVertices)
 	  MVertex *n4 = edge.second;
 	  MTriangle *t1 = (MTriangle*)triangles[0];
 	  MTriangle *t2 = (MTriangle*)triangles[1];
+
 	  MVertex *n1 = t1->getOtherVertex (n2,n4);
 	  MVertex *n3 = t2->getOtherVertex (n2,n4);
 	  if (n1<n2)
@@ -768,12 +784,48 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
 
 
-  if (CTX.mesh.smooth_internal_edges)
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
-      {
-	for (int i=0;i<10;i++)smoothInternalEdges ( *it , edgeVertices);
-      }  
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+    {
+      if (CTX.mesh.smooth_internal_edges)
+	for (int i=0;i<10;i++)
+	  smoothInternalEdges ( *it , edgeVertices);
 
+     bool twod = true;
+       for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
+ 	MTriangle *t = (*it)->triangles[i];
+ 	if(t->getVertex(0)->z() != 0.0 || t->getVertex(1)->z() != 0.0 ||t->getVertex(2)->z() != 0.0)twod = false;
+       }
+      
+
+      if (twod && order > 3)
+	{
+	  Msg(INFO,"Validity check of higher order meshes is still bugged for orders > 3");
+	}
+      else if (twod)
+	{      
+	  double minJ = 1.e22;
+	  double maxJ = -1.e22;
+	  for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
+	    double minJloc = 1.e22;
+	    double maxJloc = -1.e22;
+	    
+	    MTriangle *t = (*it)->triangles[i];
+	    getMinMaxJac (t,minJloc,maxJloc);
+	    minJ = std::min(minJ,minJloc);
+	    maxJ = std::max(maxJ,maxJloc);
+	    if (minJloc*maxJloc < 0)
+	      Msg(GERROR,"Triangle %d %d %d has negative jacobians in GFace %d",t->getVertex(0)->getNum(),
+		  t->getVertex(1)->getNum(),t->getVertex(2)->getNum(),(*it)->tag());
+	  }
+	  
+	  if (minJ*maxJ < 0)
+	    Msg(GERROR,"There exists triangles with negative jacobians in GFace %d",(*it)->tag());
+	  else
+	    Msg(INFO,"Jacobian range of face %d is %g %g",(*it)->tag(),minJ,maxJ);
+	  
+	}  
+    }
+  
   double t2 = Cpu();
   Msg(INFO, "Mesh second order complete (%g s)", t2 - t1);
   Msg(STATUS1, "Mesh");

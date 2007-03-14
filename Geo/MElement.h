@@ -288,6 +288,7 @@ class MLineN : public MLine {
 class MTriangle : public MElement {
  protected:
   MVertex *_v[3];
+  virtual void jac ( int order, MVertex *v[], double u, double v , double jac[2][2]) ;
  public :
   MTriangle(MVertex *v0, MVertex *v1, MVertex *v2, int num=0, int part=0) 
     : MElement(num, part)
@@ -342,6 +343,7 @@ class MTriangle : public MElement {
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
+  virtual void jac ( double u, double v , double j[2][2])  ;
 };
 
 class MTriangle6 : public MTriangle {
@@ -401,6 +403,7 @@ class MTriangle6 : public MTriangle {
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
     tmp = _vs[0]; _vs[0] = _vs[2]; _vs[2] = tmp;
   }
+  virtual void jac ( double u, double v , double j[2][2]) ;
 };
 
 class MTriangleN : public MTriangle {
@@ -464,6 +467,7 @@ class MTriangleN : public MTriangle {
     inv.insert (inv.begin(),_vs.rbegin(),_vs.rend());
     _vs = inv;
   }
+  virtual void jac ( double u, double v , double jac[2][2])  ;
 };
 
 
