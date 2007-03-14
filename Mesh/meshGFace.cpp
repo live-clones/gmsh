@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.66 2007-03-11 20:18:58 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.67 2007-03-14 11:44:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1422,7 +1422,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
 	BDS_Point *p = *itp;
 	if (recover_map.find(p) == recover_map.end())
 	  {
-	    MVertex *v = new MFaceVertex (p->X,p->Y,p->Z,gf,p->u,p->v);
+	    MVertex *v = new MFaceVertex (p->X,p->Y,p->Z,gf,SCALINGU*p->u,SCALINGV*p->v);
 	    recover_map[p] = v;
 	    gf->mesh_vertices.push_back(v);
 	  }
