@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.21 2007-02-27 17:15:47 remacle Exp $
+// $Id: OCCFace.cpp,v 1.22 2007-03-16 10:03:40 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -41,7 +41,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
   TopExp_Explorer exp0, exp01, exp1, exp2, exp3;
   for(exp2.Init(s, TopAbs_WIRE); exp2.More(); exp2.Next()){
     TopoDS_Shape wire = exp2.Current();
-    Msg(INFO,"OCC Face %d - New Wire",num);
+    Msg(DEBUG2,"OCC Face %d - New Wire",num);
     std::list<GEdge*> l_wire;
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){	  
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
@@ -70,7 +70,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
   _periodic[1] = surface.IsVPeriodic();
 
   ShapeAnalysis::GetFaceUVBounds(_s, umin, umax, vmin, vmax);
-  Msg(INFO, "OCC Face %d with %d edges bounds (%g,%g)(%g,%g)", num, l_edges.size(),umin,umax,vmin,vmax);
+  Msg(DEBUG2, "OCC Face %d with %d edges bounds (%g,%g)(%g,%g)", num, l_edges.size(),umin,umax,vmin,vmax);
   // we do that for the projections to converge on the 
   // borders of the surface
   const double du = umax-umin;

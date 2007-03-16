@@ -1,4 +1,4 @@
-// $Id: Attractors.cpp,v 1.3 2007-02-27 17:15:47 remacle Exp $
+// $Id: Attractors.cpp,v 1.4 2007-03-16 10:03:40 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -69,21 +69,21 @@ void Attractor::buildFastSearchStructures()
     delete kdtree;
   }
   int totpoints = 0;
-  for(std::list <Attractor *>::iterator it = allAttractors.begin();
-      it != allAttractors.end(); ++it)
-    totpoints += (*it)->attractorPoints.size();
+//   for(std::list <Attractor *>::iterator it = allAttractors.begin();
+//       it != allAttractors.end(); ++it)
+  totpoints += attractorPoints.size();
   if (totpoints)
     zeronodes = annAllocPts(totpoints, 4);
   int k = 0;
-  for(std::list <Attractor *>::iterator it = allAttractors.begin();
-      it != allAttractors.end(); ++it){
-    for (std::list <SPoint3>::iterator it2 = (*it)->attractorPoints.begin();
-	 it2 != (*it)->attractorPoints.end(); ++it2){
+//   for(std::list <Attractor *>::iterator it = allAttractors.begin();
+//       it != allAttractors.end(); ++it){
+    for (std::list <SPoint3>::iterator it2 = attractorPoints.begin();
+	 it2 != attractorPoints.end(); ++it2){
       zeronodes[k][0]=it2->x();
       zeronodes[k][1]=it2->y();
       zeronodes[k++][2]=it2->z();
     }
-  }
+//   }
   kdtree = new ANNkd_tree(zeronodes, totpoints, 3);
 #endif
 }

@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.9 2007-03-14 15:47:49 remacle Exp $
+// $Id: HighOrder.cpp,v 1.10 2007-03-16 10:03:40 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -631,12 +631,19 @@ void getMinMaxJac (MTriangle *t, double &minJ, double &maxJ)
   double u[7] = {0,1,0,.5,0,.5,.3333};
   double v[7] = {0,0,1,.5,.5,0,.3333};
   double j[2][2];  
-  for (int i=0;i<7;i++)
+
+  int n = 3;
+
+  for (int i=0;i<n;i++)
     {
-      t->jac ( u[i], v[i] , j );
-      double det = det2x2 ( j );
-      minJ = std::min ( det , minJ );
-      maxJ = std::max ( det , maxJ );
+      for (int k=0;k<n-i;k++)
+	{
+	  t->jac ( (double)i/(n-1), (double)k/(n-1) , j );
+	  double det = det2x2 ( j );
+	  //	  printf("det = %12.5E\n",det);
+	  minJ = std::min ( det , minJ );
+	  maxJ = std::max ( det , maxJ );
+	}
     }
 }
 
@@ -742,10 +749,46 @@ void smoothInternalEdges ( GFace *gf , edgeContainer &edgeVertices)
 	      
 	    }
 	}
-    }
-  
-  
+    }    
 }
+
+void checkHighOrderTriangles ( GModel *m )
+{
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+    {
+      bool twod = true;
+//       for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
+//  	MTriangle *t = (*it)->triangles[i];
+//  	if(t->getVertex(0)->z() != 0.0 || t->getVertex(1)->z() != 0.0 ||t->getVertex(2)->z() != 0.0)twod = false;
+//       }      
+      if (twod)
+	{      
+	  double minJ = 1.e22;
+	  double maxJ = -1.e22;
+	  for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
+	    double minJloc = 1.e22;
+	    double maxJloc = -1.e22;	    
+	    MTriangle *t = (*it)->triangles[i];
+	    if (t->getPolynomialOrder() > 1 && t->getPolynomialOrder() < 6)
+	      {
+		getMinMaxJac (t,minJloc,maxJloc);
+		minJ = std::min(minJ,minJloc);
+		maxJ = std::max(maxJ,maxJloc);
+		if (minJloc*maxJloc < 0)
+		  Msg(GERROR,"Triangle %d %d %d has negative jacobians in GFace %d",t->getVertex(0)->getNum(),
+		      t->getVertex(1)->getNum(),t->getVertex(2)->getNum(),(*it)->tag());
+	      }
+	  }
+	  if (minJ != 1.e22)
+	    {
+	      if (minJ*maxJ < 0)
+		Msg(GERROR,"There exists triangles with negative jacobians in GFace %d",(*it)->tag());
+	      else 
+		Msg(INFO,"No negative jacobians detected on model face %d range = (%g,%g)",(*it)->tag(),minJ,maxJ);	  
+	    }
+	}  
+    }
+}  
 
 
 void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
@@ -789,43 +832,10 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
       if (CTX.mesh.smooth_internal_edges)
 	for (int i=0;i<10;i++)
 	  smoothInternalEdges ( *it , edgeVertices);
-
-     bool twod = true;
-       for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
- 	MTriangle *t = (*it)->triangles[i];
- 	if(t->getVertex(0)->z() != 0.0 || t->getVertex(1)->z() != 0.0 ||t->getVertex(2)->z() != 0.0)twod = false;
-       }
-      
-
-      if (twod && order > 3)
-	{
-	  Msg(INFO,"Validity check of higher order meshes is still bugged for orders > 3");
-	}
-      else if (twod)
-	{      
-	  double minJ = 1.e22;
-	  double maxJ = -1.e22;
-	  for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
-	    double minJloc = 1.e22;
-	    double maxJloc = -1.e22;
-	    
-	    MTriangle *t = (*it)->triangles[i];
-	    getMinMaxJac (t,minJloc,maxJloc);
-	    minJ = std::min(minJ,minJloc);
-	    maxJ = std::max(maxJ,maxJloc);
-	    if (minJloc*maxJloc < 0)
-	      Msg(GERROR,"Triangle %d %d %d has negative jacobians in GFace %d",t->getVertex(0)->getNum(),
-		  t->getVertex(1)->getNum(),t->getVertex(2)->getNum(),(*it)->tag());
-	  }
-	  
-	  if (minJ*maxJ < 0)
-	    Msg(GERROR,"There exists triangles with negative jacobians in GFace %d",(*it)->tag());
-	  else
-	    Msg(INFO,"Jacobian range of face %d is %g %g",(*it)->tag(),minJ,maxJ);
-	  
-	}  
     }
-  
+
+  checkHighOrderTriangles ( m );
+
   double t2 = Cpu();
   Msg(INFO, "Mesh second order complete (%g s)", t2 - t1);
   Msg(STATUS1, "Mesh");

@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.32 2007-03-14 15:47:49 remacle Exp $
+// $Id: MElement.cpp,v 1.33 2007-03-16 10:03:40 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -548,8 +548,8 @@ void GradGeomShapeFunctionP4 (double u, double v, double grads[12][2])
     grads[i][0]  = 0;
     grads[i][1]  = 0;
     for (int j=0;j<12;j++){
-      if (P4[j][0] > 0)grads[i][0] += coef3[i][j] * pow(u,P4[j][0] - 1 ) * pow(v,P4[j][1] ) ;
-      if (P4[j][1] > 0)grads[i][1] += coef3[i][j] * pow(u,P4[j][0] ) * pow(v,P4[j][1] -1  ) ;
+      if (P4[j][0] > 0)grads[i][0] += coef4[i][j] * pow(u,P4[j][0] - 1 ) * pow(v,P4[j][1] ) ;
+      if (P4[j][1] > 0)grads[i][1] += coef4[i][j] * pow(u,P4[j][0] ) * pow(v,P4[j][1] -1  ) ;
     }
   }
 }
@@ -560,8 +560,8 @@ void GradGeomShapeFunctionP5 (double u, double v, double grads[15][2])
     grads[i][0]  = 0;
     grads[i][1]  = 0;
     for (int j=0;j<15;j++){
-      if (P5[j][0] > 0)grads[i][0] += coef3[i][j] * pow(u,P5[j][0] - 1 ) * pow(v,P5[j][1] ) ;
-      if (P5[j][1] > 0)grads[i][1] += coef3[i][j] * pow(u,P5[j][0] ) * pow(v,P5[j][1] -1  ) ;
+      if (P5[j][0] > 0)grads[i][0] += coef5[i][j] * pow(u,P5[j][0] - 1 ) * pow(v,P5[j][1] ) ;
+      if (P5[j][1] > 0)grads[i][1] += coef5[i][j] * pow(u,P5[j][0] ) * pow(v,P5[j][1] -1  ) ;
     }
   }
 }

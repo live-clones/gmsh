@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.144 2007-03-11 20:19:05 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.145 2007-03-16 10:03:40 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -34,6 +34,7 @@
 #include "Views.h"
 #include "ReadImg.h"
 #include "OS.h"
+#include "HighOrder.h"
 
 #if defined(HAVE_FLTK)
 #include "GmshUI.h"
@@ -395,6 +396,8 @@ int MergeFile(char *name, int warn_if_missing)
 
   CTX.geom.draw = 1;
   CTX.mesh.changed = ENT_ALL;
+
+  checkHighOrderTriangles ( GMODEL );
 
   Msg(STATUS2, "Read '%s'", name);
   return status;

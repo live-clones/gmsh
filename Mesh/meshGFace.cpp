@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.67 2007-03-14 11:44:18 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.68 2007-03-16 10:03:40 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -873,8 +873,9 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   //  if (CTX.mesh.algo2d == ALGO_2D_MESHADAPT)
     {
       RefineMesh (gf,*m,10);
-      OptimizeMesh(gf, *m, 3);
+      OptimizeMesh(gf, *m, 2);
       RefineMesh (gf,*m,-10);
+      OptimizeMesh(gf, *m, 2);
       if (gf->meshAttributes.recombine)
 	{
 	  m->recombineIntoQuads (gf->meshAttributes.recombineAngle,gf);
@@ -1403,9 +1404,9 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
   //  if (CTX.mesh.algo2d == ALGO_2D_MESHADAPT)
     {
       RefineMesh (gf,*m,10);
-      OptimizeMesh(gf, *m, 5);
+      OptimizeMesh(gf, *m, 2);
       RefineMesh (gf,*m,-10);
-      OptimizeMesh(gf, *m, 1);
+      OptimizeMesh(gf, *m, 2);
 
       if (gf->meshAttributes.recombine)
 	{
