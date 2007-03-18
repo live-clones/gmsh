@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.35 2007-03-02 08:44:55 geuzaine Exp $
+// $Id: GModel.cpp,v 1.36 2007-03-18 23:02:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -45,6 +45,7 @@ void GModel::destroy()
   gmshSurface::reset();
   Attractor::reset();
 }
+
 GRegion * GModel::regionByTag(int n) const
 {
   GEntity tmp((GModel*)this, n);

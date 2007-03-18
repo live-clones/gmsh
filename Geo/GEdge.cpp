@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.24 2007-03-09 14:57:06 remacle Exp $
+// $Id: GEdge.cpp,v 1.25 2007-03-18 23:02:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -36,7 +36,7 @@ GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
 GEdge::~GEdge() 
 {
   if(v0) v0->delEdge(this);
-  if(v1) v1->delEdge(this);
+  if(v1 && v1 != v0) v1->delEdge(this);
 
   for(unsigned int i = 0; i < mesh_vertices.size(); i++) 
     delete mesh_vertices[i];
@@ -131,7 +131,6 @@ SPoint2 GEdge::reparamOnFace(GFace *face, double epar,int dir) const
   SPoint3 sp3(p3.x(),p3.y(),p3.z());
   return face->parFromPoint(sp3);
 }
-
 
 double GEdge::curvature(double par) const 
 {
