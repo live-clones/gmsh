@@ -2788,7 +2788,7 @@ case "$UNAME" in
       UNAME="${UNAME}-no-cygwin"
       CC="${CC} -mno-cygwin"
       CXX="${CXX} -mno-cygwin"
-                  LINKER="${LINKER} -mno-cygwin -Wl,--stack,10000000"
+                  LINKER="${LINKER} -mno-cygwin -Wl,--stack,33554432"
     fi
     ;;
 esac
