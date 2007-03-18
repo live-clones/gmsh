@@ -161,7 +161,7 @@ class GModel
   // Gmsh native CAD format
   int importTHEM();
   int readGEO(const std::string &name);
-  int writeGEO(const std::string &name);
+  int writeGEO(const std::string &name, bool printLabels=true);
 
   // Fourier model
   int readFourier(const std::string &name);

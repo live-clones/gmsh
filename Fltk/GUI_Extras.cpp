@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.32 2006-12-18 21:19:55 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.33 2007-03-18 12:05:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -580,6 +580,59 @@ int options_dialog(char *name)
       if (!o) break;
       if (o == dialog->ok) {
 	Print_Options(0, GMSH_FULLRC, dialog->b[0]->value(), dialog->b[1]->value(), name);
+	dialog->window->hide();
+	return 1;
+      }
+      if (o == dialog->window || o == dialog->cancel){
+	dialog->window->hide();
+	return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+// geo dialog
+
+int geo_dialog(char *name)
+{
+  struct _geo_dialog{
+    Fl_Window *window;
+    Fl_Check_Button *b;
+    Fl_Button *ok, *cancel;
+  };
+  static _geo_dialog *dialog = NULL;
+
+  const int BH = 2 * CTX.fontsize + 1;
+  const int BB = 7 * CTX.fontsize + 9;
+  const int WB = 7;
+
+  if(!dialog){
+    dialog = new _geo_dialog;
+    int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
+    // not a "Dialog_Window" since it is modal 
+    dialog->window = new Fl_Double_Window(w, h, "GEO Options");
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save physical group labels"); y += BH;
+    dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
+    dialog->window->set_modal();
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+  
+  dialog->b->value(CTX.print.geo_labels ? 1 : 0);
+  dialog->window->show();
+
+  while(dialog->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == dialog->ok) {
+	opt_print_geo_labels(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
+	CreateOutputFile(name, FORMAT_GEO);
 	dialog->window->hide();
 	return 1;
       }

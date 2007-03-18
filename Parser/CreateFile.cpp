@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.15 2007-03-11 20:18:58 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.16 2007-03-18 12:05:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -191,7 +191,7 @@ void CreateOutputFile(char *filename, int format)
     break;
 
   case FORMAT_GEO:
-    GMODEL->writeGEO(name);
+    GMODEL->writeGEO(name, CTX.print.geo_labels);
     break;
 
 #if defined(HAVE_FLTK)

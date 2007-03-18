@@ -1,4 +1,4 @@
-// $Id: meshGRegionExtruded.cpp,v 1.12 2007-03-11 20:18:58 geuzaine Exp $
+// $Id: meshGRegionExtruded.cpp,v 1.13 2007-03-18 12:05:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -199,7 +199,7 @@ void carveHole(std::vector<T*> &elements, double distance, ANNkd_tree *kdtree)
   ANNdistArray dist = new ANNdist[1];
   std::vector<T*> temp;
   for(unsigned int i = 0; i < elements.size(); i++){
-    for(unsigned int j = 0; j < elements[i]->getNumVertices(); j++){
+    for(int j = 0; j < elements[i]->getNumVertices(); j++){
       MVertex *v = elements[i]->getVertex(j);
       double xyz[3] = {v->x(), v->y(), v->z()};
       kdtree->annkSearch(xyz, 1, index, dist);

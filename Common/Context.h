@@ -215,6 +215,7 @@ public :
     double eps_line_width_factor, eps_point_size_factor;
     int jpeg_quality, jpeg_smoothing;
     int gif_dither, gif_sort, gif_interlace, gif_transparent;
+    int geo_labels;
     int text;
   } print;
 

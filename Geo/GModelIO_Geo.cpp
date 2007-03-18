@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.10 2007-03-13 09:25:50 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.11 2007-03-18 12:05:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -149,11 +149,11 @@ class writeGVertexGEO {
     if(gv->getNativeType() == GEntity::GmshModel){
       Vertex *v = (Vertex*)gv->getNativePtr();
       if(!v) return;
-      fprintf(geo, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n",
+      fprintf(geo, "Point (%d) = {%.16g, %.16g, %.16g, %.16g};\n",
 	      v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc);
     }
     else{
-      fprintf(geo, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n",
+      fprintf(geo, "Point (%d) = {%.16g, %.16g, %.16g, %.16g};\n",
 	      gv->tag(), gv->x(), gv->y(), gv->z(), 
 	      gv->prescribedMeshSizeAtVertex());
     }
@@ -249,7 +249,7 @@ class writeGEdgeGEO {
 	  for(int i = 1; i < ge->minimumDrawSegments(); i++){
 	    double u = umin + (double)i / ge->minimumDrawSegments() * (umax - umin);
 	    GPoint p = ge->point(u);
-	    fprintf(geo, "Point(p%d + %d) = {%.16g, %.16g, %.16g, 1.e+22};\n", 
+	    fprintf(geo, "Point (p%d + %d) = {%.16g, %.16g, %.16g, 1.e+22};\n", 
 		    ge->tag(), i, p.x(), p.y(), p.z());
 	  }
 	  fprintf(geo, "CatmullRom (%d) = {%d", ge->tag(), ge->getBeginVertex()->tag());
@@ -328,24 +328,27 @@ class writePhysicalGroupGEO {
  private :
   FILE *geo;
   int dim;
+  bool printLabels;
   std::map<int, std::string> &oldLabels, &newLabels;
  public :
-  writePhysicalGroupGEO(FILE *fp, int i, 
+  writePhysicalGroupGEO(FILE *fp, int i, bool labels,
 			std::map<int, std::string> &o,
 			std::map<int, std::string> &n)
-    : dim(i), oldLabels(o), newLabels(n)
+    : dim(i), printLabels(labels), oldLabels(o), newLabels(n)
   { 
     geo = fp ? fp : stdout; 
   }
   void operator () (std::pair<const int, std::vector<GEntity *> > &g)
   {
     std::string oldName, newName;
-    if(oldLabels.count(g.first)) {
-      oldName = oldLabels[g.first];
-      fprintf(geo, "%s = %d;\n", oldName.c_str(), g.first);
-    }
-    else if(newLabels.count(g.first)) {
-      newName = newLabels[g.first];
+    if(printLabels){
+      if(oldLabels.count(g.first)) {
+	oldName = oldLabels[g.first];
+	fprintf(geo, "%s = %d;\n", oldName.c_str(), g.first);
+      }
+      else if(newLabels.count(g.first)) {
+	newName = newLabels[g.first];
+      }
     }
 
     switch (dim) {
@@ -369,7 +372,7 @@ class writePhysicalGroupGEO {
   }
 };
 
-int GModel::writeGEO(const std::string &name)
+int GModel::writeGEO(const std::string &name, bool printLabels)
 {
   FILE *fp = fopen(name.c_str(), "w");
 
@@ -395,7 +398,7 @@ int GModel::writeGEO(const std::string &name)
   getPhysicalGroups(groups);
   for(int i = 0; i < 4; i++)
     std::for_each(groups[i].begin(), groups[i].end(), 
-		  writePhysicalGroupGEO(fp, i, labels, physicalNames));
+		  writePhysicalGroupGEO(fp, i, printLabels, labels, physicalNames));
 
   if(fp) fclose(fp);
   return 1;

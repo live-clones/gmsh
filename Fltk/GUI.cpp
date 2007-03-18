@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.601 2007-03-13 16:11:42 remacle Exp $
+// $Id: GUI.cpp,v 1.602 2007-03-18 12:05:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2253,7 +2253,7 @@ void GUI::create_option_window()
       mesh_value[0]->align(FL_ALIGN_RIGHT);
       mesh_value[0]->callback(mesh_options_ok_cb);
 
-      mesh_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Element orders (1-5)");
+      mesh_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Element order");
       mesh_value[3]->minimum(1);
       mesh_value[3]->maximum(5);
       mesh_value[3]->step(1);
@@ -2282,7 +2282,7 @@ void GUI::create_option_window()
 #endif
       mesh_butt[2]->callback(mesh_options_ok_cb);
 
-      mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW, BH, "Optimize high order mesh (currently for 2D - plane)");
+      mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW, BH, "Optimize high order mesh (currently only for 2D/plane)");
       mesh_butt[3]->type(FL_TOGGLE_BUTTON);
       mesh_butt[3]->callback(mesh_options_ok_cb);
 

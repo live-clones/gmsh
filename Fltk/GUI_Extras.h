@@ -31,6 +31,7 @@ int perspective_editor();
 
 int jpeg_dialog(char *filename);
 int gif_dialog(char *filename);
+int geo_dialog(char *filename);
 int generic_bitmap_dialog(char *filename, char *title, int format);
 int generic_mesh_dialog(char *filename, char *title, int format);
 int gl2ps_dialog(char *filename, char *title, int format);

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.116 2007-02-26 08:25:46 geuzaine Exp $
+# $Id: Makefile,v 1.117 2007-03-18 12:05:16 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -131,9 +131,9 @@ OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/SBoundingBox3d.h Parser.h OpenFile.h ../Common/CommandLine.h \
   ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
   ../Common/SmoothData.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
-  ../Graphics/ReadImg.h ../Common/OS.h ../Common/GmshUI.h \
-  ../Graphics/Draw.h ../Graphics/SelectBuffer.h ../Fltk/GUI.h \
-  ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
+  ../Graphics/ReadImg.h ../Common/OS.h ../Mesh/HighOrder.h \
+  ../Common/GmshUI.h ../Graphics/Draw.h ../Graphics/SelectBuffer.h \
+  ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
   ../Fltk/Popup_Button.h ../Fltk/SpherePosition_Widget.h
 CreateFile.o: CreateFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \

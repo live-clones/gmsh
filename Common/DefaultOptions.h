@@ -1365,6 +1365,8 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "Format" , opt_print_format , FORMAT_AUTO , 
     "File format (10=automatic)" }, 
 
+  { F|O, "GeoLabels" , opt_print_geo_labels , 1. ,
+    "Save labels in unrolled Gmsh geometries" },
   { F|O, "GifDither" , opt_print_gif_dither , 0. ,
     "Apply dithering to GIF output" },
   { F|O, "GifInterlace" , opt_print_gif_interlace , 0. ,

@@ -49,6 +49,11 @@ File format (10=automatic)@*
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Print.GeoLabels
+Save labels in unrolled Gmsh geometries@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Print.GifDither
 Apply dithering to GIF output@*
 Default value: @code{0}@*

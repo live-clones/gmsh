@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.121 2007-02-02 23:50:33 geuzaine Exp $
+dnl $Id: configure.in,v 1.122 2007-03-18 12:05:16 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 dnl
@@ -145,7 +145,9 @@ case "$UNAME" in
       UNAME="${UNAME}-no-cygwin"
       CC="${CC} -mno-cygwin"
       CXX="${CXX} -mno-cygwin"
-      LINKER="${LINKER} -mno-cygwin"
+      dnl need to increase default stack size passed to ld for
+      dnl recursive tet classification in new 3D Delaunay algo
+      LINKER="${LINKER} -mno-cygwin -Wl,--stack,10000000"
     fi
     ;;
 esac

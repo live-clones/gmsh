@@ -95,8 +95,13 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ElementOrder
-Element order (1=linear elements, 2=quadratic elements)@*
+Element order (1=linear elements, N (<6) = elements of higher order)@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.SmoothInternalEdges
+Number of smoothing steps of internal edges for high order meshes@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Explode

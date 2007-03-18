@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.337 2007-03-13 16:11:42 remacle Exp $
+// $Id: Options.cpp,v 1.338 2007-03-18 12:05:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -6970,6 +6970,13 @@ double opt_print_jpeg_smoothing(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.print.jpeg_smoothing = (int)val;
   return CTX.print.jpeg_smoothing;
+}
+
+double opt_print_geo_labels(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.print.geo_labels = (int)val;
+  return CTX.print.geo_labels;
 }
 
 double opt_print_gif_dither(OPT_ARGS_NUM)

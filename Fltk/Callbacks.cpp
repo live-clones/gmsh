@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.518 2007-03-13 16:11:42 remacle Exp $
+// $Id: Callbacks.cpp,v 1.519 2007-03-18 12:05:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -649,7 +649,7 @@ void file_merge_cb(CALLBACK_ARGS)
 int _save_msh(char *name){ return msh_dialog(name); }
 int _save_pos(char *name){ return generic_mesh_dialog(name, "POS Options", FORMAT_POS); }
 int _save_options(char *name){ return options_dialog(name); }
-int _save_geo(char *name){ CreateOutputFile(name, FORMAT_GEO); return 1; }
+int _save_geo(char *name){ return geo_dialog(name); }
 int _save_cgns(char *name){ CreateOutputFile(name, FORMAT_CGNS); return 1; }
 int _save_unv(char *name){ return generic_mesh_dialog(name, "UNV Options", FORMAT_UNV); }
 int _save_med(char *name){ return generic_mesh_dialog(name, "MED Options", FORMAT_MED); }
