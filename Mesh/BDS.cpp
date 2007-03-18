@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.73 2007-02-03 15:40:06 geuzaine Exp $
+// $Id: BDS.cpp,v 1.74 2007-03-18 12:49:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -477,8 +477,8 @@ bool BDS_Mesh::import_view(Post_View *view, const double tolerance)
   std::set < BDS_Point *, PointLessThanLexicographic > pts;
 
   for(int type = 0; type < 6; type++){
-    int nbList, nbNod;
-    List_T *list;
+    int nbList=0, nbNod=0;
+    List_T *list=0;
     switch(type){
     case 0: list = view->ST; nbList = view->NbST; nbNod = 3; break;
     case 1: list = view->VT; nbList = view->NbVT; nbNod = 3; break;
