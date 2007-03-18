@@ -23,6 +23,7 @@
 double GetTimeInSeconds();
 void SleepInSeconds(double s);
 void GetResources(double *s, long *mem);
+void CheckResources();
 double Cpu();
 int GetProcessId();
 int UnlinkFile(char *name);

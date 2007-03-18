@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.33 2006-12-16 15:44:27 geuzaine Exp $
+// $Id: Box.cpp,v 1.34 2007-03-18 14:12:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,6 +21,7 @@
 
 #include <signal.h>
 #include "Gmsh.h"
+#include "OS.h"
 #include "Numeric.h"
 #include "Geo.h"
 #include "Generator.h"
@@ -94,6 +95,8 @@ int GMSHBOX(int argc, char *argv[])
   signal(SIGSEGV, Signal);
   signal(SIGFPE, Signal);
 #endif
+
+  CheckResources();
 
   GMSH_PluginManager::instance()->registerDefaultPlugins();
 

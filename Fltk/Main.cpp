@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.104 2007-02-04 11:24:55 geuzaine Exp $
+// $Id: Main.cpp,v 1.105 2007-03-18 14:12:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 #include "GUI.h"
 #include "Gmsh.h"
 #include "GmshUI.h"
+#include "OS.h"
 #include "Geo.h"
 #include "Generator.h"
 #include "CreateFile.h"
@@ -105,6 +106,8 @@ int main(int argc, char *argv[])
   signal(SIGFPE, Signal);
 #endif
 
+  CheckResources();
+  
   // Initialize the default plugins
 
   GMSH_PluginManager::instance()->registerDefaultPlugins();

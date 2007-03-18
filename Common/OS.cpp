@@ -1,4 +1,4 @@
-// $Id: OS.cpp,v 1.5 2006-11-27 22:22:07 geuzaine Exp $
+// $Id: OS.cpp,v 1.6 2007-03-18 14:12:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -88,6 +88,23 @@ void GetResources(double *s, long *mem)
          1.e-7 * (double)user.dwLowDateTime;
   }
   *mem = 0;
+#endif
+}
+
+void CheckResources(){
+#if !defined (WIN32) || defined(__CYGWIN__)
+  static struct rlimit r;
+
+  getrlimit(RLIMIT_STACK, &r);
+
+  // Try to get at least 1 MB of stack. Running with too small a stack
+  // can cause crashes in the recursive calls (e.g. for tet
+  // classification in 3D Delaunay)
+  if(r.rlim_cur < 1024 * 1024){
+    Msg(INFO, "Increasing process stack size (%d kB < 1 MB)", r.rlim_cur / 1024);
+    r.rlim_cur = r.rlim_max;
+    setrlimit(RLIMIT_STACK, &r);
+  }
 #endif
 }
 
