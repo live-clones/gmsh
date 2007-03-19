@@ -1,4 +1,4 @@
-// $Id: OS.cpp,v 1.6 2007-03-18 14:12:20 geuzaine Exp $
+// $Id: OS.cpp,v 1.7 2007-03-19 21:48:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -97,11 +97,11 @@ void CheckResources(){
 
   getrlimit(RLIMIT_STACK, &r);
 
-  // Try to get at least 1 MB of stack. Running with too small a stack
+  // Try to get at least 16 MB of stack. Running with too small a stack
   // can cause crashes in the recursive calls (e.g. for tet
   // classification in 3D Delaunay)
-  if(r.rlim_cur < 1024 * 1024){
-    Msg(INFO, "Increasing process stack size (%d kB < 1 MB)", r.rlim_cur / 1024);
+  if(r.rlim_cur < 16 * 1024 * 1024){
+    Msg(INFO, "Increasing process stack size (%d kB < 16 MB)", r.rlim_cur / 1024);
     r.rlim_cur = r.rlim_max;
     setrlimit(RLIMIT_STACK, &r);
   }
