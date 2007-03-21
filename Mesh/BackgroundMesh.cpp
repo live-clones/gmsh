@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.16 2007-02-02 17:16:46 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.17 2007-03-21 23:27:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -165,12 +165,13 @@ double LC_MVertex_BGM(GEntity *ge, double X, double Y, double Z)
 // mesh vertices
 double LC_MVertex_PNTS(GEntity *ge, double U, double V)
 {
-  double a;
   switch(ge->dim()){
   case 0:
     {
       GVertex *gv = (GVertex *)ge;
-      return gv->prescribedMeshSizeAtVertex();
+      double lc = gv->prescribedMeshSizeAtVertex();
+      if(lc >= MAX_LC) return CTX.lc / 10.;
+      return lc;
     }
   case 1:
     {
@@ -178,9 +179,11 @@ double LC_MVertex_PNTS(GEntity *ge, double U, double V)
       GVertex *v1 = ged->getBeginVertex();
       GVertex *v2 = ged->getEndVertex();
       Range<double> range = ged->parBounds(0);      
-      a = (U - range.low())/(range.high() - range.low()); 
-      return (1-a) * v1->prescribedMeshSizeAtVertex() +
+      double a = (U - range.low())/(range.high() - range.low()); 
+      double lc = (1-a) * v1->prescribedMeshSizeAtVertex() +
 	(a) * v2->prescribedMeshSizeAtVertex() ;
+      if(lc >= MAX_LC) return CTX.lc / 10.;
+      return lc;
     }
   default:
     return MAX_LC;
@@ -190,23 +193,21 @@ double LC_MVertex_PNTS(GEntity *ge, double U, double V)
 // This is the only function that is used by the meshers
 double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double Z)
 {
+  double l1 = MAX_LC;
   double l2 = MAX_LC;
-  double l3 = CTX.lc / 10.;
+  double l3 = CTX.lc;
   double l4 = LC_MVertex_BGM(ge, X, Y, Z);
-  double l5 = Attractor::lc (X,Y,Z);
+  double l5 = Attractor::lc(X, Y, Z);
 
   if(l4 < MAX_LC && !CTX.mesh.constrained_bgmesh)
     return l4 * CTX.mesh.lc_factor;
 
-  if(ge->dim() < 2) l2 = LC_MVertex_PNTS(ge, U, V);
+  if(ge->dim() < 2) 
+    l2 = LC_MVertex_PNTS(ge, U, V);
 
-  double l = std::min(std::min(std::min(l2, l4), l3), l5);
-
-  l *= CTX.mesh.lc_factor ;
-
-  double l1 = MAX_LC;
   if(CTX.mesh.lc_from_curvature && ge->dim() < 3)
-    l1 = std::max(l3/100, LC_MVertex_CURV(ge, U, V));
-
-  return std::min(l, l1) ;
+    l1 = std::max(l3 / 100., LC_MVertex_CURV(ge, U, V));
+  
+  double lc = std::min(std::min(std::min(std::min(l1, l2), l3), l4), l5);
+  return lc * CTX.mesh.lc_factor;
 }
