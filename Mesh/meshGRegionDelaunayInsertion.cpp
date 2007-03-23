@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.16 2007-02-14 11:07:02 geuzaine Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.17 2007-03-23 08:44:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -477,6 +477,11 @@ void insertVerticesInRegion (GRegion *gr)
 
   while (1)
     {
+      if (allTets.empty() ){
+	Msg(GERROR, "No tetrahedra in region %d", gr->tag());
+	break;
+      }
+
       MTet4 *worst = *allTets.begin();
 
       if (worst->isDeleted())

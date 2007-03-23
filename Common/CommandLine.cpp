@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.96 2007-03-13 16:11:42 remacle Exp $
+// $Id: CommandLine.cpp,v 1.97 2007-03-23 08:44:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -115,7 +115,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -nopopup              Don't popup dialog windows in scripts");
   Msg(DIRECT, "  -string \"string\"      Parse option string at startup");
   Msg(DIRECT, "  -option file          Parse option file at startup");
-  Msg(DIRECT, "  -convert file file    Convert views and meshes into latest file formats, then exit");
+  Msg(DIRECT, "  -convert files        Convert files into latest binary formats, then exit");
   Msg(DIRECT, "  -version              Show version number");
   Msg(DIRECT, "  -info                 Show detailed version information");
   Msg(DIRECT, "  -help                 Show this message");
@@ -284,21 +284,24 @@ void Get_Options(int argc, char *argv[])
         i++;
         CTX.terminal = 1;
         CTX.batch = 1;
-        if(argv[i] && argv[i + 1]) {
+	while(i < argc) {
+	  char filename[256];
+	  sprintf(filename, "%s_new", argv[i]);
+	  int numviews_old = List_Nbr(CTX.post.list);
           OpenProject(argv[i]);
-	  // convert post-processing views to latest (binary) format
-          for(int j = 0; j < List_Nbr(CTX.post.list); j++)
-            WriteView(*(Post_View **) List_Pointer(CTX.post.list, j),
-                      argv[i + 1], 1, j ? 1 : 0);
-	  // convert any mesh to the latest format
+	  // convert post-processing views to latest binary format
+          for(int j = numviews_old; j < List_Nbr(CTX.post.list); j++){
+	    Post_View *v = *(Post_View **)List_Pointer(CTX.post.list, j);
+            WriteView(v, filename, 1, (j == numviews_old) ? 0 : 1);
+	  }
+	  // convert mesh to latest binary format
 	  if(GMODEL->getMeshStatus() > 0){
 	    CTX.mesh.msh_file_version = 2.0;
 	    CTX.mesh.msh_binary = 1;
-	    CreateOutputFile(argv[i + 1], FORMAT_MSH);
+	    CreateOutputFile(filename, FORMAT_MSH);
 	  }
+	  i++;
         }
-        else
-          fprintf(stderr, "Usage: %s -convert file file\n", argv[0]);
         exit(1);
       }
       else if(!strcmp(argv[i] + 1, "tol")) {

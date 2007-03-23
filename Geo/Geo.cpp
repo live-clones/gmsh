@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.86 2007-03-11 20:18:58 geuzaine Exp $
+// $Id: Geo.cpp,v 1.87 2007-03-23 08:44:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2323,7 +2323,7 @@ void ExtrudeShape(int extrude_type, int shape_type, int shape_num,
 		  double A0, double A1, double A2,
 		  double X0, double X1, double X2, double alpha,
 		  ExtrudeParams *e,
-		  List_T *out)
+		  List_T *list_out)
 {
   Shape shape;
   shape.Type = shape_type;
@@ -2335,35 +2335,36 @@ void ExtrudeShape(int extrude_type, int shape_type, int shape_num,
 		A0, A1, A2,
 		X0, X1, X2, alpha,
 		e,
-		out);
+		list_out);
   List_Delete(tmp);
 }
 
-void ExtrudeShapes(int type, List_T *in, 
+void ExtrudeShapes(int type, List_T *list_in, 
 		   double T0, double T1, double T2,
 		   double A0, double A1, double A2,
 		   double X0, double X1, double X2, double alpha,
 		   ExtrudeParams *e,
-		   List_T *out)
+		   List_T *list_out)
 {
-  Shape O, TheShape;
-  Curve *pc, *prc;
-  Surface *ps;
-  Volume *pv;
-      
-  for(int i = 0; i < List_Nbr(in); i++){
-    List_Read(in, i, &O);
-    switch(O.Type){
+  for(int i = 0; i < List_Nbr(list_in); i++){
+    Shape shape;
+    List_Read(list_in, i, &shape);
+    switch(shape.Type){
     case MSH_POINT:
-      TheShape.Num = Extrude_ProtudePoint(type, O.Num, T0, T1, T2,
-					  A0, A1, A2, X0, X1, X2, alpha,
-					  &pc, &prc, 1, e);
-      TheShape.Type = MSH_POINT;
-      List_Add(out, &TheShape);
-      if(pc){
-	TheShape.Num = pc->Num;
-	TheShape.Type = pc->Typ;
-	List_Add(out, &TheShape);
+      {
+	Curve *pc = 0, *prc = 0;
+	Shape top;
+	top.Num = Extrude_ProtudePoint(type, shape.Num, T0, T1, T2,
+				       A0, A1, A2, X0, X1, X2, alpha,
+				       &pc, &prc, 1, e);
+	top.Type = MSH_POINT;
+	List_Add(list_out, &top);
+	if(pc){
+	  Shape body;
+	  body.Num = pc->Num;
+	  body.Type = pc->Typ;
+	  List_Add(list_out, &body);
+	}
       }
       break;
     case MSH_SEGM_LINE:
@@ -2376,49 +2377,67 @@ void ExtrudeShapes(int type, List_T *in,
     case MSH_SEGM_ELLI_INV:
     case MSH_SEGM_NURBS:
     case MSH_SEGM_PARAMETRIC:
-      TheShape.Num = Extrude_ProtudeCurve(type, O.Num, T0, T1, T2,
-					  A0, A1, A2, X0, X1, X2, alpha,
-					  &ps, 1, e);
-      pc = FindCurve(TheShape.Num);
-      if(!pc){
-	//Msg(WARNING, "Unknown curve %d", TheShape.Num);
-	TheShape.Type = 0;
-      }
-      else{
-	TheShape.Type = pc->Typ;
-      }
-      List_Add(out, &TheShape);
-      if(ps){
-	TheShape.Num = ps->Num;
-	TheShape.Type = ps->Typ;
-	List_Add(out, &TheShape);
+      {
+	Surface *ps = 0;
+	Shape top;
+	top.Num = Extrude_ProtudeCurve(type, shape.Num, T0, T1, T2,
+				       A0, A1, A2, X0, X1, X2, alpha,
+				       &ps, 1, e);
+	Curve *pc = FindCurve(top.Num);
+	top.Type = pc ? pc->Typ : 0;
+	List_Add(list_out, &top);
+	if(ps){
+	  Shape body;
+	  body.Num = ps->Num;
+	  body.Type = ps->Typ;
+	  List_Add(list_out, &body);
+	  for(int j = 0; j < List_Nbr(ps->Generatrices); j++){
+	    Curve *c;
+	    List_Read(ps->Generatrices, j, &c);
+	    if(abs(c->Num) != shape.Num && abs(c->Num) != top.Num){
+	      Shape side;
+	      side.Num = c->Num;
+	      side.Type = c->Typ;
+	      List_Add(list_out, &side);
+	    }
+	  }
+	}
       }
       break;
     case MSH_SURF_REGL:
     case MSH_SURF_TRIC:
     case MSH_SURF_PLAN:
     case MSH_SURF_DISCRETE:
-      TheShape.Num = Extrude_ProtudeSurface(type, O.Num, T0, T1, T2,
-					    A0, A1, A2, X0, X1, X2, alpha,
-					    &pv, e);
-      ps = FindSurface(TheShape.Num);
-      if(!ps){
-	//Msg(WARNING, "Unknown surface %d", TheShape.Num);
-	TheShape.Type = 0;
-      }
-      else{
-	TheShape.Type = ps->Typ;
-      }
-      List_Add(out, &TheShape);
-      if(pv){
-	TheShape.Num = pv->Num;
-	TheShape.Type = pv->Typ;
-	List_Add(out, &TheShape);
+      {
+	Volume *pv = 0;
+	Shape top;
+	top.Num = Extrude_ProtudeSurface(type, shape.Num, T0, T1, T2,
+					 A0, A1, A2, X0, X1, X2, alpha,
+					 &pv, e);
+	Surface *ps = FindSurface(top.Num);
+	top.Type = ps ? ps->Typ : 0;
+	List_Add(list_out, &top);
+	if(pv){
+	  Shape body;
+	  body.Num = pv->Num;
+	  body.Type = pv->Typ;
+	  List_Add(list_out, &body);
+	  for(int j = 0; j < List_Nbr(pv->Surfaces); j++){
+	    Surface *s;
+	    List_Read(pv->Surfaces, j, &s);
+	    if(abs(s->Num) != shape.Num && abs(s->Num) != top.Num){
+	      Shape side;
+	      side.Num = s->Num;
+	      side.Type = s->Typ;
+	      List_Add(list_out, &side);
+	    }
+	  }
+	}
       }
       break;
     default:
-      Msg(GERROR, "Impossible to extrude entity %d (of type %d)", O.Num,
-          O.Type);
+      Msg(GERROR, "Impossible to extrude entity %d (of type %d)",
+	  shape.Num, shape.Type);
       break;
     }
   }
@@ -2628,7 +2647,6 @@ void ReplaceDuplicatePoints()
 
   Tree_Delete(allNonDuplicatedPoints);
   List_Delete(points2delete);
-
 }
 
 void ReplaceDuplicateCurves()

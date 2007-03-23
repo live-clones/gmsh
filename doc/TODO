@@ -1,4 +1,4 @@
-$Id: TODO,v 1.54 2007-03-13 09:25:50 geuzaine Exp $
+$Id: TODO,v 1.55 2007-03-23 08:44:41 geuzaine Exp $
 
 ********************************************************************
 
@@ -88,11 +88,6 @@ create Transfinite Volumes, or use the P3D output format)
 parse CORDxx entries in Nastran files to get coordinate system
 definitions and use them when reading GRID + parse GRIDxx for axisym
 points
-
-********************************************************************
-
-add "lateral" curves (for Extrude Line) and surfaces (for Extrude
-Surface) in the return list for extrusions
 
 ********************************************************************
 

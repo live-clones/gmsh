@@ -91,8 +91,8 @@ Don't popup dialog windows in scripts
 Parse option string at startup
 @item -option file
 Parse option file at startup
-@item -convert file file
-Convert views and meshes into latest file formats, then exit
+@item -convert files
+Convert files into latest binary formats, then exit
 @item -version
 Show version number
 @item -info
