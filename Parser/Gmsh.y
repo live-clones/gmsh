@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.268 2007-03-11 20:19:02 geuzaine Exp $
+// $Id: Gmsh.y,v 1.269 2007-03-24 12:42:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -111,7 +111,7 @@ int CheckViewErrorFlags(Post_View *v);
 %type <v> VExpr VExpr_Single
 %type <i> NumericAffectation NumericIncrement PhysicalId
 %type <u> ColorExpr
-%type <c> StringExpr SendToFile
+%type <c> StringExpr StringExprVar SendToFile
 %type <l> FExpr_Multi ListOfDouble RecursiveListOfDouble
 %type <l> RecursiveListOfListOfDouble 
 %type <l> ListOfColor RecursiveListOfColor 
@@ -187,7 +187,7 @@ Printf :
       Msg(DIRECT, $3);
       Free($3);
     }
-  | tPrintf '(' tBIGSTR ')' SendToFile StringExpr tEND
+  | tPrintf '(' tBIGSTR ')' SendToFile StringExprVar tEND
     {
       char tmpstring[1024];
       FixRelativePath($6, tmpstring);
@@ -215,7 +215,7 @@ Printf :
       Free($3);
       List_Delete($5);
     }
-  | tPrintf '(' tBIGSTR ',' RecursiveListOfDouble ')' SendToFile StringExpr tEND
+  | tPrintf '(' tBIGSTR ',' RecursiveListOfDouble ')' SendToFile StringExprVar tEND
     {
       char tmpstring[1024];
       int i = PrintListOfDouble($3, $5, tmpstring);
@@ -510,12 +510,12 @@ Element :
 ;
 
 Text2DValues :
-    StringExpr
+    StringExprVar
     { 
       for(int i = 0; i < (int)strlen($1)+1; i++) List_Add(View->T2C, &$1[i]); 
       Free($1);
     }
-  | Text2DValues ',' StringExpr
+  | Text2DValues ',' StringExprVar
     { 
       for(int i = 0; i < (int)strlen($3)+1; i++) List_Add(View->T2C, &$3[i]); 
       Free($3);
@@ -537,12 +537,12 @@ Text2D :
 ;
 
 Text3DValues :
-    StringExpr
+    StringExprVar
     { 
       for(int i = 0; i < (int)strlen($1)+1; i++) List_Add(View->T3C, &$1[i]); 
       Free($1);
     }
-  | Text3DValues ',' StringExpr
+  | Text3DValues ',' StringExprVar
     { 
       for(int i = 0; i < (int)strlen($3)+1; i++) List_Add(View->T3C, &$3[i]); 
       Free($3);
@@ -793,6 +793,11 @@ Affectation :
       Free($1);
     }
 
+  | tSTRING tAFFECT StringExpr tEND 
+    { 
+      Msg(WARNING, "Named string expressions not implemented yet");
+    }
+
   // Option Strings
 
   | tSTRING '.' tSTRING tAFFECT StringExpr tEND 
@@ -1013,7 +1018,7 @@ PhysicalId :
     { 
       $$ = (int)$1; 
     }
-  | StringExpr 
+  | StringExpr
     { 
       $$ = GMODEL->setPhysicalName(std::string($1), ++THEM->MaxPhysicalNum);
       Free($1);
@@ -1845,13 +1850,13 @@ Colorify :
 //  V I S I B I L I T Y
 
 Visibility :
-    tShow StringExpr tEND
+    tShow StringExprVar tEND
     {
       for(int i = 0; i < 4; i++)
 	VisibilityShape($2, i, 1);
       Free($2);
     }
-  | tHide StringExpr tEND
+  | tHide StringExprVar tEND
     {
       for(int i = 0; i < 4; i++)
 	VisibilityShape($2, i, 0);
@@ -1930,7 +1935,7 @@ Command :
       }
       Free($1); Free($2);
     } 
-  | tSTRING tSTRING '[' FExpr ']' StringExpr tEND
+  | tSTRING tSTRING '[' FExpr ']' StringExprVar tEND
     {
       if(!strcmp($1, "Save") && !strcmp($2, "View")){
 	Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, (int)$4);
@@ -3331,6 +3336,17 @@ RecursiveListOfColor :
     }
 ;
 
+StringExprVar :
+    StringExpr
+    {
+      $$ = $1;
+    }
+  | tSTRING
+    {
+      Msg(WARNING, "Named string expressions not implemented yet");
+    }
+;
+
 StringExpr :
     tBIGSTR
     {
@@ -3344,7 +3360,7 @@ StringExpr :
       strcpy($$, ctime(&now));
       $$[strlen($$) - 1] = '\0';
     }
-  | tStrCat '(' StringExpr ',' StringExpr ')'
+  | tStrCat '(' StringExprVar ',' StringExprVar ')'
     {
       $$ = (char *)Malloc((strlen($3)+strlen($5)+1)*sizeof(char));
       strcpy($$, $3);
@@ -3352,7 +3368,7 @@ StringExpr :
       Free($3);
       Free($5);
     }
-  | tStrPrefix '(' StringExpr ')'
+  | tStrPrefix '(' StringExprVar ')'
     {
       $$ = (char *)Malloc((strlen($3)+1)*sizeof(char));
       int i;
@@ -3366,7 +3382,7 @@ StringExpr :
       if(i <= 0) strcpy($$, $3);
       Free($3);
     }
-  | tStrRelative '(' StringExpr ')'
+  | tStrRelative '(' StringExprVar ')'
     {
       $$ = (char *)Malloc((strlen($3)+1)*sizeof(char));
       int i;
@@ -3380,11 +3396,11 @@ StringExpr :
 	strcpy($$, &$3[i+1]);
       Free($3);
     }
-  | tSprintf '(' StringExpr ')'
+  | tSprintf '(' StringExprVar ')'
     {
       $$ = $3;
     }
-  | tSprintf '(' StringExpr ',' RecursiveListOfDouble ')'
+  | tSprintf '(' StringExprVar ',' RecursiveListOfDouble ')'
     {
       char tmpstring[1024];
       int i = PrintListOfDouble($3, $5, tmpstring);
