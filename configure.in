@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.123 2007-03-18 12:10:32 geuzaine Exp $
+dnl $Id: configure.in,v 1.124 2007-03-29 16:34:21 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 dnl
@@ -145,9 +145,9 @@ case "$UNAME" in
       UNAME="${UNAME}-no-cygwin"
       CC="${CC} -mno-cygwin"
       CXX="${CXX} -mno-cygwin"
-      dnl increase stack size to 32Mb to avoid stack overflows in
+      dnl increase stack size to 16Mb to avoid stack overflows in
       dnl recursive tet classification for large 3D Delaunay grids
-      LINKER="${LINKER} -mno-cygwin -Wl,--stack,33554432"
+      LINKER="${LINKER} -mno-cygwin -Wl,--stack,16777216"
     fi
     ;;
 esac
