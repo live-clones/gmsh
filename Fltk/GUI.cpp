@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.602 2007-03-18 12:05:16 geuzaine Exp $
+// $Id: GUI.cpp,v 1.603 2007-03-29 16:32:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2255,7 +2255,9 @@ void GUI::create_option_window()
 
       mesh_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Element order");
       mesh_value[3]->minimum(1);
-      mesh_value[3]->maximum(5);
+      // FIXME: this makes it possible to set > 2 by hand, but not by
+      // dragging (>2 is too buggy for general use)
+      mesh_value[3]->maximum(2);
       mesh_value[3]->step(1);
       mesh_value[3]->align(FL_ALIGN_RIGHT);
       mesh_value[3]->callback(mesh_options_ok_cb);

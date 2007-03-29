@@ -1,21 +1,20 @@
 
-How to build OpenCascade 6.1 for Gmsh:
+How to build OpenCascade 6.2 for Gmsh:
 
-- get the linux distribution of occ
+- get the linux (source) distribution of occ
 
-- uncompress and apply patches (see below)
+- if you're using Cygwin/Mingw32 (Windows) define
 
-- go to the ros/ subdir and 
+  export CC="gcc -mno-cygwin -DWNT=1 -DWIN32 -DHAVE_NO_DLL"
+  export CXX="g++ -mno-cygwin -DWNT=1 -DWIN32 -DHAVE_NO_DLL"
 
-    ./configure --prefix=/usr/local/opencascade --enable-debug=no 
-        --enable-production=yes --enable-static=yes --enable-shared=no
+- go to the ros/ directory and type
 
-  (adding '--disable-dependency-tracking' will speeds things up for 
-   one-time builds)
+  ./configure --prefix=/usr/local/opencascade --enable-debug=no 
+    --enable-production=yes --enable-static=yes --enable-shared=no
+    --disable-dependency-tracking
 
-- then do
-
-    cd adm/make;
+- then go to the adm/make/ directory and run
 
     for lib in TKernel TKMath TKAdvTools TKG2d TKG3d TKGeomBase TKBRep 
       TKGeomAlgo TKTopAlgo TKPrim TKBO TKHLR TKMesh TKShHealing TKBool 
@@ -40,41 +39,6 @@ How to build OpenCascade 6.1 for Gmsh:
         cd $lib && make install; cd ..;
     done
 
-    (This is the same as a partial 'make install')
+    and copy config.h and inc/ to /usr/local/opencascade (This is the 
+    same as a doing a partial 'make install')
 
-*************************************************************************
-
-MINGW: 
-
-1) export CC="gcc -mno-cygwin -DWNT=1 -DWIN32"
-   export CXX="g++ -mno-cygwin -DWNT=1 -DWIN32"
-
-2) fix all OSD_* routines that throw MSVC-specific exceptions (__try,
-   __leave, __finally) using #defines
-
-3) remove ALL the dllimport/dllexport stuff
-
-4) add __MINGW32__ case in OSD/OSD_Path.cxx (to avoid call to uname())
-
-*************************************************************************
-
-APPLE: 
-
-1) guard all #include<malloc.h> with #ifdef HAVE_MALLOC_H
-
-2) add __APPLE__ case in OSD/OSD_Path.cxx (to avoid call to uname())
-
-3) IMPORTANT (mmap crashes): add this in Standard/Standard.cxx
-
-#if defined(__APPLE__)
-  bMMap       = atoi("0");
-#else
-  bMMap       = atoi((var = getenv("MMGT_MMAP"     )) ? var : "1"    ); 
-#endif
-
-*************************************************************************
-
-The above patches have been submitted to the OCC folks. Hopefully they
-will be integrated in their next release.
-
-PS: to strip static libaries of debug symbols, use "strip -S *.a"
