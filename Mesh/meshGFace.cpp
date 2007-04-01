@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.68 2007-03-16 10:03:40 remacle Exp $
+// $Id: meshGFace.cpp,v 1.69 2007-04-01 10:29:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1311,7 +1311,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
 	  BDS_Edge * e = m->recover_edge ( edgeLoop_BDS[j]->iD,edgeLoop_BDS[(j+1)%edgeLoop_BDS.size()]->iD);	  
 	  if (!e)
 	    {
-	      Msg(GERROR,"impossible to recover the edge %d %d\n",edgeLoop_BDS[j]->iD,edgeLoop_BDS[(j+1)%edgeLoop_BDS.size()]->iD);
+	      Msg(GERROR,"impossible to recover the edge %d %d",edgeLoop_BDS[j]->iD,edgeLoop_BDS[(j+1)%edgeLoop_BDS.size()]->iD);
 	      SCALINGU = SCALINGV = 1;
 	      return false;
 	    }

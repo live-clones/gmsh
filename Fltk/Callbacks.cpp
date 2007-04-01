@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.519 2007-03-18 12:05:16 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.520 2007-04-01 10:29:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4215,8 +4215,10 @@ void solver_choose_executable_cb(CALLBACK_ARGS)
 #else
                   "*"
 #endif
-                  ))
+                  )){
     WID->solver[num].input[2]->value(file_chooser_get_name(1));
+    solver_ok_cb(w, data);
+  }
 }
 
 void solver_ok_cb(CALLBACK_ARGS)
@@ -4225,11 +4227,9 @@ void solver_ok_cb(CALLBACK_ARGS)
   opt_solver_popup_messages(num, GMSH_SET, WID->solver[num].butt[0]->value());
   opt_solver_merge_views(num, GMSH_SET, WID->solver[num].butt[1]->value());
   opt_solver_client_server(num, GMSH_SET, WID->solver[num].butt[2]->value());
-  if(strcmp(opt_solver_executable(num, GMSH_GET, NULL),
-            WID->solver[num].input[2]->value()))
+  if(strcmp(opt_solver_executable(num, GMSH_GET, NULL), WID->solver[num].input[2]->value()))
     retry = 1;
-  opt_solver_executable(num, GMSH_SET,
-                        (char *)WID->solver[num].input[2]->value());
+  opt_solver_executable(num, GMSH_SET, (char *)WID->solver[num].input[2]->value());
   if(retry)
     solver_cb(NULL, data);
 }
