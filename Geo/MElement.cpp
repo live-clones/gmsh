@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.33 2007-03-16 10:03:40 remacle Exp $
+// $Id: MElement.cpp,v 1.34 2007-04-02 08:52:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -152,7 +152,7 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
 
 void MElement::writePOS(FILE *fp, double scalingFactor, int elementary)
 {
-  char *str = getStringForPOS();
+  const char *str = getStringForPOS();
   if(!str) return;
 
   int n = getNumVertices();
@@ -278,7 +278,7 @@ void MElement::writeMESH(FILE *fp, int elementary)
 
 void MElement::writeBDF(FILE *fp, int format, int elementary)
 {
-  char *str = getStringForBDF();
+  const char *str = getStringForBDF();
   if(!str) return;
 
   setVolumePositive();

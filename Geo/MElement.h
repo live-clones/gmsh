@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <algorithm>
+#include <string>
 #include "GmshDefines.h"
 #include "MVertex.h"
 #include "MEdge.h"
@@ -148,8 +149,8 @@ class MElement
   // info for specific IO formats
   virtual int getTypeForMSH() = 0;
   virtual int getTypeForUNV() = 0;
-  virtual char *getStringForPOS() = 0;
-  virtual char *getStringForBDF() = 0;
+  virtual const char *getStringForPOS() = 0;
+  virtual const char *getStringForBDF() = 0;
 };
 
 class MElementLessThanLexicographic{
@@ -192,8 +193,8 @@ class MLine : public MElement {
   virtual MFace getFace(int num){ throw; }
   virtual int getTypeForMSH(){ return MSH_LIN_2; }
   virtual int getTypeForUNV(){ return 21; } // linear beam
-  virtual char *getStringForPOS(){ return "SL"; }
-  virtual char *getStringForBDF(){ return "CBAR"; }
+  virtual const char *getStringForPOS(){ return "SL"; }
+  virtual const char *getStringForBDF(){ return "CBAR"; }
   virtual void revert() 
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
@@ -236,8 +237,8 @@ class MLine3 : public MLine {
   }
   virtual int getTypeForMSH(){ return MSH_LIN_3; }
   virtual int getTypeForUNV(){ return 24; } // parabolic beam
-  virtual char *getStringForPOS(){ return "SL2"; }
-  virtual char *getStringForBDF(){ return 0; } // not available
+  virtual const char *getStringForPOS(){ return "SL2"; }
+  virtual const char *getStringForBDF(){ return 0; } // not available
 };
 
 class MLineN : public MLine {
@@ -281,8 +282,8 @@ class MLineN : public MLine {
     throw;
   }
   virtual int getTypeForUNV(){ throw; } // not available
-  virtual char *getStringForPOS(){ return 0; } // not available
-  virtual char *getStringForBDF(){ return 0; } // not available
+  virtual const char *getStringForPOS(){ return 0; } // not available
+  virtual const char *getStringForBDF(){ return 0; } // not available
 };
 
 class MTriangle : public MElement {
@@ -337,8 +338,8 @@ class MTriangle : public MElement {
   }
   virtual int getTypeForMSH(){ return MSH_TRI_3; }
   virtual int getTypeForUNV(){ return 91; } // thin shell linear triangle
-  virtual char *getStringForPOS(){ return "ST"; }
-  virtual char *getStringForBDF(){ return "CTRIA3"; }
+  virtual const char *getStringForPOS(){ return "ST"; }
+  virtual const char *getStringForBDF(){ return "CTRIA3"; }
   virtual void revert() 
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
@@ -395,8 +396,8 @@ class MTriangle6 : public MTriangle {
   }
   virtual int getTypeForMSH(){ return MSH_TRI_6; }
   virtual int getTypeForUNV(){ return 92; } // thin shell parabolic triangle
-  virtual char *getStringForPOS(){ return "ST2"; }
-  virtual char *getStringForBDF(){ return "CTRIA6"; }
+  virtual const char *getStringForPOS(){ return "ST2"; }
+  virtual const char *getStringForBDF(){ return "CTRIA6"; }
   virtual void revert() 
   {
     MVertex *tmp;
@@ -457,8 +458,8 @@ class MTriangleN : public MTriangle {
     throw;
   }
   virtual int getTypeForUNV(){ throw; } // thin shell parabolic triangle
-  virtual char *getStringForPOS(){ return 0; }
-  virtual char *getStringForBDF(){ return 0; }
+  virtual const char *getStringForPOS(){ return 0; }
+  virtual const char *getStringForBDF(){ return 0; }
   virtual void revert() 
   {
     MVertex *tmp;
@@ -543,8 +544,8 @@ class MQuadrangle : public MElement {
   virtual MFace getFace(int num){ return MFace(_v[0], _v[1], _v[2], _v[3]); }
   virtual int getTypeForMSH(){ return MSH_QUA_4; }
   virtual int getTypeForUNV(){ return 94; } // thin shell linear quadrilateral
-  virtual char *getStringForPOS(){ return "SQ"; }
-  virtual char *getStringForBDF(){ return "CQUAD4"; }
+  virtual const char *getStringForPOS(){ return "SQ"; }
+  virtual const char *getStringForBDF(){ return "CQUAD4"; }
   virtual void revert() 
   {
     MVertex *tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
@@ -601,8 +602,8 @@ class MQuadrangle8 : public MQuadrangle {
   }
   virtual int getTypeForMSH(){ return MSH_QUA_8; }
   virtual int getTypeForUNV(){ return 95; } // shell parabolic quadrilateral
-  virtual char *getStringForPOS(){ return 0; } // not available
-  virtual char *getStringForBDF(){ return "CQUAD8"; }
+  virtual const char *getStringForPOS(){ return 0; } // not available
+  virtual const char *getStringForBDF(){ return "CQUAD8"; }
   virtual void revert() 
   {
     MVertex *tmp;
@@ -659,8 +660,8 @@ class MQuadrangle9 : public MQuadrangle {
   }
   virtual int getTypeForMSH(){ return MSH_QUA_9; }
   virtual int getTypeForUNV(){ return 0; } // not available
-  virtual char *getStringForPOS(){ return "SQ2"; }
-  virtual char *getStringForBDF(){ return 0; } // not available
+  virtual const char *getStringForPOS(){ return "SQ2"; }
+  virtual const char *getStringForBDF(){ return 0; } // not available
   virtual void revert() 
   {
     MVertex *tmp;
@@ -716,8 +717,8 @@ class MTetrahedron : public MElement {
   }
   virtual int getTypeForMSH(){ return MSH_TET_4; }
   virtual int getTypeForUNV(){ return 111; } // solid linear tetrahedron
-  virtual char *getStringForPOS(){ return "SS"; }
-  virtual char *getStringForBDF(){ return "CTETRA"; }
+  virtual const char *getStringForPOS(){ return "SS"; }
+  virtual const char *getStringForBDF(){ return "CTETRA"; }
   virtual void revert()
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
@@ -850,8 +851,8 @@ class MTetrahedron10 : public MTetrahedron {
   }
   virtual int getTypeForMSH(){ return MSH_TET_10; }
   virtual int getTypeForUNV(){ return 118; } // solid parabolic tetrahedron
-  virtual char *getStringForPOS(){ return "SS2"; }
-  virtual char *getStringForBDF(){ return "CTETRA"; }
+  virtual const char *getStringForPOS(){ return "SS2"; }
+  virtual const char *getStringForBDF(){ return "CTETRA"; }
   virtual void revert()
   {
     MVertex *tmp;
@@ -918,8 +919,8 @@ class MHexahedron : public MElement {
   }
   virtual int getTypeForMSH(){ return MSH_HEX_8; }
   virtual int getTypeForUNV(){ return 115; } // solid linear brick
-  virtual char *getStringForPOS(){ return "SH"; }
-  virtual char *getStringForBDF(){ return "CHEXA"; }
+  virtual const char *getStringForPOS(){ return "SH"; }
+  virtual const char *getStringForBDF(){ return "CHEXA"; }
   virtual void revert()
   {
     MVertex *tmp;
@@ -1017,8 +1018,8 @@ class MHexahedron20 : public MHexahedron {
   }
   virtual int getTypeForMSH(){ return MSH_HEX_20; }
   virtual int getTypeForUNV(){ return 116; } // solid parabolic brick
-  virtual char *getStringForPOS(){ return 0; } // not available
-  virtual char *getStringForBDF(){ return "CHEXA"; }
+  virtual const char *getStringForPOS(){ return 0; } // not available
+  virtual const char *getStringForBDF(){ return "CHEXA"; }
   virtual void revert()
   {
     MVertex *tmp;
@@ -1106,8 +1107,8 @@ class MHexahedron27 : public MHexahedron {
   }
   virtual int getTypeForMSH(){ return MSH_HEX_27; }
   virtual int getTypeForUNV(){ return 0; } // not available
-  virtual char *getStringForPOS(){ return "SH2"; }
-  virtual char *getStringForBDF(){ return 0; } // not available
+  virtual const char *getStringForPOS(){ return "SH2"; }
+  virtual const char *getStringForBDF(){ return 0; } // not available
   virtual void revert()
   {
     MVertex *tmp;
@@ -1182,8 +1183,8 @@ class MPrism : public MElement {
   }
   virtual int getTypeForMSH(){ return MSH_PRI_6; }
   virtual int getTypeForUNV(){ return 112; } // solid linear wedge
-  virtual char *getStringForPOS(){ return "SI"; }
-  virtual char *getStringForBDF(){ return "CPENTA"; }
+  virtual const char *getStringForPOS(){ return "SI"; }
+  virtual const char *getStringForBDF(){ return "CPENTA"; }
   virtual void revert()
   {
     MVertex *tmp;
@@ -1273,8 +1274,8 @@ class MPrism15 : public MPrism {
   }
   virtual int getTypeForMSH(){ return MSH_PRI_15; }
   virtual int getTypeForUNV(){ return 113; } // solid parabolic wedge
-  virtual char *getStringForPOS(){ return 0; } // not available
-  virtual char *getStringForBDF(){ return "CPENTA"; }
+  virtual const char *getStringForPOS(){ return 0; } // not available
+  virtual const char *getStringForBDF(){ return "CPENTA"; }
   virtual void revert()
   {
     MVertex *tmp;
@@ -1348,8 +1349,8 @@ class MPrism18 : public MPrism {
   }
   virtual int getTypeForMSH(){ return MSH_PRI_18; }
   virtual int getTypeForUNV(){ return 0; } // not available
-  virtual char *getStringForPOS(){ return "SI2"; }
-  virtual char *getStringForBDF(){ return 0; } // not available
+  virtual const char *getStringForPOS(){ return "SI2"; }
+  virtual const char *getStringForBDF(){ return 0; } // not available
   virtual void revert()
   {
     MVertex *tmp;
@@ -1413,8 +1414,8 @@ class MPyramid : public MElement {
   }
   virtual int getTypeForMSH(){ return MSH_PYR_5; }
   virtual int getTypeForUNV(){ return 0; } // not available
-  virtual char *getStringForPOS(){ return "SY"; }
-  virtual char *getStringForBDF(){ return "CPYRAM"; }
+  virtual const char *getStringForPOS(){ return "SY"; }
+  virtual const char *getStringForBDF(){ return "CPYRAM"; }
   virtual void revert()
   {
     MVertex *tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
@@ -1490,8 +1491,8 @@ class MPyramid13 : public MPyramid {
   }
   virtual int getTypeForMSH(){ return MSH_PYR_13; }
   virtual int getTypeForUNV(){ return 0; } // not available
-  virtual char *getStringForPOS(){ return 0; } // not available
-  virtual char *getStringForBDF(){ return 0; } // not available
+  virtual const char *getStringForPOS(){ return 0; } // not available
+  virtual const char *getStringForBDF(){ return 0; } // not available
   virtual void revert()
   {
     MVertex *tmp;
@@ -1560,8 +1561,8 @@ class MPyramid14 : public MPyramid {
   }
   virtual int getTypeForMSH(){ return MSH_PYR_14; }
   virtual int getTypeForUNV(){ return 0; } // not available
-  virtual char *getStringForPOS(){ return "SY2"; }
-  virtual char *getStringForBDF(){ return 0; } // not available
+  virtual const char *getStringForPOS(){ return "SY2"; }
+  virtual const char *getStringForBDF(){ return 0; } // not available
   virtual void revert()
   {
     MVertex *tmp;

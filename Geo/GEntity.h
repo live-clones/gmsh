@@ -93,7 +93,7 @@ class GEntity {
   // Returns a string describing the entity type
   virtual std::string getTypeString()
   {
-    char *name[] = {
+    const char *name[] = {
       "Unknown",
       "Point",
       "Boundary layer point",
