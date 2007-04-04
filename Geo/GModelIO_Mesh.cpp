@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.12 2007-03-18 12:05:16 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.13 2007-04-04 12:18:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1233,10 +1233,14 @@ int GModel::readUNV(const std::string &name)
 		    &color, &numNodes) != 6) break;
 	  if(elementary < 0) elementary = 1;
 	  if(physical < 0) physical = 0;
-	  if(type >= 21 && type <= 24){ // beam elements
+	  switch(type){
+	  case 11: case 21: case 22: case 31:
+	  case 23: case 24: case 32:
+	    // beam elements
 	    if(!fgets(buffer, sizeof(buffer), fp)) break;
 	    int dum;
 	    if(sscanf(buffer, "%d %d %d", &dum, &dum, &dum) != 3) break;
+	    break;
 	  }
 	  int n[30];
 	  for(int i = 0; i < numNodes; i++) if(!fscanf(fp, "%d", &n[i])) return 0;
