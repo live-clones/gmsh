@@ -792,6 +792,8 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "CirclePoints" , opt_geometry_circle_points, 20. ,
     "Number of points used to draw a circle/ellipse" },
 
+  { F|O, "ExtrudeReturnLateralEntities" , opt_geometry_extrude_return_lateral, 1. ,
+    "Add lateral entities in lists returned by extrusion commands?" },
   { F|O, "ExtrudeSplinePoints" , opt_geometry_extrude_spline_points, 5. ,
     "Number of control points for splines created during extrusion" },
 

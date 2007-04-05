@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.87 2007-03-23 08:44:41 geuzaine Exp $
+// $Id: Geo.cpp,v 1.88 2007-04-05 12:51:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2391,14 +2391,16 @@ void ExtrudeShapes(int type, List_T *list_in,
 	  body.Num = ps->Num;
 	  body.Type = ps->Typ;
 	  List_Add(list_out, &body);
-	  for(int j = 0; j < List_Nbr(ps->Generatrices); j++){
-	    Curve *c;
-	    List_Read(ps->Generatrices, j, &c);
-	    if(abs(c->Num) != shape.Num && abs(c->Num) != top.Num){
-	      Shape side;
-	      side.Num = c->Num;
-	      side.Type = c->Typ;
-	      List_Add(list_out, &side);
+	  if(CTX.geom.extrude_return_lateral){
+	    for(int j = 0; j < List_Nbr(ps->Generatrices); j++){
+	      Curve *c;
+	      List_Read(ps->Generatrices, j, &c);
+	      if(abs(c->Num) != shape.Num && abs(c->Num) != top.Num){
+		Shape side;
+		side.Num = c->Num;
+		side.Type = c->Typ;
+		List_Add(list_out, &side);
+	      }
 	    }
 	  }
 	}
@@ -2422,14 +2424,16 @@ void ExtrudeShapes(int type, List_T *list_in,
 	  body.Num = pv->Num;
 	  body.Type = pv->Typ;
 	  List_Add(list_out, &body);
-	  for(int j = 0; j < List_Nbr(pv->Surfaces); j++){
-	    Surface *s;
-	    List_Read(pv->Surfaces, j, &s);
-	    if(abs(s->Num) != shape.Num && abs(s->Num) != top.Num){
-	      Shape side;
-	      side.Num = s->Num;
-	      side.Type = s->Typ;
-	      List_Add(list_out, &side);
+	  if(CTX.geom.extrude_return_lateral){
+	    for(int j = 0; j < List_Nbr(pv->Surfaces); j++){
+	      Surface *s;
+	      List_Read(pv->Surfaces, j, &s);
+	      if(abs(s->Num) != shape.Num && abs(s->Num) != top.Num){
+		Shape side;
+		side.Num = s->Num;
+		side.Type = s->Typ;
+		List_Add(list_out, &side);
+	      }
 	    }
 	  }
 	}

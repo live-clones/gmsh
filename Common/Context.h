@@ -147,7 +147,7 @@ public :
     int point_type, line_type; // flat or 3D
     int draw, light;
     int old_circle, circle_points;
-    int extrude_spline_points, old_newreg;
+    int extrude_spline_points, extrude_return_lateral, old_newreg;
     double normals, tangents;
     double scaling_factor;
     int auto_coherence, highlight_orphans;

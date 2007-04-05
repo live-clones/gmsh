@@ -14,6 +14,11 @@ Number of points used to draw a circle/ellipse@*
 Default value: @code{20}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.ExtrudeReturnLateralEntities
+Add lateral entities in lists returned by extrusion commands?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.ExtrudeSplinePoints
 Number of control points for splines created during extrusion@*
 Default value: @code{5}@*

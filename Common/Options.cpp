@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.338 2007-03-18 12:05:16 geuzaine Exp $
+// $Id: Options.cpp,v 1.339 2007-04-05 12:51:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4081,6 +4081,13 @@ double opt_geometry_extrude_spline_points(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.geom.extrude_spline_points = (int)val;
   return CTX.geom.extrude_spline_points;
+}
+
+double opt_geometry_extrude_return_lateral(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.geom.extrude_return_lateral = (int)val;
+  return CTX.geom.extrude_return_lateral;
 }
 
 double opt_geometry_scaling_factor(OPT_ARGS_NUM)
