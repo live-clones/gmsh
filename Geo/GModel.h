@@ -98,6 +98,9 @@ class GModel
   void remove(GEdge *e) { edges.erase(std::find(firstEdge(), lastEdge(), e)); }
   void remove(GVertex *v) { vertices.erase(std::find(firstVertex(), lastVertex(), v)); }
 
+  // loop over all vertices connected to elements and associate geo entity
+  void associateEntityWithVertices();
+
   // Renumber all the mesh vertices in a continuous sequence
   int renumberMeshVertices();
 

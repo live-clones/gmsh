@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.36 2007-03-18 23:02:26 geuzaine Exp $
+// $Id: GModel.cpp,v 1.37 2007-04-08 23:06:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -121,9 +121,38 @@ void GModel::removeInvisibleElements()
     removeInvisible((*it)->lines, all);
     if((*it)->meshRep) (*it)->meshRep->destroy();
   }
+}
 
-  // FIXME: loop over all mesh vertices in edges, faces and regions
-  // and remove all unused (nonconnected) vertices
+template<class T>
+static void associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &elements)
+{
+  for(unsigned int i = 0; i < elements.size(); i++)
+    for(int j = 0; j < elements[i]->getNumVertices(); j++)
+      elements[i]->getVertex(j)->setEntity(ge);
+}
+
+void GModel::associateEntityWithVertices()
+{
+  // loop on regions, then on faces, edges and vertices and store the
+  // entity pointer in the the elements' vertices (this way we
+  // associate the entity of lowest geometrical degree with each
+  // vertex)
+  for(riter it = firstRegion(); it != lastRegion(); ++it){
+    associateEntityWithElementVertices(*it, (*it)->tetrahedra);
+    associateEntityWithElementVertices(*it, (*it)->hexahedra);
+    associateEntityWithElementVertices(*it, (*it)->prisms);
+    associateEntityWithElementVertices(*it, (*it)->pyramids);
+  }
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+    associateEntityWithElementVertices(*it, (*it)->triangles);
+    associateEntityWithElementVertices(*it, (*it)->quadrangles);
+  }
+  for(eiter it = firstEdge(); it != lastEdge(); ++it){
+    associateEntityWithElementVertices(*it, (*it)->lines);
+  }
+  for(viter it = firstVertex(); it != lastVertex(); ++it){
+    (*it)->mesh_vertices[0]->setEntity(*it);
+  }
 }
 
 int GModel::renumberMeshVertices()

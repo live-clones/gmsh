@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.13 2007-04-04 12:18:54 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.14 2007-04-08 23:06:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -92,38 +92,6 @@ static void storeElementsInEntities(GModel *m,
       }
       break;
     }
-  }
-}
-
-template<class T>
-static void associateEntityWithVertices(GEntity *ge, std::vector<T*> &elements)
-{
-  for(unsigned int i = 0; i < elements.size(); i++)
-    for(int j = 0; j < elements[i]->getNumVertices(); j++)
-      elements[i]->getVertex(j)->setEntity(ge);
-}
-
-static void associateEntityWithVertices(GModel *m)
-{
-  // loop on regions, then on faces, edges and vertices and store the
-  // entity pointer in the the elements' vertices (this way we
-  // associate the entity of lowest geometrical degree with each
-  // vertex)
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
-    associateEntityWithVertices(*it, (*it)->tetrahedra);
-    associateEntityWithVertices(*it, (*it)->hexahedra);
-    associateEntityWithVertices(*it, (*it)->prisms);
-    associateEntityWithVertices(*it, (*it)->pyramids);
-  }
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
-    associateEntityWithVertices(*it, (*it)->triangles);
-    associateEntityWithVertices(*it, (*it)->quadrangles);
-  }
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
-    associateEntityWithVertices(*it, (*it)->lines);
-  }
-  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it){
-    (*it)->mesh_vertices[0]->setEntity(*it);
   }
 }
 
@@ -517,7 +485,7 @@ int GModel::readMSH(const std::string &name)
   }
 
   // associate the correct geometrical entity with each mesh vertex
-  associateEntityWithVertices(this);
+  associateEntityWithVertices();
 
   // special case for geometry vertices: now that the correct
   // geometrical entity has been associated with the vertices, we
@@ -1125,7 +1093,7 @@ int GModel::readVRML(const std::string &name)
 
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
     storeElementsInEntities(this, elements[i]);
-  associateEntityWithVertices(this);
+  associateEntityWithVertices();
   storeVerticesInEntities(allVertexVector);
 
   fclose(fp);
@@ -1328,7 +1296,7 @@ int GModel::readUNV(const std::string &name)
   
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
     storeElementsInEntities(this, elements[i]);
-  associateEntityWithVertices(this);
+  associateEntityWithVertices();
   storeVerticesInEntities(vertexMap);
   for(int i = 0; i < 4; i++)  
     storePhysicalTagsInEntities(this, i, physicals[i]);
@@ -1494,7 +1462,7 @@ int GModel::readMESH(const std::string &name)
 
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
     storeElementsInEntities(this, elements[i]);
-  associateEntityWithVertices(this);
+  associateEntityWithVertices();
   storeVerticesInEntities(vertexVector);
 
   fclose(fp);
@@ -1831,7 +1799,7 @@ int GModel::readBDF(const std::string &name)
   
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
     storeElementsInEntities(this, elements[i]);
-  associateEntityWithVertices(this);
+  associateEntityWithVertices();
   storeVerticesInEntities(vertexMap);
 
   fclose(fp);

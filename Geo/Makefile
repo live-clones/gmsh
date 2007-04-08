@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.139 2007-03-02 09:20:21 remacle Exp $
+# $Id: Makefile,v 1.140 2007-04-08 23:06:53 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -43,9 +43,7 @@ SRC = GEntity.cpp\
 	GeoStringInterface.cpp GeoInterpolation.cpp\
       findLinks.cpp\
       MVertex.cpp \
-      MElement.cpp \
-      SVector3.cpp\
-      SBoundingBox3d.cpp
+      MElement.cpp
 
 OBJ = ${SRC:.cpp=.o}
 
@@ -267,5 +265,3 @@ MElement.o: MElement.cpp MElement.h ../Common/GmshDefines.h MVertex.h \
   SPoint3.h MEdge.h SVector3.h ../Common/Hash.h MFace.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h GEntity.h \
   Range.h SBoundingBox3d.h ../Common/Message.h
-SVector3.o: SVector3.cpp SVector3.h SPoint3.h
-SBoundingBox3d.o: SBoundingBox3d.cpp SBoundingBox3d.h SPoint3.h
