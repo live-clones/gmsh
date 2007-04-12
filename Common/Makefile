@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.127 2007-04-12 08:47:24 remacle Exp $
+# $Id: Makefile,v 1.128 2007-04-12 12:21:17 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -64,3 +64,93 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
+Context.o: Context.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Context.h \
+  DefaultOptions.h GmshDefines.h Options.h Views.h ColorTable.h \
+  VertexArray.h SmoothData.h AdaptiveViews.h GmshMatrix.h Trackball.h
+AdaptiveViews.o: AdaptiveViews.cpp AdaptiveViews.h ../DataStr/List.h \
+  GmshMatrix.h ../Plugin/Plugin.h ../Common/Options.h ../Common/Message.h \
+  ../Common/Views.h ../Common/ColorTable.h ../Common/VertexArray.h \
+  ../Common/SmoothData.h ../Numeric/Numeric.h ../Common/AdaptiveViews.h \
+  ../Common/GmshMatrix.h OS.h
+Views.o: Views.cpp Gmsh.h Message.h ../DataStr/Malloc.h ../DataStr/List.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \
+  ../DataStr/Tree.h ../Numeric/Numeric.h Views.h ColorTable.h \
+  VertexArray.h SmoothData.h AdaptiveViews.h GmshMatrix.h Context.h \
+  Options.h
+ViewsIO.o: ViewsIO.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h Views.h \
+  ColorTable.h VertexArray.h SmoothData.h AdaptiveViews.h GmshMatrix.h \
+  Context.h
+Octree.o: Octree.cpp Octree.h OctreeInternals.h
+OctreeInternals.o: OctreeInternals.cpp Message.h OctreeInternals.h
+OctreePost.o: OctreePost.cpp Octree.h OctreeInternals.h OctreePost.h \
+  ../DataStr/List.h Views.h ColorTable.h VertexArray.h SmoothData.h \
+  ../Numeric/Numeric.h AdaptiveViews.h GmshMatrix.h Message.h \
+  ShapeFunctions.h
+Options.o: Options.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../DataStr/List.h ../DataStr/Tree.h GmshUI.h GmshDefines.h \
+  ../Graphics/Draw.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/VertexArray.h ../Common/SmoothData.h ../Numeric/Numeric.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Mesh/Generator.h \
+  Context.h Options.h ../Mesh/BackgroundMesh.h ../Plugin/PluginManager.h \
+  ../Plugin/Plugin.h ../Common/Options.h ../Common/Message.h \
+  ../Fltk/Solvers.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
+  ../Fltk/Colorbar_Window.h ../Common/GmshUI.h ../Fltk/Popup_Button.h \
+  ../Fltk/SpherePosition_Widget.h
+CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../DataStr/List.h ../DataStr/Tree.h GmshUI.h GmshDefines.h \
+  GmshVersion.h CommandLine.h ../Numeric/Numeric.h Context.h Options.h \
+  ../Geo/Geo.h ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
+  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
+  ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h Views.h \
+  ColorTable.h VertexArray.h SmoothData.h AdaptiveViews.h GmshMatrix.h \
+  ../Parser/OpenFile.h ../Parser/CreateFile.h ../Parser/Parser.h \
+  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/MVertex.h \
+  ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h ../Geo/MEdge.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Hash.h ../Geo/MFace.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Context.h \
+  ../Geo/ExtrudeParams.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
+  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GRegion.h \
+  ../Geo/GEntity.h ../Geo/MElement.h ../Geo/ExtrudeParams.h \
+  ../Geo/SBoundingBox3d.h OS.h
+OS.o: OS.cpp Message.h
+ColorTable.o: ColorTable.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../DataStr/List.h ../DataStr/Tree.h ColorTable.h Context.h \
+  ../Numeric/Numeric.h
+Visibility.o: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
+  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h \
+  ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h \
+  ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
+  ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Geo/GFace.h \
+  ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
+  ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/ExtrudeParams.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/MElement.h ../Geo/ExtrudeParams.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h \
+  ../Geo/SBoundingBox3d.h ../Parser/Parser.h ../DataStr/Tree.h \
+  ../DataStr/avl.h
+Trackball.o: Trackball.cpp Trackball.h
+VertexArray.o: VertexArray.cpp VertexArray.h Context.h ../DataStr/List.h \
+  ../Numeric/Numeric.h
+SmoothData.o: SmoothData.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../Numeric/Numeric.h SmoothData.h
+License.o: License.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
+  ../DataStr/List.h ../DataStr/Tree.h

@@ -271,8 +271,8 @@ class Adaptive_Post_View
   double presentTol;
   Double_Matrix * _eexps;
   Double_Matrix * _coefs;
-  Double_Matrix * _eexpsGeom;
   Double_Matrix * _coefsGeom;
+  Double_Matrix * _eexpsGeom;
   Double_Matrix * _STposX;
   Double_Matrix * _STposY;
   Double_Matrix * _STposZ;
