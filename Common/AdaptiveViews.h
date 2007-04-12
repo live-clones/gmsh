@@ -271,6 +271,8 @@ class Adaptive_Post_View
   double presentTol;
   Double_Matrix * _eexps;
   Double_Matrix * _coefs;
+  Double_Matrix * _eexpsGeom;
+  Double_Matrix * _coefsGeom;
   Double_Matrix * _STposX;
   Double_Matrix * _STposY;
   Double_Matrix * _STposZ;
@@ -282,7 +284,7 @@ class Adaptive_Post_View
   Double_Matrix * _Interpolate;
   Double_Matrix * _Geometry;
 public:
-  Adaptive_Post_View (Post_View *view, List_T *_coeffs, List_T *_eexps);
+  Adaptive_Post_View (Post_View *view, List_T *_coeffs, List_T *_eexps, List_T *_coeffsGeom=0, List_T *_eexpsGeom=0);
   ~Adaptive_Post_View ();
   int getGlobalResolutionLevel () const { return presentZoomLevel; }
   void setGlobalResolutionLevel (Post_View * view, int level)

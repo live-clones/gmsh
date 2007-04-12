@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.11 2007-03-18 12:05:16 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.12 2007-04-12 08:47:25 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -784,9 +784,8 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   if(CTX.mesh.smooth_internal_edges){
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
       for (int i = 0; i < 10; i++) smoothInternalEdges(*it, edgeVertices);
+    checkHighOrderTriangles(m);
   }
-  
-  checkHighOrderTriangles(m);
   
   double t2 = Cpu();
   Msg(INFO, "Mesh second order complete (%g s)", t2 - t1);

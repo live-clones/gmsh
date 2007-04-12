@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.17 2007-03-21 23:27:17 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.18 2007-04-12 08:47:25 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -170,7 +170,7 @@ double LC_MVertex_PNTS(GEntity *ge, double U, double V)
     {
       GVertex *gv = (GVertex *)ge;
       double lc = gv->prescribedMeshSizeAtVertex();
-      if(lc >= MAX_LC) return CTX.lc / 10.;
+      if(lc >= MAX_LC) {return CTX.lc / 10.;}
       return lc;
     }
   case 1:

@@ -310,7 +310,9 @@ class MTriangle : public MElement {
     mat[1][0] = _v[1]->y() - _v[0]->y();
     mat[1][1] = _v[2]->y() - _v[0]->y();
   }
-  void circumcenterXY(double *res) const;
+  void circumcenterXY(double *res) const; 
+  static void circumcenterXYZ(double *p1, double *p2, double *p3,double *res);
+  static void circumcenterXY (double *p1, double *p2, double *p3,double *res);
   double getSurfaceXY() const;
   bool invertmappingXY(double *p, double *uv, double tol = 1.e-8);
   virtual int getNumVertices(){ return 3; }

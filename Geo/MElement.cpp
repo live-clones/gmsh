@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.34 2007-04-02 08:52:39 geuzaine Exp $
+// $Id: MElement.cpp,v 1.35 2007-04-12 08:47:24 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -349,16 +349,48 @@ double MTriangle::getSurfaceXY() const
   return s * 0.5;
 }
 
-void MTriangle::circumcenterXY(double *res) const
+void MTriangle::circumcenterXYZ(double *p1, double *p2, double *p3,double *res)
+{
+  double v1[3] = {p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]};
+  double v2[3] = {p3[0]-p1[0],p3[1]-p1[1],p3[2]-p1[2]};
+  double vx[3] = {p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]};
+  double vy[3] = {p3[0]-p1[0],p3[1]-p1[1],p3[2]-p1[2]};
+  double vz[3]; prodve (vx,vy,vz);prodve (vz,vx,vy);
+  norme(vx);norme(vy);norme(vz);
+  double p1P[2] = {0.0,0.0};
+  double p2P[2];prosca(v1,vx,&p2P[0]);prosca(v1,vy,&p2P[1]);
+  double p3P[2];prosca(v2,vx,&p3P[0]);prosca(v2,vy,&p3P[1]);
+  double resP[2];
+
+  circumcenterXY(p1P, p2P, p3P,resP);
+
+//   double d1 = sqrt((p2P[0] - resP[0]) * (p2P[0] - resP[0]) +
+// 		   (p2P[1] - resP[1]) * (p2P[1] - resP[1]));
+
+//   double d2 = sqrt((p1P[0] - resP[0]) * (p1P[0] - resP[0]) +
+// 		   (p1P[1] - resP[1]) * (p1P[1] - resP[1])) ;
+
+//   double d3 = sqrt((p3P[0] - resP[0]) * (p3P[0] - resP[0]) +
+// 		   (p3P[1] - resP[1]) * (p3P[1] - resP[1]) );
+
+
+  //  printf("%g %g - %g %g -- %g %g %g\n",p2P[0],p2P[1],p3P[0],p3P[1],d1,d2,d3);
+
+  res[0] = p1[0] + resP[0] * vx[0] + resP[1] * vy[0];
+  res[1] = p1[1] + resP[0] * vx[1] + resP[1] * vy[1];
+  res[2] = p1[2] + resP[0] * vx[2] + resP[1] * vy[2];
+}
+
+void MTriangle::circumcenterXY(double *p1, double *p2, double *p3, double *res)
 {
   double d, a1, a2, a3;
 
-  const double x1 = _v[0]->x();
-  const double x2 = _v[1]->x();
-  const double x3 = _v[2]->x();
-  const double y1 = _v[0]->y();
-  const double y2 = _v[1]->y();
-  const double y3 = _v[2]->y();
+  const double x1 = p1[0];
+  const double x2 = p2[0];
+  const double x3 = p3[0];
+  const double y1 = p1[1];
+  const double y2 = p2[1];
+  const double y3 = p3[1];
 
   d = 2. * (double)(y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
   if(d == 0.0) {
@@ -372,6 +404,14 @@ void MTriangle::circumcenterXY(double *res) const
   a3 = x3 * x3 + y3 * y3;
   res[0] = (double)((a1 * (y3 - y2) + a2 * (y1 - y3) + a3 * (y2 - y1)) / d);
   res[1] = (double)((a1 * (x2 - x3) + a2 * (x3 - x1) + a3 * (x1 - x2)) / d);
+}
+
+void MTriangle::circumcenterXY(double *res) const
+{
+  double p1[2] = {_v[0]->x(),_v[0]->y()};
+  double p2[2] = {_v[1]->x(),_v[1]->y()};
+  double p3[2] = {_v[2]->x(),_v[2]->y()};
+  circumcenterXY(p1,p2,p3,res);
 }
 
 int MTriangleN::getNumFacesRep(){ return 1; }

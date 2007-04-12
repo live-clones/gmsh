@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.269 2007-03-24 12:42:03 geuzaine Exp $
+// $Id: Gmsh.y,v 1.270 2007-04-12 08:47:25 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -568,6 +568,14 @@ InterpolationMatrix :
                          '{' RecursiveListOfListOfDouble '}'  tEND
     {
       View->adaptive = new Adaptive_Post_View(View, $3, $6);
+    }
+
+    tInterpolationScheme '{' RecursiveListOfListOfDouble '}' 
+                         '{' RecursiveListOfListOfDouble '}'  
+                         '{' RecursiveListOfListOfDouble '}'  
+                         '{' RecursiveListOfListOfDouble '}'  tEND
+    {
+      View->adaptive = new Adaptive_Post_View(View, $3, $6, $9, $12);
     }
 ;
 

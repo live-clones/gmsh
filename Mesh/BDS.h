@@ -372,6 +372,14 @@ class BDS_SwapEdgeTestParametric : public BDS_SwapEdgeTest
   virtual ~BDS_SwapEdgeTestParametric(){}
 };
 
+class BDS_SwapEdgeTestDelaunay : public BDS_SwapEdgeTest
+{
+ public:
+  virtual bool operator() (BDS_Point *p1,BDS_Point *p2,
+			   BDS_Point *q1,BDS_Point *q2) const ; 
+  virtual ~BDS_SwapEdgeTestDelaunay(){}
+};
+
 class BDS_Mesh 
 {    
 public:

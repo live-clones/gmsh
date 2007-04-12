@@ -1042,6 +1042,14 @@ void Adaptive_Post_View::initWithLowResolution(Post_View * view)
   }
   else return;
 
+  // if there exists a polynomial representation
+  // of the geometry , then use it
+  if (_coefsGeom)
+    {
+      nbnod = _coefsGeom -> size1 ();
+    }
+
+
   minval = VAL_INF;
   maxval = -VAL_INF;
 
@@ -1094,14 +1102,18 @@ void Adaptive_Post_View::initWithLowResolution(Post_View * view)
   setAdaptiveResolutionLevel(view, 0);
 }
 
-Adaptive_Post_View::Adaptive_Post_View(Post_View * view, List_T * _c,
-                                       List_T * _pol)
-  :tol(1.e-3)
+Adaptive_Post_View::Adaptive_Post_View(Post_View * view, 
+				       List_T * _c,
+                                       List_T * _pol,
+				       List_T * _cGeom,
+				       List_T * _polGeom)
+  :tol(1.e-3),_coefsGeom(0),_eexpsGeom(0)
 {
 
   _Interpolate = _Geometry = 0;
   _coefs = new Double_Matrix ( List_Nbr (_c) , List_Nbr (_c)  );
   _eexps  = new Double_Matrix ( List_Nbr (_c) , 3  );
+
   _STvalX = _STvalY = _STvalZ =0;
 
   for(int i = 0; i < List_Nbr(_c); ++i) {
@@ -1124,6 +1136,32 @@ Adaptive_Post_View::Adaptive_Post_View(Post_View * view, List_T * _c,
       (*_coefs) (i, j) = val;
     }
   }
+
+  if (_cGeom && _polGeom)
+    {
+      _coefsGeom = new Double_Matrix ( List_Nbr (_cGeom) , List_Nbr (_cGeom)  );
+      _eexpsGeom = new Double_Matrix ( List_Nbr (_cGeom) , 3  );
+      for(int i = 0; i < List_Nbr(_cGeom); ++i) {
+	List_T **line = (List_T **) List_Pointer_Fast(_cGeom, i);
+	List_T **eexp = (List_T **) List_Pointer_Fast(_polGeom, i);
+	
+	double dpowu, dpowv, dpoww;
+	
+	List_Read(*eexp, 0, &dpowu);
+	List_Read(*eexp, 1, &dpowv);
+	List_Read(*eexp, 2, &dpoww);
+	
+	(*_eexpsGeom) (i, 0) = dpowu;
+	(*_eexpsGeom) (i, 1) = dpowv;
+	(*_eexpsGeom) (i, 2) = dpoww;
+	
+	for(int j = 0; j < List_Nbr(*line); ++j) {
+	  double val;
+	  List_Read(*line, j, &val);
+	  (*_coefsGeom) (i, j) = val;
+	}
+      }      
+    }
   initWithLowResolution(view);
 }
 
@@ -1135,6 +1173,12 @@ Adaptive_Post_View::~Adaptive_Post_View()
   delete _STposY;
   delete _STposZ;
   delete _STval;
+
+  if (_coefsGeom)
+    delete _coefsGeom;
+  if (_eexpsGeom)
+    delete _eexpsGeom;
+
   if(_Interpolate)
     delete _Interpolate;
   if(_Geometry)

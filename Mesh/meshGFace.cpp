@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.69 2007-04-01 10:29:42 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.70 2007-04-12 08:47:25 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -186,6 +186,47 @@ bool edgeSwapTest(BDS_Edge *e,GFace *gf)
 
   return q2 < 0.5*q1;
 }
+
+void fourthPoint (double *p1, double *p2, double *p3, double *p4)
+{
+  double c[3];
+  MTriangle::circumcenterXYZ(p1,p2,p3,c);
+  double vx[3] = {p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]};
+  double vy[3] = {p3[0]-p1[0],p3[1]-p1[1],p3[2]-p1[2]};
+  double vz[3]; prodve (vx,vy,vz);
+  norme(vz);
+  double R = sqrt((p1[0]-c[0])*(p1[0]-c[0])+
+ 		  (p1[1]-c[1])*(p1[1]-c[1])+
+ 		  (p1[2]-c[2])*(p1[2]-c[2]));
+  p4[0] = c[0] + R * vz[0];
+  p4[1] = c[1] + R * vz[1];
+  p4[2] = c[2] + R * vz[2];
+}
+
+bool edgeSwapTestDelaunay(BDS_Edge *e,GFace *gf)
+{
+
+  if (CTX.mesh.algo2d == ALGO_2D_MESHADAPT)
+    return edgeSwapTest (e,gf);
+
+  BDS_Point *op[2];
+  
+  if(!e->p1->config_modified && ! e->p2->config_modified) return false;
+
+  if(e->numfaces() != 2) return false;
+
+  e->oppositeof (op);
+  
+  double p1x[3] =  {e->p1->X,e->p1->Y,e->p1->Z};
+  double p2x[3] =  {e->p2->X,e->p2->Y,e->p2->Z};
+  double op1x[3] = {op[0]->X,op[0]->Y,op[0]->Z};
+  double op2x[3] = {op[1]->X,op[1]->Y,op[1]->Z};
+  double fourth[3];
+  fourthPoint(p1x,p2x,op1x,fourth);
+  double result = gmsh::insphere(p1x, p2x, op1x, fourth, op2x) * gmsh::orient3d(p1x, p2x, op1x, fourth);  
+  return result > 0.;
+}
+
 
 int edgeSwapTestQuality(BDS_Edge *e, double fact = 1.1)
 {
@@ -390,9 +431,9 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	  // result = 1  => oblige to swap because the quality is greatly improved
 	  if (!(*it)->deleted)
 	    {
-	      int result = edgeSwapTestQuality(*it,3);
+	      int result = edgeSwapTestQuality(*it,5);
 	      if (result >= 0)
-		if(edgeSwapTest(*it,gf) || result > 0)
+		if(edgeSwapTestDelaunay(*it,gf) || result > 0)
 		  if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))
 		    nb_swap++;
 	      ++it;
@@ -431,9 +472,9 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	  if (NN2++ >= NN1)break;
 	  if (!(*it)->deleted)
 	    {
-	      int result = edgeSwapTestQuality(*it,3);
+	      int result = edgeSwapTestQuality(*it,5);
 	      if (result >= 0)
-		if(edgeSwapTest(*it,gf) || result > 0)
+		if(edgeSwapTestDelaunay(*it,gf) || result > 0)
 		  if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))
 		    nb_swap++;
 	      ++it;
