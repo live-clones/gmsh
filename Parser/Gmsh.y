@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.270 2007-04-12 08:47:25 remacle Exp $
+// $Id: Gmsh.y,v 1.271 2007-04-12 08:58:07 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -101,7 +101,7 @@ int CheckViewErrorFlags(Post_View *v);
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
 %token tLoop tRecombine tDelete tCoherence
 %token tAttractor tLayers tHole tAlias tAliasWithOptions
-%token tText2D tText3D tInterpolationScheme tTime tGrain tCombine
+%token tText2D tText3D tInterpolationScheme  tTime tGrain tCombine
 %token tBSpline tBezier tNurbs tOrder tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
 %token tReturn tCall tFunction tShow tHide tGetValue
@@ -569,7 +569,7 @@ InterpolationMatrix :
     {
       View->adaptive = new Adaptive_Post_View(View, $3, $6);
     }
-
+    |
     tInterpolationScheme '{' RecursiveListOfListOfDouble '}' 
                          '{' RecursiveListOfListOfDouble '}'  
                          '{' RecursiveListOfListOfDouble '}'  
