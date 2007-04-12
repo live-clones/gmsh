@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.74 2007-03-18 12:49:30 geuzaine Exp $
+// $Id: BDS.cpp,v 1.75 2007-04-12 13:09:09 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1008,6 +1008,69 @@ bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS
   double ori_final = gmsh::orient2d(pa, pb, pc);
   // allow to move a point when a triangle was flat
   return ori_init*ori_final > 0;
+}
+
+bool BDS_Mesh::smooth_point_centroid(BDS_Point * p, GFace *gf)
+{
+
+  if (!p->config_modified)return false;
+  if(p->g && p->g->classif_degree <= 1)
+    return false;
+
+  std::list < BDS_Edge * >::iterator eit = p->edges.begin();
+  while(eit != p->edges.end()) {
+    if ((*eit)->numfaces() == 1) return false;
+    eit++;
+  }
+
+  double U = 0;
+  double V = 0;
+  double LC = 0;
+
+  std::list < BDS_Face * >ts;
+  p->getTriangles(ts);
+  std::list < BDS_Face * >::iterator it = ts.begin();
+  std::list < BDS_Face * >::iterator ite = ts.end();
+
+  double sTot = 0;
+  while(it != ite) {
+    BDS_Face *t = *it;
+    BDS_Point *n[4];
+    t->getNodes(n);
+    double S = fabs(surface_triangle(n[0],n[1],n[2])); 
+    S = 1;
+    sTot += S;
+    U  += (n[0]->u + n[1]->u + n[2]->u) *S;
+    V  += (n[0]->v + n[1]->v + n[2]->v) *S;
+    LC += (n[0]->lc() + n[1]->lc() + n[2]->lc()) *S;
+    ++it;
+  }
+  U /= (3.*sTot); 
+  V /= (3.*sTot);
+  LC /= (3.*sTot);
+
+  it = ts.begin();
+  while(it != ite) {
+    BDS_Face *t = *it;
+    if (!test_move_point_parametric_triangle ( p, U, V, t))
+      return false;
+    ++it;
+  }
+  
+  
+  GPoint gp = gf->point(U*scalingU,V*scalingV);
+  p->u = U;
+  p->v = V;
+  p->lc() = LC;
+  p->X = gp.x();
+  p->Y = gp.y();
+  p->Z = gp.z();
+  eit = p->edges.begin();
+  while(eit != p->edges.end()) {
+    (*eit)->update();
+    ++eit;
+  }  
+  return true;
 }
 
 bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)

@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.70 2007-04-12 08:47:25 remacle Exp $
+// $Id: meshGFace.cpp,v 1.71 2007-04-12 13:13:55 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -266,7 +266,7 @@ void OptimizeMesh(GFace *gf, BDS_Mesh &m, const int NIT)
 		if(m.collapse_edge_parametric ( (*ite), (*itp)))break;
 	      }
 	  else
-	    m.smooth_point_parametric(*itp,gf);		
+	    m.smooth_point_centroid(*itp,gf);		
 	  ++itp;
 	}
     }
@@ -487,7 +487,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	  while (itp != m.points.end())
 	    {
 
-	      if(m.smooth_point_parametric(*itp,gf))
+	      if(m.smooth_point_centroid(*itp,gf))
 		nb_smooth ++;
 	      ++itp;
 	    }

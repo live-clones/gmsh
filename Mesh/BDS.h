@@ -424,6 +424,7 @@ public:
   void snap_point(BDS_Point* , BDS_Mesh *geom = 0);
   bool smooth_point(BDS_Point* , BDS_Mesh *geom = 0);
   bool smooth_point_parametric(BDS_Point * p, GFace *gf);
+  bool smooth_point_centroid(BDS_Point * p, GFace *gf);
   bool move_point(BDS_Point *p , double X, double Y, double Z);
   void split_edge(BDS_Edge *, BDS_Point *);
   bool edge_constraint    ( BDS_Point *p1, BDS_Point *p2 );
