@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.71 2007-04-12 13:13:55 remacle Exp $
+// $Id: meshGFace.cpp,v 1.72 2007-04-13 12:49:52 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -270,7 +270,7 @@ void OptimizeMesh(GFace *gf, BDS_Mesh &m, const int NIT)
 	  ++itp;
 	}
     }
-    if(0){
+    for (int KK=0;KK<4;KK++){
       // swap edges that provide a better configuration
       int NN1 = m.edges.size();
       int NN2 = 0;
@@ -278,30 +278,17 @@ void OptimizeMesh(GFace *gf, BDS_Mesh &m, const int NIT)
       while (1)
 	{
 	  if (NN2++ >= NN1)break;
-	  if (!(*it)->deleted && (*it)->numfaces() == 2)
+	  if (!(*it)->deleted)
 	    {
-
-	      BDS_Point *op[2];
-	      (*it)->oppositeof(op);	      
-	      BDS_Point *p1 = (*it)->p1;
-	      BDS_Point *p2 = (*it)->p2;
-	      std::list < BDS_Face * >t1,t2,to1,to2;
-	      p1->getTriangles(t1);
-	      p2->getTriangles(t2);
-	      op[0]->getTriangles(to1);
-	      op[1]->getTriangles(to2);
-	      
-	      if (t1.size() == 7 && t2.size() == 7 && to1.size() == 5 && to2.size() == 5) 
-		m.swap_edge ( *it , BDS_SwapEdgeTestParametric());
-	      else if (t1.size() == 5 && t2.size() == 5 && to1.size() == 7 && to2.size() == 7) 
-		m.swap_edge ( *it , BDS_SwapEdgeTestParametric());	      
-	      //	      else if ( edgeSwapTestQuality(*it) == 1) 
-	      //		m.swap_edge ( *it , BDS_SwapEdgeTestParametric());
-	    }	
+	      int result = edgeSwapTestQuality(*it,5);
+	      if (result >= 0)
+		if(edgeSwapTestDelaunay(*it,gf) || result > 0)
+		  m.swap_edge ( *it , BDS_SwapEdgeTestParametric());
+	    }
 	  ++it;
 	}
+      m.cleanup();  
     }
-    m.cleanup();  
   }
 }
 

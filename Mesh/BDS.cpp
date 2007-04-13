@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.75 2007-04-12 13:09:09 remacle Exp $
+// $Id: BDS.cpp,v 1.76 2007-04-13 12:49:52 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -893,8 +893,8 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge * e, BDS_Point * p)
   std::list < BDS_Face * >t;
   BDS_Point *o = e->othervertex(p);
 
-  if(o->g != p->g)
-    return false;
+  //  if(o->g != p->g)
+  //    return false;
 
   // printf("collapsing an edge :");
   // print_edge(e);
