@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.32 2007-04-16 09:10:08 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.33 2007-04-16 11:46:27 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -189,6 +189,13 @@ void deMeshGEdge::operator() (GEdge *ge)
   if(ge->meshRep) ge->meshRep->destroy();
 }
 
+double GPointDist(GPoint &p1,GPoint &p2){
+  double dx=p1.x()-p2.x();
+  double dy=p1.y()-p2.y();
+  double dz=p1.z()-p2.z();
+  return sqrt(dx*dx+dy*dy+dz*dz);
+}
+
 void meshGEdge::operator() (GEdge *ge) 
 {  
   if(ge->geomType() == GEntity::DiscreteCurve) return;
@@ -229,13 +236,30 @@ void meshGEdge::operator() (GEdge *ge)
   }
   const double b = a / (double)(N - 1);
 
-  int count = 1, NUMP = 1;
+  MVertex *v0 =  ge->getBeginVertex()->mesh_vertices[0];
+  MVertex *v1 =  ge->getEndVertex()->mesh_vertices[0];
+
+  // if the curve is periodic and if the begin vertex is identical to the end vertex
+  // and if this vertex has only one model curve adjacent to it, then the vertex is
+  // not connecting any other curve. So, the mesh vertex and its associated  geom vertex
+  // are not necessary at the same location
+  GPoint beg_p,end_p;
+  if (ge->getBeginVertex() == ge->getEndVertex() && ge->getBeginVertex()->edges().size() == 1)
+    {
+      end_p=beg_p=ge->point(t_begin);
+    }else{
+      beg_p=GPoint(v0->x(),v0->y(),v0->z());
+      end_p=GPoint(v1->x(),v1->y(),v1->z());
+    }
+
+  int count = 1, NUMP = 1, NUMP2 = 1;
   IntPoint P1, P2;
 
   // do not consider the first and the last vertex (those are not
   // classified on this mesh edge)
-  if(N > 2){
+  if(N > 1){
     ge->mesh_vertices.resize(N - 2);
+    GPoint  last_p=beg_p;
     while(NUMP < N - 1) {
       List_Read(Points, count - 1, &P1);
       List_Read(Points, count, &P2);
@@ -245,13 +269,19 @@ void meshGEdge::operator() (GEdge *ge)
         double dp = P2.p - P1.p;
         double t = P1.t + dt / dp * (d - P1.p);
         GPoint V = ge->point(t);
-        ge->mesh_vertices[NUMP - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t);
+        double lc=BGM_MeshSize(ge,t,0,V.x(),V.y(),V.z());
+        if(GPointDist(V,last_p)>0.7*lc && !(NUMP==N-2 && GPointDist(V,end_p)<0.7*lc)){
+          last_p=V;
+          ge->mesh_vertices[NUMP2 - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t);
+          NUMP2++;
+        }
         NUMP++;
       }
       else {
         count++;
       }
     }
+    ge->mesh_vertices.resize(NUMP2 - 1);
   }
   List_Delete(Points);
 
@@ -262,21 +292,8 @@ void meshGEdge::operator() (GEdge *ge)
       ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
     ge->lines.push_back(new MLine(v0, v1));
   }
-
-  // if the curve is periodic and if the begin vertex is identical to the end vertex
-  // and if this vertex has only one model curve adjacent to it, then the vertex is
-  // not connecting any other curve. So, the mesh vertex and its associated  geom vertex
-  // are not necessary at the same location
-
-  //  printf("%p %p %d\n",ge->getBeginVertex(),ge->getEndVertex(),ge->getBeginVertex()->edges().size());    
-
-  if (ge->getBeginVertex() == ge->getEndVertex() && ge->getBeginVertex()->edges().size() == 1)
-    {
-      MVertex *v0 =  ge->getBeginVertex()->mesh_vertices[0];
-      GPoint gp = ge->point (t_begin);
-      v0->x() = gp.x();
-      v0->y() = gp.y();
-      v0->z() = gp.z();
-    }
+  v0->x() = beg_p.x();
+  v0->y() = beg_p.y();
+  v0->z() = beg_p.z();
 
 }

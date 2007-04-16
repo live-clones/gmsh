@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.272 2007-04-16 09:08:32 remacle Exp $
+// $Id: Gmsh.y,v 1.273 2007-04-16 11:46:27 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1161,7 +1161,7 @@ Shape :
       $$.Type = 0;
       $$.Num = 0;
     }
-  /*| tAttractor tLine ListOfDouble tAFFECT ListOfDouble tEND
+  | tAttractor tLine ListOfDouble tAFFECT ListOfDouble tEND
     {
       double pars[] = { CTX.lc/10, CTX.lc/100., CTX.lc/20, 10, 3 };
       for(int i = 0; i < List_Nbr($5); i++){
@@ -1172,18 +1172,23 @@ Shape :
       }
       // treshold attractor: first parameter is the treshold, next two
       // are the in and out size fields, last is transition factor
-      Attractor *att = tresholdAttractor::New(pars[0], pars[1], pars[2], pars[4]);
+      AttractorField *att = new AttractorField();
+      fields.insert(att);
+      Field *threshold=new ThresholdField(att,pars[0],pars[0]*pars[4],pars[1],pars[2]);
+      fields.insert(threshold);
+      BGMAddField(threshold);
+      //tresholdAttractor::New(pars[0], pars[1], pars[2], pars[4]);
       for(int i = 0; i < List_Nbr($3); i++){
 	double d;
 	List_Read($3, i, &d);
 	Curve *c = FindCurve((int)d); 
 	if(c){
-	  buildListOfPoints(att, c, (int)pars[3]);
+	  att->addCurve(c, (int)pars[3]);
 	}
 	else{
 	  GEdge *ge = GMODEL->edgeByTag((int)d);
 	  if(ge){
-	    buildListOfPoints(att, ge, (int)pars[3]);
+	    att->addGEdge(ge, (int)pars[3]);
 	  }
 	}
       }
@@ -1191,7 +1196,7 @@ Shape :
       // dummy values
       $$.Type = 0;
       $$.Num = 0;
-    }*/
+    }
   | tCharacteristic tLength ListOfDouble tAFFECT FExpr tEND
     {      
       for(int i = 0; i < List_Nbr($3); i++){
