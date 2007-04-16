@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.521 2007-04-16 09:08:26 remacle Exp $
+// $Id: Callbacks.cpp,v 1.522 2007-04-16 09:46:41 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -49,6 +49,7 @@
 #include "OS.h"
 #include "GModel.h"
 #include "Field.h"
+#include "BackgroundMesh.h"
 
 extern Context_T CTX;
 extern GUI *WID;
@@ -4463,7 +4464,7 @@ void view_applybgmesh_cb(CALLBACK_ARGS)
   }
   Field *field=new PostViewField(v);
   fields.insert(field);
-  lc_field.push_front(field);
+  BGMAddField(field);
 }
 
 void view_plugin_cancel_cb(CALLBACK_ARGS)
