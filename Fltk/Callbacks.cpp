@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.520 2007-04-01 10:29:42 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.521 2007-04-16 09:08:26 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -48,6 +48,7 @@
 #include "Solvers.h"
 #include "OS.h"
 #include "GModel.h"
+#include "Field.h"
 
 extern Context_T CTX;
 extern GUI *WID;
@@ -4460,7 +4461,9 @@ void view_applybgmesh_cb(CALLBACK_ARGS)
     Msg(GERROR, "Background mesh generation impossible with non-scalar view");
     return;
   }
-  BGMWithView(v);
+  Field *field=new PostViewField(v);
+  fields.insert(field);
+  lc_field.push_front(field);
 }
 
 void view_plugin_cancel_cb(CALLBACK_ARGS)

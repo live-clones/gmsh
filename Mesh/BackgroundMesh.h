@@ -21,7 +21,10 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 class GEntity;
+class Field;
 double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double Z);
-int BGMExists();
+bool BGMExists();
+void BGMAddField(Field *field);
+void BGMReset();
 
 #endif

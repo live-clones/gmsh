@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.37 2007-04-08 23:06:53 geuzaine Exp $
+// $Id: GModel.cpp,v 1.38 2007-04-16 09:08:27 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,8 +21,9 @@
 
 #include "GModel.h"
 #include "gmshSurface.h"
-#include "Attractors.h"
+#include "Field.h"
 #include "MRep.h"
+#include "BackgroundMesh.h"
 
 void GModel::destroy()
 {
@@ -43,7 +44,8 @@ void GModel::destroy()
   MVertex::resetGlobalNumber();
   MElement::resetGlobalNumber();
   gmshSurface::reset();
-  Attractor::reset();
+  fields.reset();
+  BGMReset();
 }
 
 GRegion * GModel::regionByTag(int n) const

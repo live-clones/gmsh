@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.30 2007-03-09 14:57:06 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.31 2007-04-16 09:08:28 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -234,6 +234,7 @@ void meshGEdge::operator() (GEdge *ge)
 
   // do not consider the first and the last vertex (those are not
   // classified on this mesh edge)
+  printf("mid\n");
   if(N > 2){
     ge->mesh_vertices.resize(N - 2);
     while(NUMP < N - 1) {
@@ -241,15 +242,15 @@ void meshGEdge::operator() (GEdge *ge)
       List_Read(Points, count, &P2);
       const double d = (double)NUMP *b;
       if((fabs(P2.p) >= fabs(d)) && (fabs(P1.p) < fabs(d))) {
-	double dt = P2.t - P1.t;
-	double dp = P2.p - P1.p;
-	double t = P1.t + dt / dp * (d - P1.p);
-	GPoint V = ge->point(t);
-	ge->mesh_vertices[NUMP - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t);
-	NUMP++;
+        double dt = P2.t - P1.t;
+        double dp = P2.p - P1.p;
+        double t = P1.t + dt / dp * (d - P1.p);
+        GPoint V = ge->point(t);
+        ge->mesh_vertices[NUMP - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t);
+        NUMP++;
       }
       else {
-	count++;
+        count++;
       }
     }
   }
@@ -267,7 +268,6 @@ void meshGEdge::operator() (GEdge *ge)
   // and if this vertex has only one model curve adjacent to it, then the vertex is
   // not connecting any other curve. So, the mesh vertex and its associated  geom vertex
   // are not necessary at the same location
-
 
   //  printf("%p %p %d\n",ge->getBeginVertex(),ge->getEndVertex(),ge->getBeginVertex()->edges().size());    
 

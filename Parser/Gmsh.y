@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.271 2007-04-12 08:58:07 remacle Exp $
+// $Id: Gmsh.y,v 1.272 2007-04-16 09:08:32 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -43,7 +43,8 @@
 #include "OS.h"
 #include "CreateFile.h"
 #include "gmshSurface.h"
-#include "Attractors.h"
+#include "Field.h"
+#include "BackgroundMesh.h"
 
 Tree_T *Symbol_T = NULL;
 
@@ -104,6 +105,7 @@ int CheckViewErrorFlags(Post_View *v);
 %token tText2D tText3D tInterpolationScheme  tTime tGrain tCombine
 %token tBSpline tBezier tNurbs tOrder tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
+%token tField tThreshold tStructured tLatLon tGrad
 %token tReturn tCall tFunction tShow tHide tGetValue
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 
@@ -1076,9 +1078,59 @@ Shape :
       $$.Type = MSH_PHYSICAL_POINT;
       $$.Num = num;
     }
+
+ 	| tAttractor tPoint tField '(' FExpr ')' tAFFECT ListOfDouble tEND {
+ 			AttractorField *att = new AttractorField();
+      for(int i = 0; i < List_Nbr($8); i++){
+        double d;
+        List_Read($8, i, &d);
+        Vertex *v = FindPoint((int)d); 
+        if(v)
+          att->addPoint(v->Pos.X, v->Pos.Y, v->Pos.Z);
+        else{
+          GVertex *gv = GMODEL->vertexByTag((int)d);
+          if(gv) 
+            att->addPoint(gv->x(), gv->y(), gv->z());
+        }
+      }
+      att->buildFastSearchStructures();
+      fields.insert(att,(int)$5);
+    }
+  | tThreshold tField '(' FExpr ')' tAFFECT ListOfDouble tEND {
+    double pars[]={0,CTX.lc/10,CTX.lc,CTX.lc/100,CTX.lc/20};
+    for (int i=0;i<List_Nbr($7);i++){
+      if(i>4)
+        yymsg(GERROR,"Too many parameters for Thresold Field (max=5)");
+      else
+        List_Read($7,i,&pars[i]);
+    }
+    fields.insert(new ThresholdField(fields.get((int)pars[0]),pars[1],pars[2],pars[3],pars[4]),(int)$4);
+  }
+	| tFunction tField '(' FExpr ')' tAFFECT tBIGSTR ListOfDouble tEND{
+		std::list<Field*> *flist=new std::list<Field*>;
+		flist->resize(0);
+		for(int i = 0; i < List_Nbr($8); i++){
+			double id;
+			List_Read($8, i, &id);
+      Field *pfield=fields.get((int)id);
+			if(pfield)flist->push_front(pfield);
+		}
+    fields.insert(new FunctionField(flist,$7),(int)$4);
+  }
+ 	| tStructured tField '(' FExpr ')' tAFFECT tBIGSTR tEND{
+      fields.insert(new StructuredField($7),(int)$4);
+ 		}
+ 	| tCharacteristic tLength tField ListOfDouble tEND {
+ 			for(int i = 0; i < List_Nbr($4); i++){
+ 				double id;
+ 				List_Read($4, i, &id);
+        BGMAddField(fields.get((int)id));
+ 			}
+ 		}
+  /* backward compatibility */
   | tAttractor tPoint ListOfDouble tAFFECT ListOfDouble  tEND
     {
-      double pars[] = { CTX.lc/10, CTX.lc/100., CTX.lc/20, 10, 3 };
+      double pars[] = { CTX.lc/10, CTX.lc/100., CTX.lc/20, 1, 3 };
       for(int i = 0; i < List_Nbr($5); i++){
 	if(i > 4) 
 	  yymsg(GERROR, "Too many paramaters for attractor line (max = 5)");	  
@@ -1087,25 +1139,29 @@ Shape :
       }
       // treshold attractor: first parameter is the treshold, next two
       // are the in and out size fields, last is transition factor
-      Attractor *att = tresholdAttractor::New(pars[0], pars[1], pars[2], pars[4]);
+      AttractorField *attractor= new AttractorField();
+      fields.insert(attractor);
+      Field *threshold=new ThresholdField(attractor,pars[0],pars[0]*pars[4],pars[1],pars[2]);
+      fields.insert(threshold);
+      BGMAddField(threshold);
       for(int i = 0; i < List_Nbr($3); i++){
 	double d;
 	List_Read($3, i, &d);
 	Vertex *v = FindPoint((int)d); 
 	if(v)
-	  att->addPoint(v->Pos.X, v->Pos.Y, v->Pos.Z);
+	  attractor->addPoint(v->Pos.X, v->Pos.Y, v->Pos.Z);
 	else{
 	  GVertex *gv = GMODEL->vertexByTag((int)d);
 	  if(gv) 
-	    att->addPoint(gv->x(), gv->y(), gv->z());
+	    attractor->addPoint(gv->x(), gv->y(), gv->z());
 	}
       }
-      att->buildFastSearchStructures();
+      attractor->buildFastSearchStructures();
       // dummy values
       $$.Type = 0;
       $$.Num = 0;
     }
-  | tAttractor tLine ListOfDouble tAFFECT ListOfDouble tEND
+  /*| tAttractor tLine ListOfDouble tAFFECT ListOfDouble tEND
     {
       double pars[] = { CTX.lc/10, CTX.lc/100., CTX.lc/20, 10, 3 };
       for(int i = 0; i < List_Nbr($5); i++){
@@ -1135,7 +1191,7 @@ Shape :
       // dummy values
       $$.Type = 0;
       $$.Num = 0;
-    }
+    }*/
   | tCharacteristic tLength ListOfDouble tAFFECT FExpr tEND
     {      
       for(int i = 0; i < List_Nbr($3); i++){
@@ -1962,7 +2018,11 @@ Command :
     {
       if(!strcmp($1, "Background") && !strcmp($2, "Mesh")  && !strcmp($3, "View")){
 	Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, (int)$5);
-	if(vv) BGMWithView(*vv);
+	if(vv) {
+    Field *field=new PostViewField(*vv);
+    fields.insert(field);
+    BGMAddField(field);
+  }
       }
       else{
 	yymsg(GERROR, "Unknown command '%s'", $1);
@@ -2272,7 +2332,7 @@ Extrude :
                        ExtrudeParameters '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      extr.mesh.ViewIndex = $4;
+      extr.mesh.ViewIndex = (int)$4;
       ExtrudeShapes(BOUNDARY_LAYER, $7, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
 		    &extr, $$);
       extr.mesh.ViewIndex = -1;

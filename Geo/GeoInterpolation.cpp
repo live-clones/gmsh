@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.24 2007-03-11 20:18:58 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.25 2007-04-16 09:08:27 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -129,46 +129,34 @@ SPoint2 InterpolateCubicSpline(Vertex * v[4], double t, double mat[4][4],
 
 }
 
-
 // Uniform BSplines
-Vertex InterpolateUBS(Curve * Curve, double u, int derivee)
-{
+Vertex InterpolateUBS(Curve * Curve, double u, int derivee) {
   int NbControlPoints, NbCurves, iCurve;
   double t, t1, t2;
   Vertex *v[4];
 	Vertex V;
-
+  bool periodic=Curve->end==Curve->beg;
   NbControlPoints = List_Nbr(Curve->Control_Points);
-  NbCurves = NbControlPoints - (Curve->beg==Curve->end ? 1 : 3);
-
-  iCurve = (int)(u * (double)NbCurves) + 1;
-
-  if(iCurve > NbCurves)
-    iCurve = NbCurves;
-  else if (iCurve < 1)
-    iCurve = 1;
-
-  t1 = (double)(iCurve - 1) / (double)(NbCurves);
-  t2 = (double)(iCurve) / (double)(NbCurves);
-
+  NbCurves = NbControlPoints +(periodic ? -1:+1) ;
+  iCurve = (int)floor(u * (double)NbCurves);
+  if(iCurve==NbCurves)iCurve-=1;//u=1
+  t1 = (double)(iCurve) / (double)(NbCurves);
+  t2 = (double)(iCurve+1) / (double)(NbCurves);
   t = (u - t1) / (t2 - t1);
-
-	for(int i=0;i<4;i++){
-		int k=iCurve - (Curve->beg==Curve->end ? 2 : 1) + i;
-		if (k<0) k+=NbControlPoints - 1;
-		if (k>=NbControlPoints) k-=NbControlPoints - 1;
+	for(int i=0;i<4;i++) {
+		int k=iCurve - (periodic?1:2) + i;
+		if (k<0) k=periodic ? k + NbControlPoints - 1 : 0;
+		if (k>=NbControlPoints) k=periodic ? k-NbControlPoints + 1: NbControlPoints-1;
 		List_Read(Curve->Control_Points, k , &v[i]);
 	}
-    if (Curve->geometry)
-      {
-	SPoint2 pp =  InterpolateCubicSpline(v, t, Curve->mat, 0, t1, t2,Curve->geometry);
-	SPoint3 pt = Curve->geometry->point(pp);
-	V.Pos.X = pt.x();
-	V.Pos.Y = pt.y();
-	V.Pos.Z = pt.z();
-	return V;
-      }
-    else
+  if (Curve->geometry) {
+    SPoint2 pp =  InterpolateCubicSpline(v, t, Curve->mat, 0, t1, t2,Curve->geometry);
+    SPoint3 pt = Curve->geometry->point(pp);
+    V.Pos.X = pt.x();
+    V.Pos.Y = pt.y();
+    V.Pos.Z = pt.z();
+    return V;
+  } else
       return InterpolateCubicSpline(v, t, Curve->mat, 0, t1, t2);
 }
 

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.86 2007-03-05 09:30:53 geuzaine Exp $
+// $Id: Gmsh.l,v 1.87 2007-04-16 09:08:28 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -130,8 +130,6 @@ Combine                 return tCombine;
 Cosh                    return tCosh;
 Cos                     return tCos;
 Characteristic          return tCharacteristic;
-Circle                  return tCircle;
-Coherence               return tCoherence;
 Complex                 return tComplex;
 Color                   return tColor;
 ColorTable              return tColorTable;
@@ -155,12 +153,14 @@ Euclidian               return tEuclidian;
 Exit                    return tExit;
 
 Fabs                    return tFabs;
+Field                   return tField;
 Floor                   return tFloor;
 Fmod                    return tFmod;
 For                     return tFor;
 Function                return tFunction;
 
 GetValue                return tGetValue;
+Grad                    return tGrad;
 GMSH_MAJOR_VERSION      return tGMSH_MAJOR_VERSION;
 GMSH_MINOR_VERSION      return tGMSH_MINOR_VERSION;
 GMSH_PATCH_VERSION      return tGMSH_PATCH_VERSION;
@@ -174,6 +174,7 @@ If                      return tIf;
 
 Knots			return tKnots;
 
+LatLon                  return tLatLon;
 Length                  return tLength;
 Line                    return tLine;
 Loop                    return tLoop;
@@ -217,12 +218,14 @@ Sprintf                 return tSprintf;
 StrCat                  return tStrCat;
 StrPrefix               return tStrPrefix;
 StrRelative             return tStrRelative;
+Structured              return tStructured;
 Show                    return tShow;
 
 Transfinite             return tTransfinite;
 Translate               return tTranslate;
 Tanh                    return tTanh;
 Tan                     return tTan;
+Threshold               return tThreshold;
 Today                   return tToday;
 
 Using                   return tUsing;

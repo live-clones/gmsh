@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2006-11-27 22:22:33 geuzaine Exp $
+# $Id: Makefile,v 1.15 2007-04-16 09:08:34 remacle Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -334,10 +334,9 @@ meshtool.o: libsrc/meshing/meshtool.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
   libsrc/meshing/specials.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/meshing.hpp libsrc/include/../meshing/meshing.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
+  libsrc/include/../csg/csg.hpp libsrc/include/meshing.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/../csg/surface.hpp \
+  libsrc/include/../csg/solid.hpp libsrc/include/../csg/identify.hpp \
   libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
   libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
   libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
@@ -348,7 +347,7 @@ meshtool.o: libsrc/meshing/meshtool.cpp libsrc/include/mystdlib.h \
   libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
   libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp \
   libsrc/include/geometry2d.hpp libsrc/include/../geom2d/geometry2d.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/include/../geom2d/spline2d.hpp \
+  libsrc/include/../geom2d/spline2d.hpp \
   libsrc/include/../geom2d/splinegeometry2.hpp \
   libsrc/include/../geom2d/geom2dmesh.hpp
 refine.o: libsrc/meshing/refine.cpp libsrc/include/mystdlib.h \
@@ -476,7 +475,7 @@ improve3.o: libsrc/meshing/improve3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
-  libsrc/meshing/specials.hpp libsrc/include/../opti/opti.hpp
+  libsrc/meshing/specials.hpp
 smoothing3.o: libsrc/meshing/smoothing3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
   libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
@@ -518,7 +517,7 @@ smoothing3.o: libsrc/meshing/smoothing3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
-  libsrc/meshing/specials.hpp libsrc/include/../opti/opti.hpp
+  libsrc/meshing/specials.hpp
 adfront3.o: libsrc/meshing/adfront3.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
   libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
@@ -732,7 +731,7 @@ improve2.o: libsrc/meshing/improve2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
-  libsrc/meshing/specials.hpp libsrc/include/../opti/opti.hpp
+  libsrc/meshing/specials.hpp
 smoothing2.o: libsrc/meshing/smoothing2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
   libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
@@ -774,7 +773,7 @@ smoothing2.o: libsrc/meshing/smoothing2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
-  libsrc/meshing/specials.hpp libsrc/include/../opti/opti.hpp
+  libsrc/meshing/specials.hpp
 adfront2.o: libsrc/meshing/adfront2.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
   libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
@@ -1322,7 +1321,7 @@ improve2gen.o: libsrc/meshing/improve2gen.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/curvedelems.hpp libsrc/meshing/bisect.hpp \
   libsrc/meshing/clusters.hpp libsrc/meshing/meshfunc.hpp \
   libsrc/meshing/hprefinement.hpp libsrc/meshing/boundarylayer.hpp \
-  libsrc/meshing/specials.hpp libsrc/include/../opti/opti.hpp
+  libsrc/meshing/specials.hpp
 delaunay.o: libsrc/meshing/delaunay.cpp libsrc/include/mystdlib.h \
   libsrc/meshing/meshing.hpp libsrc/include/myadt.hpp \
   libsrc/include/../general/myadt.hpp libsrc/include/mydefs.hpp \
@@ -1744,8 +1743,7 @@ nglib.o: libsrc/interface/nglib.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -1783,13 +1781,12 @@ nglib.o: libsrc/interface/nglib.cpp libsrc/include/mystdlib.h \
   libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
   libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp \
   libsrc/include/stlgeom.hpp libsrc/include/../stlgeom/stlgeom.hpp \
-  libsrc/include/../gprim/gprim.hpp \
   libsrc/include/../stlgeom/stltopology.hpp \
   libsrc/include/../stlgeom/stltool.hpp \
   libsrc/include/../stlgeom/stlline.hpp \
   libsrc/include/../stlgeom/meshstlsurface.hpp \
   libsrc/include/geometry2d.hpp libsrc/include/../geom2d/geometry2d.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/include/../geom2d/spline2d.hpp \
+  libsrc/include/../geom2d/spline2d.hpp \
   libsrc/include/../geom2d/splinegeometry2.hpp \
   libsrc/include/../geom2d/geom2dmesh.hpp libsrc/interface/nglib.h
 geomtest3d.o: libsrc/gprim/geomtest3d.cpp libsrc/include/mystdlib.h \
@@ -2021,8 +2018,7 @@ algprim.o: libsrc/csg/algprim.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -2089,8 +2085,7 @@ brick.o: libsrc/csg/brick.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -2153,9 +2148,8 @@ manifold.o: libsrc/csg/manifold.cpp libsrc/include/csg.hpp \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/linalg.hpp \
+  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
   libsrc/include/../linalg/densemat.hpp \
   libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
@@ -2220,9 +2214,8 @@ bspline2d.o: libsrc/csg/bspline2d.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/linalg.hpp \
+  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
   libsrc/include/../linalg/densemat.hpp \
   libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
@@ -2287,9 +2280,8 @@ meshsurf.o: libsrc/csg/meshsurf.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/linalg.hpp \
+  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
   libsrc/include/../linalg/densemat.hpp \
   libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
@@ -2357,8 +2349,7 @@ csgeom.o: libsrc/csg/csgeom.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -2425,8 +2416,7 @@ polyhedra.o: libsrc/csg/polyhedra.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -2489,9 +2479,8 @@ curve2d.o: libsrc/csg/curve2d.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/linalg.hpp \
+  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
   libsrc/include/../linalg/densemat.hpp \
   libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
@@ -2559,8 +2548,7 @@ singularref.o: libsrc/csg/singularref.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -2651,9 +2639,8 @@ edgeflw.o: libsrc/csg/edgeflw.cpp libsrc/include/mystdlib.h \
   libsrc/include/../meshing/hprefinement.hpp \
   libsrc/include/../meshing/boundarylayer.hpp \
   libsrc/include/../meshing/specials.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
+  libsrc/include/../csg/csg.hpp libsrc/include/../csg/surface.hpp \
+  libsrc/include/../csg/solid.hpp libsrc/include/../csg/identify.hpp \
   libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
   libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
   libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
@@ -2693,8 +2680,7 @@ solid.o: libsrc/csg/solid.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -2758,9 +2744,8 @@ explicitcurve2d.o: libsrc/csg/explicitcurve2d.cpp \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/linalg.hpp \
+  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
   libsrc/include/../linalg/densemat.hpp \
   libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
@@ -2853,9 +2838,8 @@ specpoin.o: libsrc/csg/specpoin.cpp libsrc/include/mystdlib.h \
   libsrc/include/../meshing/hprefinement.hpp \
   libsrc/include/../meshing/boundarylayer.hpp \
   libsrc/include/../meshing/specials.hpp libsrc/include/csg.hpp \
-  libsrc/include/../csg/csg.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../csg/surface.hpp libsrc/include/../csg/solid.hpp \
-  libsrc/include/../csg/identify.hpp \
+  libsrc/include/../csg/csg.hpp libsrc/include/../csg/surface.hpp \
+  libsrc/include/../csg/solid.hpp libsrc/include/../csg/identify.hpp \
   libsrc/include/../csg/singularref.hpp libsrc/include/../csg/csgeom.hpp \
   libsrc/include/../csg/triapprox.hpp libsrc/include/../csg/algprim.hpp \
   libsrc/include/../csg/brick.hpp libsrc/include/../csg/spline3d.hpp \
@@ -2895,8 +2879,7 @@ gencyl.o: libsrc/csg/gencyl.cpp libsrc/include/linalg.hpp \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -2963,8 +2946,7 @@ revolution.o: libsrc/csg/revolution.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -3030,8 +3012,7 @@ genmesh.o: libsrc/csg/genmesh.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -3097,8 +3078,7 @@ spline3d.o: libsrc/csg/spline3d.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -3161,9 +3141,8 @@ surface.o: libsrc/csg/surface.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/linalg.hpp \
+  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
   libsrc/include/../linalg/densemat.hpp \
   libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
@@ -3201,8 +3180,7 @@ surface.o: libsrc/csg/surface.cpp libsrc/include/mystdlib.h \
   libsrc/include/../csg/gencyl.hpp libsrc/include/../csg/polyhedra.hpp \
   libsrc/include/../csg/extrusion.hpp \
   libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
-  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp \
-  libsrc/include/../linalg/linalg.hpp
+  libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp
 identify.o: libsrc/csg/identify.cpp libsrc/include/mystdlib.h \
   libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
   libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
@@ -3232,8 +3210,7 @@ identify.o: libsrc/csg/identify.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -3299,8 +3276,7 @@ triapprox.o: libsrc/csg/triapprox.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -3363,9 +3339,8 @@ geom2dmesh.o: libsrc/geom2d/geom2dmesh.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/linalg.hpp \
+  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
   libsrc/include/../linalg/densemat.hpp \
   libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
@@ -3405,7 +3380,7 @@ geom2dmesh.o: libsrc/geom2d/geom2dmesh.cpp libsrc/include/mystdlib.h \
   libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
   libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp \
   libsrc/include/geometry2d.hpp libsrc/include/../geom2d/geometry2d.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/include/../geom2d/spline2d.hpp \
+  libsrc/include/../geom2d/spline2d.hpp \
   libsrc/include/../geom2d/splinegeometry2.hpp \
   libsrc/include/../geom2d/geom2dmesh.hpp
 spline2d.o: libsrc/geom2d/spline2d.cpp libsrc/include/mystdlib.h \
@@ -3434,9 +3409,8 @@ spline2d.o: libsrc/geom2d/spline2d.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/linalg.hpp \
+  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
   libsrc/include/../linalg/densemat.hpp \
   libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
@@ -3475,7 +3449,7 @@ spline2d.o: libsrc/geom2d/spline2d.cpp libsrc/include/mystdlib.h \
   libsrc/include/../csg/extrusion.hpp \
   libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
   libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/geom2d/spline2d.hpp
+  libsrc/geom2d/spline2d.hpp
 splinegeometry2.o: libsrc/geom2d/splinegeometry2.cpp \
   libsrc/include/mystdlib.h libsrc/include/csg.hpp \
   libsrc/include/../csg/csg.hpp libsrc/include/myadt.hpp \
@@ -3503,9 +3477,8 @@ splinegeometry2.o: libsrc/geom2d/splinegeometry2.cpp \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/linalg.hpp \
+  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
   libsrc/include/../linalg/densemat.hpp \
   libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
@@ -3544,8 +3517,7 @@ splinegeometry2.o: libsrc/geom2d/splinegeometry2.cpp \
   libsrc/include/../csg/extrusion.hpp \
   libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
   libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/geom2d/spline2d.hpp \
-  libsrc/geom2d/splinegeometry2.hpp
+  libsrc/geom2d/spline2d.hpp libsrc/geom2d/splinegeometry2.hpp
 genmesh2d.o: libsrc/geom2d/genmesh2d.cpp libsrc/include/mystdlib.h \
   libsrc/include/csg.hpp libsrc/include/../csg/csg.hpp \
   libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
@@ -3572,9 +3544,8 @@ genmesh2d.o: libsrc/geom2d/genmesh2d.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/linalg.hpp libsrc/include/../linalg/linalg.hpp \
-  libsrc/include/../linalg/vector.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/linalg.hpp \
+  libsrc/include/../linalg/linalg.hpp libsrc/include/../linalg/vector.hpp \
   libsrc/include/../linalg/densemat.hpp \
   libsrc/include/../linalg/polynomial.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
@@ -3614,7 +3585,7 @@ genmesh2d.o: libsrc/geom2d/genmesh2d.cpp libsrc/include/mystdlib.h \
   libsrc/include/../csg/revolution.hpp libsrc/include/../csg/specpoin.hpp \
   libsrc/include/../csg/edgeflw.hpp libsrc/include/../csg/meshsurf.hpp \
   libsrc/include/geometry2d.hpp libsrc/include/../geom2d/geometry2d.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/include/../geom2d/spline2d.hpp \
+  libsrc/include/../geom2d/spline2d.hpp \
   libsrc/include/../geom2d/splinegeometry2.hpp \
   libsrc/include/../geom2d/geom2dmesh.hpp
 meshstlsurface.o: libsrc/stlgeom/meshstlsurface.cpp \
@@ -3646,8 +3617,7 @@ meshstlsurface.o: libsrc/stlgeom/meshstlsurface.cpp \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -3673,9 +3643,8 @@ meshstlsurface.o: libsrc/stlgeom/meshstlsurface.cpp \
   libsrc/include/../meshing/hprefinement.hpp \
   libsrc/include/../meshing/boundarylayer.hpp \
   libsrc/include/../meshing/specials.hpp libsrc/stlgeom/stlgeom.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/stlgeom/stltopology.hpp \
-  libsrc/stlgeom/stltool.hpp libsrc/stlgeom/stlline.hpp \
-  libsrc/stlgeom/meshstlsurface.hpp
+  libsrc/stlgeom/stltopology.hpp libsrc/stlgeom/stltool.hpp \
+  libsrc/stlgeom/stlline.hpp libsrc/stlgeom/meshstlsurface.hpp
 stlline.o: libsrc/stlgeom/stlline.cpp libsrc/include/mystdlib.h \
   libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
   libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
@@ -3704,8 +3673,7 @@ stlline.o: libsrc/stlgeom/stlline.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -3731,9 +3699,8 @@ stlline.o: libsrc/stlgeom/stlline.cpp libsrc/include/mystdlib.h \
   libsrc/include/../meshing/hprefinement.hpp \
   libsrc/include/../meshing/boundarylayer.hpp \
   libsrc/include/../meshing/specials.hpp libsrc/stlgeom/stlgeom.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/stlgeom/stltopology.hpp \
-  libsrc/stlgeom/stltool.hpp libsrc/stlgeom/stlline.hpp \
-  libsrc/stlgeom/meshstlsurface.hpp
+  libsrc/stlgeom/stltopology.hpp libsrc/stlgeom/stltool.hpp \
+  libsrc/stlgeom/stlline.hpp libsrc/stlgeom/meshstlsurface.hpp
 stltopology.o: libsrc/stlgeom/stltopology.cpp libsrc/include/mystdlib.h \
   libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
   libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
@@ -3762,8 +3729,7 @@ stltopology.o: libsrc/stlgeom/stltopology.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -3789,9 +3755,8 @@ stltopology.o: libsrc/stlgeom/stltopology.cpp libsrc/include/mystdlib.h \
   libsrc/include/../meshing/hprefinement.hpp \
   libsrc/include/../meshing/boundarylayer.hpp \
   libsrc/include/../meshing/specials.hpp libsrc/stlgeom/stlgeom.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/stlgeom/stltopology.hpp \
-  libsrc/stlgeom/stltool.hpp libsrc/stlgeom/stlline.hpp \
-  libsrc/stlgeom/meshstlsurface.hpp
+  libsrc/stlgeom/stltopology.hpp libsrc/stlgeom/stltool.hpp \
+  libsrc/stlgeom/stlline.hpp libsrc/stlgeom/meshstlsurface.hpp
 stltool.o: libsrc/stlgeom/stltool.cpp libsrc/include/mystdlib.h \
   libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
   libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
@@ -3820,8 +3785,7 @@ stltool.o: libsrc/stlgeom/stltool.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -3847,9 +3811,8 @@ stltool.o: libsrc/stlgeom/stltool.cpp libsrc/include/mystdlib.h \
   libsrc/include/../meshing/hprefinement.hpp \
   libsrc/include/../meshing/boundarylayer.hpp \
   libsrc/include/../meshing/specials.hpp libsrc/stlgeom/stlgeom.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/stlgeom/stltopology.hpp \
-  libsrc/stlgeom/stltool.hpp libsrc/stlgeom/stlline.hpp \
-  libsrc/stlgeom/meshstlsurface.hpp
+  libsrc/stlgeom/stltopology.hpp libsrc/stlgeom/stltool.hpp \
+  libsrc/stlgeom/stlline.hpp libsrc/stlgeom/meshstlsurface.hpp
 stlgeom.o: libsrc/stlgeom/stlgeom.cpp libsrc/include/mystdlib.h \
   libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
   libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
@@ -3878,8 +3841,7 @@ stlgeom.o: libsrc/stlgeom/stlgeom.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -3905,9 +3867,8 @@ stlgeom.o: libsrc/stlgeom/stlgeom.cpp libsrc/include/mystdlib.h \
   libsrc/include/../meshing/hprefinement.hpp \
   libsrc/include/../meshing/boundarylayer.hpp \
   libsrc/include/../meshing/specials.hpp libsrc/stlgeom/stlgeom.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/stlgeom/stltopology.hpp \
-  libsrc/stlgeom/stltool.hpp libsrc/stlgeom/stlline.hpp \
-  libsrc/stlgeom/meshstlsurface.hpp
+  libsrc/stlgeom/stltopology.hpp libsrc/stlgeom/stltool.hpp \
+  libsrc/stlgeom/stlline.hpp libsrc/stlgeom/meshstlsurface.hpp
 stlgeomchart.o: libsrc/stlgeom/stlgeomchart.cpp libsrc/include/mystdlib.h \
   libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
   libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
@@ -3936,8 +3897,7 @@ stlgeomchart.o: libsrc/stlgeom/stlgeomchart.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -3963,9 +3923,8 @@ stlgeomchart.o: libsrc/stlgeom/stlgeomchart.cpp libsrc/include/mystdlib.h \
   libsrc/include/../meshing/hprefinement.hpp \
   libsrc/include/../meshing/boundarylayer.hpp \
   libsrc/include/../meshing/specials.hpp libsrc/stlgeom/stlgeom.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/stlgeom/stltopology.hpp \
-  libsrc/stlgeom/stltool.hpp libsrc/stlgeom/stlline.hpp \
-  libsrc/stlgeom/meshstlsurface.hpp
+  libsrc/stlgeom/stltopology.hpp libsrc/stlgeom/stltool.hpp \
+  libsrc/stlgeom/stlline.hpp libsrc/stlgeom/meshstlsurface.hpp
 stlgeommesh.o: libsrc/stlgeom/stlgeommesh.cpp libsrc/include/mystdlib.h \
   libsrc/include/myadt.hpp libsrc/include/../general/myadt.hpp \
   libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \
@@ -3994,8 +3953,7 @@ stlgeommesh.o: libsrc/stlgeom/stlgeommesh.cpp libsrc/include/mystdlib.h \
   libsrc/include/../gprim/geomtest3d.hpp \
   libsrc/include/../gprim/transform3d.hpp \
   libsrc/include/../gprim/adtree.hpp libsrc/include/meshing.hpp \
-  libsrc/include/../meshing/meshing.hpp libsrc/include/../gprim/gprim.hpp \
-  libsrc/include/../linalg/linalg.hpp libsrc/include/opti.hpp \
+  libsrc/include/../meshing/meshing.hpp libsrc/include/opti.hpp \
   libsrc/include/../opti/opti.hpp \
   libsrc/include/../meshing/msghandler.hpp \
   libsrc/include/../meshing/meshtype.hpp \
@@ -4021,9 +3979,8 @@ stlgeommesh.o: libsrc/stlgeom/stlgeommesh.cpp libsrc/include/mystdlib.h \
   libsrc/include/../meshing/hprefinement.hpp \
   libsrc/include/../meshing/boundarylayer.hpp \
   libsrc/include/../meshing/specials.hpp libsrc/stlgeom/stlgeom.hpp \
-  libsrc/include/../gprim/gprim.hpp libsrc/stlgeom/stltopology.hpp \
-  libsrc/stlgeom/stltool.hpp libsrc/stlgeom/stlline.hpp \
-  libsrc/stlgeom/meshstlsurface.hpp
+  libsrc/stlgeom/stltopology.hpp libsrc/stlgeom/stltool.hpp \
+  libsrc/stlgeom/stlline.hpp libsrc/stlgeom/meshstlsurface.hpp
 moveablemem.o: libsrc/general/moveablemem.cpp libsrc/include/myadt.hpp \
   libsrc/include/../general/myadt.hpp libsrc/include/mystdlib.h \
   libsrc/include/mydefs.hpp libsrc/include/../general/ngexception.hpp \

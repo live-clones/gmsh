@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.72 2007-04-13 12:49:52 remacle Exp $
+// $Id: meshGFace.cpp,v 1.73 2007-04-16 09:08:28 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -34,7 +34,6 @@
 #include "Message.h"
 #include "Numeric.h"
 #include "BDS.h"
-#include "Attractors.h"
 
 extern Context_T CTX;
 
@@ -302,7 +301,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 
   // computecharacteristic lengths using mesh edge spacing
   // separate attractors & 
-  if (NIT > 0 && !Attractor::size())
+  if (NIT > 0 && !BGMExists())
     {
       std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
       while (itp != m.points.end())
@@ -391,7 +390,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 				     coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
 				     coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v,gf);
   		  double l1;
-		  if (Attractor::size())
+		  if (!BGMExists())
 		    l1 = BGM_MeshSize(gf,
 				      (coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u)*m.scalingU,
 				      (coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v)*m.scalingV,

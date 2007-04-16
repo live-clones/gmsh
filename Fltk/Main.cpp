@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.105 2007-03-18 14:12:20 geuzaine Exp $
+// $Id: Main.cpp,v 1.106 2007-04-16 09:08:27 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -39,6 +39,8 @@
 #include "Solvers.h"
 #include "PluginManager.h"
 #include "GModel.h"
+#include "Field.h"
+#include "BackgroundMesh.h"
 
 Context_T CTX;
 Mesh *THEM = 0;
@@ -127,10 +129,12 @@ int main(int argc, char *argv[])
 	CombineViews(1, 2, CTX.post.combine_remove_orig);
       if(CTX.bgm_filename) {
         MergeFile(CTX.bgm_filename);
-        if(List_Nbr(CTX.post.list))
-          BGMWithView(*(Post_View **)
-                      List_Pointer(CTX.post.list,
-                                   List_Nbr(CTX.post.list) - 1));
+        if(List_Nbr(CTX.post.list)){
+          Field *field = new PostViewField(*(Post_View **) 
+            List_Pointer(CTX.post.list, List_Nbr(CTX.post.list) - 1));
+          BGMAddField(field);
+          fields.insert(field);
+        }
         else
           Msg(GERROR, "Invalid background mesh (no view)");
       }
@@ -227,10 +231,12 @@ int main(int argc, char *argv[])
 
   if(CTX.bgm_filename) {
     MergeFile(CTX.bgm_filename);
-    if(List_Nbr(CTX.post.list))
-      BGMWithView(*(Post_View **)
-                  List_Pointer(CTX.post.list, List_Nbr(CTX.post.list) - 1));
-    else
+    if(List_Nbr(CTX.post.list)){
+      Field *field = new PostViewField(*(Post_View **) 
+        List_Pointer(CTX.post.list, List_Nbr(CTX.post.list) - 1));
+      BGMAddField(field);
+      fields.insert(field);
+    } else
       Msg(GERROR, "Invalid background mesh (no view)");
   }
 
