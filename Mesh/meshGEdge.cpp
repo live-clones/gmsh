@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.31 2007-04-16 09:08:28 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.32 2007-04-16 09:10:08 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -234,7 +234,6 @@ void meshGEdge::operator() (GEdge *ge)
 
   // do not consider the first and the last vertex (those are not
   // classified on this mesh edge)
-  printf("mid\n");
   if(N > 2){
     ge->mesh_vertices.resize(N - 2);
     while(NUMP < N - 1) {
