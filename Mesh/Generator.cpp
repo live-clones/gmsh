@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.117 2007-02-28 06:58:46 geuzaine Exp $
+// $Id: Generator.cpp,v 1.118 2007-04-20 07:11:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -179,7 +179,8 @@ void GetStatistics(double stat[50], double quality[3][100])
 
 }
 
-bool TooManyElements(int dim){
+bool TooManyElements(int dim)
+{
   if(CTX.expert_mode || !GMODEL->numVertex()) return false;
 
   // try to detect obvious mistakes in characteristic lenghts (one of
@@ -308,10 +309,10 @@ void GenerateMesh(int ask)
   if(GMODEL->getMeshStatus() == 3 && CTX.mesh.optimize)
     OptimizeMesh();
   
-  // Create second order elements
+  // Create high order elements
   if(GMODEL->getMeshStatus() && CTX.mesh.order > 1) 
-    SetOrderN(GMODEL, CTX.mesh.order, 
-	      CTX.mesh.second_order_linear, CTX.mesh.second_order_incomplete);
+    SetOrderN(GMODEL, CTX.mesh.order, CTX.mesh.second_order_linear, 
+	      CTX.mesh.second_order_incomplete);
 
   Msg(INFO, "%d vertices %d elements", GMODEL->numVertices(), GMODEL->numElements());
 

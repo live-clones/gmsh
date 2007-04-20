@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.38 2007-04-16 09:08:27 remacle Exp $
+// $Id: GModel.cpp,v 1.39 2007-04-20 07:11:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -160,10 +160,17 @@ void GModel::associateEntityWithVertices()
 int GModel::renumberMeshVertices()
 {
   // FIXME: here, we should first:
-  // 1) loop over all elements, and tag all unused vertices in a
-  // special way (I think the best would be to set their associated
-  // entity to 0)
-  // 2) delete all untagged (i.e., unused) vertices
+
+  // 0) set vertex num of all vertices to 0
+
+  // 1) loop over all point elements, and only set their vertex num
+  // if they are not connected to at least one edge or if they
+  // have a physical id
+
+  // 2) loop over all line, face and volume elements, and set num of
+  // used verts
+
+  // 3) change all save routines to only save verts with num > 0
 
   int numVertices = 0;
   for(viter it = firstVertex(); it != lastVertex(); ++it)
