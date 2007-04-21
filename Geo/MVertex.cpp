@@ -1,4 +1,4 @@
-// $Id: MVertex.cpp,v 1.12 2007-03-18 12:05:16 geuzaine Exp $
+// $Id: MVertex.cpp,v 1.13 2007-04-21 19:40:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -27,6 +27,8 @@ double MVertexLessThanLexicographic::tolerance = 1.e-6;
 
 void MVertex::writeMSH(FILE *fp, bool binary, double scalingFactor)
 {
+  if(_num < 0) return; // negative vertices are never saved
+
   if(!binary){
     fprintf(fp, "%d %.16g %.16g %.16g\n", _num, 
 	    x() * scalingFactor, 
@@ -61,12 +63,16 @@ void MVertex::writeMSH(FILE *fp, double version, bool binary, int num,
 
 void MVertex::writeVRML(FILE *fp, double scalingFactor)
 {
+  if(_num < 0) return; // negative vertices are never saved
+
   fprintf(fp, "%.16g %.16g %.16g,\n",
 	  x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
 }
 
 void MVertex::writeUNV(FILE *fp, double scalingFactor)
 {
+  if(_num < 0) return; // negative vertices are never saved
+
   int coord_sys = 1;
   int displacement_coord_sys = 1;
   int color = 11;
@@ -81,6 +87,8 @@ void MVertex::writeUNV(FILE *fp, double scalingFactor)
 
 void MVertex::writeMESH(FILE *fp, double scalingFactor)
 {
+  if(_num < 0) return; // negative vertices are never saved
+
   fprintf(fp, " %20.14G      %20.14G      %20.14G      %d\n", 
 	  x() * scalingFactor, y() * scalingFactor, z() * scalingFactor, 0);
 }
@@ -103,6 +111,8 @@ static void double_to_char8(double val, char *str){
 
 void MVertex::writeBDF(FILE *fp, int format, double scalingFactor)
 {
+  if(_num < 0) return; // negative vertices are never saved
+
   char xs[17], ys[17], zs[17];
   double x1 = x() * scalingFactor;
   double y1 = y() * scalingFactor;

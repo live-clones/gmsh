@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.19 2007-04-16 09:08:28 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.20 2007-04-21 19:40:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -34,26 +34,20 @@
 extern Context_T CTX;
 MinField lc_field;
 
-static OctreePost *BGM_OCTREE = NULL;
+#define MAX_LC 1.e22
 
-const double MAX_LC = 1.e22;
-
-/*int BGMWithView(Post_View * ErrView)
+bool BGMExists() 
 {
-  Msg(INFO, "Applying '%s' as background mesh", ErrView->Name);
-  if(BGM_OCTREE) delete BGM_OCTREE;
-  BGM_OCTREE = new OctreePost(ErrView);
-  CTX.mesh.bgmesh_view_num = ErrView->Num; // view numbers are unique
-  return 1 ;
-}*/
-
-bool BGMExists() {
   return lc_field.empty();
 }
-void BGMAddField(Field *field){
+
+void BGMAddField(Field *field)
+{
   lc_field.push_front(field);
 }
-void BGMReset(){
+
+void BGMReset()
+{
   lc_field.clear();
 }
 
@@ -163,7 +157,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
   double l1 = MAX_LC;
   double l2 = MAX_LC;
   double l3 = CTX.lc;
-  double l4 = !lc_field.empty()?lc_field(X, Y, Z):MAX_LC;
+  double l4 = lc_field.empty() ? MAX_LC : lc_field(X, Y, Z);
 
   if(l4 < MAX_LC && !CTX.mesh.constrained_bgmesh)
     return l4 * CTX.mesh.lc_factor;

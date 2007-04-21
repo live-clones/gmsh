@@ -1,4 +1,4 @@
-// $Id: Views.cpp,v 1.194 2007-02-26 08:25:36 geuzaine Exp $
+// $Id: Views.cpp,v 1.195 2007-04-21 19:39:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -30,6 +30,7 @@
 #include "Options.h"
 #include "ColorTable.h"
 #include "SmoothData.h"
+#include "BackgroundMesh.h"
 
 #if defined(HAVE_MATH_EVAL)
 #include "matheval.h"
@@ -86,8 +87,10 @@ Post_View *BeginView(int allocate)
   else {
     v->Num = CTX.post.force_num;
     List_Replace(CTX.post.list, &v, fcmpPostViewNum);
-    // invalidate the background mesh
-    if(v->Num == CTX.mesh.bgmesh_view_num) CTX.mesh.bgmesh_view_num = -1;
+    // FIXME: need to check here if the old view is used as a field in
+    // a background mesh (and if it is, remove that field). Until we
+    // do this, let's just invalidate all the lc fields
+    BGMReset();
   }
   
   int i = List_ISearch(CTX.post.list, &v, fcmpPostViewNum);

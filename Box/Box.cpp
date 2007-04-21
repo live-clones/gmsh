@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.34 2007-03-18 14:12:20 geuzaine Exp $
+// $Id: Box.cpp,v 1.35 2007-04-21 19:39:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,7 +25,6 @@
 #include "Numeric.h"
 #include "Geo.h"
 #include "Generator.h"
-#include "Views.h"
 #include "Parser.h"
 #include "Context.h"
 #include "Options.h"
@@ -35,6 +34,8 @@
 #include "ParUtil.h"
 #include "PluginManager.h"
 #include "GModel.h"
+#include "Field.h"
+#include "BackgroundMesh.h"
 
 Context_T CTX;
 Mesh *THEM = 0;
@@ -110,9 +111,13 @@ int GMSHBOX(int argc, char *argv[])
       MergeFile(*(char**)List_Pointer(CTX.files, i));
     if(CTX.bgm_filename) {
       MergeFile(CTX.bgm_filename);
-      if(List_Nbr(CTX.post.list))
-        BGMWithView(*(Post_View **)
-                    List_Pointer(CTX.post.list, List_Nbr(CTX.post.list) - 1));
+      if(List_Nbr(CTX.post.list)){
+	Post_View *v;
+	List_Read(CTX.post.list, List_Nbr(CTX.post.list) - 1, &v);
+	Field *field = new PostViewField(v);
+	BGMAddField(field);
+	fields.insert(field);
+      }
       else{
         fprintf(stderr, ERROR_STR "Invalid background mesh (no view)\n");
 	exit(1);

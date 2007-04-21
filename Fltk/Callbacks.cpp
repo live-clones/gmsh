@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.522 2007-04-16 09:46:41 remacle Exp $
+// $Id: Callbacks.cpp,v 1.523 2007-04-21 19:39:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4462,9 +4462,10 @@ void view_applybgmesh_cb(CALLBACK_ARGS)
     Msg(GERROR, "Background mesh generation impossible with non-scalar view");
     return;
   }
-  Field *field=new PostViewField(v);
-  fields.insert(field);
+  Field *field = new PostViewField(v);
+  BGMReset();
   BGMAddField(field);
+  fields.insert(field);
 }
 
 void view_plugin_cancel_cb(CALLBACK_ARGS)

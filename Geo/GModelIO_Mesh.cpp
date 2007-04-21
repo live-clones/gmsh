@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.14 2007-04-08 23:06:53 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.15 2007-04-21 19:40:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -579,7 +579,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
 
   // get the number of vertices and renumber the vertices in a
   // continuous sequence
-  int numVertices = renumberMeshVertices();
+  int numVertices = renumberMeshVertices(saveAll);
   
   // get the number of elements (we assume that all the elements in a
   // list have the same type, i.e., they are all of the same
@@ -1110,7 +1110,7 @@ int GModel::writeVRML(const std::string &name, bool saveAll, double scalingFacto
 
   if(noPhysicalGroups()) saveAll = true;
 
-  renumberMeshVertices();
+  renumberMeshVertices(saveAll);
 
   fprintf(fp, "#VRML V1.0 ascii\n");
   fprintf(fp, "#created by Gmsh\n");
@@ -1327,7 +1327,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll, double scalingFactor
 
   if(noPhysicalGroups()) saveAll = true;
 
-  renumberMeshVertices();
+  renumberMeshVertices(saveAll);
 
   // nodes
   fprintf(fp, "%6d\n", -1);
@@ -1479,11 +1479,12 @@ int GModel::writeMESH(const std::string &name, bool saveAll, double scalingFacto
 
   if(noPhysicalGroups()) saveAll = true;
 
+  int numVertices = renumberMeshVertices(saveAll);
+
   fprintf(fp, " MeshVersionFormatted 1\n");
   fprintf(fp, " Dimension\n");
   fprintf(fp, " 3\n");
 
-  int numVertices = renumberMeshVertices();
   fprintf(fp, " Vertices\n");
   fprintf(fp, " %d\n", numVertices);
   for(viter it = firstVertex(); it != lastVertex(); ++it)
@@ -1817,7 +1818,7 @@ int GModel::writeBDF(const std::string &name, int format, bool saveAll,
 
   if(noPhysicalGroups()) saveAll = true;
 
-  renumberMeshVertices();
+  renumberMeshVertices(saveAll);
 
   fprintf(fp, "$ Created by Gmsh\n");
 

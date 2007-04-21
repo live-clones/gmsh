@@ -216,7 +216,6 @@ void WriteView(Post_View *v, char *filename, int format, int append);
 void CopyViewOptions(Post_View *src, Post_View *dest);
 void CombineViews(int time, int how, int remove);
 
-int BGMWithView(Post_View *ErrView);
 Post_View *Create2DGraph(char *xname, char *yname, int nbdata, double *x, double *y);
 
 GmshColorTable *Get_ColorTable(int num);

@@ -102,7 +102,7 @@ class GModel
   void associateEntityWithVertices();
 
   // Renumber all the mesh vertices in a continuous sequence
-  int renumberMeshVertices();
+  int renumberMeshVertices(bool saveAll);
 
   // Deletes all invisble mesh elements
   void removeInvisibleElements();

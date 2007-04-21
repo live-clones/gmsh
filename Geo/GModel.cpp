@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.39 2007-04-20 07:11:26 geuzaine Exp $
+// $Id: GModel.cpp,v 1.40 2007-04-21 19:40:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -157,34 +157,80 @@ void GModel::associateEntityWithVertices()
   }
 }
 
-int GModel::renumberMeshVertices()
+int GModel::renumberMeshVertices(bool saveAll)
 {
-  // FIXME: here, we should first:
+  // tag all mesh vertices with -1 (negative vertices will not be
+  // saved)
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
+      (*it)->mesh_vertices[i]->setNum(-1);
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
+      (*it)->mesh_vertices[i]->setNum(-1);
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
+      (*it)->mesh_vertices[i]->setNum(-1);
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
+      (*it)->mesh_vertices[i]->setNum(-1);
 
-  // 0) set vertex num of all vertices to 0
-
-  // 1) loop over all point elements, and only set their vertex num
-  // if they are not connected to at least one edge or if they
-  // have a physical id
-
-  // 2) loop over all line, face and volume elements, and set num of
-  // used verts
-
-  // 3) change all save routines to only save verts with num > 0
-
+  // tag all mesh vertices belonging to elements that need to be saved
+  // with 0
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    if(saveAll || (*it)->physicals.size()){
+      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
+	(*it)->mesh_vertices[i]->setNum(0);
+    }
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    if(saveAll || (*it)->physicals.size()){
+      for(unsigned int i = 0; i < (*it)->lines.size(); i++)
+	for(int j = 0; j < (*it)->lines[i]->getNumVertices(); j++)
+	  (*it)->lines[i]->getVertex(j)->setNum(0);
+    }
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    if(saveAll || (*it)->physicals.size()){
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+	for(int j = 0; j < (*it)->triangles[i]->getNumVertices(); j++)
+	  (*it)->triangles[i]->getVertex(j)->setNum(0);
+      for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
+	for(int j = 0; j < (*it)->quadrangles[i]->getNumVertices(); j++)
+	  (*it)->quadrangles[i]->getVertex(j)->setNum(0);
+    }
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    if(saveAll || (*it)->physicals.size()){
+      for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
+	for(int j = 0; j < (*it)->tetrahedra[i]->getNumVertices(); j++)
+	  (*it)->tetrahedra[i]->getVertex(j)->setNum(0);
+      for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
+	for(int j = 0; j < (*it)->hexahedra[i]->getNumVertices(); j++)
+	  (*it)->hexahedra[i]->getVertex(j)->setNum(0);
+      for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
+	for(int j = 0; j < (*it)->prisms[i]->getNumVertices(); j++)
+	  (*it)->prisms[i]->getVertex(j)->setNum(0);
+      for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
+	for(int j = 0; j < (*it)->pyramids[i]->getNumVertices(); j++)
+	  (*it)->pyramids[i]->getVertex(j)->setNum(0);
+    }
+  
+  // renumber all the mesh vertices tagged with 0
   int numVertices = 0;
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
-      (*it)->mesh_vertices[i]->setNum(++numVertices);
+      if(!(*it)->mesh_vertices[i]->getNum())
+	(*it)->mesh_vertices[i]->setNum(++numVertices);
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
-      (*it)->mesh_vertices[i]->setNum(++numVertices);
+      if(!(*it)->mesh_vertices[i]->getNum())
+	(*it)->mesh_vertices[i]->setNum(++numVertices);
   for(fiter it = firstFace(); it != lastFace(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
-      (*it)->mesh_vertices[i]->setNum(++numVertices);
+      if(!(*it)->mesh_vertices[i]->getNum())
+	(*it)->mesh_vertices[i]->setNum(++numVertices);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
-      (*it)->mesh_vertices[i]->setNum(++numVertices);
+      if(!(*it)->mesh_vertices[i]->getNum())
+	(*it)->mesh_vertices[i]->setNum(++numVertices);
+
   return numVertices;
 }
 
