@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.87 2007-04-16 09:08:28 remacle Exp $
+// $Id: Gmsh.l,v 1.88 2007-04-21 19:46:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -126,6 +126,8 @@ BSpline			return tBSpline;
 BoundingBox             return tBoundingBox;
 
 Ceil                    return tCeil;
+Circle                  return tCircle;
+Coherence               return tCoherence;
 Combine                 return tCombine;
 Cosh                    return tCosh;
 Cos                     return tCos;
