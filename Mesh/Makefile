@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.170 2007-04-21 19:40:00 geuzaine Exp $
+# $Id: Makefile,v 1.171 2007-04-21 20:20:57 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -58,6 +58,10 @@ ${LIB}: ${OBJ}
 
 .cpp.o:
 	${CXX} ${CFLAGS} -c $<
+
+# Don't optimize BDS: it crashes with some flavors of gcc 4.1 (e.g. on debian etch)
+BDS.o:
+	${CXX} ${FLAGS} ${INCLUDE} -c $<
 
 clean:
 	rm -f *.o
