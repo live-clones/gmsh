@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.73 2007-04-16 09:08:28 remacle Exp $
+// $Id: meshGFace.cpp,v 1.74 2007-04-21 22:08:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -725,8 +725,9 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
     }
 
 
-  /// Increase the size of the bounding box by 20 %
-  bbox *= 1.5;
+  /// Increase the size of the bounding box
+  bbox *= 2.5;
+
   /// add 4 points than encloses the domain
   /// Use negative number to distinguish thos fake vertices
   MVertex *bb[4];
