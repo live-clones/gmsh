@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.273 2007-04-16 11:46:27 remacle Exp $
+// $Id: Gmsh.y,v 1.274 2007-04-22 06:42:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1078,9 +1078,9 @@ Shape :
       $$.Type = MSH_PHYSICAL_POINT;
       $$.Num = num;
     }
-
- 	| tAttractor tPoint tField '(' FExpr ')' tAFFECT ListOfDouble tEND {
- 			AttractorField *att = new AttractorField();
+  | tAttractor tPoint tField '(' FExpr ')' tAFFECT ListOfDouble tEND 
+    {
+      AttractorField *att = new AttractorField();
       for(int i = 0; i < List_Nbr($8); i++){
         double d;
         List_Read($8, i, &d);
@@ -1094,40 +1094,60 @@ Shape :
         }
       }
       att->buildFastSearchStructures();
-      fields.insert(att,(int)$5);
+      fields.insert(att, (int)$5);
+      // dummy values
+      $$.Type = 0;
+      $$.Num = 0;
     }
-  | tThreshold tField '(' FExpr ')' tAFFECT ListOfDouble tEND {
-    double pars[]={0,CTX.lc/10,CTX.lc,CTX.lc/100,CTX.lc/20};
-    for (int i=0;i<List_Nbr($7);i++){
-      if(i>4)
-        yymsg(GERROR,"Too many parameters for Thresold Field (max=5)");
-      else
-        List_Read($7,i,&pars[i]);
+  | tThreshold tField '(' FExpr ')' tAFFECT ListOfDouble tEND 
+    {
+      double pars[] = {0, CTX.lc/10, CTX.lc, CTX.lc/100, CTX.lc/20};
+      for(int i = 0; i < List_Nbr($7); i++){
+	if(i > 4)
+	  yymsg(GERROR, "Too many parameters for Thresold Field (max=5)");
+	else
+	  List_Read($7, i, &pars[i]);
+      }
+      fields.insert(new ThresholdField(fields.get((int)pars[0]), pars[1], 
+				       pars[2], pars[3], pars[4]), (int)$4);
+      // dummy values
+      $$.Type = 0;
+      $$.Num = 0;
     }
-    fields.insert(new ThresholdField(fields.get((int)pars[0]),pars[1],pars[2],pars[3],pars[4]),(int)$4);
-  }
-	| tFunction tField '(' FExpr ')' tAFFECT tBIGSTR ListOfDouble tEND{
-		std::list<Field*> *flist=new std::list<Field*>;
-		flist->resize(0);
-		for(int i = 0; i < List_Nbr($8); i++){
-			double id;
-			List_Read($8, i, &id);
-      Field *pfield=fields.get((int)id);
-			if(pfield)flist->push_front(pfield);
-		}
-    fields.insert(new FunctionField(flist,$7),(int)$4);
-  }
- 	| tStructured tField '(' FExpr ')' tAFFECT tBIGSTR tEND{
-      fields.insert(new StructuredField($7),(int)$4);
- 		}
- 	| tCharacteristic tLength tField ListOfDouble tEND {
- 			for(int i = 0; i < List_Nbr($4); i++){
- 				double id;
- 				List_Read($4, i, &id);
+  | tFunction tField '(' FExpr ')' tAFFECT tBIGSTR ListOfDouble tEND
+    {
+      std::list<Field*> *flist = new std::list<Field*>;
+      flist->resize(0);
+      for(int i = 0; i < List_Nbr($8); i++){
+	double id;
+	List_Read($8, i, &id);
+	Field *pfield = fields.get((int)id);
+	if(pfield)flist->push_front(pfield);
+      }
+      fields.insert(new FunctionField(flist,$7),(int)$4);
+      // dummy values
+      $$.Type = 0;
+      $$.Num = 0;
+    }
+  | tStructured tField '(' FExpr ')' tAFFECT tBIGSTR tEND
+    {
+      fields.insert(new StructuredField($7), (int)$4);
+      // dummy values
+      $$.Type = 0;
+      $$.Num = 0;
+    }
+  | tCharacteristic tLength tField ListOfDouble tEND 
+    {
+      for(int i = 0; i < List_Nbr($4); i++){
+	double id;
+	List_Read($4, i, &id);
         BGMAddField(fields.get((int)id));
- 			}
- 		}
-  /* backward compatibility */
+      }
+      // dummy values
+      $$.Type = 0;
+      $$.Num = 0;
+    }
+  // backward compatibility
   | tAttractor tPoint ListOfDouble tAFFECT ListOfDouble  tEND
     {
       double pars[] = { CTX.lc/10, CTX.lc/100., CTX.lc/20, 1, 3 };
@@ -1139,9 +1159,10 @@ Shape :
       }
       // treshold attractor: first parameter is the treshold, next two
       // are the in and out size fields, last is transition factor
-      AttractorField *attractor= new AttractorField();
+      AttractorField *attractor = new AttractorField();
       fields.insert(attractor);
-      Field *threshold=new ThresholdField(attractor,pars[0],pars[0]*pars[4],pars[1],pars[2]);
+      Field *threshold = new ThresholdField(attractor, pars[0], pars[0] * pars[4], 
+					    pars[1], pars[2]);
       fields.insert(threshold);
       BGMAddField(threshold);
       for(int i = 0; i < List_Nbr($3); i++){
@@ -1174,10 +1195,10 @@ Shape :
       // are the in and out size fields, last is transition factor
       AttractorField *att = new AttractorField();
       fields.insert(att);
-      Field *threshold=new ThresholdField(att,pars[0],pars[0]*pars[4],pars[1],pars[2]);
+      Field *threshold = new ThresholdField(att, pars[0], pars[0] * pars[4],
+					    pars[1], pars[2]);
       fields.insert(threshold);
       BGMAddField(threshold);
-      //tresholdAttractor::New(pars[0], pars[1], pars[2], pars[4]);
       for(int i = 0; i < List_Nbr($3); i++){
 	double d;
 	List_Read($3, i, &d);
@@ -1529,23 +1550,19 @@ Shape :
       $$.Type = type;
       $$.Num = num;
     }
-
   | tEuclidian tCoordinates tEND
-  {
-    myGmshSurface = 0;
-  }  
-
+    {
+      myGmshSurface = 0;
+    }  
   | tCoordinates tSurface FExpr tEND
-  {
-    myGmshSurface = gmshSurface :: surfaceByTag ( (int) $3);
-  }  
-
+    {
+      myGmshSurface = gmshSurface :: surfaceByTag ( (int) $3);
+    }  
   | tParametric tSurface '(' FExpr ')' tAFFECT tBIGSTR tBIGSTR tBIGSTR tEND
-  {
-    int num = (int)$4, type = 0;
-    myGmshSurface = gmshParametricSurface::NewParametricSurface ((int)$4,$7,$8,$9);
-  }
-
+    {
+      int num = (int)$4, type = 0;
+      myGmshSurface = gmshParametricSurface::NewParametricSurface ((int)$4,$7,$8,$9);
+    }
   | tSphere '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3, type = 0;
