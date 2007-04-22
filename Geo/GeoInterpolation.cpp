@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.25 2007-04-16 09:08:27 remacle Exp $
+// $Id: GeoInterpolation.cpp,v 1.26 2007-04-22 08:46:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -130,34 +130,35 @@ SPoint2 InterpolateCubicSpline(Vertex * v[4], double t, double mat[4][4],
 }
 
 // Uniform BSplines
-Vertex InterpolateUBS(Curve * Curve, double u, int derivee) {
-  int NbControlPoints, NbCurves, iCurve;
-  double t, t1, t2;
+Vertex InterpolateUBS(Curve * Curve, double u, int derivee) 
+{
+  bool periodic = (Curve->end == Curve->beg);
+  int NbControlPoints = List_Nbr(Curve->Control_Points);
+  int NbCurves = NbControlPoints + (periodic ? -1 : 1);
+  int iCurve = (int)floor(u * (double)NbCurves);
+  if(iCurve == NbCurves) iCurve -= 1; // u = 1
+  double t1 = (double)(iCurve) / (double)(NbCurves);
+  double t2 = (double)(iCurve+1) / (double)(NbCurves);
+  double t = (u - t1) / (t2 - t1);
   Vertex *v[4];
-	Vertex V;
-  bool periodic=Curve->end==Curve->beg;
-  NbControlPoints = List_Nbr(Curve->Control_Points);
-  NbCurves = NbControlPoints +(periodic ? -1:+1) ;
-  iCurve = (int)floor(u * (double)NbCurves);
-  if(iCurve==NbCurves)iCurve-=1;//u=1
-  t1 = (double)(iCurve) / (double)(NbCurves);
-  t2 = (double)(iCurve+1) / (double)(NbCurves);
-  t = (u - t1) / (t2 - t1);
-	for(int i=0;i<4;i++) {
-		int k=iCurve - (periodic?1:2) + i;
-		if (k<0) k=periodic ? k + NbControlPoints - 1 : 0;
-		if (k>=NbControlPoints) k=periodic ? k-NbControlPoints + 1: NbControlPoints-1;
-		List_Read(Curve->Control_Points, k , &v[i]);
-	}
-  if (Curve->geometry) {
-    SPoint2 pp =  InterpolateCubicSpline(v, t, Curve->mat, 0, t1, t2,Curve->geometry);
+  for(int i = 0; i < 4; i++) {
+    int k = iCurve - (periodic ? 1 : 2) + i;
+    if(k < 0) k = periodic ? k + NbControlPoints - 1 : 0;
+    if(k >= NbControlPoints) k = periodic ? k - NbControlPoints + 1: NbControlPoints - 1;
+    List_Read(Curve->Control_Points, k , &v[i]);
+  }
+
+  if(Curve->geometry){
+    SPoint2 pp = InterpolateCubicSpline(v, t, Curve->mat, 0, t1, t2,Curve->geometry);
     SPoint3 pt = Curve->geometry->point(pp);
+    Vertex V;
     V.Pos.X = pt.x();
     V.Pos.Y = pt.y();
     V.Pos.Z = pt.z();
     return V;
-  } else
-      return InterpolateCubicSpline(v, t, Curve->mat, 0, t1, t2);
+  } 
+  else
+    return InterpolateCubicSpline(v, t, Curve->mat, 0, t1, t2);
 }
 
 // Non Uniform BSplines
@@ -207,11 +208,11 @@ Vertex InterpolateNurbs(Curve * Curve, double u, int derivee)
 {
   static double Nb[1000];
   int span = findSpan(u, Curve->degre, List_Nbr(Curve->Control_Points), Curve->k);
-  Vertex p, *v;
-
   basisFuns(u, span, Curve->degre, Curve->k, Nb);
+  Vertex p;
   p.Pos.X = p.Pos.Y = p.Pos.Z = p.w = p.lc = 0.0;
   for(int i = Curve->degre; i >= 0; --i) {
+    Vertex *v;
     List_Read(Curve->Control_Points, span - Curve->degre + i, &v);
     p.Pos.X += Nb[i] * v->Pos.X;
     p.Pos.Y += Nb[i] * v->Pos.Y;

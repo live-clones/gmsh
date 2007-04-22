@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.34 2007-04-21 22:26:51 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.35 2007-04-22 08:46:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -189,11 +189,12 @@ void deMeshGEdge::operator() (GEdge *ge)
   if(ge->meshRep) ge->meshRep->destroy();
 }
 
-double GPointDist(GPoint &p1,GPoint &p2){
-  double dx=p1.x()-p2.x();
-  double dy=p1.y()-p2.y();
-  double dz=p1.z()-p2.z();
-  return sqrt(dx*dx+dy*dy+dz*dz);
+double GPointDist(GPoint &p1, GPoint &p2)
+{
+  double dx = p1.x() - p2.x();
+  double dy = p1.y() - p2.y();
+  double dz = p1.z() - p2.z();
+  return sqrt(dx * dx + dy * dy + dz * dz);
 }
 
 void meshGEdge::operator() (GEdge *ge) 
@@ -303,5 +304,4 @@ void meshGEdge::operator() (GEdge *ge)
   v0->x() = beg_p.x();
   v0->y() = beg_p.y();
   v0->z() = beg_p.z();
-
 }

@@ -101,7 +101,7 @@ class GModel
   // loop over all vertices connected to elements and associate geo entity
   void associateEntityWithVertices();
 
-  // Renumber all the mesh vertices in a continuous sequence
+  // Renumber all the (used) mesh vertices in a continuous sequence
   int renumberMeshVertices(bool saveAll);
 
   // Deletes all invisble mesh elements
