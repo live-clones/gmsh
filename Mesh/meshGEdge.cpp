@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.35 2007-04-22 08:46:04 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.36 2007-04-22 19:41:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -237,19 +237,18 @@ void meshGEdge::operator() (GEdge *ge)
   }
   const double b = a / (double)(N - 1);
 
-  MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
-  MVertex *v1 = ge->getEndVertex()->mesh_vertices[0];
-
   // if the curve is periodic and if the begin vertex is identical to the end vertex
   // and if this vertex has only one model curve adjacent to it, then the vertex is
   // not connecting any other curve. So, the mesh vertex and its associated  geom vertex
   // are not necessary at the same location
-  GPoint beg_p,end_p;
+  GPoint beg_p, end_p;
   if(ge->getBeginVertex() == ge->getEndVertex() && 
      ge->getBeginVertex()->edges().size() == 1){
     end_p = beg_p = ge->point(t_begin);
   }
   else{
+    MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
+    MVertex *v1 = ge->getEndVertex()->mesh_vertices[0];
     beg_p = GPoint(v0->x(), v0->y(), v0->z());
     end_p = GPoint(v1->x(), v1->y(), v1->z());
   }
@@ -301,7 +300,12 @@ void meshGEdge::operator() (GEdge *ge)
       ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
     ge->lines.push_back(new MLine(v0, v1));
   }
-  v0->x() = beg_p.x();
-  v0->y() = beg_p.y();
-  v0->z() = beg_p.z();
+
+  if(ge->getBeginVertex() == ge->getEndVertex() && 
+     ge->getBeginVertex()->edges().size() == 1){
+    MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
+    v0->x() = beg_p.x();
+    v0->y() = beg_p.y();
+    v0->z() = beg_p.z();
+  }
 }
