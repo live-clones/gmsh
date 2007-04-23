@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.3 2007-02-03 11:21:40 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.4 2007-04-23 07:59:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -18,23 +18,20 @@
 // USA.
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
-//
-// Contributor(s):
-//   Pascale Noyret
+
+#include "GModel.h"
+#include "MVertex.h"
+#include "MEdge.h"
+#include "Message.h"
+
+#if defined(HAVE_MED)
 
 #include <map>
 #include <string>
 #include <vector>
 #include <iostream>
 #include <sstream>
-
-#include "GModel.h"
 #include "GModelIO_MED.h"
-#include "MVertex.h"
-#include "MEdge.h"
-#include "Message.h"
-
-#if defined(HAVE_MED)
 
 extern "C" {
 #include "med.h"
@@ -43,6 +40,11 @@ extern "C" {
 ConversionData Data::MyConversionData;
 
 typedef std::list<int>::const_iterator listIter;
+
+// _____________________________________________ //
+//                                               //
+// Implementation  de la classe  ConversionData  //
+//  ____________________________________________ //
 
 ConversionData::ConversionData()
 { 
@@ -57,18 +59,6 @@ ConversionData::ConversionData()
 	while (ValuesTypesOfElts[i] != MED_NONE)
 	{
 	   typesOfElts[i+1]=ValuesTypesOfElts[i];
-	   ++i;
-	}
-
-	// *****************************************************
-	// elements GMSH avec un nb de noeuds differents en Med
-	// *****************************************************
-	static const int secondOrderElts[] = { 10, 12, 13, 14 , 0};
-	static const int NbNodesInMed[]    = { 8,  20, 15, 13 , 0};
-	i=0;
-	while (secondOrderElts[i] != 0)
-	{
-	   maxEltInMed[secondOrderElts[i]]=NbNodesInMed[i];
 	   ++i;
 	}
 
@@ -185,17 +175,11 @@ ConversionData::ConversionData()
 	}
 };
 
-int ConversionData::inMaxEltInMed(int clef)
-{
-	std::map<int,int>::const_iterator MyIter;
-	MyIter = maxEltInMed.find(clef);
-	if ( MyIter != maxEltInMed.end() )
-		return 1;
-	return 0;
-};
 
-
-
+// ____________________________________ //
+//                                      //
+// Implementation  de la classe  MedIO  //
+//  ___________________________________ //
 
 MedIO::MedIO() : _numOfNode(1), _boolOpen(0), _meshName("monMaillage")
 { 
@@ -236,10 +220,12 @@ int MedIO::SetFile(const std::string &FileName)
 }
  
 // -------------------------------------------------
-int MedIO::AddVertex(MVertex* v, const int famille)
+int MedIO::AddNode(MVertex* v, const int famille)
 // -------------------------------------------------
 { 
-   // Msg(INFO, "Creation ");
+    //Msg(INFO, "Creation %d", v->getNum());
+   
+   if ( elements.find(v->getNum()) != elements.end() ) return 1;
    coordonnees.push_back((med_float)v->x());
    coordonnees.push_back((med_float)v->y());
    coordonnees.push_back((med_float)v->z());
@@ -254,7 +240,7 @@ int MedIO::AddVertex(MVertex* v, const int famille)
 }
 
 // -------------------------------
-int MedIO::CreateNodeFam( )
+int MedIO::CreateFamilles( )
 // -------------------------------
 {
    numFamilles.insert(0);
@@ -264,8 +250,8 @@ int MedIO::CreateNodeFam( )
 	if (*itFam != 0 )
 	{ std::ostringstream oss;
           oss << *itFam;
-          std::string fam = "Famille" + oss.str();
-          std::string group = "Groupe" + oss.str();
+          std::string fam = "F_" + oss.str();
+          std::string group = "G_" + oss.str();
 	  while (group.size() < 80) group = group + " ";
           CR = MEDfamCr (_fid, (char *) _meshName.c_str(),(char *)fam.c_str(),*itFam, 0,0,0,0,(char *)group.c_str(),1);
 	  CR=0;
@@ -284,9 +270,6 @@ int MedIO::CreateNodeFam( )
    return 1;
 }
 
-int MedIO::CreateElemtFam( )
-{}
-
 
 // -------------------------------
 int MedIO::CreateElemt()
@@ -297,10 +280,10 @@ int MedIO::CreateElemt()
        med_geometrie_element typemed =(*eltIter).second;
        if (typemed == MED_POINT1) continue;
        int nbNoeudElt = typemed % 100 ;
-       int nbElements = connectivities[typemed].size() / nbNoeudElt;
+       int nbElements = LesConn[typemed].size() / nbNoeudElt;
        if (nbElements != 0 )
            med_err CR = MEDelementsEcr (_fid, (char*) _meshName.c_str(),(med_int) 3, 
-		         &connectivities[typemed][0], MED_FULL_INTERLACE,
+		         &LesConn[typemed][0], MED_FULL_INTERLACE,
 			 NULL, MED_FAUX, NULL, MED_FAUX,
 			 &famElts[typemed][0],nbElements,
 			   MED_MAILLE,typemed,MED_NOD);
@@ -327,17 +310,10 @@ int MedIO::Ecrit()
     // *********************
     // Creation des Familles
     // *********************
-    int CRFam = CreateNodeFam();
+    int CRFam = CreateFamilles();
     if ( CRFam < 0 )
     {
        Msg(GERROR, "Error in Nodes Families Creation ");
-       return 0;
-    }
-
-    int CRFamElt = CreateElemtFam();
-    if ( CRFamElt < 0 )
-    {
-       Msg(GERROR, "Error in Elements Families Creation ");
        return 0;
     }
 
@@ -389,10 +365,11 @@ int GModel::writeMED(const std::string &name)
    MedIO MedDriver=MedIO();
    int CR1 =MedDriver.SetFile(name);
 
-   MedDriver.WriteNodes(vertices);
-   MedDriver.WriteNodes(edges);
-   MedDriver.WriteNodes(faces);
-   MedDriver.WriteNodes(regions);
+   renumberMeshVertices();
+   MedDriver.TraiteMed(vertices);
+   MedDriver.TraiteMed(edges);
+   MedDriver.TraiteMed(faces);
+   MedDriver.TraiteMed(regions);
 
    int CR2 = MedDriver.Ecrit();
    int CR3 = MedDriver.CloseFile();
@@ -409,4 +386,5 @@ int GModel::writeMED(const std::string &name)
   return 0;
 }
 
-#endif
+#endif                // du HAVE_LIBMED
+

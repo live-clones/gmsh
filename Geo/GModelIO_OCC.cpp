@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.19 2007-02-27 22:09:44 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.20 2007-04-23 07:59:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,10 +19,9 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "GModel.h"
+#include "GModelIO_OCC.h"
 #include "Message.h"
 #include "Context.h"
-#include "OCCIncludes.h"
 #include "OCCVertex.h"
 #include "OCCEdge.h"
 #include "OCCFace.h"
@@ -31,40 +30,6 @@
 extern Context_T CTX;
 
 #if defined(HAVE_OCC)
-
-#include "ShapeAnalysis_ShapeTolerance.hxx"
-#include "ShapeAnalysis_ShapeContents.hxx"
-#include "ShapeAnalysis_CheckSmallFace.hxx"
-#include "ShapeAnalysis_DataMapOfShapeListOfReal.hxx"
-#include "BRepAlgoAPI_Fuse.hxx"
-#include "BRepCheck_Analyzer.hxx"
-#include "BRepLib.hxx"
-#include "ShapeBuild_ReShape.hxx"
-#include "ShapeFix.hxx"
-#include "ShapeFix_FixSmallFace.hxx"
-
-class OCC_Internals {
-  TopoDS_Shape shape;
-  TopTools_IndexedMapOfShape fmap, emap, vmap, somap, shmap, wmap;
-public:
-  OCC_Internals()
-  {
-    somap.Clear();
-    shmap.Clear();
-    fmap.Clear();
-    wmap.Clear();
-    emap.Clear();
-    vmap.Clear();
-  }
-  void HealGeometry(double tolerance, bool fixsmalledges, 
-		    bool fixspotstripfaces, bool sewfaces, 
-		    bool makesolids=false);
-  void loadSTEP(const char *);
-  void loadIGES(const char *);
-  void loadBREP(const char *);  
-  void buildGModel(GModel *gm);
-  void buildLists();
-};
 
 void OCC_Internals::buildLists()
 {

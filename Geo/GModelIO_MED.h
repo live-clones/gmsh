@@ -1,28 +1,6 @@
 #ifndef _GMODELIO_MED_H_
 #define _GMODELIO_MED_H_
 
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA.
-// 
-// Please report all bugs and problems to <gmsh@geuz.org>.
-//
-// Contributor(s):
-//   Pascale Noyret
-
 #include <string>
 #include <map>
 #include <vector>
@@ -43,25 +21,35 @@ extern "C"
 }
 
 typedef std::map<med_geometrie_element,std::vector<int> >  connectivities;
-typedef std::list<int>::const_iterator listIter;
-typedef std::map<int,int>numero;
-typedef std::set<int>setFamille;
+typedef std::set<int>                  setFamille;
 
+class MedIO ;
+
+// _________________________________________ //
+//                                           //
+// Declaration  de la classe  ConversionData // 
+// (implementation ds le cpp)                //
+// ________________________________________  //
+//
 class ConversionData 
 {
 	public :
 
  	   ConversionData();
-	   int inMaxEltInMed(int clef);
 
            std::map<int,med_geometrie_element> typesOfElts;
-           std::map<int,int> maxEltInMed;
            std::map<int,std::list<int> > medVertexOrder;
 
 	   std::map<int,int> familleParDimension;
 	   std::map<int,int> famillefamille;
 
 };
+
+// _________________________________________________ //
+//                                                   //
+// Declaration  de la classe  TraiteMailledeBase     // 
+// (implementations en fin de fichier)               //
+// ________________________________________________  //
 
 class Data 
 {
@@ -70,42 +58,171 @@ class Data
 };
 
 
-template<class T>
-class MontraitementDeBase : Data
+template<class T> 
+class TraiteMailledeBase : Data
 {
   protected:
-  static inline int RecupereFamille(const T &ele, setFamille & numFamilles, const int dimension)
+
+  static inline int RecupereFamille(const T &ele, const int dimension, MedIO & monDriver);
+  template<class G> static void RecupereElement(const std::vector<G*> &ele, const int famille, MedIO& monDriver);
+
+};
+
+
+// _________________________________________________ //
+//                                                   //
+// Specialisations de la classe  TraiteMailledeBase  // 
+// selon le type de maille                           //
+// ________________________________________________  //
+
+template <class T>
+struct TraiteMaille : public TraiteMailledeBase<T> {
+  static inline  void AddElement(const T& ele, MedIO & monDriver)
+  { Msg(GERROR, "Wrong Call : basic Method AddElt"); };
+};
+
+
+template <>
+struct TraiteMaille<GVertex> : public TraiteMailledeBase<GVertex> {
+  static inline  void AddElement(const GVertex & ele, MedIO& monDriver) ;
+  // l'implementation est  en fin de fichier pour pouvoir utiliser la methode AddNode de MedIO
+};
+
+template <>
+struct TraiteMaille<GEdge> : public TraiteMailledeBase<GEdge> {
+  static inline void AddElement(const GEdge & ele, MedIO& monDriver) 
   {
+	   RecupereElement (ele.lines,  RecupereFamille(ele, 1, monDriver), monDriver);
+  }
+};
+
+template <>
+struct TraiteMaille<GFace> : public TraiteMailledeBase<GFace> {
+  static inline void AddElement(const GFace & ele,  MedIO&  monDriver) 
+  {
+	   RecupereElement (ele.triangles,   RecupereFamille(ele, 2, monDriver), monDriver);
+	   RecupereElement (ele.quadrangles, RecupereFamille(ele, 2, monDriver), monDriver);
+  }
+};
+
+template <>
+struct TraiteMaille<GRegion> : public TraiteMailledeBase<GRegion>{
+  static inline void AddElement(const GRegion & ele, MedIO &  monDriver) 
+  {
+	   RecupereElement (ele.tetrahedra, RecupereFamille(ele, 3, monDriver), monDriver );
+	   RecupereElement (ele.hexahedra,  RecupereFamille(ele, 3, monDriver), monDriver);
+	   RecupereElement (ele.prisms,     RecupereFamille(ele, 3, monDriver), monDriver);
+	   RecupereElement (ele.pyramids,   RecupereFamille(ele, 3, monDriver), monDriver);
+     }
+};
+
+// ______________________________________ //
+//                                        //
+// Declaration  de la classe  MedIO       // 
+// (implementation ds le cpp)             //
+// _____________________________________  //
+
+class MVertex;
+class MEdge;
+class MedIO 
+{
+   public:
+      MedIO();
+      int SetFile   (const std::string& theFileName);
+      int AddNode   (MVertex* const v, const int famille );
+      int Ecrit	    ();
+      int CloseFile ();
+
+   private :
+      int CreateFamilles();
+      int CreateElemt();
+
+   public :
+      connectivities LesConn;
+      setFamille     numFamilles;
+      std::vector<int>       families;
+      std::map<int,int>      elements;
+      std::map<med_geometrie_element,std::vector<int> > famElts;
+
+   private :
+
+      std::vector<med_float> coordonnees;
+      std::vector<med_int>   numOpt;
+  
+      int _numOfNode;
+      int _boolOpen;
+
+      med_idt _fid;
+      std::string  _FileName;
+      std::string  _meshName;
+
+   public : 
+     static ConversionData MyConversionData ;
+    
+      
+   template<class T>
+   void TraiteMed(const std::set<T*,GEntityLessThan> & seq) 
+   {
+        typename std::set<T*,GEntityLessThan>::const_iterator iter=seq.begin();
+
+        for ( ; iter != seq.end() ; ++iter)
+        {
+             const T& element= *(*iter);
+             TraiteMaille<T>::AddElement(element, *this);
+        }
+   }
+};
+
+// _______________________________________________________________ //
+//                                                                 //
+// Implementation des Methodes des classes de type TraiteElement   // 
+// qui utilisent MedIO                                             //
+// _______________________________________________________________ //
+
+void TraiteMaille<GVertex>::AddElement(const GVertex & ele, MedIO& monDriver)
+{
      int famille = 0;
-     if (ele.physicals.size() != 0) 
-        famille=ele.physicals[0];
+     if (ele.physicals.size() != 0 ) famille = ele.physicals[0];
+     monDriver.AddNode(ele.mesh_vertices[0],famille);
+}
+
+//					*-*-*-*-*-*-*-*-*-*
+
+template<class T> int TraiteMailledeBase<T>::RecupereFamille(const T &ele, const int dimension, MedIO & monDriver)
+// 
+// Dans le format MED, Les familles de mailles sont negatives (contrairement au physical group de GMSH)
+// Les familles ne contiennent des mailles de la meme dimension 
+{
+     int famille = 0;
+     if (ele.physicals.size() != 0) famille=ele.physicals[0];
      if (famille == 0) return 0; 
 
      if (famille > 0)  famille = -1 * famille;
 
-     // On verifie qu il s agit de la bonne dimension 
      int familleInitiale=famille;
      while (MyConversionData.familleParDimension[famille] != dimension)
      {
-        if (numFamilles.find(famille) == numFamilles.end())
-        {
-     	    numFamilles.insert(famille);
+        if (monDriver.numFamilles.find(famille) == monDriver.numFamilles.end())
+        {   monDriver.numFamilles.insert(famille);
 	    MyConversionData.familleParDimension[famille]=dimension;
         }
-	 else 
-	{
-           famille=famille-1000;
-        }
-	//Msg(INFO, "famille %d", famille);
+	 else famille=famille-1000;
      }
 
      MyConversionData.famillefamille[familleInitiale]=famille;
      return famille;
-  }
+}
 
-  template < class G>
-  static void RecupereElement(const std::vector<G*> &ele , connectivities &maMap, connectivities &mesFamilles, 
-		              numero& elements , const int famille) {
+//					*-*-*-*-*-*-*-*-*-*
+
+template<class T>
+template<class G> void TraiteMailledeBase<T>::RecupereElement(const std::vector<G*> &ele, const int famille, MedIO& monDriver) 
+// l'implementation aurait pu etre laissee avec la declaration (ok pour GCC 3.3.5)
+// mais pour eviter des eventuels pb de portage il semble preferable de la separer
+{
+
+     typedef std::list<int>::const_iterator listIter;
+
      if (ele.size() == 0) return;
      const int type=ele[0]->getTypeForMSH();
      const med_geometrie_element medType= Data::MyConversionData.typesOfElts[type];
@@ -117,147 +234,12 @@ class MontraitementDeBase : Data
 		      ++monIter) {
 	      const int NoeudATraiter = *monIter - 1;
 	      const int Noeud = ele[elt]->getVertex(NoeudATraiter)->getNum();
-	      maMap[medType].push_back(elements[Noeud]);
+	      monDriver.AddNode(ele[elt]->getVertex(NoeudATraiter),0);
+	      monDriver.LesConn[medType].push_back(monDriver.elements[Noeud]);
            }
-
-	mesFamilles[medType].push_back(famille);
+	monDriver.famElts[medType].push_back(famille);
         }
-  }
- };
-
-template <class T>
-struct MonTraitement : public MontraitementDeBase<T>{
-  static inline  void AddElement(const T & ele,connectivities  & maMap, connectivities &mesFamilles, numero& elements ,setFamille& numFamilles)
-   {
-	 Msg(GERROR, "Wrong Call : basic Method AddElt");
-   }
-};
-
-template <>
-struct MonTraitement<GVertex> : public MontraitementDeBase<GVertex>{
-  static inline  void AddElement(const GVertex & ele, connectivities  & maMap, connectivities &mesFamilles, numero& elements ,setFamille & numFamilles) {
-  // Pour les Noeuds on ne fait rien ni sur la connectivite ni sur les familles
-  }
-};
-
-template <>
-struct MonTraitement<GEdge> : public MontraitementDeBase<GEdge>{
-  static inline void AddElement(const GEdge & ele, connectivities  & maMap, connectivities &mesFamilles, numero& elements, setFamille & numFamilles) {
-	   RecupereElement (ele.lines,  maMap, mesFamilles, elements, RecupereFamille(ele, numFamilles, 1));
-     }
-};
-
-template <>
-struct MonTraitement<GFace> : public MontraitementDeBase<GFace>{
-  static inline void AddElement(const GFace & ele, connectivities  & maMap, connectivities &mesFamilles, numero& elements , setFamille & numFamilles) {
-	   RecupereElement (ele.triangles,   maMap, mesFamilles, elements, RecupereFamille(ele, numFamilles, 2));
-	   RecupereElement (ele.quadrangles, maMap, mesFamilles, elements, RecupereFamille(ele, numFamilles, 2));
-     }
-};
-
-template <>
-struct MonTraitement<GRegion> : public MontraitementDeBase<GRegion>{
-  static inline void AddElement(const GRegion & ele, connectivities  & maMap, connectivities &mesFamilles, numero& elements, setFamille & numFamilles) {
-	   RecupereElement (ele.tetrahedra, maMap, mesFamilles, elements, RecupereFamille(ele, numFamilles, 3));
-	   RecupereElement (ele.hexahedra,  maMap, mesFamilles, elements, RecupereFamille(ele, numFamilles, 3));
-	   RecupereElement (ele.prisms,     maMap, mesFamilles, elements, RecupereFamille(ele, numFamilles, 3));
-	   RecupereElement (ele.pyramids,   maMap, mesFamilles, elements, RecupereFamille(ele, numFamilles, 3));
-     }
-};
-
-template<class T> struct TraiteFamille
-{
-   static inline int GetFamille (const T& element)
-   {
-     // On ne traite pas les familles d 'elements a ce stade
-     return 0;
-   }
-};
-
-template<>
-struct TraiteFamille<GVertex>
-{
-  static inline int GetFamille (const GVertex& element)
- {
-     int famille = 0;
-     if (element.physicals.size() != 0 ) famille = element.physicals[0];
-     return famille;
- }
-};
-
-class MVertex;
-class MEdge;
-class MedIO 
-{
-   public:
-      MedIO();
-      int SetFile     (const std::string& theFileName);
-      int AddVertex   (MVertex* const v, const int famille );
-      int AddEdge     (MEdge* const e );
-      int Ecrit	      ();
-      int CloseFile   ();
-
-   private :
-      int CreateNodeFam();
-      int CreateElemtFam();
-      int CreateElemt();
-
-   private :
-      std::string  _FileName;
-      std::map<med_geometrie_element,std::vector<int> > connectivities;
-      std::map<med_geometrie_element,std::vector<int> > famElts;
-
-      std::vector<med_float> coordonnees;
-      std::vector<int> families;
-      std::vector<med_int> numOpt;
-      std::map<int,int> elements;
-  
-      std::set<int> numFamilles;
-      int _numOfNode;
-
-      int _boolOpen;
-      med_idt _fid;
-      std::string _meshName;
-
-   public : 
-     static ConversionData MyConversionData ;
-    
-      
-template<class T>
-void WriteNodes(const std::set<T*,GEntityLessThan> & seq) 
-{
-  typename std::set<T*,GEntityLessThan>::const_iterator iter=seq.begin();
-
-  for ( ; iter != seq.end() ; ++iter)
-  {
-    const T& element= *(*iter);
-
-    //Msg(INFO," Type d element  %s", typeid(element).name());
-
-    // Traitement des Noeuds
-    // Calcul du nombre de noeuds a stocker dans Med
-    unsigned int thisSize=element.mesh_vertices.size();
-    if (Data::MyConversionData.inMaxEltInMed(element.tag()) == 1) 
-    {
-         const unsigned int maxSize  = Data::MyConversionData.maxEltInMed[element.tag()];
-         if (maxSize < thisSize) thisSize = maxSize ;
-    };
-
-    // stockage du Noeud
-    int famille=TraiteFamille<T>::GetFamille(element);
-    for (unsigned int i = 0; i < thisSize; ++i)
-    {
-    	AddVertex (element.mesh_vertices[i], famille);
-    };
-
-    // Stockage des Egdes
-    MonTraitement<T>::AddElement(element,connectivities,famElts,elements,numFamilles);
-
-  }
 }
-};
 
-
-# endif
-
-#endif
+#endif               // du HAVE_LIBMED
+#endif               // du define de _GMODELIO_MED_H_
