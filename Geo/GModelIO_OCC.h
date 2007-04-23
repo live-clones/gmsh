@@ -1,7 +1,7 @@
 #ifndef _GMODELIO_OCC_H_
 #define _GMODELIO_OCC_H_
 
-// $Id: GModelIO_OCC.h,v 1.1 2007-04-23 07:59:25 geuzaine Exp $
+// $Id: GModelIO_OCC.h,v 1.2 2007-04-23 08:04:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,17 +26,6 @@
 #include "OCCIncludes.h"
 
 #if defined(HAVE_OCC)
-
-#include "ShapeAnalysis_ShapeTolerance.hxx"
-#include "ShapeAnalysis_ShapeContents.hxx"
-#include "ShapeAnalysis_CheckSmallFace.hxx"
-#include "ShapeAnalysis_DataMapOfShapeListOfReal.hxx"
-#include "BRepAlgoAPI_Fuse.hxx"
-#include "BRepCheck_Analyzer.hxx"
-#include "BRepLib.hxx"
-#include "ShapeBuild_ReShape.hxx"
-#include "ShapeFix.hxx"
-#include "ShapeFix_FixSmallFace.hxx"
 
 class OCC_Internals {
  protected :

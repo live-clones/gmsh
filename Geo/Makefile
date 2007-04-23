@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.142 2007-04-21 19:40:00 geuzaine Exp $
+# $Id: Makefile,v 1.143 2007-04-23 08:04:16 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -205,13 +205,13 @@ GModelIO_Fourier.o: GModelIO_Fourier.cpp GModel.h GVertex.h GEntity.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothData.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
-GModelIO_OCC.o: GModelIO_OCC.cpp GModel.h GVertex.h GEntity.h Range.h \
-  SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h \
-  SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \
-  MFace.h ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
-  ExtrudeParams.h ../Common/SmoothData.h GFace.h GEdgeLoop.h Pair.h \
-  GRegion.h ../Common/Message.h OCCIncludes.h OCCVertex.h OCCEdge.h \
-  OCCFace.h OCCRegion.h
+GModelIO_OCC.o: GModelIO_OCC.cpp GModelIO_OCC.h GModel.h GVertex.h \
+  GEntity.h Range.h SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h \
+  MVertex.h GPoint.h SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h \
+  ../Common/Hash.h MFace.h ../Numeric/Numeric.h ../Common/Context.h \
+  ../DataStr/List.h ExtrudeParams.h ../Common/SmoothData.h GFace.h \
+  GEdgeLoop.h Pair.h GRegion.h OCCIncludes.h ../Common/Message.h \
+  OCCVertex.h OCCEdge.h OCCFace.h OCCRegion.h
 GModelIO_CGNS.o: GModelIO_CGNS.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h \
   SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \
@@ -223,7 +223,7 @@ GModelIO_MED.o: GModelIO_MED.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \
   MFace.h ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
   ExtrudeParams.h ../Common/SmoothData.h GFace.h GEdgeLoop.h Pair.h \
-  GRegion.h GModelIO_MED.h ../Common/Message.h
+  GRegion.h ../Common/Message.h
 ExtrudeParams.o: ExtrudeParams.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
