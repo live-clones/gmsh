@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.2 2007-04-21 19:40:00 geuzaine Exp $
+// $Id: Field.cpp,v 1.3 2007-04-23 09:36:45 colignon Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -218,7 +218,9 @@ FunctionField::FunctionField(std::list<Field*> *_list, const char *str)
   names[2] = strdup("z");
   int p = 3;
   for(std::list<Field*>::iterator it = list->begin(); it != list->end(); it++){
-    asprintf(names + p, "f%i", p - 3);
+    char tmp[256] ; 
+    sprintf(tmp, "f%i", p - 3);
+    names[p] = strdup(tmp);
     p++;
   }
 #endif
