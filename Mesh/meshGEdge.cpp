@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.36 2007-04-22 19:41:02 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.37 2007-04-26 09:47:38 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -232,7 +232,7 @@ void meshGEdge::operator() (GEdge *ge)
     N = ge->meshAttributes.nbPointsTransfinite;
   }
   else{
-    a = Integration(ge, t_begin, t_end, F_Lc, Points, 1.e-7);
+    a = Integration(ge, t_begin, t_end, F_Lc, Points, 1.e-8);
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
   const double b = a / (double)(N - 1);

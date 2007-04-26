@@ -910,6 +910,8 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "ElementOrder" , opt_mesh_order , 1. , // "Order" is a reserved token in the parser
     "Element order (1=linear elements, N (<6) = elements of higher order)" },
+  { F|O, "C1Continuity" , opt_mesh_c1 , 0. , // "Order" is a reserved token in the parser
+    "Impose C1 continuity to high order meshes, only valid in 2D plane and ElemenOrder = 2 and 3 (todo) (Default : C0 continuity)" },
   { F|O, "SmoothInternalEdges" , opt_mesh_smooth_internal_edges , 0 , // "Order" is a reserved token in the parser
     "Number of smoothing steps of internal edges for high order meshes" },
   { F|O, "Explode" , opt_mesh_explode , 1.0 ,

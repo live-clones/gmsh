@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.603 2007-03-29 16:32:23 geuzaine Exp $
+// $Id: GUI.cpp,v 1.604 2007-04-26 09:47:38 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1619,7 +1619,7 @@ void GUI::reset_external_view_list()
 void GUI::create_option_window()
 {
   int width = 40 * fontsize;
-  int height = 13 * BH + 5 * WB;
+  int height = 14 * BH + 5 * WB;
   int L = 105 + WB;
 
   if(opt_window) {
@@ -2288,9 +2288,13 @@ void GUI::create_option_window()
       mesh_butt[3]->type(FL_TOGGLE_BUTTON);
       mesh_butt[3]->callback(mesh_options_ok_cb);
 
-      mesh_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 11 * BH, BW, BH, "Use incomplete second order elements (8-node quads, etc.)");
+      mesh_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 11 * BH, BW, BH, "Use incomplete high order elements (8-node quads, etc.)");
       mesh_butt[4]->type(FL_TOGGLE_BUTTON);
       mesh_butt[4]->callback(mesh_options_ok_cb);
+
+      mesh_butt[21] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 12 * BH, BW, BH, "Impose C1 continuity (only for degrees 2 and 3 and 2D plane)");
+      mesh_butt[21]->type(FL_TOGGLE_BUTTON);
+      mesh_butt[21]->callback(mesh_options_ok_cb);
 
       o->end();
     }

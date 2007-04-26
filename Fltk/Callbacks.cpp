@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.523 2007-04-21 19:39:59 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.524 2007-04-26 09:47:38 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1090,6 +1090,7 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_order(0, GMSH_SET, WID->mesh_value[3]->value());
   opt_mesh_smooth_internal_edges(0, GMSH_SET, WID->mesh_butt[3]->value());
   opt_mesh_second_order_incomplete(0, GMSH_SET, WID->mesh_butt[4]->value());
+  opt_mesh_c1(0, GMSH_SET, WID->mesh_butt[21]->value());
   opt_mesh_constrained_bgmesh(0, GMSH_SET, WID->mesh_butt[5]->value());
   opt_mesh_points(0, GMSH_SET, WID->mesh_butt[6]->value());
   opt_mesh_lines(0, GMSH_SET, WID->mesh_butt[7]->value());

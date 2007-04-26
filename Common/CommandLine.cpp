@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.98 2007-04-20 07:11:26 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.99 2007-04-26 09:47:37 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -376,6 +376,10 @@ void Get_Options(int argc, char *argv[])
           fprintf(stderr, ERROR_STR "Missing number\n");
           exit(1);
         }
+      }
+      else if(!strcmp(argv[i] + 1, "c1")) {
+        i++;
+	opt_mesh_c1(0, GMSH_SET, 1);
       }
       else if(!strcmp(argv[i] + 1, "optimize_hom")) {
         i++;

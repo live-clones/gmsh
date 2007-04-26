@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.12 2007-04-12 08:47:25 remacle Exp $
+// $Id: HighOrder.cpp,v 1.13 2007-04-26 09:47:38 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,14 +25,107 @@
 #include "Message.h"
 #include "OS.h"
 
-// consider 2 points with their tangent
-// x(t) = x(0) * H1(t) + dx(0) * H2(t) + x(1) * H3(t) + dx(1) * H4(t) 
+void computeMidPoints(const double *p1,
+		      const double *p2, 
+		      const double *t1, 
+		      const double *t2, 
+		      double *p3){
+	// computes the mid point p3 of the second order parametric polynomial curve according to extreme points p1,p2 and tangents t1,t2
+	// The tangent directions given in t1 and t2 are the outgoing normals !!! to the curve p1-p2
+	double x0 = p1[0];
+	double y0 = p1[1];
+	double x1 = p2[0];
+	double y1 = p2[1];
+	double t0x = -t1[0];
+	double t0y = -t1[1];
+	double t1x = t2[0];
+	double t1y = t2[1];
+
+	//computation of the rotation parameters
+	double delta_x = x1-x0;
+	double delta_y = y1-y0;
+	double L = sqrt(delta_x*delta_x+delta_y*delta_y);
+	double theta = atan2(delta_y,delta_x);
+	//	double theta = atan(delta_y/delta_x);
+	//	if (delta_x<0)
+	//	  theta += M_PI;
+	double costheta = cos(theta);
+	double sintheta = sin(theta);
+	double theta0 = atan2(t0y,t0x)-theta;
+	double theta1 = atan2(t1y,t1x)-theta;
+	double tan0 = tan(theta0);
+	double tan1 = tan(theta1);
+	delta_x = L;
+	delta_y = 0;
+
+
+	//	printf("theta0 = %g theta1 = %g\n",theta0,theta1);
+
+	// computes the 6 coefficients: solving the linear system
+	// x(t) = a1 t^2 * b1 t + c1
+	// y(t) = a2 t^2 * b2 t + c2
+	// for t in [0,1]
+	// with :
+	// x(t), y(t) on pts 0 and 1 (4 conditions)
+	// and dy/dx = dy/dt*dt/dx on those 2 pts (2 conditions)
+
+	if (tan0 == tan1)
+	  {
+	    p3[0] = 0.5 * (p1[0]+p2[0]);
+	    p3[1] = 0.5 * (p1[1]+p2[1]);
+	  }
+	else
+	  {
+	    double b1 = 2*(delta_y-delta_x*tan1)/(tan0-tan1);
+	    double a1 = delta_x-b1;
+	    double b2 = tan0 * b1;
+	    double a2 = delta_y - b2;
+	    double c1 = 0;// in general : x0... 
+	    double c2 = 0;// in general : y0... but axis have changed...
+	    
+	    // back to the initial axis
+	    double ax = costheta*a1 - sintheta*a2;
+	    double bx = costheta*b1 - sintheta*b2;
+	    double cx = x0;//costheta*c1 - sintheta*c2 + x0;
+	    double ay = sintheta*a1 + costheta*a2;
+	    double by = sintheta*b1 + costheta*b2;
+	    double cy = y0;//sintheta*c1 + costheta*c2 + y0;
+	    
+	    // computes the mid point (x,y)
+	    double t=0.5;
+	    double tsquare=t*t;
+	    p3[0] = ax*tsquare + bx*t + cx;
+	    p3[1] = ay*tsquare + by*t + cy;
+	  }
+	return;
+}
 
 void Hermite2D_C1(SPoint3 &p1, SPoint3 &p2, SPoint3 &t1, SPoint3 &t2,
 		  SPoint3 &one_third, SPoint3 &two_third)
 {
-  // double L = sqrt((p1.x()-p2.x())*(p1.x()-p2.x()) + (p1.y()-p2.y()) * (p1.y()-p2.y()));
-  // SVector3 p1p2 (p2,p1);
+   double L = sqrt((p1.x()-p2.x())*(p1.x()-p2.x()) + (p1.y()-p2.y()) * (p1.y()-p2.y()));
+   SVector3 p1p2 (p2,p1);
+   double theta  = atan2(p2.x()-p1.x(),p2.y()-p1.y());
+   double theta1 = atan2(t1.x(),t1.y());
+   double theta2 = atan2(t2.x(),t2.y());
+   double rot[2][2] =
+     {{cos(theta),-sin(theta)},
+      {sin(theta),cos(theta)}};
+
+   double ts[2] = {1./3.,2./3.};
+   SPoint3 *pt[2] = {&one_third,&two_third};
+   for (int i=0 ; i < 2; i++){
+     const double t = ts[i];
+     double H2 = L*t*(t-1)*(t-1);
+     double H4 = -L*(1-t)*t*t;
+     double x3 = t * L;
+     double y3 = H2 * theta1 + H4 * theta2;     
+     //     pt[i]->x() = p1.x() + x3 * rot[0][0] + y3 * rot[0][1]; 
+     //     pt[i]->y() = p1.y() + x3 * rot[1][0] + y3 * rot[1][1]; 
+   }
+
+   
+
   // SVector3 tt1  (t1.x(),t1.y(),0);
   // SVector3 tt2  (t2.x(),t2.y(),0);
   // const double cost1 = p1p2 * tt1;
@@ -109,7 +202,7 @@ bool reparamOnEdge(MVertex *v, GEdge *ge, double &param)
 void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
 		     edgeContainer &edgeVertices, bool linear, int nPts = 1)
 {
-  bool hermite = false;
+  bool c1 = CTX.mesh.c1_continuity;
 
   for(int i = 0; i < ele->getNumEdges(); i++){
     MEdge edge = ele->getEdge(i);
@@ -124,33 +217,23 @@ void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
       MVertex *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);            
       double u0 = 0., u1 = 0.;
       bool reparamOK = true;
-      if(hermite || (!linear && ge->geomType() != GEntity::DiscreteCurve)){
+      if(c1 || (!linear && ge->geomType() != GEntity::DiscreteCurve)){
 	reparamOK &= reparamOnEdge(v0, ge, u0);
 	reparamOK &= reparamOnEdge(v1, ge, u1);
       }
-      if(nPts == 2 && hermite){
+      if(nPts == 1 && c1){
 	SVector3 tv1 = ge->firstDer(u0);
 	SVector3 tv2 = ge->firstDer(u1);
-	tv1.normalize();
-	tv2.normalize();
-	SPoint3 t1(tv1.x(), tv1.y(), 0), t2(tv2.x(), tv2.y(), 0);
-	SPoint3 vv0(v0->x(), v0->y(), 0), vv1(v1->x(), v1->y(), 0);
-	SPoint3 one_third, two_third;
-	Hermite2D_C1(vv0, vv1, t1, t2, one_third, two_third);
-	MVertex *v1 = new MVertex(one_third.x(), one_third.y(), 0);
-	MVertex *v2 = new MVertex(two_third.x(), two_third.y(), 0);
-	ge->mesh_vertices.push_back(v1);
-	ve.push_back(v1);
-	ge->mesh_vertices.push_back(v2);
-	ve.push_back(v2);	
-	if(edge.getVertex(0) == edge.getMinVertex()){
-	  edgeVertices[p].push_back(v1);
-	  edgeVertices[p].push_back(v2);
-	}
-	else{
-	  edgeVertices[p].push_back(v2);
-	  edgeVertices[p].push_back(v1);
-	}
+	double  t1[2] = {-tv1.x(),-tv1.y()};
+	double  t2[2] = { tv2.x(), tv2.y()};	
+	double  p1[2] = { v0->x(), v0->y()};
+	double  p2[2] = { v1->x(), v1->y()};
+	double  p3[2];
+	computeMidPoints(p1,p2,t1,t2,p3);
+	MVertex *hv = new MVertex(p3[0],p3[1],0);
+	ge->mesh_vertices.push_back(hv);
+	ve.push_back(hv);
+	edgeVertices[p].push_back(hv);
       }
       else{
 	std::vector<MVertex*> temp;
