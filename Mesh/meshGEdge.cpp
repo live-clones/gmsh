@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.37 2007-04-26 09:47:38 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.38 2007-05-02 07:59:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -189,14 +189,6 @@ void deMeshGEdge::operator() (GEdge *ge)
   if(ge->meshRep) ge->meshRep->destroy();
 }
 
-double GPointDist(GPoint &p1, GPoint &p2)
-{
-  double dx = p1.x() - p2.x();
-  double dy = p1.y() - p2.y();
-  double dz = p1.z() - p2.z();
-  return sqrt(dx * dx + dy * dy + dz * dz);
-}
-
 void meshGEdge::operator() (GEdge *ge) 
 {  
   if(ge->geomType() == GEntity::DiscreteCurve) return;
@@ -276,8 +268,8 @@ void meshGEdge::operator() (GEdge *ge)
 	}
 	else{
 	  double lc = BGM_MeshSize(ge, t, 0, V.x(), V.y(), V.z());
-	  if(GPointDist(V, last_p) > 0.7 * lc && 
-	     !(NUMP == N - 2 && GPointDist(V, end_p) < 0.7 * lc)){
+	  if(V.distance(last_p) > 0.7 * lc && 
+	     !(NUMP == N - 2 && V.distance(end_p) < 0.7 * lc)){
 	    last_p = V;
 	    ge->mesh_vertices[NUMP2 - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t);
 	    NUMP2++;

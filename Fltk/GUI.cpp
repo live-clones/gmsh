@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.605 2007-04-26 12:23:04 geuzaine Exp $
+// $Id: GUI.cpp,v 1.606 2007-05-02 07:59:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2280,11 +2280,11 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Advanced");
       o->hide();
 
-      mesh_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Compute characteritic lenghts automatically from curvatures" );
+      mesh_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Compute characteritic lengths from curvatures" );
       mesh_butt[1]->type(FL_TOGGLE_BUTTON);
       mesh_butt[1]->callback(mesh_options_ok_cb);
 
-      mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Constrain background mesh with characteristic length field");
+      mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Constrain background mesh with other length fields");
       mesh_butt[5]->type(FL_TOGGLE_BUTTON);
       mesh_butt[5]->callback(mesh_options_ok_cb);
 
@@ -2295,11 +2295,11 @@ void GUI::create_option_window()
 #endif
       mesh_butt[2]->callback(mesh_options_ok_cb);
 
-      mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Optimize high order mesh (currently only for 2D-plane)");
+      mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Optimize high order mesh (only for 2D-plane)");
       mesh_butt[3]->type(FL_TOGGLE_BUTTON);
       mesh_butt[3]->callback(mesh_options_ok_cb);
 
-      mesh_butt[21] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Impose C1 continuity (only for degrees 2 and 3 and 2D-plane)");
+      mesh_butt[21] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Impose C1 continuity (only for 2D-plane, order 2 and 3)");
       mesh_butt[21]->type(FL_TOGGLE_BUTTON);
       mesh_butt[21]->callback(mesh_options_ok_cb);
 

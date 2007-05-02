@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.15 2007-04-21 19:40:00 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.16 2007-05-02 07:59:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -571,9 +571,6 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     return 0;
   }
 
-  // binary format exists only in version 2
-  if(binary) version = 2.0;
-
   // if there are no physicals we save all the elements
   if(noPhysicalGroups()) saveAll = true;
 
@@ -581,6 +578,9 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   // continuous sequence
   int numVertices = renumberMeshVertices(saveAll);
   
+  // binary format exists only in version 2
+  if(binary) version = 2.0;
+
   // get the number of elements (we assume that all the elements in a
   // list have the same type, i.e., they are all of the same
   // polynomial order)
@@ -725,9 +725,9 @@ int GModel::writePOS(const std::string &name, bool saveAll, double scalingFactor
     return 0;
   }
 
-  int status = getMeshStatus();
-
   if(noPhysicalGroups()) saveAll = true;
+
+  int status = getMeshStatus();
 
   if(status >= 3){
     fprintf(fp, "View \"Volumes\" {\n");

@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.40 2007-04-21 19:40:00 geuzaine Exp $
+// $Id: GModel.cpp,v 1.41 2007-05-02 07:59:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -250,7 +250,7 @@ bool GModel::noPhysicalGroups()
 static void addInGroup(GEntity* ge, std::map<int, std::vector<GEntity*> > &group)
 {
   for(unsigned int i = 0; i < ge->physicals.size(); i++){
-    // phyicals can be stored with negative signs when the entity
+    // physicals can be stored with negative signs when the entity
     // should be "reversed"
     int p = std::abs(ge->physicals[i]);
     if(std::find(group[p].begin(), group[p].end(), ge) == group[p].end())

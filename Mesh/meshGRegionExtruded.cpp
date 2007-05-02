@@ -1,4 +1,4 @@
-// $Id: meshGRegionExtruded.cpp,v 1.13 2007-03-18 12:05:16 geuzaine Exp $
+// $Id: meshGRegionExtruded.cpp,v 1.14 2007-05-02 07:59:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -386,13 +386,53 @@ void phase1(GRegion *gr,
     for(int j = 0; j < ep->mesh.NbLayer; j++) {
       for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
 	std::vector<MVertex*> v;
-	if(getExtrudedVertices(from->triangles[i], ep, j, k, pos, v) == 6){
-	  if(!edgeExists(v[0], v[4], edges))
-	    createEdge(v[1], v[3], edges);
-	  if(!edgeExists(v[4], v[2], edges))
-	    createEdge(v[1], v[5], edges);
-	  if(!edgeExists(v[3], v[2], edges))
-	    createEdge(v[0], v[5], edges);
+        if(getExtrudedVertices(from->triangles[i], ep, j, k, pos, v) == 6){
+#if 0 // this is the old version
+          if(!edgeExists(v[0], v[4], edges))
+            createEdge(v[1], v[3], edges);
+          if(!edgeExists(v[4], v[2], edges))
+            createEdge(v[1], v[5], edges);
+          if(!edgeExists(v[3], v[2], edges))
+            createEdge(v[0], v[5], edges);
+#else // new version from Michel Benhamou <mi.benham@free.fr>
+          int v0 = 0;
+          for(int l = 1; l < 6; l++){
+            if(v[l] < v[v0]) v0 = l;
+          }
+          v0 = (v0 + 2) % 3;
+          int vn[6];
+          for(int l = 0; l < 3; l++){
+            vn[l] = (v0 + l) % 3;
+            vn[l + 3] = vn[l] + 3;
+          }
+
+          if(v[vn[1]] < v[vn[0]]){
+            if(!edgeExists(v[vn[0]], v[vn[4]], edges))
+              createEdge(v[vn[1]], v[vn[3]], edges);
+          }
+          else{
+            if(!edgeExists(v[vn[1]], v[vn[3]], edges))
+              createEdge(v[vn[0]], v[vn[4]], edges);
+          }
+
+          if(v[vn[1]] < v[vn[4]]){
+            if(!edgeExists(v[vn[4]], v[vn[2]], edges))
+              createEdge(v[vn[1]], v[vn[5]], edges);
+          }
+          else{
+            if(!edgeExists(v[vn[1]], v[vn[5]], edges))
+              createEdge(v[vn[4]], v[vn[2]], edges);
+          }
+
+          if(v[vn[0]] < v[vn[3]]){
+            if(!edgeExists(v[vn[3]], v[vn[2]], edges))
+              createEdge(v[vn[0]], v[vn[5]], edges);
+          }
+          else{
+            if(!edgeExists(v[vn[0]], v[vn[5]], edges))
+              createEdge(v[vn[3]], v[vn[2]], edges);
+          }
+#endif
 	}
       }
     }

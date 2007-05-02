@@ -20,6 +20,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <math.h>
+
 class GEntity;
 
 class GPoint 
@@ -47,6 +49,13 @@ class GPoint
   {
     par[0] = p[0];
     par[1] = p[1];
+  }
+  double distance(GPoint &p)
+  {
+    double dx = X - p.x();
+    double dy = Y - p.y();
+    double dz = Z - p.z();
+    return sqrt(dx * dx + dy * dy + dz * dz);
   }
 };
 
