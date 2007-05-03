@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.4 2007-04-23 07:59:25 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.5 2007-05-03 09:07:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -362,10 +362,10 @@ int MedIO::CloseFile()
 int GModel::writeMED(const std::string &name)
 {
 
-   MedIO MedDriver=MedIO();
-   int CR1 =MedDriver.SetFile(name);
+   MedIO MedDriver = MedIO();
+   int CR1 = MedDriver.SetFile(name);
 
-   renumberMeshVertices();
+   renumberMeshVertices(noPhysicalGroups());
    MedDriver.TraiteMed(vertices);
    MedDriver.TraiteMed(edges);
    MedDriver.TraiteMed(faces);
