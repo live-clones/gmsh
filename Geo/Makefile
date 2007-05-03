@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.143 2007-04-23 08:04:16 geuzaine Exp $
+# $Id: Makefile,v 1.144 2007-05-03 08:50:01 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -30,12 +30,13 @@ SRC = GEntity.cpp\
       GVertex.cpp GEdge.cpp GEdgeLoop.cpp GFace.cpp GRegion.cpp\
       gmshVertex.cpp gmshEdge.cpp gmshFace.cpp gmshRegion.cpp gmshSurface.cpp\
       OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp\
+      FEdge.cpp FFace.cpp\
       projectionFace.cpp\
       GModel.cpp\
         GModelIO_Geo.cpp\
         GModelIO_Mesh.cpp\
-        GModelIO_Fourier.cpp\
         GModelIO_OCC.cpp\
+        GModelIO_F.cpp\
         GModelIO_CGNS.cpp\
         GModelIO_MED.cpp\
       ExtrudeParams.cpp \
@@ -160,6 +161,18 @@ OCCRegion.o: OCCRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   ExtrudeParams.h ../Common/SmoothData.h GFace.h GEdgeLoop.h Pair.h \
   GRegion.h OCCVertex.h OCCIncludes.h OCCEdge.h OCCFace.h OCCRegion.h \
   ../Common/Message.h
+FEdge.o: FEdge.cpp FEdge.h GEdge.h GEntity.h Range.h SPoint3.h \
+  SBoundingBox3d.h ../Common/GmshDefines.h GVertex.h MVertex.h GPoint.h \
+  SPoint2.h SVector3.h MElement.h MEdge.h ../Common/Hash.h MFace.h \
+  ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
+  ExtrudeParams.h ../Common/SmoothData.h GModel.h GFace.h GEdgeLoop.h \
+  Pair.h GRegion.h FVertex.h
+FFace.o: FFace.cpp FVertex.h GModel.h GVertex.h GEntity.h Range.h \
+  SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h \
+  SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \
+  MFace.h ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
+  ExtrudeParams.h ../Common/SmoothData.h GFace.h GEdgeLoop.h Pair.h \
+  GRegion.h FFace.h FEdge.h
 projectionFace.o: projectionFace.cpp projectionFace.h GFace.h GPoint.h \
   GEntity.h Range.h SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h \
   GEdgeLoop.h GEdge.h GVertex.h MVertex.h SPoint2.h SVector3.h MElement.h \
@@ -195,16 +208,6 @@ GModelIO_Mesh.o: GModelIO_Mesh.cpp ../Common/Message.h \
   ../Common/SmoothData.h GFace.h GEdgeLoop.h Pair.h GRegion.h \
   gmshRegion.h Geo.h gmshSurface.h ../DataStr/Tree.h ../DataStr/avl.h \
   gmshFace.h gmshVertex.h gmshEdge.h
-GModelIO_Fourier.o: GModelIO_Fourier.cpp GModel.h GVertex.h GEntity.h \
-  Range.h SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h \
-  GPoint.h SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h \
-  ../Common/Hash.h MFace.h ../Numeric/Numeric.h ../Common/Context.h \
-  ../DataStr/List.h ExtrudeParams.h ../Common/SmoothData.h GFace.h \
-  GEdgeLoop.h Pair.h GRegion.h fourierFace.h gmshFace.h Geo.h \
-  gmshSurface.h ../DataStr/Tree.h ../DataStr/avl.h gmshVertex.h \
-  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
-  ../Common/VertexArray.h ../Common/SmoothData.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h
 GModelIO_OCC.o: GModelIO_OCC.cpp GModelIO_OCC.h GModel.h GVertex.h \
   GEntity.h Range.h SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h \
   MVertex.h GPoint.h SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h \
@@ -212,6 +215,15 @@ GModelIO_OCC.o: GModelIO_OCC.cpp GModelIO_OCC.h GModel.h GVertex.h \
   ../DataStr/List.h ExtrudeParams.h ../Common/SmoothData.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h OCCIncludes.h ../Common/Message.h \
   OCCVertex.h OCCEdge.h OCCFace.h OCCRegion.h
+GModelIO_F.o: GModelIO_F.cpp GModel.h GVertex.h GEntity.h Range.h \
+  SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h \
+  SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \
+  MFace.h ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
+  ExtrudeParams.h ../Common/SmoothData.h GFace.h GEdgeLoop.h Pair.h \
+  GRegion.h ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
+  ../Common/VertexArray.h ../Common/SmoothData.h \
+  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h FFace.h FEdge.h \
+  FVertex.h ../Mesh/meshGFace.h
 GModelIO_CGNS.o: GModelIO_CGNS.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h \
   SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \

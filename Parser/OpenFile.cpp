@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.145 2007-03-16 10:03:40 remacle Exp $
+// $Id: OpenFile.cpp,v 1.146 2007-05-03 08:50:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -275,15 +275,16 @@ void SetProjectName(char *name)
 
 int MergeFile(char *name, int warn_if_missing)
 {
-#if defined(HAVE_FOURIER_MODEL)
-  if(!strcmp(name, "falcon") || !strcmp(name, "ship")){
-    GMODEL->readFourier(name);
-    SetBoundingBox();
-    CTX.mesh.changed = ENT_ALL;
-    return 1;
-  }
-#endif
-
+  // FIXME: to be removed
+  // #if defined(HAVE_FOURIER_MODEL)
+  //   if(!strcmp(name, "falcon") || !strcmp(name, "ship")){
+  //     GMODEL->readFourier(name);
+  //     SetBoundingBox();
+  //     CTX.mesh.changed = ENT_ALL;
+  //     return 1;
+  //   }
+  // #endif
+  
   // added 'b' for pure Windows programs, since some of these files
   // contain binary data
   FILE *fp = fopen(name, "rb");
@@ -353,6 +354,9 @@ int MergeFile(char *name, int warn_if_missing)
   }
   else if(!strcmp(ext, ".p3d") || !strcmp(ext, ".P3D")){
     status = GMODEL->readP3D(name);
+  }
+  else if(!strcmp(ext, ".fm") || !strcmp(ext, ".FM")) {
+    status = GMODEL->readF(name);
   }
 #if defined(HAVE_FLTK)
   else if(!strcmp(ext, ".pnm") || !strcmp(ext, ".PNM") ||

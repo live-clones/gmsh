@@ -866,6 +866,7 @@ Optional Features:
   --enable-cgns           enable CGNS output (default=no)
   --enable-occ            enable OpenCascade support (default=no)
   --enable-med            enable MED support (default=yes)
+  --enable-fm             enable support for Fourier models (default=yes)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1484,6 +1485,11 @@ fi;
 # Check whether --enable-med or --disable-med was given.
 if test "${enable_med+set}" = set; then
   enableval="$enable_med"
+
+fi;
+# Check whether --enable-fm or --disable-fm was given.
+if test "${enable_fm+set}" = set; then
+  enableval="$enable_fm"
 
 fi;
 
@@ -4246,6 +4252,7 @@ fi
     fi
   fi
 
+    if test "x$enable_matheval" != "xno"; then
     echo "$as_me:$LINENO: checking for ./contrib/MathEval/matheval.cpp" >&5
 echo $ECHO_N "checking for ./contrib/MathEval/matheval.cpp... $ECHO_C" >&6
 if test "${ac_cv_file___contrib_MathEval_matheval_cpp+set}" = set; then
@@ -4269,43 +4276,43 @@ else
   MATHEVAL="no"
 fi
 
-  if test "x${MATHEVAL}" = "xyes"; then
-    if test "x$enable_matheval" != "xno"; then
-       GMSH_DIRS="${GMSH_DIRS} contrib/MathEval"
-       GMSH_LIBS="${GMSH_LIBS} -lGmshMathEval"
-       FLAGS="-DHAVE_MATH_EVAL ${FLAGS}"
+    if test "x${MATHEVAL}" = "xyes"; then
+      GMSH_DIRS="${GMSH_DIRS} contrib/MathEval"
+      GMSH_LIBS="${GMSH_LIBS} -lGmshMathEval"
+      FLAGS="-DHAVE_MATH_EVAL ${FLAGS}"
     fi
   fi
 
-    echo "$as_me:$LINENO: checking for ./contrib/FourierModel/model.cpp" >&5
-echo $ECHO_N "checking for ./contrib/FourierModel/model.cpp... $ECHO_C" >&6
-if test "${ac_cv_file___contrib_FourierModel_model_cpp+set}" = set; then
+    if test "x$enable_fm" != "xno"; then
+    echo "$as_me:$LINENO: checking for ./contrib/FourierModel/FM_Face.cpp" >&5
+echo $ECHO_N "checking for ./contrib/FourierModel/FM_Face.cpp... $ECHO_C" >&6
+if test "${ac_cv_file___contrib_FourierModel_FM_Face_cpp+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   test "$cross_compiling" = yes &&
   { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
 echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
    { (exit 1); exit 1; }; }
-if test -r "./contrib/FourierModel/model.cpp"; then
-  ac_cv_file___contrib_FourierModel_model_cpp=yes
+if test -r "./contrib/FourierModel/FM_Face.cpp"; then
+  ac_cv_file___contrib_FourierModel_FM_Face_cpp=yes
 else
-  ac_cv_file___contrib_FourierModel_model_cpp=no
+  ac_cv_file___contrib_FourierModel_FM_Face_cpp=no
 fi
 fi
-echo "$as_me:$LINENO: result: $ac_cv_file___contrib_FourierModel_model_cpp" >&5
-echo "${ECHO_T}$ac_cv_file___contrib_FourierModel_model_cpp" >&6
-if test $ac_cv_file___contrib_FourierModel_model_cpp = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_file___contrib_FourierModel_FM_Face_cpp" >&5
+echo "${ECHO_T}$ac_cv_file___contrib_FourierModel_FM_Face_cpp" >&6
+if test $ac_cv_file___contrib_FourierModel_FM_Face_cpp = yes; then
   FOURIER="yes"
 else
   FOURIER="no"
 fi
 
-  if test "x${FOURIER}" = "xyes"; then
-    GMSH_DIRS="${GMSH_DIRS} contrib/FourierModel"
-    GMSH_LIBS="${GMSH_LIBS} -lGmshFourierModel"
-    FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS}"
+    if test "x${FOURIER}" = "xyes"; then
+      GMSH_DIRS="${GMSH_DIRS} contrib/FourierModel"
+      GMSH_LIBS="${GMSH_LIBS} -lGmshFourierModel"
+      FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS}"
+    fi
   fi
-
 fi
 
 if test "x$enable_gsl" != "xno"; then

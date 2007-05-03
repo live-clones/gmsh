@@ -167,7 +167,7 @@ class GModel
   int writeGEO(const std::string &name, bool printLabels=true);
 
   // Fourier model
-  int readFourier(const std::string &name);
+  int readF(const std::string &name);
 
   // OCC model
   int readOCCBREP(const std::string &name);
