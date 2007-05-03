@@ -1,7 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
+
+#if !defined(WIN32) || defined(__CYGWIN__)
 #include <sys/time.h>
 #include <sys/resource.h>
+#endif
 
 #if defined(__APPLE__)
 #define RUSAGE_SELF      0
@@ -84,6 +87,7 @@ void Message::Debug(char *fmt, ...)
 
 void Message::Cpu(char *fmt, ...)
 {
+#if !defined(WIN32) || defined(__CYGWIN__)
   if(_commRank) return;
   if(_verbosity >= 1){
     static struct rusage r;
@@ -101,6 +105,7 @@ void Message::Cpu(char *fmt, ...)
       fprintf(stderr, " (CPU = %gs)\n", s + 1.e-6 * us);
     va_end(args);
   }
+#endif
 }
 
 void Message::ResetProgressMeter(int step)
