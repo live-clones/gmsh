@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.609 2007-05-04 14:43:45 geuzaine Exp $
+// $Id: GUI.cpp,v 1.610 2007-05-04 16:22:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3564,6 +3564,8 @@ void GUI::reset_plugin_view_browser()
     plugin_view_browser->add("No Views");
     plugin_view_browser->deactivate();
   }
+
+  view_plugin_browser_cb(NULL, NULL);
 }
 
 void GUI::create_plugin_window(int numview)
@@ -3593,8 +3595,9 @@ void GUI::create_plugin_window(int numview)
     o->callback(view_plugin_cancel_cb);
   }
   {
-    Fl_Return_Button *o = new Fl_Return_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Run");
-    o->callback(view_plugin_run_cb);
+    plugin_run = new Fl_Return_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Run");
+    plugin_run->callback(view_plugin_run_cb);
+    plugin_run->deactivate();
   }
 
   int L1 = width / 4, L2 = 2 * L1 / 3;

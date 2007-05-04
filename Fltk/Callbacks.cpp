@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.526 2007-05-04 14:27:41 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.527 2007-05-04 16:22:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4546,6 +4546,11 @@ void view_plugin_browser_cb(CALLBACK_ARGS)
   for(int i = 1; i <= WID->plugin_browser->size(); i++)
     ((GMSH_Plugin*)WID->plugin_browser->data(i))->dialogBox->group->hide();
   p->dialogBox->group->show();
+
+  if(iView >= 0)
+    WID->plugin_run->activate();
+  else
+    WID->plugin_run->deactivate();
 }
 
 void view_plugin_run_cb(CALLBACK_ARGS)

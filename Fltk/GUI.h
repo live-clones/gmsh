@@ -217,6 +217,7 @@ public:
   Fl_Window        *plugin_window;
   Fl_Hold_Browser  *plugin_browser;
   Fl_Multi_Browser *plugin_view_browser;
+  Fl_Return_Button *plugin_run;
 
   // statistics window
   Fl_Window        *stat_window;
