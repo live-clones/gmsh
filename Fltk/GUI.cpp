@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.608 2007-05-04 14:27:41 geuzaine Exp $
+// $Id: GUI.cpp,v 1.609 2007-05-04 14:43:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2778,6 +2778,7 @@ void GUI::create_option_window()
       view_choice[7] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Range mode");
       view_choice[7]->menu(menu_range);
       view_choice[7]->align(FL_ALIGN_RIGHT);
+      view_choice[7]->tooltip("(Alt+r)");
       view_choice[7]->callback(view_options_ok_cb, (void*)"custom_range");
 
       int sw2 = (int)(2.5 * fontsize);
