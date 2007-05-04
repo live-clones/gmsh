@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.32 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: Skin.cpp,v 1.33 2007-05-04 10:45:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -60,7 +60,7 @@ void GMSH_SkinPlugin::getName(char *name) const
 
 void GMSH_SkinPlugin::getInfos(char *author, char *copyright, char *help_text) const
 {
-  strcpy(author, "C. Geuzaine (geuz@geuz.org)");
+  strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Skin) extracts the skin (the boundary) of\n"

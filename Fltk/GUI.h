@@ -95,19 +95,15 @@ extern        Context_Item menu_mesh_define_transfinite[];
 extern Context_Item menu_solver[]; 
 extern Context_Item menu_post[]; 
 
-// Forward Declarations
-
-class GMSH_Plugin;
-
 // A generalized dialogbox for plugins
 
 #define MAX_PLUGIN_OPTIONS 50
 
+class GMSH_Plugin;
+
 struct PluginDialogBox
 {
-  int current_view_index;
-  Fl_Window *main_window;
-  Fl_Return_Button *run_button;
+  Fl_Group *group;
   Fl_Value_Input *value[MAX_PLUGIN_OPTIONS];
   Fl_Input *input[MAX_PLUGIN_OPTIONS];
 };
@@ -132,7 +128,6 @@ class GUI{
 
   // Bitmaps
   Fl_Bitmap  *abort_bmp, *start_bmp, *stop_bmp, *rewind_bmp, *rotate_bmp, *ortho_bmp;
-  void add_post_plugins(Popup_Button *button , int iView);
   void add_multiline_in_browser(Fl_Browser *o, char* prefix, char *str);
 
 public:
@@ -151,7 +146,6 @@ public:
   std::vector<Popup_Button*>    m_popup_butt;
   std::vector<Popup_Button*>    m_popup2_butt;
   std::vector<char*>            m_pop_label;
-  std::vector<std::pair<int, GMSH_Plugin*>*> m_pop_plugin;
 
   // graphic window
   Fl_Window        *g_window;
@@ -219,6 +213,11 @@ public:
   Fl_Return_Button *view_ok;
   Fl_Menu_Button   *view_menu_butt[2];
 
+  // Plugin window
+  Fl_Window        *plugin_window;
+  Fl_Hold_Browser  *plugin_browser;
+  Fl_Multi_Browser *plugin_view_browser;
+
   // statistics window
   Fl_Window        *stat_window;
   Fl_Output        *stat_value[50];
@@ -282,8 +281,9 @@ public:
   void create_mesh_options_window();
   void create_solver_options_window();
   void create_post_options_window();
-  PluginDialogBox *create_plugin_window(GMSH_Plugin *p);
   void create_view_options_window(int numview);
+  void create_plugin_dialog_box(GMSH_Plugin *p, int x, int y, int width, int height);
+  void create_plugin_window(int numview);
   void create_visibility_window(bool redraw_only=false);
   void create_clip_window();
   void create_manip_window();
@@ -319,6 +319,7 @@ public:
   int  arrow_shortcuts();
   void reset_visibility();
   void reset_option_browser();
+  void reset_plugin_view_browser();
   void reset_clip_browser();
   void update_manip_window(int force=0);
   void reset_external_view_list();

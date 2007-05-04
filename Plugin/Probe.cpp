@@ -1,4 +1,4 @@
-// $Id: Probe.cpp,v 1.13 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: Probe.cpp,v 1.14 2007-05-04 10:45:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -129,7 +129,7 @@ void GMSH_ProbePlugin::getName(char *name) const
 void GMSH_ProbePlugin::getInfos(char *author, char *copyright,
                                    char *help_text) const
 {
-  strcpy(author, "C. Geuzaine (geuzaine@acm.caltech.edu)");
+  strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Probe) gets the value of the view `iView' at\n"

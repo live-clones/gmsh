@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.19 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: Integrate.cpp,v 1.20 2007-05-04 10:45:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,6 @@
 extern Context_T CTX;
 
 StringXNumber IntegrateOptions_Number[] = {
-  {GMSH_FULLRC, "ComputeLevelsetPositive", NULL, 0.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
@@ -55,16 +54,14 @@ void GMSH_IntegratePlugin::getName(char *name) const
 void GMSH_IntegratePlugin::getInfos(char *author, char *copyright,
 				    char *help_text) const
 {
-  strcpy(author, "C. Geuzaine (geuz@geuz.org)");
+  strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
 	 "Plugin(Integrate) integrates scalar fields over\n"
 	 "all the elements in the view `iView', as well\n"
 	 "as the circulation/flux of vector fields over\n"
 	 "line/surface elements. If `iView' < 0, the\n"
-	 "plugin is run on the current view. If\n"
-	 "`ComputeLevelsetPositive' is set, the plugin\n"
-	 "computes the positive area (volume) of the map.\n"
+	 "plugin is run on the current view.\n"
 	 "\n"
 	 "Plugin(Integrate) creates one new view.\n");
 }
@@ -89,8 +86,6 @@ static double integrate(int nbList, List_T *list, int dim,
 {
   if(!nbList) return 0.;
 
-  const int levelsetPositive = (int)IntegrateOptions_Number[0].def;
-  
   double res = 0.;
   int nb = List_Nbr(list) / nbList;
   for(int i = 0; i < List_Nbr(list); i += nb) {
@@ -103,10 +98,7 @@ static double integrate(int nbList, List_T *list, int dim,
     element *element = factory.create(nbNod, dim, x, y, z);
     if(!element) return 0.;
     if(nbComp == 1){
-      if(!levelsetPositive) 
-	res += element->integrate(v);
-      else 
-	res += element->integrateLevelsetPositive(v);
+      res += element->integrate(v);
     }
     else if(nbComp == 3){
       if(dim == 1)

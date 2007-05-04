@@ -1,4 +1,4 @@
-// $Id: CutGrid.cpp,v 1.19 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: CutGrid.cpp,v 1.20 2007-05-04 10:45:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -189,19 +189,20 @@ void GMSH_CutGridPlugin::getName(char *name) const
 void GMSH_CutGridPlugin::getInfos(char *author, char *copyright,
                                    char *help_text) const
 {
-  strcpy(author, "J.-F. Remacle (remacle@scorec.rpi.edu)");
+  strcpy(author, "J.-F. Remacle");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(CutGrid) cuts the view `iView' with a\n"
 	 "rectangular grid defined by the 3 points\n"
-	 "(`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U)\n"
-	 "and (`X2',`Y2',`Z2') (axis of V). The number of points\n"
-	 "along U and V is set with the options `nPointsU'\n"
-	 "and `nPointsV'. If `ConnectPoints' is zero, the\n"
-	 "plugin creates points; otherwise, the plugin\n"
-	 "generates quadrangles, lines or points depending\n"
-	 "on the values of `nPointsU' and `nPointsV'. If\n"
-	 "`iView' < 0, the plugin is run on the current view.\n"
+	 "(`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of\n"
+	 "U) and (`X2',`Y2',`Z2') (axis of V). The number of\n"
+	 "points along U and V is set with the options\n"
+	 "`nPointsU' and `nPointsV'. If `ConnectPoints' is\n"
+	 "zero, the plugin creates points; otherwise, the\n"
+	 "plugin generates quadrangles, lines or points\n"
+	 " depending on the values of `nPointsU' and\n"
+	 "`nPointsV'. If `iView' < 0, the plugin is run on\n"
+	 "the current view.\n"
 	 "\n"
 	 "Plugin(CutGrid) creates one new view.\n");
 }

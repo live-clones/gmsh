@@ -684,6 +684,10 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Orthographic" , opt_general_orthographic , 1. ,
     "Orthographic projection mode (0=perspective projection)" },
 
+  { F|S, "PluginPositionX" , opt_general_plugin_position0 , 650. , 
+    "Horizontal position (in pixels) of the upper left corner of the plugin window" }, 
+  { F|S, "PluginPositionY" , opt_general_plugin_position1 , 550. , 
+    "Vertical position (in pixels) of the upper left corner of the plugin window" }, 
   { F|O, "PointSize" , opt_general_point_size , 3. , 
     "Display size of points (in pixels)" },
   { F|O, "PolygonOffsetAlwaysOn" , opt_general_polygon_offset_always , 0. , 

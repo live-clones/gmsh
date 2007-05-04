@@ -51,6 +51,8 @@ Show general options
 Show post-processing options
 @item Shift+s
 Show solver options 
+@item Shift+u
+Show post-processing plugins
 @item Shift+w
 Show post-processing view options
 

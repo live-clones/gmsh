@@ -1,4 +1,4 @@
-// $Id: Divergence.cpp,v 1.3 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: Divergence.cpp,v 1.4 2007-05-04 10:45:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -54,7 +54,7 @@ void GMSH_DivergencePlugin::getName(char *name) const
 void GMSH_DivergencePlugin::getInfos(char *author, char *copyright,
 				    char *help_text) const
 {
-  strcpy(author, "C. Geuzaine (geuz@geuz.org)");
+  strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
 	 "Plugin(Divergence) computes the divergence of the\n"

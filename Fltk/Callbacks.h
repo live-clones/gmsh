@@ -131,7 +131,9 @@ void view_combine_time_visible_cb(CALLBACK_ARGS);
 void view_combine_time_by_name_cb(CALLBACK_ARGS);
 void view_all_visible_cb(CALLBACK_ARGS);
 void view_applybgmesh_cb(CALLBACK_ARGS);
-void view_plugin_options_cb(CALLBACK_ARGS);
+void view_plugin_cb(CALLBACK_ARGS);
+void view_plugin_browser_cb(CALLBACK_ARGS);
+void view_plugin_run_cb(CALLBACK_ARGS);
 void view_plugin_cancel_cb(CALLBACK_ARGS);
 
 // Statistics Menu

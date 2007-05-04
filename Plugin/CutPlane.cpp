@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.51 2007-01-08 16:42:42 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.52 2007-05-04 10:45:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -141,7 +141,7 @@ void GMSH_CutPlanePlugin::getName(char *name) const
 void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright,
                                    char *help_text) const
 {
-  strcpy(author, "J.-F. Remacle (remacle@scorec.rpi.edu)");
+  strcpy(author, "J.-F. Remacle");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(CutPlane) cuts the view `iView' with\n"

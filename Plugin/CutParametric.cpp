@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.18 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.19 2007-05-04 10:45:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -221,7 +221,7 @@ void GMSH_CutParametricPlugin::getName(char *name) const
 void GMSH_CutParametricPlugin::getInfos(char *author, char *copyright,
                                    char *help_text) const
 {
-  strcpy(author, "C. Geuzaine (geuzaine@acm.caltech.edu)");
+  strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(CutParametric) cuts the view `iView' with\n"

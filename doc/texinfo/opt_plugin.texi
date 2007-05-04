@@ -5,15 +5,15 @@
 
 @ftable @code
 @item Plugin(Annotate)
-Plugin(Annotate) adds the text string `Text', in
-font `Font' and size `FontSize', in the view `iView'.
-If `3D' is equal to 1, the plugin inserts the
-string in model coordinates at the position
+Plugin(Annotate) adds the text string `Text',
+in font `Font' and size `FontSize', in the view
+`iView'. If `3D' is equal to 1, the plugin inserts
+the string in model coordinates at the position
 (`X',`Y',`Z'). If `3D' is equal to 0, the plugin
-inserts the string in screen coordinates at the
-position (`X',`Y'). The string is aligned according
-to `Align'. If `iView' < 0, the plugin is run on the
-current view.
+inserts the string in screen coordinates at
+the position (`X',`Y'). The string is aligned
+according to `Align'. If `iView' < 0, the plugin
+is run on the current view.
 
 Plugin(Annotate) is executed in-place.
 
@@ -58,14 +58,15 @@ Default value: @code{-1}
 @item Plugin(CutGrid)
 Plugin(CutGrid) cuts the view `iView' with a
 rectangular grid defined by the 3 points
-(`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U)
-and (`X2',`Y2',`Z2') (axis of V). The number of points
-along U and V is set with the options `nPointsU'
-and `nPointsV'. If `ConnectPoints' is zero, the
-plugin creates points; otherwise, the plugin
-generates quadrangles, lines or points depending
-on the values of `nPointsU' and `nPointsV'. If
-`iView' < 0, the plugin is run on the current view.
+(`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of
+U) and (`X2',`Y2',`Z2') (axis of V). The number of
+points along U and V is set with the options
+`nPointsU' and `nPointsV'. If `ConnectPoints' is
+zero, the plugin creates points; otherwise, the
+plugin generates quadrangles, lines or points
+ depending on the values of `nPointsU' and
+`nPointsV'. If `iView' < 0, the plugin is run on
+the current view.
 
 Plugin(CutGrid) creates one new view.
 
@@ -470,16 +471,12 @@ Plugin(Integrate) integrates scalar fields over
 all the elements in the view `iView', as well
 as the circulation/flux of vector fields over
 line/surface elements. If `iView' < 0, the
-plugin is run on the current view. If
-`ComputeLevelsetPositive' is set, the plugin
-computes the positive area (volume) of the map.
+plugin is run on the current view.
 
 Plugin(Integrate) creates one new view.
 
 Numeric options:
 @table @code
-@item ComputeLevelsetPositive
-Default value: @code{0}
 @item iView
 Default value: @code{-1}
 @end table

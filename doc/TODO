@@ -1,4 +1,16 @@
-$Id: TODO,v 1.55 2007-03-23 08:44:41 geuzaine Exp $
+$Id: TODO,v 1.56 2007-05-04 10:45:09 geuzaine Exp $
+
+********************************************************************
+
+change the plugin GUI: have a single plugin dialog box, similar to the
+option dialog, but with 2 browsers: views and plugins. Allow multiple
+views selected at once. Add shortcut to this plugin panel (shift+u?).
+
+********************************************************************
+
+remove "Apply next changes to all views" & co: just modify view
+browser so that we can select multiple views, and apply changes to all
+selected views?
 
 ********************************************************************
 

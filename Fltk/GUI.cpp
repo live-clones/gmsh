@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.606 2007-05-02 07:59:27 geuzaine Exp $
+// $Id: GUI.cpp,v 1.607 2007-05-04 10:45:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -573,6 +573,14 @@ int GUI::global_shortcuts(int event)
 	create_view_options_window(0);
     return 1;
   }
+  else if(Fl::test_shortcut(FL_SHIFT + 'u')) {
+    if(List_Nbr(CTX.post.list))
+      if(view_number >= 0 && view_number < List_Nbr(CTX.post.list))
+	create_plugin_window(view_number);
+      else
+	create_plugin_window(0);
+    return 1;
+  }
   else if(Fl::test_shortcut(FL_ALT + 'f')) {
     opt_general_fast_redraw(0, GMSH_SET | GMSH_GUI,
 			    !opt_general_fast_redraw(0, GMSH_GET, 0));
@@ -795,6 +803,7 @@ GUI::GUI(int argc, char **argv)
   m_window = NULL;
   g_window = NULL;
   opt_window = NULL;
+  plugin_window = NULL;
   stat_window = NULL;
   msg_window = NULL;
   vis_window = NULL;
@@ -879,6 +888,7 @@ GUI::GUI(int argc, char **argv)
   g_opengl_window->take_focus();
   
   create_option_window();
+  create_plugin_window(0);
   create_message_window();
   create_statistics_window();
   create_visibility_window();
@@ -924,22 +934,6 @@ void GUI::wait(double time)
 }
 
 // Create the menu window
-
-void GUI::add_post_plugins(Popup_Button * button, int iView)
-{
-  char name[256], menuname[256];
-  for(GMSH_PluginManager::iter it = GMSH_PluginManager::instance()->begin();
-      it != GMSH_PluginManager::instance()->end(); ++it) {
-    GMSH_Plugin *p = (*it).second;
-    if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
-      p->getName(name);
-      std::pair<int, GMSH_Plugin*> *pair = new std::pair<int, GMSH_Plugin *>(iView, p);
-      m_pop_plugin.push_back(pair); // keep track of this, so we can free it later
-      sprintf(menuname, "Plugins/%s...", name);
-      button->add(menuname, 0, (Fl_Callback *) view_plugin_options_cb, (void *)pair, 0);
-    }
-  }
-}
 
 void GUI::create_menu_window()
 {
@@ -1161,9 +1155,6 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
   for(unsigned int i = 0; i < m_pop_label.size(); i++)
     delete [] m_pop_label[i];
   m_pop_label.clear();
-  for(unsigned int i = 0; i < m_pop_plugin.size(); i++) 	 
-    delete m_pop_plugin[i]; 	 
-  m_pop_plugin.clear();
 
   int width = m_window->w();
   int popw = 4 * fontsize + 3;
@@ -1247,11 +1238,12 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 		  (Fl_Callback *) view_save_txt_cb, (void *)nb, 0);
 	p[j]->add("Save As/Mesh...", 0, 
 		  (Fl_Callback *) view_save_msh_cb, (void *)nb, 0);
-	add_post_plugins(p[j], nb);
 	p[j]->add("Apply As Background Mesh", 0, 
 		  (Fl_Callback *) view_applybgmesh_cb, (void *)nb, FL_MENU_DIVIDER);
 	p[j]->add("Options...", 'o', 
 		  (Fl_Callback *) view_options_cb, (void *)nb, 0);
+	p[j]->add("Plugins...", 'p', 
+		  (Fl_Callback *) view_plugin_cb, (void *)nb, 0);
       }
 
       m_toggle_butt.push_back(b1);
@@ -1484,6 +1476,27 @@ void GUI::set_status(char *msg, int num)
   }
 }
 
+void GUI::add_multiline_in_browser(Fl_Browser * o, char *prefix, char *str)
+{
+  int start = 0, len;
+  char *buff;
+  if(!str || !strlen(str) || !strcmp(str, "\n")) {
+    o->add(" ");
+    return;
+  }
+  for(unsigned int i = 0; i < strlen(str); i++) {
+    if(i == strlen(str) - 1 || str[i] == '\n') {
+      len = i - start + (str[i] == '\n' ? 0 : 1);
+      buff = new char[len + strlen(prefix) + 2];
+      strcpy(buff, prefix);
+      strncat(buff, &str[start], len);
+      buff[len + strlen(prefix)] = '\0';
+      o->add(buff);
+      start = i + 1;
+    }
+  }
+}
+
 // set the current drawing context 
 
 void GUI::make_opengl_current()
@@ -1615,12 +1628,11 @@ void GUI::reset_external_view_list()
   }
 }
 
-
 void GUI::create_option_window()
 {
   int width = 40 * fontsize;
   int height = 13 * BH + 5 * WB;
-  int L = 105 + WB;
+  int L = 8 * fontsize + WB;
 
   if(opt_window) {
     opt_window->show();
@@ -3442,6 +3454,149 @@ void GUI::update_view_window(int num)
   view_colorbar_window->update(v->Name, v->Min, v->Max, &v->CT, &v->Changed);
 }
 
+// Create the plugin manager window
+
+void GUI::create_plugin_dialog_box(GMSH_Plugin *p, int x, int y, int width, int height)
+{
+  p->dialogBox = new PluginDialogBox;
+  p->dialogBox->group = new Fl_Group(x, y, width, height);
+
+  {
+    Fl_Tabs *o = new Fl_Tabs(x, y, width, height);
+    {
+      Fl_Group *g = new Fl_Group(x, y + BH, width, height - BH, "Options");
+      Fl_Scroll *s = new Fl_Scroll(x + WB, y + WB + BH, width - 2 * WB, height - BH - 2 * WB);
+
+      int m = p->getNbOptionsStr();
+      if(m > MAX_PLUGIN_OPTIONS) m = MAX_PLUGIN_OPTIONS;
+
+      int n = p->getNbOptions();
+      if(n > MAX_PLUGIN_OPTIONS) n = MAX_PLUGIN_OPTIONS;
+
+      int k = 0;
+      for(int i = 0; i < m; i++) {
+        StringXString *sxs = p->getOptionStr(i);
+        p->dialogBox->input[i] = new Fl_Input(x + WB, y + WB + (k + 1) * BH, IW, BH, sxs->str);
+        p->dialogBox->input[i]->align(FL_ALIGN_RIGHT);
+        p->dialogBox->input[i]->value(sxs->def);
+	k++;
+      }
+      for(int i = 0; i < n; i++) {
+        StringXNumber *sxn = p->getOption(i);
+        p->dialogBox->value[i] = new Fl_Value_Input(x + WB, y + WB + (k + 1) * BH, IW, BH, sxn->str);
+        p->dialogBox->value[i]->align(FL_ALIGN_RIGHT);
+        p->dialogBox->value[i]->value(sxn->def);
+	k++;
+      }
+
+      s->end();
+      g->end();
+    }
+    {
+      Fl_Group *g = new Fl_Group(x, y + BH, width, height - BH, "About");
+
+      Fl_Browser *o = new Fl_Browser(x + WB, y + WB + BH, width - 2 * WB, height - 2 * WB - BH);
+
+      char name[1024], copyright[256], author[256], help[4096];
+      p->getName(name);
+      p->getInfos(author, copyright, help);
+
+      o->add(" ");
+      add_multiline_in_browser(o, "@c@b@.", name);
+      o->add(" ");
+      add_multiline_in_browser(o, "", help);
+      o->add(" ");
+      add_multiline_in_browser(o, "Author: ", author);
+      add_multiline_in_browser(o, "Copyright (C) ", copyright);
+      o->add(" ");
+
+      g->end();
+    }
+    o->end();
+  }
+
+  p->dialogBox->group->end();
+  p->dialogBox->group->hide();
+}
+
+void GUI::reset_plugin_view_browser()
+{
+  // save selected state
+  std::vector<int> state;
+  for(int i = 0; i < plugin_view_browser->size(); i++){
+    if(plugin_view_browser->selected(i + 1))
+      state.push_back(1);
+    else
+      state.push_back(0);
+  }
+
+  char str[128];
+  plugin_view_browser->clear();
+  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+    sprintf(str, "View [%d]", i);
+    plugin_view_browser->add(str);
+  }
+
+  for(int i = 0; i < plugin_view_browser->size(); i++){
+    if(i < state.size() && state[i])
+      plugin_view_browser->select(i + 1);
+  }
+}
+
+void GUI::create_plugin_window(int numview)
+{
+  int width = 40 * fontsize;
+  int height = 13 * BH + 5 * WB;
+
+  if(plugin_window) {
+    if(numview >= 0 && numview < List_Nbr(CTX.post.list)){
+      plugin_view_browser->deselect();
+      plugin_view_browser->select(numview + 1);
+    }
+    plugin_window->show();
+    return;
+  }
+
+  plugin_window = new Dialog_Window(width, height, "Plugins");
+  plugin_window->box(GMSH_WINDOW_BOX);
+
+  {
+    Fl_Button *o = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
+    o->callback(view_plugin_cancel_cb);
+  }
+  {
+    Fl_Return_Button *o = new Fl_Return_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Run");
+    o->callback(view_plugin_run_cb);
+  }
+
+  int L1 = 8 * fontsize, L2 = 7 * fontsize;
+  plugin_browser = new Fl_Hold_Browser(WB, WB, L1, height - 3 * WB - BH);
+  plugin_browser->callback(view_plugin_browser_cb);
+
+  plugin_view_browser = new Fl_Multi_Browser(WB + L1, WB, L2, height - 3 * WB - BH);
+  plugin_view_browser->has_scrollbar(Fl_Browser_::VERTICAL);
+  plugin_view_browser->callback(view_plugin_browser_cb);
+
+  for(GMSH_PluginManager::iter it = GMSH_PluginManager::instance()->begin();
+      it != GMSH_PluginManager::instance()->end(); ++it) {
+    GMSH_Plugin *p = (*it).second;
+    if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
+      char name[256];
+      p->getName(name);
+      plugin_browser->add(name, p);
+      create_plugin_dialog_box(p, 2 * WB + L1 + L2, WB, width - L1 - L2 - 3 * WB, height - 3 * WB - BH);
+      // select first plugin by default
+      if(it == GMSH_PluginManager::instance()->begin()){
+	plugin_browser->select(1);
+	p->dialogBox->group->show();
+      }
+    }
+  }
+
+  plugin_window->position(CTX.plugin_position[0], CTX.plugin_position[1]);
+  plugin_window->end();
+}
+
 // Create the window for the statistics
 
 void GUI::create_statistics_window()
@@ -3618,113 +3773,6 @@ void GUI::set_statistics(bool compute_quality)
   sprintf(label[num], "%g/%g", s[44], s[35]); stat_value[num]->value(label[num]); num++;
 }
 
-
-// Create the window for the plugins
-
-void GUI::add_multiline_in_browser(Fl_Browser * o, char *prefix, char *str)
-{
-  int start = 0, len;
-  char *buff;
-  if(!str || !strlen(str) || !strcmp(str, "\n")) {
-    o->add(" ");
-    return;
-  }
-  for(unsigned int i = 0; i < strlen(str); i++) {
-    if(i == strlen(str) - 1 || str[i] == '\n') {
-      len = i - start + (str[i] == '\n' ? 0 : 1);
-      buff = new char[len + strlen(prefix) + 2];
-      strcpy(buff, prefix);
-      strncat(buff, &str[start], len);
-      buff[len + strlen(prefix)] = '\0';
-      o->add(buff);
-      start = i + 1;
-    }
-  }
-}
-
-PluginDialogBox *GUI::create_plugin_window(GMSH_Plugin * p)
-{
-  char buffer[1024], namep[1024], copyright[256], author[256], help[4096];
-
-  // get plugin info
-
-  int m = p->getNbOptionsStr();
-  int n = p->getNbOptions();
-  p->getName(namep);
-  p->getInfos(author, copyright, help);
-
-  // create window
-
-  int width = 27 * fontsize;
-  int height = ((n+m > 8 ? n+m : 8) + 2) * BH + 5 * WB;
-
-  PluginDialogBox *pdb = new PluginDialogBox;
-  pdb->current_view_index = 0;
-  pdb->main_window = new Dialog_Window(width, height);
-  pdb->main_window->box(GMSH_WINDOW_BOX);
-  sprintf(buffer, "%s Plugin", namep);
-  char *nbuffer = new char[strlen(buffer) + 1];
-  strcpy(nbuffer, buffer);
-  pdb->main_window->label(nbuffer);
-
-  {
-    Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - 1 * BH);
-    {
-      Fl_Group *g = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Options");
-
-      if(m > MAX_PLUGIN_OPTIONS) m = MAX_PLUGIN_OPTIONS;
-      if(n > MAX_PLUGIN_OPTIONS) n = MAX_PLUGIN_OPTIONS;
-
-      int k = 0;
-      for(int i = 0; i < m; i++) {
-        StringXString *sxs = p->getOptionStr(i);
-        pdb->input[i] = new Fl_Input(2 * WB, 2 * WB + (k + 1) * BH, IW, BH, sxs->str);
-        pdb->input[i]->align(FL_ALIGN_RIGHT);
-        pdb->input[i]->value(sxs->def);
-	k++;
-      }
-      for(int i = 0; i < n; i++) {
-        StringXNumber *sxn = p->getOption(i);
-        pdb->value[i] = new Fl_Value_Input(2 * WB, 2 * WB + (k + 1) * BH, IW, BH, sxn->str);
-        pdb->value[i]->align(FL_ALIGN_RIGHT);
-        pdb->value[i]->value(sxn->def);
-	k++;
-      }
-
-      g->end();
-    }
-    {
-      Fl_Group *g = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "About");
-
-      Fl_Browser *o = new Fl_Browser(2 * WB, 2 * WB + 1 * BH, width - 4 * WB, height - 5 * WB - 2 * BH);
-
-      o->add(" ");
-      add_multiline_in_browser(o, "@c@b@.", namep);
-      o->add(" ");
-      add_multiline_in_browser(o, "", help);
-      o->add(" ");
-      add_multiline_in_browser(o, "Author: ", author);
-      add_multiline_in_browser(o, "Copyright (C) ", copyright);
-      o->add(" ");
-
-      g->end();
-    }
-    o->end();
-  }
-
-  pdb->run_button = new Fl_Return_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Run");
-
-  Fl_Button *cancel = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
-  cancel->callback(view_plugin_cancel_cb, (void *)pdb->main_window);
-
-  //pdb->main_window->resizable(new Fl_Box(2 * WB, 2 * WB + BH, 10, 10));
-  
-  pdb->main_window->position(m_window->x() + m_window->w() / 2 - width / 2,
-			     m_window->y() + 6 * BH);
-  pdb->main_window->end();
-
-  return pdb;
-}
 
 // Create the window for the messages
 

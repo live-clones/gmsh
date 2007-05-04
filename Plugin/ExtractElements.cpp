@@ -1,4 +1,4 @@
-// $Id: ExtractElements.cpp,v 1.7 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: ExtractElements.cpp,v 1.8 2007-05-04 10:45:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -55,7 +55,7 @@ void GMSH_ExtractElementsPlugin::getName(char *name) const
 
 void GMSH_ExtractElementsPlugin::getInfos(char *author, char *copyright, char *help_text) const
 {
-  strcpy(author, "C. Geuzaine (geuz@geuz.org)");
+  strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(ExtractElements) extracts the elements\n"

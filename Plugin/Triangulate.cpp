@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.34 2007-01-16 11:31:42 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.35 2007-05-04 10:45:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -56,7 +56,7 @@ void GMSH_TriangulatePlugin::getName(char *name) const
 void GMSH_TriangulatePlugin::getInfos(char *author, char *copyright,
                                       char *help_text) const
 {
-  strcpy(author, "C. Geuzaine (geuz@geuz.org)");
+  strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Triangulate) triangulates the points in the\n"

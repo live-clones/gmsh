@@ -1,4 +1,4 @@
-// $Id: Warp.cpp,v 1.6 2007-02-26 08:25:46 geuzaine Exp $
+// $Id: Warp.cpp,v 1.7 2007-05-04 10:45:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -59,7 +59,7 @@ void GMSH_WarpPlugin::getName(char *name) const
 void GMSH_WarpPlugin::getInfos(char *author, char *copyright,
                                          char *help_text) const
 {
-  strcpy(author, "C. Geuzaine (geuz@geuz.org)");
+  strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Warp) transforms the elements in the\n"

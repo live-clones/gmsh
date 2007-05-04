@@ -1,4 +1,4 @@
-// $Id: Smooth.cpp,v 1.23 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: Smooth.cpp,v 1.24 2007-05-04 10:45:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -53,7 +53,7 @@ void GMSH_SmoothPlugin::getName(char *name) const
 void GMSH_SmoothPlugin::getInfos(char *author, char *copyright,
                                  char *help_text) const
 {
-  strcpy(author, "C. Geuzaine (geuz@geuz.org)");
+  strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Smooth) averages the values at the nodes\n"

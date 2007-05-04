@@ -99,6 +99,11 @@ Element order (1=linear elements, N (<6) = elements of higher order)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.C1Continuity
+Impose C1 continuity to high order meshes, only valid in 2D plane and ElemenOrder = 2 and 3 (todo) (Default : C0 continuity)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.SmoothInternalEdges
 Number of smoothing steps of internal edges for high order meshes@*
 Default value: @code{0}@*

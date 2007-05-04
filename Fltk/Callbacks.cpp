@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.524 2007-04-26 09:47:38 remacle Exp $
+// $Id: Callbacks.cpp,v 1.525 2007-05-04 10:45:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -64,6 +64,7 @@ void UpdateViewsInGUI()
     if(WID->get_context() == 3)
       WID->set_context(menu_post, 0);
     WID->reset_option_browser();
+    WID->reset_plugin_view_browser();
     WID->reset_clip_browser();
     WID->reset_external_view_list();
   }
@@ -145,6 +146,7 @@ void window_cb(CALLBACK_ARGS)
   if(!strcmp(str, "minimize")){
     WID->g_window->iconize();
     if(WID->opt_window->shown()) WID->opt_window->iconize();
+    if(WID->plugin_window->shown()) WID->plugin_window->iconize();
     if(WID->vis_window->shown()) WID->vis_window->iconize();
     if(WID->clip_window->shown()) WID->clip_window->iconize();
     if(WID->manip_window->shown()) WID->manip_window->iconize();
@@ -172,6 +174,7 @@ void window_cb(CALLBACK_ARGS)
     // the order is important!
     WID->g_window->show();
     if(WID->opt_window->shown()) WID->opt_window->show();
+    if(WID->plugin_window->shown()) WID->plugin_window->show();
     if(WID->context_geometry_window->shown()) WID->context_geometry_window->show();
     if(WID->context_mesh_window->shown()) WID->context_mesh_window->show();
     for(int i = 0; i < MAXSOLVERS; i++) {
@@ -2444,6 +2447,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Shift+o       Show general options"); 
   Msg(DIRECT, "  Shift+p       Show post-processing options");
   Msg(DIRECT, "  Shift+s       Show solver options"); 
+  Msg(DIRECT, "  Shift+u       Show post-processing plugins");
   Msg(DIRECT, "  Shift+w       Show post-processing view options");
   Msg(DIRECT, "  Shift+Escape  Enable full mouse selection");
   Msg(DIRECT, " ");
@@ -4469,54 +4473,9 @@ void view_applybgmesh_cb(CALLBACK_ARGS)
   fields.insert(field);
 }
 
-void view_plugin_cancel_cb(CALLBACK_ARGS)
+void view_plugin_cb(CALLBACK_ARGS)
 {
-  if(data)
-    ((Fl_Window *) data)->hide();
-  if(CTX.post.plugin_draw_function){
-    CTX.post.plugin_draw_function = NULL;
-    Draw();
-  }
-}
-
-void view_plugin_run_cb(CALLBACK_ARGS)
-{
-  GMSH_Post_Plugin *p = (GMSH_Post_Plugin *) data;
-  char name[256];
-  p->getName(name);
-  int iView;
-
-  if(p->dialogBox) { // get the values from the GUI
-    iView = p->dialogBox->current_view_index;
-    int m = p->getNbOptionsStr();
-    int n = p->getNbOptions();
-    if(m > MAX_PLUGIN_OPTIONS) m = MAX_PLUGIN_OPTIONS;
-    if(n > MAX_PLUGIN_OPTIONS) n = MAX_PLUGIN_OPTIONS;
-    for(int i = 0; i < m; i++) {
-      StringXString *sxs = p->getOptionStr(i);
-      sxs->def = (char*)p->dialogBox->input[i]->value();
-    }
-    for(int i = 0; i < n; i++) {
-      StringXNumber *sxn = p->getOption(i);
-      sxn->def = p->dialogBox->value[i]->value();
-    }
-  }
-  else
-    iView = 0;
-
-  try {
-    Post_View **vv = (Post_View **) List_Pointer_Test(CTX.post.list, iView);
-    if(!vv)
-      p->execute(0);
-    else
-      p->execute(*vv);
-    CTX.post.plugin_draw_function = NULL;
-    Draw();
-  }
-  catch(GMSH_Plugin * err) {
-    p->catchErrorMessage(name);
-    Msg(WARNING, "%s", name);
-  }
+  WID->create_plugin_window((int)(long)data);
 }
 
 void view_plugin_input_value_cb(CALLBACK_ARGS)
@@ -4533,30 +4492,41 @@ void view_plugin_input_cb(CALLBACK_ARGS)
   f(-1, 0, (char*)input->value());
 }
 
-void view_plugin_options_cb(CALLBACK_ARGS)
+void view_plugin_browser_cb(CALLBACK_ARGS)
 {
-  std::pair<int, GMSH_Plugin *> *pair = (std::pair<int, GMSH_Plugin *>*) data;
-  int iView = pair->first;
-  GMSH_Plugin *p = pair->second;
+  // get selected plugin
+  GMSH_Plugin *p = 0;
+  for(int i = 1; i <= WID->plugin_browser->size(); i++) {
+    if(WID->plugin_browser->selected(i)) {
+      p = (GMSH_Plugin*)WID->plugin_browser->data(i);
+      break;
+    }
+  }
+  if(!p) return;
 
-  if(!p->dialogBox)
-    p->dialogBox = WID->create_plugin_window(p);
+  // get first first selected view
+  int iView = -1;
+  for(int i = 1; i <= WID->plugin_view_browser->size(); i++) {
+    if(WID->plugin_view_browser->selected(i)) {
+      iView = i - 1;
+      break;
+    }
+  }
 
-  p->dialogBox->current_view_index = iView;
-  p->dialogBox->run_button->callback(view_plugin_run_cb, (void *)p);
-
-  // configure the input value fields (we get step, min and max by
-  // calling the option function with action==1, 2 and 3,
-  // respectively) and set the Fl_Value_Input callbacks
+  // set the Fl_Value_Input callbacks and configure the input value
+  // fields (we get step, min and max by calling the option function
+  // with action==1, 2 and 3, respectively)
   int n = p->getNbOptions();
   if(n > MAX_PLUGIN_OPTIONS) n = MAX_PLUGIN_OPTIONS;
   for(int i = 0; i < n; i++) {
     StringXNumber *sxn = p->getOption(i);
     if(sxn->function){
       p->dialogBox->value[i]->callback(view_plugin_input_value_cb, (void*)sxn->function);
-      p->dialogBox->value[i]->step(sxn->function(iView, 1, 0.));
-      p->dialogBox->value[i]->minimum(sxn->function(iView, 2, 0.));
-      p->dialogBox->value[i]->maximum(sxn->function(iView, 3, 0.));
+      if(iView >= 0){
+	p->dialogBox->value[i]->step(sxn->function(iView, 1, 0.));
+	p->dialogBox->value[i]->minimum(sxn->function(iView, 2, 0.));
+	p->dialogBox->value[i]->maximum(sxn->function(iView, 3, 0.));
+      }
     }
   }
 
@@ -4570,7 +4540,65 @@ void view_plugin_options_cb(CALLBACK_ARGS)
     }
   }
 
-  p->dialogBox->main_window->show();
+  // hide all plugin groups except the selected one
+  for(int i = 1; i <= WID->plugin_browser->size(); i++)
+    ((GMSH_Plugin*)WID->plugin_browser->data(i))->dialogBox->group->hide();
+  p->dialogBox->group->show();
+}
+
+void view_plugin_run_cb(CALLBACK_ARGS)
+{
+  // get selected plugin
+  GMSH_Post_Plugin *p = 0;
+  for(int i = 1; i <= WID->plugin_browser->size(); i++) {
+    if(WID->plugin_browser->selected(i)) {
+      p = (GMSH_Post_Plugin*)WID->plugin_browser->data(i);
+      break;
+    }
+  }
+  if(!p) return;
+
+  if(p->dialogBox) { // get the values from the GUI
+    int m = p->getNbOptionsStr();
+    int n = p->getNbOptions();
+    if(m > MAX_PLUGIN_OPTIONS) m = MAX_PLUGIN_OPTIONS;
+    if(n > MAX_PLUGIN_OPTIONS) n = MAX_PLUGIN_OPTIONS;
+    for(int i = 0; i < m; i++) {
+      StringXString *sxs = p->getOptionStr(i);
+      sxs->def = (char*)p->dialogBox->input[i]->value();
+    }
+    for(int i = 0; i < n; i++) {
+      StringXNumber *sxn = p->getOption(i);
+      sxn->def = p->dialogBox->value[i]->value();
+    }
+  }
+
+  // run on all selected views
+  for(int i = 1; i <= WID->plugin_view_browser->size(); i++) {
+    if(WID->plugin_view_browser->selected(i)) {
+      try {
+	Post_View **vv = (Post_View **) List_Pointer_Test(CTX.post.list, i - 1);
+	if(!vv)
+	  p->execute(0);
+	else
+	  p->execute(*vv);
+      }
+      catch(GMSH_Plugin * err) {
+	char tmp[256];
+	p->catchErrorMessage(tmp);
+	Msg(WARNING, "%s", tmp);
+      }
+    }
+  }
+
+  Draw();
+  CTX.post.plugin_draw_function = NULL;
+}
+
+void view_plugin_cancel_cb(CALLBACK_ARGS)
+{
+  WID->plugin_window->hide();
+  CTX.post.plugin_draw_function = NULL;
 }
 
 // Contextual windows for geometry

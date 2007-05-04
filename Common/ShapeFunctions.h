@@ -169,7 +169,8 @@ public:
   }
   double integrateLevelsetPositive(double val[])
   {
-    double ones[8] = {1., 1., 1., 1., 1., 1., 1., 1.}; // FIXME: 8-node max
+    // FIXME: explain + generalize this
+    double ones[8] = {1., 1., 1., 1., 1., 1., 1., 1.};
     double area = integrate(ones);
     double sum = 0, sumabs = 0.;
     for(int i = 0; i < getNumNodes(); i++){

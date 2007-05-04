@@ -1,4 +1,4 @@
-// $Id: Extract.cpp,v 1.22 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: Extract.cpp,v 1.23 2007-05-04 10:45:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -73,7 +73,7 @@ void GMSH_ExtractPlugin::getName(char *name) const
 
 void GMSH_ExtractPlugin::getInfos(char *author, char *copyright, char *help_text) const
 {
-  strcpy(author, "C. Geuzaine (geuz@geuz.org)");
+  strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Extract) extracts a combination of\n"

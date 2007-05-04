@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.341 2007-04-26 09:47:38 remacle Exp $
+// $Id: Options.cpp,v 1.342 2007-05-04 10:45:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2388,6 +2388,20 @@ double opt_general_option_position1(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.opt_position[1] = (int)val;
   return CTX.opt_position[1];
+}
+
+double opt_general_plugin_position0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.plugin_position[0] = (int)val;
+  return CTX.plugin_position[0];
+}
+
+double opt_general_plugin_position1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.plugin_position[1] = (int)val;
+  return CTX.plugin_position[1];
 }
 
 double opt_general_statistics_position0(OPT_ARGS_NUM)
