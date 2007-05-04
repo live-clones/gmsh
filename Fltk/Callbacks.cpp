@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.527 2007-05-04 16:22:37 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.528 2007-05-04 18:27:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2473,6 +2473,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Alt+a         Loop through axes modes"); 
   Msg(DIRECT, "  Alt+b         Hide/show bounding boxes");
   Msg(DIRECT, "  Alt+c         Loop through predefined color schemes");
+  Msg(DIRECT, "  Alt+e         Hide/Show element outlines for visible post-processing views");
   Msg(DIRECT, "  Alt+f         Change redraw mode (fast/full)"); 
   Msg(DIRECT, "  Alt+h         Hide/show all post-processing views"); 
   Msg(DIRECT, "  Alt+i         Hide/show all post-processing view scales");

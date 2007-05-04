@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.611 2007-05-04 18:19:22 geuzaine Exp $
+// $Id: GUI.cpp,v 1.612 2007-05-04 18:27:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -767,6 +767,14 @@ int GUI::global_shortcuts(int event)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_draw_strings(i, GMSH_SET | GMSH_GUI,
                               !opt_view_draw_strings(i, GMSH_GET, 0));
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT + 'e')) {
+    for(i = 0; i < List_Nbr(CTX.post.list); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_show_element(i, GMSH_SET | GMSH_GUI,
+                              !opt_view_show_element(i, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
@@ -2940,6 +2948,7 @@ void GUI::create_option_window()
       view_butt[5]->callback(view_options_ok_cb);
 
       view_butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Draw element outlines");
+      view_butt[10]->tooltip("(Alt+e)");
       view_butt[10]->type(FL_TOGGLE_BUTTON);
       view_butt[10]->callback(view_options_ok_cb);
 
