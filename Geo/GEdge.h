@@ -44,6 +44,8 @@ class GEdge : public GEntity {
 
   void addFace(GFace *f);
   void delFace(GFace *f);
+  /* start==end and no more than 2 segments */
+  bool is_mesh_degenereted() const;
 
   virtual int dim() const {return 1;}
   virtual bool periodic(int dim=0) const = 0;
