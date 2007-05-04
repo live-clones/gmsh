@@ -52,7 +52,7 @@ Show post-processing options
 @item Shift+s
 Show solver options 
 @item Shift+u
-Show post-processing plugins
+Show post-processing view plugins
 @item Shift+w
 Show post-processing view options
 
@@ -85,6 +85,8 @@ Show option window
 Merge file(s)
 @item Shift+Ctrl+s
 Save mesh in default format
+@item Shift+Ctrl+u
+Show plugin window
 @item Shift+Ctrl+v
 Show visibility window
 
@@ -112,10 +114,12 @@ Hide/show all post-processing view annotations
 Change projection mode (orthographic/perspective)
 @item Alt+p
 Hide/show geometry points
+@item Alt+r
+Loop through range modes for visible post-processing views
 @item Alt+s
 Hide/show geometry surfaces
 @item Alt+t
-Loop through interval modes for visible post-processing views 
+Loop through interval modes for visible post-processing views
 @item Alt+v
 Hide/show geometry volumes
 @item Alt+w

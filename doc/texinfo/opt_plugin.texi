@@ -227,22 +227,6 @@ Default value: @code{4}
 Default value: @code{-1}
 @end table
 
-@item Plugin(DecomposeInSimplex)
-Plugin(DecomposeInSimplex) decomposes all
-non-simplectic elements (quadrangles, prisms,
-hexahedra, pyramids) in the view `iView' into
-simplices (triangles, tetrahedra). If `iView' < 0,
-the plugin is run on the current view.
-
-Plugin(DecomposeInSimplex) is executed
-in-place.
-
-Numeric options:
-@table @code
-@item iView
-Default value: @code{-1}
-@end table
-
 @item Plugin(Divergence)
 Plugin(Divergence) computes the divergence of the
 field in the view `iView'. If `iView' < 0, the plugin
@@ -503,6 +487,22 @@ Numeric options:
 @table @code
 @item Eigenvalue
 Default value: @code{2}
+@item iView
+Default value: @code{-1}
+@end table
+
+@item Plugin(MakeSimplex)
+Plugin(MakeSimplex) decomposes all non-
+simplectic elements (quadrangles, prisms,
+hexahedra, pyramids) in the view `iView' into
+simplices (triangles, tetrahedra). If `iView' < 0,
+the plugin is run on the current view.
+
+Plugin(MakeSimplex) is executed
+in-place.
+
+Numeric options:
+@table @code
 @item iView
 Default value: @code{-1}
 @end table

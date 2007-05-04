@@ -688,6 +688,11 @@ StringXNumber GeneralOptions_Number[] = {
     "Horizontal position (in pixels) of the upper left corner of the plugin window" }, 
   { F|S, "PluginPositionY" , opt_general_plugin_position1 , 550. , 
     "Vertical position (in pixels) of the upper left corner of the plugin window" }, 
+  { F|S, "PluginWidth" , opt_general_plugin_size0 , 100. , 
+    "Width (in pixels) of the plugin window" }, 
+  { F|S, "PluginHeight" , opt_general_plugin_size1 , 100. , 
+    "Height (in pixels) of the plugin window" }, 
+
   { F|O, "PointSize" , opt_general_point_size , 3. , 
     "Display size of points (in pixels)" },
   { F|O, "PolygonOffsetAlwaysOn" , opt_general_polygon_offset_always , 0. , 

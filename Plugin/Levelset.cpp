@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.31 2007-03-05 09:30:57 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.32 2007-05-04 14:27:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,7 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Levelset.h"
-#include "DecomposeInSimplex.h"
+#include "MakeSimplex.h"
 #include "List.h"
 #include "Tools.h"
 #include "Views.h"
@@ -454,8 +454,8 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
     }
     else{
       // we decompose the element into simplices
-      DecomposeInSimplex iDec(nbNod, iNbComp);
-      DecomposeInSimplex dDec(nbNod, dNbComp);
+      MakeSimplex iDec(nbNod, iNbComp);
+      MakeSimplex dDec(nbNod, dNbComp);
       
       int nbNodNew = iDec.numSimplexNodes();
       int nbEdgNew = (nbNodNew == 4) ? 6 : 3;

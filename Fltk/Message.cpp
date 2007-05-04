@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.79 2007-05-04 10:45:08 geuzaine Exp $
+// $Id: Message.cpp,v 1.80 2007-05-04 14:27:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -228,6 +228,8 @@ void Exit(int level)
       CTX.opt_position[1] = WID->opt_window->y();
       CTX.plugin_position[0] = WID->plugin_window->x();
       CTX.plugin_position[1] = WID->plugin_window->y();
+      CTX.plugin_size[0] = WID->plugin_window->w();
+      CTX.plugin_size[1] = WID->plugin_window->h();
       CTX.stat_position[0] = WID->stat_window->x();
       CTX.stat_position[1] = WID->stat_window->y();
       CTX.vis_position[0] = WID->vis_window->x();

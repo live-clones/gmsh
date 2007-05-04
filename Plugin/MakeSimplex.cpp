@@ -1,4 +1,4 @@
-// $Id: DecomposeInSimplex.cpp,v 1.22 2007-05-04 10:45:08 geuzaine Exp $
+// $Id: MakeSimplex.cpp,v 1.1 2007-05-04 14:27:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,7 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Plugin.h"
-#include "DecomposeInSimplex.h"
+#include "MakeSimplex.h"
 #include "List.h"
 #include "Tree.h"
 #include "Views.h"
@@ -30,57 +30,57 @@
 
 extern Context_T CTX;
 
-StringXNumber DecomposeInSimplexOptions_Number[] = {
+StringXNumber MakeSimplexOptions_Number[] = {
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterDecomposeInSimplexPlugin()
+  GMSH_Plugin *GMSH_RegisterMakeSimplexPlugin()
   {
-    return new GMSH_DecomposeInSimplexPlugin();
+    return new GMSH_MakeSimplexPlugin();
   }
 }
 
-GMSH_DecomposeInSimplexPlugin::GMSH_DecomposeInSimplexPlugin()
+GMSH_MakeSimplexPlugin::GMSH_MakeSimplexPlugin()
 {
   ;
 }
 
-void GMSH_DecomposeInSimplexPlugin::getName(char *name) const
+void GMSH_MakeSimplexPlugin::getName(char *name) const
 {
-  strcpy(name, "Decompose in Simplex");
+  strcpy(name, "Make Simplex");
 }
 
-void GMSH_DecomposeInSimplexPlugin::getInfos(char *author, char *copyright,
-					     char *help_text) const
+void GMSH_MakeSimplexPlugin::getInfos(char *author, char *copyright,
+				      char *help_text) const
 {
   strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-         "Plugin(DecomposeInSimplex) decomposes all\n"
-	 "non-simplectic elements (quadrangles, prisms,\n"
+         "Plugin(MakeSimplex) decomposes all non-\n"
+	 "simplectic elements (quadrangles, prisms,\n"
 	 "hexahedra, pyramids) in the view `iView' into\n"
 	 "simplices (triangles, tetrahedra). If `iView' < 0,\n"
 	 "the plugin is run on the current view.\n"
 	 "\n"
-	 "Plugin(DecomposeInSimplex) is executed\n"
+	 "Plugin(MakeSimplex) is executed\n"
 	 "in-place.\n");
 }
 
-int GMSH_DecomposeInSimplexPlugin::getNbOptions() const
+int GMSH_MakeSimplexPlugin::getNbOptions() const
 {
-  return sizeof(DecomposeInSimplexOptions_Number) / sizeof(StringXNumber);
+  return sizeof(MakeSimplexOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_DecomposeInSimplexPlugin::getOption(int iopt)
+StringXNumber *GMSH_MakeSimplexPlugin::getOption(int iopt)
 {
-  return &DecomposeInSimplexOptions_Number[iopt];
+  return &MakeSimplexOptions_Number[iopt];
 }
 
-void GMSH_DecomposeInSimplexPlugin::catchErrorMessage(char *errorMessage) const
+void GMSH_MakeSimplexPlugin::catchErrorMessage(char *errorMessage) const
 {
-  strcpy(errorMessage, "DecomposeInSimplex failed...");
+  strcpy(errorMessage, "MakeSimplex failed...");
 }
 
 static void decomposeList(Post_View *v, int nbNod, int nbComp,
@@ -88,7 +88,7 @@ static void decomposeList(Post_View *v, int nbNod, int nbComp,
 {
   double xNew[4], yNew[4], zNew[4];
   double *valNew = new double[v->NbTimeStep * nbComp * nbNod];
-  DecomposeInSimplex dec(nbNod, nbComp, v->NbTimeStep);
+  MakeSimplex dec(nbNod, nbComp, v->NbTimeStep);
 
   if(!(*nbIn))
     return;
@@ -121,9 +121,9 @@ static void decomposeList(Post_View *v, int nbNod, int nbComp,
   *nbIn = 0;
 }
 
-Post_View *GMSH_DecomposeInSimplexPlugin::execute(Post_View * v)
+Post_View *GMSH_MakeSimplexPlugin::execute(Post_View * v)
 {
-  int iView = (int)DecomposeInSimplexOptions_Number[0].def;
+  int iView = (int)MakeSimplexOptions_Number[0].def;
 
   if(iView < 0)
     iView = v ? v->Index : 0;
@@ -137,7 +137,7 @@ Post_View *GMSH_DecomposeInSimplexPlugin::execute(Post_View * v)
 
   // Bail out if the view is an alias or if other views duplicate it
   if(v1->AliasOf || v1->Links) {
-    Msg(GERROR, "DecomposeInSimplex cannot be applied to an aliased view");
+    Msg(GERROR, "MakeSimplex cannot be applied to an aliased view");
     return 0;
   }
 
@@ -166,13 +166,13 @@ Post_View *GMSH_DecomposeInSimplexPlugin::execute(Post_View * v)
 
 // Utility class 
 
-DecomposeInSimplex::DecomposeInSimplex(int numNodes, int numComponents, int numTimeSteps)
+MakeSimplex::MakeSimplex(int numNodes, int numComponents, int numTimeSteps)
   : _numNodes(numNodes), _numComponents(numComponents), _numTimeSteps(numTimeSteps) 
 {
   ; 
 }
 
-int DecomposeInSimplex::numSimplices()
+int MakeSimplex::numSimplices()
 {
   switch(_numNodes) {
   case 4: return 2; // quad -> 2 tris
@@ -183,7 +183,7 @@ int DecomposeInSimplex::numSimplices()
   return 0;
 }
 
-int DecomposeInSimplex::numSimplexNodes()
+int MakeSimplex::numSimplexNodes()
 {
   if(_numNodes == 4)
     return 3; // quad -> tris
@@ -191,9 +191,9 @@ int DecomposeInSimplex::numSimplexNodes()
     return 4; // all others -> tets
 }
 
-void DecomposeInSimplex::reorder(int map[4], int n,
-				 double *x, double *y, double *z, double *val,
-				 double *xn, double *yn, double *zn, double *valn)
+void MakeSimplex::reorder(int map[4], int n,
+			  double *x, double *y, double *z, double *val,
+			  double *xn, double *yn, double *zn, double *valn)
 {
   for(int i = 0; i < n; i++) {
     xn[i] = x[map[i]];
@@ -230,9 +230,9 @@ void DecomposeInSimplex::reorder(int map[4], int n,
   }
 }
 
-void DecomposeInSimplex::decompose(int num, 
-				   double *x, double *y, double *z, double *val,
-				   double *xn, double *yn, double *zn, double *valn)
+void MakeSimplex::decompose(int num, 
+			    double *x, double *y, double *z, double *val,
+			    double *xn, double *yn, double *zn, double *valn)
 {
   int quadTri[2][4] = {{0,1,2,-1}, {0,2,3,-1}};
   int hexaTet[6][4] = {{0,1,3,7}, {0,4,1,7}, {1,4,5,7}, {1,2,3,7}, {1,6,2,7}, {1,5,6,7}};

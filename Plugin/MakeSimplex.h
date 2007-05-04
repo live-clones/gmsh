@@ -1,5 +1,5 @@
-#ifndef _DECOMPOSE_IN_SIMPLEX_H_
-#define _DECOMPOSE_IN_SIMPLEX_H_
+#ifndef _MAKE_SIMPLEX_H_
+#define _MAKE_SIMPLEX_H_
 
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,13 +24,13 @@
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterDecomposeInSimplexPlugin();
+  GMSH_Plugin *GMSH_RegisterMakeSimplexPlugin();
 }
 
-class GMSH_DecomposeInSimplexPlugin : public GMSH_Post_Plugin
+class GMSH_MakeSimplexPlugin : public GMSH_Post_Plugin
 {
 public:
-  GMSH_DecomposeInSimplexPlugin();
+  GMSH_MakeSimplexPlugin();
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *help_text) const;
   void catchErrorMessage(char *errorMessage) const;
@@ -39,7 +39,7 @@ public:
   Post_View *execute(Post_View *);
 };
 
-class DecomposeInSimplex{
+class MakeSimplex{
  private:
   // how many nodes in the element to decompose
   int _numNodes;
@@ -53,7 +53,7 @@ class DecomposeInSimplex{
 	       double *xn, double *yn, double *zn, double *valn);
  public:
   // default constructor
-  DecomposeInSimplex(int numNodes, int numComponents, int numTimeSteps=1);
+  MakeSimplex(int numNodes, int numComponents, int numTimeSteps=1);
   // the number of simplices into which the element is decomposed
   int numSimplices();
   // the number of nodes of the simplex

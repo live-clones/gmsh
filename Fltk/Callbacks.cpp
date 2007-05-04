@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.525 2007-05-04 10:45:07 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.526 2007-05-04 14:27:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2447,7 +2447,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Shift+o       Show general options"); 
   Msg(DIRECT, "  Shift+p       Show post-processing options");
   Msg(DIRECT, "  Shift+s       Show solver options"); 
-  Msg(DIRECT, "  Shift+u       Show post-processing plugins");
+  Msg(DIRECT, "  Shift+u       Show post-processing view plugins");
   Msg(DIRECT, "  Shift+w       Show post-processing view options");
   Msg(DIRECT, "  Shift+Escape  Enable full mouse selection");
   Msg(DIRECT, " ");
@@ -2467,6 +2467,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Shift+" CC("n") "  Show option window"); 
   Msg(DIRECT, "  Shift+" CC("o") "  Merge file(s)"); 
   Msg(DIRECT, "  Shift+" CC("s") "  Save mesh in default format");
+  Msg(DIRECT, "  Shift+" CC("u") "  Show plugin window");
   Msg(DIRECT, "  Shift+" CC("v") "  Show visibility window");
   Msg(DIRECT, " ");
   Msg(DIRECT, "  Alt+a         Loop through axes modes"); 
@@ -2480,6 +2481,7 @@ void help_short_cb(CALLBACK_ARGS)
   Msg(DIRECT, "  Alt+n         Hide/show all post-processing view annotations");
   Msg(DIRECT, "  Alt+o         Change projection mode (orthographic/perspective)");
   Msg(DIRECT, "  Alt+p         Hide/show geometry points");
+  Msg(DIRECT, "  Alt+r         Loop through range modes for visible post-processing views"); 
   Msg(DIRECT, "  Alt+s         Hide/show geometry surfaces");
   Msg(DIRECT, "  Alt+t         Loop through interval modes for visible post-processing views"); 
   Msg(DIRECT, "  Alt+v         Hide/show geometry volumes");
@@ -4591,14 +4593,15 @@ void view_plugin_run_cb(CALLBACK_ARGS)
     }
   }
 
-  Draw();
   CTX.post.plugin_draw_function = NULL;
+  Draw();
 }
 
 void view_plugin_cancel_cb(CALLBACK_ARGS)
 {
   WID->plugin_window->hide();
   CTX.post.plugin_draw_function = NULL;
+  Draw();
 }
 
 // Contextual windows for geometry

@@ -67,6 +67,7 @@ public :
   int ctx_position[2];        // position of the geo/mesh context windows on the screen
   int solver_position[2];     // position of the solver windows on the screen
   int plugin_position[2];     // position of the plugin window on the screen
+  int plugin_size[2];         // size of the plugin window on the screen
   int file_chooser_position[2]; // position of the file chooser window on the screen
   int system_menu_bar;        // use the system menu bar on MacOS?
 

@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.86 2007-01-16 11:31:42 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.87 2007-05-04 14:27:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -50,7 +50,7 @@
 #include "Divergence.h"
 #include "Annotate.h"
 #include "Remove.h"
-#include "DecomposeInSimplex.h"
+#include "MakeSimplex.h"
 #include "Smooth.h"
 #include "Transform.h"
 #include "Triangulate.h"
@@ -190,7 +190,7 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		      ("ExtractEdges", GMSH_RegisterExtractEdgesPlugin()));
 #endif
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
-		      ("DecomposeInSimplex", GMSH_RegisterDecomposeInSimplexPlugin()));
+		      ("MakeSimplex", GMSH_RegisterMakeSimplexPlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Smooth", GMSH_RegisterSmoothPlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >

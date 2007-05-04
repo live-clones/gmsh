@@ -251,6 +251,8 @@ double opt_general_option_position0(OPT_ARGS_NUM);
 double opt_general_option_position1(OPT_ARGS_NUM);
 double opt_general_plugin_position0(OPT_ARGS_NUM);
 double opt_general_plugin_position1(OPT_ARGS_NUM);
+double opt_general_plugin_size0(OPT_ARGS_NUM);
+double opt_general_plugin_size1(OPT_ARGS_NUM);
 double opt_general_statistics_position0(OPT_ARGS_NUM);
 double opt_general_statistics_position1(OPT_ARGS_NUM);
 double opt_general_visibility_position0(OPT_ARGS_NUM);

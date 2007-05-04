@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.607 2007-05-04 10:45:08 geuzaine Exp $
+// $Id: GUI.cpp,v 1.608 2007-05-04 14:27:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -62,6 +62,7 @@ Fl_Menu_Item m_menubar_table[] = {
     {0},
   {"&Tools", 0, 0, 0, FL_SUBMENU},
     {"&Options...",      FL_CTRL+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
+    {"Pl&ugins...",      FL_CTRL+FL_SHIFT+'u', (Fl_Callback *)view_plugin_cb, (void*)(-1)},
     {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"&Clipping Planes", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"&Manipulator",     FL_CTRL+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
@@ -102,6 +103,7 @@ Fl_Menu_Item m_sys_menubar_table[] = {
     {0},
   {"Tools", 0, 0, 0, FL_SUBMENU},
     {"Options...",      FL_META+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
+    {"Plugins...",      FL_META+FL_SHIFT+'u', (Fl_Callback *)view_plugin_cb, (void*)(-1)},
     {"Visibility",      FL_META+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"Clipping Planes", FL_META+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"Manipulator",     FL_META+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
@@ -747,6 +749,19 @@ int GUI::global_shortcuts(int event)
     redraw_opengl();
     return 1;
   }
+  else if(Fl::test_shortcut(FL_ALT + 'r')) {
+    for(i = 0; i < List_Nbr(CTX.post.list); i++) {
+      if(opt_view_visible(i, GMSH_GET, 0)) {
+        j = (int)opt_view_range_type(i, GMSH_GET, 0);
+        opt_view_range_type(i, GMSH_SET | GMSH_GUI,
+			    (j == DRAW_POST_RANGE_DEFAULT) ? DRAW_POST_RANGE_PER_STEP :
+			    (j == DRAW_POST_RANGE_PER_STEP) ? DRAW_POST_RANGE_CUSTOM :
+			    DRAW_POST_RANGE_DEFAULT);
+      }
+    }
+    redraw_opengl();
+    return 1;
+  }
   else if(Fl::test_shortcut(FL_ALT + 'n')) {
     for(i = 0; i < List_Nbr(CTX.post.list); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
@@ -1385,7 +1400,6 @@ void GUI::create_graphic_window()
   }
 
   // dummy resizable box
-
   Dummy_Box *resize_box = new Dummy_Box(x, 0, width - x, glheight);
   g_window->resizable(resize_box);
 
@@ -3491,6 +3505,7 @@ void GUI::create_plugin_dialog_box(GMSH_Plugin *p, int x, int y, int width, int 
 
       s->end();
       g->end();
+      o->resizable(g); // to avoid ugly resizing of tab labels
     }
     {
       Fl_Group *g = new Fl_Group(x, y + BH, width, height - BH, "About");
@@ -3532,26 +3547,38 @@ void GUI::reset_plugin_view_browser()
 
   char str[128];
   plugin_view_browser->clear();
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
-    sprintf(str, "View [%d]", i);
-    plugin_view_browser->add(str);
-  }
 
-  for(int i = 0; i < plugin_view_browser->size(); i++){
-    if(i < state.size() && state[i])
-      plugin_view_browser->select(i + 1);
+  if(List_Nbr(CTX.post.list)){
+    plugin_view_browser->activate();
+    for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+      sprintf(str, "View [%d]", i);
+      plugin_view_browser->add(str);
+    }
+    for(int i = 0; i < plugin_view_browser->size(); i++){
+      if(i < state.size() && state[i])
+	plugin_view_browser->select(i + 1);
+    }
+  }
+  else{
+    plugin_view_browser->add("No Views");
+    plugin_view_browser->deactivate();
   }
 }
 
 void GUI::create_plugin_window(int numview)
 {
-  int width = 40 * fontsize;
-  int height = 13 * BH + 5 * WB;
+  int width0 = 40 * fontsize;
+  int height0 = 13 * BH + 5 * WB;
+
+  int width = (CTX.plugin_size[0] < width0) ? width0 : CTX.plugin_size[0];
+  int height = (CTX.plugin_size[1] < height0) ? height0 : CTX.plugin_size[1];
 
   if(plugin_window) {
+    reset_plugin_view_browser();
     if(numview >= 0 && numview < List_Nbr(CTX.post.list)){
       plugin_view_browser->deselect();
       plugin_view_browser->select(numview + 1);
+      view_plugin_browser_cb(NULL, NULL);
     }
     plugin_window->show();
     return;
@@ -3569,7 +3596,7 @@ void GUI::create_plugin_window(int numview)
     o->callback(view_plugin_run_cb);
   }
 
-  int L1 = 8 * fontsize, L2 = 7 * fontsize;
+  int L1 = width / 4, L2 = 2 * L1 / 3;
   plugin_browser = new Fl_Hold_Browser(WB, WB, L1, height - 3 * WB - BH);
   plugin_browser->callback(view_plugin_browser_cb);
 
@@ -3592,6 +3619,10 @@ void GUI::create_plugin_window(int numview)
       }
     }
   }
+
+  Dummy_Box *resize_box = new Dummy_Box(WB + L1 / 2, WB, width - L1 / 2- 2 * BB - 3 * WB, height - 3 * WB - BH);
+  plugin_window->resizable(resize_box);
+  plugin_window->size_range(width0, height0);
 
   plugin_window->position(CTX.plugin_position[0], CTX.plugin_position[1]);
   plugin_window->end();

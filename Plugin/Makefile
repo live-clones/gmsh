@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.121 2007-04-21 19:40:01 geuzaine Exp $
+# $Id: Makefile,v 1.122 2007-05-04 14:27:41 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -39,7 +39,7 @@ SRC = Plugin.cpp\
         Warp.cpp\
         Skin.cpp\
         Extract.cpp ExtractElements.cpp ExtractEdges.cpp\
-        DecomposeInSimplex.cpp\
+        MakeSimplex.cpp\
         Evaluate.cpp\
         Integrate.cpp Gradient.cpp Curl.cpp Divergence.cpp\
         Annotate.cpp Remove.cpp\
@@ -77,17 +77,17 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   CutSphere.h Skin.h ../DataStr/Tree.h ../DataStr/avl.h Extract.h \
   ExtractElements.h ExtractEdges.h HarmonicToTime.h ModulusPhase.h \
   Integrate.h Gradient.h Curl.h Divergence.h Annotate.h Remove.h \
-  DecomposeInSimplex.h Smooth.h Transform.h Triangulate.h Warp.h \
-  Eigenvectors.h Eigenvalues.h Lambda2.h Evaluate.h \
-  ../Common/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h \
-  Probe.h ../Common/Context.h
+  MakeSimplex.h Smooth.h Transform.h Triangulate.h Warp.h Eigenvectors.h \
+  Eigenvalues.h Lambda2.h Evaluate.h ../Common/OctreePost.h \
+  ../Common/Octree.h ../Common/OctreeInternals.h Probe.h \
+  ../Common/Context.h
 Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothData.h \
   ../Numeric/Numeric.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
-  DecomposeInSimplex.h ../DataStr/Tools.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../Graphics/Iso.h \
-  ../Common/Context.h ../DataStr/Malloc.h
+  MakeSimplex.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../Graphics/Iso.h ../Common/Context.h \
+  ../DataStr/Malloc.h
 CutPlane.o: CutPlane.cpp CutPlane.h Levelset.h Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Common/Views.h \
   ../Common/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
@@ -208,12 +208,12 @@ ExtractEdges.o: ExtractEdges.cpp Plugin.h ../Common/Options.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/ExtrudeParams.h \
   ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/ExtrudeParams.h
-DecomposeInSimplex.o: DecomposeInSimplex.cpp Plugin.h ../Common/Options.h \
+MakeSimplex.o: MakeSimplex.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothData.h \
   ../Numeric/Numeric.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
-  DecomposeInSimplex.h ../DataStr/Tree.h ../DataStr/avl.h \
-  ../Common/Context.h ../DataStr/Malloc.h
+  MakeSimplex.h ../DataStr/Tree.h ../DataStr/avl.h ../Common/Context.h \
+  ../DataStr/Malloc.h
 Evaluate.o: Evaluate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothData.h ../Numeric/Numeric.h \
