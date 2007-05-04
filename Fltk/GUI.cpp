@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.610 2007-05-04 16:22:37 geuzaine Exp $
+// $Id: GUI.cpp,v 1.611 2007-05-04 18:19:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1223,17 +1223,17 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 		  (Fl_Callback *) view_alias_cb, (void *)nb, 0);
 	p[j]->add("Alias/View with Options", 0, 
 		  (Fl_Callback *) view_alias_with_options_cb, (void *)nb, 0);
-	p[j]->add("Combine/Elements/From Visible Views", 0, 
+	p[j]->add("Combine/Elements from Visible Views", 0, 
 		  (Fl_Callback *) view_combine_space_visible_cb, (void *)nb, 0);
-	p[j]->add("Combine/Elements/From All Views", 0, 
+	p[j]->add("Combine/Elements from All Views", 0, 
 		  (Fl_Callback *) view_combine_space_all_cb, (void *)nb, 0);
-	p[j]->add("Combine/Elements/By View Name", 0, 
+	p[j]->add("Combine/Elements by View Name", 0, 
 		  (Fl_Callback *) view_combine_space_by_name_cb, (void *)nb, 0);
-	p[j]->add("Combine/Time Steps/From Visible Views", 0, 
+	p[j]->add("Combine/Time Steps from Visible Views", 0, 
 		  (Fl_Callback *) view_combine_time_visible_cb, (void *)nb, 0);
-	p[j]->add("Combine/Time Steps/From All Views", 0, 
+	p[j]->add("Combine/Time Steps from All Views", 0, 
 		  (Fl_Callback *) view_combine_time_all_cb, (void *)nb, 0);
-	p[j]->add("Combine/Time Steps/By View Name", 0, 
+	p[j]->add("Combine/Time Steps by View Name", 0, 
 		 (Fl_Callback *) view_combine_time_by_name_cb, (void *)nb, 0);
 	p[j]->add("Set Visibility/All On", 0, 
 		  (Fl_Callback *) view_all_visible_cb, (void *)1, 0);
@@ -1249,9 +1249,9 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 		  (Fl_Callback *) view_save_binary_cb, (void *)nb, 0);
 	p[j]->add("Save As/STL Triangulation...", 0, 
 		  (Fl_Callback *) view_save_stl_cb, (void *)nb, 0);
-	p[j]->add("Save As/Text...", 0, 
+	p[j]->add("Save As/Raw Text...", 0, 
 		  (Fl_Callback *) view_save_txt_cb, (void *)nb, 0);
-	p[j]->add("Save As/Mesh...", 0, 
+	p[j]->add("Save As/Gmsh Mesh...", 0, 
 		  (Fl_Callback *) view_save_msh_cb, (void *)nb, 0);
 	p[j]->add("Apply As Background Mesh", 0, 
 		  (Fl_Callback *) view_applybgmesh_cb, (void *)nb, FL_MENU_DIVIDER);
