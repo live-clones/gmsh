@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.25 2007-05-05 10:24:53 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.26 2007-05-05 11:36:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -105,7 +105,7 @@ static void sphericalRaiseList(Post_View * v, List_T * list, int nbElm,
   if(!nbElm)
     return;
 
-  if(timeStep > v->NbTimeStep - 1){
+  if(timeStep < 0 || timeStep > v->NbTimeStep - 1){
     Msg(GERROR, "Invalid TimeStep (%d) in View[%d]", timeStep, v->Index);
     return;
   }
@@ -117,7 +117,7 @@ static void sphericalRaiseList(Post_View * v, List_T * list, int nbElm,
   //      compute d=(x-Xc,y-Yc,z-Zc)
   //      norm d
   //      get nodal value val at xyz
-  //      compute (x,y,z)_new = (x,y,z)_old + raise*val*(dx,dy,dz)
+  //      compute (x,y,z)_new = (x,y,z)_old + (offset+raise*val)*(dx,dy,dz)
 
   nb = List_Nbr(list) / nbElm;
   for(i = 0; i < List_Nbr(list); i += nb) {
@@ -130,10 +130,7 @@ static void sphericalRaiseList(Post_View * v, List_T * list, int nbElm,
       d[1] = y[j] - center[1];
       d[2] = z[j] - center[2];
       norme(d);
-      if(timeStep < 0)
-	coef = raise + offset;
-      else
-	coef = raise * val[nbNod * timeStep + j] + offset;
+      coef = offset + raise * val[nbNod * timeStep + j];
       x[j] += coef * d[0];
       y[j] += coef * d[1];
       z[j] += coef * d[2];
