@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.146 2007-05-03 08:50:02 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.147 2007-05-05 12:35:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
