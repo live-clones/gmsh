@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.75 2007-05-05 01:04:40 anand Exp $
+// $Id: meshGFace.cpp,v 1.76 2007-05-05 08:11:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -44,22 +44,13 @@ void computeEdgeLoops(const GFace *gf,
 		      std::vector<int> &indices)
 {
   std::list<GEdge*> edges = gf->edges();
-  Msg(INFO,"Number of Edges = %d",edges.size());
   std::list<int> ori = gf->orientations();
-  Msg(INFO,"Number of Orientations = %d",ori.size());
   std::list<GEdge*>::iterator it = edges.begin();
   std::list<int>::iterator ito = ori.begin();
     
   indices.push_back(0);
   GVertex *start = ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
   GVertex *v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
-
-  Msg(INFO,"(%g,%g,%g) --- (%g,%g,%g)",start->x(),start->y(),start->z(),
-      v_end->x(),v_end->y(),v_end->z());  
-  Msg(INFO,"Mesh Size = (%d,%d)",start->mesh_vertices.size(),
-      v_end->mesh_vertices.size());
-  Msg(INFO,"Edge Mesh Size = %d",(*it)->mesh_vertices.size());
-
   all_mvertices.push_back(start->mesh_vertices[0]);
   if (*ito == 1)
     for (unsigned int i=0;i<(*it)->mesh_vertices.size();i++)
@@ -72,7 +63,6 @@ void computeEdgeLoops(const GFace *gf,
   while(1){		
     ++it;
     ++ito;
-
     if(v_end == start){
       indices.push_back(all_mvertices.size());
       if(it == edges.end ()) break;
@@ -80,11 +70,9 @@ void computeEdgeLoops(const GFace *gf,
       v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
       v_start = start;
     }
-    else{
+    else{	
       if(it == edges.end ()) throw;
       v_start = ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
-      Msg(INFO,"(%g,%g,%g) --- (%g,%g,%g)",v_start->x(),v_start->y(),
-	  v_start->z(),v_end->x(),v_end->y(),v_end->z());  
       if(v_start != v_end) throw;
       v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
     }
@@ -659,8 +647,6 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
 
   v_container::iterator itv = all_vertices.begin();
 
-  Msg(INFO,"all_vertices size = %d",all_vertices.size());
-
   //  FILE *fdeb = fopen("debug.dat","w");
   //  fprintf(fdeb,"surface %d\n" ,gf->tag());
   int count = 0;
@@ -670,18 +656,15 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
     SPoint2 param;
     if(here->onWhat()->dim() == 0){
       GVertex *gv = (GVertex*)here->onWhat();
-      Msg(INFO,"gvEdgeSize = %d",gv->edges().size());
       if (gv->edges().size() == 1)
 	{
 	  GEdge *ge = *(gv->edges().begin());
 	  Range<double> bb = ge->parBounds(0);
 	  param = ge->reparamOnFace(gf, bb.low(), 1);	  
 	}
-      else {
-	Msg(INFO,"Before dyng here");
+      else
 	param = gv->reparamOnFace(gf,1);
-	Msg(INFO,"param = (%g,%g)",param.x(),param.y());
-      }
+      
     }
     else if(here->onWhat()->dim() == 1){
       GEdge *ge = (GEdge*)here->onWhat();
@@ -742,9 +725,8 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
     }
 
 
-  /// Increase the size of the bounding box
-  bbox *= 2.5;
-
+  /// Increase the size of the bounding box by 20 %
+  bbox *= 1.5;
   /// add 4 points than encloses the domain
   /// Use negative number to distinguish thos fake vertices
   MVertex *bb[4];
@@ -774,14 +756,10 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   m->scalingU = 1;
   m->scalingV = 1;
 
-  Msg(INFO,"doc = %d",doc.numPoints);
-
   for(int i = 0; i < doc.numPoints; i++) 
     {
       MVertex *here = (MVertex *)doc.points[i].data;
       int num = here->getNum();
-
-      Msg(INFO,"num = %d",num);
 
       double U, V;
       // This test was missing in 2.0.0 and led to the seemingly
@@ -798,7 +776,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
       }
 
       BDS_Point *pp = m->add_point ( num, U,V, gf);
-      //printf("here->onWhat = %p dim = %d\n",here->onWhat(),here->onWhat()->dim());
+      //      printf("here->onWhat = %p dim = %d\n",here->onWhat(),here->onWhat()->dim());
 
        if (here->onWhat()->dim() == 1)
  	{
@@ -832,8 +810,6 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   // and compute characteristic lenghts using mesh edge spacing
 
   BDS_GeomEntity CLASS_F (1,2);
-
-  Msg(INFO,"came out 0");
    
   it = edges.begin();
   while(it != edges.end())
@@ -874,7 +850,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
 	++ite;
       }
   }
-  Msg(INFO,"came out 1");
+
 
   it = emb_edges.begin();
   while(it != emb_edges.end())
@@ -920,8 +896,6 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   m->del_point(m->find_point(-3));
   m->del_point(m->find_point(-4));
 
-  Msg(INFO,"came out 2");
-
   // start mesh generation
   //  if (CTX.mesh.algo2d == ALGO_2D_MESHADAPT)
     {
@@ -941,8 +915,6 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
 //     outputScalarField(m->triangles, name,0);
   // fill the small gmsh structures
 
-  Msg(INFO,"came out 2.5");
-
   {
     std::set<BDS_Point*,PointLessThan>::iterator itp =  m->points.begin(); 
     while (itp != m->points.end())
@@ -957,8 +929,6 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
 	++itp;
       }
   }
-
-  Msg(INFO,"came out 3");
 
   {
     std::list<BDS_Face*>::iterator itt = m->triangles.begin();
@@ -1006,8 +976,6 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
 
   delete [] U_;
   delete [] V_;
-
-  Msg(INFO,"came out");
 
   return true;
 
@@ -1556,8 +1524,7 @@ void deMeshGFace::operator() (GFace *gf)
 }
 
 void meshGFace::operator() (GFace *gf) 
-{
-  Msg(INFO,"Meshing surface %d (%s)",gf->tag(), gf->getTypeString().c_str());
+{  
   if(gf->geomType() == GEntity::DiscreteSurface) return;
   if(gf->geomType() == GEntity::BoundaryLayerSurface) return;
   if(gf->geomType() == GEntity::ProjectionSurface) return;
@@ -1580,8 +1547,6 @@ void meshGFace::operator() (GFace *gf)
 
   // temp fix until we create MEdgeLoops in gmshFace
   Msg(DEBUG1, "Generating the mesh");
-
-  Msg(INFO,"ISEMPT : %d %d",gf->edgeLoops.empty(),gf->getNativeType() == GEntity::GmshModel);
   if(gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
     gmsh2DMeshGenerator(gf,false);
   }

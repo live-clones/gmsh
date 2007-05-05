@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.33 2007-05-05 01:04:40 anand Exp $
+// $Id: GFace.cpp,v 1.34 2007-05-05 08:12:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -508,8 +508,6 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p) const
 {
   double U,V;
 
-  Msg(INFO,"Instead, I died here");
-  
   XYZtoUV(p.x(),p.y(),p.z(),U,V,1.0);
 
   return SPoint2(U,V);
