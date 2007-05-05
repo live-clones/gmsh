@@ -404,6 +404,12 @@ node_derivative(Node * node, char *name, SymbolTable * symbol_table)
     else if (!strcmp(node->data.function.record->name, "Log"))
       return node_create('b', '/', node_derivative(node->data.function.child, name, symbol_table), node_copy(node->data.function.child));
     /*
+     * Apply rule of base 10 logarithmic function derivative.
+     */
+    else if (!strcmp(node->data.function.record->name, "Log10"))
+      return node_create('b', '/', node_derivative(node->data.function.child, name, symbol_table), 
+			 node_create('b', '*', node_create('c', log(10.)), node_copy(node->data.function.child)));
+    /*
      * Apply rule of square root function derivative.
      */
     else if (!strcmp(node->data.function.record->name, "Sqrt"))
