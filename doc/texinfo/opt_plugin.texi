@@ -611,6 +611,41 @@ Numeric options:
 Default value: @code{-1}
 @end table
 
+@item Plugin(SphericalRaise)
+Plugin(SphericalRaise) transforms the
+coordinates of the elements in the view
+`iView' using the values associated with the
+`TimeStep'-th time step. Instead of elevating
+the nodes along the X, Y and Z axes as in
+View[`iView'].RaiseX, View[`iView'].RaiseY
+and View[`iView'].RaiseZ, the raise is applied
+ along the radius of a sphere centered at
+(`Xc', `Yc', `Zc'). To produce a standard
+radiation pattern, set `Offset' to minus the
+radius of the sphere the original data lives on.
+If `iView' < 0, the plugin is run on the current
+view.
+
+Plugin(SphericalRaise) is executed in-place.
+
+Numeric options:
+@table @code
+@item Xc
+Default value: @code{0}
+@item Yc
+Default value: @code{0}
+@item Zc
+Default value: @code{0}
+@item Raise
+Default value: @code{1}
+@item Offset
+Default value: @code{0}
+@item TimeStep
+Default value: @code{0}
+@item iView
+Default value: @code{-1}
+@end table
+
 @item Plugin(StreamLines)
 Plugin(StreamLines) computes stream lines
 from a vector view `iView' and optionally
