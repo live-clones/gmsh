@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.144 2007-05-03 08:50:01 geuzaine Exp $
+# $Id: Makefile,v 1.145 2007-05-05 10:24:53 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -161,10 +161,10 @@ OCCRegion.o: OCCRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   ExtrudeParams.h ../Common/SmoothData.h GFace.h GEdgeLoop.h Pair.h \
   GRegion.h OCCVertex.h OCCIncludes.h OCCEdge.h OCCFace.h OCCRegion.h \
   ../Common/Message.h
-FEdge.o: FEdge.cpp FEdge.h GEdge.h GEntity.h Range.h SPoint3.h \
-  SBoundingBox3d.h ../Common/GmshDefines.h GVertex.h MVertex.h GPoint.h \
-  SPoint2.h SVector3.h MElement.h MEdge.h ../Common/Hash.h MFace.h \
-  ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
+FEdge.o: FEdge.cpp ../Common/Message.h FEdge.h GEdge.h GEntity.h Range.h \
+  SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h GVertex.h MVertex.h \
+  GPoint.h SPoint2.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \
+  MFace.h ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
   ExtrudeParams.h ../Common/SmoothData.h GModel.h GFace.h GEdgeLoop.h \
   Pair.h GRegion.h FVertex.h
 FFace.o: FFace.cpp FVertex.h GModel.h GVertex.h GEntity.h Range.h \
@@ -172,7 +172,7 @@ FFace.o: FFace.cpp FVertex.h GModel.h GVertex.h GEntity.h Range.h \
   SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \
   MFace.h ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
   ExtrudeParams.h ../Common/SmoothData.h GFace.h GEdgeLoop.h Pair.h \
-  GRegion.h FFace.h FEdge.h
+  GRegion.h FFace.h FEdge.h ../Common/Message.h
 projectionFace.o: projectionFace.cpp projectionFace.h GFace.h GPoint.h \
   GEntity.h Range.h SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h \
   GEdgeLoop.h GEdge.h GVertex.h MVertex.h SPoint2.h SVector3.h MElement.h \

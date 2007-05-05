@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.122 2007-05-04 14:27:41 geuzaine Exp $
+# $Id: Makefile,v 1.123 2007-05-05 10:24:53 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -36,7 +36,7 @@ SRC = Plugin.cpp\
         StreamLines.cpp CutGrid.cpp\
         Transform.cpp\
         Triangulate.cpp\
-        Warp.cpp\
+        Warp.cpp SphericalRaise.cpp\
         Skin.cpp\
         Extract.cpp ExtractElements.cpp ExtractEdges.cpp\
         MakeSimplex.cpp\
@@ -77,10 +77,10 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   CutSphere.h Skin.h ../DataStr/Tree.h ../DataStr/avl.h Extract.h \
   ExtractElements.h ExtractEdges.h HarmonicToTime.h ModulusPhase.h \
   Integrate.h Gradient.h Curl.h Divergence.h Annotate.h Remove.h \
-  MakeSimplex.h Smooth.h Transform.h Triangulate.h Warp.h Eigenvectors.h \
-  Eigenvalues.h Lambda2.h Evaluate.h ../Common/OctreePost.h \
-  ../Common/Octree.h ../Common/OctreeInternals.h Probe.h \
-  ../Common/Context.h
+  MakeSimplex.h Smooth.h Transform.h Triangulate.h Warp.h \
+  SphericalRaise.h Eigenvectors.h Eigenvalues.h Lambda2.h Evaluate.h \
+  ../Common/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h \
+  Probe.h ../Common/Context.h
 Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothData.h \
@@ -176,6 +176,11 @@ Warp.o: Warp.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/VertexArray.h ../Common/SmoothData.h ../Numeric/Numeric.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h Warp.h \
   ../Common/Context.h
+SphericalRaise.o: SphericalRaise.cpp Plugin.h ../Common/Options.h \
+  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
+  ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothData.h \
+  ../Numeric/Numeric.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
+  SphericalRaise.h ../Common/Context.h
 Skin.o: Skin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/Views.h ../Common/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Common/SmoothData.h ../Numeric/Numeric.h \

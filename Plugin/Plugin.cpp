@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.87 2007-05-04 14:27:41 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.88 2007-05-05 10:24:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -55,6 +55,7 @@
 #include "Transform.h"
 #include "Triangulate.h"
 #include "Warp.h"
+#include "SphericalRaise.h"
 #include "Eigenvectors.h"
 #include "Eigenvalues.h"
 #include "Lambda2.h"
@@ -197,6 +198,8 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		      ("Transform", GMSH_RegisterTransformPlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Warp", GMSH_RegisterWarpPlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("SphericalRaise", GMSH_RegisterSphericalRaisePlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("HarmonicToTime", GMSH_RegisterHarmonicToTimePlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
