@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.612 2007-05-04 18:27:53 geuzaine Exp $
+// $Id: GUI.cpp,v 1.613 2007-05-05 11:19:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1209,7 +1209,7 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
       p[1]->type(Fl_Menu_Button::POPUP3);
   
       for(int j = 0; j < 2; j++) {
-	p[j]->add("Reload/View", 0, 
+	p[j]->add("Reload/View", 'r', 
 		  (Fl_Callback *) view_reload_cb, (void *)nb, 0);
 	p[j]->add("Reload/Visible Views", 0, 
 		  (Fl_Callback *) view_reload_visible_cb, (void *)nb, 0);
