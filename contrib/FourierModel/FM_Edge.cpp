@@ -40,7 +40,7 @@ bool FM_Edge::Inverse(double x,double y,double z,double &t)
     else if (_EP->GetZ() - _SP->GetZ())
       t = (z - _SP->GetZ()) / (_EP->GetZ() - _SP->GetZ());
     else {
-      Msg::Warning("Cannnot inver the curve");
+      Msg::Warning("Cannnot invert the curve");
       t = 0.;
     }
   }

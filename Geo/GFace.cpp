@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.32 2007-02-02 23:50:33 geuzaine Exp $
+// $Id: GFace.cpp,v 1.33 2007-05-05 01:04:40 anand Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -507,6 +507,8 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
 SPoint2 GFace::parFromPoint(const SPoint3 &p) const
 {
   double U,V;
+
+  Msg(INFO,"Instead, I died here");
   
   XYZtoUV(p.x(),p.y(),p.z(),U,V,1.0);
 

@@ -19,7 +19,7 @@ void FM_Face::F(double u, double v, double &x, double &y, double &z) {
     double xU, yU, zU, uU, vU;
     _edge[0]->F(v,xD,yD,zD);
     _patch->Inverse(xD,yD,zD,uD,vD);
-    _edge[2]->F(v,xU,yU,zU);
+    _edge[2]->F(1.-v,xU,yU,zU);
     _patch->Inverse(xU,yU,zU,uU,vU);
    
     double U = uD + u * (uU - uD);
@@ -82,7 +82,7 @@ bool FM_Face::Inverse(double x,double y,double z,double &u, double &v)
     v = (V-v0)/(v1-v0);
     _edge[0]->F(v,xD,yD,zD);
     _patch->Inverse(xD,yD,zD,uD,vD);
-    _edge[2]->F(v,xU,yU,zU);
+    _edge[2]->F(1.-v,xU,yU,zU);
     _patch->Inverse(xU,yU,zU,uU,vU);
     
     u = (U - uD) / (uU - uD);

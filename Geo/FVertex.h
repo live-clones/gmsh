@@ -35,7 +35,7 @@ class FVertex : public GVertex {
     return v->GetZ();
   }
   ModelType getNativeType() const { return FourierModel; }
-  virtual SPoint2 reparamOnFace ( GFace *gf , int) const { throw; }
+  //virtual SPoint2 reparamOnFace ( GFace *gf , int) const { throw; }
 };
 
 #endif

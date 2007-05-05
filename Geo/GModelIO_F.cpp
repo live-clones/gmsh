@@ -12,20 +12,6 @@
 
 extern Context_T CTX;
 
-class meshGmsh{
-public:
-  void operator() (GFace *gf)
-  {
-    FFace *ff = dynamic_cast<FFace*>(gf);
-    if(!ff) {
-      Msg(GERROR, "face %d is not Fourier", gf->tag());
-      return;
-    }
-    meshGFace mesh;
-    mesh(ff);
-  }
-};
-
 int GModel::readF(const std::string &fn)
 {
   CTX.terminal = 1; 
