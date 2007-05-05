@@ -20,6 +20,8 @@ Save all elements (discard physical group definitions)
 Specify mesh output file name
 @item -format string
 Set output mesh format (msh, unv, vrml, stl, mesh, bdf, p3d, cgns, med)
+@item -bin
+Use binary format when available
 @item -algo string
 Select mesh algorithm (iso, netgen, tetgen)
 @item -smooth int

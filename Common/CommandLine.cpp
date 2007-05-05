@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.99 2007-04-26 09:47:37 remacle Exp $
+// $Id: CommandLine.cpp,v 1.100 2007-05-05 02:08:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -83,6 +83,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -o file               Specify mesh output file name");
   Msg(DIRECT, "  -format string        Set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh,");
   Msg(DIRECT, "                          bdf, p3d, cgns, med)");
+  Msg(DIRECT, "  -bin                  Use binary format when available");  
   Msg(DIRECT, "  -algo string          Select mesh algorithm (iso, netgen, tetgen)");
   Msg(DIRECT, "  -smooth int           Set number of mesh smoothing steps");
   Msg(DIRECT, "  -optimize             Optimize quality of tetrahedral elements");
@@ -424,6 +425,10 @@ void Get_Options(int argc, char *argv[])
           fprintf(stderr, ERROR_STR "Missing format\n");
           exit(1);
         }
+      }
+      else if(!strcmp(argv[i] + 1, "bin")) {
+        i++;
+	CTX.mesh.stl_binary = CTX.mesh.msh_binary = 1;
       }
       else if(!strcmp(argv[i] + 1, "algo")) {
         i++;
