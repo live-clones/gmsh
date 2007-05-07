@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.26 2007-05-04 08:56:17 remacle Exp $
+// $Id: GEdge.cpp,v 1.27 2007-05-07 11:40:02 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -158,7 +158,6 @@ double GEdge::curvature(double par) const
   return norm(d);
 }
 
-bool GEdge::is_mesh_degenereted() const
-{
+bool GEdge::is_mesh_degenerated() const {
   return (v0==v1 && mesh_vertices.size()<2);
 }

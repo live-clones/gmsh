@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.77 2007-05-05 08:15:55 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.78 2007-05-07 11:40:02 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -626,10 +626,11 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   while(it != edges.end())
     {
       if ((*it)->isSeam(gf))return false;
-
-      all_vertices.insert ( (*it)->mesh_vertices.begin() , (*it)->mesh_vertices.end() );
-      all_vertices.insert ( (*it)->getBeginVertex()->mesh_vertices.begin() , (*it)->getBeginVertex()->mesh_vertices.end() );
-      all_vertices.insert ( (*it)->getEndVertex()->mesh_vertices.begin() , (*it)->getEndVertex()->mesh_vertices.end() );
+      if(!(*it)->is_mesh_degenerated()){
+        all_vertices.insert ( (*it)->mesh_vertices.begin() , (*it)->mesh_vertices.end() );
+        all_vertices.insert ( (*it)->getBeginVertex()->mesh_vertices.begin() , (*it)->getBeginVertex()->mesh_vertices.end() );
+        all_vertices.insert ( (*it)->getEndVertex()->mesh_vertices.begin() , (*it)->getEndVertex()->mesh_vertices.end() );
+      }
       ++it;
     }
 
@@ -814,11 +815,13 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   it = edges.begin();
   while(it != edges.end())
     {
+    if(!(*it)->is_mesh_degenerated()){
       if (!recover_medge ( m, *it))
 	{
 	  Msg(GERROR,"Face not meshed");
 	  return false;
 	}
+    }
       ++it;
     }
   //  Msg(INFO,"Boundary Edges recovered for surface %d",gf->tag());
