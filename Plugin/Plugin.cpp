@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.88 2007-05-05 10:24:53 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.89 2007-05-07 07:50:33 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -61,6 +61,7 @@
 #include "Lambda2.h"
 #include "Evaluate.h"
 #include "Probe.h"
+#include "FieldView.h"
 #include "Context.h"
 
 extern Context_T CTX;
@@ -224,6 +225,8 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		      ("Lambda2", GMSH_RegisterLambda2Plugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Probe", GMSH_RegisterProbePlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("FieldView", GMSH_RegisterFieldViewPlugin()));
 #if defined(HAVE_TRIANGLE)
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Triangulate", GMSH_RegisterTriangulatePlugin()));
