@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.123 2007-05-05 10:24:53 geuzaine Exp $
+# $Id: Makefile,v 1.124 2007-05-07 08:36:36 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -40,7 +40,7 @@ SRC = Plugin.cpp\
         Skin.cpp\
         Extract.cpp ExtractElements.cpp ExtractEdges.cpp\
         MakeSimplex.cpp\
-        Evaluate.cpp\
+        Evaluate.cpp FieldView.cpp\
         Integrate.cpp Gradient.cpp Curl.cpp Divergence.cpp\
         Annotate.cpp Remove.cpp\
         Probe.cpp\
@@ -80,7 +80,7 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   MakeSimplex.h Smooth.h Transform.h Triangulate.h Warp.h \
   SphericalRaise.h Eigenvectors.h Eigenvalues.h Lambda2.h Evaluate.h \
   ../Common/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h \
-  Probe.h ../Common/Context.h
+  Probe.h FieldView.h ../Common/Context.h
 Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothData.h \
@@ -225,6 +225,24 @@ Evaluate.o: Evaluate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h Evaluate.h \
   ../Common/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h \
   ../Common/Context.h
+FieldView.o: FieldView.cpp Plugin.h ../Common/Options.h \
+  ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
+  ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothData.h \
+  ../Numeric/Numeric.h ../Common/AdaptiveViews.h ../Common/GmshMatrix.h \
+  ../Mesh/Field.h ../Geo/Geo.h ../Common/GmshDefines.h \
+  ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/GVertex.h ../Geo/GEntity.h \
+  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h \
+  ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/Context.h ../Geo/ExtrudeParams.h ../Common/OctreePost.h \
+  ../Common/Octree.h ../Common/OctreeInternals.h FieldView.h \
+  ../Common/ShapeFunctions.h
 Integrate.o: Integrate.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothData.h \

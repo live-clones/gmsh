@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.613 2007-05-05 11:19:51 geuzaine Exp $
+// $Id: GUI.cpp,v 1.614 2007-05-07 08:36:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2073,7 +2073,7 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "General");
       o->hide();
 
-      geo_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Geometrical tolerance");
+      geo_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Geometry tolerance");
       geo_value[2]->align(FL_ALIGN_RIGHT);
       geo_value[2]->callback(geometry_options_ok_cb);
 
