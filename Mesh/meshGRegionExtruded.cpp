@@ -1,4 +1,4 @@
-// $Id: meshGRegionExtruded.cpp,v 1.15 2007-05-02 08:40:52 geuzaine Exp $
+// $Id: meshGRegionExtruded.cpp,v 1.16 2007-05-08 07:21:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -387,7 +387,7 @@ void phase1(GRegion *gr,
       for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
 	std::vector<MVertex*> v;
         if(getExtrudedVertices(from->triangles[i], ep, j, k, pos, v) == 6){
-#if 0 // this is the old version
+#if 1 // this is the old version
           if(!edgeExists(v[0], v[4], edges))
             createEdge(v[1], v[3], edges);
           if(!edgeExists(v[4], v[2], edges))
