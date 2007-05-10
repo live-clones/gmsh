@@ -11,11 +11,15 @@
 
 class FM_Reader {
  private:
+  int _nVertices;
+  int _nEdges;
   int _nFaces;
   int _nPatches;
   int _nIntersections;
   std::vector<PatchInfo*> _patchList;
   std::vector<IntersectionInfo*> _intersectionList;
+  std::vector<FM_Vertex*> _vertex;
+  std::vector<FM_Edge*> _edge;
   std::vector<FM_Face*> _face;
   std::vector<Patch*> _patch;
   std::vector<Curve*> _intersection;
@@ -23,12 +27,16 @@ class FM_Reader {
   FM_Reader(const char* fn);
   virtual ~FM_Reader() {}
 
+  inline int GetNumVertices() { return _nVertices; }
+  inline int GetNumEdges() { return _nEdges; }
   inline int GetNumFaces() { return _nFaces; }
   inline int GetNumPatches() { return _nPatches; }
   inline int GetNumIntersections() { return _nIntersections; }
   inline std::vector<PatchInfo*> GetPatchList() { return _patchList; }
   inline std::vector<IntersectionInfo*> GetIntersectionList()
     { return _intersectionList; }
+  inline FM_Vertex* GetVertex(int i) { return _vertex[i]; }
+  inline FM_Edge* GetEdge(int i) { return _edge[i]; }
   inline FM_Face* GetFace(int i) { return _face[i]; }
 
   Patch* GetPatch(int tag);

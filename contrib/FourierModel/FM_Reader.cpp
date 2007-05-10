@@ -68,27 +68,34 @@ FM_Reader::FM_Reader(const char* fn)
     _intersection[II->tag] = new Curve(II,_patch);
   }
 
+  InputFile >> _nVertices;
+  for (int i=0;i<_nVertices;i++) {
+    double x,y,z;
+    InputFile >> x >> y >> z;
+    _vertex.push_back(new FM_Vertex(i,x,y,z));
+  }
+
+  InputFile >> _nEdges;
+  for (int i=0;i<_nEdges;i++) {
+    int edgeTag, svTag, evTag;
+    InputFile >> edgeTag >> svTag >> evTag;
+    if (edgeTag < 0)
+      _edge.push_back(new FM_Edge(i,0,_vertex[svTag],_vertex[evTag]));
+    else
+      _edge.push_back(new FM_Edge(i,GetIntersection(edgeTag),
+				  _vertex[svTag],_vertex[evTag]));
+  }
+
   InputFile >> _nFaces;
   for (int i=0;i<_nFaces;i++) {
     int faceTag, nEdges;
     InputFile >> faceTag;
-    _face.push_back(new FM_Face(GetPatch(faceTag)));
+    _face.push_back(new FM_Face(i,GetPatch(faceTag)));
     InputFile >> nEdges;
     for (int j=0;j<nEdges;j++) {
       int edgeTag;
-      double SPx,SPy,SPz;
-      double EPx,EPy,EPz;
       InputFile >> edgeTag;
-      InputFile >> SPx >> SPy >> SPz;
-      InputFile >> EPx >> EPy >> EPz;
-      if (edgeTag < 0)
-	_face[i]->AddEdge(new FM_Edge(0,
-				      new FM_Vertex(SPx,SPy,SPz),
-				      new FM_Vertex(EPx,EPy,EPz)));
-      else
-	_face[i]->AddEdge(new FM_Edge(GetIntersection(edgeTag),
-				      new FM_Vertex(SPx,SPy,SPz),
-				      new FM_Vertex(EPx,EPy,EPz)));
+      _face[i]->AddEdge(_edge[edgeTag]);
     }
   }
 }

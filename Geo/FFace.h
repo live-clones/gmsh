@@ -15,7 +15,7 @@ class FFace : public GFace {
   FM_Face *face;
   bool _periodic[2];
  public:
-  FFace(GModel *m, FM_Face *face_, int tag);
+  FFace(GModel *m, FM_Face *face_, int tag, std::list<GEdge*> l_edges_);
 
   virtual ~FFace() {}
 

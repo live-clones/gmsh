@@ -70,4 +70,35 @@ double FEdge::parFromPoint(const SPoint3 &pt) const
   return p;
 }
 
+SVector3 FEdge::firstDer(double par) const
+{
+  double x,y,z;
+  if (edge)
+    edge->Dfdt(par,x,y,z);
+  else {
+    x = y = z = 0.;
+  }
+  return SVector3(x,y,z);
+}
+
+int FEdge::minimumMeshSegments() const
+{
+  if(geomType() == Line || geomType() == Unknown)
+    return GEdge::minimumMeshSegments();
+  else
+    return 2; // always put at least one mid-point on non-straight lines
+}
+
+int FEdge::minimumDrawSegments() const
+{
+  int n = GEdge::minimumDrawSegments();
+
+  if(geomType() == Line)
+    return n;
+  else if(geomType() == Circle || geomType() == Ellipse)
+    return CTX.geom.circle_points;
+  else
+    return 20 * n;
+}
+
 #endif

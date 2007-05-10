@@ -5,52 +5,13 @@
 
 #if defined(HAVE_FOURIER_MODEL)
 
-FFace::FFace(GModel *m, FM_Face *face_, int tag) : GFace(m,tag), face(face_) 
+FFace::FFace(GModel *m, FM_Face *face_, int tag, std::list<GEdge*> l_edges_) 
+  : GFace(m,tag), face(face_)
 {
-  if (face->GetNumEdges()) {
-    std::list<GVertex*> corners;
-    std::list<GVertex*>::iterator itStart, itEnd;
-
-    corners.push_back(new FVertex(m,0,face->GetEdge(0)->
-				  GetStartPoint()));
-    corners.push_back(new FVertex(m,1,face->GetEdge(1)->
-				  GetStartPoint()));
-    corners.push_back(new FVertex(m,2,face->GetEdge(2)->
-				  GetStartPoint()));
-    corners.push_back(new FVertex(m,3,face->GetEdge(3)->
-				  GetStartPoint()));
-
-    itStart = itEnd = corners.begin(); itEnd++;
-    for (int i=0;i<face->GetNumEdges();i++) {
-      l_edges.push_back(new FEdge(m,face->GetEdge(i),i,*itStart,*itEnd));
-      l_dirs.push_back(1);      
-      itStart++; itEnd++;
-      if (itEnd == corners.end()) {
-	itEnd = corners.begin();
-      }
-    }
-    for (std::list<GEdge*>::iterator it = l_edges.begin();it != l_edges.end();
-	 it++) {
-      GVertex *start = (*it)->getBeginVertex();
-      GVertex *end = (*it)->getEndVertex();
-      Msg(INFO,"(%g,%g,%g) --- (%g,%g,%g)",start->x(),start->y(),start->z(),
-	  end->x(),end->y(),end->z());
-    }
-  }
-  else {
-    double x,y,z;
-    face->F(0.,0.,x,y,z);
-    GVertex* p0 = new FVertex(m,0,new FM_Vertex(x,y,z));
-    face->F(1.,0.,x,y,z);
-    GVertex* p1 = new FVertex(m,1,new FM_Vertex(x,y,z));
-    face->F(1.,1.,x,y,z);
-    GVertex* p2 = new FVertex(m,2,new FM_Vertex(x,y,z));
-    face->F(0.,1.,x,y,z);
-    GVertex* p3 = new FVertex(m,3,new FM_Vertex(x,y,z));
-    l_edges.push_back(new FEdge(m,face,0,0,p0,p1));
-    l_edges.push_back(new FEdge(m,face,1,1,p1,p2));
-    l_edges.push_back(new FEdge(m,face,2,2,p2,p3));
-    l_edges.push_back(new FEdge(m,face,3,3,p3,p0));
+  for (std::list<GEdge*>::iterator it = l_edges_.begin();
+       it != l_edges_.end(); it++) {
+    l_edges.push_back((*it));
+    l_dirs.push_back(1);   
   }
 }
 

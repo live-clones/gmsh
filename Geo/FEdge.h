@@ -5,6 +5,7 @@
 #include "GModel.h"
 #include "FVertex.h"
 #include "Range.h"
+#include "Message.h"
 
 #if defined(HAVE_FOURIER_MODEL)
 
@@ -26,19 +27,18 @@ class FEdge : public GEdge {
   double period() const { throw ; }
   virtual bool periodic(int dim=0) const { return false; }
   virtual Range<double> parBounds(int i) const;
-  virtual GeomType geomType() const { throw; }
+  virtual GeomType geomType() const { return ParametricCurve; }
   virtual bool degenerate(int) const { return false; }
   virtual bool continuous(int dim) const { return true; }
   virtual GPoint point(double p) const;
   virtual GPoint closestPoint(const SPoint3 & queryPoint) { throw; }
   virtual int containsPoint(const SPoint3 &pt) const { throw; }
   virtual int containsParam(double pt) const { throw; }
-  virtual SVector3 firstDer(double par) const { throw; }
-  virtual SPoint2 reparamOnFace(GFace *face, double epar, int dir) const 
-  { throw; }
+  virtual SVector3 firstDer(double par) const;
+  //virtual SPoint2 reparamOnFace(GFace *face, double epar, int dir) const;
   virtual double parFromPoint(const SPoint3 &pt) const;
-  virtual int minimumMeshSegments () const { throw; }
-  virtual int minimumDrawSegments () const { throw; }
+  virtual int minimumMeshSegments () const;
+  virtual int minimumDrawSegments () const;
   ModelType getNativeType() const { return FourierModel; }
 };
 

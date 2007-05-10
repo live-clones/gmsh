@@ -6,19 +6,22 @@
 
 class FM_Edge {
  private:
+  int _tag;
   Curve* _curve;
   FM_Vertex* _SP;
   FM_Vertex* _EP;
  public:
-  FM_Edge() : _curve(0), _SP(0), _EP(0) {}
-  FM_Edge(Curve* curve) : _curve(curve), _SP(0), _EP(0) {}
-  FM_Edge(Curve* curve, FM_Vertex* SP, FM_Vertex* EP) : 
-    _curve(curve), _SP(SP), _EP(EP) {}
+  FM_Edge() : _tag(-1), _curve(0), _SP(0), _EP(0) {}
+  FM_Edge(Curve* curve) : _tag(-1), _curve(curve), _SP(0), _EP(0) {}
+  FM_Edge(int tag, Curve* curve, FM_Vertex* SP, FM_Vertex* EP) : 
+    _tag(tag), _curve(curve), _SP(SP), _EP(EP) {}
   virtual ~FM_Edge() {}
 
+  inline int GetTag() { return _tag; }
   inline FM_Vertex* GetStartPoint() { return _SP; }
   inline FM_Vertex* GetEndPoint() { return _EP; }
 
+  inline void SetTag(int tag) { _tag = tag; }
   inline void SetStartPoint(FM_Vertex* SP) { _SP = SP; }
   inline void SetStartPoint(double x, double y, double z) { 
     _SP = new FM_Vertex(x,y,z); 
