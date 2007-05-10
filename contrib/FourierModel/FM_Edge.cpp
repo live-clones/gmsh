@@ -8,7 +8,13 @@ void FM_Edge::F(double t, double &x, double &y, double &z)
     _curve->Inverse(_SP->GetX(),_SP->GetY(),_SP->GetZ(),tStart);
     _curve->Inverse(_EP->GetX(),_EP->GetY(),_EP->GetZ(),tEnd);
    
-    double tRescaled = tStart + t * (tEnd - tStart);
+    double tRescaled;
+    if (std::abs(tEnd - tStart) < 1.e-12) {
+      tRescaled = tStart + t * (1. + tEnd - tStart);
+      tRescaled -= floor(tRescaled);
+    }
+    else
+      tRescaled = tStart + t * (tEnd - tStart);
     _curve->F(tRescaled, x, y, z);
     //Msg::Info("%g %g %g",_SP->GetX(),_SP->GetY(),_SP->GetZ());
     //Msg::Info("%g %g %g",_EP->GetX(),_EP->GetY(),_EP->GetZ());
@@ -30,7 +36,13 @@ bool FM_Edge::Inverse(double x,double y,double z,double &t)
     
     double tCurve;
     _curve->Inverse(x, y, z, tCurve);
-    t = (tCurve - tStart) / (tEnd - tStart);
+
+    if (std::abs(tEnd - tStart) < 1.e-12) {
+      t = (tCurve - tStart) / (1. + tEnd - tStart);
+      t -= floor(t);
+    }
+    else
+      t = (tCurve - tStart) / (tEnd - tStart);
   }
   else {
     if (_EP->GetX() - _SP->GetX())
@@ -57,7 +69,13 @@ void FM_Edge::Dfdt(double t, double &x, double &y, double &z)
     _curve->Inverse(_EP->GetX(),_EP->GetY(),_EP->GetZ(),tEnd);
     
     double h = 1.e-10;
-    double tRescaled = tStart + t * (tEnd - tStart);
+    double tRescaled;
+    if (std::abs(tEnd - tStart) < 1.e-12) {
+      tRescaled = tStart + t * (1. + tEnd - tStart);
+      tRescaled -= floor(tRescaled);
+    }
+    else
+      tRescaled = tStart + t * (tEnd - tStart);
     if (t+0.5*h > 1.) {
       _curve->F(tRescaled, xPlus, yPlus, zPlus);
       double tMinus = tStart + (t - h) * (tEnd - tStart);
@@ -96,7 +114,13 @@ void FM_Edge::Dfdfdtdt(double t, double &x, double &y, double &z)
     _curve->Inverse(_EP->GetX(),_EP->GetY(),_EP->GetZ(),tEnd);
     
     double h = 1.e-10;
-    double tRescaled = tStart + t * (tEnd - tStart);
+    double tRescaled;
+    if (std::abs(tEnd - tStart) < 1.e-12) {
+      tRescaled = tStart + t * (1. + tEnd - tStart);
+      tRescaled -= floor(tRescaled);
+    }
+    else
+      tRescaled = tStart + t * (tEnd - tStart);
     if (t+0.5*h > 1.) {
       Dfdt(tRescaled, xPlus, yPlus, zPlus);
       double tMinus = tStart + (t - h) * (tEnd - tStart);
