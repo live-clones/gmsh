@@ -3,6 +3,20 @@
 
 #if defined(HAVE_FOURIER_MODEL)
 
+FEdge::FEdge(GModel *model, FM_Edge* edge_, int tag, GVertex *v0, GVertex *v1) 
+  : GEdge(model, tag, v0, v1), edge(edge_), face(0), edgeNum(-1) 
+{
+  //meshAttributes.Method = TRANSFINI; 
+  //meshAttributes.coeffTransfinite = 1.;
+  //meshAttributes.nbPointsTransfinite = 10;
+}
+
+FEdge::FEdge(GModel *model, FM_Face* face_, int edgeNum_, int tag, GVertex *v0, 
+	     GVertex *v1) 
+  : GEdge(model, tag, v0, v1), edge(0), face(face_), edgeNum(edgeNum_) 
+{
+}
+
 Range<double> FEdge::parBounds(int i) const
 { 
   return(Range<double>(0.,1.));

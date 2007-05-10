@@ -1,4 +1,4 @@
-// $Id: GRegion.cpp,v 1.15 2006-12-16 14:37:20 geuzaine Exp $
+// $Id: GRegion.cpp,v 1.16 2007-05-10 22:08:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -120,17 +120,31 @@ void GRegion::deleteMeshPartitions()
 std::list<GEdge*> GRegion::edges() const
 {
   std::list<GEdge*> e;
-  std::list<GFace *>::const_iterator it =  l_faces.begin();
+  std::list<GFace*>::const_iterator it = l_faces.begin();
   while(it != l_faces.end()){
     std::list<GEdge*> e2;
     e2 = (*it)->edges();
     std::list<GEdge*>::const_iterator it2 = e2.begin();
     while (it2 != e2.end()){
-      if (std::find(e.begin(),e.end(),*it2) == e.end())
+      if (std::find(e.begin(), e.end(), *it2) == e.end())
 	e.push_back(*it2);
       ++it2;
     }
     ++it;
   }
   return e;
+}
+
+bool GRegion::edgeConnected(GRegion *r) const
+{
+  std::list<GEdge*> e = edges();
+  std::list<GEdge*> e2 = r->edges();
+  
+  std::list<GEdge*>::const_iterator it = e.begin();
+  while(it != e.end()){
+    if(std::find(e2.begin(), e2.end(), *it) != e2.end())
+      return true;
+    ++it;
+  }
+  return false;
 }

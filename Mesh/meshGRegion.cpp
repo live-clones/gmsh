@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.29 2007-03-11 20:18:58 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.30 2007-05-10 22:08:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -190,6 +190,9 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 #if !defined(HAVE_TETGEN)
   Msg(GERROR, "Tetgen is not compiled in this version of Gmsh");
 #else
+
+  for(unsigned int i = 0; i < regions.size(); i++)
+    Msg(STATUS2, "Meshing volume %d (Delaunay)", regions[i]->tag());
 
   // put all the faces in the same model
   GRegion *gr = regions[0];
@@ -494,9 +497,6 @@ void meshGRegion::operator() (GRegion *gr)
 
   if(ep && ep->mesh.ExtrudeMesh) return;
 
-  // Send a messsage to the GMSH environment
-  Msg(STATUS2, "Meshing volume %d", gr->tag());
-
   // destroy the mesh if it exists
   deMeshGRegion dem;
   dem(gr);
@@ -523,6 +523,7 @@ void meshGRegion::operator() (GRegion *gr)
 #if !defined(HAVE_NETGEN)
     Msg(GERROR, "Netgen is not compiled in this version of Gmsh");
 #else
+    Msg(STATUS2, "Meshing volume %d (Netgen)", gr->tag());
     // orient the triangles of with respect to this region
     meshNormalsPointOutOfTheRegion(gr);
     std::vector<MVertex*> numberedV;

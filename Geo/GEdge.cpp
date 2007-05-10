@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.27 2007-05-07 11:40:02 remacle Exp $
+// $Id: GEdge.cpp,v 1.28 2007-05-10 22:08:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -119,16 +119,16 @@ SVector3 GEdge::secondDer(double par) const
 {
   // use central differences
   const double eps = 1.e-3;
-  SVector3 x1 = firstDer(par-eps);
-  SVector3 x2 = firstDer(par+eps);
-  return 500*(x2-x1);
+  SVector3 x1 = firstDer(par - eps);
+  SVector3 x2 = firstDer(par + eps);
+  return 500 * (x2 - x1);
 }
 
-// Reparmaterize the point onto the given face.
 SPoint2 GEdge::reparamOnFace(GFace *face, double epar,int dir) const
 {
-  const GPoint p3 = point (epar);
-  SPoint3 sp3(p3.x(),p3.y(),p3.z());
+  // reparmaterize the point onto the given face.
+  const GPoint p3 = point(epar);
+  SPoint3 sp3(p3.x(), p3.y(), p3.z());
   return face->parFromPoint(sp3);
 }
 
@@ -153,11 +153,12 @@ double GEdge::curvature(double par) const
 
   n1.normalize();
   n2.normalize();
-  const double one_over_D = 1./D;
-  SVector3 d = one_over_D*(n2-n1);
+  const double one_over_D = 1. / D;
+  SVector3 d = one_over_D * (n2 - n1);
   return norm(d);
 }
 
-bool GEdge::is_mesh_degenerated() const {
-  return (v0==v1 && mesh_vertices.size()<2);
+bool GEdge::is_mesh_degenerated() const 
+{
+  return (v0 == v1 && mesh_vertices.size() < 2);
 }

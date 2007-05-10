@@ -18,11 +18,9 @@ class FEdge : public GEdge {
   FM_Face* face;
   int edgeNum;
  public:
-  FEdge(GModel *model, FM_Edge* edge_, int tag, GVertex *v0, GVertex *v1) : 
-    GEdge(model, tag, v0, v1), edge(edge_), face(0), edgeNum(-1) {}
+  FEdge(GModel *model, FM_Edge* edge_, int tag, GVertex *v0, GVertex *v1);
   FEdge(GModel *model, FM_Face* face_, int edgeNum_, int tag, GVertex *v0, 
-	GVertex *v1) : GEdge(model, tag, v0, v1), edge(0), face(face_), 
-    edgeNum(edgeNum_) {}
+	GVertex *v1);
   virtual ~FEdge() {}
   double period() const { throw ; }
   virtual bool periodic(int dim=0) const { return false; }

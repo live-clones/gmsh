@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.16 2007-05-02 07:59:27 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.17 2007-05-10 22:08:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1363,6 +1363,43 @@ int GModel::writeUNV(const std::string &name, bool saveAll, double scalingFactor
     writeElementsUNV(fp, (*it)->prisms, saveAll, num, (*it)->tag(), (*it)->physicals);
   }
   fprintf(fp, "%6d\n", -1);
+
+  // save groups of nodes for physical lines and physical surfaces
+  bool saveGroupsOfNodes = false; // add option in CTX+GUI for this
+  if(saveGroupsOfNodes){
+    fprintf(fp, "%6d\n", -1);
+    fprintf(fp, "%6d\n", 2477);
+    std::map<int, std::vector<GEntity*> > groups[4];
+    getPhysicalGroups(groups);
+    for(int dim = 1; dim <= 2; dim++){
+      for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
+	  it != groups[dim].end(); it++){
+	std::set<MVertex*> nodes;
+	for(unsigned int i = 0; i < it->second.size(); i++){
+	  if(dim == 1){
+	    GEdge *ge = (GEdge*)it->second[i];
+	    for(unsigned int j = 0; j < ge->lines.size(); j++)
+	      for(int k = 0; k < ge->lines[j]->getNumVertices(); k++)
+		nodes.insert(ge->lines[j]->getVertex(k));
+	  }
+	  else if(dim == 2){
+	    GFace *gf = (GFace*)it->second[i];
+	    for(unsigned int j = 0; j < gf->triangles.size(); j++)
+	      for(int k = 0; k < gf->triangles[j]->getNumVertices(); k++)
+		nodes.insert(gf->triangles[j]->getVertex(k));
+	    for(unsigned int j = 0; j < gf->quadrangles.size(); j++)
+	      for(int k = 0; k < gf->quadrangles[j]->getNumVertices(); k++)
+		nodes.insert(gf->quadrangles[j]->getVertex(k));
+	  }
+	}
+	// put actual format of dataset in here
+	printf("physical %d : %d nodes\n", it->first, nodes.size());
+	for(std::set<MVertex*>::iterator it2 = nodes.begin(); it2 != nodes.end(); it2++)
+	  printf("node %6d\n", (*it2)->getNum());
+      }
+    }
+    fprintf(fp, "%6d\n", -1);
+  }
 
   fclose(fp);
   return 1;

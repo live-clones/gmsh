@@ -43,6 +43,9 @@ class GRegion : public GEntity {
   // The bounding box
   virtual SBoundingBox3d bounds() const; 
 
+  // Checks if the region is connected to another region by an edge
+  bool edgeConnected(GRegion *r) const;
+
   // Recompute the mesh partitions defined on this region.
   void recomputeMeshPartitions();
 

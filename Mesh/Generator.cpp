@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.118 2007-04-20 07:11:26 geuzaine Exp $
+// $Id: Generator.cpp,v 1.119 2007-05-10 22:08:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -232,6 +232,14 @@ void Mesh2D()
   Msg(STATUS1, "Mesh");
 }
 
+
+void FindConnectedRegions(std::vector<GRegion*> &delaunay, 
+			  std::vector<std::vector<GRegion*> > &connected)
+{
+  // FIXME: need to split region vector into connected components here!
+  connected.push_back(delaunay);
+}
+
 void Mesh3D()
 {
   if(TooManyElements(3)) return;
@@ -249,8 +257,13 @@ void Mesh3D()
   std::vector<GRegion*> delaunay;
   std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), meshGRegion(delaunay));
 
-  // and finally mesh the delaunay regions (again, this is global)
-  MeshDelaunayVolume(delaunay);
+  // and finally mesh the delaunay regions (again, this is global; but
+  // we mesh each connected part separately for performance and mesh
+  // quality reasons)
+  std::vector<std::vector<GRegion*> > connected;
+  FindConnectedRegions(delaunay, connected);
+  for(unsigned int i = 0; i < connected.size(); i++)
+    MeshDelaunayVolume(connected[i]);
 
   double t2 = Cpu();
   CTX.mesh_timer[2] = t2 - t1;

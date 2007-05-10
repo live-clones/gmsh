@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.145 2007-05-05 10:24:53 geuzaine Exp $
+# $Id: Makefile,v 1.146 2007-05-10 22:08:03 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -223,7 +223,16 @@ GModelIO_F.o: GModelIO_F.cpp GModel.h GVertex.h GEntity.h Range.h \
   GRegion.h ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothData.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h FFace.h FEdge.h \
-  FVertex.h ../Mesh/meshGFace.h
+  FVertex.h ../Mesh/meshGFace.h GModelIO_F.h \
+  ../contrib/FourierModel/FM_Reader.h ../contrib/FourierModel/Curve.h \
+  ../contrib/FourierModel/Patch.h ../contrib/FourierModel/FM_Info.h \
+  ../contrib/FourierModel/FM_Info.h ../contrib/FourierModel/ExactPatch.h \
+  ../contrib/FourierModel/Patch.h \
+  ../contrib/FourierModel/ContinuationPatch.h \
+  ../contrib/FourierModel/Patch.h ../contrib/FourierModel/FM_Info.h \
+  ../contrib/FourierModel/FM_Face.h ../contrib/FourierModel/Patch.h \
+  ../contrib/FourierModel/FM_Edge.h ../contrib/FourierModel/Curve.h \
+  ../contrib/FourierModel/FM_Vertex.h
 GModelIO_CGNS.o: GModelIO_CGNS.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h \
   SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \

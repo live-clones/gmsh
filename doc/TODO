@@ -1,4 +1,14 @@
-$Id: TODO,v 1.57 2007-05-04 14:45:04 geuzaine Exp $
+$Id: TODO,v 1.58 2007-05-10 22:08:06 geuzaine Exp $
+
+********************************************************************
+
+add function to deform MESH with displacement post-pro view
+
+********************************************************************
+
+3D Delaunay: precompute non-connected volumes and apply algo to each
+non-connected aggregate. This will improve mesh quality and speed for
+close non-connected objects.
 
 ********************************************************************
 
