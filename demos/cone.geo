@@ -11,5 +11,4 @@ Extrude {{0,0,1}, {0,0,0}, Pi/2} { Surface{5}; }
 Extrude {{0,0,1}, {0,0,0}, Pi/2} { Surface{17}; }
 Extrude {{0,0,1}, {0,0,0}, Pi/2} { Surface{29}; }
 Extrude {{0,0,1}, {0,0,0}, Pi/2} { Surface{41}; }
-Physical Surface(53) = {12,24,36,48,52,40,28,16};
-ExteriorShell = 53;
+
