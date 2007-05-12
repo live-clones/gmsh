@@ -29,8 +29,9 @@ class IntersectionInfo {
   struct {
     int patchTag;
   } intersectingPatches[2];
+  int edgeNumber;
   
-  IntersectionInfo() {}
+  IntersectionInfo() : tag(-1), edgeNumber(-1) {}
   virtual ~IntersectionInfo() {}
 };
 

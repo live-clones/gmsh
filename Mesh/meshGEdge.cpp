@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.38 2007-05-02 07:59:27 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.39 2007-05-12 22:45:14 anand Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -227,6 +227,7 @@ void meshGEdge::operator() (GEdge *ge)
     a = Integration(ge, t_begin, t_end, F_Lc, Points, 1.e-8);
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
+
   const double b = a / (double)(N - 1);
 
   // if the curve is periodic and if the begin vertex is identical to the end vertex

@@ -166,8 +166,8 @@ std::complex<double> ContinuationPatch::
   double epsilon = 1e-12;
   if(u < 0. - epsilon || u > 1. + epsilon){
     Msg::Error("Trying to interpolate outside interval: (u,v)=(%.16g,%.16g) "
-               "not in [%g,%g]x[%g,%g]", u, v, 0., 1., 0., 1.);
-  }
+               "not in [%g,%g]x[%g,%g]", u, v, 0., 1., 0., 1.); 
+ }
 
   // Interpolate to find value at (u,v)
   for(int j = 0; j < _uModes; j++){

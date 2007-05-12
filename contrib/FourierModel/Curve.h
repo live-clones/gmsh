@@ -7,6 +7,7 @@
 // The base class for the patches
 class Curve {
  private:
+  int _edgeNum;
   double _h, _tol;
  protected:
   // Patches

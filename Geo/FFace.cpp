@@ -58,7 +58,7 @@ int FFace::containsParam(const SPoint2 &pt) const
   if(pt[1] < 0. - tol || pt[1] > 1. + tol) return 0;
   return 1;
 }
-  
+
 SVector3 FFace::normal(const SPoint2 &param) const
 {
   double x,y,z;

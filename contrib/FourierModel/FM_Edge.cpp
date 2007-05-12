@@ -76,19 +76,19 @@ void FM_Edge::Dfdt(double t, double &x, double &y, double &z)
     }
     else
       tRescaled = tStart + t * (tEnd - tStart);
-    if (t+0.5*h > 1.) {
+    if (tRescaled+0.5*h > tEnd) {
       _curve->F(tRescaled, xPlus, yPlus, zPlus);
-      double tMinus = tStart + (t - h) * (tEnd - tStart);
+      double tMinus = tRescaled - h;
       _curve->F(tMinus, xMinus, yMinus, zMinus);
     }
-    else if (t-0.5*h < 0.) {
+    else if (tRescaled-0.5*h < tStart) {
       _curve->F(tRescaled, xMinus, yMinus, zMinus);
-      double tPlus = tStart + (t + h) * (tEnd - tStart);
+      double tPlus = tRescaled + h;
       _curve->F(tPlus, xPlus, yPlus, zPlus);
     }
     else {
-      double tPlus = tStart + (t + 0.5 * h) * (tEnd - tStart);
-      double tMinus = tStart + (t - 0.5 * h) * (tEnd - tStart);
+      double tPlus = tRescaled + 0.5 * h;
+      double tMinus = tRescaled - 0.5 * h;
       _curve->F(tPlus, xPlus, yPlus, zPlus);
       _curve->F(tMinus, xMinus, yMinus, zMinus);
     }
@@ -121,19 +121,19 @@ void FM_Edge::Dfdfdtdt(double t, double &x, double &y, double &z)
     }
     else
       tRescaled = tStart + t * (tEnd - tStart);
-    if (t+0.5*h > 1.) {
+    if (tRescaled+0.5*h > tEnd) {
       Dfdt(tRescaled, xPlus, yPlus, zPlus);
-      double tMinus = tStart + (t - h) * (tEnd - tStart);
+      double tMinus = tRescaled - h;
       Dfdt(tMinus, xMinus, yMinus, zMinus);
     }
-    else if (t-0.5*h < 0.) {
+    else if (tRescaled-0.5*h < tStart) {
       Dfdt(tRescaled, xMinus, yMinus, zMinus);
-      double tPlus = tStart + (t + h) * (tEnd - tStart);
+      double tPlus = tRescaled + h;
       Dfdt(tPlus, xPlus, yPlus, zPlus);
     }
     else {
-      double tPlus = tStart + (t + 0.5 * h) * (tEnd - tStart);
-      double tMinus = tStart + (t - 0.5 * h) * (tEnd - tStart);
+      double tPlus = tRescaled + 0.5 * h;
+      double tMinus = tRescaled - 0.5 * h;
       Dfdt(tPlus, xPlus, yPlus, zPlus);
       Dfdt(tMinus, xMinus, yMinus, zMinus);
     }
