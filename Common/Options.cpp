@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.343 2007-05-04 14:27:41 geuzaine Exp $
+// $Id: Options.cpp,v 1.344 2007-05-13 10:37:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -5007,6 +5007,13 @@ double opt_mesh_save_all(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.mesh.save_all = val ? 1 : 0;
   return CTX.mesh.save_all;
+}
+
+double opt_mesh_save_groups_of_nodes(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.save_groups_of_nodes = val ? 1 : 0;
+  return CTX.mesh.save_groups_of_nodes;
 }
 
 double opt_mesh_color_carousel(OPT_ARGS_NUM)

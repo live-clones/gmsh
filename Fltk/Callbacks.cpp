@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.529 2007-05-07 08:36:36 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.530 2007-05-13 10:37:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -656,7 +656,7 @@ int _save_pos(char *name){ return generic_mesh_dialog(name, "POS Options", FORMA
 int _save_options(char *name){ return options_dialog(name); }
 int _save_geo(char *name){ return geo_dialog(name); }
 int _save_cgns(char *name){ CreateOutputFile(name, FORMAT_CGNS); return 1; }
-int _save_unv(char *name){ return generic_mesh_dialog(name, "UNV Options", FORMAT_UNV); }
+int _save_unv(char *name){ return unv_dialog(name); }
 int _save_med(char *name){ return generic_mesh_dialog(name, "MED Options", FORMAT_MED); }
 int _save_mesh(char *name){ return generic_mesh_dialog(name, "MESH Options", FORMAT_MESH); }
 int _save_bdf(char *name){ return bdf_dialog(name); }

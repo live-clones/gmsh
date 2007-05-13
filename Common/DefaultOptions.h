@@ -1011,6 +1011,8 @@ StringXNumber MeshOptions_Number[] = {
 
   { F,   "SaveAll" , opt_mesh_save_all , 0. , 
     "Ignore Physical definitions and save all elements" },
+  { F,   "SaveGroupsOfNodes" , opt_mesh_save_groups_of_nodes , 0. , 
+    "Save groups of nodes for each physical line and surface (UNV mesh format only)" },
   { F|O, "ScalingFactor" , opt_mesh_scaling_factor , 1.0 ,
     "Global scaling factor applied to the saved mesh" },
   { F|O, "SecondOrderIncomplete" , opt_mesh_second_order_incomplete , 1. ,

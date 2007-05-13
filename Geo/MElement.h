@@ -459,7 +459,7 @@ class MTriangleN : public MTriangle {
     if (_order == 5 && _vs.size() == 18) return MSH_TRI_21;
     throw;
   }
-  virtual int getTypeForUNV(){ throw; } // thin shell parabolic triangle
+  virtual int getTypeForUNV(){ throw; } // not available
   virtual const char *getStringForPOS(){ return 0; }
   virtual const char *getStringForBDF(){ return 0; }
   virtual void revert() 

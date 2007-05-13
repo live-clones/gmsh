@@ -486,6 +486,7 @@ double opt_mesh_cut_planeb(OPT_ARGS_NUM);
 double opt_mesh_cut_planec(OPT_ARGS_NUM);
 double opt_mesh_cut_planed(OPT_ARGS_NUM);
 double opt_mesh_save_all(OPT_ARGS_NUM);
+double opt_mesh_save_groups_of_nodes(OPT_ARGS_NUM);
 double opt_mesh_color_carousel(OPT_ARGS_NUM);
 double opt_mesh_nb_nodes(OPT_ARGS_NUM);
 double opt_mesh_nb_triangles(OPT_ARGS_NUM);

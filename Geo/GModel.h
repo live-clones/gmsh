@@ -202,8 +202,8 @@ class GModel
 
   // I-deas universal mesh format
   int readUNV(const std::string &name);
-  int writeUNV(const std::string &name, 
-	       bool saveAll=false, double scalingFactor=1.0);
+  int writeUNV(const std::string &name, bool saveAll=false, 
+	       bool saveGroupsOfNodes=false, double scalingFactor=1.0);
 
   // Medit (INRIA) mesh format
   int readMESH(const std::string &name);

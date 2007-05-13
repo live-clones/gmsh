@@ -186,7 +186,7 @@ public :
       double val = cut_planea * x + cut_planeb * y + cut_planec * z + cut_planed; 
       return val;
     }
-    int save_all, stl_binary, msh_binary, bdf_field_format;
+    int save_all, save_groups_of_nodes, stl_binary, msh_binary, bdf_field_format;
     char *triangle_options;
     int smooth_normals, reverse_all_normals;
     double angle_smooth_normals;

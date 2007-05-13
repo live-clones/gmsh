@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.17 2007-05-10 22:08:03 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.18 2007-05-13 10:37:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1317,7 +1317,8 @@ static void writeElementsUNV(FILE *fp, const std::vector<T*> &ele, int saveAll,
 	ele[i]->writeUNV(fp, ++num, elementary, physicals[j]);
 }
 
-int GModel::writeUNV(const std::string &name, bool saveAll, double scalingFactor)
+int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNodes, 
+		     double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
@@ -1364,13 +1365,13 @@ int GModel::writeUNV(const std::string &name, bool saveAll, double scalingFactor
   }
   fprintf(fp, "%6d\n", -1);
 
-  // save groups of nodes for physical lines and physical surfaces
-  bool saveGroupsOfNodes = false; // add option in CTX+GUI for this
+  // groups of nodes (for physical lines and physical surfaces)
   if(saveGroupsOfNodes){
     fprintf(fp, "%6d\n", -1);
     fprintf(fp, "%6d\n", 2477);
     std::map<int, std::vector<GEntity*> > groups[4];
     getPhysicalGroups(groups);
+    int gr = 1;
     for(int dim = 1; dim <= 2; dim++){
       for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
 	  it != groups[dim].end(); it++){
@@ -1392,10 +1393,19 @@ int GModel::writeUNV(const std::string &name, bool saveAll, double scalingFactor
 		nodes.insert(gf->quadrangles[j]->getVertex(k));
 	  }
 	}
-	// put actual format of dataset in here
-	printf("physical %d : %d nodes\n", it->first, nodes.size());
-	for(std::set<MVertex*>::iterator it2 = nodes.begin(); it2 != nodes.end(); it2++)
-	  printf("node %6d\n", (*it2)->getNum());
+	fprintf(fp, "%10d%10d%10d%10d%10d%10d%10d%10d\n",
+		gr++, 0, 0, 0, 0, 0, 0, nodes.size());
+	fprintf(fp, "PERMANENT GROUP1\n");
+	int row = 0;
+	for(std::set<MVertex*>::iterator it2 = nodes.begin(); it2 != nodes.end(); it2++){
+	  if(row == 2) {
+	    fprintf(fp, "\n");
+	    row = 0;
+	  }
+	  fprintf(fp, "%10d%10d%10d%10d", 7, (*it2)->getNum(), 0, 0);
+	  row++;
+	}
+	fprintf(fp, "\n");
       }
     }
     fprintf(fp, "%6d\n", -1);

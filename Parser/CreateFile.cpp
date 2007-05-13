@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.16 2007-03-18 12:05:16 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.17 2007-05-13 10:37:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -162,7 +162,8 @@ void CreateOutputFile(char *filename, int format)
     break;
 
   case FORMAT_UNV:
-    GMODEL->writeUNV(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
+    GMODEL->writeUNV(name, CTX.mesh.save_all, CTX.mesh.save_groups_of_nodes,
+		     CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_MESH:
