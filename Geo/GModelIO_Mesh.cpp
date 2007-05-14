@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.18 2007-05-13 10:37:02 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.19 2007-05-14 12:51:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1365,14 +1365,14 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
   }
   fprintf(fp, "%6d\n", -1);
 
-  // groups of nodes (for physical lines and physical surfaces)
+  // groups of nodes for physical groups
   if(saveGroupsOfNodes){
     fprintf(fp, "%6d\n", -1);
     fprintf(fp, "%6d\n", 2477);
     std::map<int, std::vector<GEntity*> > groups[4];
     getPhysicalGroups(groups);
     int gr = 1;
-    for(int dim = 1; dim <= 2; dim++){
+    for(int dim = 1; dim <= 3; dim++){
       for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
 	  it != groups[dim].end(); it++){
 	std::set<MVertex*> nodes;
@@ -1392,10 +1392,24 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
 	      for(int k = 0; k < gf->quadrangles[j]->getNumVertices(); k++)
 		nodes.insert(gf->quadrangles[j]->getVertex(k));
 	  }
+	  else if(dim == 3){
+	    GRegion *gr = (GRegion*)it->second[i];
+	    for(unsigned int j = 0; j < gr->tetrahedra.size(); j++)
+	      for(int k = 0; k < gr->tetrahedra[j]->getNumVertices(); k++)
+		nodes.insert(gr->tetrahedra[j]->getVertex(k));
+	    for(unsigned int j = 0; j < gr->hexahedra.size(); j++)
+	      for(int k = 0; k < gr->hexahedra[j]->getNumVertices(); k++)
+		nodes.insert(gr->hexahedra[j]->getVertex(k));
+	    for(unsigned int j = 0; j < gr->prisms.size(); j++)
+	      for(int k = 0; k < gr->prisms[j]->getNumVertices(); k++)
+		nodes.insert(gr->prisms[j]->getVertex(k));
+	    for(unsigned int j = 0; j < gr->pyramids.size(); j++)
+	      for(int k = 0; k < gr->pyramids[j]->getNumVertices(); k++)
+		nodes.insert(gr->pyramids[j]->getVertex(k));
+	  }
 	}
-	fprintf(fp, "%10d%10d%10d%10d%10d%10d%10d%10d\n",
-		gr++, 0, 0, 0, 0, 0, 0, nodes.size());
-	fprintf(fp, "PERMANENT GROUP1\n");
+	fprintf(fp, "%10d%10d%10d%10d%10d%10d%10d%10d\n", gr, 0, 0, 0, 0, 0, 0, nodes.size());
+	fprintf(fp, "PERMENENT GROUP%d\n", gr++);
 	int row = 0;
 	for(std::set<MVertex*>::iterator it2 = nodes.begin(); it2 != nodes.end(); it2++){
 	  if(row == 2) {
