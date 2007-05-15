@@ -2,7 +2,7 @@
 #include "Message.h"
 
 void FM_Face::F(double u, double v, double &x, double &y, double &z) {
-  if (_edge.size() == 0) {
+  if (_edge.size() == 4) {
     _patch->F(u,v,x,y,z);
   }
   else if (_edge.size() == 1) {
@@ -15,17 +15,23 @@ void FM_Face::F(double u, double v, double &x, double &y, double &z) {
     _patch->F(u*R,v,x,y,z);
   }
   else if (_edge.size() == 4) {
-    double xD, yD, zD, uD, vD;
-    double xU, yU, zU, uU, vU;
-    _edge[0]->F(v,xD,yD,zD);
-    _patch->Inverse(xD,yD,zD,uD,vD);
-    _edge[2]->F(1.-v,xU,yU,zU);
-    _patch->Inverse(xU,yU,zU,uU,vU);
-   
-    double U = uD + u * (uU - uD);
-    double V = vD;
-
-    _patch->F(U,V,x,y,z);
+    bool isPhysical = (_edge[0]->IsPhysical()) && (_edge[1]->IsPhysical()) &&
+      (_edge[2]->IsPhysical()) && (_edge[3]->IsPhysical());
+    if (isPhysical)
+      _patch->F(u,v,x,y,z);
+    else {
+      double xD, yD, zD, uD, vD;
+      double xU, yU, zU, uU, vU;
+      _edge[0]->F(v,xD,yD,zD);
+      _patch->Inverse(xD,yD,zD,uD,vD);
+      _edge[2]->F(1.-v,xU,yU,zU);
+      _patch->Inverse(xU,yU,zU,uU,vU);
+      
+      double U = uD + u * (uU - uD);
+      double V = vD;
+      
+      _patch->F(U,V,x,y,z);
+    }
   }
   else {
     Msg::Info("Such a face not implemented yet");
@@ -35,10 +41,7 @@ void FM_Face::F(double u, double v, double &x, double &y, double &z) {
 
 bool FM_Face::Inverse(double x,double y,double z,double &u, double &v)
 {
-  if (_edge.size() == 0) {
-    _patch->Inverse(x,y,z,u,v);
-  }
-  else if (_edge.size() == 1) {
+  if (_edge.size() == 1) {
     double n[3], t[3], s[3], c[3], r[3];
     _patch->F(0.,0.,c[0],c[1],c[2]);
     for (int i=0;i<3;i++) {
@@ -70,22 +73,28 @@ bool FM_Face::Inverse(double x,double y,double z,double &u, double &v)
     u = norm / R;
   }
   else if (_edge.size() == 4) {
-    double U, V;
-    _patch->Inverse(x,y,z,U,V);
-    double u0,v0,u1,v1;
-    double xD, yD, zD, uD, vD;
-    double xU, yU, zU, uU, vU;
-    _edge[0]->F(0,xD,yD,zD);
-    _patch->Inverse(xD,yD,zD,u0,v0);
-    _edge[0]->F(1,xD,yD,zD);
-    _patch->Inverse(xD,yD,zD,u1,v1);
-    v = (V-v0)/(v1-v0);
-    _edge[0]->F(v,xD,yD,zD);
-    _patch->Inverse(xD,yD,zD,uD,vD);
-    _edge[2]->F(1.-v,xU,yU,zU);
-    _patch->Inverse(xU,yU,zU,uU,vU);
-    
-    u = (U - uD) / (uU - uD);
+    bool isPhysical = (_edge[0]->IsPhysical()) && (_edge[1]->IsPhysical()) &&
+      (_edge[2]->IsPhysical()) && (_edge[3]->IsPhysical());
+    if (isPhysical)
+      _patch->Inverse(x,y,z,u,v);
+    else {
+      double U, V;
+      _patch->Inverse(x,y,z,U,V);
+      double u0,v0,u1,v1;
+      double xD, yD, zD, uD, vD;
+      double xU, yU, zU, uU, vU;
+      _edge[0]->F(0,xD,yD,zD);
+      _patch->Inverse(xD,yD,zD,u0,v0);
+      _edge[0]->F(1,xD,yD,zD);
+      _patch->Inverse(xD,yD,zD,u1,v1);
+      v = (V-v0)/(v1-v0);
+      _edge[0]->F(v,xD,yD,zD);
+      _patch->Inverse(xD,yD,zD,uD,vD);
+      _edge[2]->F(1.-v,xU,yU,zU);
+      _patch->Inverse(xU,yU,zU,uU,vU);
+      
+      u = (U - uD) / (uU - uD);
+    }
   }
   else {
     Msg::Info("Such a face not implemented yet");

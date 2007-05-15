@@ -30,6 +30,12 @@ class FM_Edge {
   inline void SetEndPoint(double x, double y, double z) { 
     _EP = new FM_Vertex(x,y,z); 
   }
+  inline bool IsPhysical() {
+    if (_curve)
+      return true;
+    else
+      false;
+  }
 
   void F(double t, double &x, double &y, double &z);
   bool Inverse(double x,double y,double z,double &t);
