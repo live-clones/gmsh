@@ -2,17 +2,15 @@
 #include "Message.h"
 
 void FM_Face::F(double u, double v, double &x, double &y, double &z) {
-  if (_edge.size() == 4) {
-    _patch->F(u,v,x,y,z);
-  }
-  else if (_edge.size() == 1) {
-    // sanity check
+  if (_edge.size() == 1) {
+    double U = sqrt((2*u-1)*(2*u-1)+(2*v-1)*(2*v-1));
+    double V = 0.5 * (atan2(2*v-1,2*u-1)/ M_PI + 1.);
     double cx, cy, cz;
     _patch->F(0.,0.,cx,cy,cz);
     double px, py, pz;
-    _edge[0]->F(v,px,py,pz);
+    _edge[0]->F(V,px,py,pz);
     double R = sqrt((px-cx)*(px-cx)+(py-cy)*(py-cy)+(pz-cz)*(pz-cz));
-    _patch->F(u*R,v,x,y,z);
+    _patch->F(U*R,V,x,y,z);
   }
   else if (_edge.size() == 4) {
     bool isPhysical = (_edge[0]->IsPhysical()) && (_edge[1]->IsPhysical()) &&
@@ -65,12 +63,15 @@ bool FM_Face::Inverse(double x,double y,double z,double &u, double &v)
       xx += r[i] * t[i];
       yy += r[i] * s[i];
     }
-    v = atan2(yy, xx)/(2. * M_PI) +0.5;
+    double U,V;
+    V = atan2(yy, xx)/(2. * M_PI) +0.5;
     double px, py, pz;
     _edge[0]->F(v,px,py,pz);
     double R = sqrt((px-c[0])*(px-c[0])+(py-c[1])*(py-c[1])+
 		    (pz-c[2])*(pz-c[2]));
-    u = norm / R;
+    U = norm / R;
+    u = 0.5 * (1 + U * cos(2*M_PI*(v-0.5)));
+    v = 0.5 * (1 + U * cos(2*M_PI*(v-0.5)));
   }
   else if (_edge.size() == 4) {
     bool isPhysical = (_edge[0]->IsPhysical()) && (_edge[1]->IsPhysical()) &&

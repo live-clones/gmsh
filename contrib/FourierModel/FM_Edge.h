@@ -34,7 +34,7 @@ class FM_Edge {
     if (_curve)
       return true;
     else
-      false;
+      return false;
   }
 
   void F(double t, double &x, double &y, double &z);
