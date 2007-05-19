@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.530 2007-05-13 10:37:01 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.531 2007-05-19 16:40:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -569,6 +569,16 @@ void status_rewind_cb(CALLBACK_ARGS)
       opt_view_visible(i, GMSH_SET | GMSH_GUI, !i);
   }
   Draw();
+}
+
+void status_stepbackward_cb(CALLBACK_ARGS)
+{
+  ManualPlay(!CTX.post.anim_cycle, -1);
+}
+
+void status_stepforward_cb(CALLBACK_ARGS)
+{
+  ManualPlay(!CTX.post.anim_cycle, 1);
 }
 
 // File Menu

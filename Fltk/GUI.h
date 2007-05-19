@@ -127,7 +127,9 @@ class GUI{
   Fl_Scroll *m_scroll;
 
   // Bitmaps
-  Fl_Bitmap  *abort_bmp, *start_bmp, *stop_bmp, *rewind_bmp, *rotate_bmp, *ortho_bmp;
+  Fl_Bitmap  *abort_bmp, *rotate_bmp, *ortho_bmp;
+  Fl_Bitmap  *start_bmp, *stop_bmp, *rewind_bmp, *stepbackward_bmp, *stepforward_bmp;
+
   void add_multiline_in_browser(Fl_Browser *o, char* prefix, char *str);
 
 public:
@@ -150,7 +152,7 @@ public:
   // graphic window
   Fl_Window        *g_window;
   Opengl_Window    *g_opengl_window;
-  Fl_Button        *g_status_butt[10];
+  Fl_Button        *g_status_butt[12];
   Fl_Box           *g_status_label[2];
 
   // Option window

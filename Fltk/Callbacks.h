@@ -42,6 +42,8 @@ void status_xyz1p_cb(CALLBACK_ARGS);
 void status_play_cb(CALLBACK_ARGS);
 void status_pause_cb(CALLBACK_ARGS);
 void status_rewind_cb(CALLBACK_ARGS);
+void status_stepbackward_cb(CALLBACK_ARGS);
+void status_stepforward_cb(CALLBACK_ARGS);
 
 // File Menu
 

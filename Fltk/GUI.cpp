@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.614 2007-05-07 08:36:36 geuzaine Exp $
+// $Id: GUI.cpp,v 1.615 2007-05-19 16:40:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1381,6 +1381,15 @@ void GUI::create_graphic_window()
   rewind_bmp->label(g_status_butt[6]);
   g_status_butt[6]->deactivate();
 
+  g_status_butt[10] = new Fl_Button(x, glheight + 2, sw, sht);
+  x += sw;
+  g_status_butt[10]->callback(status_stepbackward_cb);
+  g_status_butt[10]->tooltip("Step backward");
+  stepbackward_bmp = new Fl_Bitmap(stepbackward_bits, stepbackward_width,
+                                   stepbackward_height);
+  stepbackward_bmp->label(g_status_butt[10]);
+  g_status_butt[10]->deactivate();
+
   g_status_butt[7] = new Fl_Button(x, glheight + 2, sw, sht);
   x += sw;
   g_status_butt[7]->callback(status_play_cb);
@@ -1390,7 +1399,16 @@ void GUI::create_graphic_window()
   stop_bmp = new Fl_Bitmap(stop_bits, stop_width, stop_height);
   g_status_butt[7]->deactivate();
 
-  for(int i = 0; i < 10; i++) {
+  g_status_butt[11] = new Fl_Button(x, glheight + 2, sw, sht);
+  x += sw;
+  g_status_butt[11]->callback(status_stepforward_cb);
+  g_status_butt[11]->tooltip("Step forward");
+  stepforward_bmp = new Fl_Bitmap(stepforward_bits, stepforward_width,
+                                   stepforward_height);
+  stepforward_bmp->label(g_status_butt[11]);
+  g_status_butt[11]->deactivate();
+
+  for(int i = 0; i < 12; i++) {
     g_status_butt[i]->box(FL_FLAT_BOX);
     g_status_butt[i]->selection_color(FL_WHITE);
     g_status_butt[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
@@ -1467,10 +1485,14 @@ void GUI::check_anim_buttons()
   if(!play) {
     g_status_butt[6]->deactivate();
     g_status_butt[7]->deactivate();
+    g_status_butt[10]->deactivate();
+    g_status_butt[11]->deactivate();
   }
   else {
     g_status_butt[6]->activate();
     g_status_butt[7]->activate();
+    g_status_butt[10]->activate();
+    g_status_butt[11]->activate();
   }
 }
 
