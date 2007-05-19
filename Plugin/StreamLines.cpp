@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.26 2007-05-19 16:38:01 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.27 2007-05-19 22:01:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -186,7 +186,9 @@ void GMSH_StreamLinesPlugin::getInfos(char *author, char *copyright,
 	 "interpolated on the vector view. The time stepping\n"
 	 "scheme is a RK44 with step size `DT' and `MaxIter'\n"
 	 "maximum number of iterations. If `iView' < 0, the\n"
-	 "plugin is run on the current view.\n"
+	 "plugin is run on the current view. If `TimeStep' < 0,\n"
+	 "the plugin tries to compute streamlines of the unsteady\n"
+	 "flow.\n"
 	 "\n"
 	 "Plugin(StreamLines) creates one new view. This\n"
 	 "view contains multi-step vector points if `dView'\n"
@@ -261,7 +263,7 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const
   }
 
   int timestep = (int)StreamLinesOptions_Number[13].def;
-  if(timestep < 0 || timestep > v1->NbTimeStep - 1){
+  if(timestep > v1->NbTimeStep - 1){
     Msg(GERROR, "Invalid time step (%d) in View[%d]: using step 0 instead",
 	timestep, v1->Index);
     timestep = 0;
@@ -290,9 +292,23 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const
 	List_Add(View->VP, &X[2]);	      
       }
 
+      int currentTimeStep = 0;
+
       for(int iter = 0; iter < (int)StreamLinesOptions_Number[11].def; iter++){
 
 	double XPREV[3] = { X[0], X[1], X[2] };
+
+	if(timestep < 0){
+	  const double currentT = DT * iter;
+	  for(; currentTimeStep < v1->NbTimeStep - 1 && currentT > 0.5 *
+		(*(double*)List_Pointer(v1->Time, currentTimeStep) +
+		 *(double*)List_Pointer(v1->Time, currentTimeStep + 1));
+              currentTimeStep++);
+	}
+	else{
+	  currentTimeStep = timestep;
+	}
+	//Msg(DEBUG, "iter = %d, currentTimeStep = %d", iter, currentTimeStep);
 
 	// dX/dt = V
 	// X1 = X + a1 * DT * V(X)
@@ -301,17 +317,17 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const
 	// X4 = X + a4 * DT * V(X3)
 	// X = X + b1 X1 + b2 X2 + b3 X3 + b4 x4
 
-	// o.searchVector(X[0], X[1], X[2], val, timestep, &sizeElem);
+	// o.searchVector(X[0], X[1], X[2], val, currentTimeStep, &sizeElem);
 	// double normV = sqrt(val[0]*val[0]+val[1]*val[1]+val[2]*val[2]);	     
 	// if (normV==0.0) normV = 1.0;
 	// double DT = sizeElem / normV ; // CFL = 1 ==> secure 
-	o.searchVector(X[0], X[1], X[2], val, timestep);
+	o.searchVector(X[0], X[1], X[2], val, currentTimeStep);
 	for(int k = 0; k < 3; k++) X1[k] = X[k] + DT * val[k] * a1;
-	o.searchVector(X1[0], X1[1], X1[2], val, timestep);
+	o.searchVector(X1[0], X1[1], X1[2], val, currentTimeStep);
 	for(int k = 0; k < 3; k++) X2[k] = X[k] + DT * val[k] * a2;
-	o.searchVector(X2[0], X2[1], X2[2], val, timestep);
+	o.searchVector(X2[0], X2[1], X2[2], val, currentTimeStep);
 	for(int k = 0; k < 3; k++) X3[k] = X[k] + DT * val[k] * a3;
-	o.searchVector(X3[0], X3[1], X3[2], val, timestep);
+	o.searchVector(X3[0], X3[1], X3[2], val, currentTimeStep);
 	for(int k = 0; k < 3; k++) X4[k] = X[k] + DT * val[k] * a4;
 
 	for(int k = 0; k < 3; k++) 

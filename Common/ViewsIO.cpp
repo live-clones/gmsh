@@ -1,4 +1,4 @@
-// $Id: ViewsIO.cpp,v 1.9 2006-11-27 22:22:08 geuzaine Exp $
+// $Id: ViewsIO.cpp,v 1.10 2007-05-19 22:01:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -68,8 +68,6 @@ int ReadView(char *filename)
       }
       if(size == sizeof(double))
         Msg(DEBUG, "Data is in double precision format (size==%d)", size);
-      else if(size == sizeof(float))
-        Msg(DEBUG, "Data is in single precision format (size==%d)", size);
       else {
         Msg(GERROR, "Unknown data size (%d) in post-processing file", size);
         return 0;
