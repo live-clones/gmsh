@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.25 2007-05-04 10:45:09 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.26 2007-05-19 16:38:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -46,6 +46,7 @@ StringXNumber StreamLinesOptions_Number[] = {
   {GMSH_FULLRC, "nPointsV", GMSH_StreamLinesPlugin::callbackV, 1},
   {GMSH_FULLRC, "MaxIter", NULL, 100},
   {GMSH_FULLRC, "DT", NULL, .1},
+  {GMSH_FULLRC, "TimeStep", NULL, 0},
   {GMSH_FULLRC, "dView", NULL, -1.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
@@ -171,21 +172,21 @@ void GMSH_StreamLinesPlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
 	 "Plugin(StreamLines) computes stream lines\n"
-	 "from a vector view `iView' and optionally\n"
-	 "interpolates the scalar view `dView' on the\n"
-	 "resulting stream lines. It takes as input a\n"
-	 "grid defined by the 3 points (`X0',`Y0',`Z0')\n"
-	 "(origin), (`X1',`Y1',`Z1') (axis of U) and\n"
-	 "(`X2',`Y2',`Z2') (axis of V). The number of points\n"
-	 "that are going to be transported along U and V is\n"
-	 "set with the options `nPointsU' and `nPointsV'.\n"
-	 "Then, we solve the equation DX(t)/dt = V(x,y,z)\n"
-	 "with X(t=0) chosen as the grid and V(x,y,z)\n"
-	 "interpolated on the vector view. The timestep and\n"
-	 "the maximum number of iterations are set with\n"
-	 "the options `MaxIter' and `DT'. The time stepping\n"
-	 "scheme is a RK44. If `iView' < 0, the plugin is run\n"
-	 "on the current view.\n"
+	 "from the `TimeStep'-th time step of a vector\n"
+	 "view `iView' and optionally interpolates the\n"
+	 "scalar view `dView' on the resulting stream\n"
+	 "lines. The plugin takes as input a grid defined\n"
+	 "by the 3 points (`X0',`Y0',`Z0') (origin),\n"
+	 "(`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2')\n"
+	 "(axis of V). The number of points that are to\n"
+	 "be transported along U and V is set with the\n"
+	 "options `nPointsU' and `nPointsV'. The equation\n"
+	 "DX(t)/dt=V(x,y,z) is then solved with the initial\n"
+	 "condition X(t=0) chosen as the grid and with V(x,y,z)\n"
+	 "interpolated on the vector view. The time stepping\n"
+	 "scheme is a RK44 with step size `DT' and `MaxIter'\n"
+	 "maximum number of iterations. If `iView' < 0, the\n"
+	 "plugin is run on the current view.\n"
 	 "\n"
 	 "Plugin(StreamLines) creates one new view. This\n"
 	 "view contains multi-step vector points if `dView'\n"
@@ -259,6 +260,13 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const
     return NULL;
   }
 
+  int timestep = (int)StreamLinesOptions_Number[13].def;
+  if(timestep < 0 || timestep > v1->NbTimeStep - 1){
+    Msg(GERROR, "Invalid time step (%d) in View[%d]: using step 0 instead",
+	timestep, v1->Index);
+    timestep = 0;
+  }
+
   OctreePost o(v1);
   OctreePost *o2 = NULL;
 
@@ -293,17 +301,17 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const
 	// X4 = X + a4 * DT * V(X3)
 	// X = X + b1 X1 + b2 X2 + b3 X3 + b4 x4
 
-	// o.searchVector(X[0], X[1], X[2], val, 0, &sizeElem);
+	// o.searchVector(X[0], X[1], X[2], val, timestep, &sizeElem);
 	// double normV = sqrt(val[0]*val[0]+val[1]*val[1]+val[2]*val[2]);	     
 	// if (normV==0.0) normV = 1.0;
 	// double DT = sizeElem / normV ; // CFL = 1 ==> secure 
-	o.searchVector(X[0], X[1], X[2], val, 0);
+	o.searchVector(X[0], X[1], X[2], val, timestep);
 	for(int k = 0; k < 3; k++) X1[k] = X[k] + DT * val[k] * a1;
-	o.searchVector(X1[0], X1[1], X1[2], val, 0);
+	o.searchVector(X1[0], X1[1], X1[2], val, timestep);
 	for(int k = 0; k < 3; k++) X2[k] = X[k] + DT * val[k] * a2;
-	o.searchVector(X2[0], X2[1], X2[2], val, 0);
+	o.searchVector(X2[0], X2[1], X2[2], val, timestep);
 	for(int k = 0; k < 3; k++) X3[k] = X[k] + DT * val[k] * a3;
-	o.searchVector(X3[0], X3[1], X3[2], val, 0);
+	o.searchVector(X3[0], X3[1], X3[2], val, timestep);
 	for(int k = 0; k < 3; k++) X4[k] = X[k] + DT * val[k] * a4;
 
 	for(int k = 0; k < 3; k++) 
@@ -352,8 +360,8 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const
 
 Post_View *GMSH_StreamLinesPlugin::execute(Post_View * v)
 {
-  int iView = (int)StreamLinesOptions_Number[14].def;
-  int dView = (int)StreamLinesOptions_Number[13].def;
+  int dView = (int)StreamLinesOptions_Number[14].def;
+  int iView = (int)StreamLinesOptions_Number[15].def;
 
   if(iView < 0)
     iView = v ? v->Index : 0;
