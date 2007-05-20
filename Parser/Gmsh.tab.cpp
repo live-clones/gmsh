@@ -130,7 +130,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.319 2007-04-22 06:42:26 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.320 2007-05-20 13:23:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -5488,7 +5488,7 @@ case 207:
 case 208:
 #line 2573 "Gmsh.y"
 {
-      yymsg(WARNING, "Explicit region numbers in layers are deprecated");
+      yymsg(GERROR, "Explicit region numbers in layers are deprecated");
       double d;
       extr.mesh.ExtrudeMesh = true;
       extr.mesh.NbLayer = List_Nbr(yyvsp[-6].l);

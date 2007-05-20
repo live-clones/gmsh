@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.231 2007-03-29 16:32:23 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.232 2007-05-20 13:23:48 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 @c
@@ -2016,7 +2016,7 @@ extruded and has the following syntax:
 @end group
 @end example
 
-In the first @code{Layer} form, @var{expression} gives the number of
+In the first @code{Layers} form, @var{expression} gives the number of
 elements to be created in the (single) layer. In the second form, the
 first @var{expression-list} defines how many elements should be created
 in each extruded layer, and the second @var{expression-list} gives the
@@ -2028,6 +2028,16 @@ For line extrusions, the @code{Recombine} option will recombine triangles
 into quadrangles when possible.  For surface extrusions, the
 @code{Recombine} option will recombine tetrahedra into prisms, hexahedra or
 pyramids.
+
+Please note that, starting with Gmsh 2.0, region numbers cannot be
+specified explicitly anymore in @code{Layers} commands. Instead, as with
+all other geometry commands, you must use the automatically created
+entity identifier created by the extrusion command. For example, the
+following extrusion command will return the id of the new ``top''
+surface in @code{num[0]} and the id of the new volume in @code{num[1]}:
+@example
+num[] = Extrude @{0,0,1@} @{ Surface@{1@}; Layers@{10@}; @};
+@end example
 
 @item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @var{layers} @}
 Extrudes both the geometry and the mesh using a rotation
