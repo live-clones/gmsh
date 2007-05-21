@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.27 2007-05-19 22:01:27 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.28 2007-05-21 09:02:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -299,7 +299,9 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const
 	double XPREV[3] = { X[0], X[1], X[2] };
 
 	if(timestep < 0){
-	  const double currentT = DT * iter;
+	  double T0 = List_Nbr(v1->Time) ? *(double*)List_Pointer(v1->Time, 0) : 0.;
+	  double currentT = T0 + DT * iter;
+	  List_Add(View->Time, &currentT);
 	  for(; currentTimeStep < v1->NbTimeStep - 1 && currentT > 0.5 *
 		(*(double*)List_Pointer(v1->Time, currentTimeStep) +
 		 *(double*)List_Pointer(v1->Time, currentTimeStep + 1));
