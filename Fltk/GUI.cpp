@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.616 2007-05-23 21:20:57 geuzaine Exp $
+// $Id: GUI.cpp,v 1.617 2007-05-23 21:58:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1341,10 +1341,9 @@ void gmsh_forward(Fl_Color c)
 {
   fl_color(c);
   bl; vv(-0.6,0.8); vv(0.2,0.0); vv(-0.6,-0.8); el;
-  fl_begin_line(); vv(-0.2,0.8); vv(0.6,0.0); fl_end_line();
-  fl_begin_line(); vv(-0.2,0.8); vv(-0.2,0.4); fl_end_line();
-  fl_begin_line(); vv(-0.2,-0.8); vv(0.6,0.0); fl_end_line();
-  fl_begin_line(); vv(-0.2,-0.8); vv(-0.2,-0.4); fl_end_line();
+  fl_begin_line(); 
+  vv(-0.2,0.33); vv(-0.2,0.8); vv(0.6,0.0); vv(-0.2,-0.8); vv(-0.2,-0.33); 
+  fl_end_line();
 }
 
 void gmsh_back(Fl_Color c)
@@ -1368,7 +1367,7 @@ void gmsh_rotate(Fl_Color c)
 {
   fl_color(c);
   fl_begin_line(); fl_arc(0.0, -0.1, 0.7, 0.0, 270.0); fl_end_line();
-  fl_begin_polygon(); vv(0.5,0.6); vv(-0.1,1); vv(-0.1,0.2); fl_end_polygon();
+  fl_begin_polygon(); vv(0.5,0.6); vv(-0.1,0.9); vv(-0.1,0.3); fl_end_polygon();
 }
 
 #undef vv
