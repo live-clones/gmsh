@@ -1,4 +1,9 @@
-$Id: TODO,v 1.58 2007-05-10 22:08:06 geuzaine Exp $
+$Id: TODO,v 1.59 2007-05-23 15:35:33 geuzaine Exp $
+
+********************************************************************
+
+add cleanup fct to remove duplicate elements in
+GModel->checkMeshCoherence
 
 ********************************************************************
 

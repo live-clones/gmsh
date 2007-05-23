@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.147 2007-05-05 12:35:19 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.148 2007-05-23 15:35:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -311,7 +311,8 @@ int MergeFile(char *name, int warn_if_missing)
 		   "Cancel", "Uncompress", NULL, name)){
 	char tmp[256];
 	sprintf(tmp, "gunzip -c %s > %s", name, base);
-	SystemCall(tmp);
+	if(SystemCall(tmp))
+	  Msg(GERROR, "Failed to uncompress `%s': check directory permissions", name);
 	if(!strcmp(CTX.filename, name)) // this is the project file
 	  SetProjectName(base);
 	return MergeFile(base);

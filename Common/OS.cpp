@@ -1,4 +1,4 @@
-// $Id: OS.cpp,v 1.7 2007-03-19 21:48:13 geuzaine Exp $
+// $Id: OS.cpp,v 1.8 2007-05-23 15:35:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -160,7 +160,7 @@ int KillProcess(int pid)
   return 1;
 }
 
-void SystemCall(char *command)
+int SystemCall(char *command)
 {
 #if defined(WIN32)
   STARTUPINFO suInfo;
@@ -170,12 +170,13 @@ void SystemCall(char *command)
   Msg(INFO, "Calling '%s'", command);
   CreateProcess(NULL, command, NULL, NULL, FALSE,
                 NORMAL_PRIORITY_CLASS, NULL, NULL, &suInfo, &prInfo);
+  return 0;
 #else
   if(!system(NULL)) {
     Msg(GERROR, "Could not find /bin/sh: aborting system call");
-    return;
+    return 1;
   }
   Msg(INFO, "Calling '%s'", command);
-  system(command);
+  return system(command);
 #endif
 }

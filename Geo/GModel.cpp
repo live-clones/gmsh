@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.41 2007-05-02 07:59:27 geuzaine Exp $
+// $Id: GModel.cpp,v 1.42 2007-05-23 15:35:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -494,10 +494,14 @@ void GModel::checkMeshCoherence()
 
   Msg(INFO, "Checking mesh coherence (%d elements)", numEle);
 
+  SBoundingBox3d bb = bounds();
+  double lc = bb.empty() ? 1. : norm(SVector3(bb.max(), bb.min()));
+  double tol = CTX.geom.tolerance * lc;
+
   // check for duplicate mesh vertices
   {
     double old_tol = MVertexLessThanLexicographic::tolerance; 
-    MVertexLessThanLexicographic::tolerance = CTX.geom.tolerance;
+    MVertexLessThanLexicographic::tolerance = tol;
     std::set<MVertex*, MVertexLessThanLexicographic> pos;
     int num = 0;
     for(viter it = firstVertex(); it != lastVertex(); ++it)
@@ -515,7 +519,7 @@ void GModel::checkMeshCoherence()
   // check for duplicate elements
   {
     double old_tol = MElementLessThanLexicographic::tolerance; 
-    MElementLessThanLexicographic::tolerance = CTX.geom.tolerance;
+    MElementLessThanLexicographic::tolerance = tol;
     std::set<MElement*, MElementLessThanLexicographic> pos;
     int num = 0;
     for(eiter it = firstEdge(); it != lastEdge(); ++it)
