@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.615 2007-05-19 16:40:03 geuzaine Exp $
+// $Id: GUI.cpp,v 1.616 2007-05-23 21:20:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -28,7 +28,6 @@
 #include "Draw.h"
 #include "GUI.h"
 #include "Callbacks.h"
-#include "Bitmaps.h"
 #include "Win32Icon.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
@@ -892,16 +891,24 @@ GUI::GUI(int argc, char **argv)
   // Nothing to do here
 #else
   fl_open_display();
-  Pixmap p1 = XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
-                                    gmsh32x32_bits, gmsh32x32_width,
-                                    gmsh32x32_height);
-  Pixmap p2 = XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
-                                    gmsh32x32_bits, gmsh32x32_width,
-                                    gmsh32x32_height);
-  m_window->icon((char *)p1);
-  g_window->icon((char *)p2);
+  static char gmsh32x32[] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x01, 0x00, 0x00, 0x40, 0x03, 0x00,
+    0x00, 0x40, 0x03, 0x00, 0x00, 0x20, 0x07, 0x00, 0x00, 0x20, 0x07, 0x00,
+    0x00, 0x10, 0x0f, 0x00, 0x00, 0x10, 0x0f, 0x00, 0x00, 0x08, 0x1f, 0x00,
+    0x00, 0x08, 0x1f, 0x00, 0x00, 0x04, 0x3f, 0x00, 0x00, 0x04, 0x3f, 0x00,
+    0x00, 0x02, 0x7f, 0x00, 0x00, 0x02, 0x7f, 0x00, 0x00, 0x01, 0xff, 0x00,
+    0x00, 0x01, 0xff, 0x00, 0x80, 0x00, 0xff, 0x01, 0x80, 0x00, 0xff, 0x01,
+    0x40, 0x00, 0xff, 0x03, 0x40, 0x00, 0xff, 0x03, 0x20, 0x00, 0xff, 0x07,
+    0x20, 0x00, 0xff, 0x07, 0x10, 0x00, 0xff, 0x0f, 0x10, 0x00, 0xff, 0x0f,
+    0x08, 0x00, 0xff, 0x1f, 0x08, 0x00, 0xff, 0x1f, 0x04, 0x40, 0xfd, 0x3f,
+    0x04, 0xa8, 0xea, 0x3f, 0x02, 0x55, 0x55, 0x7f, 0xa2, 0xaa, 0xaa, 0x7a,
+    0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 };
+  m_window->icon((char*)XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
+					      gmsh32x32, 32, 32));
+  g_window->icon((char*)XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
+					      gmsh32x32, 32, 32));
 #endif
-
+  
   // we must show() m_window first (at least on Win32, since the icon
   // is associated with m_window); and besides, it's probably better
   // to have the initial focus on g_window so that we can directly
@@ -1305,6 +1312,69 @@ int GUI::get_context()
 
 // Create the graphic window
 
+#define vv(x,y) fl_vertex(x,y)
+#define bl fl_begin_loop()
+#define el fl_end_loop()
+
+void gmsh_play(Fl_Color c)
+{
+  fl_color(c);
+  bl; vv(-0.4,0.8); vv(0.4,0.0); vv(-0.4,-0.8); el;
+}
+
+void gmsh_pause(Fl_Color c)
+{
+  fl_color(c);
+  bl; vv(-0.6,-0.8); vv(-0.1,-0.8); vv(-0.1,0.8); vv(-0.6,0.8); el;
+  bl; vv(0.2,-0.8); vv(0.7,-0.8); vv(0.7,0.8); vv(0.2,0.8); el;
+}
+
+void gmsh_rewind(Fl_Color c)
+{
+  fl_color(c);
+  fl_rotate(180);  
+  bl; vv(0.2,0.8); vv(0.6,0.8); vv(0.6,-0.8); vv(0.2,-0.8); el;
+  bl; vv(-0.6,0.8); vv(0.2,0.0); vv(-0.6,-0.8); el;
+}
+
+void gmsh_forward(Fl_Color c)
+{
+  fl_color(c);
+  bl; vv(-0.6,0.8); vv(0.2,0.0); vv(-0.6,-0.8); el;
+  fl_begin_line(); vv(-0.2,0.8); vv(0.6,0.0); fl_end_line();
+  fl_begin_line(); vv(-0.2,0.8); vv(-0.2,0.4); fl_end_line();
+  fl_begin_line(); vv(-0.2,-0.8); vv(0.6,0.0); fl_end_line();
+  fl_begin_line(); vv(-0.2,-0.8); vv(-0.2,-0.4); fl_end_line();
+}
+
+void gmsh_back(Fl_Color c)
+{
+  fl_rotate(180);  
+  gmsh_forward(c);
+}
+
+void gmsh_ortho(Fl_Color c)
+{
+  fl_color(c);
+  bl; vv(-0.8,0.8); vv(0.4,0.8); vv(0.4,-0.4); vv(-0.8,-0.4); el;
+  bl; vv(-0.4,0.4); vv(0.8,0.4); vv(0.8,-0.8); vv(-0.4,-0.8); el;
+  fl_begin_line(); vv(-0.8,0.8); vv(-0.4,0.4); fl_end_line();
+  fl_begin_line(); vv(0.4,0.8); vv(0.8,0.4); fl_end_line();
+  fl_begin_line(); vv(0.4,-0.4); vv(0.8,-0.8); fl_end_line();
+  fl_begin_line(); vv(-0.8,-0.4); vv(-0.4,-0.8); fl_end_line();
+}
+
+void gmsh_rotate(Fl_Color c)
+{
+  fl_color(c);
+  fl_begin_line(); fl_arc(0.0, -0.1, 0.7, 0.0, 270.0); fl_end_line();
+  fl_begin_polygon(); vv(0.5,0.6); vv(-0.1,1); vv(-0.1,0.2); fl_end_polygon();
+}
+
+#undef vv
+#undef bl
+#undef el
+
 void GUI::create_graphic_window()
 {
   if(g_window) {
@@ -1312,8 +1382,16 @@ void GUI::create_graphic_window()
     return;
   }
 
+  fl_add_symbol("gmsh_rewind", gmsh_rewind, 1);
+  fl_add_symbol("gmsh_back", gmsh_back, 1);
+  fl_add_symbol("gmsh_play", gmsh_play, 1);
+  fl_add_symbol("gmsh_pause", gmsh_pause, 1);
+  fl_add_symbol("gmsh_forward", gmsh_forward, 1);
+  fl_add_symbol("gmsh_ortho", gmsh_ortho, 1);
+  fl_add_symbol("gmsh_rotate", gmsh_rotate, 1);
+
   int sh = 2 * fontsize - 4;    // status bar height
-  int sw = fontsize + 4;        // status button width
+  int sw = fontsize + 3;        // status button width
   int width = CTX.viewport[2] - CTX.viewport[0];
   int glheight = CTX.viewport[3] - CTX.viewport[1];
   int height = glheight + sh;
@@ -1344,24 +1422,20 @@ void GUI::create_graphic_window()
   g_status_butt[2]->callback(status_xyz1p_cb, (void *)"z");
   g_status_butt[2]->tooltip("Set +Z or -Z view (Alt+z or Alt+Shift+z)");
 
-  g_status_butt[4] = new Fl_Button(x, glheight + 2, sw, sht);
+  g_status_butt[4] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_rotate");
   x += sw;
   g_status_butt[4]->callback(status_xyz1p_cb, (void *)"r");
   g_status_butt[4]->tooltip("Rotate +90 or -90 degrees");
-  rotate_bmp = new Fl_Bitmap(rotate_bits, rotate_width, rotate_height);
-  rotate_bmp->label(g_status_butt[4]);
 
   g_status_butt[3] = new Fl_Button(x, glheight + 2, 2 * fontsize, sht, "1:1");
   x += 2 * fontsize;
   g_status_butt[3]->callback(status_xyz1p_cb, (void *)"1:1");
   g_status_butt[3]->tooltip("Set unit scale");
 
-  g_status_butt[8] = new Fl_Button(x, glheight + 2, sw, sht);
+  g_status_butt[8] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_ortho");
   x += sw;
   g_status_butt[8]->callback(status_xyz1p_cb, (void *)"p");
   g_status_butt[8]->tooltip("Toggle projection mode (Alt+o or Alt+Shift+o)");
-  ortho_bmp = new Fl_Bitmap(ortho_bits, ortho_width, ortho_height);
-  ortho_bmp->label(g_status_butt[8]);
 
   g_status_butt[9] = new Fl_Button(x, glheight + 2, sw, sht, "S");
   x += sw;
@@ -1373,39 +1447,28 @@ void GUI::create_graphic_window()
   g_status_butt[5]->callback(status_xyz1p_cb, (void *)"?");
   g_status_butt[5]->tooltip("Show current options");
 
-  g_status_butt[6] = new Fl_Button(x, glheight + 2, sw, sht);
+  g_status_butt[6] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_rewind");
   x += sw;
   g_status_butt[6]->callback(status_rewind_cb);
   g_status_butt[6]->tooltip("Rewind animation");
-  rewind_bmp = new Fl_Bitmap(rewind_bits, rewind_width, rewind_height);
-  rewind_bmp->label(g_status_butt[6]);
   g_status_butt[6]->deactivate();
 
-  g_status_butt[10] = new Fl_Button(x, glheight + 2, sw, sht);
+  g_status_butt[10] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_back");
   x += sw;
   g_status_butt[10]->callback(status_stepbackward_cb);
   g_status_butt[10]->tooltip("Step backward");
-  stepbackward_bmp = new Fl_Bitmap(stepbackward_bits, stepbackward_width,
-                                   stepbackward_height);
-  stepbackward_bmp->label(g_status_butt[10]);
   g_status_butt[10]->deactivate();
 
-  g_status_butt[7] = new Fl_Button(x, glheight + 2, sw, sht);
+  g_status_butt[7] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_play");
   x += sw;
   g_status_butt[7]->callback(status_play_cb);
   g_status_butt[7]->tooltip("Play/pause animation");
-  start_bmp = new Fl_Bitmap(start_bits, start_width, start_height);
-  start_bmp->label(g_status_butt[7]);
-  stop_bmp = new Fl_Bitmap(stop_bits, stop_width, stop_height);
   g_status_butt[7]->deactivate();
 
-  g_status_butt[11] = new Fl_Button(x, glheight + 2, sw, sht);
+  g_status_butt[11] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_forward");
   x += sw;
   g_status_butt[11]->callback(status_stepforward_cb);
   g_status_butt[11]->tooltip("Step forward");
-  stepforward_bmp = new Fl_Bitmap(stepforward_bits, stepforward_width,
-                                   stepforward_height);
-  stepforward_bmp->label(g_status_butt[11]);
   g_status_butt[11]->deactivate();
 
   for(int i = 0; i < 12; i++) {
@@ -1460,11 +1523,11 @@ void GUI::set_anim_buttons(int mode)
 {
   if(mode) {
     g_status_butt[7]->callback(status_play_cb);
-    start_bmp->label(g_status_butt[7]);
+    g_status_butt[7]->label("@-1gmsh_play");
   }
   else {
     g_status_butt[7]->callback(status_pause_cb);
-    stop_bmp->label(g_status_butt[7]);
+    g_status_butt[7]->label("@-1gmsh_pause");
   }
 }
 

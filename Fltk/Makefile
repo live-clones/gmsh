@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.131 2007-04-21 19:40:00 geuzaine Exp $
+# $Id: Makefile,v 1.132 2007-05-23 21:20:57 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -106,7 +106,7 @@ GUI.o: GUI.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Common/ColorTable.h ../Common/VertexArray.h ../Common/SmoothData.h \
   ../Common/AdaptiveViews.h ../Common/GmshMatrix.h GUI.h Opengl_Window.h \
   Colorbar_Window.h Popup_Button.h SpherePosition_Widget.h Callbacks.h \
-  Bitmaps.h Win32Icon.h ../Parser/OpenFile.h ../Common/CommandLine.h \
+  Win32Icon.h ../Parser/OpenFile.h ../Common/CommandLine.h \
   ../Mesh/Generator.h Solvers.h ../Plugin/PluginManager.h \
   ../Plugin/Plugin.h Shortcut_Window.h
 GUI_Extras.o: GUI_Extras.cpp ../Common/Gmsh.h ../Common/Message.h \

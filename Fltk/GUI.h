@@ -126,10 +126,6 @@ class GUI{
   int MH, fontsize;
   Fl_Scroll *m_scroll;
 
-  // Bitmaps
-  Fl_Bitmap  *abort_bmp, *rotate_bmp, *ortho_bmp;
-  Fl_Bitmap  *start_bmp, *stop_bmp, *rewind_bmp, *stepbackward_bmp, *stepforward_bmp;
-
   void add_multiline_in_browser(Fl_Browser *o, char* prefix, char *str);
 
 public:
