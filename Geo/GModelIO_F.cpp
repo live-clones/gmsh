@@ -9,6 +9,7 @@
 
 #if defined(HAVE_FOURIER_MODEL)
 
+
 extern Context_T CTX;
 
 void F_Internals::loadF(const char *fn)

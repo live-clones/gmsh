@@ -2,9 +2,10 @@
 #define _GMODELIO_F_H_
 
 #include "GModel.h"
-#include "FM_Reader.h"
 
 #if defined(HAVE_FOURIER_MODEL)
+
+#include "FM_Reader.h"
 
 class F_Internals {
  protected:
