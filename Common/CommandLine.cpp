@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.100 2007-05-05 02:08:57 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.101 2007-05-24 17:34:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -433,20 +433,16 @@ void Get_Options(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "algo")) {
         i++;
         if(argv[i] != NULL) {
-          if(!strncmp(argv[i], "del3d", 5))
-            CTX.mesh.algo2d = ALGO_3D_DELAUNAY;
+          if(!strncmp(argv[i], "del3d", 5) || !strncmp(argv[i], "tetgen", 6))
+            CTX.mesh.algo2d = ALGO_3D_TETGEN_DELAUNAY;
           else if(!strncmp(argv[i], "netgen", 6))
             CTX.mesh.algo3d = ALGO_3D_NETGEN;
-          else if(!strncmp(argv[i], "tetgen", 6))
-	    CTX.mesh.algo3d = ALGO_3D_TETGEN;
-          else if(!strncmp(argv[i], "del2d", 5) ||
-		  !strncmp(argv[i], "del", 3))
+          else if(!strncmp(argv[i], "del2d", 5) || !strncmp(argv[i], "tri", 3))
             CTX.mesh.algo2d = ALGO_2D_DELAUNAY;
-          else if(!strncmp(argv[i], "bds", 3) || 
-		  !strncmp(argv[i], "iso", 3))
+          else if(!strncmp(argv[i], "bds", 3))
             CTX.mesh.algo2d = ALGO_2D_MESHADAPT;
-          else if(!strncmp(argv[i], "tri", 3))
-            CTX.mesh.algo2d = ALGO_2D_TRIANGLE;
+          else if(!strncmp(argv[i], "del", 3) || !strncmp(argv[i], "iso", 3))
+	    CTX.mesh.algo2d = ALGO_2D_MESHADAPT_DELAUNAY;
           else {
             fprintf(stderr, ERROR_STR "Unknown mesh algorithm\n");
             exit(1);

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.344 2007-05-13 10:37:01 geuzaine Exp $
+// $Id: Options.cpp,v 1.345 2007-05-24 17:34:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4753,12 +4753,15 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
     switch (CTX.mesh.algo2d) {
+    case ALGO_2D_MESHADAPT:
+      WID->mesh_choice[2]->value(0);
+      break;
     case ALGO_2D_DELAUNAY:
       WID->mesh_choice[2]->value(1);
       break;
-    case ALGO_2D_MESHADAPT:
+    case ALGO_2D_MESHADAPT_DELAUNAY:
     default:
-      WID->mesh_choice[2]->value(0);
+      WID->mesh_choice[2]->value(2);
       break;
     }
   }
@@ -4804,7 +4807,7 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
     case ALGO_3D_NETGEN:
       WID->mesh_choice[3]->value(1);
       break;
-    case ALGO_3D_DELAUNAY:
+    case ALGO_3D_TETGEN_DELAUNAY:
     default:
       WID->mesh_choice[3]->value(0);
       break;

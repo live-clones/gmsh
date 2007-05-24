@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.18 2007-03-11 20:18:58 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.19 2007-05-24 17:34:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -178,6 +178,8 @@ int MeshExtrudedSurface(GFace *gf,
 
   if(!ep || !ep->mesh.ExtrudeMesh)
     return 0;
+
+  Msg(STATUS2, "Meshing surface %d (extruded)", gf->tag());
 
   // build a set with all the vertices on the boundary of gf
   double old_tol = MVertexLessThanLexicographic::tolerance; 

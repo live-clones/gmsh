@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.618 2007-05-23 22:05:17 geuzaine Exp $
+// $Id: GUI.cpp,v 1.619 2007-05-24 17:34:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2332,10 +2332,11 @@ void GUI::create_option_window()
       static Fl_Menu_Item menu_2d_algo[] = {
         {"MeshAdapt", 0, 0, 0},
         {"Delaunay", 0, 0, 0},
+        {"MeshAdapt+Delaunay", 0, 0, 0},
         {0}
       };
       static Fl_Menu_Item menu_3d_algo[] = {
-        {"Delaunay", 0, 0, 0},
+        {"Tetgen+Delaunay", 0, 0, 0},
         {"Netgen", 0, 0, 0},
         {0}
       };
@@ -2349,8 +2350,6 @@ void GUI::create_option_window()
       mesh_choice[2]->menu(menu_2d_algo);
       mesh_choice[2]->align(FL_ALIGN_RIGHT);
       mesh_choice[2]->callback(mesh_options_ok_cb);
-      // not reimplemented yet
-      ((Fl_Menu_Item*)mesh_choice[2]->menu())[1].deactivate();
 
       mesh_choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "3D algorithm");
       mesh_choice[3]->menu(menu_3d_algo);

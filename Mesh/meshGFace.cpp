@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.79 2007-05-24 14:44:06 remacle Exp $
+// $Id: meshGFace.cpp,v 1.80 2007-05-24 17:34:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -900,7 +900,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   m->del_point(m->find_point(-4));
 
   // start mesh generation
-  if (CTX.mesh.algo2d == ALGO_2D_MESHADAPT || gf->geomType() != GEntity::Plane)
+  if (CTX.mesh.algo2d != ALGO_2D_DELAUNAY || gf->geomType() != GEntity::Plane)
     {
       RefineMesh (gf,*m,10);
       OptimizeMesh(gf, *m, 2);
@@ -960,10 +960,8 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   // the delaunay algo is based directly on internal gmsh structures
   // BDS mesh is passed in order not to recompute local coordinates
   // of vertices
-  if ((CTX.mesh.algo2d == ALGO_2D_DELAUNAY || CTX.mesh.algo2d == ALGO_2D_DELAUNAY) &&
-      gf->geomType() == GEntity::Plane)
+  if (CTX.mesh.algo2d == ALGO_2D_DELAUNAY && gf->geomType() == GEntity::Plane)
      {
-       printf("coucou\n");
        insertVerticesInFace (gf,m) ;
      }
 
@@ -1534,14 +1532,33 @@ void meshGFace::operator() (GFace *gf)
   if(gf->geomType() == GEntity::BoundaryLayerSurface) return;
   if(gf->geomType() == GEntity::ProjectionSurface) return;
 
-  Msg(STATUS2, "Meshing surface %d (%s)", gf->tag(), gf->getTypeString().c_str());
-
   // destroy the mesh if it exists
   deMeshGFace dem;
   dem(gf);
 
   if(MeshTransfiniteSurface(gf)) return;
   if(MeshExtrudedSurface(gf)) return;
+
+  char *algo = "Unknown";
+  switch(CTX.mesh.algo2d){
+  case ALGO_2D_MESHADAPT: 
+    algo = "MeshAdapt";
+    break;
+  case ALGO_2D_DELAUNAY: 
+    // FIXME: Delaunay not available in all cases at the moment
+    if(gf->geomType() == GEntity::Plane && 
+       (gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()))
+      algo = "Delaunay";
+    else
+      algo = "MeshAdapt+Delaunay";
+    break;
+  case ALGO_2D_MESHADAPT_DELAUNAY: 
+    algo = "MeshAdapt+Delaunay"; 
+    break;
+  }
+  
+  Msg(STATUS2, "Meshing surface %d (%s, %s)", gf->tag(),
+      gf->getTypeString().c_str(), algo);
 
   // compute loops on the fly (indices indicate start and end points
   // of a loop; loops are not yet oriented)

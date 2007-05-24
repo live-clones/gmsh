@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.19 2007-03-11 20:18:58 geuzaine Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.20 2007-05-24 17:34:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -53,6 +53,8 @@ extern Context_T CTX;
 int MeshTransfiniteSurface(GFace *gf)
 {
   if(gf->meshAttributes.Method != TRANSFINI) return 0;
+
+  Msg(STATUS2, "Meshing surface %d (transfinite)", gf->tag());
 
   std::vector <MVertex *> corners, d_vertices;
   std::vector <int> indices;

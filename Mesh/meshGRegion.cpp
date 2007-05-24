@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.30 2007-05-10 22:08:04 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.31 2007-05-24 17:34:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -516,7 +516,7 @@ void meshGRegion::operator() (GRegion *gr)
     }
   }
 
-  if(CTX.mesh.algo3d == ALGO_3D_DELAUNAY || CTX.mesh.algo3d == ALGO_3D_TETGEN){
+  if(CTX.mesh.algo3d == ALGO_3D_TETGEN_DELAUNAY){
     delaunay.push_back(gr);
   }
   else if(CTX.mesh.algo3d == ALGO_3D_NETGEN ){
