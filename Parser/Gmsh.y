@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.276 2007-05-24 13:58:06 remacle Exp $
+// $Id: Gmsh.y,v 1.277 2007-05-24 17:37:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1099,15 +1099,23 @@ Shape :
       $$.Type = 0;
       $$.Num = 0;
     }
-  | tLatLon tField '(' FExpr ')' tAFFECT FExpr tEND{
-      fields.insert(new LatLonField(fields.get((int)$7)),(int)$4);
+  | tLatLon tField '(' FExpr ')' tAFFECT FExpr tEND
+    {
+      fields.insert(new LatLonField(fields.get((int)$7)), (int)$4);
+      // dummy values
+      $$.Type = 0;
+      $$.Num = 0;
     }
-  | tPostView tField '(' FExpr ')' tAFFECT FExpr tEND {
+  | tPostView tField '(' FExpr ')' tAFFECT FExpr tEND 
+    {
       Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, (int)$7);
       if(vv) 
-        fields.insert(new PostViewField(*vv),(int)$4);
+        fields.insert(new PostViewField(*vv), (int)$4);
       else
         yymsg(GERROR, "Field %i error, view %i does not exist",(int)$4,(int)$7);
+      // dummy values
+      $$.Type = 0;
+      $$.Num = 0;
     }
   | tThreshold tField '(' FExpr ')' tAFFECT ListOfDouble tEND 
     {
