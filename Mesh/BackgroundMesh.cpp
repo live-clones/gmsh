@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.21 2007-04-22 08:46:04 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.22 2007-05-24 14:44:06 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -105,20 +105,26 @@ double LC_MVertex_CURV(GEntity *ge, double U, double V)
   case 1:
     {
       GEdge *ged = (GEdge *)ge;
-      //Crv = ged->curvature(U);
-      Crv = max_surf_curvature(ged, U);
+      Crv = ged->curvature(U);
+      //      printf("coucou %12.5E %d\n",Crv,CTX.mesh.min_circ_points);
+      //Crv = max_surf_curvature(ged, U);
     }
     break;
   case 2:
     {
-      GFace *gf = (GFace *)ge;
-      Crv = gf->curvature(SPoint2(U, V));
+      //      GFace *gf = (GFace *)ge;
+      //      Crv = gf->curvature(SPoint2(U, V));
     }
     break;
   }
-  
-  if(Crv > 0) return 2*M_PI / Crv / CTX.mesh.min_circ_points;
-  else return MAX_LC;
+ 
+  double lc = Crv > 0 ? 2*M_PI / Crv / CTX.mesh.min_circ_points : MAX_LC;
+
+  //  double lc_min = CTX.lc /300;
+
+
+  return lc;
+
 }
 
 
@@ -166,8 +172,10 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
     l2 = LC_MVertex_PNTS(ge, U, V);
 
   if(CTX.mesh.lc_from_curvature && ge->dim() < 3)
-    l1 = std::max(l3 / 100., LC_MVertex_CURV(ge, U, V));
+    l1 = LC_MVertex_CURV(ge, U, V);
   
+  //  printf("l1 = %12.5E l2 = %12.5E\n",l1,l2);
+
   double lc = std::min(std::min(std::min(l1, l2), l3), l4);
   return lc * CTX.mesh.lc_factor;
 }

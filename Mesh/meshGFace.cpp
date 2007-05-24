@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.78 2007-05-07 11:40:02 remacle Exp $
+// $Id: meshGFace.cpp,v 1.79 2007-05-24 14:44:06 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -314,7 +314,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	    if (l<L && (*it)->g && (*it)->g->classif_degree == 1)L=l;
 	    ++it;
 	  }
-	  (*itp)->lc() = std::max(L,(*itp)->lc());
+	  (*itp)->lc() = std::min(L,(*itp)->lc());
 	  ++itp;
 	}
     }
@@ -900,7 +900,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   m->del_point(m->find_point(-4));
 
   // start mesh generation
-  //  if (CTX.mesh.algo2d == ALGO_2D_MESHADAPT)
+  if (CTX.mesh.algo2d == ALGO_2D_MESHADAPT || gf->geomType() != GEntity::Plane)
     {
       RefineMesh (gf,*m,10);
       OptimizeMesh(gf, *m, 2);
@@ -911,11 +911,11 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
 	  m->recombineIntoQuads (gf->meshAttributes.recombineAngle,gf);
 	}
     }
-    //     char name[245];
-    //     sprintf(name,"param%d.pos",gf->tag());
-    //     outputScalarField(m->triangles, name,1);
-//     sprintf(name,"real%d.pos",gf->tag());
-//     outputScalarField(m->triangles, name,0);
+  //     char name[245];
+  //     sprintf(name,"param%d.pos",gf->tag());
+  //     outputScalarField(m->triangles, name,1);
+  //     sprintf(name,"real%d.pos",gf->tag());
+  //     outputScalarField(m->triangles, name,0);
   // fill the small gmsh structures
 
   {
@@ -960,10 +960,12 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   // the delaunay algo is based directly on internal gmsh structures
   // BDS mesh is passed in order not to recompute local coordinates
   // of vertices
-//   if (CTX.mesh.algo2d == ALGO_2D_DELAUNAY || CTX.mesh.algo2d == ALGO_2D_DELAUNAY)
-//     {
-//       insertVerticesInFace (gf,m) ;
-//     }
+  if ((CTX.mesh.algo2d == ALGO_2D_DELAUNAY || CTX.mesh.algo2d == ALGO_2D_DELAUNAY) &&
+      gf->geomType() == GEntity::Plane)
+     {
+       printf("coucou\n");
+       insertVerticesInFace (gf,m) ;
+     }
 
   // delete the mesh
 

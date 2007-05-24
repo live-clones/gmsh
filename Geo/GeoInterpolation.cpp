@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.26 2007-04-22 08:46:04 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.27 2007-05-24 14:44:06 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -238,7 +238,7 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
   V.u = u;
 
   if(derivee) {
-    double eps = 1.e-3;
+    double eps = 1.e-5;
     Vertex D[2];
     D[0] = InterpolateCurve(c, u, 0);
     D[1] = InterpolateCurve(c, u + eps, 0);

@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.1 2007-01-12 13:16:59 remacle Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.2 2007-05-24 14:44:06 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -197,11 +197,11 @@ int inCircumCircle ( MTri3 *t , const double *p , const gmsh2dMetric &metric )
 int MTri3::inCircumCircle ( const double *p ) const
 {
 
-//    double pa[2] = {base->getVertex(0)->x(),base->getVertex(0)->y()};
-//    double pb[2] = {base->getVertex(1)->x(),base->getVertex(1)->y()};
-//    double pc[2] = {base->getVertex(2)->x(),base->getVertex(2)->y()};
-//    double result = gmsh::incircle(pa, pb, pc, (double*)p) * gmsh::orient2d(pa, pb, pc);  
-//    return (result > 0) ? 1 : 0;
+    double pa[2] = {base->getVertex(0)->x(),base->getVertex(0)->y()};
+    double pb[2] = {base->getVertex(1)->x(),base->getVertex(1)->y()};
+    double pc[2] = {base->getVertex(2)->x(),base->getVertex(2)->y()};
+    double result = gmsh::incircle(pa, pb, pc, (double*)p) * gmsh::orient2d(pa, pb, pc);  
+    return (result > 0) ? 1 : 0;
 
 
   double eps, d1, d2, x[2];

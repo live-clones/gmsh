@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.28 2007-05-10 22:08:03 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.29 2007-05-24 14:44:06 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -134,8 +134,8 @@ SPoint2 GEdge::reparamOnFace(GFace *face, double epar,int dir) const
 
 double GEdge::curvature(double par) const 
 {
-  double eps1 = 1.e-3;
-  double eps2 = 1.e-3;
+  double eps1 = 1.e-5;
+  double eps2 = 1.e-5;
 
   Range<double> r = parBounds(0);
   if (r.low() == par) eps2 = 0;
@@ -146,6 +146,8 @@ double GEdge::curvature(double par) const
 
   GPoint P1 = point(par - eps1);
   GPoint P2 = point(par + eps2);
+
+
 
   double D = sqrt ((P1.x() - P2.x()) * (P1.x() - P2.x()) +
 		   (P1.y() - P2.y()) * (P1.y() - P2.y()) +
