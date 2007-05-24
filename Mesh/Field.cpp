@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.3 2007-04-23 09:36:45 colignon Exp $
+// $Id: Field.cpp,v 1.4 2007-05-24 13:57:59 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,6 +21,7 @@
 
 #include <fstream>
 #include <math.h>
+#include <BDS.h>
 #include "Gmsh.h"
 #include "Field.h"
 #include "Context.h"

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.275 2007-05-20 13:23:48 geuzaine Exp $
+// $Id: Gmsh.y,v 1.276 2007-05-24 13:58:06 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -105,7 +105,7 @@ int CheckViewErrorFlags(Post_View *v);
 %token tText2D tText3D tInterpolationScheme  tTime tGrain tCombine
 %token tBSpline tBezier tNurbs tOrder tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
-%token tField tThreshold tStructured tLatLon tGrad
+%token tField tThreshold tStructured tLatLon tGrad tPostView 
 %token tReturn tCall tFunction tShow tHide tGetValue
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 
@@ -1098,6 +1098,16 @@ Shape :
       // dummy values
       $$.Type = 0;
       $$.Num = 0;
+    }
+  | tLatLon tField '(' FExpr ')' tAFFECT FExpr tEND{
+      fields.insert(new LatLonField(fields.get((int)$7)),(int)$4);
+    }
+  | tPostView tField '(' FExpr ')' tAFFECT FExpr tEND {
+      Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, (int)$7);
+      if(vv) 
+        fields.insert(new PostViewField(*vv),(int)$4);
+      else
+        yymsg(GERROR, "Field %i error, view %i does not exist",(int)$4,(int)$7);
     }
   | tThreshold tField '(' FExpr ')' tAFFECT ListOfDouble tEND 
     {

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.88 2007-04-21 19:46:27 geuzaine Exp $
+// $Id: Gmsh.l,v 1.89 2007-05-24 13:57:59 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -233,6 +233,7 @@ Today                   return tToday;
 Using                   return tUsing;
 
 Volume                  return tVolume;
+PostView			return tPostView;
 
 T2                      return tText2D;
 T3                      return tText3D;
