@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.620 2007-05-25 08:04:13 geuzaine Exp $
+// $Id: GUI.cpp,v 1.621 2007-05-25 21:58:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1352,12 +1352,12 @@ void gmsh_back(Fl_Color c)
 void gmsh_ortho(Fl_Color c)
 {
   fl_color(c);
-  bl; vv(-0.8,0.8); vv(0.4,0.8); vv(0.4,-0.4); vv(-0.8,-0.4); el;
-  bl; vv(-0.4,0.4); vv(0.8,0.4); vv(0.8,-0.8); vv(-0.4,-0.8); el;
-  fl_begin_line(); vv(-0.8,0.8); vv(-0.4,0.4); fl_end_line();
-  fl_begin_line(); vv(0.4,0.8); vv(0.8,0.4); fl_end_line();
-  fl_begin_line(); vv(0.4,-0.4); vv(0.8,-0.8); fl_end_line();
-  fl_begin_line(); vv(-0.8,-0.4); vv(-0.4,-0.8); fl_end_line();
+  bl; vv(-0.8,0.8); vv(0.3,0.8); vv(0.3,-0.3); vv(-0.8,-0.3); el;
+  bl; vv(-0.3,0.3); vv(0.8,0.3); vv(0.8,-0.8); vv(-0.3,-0.8); el;
+  fl_begin_line(); vv(-0.8,0.8); vv(-0.3,0.3); fl_end_line();
+  fl_begin_line(); vv(0.3,0.8); vv(0.8,0.3); fl_end_line();
+  fl_begin_line(); vv(0.3,-0.3); vv(0.8,-0.8); fl_end_line();
+  fl_begin_line(); vv(-0.8,-0.3); vv(-0.3,-0.8); fl_end_line();
 }
 
 void gmsh_rotate(Fl_Color c)
