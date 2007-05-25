@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.619 2007-05-24 17:34:03 geuzaine Exp $
+// $Id: GUI.cpp,v 1.620 2007-05-25 08:04:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1319,31 +1319,28 @@ int GUI::get_context()
 void gmsh_play(Fl_Color c)
 {
   fl_color(c);
-  bl; vv(-0.4,0.8); vv(0.4,0.0); vv(-0.4,-0.8); el;
+  bl; vv(-0.3,0.8); vv(0.5,0.0); vv(-0.3,-0.8); el;
 }
 
 void gmsh_pause(Fl_Color c)
 {
   fl_color(c);
-  bl; vv(-0.6,-0.8); vv(-0.1,-0.8); vv(-0.1,0.8); vv(-0.6,0.8); el;
-  bl; vv(0.2,-0.8); vv(0.7,-0.8); vv(0.7,0.8); vv(0.2,0.8); el;
+  bl; vv(-0.8,-0.8); vv(-0.3,-0.8); vv(-0.3,0.8); vv(-0.8,0.8); el;
+  bl; vv(0.0,-0.8); vv(0.5,-0.8); vv(0.5,0.8); vv(0.0,0.8); el;
 }
 
 void gmsh_rewind(Fl_Color c)
 {
   fl_color(c);
-  fl_rotate(180);  
-  bl; vv(0.2,0.8); vv(0.6,0.8); vv(0.6,-0.8); vv(0.2,-0.8); el;
-  bl; vv(-0.6,0.8); vv(0.2,0.0); vv(-0.6,-0.8); el;
+  bl; vv(-0.8,-0.8); vv(-0.3,-0.8); vv(-0.3,0.8); vv(-0.8,0.8); el;
+  bl; vv(-0.3,0.0); vv(0.5,-0.8); vv(0.5,0.8); el;
 }
 
 void gmsh_forward(Fl_Color c)
 {
   fl_color(c);
-  bl; vv(-0.6,0.8); vv(0.2,0.0); vv(-0.6,-0.8); el;
-  fl_begin_line(); 
-  vv(-0.2,0.37); vv(-0.2,0.8); vv(0.6,0.0); vv(-0.2,-0.8); vv(-0.2,-0.37); 
-  fl_end_line();
+  bl; vv(0.0,0.8); vv(0.8,0.0); vv(0.0,-0.8); el;
+  bl; vv(-0.8,0.8); vv(-0.3,0.8); vv(-0.3,-0.8); vv(-0.8,-0.8); el;
 }
 
 void gmsh_back(Fl_Color c)
