@@ -71,13 +71,16 @@
 #define ENT_ALL      (ENT_POINT | ENT_LINE | ENT_SURFACE | ENT_VOLUME)
 
 // 2D mesh algorithms
-#define ALGO_2D_MESHADAPT          1
-#define ALGO_2D_DELAUNAY           2
-#define ALGO_2D_MESHADAPT_DELAUNAY 3
+#define ALGO_2D_MESHADAPT_DELAUNAY  1
+#define ALGO_2D_ANISOTROPIC         2 // unused
+#define ALGO_2D_TRIANGLE            3 // unused
+#define ALGO_2D_MESHADAPT           4
+#define ALGO_2D_DELAUNAY            5
 
 // 3D mesh algorithms
 #define ALGO_3D_TETGEN_DELAUNAY    1
 #define ALGO_3D_NETGEN             4
+#define ALGO_3D_TETGEN             5 // unused
 
 #define TRANSFINI 1
 #define LIBRE     2

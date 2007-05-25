@@ -875,7 +875,7 @@ StringXNumber GeometryOptions_Number[] = {
 
 StringXNumber MeshOptions_Number[] = {
   { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_MESHADAPT_DELAUNAY ,
-    "2D mesh algorithm (1=MeshAdapt, 2=Delaunay, 3=MeshAdapt+Delaunay)" }, 
+    "2D mesh algorithm (1=MeshAdapt+Delaunay, 4=MeshAdapt, 5=Delaunay)" }, 
   { F|O, "Algorithm3D" , opt_mesh_algo3d , 
 #if defined(HAVE_TETGEN)
     ALGO_3D_TETGEN_DELAUNAY ,
