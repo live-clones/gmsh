@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.621 2007-05-25 21:58:11 geuzaine Exp $
+// $Id: GUI.cpp,v 1.622 2007-06-06 07:27:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -855,7 +855,18 @@ GUI::GUI(int argc, char **argv)
   // store fontsize now: we don't want any subsequent change
   // (e.g. when doing a 'restore options') to be taken into account
   // in the dynamic GUI features (set_context, plugin, etc.)
-  fontsize = CTX.fontsize;
+  if(CTX.fontsize > 0){
+    fontsize = CTX.fontsize;
+  }
+  else{
+    int x, y, w, h;
+    Fl::screen_xywh(x, y, w, h);
+    if(w <= 860)       fontsize = 11;
+    else if(w <= 1024) fontsize = 12;
+    else if(w <= 1440) fontsize = 13;
+    else if(w <= 1600) fontsize = 14;
+    else               fontsize = 15;
+  }
 
   // set default font size
   FL_NORMAL_SIZE = fontsize;

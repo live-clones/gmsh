@@ -563,8 +563,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Horizontal position (in pixels) of the upper left corner of the file chooser windows" }, 
   { F|S, "FileChooserPositionY" , opt_general_file_chooser_position1 , 200. ,
     "Vertical position (in pixels) of the upper left corner of the file chooser windows" }, 
-  { F|O, "FontSize" , opt_general_fontsize , 13. , 
-    "Size of the font in the user interface" },
+  { F|O, "FontSize" , opt_general_fontsize , -1. , 
+    "Size of the font in the user interface (-1=automatic)" },
 
   { F|O, "GraphicsFontSize" , opt_general_graphics_fontsize , 16. ,
     "Size of the font in the graphic window" }, 
