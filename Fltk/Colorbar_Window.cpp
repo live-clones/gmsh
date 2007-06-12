@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.57 2006-11-27 22:22:09 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.58 2007-06-12 07:04:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,7 @@ Colorbar_Window::Colorbar_Window(int x, int y, int w, int h, const char *l)
   ct = NULL;
   label = NULL;
   help_flag = 1;
-  font_height = CTX.fontsize;
+  font_height = GetFontSize();
   marker_height = font_height;
   wedge_height = marker_height;
   marker_pos = 0;

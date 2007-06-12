@@ -332,6 +332,7 @@ int GetFontIndex(char *fontname);
 int GetFontEnum(int index);
 char *GetFontName(int index);
 int GetFontAlign(char *alignstr);
+int GetFontSize();
 
 #endif
 

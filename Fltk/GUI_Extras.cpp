@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.34 2007-05-13 10:37:02 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.35 2007-06-12 07:04:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,14 +23,13 @@
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "File_Picker.h"
-#include "Shortcut_Window.h"
 #include "CreateFile.h"
 #include "Options.h"
 #include "Context.h"
 #include "Draw.h"
+#include "GUI.h"
+#include "Shortcut_Window.h"
 
-#include <FL/Fl_Button.H>
-#include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Value_Slider.H>
 #include <FL/Fl_Menu_Window.H>
 #include <errno.h>
@@ -121,8 +120,8 @@ int arrow_editor(char *title, double &a, double &b, double &c)
   };
   static _editor *editor = NULL;
 
-  const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize + 9;
+  const int BH = 2 * GetFontSize() + 1;
+  const int BB = 7 * GetFontSize() + 9;
   const int WB = 7;
 
   if(!editor){
@@ -229,8 +228,8 @@ int generic_bitmap_dialog(char *name, char *title, int format)
   };
   static _generic_bitmap_dialog *dialog = NULL;
 
-  const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize + 9;
+  const int BH = 2 * GetFontSize() + 1;
+  const int BB = 7 * GetFontSize() + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -284,8 +283,8 @@ int jpeg_dialog(char *name)
   };
   static _jpeg_dialog *dialog = NULL;
 
-  const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize + 9;
+  const int BH = 2 * GetFontSize() + 1;
+  const int BB = 7 * GetFontSize() + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -353,8 +352,8 @@ int gif_dialog(char *name)
   };
   static _gif_dialog *dialog = NULL;
 
-  const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize + 9;
+  const int BH = 2 * GetFontSize() + 1;
+  const int BB = 7 * GetFontSize() + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -465,8 +464,8 @@ int gl2ps_dialog(char *name, char *title, int format)
     {0}
   };
 
-  const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize + 9;
+  const int BH = 2 * GetFontSize() + 1;
+  const int BB = 7 * GetFontSize() + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -548,8 +547,8 @@ int options_dialog(char *name)
   };
   static _options_dialog *dialog = NULL;
 
-  const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize + 9;
+  const int BH = 2 * GetFontSize() + 1;
+  const int BB = 7 * GetFontSize() + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -603,8 +602,8 @@ int geo_dialog(char *name)
   };
   static _geo_dialog *dialog = NULL;
 
-  const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize + 9;
+  const int BH = 2 * GetFontSize() + 1;
+  const int BB = 7 * GetFontSize() + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -656,8 +655,8 @@ int generic_mesh_dialog(char *name, char *title, int format)
   };
   static _generic_mesh_dialog *dialog = NULL;
 
-  const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize + 9;
+  const int BH = 2 * GetFontSize() + 1;
+  const int BB = 7 * GetFontSize() + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -718,8 +717,8 @@ int msh_dialog(char *name)
     {0}
   };
 
-  const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize + 9;
+  const int BH = 2 * GetFontSize() + 1;
+  const int BB = 7 * GetFontSize() + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -780,8 +779,8 @@ int unv_dialog(char *name)
   };
   static _unv_dialog *dialog = NULL;
 
-  const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize + 9;
+  const int BH = 2 * GetFontSize() + 1;
+  const int BB = 7 * GetFontSize() + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -845,8 +844,8 @@ int bdf_dialog(char *name)
     {0}
   };
 
-  const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize + 9;
+  const int BH = 2 * GetFontSize() + 1;
+  const int BB = 7 * GetFontSize() + 9;
   const int WB = 7;
 
   if(!dialog){
@@ -910,8 +909,8 @@ int stl_dialog(char *name)
     {0}
   };
 
-  const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize + 9;
+  const int BH = 2 * GetFontSize() + 1;
+  const int BB = 7 * GetFontSize() + 9;
   const int WB = 7;
 
   if(!dialog){

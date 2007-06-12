@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.622 2007-06-06 07:27:35 geuzaine Exp $
+// $Id: GUI.cpp,v 1.623 2007-06-12 07:04:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -452,6 +452,22 @@ int GetFontAlign(char *alignstr)
   return 0;
 }
 
+int GetFontSize()
+{
+  if(CTX.fontsize > 0){
+    return CTX.fontsize;
+  }
+  else{
+    int x, y, w, h;
+    Fl::screen_xywh(x, y, w, h);
+    if(w <= 860)       return 11;
+    else if(w <= 1024) return 12;
+    else if(w <= 1440) return 13;
+    else if(w <= 1600) return 14;
+    else               return 15;
+  }
+}
+
 // Definition of global shortcuts
 
 int GUI::global_shortcuts(int event)
@@ -855,18 +871,7 @@ GUI::GUI(int argc, char **argv)
   // store fontsize now: we don't want any subsequent change
   // (e.g. when doing a 'restore options') to be taken into account
   // in the dynamic GUI features (set_context, plugin, etc.)
-  if(CTX.fontsize > 0){
-    fontsize = CTX.fontsize;
-  }
-  else{
-    int x, y, w, h;
-    Fl::screen_xywh(x, y, w, h);
-    if(w <= 860)       fontsize = 11;
-    else if(w <= 1024) fontsize = 12;
-    else if(w <= 1440) fontsize = 13;
-    else if(w <= 1600) fontsize = 14;
-    else               fontsize = 15;
-  }
+  fontsize = GetFontSize();
 
   // set default font size
   FL_NORMAL_SIZE = fontsize;

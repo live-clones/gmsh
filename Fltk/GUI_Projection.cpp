@@ -5,11 +5,8 @@
 #include "Draw.h"
 #include "Options.h"
 #include "Context.h"
-
+#include "GUI.h"
 #include "Shortcut_Window.h"
-#include <FL/Fl_Button.H>
-#include <FL/Fl_Return_Button.H>
-#include <FL/Fl_Value_Input.H>
 
 extern GModel *GMODEL;
 extern Context_T CTX;
@@ -23,8 +20,8 @@ int projection_editor(char *title, projectionFace *p)
   };
   static _editor *editor = 0;
 
-  const int BH = 2 * CTX.fontsize + 1;
-  const int BB = 7 * CTX.fontsize;
+  const int BH = 2 * GetFontSize() + 1;
+  const int BB = 7 * GetFontSize();
   const int WB = 7;
   
   SBoundingBox3d bounds = GMODEL->bounds();
