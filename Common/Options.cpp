@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.345 2007-05-24 17:34:03 geuzaine Exp $
+// $Id: Options.cpp,v 1.346 2007-06-22 08:07:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -7067,6 +7067,13 @@ double opt_print_text(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.print.text = (int)val;
   return CTX.print.text;
+}
+
+double opt_print_tex_as_equation(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.print.tex_as_equation = (int)val;
+  return CTX.print.tex_as_equation;
 }
 
 // Color option routines

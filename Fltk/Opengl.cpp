@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.72 2006-12-12 01:39:15 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.73 2007-06-22 08:07:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -53,6 +53,9 @@ void SanitizeTeXString(char *in, char *out)
     strcpy(out, in);
     return;
   }
+
+  if(CTX.print.tex_as_equation) *out++ = '$';
+
   // otherwise, escape the following special characters:
   char bad[8] = { '%', '^', '#', '%', '&', '_', '{', '}' };
   while(*in){
@@ -64,6 +67,9 @@ void SanitizeTeXString(char *in, char *out)
     }
     *out++ = *in++;
   }
+
+  if(CTX.print.tex_as_equation) *out++ = '$';
+
   *out = '\0';
 }
 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.532 2007-05-24 17:34:03 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.533 2007-06-22 08:07:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -676,7 +676,7 @@ int _save_vrml(char *name){ return generic_mesh_dialog(name, "VRML Options", FOR
 int _save_eps(char *name){ return gl2ps_dialog(name, "EPS Options", FORMAT_EPS); }
 int _save_gif(char *name){ return gif_dialog(name); }
 int _save_jpeg(char *name){ return jpeg_dialog(name); }
-int _save_tex(char *name){ CreateOutputFile(name, FORMAT_TEX); return 1; }
+int _save_tex(char *name){ return latex_dialog(name); }
 int _save_pdf(char *name){ return gl2ps_dialog(name, "PDF Options", FORMAT_PDF); }
 int _save_png(char *name){ return generic_bitmap_dialog(name, "PNG Options", FORMAT_PNG); }
 int _save_ps(char *name){ return gl2ps_dialog(name, "PS Options", FORMAT_PS); }

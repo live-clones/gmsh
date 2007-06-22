@@ -648,6 +648,7 @@ double opt_print_gif_sort(OPT_ARGS_NUM);
 double opt_print_gif_interlace(OPT_ARGS_NUM);
 double opt_print_gif_transparent(OPT_ARGS_NUM);
 double opt_print_text(OPT_ARGS_NUM);
+double opt_print_tex_as_equation(OPT_ARGS_NUM);
 
 // COLORS
 

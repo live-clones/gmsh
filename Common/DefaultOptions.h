@@ -1396,6 +1396,8 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "JpegSmoothing" , opt_print_jpeg_smoothing , 0. ,
     "JPEG smoothing (between 0 and 100)" },
 
+  { F|O, "TexAsEquation" , opt_print_tex_as_equation , 0. ,
+    "Print all TeX strings as equations" },
   { F|O, "Text" , opt_print_text , 1. ,
     "Print text strings?" },
 

@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.35 2007-06-12 07:04:08 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.36 2007-06-22 08:07:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -259,6 +259,59 @@ int generic_bitmap_dialog(char *name, char *title, int format)
       if (o == dialog->ok) {
 	opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b->value());
 	CreateOutputFile(name, format);
+	dialog->window->hide();
+	return 1;
+      }
+      if (o == dialog->window || o == dialog->cancel){
+	dialog->window->hide();
+	return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+// TeX dialog
+
+int latex_dialog(char *name)
+{
+  struct _latex_dialog{
+    Fl_Window *window;
+    Fl_Check_Button *b;
+    Fl_Button *ok, *cancel;
+  };
+  static _latex_dialog *dialog = NULL;
+
+  const int BH = 2 * GetFontSize() + 1;
+  const int BB = 7 * GetFontSize() + 9;
+  const int WB = 7;
+
+  if(!dialog){
+    dialog = new _latex_dialog;
+    int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
+    // not a "Dialog_Window" since it is modal 
+    dialog->window = new Fl_Double_Window(w, h, "LaTeX Options");
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print strings as equations"); y += BH;
+    dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
+    dialog->window->set_modal();
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+  
+  dialog->b->value(CTX.print.tex_as_equation);
+  dialog->window->show();
+
+  while(dialog->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == dialog->ok) {
+	opt_print_tex_as_equation(0, GMSH_SET | GMSH_GUI, (int)dialog->b->value());
+	CreateOutputFile(name, FORMAT_TEX);
 	dialog->window->hide();
 	return 1;
       }

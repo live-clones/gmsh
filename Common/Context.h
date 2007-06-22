@@ -218,7 +218,7 @@ public :
     int jpeg_quality, jpeg_smoothing;
     int gif_dither, gif_sort, gif_interlace, gif_transparent;
     int geo_labels;
-    int text;
+    int text, tex_as_equation;
   } print;
 
   // color options

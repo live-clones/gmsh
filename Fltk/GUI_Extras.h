@@ -40,6 +40,7 @@ int msh_dialog(char *filename);
 int unv_dialog(char *filename);
 int bdf_dialog(char *filename);
 int stl_dialog(char *filename);
+int latex_dialog(char *filename);
 
 #endif
 

@@ -3,7 +3,7 @@
 #include <signal.h>
 #include <stdarg.h>
 
-void Msg(int level, char *fmt, ...)
+void Msg(int level, const char *fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
