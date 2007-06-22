@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.78 2007-03-05 09:30:53 geuzaine Exp $
+// $Id: PostElement.cpp,v 1.79 2007-06-22 12:08:16 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

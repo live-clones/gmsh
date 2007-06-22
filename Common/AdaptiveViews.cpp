@@ -26,7 +26,17 @@
 #include "Plugin.h"
 #include "OS.h"
 
+
+
 // A recursive effective implementation
+
+void adapt_triangle::GSF (const double u, const double v, double w, double sf[]) 
+{
+  sf[0] = 1. - u - v;
+  sf[1] = u;
+  sf[2] = v;
+}
+
 
 void computeShapeFunctions(Double_Matrix * coeffs, Double_Matrix * eexps,
                            double u, double v, double w, double *sf);
@@ -85,6 +95,7 @@ void adapt_triangle::Create(int maxlevel, Double_Matrix * coeffs,
   adapt_triangle *t = new adapt_triangle(p1, p2, p3);
   Recur_Create(t, maxlevel, level, coeffs, eexps);
 }
+
 
 void adapt_quad::Create(int maxlevel, Double_Matrix * coeffs,
                         Double_Matrix * eexps)
@@ -191,6 +202,8 @@ void adapt_triangle::Recur_Create(adapt_triangle * t, int maxlevel, int level,
   t->e[2] = t3;
   t->e[3] = t4;
 }
+
+
 
 void adapt_quad::Recur_Create(adapt_quad * q, int maxlevel, int level,
                               Double_Matrix * coeffs, Double_Matrix * eexps)
@@ -386,6 +399,7 @@ void adapt_triangle::Error(double AVG, double tol)
   Recur_Error(t, AVG, tol);
 }
 
+
 void adapt_quad::Error(double AVG, double tol)
 {
   adapt_quad *q = *all_elems.begin();
@@ -516,6 +530,7 @@ void adapt_triangle::Recur_Error(adapt_triangle * t, double AVG, double tol)
     }
   }
 }
+
 
 void adapt_quad::Recur_Error(adapt_quad * q, double AVG, double tol)
 {
@@ -705,14 +720,17 @@ int Adaptive_Post_View::zoomElement(Post_View * view,
   double c0 = Cpu();
 
   const int N = _coefs->size1();
+  
+  //  printf("%d coefs %d nod %d points %d %d %d %d\n",N,nbNod,adapt_point::all_points.size(),_STposX->size1(),_STposX->size2(),_STval->size1(),_STval->size2());
+
   Double_Vector val(N), res(adapt_point::all_points.size());
   Double_Vector valx(N), resx(adapt_point::all_points.size());
   Double_Vector valy(N), resy(adapt_point::all_points.size());
   Double_Vector valz(N), resz(adapt_point::all_points.size());
-  Double_Matrix xyz(nbNod,3);
+  Double_Matrix xyz(_STposX->size2(),3);
   Double_Matrix XYZ(adapt_point::all_points.size(),3);
 
-  for(int k = 0; k < nbNod; ++k){
+  for(int k = 0; k < _STposX->size2(); ++k){
     xyz(k, 0) = (*_STposX)(ielem, k);
     xyz(k, 1) = (*_STposY)(ielem, k);
     xyz(k, 2) = (*_STposZ)(ielem, k);
@@ -830,9 +848,9 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(Post_View * view,
   if(presentTol == tol && presentZoomLevel == level && !plug)
     return;
 
-  printf
-    ("calling setAdaptive with level = %d and plug = %p tol %g presentTol %g\n",
-     level, (void *)plug, tol, presentTol);
+//   printf
+//     ("calling setAdaptive with level = %d and plug = %p tol %g presentTol %g\n",
+//      level, (void *)plug, tol, presentTol);
 
   int *done = new int[_STposX->size1()];
   for(int i = 0; i < _STposX->size1(); ++i)
@@ -853,7 +871,7 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(Post_View * view,
     view->NbVT = 0;
     view->VT =List_Create ( nbelm * 36, nbelm , sizeof(double));	
   }
-  if(view->NbST) {
+  else if(view->NbST) {
     TYP = 1;
     List_Delete(view->ST);
     view->NbST = 0;
@@ -912,7 +930,7 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(Post_View * view,
 						    &(view->SS), &(view->NbSS), done);
     int nbDone = 0;
     for(int i=0; i < _STposX->size1(); ++i) nbDone += done[i];
-    printf("adaptive %d %d %d %d\n", level, level_act, nbDone, _STposX->size1());
+    //    printf("adaptive %d %d %d %d\n", level, level_act, nbDone, _STposX->size1());
     if (nbDone ==_STposX->size1())  break;
     if (level_act >= level) break;
     level_act ++;
@@ -926,7 +944,7 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(Post_View * view,
   presentZoomLevel = level;
   presentTol = tol;
 
-  printf("finished %g %g %g %g\n", t0, t1, t2, t3);
+  //  printf("finished %g %g %g %g\n", t0, t1, t2, t3);
   delete[]done;
 }
 
@@ -954,7 +972,7 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel_TEMPL(Post_View * view,
   if(_Geometry)
     delete _Geometry;
   _Interpolate = new Double_Matrix(adapt_point::all_points.size(), N);
-  _Geometry = new Double_Matrix(adapt_point::all_points.size(), ELEM::nbNod);
+  _Geometry = new Double_Matrix(adapt_point::all_points.size(), _STposX->size2());
 
   int kk = 0;
   for(; it != ite; ++it) {
@@ -962,8 +980,16 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel_TEMPL(Post_View * view,
     for(int k = 0; k < N; ++k) {
       (*_Interpolate) (kk, k) = p->shape_functions[k];
     }
-    ELEM::GSF(p->x, p->y, p->z, sf);
-    for(int k = 0; k < ELEM::nbNod; k++)
+
+    if (_coefsGeom)
+      {
+	computeShapeFunctions(_coefsGeom, _eexpsGeom, p->x, p->y, p->z, sf);
+      }
+    else
+      {
+	ELEM::GSF(p->x, p->y, p->z, sf);
+      }
+    for(int k = 0; k < _STposX->size2(); k++)
       (*_Geometry) (kk, k) = sf[k];
     kk++;
   }
@@ -1047,6 +1073,7 @@ void Adaptive_Post_View::initWithLowResolution(Post_View * view)
   if (_coefsGeom)
     {
       nbnod = _coefsGeom -> size1 ();
+      //      printf("THERE IS A GEOMETRY !!!!!!!! nbNod = %d\n",nbnod);
     }
 
 

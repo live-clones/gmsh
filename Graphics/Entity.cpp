@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.71 2006-11-27 22:22:14 geuzaine Exp $
+// $Id: Entity.cpp,v 1.72 2007-06-22 12:08:16 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -128,7 +128,7 @@ void Draw_Cylinder(double width, double *x, double *y, double *z, int light)
 void Draw_Line(int type, double width, double *x, double *y, double *z,
                int light)
 {
-  if(type)
+  if(type==1)
     Draw_Cylinder(width, x, y, z, light);
   else {
     glBegin(GL_LINES);

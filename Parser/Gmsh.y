@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.277 2007-05-24 17:37:34 geuzaine Exp $
+// $Id: Gmsh.y,v 1.278 2007-06-22 12:08:17 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -487,24 +487,25 @@ Element :
     {
       if(ViewValueList){
 	if(ViewCoordIdx != 3 * ViewNumNodes){
-	  yymsg(GERROR, "Wrong number of node coordinates (%d != %d)", 
-		ViewCoordIdx, 3 * ViewNumNodes);
-	  double d = 0;
-	  for(int i = 0; i < 3 * ViewNumNodes; i++)
-	    List_Add(ViewValueList, &d);
+/* 	  yymsg(GERROR, "Wrong number of node coordinates (%d != %d)",  */
+/* 		ViewCoordIdx, 3 * ViewNumNodes); */
+/* 	  double d = 0; */
+/* 	  for(int i = 0; i < 3 * ViewNumNodes; i++) */
+/* 	    List_Add(ViewValueList, &d); */
+	  ViewNumNodes = ViewCoordIdx/3;
 	}
-	else{
-	  for(int i = 0; i < 3; i++)
-	    for(int j = 0; j < ViewNumNodes; j++)
-	      List_Add(ViewValueList, &ViewCoord[3*j+i]);
-	}
+	//	else{
+	for(int i = 0; i < 3; i++)
+	  for(int j = 0; j < ViewNumNodes; j++)
+	    List_Add(ViewValueList, &ViewCoord[3*j+i]);
+	//	}
 	ViewNumListTmp = List_Nbr(ViewValueList);
       }
     }
     '{' ElementValues '}' tEND
     {
       if(ViewValueList){  
-	if((List_Nbr(ViewValueList) - ViewNumListTmp) % (ViewNumComp * ViewNumNodes)) 
+	if((List_Nbr(ViewValueList) - ViewNumListTmp) % (ViewNumComp * ViewCoordIdx/3)) 
 	  ViewErrorFlags[ViewElementIdx]++;
 	(*ViewNumList)++;
       }

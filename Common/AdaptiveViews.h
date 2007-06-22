@@ -108,12 +108,7 @@ public:
   {
     return (p[0]->val + p[1]->val + p[2]->val)/3.;    
   }
-  inline static void GSF (const double u, const double v, double w, double sf[]) 
-  {
-    sf[0] = 1. - u - v;
-    sf[1] = u;
-    sf[2] = v;
-  }
+  static void GSF (const double u, const double v, double w, double sf[]); 
   void print ()
   {
     printf("p1 %g %g p2 %g %g p3 %g %g\n", 
@@ -130,6 +125,10 @@ public:
   static std::list<adapt_triangle*> all_elems;
   static int nbNod;
 };
+
+
+
+
 
 class adapt_quad
 {
