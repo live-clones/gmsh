@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.148 2007-05-24 14:21:53 geuzaine Exp $
+# $Id: Makefile,v 1.149 2007-07-09 13:54:36 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -22,8 +22,9 @@
 include ../variables
 
 LIB     = ../lib/libGmshGeo.a
-INCLUDE = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Numeric\
-          -I../Parser -I../Fltk -I../contrib/NR -I../contrib/FourierModel -I../contrib/ANN/include -I../contrib/MathEval
+INCLUDE = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Post -I../Numeric\
+          -I../Parser -I../Fltk -I../contrib/NR -I../contrib/FourierModel\
+          -I../contrib/ANN/include -I../contrib/MathEval
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
 
 SRC = GEntity.cpp\
@@ -184,13 +185,13 @@ GModel.o: GModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h MFace.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
   ExtrudeParams.h ../Common/SmoothData.h GFace.h GEdgeLoop.h Pair.h \
-  GRegion.h gmshSurface.h ../Mesh/Field.h ../Common/Views.h \
-  ../Common/ColorTable.h ../Common/VertexArray.h ../Common/SmoothData.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h ../Geo/Geo.h \
-  ../Geo/gmshSurface.h ../DataStr/Tree.h ../DataStr/avl.h \
-  ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Geo/GEdge.h \
-  ../Common/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h \
-  MRep.h ../Common/Message.h ../Common/OS.h ../Mesh/BackgroundMesh.h
+  GRegion.h gmshSurface.h ../Mesh/Field.h ../Post/Views.h \
+  ../Post/ColorTable.h ../Common/VertexArray.h ../Post/AdaptiveViews.h \
+  ../Common/GmshMatrix.h ../Geo/Geo.h ../Geo/gmshSurface.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
+  ../Geo/ExtrudeParams.h ../Geo/GEdge.h ../Post/OctreePost.h \
+  ../Common/Octree.h ../Common/OctreeInternals.h MRep.h \
+  ../Common/Message.h ../Common/OS.h ../Mesh/BackgroundMesh.h
 GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h \
   SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \
@@ -220,10 +221,9 @@ GModelIO_F.o: GModelIO_F.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \
   MFace.h ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
   ExtrudeParams.h ../Common/SmoothData.h GFace.h GEdgeLoop.h Pair.h \
-  GRegion.h ../Common/Message.h ../Common/Views.h ../Common/ColorTable.h \
-  ../Common/VertexArray.h ../Common/SmoothData.h \
-  ../Common/AdaptiveViews.h ../Common/GmshMatrix.h FFace.h FEdge.h \
-  FVertex.h ../Mesh/meshGFace.h GModelIO_F.h
+  GRegion.h ../Common/Message.h ../Post/Views.h ../Post/ColorTable.h \
+  ../Common/VertexArray.h ../Post/AdaptiveViews.h ../Common/GmshMatrix.h \
+  FFace.h FEdge.h FVertex.h ../Mesh/meshGFace.h GModelIO_F.h
 GModelIO_CGNS.o: GModelIO_CGNS.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h \
   SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \

@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.33 2006-11-27 22:22:07 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.1 2007-07-09 13:54:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

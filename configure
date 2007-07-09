@@ -3185,13 +3185,13 @@ esac
 
 
 
-GMSH_DIRS="Common DataStr Geo Mesh Numeric Parallel Parser Plugin"
+GMSH_DIRS="Common DataStr Geo Mesh Post Numeric Parallel Parser Plugin"
 
 if test "x$enable_gui" != "xno"; then
 
   GMSH_DIRS="${GMSH_DIRS} Graphics Fltk"
   GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshPlugin -lGmshCommon -lGmshDataStr -lGmshNumeric"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshPlugin -lGmshPost -lGmshCommon -lGmshDataStr -lGmshNumeric"
   GMSH_LIBS="${GMSH_LIBS} -lGmshParallel"
   FLAGS="-DHAVE_FLTK ${FLAGS}"
 
@@ -3622,8 +3622,9 @@ fi
 else
 
   GMSH_DIRS="${GMSH_DIRS} Box"
-  GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo -lGmshPlugin"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshDataStr -lGmshNumeric -lGmshParallel"
+  GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshPlugin -lGmshPost -lGmshCommon -lGmshDataStr"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshNumeric -lGmshParallel"
 
     ZLIB=""
   if test "x$enable_zlib" != "xno"; then

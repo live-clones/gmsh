@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.34 2007-05-04 10:45:09 geuzaine Exp $
+// $Id: Transform.cpp,v 1.35 2007-07-09 13:54:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -122,7 +122,16 @@ static void transform_list(Post_View *view, List_T *list, int nbList,
     double *z = (double *)List_Pointer_Fast(list, i + 2 * nbVert);
     for(int j = 0; j < nbVert; j++) {
       double v[3] = { x[j], y[j], z[j] };
+#if 1
       transform(mat, v, &x[j], &y[j], &z[j]);
+#else
+      // for saku
+      double alpha = mat[0][0];
+      double d = sqrt(v[0] * v[0] + v[1] * v[1]);
+      x[j] = cos(2 * M_PI / alpha * atan2(v[1], v[0])) * alpha / (2 * M_PI) * d;
+      y[j] = sin(2 * M_PI / alpha * atan2(v[1], v[0])) * alpha / (2 * M_PI) * d;
+      z[j] = cos(asin(alpha / (2 * M_PI))) * d;
+#endif
       if(x[j] < view->BBox[0]) view->BBox[0] = x[j];
       if(x[j] > view->BBox[1]) view->BBox[1] = x[j];
       if(y[j] < view->BBox[2]) view->BBox[2] = y[j];
