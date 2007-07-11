@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.119 2007-05-10 22:08:03 geuzaine Exp $
+// $Id: Generator.cpp,v 1.120 2007-07-11 16:55:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -216,6 +216,16 @@ void Mesh1D()
 void Mesh2D()
 {
   if(TooManyElements(2)) return;
+
+  if(CTX.mesh.algo2d == ALGO_2D_DELAUNAY && !CTX.expert_mode){
+    if(!GetBinaryAnswer("The 2D Delaunay algorithm is still highly experimental\n"
+			"and produces triangles with random orientations. Do you\n"
+			"really want to continue?\n\n"
+			"(To disable this warning in the future, select `Enable\n"
+			"expert mode' in the option dialog.)",
+			"Continue", "Cancel")) return;
+  }
+
   Msg(STATUS1, "Meshing 2D...");
   double t1 = Cpu();
 
