@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.19 2007-05-14 12:51:09 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.20 2007-07-11 15:46:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -467,21 +467,35 @@ int GModel::readMSH(const std::string &name)
 
   // store the elements in their associated elementary entity. If the
   // entity does not exist, create a new one.
-  for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
+  bool noElements = true;
+  for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++){
+    noElements &= elements[i].empty();
     storeElementsInEntities(this, elements[i]);
+  }
 
-  // treat points separately
-  {
-    std::map<int, std::vector<MVertex*> >::const_iterator it = points.begin();
-    for(; it != points.end(); ++it){
-      GVertex *v = vertexByTag(it->first);
-      if(!v){
-	v = new gmshVertex(this, it->first);
-	add(v);
-      }
-      for(unsigned int i = 0; i < it->second.size(); i++) 
-	v->mesh_vertices.push_back(it->second[i]);
+  // special case: if there are no elements, create one geometry
+  // vertex for each mesh vertex
+  if(noElements){
+    Msg(INFO, "No elements in mesh: creating geometry vertices");
+    for(unsigned int i = 0; i < vertexVector.size(); i++){
+      MVertex *v = vertexVector[i];
+      if(v) points[v->getNum()].push_back(v);
     }
+    for(std::map<int, MVertex*>::iterator it = vertexMap.begin(); 
+	it != vertexMap.end(); ++it) 
+      points[it->second->getNum()].push_back(it->second);
+  }
+  
+  // treat points separately
+  for(std::map<int, std::vector<MVertex*> >::iterator it = points.begin(); 
+      it != points.end(); ++it){
+    GVertex *v = vertexByTag(it->first);
+    if(!v){
+      v = new gmshVertex(this, it->first);
+      add(v);
+    }
+    for(unsigned int i = 0; i < it->second.size(); i++) 
+      v->mesh_vertices.push_back(it->second[i]);
   }
 
   // associate the correct geometrical entity with each mesh vertex
