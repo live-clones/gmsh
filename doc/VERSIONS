@@ -1,18 +1,21 @@
-$Id: VERSIONS,v 1.386 2007-07-09 13:54:38 geuzaine Exp $
+$Id: VERSIONS,v 1.387 2007-07-11 17:55:46 geuzaine Exp $
 
-2.1 (xxx yy, 2007): volumes can now be defined from external CAD
+2.0.8 (Jul XX, 2007): unused vertices are not saved in mesh files
+anymore; new plugin GUI; automatic GUI font size selection; renamed
+Plugin(DecomposeInSimplex) into Plugin(MakeSimplex); reintroduced
+enhanced Plugin(SphericalRaise); clarified meshing algo names; new
+option to save groups of nodes in UNV meshes; many small improvements
+and small bug fixes.
+
+2.0.7 (Apr 3, 2007): volumes can now be defined from external CAD
 surfaces; Delaunay/Tetgen algorithm is now used by default when
 available; re-added support for Plot3D structured mesh format; added
 ability to export external CAD models as GEO files (this only works
 for the limited set of geometrical primitives available in the GEO
 language, of course--so trying to convert e.g. a trimmed NURBS from a
 STEP file into a GEO file will fail); "lateral" entities are now added
-at the end of the list returned by extrusion commands; unused vertices
-are not saved in mesh files anymore; new plugin GUI; automatic GUI
-font size selection; renamed Plugin(DecomposeInSimplex) into
-Plugin(MakeSimplex); reintroduced enhanced Plugin(SphericalRaise);
-clarified meshing algo names; many small improvements and small bug
-fixes.
+at the end of the list returned by extrusion commands; fixed various
+bugs.
 
 2.0 (Feb 5, 2007): new geometry and mesh databases, with support for
 STEP and IGES import via OpenCascade; complete rewrite of geometry and
