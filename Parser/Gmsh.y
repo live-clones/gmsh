@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.278 2007-06-22 12:08:17 remacle Exp $
+// $Id: Gmsh.y,v 1.279 2007-07-11 16:38:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -487,18 +487,13 @@ Element :
     {
       if(ViewValueList){
 	if(ViewCoordIdx != 3 * ViewNumNodes){
-/* 	  yymsg(GERROR, "Wrong number of node coordinates (%d != %d)",  */
-/* 		ViewCoordIdx, 3 * ViewNumNodes); */
-/* 	  double d = 0; */
-/* 	  for(int i = 0; i < 3 * ViewNumNodes; i++) */
-/* 	    List_Add(ViewValueList, &d); */
+ 	  // yymsg(GERROR, "Wrong number of node coordinates (%d != %d)", 
+	  //       ViewCoordIdx, 3 * ViewNumNodes);
 	  ViewNumNodes = ViewCoordIdx/3;
 	}
-	//	else{
 	for(int i = 0; i < 3; i++)
 	  for(int j = 0; j < ViewNumNodes; j++)
 	    List_Add(ViewValueList, &ViewCoord[3*j+i]);
-	//	}
 	ViewNumListTmp = List_Nbr(ViewValueList);
       }
     }

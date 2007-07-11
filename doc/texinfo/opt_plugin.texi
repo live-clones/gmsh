@@ -413,6 +413,19 @@ Default value: @code{0}
 Default value: @code{-1}
 @end table
 
+@item Plugin(FieldView)
+Plugin(FieldView) evaluate a field on the choosen view.
+
+Numeric options:
+@table @code
+@item Component
+Default value: @code{-1}
+@item iView
+Default value: @code{-1}
+@item Field
+Default value: @code{-1}
+@end table
+
 @item Plugin(Gradient)
 Plugin(Gradient) computes the gradient of the
 field in the view `iView'. If `iView' < 0, the
@@ -648,21 +661,23 @@ Default value: @code{-1}
 
 @item Plugin(StreamLines)
 Plugin(StreamLines) computes stream lines
-from a vector view `iView' and optionally
-interpolates the scalar view `dView' on the
-resulting stream lines. It takes as input a
-grid defined by the 3 points (`X0',`Y0',`Z0')
-(origin), (`X1',`Y1',`Z1') (axis of U) and
-(`X2',`Y2',`Z2') (axis of V). The number of points
-that are going to be transported along U and V is
-set with the options `nPointsU' and `nPointsV'.
-Then, we solve the equation DX(t)/dt = V(x,y,z)
-with X(t=0) chosen as the grid and V(x,y,z)
-interpolated on the vector view. The timestep and
-the maximum number of iterations are set with
-the options `MaxIter' and `DT'. The time stepping
-scheme is a RK44. If `iView' < 0, the plugin is run
-on the current view.
+from the `TimeStep'-th time step of a vector
+view `iView' and optionally interpolates the
+scalar view `dView' on the resulting stream
+lines. The plugin takes as input a grid defined
+by the 3 points (`X0',`Y0',`Z0') (origin),
+(`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2')
+(axis of V). The number of points that are to
+be transported along U and V is set with the
+options `nPointsU' and `nPointsV'. The equation
+DX(t)/dt=V(x,y,z) is then solved with the initial
+condition X(t=0) chosen as the grid and with V(x,y,z)
+interpolated on the vector view. The time stepping
+scheme is a RK44 with step size `DT' and `MaxIter'
+maximum number of iterations. If `iView' < 0, the
+plugin is run on the current view. If `TimeStep' < 0,
+the plugin tries to compute streamlines of the unsteady
+flow.
 
 Plugin(StreamLines) creates one new view. This
 view contains multi-step vector points if `dView'
@@ -696,6 +711,8 @@ Default value: @code{1}
 Default value: @code{100}
 @item DT
 Default value: @code{0.1}
+@item TimeStep
+Default value: @code{0}
 @item dView
 Default value: @code{-1}
 @item iView

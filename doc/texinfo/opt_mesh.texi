@@ -10,12 +10,12 @@ Default value: @code{"praqzBPY"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm
-2D mesh algorithm (1=meshadapt, 2=delaunay)@*
+2D mesh algorithm (1=MeshAdapt+Delaunay, 4=MeshAdapt, 5=Delaunay)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm3D
-3D mesh algorithm (1=delaunay, 4=netgen, 5=tetgen)@*
+3D mesh algorithm (1=Tetgen+Delaunay, 4=Netgen)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -301,6 +301,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveAll
 Ignore Physical definitions and save all elements@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.SaveGroupsOfNodes
+Save groups of nodes for each physical line and surface (UNV mesh format only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 

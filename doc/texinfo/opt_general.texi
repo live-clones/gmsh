@@ -390,8 +390,8 @@ Default value: @code{200}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.FontSize
-Size of the font in the user interface@*
-Default value: @code{13}@*
+Size of the font in the user interface (-1=automatic)@*
+Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsFontSize

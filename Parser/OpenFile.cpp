@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.148 2007-05-23 15:35:33 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.149 2007-07-11 16:38:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -275,16 +275,6 @@ void SetProjectName(char *name)
 
 int MergeFile(char *name, int warn_if_missing)
 {
-  // FIXME: to be removed
-  // #if defined(HAVE_FOURIER_MODEL)
-  //   if(!strcmp(name, "falcon") || !strcmp(name, "ship")){
-  //     GMODEL->readFourier(name);
-  //     SetBoundingBox();
-  //     CTX.mesh.changed = ENT_ALL;
-  //     return 1;
-  //   }
-  // #endif
-  
   // added 'b' for pure Windows programs, since some of these files
   // contain binary data
   FILE *fp = fopen(name, "rb");
