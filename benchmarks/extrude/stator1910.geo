@@ -56,35 +56,35 @@ V_100dent   = 123456;
 i_sect = 1;
 
 Extrude Surface {2, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_corp, 1};                           // corp   
+  Recombine ; Layers { 1};                           // corp   
   };
 Extrude Surface {4, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_100dent, 1};                        // pas de dent
+  Recombine ; Layers { 1};                        // pas de dent
   };
 Extrude Surface {6, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_100dent, 1};                        // pas de dent
+  Recombine ; Layers { 1};                        // pas de dent
   };
 Extrude Surface {8, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1 ,V_PZT_lower + N_*(i_sect-1), 1 };     // PZT_lower
+  Recombine ; Layers { 1 };     // PZT_lower
   };
 Extrude Surface {10, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_PZT_upper + N_*(i_sect-1), 1 };     // PZT_upper 
+  Recombine ; Layers { 1};     // PZT_upper 
   };
 
 Extrude Surface {86, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1 ,V_corp, 1 };                                // corp
+  Recombine ; Layers { 1 };                                // corp
   };
 Extrude Surface {108, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_100dent, 1 };                             // pas de dent
+  Recombine ; Layers { 1 };                             // pas de dent
   };
 Extrude Surface {130, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_100dent, 1 };                             // pas de dent
+  Recombine ; Layers { 1 };                             // pas de dent
   };
 Extrude Surface {152, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_PZT_lower + N_*(i_sect-1), 1};            // PZT_lower
+  Recombine ; Layers { 1 };            // PZT_lower
   };
 Extrude Surface {174, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_PZT_upper + N_*(i_sect-1), 1};            //  PZT_upper 
+  Recombine ; Layers { 1 };            //  PZT_upper 
   };
 
 L_sec=(Pi/12-teta_vide)*R; 
@@ -92,10 +92,6 @@ l_vide=teta_vide*R/L_sec;
 l_dent=teta_tooth*R/L_sec;
 
 For i In {0:4}
-  ListVol1[i]=V_corp ;   // corp
-  ListVol2[i]=V_dent+i; //  dents ou vides : V_dent<-dent, V_dent+1<-vide ...
-  ListVol3[i]=V_PZT_lower + N_*(i_sect-1);   // PZT_lower        
-  ListVol4[i]=V_PZT_upper + N_*(i_sect-1);   // PZT_upper
   ListExt[i]=1;
 EndFor
 
@@ -111,51 +107,51 @@ EndFor
 ListDiv[4]=1;
 
 Extrude Surface {86+insc, {0,0,1}, {0,0,0}, Pi/12-teta_vide}{
-  Recombine ; Layers {  ListExt[{0:4}] , ListVol1[{0:4}], ListDiv[{0:4}] }; 
+  Recombine ; Layers {  ListExt[{0:4}] , ListDiv[{0:4}] }; 
   };
 Extrude Surface {108+insc, {0,0,1}, {0,0,0}, Pi/12-teta_vide}{
-  Recombine ; Layers {  ListExt[{0:4}] , ListVol2[{0:4}], ListDiv[{0:4}] }; 
+  Recombine ; Layers {  ListExt[{0:4}] , ListDiv[{0:4}] }; 
   };
 Extrude Surface {130+insc, {0,0,1}, {0,0,0}, Pi/12-teta_vide}{
-  Recombine ; Layers {  ListExt[{0:4}] , ListVol2[{0:4}], ListDiv[{0:4}] };
+  Recombine ; Layers {  ListExt[{0:4}] , ListDiv[{0:4}] };
   };
 Extrude Surface {152+insc, {0,0,1}, {0,0,0}, Pi/12-teta_vide}{
-  Recombine ; Layers {  ListExt[{0:4}] , ListVol3[{0:4}], ListDiv[{0:4}] };
+  Recombine ; Layers {  ListExt[{0:4}] , ListDiv[{0:4}] };
   };
 Extrude Surface {174+insc, {0,0,1}, {0,0,0}, Pi/12-teta_vide}{
-  Recombine ; Layers {  ListExt[{0:4}] , ListVol4[{0:4}], ListDiv[{0:4}] };
+  Recombine ; Layers {  ListExt[{0:4}] , ListDiv[{0:4}] };
   };
 
 Extrude Surface {86+2*insc, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1 ,V_corp, 1 };                                // corp
+  Recombine ; Layers { 1 };                                // corp
   };
 Extrude Surface {108+2*insc, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_100dent, 1 };                             // pas de dent
+  Recombine ; Layers { 1 };                             // pas de dent
   };
 Extrude Surface {130+2*insc, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_100dent, 1};                              // pas de dent
+  Recombine ; Layers { 1 };                              // pas de dent
   };
 Extrude Surface {152+2*insc, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_PZT_lower + N_*(i_sect-1), 1};                            // PZT_lower
+  Recombine ; Layers { 1 };                            // PZT_lower
   };
 Extrude Surface {174+2*insc, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_PZT_upper + N_*(i_sect-1), 1};                            //  PZT_upper 
+  Recombine ; Layers { 1 };                            //  PZT_upper 
   };
 
 Extrude Surface {86+3*insc, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_corp, 1};                          // corp   
+  Recombine ; Layers { 1 };                          // corp   
   };
 Extrude Surface {108+3*insc, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_100dent, 1};                       // pas de dent
+  Recombine ; Layers { 1 };                       // pas de dent
   };
 Extrude Surface {130+3*insc, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_100dent, 1};                       // pas de dent
+  Recombine ; Layers { 1 };                       // pas de dent
   };
 Extrude Surface {152+3*insc, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_PZT_lower + N_*(i_sect-1), 1 };    // PZT_lower
+  Recombine ; Layers { 1 };    // PZT_lower
   };
 Extrude Surface {174+3*insc, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_PZT_upper + N_*(i_sect-1), 1 };    // PZT_upper 
+  Recombine ; Layers { 1 };    // PZT_upper 
   };
 
 
@@ -164,89 +160,84 @@ Extrude Surface {174+3*insc, {0,0,1}, {0,0,0}, teta_gap/2}{
 For i_sect In {2:NodLin}
 
 Extrude Surface {86+((i_sect-2)*5+4)*insc, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_corp, 1};                          // corp   
+  Recombine ; Layers { 1 };                          // corp   
   };
 Extrude Surface {108+((i_sect-2)*5+4)*insc, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_100dent, 1};                       // pas de dent
+  Recombine ; Layers { 1 };                       // pas de dent
   };
 Extrude Surface {130+((i_sect-2)*5+4)*insc, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_100dent, 1};                       // pas de dent
+  Recombine ; Layers { 1 };                       // pas de dent
   };
 Extrude Surface {152+((i_sect-2)*5+4)*insc, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_PZT_lower + N_*(i_sect-1), 1 };   // PZT_lower
+  Recombine ; Layers { 1 };   // PZT_lower
   };
 Extrude Surface {174+((i_sect-2)*5+4)*insc, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_PZT_upper + N_*(i_sect-1), 1 };   // PZT_upper 
+  Recombine ; Layers { 1 };   // PZT_upper 
   };
 
 
 Extrude Surface {86+((i_sect-2)*5+5)*insc, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_corp, 1 };                                // corp
+  Recombine ; Layers { 1 };                                // corp
   };
 Extrude Surface {108+((i_sect-2)*5+5)*insc, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_100dent, 1 };                             // pas de dent
+  Recombine ; Layers { 1 };                             // pas de dent
   };
 Extrude Surface {130+((i_sect-2)*5+5)*insc, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_100dent, 1};                              // pas de dent
+  Recombine ; Layers { 1 };                              // pas de dent
   };
 Extrude Surface {152+((i_sect-2)*5+5)*insc, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_PZT_lower + N_*(i_sect-1), 1};            // PZT_lower
+  Recombine ; Layers { 1 };            // PZT_lower
   };
 Extrude Surface {174+((i_sect-2)*5+5)*insc, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_PZT_upper + N_*(i_sect-1), 1};            //  PZT_upper 
+  Recombine ; Layers { 1 };            //  PZT_upper 
   };
-
-For i In {0:4}
-  ListVol4[i] = V_PZT_lower + N_*(i_sect-1);   // PZT_lower
-  ListVol5[i] = V_PZT_upper + N_*(i_sect-1);   // PZT_upper
-EndFor
 
 Extrude Surface {86+((i_sect-2)*5+6)*insc, {0,0,1}, {0,0,0}, Pi/12-teta_vide}{
-  Recombine ; Layers {  ListExt[{0:4}] , ListVol1[{0:4}], ListDiv[{0:4}] }; 
+  Recombine ; Layers {  ListExt[{0:4}] , ListDiv[{0:4}] }; 
   };
 Extrude Surface {108+((i_sect-2)*5+6)*insc, {0,0,1}, {0,0,0}, Pi/12-teta_vide}{
-  Recombine ; Layers {  ListExt[{0:4}] , ListVol2[{0:4}], ListDiv[{0:4}] }; 
+  Recombine ; Layers {  ListExt[{0:4}] , ListDiv[{0:4}] }; 
   };
 Extrude Surface {130+((i_sect-2)*5+6)*insc, {0,0,1}, {0,0,0}, Pi/12-teta_vide}{
-  Recombine ; Layers {  ListExt[{0:4}] , ListVol2[{0:4}], ListDiv[{0:4}] };
+  Recombine ; Layers {  ListExt[{0:4}] , ListDiv[{0:4}] };
   };
 Extrude Surface {152+((i_sect-2)*5+6)*insc, {0,0,1}, {0,0,0}, Pi/12-teta_vide}{
-  Recombine ; Layers {  ListExt[{0:4}] , ListVol3[{0:4}], ListDiv[{0:4}] };
+  Recombine ; Layers {  ListExt[{0:4}] , ListDiv[{0:4}] };
   };
 Extrude Surface {174+((i_sect-2)*5+6)*insc, {0,0,1}, {0,0,0}, Pi/12-teta_vide}{
-  Recombine ; Layers {  ListExt[{0:4}] , ListVol4[{0:4}], ListDiv[{0:4}] };
+  Recombine ; Layers {  ListExt[{0:4}] , ListDiv[{0:4}] };
   };
 
 Extrude Surface {86+((i_sect-2)*5+7)*insc, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_corp, 1 };                             // corp
+  Recombine ; Layers { 1 };                             // corp
   };
 Extrude Surface {108+((i_sect-2)*5+7)*insc, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_100dent, 1 };                             // pas de dent
+  Recombine ; Layers { 1 };                             // pas de dent
   };
 Extrude Surface {130+((i_sect-2)*5+7)*insc, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_100dent, 1};                              // pas de dent
+  Recombine ; Layers { 1 };                              // pas de dent
   };
 Extrude Surface {152+((i_sect-2)*5+7)*insc, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_PZT_lower + N_*(i_sect-1), 1};                              // PZT_lower
+  Recombine ; Layers { 1 };                              // PZT_lower
   };
 Extrude Surface {174+((i_sect-2)*5+7)*insc, {0,0,1}, {0,0,0}, teta_vide/2 -teta_gap/2 }{
-  Recombine ; Layers { 1, V_PZT_upper + N_*(i_sect-1), 1};                          //  PZT_upper 
+  Recombine ; Layers { 1 };                          //  PZT_upper 
   };
 
 Extrude Surface {86+((i_sect-2)*5+8)*insc, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_corp, 1};                 // corp   
+  Recombine ; Layers { 1 };                 // corp   
   };
 Extrude Surface {108+((i_sect-2)*5+8)*insc, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_100dent, 1};                 // pas de dent
+  Recombine ; Layers { 1 };                 // pas de dent
   };
 Extrude Surface {130+((i_sect-2)*5+8)*insc, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_100dent, 1};                 // pas de dent
+  Recombine ; Layers { 1 };                 // pas de dent
   };
 Extrude Surface {152+((i_sect-2)*5+8)*insc, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_PZT_lower + N_*(i_sect-1), 1 };                // PZT_lower
+  Recombine ; Layers { 1 };                // PZT_lower
   };
 Extrude Surface {174+((i_sect-2)*5+8)*insc, {0,0,1}, {0,0,0}, teta_gap/2}{
-  Recombine ; Layers { 1, V_PZT_upper + N_*(i_sect-1), 1 };                // PZT_upper 
+  Recombine ; Layers { 1 };                // PZT_upper 
   };
 
 EndFor 
@@ -272,7 +263,6 @@ Point101 = 1011;
 For i In {0:2}
    ListDent[i]=V_dent+i*2;
 EndFor
-Physical Volume(Corp) = {V_corp, ListDent[{0:2}]};
 
 
 i_plus[{1:12}]={1,2,  5,6,  9,10,    13,14,    17,18,    21,22}; //  (++)(--)(++)(--)(++)(--)(++)(--)(++)(--)(++)(--)
@@ -289,8 +279,6 @@ For i In {1:12}
       ListPZT_lower_minus[i] = V_PZT_lower + N_*(i_minus[i]-1);
 EndFor
 
-Physical Volume(PZTplus)  = {  ListPZT_lower_plus[{1:12}],  ListPZT_upper_plus[{1:12}] } ; 
-Physical Volume(PZTminus) = {  ListPZT_lower_minus[{1:12}], ListPZT_upper_minus[{1:12}] } ;
 
 
 For i In {1:NodLin*5}  // taking into account the gaps,...
@@ -303,21 +291,14 @@ i_upper_minus[{1:48}]={   12:19,    32:39,    52:59,    72:79,    92:99,     112
 i_lower_plus[{1:48}]={1,2,3,4,   17:24,    37:44,    57:64,    77:84,    97:104,     117,118,119,120};
 i_lower_minus[{1:48}]={      7:14,    27:34,    47:54,    67:74,    87:94,     107:114};
 
-Physical Surface (ElectrodeUpper) = { List_Electrode_Upper[{i_upper_plus[{1:48}]}], List_Electrode_Upper[{i_upper_minus[{1:48}]}] } ;
-Physical Surface (ElectrodeLower) = { List_Electrode_Lower[{i_lower_plus[{1:48}]}], List_Electrode_Lower[{i_lower_minus[{1:48}]}] } ;
-
 For i In {1:NodLin*5}  // taking into account the gaps,...
   List_Emasse_upper[i]=85+(i-1)*insc;
   List_Emasse_lower[i]=69+(i-1)*insc;
 EndFor
-Physical Surface (Masse)  = { List_Emasse_upper[{1:120}], List_Emasse_lower[{1:120}] } ;
 
 For i In {1:NodLin*5}
   List_IC[i]=53+(i-1)*insc;
 EndFor
-Physical Surface (Inner_Cylinder)  =  { List_IC[{1:120}] };
-
-//Physical Point (Point99) = {};  
 
 
 

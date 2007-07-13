@@ -1,4 +1,5 @@
 // Gmsh project created on Wed Jan 31 21:34:00 2007
+Geometry.ExtrudeReturnLateralEntities = 0;
 
 // definition of geometry
 radius = 5;

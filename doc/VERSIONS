@@ -1,11 +1,11 @@
-$Id: VERSIONS,v 1.387 2007-07-11 17:55:46 geuzaine Exp $
+$Id: VERSIONS,v 1.388 2007-07-13 14:12:07 geuzaine Exp $
 
-2.0.8 (Jul XX, 2007): unused vertices are not saved in mesh files
+2.0.8 (Jul 13, 2007): unused vertices are not saved in mesh files
 anymore; new plugin GUI; automatic GUI font size selection; renamed
 Plugin(DecomposeInSimplex) into Plugin(MakeSimplex); reintroduced
 enhanced Plugin(SphericalRaise); clarified meshing algo names; new
-option to save groups of nodes in UNV meshes; many small improvements
-and small bug fixes.
+option to save groups of nodes in UNV meshes; new background mesh
+infrastructure; many small improvements and small bug fixes.
 
 2.0.7 (Apr 3, 2007): volumes can now be defined from external CAD
 surfaces; Delaunay/Tetgen algorithm is now used by default when

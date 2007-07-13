@@ -121,25 +121,21 @@ Plane Surface(619) = {618};
   
 ex = .05;
 
-Extrude Surface{619, {0.0,0.0,ex}}{ Layers{ {10}, {1}, {1} };  };  
+Extrude Surface{619, {0.0,0.0,ex}}{ Layers{ 10 };  };  
 Coherence;  
-Extrude Surface{301, {0.0,0.0,ex}}{ Layers{ {10}, {1}, {1} };  };  
+Extrude Surface{301, {0.0,0.0,ex}}{ Layers{ 10 };  };  
 Coherence;  
-Extrude Surface{401, {0.0,0.0,ex}}{ Layers{ {10}, {1}, {1} };  };  
+Extrude Surface{401, {0.0,0.0,ex}}{ Layers{ 10 };  };  
 Coherence;  
-Extrude Surface{403, {0.0,0.0,ex}}{ Layers{ {10}, {1}, {1} };  };  
+Extrude Surface{403, {0.0,0.0,ex}}{ Layers{ 10 };  };  
 Coherence;  
-Extrude Surface{405, {0.0,0.0,ex}}{ Layers{ {10}, {1}, {1} };  };  
+Extrude Surface{405, {0.0,0.0,ex}}{ Layers{ 10 };  };  
 Coherence;  
-Extrude Surface{407, {0.0,0.0,ex}}{ Layers{ {10}, {1}, {1} };  };  
+Extrude Surface{407, {0.0,0.0,ex}}{ Layers{ 10 };  };  
 Coherence;  
-Extrude Surface{409, {0.0,0.0,ex}}{ Layers{ {10}, {1}, {1} };  };  
+Extrude Surface{409, {0.0,0.0,ex}}{ Layers{ 10 };  };  
 Coherence;  
-Extrude Surface{411, {0.0,0.0,ex}}{ Layers{ {10}, {1}, {1} };  };  
+Extrude Surface{411, {0.0,0.0,ex}}{ Layers{ 10 };  };  
 Coherence;  
-Extrude Surface{413, {0.0,0.0,ex}}{ Layers{ {10}, {1}, {1} };  };  
+Extrude Surface{413, {0.0,0.0,ex}}{ Layers{ 10 };  };  
 Coherence;  
- 
-Physical Volume(1) = {1};
-Physical Surface(2) = {652,656,702,660,664,734,790,791,756,676,680,848,636,826,804};
- 

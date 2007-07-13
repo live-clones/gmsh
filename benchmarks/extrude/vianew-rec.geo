@@ -97,18 +97,13 @@ NLup = 3;
 // extrude down first:
 Extrude {0,0,-A*L} {
   Surface{42};
-  Layers { {NLdn}, {9001}, {1} } ; 
+  Layers { NLdn } ; 
   Recombine;
 }
 
 // extrude up second:
 Extrude {0,0,L} {
   Surface { 26:42:2 };
-  Layers { {NLup}, {9000}, {1} }; 
+  Layers { NLup }; 
   Recombine;
 }
-
-// wafer surface including surfaces that are extruded downwards:
-Physical Surface(1001) = {26,28,30,32,34,36,38,40, 51,55,59,63,64};
-Physical Surface(1009) = {73,95,117,121,139,161,165,183,205,209,227,85, 86,108,130,152,174,196,218,240,262};
-Physical Volume(2001)  = {9000,9001};

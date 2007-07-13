@@ -16,11 +16,6 @@ Line(2) = {7,1};
 Line(3) = {1,2};
 Line Loop(4) = {3,1,2};
 Plane Surface(5) = {4};
-Extrude Surface {5, {0,1,0}, {0,0,0}, Pi/2}  
-{Layers{10,100,1}; };
+Extrude Surface {5, {0,1,0}, {0,0,0}, Pi/2}{ Layers{10}; };
 
-//Surface Loop(18) = {5,17,13,16};
-//Volume(19) = {18};
-
-//Physical Volume(1)=100;
 

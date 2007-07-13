@@ -12,8 +12,7 @@ Line Loop(5) = {2,3,4,1};
 Plane Surface(6) = {5};                                          
 Extrude {0,0.0,1}{                               
   Surface{6};
-  Layers {{10,5,10},{100,200,300},{.1,.9,1.}};                                  
+  Layers {{10,5,10},{.1,.9,1.}};                                  
   //Recombine;
 }
 
-Physical Volume(99) = {100,200,300};
