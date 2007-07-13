@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2007-07-12 16:23:32 geuzaine Exp $
+# $Id: Makefile,v 1.14 2007-07-13 14:32:09 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -20,7 +20,7 @@
 # Please report all bugs and problems to <gmsh@geuz.org>.
 
 dvi:
-	TEX=latex;texi2dvi gmsh.texi 
+	texi2dvi gmsh.texi 
 
 ps: dvi
 	dvips gmsh -o
