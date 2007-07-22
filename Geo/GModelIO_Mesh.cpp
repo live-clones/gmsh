@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.20 2007-07-11 15:46:32 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.21 2007-07-22 15:48:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1422,7 +1422,8 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
 		nodes.insert(gr->pyramids[j]->getVertex(k));
 	  }
 	}
-	fprintf(fp, "%10d%10d%10d%10d%10d%10d%10d%10d\n", gr, 0, 0, 0, 0, 0, 0, nodes.size());
+	fprintf(fp, "%10d%10d%10d%10d%10d%10d%10d%10d\n", 
+		gr, 0, 0, 0, 0, 0, 0, (int)nodes.size());
 	fprintf(fp, "PERMENENT GROUP%d\n", gr++);
 	int row = 0;
 	for(std::set<MVertex*>::iterator it2 = nodes.begin(); it2 != nodes.end(); it2++){
@@ -1740,20 +1741,22 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
 
   readLineBDF(buffer, format, fields);
 
-  if((fields.size() - 2 < abs(numVertices)) || (numVertices < 0 && (fields.size() == 9))){
+  if(((int)fields.size() - 2 < abs(numVertices)) || 
+     (numVertices < 0 && (fields.size() == 9))){
     if(fields.size() == 9) fields.pop_back();
     if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
     readLineBDF(buffer2, format, fields);
   }
 
-  if((fields.size() - 2 < abs(numVertices)) || (numVertices < 0 && (fields.size() == 17))){
+  if(((int)fields.size() - 2 < abs(numVertices)) || 
+     (numVertices < 0 && (fields.size() == 17))){
     if(fields.size() == 17) fields.pop_back();
     if(!fgets(buffer3, sizeof(buffer3), fp)) return 0;
     readLineBDF(buffer3, format, fields);
   }
 
   // negative 'numVertices' gives the minimum required number of vertices
-  if(fields.size() - 2 < abs(numVertices)){
+  if((int)fields.size() - 2 < abs(numVertices)){
     Msg(GERROR, "Wrong number of vertices %d for element", fields.size() - 2);
     return 0;
   }
