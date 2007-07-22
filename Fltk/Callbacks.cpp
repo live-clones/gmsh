@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.533 2007-06-22 08:07:45 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.534 2007-07-22 15:48:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3275,6 +3275,9 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	Draw();
 	List_Pop(List1);
       }
+    }
+    if(ib == 'i') {
+      Msg(GERROR, "Inverting selection!");
     }
     if(ib == 'e') {
       if(List_Nbr(List1)){

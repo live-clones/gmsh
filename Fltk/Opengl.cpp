@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.73 2007-06-22 08:07:46 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.74 2007-07-22 15:48:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -236,6 +236,10 @@ char SelectEntity(int type,
     if(WID->undo_selection) {
       WID->undo_selection = 0;
       return 'u';
+    }
+    if(WID->invert_selection) {
+      WID->invert_selection = 0;
+      return 'i';
     }
     if(WID->try_selection) {
       bool add = (WID->try_selection > 0) ? true : false;

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.623 2007-06-12 07:04:08 geuzaine Exp $
+// $Id: GUI.cpp,v 1.624 2007-07-22 15:48:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -534,6 +534,10 @@ int GUI::global_shortcuts(int event)
   }
   else if(Fl::test_shortcut('u')) {
     undo_selection = 1;
+    return 0;   // trick: do as if we didn't use it
+  }
+  else if(Fl::test_shortcut('i')) {
+    invert_selection = 1;
     return 0;   // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut('q')) {
