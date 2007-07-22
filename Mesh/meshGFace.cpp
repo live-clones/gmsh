@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.80 2007-05-24 17:34:04 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.81 2007-07-22 15:47:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -580,7 +580,7 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge)
       e = m->recover_edge ( vstart->getNum(), vend->getNum());
       if (e)e->g = g;
       else {
-	Msg(GERROR,"Unable to recover an edge %g %g && %g %g (%d/*d)",vstart->x(),vstart->y(), vend->x(),vend->y(),i,ge->mesh_vertices.size());
+	Msg(GERROR,"Unable to recover an edge %g %g && %g %g (%d/%d)",vstart->x(),vstart->y(), vend->x(),vend->y(),i,ge->mesh_vertices.size());
 	return false;
       }
     }    
