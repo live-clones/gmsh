@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.81 2007-02-12 08:36:14 geuzaine Exp $
+$Id: FAQ,v 1.82 2007-07-23 19:28:13 geuzaine Exp $
 
 This is the Gmsh FAQ
 
@@ -256,7 +256,7 @@ coefficients A,B,C,D of the equation A*x+B*y+C*y+D=0, which can be
 adjusted interactively by dragging the mouse in the input
 fields. There is also one additional clipping plane available for
 "cutting" only the mesh (by keeping entire elements), in
-'Tools->Options->Mesh->Cut Plane'.
+'Tools->Options->Mesh->Cutting'.
 
 * 5.13 What is the signification of Rho, Eta and Gamma in 
 Tools->Statistics?
@@ -316,11 +316,11 @@ Section 7: Post-processing module
 
 * 7.1 How do I compute a section of a plot?
 
-Use 'View->Plugins->Cut Plane'.
+Use 'Tools->Plugins->Cut Plane'.
 
 * 7.2 Can I save an isosurface to a file?
 
-Yes: first run 'View->Plugins->Cut Map' to extract the isosurface,
+Yes: first run 'Tools->Plugins->Cut Map' to extract the isosurface,
 then use 'View->Save As' to save the new view.
 
 * 7.3 Can Gmsh generate isovolumes?
@@ -393,7 +393,7 @@ Yes, using scripts. Have a look at 'tutorial/t8.geo' or
 * 7.10 Is there a way to visualize only certain components of
 vector/tensor fields?
 
-Yes, using 'View->Plugin->Extract'.
+Yes, using 'Tools->Plugins->Extract'.
 
 * 7.11 Can I do arithmetic operations on a view? Can I perform
 operations involving different views?
