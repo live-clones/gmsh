@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.232 2007-05-20 13:23:48 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.233 2007-07-25 15:48:35 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 @c
@@ -1480,11 +1480,11 @@ need to be grouped inside the physical point.
 @cindex Lines, physical
 
 @ftable @code
-@item Bezier ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a Bezier curve. The @var{expression} inside the parentheses is the
-Bezier curve's identification number; the @var{expression-list} on the right
-hand side should contain the identification numbers of all the curve's
-control points.
+@c @item Bezier ( @var{expression} ) = @{ @var{expression-list} @};
+@c Creates a Bezier curve. The @var{expression} inside the parentheses is the
+@c Bezier curve's identification number; the @var{expression-list} on the right
+@c hand side should contain the identification numbers of all the curve's
+@c control points.
 
 @item BSpline ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a B-spline curve. The @var{expression} inside the parentheses is the

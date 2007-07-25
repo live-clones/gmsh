@@ -26,7 +26,7 @@ Point(p+1) = {xx+.5, 0,  0, lc} ;
 Point(p+2) = {xx+.5, 1, 0, 0.1*lc} ;
 Point(p+3) = {xx, 1, 0, lc} ;
 l = newreg;
-BSpline(l) = {p+3,p+3,p+3,p+2,p+1,p+1,p,p,p};
+BSpline(l) = {p+3,p+2,p+1,p+1,p};
 Line(l+1) = {p,p+3};
 s = newreg;
 Line Loop(s) = {-l,-(l+1)};
@@ -56,18 +56,19 @@ Point(p+1) = {xx+.5, 0,  0, lc} ;
 Point(p+2) = {xx+.5, 1, 0, 0.1*lc} ;
 Point(p+3) = {xx, 1, 0, lc} ;
 l = newreg;
-Bezier(l) = {p+3,p+2,p+1,p};
+//Bezier(l) = {p+3,p+2,p+1,p}; // Bezier curves are broken
+BSpline(l) = {p+3,p+2,p+1,p};
 Line(l+1) = {p,p+3};
 s = newreg;
 Line Loop(s) = {-l,-(l+1)};
 Plane Surface(s+1) = s;
 
 // Duplicate the surfaces, and use uniform mesh
-p1=newp;
+p1 = newp;
 Translate {0,-1.5,0} {
   Duplicata { Surface{6:18:4}; }
 }
-p2=newp;
+p2 = newp;
 Printf("p1 p2 = %g %g", p1, p2);
 
 Characteristic Length {p1:p2-1} = lc/5 ;

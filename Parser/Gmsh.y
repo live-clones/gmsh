@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.279 2007-07-11 16:38:36 geuzaine Exp $
+// $Id: Gmsh.y,v 1.280 2007-07-25 15:48:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1401,22 +1401,16 @@ Shape :
   | tBSpline '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(List_Nbr($6) < 4){
-	yymsg(GERROR, "Too few control points for BSpline %d (%d < 4)", num,
-	      List_Nbr($6));
+      if(FindCurve(num)){
+	yymsg(GERROR, "Curve %d already exists", num);
       }
       else{
-	if(FindCurve(num)){
-	  yymsg(GERROR, "Curve %d already exists", num);
-	}
-	else{
-	  List_T *temp = ListOfDouble2ListOfInt($6);
-	  Curve *c = Create_Curve(num, MSH_SEGM_BSPLN, 2, temp, NULL,
-				  -1, -1, 0., 1.);
-	  Tree_Add(THEM->Curves, &c);
-	  CreateReversedCurve(c);
-	  List_Delete(temp);
-	}
+	List_T *temp = ListOfDouble2ListOfInt($6);
+	Curve *c = Create_Curve(num, MSH_SEGM_BSPLN, 2, temp, NULL,
+				-1, -1, 0., 1.);
+	Tree_Add(THEM->Curves, &c);
+	CreateReversedCurve(c);
+	List_Delete(temp);
       }
       List_Delete($6);
       $$.Type = MSH_SEGM_BSPLN;
@@ -1425,22 +1419,16 @@ Shape :
   | tBezier '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(List_Nbr($6) < 4){
-	yymsg(GERROR, "Too few control points for Bezier curve %d (%d < 4)", num,
-	      List_Nbr($6));
+      if(FindCurve(num)){
+	yymsg(GERROR, "Curve %d already exists", num);
       }
       else{
-	if(FindCurve(num)){
-	  yymsg(GERROR, "Curve %d already exists", num);
-	}
-	else{
-	  List_T *temp = ListOfDouble2ListOfInt($6);
-	  Curve *c = Create_Curve(num, MSH_SEGM_BEZIER, 2, temp, NULL,
-				  -1, -1, 0., 1.);
-	  Tree_Add(THEM->Curves, &c);
-	  CreateReversedCurve(c);
-	  List_Delete(temp);
-	}
+	List_T *temp = ListOfDouble2ListOfInt($6);
+	Curve *c = Create_Curve(num, MSH_SEGM_BEZIER, 2, temp, NULL,
+				-1, -1, 0., 1.);
+	Tree_Add(THEM->Curves, &c);
+	CreateReversedCurve(c);
+	List_Delete(temp);
       }
       List_Delete($6);
       $$.Type = MSH_SEGM_BEZIER;

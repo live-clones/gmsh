@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.34 2007-05-14 10:34:55 remacle Exp $
+// $Id: gmshEdge.cpp,v 1.35 2007-07-25 15:48:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -156,33 +156,32 @@ SPoint2 gmshEdge::reparamOnFace(GFace *face, double epar,int dir) const
 	  (v[2]->pntOnGeometry - v[1]->pntOnGeometry) * epar;
 	return p;
       }
-      break;
-  case MSH_SEGM_BSPLN:
-  case MSH_SEGM_BEZIER:
-		int NbControlPoints, NbCurves, iCurve;
-		double t, t1, t2;
-		Vertex *v[4];
-		NbControlPoints = List_Nbr(c->Control_Points);
-		NbCurves = NbControlPoints + (periodic ? -1 : 1);
-		iCurve = (int)floor(epar * (double)NbCurves);
-		if(iCurve >= NbCurves)
-			iCurve = NbCurves-1;
-		else if (iCurve < 0) // ? does it happen ?
-			iCurve = 0;
-
-		t1 = (double)(iCurve) / (double)(NbCurves);
-		t2 = (double)(iCurve+1) / (double)(NbCurves);
-		t = (epar - t1) / (t2 - t1);
-		for(int j = 0; j < 4; j ++ ){
-			int k=iCurve - (periodic ? 1 : 2) + j;
-      if(k < 0) k = periodic ? k + NbControlPoints - 1 : 0;
-      if(k >= NbControlPoints) k = periodic ? k - NbControlPoints + 1: NbControlPoints - 1;
-			List_Read(c->Control_Points,k, &v[j]);
-		}
-		return InterpolateCubicSpline(v, t, c->mat, 0, t1, t2,c->geometry);
+    case MSH_SEGM_BSPLN:
+    case MSH_SEGM_BEZIER:
+      {
+	int NbControlPoints = List_Nbr(c->Control_Points);
+	int NbCurves = NbControlPoints + (periodic ? -1 : 1);
+	int iCurve = (int)floor(epar * (double)NbCurves);
+	if(iCurve >= NbCurves)
+	  iCurve = NbCurves - 1;
+	else if (iCurve < 0) // ? does it happen ?
+	  iCurve = 0;
+	double t1 = (double)(iCurve) / (double)(NbCurves);
+	double t2 = (double)(iCurve+1) / (double)(NbCurves);
+	double t = (epar - t1) / (t2 - t1);
+	Vertex *v[4];
+	for(int j = 0; j < 4; j ++ ){
+	  int k = iCurve - (periodic ? 1 : 2) + j;
+	  if(k < 0) 
+	    k = periodic ? k + NbControlPoints - 1 : 0;
+	  if(k >= NbControlPoints) 
+	    k = periodic ? k - NbControlPoints + 1: NbControlPoints - 1;
+	  List_Read(c->Control_Points, k, &v[j]);
+	}
+	return InterpolateCubicSpline(v, t, c->mat, 0, t1, t2, c->geometry);
+      }
     case MSH_SEGM_SPLN :
       {
-	Vertex *v[4];
 	Vertex temp1, temp2;
 	int N = List_Nbr(c->Control_Points);
 	int i = (int)((double)(N - 1) * epar);
@@ -193,38 +192,41 @@ SPoint2 gmshEdge::reparamOnFace(GFace *face, double epar,int dir) const
 	double t1 = (double)(i) / (double)(N - 1);
 	double t2 = (double)(i + 1) / (double)(N - 1);
 	double t = (epar - t1) / (t2 - t1);
+	Vertex *v[4];
 	List_Read(c->Control_Points, i, &v[1]);
 	List_Read(c->Control_Points, i + 1, &v[2]);
 	if(!i) {
-		if(c->beg == c->end){
-			List_Read(c->Control_Points,N-2,&v[0]);
-		}else{
-			v[0] = &temp1;
-			v[0]->pntOnGeometry = v[1]->pntOnGeometry * 2. - v[2]->pntOnGeometry;
-		}
+	  if(c->beg == c->end){
+	    List_Read(c->Control_Points,N-2,&v[0]);
+	  }
+	  else{
+	    v[0] = &temp1;
+	    v[0]->pntOnGeometry = v[1]->pntOnGeometry * 2. - v[2]->pntOnGeometry;
+	  }
 	}
-	else {
+	else{
 	  List_Read(c->Control_Points, i - 1, &v[0]);
 	}
 	if(i == N - 2) {
-		if(c->beg == c->end){
-			List_Read(c->Control_Points,1,&v[3]);
-		}else{
-			v[3] = &temp2;
-			v[3]->pntOnGeometry = v[2]->pntOnGeometry * 2. - v[1]->pntOnGeometry;
-		}
+	  if(c->beg == c->end){
+	    List_Read(c->Control_Points,1,&v[3]);
+	  }
+	  else{
+	    v[3] = &temp2;
+	    v[3]->pntOnGeometry = v[2]->pntOnGeometry * 2. - v[1]->pntOnGeometry;
+	  }
 	}
-	else {
+	else{
 	  List_Read(c->Control_Points, i + 2, &v[3]);
 	}
-	return InterpolateCubicSpline(v, t, c->mat, 0, t1, t2,c->geometry);
+	return InterpolateCubicSpline(v, t, c->mat, 0, t1, t2, c->geometry);
       }
-    default :
+    default:
       throw;
     }
   }
   
-  if (s->Typ ==  MSH_SURF_REGL){
+  if(s->Typ ==  MSH_SURF_REGL){
     Curve *C[4];
     for(int i = 0; i < 4; i++)
       List_Read(s->Generatrices, i, &C[i]);

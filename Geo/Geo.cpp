@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.88 2007-04-05 12:51:28 geuzaine Exp $
+// $Id: Geo.cpp,v 1.89 2007-07-25 15:48:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
