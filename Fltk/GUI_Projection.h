@@ -13,6 +13,8 @@
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Round_Button.H>
 
+#define MAX_PROJECTION_PARAMETERS 20
+
 void select_cb(Fl_Widget *w, void *data);
 void browse_cb(Fl_Widget *w, void *data);
 void update_cb(Fl_Widget *w, void *data);
@@ -36,7 +38,7 @@ class projectionEditor {
   std::vector<MElement*> _elements;
   std::vector<GEntity*> _entities;
   Fl_Window *_window;
-  Fl_Value_Input *_input[20];
+  Fl_Value_Input *_input[MAX_PROJECTION_PARAMETERS];
   Fl_Hold_Browser *_browser;
   Fl_Round_Button *_select[3];
   uvPlot *_uvPlot;
@@ -47,7 +49,9 @@ class projectionEditor {
   std::vector<MElement*> &getElements() { return _elements; }
   std::vector<GEntity*> &getEntities() { return _entities; }
   std::vector<FProjectionFace*> &getProjectionFaces() { return _faces; }
+  FProjectionFace *getCurrentProjectionFace();
   int getSelectionMode();
+  Fl_Value_Input *getValueInput(int i);
 };
 
 #endif

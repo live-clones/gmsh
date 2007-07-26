@@ -16,8 +16,11 @@ void uvPlot::draw()
   // draw points
   fl_color(FL_BLACK);
   if(_u.size() != _v.size()) return;
-  for(unsigned int i = 0; i < _u.size(); i++)
-    fl_rect(_u[i] * w(), _v[i] * h(), 3, 3);
+  for(unsigned int i = 0; i < _u.size(); i++){
+    int x = (int)(_u[i] * w());
+    int y = (int)(_v[i] * h());
+    fl_rect(x, y, 3, 3);
+  }
 
   fl_font(FL_HELVETICA, 14);
   fl_draw("Hello", w() / 2, h() / 2);
@@ -28,18 +31,18 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
 {
   // construct GUI in terms of standard sizes
   const int BH = 2 * GetFontSize() + 1, BB = 7 * GetFontSize(), WB = 7;
-  const int width = 3.5 * BB, height = 18 * BH;
+  const int width = (int)(3.5 * BB), height = 18 * BH;
   
   // create all widgets (we construct this once, we never deallocate!)
   _window = new Dialog_Window(width, height, "Reparameterize");
   
-  new Fl_Box(WB, WB + BH, 0.5 * BB, BH, "Select:");
+  new Fl_Box(WB, WB + BH, BB / 2, BH, "Select:");
 
   Fl_Group *o = new Fl_Group(WB, WB, 2 * BB, 3 * BH);
-  _select[0] = new Fl_Round_Button(2 * WB + 0.5 * BB, WB, BB, BH, "Points");
+  _select[0] = new Fl_Round_Button(2 * WB + BB / 2, WB, BB, BH, "Points");
   _select[0]->value(1);
-  _select[1] = new Fl_Round_Button(2 * WB + 0.5 * BB, WB + BH, BB, BH, "Elements");
-  _select[2] = new Fl_Round_Button(2 * WB + 0.5 * BB, WB + 2 * BH, BB, BH, "Surfaces");
+  _select[1] = new Fl_Round_Button(2 * WB + BB / 2, WB + BH, BB, BH, "Elements");
+  _select[2] = new Fl_Round_Button(2 * WB + BB / 2, WB + 2 * BH, BB, BH, "Surfaces");
   for(int i = 0; i < 3; i++){
     _select[i]->callback(select_cb, this);
     _select[i]->type(FL_RADIO_BUTTON);
@@ -47,28 +50,26 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
   o->end();
   
   Fl_Toggle_Button *b1 = 
-    new Fl_Toggle_Button(width - WB - 1.5 * BB, WB, 1.5 * BB, BH, "Hide unselected");
+    new Fl_Toggle_Button(width - WB - (int)(1.5 * BB), WB, (int)(1.5 * BB), BH, "Hide unselected");
   b1->callback(hide_cb);
 
   Fl_Button *b2 = 
-    new Fl_Button(width - WB - 1.5 * BB, WB + BH, 1.5 * BB, BH, "Save selection");
+    new Fl_Button(width - WB - (int)(1.5 * BB), WB + BH, (int)(1.5 * BB), BH, "Save selection");
   b2->callback(save_cb, this);
 
   _browser = new Fl_Hold_Browser(WB, 2 * WB + 3 * BH, BB, 5 * BH);
   _browser->callback(browse_cb, this);
   for(unsigned int i = 0; i < _faces.size(); i++){
-    _browser->add("test");
+    ProjectionSurface *ps = _faces[i]->GetProjectionSurface();
+    _browser->add(ps->GetName().c_str());
   }
 
   Fl_Scroll *s = new Fl_Scroll(2 * WB + BB, 2 * WB + 3 * BH, width - 3 * WB - BB, 5 * BH);
-  for(int i = 0; i < 20; i++){
+  for(int i = 0; i < MAX_PROJECTION_PARAMETERS; i++){
     _input[i] = new Fl_Value_Input(2 * WB + BB, 2 * WB + (i + 3) * BH, BB, BH);
     _input[i]->align(FL_ALIGN_RIGHT);
     _input[i]->callback(update_cb, this);
-    _input[i]->minimum(0.);
-    _input[i]->maximum(1.);
-    _input[i]->step(0.01);
-    //_input[i]->hide();
+    _input[i]->hide();
   }
   s->end();
 
@@ -86,7 +87,7 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
   _window->end();
   _window->hotspot(_window);
   _window->resizable(_uvPlot);
-  _window->size_range(width, 0.75 * height);
+  _window->size_range(width, (int)(0.75 * height));
 }
 
 int projectionEditor::getSelectionMode() 
@@ -98,16 +99,62 @@ int projectionEditor::getSelectionMode()
   return ENT_ALL;
 }
 
+FProjectionFace *projectionEditor::getCurrentProjectionFace()
+{
+  for(int i = 1; i <= _browser->size(); i++)
+    if(_browser->selected(i)) return _faces[i - 1];
+  return 0;
+}
+
+Fl_Value_Input *projectionEditor::getValueInput(int i)
+{
+  if(i < 0 || i > MAX_PROJECTION_PARAMETERS - 1) return 0;
+  return _input[i];
+}
+
 void browse_cb(Fl_Widget *w, void *data)
 {
   projectionEditor *e = (projectionEditor*)data;
   SBoundingBox3d bounds = GMODEL->bounds();
 
-  // change active projection face 
-  //e->face()->setVisibility(true);
+  std::vector<FProjectionFace*> &faces(e->getProjectionFaces());
+  for(unsigned int i = 0; i < faces.size(); i++)
+    faces[i]->setVisibility(false);
 
-  // set and show parameters accordingly
+  for(int i = 0; i < MAX_PROJECTION_PARAMETERS; i++)  
+    e->getValueInput(i)->hide();
 
+  FProjectionFace *f = e->getCurrentProjectionFace();
+  if(f){
+    f->setVisibility(true);
+    ProjectionSurface *ps = f->GetProjectionSurface();
+    for(int i = 0; i < 9; i++){
+      e->getValueInput(i)->show();
+      if(i < 3){ // scaling
+	e->getValueInput(i)->maximum(CTX.lc * 10.);
+	e->getValueInput(i)->minimum(CTX.lc / 100.);
+	e->getValueInput(i)->step(CTX.lc / 100.);
+	e->getValueInput(i)->label((i == 0) ? "X scale" : (i == 1) ? "Y scale" : "Z scale");
+	e->getValueInput(i)->value(1.); // FIXME
+      }
+      else if(i < 6){ //rotation
+	e->getValueInput(i)->maximum(-180.);
+	e->getValueInput(i)->minimum(180.);
+	e->getValueInput(i)->step(0.1);
+      }
+      else{ // translation
+	e->getValueInput(i)->maximum(bounds.max()[i] + CTX.lc);
+	e->getValueInput(i)->minimum(bounds.min()[i] - CTX.lc);
+	e->getValueInput(i)->step(CTX.lc / 100.);
+      }
+    }
+    for(int i = 9; i < 9 + ps->GetNumParameters(); i++){
+      e->getValueInput(i)->show();
+      e->getValueInput(i)->label("My nice label");
+      e->getValueInput(i)->value(ps->GetParameter(i - 9));
+    }
+  }
+  Draw();
 }
 
 void update_cb(Fl_Widget *w, void *data)
@@ -115,6 +162,22 @@ void update_cb(Fl_Widget *w, void *data)
   projectionEditor *e = (projectionEditor*)data;
 
   // get all parameters from GUI and modify projection surface accordingly
+  FProjectionFace *f = e->getCurrentProjectionFace();
+  if(f){
+    ProjectionSurface *ps = f->GetProjectionSurface();
+    ps->Rescale(e->getValueInput(0)->value(),
+		e->getValueInput(1)->value(),
+		e->getValueInput(2)->value());
+    ps->Rotate(e->getValueInput(3)->value(),
+	       e->getValueInput(4)->value(),
+	       e->getValueInput(5)->value());
+    ps->Translate(e->getValueInput(6)->value(),
+		  e->getValueInput(7)->value(),
+		  e->getValueInput(8)->value());
+    for(int i = 9; i < 9 + ps->GetNumParameters(); i++)
+      ps->SetParameter(i - 9, e->getValueInput(i)->value());
+    Draw();
+  }
 
   // project all selected points and update u,v display
   std::vector<double> u, v;
