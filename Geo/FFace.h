@@ -13,7 +13,6 @@
 class FFace : public GFace {
  protected:
   FM_Face *face;
-  bool _periodic[2];
  public:
   FFace(GModel *m, FM_Face *face_, int tag, std::list<GEdge*> l_edges_);
 
@@ -37,10 +36,10 @@ class FFace : public GFace {
   virtual bool continuous(int dim) const { return true; }
   virtual bool periodic(int dim) const { return false; }
   virtual bool degenerate(int dim) const { return false; }
-  virtual double period(int dir) const {throw;}
+  virtual double period(int dir) const;
   ModelType getNativeType() const { return FourierModel; }
   void * getNativePtr() const {throw;} 
-  virtual bool surfPeriodic(int dim) const {throw;}
+  virtual bool surfPeriodic(int dim) const;
 };
 
 #endif

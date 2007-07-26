@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.81 2007-07-22 15:47:46 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.82 2007-07-26 16:28:27 anand Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -811,17 +811,17 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   // and compute characteristic lenghts using mesh edge spacing
 
   BDS_GeomEntity CLASS_F (1,2);
-   
+
   it = edges.begin();
   while(it != edges.end())
     {
-    if(!(*it)->is_mesh_degenerated()){
-      if (!recover_medge ( m, *it))
-	{
-	  Msg(GERROR,"Face not meshed");
-	  return false;
-	}
-    }
+      if(!(*it)->is_mesh_degenerated()){
+	if (!recover_medge ( m, *it))
+	  {
+	    Msg(GERROR,"Face not meshed");
+	    return false;
+	  }
+      }
       ++it;
     }
   //  Msg(INFO,"Boundary Edges recovered for surface %d",gf->tag());
@@ -1530,7 +1530,7 @@ void meshGFace::operator() (GFace *gf)
 {  
   if(gf->geomType() == GEntity::DiscreteSurface) return;
   if(gf->geomType() == GEntity::BoundaryLayerSurface) return;
-  if(gf->geomType() == GEntity::ProjectionSurface) return;
+  if(gf->geomType() == GEntity::ProjectionFace) return;
 
   // destroy the mesh if it exists
   deMeshGFace dem;
@@ -1602,7 +1602,7 @@ bool shouldRevert(MEdge &reference, std::vector<T*> &elements)
 
 void orientMeshGFace::operator()(GFace *gf)
 {
-  if(gf->geomType() == GEntity::ProjectionSurface) return;
+  if(gf->geomType() == GEntity::ProjectionFace) return;
 
   // surface orientions in OCC are not consistent with the orientation
   // of the bounding edges, so just leave them unchanged:

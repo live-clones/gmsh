@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.29 2007-05-24 14:44:06 remacle Exp $
+// $Id: GEdge.cpp,v 1.30 2007-07-26 16:28:27 anand Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

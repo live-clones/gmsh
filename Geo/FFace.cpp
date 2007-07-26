@@ -38,6 +38,23 @@ SPoint2 FFace::parFromPoint(const SPoint3 &p) const
   double u, v, x, y, z;
   x = p.x(); y = p.y(); z = p.z();
   face->Inverse(x,y,z,u,v);
+  printf("per : %d %d\n",face->IsPeriodic(0),face->IsPeriodic(1));
+  if (face->IsPeriodic(0)) {
+    double s,e;
+    printf("\tper : %d %d\n",face->GetEdge(0)->GetCurveExtent(s,e),
+	   face->GetEdge(1)->GetCurveExtent(s,e));
+    if (face->GetEdge(0)->GetCurveExtent(s,e)) {
+      printf("%g %g %g\n",u,s,e);
+      u -= floor(u - s);
+      printf("%g %g %g\n\n",u,s,e);
+    }
+  }
+  if (face->IsPeriodic(1)) {
+    double s,e;
+    if (face->GetEdge(1)->GetCurveExtent(s,e)) {
+      v -= floor(v - s);
+    } 
+  }
   return SPoint2(u, v);
 }
 
@@ -70,5 +87,16 @@ GEntity::GeomType FFace::geomType() const
 {
   return  GEntity::ParametricSurface;
 }
+
+bool FFace::surfPeriodic(int dim) const
+{
+  return face->IsPeriodic(dim);
+}
+
+double FFace::period(int dir) const
+{
+    return 1.;
+}
+
 
 #endif

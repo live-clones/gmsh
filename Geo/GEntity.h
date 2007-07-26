@@ -82,7 +82,7 @@ class GEntity {
     Torus,
     RuledSurface,
     ParametricSurface,
-    ProjectionSurface,
+    ProjectionFace,
     BSplineSurface,
     BoundaryLayerSurface,
     DiscreteSurface,
