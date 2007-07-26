@@ -23,7 +23,7 @@ void uvPlot::draw()
   fl_draw("Hello", w() / 2, h() / 2);
 }
 
-projectionEditor::projectionEditor(std::vector<projectionFace*> &faces) 
+projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces) 
   : _faces(faces)
 {
   // construct GUI in terms of standard sizes
@@ -264,10 +264,10 @@ void mesh_parameterize_cb(Fl_Widget* w, void* data)
   opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
 
   // create one instance of each available projection surface
-  std::vector<projectionFace*> faces;
+  std::vector<FProjectionFace*> faces;
   if(faces.empty()){
-    faces.push_back(new parabolicCylinder(GMODEL, 10000));
-    faces.push_back(new parabolicCylinder(GMODEL, 10001));
+    faces.push_back(new FProjectionFace(GMODEL, 10000, new CylindricalProjectionSurface(0)));
+    faces.push_back(new FProjectionFace(GMODEL, 10001, new RevolvedParabolaProjectionSurface(0)));
   }
 
   // make each projection surface invisible and 

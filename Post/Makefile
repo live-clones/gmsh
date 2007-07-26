@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2007-07-09 13:54:37 geuzaine Exp $
+# $Id: Makefile,v 1.2 2007-07-26 16:35:01 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -58,25 +58,27 @@ depend:
 Views.o: Views.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Views.h ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothData.h AdaptiveViews.h ../Common/GmshMatrix.h \
-  ../Common/Context.h ../Common/Options.h ../Mesh/BackgroundMesh.h
+  ../Numeric/Numeric.h Views.h ColorTable.h ../DataStr/List.h \
+  ../Common/VertexArray.h ../Common/SmoothData.h ../Numeric/Numeric.h \
+  AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h \
+  ../Common/Options.h ../Mesh/BackgroundMesh.h
 ViewsIO.o: ViewsIO.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Views.h ColorTable.h ../Common/VertexArray.h \
-  ../Common/SmoothData.h AdaptiveViews.h ../Common/GmshMatrix.h \
-  ../Common/Context.h
+  ../Numeric/Numeric.h Views.h ColorTable.h ../DataStr/List.h \
+  ../Common/VertexArray.h ../Common/SmoothData.h ../Numeric/Numeric.h \
+  AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h
 AdaptiveViews.o: AdaptiveViews.cpp AdaptiveViews.h ../DataStr/List.h \
   ../Common/GmshMatrix.h ../Plugin/Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Post/Views.h ../Post/ColorTable.h \
-  ../Common/VertexArray.h ../Common/SmoothData.h ../Numeric/Numeric.h \
-  ../Post/AdaptiveViews.h ../Common/OS.h
+  ../DataStr/List.h ../Common/VertexArray.h ../Common/SmoothData.h \
+  ../Numeric/Numeric.h ../Post/AdaptiveViews.h ../Common/GmshMatrix.h \
+  ../Common/OS.h
 OctreePost.o: OctreePost.cpp ../Common/Octree.h \
   ../Common/OctreeInternals.h OctreePost.h ../DataStr/List.h Views.h \
   ColorTable.h ../Common/VertexArray.h ../Common/SmoothData.h \
   ../Numeric/Numeric.h AdaptiveViews.h ../Common/GmshMatrix.h \
-  ../Common/Message.h ../Common/ShapeFunctions.h
+  ../Numeric/Numeric.h ../Common/Message.h ../Common/ShapeFunctions.h
 ColorTable.o: ColorTable.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \

@@ -3,13 +3,12 @@
 
 #include "GModel.h"
 #include "Range.h"
-#include "projectionFace.h"
-#include "CylindricalProjectionSurface.h"
-#include "RevolvedParabolaProjectionSurface.h"
 
 #if defined(HAVE_FOURIER_MODEL)
 
 #include "ProjectionSurface.h"
+#include "CylindricalProjectionSurface.h"
+#include "RevolvedParabolaProjectionSurface.h"
 
 class FProjectionFace : public GFace {
  protected:

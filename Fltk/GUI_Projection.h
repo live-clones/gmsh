@@ -4,7 +4,7 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "GModel.h"
-#include "projectionFace.h"
+#include "FProjectionFace.h"
 
 #include <vector>
 
@@ -32,7 +32,7 @@ class uvPlot : public Fl_Window {
 
 class projectionEditor {
  private:
-  std::vector<projectionFace*> _faces;
+  std::vector<FProjectionFace*> _faces;
   std::vector<MElement*> _elements;
   std::vector<GEntity*> _entities;
   Fl_Window *_window;
@@ -41,12 +41,12 @@ class projectionEditor {
   Fl_Round_Button *_select[3];
   uvPlot *_uvPlot;
  public:
-  projectionEditor(std::vector<projectionFace*> &faces);
+  projectionEditor(std::vector<FProjectionFace*> &faces);
   void show(){ _window->show(); select_cb(0, this); }
   uvPlot *uv() { return _uvPlot; }
   std::vector<MElement*> &getElements() { return _elements; }
   std::vector<GEntity*> &getEntities() { return _entities; }
-  std::vector<projectionFace*> &getProjectionFaces() { return _faces; }
+  std::vector<FProjectionFace*> &getProjectionFaces() { return _faces; }
   int getSelectionMode();
 };
 
