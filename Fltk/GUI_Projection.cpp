@@ -7,6 +7,8 @@
 extern GModel *GMODEL;
 extern Context_T CTX;
 
+#if defined(HAVE_FOURIER_MODEL)
+
 void uvPlot::draw()
 {
   // draw background
@@ -344,3 +346,12 @@ void mesh_parameterize_cb(Fl_Widget* w, void* data)
   if(!editor) editor = new projectionEditor(faces);
   editor->show();
 }
+
+#else
+
+void mesh_parameterize_cb(Fl_Widget* w, void* data)
+{
+  Msg(GERROR, "You must compile FourierModel to reparameterize meshes");
+}
+
+#endif

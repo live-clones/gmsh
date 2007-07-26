@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.137 2007-07-26 16:45:06 geuzaine Exp $
+# $Id: Makefile,v 1.138 2007-07-26 17:57:27 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -138,8 +138,7 @@ GUI_Projection.o: GUI_Projection.cpp ../Graphics/Draw.h ../DataStr/List.h \
   ../DataStr/Malloc.h ../DataStr/Tree.h ../DataStr/avl.h \
   ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
   ../Common/GmshUI.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEdge.h \
-  ../Geo/GFace.h ../Geo/GRegion.h ../Geo/SBoundingBox3d.h \
-  ../Geo/FProjectionFace.h ../Geo/GModel.h ../Geo/Range.h GUI.h \
+  ../Geo/GFace.h ../Geo/GRegion.h ../Geo/SBoundingBox3d.h GUI.h \
   Opengl_Window.h Colorbar_Window.h Popup_Button.h \
   SpherePosition_Widget.h Shortcut_Window.h
 Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \

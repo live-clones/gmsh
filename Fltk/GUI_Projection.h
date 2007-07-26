@@ -4,14 +4,15 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "GModel.h"
-#include "FProjectionFace.h"
-
-#include <vector>
-
 #include "GUI.h"
 #include "Shortcut_Window.h"
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Round_Button.H>
+
+#if defined(HAVE_FOURIER_MODEL)
+
+#include <vector>
+#include "FProjectionFace.h"
 
 #define MAX_PROJECTION_PARAMETERS 20
 
@@ -53,5 +54,7 @@ class projectionEditor {
   int getSelectionMode();
   Fl_Value_Input *getValueInput(int i);
 };
+
+#endif
 
 #endif

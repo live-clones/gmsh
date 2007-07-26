@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.626 2007-07-26 13:10:47 geuzaine Exp $
+// $Id: GUI.cpp,v 1.627 2007-07-26 17:57:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -290,7 +290,9 @@ Context_Item menu_mesh[] = {
 #if defined(HAVE_NETGEN)
   {"Optimize quality", (Fl_Callback *)mesh_optimize_cb} , 
 #endif
+#if defined(HAVE_FOURIER_MODEL)
   {"Reparameterize",   (Fl_Callback *)mesh_parameterize_cb} , 
+#endif
   {"Save",         (Fl_Callback *)mesh_save_cb} ,
   {0} 
 };  
