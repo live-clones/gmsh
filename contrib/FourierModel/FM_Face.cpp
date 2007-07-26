@@ -2,6 +2,9 @@
 #include "Message.h"
 
 void FM_Face::F(double u, double v, double &x, double &y, double &z) {
+
+  _patch->F(u,v,x,y,z);
+  /*
   if (_edge.size() == 1) {
     double U = sqrt((2*u-1)*(2*u-1)+(2*v-1)*(2*v-1));
     double V = 0.5 * (atan2(2*v-1,2*u-1)/ M_PI + 1.);
@@ -35,10 +38,14 @@ void FM_Face::F(double u, double v, double &x, double &y, double &z) {
     Msg::Info("Such a face not implemented yet");
     x = y = z = 0.;
   }
+  */
 }
 
 bool FM_Face::Inverse(double x,double y,double z,double &u, double &v)
 {
+  _patch->Inverse(x,y,z,u,v);
+
+  /*
   if (_edge.size() == 1) {
     double n[3], t[3], s[3], c[3], r[3];
     _patch->F(0.,0.,c[0],c[1],c[2]);
@@ -101,7 +108,7 @@ bool FM_Face::Inverse(double x,double y,double z,double &u, double &v)
     Msg::Info("Such a face not implemented yet");
     u = v = 0.;
   }
-  
+  */
 }
 
 void FM_Face::Dfdu(double u, double v, double &x, double &y, double &z)

@@ -2,14 +2,12 @@
 #define _EXACT_PATCH_H_
 
 #include "Patch.h"
+#include "ProjectionSurface.h"
 
 // The base class for the patches
 class ExactPatch : public Patch {
- private:
-  // third axis
-  double _NcrossT[3];
  public:
-  ExactPatch(PatchInfo* PI);
+  ExactPatch(PatchInfo* PI, ProjectionSurface* ps);
   virtual ~ExactPatch() {}
 
   // These are the virtual functions that must be provided by all

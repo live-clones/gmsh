@@ -1,20 +1,38 @@
 #include "FM_Edge.h"
 #include "Message.h"
 
+bool FM_Edge::GetCurveExtent(double &start, double &end)
+{
+  bool result = false;
+  if (_curve) {
+    printf("\t\tedgeType : %d\n",_curve->GetEdgeType());
+    if (_curve->GetEdgeType() >= 0) {
+      _curve->GetEdgeParExtent(start,end);
+      result = true;
+    }
+  }
+
+  return result;
+}
+
 void FM_Edge::F(double t, double &x, double &y, double &z)
 {
   if (_curve) {
-    double tStart, tEnd;
-    _curve->Inverse(_SP->GetX(),_SP->GetY(),_SP->GetZ(),tStart);
-    _curve->Inverse(_EP->GetX(),_EP->GetY(),_EP->GetZ(),tEnd);
-   
     double tRescaled;
-    if (std::abs(tEnd - tStart) < 1.e-12) {
-      tRescaled = tStart + t * (1. + tEnd - tStart);
-      tRescaled -= floor(tRescaled);
+    if (_curve->GetEdgeType() < 0) {
+      double tStart, tEnd;
+      _curve->Inverse(_SP->GetX(),_SP->GetY(),_SP->GetZ(),tStart);
+      _curve->Inverse(_EP->GetX(),_EP->GetY(),_EP->GetZ(),tEnd);
+      
+      if (std::abs(tEnd - tStart) < 1.e-12) {
+	tRescaled = tStart + t * (1. + tEnd - tStart);
+	tRescaled -= floor(tRescaled);
+      }
+      else
+	tRescaled = tStart + t * (tEnd - tStart);
     }
     else
-      tRescaled = tStart + t * (tEnd - tStart);
+      tRescaled = t;
     _curve->F(tRescaled, x, y, z);
     //Msg::Info("%g %g %g",_SP->GetX(),_SP->GetY(),_SP->GetZ());
     //Msg::Info("%g %g %g",_EP->GetX(),_EP->GetY(),_EP->GetZ());

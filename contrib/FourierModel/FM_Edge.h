@@ -37,6 +37,8 @@ class FM_Edge {
       return false;
   }
 
+  bool GetCurveExtent(double &start, double &end);
+
   void F(double t, double &x, double &y, double &z);
   bool Inverse(double x,double y,double z,double &t);
   void Dfdt(double t, double &x, double &y, double &z);  

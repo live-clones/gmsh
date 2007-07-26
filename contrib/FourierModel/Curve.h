@@ -7,7 +7,7 @@
 // The base class for the patches
 class Curve {
  private:
-  int _edgeNum;
+  int _along;
   double _h, _tol;
  protected:
   // Patches
@@ -31,6 +31,8 @@ class Curve {
   // with respect to u and v
   virtual double GetPou(double t);
   virtual int GetTag();
+  virtual int GetEdgeType();
+  virtual void GetEdgeParExtent(double &start, double &end);
   virtual void F(double t, double &x, double &y, double &z);
   virtual bool Inverse(double x,double y,double z,double &t);
 };

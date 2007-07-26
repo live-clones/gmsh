@@ -21,6 +21,7 @@ class FM_Face {
 
   inline void SetTag(int tag) { _tag = tag; }
   inline int GetTag() { return _tag; }
+  inline bool IsPeriodic(int dim) { return _patch->_PI->periodic[dim]; }
   inline void AddEdge(FM_Edge* edge) { _edge.push_back(edge); }
   inline int GetNumEdges() { return _edge.size(); }
   inline FM_Edge* GetEdge(int i) { return _edge[i]; }
