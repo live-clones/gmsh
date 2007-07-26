@@ -889,6 +889,7 @@ Optional Packages:
   --with-occ-prefix=PFX   prefix where OpenCascade is installed
   --with-hdf5-prefix=PFX  prefix where OpenCascade is installed
   --with-med-prefix=PFX   prefix where OpenCascade is installed
+  --with-fftw3-prefix=PFX prefix where FFTW3 is installed
 
 Some influential environment variables:
   CC          C compiler command
@@ -1400,6 +1401,12 @@ fi;
 if test "${with_med_prefix+set}" = set; then
   withval="$with_med_prefix"
   MED_PREFIX=$withval
+fi;
+
+# Check whether --with-fftw3-prefix or --without-fftw3-prefix was given.
+if test "${with_fftw3_prefix+set}" = set; then
+  withval="$with_fftw3_prefix"
+  FFTW3_PREFIX=$withval
 fi;
 
 # Check whether --enable-gsl or --disable-gsl was given.
@@ -4321,11 +4328,89 @@ else
 fi
 
     if test "x${FOURIER}" = "xyes"; then
-      GMSH_DIRS="${GMSH_DIRS} contrib/FourierModel"
-      GMSH_LIBS="${GMSH_LIBS} -lGmshFourierModel"
-      FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS}"
+            if test "x${FFTW3_PREFIX}" != "x"; then
+        LDFLAGS="-L${FFTW3_PREFIX}/lib ${LDFLAGS}"
+      fi
+      echo "$as_me:$LINENO: checking for main in -lfftw3" >&5
+echo $ECHO_N "checking for main in -lfftw3... $ECHO_C" >&6
+if test "${ac_cv_lib_fftw3_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lfftw3  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_fftw3_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_fftw3_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_fftw3_main" >&5
+echo "${ECHO_T}$ac_cv_lib_fftw3_main" >&6
+if test $ac_cv_lib_fftw3_main = yes; then
+  FFTW3="yes"
+else
+  FFTW3="no"
+fi
+
+      if test "x${FFTW3}" != "xyes"; then
+        { echo "$as_me:$LINENO: WARNING: Could not find FFTW3: disabling FourierModel." >&5
+echo "$as_me: WARNING: Could not find FFTW3: disabling FourierModel." >&2;}
+      else
+        GMSH_DIRS="${GMSH_DIRS} contrib/FourierModel"
+        if test "x${FFTW3_PREFIX}" = "x"; then
+          GMSH_LIBS="${GMSH_LIBS} -lGmshFourierModel -lfftw3"
+          FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS}"
+        else
+          GMSH_LIBS="${GMSH_LIBS} -lGmshFourierModel -L${FFTW3_PREFIX}/lib -lfftw3"
+          FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS} -I${FFTW3_PREFIX}/include"
+        fi
+      fi
     fi
   fi
+
 fi
 
 if test "x$enable_gsl" != "xno"; then
