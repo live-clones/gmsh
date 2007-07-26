@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.35 2007-04-12 08:47:24 remacle Exp $
+// $Id: MElement.cpp,v 1.36 2007-07-26 13:10:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,9 +24,18 @@
 #include "GEntity.h"
 #include "Numeric.h"
 #include "Message.h"
+#include "Context.h"
+
+extern Context_T CTX;
 
 int MElement::_globalNum = 0;
 double MElementLessThanLexicographic::tolerance = 1.e-6;
+
+char MElement::getVisibility()
+{
+  if(CTX.hide_unselected && _visible < 2) return false;
+  return _visible; 
+}
 
 double MElement::minEdge()
 {

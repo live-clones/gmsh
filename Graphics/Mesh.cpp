@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.198 2007-03-11 20:18:58 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.199 2007-07-26 13:10:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

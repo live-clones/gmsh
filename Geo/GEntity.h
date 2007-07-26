@@ -184,7 +184,7 @@ class GEntity {
   virtual SBoundingBox3d bounds() const { throw; }
 
   // Get the visibility flag
-  virtual char getVisibility(){ return _visible; }
+  virtual char getVisibility();
 
   // Set the visibility flag
   virtual void setVisibility(char val, bool recursive=false){ _visible = val; }

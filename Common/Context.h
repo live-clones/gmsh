@@ -140,6 +140,8 @@ public :
 
   int expert_mode; // to disable some warnings for beginners
   int printing; // dynamic: equal to 1 while gmsh is printing
+  
+  int hide_unselected; // hide all unselected entities
 
   // geometry options 
   struct{

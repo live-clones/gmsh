@@ -274,7 +274,6 @@ void mesh_define_cb(CALLBACK_ARGS);
 void mesh_1d_cb(CALLBACK_ARGS);
 void mesh_2d_cb(CALLBACK_ARGS); 
 void mesh_3d_cb(CALLBACK_ARGS); 
-void mesh_edit_cb(CALLBACK_ARGS);
 void mesh_delete_cb(CALLBACK_ARGS);
 void mesh_delete_parts_cb(CALLBACK_ARGS);
 void mesh_inspect_cb(CALLBACK_ARGS);

@@ -1,4 +1,4 @@
-// $Id: GEntity.cpp,v 1.10 2006-11-30 13:55:20 geuzaine Exp $
+// $Id: GEntity.cpp,v 1.11 2007-07-26 13:10:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -34,6 +34,12 @@ GEntity::GEntity(GModel *m, int t)
 GEntity::~GEntity()
 {
   if(meshRep) delete meshRep; 
+}
+
+char GEntity::getVisibility()
+{ 
+  if(CTX.hide_unselected && !CTX.pick_elements && !getSelection()) return false;
+  return _visible; 
 }
 
 bool GEntity::useColor()

@@ -70,7 +70,7 @@ class MElement
   virtual void setPartition(int num){ _partition = (short)num; }
 
   // get/set the visibility flag
-  virtual char getVisibility(){ return _visible; }
+  virtual char getVisibility();
   virtual void setVisibility(char val){ _visible = val; }
 
   // get the vertices

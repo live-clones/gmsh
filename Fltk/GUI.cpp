@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.625 2007-07-25 15:48:32 geuzaine Exp $
+// $Id: GUI.cpp,v 1.626 2007-07-26 13:10:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -281,7 +281,7 @@ Context_Item menu_mesh[] = {
   {"1Mesh", NULL} ,
   {"Define",       (Fl_Callback *)mesh_define_cb} ,
   {"Inspect",      (Fl_Callback *)mesh_inspect_cb} , 
-  {"Edit",         (Fl_Callback *)mesh_edit_cb} , 
+  {"Delete",       (Fl_Callback *)mesh_delete_cb} , 
   {"1D",           (Fl_Callback *)mesh_1d_cb} ,
   {"2D",           (Fl_Callback *)mesh_2d_cb} , 
   {"3D",           (Fl_Callback *)mesh_3d_cb} , 
@@ -290,26 +290,10 @@ Context_Item menu_mesh[] = {
 #if defined(HAVE_NETGEN)
   {"Optimize quality", (Fl_Callback *)mesh_optimize_cb} , 
 #endif
+  {"Reparameterize",   (Fl_Callback *)mesh_parameterize_cb} , 
   {"Save",         (Fl_Callback *)mesh_save_cb} ,
   {0} 
 };  
-    Context_Item menu_mesh_edit[] = {
-      {"1Mesh>Edit", NULL} ,
-      {"Delete", (Fl_Callback *)mesh_delete_cb} ,
-      //{"Update edges",   (Fl_Callback *)mesh_update_edges_cb} ,
-      {"Reparameterize", (Fl_Callback *)mesh_parameterize_cb} ,
-      //{"Remesh 2D",      (Fl_Callback *)mesh_remesh_cb} , 
-      {0} 
-    };  
-        Context_Item menu_mesh_delete[] = {
-          {"1Mesh>Edit>Delete", NULL} ,
-          {"Elements", (Fl_Callback *)mesh_delete_parts_cb, (void*)"elements"} ,
-	  {"Point",   (Fl_Callback *)geometry_elementary_delete_point_cb} ,
-          {"Lines",    (Fl_Callback *)mesh_delete_parts_cb, (void*)"lines"} ,
-          {"Surfaces", (Fl_Callback *)mesh_delete_parts_cb, (void*)"surfaces"} ,
-          {"Volumes",  (Fl_Callback *)mesh_delete_parts_cb, (void*)"volumes"} ,
-          {0} 
-        };  
     Context_Item menu_mesh_define[] = {
       {"1Mesh>Define", NULL} ,
       {"Characteristic length", (Fl_Callback *)mesh_define_length_cb  } ,
@@ -324,6 +308,14 @@ Context_Item menu_mesh[] = {
 	  {"Volume",  (Fl_Callback *)mesh_define_transfinite_volume_cb} , 
 	  {0} 
 	};  
+    Context_Item menu_mesh_delete[] = {
+      {"1Mesh>Edit>Delete", NULL} ,
+      {"Elements", (Fl_Callback *)mesh_delete_parts_cb, (void*)"elements"} ,
+      {"Lines",    (Fl_Callback *)mesh_delete_parts_cb, (void*)"lines"} ,
+      {"Surfaces", (Fl_Callback *)mesh_delete_parts_cb, (void*)"surfaces"} ,
+      {"Volumes",  (Fl_Callback *)mesh_delete_parts_cb, (void*)"volumes"} ,
+      {0} 
+    };  
 
 // FIXME: should create MAXSOLVERS items...
 Context_Item menu_solver[] = {
