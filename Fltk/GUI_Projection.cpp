@@ -28,8 +28,47 @@ void uvPlot::draw()
   fl_draw("Hello", w() / 2, h() / 2);
 }
 
+projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, int BH, 
+		       projectionEditor *e) 
+  : face(f)
+{
+  group = new Fl_Scroll(x, y, w, h);
+  SBoundingBox3d bounds = GMODEL->bounds();
+  ProjectionSurface *ps = f->GetProjectionSurface();
+  for(int i = 0; i < ps->GetNumParameters() + 9; i++){
+    Fl_Value_Input *v = new Fl_Value_Input(x, y + i * BH, BB, BH);
+    if(i < 3){ // scaling
+      v->maximum(CTX.lc * 10.);
+      v->minimum(CTX.lc / 100.);
+      v->step(CTX.lc / 100.);
+      v->label((i == 0) ? "X scale" : (i == 1) ? "Y scale" : "Z scale");
+      v->value(1.);
+    }
+    else if(i < 6){ //rotation
+      v->maximum(-180.);
+      v->minimum(180.);
+      v->step(0.1);
+      v->label((i == 3) ? "X rotation" : (i == 4) ? "Y rotation" : "Z rotation");
+    }
+    else if(i < 9){ // translation
+      v->maximum(bounds.max()[i] + CTX.lc);
+      v->minimum(bounds.min()[i] - CTX.lc);
+      v->step(CTX.lc / 100.);
+      v->label((i == 6) ? "X translation" : (i == 7) ? "Y translation" : "Z translation");
+    }
+    else{ // other parameters
+      v->label("My nice label");
+      v->value(ps->GetParameter(i - 9));
+    }
+    v->align(FL_ALIGN_RIGHT);
+    v->callback(update_cb, e);
+    parameters.push_back(v);
+  }
+  group->end();
+  group->hide();
+}
+
 projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces) 
-  : _faces(faces)
 {
   // construct GUI in terms of standard sizes
   const int BH = 2 * GetFontSize() + 1, BB = 7 * GetFontSize(), WB = 7;
@@ -51,39 +90,34 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
   }
   o->end();
   
-  Fl_Toggle_Button *b1 = 
-    new Fl_Toggle_Button(width - WB - (int)(1.5 * BB), WB, (int)(1.5 * BB), BH, "Hide unselected");
+  Fl_Toggle_Button *b1 = new Fl_Toggle_Button(width - WB - (int)(1.5 * BB), WB, 
+					      (int)(1.5 * BB), BH, "Hide unselected");
   b1->callback(hide_cb);
 
-  Fl_Button *b2 = 
-    new Fl_Button(width - WB - (int)(1.5 * BB), WB + BH, (int)(1.5 * BB), BH, "Save selection");
+  Fl_Button *b2 = new Fl_Button(width - WB - (int)(1.5 * BB), WB + BH,
+				(int)(1.5 * BB), BH, "Save selection");
   b2->callback(save_cb, this);
 
-  _browser = new Fl_Hold_Browser(WB, 2 * WB + 3 * BH, BB, 5 * BH);
+  const int brw = (int)(1.25 * BB);
+
+  _browser = new Fl_Hold_Browser(WB, 2 * WB + 3 * BH, brw, 5 * BH);
   _browser->callback(browse_cb, this);
-  for(unsigned int i = 0; i < _faces.size(); i++){
-    ProjectionSurface *ps = _faces[i]->GetProjectionSurface();
+  for(unsigned int i = 0; i < faces.size(); i++){
+    ProjectionSurface *ps = faces[i]->GetProjectionSurface();
     _browser->add(ps->GetName().c_str());
+    _projections.push_back(new projection(faces[i], 2 * WB + brw, 2 * WB + 3 * BH, 
+					  width - 3 * WB - brw, 5 * BH, BB, BH, this));
   }
-
-  Fl_Scroll *s = new Fl_Scroll(2 * WB + BB, 2 * WB + 3 * BH, width - 3 * WB - BB, 5 * BH);
-  for(int i = 0; i < MAX_PROJECTION_PARAMETERS; i++){
-    _input[i] = new Fl_Value_Input(2 * WB + BB, 2 * WB + (i + 3) * BH, BB, BH);
-    _input[i]->align(FL_ALIGN_RIGHT);
-    _input[i]->callback(update_cb, this);
-    _input[i]->hide();
-  }
-  s->end();
-
+  
   _uvPlot = new uvPlot(WB, 3 * WB + 8 * BH, width - 2 * WB, height - 5 * WB - 9 * BH);
   _uvPlot->end();
 
-  Fl_Button *b3 = 
-    new Fl_Button(width - 2 * WB - 2 * BB, height - WB - BH, BB, BH, "Compute");
+  Fl_Button *b3 = new Fl_Button(width - 2 * WB - 2 * BB, height - WB - BH, 
+				BB, BH, "Compute");
   b3->callback(compute_cb, this);
 
-  Fl_Button *b4 = 
-    new Fl_Button(width - WB - BB, height - WB - BH, BB, BH, "Cancel");
+  Fl_Button *b4 = new Fl_Button(width - WB - BB, height - WB - BH,
+				BB, BH, "Cancel");
   b4->callback(close_cb, _window);
 
   _window->end();
@@ -101,60 +135,27 @@ int projectionEditor::getSelectionMode()
   return ENT_ALL;
 }
 
-FProjectionFace *projectionEditor::getCurrentProjectionFace()
+projection *projectionEditor::getCurrentProjection()
 {
   for(int i = 1; i <= _browser->size(); i++)
-    if(_browser->selected(i)) return _faces[i - 1];
+    if(_browser->selected(i)) return _projections[i - 1];
   return 0;
-}
-
-Fl_Value_Input *projectionEditor::getValueInput(int i)
-{
-  if(i < 0 || i > MAX_PROJECTION_PARAMETERS - 1) return 0;
-  return _input[i];
 }
 
 void browse_cb(Fl_Widget *w, void *data)
 {
   projectionEditor *e = (projectionEditor*)data;
-  SBoundingBox3d bounds = GMODEL->bounds();
 
-  std::vector<FProjectionFace*> &faces(e->getProjectionFaces());
-  for(unsigned int i = 0; i < faces.size(); i++)
-    faces[i]->setVisibility(false);
+  std::vector<projection*> &projections(e->getProjections());
+  for(unsigned int i = 0; i < projections.size(); i++){
+    projections[i]->face->setVisibility(false);
+    projections[i]->group->hide();
+  }
 
-  for(int i = 0; i < MAX_PROJECTION_PARAMETERS; i++)  
-    e->getValueInput(i)->hide();
-
-  FProjectionFace *f = e->getCurrentProjectionFace();
-  if(f){
-    f->setVisibility(true);
-    ProjectionSurface *ps = f->GetProjectionSurface();
-    for(int i = 0; i < 9; i++){
-      e->getValueInput(i)->show();
-      if(i < 3){ // scaling
-	e->getValueInput(i)->maximum(CTX.lc * 10.);
-	e->getValueInput(i)->minimum(CTX.lc / 100.);
-	e->getValueInput(i)->step(CTX.lc / 100.);
-	e->getValueInput(i)->label((i == 0) ? "X scale" : (i == 1) ? "Y scale" : "Z scale");
-	e->getValueInput(i)->value(1.); // FIXME
-      }
-      else if(i < 6){ //rotation
-	e->getValueInput(i)->maximum(-180.);
-	e->getValueInput(i)->minimum(180.);
-	e->getValueInput(i)->step(0.1);
-      }
-      else{ // translation
-	e->getValueInput(i)->maximum(bounds.max()[i] + CTX.lc);
-	e->getValueInput(i)->minimum(bounds.min()[i] - CTX.lc);
-	e->getValueInput(i)->step(CTX.lc / 100.);
-      }
-    }
-    for(int i = 9; i < 9 + ps->GetNumParameters(); i++){
-      e->getValueInput(i)->show();
-      e->getValueInput(i)->label("My nice label");
-      e->getValueInput(i)->value(ps->GetParameter(i - 9));
-    }
+  projection *p = e->getCurrentProjection();
+  if(p){
+    p->face->setVisibility(true);
+    p->group->show();
   }
   Draw();
 }
@@ -164,20 +165,20 @@ void update_cb(Fl_Widget *w, void *data)
   projectionEditor *e = (projectionEditor*)data;
 
   // get all parameters from GUI and modify projection surface accordingly
-  FProjectionFace *f = e->getCurrentProjectionFace();
-  if(f){
-    ProjectionSurface *ps = f->GetProjectionSurface();
-    ps->Rescale(e->getValueInput(0)->value(),
-		e->getValueInput(1)->value(),
-		e->getValueInput(2)->value());
-    ps->Rotate(e->getValueInput(3)->value(),
-	       e->getValueInput(4)->value(),
-	       e->getValueInput(5)->value());
-    ps->Translate(e->getValueInput(6)->value(),
-		  e->getValueInput(7)->value(),
-		  e->getValueInput(8)->value());
+  projection *p = e->getCurrentProjection();
+  if(p){
+    ProjectionSurface *ps = p->face->GetProjectionSurface();
+    ps->Rescale(p->parameters[0]->value(),
+		p->parameters[1]->value(),
+		p->parameters[2]->value());
+    ps->Rotate(p->parameters[3]->value(),
+	       p->parameters[4]->value(),
+	       p->parameters[5]->value());
+    ps->Translate(p->parameters[6]->value(),
+		  p->parameters[7]->value(),
+		  p->parameters[8]->value());
     for(int i = 9; i < 9 + ps->GetNumParameters(); i++)
-      ps->SetParameter(i - 9, e->getValueInput(i)->value());
+      ps->SetParameter(i - 9, p->parameters[i]->value());
     Draw();
   }
 
@@ -331,8 +332,10 @@ void mesh_parameterize_cb(Fl_Widget* w, void* data)
   // create one instance of each available projection surface
   std::vector<FProjectionFace*> faces;
   if(faces.empty()){
-    faces.push_back(new FProjectionFace(GMODEL, 10000, new CylindricalProjectionSurface(0)));
-    faces.push_back(new FProjectionFace(GMODEL, 10001, new RevolvedParabolaProjectionSurface(0)));
+    faces.push_back(new FProjectionFace(GMODEL, 10000, 
+					new CylindricalProjectionSurface(0)));
+    faces.push_back(new FProjectionFace(GMODEL, 10001,
+					new RevolvedParabolaProjectionSurface(0)));
   }
 
   // make each projection surface invisible and 

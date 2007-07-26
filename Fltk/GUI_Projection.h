@@ -14,8 +14,6 @@
 #include <vector>
 #include "FProjectionFace.h"
 
-#define MAX_PROJECTION_PARAMETERS 20
-
 void select_cb(Fl_Widget *w, void *data);
 void browse_cb(Fl_Widget *w, void *data);
 void update_cb(Fl_Widget *w, void *data);
@@ -33,13 +31,23 @@ class uvPlot : public Fl_Window {
   void fill(std::vector<double> &u, std::vector<double> &v){ _u = u; _v = v; redraw(); }
 };
 
+class projectionEditor;
+
+class projection {
+ public:
+  FProjectionFace *face;
+  Fl_Group *group;
+  std::vector<Fl_Value_Input*> parameters;
+  projection(FProjectionFace *f, int x, int y, int w, int h, int BB, int BH,
+	     projectionEditor *e);
+};
+
 class projectionEditor {
  private:
-  std::vector<FProjectionFace*> _faces;
+  std::vector<projection*> _projections;
   std::vector<MElement*> _elements;
   std::vector<GEntity*> _entities;
   Fl_Window *_window;
-  Fl_Value_Input *_input[MAX_PROJECTION_PARAMETERS];
   Fl_Hold_Browser *_browser;
   Fl_Round_Button *_select[3];
   uvPlot *_uvPlot;
@@ -49,10 +57,9 @@ class projectionEditor {
   uvPlot *uv() { return _uvPlot; }
   std::vector<MElement*> &getElements() { return _elements; }
   std::vector<GEntity*> &getEntities() { return _entities; }
-  std::vector<FProjectionFace*> &getProjectionFaces() { return _faces; }
-  FProjectionFace *getCurrentProjectionFace();
+  std::vector<projection*> &getProjections() { return _projections; }
+  projection *getCurrentProjection();
   int getSelectionMode();
-  Fl_Value_Input *getValueInput(int i);
 };
 
 #endif
