@@ -1,4 +1,4 @@
-// $Id: GEntity.cpp,v 1.11 2007-07-26 13:10:48 geuzaine Exp $
+// $Id: GEntity.cpp,v 1.12 2007-07-27 13:27:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,9 @@ GEntity::~GEntity()
 
 char GEntity::getVisibility()
 { 
-  if(CTX.hide_unselected && !CTX.pick_elements && !getSelection()) return false;
+  if(CTX.hide_unselected && !CTX.pick_elements && !getSelection() &&
+     geomType() != ProjectionFace) 
+    return false;
   return _visible; 
 }
 
