@@ -9,6 +9,8 @@ extern Context_T CTX;
 
 #if defined(HAVE_FOURIER_MODEL)
 
+static double currentParams[9];
+
 void uvPlot::draw()
 {
   // draw background
@@ -37,28 +39,42 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
   ProjectionSurface *ps = f->GetProjectionSurface();
   for(int i = 0; i < ps->GetNumParameters() + 9; i++){
     Fl_Value_Input *v = new Fl_Value_Input(x, y + i * BH, BB, BH);
+
+    ps->GetScale(currentParams[0],currentParams[1],currentParams[2]);
+    ps->GetOrigin(currentParams[6],currentParams[7],currentParams[8]);
+
     if(i < 3){ // scaling
       v->maximum(CTX.lc * 10.);
       v->minimum(CTX.lc / 100.);
       v->step(CTX.lc / 100.);
       v->label((i == 0) ? "X scale" : (i == 1) ? "Y scale" : "Z scale");
-      v->value(1.);
+      v->value(currentParams[i]);
     }
     else if(i < 6){ //rotation
+      currentParams[i] = 0.;
       v->maximum(-180.);
       v->minimum(180.);
       v->step(0.1);
-      v->label((i == 3) ? "X rotation" : (i == 4) ? "Y rotation" : "Z rotation");
+      v->label((i == 3) ? "X rotation" : (i == 4) ? "Y rotation" : 
+	       "Z rotation");
+      v->value(currentParams[i]);
     }
     else if(i < 9){ // translation
-      v->maximum(bounds.max()[i] + CTX.lc);
-      v->minimum(bounds.min()[i] - CTX.lc);
+      v->maximum(bounds.max()[i] + 10. * CTX.lc);
+      v->minimum(bounds.min()[i] - 10. * CTX.lc);
       v->step(CTX.lc / 100.);
-      v->label((i == 6) ? "X translation" : (i == 7) ? "Y translation" : "Z translation");
+      v->label((i == 6) ? "X translation" : (i == 7) ? "Y translation" : 
+	       "Z translation");
+      //v->value(currentParams[i]);
+      v->value(bounds.center()[i]);
     }
     else{ // other parameters
+      v->maximum(10. * CTX.lc);
+      v->minimum(-10. * CTX.lc);
+      v->step(CTX.lc / 100.);
       v->label("My nice label");
       v->value(ps->GetParameter(i - 9));
+      v->value(currentParams[i]);
     }
     v->align(FL_ALIGN_RIGHT);
     v->callback(update_cb, e);
@@ -78,24 +94,27 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
   _window = new Dialog_Window(width, height, "Reparameterize");
   
   new Fl_Box(WB, WB + BH, BB / 2, BH, "Select:");
-
+  
   Fl_Group *o = new Fl_Group(WB, WB, 2 * BB, 3 * BH);
-  _select[0] = new Fl_Round_Button(2 * WB + BB / 2, WB, BB, BH, "Points");
+  _select[0] = 
+    new Fl_Round_Button(2 * WB + BB / 2, WB, BB, BH, "Points");
   _select[0]->value(1);
-  _select[1] = new Fl_Round_Button(2 * WB + BB / 2, WB + BH, BB, BH, "Elements");
-  _select[2] = new Fl_Round_Button(2 * WB + BB / 2, WB + 2 * BH, BB, BH, "Surfaces");
+  _select[1] = 
+    new Fl_Round_Button(2 * WB + BB / 2, WB + BH, BB, BH, "Elements");
+  _select[2] = 
+    new Fl_Round_Button(2 * WB + BB / 2, WB + 2 * BH, BB, BH, "Surfaces");
   for(int i = 0; i < 3; i++){
     _select[i]->callback(select_cb, this);
     _select[i]->type(FL_RADIO_BUTTON);
   }
   o->end();
   
-  Fl_Toggle_Button *b1 = new Fl_Toggle_Button(width - WB - (int)(1.5 * BB), WB, 
-					      (int)(1.5 * BB), BH, "Hide unselected");
+  Fl_Toggle_Button *b1 = new Fl_Toggle_Button
+    (width - WB - 3 * BB / 2, WB, 3 * BB / 2, BH, "Hide unselected");
   b1->callback(hide_cb);
-
-  Fl_Button *b2 = new Fl_Button(width - WB - (int)(1.5 * BB), WB + BH,
-				(int)(1.5 * BB), BH, "Save selection");
+  
+  Fl_Button *b2 = new Fl_Button
+    (width - WB - 3 * BB / 2, WB + BH, 3 * BB / 2, BH, "Save selection");
   b2->callback(save_cb, this);
 
   const int brw = (int)(1.25 * BB);
@@ -105,11 +124,13 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
   for(unsigned int i = 0; i < faces.size(); i++){
     ProjectionSurface *ps = faces[i]->GetProjectionSurface();
     _browser->add(ps->GetName().c_str());
-    _projections.push_back(new projection(faces[i], 2 * WB + brw, 2 * WB + 3 * BH, 
-					  width - 3 * WB - brw, 5 * BH, BB, BH, this));
+    _projections.push_back
+      (new projection(faces[i], 2 * WB + brw, 2 * WB + 3 * BH, 
+		      width - 3 * WB - brw, 5 * BH, BB, BH, this));
   }
   
-  _uvPlot = new uvPlot(WB, 3 * WB + 8 * BH, width - 2 * WB, height - 5 * WB - 9 * BH);
+  _uvPlot = 
+    new uvPlot(WB, 3 * WB + 8 * BH, width - 2 * WB, height - 5 * WB - 9 * BH);
   _uvPlot->end();
 
   Fl_Button *b3 = new Fl_Button(width - 2 * WB - 2 * BB, height - WB - BH, 
@@ -119,7 +140,7 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
   Fl_Button *b4 = new Fl_Button(width - WB - BB, height - WB - BH,
 				BB, BH, "Cancel");
   b4->callback(close_cb, _window);
-
+  
   _window->end();
   _window->hotspot(_window);
   _window->resizable(_uvPlot);
@@ -151,11 +172,68 @@ void browse_cb(Fl_Widget *w, void *data)
     projections[i]->face->setVisibility(false);
     projections[i]->group->hide();
   }
+  
+  /*
+<<<<<<< GUI_Projection.cpp
+  for(int i = 0; i < MAX_PROJECTION_PARAMETERS; i++)  
+    e->getValueInput(i)->hide();
+
+  FProjectionFace *f = e->getCurrentProjectionFace();
+  if(f){
+    f->setVisibility(true);
+    ProjectionSurface *ps = f->GetProjectionSurface();
+    for(int i = 0; i < 9; i++){
+      e->getValueInput(i)->show();
+      ps->GetScale(currentParams[0],currentParams[1],currentParams[2]);
+      ps->GetOrigin(currentParams[6],currentParams[7],currentParams[8]);
+      if(i < 3){ // scaling
+	e->getValueInput(i)->maximum(CTX.lc * 10.);
+	e->getValueInput(i)->minimum(CTX.lc / 100.);
+	e->getValueInput(i)->step(CTX.lc / 100.);
+	e->getValueInput(i)->
+	  label((i == 0) ? "X scale" : (i == 1) ? "Y scale" : "Z scale");
+	e->getValueInput(i)->value(currentParams[i]);
+      }
+      else if(i < 6){ //rotation
+	currentParams[i] = 0.;
+	e->getValueInput(i)->maximum(180.);
+	e->getValueInput(i)->minimum(-180.);
+	e->getValueInput(i)->step(0.1);
+	e->getValueInput(i)->
+	  label((i == 3) ? "X Rotation" : (i == 4) ? "Y Rotation" : 
+		"Z Rotation");
+	e->getValueInput(i)->value(currentParams[i]);
+      }
+      else{ // translation
+	e->getValueInput(i)->maximum(bounds.max()[i] + CTX.lc);
+	e->getValueInput(i)->minimum(bounds.min()[i] - CTX.lc);
+	e->getValueInput(i)->step(( CTX.lc) / 100.);
+	e->getValueInput(i)->
+	  label((i == 6) ? "X Translation" : (i == 7) ? "Y Translation" : 
+		"Z Translation");
+	e->getValueInput(i)->value(currentParams[i]);
+      }
+    }
+    for(int i = 9; i < 9 + ps->GetNumParameters(); i++){
+      currentParams[i] = ps->GetParameter(i - 9);
+      e->getValueInput(i)->show();
+      e->getValueInput(i)->maximum(10. * CTX.lc);
+      e->getValueInput(i)->minimum(-10. * CTX.lc);
+      e->getValueInput(i)->step(CTX.lc / 100.);
+      e->getValueInput(i)->label("My nice label");
+      e->getValueInput(i)->value(currentParams[i]);
+    }
+=======
+  */
 
   projection *p = e->getCurrentProjection();
   if(p){
     p->face->setVisibility(true);
     p->group->show();
+
+
+    // >>>>>>> 1.12
+
   }
   Draw();
 }
@@ -165,22 +243,26 @@ void update_cb(Fl_Widget *w, void *data)
   projectionEditor *e = (projectionEditor*)data;
 
   // get all parameters from GUI and modify projection surface accordingly
+
   projection *p = e->getCurrentProjection();
   if(p){
     ProjectionSurface *ps = p->face->GetProjectionSurface();
-    ps->Rescale(p->parameters[0]->value(),
-		p->parameters[1]->value(),
-		p->parameters[2]->value());
-    ps->Rotate(p->parameters[3]->value(),
-	       p->parameters[4]->value(),
-	       p->parameters[5]->value());
-    ps->Translate(p->parameters[6]->value(),
-		  p->parameters[7]->value(),
-		  p->parameters[8]->value());
-    for(int i = 9; i < 9 + ps->GetNumParameters(); i++)
-      ps->SetParameter(i - 9, p->parameters[i]->value());
+    ps->Rescale(p->parameters[0]->value() / currentParams[0],
+		p->parameters[1]->value() / currentParams[1],
+		p->parameters[2]->value() / currentParams[2]);
+    ps->Rotate(p->parameters[3]->value() - currentParams[3],
+	       p->parameters[4]->value() - currentParams[4],
+	       p->parameters[5]->value() - currentParams[5]);
+    ps->Translate(p->parameters[6]->value() - currentParams[6],
+		  p->parameters[7]->value() - currentParams[7],
+		  p->parameters[8]->value() - currentParams[8]);
+    for (int i = 9; i < 9 + ps->GetNumParameters(); i++)
+      ps->SetParameter(i - 9, p->parameters[i]->value() - currentParams[i]);
+
     Draw();
-  }
+    for (int i = 0; i < 9; i++)
+      currentParams[i] = p->parameters[i]->value();
+}
 
   // project all selected points and update u,v display
   std::vector<double> u, v;
@@ -332,10 +414,10 @@ void mesh_parameterize_cb(Fl_Widget* w, void* data)
   // create one instance of each available projection surface
   std::vector<FProjectionFace*> faces;
   if(faces.empty()){
-    faces.push_back(new FProjectionFace(GMODEL, 10000, 
-					new CylindricalProjectionSurface(0)));
-    faces.push_back(new FProjectionFace(GMODEL, 10001,
-					new RevolvedParabolaProjectionSurface(0)));
+    faces.push_back(new FProjectionFace
+		    (GMODEL, 10000, new CylindricalProjectionSurface(0)));
+    faces.push_back(new FProjectionFace
+		    (GMODEL, 10001, new RevolvedParabolaProjectionSurface(1)));
   }
 
   // make each projection surface invisible and 

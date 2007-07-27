@@ -4,15 +4,20 @@ CylindricalProjectionSurface::CylindricalProjectionSurface
 (int tag) : ProjectionSurface(1.)
 {
   SetTag(tag);
-  SetName(std::string("cylinder"));
+  SetName(std::string("Cylinder"));
 
   twoPi_ = 2 * M_PI;
 
+  R_ = 1.;
+  Z_ = 1.;
+
+  numParameters_ = 2;
+
   O_[0] = O_[1] = O_[2] = 0.;
 
-  E0_[0] = 0.; E0_[1] = 0.; E0_[2] = 1.;
-  E1_[0] = 1.; E1_[1] = 0.; E1_[2] = 0.;
-  E2_[0] = 0.; E2_[1] = 1.; E2_[2] = 0.;
+  E0_[0] = 1.; E0_[1] = 0.; E0_[2] = 0.;
+  E1_[0] = 0.; E1_[1] = 1.; E1_[2] = 0.;
+  E2_[0] = 0.; E2_[1] = 0.; E2_[2] = 1.;
 
   scale_[0] = scale_[1] = scale_[2] = 1.;
 }
@@ -22,7 +27,7 @@ CylindricalProjectionSurface::CylindricalProjectionSurface
   : ProjectionSurface(1.)
 {
   SetTag(tag);
-  SetName(std::string("cylinder"));
+  SetName(std::string("Cylinder"));
 
   twoPi_ = 2 * M_PI;
 
@@ -41,16 +46,16 @@ CylindricalProjectionSurface::CylindricalProjectionSurface
 void CylindricalProjectionSurface::
 F(double u, double v, double &x, double &y, double &z)
 {
-  x = O_[0] + E0_[0] * scale_[0] * v;
-  y = O_[1] + E0_[1] * scale_[0] * v;
-  z = O_[2] + E0_[2] * scale_[0] * v;
+  x = O_[0] + E0_[0] * Z_ * v;
+  y = O_[1] + E0_[1] * Z_ * v;
+  z = O_[2] + E0_[2] * Z_ * v;
   
-  x += E1_[0] * cos(twoPi_ * (u - 0.5)) + 
-    E2_[0] * sin(twoPi_ * (u - 0.5));
-  y += E1_[1] * cos(twoPi_ * (u - 0.5)) +
-    E2_[1] * sin(twoPi_ * (u - 0.5));
-  z += E1_[2] * cos(twoPi_ * (u - 0.5)) +
-    E2_[2] * sin(twoPi_ * (u - 0.5));
+  x += R_ * (E1_[0] * cos(twoPi_ * (u - 0.5)) + 
+	     E2_[0] * sin(twoPi_ * (u - 0.5)));
+  y += R_ * (E1_[1] * cos(twoPi_ * (u - 0.5)) +
+	     E2_[1] * sin(twoPi_ * (u - 0.5)));
+  z += R_ * (E1_[2] * cos(twoPi_ * (u - 0.5)) +
+	     E2_[2] * sin(twoPi_ * (u - 0.5)));
 }
 
 bool CylindricalProjectionSurface::
@@ -61,7 +66,7 @@ Inverse(double x, double y, double z, double &u,double &v)
   double t = (x - O_[0]) * E0_[0] +
     (y - O_[1]) * E0_[1] +
     (z - O_[2]) * E0_[2];
-  v = t / scale_[0];
+  v = t / Z_;
   double n[3];
   n[0] = x - (O_[0] + t * E0_[0]);
   n[1] = y - (O_[1] + t * E0_[1]);
@@ -84,13 +89,13 @@ Inverse(double x, double y, double z, double &u,double &v)
 void CylindricalProjectionSurface::
 Dfdu(double u, double v, double &x, double &y, double &z)
 {
-  x = twoPi_ * 
+  x = twoPi_ * R_ * 
     (- E1_[0] * sin(twoPi_ * (u - 0.5)) +
      E2_[0] * cos(twoPi_ * (u - 0.5)));
-  y = twoPi_ * 
+  y = twoPi_ * R_ *
     (- E1_[1] * sin(twoPi_ * (u - 0.5)) +
      E2_[1] * cos(twoPi_ * (u - 0.5)));
-  z = twoPi_ * 
+  z = twoPi_ * R_ *
     (- E1_[2] * sin(twoPi_ * (u - 0.5)) +
      E2_[2] * cos(twoPi_ * (u - 0.5)));
 }
@@ -98,21 +103,21 @@ Dfdu(double u, double v, double &x, double &y, double &z)
 void CylindricalProjectionSurface::
 Dfdv(double u, double v, double &x, double &y, double &z)
 {
-  x = E0_[0] * scale_[0];
-  y = E0_[1] * scale_[0];
-  z = E0_[2] * scale_[0];
+  x = E0_[0] * Z_;
+  y = E0_[1] * Z_;
+  z = E0_[2] * Z_;
 }
 
 void CylindricalProjectionSurface::
 Dfdfdudu(double u,double v, double &x, double &y, double &z)
 {
-  x = -  twoPi_ *  twoPi_ *
+  x = -  twoPi_ *  twoPi_ * R_ *
     (E1_[0] * cos(twoPi_ * (u - 0.5)) +
      E2_[0] * sin(twoPi_ * (u - 0.5)));
-  y = -  twoPi_ *  twoPi_ *
+  y = -  twoPi_ *  twoPi_ * R_ *
     (E1_[1] * cos(twoPi_ * (u - 0.5)) +
      E2_[1] * sin(twoPi_ * (u - 0.5)));
-  z = -  twoPi_ *  twoPi_ *
+  z = -  twoPi_ *  twoPi_ * R_ *
     (E1_[2] * cos(twoPi_ * (u - 0.5)) +
      E2_[2] * sin(twoPi_ * (u - 0.5)));
 }
@@ -132,13 +137,13 @@ Dfdfdvdv(double u, double v, double &x, double &y, double &z)
 void CylindricalProjectionSurface::
 Dfdfdfdududu(double u,double v,double &x,double &y,double &z)
 {
-  x = twoPi_ *  twoPi_ * twoPi_ *
+  x = twoPi_ *  twoPi_ * twoPi_ * R_ *
     (E1_[0] * sin(twoPi_ * (u - 0.5)) -
      E2_[0] * cos(twoPi_ * (u - 0.5)));
-  y = twoPi_ *  twoPi_ * twoPi_ *
+  y = twoPi_ *  twoPi_ * twoPi_ * R_ *
     (E1_[1] * sin(twoPi_ * (u - 0.5)) -
      E2_[1] * cos(twoPi_ * (u - 0.5)));
-  z = twoPi_ *  twoPi_ * twoPi_ *
+  z = twoPi_ *  twoPi_ * twoPi_ * R_ *
     (E1_[2] * sin(twoPi_ * (u - 0.5)) +
      E2_[2] * cos(twoPi_ * (u - 0.5)));
 }
@@ -211,10 +216,21 @@ OrthoProjectionOnSurface(double x, double y, double z, double &u,double &v)
 void CylindricalProjectionSurface::
 SetParameter(int i, double x)
 {
+  switch (i) {
+  case 0:
+    R_ = x;
+  case 1:
+    Z_ = x;
+  }
 }
 
 double CylindricalProjectionSurface::
 GetParameter(int i)
 {
-  return 0.;
+  switch (i) {
+  case 0:
+    return R_;
+  case 1:
+    return Z_;
+  }
 }

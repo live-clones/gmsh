@@ -7,6 +7,7 @@
 class CylindricalProjectionSurface : public ProjectionSurface {
  private:
   double twoPi_;
+  double R_, Z_;
  public:
   CylindricalProjectionSurface
     (int tag);
