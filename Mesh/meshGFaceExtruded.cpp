@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.19 2007-05-24 17:34:04 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.20 2007-07-31 20:07:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -60,6 +60,26 @@ void createQuaTri(std::vector<MVertex*> &v, GFace *to,
   }
 }
 
+// FIXME: this is a temporary hack to try to circumvent problems
+// experienced with pos.find(). We need to find a better solution.
+std::set<MVertex*, MVertexLessThanLexicographic>::iterator 
+linearFind(std::set<MVertex*, MVertexLessThanLexicographic> &pos, MVertex *p)
+{
+  double eps = MVertexLessThanLexicographic::tolerance;
+  Msg(INFO, "Trying linear find for point %.16g %.16g %.16g (eps = %.16g)",
+      p->x(), p->y(), p->z(), eps);
+  for(std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = pos.begin();
+      it != pos.end(); ++it){
+    MVertex *v = *it;
+    double dx = v->x() - p->x();
+    double dy = v->y() - p->y();
+    double dz = v->z() - p->z();
+    if(sqrt(dx * dx + dy * dy + dz * dz) < eps) return it;
+  }
+  return pos.end();
+}
+	   
+
 void extrudeMesh(GEdge *from, GFace *to,
 		 std::set<MVertex*, MVertexLessThanLexicographic> &pos,
 		 std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
@@ -104,7 +124,8 @@ void extrudeMesh(GEdge *from, GFace *to,
 	for(int p = 0; p < 4; p++){
 	  MVertex tmp(x[p], y[p], z[p], 0, -1);
 	  itp = pos.find(&tmp);
-	  if(itp == pos.end()) {
+	  if(itp == pos.end()) itp = linearFind(pos, &tmp);
+	  if(itp == pos.end()){
 	    Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
 		tmp.x(), tmp.y(), tmp.z(), to->tag());
 	    return;
@@ -143,6 +164,7 @@ void copyMesh(GFace *from, GFace *to,
       ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
 		  tmp.x(), tmp.y(), tmp.z());
       itp = pos.find(&tmp);
+      if(itp == pos.end()) itp = linearFind(pos, &tmp);
       if(itp == pos.end()) {
 	Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
 	    tmp.x(), tmp.y(), tmp.z(), to->tag());
@@ -160,6 +182,7 @@ void copyMesh(GFace *from, GFace *to,
       ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
 		  tmp.x(), tmp.y(), tmp.z());
       itp = pos.find(&tmp);
+      if(itp == pos.end()) itp = linearFind(pos, &tmp);
       if(itp == pos.end()) {
 	Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d", 
 	    tmp.x(), tmp.y(), tmp.z(), to->tag());
@@ -184,6 +207,7 @@ int MeshExtrudedSurface(GFace *gf,
   // build a set with all the vertices on the boundary of gf
   double old_tol = MVertexLessThanLexicographic::tolerance; 
   MVertexLessThanLexicographic::tolerance = 1.e-12 * CTX.lc;
+
   std::set<MVertex*, MVertexLessThanLexicographic> pos;
   std::list<GEdge*> edges = gf->edges();
   std::list<GEdge*>::iterator it = edges.begin();

@@ -22,8 +22,8 @@
 
 #include <vector>
 #include <set>
+#include "MVertex.h"
 
-class MVertex;
 class GFace;
 
 // Create the mesh of the face
@@ -58,5 +58,8 @@ void computeEdgeLoops(const GFace *gf,
 int MeshTransfiniteSurface(GFace *gf);
 int MeshExtrudedSurface(GFace *gf, 
 			std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges=0);
+
+std::set<MVertex*, MVertexLessThanLexicographic>::iterator 
+linearFind(std::set<MVertex*, MVertexLessThanLexicographic> &pos, MVertex *p);
 
 #endif

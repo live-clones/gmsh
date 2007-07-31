@@ -1,4 +1,4 @@
-// $Id: meshGRegionExtruded.cpp,v 1.17 2007-05-10 22:08:06 geuzaine Exp $
+// $Id: meshGRegionExtruded.cpp,v 1.18 2007-07-31 20:07:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -111,6 +111,7 @@ int getExtrudedVertices(MElement *ele, ExtrudeParams *ep, int j, int k,
   for(int p = 0; p < 2 * n; p++){
     MVertex tmp(x[p], y[p], z[p], 0, -1);
     itp = pos.find(&tmp);
+    if(itp == pos.end()) itp = linearFind(pos, &tmp);
     if(itp == pos.end())
       Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g)",
 	  tmp.x(), tmp.y(), tmp.z());
