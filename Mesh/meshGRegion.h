@@ -53,5 +53,6 @@ class deMeshGRegion {
 void MeshDelaunayVolume(std::vector<GRegion*> &delaunay);
 int MeshTransfiniteVolume(GRegion *gr);
 int SubdivideExtrudedMesh(GModel *m);
+void carveHole(GRegion *gr, int num, double distance, std::vector<int> &surfaces);
 
 #endif

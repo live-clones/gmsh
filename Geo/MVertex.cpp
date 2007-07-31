@@ -1,4 +1,4 @@
-// $Id: MVertex.cpp,v 1.13 2007-04-21 19:40:00 geuzaine Exp $
+// $Id: MVertex.cpp,v 1.14 2007-07-31 22:09:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,16 @@
 
 int MVertex::_globalNum = 0;
 double MVertexLessThanLexicographic::tolerance = 1.e-6;
+
+bool MVertexLessThanLexicographic::operator()(const MVertex *v1, const MVertex *v2) const
+{
+  if(v1->x() - v2->x() >  tolerance) return true;
+  if(v1->x() - v2->x() < -tolerance) return false;
+  if(v1->y() - v2->y() >  tolerance) return true;
+  if(v1->y() - v2->y() < -tolerance) return false;
+  if(v1->z() - v2->z() >  tolerance) return true;
+  return false;
+}
 
 void MVertex::writeMSH(FILE *fp, bool binary, double scalingFactor)
 {
@@ -132,4 +142,15 @@ void MVertex::writeBDF(FILE *fp, int format, double scalingFactor)
     fprintf(fp, "GRID*   %-16d%-16d%-16.9G%-16.9G*N%-6d\n", _num, 0, x1, y1, _num);
     fprintf(fp, "*N%-6d%-16.9G\n", _num, z1);
   }
+}
+
+std::set<MVertex*, MVertexLessThanLexicographic>::iterator 
+MVertex::linearSearch(std::set<MVertex*, MVertexLessThanLexicographic> &pos)
+{
+  double tol = MVertexLessThanLexicographic::tolerance;
+  for(std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = pos.begin();
+      it != pos.end(); ++it){
+    if(distance(*it) < tol) return it;
+  }
+  return pos.end();
 }

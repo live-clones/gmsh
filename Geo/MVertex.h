@@ -21,10 +21,17 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <stdio.h>
-#include <algorithm>
+#include <set>
 #include "SPoint3.h"
 
 class GEntity;
+class MVertex;
+
+class MVertexLessThanLexicographic{
+ public:
+  static double tolerance;
+  bool operator()(const MVertex *v1, const MVertex *v2) const;
+};
 
 // A mesh vertex.
 class MVertex{
@@ -90,6 +97,10 @@ class MVertex{
     return sqrt(dx * dx + dy * dy + dz * dz);
   }
 
+  // linear coordinate search for the vertex in a set
+  std::set<MVertex*, MVertexLessThanLexicographic>::iterator 
+  linearSearch(std::set<MVertex*, MVertexLessThanLexicographic> &pos);
+
   // Get the data associated with this vertex
   virtual void *getData(){ return 0; }
 
@@ -141,20 +152,6 @@ class MDataFaceVertex : public MFaceVertex{
   virtual ~MDataFaceVertex(){}
   virtual bool getData(T &data){ data = _data; return true; }
   virtual void *getData(){ return (void*)&_data; }
-};
-
-class MVertexLessThanLexicographic{
- public:
-  static double tolerance;
-  bool operator()(const MVertex *v1, const MVertex *v2) const
-  {
-    if(v1->x() - v2->x() >  tolerance) return true;
-    if(v1->x() - v2->x() < -tolerance) return false;
-    if(v1->y() - v2->y() >  tolerance) return true;
-    if(v1->y() - v2->y() < -tolerance) return false;
-    if(v1->z() - v2->z() >  tolerance) return true;
-    return false;
-  }
 };
 
 #endif
