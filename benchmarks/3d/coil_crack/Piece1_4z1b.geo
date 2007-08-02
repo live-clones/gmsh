@@ -227,8 +227,8 @@ Volume(vAir) = {news-2,news-1,surftotprobe};//Rest Air
 Characteristic Length{10,11,28,32}= pflaw ;//Watch out! Changing characteristic lenths of the flaw at the end
 //Characteristic Length{66,93}= ph3 ;
 
-//Transfinite Line{cd[0],cd[1],cd[2]} = 5 ;
-//Transfinite Line{15,6} = nDefect+1 ;
+Transfinite Line{cd[0],cd[1],cd[2]} = 5 ;
+Transfinite Line{15,6} = nDefect+1 ;
 
 //-------------------------------------------------------------------
 

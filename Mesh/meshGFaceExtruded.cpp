@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.21 2007-07-31 22:09:11 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.22 2007-08-02 16:16:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -193,7 +193,7 @@ int MeshExtrudedSurface(GFace *gf,
 
   Msg(STATUS2, "Meshing surface %d (extruded)", gf->tag());
 
-  // build a set with all the vertices on the boundary of gf
+  // build a set with all the vertices on the boundary of the face gf
   double old_tol = MVertexLessThanLexicographic::tolerance; 
   MVertexLessThanLexicographic::tolerance = 1.e-12 * CTX.lc;
 
@@ -209,8 +209,8 @@ int MeshExtrudedSurface(GFace *gf,
     ++it;
   }
 
-  // if the edges are constrained, the vertices already exist on the
-  // face--so we add them to the set
+  // if the edges of the mesh are constrained, the vertices already
+  // exist on the face--so we add them to the set
   if(constrainedEdges)
     pos.insert(gf->mesh_vertices.begin(), gf->mesh_vertices.end());
   

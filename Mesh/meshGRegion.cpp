@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.31 2007-05-24 17:34:04 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.32 2007-08-02 16:16:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -192,7 +192,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 #else
 
   for(unsigned int i = 0; i < regions.size(); i++)
-    Msg(STATUS2, "Meshing volume %d (Delaunay)", regions[i]->tag());
+    Msg(STATUS2, "Meshing volume %d (Tetgen+Delaunay)", regions[i]->tag());
 
   // put all the faces in the same model
   GRegion *gr = regions[0];
