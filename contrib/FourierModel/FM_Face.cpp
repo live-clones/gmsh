@@ -113,32 +113,27 @@ bool FM_Face::Inverse(double x,double y,double z,double &u, double &v)
 
 void FM_Face::Dfdu(double u, double v, double &x, double &y, double &z)
 {
-  Msg::Info("Not implemented yet.");
-  x = y = z = 0.;
+  _patch->Dfdu(u,v,x,y,z);
 }
 
 void FM_Face::Dfdv(double u, double v, double &x, double &y, double &z)
 {
-  Msg::Info("Not implemented yet.");
-  x = y = z = 0.;
+  _patch->Dfdv(u,v,x,y,z);
 }
 
 void FM_Face::Dfdfdudu(double u, double v, double &x, double &y, double &z)
 {
-  Msg::Info("Not implemented yet.");
-  x = y = z = 0.;
+  _patch->Dfdfdudu(u,v,x,y,z);
 }
 
 void FM_Face::Dfdfdudv(double u, double v, double &x, double &y, double &z)
 {
-  Msg::Info("Not implemented yet.");
-  x = y = z = 0.;
+  _patch->Dfdfdudv(u,v,x,y,z);
 }
 
 void FM_Face::Dfdfdvdv(double u, double v, double &x, double &y, double &z)
 {
-  Msg::Info("Not implemented yet.");
-  x = y = z = 0.;
+  _patch->Dfdfdvdv(u,v,x,y,z);
 }
 
 void FM_Face::GetNormal(double u, double v, double &x, double &y, double &z)

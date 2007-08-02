@@ -43,6 +43,18 @@ class Interpolator2D {
     Msg::Error("Second derivative not implemented for this interpolator");
     return 0.; 
   }
+  // checks if the interpolation point is good enough
+  virtual bool IsPointInInterpolationRange(double u, double v)
+  {
+    Msg::Error("Goodness check not implemented for this interpolator");
+    return 0; 
+  }
+  // returns the size of interpolation data
+  virtual int GetDataSize()
+  {
+    Msg::Error("GetDataSize not implemented for this interpolator");
+    return 0;
+  }
 };
 
 // FFT + polynomial interpolation on refined grid (assumes that the
@@ -95,8 +107,9 @@ class FftPolyInterpolator2D : public Interpolator2D {
  public:
   FftPolyInterpolator2D(const std::vector<double> &u,
 			const std::vector<double> &v,
-			const std::vector< std::vector< std::complex<double> > > &data,
-			int refineFactor=16, int polyOrder=3, int derivative=0);
+			const std::vector<std::vector<std::complex<double> > >
+			&data, int refineFactor=16, int polyOrder=3, 
+			int derivative=0);
   ~FftPolyInterpolator2D();
   virtual std::complex<double> F(double u, double v);
   virtual std::complex<double> Dfdu(double u, double v);
@@ -104,6 +117,50 @@ class FftPolyInterpolator2D : public Interpolator2D {
   virtual std::complex<double> Dfdfdudu(double u, double v);
   virtual std::complex<double> Dfdfdvdv(double u, double v);
   virtual std::complex<double> Dfdfdudv(double u, double v);
+};
+
+// Fourier Continuation interpolation
+class FourierContinuationInterpolator2D : public Interpolator2D {
+ private:
+  friend class Body;
+  // u and v data
+  std::vector<double> _u, _v;
+  // temporary interpolation variables
+  std::vector< std::complex<double> > _tmpCoeff, _tmpInterp;
+ protected:
+  // bitfield telling if we also interpolate the derivative(s)
+  int _derivative;
+  // Data Size
+  int _nData;
+  // Number of Fourier Modes
+  int _uModes, _vModes, _nModes;
+  // Period Information
+  double _periodU, _periodV;
+  // Limits of Fourier Series
+  int _uModesLower, _uModesUpper, _vModesLower, _vModesUpper;
+  // data (and its first 2 derivatives)
+  std::complex<double> **_coeffData, **_coeffDerivU, **_coeffDerivV;
+  std::complex<double> **_coeffDerivUU, **_coeffDerivVV, **_coeffDerivUV;
+  // polynomial evaluator
+  std::complex<double> _PolyEval(std::vector< std::complex<double> > _coeff, 
+				 std::complex<double> x);
+  // interpolation wrapper
+  std::complex<double> _Interpolate(double u,double v,int uDer=0,int vDer=0);
+ public:
+  FourierContinuationInterpolator2D
+    (const std::vector<double> &u, const std::vector<double> &v,
+     const std::vector< std::complex<double> > &data,
+     int derivative = 0, int uModes = 1, int vModes = 1, 
+     double periodU = 2, double periodV = 2);
+  ~FourierContinuationInterpolator2D();
+  virtual std::complex<double> F(double u, double v);
+  virtual std::complex<double> Dfdu(double u, double v);
+  virtual std::complex<double> Dfdv(double u, double v);
+  virtual std::complex<double> Dfdfdudu(double u, double v);
+  virtual std::complex<double> Dfdfdvdv(double u, double v);
+  virtual std::complex<double> Dfdfdudv(double u, double v);
+  virtual bool IsPointInInterpolationRange(double u, double v);
+  virtual int GetDataSize();
 };
 
 #endif

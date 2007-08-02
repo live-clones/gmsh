@@ -234,3 +234,14 @@ GetParameter(int i)
     return Z_;
   }
 }
+
+std::string CylindricalProjectionSurface::
+GetLabel(int i)
+{
+  switch (i) {
+  case 0:
+    return std::string("R");
+  case 1:
+    return std::string("Hight Scale");
+  }
+}

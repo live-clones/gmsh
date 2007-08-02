@@ -18,16 +18,17 @@ void uvPlot::draw()
   fl_rectf(0, 0, w(), h());
 
   // draw points
-  fl_color(FL_BLACK);
   if(_u.size() != _v.size()) return;
   for(unsigned int i = 0; i < _u.size(); i++){
     int x = (int)(_u[i] * w());
     int y = (int)(_v[i] * h());
+    // fixme: change color depending on f
+    fl_color(FL_BLACK);
     fl_rect(x, y, 3, 3);
   }
 
-  fl_font(FL_HELVETICA, 14);
-  fl_draw("Hello", w() / 2, h() / 2);
+  //fl_font(FL_HELVETICA, 14);
+  //fl_draw("Hello", w() / 2, h() / 2);
 }
 
 projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, int BH, 
@@ -65,14 +66,13 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
       v->step(CTX.lc / 100.);
       v->label((i == 6) ? "X translation" : (i == 7) ? "Y translation" : 
 	       "Z translation");
-      //v->value(currentParams[i]);
-      v->value(bounds.center()[i]);
+      v->value(bounds.center()[i - 6]);
     }
     else{ // other parameters
       v->maximum(10. * CTX.lc);
       v->minimum(-10. * CTX.lc);
       v->step(CTX.lc / 100.);
-      v->label("My nice label");
+      v->label(strdup(ps->GetLabel(i - 9).c_str()));
       v->value(ps->GetParameter(i - 9));
       v->value(currentParams[i]);
     }
@@ -173,67 +173,10 @@ void browse_cb(Fl_Widget *w, void *data)
     projections[i]->group->hide();
   }
   
-  /*
-<<<<<<< GUI_Projection.cpp
-  for(int i = 0; i < MAX_PROJECTION_PARAMETERS; i++)  
-    e->getValueInput(i)->hide();
-
-  FProjectionFace *f = e->getCurrentProjectionFace();
-  if(f){
-    f->setVisibility(true);
-    ProjectionSurface *ps = f->GetProjectionSurface();
-    for(int i = 0; i < 9; i++){
-      e->getValueInput(i)->show();
-      ps->GetScale(currentParams[0],currentParams[1],currentParams[2]);
-      ps->GetOrigin(currentParams[6],currentParams[7],currentParams[8]);
-      if(i < 3){ // scaling
-	e->getValueInput(i)->maximum(CTX.lc * 10.);
-	e->getValueInput(i)->minimum(CTX.lc / 100.);
-	e->getValueInput(i)->step(CTX.lc / 100.);
-	e->getValueInput(i)->
-	  label((i == 0) ? "X scale" : (i == 1) ? "Y scale" : "Z scale");
-	e->getValueInput(i)->value(currentParams[i]);
-      }
-      else if(i < 6){ //rotation
-	currentParams[i] = 0.;
-	e->getValueInput(i)->maximum(180.);
-	e->getValueInput(i)->minimum(-180.);
-	e->getValueInput(i)->step(0.1);
-	e->getValueInput(i)->
-	  label((i == 3) ? "X Rotation" : (i == 4) ? "Y Rotation" : 
-		"Z Rotation");
-	e->getValueInput(i)->value(currentParams[i]);
-      }
-      else{ // translation
-	e->getValueInput(i)->maximum(bounds.max()[i] + CTX.lc);
-	e->getValueInput(i)->minimum(bounds.min()[i] - CTX.lc);
-	e->getValueInput(i)->step(( CTX.lc) / 100.);
-	e->getValueInput(i)->
-	  label((i == 6) ? "X Translation" : (i == 7) ? "Y Translation" : 
-		"Z Translation");
-	e->getValueInput(i)->value(currentParams[i]);
-      }
-    }
-    for(int i = 9; i < 9 + ps->GetNumParameters(); i++){
-      currentParams[i] = ps->GetParameter(i - 9);
-      e->getValueInput(i)->show();
-      e->getValueInput(i)->maximum(10. * CTX.lc);
-      e->getValueInput(i)->minimum(-10. * CTX.lc);
-      e->getValueInput(i)->step(CTX.lc / 100.);
-      e->getValueInput(i)->label("My nice label");
-      e->getValueInput(i)->value(currentParams[i]);
-    }
-=======
-  */
-
   projection *p = e->getCurrentProjection();
   if(p){
     p->face->setVisibility(true);
     p->group->show();
-
-
-    // >>>>>>> 1.12
-
   }
   Draw();
 }
@@ -262,15 +205,29 @@ void update_cb(Fl_Widget *w, void *data)
     Draw();
     for (int i = 0; i < 9; i++)
       currentParams[i] = p->parameters[i]->value();
-}
-
-  // project all selected points and update u,v display
-  std::vector<double> u, v;
-  for(int i = 0; i < 5000; i++){
-    u.push_back((double)rand() / (double)RAND_MAX);
-    v.push_back((double)rand() / (double)RAND_MAX);
+    
+    // project all selected points and update u,v display
+    std::vector<double> u, v, f;
+    std::vector<GEntity*> &ent(e->getEntities());
+    for(unsigned int i = 0; i < ent.size(); i++){
+      if(ent[i]->getSelection()){
+	GVertex *ve = dynamic_cast<GVertex*>(ent[i]);
+	if(!ve)
+	  Msg(GERROR, "Problem in point selection processing");
+	else{
+	  double uu, vv, xx, yy, zz;
+	  ps->OrthoProjectionOnSurface(ve->x(),ve->y(),ve->z(),uu,vv);
+	  u.push_back(uu);
+	  v.push_back(vv);
+	  ps->F(uu,vv,xx,yy,zz);
+	  double dx = xx - ve->x(), dy= yy - ve->y(), dz = zz - ve->z();
+	  f.push_back(sqrt(dx * dx + dy * dy + dz * dz));
+	}
+      }
+    }
+    // loop over elements and do the same thing
+    e->uv()->fill(u, v, f);
   }
-  e->uv()->fill(u, v);
 }
 
 void select_cb(Fl_Widget *w, void *data)
@@ -364,6 +321,7 @@ void select_cb(Fl_Widget *w, void *data)
       ZeroHighlight();
       break;
     }
+    update_cb(w, data);
   }
 
   CTX.mesh.changed = ENT_ALL;
@@ -403,7 +361,119 @@ void compute_cb(Fl_Widget *w, void *data)
 {
   projectionEditor *e = (projectionEditor*)data;
 
-  Msg(GERROR, "Compute!");
+  projection *p = e->getCurrentProjection();
+  if(p){
+    ProjectionSurface *ps = p->face->GetProjectionSurface();
+
+    // project all selected points and update u,v display
+    std::vector<double> u, v;
+    std::vector<std::complex<double> > f;
+    std::vector<GEntity*> &ent(e->getEntities());
+    for(unsigned int i = 0; i < ent.size(); i++){
+      GVertex *ve = dynamic_cast<GVertex*>(ent[i]);
+      if(!ve){
+	Msg(GERROR, "Problem in point selection processing");
+      }
+      else{
+	double uu, vv;
+	ps->OrthoProjectionOnSurface(ve->x(),ve->y(),ve->z(),uu,vv);
+	u.push_back(uu);
+	v.push_back(vv);
+	double p[3], n[3];
+	ps->F(u[i],v[i],p[0],p[1],p[2]);
+	ps->GetUnitNormal(u[i],v[i],n[0],n[1],n[2]);
+	f.push_back((ve->x() - p[0]) * n[0] + (ve->y() - p[1]) * n[1] + 
+		    (ve->z() - p[2]) * n[2]);
+      }
+    }
+    Patch* patch = new FPatch(0,ps,u,v,f,3);
+    patch->SetMinU(0.0);
+    patch->SetMaxU(0.5);
+
+    double LL[2], LR[2], UL[2], UR[2];
+    LL[0] = 0.0; LL[1] = 0.0;
+    LR[0] = 1.0; LR[1] = 0.0;
+    UL[0] = 0.0; UL[1] = 1.0;
+    UR[0] = 1.0; UR[1] = 1.0;
+
+    int i1, i2;
+    double xx,yy,zz;
+
+    int tagVertex = GMODEL->numVertex();
+    patch->F(LL[0],LL[1],xx,yy,zz);
+    FM_Vertex* vLL = new FM_Vertex(++tagVertex,xx,yy,zz);
+    GMODEL->add(new FVertex(GMODEL,vLL->GetTag(),vLL));
+    patch->F(LR[0],LR[1],xx,yy,zz);
+    FM_Vertex* vLR = new FM_Vertex(++tagVertex,xx,yy,zz);
+    GMODEL->add(new FVertex(GMODEL,vLR->GetTag(),vLR));
+    patch->F(UL[0],UL[1],xx,yy,zz);
+    FM_Vertex* vUL = new FM_Vertex(++tagVertex,xx,yy,zz);
+    GMODEL->add(new FVertex(GMODEL,vUL->GetTag(),vUL));
+    patch->F(UR[0],UR[1],xx,yy,zz);
+    FM_Vertex* vUR = new FM_Vertex(++tagVertex,xx,yy,zz);
+    GMODEL->add(new FVertex(GMODEL,vUR->GetTag(),vUR));
+
+    Curve* curveB = new FCurve(0,patch,LL,LR);
+    Curve* curveR = new FCurve(0,patch,LR,UR);
+    Curve* curveT = new FCurve(0,patch,UR,UL);
+    Curve* curveL = new FCurve(0,patch,UL,LL);
+
+    int tagEdge = GMODEL->numEdge();
+    FM_Edge* eB = new FM_Edge(++tagEdge,curveB,vLL,vLR);
+    i1 = eB->GetStartPoint()->GetTag();
+    i2 = eB->GetEndPoint()->GetTag();
+    GMODEL->add(new FEdge(GMODEL,eB,eB->GetTag(),GMODEL->vertexByTag(i1),
+			  GMODEL->vertexByTag(i2)));
+    FM_Edge* eR = new FM_Edge(++tagEdge,curveR,vLR,vUR); 
+    i1 = eR->GetStartPoint()->GetTag();
+    i2 = eR->GetEndPoint()->GetTag();
+    GMODEL->add(new FEdge(GMODEL,eR,eR->GetTag(),GMODEL->vertexByTag(i1),
+			  GMODEL->vertexByTag(i2))); 
+    FM_Edge* eT = new FM_Edge(++tagEdge,curveT,vUR,vUL);
+    i1 = eT->GetStartPoint()->GetTag();
+    i2 = eT->GetEndPoint()->GetTag();
+    GMODEL->add(new FEdge(GMODEL,eT,eT->GetTag(),GMODEL->vertexByTag(i1),
+			  GMODEL->vertexByTag(i2)));
+    FM_Edge* eL = new FM_Edge(++tagEdge,curveL,vUL,vLL); 
+    i1 = eL->GetStartPoint()->GetTag();
+    i2 = eL->GetEndPoint()->GetTag();
+    GMODEL->add(new FEdge(GMODEL,eL,eL->GetTag(),GMODEL->vertexByTag(i1),
+			  GMODEL->vertexByTag(i2)));
+
+    FM_Face* face = new FM_Face(GMODEL->numFace() + 1,patch);
+    face->AddEdge(eB); face->AddEdge(eR); face->AddEdge(eT); face->AddEdge(eL);
+    std::list<GEdge*> l_edges;
+    for (int j=0;j<face->GetNumEdges();j++) {
+      int tag = face->GetEdge(j)->GetTag(); 
+      l_edges.push_back(GMODEL->edgeByTag(tag));
+    }
+    GMODEL->add(new FFace(GMODEL,face,face->GetTag(),l_edges));
+
+    int nU=64;
+    int nV=64;
+    
+    std::vector<int> color(3);
+    
+    std::vector<std::vector<double> > x(nU,std::vector<double>(nV));
+    std::vector<std::vector<double> > y(nU,std::vector<double>(nV));
+    std::vector<std::vector<double> > z(nU,std::vector<double>(nV));
+    
+    std::vector<std::vector<int> > mask = ones(nU,nV);
+    
+    double hU = 1./(nU-1);
+    double hV = 1./(nV-1);
+    
+    for (int j=0;j<nU;j++) {
+      for (int k=0;k<nV;k++) {
+	double u = j*hU;
+	double v = k*hV;
+	patch->F(u,v,x[j][k],y[j][k],z[j][k]);
+      }
+    }
+    color[0] = 0; color[1] = 0; color[2] = 1;
+    plotSceneViewer(0,"patch.iv",color,x,y,z,nU,nV,mask);
+  }
+  //Msg(GERROR, "Compute!");
 }
 
 void mesh_parameterize_cb(Fl_Widget* w, void* data)
@@ -414,10 +484,10 @@ void mesh_parameterize_cb(Fl_Widget* w, void* data)
   // create one instance of each available projection surface
   std::vector<FProjectionFace*> faces;
   if(faces.empty()){
-    faces.push_back(new FProjectionFace
-		    (GMODEL, 10000, new CylindricalProjectionSurface(0)));
-    faces.push_back(new FProjectionFace
-		    (GMODEL, 10001, new RevolvedParabolaProjectionSurface(1)));
+    faces.push_back(new FProjectionFace(GMODEL, GMODEL->numFace() + 1, 
+					new CylindricalProjectionSurface(0)));
+    faces.push_back(new FProjectionFace(GMODEL, GMODEL->numFace() + 1,
+					new RevolvedParabolaProjectionSurface(1)));
   }
 
   // make each projection surface invisible and 

@@ -3,11 +3,17 @@
 #include <complex>
 #include "Interpolator2D.h"
 
+extern "C" {
+  void zgelss_(int &,int &,int &,std::complex<double> *,int &,
+	       std::complex<double> *,int &,double *,double &,int &,
+	       std::complex<double> *,int &,double *,int &);
+}
+
 FftPolyInterpolator2D::
 FftPolyInterpolator2D(const std::vector<double> &u, 
 		      const std::vector<double> &v,
-		      const std::vector< std::vector< std::complex<double> > > &data,
-		      int refineFactor, int polyOrder, int derivative)
+		      const std::vector< std::vector< std::complex<double> > > 
+		      &data, int refineFactor, int polyOrder, int derivative)
   : _refineFactor(refineFactor), _polyOrder(polyOrder), _derivative(derivative),
     _uFine(0), _vFine(0), _fineData(0), _fineDerivU(0), _fineDerivV(0), 
     _fineDerivUU(0), _fineDerivVV(0), _fineDerivUV(0)
@@ -456,4 +462,293 @@ std::complex<double> FftPolyInterpolator2D::Dfdfdvdv(double u, double v)
 std::complex<double> FftPolyInterpolator2D::Dfdfdudv(double u, double v)
 {
   return _Interpolate(u, v, 1, 1);
+}
+
+
+
+FourierContinuationInterpolator2D::FourierContinuationInterpolator2D
+(const std::vector<double> &u, const std::vector<double> &v,
+ const std::vector< std::complex<double> > &data, 
+ int derivative, int uModes, int vModes, double periodU, double periodV)
+  : _derivative(derivative), _uModes(uModes), _vModes(vModes), 
+    _periodU(periodU), _periodV(periodV),
+    _coeffData(0), _coeffDerivU(0), _coeffDerivV(0), _coeffDerivUU(0), 
+    _coeffDerivVV(0), _coeffDerivUV(0)
+{ 
+  // sanity check
+  if (!((u.size() == v.size()) && (v.size() == data.size()))) {
+    Msg::Fatal("Input data of unequal size.");
+  }
+  _nData = data.size();
+  _nModes = _uModes * _vModes;
+
+  for (int i=0;i<_nData;i++) {
+    _u.push_back(u[i]);
+    _v.push_back(v[i]);
+  }
+
+  // Initialize _Data to zero
+  _coeffData = new std::complex<double>*[_uModes];
+  for(int j = 0; j < _uModes; j++){
+    _coeffData[j] = new std::complex<double>[_vModes];
+    for(int k = 0; k < _vModes; k++)
+      _coeffData[j][k] = 0.;
+  }
+
+  if ((_uModes % 2) == 0) {
+    _uModesLower = - _uModes/2;
+    _uModesUpper = _uModes/2 - 1;
+  }
+  else {
+    _uModesLower = - (_uModes - 1)/2;
+    _uModesUpper = (_uModes - 1)/2;
+  }
+  if ((_vModes % 2) == 0) {
+    _vModesLower = - _vModes/2;
+    _vModesUpper = _vModes/2 - 1;
+  }
+  else {
+    _vModesLower = - (_vModes - 1)/2;
+    _vModesUpper = (_vModes - 1)/2;
+  }
+
+  std::complex<double> *LSRhs = new std::complex<double> [_nData];
+  std::complex<double> *LSMatrix = new std::complex<double> [_nModes * _nData];
+
+  for (int i=0;i<_nData;i++)
+    LSRhs[i] = data[i];
+
+  for (int j=0;j<_uModes;j++)
+    for (int k=0;k<_vModes;k++)
+      for (int i=0;i<_nData;i++)
+	LSMatrix[i+_nData*(k+_vModes*j)] = std::complex<double>
+	  (cos(2*M_PI * ((j + _uModesLower) * u[i] / _periodU + 
+			 (k + _vModesLower) * v[i] / _periodV)),
+	   sin(2*M_PI * ((j + _uModesLower) * u[i] / _periodU + 
+			 (k + _vModesLower) * v[i] / _periodV)));
+
+  // some parameters for the lease square solvers "zgelss"
+  int info, rank;
+  int lwork = 66*_nData, one = 1;
+  double rcond = -1.;
+  double *s = new double [_nModes];
+  double *rwork = new double [5*_nModes];
+  std::complex<double> *work = new std::complex<double> [lwork];
+
+  zgelss_(_nData,_nModes,one,&LSMatrix[0],_nData,&LSRhs[0],_nData,&s[0],rcond,
+	  rank,&work[0],lwork,&rwork[0],info);
+
+  for(int j = 0; j < _uModes; j++)
+    for(int k = 0; k < _vModes; k++)
+      _coeffData[j][k] = LSRhs[k+_vModes*j];
+
+  // deleting lease square arrays
+  delete[] s, rwork, work;
+  delete[] LSMatrix, LSRhs;
+
+  // Check if we need to interpolate the derivative(s)
+  if(_derivative){
+    // Initialize _fineDeriv and _fineDeriv2 to zero
+    if(_derivative & 1){
+      _coeffDerivU = new std::complex<double>*[_uModes];
+      _coeffDerivV = new std::complex<double>*[_uModes];
+      for(int j = 0; j < _uModes; j++){
+	_coeffDerivU[j] = new std::complex<double>[_vModes];
+	_coeffDerivV[j] = new std::complex<double>[_vModes];
+	for(int k = 0; k < _vModes; k++){
+	  _coeffDerivU[j][k] = 0.;
+	  _coeffDerivV[j][k] = 0.;
+	}
+      }
+    }
+    
+    if(_derivative & 2){
+      _coeffDerivUU = new std::complex<double>*[_uModes];
+      _coeffDerivVV = new std::complex<double>*[_uModes];
+      _coeffDerivUV = new std::complex<double>*[_uModes];
+      for(int j = 0; j < _uModes; j++){
+	_coeffDerivUU[j] = new std::complex<double>[_vModes];
+	_coeffDerivVV[j] = new std::complex<double>[_vModes];
+	_coeffDerivUV[j] = new std::complex<double>[_vModes];
+	for(int k = 0; k < _vModes; k++){
+	  _coeffDerivUU[j][k] = 0.;
+	  _coeffDerivVV[j][k] = 0.;
+	  _coeffDerivUV[j][k] = 0.;
+	}
+      }
+    }
+    
+    // Copy the Fourier coefficients into _coeffDeriv and _coeffDeriv2
+    std::complex<double> I(0., 1.);
+    for(int j = 0; j < _uModes; j++){
+      for(int k = 0; k < _vModes; k++){
+	int J = j+_uModesLower;
+	int K = k+_vModesLower;
+	if(_derivative & 1){
+	  _coeffDerivU[j][k] = (2 * M_PI * J * I / _periodU) *_coeffData[j][k];
+	  _coeffDerivV[j][k] = (2 * M_PI * K * I / _periodV) *_coeffData[j][k];
+	}
+	if(_derivative & 2){
+	  _coeffDerivUU[j][k] = - (4 * M_PI * M_PI * J * J / 
+				   (_periodU * _periodU)) * _coeffData[j][k];
+	  _coeffDerivVV[j][k] = - (4 * M_PI * M_PI * K * K /
+				   (_periodV * _periodV)) * _coeffData[j][k];
+	  _coeffDerivUV[j][k] = - (4 * M_PI * M_PI * J * K /
+				   (_periodU * _periodV)) * _coeffData[j][k];
+	}
+      }
+    }
+  }    
+  // Initialize interpolation variables
+  _tmpCoeff = std::vector< std::complex<double> >(_vModes);
+  _tmpInterp = std::vector< std::complex<double> >(_uModes);
+}
+
+FourierContinuationInterpolator2D::~FourierContinuationInterpolator2D()
+{
+  for(int j = 0; j < _uModes; j++)
+    delete [] _coeffData[j];
+  delete [] _coeffData;
+
+  if(_coeffDerivU){
+    for(int j = 0; j < _uModes; j++)
+      delete [] _coeffDerivU[j];
+    delete [] _coeffDerivU;
+  }
+  if(_coeffDerivV){
+    for(int j = 0; j < _uModes; j++)
+      delete [] _coeffDerivV[j];
+    delete [] _coeffDerivV;
+  }
+  if(_coeffDerivUU){
+    for(int j = 0; j < _uModes; j++)
+      delete [] _coeffDerivUU[j];
+    delete [] _coeffDerivUU;
+  }
+  if(_coeffDerivVV){
+    for(int j = 0; j < _uModes; j++)
+      delete [] _coeffDerivVV[j];
+    delete [] _coeffDerivVV;
+  }
+  if(_coeffDerivUV){
+    for(int j = 0; j < _uModes; j++)
+      delete [] _coeffDerivUV[j];
+    delete [] _coeffDerivUV;
+  }
+}
+
+std::complex<double> FourierContinuationInterpolator2D::
+_PolyEval(std::vector< std::complex<double> > _coeff, std::complex<double> x)
+{
+  int _polyOrder = _coeff.size()-1;
+  std::complex<double> out = 0.;
+
+  out = x * _coeff[_polyOrder];
+  for (int i = _polyOrder - 1; i > 0; i--)
+    out = x * (out + _coeff[i]);
+  out = out + _coeff[0];
+  
+  return out;
+}
+
+std::complex<double> FourierContinuationInterpolator2D::
+  _Interpolate(double u, double v, int uDer, int vDer)
+{
+  //Msg::Info("%d %d %d",uDer,vDer,_derivative);
+  if (((uDer==2 || vDer==2 || (uDer==1 && vDer==1)) && !(_derivative & 2) ) || 
+      ((uDer==1 || vDer==1) && !(_derivative & 1)) ||
+      (uDer<0 || uDer>2 || vDer<0 || vDer>2) ) {
+    Msg::Error("Derivative data not available: check contructor call %d %d %d",
+	       uDer,vDer,_derivative);
+    return 0.;
+  }
+
+  double epsilon = 1e-12;
+  if(u < 0. - epsilon || u > 1. + epsilon){
+    Msg::Error("Trying to interpolate outside interval: (u,v)=(%.16g,%.16g) "
+	       "not in [%g,%g]x[%g,%g]", u, v, 0., 1., 0., 1.);
+    return 0.;
+  }
+
+  // Interpolate to find value at (u,v)
+  for(int j = 0; j < _uModes; j++){
+    for(int k = 0; k < _vModes; k++){
+      std::complex<double> tmp;
+      if(uDer == 0 && vDer == 0)
+	tmp = _coeffData[j][k];
+      else if(uDer == 1 && vDer == 0)
+	tmp = _coeffDerivU[j][k];
+      else if(uDer == 0 && vDer == 1)
+	tmp = _coeffDerivV[j][k];
+      else if(uDer == 2 && vDer == 0)
+	tmp = _coeffDerivUU[j][k];
+      else if(uDer == 0 && vDer == 2)
+	tmp = _coeffDerivVV[j][k];
+      else
+	tmp = _coeffDerivUV[j][k];
+      _tmpCoeff[k] = tmp;
+    }
+    std::complex<double> y(cos(2 * M_PI * v / _periodV), 
+			   sin(2 * M_PI * v / _periodV));
+    _tmpInterp[j] = _PolyEval(_tmpCoeff, y);
+    _tmpInterp[j] *= std::complex<double>
+      (cos(2 * M_PI * _vModesLower * v / _periodV), 
+       sin(2 * M_PI * _vModesLower * v / _periodV));
+  }
+  std::complex<double> x(cos(2 * M_PI * u / _periodU), 
+			 sin(2 * M_PI * u / _periodU));
+  return _PolyEval(_tmpInterp, x) * std::complex<double>
+    (cos(2 * M_PI * _uModesLower * u / _periodU),
+     sin(2 * M_PI * _uModesLower * u / _periodU));
+}
+
+std::complex<double> FourierContinuationInterpolator2D::F(double u, double v)
+{
+  return _Interpolate(u, v, 0, 0);
+}
+
+std::complex<double> FourierContinuationInterpolator2D::Dfdu(double u, double v)
+{
+  return _Interpolate(u, v, 1, 0);
+}
+
+std::complex<double> FourierContinuationInterpolator2D::Dfdv(double u, double v)
+{
+  return _Interpolate(u, v, 0, 1);
+}
+
+std::complex<double> FourierContinuationInterpolator2D::Dfdfdudu(double u, double v)
+{
+  return _Interpolate(u, v, 2, 0);
+}
+
+std::complex<double> FourierContinuationInterpolator2D::Dfdfdvdv(double u, double v)
+{
+  return _Interpolate(u, v, 0, 2);
+}
+
+std::complex<double> FourierContinuationInterpolator2D::Dfdfdudv
+(double u, double v)
+{
+  return _Interpolate(u, v, 1, 1);
+}
+
+bool FourierContinuationInterpolator2D::IsPointInInterpolationRange
+(double u, double v)
+{
+  double nbdRadius = 1.e-2;
+  bool status = false;
+  for (int i=0;i<_nData;i++) {
+    double tmp = sqrt((u - _u[i])*(u - _u[i])+(v - _v[i])*(v - _v[i]));
+    if (tmp < nbdRadius) {
+      status = true;
+      break;
+    }
+  }
+  return status;
+}
+
+int FourierContinuationInterpolator2D::GetDataSize()
+{
+  return _nData;
 }

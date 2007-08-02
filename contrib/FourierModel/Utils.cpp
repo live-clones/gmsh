@@ -1,4 +1,5 @@
 #include "Utils.h"
+#include "Message.h"
 
 std::vector<double> SolveCubic(double a, double b, double c)
 {
@@ -80,8 +81,178 @@ std::vector<double> SolveCubic(double a, double b, double c)
     }
   }
 
-  //  cout << a << ' ' << b << ' ' << c << ' ' <<
-  //     num << ' ' << root[0] << ' ' <<root[1] << ' ' << root[2] << endl; 
-
   return root;
+}
+
+void  find(std::vector<int> &a, int length, std::vector<int> &q, int &num){
+
+  int i,j=0;
+
+  for (i=0 ; i < length ; i++){
+    if (a[i]!=0){
+      q[j]=i+1;
+      j=j+1;
+    }
+  }
+  num=j;
+}
+
+int minVec(std::vector<int> &a,int n){
+//   vector<int> a(n);
+//   copyVec(aa,n,a);
+  int i;
+  int s=a[0];
+
+  for (i=1;i<n ;i++){
+    if (s>a[i]){
+      s=a[i];
+    }
+  }
+  return s;
+}
+
+int maxVec(std::vector<int> &a,int n){
+//   vector<int> a(n);
+//   copyVec(aa,n,a);
+  int i;
+  int s=a[0];
+
+  for (i=1;i<n ;i++){
+    if (s<a[i]){
+      s=a[i];
+    }
+  }
+  return s;
+}
+
+std::vector<std::vector<int> > ones(int row, int col){
+  std::vector<std::vector<int> > tmp(row, std::vector<int> (col));
+  for (int i=0 ; i < row ; i++){
+    for (int j=0 ; j < col ; j++){
+      tmp[i][j]=1;
+    }
+  }
+  return tmp;
+}
+
+void plotSceneViewer(int app, char* bffer, std::vector<int> &color,
+                      std::vector<std::vector<double> > &x,
+                      std::vector<std::vector<double> > &y,
+                      std::vector<std::vector<double> > &z, int ROW, int COL,
+                      std::vector<std::vector<int> > &mask){
+
+  std::fstream outfile;
+  if (app==0){
+    outfile.open(bffer, std::ios::out);
+  }else{
+    outfile.open(bffer, std::ios::out | std::ios::app);
+  }
+
+  if (outfile.fail())
+    {
+      Msg::Error("Could not open readfile.txt");
+      exit(1);
+    }
+  if (app==0){//not appending
+    outfile  << "#Inventor V2.1 ascii" << std::endl;
+    outfile  << "#created by allplot.cpp" << std::endl;
+  }
+
+  outfile  << "Separator {" << std::endl;
+  outfile  << "  Material {" << std::endl;
+  outfile  << "    diffuseColor [" << std::endl;
+  outfile  << "      " << ' ' << color[0] << ' ' << color[1] << ' ' << color[2] << std::endl;
+  outfile  << "    ]" << std::endl;
+  outfile  << "  }" << std::endl;
+  outfile  << "  IndexedTriangleStripSet {" << std::endl;;
+  outfile  << "    vertexProperty VertexProperty {"<< std::endl;;
+  outfile  << "      vertex [" << std::endl;
+  //outfile  << "        " << ' ' << x(0,0) << ' ' << y(0,0) << ' ' << z(0,0);
+
+  int i, j;
+
+  for (j=0 ; j < COL ; j++){
+    for (i=0 ; i < ROW ; i++){
+      if (i==0 & j==0 ){
+          outfile  << "        " << ' ' << x[i][j] << ' ' << y[i][j] << ' ' << z[i][j];
+      }else{
+        outfile  <<"," << ' ' << ' ' << std::endl;
+        outfile  << "        " << ' ' << x[i][j] << ' ' << y[i][j] << ' ' << z[i][j];
+      }
+    }
+  }
+
+  outfile  <<' ' << std::endl;
+  outfile  << "      ]" << std::endl;
+  outfile  << "    }" << std::endl;
+  outfile  << "    coordIndex [" << std::endl;
+
+  int jump=ROW;
+  int col, row;
+  int startrow, startoffset, endrow, endoffset;
+  std::vector<int> qq(ROW), qw(ROW);
+  int num1,num2,min1,min2,max1,max2;
+
+  //  for (col=0 ; col < ROW-1 ; col++){
+  for (col=0 ; col < COL-1 ; col++){
+    //copyColToVec(mask, ROW, col, qq);
+    for (int i=0 ; i < ROW ; i++){
+      qq[i]=mask[i][col];
+    }
+
+    find(qq, ROW, qw,  num1);//cout << num1 << endl;
+
+    if (num1!=0){
+      min1=minVec(qw,num1);
+      max1=maxVec(qw,num1);
+    }
+
+    //  copyColToVec(mask, ROW, col+1, qq);
+    for (int i=0 ; i < ROW ; i++){
+      qq[i]=mask[i][col+1];
+    }
+
+    find(qq, ROW, qw,  num2);
+    if (num2!=0){
+      min2=minVec(qw,num2);
+      max2=maxVec(qw,num2);
+    }
+
+    if (num1!=0 & num2!=0){
+      startrow=std::max(min1,min2)-1;
+      startoffset=min1-min2;
+
+      if (startoffset>0){
+        outfile  << "     " << ' ' << (col+1)*jump+startrow << ' ' <<"," << ' ' <<
+          col*jump+startrow << ' ' <<"," << ' ' << (col+1)*jump+startrow-1  << ' '<<"," << ' ' << "-1,"<< std::endl;
+      }else if (startoffset<0){
+        outfile  << "     " << ' ' << (col+1)*jump+startrow << ' ' <<"," << ' '<< 
+          col*jump+startrow << ' ' <<"," << ' ' << col*jump+startrow-1 <<' ' << "," << ' ' << "-1,"<< std::endl;
+      }
+
+      endrow=std::min(max1,max2)-1;
+      endoffset=max1-max2;
+
+      if (endoffset>0){
+        outfile  << "     " << ' ' <<(col+1)*jump+endrow<< ' ' <<"," << ' ' <<
+          col*jump+endrow+1 << ' ' <<"," << ' ' << col*jump+endrow << ' '<< "," << ' ' << "-1,"<<std::endl;
+      }else if (endoffset<0){
+        outfile  << "     " << ' ' <<(col+1)*jump+endrow << ' ' << "," << ' ' <<
+          (col+1)*jump+endrow+1 << ' ' <<"," << ' ' << col*jump+endrow <<' ' <<"," << ' ' << "-1,"<< std::endl;
+      }
+
+      outfile << "     " << ' ' << col*jump+startrow << ' ' <<"," << ' ' << (col+1)*jump+startrow<< ' ' << "," ;
+
+      for (row= startrow+1; row <= endrow ; row++){
+        outfile << col*jump+row << ' '  <<"," << ' '<< (col+1)*jump+row<< ' ' << ",";
+      }
+    }
+      outfile << " -1," << std::endl;
+  }
+
+  outfile  << "    ]" << std::endl;
+  outfile  << "  }" << std::endl;
+  outfile  << "}" << std::endl;
+
+  outfile.close();
 }

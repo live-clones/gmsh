@@ -13,8 +13,8 @@ BlendedPatch::BlendedPatch
 
   _derivative = patch_->GetDerivativeBitField();
 
-  _uM = patch_->GetUModes();
-  _vM = patch_->GetVModes();
+  //_uM = patch_->GetUModes();
+  //_vM = patch_->GetVModes();
  
   _periodU = patch_->IsUPeriodic() ? 1. : 2.;
   _periodV = patch_->IsVPeriodic() ? 1. : 2.;
@@ -860,16 +860,16 @@ double  BlendedPatch::GetPou(double u, double v)
 {
   double pouU, pouV;
 
-  if (patch_->_PI->hardEdge[3])
+  if (patch_->IsHardEdge(3))
     pouU = OneSidedPartitionOfUnity(0.,1.,u);
-  else if (patch_->_PI->hardEdge[1])
+  else if (patch_->IsHardEdge(1))
     pouU = 1. - OneSidedPartitionOfUnity(0.,1.,u);
   else
     pouU = PartitionOfUnity(u, 0., 0.3, 0.7, 1.);
 
-  if (patch_->_PI->hardEdge[0])
+  if (patch_->IsHardEdge(0))
     pouV = OneSidedPartitionOfUnity(0.,1.,v);
-  else if (patch_->_PI->hardEdge[2])
+  else if (patch_->IsHardEdge(2))
     pouV = 1. - OneSidedPartitionOfUnity(0.,1.,v);
   else
     pouV = PartitionOfUnity(v, 0., 0.3, 0.7, 1.);

@@ -111,9 +111,9 @@ bool BlendOperator::GetPointOnPatch_
     else {
       double QuPlus = Qu + h;
       double QvPlus = Qv + h;
-      if (GetPatch(j)->_PI->periodic[0] == 1)
+      if (GetPatch(j)->IsUPeriodic())
 	QuPlus -= std::floor(QuPlus);
-      if (GetPatch(j)->_PI->periodic[1] == 1)
+      if (GetPatch(j)->IsVPeriodic())
 	QvPlus -= std::floor(QvPlus);
 
       double QplusU[3], QplusV[3];
@@ -154,9 +154,9 @@ bool BlendOperator::GetPointOnPatch_
 
       //printf("Q1 = (%g,%g)\n",Qu,Qv);
 
-      if (GetPatch(j)->_PI->periodic[0] == 1)
+      if (GetPatch(j)->IsUPeriodic())
 	Qu -= std::floor(Qu);
-      if (GetPatch(j)->_PI->periodic[1] == 1)
+      if (GetPatch(j)->IsVPeriodic())
 	Qv -= std::floor(Qv);
 
       //printf("Q2 = (%g,%g)\n",Qu,Qv);
@@ -391,9 +391,9 @@ bool BlendOperator::GetPointOnPatch
     else {
       double QuPlus = Qu + h;
       double QvPlus = Qv + h;
-      if (GetPatch(patchTag)->_PI->periodic[0] == 1)
+      if (GetPatch(patchTag)->IsUPeriodic())
 	QuPlus -= std::floor(QuPlus);
-      if (GetPatch(patchTag)->_PI->periodic[1] == 1)
+      if (GetPatch(patchTag)->IsVPeriodic())
 	QvPlus -= std::floor(QvPlus);
       
       double QplusU[3], QplusV[3];

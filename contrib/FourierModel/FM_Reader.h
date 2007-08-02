@@ -4,7 +4,9 @@
 #include <vector>
 #include <string>
 #include <complex>
+#include "Point.h"
 #include "Curve.h"
+#include "IntersectionCurve.h"
 #include "ExactPatch.h"
 #include "ContinuationPatch.h"
 #include "CylindricalProjectionSurface.h"
@@ -29,7 +31,7 @@ class FM_Reader {
   std::vector<FM_Edge*> _edge;
   std::vector<FM_Face*> _face;
   std::vector<Patch*> _patch;
-  std::vector<Curve*> _intersection;
+  std::vector<Curve*> _curve;
   std::vector<ProjectionSurface*> _ps;
 
   BlendOperator* _blendOperator;
@@ -83,7 +85,7 @@ class FM_Reader {
   BlendedPatch* GetBlendedPatch
     (int tag);
 
-  Curve* GetIntersection
+  Curve* GetCurve
     (int tag);
 
   ProjectionSurface* GetProjectionSurface

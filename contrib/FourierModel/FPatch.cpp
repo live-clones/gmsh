@@ -1,34 +1,49 @@
 #include <math.h>
 #include "Message.h"
-#include "ContinuationPatch.h"
+#include "FPatch.h"
 
-ContinuationPatch::ContinuationPatch
-(PatchInfo* PI, ProjectionSurface* ps, int derivative) 
-  : Patch(),_coeffOriginalData(0),_coeffData(0),_coeffDerivU(0),
+extern "C" {
+  void zgelss_(int &,int &,int &,std::complex<double> *,int &,
+               std::complex<double> *,int &,double *,double &,int &,
+               std::complex<double> *,int &,double *,int &);
+}
+
+FPatch::FPatch(int tag, ProjectionSurface* ps, 
+	       std::vector<double> &u, std::vector<double> &v,
+	       std::vector< std::complex<double> > &data, int derivative) 
+  : _coeffOriginalData(0),_coeffData(0),_coeffDerivU(0),
     _coeffDerivV(0),_coeffDerivUU(0),_coeffDerivVV(0),_coeffDerivUV(0)
 {
-  _PI = PI;
-  _tag = _PI->tag;
+  _ps = ps;
+
+  _tag = tag;
   _derivative = derivative;
 
-  SetProjectionSurface(ps);
+  _uModes = 10;
+  _vModes = 8;
 
-  _uMin = _PI->uMin;
-  _uMax = _PI->uMax;
-  _vMin = _PI->vMin;
-  _vMax = _PI->vMax;
+  _uM = 16+1;
+  _vM = 16;
 
-  _periodicityU = _PI->periodic[0];
-  _periodicityV = _PI->periodic[1];
+  _hardEdge[0] = false;
+  _hardEdge[1] = false;
+  _hardEdge[2] = false;
+  _hardEdge[3] = false;
 
-  for (int i = 0; i < 4; i++)
-    _hardEdge[i] = _PI->hardEdge[i];
+  if (_ps->IsUPeriodic())
+    _periodicityU = 1;
+  if (_ps->IsVPeriodic())
+    _periodicityV = 1;
 
-  _periodU = (1-_PI->periodic[0]) + 1;
-  _periodV = (1-_PI->periodic[1]) + 1;
+  if (_ps->IsUPeriodic())
+    _periodU = 1.;
+  else
+    _periodU = 2.;
 
-  _uModes = _PI->nModes[0];
-  _vModes = _PI->nModes[1];
+  if (_ps->IsVPeriodic())
+    _periodV = 1.;
+  else
+    _periodV = 2.;
 
   if ((_uModes % 2) == 0) {
     _uModesLower = - _uModes/2;
@@ -47,10 +62,7 @@ ContinuationPatch::ContinuationPatch
     _vModesUpper = (_vModes - 1)/2;
   }
 
-  _uM = _PI->nM[0];
-  _vM = _PI->nM[1];
-
-  if (IsUPeriodic()) {
+  if (_ps->IsUPeriodic()) {
     if ((_uM % 2) == 0) {
       _uMLower = - _uM/2;
       _uMUpper = _uM/2 - 1;
@@ -64,7 +76,7 @@ ContinuationPatch::ContinuationPatch
     _uMLower = 0;
     _uMUpper = _uM;
   }
-  if (IsVPeriodic()) {
+  if (_ps->IsVPeriodic()) {
     if ((_vM % 2) == 0) {
       _vMLower = - _vM/2;
       _vMUpper = _vM/2 - 1;
@@ -79,13 +91,54 @@ ContinuationPatch::ContinuationPatch
     _vMUpper = _vM;    
   }
 
+
   // Initialize Data
+
   _coeffOriginalData = new std::complex<double>*[_uModes];
   for(int j = 0; j < _uModes; j++){
     _coeffOriginalData[j] = new std::complex<double>[_vModes];
-    for(int k = 0; k < _vModes; k++)
-      _coeffOriginalData[j][k] = _PI->coeff[j][k];
+
+    //for(int k = 0; k < _vModes; k++)
+    //_coeffOriginalData[j][k] = _PI->coeff[j][k];
   }
+
+  _nData = data.size();
+  _nModes = _uModes * _vModes;
+
+  std::complex<double> *LSRhs = new std::complex<double> [_nData];
+  std::complex<double> *LSMatrix = new std::complex<double> [_nModes * _nData];
+
+  for (int i=0;i<_nData;i++)
+    LSRhs[i] = data[i];
+
+  for (int j=0;j<_uModes;j++)
+    for (int k=0;k<_vModes;k++)
+      for (int i=0;i<_nData;i++)
+        LSMatrix[i+_nData*(k+_vModes*j)] = std::complex<double>
+          (cos(2*M_PI * ((j + _uModesLower) * u[i] / _periodU +
+                         (k + _vModesLower) * v[i] / _periodV)),
+           sin(2*M_PI * ((j + _uModesLower) * u[i] / _periodU +
+                         (k + _vModesLower) * v[i] / _periodV)));
+
+  // some parameters for the lease square solvers "zgelss"
+  int info, rank;
+  int lwork = 66*_nData, one = 1;
+  double rcond = -1.;
+  double *s = new double [_nModes];
+  double *rwork = new double [5*_nModes];
+  std::complex<double> *work = new std::complex<double> [lwork];
+
+  zgelss_(_nData,_nModes,one,&LSMatrix[0],_nData,&LSRhs[0],_nData,&s[0],rcond,
+          rank,&work[0],lwork,&rwork[0],info);
+
+  for(int j = 0; j < _uModes; j++)
+    for(int k = 0; k < _vModes; k++)
+      _coeffOriginalData[j][k] = LSRhs[k+_vModes*j];
+
+  // deleting lease square arrays
+  delete[] s, rwork, work;
+  delete[] LSMatrix, LSRhs;
+
 
   // Initialize interpolation variables
   _tmpOrigCoeff = std::vector< std::complex<double> >(_vModes);
@@ -93,15 +146,6 @@ ContinuationPatch::ContinuationPatch
 
   if (_derivative)
     _ReprocessSeriesCoeff();
-
-  /*
-  for (int j = 0; j < _uM; j++) {
-    for (int k = 0; k < _vM; k++)
-      printf("%g ",_coeffData[j][k].real());
-    printf("\n\n");
-  }
-  printf("\n");
-  */
 
   // Check if we need to interpolate the derivative(s)
   if(_derivative){
@@ -140,7 +184,7 @@ ContinuationPatch::ContinuationPatch
     for(int j = _uM - 1; j >= 0; j--){
       for(int k = _vM - 1; k >= 0; k--){
         if(_derivative & 1){
-	  if (IsUPeriodic()) {
+	  if (_ps->IsUPeriodic()) {
 	    int J = j+_uMLower;
 	    _coeffDerivU[j][k] = (2 * M_PI * J * I / _periodU) *
 	      _coeffData[j][k];
@@ -156,7 +200,7 @@ ContinuationPatch::ContinuationPatch
 	    //if (j != 0)
 	    //_coeffDerivU[j][k] *= 2.;
 	  }
-	  if (IsVPeriodic()) {
+	  if (_ps->IsVPeriodic()) {
 	    int K = k+_vMLower;
 	    _coeffDerivV[j][k] = (2 * M_PI * K * I / _periodV) *
 	      _coeffData[j][k];
@@ -178,12 +222,12 @@ ContinuationPatch::ContinuationPatch
     for (int j = 0; j < _uM; j++) {
       for (int k = 0; k < _vM; k++) {
 	if (_derivative & 1) {
-	  if (!IsUPeriodic()) {
+	  if (!_ps->IsUPeriodic()) {
 	    if (j != 0) {
 	      _coeffDerivU[j][k] *= 2.;
 	    }
 	  }
-	  if (!IsVPeriodic()) {
+	  if (!_ps->IsVPeriodic()) {
 	    if (k != 0) {
 	      _coeffDerivV[j][k] *= 2.;
 	    }
@@ -195,7 +239,7 @@ ContinuationPatch::ContinuationPatch
     for(int j = _uM - 1; j >= 0; j--) {
       for(int k = _vM - 1; k >= 0; k--) {
 	if(_derivative & 2) {
-	  if (IsUPeriodic()) {
+	  if (_ps->IsUPeriodic()) {
 	    int J = j+_uMLower;
 	    _coeffDerivUU[j][k] = (2 * M_PI * J * I / _periodU) * 
 	      _coeffDerivU[j][k];
@@ -212,7 +256,7 @@ ContinuationPatch::ContinuationPatch
 	    //if (j != 0)
 	    //_coeffDerivUU[j][k] *= 2.;
 	  }
-	  if (IsVPeriodic()) {
+	  if (_ps->IsVPeriodic()) {
 	    int K = k+_vMLower;
 	    _coeffDerivVV[j][k] = (2 * M_PI * K * I / _periodV) * 
 	      _coeffDerivV[j][k];
@@ -243,12 +287,12 @@ ContinuationPatch::ContinuationPatch
     for (int j = 0; j < _uM; j++) {
       for (int k = 0; k < _vM; k++) {
 	if (_derivative & 2) {
-	  if (!IsUPeriodic() && IsVPeriodic()) {
+	  if (!_ps->IsUPeriodic() && _ps->IsVPeriodic()) {
 	    if (j != 0) {
 	      _coeffDerivUU[j][k] *= 2.;
 	    }
 	  }
-	  if (IsUPeriodic() && !IsVPeriodic()) {
+	  if (_ps->IsUPeriodic() && !_ps->IsVPeriodic()) {
 	    if (k != 0) {
 	      _coeffDerivVV[j][k] *= 2.;
 	      _coeffDerivUV[j][k] *= 2.;
@@ -259,92 +303,13 @@ ContinuationPatch::ContinuationPatch
     }
   }
 
-  /*
-  for (int j = 0; j < _uM; j++) {
-    for (int k = 0; k < _vM; k++)
-      printf("%g ",_coeffDerivVV[j][k].real());
-    printf("\n\n");
-  }
-  printf("\n");
-  */
-
   // Initialize interpolation variables
   _tmpCoeff = std::vector< std::complex<double> >(_vM);
   _tmpInterp = std::vector< std::complex<double> >(_uM);
 
-  /*
-  int nU = 64;
-  int nV = 64;
-
-  double hU = 1. / (double)(nU-1);
-  double hV = 1. / (double)(nV-1);
-
-  double f_error = 0.;
-  double dfdu_error = 0.;
-  double dfdv_error = 0.;
-  double dfdfdudu_error = 0.;
-  double dfdfdudv_error = 0.;
-  double dfdfdvdv_error = 0.;
-
-  for (int j = 0; j < nU; j++)
-    for (int k = 0; k < nV; k++) {
-      double u = j * hU;
-      double v = k * hV;
-      //printf("%d %d\n",j,k);
-      std::complex<double> f = _Interpolate(u,v,0,0);
-      //printf("%d %d\n",j,k);
-      //std::complex<double> ef = 2. * v * v - 1.;
-      //std::complex<double> ef = 2. * v * v * cos(2 * M_PI * u);
-      std::complex<double> ef = cos(v) * cos(2 * M_PI * u);
-      f_error = std::max(f_error,std::abs(f - ef));
-
-      std::complex<double> dfdu = _Interpolate(u,v,1,0);
-      //std::complex<double> edfdu = 0.;
-      //std::complex<double> edfdu = - 4. * M_PI * v * v * sin(2 * M_PI * u);
-      std::complex<double> edfdu = - 2. * M_PI * cos(v) * sin(2 * M_PI * u);
-      dfdu_error = std::max(dfdu_error,std::abs(dfdu - edfdu));
-
-      std::complex<double> dfdv = _Interpolate(u,v,0,1);
-      //std::complex<double> edfdv = 4. * v;
-      //std::complex<double> edfdv = 4. * v * cos(2 * M_PI * u);
-      std::complex<double> edfdv = - sin(v) * cos(2 * M_PI * u);
-      dfdv_error = std::max(dfdv_error,std::abs(dfdv - edfdv));
-      //printf("%d %d : %g %g :: %g %g\n",j,k,dfdv.real(),edfdv.real(),
-      //   dfdv.imag(),edfdv.imag());
-
-      std::complex<double> dfdfdudu = _Interpolate(u,v,2,0);
-      //std::complex<double> edfdfdudu = 0.;
-      //std::complex<double> edfdfdudu = 
-      //- 8. * M_PI * M_PI * v * v * cos(2 * M_PI * u);
-      std::complex<double> edfdfdudu = 
-	- 4. * M_PI * M_PI * cos(v) * cos(2 * M_PI * u);
-      dfdfdudu_error = std::max(dfdfdudu_error,std::abs(dfdfdudu - edfdfdudu));
-
-      std::complex<double> dfdfdvdv = _Interpolate(u,v,0,2);
-      //std::complex<double> edfdfdvdv = 4.;
-      //std::complex<double> edfdfdvdv = 4. * cos(2 * M_PI * u);
-      std::complex<double> edfdfdvdv = - cos(v) * cos(2 * M_PI * u);
-      dfdfdvdv_error = std::max(dfdfdvdv_error,std::abs(dfdfdvdv - edfdfdvdv));
-      //printf("%d %d : %g %g :: %g %g\n",j,k,dfdfdvdv.real(),edfdfdvdv.real(),
-      //     dfdfdvdv.imag(),edfdfdvdv.imag());
-
-      std::complex<double> dfdfdudv = _Interpolate(u,v,1,1);
-      //std::complex<double> edfdfdudv = 0.;
-      //std::complex<double> edfdfdudv = - 8. * M_PI * v * sin(2 * M_PI * u);
-      std::complex<double> edfdfdudv = 2. * M_PI * sin(v) * sin(2 * M_PI * u);
-      dfdfdudv_error = std::max(dfdfdudv_error,std::abs(dfdfdudv - edfdfdudv));
-    }
-
-  printf("F_Error = %g\n",f_error);
-  printf("Dfdu_Error = %g\n",dfdu_error);
-  printf("Dfdv_Error = %g\n",dfdv_error);
-  printf("Dfdfdudu_Error = %g\n",dfdfdudu_error);
-  printf("Dfdfdudv_Error = %g\n",dfdfdudv_error);
-  printf("Dfdfdvdv_Error = %g\n\n",dfdfdvdv_error);
-  */
 }
 
-ContinuationPatch::~ContinuationPatch()
+FPatch::~FPatch()
 {
   for(int j = 0; j < _uModes; j++)
     delete [] _coeffOriginalData[j];
@@ -381,14 +346,14 @@ ContinuationPatch::~ContinuationPatch()
   }
 }
 
-int ContinuationPatch::_forwardSize = 0;
-int ContinuationPatch::_backwardSize = 0;
-fftw_plan ContinuationPatch::_forwardPlan;
-fftw_plan ContinuationPatch::_backwardPlan;
-fftw_complex *ContinuationPatch::_forwardData = 0;
-fftw_complex *ContinuationPatch::_backwardData = 0;
+int FPatch::_forwardSize = 0;
+int FPatch::_backwardSize = 0;
+fftw_plan FPatch::_forwardPlan;
+fftw_plan FPatch::_backwardPlan;
+fftw_complex *FPatch::_forwardData = 0;
+fftw_complex *FPatch::_backwardData = 0;
 
-void ContinuationPatch::_SetForwardPlan(int n)
+void FPatch::_SetForwardPlan(int n)
 {
   if(n != _forwardSize){
     if(_forwardSize){
@@ -404,7 +369,7 @@ void ContinuationPatch::_SetForwardPlan(int n)
   }
 }
 
-void ContinuationPatch::_SetBackwardPlan(int n)
+void FPatch::_SetBackwardPlan(int n)
 {
   if(n != _backwardSize){
     if(_backwardSize){
@@ -420,7 +385,7 @@ void ContinuationPatch::_SetBackwardPlan(int n)
   }
 }
 
-void ContinuationPatch::_ForwardFft(int n, std::complex<double> *fftData)
+void FPatch::_ForwardFft(int n, std::complex<double> *fftData)
 {
   // Initialize fftw plan and array (ignoring the last element of
   // fftData, which should just be the periodic extension)
@@ -440,7 +405,7 @@ void ContinuationPatch::_ForwardFft(int n, std::complex<double> *fftData)
       s * std::complex<double>(_forwardData[i][0], _forwardData[i][1]);
 }
 
-void ContinuationPatch::_BackwardFft(int n, std::complex<double> *fftData)
+void FPatch::_BackwardFft(int n, std::complex<double> *fftData)
 {
   // Initialize fftw plan and array (ignoring last element of fftData)
   _SetBackwardPlan(n - 1);
@@ -461,24 +426,22 @@ void ContinuationPatch::_BackwardFft(int n, std::complex<double> *fftData)
   fftData[n - 1] = fftData[0];
 }
 
-void ContinuationPatch::_ReprocessSeriesCoeff()
+void FPatch::_ReprocessSeriesCoeff()
 {
-  bool direct = false;
-
   _coeffData = new std::complex<double>*[_uM];
   for(int j = 0; j < _uM; j++) {
     _coeffData[j] = new std::complex<double>[_vM];
     for(int k = 0; k < _vM; k++)
       _coeffData[j][k] = 0.;
   }
-  if (IsUPeriodic() && IsVPeriodic()) {
+  if (_ps->IsUPeriodic() && _ps->IsVPeriodic()) {
     int uShift = (_uM-_uModes)%2 == 0 ? (_uM-_uModes)/2 : (_uM-_uModes)/2 + 1;
     int vShift = (_vM-_vModes)%2 == 0 ? (_vM-_vModes)/2 : (_vM-_vModes)/2 + 1;
     for (int j = 0; j < _uModes; j++)
       for (int k = 0; k < _vModes; k++)
 	_coeffData[uShift + j][vShift + k] = _coeffOriginalData[j][k];
   }
-  else if (IsUPeriodic()) {
+  else if (_ps->IsUPeriodic()) {
     std::vector<double> u(_uM), v(_vM + 1);
     for (int j = 0; j < _uM; j++)
       u[j] = (double)j / (double)(_uM-1);
@@ -490,37 +453,16 @@ void ContinuationPatch::_ReprocessSeriesCoeff()
       dataU[k] = new std::complex<double> [_uM];
     std::complex<double> *dataV = new std::complex<double>[2*_vM + 1];
     for (int j = 0; j < _uM - 1; j++) {
-      if (direct)
-	for (int k = 0; k < _vM + 1; k++) {
-	  //dataV[k] = 1.;
-	  //dataV[k] = 2. * cos(M_PI * v[k]) * cos(M_PI * v[k]) - 1.;
-	  //dataV[k] = 2. * (0.5 * cos(M_PI * v[k]) + 0.5) *
-	  //(0.5 * cos(M_PI * v[k]) + 0.5) - 1.;
-	  //dataV[k] = 2. * (0.5 * cos(M_PI * v[k]) + 0.5) *
-	  //(0.5 * cos(M_PI * v[k]) + 0.5) * cos(2 * M_PI * u[j]);
-	  //dataV[k] = cos(0.5 * cos(M_PI * v[k]) + 0.5) * 
-	  //cos(2 * M_PI * u[j]);
-	  dataV[k] = _Interpolate(u[j],0.5 * cos(M_PI * v[k]) + 0.5);
-	}
-      else {
-	int nIntervals = 16;
-	double hIntervals = 0.5 / (double)nIntervals;
-	std::vector<double> tmpU(2 * nIntervals + 1);
-	std::vector<std::complex<double> > tmpData(2 * nIntervals + 1);
-	for (int l = 0; l < 2 * nIntervals + 1; l++)
-	  tmpU[l] = (double)l * hIntervals;
-	for (int l = 0; l < nIntervals + 1; l++) {
-	  tmpData[l] = tmpU[l];
-	  //tmpData[l] = _Interpolate(u[j],2 * tmpU[l]);
-	}
-	for (int l = 1; l < nIntervals + 1; l++)
-	  tmpData[nIntervals + l] = tmpData[nIntervals - l];
-	FftPolyInterpolator1D interpolator(tmpU,tmpData);
-	for (int k = 0; k < _vM + 1; k++) {
-	  dataV[k] = interpolator.F(0.5 * cos(0.5 * M_PI * v[k]) + 0.5);
-	  printf("%g : (%g,%g)\n",0.5 * cos(0.5 * M_PI * v[k]) + 0.5,
-		 dataV[k].real(),dataV[k].imag());
-	}
+      for (int k = 0; k < _vM + 1; k++) {
+	//dataV[k] = 1.;
+	//dataV[k] = 2. * cos(M_PI * v[k]) * cos(M_PI * v[k]) - 1.;
+	//dataV[k] = 2. * (0.5 * cos(M_PI * v[k]) + 0.5) *
+	//(0.5 * cos(M_PI * v[k]) + 0.5) - 1.;
+	//dataV[k] = 2. * (0.5 * cos(M_PI * v[k]) + 0.5) *
+	//(0.5 * cos(M_PI * v[k]) + 0.5) * cos(2 * M_PI * u[j]);
+	//dataV[k] = cos(0.5 * cos(M_PI * v[k]) + 0.5) * 
+	//cos(2 * M_PI * u[j]);
+	dataV[k] = _Interpolate(u[j],0.5 * cos(M_PI * v[k]) + 0.5);
       }
       for (int k = 1; k < _vM+1; k++)
 	dataV[_vM + k] = dataV[_vM -k];
@@ -594,7 +536,7 @@ void ContinuationPatch::_ReprocessSeriesCoeff()
   }
 }
 
-std::complex<double> ContinuationPatch::
+std::complex<double> FPatch::
 _PolyEval(std::vector< std::complex<double> > _coeff, std::complex<double> x)
 {
   int _polyOrder = _coeff.size()-1;
@@ -608,7 +550,7 @@ _PolyEval(std::vector< std::complex<double> > _coeff, std::complex<double> x)
   return out;
 }
 
-std::complex<double> ContinuationPatch::
+std::complex<double> FPatch::
   _Interpolate(double u, double v)
 {
   double epsilon = 1e-12;
@@ -637,7 +579,7 @@ std::complex<double> ContinuationPatch::
      sin(2 * M_PI * _uModesLower * u / _periodU));
 }
 
-std::complex<double> ContinuationPatch::
+std::complex<double> FPatch::
   _Interpolate(double u, double v, int uDer, int vDer)
 {
   //Msg::Info("%d %d %d",uDer,vDer,_derivative);
@@ -656,7 +598,7 @@ std::complex<double> ContinuationPatch::
   }
   std::vector<double> uT(_uM,0.);
   std::vector<double> vT(_vM,0.);
-  if (!IsUPeriodic()) {
+  if (!_ps->IsUPeriodic()) {
     for (int j = 0; j < _uM; j++)
       if (j == 0)
 	uT[j] = 1.;
@@ -665,7 +607,7 @@ std::complex<double> ContinuationPatch::
       else
 	uT[j] = 2. * uT[1] * uT[j-1] - uT[j-2];
   }
-  if (!IsVPeriodic()) {
+  if (!_ps->IsVPeriodic()) {
     for (int k = 0; k < _vM; k++)
       if (k == 0)
 	vT[k] = 1.;
@@ -695,7 +637,7 @@ std::complex<double> ContinuationPatch::
       _tmpCoeff[k] = tmp;
     }
     //printf("i was here 00\n");
-    if (IsVPeriodic()) {
+    if (_ps->IsVPeriodic()) {
       std::complex<double> y(cos(2 * M_PI * v / _periodV),
 			     sin(2 * M_PI * v / _periodV));
       _tmpInterp[j] = _PolyEval(_tmpCoeff, y);
@@ -710,7 +652,7 @@ std::complex<double> ContinuationPatch::
     }
   }
   //printf("i was here\n");
-  if (IsUPeriodic()) {
+  if (_ps->IsUPeriodic()) {
     std::complex<double> x(cos(2 * M_PI * u / _periodU),
 			   sin(2 * M_PI * u / _periodU));
     return _PolyEval(_tmpInterp, x) * std::complex<double>
@@ -725,7 +667,7 @@ std::complex<double> ContinuationPatch::
   }
 }
 
-void ContinuationPatch::
+void FPatch::
 F(double u, double v, double &x, double &y, double &z)
 {
   double px, py, pz, nx, ny, nz, d;
@@ -736,17 +678,14 @@ F(double u, double v, double &x, double &y, double &z)
   _ps->F(u,v,px,py,pz);
   _ps->GetUnitNormal(u,v,nx,ny,nz);
 
-  if (_derivative)
-    d = _Interpolate(u, v, 0, 0).real();
-  else
-    d = _Interpolate(u, v).real();
+  d = _Interpolate(u, v).real();
 
   x = px + d * nx;
   y = py + d * ny;
   z = pz + d * nz;
 }
 
-bool ContinuationPatch::
+bool FPatch::
 Inverse(double x,double y,double z,double &u,double &v)
 {
   bool result = _ps->OrthoProjectionOnSurface(x,y,z,u,v);
@@ -763,7 +702,7 @@ Inverse(double x,double y,double z,double &u,double &v)
   return result;
 }
 
-void ContinuationPatch::
+void FPatch::
 Dfdu(double u, double v, double &x, double &y, double &z)
 {
   double px, py, pz, nx, ny, nz, d;
@@ -785,7 +724,7 @@ Dfdu(double u, double v, double &x, double &y, double &z)
   z = pzu + du * nz + d * nzu;
 }
 
-void ContinuationPatch::
+void FPatch::
 Dfdv(double u, double v, double &x, double &y, double &z)
 {
   double px, py, pz, nx, ny, nz, d;
@@ -807,7 +746,7 @@ Dfdv(double u, double v, double &x, double &y, double &z)
   z = pzv + dv * nz + d * nzv;
 }
 
-void ContinuationPatch::
+void FPatch::
 Dfdfdudu(double u, double v, double &x, double &y, double &z)
 {
   double px, py, pz, nx, ny, nz, d;
@@ -833,7 +772,7 @@ Dfdfdudu(double u, double v, double &x, double &y, double &z)
   z = pzuu + duu * nz + du * nzu + du * nzu + d * nzuu;
 }
 
-void ContinuationPatch::
+void FPatch::
 Dfdfdvdv(double u, double v, double &x, double &y, double &z)
 {
   double px, py, pz, nx, ny, nz, d;
@@ -859,7 +798,7 @@ Dfdfdvdv(double u, double v, double &x, double &y, double &z)
   z = pzvv + dvv * nz + dv * nzv + dv * nzv + d * nzvv;
 }
 
-void ContinuationPatch::
+void FPatch::
 Dfdfdudv(double u, double v, double &x, double &y, double &z)
 {
   double px, py, pz, nx, ny, nz, d;
@@ -889,20 +828,20 @@ Dfdfdudv(double u, double v, double &x, double &y, double &z)
   z = pzuv + duv * nz + du * nzv + dv * nzu + d * nzuv;
 }
 
-double  ContinuationPatch::GetPou(double u, double v)
+double  FPatch::GetPou(double u, double v)
 {
   double pouU, pouV;
 
-  if (IsHardEdge(3))
+  if (_hardEdge[3])
     pouU = OneSidedPartitionOfUnity(0.,1.,u);
-  else if (IsHardEdge(1))
+  else if (_hardEdge[1])
     pouU = 1. - OneSidedPartitionOfUnity(0.,1.,u);
   else
     pouU = PartitionOfUnity(u, 0., 0.3, 0.7, 1.);
 
-  if (IsHardEdge(0))
+  if (_hardEdge[0])
     pouV = OneSidedPartitionOfUnity(0.,1.,v);
-  else if (IsHardEdge(2))
+  else if (_hardEdge[2])
     pouV = 1. - OneSidedPartitionOfUnity(0.,1.,v);
   else
     pouV = PartitionOfUnity(v, 0., 0.3, 0.7, 1.);

@@ -2,25 +2,25 @@
 #define _PATCH_H_
 
 #include <cmath>
-#include "FM_Info.h"
 #include "ProjectionSurface.h"
 
 // The base class for the patches
 class Patch {
  protected:
   // bitfield telling if we also interpolate the derivative(s)
+  int _tag;
   int _derivative;
   double _uMin, _uMax;
   double _vMin, _vMax;
   int _periodicityU, _periodicityV;
   ProjectionSurface* _ps;
+  // Hard edges
+  int _hardEdge[4];
  public:
-  PatchInfo* _PI;
   Patch();
-  Patch(PatchInfo* PI);
   virtual ~Patch() {}
 
-  int GetTag();
+  inline int GetTag() { return _tag; }
 
   inline double GetMinU() { return _uMin; }
   inline double GetMaxU() { return _uMax; }
@@ -35,6 +35,9 @@ class Patch {
     { if (_periodicityU) return true; else return false; }
   inline bool IsVPeriodic() 
     { if (_periodicityV) return true; else return false; }
+
+  inline bool IsHardEdge(int i)
+    { if (_hardEdge[i]) return true; else return false; }
 
   inline void SetPeriodicity(int pU, int pV) 
     { _periodicityU = pU; _periodicityV = pV; }
@@ -81,10 +84,7 @@ class Patch {
       return v;
     }
 
-  inline int GetUModes() { return _PI->nM[0]; }
-  inline int GetVModes() { return _PI->nM[1]; }
   inline int GetDerivativeBitField() { return _derivative; }
-
   inline ProjectionSurface* GetProjectionSurface() { return _ps; }
   inline void SetProjectionSurface(ProjectionSurface* ps) { _ps = ps; }
 

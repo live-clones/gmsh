@@ -50,6 +50,8 @@ class RevolvedParabolaProjectionSurface : public ProjectionSurface {
     (int i, double x);
   virtual double GetParameter
     (int i);
+  virtual std::string GetLabel
+    (int i);
 
   // Redefinitions for RevolvedParabolaProjectionSurface
 

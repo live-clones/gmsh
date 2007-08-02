@@ -264,3 +264,16 @@ GetParameter(int i)
     return K_[1];
   }
 }
+
+std::string RevolvedParabolaProjectionSurface::
+GetLabel(int i)
+{
+  switch (i) {
+  case 0:
+    return std::string("Radius");
+  case 1:
+    return std::string("Parabola Scale 1");
+  case 2:
+    return std::string("Parabola Scale 2");
+  }
+}

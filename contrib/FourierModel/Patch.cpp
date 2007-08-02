@@ -1,18 +1,9 @@
 #include <cmath>
 #include "Patch.h"
 
-Patch::Patch() :_PI(0), _ps(0), _uMin(0.), _uMax(1.), _vMin(0.), _vMax(1.),
-		_periodicityU(0), _periodicityV(0), _derivative(0) {}
-
-Patch::Patch(PatchInfo* PI) : _PI(PI), _ps(0), _derivative(0) 
-{
-  _uMin = _PI->uMin;
-  _uMax = _PI->uMax;
-  _vMin = _PI->vMin;
-  _vMax = _PI->vMax;
-  _periodicityU = _PI->periodic[0];
-  _periodicityV = _PI->periodic[1];
-}
+Patch::Patch() :_ps(0), _uMin(0.), _uMax(1.), _vMin(0.), _vMax(1.),
+		_periodicityU(0), _periodicityV(0), _derivative(0), 
+		_tag(-1) {}
 
 void Patch::GetNormal(double u, double v, double &x, double &y, double &z)
 {
@@ -89,9 +80,4 @@ void Patch::Dndv(double u, double v, double &x, double &y, double &z)
        n[1]*n[2]*dndv[2]) / normCubed;
   z = ((normSquared - n[2]*n[2])*dndv[2] - n[2]*n[0]*dndv[0] -
        n[2]*n[1]*dndv[1]) / normCubed;
-}
-
-int Patch::GetTag()
-{
-  return _PI->tag;
 }

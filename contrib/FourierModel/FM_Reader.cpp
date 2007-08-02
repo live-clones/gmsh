@@ -103,7 +103,7 @@ FM_Reader::FM_Reader(const char* fn)
     }
   }
 
-  _intersection.resize(_nIntersections,0);
+  _curve.resize(_nIntersections,0);
 
   for (int i=0;i<_nPatches;i++) {
     _patchList[i]->tag = i;
@@ -123,7 +123,7 @@ FM_Reader::FM_Reader(const char* fn)
 
   for (int i=0;i<_nIntersections;i++) {
     IntersectionInfo* II = _intersectionList[i];
-    _intersection[II->tag] = new Curve(II,_patch);
+    _curve[II->tag] = new IntersectionCurve(II,_patch);
   }
 
   InputFile >> _nVertices;
@@ -140,7 +140,7 @@ FM_Reader::FM_Reader(const char* fn)
     if (edgeTag < 0)
       _edge.push_back(new FM_Edge(i,0,_vertex[svTag],_vertex[evTag]));
     else
-      _edge.push_back(new FM_Edge(i,GetIntersection(edgeTag),
+      _edge.push_back(new FM_Edge(i,GetCurve(edgeTag),
 				  _vertex[svTag],_vertex[evTag]));
   }
 
@@ -165,12 +165,12 @@ Patch* FM_Reader::GetPatch(int tag)
       return _patch[i];
 }
 
-Curve* FM_Reader::GetIntersection(int tag)
+Curve* FM_Reader::GetCurve(int tag)
 {
   Curve* curve = 0;
-  for (int i=0;i<_intersection.size();i++) {
-    if (_intersection[i]->GetTag() == tag) {
-      curve = _intersection[i];
+  for (int i=0;i<_curve.size();i++) {
+    if (_curve[i]->GetTag() == tag) {
+      curve = _curve[i];
       break;
     }
   }

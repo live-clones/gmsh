@@ -2,6 +2,7 @@
 #define _EXACT_PATCH_H_
 
 #include "Patch.h"
+#include "FM_Info.h"
 #include "ProjectionSurface.h"
 
 // The base class for the patches
@@ -9,6 +10,8 @@ class ExactPatch : public Patch {
  public:
   ExactPatch(PatchInfo* PI, ProjectionSurface* ps);
   virtual ~ExactPatch() {}
+
+  PatchInfo* _PI;
 
   // These are the virtual functions that must be provided by all
   // derived patches: GetPou() returns the original smooth

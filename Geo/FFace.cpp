@@ -15,6 +15,17 @@ FFace::FFace(GModel *m, FM_Face *face_, int tag, std::list<GEdge*> l_edges_)
   }
 }
 
+FFace::FFace(GModel *m, FM_Face *face_, int tag, std::list<GEdge*> l_edges_,
+	     std::list<int> l_dirs_) : GFace(m,tag), face(face_)
+{
+  for (std::list<GEdge*>::iterator it = l_edges_.begin();
+       it != l_edges_.end(); it++)
+    l_edges.push_back((*it));  
+  for (std::list<int>::iterator it = l_dirs_.begin();
+       it != l_dirs_.end(); it++)
+    l_dirs.push_back((*it));  
+}
+
 Range<double> FFace::parBounds(int i) const
 {
   return Range<double>(0.,1.);
@@ -38,23 +49,7 @@ SPoint2 FFace::parFromPoint(const SPoint3 &p) const
   double u, v, x, y, z;
   x = p.x(); y = p.y(); z = p.z();
   face->Inverse(x,y,z,u,v);
-  printf("per : %d %d\n",face->IsPeriodic(0),face->IsPeriodic(1));
-  if (face->IsPeriodic(0)) {
-    double s,e;
-    printf("\tper : %d %d\n",face->GetEdge(0)->GetCurveExtent(s,e),
-	   face->GetEdge(1)->GetCurveExtent(s,e));
-    if (face->GetEdge(0)->GetCurveExtent(s,e)) {
-      printf("%g %g %g\n",u,s,e);
-      u -= floor(u - s);
-      printf("%g %g %g\n\n",u,s,e);
-    }
-  }
-  if (face->IsPeriodic(1)) {
-    double s,e;
-    if (face->GetEdge(1)->GetCurveExtent(s,e)) {
-      v -= floor(v - s);
-    } 
-  }
+
   return SPoint2(u, v);
 }
 

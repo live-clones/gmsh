@@ -1,8 +1,9 @@
 #include "Message.h"
 #include "ExactPatch.h"
 
-ExactPatch::ExactPatch(PatchInfo *PI, ProjectionSurface* ps) : Patch(PI)
+ExactPatch::ExactPatch(PatchInfo *PI, ProjectionSurface* ps) : Patch()
 {
+  _PI = PI;
   SetProjectionSurface(ps);
 
   if (!strcmp(_PI->type,"plane")) {

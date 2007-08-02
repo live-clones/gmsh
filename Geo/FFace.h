@@ -15,6 +15,8 @@ class FFace : public GFace {
   FM_Face *face;
  public:
   FFace(GModel *m, FM_Face *face_, int tag, std::list<GEdge*> l_edges_);
+  FFace(GModel *m, FM_Face *face_, int tag, std::list<GEdge*> l_edges_,
+	std::list<int> l_dirs_);
 
   virtual ~FFace() {}
 

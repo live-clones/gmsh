@@ -26,6 +26,9 @@ class ProjectionSurface {
 
   inline int GetNumParameters() { return numParameters_; }
 
+  inline bool IsUPeriodic() { return uPeriodic_; }
+  inline bool IsVPeriodic() { return vPeriodic_; }
+
   // Public access functions
 
   inline void GetOrigin
@@ -84,6 +87,8 @@ class ProjectionSurface {
   virtual void SetParameter
     (int i, double x) = 0;
   virtual double GetParameter
+    (int i) = 0;
+  virtual std::string GetLabel
     (int i) = 0;
 
   // These functions may also be provided by the derived 
