@@ -4,7 +4,6 @@
 #include <vector>
 #include <string>
 #include <complex>
-#include "Point.h"
 #include "Curve.h"
 #include "IntersectionCurve.h"
 #include "ExactPatch.h"
