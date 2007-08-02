@@ -36,6 +36,11 @@ class ProjectionSurface {
     {
       x = O_[0]; y = O_[1]; z = O_[2];
     }
+  inline void SetOrigin
+  (double x, double y, double z)
+    {
+      O_[0] = x; O_[1] = y; O_[2] = z;
+    }
   inline void GetE0
     (double &x, double &y, double &z)
     {

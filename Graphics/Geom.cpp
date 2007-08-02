@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.132 2007-08-02 20:55:46 anand Exp $
+// $Id: Geom.cpp,v 1.133 2007-08-02 22:28:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -452,7 +452,7 @@ public :
       _drawPlaneGFace(f);
     else if(f->geomType() == GEntity::ProjectionFace)
       _drawProjectionGFace(f);
-    if(f->geomType() == GEntity::ParametricSurface)
+    else if(f->geomType() == GEntity::ParametricSurface)
       _drawParametricGFace(f);
     else
       _drawNonPlaneGFace(f);

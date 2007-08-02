@@ -49,6 +49,7 @@ class projection {
  public:
   FProjectionFace *face;
   Fl_Group *group;
+  double *currentParams;
   std::vector<Fl_Value_Input*> parameters;
   projection(FProjectionFace *f, int x, int y, int w, int h, int BB, int BH,
 	     projectionEditor *e);

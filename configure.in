@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.128 2007-07-26 18:19:13 geuzaine Exp $
+dnl $Id: configure.in,v 1.129 2007-08-02 22:28:05 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 dnl
@@ -499,21 +499,28 @@ if test "x$enable_contrib" != "xno"; then
   if test "x$enable_fm" != "xno"; then
     AC_CHECK_FILE(./contrib/FourierModel/FM_Face.cpp, FOURIER="yes", FOURIER="no")
     if test "x${FOURIER}" = "xyes"; then
-      dnl Check for FFTW3
-      if test "x${FFTW3_PREFIX}" != "x"; then
-        LDFLAGS="-L${FFTW3_PREFIX}/lib ${LDFLAGS}"
-      fi
-      AC_CHECK_LIB(fftw3,main,FFTW3="yes",FFTW3="no")
-      if test "x${FFTW3}" != "xyes"; then
-        AC_MSG_WARN([Could not find FFTW3: disabling FourierModel.])
+      dnl Check for lapack
+      AC_CHECK_LIB(lapack,main,LAPACK="yes",LAPACK="no")
+      if test "x${LAPACK}" != "xyes"; then
+        AC_MSG_WARN([Could not find lapack: disabling FourierModel.])
       else
-        GMSH_DIRS="${GMSH_DIRS} contrib/FourierModel"
-        if test "x${FFTW3_PREFIX}" = "x"; then
-          GMSH_LIBS="${GMSH_LIBS} -lGmshFourierModel -lfftw3"
-          FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS}"
+        dnl Check for FFTW3
+        if test "x${FFTW3_PREFIX}" != "x"; then
+          LDFLAGS="-L${FFTW3_PREFIX}/lib ${LDFLAGS}"
+        fi
+        AC_CHECK_LIB(fftw3,main,FFTW3="yes",FFTW3="no")
+        if test "x${FFTW3}" != "xyes"; then
+          AC_MSG_WARN([Could not find FFTW3: disabling FourierModel.])
         else
-          GMSH_LIBS="${GMSH_LIBS} -lGmshFourierModel -L${FFTW3_PREFIX}/lib -lfftw3"
-          FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS} -I${FFTW3_PREFIX}/include"
+          GMSH_DIRS="${GMSH_DIRS} contrib/FourierModel"
+          if test "x${FFTW3_PREFIX}" = "x"; then
+            GMSH_LIBS="${GMSH_LIBS} -lGmshFourierModel -lfftw3"
+            FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS}"
+          else
+            GMSH_LIBS="${GMSH_LIBS} -lGmshFourierModel -L${FFTW3_PREFIX}/lib -lfftw3"
+            FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS} -I${FFTW3_PREFIX}/include"
+          fi
+          GMSH_LIBS="${GMSH_LIBS} -llapack"
         fi
       fi
     fi
@@ -704,7 +711,7 @@ case "$UNAME" in
     if test "x$enable_gui" = "xno"; then
       GMSH_LIBS="${GMSH_LIBS} -framework ApplicationServices"
     fi
-    POSTBUILD="/Developer/Tools/Rez -t APPL -o bin/gmsh Fltk/MacRes.r"
+    dnl POSTBUILD="/Developer/Tools/Rez -t APPL -o bin/gmsh Fltk/MacRes.r"
     ;;
 
   AIX*)

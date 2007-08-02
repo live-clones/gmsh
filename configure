@@ -4328,10 +4328,78 @@ else
 fi
 
     if test "x${FOURIER}" = "xyes"; then
-            if test "x${FFTW3_PREFIX}" != "x"; then
-        LDFLAGS="-L${FFTW3_PREFIX}/lib ${LDFLAGS}"
-      fi
-      echo "$as_me:$LINENO: checking for main in -lfftw3" >&5
+            echo "$as_me:$LINENO: checking for main in -llapack" >&5
+echo $ECHO_N "checking for main in -llapack... $ECHO_C" >&6
+if test "${ac_cv_lib_lapack_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-llapack  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_lapack_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_lapack_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_lapack_main" >&5
+echo "${ECHO_T}$ac_cv_lib_lapack_main" >&6
+if test $ac_cv_lib_lapack_main = yes; then
+  LAPACK="yes"
+else
+  LAPACK="no"
+fi
+
+      if test "x${LAPACK}" != "xyes"; then
+        { echo "$as_me:$LINENO: WARNING: Could not find lapack: disabling FourierModel." >&5
+echo "$as_me: WARNING: Could not find lapack: disabling FourierModel." >&2;}
+      else
+                if test "x${FFTW3_PREFIX}" != "x"; then
+          LDFLAGS="-L${FFTW3_PREFIX}/lib ${LDFLAGS}"
+        fi
+        echo "$as_me:$LINENO: checking for main in -lfftw3" >&5
 echo $ECHO_N "checking for main in -lfftw3... $ECHO_C" >&6
 if test "${ac_cv_lib_fftw3_main+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -4395,17 +4463,19 @@ else
   FFTW3="no"
 fi
 
-      if test "x${FFTW3}" != "xyes"; then
-        { echo "$as_me:$LINENO: WARNING: Could not find FFTW3: disabling FourierModel." >&5
+        if test "x${FFTW3}" != "xyes"; then
+          { echo "$as_me:$LINENO: WARNING: Could not find FFTW3: disabling FourierModel." >&5
 echo "$as_me: WARNING: Could not find FFTW3: disabling FourierModel." >&2;}
-      else
-        GMSH_DIRS="${GMSH_DIRS} contrib/FourierModel"
-        if test "x${FFTW3_PREFIX}" = "x"; then
-          GMSH_LIBS="${GMSH_LIBS} -lGmshFourierModel -lfftw3"
-          FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS}"
         else
-          GMSH_LIBS="${GMSH_LIBS} -lGmshFourierModel -L${FFTW3_PREFIX}/lib -lfftw3"
-          FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS} -I${FFTW3_PREFIX}/include"
+          GMSH_DIRS="${GMSH_DIRS} contrib/FourierModel"
+          if test "x${FFTW3_PREFIX}" = "x"; then
+            GMSH_LIBS="${GMSH_LIBS} -lGmshFourierModel -lfftw3"
+            FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS}"
+          else
+            GMSH_LIBS="${GMSH_LIBS} -lGmshFourierModel -L${FFTW3_PREFIX}/lib -lfftw3"
+            FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS} -I${FFTW3_PREFIX}/include"
+          fi
+          GMSH_LIBS="${GMSH_LIBS} -llapack"
         fi
       fi
     fi
@@ -4989,8 +5059,7 @@ case "$UNAME" in
     if test "x$enable_gui" = "xno"; then
       GMSH_LIBS="${GMSH_LIBS} -framework ApplicationServices"
     fi
-    POSTBUILD="/Developer/Tools/Rez -t APPL -o bin/gmsh Fltk/MacRes.r"
-    ;;
+        ;;
 
   AIX*)
     FLAGS="-D_BSD -DHAVE_NO_DLL ${FLAGS}"

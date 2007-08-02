@@ -9,8 +9,6 @@ extern Context_T CTX;
 
 #if defined(HAVE_FOURIER_MODEL)
 
-static double currentParams[9];
-
 void uvPlot::draw()
 {
   // draw background
@@ -38,13 +36,11 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
   group = new Fl_Scroll(x, y, w, h);
   SBoundingBox3d bounds = GMODEL->bounds();
   ProjectionSurface *ps = f->GetProjectionSurface();
+  currentParams = new double[ps->GetNumParameters() + 9];
   for(int i = 0; i < ps->GetNumParameters() + 9; i++){
     Fl_Value_Input *v = new Fl_Value_Input(x, y + i * BH, BB, BH);
-
-    ps->GetScale(currentParams[0],currentParams[1],currentParams[2]);
-    ps->GetOrigin(currentParams[6],currentParams[7],currentParams[8]);
-
     if(i < 3){ // scaling
+      currentParams[i] = 1.;
       v->maximum(CTX.lc * 10.);
       v->minimum(CTX.lc / 100.);
       v->step(CTX.lc / 100.);
@@ -61,21 +57,23 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
       v->value(currentParams[i]);
     }
     else if(i < 9){ // translation
+      currentParams[i] = bounds.center()[i - 6];
       v->maximum(bounds.max()[i] + 10. * CTX.lc);
       v->minimum(bounds.min()[i] - 10. * CTX.lc);
       v->step(CTX.lc / 100.);
       v->label((i == 6) ? "X translation" : (i == 7) ? "Y translation" : 
 	       "Z translation");
-      v->value(bounds.center()[i - 6]);
+      v->value(currentParams[i]);
     }
     else{ // other parameters
+      currentParams[i] = ps->GetParameter(i - 9);
       v->maximum(10. * CTX.lc);
       v->minimum(-10. * CTX.lc);
       v->step(CTX.lc / 100.);
       v->label(strdup(ps->GetLabel(i - 9).c_str()));
-      v->value(ps->GetParameter(i - 9));
       v->value(currentParams[i]);
     }
+    ps->SetOrigin(currentParams[6], currentParams[7], currentParams[8]);
     v->align(FL_ALIGN_RIGHT);
     v->callback(update_cb, e);
     parameters.push_back(v);
@@ -190,21 +188,20 @@ void update_cb(Fl_Widget *w, void *data)
   projection *p = e->getCurrentProjection();
   if(p){
     ProjectionSurface *ps = p->face->GetProjectionSurface();
-    ps->Rescale(p->parameters[0]->value() / currentParams[0],
-		p->parameters[1]->value() / currentParams[1],
-		p->parameters[2]->value() / currentParams[2]);
-    ps->Rotate(p->parameters[3]->value() - currentParams[3],
-	       p->parameters[4]->value() - currentParams[4],
-	       p->parameters[5]->value() - currentParams[5]);
-    ps->Translate(p->parameters[6]->value() - currentParams[6],
-		  p->parameters[7]->value() - currentParams[7],
-		  p->parameters[8]->value() - currentParams[8]);
-    for (int i = 9; i < 9 + ps->GetNumParameters(); i++)
-      ps->SetParameter(i - 9, p->parameters[i]->value() - currentParams[i]);
-
-    Draw();
+    ps->Rescale(p->parameters[0]->value() / p->currentParams[0],
+		p->parameters[1]->value() / p->currentParams[1],
+		p->parameters[2]->value() / p->currentParams[2]);
+    ps->Rotate(p->parameters[3]->value() - p->currentParams[3],
+	       p->parameters[4]->value() - p->currentParams[4],
+	       p->parameters[5]->value() - p->currentParams[5]);
+    ps->Translate(p->parameters[6]->value() - p->currentParams[6],
+		  p->parameters[7]->value() - p->currentParams[7],
+		  p->parameters[8]->value() - p->currentParams[8]);
     for (int i = 0; i < 9; i++)
-      currentParams[i] = p->parameters[i]->value();
+      p->currentParams[i] = p->parameters[i]->value();
+    for (int i = 9; i < 9 + ps->GetNumParameters(); i++)
+      ps->SetParameter(i - 9, p->parameters[i]->value());
+    Draw();
     
     // project all selected points and update u,v display
     std::vector<double> u, v, f;
@@ -484,10 +481,11 @@ void mesh_parameterize_cb(Fl_Widget* w, void* data)
   // create one instance of each available projection surface
   std::vector<FProjectionFace*> faces;
   if(faces.empty()){
-    faces.push_back(new FProjectionFace(GMODEL, GMODEL->numFace() + 1, 
-					new CylindricalProjectionSurface(0)));
-    faces.push_back(new FProjectionFace(GMODEL, GMODEL->numFace() + 1,
-					new RevolvedParabolaProjectionSurface(1)));
+    int tag = GMODEL->numFace();
+    faces.push_back(new FProjectionFace(GMODEL, ++tag, 
+					new CylindricalProjectionSurface(tag)));
+    faces.push_back(new FProjectionFace(GMODEL, ++tag,
+					new RevolvedParabolaProjectionSurface(tag)));
   }
 
   // make each projection surface invisible and 

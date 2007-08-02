@@ -7,14 +7,13 @@ CFLAGS = ${OPTIM} ${FLAGS}
 SRC = ProjectionSurface.cpp \
 	CylindricalProjectionSurface.cpp \
 	RevolvedParabolaProjectionSurface.cpp \
-      Patch.h \
+      Patch.cpp \
 	FPatch.cpp \
 	ContinuationPatch.cpp \
 	ExactPatch.cpp\
       Curve.cpp \
 	FCurve.cpp\
 	IntersectionCurve.cpp \
-      Point.cpp \
       BlendedPatch.cpp \
       BlendOperator.cpp \
       FM_Edge.cpp\
