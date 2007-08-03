@@ -206,9 +206,8 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
     hardEdges[i]->tooltip("Push to mark edge as `hard'");
   }  
 
-  _uvPlot = 
-    new uvPlot(WB + hard, 3 * WB + 9 * BH + hard, 
-	       width - 2 * WB - 2 * hard, height - 7 * WB - 12 * BH - 2 * hard);
+  _uvPlot = new uvPlot(WB + hard, 3 * WB + 9 * BH + hard, 
+		       width - 2 * WB - 2 * hard, height - 7 * WB - 12 * BH - 2 * hard);
   _uvPlot->end();
   
   modes[0] = new Fl_Value_Input(WB, height - 3 * WB - 3 * BH, BB  / 2, BH);
@@ -479,6 +478,8 @@ void compute_cb(Fl_Widget *w, void *data)
 		    (ve->z() - p[2]) * n[2]);
       }
     }
+    if(f.empty()) return;
+
     // get options: e->modes[i]->value()
     Patch* patch = new FPatch(0,ps,u,v,f,3);
     patch->SetMinU(0.0);
