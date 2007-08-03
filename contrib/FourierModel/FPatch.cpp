@@ -24,13 +24,15 @@ FPatch::FPatch(int tag, ProjectionSurface* ps,
   _uModes = uModes;
   _vModes = vModes;
 
-  _uM = (int)(log((double)uM) / log(2.));
-  _vM = (int)(log((double)vM) / log(2.));
+  _uM = (int)pow(2.,(int)(log((double)uM) / log(2.)));
+  _vM = (int)pow(2.,(int)(log((double)vM) / log(2.)));
 
   if (_ps->IsUPeriodic())
     _uM++;
   if (_ps->IsVPeriodic())
     _vM++;
+
+  printf("%d %d\n",_uM,_vM);
 
   _hardEdge[0] = hardEdge0;
   _hardEdge[1] = hardEdge1;
