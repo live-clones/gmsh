@@ -5,7 +5,6 @@
 #include "Patch.h"
 #include "FM_Info.h"
 #include "PartitionOfUnity.h"
-#include "Interpolator1D.h"
 
 // The base class for the patches
 class ContinuationPatch : public Patch {

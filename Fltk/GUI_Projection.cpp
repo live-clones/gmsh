@@ -174,7 +174,7 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
   
   new Fl_Box(WB, WB + BH, BB / 2, BH, "Select:");
   
- Fl_Group *o = new Fl_Group(WB, WB, 2 * BB, 3 * BH);
+  Fl_Group *o = new Fl_Group(WB, WB, 2 * BB, 3 * BH);
   _select[0] = 
     new Fl_Round_Button(2 * WB + BB / 2, WB, BB, BH, "Points");
   _select[0]->value(1);
@@ -210,29 +210,29 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
   
   int hard = 8;
   hardEdges[0] = new Fl_Toggle_Button(WB, 3 * WB + 9 * BH + hard, 
-				      hard, height - 7 * WB - 12 * BH - 2 * hard);
+				      hard, height - 7 * WB - 13 * BH - 2 * hard);
   hardEdges[1] = new Fl_Toggle_Button(width - WB - hard, 3 * WB + 9 * BH + hard, 
-				      hard, height - 7 * WB - 12 * BH - 2 * hard);
+				      hard, height - 7 * WB - 13 * BH - 2 * hard);
   hardEdges[2] = new Fl_Toggle_Button(WB + hard, 3 * WB + 9 * BH, 
 				      width - 2 * WB - 2 * hard, hard);
-  hardEdges[3] = new Fl_Toggle_Button(WB + hard, -4 * WB - 3 * BH + height - hard,
+  hardEdges[3] = new Fl_Toggle_Button(WB + hard, height - 4 * WB - 4 * BH - hard,
 				      width - 2 * WB - 2 * hard, hard);
   for(int i = 0; i < 4; i++){
     hardEdges[i]->tooltip("Push to mark edge as `hard'");
   }  
 
   _uvPlot = new uvPlot(WB + hard, 3 * WB + 9 * BH + hard, 
-		       width - 2 * WB - 2 * hard, height - 7 * WB - 12 * BH - 2 * hard);
+		       width - 2 * WB - 2 * hard, height - 7 * WB - 13 * BH - 2 * hard);
   _uvPlot->end();
   
-  modes[0] = new Fl_Value_Input(WB, height - 3 * WB - 3 * BH, BB  / 2, BH);
+  modes[0] = new Fl_Value_Input(WB, height - 3 * WB - 4 * BH, BB  / 2, BH);
   modes[0]->tooltip("Number of Fourier modes along u");
-  modes[1] = new Fl_Value_Input(WB + BB / 2, height - 3 * WB - 3 * BH, BB  / 2, BH, 
+  modes[1] = new Fl_Value_Input(WB + BB / 2, height - 3 * WB - 4 * BH, BB  / 2, BH, 
 				"Fourier modes");
   modes[1]->tooltip("Number of Fourier modes along v");
-  modes[2] = new Fl_Value_Input(WB, height - 3 * WB - 2 * BH, BB  / 2, BH);
+  modes[2] = new Fl_Value_Input(WB, height - 3 * WB - 3 * BH, BB  / 2, BH);
   modes[2]->tooltip("Number of Chebyshev modes along u");
-  modes[3] = new Fl_Value_Input(WB + BB / 2, height - 3 * WB - 2 * BH, BB  / 2, BH, 
+  modes[3] = new Fl_Value_Input(WB + BB / 2, height - 3 * WB - 3 * BH, BB  / 2, BH, 
 				"Chebyshev modes");
   modes[3]->tooltip("Number of Chebyshev modes along v");
   for(int i = 0; i < 4; i++){
@@ -243,16 +243,26 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
     modes[i]->align(FL_ALIGN_RIGHT);
   }    
 
-  Fl_Button *b3 = new Fl_Button(width - WB - BB, height - 3 * WB - 3 * BH, 
-				BB, 2 * BH, "Generate\nPatch");
+  Fl_Button *b3 = new Fl_Button(width - WB - BB, height - 3 * WB - 4 * BH, 
+				BB, 2 * BH, "Generate\npatch");
   b3->callback(compute_cb, this);
 
+  new Fl_Box(WB, height - 2 * WB - 2 * BH, BB / 2, BH, "Delete:");
+  Fl_Button *b4 = new Fl_Button(WB + BB / 2, height - 2 * WB - 2 * BH, BB / 2, BH, "last");
+  b4->callback(delete_cb, (void*)"last");
+  Fl_Button *b5 = new Fl_Button(WB + BB, height - 2 * WB - 2 * BH, BB / 2, BH, "select");
+  b5->callback(delete_cb, (void*)"select");
+
+  int s = width - 4 * WB - 3 * BB / 2;
+  Fl_Button *b6 = new Fl_Button(2 * WB + 3 * BB / 2, height - 2 * WB - 2 * BH, 
+				s / 2, BH, "Blend");
   
+  Fl_Button *b7 = new Fl_Button(3 * WB + 3 * BB / 2 + s / 2, height - 2 * WB - 2 * BH, 
+				s / 2, BH, "Intersect");
 
-
-  Fl_Button *b4 = new Fl_Button(width - WB - BB, height - WB - BH,
+  Fl_Button *b8 = new Fl_Button(width - WB - BB, height - WB - BH,
 				BB, BH, "Cancel");
-  b4->callback(close_cb, _window);
+  b8->callback(close_cb, _window);
   
   _window->end();
   _window->hotspot(_window);
@@ -844,6 +854,13 @@ void compute_cb(Fl_Widget *w, void *data)
   }
 
   Draw();
+}
+
+void delete_cb(Fl_Widget *w, void *data)
+{
+  char *str = (char*)data;
+  Msg(GERROR, "deleting %s", str);
+
 }
 
 void mesh_parameterize_cb(Fl_Widget* w, void* data)

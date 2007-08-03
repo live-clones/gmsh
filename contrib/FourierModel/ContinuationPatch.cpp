@@ -463,8 +463,6 @@ void ContinuationPatch::_BackwardFft(int n, std::complex<double> *fftData)
 
 void ContinuationPatch::_ReprocessSeriesCoeff()
 {
-  bool direct = false;
-
   _coeffData = new std::complex<double>*[_uM];
   for(int j = 0; j < _uM; j++) {
     _coeffData[j] = new std::complex<double>[_vM];
@@ -490,7 +488,6 @@ void ContinuationPatch::_ReprocessSeriesCoeff()
       dataU[k] = new std::complex<double> [_uM];
     std::complex<double> *dataV = new std::complex<double>[2*_vM + 1];
     for (int j = 0; j < _uM - 1; j++) {
-      if (direct)
 	for (int k = 0; k < _vM + 1; k++) {
 	  //dataV[k] = 1.;
 	  //dataV[k] = 2. * cos(M_PI * v[k]) * cos(M_PI * v[k]) - 1.;
@@ -502,26 +499,6 @@ void ContinuationPatch::_ReprocessSeriesCoeff()
 	  //cos(2 * M_PI * u[j]);
 	  dataV[k] = _Interpolate(u[j],0.5 * cos(M_PI * v[k]) + 0.5);
 	}
-      else {
-	int nIntervals = 16;
-	double hIntervals = 0.5 / (double)nIntervals;
-	std::vector<double> tmpU(2 * nIntervals + 1);
-	std::vector<std::complex<double> > tmpData(2 * nIntervals + 1);
-	for (int l = 0; l < 2 * nIntervals + 1; l++)
-	  tmpU[l] = (double)l * hIntervals;
-	for (int l = 0; l < nIntervals + 1; l++) {
-	  tmpData[l] = tmpU[l];
-	  //tmpData[l] = _Interpolate(u[j],2 * tmpU[l]);
-	}
-	for (int l = 1; l < nIntervals + 1; l++)
-	  tmpData[nIntervals + l] = tmpData[nIntervals - l];
-	FftPolyInterpolator1D interpolator(tmpU,tmpData);
-	for (int k = 0; k < _vM + 1; k++) {
-	  dataV[k] = interpolator.F(0.5 * cos(0.5 * M_PI * v[k]) + 0.5);
-	  printf("%g : (%g,%g)\n",0.5 * cos(0.5 * M_PI * v[k]) + 0.5,
-		 dataV[k].real(),dataV[k].imag());
-	}
-      }
       for (int k = 1; k < _vM+1; k++)
 	dataV[_vM + k] = dataV[_vM -k];
       _BackwardFft(2*_vM + 1, dataV);

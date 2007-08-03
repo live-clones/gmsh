@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.628 2007-08-03 00:44:28 geuzaine Exp $
+// $Id: GUI.cpp,v 1.629 2007-08-03 22:21:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -729,8 +729,13 @@ int GUI::global_shortcuts(int event)
     redraw_opengl();
     return 1;
   }
-  else if(Fl::test_shortcut(FL_ALT + 'd') ||
-	  Fl::test_shortcut(FL_ALT + FL_SHIFT + 'd')) {
+  else if(Fl::test_shortcut(FL_ALT + 'd')){
+    opt_geometry_surface_type(0, GMSH_SET | GMSH_GUI,
+			      !opt_geometry_surface_type(0, GMSH_GET, 0));
+    redraw_opengl();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'd')) {
     opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI,
 			    !opt_mesh_surfaces_faces(0, GMSH_GET, 0));
     redraw_opengl();
@@ -2305,6 +2310,7 @@ void GUI::create_option_window()
       geo_choice[2]->menu(menu_surface_display);
       geo_choice[2]->align(FL_ALIGN_RIGHT);	
       geo_choice[2]->callback(geometry_options_ok_cb);
+      geo_choice[2]->tooltip("(Alt+d)");
 
       o->end();
     }

@@ -23,8 +23,7 @@ SRC = ProjectionSurface.cpp \
       FM_Vertex.cpp\
       Message.cpp \
       Utils.cpp \
-      PartitionOfUnity.cpp \
-      Interpolator1D.cpp
+      PartitionOfUnity.cpp
 
 OBJ = ${SRC:.cpp=.o}
 
@@ -59,8 +58,7 @@ Patch.o: Patch.cpp Patch.h ProjectionSurface.h
 FPatch.o: FPatch.cpp Message.h FPatch.h Patch.h ProjectionSurface.h \
   PartitionOfUnity.h
 ContinuationPatch.o: ContinuationPatch.cpp Message.h ContinuationPatch.h \
-  Patch.h ProjectionSurface.h FM_Info.h PartitionOfUnity.h \
-  Interpolator1D.h
+  Patch.h ProjectionSurface.h FM_Info.h PartitionOfUnity.h
 ExactPatch.o: ExactPatch.cpp Message.h ExactPatch.h Patch.h \
   ProjectionSurface.h FM_Info.h
 Curve.o: Curve.cpp Curve.h
@@ -77,11 +75,10 @@ FM_Face.o: FM_Face.cpp FM_Face.h Patch.h ProjectionSurface.h FM_Edge.h \
 FM_Info.o: FM_Info.cpp FM_Info.h
 FM_Reader.o: FM_Reader.cpp Message.h FM_Reader.h Curve.h \
   IntersectionCurve.h Patch.h ProjectionSurface.h FM_Info.h ExactPatch.h \
-  ContinuationPatch.h PartitionOfUnity.h Interpolator1D.h \
+  ContinuationPatch.h PartitionOfUnity.h \
   CylindricalProjectionSurface.h RevolvedParabolaProjectionSurface.h \
   Utils.h FM_Face.h FM_Edge.h FM_Vertex.h BlendOperator.h BlendedPatch.h
 FM_Vertex.o: FM_Vertex.cpp
 Message.o: Message.cpp Message.h
 Utils.o: Utils.cpp Utils.h Message.h
 PartitionOfUnity.o: PartitionOfUnity.cpp PartitionOfUnity.h
-Interpolator1D.o: Interpolator1D.cpp Interpolator1D.h Message.h

@@ -32,6 +32,7 @@ void close_cb(Fl_Widget *w, void *data);
 void hide_cb(Fl_Widget *w, void *data);
 void save_cb(Fl_Widget *w, void *data);
 void compute_cb(Fl_Widget *w, void *data);
+void delete_cb(Fl_Widget *w, void *data);
 
 class uvPlot : public Fl_Window {
  private:
