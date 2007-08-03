@@ -6,8 +6,10 @@
 #include "GModel.h"
 #include "GUI.h"
 #include "Shortcut_Window.h"
+#include "ColorTable.h"
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Round_Button.H>
+
 #if defined(HAVE_FOURIER_MODEL)
 
 #include "Utils.h"
@@ -34,13 +36,13 @@ void compute_cb(Fl_Widget *w, void *data);
 class uvPlot : public Fl_Window {
  private:
   std::vector<double> _u, _v, _f;
+  GmshColorTable _colorTable;
+  double _dmin, _dmax;
+  void color(double d);
   void draw();
  public:
-  uvPlot(int x, int y, int w, int h, const char *l=0) : Fl_Window(x, y, w, h, l){}
-  void fill(std::vector<double> &u, std::vector<double> &v, std::vector<double> &f)
-  { 
-    _u = u; _v = v; _f = f; redraw();
-  }
+  uvPlot(int x, int y, int w, int h, const char *l=0);
+  void fill(std::vector<double> &u, std::vector<double> &v, std::vector<double> &f);
 };
 
 class projectionEditor;

@@ -9,6 +9,47 @@ extern Context_T CTX;
 
 #if defined(HAVE_FOURIER_MODEL)
 
+uvPlot::uvPlot(int x, int y, int w, int h, const char *l)
+  : Fl_Window(x, y, w, h, l), _dmin(0.), _dmax(0.)
+{
+  ColorTable_InitParam(2, &_colorTable);
+  ColorTable_Recompute(&_colorTable);
+}
+
+void uvPlot::fill(std::vector<double> &u, std::vector<double> &v,
+		  std::vector<double> &f)
+{ 
+  _u = u; _v = v; _f = f; 
+  // compute min/max distance
+  if(_f.size()){
+    _dmin = 1.e200; _dmax = 0.;
+    for(unsigned int i = 0; i < _f.size(); i++){
+      // only compute min/max for valid projections
+      if(_u[i] >= 0. && _u[i] <= 1. &&
+	 _v[i] >= 0. && _v[i] <= 1.){
+	_dmin = std::min(_dmin, _f[i]);
+	_dmax = std::max(_dmax, _f[i]);
+      }
+    }
+  }
+  redraw();
+}
+
+void uvPlot::color(double d)
+{
+  int numcol = _colorTable.size;
+  int index;
+  if(_dmin == _dmax)
+    index = numcol / 2;
+  else
+    index = (int)((d - _dmin) * (numcol - 1) / (_dmax - _dmin));
+  unsigned int color = _colorTable.table[index];
+  int r = CTX.UNPACK_RED(color);
+  int g = CTX.UNPACK_GREEN(color);
+  int b = CTX.UNPACK_BLUE(color);
+  fl_color(r, g, b);
+}
+
 void uvPlot::draw()
 {
   // draw background
@@ -17,16 +58,37 @@ void uvPlot::draw()
 
   // draw points
   if(_u.size() != _v.size()) return;
+
+  int pw = w();
+  int ph = h() - 30;
+
   for(unsigned int i = 0; i < _u.size(); i++){
-    int x = (int)(_u[i] * w());
-    int y = (int)(_v[i] * h());
-    // fixme: change color depending on f
-    fl_color(FL_BLACK);
-    fl_rect(x, y, 3, 3);
+    if(_u[i] >= 0. && _u[i] <= 1. &&
+       _v[i] >= 0. && _v[i] <= 1.){
+      int x = (int)(_u[i] * pw);
+      int y = (int)(_v[i] * ph);
+      color(_f[i]);
+      fl_rect(x, y, 3, 3);
+    }
   }
 
-  //fl_font(FL_HELVETICA, 14);
-  //fl_draw("Hello", w() / 2, h() / 2);
+  for(int i = 0; i < w(); i++){
+    int index = (int)(i * (_colorTable.size - 1) / w());
+    unsigned int color = _colorTable.table[index];
+    int r = CTX.UNPACK_RED(color);
+    int g = CTX.UNPACK_GREEN(color);
+    int b = CTX.UNPACK_BLUE(color);
+    fl_color(r, g, b);
+    fl_line(i, ph, i, ph + 10);
+  }
+
+  fl_color(FL_BLACK);
+  fl_font(FL_HELVETICA, 13);
+  static char min[256], max[256];
+  sprintf(min, "%g", _dmin);
+  sprintf(max, "%g", _dmax);
+  fl_draw(min, 5, h() - 5);
+  fl_draw(max, pw - fl_width(max) - 5, h() - 5);
 }
 
 projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, int BH, 
@@ -176,7 +238,8 @@ void browse_cb(Fl_Widget *w, void *data)
     p->face->setVisibility(true);
     p->group->show();
   }
-  Draw();
+
+  update_cb(w, data);
 }
 
 void update_cb(Fl_Widget *w, void *data)
@@ -202,8 +265,7 @@ void update_cb(Fl_Widget *w, void *data)
     for (int i = 9; i < 9 + ps->GetNumParameters(); i++)
       ps->SetParameter(i - 9, p->parameters[i]->value());
     p->face->computeGraphicsRep(64, 64); // FIXME: hardcoded for now!
-    Draw();
-    
+   
     // project all selected points and update u,v display
     std::vector<double> u, v, f;
     std::vector<GEntity*> &ent(e->getEntities());
@@ -226,6 +288,8 @@ void update_cb(Fl_Widget *w, void *data)
     // loop over elements and do the same thing
     e->uv()->fill(u, v, f);
   }
+
+  Draw();
 }
 
 void select_cb(Fl_Widget *w, void *data)
