@@ -243,17 +243,18 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
     modes[i]->align(FL_ALIGN_RIGHT);
   }    
 
-  Fl_Button *b3 = new Fl_Button(width - WB - BB, height - 3 * WB - 4 * BH, 
-				BB, 2 * BH, "Generate\npatch");
+  int s = width - 4 * wb - 3 * bb / 2;
+
+  fl_button *b3 = new fl_button(width - wb - s / 2, height - 3 * wb - 4 * bh, 
+				s / 2, 2 * bh, "generate\npatch");
   b3->callback(compute_cb, this);
 
-  new Fl_Box(WB, height - 2 * WB - 2 * BH, BB / 2, BH, "Delete:");
-  Fl_Button *b4 = new Fl_Button(WB + BB / 2, height - 2 * WB - 2 * BH, BB / 2, BH, "last");
+  new fl_box(wb, height - 2 * wb - 2 * bh, bb / 2, bh, "delete:");
+  fl_button *b4 = new fl_button(wb + bb / 2, height - 2 * wb - 2 * bh, bb / 2, bh, "last");
   b4->callback(delete_cb, (void*)"last");
   Fl_Button *b5 = new Fl_Button(WB + BB, height - 2 * WB - 2 * BH, BB / 2, BH, "select");
   b5->callback(delete_cb, (void*)"select");
 
-  int s = width - 4 * WB - 3 * BB / 2;
   Fl_Button *b6 = new Fl_Button(2 * WB + 3 * BB / 2, height - 2 * WB - 2 * BH, 
 				s / 2, BH, "Blend");
   
