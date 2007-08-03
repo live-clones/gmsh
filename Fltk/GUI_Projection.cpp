@@ -201,6 +201,7 @@ void update_cb(Fl_Widget *w, void *data)
       p->currentParams[i] = p->parameters[i]->value();
     for (int i = 9; i < 9 + ps->GetNumParameters(); i++)
       ps->SetParameter(i - 9, p->parameters[i]->value());
+    p->face->computeGraphicsRep(64, 64); // FIXME: hardcoded for now!
     Draw();
     
     // project all selected points and update u,v display

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.347 2007-07-26 13:10:47 geuzaine Exp $
+// $Id: Options.cpp,v 1.348 2007-08-03 00:44:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4033,6 +4033,19 @@ double opt_geometry_line_type(OPT_ARGS_NUM)
   }
 #endif
   return CTX.geom.line_type;
+}
+
+double opt_geometry_surface_type(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX.geom.surface_type = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)) {
+    WID->geo_choice[2]->value(CTX.geom.surface_type);
+  }
+#endif
+  return CTX.geom.surface_type;
 }
 
 double opt_geometry_light(OPT_ARGS_NUM)

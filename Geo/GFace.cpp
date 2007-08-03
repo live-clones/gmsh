@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.34 2007-05-05 08:12:08 geuzaine Exp $
+// $Id: GFace.cpp,v 1.35 2007-08-03 00:44:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -513,3 +513,31 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p) const
   return SPoint2(U,V);
 }
 
+void GFace::computeGraphicsRep(int nu, int nv)
+{
+  _graphicsRep.resize(nu);
+  for(unsigned int i = 0; i < nu; i++) _graphicsRep[i].resize(nv);
+
+  Range<double> ubounds = parBounds(0);
+  Range<double> vbounds = parBounds(1);
+  double umin = ubounds.low(), umax = ubounds.high();
+  double vmin = vbounds.low(), vmax = vbounds.high();
+
+  for(int i = 0; i < nu; i++){
+    for(int j = 0; j < nv; j++){
+      double u = umin + (double)i/(double)(nu-1) * (umax - umin);
+      double v = vmin + (double)j/(double)(nv-1) * (vmax - vmin);
+      struct graphics_point gp;
+      GPoint p = point(u, v);
+      gp.xyz[0] = p.x();
+      gp.xyz[1] = p.y();
+      gp.xyz[2] = p.z();
+      SVector3 n = normal(SPoint2(u, v));
+      gp.n[0] = n.x();
+      gp.n[1] = n.y();
+      gp.n[2] = n.z();
+      _graphicsRep[i][j] = gp;
+    }
+  }
+
+}

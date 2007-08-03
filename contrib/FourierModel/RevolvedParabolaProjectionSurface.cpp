@@ -225,20 +225,6 @@ bool RevolvedParabolaProjectionSurface::OrthoProjectionOnSurface
     return false;
 }
 
-void RevolvedParabolaProjectionSurface::GetNormal
-(double u, double v, double &x, double &y, double &z)
-{
-  x = - 2. * K_[1] * (v - 0.5) * 
-    (E1_[0] * cos(twoPi_ * (u - 0.5)) + E2_[0] * sin(twoPi_ * (u - 0.5))) + 
-    K_[0] * E0_[0];
-  y = - 2. * K_[1] * (v - 0.5) *
-    (E1_[1] * cos(twoPi_ * (u - 0.5)) + E2_[1] * sin(twoPi_ * (u - 0.5))) +
-    K_[0] * E0_[1];
-  z = - 2. * K_[1] * (v - 0.5) *
-    (E1_[2] * cos(twoPi_ * (u - 0.5)) + E2_[2] * sin(twoPi_ * (u - 0.5))) +
-    K_[0] * E0_[2];
-}
-
 void RevolvedParabolaProjectionSurface::
 SetParameter(int i, double x)
 {

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.627 2007-07-26 17:57:27 geuzaine Exp $
+// $Id: GUI.cpp,v 1.628 2007-08-03 00:44:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -346,6 +346,12 @@ static Fl_Menu_Item menu_point_display[] = {
 static Fl_Menu_Item menu_line_display[] = {
   {"Color segment", 0, 0, 0},
   {"3D cylinder",   0, 0, 0},
+  {0}
+};
+
+static Fl_Menu_Item menu_surface_display[] = {
+  {"Wireframe", 0, 0, 0},
+  {"Solid",   0, 0, 0},
   {0}
 };
 
@@ -2294,6 +2300,11 @@ void GUI::create_option_window()
       geo_value[6]->step(0.1);
       geo_value[6]->align(FL_ALIGN_RIGHT);
       geo_value[6]->callback(geometry_options_ok_cb);
+
+      geo_choice[2] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Surface display");
+      geo_choice[2]->menu(menu_surface_display);
+      geo_choice[2]->align(FL_ALIGN_RIGHT);	
+      geo_choice[2]->callback(geometry_options_ok_cb);
 
       o->end();
     }

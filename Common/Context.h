@@ -148,7 +148,7 @@ public :
     int points, lines, surfaces, volumes;
     int points_num, lines_num, surfaces_num, volumes_num;
     double point_size, line_width, point_sel_size, line_sel_width;
-    int point_type, line_type; // flat or 3D
+    int point_type, line_type, surface_type;
     int draw, light;
     int old_circle, circle_points;
     int extrude_spline_points, extrude_return_lateral, old_newreg;

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.133 2007-08-02 22:28:06 geuzaine Exp $
+// $Id: Geom.cpp,v 1.134 2007-08-03 00:44:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -243,83 +243,44 @@ class drawGFace {
     }
   }
   
-  void _drawProjectionGFace(GFace *f)
-  {
-    Range<double> ubounds = f->parBounds(0);
-    Range<double> vbounds = f->parBounds(1);
-    double umin = ubounds.low(), umax = ubounds.high();
-    double vmin = vbounds.low(), vmax = vbounds.high();
-    const int N = 25;
-    
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    //glEnable(GL_LIGHTING);
-    //glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-    glColor4ubv((GLubyte *) & CTX.color.geom.selection);
-    glBegin(GL_QUADS);
-    for(int i = 1; i < N; i++){
-      for(int j = 1; j < N; j++){
-    	double u1 = umin + (double)i/(double)(N-1) * (umax - umin);
-	double v1 = vmin + (double)j/(double)(N-1) * (vmax - vmin);
-    	double u2 = umin + (double)(i-1)/(double)(N-1) * (umax - umin);
-	double v2 = vmin + (double)(j-1)/(double)(N-1) * (vmax - vmin);
-	GPoint p1 = f->point(u1, v1);
-	GPoint p2 = f->point(u2, v1);
-	GPoint p3 = f->point(u2, v2);
-	GPoint p4 = f->point(u1, v2);
-	//SVector3 n1 = f->normal(SPoint2(u1, v1));
-	//SVector3 n2 = f->normal(SPoint2(u2, v1));
-	//SVector3 n3 = f->normal(SPoint2(u2, v2));
-	//SVector3 n4 = f->normal(SPoint2(u1, v2));
-	//glNormal3d(n1.x(), n1.y(), n1.z());
-	glVertex3d(p1.x(), p1.y(), p1.z());
-	//glNormal3d(n2.x(), n2.y(), n2.z());
-	glVertex3d(p2.x(), p2.y(), p2.z());
-	//glNormal3d(n3.x(), n3.y(), n3.z());
-	glVertex3d(p3.x(), p3.y(), p3.z());
-	//glNormal3d(n4.x(), n4.y(), n4.z());
-	glVertex3d(p4.x(), p4.y(), p4.z());
-      }
-    }
-    glEnd();
-    //glDisable(GL_LIGHTING);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  }
-
   void _drawParametricGFace(GFace *f)
   {
-    Range<double> ubounds = f->parBounds(0);
-    Range<double> vbounds = f->parBounds(1);
-    double umin = ubounds.low(), umax = ubounds.high();
-    double vmin = vbounds.low(), vmax = vbounds.high();
-    const int N = 40;
-    
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    std::vector<std::vector<graphics_point> > &gr(f->getGraphicsRep());
+
+    const int N = 64;
+
+    // We create data here and the routine is not designed to be
+    // reentrant, so we must lock it to avoid race conditions when
+    // redraw events are fired in rapid succession
+   
+    if(gr.size() != N && !CTX.threads_lock) {
+      CTX.threads_lock = 1; 
+      f->computeGraphicsRep(N, N);
+      CTX.threads_lock = 0;
+    }
+
+    if(gr.size() != N) return;
+
+    if(f->geomType() == GEntity::ProjectionFace)
+      glColor4ubv((GLubyte *) & CTX.color.geom.selection);
+
+    if(CTX.geom.surface_type > 0)
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    else
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
     glEnable(GL_LIGHTING);
-    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-    glColor4ubv((GLubyte *) & CTX.color.geom.selection);
     glBegin(GL_QUADS);
-    for(int i = 1; i < N; i++){
-      for(int j = 1; j < N; j++){
-    	double u1 = umin + (double)i/(double)(N-1) * (umax - umin);
-	double v1 = vmin + (double)j/(double)(N-1) * (vmax - vmin);
-    	double u2 = umin + (double)(i-1)/(double)(N-1) * (umax - umin);
-	double v2 = vmin + (double)(j-1)/(double)(N-1) * (vmax - vmin);
-	GPoint p1 = f->point(u1, v1);
-	GPoint p2 = f->point(u2, v1);
-	GPoint p3 = f->point(u2, v2);
-	GPoint p4 = f->point(u1, v2);
-	SVector3 n1 = f->normal(SPoint2(u1, v1));
-	SVector3 n2 = f->normal(SPoint2(u2, v1));
-	SVector3 n3 = f->normal(SPoint2(u2, v2));
-	SVector3 n4 = f->normal(SPoint2(u1, v2));
-	glNormal3d(n1.x(), n1.y(), n1.z());
-	glVertex3d(p1.x(), p1.y(), p1.z());
-	glNormal3d(n2.x(), n2.y(), n2.z());
-	glVertex3d(p2.x(), p2.y(), p2.z());
-	glNormal3d(n3.x(), n3.y(), n3.z());
-	glVertex3d(p3.x(), p3.y(), p3.z());
-	glNormal3d(n4.x(), n4.y(), n4.z());
-	glVertex3d(p4.x(), p4.y(), p4.z());
+    for(unsigned int i = 1; i < gr.size(); i++){
+      for(unsigned int j = 1; j < gr[0].size(); j++){
+        glNormal3fv(gr[i - 1][j - 1].n);
+        glVertex3fv(gr[i - 1][j - 1].xyz);
+        glNormal3fv(gr[i    ][j - 1].n);
+        glVertex3fv(gr[i    ][j - 1].xyz);
+        glNormal3fv(gr[i    ][j    ].n);
+        glVertex3fv(gr[i    ][j    ].xyz);
+        glNormal3fv(gr[i - 1][j    ].n);
+        glVertex3fv(gr[i - 1][j    ].xyz);
       }
     }
     glEnd();
@@ -450,9 +411,8 @@ public :
 
     if(f->geomType() == GEntity::Plane)
       _drawPlaneGFace(f);
-    else if(f->geomType() == GEntity::ProjectionFace)
-      _drawProjectionGFace(f);
-    else if(f->geomType() == GEntity::ParametricSurface)
+    else if(f->geomType() == GEntity::ProjectionFace ||
+	    f->geomType() == GEntity::ParametricSurface)
       _drawParametricGFace(f);
     else
       _drawNonPlaneGFace(f);

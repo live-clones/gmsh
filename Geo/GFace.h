@@ -37,11 +37,22 @@ struct mean_plane
   double x, y, z;
 };
 
+struct graphics_point
+{
+  float xyz[3];
+  float n[3];
+};
+
 class GRegion;
 
 // A model face. 
 class GFace : public GEntity 
 {
+ private:
+  // a graphical representation for topologically simple surfaces: a
+  // 2D array of points/normals
+  std::vector<std::vector<graphics_point> > _graphicsRep;
+
  protected: 
   // edge loops, will replace what follows
   // list of al the edges of the face
@@ -141,6 +152,8 @@ class GFace : public GEntity
   // Resets the mesh attributes to default values
   virtual void resetMeshAttributes();
 
+  std::vector<graphics_point> _graphicsRepresentation;
+
   struct {
     // do we recombine the triangles of the mesh ?
     int recombine;
@@ -161,6 +174,12 @@ class GFace : public GEntity
   // a crude graphical representation using a "cross" defined by pairs
   // of start/end points
   std::vector<SPoint3> cross;
+
+  // fill the graphics representation
+  void computeGraphicsRep(int nu, int nv);
+
+  // fill the graphics representation
+  std::vector<std::vector<graphics_point> > &getGraphicsRep(){ return _graphicsRep;}
 
   // a array for accessing the transfinite vertices using a pair of
   // indices

@@ -52,11 +52,6 @@ class RevolvedParabolaProjectionSurface : public ProjectionSurface {
     (int i);
   virtual std::string GetLabel
     (int i);
-
-  // Redefinitions for RevolvedParabolaProjectionSurface
-
-  virtual void GetNormal
-    (double u, double v, double &x, double &y, double &z);
 };
 
 #endif

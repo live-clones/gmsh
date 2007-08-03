@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.535 2007-07-26 13:10:47 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.536 2007-08-03 00:44:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1069,6 +1069,7 @@ void geometry_options_ok_cb(CALLBACK_ARGS)
 
   opt_geometry_point_type(0, GMSH_SET, WID->geo_choice[0]->value());
   opt_geometry_line_type(0, GMSH_SET, WID->geo_choice[1]->value());
+  opt_geometry_surface_type(0, GMSH_SET, WID->geo_choice[2]->value());
 
   if(CTX.fast_redraw)
     CTX.post.draw = CTX.mesh.draw = 0;

@@ -407,6 +407,7 @@ double opt_geometry_point_type(OPT_ARGS_NUM);
 double opt_geometry_line_width(OPT_ARGS_NUM);
 double opt_geometry_line_sel_width(OPT_ARGS_NUM);
 double opt_geometry_line_type(OPT_ARGS_NUM);
+double opt_geometry_surface_type(OPT_ARGS_NUM);
 double opt_geometry_light(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_small_edges(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_small_faces(OPT_ARGS_NUM);
