@@ -71,6 +71,7 @@ class projectionEditor {
   void show(){ _window->show(); select_cb(0, this); }
   uvPlot *uv() { return _uvPlot; }
   Fl_Value_Input* modes[4];
+  Fl_Toggle_Button* hardEdges[4];
   std::vector<MElement*> &getElements() { return _elements; }
   std::vector<GEntity*> &getEntities() { return _entities; }
   std::vector<projection*> &getProjections() { return _projections; }

@@ -19,30 +19,37 @@ uvPlot::uvPlot(int x, int y, int w, int h, const char *l)
 void uvPlot::fill(std::vector<double> &u, std::vector<double> &v,
 		  std::vector<double> &f)
 { 
-  _u = u; _v = v; _f = f; 
-  // compute min/max distance
-  if(_f.size()){
-    _dmin = 1.e200; _dmax = 0.;
-    for(unsigned int i = 0; i < _f.size(); i++){
-      // only compute min/max for valid projections
-      if(_u[i] >= 0. && _u[i] <= 1. &&
-	 _v[i] >= 0. && _v[i] <= 1.){
-	_dmin = std::min(_dmin, _f[i]);
-	_dmax = std::max(_dmax, _f[i]);
-      }
+  _u.clear(); 
+  _v.clear();
+  _f.clear();
+
+  if(u.empty() || u.size() != v.size() || u.size() != f.size()) 
+    return;
+
+  _dmin = 1.e200; _dmax = 0.;
+
+  for(unsigned int i = 0; i < u.size(); i++){
+    // only store valid points
+    if(u[i] >= 0. && u[i] <= 1. && v[i] >= 0. && v[i] <= 1.){
+      _u.push_back(u[i]); 
+      _v.push_back(v[i]); 
+      _f.push_back(f[i]); 
+      _dmin = std::min(_dmin, f[i]);
+      _dmax = std::max(_dmax, f[i]);
     }
   }
+
+  if(_u.empty()) _dmin = _dmax = 0.;
   redraw();
 }
 
 void uvPlot::color(double d)
 {
-  int numcol = _colorTable.size;
   int index;
   if(_dmin == _dmax)
-    index = numcol / 2;
+    index = _colorTable.size / 2;
   else
-    index = (int)((d - _dmin) * (numcol - 1) / (_dmax - _dmin));
+    index = (int)((d - _dmin) * (_colorTable.size - 1) / (_dmax - _dmin));
   unsigned int color = _colorTable.table[index];
   int r = CTX.UNPACK_RED(color);
   int g = CTX.UNPACK_GREEN(color);
@@ -56,22 +63,18 @@ void uvPlot::draw()
   fl_color(FL_WHITE);
   fl_rectf(0, 0, w(), h());
 
-  // draw points
-  if(_u.size() != _v.size()) return;
-
+  // draw points in u,v space, colored by their distance to the
+  // projection surface
   int pw = w();
-  int ph = h() - 30;
-
+  int ph = h() - (2 * GetFontSize() + 5);
   for(unsigned int i = 0; i < _u.size(); i++){
-    if(_u[i] >= 0. && _u[i] <= 1. &&
-       _v[i] >= 0. && _v[i] <= 1.){
-      int x = (int)(_u[i] * pw);
-      int y = (int)(_v[i] * ph);
-      color(_f[i]);
-      fl_rect(x, y, 3, 3);
-    }
+    int x = (int)(_u[i] * pw);
+    int y = (int)(_v[i] * ph);
+    color(_f[i]);
+    fl_rect(x, y, 3, 3);
   }
 
+  // draw color bar
   for(int i = 0; i < w(); i++){
     int index = (int)(i * (_colorTable.size - 1) / w());
     unsigned int color = _colorTable.table[index];
@@ -82,12 +85,15 @@ void uvPlot::draw()
     fl_line(i, ph, i, ph + 10);
   }
 
+  // draw labels
   fl_color(FL_BLACK);
-  fl_font(FL_HELVETICA, 13);
-  static char min[256], max[256];
+  fl_font(FL_HELVETICA, GetFontSize());
+  static char min[256], max[256], pts[256];
   sprintf(min, "%g", _dmin);
   sprintf(max, "%g", _dmax);
+  sprintf(pts, "[%d pts]", _f.size());
   fl_draw(min, 5, h() - 5);
+  fl_draw(pts, pw / 2 - fl_width(pts) / 2, h() - 5);
   fl_draw(max, pw - fl_width(max) - 5, h() - 5);
 }
 
@@ -190,25 +196,28 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
   }
   
   int hard = 8;
-  new Fl_Toggle_Button(WB, 3 * WB + 8 * BH + hard, 
-		       hard, height - 5 * WB - 12 * BH - 2 * hard);
-  new Fl_Toggle_Button(width - WB - hard, 3 * WB + 8 * BH + hard, 
-		       hard, height - 5 * WB - 12 * BH - 2 * hard);
-  new Fl_Toggle_Button(WB + hard, 3 * WB + 8 * BH, 
-		       width - 2 * WB - 2 * hard, hard);
-  new Fl_Toggle_Button(WB + hard, 3 * WB + 8 * BH + height - 5 * WB - 12 * BH - hard,
-		       width - 2 * WB - 2 * hard, hard);
+  hardEdges[0] = new Fl_Toggle_Button(WB, 3 * WB + 8 * BH + hard, 
+				      hard, height - 7 * WB - 11 * BH - 2 * hard);
+  hardEdges[1] = new Fl_Toggle_Button(width - WB - hard, 3 * WB + 8 * BH + hard, 
+				      hard, height - 7 * WB - 11 * BH - 2 * hard);
+  hardEdges[2] = new Fl_Toggle_Button(WB + hard, 3 * WB + 8 * BH, 
+				      width - 2 * WB - 2 * hard, hard);
+  hardEdges[3] = new Fl_Toggle_Button(WB + hard, -4 * WB - 3 * BH + height - hard,
+				      width - 2 * WB - 2 * hard, hard);
+  for(int i = 0; i < 4; i++){
+    hardEdges[i]->tooltip("Push to mark edge as `hard'");
+  }  
 
   _uvPlot = 
     new uvPlot(WB + hard, 3 * WB + 8 * BH + hard, 
-	       width - 2 * WB - 2 * hard, height - 5 * WB - 12 * BH - 2 * hard);
+	       width - 2 * WB - 2 * hard, height - 7 * WB - 11 * BH - 2 * hard);
   _uvPlot->end();
   
-  modes[0] = new Fl_Value_Input(WB, height - WB - 4 * BH, BB  / 2, BH);
-  modes[1] = new Fl_Value_Input(WB + BB / 2, height - WB - 4 * BH, BB  / 2, BH, 
+  modes[0] = new Fl_Value_Input(WB, height - 3 * WB - 3 * BH, BB  / 2, BH);
+  modes[1] = new Fl_Value_Input(WB + BB / 2, height - 3 * WB - 3 * BH, BB  / 2, BH, 
 				"Fourier modes along u and v");
-  modes[2] = new Fl_Value_Input(WB, height - WB - 3 * BH, BB  / 2, BH);
-  modes[3] = new Fl_Value_Input(WB + BB / 2, height - WB - 3 * BH, BB  / 2, BH, 
+  modes[2] = new Fl_Value_Input(WB, height - 3 * WB - 2 * BH, BB  / 2, BH);
+  modes[3] = new Fl_Value_Input(WB + BB / 2, height - 3 * WB - 2 * BH, BB  / 2, BH, 
 				"Chebychev modes along u and v");
   for(int i = 0; i < 4; i++){
     modes[i]->maximum(128);
@@ -560,7 +569,8 @@ void compute_cb(Fl_Widget *w, void *data)
     color[0] = 0; color[1] = 0; color[2] = 1;
     plotSceneViewer(0,"patch.iv",color,x,y,z,nU,nV,mask);
   }
-  //Msg(GERROR, "Compute!");
+
+  Draw();
 }
 
 void mesh_parameterize_cb(Fl_Widget* w, void* data)
