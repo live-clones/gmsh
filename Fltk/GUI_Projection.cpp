@@ -23,19 +23,17 @@ void uvPlot::fill(std::vector<double> &u, std::vector<double> &v,
   _v.clear();
   _f.clear();
 
-  if(u.empty() || u.size() != v.size() || u.size() != f.size()) 
-    return;
-
-  _dmin = 1.e200; _dmax = 0.;
-
-  for(unsigned int i = 0; i < u.size(); i++){
-    // only store valid points
-    if(u[i] >= 0. && u[i] <= 1. && v[i] >= 0. && v[i] <= 1.){
-      _u.push_back(u[i]); 
-      _v.push_back(v[i]); 
-      _f.push_back(f[i]); 
-      _dmin = std::min(_dmin, f[i]);
-      _dmax = std::max(_dmax, f[i]);
+  if(u.size() == v.size() && u.size() == f.size()){
+    _dmin = 1.e200; _dmax = 0.;
+    for(unsigned int i = 0; i < u.size(); i++){
+      // only store valid points
+      if(u[i] >= 0. && u[i] <= 1. && v[i] >= 0. && v[i] <= 1.){
+	_u.push_back(u[i]); 
+	_v.push_back(v[i]); 
+	_f.push_back(f[i]); 
+	_dmin = std::min(_dmin, f[i]);
+	_dmax = std::max(_dmax, f[i]);
+      }
     }
   }
 
