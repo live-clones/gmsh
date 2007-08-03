@@ -185,22 +185,22 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
 
   const int brw = (int)(1.25 * BB);
 
-  _browser = new Fl_Hold_Browser(WB, 2 * WB + 3 * BH, brw, 5 * BH);
+  _browser = new Fl_Hold_Browser(WB, 2 * WB + 3 * BH, brw, 6 * BH);
   _browser->callback(browse_cb, this);
   for(unsigned int i = 0; i < faces.size(); i++){
     ProjectionSurface *ps = faces[i]->GetProjectionSurface();
     _browser->add(ps->GetName().c_str());
     _projections.push_back
       (new projection(faces[i], 2 * WB + brw, 2 * WB + 3 * BH, 
-		      width - 3 * WB - brw, 5 * BH, BB, BH, this));
+		      width - 3 * WB - brw, 6 * BH, BB, BH, this));
   }
   
   int hard = 8;
-  hardEdges[0] = new Fl_Toggle_Button(WB, 3 * WB + 8 * BH + hard, 
-				      hard, height - 7 * WB - 11 * BH - 2 * hard);
-  hardEdges[1] = new Fl_Toggle_Button(width - WB - hard, 3 * WB + 8 * BH + hard, 
-				      hard, height - 7 * WB - 11 * BH - 2 * hard);
-  hardEdges[2] = new Fl_Toggle_Button(WB + hard, 3 * WB + 8 * BH, 
+  hardEdges[0] = new Fl_Toggle_Button(WB, 3 * WB + 9 * BH + hard, 
+				      hard, height - 7 * WB - 12 * BH - 2 * hard);
+  hardEdges[1] = new Fl_Toggle_Button(width - WB - hard, 3 * WB + 9 * BH + hard, 
+				      hard, height - 7 * WB - 12 * BH - 2 * hard);
+  hardEdges[2] = new Fl_Toggle_Button(WB + hard, 3 * WB + 9 * BH, 
 				      width - 2 * WB - 2 * hard, hard);
   hardEdges[3] = new Fl_Toggle_Button(WB + hard, -4 * WB - 3 * BH + height - hard,
 				      width - 2 * WB - 2 * hard, hard);
@@ -209,8 +209,8 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
   }  
 
   _uvPlot = 
-    new uvPlot(WB + hard, 3 * WB + 8 * BH + hard, 
-	       width - 2 * WB - 2 * hard, height - 7 * WB - 11 * BH - 2 * hard);
+    new uvPlot(WB + hard, 3 * WB + 9 * BH + hard, 
+	       width - 2 * WB - 2 * hard, height - 7 * WB - 12 * BH - 2 * hard);
   _uvPlot->end();
   
   modes[0] = new Fl_Value_Input(WB, height - 3 * WB - 3 * BH, BB  / 2, BH);
