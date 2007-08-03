@@ -91,8 +91,8 @@ void uvPlot::draw()
   sprintf(max, "%g", _dmax);
   sprintf(pts, "[%d pts]", _f.size());
   fl_draw(min, 5, h() - 5);
-  fl_draw(pts, pw / 2 - fl_width(pts) / 2, h() - 5);
-  fl_draw(max, pw - fl_width(max) - 5, h() - 5);
+  fl_draw(pts, pw / 2 - (int)fl_width(pts) / 2, h() - 5);
+  fl_draw(max, pw - (int)fl_width(max) - 5, h() - 5);
 }
 
 projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, int BH, 
@@ -159,7 +159,7 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
   
   new Fl_Box(WB, WB + BH, BB / 2, BH, "Select:");
   
-  Fl_Group *o = new Fl_Group(WB, WB, 2 * BB, 3 * BH);
+ Fl_Group *o = new Fl_Group(WB, WB, 2 * BB, 3 * BH);
   _select[0] = 
     new Fl_Round_Button(2 * WB + BB / 2, WB, BB, BH, "Points");
   _select[0]->value(1);
@@ -217,6 +217,7 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
   modes[3] = new Fl_Value_Input(WB + BB / 2, height - 3 * WB - 2 * BH, BB  / 2, BH, 
 				"Chebychev modes along u and v");
   for(int i = 0; i < 4; i++){
+    modes[i]->value(8);
     modes[i]->maximum(128);
     modes[i]->minimum(1);
     modes[i]->step(1);
@@ -485,95 +486,332 @@ void compute_cb(Fl_Widget *w, void *data)
 		    (ve->z() - p[2]) * n[2]);
       }
     }
+
     if(f.empty()) return;
 
-    // get options: e->modes[i]->value()
-    Patch* patch = new FPatch(0,ps,u,v,f,3);
-    patch->SetMinU(0.0);
-    patch->SetMaxU(0.5);
-
-    double LL[2], LR[2], UL[2], UR[2];
-    LL[0] = 0.0; LL[1] = 0.0;
-    LR[0] = 1.0; LR[1] = 0.0;
-    UL[0] = 0.0; UL[1] = 1.0;
-    UR[0] = 1.0; UR[1] = 1.0;
-
-    int i1, i2;
-    double xx,yy,zz;
-
-    int tagVertex = GMODEL->numVertex();
-    patch->F(LL[0],LL[1],xx,yy,zz);
-    FM_Vertex* vLL = new FM_Vertex(++tagVertex,xx,yy,zz);
-    GMODEL->add(new FVertex(GMODEL,vLL->GetTag(),vLL));
-    patch->F(LR[0],LR[1],xx,yy,zz);
-    FM_Vertex* vLR = new FM_Vertex(++tagVertex,xx,yy,zz);
-    GMODEL->add(new FVertex(GMODEL,vLR->GetTag(),vLR));
-    patch->F(UL[0],UL[1],xx,yy,zz);
-    FM_Vertex* vUL = new FM_Vertex(++tagVertex,xx,yy,zz);
-    GMODEL->add(new FVertex(GMODEL,vUL->GetTag(),vUL));
-    patch->F(UR[0],UR[1],xx,yy,zz);
-    FM_Vertex* vUR = new FM_Vertex(++tagVertex,xx,yy,zz);
-    GMODEL->add(new FVertex(GMODEL,vUR->GetTag(),vUR));
-
-    Curve* curveB = new FCurve(0,patch,LL,LR);
-    Curve* curveR = new FCurve(0,patch,LR,UR);
-    Curve* curveT = new FCurve(0,patch,UR,UL);
-    Curve* curveL = new FCurve(0,patch,UL,LL);
-
-    int tagEdge = GMODEL->numEdge();
-    FM_Edge* eB = new FM_Edge(++tagEdge,curveB,vLL,vLR);
-    i1 = eB->GetStartPoint()->GetTag();
-    i2 = eB->GetEndPoint()->GetTag();
-    GMODEL->add(new FEdge(GMODEL,eB,eB->GetTag(),GMODEL->vertexByTag(i1),
-			  GMODEL->vertexByTag(i2)));
-    FM_Edge* eR = new FM_Edge(++tagEdge,curveR,vLR,vUR); 
-    i1 = eR->GetStartPoint()->GetTag();
-    i2 = eR->GetEndPoint()->GetTag();
-    GMODEL->add(new FEdge(GMODEL,eR,eR->GetTag(),GMODEL->vertexByTag(i1),
-			  GMODEL->vertexByTag(i2))); 
-    FM_Edge* eT = new FM_Edge(++tagEdge,curveT,vUR,vUL);
-    i1 = eT->GetStartPoint()->GetTag();
-    i2 = eT->GetEndPoint()->GetTag();
-    GMODEL->add(new FEdge(GMODEL,eT,eT->GetTag(),GMODEL->vertexByTag(i1),
-			  GMODEL->vertexByTag(i2)));
-    FM_Edge* eL = new FM_Edge(++tagEdge,curveL,vUL,vLL); 
-    i1 = eL->GetStartPoint()->GetTag();
-    i2 = eL->GetEndPoint()->GetTag();
-    GMODEL->add(new FEdge(GMODEL,eL,eL->GetTag(),GMODEL->vertexByTag(i1),
-			  GMODEL->vertexByTag(i2)));
-
-    FM_Face* face = new FM_Face(GMODEL->numFace() + 1,patch);
-    face->AddEdge(eB); face->AddEdge(eR); face->AddEdge(eT); face->AddEdge(eL);
-    std::list<GEdge*> l_edges;
-    for (int j=0;j<face->GetNumEdges();j++) {
-      int tag = face->GetEdge(j)->GetTag(); 
-      l_edges.push_back(GMODEL->edgeByTag(tag));
-    }
-    GMODEL->add(new FFace(GMODEL,face,face->GetTag(),l_edges));
-
-    int nU=64;
-    int nV=64;
-    
-    std::vector<int> color(3);
-    
-    std::vector<std::vector<double> > x(nU,std::vector<double>(nV));
-    std::vector<std::vector<double> > y(nU,std::vector<double>(nV));
-    std::vector<std::vector<double> > z(nU,std::vector<double>(nV));
-    
-    std::vector<std::vector<int> > mask = ones(nU,nV);
-    
-    double hU = 1./(nU-1);
-    double hV = 1./(nV-1);
-    
-    for (int j=0;j<nU;j++) {
-      for (int k=0;k<nV;k++) {
-	double u = j*hU;
-	double v = k*hV;
-	patch->F(u,v,x[j][k],y[j][k],z[j][k]);
+    if (ps->IsUPeriodic()) {
+      Patch* patchL = 
+	new FPatch(0,ps,u,v,f,3,(int)(e->modes[0]->value()),
+		   (int)(e->modes[1]->value()),(int)(e->modes[2]->value()), 
+		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(), e->hardEdges[1]->value(),
+		   e->hardEdges[2]->value(), e->hardEdges[3]->value());
+      patchL->SetMinU(-0.35);
+      patchL->SetMaxU(0.35);
+      
+      double LL[2], LR[2], UL[2], UR[2];
+      LL[0] = 0.0; LL[1] = 0.0;
+      LR[0] = 1.0; LR[1] = 0.0;
+      UL[0] = 0.0; UL[1] = 1.0;
+      UR[0] = 1.0; UR[1] = 1.0;
+      
+      int i1, i2;
+      double xx,yy,zz;
+      
+      int tagVertex = GMODEL->numVertex();
+      patchL->F(LL[0],LL[1],xx,yy,zz);
+      FM_Vertex* vLLL = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vLLL->GetTag(),vLLL));
+      patchL->F(LR[0],LR[1],xx,yy,zz);
+      FM_Vertex* vLLR = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vLLR->GetTag(),vLLR));
+      patchL->F(UL[0],UL[1],xx,yy,zz);
+      FM_Vertex* vLUL = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vLUL->GetTag(),vLUL));
+      patchL->F(UR[0],UR[1],xx,yy,zz);
+      FM_Vertex* vLUR = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vLUR->GetTag(),vLUR));
+      
+      Curve* curveLB = new FCurve(0,patchL,LL,LR);
+      Curve* curveLR = new FCurve(0,patchL,LR,UR);
+      Curve* curveLT = new FCurve(0,patchL,UR,UL);
+      Curve* curveLL = new FCurve(0,patchL,UL,LL);
+      
+      int tagEdge = GMODEL->numEdge();
+      FM_Edge* eLB = new FM_Edge(++tagEdge,curveLB,vLLL,vLLR);
+      i1 = eLB->GetStartPoint()->GetTag();
+      i2 = eLB->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eLB,eLB->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2)));
+      FM_Edge* eLR = new FM_Edge(++tagEdge,curveLR,vLLR,vLUR); 
+      i1 = eLR->GetStartPoint()->GetTag();
+      i2 = eLR->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eLR,eLR->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2))); 
+      FM_Edge* eLT = new FM_Edge(++tagEdge,curveLT,vLUR,vLUL);
+      i1 = eLT->GetStartPoint()->GetTag();
+      i2 = eLT->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eLT,eLT->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2)));
+      FM_Edge* eLL = new FM_Edge(++tagEdge,curveLL,vLUL,vLLL); 
+      i1 = eLL->GetStartPoint()->GetTag();
+      i2 = eLL->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eLL,eLL->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2)));
+      
+      FM_Face* faceL = new FM_Face(GMODEL->numFace() + 1,patchL);
+      faceL->AddEdge(eLB); faceL->AddEdge(eLR); 
+      faceL->AddEdge(eLT); faceL->AddEdge(eLL);
+      std::list<GEdge*> l_edgesL;
+      for (int j=0;j<faceL->GetNumEdges();j++) {
+	int tag = faceL->GetEdge(j)->GetTag(); 
+	l_edgesL.push_back(GMODEL->edgeByTag(tag));
       }
+      GMODEL->add(new FFace(GMODEL,faceL,faceL->GetTag(),l_edgesL));
+
+      Patch* patchR = 
+	new FPatch(0,ps,u,v,f,3,(int)(e->modes[0]->value()),
+		   (int)(e->modes[1]->value()),(int)(e->modes[2]->value()), 
+		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(), e->hardEdges[1]->value(),
+		   e->hardEdges[2]->value(), e->hardEdges[3]->value());
+      patchR->SetMinU(0.15);
+      patchR->SetMaxU(0.85);
+      
+      tagVertex = GMODEL->numVertex();
+      patchR->F(LL[0],LL[1],xx,yy,zz);
+      FM_Vertex* vRLL = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vRLL->GetTag(),vRLL));
+      patchR->F(LR[0],LR[1],xx,yy,zz);
+      FM_Vertex* vRLR = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vRLR->GetTag(),vRLR));
+      patchR->F(UL[0],UL[1],xx,yy,zz);
+      FM_Vertex* vRUL = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vRUL->GetTag(),vRUL));
+      patchR->F(UR[0],UR[1],xx,yy,zz);
+      FM_Vertex* vRUR = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vRUR->GetTag(),vRUR));
+      
+      Curve* curveRB = new FCurve(0,patchR,LL,LR);
+      Curve* curveRR = new FCurve(0,patchR,LR,UR);
+      Curve* curveRT = new FCurve(0,patchR,UR,UL);
+      Curve* curveRL = new FCurve(0,patchR,UL,LL);
+      
+      tagEdge = GMODEL->numEdge();
+      FM_Edge* eRB = new FM_Edge(++tagEdge,curveRB,vRLL,vRLR);
+      i1 = eRB->GetStartPoint()->GetTag();
+      i2 = eRB->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eRB,eRB->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2)));
+      FM_Edge* eRR = new FM_Edge(++tagEdge,curveRR,vRLR,vRUR); 
+      i1 = eRR->GetStartPoint()->GetTag();
+      i2 = eRR->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eRR,eRR->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2))); 
+      FM_Edge* eRT = new FM_Edge(++tagEdge,curveRT,vRUR,vRUL);
+      i1 = eRT->GetStartPoint()->GetTag();
+      i2 = eRT->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eRT,eRT->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2)));
+      FM_Edge* eRL = new FM_Edge(++tagEdge,curveRL,vRUL,vRLL); 
+      i1 = eRL->GetStartPoint()->GetTag();
+      i2 = eRL->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eRL,eRL->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2)));
+      
+      FM_Face* faceR = new FM_Face(GMODEL->numFace() + 1,patchR);
+      faceR->AddEdge(eRB); faceR->AddEdge(eRR); 
+      faceR->AddEdge(eRT); faceR->AddEdge(eRL);
+      std::list<GEdge*> l_edgesR;
+      for (int j=0;j<faceR->GetNumEdges();j++) {
+	int tag = faceR->GetEdge(j)->GetTag(); 
+	l_edgesR.push_back(GMODEL->edgeByTag(tag));
+      }
+      GMODEL->add(new FFace(GMODEL,faceR,faceR->GetTag(),l_edgesR));
     }
-    color[0] = 0; color[1] = 0; color[2] = 1;
-    plotSceneViewer(0,"patch.iv",color,x,y,z,nU,nV,mask);
+    else if (ps->IsVPeriodic()) {
+      Patch* patchL = 
+	new FPatch(0,ps,u,v,f,3,(int)(e->modes[0]->value()),
+		   (int)(e->modes[1]->value()),(int)(e->modes[2]->value()), 
+		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(), e->hardEdges[1]->value(),
+		   e->hardEdges[2]->value(), e->hardEdges[3]->value());
+      patchL->SetMinV(-0.35);
+      patchL->SetMaxV(0.35);
+      
+      double LL[2], LR[2], UL[2], UR[2];
+      LL[0] = 0.0; LL[1] = 0.0;
+      LR[0] = 1.0; LR[1] = 0.0;
+      UL[0] = 0.0; UL[1] = 1.0;
+      UR[0] = 1.0; UR[1] = 1.0;
+      
+      int i1, i2;
+      double xx,yy,zz;
+      
+      int tagVertex = GMODEL->numVertex();
+      patchL->F(LL[0],LL[1],xx,yy,zz);
+      FM_Vertex* vLLL = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vLLL->GetTag(),vLLL));
+      patchL->F(LR[0],LR[1],xx,yy,zz);
+      FM_Vertex* vLLR = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vLLR->GetTag(),vLLR));
+      patchL->F(UL[0],UL[1],xx,yy,zz);
+      FM_Vertex* vLUL = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vLUL->GetTag(),vLUL));
+      patchL->F(UR[0],UR[1],xx,yy,zz);
+      FM_Vertex* vLUR = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vLUR->GetTag(),vLUR));
+      
+      Curve* curveLB = new FCurve(0,patchL,LL,LR);
+      Curve* curveLR = new FCurve(0,patchL,LR,UR);
+      Curve* curveLT = new FCurve(0,patchL,UR,UL);
+      Curve* curveLL = new FCurve(0,patchL,UL,LL);
+      
+      int tagEdge = GMODEL->numEdge();
+      FM_Edge* eLB = new FM_Edge(++tagEdge,curveLB,vLLL,vLLR);
+      i1 = eLB->GetStartPoint()->GetTag();
+      i2 = eLB->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eLB,eLB->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2)));
+      FM_Edge* eLR = new FM_Edge(++tagEdge,curveLR,vLLR,vLUR); 
+      i1 = eLR->GetStartPoint()->GetTag();
+      i2 = eLR->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eLR,eLR->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2))); 
+      FM_Edge* eLT = new FM_Edge(++tagEdge,curveLT,vLUR,vLUL);
+      i1 = eLT->GetStartPoint()->GetTag();
+      i2 = eLT->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eLT,eLT->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2)));
+      FM_Edge* eLL = new FM_Edge(++tagEdge,curveLL,vLUL,vLLL); 
+      i1 = eLL->GetStartPoint()->GetTag();
+      i2 = eLL->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eLL,eLL->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2)));
+      
+      FM_Face* faceL = new FM_Face(GMODEL->numFace() + 1,patchL);
+      faceL->AddEdge(eLB); faceL->AddEdge(eLR); 
+      faceL->AddEdge(eLT); faceL->AddEdge(eLL);
+      std::list<GEdge*> l_edgesL;
+      for (int j=0;j<faceL->GetNumEdges();j++) {
+	int tag = faceL->GetEdge(j)->GetTag(); 
+	l_edgesL.push_back(GMODEL->edgeByTag(tag));
+      }
+      GMODEL->add(new FFace(GMODEL,faceL,faceL->GetTag(),l_edgesL));
+
+      Patch* patchR = 
+	new FPatch(0,ps,u,v,f,3,(int)(e->modes[0]->value()),
+		   (int)(e->modes[1]->value()),(int)(e->modes[2]->value()), 
+		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(), e->hardEdges[1]->value(),
+		   e->hardEdges[2]->value(), e->hardEdges[3]->value());
+      patchR->SetMinV(0.15);
+      patchR->SetMaxV(0.85);
+      
+      tagVertex = GMODEL->numVertex();
+      patchR->F(LL[0],LL[1],xx,yy,zz);
+      FM_Vertex* vRLL = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vRLL->GetTag(),vRLL));
+      patchR->F(LR[0],LR[1],xx,yy,zz);
+      FM_Vertex* vRLR = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vRLR->GetTag(),vRLR));
+      patchR->F(UL[0],UL[1],xx,yy,zz);
+      FM_Vertex* vRUL = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vRUL->GetTag(),vRUL));
+      patchR->F(UR[0],UR[1],xx,yy,zz);
+      FM_Vertex* vRUR = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vRUR->GetTag(),vRUR));
+      
+      Curve* curveRB = new FCurve(0,patchR,LL,LR);
+      Curve* curveRR = new FCurve(0,patchR,LR,UR);
+      Curve* curveRT = new FCurve(0,patchR,UR,UL);
+      Curve* curveRL = new FCurve(0,patchR,UL,LL);
+      
+      tagEdge = GMODEL->numEdge();
+      FM_Edge* eRB = new FM_Edge(++tagEdge,curveRB,vRLL,vRLR);
+      i1 = eRB->GetStartPoint()->GetTag();
+      i2 = eRB->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eRB,eRB->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2)));
+      FM_Edge* eRR = new FM_Edge(++tagEdge,curveRR,vRLR,vRUR); 
+      i1 = eRR->GetStartPoint()->GetTag();
+      i2 = eRR->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eRR,eRR->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2))); 
+      FM_Edge* eRT = new FM_Edge(++tagEdge,curveRT,vRUR,vRUL);
+      i1 = eRT->GetStartPoint()->GetTag();
+      i2 = eRT->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eRT,eRT->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2)));
+      FM_Edge* eRL = new FM_Edge(++tagEdge,curveRL,vRUL,vRLL); 
+      i1 = eRL->GetStartPoint()->GetTag();
+      i2 = eRL->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eRL,eRL->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2)));
+      
+      FM_Face* faceR = new FM_Face(GMODEL->numFace() + 1,patchR);
+      faceR->AddEdge(eRB); faceR->AddEdge(eRR); 
+      faceR->AddEdge(eRT); faceR->AddEdge(eRL);
+      std::list<GEdge*> l_edgesR;
+      for (int j=0;j<faceR->GetNumEdges();j++) {
+	int tag = faceR->GetEdge(j)->GetTag(); 
+	l_edgesR.push_back(GMODEL->edgeByTag(tag));
+      }
+      GMODEL->add(new FFace(GMODEL,faceR,faceR->GetTag(),l_edgesR));
+    }
+    else {
+      Patch* patch = 
+	new FPatch(0,ps,u,v,f,3,(int)(e->modes[0]->value()),
+		   (int)(e->modes[1]->value()),(int)(e->modes[2]->value()), 
+		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(), e->hardEdges[1]->value(),
+		   e->hardEdges[2]->value(), e->hardEdges[3]->value());
+      
+      double LL[2], LR[2], UL[2], UR[2];
+      LL[0] = 0.0; LL[1] = 0.0;
+      LR[0] = 1.0; LR[1] = 0.0;
+      UL[0] = 0.0; UL[1] = 1.0;
+      UR[0] = 1.0; UR[1] = 1.0;
+      
+      int i1, i2;
+      double xx,yy,zz;
+      
+      int tagVertex = GMODEL->numVertex();
+      patch->F(LL[0],LL[1],xx,yy,zz);
+      FM_Vertex* vLL = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vLL->GetTag(),vLL));
+      patch->F(LR[0],LR[1],xx,yy,zz);
+      FM_Vertex* vLR = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vLR->GetTag(),vLR));
+      patch->F(UL[0],UL[1],xx,yy,zz);
+      FM_Vertex* vUL = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vUL->GetTag(),vUL));
+      patch->F(UR[0],UR[1],xx,yy,zz);
+      FM_Vertex* vUR = new FM_Vertex(++tagVertex,xx,yy,zz);
+      GMODEL->add(new FVertex(GMODEL,vUR->GetTag(),vUR));
+      
+      Curve* curveB = new FCurve(0,patch,LL,LR);
+      Curve* curveR = new FCurve(0,patch,LR,UR);
+      Curve* curveT = new FCurve(0,patch,UR,UL);
+      Curve* curveL = new FCurve(0,patch,UL,LL);
+      
+      int tagEdge = GMODEL->numEdge();
+      FM_Edge* eB = new FM_Edge(++tagEdge,curveB,vLL,vLR);
+      i1 = eB->GetStartPoint()->GetTag();
+      i2 = eB->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eB,eB->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2)));
+      FM_Edge* eR = new FM_Edge(++tagEdge,curveR,vLR,vUR); 
+      i1 = eR->GetStartPoint()->GetTag();
+      i2 = eR->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eR,eR->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2))); 
+      FM_Edge* eT = new FM_Edge(++tagEdge,curveT,vUR,vUL);
+      i1 = eT->GetStartPoint()->GetTag();
+      i2 = eT->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eT,eT->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2)));
+      FM_Edge* eL = new FM_Edge(++tagEdge,curveL,vUL,vLL); 
+      i1 = eL->GetStartPoint()->GetTag();
+      i2 = eL->GetEndPoint()->GetTag();
+      GMODEL->add(new FEdge(GMODEL,eL,eL->GetTag(),GMODEL->vertexByTag(i1),
+			    GMODEL->vertexByTag(i2)));
+      
+      FM_Face* face = new FM_Face(GMODEL->numFace() + 1,patch);
+      face->AddEdge(eB); face->AddEdge(eR); 
+      face->AddEdge(eT); face->AddEdge(eL);
+      std::list<GEdge*> l_edges;
+      for (int j=0;j<face->GetNumEdges();j++) {
+	int tag = face->GetEdge(j)->GetTag(); 
+	l_edges.push_back(GMODEL->edgeByTag(tag));
+      }
+      GMODEL->add(new FFace(GMODEL,face,face->GetTag(),l_edges));
+    }
   }
 
   Draw();

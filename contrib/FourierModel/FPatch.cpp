@@ -10,7 +10,9 @@ extern "C" {
 
 FPatch::FPatch(int tag, ProjectionSurface* ps, 
 	       std::vector<double> &u, std::vector<double> &v,
-	       std::vector< std::complex<double> > &data, int derivative) 
+	       std::vector< std::complex<double> > &data, int derivative,
+	       int uModes, int vModes, int uM, int vM,
+	       bool hardEdge0, bool hardEdge1, bool hardEdge2, bool hardEdge3) 
   : _coeffOriginalData(0),_coeffData(0),_coeffDerivU(0),
     _coeffDerivV(0),_coeffDerivUU(0),_coeffDerivVV(0),_coeffDerivUV(0)
 {
@@ -19,16 +21,21 @@ FPatch::FPatch(int tag, ProjectionSurface* ps,
   _tag = tag;
   _derivative = derivative;
 
-  _uModes = 10;
-  _vModes = 8;
+  _uModes = uModes;
+  _vModes = vModes;
 
-  _uM = 16+1;
-  _vM = 16;
+  _uM = (int)(log((double)uM) / log(2.));
+  _vM = (int)(log((double)vM) / log(2.));
 
-  _hardEdge[0] = false;
-  _hardEdge[1] = false;
-  _hardEdge[2] = false;
-  _hardEdge[3] = false;
+  if (_ps->IsUPeriodic())
+    _uM++;
+  if (_ps->IsVPeriodic())
+    _vM++;
+
+  _hardEdge[0] = hardEdge0;
+  _hardEdge[1] = hardEdge1;
+  _hardEdge[2] = hardEdge2;
+  _hardEdge[3] = hardEdge3;
 
   if (_ps->IsUPeriodic())
     _periodicityU = 1;

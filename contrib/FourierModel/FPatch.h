@@ -1,6 +1,7 @@
 #ifndef _F_PATCH_H_
 #define _F_PATCH_H_
 
+#include <cmath>
 #include <vector>
 #include <fftw3.h>
 #include <complex>
@@ -69,7 +70,10 @@ class FPatch : public Patch {
   FPatch
     (int tag, ProjectionSurface* ps,
      std::vector<double> &u, std::vector<double> &v,
-     std::vector< std::complex<double> > &data,int derivative = 0);
+     std::vector< std::complex<double> > &data, int derivative = 3,
+     int uModes = 10, int vModes = 8, int uM = 17, int vM = 16,
+     bool hardEdge0 = false, bool hardEdge1 = false, bool hardEdge2 = false,
+     bool hardEdge3 = false);
   virtual ~FPatch();
 
   // Abstract functions of Patch
