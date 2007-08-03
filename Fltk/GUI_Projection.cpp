@@ -265,6 +265,13 @@ void browse_cb(Fl_Widget *w, void *data)
   
   projection *p = e->getCurrentProjection();
   if(p){
+    if(!GMODEL->faceByTag(p->face->tag())){
+      // the projection face is not in the model: add it and reset all
+      // selections
+      GMODEL->add(p->face);
+      e->getEntities().clear();
+      e->getElements().clear();
+    }
     p->face->setVisibility(true);
     p->group->show();
   }
@@ -577,25 +584,17 @@ void mesh_parameterize_cb(Fl_Widget* w, void* data)
   // display geometry surfaces
   opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
 
-  // create one instance of each available projection surface
-  std::vector<FProjectionFace*> faces;
-  if(faces.empty()){
+  // create the (static) editor
+  static projectionEditor *editor = 0;
+  if(!editor){
+    std::vector<FProjectionFace*> faces;
     int tag = GMODEL->numFace();
     faces.push_back(new FProjectionFace(GMODEL, ++tag, 
 					new CylindricalProjectionSurface(tag)));
     faces.push_back(new FProjectionFace(GMODEL, ++tag,
 					new RevolvedParabolaProjectionSurface(tag)));
+    editor = new projectionEditor(faces);
   }
-
-  // make each projection surface invisible and 
-  for(unsigned int i = 0; i < faces.size(); i++){
-    faces[i]->setVisibility(false);
-    GMODEL->add(faces[i]);
-  }
- 
-  // launch editor
-  static projectionEditor *editor = 0;
-  if(!editor) editor = new projectionEditor(faces);
   editor->show();
 }
 
