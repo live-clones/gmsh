@@ -148,7 +148,7 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
 {
   // construct GUI in terms of standard sizes
   const int BH = 2 * GetFontSize() + 1, BB = 7 * GetFontSize(), WB = 7;
-  const int width = (int)(3.5 * BB), height = 18 * BH;
+  const int width = (int)(3.5 * BB), height = 22 * BH;
   
   // create all widgets (we construct this once, we never deallocate!)
   _window = new Dialog_Window(width, height, "Reparameterize");
@@ -189,9 +189,33 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
 		      width - 3 * WB - brw, 5 * BH, BB, BH, this));
   }
   
+  int hard = 8;
+  new Fl_Toggle_Button(WB, 3 * WB + 8 * BH + hard, 
+		       hard, height - 5 * WB - 12 * BH - 2 * hard);
+  new Fl_Toggle_Button(width - WB - hard, 3 * WB + 8 * BH + hard, 
+		       hard, height - 5 * WB - 12 * BH - 2 * hard);
+  new Fl_Toggle_Button(WB + hard, 3 * WB + 8 * BH, 
+		       width - 2 * WB - 2 * hard, hard);
+  new Fl_Toggle_Button(WB + hard, 3 * WB + 8 * BH + height - 5 * WB - 12 * BH - hard,
+		       width - 2 * WB - 2 * hard, hard);
+
   _uvPlot = 
-    new uvPlot(WB, 3 * WB + 8 * BH, width - 2 * WB, height - 5 * WB - 9 * BH);
+    new uvPlot(WB + hard, 3 * WB + 8 * BH + hard, 
+	       width - 2 * WB - 2 * hard, height - 5 * WB - 12 * BH - 2 * hard);
   _uvPlot->end();
+  
+  modes[0] = new Fl_Value_Input(WB, height - WB - 4 * BH, BB  / 2, BH);
+  modes[1] = new Fl_Value_Input(WB + BB / 2, height - WB - 4 * BH, BB  / 2, BH, 
+				"Fourier modes along u and v");
+  modes[2] = new Fl_Value_Input(WB, height - WB - 3 * BH, BB  / 2, BH);
+  modes[3] = new Fl_Value_Input(WB + BB / 2, height - WB - 3 * BH, BB  / 2, BH, 
+				"Chebychev modes along u and v");
+  for(int i = 0; i < 4; i++){
+    modes[i]->maximum(128);
+    modes[i]->minimum(1);
+    modes[i]->step(1);
+    modes[i]->align(FL_ALIGN_RIGHT);
+  }    
 
   Fl_Button *b3 = new Fl_Button(width - 2 * WB - 2 * BB, height - WB - BH, 
 				BB, BH, "Compute");
@@ -448,6 +472,7 @@ void compute_cb(Fl_Widget *w, void *data)
 		    (ve->z() - p[2]) * n[2]);
       }
     }
+    // get options: e->modes[i]->value()
     Patch* patch = new FPatch(0,ps,u,v,f,3);
     patch->SetMinU(0.0);
     patch->SetMaxU(0.5);
