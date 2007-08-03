@@ -75,9 +75,9 @@ FM_Face.o: FM_Face.cpp FM_Face.h Patch.h ProjectionSurface.h FM_Edge.h \
 FM_Info.o: FM_Info.cpp FM_Info.h
 FM_Reader.o: FM_Reader.cpp Message.h FM_Reader.h Curve.h \
   IntersectionCurve.h Patch.h ProjectionSurface.h FM_Info.h ExactPatch.h \
-  ContinuationPatch.h PartitionOfUnity.h \
-  CylindricalProjectionSurface.h RevolvedParabolaProjectionSurface.h \
-  Utils.h FM_Face.h FM_Edge.h FM_Vertex.h BlendOperator.h BlendedPatch.h
+  ContinuationPatch.h PartitionOfUnity.h CylindricalProjectionSurface.h \
+  RevolvedParabolaProjectionSurface.h Utils.h FM_Face.h FM_Edge.h \
+  FM_Vertex.h BlendOperator.h BlendedPatch.h
 FM_Vertex.o: FM_Vertex.cpp
 Message.o: Message.cpp Message.h
 Utils.o: Utils.cpp Utils.h Message.h
