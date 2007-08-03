@@ -32,8 +32,6 @@ FPatch::FPatch(int tag, ProjectionSurface* ps,
   if (_ps->IsVPeriodic())
     _vM++;
 
-  printf("%d %d\n",_uM,_vM);
-
   _hardEdge[0] = hardEdge0;
   _hardEdge[1] = hardEdge1;
   _hardEdge[2] = hardEdge2;

@@ -16,6 +16,26 @@ class ProjectionSurface {
   ProjectionSurface
     (double uPeriod = -1., double vPeriod = -1.);
 
+  ProjectionSurface(ProjectionSurface *ps)
+  {
+    tag_ = ps->tag_;
+    name_ = ps->name_;
+    numParameters_ = ps->numParameters_;
+    uPeriod_ = ps->uPeriod_;
+    vPeriod_ = ps->vPeriod_;
+    uPeriodic_ = ps->uPeriodic_;
+    vPeriodic_ = ps->vPeriodic_;
+    for(int i = 0; i < 3; i++){
+      O_[i] = ps->O_[i];
+      E0_[i] = ps->E0_[i];
+      E1_[i] = ps->E1_[i];
+      E2_[i] = ps->E2_[i];
+      scale_[i] = ps->scale_[i];
+    }
+  }
+
+  virtual ProjectionSurface *clone() = 0;
+
   virtual ~ProjectionSurface() {}
 
   inline int GetTag() { return tag_; }

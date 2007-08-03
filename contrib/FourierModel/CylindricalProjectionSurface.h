@@ -13,9 +13,21 @@ class CylindricalProjectionSurface : public ProjectionSurface {
     (int tag);
   CylindricalProjectionSurface
     (int tag, double O[3], double E0[3], double E1[3], double scale[3]);
+  CylindricalProjectionSurface(CylindricalProjectionSurface *ps) 
+    : ProjectionSurface(ps) 
+  {
+    twoPi_ = ps->twoPi_;
+    R_ = ps->R_;
+    Z_ = ps->Z_;
+  }
 
   virtual ~CylindricalProjectionSurface
     () {}
+
+  virtual ProjectionSurface *clone()
+  {
+    return new CylindricalProjectionSurface(this);
+  }
 
   // Abstract methods of ProjectionSurface
 

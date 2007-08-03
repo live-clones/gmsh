@@ -16,9 +16,22 @@ class RevolvedParabolaProjectionSurface : public ProjectionSurface {
   RevolvedParabolaProjectionSurface
     (int tag, double O[3], double E0[3], double E1[3], double scale[3],
      double R, double K[2]);
+  RevolvedParabolaProjectionSurface(RevolvedParabolaProjectionSurface *ps) 
+    : ProjectionSurface(ps) 
+  {
+    twoPi_ = ps->twoPi_;
+    R_ = ps->R_;
+    K_[0] = ps->K_[0];
+    K_[1] = ps->K_[1];
+  }
 
   virtual ~RevolvedParabolaProjectionSurface
     () {}
+
+  virtual ProjectionSurface *clone()
+  {
+    return new RevolvedParabolaProjectionSurface(this);
+  }
 
   // Abstract methods of ProjectionSurface
 

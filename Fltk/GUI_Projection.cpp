@@ -9,6 +9,8 @@ extern Context_T CTX;
 
 #if defined(HAVE_FOURIER_MODEL)
 
+#define HARDCODED
+
 uvPlot::uvPlot(int x, int y, int w, int h, const char *l)
   : Fl_Window(x, y, w, h, l), _dmin(0.), _dmax(0.)
 {
@@ -115,6 +117,9 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
     }
     else if(i < 6){ //rotation
       currentParams[i] = 0.;
+#if defined HARDCODED
+      currentParams[5] = 90.;
+#endif
       v->maximum(-180.);
       v->minimum(180.);
       v->step(0.1);
@@ -124,6 +129,11 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
     }
     else if(i < 9){ // translation
       currentParams[i] = bounds.center()[i - 6];
+#if defined HARDCODED
+      currentParams[6] = 10.97;
+      currentParams[7] = 0.301;
+      currentParams[8] = 1.745;
+#endif
       v->maximum(bounds.max()[i] + 10. * CTX.lc);
       v->minimum(bounds.min()[i] - 10. * CTX.lc);
       v->step(CTX.lc / 100.);
@@ -133,6 +143,11 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
     }
     else{ // other parameters
       currentParams[i] = ps->GetParameter(i - 9);
+#if defined HARDCODED
+      currentParams[9] = .35;
+      currentParams[10] = .39;
+      currentParams[11] = 3.55;
+#endif
       v->maximum(10. * CTX.lc);
       v->minimum(-10. * CTX.lc);
       v->step(CTX.lc / 100.);
@@ -211,11 +226,15 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
   _uvPlot->end();
   
   modes[0] = new Fl_Value_Input(WB, height - 3 * WB - 3 * BH, BB  / 2, BH);
+  modes[0]->tooltip("Number of Fourier modes along u");
   modes[1] = new Fl_Value_Input(WB + BB / 2, height - 3 * WB - 3 * BH, BB  / 2, BH, 
-				"Fourier modes along u and v");
+				"Fourier modes");
+  modes[1]->tooltip("Number of Fourier modes along v");
   modes[2] = new Fl_Value_Input(WB, height - 3 * WB - 2 * BH, BB  / 2, BH);
+  modes[2]->tooltip("Number of Chebyshev modes along u");
   modes[3] = new Fl_Value_Input(WB + BB / 2, height - 3 * WB - 2 * BH, BB  / 2, BH, 
-				"Chebychev modes along u and v");
+				"Chebyshev modes");
+  modes[3]->tooltip("Number of Chebyshev modes along v");
   for(int i = 0; i < 4; i++){
     modes[i]->value(8);
     modes[i]->maximum(128);
@@ -224,9 +243,12 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
     modes[i]->align(FL_ALIGN_RIGHT);
   }    
 
-  Fl_Button *b3 = new Fl_Button(width - 2 * WB - 2 * BB, height - WB - BH, 
-				BB, BH, "Compute");
+  Fl_Button *b3 = new Fl_Button(width - WB - BB, height - 3 * WB - 3 * BH, 
+				BB, 2 * BH, "Generate\nPatch");
   b3->callback(compute_cb, this);
+
+  
+
 
   Fl_Button *b4 = new Fl_Button(width - WB - BB, height - WB - BH,
 				BB, BH, "Cancel");
@@ -266,6 +288,7 @@ void browse_cb(Fl_Widget *w, void *data)
   
   projection *p = e->getCurrentProjection();
   if(p){
+    /*
     if(!GMODEL->faceByTag(p->face->tag())){
       // the projection face is not in the model: add it and reset all
       // selections
@@ -273,6 +296,7 @@ void browse_cb(Fl_Widget *w, void *data)
       e->getEntities().clear();
       e->getElements().clear();
     }
+    */
     p->face->setVisibility(true);
     p->group->show();
   }
@@ -491,10 +515,11 @@ void compute_cb(Fl_Widget *w, void *data)
 
     if (ps->IsUPeriodic()) {
       Patch* patchL = 
-	new FPatch(0,ps,u,v,f,3,(int)(e->modes[0]->value()),
+	new FPatch(0,ps->clone(),u,v,f,3,(int)(e->modes[0]->value()),
 		   (int)(e->modes[1]->value()),(int)(e->modes[2]->value()), 
-		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(), e->hardEdges[1]->value(),
-		   e->hardEdges[2]->value(), e->hardEdges[3]->value());
+		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(), 
+		   e->hardEdges[1]->value(), e->hardEdges[2]->value(), 
+		   e->hardEdges[3]->value());
       patchL->SetMinU(-0.35);
       patchL->SetMaxU(0.35);
       
@@ -559,10 +584,11 @@ void compute_cb(Fl_Widget *w, void *data)
       GMODEL->add(new FFace(GMODEL,faceL,faceL->GetTag(),l_edgesL));
 
       Patch* patchR = 
-	new FPatch(0,ps,u,v,f,3,(int)(e->modes[0]->value()),
+	new FPatch(0,ps->clone(),u,v,f,3,(int)(e->modes[0]->value()),
 		   (int)(e->modes[1]->value()),(int)(e->modes[2]->value()), 
-		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(), e->hardEdges[1]->value(),
-		   e->hardEdges[2]->value(), e->hardEdges[3]->value());
+		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(), 
+		   e->hardEdges[1]->value(), e->hardEdges[2]->value(), 
+		   e->hardEdges[3]->value());
       patchR->SetMinU(0.15);
       patchR->SetMaxU(0.85);
       
@@ -619,10 +645,11 @@ void compute_cb(Fl_Widget *w, void *data)
     }
     else if (ps->IsVPeriodic()) {
       Patch* patchL = 
-	new FPatch(0,ps,u,v,f,3,(int)(e->modes[0]->value()),
+	new FPatch(0,ps->clone(),u,v,f,3,(int)(e->modes[0]->value()),
 		   (int)(e->modes[1]->value()),(int)(e->modes[2]->value()), 
-		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(), e->hardEdges[1]->value(),
-		   e->hardEdges[2]->value(), e->hardEdges[3]->value());
+		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(),
+		   e->hardEdges[1]->value(), e->hardEdges[2]->value(), 
+		   e->hardEdges[3]->value());
       patchL->SetMinV(-0.35);
       patchL->SetMaxV(0.35);
       
@@ -687,10 +714,11 @@ void compute_cb(Fl_Widget *w, void *data)
       GMODEL->add(new FFace(GMODEL,faceL,faceL->GetTag(),l_edgesL));
 
       Patch* patchR = 
-	new FPatch(0,ps,u,v,f,3,(int)(e->modes[0]->value()),
+	new FPatch(0,ps->clone(),u,v,f,3,(int)(e->modes[0]->value()),
 		   (int)(e->modes[1]->value()),(int)(e->modes[2]->value()), 
-		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(), e->hardEdges[1]->value(),
-		   e->hardEdges[2]->value(), e->hardEdges[3]->value());
+		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(),
+		   e->hardEdges[1]->value(), e->hardEdges[2]->value(), 
+		   e->hardEdges[3]->value());
       patchR->SetMinV(0.15);
       patchR->SetMaxV(0.85);
       
@@ -747,10 +775,11 @@ void compute_cb(Fl_Widget *w, void *data)
     }
     else {
       Patch* patch = 
-	new FPatch(0,ps,u,v,f,3,(int)(e->modes[0]->value()),
+	new FPatch(0,ps->clone(),u,v,f,3,(int)(e->modes[0]->value()),
 		   (int)(e->modes[1]->value()),(int)(e->modes[2]->value()), 
-		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(), e->hardEdges[1]->value(),
-		   e->hardEdges[2]->value(), e->hardEdges[3]->value());
+		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(), 
+		   e->hardEdges[1]->value(), e->hardEdges[2]->value(), 
+		   e->hardEdges[3]->value());
       
       double LL[2], LR[2], UL[2], UR[2];
       LL[0] = 0.0; LL[1] = 0.0;
@@ -832,6 +861,11 @@ void mesh_parameterize_cb(Fl_Widget* w, void* data)
     faces.push_back(new FProjectionFace(GMODEL, ++tag,
 					new RevolvedParabolaProjectionSurface(tag)));
     editor = new projectionEditor(faces);
+
+    for(unsigned int i = 0; i < faces.size(); i++){
+      faces[i]->setVisibility(false);
+      GMODEL->add(faces[i]);
+    }
   }
   editor->show();
 }
