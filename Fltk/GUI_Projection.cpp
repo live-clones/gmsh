@@ -9,7 +9,7 @@ extern Context_T CTX;
 
 #if defined(HAVE_FOURIER_MODEL)
 
-#define HARDCODED
+//#define HARDCODED
 
 uvPlot::uvPlot(int x, int y, int w, int h, const char *l)
   : Fl_Window(x, y, w, h, l), _dmin(0.), _dmax(0.)
@@ -243,14 +243,14 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
     modes[i]->align(FL_ALIGN_RIGHT);
   }    
 
-  int s = width - 4 * wb - 3 * bb / 2;
+  int s = width - 4 * WB - 3 * BB / 2;
 
-  fl_button *b3 = new fl_button(width - wb - s / 2, height - 3 * wb - 4 * bh, 
-				s / 2, 2 * bh, "generate\npatch");
+  Fl_Button *b3 = new Fl_Button(width - WB - s / 2, height - 3 * WB - 4 * BH, 
+				s / 2, 2 * BH, "Generate\nPatch");
   b3->callback(compute_cb, this);
 
-  new fl_box(wb, height - 2 * wb - 2 * bh, bb / 2, bh, "delete:");
-  fl_button *b4 = new fl_button(wb + bb / 2, height - 2 * wb - 2 * bh, bb / 2, bh, "last");
+  new Fl_Box(WB, height - 2 * WB - 2 * BH, BB / 2, BH, "Delete:");
+  Fl_Button *b4 = new Fl_Button(WB + BB / 2, height - 2 * WB - 2 * BH, BB / 2, BH, "last");
   b4->callback(delete_cb, (void*)"last");
   Fl_Button *b5 = new Fl_Button(WB + BB, height - 2 * WB - 2 * BH, BB / 2, BH, "select");
   b5->callback(delete_cb, (void*)"select");
@@ -857,11 +857,48 @@ void compute_cb(Fl_Widget *w, void *data)
   Draw();
 }
 
+void delete_fourier(GFace *gf)
+{
+  if(gf->getNativeType() != GEntity::FourierModel) return;
+  /*
+  std::list<GVertex*> vertices = gf->vertices();
+  for(std::list<GVertex*>::iterator it = vertices.begin(); it != vertices.end(); it++){
+    GMODEL->remove(*it);
+    delete *it;
+  }
+
+  std::list<GEdge*> edges = gf->edges();
+  for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
+    GMODEL->remove(*it);
+    delete *it;
+  }
+
+  GMODEL->remove(gf);
+  delete gf;
+  */
+}
+
 void delete_cb(Fl_Widget *w, void *data)
 {
   char *str = (char*)data;
-  Msg(GERROR, "deleting %s", str);
-
+  if(!strcmp(str, "last")){
+    
+  }
+  else{
+    Msg(ONSCREEN, "Select Surface\n");
+    std::vector<GVertex*> vertices;
+    std::vector<GEdge*> edges;
+    std::vector<GFace*> faces;
+    std::vector<GRegion*> regions;
+    std::vector<MElement*> elements;
+    char ib = SelectEntity(ENT_SURFACE, vertices, edges, faces, regions, elements);
+    if(ib == 'l'){
+      for(unsigned int i = 0; i < faces.size(); i++)
+	delete_fourier(faces[i]);
+    }
+    Draw();
+    Msg(ONSCREEN, "");
+  }
 }
 
 void mesh_parameterize_cb(Fl_Widget* w, void* data)
