@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.43 2007-08-03 14:57:09 geuzaine Exp $
+// $Id: GModel.cpp,v 1.44 2007-08-06 19:52:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -89,6 +89,30 @@ GVertex * GModel::vertexByTag(int n) const
     return *it;
   else
     return 0;
+}
+
+void GModel::remove(GRegion *r) 
+{ 
+  riter it = std::find(firstRegion(), lastRegion(), r);
+  if(it != regions.end()) regions.erase(it);
+}
+
+void GModel::remove(GFace *f) 
+{ 
+  fiter it = std::find(firstFace(), lastFace(), f);
+  if(it != faces.end()) faces.erase(it);
+}
+
+void GModel::remove(GEdge *e) 
+{ 
+  eiter it = std::find(firstEdge(), lastEdge(), e);
+  if(it != edges.end()) edges.erase(it);
+}
+
+void GModel::remove(GVertex *v) 
+{
+  viter it = std::find(firstVertex(), lastVertex(), v);
+  if(it != vertices.end()) vertices.erase(it); 
 }
 
 template <class T>

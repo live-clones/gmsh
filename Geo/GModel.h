@@ -95,10 +95,10 @@ class GModel
   void add(GEdge *e) { edges.insert(e); }
   void add(GVertex *v) { vertices.insert(v); }
 
-  void remove(GRegion *r) { regions.erase(std::find(firstRegion(), lastRegion(), r)); }
-  void remove(GFace *f) { faces.erase(std::find(firstFace(), lastFace(), f)); }
-  void remove(GEdge *e) { edges.erase(std::find(firstEdge(), lastEdge(), e)); }
-  void remove(GVertex *v) { vertices.erase(std::find(firstVertex(), lastVertex(), v)); }
+  void remove(GRegion *r);
+  void remove(GFace *f);
+  void remove(GEdge *e);
+  void remove(GVertex *v);
 
   // loop over all vertices connected to elements and associate geo entity
   void associateEntityWithVertices();
