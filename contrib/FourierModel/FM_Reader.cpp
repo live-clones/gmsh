@@ -19,11 +19,11 @@ FM_Reader::FM_Reader(const char* fn)
   //for (unsigned int i = 0; i < _nPatches; i++) {
   unsigned int i = 0;
   while (!InputFile.eof()) {
-    std::cout << "here\n";
     char psName[32];
     InputFile >> psName;
     std::cout << psName;
     int psTag;
+    std::cout << psTag;
     InputFile >> psTag;
     double origin[3];
     InputFile >> origin[0] >> origin[1] >> origin[2];
