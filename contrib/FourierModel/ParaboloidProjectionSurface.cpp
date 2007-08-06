@@ -4,7 +4,7 @@ ParaboloidProjectionSurface::ParaboloidProjectionSurface
 (int tag) : ProjectionSurface(1.) 
 {
   SetTag(tag);
-  SetName(std::string("Paraboloid"));
+  SetName(std::string("paraboloid"));
 
   twoPi_ = 2 * M_PI;
   K_[0] = K_[1] = 0.5;

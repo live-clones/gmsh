@@ -1,10 +1,10 @@
 #include "PlaneProjectionSurface.h"
 
 PlaneProjectionSurface::PlaneProjectionSurface
-(int tag) : ProjectionSurface(1.)
+(int tag) : ProjectionSurface()
 {
   SetTag(tag);
-  SetName(std::string("Plane"));
+  SetName(std::string("plane"));
 
   numParameters_ = 0;
 
@@ -19,7 +19,7 @@ PlaneProjectionSurface::PlaneProjectionSurface
 
 PlaneProjectionSurface::PlaneProjectionSurface
 (int tag, double O[3], double E0[3], double E1[3], double scale[3])
-  : ProjectionSurface(1.)
+  : ProjectionSurface()
 {
   SetTag(tag);
   SetName(std::string("Plane"));

@@ -26,6 +26,8 @@ RevolvedParabolaProjectionSurface::RevolvedParabolaProjectionSurface
 (int tag, double O[3], double E0[3], double E1[3], double scale[3],
  double R, double K[2]) : ProjectionSurface(1.) 
 {
+  printf("here\n");
+
   SetTag(tag);
   SetName(std::string("revolvedParabola"));
 
@@ -44,6 +46,12 @@ RevolvedParabolaProjectionSurface::RevolvedParabolaProjectionSurface
   E2_[2] = E0_[0] * E1_[1] - E0_[1] * E1_[0]; 
 
   scale_[0] = scale[0]; scale_[1] = scale[1]; scale_[2] = scale[2];
+
+  printf("P : %g %g %g\n",R_,K_[0],K_[1]);
+  printf("O : %g %g %g\n",O_[0],O_[1],O_[2]);
+  printf("E0 : %g %g %g\n",E0_[0],E0_[1],E0_[2]);
+  printf("E1 : %g %g %g\n",E1_[0],E1_[1],E1_[2]);
+  printf("s : %g %g %g\n",scale_[0],scale_[1],scale_[2]);
 }
 
 void RevolvedParabolaProjectionSurface::F

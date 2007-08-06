@@ -849,19 +849,27 @@ void compute_cb(Fl_Widget *w, void *data)
   // IO Test Code
   char *filename = "patches.fm";
 
-  FILE *fp = fopen(filename, "w");
+  FILE *fp = fopen(filename, "w+");
   if(!fp){
     printf("Unable to open file '%s'\n", filename);
     return;
   }
 
   std::set<GFace*, GEntityLessThan>::iterator fiter;
+  int numFourierPatches = 0;
+  for (fiter = GMODEL->firstFace(); fiter != GMODEL->lastFace(); fiter++) {
+    if ((*fiter)->getNativeType() == GEntity::FourierModel) {
+      numFourierPatches++;
+    }
+  }
+  fprintf(fp, "%d\n", numFourierPatches);
   for (fiter = GMODEL->firstFace(); fiter != GMODEL->lastFace(); fiter++) {
     if ((*fiter)->getNativeType() == GEntity::FourierModel) {
       FFace* ff = (FFace*) (*fiter);
       ff->GetFMFace()->GetPatch()->Export(fp);
     }
   }
+  fclose(fp);
 
   FM_Reader* reader = new FM_Reader(filename);
   // End Test

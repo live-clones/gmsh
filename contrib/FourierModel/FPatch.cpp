@@ -860,7 +860,6 @@ void FPatch::Export(FILE *fp)
 {
   double x,y,z;
 
-  fprintf(fp, "\n");
   fprintf(fp, "%s\n", _ps->GetName().c_str());
   fprintf(fp, "%d\n", _ps->GetTag());
   _ps->GetOrigin(x,y,z);

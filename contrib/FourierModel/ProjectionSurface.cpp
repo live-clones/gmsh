@@ -4,6 +4,7 @@
 ProjectionSurface::ProjectionSurface
 (double uPeriod, double vPeriod)
 {
+  printf("here in ProjectoionSufrace\n");
   tag_ = -1;
   name_ = std::string("default");
   numParameters_ = 0;
