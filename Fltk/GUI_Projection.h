@@ -37,19 +37,19 @@ void action_cb(Fl_Widget *w, void *data);
 
 class uvPlot : public Fl_Window {
  private:
-  std::vector<double> _u, _v;
-  std::vector<std::complex<double> > _f;
+  std::vector<double> _u, _v, _dist;
+  std::vector<std::complex<double> > _f; // "signed" distance
   GmshColorTable _colorTable;
   double _dmin, _dmax;
   void color(double d);
   void draw();
  public:
   uvPlot(int x, int y, int w, int h, const char *l=0);
-  void set(std::vector<double> &u, std::vector<double> &v, 
+  void set(std::vector<double> &u, std::vector<double> &v, std::vector<double> &dist, 
 	   std::vector<std::complex<double> > &f);
-  void get(std::vector<double> &u, std::vector<double> &v,
+  void get(std::vector<double> &u, std::vector<double> &v, std::vector<double> &dist,
 	   std::vector<std::complex<double> > &f)
-  { u = _u; v = _v; f = _f; }
+  { u = _u; v = _v; dist = _dist; f = _f; }
 };
 
 class projectionEditor;

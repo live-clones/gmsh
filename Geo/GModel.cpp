@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.44 2007-08-06 19:52:00 geuzaine Exp $
+// $Id: GModel.cpp,v 1.45 2007-08-06 21:22:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -27,15 +27,20 @@
 
 void GModel::destroy()
 {
+  std::vector<GFace*> to_keep;
+
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     delete *it;
   regions.clear();
   for(fiter it = firstFace(); it != lastFace(); ++it){
-    // projection faces are persistent and should never be deleted
-    if((*it)->geomType() != GEntity::ProjectionFace)
+    // projection faces are persistent
+    if((*it)->geomType() == GEntity::ProjectionFace)
+      to_keep.push_back(*it);
+    else
       delete *it;
   }
   faces.clear();
+  faces.insert(to_keep.begin(), to_keep.end());
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     delete *it;
   edges.clear();

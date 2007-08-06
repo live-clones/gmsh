@@ -9,7 +9,7 @@ extern Context_T CTX;
 
 #if defined(HAVE_FOURIER_MODEL)
 
-//#define HARDCODED
+#define HARDCODED
 
 uvPlot::uvPlot(int x, int y, int w, int h, const char *l)
   : Fl_Window(x, y, w, h, l), _dmin(0.), _dmax(0.)
@@ -18,23 +18,25 @@ uvPlot::uvPlot(int x, int y, int w, int h, const char *l)
   ColorTable_Recompute(&_colorTable);
 }
 
-void uvPlot::set(std::vector<double> &u, std::vector<double> &v,
-		 std::vector<std::complex<double> > &f)
+void uvPlot::set(std::vector<double> &u, std::vector<double> &v, 
+		 std::vector<double> &dist, std::vector<std::complex<double> > &f)
 { 
   _u.clear(); 
   _v.clear();
+  _dist.clear();
   _f.clear();
 
-  if(u.size() == v.size() && u.size() == f.size()){
+  if(u.size() == v.size() && u.size() == dist.size() && u.size() == f.size()){
     _dmin = 1.e200; _dmax = 0.;
     for(unsigned int i = 0; i < u.size(); i++){
       // only store valid points
       if(u[i] >= 0. && u[i] <= 1. && v[i] >= 0. && v[i] <= 1.){
 	_u.push_back(u[i]); 
 	_v.push_back(v[i]); 
+	_dist.push_back(dist[i]); 
 	_f.push_back(f[i]); 
-	_dmin = std::min(_dmin, f[i].real());
-	_dmax = std::max(_dmax, f[i].real());
+	_dmin = std::min(_dmin, dist[i]);
+	_dmax = std::max(_dmax, dist[i]);
       }
     }
   }
@@ -70,7 +72,7 @@ void uvPlot::draw()
   for(unsigned int i = 0; i < _u.size(); i++){
     int x = (int)(_u[i] * pw);
     int y = (int)(_v[i] * ph);
-    color(_f[i].real());
+    color(_dist[i]);
     fl_rect(x, y, 3, 3);
   }
 
@@ -91,7 +93,7 @@ void uvPlot::draw()
   static char min[256], max[256], pts[256];
   sprintf(min, "%g", _dmin);
   sprintf(max, "%g", _dmax);
-  sprintf(pts, "[%d pts]", _f.size());
+  sprintf(pts, "[%d pts]", _u.size());
   fl_draw(min, 5, h() - 5);
   fl_draw(pts, pw / 2 - (int)fl_width(pts) / 2, h() - 5);
   fl_draw(max, pw - (int)fl_width(max) - 5, h() - 5);
@@ -348,7 +350,7 @@ void update_cb(Fl_Widget *w, void *data)
     p->face->computeGraphicsRep(64, 64); // FIXME: hardcoded for now!
    
     // project all selected points and update u,v display
-    std::vector<double> u, v;
+    std::vector<double> u, v, dist;
     std::vector<std::complex<double> > f;
     std::vector<GEntity*> &ent(e->getEntities());
     for(unsigned int i = 0; i < ent.size(); i++){
@@ -357,18 +359,20 @@ void update_cb(Fl_Widget *w, void *data)
 	if(!ve)
 	  Msg(GERROR, "Problem in point selection processing");
 	else{
-	  double uu, vv, xx, yy, zz;
+	  double uu, vv, p[3], n[3];
 	  ps->OrthoProjectionOnSurface(ve->x(),ve->y(),ve->z(),uu,vv);
 	  u.push_back(uu);
 	  v.push_back(vv);
-	  ps->F(uu,vv,xx,yy,zz);
-	  double dx = xx - ve->x(), dy= yy - ve->y(), dz = zz - ve->z();
-	  f.push_back(sqrt(dx * dx + dy * dy + dz * dz));
+	  ps->F(uu, vv, p[0], p[1], p[2]);
+	  ps->GetUnitNormal(uu, vv, n[0], n[1], n[2]);
+	  double dx = ve->x() - p[0], dy = ve->y() - p[1], dz = ve->z() - p[2];
+	  dist.push_back(sqrt(dx * dx + dy * dy + dz * dz));
+	  f.push_back(dx * n[0] + dy * n[1] + dz * n[2]);
 	}
       }
     }
     // loop over elements and do the same thing
-    e->uv()->set(u, v, f);
+    e->uv()->set(u, v, dist, f);
   }
 
   Draw();
@@ -463,6 +467,8 @@ void select_cb(Fl_Widget *w, void *data)
     }
     if(ib == 'q') {
       ZeroHighlight();
+      ele.clear();
+      ent.clear();
       break;
     }
     update_cb(w, data);
@@ -508,9 +514,9 @@ void compute_cb(Fl_Widget *w, void *data)
   projection *p = e->getCurrentProjection();
   if(p){
     // get the projection data
-    std::vector<double> u, v;
+    std::vector<double> u, v, dist;
     std::vector<std::complex<double> > f;
-    e->uv()->get(u, v, f);
+    e->uv()->get(u, v, dist, f);
     if(f.empty()) return;
 
     // create the Fourier faces (with boundaries)
