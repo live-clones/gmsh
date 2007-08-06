@@ -33,18 +33,23 @@ void close_cb(Fl_Widget *w, void *data);
 void hide_cb(Fl_Widget *w, void *data);
 void save_cb(Fl_Widget *w, void *data);
 void compute_cb(Fl_Widget *w, void *data);
-void delete_cb(Fl_Widget *w, void *data);
+void action_cb(Fl_Widget *w, void *data);
 
 class uvPlot : public Fl_Window {
  private:
-  std::vector<double> _u, _v, _f;
+  std::vector<double> _u, _v;
+  std::vector<std::complex<double> > _f;
   GmshColorTable _colorTable;
   double _dmin, _dmax;
   void color(double d);
   void draw();
  public:
   uvPlot(int x, int y, int w, int h, const char *l=0);
-  void fill(std::vector<double> &u, std::vector<double> &v, std::vector<double> &f);
+  void set(std::vector<double> &u, std::vector<double> &v, 
+	   std::vector<std::complex<double> > &f);
+  void get(std::vector<double> &u, std::vector<double> &v,
+	   std::vector<std::complex<double> > &f)
+  { u = _u; v = _v; f = _f; }
 };
 
 class projectionEditor;

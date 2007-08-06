@@ -18,8 +18,8 @@ uvPlot::uvPlot(int x, int y, int w, int h, const char *l)
   ColorTable_Recompute(&_colorTable);
 }
 
-void uvPlot::fill(std::vector<double> &u, std::vector<double> &v,
-		  std::vector<double> &f)
+void uvPlot::set(std::vector<double> &u, std::vector<double> &v,
+		 std::vector<std::complex<double> > &f)
 { 
   _u.clear(); 
   _v.clear();
@@ -33,8 +33,8 @@ void uvPlot::fill(std::vector<double> &u, std::vector<double> &v,
 	_u.push_back(u[i]); 
 	_v.push_back(v[i]); 
 	_f.push_back(f[i]); 
-	_dmin = std::min(_dmin, f[i]);
-	_dmax = std::max(_dmax, f[i]);
+	_dmin = std::min(_dmin, f[i].real());
+	_dmax = std::max(_dmax, f[i].real());
       }
     }
   }
@@ -70,7 +70,7 @@ void uvPlot::draw()
   for(unsigned int i = 0; i < _u.size(); i++){
     int x = (int)(_u[i] * pw);
     int y = (int)(_v[i] * ph);
-    color(_f[i]);
+    color(_f[i].real());
     fl_rect(x, y, 3, 3);
   }
 
@@ -167,7 +167,7 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
 {
   // construct GUI in terms of standard sizes
   const int BH = 2 * GetFontSize() + 1, BB = 7 * GetFontSize(), WB = 7;
-  const int width = (int)(3.5 * BB), height = 22 * BH;
+  const int width = (int)(3.5 * BB), height = 24 * BH;
   
   // create all widgets (we construct this once, we never deallocate!)
   _window = new Dialog_Window(width, height, "Reparameterize");
@@ -187,14 +187,16 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
     _select[i]->type(FL_RADIO_BUTTON);
   }
   o->end();
-  
-  Fl_Toggle_Button *b1 = new Fl_Toggle_Button
-    (width - WB - 3 * BB / 2, WB, 3 * BB / 2, BH, "Hide unselected");
-  b1->callback(hide_cb);
-  
-  Fl_Button *b2 = new Fl_Button
-    (width - WB - 3 * BB / 2, WB + BH, 3 * BB / 2, BH, "Save selection");
-  b2->callback(save_cb, this);
+
+  {  
+    Fl_Toggle_Button *b1 = new Fl_Toggle_Button
+      (width - WB - 3 * BB / 2, WB, 3 * BB / 2, BH, "Hide unselected");
+    b1->callback(hide_cb);
+
+    Fl_Button *b2 = new Fl_Button
+      (width - WB - 3 * BB / 2, WB + BH, 3 * BB / 2, BH, "Save selection");
+    b2->callback(save_cb, this);
+  }
 
   const int brw = (int)(1.25 * BB);
 
@@ -210,29 +212,29 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
   
   int hard = 8;
   hardEdges[0] = new Fl_Toggle_Button(WB, 3 * WB + 9 * BH + hard, 
-				      hard, height - 7 * WB - 13 * BH - 2 * hard);
+				      hard, height - 8 * WB - 14 * BH - 2 * hard);
   hardEdges[1] = new Fl_Toggle_Button(width - WB - hard, 3 * WB + 9 * BH + hard, 
-				      hard, height - 7 * WB - 13 * BH - 2 * hard);
+				      hard, height - 8 * WB - 14 * BH - 2 * hard);
   hardEdges[2] = new Fl_Toggle_Button(WB + hard, 3 * WB + 9 * BH, 
 				      width - 2 * WB - 2 * hard, hard);
-  hardEdges[3] = new Fl_Toggle_Button(WB + hard, height - 4 * WB - 4 * BH - hard,
+  hardEdges[3] = new Fl_Toggle_Button(WB + hard, height - 5 * WB - 5 * BH - hard,
 				      width - 2 * WB - 2 * hard, hard);
   for(int i = 0; i < 4; i++){
     hardEdges[i]->tooltip("Push to mark edge as `hard'");
   }  
 
   _uvPlot = new uvPlot(WB + hard, 3 * WB + 9 * BH + hard, 
-		       width - 2 * WB - 2 * hard, height - 7 * WB - 13 * BH - 2 * hard);
+		       width - 2 * WB - 2 * hard, height - 8 * WB - 14 * BH - 2 * hard);
   _uvPlot->end();
   
-  modes[0] = new Fl_Value_Input(WB, height - 3 * WB - 4 * BH, BB  / 2, BH);
+  modes[0] = new Fl_Value_Input(WB, height - 4 * WB - 5 * BH, BB  / 2, BH);
   modes[0]->tooltip("Number of Fourier modes along u");
-  modes[1] = new Fl_Value_Input(WB + BB / 2, height - 3 * WB - 4 * BH, BB  / 2, BH, 
+  modes[1] = new Fl_Value_Input(WB + BB / 2, height - 4 * WB - 5 * BH, BB  / 2, BH, 
 				"Fourier modes");
   modes[1]->tooltip("Number of Fourier modes along v");
-  modes[2] = new Fl_Value_Input(WB, height - 3 * WB - 3 * BH, BB  / 2, BH);
+  modes[2] = new Fl_Value_Input(WB, height - 4 * WB - 4 * BH, BB  / 2, BH);
   modes[2]->tooltip("Number of Chebyshev modes along u");
-  modes[3] = new Fl_Value_Input(WB + BB / 2, height - 3 * WB - 3 * BH, BB  / 2, BH, 
+  modes[3] = new Fl_Value_Input(WB + BB / 2, height - 4 * WB - 4 * BH, BB  / 2, BH, 
 				"Chebyshev modes");
   modes[3]->tooltip("Number of Chebyshev modes along v");
   for(int i = 0; i < 4; i++){
@@ -243,32 +245,47 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
     modes[i]->align(FL_ALIGN_RIGHT);
   }    
 
-  int s = width - 4 * WB - 3 * BB / 2;
+  {
+    Fl_Button *b = new Fl_Button(width - WB - BB, height - 4 * WB - 5 * BH, 
+				  BB, 2 * BH, "Generate\nPatch");
+    b->callback(compute_cb, this);
+  }
 
-  Fl_Button *b3 = new Fl_Button(width - WB - s / 2, height - 3 * WB - 4 * BH, 
-				s / 2, 2 * BH, "Generate\nPatch");
-  b3->callback(compute_cb, this);
+  {
+    int bb = (int)(0.37 * BB);
+    new Fl_Box(WB, height - 3 * WB - 3 * BH, BB / 2, BH, "Delete:");
+    Fl_Button *b1 = new Fl_Button(WB + BB / 2, height - 3 * WB - 3 * BH, bb, BH, "last");
+    b1->callback(action_cb, (void*)"delete_last");
+    Fl_Button *b2 = new Fl_Button(WB + BB / 2 + bb, height - 3 * WB - 3 * BH, bb, BH, "all");
+    b2->callback(action_cb, (void*)"delete_all");
+    Fl_Button *b3 = new Fl_Button(WB + BB / 2 + 2 * bb, height - 3 * WB - 3 * BH, bb, BH, "sel.");
+    b3->callback(action_cb, (void*)"delete_select");
+  }
 
-  new Fl_Box(WB, height - 2 * WB - 2 * BH, BB / 2, BH, "Delete:");
-  Fl_Button *b4 = new Fl_Button(WB + BB / 2, height - 2 * WB - 2 * BH, BB / 2, BH, "last");
-  b4->callback(delete_cb, (void*)"last");
-  Fl_Button *b5 = new Fl_Button(WB + BB, height - 2 * WB - 2 * BH, BB / 2, BH, "select");
-  b5->callback(delete_cb, (void*)"select");
+  {
+    int bb = (int)(0.37 * BB);
+    int s = width - WB - BB / 2 - 3 * bb;
+    new Fl_Box(s, height - 3 * WB - 3 * BH, BB / 2, BH, "Save:");
+    Fl_Button *b1 = new Fl_Button(s + BB / 2, height - 3 * WB - 3 * BH, bb, BH, "last");
+    b1->callback(action_cb, (void*)"save_last");
+    Fl_Button *b2 = new Fl_Button(s + BB / 2 + bb, height - 3 * WB - 3 * BH, bb, BH, "all");
+    b2->callback(action_cb, (void*)"save_all");
+    Fl_Button *b3 = new Fl_Button(s + BB / 2 + 2 * bb, height - 3 * WB - 3 * BH, bb, BH, "sel.");
+    b3->callback(action_cb, (void*)"save_select");
+  }
 
-  Fl_Button *b6 = new Fl_Button(2 * WB + 3 * BB / 2, height - 2 * WB - 2 * BH, 
-				s / 2, BH, "Blend");
-  
-  Fl_Button *b7 = new Fl_Button(3 * WB + 3 * BB / 2 + s / 2, height - 2 * WB - 2 * BH, 
-				s / 2, BH, "Intersect");
+  {
+    Fl_Button *b1 = new Fl_Button(WB, height - 2 * WB - 2 * BH, BB, BH, "Blend");
+    Fl_Button *b2 = new Fl_Button(2 * WB + BB, height - 2 * WB - 2 * BH, BB, BH, "Intersect");
+  }
 
-  Fl_Button *b8 = new Fl_Button(width - WB - BB, height - WB - BH,
-				BB, BH, "Cancel");
-  b8->callback(close_cb, _window);
+  Fl_Button *b = new Fl_Button(width - WB - BB, height - WB - BH, BB, BH, "Cancel");
+  b->callback(close_cb, _window);
   
   _window->end();
   _window->hotspot(_window);
   _window->resizable(_uvPlot);
-  _window->size_range(width, (int)(0.75 * height));
+  _window->size_range(width, (int)(0.85 * height));
 }
 
 int projectionEditor::getSelectionMode() 
@@ -299,15 +316,6 @@ void browse_cb(Fl_Widget *w, void *data)
   
   projection *p = e->getCurrentProjection();
   if(p){
-    /*
-    if(!GMODEL->faceByTag(p->face->tag())){
-      // the projection face is not in the model: add it and reset all
-      // selections
-      GMODEL->add(p->face);
-      e->getEntities().clear();
-      e->getElements().clear();
-    }
-    */
     p->face->setVisibility(true);
     p->group->show();
   }
@@ -340,7 +348,8 @@ void update_cb(Fl_Widget *w, void *data)
     p->face->computeGraphicsRep(64, 64); // FIXME: hardcoded for now!
    
     // project all selected points and update u,v display
-    std::vector<double> u, v, f;
+    std::vector<double> u, v;
+    std::vector<std::complex<double> > f;
     std::vector<GEntity*> &ent(e->getEntities());
     for(unsigned int i = 0; i < ent.size(); i++){
       if(ent[i]->getSelection()){
@@ -359,7 +368,7 @@ void update_cb(Fl_Widget *w, void *data)
       }
     }
     // loop over elements and do the same thing
-    e->uv()->fill(u, v, f);
+    e->uv()->set(u, v, f);
   }
 
   Draw();
@@ -498,33 +507,15 @@ void compute_cb(Fl_Widget *w, void *data)
 
   projection *p = e->getCurrentProjection();
   if(p){
-    ProjectionSurface *ps = p->face->GetProjectionSurface();
-
-    // project all selected points and update u,v display
+    // get the projection data
     std::vector<double> u, v;
     std::vector<std::complex<double> > f;
-    std::vector<GEntity*> &ent(e->getEntities());
-    for(unsigned int i = 0; i < ent.size(); i++){
-      GVertex *ve = dynamic_cast<GVertex*>(ent[i]);
-      if(!ve){
-	Msg(GERROR, "Problem in point selection processing");
-      }
-      else{
-	double uu, vv;
-	ps->OrthoProjectionOnSurface(ve->x(),ve->y(),ve->z(),uu,vv);
-	u.push_back(uu);
-	v.push_back(vv);
-	double p[3], n[3];
-	ps->F(u[i],v[i],p[0],p[1],p[2]);
-	ps->GetUnitNormal(u[i],v[i],n[0],n[1],n[2]);
-	f.push_back((ve->x() - p[0]) * n[0] + (ve->y() - p[1]) * n[1] + 
-		    (ve->z() - p[2]) * n[2]);
-      }
-    }
-
+    e->uv()->get(u, v, f);
     if(f.empty()) return;
 
-    if (ps->IsUPeriodic()) {
+    // create the Fourier faces (with boundaries)
+    ProjectionSurface *ps = p->face->GetProjectionSurface();
+    if(ps->IsUPeriodic()) {
       Patch* patchL = 
 	new FPatch(0,ps->clone(),u,v,f,3,(int)(e->modes[0]->value()),
 		   (int)(e->modes[1]->value()),(int)(e->modes[2]->value()), 
@@ -855,7 +846,6 @@ void compute_cb(Fl_Widget *w, void *data)
   }
 
   // IO Test Code
-
   char *filename = "patches.fm";
 
   FILE *fp = fopen(filename, "w");
@@ -873,7 +863,6 @@ void compute_cb(Fl_Widget *w, void *data)
   }
 
   FM_Reader* reader = new FM_Reader(filename);
-
   // End Test
 
   Draw();
@@ -882,45 +871,59 @@ void compute_cb(Fl_Widget *w, void *data)
 void delete_fourier(GFace *gf)
 {
   if(gf->getNativeType() != GEntity::FourierModel) return;
-  /*
+
   std::list<GVertex*> vertices = gf->vertices();
   for(std::list<GVertex*>::iterator it = vertices.begin(); it != vertices.end(); it++){
     GMODEL->remove(*it);
-    delete *it;
+    //delete *it;
   }
 
   std::list<GEdge*> edges = gf->edges();
   for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
     GMODEL->remove(*it);
-    delete *it;
+    //delete *it;
   }
 
   GMODEL->remove(gf);
-  delete gf;
-  */
+  //delete gf;
 }
 
-void delete_cb(Fl_Widget *w, void *data)
+void action_cb(Fl_Widget *w, void *data)
 {
-  char *str = (char*)data;
-  if(!strcmp(str, "last")){
-    
+  std::string what((char*)data);
+  std::vector<GFace*> faces;
+
+  if(what == "delete_last" || what == "save_last"){
+    int id = -1;
+    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+      if((*it)->getNativeType() == GEntity::FourierModel) id = std::max(id, (*it)->tag());
+    if(id > 0) faces.push_back(GMODEL->faceByTag(id));
   }
-  else{
-    Msg(ONSCREEN, "Select Surface\n");
+  else if(what == "delete_all" || what == "save_all"){
+    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+      if((*it)->getNativeType() == GEntity::FourierModel)
+	faces.push_back(*it);
+  }
+  else if(what == "delete_select" || what == "select_all"){
+    Msg(ONSCREEN, "Select Surface\n[Press 'e' to end selection 'q' to abort]");
     std::vector<GVertex*> vertices;
     std::vector<GEdge*> edges;
     std::vector<GFace*> faces;
     std::vector<GRegion*> regions;
     std::vector<MElement*> elements;
     char ib = SelectEntity(ENT_SURFACE, vertices, edges, faces, regions, elements);
-    if(ib == 'l'){
-      for(unsigned int i = 0; i < faces.size(); i++)
-	delete_fourier(faces[i]);
-    }
-    Draw();
+    if(ib == 'l') faces.insert(faces.end(), faces.begin(), faces.end());
     Msg(ONSCREEN, "");
   }
+
+  if(what == "delete_last" || what == "delete_all" || what == "delete_select"){
+    for(unsigned int i = 0; i < faces.size(); i++) delete_fourier(faces[i]);
+  }
+  else{
+    // call IO code
+  }
+
+  Draw();
 }
 
 void mesh_parameterize_cb(Fl_Widget* w, void* data)
