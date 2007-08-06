@@ -9,6 +9,8 @@
 // The base class for the patches
 class ContinuationPatch : public Patch {
  protected:
+  // Do we recompute
+  int _recompute;
   // Number of Fourier Modes
   int _uModes, _vModes;
   // Number of Modes in reprocessed Fourier/Chebyshev series
@@ -50,13 +52,14 @@ class ContinuationPatch : public Patch {
   void _BackwardFft(int n, std::complex<double> *fftData);
  public:
   ContinuationPatch
-    (PatchInfo* PI, ProjectionSurface* ps, int derivative = 0);
+    (PatchInfo* PI, ProjectionSurface* ps);
   virtual ~ContinuationPatch();
 
   PatchInfo* _PI;
 
   // Abstract functions of Patch
 
+  virtual void Export(FILE *fp);
   virtual double GetPou(double u, double v);
   virtual void F(double u, double v, double &x, double &y, double &z);
   virtual bool Inverse(double x,double y,double z,double &u,double &v);

@@ -7,6 +7,8 @@
 #if defined(HAVE_FOURIER_MODEL)
 
 #include "ProjectionSurface.h"
+#include "PlaneProjectionSurface.h"
+#include "ParaboloidProjectionSurface.h"
 #include "CylindricalProjectionSurface.h"
 #include "RevolvedParabolaProjectionSurface.h"
 

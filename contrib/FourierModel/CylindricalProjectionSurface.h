@@ -13,6 +13,9 @@ class CylindricalProjectionSurface : public ProjectionSurface {
     (int tag);
   CylindricalProjectionSurface
     (int tag, double O[3], double E0[3], double E1[3], double scale[3]);
+  CylindricalProjectionSurface
+    (int tag, double O[3], double E0[3], double E1[3], double scale[3],
+     double R, double Z);
   CylindricalProjectionSurface(CylindricalProjectionSurface *ps) 
     : ProjectionSurface(ps) 
   {

@@ -29,6 +29,7 @@ class FM_Face {
     }
   inline void AddEdge(FM_Edge* edge) { _edge.push_back(edge); }
   inline int GetNumEdges() { return _edge.size(); }
+  inline Patch* GetPatch() { return _patch; }
   inline FM_Edge* GetEdge(int i) { return _edge[i]; }
 
   void F(double u, double v, double &x, double &y, double &z);

@@ -19,6 +19,7 @@ void F_Internals::loadF(const char *fn)
 
 void F_Internals::buildGModel(GModel *model)
 {
+/*
   // building geom vertices
   int nVertices = _reader->GetNumVertices();
   for (int i=0;i<nVertices;i++) {
@@ -48,6 +49,7 @@ void F_Internals::buildGModel(GModel *model)
     FFace *f = new FFace(model, face, i, l_edges);
     model->add(f);
   }
+*/
 }
 
 int GModel::readF(const std::string &fn)

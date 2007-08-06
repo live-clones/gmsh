@@ -5,6 +5,8 @@ LIB = ../../lib/libGmshFourierModel.a
 CFLAGS = ${OPTIM} ${FLAGS}
 
 SRC = ProjectionSurface.cpp \
+	PlaneProjectionSurface.cpp \
+	ParaboloidProjectionSurface.cpp \
 	CylindricalProjectionSurface.cpp \
 	RevolvedParabolaProjectionSurface.cpp \
       Patch.cpp \
@@ -49,6 +51,9 @@ depend:
 
 # DO NOT DELETE THIS LINE
 ProjectionSurface.o: ProjectionSurface.cpp ProjectionSurface.h
+PlaneProjectionSurface.o: PlaneProjectionSurface.cpp PlaneProjectionSurface.h
+ParaboloidProjectionSurface.o: ParaboloidProjectionSurface.cpp \
+  ParaboloidProjectionSurface.h
 CylindricalProjectionSurface.o: CylindricalProjectionSurface.cpp \
   CylindricalProjectionSurface.h ProjectionSurface.h
 RevolvedParabolaProjectionSurface.o:  \

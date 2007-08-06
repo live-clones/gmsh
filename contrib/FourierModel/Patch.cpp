@@ -2,7 +2,7 @@
 #include "Patch.h"
 
 Patch::Patch() :_ps(0), _uMin(0.), _uMax(1.), _vMin(0.), _vMax(1.),
-		_periodicityU(0), _periodicityV(0), _derivative(0), 
+		_periodicityU(0), _periodicityV(0), _derivative(3), 
 		_tag(-1) {}
 
 void Patch::GetNormal(double u, double v, double &x, double &y, double &z)

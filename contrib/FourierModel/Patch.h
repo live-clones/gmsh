@@ -94,6 +94,7 @@ class Patch {
   // the mapping f: (u,v)->(x,y,z) and its inverse; and the Df*() and Dn*()
   // functions return the derivatives of the mapping f and unit normal n 
   // with respect to u and v
+  virtual void Export(FILE *fp) = 0;
   virtual double GetPou(double u, double v) = 0;
   virtual void F(double u, double v, double &x, double &y, double &z) = 0;
   virtual bool Inverse(double x,double y,double z,double &u,double &v) = 0;

@@ -6,156 +6,145 @@
 FM_Reader::FM_Reader(const char* fn)
 {
   char c;
-  char continuation[16] = "continuation";
+  char Exact[8] = "Exact";
   char cylinder[16] = "cylinder";
   char revolvedParabola[32] = "revolvedParabola";
+
   std::ifstream InputFile(fn);
   if (!InputFile) {
     Msg::Info("Failed to open input file.");
     exit(EXIT_FAILURE);
   }
-  InputFile >> _nPS;
-  for (int i=0;i<_nPS;i++) {
-    char projection[32];
-    InputFile >> projection;
+  //InputFile >> _nPatches;
+  //for (unsigned int i = 0; i < _nPatches; i++) {
+  unsigned int i = 0;
+  while (!InputFile.eof()) {
+    std::cout << "here\n";
+    char psName[32];
+    InputFile >> psName;
+    std::cout << psName;
+    int psTag;
+    InputFile >> psTag;
     double origin[3];
     InputFile >> origin[0] >> origin[1] >> origin[2];
-    double normal[3];
-    InputFile >> normal[0] >> normal[1] >> normal[2];
-    double tangent[3];
-    InputFile >> tangent[0] >> tangent[1] >> tangent[2];
+    double E0[3];
+    InputFile >> E0[0] >> E0[1] >> E0[2];
+    double E1[3];
+    InputFile >> E1[0] >> E1[1] >> E1[2];
     double scale[3];
     InputFile >> scale[0] >> scale[1] >> scale[2];
-    if (!strcmp(projection,cylinder))
+    int psNumParams;
+    InputFile >> psNumParams;
+    std::vector<double> psParams;
+    for (unsigned int j = 0; j < psNumParams; j++) {
+      double tmp;
+      InputFile >> tmp;
+      psParams.push_back(tmp);
+    }
+    if (!strcmp(psName,cylinder))
       _ps.push_back
-	(new CylindricalProjectionSurface(i,origin,normal,tangent,scale));
-    else if (!strcmp(projection,revolvedParabola)) {
-      double R, K[2];
-      InputFile >> R;
-      InputFile >> K[0] >> K[1];
+	(new CylindricalProjectionSurface
+	 (psTag,origin,E0,E1,scale,psParams[0],psParams[1]));
+    else if (!strcmp(psName,revolvedParabola)) {
+      double K[2];
+      K[0] = psParams[1]; K[1] = psParams[2];
       _ps.push_back(new RevolvedParabolaProjectionSurface
-		    (i,origin,normal,tangent,scale,R,K));
+		    (i,origin,E0,E1,scale,psParams[0],K));
     }
     else {
       _ps.push_back
-	(new CylindricalProjectionSurface(i,origin,normal,tangent,scale));
+	(new CylindricalProjectionSurface(i,origin,E0,E1,scale));
       Msg::Error("Unknown projection surface. Replaced by Cylinder...");
     }
-  }
-
-  InputFile >> _nPatches;
-
-  for (int i=0;i<_nPatches;i++) {
+    InputFile >> psName;
     _patchList.push_back(new PatchInfo);
-    InputFile >> _patchList[i]->type;
-    InputFile >> _patchList[i]->projectionSurfaceTag;
-    if (!strcmp(_patchList[i]->type,continuation)) {
-      InputFile >> _patchList[i]->periodic[0] >> _patchList[i]->periodic[1];
-      InputFile >> _patchList[i]->uMin >> _patchList[i]->uMax;
-      InputFile >> _patchList[i]->vMin >> _patchList[i]->vMax;
+    InputFile >> _patchList[i]->tag;
+    InputFile >> _patchList[i]->tag;
+    InputFile >> _patchList[i]->uMin >> _patchList[i]->uMax;
+    InputFile >> _patchList[i]->vMin >> _patchList[i]->vMax;
+    if (strcmp(psName,Exact)) {
       InputFile >> _patchList[i]->hardEdge[0] >> _patchList[i]->hardEdge[1] >>
 	_patchList[i]->hardEdge[2] >> _patchList[i]->hardEdge[3];
-      InputFile >> _patchList[i]->nM[0] >> _patchList[i]->nM[1];
       InputFile >> _patchList[i]->nModes[0] >> _patchList[i]->nModes[1];
-      _patchList[i]->coeff.resize(_patchList[i]->nModes[0]);
+      _patchList[i]->coeffFourier.resize(_patchList[i]->nModes[0]);
       for (int j=0;j<_patchList[i]->nModes[0];j++) {
-	_patchList[i]->coeff[j].resize(_patchList[i]->nModes[1]);
+	_patchList[i]->coeffFourier[j].resize(_patchList[i]->nModes[1]);
 	for (int k=0;k<_patchList[i]->nModes[1];k++) {
 	  double realCoeff, imagCoeff;
 	  InputFile >> realCoeff >> imagCoeff;
-	  _patchList[i]->coeff[j][k] = 
+	  _patchList[i]->coeffFourier[j][k] = 
 	    std::complex<double>(realCoeff,imagCoeff);
 	}
       }
+      InputFile >> _patchList[i]->nM[0] >> _patchList[i]->nM[1];
+      InputFile >> _patchList[i]->recompute;
+      if ((_patchList[i]->derivative) && (!_patchList[i]->recompute)) {
+	_patchList[i]->coeffCheby.resize(_patchList[i]->nM[0]);
+	for (int j=0;j<_patchList[i]->nM[0];j++) {
+	  _patchList[i]->coeffCheby[j].resize(_patchList[i]->nM[1]);
+	  for (int k=0;k<_patchList[i]->nM[1];k++) {
+	    double realCoeff, imagCoeff;
+	    InputFile >> realCoeff >> imagCoeff;
+	    _patchList[i]->coeffCheby[j][k] = 
+	      std::complex<double>(realCoeff,imagCoeff);
+	  }
+	}
+	_patchList[i]->coeffDerivU.resize(_patchList[i]->nM[0]);
+	for (int j=0;j<_patchList[i]->nM[0];j++) {
+	  _patchList[i]->coeffDerivU[j].resize(_patchList[i]->nM[1]);
+	  for (int k=0;k<_patchList[i]->nM[1];k++) {
+	    double realCoeff, imagCoeff;
+	    InputFile >> realCoeff >> imagCoeff;
+	    _patchList[i]->coeffDerivU[j][k] = 
+	      std::complex<double>(realCoeff,imagCoeff);
+	  }
+	}
+	_patchList[i]->coeffDerivV.resize(_patchList[i]->nM[0]);
+	for (int j=0;j<_patchList[i]->nM[0];j++) {
+	  _patchList[i]->coeffDerivV[j].resize(_patchList[i]->nM[1]);
+	  for (int k=0;k<_patchList[i]->nM[1];k++) {
+	    double realCoeff, imagCoeff;
+	    InputFile >> realCoeff >> imagCoeff;
+	    _patchList[i]->coeffDerivV[j][k] = 
+	      std::complex<double>(realCoeff,imagCoeff);
+	  }
+	}
+	_patchList[i]->coeffDerivUU.resize(_patchList[i]->nM[0]);
+	for (int j=0;j<_patchList[i]->nM[0];j++) {
+	  _patchList[i]->coeffDerivUU[j].resize(_patchList[i]->nM[1]);
+	  for (int k=0;k<_patchList[i]->nM[1];k++) {
+	    double realCoeff, imagCoeff;
+	    InputFile >> realCoeff >> imagCoeff;
+	    _patchList[i]->coeffDerivUU[j][k] = 
+	      std::complex<double>(realCoeff,imagCoeff);
+	  }
+	}
+	_patchList[i]->coeffDerivUV.resize(_patchList[i]->nM[0]);
+	for (int j=0;j<_patchList[i]->nM[0];j++) {
+	  _patchList[i]->coeffDerivUV[j].resize(_patchList[i]->nM[1]);
+	  for (int k=0;k<_patchList[i]->nM[1];k++) {
+	    double realCoeff, imagCoeff;
+	    InputFile >> realCoeff >> imagCoeff;
+	    _patchList[i]->coeffDerivUV[j][k] = 
+	      std::complex<double>(realCoeff,imagCoeff);
+	  }
+	}
+	_patchList[i]->coeffDerivVV.resize(_patchList[i]->nM[0]);
+	for (int j=0;j<_patchList[i]->nM[0];j++) {
+	  _patchList[i]->coeffDerivVV[j].resize(_patchList[i]->nM[1]);
+	  for (int k=0;k<_patchList[i]->nM[1];k++) {
+	    double realCoeff, imagCoeff;
+	    InputFile >> realCoeff >> imagCoeff;
+	    _patchList[i]->coeffDerivVV[j][k] = 
+	      std::complex<double>(realCoeff,imagCoeff);
+	  }
+	}
+      }
     }
+    _patch.push_back(new ContinuationPatch(_patchList[i], _ps[i]));
+    i++;
   }
-
-  InputFile >> _nIntersections;
-
-  for (int i=0;i<_nIntersections;i++) {
-    _intersectionList.push_back(new IntersectionInfo);
-    InputFile >> _intersectionList[i]->tag;
-    InputFile >> _intersectionList[i]->SP[0] >> _intersectionList[i]->SP[1] 
-	      >> _intersectionList[i]->SP[2];
-    InputFile >> _intersectionList[i]->EP[0] >> _intersectionList[i]->EP[1] 
-	      >> _intersectionList[i]->EP[2];
-    InputFile >> _intersectionList[i]->intersectingPatches[0].patchTag;
-    InputFile >> _intersectionList[i]->intersectingPatches[1].patchTag;
-    InputFile >> _intersectionList[i]->along;
-    if ((_intersectionList[i]->intersectingPatches[0].patchTag < 0) ||
-	(_intersectionList[i]->intersectingPatches[1].patchTag < 0))
-      InputFile >> _intersectionList[i]->edgeInfo.edgeType >>
-	_intersectionList[i]->edgeInfo.constValue >>
-	_intersectionList[i]->edgeInfo.startValue >>
-	_intersectionList[i]->edgeInfo.endValue >>
-	_intersectionList[i]->edgeInfo.acrossDiscontinuity;
-  }
-  _overlapChart.resize(_nPatches);
-  for (int i=0;i<_nPatches;i++) {
-    _overlapChart[i].resize(_nPatches);
-    for (int j=0;j<_nPatches;j++) {
-      _overlapChart[i][j] = new OverlapInfo;
-      InputFile >> _overlapChart[i][j]->doesIntersect >> 
-	_overlapChart[i][j]->xMin >> _overlapChart[i][j]->xMax >>
-	_overlapChart[i][j]->yMin >> _overlapChart[i][j]->yMax >>
-	_overlapChart[i][j]->zMin >> _overlapChart[i][j]->zMax >>
-	_overlapChart[i][j]->psTag;
-    }
-  }
-
-  _curve.resize(_nIntersections,0);
-
-  for (int i=0;i<_nPatches;i++) {
-    _patchList[i]->tag = i;
-    PatchInfo* PI = _patchList[i];
-
-    if (!strcmp(PI->type,continuation))
-      _patch.push_back
-	(new ContinuationPatch(PI,_ps[PI->projectionSurfaceTag],3));
-    else
-      _patch.push_back(new ExactPatch(PI,_ps[PI->projectionSurfaceTag]));
-  }
-
-  _blendOperator = new BlendOperator(_patch,_ps,_overlapChart);
-
-  for (int i=0;i<_nPatches;i++)
-    _blendedPatch.push_back(new BlendedPatch(_patch[i],_blendOperator));
-
-  for (int i=0;i<_nIntersections;i++) {
-    IntersectionInfo* II = _intersectionList[i];
-    _curve[II->tag] = new IntersectionCurve(II,_patch);
-  }
-
-  InputFile >> _nVertices;
-  for (int i=0;i<_nVertices;i++) {
-    double x,y,z;
-    InputFile >> x >> y >> z;
-    _vertex.push_back(new FM_Vertex(i,x,y,z));
-  }
-
-  InputFile >> _nEdges;
-  for (int i=0;i<_nEdges;i++) {
-    int edgeTag, svTag, evTag;
-    InputFile >> edgeTag >> svTag >> evTag;
-    if (edgeTag < 0)
-      _edge.push_back(new FM_Edge(i,0,_vertex[svTag],_vertex[evTag]));
-    else
-      _edge.push_back(new FM_Edge(i,GetCurve(edgeTag),
-				  _vertex[svTag],_vertex[evTag]));
-  }
-
-  InputFile >> _nFaces;
-  for (int i=0;i<_nFaces;i++) {
-    int faceTag, nEdges;
-    InputFile >> faceTag;
-    _face.push_back(new FM_Face(i,GetPatch(faceTag)));
-    InputFile >> nEdges;
-    for (int j=0;j<nEdges;j++) {
-      int edgeTag;
-      InputFile >> edgeTag;
-      _face[i]->AddEdge(_edge[edgeTag]);
-    }
-  }
+  _nPatches = _patch.size();
 }
 
 Patch* FM_Reader::GetPatch(int tag)
@@ -163,18 +152,6 @@ Patch* FM_Reader::GetPatch(int tag)
   for (int i=0;i<_patch.size();i++)
     if (_patch[i]->GetTag() == tag)
       return _patch[i];
-}
-
-Curve* FM_Reader::GetCurve(int tag)
-{
-  Curve* curve = 0;
-  for (int i=0;i<_curve.size();i++) {
-    if (_curve[i]->GetTag() == tag) {
-      curve = _curve[i];
-      break;
-    }
-  }
-  return curve;
 }
 
 ProjectionSurface* FM_Reader::GetProjectionSurface(int tag)
@@ -187,11 +164,4 @@ ProjectionSurface* FM_Reader::GetProjectionSurface(int tag)
     }
   }
   return ps;
-}
-
-BlendedPatch* FM_Reader::GetBlendedPatch(int tag)
-{
-  for (int i=0;i<_blendedPatch.size();i++)
-    if (_blendedPatch[i]->GetTag() == tag)
-      return _blendedPatch[i];
 }

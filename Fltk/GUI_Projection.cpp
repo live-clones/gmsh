@@ -854,6 +854,28 @@ void compute_cb(Fl_Widget *w, void *data)
     }
   }
 
+  // IO Test Code
+
+  char *filename = "patches.fm";
+
+  FILE *fp = fopen(filename, "w");
+  if(!fp){
+    printf("Unable to open file '%s'\n", filename);
+    return;
+  }
+
+  std::set<GFace*, GEntityLessThan>::iterator fiter;
+  for (fiter = GMODEL->firstFace(); fiter != GMODEL->lastFace(); fiter++) {
+    if ((*fiter)->getNativeType() == GEntity::FourierModel) {
+      FFace* ff = (FFace*) (*fiter);
+      ff->GetFMFace()->GetPatch()->Export(fp);
+    }
+  }
+
+  FM_Reader* reader = new FM_Reader(filename);
+
+  // End Test
+
   Draw();
 }
 
@@ -911,10 +933,15 @@ void mesh_parameterize_cb(Fl_Widget* w, void* data)
   if(!editor){
     std::vector<FProjectionFace*> faces;
     int tag = GMODEL->numFace();
+    faces.push_back(new FProjectionFace(GMODEL, ++tag,
+					new PlaneProjectionSurface(tag)));
+    faces.push_back(new FProjectionFace(GMODEL, ++tag,
+					new ParaboloidProjectionSurface(tag)));
     faces.push_back(new FProjectionFace(GMODEL, ++tag, 
 					new CylindricalProjectionSurface(tag)));
     faces.push_back(new FProjectionFace(GMODEL, ++tag,
 					new RevolvedParabolaProjectionSurface(tag)));
+
     editor = new projectionEditor(faces);
 
     for(unsigned int i = 0; i < faces.size(); i++){

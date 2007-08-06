@@ -4,6 +4,8 @@ PatchInfo::PatchInfo() : tag(-1)
 {
   uMin = vMin = 0.;
   uMax = vMax = 1.;
+  derivative = 3;
+  recompute = 1;
 }
 
 OverlapInfo::OverlapInfo()

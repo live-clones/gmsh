@@ -42,6 +42,7 @@ class FFace : public GFace {
   ModelType getNativeType() const { return FourierModel; }
   void * getNativePtr() const {throw;} 
   virtual bool surfPeriodic(int dim) const;
+  FM_Face* GetFMFace() { return face; }
 };
 
 #endif

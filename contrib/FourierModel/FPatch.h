@@ -78,6 +78,7 @@ class FPatch : public Patch {
 
   // Abstract functions of Patch
 
+  virtual void Export(FILE *fp);
   virtual double GetPou(double u, double v);
   virtual void F(double u, double v, double &x, double &y, double &z);
   virtual bool Inverse(double x,double y,double z,double &u,double &v);

@@ -43,6 +43,31 @@ CylindricalProjectionSurface::CylindricalProjectionSurface
   scale_[0] = scale[0]; scale_[1] = scale[1]; scale_[2] = scale[2];
 }
 
+CylindricalProjectionSurface::CylindricalProjectionSurface
+(int tag, double O[3], double E0[3], double E1[3], double scale[3],
+ double R, double Z)
+  : ProjectionSurface(1.)
+{
+  SetTag(tag);
+  SetName(std::string("Cylinder"));
+
+  twoPi_ = 2 * M_PI;
+
+  O_[0] = O[0]; O_[1] = O[1]; O_[2] = O[2];
+
+  E0_[0] = E0[0]; E0_[1] = E0[1]; E0_[2] = E0[2];
+  E1_[0] = E1[0]; E1_[1] = E1[1]; E1_[2] = E1[2];
+
+  E2_[0] = E0_[1] * E1_[2] - E0_[2] * E1_[1];
+  E2_[1] = E0_[2] * E1_[0] - E0_[0] * E1_[2];
+  E2_[2] = E0_[0] * E1_[1] - E0_[1] * E1_[0];
+
+  scale_[0] = scale[0]; scale_[1] = scale[1]; scale_[2] = scale[2];
+
+  R_ = R;
+  Z_ = Z;
+}
+
 void CylindricalProjectionSurface::
 F(double u, double v, double &x, double &y, double &z)
 {

@@ -24,6 +24,7 @@
 #include "FM_Vertex.h"
 #include "FM_Edge.h"
 #include "FM_Face.h"
+#include "FM_Reader.h"
 
 void select_cb(Fl_Widget *w, void *data);
 void browse_cb(Fl_Widget *w, void *data);

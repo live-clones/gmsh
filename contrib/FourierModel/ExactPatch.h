@@ -8,10 +8,8 @@
 // The base class for the patches
 class ExactPatch : public Patch {
  public:
-  ExactPatch(PatchInfo* PI, ProjectionSurface* ps);
+  ExactPatch(ProjectionSurface* ps);
   virtual ~ExactPatch() {}
-
-  PatchInfo* _PI;
 
   // These are the virtual functions that must be provided by all
   // derived patches: GetPou() returns the original smooth
@@ -19,6 +17,8 @@ class ExactPatch : public Patch {
   // the mapping f: (u,v)->(x,y,z) and its inverse; and the Df*() and Dn*()
   // functions return the derivatives of the mapping f and unit normal n 
   // with respect to u and v
+
+  virtual void Export(FILE *fp);
   virtual double GetPou(double u, double v);
   virtual void F(double u, double v, double &x, double &y, double &z);
   virtual bool Inverse(double x,double y,double z,double &u,double &v);

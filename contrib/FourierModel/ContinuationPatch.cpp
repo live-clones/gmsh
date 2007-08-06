@@ -3,13 +3,14 @@
 #include "ContinuationPatch.h"
 
 ContinuationPatch::ContinuationPatch
-(PatchInfo* PI, ProjectionSurface* ps, int derivative) 
+(PatchInfo* PI, ProjectionSurface* ps)
   : Patch(),_coeffOriginalData(0),_coeffData(0),_coeffDerivU(0),
     _coeffDerivV(0),_coeffDerivUU(0),_coeffDerivVV(0),_coeffDerivUV(0)
 {
   _PI = PI;
   _tag = _PI->tag;
-  _derivative = derivative;
+  _derivative = _PI->derivative;
+  _recompute = _PI->recompute;
 
   SetProjectionSurface(ps);
 
@@ -18,14 +19,23 @@ ContinuationPatch::ContinuationPatch
   _vMin = _PI->vMin;
   _vMax = _PI->vMax;
 
-  _periodicityU = _PI->periodic[0];
-  _periodicityV = _PI->periodic[1];
+  if (_ps->IsUPeriodic())
+    _periodicityU = 1;
+  if (_ps->IsVPeriodic())
+    _periodicityV = 1;
 
   for (int i = 0; i < 4; i++)
     _hardEdge[i] = _PI->hardEdge[i];
 
-  _periodU = (1-_PI->periodic[0]) + 1;
-  _periodV = (1-_PI->periodic[1]) + 1;
+  if (_ps->IsUPeriodic())
+    _periodU = 1.;
+  else
+    _periodU = 2.;
+
+  if (_ps->IsVPeriodic())
+    _periodV = 1.;
+  else
+    _periodV = 2.;
 
   _uModes = _PI->nModes[0];
   _vModes = _PI->nModes[1];
@@ -79,46 +89,43 @@ ContinuationPatch::ContinuationPatch
     _vMUpper = _vM;    
   }
 
+  // Initialize interpolation variables
+  _tmpCoeff = std::vector< std::complex<double> >(_vM);
+  _tmpInterp = std::vector< std::complex<double> >(_uM);
+
   // Initialize Data
   _coeffOriginalData = new std::complex<double>*[_uModes];
   for(int j = 0; j < _uModes; j++){
     _coeffOriginalData[j] = new std::complex<double>[_vModes];
     for(int k = 0; k < _vModes; k++)
-      _coeffOriginalData[j][k] = _PI->coeff[j][k];
+      _coeffOriginalData[j][k] = _PI->coeffFourier[j][k];
   }
 
   // Initialize interpolation variables
   _tmpOrigCoeff = std::vector< std::complex<double> >(_vModes);
   _tmpOrigInterp = std::vector< std::complex<double> >(_uModes);
 
-  if (_derivative)
-    _ReprocessSeriesCoeff();
-
-  /*
-  for (int j = 0; j < _uM; j++) {
-    for (int k = 0; k < _vM; k++)
-      printf("%g ",_coeffData[j][k].real());
-    printf("\n\n");
-  }
-  printf("\n");
-  */
-
-  // Check if we need to interpolate the derivative(s)
-  if(_derivative){
-    // Initialize _fineDeriv and _fineDeriv2 to zero
+  if (_derivative) {
+    // Initialize Chebyshev coefficients
+    _coeffData = new std::complex<double>*[_uM];
+    for(int j = 0; j < _uM; j++) {
+      _coeffData[j] = new std::complex<double>[_vM];
+      for(int k = 0; k < _vM; k++)
+	_coeffData[j][k] = 0.;
+    }
+    // Initialize Deriv and Deriv2 to zero
     if(_derivative & 1){
       _coeffDerivU = new std::complex<double>*[_uM];
       _coeffDerivV = new std::complex<double>*[_uM];
       for(int j = 0; j < _uM; j++){
-        _coeffDerivU[j] = new std::complex<double>[_vM];
-        _coeffDerivV[j] = new std::complex<double>[_vM];
-        for(int k = 0; k < _vM; k++){
-          _coeffDerivU[j][k] = 0.;
-          _coeffDerivV[j][k] = 0.;
-        }
+	_coeffDerivU[j] = new std::complex<double>[_vM];
+	_coeffDerivV[j] = new std::complex<double>[_vM];
+	for(int k = 0; k < _vM; k++){
+	  _coeffDerivU[j][k] = 0.;
+	  _coeffDerivV[j][k] = 0.;
+	}
       }
     }
-
     if(_derivative & 2){
       _coeffDerivUU = new std::complex<double>*[_uM];
       _coeffDerivVV = new std::complex<double>*[_uM];
@@ -134,214 +141,140 @@ ContinuationPatch::ContinuationPatch
         }
       }
     }
-
-    // Copy the Fourier coefficients into _coeffDeriv and _coeffDeriv2
-    std::complex<double> I(0., 1.);
-    for(int j = _uM - 1; j >= 0; j--){
-      for(int k = _vM - 1; k >= 0; k--){
-        if(_derivative & 1){
-	  if (IsUPeriodic()) {
-	    int J = j+_uMLower;
-	    _coeffDerivU[j][k] = (2 * M_PI * J * I / _periodU) *
-	      _coeffData[j][k];
-	  }
-	  else {
-	    if (j == _uM - 1)
-	      _coeffDerivU[j][k] = 0.;
-	    else if (j == _uM - 2)
-	      _coeffDerivU[j][k] = 2. * (double)(j + 1) * _coeffData[j + 1][k];
-	    else
-	      _coeffDerivU[j][k] = _coeffDerivU[j + 2][k] +
-		2. * (double)(j + 1) * _coeffData[j + 1][k];
-	    //if (j != 0)
-	    //_coeffDerivU[j][k] *= 2.;
-	  }
-	  if (IsVPeriodic()) {
-	    int K = k+_vMLower;
-	    _coeffDerivV[j][k] = (2 * M_PI * K * I / _periodV) *
-	      _coeffData[j][k];
-	  }
-	  else {
-	    if (k == _vM - 1)
-	      _coeffDerivV[j][k] = 0.;
-	    else if (k == _vM - 2)
-	      _coeffDerivV[j][k] = 2. * (double)(k + 1) * _coeffData[j][k + 1];
-	    else
-	      _coeffDerivV[j][k] = _coeffDerivV[j][k + 2] +
-		2. * (double)(k + 1) * _coeffData[j][k + 1];
-	    //if (k != 0)
-	    //_coeffDerivV[j][k] *= 2.;
-	  }
-        }
-      }
-    }
-    for (int j = 0; j < _uM; j++) {
-      for (int k = 0; k < _vM; k++) {
-	if (_derivative & 1) {
-	  if (!IsUPeriodic()) {
-	    if (j != 0) {
-	      _coeffDerivU[j][k] *= 2.;
-	    }
-	  }
-	  if (!IsVPeriodic()) {
-	    if (k != 0) {
-	      _coeffDerivV[j][k] *= 2.;
-	    }
-	  }
-	}
-      }
-    }
-
-    for(int j = _uM - 1; j >= 0; j--) {
-      for(int k = _vM - 1; k >= 0; k--) {
-	if(_derivative & 2) {
-	  if (IsUPeriodic()) {
-	    int J = j+_uMLower;
-	    _coeffDerivUU[j][k] = (2 * M_PI * J * I / _periodU) * 
-	      _coeffDerivU[j][k];
-	  }
-	  else {
-	    if (j == _uM - 1)
-	      _coeffDerivUU[j][k] = 0.;
-	    else if (j == _uM - 2)
-	      _coeffDerivUU[j][k] = 2. * (double)(j + 1) * 
-		_coeffDerivU[j + 1][k];
-	    else
-	      _coeffDerivUU[j][k] = _coeffDerivUU[j + 2][k] +
-		2. * (double)(j + 1) * _coeffDerivU[j + 1][k];
-	    //if (j != 0)
-	    //_coeffDerivUU[j][k] *= 2.;
-	  }
-	  if (IsVPeriodic()) {
-	    int K = k+_vMLower;
-	    _coeffDerivVV[j][k] = (2 * M_PI * K * I / _periodV) * 
-	      _coeffDerivV[j][k];
-	    _coeffDerivUV[j][k] = (2 * M_PI * K * I / _periodV) * 
-	      _coeffDerivU[j][k];
-	  }
-	  else {
-	    if (k == _vM - 1) {
-	      _coeffDerivVV[j][k] = 0.;
-	      _coeffDerivUV[j][k] = 0.;
-	    }
-	    else if (k == _vM - 2) {
-	      _coeffDerivVV[j][k] = 2. * (double)(k + 1) * 
-		_coeffDerivV[j][k + 1];
-	      _coeffDerivUV[j][k] = 2. * (double)(k + 1) * 
-		_coeffDerivU[j][k + 1];
+    if (_recompute) {
+      _ReprocessSeriesCoeff();
+      // Copy the Fourier coefficients into _coeffDeriv and _coeffDeriv2
+      std::complex<double> I(0., 1.);
+      for(int j = _uM - 1; j >= 0; j--){
+	for(int k = _vM - 1; k >= 0; k--){
+	  if(_derivative & 1){
+	    if (IsUPeriodic()) {
+	      int J = j+_uMLower;
+	      _coeffDerivU[j][k] = (2 * M_PI * J * I / _periodU) *
+		_coeffData[j][k];
 	    }
 	    else {
-	      _coeffDerivVV[j][k] = _coeffDerivVV[j][k + 2] +
-		2. * (double)(k + 1) * _coeffDerivV[j][k + 1];
-	      _coeffDerivUV[j][k] = _coeffDerivUV[j][k + 2] +
-		2. * (double)(k + 1) * _coeffDerivU[j][k + 1];
+	      if (j == _uM - 1)
+		_coeffDerivU[j][k] = 0.;
+	      else if (j == _uM - 2)
+		_coeffDerivU[j][k] = 
+		  2. * (double)(j + 1) * _coeffData[j + 1][k];
+	      else
+		_coeffDerivU[j][k] = _coeffDerivU[j + 2][k] +
+		  2. * (double)(j + 1) * _coeffData[j + 1][k];
+	    }
+	    if (IsVPeriodic()) {
+	      int K = k+_vMLower;
+	      _coeffDerivV[j][k] = (2 * M_PI * K * I / _periodV) *
+		_coeffData[j][k];
+	    }
+	    else {
+	      if (k == _vM - 1)
+		_coeffDerivV[j][k] = 0.;
+	      else if (k == _vM - 2)
+		_coeffDerivV[j][k] = 
+		  2. * (double)(k + 1) * _coeffData[j][k + 1];
+	      else
+		_coeffDerivV[j][k] = _coeffDerivV[j][k + 2] +
+		  2. * (double)(k + 1) * _coeffData[j][k + 1];
+	    }
+	  }
+	}
+      }
+      for (int j = 0; j < _uM; j++) {
+	for (int k = 0; k < _vM; k++) {
+	  if (_derivative & 1) {
+	    if (!IsUPeriodic()) {
+	      if (j != 0) {
+		_coeffDerivU[j][k] *= 2.;
+	      }
+	    }
+	    if (!IsVPeriodic()) {
+	      if (k != 0) {
+		_coeffDerivV[j][k] *= 2.;
+	      }
+	    }
+	  }
+	}
+      }
+      
+      for(int j = _uM - 1; j >= 0; j--) {
+	for(int k = _vM - 1; k >= 0; k--) {
+	  if(_derivative & 2) {
+	    if (IsUPeriodic()) {
+	      int J = j+_uMLower;
+	      _coeffDerivUU[j][k] = (2 * M_PI * J * I / _periodU) * 
+		_coeffDerivU[j][k];
+	    }
+	    else {
+	      if (j == _uM - 1)
+		_coeffDerivUU[j][k] = 0.;
+	      else if (j == _uM - 2)
+		_coeffDerivUU[j][k] = 2. * (double)(j + 1) * 
+		  _coeffDerivU[j + 1][k];
+	      else
+		_coeffDerivUU[j][k] = _coeffDerivUU[j + 2][k] +
+		  2. * (double)(j + 1) * _coeffDerivU[j + 1][k];
+	    }
+	    if (IsVPeriodic()) {
+	      int K = k+_vMLower;
+	      _coeffDerivVV[j][k] = (2 * M_PI * K * I / _periodV) * 
+		_coeffDerivV[j][k];
+	      _coeffDerivUV[j][k] = (2 * M_PI * K * I / _periodV) * 
+		_coeffDerivU[j][k];
+	    }
+	    else {
+	      if (k == _vM - 1) {
+		_coeffDerivVV[j][k] = 0.;
+		_coeffDerivUV[j][k] = 0.;
+	      }
+	      else if (k == _vM - 2) {
+		_coeffDerivVV[j][k] = 2. * (double)(k + 1) * 
+		  _coeffDerivV[j][k + 1];
+		_coeffDerivUV[j][k] = 2. * (double)(k + 1) * 
+		  _coeffDerivU[j][k + 1];
+	      }
+	      else {
+		_coeffDerivVV[j][k] = _coeffDerivVV[j][k + 2] +
+		  2. * (double)(k + 1) * _coeffDerivV[j][k + 1];
+		_coeffDerivUV[j][k] = _coeffDerivUV[j][k + 2] +
+		  2. * (double)(k + 1) * _coeffDerivU[j][k + 1];
+	      }
+	    }
+	  }
+	}
+      }
+      for (int j = 0; j < _uM; j++) {
+	for (int k = 0; k < _vM; k++) {
+	  if (_derivative & 2) {
+	    if (!IsUPeriodic() && IsVPeriodic()) {
+	      if (j != 0) {
+		_coeffDerivUU[j][k] *= 2.;
+	      }
+	    }
+	    if (IsUPeriodic() && !IsVPeriodic()) {
+	      if (k != 0) {
+		_coeffDerivVV[j][k] *= 2.;
+		_coeffDerivUV[j][k] *= 2.;
+	      }
 	    }
 	  }
 	}
       }
     }
-    for (int j = 0; j < _uM; j++) {
-      for (int k = 0; k < _vM; k++) {
-	if (_derivative & 2) {
-	  if (!IsUPeriodic() && IsVPeriodic()) {
-	    if (j != 0) {
-	      _coeffDerivUU[j][k] *= 2.;
-	    }
-	  }
-	  if (IsUPeriodic() && !IsVPeriodic()) {
-	    if (k != 0) {
-	      _coeffDerivVV[j][k] *= 2.;
-	      _coeffDerivUV[j][k] *= 2.;
-	    }
-	  }
+    else {
+      for (int j = 0; j < _uM; j++) {
+	for (int k = 0; k < _vModes; k++) {
+	  _coeffData[j][k] = _PI->coeffCheby[j][k];
+	  _coeffDerivU[j][k] = _PI->coeffDerivU[j][k];
+	  _coeffDerivV[j][k] = _PI->coeffDerivV[j][k];
+	  _coeffDerivUU[j][k] = _PI->coeffDerivUU[j][k];
+	  _coeffDerivUV[j][k] = _PI->coeffDerivUV[j][k];
+	  _coeffDerivVV[j][k] = _PI->coeffDerivVV[j][k];
 	}
       }
     }
   }
-
-  /*
-  for (int j = 0; j < _uM; j++) {
-    for (int k = 0; k < _vM; k++)
-      printf("%g ",_coeffDerivVV[j][k].real());
-    printf("\n\n");
-  }
-  printf("\n");
-  */
-
-  // Initialize interpolation variables
-  _tmpCoeff = std::vector< std::complex<double> >(_vM);
-  _tmpInterp = std::vector< std::complex<double> >(_uM);
-
-  /*
-  int nU = 64;
-  int nV = 64;
-
-  double hU = 1. / (double)(nU-1);
-  double hV = 1. / (double)(nV-1);
-
-  double f_error = 0.;
-  double dfdu_error = 0.;
-  double dfdv_error = 0.;
-  double dfdfdudu_error = 0.;
-  double dfdfdudv_error = 0.;
-  double dfdfdvdv_error = 0.;
-
-  for (int j = 0; j < nU; j++)
-    for (int k = 0; k < nV; k++) {
-      double u = j * hU;
-      double v = k * hV;
-      //printf("%d %d\n",j,k);
-      std::complex<double> f = _Interpolate(u,v,0,0);
-      //printf("%d %d\n",j,k);
-      //std::complex<double> ef = 2. * v * v - 1.;
-      //std::complex<double> ef = 2. * v * v * cos(2 * M_PI * u);
-      std::complex<double> ef = cos(v) * cos(2 * M_PI * u);
-      f_error = std::max(f_error,std::abs(f - ef));
-
-      std::complex<double> dfdu = _Interpolate(u,v,1,0);
-      //std::complex<double> edfdu = 0.;
-      //std::complex<double> edfdu = - 4. * M_PI * v * v * sin(2 * M_PI * u);
-      std::complex<double> edfdu = - 2. * M_PI * cos(v) * sin(2 * M_PI * u);
-      dfdu_error = std::max(dfdu_error,std::abs(dfdu - edfdu));
-
-      std::complex<double> dfdv = _Interpolate(u,v,0,1);
-      //std::complex<double> edfdv = 4. * v;
-      //std::complex<double> edfdv = 4. * v * cos(2 * M_PI * u);
-      std::complex<double> edfdv = - sin(v) * cos(2 * M_PI * u);
-      dfdv_error = std::max(dfdv_error,std::abs(dfdv - edfdv));
-      //printf("%d %d : %g %g :: %g %g\n",j,k,dfdv.real(),edfdv.real(),
-      //   dfdv.imag(),edfdv.imag());
-
-      std::complex<double> dfdfdudu = _Interpolate(u,v,2,0);
-      //std::complex<double> edfdfdudu = 0.;
-      //std::complex<double> edfdfdudu = 
-      //- 8. * M_PI * M_PI * v * v * cos(2 * M_PI * u);
-      std::complex<double> edfdfdudu = 
-	- 4. * M_PI * M_PI * cos(v) * cos(2 * M_PI * u);
-      dfdfdudu_error = std::max(dfdfdudu_error,std::abs(dfdfdudu - edfdfdudu));
-
-      std::complex<double> dfdfdvdv = _Interpolate(u,v,0,2);
-      //std::complex<double> edfdfdvdv = 4.;
-      //std::complex<double> edfdfdvdv = 4. * cos(2 * M_PI * u);
-      std::complex<double> edfdfdvdv = - cos(v) * cos(2 * M_PI * u);
-      dfdfdvdv_error = std::max(dfdfdvdv_error,std::abs(dfdfdvdv - edfdfdvdv));
-      //printf("%d %d : %g %g :: %g %g\n",j,k,dfdfdvdv.real(),edfdfdvdv.real(),
-      //     dfdfdvdv.imag(),edfdfdvdv.imag());
-
-      std::complex<double> dfdfdudv = _Interpolate(u,v,1,1);
-      //std::complex<double> edfdfdudv = 0.;
-      //std::complex<double> edfdfdudv = - 8. * M_PI * v * sin(2 * M_PI * u);
-      std::complex<double> edfdfdudv = 2. * M_PI * sin(v) * sin(2 * M_PI * u);
-      dfdfdudv_error = std::max(dfdfdudv_error,std::abs(dfdfdudv - edfdfdudv));
-    }
-
-  printf("F_Error = %g\n",f_error);
-  printf("Dfdu_Error = %g\n",dfdu_error);
-  printf("Dfdv_Error = %g\n",dfdv_error);
-  printf("Dfdfdudu_Error = %g\n",dfdfdudu_error);
-  printf("Dfdfdudv_Error = %g\n",dfdfdudv_error);
-  printf("Dfdfdvdv_Error = %g\n\n",dfdfdvdv_error);
-  */
 }
 
 ContinuationPatch::~ContinuationPatch()
@@ -463,12 +396,6 @@ void ContinuationPatch::_BackwardFft(int n, std::complex<double> *fftData)
 
 void ContinuationPatch::_ReprocessSeriesCoeff()
 {
-  _coeffData = new std::complex<double>*[_uM];
-  for(int j = 0; j < _uM; j++) {
-    _coeffData[j] = new std::complex<double>[_vM];
-    for(int k = 0; k < _vM; k++)
-      _coeffData[j][k] = 0.;
-  }
   if (IsUPeriodic() && IsVPeriodic()) {
     int uShift = (_uM-_uModes)%2 == 0 ? (_uM-_uModes)/2 : (_uM-_uModes)/2 + 1;
     int vShift = (_vM-_vModes)%2 == 0 ? (_vM-_vModes)/2 : (_vM-_vModes)/2 + 1;
@@ -713,10 +640,7 @@ F(double u, double v, double &x, double &y, double &z)
   _ps->F(u,v,px,py,pz);
   _ps->GetUnitNormal(u,v,nx,ny,nz);
 
-  if (_derivative)
-    d = _Interpolate(u, v, 0, 0).real();
-  else
-    d = _Interpolate(u, v).real();
+  d = _Interpolate(u, v).real();
 
   x = px + d * nx;
   y = py + d * ny;
@@ -885,4 +809,77 @@ double  ContinuationPatch::GetPou(double u, double v)
     pouV = PartitionOfUnity(v, 0., 0.3, 0.7, 1.);
 
   return pouU * pouV;
+}
+
+void ContinuationPatch::Export(FILE *fp)
+{
+  double x,y,z;
+
+  fprintf(fp, "%s\n", _ps->GetName().c_str());
+  fprintf(fp, "%d\n", _ps->GetTag());
+  _ps->GetOrigin(x,y,z);
+  fprintf(fp, "%g %g %g\n", x, y, z);
+  _ps->GetE0(x,y,z);
+  fprintf(fp, "%g %g %g\n", x, y, z);
+  _ps->GetE1(x,y,z);
+  fprintf(fp, "%g %g %g\n", x, y, z);
+  _ps->GetScale(x,y,z);
+  fprintf(fp, "%g %g %g\n", x, y, z);
+  fprintf(fp, "%d\n", _ps->GetNumParameters());
+  for (int i = 0; i < _ps->GetNumParameters(); i++)
+    fprintf(fp, "%g\n",_ps->GetParameter(i));
+
+  fprintf(fp, "%s\n", "ContinuationPatch");
+  fprintf(fp, "%d\n", _tag);
+  fprintf(fp, "%d\n", _derivative);
+  fprintf(fp, "%g %g\n", _uMin, _uMax);
+  fprintf(fp, "%g %g\n", _vMin, _vMax);
+  fprintf(fp, "%d %d %d %d\n", _hardEdge[0], _hardEdge[1], _hardEdge[2],
+	  _hardEdge[3]);
+  fprintf(fp, "%d %d\n", _uModes, _vModes);
+  for (int j = 0; j < _uModes; j++) {
+    for (int k = 0; k < _vModes; k++) {
+      fprintf(fp, "%g %g\n", _coeffOriginalData[j][k].real(),
+	      _coeffOriginalData[j][k].imag());
+    }
+  }
+  fprintf(fp, "%d\n", 0);
+  fprintf(fp, "%d %d\n", _uM, _vM);
+  for (int j = 0; j < _uM; j++) {
+    for (int k = 0; k < _vM; k++) {
+      fprintf(fp, "%g %g\n", _coeffData[j][k].real(), _coeffData[j][k].imag());
+    }
+  }
+  if (_derivative) {
+    for (int j = 0; j < _uM; j++) {
+      for (int k = 0; k < _vM; k++) {
+	fprintf(fp, "%g %g\n", _coeffDerivU[j][k].real(), 
+		_coeffDerivU[j][k].imag());
+      }
+    }
+    for (int j = 0; j < _uM; j++) {
+      for (int k = 0; k < _vM; k++) {
+	fprintf(fp, "%g %g\n", _coeffDerivV[j][k].real(), 
+		_coeffDerivV[j][k].imag());
+      }
+    }
+    for (int j = 0; j < _uM; j++) {
+      for (int k = 0; k < _vM; k++) {
+	fprintf(fp, "%g %g\n", _coeffDerivUU[j][k].real(), 
+		_coeffDerivUU[j][k].imag());
+      }
+    }
+    for (int j = 0; j < _uM; j++) {
+      for (int k = 0; k < _vM; k++) {
+	fprintf(fp, "%g %g\n", _coeffDerivUV[j][k].real(), 
+		_coeffDerivUV[j][k].imag());
+      }
+    }
+    for (int j = 0; j < _uM; j++) {
+      for (int k = 0; k < _vM; k++) {
+	fprintf(fp, "%g %g\n", _coeffDerivVV[j][k].real(), 
+		_coeffDerivVV[j][k].imag());
+      }
+    }
+  }
 }

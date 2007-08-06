@@ -6,15 +6,20 @@
 
 class PatchInfo {
  public:
-  char type[16];
   int tag;
-  int projectionSurfaceTag;
+  int derivative;
+  int recompute;
   int nM[2];
   int nModes[2];
-  int periodic[2];
   double uMin, uMax, vMin, vMax;
   int hardEdge[4];
-  std::vector<std::vector<std::complex<double> > > coeff;
+  std::vector<std::vector<std::complex<double> > > coeffFourier;
+  std::vector<std::vector<std::complex<double> > > coeffCheby;
+  std::vector<std::vector<std::complex<double> > > coeffDerivU;
+  std::vector<std::vector<std::complex<double> > > coeffDerivV;
+  std::vector<std::vector<std::complex<double> > > coeffDerivUU;
+  std::vector<std::vector<std::complex<double> > > coeffDerivUV;
+  std::vector<std::vector<std::complex<double> > > coeffDerivVV;
 
   PatchInfo();
   virtual ~PatchInfo() {}
