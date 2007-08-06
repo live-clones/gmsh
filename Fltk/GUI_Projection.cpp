@@ -21,27 +21,20 @@ uvPlot::uvPlot(int x, int y, int w, int h, const char *l)
 void uvPlot::set(std::vector<double> &u, std::vector<double> &v, 
 		 std::vector<double> &dist, std::vector<std::complex<double> > &f)
 { 
-  _u.clear(); 
-  _v.clear();
-  _dist.clear();
-  _f.clear();
-
-  if(u.size() == v.size() && u.size() == dist.size() && u.size() == f.size()){
-    _dmin = 1.e200; _dmax = 0.;
-    for(unsigned int i = 0; i < u.size(); i++){
-      // only store valid points
-      if(u[i] >= 0. && u[i] <= 1. && v[i] >= 0. && v[i] <= 1.){
-	_u.push_back(u[i]); 
-	_v.push_back(v[i]); 
-	_dist.push_back(dist[i]); 
-	_f.push_back(f[i]); 
-	_dmin = std::min(_dmin, dist[i]);
-	_dmax = std::max(_dmax, dist[i]);
-      }
+  _u = u; 
+  _v = v;
+  _dist = dist;
+  _f = f;
+  if(dist.empty()){
+    _dmin = _dmax = 0.;
+  }
+  else{
+    _dmin = _dmax = dist[0];
+    for(unsigned int i = 1; i < dist.size(); i++){
+      _dmin = std::min(_dmin, dist[i]);
+      _dmax = std::max(_dmax, dist[i]);
     }
   }
-
-  if(_u.empty()) _dmin = _dmax = 0.;
   redraw();
 }
 
@@ -361,13 +354,15 @@ void update_cb(Fl_Widget *w, void *data)
 	else{
 	  double uu, vv, p[3], n[3];
 	  ps->OrthoProjectionOnSurface(ve->x(),ve->y(),ve->z(),uu,vv);
-	  u.push_back(uu);
-	  v.push_back(vv);
-	  ps->F(uu, vv, p[0], p[1], p[2]);
-	  ps->GetUnitNormal(uu, vv, n[0], n[1], n[2]);
-	  double dx = ve->x() - p[0], dy = ve->y() - p[1], dz = ve->z() - p[2];
-	  dist.push_back(sqrt(dx * dx + dy * dy + dz * dz));
-	  f.push_back(dx * n[0] + dy * n[1] + dz * n[2]);
+	  if(uu >= 0. && uu <= 1. && vv >= 0. && vv <= 1.){
+	    u.push_back(uu);
+	    v.push_back(vv);
+	    ps->F(uu, vv, p[0], p[1], p[2]);
+	    ps->GetUnitNormal(uu, vv, n[0], n[1], n[2]);
+	    double dx = ve->x() - p[0], dy = ve->y() - p[1], dz = ve->z() - p[2];
+	    dist.push_back(sqrt(dx * dx + dy * dy + dz * dz));
+	    f.push_back(dx * n[0] + dy * n[1] + dz * n[2]);
+	  }
 	}
       }
     }
