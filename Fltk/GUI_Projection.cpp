@@ -99,7 +99,7 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
   group = new Fl_Scroll(x, y, w, h);
   SBoundingBox3d bounds = GMODEL->bounds();
   ProjectionSurface *ps = f->GetProjectionSurface();
-  currentParams = new double[ps->GetNumParameters() + 9];
+  currentParams = new double[ps->GetNumParameters() + 9 + 100]; // FIXME!!!!!!!!!!!!!
   for(int i = 0; i < ps->GetNumParameters() + 9; i++){
     Fl_Value_Input *v = new Fl_Value_Input(x, y + i * BH, BB, BH);
     if(i < 3){ // scaling
