@@ -11,19 +11,6 @@ FProjectionFace(GModel *m, int num, ProjectionSurface* ps)
 
 FProjectionFace::~FProjectionFace() {}
 
-/*
-void FProjectionFace::ResetProjectionSurface(int type)
-{
-  if (ps_->GetTag() != type) {
-    delete ps_;
-    if (type == 1)
-      ps_ = new RevolvedParabolaProjectionSurface(type);
-    else
-      ps_ = new CylindricalProjectionSurface(type);
-  }
-}
-*/
-
 GPoint FProjectionFace::point(double par1, double par2) const
 {
   SVector3 p;
