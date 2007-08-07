@@ -21,7 +21,8 @@ void update_cb(Fl_Widget *w, void *data);
 void close_cb(Fl_Widget *w, void *data);
 void hide_cb(Fl_Widget *w, void *data);
 void save_selection_cb(Fl_Widget *w, void *data);
-void read_parameters_cb(Fl_Widget *w, void *data);
+void load_projection_cb(Fl_Widget *w, void *data);
+void save_projection_cb(Fl_Widget *w, void *data);
 void compute_cb(Fl_Widget *w, void *data);
 void action_cb(Fl_Widget *w, void *data);
 
@@ -61,10 +62,12 @@ class projectionEditor {
   std::vector<GEntity*> _entities;
   Fl_Window *_window;
   Fl_Hold_Browser *_browser;
+  int _paramWin[6];
   Fl_Round_Button *_select[3];
   uvPlot *_uvPlot;
  public:
-  projectionEditor(std::vector<FProjectionFace*> &faces);
+  projectionEditor();
+  void load(FProjectionFace *face);
   void show(){ _window->show(); select_cb(0, this); }
   uvPlot *uv() { return _uvPlot; }
   Fl_Value_Input* modes[4];
@@ -73,6 +76,7 @@ class projectionEditor {
   std::vector<GEntity*> &getEntities() { return _entities; }
   std::vector<projection*> &getProjections() { return _projections; }
   projection *getCurrentProjection();
+  projection *getLastProjection();
   int getSelectionMode();
 };
 

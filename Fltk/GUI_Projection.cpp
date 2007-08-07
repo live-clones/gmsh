@@ -18,6 +18,27 @@ extern Context_T CTX;
 #include "CylindricalProjectionSurface.h"
 #include "RevolvedParabolaProjectionSurface.h"
 
+static FProjectionFace *createProjectionFaceFromName(char *name)
+{
+  int tag = GMODEL->numFace() + 1;
+  FProjectionFace *f = 0;
+  if(!strcmp(name, "plane"))
+    f = new FProjectionFace(GMODEL, tag, new PlaneProjectionSurface(tag));
+  else if(!strcmp(name, "paraboloid"))
+    f = new FProjectionFace(GMODEL, tag, new ParaboloidProjectionSurface(tag));
+  else if(!strcmp(name, "Cylinder"))
+    f = new FProjectionFace(GMODEL, tag, new CylindricalProjectionSurface(tag));
+  else if(!strcmp(name, "revolvedParabola"))
+    f = new FProjectionFace(GMODEL, tag, new RevolvedParabolaProjectionSurface(tag));
+  else
+    Msg(GERROR, "Unknown projection face `%s'", name);
+  if(f){
+    f->setVisibility(false);
+    GMODEL->add(f);
+  }
+  return f;
+}
+
 uvPlot::uvPlot(int x, int y, int w, int h, const char *l)
   : Fl_Window(x, y, w, h, l), _dmin(0.), _dmax(0.)
 {
@@ -151,7 +172,7 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
   group->hide();
 }
 
-projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces) 
+projectionEditor::projectionEditor() 
 {
   // construct GUI in terms of standard sizes
   const int BH = 2 * GetFontSize() + 1, BB = 7 * GetFontSize(), WB = 7;
@@ -183,23 +204,27 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
     Fl_Button *b2 = new Fl_Button
       (width - WB - 3 * BB / 2, WB + BH, 3 * BB / 2, BH, "Save selection");
     b2->callback(save_selection_cb, this);
-    Fl_Button *b3 = new Fl_Button
-      (width - WB - 3 * BB / 2, WB + 2 * BH, 3 * BB / 2, BH, "Read parameters");
-    b3->callback(read_parameters_cb, this);
   }
 
   const int brw = (int)(1.25 * BB);
 
-  _browser = new Fl_Hold_Browser(WB, 2 * WB + 3 * BH, brw, 6 * BH);
+  _browser = new Fl_Hold_Browser(WB, 2 * WB + 3 * BH, brw, 5 * BH);
   _browser->callback(browse_cb, this);
-  for(unsigned int i = 0; i < faces.size(); i++){
-    ProjectionSurface *ps = faces[i]->GetProjectionSurface();
-    _browser->add(ps->GetName().c_str());
-    _projections.push_back
-      (new projection(faces[i], 2 * WB + brw, 2 * WB + 3 * BH, 
-		      width - 3 * WB - brw, 6 * BH, BB, BH, this));
+
+  _paramWin[0] = 2 * WB + brw;
+  _paramWin[1] = 2 * WB + 3 * BH;
+  _paramWin[2] = width - 3 * WB - brw;
+  _paramWin[3] = 6 * BH;
+  _paramWin[4] = BB;
+  _paramWin[5] = BH;
+
+  {
+    Fl_Button *b1 = new Fl_Button(WB, 2 * WB + 8 * BH, brw / 2, BH, "Load");
+    b1->callback(load_projection_cb, this);
+    Fl_Button *b2 = new Fl_Button(WB + brw / 2, 2 * WB + 8 * BH, brw / 2, BH, "Save");
+    b2->callback(save_projection_cb, this);
   }
-  
+
   int hard = 8;
   int uvw = width - 2 * WB - 2 * hard - 3 * WB;
   int uvh = height - 8 * WB - 14 * BH - 2 * hard;
@@ -294,6 +319,16 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
   _window->size_range(width, (int)(0.85 * height));
 }
 
+void projectionEditor::load(FProjectionFace *face)
+{
+  ProjectionSurface *ps = face->GetProjectionSurface();
+  _browser->add(ps->GetName().c_str());
+  projection *p =  new projection(face, _paramWin[0], _paramWin[1], _paramWin[2],
+				  _paramWin[3], _paramWin[4], _paramWin[5], this);
+  _projections.push_back(p);
+  _window->add(p->group);
+}
+
 int projectionEditor::getSelectionMode() 
 { 
   if(_select[0]->value())
@@ -308,6 +343,11 @@ projection *projectionEditor::getCurrentProjection()
   for(int i = 1; i <= _browser->size(); i++)
     if(_browser->selected(i)) return _projections[i - 1];
   return 0;
+}
+
+projection *projectionEditor::getLastProjection()
+{
+  return _projections[_projections.size() - 1];
 }
 
 void browse_cb(Fl_Widget *w, void *data)
@@ -530,33 +570,75 @@ void hide_cb(Fl_Widget *w, void *data)
 void save_selection_cb(Fl_Widget *w, void *data)
 {
   projectionEditor *e = (projectionEditor*)data;
-
   std::vector<GEntity*> &ent(e->getEntities());
-  for(unsigned int i = 0; i < ent.size(); i++){
-    printf("entity %d\n", ent[i]->tag());
-  }
-
-  std::vector<MElement*> &ele(e->getElements());
-  for(unsigned int i = 0; i < ele.size(); i++){
-    printf("element %d\n", ele[i]->getNum());
+  if(file_chooser(0, 1, "Save Selection", "*.geo")){
+    FILE *fp = fopen(file_chooser_get_name(1), "w");
+    if(!fp){
+      Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1));
+      return;
+    }
+    // FIXME: maybe we should save as mesh file
+    for(unsigned int i = 0; i < ent.size(); i++){
+      GVertex *v = dynamic_cast<GVertex*>(ent[i]);
+      if(v && v->getSelection())
+	fprintf(fp, "Point(%d) = {%.16g,%.16g,%.16g,1};\n", v->tag(), 
+		v->x(), v->y(), v->z());
+    }
+    // FIXME: deal with std::vector<MElement*> &ele(e->getElements());
+    fclose(fp);
   }
 }
 
-void read_parameters_cb(Fl_Widget *w, void *data)
+void load_projection_cb(Fl_Widget *w, void *data)
+{
+  projectionEditor *e = (projectionEditor*)data;
+  if(file_chooser(0, 0, "Load Projection", "*.pro")){
+    FILE *fp = fopen(file_chooser_get_name(1), "r");
+    if(!fp){
+      Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1));
+      return;
+    }
+    char name[256];
+    if(!fscanf(fp, "%s", name)){
+      Msg(GERROR, "Bad projection file format");
+      return;
+    }
+    FProjectionFace *face = createProjectionFaceFromName(name);
+    if(face){
+      e->load(face);
+      projection *p = e->getLastProjection();
+      if(p){
+	for(unsigned int i = 0; i < p->parameters.size(); i++){
+	  double val;
+	  if(!fscanf(fp, "%lf", &val)){
+	    Msg(GERROR, "Missing paramater for projection `%s'", name);
+	    break;
+	  }
+	  p->parameters[i]->value(val);
+	}
+	fclose(fp);
+	update_cb(0, data);
+      }
+    }
+  }
+}
+
+void save_projection_cb(Fl_Widget *w, void *data)
 {
   projectionEditor *e = (projectionEditor*)data;
   projection *p = e->getCurrentProjection();
   if(p){
-    if(file_chooser(0, 0, "Read parameters", "*.par")){
-      FILE *fp = fopen(file_chooser_get_name(1), "r");
-      if(!fp) return;
-      for(unsigned int i = 0; i < p->parameters.size(); i++){
-	double val;
-	if(!fscanf(fp, "%lf", &val)) break;
-	p->parameters[i]->value(val);
+    ProjectionSurface *ps = p->face->GetProjectionSurface();
+    if(file_chooser(0, 1, "Save Projection", "*.pro")){
+      FILE *fp = fopen(file_chooser_get_name(1), "w");
+      if(!fp){
+	Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1));
+	return;
       }
+      fprintf(fp, "%s\n", ps->GetName().c_str());
+      for(unsigned int i = 0; i < p->parameters.size(); i++)
+	fprintf(fp, "%.16g\n", p->parameters[i]->value());
       fclose(fp);
-      update_cb(0, data);
     }
   }
 }
@@ -702,23 +784,11 @@ void mesh_parameterize_cb(Fl_Widget* w, void* data)
   // create the (static) editor
   static projectionEditor *editor = 0;
   if(!editor){
-    std::vector<FProjectionFace*> faces;
-    int tag = GMODEL->numFace();
-    faces.push_back(new FProjectionFace(GMODEL, ++tag,
-					new PlaneProjectionSurface(tag)));
-    faces.push_back(new FProjectionFace(GMODEL, ++tag,
-					new ParaboloidProjectionSurface(tag)));
-    faces.push_back(new FProjectionFace(GMODEL, ++tag, 
-					new CylindricalProjectionSurface(tag)));
-    faces.push_back(new FProjectionFace(GMODEL, ++tag,
-					new RevolvedParabolaProjectionSurface(tag)));
-
-    editor = new projectionEditor(faces);
-
-    for(unsigned int i = 0; i < faces.size(); i++){
-      faces[i]->setVisibility(false);
-      GMODEL->add(faces[i]);
-    }
+    editor = new projectionEditor();
+    editor->load(createProjectionFaceFromName("plane"));
+    editor->load(createProjectionFaceFromName("paraboloid"));
+    editor->load(createProjectionFaceFromName("Cylinder"));
+    editor->load(createProjectionFaceFromName("revolvedParabola"));
   }
   editor->show();
 }
