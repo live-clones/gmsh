@@ -537,7 +537,7 @@ void filter_cb(Fl_Widget *w, void *data)
     std::vector<GEntity*> &ent(e->getEntities());
     for(unsigned int i = 0; i < ent.size(); i++){
       GVertex *gv = dynamic_cast<GVertex*>(ent[i]);
-      if(ve){
+      if(gv){
 	double uu, vv, p[3], n[3];
 	ps->OrthoProjectionOnSurface(gv->x(), gv->y(), gv->z(), uu, vv);
 	ps->F(uu, vv, p[0], p[1], p[2]);
@@ -725,7 +725,7 @@ void delete_fourier(GFace *gf)
   for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++)
     GMODEL->remove(*it);
 
-  GMODEL->remove(gf)
+  GMODEL->remove(gf);
 }
 
 void action_cb(Fl_Widget *w, void *data)
