@@ -47,7 +47,7 @@ void ParaboloidProjectionSurface::F
   y = O_[1] + (u - 0.5) * scale_[1] * E1_[1] + (v - 0.5) * scale_[2] * E2_[1] +
     ((u - 0.5) * scale_[1] * (u - 0.5) * scale_[1] +
      (v - 0.5) * scale_[2] * (v - 0.5) * scale_[2]) * scale_[0] * E0_[1];
-  z = O_[0] + (u - 0.5) * scale_[1] * E1_[2] + (v - 0.5) * scale_[2] * E2_[2] +
+  z = O_[2] + (u - 0.5) * scale_[1] * E1_[2] + (v - 0.5) * scale_[2] * E2_[2] +
     ((u - 0.5) * scale_[1] * (u - 0.5) * scale_[1] +
      (v - 0.5) * scale_[2] * (v - 0.5) * scale_[2]) * scale_[0] * E0_[2];
 }
@@ -141,51 +141,46 @@ void ParaboloidProjectionSurface::Dfdfdfdvdvdv
 bool ParaboloidProjectionSurface::OrthoProjectionOnSurface
 (double x, double y, double z, double& u, double& v)
 {
-  /*
   double R[3];
   R[0] = x - O_[0];
   R[1] = y - O_[1];
   R[2] = z - O_[2];
 
-  double RdotT = 0., RdotNcT = 0.;
+  double x0 = 0., y0 = 0., z0 = 0.;
   for (int i=0;i<3;i++) {
-    RdotT += R[i] * E1_[i];
-    RdotNcT += R[i] * E2_[i];
+    x0 += R[i] * E1_[i];
+    y0 += R[i] * E2_[i];
+    z0 += R[i] * E0_[i];
   }
 
-  RdotT /= scale_[1];
-  RdotNcT /= scale_[2];
+  z0 /= scale_[0];
 
-  u = atan2(RdotNcT,RdotT);
-  u /= twoPi_;
-  u += 0.5;      
+  double a = 4.;
+  double b = 4. * (1. + z0);
+  double c = 1 + 4. * z0;
+  double d = z0 - x0 * x0 - y0 * y0;
 
-  double r1 = 0., r2 = 0.;
-  for (int i=0;i<3;i++) {
-    r1 += R[i] * (E1_[i] * scale_[1] * cos(twoPi_ * (u - 0.5)) +
-		 E2_[i] * scale_[2] * sin(twoPi_ * (u - 0.5)));
-    r2 += R[i] * scale_[0] * E0_[i];
-  }
-
-  double A = 
-    scale_[1] * scale_[1] * cos(twoPi_ * (u - 0.5)) * cos(twoPi_ * (u - 0.5)) +
-    scale_[2] * scale_[2] * sin(twoPi_ * (u - 0.5)) * sin(twoPi_ * (u - 0.5));
-  double B = scale_[0] * scale_[0];
-
-  double a = 2 * K_[1] * K_[1] * B * B;
-  double b = K_[0] * K_[0] * A * A - 2 * K_[1] * r2 * B;
-  double c = - K_[0] * r1 * A;
-
-  std::vector<double> root = SolveCubic(a,b,c);
+  std::vector<double> root = SolveCubic(a,b,c,d);
 
   if (root.size()) {
-
+    double xP,yP,zP;
+    double minDist = 1.e12;
+    double minRoot;
     for (int i=0;i<root.size();i++) {
-      if (root[i] >= 0.) {
-	v = root[i];
-	break;
+      xP = x0 / (2 * root[i] + 1.);
+      yP = y0 / (2 * root[i] + 1.);
+      zP = z0 + root[i];
+      double dist = sqrt((x0-xP)*(x0-xP)+(y0-yP)*(y0-yP)+(z0-zP)*(z0-zP));
+      if (dist < minDist) {
+        minDist = dist;
+        minRoot = root[i];
       }
     }
+    xP = x0 / (2 * minRoot + 1.);
+    yP = y0 / (2 * minRoot + 1.);
+    zP = z0 + minRoot;
+    u = xP / scale_[1] + 0.5;
+    v = yP / scale_[2] + 0.5;
     double tol =1.e-4;
     if ((u > - tol) && (u < 1. + tol) && (v > - tol) && (v < 1. + tol))
       return true;
@@ -194,7 +189,6 @@ bool ParaboloidProjectionSurface::OrthoProjectionOnSurface
   }
   else
     return false;
-*/
 }
 
 void ParaboloidProjectionSurface::
