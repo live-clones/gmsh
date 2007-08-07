@@ -36,6 +36,8 @@ void save_cb(Fl_Widget *w, void *data);
 void compute_cb(Fl_Widget *w, void *data);
 void action_cb(Fl_Widget *w, void *data);
 
+void makeGFace(Patch* patch);
+
 class uvPlot : public Fl_Window {
  private:
   std::vector<double> _u, _v, _dist;

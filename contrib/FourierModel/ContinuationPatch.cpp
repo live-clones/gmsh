@@ -264,7 +264,7 @@ ContinuationPatch::ContinuationPatch
     }
     else {
       for (int j = 0; j < _uM; j++) {
-	for (int k = 0; k < _vModes; k++) {
+	for (int k = 0; k < _vM; k++) {
 	  _coeffData[j][k] = _PI->coeffCheby[j][k];
 	  _coeffDerivU[j][k] = _PI->coeffDerivU[j][k];
 	  _coeffDerivV[j][k] = _PI->coeffDerivV[j][k];
