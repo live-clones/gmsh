@@ -4,6 +4,7 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "GModel.h"
+#include "GModelIO_F.h"
 #include "GUI.h"
 #include "Shortcut_Window.h"
 #include "ColorTable.h"
@@ -15,16 +16,7 @@
 #include "Utils.h"
 #include <vector>
 #include <complex>
-#include "FVertex.h"
-#include "FEdge.h"
-#include "FFace.h"
-#include "FPatch.h"
-#include "FCurve.h"
 #include "FProjectionFace.h"
-#include "FM_Vertex.h"
-#include "FM_Edge.h"
-#include "FM_Face.h"
-#include "FM_Reader.h"
 
 void select_cb(Fl_Widget *w, void *data);
 void filter_cb(Fl_Widget *w, void *data);
@@ -35,8 +27,6 @@ void hide_cb(Fl_Widget *w, void *data);
 void save_cb(Fl_Widget *w, void *data);
 void compute_cb(Fl_Widget *w, void *data);
 void action_cb(Fl_Widget *w, void *data);
-
-void makeGFace(Patch* patch);
 
 class uvPlot : public Fl_Window {
  private:

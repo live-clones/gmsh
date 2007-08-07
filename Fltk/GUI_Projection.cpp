@@ -3,11 +3,14 @@
 #include "Context.h"
 #include "SelectBuffer.h"
 #include "GUI_Projection.h"
+#include "FFace.h"
 
 extern GModel *GMODEL;
 extern Context_T CTX;
 
 #if defined(HAVE_FOURIER_MODEL)
+
+#include "FPatch.h"
 
 #define HARDCODED
 
@@ -257,11 +260,14 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
   {
     int bb = (int)(0.37 * BB);
     new Fl_Box(WB, height - 3 * WB - 3 * BH, BB / 2, BH, "Delete:");
-    Fl_Button *b1 = new Fl_Button(WB + BB / 2, height - 3 * WB - 3 * BH, bb, BH, "last");
+    Fl_Button *b1 = new Fl_Button(WB + BB / 2, height - 3 * WB - 3 * BH, 
+				  bb, BH, "last");
     b1->callback(action_cb, (void*)"delete_last");
-    Fl_Button *b2 = new Fl_Button(WB + BB / 2 + bb, height - 3 * WB - 3 * BH, bb, BH, "all");
+    Fl_Button *b2 = new Fl_Button(WB + BB / 2 + bb, height - 3 * WB - 3 * BH,
+				  bb, BH, "all");
     b2->callback(action_cb, (void*)"delete_all");
-    Fl_Button *b3 = new Fl_Button(WB + BB / 2 + 2 * bb, height - 3 * WB - 3 * BH, bb, BH, "sel.");
+    Fl_Button *b3 = new Fl_Button(WB + BB / 2 + 2 * bb, height - 3 * WB - 3 * BH,
+				  bb, BH, "sel.");
     b3->callback(action_cb, (void*)"delete_select");
   }
 
@@ -269,17 +275,22 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
     int bb = (int)(0.37 * BB);
     int s = width - WB - BB / 2 - 3 * bb;
     new Fl_Box(s, height - 3 * WB - 3 * BH, BB / 2, BH, "Save:");
-    Fl_Button *b1 = new Fl_Button(s + BB / 2, height - 3 * WB - 3 * BH, bb, BH, "last");
+    Fl_Button *b1 = new Fl_Button(s + BB / 2, height - 3 * WB - 3 * BH,
+				  bb, BH, "last");
     b1->callback(action_cb, (void*)"save_last");
-    Fl_Button *b2 = new Fl_Button(s + BB / 2 + bb, height - 3 * WB - 3 * BH, bb, BH, "all");
+    Fl_Button *b2 = new Fl_Button(s + BB / 2 + bb, height - 3 * WB - 3 * BH,
+				  bb, BH, "all");
     b2->callback(action_cb, (void*)"save_all");
-    Fl_Button *b3 = new Fl_Button(s + BB / 2 + 2 * bb, height - 3 * WB - 3 * BH, bb, BH, "sel.");
+    Fl_Button *b3 = new Fl_Button(s + BB / 2 + 2 * bb, height - 3 * WB - 3 * BH,
+				  bb, BH, "sel.");
     b3->callback(action_cb, (void*)"save_select");
   }
 
   {
-    Fl_Button *b1 = new Fl_Button(WB, height - 2 * WB - 2 * BH, BB, BH, "Blend");
-    Fl_Button *b2 = new Fl_Button(2 * WB + BB, height - 2 * WB - 2 * BH, BB, BH, "Intersect");
+    Fl_Button *b1 = new Fl_Button(WB, height - 2 * WB - 2 * BH, 
+				  BB, BH, "Blend");
+    Fl_Button *b2 = new Fl_Button(2 * WB + BB, height - 2 * WB - 2 * BH, 
+				  BB, BH, "Intersect");
   }
 
   Fl_Button *b = new Fl_Button(width - WB - BB, height - WB - BH, BB, BH, "Cancel");
@@ -551,91 +562,53 @@ void compute_cb(Fl_Widget *w, void *data)
     e->uv()->get(u, v, dist, f);
     if(f.empty()) return;
 
+    int uModes = (int)e->modes[0]->value();
+    int vModes = (int)e->modes[1]->value();
+
+    if(f.size() < uModes * vModes){
+      Msg(GERROR, "Number of points < uModes * vModes");
+      return;
+    }
+
+    int uM = (int)e->modes[2]->value();
+    int vM = (int)e->modes[3]->value();
+    int h0 = e->hardEdges[0]->value();
+    int h1 = e->hardEdges[1]->value();
+    int h2 = e->hardEdges[2]->value();
+    int h3 = e->hardEdges[3]->value();
+
     // create the Fourier faces (with boundaries)
     ProjectionSurface *ps = p->face->GetProjectionSurface();
     if(ps->IsUPeriodic()) {
-      Patch* patchL = 
-	new FPatch(0,ps->clone(),u,v,f,3,(int)(e->modes[0]->value()),
-		   (int)(e->modes[1]->value()),(int)(e->modes[2]->value()), 
-		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(), 
-		   e->hardEdges[1]->value(), e->hardEdges[2]->value(), 
-		   e->hardEdges[3]->value());
+      Patch* patchL = new FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
+				 uM, vM, h0, h1, h2, h3);
       patchL->SetMinU(-0.35);
       patchL->SetMaxU(0.35);
       makeGFace(patchL);
-
-      Patch* patchR = 
-	new FPatch(0,ps->clone(),u,v,f,3,(int)(e->modes[0]->value()),
-		   (int)(e->modes[1]->value()),(int)(e->modes[2]->value()), 
-		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(), 
-		   e->hardEdges[1]->value(), e->hardEdges[2]->value(), 
-		   e->hardEdges[3]->value());
+      Patch* patchR = new FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
+				 uM, vM, h0, h1, h2, h3);
       patchR->SetMinU(0.15);
       patchR->SetMaxU(0.85);
       makeGFace(patchR);
     }
     else if (ps->IsVPeriodic()) {
-      Patch* patchL = 
-	new FPatch(0,ps->clone(),u,v,f,3,(int)(e->modes[0]->value()),
-		   (int)(e->modes[1]->value()),(int)(e->modes[2]->value()), 
-		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(),
-		   e->hardEdges[1]->value(), e->hardEdges[2]->value(), 
-		   e->hardEdges[3]->value());
+      Patch* patchL = new FPatch(0,ps->clone(), u, v, f, 3, uModes, vModes, 
+				 uM, vM, h0, h1, h2, h3);
       patchL->SetMinV(-0.35);
       patchL->SetMaxV(0.35);
       makeGFace(patchL);
-
-      Patch* patchR = 
-	new FPatch(0,ps->clone(),u,v,f,3,(int)(e->modes[0]->value()),
-		   (int)(e->modes[1]->value()),(int)(e->modes[2]->value()), 
-		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(),
-		   e->hardEdges[1]->value(), e->hardEdges[2]->value(), 
-		   e->hardEdges[3]->value());
+      Patch* patchR = new FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
+				 uM, vM, h0, h1, h2, h3);
       patchR->SetMinV(0.15);
       patchR->SetMaxV(0.85);
       makeGFace(patchR);
     }
     else {
-      Patch* patch = 
-	new FPatch(0,ps->clone(),u,v,f,3,(int)(e->modes[0]->value()),
-		   (int)(e->modes[1]->value()),(int)(e->modes[2]->value()), 
-		   (int)(e->modes[3]->value()), e->hardEdges[0]->value(), 
-		   e->hardEdges[1]->value(), e->hardEdges[2]->value(), 
-		   e->hardEdges[3]->value());
+      Patch* patch = new FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+				uM, vM, h0, h1, h2, h3);
       makeGFace(patch);
     }
   }
-
-  // IO Test Code
-  char *filename = "patches.fm";
-
-  FILE *fp = fopen(filename, "w+");
-  if(!fp){
-    printf("Unable to open file '%s'\n", filename);
-    return;
-  }
-
-  std::set<GFace*, GEntityLessThan>::iterator fiter;
-  int numFourierPatches = 0;
-  for (fiter = GMODEL->firstFace(); fiter != GMODEL->lastFace(); fiter++) {
-    if ((*fiter)->getNativeType() == GEntity::FourierModel) {
-      numFourierPatches++;
-    }
-  }
-  fprintf(fp, "%d\n", numFourierPatches);
-  for (fiter = GMODEL->firstFace(); fiter != GMODEL->lastFace(); fiter++) {
-    if ((*fiter)->getNativeType() == GEntity::FourierModel) {
-      FFace* ff = (FFace*) (*fiter);
-      ff->GetFMFace()->GetPatch()->Export(fp);
-    }
-  }
-  fclose(fp);
-
-  FM_Reader* reader = new FM_Reader(filename);
-  for (int i = 0; i < reader->GetNumPatches(); i++)
-    makeGFace(reader->GetPatch(i));
-
-  // End Test
 
   Draw();
 }
@@ -692,7 +665,18 @@ void action_cb(Fl_Widget *w, void *data)
     for(unsigned int i = 0; i < faces.size(); i++) delete_fourier(faces[i]);
   }
   else{
-    // call IO code
+    char *filename = "patches.fm";
+    FILE *fp = fopen(filename, "w+");
+    if(!fp){
+      printf("Unable to open file '%s'\n", filename);
+      return;
+    }
+    fprintf(fp, "%d\n", (int)faces.size());
+    for(unsigned int i = 0; i < faces.size(); i++){
+      FFace* ff = (FFace*)faces[i];
+      ff->GetFMFace()->GetPatch()->Export(fp);
+    }
+    fclose(fp);
   }
 
   Draw();
@@ -725,69 +709,6 @@ void mesh_parameterize_cb(Fl_Widget* w, void* data)
     }
   }
   editor->show();
-}
-
-void makeGFace(Patch* patch)
-{
-  double LL[2], LR[2], UL[2], UR[2];
-  LL[0] = 0.0; LL[1] = 0.0;
-  LR[0] = 1.0; LR[1] = 0.0;
-  UL[0] = 0.0; UL[1] = 1.0;
-  UR[0] = 1.0; UR[1] = 1.0;
-  
-  int i1, i2;
-  double xx,yy,zz;
-  
-  int tagVertex = GMODEL->numVertex();
-  patch->F(LL[0],LL[1],xx,yy,zz);
-  FM_Vertex* vLL = new FM_Vertex(++tagVertex,xx,yy,zz);
-  GMODEL->add(new FVertex(GMODEL,vLL->GetTag(),vLL));
-  patch->F(LR[0],LR[1],xx,yy,zz);
-  FM_Vertex* vLR = new FM_Vertex(++tagVertex,xx,yy,zz);
-  GMODEL->add(new FVertex(GMODEL,vLR->GetTag(),vLR));
-  patch->F(UL[0],UL[1],xx,yy,zz);
-  FM_Vertex* vUL = new FM_Vertex(++tagVertex,xx,yy,zz);
-  GMODEL->add(new FVertex(GMODEL,vUL->GetTag(),vUL));
-  patch->F(UR[0],UR[1],xx,yy,zz);
-  FM_Vertex* vUR = new FM_Vertex(++tagVertex,xx,yy,zz);
-  GMODEL->add(new FVertex(GMODEL,vUR->GetTag(),vUR));
-  
-  Curve* curveB = new FCurve(0,patch,LL,LR);
-  Curve* curveR = new FCurve(0,patch,LR,UR);
-  Curve* curveT = new FCurve(0,patch,UR,UL);
-  Curve* curveL = new FCurve(0,patch,UL,LL);
-  
-  int tagEdge = GMODEL->numEdge();
-  FM_Edge* eB = new FM_Edge(++tagEdge,curveB,vLL,vLR);
-  i1 = eB->GetStartPoint()->GetTag();
-  i2 = eB->GetEndPoint()->GetTag();
-  GMODEL->add(new FEdge(GMODEL,eB,eB->GetTag(),GMODEL->vertexByTag(i1),
-			GMODEL->vertexByTag(i2)));
-  FM_Edge* eR = new FM_Edge(++tagEdge,curveR,vLR,vUR); 
-  i1 = eR->GetStartPoint()->GetTag();
-  i2 = eR->GetEndPoint()->GetTag();
-  GMODEL->add(new FEdge(GMODEL,eR,eR->GetTag(),GMODEL->vertexByTag(i1),
-			GMODEL->vertexByTag(i2))); 
-  FM_Edge* eT = new FM_Edge(++tagEdge,curveT,vUR,vUL);
-  i1 = eT->GetStartPoint()->GetTag();
-  i2 = eT->GetEndPoint()->GetTag();
-  GMODEL->add(new FEdge(GMODEL,eT,eT->GetTag(),GMODEL->vertexByTag(i1),
-			GMODEL->vertexByTag(i2)));
-  FM_Edge* eL = new FM_Edge(++tagEdge,curveL,vUL,vLL); 
-  i1 = eL->GetStartPoint()->GetTag();
-  i2 = eL->GetEndPoint()->GetTag();
-  GMODEL->add(new FEdge(GMODEL,eL,eL->GetTag(),GMODEL->vertexByTag(i1),
-			GMODEL->vertexByTag(i2)));
-  
-  FM_Face* face = new FM_Face(GMODEL->numFace() + 1,patch);
-  face->AddEdge(eB); face->AddEdge(eR); 
-  face->AddEdge(eT); face->AddEdge(eL);
-  std::list<GEdge*> l_edges;
-  for (int j=0;j<face->GetNumEdges();j++) {
-    int tag = face->GetEdge(j)->GetTag(); 
-    l_edges.push_back(GMODEL->edgeByTag(tag));
-  }
-  GMODEL->add(new FFace(GMODEL,face,face->GetTag(),l_edges));
 }
 
 #else
