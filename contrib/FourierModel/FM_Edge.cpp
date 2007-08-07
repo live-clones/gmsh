@@ -2,6 +2,8 @@
 #include "FM_Edge.h"
 #include "Message.h"
 
+using namespace FM;
+
 void FM_Edge::F(double t, double &x, double &y, double &z)
 {
   if (_curve) {

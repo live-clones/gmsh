@@ -13,6 +13,8 @@
 
 #include "Message.h"
 
+using namespace FM;
+
 int Message::_commRank = 0;
 int Message::_commSize = 1;
 int Message::_verbosity = 3;

@@ -23,13 +23,13 @@ static FProjectionFace *createProjectionFaceFromName(char *name)
   int tag = GMODEL->numFace() + 1;
   FProjectionFace *f = 0;
   if(!strcmp(name, "plane"))
-    f = new FProjectionFace(GMODEL, tag, new PlaneProjectionSurface(tag));
+    f = new FProjectionFace(GMODEL, tag, new FM::PlaneProjectionSurface(tag));
   else if(!strcmp(name, "paraboloid"))
-    f = new FProjectionFace(GMODEL, tag, new ParaboloidProjectionSurface(tag));
+    f = new FProjectionFace(GMODEL, tag, new FM::ParaboloidProjectionSurface(tag));
   else if(!strcmp(name, "cylinder"))
-    f = new FProjectionFace(GMODEL, tag, new CylindricalProjectionSurface(tag));
+    f = new FProjectionFace(GMODEL, tag, new FM::CylindricalProjectionSurface(tag));
   else if(!strcmp(name, "revolvedParabola"))
-    f = new FProjectionFace(GMODEL, tag, new RevolvedParabolaProjectionSurface(tag));
+    f = new FProjectionFace(GMODEL, tag, new FM::RevolvedParabolaProjectionSurface(tag));
   else
     Msg(GERROR, "Unknown projection face `%s'", name);
   if(f){
@@ -126,7 +126,7 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
 {
   group = new Fl_Scroll(x, y, w, h);
   SBoundingBox3d bounds = GMODEL->bounds();
-  ProjectionSurface *ps = f->GetProjectionSurface();
+  FM::ProjectionSurface *ps = f->GetProjectionSurface();
   currentParams = new double[ps->GetNumParameters() + 9];
   for(int i = 0; i < ps->GetNumParameters() + 9; i++){
     Fl_Value_Input *v = new Fl_Value_Input(x, y + i * BH, BB, BH);
@@ -321,7 +321,7 @@ projectionEditor::projectionEditor()
 
 void projectionEditor::load(FProjectionFace *face, std::string tag)
 {
-  ProjectionSurface *ps = face->GetProjectionSurface();
+  FM::ProjectionSurface *ps = face->GetProjectionSurface();
   _browser->add(tag.size() ? tag.c_str() : ps->GetName().c_str());
   projection *p =  new projection(face, _paramWin[0], _paramWin[1], _paramWin[2],
 				  _paramWin[3], _paramWin[4], _paramWin[5], this);
@@ -377,7 +377,7 @@ void update_cb(Fl_Widget *w, void *data)
 
   projection *p = e->getCurrentProjection();
   if(p){
-    ProjectionSurface *ps = p->face->GetProjectionSurface();
+    FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
     ps->Rescale(p->parameters[0]->value() / p->currentParams[0],
 		p->parameters[1]->value() / p->currentParams[1],
 		p->parameters[2]->value() / p->currentParams[2]);
@@ -533,7 +533,7 @@ void filter_cb(Fl_Widget *w, void *data)
     SBoundingBox3d bbox = GMODEL->bounds();
     double lc = norm(SVector3(bbox.max(), bbox.min()));
     double threshold = slider->value() * lc;
-    ProjectionSurface *ps = p->face->GetProjectionSurface();
+    FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
     std::vector<GEntity*> &ent(e->getEntities());
     for(unsigned int i = 0; i < ent.size(); i++){
       GVertex *gv = dynamic_cast<GVertex*>(ent[i]);
@@ -634,7 +634,7 @@ void save_projection_cb(Fl_Widget *w, void *data)
   projectionEditor *e = (projectionEditor*)data;
   projection *p = e->getCurrentProjection();
   if(p){
-    ProjectionSurface *ps = p->face->GetProjectionSurface();
+    FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
     if(file_chooser(0, 1, "Save Projection", "*.pro")){
       FILE *fp = fopen(file_chooser_get_name(1), "w");
       if(!fp){
@@ -677,34 +677,34 @@ void compute_cb(Fl_Widget *w, void *data)
     int h3 = e->hardEdges[3]->value();
 
     // create the Fourier faces (with boundaries)
-    ProjectionSurface *ps = p->face->GetProjectionSurface();
+    FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
     if(ps->IsUPeriodic()) {
-      Patch* patchL = new FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
-				 uM, vM, h0, h1, h2, h3);
+      FM::Patch* patchL = new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
+					 uM, vM, h0, h1, h2, h3);
       patchL->SetMinU(-0.35);
       patchL->SetMaxU(0.35);
       makeGFace(patchL);
-      Patch* patchR = new FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
-				 uM, vM, h0, h1, h2, h3);
+      FM::Patch* patchR = new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
+					 uM, vM, h0, h1, h2, h3);
       patchR->SetMinU(0.15);
       patchR->SetMaxU(0.85);
       makeGFace(patchR);
     }
     else if (ps->IsVPeriodic()) {
-      Patch* patchL = new FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
-				 uM, vM, h0, h1, h2, h3);
+      FM::Patch* patchL = new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+					 uM, vM, h0, h1, h2, h3);
       patchL->SetMinV(-0.35);
       patchL->SetMaxV(0.35);
       makeGFace(patchL);
-      Patch* patchR = new FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
-				 uM, vM, h0, h1, h2, h3);
+      FM::Patch* patchR = new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
+					 uM, vM, h0, h1, h2, h3);
       patchR->SetMinV(0.15);
       patchR->SetMaxV(0.85);
       makeGFace(patchR);
     }
     else {
-      Patch* patch = new FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
-				uM, vM, h0, h1, h2, h3);
+      FM::Patch* patch = new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+					uM, vM, h0, h1, h2, h3);
       makeGFace(patch);
     }
   }

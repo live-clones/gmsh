@@ -7,6 +7,8 @@
 #include "BlendOperator.h"
 #include "PartitionOfUnity.h"
 
+namespace FM {
+
 class BlendedPatch {
  private:
   Patch* patch_;
@@ -96,5 +98,7 @@ class BlendedPatch {
   int GetTag
     () { return patchTag_; }
 };
+
+}
 
 #endif

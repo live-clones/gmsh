@@ -6,6 +6,8 @@
 #include "Patch.h"
 #include "ProjectionSurface.h"
 
+namespace FM {
+
 class BlendOperator {
  private:
   std::vector<Patch*> patch_;
@@ -52,5 +54,7 @@ class BlendOperator {
   bool GetPointOnPatch
     (int patchTag, double d[3], double &x, double &y, double &z);
 };
+
+}
 
 #endif

@@ -2,6 +2,8 @@
 #include "Message.h"
 #include "FPatch.h"
 
+using namespace FM;
+
 extern "C" {
   void zgelss_(int &,int &,int &,std::complex<double> *,int &,
                std::complex<double> *,int &,double *,double &,int &,

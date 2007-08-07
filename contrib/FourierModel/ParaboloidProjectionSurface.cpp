@@ -1,5 +1,7 @@
 #include "ParaboloidProjectionSurface.h"
 
+using namespace FM;
+
 ParaboloidProjectionSurface::ParaboloidProjectionSurface
 (int tag) : ProjectionSurface() 
 {

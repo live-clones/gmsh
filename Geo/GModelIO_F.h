@@ -7,7 +7,7 @@
 
 #include "Patch.h"
 
-void makeGFace(Patch* patch);
+void makeGFace(FM::Patch* patch);
 
 #endif
 

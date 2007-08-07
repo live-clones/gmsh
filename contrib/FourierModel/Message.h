@@ -3,6 +3,8 @@
 
 #include <stdarg.h>
 
+namespace FM {
+
 // a class to manage messages
 class Message {
  private:
@@ -32,5 +34,7 @@ class Message {
 };
 
 typedef Message Msg;
+
+}
 
 #endif

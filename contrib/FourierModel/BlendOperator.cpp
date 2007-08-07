@@ -1,5 +1,7 @@
 #include "BlendOperator.h"
 
+using namespace FM;
+
 bool BlendOperator::GetPointOnPatch_
 (int i, double u, double v, int j, double &x, double &y, double &z)
 {

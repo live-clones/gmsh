@@ -3,6 +3,8 @@
 #include "Message.h"
 #include "FM_Reader.h"
 
+using namespace FM;
+
 FM_Reader::FM_Reader(const char* fn)
 {
   char c;

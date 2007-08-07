@@ -6,6 +6,8 @@
 #include "FM_Info.h"
 #include "PartitionOfUnity.h"
 
+namespace FM {
+
 // The base class for the patches
 class ContinuationPatch : public Patch {
  protected:
@@ -69,5 +71,7 @@ class ContinuationPatch : public Patch {
   virtual void Dfdfdudv(double u,double v,double &x,double &y,double &z);
   virtual void Dfdfdvdv(double u,double v,double &x,double &y,double &z);
 };
+
+}
 
 #endif

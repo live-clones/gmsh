@@ -6,6 +6,8 @@
 #include "Utils.h"
 #include "ProjectionSurface.h"
 
+namespace FM {
+
 class RevolvedParabolaProjectionSurface : public ProjectionSurface {
  private:
   double twoPi_;
@@ -66,5 +68,7 @@ class RevolvedParabolaProjectionSurface : public ProjectionSurface {
   virtual std::string GetLabel
     (int i);
 };
+
+}
 
 #endif

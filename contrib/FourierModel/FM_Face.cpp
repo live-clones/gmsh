@@ -1,6 +1,8 @@
 #include "FM_Face.h"
 #include "Message.h"
 
+using namespace FM;
+
 void FM_Face::F(double u, double v, double &x, double &y, double &z) {
 
   _patch->F(u,v,x,y,z);

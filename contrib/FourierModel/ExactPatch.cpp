@@ -1,6 +1,8 @@
 #include "Message.h"
 #include "ExactPatch.h"
 
+using namespace FM;
+
 ExactPatch::ExactPatch(ProjectionSurface* ps) : Patch()
 {
   SetProjectionSurface(ps);

@@ -5,6 +5,8 @@
 #include "Patch.h"
 #include "FM_Info.h"
 
+namespace FM {
+
 // The base class for the patches
 class IntersectionCurve : public Curve {
  private:
@@ -36,5 +38,7 @@ class IntersectionCurve : public Curve {
   virtual void Dfdt(double t, double &x, double &y, double &z);
   virtual void Dfdfdtdt(double t, double &x, double &y, double &z);
 };
+
+}
 
 #endif

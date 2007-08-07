@@ -1,5 +1,7 @@
 #include "Curve.h"
 
+using namespace FM;
+
 Curve::Curve() 
 {
   _tag = -1;

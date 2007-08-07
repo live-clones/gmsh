@@ -1,5 +1,7 @@
 #include "PlaneProjectionSurface.h"
 
+using namespace FM;
+
 PlaneProjectionSurface::PlaneProjectionSurface
 (int tag) : ProjectionSurface()
 {

@@ -1,6 +1,8 @@
 #ifndef _FM_VERTEX_H_
 #define _FM_VERTEX_H_
 
+namespace FM {
+
 class FM_Vertex {
  private:
   int _tag;
@@ -22,5 +24,7 @@ class FM_Vertex {
   inline void SetY(double y) { _y = y; }
   inline void SetZ(double z) { _z = z; }
 };
+
+}
 
 #endif

@@ -1,5 +1,7 @@
 #include "FCurve.h"
 
+using namespace FM;
+
 FCurve::FCurve
 (int tag, Patch* patch) 
   : Curve(tag)

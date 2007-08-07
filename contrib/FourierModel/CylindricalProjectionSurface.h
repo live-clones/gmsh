@@ -4,6 +4,8 @@
 #include <cmath>
 #include "ProjectionSurface.h"
 
+namespace FM {
+
 class CylindricalProjectionSurface : public ProjectionSurface {
  private:
   double twoPi_;
@@ -80,5 +82,7 @@ class CylindricalProjectionSurface : public ProjectionSurface {
   virtual void Dndndvdv
     (double u, double v, double &x, double &y, double &z);
 };
+
+}
 
 #endif

@@ -12,10 +12,10 @@
 
 class FFace : public GFace {
  protected:
-  FM_Face *face;
+  FM::FM_Face *face;
  public:
-  FFace(GModel *m, FM_Face *face_, int tag, std::list<GEdge*> l_edges_);
-  FFace(GModel *m, FM_Face *face_, int tag, std::list<GEdge*> l_edges_,
+  FFace(GModel *m, FM::FM_Face *face_, int tag, std::list<GEdge*> l_edges_);
+  FFace(GModel *m, FM::FM_Face *face_, int tag, std::list<GEdge*> l_edges_,
 	std::list<int> l_dirs_);
 
   virtual ~FFace() {}
@@ -42,7 +42,7 @@ class FFace : public GFace {
   ModelType getNativeType() const { return FourierModel; }
   void * getNativePtr() const {throw;} 
   virtual bool surfPeriodic(int dim) const;
-  FM_Face* GetFMFace() { return face; }
+  FM::FM_Face* GetFMFace() { return face; }
 };
 
 #endif

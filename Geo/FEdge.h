@@ -14,10 +14,10 @@
 
 class FEdge : public GEdge {
  protected:
-  FM_Edge* edge;
+  FM::FM_Edge* edge;
   int edgeNum;
  public:
-  FEdge(GModel *model, FM_Edge* edge_, int tag, GVertex *v0, GVertex *v1);
+  FEdge(GModel *model, FM::FM_Edge* edge_, int tag, GVertex *v0, GVertex *v1);
   virtual ~FEdge() {}
   double period() const { throw ; }
   virtual bool periodic(int dim=0) const { return false; }

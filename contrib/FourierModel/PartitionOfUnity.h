@@ -3,6 +3,8 @@
 
 #include <cmath>
 
+namespace FM {
+
 inline double OneSidedPartitionOfUnity(double t0,
 				       double t1,
 				       double t)
@@ -131,6 +133,8 @@ inline double PartitionOfUnityDtDt(double r,
   if(r < start1 || r > start2) { return 0.; }
   if(r > end1 && r < end2) { return 0.; }
   return PartitionOfUnityDtDtInternalCall(r, start1, end1, end2, start2);
+}
+
 }
 
 #endif

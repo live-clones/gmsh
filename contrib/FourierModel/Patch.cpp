@@ -1,6 +1,8 @@
 #include <cmath>
 #include "Patch.h"
 
+using namespace FM;
+
 Patch::Patch() :_ps(0), _uMin(0.), _uMax(1.), _vMin(0.), _vMax(1.),
 		_periodicityU(0), _periodicityV(0), _derivative(3), 
 		_tag(-1) {}

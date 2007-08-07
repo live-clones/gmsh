@@ -10,11 +10,11 @@
 
 class FProjectionFace : public GFace {
  protected:
-  ProjectionSurface* ps_;
+  FM::ProjectionSurface* ps_;
 
  public:
   FProjectionFace(GModel *m, int num);
-  FProjectionFace(GModel *m, int num, ProjectionSurface* ps);
+  FProjectionFace(GModel *m, int num, FM::ProjectionSurface* ps);
   ~FProjectionFace();
 
   Range<double> parBounds(int i) const;
@@ -38,7 +38,7 @@ class FProjectionFace : public GFace {
   void * getNativePtr() const {throw;} 
   virtual bool surfPeriodic(int dim) const {throw;}
 
-  inline ProjectionSurface* GetProjectionSurface() { return ps_; }
+  inline FM::ProjectionSurface* GetProjectionSurface() { return ps_; }
 };
 
 #endif

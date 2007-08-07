@@ -6,7 +6,7 @@ FProjectionFace::FProjectionFace(GModel *m, int num)
   : GFace(m,num), ps_(0) {}
 
 FProjectionFace::
-FProjectionFace(GModel *m, int num, ProjectionSurface* ps)
+FProjectionFace(GModel *m, int num, FM::ProjectionSurface* ps)
   : GFace(m,num), ps_(ps) {}
 
 FProjectionFace::~FProjectionFace() {}

@@ -17,6 +17,8 @@
 #include "BlendOperator.h"
 #include "BlendedPatch.h"
 
+namespace FM {
+
 class FM_Reader {
  private:
   int _nPatches;
@@ -41,5 +43,7 @@ class FM_Reader {
   ProjectionSurface* GetProjectionSurface
     (int tag);
 };
+
+}
 
 #endif

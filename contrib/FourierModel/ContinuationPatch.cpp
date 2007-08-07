@@ -2,6 +2,8 @@
 #include "Message.h"
 #include "ContinuationPatch.h"
 
+using namespace FM;
+
 ContinuationPatch::ContinuationPatch
 (PatchInfo* PI, ProjectionSurface* ps)
   : Patch(),_coeffOriginalData(0),_coeffData(0),_coeffDerivU(0),

@@ -1,6 +1,8 @@
 #include <cmath>
 #include "ProjectionSurface.h"
 
+using namespace FM;
+
 ProjectionSurface::ProjectionSurface
 (double uPeriod, double vPeriod)
 {

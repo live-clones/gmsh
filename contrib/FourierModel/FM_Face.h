@@ -5,6 +5,8 @@
 #include "Patch.h"
 #include "FM_Edge.h"
 
+namespace FM {
+
 class FM_Face {
  private:
   int _tag;
@@ -42,5 +44,7 @@ class FM_Face {
   void GetUnitNormal(double u,double v,double &x,double &y,double &z);
   void GetNormal(double u, double v, double &x, double &y, double &z);
 };
+
+}
 
 #endif

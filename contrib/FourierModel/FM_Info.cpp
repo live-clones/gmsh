@@ -1,5 +1,7 @@
 #include "FM_Info.h"
 
+using namespace FM;
+
 PatchInfo::PatchInfo() : tag(-1) 
 {
   uMin = vMin = 0.;

@@ -2,6 +2,8 @@
 #include "Message.h"
 #include "IntersectionCurve.h"
 
+using namespace FM;
+
 IntersectionCurve::IntersectionCurve
 (IntersectionInfo* II, std::vector<Patch*> patches) 
   : Curve(), _II(II)

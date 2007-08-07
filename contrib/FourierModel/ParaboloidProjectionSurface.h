@@ -6,6 +6,8 @@
 #include "Utils.h"
 #include "ProjectionSurface.h"
 
+namespace FM {
+
 class ParaboloidProjectionSurface : public ProjectionSurface {
  public:
   ParaboloidProjectionSurface
@@ -58,5 +60,7 @@ class ParaboloidProjectionSurface : public ProjectionSurface {
   virtual std::string GetLabel
     (int i);
 };
+
+}
 
 #endif

@@ -10,10 +10,10 @@
 
 class FVertex : public GVertex {
  protected:
-  FM_Vertex* v;
+  FM::FM_Vertex* v;
 
  public:
-  FVertex(GModel *m, int num, FM_Vertex* _v) : GVertex(m, num), v(_v)
+  FVertex(GModel *m, int num, FM::FM_Vertex* _v) : GVertex(m, num), v(_v)
   {
     mesh_vertices.push_back(new MVertex(x(), y(), z(), this));
   }

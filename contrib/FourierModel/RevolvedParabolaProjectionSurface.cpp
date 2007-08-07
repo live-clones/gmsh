@@ -1,5 +1,7 @@
 #include "RevolvedParabolaProjectionSurface.h"
 
+using namespace FM;
+
 RevolvedParabolaProjectionSurface::RevolvedParabolaProjectionSurface
 (int tag) : ProjectionSurface(1.) 
 {

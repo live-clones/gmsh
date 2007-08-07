@@ -5,7 +5,7 @@
 
 #if defined(HAVE_FOURIER_MODEL)
 
-FFace::FFace(GModel *m, FM_Face *face_, int tag, std::list<GEdge*> l_edges_) 
+FFace::FFace(GModel *m, FM::FM_Face *face_, int tag, std::list<GEdge*> l_edges_) 
   : GFace(m,tag), face(face_)
 {
   for (std::list<GEdge*>::iterator it = l_edges_.begin();
@@ -15,7 +15,7 @@ FFace::FFace(GModel *m, FM_Face *face_, int tag, std::list<GEdge*> l_edges_)
   }
 }
 
-FFace::FFace(GModel *m, FM_Face *face_, int tag, std::list<GEdge*> l_edges_,
+FFace::FFace(GModel *m, FM::FM_Face *face_, int tag, std::list<GEdge*> l_edges_,
 	     std::list<int> l_dirs_) : GFace(m,tag), face(face_)
 {
   for (std::list<GEdge*>::iterator it = l_edges_.begin();

@@ -1,6 +1,8 @@
 #include "Utils.h"
 #include "Message.h"
 
+using namespace FM;
+
 std::vector<double> SolveCubic(double a, double b, double c)
 {
   std::vector<double> root;

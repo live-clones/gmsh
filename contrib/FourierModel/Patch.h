@@ -4,6 +4,8 @@
 #include <cmath>
 #include "ProjectionSurface.h"
 
+namespace FM {
+
 // The base class for the patches
 class Patch {
  protected:
@@ -112,5 +114,7 @@ class Patch {
   virtual void GetNormal(double u, double v, double &x, double &y, double &z);
 
 };
+
+}
 
 #endif

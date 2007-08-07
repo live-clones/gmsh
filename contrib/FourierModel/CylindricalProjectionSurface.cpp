@@ -1,5 +1,7 @@
 #include "CylindricalProjectionSurface.h"
 
+using namespace FM;
+
 CylindricalProjectionSurface::CylindricalProjectionSurface
 (int tag) : ProjectionSurface(1.)
 {

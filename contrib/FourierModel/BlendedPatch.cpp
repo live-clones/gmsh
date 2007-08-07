@@ -1,5 +1,7 @@
 #include "BlendedPatch.h"
 
+using namespace FM;
+
 BlendedPatch::BlendedPatch
 (Patch* patch, BlendOperator* blendOp) 
   : _coeffData(0),_coeffDerivU(0),_coeffDerivV(0),

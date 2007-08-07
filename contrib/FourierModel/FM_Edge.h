@@ -4,6 +4,8 @@
 #include "Curve.h"
 #include "FM_Vertex.h"
 
+namespace FM {
+
 class FM_Edge {
  private:
   int _tag;
@@ -44,5 +46,7 @@ class FM_Edge {
   void Dfdt(double t, double &x, double &y, double &z);  
   void Dfdfdtdt(double t, double &x, double &y, double &z);
 };
+
+}
 
 #endif

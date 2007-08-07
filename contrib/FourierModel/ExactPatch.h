@@ -5,6 +5,8 @@
 #include "FM_Info.h"
 #include "ProjectionSurface.h"
 
+namespace FM {
+
 // The base class for the patches
 class ExactPatch : public Patch {
  public:
@@ -28,4 +30,7 @@ class ExactPatch : public Patch {
   virtual void Dfdfdudv(double u,double v,double &x,double &y,double &z);
   virtual void Dfdfdvdv(double u,double v,double &x,double &y,double &z);
 };
+
+}
+
 #endif

@@ -4,6 +4,8 @@
 #include "Curve.h"
 #include "Patch.h"
 
+namespace FM {
+
 // The base class for the patches
 class FCurve : public Curve {
  protected:
@@ -56,5 +58,7 @@ class FCurve : public Curve {
   virtual void Dfdfdtdt
     (double t, double &x, double &y, double &z);
 };
+
+}
 
 #endif

@@ -9,6 +9,8 @@
 #include "PartitionOfUnity.h"
 #include "ProjectionSurface.h"
 
+namespace FM {
+
 // The base class for the patches
 class FPatch : public Patch {
  protected:
@@ -88,5 +90,7 @@ class FPatch : public Patch {
   virtual void Dfdfdudv(double u,double v,double &x,double &y,double &z);
   virtual void Dfdfdvdv(double u,double v,double &x,double &y,double &z);
 };
+
+}
 
 #endif

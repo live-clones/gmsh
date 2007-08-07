@@ -3,6 +3,8 @@
 
 #include <string>
 
+namespace FM {
+
 class ProjectionSurface {
  private:
   int tag_;
@@ -142,5 +144,7 @@ class ProjectionSurface {
   virtual void Rescale
     (double S0, double S1, double S2);
 };
+
+}
 
 #endif

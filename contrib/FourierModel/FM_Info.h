@@ -4,6 +4,8 @@
 #include <complex>
 #include <vector>
 
+namespace FM {
+
 class PatchInfo {
  public:
   int tag;
@@ -57,5 +59,7 @@ class IntersectionInfo {
   IntersectionInfo();
   virtual ~IntersectionInfo() {}
 };
+
+}
 
 #endif
