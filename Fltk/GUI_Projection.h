@@ -1,22 +1,18 @@
 #ifndef _GUI_PROJECTION_H_
 #define _GUI_PROJECTION_H_
 
-#include "Gmsh.h"
 #include "GmshUI.h"
 #include "GModel.h"
-#include "GModelIO_F.h"
+#include "FProjectionFace.h"
 #include "GUI.h"
 #include "Shortcut_Window.h"
 #include "ColorTable.h"
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Round_Button.H>
-
-#if defined(HAVE_FOURIER_MODEL)
-
-#include "Utils.h"
 #include <vector>
 #include <complex>
-#include "FProjectionFace.h"
+
+#if defined(HAVE_FOURIER_MODEL)
 
 void select_cb(Fl_Widget *w, void *data);
 void filter_cb(Fl_Widget *w, void *data);
@@ -24,7 +20,8 @@ void browse_cb(Fl_Widget *w, void *data);
 void update_cb(Fl_Widget *w, void *data);
 void close_cb(Fl_Widget *w, void *data);
 void hide_cb(Fl_Widget *w, void *data);
-void save_cb(Fl_Widget *w, void *data);
+void save_selection_cb(Fl_Widget *w, void *data);
+void read_parameters_cb(Fl_Widget *w, void *data);
 void compute_cb(Fl_Widget *w, void *data);
 void action_cb(Fl_Widget *w, void *data);
 
@@ -43,8 +40,6 @@ class uvPlot : public Fl_Window {
   void get(std::vector<double> &u, std::vector<double> &v, std::vector<double> &dist,
 	   std::vector<std::complex<double> > &f)
   { u = _u; v = _v; dist = _dist; f = _f; }
-  double dmin() { return _dmin; }
-  double dmax() { return _dmax; }
 };
 
 class projectionEditor;

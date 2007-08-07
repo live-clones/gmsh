@@ -7,10 +7,6 @@
 #if defined(HAVE_FOURIER_MODEL)
 
 #include "ProjectionSurface.h"
-#include "PlaneProjectionSurface.h"
-#include "ParaboloidProjectionSurface.h"
-#include "CylindricalProjectionSurface.h"
-#include "RevolvedParabolaProjectionSurface.h"
 
 class FProjectionFace : public GFace {
  protected:
@@ -43,8 +39,6 @@ class FProjectionFace : public GFace {
   virtual bool surfPeriodic(int dim) const {throw;}
 
   inline ProjectionSurface* GetProjectionSurface() { return ps_; }
-
-  //virtual void ResetProjectionSurface(int type);
 };
 
 #endif

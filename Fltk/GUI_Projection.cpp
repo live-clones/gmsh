@@ -1,8 +1,10 @@
+#include "GModelIO_F.h"
 #include "Draw.h"
 #include "Options.h"
 #include "Context.h"
 #include "SelectBuffer.h"
 #include "GUI_Projection.h"
+#include "GUI_Extras.h"
 #include "FFace.h"
 
 extern GModel *GMODEL;
@@ -11,8 +13,10 @@ extern Context_T CTX;
 #if defined(HAVE_FOURIER_MODEL)
 
 #include "FPatch.h"
-
-#define HARDCODED
+#include "PlaneProjectionSurface.h"
+#include "ParaboloidProjectionSurface.h"
+#include "CylindricalProjectionSurface.h"
+#include "RevolvedParabolaProjectionSurface.h"
 
 uvPlot::uvPlot(int x, int y, int w, int h, const char *l)
   : Fl_Window(x, y, w, h, l), _dmin(0.), _dmax(0.)
@@ -102,7 +106,7 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
   group = new Fl_Scroll(x, y, w, h);
   SBoundingBox3d bounds = GMODEL->bounds();
   ProjectionSurface *ps = f->GetProjectionSurface();
-  currentParams = new double[ps->GetNumParameters() + 9 + 100]; // FIXME!!!!!!!!!!!!!
+  currentParams = new double[ps->GetNumParameters() + 9];
   for(int i = 0; i < ps->GetNumParameters() + 9; i++){
     Fl_Value_Input *v = new Fl_Value_Input(x, y + i * BH, BB, BH);
     if(i < 3){ // scaling
@@ -115,23 +119,14 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
     }
     else if(i < 6){ //rotation
       currentParams[i] = 0.;
-#if defined HARDCODED
-      currentParams[5] = 90.;
-#endif
       v->maximum(-180.);
       v->minimum(180.);
       v->step(0.1);
-      v->label((i == 3) ? "X rotation" : (i == 4) ? "Y rotation" : 
-	       "Z rotation");
+      v->label((i == 3) ? "X rotation" : (i == 4) ? "Y rotation" : "Z rotation");
       v->value(currentParams[i]);
     }
     else if(i < 9){ // translation
       currentParams[i] = bounds.center()[i - 6];
-#if defined HARDCODED
-      currentParams[6] = 10.97;
-      currentParams[7] = 0.301;
-      currentParams[8] = 1.745;
-#endif
       v->maximum(bounds.max()[i] + 10. * CTX.lc);
       v->minimum(bounds.min()[i] - 10. * CTX.lc);
       v->step(CTX.lc / 100.);
@@ -141,11 +136,6 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
     }
     else{ // other parameters
       currentParams[i] = ps->GetParameter(i - 9);
-#if defined HARDCODED
-      currentParams[9] = .35;
-      currentParams[10] = .39;
-      currentParams[11] = 3.55;
-#endif
       v->maximum(10. * CTX.lc);
       v->minimum(-10. * CTX.lc);
       v->step(CTX.lc / 100.);
@@ -190,10 +180,12 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
     Fl_Toggle_Button *b1 = new Fl_Toggle_Button
       (width - WB - 3 * BB / 2, WB, 3 * BB / 2, BH, "Hide unselected");
     b1->callback(hide_cb);
-
     Fl_Button *b2 = new Fl_Button
       (width - WB - 3 * BB / 2, WB + BH, 3 * BB / 2, BH, "Save selection");
-    b2->callback(save_cb, this);
+    b2->callback(save_selection_cb, this);
+    Fl_Button *b3 = new Fl_Button
+      (width - WB - 3 * BB / 2, WB + 2 * BH, 3 * BB / 2, BH, "Read parameters");
+    b3->callback(read_parameters_cb, this);
   }
 
   const int brw = (int)(1.25 * BB);
@@ -535,7 +527,7 @@ void hide_cb(Fl_Widget *w, void *data)
   Draw();
 }
 
-void save_cb(Fl_Widget *w, void *data)
+void save_selection_cb(Fl_Widget *w, void *data)
 {
   projectionEditor *e = (projectionEditor*)data;
 
@@ -547,6 +539,25 @@ void save_cb(Fl_Widget *w, void *data)
   std::vector<MElement*> &ele(e->getElements());
   for(unsigned int i = 0; i < ele.size(); i++){
     printf("element %d\n", ele[i]->getNum());
+  }
+}
+
+void read_parameters_cb(Fl_Widget *w, void *data)
+{
+  projectionEditor *e = (projectionEditor*)data;
+  projection *p = e->getCurrentProjection();
+  if(p){
+    if(file_chooser(0, 0, "Read parameters", "*.par")){
+      FILE *fp = fopen(file_chooser_get_name(1), "r");
+      if(!fp) return;
+      for(unsigned int i = 0; i < p->parameters.size(); i++){
+	double val;
+	if(!fscanf(fp, "%lf", &val)) break;
+	p->parameters[i]->value(val);
+      }
+      fclose(fp);
+      update_cb(0, data);
+    }
   }
 }
 
@@ -661,8 +672,9 @@ void action_cb(Fl_Widget *w, void *data)
     Msg(ONSCREEN, "");
   }
 
-  if(what == "delete_last" || what == "delete_all" || what == "delete_select"){
-    for(unsigned int i = 0; i < faces.size(); i++) delete_fourier(faces[i]);
+  if(what[0] == 'd'){
+    for(unsigned int i = 0; i < faces.size(); i++) 
+      delete_fourier(faces[i]);
   }
   else{
     char *filename = "patches.fm";
