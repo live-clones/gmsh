@@ -319,10 +319,10 @@ projectionEditor::projectionEditor()
   _window->size_range(width, (int)(0.85 * height));
 }
 
-void projectionEditor::load(FProjectionFace *face)
+void projectionEditor::load(FProjectionFace *face, std::string tag)
 {
   ProjectionSurface *ps = face->GetProjectionSurface();
-  _browser->add(ps->GetName().c_str());
+  _browser->add(tag.size() ? tag.c_str() : ps->GetName().c_str());
   projection *p =  new projection(face, _paramWin[0], _paramWin[1], _paramWin[2],
 				  _paramWin[3], _paramWin[4], _paramWin[5], this);
   _projections.push_back(p);
@@ -417,7 +417,7 @@ void update_cb(Fl_Widget *w, void *data)
 	}
       }
     }
-    // loop over elements and do the same thing
+    // deal with elements here
     e->uv()->set(u, v, dist, f);
   }
 
@@ -551,6 +551,7 @@ void filter_cb(Fl_Widget *w, void *data)
 	  ve->setSelection(false);
       }
     }
+    // deal with elements here
   }
   update_cb(0, data);
 }
@@ -577,14 +578,14 @@ void save_selection_cb(Fl_Widget *w, void *data)
       Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1));
       return;
     }
-    // FIXME: maybe we should save as mesh file
+    // maybe we should save as mesh file
     for(unsigned int i = 0; i < ent.size(); i++){
       GVertex *v = dynamic_cast<GVertex*>(ent[i]);
       if(v && v->getSelection())
 	fprintf(fp, "Point(%d) = {%.16g,%.16g,%.16g,1};\n", v->tag(), 
 		v->x(), v->y(), v->z());
     }
-    // FIXME: deal with std::vector<MElement*> &ele(e->getElements());
+    // deal with elements here
     fclose(fp);
   }
 }
@@ -598,28 +599,35 @@ void load_projection_cb(Fl_Widget *w, void *data)
       Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1));
       return;
     }
-    char name[256];
-    if(!fscanf(fp, "%s", name)){
+    int num;
+    if(!fscanf(fp, "%d", &num)){
       Msg(GERROR, "Bad projection file format");
       return;
     }
-    FProjectionFace *face = createProjectionFaceFromName(name);
-    if(face){
-      e->load(face);
-      projection *p = e->getLastProjection();
-      if(p){
-	for(unsigned int i = 0; i < p->parameters.size(); i++){
-	  double val;
-	  if(!fscanf(fp, "%lf", &val)){
-	    Msg(GERROR, "Missing paramater for projection `%s'", name);
-	    break;
+    for(int proj = 0; proj < num; proj++){
+      char name[256], tag[256];
+      if(!fscanf(fp, "%s", tag) || !fscanf(fp, "%s", name)){
+	Msg(GERROR, "Bad projection file format");
+	return;
+      }
+      FProjectionFace *face = createProjectionFaceFromName(name);
+      if(face){
+	e->load(face, tag);
+	projection *p = e->getLastProjection();
+	if(p){
+	  for(unsigned int i = 0; i < p->parameters.size(); i++){
+	    double val;
+	    if(!fscanf(fp, "%lf", &val)){
+	      Msg(GERROR, "Missing paramater for projection `%s'", name);
+	      break;
+	    }
+	    p->parameters[i]->value(val);
 	  }
-	  p->parameters[i]->value(val);
 	}
-	fclose(fp);
-	update_cb(0, data);
       }
     }
+    fclose(fp);
+    update_cb(0, data);
   }
 }
 
@@ -635,7 +643,7 @@ void save_projection_cb(Fl_Widget *w, void *data)
 	Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1));
 	return;
       }
-      fprintf(fp, "%s\n", ps->GetName().c_str());
+      fprintf(fp, "1\n%s\n%s\n", ps->GetName().c_str(), ps->GetName().c_str());
       for(unsigned int i = 0; i < p->parameters.size(); i++)
 	fprintf(fp, "%.16g\n", p->parameters[i]->value());
       fclose(fp);

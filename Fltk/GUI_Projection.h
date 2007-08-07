@@ -67,7 +67,7 @@ class projectionEditor {
   uvPlot *_uvPlot;
  public:
   projectionEditor();
-  void load(FProjectionFace *face);
+  void load(FProjectionFace *face, std::string tag="");
   void show(){ _window->show(); select_cb(0, this); }
   uvPlot *uv() { return _uvPlot; }
   Fl_Value_Input* modes[4];
