@@ -26,7 +26,7 @@ static FProjectionFace *createProjectionFaceFromName(char *name)
     f = new FProjectionFace(GMODEL, tag, new PlaneProjectionSurface(tag));
   else if(!strcmp(name, "paraboloid"))
     f = new FProjectionFace(GMODEL, tag, new ParaboloidProjectionSurface(tag));
-  else if(!strcmp(name, "Cylinder"))
+  else if(!strcmp(name, "cylinder"))
     f = new FProjectionFace(GMODEL, tag, new CylindricalProjectionSurface(tag));
   else if(!strcmp(name, "revolvedParabola"))
     f = new FProjectionFace(GMODEL, tag, new RevolvedParabolaProjectionSurface(tag));
@@ -790,7 +790,7 @@ void mesh_parameterize_cb(Fl_Widget* w, void* data)
     editor = new projectionEditor();
     editor->load(createProjectionFaceFromName("plane"));
     editor->load(createProjectionFaceFromName("paraboloid"));
-    editor->load(createProjectionFaceFromName("Cylinder"));
+    editor->load(createProjectionFaceFromName("cylinder"));
     editor->load(createProjectionFaceFromName("revolvedParabola"));
   }
   editor->show();
