@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.134 2007-08-03 00:44:28 geuzaine Exp $
+// $Id: Geom.cpp,v 1.135 2007-08-07 20:27:20 anand Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -269,7 +269,7 @@ class drawGFace {
     else
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    glEnable(GL_LIGHTING);
+    if(CTX.geom.light) glEnable(GL_LIGHTING);
     glBegin(GL_QUADS);
     for(unsigned int i = 1; i < gr.size(); i++){
       for(unsigned int j = 1; j < gr[0].size(); j++){
