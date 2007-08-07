@@ -12,11 +12,11 @@ extern Context_T CTX;
 
 #if defined(HAVE_FOURIER_MODEL)
 
-#include "FPatch.h"
-#include "PlaneProjectionSurface.h"
-#include "ParaboloidProjectionSurface.h"
-#include "CylindricalProjectionSurface.h"
-#include "RevolvedParabolaProjectionSurface.h"
+#include "FM_FPatch.h"
+#include "FM_PlaneProjectionSurface.h"
+#include "FM_ParaboloidProjectionSurface.h"
+#include "FM_CylindricalProjectionSurface.h"
+#include "FM_RevolvedParabolaProjectionSurface.h"
 
 static FProjectionFace *createProjectionFaceFromName(char *name)
 {

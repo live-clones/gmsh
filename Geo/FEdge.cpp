@@ -3,7 +3,7 @@
 
 #if defined(HAVE_FOURIER_MODEL)
 
-FEdge::FEdge(GModel *model, FM::FM_Edge* edge_, int tag, GVertex *v0, GVertex *v1) 
+FEdge::FEdge(GModel *model, FM::TopoEdge* edge_, int tag, GVertex *v0, GVertex *v1) 
   : GEdge(model, tag, v0, v1), edge(edge_) 
 {
   //meshAttributes.Method = TRANSFINI; 

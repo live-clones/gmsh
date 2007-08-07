@@ -5,7 +5,7 @@
 
 #if defined(HAVE_FOURIER_MODEL)
 
-#include "Patch.h"
+#include "FM_Patch.h"
 
 void makeGFace(FM::Patch* patch);
 

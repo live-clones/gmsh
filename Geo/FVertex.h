@@ -6,14 +6,14 @@
 
 #if defined(HAVE_FOURIER_MODEL)
 
-#include "FM_Vertex.h"
+#include "FM_TopoVertex.h"
 
 class FVertex : public GVertex {
  protected:
-  FM::FM_Vertex* v;
+  FM::TopoVertex* v;
 
  public:
-  FVertex(GModel *m, int num, FM::FM_Vertex* _v) : GVertex(m, num), v(_v)
+  FVertex(GModel *m, int num, FM::TopoVertex* _v) : GVertex(m, num), v(_v)
   {
     mesh_vertices.push_back(new MVertex(x(), y(), z(), this));
   }

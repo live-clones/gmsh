@@ -9,15 +9,15 @@
 
 #if defined(HAVE_FOURIER_MODEL)
 
-#include "FM_Edge.h"
-#include "FM_Face.h"
+#include "FM_TopoEdge.h"
+#include "FM_TopoFace.h"
 
 class FEdge : public GEdge {
  protected:
-  FM::FM_Edge* edge;
+  FM::TopoEdge* edge;
   int edgeNum;
  public:
-  FEdge(GModel *model, FM::FM_Edge* edge_, int tag, GVertex *v0, GVertex *v1);
+  FEdge(GModel *model, FM::TopoEdge* edge_, int tag, GVertex *v0, GVertex *v1);
   virtual ~FEdge() {}
   double period() const { throw ; }
   virtual bool periodic(int dim=0) const { return false; }

@@ -6,7 +6,7 @@
 
 #if defined(HAVE_FOURIER_MODEL)
 
-#include "ProjectionSurface.h"
+#include "FM_ProjectionSurface.h"
 
 class FProjectionFace : public GFace {
  protected:
