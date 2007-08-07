@@ -7,21 +7,14 @@
 #include "ProjectionSurface.h"
 
 class ParaboloidProjectionSurface : public ProjectionSurface {
- private:
-  double twoPi_;
-  double K_[2];
  public:
   ParaboloidProjectionSurface
     (int tag);
   ParaboloidProjectionSurface
-    (int tag, double O[3], double E0[3], double E1[3], double scale[3],
-     double K[2]);
+    (int tag, double O[3], double E0[3], double E1[3], double scale[3]);
   ParaboloidProjectionSurface(ParaboloidProjectionSurface *ps) 
     : ProjectionSurface(ps) 
   {
-    twoPi_ = ps->twoPi_;
-    K_[0] = ps->K_[0];
-    K_[1] = ps->K_[1];
   }
 
   virtual ~ParaboloidProjectionSurface

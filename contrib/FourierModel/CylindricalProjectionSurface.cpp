@@ -4,7 +4,7 @@ CylindricalProjectionSurface::CylindricalProjectionSurface
 (int tag) : ProjectionSurface(1.)
 {
   SetTag(tag);
-  SetName(std::string("Cylinder"));
+  SetName(std::string("cylinder"));
 
   twoPi_ = 2 * M_PI;
 

@@ -452,7 +452,7 @@ void ContinuationPatch::_ReprocessSeriesCoeff()
     delete [] dataU;
     delete [] dataV;
   }
-  else {
+  else if (IsVPeriodic()){
     std::vector<double> u(_uM + 1), v(_vM);
     for (int j = 0; j < _uM + 1; j++)
       u[j] = (double)j / (double)_uM;
@@ -495,6 +495,52 @@ void ContinuationPatch::_ReprocessSeriesCoeff()
       delete [] dataV[j];
     delete [] dataV;
     delete [] dataU;
+  }
+  else {
+    std::vector<double> u(_uM + 1), v(_vM + 1);
+    for (int j = 0; j < _uM + 1; j++)
+      u[j] = (double)j / (double)_uM;
+    for (int j = 0; j < _vM + 1; j++)
+      v[j] = (double)j / (double)_vM;
+
+    std::complex<double> **dataU = new std::complex<double> *[_vM];
+    for (int k = 0; k < _vM; k++)
+      dataU[k] = new std::complex<double> [2*_uM + 1];
+
+    std::complex<double> *dataV = new std::complex<double>[2*_vM + 1];
+    for (int j = 0; j < _uM + 1; j++) {
+      for (int k = 0; k < _vM + 1; k++) {
+	dataV[k] = _Interpolate(0.5 * cos(M_PI * u[j]) + 0.5,
+				0.5 * cos(M_PI * v[k]) + 0.5);
+      }
+      for (int k = 1; k < _vM+1; k++)
+	dataV[_vM + k] = dataV[_vM - k];
+      _BackwardFft(2*_vM + 1, dataV);
+      dataU[0][j] = 0.5 * dataV[0] / (double)_vM;
+      for (int k=1; k<_vM-1; k++)
+	dataU[k][j] = dataV[k] / (double)_vM;
+      dataU[_vM-1][j] = 0.5 * dataV[_vM-1] / (double)_vM;
+    }
+
+    for (int k = 0; k < _vM; k++) {
+      for (int j = 1; j < _uM+1; j++) {
+	dataU[k][_uM + j] = dataU[k][_uM - k];
+      }
+      _BackwardFft(2*_uM + 1, dataU[k]);
+    }
+
+    for (int j = 0; j < _uM; j++) {
+      for (int k = 0; k < _vM; k++) {
+	if ((j == 0) || (j == _uM - 1))
+	  _coeffData[j][k] = 0.5 * dataU[k][j]/ (double)_uM;
+	else
+	  _coeffData[j][k] = dataU[k][j]/ (double)_uM;
+      }
+    }
+    for (int k = 0; k < _vM; k++)
+      delete [] dataU[k];
+    delete [] dataU;
+    delete [] dataV;
   }
 }
 

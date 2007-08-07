@@ -44,12 +44,9 @@ FM_Reader::FM_Reader(const char* fn)
     else if (!strcmp(psName,cylinder))
       _ps[i] = new CylindricalProjectionSurface
 	(psTag,origin,E0,E1,scale,psParams[0],psParams[1]);
-    else if (!strcmp(psName,paraboloid)) {
-      double K[2];
-      K[0] = psParams[0]; K[1] = psParams[1];
+    else if (!strcmp(psName,paraboloid))
       _ps[i] = new ParaboloidProjectionSurface
-	(psTag,origin,E0,E1,scale,K);
-    }
+	(psTag,origin,E0,E1,scale);
     else if (!strcmp(psName,revolvedParabola)) {
       double R = psParams[0];
       double K[2];
