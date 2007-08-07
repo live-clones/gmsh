@@ -745,7 +745,7 @@ void action_cb(Fl_Widget *w, void *data)
       if((*it)->getNativeType() == GEntity::FourierModel)
 	faces.push_back(*it);
   }
-  else if(what == "delete_select" || what == "select_all"){
+  else if(what == "delete_select" || what == "save_select"){
     Msg(ONSCREEN, "Select Surface\n[Press 'e' to end selection 'q' to abort]");
     std::vector<GVertex*> vertices;
     std::vector<GEdge*> edges;
