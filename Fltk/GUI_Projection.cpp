@@ -206,21 +206,29 @@ projectionEditor::projectionEditor(std::vector<FProjectionFace*> &faces)
   }
   
   int hard = 8;
-  hardEdges[0] = new Fl_Toggle_Button(WB, 3 * WB + 9 * BH + hard, 
-				      hard, height - 8 * WB - 14 * BH - 2 * hard);
-  hardEdges[1] = new Fl_Toggle_Button(width - WB - hard, 3 * WB + 9 * BH + hard, 
-				      hard, height - 8 * WB - 14 * BH - 2 * hard);
-  hardEdges[2] = new Fl_Toggle_Button(WB + hard, 3 * WB + 9 * BH, 
-				      width - 2 * WB - 2 * hard, hard);
-  hardEdges[3] = new Fl_Toggle_Button(WB + hard, height - 5 * WB - 5 * BH - hard,
-				      width - 2 * WB - 2 * hard, hard);
-  for(int i = 0; i < 4; i++){
-    hardEdges[i]->tooltip("Push to mark edge as `hard'");
-  }  
+  int uvw = width - 2 * WB - 2 * hard - 3 * WB;
+  int uvh = height - 8 * WB - 14 * BH - 2 * hard;
 
-  _uvPlot = new uvPlot(WB + hard, 3 * WB + 9 * BH + hard, 
-		       width - 2 * WB - 2 * hard, height - 8 * WB - 14 * BH - 2 * hard);
+  hardEdges[0] = new Fl_Toggle_Button(WB, 3 * WB + 9 * BH + hard, 
+				      hard, uvh);
+  hardEdges[1] = new Fl_Toggle_Button(width - 4 * WB - hard, 3 * WB + 9 * BH + hard,
+				      hard, uvh);
+  hardEdges[2] = new Fl_Toggle_Button(WB + hard, 3 * WB + 9 * BH, 
+				      uvw, hard);
+  hardEdges[3] = new Fl_Toggle_Button(WB + hard, height - 5 * WB - 5 * BH - hard, 
+				      uvw, hard);
+  for(int i = 0; i < 4; i++)
+    hardEdges[i]->tooltip("Push to mark edge as `hard'");
+
+  _uvPlot = new uvPlot(WB + hard, 3 * WB + 9 * BH + hard, uvw, uvh);
   _uvPlot->end();
+
+  Fl_Slider *s = new Fl_Slider(width - 3 * WB, 3 * WB + 9 * BH + hard, 2 * WB, uvh);
+  s->minimum(1.);
+  s->maximum(0.);
+  s->value(1.);
+  s->callback(filter_cb, this);
+  s->tooltip("Filter selection by distance to projection surface");
   
   modes[0] = new Fl_Value_Input(WB, height - 4 * WB - 5 * BH, BB  / 2, BH);
   modes[0]->tooltip("Number of Fourier modes along u");
@@ -315,7 +323,7 @@ void browse_cb(Fl_Widget *w, void *data)
     p->group->show();
   }
 
-  update_cb(w, data);
+  update_cb(0, data);
 }
 
 void update_cb(Fl_Widget *w, void *data)
@@ -466,13 +474,42 @@ void select_cb(Fl_Widget *w, void *data)
       ent.clear();
       break;
     }
-    update_cb(w, data);
+    update_cb(0, data);
   }
 
   CTX.mesh.changed = ENT_ALL;
   CTX.pick_elements = 0;
   Draw();  
   Msg(ONSCREEN, "");
+}
+
+void filter_cb(Fl_Widget *w, void *data)
+{
+  Fl_Slider *slider = (Fl_Slider*)w;
+  projectionEditor *e = (projectionEditor*)data;
+  projection *p = e->getCurrentProjection();
+  if(p){
+    SBoundingBox3d bbox = GMODEL->bounds();
+    double lc = norm(SVector3(bbox.max(), bbox.min()));
+    double threshold = slider->value() * lc;
+    ProjectionSurface *ps = p->face->GetProjectionSurface();
+    std::vector<GEntity*> &ent(e->getEntities());
+    for(unsigned int i = 0; i < ent.size(); i++){
+      GVertex *ve = dynamic_cast<GVertex*>(ent[i]);
+      if(ve){
+	double uu, vv, p[3], n[3];
+	ps->OrthoProjectionOnSurface(ve->x(),ve->y(),ve->z(),uu,vv);
+	ps->F(uu, vv, p[0], p[1], p[2]);
+	double dx = ve->x() - p[0], dy = ve->y() - p[1], dz = ve->z() - p[2];
+	if(uu >= 0. && uu <= 1. && vv >= 0. && vv < 1. &&
+	   sqrt(dx * dx + dy * dy + dz * dz) < threshold)
+	  ve->setSelection(true);
+	else
+	  ve->setSelection(false);
+      }
+    }
+  }
+  update_cb(0, data);
 }
 
 void close_cb(Fl_Widget *w, void *data)

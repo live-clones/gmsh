@@ -27,6 +27,7 @@
 #include "FM_Reader.h"
 
 void select_cb(Fl_Widget *w, void *data);
+void filter_cb(Fl_Widget *w, void *data);
 void browse_cb(Fl_Widget *w, void *data);
 void update_cb(Fl_Widget *w, void *data);
 void close_cb(Fl_Widget *w, void *data);
@@ -50,6 +51,8 @@ class uvPlot : public Fl_Window {
   void get(std::vector<double> &u, std::vector<double> &v, std::vector<double> &dist,
 	   std::vector<std::complex<double> > &f)
   { u = _u; v = _v; dist = _dist; f = _f; }
+  double dmin() { return _dmin; }
+  double dmax() { return _dmax; }
 };
 
 class projectionEditor;
