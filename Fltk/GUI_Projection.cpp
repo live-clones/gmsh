@@ -399,18 +399,18 @@ void update_cb(Fl_Widget *w, void *data)
     std::vector<GEntity*> &ent(e->getEntities());
     for(unsigned int i = 0; i < ent.size(); i++){
       if(ent[i]->getSelection()){
-	GVertex *ve = dynamic_cast<GVertex*>(ent[i]);
-	if(!ve)
+	GVertex *gv = dynamic_cast<GVertex*>(ent[i]);
+	if(!gv)
 	  Msg(GERROR, "Problem in point selection processing");
 	else{
 	  double uu, vv, p[3], n[3];
-	  ps->OrthoProjectionOnSurface(ve->x(),ve->y(),ve->z(),uu,vv);
+	  ps->OrthoProjectionOnSurface(gv->x(), gv->y(), gv->z(), uu, vv);
 	  if(uu >= 0. && uu <= 1. && vv >= 0. && vv <= 1.){
-	    u.push_back(uu);
-	    v.push_back(vv);
 	    ps->F(uu, vv, p[0], p[1], p[2]);
 	    ps->GetUnitNormal(uu, vv, n[0], n[1], n[2]);
-	    double dx = ve->x() - p[0], dy = ve->y() - p[1], dz = ve->z() - p[2];
+	    double dx = gv->x() - p[0], dy = gv->y() - p[1], dz = gv->z() - p[2];
+	    u.push_back(uu);
+	    v.push_back(vv);
 	    dist.push_back(sqrt(dx * dx + dy * dy + dz * dz));
 	    f.push_back(dx * n[0] + dy * n[1] + dz * n[2]);
 	  }
@@ -495,14 +495,12 @@ void select_cb(Fl_Widget *w, void *data)
     if(ib == 'u') {
       if(CTX.pick_elements){
 	if(ele.size()){
-	  ele[ele.size() - 1]->setVisibility(1);
-	  ele.pop_back();
+	  ele[ele.size() - 1]->setVisibility(1); ele.pop_back();
 	}
       }
       else{
 	if(ent.size()){
-	  ent[ent.size() - 1]->setSelection(0);
-	  ent.pop_back();
+	  ent[ent.size() - 1]->setSelection(0); ent.pop_back();
 	}
       }
     }
@@ -538,17 +536,17 @@ void filter_cb(Fl_Widget *w, void *data)
     ProjectionSurface *ps = p->face->GetProjectionSurface();
     std::vector<GEntity*> &ent(e->getEntities());
     for(unsigned int i = 0; i < ent.size(); i++){
-      GVertex *ve = dynamic_cast<GVertex*>(ent[i]);
+      GVertex *gv = dynamic_cast<GVertex*>(ent[i]);
       if(ve){
 	double uu, vv, p[3], n[3];
-	ps->OrthoProjectionOnSurface(ve->x(),ve->y(),ve->z(),uu,vv);
+	ps->OrthoProjectionOnSurface(gv->x(), gv->y(), gv->z(), uu, vv);
 	ps->F(uu, vv, p[0], p[1], p[2]);
-	double dx = ve->x() - p[0], dy = ve->y() - p[1], dz = ve->z() - p[2];
+	double dx = gv->x() - p[0], dy = gv->y() - p[1], dz = gv->z() - p[2];
 	if(uu >= 0. && uu <= 1. && vv >= 0. && vv < 1. &&
 	   sqrt(dx * dx + dy * dy + dz * dz) < threshold)
-	  ve->setSelection(true);
+	  gv->setSelection(true);
 	else
-	  ve->setSelection(false);
+	  gv->setSelection(false);
       }
     }
     // deal with elements here
@@ -580,10 +578,10 @@ void save_selection_cb(Fl_Widget *w, void *data)
     }
     // maybe we should save as mesh file
     for(unsigned int i = 0; i < ent.size(); i++){
-      GVertex *v = dynamic_cast<GVertex*>(ent[i]);
-      if(v && v->getSelection())
-	fprintf(fp, "Point(%d) = {%.16g,%.16g,%.16g,1};\n", v->tag(), 
-		v->x(), v->y(), v->z());
+      GVertex *gv = dynamic_cast<GVertex*>(ent[i]);
+      if(gv && gv->getSelection())
+	fprintf(fp, "Point(%d) = {%.16g,%.16g,%.16g,1};\n", gv->tag(), 
+		gv->x(), gv->y(), gv->z());
     }
     // deal with elements here
     fclose(fp);
@@ -693,7 +691,7 @@ void compute_cb(Fl_Widget *w, void *data)
       makeGFace(patchR);
     }
     else if (ps->IsVPeriodic()) {
-      Patch* patchL = new FPatch(0,ps->clone(), u, v, f, 3, uModes, vModes, 
+      Patch* patchL = new FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
 				 uM, vM, h0, h1, h2, h3);
       patchL->SetMinV(-0.35);
       patchL->SetMaxV(0.35);
@@ -718,20 +716,16 @@ void delete_fourier(GFace *gf)
 {
   if(gf->getNativeType() != GEntity::FourierModel) return;
 
+  // don't actually delete the data so we can add `undo' later
   std::list<GVertex*> vertices = gf->vertices();
-  for(std::list<GVertex*>::iterator it = vertices.begin(); it != vertices.end(); it++){
+  for(std::list<GVertex*>::iterator it = vertices.begin(); it != vertices.end(); it++)
     GMODEL->remove(*it);
-    //delete *it;
-  }
 
   std::list<GEdge*> edges = gf->edges();
-  for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
+  for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++)
     GMODEL->remove(*it);
-    //delete *it;
-  }
 
-  GMODEL->remove(gf);
-  //delete gf;
+  GMODEL->remove(gf)
 }
 
 void action_cb(Fl_Widget *w, void *data)
@@ -742,7 +736,8 @@ void action_cb(Fl_Widget *w, void *data)
   if(what == "delete_last" || what == "save_last"){
     int id = -1;
     for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
-      if((*it)->getNativeType() == GEntity::FourierModel) id = std::max(id, (*it)->tag());
+      if((*it)->getNativeType() == GEntity::FourierModel) 
+	id = std::max(id, (*it)->tag());
     if(id > 0) faces.push_back(GMODEL->faceByTag(id));
   }
   else if(what == "delete_all" || what == "save_all"){
