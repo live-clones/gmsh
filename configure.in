@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.130 2007-08-07 22:13:52 anand Exp $
+dnl $Id: configure.in,v 1.131 2007-08-08 16:14:17 anand Exp $
 dnl
 dnl Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 dnl
@@ -77,6 +77,10 @@ AC_ARG_WITH(fm-prefix,
             AC_HELP_STRING([--with-fm-prefix=PFX],
                            [prefix where FourierModel is installed]),
             [FM_PREFIX=$withval])
+AC_ARG_WITH(blas-lapack-prefix,
+            AC_HELP_STRING([--with-blas-lapack-prefix=PFX],
+                           [prefix where BLAS and LAPACK are installed]),
+            [BLAS_LAPACK_PREFIX=$withval])
 
 dnl Parse '--enable' command line options
 AC_ARG_ENABLE(gsl,
@@ -600,6 +604,15 @@ if test "x$enable_occ" = "xyes"; then
   fi
 fi
 
+dnl Check for blas and lapack (used by FourierModel)
+AC_LANG_PUSH(Fortran 77)
+if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
+  LDFLAGS="-L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib ${LDFLAGS}"
+fi
+AC_CHECK_LIB(blas,dasum,BLAS="yes",BLAS="no")
+AC_CHECK_LIB(lapack,dbdsqr,LAPACK="yes",LAPACK="no",-lblas)
+AC_LANG_POP()
+
 dnl Check for FourierModel
 if test "x$enable_fm" != "xno"; then
   if test "x${FM_PREFIX}" != "x"; then
@@ -607,10 +620,8 @@ if test "x$enable_fm" != "xno"; then
   fi
   AC_CHECK_LIB(FourierModel,main,FM="yes",FM="no")
   if test "x${FM}" = "xyes"; then
-    dnl Check for lapack
-    AC_CHECK_LIB(lapack,main,LAPACK="yes",LAPACK="no")
-    if test "x${LAPACK}" != "xyes"; then
-      AC_MSG_WARN([Could not find lapack: disabling FourierModel.])
+    if test "x${BLAS}" != "xyes" -o "x${LAPACK}" != "xyes"; then
+      AC_MSG_WARN([Could not find blas or lapack: disabling FourierModel.])
     else
       dnl Check for FFTW3
       if test "x${FFTW3_PREFIX}" != "x"; then
@@ -633,7 +644,18 @@ if test "x$enable_fm" != "xno"; then
           GMSH_LIBS="${GMSH_LIBS} -L${FFTW3_PREFIX}/lib -lfftw3"
           FLAGS="${FLAGS} -I${FFTW3_PREFIX}/include"
         fi
-        GMSH_LIBS="${GMSH_LIBS} -llapack"
+        if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
+          GMSH_LIBS="${GMSH_LIBS} -L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib"
+        fi
+        GMSH_LIBS="${GMSH_LIBS} -llapack -lblas"
+        case "${F77}" in
+          *gfortran*)
+            GMSH_LIBS="${GMSH_LIBS} -lgfortran"
+            ;;
+          *g77*)
+            GMSH_LIBS="${GMSH_LIBS} -lg2c"
+            ;;
+        esac
       fi
     fi
   fi
