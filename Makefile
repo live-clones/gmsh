@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.435 2007-07-09 13:54:35 geuzaine Exp $
+# $Id: Makefile,v 1.436 2007-08-08 07:06:40 anand Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -152,7 +152,7 @@ source-tree: purge
 source: source-tree
 	cd gmsh-${GMSH_VERSION} && rm -rf ${GMSH_VERSION_FILE}\
           contrib/NR contrib/Triangle/triangle.* contrib/Tetgen/tetgen.*\
-          contrib/Tetgen/predicates.* contrib/FourierModel utils/commercial 
+          contrib/Tetgen/predicates.* utils/commercial 
 	tar zcvf gmsh-${GMSH_VERSION}-source.tgz gmsh-${GMSH_VERSION}
 
 source-commercial: source-tree
