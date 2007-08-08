@@ -762,20 +762,21 @@ void action_cb(Fl_Widget *w, void *data)
       delete_fourier(faces[i]);
   }
   else{
-    char *filename = "patches.fm";
-    FILE *fp = fopen(filename, "w+");
-    if(!fp){
-      printf("Unable to open file '%s'\n", filename);
-      return;
+    if(file_chooser(0, 1, "Save Fourier Model", "*.fm")){
+      FILE *fp = fopen(file_chooser_get_name(1), "w");
+      if(!fp){
+	Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1));
+	return;
+      }
+      fprintf(fp, "%d\n", (int)faces.size());
+      for(unsigned int i = 0; i < faces.size(); i++){
+	FFace* ff = (FFace*)faces[i];
+	ff->GetFMFace()->GetPatch()->Export(fp);
+      }
+      fclose(fp);
     }
-    fprintf(fp, "%d\n", (int)faces.size());
-    for(unsigned int i = 0; i < faces.size(); i++){
-      FFace* ff = (FFace*)faces[i];
-      ff->GetFMFace()->GetPatch()->Export(fp);
-    }
-    fclose(fp);
   }
-
+  
   Draw();
 }
 
