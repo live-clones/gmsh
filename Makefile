@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.436 2007-08-08 07:06:40 anand Exp $
+# $Id: Makefile,v 1.437 2007-08-08 18:34:48 anand Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -98,6 +98,9 @@ clean:
 clean-most:
 	for i in doc lib ${GMSH_DIRS:contrib/Netgen=}; do (cd $$i && ${MAKE} clean); done
 	rm -f ${GMSH_VERSION_FILE}
+
+clean-fm:
+	rm -f Geo/F*.o Geo/GModelIO_F.o Fltk/GUI_Projection.o 
 
 depend: initialtag
 	for i in ${GMSH_DIRS};\
