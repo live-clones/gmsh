@@ -17,6 +17,7 @@ extern Context_T CTX;
 #include "FM_ParaboloidProjectionSurface.h"
 #include "FM_CylindricalProjectionSurface.h"
 #include "FM_RevolvedParabolaProjectionSurface.h"
+#include "FM_TranslatedParabolaProjectionSurface.h"
 
 static FProjectionFace *createProjectionFaceFromName(char *name)
 {
@@ -30,6 +31,8 @@ static FProjectionFace *createProjectionFaceFromName(char *name)
     f = new FProjectionFace(GMODEL, tag, new FM::CylindricalProjectionSurface(tag));
   else if(!strcmp(name, "revolvedParabola"))
     f = new FProjectionFace(GMODEL, tag, new FM::RevolvedParabolaProjectionSurface(tag));
+  else if(!strcmp(name, "translatedParabola"))
+    f = new FProjectionFace(GMODEL, tag, new FM::TranslatedParabolaProjectionSurface(tag));
   else
     Msg(GERROR, "Unknown projection face `%s'", name);
   if(f){
@@ -820,6 +823,7 @@ void mesh_parameterize_cb(Fl_Widget* w, void* data)
     editor->load(createProjectionFaceFromName("paraboloid"));
     editor->load(createProjectionFaceFromName("cylinder"));
     editor->load(createProjectionFaceFromName("revolvedParabola"));
+    editor->load(createProjectionFaceFromName("translatedParabola"));
   }
   editor->show();
 }
