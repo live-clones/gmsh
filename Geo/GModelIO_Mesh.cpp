@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.21 2007-07-22 15:48:07 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.22 2007-08-14 18:11:19 anand Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1074,6 +1074,13 @@ int GModel::readVRML(const std::string &name)
 	vertexVector.clear();
 	if(!skipUntil(fp, "point")) break;
 	if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
+      }
+      else if(!strcmp(str, "coord")){
+	vertexVector.clear();
+	if(!skipUntil(fp, "point")) break;
+	if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
+	if(!skipUntil(fp, "coordIndex")) break;
+	if(!readElementsVRML(fp, vertexVector, region, elements, true)) break;
       }
       else if(!strcmp(str, "IndexedTriangleStripSet")){
 	region++;
