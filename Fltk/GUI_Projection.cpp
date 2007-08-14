@@ -13,6 +13,7 @@ extern Context_T CTX;
 #if defined(HAVE_FOURIER_MODEL)
 
 #include "FM_FPatch.h"
+#include "FM_WFPatch.h"
 #include "FM_PlaneProjectionSurface.h"
 #include "FM_ParaboloidProjectionSurface.h"
 #include "FM_CylindricalProjectionSurface.h"
@@ -709,33 +710,53 @@ void compute_cb(Fl_Widget *w, void *data)
     // create the Fourier faces (with boundaries)
     FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
     if(ps->IsUPeriodic()) {
-      FM::Patch* patchL = new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
-					 uM, vM, h0, h1, h2, h3);
+      FM::Patch* patchL = 
+	new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+		       uM, vM, h0, h1, h2, h3);
       patchL->SetMinU(-0.35);
       patchL->SetMaxU(0.35);
       makeGFace(patchL);
-      FM::Patch* patchR = new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
-					 uM, vM, h0, h1, h2, h3);
+      FM::Patch* patchR = 
+	new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
+		       uM, vM, h0, h1, h2, h3);
       patchR->SetMinU(0.15);
       patchR->SetMaxU(0.85);
       makeGFace(patchR);
+      /*
+      FM::Patch* patch =
+	new FM::WFPatch(0, ps->clone(), u, v, f, 3, uModes, vModes);
+      makeGFace(patch);
+      */
     }
     else if (ps->IsVPeriodic()) {
-      FM::Patch* patchL = new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
-					 uM, vM, h0, h1, h2, h3);
+      FM::Patch* patchL = 
+	new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+		       uM, vM, h0, h1, h2, h3);
       patchL->SetMinV(-0.35);
       patchL->SetMaxV(0.35);
       makeGFace(patchL);
-      FM::Patch* patchR = new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
-					 uM, vM, h0, h1, h2, h3);
+      FM::Patch* patchR = 
+	new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
+		       uM, vM, h0, h1, h2, h3);
       patchR->SetMinV(0.15);
       patchR->SetMaxV(0.85);
       makeGFace(patchR);
+      /*
+      FM::Patch* patch =
+	new FM::WFPatch(0, ps->clone(), u, v, f, 3, uModes, vModes);
+      makeGFace(patch);
+      */
     }
     else {
-      FM::Patch* patch = new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
-					uM, vM, h0, h1, h2, h3);
+      FM::Patch* patch = 
+	new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+		       uM, vM, h0, h1, h2, h3);
       makeGFace(patch);
+      /*
+      FM::Patch* patch =
+	new FM::WFPatch(0, ps->clone(), u, v, f, 3, uModes, vModes);
+      makeGFace(patch);
+      */
     }
   }
 
