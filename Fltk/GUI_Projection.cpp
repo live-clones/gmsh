@@ -369,6 +369,24 @@ void browse_cb(Fl_Widget *w, void *data)
   update_cb(0, data);
 }
 
+void project_point(FM::ProjectionSurface *ps, double x, double y, double z,
+		   std::vector<double> &u, std::vector<double> &v, 
+		   std::vector<double> &dist,
+		   std::vector<std::complex<double> > &f)
+{		   
+  double uu, vv, p[3], n[3];
+  ps->OrthoProjectionOnSurface(x, y, z, uu, vv);
+  if(uu >= 0. && uu <= 1. && vv >= 0. && vv <= 1.){
+    ps->F(uu, vv, p[0], p[1], p[2]);
+    ps->GetUnitNormal(uu, vv, n[0], n[1], n[2]);
+    double dx = x - p[0], dy = y - p[1], dz = z - p[2];
+    u.push_back(uu);
+    v.push_back(vv);
+    dist.push_back(sqrt(dx * dx + dy * dy + dz * dz));
+    f.push_back(dx * n[0] + dy * n[1] + dz * n[2]);
+  }
+}
+
 void update_cb(Fl_Widget *w, void *data)
 {
   projectionEditor *e = (projectionEditor*)data;
@@ -393,7 +411,7 @@ void update_cb(Fl_Widget *w, void *data)
       ps->SetParameter(i - 9, p->parameters[i]->value());
     p->face->computeGraphicsRep(64, 64); // FIXME: hardcoded for now!
    
-    // project all selected points and update u,v display
+    // project selected points and elements and update u,v display
     std::vector<double> u, v, dist;
     std::vector<std::complex<double> > f;
     std::vector<GEntity*> &ent(e->getEntities());
@@ -402,22 +420,18 @@ void update_cb(Fl_Widget *w, void *data)
 	GVertex *gv = dynamic_cast<GVertex*>(ent[i]);
 	if(!gv)
 	  Msg(GERROR, "Problem in point selection processing");
-	else{
-	  double uu, vv, p[3], n[3];
-	  ps->OrthoProjectionOnSurface(gv->x(), gv->y(), gv->z(), uu, vv);
-	  if(uu >= 0. && uu <= 1. && vv >= 0. && vv <= 1.){
-	    ps->F(uu, vv, p[0], p[1], p[2]);
-	    ps->GetUnitNormal(uu, vv, n[0], n[1], n[2]);
-	    double dx = gv->x() - p[0], dy = gv->y() - p[1], dz = gv->z() - p[2];
-	    u.push_back(uu);
-	    v.push_back(vv);
-	    dist.push_back(sqrt(dx * dx + dy * dy + dz * dz));
-	    f.push_back(dx * n[0] + dy * n[1] + dz * n[2]);
-	  }
-	}
+	else
+	  project_point(ps, gv->x(), gv->y(), gv->z(), u, v, dist, f);
       }
     }
-    // deal with elements here
+    std::vector<MElement*> &ele(e->getElements());
+    std::set<MVertex*> verts;
+    for(unsigned int i = 0; i < ele.size(); i++)
+      if(ele[i]->getVisibility() == 2)
+	for(int j = 0; j < ele[i]->getNumVertices(); j++)
+	  verts.insert(ele[i]->getVertex(j));
+    for(std::set<MVertex*>::iterator it = verts.begin(); it != verts.end(); it++)
+      project_point(ps, (*it)->x(), (*it)->y(), (*it)->z(), u, v, dist, f);
     e->uv()->set(u, v, dist, f);
   }
 
@@ -549,7 +563,20 @@ void filter_cb(Fl_Widget *w, void *data)
 	  gv->setSelection(false);
       }
     }
-    // deal with elements here
+    std::vector<MElement*> &ele(e->getElements());
+    for(unsigned int i = 0; i < ele.size(); i++){
+      SPoint3 pc = ele[i]->barycenter();
+      double uu, vv, p[3], n[3];
+      ps->OrthoProjectionOnSurface(pc.x(), pc.y(), pc.z(), uu, vv);
+      ps->F(uu, vv, p[0], p[1], p[2]);
+      double dx = pc.x() - p[0], dy = pc.y() - p[1], dz = pc.z() - p[2];
+      if(uu >= 0. && uu <= 1. && vv >= 0. && vv < 1. &&
+	 sqrt(dx * dx + dy * dy + dz * dz) < threshold)
+	ele[i]->setVisibility(2);
+      else
+	ele[i]->setVisibility(1);
+    }
+    if(ele.size()) CTX.mesh.changed = ENT_ALL;
   }
   update_cb(0, data);
 }
