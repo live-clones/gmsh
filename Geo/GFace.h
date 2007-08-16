@@ -152,8 +152,6 @@ class GFace : public GEntity
   // Resets the mesh attributes to default values
   virtual void resetMeshAttributes();
 
-  std::vector<graphics_point> _graphicsRepresentation;
-
   struct {
     // do we recombine the triangles of the mesh ?
     int recombine;
