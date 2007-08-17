@@ -148,6 +148,21 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
       v->label((i == 0) ? "X" : (i == 1) ? "Y" : "Z");
     }
     ps->SetOrigin(pc[0], pc[1], pc[2]);
+    Fl_Repeat_Button *bm[3], *bp[3];
+    for(int i = 0; i < 3; i++){
+      new Fl_Box(x + w - BB / 3 - BB / 6, y + (1 + i) * BH, BB / 8, BH, 
+		 (i == 0) ? "E0" : (i == 1) ? "E1" : "E2");
+      bp[i] = new Fl_Repeat_Button(x + w - BB / 3, y + (1 + i) * BH, 
+				   BB / 8, BH / 2, "+");
+      bm[i] = new Fl_Repeat_Button(x + w - BB / 3, y + (1 + i) * BH + BH / 2,
+				   BB / 8, BH / 2, "-");
+    }
+    bp[0]->callback(translate_p0_cb, e);
+    bp[1]->callback(translate_p1_cb, e);
+    bp[2]->callback(translate_p2_cb, e);
+    bm[0]->callback(translate_m0_cb, e);
+    bm[1]->callback(translate_m1_cb, e);
+    bm[2]->callback(translate_m2_cb, e);
   }
   { // normal is stored in parameters[3,4,5]
     Fl_Value_Input *v1 = new Fl_Value_Input(x, y + 4 * BH, BB / 3, BH);
@@ -160,7 +175,7 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
     parameters.push_back(v3);
     v3->maximum(1.); v3->minimum(-1.); v3->step(0.01); v3->value(1.);
     v3->label("Normal");
-    Fl_Button *b = new Fl_Button(x + w - BB / 3, y + 4 * BH, BB / 8, BH, "-");
+    Fl_Button *b = new Fl_Button(x + w - BB / 3, y + 4 * BH + BH / 4, BB / 8, BH / 2, "-");
     b->callback(invert_normal_cb, e);
     b->tooltip("Invert normal");
   }
@@ -434,22 +449,39 @@ void invert_normal_cb(Fl_Widget *w, void *data)
   }
 }
 
-void translate_cb(Fl_Widget *w, void *data)
+void translate(void *data, int axis, bool plus)
 {
   projectionEditor *e = (projectionEditor*)data;
   projection *p = e->getCurrentProjection();
   if(p){
-    // add widgets so that we can translate along the principal
-    // directions, and change the origin's position accordingly
-    double x = p->parameters[0]->value();
-    double y = p->parameters[1]->value();
-    double z = p->parameters[2]->value();
-    p->parameters[0]->value(x);
-    p->parameters[1]->value(y);
-    p->parameters[2]->value(z);
+    FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
+    SVector3 origin(p->parameters[0]->value(),
+		    p->parameters[1]->value(),
+		    p->parameters[2]->value());
+    SVector3 vec;
+    if(axis == 0)
+      ps->GetE0(vec[0], vec[1], vec[2]);
+    else if(axis == 1)
+      ps->GetE1(vec[0], vec[1], vec[2]);
+    else
+      ps->GetE2(vec[0], vec[1], vec[2]);
+    if(plus)
+      origin += vec * (CTX.lc / 100.);
+    else
+      origin -= vec * (CTX.lc / 100.);
+    p->parameters[0]->value(origin[0]);
+    p->parameters[1]->value(origin[1]);
+    p->parameters[2]->value(origin[2]);
     update_cb(0, data);
   }
 }
+
+void translate_p0_cb(Fl_Widget *w, void *data){ translate(data, 0, true); }
+void translate_p1_cb(Fl_Widget *w, void *data){ translate(data, 1, true); }
+void translate_p2_cb(Fl_Widget *w, void *data){ translate(data, 2, true); }
+void translate_m0_cb(Fl_Widget *w, void *data){ translate(data, 0, false); }
+void translate_m1_cb(Fl_Widget *w, void *data){ translate(data, 1, false); }
+void translate_m2_cb(Fl_Widget *w, void *data){ translate(data, 2, false); }
 
 void set_position_cb(Fl_Widget *w, void *data)
 {
