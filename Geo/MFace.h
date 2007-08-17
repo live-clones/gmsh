@@ -114,6 +114,17 @@ class MFace {
 		  _v[2]->x(), _v[2]->y(), _v[2]->z(), n);
     return SVector3(n[0], n[1], n[2]);
   }
+  SVector3 tangent(int num) const
+  {
+    SVector3 t0(_v[1]->x() - _v[0]->x(), 
+		_v[1]->y() - _v[0]->y(),
+		_v[1]->z() - _v[0]->z());
+    t0.normalize();
+    if(!num) return t0;
+    SVector3 n = normal();
+    SVector3 t1 = crossprod(n, t0);
+    return t1;
+  }
   SPoint3 barycenter() const
   {
     SPoint3 p(0., 0., 0.);

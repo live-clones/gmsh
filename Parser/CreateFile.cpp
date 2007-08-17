@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.17 2007-05-13 10:37:02 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.18 2007-08-17 15:43:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -84,7 +84,7 @@ int GuessFileFormatFromFileName(char *name)
 void GetDefaultFileName(int format, char *name)
 {
   char ext[32] = "";
-  strcpy(name, CTX.base_filename);
+  strcpy(name, CTX.no_ext_filename);
   switch(format){
   case FORMAT_GEO:  strcpy(ext, ".geo_unrolled"); break;
   case FORMAT_MSH:  strcpy(ext, ".msh"); break;
@@ -115,12 +115,14 @@ void GetDefaultFileName(int format, char *name)
 
 void CreateOutputFile(char *filename, int format)
 {
-  char name[256];
+  char name[256], no_ext[256], ext[256], base[256];
 
   if(!filename || !strlen(filename))
     GetDefaultFileName(format, name);
   else
     strcpy(name, filename);
+
+  SplitFileName(name, no_ext, ext, base);
 
   int oldformat = CTX.print.format;
   CTX.print.format = format;
@@ -288,14 +290,14 @@ void CreateOutputFile(char *filename, int format)
 	(CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0) |
 	(CTX.print.eps_compress ? GL2PS_COMPRESS : 0) |
 	(CTX.print.eps_ps3shading ? 0 : GL2PS_NO_PS3_SHADING);
-      
+
       GLint buffsize = 0;
       int res = GL2PS_OVERFLOW;
       while(res == GL2PS_OVERFLOW) {
 	buffsize += 2048 * 2048;
 	gl2psBeginPage(CTX.base_filename, "Gmsh", viewport, 
 		       psformat, pssort, psoptions, GL_RGBA, 0, NULL, 
-		       15, 20, 10, buffsize, fp, name);
+		       15, 20, 10, buffsize, fp, base);
 	if(CTX.print.eps_quality == 0){
 	  double modelview[16], projection[16];
 	  glGetDoublev(GL_PROJECTION_MATRIX, projection);
@@ -337,7 +339,7 @@ void CreateOutputFile(char *filename, int format)
 	buffsize += 2048 * 2048;
 	gl2psBeginPage(CTX.base_filename, "Gmsh", viewport,
 		       GL2PS_TEX, GL2PS_NO_SORT, GL2PS_NONE, GL_RGBA, 0, NULL, 
-		       0, 0, 0, buffsize, fp, name);
+		       0, 0, 0, buffsize, fp, base);
 	PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
 	int oldtext = CTX.print.text;
 	CTX.print.text = 1;

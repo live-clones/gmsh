@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.8 2007-02-07 13:06:49 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.9 2007-08-17 15:43:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -109,8 +109,8 @@ void add_infile(char *text, char *fich, bool deleted_something)
   }
   
   if(!CTX.expert_mode) {
-    char base[256], ext[256];
-    SplitFileName(fich, base, ext);
+    char no_ext[256], ext[256], base[256];
+    SplitFileName(fich, no_ext, ext, base);
     if(strlen(ext) && strcmp(ext, ".geo") && strcmp(ext, ".GEO")){
       char question[1024];
       sprintf(question, 

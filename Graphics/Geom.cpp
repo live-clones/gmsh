@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.135 2007-08-07 20:27:20 anand Exp $
+// $Id: Geom.cpp,v 1.136 2007-08-17 15:43:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -286,6 +286,17 @@ class drawGFace {
     glEnd();
     glDisable(GL_LIGHTING);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    if(CTX.geom.normals) {
+      GPoint p = f->point(0.5, 0.5);
+      SVector3 n = f->normal(SPoint2(0.5, 0.5));
+      for(int i = 0; i < 3; i++)
+	n[i] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[i];
+      glColor4ubv((GLubyte *) & CTX.color.geom.normals);
+      Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
+		  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
+		  p.x(), p.y(), p.z(), n[0], n[1], n[2], CTX.geom.light);
+    }
   }
 
   void _drawPlaneGFace(GFace *f)

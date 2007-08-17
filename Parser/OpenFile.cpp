@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.149 2007-07-11 16:38:36 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.150 2007-08-17 15:43:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -72,14 +72,21 @@ void FixWindowsPath(char *in, char *out){
 #endif
 }
 
-void SplitFileName(char *name, char *base, char *ext)
+void SplitFileName(char *name, char *no_ext, char *ext, char *base)
 {
-  strcpy(base, name);
+  strcpy(no_ext, name);
   strcpy(ext, "");
-  for(int i = strlen(name)-1; i >= 0; i--){
+  for(int i = strlen(name) - 1; i >= 0; i--){
     if(name[i] == '.'){
       strcpy(ext, &name[i]);
-      base[i] = '\0';
+      no_ext[i] = '\0';
+      break;
+    }
+  }
+  strcpy(base, no_ext);
+  for(int i = strlen(no_ext) - 1; i >= 0; i--){
+    if(no_ext[i] == '/' || no_ext[i] == '\\'){
+      strcpy(base, &no_ext[i + 1]);
       break;
     }
   }
@@ -262,10 +269,11 @@ void ParseString(char *str)
 
 void SetProjectName(char *name)
 {
-  char base[356], ext[256];
-  SplitFileName(name, base, ext);
+  char no_ext[256], ext[256], base[256];
+  SplitFileName(name, no_ext, ext, base);
 
   strncpy(CTX.filename, name, 255);
+  strncpy(CTX.no_ext_filename, no_ext, 255);
   strncpy(CTX.base_filename, base, 255);
 
 #if defined(HAVE_FLTK)
@@ -289,8 +297,8 @@ int MergeFile(char *name, int warn_if_missing)
 
   Msg(STATUS2, "Reading '%s'", name);
 
-  char ext[256], base[256];
-  SplitFileName(name, base, ext);
+  char no_ext[256], ext[256], base[256];
+  SplitFileName(name, no_ext, ext, base);
 
 #if defined(HAVE_FLTK)
   if(!CTX.batch) {
@@ -300,12 +308,12 @@ int MergeFile(char *name, int warn_if_missing)
       if(fl_choice("File '%s' is in gzip format.\n\nDo you want to uncompress it?", 
 		   "Cancel", "Uncompress", NULL, name)){
 	char tmp[256];
-	sprintf(tmp, "gunzip -c %s > %s", name, base);
+	sprintf(tmp, "gunzip -c %s > %s", name, no_ext);
 	if(SystemCall(tmp))
 	  Msg(GERROR, "Failed to uncompress `%s': check directory permissions", name);
 	if(!strcmp(CTX.filename, name)) // this is the project file
-	  SetProjectName(base);
-	return MergeFile(base);
+	  SetProjectName(no_ext);
+	return MergeFile(no_ext);
       }
     }
   }

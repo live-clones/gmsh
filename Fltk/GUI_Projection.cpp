@@ -2,6 +2,7 @@
 #include "Draw.h"
 #include "Options.h"
 #include "Context.h"
+#include "OpenFile.h"
 #include "SelectBuffer.h"
 #include "GUI_Projection.h"
 #include "GUI_Extras.h"
@@ -131,47 +132,71 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
   group = new Fl_Scroll(x, y, w, h);
   SBoundingBox3d bounds = GMODEL->bounds();
   FM::ProjectionSurface *ps = f->GetProjectionSurface();
-  currentParams = new double[ps->GetNumParameters() + 9];
-  for(int i = 0; i < ps->GetNumParameters() + 9; i++){
-    Fl_Value_Input *v = new Fl_Value_Input(x, y + i * BH, BB, BH);
-    if(i < 3){ // scaling
-      currentParams[i] = 1.;
-      v->maximum(CTX.lc * 10.);
-      v->minimum(CTX.lc / 100.);
-      v->step(CTX.lc / 100.);
-      v->label((i == 0) ? "X scale" : (i == 1) ? "Y scale" : "Z scale");
-      v->value(currentParams[i]);
-    }
-    else if(i < 6){ //rotation
-      currentParams[i] = 0.;
-      v->maximum(-180.);
-      v->minimum(180.);
-      v->step(0.1);
-      v->label((i == 3) ? "X rotation" : (i == 4) ? "Y rotation" : "Z rotation");
-      v->value(currentParams[i]);
-    }
-    else if(i < 9){ // translation
-      currentParams[i] = bounds.center()[i - 6];
+  
+  Fl_Toggle_Button *b = new Fl_Toggle_Button(x, y, BB, BH, "Set position");
+  b->callback(set_position_cb, e);
+  
+  { // origin is stored in parameters[0,1,2]
+    SPoint3 pc = bounds.center();
+    for(int i = 0; i < 3; i++){
+      Fl_Value_Input *v = new Fl_Value_Input(x, y + (1 + i) * BH, BB, BH);
+      parameters.push_back(v);
       v->maximum(bounds.max()[i] + 10. * CTX.lc);
       v->minimum(bounds.min()[i] - 10. * CTX.lc);
       v->step(CTX.lc / 100.);
-      v->label((i == 6) ? "X translation" : (i == 7) ? "Y translation" : 
-	       "Z translation");
-      v->value(currentParams[i]);
+      v->value(pc[i]);
+      v->label((i == 0) ? "X" : (i == 1) ? "Y" : "Z");
     }
-    else{ // other parameters
-      currentParams[i] = ps->GetParameter(i - 9);
-      v->maximum(10. * CTX.lc);
-      v->minimum(-10. * CTX.lc);
-      v->step(CTX.lc / 100.);
-      v->label(strdup(ps->GetLabel(i - 9).c_str()));
-      v->value(currentParams[i]);
-    }
-    ps->SetOrigin(currentParams[6], currentParams[7], currentParams[8]);
-    v->align(FL_ALIGN_RIGHT);
-    v->callback(update_cb, e);
+    ps->SetOrigin(pc[0], pc[1], pc[2]);
+  }
+  { // normal is stored in parameters[3,4,5]
+    Fl_Value_Input *v1 = new Fl_Value_Input(x, y + 4 * BH, BB / 3, BH);
+    parameters.push_back(v1);
+    v1->maximum(1.); v1->minimum(-1.); v1->step(0.01); v1->value(0.);
+    Fl_Value_Input *v2 = new Fl_Value_Input(x + BB / 3, y + 4 * BH, BB / 3, BH);
+    parameters.push_back(v2);
+    v2->maximum(1.); v2->minimum(-1.); v2->step(0.01); v2->value(0.);
+    Fl_Value_Input *v3 = new Fl_Value_Input(x + 2 * BB / 3, y + 4 * BH, BB - 2 * BB / 3, BH);
+    parameters.push_back(v3);
+    v3->maximum(1.); v3->minimum(-1.); v3->step(0.01); v3->value(1.);
+    v3->label("Normal");
+  }
+  { // rotation is stored in parameters[6]
+    Fl_Value_Input *v = new Fl_Value_Input(x, y + 5 * BH, BB, BH, "Rotation");
+    v->maximum(-180.);
+    v->minimum(180.);
+    v->step(0.1);
+    v->value(0.);
     parameters.push_back(v);
   }
+  { // scale is stored in parameters[7,8,9]
+    for(int i = 0; i < 3; i++){
+      Fl_Value_Input *v = new Fl_Value_Input(x, y + (6 + i) * BH, BB, BH);
+      parameters.push_back(v);
+      v->maximum(CTX.lc * 10.);
+      v->minimum(CTX.lc / 100.);
+      v->step(CTX.lc / 100.);
+      v->value(CTX.lc / 10.);
+      v->label((i == 0) ? "Scale0" : (i == 1) ? "Scale1" : "Scale2");
+    }
+  }
+
+  // other parameters are stored in parameters[10,...]
+  for(int i = 0; i < ps->GetNumParameters(); i++){
+    Fl_Value_Input *v = new Fl_Value_Input(x, y + (9 + i) * BH, BB, BH);
+    v->maximum(10. * CTX.lc);
+    v->minimum(-10. * CTX.lc);
+    v->step(CTX.lc / 100.);
+    v->label(strdup(ps->GetLabel(i).c_str()));
+    v->value(ps->GetParameter(i));
+    parameters.push_back(v);
+  }
+
+  for(unsigned int i = 0; i < parameters.size(); i++){
+    parameters[i]->align(FL_ALIGN_RIGHT);
+    parameters[i]->callback(update_cb, e);
+  }
+
   group->end();
   group->hide();
 }
@@ -180,22 +205,21 @@ projectionEditor::projectionEditor()
 {
   // construct GUI in terms of standard sizes
   const int BH = 2 * GetFontSize() + 1, BB = 7 * GetFontSize(), WB = 7;
-  const int width = (int)(3.5 * BB), height = 24 * BH;
+  const int width = (int)(3.75 * BB), height = 24 * BH;
   
   // create all widgets (we construct this once, we never deallocate!)
   _window = new Dialog_Window(width, height, "Reparameterize");
   
-  new Fl_Box(WB, WB + BH, BB / 2, BH, "Select:");
+  new Fl_Box(WB, WB + BH / 2, BB / 2, BH, "Select:");
   
   Fl_Group *o = new Fl_Group(WB, WB, 2 * BB, 3 * BH);
-  _select[0] = 
-    new Fl_Round_Button(2 * WB + BB / 2, WB, BB, BH, "Points");
-  _select[0]->value(1);
-  _select[1] = 
-    new Fl_Round_Button(2 * WB + BB / 2, WB + BH, BB, BH, "Elements");
-  _select[2] = 
-    new Fl_Round_Button(2 * WB + BB / 2, WB + 2 * BH, BB, BH, "Surfaces");
-  for(int i = 0; i < 3; i++){
+  _select[0] = new Fl_Round_Button(2 * WB + BB / 2, WB, BB, BH, "Points");
+  _select[1] = new Fl_Round_Button(2 * WB + BB / 2, WB + BH, BB, BH, "Elements");
+  if(GMODEL->numElements())
+    _select[1]->value(1);
+  else
+    _select[0]->value(1);
+  for(int i = 0; i < 2; i++){
     _select[i]->callback(select_cb, this);
     _select[i]->type(FL_RADIO_BUTTON);
   }
@@ -210,16 +234,16 @@ projectionEditor::projectionEditor()
     b2->callback(save_selection_cb, this);
   }
 
-  const int brw = (int)(1.25 * BB);
+  const int brw = (int)(1.3 * BB);
 
-  _browser = new Fl_Hold_Browser(WB, 2 * WB + 3 * BH, brw, 5 * BH);
+  _browser = new Fl_Hold_Browser(WB, 2 * WB + 2 * BH, brw, 6 * BH);
   _browser->callback(browse_cb, this);
 
   _paramWin[0] = 2 * WB + brw;
-  _paramWin[1] = 2 * WB + 3 * BH;
+  _paramWin[1] = 2 * WB + 2 * BH;
   _paramWin[2] = width - 3 * WB - brw;
-  _paramWin[3] = 6 * BH;
-  _paramWin[4] = BB;
+  _paramWin[3] = 7 * BH;
+  _paramWin[4] = (int)(1.25 * BB);
   _paramWin[5] = BH;
 
   {
@@ -233,43 +257,48 @@ projectionEditor::projectionEditor()
   int uvw = width - 2 * WB - 2 * hard - 3 * WB;
   int uvh = height - 8 * WB - 14 * BH - 2 * hard;
 
-  hardEdges[0] = new Fl_Toggle_Button(WB, 3 * WB + 9 * BH + hard, 
-				      hard, uvh);
-  hardEdges[1] = new Fl_Toggle_Button(width - 4 * WB - hard, 3 * WB + 9 * BH + hard,
-				      hard, uvh);
-  hardEdges[2] = new Fl_Toggle_Button(WB + hard, 3 * WB + 9 * BH, 
-				      uvw, hard);
-  hardEdges[3] = new Fl_Toggle_Button(WB + hard, height - 5 * WB - 5 * BH - hard, 
-				      uvw, hard);
+  _hardEdges[0] = new Fl_Toggle_Button(WB, 3 * WB + 9 * BH + hard, 
+				       hard, uvh);
+  _hardEdges[1] = new Fl_Toggle_Button(width - 4 * WB - hard, 3 * WB + 9 * BH + hard,
+				       hard, uvh);
+  _hardEdges[2] = new Fl_Toggle_Button(WB + hard, 3 * WB + 9 * BH, 
+				       uvw, hard);
+  _hardEdges[3] = new Fl_Toggle_Button(WB + hard, height - 5 * WB - 5 * BH - hard, 
+				       uvw, hard);
   for(int i = 0; i < 4; i++)
-    hardEdges[i]->tooltip("Push to mark edge as `hard'");
+    _hardEdges[i]->tooltip("Push to mark edge as `hard'");
 
   _uvPlot = new uvPlot(WB + hard, 3 * WB + 9 * BH + hard, uvw, uvh);
   _uvPlot->end();
 
-  Fl_Slider *s = new Fl_Slider(width - 3 * WB, 3 * WB + 9 * BH + hard, 2 * WB, uvh);
-  s->minimum(1.);
-  s->maximum(0.);
-  s->value(1.);
-  s->callback(filter_cb, this);
-  s->tooltip("Filter selection by distance to projection surface");
+  _slider = new Fl_Slider(width - 3 * WB, 3 * WB + 9 * BH + hard, 2 * WB, uvh);
+  _slider->minimum(1.);
+  _slider->maximum(0.);
+  _slider->value(1.);
+  _slider->callback(filter_cb, this);
+  _slider->tooltip("Filter selection by distance to projection surface");
+
+  _orientation = new Fl_Toggle_Button(width - 3 * WB, height - 5 * WB - 5 * BH - hard, 
+				      2 * WB, hard);
+  _orientation->callback(filter_cb, this);
+  _orientation->tooltip("Filter elements using orientation");
   
-  modes[0] = new Fl_Value_Input(WB, height - 4 * WB - 5 * BH, BB  / 2, BH);
-  modes[0]->tooltip("Number of Fourier modes along u");
-  modes[1] = new Fl_Value_Input(WB + BB / 2, height - 4 * WB - 5 * BH, BB  / 2, BH, 
-				"Fourier modes");
-  modes[1]->tooltip("Number of Fourier modes along v");
-  modes[2] = new Fl_Value_Input(WB, height - 4 * WB - 4 * BH, BB  / 2, BH);
-  modes[2]->tooltip("Number of Chebyshev modes along u");
-  modes[3] = new Fl_Value_Input(WB + BB / 2, height - 4 * WB - 4 * BH, BB  / 2, BH, 
-				"Chebyshev modes");
-  modes[3]->tooltip("Number of Chebyshev modes along v");
+  _modes[0] = new Fl_Value_Input(WB, height - 4 * WB - 5 * BH, BB  / 2, BH);
+  _modes[0]->tooltip("Number of Fourier modes along u");
+  _modes[1] = new Fl_Value_Input(WB + BB / 2, height - 4 * WB - 5 * BH, BB  / 2, BH, 
+				 "Fourier modes");
+  _modes[1]->tooltip("Number of Fourier modes along v");
+  _modes[2] = new Fl_Value_Input(WB, height - 4 * WB - 4 * BH, BB  / 2, BH);
+  _modes[2]->tooltip("Number of Chebyshev modes along u");
+  _modes[3] = new Fl_Value_Input(WB + BB / 2, height - 4 * WB - 4 * BH, BB  / 2, BH, 
+				 "Chebyshev modes");
+  _modes[3]->tooltip("Number of Chebyshev modes along v");
   for(int i = 0; i < 4; i++){
-    modes[i]->value(8);
-    modes[i]->maximum(128);
-    modes[i]->minimum(1);
-    modes[i]->step(1);
-    modes[i]->align(FL_ALIGN_RIGHT);
+    _modes[i]->value(8);
+    _modes[i]->maximum(128);
+    _modes[i]->minimum(1);
+    _modes[i]->step(1);
+    _modes[i]->align(FL_ALIGN_RIGHT);
   }    
 
   {
@@ -337,9 +366,8 @@ int projectionEditor::getSelectionMode()
 { 
   if(_select[0]->value())
     return ENT_POINT;
-  else if(_select[2]->value())
-    return ENT_SURFACE;
-  return ENT_ALL;
+  else
+    return ENT_ALL;
 }
 
 projection *projectionEditor::getCurrentProjection()
@@ -391,6 +419,71 @@ void project_point(FM::ProjectionSurface *ps, double x, double y, double z,
   }
 }
 
+void set_position_cb(Fl_Widget *w, void *data)
+{
+  projectionEditor *e = (projectionEditor*)data;
+  projection *p = e->getCurrentProjection();
+  if(p){
+    FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
+    std::vector<GVertex*> vertices;
+    std::vector<GEdge*> edges;
+    std::vector<GFace*> faces;
+    std::vector<GRegion*> regions;
+    std::vector<MElement*> elements;
+    char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, elements);
+    if(ib == 'l'){
+      if(vertices.size()){
+	p->parameters[0]->value(vertices[0]->x());
+	p->parameters[1]->value(vertices[0]->y());
+	p->parameters[2]->value(vertices[0]->z());
+      }
+      else if(elements.size()){
+	SPoint3 pc = elements[0]->barycenter();
+	p->parameters[0]->value(pc.x());
+	p->parameters[1]->value(pc.y());
+	p->parameters[2]->value(pc.z());
+	if(elements[0]->getNumFaces()){
+	  MFace f = elements[0]->getFace(0);
+	  SVector3 n = f.normal();
+	  p->parameters[3]->value(n[0]);
+	  p->parameters[4]->value(n[1]);
+	  p->parameters[5]->value(n[2]);
+	}
+      }
+    }
+    ((Fl_Toggle_Button*)w)->value(0);
+  }
+  update_cb(0, data);
+}
+
+void getTangents(const SVector3 n, SVector3 &t1, SVector3 &t2, const double angle)
+{
+  SVector3 ex(0., 0., 0.);
+  if(n[0] == 0.)
+    ex[0] = 1.;
+  else if(n[1] == 0.)
+    ex[1] = 1.;
+  else
+    ex[2] = 1.;
+  SVector3 a = crossprod(n, ex);
+  a.normalize();
+  SVector3 b = crossprod(n, a);
+  b.normalize();
+  double x = n[0], y = n[1], z = n[2];
+  double c = cos(angle * M_PI / 180.), s = sin(angle * M_PI / 180.);
+  double rot[3][3] = 
+    {{x * x * (1-c) + c    , x * y * (1-c) - z * s, x * z * (1-c) + y * s},
+     {y * x * (1-c) + z * s, y * y * (1-c) + c    , y * z * (1-c) - x * s},
+     {x * z * (1-c) - y * s, y * z * (1-c) + x * s, z * z * (1-c) + c    }};
+  for(int i = 0; i < 3; i++){
+    t1[i] = t2[i] = 0.;
+    for(int j = 0; j < 3; j++){
+      t1[i] += rot[i][j] * a[j];
+      t2[i] += rot[i][j] * b[j];
+    }
+  }
+}
+
 void update_cb(Fl_Widget *w, void *data)
 {
   projectionEditor *e = (projectionEditor*)data;
@@ -400,21 +493,26 @@ void update_cb(Fl_Widget *w, void *data)
   projection *p = e->getCurrentProjection();
   if(p){
     FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
-    ps->Rescale(p->parameters[0]->value() / p->currentParams[0],
-		p->parameters[1]->value() / p->currentParams[1],
-		p->parameters[2]->value() / p->currentParams[2]);
-    ps->Rotate(p->parameters[3]->value() - p->currentParams[3],
-	       p->parameters[4]->value() - p->currentParams[4],
-	       p->parameters[5]->value() - p->currentParams[5]);
-    ps->Translate(p->parameters[6]->value() - p->currentParams[6],
-		  p->parameters[7]->value() - p->currentParams[7],
-		  p->parameters[8]->value() - p->currentParams[8]);
-    for (int i = 0; i < 9; i++)
-      p->currentParams[i] = p->parameters[i]->value();
-    for (int i = 9; i < 9 + ps->GetNumParameters(); i++)
-      ps->SetParameter(i - 9, p->parameters[i]->value());
-    p->face->computeGraphicsRep(64, 64); // FIXME: hardcoded for now!
-   
+    ps->SetOrigin(p->parameters[0]->value(),
+		  p->parameters[1]->value(),
+		  p->parameters[2]->value());
+    SVector3 n(p->parameters[3]->value(),
+	       p->parameters[4]->value(),
+	       p->parameters[5]->value());
+    if(!n.normalize()) n[2] = 1.;
+    SVector3 t1, t2;
+    getTangents(n, t1, t2, p->parameters[6]->value());
+    ps->SetE0(n[0], n[1], n[2]);
+    ps->SetE1(t1[0], t1[1], t1[2]);
+    ps->SetE2(t2[0], t2[1], t2[2]);
+    ps->SetScale(p->parameters[7]->value(),
+		 p->parameters[8]->value(),
+		 p->parameters[9]->value());
+    for (int i = 0; i < ps->GetNumParameters(); i++)
+      ps->SetParameter(i, p->parameters[i + 10]->value());
+
+    p->face->computeGraphicsRep(64, 64); // FIXME: hardcoded for now
+
     // project selected points and elements and update u,v display
     std::vector<double> u, v, dist;
     std::vector<std::complex<double> > f;
@@ -544,13 +642,12 @@ void select_cb(Fl_Widget *w, void *data)
 
 void filter_cb(Fl_Widget *w, void *data)
 {
-  Fl_Slider *slider = (Fl_Slider*)w;
   projectionEditor *e = (projectionEditor*)data;
   projection *p = e->getCurrentProjection();
   if(p){
     SBoundingBox3d bbox = GMODEL->bounds();
     double lc = norm(SVector3(bbox.max(), bbox.min()));
-    double threshold = slider->value() * lc;
+    double threshold = e->getThreshold() * lc;
     FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
     std::vector<GEntity*> &ent(e->getEntities());
     for(unsigned int i = 0; i < ent.size(); i++){
@@ -575,8 +672,17 @@ void filter_cb(Fl_Widget *w, void *data)
       ps->F(uu, vv, p[0], p[1], p[2]);
       double dx = pc.x() - p[0], dy = pc.y() - p[1], dz = pc.z() - p[2];
       if(uu >= 0. && uu <= 1. && vv >= 0. && vv < 1. &&
-	 sqrt(dx * dx + dy * dy + dz * dz) < threshold)
+	 sqrt(dx * dx + dy * dy + dz * dz) < threshold){
 	ele[i]->setVisibility(2);
+	// keep only the elements oriented in the same direction as
+	// the projection surface
+	if(e->getOrientation() && ele[i]->getNumFaces()){
+	  MFace f = ele[i]->getFace(0);
+	  SVector3 n = f.normal(), n2;
+	  ps->GetNormal(uu, vv, n2[0], n2[1], n2[2]);
+	  if(dot(n, n2) < 0.) ele[i]->setVisibility(1);
+	}
+      }
       else
 	ele[i]->setVisibility(1);
     }
@@ -600,21 +706,39 @@ void hide_cb(Fl_Widget *w, void *data)
 void save_selection_cb(Fl_Widget *w, void *data)
 {
   projectionEditor *e = (projectionEditor*)data;
-  std::vector<GEntity*> &ent(e->getEntities());
-  if(file_chooser(0, 1, "Save Selection", "*.geo")){
+  if(file_chooser(0, 1, "Save Selection", "*.{geo,msh}")){
     FILE *fp = fopen(file_chooser_get_name(1), "w");
     if(!fp){
       Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1));
       return;
     }
-    // maybe we should save as mesh file
+    std::vector<GEntity*> &ent(e->getEntities());
     for(unsigned int i = 0; i < ent.size(); i++){
       GVertex *gv = dynamic_cast<GVertex*>(ent[i]);
       if(gv && gv->getSelection())
 	fprintf(fp, "Point(%d) = {%.16g,%.16g,%.16g,1};\n", gv->tag(), 
 		gv->x(), gv->y(), gv->z());
     }
-    // deal with elements here
+    std::vector<MElement*> &ele(e->getElements());
+    if(ele.size()){
+      int nelm = 0;
+      std::set<MVertex*> verts;
+      for(unsigned int i = 0; i < ele.size(); i++){
+	if(ele[i]->getVisibility() == 2){
+	  nelm++;
+	  for(int j = 0; j < ele[i]->getNumVertices(); j++)
+	    verts.insert(ele[i]->getVertex(j));
+	}
+      }
+      fprintf(fp, "$NOD\n%d\n", verts.size());
+      for(std::set<MVertex*>::iterator it = verts.begin(); it != verts.end(); it++)
+	(*it)->writeMSH(fp);
+      fprintf(fp, "$ENDNOD\n$ELM\n%d\n", nelm);
+      for(unsigned int i = 0; i < ele.size(); i++)
+	if(ele[i]->getVisibility() == 2)
+	  ele[i]->writeMSH(fp, 1.0);
+      fprintf(fp, "$ENDELM\n");
+    }
     fclose(fp);
   }
 }
@@ -667,12 +791,15 @@ void save_projection_cb(Fl_Widget *w, void *data)
   if(p){
     FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
     if(file_chooser(0, 1, "Save Projection", "*.pro")){
-      FILE *fp = fopen(file_chooser_get_name(1), "w");
+      char *name = file_chooser_get_name(1);
+      FILE *fp = fopen(name, "w");
       if(!fp){
-	Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1));
+	Msg(GERROR, "Unable to open file `%s'", name);
 	return;
       }
-      fprintf(fp, "1\n%s\n%s\n", ps->GetName().c_str(), ps->GetName().c_str());
+      char no_ext[256], ext[256], base[256];
+      SplitFileName(name, no_ext, ext, base);
+      fprintf(fp, "1\n%s\n%s\n", base, ps->GetName().c_str());
       for(unsigned int i = 0; i < p->parameters.size(); i++)
 	fprintf(fp, "%.16g\n", p->parameters[i]->value());
       fclose(fp);
@@ -692,20 +819,20 @@ void compute_cb(Fl_Widget *w, void *data)
     e->uv()->get(u, v, dist, f);
     if(f.empty()) return;
 
-    int uModes = (int)e->modes[0]->value();
-    int vModes = (int)e->modes[1]->value();
+    int uModes = e->getMode(0);
+    int vModes = e->getMode(1);
 
     if(f.size() < uModes * vModes){
       Msg(GERROR, "Number of points < uModes * vModes");
       return;
     }
 
-    int uM = (int)e->modes[2]->value();
-    int vM = (int)e->modes[3]->value();
-    int h0 = e->hardEdges[0]->value();
-    int h1 = e->hardEdges[1]->value();
-    int h2 = e->hardEdges[2]->value();
-    int h3 = e->hardEdges[3]->value();
+    int uM = e->getMode(2);
+    int vM = e->getMode(3);
+    int h0 = e->getHardEdge(0);
+    int h1 = e->getHardEdge(1);
+    int h2 = e->getHardEdge(2);
+    int h3 = e->getHardEdge(3);
 
     // create the Fourier faces (with boundaries)
     FM::ProjectionSurface *ps = p->face->GetProjectionSurface();

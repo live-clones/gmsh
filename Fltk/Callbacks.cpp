@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.536 2007-08-03 00:44:28 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.537 2007-08-17 15:43:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4111,7 +4111,7 @@ void solver_cb(CALLBACK_ARGS)
   if(first[num]) {
     char file[256];
     first[num] = 0;
-    strcpy(file, CTX.base_filename);
+    strcpy(file, CTX.no_ext_filename);
     strcat(file, SINFO[num].extension);
     WID->solver[num].input[0]->value(file);
   }

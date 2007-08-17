@@ -17,6 +17,7 @@
 void select_cb(Fl_Widget *w, void *data);
 void filter_cb(Fl_Widget *w, void *data);
 void browse_cb(Fl_Widget *w, void *data);
+void set_position_cb(Fl_Widget *w, void *data);
 void update_cb(Fl_Widget *w, void *data);
 void close_cb(Fl_Widget *w, void *data);
 void hide_cb(Fl_Widget *w, void *data);
@@ -49,7 +50,6 @@ class projection {
  public:
   FProjectionFace *face;
   Fl_Group *group;
-  double *currentParams;
   std::vector<Fl_Value_Input*> parameters;
   projection(FProjectionFace *f, int x, int y, int w, int h, int BB, int BH,
 	     projectionEditor *e);
@@ -65,19 +65,24 @@ class projectionEditor {
   int _paramWin[6];
   Fl_Round_Button *_select[3];
   uvPlot *_uvPlot;
+  Fl_Value_Input *_modes[4];
+  Fl_Toggle_Button *_hardEdges[4], *_orientation;
+  Fl_Slider *_slider;
  public:
   projectionEditor();
   void load(FProjectionFace *face, std::string tag="");
   void show(){ _window->show(); select_cb(0, this); }
   uvPlot *uv() { return _uvPlot; }
-  Fl_Value_Input* modes[4];
-  Fl_Toggle_Button* hardEdges[4];
   std::vector<MElement*> &getElements() { return _elements; }
   std::vector<GEntity*> &getEntities() { return _entities; }
   std::vector<projection*> &getProjections() { return _projections; }
   projection *getCurrentProjection();
   projection *getLastProjection();
   int getSelectionMode();
+  int getMode(int i){ return (int)_modes[i]->value(); }
+  int getHardEdge(int i){ return (int)_hardEdges[i]->value(); }
+  int getOrientation(){ return (int)_orientation->value(); }
+  double getThreshold(){ return _slider->value(); }
 };
 
 #endif

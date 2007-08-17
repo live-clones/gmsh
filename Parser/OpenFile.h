@@ -27,7 +27,7 @@ void OpenProjectMacFinder(const char *filename);
 int MergeFile(char *filename, int warn_if_missing=0);
 void FixRelativePath(char *in, char *out);
 void FixWindowsPath(char *in, char *out);
-void SplitFileName(char *name, char *base, char *ext);
+void SplitFileName(char *name, char *no_ext, char *ext, char *base);
 void SetBoundingBox(double xmin, double xmax,
 		    double ymin, double ymax, 
 		    double zmin, double zmax);
