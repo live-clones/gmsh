@@ -223,7 +223,7 @@ projectionEditor::projectionEditor()
 {
   // construct GUI in terms of standard sizes
   const int BH = 2 * GetFontSize() + 1, BB = 7 * GetFontSize(), WB = 7;
-  const int width = (int)(3.75 * BB), height = 24 * BH;
+  const int width = (int)(3.75 * BB), height = 25 * BH;
   
   // create all widgets (we construct this once, we never deallocate!)
   _window = new Dialog_Window(width, height, "Reparameterize");
@@ -273,7 +273,7 @@ projectionEditor::projectionEditor()
 
   int hard = 8;
   int uvw = width - 2 * WB - 2 * hard - 3 * WB;
-  int uvh = height - 8 * WB - 14 * BH - 2 * hard;
+  int uvh = height - 8 * WB - 15 * BH - 2 * hard;
 
   _hardEdges[0] = new Fl_Toggle_Button(WB, 3 * WB + 9 * BH + hard, 
 				       hard, uvh);
@@ -281,7 +281,7 @@ projectionEditor::projectionEditor()
 				       hard, uvh);
   _hardEdges[2] = new Fl_Toggle_Button(WB + hard, 3 * WB + 9 * BH, 
 				       uvw, hard);
-  _hardEdges[3] = new Fl_Toggle_Button(WB + hard, height - 5 * WB - 5 * BH - hard, 
+  _hardEdges[3] = new Fl_Toggle_Button(WB + hard, height - 5 * WB - 6 * BH - hard, 
 				       uvw, hard);
   for(int i = 0; i < 4; i++)
     _hardEdges[i]->tooltip("Push to mark edge as `hard'");
@@ -296,11 +296,25 @@ projectionEditor::projectionEditor()
   _slider->callback(filter_cb, this);
   _slider->tooltip("Filter selection by distance to projection surface");
 
-  _orientation = new Fl_Toggle_Button(width - 3 * WB, height - 5 * WB - 5 * BH - hard, 
+  _orientation = new Fl_Toggle_Button(width - 3 * WB, height - 5 * WB - 6 * BH - hard, 
 				      2 * WB, hard);
   _orientation->callback(filter_cb, this);
   _orientation->tooltip("Filter elements using orientation");
-  
+
+  new Fl_Box(WB, height - 4 * WB - 6 * BH, BB, BH, "Patch Type:");
+  Fl_Group *oo = new Fl_Group( WB, height - 4 * WB - 6 * BH, 3 * BB, BH);
+  _pselect[0] = new Fl_Round_Button(2 * WB + BB, height - 4 * WB - 6 * BH,
+				   BB, BH, "Continuation");
+  _pselect[1] = new Fl_Round_Button(3 * WB + 2 * BB, height - 4 * WB - 
+				   6 * BH, BB, BH, "Windowing");
+
+  for(int i = 0; i < 2; i++)
+    _pselect[i]->type(FL_RADIO_BUTTON);
+
+  _pselect[0]->value(1);
+
+  oo->end();
+
   _modes[0] = new Fl_Value_Input(WB, height - 4 * WB - 5 * BH, BB  / 2, BH);
   _modes[0]->tooltip("Number of Fourier modes along u");
   _modes[1] = new Fl_Value_Input(WB + BB / 2, height - 4 * WB - 5 * BH, BB  / 2, BH, 
@@ -386,6 +400,14 @@ int projectionEditor::getSelectionMode()
     return ENT_POINT;
   else
     return ENT_ALL;
+}
+
+int projectionEditor::getPatchType()
+{
+  if (_pselect[0]->value())
+    return 0;
+  else
+    return 1;
 }
 
 projection *projectionEditor::getCurrentProjection()
@@ -898,56 +920,49 @@ void compute_cb(Fl_Widget *w, void *data)
     int h2 = e->getHardEdge(2);
     int h3 = e->getHardEdge(3);
 
-    // create the Fourier faces (with boundaries)
     FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
-    if(ps->IsUPeriodic()) {
-      FM::Patch* patchL = 
-	new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
-		       uM, vM, h0, h1, h2, h3);
-      patchL->SetMinU(-0.35);
-      patchL->SetMaxU(0.35);
-      makeGFace(patchL);
-      FM::Patch* patchR = 
-	new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
-		       uM, vM, h0, h1, h2, h3);
-      patchR->SetMinU(0.15);
-      patchR->SetMaxU(0.85);
-      makeGFace(patchR);
-      /*
+    if (e->getPatchType()) {
+      // create the US-FFT/Windowing faces (with boundaries)
       FM::Patch* patch =
 	new FM::WFPatch(0, ps->clone(), u, v, f, 3, uModes, vModes);
       makeGFace(patch);
-      */
-    }
-    else if (ps->IsVPeriodic()) {
-      FM::Patch* patchL = 
-	new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
-		       uM, vM, h0, h1, h2, h3);
-      patchL->SetMinV(-0.35);
-      patchL->SetMaxV(0.35);
-      makeGFace(patchL);
-      FM::Patch* patchR = 
-	new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
-		       uM, vM, h0, h1, h2, h3);
-      patchR->SetMinV(0.15);
-      patchR->SetMaxV(0.85);
-      makeGFace(patchR);
-      /*
-      FM::Patch* patch =
-	new FM::WFPatch(0, ps->clone(), u, v, f, 3, uModes, vModes);
-      makeGFace(patch);
-      */
     }
     else {
-      FM::Patch* patch = 
-	new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
-		       uM, vM, h0, h1, h2, h3);
-      makeGFace(patch);
-      /*
-      FM::Patch* patch =
-	new FM::WFPatch(0, ps->clone(), u, v, f, 3, uModes, vModes);
-      makeGFace(patch);
-      */
+      // create the Fourier faces (with boundaries)
+      if(ps->IsUPeriodic()) {
+	FM::Patch* patchL = 
+	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+			 uM, vM, h0, h1, h2, h3);
+	patchL->SetMinU(-0.35);
+	patchL->SetMaxU(0.35);
+	makeGFace(patchL);
+	FM::Patch* patchR = 
+	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
+			 uM, vM, h0, h1, h2, h3);
+	patchR->SetMinU(0.15);
+	patchR->SetMaxU(0.85);
+	makeGFace(patchR);
+      }
+      else if (ps->IsVPeriodic()) {
+	FM::Patch* patchL = 
+	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+			 uM, vM, h0, h1, h2, h3);
+	patchL->SetMinV(-0.35);
+	patchL->SetMaxV(0.35);
+	makeGFace(patchL);
+	FM::Patch* patchR = 
+	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
+			 uM, vM, h0, h1, h2, h3);
+	patchR->SetMinV(0.15);
+	patchR->SetMaxV(0.85);
+	makeGFace(patchR);
+      }
+      else {
+	FM::Patch* patch = 
+	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+			 uM, vM, h0, h1, h2, h3);
+	makeGFace(patch);
+      }
     }
   }
 

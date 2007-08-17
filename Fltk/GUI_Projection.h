@@ -70,7 +70,7 @@ class projectionEditor {
   Fl_Window *_window;
   Fl_Hold_Browser *_browser;
   int _paramWin[6];
-  Fl_Round_Button *_select[3];
+  Fl_Round_Button *_select[2], *_pselect[2];
   uvPlot *_uvPlot;
   Fl_Value_Input *_modes[4];
   Fl_Toggle_Button *_hardEdges[4], *_orientation;
@@ -86,6 +86,7 @@ class projectionEditor {
   projection *getCurrentProjection();
   projection *getLastProjection();
   int getSelectionMode();
+  int getPatchType();
   int getMode(int i){ return (int)_modes[i]->value(); }
   int getHardEdge(int i){ return (int)_hardEdges[i]->value(); }
   int getOrientation(){ return (int)_orientation->value(); }
