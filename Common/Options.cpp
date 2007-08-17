@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.348 2007-08-03 00:44:28 geuzaine Exp $
+// $Id: Options.cpp,v 1.349 2007-08-17 17:51:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -7304,6 +7304,17 @@ unsigned int opt_geometry_color_normals(OPT_ARGS_COL)
   CCC(CTX.color.geom.normals, WID->geo_col[9]);
 #endif
   return CTX.color.geom.normals;
+}
+
+unsigned int opt_geometry_color_projection(OPT_ARGS_COL)
+{
+  if(action & GMSH_SET){
+    CTX.color.geom.projection = val;
+  }
+#if defined(HAVE_FLTK)
+  CCC(CTX.color.geom.projection, WID->geo_col[10]);
+#endif
+  return CTX.color.geom.projection;
 }
 
 unsigned int opt_mesh_color_points(OPT_ARGS_COL)

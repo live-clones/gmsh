@@ -18,6 +18,8 @@ void select_cb(Fl_Widget *w, void *data);
 void filter_cb(Fl_Widget *w, void *data);
 void browse_cb(Fl_Widget *w, void *data);
 void set_position_cb(Fl_Widget *w, void *data);
+void invert_normal_cb(Fl_Widget *w, void *data);
+void translate_cb(Fl_Widget *w, void *data);
 void update_cb(Fl_Widget *w, void *data);
 void close_cb(Fl_Widget *w, void *data);
 void hide_cb(Fl_Widget *w, void *data);

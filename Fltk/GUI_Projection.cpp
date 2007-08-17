@@ -160,6 +160,9 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
     parameters.push_back(v3);
     v3->maximum(1.); v3->minimum(-1.); v3->step(0.01); v3->value(1.);
     v3->label("Normal");
+    Fl_Button *b = new Fl_Button(x + w - BB / 3, y + 4 * BH, BB / 8, BH, "-");
+    b->callback(invert_normal_cb, e);
+    b->tooltip("Invert normal");
   }
   { // rotation is stored in parameters[6]
     Fl_Value_Input *v = new Fl_Value_Input(x, y + 5 * BH, BB, BH, "Rotation");
@@ -419,6 +422,35 @@ void project_point(FM::ProjectionSurface *ps, double x, double y, double z,
   }
 }
 
+void invert_normal_cb(Fl_Widget *w, void *data)
+{
+  projectionEditor *e = (projectionEditor*)data;
+  projection *p = e->getCurrentProjection();
+  if(p){
+    p->parameters[3]->value(-p->parameters[3]->value());
+    p->parameters[4]->value(-p->parameters[4]->value());
+    p->parameters[5]->value(-p->parameters[5]->value());
+    update_cb(0, data);
+  }
+}
+
+void translate_cb(Fl_Widget *w, void *data)
+{
+  projectionEditor *e = (projectionEditor*)data;
+  projection *p = e->getCurrentProjection();
+  if(p){
+    // add widgets so that we can translate along the principal
+    // directions, and change the origin's position accordingly
+    double x = p->parameters[0]->value();
+    double y = p->parameters[1]->value();
+    double z = p->parameters[2]->value();
+    p->parameters[0]->value(x);
+    p->parameters[1]->value(y);
+    p->parameters[2]->value(z);
+    update_cb(0, data);
+  }
+}
+
 void set_position_cb(Fl_Widget *w, void *data)
 {
   projectionEditor *e = (projectionEditor*)data;
@@ -452,8 +484,8 @@ void set_position_cb(Fl_Widget *w, void *data)
       }
     }
     ((Fl_Toggle_Button*)w)->value(0);
+    update_cb(0, data);
   }
-  update_cb(0, data);
 }
 
 void getTangents(const SVector3 n, SVector3 &t1, SVector3 &t2, const double angle)

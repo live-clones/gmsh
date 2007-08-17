@@ -1472,6 +1472,9 @@ StringXColor GeometryOptions_Color[] = {
   { F|O, "Normals" , opt_geometry_color_normals ,
     {255, 0, 0, 255}, {255, 0, 0, 255}, {0, 0, 0, 255},
     "Normal geometry vectors color" },
+  { F|O, "Projection" , opt_geometry_color_projection ,
+    {0, 255, 0, 255}, {0, 255, 0, 255}, {0, 0, 0, 255},
+    "Projection surface color" },
   { 0, NULL , NULL , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , NULL }
 } ;
 

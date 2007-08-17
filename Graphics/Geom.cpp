@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.136 2007-08-17 15:43:07 geuzaine Exp $
+// $Id: Geom.cpp,v 1.137 2007-08-17 17:51:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -262,7 +262,7 @@ class drawGFace {
     if(gr.size() != N) return;
 
     if(f->geomType() == GEntity::ProjectionFace)
-      glColor4ubv((GLubyte *) & CTX.color.geom.selection);
+      glColor4ubv((GLubyte *) & CTX.color.geom.projection);
 
     if(CTX.geom.surface_type > 0)
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

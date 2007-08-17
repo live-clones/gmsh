@@ -230,7 +230,7 @@ public :
     unsigned int ambient_light[6], diffuse_light[6], specular_light[6];
     struct{
       unsigned int point, line, surface, volume;
-      unsigned int selection, highlight[3];
+      unsigned int selection, highlight[3], projection;
       unsigned int tangents, normals;
     } geom;
     struct{
