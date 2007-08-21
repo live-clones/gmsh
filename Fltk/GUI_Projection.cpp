@@ -8,7 +8,6 @@
 #include "GUI_Extras.h"
 #include "FFace.h"
 
-extern GModel *GMODEL;
 extern Context_T CTX;
 
 #if defined(HAVE_FOURIER_MODEL)
@@ -23,23 +22,24 @@ extern Context_T CTX;
 
 static FProjectionFace *createProjectionFaceFromName(char *name)
 {
-  int tag = GMODEL->numFace() + 1;
+  GModel *m = GModel::current();
+  int tag = m->numFace() + 1;
   FProjectionFace *f = 0;
   if(!strcmp(name, "plane"))
-    f = new FProjectionFace(GMODEL, tag, new FM::PlaneProjectionSurface(tag));
+    f = new FProjectionFace(m, tag, new FM::PlaneProjectionSurface(tag));
   else if(!strcmp(name, "paraboloid"))
-    f = new FProjectionFace(GMODEL, tag, new FM::ParaboloidProjectionSurface(tag));
+    f = new FProjectionFace(m, tag, new FM::ParaboloidProjectionSurface(tag));
   else if(!strcmp(name, "cylinder"))
-    f = new FProjectionFace(GMODEL, tag, new FM::CylindricalProjectionSurface(tag));
+    f = new FProjectionFace(m, tag, new FM::CylindricalProjectionSurface(tag));
   else if(!strcmp(name, "revolvedParabola"))
-    f = new FProjectionFace(GMODEL, tag, new FM::RevolvedParabolaProjectionSurface(tag));
+    f = new FProjectionFace(m, tag, new FM::RevolvedParabolaProjectionSurface(tag));
   else if(!strcmp(name, "translatedParabola"))
-    f = new FProjectionFace(GMODEL, tag, new FM::TranslatedParabolaProjectionSurface(tag));
+    f = new FProjectionFace(m, tag, new FM::TranslatedParabolaProjectionSurface(tag));
   else
     Msg(GERROR, "Unknown projection face `%s'", name);
   if(f){
     f->setVisibility(false);
-    GMODEL->add(f);
+    m->add(f);
   }
   return f;
 }
@@ -130,7 +130,7 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
   : face(f)
 {
   group = new Fl_Scroll(x, y, w, h);
-  SBoundingBox3d bounds = GMODEL->bounds();
+  SBoundingBox3d bounds = GModel::current()->bounds();
   FM::ProjectionSurface *ps = f->GetProjectionSurface();
   
   Fl_Toggle_Button *b = new Fl_Toggle_Button(x, y, BB, BH, "Set position");
@@ -233,7 +233,7 @@ projectionEditor::projectionEditor()
   Fl_Group *o = new Fl_Group(WB, WB, 2 * BB, 3 * BH);
   _select[0] = new Fl_Round_Button(2 * WB + BB / 2, WB, BB, BH, "Points");
   _select[1] = new Fl_Round_Button(2 * WB + BB / 2, WB + BH, BB, BH, "Elements");
-  if(GMODEL->numElements())
+  if(GModel::current()->numElements())
     _select[1]->value(1);
   else
     _select[0]->value(1);
@@ -731,7 +731,7 @@ void filter_cb(Fl_Widget *w, void *data)
   projectionEditor *e = (projectionEditor*)data;
   projection *p = e->getCurrentProjection();
   if(p){
-    SBoundingBox3d bbox = GMODEL->bounds();
+    SBoundingBox3d bbox = GModel::current()->bounds();
     double lc = norm(SVector3(bbox.max(), bbox.min()));
     double threshold = e->getThreshold() * lc;
     FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
@@ -973,16 +973,18 @@ void delete_fourier(GFace *gf)
 {
   if(gf->getNativeType() != GEntity::FourierModel) return;
 
+  GModel *m = GModel::current();
+
   // don't actually delete the data so we can add `undo' later
   std::list<GVertex*> vertices = gf->vertices();
   for(std::list<GVertex*>::iterator it = vertices.begin(); it != vertices.end(); it++)
-    GMODEL->remove(*it);
+    m->remove(*it);
 
   std::list<GEdge*> edges = gf->edges();
   for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++)
-    GMODEL->remove(*it);
+    m->remove(*it);
 
-  GMODEL->remove(gf);
+  m->remove(gf);
 }
 
 void action_cb(Fl_Widget *w, void *data)
@@ -990,15 +992,17 @@ void action_cb(Fl_Widget *w, void *data)
   std::string what((char*)data);
   std::vector<GFace*> faces;
 
+  GModel *m = GModel::current();
+
   if(what == "delete_last" || what == "save_last"){
     int id = -1;
-    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
       if((*it)->getNativeType() == GEntity::FourierModel) 
 	id = std::max(id, (*it)->tag());
-    if(id > 0) faces.push_back(GMODEL->faceByTag(id));
+    if(id > 0) faces.push_back(m->faceByTag(id));
   }
   else if(what == "delete_all" || what == "save_all"){
-    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
       if((*it)->getNativeType() == GEntity::FourierModel)
 	faces.push_back(*it);
   }

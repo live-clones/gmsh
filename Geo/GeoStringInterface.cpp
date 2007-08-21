@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.9 2007-08-17 15:43:07 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.10 2007-08-21 19:05:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,6 @@
 #include "GModel.h"
 
 extern Context_T CTX;
-extern GModel *GMODEL;
 
 #define BUFFSIZE 128000
 
@@ -97,9 +96,9 @@ void add_infile(char *text, char *fich, bool deleted_something)
   if(deleted_something){
     // we need to start from scratch since the command just parsed
     // could have deleted some entities
-    GMODEL->destroy();
+    GModel::current()->destroy();
   }
-  GMODEL->importTHEM();
+  GModel::current()->importTHEM();
   CTX.mesh.changed = ENT_ALL;
 
   FILE *file;

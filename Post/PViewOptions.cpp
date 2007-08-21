@@ -1,0 +1,76 @@
+// $Id: PViewOptions.cpp,v 1.1 2007-08-21 19:05:43 geuzaine Exp $
+//
+// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+// USA.
+// 
+// Please report all bugs and problems to <gmsh@geuz.org>.
+//
+// Contributor(s):
+// 
+
+#include "PViewOptions.h"
+
+PViewOptions::PViewOptions()
+{
+  // FIXME: remove this once Options.cpp uses PViewOptions!
+  Type = Plot3D;
+  AutoPosition = 1;
+  strcpy(Format, "%g");
+  Axes = 0;
+  for(int i = 0; i < 3; i++){
+    Offset[i] = Raise[i] = 0.;
+    for(int j = 0; j < 3; j++){
+      Transform[i][j] = 0.;
+    }
+  }
+  DisplacementFactor = 0.;
+  Explode = 1.;
+  ArrowSize = 50;
+  ArrowRelHeadRadius = 0.5;
+  ArrowRelStemRadius = 0.2;
+  ArrowRelStemLength = 0.7;
+  Normals = Tangents = 0.;
+  Visible = 1;
+  IntervalsType = Continuous;
+  NbIso = 15;
+  ArrowSizeProportional = 0;
+  Light = LightTwoSide = 1;
+  LightLines = SmoothNormals = 0;
+  AngleSmoothNormals = 90;
+  SaturateValues = 0;
+  FakeTransparency = 0;
+  ShowElement = 0;
+  ShowTime = ShowScale = 1;
+  ScaleType = Default;
+  RangeType = Linear;
+  VectorType = Arrow3D;
+  TensorType = VonMises;
+  GlyphLocation = COG;
+  TimeStep = 0;
+  DrawStrings = DrawPoints = DrawLines = DrawTriangles = DrawQuadrangles =
+    DrawTetrahedra = DrawHexahedra = DrawPrisms = DrawPyramids =
+    DrawScalars = DrawVectors = DrawTensors = 1;
+  Boundary = 0;
+  PointType = LineType = 0;
+  PointSize = LineWidth = 2;
+  UseStipple = 0;
+  ExternalViewIndex = ViewIndexForGenRaise = -1;
+  UseGenRaise = 0;
+  GenRaiseFactor = 0.;
+
+  GmshColorTable CT;
+}

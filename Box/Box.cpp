@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.35 2007-04-21 19:39:59 geuzaine Exp $
+// $Id: Box.cpp,v 1.36 2007-08-21 19:05:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -39,7 +39,6 @@
 
 Context_T CTX;
 Mesh *THEM = 0;
-GModel *GMODEL = 0;
 
 // Print some help/info messages
 
@@ -79,7 +78,7 @@ int GMSHBOX(int argc, char *argv[])
 {
   ParUtil::Instance()->init(argc, argv);
 
-  GMODEL = new GModel;
+  GModel::list.push_back(new GModel);
   THEM = new Mesh;
 
   InitSymbols();

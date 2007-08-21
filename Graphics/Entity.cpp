@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.72 2007-06-22 12:08:16 remacle Exp $
+// $Id: Entity.cpp,v 1.73 2007-08-21 19:05:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 #include "GmshUI.h"
 #include "Numeric.h"
 #include "Draw.h"
+#include "Views.h"
 #include "Context.h"
 #include "gl2ps.h"
 

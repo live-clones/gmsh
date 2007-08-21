@@ -1,4 +1,4 @@
-// $Id: findLinks.cpp,v 1.1 2007-02-15 08:26:46 geuzaine Exp $
+// $Id: findLinks.cpp,v 1.2 2007-08-21 19:05:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,8 +21,6 @@
 
 #include "Gmsh.h"
 #include "GModel.h"
-
-extern GModel *GMODEL;
 
 typedef struct{
   int n, a;
@@ -47,7 +45,7 @@ static int complink(const void *a, const void *b)
 static void recurFindLinkedEdges(int ed, List_T *edges, Tree_T *points,
 				 Tree_T *links)
 {
-  GEdge *ge = GMODEL->edgeByTag(ed);
+  GEdge *ge = GModel::current()->edgeByTag(ed);
   if(!ge){
     Msg(GERROR, "Unknown curve %d", ed);
     return;
@@ -82,7 +80,8 @@ static void recurFindLinkedEdges(int ed, List_T *edges, Tree_T *points,
 
 static int createEdgeLinks(Tree_T *links)
 {
-  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++) {
+  GModel *m = GModel::current();
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++) {
     GEdge *ge = *it;;
     if(!ge->getBeginVertex() || !ge->getEndVertex()){
       Msg(GERROR, "Cannot link curves with no begin or end points");
@@ -121,7 +120,7 @@ static void orientAndSortEdges(List_T *edges, Tree_T *links)
   List_Read(temp, 0, &num);
   List_Add(edges, &num);
 
-  GEdge *ge0 = GMODEL->edgeByTag(abs(num));
+  GEdge *ge0 = GModel::current()->edgeByTag(abs(num));
   if(!ge0){
     Msg(GERROR, "Unknown curve %d", abs(num));
     return;
@@ -139,7 +138,7 @@ static void orientAndSortEdges(List_T *edges, Tree_T *links)
       nxa na;
       List_Read(lk.l, j, &na);
       if(ge0->tag() != na.a && List_Search(temp, &na.a, fcmp_absint)){
-	GEdge *ge1 = GMODEL->edgeByTag(abs(na.a));
+	GEdge *ge1 = GModel::current()->edgeByTag(abs(na.a));
 	if(!ge1){
 	  Msg(GERROR, "Unknown curve %d", abs(na.a));
 	  return;
@@ -174,7 +173,7 @@ int allEdgesLinked(int ed, List_T *edges)
   for(int i = 0; i < List_Nbr(edges); i++){
     int num;
     List_Read(edges, i, &num);
-    GEdge *ge = GMODEL->edgeByTag(abs(num));
+    GEdge *ge = GModel::current()->edgeByTag(abs(num));
     if(!ge){
       Msg(GERROR, "Unknown curve %d", abs(num));
       return 0;
@@ -218,7 +217,7 @@ int allEdgesLinked(int ed, List_T *edges)
 static void recurFindLinkedFaces(int fac, List_T *faces, Tree_T *edges, 
 				 Tree_T *links)
 {
-  GFace *gf = GMODEL->faceByTag(abs(fac));
+  GFace *gf = GModel::current()->faceByTag(abs(fac));
   if(!gf){
     Msg(GERROR, "Unknown surface %d", abs(fac));
     return;
@@ -251,7 +250,8 @@ static void recurFindLinkedFaces(int fac, List_T *faces, Tree_T *edges,
 
 static void createFaceLinks(Tree_T *links)
 {
-  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++) {
+  GModel *m = GModel::current();
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++) {
     GFace *gf = *it;
     if(gf->tag() > 0){
       nxa na;
@@ -285,7 +285,7 @@ int allFacesLinked(int fac, List_T *faces)
   for(int i = 0; i < List_Nbr(faces); i++){
     int num;
     List_Read(faces, i, &num);
-    GFace *gf = GMODEL->faceByTag(abs(num));
+    GFace *gf = GModel::current()->faceByTag(abs(num));
     if(!gf){
       Msg(GERROR, "Unknown surface %d", abs(num));
       return 0;

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.107 2007-04-21 19:40:00 geuzaine Exp $
+// $Id: Main.cpp,v 1.108 2007-08-21 19:05:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -41,11 +41,11 @@
 #include "GModel.h"
 #include "Field.h"
 #include "BackgroundMesh.h"
+#include "PView.h"
 
 Context_T CTX;
 Mesh *THEM = 0;
 GUI *WID = 0;
-GModel *GMODEL = 0;
 
 int main(int argc, char *argv[])
 {
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
   }
 
   // Create a new model
-  GMODEL = new GModel;
+  GModel::list.push_back(new GModel);
   THEM = new Mesh;
 
   // Initialize the symbol tree that will hold variable names
@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
       else if(CTX.batch == -1)
         CreateOutputFile(CTX.output_filename, FORMAT_GEO);
       else if(CTX.batch == -2)
-	GMODEL->checkMeshCoherence();
+	GModel::current()->checkMeshCoherence();
       exit(0);
     }
   }

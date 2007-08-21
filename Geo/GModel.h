@@ -56,6 +56,11 @@ class GModel
   GModel(const std::string &name) : modelName(name), normals(0) {}
   ~GModel(){ deleteOCCInternals(); destroy(); }
   
+  // the static list of all loaded models
+  static std::vector<GModel*> list;
+  // returns the current model
+  static GModel *current();
+
   typedef std::set<GRegion*, GEntityLessThan>::iterator riter;
   typedef std::set<GFace*, GEntityLessThan>::iterator fiter;
   typedef std::set<GEdge*, GEntityLessThan>::iterator eiter;

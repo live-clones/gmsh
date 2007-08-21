@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.109 2006-11-27 22:22:14 geuzaine Exp $
+// $Id: Draw.cpp,v 1.110 2007-08-21 19:05:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,16 +26,17 @@
 #include "Context.h"
 #include "Numeric.h"
 #include "GModel.h"
+#include "Views.h"
 
 extern Context_T CTX;
-extern GModel *GMODEL;
 
 int NeedPolygonOffset()
 {
-  if(GMODEL->getMeshStatus() == 2 &&
+  GModel *m = GModel::current();
+  if(m->getMeshStatus() == 2 &&
      (CTX.mesh.surfaces_edges || CTX.geom.lines || CTX.geom.surfaces))
     return 1;
-  if(GMODEL->getMeshStatus() == 3 && 
+  if(m->getMeshStatus() == 3 && 
      (CTX.mesh.surfaces_edges || CTX.mesh.volumes_edges))
     return 1;
   for(int i = 0; i < List_Nbr(CTX.post.list); i++){
@@ -77,6 +78,7 @@ void Draw3d(void)
   Draw_Geom();
   Draw_Mesh();
   Draw_Post();
+  Draw_Post_New();
 }
 
 void Draw2d(void)

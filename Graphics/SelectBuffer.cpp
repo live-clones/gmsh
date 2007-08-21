@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.12 2007-02-04 15:59:18 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.13 2007-08-21 19:05:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,6 @@
 #include "MRep.h"
 
 extern Context_T CTX;
-extern GModel *GMODEL;
 
 class hit{
 public:
@@ -63,9 +62,10 @@ bool ProcessSelectionBuffer(int entityType,
 
   // In our case the selection buffer size is equal to between 5 and 7
   // times the maximum number of possible hits
-  int eles = (meshSelection && CTX.pick_elements) ? 4 * GMODEL->numElements() : 0;
-  int size = 7 * (GMODEL->numVertex() + GMODEL->numEdge() + GMODEL->numFace() + 
-		  GMODEL->numRegion() + eles) + 1000 ;
+  GModel *m = GModel::current();
+  int eles = (meshSelection && CTX.pick_elements) ? 4 * m->numElements() : 0;
+  int size = 7 * (m->numVertex() + m->numEdge() + m->numFace() + 
+		  m->numRegion() + eles) + 1000 ;
 
   GLuint *selectionBuffer = new GLuint[size];
   glSelectBuffer(size, selectionBuffer);
@@ -153,7 +153,7 @@ bool ProcessSelectionBuffer(int entityType,
       switch (hits[i].type) {
       case 0:
 	{
-	  GVertex *v = GMODEL->vertexByTag(hits[i].ient);
+	  GVertex *v = m->vertexByTag(hits[i].ient);
 	  if(!v){
 	    Msg(GERROR, "Problem in point selection processing");
 	    return false;
@@ -164,7 +164,7 @@ bool ProcessSelectionBuffer(int entityType,
 	break;
       case 1:
 	{
-	  GEdge *e = GMODEL->edgeByTag(hits[i].ient);
+	  GEdge *e = m->edgeByTag(hits[i].ient);
 	  if(!e){
 	    Msg(GERROR, "Problem in line selection processing");
 	    return false;
@@ -179,7 +179,7 @@ bool ProcessSelectionBuffer(int entityType,
 	break;
       case 2:
 	{
-	  GFace *f = GMODEL->faceByTag(hits[i].ient);
+	  GFace *f = m->faceByTag(hits[i].ient);
 	  if(!f){
 	    Msg(GERROR, "Problem in surface selection processing");
 	    return false;
@@ -194,7 +194,7 @@ bool ProcessSelectionBuffer(int entityType,
 	break;
       case 3:
 	{
-	  GRegion *r = GMODEL->regionByTag(hits[i].ient);
+	  GRegion *r = m->regionByTag(hits[i].ient);
 	  if(!r){
 	    Msg(GERROR, "Problem in volume selection processing");
 	    return false;
@@ -224,20 +224,21 @@ void HighlightEntity(GEntity *e)
 
 void HighlightEntityNum(int v, int c, int s, int r)
 {
+  GModel *m = GModel::current();
   if(v) {
-    GVertex *pv = GMODEL->vertexByTag(v);
+    GVertex *pv = m->vertexByTag(v);
     if(pv) HighlightEntity(pv);
   }
   if(c) {
-    GEdge *pc = GMODEL->edgeByTag(c);
+    GEdge *pc = m->edgeByTag(c);
     if(pc) HighlightEntity(pc);
   }
   if(s) {
-    GFace *ps = GMODEL->faceByTag(s);
+    GFace *ps = m->faceByTag(s);
     if(ps) HighlightEntity(ps);
   }
   if(r) {
-    GRegion *pr = GMODEL->regionByTag(r);
+    GRegion *pr = m->regionByTag(r);
     if(pr) HighlightEntity(pr);
   }
 }
@@ -257,41 +258,44 @@ void ZeroHighlightEntity(GVertex *v, GEdge *c, GFace *s, GRegion *r)
 
 void ZeroHighlightEntityNum(int v, int c, int s, int r)
 {
+  GModel *m = GModel::current();
   if(v) {
-    GVertex *pv = GMODEL->vertexByTag(v);
+    GVertex *pv = m->vertexByTag(v);
     if(pv) ZeroHighlightEntity(pv);
   }
   if(c) {
-    GEdge *pc = GMODEL->edgeByTag(c);
+    GEdge *pc = m->edgeByTag(c);
     if(pc) ZeroHighlightEntity(pc);
   }
   if(s) {
-    GFace *ps = GMODEL->faceByTag(s);
+    GFace *ps = m->faceByTag(s);
     if(ps) ZeroHighlightEntity(ps);
   }
   if(r) {
-    GRegion *pr = GMODEL->regionByTag(r);
+    GRegion *pr = m->regionByTag(r);
     if(pr) ZeroHighlightEntity(pr);
   }
 }
 
 void ZeroHighlight()
 {
-  for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
+  GModel *m = GModel::current();
+
+  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
     ZeroHighlightEntity(*it);
-  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
     ZeroHighlightEntity(*it);
-  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
     ZeroHighlightEntity(*it);
-  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
     ZeroHighlightEntity(*it);
 
-  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++){
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
     for(unsigned int i = 0; i < (*it)->lines.size(); i++)
       if((*it)->lines[i]->getVisibility() == 2)
 	(*it)->lines[i]->setVisibility(1);
   }
-  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++){
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
       if((*it)->triangles[i]->getVisibility() == 2)
 	(*it)->triangles[i]->setVisibility(1);
@@ -299,7 +303,7 @@ void ZeroHighlight()
       if((*it)->quadrangles[i]->getVisibility() == 2) 
 	(*it)->quadrangles[i]->setVisibility(1);
   }
-  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++){
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
     for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
       if((*it)->tetrahedra[i]->getVisibility() == 2)
 	(*it)->tetrahedra[i]->setVisibility(1);

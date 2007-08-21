@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.150 2007-08-17 15:43:07 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.151 2007-08-21 19:05:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -32,6 +32,7 @@
 #include "OpenFile.h"
 #include "CommandLine.h"
 #include "Views.h"
+#include "PView.h"
 #include "ReadImg.h"
 #include "OS.h"
 #include "HighOrder.h"
@@ -45,9 +46,8 @@ extern GUI *WID;
 void UpdateViewsInGUI();
 #endif
 
-extern Mesh *THEM;
-extern GModel *GMODEL;
 extern Context_T CTX;
+extern Mesh *THEM;
 
 void FixRelativePath(char *in, char *out){
   if(in[0] == '/' || in[0] == '\\' || (strlen(in)>2 && in[1] == ':')){
@@ -149,9 +149,7 @@ void SetBoundingBox(void)
 {
   if(CTX.forced_bbox) return;
 
-  SBoundingBox3d bb;
-
-  bb = GMODEL->bounds();
+  SBoundingBox3d bb = GModel::current()->bounds();
   
   if(bb.empty() && List_Nbr(CTX.post.list)) {
     for(int i = 0; i < List_Nbr(CTX.post.list); i++){
@@ -263,7 +261,7 @@ void ParseString(char *str)
     fprintf(fp, "\n");
     fclose(fp);
     ParseFile(CTX.tmp_filename_fullpath, 1);
-    if(GMODEL) GMODEL->importTHEM();
+    GModel::current()->importTHEM();
   }
 }
 
@@ -320,42 +318,45 @@ int MergeFile(char *name, int warn_if_missing)
 #endif
 
   CTX.geom.draw = 0; // don't try to draw the model while reading
+
+  GModel *m = GModel::current();
+
   int status = 0;
   if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL")){
-    status = GMODEL->readSTL(name, CTX.geom.tolerance);
+    status = m->readSTL(name, CTX.geom.tolerance);
   }
   else if(!strcmp(ext, ".brep") || !strcmp(ext, ".rle") ||
 	  !strcmp(ext, ".brp") || !strcmp(ext, ".BRP")){
-    GMODEL->readOCCBREP(std::string(name));
+    status = m->readOCCBREP(std::string(name));
   }
   else if(!strcmp(ext, ".iges") || !strcmp(ext, ".IGES") ||
 	  !strcmp(ext, ".igs") || !strcmp(ext, ".IGS")){
-    GMODEL->readOCCIGES(std::string(name));
+    status = m->readOCCIGES(std::string(name));
   }
   else if(!strcmp(ext, ".step") || !strcmp(ext, ".STEP") ||
 	  !strcmp(ext, ".stp") || !strcmp(ext, ".STP")){
-    GMODEL->readOCCSTEP(std::string(name));
+    status = m->readOCCSTEP(std::string(name));
   }
   else if(!strcmp(ext, ".unv") || !strcmp(ext, ".UNV")){
-    status = GMODEL->readUNV(name);
+    status = m->readUNV(name);
   }
   else if(!strcmp(ext, ".wrl") || !strcmp(ext, ".WRL") || 
 	  !strcmp(ext, ".vrml") || !strcmp(ext, ".VRML") ||
 	  !strcmp(ext, ".iv") || !strcmp(ext, ".IV")){
-    status = GMODEL->readVRML(name);
+    status = m->readVRML(name);
   }
   else if(!strcmp(ext, ".mesh") || !strcmp(ext, ".MESH")){
-    status = GMODEL->readMESH(name);
+    status = m->readMESH(name);
   }
   else if(!strcmp(ext, ".bdf") || !strcmp(ext, ".BDF") ||
 	  !strcmp(ext, ".nas") || !strcmp(ext, ".NAS")){
-    status = GMODEL->readBDF(name);
+    status = m->readBDF(name);
   }
   else if(!strcmp(ext, ".p3d") || !strcmp(ext, ".P3D")){
-    status = GMODEL->readP3D(name);
+    status = m->readP3D(name);
   }
   else if(!strcmp(ext, ".fm") || !strcmp(ext, ".FM")) {
-    status = GMODEL->readF(name);
+    status = m->readF(name);
   }
 #if defined(HAVE_FLTK)
   else if(!strcmp(ext, ".pnm") || !strcmp(ext, ".PNM") ||
@@ -384,14 +385,20 @@ int MergeFile(char *name, int warn_if_missing)
     if(!strncmp(header, "$PTS", 4) || !strncmp(header, "$NO", 3) || 
        !strncmp(header, "$PARA", 5) || !strncmp(header, "$ELM", 4) ||
        !strncmp(header, "$MeshFormat", 11)) {
-      status = GMODEL->readMSH(name);
+      status = m->readMSH(name);
     }
     else if(!strncmp(header, "$PostFormat", 11) || 
 	    !strncmp(header, "$View", 5)) {
+#if 0 // FIXME: test new post-pro
+      PView *p = new PView(false);
+      PView::list.push_back(p);
+      status = p->getData()->read(name);
+#else
       status = ReadView(name);
+#endif
     }
     else {
-      status = GMODEL->readGEO(name);
+      status = m->readGEO(name);
     }
   }
 
@@ -400,7 +407,7 @@ int MergeFile(char *name, int warn_if_missing)
   CTX.geom.draw = 1;
   CTX.mesh.changed = ENT_ALL;
 
-  checkHighOrderTriangles ( GMODEL );
+  checkHighOrderTriangles(m);
 
   Msg(STATUS2, "Read '%s'", name);
   return status;
@@ -414,13 +421,14 @@ void OpenProject(char *name)
   }
   CTX.threads_lock = 1;
 
-  GMODEL->destroy();
+  GModel::current()->destroy();
   THEM->destroy();
 
   // Initialize pseudo random mesh generator to the same seed
   srand(1);
 
-  // temporary hack until we fill GMODEL on the fly during parsing
+  // temporary hack until we fill the current GModel on the fly during
+  // parsing
   ResetTemporaryBoundingBox();
 
   SetProjectName(name);

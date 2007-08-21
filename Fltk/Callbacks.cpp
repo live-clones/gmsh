@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.537 2007-08-17 15:43:07 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.538 2007-08-21 19:05:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -53,7 +53,6 @@
 
 extern Context_T CTX;
 extern GUI *WID;
-extern GModel *GMODEL;
 
 // Helper routines
 
@@ -2023,13 +2022,13 @@ void visibility_delete_cb(CALLBACK_ARGS)
     }
   }
   if(all){
-    GMODEL->deletePhysicalGroups();
+    GModel::current()->deletePhysicalGroups();
   }
   else{
     for(int i = 0; i < VisibilityManager::instance()->getNumEntities(); i++){
       if(WID->vis_browser->selected(i + 1)){
 	Vis *v = VisibilityManager::instance()->getEntity(i);
-	GMODEL->deletePhysicalGroup(v->getDim(), v->getTag());
+	GModel::current()->deletePhysicalGroup(v->getDim(), v->getTag());
       }
     }
   }
@@ -3807,7 +3806,7 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
 	for(unsigned int i = 0; i < ent.size(); i++)
 	  if(ent[i]->getSelection() == 1) ent[i]->setVisibility(0);
       }
-      GMODEL->removeInvisibleElements();
+      GModel::current()->removeInvisibleElements();
       ele.clear();
       ent.clear();
     }
@@ -3889,9 +3888,10 @@ void mesh_inspect_cb(CALLBACK_ARGS)
 void mesh_degree_cb(CALLBACK_ARGS)
 {
   if((long)data == 2)
-    SetOrderN(GMODEL, 2, CTX.mesh.second_order_linear, CTX.mesh.second_order_incomplete);
+    SetOrderN(GModel::current(), 2, CTX.mesh.second_order_linear, 
+	      CTX.mesh.second_order_incomplete);
   else
-    SetOrder1(GMODEL);
+    SetOrder1(GModel::current());
   CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
   Draw();
   Msg(STATUS2N, " ");

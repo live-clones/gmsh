@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.199 2007-07-26 13:10:48 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.200 2007-08-21 19:05:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -28,7 +28,6 @@
 #include "OS.h"
 #include "gl2ps.h"
 
-extern GModel *GMODEL;
 extern Context_T CTX;
 
 // General helper routines
@@ -910,29 +909,30 @@ void Draw_Mesh()
   
   if(!CTX.threads_lock){
     CTX.threads_lock = 1; 
-    int status = GMODEL->getMeshStatus();
+    GModel *m = GModel::current();
+    int status = m->getMeshStatus();
     if(CTX.mesh.changed) {
       Msg(DEBUG, "Mesh has changed: reinitializing drawing data", CTX.mesh.changed);
       if(status >= 1 && CTX.mesh.changed & ENT_LINE)
-	std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), initMeshGEdge());
+	std::for_each(m->firstEdge(), m->lastEdge(), initMeshGEdge());
       if(status >= 2 && CTX.mesh.changed & ENT_SURFACE){
-	if(GMODEL->normals) delete GMODEL->normals;
-	GMODEL->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
+	if(m->normals) delete m->normals;
+	m->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
 	if(CTX.mesh.smooth_normals)
-	  std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), initSmoothNormalsGFace());
-	std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), initMeshGFace());
+	  std::for_each(m->firstFace(), m->lastFace(), initSmoothNormalsGFace());
+	std::for_each(m->firstFace(), m->lastFace(), initMeshGFace());
       }
       if(status >= 3 && CTX.mesh.changed & ENT_VOLUME)
-	std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), initMeshGRegion());
+	std::for_each(m->firstRegion(), m->lastRegion(), initMeshGRegion());
     }
     if(status >= 0)
-      std::for_each(GMODEL->firstVertex(), GMODEL->lastVertex(), drawMeshGVertex());
+      std::for_each(m->firstVertex(), m->lastVertex(), drawMeshGVertex());
     if(status >= 1)
-      std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), drawMeshGEdge());
+      std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge());
     if(status >= 2)
-      std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), drawMeshGFace());
+      std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace());
     if(status >= 3)
-      std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), drawMeshGRegion());
+      std::for_each(m->firstRegion(), m->lastRegion(), drawMeshGRegion());
     CTX.mesh.changed = 0;
     CTX.threads_lock = 0;
   }

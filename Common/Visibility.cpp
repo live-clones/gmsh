@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.26 2006-12-12 18:16:41 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.27 2007-08-21 19:05:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,8 +22,6 @@
 #include "Visibility.h"
 #include "GModel.h"
 #include "Parser.h" // for Symbol_T
-
-extern GModel *GMODEL;
 
 VisibilityManager *VisibilityManager::manager = 0;
 
@@ -64,10 +62,12 @@ void VisibilityManager::update(int type)
   // get old labels from parser
   if(Tree_Nbr(Symbol_T)) Tree_Action(Symbol_T, setLabels);
 
+  GModel *m = GModel::current();
+
   // add new labels for physicals
   if(type == 1){
-    GModel::piter it = GMODEL->firstPhysicalName();
-    while(it != GMODEL->lastPhysicalName()){
+    GModel::piter it = m->firstPhysicalName();
+    while(it != m->lastPhysicalName()){
       setLabel(it->first, it->second);
       ++it;
     }
@@ -78,18 +78,18 @@ void VisibilityManager::update(int type)
   _entities.clear();
   
   if(type == 0){ // elementary entities
-    for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
+    for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
       _entities.push_back(new VisElementary(*it));
-    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
+    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
       _entities.push_back(new VisElementary(*it));
-    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
       _entities.push_back(new VisElementary(*it));
-    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
       _entities.push_back(new VisElementary(*it));
   }
   else if(type == 1){ // physical entities
     std::map<int, std::vector<GEntity*> > groups[4];
-    GMODEL->getPhysicalGroups(groups);
+    m->getPhysicalGroups(groups);
     for(int i = 0; i < 4; i++){
       std::map<int, std::vector<GEntity*> >::const_iterator it = groups[i].begin();
       for(; it != groups[i].end(); ++it)
@@ -97,7 +97,7 @@ void VisibilityManager::update(int type)
     }
   }
   else if(type == 2){ // partitions
-    std::set<int> part = GMODEL->getMeshPartitions();
+    std::set<int> part = m->getMeshPartitions();
     for(std::set<int>::const_iterator it = part.begin(); it != part.end(); ++it)
       _entities.push_back(new VisPartition(*it));
   }
@@ -106,15 +106,17 @@ void VisibilityManager::update(int type)
 
 void VisibilityManager::setAllInvisible(int type)
 {
+  GModel *m = GModel::current();
+
   if(type == 0 || type == 1){
     // elementary or physical mode: set all entities in the model invisible
-    for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
+    for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
       (*it)->setVisibility(false);
-    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
+    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
       (*it)->setVisibility(false);
-    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
       (*it)->setVisibility(false);
-    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
       (*it)->setVisibility(false);
   }
 
@@ -137,16 +139,18 @@ std::string VisibilityManager::getStringForGEO()
 {
   std::vector<int> state[4][2];
 
-  for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
+  GModel *m = GModel::current();
+
+  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
     (*it)->getVisibility() ?
       state[0][1].push_back((*it)->tag()) : state[0][0].push_back((*it)->tag());
-  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
     (*it)->getVisibility() ? 
       state[1][1].push_back((*it)->tag()) : state[1][0].push_back((*it)->tag());
-  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
     (*it)->getVisibility() ? 
       state[2][1].push_back((*it)->tag()) : state[2][0].push_back((*it)->tag());
-  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
     (*it)->getVisibility() ? 
       state[3][1].push_back((*it)->tag()) : state[3][0].push_back((*it)->tag());
   
@@ -193,32 +197,34 @@ void VisibilityManager::setVisibilityByNumber(int type, int num, char val, bool 
 {
   bool all = (num < 0) ? true : false;
 
+  GModel *m = GModel::current();
+
   switch(type){
   case 0: // nodes
-    for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
+    for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
       for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
 	if(all || (*it)->mesh_vertices[i]->getNum() == num) 
 	  (*it)->mesh_vertices[i]->setVisibility(val);
-    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
+    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
       for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
 	if(all || (*it)->mesh_vertices[i]->getNum() == num) 
 	  (*it)->mesh_vertices[i]->setVisibility(val);
-    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
       for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
 	if(all || (*it)->mesh_vertices[i]->getNum() == num) 
 	  (*it)->mesh_vertices[i]->setVisibility(val);
-    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
       for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
 	if(all || (*it)->mesh_vertices[i]->getNum() == num) 
 	  (*it)->mesh_vertices[i]->setVisibility(val);
     break;
   case 1: // elements
-    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++){
+    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
       for(unsigned int i = 0; i < (*it)->lines.size(); i++)
 	if(all || (*it)->lines[i]->getNum() == num) 
 	  (*it)->lines[i]->setVisibility(val);
     }
-    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++){
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
       for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
 	if(all || (*it)->triangles[i]->getNum() == num) 
 	  (*it)->triangles[i]->setVisibility(val);
@@ -226,7 +232,7 @@ void VisibilityManager::setVisibilityByNumber(int type, int num, char val, bool 
 	if(all || (*it)->quadrangles[i]->getNum() == num) 
 	  (*it)->quadrangles[i]->setVisibility(val);
     }
-    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++){
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
       for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
 	if(all || (*it)->tetrahedra[i]->getNum() == num) 
 	  (*it)->tetrahedra[i]->setVisibility(val);
@@ -242,38 +248,38 @@ void VisibilityManager::setVisibilityByNumber(int type, int num, char val, bool 
     }
     break;
   case 2: // point
-    for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
+    for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
       if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
     break;
   case 3: // line
-    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
+    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
       if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
     break;
   case 4: // surface
-    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
       if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
     break;
   case 5: // volume
-    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
       if(all || (*it)->tag() == num) (*it)->setVisibility(val, recursive);
     break;
   case 6: // physical point
-    for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); it++)
+    for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
       for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
 	if (all || std::abs((*it)->physicals[i]) == num) (*it)->setVisibility(val, recursive);
     break;
   case 7: // physical line
-    for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++)
+    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
       for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
 	if (all || std::abs((*it)->physicals[i]) == num) (*it)->setVisibility(val, recursive);
     break;
   case 8: // physical surface
-    for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++)
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
       for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
 	if (all || std::abs((*it)->physicals[i]) == num) (*it)->setVisibility(val, recursive);
     break;
   case 9: // physical volume
-    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++)
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
       for(unsigned int i = 0; i < (*it)->physicals.size(); i++)
 	if (all || std::abs((*it)->physicals[i]) == num) (*it)->setVisibility(val, recursive);
     break;
@@ -294,13 +300,15 @@ void VisPhysical::setVisibility(char val, bool recursive)
 
 void VisPartition::setVisibility(char val, bool recursive)
 {
+  GModel *m = GModel::current();
+
   _visible = val;
-  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); it++){
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
     for(unsigned int i = 0; i < (*it)->lines.size(); i++)
       if((*it)->lines[i]->getPartition() == _tag) 
 	(*it)->lines[i]->setVisibility(val);
   }
-  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); it++){
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
       if((*it)->triangles[i]->getPartition() == _tag) 
 	(*it)->triangles[i]->setVisibility(val);
@@ -308,7 +316,7 @@ void VisPartition::setVisibility(char val, bool recursive)
       if((*it)->quadrangles[i]->getPartition() == _tag) 
 	(*it)->quadrangles[i]->setVisibility(val);
   }
-  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); it++){
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
     for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
       if((*it)->tetrahedra[i]->getPartition() == _tag) 
 	(*it)->tetrahedra[i]->setVisibility(val);

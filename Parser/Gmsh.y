@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.280 2007-07-25 15:48:34 geuzaine Exp $
+// $Id: Gmsh.y,v 1.281 2007-08-21 19:05:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -50,7 +50,6 @@ Tree_T *Symbol_T = NULL;
 
 extern Context_T CTX;
 extern Mesh *THEM;
-extern GModel *GMODEL;
 
 static ExtrudeParams extr;
 
@@ -1026,7 +1025,8 @@ PhysicalId :
     }
   | StringExpr
     { 
-      $$ = GMODEL->setPhysicalName(std::string($1), ++THEM->MaxPhysicalNum);
+      $$ = GModel::current()->setPhysicalName(std::string($1),
+					      ++THEM->MaxPhysicalNum);
       Free($1);
     }
 ;
@@ -1084,7 +1084,7 @@ Shape :
         if(v)
           att->addPoint(v->Pos.X, v->Pos.Y, v->Pos.Z);
         else{
-          GVertex *gv = GMODEL->vertexByTag((int)d);
+          GVertex *gv = GModel::current()->vertexByTag((int)d);
           if(gv) 
             att->addPoint(gv->x(), gv->y(), gv->z());
         }
@@ -1186,7 +1186,7 @@ Shape :
 	if(v)
 	  attractor->addPoint(v->Pos.X, v->Pos.Y, v->Pos.Z);
 	else{
-	  GVertex *gv = GMODEL->vertexByTag((int)d);
+	  GVertex *gv = GModel::current()->vertexByTag((int)d);
 	  if(gv) 
 	    attractor->addPoint(gv->x(), gv->y(), gv->z());
 	}
@@ -1221,7 +1221,7 @@ Shape :
 	  att->addCurve(c, (int)pars[3]);
 	}
 	else{
-	  GEdge *ge = GMODEL->edgeByTag((int)d);
+	  GEdge *ge = GModel::current()->edgeByTag((int)d);
 	  if(ge){
 	    att->addGEdge(ge, (int)pars[3]);
 	  }
@@ -1241,7 +1241,7 @@ Shape :
 	if(v)
 	  v->lc = $5;
 	else{
-	  GVertex *gv = GMODEL->vertexByTag((int)d);
+	  GVertex *gv = GModel::current()->vertexByTag((int)d);
 	  if(gv) 
 	    gv->setPrescribedMeshSizeAtVertex($5);
 	}
@@ -1750,7 +1750,7 @@ ListOfShapes :
 	  List_Add($$, &TheShape);
 	}
 	else{
-	  GVertex *gv = GMODEL->vertexByTag(TheShape.Num);
+	  GVertex *gv = GModel::current()->vertexByTag(TheShape.Num);
 	  if(gv){
 	    TheShape.Type = MSH_POINT_FROM_GMODEL;
 	    List_Add($$, &TheShape);
@@ -1773,7 +1773,7 @@ ListOfShapes :
 	  List_Add($$, &TheShape);
 	}
 	else{
-	  GEdge *ge = GMODEL->edgeByTag(TheShape.Num);
+	  GEdge *ge = GModel::current()->edgeByTag(TheShape.Num);
 	  if(ge){
 	    TheShape.Type = MSH_SEGM_FROM_GMODEL;
 	    List_Add($$, &TheShape);
@@ -1796,7 +1796,7 @@ ListOfShapes :
 	  List_Add($$, &TheShape);
 	}
 	else{
-	  GFace *gf = GMODEL->faceByTag(TheShape.Num);
+	  GFace *gf = GModel::current()->faceByTag(TheShape.Num);
 	  if(gf){
 	    TheShape.Type = MSH_SURF_FROM_GMODEL;
 	    List_Add($$, &TheShape);
@@ -1819,7 +1819,7 @@ ListOfShapes :
 	  List_Add($$, &TheShape);
 	}
 	else{
-	  GRegion *gr = GMODEL->regionByTag(TheShape.Num);
+	  GRegion *gr = GModel::current()->regionByTag(TheShape.Num);
 	  if(gr){
 	    TheShape.Type = MSH_VOLUME_FROM_GMODEL;
 	    List_Add($$, &TheShape);
@@ -1892,13 +1892,13 @@ Delete :
   | tDelete tSTRING tEND
     {
       if(!strcmp($2, "Meshes") || !strcmp($2, "All")){
-	GMODEL->destroy();
+	GModel::current()->destroy();
 	THEM->destroy();
       }
       else if(!strcmp($2, "Physicals")){
 	List_Action(THEM->PhysicalGroups, Free_PhysicalGroup);
 	List_Reset(THEM->PhysicalGroups);
-	GMODEL->deletePhysicalGroups();
+	GModel::current()->deletePhysicalGroups();
       }
       else{
 	yymsg(GERROR, "Unknown command 'Delete %s'", $2);
@@ -1995,7 +1995,7 @@ Command :
 	// make sure we have the latest data from THEM in GModel
 	// (fixes bug where we would have no geometry in the picture if
 	// the print command is in the same file as the geometry)
-	GMODEL->importTHEM();
+	GModel::current()->importTHEM();
 	char tmpstring[1024];
 	FixRelativePath($2, tmpstring);
 	CreateOutputFile(tmpstring, CTX.print.format);
@@ -2003,7 +2003,7 @@ Command :
       }
       else if(!strcmp($1, "Save")){
 #if defined(HAVE_FLTK)
-	GMODEL->importTHEM();
+	GModel::current()->importTHEM();
 	char tmpstring[1024];
 	FixRelativePath($2, tmpstring);
 	CreateOutputFile(tmpstring, CTX.mesh.format);

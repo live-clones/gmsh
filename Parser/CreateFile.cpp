@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.18 2007-08-17 15:43:07 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.19 2007-08-21 19:05:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,6 @@
 #endif
 
 extern Context_T CTX;
-extern GModel *GMODEL;
 
 int GuessFileFormatFromFileName(char *name)
 {
@@ -150,51 +149,51 @@ void CreateOutputFile(char *filename, int format)
     break;
 
   case FORMAT_MSH:
-    GMODEL->writeMSH(name, CTX.mesh.msh_file_version, CTX.mesh.msh_binary, 
-		     CTX.mesh.save_all, CTX.mesh.scaling_factor);
+    GModel::current()->writeMSH(name, CTX.mesh.msh_file_version, CTX.mesh.msh_binary, 
+				CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_STL:
-    GMODEL->writeSTL(name, CTX.mesh.stl_binary,
-		     CTX.mesh.save_all, CTX.mesh.scaling_factor);
+    GModel::current()->writeSTL(name, CTX.mesh.stl_binary,
+				CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_VRML:
-    GMODEL->writeVRML(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
+    GModel::current()->writeVRML(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_UNV:
-    GMODEL->writeUNV(name, CTX.mesh.save_all, CTX.mesh.save_groups_of_nodes,
-		     CTX.mesh.scaling_factor);
+    GModel::current()->writeUNV(name, CTX.mesh.save_all, CTX.mesh.save_groups_of_nodes,
+				CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_MESH:
-    GMODEL->writeMESH(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
+    GModel::current()->writeMESH(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_BDF:
-    GMODEL->writeBDF(name, CTX.mesh.bdf_field_format, 
+    GModel::current()->writeBDF(name, CTX.mesh.bdf_field_format, 
 		     CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_P3D:
-    GMODEL->writeP3D(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
+    GModel::current()->writeP3D(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_CGNS:
-    GMODEL->writeCGNS(name, CTX.mesh.scaling_factor);
+    GModel::current()->writeCGNS(name, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_MED:
-    GMODEL->writeMED(name);
+    GModel::current()->writeMED(name);
     break;
 
   case FORMAT_POS:
-    GMODEL->writePOS(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
+    GModel::current()->writePOS(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_GEO:
-    GMODEL->writeGEO(name, CTX.print.geo_labels);
+    GModel::current()->writeGEO(name, CTX.print.geo_labels);
     break;
 
 #if defined(HAVE_FLTK)

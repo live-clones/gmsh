@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.137 2007-08-17 17:51:27 geuzaine Exp $
+// $Id: Geom.cpp,v 1.138 2007-08-21 19:05:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -28,7 +28,6 @@
 #include "SBoundingBox3d.h"
 
 extern Context_T CTX;
-extern GModel *GMODEL;
 
 class drawGVertex {
  public :
@@ -453,8 +452,7 @@ class drawGRegion {
     else
       glColor4ubv((GLubyte *) & CTX.color.geom.volume);
     
-    SBoundingBox3d bb = r->bounds();
-    SPoint3 p = bb.center();
+    SPoint3 p = r->bounds().center();
     const double size = 8.;
 
     if(CTX.geom.volumes)
@@ -489,23 +487,25 @@ void Draw_Geom()
     else
       glDisable((GLenum)(GL_CLIP_PLANE0 + i));
   
+  GModel *m = GModel::current();
+
   if(CTX.geom.points || CTX.geom.points_num)
-    std::for_each(GMODEL->firstVertex(), GMODEL->lastVertex(), drawGVertex());
+    std::for_each(m->firstVertex(), m->lastVertex(), drawGVertex());
 
   if(CTX.geom.lines || CTX.geom.lines_num || CTX.geom.tangents)
-    std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), drawGEdge());
+    std::for_each(m->firstEdge(), m->lastEdge(), drawGEdge());
 
   if(CTX.geom.surfaces || CTX.geom.surfaces_num || CTX.geom.normals)
-    std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), drawGFace());
+    std::for_each(m->firstFace(), m->lastFace(), drawGFace());
 
   if(CTX.geom.volumes || CTX.geom.volumes_num)
-    std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), drawGRegion());
+    std::for_each(m->firstRegion(), m->lastRegion(), drawGRegion());
 
   for(int i = 0; i < 6; i++)
     glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
   bool geometryExists = 
-    GMODEL->numVertex() || GMODEL->numEdge() || GMODEL->numFace() || GMODEL->numRegion();
+    m->numVertex() || m->numEdge() || m->numFace() || m->numRegion();
 
   if(geometryExists && (CTX.draw_bbox || !CTX.mesh.draw)) {
     glColor4ubv((GLubyte *) & CTX.color.fg);

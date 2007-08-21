@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.101 2007-05-24 17:34:03 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.102 2007-08-21 19:05:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -43,7 +43,6 @@
 #endif
 
 extern Context_T CTX;
-extern GModel *GMODEL;
 
 char gmsh_progname[]  = "Gmsh, a 3D mesh generator with pre- and post-processing facilities" ;
 char gmsh_copyright[] = "Copyright (C) 1997-2007 Christophe Geuzaine and Jean-Francois Remacle";
@@ -296,7 +295,7 @@ void Get_Options(int argc, char *argv[])
             WriteView(v, filename, 1, (j == numviews_old) ? 0 : 1);
 	  }
 	  // convert mesh to latest binary format
-	  if(GMODEL->getMeshStatus() > 0){
+	  if(GModel::current()->getMeshStatus() > 0){
 	    CTX.mesh.msh_file_version = 2.0;
 	    CTX.mesh.msh_binary = 1;
 	    CreateOutputFile(filename, FORMAT_MSH);

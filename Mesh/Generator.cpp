@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.120 2007-07-11 16:55:11 geuzaine Exp $
+// $Id: Generator.cpp,v 1.121 2007-08-21 19:05:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -33,7 +33,6 @@
 #include "HighOrder.h"
 
 extern Context_T CTX;
-extern GModel *GMODEL;
 
 template<class T>
 static void GetQualityMeasure(std::vector<T*>& ele, 
@@ -67,26 +66,28 @@ void GetStatistics(double stat[50], double quality[3][100])
 {
   for(int i = 0; i < 50; i++) stat[i] = 0.;
 
-  stat[0] = GMODEL->numVertex();
-  stat[1] = GMODEL->numEdge();
-  stat[2] = GMODEL->numFace();
-  stat[3] = GMODEL->numRegion();
+  GModel *m = GModel::current();
+
+  stat[0] = m->numVertex();
+  stat[1] = m->numEdge();
+  stat[2] = m->numFace();
+  stat[3] = m->numRegion();
   
   std::map<int, std::vector<GEntity*> > physicals[4];
-  GMODEL->getPhysicalGroups(physicals);
+  m->getPhysicalGroups(physicals);
   stat[45] = physicals[0].size() + physicals[1].size() + 
     physicals[2].size() + physicals[3].size();
   
-  for(GModel::eiter it = GMODEL->firstEdge(); it != GMODEL->lastEdge(); ++it)
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
     stat[4] += (*it)->mesh_vertices.size();
   
-  for(GModel::fiter it = GMODEL->firstFace(); it != GMODEL->lastFace(); ++it){
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
     stat[5] += (*it)->mesh_vertices.size();
     stat[7] += (*it)->triangles.size();
     stat[8] += (*it)->quadrangles.size();
   }
   
-  for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); ++it){
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
     stat[6] += (*it)->mesh_vertices.size();
     stat[9] += (*it)->tetrahedra.size();
     stat[10] += (*it)->hexahedra.size();
@@ -105,7 +106,7 @@ void GetStatistics(double stat[50], double quality[3][100])
     double gamma=0., gammaMin=1., gammaMax=0.;
     double eta=0., etaMin=1., etaMax=0.;
     double rho=0., rhoMin=1., rhoMax=0.;
-    for(GModel::riter it = GMODEL->firstRegion(); it != GMODEL->lastRegion(); ++it){
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
       GetQualityMeasure((*it)->tetrahedra, gamma, gammaMin, gammaMax,
 			eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
       GetQualityMeasure((*it)->hexahedra, gamma, gammaMin, gammaMax,
@@ -181,15 +182,16 @@ void GetStatistics(double stat[50], double quality[3][100])
 
 bool TooManyElements(int dim)
 {
-  if(CTX.expert_mode || !GMODEL->numVertex()) return false;
+  GModel *m = GModel::current();
+  if(CTX.expert_mode || !m->numVertex()) return false;
 
   // try to detect obvious mistakes in characteristic lenghts (one of
   // the most common cause for erroneous bug reports on the mailing
   // list)
   double sumAllLc = 0.;
-  for(GModel::viter it = GMODEL->firstVertex(); it != GMODEL->lastVertex(); ++it)
+  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it)
     sumAllLc += (*it)->prescribedMeshSizeAtVertex();
-  sumAllLc /= (double)GMODEL->numVertex();
+  sumAllLc /= (double)m->numVertex();
   if(!sumAllLc || pow(CTX.lc / sumAllLc, dim) > 1.e10) 
     return !GetBinaryAnswer("Your choice of characteristic lengths will likely produce\n"
 			    "a very large mesh. Do you really want to continue?\n\n"
@@ -205,7 +207,8 @@ void Mesh1D()
   Msg(STATUS1, "Meshing 1D...");
   double t1 = Cpu();
 
-  std::for_each(GMODEL->firstEdge(), GMODEL->lastEdge(), meshGEdge());
+  GModel *m = GModel::current();
+  std::for_each(m->firstEdge(), m->lastEdge(), meshGEdge());
 
   double t2 = Cpu();
   CTX.mesh_timer[0] = t2 - t1;
@@ -229,12 +232,13 @@ void Mesh2D()
   Msg(STATUS1, "Meshing 2D...");
   double t1 = Cpu();
 
-  std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), meshGFace());  
+  GModel *m = GModel::current();
+  std::for_each(m->firstFace(), m->lastFace(), meshGFace());  
 
   // boundary layers are special: their definition (including vertices
   // and curve meshes) relies on the surface mesh--and it is global
   // since we use a smooth normal field
-  MeshBoundaryLayerFaces(GMODEL);
+  MeshBoundaryLayerFaces(m);
 
   double t2 = Cpu();
   CTX.mesh_timer[1] = t2 - t1;
@@ -256,16 +260,18 @@ void Mesh3D()
   Msg(STATUS1, "Meshing 3D...");
   double t1 = Cpu();
 
+  GModel *m = GModel::current();
+
   // mesh the extruded volumes first
-  std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), meshGRegionExtruded());
+  std::for_each(m->firstRegion(), m->lastRegion(), meshGRegionExtruded());
 
   // then subdivide if necessary (unfortunately the subdivision is a
   // global operation, which can require changing the surface mesh!)
-  SubdivideExtrudedMesh(GMODEL);
+  SubdivideExtrudedMesh(m);
 
   // then mesh all the non-delaunay regions
   std::vector<GRegion*> delaunay;
-  std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), meshGRegion(delaunay));
+  std::for_each(m->firstRegion(), m->lastRegion(), meshGRegion(delaunay));
 
   // and finally mesh the delaunay regions (again, this is global; but
   // we mesh each connected part separately for performance and mesh
@@ -286,7 +292,8 @@ void OptimizeMesh()
   Msg(STATUS1, "Optimizing 3D...");
   double t1 = Cpu();
 
-  std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), optimizeMeshGRegion());
+  GModel *m = GModel::current();
+  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegion());
 
   double t2 = Cpu();
   Msg(INFO, "Mesh 3D optimization complete (%g s)", t2 - t1);
@@ -301,21 +308,23 @@ void GenerateMesh(int ask)
   }
   CTX.threads_lock = 1;
 
-  int old = GMODEL->getMeshStatus(false);
+  GModel *m = GModel::current();
+
+  int old = m->getMeshStatus(false);
 
   // Change any high order elements back into first order ones
-  SetOrder1(GMODEL);
+  SetOrder1(m);
 
   // 1D mesh
   if(ask == 1 || (ask > 1 && old < 1)) {
-    std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), deMeshGRegion());
-    std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), deMeshGFace());
+    std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
+    std::for_each(m->firstFace(), m->lastFace(), deMeshGFace());
     Mesh1D();
   }
 
   // 2D mesh
   if(ask == 2 || (ask > 2 && old < 2)) {
-    std::for_each(GMODEL->firstRegion(), GMODEL->lastRegion(), deMeshGRegion());
+    std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
     Mesh2D();
   }
 
@@ -325,19 +334,19 @@ void GenerateMesh(int ask)
   }
 
   // Orient the surface mesh so that it matches the geometry
-  if(GMODEL->getMeshStatus() >= 2)
-    std::for_each(GMODEL->firstFace(), GMODEL->lastFace(), orientMeshGFace());
+  if(m->getMeshStatus() >= 2)
+    std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
   
   // Optimize quality
-  if(GMODEL->getMeshStatus() == 3 && CTX.mesh.optimize)
+  if(m->getMeshStatus() == 3 && CTX.mesh.optimize)
     OptimizeMesh();
   
   // Create high order elements
-  if(GMODEL->getMeshStatus() && CTX.mesh.order > 1) 
-    SetOrderN(GMODEL, CTX.mesh.order, CTX.mesh.second_order_linear, 
+  if(m->getMeshStatus() && CTX.mesh.order > 1) 
+    SetOrderN(m, CTX.mesh.order, CTX.mesh.second_order_linear, 
 	      CTX.mesh.second_order_incomplete);
 
-  Msg(INFO, "%d vertices %d elements", GMODEL->numVertices(), GMODEL->numElements());
+  Msg(INFO, "%d vertices %d elements", m->numVertices(), m->numElements());
 
   CTX.threads_lock = 0;
   CTX.mesh.changed = ENT_ALL;

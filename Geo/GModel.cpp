@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.45 2007-08-06 21:22:58 geuzaine Exp $
+// $Id: GModel.cpp,v 1.46 2007-08-21 19:05:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,18 @@
 #include "Field.h"
 #include "MRep.h"
 #include "BackgroundMesh.h"
+
+std::vector<GModel*> GModel::list;
+
+GModel *GModel::current()
+{ 
+  if(list.empty()){
+    Msg(GERROR, "No model available");
+    return 0;
+  }
+  // return last one for now
+  return list.back();
+}
 
 void GModel::destroy()
 {

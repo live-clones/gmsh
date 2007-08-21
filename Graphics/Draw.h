@@ -20,8 +20,10 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <vector>
 #include "List.h"
-#include "Views.h"
+
+class Post_View;
 
 #define GMSH_RENDER    1
 #define GMSH_SELECT    2
@@ -54,6 +56,7 @@ void Draw_String_Right(char *s);
 void Draw_Geom(void);
 void Draw_Mesh(void);
 void Draw_Post(void);
+void Draw_Post_New();
 void Draw_Graph2D(void);
 void Draw_Text2D(void);
 void Draw_Text2D3D(int dim, int timestep, int nb, List_T *td, List_T *tc);

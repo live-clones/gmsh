@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.89 2007-07-25 15:48:32 geuzaine Exp $
+// $Id: Geo.cpp,v 1.90 2007-08-21 19:05:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -28,7 +28,6 @@
 
 extern Mesh *THEM;
 extern Context_T CTX;
-extern GModel *GMODEL;
 
 static List_T *ListOfTransformedPoints = NULL;
 
@@ -49,13 +48,13 @@ void Mesh::free_all()
 {
   MaxPointNum = MaxLineNum = MaxLineLoopNum = MaxSurfaceNum = 0;
   MaxSurfaceLoopNum = MaxVolumeNum = MaxPhysicalNum = 0;
-  Tree_Action(THEM->Points, Free_Vertex); Tree_Delete(THEM->Points);
-  Tree_Action(THEM->Curves, Free_Curve); Tree_Delete(THEM->Curves);
-  Tree_Action(THEM->EdgeLoops, Free_EdgeLoop); Tree_Delete(THEM->EdgeLoops);
-  Tree_Action(THEM->Surfaces, Free_Surface); Tree_Delete(THEM->Surfaces);
-  Tree_Action(THEM->SurfaceLoops, Free_SurfaceLoop); Tree_Delete(THEM->SurfaceLoops);
-  Tree_Action(THEM->Volumes, Free_Volume); Tree_Delete(THEM->Volumes);
-  List_Action(THEM->PhysicalGroups, Free_PhysicalGroup); List_Delete(THEM->PhysicalGroups);
+  Tree_Action(Points, Free_Vertex); Tree_Delete(Points);
+  Tree_Action(Curves, Free_Curve); Tree_Delete(Curves);
+  Tree_Action(EdgeLoops, Free_EdgeLoop); Tree_Delete(EdgeLoops);
+  Tree_Action(Surfaces, Free_Surface); Tree_Delete(Surfaces);
+  Tree_Action(SurfaceLoops, Free_SurfaceLoop); Tree_Delete(SurfaceLoops);
+  Tree_Action(Volumes, Free_Volume); Tree_Delete(Volumes);
+  List_Action(PhysicalGroups, Free_PhysicalGroup); List_Delete(PhysicalGroups);
 }
 
 // Comparison routines
@@ -3066,7 +3065,7 @@ void setVolumeSurfaces(Volume *v, List_T *loops)
 	  List_Add(v->SurfacesOrientations, &tmp);
 	}
 	else{
-	  GFace *gf = GMODEL->faceByTag(abs(is));
+	  GFace *gf = GModel::current()->faceByTag(abs(is));
 	  if(gf) {
 	    List_Add(v->SurfacesByTag, &is);
 	  }

@@ -15,8 +15,6 @@
 #include "FM_TopoFace.h"
 #include "FM_Reader.h"
 
-extern GModel *GMODEL;
-
 void makeGFace(FM::Patch* patch)
 {
   double LL[2], LR[2], UL[2], UR[2];
@@ -28,56 +26,58 @@ void makeGFace(FM::Patch* patch)
   int i1, i2;
   double xx,yy,zz;
   
-  int tagVertex = GMODEL->numVertex();
-  patch->F(LL[0],LL[1],xx,yy,zz);
-  FM::TopoVertex* vLL = new FM::TopoVertex(++tagVertex,xx,yy,zz);
-  GMODEL->add(new FVertex(GMODEL,vLL->GetTag(),vLL));
-  patch->F(LR[0],LR[1],xx,yy,zz);
-  FM::TopoVertex* vLR = new FM::TopoVertex(++tagVertex,xx,yy,zz);
-  GMODEL->add(new FVertex(GMODEL,vLR->GetTag(),vLR));
-  patch->F(UL[0],UL[1],xx,yy,zz);
-  FM::TopoVertex* vUL = new FM::TopoVertex(++tagVertex,xx,yy,zz);
-  GMODEL->add(new FVertex(GMODEL,vUL->GetTag(),vUL));
-  patch->F(UR[0],UR[1],xx,yy,zz);
-  FM::TopoVertex* vUR = new FM::TopoVertex(++tagVertex,xx,yy,zz);
-  GMODEL->add(new FVertex(GMODEL,vUR->GetTag(),vUR));
+  GModel *m = GModel::current();
+
+  int tagVertex = m->numVertex();
+  patch->F(LL[0], LL[1], xx, yy, zz);
+  FM::TopoVertex* vLL = new FM::TopoVertex(++tagVertex, xx, yy, zz);
+  m->add(new FVertex(m, vLL->GetTag(), vLL));
+  patch->F(LR[0], LR[1], xx, yy, zz);
+  FM::TopoVertex* vLR = new FM::TopoVertex(++tagVertex, xx, yy, zz);
+  m->add(new FVertex(m, vLR->GetTag(), vLR));
+  patch->F(UL[0], UL[1], xx, yy, zz);
+  FM::TopoVertex* vUL = new FM::TopoVertex(++tagVertex, xx, yy, zz);
+  m->add(new FVertex(m, vUL->GetTag(), vUL));
+  patch->F(UR[0], UR[1], xx, yy, zz);
+  FM::TopoVertex* vUR = new FM::TopoVertex(++tagVertex, xx, yy, zz);
+  m->add(new FVertex(m, vUR->GetTag(), vUR));
   
-  FM::Curve* curveB = new FM::FCurve(0,patch,LL,LR);
-  FM::Curve* curveR = new FM::FCurve(0,patch,LR,UR);
-  FM::Curve* curveT = new FM::FCurve(0,patch,UR,UL);
-  FM::Curve* curveL = new FM::FCurve(0,patch,UL,LL);
+  FM::Curve* curveB = new FM::FCurve(0, patch, LL, LR);
+  FM::Curve* curveR = new FM::FCurve(0, patch, LR, UR);
+  FM::Curve* curveT = new FM::FCurve(0, patch, UR, UL);
+  FM::Curve* curveL = new FM::FCurve(0, patch, UL, LL);
   
-  int tagEdge = GMODEL->numEdge();
-  FM::TopoEdge* eB = new FM::TopoEdge(++tagEdge,curveB,vLL,vLR);
+  int tagEdge = m->numEdge();
+  FM::TopoEdge* eB = new FM::TopoEdge(++tagEdge, curveB, vLL, vLR);
   i1 = eB->GetStartPoint()->GetTag();
   i2 = eB->GetEndPoint()->GetTag();
-  GMODEL->add(new FEdge(GMODEL,eB,eB->GetTag(),GMODEL->vertexByTag(i1),
-			GMODEL->vertexByTag(i2)));
-  FM::TopoEdge* eR = new FM::TopoEdge(++tagEdge,curveR,vLR,vUR); 
+  m->add(new FEdge(m, eB, eB->GetTag(), m->vertexByTag(i1),
+		   m->vertexByTag(i2)));
+  FM::TopoEdge* eR = new FM::TopoEdge(++tagEdge, curveR, vLR, vUR); 
   i1 = eR->GetStartPoint()->GetTag();
   i2 = eR->GetEndPoint()->GetTag();
-  GMODEL->add(new FEdge(GMODEL,eR,eR->GetTag(),GMODEL->vertexByTag(i1),
-			GMODEL->vertexByTag(i2))); 
-  FM::TopoEdge* eT = new FM::TopoEdge(++tagEdge,curveT,vUR,vUL);
+  m->add(new FEdge(m, eR, eR->GetTag(), m->vertexByTag(i1),
+		   m->vertexByTag(i2))); 
+  FM::TopoEdge* eT = new FM::TopoEdge(++tagEdge, curveT, vUR, vUL);
   i1 = eT->GetStartPoint()->GetTag();
   i2 = eT->GetEndPoint()->GetTag();
-  GMODEL->add(new FEdge(GMODEL,eT,eT->GetTag(),GMODEL->vertexByTag(i1),
-			GMODEL->vertexByTag(i2)));
-  FM::TopoEdge* eL = new FM::TopoEdge(++tagEdge,curveL,vUL,vLL); 
+  m->add(new FEdge(m, eT, eT->GetTag(), m->vertexByTag(i1),
+		   m->vertexByTag(i2)));
+  FM::TopoEdge* eL = new FM::TopoEdge(++tagEdge, curveL, vUL, vLL); 
   i1 = eL->GetStartPoint()->GetTag();
   i2 = eL->GetEndPoint()->GetTag();
-  GMODEL->add(new FEdge(GMODEL,eL,eL->GetTag(),GMODEL->vertexByTag(i1),
-			GMODEL->vertexByTag(i2)));
+  m->add(new FEdge(m, eL, eL->GetTag(), m->vertexByTag(i1),
+		   m->vertexByTag(i2)));
   
-  FM::TopoFace* face = new FM::TopoFace(GMODEL->numFace() + 1,patch);
+  FM::TopoFace* face = new FM::TopoFace(m->numFace() + 1, patch);
   face->AddEdge(eB); face->AddEdge(eR); 
   face->AddEdge(eT); face->AddEdge(eL);
   std::list<GEdge*> l_edges;
-  for (int j=0;j<face->GetNumEdges();j++) {
+  for (int j = 0; j < face->GetNumEdges(); j++) {
     int tag = face->GetEdge(j)->GetTag(); 
-    l_edges.push_back(GMODEL->edgeByTag(tag));
+    l_edges.push_back(m->edgeByTag(tag));
   }
-  GMODEL->add(new FFace(GMODEL,face,face->GetTag(),l_edges));
+  m->add(new FFace(m, face, face->GetTag(), l_edges));
 }
 
 int GModel::readF(const std::string &filename)
