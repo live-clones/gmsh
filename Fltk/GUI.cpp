@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.630 2007-08-22 12:36:04 geuzaine Exp $
+// $Id: GUI.cpp,v 1.631 2007-08-22 20:53:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4775,124 +4775,100 @@ void GUI::create_mesh_context_window(int num)
 
 void GUI::create_solver_window(int num)
 {
-  int i, nbbutts = 0, newrow = 0;
-  static Fl_Group *g[10];
-
-  int LL = (int)(1.75 * IW);
-  int BBS = (5 * fontsize + 1); // smaller width of a button with internal label
-
   if(solver[num].window) {
     solver[num].window->show();
     return;
   }
 
-  for(i = 0; i < MAXSOLVERS; i++)
+  for(int i = 0; i < MAXSOLVERS; i++)
     if(strlen(SINFO[num].option_name[i]))
       SINFO[num].nboptions = i + 1;
 
-  for(i = 0; i < MAXSOLVERS; i++)
-    if(strlen(SINFO[num].button_name[i]))
-      nbbutts++;
-  if(nbbutts > 3)
-    newrow = 1;
-
-  int width = 5 * BBS + 6 * WB;
-  int height = (8 + SINFO[num].nboptions + newrow) * WB + (6 + SINFO[num].nboptions + newrow) * BH;
-  if(height < 8 * WB + 8 * BH)
-    height = 8 * WB + 8 * BH;   //minimum height required by Options tab
-
+  int LL = 2 * IW;
+  int width = LL + BB + BB / 3 + 4 * WB;
+  int height = (8 + SINFO[num].nboptions) * BH + 6 * WB;
+  int BBS = (width - 8 * WB) / 5;
+  
   solver[num].window = new Dialog_Window(width, height);
   solver[num].window->box(GMSH_WINDOW_BOX);
   {
-    Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - (3 + newrow) * WB - (1 + newrow) * BH);
+    Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - 1 * BH);
     {
-      g[0] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - (3 + newrow) * WB - (2 + newrow) * BH, "General");
+      Fl_Group *g = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Controls");
 
-      solver[num].input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, LL, BH, "Problem");
-      Fl_Button *b1 = new Fl_Button(2 * WB, 3 * WB + 2 * BH, BB, BH, "Choose");
-      b1->callback(solver_file_open_cb, (void *)num);
-      Fl_Button *b2 = new Fl_Button(3 * WB + BB, 3 * WB + 2 * BH, BB, BH, "Edit");
-      b2->callback(solver_file_edit_cb, (void *)num);
+      solver[num].input[2] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, LL, BH, "Solver");
+      solver[num].input[2]->callback(solver_ok_cb, (void *)num);
 
-      solver[num].input[1] = new Fl_Input(2 * WB, 4 * WB + 3 * BH, LL, BH, "Mesh");
-      Fl_Button *b3 = new Fl_Button(2 * WB, 5 * WB + 4 * BH, BB, BH, "Choose");
-      b3->callback(solver_choose_mesh_cb, (void *)num);
+      Fl_Button *b1 = new Fl_Button(width - 2 * WB - BBS, 2 * WB + 1 * BH, BBS, BH, "Choose");
+      b1->callback(solver_choose_executable_cb, (void *)num);
+      Fl_Button *b2 = new Fl_Button(width - 2 * WB - BBS, 2 * WB + 2 * BH, BBS, BH, "Save");
+      b2->callback(options_save_cb);
 
-      for(i = 0; i < 2; i++) {
+      int ww = (LL - WB) / 2;
+      solver[num].butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, ww, BH, "Client/server");
+      solver[num].butt[0] = new Fl_Check_Button(2 * WB, 2 * WB + 3 * BH, ww, BH, "Pop-up messages");
+      solver[num].butt[1] = new Fl_Check_Button(3 * WB + ww, 2 * WB + 2 * BH, ww, BH, "Auto-load results");
+      
+      for(int i = 0; i < 3; i++){
+	solver[num].butt[i]->type(FL_TOGGLE_BUTTON);
+	solver[num].butt[i]->callback(solver_ok_cb, (void *)num);
+      }
+
+      solver[num].input[0] = new Fl_Input(2 * WB + BB / 2, 2 * WB + 4 * BH, LL - BB / 2, BH, "Input");
+      Fl_Button *b3 = new Fl_Button(width - 2 * WB - BBS, 2 * WB + 4 * BH, BBS, BH, "Choose");
+      b3->callback(solver_file_open_cb, (void *)num);
+
+      Fl_Button *b4 = new Fl_Button(2 * WB, 2 * WB + 4 * BH, BB / 2, BH, "Edit");
+      b4->callback(solver_file_edit_cb, (void *)num);
+
+      solver[num].input[1] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, LL, BH, "Mesh");
+      Fl_Button *b5 = new Fl_Button(width - 2 * WB - BBS, 2 * WB + 5 * BH, BBS, BH, "Choose");
+      b5->callback(solver_choose_mesh_cb, (void *)num);
+
+      for(int i = 0; i < 3; i++) {
         solver[num].input[i]->align(FL_ALIGN_RIGHT);
       }
 
-      for(i = 0; i < SINFO[num].nboptions; i++) {
-        solver[num].choice[i] = new Fl_Choice(2 * WB, (6 + i) * WB + (5 + i) * BH, LL, BH, SINFO[num].option_name[i]);
+      for(int i = 0; i < SINFO[num].nboptions; i++) {
+        solver[num].choice[i] = new Fl_Choice(2 * WB, 2 * WB + (6 + i) * BH, LL, BH,
+					      SINFO[num].option_name[i]);
         solver[num].choice[i]->align(FL_ALIGN_RIGHT);
       }
 
-      g[0]->end();
-    }
-    {
-      g[1] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - (3 + newrow) * WB - (2 + newrow) * BH, "Options");
-
-      solver[num].input[2] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, LL, BH, "Executable");
-      solver[num].input[2]->align(FL_ALIGN_RIGHT);
-      solver[num].input[2]->callback(solver_ok_cb, (void *)num);
-
-      Fl_Button *b = new Fl_Button(2 * WB, 3 * WB + 2 * BH, BB, BH, "Choose");
-      b->callback(solver_choose_executable_cb, (void *)num);
-
-      solver[num].butt[2] = new Fl_Check_Button(2 * WB, 4 * WB + 3 * BH, LL, BH, "Enable client-server connection");
-      solver[num].butt[2]->type(FL_TOGGLE_BUTTON);
-      solver[num].butt[2]->callback(solver_ok_cb, (void *)num);
-      solver[num].butt[0] = new Fl_Check_Button(2 * WB, 4 * WB + 4 * BH, LL, BH, "Display client messages");
-      solver[num].butt[0]->type(FL_TOGGLE_BUTTON);
-      solver[num].butt[0]->callback(solver_ok_cb, (void *)num);
-      solver[num].butt[1] = new Fl_Check_Button(2 * WB, 4 * WB + 5 * BH, LL, BH, "Merge views automatically");
-      solver[num].butt[1]->type(FL_TOGGLE_BUTTON);
-      solver[num].butt[1]->callback(solver_ok_cb, (void *)num);
-
-      {
-        Fl_Button *o = new Fl_Button(width - BB - 2 * WB,
-                                     height - (3 + newrow) * WB - (2 + newrow) * BH,
-				     BB, BH, "Save");
-        o->callback(options_save_cb);
+      static int arg[MAXSOLVERS][5][2];
+      for(int i = 0; i < 5; i++) {
+	if(strlen(SINFO[num].button_name[i])) {
+	  arg[num][i][0] = num;
+	  arg[num][i][1] = i;
+	  solver[num].command[i] = new Fl_Button((2 + i) * WB + i * BBS, 
+						 3 * WB + (6 + SINFO[num].nboptions) * BH,
+						 BBS, BH, SINFO[num].button_name[i]);
+	  solver[num].command[i]->callback(solver_command_cb, (void *)arg[num][i]);
+	}
       }
-      g[1]->end();
+
+      g->end();
     }
     {
-      g[2] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - (3 + newrow) * WB - (2 + newrow) * BH, "About");
+      Fl_Group *g = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "About");
 
       Fl_Browser *o = new Fl_Browser(2 * WB, 2 * WB + 1 * BH, width - 4 * WB,
-                                     height - (5 + newrow) * WB - (2 + newrow) * BH);
+                                     height - 5 * WB - 2 * BH);
       o->add(" ");
       add_multiline_in_browser(o, "@c@b@.", SINFO[num].name);
       o->add(" ");
       add_multiline_in_browser(o, "@c@. ", SINFO[num].help);
 
-      g[2]->end();
+      g->end();
     }
     o->end();
   }
 
-  static int arg[MAXSOLVERS][5][2];
-  int nb = 0;
-  for(i = 4; i >= 0; i--) {
-    if(strlen(SINFO[num].button_name[i])) {
-      arg[num][i][0] = num;
-      arg[num][i][1] = i;
-      solver[num].command[nb] = new Fl_Button(width - (1 + nb + 2 * !newrow) * BBS - (1 + nb + 2 * !newrow) * WB,
-					      height - (1 + newrow) * BH - (1 + newrow) * WB, BBS, BH,
-					      SINFO[num].button_name[i]);
-      solver[num].command[nb]->callback(solver_command_cb, (void *)arg[num][i]);
-      nb++;
-    }
-  }
-
   {
-    Fl_Button *o = new Fl_Button(width - 2 * BBS - 2 * WB, height - BH - WB, BBS, BH, "Kill");
-    o->callback(solver_kill_cb, (void *)num);
-  }
-  {
-    Fl_Button *o = new Fl_Button(width - BBS - WB, height - BH - WB, BBS, BH, "Cancel");
-    o->callback(cancel_cb, (void *)solver[num].window);
+    Fl_Button *b1 = new Fl_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Kill solver");
+    b1->callback(solver_kill_cb, (void *)num);
+    Fl_Button *b2 = new Fl_Button(width - BB - WB, height - BH - WB, BB, BH, "Cancel");
+    b2->callback(cancel_cb, (void *)solver[num].window);
   }
 
   solver[num].window->position(CTX.solver_position[0], CTX.solver_position[1]);
