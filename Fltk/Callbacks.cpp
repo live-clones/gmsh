@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.538 2007-08-21 19:05:39 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.539 2007-08-22 21:02:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4160,7 +4160,7 @@ void solver_file_edit_cb(CALLBACK_ARGS)
 void solver_choose_mesh_cb(CALLBACK_ARGS)
 {
   int num = (int)(long)data;
-  if(file_chooser(0, 0, "Choose", "*.msh"))
+  if(file_chooser(0, 0, "Choose", "*"))
     WID->solver[num].input[1]->value(file_chooser_get_name(1));
 }
 
