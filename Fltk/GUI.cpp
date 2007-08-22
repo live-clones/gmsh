@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.629 2007-08-03 22:21:17 geuzaine Exp $
+// $Id: GUI.cpp,v 1.630 2007-08-22 12:36:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4834,20 +4834,20 @@ void GUI::create_solver_window(int num)
 
       solver[num].input[2] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, LL, BH, "Executable");
       solver[num].input[2]->align(FL_ALIGN_RIGHT);
-      solver[num].input[2]->callback(solver_ok_cb);
+      solver[num].input[2]->callback(solver_ok_cb, (void *)num);
 
       Fl_Button *b = new Fl_Button(2 * WB, 3 * WB + 2 * BH, BB, BH, "Choose");
       b->callback(solver_choose_executable_cb, (void *)num);
 
       solver[num].butt[2] = new Fl_Check_Button(2 * WB, 4 * WB + 3 * BH, LL, BH, "Enable client-server connection");
       solver[num].butt[2]->type(FL_TOGGLE_BUTTON);
-      solver[num].butt[2]->callback(solver_ok_cb);
+      solver[num].butt[2]->callback(solver_ok_cb, (void *)num);
       solver[num].butt[0] = new Fl_Check_Button(2 * WB, 4 * WB + 4 * BH, LL, BH, "Display client messages");
       solver[num].butt[0]->type(FL_TOGGLE_BUTTON);
-      solver[num].butt[0]->callback(solver_ok_cb);
+      solver[num].butt[0]->callback(solver_ok_cb, (void *)num);
       solver[num].butt[1] = new Fl_Check_Button(2 * WB, 4 * WB + 5 * BH, LL, BH, "Merge views automatically");
       solver[num].butt[1]->type(FL_TOGGLE_BUTTON);
-      solver[num].butt[1]->callback(solver_ok_cb);
+      solver[num].butt[1]->callback(solver_ok_cb, (void *)num);
 
       {
         Fl_Button *o = new Fl_Button(width - BB - 2 * WB,
