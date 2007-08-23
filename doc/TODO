@@ -1,4 +1,11 @@
-$Id: TODO,v 1.59 2007-05-23 15:35:33 geuzaine Exp $
+$Id: TODO,v 1.60 2007-08-23 06:59:53 geuzaine Exp $
+
+********************************************************************
+
+if 2 physical lines are defined for a given elementary line, with
+different orientations, when we read the file back displaying the
+phsyical shows the elements in both directions (since all the elements
+have been loaded in the same elementary entity)
 
 ********************************************************************
 
