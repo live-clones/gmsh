@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.151 2007-08-21 19:05:43 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.152 2007-08-24 20:14:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -389,9 +389,8 @@ int MergeFile(char *name, int warn_if_missing)
     }
     else if(!strncmp(header, "$PostFormat", 11) || 
 	    !strncmp(header, "$View", 5)) {
-#if 0 // FIXME: test new post-pro
+#if 0 // test new post-pro
       PView *p = new PView(false);
-      PView::list.push_back(p);
       status = p->getData()->read(name);
 #else
       status = ReadView(name);

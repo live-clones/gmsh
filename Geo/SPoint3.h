@@ -44,6 +44,7 @@ class SPoint3 {
   void operator+=(const SPoint3 &p);
   void operator-=(const SPoint3 &p);
   void operator*=(double mult);
+  void operator/=(double mult);
   SPoint3 operator*(double mult);
   operator double *() { return P; }
 };
@@ -83,6 +84,9 @@ inline void SPoint3::operator-=(const SPoint3 &p)
 
 inline void SPoint3::operator*=(double mult)
 { P[0] *= mult; P[1] *= mult; P[2] *= mult; }
+
+inline void SPoint3::operator/=(double div)
+{ P[0] /= div; P[1] /= div; P[2] /= div; }
 
 inline SPoint3 SPoint3::operator*(double mult)
 { return SPoint3(P[0] * mult, P[1] * mult, P[2] * mult); }

@@ -21,25 +21,42 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <vector>
+#include <set>
+#include "SVector3.h"
 
 class MElement;
+
+class BarycenterLessThan{
+ public:
+  static double tolerance;
+  bool operator()(const SPoint3 &p1, const SPoint3 &p2) const
+  {
+    if(p1.x() - p2.x() >  tolerance) return true;
+    if(p1.x() - p2.x() < -tolerance) return false;
+    if(p1.y() - p2.y() >  tolerance) return true;
+    if(p1.y() - p2.y() < -tolerance) return false;
+    if(p1.z() - p2.z() >  tolerance) return true;
+    return false;
+  }
+};
 
 class VertexArray{
  public:
   int fill; // this must/will be removed
  private:
-  int _type;
+  int _numVerticesPerElement;
   std::vector<float> _vertices;
   std::vector<char> _normals;
   std::vector<unsigned char> _colors;
   std::vector<MElement*> _elements;
+  std::set<SPoint3, BarycenterLessThan> _barycenters;
  public:
-  VertexArray(int numNodesPerElement, int numElements);
+  VertexArray(int numVerticesPerElement, int numElements);
   ~VertexArray(){}
-  // returns the number of nodes in the array
+  // returns the number of vertices in the array
   int getNumVertices() { return _vertices.size() / 3; }
-  // returns the type of the array
-  int getType() { return _type; }
+  // returns the number of vertices per element
+  int getNumVerticesPerElement() { return _numVerticesPerElement; }
   // returns the number of element pointers
   int getNumElementPointers() { return _elements.size(); }
   // returns a pointer to the raw vertex array
@@ -54,6 +71,11 @@ class VertexArray{
   void add(float x, float y, float z, float n0, float n1, float n2, 
 	   unsigned int col, MElement *ele=0);
   void add(float x, float y, float z, unsigned int col, MElement *ele=0);
+  // add a complete element in the arrays (if unique is set, only add
+  // the element if another one with the same barycenter is not
+  // already present)
+  void add(double *x, double *y, double *z, SVector3 *n, unsigned int *col,
+	   MElement *ele=0, bool unique=true);
   // sorts the elements back to front wrt the eye position
   void sort(double eye[3]);
 };

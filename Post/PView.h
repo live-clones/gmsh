@@ -41,9 +41,6 @@ class PView{
   int _aliasOf;
   // flag to mark that some other views link to this one
   bool _links;
-  // flag to mark that this view is 'dirty' and should not be
-  // displayed
-  bool _dirty;
   // name of the view
   std::string _name;
   // name of the file the view was loaded from
@@ -54,17 +51,21 @@ class PView{
   PViewData *_data;
  public:
   PView(bool allocate=true) :
-    _num(0), _index(0), _changed(false), _aliasOf(-1), _links(false), 
-    _dirty(true), _name(""), _filename(""), _options(0), _data(0),
-    va_lines(0), va_triangles(0), normals(0), adaptive(0)
+    _num(0), _index(0), _changed(true), _aliasOf(-1), _links(false), 
+    _name(""), _filename(""), _options(0), _data(0),
+    va_points(0), va_lines(0), va_triangles(0), normals(0), adaptive(0)
   {
     _data = new PViewDataList(allocate);
     _options = new PViewOptions;
+    list.push_back(this);
+    // reset indices
+    for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
   }
   ~PView()
   {
     if(_options) delete _options;
     if(_data) delete _data;
+    if(va_points) delete va_points;
     if(va_lines) delete va_lines;
     if(va_triangles) delete va_triangles;
     if(normals) delete normals;
@@ -80,8 +81,6 @@ class PView{
   void setIndex(int val){ _index = val; }
   bool getChanged(){ return _changed; }
   void setChanged(bool val){ _changed = val; }
-  bool getDirty(){ return _dirty; }
-  void setDirty(bool val){ _dirty = val; }
   void setGlobalResolutionLevel(int level)
   {
     //if(adaptive) adaptive->setGlobalResolutionLevel(this, level);
@@ -92,7 +91,7 @@ class PView{
   }
 
   // vertex arrays to draw triangles and lines efficiently
-  VertexArray *va_lines, *va_triangles;
+  VertexArray *va_points, *va_lines, *va_triangles;
   // smoothed normals
   smooth_normals *normals;
   // adaptative rendering for high-order datasets

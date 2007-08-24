@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.110 2007-08-21 19:05:39 geuzaine Exp $
+// $Id: Draw.cpp,v 1.111 2007-08-24 20:14:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -77,8 +77,8 @@ void Draw3d(void)
   InitPosition();
   Draw_Geom();
   Draw_Mesh();
+  Draw_Post_Old();
   Draw_Post();
-  Draw_Post_New();
 }
 
 void Draw2d(void)

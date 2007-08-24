@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.200 2007-08-21 19:05:39 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.201 2007-08-24 20:14:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -474,11 +474,11 @@ static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalAr
   // draw each one separately
   if(CTX.render_mode == GMSH_SELECT && CTX.pick_elements) {
     if(va->getNumElementPointers() == va->getNumVertices()){
-      for(int i = 0; i < va->getNumVertices(); i += va->getType()){
-	glPushName(va->getType());
+      for(int i = 0; i < va->getNumVertices(); i += va->getNumVerticesPerElement()){
+	glPushName(va->getNumVerticesPerElement());
 	glPushName(i);
 	glBegin(type);
-	for(int j = 0; j < va->getType(); j++)
+	for(int j = 0; j < va->getNumVerticesPerElement(); j++)
 	  glVertex3fv(va->getVertexArray(3 * (i + j)));
 	glEnd();
 	glPopName();
@@ -518,7 +518,7 @@ static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalAr
     glColor4ubv((GLubyte *) & color);
   }
   
-  if(va->getType() > 2 && !drawOutline && CTX.polygon_offset)
+  if(va->getNumVerticesPerElement() > 2 && !drawOutline && CTX.polygon_offset)
     glEnable(GL_POLYGON_OFFSET_FILL);
   
   if(drawOutline) 

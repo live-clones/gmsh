@@ -1,4 +1,4 @@
-// $Id: PViewOptions.cpp,v 1.1 2007-08-21 19:05:43 geuzaine Exp $
+// $Id: PViewOptions.cpp,v 1.2 2007-08-24 20:14:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -72,5 +72,28 @@ PViewOptions::PViewOptions()
   UseGenRaise = 0;
   GenRaiseFactor = 0.;
 
-  GmshColorTable CT;
+  ColorTable_InitParam(2, &CT);
+  ColorTable_Recompute(&CT);
+}
+
+// val in [min, max]
+unsigned int PViewOptions::getColor(double val, double min, double max)
+{
+  //int index = v->GIFV(min, max, v->CT.size, val);
+
+  if(CT.size == 1) return CT.table[0];
+
+  int index = (min == max) ? CT.size / 2 :
+    (int)((val - min) * (CT.size - 1) / (max - min));
+
+  return CT.table[index];
+}
+
+// i in [0, nb - 1]
+unsigned int PViewOptions::getColor(int i, int nb)
+{
+  int index = (nb == 1) ? CT.size / 2 : 
+    (int)(i / (double)(nb - 1) * (CT.size - 1) + 0.5);
+
+  return CT.table[index];
 }

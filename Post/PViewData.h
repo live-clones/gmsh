@@ -31,13 +31,18 @@
 
 // abstract interface to post-processing view data
 class PViewData {
+ private:
+  // flag to mark that the data is 'dirty' and should not be displayed
+  bool _dirty;
  public:
-  PViewData(){}
+  PViewData() : _dirty(true) {}
   virtual ~PViewData(){}
+  virtual bool getDirty(){ return _dirty; }
+  virtual void setDirty(bool val){ _dirty = val; }
   virtual void finalize(){}
   virtual int getNumTimeSteps() = 0;
-  virtual int getMin(int step=-1) = 0;
-  virtual int getMax(int step=-1) = 0;
+  virtual double getMin(int step=-1) = 0;
+  virtual double getMax(int step=-1) = 0;
   virtual SBoundingBox3d getBoundingBox() = 0;
   virtual int getNumPoints(){ return 0; }
   virtual int getNumLines(){ return 0; }
@@ -53,7 +58,7 @@ class PViewData {
   virtual int getNumNodes(int ele) = 0;
   virtual void getNode(int ele, int nod, double &x, double &y, double &z) = 0;
   virtual int getNumComponents(int ele) = 0;
-  virtual void getValue(int ele, int node, int step, int comp, double &val) = 0;
+  virtual void getValue(int ele, int node, int comp, int step, double &val) = 0;
   virtual bool read(std::string filename){}
 };
 
@@ -101,8 +106,8 @@ class PViewDataList : public PViewData {
   ~PViewDataList();
   void finalize();
   int getNumTimeSteps(){ return NbTimeStep; }
-  int getMin(int step=-1){ return Min; }
-  int getMax(int step=-1){ return Max; }
+  double getMin(int step=-1);
+  double getMax(int step=-1);
   SBoundingBox3d getBoundingBox(){ return BBox; }
   int getNumPoints(){ return NbSP + NbVP + NbTP; }
   int getNumLines(){ return NbSL + NbVL + NbTL; }
@@ -122,7 +127,7 @@ class PViewDataList : public PViewData {
   int getNumNodes(int ele);
   void getNode(int ele, int nod, double &x, double &y, double &z);
   int getNumComponents(int ele);
-  void getValue(int ele, int node, int step, int comp, double &val);
+  void getValue(int ele, int node, int comp, int step, double &val);
   bool read(std::string filename);
 };
 
@@ -135,15 +140,15 @@ class PViewDataGModel : public PViewData {
   PViewDataGModel(){}
   ~PViewDataGModel(){}
   int getNumTimeSteps(){ return 1; }
-  int getMin(int step=-1){ return 0.; }
-  int getMax(int step=-1){ return 1.; }
+  double getMin(int step=-1){ return 0.; }
+  double getMax(int step=-1){ return 1.; }
   SBoundingBox3d getBoundingBox(){ return SBoundingBox3d(); }
   int getNumElements(){ return _model->numElements(); }
   int getDimension(int ele){ return 0; }
   int getNumNodes(int ele){ return 0; }
   void getNode(int ele, int nod, double &x, double &y, double &z){}
   int getNumComponents(int ele){ return 1; }
-  void getValue(int ele, int node, int step, int comp, double &val){}
+  void getValue(int ele, int node, int comp, int step, double &val){}
 };
 
 #endif

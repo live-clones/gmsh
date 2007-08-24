@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.17 2006-11-27 22:22:08 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.18 2007-08-24 20:14:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,10 +26,10 @@
 
 extern Context_T CTX;
 
-VertexArray::VertexArray(int numNodesPerElement, int numElements) 
-  : fill(0), _type(numNodesPerElement)
+VertexArray::VertexArray(int numVerticesPerElement, int numElements) 
+  : fill(0), _numVerticesPerElement(numVerticesPerElement)
 {
-  int nb = (numElements ? numElements : 1) * numNodesPerElement;
+  int nb = (numElements ? numElements : 1) * numVerticesPerElement;
   _vertices.reserve(nb * 3);
   _normals.reserve(nb * 3);
   _colors.reserve(nb *4);
@@ -42,8 +42,8 @@ void VertexArray::add(float x, float y, float z, float n0, float n1, float n2,
   _vertices.push_back(y);
   _vertices.push_back(z);
 
-  // Warning: storing the normals as bytes WILL hurt rendering
-  // performance... but it reduces significantly the memory footprint.
+  // storing the normals as bytes hurts rendering performance, but it
+  // significantly reduces the memory footprint
   char c0 = float2char(n0);
   char c1 = float2char(n1);
   char c2 = float2char(n2);
@@ -79,6 +79,26 @@ void VertexArray::add(float x, float y, float z, unsigned int col, MElement *ele
   _colors.push_back(a);
 
   if(ele && CTX.pick_elements) _elements.push_back(ele);
+}
+
+double BarycenterLessThan::tolerance = 0.;
+
+void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
+		      unsigned int *col, MElement *ele, bool unique)
+{
+  int npe = _numVerticesPerElement;
+  if(unique){
+    SPoint3 pc(0., 0., 0.);
+    for(int i = 0; i < npe; i++)
+      pc += SPoint3(x[i], y[i], z[i]);
+    pc /= (double)npe;
+    BarycenterLessThan::tolerance = 1.e-12 * CTX.lc;
+    if(_barycenters.find(pc) != _barycenters.end()) return;
+    _barycenters.insert(pc);
+  }
+
+  for(int i = 0; i < npe; i++)
+    add(x[i], y[i], z[i], n[i].x(), n[i].y(), n[i].z(), col[i], ele);
 }
 
 class AlphaElement {
@@ -122,25 +142,26 @@ void VertexArray::sort(double eye[3])
   // twice. We should think about a more efficient way to sort the
   // three arrays in place.
 
-  AlphaElementLessThan::numVertices = getType();
+  AlphaElementLessThan::numVertices = getNumVerticesPerElement();
   AlphaElementLessThan::eye[0] = eye[0];
   AlphaElementLessThan::eye[1] = eye[1];
   AlphaElementLessThan::eye[2] = eye[2];
 
-  int n = getNumVertices() / getType();
+  int npe = getNumVerticesPerElement();
+  int n = getNumVertices() / npe;
 
   std::vector<AlphaElement> elements;
   elements.reserve(n);
   if(_normals.size())
     for(int i = 0; i < n; i++)
-      elements.push_back(AlphaElement(&_vertices[3 * getType() * i], 
-				      &_normals[3 * getType() * i], 
-				      &_colors[4 * getType() * i]));
+      elements.push_back(AlphaElement(&_vertices[3 * npe * i], 
+				      &_normals[3 * npe * i], 
+				      &_colors[4 * npe * i]));
   else
     for(int i = 0; i < n; i++)
-      elements.push_back(AlphaElement(&_vertices[3 * getType() * i], 
+      elements.push_back(AlphaElement(&_vertices[3 * npe * i], 
 				      0, 
-				      &_colors[4 * getType() * i]));
+				      &_colors[4 * npe * i]));
   
   std::sort(elements.begin(), elements.end(), AlphaElementLessThan());
 
@@ -152,7 +173,7 @@ void VertexArray::sort(double eye[3])
   sortedColors.reserve(_colors.size());
 
   for(int i = 0; i < n; i++){
-    for(int j = 0; j < getType(); j++){
+    for(int j = 0; j < getNumVerticesPerElement(); j++){
       for(int k = 0; k < 3; k++){
 	sortedVertices.push_back(elements[i].v[3 * j + k]);
 	if(elements[i].v)

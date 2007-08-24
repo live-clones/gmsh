@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.157 2007-08-21 19:05:39 geuzaine Exp $
+# $Id: Makefile,v 1.158 2007-08-24 20:14:18 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -75,7 +75,8 @@ GEntity.o: GEntity.cpp GEntity.h Range.h SPoint3.h SBoundingBox3d.h \
   SPoint2.h SVector3.h MElement.h MEdge.h ../Common/Hash.h MFace.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
   ExtrudeParams.h ../Common/SmoothData.h GFace.h GEdgeLoop.h Pair.h \
-  GRegion.h ../Common/VertexArray.h ../Common/Message.h ../Common/OS.h
+  GRegion.h ../Common/VertexArray.h ../Geo/SVector3.h ../Common/Message.h \
+  ../Common/OS.h
 GVertex.o: GVertex.cpp GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h SPoint2.h \
   GFace.h GEdgeLoop.h GEdge.h SVector3.h MElement.h MEdge.h \
@@ -186,12 +187,12 @@ GModel.o: GModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
   ExtrudeParams.h ../Common/SmoothData.h GFace.h GEdgeLoop.h Pair.h \
   GRegion.h gmshSurface.h ../Mesh/Field.h ../Post/Views.h \
-  ../Post/ColorTable.h ../Common/VertexArray.h ../Post/AdaptiveViews.h \
-  ../Common/GmshMatrix.h ../Geo/Geo.h ../Geo/gmshSurface.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
-  ../Geo/ExtrudeParams.h ../Geo/GEdge.h ../Post/OctreePost.h \
-  ../Common/Octree.h ../Common/OctreeInternals.h MRep.h \
-  ../Common/Message.h ../Common/OS.h ../Mesh/BackgroundMesh.h
+  ../Post/ColorTable.h ../Common/VertexArray.h ../Geo/SVector3.h \
+  ../Post/AdaptiveViews.h ../Common/GmshMatrix.h ../Geo/Geo.h \
+  ../Geo/gmshSurface.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Geo/GEdge.h \
+  ../Post/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h \
+  MRep.h ../Common/Message.h ../Common/OS.h ../Mesh/BackgroundMesh.h
 GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h ../Common/GmshDefines.h MVertex.h GPoint.h \
   SPoint2.h GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h \

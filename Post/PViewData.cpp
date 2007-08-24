@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.1 2007-08-21 19:05:43 geuzaine Exp $
+// $Id: PViewData.cpp,v 1.2 2007-08-24 20:14:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -114,6 +114,20 @@ void PViewDataList::finalize()
       List_Add(Time, &d);
     }
   }
+
+  setDirty(false);
+}
+
+double PViewDataList::getMin(int step)
+{
+  if(step < 0) return Min;
+  return TimeStepMin[step];
+}
+
+double PViewDataList::getMax(int step)
+{
+  if(step < 0) return Max;
+  return TimeStepMax[step];
 }
 
 void PViewDataList::_stat(List_T *D, List_T *C, int nb)
@@ -306,7 +320,7 @@ int PViewDataList::getNumComponents(int ele)
   return _lastNumComponents;
 }
 
-void PViewDataList::getValue(int ele, int nod, int step, int comp, double &val)
+void PViewDataList::getValue(int ele, int nod, int comp, int step, double &val)
 {
   if(ele != _lastElement) _setLast(ele);
   val = _lastVal[step * _lastNumNodes  * _lastNumComponents + 

@@ -63,7 +63,7 @@ class PViewOptions {
   enum RangeType {
     Default,
     Custom,
-    PerStep
+    PerTimeStep
   };
   enum ScaleType {
     Linear,
@@ -77,7 +77,7 @@ class PViewOptions {
   int Axes, AxesAutoPosition, AxesTics[3];
   char AxesFormat[3][256], AxesLabel[3][256];
   double AxesPosition[6];
-  double CustomMin, CustomMax;
+  double CustomMin, CustomMax, TmpMin, TmpMax;
   double Offset[3], Raise[3], Transform[3][3], DisplacementFactor, Explode;
   double ArrowSize, ArrowRelHeadRadius, ArrowRelStemRadius, ArrowRelStemLength;
   double Normals, Tangents;
@@ -113,6 +113,8 @@ class PViewOptions {
   // static reference container that contains default values
   static PViewOptions reference;
   PViewOptions();
+  unsigned int getColor(int i, int nb);
+  unsigned int getColor(double val, double min, double max);
 };
 
 #endif
