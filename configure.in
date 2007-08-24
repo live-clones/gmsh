@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.131 2007-08-08 16:14:17 anand Exp $
+dnl $Id: configure.in,v 1.132 2007-08-24 08:38:24 remacle Exp $
 dnl
 dnl Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 dnl
@@ -745,7 +745,7 @@ case "$UNAME" in
     if test "x$enable_gui" = "xno"; then
       GMSH_LIBS="${GMSH_LIBS} -framework ApplicationServices"
     fi
-    dnl POSTBUILD="/Developer/Tools/Rez -t APPL -o bin/gmsh Fltk/MacRes.r"
+    POSTBUILD="/Developer/Tools/Rez -t APPL -o bin/gmsh Fltk/MacRes.r"
     ;;
 
   AIX*)

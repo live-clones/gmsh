@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.73 2007-08-21 19:05:39 geuzaine Exp $
+// $Id: Entity.cpp,v 1.74 2007-08-24 08:38:24 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -85,6 +85,46 @@ void Draw_Disk(double size, double rint, double x, double y, double z, int light
   glScaled(s, s, s);
   glCallList(listnum);
   glPopMatrix();
+  glDisable(GL_LIGHTING);
+}
+void Draw_TapCylinder(double width, double val1, double val2, 
+		      double ValMin, double ValMax, 
+		      double *x, double *y, double *z, int light)
+{
+  if(light) glEnable(GL_LIGHTING);
+
+  static int first = 1;
+  static GLUquadricObj *qua;
+
+  if(first){
+    first = 0;
+    qua = gluNewQuadric();
+  }
+
+  double dx = x[1] - x[0];
+  double dy = y[1] - y[0];
+  double dz = z[1] - z[0];
+  double length = sqrt(dx*dx + dy*dy + dz*dz);
+  double radius1 = width * (val1-ValMin)/(ValMax-ValMin) * CTX.pixel_equiv_x /CTX.s[0];
+  double radius2 = width * (val2-ValMin)/(ValMax-ValMin) * CTX.pixel_equiv_x /CTX.s[0];
+  double zdir[3] = {0., 0., 1.};
+  double vdir[3] = {dx/length, dy/length, dz/length};
+  double axis[3], cosphi, phi;
+  prodve(zdir, vdir, axis);
+  prosca(zdir, vdir, &cosphi);
+  if(!norme(axis)){
+    axis[0] = 0.;
+    axis[1] = 1.;
+    axis[2] = 0.;
+  }
+  phi = 180. * myacos(cosphi) / M_PI;
+
+  glPushMatrix();
+  glTranslated(x[0], y[0], z[0]);
+  glRotated(phi, axis[0], axis[1], axis[2]);
+  gluCylinder(qua, radius1, radius2, length, CTX.quadric_subdivisions, 1);
+  glPopMatrix();
+
   glDisable(GL_LIGHTING);
 }
 

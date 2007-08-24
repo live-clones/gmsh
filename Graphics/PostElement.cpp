@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.79 2007-06-22 12:08:16 remacle Exp $
+// $Id: PostElement.cpp,v 1.80 2007-08-24 08:38:24 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -305,10 +305,15 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
   if(View->IntervalsType == DRAW_POST_CONTINUOUS) {
     if(Val[0] >= ValMin && Val[0] <= ValMax &&
        Val[1] >= ValMin && Val[1] <= ValMax) {
-      if(View->LineType) {
+      if(View->LineType == 1) {
 	// not perfect...
 	PaletteContinuous(View, ValMin, ValMax, Val[0]);
 	Draw_Line(View->LineType, View->LineWidth, X, Y, Z, View->Light);
+      }
+      else if (View->LineType == 2) {
+	PaletteContinuous(View, ValMin, ValMax, Val[0]);
+	//Draw_Line(View->LineType, View->LineWidth, X, Y, Z, View->Light);
+	Draw_TapCylinder(View->LineWidth, Val[0], Val[1], ValMin, ValMax, X, Y, Z, View->Light);
       }
       else {
 	glBegin(GL_LINES);

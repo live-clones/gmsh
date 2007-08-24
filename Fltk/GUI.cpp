@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.631 2007-08-22 20:53:13 geuzaine Exp $
+// $Id: GUI.cpp,v 1.632 2007-08-24 08:38:24 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -346,6 +346,13 @@ static Fl_Menu_Item menu_point_display[] = {
 static Fl_Menu_Item menu_line_display[] = {
   {"Color segment", 0, 0, 0},
   {"3D cylinder",   0, 0, 0},
+  {0}
+};
+
+static Fl_Menu_Item menu_line_display_postpro[] = {
+  {"Color segment", 0, 0, 0},
+  {"3D cylinder",   0, 0, 0},
+  {"Taper cylinder",   0, 0, 0},
   {0}
 };
 
@@ -3235,7 +3242,7 @@ void GUI::create_option_window()
       view_value[61]->callback(view_options_ok_cb);
 
       view_choice[6] = new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display");
-      view_choice[6]->menu(menu_line_display);
+      view_choice[6]->menu(menu_line_display_postpro);
       view_choice[6]->align(FL_ALIGN_RIGHT);
       view_choice[6]->callback(view_options_ok_cb);
 

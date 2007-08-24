@@ -66,6 +66,7 @@ void Draw_Scales(void);
 void Draw_Disk(double size, double rint, double x, double y, double z, int light);
 void Draw_Sphere(double size, double x, double y, double z, int light);
 void Draw_Cylinder(double width, double *x, double *y, double *z, int light);
+void Draw_TapCylinder(double width, double val1, double val2, double ValMin, double ValMax, double *x, double *y, double *z, int light);
 void Draw_Point(int type, double size, double *x, double *y, double *z, 
 		int light);
 void Draw_Line(int type, double width, double *x, double *y, double *z,
