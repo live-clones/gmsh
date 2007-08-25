@@ -221,8 +221,6 @@ Post_View *Create2DGraph(char *xname, char *yname, int nbdata, double *x, double
 GmshColorTable *Get_ColorTable(int num);
 void Print_ColorTable(int num, int diff, char *prefix, FILE *file);
 
-double ComputeVonMises(double* val);
-
 void InitGeneralizedRaise(Post_View *v);
 void FreeGeneralizedRaise(Post_View *v);
 void ApplyGeneralizedRaise(Post_View * v, int numNodes, int numComp, double *vals,

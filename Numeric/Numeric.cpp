@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.31 2007-01-12 13:16:59 remacle Exp $
+// $Id: Numeric.cpp,v 1.32 2007-08-25 10:58:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -482,6 +482,17 @@ void gradSimplex(double *x, double *y, double *z, double *v, double *grad)
   b[1] = v[2] - v[0];
   b[2] = v[3] - v[0];
   sys3x3(mat, b, grad, &det);
+}
+
+double ComputeVonMises(double *V)
+{
+  double tr = (V[0] + V[4] + V[8]) / 3.;
+  double v11 = V[0] - tr, v12 = V[1],      v13 = V[2];
+  double v21 = V[3],      v22 = V[4] - tr, v23 = V[5];
+  double v31 = V[6],      v32 = V[7],      v33 = V[8] - tr;
+  return sqrt(1.5 * (v11 * v11 + v12 * v12 + v13 * v13 +
+                     v21 * v21 + v22 * v22 + v23 * v23 +
+                     v31 * v31 + v32 * v32 + v33 * v33));
 }
 
 void eigenvalue(double mat[3][3], double v[3])

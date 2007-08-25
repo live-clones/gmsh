@@ -94,13 +94,13 @@ class PViewDataList : public PViewData {
   std::map<int, List_T*> *Grains; // For LMGC90, grains shapes
   std::map<int, int> *DisplayListsOfGrains; // For LMGC90, grains shapes
  private:
+  int _index[24];
   int _lastElement, _lastDimension, _lastNumNodes, _lastNumComponents;
   double *_lastXYZ, *_lastVal;
   void _stat(List_T *D, List_T *C, int nb);
   void _stat(List_T *list, int nbcomp, int nbelm, int nbnod);
   void _setLast(int ele);
   void _setLast(int ele, int dim, int nbnod, int nbcomp, List_T *list, int nblist);
-  void _getListIndices(int index[24]);
  public:
   PViewDataList(bool allocate=true);
   ~PViewDataList();

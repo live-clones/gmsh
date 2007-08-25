@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.18 2007-08-24 20:14:17 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.19 2007-08-25 10:58:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -81,18 +81,17 @@ void VertexArray::add(float x, float y, float z, unsigned int col, MElement *ele
   if(ele && CTX.pick_elements) _elements.push_back(ele);
 }
 
-double BarycenterLessThan::tolerance = 0.;
+float BarycenterLessThan::tolerance = 0.;
 
 void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
 		      unsigned int *col, MElement *ele, bool unique)
 {
   int npe = _numVerticesPerElement;
   if(unique){
-    SPoint3 pc(0., 0., 0.);
+    Barycenter pc(0., 0., 0.);
     for(int i = 0; i < npe; i++)
-      pc += SPoint3(x[i], y[i], z[i]);
-    pc /= (double)npe;
-    BarycenterLessThan::tolerance = 1.e-12 * CTX.lc;
+      pc += Barycenter(x[i], y[i], z[i]);
+    BarycenterLessThan::tolerance = 1.e-6 * CTX.lc;
     if(_barycenters.find(pc) != _barycenters.end()) return;
     _barycenters.insert(pc);
   }

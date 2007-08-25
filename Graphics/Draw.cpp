@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.111 2007-08-24 20:14:18 geuzaine Exp $
+// $Id: Draw.cpp,v 1.112 2007-08-25 10:58:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -51,7 +51,7 @@ int NeedPolygonOffset()
   return 0;
 }
 
-void Draw3d(void)
+void Draw3d()
 {
   // We should only enable the polygon offset when there is a mix of
   // lines and polygons to be drawn; enabling it all the time can lead
@@ -81,7 +81,7 @@ void Draw3d(void)
   Draw_Post();
 }
 
-void Draw2d(void)
+void Draw2d()
 {
   glDisable(GL_DEPTH_TEST);
   for(int i = 0; i < 6; i++)
@@ -104,7 +104,7 @@ void Draw2d(void)
     Draw_SmallAxes();
 }
 
-void DrawPlugin(void (*draw)(void))
+void DrawPlugin(void (*draw)())
 {
   CTX.post.plugin_draw_function = draw;
   int old = CTX.draw_bbox;
@@ -122,7 +122,7 @@ void DrawPlugin(void (*draw)(void))
   CTX.mesh.draw = 1;
 }
 
-void ClearOpengl(void)
+void ClearOpengl()
 {
   glClearColor(CTX.UNPACK_RED(CTX.color.bg) / 255.,
                CTX.UNPACK_GREEN(CTX.color.bg) / 255.,
@@ -254,7 +254,7 @@ void InitProjection(int xpick, int ypick, int wpick, int hpick)
   }
 }
 
-void InitRenderModel(void)
+void InitRenderModel()
 {
   GLfloat r, g, b;
 
@@ -322,7 +322,7 @@ void InitRenderModel(void)
   glDisable(GL_LIGHTING);
 }
 
-void InitPosition(void)
+void InitPosition()
 {
   glScaled(CTX.s[0], CTX.s[1], CTX.s[2]);
   glTranslated(CTX.t[0], CTX.t[1], CTX.t[2]);

@@ -1,4 +1,4 @@
-// $Id: PViewOptions.cpp,v 1.2 2007-08-24 20:14:19 geuzaine Exp $
+// $Id: PViewOptions.cpp,v 1.3 2007-08-25 10:58:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -34,7 +34,7 @@ PViewOptions::PViewOptions()
   for(int i = 0; i < 3; i++){
     Offset[i] = Raise[i] = 0.;
     for(int j = 0; j < 3; j++){
-      Transform[i][j] = 0.;
+      Transform[i][j] = (i == j) ? 1. : 0.;
     }
   }
   DisplacementFactor = 0.;

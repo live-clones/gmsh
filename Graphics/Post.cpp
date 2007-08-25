@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.114 2007-08-24 20:14:18 geuzaine Exp $
+// $Id: Post.cpp,v 1.115 2007-08-25 10:58:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -75,6 +75,72 @@ SVector3 normal3(double xyz[NMAX][3], int i0=0, int i1=1, int i2=2)
   return n;
 }
 
+void changeCoordinates(PView *p, int nbnod, int nbcomp, 
+		       double xyz[NMAX][3], double val[NMAX][9],
+		       bool offset, bool raise, bool transform)
+{
+  PViewOptions *opt = p->getOptions();
+
+  if(opt->Explode != 1.) {
+    double barycenter[3] = {0., 0., 0.};
+    for(int i = 0; i < nbnod; i++)
+      for(int j = 0; j < 3; j++)
+	barycenter[j] += xyz[i][j];
+    for(int j = 0; j < 3; j++)
+      barycenter[j] /= (double)nbnod;
+    for(int i = 0; i < nbnod; i++)
+      for(int j = 0; j < 3; j++)
+	xyz[i][j] = barycenter[j] + opt->Explode * (xyz[i][j] - barycenter[j]);
+  }
+  
+  if(transform){
+    for(int i = 0; i < nbnod; i++) {
+      double old[3] = {xyz[i][0], xyz[i][1], xyz[i][2]};
+      for(int j = 0; j < 3; j++){
+	xyz[i][j] = 0.;
+	for(int k = 0; k < 3; k++)
+	  xyz[i][j] += opt->Transform[j][k] * old[k];
+      }
+    }
+  }
+  
+  if(offset){
+    for(int i = 0; i < nbnod; i++)
+      for(int j = 0; j < 3; j++)
+	xyz[i][j] += opt->Offset[j];
+  }
+  
+  if(raise){
+    for(int i = 0; i < nbnod; i++){
+      double norm = 0.;
+      if(nbcomp == 1)
+	norm = val[i][0];
+      else if(nbcomp == 3)
+	norm = sqrt(val[i][0] * val[i][0] + 
+		    val[i][1] * val[i][1] + 
+		    val[i][2] * val[i][2]);
+      else if(nbcomp == 9)
+	norm = ComputeVonMises(val[i]);
+      for(int j = 0; j < 3; j++)
+	xyz[i][j] += opt->Raise[j] * norm;
+    }
+  }
+
+  if(opt->UseGenRaise){
+    /* FIXME
+    int ext_nbcomp = nbcomp;
+    double *ext_vals = vals;
+    if(v->ViewIndexForGenRaise >= 0)
+      GetValuesFromExternalView(v, type, nbcomp, &ext_nbcomp, &ext_vals, 
+				v->ViewIndexForGenRaise);
+    ApplyGeneralizedRaise(v, nbnod, ext_nbcomp, ext_vals, x2, y2, z2);
+    */
+  }
+
+  for(int i = 0; i < nbnod; i++)
+    opt->TmpBBox += SPoint3(xyz[i][0], xyz[i][1], xyz[i][2]);
+}
+
 void addScalarPoint(PView *p, double xyz[NMAX][3], double val[NMAX][9])
 {
 }
@@ -110,6 +176,7 @@ void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9],
     if(val[i0][0] >= vmin && val[i0][0] <= vmax &&
        val[i1][0] >= vmin && val[i1][0] <= vmax &&
        val[i2][0] >= vmin && val[i2][0] <= vmax){
+
       // full triangle
       for(int i = 0; i < 3; i++){
 	x[i] = xyz[id[i]][0]; y[i] = xyz[id[i]][1]; z[i] = xyz[id[i]][2]; 
@@ -146,7 +213,6 @@ void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9],
   if(opt->IntervalsType == PViewOptions::Discrete){
     for(int k = 0; k < opt->NbIso; k++){
       if(vmin == vmax) k = opt->NbIso / 2;
-      unsigned int col = opt->getColor(k, opt->NbIso);
       double min = 0.;//FIXME View->GVFI(vmin, vmax, p->NbIso + 1, k);
       double max = 0.;//FIXME View->GVFI(vmin, vmax, p->NbIso + 1, k + 1);
       int nb = cutTriangle(xyz, val, min, max, i0, i1, i2);
@@ -154,15 +220,15 @@ void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9],
 	for(int j = 2; j < nb; j++){
 	  int id2[3] = {0, j - 1, j};
 	  for(int i = 0; i < 3; i++){
-	    double x = xyz[id2[i]][0], y = xyz[id2[i]][1], z = xyz[id2[i]][2];
-	    SVector3 n = ntri;
+	    x[i] = xyz[id2[i]][0]; y[i] = xyz[id2[i]][1]; z[i] = xyz[id2[i]][2];
+	    n[i] = ntri;
 	    if(opt->SmoothNormals){
-	      if(pre) p->normals->add(x, y, z, n[0], n[1], n[2]);
-	      else p->normals->get(x, y, z, n[0], n[1], n[2]);
+	      if(pre) p->normals->add(x[i], y[i], z[i], n[i][0], n[i][1], n[i][2]);
+	      else p->normals->get(x[i], y[i], z[i], n[i][0], n[i][1], n[i][2]);
 	    }
-	    if(!pre)
-	      p->va_triangles->add(x, y, z, n[0], n[1], n[2], col);
+	    col[i] = opt->getColor(k, opt->NbIso);
 	  }
+	  if(!pre) p->va_triangles->add(x, y, z, n, col, 0, col);
 	}
       }
       if(vmin == vmax) break;
@@ -227,6 +293,19 @@ void addElementsInArrays(PView *p, bool preprocessNormalsOnly=false)
     opt->TmpMax = data->getMax();
   }
 
+  // do we need to apply an offset?
+  bool offset = (opt->Offset[0] || opt->Offset[1] || opt->Offset[2]);
+
+  // do we need to apply a simple raise?
+  bool raise = (opt->Raise[0] || opt->Raise[1] || opt->Raise[2]);
+
+  // do we need to apply a general transformation?
+  bool transform = (opt->Transform[0][0] != 1. || opt->Transform[0][1] != 0. || 
+		    opt->Transform[0][2] != 0. || opt->Transform[1][0] != 0. || 
+		    opt->Transform[1][1] != 1. || opt->Transform[1][2] != 0. ||
+		    opt->Transform[2][0] != 0. || opt->Transform[2][1] != 0. || 
+		    opt->Transform[2][2] != 1.);
+
   double xyz[NMAX][3], val[NMAX][9];
 
   for(int i = 0; i < data->getNumElements(); i++){
@@ -238,13 +317,14 @@ void addElementsInArrays(PView *p, bool preprocessNormalsOnly=false)
       for(int k = 0; k < numcomp; k++)
 	data->getValue(i, j, k, step, val[j][k]);
     }
+    changeCoordinates(p, n, numcomp, xyz, val, offset, raise, transform);
     if(numcomp == 1){
       switch(dim){
       case 0: addScalarPoint(p, xyz, val); break;
       case 1: addScalarLine(p, xyz, val); break;
       case 2: 
 	if(n == 3) addScalarTriangle(p, xyz, val, pre);
-	else addScalarQuadrangle(p, xyz, val, pre);
+	else if(n == 4) addScalarQuadrangle(p, xyz, val, pre);
 	break;
       case 3:
 	if(n == 4) addScalarTetrahedron(p, xyz, val, pre);
@@ -365,8 +445,28 @@ class initArraysPView {
   }
 };
 
+static double eyeStored[3] = { 0., 0., 0. };
+
+bool eyeChanged()
+{
+  double zeye = 100 * CTX.lc;
+  double tmp[3] = {CTX.rot[2] * zeye, CTX.rot[6] * zeye, CTX.rot[10] * zeye};
+  if(fabs(tmp[0] - eyeStored[0]) > 1.e-3 ||
+     fabs(tmp[1] - eyeStored[1]) > 1.e-3 ||
+     fabs(tmp[2] - eyeStored[2]) > 1.e-3) {
+    eyeStored[0] = tmp[0];
+    eyeStored[1] = tmp[1];
+    eyeStored[2] = tmp[2];
+    Msg(DEBUG, "New eye = (%g %g %g)", tmp[0], tmp[1], tmp[2]);
+    return true;
+  }
+  return false;
+}
+
 class drawArraysPView {
- public :
+ private:
+  static double _storedEye[3];
+ public:
   void operator () (PView *p)
   {
     PViewData *data = p->getData();
@@ -390,6 +490,12 @@ class drawArraysPView {
 	glEnable((GLenum)(GL_CLIP_PLANE0 + i));
       else
 	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+    
+    if(CTX.alpha && ColorTable_IsAlpha(&opt->CT) && 
+       !opt->FakeTransparency && (eyeChanged() || p->getChanged())){
+      Msg(DEBUG, "Sorting View[%d] for transparency", p->getIndex());
+      p->va_triangles->sort(eyeStored);
+    }
     
     drawArrays(p, p->va_points, GL_POINTS);
     drawArrays(p, p->va_lines, GL_LINES);

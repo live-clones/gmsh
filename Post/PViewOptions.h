@@ -22,6 +22,7 @@
 
 #include <string>
 #include "ColorTable.h"
+#include "SBoundingBox3d.h"
 
 class PViewOptions {
  public:
@@ -78,6 +79,7 @@ class PViewOptions {
   char AxesFormat[3][256], AxesLabel[3][256];
   double AxesPosition[6];
   double CustomMin, CustomMax, TmpMin, TmpMax;
+  SBoundingBox3d TmpBBox;
   double Offset[3], Raise[3], Transform[3][3], DisplacementFactor, Explode;
   double ArrowSize, ArrowRelHeadRadius, ArrowRelStemRadius, ArrowRelStemLength;
   double Normals, Tangents;

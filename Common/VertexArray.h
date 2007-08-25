@@ -26,10 +26,21 @@
 
 class MElement;
 
+class Barycenter {
+ private:
+  float _x, _y, _z;
+ public:
+  Barycenter(double x, double y, double z) : _x(x), _y(y), _z(z){}
+  float x() const { return _x; }
+  float y() const { return _y; }
+  float z() const { return _z; }
+  void operator+=(const Barycenter &p){ _x += p.x(); _y += p.y(); _z += p.z(); }
+};
+
 class BarycenterLessThan{
  public:
-  static double tolerance;
-  bool operator()(const SPoint3 &p1, const SPoint3 &p2) const
+  static float tolerance;
+  bool operator()(const Barycenter &p1, const Barycenter &p2) const
   {
     if(p1.x() - p2.x() >  tolerance) return true;
     if(p1.x() - p2.x() < -tolerance) return false;
@@ -49,7 +60,7 @@ class VertexArray{
   std::vector<char> _normals;
   std::vector<unsigned char> _colors;
   std::vector<MElement*> _elements;
-  std::set<SPoint3, BarycenterLessThan> _barycenters;
+  std::set<Barycenter, BarycenterLessThan> _barycenters;
  public:
   VertexArray(int numVerticesPerElement, int numElements);
   ~VertexArray(){}
