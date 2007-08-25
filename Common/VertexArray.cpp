@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.19 2007-08-25 10:58:34 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.20 2007-08-25 22:18:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -96,8 +96,10 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
     _barycenters.insert(pc);
   }
 
-  for(int i = 0; i < npe; i++)
-    add(x[i], y[i], z[i], n[i].x(), n[i].y(), n[i].z(), col[i], ele);
+  for(int i = 0; i < npe; i++){
+    if(n) add(x[i], y[i], z[i], n[i].x(), n[i].y(), n[i].z(), col[i], ele);
+    else add(x[i], y[i], z[i], col[i], ele);
+  }
 }
 
 class AlphaElement {
