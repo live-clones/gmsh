@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.3 2007-08-25 10:58:34 geuzaine Exp $
+// $Id: PViewData.cpp,v 1.4 2007-08-25 19:19:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,7 @@ PViewDataList::PViewDataList(bool allocate)
     NbSY2(0), SY2(0), NbVY2(0), VY2(0), NbTY2(0), TY2(0),
     NbT2(0), T2D(0), T2C(0), NbT3(0), T3D(0), T3C(0),
     _lastElement(-1), _lastDimension(-1), _lastNumNodes(-1), 
-    _lastNumComponents(-1), _lastXYZ(0), _lastVal(0)
+    _lastNumComponents(-1), _lastNumEdges(-1), _lastXYZ(0), _lastVal(0)
 {
   for(int i = 0; i < 24; i++) _index[i] = 0;
 
@@ -228,12 +228,13 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod)
   }
 }
 
-void PViewDataList::_setLast(int ele, int dim, int nbnod, int nbcomp, 
+void PViewDataList::_setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
 			     List_T *list, int nblist)
 {
   _lastDimension = dim;
   _lastNumNodes = nbnod;
   _lastNumComponents = nbcomp;
+  _lastNumEdges = nbedg;
   int nb = List_Nbr(list) / nblist;
   _lastXYZ = (double*)List_Pointer_Fast(list, ele * nb);
   _lastVal = (double*)List_Pointer_Fast(list, ele * nb + 3 * _lastNumNodes);
@@ -243,44 +244,44 @@ void PViewDataList::_setLast(int ele)
 {
   _lastElement = ele;
   if(ele < _index[2]){ // points
-    if(ele < _index[0]) _setLast(ele, 0, 1, 1, SP, NbSP);
-    else if(ele < _index[1]) _setLast(ele - _index[0], 0, 1, 3, VP, NbVP);
-    else _setLast(ele - _index[1], 0, 1, 9, TP, NbTP);
+    if(ele < _index[0]) _setLast(ele, 0, 1, 1, 0, SP, NbSP);
+    else if(ele < _index[1]) _setLast(ele - _index[0], 0, 1, 3, 0, VP, NbVP);
+    else _setLast(ele - _index[1], 0, 1, 9, 0, TP, NbTP);
   }
   else if(ele < _index[5]){ // lines
-    if(ele < _index[3]) _setLast(ele - _index[2], 1, 2, 1, SL, NbSL);
-    else if(ele < _index[4]) _setLast(ele - _index[3], 1, 2, 3, VL, NbVL);
-    else _setLast(ele - _index[4], 1, 2, 9, TL, NbTL);
+    if(ele < _index[3]) _setLast(ele - _index[2], 1, 2, 1, 1, SL, NbSL);
+    else if(ele < _index[4]) _setLast(ele - _index[3], 1, 2, 3, 1, VL, NbVL);
+    else _setLast(ele - _index[4], 1, 2, 9, 1, TL, NbTL);
   }
   else if(ele < _index[8]){ // triangles
-    if(ele < _index[6]) _setLast(ele - _index[5], 2, 3, 1, ST, NbST);
-    else if(ele < _index[7]) _setLast(ele - _index[6], 2, 3, 3, VT, NbVT);
-    else _setLast(ele - _index[7], 2, 3, 9, TT, NbTT);
+    if(ele < _index[6]) _setLast(ele - _index[5], 2, 3, 1, 3, ST, NbST);
+    else if(ele < _index[7]) _setLast(ele - _index[6], 2, 3, 3, 3, VT, NbVT);
+    else _setLast(ele - _index[7], 2, 3, 9, 3, TT, NbTT);
   }
   else if(ele < _index[11]){ // quadrangles
-    if(ele < _index[9]) _setLast(ele - _index[8], 2, 4, 1, SQ, NbSQ);
-    else if(ele < _index[10]) _setLast(ele - _index[9], 2, 4, 3, VQ, NbVQ);
-    else _setLast(ele - _index[10], 2, 4, 9, TQ, NbTQ);
+    if(ele < _index[9]) _setLast(ele - _index[8], 2, 4, 1, 4, SQ, NbSQ);
+    else if(ele < _index[10]) _setLast(ele - _index[9], 2, 4, 3, 4, VQ, NbVQ);
+    else _setLast(ele - _index[10], 2, 4, 9, 4, TQ, NbTQ);
   }
   else if(ele < _index[14]){ // tetrahedra
-    if(ele < _index[12]) _setLast(ele - _index[11], 3, 4, 1, SS, NbSS);
-    else if(ele < _index[13]) _setLast(ele - _index[12], 3, 4, 3, VS, NbVS);
-    else _setLast(ele - _index[13], 3, 2, 9, TS, NbTS);
+    if(ele < _index[12]) _setLast(ele - _index[11], 3, 4, 1, 6, SS, NbSS);
+    else if(ele < _index[13]) _setLast(ele - _index[12], 3, 4, 3, 6, VS, NbVS);
+    else _setLast(ele - _index[13], 3, 2, 9, 6, TS, NbTS);
   }
   else if(ele < _index[17]){ // hexahedra
-    if(ele < _index[15]) _setLast(ele - _index[14], 3, 8, 1, SH, NbSH);
-    else if(ele < _index[16]) _setLast(ele - _index[15], 3, 8, 3, VH, NbVH);
-    else _setLast(ele - _index[16], 3, 8, 9, TH, NbTH);
+    if(ele < _index[15]) _setLast(ele - _index[14], 3, 8, 1, 12, SH, NbSH);
+    else if(ele < _index[16]) _setLast(ele - _index[15], 3, 8, 3, 12, VH, NbVH);
+    else _setLast(ele - _index[16], 3, 8, 9, 12, TH, NbTH);
   }
   else if(ele < _index[20]){ // prisms
-    if(ele < _index[18]) _setLast(ele - _index[17], 3, 6, 1, SI, NbSI);
-    else if(ele < _index[19]) _setLast(ele - _index[18], 3, 6, 3, VI, NbVI);
-    else _setLast(ele - _index[19], 3, 6, 9, TI, NbTI);
+    if(ele < _index[18]) _setLast(ele - _index[17], 3, 6, 1, 9, SI, NbSI);
+    else if(ele < _index[19]) _setLast(ele - _index[18], 3, 6, 3, 9, VI, NbVI);
+    else _setLast(ele - _index[19], 3, 6, 9, 9, TI, NbTI);
   }
   else{ // pyramids
-    if(ele < _index[21]) _setLast(ele - _index[20], 3, 5, 1, SY, NbSY);
-    else if(ele < _index[22]) _setLast(ele - _index[21], 3, 5, 3, VY, NbVY);
-    else _setLast(ele - _index[22], 3, 5, 9, TY, NbTY);
+    if(ele < _index[21]) _setLast(ele - _index[20], 3, 5, 1, 15, SY, NbSY);
+    else if(ele < _index[22]) _setLast(ele - _index[21], 3, 5, 3, 15, VY, NbVY);
+    else _setLast(ele - _index[22], 3, 5, 9, 15, TY, NbTY);
   }
 }
 
@@ -316,4 +317,10 @@ void PViewDataList::getValue(int ele, int nod, int comp, int step, double &val)
   val = _lastVal[step * _lastNumNodes  * _lastNumComponents + 
 		 nod * _lastNumComponents +
 		 comp];
+}
+
+int PViewDataList::getNumEdges(int ele)
+{
+  if(ele != _lastElement) _setLast(ele);
+  return _lastNumEdges;
 }

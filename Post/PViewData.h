@@ -59,6 +59,7 @@ class PViewData {
   virtual void getNode(int ele, int nod, double &x, double &y, double &z) = 0;
   virtual int getNumComponents(int ele) = 0;
   virtual void getValue(int ele, int node, int comp, int step, double &val) = 0;
+  virtual int getNumEdges(int ele) = 0;
   virtual bool read(std::string filename){}
 };
 
@@ -95,12 +96,14 @@ class PViewDataList : public PViewData {
   std::map<int, int> *DisplayListsOfGrains; // For LMGC90, grains shapes
  private:
   int _index[24];
-  int _lastElement, _lastDimension, _lastNumNodes, _lastNumComponents;
+  int _lastElement, _lastDimension;
+  int _lastNumNodes, _lastNumComponents, _lastNumEdges;
   double *_lastXYZ, *_lastVal;
   void _stat(List_T *D, List_T *C, int nb);
   void _stat(List_T *list, int nbcomp, int nbelm, int nbnod);
   void _setLast(int ele);
-  void _setLast(int ele, int dim, int nbnod, int nbcomp, List_T *list, int nblist);
+  void _setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
+		List_T *list, int nblist);
  public:
   PViewDataList(bool allocate=true);
   ~PViewDataList();
@@ -128,6 +131,7 @@ class PViewDataList : public PViewData {
   void getNode(int ele, int nod, double &x, double &y, double &z);
   int getNumComponents(int ele);
   void getValue(int ele, int node, int comp, int step, double &val);
+  int getNumEdges(int ele);
   bool read(std::string filename);
 };
 
@@ -149,6 +153,7 @@ class PViewDataGModel : public PViewData {
   void getNode(int ele, int nod, double &x, double &y, double &z){}
   int getNumComponents(int ele){ return 1; }
   void getValue(int ele, int node, int comp, int step, double &val){}
+  int getNumEdges(int ele){ return 0; }
 };
 
 #endif

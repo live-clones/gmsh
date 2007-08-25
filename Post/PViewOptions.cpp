@@ -1,4 +1,4 @@
-// $Id: PViewOptions.cpp,v 1.3 2007-08-25 10:58:34 geuzaine Exp $
+// $Id: PViewOptions.cpp,v 1.4 2007-08-25 19:19:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -46,14 +46,16 @@ PViewOptions::PViewOptions()
   Normals = Tangents = 0.;
   Visible = 1;
   IntervalsType = Continuous;
+  //IntervalsType = Discrete;
   NbIso = 15;
   ArrowSizeProportional = 0;
   Light = LightTwoSide = 1;
-  LightLines = SmoothNormals = 0;
-  AngleSmoothNormals = 90;
+  LightLines = 1;
+  SmoothNormals = 0;
+  AngleSmoothNormals = 30;
   SaturateValues = 0;
   FakeTransparency = 0;
-  ShowElement = 0;
+  ShowElement = 1;
   ShowTime = ShowScale = 1;
   ScaleType = Default;
   RangeType = Linear;
@@ -66,11 +68,25 @@ PViewOptions::PViewOptions()
     DrawScalars = DrawVectors = DrawTensors = 1;
   Boundary = 0;
   PointType = LineType = 0;
-  PointSize = LineWidth = 2;
+  PointSize = LineWidth = 1;
   UseStipple = 0;
   ExternalViewIndex = ViewIndexForGenRaise = -1;
   UseGenRaise = 0;
   GenRaiseFactor = 0.;
+
+  color.point = 0;
+  color.line = 0;
+  color.triangle = 0;
+  color.quadrangle = 0;
+  color.tetrahedron = 0;
+  color.hexahedron = 0;
+  color.prism = 0;
+  color.pyramid = 0;
+  color.tangents = 0;
+  color.normals = 0;
+  color.text2d = 0;
+  color.text3d = 0;
+  color.axes = 0;
 
   ColorTable_InitParam(2, &CT);
   ColorTable_Recompute(&CT);
