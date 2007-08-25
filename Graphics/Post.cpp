@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.116 2007-08-25 22:18:05 geuzaine Exp $
+// $Id: Post.cpp,v 1.117 2007-08-25 22:42:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -485,6 +485,22 @@ void addTensorElement(PView *p, int numEdges, double xyz[NMAX][3],
 {
 }
 
+bool skipElement(PView *p, int numEdges)
+{
+  PViewOptions *opt = p->getOptions();
+  switch(numEdges){
+  case 0: return !opt->DrawPoints;
+  case 1: return !opt->DrawLines;
+  case 3: return !opt->DrawTriangles;
+  case 4: return !opt->DrawQuadrangles;
+  case 6: return !opt->DrawTetrahedra;
+  case 12: return !opt->DrawHexahedra;
+  case 9: return !opt->DrawPrisms;
+  case 8: return !opt->DrawPyramids;
+  default: return true;
+  }
+}
+
 void addElementsInArrays(PView *p, bool preprocessNormalsOnly=false)
 {
   PViewData *data = p->getData();
@@ -522,10 +538,11 @@ void addElementsInArrays(PView *p, bool preprocessNormalsOnly=false)
   double xyz[NMAX][3], val[NMAX][9];
 
   for(int i = 0; i < data->getNumElements(); i++){
+    int numEdges = data->getNumEdges(i);
+    if(skipElement(p, numEdges)) continue;
     int dim = data->getDimension(i);
     int numComp = data->getNumComponents(i);
     int numNodes = data->getNumNodes(i);
-    int numEdges = data->getNumEdges(i);
     for(int j = 0; j < numNodes; j++){
       data->getNode(i, j, xyz[j][0], xyz[j][1], xyz[j][2]);
       for(int k = 0; k < numComp; k++)
@@ -534,11 +551,11 @@ void addElementsInArrays(PView *p, bool preprocessNormalsOnly=false)
     changeCoordinates(p, numNodes, numComp, xyz, val, offset, raise, transform);
     if(opt->ShowElement) 
       addOutlineElement(p, numEdges, xyz, pre);
-    if(numComp == 1)
+    if(numComp == 1 && opt->DrawScalars)
       addScalarElement(p, numEdges, xyz, val, pre);
-    else if(numComp == 3)
+    else if(numComp == 3 && opt->DrawVectors)
       addVectorElement(p, numEdges, xyz, val, pre);
-    else if(numComp == 9)
+    else if(numComp == 9 && opt->DrawTensors)
       addTensorElement(p, numEdges, xyz, val, pre);
   }
 }

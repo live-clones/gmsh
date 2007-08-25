@@ -1,4 +1,4 @@
-// $Id: PViewOptions.cpp,v 1.4 2007-08-25 19:19:49 geuzaine Exp $
+// $Id: PViewOptions.cpp,v 1.5 2007-08-25 22:42:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -55,7 +55,7 @@ PViewOptions::PViewOptions()
   AngleSmoothNormals = 30;
   SaturateValues = 0;
   FakeTransparency = 0;
-  ShowElement = 1;
+  ShowElement = 0;
   ShowTime = ShowScale = 1;
   ScaleType = Default;
   RangeType = Linear;
