@@ -38,11 +38,11 @@ class PViewOptions {
     Numeric
   };
   enum VectorType {
-    Segment,
-    Arrow,
-    Pyramid,
-    Arrow3D,
-    Displacement
+    Segment = 1,
+    Arrow = 2,
+    Pyramid = 3,
+    Arrow3D = 4,
+    Displacement = 5
   };
   enum TensorType {
     VonMises,

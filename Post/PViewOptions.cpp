@@ -1,4 +1,4 @@
-// $Id: PViewOptions.cpp,v 1.6 2007-08-27 13:46:22 geuzaine Exp $
+// $Id: PViewOptions.cpp,v 1.7 2007-08-27 17:51:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -48,10 +48,10 @@ PViewOptions::PViewOptions()
   }
   DisplacementFactor = 1.;
   Explode = 1.;
-  ArrowSize = 50;
-  ArrowRelHeadRadius = 0.5;
-  ArrowRelStemRadius = 0.2;
-  ArrowRelStemLength = 0.7;
+  ArrowSize = 60;
+  ArrowRelHeadRadius = 0.12;
+  ArrowRelStemRadius = 0.02;
+  ArrowRelStemLength = 0.56;
   Normals = 0.;
   Tangents = 0.;
   Visible = 1;
@@ -70,7 +70,8 @@ PViewOptions::PViewOptions()
   ShowElement = 0;
   ShowTime = ShowScale = 1;
   ScaleType = Linear;
-  VectorType = Arrow3D;
+  //VectorType = Arrow3D;
+  VectorType = Segment;
   //VectorType = Displacement;
   TensorType = VonMises;
   GlyphLocation = COG;

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.118 2007-08-27 13:46:22 geuzaine Exp $
+// $Id: Post.cpp,v 1.119 2007-08-27 17:51:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -698,11 +698,12 @@ void addVectorElement(PView *p, int iele, int numNodes, int numEdges,
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
 
+  int numComp2;
+  double val2[NMAX][9];
+  getExternalValues(p, opt->ExternalViewIndex, iele, numNodes, 
+		    3, val, numComp2, val2);
+
   if(opt->VectorType == PViewOptions::Displacement){
-    int numComp2;
-    double val2[NMAX][9];
-    getExternalValues(p, opt->ExternalViewIndex, iele, numNodes, 
-		      3, val, numComp2, val2);
     for(int i = 0; i < numNodes; i++)
       val2[i][0] = normValue(numComp2, val2[i]);
 
@@ -736,6 +737,62 @@ void addVectorElement(PView *p, int iele, int numNodes, int numEdges,
 	}
 	p->va_lines->add(dxyz[0], dxyz[1], dxyz[2], 0, col, 0);
       }
+    }
+    return;
+  }
+
+  if(pre) return;
+
+  if(opt->GlyphLocation == PViewOptions::Vertex){
+    for(int i = 0; i < numNodes; i++){
+      double norm = normValue(3, val[i]);
+      double norm2 = normValue(numComp2, val2[i]);
+      if(norm && opt->TmpMax && 
+	 norm2 >= opt->ExternalMin && 
+	 norm2 <= opt->ExternalMax){
+	unsigned int color = opt->getColor(norm2, opt->ExternalMin, opt->ExternalMax);
+	unsigned int col[2] = {color, color};
+	double dxyz[3][2];
+	for(int j = 0; j < 3; j++){
+	  dxyz[j][0] = xyz[i][j];
+	  dxyz[j][1] = val[i][j];
+	}
+	p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], 0, col, 0, false);
+      }
+    }
+  }
+
+  if(opt->GlyphLocation == PViewOptions::COG){
+    SPoint3 pc(0., 0., 0.);
+    double d[3] = {0., 0., 0.};
+    double d2[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
+
+    for(int i = 0; i < numNodes; i++){
+      pc += SPoint3(xyz[i][0], xyz[i][1], xyz[i][2]);
+      for(int j = 0; j < 3; j++) d[j] += val[i][j];
+      for(int j = 0; j < numComp2; j++) d2[j] += val2[i][j];
+    }
+    pc /= (double)numNodes;
+    for(int j = 0; j < 3; j++) d[j] /= (double)numNodes;
+    for(int j = 0; j < numComp2; j++) d2[j] /= (double)numNodes;
+
+    double norm = normValue(3, d);
+    double norm2 = normValue(numComp2, d2);
+
+    // need epsilon since we compare computed results (the average)
+    // instead of the raw data used to compute bounds
+    double eps = 1.e-15;
+    if(norm && opt->TmpMax &&
+       norm2 >= opt->ExternalMin * (1. - 1.e-15) &&
+       norm2 <= opt->ExternalMax * (1. + 1.e-15)){
+      unsigned int color = opt->getColor(norm2, opt->ExternalMin, opt->ExternalMax);
+      unsigned int col[2] = {color, color};
+      double dxyz[3][2];
+      for(int i = 0; i < 3; i++){
+	dxyz[i][0] = pc[i];
+	dxyz[i][1] = d[i];
+      }
+      p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], 0, col, 0, false);
     }
   }
 }
@@ -854,6 +911,26 @@ void drawArrays(PView *p, VertexArray *va, GLint type, bool useNormalArray)
   glDisable(GL_LIGHTING);
 }
 
+void drawVectorArray(PView *p, VertexArray *va)
+{
+  if(!va || va->getNumVerticesPerElement() != 2) return;
+
+  PViewOptions *opt = p->getOptions();
+  
+  for(int i = 0; i < va->getNumVertices(); i += 2){
+    float *p = va->getVertexArray(3 * i);
+    float *v = va->getVertexArray(3 * (i + 1));
+    glColor4ubv((GLubyte *)va->getColorArray(4 * i));
+    double norm = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    double f = CTX.pixel_equiv_x / CTX.s[0] * opt->ArrowSize / 
+      (opt->ArrowSizeProportional ? opt->TmpMax : norm);
+    Draw_Vector(opt->VectorType, opt->IntervalsType != PViewOptions::Iso,
+		opt->ArrowRelHeadRadius, opt->ArrowRelStemLength,
+		opt->ArrowRelStemRadius, p[0], p[1], p[2],
+		v[0] * f, v[1] * f, v[2] * f, opt->Light);
+  }
+}
+
 std::string stringValue(int numComp, double d[9], double norm, char *format)
 {
   char label[100];
@@ -898,66 +975,6 @@ void drawNumberGlyphs(PView *p, int numNodes, int numComp,
       glColor4ubv((GLubyte *) & col);
       glRasterPos3d(xyz[i][0], xyz[i][1], xyz[i][2]);
       Draw_String((char*)stringValue(numComp, val[i], norm, opt->Format).c_str());
-    }
-  }
-}
-
-void drawVectorGlyphs(PView *p, int iele, int numNodes, 
-		      double xyz[NMAX][3], double val[NMAX][9])
-{
-  PViewOptions *opt = p->getOptions();
-
-  double d[3] = {0., 0., 0.};
-  int numComp2;
-  double val2[NMAX][9], d2[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
-
-  getExternalValues(p, opt->ExternalViewIndex, iele, numNodes,
-		    3, val, numComp2, val2);
-  
-  if(opt->GlyphLocation == PViewOptions::COG){
-    SPoint3 pc(0., 0., 0.);
-    for(int i = 0; i < numNodes; i++){
-      pc += SPoint3(xyz[i][0], xyz[i][1], xyz[i][2]);
-      for(int j = 0; j < 3; j++) d[j] += val[i][j];
-      for(int j = 0; j < numComp2; j++) d2[j] += val2[i][j];
-    }
-    pc /= (double)numNodes;
-    for(int j = 0; j < 3; j++) d[j] /= (double)numNodes;
-    for(int j = 0; j < numComp2; j++) d2[j] /= (double)numNodes;
-    double norm = normValue(3, d);
-    double norm2 = normValue(numComp2, d2);
-    // need epsilon since we compare computed results (the average)
-    // instead of the raw data used to compute bounds
-    double eps = 1.e-15;
-    if(norm && opt->TmpMax &&
-       norm2 >= opt->ExternalMin * (1. - 1.e-15) &&
-       norm2 <= opt->ExternalMax * (1. + 1.e-15)){
-      unsigned int col = opt->getColor(norm2, opt->ExternalMin, opt->ExternalMax);
-      glColor4ubv((GLubyte *) & col);
-      double f = CTX.pixel_equiv_x / CTX.s[0] * opt->ArrowSize / 
-	(opt->ArrowSizeProportional ? opt->TmpMax : norm);
-      Draw_Vector(opt->VectorType, opt->IntervalsType != PViewOptions::Iso,
-		  opt->ArrowRelHeadRadius, opt->ArrowRelStemLength,
-		  opt->ArrowRelStemRadius, pc[0], pc[1], pc[2],
-		  d[0] * f, d[1] * f, d[2] * f, opt->Light);
-    }
-  }
-  else if(opt->GlyphLocation == PViewOptions::Vertex){
-    for(int i = 0; i < numNodes; i++){
-      double norm = normValue(3, val[i]);
-      double norm2 = normValue(numComp2, val2[i]);
-      if(norm && opt->TmpMax && 
-	 norm2 >= opt->ExternalMin &&
-	 norm2 <= opt->ExternalMax){
-	unsigned int col = opt->getColor(norm2, opt->ExternalMin, opt->ExternalMax);
-	glColor4ubv((GLubyte *) & col);
-	double f = CTX.pixel_equiv_x / CTX.s[0] * opt->ArrowSize / 
-	  (opt->ArrowSizeProportional ? opt->TmpMax : norm);
-	Draw_Vector(opt->VectorType, opt->IntervalsType != PViewOptions::Iso,
-		    opt->ArrowRelHeadRadius, opt->ArrowRelStemLength,
-		    opt->ArrowRelStemRadius, xyz[i][0], xyz[i][1], xyz[i][2],
-		    val[i][0] * f, val[i][1] * f, val[i][2] * f, opt->Light);
-      }
     }
   }
 }
@@ -1025,12 +1042,10 @@ void drawGlyphs(PView *p)
     changeCoordinates(p, i, numNodes, numComp, xyz, val);
     if(opt->IntervalsType == PViewOptions::Numeric)
       drawNumberGlyphs(p, numNodes, numComp, xyz, val);
-    else if(numComp == 3 && opt->VectorType != PViewOptions::Displacement)
-      drawVectorGlyphs(p, i, numNodes, xyz, val);
     if(dim == 2 && opt->Normals)
       drawNormalVectorGlyphs(p, numNodes, xyz, val);
     else if(dim == 1 && opt->Tangents)
-      drawTangentVectorGlyphs(p, numNodes, xyz, val);
+      drawTangentVectorGlyphs(p, numNodes, xyz, val);  
   }
 }
 
@@ -1084,6 +1099,20 @@ static int estimateNumTriangles(PView *p)
   return heuristic + 10000;
 }
 
+static int estimateNumVectors(PView *p)
+{
+  PViewData *data = p->getData();
+  PViewOptions *opt = p->getOptions();
+
+  int heuristic = data->getNumVectors();
+  if(opt->Normals)
+    heuristic += data->getNumTriangles() + data->getNumQuadrangles();
+  if(opt->Tangents)
+    heuristic += data->getNumLines();
+
+  return heuristic + 1000;
+}
+
 class initPView {
  public :
   void operator () (PView *p)
@@ -1099,6 +1128,8 @@ class initPView {
     p->va_lines = new VertexArray(2, estimateNumLines(p));
     if(p->va_triangles) delete p->va_triangles;
     p->va_triangles = new VertexArray(3, estimateNumTriangles(p));
+    if(p->va_vectors) delete p->va_vectors;
+    p->va_vectors = new VertexArray(2, estimateNumVectors(p));
 
     if(p->normals) delete p->normals;
     p->normals = new smooth_normals(opt->AngleSmoothNormals);
@@ -1108,12 +1139,6 @@ class initPView {
     if(opt->SmoothNormals) addElementsInArrays(p, true);
     addElementsInArrays(p);
 
-    if(opt->IntervalsType == PViewOptions::Numeric ||
-       opt->Normals || opt->Tangents ||
-       (data->getNumVectors() && opt->VectorType != PViewOptions::Displacement) ||
-       (data->getNumTensors() && opt->TensorType != PViewOptions::VonMises))
-      p->setGlyphs(true);
-    
     p->setChanged(false);
   }
 };
@@ -1181,8 +1206,13 @@ class drawPView {
     drawArrays(p, p->va_lines, GL_LINES, opt->Light && opt->LightLines);
     drawArrays(p, p->va_triangles, GL_TRIANGLES, opt->Light);
 
-    // then draw all the stuff that we cannot put in vertex arrays
-    if(p->getGlyphs()) drawGlyphs(p);
+    // draw the "pseudo" vertex arrays for vectors
+    drawVectorArray(p, p->va_vectors);
+
+    // to void looping over elements we could also store these glyphs
+    // in "pseudo" vertex arrays
+    if(opt->Normals || opt->Tangents || opt->IntervalsType == PViewOptions::Numeric) 
+      drawGlyphs(p);
 
     if(opt->DrawStrings){
       glColor4ubv((GLubyte *) & opt->color.text3d);

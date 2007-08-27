@@ -37,8 +37,6 @@ class PView{
   int _index;
   // flag to mark that the view has changed
   bool _changed;
-  // flag to mark that the view contains non-optimized glyphs
-  bool _haveGlyphs;
   // flag to mark that the view is an alias of another view
   int _aliasOf;
   // flag to mark that some other views link to this one
@@ -55,10 +53,10 @@ class PView{
   PViewData *_data;
  public:
   PView(bool allocate=true) :
-    _num(0), _index(0), _changed(true), _haveGlyphs(false), _aliasOf(-1), 
+    _num(0), _index(0), _changed(true), _aliasOf(-1), 
     _links(false), _name(""), _filename(""), _eye(0., 0., 0.),
     _options(0), _data(0), va_points(0), va_lines(0), va_triangles(0),
-    normals(0), adaptive(0)
+    va_vectors(0), normals(0), adaptive(0)
   {
     _data = new PViewDataList(allocate);
     _options = new PViewOptions;
@@ -73,6 +71,7 @@ class PView{
     if(va_points) delete va_points;
     if(va_lines) delete va_lines;
     if(va_triangles) delete va_triangles;
+    if(va_vectors) delete va_vectors;
     if(normals) delete normals;
     if(adaptive) delete adaptive;
   }
@@ -86,8 +85,6 @@ class PView{
   void setIndex(int val){ _index = val; }
   bool getChanged(){ return _changed; }
   void setChanged(bool val);
-  bool getGlyphs(){ return _haveGlyphs; }
-  void setGlyphs(bool val){ _haveGlyphs = val; }
   SPoint3 &getEye(){ return _eye; }
   void setEye(SPoint3 &p){ _eye = p; }
   void setGlobalResolutionLevel(int level)
@@ -100,7 +97,7 @@ class PView{
   }
 
   // vertex arrays to draw triangles and lines efficiently
-  VertexArray *va_points, *va_lines, *va_triangles;
+  VertexArray *va_points, *va_lines, *va_triangles, *va_vectors;
   // smoothed normals
   smooth_normals *normals;
   // adaptative rendering for high-order datasets
