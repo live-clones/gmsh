@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.21 2007-08-27 13:46:21 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.22 2007-08-27 23:33:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -32,7 +32,7 @@ VertexArray::VertexArray(int numVerticesPerElement, int numElements)
   int nb = (numElements ? numElements : 1) * numVerticesPerElement;
   _vertices.reserve(nb * 3);
   _normals.reserve(nb * 3);
-  _colors.reserve(nb *4);
+  _colors.reserve(nb * 4);
 }
 
 void VertexArray::add(float x, float y, float z, float n0, float n1, float n2,
