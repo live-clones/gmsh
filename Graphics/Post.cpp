@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.119 2007-08-27 17:51:25 geuzaine Exp $
+// $Id: Post.cpp,v 1.120 2007-08-27 22:05:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -587,7 +587,7 @@ void addScalarHexahedron(PView *p, double xyz[NMAX][3], double val[NMAX][9],
   if(opt->Boundary > 0){
     opt->Boundary--;
     for(int i = 0; i < 6; i++)
-      addScalarQuadrangle(p, xyz, val, iq[i][0], iq[i][1], iq[i][2], iq[i][3], true);
+      addScalarQuadrangle(p, xyz, val, pre, iq[i][0], iq[i][1], iq[i][2], iq[i][3], true);
     opt->Boundary++;
     return;
   }
@@ -620,9 +620,9 @@ void addScalarPrism(PView *p, double xyz[NMAX][3], double val[NMAX][9],
   if(opt->Boundary > 0){
     opt->Boundary--;
     for(int i = 0; i < 3; i++)
-      addScalarQuadrangle(p, xyz, val, iq[i][0], iq[i][1], iq[i][2], iq[i][3], true);
+      addScalarQuadrangle(p, xyz, val, pre, iq[i][0], iq[i][1], iq[i][2], iq[i][3], true);
     for(int i = 0; i < 2; i++)
-      addScalarTriangle(p, xyz, val, it[i][0], it[i][1], it[i][2], true);
+      addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], true);
     opt->Boundary++;
     return;
   }
@@ -651,9 +651,9 @@ void addScalarPyramid(PView *p, double xyz[NMAX][3], double val[NMAX][9],
 
   if(opt->Boundary > 0){
     opt->Boundary--;
-    addScalarQuadrangle(p, xyz, val, 0, 3, 2, 1, true);
+    addScalarQuadrangle(p, xyz, val, pre, 0, 3, 2, 1, true);
     for(int i = 0; i < 4; i++)
-      addScalarTriangle(p, xyz, val, it[i][0], it[i][1], it[i][2], true);
+      addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], true);
     opt->Boundary++;
     return;
   }
@@ -830,25 +830,9 @@ void addElementsInArrays(PView *p, bool preprocessNormalsOnly=false)
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
   
-  int pre = preprocessNormalsOnly;
-
-  if(opt->RangeType == PViewOptions::Custom){
-    opt->TmpMin = opt->CustomMin;
-    opt->TmpMax = opt->CustomMax;
-  }
-  else if(opt->RangeType == PViewOptions::PerTimeStep){
-    opt->TmpMin = data->getMin(opt->TimeStep);
-    opt->TmpMax = data->getMax(opt->TimeStep);
-  }
-  else{
-    opt->TmpMin = data->getMin();
-    opt->TmpMax = data->getMax();
-  }
-
   opt->TmpBBox.reset();
 
   double xyz[NMAX][3], val[NMAX][9];
-
   for(int i = 0; i < data->getNumElements(); i++){
     int numEdges = data->getNumEdges(i);
     if(skipElement(p, numEdges)) continue;
@@ -860,16 +844,18 @@ void addElementsInArrays(PView *p, bool preprocessNormalsOnly=false)
 	data->getValue(i, j, k, opt->TimeStep, val[j][k]);
     }
     changeCoordinates(p, i, numNodes, numComp, xyz, val);
+
     for(int j = 0; j < numNodes; j++)
       opt->TmpBBox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
+
     if(opt->ShowElement) 
-      addOutlineElement(p, numEdges, xyz, pre);
+      addOutlineElement(p, numEdges, xyz, preprocessNormalsOnly);
     if(numComp == 1 && opt->DrawScalars)
-      addScalarElement(p, numEdges, xyz, val, pre);
+      addScalarElement(p, numEdges, xyz, val, preprocessNormalsOnly);
     else if(numComp == 3 && opt->DrawVectors)
-      addVectorElement(p, i, numNodes, numEdges, xyz, val, pre);
+      addVectorElement(p, i, numNodes, numEdges, xyz, val, preprocessNormalsOnly);
     else if(numComp == 9 && opt->DrawTensors)
-      addTensorElement(p, numNodes, numEdges, xyz, val, pre);
+      addTensorElement(p, numNodes, numEdges, xyz, val, preprocessNormalsOnly);
   }
 }
 
@@ -882,11 +868,21 @@ void drawArrays(PView *p, VertexArray *va, GLint type, bool useNormalArray)
   if(CTX.polygon_offset || opt->ShowElement)
     glEnable(GL_POLYGON_OFFSET_FILL);
 
-  if(type == GL_LINES && opt->LineType > 0){
-    // bypass glDrawArrays and draw cylinders by hand
+  if(type == GL_POINTS && opt->PointType > 0){
+    for(int i = 0; i < va->getNumVertices(); i++){
+      float *p = va->getVertexArray(3 * i);
+      glColor4ubv((GLubyte *)va->getColorArray(4 * i));
+      Draw_Sphere(opt->PointSize, p[0], p[1], p[2], opt->Light);
+    }
   }
-  else if(type == GL_POINTS && opt->PointType > 0){
-    // bypass glDrawArrays and draw spheres by hand
+  else if(type == GL_LINES && opt->LineType > 0){
+    for(int i = 0; i < va->getNumVertices(); i += 2){
+      float *p0 = va->getVertexArray(3 * i);
+      float *p1 = va->getVertexArray(3 * (i + 1));
+      double x[2] = {p0[0], p1[0]}, y[2] = {p0[1], p1[1]}, z[2] = {p0[2], p1[2]};
+      glColor4ubv((GLubyte *)va->getColorArray(4 * i));
+      Draw_Cylinder(opt->LineWidth, x, y, z, opt->Light);
+    }
   }
   else{
     glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
@@ -1024,6 +1020,9 @@ void drawGlyphs(PView *p)
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
 
+  if(!opt->Normals && !opt->Tangents && opt->IntervalsType != PViewOptions::Numeric)
+    return;
+
   Msg(DEBUG, "drawing extra glyphs (this is slow...)");
 
   double xyz[NMAX][3], val[NMAX][9];
@@ -1136,6 +1135,19 @@ class initPView {
 
     if(opt->UseGenRaise) opt->createGeneralRaise();
 
+    if(opt->RangeType == PViewOptions::Custom){
+      opt->TmpMin = opt->CustomMin;
+      opt->TmpMax = opt->CustomMax;
+    }
+    else if(opt->RangeType == PViewOptions::PerTimeStep){
+      opt->TmpMin = data->getMin(opt->TimeStep);
+      opt->TmpMax = data->getMax(opt->TimeStep);
+    }
+    else{
+      opt->TmpMin = data->getMin();
+      opt->TmpMax = data->getMax();
+    }
+
     if(opt->SmoothNormals) addElementsInArrays(p, true);
     addElementsInArrays(p);
 
@@ -1209,10 +1221,9 @@ class drawPView {
     // draw the "pseudo" vertex arrays for vectors
     drawVectorArray(p, p->va_vectors);
 
-    // to void looping over elements we could also store these glyphs
-    // in "pseudo" vertex arrays
-    if(opt->Normals || opt->Tangents || opt->IntervalsType == PViewOptions::Numeric) 
-      drawGlyphs(p);
+    // to avoid looping over elements we should also store these
+    // glyphs in "pseudo" vertex arrays
+    drawGlyphs(p);
 
     if(opt->DrawStrings){
       glColor4ubv((GLubyte *) & opt->color.text3d);
