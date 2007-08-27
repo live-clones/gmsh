@@ -37,6 +37,8 @@ class PView{
   int _index;
   // flag to mark that the view has changed
   bool _changed;
+  // flag to mark that the view contains non-optimized glyphs
+  bool _haveGlyphs;
   // flag to mark that the view is an alias of another view
   int _aliasOf;
   // flag to mark that some other views link to this one
@@ -45,15 +47,18 @@ class PView{
   std::string _name;
   // name of the file the view was loaded from
   std::string _filename;
+  // eye position
+  SPoint3 _eye;
   // the options
   PViewOptions *_options;
   // the data
   PViewData *_data;
  public:
   PView(bool allocate=true) :
-    _num(0), _index(0), _changed(true), _aliasOf(-1), _links(false), 
-    _name(""), _filename(""), _options(0), _data(0),
-    va_points(0), va_lines(0), va_triangles(0), normals(0), adaptive(0)
+    _num(0), _index(0), _changed(true), _haveGlyphs(false), _aliasOf(-1), 
+    _links(false), _name(""), _filename(""), _eye(0., 0., 0.),
+    _options(0), _data(0), va_points(0), va_lines(0), va_triangles(0),
+    normals(0), adaptive(0)
   {
     _data = new PViewDataList(allocate);
     _options = new PViewOptions;
@@ -80,7 +85,11 @@ class PView{
   int getIndex(){ return _index; }
   void setIndex(int val){ _index = val; }
   bool getChanged(){ return _changed; }
-  void setChanged(bool val){ _changed = val; }
+  void setChanged(bool val);
+  bool getGlyphs(){ return _haveGlyphs; }
+  void setGlyphs(bool val){ _haveGlyphs = val; }
+  SPoint3 &getEye(){ return _eye; }
+  void setEye(SPoint3 &p){ _eye = p; }
   void setGlobalResolutionLevel(int level)
   {
     //if(adaptive) adaptive->setGlobalResolutionLevel(this, level);

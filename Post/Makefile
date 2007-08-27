@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2007-08-24 20:14:18 geuzaine Exp $
+# $Id: Makefile,v 1.7 2007-08-27 13:46:22 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -89,7 +89,8 @@ PViewData.o: PViewData.cpp PViewData.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/ExtrudeParams.h ../Geo/GRegion.h ../Geo/GEntity.h \
   ../Geo/MElement.h ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h
-PViewOptions.o: PViewOptions.cpp PViewOptions.h ColorTable.h
+PViewOptions.o: PViewOptions.cpp PViewOptions.h ColorTable.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/Message.h
 PViewIO.o: PViewIO.cpp PView.h ../Common/VertexArray.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Common/SmoothData.h ../Numeric/Numeric.h \
   AdaptiveViews.h ../DataStr/List.h ../Common/GmshMatrix.h PViewData.h \

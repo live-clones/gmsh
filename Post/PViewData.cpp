@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.4 2007-08-25 19:19:49 geuzaine Exp $
+// $Id: PViewData.cpp,v 1.5 2007-08-27 13:46:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,7 @@
 
 PViewDataList::PViewDataList(bool allocate)
   : DataSize(sizeof(double)), NbTimeStep(0), 
-    ScalarOnly(0), TextOnly(0), Min(VAL_INF), Max(-VAL_INF), Time(0),
+    Min(VAL_INF), Max(-VAL_INF), Time(0),
     NbSP(0), SP(0), NbVP(0), VP(0), NbTP(0), TP(0),
     NbSL(0), SL(0), NbVL(0), VL(0), NbTL(0), TL(0),
     NbSL2(0), SL2(0), NbVL2(0), VL2(0), NbTL2(0), TL2(0),
@@ -178,9 +178,6 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod)
   // compute statistics for element lists
   if(!nbelm) return;
 
-  TextOnly = false;
-  if(nbcomp > 1) ScalarOnly = false;
-  
   int nb = List_Nbr(list) / nbelm;
   for(int i = 0; i < List_Nbr(list); i += nb){
     int N = nb - 3 * nbnod;

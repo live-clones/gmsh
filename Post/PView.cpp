@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.1 2007-08-21 19:05:43 geuzaine Exp $
+// $Id: PView.cpp,v 1.2 2007-08-27 13:46:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,17 @@
 #include "Message.h"
 
 std::vector<PView*> PView::list;
+
+void PView::setChanged(bool val)
+{ 
+  _changed = val; 
+  // reset the eye position everytime we change the view so that the
+  // arrays get resorted for transparency
+  if(_changed){
+    _eye = SPoint3(0., 0., 0.); 
+    _haveGlyphs = false;
+  }
+}
 
 PView *PView::current()
 { 

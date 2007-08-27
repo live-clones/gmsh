@@ -1,4 +1,4 @@
-// $Id: PostElement.cpp,v 1.80 2007-08-24 08:38:24 remacle Exp $
+// $Id: PostElement.cpp,v 1.81 2007-08-27 13:46:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -334,10 +334,10 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
       if(ValMin == ValMax)
 	k = View->NbIso / 2;
       PaletteDiscrete(View, View->NbIso, k);
-      CutLine(X, Y, Z, &Val[0],
-	      View->GVFI(ValMin, ValMax, View->NbIso + 1, k),
-	      View->GVFI(ValMin, ValMax, View->NbIso + 1, k + 1),
-	      Xp, Yp, Zp, &nb, Vp);
+      nb = CutLine(X, Y, Z, &Val[0],
+		   View->GVFI(ValMin, ValMax, View->NbIso + 1, k),
+		   View->GVFI(ValMin, ValMax, View->NbIso + 1, k + 1),
+		   Xp, Yp, Zp, Vp);
       if(nb == 2)
 	Draw_Line(View->LineType, View->LineWidth, Xp, Yp, Zp, View->Light);
       if(ValMin == ValMax)
@@ -350,8 +350,8 @@ void Draw_ScalarLine(Post_View * View, int preproNormals,
       if(ValMin == ValMax)
 	k = View->NbIso / 2;
       PaletteDiscrete(View, View->NbIso, k);
-      IsoLine(View, X, Y, Z, &Val[0],
-	      View->GVFI(ValMin, ValMax, View->NbIso, k));
+      IsoLine_Old(View, X, Y, Z, &Val[0],
+		  View->GVFI(ValMin, ValMax, View->NbIso, k));
       if(ValMin == ValMax)
 	break;
     }
@@ -485,7 +485,7 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
       }
     }
     else {
-      CutTriangle(X, Y, Z, Val, ValMin, ValMax, Xp, Yp, Zp, &nb, Vp);
+      nb = CutTriangle(X, Y, Z, Val, ValMin, ValMax, Xp, Yp, Zp, Vp);
       if(nb >= 3) {
 	if(preproNormals){
 	  for(int i = 0; i < nb; i++)
@@ -539,10 +539,10 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
       if(ValMin == ValMax)
 	k = View->NbIso / 2;
       unsigned int col = PaletteDiscrete(View, View->NbIso, k);
-      CutTriangle(X, Y, Z, Val,
-		  View->GVFI(ValMin, ValMax, View->NbIso + 1, k),
-		  View->GVFI(ValMin, ValMax, View->NbIso + 1, k + 1),
-		  Xp, Yp, Zp, &nb, Vp);
+      nb = CutTriangle(X, Y, Z, Val,
+		       View->GVFI(ValMin, ValMax, View->NbIso + 1, k),
+		       View->GVFI(ValMin, ValMax, View->NbIso + 1, k + 1),
+		       Xp, Yp, Zp, Vp);
       if(nb >= 3) {
 	if(preproNormals){
 	  for(int i = 0; i < nb; i++)
@@ -594,8 +594,8 @@ void Draw_ScalarTriangle(Post_View * View, int preproNormals,
       if(ValMin == ValMax)
 	k = View->NbIso / 2;
       unsigned int col = PaletteDiscrete(View, View->NbIso, k);
-      IsoTriangle(View, X, Y, Z, Val,
-		  View->GVFI(ValMin, ValMax, View->NbIso, k), col);
+      IsoTriangle_Old(View, X, Y, Z, Val,
+		      View->GVFI(ValMin, ValMax, View->NbIso, k), col);
       if(ValMin == ValMax) 
 	break;
     }
@@ -668,8 +668,8 @@ void Draw_ScalarTetrahedron(Post_View * View, int preproNormals,
       if(ValMin == ValMax)
 	k = View->NbIso / 2;
       unsigned int col = PaletteDiscrete(View, View->NbIso, k);
-      IsoSimplex(View, preproNormals, X, Y, Z, Val,
-                 View->GVFI(ValMin, ValMax, View->NbIso, k), col);
+      IsoSimplex_Old(View, preproNormals, X, Y, Z, Val,
+		     View->GVFI(ValMin, ValMax, View->NbIso, k), col);
       if(ValMin == ValMax)
 	break;
     }

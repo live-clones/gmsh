@@ -22,6 +22,7 @@
 
 #include <vector>
 #include "List.h"
+#include "SBoundingBox3d.h"
 
 class Post_View;
 
@@ -85,6 +86,8 @@ void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
 void Draw_SmallAxes(void);
 void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
 	       double bbox[6]);
+void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
+	       SBoundingBox3d &bbox);
 
 #define ARGS Post_View *View, int preproNormals, \
              double ValMin, double ValMax, 	 \

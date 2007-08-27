@@ -47,6 +47,7 @@ class SPoint3 {
   void operator/=(double mult);
   SPoint3 operator*(double mult);
   operator double *() { return P; }
+  double distance(const SPoint3 &p);
 };
 
 inline SPoint3 operator + (const SPoint3 &a, const SPoint3 &b)
@@ -96,5 +97,11 @@ inline double &SPoint3::operator[](int i)
 
 inline double SPoint3::operator[](int i) const
 { return P[i]; }
+
+inline double SPoint3::distance(const SPoint3 &p)
+{ 
+  double x = P[0] - p.P[0], y = P[1] - p.P[1], z = P[2] - p.P[2];
+  return sqrt(x * x + y * y + z * z);
+}
 
 #endif

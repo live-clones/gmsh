@@ -20,25 +20,37 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+int IsoLine(double *X, double *Y, double *Z, double *Val, double V,
+	    double *Xp, double *Yp, double *Zp);
+
+int IsoTriangle(double *X, double *Y, double *Z, double *Val, double V, 
+		double *Xp, double *Yp, double *Zp);
+
+int IsoSimplex(double *X, double *Y, double *Z, double *Val, double V,
+	       double *Xp, double *Yp, double *Zp, double n[3]);
+
+int CutLine(double *x, double *y, double *z, double *v,
+	    double min, double max, 
+	    double *xp, double *yp, double *zp, double *vp);
+
+int CutTriangle(double *x, double *y, double *z, double *v,
+		double min, double max, 
+		double *xp, double *yp, double *zp, double *vp);
+
+
+// ******** FIXME: REMOVE EVERYTHING BELOW THIS LINE ***************
+
 #include "Views.h"
 
-void CutTriangle(double *X, double *Y, double *Z, double *Val,
-		 double V1, double V2, double *Xp, double *Yp, double *Zp, 
-		 int *nb, double *value);
+void IsoLine_Old(Post_View *View, double *X, double *Y, double *Z, 
+		 double *Val, double V);
 
-void CutLine(double *X, double *Y, double *Z, double *Val,
-	     double V1, double V2, double *Xp, double *Yp, double *Zp,
-	     int *nb, double *value);
+void IsoTriangle_Old(Post_View *View, 
+		     double *X, double *Y, double *Z, double *Val, double V,
+		     unsigned int color);
 
-void IsoLine(Post_View *View, double *X, double *Y, double *Z, 
-	     double *Val, double V);
-
-void IsoTriangle(Post_View *View, 
-		 double *X, double *Y, double *Z, double *Val, double V,
-		 unsigned int color);
-
-void IsoSimplex(Post_View *View, int preproNormals, 
-		double *X, double *Y, double *Z, double *Val, double V,
-		unsigned int color);
+void IsoSimplex_Old(Post_View *View, int preproNormals, 
+		    double *X, double *Y, double *Z, double *Val, double V,
+		    unsigned int color);
   
 #endif

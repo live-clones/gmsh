@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.136 2007-08-24 20:14:17 geuzaine Exp $
+# $Id: Makefile,v 1.137 2007-08-27 13:46:21 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -73,15 +73,15 @@ OctreeInternals.o: OctreeInternals.cpp Message.h OctreeInternals.h
 Options.o: Options.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h GmshUI.h GmshDefines.h \
-  ../Graphics/Draw.h ../Mesh/Generator.h Context.h Options.h \
-  ../Mesh/BackgroundMesh.h ../Plugin/PluginManager.h ../Plugin/Plugin.h \
-  ../Common/Options.h ../Common/Message.h ../Post/Views.h \
-  ../Post/ColorTable.h ../Common/VertexArray.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Common/SmoothData.h ../Numeric/Numeric.h \
-  ../Post/AdaptiveViews.h ../Common/GmshMatrix.h ../Fltk/Solvers.h \
-  ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
-  ../Common/GmshUI.h ../Fltk/Popup_Button.h \
-  ../Fltk/SpherePosition_Widget.h
+  ../Graphics/Draw.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
+  ../Mesh/Generator.h Context.h Options.h ../Mesh/BackgroundMesh.h \
+  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
+  ../Common/Message.h ../Post/Views.h ../Post/ColorTable.h \
+  ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Common/SmoothData.h ../Numeric/Numeric.h ../Post/AdaptiveViews.h \
+  ../Common/GmshMatrix.h ../Fltk/Solvers.h ../Fltk/GUI.h \
+  ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h ../Common/GmshUI.h \
+  ../Fltk/Popup_Button.h ../Fltk/SpherePosition_Widget.h
 CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h GmshUI.h GmshDefines.h \

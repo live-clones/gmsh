@@ -88,7 +88,7 @@ class VertexArray{
   void add(double *x, double *y, double *z, SVector3 *n, unsigned int *col,
 	   MElement *ele=0, bool unique=true);
   // sorts the elements back to front wrt the eye position
-  void sort(double eye[3]);
+  void sort(double x, double y, double z);
 };
 
 #endif

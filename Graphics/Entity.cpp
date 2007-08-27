@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.74 2007-08-24 08:38:24 remacle Exp $
+// $Id: Entity.cpp,v 1.75 2007-08-27 13:46:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -87,6 +87,7 @@ void Draw_Disk(double size, double rint, double x, double y, double z, int light
   glPopMatrix();
   glDisable(GL_LIGHTING);
 }
+
 void Draw_TapCylinder(double width, double val1, double val2, 
 		      double ValMin, double ValMax, 
 		      double *x, double *y, double *z, int light)
@@ -780,6 +781,15 @@ void Draw_GridStipple(int n1, int n2, double p1[3], double p2[3], double p3[3])
   glEnd();
   glDisable(GL_LINE_STIPPLE);
   gl2psDisable(GL2PS_LINE_STIPPLE);
+}
+
+void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256], 
+	       SBoundingBox3d &bb)
+{
+  double bbox[6] = {bb.min().x(), bb.max().x(),
+		    bb.min().y(), bb.max().y(),
+		    bb.min().z(), bb.max().z()};
+  Draw_Axes(mode, tics, format, label, bbox);
 }
 
 void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256], 

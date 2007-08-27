@@ -78,7 +78,7 @@ class PViewOptions {
   int Axes, AxesAutoPosition, AxesTics[3];
   char AxesFormat[3][256], AxesLabel[3][256];
   double AxesPosition[6];
-  double CustomMin, CustomMax, TmpMin, TmpMax;
+  double CustomMin, CustomMax, TmpMin, TmpMax, ExternalMin, ExternalMax;
   SBoundingBox3d TmpBBox;
   double Offset[3], Raise[3], Transform[3][3], DisplacementFactor, Explode;
   double ArrowSize, ArrowRelHeadRadius, ArrowRelStemRadius, ArrowRelStemLength;
@@ -115,8 +115,13 @@ class PViewOptions {
   // static reference container that contains default values
   static PViewOptions reference;
   PViewOptions();
+  ~PViewOptions();
+  void createGeneralRaise();
+  void destroyGeneralRaise();
   unsigned int getColor(int i, int nb);
   unsigned int getColor(double val, double min, double max);
+  double getScaleValue(int iso, int numIso, double min, double max);
+  int getScaleIndex(double val, int numIso, double min, double max);
 };
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.39 2006-11-27 22:22:14 geuzaine Exp $
+// $Id: Iso.cpp,v 1.40 2007-08-27 13:46:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -28,16 +28,36 @@
 
 extern Context_T CTX;
 
-// Draw an iso-line inside a triangle
-
-void IsoTriangle(Post_View * View, double *X, double *Y, double *Z,
-		 double *Val, double V, unsigned int color)
+static void affect(double *xi, double *yi, double *zi, int i,
+		   double *xp, double *yp, double *zp, int j)
 {
-  // don't draw anything if the value is constant
-  if(Val[0] == Val[1] && Val[0] == Val[2])
-    return;
+  xi[i] = xp[j];
+  yi[i] = yp[j];
+  zi[i] = zp[j];
+}
 
-  double Xp[3], Yp[3], Zp[3];
+// Draw an iso-point in a line
+
+int IsoLine(double *X, double *Y, double *Z, double *Val, double V,
+	    double *Xp, double *Yp, double *Zp)
+{
+  if(Val[0] == Val[1])
+    return 0;
+
+  if((Val[0] >= V && Val[1] <= V) || (Val[1] >= V && Val[0] <= V)) {
+    InterpolateIso(X, Y, Z, Val, V, 0, 1, Xp, Yp, Zp);
+    return 1;
+  }
+  return 0;
+}
+
+// Compute an iso-line inside a triangle
+
+int IsoTriangle(double *X, double *Y, double *Z, double *Val, double V, 
+		double *Xp, double *Yp, double *Zp)
+{
+  if(Val[0] == Val[1] && Val[0] == Val[2]) return 0;
+
   int nb = 0;
   if((Val[0] >= V && Val[1] <= V) || (Val[1] >= V && Val[0] <= V)) {
     InterpolateIso(X, Y, Z, Val, V, 0, 1, &Xp[nb], &Yp[nb], &Zp[nb]);
@@ -52,62 +72,208 @@ void IsoTriangle(Post_View * View, double *X, double *Y, double *Z,
     nb++;
   }
   
-  if(nb == 2){
-    if(View->LinVertexArray && View->LinVertexArray->fill && !View->LineType){
-      View->LinVertexArray->add(Xp[0], Yp[0], Zp[0], color);
-      View->LinVertexArray->add(Xp[1], Yp[1], Zp[1], color);
+  if(nb == 2) return 2;
+  return 0;
+}
+
+int IsoSimplex(double *X, double *Y, double *Z, double *Val, double V,
+	       double *Xp, double *Yp, double *Zp, double n[3])
+{
+  if(Val[0] == Val[1] && Val[0] == Val[2] && Val[0] == Val[3])
+    return 0;
+
+  int nb = 0;
+  if((Val[0] >= V && Val[1] <= V) || (Val[1] >= V && Val[0] <= V)) {
+    InterpolateIso(X, Y, Z, Val, V, 0, 1, &Xp[nb], &Yp[nb], &Zp[nb]);
+    nb++;
+  }
+  if((Val[0] >= V && Val[2] <= V) || (Val[2] >= V && Val[0] <= V)) {
+    InterpolateIso(X, Y, Z, Val, V, 0, 2, &Xp[nb], &Yp[nb], &Zp[nb]);
+    nb++;
+  }
+  if((Val[0] >= V && Val[3] <= V) || (Val[3] >= V && Val[0] <= V)) {
+    InterpolateIso(X, Y, Z, Val, V, 0, 3, &Xp[nb], &Yp[nb], &Zp[nb]);
+    nb++;
+  }
+  if((Val[1] >= V && Val[2] <= V) || (Val[2] >= V && Val[1] <= V)) {
+    InterpolateIso(X, Y, Z, Val, V, 1, 2, &Xp[nb], &Yp[nb], &Zp[nb]);
+    nb++;
+  }
+  if((Val[1] >= V && Val[3] <= V) || (Val[3] >= V && Val[1] <= V)) {
+    InterpolateIso(X, Y, Z, Val, V, 1, 3, &Xp[nb], &Yp[nb], &Zp[nb]);
+    nb++;
+  }
+  if((Val[2] >= V && Val[3] <= V) || (Val[3] >= V && Val[2] <= V)) {
+    InterpolateIso(X, Y, Z, Val, V, 2, 3, &Xp[nb], &Yp[nb], &Zp[nb]);
+    nb++;
+  }
+
+  // Remove identical nodes (this can happen if an edge belongs to the
+  // zero levelset). We should be doing this even for nb < 4, but it
+  // would slow us down even more (and we don't really care if some
+  // nodes in a postprocessing element are identical)
+  if(nb > 4) {
+    double xi[6], yi[6], zi[6];
+    affect(xi, yi, zi, 0, Xp, Yp, Zp, 0);
+    int ni = 1;
+    for(int j = 1; j < nb; j++) {
+      for(int i = 0; i < ni; i++) {
+	if(fabs(Xp[j] - xi[i]) < 1.e-12 &&
+	   fabs(Yp[j] - yi[i]) < 1.e-12 &&
+	   fabs(Zp[j] - zi[i]) < 1.e-12) {
+	  break;
+	}
+	if(i == ni - 1) {
+	  affect(xi, yi, zi, i + 1, Xp, Yp, Zp, j);
+	  ni++;
+	}
+      }
     }
-    else{
-      glColor4ubv((GLubyte *) & color);
-      Draw_Line(View->LineType, View->LineWidth, Xp, Yp, Zp, View->Light);
+    for(int i = 0; i < ni; i++)
+      affect(Xp, Yp, Zp, i, xi, yi, zi, i);
+    nb = ni;
+  }
+
+  if(nb < 3 || nb > 4)
+    return 0;
+
+  // 3 possible quads at this point: (0,2,5,3), (0,1,5,4) or
+  // (1,2,4,3), so simply invert the 2 last vertices for having the
+  // quad ordered
+  if(nb == 4) {
+    double x = Xp[3], y = Yp[3], z = Zp[3];
+    Xp[3] = Xp[2];
+    Yp[3] = Yp[2];
+    Zp[3] = Zp[2];
+    Xp[2] = x;
+    Yp[2] = y;
+    Zp[2] = z;
+  }
+
+  // to get a nice isosurface, we should have n . grad v > 0, where n
+  // is the normal to the polygon and v is the unknown field we want
+  // to draw
+  double v1[3] = {Xp[2] - Xp[0], Yp[2] - Yp[0], Zp[2] - Zp[0]};
+  double v2[3] = {Xp[1] - Xp[0], Yp[1] - Yp[0], Zp[1] - Zp[0]};
+  prodve(v1, v2, n);
+  norme(n);
+
+  double g[3];
+  gradSimplex(X, Y, Z, Val, g);
+
+  double gdotn;
+  prosca(g, n, &gdotn);
+
+  if(gdotn > 0.) {
+    double Xpi[6], Ypi[6], Zpi[6];
+    for(int i = 0; i < nb; i++) {
+      Xpi[i] = Xp[i];
+      Ypi[i] = Yp[i];
+      Zpi[i] = Zp[i];
+    }
+    for(int i = 0; i < nb; i++) {
+      Xp[i] = Xpi[nb - i - 1];
+      Yp[i] = Ypi[nb - i - 1];
+      Zp[i] = Zpi[nb - i - 1];
     }
   }
+  else {
+    n[0] = -n[0];
+    n[1] = -n[1];
+    n[2] = -n[2];
+  }
+
+  return nb;
+}
+
+// Compute the line between the two iso-points V1 and V2 in a line
+
+int CutLine(double *X, double *Y, double *Z, double *Val,
+	    double V1, double V2, 
+	    double *Xp2, double *Yp2, double *Zp2, double *Vp2)
+{
+  int io[2];
+  if(Val[0] < Val[1]) {
+    io[0] = 0;
+    io[1] = 1;
+  }
+  else {
+    io[0] = 1;
+    io[1] = 0;
+  }
+
+  if(Val[io[0]] > V2 || Val[io[1]] < V1) return 0;
+
+  if(V1 <= Val[io[0]] && Val[io[1]] <= V2) {
+    for(int i = 0; i < 2; i++) {
+      Vp2[i] = Val[i];
+      Xp2[i] = X[i];
+      Yp2[i] = Y[i];
+      Zp2[i] = Z[i];
+    }
+    return 2;
+  }
+
+  if(V1 <= Val[io[0]]) {
+    Vp2[0] = Val[io[0]];
+    Xp2[0] = X[io[0]];
+    Yp2[0] = Y[io[0]];
+    Zp2[0] = Z[io[0]];
+  }
+  else {
+    Vp2[0] = V1;
+    InterpolateIso(X, Y, Z, Val, V1, io[0], io[1], &Xp2[0], &Yp2[0], &Zp2[0]);
+  }
+
+  if(V2 >= Val[io[1]]) {
+    Vp2[1] = Val[io[1]];
+    Xp2[1] = X[io[1]];
+    Yp2[1] = Y[io[1]];
+    Zp2[1] = Z[io[1]];
+  }
+  else {
+    Vp2[1] = V2;
+    InterpolateIso(X, Y, Z, Val, V2, io[0], io[1], &Xp2[1], &Yp2[1], &Zp2[1]);
+  }
+
+  return 2;
 }
 
 // Compute the polygon between the two iso-lines V1 and V2 in a
 // triangle
 
-void CutTriangle(double *X, double *Y, double *Z, double *Val,
-		 double V1, double V2, double *Xp2, double *Yp2,
-		 double *Zp2, int *Np2, double *Vp2)
+int CutTriangle(double *X, double *Y, double *Z, double *Val,
+		double V1, double V2, 
+		double *Xp2, double *Yp2, double *Zp2, double *Vp2)
 {
-  int i, io[3], j, iot, Np, Fl;
-  double Xp[10], Yp[10], Zp[10], Vp[10];
-
-  *Np2 = 0;
-
-  for(i = 0; i < 3; i++)
-    io[i] = i;
-
-  for(i = 0; i < 2; i++) {
-    for(j = i + 1; j < 3; j++) {
+  // fill io so that it contains an indexing of the nodes such that
+  // Val[io[i]] > Val[io[j]] if i > j
+  int io[3] = {0, 1, 2};
+  for(int i = 0; i < 2; i++) {
+    for(int j = i + 1; j < 3; j++) {
       if(Val[io[i]] > Val[io[j]]) {
-        iot = io[i];
+        int iot = io[i];
         io[i] = io[j];
         io[j] = iot;
       }
     }
   }
 
-  // io[] contains an indexing of nodes such that Val[io[i]] > Val[io[j]] if i > j
-
-  if(Val[io[0]] > V2)
-    return;
-  if(Val[io[2]] < V1)
-    return;
+  if(Val[io[0]] > V2 || Val[io[2]] < V1) return 0;
 
   if(V1 <= Val[io[0]] && Val[io[2]] <= V2) {
-    for(i = 0; i < 3; i++) {
+    for(int i = 0; i < 3; i++) {
       Vp2[i] = Val[i];
       Xp2[i] = X[i];
       Yp2[i] = Y[i];
       Zp2[i] = Z[i];
     }
-    *Np2 = 3;
-    return;
+    return 3;
   }
 
-  Np = 0;
+  int Np = 0, Fl = 0;
+  double Xp[10], Yp[10], Zp[10], Vp[10];
+
   if(V1 <= Val[io[0]]) {
     Vp[Np] = Val[io[0]];
     Xp[Np] = X[io[0]];
@@ -136,7 +302,7 @@ void CutTriangle(double *X, double *Y, double *Z, double *Val,
   }
 
   if(V2 == Val[io[0]]) {
-    return;
+    return 0;
   }
   else if((Val[io[0]] < V2) && (V2 < Val[io[1]])) {
     Vp[Np] = V2;
@@ -180,55 +346,109 @@ void CutTriangle(double *X, double *Y, double *Z, double *Val,
   Xp2[0] = Xp[0];
   Yp2[0] = Yp[0];
   Zp2[0] = Zp[0];
-  *Np2 = 1;
 
-  for(i = 1; i < Np; i++) {
-    if((Xp[i] != Xp2[(*Np2) - 1]) || (Yp[i] != Yp2[(*Np2) - 1]) || 
-       (Zp[i] != Zp2[(*Np2) - 1])) {
-      Vp2[*Np2] = Vp[i];
-      Xp2[*Np2] = Xp[i];
-      Yp2[*Np2] = Yp[i];
-      Zp2[*Np2] = Zp[i];
-      (*Np2)++;
+  int Np2 = 1;
+
+  for(int i = 1; i < Np; i++) {
+    if((Xp[i] != Xp2[Np2 - 1]) || (Yp[i] != Yp2[Np2 - 1]) || 
+       (Zp[i] != Zp2[Np2 - 1])){
+      Vp2[Np2] = Vp[i];
+      Xp2[Np2] = Xp[i];
+      Yp2[Np2] = Yp[i];
+      Zp2[Np2] = Zp[i];
+      Np2++;
     }
   }
 
-  if(Xp2[0] == Xp2[(*Np2) - 1] && Yp2[0] == Yp2[(*Np2) - 1] && 
-     Zp2[0] == Zp2[(*Np2) - 1]) {
-    (*Np2)--;
+  if(Xp2[0] == Xp2[Np2 - 1] && Yp2[0] == Yp2[Np2 - 1] && 
+     Zp2[0] == Zp2[Np2 - 1]) {
+    Np2--;
   }
 
   // check and fix orientation
-  double in1[3] = { X[1]-X[0], Y[1]-Y[0], Z[1]-Z[0]};
-  double in2[3] = { X[2]-X[0], Y[2]-Y[0], Z[2]-Z[0]};
+  double in1[3] = {X[1] - X[0], Y[1] - Y[0], Z[1] - Z[0]};
+  double in2[3] = {X[2] - X[0], Y[2] - Y[0], Z[2] - Z[0]};
   double inn[3];
   prodve(in1, in2, inn);
-  double out1[3] = { Xp2[1]-Xp2[0], Yp2[1]-Yp2[0], Zp2[1]-Zp2[0]};
-  double out2[3] = { Xp2[2]-Xp2[0], Yp2[2]-Yp2[0], Zp2[2]-Zp2[0]};
+  double out1[3] = {Xp2[1] - Xp2[0], Yp2[1] - Yp2[0], Zp2[1] - Zp2[0]};
+  double out2[3] = {Xp2[2] - Xp2[0], Yp2[2] - Yp2[0], Zp2[2] - Zp2[0]};
   double outn[3];
   prodve(out1, out2, outn);
   double res;
   prosca(inn, outn, &res);
   if(res < 0){
-    for(i = 0; i < *Np2; i++){
-      Vp[i] = Vp2[*Np2-i-1];
-      Xp[i] = Xp2[*Np2-i-1];
-      Yp[i] = Yp2[*Np2-i-1];
-      Zp[i] = Zp2[*Np2-i-1];
+    for(int i = 0; i < Np2; i++){
+      Vp[i] = Vp2[Np2 - i - 1];
+      Xp[i] = Xp2[Np2 - i - 1];
+      Yp[i] = Yp2[Np2 - i - 1];
+      Zp[i] = Zp2[Np2 - i - 1];
     }
-    for(i = 0; i < *Np2; i++){
+    for(int i = 0; i < Np2; i++){
       Vp2[i] = Vp[i];
       Xp2[i] = Xp[i];
       Yp2[i] = Yp[i];
       Zp2[i] = Zp[i];
     }
   }
+
+  return Np2;
+}
+
+
+
+
+
+
+
+
+// ****************** FIXME: REMOVE EVERYTHING BELOW THIS LINE ****************
+
+
+
+
+
+
+
+// Draw an iso-line inside a triangle
+
+void IsoTriangle_Old(Post_View * View, double *X, double *Y, double *Z,
+		     double *Val, double V, unsigned int color)
+{
+  // don't draw anything if the value is constant
+  if(Val[0] == Val[1] && Val[0] == Val[2])
+    return;
+
+  double Xp[3], Yp[3], Zp[3];
+  int nb = 0;
+  if((Val[0] >= V && Val[1] <= V) || (Val[1] >= V && Val[0] <= V)) {
+    InterpolateIso(X, Y, Z, Val, V, 0, 1, &Xp[nb], &Yp[nb], &Zp[nb]);
+    nb++;
+  }
+  if((Val[0] >= V && Val[2] <= V) || (Val[2] >= V && Val[0] <= V)) {
+    InterpolateIso(X, Y, Z, Val, V, 0, 2, &Xp[nb], &Yp[nb], &Zp[nb]);
+    nb++;
+  }
+  if((Val[1] >= V && Val[2] <= V) || (Val[2] >= V && Val[1] <= V)) {
+    InterpolateIso(X, Y, Z, Val, V, 1, 2, &Xp[nb], &Yp[nb], &Zp[nb]);
+    nb++;
+  }
+  
+  if(nb == 2){
+    if(View->LinVertexArray && View->LinVertexArray->fill && !View->LineType){
+      View->LinVertexArray->add(Xp[0], Yp[0], Zp[0], color);
+      View->LinVertexArray->add(Xp[1], Yp[1], Zp[1], color);
+    }
+    else{
+      glColor4ubv((GLubyte *) & color);
+      Draw_Line(View->LineType, View->LineWidth, Xp, Yp, Zp, View->Light);
+    }
+  }
 }
 
 // Draw an iso-point in a line
 
-void IsoLine(Post_View *View, double *X, double *Y, double *Z, 
-	     double *Val, double V)
+void IsoLine_Old(Post_View *View, double *X, double *Y, double *Z, 
+		 double *Val, double V)
 {
   double Xp[2], Yp[2], Zp[2];
 
@@ -239,67 +459,6 @@ void IsoLine(Post_View *View, double *X, double *Y, double *Z,
   if((Val[0] >= V && Val[1] <= V) || (Val[1] >= V && Val[0] <= V)) {
     InterpolateIso(X, Y, Z, Val, V, 0, 1, Xp, Yp, Zp);
     Draw_Point(View->PointType, View->PointSize, Xp, Yp, Zp, View->Light);
-  }
-}
-
-// Compute the line between the two iso-points V1 and V2 in a line
-
-void CutLine(double *X, double *Y, double *Z, double *Val,
-	     double V1, double V2, double *Xp2, double *Yp2, double *Zp2,
-	     int *Np2, double *Vp2)
-{
-  int i, io[2];
-
-  if(Val[0] < Val[1]) {
-    io[0] = 0;
-    io[1] = 1;
-  }
-  else {
-    io[0] = 1;
-    io[1] = 0;
-  }
-
-  // io[] contains an indexing of nodes such that Val[io[i]] > Val[io[j]] if i > j
-
-  *Np2 = 0;
-
-  if(Val[io[0]] > V2)
-    return;
-  if(Val[io[1]] < V1)
-    return;
-
-  *Np2 = 2;
-
-  if(V1 <= Val[io[0]] && Val[io[1]] <= V2) {
-    for(i = 0; i < 2; i++) {
-      Vp2[i] = Val[i];
-      Xp2[i] = X[i];
-      Yp2[i] = Y[i];
-      Zp2[i] = Z[i];
-    }
-    return;
-  }
-
-  if(V1 <= Val[io[0]]) {
-    Vp2[0] = Val[io[0]];
-    Xp2[0] = X[io[0]];
-    Yp2[0] = Y[io[0]];
-    Zp2[0] = Z[io[0]];
-  }
-  else {
-    Vp2[0] = V1;
-    InterpolateIso(X, Y, Z, Val, V1, io[0], io[1], &Xp2[0], &Yp2[0], &Zp2[0]);
-  }
-
-  if(V2 >= Val[io[1]]) {
-    Vp2[1] = Val[io[1]];
-    Xp2[1] = X[io[1]];
-    Yp2[1] = Y[io[1]];
-    Zp2[1] = Z[io[1]];
-  }
-  else {
-    Vp2[1] = V2;
-    InterpolateIso(X, Y, Z, Val, V2, io[0], io[1], &Xp2[1], &Yp2[1], &Zp2[1]);
   }
 }
 
@@ -400,19 +559,11 @@ void EnhanceSimplexPolygon(Post_View * View, int nb,    // nb of points in polyg
   }
 }
 
-static void affect(double *xi, double *yi, double *zi, int i,
-		   double *xp, double *yp, double *zp, int j)
-{
-  xi[i] = xp[j];
-  yi[i] = yp[j];
-  zi[i] = zp[j];
-}
-
 // Draw an iso-surface inside a tetrahedron
 
-void IsoSimplex(Post_View * View, int preproNormals,
-                double *X, double *Y, double *Z, double *Val,
-                double V, unsigned int color)
+void IsoSimplex_Old(Post_View * View, int preproNormals,
+		    double *X, double *Y, double *Z, double *Val,
+		    double V, unsigned int color)
 {
   int nb;
   double Xp[6], Yp[6], Zp[6], PVals[6];

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.128 2007-08-24 20:14:18 geuzaine Exp $
+# $Id: Makefile,v 1.129 2007-08-27 13:46:22 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -94,13 +94,15 @@ CutPlane.o: CutPlane.cpp CutPlane.h Levelset.h Plugin.h \
   ../Post/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Common/SmoothData.h \
   ../Numeric/Numeric.h ../Post/AdaptiveViews.h ../Common/GmshMatrix.h \
-  ../Common/Context.h ../Common/GmshUI.h ../Graphics/Draw.h
+  ../Common/Context.h ../Common/GmshUI.h ../Graphics/Draw.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h
 CutSphere.o: CutSphere.cpp CutSphere.h Levelset.h Plugin.h \
   ../Common/Options.h ../Common/Message.h ../Post/Views.h \
   ../Post/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Common/SmoothData.h \
   ../Numeric/Numeric.h ../Post/AdaptiveViews.h ../Common/GmshMatrix.h \
-  ../Common/Context.h ../Common/GmshUI.h ../Graphics/Draw.h
+  ../Common/Context.h ../Common/GmshUI.h ../Graphics/Draw.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h
 CutMap.o: CutMap.cpp CutMap.h Levelset.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Post/Views.h ../Post/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Geo/SVector3.h \
@@ -117,7 +119,8 @@ CutParametric.o: CutParametric.cpp ../Post/OctreePost.h \
   ../Post/ColorTable.h ../DataStr/List.h ../Common/VertexArray.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Common/SmoothData.h \
   ../Numeric/Numeric.h ../Post/AdaptiveViews.h ../Common/GmshMatrix.h \
-  ../Common/Context.h ../Common/GmshUI.h ../Graphics/Draw.h
+  ../Common/Context.h ../Common/GmshUI.h ../Graphics/Draw.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h
 Lambda2.o: Lambda2.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Post/Views.h ../Post/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
@@ -142,14 +145,16 @@ StreamLines.o: StreamLines.cpp ../Post/OctreePost.h ../Common/Octree.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Common/SmoothData.h ../Numeric/Numeric.h \
   ../Post/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h \
-  ../Common/GmshUI.h ../Graphics/Draw.h
+  ../Common/GmshUI.h ../Graphics/Draw.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint3.h
 CutGrid.o: CutGrid.cpp ../Post/OctreePost.h ../Common/Octree.h \
   ../Common/OctreeInternals.h CutGrid.h Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Post/Views.h ../Post/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Common/SmoothData.h ../Numeric/Numeric.h \
   ../Post/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h \
-  ../Common/GmshUI.h ../Graphics/Draw.h
+  ../Common/GmshUI.h ../Graphics/Draw.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint3.h
 Transform.o: Transform.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Post/Views.h ../Post/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Geo/SVector3.h \
@@ -284,7 +289,8 @@ Annotate.o: Annotate.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Common/GmshMatrix.h Annotate.h ../Common/Context.h \
   ../Common/GmshUI.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
   ../Fltk/Colorbar_Window.h ../Fltk/Popup_Button.h \
-  ../Fltk/SpherePosition_Widget.h ../Graphics/Draw.h
+  ../Fltk/SpherePosition_Widget.h ../Graphics/Draw.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h
 Remove.o: Remove.cpp Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Post/Views.h ../Post/ColorTable.h ../DataStr/List.h \
   ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
@@ -295,8 +301,9 @@ Probe.o: Probe.cpp Probe.h Plugin.h ../Common/Options.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Common/SmoothData.h ../Numeric/Numeric.h \
   ../Post/AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h \
-  ../Common/GmshUI.h ../Graphics/Draw.h ../Post/OctreePost.h \
-  ../Common/Octree.h ../Common/OctreeInternals.h
+  ../Common/GmshUI.h ../Graphics/Draw.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint3.h ../Post/OctreePost.h ../Common/Octree.h \
+  ../Common/OctreeInternals.h
 HarmonicToTime.o: HarmonicToTime.cpp Plugin.h ../Common/Options.h \
   ../Common/Message.h ../Post/Views.h ../Post/ColorTable.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Geo/SVector3.h \

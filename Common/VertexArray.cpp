@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.20 2007-08-25 22:18:06 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.21 2007-08-27 13:46:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -97,8 +97,10 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
   }
 
   for(int i = 0; i < npe; i++){
-    if(n) add(x[i], y[i], z[i], n[i].x(), n[i].y(), n[i].z(), col[i], ele);
-    else add(x[i], y[i], z[i], col[i], ele);
+    if(n) 
+      add(x[i], y[i], z[i], n[i].x(), n[i].y(), n[i].z(), col[i], ele);
+    else
+      add(x[i], y[i], z[i], 0., 0., 1., col[i], ele);
   }
 }
 
@@ -137,16 +139,16 @@ class AlphaElementLessThan {
 int AlphaElementLessThan::numVertices = 0;
 double AlphaElementLessThan::eye[3] = {0., 0., 0.};
 
-void VertexArray::sort(double eye[3])
+void VertexArray::sort(double x, double y, double z)
 {
   // This simplementation is pretty bad: it copies the whole data
   // twice. We should think about a more efficient way to sort the
   // three arrays in place.
 
   AlphaElementLessThan::numVertices = getNumVerticesPerElement();
-  AlphaElementLessThan::eye[0] = eye[0];
-  AlphaElementLessThan::eye[1] = eye[1];
-  AlphaElementLessThan::eye[2] = eye[2];
+  AlphaElementLessThan::eye[0] = x;
+  AlphaElementLessThan::eye[1] = y;
+  AlphaElementLessThan::eye[2] = z;
 
   int npe = getNumVerticesPerElement();
   int n = getNumVertices() / npe;

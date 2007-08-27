@@ -44,6 +44,9 @@ class PViewData {
   virtual double getMin(int step=-1) = 0;
   virtual double getMax(int step=-1) = 0;
   virtual SBoundingBox3d getBoundingBox() = 0;
+  virtual int getNumScalars(){ return 0; }
+  virtual int getNumVectors(){ return 0; }
+  virtual int getNumTensors(){ return 0; }
   virtual int getNumPoints(){ return 0; }
   virtual int getNumLines(){ return 0; }
   virtual int getNumTriangles(){ return 0; }
@@ -69,7 +72,7 @@ class PViewDataList : public PViewData {
   // FIXME: all these members will be made private once the plugins
   // have been rewritten
   int DataSize; // size(double) or sizeof(float)
-  int NbTimeStep, ScalarOnly, TextOnly;
+  int NbTimeStep;
   double Min, Max;
   std::vector<double> TimeStepMin, TimeStepMax;
   SBoundingBox3d BBox;
@@ -112,6 +115,9 @@ class PViewDataList : public PViewData {
   double getMin(int step=-1);
   double getMax(int step=-1);
   SBoundingBox3d getBoundingBox(){ return BBox; }
+  int getNumScalars(){ return NbSP + NbSL + NbST + NbSQ + NbSS + NbSH + NbSI + NbSY; }
+  int getNumVectors(){ return NbVP + NbVL + NbVT + NbVQ + NbVS + NbVH + NbVI + NbVY; }
+  int getNumTensors(){ return NbTP + NbTL + NbTT + NbTQ + NbTS + NbTH + NbTI + NbTY; }
   int getNumPoints(){ return NbSP + NbVP + NbTP; }
   int getNumLines(){ return NbSL + NbVL + NbTL; }
   int getNumTriangles(){ return NbST + NbVT + NbTT; }

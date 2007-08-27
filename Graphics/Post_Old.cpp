@@ -1,4 +1,4 @@
-// $Id: Post_Old.cpp,v 1.1 2007-08-24 20:14:18 geuzaine Exp $
+// $Id: Post_Old.cpp,v 1.2 2007-08-27 13:46:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -764,7 +764,7 @@ void Draw_Post_Old(void)
 	if(CTX.alpha && ColorTable_IsAlpha(&v->CT) && !v->FakeTransparency &&
 	   (changedEye() || v->Changed)){
 	  Msg(DEBUG, "Sorting View[%d] for transparency (WITH vertex array)", v->Index);
-	  v->TriVertexArray->sort(storedEye);
+	  v->TriVertexArray->sort(storedEye[0], storedEye[1], storedEye[2]);
 	}
 
 	glVertexPointer(3, GL_FLOAT, 0, v->TriVertexArray->getVertexArray());
