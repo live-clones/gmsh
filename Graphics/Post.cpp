@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.120 2007-08-27 22:05:42 geuzaine Exp $
+// $Id: Post.cpp,v 1.121 2007-08-27 23:33:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -71,16 +71,51 @@ double normValue(int numComp, double val[9])
   return 0.;
 }
 
-bool getExternalValues(PView *p, int index, int iele, int nbnod,
-		       int nbcomp, double val[NMAX][9], 
-		       int &nbcomp2, double val2[NMAX][9])
+void getLineNormal(PView *p, double x[2], double y[2], double z[2],
+		   double *v, SVector3 n[2], bool computeNormal)
+{
+  PViewOptions *opt = p->getOptions();
+
+  if(opt->LineType > 0){
+    if(v){
+      // if we draw tapered cylinders, we'll use the normalized values
+      // (between 0 and 1) stored in the first component of the
+      // normals to modulate the width of the cylinder
+      double d = opt->TmpMax - opt->TmpMin;
+      n[0][0] = (v[0] - opt->TmpMin) / (d ? d : 1.);
+      n[1][0] = (v[1] - opt->TmpMin) / (d ? d : 1.);
+    }
+    else{
+      // when we don't have values we use maximum width cylinders
+      n[0][0] = n[1][0] = 1.;
+    }
+  }
+  else if(computeNormal){
+    // if we don't have a normal, we compute one
+    SVector3 t(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
+    SVector3 ex(0., 0., 0.);
+    if(t[0] == 0.)
+      ex[0] = 1.;
+    else if(t[1] == 0.)
+      ex[1] = 1.;
+    else
+      ex[2] = 1.;
+    n[0] = crossprod(t, ex);
+    n[0].normalize();
+    n[1] = n[0];
+  }
+}
+
+bool getExternalValues(PView *p, int index, int iele, int numNodes,
+		       int numComp, double val[NMAX][9], 
+		       int &numComp2, double val2[NMAX][9])
 {
   PViewOptions *opt = p->getOptions();
 
   // use self by default
-  nbcomp2 = nbcomp;
-  for(int i = 0; i < nbnod; i++)
-    for(int j = 0; j < nbcomp; j++)
+  numComp2 = numComp;
+  for(int i = 0; i < numNodes; i++)
+    for(int j = 0; j < numComp; j++)
       val2[i][j] = val[i][j];
   opt->ExternalMin = opt->TmpMin;
   opt->ExternalMax = opt->TmpMax;
@@ -91,10 +126,10 @@ bool getExternalValues(PView *p, int index, int iele, int nbnod,
   PViewData *data2 = p2->getData();
 
   if(opt->TimeStep < data2->getNumTimeSteps() && iele < data2->getNumElements()){
-    if(data2->getNumNodes(iele) == nbnod){
-      nbcomp2 = data2->getNumComponents(iele);
-      for(int i = 0; i < nbnod; i++)
-	for(int j = 0; j < nbcomp2; j++)
+    if(data2->getNumNodes(iele) == numNodes){
+      numComp2 = data2->getNumComponents(iele);
+      for(int i = 0; i < numNodes; i++)
+	for(int j = 0; j < numComp2; j++)
 	  data2->getValue(iele, i, j, opt->TimeStep, val2[i][j]);
       if(opt->RangeType == PViewOptions::Custom){
 	opt->ExternalMin = opt->CustomMin;
@@ -142,19 +177,19 @@ void applyGeneralRaise(PView *p, int numNodes, int numComp,
   }
 }
 
-void changeCoordinates(PView *p, int iele, int nbnod, int nbcomp, 
+void changeCoordinates(PView *p, int iele, int numNodes, int numComp, 
 		       double xyz[NMAX][3], double val[NMAX][9])
 {
   PViewOptions *opt = p->getOptions();
 
   if(opt->Explode != 1.) {
     double barycenter[3] = {0., 0., 0.};
-    for(int i = 0; i < nbnod; i++)
+    for(int i = 0; i < numNodes; i++)
       for(int j = 0; j < 3; j++)
 	barycenter[j] += xyz[i][j];
     for(int j = 0; j < 3; j++)
-      barycenter[j] /= (double)nbnod;
-    for(int i = 0; i < nbnod; i++)
+      barycenter[j] /= (double)numNodes;
+    for(int i = 0; i < numNodes; i++)
       for(int j = 0; j < 3; j++)
 	xyz[i][j] = barycenter[j] + opt->Explode * (xyz[i][j] - barycenter[j]);
   }
@@ -164,7 +199,7 @@ void changeCoordinates(PView *p, int iele, int nbnod, int nbcomp,
      opt->Transform[1][1] != 1. || opt->Transform[1][2] != 0. ||
      opt->Transform[2][0] != 0. || opt->Transform[2][1] != 0. || 
      opt->Transform[2][2] != 1.){
-    for(int i = 0; i < nbnod; i++) {
+    for(int i = 0; i < numNodes; i++) {
       double old[3] = {xyz[i][0], xyz[i][1], xyz[i][2]};
       for(int j = 0; j < 3; j++){
 	xyz[i][j] = 0.;
@@ -175,32 +210,32 @@ void changeCoordinates(PView *p, int iele, int nbnod, int nbcomp,
   }
   
   if(opt->Offset[0] || opt->Offset[1] || opt->Offset[2]){
-    for(int i = 0; i < nbnod; i++)
+    for(int i = 0; i < numNodes; i++)
       for(int j = 0; j < 3; j++)
 	xyz[i][j] += opt->Offset[j];
   }
   
   if(opt->Raise[0] || opt->Raise[1] || opt->Raise[2]){
-    for(int i = 0; i < nbnod; i++){
-      double norm = normValue(nbcomp, val[i]);
+    for(int i = 0; i < numNodes; i++){
+      double norm = normValue(numComp, val[i]);
       for(int j = 0; j < 3; j++)
 	xyz[i][j] += opt->Raise[j] * norm;
     }
   }
 
-  if(nbcomp == 3 && opt->VectorType == PViewOptions::Displacement){
-    for(int i = 0; i < nbnod; i++){
+  if(numComp == 3 && opt->VectorType == PViewOptions::Displacement){
+    for(int i = 0; i < numNodes; i++){
       for(int j = 0; j < 3; j++)
 	xyz[i][j] += opt->DisplacementFactor * val[i][j];
     }
   }
 
   if(opt->UseGenRaise){
-    int nbcomp2;
+    int numComp2;
     double val2[NMAX][9];
-    getExternalValues(p, opt->ViewIndexForGenRaise, iele, nbnod, 
-		      nbcomp, val, nbcomp2, val2);
-    applyGeneralRaise(p, nbnod, nbcomp2, val2, xyz);
+    getExternalValues(p, opt->ViewIndexForGenRaise, iele, numNodes, 
+		      numComp, val, numComp2, val2);
+    applyGeneralRaise(p, numNodes, numComp2, val2, xyz);
   }
 }
 
@@ -235,7 +270,9 @@ void addOutlineLine(PView *p, double xyz[NMAX][3], unsigned int color,
     x[i] = xyz[in[i]][0]; y[i] = xyz[in[i]][1]; z[i] = xyz[in[i]][2]; 
     col[i] = color;
   }
-  p->va_lines->add(x, y, z, 0, col, 0, true);
+  SVector3 n[2];
+  getLineNormal(p, x, y, z, 0, n, true);
+  p->va_lines->add(x, y, z, n, col, 0, true);
 }
 
 void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9], 
@@ -258,6 +295,9 @@ void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9],
   double z[2] = {xyz[i0][2], xyz[i1][2]};
   double v[2] = {val[i0][0], val[i1][0]};
 
+  SVector3 n[2];
+  getLineNormal(p, x, y, z, v, n, true);
+
   double vmin = opt->TmpMin, vmax = opt->TmpMax;
 
   if(opt->SaturateValues) saturate(2, val, vmin, vmax, i0, i1);
@@ -268,7 +308,7 @@ void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9],
       unsigned int col[2];
       for(int i = 0; i < 2; i++)
 	col[i] = opt->getColor(v[i], vmin, vmax);
-      p->va_lines->add(x, y, z, 0, col, 0, unique);
+      p->va_lines->add(x, y, z, n, col, 0, unique);
     }
     else{
       double x2[2], y2[2], z2[2], v2[2];
@@ -277,7 +317,7 @@ void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9],
 	unsigned int col[2];
 	for(int i = 0; i < 2; i++)
 	  col[i] = opt->getColor(v2[i], vmin, vmax);
-	p->va_lines->add(x2, y2, z2, 0, col, 0, unique);
+	p->va_lines->add(x2, y2, z2, n, col, 0, unique);
       }
     }
   }
@@ -292,7 +332,7 @@ void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9],
       if(nb == 2){
 	unsigned color = opt->getColor(k, opt->NbIso);
 	unsigned int col[2] = {color, color};
-	p->va_lines->add(x2, y2, z2, 0, col, 0, unique);
+	p->va_lines->add(x2, y2, z2, n, col, 0, unique);
       }
       if(vmin == vmax) break;
     }
@@ -334,6 +374,7 @@ void addOutlineTriangle(PView *p, double xyz[NMAX][3], unsigned int color,
 	else p->normals->get(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
       }
     }
+    getLineNormal(p, x, y, z, 0, n, false);
     if(!pre) p->va_lines->add(x, y, z, n, col, 0, true);
   }
 }
@@ -447,6 +488,8 @@ void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9],
 	    else p->normals->get(x2[i], y2[i], z2[i], n[i][0], n[i][1], n[i][2]);
 	  }
 	}
+	double v[2] = {iso, iso};
+	getLineNormal(p, x, y, z, v, n, false);
 	if(!pre) p->va_lines->add(x2, y2, z2, n, col, 0, unique);
       }
       if(vmin == vmax) break;
@@ -475,6 +518,7 @@ void addOutlineQuadrangle(PView *p, double xyz[NMAX][3], unsigned int color,
 	else p->normals->get(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
       }
     }
+    getLineNormal(p, x, y, z, 0, n, false);
     if(!pre) p->va_lines->add(x, y, z, n, col, 0, true);
   }
 }
@@ -725,17 +769,20 @@ void addVectorElement(PView *p, int iele, int numNodes, int numEdges,
 	  data->getValue(iele, 0, j, ts + 1, dxyz[j][1]);
 	}
 	unsigned int col[2];
+	double norm[2];
 	for(int i = 0; i < 2; i++){
-	  double norm = sqrt(dxyz[0][i] * dxyz[0][i] + 
-			     dxyz[1][i] * dxyz[1][i] + 
-			     dxyz[2][i] * dxyz[2][i]);
-	  col[i] = opt->getColor(norm, opt->TmpMin, opt->TmpMax);
+	  norm[i] = sqrt(dxyz[0][i] * dxyz[0][i] + 
+			 dxyz[1][i] * dxyz[1][i] + 
+			 dxyz[2][i] * dxyz[2][i]);
+	  col[i] = opt->getColor(norm[i], opt->TmpMin, opt->TmpMax);
 	}
 	for(int j = 0; j < 3; j++){	
 	  dxyz[j][0] = xyz0[j] + dxyz[j][0] * opt->DisplacementFactor;
 	  dxyz[j][1] = xyz0[j] + dxyz[j][1] * opt->DisplacementFactor;
 	}
-	p->va_lines->add(dxyz[0], dxyz[1], dxyz[2], 0, col, 0);
+	SVector3 n[2];
+	getLineNormal(p, dxyz[0], dxyz[1], dxyz[2], norm, n, true);
+	p->va_lines->add(dxyz[0], dxyz[1], dxyz[2], n, col, 0, false);
       }
     }
     return;
@@ -881,7 +928,14 @@ void drawArrays(PView *p, VertexArray *va, GLint type, bool useNormalArray)
       float *p1 = va->getVertexArray(3 * (i + 1));
       double x[2] = {p0[0], p1[0]}, y[2] = {p0[1], p1[1]}, z[2] = {p0[2], p1[2]};
       glColor4ubv((GLubyte *)va->getColorArray(4 * i));
-      Draw_Cylinder(opt->LineWidth, x, y, z, opt->Light);
+      if(opt->LineType == 1)
+	Draw_Cylinder(opt->LineWidth, x, y, z, opt->Light);
+      else{
+	char *n0 = va->getNormalArray(3 * i);
+	char *n1 = va->getNormalArray(3 * (i + 1));
+	double v0 = char2float(*n0), v1 = char2float(*n1);
+	Draw_TapCylinder(opt->LineWidth, v0, v1, 0., 1., x, y, z, opt->Light);
+      }
     }
   }
   else{
@@ -1150,6 +1204,10 @@ class initPView {
 
     if(opt->SmoothNormals) addElementsInArrays(p, true);
     addElementsInArrays(p);
+
+    Msg(INFO, "Rendering %d vertices", p->va_points->getNumVertices() + 
+	p->va_lines->getNumVertices() + p->va_triangles->getNumVertices() + 
+	p->va_vectors->getNumVertices());
 
     p->setChanged(false);
   }
