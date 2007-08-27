@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.10 2007-08-21 19:05:39 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.11 2007-08-27 19:53:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -291,7 +291,7 @@ void add_spline(int N, int *p, char *fich)
 {
   char text[BUFFSIZE], text2[BUFFSIZE];
 
-  snprintf(text, BUFFSIZE, "CatmullRom(%d) = {", NEWLINE());
+  snprintf(text, BUFFSIZE, "Spline(%d) = {", NEWLINE());
   for(int i = 0; i < N; i++) {
     if(i != N - 1)
       snprintf(text2, BUFFSIZE, "%d,", p[i]);
