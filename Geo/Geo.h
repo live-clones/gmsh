@@ -304,6 +304,8 @@ void ReplaceAllDuplicates();
 bool ProjectPointOnCurve(Curve *c, Vertex *v, Vertex *RES, Vertex *DER);
 bool ProjectPointOnSurface(Surface *s, Vertex &p, double u[2]);
 
+bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *point_ids);
+
 int recognize_seg(int typ, List_T *liste, int *seg);
 int recognize_loop(List_T *liste, int *loop);
 int recognize_surfloop(List_T *liste, int *loop);

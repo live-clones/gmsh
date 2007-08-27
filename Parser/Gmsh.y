@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.281 2007-08-21 19:05:42 geuzaine Exp $
+// $Id: Gmsh.y,v 1.282 2007-08-27 19:27:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -99,7 +99,7 @@ int CheckViewErrorFlags(Post_View *v);
 %token tPlane tRuled tTransfinite tComplex tPhysical
 %token tUsing tBump tProgression tPlugin
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
-%token tLoop tRecombine tDelete tCoherence
+%token tLoop tRecombine tDelete tCoherence tIntersect
 %token tAttractor tLayers tHole tAlias tAliasWithOptions
 %token tText2D tText3D tInterpolationScheme  tTime tGrain tCombine
 %token tBSpline tBezier tNurbs tOrder tKnots
@@ -3252,6 +3252,11 @@ FExpr_Multi :
 	List_Add($$, &v->Pos.Y);
 	List_Add($$, &v->Pos.Z);
       }
+    }
+  | tIntersect tLine '{' RecursiveListOfDouble '}' tSurface '{' FExpr '}' 
+    { 
+      $$ = List_Create(3, 1, sizeof(double));
+      IntersectCurvesWithSurface($4, (int)$8, $$);
     }
   | Transform
     {

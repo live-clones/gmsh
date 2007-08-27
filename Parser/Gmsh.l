@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.89 2007-05-24 13:57:59 remacle Exp $
+// $Id: Gmsh.l,v 1.90 2007-08-27 19:27:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -173,6 +173,7 @@ Hypot                   return tHypot;
 
 In                      return tIn;
 If                      return tIf;
+Intersect               return tIntersect;
 
 Knots			return tKnots;
 

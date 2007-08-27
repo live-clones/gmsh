@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.90 2007-08-21 19:05:39 geuzaine Exp $
+// $Id: Geo.cpp,v 1.91 2007-08-27 19:27:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2898,6 +2898,57 @@ void Projette(Vertex *v, double mat[3][3])
   v->Pos.X = X;
   v->Pos.Y = Y;
   v->Pos.Z = Z;
+}
+
+// Intersect a curve with a surface
+
+static void intersectCS(int N, double x[], double res[])
+{
+  //x[1] = u x[2] = v x[3] = w
+  Vertex s, c;
+  s = InterpolateSurface(SURFACE, x[1], x[2], 0, 0);
+  c = InterpolateCurve(CURVE, x[3], 0);
+  res[1] = s.Pos.X - c.Pos.X;
+  res[2] = s.Pos.Y - c.Pos.Y;
+  res[3] = s.Pos.Z - c.Pos.Z;
+}
+
+bool IntersectCurveSurface(Curve *c, Surface *s, double x[])
+{
+  int check;
+  SURFACE = s;
+  CURVE = c;
+  newt(x, 3, &check, intersectCS);
+  if(check)
+    return false;
+  return true;
+}
+
+bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *point_ids)
+{
+  Surface *s = FindSurface(surface_id);
+  if(!s){
+    Msg(GERROR, "Unknown surface %d", surface_id);
+    return false;
+  }
+  for(int i = 0; i < List_Nbr(curve_ids); i++){
+    double curve_id;
+    List_Read(curve_ids, i, &curve_id);
+    Curve *c = FindCurve((int)curve_id);
+    if(!c){
+      Msg(GERROR, "Uknown curve %d", (int)curve_id);
+    }
+    else{
+      double x[4] = {0., 0.5, 0.5, 0.5};
+      if(IntersectCurveSurface(c, s, x)){
+	Vertex p = InterpolateCurve(c, x[3], 0);
+	Vertex *v = Create_Vertex(NEWPOINT(), p.Pos.X, p.Pos.Y, p.Pos.Z, p.lc, p.u);
+	Tree_Insert(THEM->Points, &v);
+	double num = v->Num;
+	List_Add(point_ids, &num);
+      }
+    }
+  }
 }
 
 // Bunch of utility routines
