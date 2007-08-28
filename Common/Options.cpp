@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.349 2007-08-17 17:51:26 geuzaine Exp $
+// $Id: Options.cpp,v 1.350 2007-08-28 08:38:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -6712,10 +6712,11 @@ double opt_view_point_type(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->PointType = (int)val;
+    if(v->PointType < 0 || v->PointType > 2) v->PointType = 0;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_choice[5]->value(v->PointType ? 1 : 0);
+    WID->view_choice[5]->value(v->PointType);
   }
 #endif
   return v->PointType;
@@ -6726,11 +6727,12 @@ double opt_view_line_type(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     v->LineType = (int)val;
+    if(v->LineType < 0 || v->LineType > 2) v->LineType = 0;
     v->Changed = 1;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_choice[6]->value(v->LineType ? 1 : 0);
+    WID->view_choice[6]->value(v->LineType);
   }
 #endif
   return v->LineType;

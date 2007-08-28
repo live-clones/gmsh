@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.122 2007-08-28 07:03:42 geuzaine Exp $
+// $Id: Post.cpp,v 1.123 2007-08-28 08:38:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -69,6 +69,20 @@ double normValue(int numComp, double val[9])
   else if(numComp == 9)
     return ComputeVonMises(val);
   return 0.;
+}
+
+SVector3 getPointNormal(PView *p, double v)
+{
+  PViewOptions *opt = p->getOptions();
+  SVector3 n(0., 0., 0.);
+  if(opt->PointType > 0){
+    // if we draw spheres, we'll use the normalized value (between 0
+    // and 1) stored in the first component of the normals to
+    // change the radius of the sphere
+    double d = opt->TmpMax - opt->TmpMin;
+    n[0] = (v - opt->TmpMin) / (d ? d : 1.);
+  }
+  return n;
 }
 
 void getLineNormal(PView *p, double x[2], double y[2], double z[2],
@@ -243,7 +257,8 @@ void addOutlinePoint(PView *p, double xyz[NMAX][3], unsigned int color,
 		     bool pre=false, int i0=0)
 {
   if(pre) return;
-  p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], 0, &color, 0, true);
+  SVector3 n = getPointNormal(p, 1.);
+  p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &color, 0, true);
 }
 
 void addScalarPoint(PView *p, double xyz[NMAX][3], double val[NMAX][9],
@@ -255,7 +270,8 @@ void addScalarPoint(PView *p, double xyz[NMAX][3], double val[NMAX][9],
   double vmin = opt->TmpMin, vmax = opt->TmpMax;
   if(opt->SaturateValues) saturate(1, val, vmin, vmax, i0);
   unsigned int col = opt->getColor(val[i0][0], vmin, vmax);
-  p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], 0, &col, 0, unique);
+  SVector3 n = getPointNormal(p, val[i0][0]);
+  p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &col, 0, unique);
 }
 
 void addOutlineLine(PView *p, double xyz[NMAX][3], unsigned int color,
@@ -346,7 +362,8 @@ void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9],
       int nb = IsoLine(x, y, z, v, iso, x2, y2, z2);
       if(nb == 1){
 	unsigned int color = opt->getColor(k, opt->NbIso);
-	p->va_points->add(x2, y2, z2, 0, &color, 0, unique);
+	SVector3 n = getPointNormal(p, iso);
+	p->va_points->add(x2, y2, z2, &n, &color, 0, unique);
       }
       if(vmin == vmax) break;
     }
@@ -916,7 +933,12 @@ void drawArrays(PView *p, VertexArray *va, GLint type, bool useNormalArray)
     for(int i = 0; i < va->getNumVertices(); i++){
       float *p = va->getVertexArray(3 * i);
       glColor4ubv((GLubyte *)va->getColorArray(4 * i));
-      Draw_Sphere(opt->PointSize, p[0], p[1], p[2], opt->Light);
+      double f = 1.;
+      if(opt->PointType == 2){
+	char *n = va->getNormalArray(3 * i);
+	f = char2float(*n);
+      }
+      Draw_Sphere(opt->PointSize * f, p[0], p[1], p[2], opt->Light);
     }
   }
   else if(type == GL_LINES && opt->LineType > 0){
@@ -925,14 +947,14 @@ void drawArrays(PView *p, VertexArray *va, GLint type, bool useNormalArray)
       float *p1 = va->getVertexArray(3 * (i + 1));
       double x[2] = {p0[0], p1[0]}, y[2] = {p0[1], p1[1]}, z[2] = {p0[2], p1[2]};
       glColor4ubv((GLubyte *)va->getColorArray(4 * i));
-      if(opt->LineType == 1)
-	Draw_Cylinder(opt->LineWidth, x, y, z, opt->Light);
-      else{
+      if(opt->LineType == 2){
 	char *n0 = va->getNormalArray(3 * i);
 	char *n1 = va->getNormalArray(3 * (i + 1));
 	double v0 = char2float(*n0), v1 = char2float(*n1);
 	Draw_TapCylinder(opt->LineWidth, v0, v1, 0., 1., x, y, z, opt->Light);
       }
+      else
+	Draw_Cylinder(opt->LineWidth, x, y, z, opt->Light);
     }
   }
   else{

@@ -818,7 +818,7 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "LineSelectWidth" , opt_geometry_line_sel_width , 2. , 
     "Display width of selected lines (in pixels)" },
   { F|O, "LineType" , opt_geometry_line_type , 0. , 
-    "Display lines as solid color segments (0) or 3D cylinders (1)" },
+    "Display lines as solid color segments (0), 3D cylinders (1) or tapered cylinders (2)" },
   { F|O, "LineWidth" , opt_geometry_line_width , 2. , 
     "Display width of lines (in pixels)" },
 
@@ -845,7 +845,7 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "PointSize" , opt_geometry_point_size , 4. , 
     "Display size of points (in pixels)" },
   { F|O, "PointType" , opt_geometry_point_type , 0. , 
-    "Display points as solid color dots (0) or 3D spheres (1)" },
+    "Display points as solid color dots (0), 3D spheres (1) or growing spheres (2)" },
 
   { F|O, "ScalingFactor" , opt_geometry_scaling_factor , 1.0 , 
     "Global geometry scaling factor" },

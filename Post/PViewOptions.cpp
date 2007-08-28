@@ -1,4 +1,4 @@
-// $Id: PViewOptions.cpp,v 1.8 2007-08-28 07:03:42 geuzaine Exp $
+// $Id: PViewOptions.cpp,v 1.9 2007-08-28 08:38:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -79,10 +79,10 @@ PViewOptions::PViewOptions()
   DrawStrings = DrawPoints = DrawLines = DrawTriangles = DrawQuadrangles =
     DrawTetrahedra = DrawHexahedra = DrawPrisms = DrawPyramids =
     DrawScalars = DrawVectors = DrawTensors = 1;
-  Boundary = 0;
+  Boundary = 1;
   PointType = LineType = 2;
   PointSize = 3;
-  LineWidth = 3;
+  LineWidth = 2;
   UseStipple = 0;
   ExternalViewIndex = ViewIndexForGenRaise = -1;
   UseGenRaise = 0;

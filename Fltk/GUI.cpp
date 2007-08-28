@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.632 2007-08-24 08:38:24 remacle Exp $
+// $Id: GUI.cpp,v 1.633 2007-08-28 08:38:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -343,32 +343,39 @@ static Fl_Menu_Item menu_point_display[] = {
   {0}
 };
 
+static Fl_Menu_Item menu_point_display_post[] = {
+  {"Color dot",      0, 0, 0},
+  {"3D sphere",      0, 0, 0},
+  {"Growing sphere", 0, 0, 0},
+  {0}
+};
+
 static Fl_Menu_Item menu_line_display[] = {
   {"Color segment", 0, 0, 0},
   {"3D cylinder",   0, 0, 0},
   {0}
 };
 
-static Fl_Menu_Item menu_line_display_postpro[] = {
-  {"Color segment", 0, 0, 0},
-  {"3D cylinder",   0, 0, 0},
-  {"Taper cylinder",   0, 0, 0},
+static Fl_Menu_Item menu_line_display_post[] = {
+  {"Color segment",    0, 0, 0},
+  {"3D cylinder",      0, 0, 0},
+  {"Tapered cylinder", 0, 0, 0},
   {0}
 };
 
 static Fl_Menu_Item menu_surface_display[] = {
   {"Wireframe", 0, 0, 0},
-  {"Solid",   0, 0, 0},
+  {"Solid",     0, 0, 0},
   {0}
 };
 
 static Fl_Menu_Item menu_axes_mode[] = {
-  {"None", 0, 0, 0},
+  {"None",        0, 0, 0},
   {"Simple axes", 0, 0, 0},
-  {"Box", 0, 0, 0},
-  {"Full grid", 0, 0, 0},
-  {"Open grid", 0, 0, 0},
-  {"Ruler", 0, 0, 0},
+  {"Box",         0, 0, 0},
+  {"Full grid",   0, 0, 0},
+  {"Open grid",   0, 0, 0},
+  {"Ruler",       0, 0, 0},
   {0}
 };
 
@@ -3230,7 +3237,7 @@ void GUI::create_option_window()
       view_value[12]->callback(view_options_ok_cb);
 
       view_choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Point display");
-      view_choice[5]->menu(menu_point_display);
+      view_choice[5]->menu(menu_point_display_post);
       view_choice[5]->align(FL_ALIGN_RIGHT);
       view_choice[5]->callback(view_options_ok_cb);
 
@@ -3242,7 +3249,7 @@ void GUI::create_option_window()
       view_value[61]->callback(view_options_ok_cb);
 
       view_choice[6] = new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display");
-      view_choice[6]->menu(menu_line_display_postpro);
+      view_choice[6]->menu(menu_line_display_post);
       view_choice[6]->align(FL_ALIGN_RIGHT);
       view_choice[6]->callback(view_options_ok_cb);
 
