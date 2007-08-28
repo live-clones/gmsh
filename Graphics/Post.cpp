@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.123 2007-08-28 08:38:47 geuzaine Exp $
+// $Id: Post.cpp,v 1.124 2007-08-28 22:54:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1301,9 +1301,16 @@ class drawPView {
     // glyphs in "pseudo" vertex arrays
     drawGlyphs(p);
 
+    // draw the 3D strings
     if(opt->DrawStrings){
       glColor4ubv((GLubyte *) & opt->color.text3d);
-      //Draw_Text2D3D(3, opt->TimeStep, data->NbT3, data->T3D, data->T3C);
+      for(int i = 0; i < data->getNumStrings3D(); i++){
+	double x, y, z, style;
+	std::string str;
+	data->getString3D(i, opt->TimeStep, str, x, y, z, style);
+	glRasterPos3d(x, y, z);
+	Draw_String((char*)str.c_str(), style);
+      }
     }
     
     if(CTX.alpha){

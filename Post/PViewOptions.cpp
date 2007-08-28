@@ -1,4 +1,4 @@
-// $Id: PViewOptions.cpp,v 1.9 2007-08-28 08:38:47 geuzaine Exp $
+// $Id: PViewOptions.cpp,v 1.10 2007-08-28 22:54:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -79,8 +79,8 @@ PViewOptions::PViewOptions()
   DrawStrings = DrawPoints = DrawLines = DrawTriangles = DrawQuadrangles =
     DrawTetrahedra = DrawHexahedra = DrawPrisms = DrawPyramids =
     DrawScalars = DrawVectors = DrawTensors = 1;
-  Boundary = 1;
-  PointType = LineType = 2;
+  Boundary = 0;
+  PointType = LineType = 0;
   PointSize = 3;
   LineWidth = 2;
   UseStipple = 0;
@@ -135,11 +135,12 @@ double PViewOptions::getScaleValue(int iso, int numIso, double min, double max)
   return 0.;
 }
 
-int PViewOptions::getScaleIndex(double val, int numIso, double min, double max)
+int PViewOptions::getScaleIndex(double val, int numIso, double min, double max,
+				bool forceLinear)
 {
   if(min == max) return numIso / 2;
 
-  if(ScaleType == Linear){
+  if(forceLinear || ScaleType == Linear){
     return (int)((val - min) * (numIso - 1) / (max - min));
   }
   else if(ScaleType == Logarithmic){
@@ -155,10 +156,11 @@ int PViewOptions::getScaleIndex(double val, int numIso, double min, double max)
 }
 
 // val in [min, max]
-unsigned int PViewOptions::getColor(double val, double min, double max)
+unsigned int PViewOptions::getColor(double val, double min, double max, 
+				    bool forceLinear)
 {
   if(CT.size == 1) return CT.table[0];
-  int index = getScaleIndex(val, CT.size, min, max);
+  int index = getScaleIndex(val, CT.size, min, max, forceLinear);
   return CT.table[index];
 }
 

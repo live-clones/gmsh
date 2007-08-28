@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.5 2007-08-27 13:46:22 geuzaine Exp $
+// $Id: PViewData.cpp,v 1.6 2007-08-28 22:54:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -320,4 +320,70 @@ int PViewDataList::getNumEdges(int ele)
 {
   if(ele != _lastElement) _setLast(ele);
   return _lastNumEdges;
+}
+
+void PViewDataList::_getString(int dim, int i, int timestep, std::string &str, 
+			       double &x, double &y, double &z, double &style)
+{
+  // 3D: T3D is a list of double: x,y,z,style,index,x,y,z,style,index,...
+  //     T3C is a list of chars: string\0,string\0,string\0,string\0,...
+  //     Parser format is: T3(x,y,z,style){"str","str",...};
+  // 2D: T2D is a list of double: x,y,style,index,x,y,style,index,...
+  //     T2C is a list of chars: string\0,string\0,string\0,string\0,...
+  //     Parser format is: T2(x,y,style){"str","str",...};
+
+  int nb = (dim == 2) ? NbT2 : NbT3;
+  List_T *td = (dim == 2) ? T2D : T3D;
+  List_T *tc = (dim == 2) ? T2C : T3C;
+  int nbd = (dim == 2) ? 4 : 5;
+
+  int index, nbchar;
+  double *d1 = (double *)List_Pointer(td, i * nbd);
+  double *d2 = (double *)List_Pointer_Test(td, (i + 1) * nbd);
+  if(dim == 2) {
+    x = d1[0];
+    y = d1[1];
+    z = 0.;
+    style = d1[2];
+    index = (int)d1[3];
+    if(d2)
+      nbchar = (int)d2[3] - index;
+    else
+      nbchar = List_Nbr(tc) - index;
+  }
+  else {
+    x = d1[0];
+    y = d1[1];
+    z = d1[2];
+    style = d1[3];
+    index = (int)d1[4];
+    if(d2)
+      nbchar = (int)d2[4] - index;
+    else
+      nbchar = List_Nbr(tc) - index;
+  }
+  
+  char *c = (char *)List_Pointer(tc, index);
+  int k = 0, l = 0;
+  while(k < nbchar && l != timestep) {
+    if(c[k++] == '\0')
+      l++;
+  }
+  if(k < nbchar && l == timestep)
+    str = std::string(&c[k]);
+  else
+    str = std::string(c);
+}
+
+void PViewDataList::getString2D(int i, int step, std::string &str, 
+				double &x, double &y, double &style)
+{
+  double z;
+  _getString(2, i, step, str, x, y, z, style);
+}
+
+void PViewDataList::getString3D(int i, int step, std::string &str, 
+				double &x, double &y, double &z, double &style)
+{
+  _getString(3, i, step, str, x, y, z, style);
 }

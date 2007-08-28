@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.58 2006-11-27 22:22:14 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.59 2007-08-28 22:54:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -526,12 +526,30 @@ void Draw_Text2D3D(int dim, int timestep, int nb, List_T * td, List_T * tc)
   }
 }
 
+#include "PView.h"
 
-void Draw_Text2D(void)
+void Draw_Text2D()
 {
+  for(unsigned int i = 0; i < PView::list.size(); i++){
+    PViewData *data = PView::list[i]->getData();
+    PViewOptions *opt = PView::list[i]->getOptions();
+    if(opt->Visible && opt->DrawStrings){
+      glColor4ubv((GLubyte *) & opt->color.text2d);
+      for(int j = 0; j < data->getNumStrings2D(); j++){
+	double x, y, style;
+	std::string str;
+	data->getString2D(j, opt->TimeStep, str, x, y, style);
+	Fix2DCoordinates(&x, &y);
+	glRasterPos2d(x, y);
+	Draw_String((char*)str.c_str(), style);
+      }
+    }
+  }
+
+  ///////// remove this ////////
+
   if(!CTX.post.list)
     return;
-
   for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
     Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, i);
     if(v->Visible && !v->Dirty && v->DrawStrings){

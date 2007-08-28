@@ -63,6 +63,12 @@ class PViewData {
   virtual int getNumComponents(int ele) = 0;
   virtual void getValue(int ele, int node, int comp, int step, double &val) = 0;
   virtual int getNumEdges(int ele) = 0;
+  virtual int getNumStrings2D(){ return 0; }
+  virtual int getNumStrings3D(){ return 0; }
+  virtual void getString2D(int i, int step, std::string &str, 
+			   double &x, double &y, double &style){}
+  virtual void getString3D(int i, int step, std::string &str, 
+			   double &x, double &y, double &z, double &style){}
   virtual bool read(std::string filename){}
 };
 
@@ -107,6 +113,8 @@ class PViewDataList : public PViewData {
   void _setLast(int ele);
   void _setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
 		List_T *list, int nblist);
+  void _getString(int dim, int i, int timestep, std::string &str, 
+		  double &x, double &y, double &z, double &style);
  public:
   PViewDataList(bool allocate=true);
   ~PViewDataList();
@@ -138,6 +146,12 @@ class PViewDataList : public PViewData {
   int getNumComponents(int ele);
   void getValue(int ele, int node, int comp, int step, double &val);
   int getNumEdges(int ele);
+  int getNumStrings2D(){ return NbT2; }
+  int getNumStrings3D(){ return NbT3; }
+  void getString2D(int i, int step, std::string &str, 
+		   double &x, double &y, double &style);
+  void getString3D(int i, int step, std::string &str, 
+		   double &x, double &y, double &z, double &style);
   bool read(std::string filename);
 };
 
