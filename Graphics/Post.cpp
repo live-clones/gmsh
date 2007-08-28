@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.121 2007-08-27 23:33:28 geuzaine Exp $
+// $Id: Post.cpp,v 1.122 2007-08-28 07:03:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -794,9 +794,7 @@ void addVectorElement(PView *p, int iele, int numNodes, int numEdges,
     for(int i = 0; i < numNodes; i++){
       double norm = normValue(3, val[i]);
       double norm2 = normValue(numComp2, val2[i]);
-      if(norm && opt->TmpMax && 
-	 norm2 >= opt->ExternalMin && 
-	 norm2 <= opt->ExternalMax){
+      if(norm2 >= opt->ExternalMin && norm2 <= opt->ExternalMax){
 	unsigned int color = opt->getColor(norm2, opt->ExternalMin, opt->ExternalMax);
 	unsigned int col[2] = {color, color};
 	double dxyz[3][2];
@@ -828,10 +826,9 @@ void addVectorElement(PView *p, int iele, int numNodes, int numEdges,
 
     // need epsilon since we compare computed results (the average)
     // instead of the raw data used to compute bounds
-    double eps = 1.e-15;
-    if(norm && opt->TmpMax &&
-       norm2 >= opt->ExternalMin * (1. - 1.e-15) &&
-       norm2 <= opt->ExternalMax * (1. + 1.e-15)){
+    const double eps = 1.e-15;
+    if(norm2 >= opt->ExternalMin * (1. - eps) &&
+       norm2 <= opt->ExternalMax * (1. + eps)){
       unsigned int color = opt->getColor(norm2, opt->ExternalMin, opt->ExternalMax);
       unsigned int col[2] = {color, color};
       double dxyz[3][2];
@@ -950,7 +947,6 @@ void drawArrays(PView *p, VertexArray *va, GLint type, bool useNormalArray)
     else
       glDisableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
-    Msg(DEBUG, "%d verts in varray", va->getNumVertices());
     glDrawArrays(type, 0, va->getNumVertices());
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
@@ -972,12 +968,14 @@ void drawVectorArray(PView *p, VertexArray *va)
     float *v = va->getVertexArray(3 * (i + 1));
     glColor4ubv((GLubyte *)va->getColorArray(4 * i));
     double norm = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-    double f = CTX.pixel_equiv_x / CTX.s[0] * opt->ArrowSize / 
-      (opt->ArrowSizeProportional ? opt->TmpMax : norm);
-    Draw_Vector(opt->VectorType, opt->IntervalsType != PViewOptions::Iso,
-		opt->ArrowRelHeadRadius, opt->ArrowRelStemLength,
-		opt->ArrowRelStemRadius, p[0], p[1], p[2],
-		v[0] * f, v[1] * f, v[2] * f, opt->Light);
+    if(norm && opt->TmpMax){
+      double f = CTX.pixel_equiv_x / CTX.s[0] * opt->ArrowSize / 
+	(opt->ArrowSizeProportional ? opt->TmpMax : norm);
+      Draw_Vector(opt->VectorType, opt->IntervalsType != PViewOptions::Iso,
+		  opt->ArrowRelHeadRadius, opt->ArrowRelStemLength,
+		  opt->ArrowRelStemRadius, p[0], p[1], p[2],
+		  v[0] * f, v[1] * f, v[2] * f, opt->Light);
+    }
   }
 }
 
@@ -1041,9 +1039,8 @@ void drawNormalVectorGlyphs(PView *p, int numNodes, double xyz[NMAX][3],
 
   SVector3 n = normal3(xyz);
   n.normalize();
-  n[0] *= opt->Normals * CTX.pixel_equiv_x / CTX.s[0];
-  n[1] *= opt->Normals * CTX.pixel_equiv_x / CTX.s[1];
-  n[2] *= opt->Normals * CTX.pixel_equiv_x / CTX.s[2];
+  for(int i = 0; i < 3; i++)
+    n[i] *= opt->Normals * CTX.pixel_equiv_x / CTX.s[i];
   glColor4ubv((GLubyte *) & opt->color.normals);
   Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 	      CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
@@ -1060,9 +1057,8 @@ void drawTangentVectorGlyphs(PView *p, int numNodes, double xyz[NMAX][3],
   SVector3 pc = 0.5 * (p0 + p1);
   SVector3 t(p0, p1);
   t.normalize();
-  t[0] *= opt->Tangents * CTX.pixel_equiv_x / CTX.s[0];
-  t[1] *= opt->Tangents * CTX.pixel_equiv_x / CTX.s[1];
-  t[2] *= opt->Tangents * CTX.pixel_equiv_x / CTX.s[2];
+  for(int i = 0; i < 3; i++)
+    t[i] *= opt->Tangents * CTX.pixel_equiv_x / CTX.s[i];
   glColor4ubv((GLubyte *) & opt->color.tangents);
   Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
 	      CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 

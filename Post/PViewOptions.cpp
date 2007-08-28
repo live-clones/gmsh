@@ -1,4 +1,4 @@
-// $Id: PViewOptions.cpp,v 1.7 2007-08-27 17:51:25 geuzaine Exp $
+// $Id: PViewOptions.cpp,v 1.8 2007-08-28 07:03:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -56,7 +56,7 @@ PViewOptions::PViewOptions()
   Tangents = 0.;
   Visible = 1;
   IntervalsType = Continuous;
-  IntervalsType = Discrete;
+  //IntervalsType = Discrete;
   IntervalsType = Iso;
   //IntervalsType = Numeric;
   NbIso = 15;
@@ -80,9 +80,9 @@ PViewOptions::PViewOptions()
     DrawTetrahedra = DrawHexahedra = DrawPrisms = DrawPyramids =
     DrawScalars = DrawVectors = DrawTensors = 1;
   Boundary = 0;
-  PointType = LineType = 0;
+  PointType = LineType = 2;
   PointSize = 3;
-  LineWidth = 1;
+  LineWidth = 3;
   UseStipple = 0;
   ExternalViewIndex = ViewIndexForGenRaise = -1;
   UseGenRaise = 0;
