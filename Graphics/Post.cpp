@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.124 2007-08-28 22:54:06 geuzaine Exp $
+// $Id: Post.cpp,v 1.125 2007-08-28 23:12:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -269,9 +269,11 @@ void addScalarPoint(PView *p, double xyz[NMAX][3], double val[NMAX][9],
   PViewOptions *opt = p->getOptions();
   double vmin = opt->TmpMin, vmax = opt->TmpMax;
   if(opt->SaturateValues) saturate(1, val, vmin, vmax, i0);
-  unsigned int col = opt->getColor(val[i0][0], vmin, vmax);
-  SVector3 n = getPointNormal(p, val[i0][0]);
-  p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &col, 0, unique);
+  if(val[i0][0] >= vmin && val[i0][0] <= vmax){
+    unsigned int col = opt->getColor(val[i0][0], vmin, vmax);
+    SVector3 n = getPointNormal(p, val[i0][0]);
+    p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &col, 0, unique);
+  }
 }
 
 void addOutlineLine(PView *p, double xyz[NMAX][3], unsigned int color,
@@ -313,7 +315,6 @@ void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9],
 
   SVector3 n[2];
   getLineNormal(p, x, y, z, v, n, true);
-
   double vmin = opt->TmpMin, vmax = opt->TmpMax;
 
   if(opt->SaturateValues) saturate(2, val, vmin, vmax, i0, i1);
@@ -1024,6 +1025,8 @@ void drawNumberGlyphs(PView *p, int numNodes, int numComp,
   PViewOptions *opt = p->getOptions();
   double d[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
 
+  double vmin = opt->TmpMin, vmax = opt->TmpMax;
+
   if(opt->GlyphLocation == PViewOptions::COG){
     SPoint3 pc(0., 0., 0.);
     for(int i = 0; i < numNodes; i++){
@@ -1033,18 +1036,22 @@ void drawNumberGlyphs(PView *p, int numNodes, int numComp,
     pc /= (double)numNodes;
     for(int j = 0; j < numComp; j++) d[j] /= (double)numNodes;
     double norm = normValue(numComp, d);
-    unsigned int col = opt->getColor(norm, opt->TmpMin, opt->TmpMax);
-    glColor4ubv((GLubyte *) & col);
-    glRasterPos3d(pc.x(), pc.y(), pc.z());
-    Draw_String((char*)stringValue(numComp, d, norm, opt->Format).c_str());
+    if(norm >= vmin && norm <= vmax){
+      unsigned int col = opt->getColor(norm, vmin, vmax);
+      glColor4ubv((GLubyte *) & col);
+      glRasterPos3d(pc.x(), pc.y(), pc.z());
+      Draw_String((char*)stringValue(numComp, d, norm, opt->Format).c_str());
+    }
   }
   else if(opt->GlyphLocation == PViewOptions::Vertex){
     for(int i = 0; i < numNodes; i++){
       double norm = normValue(numComp, val[i]);
-      unsigned int col = opt->getColor(norm, opt->TmpMin, opt->TmpMax);
-      glColor4ubv((GLubyte *) & col);
-      glRasterPos3d(xyz[i][0], xyz[i][1], xyz[i][2]);
-      Draw_String((char*)stringValue(numComp, val[i], norm, opt->Format).c_str());
+      if(norm >= vmin && norm <= vmax){
+	unsigned int col = opt->getColor(norm, vmin, vmax);
+	glColor4ubv((GLubyte *) & col);
+	glRasterPos3d(xyz[i][0], xyz[i][1], xyz[i][2]);
+	Draw_String((char*)stringValue(numComp, val[i], norm, opt->Format).c_str());
+      }
     }
   }
 }
