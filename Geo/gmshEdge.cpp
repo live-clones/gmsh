@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.36 2007-08-29 07:57:39 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.37 2007-08-29 14:18:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -227,7 +227,7 @@ SPoint2 gmshEdge::reparamOnFace(GFace *face, double epar,int dir) const
   }
   
   if(s->Typ ==  MSH_SURF_REGL){
-    Curve *C[4]; // BUG !!!!!!!!!!!!!!!!!!!!!
+    Curve *C[4];
     for(int i = 0; i < 4; i++)
       List_Read(s->Generatrices, i, &C[i]);
 
