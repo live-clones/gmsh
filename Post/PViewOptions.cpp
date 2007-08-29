@@ -1,4 +1,4 @@
-// $Id: PViewOptions.cpp,v 1.12 2007-08-29 14:18:25 geuzaine Exp $
+// $Id: PViewOptions.cpp,v 1.13 2007-08-29 18:41:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -57,7 +57,7 @@ PViewOptions::PViewOptions()
   Visible = 1;
   IntervalsType = Continuous;
   //IntervalsType = Discrete;
-  //IntervalsType = Iso;
+  IntervalsType = Iso;
   //IntervalsType = Numeric;
   NbIso = 15;
   ArrowSizeProportional = 1;

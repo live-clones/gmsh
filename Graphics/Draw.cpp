@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.112 2007-08-25 10:58:34 geuzaine Exp $
+// $Id: Draw.cpp,v 1.113 2007-08-29 18:41:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -95,6 +95,10 @@ void Draw2d()
   glTranslated(0., 0., CTX.clip_factor > 1. ? 1./CTX.clip_factor : CTX.clip_factor);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
+
+  Draw_Graph2D_Old();
+  Draw_Text2D_Old();
+
   Draw_Graph2D();
   Draw_Text2D();
   Draw_OnScreenMessages();

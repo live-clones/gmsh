@@ -24,56 +24,44 @@
 #include "List.h"
 #include "SBoundingBox3d.h"
 
-class Post_View;
-
 #define GMSH_RENDER    1
 #define GMSH_SELECT    2
 #define GMSH_FEEDBACK  3
 
-void SetOpenglContext(void);
-void ClearOpengl(void);
+void SetOpenglContext();
+void ClearOpengl();
 
 void InitProjection(int xpick=0, int ypick=0, int wpick=0, int hpick=0);
-void InitPosition(void);
-void InitRenderModel(void);
+void InitPosition();
+void InitRenderModel();
 
 void Unproject(double x, double y, double p[3], double d[3]);
 void Viewport2World(double win[3], double xyz[3]);
 void World2Viewport(double xyz[3], double win[3]);
 
-unsigned int PaletteContinuous(Post_View * View, double min, double max, double val);
-unsigned int PaletteContinuousLinear(Post_View * v, double min, double max, double val);
-unsigned int PaletteDiscrete(Post_View * View, int nbi, int i);
+int Fix2DCoordinates(double *x, double *y);
 
-void Draw3d(void);
-void Draw2d(void);
-void DrawPlugin(void (*draw)(void));
-void Draw(void);
+void Draw3d();
+void Draw2d();
+void DrawPlugin(void (*draw)());
+void Draw();
 
 void Draw_String(char *s);
 void Draw_String(char *s, double style);
 void Draw_String_Center(char *s);
 void Draw_String_Right(char *s);
-void Draw_Geom(void);
-void Draw_Mesh(void);
-void Draw_Post_Old(void);
+void Draw_Geom();
+void Draw_Mesh();
 void Draw_Post();
-void Draw_Graph2D(void);
-void Draw_Text2D(void);
-void Draw_Text2D3D(int dim, int timestep, int nb, List_T *td, List_T *tc);
-int Fix2DCoordinates(double *x, double *y);
-void Draw_OnScreenMessages(void);
-void Draw_Scales(void);
-void Draw_Disk(double size, double rint, double x, double y, double z, int light);
+void Draw_Graph2D();
+void Draw_Text2D();
+void Draw_OnScreenMessages();
+void Draw_Scales();
+
 void Draw_Sphere(double size, double x, double y, double z, int light);
 void Draw_Cylinder(double width, double *x, double *y, double *z, int light);
-void Draw_TapCylinder(double width, double val1, double val2, double ValMin, double ValMax, double *x, double *y, double *z, int light);
-void Draw_Point(int type, double size, double *x, double *y, double *z, 
-		int light);
-void Draw_Line(int type, double width, double *x, double *y, double *z,
-	       int light);
-void Draw_Triangle_Overlay(double r, double g, double b,
-			   double *v1, double *v2, double *v3);
+void Draw_TapCylinder(double width, double val1, double val2, double ValMin, 
+		      double ValMax, double *x, double *y, double *z, int light);
 void Draw_Vector(int Type, int Fill,
 		 double relHeadRadius, double relStemLength, double relStemRadius,
 		 double x, double y, double z, double dx, double dy, double dz,
@@ -88,6 +76,33 @@ void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
 	       double bbox[6]);
 void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
 	       SBoundingBox3d &bbox);
+
+
+
+
+
+// //////////////// FIXME remove everything below ////////////////////
+
+
+void Draw_Post_Old(void);
+
+void Draw_Graph2D_Old();
+void Draw_Text2D_Old();
+
+void Draw_Text2D3D(int dim, int timestep, int nb, List_T *td, List_T *tc);
+
+void Draw_Point(int type, double size, double *x, double *y, double *z, 
+		int light);
+void Draw_Line(int type, double width, double *x, double *y, double *z,
+	       int light);
+
+
+class Post_View;
+
+unsigned int PaletteContinuous(Post_View * View, double min, double max, double val);
+unsigned int PaletteContinuousLinear(Post_View * v, double min, double max, double val);
+unsigned int PaletteDiscrete(Post_View * View, int nbi, int i);
+
 
 #define ARGS Post_View *View, int preproNormals, \
              double ValMin, double ValMax, 	 \

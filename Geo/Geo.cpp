@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.93 2007-08-29 14:18:25 geuzaine Exp $
+// $Id: Geo.cpp,v 1.94 2007-08-29 18:41:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -56,9 +56,6 @@ void Mesh::free_all()
   Tree_Action(SurfaceLoops, Free_SurfaceLoop); Tree_Delete(SurfaceLoops);
   Tree_Action(Volumes, Free_Volume); Tree_Delete(Volumes);
   List_Action(PhysicalGroups, Free_PhysicalGroup); List_Delete(PhysicalGroups);
-  // don't delete the symbols: for now we assume that symbols live
-  // forever
-  // InitSymbols();
 }
 
 // Comparison routines

@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.75 2007-08-27 13:46:21 geuzaine Exp $
+// $Id: Entity.cpp,v 1.76 2007-08-29 18:41:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -64,29 +64,6 @@ void Draw_Sphere(double size, double x, double y, double z, int light)
   glDisable(GL_LIGHTING);
 }
 
-
-void Draw_Disk(double size, double rint, double x, double y, double z, int light)
-{
-  if(light) glEnable(GL_LIGHTING);
-  static GLUquadricObj *qua;
-  static int first = 1, listnum;
-  double s = size;
-  if(first) {
-    first = 0;
-    qua = gluNewQuadric();
-    listnum = glGenLists(1);
-    glNewList(listnum, GL_COMPILE);
-    gluDisk(qua, rint, 1, 2*CTX.quadric_subdivisions, 2*CTX.quadric_subdivisions);
-    glEndList();
-  }
-
-  glPushMatrix();
-  glTranslated(x, y, z);
-  glScaled(s, s, s);
-  glCallList(listnum);
-  glPopMatrix();
-  glDisable(GL_LIGHTING);
-}
 
 void Draw_TapCylinder(double width, double val1, double val2, 
 		      double ValMin, double ValMax, 
@@ -178,25 +155,6 @@ void Draw_Line(int type, double width, double *x, double *y, double *z,
     glVertex3d(x[1], y[1], z[1]);
     glEnd();
   }
-}
-
-void Draw_Triangle_Overlay(double r, double g, double b,
-			   double *v1, double *v2, double *v3)
-{
-  SetOpenglContext();
-  InitProjection();
-  InitPosition();
-  glDisable(GL_DEPTH_TEST);
-  glDrawBuffer(GL_FRONT);
-  glColor3f(r, g, b);
-  glBegin(GL_LINE_LOOP);
-  glVertex3dv(v1);
-  glVertex3dv(v2);
-  glVertex3dv(v3);
-  glEnd();
-  glFlush();
-  glDrawBuffer(GL_BACK);
-  glEnable(GL_DEPTH_TEST);
 }
 
 void Draw_SimpleVector(int arrow, int fill,

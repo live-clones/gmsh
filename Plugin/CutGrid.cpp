@@ -1,4 +1,4 @@
-// $Id: CutGrid.cpp,v 1.20 2007-05-04 10:45:08 geuzaine Exp $
+// $Id: CutGrid.cpp,v 1.21 2007-08-29 18:41:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -86,7 +86,7 @@ void GMSH_CutGridPlugin::draw()
     for(int i = 0; i < getNbU(); ++i){
       for(int j = 0; j < getNbV(); ++j){
 	getPoint(i, j, p);
-	Draw_Point(1, CTX.point_size, &p[0], &p[1], &p[2], 1);
+	Draw_Sphere(CTX.point_size, p[0], p[1], p[2], 1);
       }
     }
   }

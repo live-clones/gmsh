@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.19 2007-05-04 10:45:08 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.20 2007-08-29 18:41:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -142,7 +142,7 @@ void GMSH_CutParametricPlugin::draw()
   }
   else{
     for(unsigned int i = 0; i < x.size(); ++i)
-      Draw_Point(1, CTX.point_size, &x[i], &y[i], &z[i], 1);
+      Draw_Sphere(CTX.point_size, x[i], y[i], z[i], 1);
   }
 #endif
 }
