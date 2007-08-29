@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.27 2007-05-24 14:44:06 remacle Exp $
+// $Id: GeoInterpolation.cpp,v 1.28 2007-08-29 07:57:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -456,6 +456,7 @@ Vertex InterpolateRuledSurface(Surface * s, double u, double v)
   Vertex *c1, *c2;
   int issphere = 1;
   for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
+    if(i == 4) break; // we accept holes in ruled surfaces!
     List_Read(s->Generatrices, i, &C[i]);
     if(C[i]->Typ != MSH_SEGM_CIRC && C[i]->Typ != MSH_SEGM_CIRC_INV) {
       issphere = 0;
@@ -474,7 +475,7 @@ Vertex InterpolateRuledSurface(Surface * s, double u, double v)
 
   Vertex *S[4], V[4], T;
 
-  if(s->Typ == MSH_SURF_REGL){
+  if(s->Typ == MSH_SURF_REGL && List_Nbr(s->Generatrices) >= 4){
     S[0] = C[0]->beg;
     S[1] = C[1]->beg;
     S[2] = C[2]->beg;
@@ -484,8 +485,9 @@ Vertex InterpolateRuledSurface(Surface * s, double u, double v)
     V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
     V[3] = InterpolateCurve(C[3], C[3]->ubeg + (C[3]->uend - C[3]->ubeg) * (1. - v), 0);
     T = TransfiniteQua(V[0], V[1], V[2], V[3], *S[0], *S[1], *S[2], *S[3], u, v);
+    if(issphere) TransfiniteSph(*S[0], *c1, &T);
   }
-  else{
+  else if(List_Nbr(s->Generatrices) >= 3){
     S[0] = C[0]->beg;
     S[1] = C[1]->beg;
     S[2] = C[2]->beg;
@@ -493,9 +495,9 @@ Vertex InterpolateRuledSurface(Surface * s, double u, double v)
     V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
     V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1.-u), 0);
     T = TransfiniteTri(V[0], V[1], V[2], *S[0], *S[1], *S[2], u, v);
+    if(issphere) TransfiniteSph(*S[0], *c1, &T);
   }
 
-  if(issphere) TransfiniteSph(*S[0], *c1, &T);
   return T;
 }
 
