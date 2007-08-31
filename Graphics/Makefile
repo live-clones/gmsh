@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.123 2007-08-29 18:41:06 geuzaine Exp $
+# $Id: Makefile,v 1.124 2007-08-31 17:28:42 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -36,7 +36,7 @@ SRC = Draw.cpp \
       Iso.cpp \
       Entity.cpp \
       ReadImg.cpp \
-      Scale.cpp \
+      Scale_Old.cpp Scale.cpp \
       Graph2D_Old.cpp Graph2D.cpp \
       gl2ps.cpp\
       gl2gif.cpp\

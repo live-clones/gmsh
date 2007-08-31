@@ -84,6 +84,7 @@ void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
 // //////////////// FIXME remove everything below ////////////////////
 
 
+void Draw_Scales_Old();
 void Draw_Post_Old(void);
 
 void Draw_Graph2D_Old();
