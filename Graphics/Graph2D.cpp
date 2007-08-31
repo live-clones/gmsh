@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.61 2007-08-31 09:18:16 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.62 2007-08-31 16:55:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -367,9 +367,8 @@ void Draw_Graph2D()
   }
   if(graphs.empty()) return;
 
-  double xsep = 0., ysep = 5 * gl_height();
-
   gl_font(CTX.gl_font_enum, CTX.gl_fontsize);
+  double xsep = 0., ysep = 5 * gl_height();
   char label[1024];
   for(unsigned int i = 0; i < graphs.size(); i++) {
     PViewOptions *opt = graphs[i]->getOptions();
@@ -383,8 +382,8 @@ void Draw_Graph2D()
     if(!opt->AutoPosition) {
       double x = opt->Position[0], y = opt->Position[1];
       int center = Fix2DCoordinates(&x, &y);
-      drawGraph(p, x - (center & 1 ? opt->Size[0]/2. : 0), 
-		y + (center & 2 ? opt->Size[1]/2. : 0), 
+      drawGraph(p, x - (center & 1 ? opt->Size[0] / 2. : 0), 
+		y + (center & 2 ? opt->Size[1] / 2. : 0), 
 		opt->Size[0], opt->Size[1]);
     }
     else{
