@@ -81,6 +81,8 @@ class PView{
   static PView *current();
   PViewOptions *getOptions(){ return _options; }  
   PViewData *getData(){ return _data; }
+  std::string getName(){ return _name; }
+  void setName(std::string val){ _name = val; }
   int getIndex(){ return _index; }
   void setIndex(int val){ _index = val; }
   bool getChanged(){ return _changed; }

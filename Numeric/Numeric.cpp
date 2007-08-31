@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.32 2007-08-25 10:58:34 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.33 2007-08-31 09:18:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -493,6 +493,17 @@ double ComputeVonMises(double *V)
   return sqrt(1.5 * (v11 * v11 + v12 * v12 + v13 * v13 +
                      v21 * v21 + v22 * v22 + v23 * v23 +
                      v31 * v31 + v32 * v32 + v33 * v33));
+}
+
+double ComputeScalarRep(int numComp, double *val)
+{
+  if(numComp == 1)
+    return val[0];
+  else if(numComp == 3)
+    return sqrt(val[0] * val[0] + val[1] * val[1] + val[2] * val[2]);
+  else if(numComp == 9)
+    return ComputeVonMises(val);
+  return 0.;
 }
 
 void eigenvalue(double mat[3][3], double v[3])

@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.6 2007-08-28 22:54:06 geuzaine Exp $
+// $Id: PViewData.cpp,v 1.7 2007-08-31 09:18:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -131,6 +131,14 @@ void PViewDataList::finalize()
   }
   
   setDirty(false);
+}
+
+double PViewDataList::getTime(int step)
+{
+  if(step < 0 || step >= List_Nbr(Time)) return 0.;
+  double val;
+  List_Read(Time, step, &val);
+  return val;
 }
 
 double PViewDataList::getMin(int step)

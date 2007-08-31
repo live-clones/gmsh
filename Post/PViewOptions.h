@@ -89,7 +89,7 @@ class PViewOptions {
   int SaturateValues, FakeTransparency;
   int ShowElement, ShowTime, ShowScale;
   int ScaleType, RangeType;
-  int VectorType, TensorType, GlyphLocation;
+  int VectorType, TensorType, GlyphLocation, CenterGlyphs;
   int TimeStep;
   int DrawStrings;
   int DrawPoints, DrawLines, DrawTriangles, DrawQuadrangles;

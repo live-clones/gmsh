@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.125 2007-08-28 23:12:49 geuzaine Exp $
+// $Id: Post.cpp,v 1.126 2007-08-31 09:18:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -60,25 +60,14 @@ SVector3 normal3(double xyz[NMAX][3], int i0=0, int i1=1, int i2=2)
   return n;
 }
 
-double normValue(int numComp, double val[9])
-{
-  if(numComp == 1)
-    return val[0];
-  else if(numComp == 3)
-    return sqrt(val[0] * val[0] + val[1] * val[1] + val[2] * val[2]);
-  else if(numComp == 9)
-    return ComputeVonMises(val);
-  return 0.;
-}
-
 SVector3 getPointNormal(PView *p, double v)
 {
   PViewOptions *opt = p->getOptions();
   SVector3 n(0., 0., 0.);
   if(opt->PointType > 0){
-    // if we draw spheres, we'll use the normalized value (between 0
-    // and 1) stored in the first component of the normals to
-    // change the radius of the sphere
+    // when we draw spheres, we use the normalized value (between 0
+    // and 1) stored in the first component of the normal to modulate
+    // the radius
     double d = opt->TmpMax - opt->TmpMin;
     n[0] = (v - opt->TmpMin) / (d ? d : 1.);
   }
@@ -92,9 +81,9 @@ void getLineNormal(PView *p, double x[2], double y[2], double z[2],
 
   if(opt->LineType > 0){
     if(v){
-      // if we draw tapered cylinders, we'll use the normalized values
+      // when we draw tapered cylinders, we use the normalized values
       // (between 0 and 1) stored in the first component of the
-      // normals to modulate the width of the cylinder
+      // normals to modulate the width
       double d = opt->TmpMax - opt->TmpMin;
       n[0][0] = (v[0] - opt->TmpMin) / (d ? d : 1.);
       n[1][0] = (v[1] - opt->TmpMin) / (d ? d : 1.);
@@ -231,9 +220,9 @@ void changeCoordinates(PView *p, int iele, int numNodes, int numComp,
   
   if(opt->Raise[0] || opt->Raise[1] || opt->Raise[2]){
     for(int i = 0; i < numNodes; i++){
-      double norm = normValue(numComp, val[i]);
+      double v = ComputeScalarRep(numComp, val[i]);
       for(int j = 0; j < 3; j++)
-	xyz[i][j] += opt->Raise[j] * norm;
+	xyz[i][j] += opt->Raise[j] * v;
     }
   }
 
@@ -767,7 +756,7 @@ void addVectorElement(PView *p, int iele, int numNodes, int numEdges,
 
   if(opt->VectorType == PViewOptions::Displacement){
     for(int i = 0; i < numNodes; i++)
-      val2[i][0] = normValue(numComp2, val2[i]);
+      val2[i][0] = ComputeScalarRep(numComp2, val2[i]);
 
     // add scalar element with correct min/max
     double min = opt->TmpMin, max = opt->TmpMax;
@@ -810,10 +799,9 @@ void addVectorElement(PView *p, int iele, int numNodes, int numEdges,
 
   if(opt->GlyphLocation == PViewOptions::Vertex){
     for(int i = 0; i < numNodes; i++){
-      double norm = normValue(3, val[i]);
-      double norm2 = normValue(numComp2, val2[i]);
-      if(norm2 >= opt->ExternalMin && norm2 <= opt->ExternalMax){
-	unsigned int color = opt->getColor(norm2, opt->ExternalMin, opt->ExternalMax);
+      double v2 = ComputeScalarRep(numComp2, val2[i]);
+      if(v2 >= opt->ExternalMin && v2 <= opt->ExternalMax){
+	unsigned int color = opt->getColor(v2, opt->ExternalMin, opt->ExternalMax);
 	unsigned int col[2] = {color, color};
 	double dxyz[3][2];
 	for(int j = 0; j < 3; j++){
@@ -839,15 +827,12 @@ void addVectorElement(PView *p, int iele, int numNodes, int numEdges,
     for(int j = 0; j < 3; j++) d[j] /= (double)numNodes;
     for(int j = 0; j < numComp2; j++) d2[j] /= (double)numNodes;
 
-    double norm = normValue(3, d);
-    double norm2 = normValue(numComp2, d2);
-
-    // need epsilon since we compare computed results (the average)
+    // need tolerance since we compare computed results (the average)
     // instead of the raw data used to compute bounds
-    const double eps = 1.e-15;
-    if(norm2 >= opt->ExternalMin * (1. - eps) &&
-       norm2 <= opt->ExternalMax * (1. + eps)){
-      unsigned int color = opt->getColor(norm2, opt->ExternalMin, opt->ExternalMax);
+    double v2 = ComputeScalarRep(numComp2, d2);
+    if(v2 >= opt->ExternalMin * (1. - 1.e-15) &&
+       v2 <= opt->ExternalMax * (1. + 1.e-15)){
+      unsigned int color = opt->getColor(v2, opt->ExternalMin, opt->ExternalMax);
       unsigned int col[2] = {color, color};
       double dxyz[3][2];
       for(int i = 0; i < 3; i++){
@@ -912,12 +897,15 @@ void addElementsInArrays(PView *p, bool preprocessNormalsOnly=false)
 
     if(opt->ShowElement) 
       addOutlineElement(p, numEdges, xyz, preprocessNormalsOnly);
-    if(numComp == 1 && opt->DrawScalars)
-      addScalarElement(p, numEdges, xyz, val, preprocessNormalsOnly);
-    else if(numComp == 3 && opt->DrawVectors)
-      addVectorElement(p, i, numNodes, numEdges, xyz, val, preprocessNormalsOnly);
-    else if(numComp == 9 && opt->DrawTensors)
-      addTensorElement(p, numNodes, numEdges, xyz, val, preprocessNormalsOnly);
+
+    if(opt->IntervalsType != PViewOptions::Numeric){
+      if(numComp == 1 && opt->DrawScalars)
+	addScalarElement(p, numEdges, xyz, val, preprocessNormalsOnly);
+      else if(numComp == 3 && opt->DrawVectors)
+	addVectorElement(p, i, numNodes, numEdges, xyz, val, preprocessNormalsOnly);
+      else if(numComp == 9 && opt->DrawTensors)
+	addTensorElement(p, numNodes, numEdges, xyz, val, preprocessNormalsOnly);
+    }
   }
 }
 
@@ -994,10 +982,16 @@ void drawVectorArray(PView *p, VertexArray *va)
     if(norm && opt->TmpMax){
       double f = CTX.pixel_equiv_x / CTX.s[0] * opt->ArrowSize / 
 	(opt->ArrowSizeProportional ? opt->TmpMax : norm);
+      double dx = v[0] * f, dy = v[1] * f, dz = v[2] * f;
+      double x = p[0], y = p[1], z = p[2];
+      if(opt->CenterGlyphs){
+	x -= 0.5 * dx;
+	y -= 0.5 * dy;
+	z -= 0.5 * dz;
+      }
       Draw_Vector(opt->VectorType, opt->IntervalsType != PViewOptions::Iso,
 		  opt->ArrowRelHeadRadius, opt->ArrowRelStemLength,
-		  opt->ArrowRelStemRadius, p[0], p[1], p[2],
-		  v[0] * f, v[1] * f, v[2] * f, opt->Light);
+		  opt->ArrowRelStemRadius, x, y, z, dx, dy, dz, opt->Light);
     }
   }
 }
@@ -1035,22 +1029,30 @@ void drawNumberGlyphs(PView *p, int numNodes, int numComp,
     }
     pc /= (double)numNodes;
     for(int j = 0; j < numComp; j++) d[j] /= (double)numNodes;
-    double norm = normValue(numComp, d);
-    if(norm >= vmin && norm <= vmax){
-      unsigned int col = opt->getColor(norm, vmin, vmax);
+    double v = ComputeScalarRep(numComp, d);
+    if(v >= vmin && v <= vmax){
+      unsigned int col = opt->getColor(v, vmin, vmax);
       glColor4ubv((GLubyte *) & col);
       glRasterPos3d(pc.x(), pc.y(), pc.z());
-      Draw_String((char*)stringValue(numComp, d, norm, opt->Format).c_str());
+      char *txt = (char*)stringValue(numComp, d, v, opt->Format).c_str();
+      if(opt->CenterGlyphs)
+	Draw_String_Center(txt);
+      else
+	Draw_String(txt);
     }
   }
   else if(opt->GlyphLocation == PViewOptions::Vertex){
     for(int i = 0; i < numNodes; i++){
-      double norm = normValue(numComp, val[i]);
-      if(norm >= vmin && norm <= vmax){
-	unsigned int col = opt->getColor(norm, vmin, vmax);
+      double v = ComputeScalarRep(numComp, val[i]);
+      if(v >= vmin && v <= vmax){
+	unsigned int col = opt->getColor(v, vmin, vmax);
 	glColor4ubv((GLubyte *) & col);
 	glRasterPos3d(xyz[i][0], xyz[i][1], xyz[i][2]);
-	Draw_String((char*)stringValue(numComp, val[i], norm, opt->Format).c_str());
+	char *txt = (char*)stringValue(numComp, val[i], v, opt->Format).c_str();
+	if(opt->CenterGlyphs)
+	  Draw_String_Center(txt);
+	else
+	  Draw_String(txt);
       }
     }
   }
@@ -1198,7 +1200,9 @@ class initPView {
     PViewData *data = p->getData();
     PViewOptions *opt = p->getOptions();
 
-    if(!p->getChanged() || data->getDirty() || !opt->Visible) return;
+    if(data->getDirty() || !p->getChanged()) return;
+
+    if(!opt->Visible || opt->Type != PViewOptions::Plot3D) return;
 
     if(p->va_points) delete p->va_points;
     p->va_points = new VertexArray(1, estimateNumPoints(p));
@@ -1256,7 +1260,7 @@ class drawPView {
     PViewData *data = p->getData();
     PViewOptions *opt = p->getOptions();
     
-    if(!opt->Visible) return;
+    if(!opt->Visible || opt->Type != PViewOptions::Plot3D) return;
     
     glPointSize(opt->PointSize);
     gl2psPointSize(opt->PointSize * CTX.print.eps_point_size_factor);

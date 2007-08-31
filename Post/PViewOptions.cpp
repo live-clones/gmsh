@@ -1,4 +1,4 @@
-// $Id: PViewOptions.cpp,v 1.13 2007-08-29 18:41:06 geuzaine Exp $
+// $Id: PViewOptions.cpp,v 1.14 2007-08-31 09:18:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -32,7 +32,11 @@
 PViewOptions::PViewOptions()
 {
   // FIXME: remove this once Options.cpp uses PViewOptions!
-  Type = Plot3D;
+
+  //Type = Plot3D;
+  //Type = Plot2DTime;
+  Type = Plot2DSpace;
+
   AutoPosition = 1;
   strcpy(Format, "%g");
   Axes = 1;
@@ -57,7 +61,7 @@ PViewOptions::PViewOptions()
   Visible = 1;
   IntervalsType = Continuous;
   //IntervalsType = Discrete;
-  IntervalsType = Iso;
+  //IntervalsType = Iso;
   //IntervalsType = Numeric;
   NbIso = 15;
   ArrowSizeProportional = 1;
@@ -70,11 +74,12 @@ PViewOptions::PViewOptions()
   ShowElement = 0;
   ShowTime = ShowScale = 1;
   ScaleType = Linear;
-  //VectorType = Arrow3D;
-  VectorType = Segment;
+  VectorType = Arrow3D;
+  //VectorType = Segment;
   //VectorType = Displacement;
   TensorType = VonMises;
   GlyphLocation = COG;
+  CenterGlyphs = 0;
   TimeStep = 0;
   DrawStrings = DrawPoints = DrawLines = DrawTriangles = DrawQuadrangles =
     DrawTetrahedra = DrawHexahedra = DrawPrisms = DrawPyramids =
@@ -88,6 +93,7 @@ PViewOptions::PViewOptions()
   UseGenRaise = 0;
   GenRaiseFactor = 0.;
   RangeType = Default;
+  RangeType = PerTimeStep;
   //RangeType = Custom;
   CustomMin = 0;
   CustomMax = 1.;

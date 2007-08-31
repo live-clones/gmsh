@@ -41,6 +41,7 @@ class PViewData {
   virtual void setDirty(bool val){ _dirty = val; }
   virtual void finalize(){}
   virtual int getNumTimeSteps() = 0;
+  virtual double getTime(int step){ return 0.; }
   virtual double getMin(int step=-1) = 0;
   virtual double getMax(int step=-1) = 0;
   virtual SBoundingBox3d getBoundingBox() = 0;
@@ -120,6 +121,7 @@ class PViewDataList : public PViewData {
   ~PViewDataList();
   void finalize();
   int getNumTimeSteps(){ return NbTimeStep; }
+  double getTime(int step);
   double getMin(int step=-1);
   double getMax(int step=-1);
   SBoundingBox3d getBoundingBox(){ return BBox; }

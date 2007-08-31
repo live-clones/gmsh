@@ -91,6 +91,7 @@ double InterpolateIso(double *X, double *Y, double *Z,
 		      double *XI, double *YI ,double *ZI);
 void gradSimplex(double *x, double *y, double *z, double *v, double *grad);
 double ComputeVonMises(double *val);
+double ComputeScalarRep(int numComp, double *val);
 
 /* Numerical routines implemented using either Numerical Recipes or
    the GSL */
