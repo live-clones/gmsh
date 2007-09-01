@@ -1,4 +1,4 @@
-// $Id: PViewOptions.cpp,v 1.14 2007-08-31 09:18:16 geuzaine Exp $
+// $Id: PViewOptions.cpp,v 1.15 2007-09-01 14:27:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -31,11 +31,15 @@
 
 PViewOptions::PViewOptions()
 {
+  for(int i = 0; i < 3; i++) GenRaise_f[i] = 0;
+  ColorTable_InitParam(2, &CT);
+  ColorTable_Recompute(&CT);
+
   // FIXME: remove this once Options.cpp uses PViewOptions!
 
-  //Type = Plot3D;
+  Type = Plot3D;
   //Type = Plot2DTime;
-  Type = Plot2DSpace;
+  //Type = Plot2DSpace;
 
   AutoPosition = 1;
   strcpy(Format, "%g");
@@ -111,9 +115,6 @@ PViewOptions::PViewOptions()
   color.text2d = 0;
   color.text3d = 0;
   color.axes = 0;
-
-  ColorTable_InitParam(2, &CT);
-  ColorTable_Recompute(&CT);
 }
 
 PViewOptions::~PViewOptions()

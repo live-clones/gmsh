@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.7 2007-08-31 09:18:16 geuzaine Exp $
+// $Id: PViewData.cpp,v 1.8 2007-09-01 14:27:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,9 +24,13 @@
 
 #include "PViewData.h"
 #include "Numeric.h"
+#include "SmoothData.h"
+#include "Context.h"
+
+extern Context_T CTX;
 
 PViewDataList::PViewDataList(bool allocate)
-  : DataSize(sizeof(double)), NbTimeStep(0), 
+  : PViewData(), DataSize(sizeof(double)), NbTimeStep(0), 
     Min(VAL_INF), Max(-VAL_INF), Time(0),
     NbSP(0), SP(0), NbVP(0), VP(0), NbTP(0), TP(0),
     NbSL(0), SL(0), NbVL(0), VL(0), NbTL(0), TL(0),
@@ -129,6 +133,8 @@ void PViewDataList::finalize()
     for(int j = 0; j <= i; j++)
       _index[i] += nb[j];
   }
+
+  if(CTX.post.smooth) smooth();
   
   setDirty(false);
 }
@@ -203,7 +209,7 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod)
       NbTimeStep = N / (nbcomp * nbnod);
       TimeStepMin.clear();
       TimeStepMax.clear();
-      for(int j = 0; j < NbTimeStep; j++){	  
+      for(int j = 0; j < NbTimeStep; j++){
 	TimeStepMin.push_back(VAL_INF);
 	TimeStepMax.push_back(-VAL_INF);
       }
@@ -394,4 +400,87 @@ void PViewDataList::getString3D(int i, int step, std::string &str,
 				double &x, double &y, double &z, double &style)
 {
   _getString(3, i, step, str, x, y, z, style);
+}
+
+static void generateConnectivities(List_T *list, int nbList, 
+				   int nbTimeStep, int nbVert, 
+				   smooth_data &data)
+{
+  if(!nbList) return;
+  double *vals = new double[nbTimeStep];
+  int nb = List_Nbr(list) / nbList;
+  for(int i = 0; i < List_Nbr(list); i += nb) {
+    double *x = (double *)List_Pointer_Fast(list, i);
+    double *y = (double *)List_Pointer_Fast(list, i + nbVert);
+    double *z = (double *)List_Pointer_Fast(list, i + 2 * nbVert);
+    double *v = (double *)List_Pointer_Fast(list, i + 3 * nbVert);
+    for(int j = 0; j < nbVert; j++) {
+      for(int k = 0; k < nbTimeStep; k++)
+        vals[k] = v[j + k * nbVert];
+      data.add(x[j], y[j], z[j], nbTimeStep, vals);
+    }
+  }
+  delete [] vals;
+}
+
+static void smoothList(List_T *list, int nbList, double &min, double &max, 
+		       std::vector<double> &tsmin, std::vector<double> &tsmax, 
+		       int nbTimeStep, int nbVert, smooth_data &data)
+{
+  if(!nbList) return;
+  double *vals = new double[nbTimeStep];
+  int nb = List_Nbr(list)/nbList;
+  for(int i = 0; i < List_Nbr(list); i += nb) {
+    double *x = (double *)List_Pointer_Fast(list, i);
+    double *y = (double *)List_Pointer_Fast(list, i + nbVert);
+    double *z = (double *)List_Pointer_Fast(list, i + 2 * nbVert);
+    double *v = (double *)List_Pointer_Fast(list, i + 3 * nbVert);
+    for(int j = 0; j < nbVert; j++) {
+      if(data.get(x[j], y[j], z[j], nbTimeStep, vals)){
+	for(int k = 0; k < nbTimeStep; k++) {
+	  double dd = vals[k];
+          v[j + k * nbVert] = dd;
+	  min = std::min(min, dd);
+	  max = std::max(max, dd);
+          tsmin[k] = std::min(tsmin[k], dd);
+          tsmax[k] = std::max(tsmax[k], dd);
+        }
+      }
+    }
+  }
+  delete [] vals;
+}
+
+void PViewDataList::smooth()
+{
+  double old_eps = xyzv::eps;
+  xyzv::eps = CTX.lc * 1.e-8;
+  
+  if(NbSL || NbST || NbSQ || NbSS || NbSH || NbSI || NbSY) {
+    Min = VAL_INF;
+    Max = -VAL_INF;
+    TimeStepMin.clear();
+    TimeStepMax.clear();
+    for(int j = 0; j < NbTimeStep; j++){
+      TimeStepMin.push_back(VAL_INF);
+      TimeStepMax.push_back(-VAL_INF);
+    }
+    smooth_data data;
+    generateConnectivities(SL, NbSL, NbTimeStep, 2, data);
+    generateConnectivities(ST, NbST, NbTimeStep, 3, data);
+    generateConnectivities(SQ, NbSQ, NbTimeStep, 4, data);
+    generateConnectivities(SS, NbSS, NbTimeStep, 4, data);
+    generateConnectivities(SH, NbSH, NbTimeStep, 8, data);
+    generateConnectivities(SI, NbSI, NbTimeStep, 6, data);
+    generateConnectivities(SY, NbSY, NbTimeStep, 5, data);
+    smoothList(SL, NbSL, Min, Max, TimeStepMin, TimeStepMax, NbTimeStep, 2, data);
+    smoothList(ST, NbST, Min, Max, TimeStepMin, TimeStepMax, NbTimeStep, 3, data);
+    smoothList(SQ, NbSQ, Min, Max, TimeStepMin, TimeStepMax, NbTimeStep, 4, data);
+    smoothList(SS, NbSS, Min, Max, TimeStepMin, TimeStepMax, NbTimeStep, 4, data);
+    smoothList(SH, NbSH, Min, Max, TimeStepMin, TimeStepMax, NbTimeStep, 8, data);
+    smoothList(SI, NbSI, Min, Max, TimeStepMin, TimeStepMax, NbTimeStep, 6, data);
+    smoothList(SY, NbSY, Min, Max, TimeStepMin, TimeStepMax, NbTimeStep, 5, data);
+  }
+
+  xyzv::eps = old_eps;  
 }

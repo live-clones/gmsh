@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.158 2007-08-24 20:14:18 geuzaine Exp $
+# $Id: Makefile,v 1.159 2007-09-01 14:27:55 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -248,7 +248,7 @@ Geo.o: Geo.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   SPoint3.h SVector3.h SBoundingBox3d.h ExtrudeParams.h \
   ../Common/SmoothData.h GModel.h GVertex.h GEntity.h MVertex.h GPoint.h \
   GEdge.h MElement.h MEdge.h ../Common/Hash.h MFace.h ../Common/Context.h \
-  GFace.h GEdgeLoop.h GRegion.h GeoInterpolation.h
+  GFace.h GEdgeLoop.h GRegion.h GeoInterpolation.h ../Parser/Parser.h
 GeoStringInterface.o: GeoStringInterface.cpp ../Common/Gmsh.h \
   ../Common/Message.h ../DataStr/Malloc.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h \

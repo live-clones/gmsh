@@ -34,6 +34,8 @@ class PViewData {
  private:
   // flag to mark that the data is 'dirty' and should not be displayed
   bool _dirty;
+  // name of the file the data was loaded from
+  std::string _filename;
  public:
   PViewData() : _dirty(true) {}
   virtual ~PViewData(){}
@@ -154,6 +156,7 @@ class PViewDataList : public PViewData {
 		   double &x, double &y, double &style);
   void getString3D(int i, int step, std::string &str, 
 		   double &x, double &y, double &z, double &style);
+  void smooth();
   bool read(std::string filename);
 };
 

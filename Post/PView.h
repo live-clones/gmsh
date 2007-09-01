@@ -31,6 +31,7 @@
 // a post-processing view
 class PView{
  private:
+  static int _globalNum;
   // unique tag of the view
   int _num;
   // index of the view in the current view list
@@ -39,12 +40,10 @@ class PView{
   bool _changed;
   // flag to mark that the view is an alias of another view
   int _aliasOf;
-  // flag to mark that some other views link to this one
-  bool _links;
+  // reference counter mark that some other views link to this one
+  int _links;
   // name of the view
   std::string _name;
-  // name of the file the view was loaded from
-  std::string _filename;
   // eye position
   SPoint3 _eye;
   // the options
@@ -52,29 +51,11 @@ class PView{
   // the data
   PViewData *_data;
  public:
-  PView(bool allocate=true) :
-    _num(0), _index(0), _changed(true), _aliasOf(-1), 
-    _links(false), _name(""), _filename(""), _eye(0., 0., 0.),
-    _options(0), _data(0), va_points(0), va_lines(0), va_triangles(0),
-    va_vectors(0), normals(0), adaptive(0)
-  {
-    _data = new PViewDataList(allocate);
-    _options = new PViewOptions;
-    list.push_back(this);
-    // reset indices
-    for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
-  }
-  ~PView()
-  {
-    if(_options) delete _options;
-    if(_data) delete _data;
-    if(va_points) delete va_points;
-    if(va_lines) delete va_lines;
-    if(va_triangles) delete va_triangles;
-    if(va_vectors) delete va_vectors;
-    if(normals) delete normals;
-    if(adaptive) delete adaptive;
-  }
+  // default constructor
+  PView(bool allocate=true);
+  // alias constructor
+  PView(PView *ref, bool copyOptions=true);
+  ~PView();
   // the static list of all loaded views
   static std::vector<PView*> list;
   // the current view
@@ -83,10 +64,13 @@ class PView{
   PViewData *getData(){ return _data; }
   std::string getName(){ return _name; }
   void setName(std::string val){ _name = val; }
+  int getNum(){ return _num; }
   int getIndex(){ return _index; }
   void setIndex(int val){ _index = val; }
   bool getChanged(){ return _changed; }
   void setChanged(bool val);
+  int& getLinks(){ return _links; }
+  int getAliasOf(){ return _aliasOf; }
   SPoint3 &getEye(){ return _eye; }
   void setEye(SPoint3 &p){ _eye = p; }
   void setGlobalResolutionLevel(int level)
@@ -104,7 +88,6 @@ class PView{
   smooth_normals *normals;
   // adaptative rendering for high-order datasets
   Adaptive_Post_View *adaptive;
-
 };
 
 #endif
