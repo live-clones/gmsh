@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.9 2007-09-01 16:05:43 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.1 2007-09-01 16:06:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,4 +22,4 @@
 // Contributor(s):
 // 
 
-#include "PViewData.h"
+#include "PViewDataGModel.h"

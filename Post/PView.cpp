@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.4 2007-09-01 14:27:55 geuzaine Exp $
+// $Id: PView.cpp,v 1.5 2007-09-01 16:05:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 // 
 
 #include "PView.h"
+#include "PViewDataList.h"
 #include "Message.h"
 
 int PView::_globalNum = 0;
