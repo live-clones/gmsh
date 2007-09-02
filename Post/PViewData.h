@@ -28,6 +28,8 @@ class PViewData {
  private:
   // flag to mark that the data is 'dirty' and should not be displayed
   bool _dirty;
+  // name of the view
+  std::string _name;
   // name of the file the data was loaded from
   std::string _filename;
  public:
@@ -35,8 +37,12 @@ class PViewData {
   virtual ~PViewData(){}
   virtual bool getDirty(){ return _dirty; }
   virtual void setDirty(bool val){ _dirty = val; }
-  virtual void finalize(){}
+  virtual void finalize(){ _dirty = false; }
   virtual int getNumTimeSteps() = 0;
+  virtual std::string getName(){ return _name; }
+  virtual void setName(std::string val){ _name = val; }
+  virtual std::string getFileName(){ return _filename; }
+  virtual void setFileName(std::string val){ _filename = val; }
   virtual double getTime(int step){ return 0.; }
   virtual double getMin(int step=-1) = 0;
   virtual double getMax(int step=-1) = 0;
@@ -66,7 +72,13 @@ class PViewData {
 			   double &x, double &y, double &style){}
   virtual void getString3D(int i, int step, std::string &str, 
 			   double &x, double &y, double &z, double &style){}
-  virtual bool read(std::string filename){}
+  virtual bool read(std::string name){ return false; }
+  virtual bool writePOS(std::string name, bool binary=false, bool parsed=true,
+			bool append=false){ return false; }
+  virtual bool writeSTL(std::string name){ return false; }
+  virtual bool writeTXT(std::string name){ return false; }
+  virtual bool writeMSH(std::string name){ return false; }
+
 };
 
 #endif

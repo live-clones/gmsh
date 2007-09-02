@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.63 2007-09-01 09:20:00 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.64 2007-09-02 21:05:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -149,16 +149,16 @@ static void drawGraphAxes(PView *p, double xleft, double ytop, double width,
     if((opt->ShowTime == 1 && nt > 1) || opt->ShowTime == 2){
       char tmp[256];
       sprintf(tmp, opt->Format, data->getTime(opt->TimeStep));
-      sprintf(label, "%s (%s)", p->getName().c_str(), tmp);
+      sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
     }
     else if((opt->ShowTime == 3 && nt > 1) || opt->ShowTime == 4){
-      sprintf(label, "%s (%d)", p->getName().c_str(), opt->TimeStep);
+      sprintf(label, "%s (%d)", data->getName().c_str(), opt->TimeStep);
     }
     else
-      sprintf(label, "%s", p->getName().c_str());
+      sprintf(label, "%s", data->getName().c_str());
   }
   else
-    sprintf(label, "%s", p->getName().c_str());
+    sprintf(label, "%s", data->getName().c_str());
   glRasterPos2d(xleft, ytop + font_h + tic);
   Draw_String_Center(label);
   

@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.1 2007-09-01 16:06:24 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.2 2007-09-02 21:05:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,3 +23,30 @@
 // 
 
 #include "PViewDataGModel.h"
+
+bool PViewDataGModel::read(std::string name)
+{
+  // model->read();
+}
+
+bool PViewDataGModel::writePOS(std::string name, bool binary, bool parsed,
+			       bool append)
+{
+  // model->writePOS()
+}
+
+bool PViewDataGModel::writeSTL(std::string name)
+{
+  // model->writeSTL()
+}
+
+bool PViewDataGModel::writeTXT(std::string name)
+{
+  // model->writeTXT()
+}
+
+bool PViewDataGModel::writeMSH(std::string name)
+{
+  // model->writeMSH()
+}
+

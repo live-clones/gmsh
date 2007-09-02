@@ -72,6 +72,7 @@ class PViewDataList : public PViewData {
 		List_T *list, int nblist);
   void _getString(int dim, int i, int timestep, std::string &str, 
 		  double &x, double &y, double &z, double &style);
+  void _splitCurvedElements();
  public:
   PViewDataList(bool allocate=true);
   ~PViewDataList();
@@ -111,7 +112,12 @@ class PViewDataList : public PViewData {
   void getString3D(int i, int step, std::string &str, 
 		   double &x, double &y, double &z, double &style);
   void smooth();
-  bool read(std::string filename);
+  bool read(std::string name);
+  bool writePOS(std::string name, bool binary=false, bool parsed=true,
+		bool append=false);
+  bool writeSTL(std::string name);
+  bool writeTXT(std::string name);
+  bool writeMSH(std::string name);
 };
 
 #endif

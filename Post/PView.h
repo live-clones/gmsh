@@ -42,8 +42,6 @@ class PView{
   int _aliasOf;
   // reference counter mark that some other views link to this one
   int _links;
-  // name of the view
-  std::string _name;
   // eye position
   SPoint3 _eye;
   // the options
@@ -62,8 +60,6 @@ class PView{
   static PView *current();
   PViewOptions *getOptions(){ return _options; }  
   PViewData *getData(){ return _data; }
-  std::string getName(){ return _name; }
-  void setName(std::string val){ _name = val; }
   int getNum(){ return _num; }
   int getIndex(){ return _index; }
   void setIndex(int val){ _index = val; }

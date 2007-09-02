@@ -44,6 +44,12 @@ class PViewDataGModel : public PViewData {
   int getNumComponents(int ele){ return 1; }
   void getValue(int ele, int node, int comp, int step, double &val){}
   int getNumEdges(int ele){ return 0; }
+  bool read(std::string name);
+  bool writePOS(std::string name, bool binary=false, bool parsed=true,
+		bool append=false);
+  bool writeSTL(std::string name);
+  bool writeTXT(std::string name);
+  bool writeMSH(std::string name);
 };
 
 #endif

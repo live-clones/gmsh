@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.66 2007-09-01 09:20:00 geuzaine Exp $
+// $Id: Scale.cpp,v 1.67 2007-09-02 21:05:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -180,13 +180,13 @@ static void drawScaleLabel(PView *p, double xmin, double ymin, double width,
   if((opt->ShowTime == 1 && nt > 1) || opt->ShowTime == 2){
     char tmp[256];
     sprintf(tmp, opt->Format, data->getTime(opt->TimeStep));
-    sprintf(label, "%s (%s)", p->getName().c_str(), tmp);
+    sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
   }
   else if((opt->ShowTime == 3 && nt > 1) || opt->ShowTime == 4){
-    sprintf(label, "%s (%d)", p->getName().c_str(), opt->TimeStep);
+    sprintf(label, "%s (%d)", data->getName().c_str(), opt->TimeStep);
   }
   else
-    sprintf(label, "%s", p->getName().c_str());
+    sprintf(label, "%s", data->getName().c_str());
  
   if(horizontal){
     glRasterPos2d(xmin + width / 2., ymin + height + tic + 1.4 * font_h);
@@ -306,10 +306,10 @@ void Draw_Scales()
       if(opt->ShowTime){
 	char tmp[256];
 	sprintf(tmp, opt->Format, data->getTime(opt->TimeStep));
-	sprintf(label, "%s (%s)", p->getName().c_str(), tmp);
+	sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
       }
       else
-	sprintf(label, "%s", p->getName().c_str());
+	sprintf(label, "%s", data->getName().c_str());
       width = std::max(width, gl_width(label));
       if(i % 2) width_total += std::max(bar_size + width, bar_size + width_prev);
     }

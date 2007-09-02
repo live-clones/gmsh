@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.1 2007-09-01 16:06:24 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.2 2007-09-02 21:05:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -101,9 +101,10 @@ void PViewDataList::finalize()
   _stat(T2D, T2C, 4); _stat(T3D, T3C, 5);
 
   // convert all "old-style" (non adaptive) 2nd order elements into
-  // linear elements *and* free all the data associated with the
-  // 2nd order elements
-  //FIXME:   _splitCurvedElements();
+  // linear elements *and* free all the data associated with the 2nd
+  // order elements (this is a temporary solution, until we use
+  // Adaptive_Views on all curved elements)
+  _splitCurvedElements();
 
   // compute min/max and other statistics for all element lists
   _stat(SP, 1, NbSP, 1); _stat(VP, 3, NbVP, 1); _stat(TP, 9, NbTP, 1);
@@ -400,6 +401,107 @@ void PViewDataList::getString3D(int i, int step, std::string &str,
 				double &x, double &y, double &z, double &style)
 {
   _getString(3, i, step, str, x, y, z, style);
+}
+
+static void splitCurvedElement(List_T **in, int *nbin, List_T *out, int *nbout, 
+			       int nodin, int nodout, int nbcomp, int nbsplit,
+			       int split[][8], int remove=1)
+{
+  if(*nbin){
+    int nb = List_Nbr(*in) / *nbin;
+    int nbstep = (nb - 3 * nodin) / (nodin * nbcomp); // we don't know this yet for the view
+    for(int i = 0; i < List_Nbr(*in); i += nb) {
+      double *coord = (double *)List_Pointer_Fast(*in, i);
+      double *val = (double *)List_Pointer_Fast(*in, i + 3 * nodin);
+      for(int j = 0; j < nbsplit; j++){
+	for(int k = 0; k < nodout; k++)
+	  List_Add(out, &coord[split[j][k]]);
+	for(int k = 0; k < nodout; k++)
+	  List_Add(out, &coord[nodin + split[j][k]]);
+	for(int k = 0; k < nodout; k++)
+	  List_Add(out, &coord[2 * nodin + split[j][k]]);
+	for(int ts = 0; ts < nbstep; ts++){
+	  for(int k = 0; k < nodout; k++){
+	    for(int l = 0; l < nbcomp; l++){
+	      List_Add(out, &val[nodin * nbcomp * ts + nbcomp * split[j][k] + l]);
+	    }
+	  }
+	}
+	(*nbout)++;
+      }
+    }
+  }
+
+  if(remove){
+    *nbin = 0;
+    List_Delete(*in);
+    *in = NULL;
+  }
+}
+
+void PViewDataList::_splitCurvedElements()
+{
+  int lin[2][8] = { // 2-split
+    {0,2}, {2,1}
+  };
+  splitCurvedElement(&SL2, &NbSL2, SL, &NbSL, 3,2, 1, 2, lin);
+  splitCurvedElement(&VL2, &NbVL2, VL, &NbVL, 3,2, 3, 2, lin);
+  splitCurvedElement(&TL2, &NbTL2, TL, &NbTL, 3,2, 9, 2, lin);
+
+  int tri[4][8] = { // 4-split
+    {0,3,5}, {1,4,3}, {2,5,4}, {3,4,5}
+  };
+  splitCurvedElement(&ST2, &NbST2, ST, &NbST, 6,3, 1, 4, tri);
+  splitCurvedElement(&VT2, &NbVT2, VT, &NbVT, 6,3, 3, 4, tri);
+  splitCurvedElement(&TT2, &NbTT2, TT, &NbTT, 6,3, 9, 4, tri);
+
+  int qua[4][8] = { // 4-split
+    {0,4,8,7}, {1,5,8,4}, {2,6,8,5}, {3,7,8,6}
+  };
+  splitCurvedElement(&SQ2, &NbSQ2, SQ, &NbSQ, 9,4, 1, 4, qua);
+  splitCurvedElement(&VQ2, &NbVQ2, VQ, &NbVQ, 9,4, 3, 4, qua);
+  splitCurvedElement(&TQ2, &NbTQ2, TQ, &NbTQ, 9,4, 9, 4, qua);
+
+  int tet[8][8] = { // 8-split
+    {0,4,6,7}, {1,5,4,9}, {2,6,5,8}, {3,9,7,8},
+    {4,6,7,8}, {4,6,5,8}, {4,5,9,8}, {4,7,9,8}
+  };
+  splitCurvedElement(&SS2, &NbSS2, SS, &NbSS, 10,4, 1, 8, tet);
+  splitCurvedElement(&VS2, &NbVS2, VS, &NbVS, 10,4, 3, 8, tet);
+  splitCurvedElement(&TS2, &NbTS2, TS, &NbTS, 10,4, 9, 8, tet);
+
+  int hex[8][8] = { // 8-split
+    {0,8,20,9, 10,21,26,22}, {8,1,11,20, 21,12,23,26},
+    {9,20,13,3, 22,26,24,15}, {20,11,2,13, 26,23,14,24},
+    {10,21,26,22, 4,16,25,17}, {21,12,23,26, 16,5,18,25},
+    {22,26,24,15, 17,25,19,7}, {26,23,14,24, 25,18,6,19}
+  };
+  splitCurvedElement(&SH2, &NbSH2, SH, &NbSH, 27,8, 1, 8, hex);
+  splitCurvedElement(&VH2, &NbVH2, VH, &NbVH, 27,8, 3, 8, hex);
+  splitCurvedElement(&TH2, &NbTH2, TH, &NbTH, 27,8, 9, 8, hex);
+
+  int pri[8][8] = { // 8-split
+    {0,6,7, 8,15,16}, {1,9,6, 10,17,15}, {2,7,9, 11,16,17}, {6,9,7, 15,17,16},
+    {8,15,16, 3,12,13}, {10,17,15, 4,14,12}, {11,16,17, 5,13,14}, {15,17,16, 12,14,13}
+  };
+  splitCurvedElement(&SI2, &NbSI2, SI, &NbSI, 18,6, 1, 8, pri);
+  splitCurvedElement(&VI2, &NbVI2, VI, &NbVI, 18,6, 3, 8, pri);
+  splitCurvedElement(&TI2, &NbTI2, TI, &NbTI, 18,6, 9, 8, pri);
+
+  int pyr[6][8] = { // 6 pyramids
+    {0,5,13,6, 7}, {5,1,8,13, 9}, {6,13,10,3, 12}, {13,8,2,10, 11},
+    {7,9,11,12, 4}, {7,12,11,9, 13}
+  };
+  splitCurvedElement(&SY2, &NbSY2, SY, &NbSY, 14,5, 1, 6, pyr, 0); // don't remove yet
+  splitCurvedElement(&VY2, &NbVY2, VY, &NbVY, 14,5, 3, 6, pyr, 0);
+  splitCurvedElement(&TY2, &NbTY2, TY, &NbTY, 14,5, 9, 6, pyr, 0);
+
+  int pyr2[4][8] = { // + 4 tets to fill the holes
+    {6,12,7,13}, {7,9,5,13}, {9,11,8,13}, {12,10,11,13}
+  };
+  splitCurvedElement(&SY2, &NbSY2, SS, &NbSS, 14,4, 1, 4, pyr2);
+  splitCurvedElement(&VY2, &NbVY2, VS, &NbVS, 14,4, 3, 4, pyr2);
+  splitCurvedElement(&TY2, &NbTY2, TS, &NbTS, 14,4, 9, 4, pyr2);
 }
 
 static void generateConnectivities(List_T *list, int nbList, 

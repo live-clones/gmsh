@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2007-09-01 16:05:43 geuzaine Exp $
+# $Id: Makefile,v 1.9 2007-09-02 21:05:20 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -73,7 +73,7 @@ PViewDataList.o: PViewDataList.cpp PViewDataList.h PViewData.h \
   ../Numeric/Numeric.h ../Common/SmoothData.h ../Common/Context.h
 PViewDataListIO.o: PViewDataListIO.cpp PViewDataList.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../DataStr/List.h \
-  ../Common/Message.h
+  ../Numeric/Numeric.h ../Common/Message.h ../Common/Context.h
 PViewDataGModel.o: PViewDataGModel.cpp PViewDataGModel.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h PViewDataList.h \
   ../DataStr/List.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \

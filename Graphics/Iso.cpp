@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.40 2007-08-27 13:46:21 geuzaine Exp $
+// $Id: Iso.cpp,v 1.41 2007-09-02 21:05:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -36,7 +36,7 @@ static void affect(double *xi, double *yi, double *zi, int i,
   zi[i] = zp[j];
 }
 
-// Draw an iso-point in a line
+// Compute an iso-point in a line
 
 int IsoLine(double *X, double *Y, double *Z, double *Val, double V,
 	    double *Xp, double *Yp, double *Zp)
@@ -75,6 +75,8 @@ int IsoTriangle(double *X, double *Y, double *Z, double *Val, double V,
   if(nb == 2) return 2;
   return 0;
 }
+
+// Compute an iso-polygon inside a tetrahedron
 
 int IsoSimplex(double *X, double *Y, double *Z, double *Val, double V,
 	       double *Xp, double *Yp, double *Zp, double n[3])
