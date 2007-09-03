@@ -59,6 +59,19 @@ class gmshVertex : public GVertex {
   {
     return v ? v->Pos.Z : mesh_vertices.size() ? mesh_vertices[0]->z() : 0.;
   }
+  virtual void setPosition(GPoint &p)
+  {
+    if(v){
+      v->Pos.X = p.x();
+      v->Pos.Y = p.y();
+      v->Pos.Z = p.z();
+    }
+    if(mesh_vertices.size()){
+      mesh_vertices[0]->x() = p.x();
+      mesh_vertices[0]->y() = p.y();
+      mesh_vertices[0]->z() = p.z();
+    }
+  }
   virtual GeomType geomType() const;
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return v; }

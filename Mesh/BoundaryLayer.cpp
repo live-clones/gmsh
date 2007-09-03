@@ -1,4 +1,4 @@
-// $Id: BoundaryLayer.cpp,v 1.2 2007-03-05 09:30:53 geuzaine Exp $
+// $Id: BoundaryLayer.cpp,v 1.3 2007-09-03 12:00:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,7 @@ static void addExtrudeNormals(std::vector<T*> &elements)
     }
   }
 }
-  
+
 int MeshBoundaryLayerFaces(GModel *m)
 {
   bool haveBoundaryLayers = false;
@@ -107,14 +107,10 @@ int MeshBoundaryLayerFaces(GModel *m)
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++){
     GVertex *gv = *it;
     if(gv->geomType() == GEntity::BoundaryLayerPoint){
-      double x = gv->x();
-      double y = gv->y();
-      double z = gv->z();
+      GPoint p = gv->point();
       myep->Extrude(myep->mesh.NbLayer - 1, myep->mesh.NbElmLayer[myep->mesh.NbLayer - 1],
-		    x, y, z);
-      gv->mesh_vertices[0]->x() = x;
-      gv->mesh_vertices[0]->y() = y;
-      gv->mesh_vertices[0]->z() = z;
+		    p.x(), p.y(), p.z());
+      gv->setPosition(p);
     }
   }
   

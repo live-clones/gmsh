@@ -38,6 +38,7 @@ class GVertex : public GEntity
   virtual double x() const = 0;
   virtual double y() const = 0;
   virtual double z() const = 0;
+  virtual void setPosition(GPoint &p);
   void addEdge(GEdge *e);
   void delEdge(GEdge *e);
   virtual int dim() const {return 0;}

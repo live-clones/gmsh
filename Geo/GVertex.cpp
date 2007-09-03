@@ -1,4 +1,4 @@
-// $Id: GVertex.cpp,v 1.12 2007-01-18 13:18:42 geuzaine Exp $
+// $Id: GVertex.cpp,v 1.13 2007-09-03 12:00:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,9 +19,10 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <algorithm>
 #include "GVertex.h"
 #include "GFace.h"
-#include <algorithm>
+#include "Message.h"
 
 GVertex::GVertex(GModel *m, int tag, double ms) : GEntity (m, tag), meshSize (ms) 
 {
@@ -31,6 +32,11 @@ GVertex::~GVertex()
 {
   for(unsigned int i = 0; i < mesh_vertices.size(); i++)
     delete mesh_vertices[i];
+}
+
+void GVertex::setPosition(GPoint &p)
+{
+  Msg(GERROR, "Cannot set position of this kind of vertex");
 }
 
 void GVertex::addEdge(GEdge *e)
