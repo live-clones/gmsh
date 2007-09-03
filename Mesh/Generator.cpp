@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.121 2007-08-21 19:05:40 geuzaine Exp $
+// $Id: Generator.cpp,v 1.122 2007-09-03 20:09:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -180,9 +180,8 @@ void GetStatistics(double stat[50], double quality[3][100])
 
 }
 
-bool TooManyElements(int dim)
+bool TooManyElements(GModel *m, int dim)
 {
-  GModel *m = GModel::current();
   if(CTX.expert_mode || !m->numVertex()) return false;
 
   // try to detect obvious mistakes in characteristic lenghts (one of
@@ -201,13 +200,12 @@ bool TooManyElements(int dim)
   return false;
 }
 
-void Mesh1D()
+void Mesh1D(GModel *m)
 {
-  if(TooManyElements(1)) return;
+  if(TooManyElements(m, 1)) return;
   Msg(STATUS1, "Meshing 1D...");
   double t1 = Cpu();
 
-  GModel *m = GModel::current();
   std::for_each(m->firstEdge(), m->lastEdge(), meshGEdge());
 
   double t2 = Cpu();
@@ -216,9 +214,9 @@ void Mesh1D()
   Msg(STATUS1, "Mesh");
 }
 
-void Mesh2D()
+void Mesh2D(GModel *m)
 {
-  if(TooManyElements(2)) return;
+  if(TooManyElements(m, 2)) return;
 
   if(CTX.mesh.algo2d == ALGO_2D_DELAUNAY && !CTX.expert_mode){
     if(!GetBinaryAnswer("The 2D Delaunay algorithm is still highly experimental\n"
@@ -232,13 +230,11 @@ void Mesh2D()
   Msg(STATUS1, "Meshing 2D...");
   double t1 = Cpu();
 
-  GModel *m = GModel::current();
-  std::for_each(m->firstFace(), m->lastFace(), meshGFace());  
-
-  // boundary layers are special: their definition (including vertices
-  // and curve meshes) relies on the surface mesh--and it is global
-  // since we use a smooth normal field
-  MeshBoundaryLayerFaces(m);
+  // boundary layers are special: their generation (including vertices
+  // and curve meshes) is global as it depends on a smooth normal
+  // field generated from the surface mesh of the source surfaces
+  if(!Mesh2DWithBoundaryLayers(m))
+    std::for_each(m->firstFace(), m->lastFace(), meshGFace());  
 
   double t2 = Cpu();
   CTX.mesh_timer[1] = t2 - t1;
@@ -254,13 +250,11 @@ void FindConnectedRegions(std::vector<GRegion*> &delaunay,
   connected.push_back(delaunay);
 }
 
-void Mesh3D()
+void Mesh3D(GModel *m)
 {
-  if(TooManyElements(3)) return;
+  if(TooManyElements(m, 3)) return;
   Msg(STATUS1, "Meshing 3D...");
   double t1 = Cpu();
-
-  GModel *m = GModel::current();
 
   // mesh the extruded volumes first
   std::for_each(m->firstRegion(), m->lastRegion(), meshGRegionExtruded());
@@ -287,12 +281,11 @@ void Mesh3D()
   Msg(STATUS1, "Mesh");
 }
 
-void OptimizeMesh()
+void OptimizeMesh(GModel *m)
 {
   Msg(STATUS1, "Optimizing 3D...");
   double t1 = Cpu();
 
-  GModel *m = GModel::current();
   std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegion());
 
   double t2 = Cpu();
@@ -319,18 +312,18 @@ void GenerateMesh(int ask)
   if(ask == 1 || (ask > 1 && old < 1)) {
     std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
     std::for_each(m->firstFace(), m->lastFace(), deMeshGFace());
-    Mesh1D();
+    Mesh1D(m);
   }
 
   // 2D mesh
   if(ask == 2 || (ask > 2 && old < 2)) {
     std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
-    Mesh2D();
+    Mesh2D(m);
   }
 
   // 3D mesh
   if(ask == 3) {
-    Mesh3D();
+    Mesh3D(m);
   }
 
   // Orient the surface mesh so that it matches the geometry
@@ -339,7 +332,7 @@ void GenerateMesh(int ask)
   
   // Optimize quality
   if(m->getMeshStatus() == 3 && CTX.mesh.optimize)
-    OptimizeMesh();
+    OptimizeMesh(m);
   
   // Create high order elements
   if(m->getMeshStatus() && CTX.mesh.order > 1) 

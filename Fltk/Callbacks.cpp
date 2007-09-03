@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.539 2007-08-22 21:02:11 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.540 2007-09-03 20:09:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -480,20 +480,12 @@ void status_xyz1p_cb(CALLBACK_ARGS)
     WID->create_message_window();
   }
   else if(!strcmp(str, "S")){ // mouse selection
-    if(Fl::event_state(FL_SHIFT)){
-      // mouse hover and select for geometry and mesh
-      opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 2);
-    }
-    else if(CTX.enable_mouse_selection){
-      // mouse does nothing
+    if(CTX.mouse_selection){
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 0);
       WID->g_opengl_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
     }
-    else{
-      // mouse hover and select for geometry, but mouse select only
-      // for mesh (default, for performance reasons)
+    else
       opt_general_mouse_selection(0, GMSH_SET | GMSH_GUI, 1);
-    }
   }
   WID->update_manip_window();
 }
@@ -942,6 +934,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_axes_auto_position(0, GMSH_SET, WID->gen_butt[0]->value());
   opt_general_small_axes(0, GMSH_SET, WID->gen_butt[1]->value());
   opt_general_fast_redraw(0, GMSH_SET, WID->gen_butt[2]->value());
+  opt_general_mouse_hover_meshes(0, GMSH_SET, WID->gen_butt[11]->value());
   if(opt_general_double_buffer(0, GMSH_GET, 0) != WID->gen_butt[3]->value())
     opt_general_double_buffer(0, GMSH_SET, WID->gen_butt[3]->value());
   if(opt_general_antialiasing(0, GMSH_GET, 0) != WID->gen_butt[12]->value())
@@ -3904,7 +3897,7 @@ void mesh_optimize_cb(CALLBACK_ARGS)
     return;
   }
   CTX.threads_lock = 1;
-  OptimizeMesh();
+  OptimizeMesh(GModel::current());
   CTX.threads_lock = 0;
   CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
   Draw();

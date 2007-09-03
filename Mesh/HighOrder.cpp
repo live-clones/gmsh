@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.13 2007-04-26 09:47:38 remacle Exp $
+// $Id: HighOrder.cpp,v 1.14 2007-09-03 20:09:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -217,7 +217,9 @@ void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
       MVertex *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);            
       double u0 = 0., u1 = 0.;
       bool reparamOK = true;
-      if(c1 || (!linear && ge->geomType() != GEntity::DiscreteCurve)){
+      if(c1 || (!linear && 
+		ge->geomType() != GEntity::DiscreteCurve &&
+		ge->geomType() != GEntity::BoundaryLayerCurve)){
 	reparamOK &= reparamOnEdge(v0, ge, u0);
 	reparamOK &= reparamOnEdge(v1, ge, u1);
       }
@@ -279,7 +281,9 @@ void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
       MVertex *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);
       SPoint2 p0, p1;
       bool reparamOK = true;
-      if(!linear && gf->geomType() != GEntity::DiscreteSurface){
+      if(!linear && 
+	 gf->geomType() != GEntity::DiscreteSurface &&
+	 gf->geomType() != GEntity::BoundaryLayerSurface){
 	reparamOK &= reparamOnFace(v0, gf, p0);
 	reparamOK &= reparamOnFace(v1, gf, p1);
       }
@@ -352,7 +356,9 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
     else{
       SPoint2 p0, p1, p2, p3;
       bool reparamOK = true;
-      if(!linear && gf->geomType() != GEntity::DiscreteSurface){
+      if(!linear && 
+	 gf->geomType() != GEntity::DiscreteSurface &&
+	 gf->geomType() != GEntity::BoundaryLayerSurface){
 	reparamOK &= reparamOnFace(p[0], gf, p0);
 	reparamOK &= reparamOnFace(p[1], gf, p1);
 	reparamOK &= reparamOnFace(p[2], gf, p2);

@@ -671,8 +671,10 @@ StringXNumber GeneralOptions_Number[] = {
     "Minimum model coordinate along the Y-axis (read-only)" }, 
   { F,   "MinZ" , opt_general_zmin , 0. , 
     "Minimum model coordinate along the Z-axis (read-only)" }, 
+  { F|O, "MouseHoverMeshes" , opt_general_mouse_hover_meshes , 0. ,
+    "Enable mouse hover on meshes" },
   { F|O, "MouseSelection" , opt_general_mouse_selection , 1. ,
-    "Mouse hover and selection mode (0=none, 1=hover and select geometry but only select mesh, 2=hover and select geometry and mesh)" },
+    "Enable mouse selection" },
 
   { F|O, "NoPopup" , opt_general_nopopup , 0. , 
     "Disable interactive dialog windows in scripts (and use default values instead)" },

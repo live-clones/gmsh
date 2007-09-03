@@ -1,4 +1,4 @@
-// $Id: meshGEdgeExtruded.cpp,v 1.6 2007-01-16 11:31:41 geuzaine Exp $
+// $Id: meshGEdgeExtruded.cpp,v 1.7 2007-09-03 20:09:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

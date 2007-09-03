@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.350 2007-08-28 08:38:47 geuzaine Exp $
+// $Id: Options.cpp,v 1.351 2007-09-03 20:09:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2801,28 +2801,32 @@ double opt_general_orthographic(OPT_ARGS_NUM)
 double opt_general_mouse_selection(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.enable_mouse_selection = (int)val;
+    CTX.mouse_selection = (int)val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
-    switch(CTX.enable_mouse_selection){
-    case 1:
+    if(CTX.mouse_selection){
       if(!CTX.batch) Msg(STATUS2N, "Mouse selection ON");
       WID->g_status_butt[9]->color(FL_BACKGROUND_COLOR);
-      break;
-    case 2:
-      if(!CTX.batch) Msg(STATUS2N, "Mouse selection ON (with mesh hover)");
-      WID->g_status_butt[9]->color(FL_GREEN);
-      break;
-    case 0:
-    default:
+    }
+    else{
       if(!CTX.batch) Msg(STATUS2N, "Mouse selection OFF");
       WID->g_status_butt[9]->color(FL_RED);
-      break;
     }
     WID->g_status_butt[9]->redraw();
   }
 #endif
-  return CTX.enable_mouse_selection;
+  return CTX.mouse_selection;
+}
+
+double opt_general_mouse_hover_meshes(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mouse_hover_meshes = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->gen_butt[11]->value(CTX.mouse_hover_meshes);
+#endif
+  return CTX.mouse_hover_meshes;
 }
 
 double opt_general_fast_redraw(OPT_ARGS_NUM)

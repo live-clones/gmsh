@@ -20,8 +20,10 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+class GModel;
+
 void GetStatistics(double stat[50], double quality[3][100]=0);
 void GenerateMesh(int dimension);
-void OptimizeMesh();
+void OptimizeMesh(GModel *m);
 
 #endif

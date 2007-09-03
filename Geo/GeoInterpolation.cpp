@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.28 2007-08-29 07:57:39 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.29 2007-09-03 20:09:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -376,6 +376,14 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
     else
       return InterpolateCubicSpline(v, t, c->mat, 0, t1, t2);
 
+  case MSH_SEGM_BND_LAYER:
+    Msg(GERROR, "Cannot interpolate boundary layer curve");
+    return V;
+
+  case MSH_SEGM_DISCRETE:
+    Msg(GERROR, "Cannot interpolate discrete curve");
+    return V;
+
   default:
     Msg(GERROR, "Unknown curve type in interpolation");
     return V;
@@ -600,6 +608,18 @@ Vertex InterpolateSurface(Surface * s, double u, double v, int derivee, int u_v)
 	T.Pos.Z = 0.;
       return T;
     }
+  case MSH_SURF_BND_LAYER:
+    {
+      Msg(GERROR, "Cannot interpolate boundary layer surface");
+      Vertex T(0., 0., 0.);
+      return T;
+    }    
+  case MSH_SURF_DISCRETE:
+    {
+      Msg(GERROR, "Cannot interpolate discrete surface");
+      Vertex T(0., 0., 0.);
+      return T;
+    }    
   default:
     {
       Msg(GERROR, "Unknown surface type in interpolation");

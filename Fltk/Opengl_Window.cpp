@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.78 2006-12-17 22:23:16 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.79 2007-09-03 20:09:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -120,7 +120,7 @@ void Opengl_Window::draw()
     glLoadIdentity();
     glColor3d(1., 1., 1.);
     glDisable(GL_DEPTH_TEST);
-    if(SelectionMode && CTX.enable_mouse_selection){
+    if(SelectionMode && CTX.mouse_selection){
       glEnable(GL_LINE_STIPPLE);
       glLineStipple(1, 0x0F0F);
     }
@@ -139,7 +139,7 @@ void Opengl_Window::draw()
       if(!i) lasso.set();
     }
     glDisable(GL_BLEND);
-    if(SelectionMode && CTX.enable_mouse_selection)
+    if(SelectionMode && CTX.mouse_selection)
       glDisable(GL_LINE_STIPPLE);
     glEnable(GL_DEPTH_TEST);
   }
@@ -202,7 +202,7 @@ int Opengl_Window::handle(int event)
       }
       else if(LassoMode) {
         LassoMode = false;
-	if(SelectionMode && CTX.enable_mouse_selection){
+	if(SelectionMode && CTX.mouse_selection){
 	  WID->try_selection = 2; // will try to select multiple entities
 	  WID->try_selection_xywh[0] = (int)(click.win[0] + curr.win[0])/2;
 	  WID->try_selection_xywh[1] = (int)(click.win[1] + curr.win[1])/2;
@@ -213,7 +213,7 @@ int Opengl_Window::handle(int event)
 	  lasso_zoom(click, curr);
 	}
       }
-      else if(CTX.enable_mouse_selection){
+      else if(CTX.mouse_selection){
         WID->try_selection = 1; // will try to select clicked entity
 	WID->try_selection_xywh[0] = (int)curr.win[0];
 	WID->try_selection_xywh[1] = (int)curr.win[1];
@@ -231,7 +231,7 @@ int Opengl_Window::handle(int event)
       }
       else if(LassoMode) {
 	LassoMode = false;
-	if(SelectionMode && CTX.enable_mouse_selection){
+	if(SelectionMode && CTX.mouse_selection){
 	  WID->try_selection = -2; // will try to unselect multiple entities
 	  WID->try_selection_xywh[0] = (int)(click.win[0] + curr.win[0])/2;
 	  WID->try_selection_xywh[1] = (int)(click.win[1] + curr.win[1])/2;
@@ -242,7 +242,7 @@ int Opengl_Window::handle(int event)
 	  lasso_zoom(click, curr);
 	}
       }
-      else if(CTX.enable_mouse_selection){
+      else if(CTX.mouse_selection){
         WID->try_selection = -1; // will try to unselect clicked entity
 	WID->try_selection_xywh[0] = (int)curr.win[0];
 	WID->try_selection_xywh[1] = (int)curr.win[1];
@@ -388,12 +388,12 @@ int Opengl_Window::handle(int event)
 	std::vector<GFace*> faces;
 	std::vector<GRegion*> regions;
 	std::vector<MElement*> elements;
-	bool something = ProcessSelectionBuffer(WID->selection, false,
-						CTX.enable_mouse_selection > 1,
-						(int)curr.win[0], (int)curr.win[1], 5, 5, 
-						vertices, edges, faces, regions,
-						elements);
-	if((WID->selection == ENT_ALL && something) ||
+	bool res = ProcessSelectionBuffer(WID->selection, false, 
+					  CTX.mouse_hover_meshes, 
+					  (int)curr.win[0], (int)curr.win[1], 5, 5, 
+					  vertices, edges, faces, regions,
+					  elements);
+	if((WID->selection == ENT_ALL && res) ||
 	   (WID->selection == ENT_POINT && vertices.size()) ||
 	   (WID->selection == ENT_LINE && edges.size()) || 
 	   (WID->selection == ENT_SURFACE && faces.size()) ||

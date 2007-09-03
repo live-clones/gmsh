@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.138 2007-08-21 19:05:39 geuzaine Exp $
+// $Id: Geom.cpp,v 1.139 2007-09-03 20:09:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -308,13 +308,24 @@ class drawGFace {
       std::list<GEdge*> edges = f->edges();
       SBoundingBox3d bb;
       for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
-	Range<double> t_bounds = (*it)->parBounds(0);
-	GPoint p[3] = {(*it)->point(t_bounds.low()),
-		       (*it)->point(0.5 * (t_bounds.low() + t_bounds.high())),
-		       (*it)->point(t_bounds.high())};
-	for(int i = 0; i < 3; i++){
-	  SPoint2 uv = f->parFromPoint(SPoint3(p[i].x(), p[i].y(), p[i].z()));
-	  bb += SPoint3(uv.x(), uv.y(), 0.);
+	GEdge *ge = *it;
+	if(ge->geomType() == GEntity::DiscreteCurve || 
+	   ge->geomType() == GEntity::BoundaryLayerCurve){
+	  // don't try again
+	  f->cross.clear();
+	  f->cross.push_back(SPoint3(0., 0., 0.));
+	  CTX.threads_lock = 0;
+	  return;
+	}
+	else{
+	  Range<double> t_bounds = ge->parBounds(0);
+	  GPoint p[3] = {ge->point(t_bounds.low()),
+			 ge->point(0.5 * (t_bounds.low() + t_bounds.high())),
+			 ge->point(t_bounds.high())};
+	  for(int i = 0; i < 3; i++){
+	    SPoint2 uv = f->parFromPoint(SPoint3(p[i].x(), p[i].y(), p[i].z()));
+	    bb += SPoint3(uv.x(), uv.y(), 0.);
+	  }
 	}
       }
       bb *= 1.1;

@@ -1,4 +1,4 @@
-// $Id: BoundaryLayer.cpp,v 1.3 2007-09-03 12:00:28 geuzaine Exp $
+// $Id: BoundaryLayer.cpp,v 1.4 2007-09-03 20:09:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -46,74 +46,73 @@ static void addExtrudeNormals(std::vector<T*> &elements)
   }
 }
 
-int MeshBoundaryLayerFaces(GModel *m)
+int Mesh2DWithBoundaryLayers(GModel *m)
 {
-  bool haveBoundaryLayers = false;
+  ExtrudeParams *ep = 0;
+
+  std::set<GFace*> sourceFaces, otherFaces;
+  std::set<GEdge*> sourceEdges, otherEdges;
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
     GFace *gf = *it;
     if(gf->geomType() == GEntity::BoundaryLayerSurface){
-      haveBoundaryLayers = true;
-      break;
-    }
-  }
-  if(!haveBoundaryLayers) return 0;
-
-  // make sure the surface mesh is oriented correctly (normally we do
-  // this only after the 3D mesh is done; but here it's critical since
-  // we use the normals for the extrusion)
-  std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
-
-  // compute a normal field for the extrusion
-  if(ExtrudeParams::normals) delete ExtrudeParams::normals;
-  ExtrudeParams::normals = new smooth_data();
-  ExtrudeParams *myep = 0;
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
-    GFace *gf = *it;
-    if(gf->geomType() == GEntity::BoundaryLayerSurface){
-      ExtrudeParams *ep = myep = gf->meshAttributes.extrude;
+      ep = gf->meshAttributes.extrude;
       if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY){
-	if(ep->mesh.ViewIndex >= 0 && ep->mesh.ViewIndex < List_Nbr(CTX.post.list)){ 
-	  // use external vector point post-pro view to get normals
-	  // FIXME: should use an octree on a general view instead
-	  xyzv::eps = 1.e-4;
-	  Post_View *v = *(Post_View**)List_Pointer(CTX.post.list, ep->mesh.ViewIndex);
-	  if(v->NbVP){
-	    int nb = List_Nbr(v->VP) / v->NbVP;
-	    for(int i = 0; i < List_Nbr(v->VP); i += nb){
-	      double *data = (double*)List_Pointer_Fast(v->VP, i);
-	      ExtrudeParams::normals->add(data[0], data[1], data[2], 3, &data[3]);
-	    }
-	  }
+	GFace *from = m->faceByTag(std::abs(ep->geo.Source));
+	if(!from){
+	  Msg(GERROR, "Unknown source face %d for boundary layer", ep->geo.Source);
+	  return 0;
 	}
-	else{ 
-	  // compute smooth normal field from surfaces
-	  GFace *from = gf->model()->faceByTag(std::abs(ep->geo.Source));
-	  if(!from){
-	    Msg(GERROR, "Unknown source face %d for boundary layer", ep->geo.Source);
-	    continue;
-	  }
-	  addExtrudeNormals(from->triangles);
-	  addExtrudeNormals(from->quadrangles);
-	}
+	sourceFaces.insert(from);
+	std::list<GEdge*> e = from->edges();
+	sourceEdges.insert(e.begin(), e.end());
       }
     }
   }
-  ExtrudeParams::normals->normalize();
-  //ExtrudeParams::normals->exportview("normals.pos");
-  if(!myep) return 0;
+  if(sourceFaces.empty()) return 0;
 
-  // set the position of bounding points (FIXME: should check
-  // coherence of all extrude parameters)
+  // compute set of non-source edges and faces
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
+    if(sourceEdges.find(*it) == sourceEdges.end()) otherEdges.insert(*it);
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
+    if(sourceFaces.find(*it) == sourceFaces.end()) otherFaces.insert(*it);
+
+  // mesh source surfaces
+  std::for_each(sourceFaces.begin(), sourceFaces.end(), meshGFace());  
+  
+  // make sure the source surfaces for the boundary layers are
+  // oriented correctly (normally we do this only after the 3D mesh is
+  // done; but here it's critical since we use the normals for the
+  // extrusion)
+  std::for_each(sourceFaces.begin(), sourceFaces.end(), orientMeshGFace());
+
+  // compute a normal field for all the source faces
+  if(ExtrudeParams::normals) delete ExtrudeParams::normals;
+  ExtrudeParams::normals = new smooth_data();
+  for(std::set<GFace*>::iterator it = sourceFaces.begin(); 
+      it != sourceFaces.end(); it++){
+    GFace *gf = *it;
+    addExtrudeNormals(gf->triangles);
+    addExtrudeNormals(gf->quadrangles);
+  }
+  ExtrudeParams::normals->normalize();
+
+  // set the position of boundary layer points using the smooth normal
+  // field
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++){
     GVertex *gv = *it;
     if(gv->geomType() == GEntity::BoundaryLayerPoint){
       GPoint p = gv->point();
-      myep->Extrude(myep->mesh.NbLayer - 1, myep->mesh.NbElmLayer[myep->mesh.NbLayer - 1],
-		    p.x(), p.y(), p.z());
+      ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
+		  p.x(), p.y(), p.z());
       gv->setPosition(p);
     }
   }
-  
+
+  // remesh non-source edges (since they might have been modified by
+  // the change in boundary layer points)
+  std::for_each(otherFaces.begin(), otherFaces.end(), deMeshGFace());
+  std::for_each(otherEdges.begin(), otherEdges.end(), meshGEdge());
+
   // mesh the curves bounding the boundary layers by extrusion using
   // the smooth normal field
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
@@ -125,6 +124,9 @@ int MeshBoundaryLayerFaces(GModel *m)
       MeshExtrudedCurve(ge);
     }
   }
+
+  // mesh non-source surfaces
+  std::for_each(otherFaces.begin(), otherFaces.end(), meshGFace());  
 
   // mesh the surfaces bounding the boundary layers by extrusion using
   // the smooth normal field

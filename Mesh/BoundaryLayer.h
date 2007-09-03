@@ -22,6 +22,6 @@
 
 #include "GModel.h"
 
-int MeshBoundaryLayerFaces(GModel *m);
+int Mesh2DWithBoundaryLayers(GModel *m);
 
 #endif

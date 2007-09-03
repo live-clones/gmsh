@@ -136,7 +136,8 @@ public :
 
   int forced_bbox; // dynamic variable tracking if the bbox is currently imposed
 
-  int enable_mouse_selection; // enable selection using the mouse
+  int mouse_selection; // enable selection using the mouse
+  int mouse_hover_meshes; // enable mouse hover on meshes
   int pick_elements; // allow individual element picking
 
   int expert_mode; // to disable some warnings for beginners
@@ -178,7 +179,8 @@ public :
     int dual;
     int light, light_two_side, light_lines;
     int format, nb_smoothing, algo2d, algo3d, algo_recombine;
-    int order, second_order_linear, second_order_incomplete, smooth_internal_edges, c1_continuity;
+    int order, second_order_linear, second_order_incomplete;
+    int smooth_internal_edges, c1_continuity;
     int min_circ_points;
     int constrained_bgmesh, lc_from_curvature;
     double normals, tangents, explode;
