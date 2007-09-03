@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.5 2007-09-01 16:05:43 geuzaine Exp $
+// $Id: PView.cpp,v 1.6 2007-09-03 06:21:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -73,26 +73,28 @@ PView::~PView()
 
   std::vector<PView*>::iterator it = std::find(list.begin(), list.end(), this);
   if(it != list.end()) list.erase(it);
+  for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
 
   if(!_data || _links > 0) return;
 
   if(_aliasOf){
     for(unsigned int i = 0; i < list.size(); i++){
       if(list[i]->getNum() == _aliasOf){
-	// original data still exists so we can safely delete
-	delete _data;
+	// original data still exists, decrement ref counter
 	list[i]->getLinks()--;
 	return;
       }
     }
-    // original is gone
-    int numAliases = 0;
-    for(unsigned int i = 0; i < list.size(); i++)
-      if(list[i]->getAliasOf() == _aliasOf)
-	numAliases++;
-    if(numAliases == 1) // no others aliases so safe to delete
-      delete _data;
+    for(unsigned int i = 0; i < list.size(); i++){
+      if(list[i]->getAliasOf() == _aliasOf){
+	// original is gone, but other aliases exist
+	return;
+      }
+    }
   }
+
+  Msg(DEBUG, "Deleting data in ex-View[%d] (unique num = %d)", _index, _num);
+  delete _data;
 }
 
 void PView::setChanged(bool val)
