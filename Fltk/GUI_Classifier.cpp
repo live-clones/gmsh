@@ -166,6 +166,17 @@ void updateedges_cb(Fl_Widget* w, void* data)
 	break;
       e->temporary->lines.push_back(new MLine(ea.v1, ea.v2));            
     } 
+
+  if (e->_togbuttons[CLASSTOGBUTTON_CLOS]->value())
+    {
+      for ( int i=0 ; i<e->edges_lonly.size();i++)
+	{
+	  edge_angle ea =  e->edges_lonly[i];
+	  e->temporary->lines.push_back(new MLine(ea.v1, ea.v2));            
+	} 
+    }
+  
+
   CTX.mesh.changed = ENT_ALL;
   Draw();   
 }
@@ -244,6 +255,10 @@ classificationEditor::classificationEditor()
     _togbuttons[CLASSTOGBUTTON_HIDE] = 
       new Fl_Toggle_Button(3*WB+BB, 2*WB+1*BH, BB, BH, "Hide Unselected");
     _togbuttons[CLASSTOGBUTTON_HIDE]->callback(hide_cb,this);
+
+    _togbuttons[CLASSTOGBUTTON_CLOS] = 
+      new Fl_Toggle_Button(4*WB+2*BB, 2*WB+1*BH, BB, BH, "Include Closure");
+    _togbuttons[CLASSTOGBUTTON_CLOS]->callback(updateedges_cb,this);
     
     _inputs[CLASSVALUE_ANGLE] = 
       new Fl_Value_Input(2*WB, 3*WB+2*BH, BB, BH, "Treshold Angle");

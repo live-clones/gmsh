@@ -26,6 +26,7 @@ void class_color_cb(Fl_Widget *w, void *data);
 #define CLASSBUTTON_COLOR    5
 #define CLASSBUTTON_SELFAC   6
 #define CLASSTOGBUTTON_HIDE  0
+#define CLASSTOGBUTTON_CLOS  1
 #define CLASSVALUE_ANGLE     0
 
 class edge_angle
