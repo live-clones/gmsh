@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.160 2007-09-03 20:09:14 geuzaine Exp $
+# $Id: Makefile,v 1.161 2007-09-04 15:19:24 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -275,8 +275,14 @@ findLinks.o: findLinks.cpp ../Common/Gmsh.h ../Common/Message.h \
   MElement.h MEdge.h ../Common/Hash.h MFace.h ../Numeric/Numeric.h \
   ../Common/Context.h ExtrudeParams.h ../Common/SmoothData.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h
-MVertex.o: MVertex.cpp MVertex.h SPoint3.h
+MVertex.o: MVertex.cpp MVertex.h SPoint3.h GEdge.h GEntity.h Range.h \
+  SBoundingBox3d.h ../Common/GmshDefines.h GVertex.h GPoint.h SPoint2.h \
+  SVector3.h MElement.h MEdge.h ../Common/Hash.h MFace.h \
+  ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
+  ExtrudeParams.h ../Common/SmoothData.h GFace.h GEdgeLoop.h Pair.h
 MElement.o: MElement.cpp MElement.h ../Common/GmshDefines.h MVertex.h \
   SPoint3.h MEdge.h SVector3.h ../Common/Hash.h MFace.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h GEntity.h \
-  Range.h SBoundingBox3d.h ../Common/Message.h
+  Range.h SBoundingBox3d.h GFace.h GPoint.h GEdgeLoop.h GEdge.h GVertex.h \
+  SPoint2.h ExtrudeParams.h ../Common/SmoothData.h Pair.h \
+  ../Common/Message.h
