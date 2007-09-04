@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.20 2007-05-24 17:34:04 geuzaine Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.21 2007-09-04 13:47:02 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

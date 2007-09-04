@@ -1,4 +1,4 @@
-// $Id: GEdgeLoop.cpp,v 1.5 2007-01-19 15:34:05 geuzaine Exp $
+// $Id: GEdgeLoop.cpp,v 1.6 2007-09-04 13:47:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

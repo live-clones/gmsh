@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.39 2007-05-12 22:45:14 anand Exp $
+// $Id: meshGEdge.cpp,v 1.40 2007-09-04 13:47:02 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,116 @@
 #include "MRep.h"
 #include "BackgroundMesh.h"
 #include "Message.h"
+
+typedef struct{
+  int Num;
+  double t, lc, p;
+}IntPoint;
+
+
+struct xi2lc
+{
+  double xi,lc;
+  xi2lc (const double &_xi,const double _lc)
+    :xi(_xi),lc(_lc)
+  { }
+  bool operator < ( const xi2lc &other)
+  {
+    return xi < other.xi; 
+  }
+};
+
+std::vector<xi2lc> interpLc;
+
+void smoothInterpLc (bool periodic, int nbSmooth)
+{
+  if (periodic)
+    {
+      for (int i=0 ; i<interpLc.size()*nbSmooth; i++)
+	{	  	  
+	  xi2lc &left  = interpLc[(i-1)%interpLc.size()];
+	  xi2lc &mid   = interpLc[i%interpLc.size()];
+	  xi2lc &right = interpLc[(i+1)%interpLc.size()];
+
+	  if (1./mid.lc > 1.1 * 1./left.lc)mid.lc = left.lc/1.1;
+	  if (1./mid.lc > 1.1 * 1./right.lc)mid.lc = right.lc/1.1;
+	}
+    } 
+  else
+    {
+      for (int j=0 ; j<nbSmooth; j++)
+	{
+	  for (int i=0 ; i<interpLc.size(); i++)
+	    {	  	  
+	      xi2lc &left  = (i==0)?interpLc[0]:interpLc[i-1];
+	      xi2lc &mid   = interpLc[i];
+	      xi2lc &right = (i==interpLc.size()-1)?interpLc[interpLc.size()-1]:interpLc[i+1];
+	      
+	      if (1./mid.lc > 1.1 * 1./left.lc)mid.lc = left.lc/1.1;
+	      if (1./mid.lc > 1.1 * 1./right.lc)mid.lc = right.lc/1.1;
+	    }
+	} 
+    }
+}
+
+void printInterpLc (const char *name)
+{
+  FILE *f = fopen (name,"w");
+  for (int i=0 ; i<interpLc.size(); i++)
+    {	  	  
+      xi2lc &interp  = interpLc[i];
+      fprintf(f,"%12.5E %12.5E\n",interp.xi,1/interp.lc);
+    }
+  fclose(f);
+}
+
+void buildInterpLc (List_T *lcPoints)
+{
+  IntPoint p;
+  interpLc.clear();
+  for (int i=0;i<List_Nbr(lcPoints);i++)
+    {
+      List_Read(lcPoints, i, &p);
+      interpLc.push_back(xi2lc ( p.t,p.lc));
+    }
+  //  printf("interpLc with %d points\n",interpLc.size());
+}
+
+double F_Lc_usingInterpLc(GEdge *ge, double t)
+{
+  std::vector<xi2lc>::iterator it = std::lower_bound (interpLc.begin(),interpLc.end(),xi2lc(t,0));
+  double t1 = it->xi;
+  double l1 = it->lc;
+  it++;
+  SVector3 der = ge->firstDer(t);
+  const double d = norm(der);
+  if (it == interpLc.end())return d*l1;
+  double t2 = it->xi;
+  double l2 = it->lc;
+  double l  = l1 + ((t-t1)/(t2-t1)) * (l2-l1);
+  return d*l;
+}
+
+
+double F_Lc_usingInterpLcBis(GEdge *ge, double t)
+{
+  GPoint p = ge->point(t);
+  double lc_here;
+
+  Range<double> bounds = ge->parBounds(0);
+  double t_begin = bounds.low();
+  double t_end = bounds.high();
+
+  if(t == t_begin)
+    lc_here = BGM_MeshSize(ge->getBeginVertex(), t, 0, p.x(), p.y(), p.z());
+  else if(t == t_end)
+    lc_here = BGM_MeshSize(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
+  else
+    lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
+
+  return 1 / lc_here;
+}
+
 
 double F_Lc(GEdge *ge, double t)
 {
@@ -111,11 +221,6 @@ double F_One(GEdge *ge, double t)
   SVector3 der = ge->firstDer(t) ;
   return norm(der);
 }
-
-typedef struct{
-  int Num;
-  double t, lc, p;
-}IntPoint;
 
 double trapezoidal(IntPoint * P1, IntPoint * P2)
 {
@@ -204,6 +309,8 @@ void meshGEdge::operator() (GEdge *ge)
 
   // Create a list of integration points
   List_T *Points = List_Create(10, 10, sizeof(IntPoint));
+  // Create a list of points for interpolating the LC Field
+  List_T *lcPoints = List_Create(10, 10, sizeof(IntPoint));
 
   // compute bounds
   Range<double> bounds = ge->parBounds(0);
@@ -212,6 +319,9 @@ void meshGEdge::operator() (GEdge *ge)
   
   // first compute the length of the curve by integrating one
   double length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-8);
+
+  //  printf("%d points for the length\n",List_Nbr(Points));
+
   ge->setLength(length);
 
   List_Reset(Points);
@@ -224,7 +334,20 @@ void meshGEdge::operator() (GEdge *ge)
     N = ge->meshAttributes.nbPointsTransfinite;
   }
   else{
-    a = Integration(ge, t_begin, t_end, F_Lc, Points, 1.e-8);
+    if (CTX.mesh.lc_integration_precision > 1.e-8)
+      {
+	Integration(ge, t_begin, t_end, F_Lc_usingInterpLcBis, lcPoints, CTX.mesh.lc_integration_precision);
+	buildInterpLc (lcPoints);
+	printInterpLc ("toto1.dat");
+	smoothInterpLc (ge->periodic(),20);
+	printInterpLc ("toto2.dat");
+	a = Integration(ge, t_begin, t_end, F_Lc_usingInterpLc, Points, 1.e-8);
+	//	printf("%d points for LC , %d points for the distribution interpLc %d\n",List_Nbr(lcPoints),List_Nbr(Points),interpLc.size());
+      }
+    else
+      {
+	a = Integration(ge, t_begin, t_end, F_Lc, Points, 1.e-8);
+      }
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
 
@@ -251,6 +374,7 @@ void meshGEdge::operator() (GEdge *ge)
 
   // do not consider the first and the last vertex (those are not
   // classified on this mesh edge)
+
   if(N > 1){
     ge->mesh_vertices.resize(N - 2);
     GPoint last_p = beg_p;
@@ -261,9 +385,9 @@ void meshGEdge::operator() (GEdge *ge)
       if((fabs(P2.p) >= fabs(d)) && (fabs(P1.p) < fabs(d))) {
         double dt = P2.t - P1.t;
         double dp = P2.p - P1.p;
-        double t = P1.t + dt / dp * (d - P1.p);
+        double t  = P1.t + dt / dp * (d - P1.p);
         GPoint V = ge->point(t);
-	if(ge->meshAttributes.Method == TRANSFINI){
+	if(1 || ge->meshAttributes.Method == TRANSFINI){
 	  ge->mesh_vertices[NUMP2 - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t);
 	  NUMP2++;
 	}
@@ -285,6 +409,7 @@ void meshGEdge::operator() (GEdge *ge)
     ge->mesh_vertices.resize(NUMP2 - 1);
   }
   List_Delete(Points);
+  List_Delete(lcPoints);
 
   for(unsigned int i = 0; i < ge->mesh_vertices.size() + 1; i++){
     MVertex *v0 = (i == 0) ? 
@@ -301,4 +426,6 @@ void meshGEdge::operator() (GEdge *ge)
     v0->y() = beg_p.y();
     v0->z() = beg_p.z();
   }
+
+
 }

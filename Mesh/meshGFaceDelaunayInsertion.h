@@ -46,8 +46,6 @@ struct gmsh2dMetric
 class MTri3
 {
   bool deleted;
-  gmsh2dMetric metric;
-  double xc,yc;
   double circum_radius;
   MTriangle *base;
   MTri3 *neigh[3];
@@ -56,9 +54,8 @@ class MTri3
   bool isDeleted () const {return deleted;}
   void   forceRadius (double r){circum_radius=r;}
   double getRadius ()const {return circum_radius;}
-  inline void getCenter (double c[2]) const {c[0]=xc;c[1]=yc;}
   
-  MTri3 ( MTriangle * t, std::vector<gmsh2dMetric> & sizes);
+  MTri3 ( MTriangle * t, double lc);
   inline MTriangle * tri() const {return base;}
   inline void  setNeigh (int iN , MTri3 *n) {neigh[iN]=n;}
   inline MTri3 *getNeigh (int iN ) const {return neigh[iN];}
@@ -76,6 +73,7 @@ class MTri3
   void Center_Circum_Aniso(double a, double b, double d, double &x, double &y, double &r) const ;
 
   double getSurfaceXY () const { return base -> getSurfaceXY() ; };
+  double getSurfaceUV (GFace* gf) const { return base -> getSurfaceUV(gf) ; };
   inline void setDeleted (bool d)
   {
     deleted = d;
@@ -110,5 +108,29 @@ class compareTri3Ptr
       return a<b;
    }
 };
+
+
+struct edgeXface
+{
+  MVertex *v[2];
+  MTri3 * t1;
+  int i1;
+  edgeXface ( MTri3 *_t, int iFac)
+    : t1(_t),i1(iFac)
+  {
+    v[0] = t1->tri()->getVertex ( iFac == 0 ? 2 : iFac-1 );
+    v[1] = t1->tri()->getVertex ( iFac );
+    std::sort ( v, v+2 );
+  }
+  inline bool operator < ( const edgeXface & other) const
+  {
+    if (v[0] < other.v[0])return true;
+    if (v[0] > other.v[0])return false;
+    if (v[1] < other.v[1])return true;
+    return false;
+  }
+};
+
+
 
 #endif

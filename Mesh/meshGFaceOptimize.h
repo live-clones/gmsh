@@ -19,7 +19,16 @@
 // USA.
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
+#include "MElement.h"
+#include "MEdge.h"
+#include <map>
+#include <vector>
 class GFace;
+class MVertex;
+typedef std::map<MVertex*,std::vector<MTriangle*> > v2t_cont ;
+typedef std::map<MEdge, std::pair<MTriangle*,MTriangle*> , Less_Edge> e2t_cont ;
+void buildVertexToTriangle ( std::vector<MTriangle*> & ,  v2t_cont &adj );
+void buildEdgeToTriangle ( std::vector<MTriangle*> & ,  e2t_cont &adj );
 void laplaceSmoothing   (GFace *gf);
 void edgeSwappingLawson (GFace *gf);
 #endif

@@ -8,7 +8,7 @@
  * Started 10/19/95
  * George
  *
- * $Id: proto.h,v 1.2 2005-09-26 18:11:23 geuzaine Exp $
+ * $Id: proto.h,v 1.3 2007-09-04 13:47:06 remacle Exp $
  *
  */
 

@@ -159,7 +159,10 @@ public:
 
 class BDS_Point 
 {
-  double _lc;
+  // the first size is the one dictated by the Background Mesh
+  // the second one is dictated by charecteristic lengths at points
+  // and is propagated
+  double _lcBGM, _lcPTS;
 public:
   double X,Y,Z; // Real COORDINATES
   double u,v;   // Parametric COORDINATES
@@ -169,8 +172,8 @@ public:
   std::list<BDS_Edge*> edges;
 
   // just a transition
-  double & radius () {return _lc;}
-  double & lc     () {return _lc;}
+  double & lcBGM  () {return _lcBGM;}
+  double & lc     () {return _lcPTS;}
   
   inline bool operator < (const BDS_Point & other) const
   {
@@ -190,7 +193,7 @@ public:
   }
   void getTriangles(std::list<BDS_Face *> &t) const; 	
   BDS_Point(int id, double x=0, double y=0, double z=0)
-    : _lc(1.e22),X(x),Y(y),Z(z),u(0),v(0),config_modified(true),iD(id),g(0)
+    : _lcBGM(1.e22),_lcPTS(1.e22),X(x),Y(y),Z(z),u(0),v(0),config_modified(true),iD(id),g(0)
   {	    
   }
 };
@@ -380,6 +383,32 @@ class BDS_SwapEdgeTestDelaunay : public BDS_SwapEdgeTest
   virtual ~BDS_SwapEdgeTestDelaunay(){}
 };
 
+struct EdgeToRecover 
+{
+  int p1,p2;
+  GEdge *ge;
+  EdgeToRecover ( int  _p1 ,  int  _p2 , GEdge *_ge) : ge(_ge)
+  {
+    if (_p1 < _p2 )
+      {
+	p1 = _p1 ;
+	p2 = _p2 ;
+      }
+    else
+      {
+	p2 = _p1 ;
+	p1 = _p2 ;
+      }
+  }
+  bool operator < ( const EdgeToRecover & other) const
+  {    
+    if ( p1 < other.p1 ) return true;
+    if ( p1 > other.p1 ) return false;
+    if ( p2 < other.p2 ) return true;
+    return false;
+  }
+};
+
 class BDS_Mesh 
 {    
 public:
@@ -418,7 +447,7 @@ public:
   void add_geom(int degree, int tag);
   BDS_GeomEntity *get_geom(int p1, int p2);
   // 2D operators
-  BDS_Edge *recover_edge(int p1, int p2);
+  BDS_Edge *recover_edge(int p1, int p2, std::set<EdgeToRecover> *e2r=0);
   bool swap_edge(BDS_Edge *, const BDS_SwapEdgeTest &theTest);
   bool collapse_edge_parametric(BDS_Edge *, BDS_Point*);
   void snap_point(BDS_Point* , BDS_Mesh *geom = 0);

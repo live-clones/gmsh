@@ -1023,6 +1023,8 @@ StringXNumber MeshOptions_Number[] = {
     "Create incomplete second order elements? (8-node quads, 20-node hexas, etc.)" },
   { F|O, "SecondOrderLinear" , opt_mesh_second_order_linear , 0. ,
     "Should second order vertices simply be created by linear interpolation?" },
+  { F|O, "LcIntegrationPrecision" , opt_mesh_lc_integration_precision, 1.e-9 ,
+    "Accuracy of evaluation of the LC field for 1D mesh generation" },
   { F|O, "Smoothing" , opt_mesh_nb_smoothing , 1. ,
     "Number of smoothing steps applied to the final mesh" },
   { F|O, "SmoothNormals" , opt_mesh_smooth_normals , 0. , 

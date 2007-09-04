@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.540 2007-09-03 20:09:13 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.541 2007-09-04 13:47:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3903,6 +3903,7 @@ void mesh_optimize_cb(CALLBACK_ARGS)
   Draw();
   Msg(STATUS2N, " ");
 }
+
 
 void mesh_define_length_cb(CALLBACK_ARGS)
 {

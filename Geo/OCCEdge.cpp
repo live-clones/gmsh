@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.21 2007-02-27 17:15:47 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.22 2007-09-04 13:47:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

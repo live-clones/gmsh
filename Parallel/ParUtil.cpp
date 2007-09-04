@@ -1,4 +1,4 @@
-// $Id: ParUtil.cpp,v 1.17 2006-11-27 22:22:17 geuzaine Exp $
+// $Id: ParUtil.cpp,v 1.18 2007-09-04 13:47:03 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

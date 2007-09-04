@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.36 2007-07-26 13:10:48 geuzaine Exp $
+// $Id: MElement.cpp,v 1.37 2007-09-04 13:47:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,9 +22,11 @@
 #include <math.h>
 #include "MElement.h"
 #include "GEntity.h"
+#include "GFace.h"
 #include "Numeric.h"
 #include "Message.h"
 #include "Context.h"
+
 
 extern Context_T CTX;
 
@@ -342,6 +344,53 @@ bool MTriangle::invertmappingXY(double *p, double *uv, double tol)
   return false; 
 }
 
+
+bool MTriangle::invertmappingUV(GFace* gf, double *p, double *uv, double tol)
+{
+  double mat[2][2];
+  double b[2];
+
+  double u0,v0,u1,v1,u2,v2;
+
+  parametricCoordinates ( getVertex(0), gf, u0, v0);
+  parametricCoordinates ( getVertex(1), gf, u1, v1);
+  parametricCoordinates ( getVertex(2), gf, u2, v2);
+  
+  mat[0][0] = u1 - u0;
+  mat[0][1] = u2 - u0;
+  mat[1][0] = v1 - v0;
+  mat[1][1] = v2 - v0;
+
+  b[0] = p[0] - u0;
+  b[1] = p[1] - v0;
+  sys2x2(mat, b, uv);
+
+  if(uv[0] >= -tol && 
+     uv[1] >= -tol && 
+     uv[0] <= 1. + tol && 
+     uv[1] <= 1. + tol && 
+     1. - uv[0] - uv[1] > -tol) {
+    return true;
+  }
+  return false; 
+}
+
+
+double MTriangle::getSurfaceUV(GFace *gf)
+{
+  double u3,v3,u1,v1,u2,v2;
+
+  parametricCoordinates ( getVertex(0), gf, u1, v1);
+  parametricCoordinates ( getVertex(1), gf, u2, v2);
+  parametricCoordinates ( getVertex(2), gf, u3, v3);
+
+  const double vv1 [2] = {u2 - u1, v2 - v1};
+  const double vv2 [2] = {u3 - u1, v3 - v1};
+
+  double s = vv1[0] * vv2[1] - vv1[1] * vv2[0]; 
+  return s * 0.5;
+}
+
 double MTriangle::getSurfaceXY() const
 {
   const double x1 = _v[0]->x();
@@ -373,21 +422,40 @@ void MTriangle::circumcenterXYZ(double *p1, double *p2, double *p3,double *res)
 
   circumcenterXY(p1P, p2P, p3P,resP);
 
-//   double d1 = sqrt((p2P[0] - resP[0]) * (p2P[0] - resP[0]) +
-// 		   (p2P[1] - resP[1]) * (p2P[1] - resP[1]));
+//    double d1 = sqrt((p2P[0] - resP[0]) * (p2P[0] - resP[0]) +
+//  		   (p2P[1] - resP[1]) * (p2P[1] - resP[1]));
 
-//   double d2 = sqrt((p1P[0] - resP[0]) * (p1P[0] - resP[0]) +
-// 		   (p1P[1] - resP[1]) * (p1P[1] - resP[1])) ;
+//    double d2 = sqrt((p1P[0] - resP[0]) * (p1P[0] - resP[0]) +
+//  		   (p1P[1] - resP[1]) * (p1P[1] - resP[1])) ;
 
-//   double d3 = sqrt((p3P[0] - resP[0]) * (p3P[0] - resP[0]) +
-// 		   (p3P[1] - resP[1]) * (p3P[1] - resP[1]) );
+//    double d3 = sqrt((p3P[0] - resP[0]) * (p3P[0] - resP[0]) +
+//  		   (p3P[1] - resP[1]) * (p3P[1] - resP[1]) );
 
 
-  //  printf("%g %g - %g %g -- %g %g %g\n",p2P[0],p2P[1],p3P[0],p3P[1],d1,d2,d3);
-
+//   printf("%g %g - %g %g -- %g %g %g\n",p2P[0],p2P[1],p3P[0],p3P[1],d1,d2,d3);
+  
   res[0] = p1[0] + resP[0] * vx[0] + resP[1] * vy[0];
   res[1] = p1[1] + resP[0] * vx[1] + resP[1] * vy[1];
   res[2] = p1[2] + resP[0] * vx[2] + resP[1] * vy[2];
+  
+  return;
+
+  double d1 = sqrt((p1[0] - res[0]) * (p1[0] - res[0]) +
+  		   (p1[1] - res[1]) * (p1[1] - res[1]) +
+  		   (p1[2] - res[2]) * (p1[2] - res[2]) );
+  double d2 = sqrt((p2[0] - res[0]) * (p2[0] - res[0]) +
+  		   (p2[1] - res[1]) * (p2[1] - res[1]) +
+  		   (p2[2] - res[2]) * (p2[2] - res[2]) );
+  double d3 = sqrt((p3[0] - res[0]) * (p3[0] - res[0]) +
+  		   (p3[1] - res[1]) * (p3[1] - res[1]) +
+  		   (p3[2] - res[2]) * (p3[2] - res[2]) );
+  		   
+
+
+  printf("%g %g %g\n",d1,d2,d3);
+  
+
+
 }
 
 void MTriangle::circumcenterXY(double *p1, double *p2, double *p3, double *res)
@@ -413,6 +481,46 @@ void MTriangle::circumcenterXY(double *p1, double *p2, double *p3, double *res)
   a3 = x3 * x3 + y3 * y3;
   res[0] = (double)((a1 * (y3 - y2) + a2 * (y1 - y3) + a3 * (y2 - y1)) / d);
   res[1] = (double)((a1 * (x2 - x3) + a2 * (x3 - x1) + a3 * (x1 - x2)) / d);
+}
+
+
+void MTriangle::circumcenterUV(GFace *gf, double *res)
+{
+  double u3,v3,u1,v1,u2,v2;
+
+  parametricCoordinates ( getVertex(0), gf, u1, v1);
+  parametricCoordinates ( getVertex(1), gf, u2, v2);
+  parametricCoordinates ( getVertex(2), gf, u3, v3);
+
+//   Pair<SVector3,SVector3> der = gf->firstDer(SPoint2((u1+u2+u3)/3.,(v1+v2+v3)/3.)) ;
+//   const double a = dot(der.first() ,der.first() );
+//   const double b = dot(der.second(),der.first() );
+//   const double d = dot(der.second(),der.second()); 
+
+//   double sys[2][2];
+//   double rhs[2];
+
+//   sys[0][0] = 2. * a * (u1 - u2) + 2. * b * (v1 - v2);
+//   sys[0][1] = 2. * d * (v1 - v2) + 2. * b * (u1 - u2);
+//   sys[1][0] = 2. * a * (u1 - u3) + 2. * b * (v1 - v3);
+//   sys[1][1] = 2. * d * (v1 - v3) + 2. * b * (u1 - u3);
+
+//   rhs[0] =
+//     a * (u1 * u1 - u2 * u2) + d * (v1 * v1 - v2 * v2) + 2. * b * (u1 * v1 -
+//                                                                   u2 * v2);
+//   rhs[1] =
+//     a * (u1 * u1 - u3 * u3) + d * (v1 * v1 - v3 * v3) + 2. * b * (u1 * v1 -
+//                                                                   u3 * v3);
+//   sys2x2(sys, rhs, res);
+
+//   return;
+   double p1[2] ={u1,v1};
+   double p2[2] ={u2,v2};
+   double p3[2] ={u3,v3};
+  
+//   printf("%g %g vs ",res[0],res[1]);
+  circumcenterXY(p1,p2,p3,res);
+  //  printf("%g %g \n ",res[0],res[1]);
 }
 
 void MTriangle::circumcenterXY(double *res) const

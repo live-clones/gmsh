@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.17 2007-03-23 08:44:41 geuzaine Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.18 2007-09-04 13:47:02 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -137,14 +137,6 @@ bool insertVertex (MVertex *v ,
   std::list<MTet4*>  cavity; 
   std::list<MTet4*>  new_cavity;
 
-//   int NC = 0;
-//   {
-//     for (std::set<MTet4*,compareTet4Ptr>::iterator it = allTets.begin();it!=allTets.end();++it)
-//       {
-// 	if (!((*it)->isDeleted()) && (*it)->inCircumSphere ( v ))NC++;	
-//       }
-//   }
-
   recurFindCavity ( shell,  cavity, v , t);  
 
 //     Msg(INFO,"%d %d",cavity.size(),NC);
@@ -199,7 +191,6 @@ bool insertVertex (MVertex *v ,
   int k = 0;
 
   std::list<faceXtet>::iterator it =   shell.begin();
-
 
 
   while (it != shell.end())

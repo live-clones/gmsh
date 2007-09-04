@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.9 2007-01-16 11:31:41 geuzaine Exp $
+// $Id: DivideAndConquer.cpp,v 1.10 2007-09-04 13:47:02 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

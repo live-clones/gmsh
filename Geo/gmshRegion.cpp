@@ -1,4 +1,4 @@
-// $Id: gmshRegion.cpp,v 1.14 2007-02-12 08:36:11 geuzaine Exp $
+// $Id: gmshRegion.cpp,v 1.15 2007-09-04 13:47:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

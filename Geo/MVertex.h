@@ -25,6 +25,7 @@
 #include "SPoint3.h"
 
 class GEntity;
+class GFace;
 class MVertex;
 
 class MVertexLessThanLexicographic{
@@ -85,7 +86,7 @@ class MVertex{
   inline void setNum(int num) { _num = num; }
 
   // get/set ith parameter
-  virtual bool getParameter(int i, double &par){ return false; }
+  virtual bool getParameter(int i, double &par) const{ return false; }
   virtual bool setParameter(int i, double par){ return false; }
 
   // measure distance to another vertex
@@ -123,7 +124,7 @@ class MEdgeVertex : public MVertex{
   {
   }
   virtual ~MEdgeVertex(){}
-  virtual bool getParameter(int i, double &par){ par = _u; return true; }
+  virtual bool getParameter(int i, double &par) const{ par = _u; return true; }
   virtual bool setParameter(int i, double par){ _u = par; return true; }
 };
 
@@ -136,22 +137,10 @@ class MFaceVertex : public MVertex{
   {
   }
   virtual ~MFaceVertex(){}
-  virtual bool getParameter(int i, double &par){ par = (i ? _v : _u); return true; }
+  virtual bool getParameter(int i, double &par)const { par = (i ? _v : _u); return true; }
   virtual bool setParameter(int i, double par){ if(!i) _u = par; else _v = par; return true; }
 };
 
-template<class T>
-class MDataFaceVertex : public MFaceVertex{
- private:
-  T _data;
- public :
-  MDataFaceVertex(double x, double y, double z, GEntity *ge, double u, double v, T data) 
-    : MFaceVertex(x, y, z, ge, u, v), _data(data)
-  {
-  }
-  virtual ~MDataFaceVertex(){}
-  virtual bool getData(T &data){ data = _data; return true; }
-  virtual void *getData(){ return (void*)&_data; }
-};
+void parametricCoordinates ( const MVertex*ver, const GFace *gf, double &u, double &v);
 
 #endif

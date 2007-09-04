@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.22 2007-05-24 14:44:06 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.23 2007-09-04 13:47:02 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,7 @@ MinField lc_field;
 
 bool BGMExists() 
 {
-  return lc_field.empty();
+  return !lc_field.empty();
 }
 
 void BGMAddField(Field *field)
@@ -55,6 +55,22 @@ void BGMReset()
 // to have the geometry captured with accuracy. A parameter called
 // CTX.mesh.min_circ_points tells the minimum number of points per
 // radius of curvature
+
+static double max_edge_curvature(const GVertex *gv)
+{
+  double max_curvature = 0;
+  std::list<GEdge*> l_edges = gv->edges();
+  for (std::list<GEdge*>::const_iterator ite = l_edges.begin(); 
+       ite != l_edges.end(); ++ite){
+    GEdge *_myGEdge = *ite;
+    Range<double> range = _myGEdge->parBounds(0);      
+    double cc;
+    if (gv == _myGEdge->getBeginVertex())cc = _myGEdge->curvature (range.low());
+    else cc = _myGEdge->curvature (range.high());
+    max_curvature = std::max(max_curvature,cc);
+  }
+  return max_curvature;
+}
 
 static double max_surf_curvature(const GVertex *gv)
 {
@@ -100,20 +116,23 @@ double LC_MVertex_CURV(GEntity *ge, double U, double V)
   double Crv = 0;
   switch(ge->dim()){
   case 0:
-    Crv = max_surf_curvature ( (const GVertex *)ge);
+    Crv = max_edge_curvature ( (const GVertex *)ge);
+    Crv = std::max(max_surf_curvature ( (const GVertex *)ge),Crv);
+    //    printf("point %d coucou %g\n",ge->tag(),Crv);
     break;
   case 1:
     {
       GEdge *ged = (GEdge *)ge;
       Crv = ged->curvature(U);
       //      printf("coucou %12.5E %d\n",Crv,CTX.mesh.min_circ_points);
-      //Crv = max_surf_curvature(ged, U);
+      Crv = std::max(Crv,max_surf_curvature(ged, U));
+      
     }
     break;
   case 2:
     {
-      //      GFace *gf = (GFace *)ge;
-      //      Crv = gf->curvature(SPoint2(U, V));
+      GFace *gf = (GFace *)ge;
+      Crv = gf->curvature(SPoint2(U, V));
     }
     break;
   }
@@ -165,16 +184,17 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
   double l3 = CTX.lc;
   double l4 = lc_field.empty() ? MAX_LC : lc_field(X, Y, Z);
 
-  if(l4 < MAX_LC && !CTX.mesh.constrained_bgmesh)
-    return l4 * CTX.mesh.lc_factor;
+  if(CTX.mesh.lc_from_curvature && ge->dim() < 3)
+    l1 = LC_MVertex_CURV(ge, U, V);
+
+  if(l4 < MAX_LC && CTX.mesh.constrained_bgmesh)
+    return std::min(l4,l1) * CTX.mesh.lc_factor;
 
   if(ge->dim() < 2) 
     l2 = LC_MVertex_PNTS(ge, U, V);
 
-  if(CTX.mesh.lc_from_curvature && ge->dim() < 3)
-    l1 = LC_MVertex_CURV(ge, U, V);
   
-  //  printf("l1 = %12.5E l2 = %12.5E\n",l1,l2);
+  //  printf("l1 = %12.5E l2 = %12.5E l4 = %12.5E\n",l1,l2,l4);
 
   double lc = std::min(std::min(std::min(l1, l2), l3), l4);
   return lc * CTX.mesh.lc_factor;

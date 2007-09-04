@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.39 2006-11-27 22:22:08 geuzaine Exp $
+// $Id: List.cpp,v 1.40 2007-09-04 13:47:00 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

@@ -1,4 +1,4 @@
-// $Id: OS.cpp,v 1.8 2007-05-23 15:35:33 geuzaine Exp $
+// $Id: OS.cpp,v 1.9 2007-09-04 13:47:00 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

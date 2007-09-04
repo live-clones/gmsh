@@ -63,6 +63,7 @@ public:
   virtual SVector3 normal(const SPoint2 &param) const = 0;
   // Return the first derivate of the face at the parameter location.
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const = 0;
+  virtual double getMetricEigenvalue ( const SPoint2 &) {throw;}
 };
 
 class gmshSphere : public gmshSurface
@@ -136,6 +137,12 @@ public:
     // 2 be done
     throw;
   }  
+  virtual double getMetricEigenvalue ( const SPoint2 &p)
+  {
+    double l = (4*r*r)/(4*r*r+p.x()*p.x()+p.y()*p.y());
+    return l*l;
+  }
+
 };
 
 

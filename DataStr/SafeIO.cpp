@@ -1,4 +1,4 @@
-// $Id: SafeIO.cpp,v 1.9 2006-11-27 22:22:08 geuzaine Exp $
+// $Id: SafeIO.cpp,v 1.10 2007-09-04 13:47:00 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

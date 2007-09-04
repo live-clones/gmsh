@@ -105,6 +105,13 @@ class GFace : public GEntity
   virtual GPoint point(double par1, double par2) const = 0;
   virtual GPoint point(const SPoint2 &pt) const { return point(pt.x(), pt.y()); }
 
+  // If the mapping is a conforming mapping, i.e. a mapping that conserves angles,
+  // this function returns the eigenvalue of the metric at a given point
+  // this is a special feature for stereographic mappings of the sphere
+  // that is used in 2D mesh generation !
+
+  virtual double getMetricEigenvalue ( const SPoint2 &) {throw;}
+
   // Return the parmater location on the face given a point in space
   // that is on the face.
   virtual SPoint2 parFromPoint(const SPoint3 &) const;

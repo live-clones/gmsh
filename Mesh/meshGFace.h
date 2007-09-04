@@ -59,4 +59,5 @@ int MeshTransfiniteSurface(GFace *gf);
 int MeshExtrudedSurface(GFace *gf, 
 			std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges=0);
 
+void fourthPoint (double *p1, double *p2, double *p3, double *p4);
 #endif

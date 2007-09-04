@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# $Id: solver.pl,v 1.3 2006-02-23 21:59:09 geuzaine Exp $
+# $Id: solver.pl,v 1.4 2007-09-04 13:47:08 remacle Exp $
 #
 # Copyright (c) 2002 Laurent CHAMPANEY <laurent.champaney@meca.uvsq.fr>. 
 #

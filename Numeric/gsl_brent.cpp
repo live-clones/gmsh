@@ -1,4 +1,4 @@
-// $Id: gsl_brent.cpp,v 1.15 2006-11-27 22:22:17 geuzaine Exp $
+// $Id: gsl_brent.cpp,v 1.16 2007-09-04 13:47:03 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

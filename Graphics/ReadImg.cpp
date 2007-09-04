@@ -1,4 +1,4 @@
-// $Id: ReadImg.cpp,v 1.17 2006-11-27 22:22:16 geuzaine Exp $
+// $Id: ReadImg.cpp,v 1.18 2007-09-04 13:47:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

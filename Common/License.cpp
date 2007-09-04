@@ -1,4 +1,4 @@
-// $Id: License.cpp,v 1.9 2007-01-28 17:26:53 geuzaine Exp $
+// $Id: License.cpp,v 1.10 2007-09-04 13:47:00 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

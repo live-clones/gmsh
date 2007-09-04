@@ -1,4 +1,4 @@
-/* $Id: GmshClient.c,v 1.7 2006-11-27 22:22:34 geuzaine Exp $ */
+/* $Id: GmshClient.c,v 1.8 2007-09-04 13:47:07 remacle Exp $ */
 /*
  * Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
  *

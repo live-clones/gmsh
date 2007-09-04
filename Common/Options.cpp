@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.351 2007-09-03 20:09:13 geuzaine Exp $
+// $Id: Options.cpp,v 1.352 2007-09-04 13:47:00 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4760,6 +4760,17 @@ double opt_mesh_nb_smoothing(OPT_ARGS_NUM)
     WID->mesh_value[0]->value(CTX.mesh.nb_smoothing);
 #endif
   return CTX.mesh.nb_smoothing;
+}
+
+double opt_mesh_lc_integration_precision(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.lc_integration_precision = val;
+#if defined(HAVE_FLTK)
+  //  if(WID && (action & GMSH_GUI))
+  //    WID->mesh_value[0]->value(CTX.mesh.nb_smoothing);
+#endif
+  return CTX.mesh.lc_integration_precision;
 }
 
 double opt_mesh_algo2d(OPT_ARGS_NUM)

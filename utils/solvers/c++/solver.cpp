@@ -1,4 +1,4 @@
-// $Id: solver.cpp,v 1.9 2006-02-25 14:36:53 geuzaine Exp $
+// $Id: solver.cpp,v 1.10 2007-09-04 13:47:08 remacle Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //

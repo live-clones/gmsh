@@ -471,6 +471,7 @@ double opt_mesh_bdf_field_format(OPT_ARGS_NUM);
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM);
 double opt_mesh_algo2d(OPT_ARGS_NUM);
 double opt_mesh_algo3d(OPT_ARGS_NUM);
+double opt_mesh_lc_integration_precision(OPT_ARGS_NUM);
 double opt_mesh_recombine_algo(OPT_ARGS_NUM);
 double opt_mesh_min_circ_points(OPT_ARGS_NUM);
 double opt_mesh_constrained_bgmesh(OPT_ARGS_NUM);

@@ -1,4 +1,4 @@
-// $Id: FieldView.cpp,v 1.1 2007-05-07 07:50:33 remacle Exp $
+// $Id: FieldView.cpp,v 1.2 2007-09-04 13:47:05 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

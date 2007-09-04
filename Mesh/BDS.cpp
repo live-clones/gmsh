@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.76 2007-04-13 12:49:52 remacle Exp $
+// $Id: BDS.cpp,v 1.77 2007-09-04 13:47:02 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -206,7 +206,7 @@ int Intersect_Edges_2d(double x1, double y1, double x2, double y2,
   return 0;
 }
 
-BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2)
+BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2,std::set<EdgeToRecover> *e2r)
 {
   BDS_Edge *e = find_edge (num1, num2);
 
@@ -233,11 +233,18 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2)
 				  e->p2->u, e->p2->v,
 				  p1->u, p1->v,
 				  p2->u, p2->v))
-	      intersected.push_back(e);	  
+	      {
+		if (e2r && e2r->find(EdgeToRecover(e->p1->iD,e->p2->iD,0)) != e2r->end())
+		  {
+		    Msg(GERROR," edge %d %d cannot be recovered because it intersects %d %d",num1,num2,e->p1->iD,e->p2->iD);
+		    return false;
+		  }
+		intersected.push_back(e);	  
+	      }
 	  ++it;
 	}
 
-      if (!intersected.size() || ix > 10000)
+      if (!intersected.size() || ix > 100)
 	{
 	  BDS_Edge *eee = find_edge (num1, num2);
 	  if (!eee)

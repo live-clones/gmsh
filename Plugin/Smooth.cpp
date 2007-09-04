@@ -1,4 +1,4 @@
-// $Id: Smooth.cpp,v 1.24 2007-05-04 10:45:09 geuzaine Exp $
+// $Id: Smooth.cpp,v 1.25 2007-09-04 13:47:05 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

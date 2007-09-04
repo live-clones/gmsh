@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.11 2007-03-18 12:05:16 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.12 2007-09-04 13:47:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

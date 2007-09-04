@@ -8,7 +8,7 @@
  * Started 8/27/94
  * George
  *
- * $Id: defs.h,v 1.1 2005-09-21 17:29:37 geuzaine Exp $
+ * $Id: defs.h,v 1.2 2007-09-04 13:47:06 remacle Exp $
  *
  */
 

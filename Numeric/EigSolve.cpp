@@ -1,4 +1,4 @@
-// $Id: EigSolve.cpp,v 1.7 2006-11-27 22:22:17 geuzaine Exp $
+// $Id: EigSolve.cpp,v 1.8 2007-09-04 13:47:03 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.80 2007-05-04 14:27:41 geuzaine Exp $
+// $Id: Message.cpp,v 1.81 2007-09-04 13:47:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.33 2007-05-04 10:45:09 geuzaine Exp $
+// $Id: Skin.cpp,v 1.34 2007-09-04 13:47:05 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

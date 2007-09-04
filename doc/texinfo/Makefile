@@ -1,4 +1,8 @@
-# $Id: Makefile,v 1.14 2007-07-13 14:32:09 geuzaine Exp $
+<<<<<<< Makefile
+# $Id: Makefile,v 1.15 2007-09-04 13:47:07 remacle Exp $
+=======
+# $Id: Makefile,v 1.15 2007-09-04 13:47:07 remacle Exp $
+>>>>>>> 1.14
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #

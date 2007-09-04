@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.634 2007-09-03 20:09:14 geuzaine Exp $
+// $Id: GUI.cpp,v 1.635 2007-09-04 13:47:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -293,6 +293,7 @@ Context_Item menu_mesh[] = {
 #if defined(HAVE_FOURIER_MODEL)
   {"Reparameterize",   (Fl_Callback *)mesh_parameterize_cb} , 
 #endif
+  {"Reclassify",   (Fl_Callback *)mesh_classify_cb} , 
   {"Save",         (Fl_Callback *)mesh_save_cb} ,
   {0} 
 };  

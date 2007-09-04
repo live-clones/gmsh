@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.4 2007-05-24 13:57:59 remacle Exp $
+// $Id: Field.cpp,v 1.5 2007-09-04 13:47:02 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #include "Field.h"
 #include "Context.h"
 #include "GeoInterpolation.h"
+#include "GModel.h"
 #ifdef HAVE_MATH_EVAL
 #include "matheval.h"
 #endif
@@ -321,7 +322,7 @@ double MinField::operator()(double x, double y, double z)
 
 // Attractor Field
 #define maxpts  1
-void AttractorField::addPoint(double X, double Y, double Z, double lc)
+void AttractorField::addPoint(double X, double Y, double Z)
 {
   attractorPoints.push_back(SPoint3(X, Y, Z));
 }
@@ -405,4 +406,60 @@ void AttractorField::addGEdge(GEdge *c, int N)
     GPoint gp = c->point(t);
     addPoint(gp.x(), gp.y(), gp.z());
   }
+}
+
+void addMapLc (std::map<MVertex*,double> &maplc, MVertex *v, double l)
+{
+  std::map<MVertex*,double> :: iterator it = maplc.find(v);
+  if (it == maplc.end())maplc[v] = l;
+  else if (it->second > l) it->second = l;
+}
+
+
+AttractorField_1DMesh::AttractorField_1DMesh (GModel *m, double dmax, double dmin, double lcmax)
+  : _dmax(dmax), _dmin(dmin), _lcmax(lcmax)
+{
+  GModel::eiter it = m->firstEdge();
+
+  std::map<MVertex*,double> maplc;
+
+  while (it != m->lastEdge())
+    {
+      MVertex *first = (*it)->getBeginVertex()->mesh_vertices[0];
+      for (int i=1;i<=(*it)->mesh_vertices.size();++i)
+	{
+	  MVertex *last = i==(*it)->mesh_vertices.size() ? (*it)->getEndVertex()->mesh_vertices[0]:(*it)->mesh_vertices[i];
+	  double l = sqrt((first->x()-last->x())*(first->x()-last->x())+
+			  (first->y()-last->y())*(first->y()-last->y())+
+			  (first->z()-last->z())*(first->z()-last->z()));
+	  addMapLc(maplc,first,l);
+	  addMapLc(maplc,last,l);
+	  first = last;
+	}
+    }      
+
+  std::map<MVertex*,double> :: iterator itm = maplc.begin();
+  
+  while (itm != maplc.end())
+    {
+      addPoint(itm->first->x(),itm->first->y(),itm->first->z());
+      lcs.push_back(itm->second);
+    }  
+}
+
+
+double AttractorField_1DMesh::operator()(double X, double Y, double Z)
+{
+#ifdef HAVE_ANN_
+  double xyz[3] = {X, Y, Z};
+  kdtree->annkSearch(xyz, maxpts, index, dist);
+  double d = sqrt(dist[0]);
+  double lcmin = lcs[index[0]];
+  double r = (d - _dmin) / (_dmax - _dmin);
+  r = std::max(std::min(r, 1.), 0.);
+  double lc = lcmin * (1 - r) + _lcmax * r;
+  return lc;
+#else
+  Msg(GERROR,"GMSH should be compiled with ANN in order to enable attractors");
+#endif
 }

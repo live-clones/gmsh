@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.102 2007-08-21 19:05:38 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.103 2007-09-04 13:47:00 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -90,6 +90,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -optimize_hom         Optimize higher order meshes (in 2D)");
   Msg(DIRECT, "  -clscale float        Set characteristic length scaling factor");
   Msg(DIRECT, "  -clcurv               Compute characteristic lengths from curvatures");
+  Msg(DIRECT, "  -epslc1d              Set the accuracy of the evaluation of the LCFIELD for 1D mesh");
   Msg(DIRECT, "  -rand float           Set random perturbation factor");
   Msg(DIRECT, "  -bgm file             Load background mesh from file");
   Msg(DIRECT, "  -constrain            Constrain background mesh with characteristic lengths");
@@ -347,6 +348,21 @@ void Get_Options(int argc, char *argv[])
           if(CTX.mesh.lc_factor <= 0.0) {
             fprintf(stderr, ERROR_STR
                     "Characteristic length factor must be > 0\n");
+            exit(1);
+          }
+        }
+        else {
+          fprintf(stderr, ERROR_STR "Missing number\n");
+          exit(1);
+        }
+      }
+      else if(!strcmp(argv[i] + 1, "epslc1d")) {
+        i++;
+        if(argv[i] != NULL) {
+          CTX.mesh.lc_integration_precision = atof(argv[i++]);
+          if(CTX.mesh.lc_integration_precision <= 0.0) {
+            fprintf(stderr, ERROR_STR
+                    "Integration Accuraci for evaluation of 1D LC FIELD must be > 0\n");
             exit(1);
           }
         }

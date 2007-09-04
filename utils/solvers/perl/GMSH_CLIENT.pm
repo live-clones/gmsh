@@ -1,4 +1,4 @@
-# $Id: GMSH_CLIENT.pm,v 1.3 2006-02-23 21:59:09 geuzaine Exp $
+# $Id: GMSH_CLIENT.pm,v 1.4 2007-09-04 13:47:08 remacle Exp $
 #
 # Copyright (c) 2002 Laurent CHAMPANEY <laurent.champaney@meca.uvsq.fr>. 
 # All rights reserved.

@@ -1,4 +1,4 @@
-// $Id: GRegion.cpp,v 1.16 2007-05-10 22:08:03 geuzaine Exp $
+// $Id: GRegion.cpp,v 1.17 2007-09-04 13:47:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

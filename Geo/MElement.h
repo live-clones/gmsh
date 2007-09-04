@@ -29,6 +29,8 @@
 #include "MFace.h"
 #include "Numeric.h"
 
+class GFace;
+
 // A mesh element.
 class MElement 
 {
@@ -311,10 +313,13 @@ class MTriangle : public MElement {
     mat[1][1] = _v[2]->y() - _v[0]->y();
   }
   void circumcenterXY(double *res) const; 
+  void circumcenterUV(GFace*,double *res); 
   static void circumcenterXYZ(double *p1, double *p2, double *p3,double *res);
   static void circumcenterXY (double *p1, double *p2, double *p3,double *res);
   double getSurfaceXY() const;
+  double getSurfaceUV(GFace*);
   bool invertmappingXY(double *p, double *uv, double tol = 1.e-8);
+  bool invertmappingUV(GFace*,double *p, double *uv, double tol = 1.e-8);
   virtual int getNumVertices(){ return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual MVertex *getOtherVertex(MVertex *v1, MVertex *v2){ 
@@ -763,11 +768,8 @@ class MTetrahedron : public MElement {
     }
     return false;
   }
-  inline void circumcenter(double *res)
+  inline static void circumcenter(double X[4],double Y[4],double Z[4],double *res)
   {
-    double X[4] = {_v[0]->x(), _v[1]->x(), _v[2]->x(), _v[3]->x()};
-    double Y[4] = {_v[0]->y(), _v[1]->y(), _v[2]->y(), _v[3]->y()};
-    double Z[4] = {_v[0]->z(), _v[1]->z(), _v[2]->z(), _v[3]->z()};
     double mat[3][3], b[3], dum;    
     b[0] = X[1] * X[1] - X[0] * X[0] +
       Y[1] * Y[1] - Y[0] * Y[0] + Z[1] * Z[1] - Z[0] * Z[0];
@@ -789,6 +791,14 @@ class MTetrahedron : public MElement {
     if(!sys3x3(mat, b, res, &dum)) {
       res[0] = res[1] = res[2] = 10.0e10;
     }
+  }
+  inline void circumcenter(double *res)
+  {
+    double X[4] = {_v[0]->x(), _v[1]->x(), _v[2]->x(), _v[3]->x()};
+    double Y[4] = {_v[0]->y(), _v[1]->y(), _v[2]->y(), _v[3]->y()};
+    double Z[4] = {_v[0]->z(), _v[1]->z(), _v[2]->z(), _v[3]->z()};
+
+    MTetrahedron::circumcenter (X,Y,Z,res); 
   }
 };
 

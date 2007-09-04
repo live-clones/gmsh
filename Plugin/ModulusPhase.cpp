@@ -1,4 +1,4 @@
-// $Id: ModulusPhase.cpp,v 1.5 2007-05-04 10:45:09 geuzaine Exp $
+// $Id: ModulusPhase.cpp,v 1.6 2007-09-04 13:47:05 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

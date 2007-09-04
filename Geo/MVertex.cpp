@@ -1,4 +1,4 @@
-// $Id: MVertex.cpp,v 1.14 2007-07-31 22:09:11 geuzaine Exp $
+// $Id: MVertex.cpp,v 1.15 2007-09-04 13:47:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,6 +21,8 @@
 
 #include <math.h>
 #include "MVertex.h"
+#include "GEdge.h"
+#include "GFace.h"
 
 int MVertex::_globalNum = 0;
 double MVertexLessThanLexicographic::tolerance = 1.e-6;
@@ -153,4 +155,30 @@ MVertex::linearSearch(std::set<MVertex*, MVertexLessThanLexicographic> &pos)
     if(distance(*it) < tol) return it;
   }
   return pos.end();
+}
+
+void parametricCoordinates ( const MVertex*ver, const GFace *gf, double &u, double &v)
+{
+  GEntity *ge = ver->onWhat();
+  if (ge->dim() == 2)
+    {
+      ver->getParameter ( 0,u);
+      ver->getParameter ( 1,v);	  
+    }
+  else if (ge->dim() == 1)
+    {
+      double t;
+      ver->getParameter ( 0,t);
+      GEdge *ged = dynamic_cast<GEdge*> (ge);
+      SPoint2 p = ged->reparamOnFace ( (GFace*)gf , t , 1);
+      u =p.x(); 
+      v =p.y(); 
+    }
+  else
+    {
+      GVertex *gver = dynamic_cast<GVertex*> (ge);
+      SPoint2 p = gver->reparamOnFace ( (GFace*)gf , 1);
+      u =p.x(); 
+      v =p.y(); 
+    }      
 }

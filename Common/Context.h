@@ -175,7 +175,7 @@ public :
     int optimize;
     int quality_type, label_type;
     double quality_inf, quality_sup, radius_inf, radius_sup;
-    double scaling_factor, lc_factor, rand_factor;
+    double scaling_factor, lc_factor, rand_factor, lc_integration_precision;
     int dual;
     int light, light_two_side, light_lines;
     int format, nb_smoothing, algo2d, algo3d, algo_recombine;

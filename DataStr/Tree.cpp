@@ -1,4 +1,4 @@
-// $Id: Tree.cpp,v 1.21 2006-11-27 22:22:08 geuzaine Exp $
+// $Id: Tree.cpp,v 1.22 2007-09-04 13:47:00 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

@@ -20,6 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <vector>
 #include <map>
 #include <list>
 #include "Views.h"
@@ -127,11 +128,23 @@ protected :
 public :
   AttractorField();
   virtual ~AttractorField();
-  void addPoint(double X, double Y, double Z, double lc = -1.0);
+  void addPoint(double X, double Y, double Z);
   void buildFastSearchStructures() ;
   void addGEdge(GEdge*, int);
   void addCurve(Curve*, int);
-  double operator()(double X, double Y, double Z) ;
+  virtual double operator()(double X, double Y, double Z) ;
 };
+
+class AttractorField_1DMesh : public AttractorField 
+{
+protected:
+  std::vector<double> lcs;
+  double _dmax,_dmin,_lcmax;
+public:
+  AttractorField_1DMesh (GModel *m, double dmax, double dmin, double lcmax);
+  virtual double operator()(double X, double Y, double Z) ;
+};
+
+
 
 #endif

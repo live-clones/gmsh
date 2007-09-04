@@ -1,4 +1,4 @@
-// $Id: Warp.cpp,v 1.7 2007-05-04 10:45:09 geuzaine Exp $
+// $Id: Warp.cpp,v 1.8 2007-09-04 13:47:05 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

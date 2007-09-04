@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.83 2007-09-03 20:09:14 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.84 2007-09-04 13:47:02 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,6 +21,7 @@
 
 #include "meshGFace.h"
 #include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceOptimize.h"
 #include "DivideAndConquer.h"
 #include "BackgroundMesh.h"
 #include "GVertex.h"
@@ -99,8 +100,7 @@ double F_LC_ANALY(double xx, double yy, double zz)
 
 double NewGetLc(BDS_Point *p)
 {
-  //  double l = Attractor::lc (p->X,p->Y,p->Z);
-  return p->lc();
+  return std::min(p->lc(),p->lcBGM());
 }
 
 inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2)
@@ -295,13 +295,13 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 {
   int IT =0;
 
-  //printf("lc (1,1) = %g\n",Attractor::lc(1,1,0));
+  //  printf("lc (1,1) = %g\n",Attractor::lc(1,1,0));
 
   int MAXNP = m.MAXPOINTNUMBER;
 
   // computecharacteristic lengths using mesh edge spacing
-  // separate attractors & 
-  if (NIT > 0 && !BGMExists())
+  // those lengths will propagate in the 2D mesh.
+  if (NIT > 0)
     {
       std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
       while (itp != m.points.end())
@@ -314,7 +314,9 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	    if (l<L && (*it)->g && (*it)->g->classif_degree == 1)L=l;
 	    ++it;
 	  }
-	  (*itp)->lc() = std::min(L,(*itp)->lc());
+	  if(!CTX.mesh.constrained_bgmesh)
+	    (*itp)->lc() = L;
+	  (*itp)->lcBGM() = L;
 	  ++itp;
 	}
     }
@@ -324,19 +326,8 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
   const double MINE_ = 0.7, MAXE_=1.4;
   while (1)
     {
-    //   double stot = 0;
-//       std::list<BDS_Face *>::iterator ittt = m.triangles.begin();
-//       while (ittt!= m.triangles.end())
-// 	{
-// 	  if (!(*ittt)->deleted)
-// 	    {
-// 	      BDS_Point *pts[4];
-// 	      (*ittt)->getNodes(pts);
-// 	      stot += fabs( surface_triangle_param(pts[0], pts[1], pts[2]));
-// 	    }
-// 	  ++ittt;
-// 	}
-      
+      // we count the number of local mesh modifs.
+
       int nb_split=0;
       int nb_smooth=0;
       int nb_collaps=0;
@@ -367,7 +358,6 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
       
       if ((minL > MINE_ && maxL < MAXE_) || IT > (abs(NIT)))break;
 
-
       NN1 = m.edges.size();
       NN2 = 0;
       it = m.edges.begin();
@@ -377,27 +367,21 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	  if (!(*it)->deleted)
 	    {
 	      double lone = NewGetLc ( *it,gf);
-
-	      // take care with seams :
-	      //	      if (lone < 1.e-10 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
 	      if ((*it)->numfaces() == 2 && (lone >  MAXE_))
 		{
-
 		  const double coord = 0.5;
-
 		  BDS_Point *mid ;
 		  mid  = m.add_point(++m.MAXPOINTNUMBER,
 				     coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
 				     coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v,gf);
   		  double l1;
-		  if (!BGMExists())
-		    l1 = BGM_MeshSize(gf,
-				      (coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u)*m.scalingU,
-				      (coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v)*m.scalingV,
-				      mid->X,mid->Y,mid->Z);
-		  else l1 = 0.5 * ( (*it)->p1->lc() +  (*it)->p2->lc() );
-
-		  mid->lc() = l1;
+		  //		  if (BGMExists())
+		  mid->lcBGM() = BGM_MeshSize(gf,
+					      (coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u)*m.scalingU,
+					      (coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v)*m.scalingV,
+					      mid->X,mid->Y,mid->Z);
+		  //mid->lc() = 2./ ( 1./(*it)->p1->lc() +  1./(*it)->p2->lc() );		  
+		  mid->lc() = 0.5 * ( (*it)->p1->lc() +  (*it)->p2->lc() );		  
 		  m.split_edge ( *it, mid );
 		  nb_split++;
 		} 
@@ -406,7 +390,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	}
 
       // swap edges that provide a better configuration
-//       NN1 = m.edges.size();
+
       NN2 = 0;
       it = m.edges.begin();
       while (1)
@@ -467,138 +451,130 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	    }
 	}
       // smooth resulting mesh
-      //if (IT % 4 == 0 )
-	{
-	  std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
-	  while (itp != m.points.end())
-	    {
-
-	      if(m.smooth_point_centroid(*itp,gf))
-		nb_smooth ++;
-	      ++itp;
-	    }
-	}
-	// recompute mesh sizes takin into account curvature , BGMESH & co
-	m.cleanup();  
-	if (0 && IT % 5 == 0)
-	{
-	  std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
-	  while (itp != m.points.end())
-	    {
-	      BDS_Point *p = *itp;
-	      if(p->g->classif_degree == 2)
-		{
-		  double l2 = BGM_MeshSize(gf,p->u*m.scalingU,p->v*m.scalingV,p->X,p->Y,p->Z);
-		  p->config_modified = true;
-		  p->lc() = std::min(p->lc(),l2);
-		}
-	      ++itp;
-	    }
-	  for (int ITERA = 0;ITERA< 0; ITERA++);
+      {
+	std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
+	while (itp != m.points.end())
 	  {
-	    it = m.edges.begin();
-	    while (it != m.edges.end())
-	      {
-		BDS_Edge *e = *it;
-		if (!e->deleted)
-		  {
-		    double l1 = e->p1->lc();
-		    double l2 = e->p2->lc();
-		    if (l1 > 1.3 *l2) e->p1->lc() = 1.5*l2;
-		    if (l2 > 1.3 *l1) e->p2->lc() = 1.5*l1;
-		  }
-		++it;
-	      }
+	    
+	    if(m.smooth_point_centroid(*itp,gf))
+	      nb_smooth ++;
+	    ++itp;
 	  }
-	}
-	IT++;
-	Msg(DEBUG1," iter %3d minL %8.3f maxL %8.3f : %6d splits, %6d swaps, %6d collapses, %6d moves",IT,minL,maxL,nb_split,nb_swap,nb_collaps,nb_smooth);
+      }
 
-	if (nb_split==0 && nb_collaps == 0)break;
+      // clean up the mesh
+      m.cleanup();  	
+      IT++;
+      Msg(DEBUG1," iter %3d minL %8.3f maxL %8.3f : %6d splits, %6d swaps, %6d collapses, %6d moves",IT,minL,maxL,nb_split,nb_swap,nb_collaps,nb_smooth);
+      
+      if (nb_split==0 && nb_collaps == 0)break;
     }  
 }
 
 
 
 
-bool recover_medge ( BDS_Mesh *m, GEdge *ge)
+bool recover_medge ( BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, int pass_)
 {
-
-  m->add_geom (ge->tag(), 1);
-  BDS_GeomEntity *g = m->get_geom(ge->tag(),1);
+  BDS_GeomEntity *g;
+  if (pass_ == 2)
+    {
+      m->add_geom (ge->tag(), 1);
+      g = m->get_geom(ge->tag(),1);
+    }
 
   if (ge->mesh_vertices.size() == 0)
     {
 
       MVertex   *vstart = *(ge->getBeginVertex()->mesh_vertices.begin());
       MVertex   *vend   = *(ge->getEndVertex()->mesh_vertices.begin());
-      BDS_Point *pstart = m->find_point(vstart->getNum());
-      BDS_Point *pend   = m->find_point(vend->getNum());
+      if (pass_ == 1)
+	{
+	  e2r->insert (EdgeToRecover (vstart->getNum(), vend->getNum(),ge));
+	  return true;
+	}
+      else
+	{
+	  BDS_Point *pstart = m->find_point(vstart->getNum());
+	  BDS_Point *pend   = m->find_point(vend->getNum());
+	  
+	  if(!pstart->g)
+	    {
+	      m->add_geom (vstart->getNum(), 0);
+	      BDS_GeomEntity *g0 = m->get_geom(vstart->getNum(), 0);
+	      pstart->g = g0;
+	    }
+	  if(!pend->g)
+	    {
+	      m->add_geom (vend->getNum(), 0);
+	      BDS_GeomEntity *g0 = m->get_geom(vend->getNum(), 0);
+	      pend->g = g0;
+	    }
+	  BDS_Edge * e = m->recover_edge ( vstart->getNum(), vend->getNum(),e2r);
+	  if (e)e->g = g;
+	  else {
+	    Msg(GERROR,"The unrecoverable edge is on model edge %d",ge->tag());
+	    return false;
+	  }
+	  return true;
+	}
+    }
 
+  BDS_Edge * e;
+  MVertex *vstart = *(ge->getBeginVertex()->mesh_vertices.begin());
+  MVertex *vend   = *(ge->mesh_vertices.begin());
+
+  if (pass_ == 1)e2r->insert (EdgeToRecover (vstart->getNum(), vend->getNum(),ge));
+  else 
+    {
+      BDS_Point *pstart = m->find_point(vstart->getNum());
       if(!pstart->g)
 	{
 	  m->add_geom (vstart->getNum(), 0);
 	  BDS_GeomEntity *g0 = m->get_geom(vstart->getNum(), 0);
 	  pstart->g = g0;
 	}
+      e = m->recover_edge ( vstart->getNum(), vend->getNum(),e2r);
+      if (e)e->g = g;
+      else {
+	Msg(GERROR,"The unrecoverable edge is on model edge %d",ge->tag());
+	return false;
+      }
+    }
+
+  for (unsigned int i=1;i<ge->mesh_vertices.size();i++)
+    {
+      vstart = ge->mesh_vertices[i-1];
+      vend   = ge->mesh_vertices[i];
+      if (pass_ == 1)e2r->insert (EdgeToRecover (vstart->getNum(), vend->getNum(),ge));
+      else
+	{
+	  e = m->recover_edge ( vstart->getNum(), vend->getNum(),e2r);
+	  if (e)e->g = g;
+	  else {
+	    Msg(GERROR,"Unable to recover an edge %g %g && %g %g (%d/%d)",vstart->x(),vstart->y(), vend->x(),vend->y(),i,ge->mesh_vertices.size());
+	    return false;
+	  }
+	}
+    }    
+  vstart = vend;
+  vend   = *(ge->getEndVertex()->mesh_vertices.begin());
+  if (pass_ == 1)e2r->insert (EdgeToRecover (vstart->getNum(), vend->getNum(),ge));
+  else
+    {
+      e = m->recover_edge ( vstart->getNum(), vend->getNum(),e2r);
+      if (e)e->g = g;
+      else {
+	Msg(GERROR,"Unable to recover an edge %g %g && %g %g (%d/%d)",vstart->x(),vstart->y(), vend->x(),vend->y(),ge->mesh_vertices.size(),ge->mesh_vertices.size());
+	return false;
+      }
+      BDS_Point *pend = m->find_point(vend->getNum());
       if(!pend->g)
 	{
 	  m->add_geom (vend->getNum(), 0);
 	  BDS_GeomEntity *g0 = m->get_geom(vend->getNum(), 0);
 	  pend->g = g0;
 	}
-      BDS_Edge * e = m->recover_edge ( vstart->getNum(), vend->getNum());
-      if (e)e->g = g;
-      else {
-	Msg(GERROR,"Unable to recover an edge %g %g && %g %g (size 0)",vstart->x(),vstart->y(), vend->x(),vend->y());
-	Msg(GERROR,"Mesh with %d triangles",m->triangles.size());
-	return false;
-      }
-      return true;
-    }
-
-
-  MVertex *vstart = *(ge->getBeginVertex()->mesh_vertices.begin());
-  MVertex *vend   = *(ge->mesh_vertices.begin());
-
-  BDS_Point *pstart = m->find_point(vstart->getNum());
-  if(!pstart->g)
-    {
-      m->add_geom (vstart->getNum(), 0);
-      BDS_GeomEntity *g0 = m->get_geom(vstart->getNum(), 0);
-      pstart->g = g0;
-    }
-
-  BDS_Edge * e = m->recover_edge ( vstart->getNum(), vend->getNum());
-  if (e)e->g = g;
-  else return false;
-
-  for (unsigned int i=1;i<ge->mesh_vertices.size();i++)
-    {
-      vstart = ge->mesh_vertices[i-1];
-      vend   = ge->mesh_vertices[i];
-      e = m->recover_edge ( vstart->getNum(), vend->getNum());
-      if (e)e->g = g;
-      else {
-	Msg(GERROR,"Unable to recover an edge %g %g && %g %g (%d/%d)",vstart->x(),vstart->y(), vend->x(),vend->y(),i,ge->mesh_vertices.size());
-	return false;
-      }
-    }    
-  vstart = vend;
-  vend   = *(ge->getEndVertex()->mesh_vertices.begin());
-  e = m->recover_edge ( vstart->getNum(), vend->getNum());
-  if (e)e->g = g;
-  else {
-    Msg(GERROR,"Unable to recover an edge %g %g && %g %g",vstart->x(),vstart->y(), vend->x(),vend->y());
-    return false;
-  }
-
-  BDS_Point *pend = m->find_point(vend->getNum());
-  if(!pend->g)
-    {
-      m->add_geom (vend->getNum(), 0);
-      BDS_GeomEntity *g0 = m->get_geom(vend->getNum(), 0);
-      pend->g = g0;
     }
   return true;
 }
@@ -661,13 +637,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
     }
     else if(here->onWhat()->dim() == 0){
       GVertex *gv = (GVertex*)here->onWhat();
-      if(gv->edges().size() == 1){
-	GEdge *ge = *(gv->edges().begin());
-	Range<double> bb = ge->parBounds(0);
-	param = ge->reparamOnFace(gf, bb.low(), 1);	  
-      }
-      else
-	param = gv->reparamOnFace(gf,1);
+      param = gv->reparamOnFace(gf,1);      
     }
     else if(here->onWhat()->dim() == 1){
       GEdge *ge = (GEdge*)here->onWhat();
@@ -772,27 +742,22 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
       // to curve interpolation, and straight line interpol does
       // "while(not in bounds) i--" which would take forever to get
       // back into a reasonnable interval)
-      if(num < 0){ // fake bbox points 
-	U = V = 0;
+
+      // JFR : the fix was WRONG, I fixed the fix ;-)
+
+      if(num< 0){ // fake bbox points 
+	U = bb[-1-num]->x();
+	V = bb[-1-num]->y();
       }
-      else{
+      else
+      {
 	U = U_[num];
 	V = V_[num];
       }
 
       BDS_Point *pp = m->add_point ( num, U,V, gf);
-      //      printf("here->onWhat = %p dim = %d\n",here->onWhat(),here->onWhat()->dim());
-
-       if (here->onWhat()->dim() == 1)
- 	{
- 	  double t;
- 	  here->getParameter(0,t);
- 	  pp->lc() = BGM_MeshSize ( here->onWhat(), t, 0, here->x(),here->y(),here->z());
- 	}
-       else
-	 pp->lc() = BGM_MeshSize ( here->onWhat(), U, V, here->x(),here->y(),here->z());
     }
-
+  
   Msg(DEBUG1,"Meshing of the convex hull (%d points) done",all_vertices.size());
 
   for(int i = 0; i < doc.numTriangles; i++) 
@@ -815,14 +780,47 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   // and compute characteristic lenghts using mesh edge spacing
 
   BDS_GeomEntity CLASS_F (1,2);
+  if (debug)
+    {
+      char name[245];
+      sprintf(name,"surface%d-initial-real.pos",gf->tag());
+      outputScalarField(m->triangles, name,0);
+      sprintf(name,"surface%d-initial-param.pos",gf->tag());
+      outputScalarField(m->triangles, name,1);
+    }
+    
+  Msg(DEBUG1,"Recovering %d model Edges",edges.size());
+  
+  // build a structure with all mesh edges that have to be
+  // recovered. If two of these edges intersect, then the
+  // 1D mesh have to be densified
+
+  std::set<EdgeToRecover> edgesToRecover;
+  it = edges.begin();
+  while(it != edges.end())
+    {
+      if(!(*it)->is_mesh_degenerated())
+	recover_medge ( m, *it, &edgesToRecover,1);
+      ++it;
+    }
+  it = emb_edges.begin();
+  while(it != emb_edges.end())
+    {
+      recover_medge ( m, *it, &edgesToRecover,1);
+      ++it;
+    }
+
+
+  Msg(DEBUG1,"Recovering %d mesh Edges",edgesToRecover.size());
+  // effectively recover the medge
 
   it = edges.begin();
   while(it != edges.end())
     {
       if(!(*it)->is_mesh_degenerated()){
-	if (!recover_medge ( m, *it))
+	if (!recover_medge ( m, *it, &edgesToRecover,2))
 	  {
-	    Msg(GERROR,"Face not meshed");
+	    Msg(GERROR,"Face cannot be not meshed because 1D mesh self intersects !");
 	    return false;
 	  }
       }
@@ -859,10 +857,11 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   }
 
 
+
   it = emb_edges.begin();
   while(it != emb_edges.end())
     {
-      recover_medge ( m, *it);
+      recover_medge ( m, *it, &edgesToRecover,2);
       ++it;
     }
 
@@ -879,6 +878,18 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
       }
   }
   m->cleanup();
+
+
+  if (debug)
+    {
+      char name[245];
+      sprintf(name,"surface%d-recovered-real.pos",gf->tag());
+      outputScalarField(m->triangles, name,0);
+      sprintf(name,"surface%d-recovered-param.pos",gf->tag());
+      outputScalarField(m->triangles, name,1);
+    }
+
+
   {
     std::list<BDS_Edge*>::iterator ite = m->edges.begin();
     while (ite != m->edges.end())
@@ -904,7 +915,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   m->del_point(m->find_point(-4));
 
   // start mesh generation
-  if (CTX.mesh.algo2d != ALGO_2D_DELAUNAY || gf->geomType() != GEntity::Plane)
+  if (CTX.mesh.algo2d != ALGO_2D_DELAUNAY)
     {
       RefineMesh (gf,*m,10);
       OptimizeMesh(gf, *m, 2);
@@ -964,20 +975,20 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   // the delaunay algo is based directly on internal gmsh structures
   // BDS mesh is passed in order not to recompute local coordinates
   // of vertices
-  if (CTX.mesh.algo2d == ALGO_2D_DELAUNAY && gf->geomType() == GEntity::Plane)
+  if (CTX.mesh.algo2d == ALGO_2D_DELAUNAY)
      {
        insertVerticesInFace (gf,m) ;
+       for (int i=0;i<5;i++)laplaceSmoothing (gf);
      }
-
-  // delete the mesh
-
-  if (debug){
+  else if (debug){
     char name[256];
     sprintf(name,"real%d.pos",gf->tag());
     outputScalarField(m->triangles, name,0);
     sprintf(name,"param%d.pos",gf->tag());
     outputScalarField(m->triangles, name,1);
   }
+
+  // delete the mesh
   delete m;
 
 
@@ -1176,16 +1187,16 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	 V = param.y() / m->scalingV;
 	 BDS_Point *pp;
 	 pp = m->add_point ( count, U,V,gf );
-	 if(ge->dim() == 1)
-	   {
-	     double t;
-	     here->getParameter(0,t);
-	     pp->lc() = BGM_MeshSize(ge,t,-12,here->x(),here->y(),here->z());
-	   }
-	 else
-	   {
-	     pp->lc() = BGM_MeshSize(ge,param.x(),param.y(),here->x(),here->y(),here->z());
-	   }
+// 	 if(ge->dim() == 1)
+// 	   {
+// 	     double t;
+// 	     here->getParameter(0,t);
+// 	     pp->lc() = BGM_MeshSize(ge,t,-12,here->x(),here->y(),here->z());
+// 	   }
+// 	 else
+// 	   {
+// 	     pp->lc() = BGM_MeshSize(ge,param.x(),param.y(),here->x(),here->y(),here->z());
+// 	   }
 
 	 m->add_geom (ge->tag(), ge->dim());
 	 BDS_GeomEntity *g = m->get_geom(ge->tag(),ge->dim());
@@ -1337,6 +1348,18 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
     }
 
 
+  // build a list of edges to recover
+//   std::set<EdgeToRecover> e2r;
+//   for (unsigned int i=0;i<edgeLoops_BDS.size();i++)
+//     {
+//       std::vector<BDS_Point*> &edgeLoop_BDS = edgeLoops_BDS[i];
+//       for (unsigned int j=0;j<edgeLoop_BDS.size();j++)
+// 	{
+// 	  e2r.insert (EdgeToRecover (edgeLoop_BDS[j]->iD,edgeLoop_BDS[(j+1)%edgeLoop_BDS.size()]->iD,ge));
+// 	}
+//     }
+
+
   for (unsigned int i=0;i<edgeLoops_BDS.size();i++)
     {
       std::vector<BDS_Point*> &edgeLoop_BDS = edgeLoops_BDS[i];
@@ -1435,7 +1458,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
   // goto hhh;
   // start mesh generation
   
-  //  if (CTX.mesh.algo2d == ALGO_2D_MESHADAPT)
+  if (CTX.mesh.algo2d != ALGO_2D_DELAUNAY)
     {
       RefineMesh (gf,*m,10);
       OptimizeMesh(gf, *m, 2);
@@ -1505,12 +1528,12 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
       outputScalarField(m->triangles, name,1);
     }
 
-//   if (CTX.mesh.algo2d == ALGO_2D_DELAUNAY)
-//     {
-//       insertVerticesInFace (gf,m) ;
-//     }
-
-  
+   if (CTX.mesh.algo2d == ALGO_2D_DELAUNAY)
+     {
+       insertVerticesInFace (gf,m) ;
+       for (int i=0;i<5;i++)laplaceSmoothing (gf);
+     }
+ 
   delete m; 
   SCALINGU = SCALINGV = 1;
   return true;
@@ -1574,7 +1597,7 @@ void meshGFace::operator() (GFace *gf)
   // temp fix until we create MEdgeLoops in gmshFace
   Msg(DEBUG1, "Generating the mesh");
   if(gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
-    gmsh2DMeshGenerator(gf,false);
+    gmsh2DMeshGenerator(gf,true);
   }
   else{
     if(!gmsh2DMeshGeneratorPeriodic(gf,false))

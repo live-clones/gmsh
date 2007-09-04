@@ -1029,6 +1029,9 @@ void Adaptive_Post_View::initWithLowResolution(Post_View * view)
 
   int nbComp = 1;
 
+  //  printf("%d\n",view->NbST);
+
+
   if (view->NbST){
     myList = view->ST;
     nbelm = view->NbST;
@@ -1074,8 +1077,11 @@ void Adaptive_Post_View::initWithLowResolution(Post_View * view)
     {
       nbnod = _coefsGeom -> size1 ();
       //      printf("THERE IS A GEOMETRY !!!!!!!! nbNod = %d\n",nbnod);
+    }  
+  else
+    {
+      printf("coucouc2\n");
     }
-
 
   minval = VAL_INF;
   maxval = -VAL_INF;
@@ -1166,6 +1172,9 @@ Adaptive_Post_View::Adaptive_Post_View(Post_View * view,
 
   if (_cGeom && _polGeom)
     {
+
+      printf("coucou %d \n",List_Nbr (_cGeom));
+
       _coefsGeom = new Double_Matrix ( List_Nbr (_cGeom) , List_Nbr (_cGeom)  );
       _eexpsGeom = new Double_Matrix ( List_Nbr (_cGeom) , 3  );
       for(int i = 0; i < List_Nbr(_cGeom); ++i) {
