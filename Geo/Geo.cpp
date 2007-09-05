@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.94 2007-08-29 18:41:06 geuzaine Exp $
+// $Id: Geo.cpp,v 1.95 2007-09-05 10:11:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1666,18 +1666,17 @@ void ApplyTransformationToSurface(double matrix[4][4], Surface *s)
   End_Surface(s);
 }
 
-void ApplicationOnShapes(double matrix[4][4], List_T *ListShapes)
+void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
 {
-  int i;
-  Shape O;
   Vertex *v;
   Curve *c;
   Surface *s;
 
   List_Reset(ListOfTransformedPoints);
 
-  for(i = 0; i < List_Nbr(ListShapes); i++) {
-    List_Read(ListShapes, i, &O);
+  for(int i = 0; i < List_Nbr(shapes); i++) {
+    Shape O;
+    List_Read(shapes, i, &O);
     switch (O.Type) {
     case MSH_POINT:
       v = FindPoint(O.Num);
@@ -1721,7 +1720,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T *ListShapes)
   List_Reset(ListOfTransformedPoints);
 }
 
-void TranslateShapes(double X, double Y, double Z, List_T *ListShapes)
+void TranslateShapes(double X, double Y, double Z, List_T *shapes)
 {
   double T[3], matrix[4][4];
 
@@ -1729,13 +1728,13 @@ void TranslateShapes(double X, double Y, double Z, List_T *ListShapes)
   T[1] = Y;
   T[2] = Z;
   SetTranslationMatrix(matrix, T);
-  ApplicationOnShapes(matrix, ListShapes);
+  ApplicationOnShapes(matrix, shapes);
 
   if(CTX.geom.auto_coherence)
     ReplaceAllDuplicates();
 }
 
-void DilatShapes(double X, double Y, double Z, double A, List_T *ListShapes)
+void DilatShapes(double X, double Y, double Z, double A, List_T *shapes)
 {
   double T[3], matrix[4][4];
 
@@ -1743,7 +1742,7 @@ void DilatShapes(double X, double Y, double Z, double A, List_T *ListShapes)
   T[1] = Y;
   T[2] = Z;
   SetDilatationMatrix(matrix, T, A);
-  ApplicationOnShapes(matrix, ListShapes);
+  ApplicationOnShapes(matrix, shapes);
 
   if(CTX.geom.auto_coherence)
     ReplaceAllDuplicates();
@@ -1751,7 +1750,7 @@ void DilatShapes(double X, double Y, double Z, double A, List_T *ListShapes)
 
 void RotateShapes(double Ax, double Ay, double Az,
                   double Px, double Py, double Pz,
-                  double alpha, List_T *ListShapes)
+                  double alpha, List_T *shapes)
 {
   double A[3], T[3], matrix[4][4];
 
@@ -1759,35 +1758,117 @@ void RotateShapes(double Ax, double Ay, double Az,
   T[1] = -Py;
   T[2] = -Pz;
   SetTranslationMatrix(matrix, T);
-  ApplicationOnShapes(matrix, ListShapes);
+  ApplicationOnShapes(matrix, shapes);
 
   A[0] = Ax;
   A[1] = Ay;
   A[2] = Az;
   SetRotationMatrix(matrix, A, alpha);
-  ApplicationOnShapes(matrix, ListShapes);
+  ApplicationOnShapes(matrix, shapes);
 
   T[0] = Px;
   T[1] = Py;
   T[2] = Pz;
   SetTranslationMatrix(matrix, T);
-  ApplicationOnShapes(matrix, ListShapes);
+  ApplicationOnShapes(matrix, shapes);
 
   if(CTX.geom.auto_coherence)
     ReplaceAllDuplicates();
 }
 
-void SymmetryShapes(double A, double B, double C, double D, List_T *ListShapes)
+void SymmetryShapes(double A, double B, double C, double D, List_T *shapes)
 {
   double matrix[4][4];
 
   SetSymmetryMatrix(matrix, A, B, C, D);
-  ApplicationOnShapes(matrix, ListShapes);
+  ApplicationOnShapes(matrix, shapes);
 
   if(CTX.geom.auto_coherence)
     ReplaceAllDuplicates();
 }
 
+void BoundaryShapes(List_T *shapes, List_T *shapesBoundary)
+{
+  for(int i = 0; i < List_Nbr(shapes); i++) {
+    Shape O;
+    List_Read(shapes, i, &O);
+    switch (O.Type) {
+    case MSH_POINT:
+      return;
+      break;
+    case MSH_SEGM_LINE:
+    case MSH_SEGM_SPLN:
+    case MSH_SEGM_BSPLN:
+    case MSH_SEGM_BEZIER:
+    case MSH_SEGM_CIRC:
+    case MSH_SEGM_CIRC_INV:
+    case MSH_SEGM_ELLI:
+    case MSH_SEGM_ELLI_INV:
+    case MSH_SEGM_NURBS:
+    case MSH_SEGM_PARAMETRIC:
+      {
+	Curve *c = FindCurve(O.Num);
+	if(c){
+	  if(c->beg){
+	    Shape sh;
+	    sh.Type = MSH_POINT;
+	    sh.Num = c->beg->Num;
+	    List_Add(shapesBoundary, &sh);
+	  }
+	  if(c->end){
+	    Shape sh;
+	    sh.Type = MSH_POINT;
+	    sh.Num = c->end->Num;
+	    List_Add(shapesBoundary, &sh);
+	  }
+	}
+	else
+	  Msg(GERROR, "Unknown curve %d", O.Num);
+      }
+      break;
+    case MSH_SURF_REGL:
+    case MSH_SURF_TRIC:
+    case MSH_SURF_PLAN:
+      {
+	Surface *s = FindSurface(O.Num);
+	if(s){
+	  for(int j = 0; j < List_Nbr(s->Generatrices); j++){
+	    Curve *c;
+	    List_Read(s->Generatrices, j, &c);
+	    Shape sh;
+	    sh.Type = c->Typ;
+	    sh.Num = c->Num;
+	    List_Add(shapesBoundary, &sh);
+	  }
+	}
+	else
+	  Msg(GERROR, "Unknown surface %d", O.Num);
+      }
+      break;
+    case MSH_VOLUME:
+      {
+	Volume *v = FindVolume(O.Num);
+	if(v){
+	  for(int j = 0; j < List_Nbr(v->Surfaces); j++){
+	    Surface *s;
+	    List_Read(v->Surfaces, j, &s);
+	    Shape sh;
+	    sh.Type = s->Typ;
+	    sh.Num = s->Num;
+	    List_Add(shapesBoundary, &sh);
+	  }
+	}
+	else
+	  Msg(GERROR, "Unknown volume %d", O.Num);
+      }
+      break;
+    default:
+      Msg(GERROR, "Impossible to take boundary of entity %d (of type %d)", O.Num,
+          O.Type);
+      break;
+    }
+  }
+}
 
 // Extrusion routines
 
@@ -2923,7 +3004,7 @@ bool IntersectCurveSurface(Curve *c, Surface *s, double x[4])
   return true;
 }
 
-bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *point_ids)
+bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shapes)
 {
   Surface *s = FindSurface(surface_id);
   if(!s){
@@ -2940,8 +3021,11 @@ bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *point
 	Vertex p = InterpolateCurve(c, x[3], 0);
 	Vertex *v = Create_Vertex(NEWPOINT(), p.Pos.X, p.Pos.Y, p.Pos.Z, p.lc, p.u);
 	Tree_Insert(THEM->Points, &v);
+	Shape s;
+	s.Type = MSH_POINT;
+	s.Num = v->Num;
 	double num = v->Num;
-	List_Add(point_ids, &num);
+	List_Add(shapes, &s);
       }
     }
     else

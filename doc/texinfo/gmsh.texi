@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.233 2007-07-25 15:48:35 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.234 2007-09-05 10:11:32 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 @c
@@ -1751,6 +1751,14 @@ Translates all elementary entities (points, lines or surfaces) in
 @var{transform-list}. The @var{expression-list} should contain three
 @w{@var{expression}s} giving the X, Y and Z components of the translation
 vector.
+
+@item Boundary @{ @var{transform-list} @}
+(Not a transformation per-se.) Returns the boundary of the elementary
+entities in @var{transform-list}.
+
+@c @item Intersect Line @{ @var{expression-list} @} Surface @{ @var{expression} @}
+@c (Not a transformation per-se.) Returns the intersections of the lines
+@c given in @var{expression-list} with the specified surface.
 @end ftable
 
 @noindent with

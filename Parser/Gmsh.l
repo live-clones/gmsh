@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.90 2007-08-27 19:27:02 geuzaine Exp $
+// $Id: Gmsh.l,v 1.91 2007-09-05 10:11:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -121,6 +121,7 @@ ArcTan2                 return tAtan2;
 Attractor		return tAttractor;
 
 Bezier			return tBezier;
+Boundary		return tBoundary;
 Bump                    return tBump;
 BSpline			return tBSpline;
 BoundingBox             return tBoundingBox;

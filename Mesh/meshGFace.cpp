@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.84 2007-09-04 13:47:02 remacle Exp $
+// $Id: meshGFace.cpp,v 1.85 2007-09-05 10:11:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1597,7 +1597,7 @@ void meshGFace::operator() (GFace *gf)
   // temp fix until we create MEdgeLoops in gmshFace
   Msg(DEBUG1, "Generating the mesh");
   if(gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
-    gmsh2DMeshGenerator(gf,true);
+    gmsh2DMeshGenerator(gf,false);
   }
   else{
     if(!gmsh2DMeshGeneratorPeriodic(gf,false))

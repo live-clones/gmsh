@@ -270,15 +270,12 @@ SurfaceLoop *FindSurfaceLoop(int inum);
 Volume *FindVolume(int inum);
 PhysicalGroup *FindPhysicalGroup(int inum, int type);
 
-void TranslateShapes(double X,double Y,double Z,
-                     List_T *ListShapes);
-void DilatShapes(double X,double Y,double Z, double A,
-                 List_T *ListShapes);
+void TranslateShapes(double X,double Y,double Z, List_T *shapes);
+void DilatShapes(double X,double Y,double Z, double A, List_T *shapes);
 void RotateShapes(double Ax,double Ay,double Az,
-		  double Px,double Py, double Pz,
-		  double alpha, List_T *ListShapes);
-void SymmetryShapes(double A,double B,double C,
-		    double D, List_T *ListShapes);
+		  double Px,double Py, double Pz, double alpha, List_T *shapes);
+void SymmetryShapes(double A,double B,double C, double D, List_T *shapes);
+void BoundaryShapes(List_T *shapes, List_T *shapesBoundary);
 void CopyShape(int Type, int Num, int *New);
 void DeleteShape(int Type, int Num);
 void ColorShape(int Type, int Num, unsigned int Color);
@@ -304,7 +301,7 @@ void ReplaceAllDuplicates();
 bool ProjectPointOnCurve(Curve *c, Vertex *v, Vertex *RES, Vertex *DER);
 bool ProjectPointOnSurface(Surface *s, Vertex &p, double u[2]);
 
-bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *point_ids);
+bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shapes);
 
 int recognize_seg(int typ, List_T *liste, int *seg);
 int recognize_loop(List_T *liste, int *loop);

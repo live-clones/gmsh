@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.282 2007-08-27 19:27:03 geuzaine Exp $
+// $Id: Gmsh.y,v 1.283 2007-09-05 10:11:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -99,7 +99,7 @@ int CheckViewErrorFlags(Post_View *v);
 %token tPlane tRuled tTransfinite tComplex tPhysical
 %token tUsing tBump tProgression tPlugin
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
-%token tLoop tRecombine tDelete tCoherence tIntersect
+%token tLoop tRecombine tDelete tCoherence tIntersect tBoundary
 %token tAttractor tLayers tHole tAlias tAliasWithOptions
 %token tText2D tText3D tInterpolationScheme  tTime tGrain tCombine
 %token tBSpline tBezier tNurbs tOrder tKnots
@@ -116,7 +116,7 @@ int CheckViewErrorFlags(Post_View *v);
 %type <l> FExpr_Multi ListOfDouble RecursiveListOfDouble
 %type <l> RecursiveListOfListOfDouble 
 %type <l> ListOfColor RecursiveListOfColor 
-%type <l> ListOfShapes Duplicata Transform Extrude MultipleShape
+%type <l> ListOfShapes Transform Extrude MultipleShape
 %type <s> Shape
 
 // Operators (with ascending priority): cf. C language
@@ -159,7 +159,6 @@ GeoFormatItem :
   | Affectation { return 1; }
   | Shape       { return 1; }
   | Transform   { List_Delete($1); return 1; }
-  | Duplicata   { List_Delete($1); return 1; }
   | Delete      { return 1; }
   | Colorify    { return 1; }
   | Visibility  { return 1; }
@@ -259,6 +258,16 @@ View :
       }
       Free($1); Free($2); Free($3);
     }  
+  | tAlias tSTRING '[' FExpr ']' tEND
+    {
+      if(!strcmp($2, "View")) AliasView((int)$4, 0);
+      Free($2);
+    }
+  | tAliasWithOptions tSTRING '[' FExpr ']' tEND
+    {
+      if(!strcmp($2, "View")) AliasView((int)$4, 1);
+      Free($2);
+    }
 ;
 
 Views :
@@ -1710,7 +1719,7 @@ Transform :
       RotateShapes($3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $7, $10);
       $$ = $10;
     }
-  | tSymmetry  VExpr   '{' MultipleShape '}'
+  | tSymmetry  VExpr '{' MultipleShape '}'
     {
       SymmetryShapes($2[0], $2[1], $2[2], $2[3], $4);
       $$ = $4;
@@ -1720,11 +1729,33 @@ Transform :
       DilatShapes($3[0], $3[1], $3[2], $5, $8);
       $$ = $8;
     }
+  | tDuplicata '{' MultipleShape '}'
+    {
+      $$ = List_Create(3, 3, sizeof(Shape));
+      for(int i = 0; i < List_Nbr($3); i++){
+	Shape TheShape;
+	List_Read($3, i, &TheShape);
+	CopyShape(TheShape.Type, TheShape.Num, &TheShape.Num);
+	List_Add($$, &TheShape);
+      }
+      List_Delete($3);
+    }
+  | tIntersect tLine '{' RecursiveListOfDouble '}' tSurface '{' FExpr '}' 
+    { 
+      $$ = List_Create(2, 1, sizeof(Shape));
+      IntersectCurvesWithSurface($4, (int)$8, $$);
+      List_Delete($4);
+    }
+  | tBoundary '{' MultipleShape '}'
+    { 
+      $$ = List_Create(2, 1, sizeof(Shape));
+      BoundaryShapes($3, $$);
+      List_Delete($3);
+    }
 ;
 
 MultipleShape : 
-    Duplicata     { $$ = $1; }
-  | ListOfShapes  { $$ = $1; }
+    ListOfShapes  { $$ = $1; }
   | Transform     { $$ = $1; }
 ;
 
@@ -1830,42 +1861,6 @@ ListOfShapes :
       }
     }
 ;
-
-//  D U P L I C A T A
-
-Duplicata :
-    tDuplicata '{' ListOfShapes '}'
-    {
-      $$ = List_Create(3, 3, sizeof(Shape));
-      for(int i = 0; i < List_Nbr($3); i++){
-	Shape TheShape;
-	List_Read($3, i, &TheShape);
-	CopyShape(TheShape.Type, TheShape.Num, &TheShape.Num);
-	List_Add($$, &TheShape);
-      }
-      List_Delete($3);
-    }
-  // for backward compatibility:
-  | tDuplicata tSTRING '[' FExpr ']' tEND
-    {
-      if(!strcmp($2, "View")) AliasView((int)$4, 0);
-      Free($2);
-      $$ = NULL;
-    }
-  | tAlias tSTRING '[' FExpr ']' tEND
-    {
-      if(!strcmp($2, "View")) AliasView((int)$4, 0);
-      Free($2);
-      $$ = NULL;
-    }
-  | tAliasWithOptions tSTRING '[' FExpr ']' tEND
-    {
-      if(!strcmp($2, "View")) AliasView((int)$4, 1);
-      Free($2);
-      $$ = NULL;
-    }
-;
-
 
 //  D E L E T E
 
@@ -3241,7 +3236,7 @@ FExpr_Multi :
       Vertex *v = FindPoint((int)$3);
       $$ = List_Create(3, 1, sizeof(double));      
       if(!v) {
-	yymsg(GERROR, "Unknown point '%d'", (int) $3);
+	yymsg(GERROR, "Unknown point '%d'", (int)$3);
 	double d = 0.0;
 	List_Add($$, &d);
 	List_Add($$, &d);
@@ -3253,22 +3248,7 @@ FExpr_Multi :
 	List_Add($$, &v->Pos.Z);
       }
     }
-  | tIntersect tLine '{' RecursiveListOfDouble '}' tSurface '{' FExpr '}' 
-    { 
-      $$ = List_Create(3, 1, sizeof(double));
-      IntersectCurvesWithSurface($4, (int)$8, $$);
-    }
   | Transform
-    {
-      $$ = List_Create(List_Nbr($1), 1, sizeof(double));
-      for(int i = 0; i < List_Nbr($1); i++){
-	Shape *s = (Shape*) List_Pointer($1, i);
-	double d = s->Num;
-	List_Add($$, &d);
-      }
-      List_Delete($1);
-    }
-  | Duplicata
     {
       $$ = List_Create(List_Nbr($1), 1, sizeof(double));
       for(int i = 0; i < List_Nbr($1); i++){
