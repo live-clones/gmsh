@@ -1,4 +1,4 @@
-# $Id: variables.in,v 1.16 2007-09-04 13:47:00 remacle Exp $
+# $Id: variables.in,v 1.17 2007-09-05 08:36:21 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -60,6 +60,7 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 bindir=@bindir@
 datadir=@datadir@
+datarootdir=@datarootdir@
 includedir=@includedir@
 libdir=@libdir@
 mandir=@mandir@
