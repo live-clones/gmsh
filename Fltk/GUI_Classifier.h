@@ -12,6 +12,7 @@
 #include <vector>
 
 void class_select_cb(Fl_Widget *w, void *data);
+void class_hide_cb(Fl_Widget *w, void *data);
 void class_selectgface_cb(Fl_Widget *w, void *data);
 void class_save_cb(Fl_Widget *w, void *data);
 void class_clear_cb(Fl_Widget *w, void *data);

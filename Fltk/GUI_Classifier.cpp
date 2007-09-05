@@ -254,7 +254,7 @@ classificationEditor::classificationEditor()
     
     _togbuttons[CLASSTOGBUTTON_HIDE] = 
       new Fl_Toggle_Button(3*WB+BB, 2*WB+1*BH, BB, BH, "Hide Unselected");
-    _togbuttons[CLASSTOGBUTTON_HIDE]->callback(hide_cb,this);
+    _togbuttons[CLASSTOGBUTTON_HIDE]->callback(class_hide_cb,this);
 
     _togbuttons[CLASSTOGBUTTON_CLOS] = 
       new Fl_Toggle_Button(4*WB+2*BB, 2*WB+1*BH, BB, BH, "Include Closure");
@@ -308,6 +308,13 @@ classificationEditor::classificationEditor()
   _window->size_range(width, (int)(0.85 * height));    
 }
 
+
+void class_hide_cb(Fl_Widget *w, void *data)
+{
+  CTX.hide_unselected = !CTX.hide_unselected;
+  CTX.mesh.changed = ENT_ALL;
+  Draw();
+}
 
 void class_select_cb(Fl_Widget *w, void *data)
 {
