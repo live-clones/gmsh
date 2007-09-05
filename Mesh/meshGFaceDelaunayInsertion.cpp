@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.3 2007-09-04 13:47:02 remacle Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.4 2007-09-05 13:19:15 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -99,6 +99,34 @@ int MTri3::inCircumCircle ( const double *p ) const
   return (result > 0) ? 1 : 0;  
 }
 
+int inCircumCircle ( MTriangle *base, 
+		     const double *p ,
+		     const double *param ,
+		     std::vector<double> & Us,
+		     std::vector<double> & Vs) 
+{
+  double pa[2] = {Us[base->getVertex(0)->getNum()],
+		  Vs[base->getVertex(0)->getNum()]};
+  double pb[2] = {Us[base->getVertex(1)->getNum()],
+		  Vs[base->getVertex(1)->getNum()]};
+  double pc[2] = {Us[base->getVertex(2)->getNum()],
+		  Vs[base->getVertex(2)->getNum()]};
+
+  double result = gmsh::incircle(pa, pb, pc, (double*)param) * gmsh::orient2d(pa, pb, pc);  
+  return (result > 0) ? 1 : 0;  
+
+
+
+//   double pa[3] = {base->getVertex(0)->x(),base->getVertex(0)->y(),base->getVertex(0)->z()};
+//   double pb[3] = {base->getVertex(1)->x(),base->getVertex(1)->y(),base->getVertex(1)->z()};
+//   double pc[3] = {base->getVertex(2)->x(),base->getVertex(2)->y(),base->getVertex(2)->z()};
+//   double fourth[3];
+//   fourthPoint ( pa,pb,pc,fourth);
+
+//   double result = gmsh::insphere(pa, pb, pc, fourth, (double*)p) * gmsh::orient3d(pa, pb, pc,fourth);  
+//   return (result > 0) ? 1 : 0;  
+}
+
 
 template <class ITER>
 void connectTris ( ITER beg, ITER end)
@@ -135,7 +163,10 @@ void connectTriangles ( std::list<MTri3*> & l)
 void recurFindCavity (std::list<edgeXface> & shell, 
 		      std::list<MTri3*> & cavity, 
 		      double *v, 
-		      MTri3 *t)
+		      double *param, 
+		      MTri3 *t,
+		      std::vector<double> & Us,
+		      std::vector<double> & Vs)
 {
   t->setDeleted(true);
   // the cavity that has to be removed
@@ -149,9 +180,9 @@ void recurFindCavity (std::list<edgeXface> & shell,
 	  shell.push_back ( edgeXface ( t, i ) );
       else  if (!neigh->isDeleted())
 	{
-	  int circ =  neigh->inCircumCircle ( v );
+	  int circ =  inCircumCircle (neigh->tri(), v , param, Us, Vs);
 	  if (circ)
-	    recurFindCavity ( shell, cavity,v , neigh);
+	    recurFindCavity ( shell, cavity,v, param, neigh,Us,Vs);
 	  else
 	    shell.push_back ( edgeXface ( t, i ) );
 	}
@@ -160,12 +191,25 @@ void recurFindCavity (std::list<edgeXface> & shell,
 
 bool circUV ( MTriangle   *t , 
 	      std::vector<double> & Us,
-	      std::vector<double> & Vs , double *res)
+	      std::vector<double> & Vs , double *res, GFace *gf)
 {
-  double p1 [2] = {Us[t->getVertex(0)->getNum()],Vs[t->getVertex(0)->getNum()]};
-  double p2 [2] = {Us[t->getVertex(1)->getNum()],Vs[t->getVertex(1)->getNum()]};
-  double p3 [2] = {Us[t->getVertex(2)->getNum()],Vs[t->getVertex(2)->getNum()]};
-  t->circumcenterXY ( p1, p2 , p3, res);
+  double u1 [3] = {Us[t->getVertex(0)->getNum()],Vs[t->getVertex(0)->getNum()],0};
+  double u2 [3] = {Us[t->getVertex(1)->getNum()],Vs[t->getVertex(1)->getNum()],0};
+  double u3 [3] = {Us[t->getVertex(2)->getNum()],Vs[t->getVertex(2)->getNum()],0};
+  t->circumcenterXY ( u1, u2 , u3, res);
+  return true;
+  double p1 [3] = {t->getVertex(0)->x(),t->getVertex(0)->y(),t->getVertex(0)->z()};
+  double p2 [3] = {t->getVertex(1)->x(),t->getVertex(1)->y(),t->getVertex(1)->z()};
+  double p3 [3] = {t->getVertex(2)->x(),t->getVertex(2)->y(),t->getVertex(2)->z()};
+  double resxy[3], uv[2];
+  t->circumcenterXYZ ( p1, p2 , p3, resxy,uv);
+  return true;
+  //  printf("uv = %g %g\n",uv[0],uv[1]);
+  //    printf("%g %g vs ",res[0],res[1]);
+  res[0] = u1[0] + uv[0] * ( u2[0] - u1[0] ) + uv[1] * ( u3[0] - u1[0] );
+  res[1] = u1[1] + uv[0] * ( u2[1] - u1[1] ) + uv[1] * ( u3[1] - u1[1] );
+  //    printf("%g %g \n",res[0],res[1]);
+  
 }
 
 bool invMapUV ( MTriangle   *t , 
@@ -221,6 +265,7 @@ double getSurfUV ( MTriangle   *t ,
 }
 
 bool insertVertex (MVertex *v , 
+		   double  *param , 
 		   MTri3   *t ,
 		   std::set<MTri3*,compareTri3Ptr> &allTets,
 		   std::vector<double> & vSizes,
@@ -234,7 +279,7 @@ bool insertVertex (MVertex *v ,
 
   double p[3] = {v->x(),v->y(),v->z()};
 
-  recurFindCavity ( shell,  cavity, p , t);  
+  recurFindCavity ( shell,  cavity, p , param, t, Us, Vs);  
 
   // check that volume is conserved
   double newVolume = 0;
@@ -251,8 +296,9 @@ bool insertVertex (MVertex *v ,
 
 //   fprintf(ff,"};\n");
 //   fclose (ff);
-//   sprintf(name,"test%d.pos",III++);
-//   ff = fopen (name,"w");
+//   char name[256];
+//   sprintf(name,"test.pos");
+//   FILE *ff = fopen (name,"w");
 //   fprintf(ff,"View\"test\"{\n");
 
 
@@ -284,6 +330,16 @@ bool insertVertex (MVertex *v ,
 // 	       Us [t->getVertex(2)->getNum()],
 // 	       Vs [t->getVertex(2)->getNum()],
 // 	       0.0);
+//       fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {0,0,0};\n",
+// 	      t->getVertex(0)->x(),
+// 	      t->getVertex(0)->y(),
+// 	      t->getVertex(0)->z(),
+// 	      t->getVertex(1)->x(),
+// 	      t->getVertex(1)->y(),
+// 	      t->getVertex(1)->z(),
+// 	      t->getVertex(2)->x(),
+// 	      t->getVertex(2)->y(),
+// 	      t->getVertex(2)->z());
       newTris[k++]=t4;
       // all new triangles are pushed front in order to
       // ba able to destroy them if the cavity is not
@@ -295,12 +351,12 @@ bool insertVertex (MVertex *v ,
       	new_cavity.push_back (otherSide);
       //      if (!it->t1->isDeleted())throw;
       double ss = fabs(getSurfUV(t4->tri(),Us,Vs));
-      if (ss < 1.e-12)ss = 1256172121;
+      if (ss < 1.e-25)ss = 1256172121;
       newVolume += ss;
       ++it;
     }
-//     fprintf(ff,"};\n");
-//     fclose (ff);
+//   fprintf(ff,"};\n");
+//   fclose (ff);
 //   printf("%d %d newVolume %g oldVolume %g\n",cavity.size(),new_cavity.size(),newVolume,oldVolume);
 //    getchar();
 
@@ -315,7 +371,7 @@ bool insertVertex (MVertex *v ,
   // The cavity is NOT star shaped
   else
     {      
-      printf("the cavity (%d members) is not star shaped %g vs %g\n",shell.size(),oldVolume,newVolume);
+      //      printf("the cavity (%d members) is not star shaped %g vs %g\n",shell.size(),oldVolume,newVolume);
 
       for (unsigned int i=0;i<shell.size();i++)delete newTris[i];
       delete [] newTris;      
@@ -364,6 +420,33 @@ static void setLcs ( MTriangle *t, std::map<MVertex*,double> &vSizes)
 	  if (itj->second > l)itj->second = l;
 	}
     }
+}
+
+void _printTris (char *name,    std::set<MTri3*,compareTri3Ptr>&AllTris, std::vector<double>&Us, std::vector<double>&Vs)
+{
+  FILE *ff = fopen (name,"w");
+  fprintf(ff,"View\"test\"{\n");
+  std::set<MTri3*,compareTri3Ptr>::iterator it = AllTris.begin();
+  while (it != AllTris.end() )
+    {
+      MTri3 *worst = *it;
+      if (!worst->isDeleted())
+	{
+	  fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {0,0,0};\n",
+		  Us [(worst)->tri()->getVertex(0)->getNum()],
+		  Vs [(worst)->tri()->getVertex(0)->getNum()],
+		  0.0,
+		  Us [(worst)->tri()->getVertex(1)->getNum()],
+		  Vs [(worst)->tri()->getVertex(1)->getNum()],
+		  0.0,
+		  Us [(worst)->tri()->getVertex(2)->getNum()],
+		  Vs [(worst)->tri()->getVertex(2)->getNum()],
+		  0.0);
+	}
+      ++it;
+    }
+  fprintf(ff,"};\n");
+  fclose (ff);
 }
 
 void insertVerticesInFace (GFace *gf, BDS_Mesh *bds)
@@ -423,11 +506,17 @@ void insertVerticesInFace (GFace *gf, BDS_Mesh *bds)
 	    Msg(DEBUG,"%7d points created -- Worst tri radius is %8.3f",vSizes.size(),worst->getRadius());
 	  double center[2],uv[2];
 	  if (worst->getRadius() < 0.5 * sqrt(2.0)) break;	  
-	  circUV(worst->tri(),Us,Vs,center);
+	  circUV(worst->tri(),Us,Vs,center,gf);
 	  bool inside = invMapUV(worst->tri(),center,Us,Vs,uv,1.e-8);
 
-	  if (1 || inside)
+	  if (inside)
 	    {
+
+// 	      char name[245];
+// 	      sprintf(name,"param%d.pos",ITER);
+// 	      _printTris (name, AllTris, Us,Vs);
+
+
 	      // we use here local coordinates as real coordinates
 	      // x,y and z will be computed hereafter
 	      //	      Msg(INFO,"Point is inside");
@@ -446,9 +535,9 @@ void insertVerticesInFace (GFace *gf, BDS_Mesh *bds)
 	      Us.push_back( center[0] );
 	      Vs.push_back( center[1] );
 	      
-	      if (!insertVertex ( v , worst, AllTris,vSizes,vSizesBGM,Us,Vs))
+	      if (!insertVertex ( v , center, worst, AllTris,vSizes,vSizesBGM,Us,Vs))
 		{
-		  Msg(INFO,"cavity is invalid");
+		  Msg(DEBUG,"2D Delaunay : a cavity is not star shaped");
 		  AllTris.erase(AllTris.begin());
 		  worst->forceRadius(-1);
 		  AllTris.insert(worst);		  
@@ -459,18 +548,19 @@ void insertVerticesInFace (GFace *gf, BDS_Mesh *bds)
 	    }
  	  else
  	    {
-	      Msg(INFO,"Point %g %g is outside %g %g - %g %g - %g %g (%g %g)",
-		  center[0],center[1],		  
-		  Us [(worst)->tri()->getVertex(0)->getNum()],
-		  Vs [(worst)->tri()->getVertex(0)->getNum()],
-		  Us [(worst)->tri()->getVertex(1)->getNum()],
-		  Vs [(worst)->tri()->getVertex(1)->getNum()],
-		  Us [(worst)->tri()->getVertex(2)->getNum()],
-		  Vs [(worst)->tri()->getVertex(2)->getNum()],
-		  uv[0],uv[1]);
+//  	      Msg(DEBUG,"Point %g %g is outside %g %g - %g %g - %g %g (%g %g)",
+//  		  center[0],center[1],		  
+//  		  Us [(worst)->tri()->getVertex(0)->getNum()],
+//  		  Vs [(worst)->tri()->getVertex(0)->getNum()],
+//  		  Us [(worst)->tri()->getVertex(1)->getNum()],
+//  		  Vs [(worst)->tri()->getVertex(1)->getNum()],
+//  		  Us [(worst)->tri()->getVertex(2)->getNum()],
+//  		  Vs [(worst)->tri()->getVertex(2)->getNum()],
+//  		  uv[0],uv[1]);
  	      AllTris.erase(AllTris.begin());
  	      worst->forceRadius(0);
- 	      AllTris.insert(worst);		  
+ 	      AllTris.insert(worst);
+	      //	      break;
 	    }
 	}
     }
@@ -478,10 +568,6 @@ void insertVerticesInFace (GFace *gf, BDS_Mesh *bds)
   // optimize the mesh
 
   // fill new gmsh structures with triangles
-   char name[245];
-   sprintf(name,"param%d.pos",gf->tag());
-   FILE *ff = fopen (name,"w");
-   fprintf(ff,"View\"test\"{\n");
   while (1)
     {
       if (AllTris.begin() == AllTris.end() ) break;
@@ -493,20 +579,8 @@ void insertVerticesInFace (GFace *gf, BDS_Mesh *bds)
       else
 	{
 	  gf->triangles.push_back(worst->tri());
-	  fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {0,0,0};\n",
-		  Us [(worst)->tri()->getVertex(0)->getNum()],
-		  Vs [(worst)->tri()->getVertex(0)->getNum()],
-		  0.0,
-		  Us [(worst)->tri()->getVertex(1)->getNum()],
-		  Vs [(worst)->tri()->getVertex(1)->getNum()],
-		  0.0,
-		  Us [(worst)->tri()->getVertex(2)->getNum()],
-		  Vs [(worst)->tri()->getVertex(2)->getNum()],
-		  0.0);
 	}
       delete worst;
       AllTris.erase(AllTris.begin());      
     }
-  fprintf(ff,"};\n");
-  fclose (ff);
 }

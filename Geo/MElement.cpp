@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.37 2007-09-04 13:47:01 remacle Exp $
+// $Id: MElement.cpp,v 1.38 2007-09-05 13:19:15 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -407,20 +407,30 @@ double MTriangle::getSurfaceXY() const
   return s * 0.5;
 }
 
-void MTriangle::circumcenterXYZ(double *p1, double *p2, double *p3,double *res)
+void MTriangle::circumcenterXYZ(double *p1, double *p2, double *p3,double *res, double *uv)
 {
   double v1[3] = {p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]};
   double v2[3] = {p3[0]-p1[0],p3[1]-p1[1],p3[2]-p1[2]};
   double vx[3] = {p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]};
   double vy[3] = {p3[0]-p1[0],p3[1]-p1[1],p3[2]-p1[2]};
   double vz[3]; prodve (vx,vy,vz);prodve (vz,vx,vy);
-  norme(vx);norme(vy);norme(vz);
+  norme(vx); norme(vy);norme(vz);
   double p1P[2] = {0.0,0.0};
   double p2P[2];prosca(v1,vx,&p2P[0]);prosca(v1,vy,&p2P[1]);
   double p3P[2];prosca(v2,vx,&p3P[0]);prosca(v2,vy,&p3P[1]);
   double resP[2];
 
   circumcenterXY(p1P, p2P, p3P,resP);
+
+  if (uv)
+    {
+      double mat[2][2] = {{p2P[0]-p1P[0],p3P[0]-p1P[0]},
+			  {p2P[1]-p1P[1],p3P[1]-p1P[1]}};
+      double rhs[2] = {resP[0]-p1P[0],resP[1]-p1P[1]};
+      sys2x2(mat,rhs,uv);
+    }
+
+
 
 //    double d1 = sqrt((p2P[0] - resP[0]) * (p2P[0] - resP[0]) +
 //  		   (p2P[1] - resP[1]) * (p2P[1] - resP[1]));
@@ -437,23 +447,31 @@ void MTriangle::circumcenterXYZ(double *p1, double *p2, double *p3,double *res)
   res[0] = p1[0] + resP[0] * vx[0] + resP[1] * vy[0];
   res[1] = p1[1] + resP[0] * vx[1] + resP[1] * vy[1];
   res[2] = p1[2] + resP[0] * vx[2] + resP[1] * vy[2];
+
+
+//    double d2 = sqrt((p1P[0] - resP[0]) * (p1P[0] - resP[0]) +
+//  		   (p1P[1] - resP[1]) * (p1P[1] - resP[1])) ;
+
+//    double d3 = sqrt((p3P[0] - resP[0]) * (p3P[0] - resP[0]) +
+//  		   (p3P[1] - resP[1]) * (p3P[1] - resP[1]) );
+
+
   
+
   return;
 
-  double d1 = sqrt((p1[0] - res[0]) * (p1[0] - res[0]) +
-  		   (p1[1] - res[1]) * (p1[1] - res[1]) +
-  		   (p1[2] - res[2]) * (p1[2] - res[2]) );
-  double d2 = sqrt((p2[0] - res[0]) * (p2[0] - res[0]) +
-  		   (p2[1] - res[1]) * (p2[1] - res[1]) +
-  		   (p2[2] - res[2]) * (p2[2] - res[2]) );
-  double d3 = sqrt((p3[0] - res[0]) * (p3[0] - res[0]) +
-  		   (p3[1] - res[1]) * (p3[1] - res[1]) +
-  		   (p3[2] - res[2]) * (p3[2] - res[2]) );
+  double d1 = sqrt((res[0] - p1[0]) * (res[0] - p1[0]) +
+  		   (res[1] - p1[1]) * (res[1] - p1[1]) +
+  		   (res[2] - p1[2]) * (res[2] - p1[2]) );
+  double d2 = sqrt((res[0] - p2[0]) * (res[0] - p2[0]) +
+  		   (res[1] - p2[1]) * (res[1] - p2[1]) +
+  		   (res[2] - p2[2]) * (res[2] - p2[2]) );
+  double d3 = sqrt((res[0] - p3[0]) * (res[0] - p3[0]) +
+  		   (res[1] - p3[1]) * (res[1] - p3[1]) +
+  		   (res[2] - p3[2]) * (res[2] - p3[2]) );
   		   
+   printf(" -- %g %g %g\n",d1,d2,d3);
 
-
-  printf("%g %g %g\n",d1,d2,d3);
-  
 
 
 }

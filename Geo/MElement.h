@@ -314,7 +314,7 @@ class MTriangle : public MElement {
   }
   void circumcenterXY(double *res) const; 
   void circumcenterUV(GFace*,double *res); 
-  static void circumcenterXYZ(double *p1, double *p2, double *p3,double *res);
+  static void circumcenterXYZ(double *p1, double *p2, double *p3,double *res, double *uv = 0);
   static void circumcenterXY (double *p1, double *p2, double *p3,double *res);
   double getSurfaceXY() const;
   double getSurfaceUV(GFace*);

@@ -78,41 +78,44 @@ void laplaceSmoothing (GFace *gf)
   v2t_cont adj;
   buildVertexToTriangle ( gf ,  adj );
 
-  v2t_cont :: iterator it = adj.begin();
-  
-  while (it != adj.end())
+   for (int i=0;i<5;i++)
     {
-      MVertex *ver= it->first;
-      GEntity *ge = ver->onWhat();
-      // this vertex in internal to the face
-      if (ge->dim() == 2)
+      v2t_cont :: iterator it = adj.begin();
+      
+      while (it != adj.end())
 	{
-	  double initu,initv;
-	  ver->getParameter ( 0,initu);
-	  ver->getParameter ( 1,initv);
-
-	  const std::vector<MTriangle*> & lt = it->second;
-
-	  double fact = lt.size() ? 1./(3.*lt.size()):0;
-
-	  double cu=0,cv=0;
-	  double pu[3],pv[3];
-	  for (unsigned int i=0;i<lt.size();i++)
+	  MVertex *ver= it->first;
+	  GEntity *ge = ver->onWhat();
+	  // this vertex in internal to the face
+	  if (ge->dim() == 2)
 	    {
-	      parametricCoordinates ( lt[i] , gf, pu, pv);
-	      cu += fact*(pu[0]+pu[1]+pu[2]);
-	      cv += fact*(pv[0]+pv[1]+pv[2]);
-	      // have to test validity !
+	      double initu,initv;
+	      ver->getParameter ( 0,initu);
+	      ver->getParameter ( 1,initv);
+	      
+	      const std::vector<MTriangle*> & lt = it->second;
+	      
+	      double fact = lt.size() ? 1./(3.*lt.size()):0;
+	      
+	      double cu=0,cv=0;
+	      double pu[3],pv[3];
+	      for (unsigned int i=0;i<lt.size();i++)
+		{
+		  parametricCoordinates ( lt[i] , gf, pu, pv);
+		  cu += fact*(pu[0]+pu[1]+pu[2]);
+		  cv += fact*(pv[0]+pv[1]+pv[2]);
+		  // have to test validity !
+		}
+	      ver->setParameter(0,cu);
+	      ver->setParameter(1,cv);
+	      GPoint pt = gf->point(SPoint2(cu,cv));
+	      ver->x() = pt.x();
+	      ver->y() = pt.y();
+	      ver->z() = pt.z();
 	    }
-	  ver->setParameter(0,cu);
-	  ver->setParameter(1,cv);
-	  GPoint pt = gf->point(SPoint2(cu,cv));
-	  ver->x() = pt.x();
-	  ver->y() = pt.y();
-	  ver->z() = pt.z();
-	}
-      ++it;
-    }  
+	  ++it;
+	}  
+    }
 }
 
 extern void fourthPoint (double *p1, double *p2, double *p3, double *p4);

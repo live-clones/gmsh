@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.85 2007-09-05 10:11:30 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.86 2007-09-05 13:19:15 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -39,6 +39,13 @@
 extern Context_T CTX;
 
 static double SCALINGU=1,SCALINGV=1;
+
+bool AlgoDelaunay2D ( GFace *gf )
+{
+  if ( gf->getNativeType() == GEntity::GmshModel && CTX.mesh.algo2d == ALGO_2D_DELAUNAY && gf->geomType() == GEntity::Plane)
+    return true;
+  return false;
+}
 
 void computeEdgeLoops(const GFace *gf,
 		      std::vector<MVertex*> &all_mvertices,
@@ -915,7 +922,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   m->del_point(m->find_point(-4));
 
   // start mesh generation
-  if (CTX.mesh.algo2d != ALGO_2D_DELAUNAY)
+  if (!AlgoDelaunay2D ( gf ))
     {
       RefineMesh (gf,*m,10);
       OptimizeMesh(gf, *m, 2);
@@ -975,10 +982,10 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   // the delaunay algo is based directly on internal gmsh structures
   // BDS mesh is passed in order not to recompute local coordinates
   // of vertices
-  if (CTX.mesh.algo2d == ALGO_2D_DELAUNAY)
+  if (AlgoDelaunay2D ( gf ))
      {
        insertVerticesInFace (gf,m) ;
-       for (int i=0;i<5;i++)laplaceSmoothing (gf);
+       laplaceSmoothing (gf);
      }
   else if (debug){
     char name[256];
@@ -1458,7 +1465,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
   // goto hhh;
   // start mesh generation
   
-  if (CTX.mesh.algo2d != ALGO_2D_DELAUNAY)
+  if (!AlgoDelaunay2D ( gf ))
     {
       RefineMesh (gf,*m,10);
       OptimizeMesh(gf, *m, 2);
@@ -1528,10 +1535,10 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
       outputScalarField(m->triangles, name,1);
     }
 
-   if (CTX.mesh.algo2d == ALGO_2D_DELAUNAY)
+   if (AlgoDelaunay2D ( gf ))
      {
        insertVerticesInFace (gf,m) ;
-       for (int i=0;i<5;i++)laplaceSmoothing (gf);
+       laplaceSmoothing (gf);
      }
  
   delete m; 
@@ -1573,8 +1580,7 @@ void meshGFace::operator() (GFace *gf)
     break;
   case ALGO_2D_DELAUNAY: 
     // FIXME: Delaunay not available in all cases at the moment
-    if(gf->geomType() == GEntity::Plane && 
-       (gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()))
+    if(AlgoDelaunay2D(gf))
       algo = "Delaunay";
     else
       algo = "MeshAdapt+Delaunay";
