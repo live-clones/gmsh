@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.283 2007-09-05 10:11:31 geuzaine Exp $
+// $Id: Gmsh.y,v 1.284 2007-09-06 15:49:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1137,6 +1137,14 @@ Shape :
       $$.Type = 0;
       $$.Num = 0;
     }
+  | tFunction tField '(' FExpr ')' tAFFECT tBIGSTR tEND
+    {
+      std::list<Field*> *flist = new std::list<Field*>;
+      fields.insert(new FunctionField(flist,$7), (int)$4);
+      // dummy values
+      $$.Type = 0;
+      $$.Num = 0;
+    }
   | tFunction tField '(' FExpr ')' tAFFECT tBIGSTR ListOfDouble tEND
     {
       std::list<Field*> *flist = new std::list<Field*>;
@@ -1145,9 +1153,9 @@ Shape :
 	double id;
 	List_Read($8, i, &id);
 	Field *pfield = fields.get((int)id);
-	if(pfield)flist->push_front(pfield);
+	if(pfield) flist->push_front(pfield);
       }
-      fields.insert(new FunctionField(flist,$7),(int)$4);
+      fields.insert(new FunctionField(flist,$7), (int)$4);
       // dummy values
       $$.Type = 0;
       $$.Num = 0;
