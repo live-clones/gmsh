@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.9 2007-09-01 16:05:43 geuzaine Exp $
+// $Id: PViewData.cpp,v 1.10 2007-09-08 21:26:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,3 +23,15 @@
 // 
 
 #include "PViewData.h"
+
+PViewData::PViewData()
+  : _dirty(true), _name(""), _filename(""), _fileIndex(0)
+{
+}
+
+bool PViewData::empty()
+{
+  return (!getNumElements() && 
+	  !getNumStrings2D() &&
+	  !getNumStrings3D());
+}

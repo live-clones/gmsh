@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.2 2007-09-02 21:05:20 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.3 2007-09-08 21:26:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 #include "PViewDataList.h"
 #include "Numeric.h"
 #include "SmoothData.h"
+#include "Message.h"
 #include "Context.h"
 
 extern Context_T CTX;
@@ -47,7 +48,7 @@ PViewDataList::PViewDataList(bool allocate)
     NbSI2(0), SI2(0), NbVI2(0), VI2(0), NbTI2(0), TI2(0),
     NbSY(0), SY(0), NbVY(0), VY(0), NbTY(0), TY(0),
     NbSY2(0), SY2(0), NbVY2(0), VY2(0), NbTY2(0), TY2(0),
-    NbT2(0), T2D(0), T2C(0), NbT3(0), T3D(0), T3C(0),
+    NbT2(0), T2D(0), T2C(0), NbT3(0), T3D(0), T3C(0), adaptive(0), 
     _lastElement(-1), _lastDimension(-1), _lastNumNodes(-1), 
     _lastNumComponents(-1), _lastNumEdges(-1), _lastXYZ(0), _lastVal(0)
 {
@@ -69,8 +70,6 @@ PViewDataList::PViewDataList(bool allocate)
     T2C = List_Create(1, 100, sizeof(char));
     T3D = List_Create(1, 100, sizeof(double));
     T3C = List_Create(1, 100, sizeof(char));
-    Grains = new std::map<int, List_T*>;
-    DisplayListsOfGrains= new std::map<int, int>;
   }
 }
 
@@ -87,8 +86,7 @@ PViewDataList::~PViewDataList()
   List_Delete(SY); List_Delete(VY); List_Delete(TY);
   List_Delete(T2D); List_Delete(T2C);
   List_Delete(T3D); List_Delete(T3C);
-  if(Grains) delete Grains;
-  if(DisplayListsOfGrains) delete DisplayListsOfGrains;
+  if(adaptive) delete adaptive;
 }
 
 void PViewDataList::finalize()
@@ -138,6 +136,40 @@ void PViewDataList::finalize()
   if(CTX.post.smooth) smooth();
   
   setDirty(false);
+}
+
+int PViewDataList::getNumScalars()
+{ 
+  return NbSP + NbSL + NbST + NbSQ + NbSS + NbSH + NbSI + NbSY; 
+}
+
+int PViewDataList::getNumVectors()
+{
+  return NbVP + NbVL + NbVT + NbVQ + NbVS + NbVH + NbVI + NbVY; 
+}
+
+int PViewDataList::getNumTensors()
+{ 
+  return NbTP + NbTL + NbTT + NbTQ + NbTS + NbTH + NbTI + NbTY; 
+}
+
+int PViewDataList::getNumElements(int type)
+{
+  if(type){
+    switch(type){
+    case Point: return NbSP + NbVP + NbTP;
+    case Line: return NbSL + NbVL + NbTL;
+    case Triangle: return NbST + NbVT + NbTT;
+    case Quadrangle: return NbSQ + NbVQ + NbTQ;
+    case Tetrahedron: return NbSS + NbVS + NbTS;
+    case Hexahedron: return NbSH + NbVH + NbTH;
+    case Prism: return NbSI + NbVI + NbTI;
+    case Pyramid: return NbSY + NbVY + NbTY;
+    default: Msg(GERROR, "Unknown element type"); return 0;
+    }
+  }
+
+  return getNumScalars() + getNumVectors() + getNumTensors();
 }
 
 double PViewDataList::getTime(int step)
@@ -586,3 +618,268 @@ void PViewDataList::smooth()
 
   xyzv::eps = old_eps;  
 }
+
+bool PViewDataList::combineSpace(nameData &nd)
+{
+  // sanity checks
+  if(nd.data.size() < 2) return false;
+  int ts = nd.data[0]->getNumTimeSteps();
+  for(unsigned int i = 1; i < nd.data.size(); i++) {
+    if(nd.data[i]->getNumTimeSteps() != ts){
+      Msg(GERROR, "Cannot combine views having different number of time steps");
+      return false;
+    }
+  }
+
+  for(unsigned int i = 0; i < nd.data.size(); i++) {
+    PViewDataList *l = dynamic_cast<PViewDataList*>(nd.data[i]);
+    if(!l){
+      Msg(GERROR, "Cannot combine hybrid data");
+      return false;
+    }
+    // merge elememts
+    List_Merge(l->SP, SP); NbSP += l->NbSP; List_Merge(l->VP, VP); NbVP += l->NbVP;
+    List_Merge(l->TP, TP); NbTP += l->NbTP; List_Merge(l->SL, SL); NbSL += l->NbSL;
+    List_Merge(l->VL, VL); NbVL += l->NbVL; List_Merge(l->TL, TL); NbTL += l->NbTL;
+    List_Merge(l->ST, ST); NbST += l->NbST; List_Merge(l->VT, VT); NbVT += l->NbVT;
+    List_Merge(l->TT, TT); NbTT += l->NbTT; List_Merge(l->SQ, SQ); NbSQ += l->NbSQ;
+    List_Merge(l->VQ, VQ); NbVQ += l->NbVQ; List_Merge(l->TQ, TQ); NbTQ += l->NbTQ;
+    List_Merge(l->SS, SS); NbSS += l->NbSS; List_Merge(l->VS, VS); NbVS += l->NbVS;
+    List_Merge(l->TS, TS); NbTS += l->NbTS; List_Merge(l->SH, SH); NbSH += l->NbSH;
+    List_Merge(l->VH, VH); NbVH += l->NbVH; List_Merge(l->TH, TH); NbTH += l->NbTH;
+    List_Merge(l->SI, SI); NbSI += l->NbSI; List_Merge(l->VI, VI); NbVI += l->NbVI;
+    List_Merge(l->TI, TI); NbTI += l->NbTI; List_Merge(l->SY, SY); NbSY += l->NbSY;
+    List_Merge(l->VY, VY); NbVY += l->NbVY; List_Merge(l->TY, TY); NbTY += l->NbTY;
+
+    // merge strings
+    for(int i = 0; i < List_Nbr(l->T2D); i += 4){
+      List_Add(T2D, List_Pointer(l->T2D, i));
+      List_Add(T2D, List_Pointer(l->T2D, i + 1));
+      List_Add(T2D, List_Pointer(l->T2D, i + 2)); 
+      double d = List_Nbr(T2C);
+      List_Add(T2D, &d);
+      double beg, end;
+      List_Read(l->T2D, i + 3, &beg); 
+      if(i > List_Nbr(l->T2D) - 8)
+	end = (double)List_Nbr(l->T2C);
+      else
+	List_Read(l->T2D, i + 3 + 4, &end); 
+      char *c = (char*)List_Pointer(l->T2C, (int)beg);
+      for(int j = 0; j < (int)(end - beg); j++)
+	List_Add(T2C, &c[j]); 
+      NbT2++;
+    }
+    for(int i = 0; i < List_Nbr(l->T3D); i += 5){
+      List_Add(T3D, List_Pointer(l->T3D, i));
+      List_Add(T3D, List_Pointer(l->T3D, i + 1));
+      List_Add(T3D, List_Pointer(l->T3D, i + 2)); 
+      List_Add(T3D, List_Pointer(l->T3D, i + 3)); 
+      double d = List_Nbr(T3C);
+      List_Add(T3D, &d);
+      double beg, end;
+      List_Read(l->T3D, i + 4, &beg); 
+      if(i > List_Nbr(l->T3D) - 10)
+	end = (double)List_Nbr(l->T3C);
+      else
+	List_Read(l->T3D, i + 4 + 5, &end); 
+      char *c = (char*)List_Pointer(l->T3C, (int)beg);
+      for(int j = 0; j < (int)(end-beg); j++)
+	List_Add(T3C, &c[j]); 
+      NbT3++;
+    }
+  }
+  
+  std::string tmp;
+  if(nd.name == "__all__")
+    tmp = "all";
+  else if(nd.name == "__vis__")
+    tmp = "visible";
+  else
+    tmp = nd.name;
+  char name[256];
+  sprintf(name, "%s_Combine", tmp.c_str());
+
+  setName(name);
+  setFileName(std::string(name) + ".pos");
+  finalize();
+}
+
+void PViewDataList::getRawData(int type, List_T **l, int **ne, int *nc, int *nn)
+{
+  switch(type){
+  case 0 : *l = SP; *ne = &NbSP; *nc = 1; *nn = 1; break;
+  case 1 : *l = VP; *ne = &NbVP; *nc = 3; *nn = 1; break;
+  case 2 : *l = TP; *ne = &NbTP; *nc = 9; *nn = 1; break;
+  case 3 : *l = SL; *ne = &NbSL; *nc = 1; *nn = 2; break;
+  case 4 : *l = VL; *ne = &NbVL; *nc = 3; *nn = 2; break;
+  case 5 : *l = TL; *ne = &NbTL; *nc = 9; *nn = 2; break;
+  case 6 : *l = ST; *ne = &NbST; *nc = 1; *nn = 3; break;
+  case 7 : *l = VT; *ne = &NbVT; *nc = 3; *nn = 3; break;
+  case 8 : *l = TT; *ne = &NbTT; *nc = 9; *nn = 3; break;
+  case 9 : *l = SQ; *ne = &NbSQ; *nc = 1; *nn = 4; break;
+  case 10: *l = VQ; *ne = &NbVQ; *nc = 3; *nn = 4; break;
+  case 11: *l = TQ; *ne = &NbTQ; *nc = 9; *nn = 4; break;
+  case 12: *l = SS; *ne = &NbSS; *nc = 1; *nn = 4; break;
+  case 13: *l = VS; *ne = &NbVS; *nc = 3; *nn = 4; break;
+  case 14: *l = TS; *ne = &NbTS; *nc = 9; *nn = 4; break;
+  case 15: *l = SH; *ne = &NbSH; *nc = 1; *nn = 8; break;
+  case 16: *l = VH; *ne = &NbVH; *nc = 3; *nn = 8; break;
+  case 17: *l = TH; *ne = &NbTH; *nc = 9; *nn = 8; break;
+  case 18: *l = SI; *ne = &NbSI; *nc = 1; *nn = 6; break;
+  case 19: *l = VI; *ne = &NbVI; *nc = 3; *nn = 6; break;
+  case 20: *l = TI; *ne = &NbTI; *nc = 9; *nn = 6; break;
+  case 21: *l = SY; *ne = &NbSY; *nc = 1; *nn = 5; break;
+  case 22: *l = VY; *ne = &NbVY; *nc = 3; *nn = 5; break;
+  case 23: *l = TY; *ne = &NbTY; *nc = 9; *nn = 5; break;
+  default: Msg(GERROR, "Wrong type in PViewDataList"); break;
+  }
+}
+
+bool PViewDataList::combineTime(nameData &nd)
+{
+  // sanity checks
+  if(nd.data.size() < 2) return false;
+  std::vector<PViewDataList*> data(nd.data.size());
+  for(unsigned int i = 0; i < nd.data.size(); i++){
+    data[i] = dynamic_cast<PViewDataList*>(nd.data[i]);
+    if(!data[i]){
+      Msg(GERROR, "Cannot combine hybrid data");
+      return false;
+    }
+  }
+
+  int *nbe=0, *nbe2=0, nbn, nbn2, nbc, nbc2;
+  List_T *list=0, *list2=0;
+  
+  // use the first data set as the reference
+  for(int i = 0; i < 24; i++){
+    getRawData(i, &list, &nbe, &nbc, &nbn);
+    data[0]->getRawData(i, &list2, &nbe2, &nbc2, &nbn2);
+    *nbe = *nbe2;
+  }
+  NbT2 = data[0]->NbT2;
+  NbT3 = data[0]->NbT3;
+
+  // merge values for all element types
+  for(int i = 0; i < 24; i++){
+    getRawData(i, &list, &nbe, &nbc, &nbn);
+    for(int j = 0; j < *nbe; j++){
+      for(unsigned int k = 0; k < data.size(); k++){
+	data[k]->getRawData(i, &list2, &nbe2, &nbc2, &nbn2);
+	if(*nbe && *nbe == *nbe2){
+	  int nb2 = List_Nbr(list2) / *nbe2;
+	  if(!k){ 
+	    // copy coordinates of elm j (we are always here as
+	    // expected, since the ref view is the first one)
+	    for(int l = 0; l < 3 * nbn2; l++)
+	      List_Add(list, List_Pointer(list2, j * nb2 + l));
+	  }
+	  // copy values of elm j
+	  for(int l = 0; l < data[k]->getNumTimeSteps() * nbc2 * nbn2; l++)
+	    List_Add(list, List_Pointer(list2, j * nb2 + 3 * nbn2 + l));
+	}
+      }
+    }
+  }
+
+  // merge 2d strings
+  for(int j = 0; j < NbT2; j++){
+    for(unsigned int k = 0; k < data.size(); k++){
+      if(NbT2 == data[k]->NbT2){
+	if(!k){
+	  // copy coordinates 
+	  List_Add(T2D, List_Pointer(data[k]->T2D, j * 4));
+	  List_Add(T2D, List_Pointer(data[k]->T2D, j * 4 + 1));
+	  List_Add(T2D, List_Pointer(data[k]->T2D, j * 4 + 2));
+	  // index
+	  double d = List_Nbr(T2C);
+	  List_Add(T2D, &d);
+	}
+	// copy char values
+	double beg, end;
+	List_Read(data[k]->T2D, j * 4 + 3, &beg);
+	if(j == NbT2 - 1)
+	  end = (double)List_Nbr(data[k]->T2C);
+	else
+	  List_Read(data[k]->T2D, j * 4 + 4 + 3, &end);
+	char *c = (char*)List_Pointer(data[k]->T2C, (int)beg);
+	for(int l = 0; l < (int)(end - beg); l++)
+	  List_Add(T2C, &c[l]);
+      }
+    }
+  }
+
+  // merge 3d strings
+  for(int j = 0; j < NbT3; j++){
+    for(unsigned int k = 0; k < data.size(); k++){
+      if(NbT3 == data[k]->NbT3){
+	if(!k){
+	  // copy coordinates 
+	  List_Add(T3D, List_Pointer(data[k]->T3D, j * 5));
+	  List_Add(T3D, List_Pointer(data[k]->T3D, j * 5 + 1));
+	  List_Add(T3D, List_Pointer(data[k]->T3D, j * 5 + 2));
+	  List_Add(T3D, List_Pointer(data[k]->T3D, j * 5 + 3));
+	  // index
+	  double d = List_Nbr(T3C);
+	  List_Add(T3D, &d);
+	}
+	// copy char values
+	double beg, end;
+	List_Read(data[k]->T3D, j * 5 + 4, &beg);
+	if(j == NbT3 - 1)
+	  end = (double)List_Nbr(data[k]->T3C);
+	else
+	  List_Read(data[k]->T3D, j * 5 + 5 + 4, &end);
+	char *c = (char*)List_Pointer(data[k]->T3C, (int)beg);
+	for(int l = 0; l < (int)(end - beg); l++)
+	  List_Add(T3C, &c[l]);
+      }
+    }
+  }
+
+  // create the time data
+  for(unsigned int i = 0; i < data.size(); i++)
+    List_Merge(data[i]->Time, Time);
+  
+  // if all the time values are the same, it probably means that the
+  // original views didn't have any time data: then we'll just use
+  // time step values
+  if(List_Nbr(Time)){
+    double t0, ti;
+    List_Read(Time, 0, &t0);
+    bool allTheSame = true;
+    for(int i = 1; i < List_Nbr(Time); i++){
+      List_Read(Time, i, &ti);
+      if(ti != t0){
+	allTheSame = false;
+	break;
+      }
+    }
+    if(allTheSame) List_Reset(Time);
+  }
+
+  std::string tmp;
+  if(nd.name == "__all__")
+    tmp = "all";
+  else if(nd.name == "__vis__")
+    tmp = "visible";
+  else
+    tmp = nd.name;
+  char name[256];
+  sprintf(name, "%s_Combine", tmp.c_str());
+
+  setName(name);
+  setFileName(std::string(name) + ".pos");
+  finalize();
+}
+
+void PViewDataList::setGlobalResolutionLevel(int level)
+{
+  //if(adaptive) adaptive->setGlobalResolutionLevel(this, level);
+}
+
+void PViewDataList::setAdaptiveResolutionLevel(int level, GMSH_Post_Plugin *plugin)
+{
+  //if(adaptive) adaptive->setAdaptiveResolutionLevel(this, level, plugin);
+}
+

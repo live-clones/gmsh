@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.40 2007-09-04 13:47:00 remacle Exp $
+// $Id: List.cpp,v 1.41 2007-09-08 21:26:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -404,6 +404,16 @@ void List_Copy(List_T * a, List_T * b)
   N = List_Nbr(a);
   for(i = 0; i < N; i++) {
     List_Add(b, List_Pointer(a, i));
+  }
+}
+
+void List_Merge(List_T * a, List_T * b)
+{
+  int i;
+
+  if(!a || !b) return;
+  for(i = 0; i < List_Nbr(a); i++) {
+    List_Add(b, List_Pointer_Fast(a, i));
   }
 }
 

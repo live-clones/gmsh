@@ -21,6 +21,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <list>
+#include <set>
 #include "List.h"
 #include "GmshMatrix.h"
 

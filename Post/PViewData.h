@@ -21,7 +21,11 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <string>
+#include <vector>
 #include "SBoundingBox3d.h"
+
+class GMSH_Post_Plugin;
+class nameData;
 
 // abstract interface to post-processing view data
 class PViewData {
@@ -32,17 +36,31 @@ class PViewData {
   std::string _name;
   // name of the file the data was loaded from
   std::string _filename;
+  // index of the view in the file
+  int _fileIndex;
  public:
-  PViewData() : _dirty(true) {}
+  enum ElementType {
+    Point=1,
+    Line=2,
+    Triangle=3,
+    Quadrangle=4,
+    Tetrahedron=5,
+    Hexahedron=6,
+    Prism=7,
+    Pyramid=8
+  };
+  PViewData();
   virtual ~PViewData(){}
   virtual bool getDirty(){ return _dirty; }
   virtual void setDirty(bool val){ _dirty = val; }
   virtual void finalize(){ _dirty = false; }
-  virtual int getNumTimeSteps() = 0;
   virtual std::string getName(){ return _name; }
   virtual void setName(std::string val){ _name = val; }
   virtual std::string getFileName(){ return _filename; }
   virtual void setFileName(std::string val){ _filename = val; }
+  virtual int getFileIndex(){ return _fileIndex; }
+  virtual void setFileIndex(int val){ _fileIndex = val; }
+  virtual int getNumTimeSteps() = 0;
   virtual double getTime(int step){ return 0.; }
   virtual double getMin(int step=-1) = 0;
   virtual double getMax(int step=-1) = 0;
@@ -50,15 +68,7 @@ class PViewData {
   virtual int getNumScalars(){ return 0; }
   virtual int getNumVectors(){ return 0; }
   virtual int getNumTensors(){ return 0; }
-  virtual int getNumPoints(){ return 0; }
-  virtual int getNumLines(){ return 0; }
-  virtual int getNumTriangles(){ return 0; }
-  virtual int getNumQuadrangles(){ return 0; }
-  virtual int getNumTetrahedra(){ return 0; }
-  virtual int getNumHexahedra(){ return 0; }
-  virtual int getNumPrisms(){ return 0; }
-  virtual int getNumPyramids(){ return 0; }
-  virtual int getNumElements() = 0;
+  virtual int getNumElements(int type=0) = 0;
   virtual int getDimension(int ele) = 0;
   virtual int getEntity(int ele){ return 0; }
   virtual int getNumNodes(int ele) = 0;
@@ -72,13 +82,34 @@ class PViewData {
 			   double &x, double &y, double &style){}
   virtual void getString3D(int i, int step, std::string &str, 
 			   double &x, double &y, double &z, double &style){}
-  virtual bool read(std::string name){ return false; }
+  virtual bool empty();
+  virtual void smooth(){}
+  virtual bool combineTime(nameData &nd){ return false; }
+  virtual bool combineSpace(nameData &nd){ return false; }
+  virtual void setGlobalResolutionLevel(int level){}
+  virtual void setAdaptiveResolutionLevel(int level, GMSH_Post_Plugin *plugin=0){}
+
+  // I/O routines
   virtual bool writePOS(std::string name, bool binary=false, bool parsed=true,
 			bool append=false){ return false; }
   virtual bool writeSTL(std::string name){ return false; }
   virtual bool writeTXT(std::string name){ return false; }
   virtual bool writeMSH(std::string name){ return false; }
+};
 
+class nameData{
+ public:
+  std::string name;
+  std::vector<int> indices;
+  std::vector<PViewData*> data;
+};
+
+class nameDataLessThan{
+ public:
+  bool operator()(const nameData &n1, const nameData &n2) const
+  {
+    return n1.name < n2.name;
+  }
 };
 
 #endif

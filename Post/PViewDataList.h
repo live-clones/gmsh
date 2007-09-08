@@ -25,6 +25,7 @@
 #include <string>
 #include "PViewData.h"
 #include "SBoundingBox3d.h"
+#include "AdaptiveViews.h"
 #include "List.h"
 
 #define VAL_INF 1.e200
@@ -60,6 +61,7 @@ class PViewDataList : public PViewData {
   List_T *T2D, *T2C, *T3D, *T3C; // 2D and 3D text strings
   std::map<int, List_T*> *Grains; // For LMGC90, grains shapes
   std::map<int, int> *DisplayListsOfGrains; // For LMGC90, grains shapes
+  Adaptive_Post_View *adaptive;
  private:
   int _index[24];
   int _lastElement, _lastDimension;
@@ -82,23 +84,10 @@ class PViewDataList : public PViewData {
   double getMin(int step=-1);
   double getMax(int step=-1);
   SBoundingBox3d getBoundingBox(){ return BBox; }
-  int getNumScalars(){ return NbSP + NbSL + NbST + NbSQ + NbSS + NbSH + NbSI + NbSY; }
-  int getNumVectors(){ return NbVP + NbVL + NbVT + NbVQ + NbVS + NbVH + NbVI + NbVY; }
-  int getNumTensors(){ return NbTP + NbTL + NbTT + NbTQ + NbTS + NbTH + NbTI + NbTY; }
-  int getNumPoints(){ return NbSP + NbVP + NbTP; }
-  int getNumLines(){ return NbSL + NbVL + NbTL; }
-  int getNumTriangles(){ return NbST + NbVT + NbTT; }
-  int getNumQuadrangles(){ return NbSQ + NbVQ + NbTQ; }
-  int getNumTetrahedra(){ return NbSS + NbVS + NbTS; }
-  int getNumHexahedra(){ return NbSH + NbVH + NbTH; }
-  int getNumPrisms(){ return NbSI + NbVI + NbTI; }
-  int getNumPyramids(){ return NbSY + NbVY + NbTY; }
-  int getNumElements()
-  {
-    return getNumPoints() + getNumLines() + getNumTriangles() + 
-      getNumQuadrangles() + getNumTetrahedra() + getNumHexahedra() + 
-      getNumPrisms() + getNumPyramids();
-  }
+  int getNumScalars();
+  int getNumVectors();
+  int getNumTensors();
+  int getNumElements(int type=0);
   int getDimension(int ele);
   int getNumNodes(int ele);
   void getNode(int ele, int nod, double &x, double &y, double &z);
@@ -112,7 +101,16 @@ class PViewDataList : public PViewData {
   void getString3D(int i, int step, std::string &str, 
 		   double &x, double &y, double &z, double &style);
   void smooth();
-  bool read(std::string name);
+  bool combineTime(nameData &nd);
+  bool combineSpace(nameData &nd);
+  void setGlobalResolutionLevel(int level);
+  void setAdaptiveResolutionLevel(int level, GMSH_Post_Plugin *plugin=0);
+
+  // specific to list-based data sets
+  void getRawData(int type, List_T **l, int **ne, int *nc, int *nn);
+
+  // I/O routines
+  bool read(FILE *fp, double version, int format, int size);
   bool writePOS(std::string name, bool binary=false, bool parsed=true,
 		bool append=false);
   bool writeSTL(std::string name);

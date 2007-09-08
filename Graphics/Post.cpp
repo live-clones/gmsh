@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.126 2007-08-31 09:18:16 geuzaine Exp $
+// $Id: Post.cpp,v 1.127 2007-09-08 21:26:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1141,7 +1141,7 @@ static int estimateNumPoints(PView *p)
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
 
-  int heuristic = data->getNumPoints();
+  int heuristic = data->getNumElements(PViewData::Point);
   return heuristic + 10000;
 }
 
@@ -1150,7 +1150,7 @@ static int estimateNumLines(PView *p)
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
 
-  int heuristic = data->getNumLines();
+  int heuristic = data->getNumElements(PViewData::Line);
   return heuristic + 10000;
 }
 
@@ -1159,12 +1159,12 @@ static int estimateNumTriangles(PView *p)
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
 
-  int tris = data->getNumTriangles();
-  int quads = data->getNumQuadrangles();
-  int tets = data->getNumTetrahedra();
-  int prisms = data->getNumPrisms();
-  int pyrs = data->getNumPyramids();
-  int hexas = data->getNumHexahedra();
+  int tris = data->getNumElements(PViewData::Triangle);
+  int quads = data->getNumElements(PViewData::Quadrangle);
+  int tets = data->getNumElements(PViewData::Tetrahedron);
+  int prisms = data->getNumElements(PViewData::Prism);
+  int pyrs = data->getNumElements(PViewData::Pyramid);
+  int hexas = data->getNumElements(PViewData::Hexahedron);
 
   int heuristic = 0;
   if(opt->IntervalsType == PViewOptions::Iso)
@@ -1186,9 +1186,10 @@ static int estimateNumVectors(PView *p)
 
   int heuristic = data->getNumVectors();
   if(opt->Normals)
-    heuristic += data->getNumTriangles() + data->getNumQuadrangles();
+    heuristic += data->getNumElements(PViewData::Triangle) +
+      data->getNumElements(PViewData::Quadrangle);
   if(opt->Tangents)
-    heuristic += data->getNumLines();
+    heuristic += data->getNumElements(PViewData::Line);
 
   return heuristic + 1000;
 }

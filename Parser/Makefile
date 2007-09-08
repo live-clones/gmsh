@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.124 2007-08-24 20:14:18 geuzaine Exp $
+# $Id: Makefile,v 1.125 2007-09-08 21:26:04 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -133,12 +133,11 @@ OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Geo/SBoundingBox3d.h Parser.h OpenFile.h ../Common/CommandLine.h \
   ../Post/Views.h ../Post/ColorTable.h ../Common/VertexArray.h \
   ../Post/AdaptiveViews.h ../Common/GmshMatrix.h ../Post/PView.h \
-  ../Post/AdaptiveViews.h ../Post/PViewData.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Graphics/ReadImg.h ../Common/OS.h \
-  ../Mesh/HighOrder.h ../Common/GmshUI.h ../Graphics/Draw.h \
-  ../Graphics/SelectBuffer.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
-  ../Fltk/Colorbar_Window.h ../Fltk/Popup_Button.h \
-  ../Fltk/SpherePosition_Widget.h
+  ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
+  ../Graphics/ReadImg.h ../Common/OS.h ../Mesh/HighOrder.h \
+  ../Common/GmshUI.h ../Graphics/Draw.h ../Graphics/SelectBuffer.h \
+  ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
+  ../Fltk/Popup_Button.h ../Fltk/SpherePosition_Widget.h
 CreateFile.o: CreateFile.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \

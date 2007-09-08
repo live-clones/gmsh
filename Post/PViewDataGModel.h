@@ -37,14 +37,15 @@ class PViewDataGModel : public PViewData {
   double getMin(int step=-1){ return 0.; }
   double getMax(int step=-1){ return 1.; }
   SBoundingBox3d getBoundingBox(){ return SBoundingBox3d(); }
-  int getNumElements(){ return _model->numElements(); }
+  int getNumElements(int type=0){ return _model->numElements(); }
   int getDimension(int ele){ return 0; }
   int getNumNodes(int ele){ return 0; }
   void getNode(int ele, int nod, double &x, double &y, double &z){}
   int getNumComponents(int ele){ return 1; }
   void getValue(int ele, int node, int comp, int step, double &val){}
   int getNumEdges(int ele){ return 0; }
-  bool read(std::string name);
+
+  // I/O routines
   bool writePOS(std::string name, bool binary=false, bool parsed=true,
 		bool append=false);
   bool writeSTL(std::string name);

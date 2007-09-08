@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.146 2007-09-04 15:19:24 geuzaine Exp $
+# $Id: Makefile,v 1.147 2007-09-08 21:26:04 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -91,8 +91,8 @@ Main.o: Main.cpp GUI.h Opengl_Window.h Colorbar_Window.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h \
   ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h ../Mesh/Field.h \
   ../Post/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h \
-  ../Mesh/BackgroundMesh.h ../Post/PView.h ../Post/AdaptiveViews.h \
-  ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h
+  ../Mesh/BackgroundMesh.h ../Post/PView.h ../Post/PViewData.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h
 Message.o: Message.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \

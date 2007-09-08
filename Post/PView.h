@@ -24,7 +24,6 @@
 #include <string>
 #include "VertexArray.h"
 #include "SmoothData.h"
-#include "AdaptiveViews.h"
 #include "PViewData.h"
 #include "PViewOptions.h"
 
@@ -32,17 +31,17 @@
 class PView{
  private:
   static int _globalNum;
-  // unique tag of the view
+  // unique tag of the view (> 0)
   int _num;
   // index of the view in the current view list
   int _index;
   // flag to mark that the view has changed
   bool _changed;
-  // flag to mark that the view is an alias of another view
+  // tag of the source view if this view is an alias, zero otherwise
   int _aliasOf;
-  // reference counter mark that some other views link to this one
+  // reference counter (how many views link to this one)
   int _links;
-  // eye position
+  // eye position (for transparency sorting)
   SPoint3 _eye;
   // the options
   PViewOptions *_options;
@@ -53,11 +52,8 @@ class PView{
   PView(bool allocate=true);
   // alias constructor
   PView(PView *ref, bool copyOptions=true);
+  // default destructor
   ~PView();
-  // the static list of all loaded views
-  static std::vector<PView*> list;
-  // the current view
-  static PView *current();
   PViewOptions *getOptions(){ return _options; }  
   PViewData *getData(){ return _data; }
   int getNum(){ return _num; }
@@ -65,25 +61,24 @@ class PView{
   void setIndex(int val){ _index = val; }
   bool getChanged(){ return _changed; }
   void setChanged(bool val);
-  int& getLinks(){ return _links; }
+  int &getLinks(){ return _links; }
   int getAliasOf(){ return _aliasOf; }
   SPoint3 &getEye(){ return _eye; }
   void setEye(SPoint3 &p){ _eye = p; }
-  void setGlobalResolutionLevel(int level)
-  {
-    //if(adaptive) adaptive->setGlobalResolutionLevel(this, level);
-  }
-  void setAdaptiveResolutionLevel(int level, GMSH_Post_Plugin *plugin = 0)
-  {
-    //if(adaptive) adaptive->setAdaptiveResolutionLevel(this, level, plugin);
-  }
+
+  // the static list of all loaded views
+  static std::vector<PView*> list;
+  // the current view
+  static PView *current();
+  // read view(s) in list format from a file
+  static bool read(std::string filename, int fileIndex=-1);
+  // combine view
+  static void combine(bool time, int how, bool remove);
 
   // vertex arrays to draw triangles and lines efficiently
   VertexArray *va_points, *va_lines, *va_triangles, *va_vectors;
   // smoothed normals
   smooth_normals *normals;
-  // adaptative rendering for high-order datasets
-  Adaptive_Post_View *adaptive;
 };
 
 #endif

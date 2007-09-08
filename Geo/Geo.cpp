@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.95 2007-09-05 10:11:30 geuzaine Exp $
+// $Id: Geo.cpp,v 1.96 2007-09-08 21:26:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1794,18 +1794,20 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary)
     List_Read(shapes, i, &O);
     switch (O.Type) {
     case MSH_POINT:
+    case MSH_POINT_BND_LAYER:
       return;
       break;
     case MSH_SEGM_LINE:
     case MSH_SEGM_SPLN:
-    case MSH_SEGM_BSPLN:
-    case MSH_SEGM_BEZIER:
     case MSH_SEGM_CIRC:
     case MSH_SEGM_CIRC_INV:
     case MSH_SEGM_ELLI:
     case MSH_SEGM_ELLI_INV:
+    case MSH_SEGM_BSPLN:
     case MSH_SEGM_NURBS:
+    case MSH_SEGM_BEZIER:
     case MSH_SEGM_PARAMETRIC:
+    case MSH_SEGM_BND_LAYER:
       {
 	Curve *c = FindCurve(O.Num);
 	if(c){
@@ -1826,9 +1828,10 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary)
 	  Msg(GERROR, "Unknown curve %d", O.Num);
       }
       break;
+    case MSH_SURF_PLAN:
     case MSH_SURF_REGL:
     case MSH_SURF_TRIC:
-    case MSH_SURF_PLAN:
+    case MSH_SURF_BND_LAYER:
       {
 	Surface *s = FindSurface(O.Num);
 	if(s){

@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.6 2007-09-03 06:21:08 geuzaine Exp $
+// $Id: PView.cpp,v 1.7 2007-09-08 21:26:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -32,7 +32,7 @@ std::vector<PView*> PView::list;
 PView::PView(bool allocate)
   : _changed(true), _aliasOf(0), _links(0), _eye(0., 0., 0.), 
     va_points(0), va_lines(0), va_triangles(0), va_vectors(0), 
-    normals(0), adaptive(0)
+    normals(0)
 {
   _num = ++_globalNum;
   _data = new PViewDataList(allocate);
@@ -45,7 +45,7 @@ PView::PView(bool allocate)
 PView::PView(PView *ref, bool copyOptions)
   : _changed(true), _links(0), _eye(0., 0., 0.), 
     va_points(0), va_lines(0), va_triangles(0), va_vectors(0), 
-    normals(0), adaptive(0)
+    normals(0)
 {
   _num = ++_globalNum;
   _aliasOf = ref->getNum();
@@ -67,7 +67,6 @@ PView::~PView()
   if(va_triangles) delete va_triangles;
   if(va_vectors) delete va_vectors;
   if(normals) delete normals;
-  if(adaptive) delete adaptive;
 
   if(_options) delete _options;
 
@@ -113,4 +112,141 @@ PView *PView::current()
   }
   // return the last one for now
   return list.back();
+}
+
+bool PView::read(std::string filename, int fileIndex)
+{
+  FILE *fp = fopen(filename.c_str(), "rb");
+  if(!fp){
+    Msg(GERROR, "Unable to open file '%s'", filename.c_str());
+    return false;
+  }
+
+  char str[256];
+  double version;
+  int format, size, index = -1;
+
+  while(1) {
+
+    do {
+      if(!fgets(str, 256, fp) || feof(fp))
+        break;
+    } while(str[0] != '$');
+    
+    if(feof(fp))
+      break;
+
+    if(!strncmp(&str[1], "PostFormat", 10)) {
+
+      if(!fscanf(fp, "%lf %d %d\n", &version, &format, &size)){
+        Msg(GERROR, "Read error");
+        return false;
+      }
+      if(version < 1.0) {
+        Msg(GERROR, "Post-processing file too old (ver. %g < 1.0)", version);
+        return false;
+      }
+      if(size == sizeof(double))
+        Msg(DEBUG, "Data is in double precision format (size==%d)", size);
+      else {
+        Msg(GERROR, "Unknown data size (%d) in post-processing file", size);
+        return false;
+      }
+      if(format == 0)
+        format = LIST_FORMAT_ASCII;
+      else if(format == 1)
+        format = LIST_FORMAT_BINARY;
+      else {
+        Msg(GERROR, "Unknown format for view");
+        return false;
+      }
+
+    }
+    else if(!strncmp(&str[1], "View", 4)){
+
+      index++;
+      if(fileIndex < 0 || fileIndex == index){
+	PView *p = new PView(false);
+	PViewDataList *d = dynamic_cast<PViewDataList*>(p->getData());
+	if(!d || !d->read(fp, version, format, size)){
+	  Msg(GERROR, "Could not read data in list format");
+	  delete p;
+	  return false;
+	}
+	else{
+	  d->setFileName(filename);
+	  d->setFileIndex(index);
+	}
+      }
+
+    }
+
+    do {
+      if(!fgets(str, 256, fp) || feof(fp)){
+        Msg(GERROR, "Prematured end of file");
+	break;
+      }
+    } while(str[0] != '$');
+
+  }
+
+  fclose(fp);
+  return true;
+}
+
+void PView::combine(bool time, int how, bool remove)
+{
+  // time == true: combine the timesteps (oherwise combine the elements)
+  // how == 0: try to combine all visible views
+  //        1: try to combine all views
+  //        2: try to combine all views having identical names
+
+  std::vector<nameData> nds;
+  for(unsigned int i = 0; i < list.size(); i++) {
+    PView *p = list[i];
+    PViewData *data = p->getData();
+    if(how || p->getOptions()->Visible) {
+      nameData nd;
+      // this will lead to weird results if there are views named
+      // "__all__" or "__vis__" :-)
+      if(how == 2)
+	nd.name = data->getName();
+      else if(how == 1)
+	nd.name = "__all__";
+      else
+	nd.name = "__vis__";
+      unsigned int j = 0;
+      while(j < nds.size()){
+	if(nds[j].name == nd.name){
+	  nds[j].data.push_back(data);
+	  nds[j].indices.push_back(i);
+	  break;
+	}
+	j++;
+      }
+      if(j == nds.size()){
+	nd.data.push_back(data);
+	nd.indices.push_back(i);
+	nds.push_back(nd);
+      }
+    }
+  }
+
+  std::set<PView*> rm;
+  for(unsigned int i = 0; i < nds.size(); i++){
+    if(nds[i].data.size() > 1){
+      // there's potentially something to combine
+      PView *p = new PView(true);
+      PViewData *data = p->getData();
+      bool res = time ? data->combineTime(nds[i]): data->combineSpace(nds[i]);
+      if(res)
+	for(unsigned int j = 0; j < nds[i].indices.size(); j++)
+	  rm.insert(list[nds[i].indices[j]]);
+      else
+	delete p;
+    }
+  }
+  if(remove)
+    for(std::set<PView*>::iterator it = rm.begin(); it != rm.end(); it++)
+      delete *it;
 }

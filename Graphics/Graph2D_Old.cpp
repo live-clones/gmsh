@@ -1,4 +1,4 @@
-// $Id: Graph2D_Old.cpp,v 1.1 2007-08-29 18:41:06 geuzaine Exp $
+// $Id: Graph2D_Old.cpp,v 1.2 2007-09-08 21:26:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -525,8 +525,6 @@ void Draw_Text2D3D(int dim, int timestep, int nb, List_T * td, List_T * tc)
       Draw_String(c, style);
   }
 }
-
-#include "PView.h"
 
 void Draw_Text2D_Old()
 {
