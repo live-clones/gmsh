@@ -133,7 +133,7 @@
 
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.330 2007-09-06 15:49:43 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.331 2007-09-09 00:18:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -539,7 +539,7 @@ static const short yyrline[] = { 0,
    184,   190,   205,   218,   246,   254,   261,   266,   273,   281,
    282,   283,   284,   285,   286,   289,   292,   296,   299,   303,
    494,   508,   518,   524,   531,   539,   545,   551,   558,   566,
-   572,   578,   588,   593,   597,   606,   608,   609,   610,   611,
+   572,   578,   587,   592,   597,   606,   608,   609,   610,   611,
    614,   616,   619,   654,   693,   747,   764,   782,   793,   810,
    817,   831,   848,   874,   901,   915,   932,   946,   963,   983,
   1006,  1016,  1030,  1035,  1044,  1070,  1086,  1107,  1114,  1125,
@@ -3347,19 +3347,19 @@ case 51:
     ;
     break;}
 case 52:
-#line 583 "Gmsh.y"
+#line 582 "Gmsh.y"
 {
       View->adaptive = new Adaptive_Post_View(View, yyvsp[-11].l, yyvsp[-8].l, yyvsp[-5].l, yyvsp[-2].l);
     ;
     break;}
 case 53:
-#line 590 "Gmsh.y"
+#line 589 "Gmsh.y"
 {
       ViewValueList = View->Time;
     ;
     break;}
 case 54:
-#line 594 "Gmsh.y"
+#line 593 "Gmsh.y"
 {
     ;
     break;}
@@ -4924,11 +4924,11 @@ case 148:
 {
       if(!strcmp(yyvsp[-6].c, "Background") && !strcmp(yyvsp[-5].c, "Mesh")  && !strcmp(yyvsp[-4].c, "View")){
 	Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, (int)yyvsp[-2].d);
-	if(vv) {
-    Field *field=new PostViewField(*vv);
-    fields.insert(field);
-    BGMAddField(field);
-  }
+	if(vv){
+	  Field *field = new PostViewField(*vv);
+	  fields.insert(field);
+	  BGMAddField(field);
+	}
       }
       else{
 	yymsg(GERROR, "Unknown command '%s'", yyvsp[-6].c);

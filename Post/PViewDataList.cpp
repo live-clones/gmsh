@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.3 2007-09-08 21:26:05 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.4 2007-09-09 00:18:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -748,8 +748,8 @@ bool PViewDataList::combineTime(nameData &nd)
     }
   }
 
-  int *nbe=0, *nbe2=0, nbn, nbn2, nbc, nbc2;
-  List_T *list=0, *list2=0;
+  int *nbe = 0, *nbe2 = 0, nbn, nbn2, nbc, nbc2;
+  List_T *list = 0, *list2 = 0;
   
   // use the first data set as the reference
   for(int i = 0; i < 24; i++){
@@ -882,4 +882,3 @@ void PViewDataList::setAdaptiveResolutionLevel(int level, GMSH_Post_Plugin *plug
 {
   //if(adaptive) adaptive->setAdaptiveResolutionLevel(this, level, plugin);
 }
-

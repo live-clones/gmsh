@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.284 2007-09-06 15:49:44 geuzaine Exp $
+// $Id: Gmsh.y,v 1.285 2007-09-09 00:18:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -575,8 +575,7 @@ InterpolationMatrix :
     {
       View->adaptive = new Adaptive_Post_View(View, $3, $6);
     }
-    |
-    tInterpolationScheme '{' RecursiveListOfListOfDouble '}' 
+ |  tInterpolationScheme '{' RecursiveListOfListOfDouble '}' 
                          '{' RecursiveListOfListOfDouble '}'  
                          '{' RecursiveListOfListOfDouble '}'  
                          '{' RecursiveListOfListOfDouble '}'  tEND
@@ -594,6 +593,7 @@ Time :
     {
     }
 ;
+
 Grain :
     tGrain '(' FExpr ')'  ListOfDouble  tEND
     {
@@ -2045,11 +2045,11 @@ Command :
     {
       if(!strcmp($1, "Background") && !strcmp($2, "Mesh")  && !strcmp($3, "View")){
 	Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, (int)$5);
-	if(vv) {
-    Field *field=new PostViewField(*vv);
-    fields.insert(field);
-    BGMAddField(field);
-  }
+	if(vv){
+	  Field *field = new PostViewField(*vv);
+	  fields.insert(field);
+	  BGMAddField(field);
+	}
       }
       else{
 	yymsg(GERROR, "Unknown command '%s'", $1);
