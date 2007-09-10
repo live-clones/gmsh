@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.128 2007-09-10 04:47:03 geuzaine Exp $
+// $Id: Post.cpp,v 1.129 2007-09-10 05:13:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1387,10 +1387,11 @@ void Draw_Post()
 
   if(!CTX.post.draw) return;
 
-  if(!CTX.threads_lock){
-    CTX.threads_lock = 1;
+  static bool busy = false;
+  if(!busy){
+    busy = true;
     std::for_each(PView::list.begin(), PView::list.end(), initPView());
     std::for_each(PView::list.begin(), PView::list.end(), drawPView());
-    CTX.threads_lock = 0;
+    busy = false;
   }
 }
