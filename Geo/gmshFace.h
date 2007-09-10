@@ -34,6 +34,7 @@ class gmshFace : public GFace {
   gmshFace(GModel *m, int num);
   virtual ~gmshFace(){}
   Range<double> parBounds(int i) const; 
+  void setModelEdges(std::list<GEdge*>&);
   virtual int paramDegeneracies(int dir, double *par) { return 0; }
   
   virtual GPoint point(double par1, double par2) const; 

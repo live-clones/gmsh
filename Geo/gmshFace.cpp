@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.40 2007-09-04 13:47:01 remacle Exp $
+// $Id: gmshFace.cpp,v 1.41 2007-09-10 13:37:21 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -98,6 +98,16 @@ gmshFace::gmshFace(GModel *m, int num)
 {
   s = Create_Surface(num, MSH_SURF_DISCRETE);
   Tree_Add(THEM->Surfaces, &s);
+}
+
+void gmshFace::setModelEdges(std::list<GEdge*>&ed)
+{
+  for (std::list<GEdge*>::iterator it = ed.begin(); it!=ed.end() ; ++it)
+    {
+      l_edges.push_back(*it);
+      (*it)->addFace(this);
+      l_dirs.push_back( 1 );
+    }
 }
 
 void gmshFace::resetMeshAttributes()

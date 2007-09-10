@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.4 2007-09-05 13:19:15 remacle Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.5 2007-09-10 13:37:21 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -573,13 +573,9 @@ void insertVerticesInFace (GFace *gf, BDS_Mesh *bds)
       if (AllTris.begin() == AllTris.end() ) break;
       MTri3 *worst = *AllTris.begin();
       if (worst->isDeleted())
-	{
 	  delete worst->tri();
-	}
       else
-	{
-	  gf->triangles.push_back(worst->tri());
-	}
+	gf->triangles.push_back(worst->tri());
       delete worst;
       AllTris.erase(AllTris.begin());      
     }

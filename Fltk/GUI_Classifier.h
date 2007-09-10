@@ -18,6 +18,8 @@ void class_save_cb(Fl_Widget *w, void *data);
 void class_clear_cb(Fl_Widget *w, void *data);
 void class_deleteedge_cb(Fl_Widget *w, void *data);
 void class_color_cb(Fl_Widget *w, void *data);
+void class_ok_cb(Fl_Widget *w, void *data);
+void class_okcolor_cb(Fl_Widget *w, void *data);
 
 #define CLASSBUTTON_SELECT   0
 #define CLASSBUTTON_DEL      1
@@ -44,6 +46,7 @@ class edge_angle
 
 class classificationEditor {
  public:
+  double op[10];
   std::vector<MTriangle*> _elements;
   std::set<GFace*> _faces;
   Fl_Window *_window;
@@ -58,5 +61,6 @@ class classificationEditor {
   classificationEditor();
   void show(){ _window->show();}
   std::vector<MTriangle*> &getElements() { return _elements; }
+  Fl_Group *edge_detec,*face_color,*reverse_eng;
 };
 #endif
