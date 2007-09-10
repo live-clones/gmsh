@@ -1250,7 +1250,7 @@ StringXNumber ViewOptions_Number[] = {
 
   { F|O, "Light" , opt_view_light , 1. ,
     "Enable lighting for the view" },
-  { F|O, "LightLines" , opt_view_light_lines , 0. , 
+  { F|O, "LightLines" , opt_view_light_lines , 1. , 
     "Light element edges" },
   { F|O, "LightTwoSide" , opt_view_light_two_side , 1. , 
     "Light both sides of view elements (leads to slower rendering)" },
