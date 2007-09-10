@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.636 2007-09-10 04:47:02 geuzaine Exp $
+// $Id: GUI.cpp,v 1.637 2007-09-10 05:31:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1542,6 +1542,19 @@ void GUI::set_size(int new_w, int new_h)
 void GUI::set_title(char *str)
 {
   g_window->label(str);
+}
+
+// Update GUI when views get added or deleted
+
+void GUI::update_views()
+{
+  check_anim_buttons();
+  if(get_context() == 3)
+    set_context(menu_post, 0);
+  reset_option_browser();
+  reset_plugin_view_browser();
+  reset_clip_browser();
+  reset_external_view_list();
 }
 
 // Set animation button

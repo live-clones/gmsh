@@ -304,6 +304,7 @@ public:
   void set_size(int w, int h);
   void set_context(Context_Item menu[], int flag);
   int  get_context();
+  void update_views();
   void set_anim_buttons(int mode);
   void check_anim_buttons();
   void set_status(char *msg, int num);

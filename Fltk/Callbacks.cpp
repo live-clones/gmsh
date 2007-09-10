@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.542 2007-09-10 04:47:02 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.543 2007-09-10 05:31:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -55,19 +55,6 @@ extern Context_T CTX;
 extern GUI *WID;
 
 // Helper routines
-
-void UpdateViewsInGUI()
-{
-  if(WID) {
-    WID->check_anim_buttons();
-    if(WID->get_context() == 3)
-      WID->set_context(menu_post, 0);
-    WID->reset_option_browser();
-    WID->reset_plugin_view_browser();
-    WID->reset_clip_browser();
-    WID->reset_external_view_list();
-  }
-}
 
 int SetGlobalShortcut(int event)
 {
@@ -1836,7 +1823,7 @@ void statistics_histogram_cb(CALLBACK_ARGS)
   std::vector<double> x, y;
   for(int i = 0; i < 100; i++) y.push_back(WID->quality[type][i]);
   new PView(name, "# Elements", x, y);
-  UpdateViewsInGUI();
+  WID->update_views();
   Draw();
 }
 
@@ -4266,7 +4253,7 @@ void view_remove_other_cb(CALLBACK_ARGS)
   if(PView::list.empty()) return;
   for(int i = PView::list.size() - 1; i >= 0; i--)
     if(i != (long)data) delete PView::list[i];
-  UpdateViewsInGUI();
+  WID->update_views();
   Draw();
 }
 
@@ -4274,7 +4261,7 @@ void view_remove_all_cb(CALLBACK_ARGS)
 {
   if(PView::list.empty()) return;
   while(PView::list.size()) delete PView::list[0];
-  UpdateViewsInGUI();
+  WID->update_views();
   Draw();
 }
 
@@ -4283,7 +4270,7 @@ void view_remove_visible_cb(CALLBACK_ARGS)
   if(PView::list.empty()) return;
   for(int i = PView::list.size() - 1; i >= 0; i--)
     if(opt_view_visible(i, GMSH_GET, 0)) delete PView::list[i];
-  UpdateViewsInGUI();
+  WID->update_views();
   Draw();
 }
 
@@ -4292,7 +4279,7 @@ void view_remove_invisible_cb(CALLBACK_ARGS)
   if(PView::list.empty()) return;
   for(int i = PView::list.size() - 1; i >= 0; i--)
     if(!opt_view_visible(i, GMSH_GET, 0)) delete PView::list[i];
-  UpdateViewsInGUI();
+  WID->update_views();
   Draw();
 }
 
@@ -4301,14 +4288,14 @@ void view_remove_empty_cb(CALLBACK_ARGS)
   if(PView::list.empty()) return;
   for(int i = PView::list.size() - 1; i >= 0; i--)
     if(PView::list[i]->getData()->empty()) delete PView::list[i];
-  UpdateViewsInGUI();
+  WID->update_views();
   Draw();
 }
 
 void view_remove_cb(CALLBACK_ARGS)
 {
   delete PView::list[(int)(long)data];
-  UpdateViewsInGUI();
+  WID->update_views();
   Draw();
 }
 
@@ -4362,56 +4349,56 @@ void view_save_msh_cb(CALLBACK_ARGS)
 void view_alias_cb(CALLBACK_ARGS)
 {
   new PView(PView::list[(int)(long)data], false);
-  UpdateViewsInGUI();
+  WID->update_views();
   Draw();
 }
 
 void view_alias_with_options_cb(CALLBACK_ARGS)
 {
   new PView(PView::list[(int)(long)data], true);
-  UpdateViewsInGUI();
+  WID->update_views();
   Draw();
 }
 
 void view_combine_space_all_cb(CALLBACK_ARGS)
 {
   PView::combine(false, 1, CTX.post.combine_remove_orig);
-  UpdateViewsInGUI();
+  WID->update_views();
   Draw();
 }
 
 void view_combine_space_visible_cb(CALLBACK_ARGS)
 {
   PView::combine(false, 0, CTX.post.combine_remove_orig);
-  UpdateViewsInGUI();
+  WID->update_views();
   Draw();
 }
 
 void view_combine_space_by_name_cb(CALLBACK_ARGS)
 {
   PView::combine(false, 2, CTX.post.combine_remove_orig);
-  UpdateViewsInGUI();
+  WID->update_views();
   Draw();
 }
 
 void view_combine_time_all_cb(CALLBACK_ARGS)
 {
   PView::combine(true, 1, CTX.post.combine_remove_orig);
-  UpdateViewsInGUI();
+  WID->update_views();
   Draw();
 }
 
 void view_combine_time_visible_cb(CALLBACK_ARGS)
 {
   PView::combine(true, 0, CTX.post.combine_remove_orig);
-  UpdateViewsInGUI();
+  WID->update_views();
   Draw();
 }
 
 void view_combine_time_by_name_cb(CALLBACK_ARGS)
 {
   PView::combine(true, 2, CTX.post.combine_remove_orig);
-  UpdateViewsInGUI();
+  WID->update_views();
   Draw();
 }
 

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.109 2007-09-10 04:47:02 geuzaine Exp $
+// $Id: Main.cpp,v 1.110 2007-09-10 05:31:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -182,9 +182,11 @@ int main(int argc, char *argv[])
   OpenProject(CTX.filename);
   for(int i = 1; i < List_Nbr(CTX.files); i++)
     MergeFile(*(char**)List_Pointer(CTX.files, i));
-  if(CTX.post.combine_time)
+  if(CTX.post.combine_time){
     PView::combine(true, 2, CTX.post.combine_remove_orig);
-  
+    WID->update_views();
+  }
+
   // Init first context
   switch (CTX.initial_context) {
   case 1:

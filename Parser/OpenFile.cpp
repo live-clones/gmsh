@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.159 2007-09-10 04:47:07 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.160 2007-09-10 05:31:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -42,7 +42,6 @@
 #include "SelectBuffer.h"
 #include "GUI.h"
 extern GUI *WID;
-extern void UpdateViewsInGUI();
 #endif
 
 extern Context_T CTX;
@@ -238,7 +237,7 @@ int ParseFile(char *f, int close, int warn_if_missing)
 
 #if defined(HAVE_FLTK)
   if(numViewsBefore != PView::list.size())
-    UpdateViewsInGUI();
+    WID->update_views();
 #endif
 
   return 1;
@@ -399,7 +398,7 @@ int MergeFile(char *name, int warn_if_missing)
 
 #if defined(HAVE_FLTK)
   if(numViewsBefore != PView::list.size())
-    UpdateViewsInGUI();
+    WID->update_views();
 #endif
 
   Msg(STATUS2, "Read '%s'", name);
