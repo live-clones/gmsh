@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.20 2007-08-29 18:41:06 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.21 2007-09-10 04:47:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -305,6 +305,10 @@ Post_View *GMSH_CutParametricPlugin::execute(Post_View * v)
   if(!fillXYZ())
     return v;
 
+  Msg(FATAL, "XXXXXXXXXXXXXXX");
+  return 0;
+
+  /*
   int nbU = (int)CutParametricOptions_Number[2].def;
   int connect = (int)CutParametricOptions_Number[3].def;
   if(nbU < 2) connect = 0;
@@ -357,4 +361,5 @@ Post_View *GMSH_CutParametricPlugin::execute(Post_View * v)
   delete [] res1;
 
   return v2;
+  */
 }

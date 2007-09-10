@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.36 2007-08-21 19:05:38 geuzaine Exp $
+// $Id: Box.cpp,v 1.37 2007-09-10 04:47:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -110,10 +110,8 @@ int GMSHBOX(int argc, char *argv[])
       MergeFile(*(char**)List_Pointer(CTX.files, i));
     if(CTX.bgm_filename) {
       MergeFile(CTX.bgm_filename);
-      if(List_Nbr(CTX.post.list)){
-	Post_View *v;
-	List_Read(CTX.post.list, List_Nbr(CTX.post.list) - 1, &v);
-	Field *field = new PostViewField(v);
+      if(PView::list.size()){
+	Field *field = new PostViewField(PView::list.back());
 	BGMAddField(field);
 	fields.insert(field);
       }

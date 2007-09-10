@@ -1,4 +1,4 @@
-// $Id: Probe.cpp,v 1.15 2007-08-29 18:41:06 geuzaine Exp $
+// $Id: Probe.cpp,v 1.16 2007-09-10 04:47:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -168,7 +168,12 @@ Post_View *GMSH_ProbePlugin::execute(Post_View * v)
     Msg(GERROR, "View[%d] does not exist", iView);
     return v;
   }
-  
+
+
+  Msg(FATAL, "XXXXXXXXXXXXXXXXXXXXX");
+  return 0;
+
+  /*
   Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
   Post_View *v2 = BeginView(1);
 
@@ -217,4 +222,7 @@ Post_View *GMSH_ProbePlugin::execute(Post_View * v)
   sprintf(filename, "%s_Probe.pos", v1->Name);
   EndView(v2, 1, filename, name);
   return v2;
+
+
+  */
 }

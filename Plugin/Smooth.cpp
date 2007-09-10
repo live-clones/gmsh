@@ -1,4 +1,4 @@
-// $Id: Smooth.cpp,v 1.25 2007-09-04 13:47:05 remacle Exp $
+// $Id: Smooth.cpp,v 1.26 2007-09-10 04:47:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -92,7 +92,6 @@ Post_View *GMSH_SmoothPlugin::execute(Post_View * v)
 
   Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
 
-  v1->smooth();
+  //v1->smooth();
   return v1;
 }
-

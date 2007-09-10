@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.91 2007-09-05 10:11:30 geuzaine Exp $
+// $Id: Gmsh.l,v 1.92 2007-09-10 04:47:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -33,6 +33,7 @@
 char yyname[256] = "";
 int  yylineno = 1;
 int  yyerrorstate = 0;
+int  yyviewindex = 0;
 
 void   parsestring(char endchar);
 char  *strsave(char *ptr);
@@ -235,13 +236,12 @@ Today                   return tToday;
 Using                   return tUsing;
 
 Volume                  return tVolume;
-PostView			return tPostView;
+PostView                return tPostView;
 
 T2                      return tText2D;
 T3                      return tText3D;
 INTERPOLATION_SCHEME    return tInterpolationScheme;
 TIME                    return tTime;
-GRAIN                   return tGrain;
 
 {digit}+ |
 {digit}+"."{digit}*({exp})? |

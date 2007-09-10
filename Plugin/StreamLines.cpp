@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.29 2007-08-29 18:41:06 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.30 2007-09-10 04:47:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -243,6 +243,10 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const
   double XINIT[3], X[3], DX[3], X1[3], X2[3], X3[3], X4[3];
   double val[3], *val2 = NULL;
 
+  Msg(FATAL, "XXXXXXXXXXXXXXXXXXX");
+  return 0;
+  /*
+
   Post_View *View = BeginView(1);
 
   Post_View *v1;
@@ -374,6 +378,8 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const
   EndView(View, 1, filename, name);
 
   return View;
+
+  */
 }
 
 Post_View *GMSH_StreamLinesPlugin::execute(Post_View * v)

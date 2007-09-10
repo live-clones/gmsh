@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.103 2007-09-04 13:47:00 remacle Exp $
+// $Id: CommandLine.cpp,v 1.104 2007-09-10 04:47:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -28,7 +28,7 @@
 #include "Context.h"
 #include "Options.h"
 #include "Geo.h"
-#include "Views.h"
+#include "PView.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "Parser.h"
@@ -288,13 +288,11 @@ void Get_Options(int argc, char *argv[])
 	while(i < argc) {
 	  char filename[256];
 	  sprintf(filename, "%s_new", argv[i]);
-	  int numviews_old = List_Nbr(CTX.post.list);
+	  int n = PView::list.size();
           OpenProject(argv[i]);
 	  // convert post-processing views to latest binary format
-          for(int j = numviews_old; j < List_Nbr(CTX.post.list); j++){
-	    Post_View *v = *(Post_View **)List_Pointer(CTX.post.list, j);
-            WriteView(v, filename, 1, (j == numviews_old) ? 0 : 1);
-	  }
+          for(unsigned int j = n; j < PView::list.size(); j++)
+	    PView::list[j]->write(filename, 1, (j == n) ? false : true);
 	  // convert mesh to latest binary format
 	  if(GModel::current()->getMeshStatus() > 0){
 	    CTX.mesh.msh_file_version = 2.0;

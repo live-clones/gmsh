@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.55 2006-12-16 15:44:28 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.56 2007-09-10 04:47:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 #include "OpenFile.h"
 #include "GmshUI.h"
 #include "GUI.h"
+#include "PView.h"
 #include "Draw.h"
 #include "Context.h"
 
@@ -227,10 +228,10 @@ int Solver(int num, char *args)
 	  break;
 	case GmshServer::CLIENT_MERGE_FILE:
 	  if(num < 0 || (num >= 0 && SINFO[num].merge_views)) {
-	    int n = List_Nbr(CTX.post.list);
+	    int n = PView::list.size();
 	    MergeFile(message);
 	    Draw();
-	    if(n != List_Nbr(CTX.post.list))
+	    if(n != PView::list.size()) 
 	      WID->set_context(menu_post, 0);
 	  }
 	  break;

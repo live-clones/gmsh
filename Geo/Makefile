@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.161 2007-09-04 15:19:24 geuzaine Exp $
+# $Id: Makefile,v 1.162 2007-09-10 04:47:02 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -187,10 +187,10 @@ GModel.o: GModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   GEdge.h SVector3.h MElement.h MEdge.h ../Common/Hash.h MFace.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
   ExtrudeParams.h ../Common/SmoothData.h GFace.h GEdgeLoop.h Pair.h \
-  GRegion.h gmshSurface.h ../Mesh/Field.h ../Post/Views.h \
-  ../Post/ColorTable.h ../Common/VertexArray.h ../Geo/SVector3.h \
-  ../Post/AdaptiveViews.h ../Common/GmshMatrix.h ../Geo/Geo.h \
-  ../Geo/gmshSurface.h ../DataStr/Tree.h ../DataStr/avl.h \
+  GRegion.h gmshSurface.h ../Mesh/Field.h ../Post/PView.h \
+  ../Common/VertexArray.h ../Geo/SVector3.h ../Post/PViewData.h \
+  ../Geo/SBoundingBox3d.h ../Post/PViewOptions.h ../Post/ColorTable.h \
+  ../Geo/Geo.h ../Geo/gmshSurface.h ../DataStr/Tree.h ../DataStr/avl.h \
   ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Geo/GEdge.h \
   ../Post/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h \
   MRep.h ../Common/Message.h ../Common/OS.h ../Mesh/BackgroundMesh.h

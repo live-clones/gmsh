@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.352 2007-09-04 13:47:00 remacle Exp $
+// $Id: Options.cpp,v 1.353 2007-09-10 04:47:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "Draw.h"
+#include "PView.h"
 #include "Generator.h"
 #include "Context.h"
 #include "Options.h"
@@ -38,15 +39,10 @@ extern GUI *WID;
 extern void activate_cb(Fl_Widget* w, void* data);
 #endif
 
-extern Post_View *Post_ViewReference;
-
 // General routines
 
 void Init_Options_Safe(int num)
 {
-  ColorTable_InitParam(1, &Post_ViewReference->CT);
-  ColorTable_Recompute(&Post_ViewReference->CT);
-
   // Default string options
   Set_DefaultStringOptions(num, GeneralOptions_String);
   Set_DefaultStringOptions(num, GeometryOptions_String);
@@ -114,9 +110,6 @@ void Init_Options(int num)
   if(len && CTX.home_dir[len-1] != '/')
     strcat(CTX.home_dir, "/");
 
-  // Reference view storing default options
-  Post_ViewReference = (Post_View *) Malloc(sizeof(Post_View));
-
   Init_Options_Safe(num);
 
   // The following defaults cannot be set by the user 
@@ -157,16 +150,13 @@ void Init_Options(int num)
 
 void ReInit_Options(int num)
 {
-  // horrible trick so that the opt_view_XXX will act on the reference view
-  List_T *l = CTX.post.list;
-  CTX.post.list = NULL; 
+  // horrible trick so that opt_view_XXX will act on the reference view
+  std::vector<PView*> tmp = PView::list;
+  PView::list.clear(); 
   Init_Options_Safe(num);
-  CTX.post.list = l;
-
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
-    Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, i);
-    CopyViewOptions(Post_ViewReference, v);
-  }
+  PView::list = tmp; 
+  for(unsigned int i = 0; i < PView::list.size(); i++)
+    PView::list[i]->setOptions();
 }
 
 void Init_Options_GUI(int num)
@@ -209,11 +199,58 @@ void Print_OptionCategory(int level, int diff, int help, char *cat, FILE * file)
   }
 }
 
+GmshColorTable *Get_ColorTable(int num)
+{
+  PViewOptions *opt;
+  if(PView::list.empty() || num < 0 || num > PView::list.size() - 1)
+    opt = &PViewOptions::reference;
+  else{
+    opt = PView::list[num]->getOptions();
+    // assume that if we access the colortable we will change it
+    PView::list[num]->setChanged(true);
+  }
+  return &opt->CT;
+}
+
+void Print_ColorTable(int num, int diff, char *prefix, FILE *file)
+{
+  PViewOptions *opt;
+  if(PView::list.empty() || num < 0 || num > PView::list.size() - 1)
+    opt = &PViewOptions::reference;
+  else
+    opt = PView::list[num]->getOptions();
+
+  if(diff){
+    // compare the current colormap with a vanilla colormap having the
+    // parameters
+    GmshColorTable ref;
+    ColorTable_InitParam(opt->CT.ipar[COLORTABLE_NUMBER], &ref); 
+    for(int i = 0; i < COLORTABLE_NBMAX_PARAM; i++){
+      ref.ipar[i] = opt->CT.ipar[i];
+      ref.dpar[i] = opt->CT.dpar[i];
+    }
+    ColorTable_Recompute(&ref);
+    if(!ColorTable_Diff(&ref, &opt->CT))
+      return;
+  }
+
+  char tmp[1024];
+  sprintf(tmp, "%s = {", prefix);
+  if(file)
+    fprintf(file, "%s\n", tmp);
+  else
+    Msg(DIRECT, tmp);
+  ColorTable_Print(&opt->CT, file);
+  sprintf(tmp, "};");
+  if(file)
+    fprintf(file, "%s\n", tmp);
+  else
+    Msg(DIRECT, tmp);
+}
+
 void Print_Options(int num, int level, int diff, int help, char *filename)
 {
   FILE *file;
-  char tmp[256];
-  int i;
 
   if(filename) {
     file = fopen(filename, "w");
@@ -287,7 +324,8 @@ void Print_Options(int num, int level, int diff, int help, char *filename)
                      "PostProcessing.", file);
 
   if(level & GMSH_FULLRC) {
-    for(i = 0; i < List_Nbr(CTX.post.list); i++) {
+    for(unsigned int i = 0; i < PView::list.size(); i++) {
+      char tmp[256];
       sprintf(tmp, "View[%d].", i);
       Print_OptionCategory(level, diff, help, "View options (strings)", file);
       Print_StringOptions(i, level, diff, help, ViewOptions_String, tmp, file);
@@ -799,23 +837,23 @@ int Get_ColorForString(StringX4Int SX4I[], int alpha,
     return CTX.PACK_COLOR(SX4I[i].int1, SX4I[i].int2, SX4I[i].int3, SX4I[i].int4);
 }
 
-
-
-
+#define GET_VIEW(error_val)					\
+  PView *view = 0;						\
+  PViewData *data = 0;						\
+  PViewOptions *opt;						\
+  if(PView::list.empty())					\
+    opt = &PViewOptions::reference;				\
+  else{								\
+    if(num < 0 || num >= PView::list.size()){			\
+      Msg(WARNING, "View[%d] does not exist", num) ;		\
+      return (error_val) ;					\
+    }								\
+    view = PView::list[num];					\
+    data = view->getData();					\
+    opt = view->getOptions();					\
+  }
 
 // String option routines
-
-#define GET_VIEW(error_val)						\
-  Post_View *v, **vv;							\
-  if(!List_Nbr(CTX.post.list))						\
-    v = Post_ViewReference ;						\
-  else{									\
-    if(!(vv = (Post_View **)List_Pointer_Test(CTX.post.list, num))){	\
-      Msg(WARNING, "View[%d] does not exist", num) ;			\
-      return (error_val) ;						\
-    }									\
-    v = *vv;                                                            \
-  }
 
 char *opt_general_axes_label0(OPT_ARGS_STR)
 {
@@ -1894,167 +1932,162 @@ int _gui_action_valid(int action, int num)
 char *opt_view_name(OPT_ARGS_STR)
 {
   GET_VIEW(""); 
+  if(!data) return "";
   if(action & GMSH_SET) {
-    strcpy(v->Name, val);
+    data->setName(val);
 #if defined(HAVE_FLTK)
     if(WID && (num < (int)WID->m_toggle_butt.size())) {
-      // this is OK even if v->Name is not static or allocated, since
-      // we reset it correctly in the main GUI routines when the view
-      // associated with the button changes (i.e., when views are
-      // removed)
-      WID->m_toggle_butt[num]->label(v->Name);
+      WID->m_toggle_butt[num]->label(data->getName().c_str());
       WID->m_toggle_butt[num]->redraw();
     }
 #endif
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_input[0]->value(v->Name);
+    WID->view_input[0]->value(data->getName().c_str());
   }
 #endif
-  return v->Name;
+  return (char*)data->getName().c_str();
 }
 
 char *opt_view_format(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(v->Format, val);
+    strcpy(opt->Format, val);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_input[1]->value(v->Format);
+    WID->view_input[1]->value(opt->Format);
 #endif
-  return v->Format;
+  return opt->Format;
 }
 
 char *opt_view_filename(OPT_ARGS_STR)
 {
   GET_VIEW("");
-  if(action & GMSH_SET) {
-    strcpy(v->FileName, val);
-  }
-  return v->FileName;
+  if(!data) return "";
+  return (char*)data->getFileName().c_str();
 }
 
 char *opt_view_axes_label0(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(v->AxesLabel[0], val);
+    strcpy(opt->AxesLabel[0], val);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_input[10]->value(v->AxesLabel[0]);
+    WID->view_input[10]->value(opt->AxesLabel[0]);
 #endif
-  return v->AxesLabel[0];
+  return opt->AxesLabel[0];
 }
 
 char *opt_view_axes_label1(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(v->AxesLabel[1], val);
+    strcpy(opt->AxesLabel[1], val);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_input[11]->value(v->AxesLabel[1]);
+    WID->view_input[11]->value(opt->AxesLabel[1]);
 #endif
-  return v->AxesLabel[1];
+  return opt->AxesLabel[1];
 }
 
 char *opt_view_axes_label2(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(v->AxesLabel[2], val);
+    strcpy(opt->AxesLabel[2], val);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_input[12]->value(v->AxesLabel[2]);
+    WID->view_input[12]->value(opt->AxesLabel[2]);
 #endif
-  return v->AxesLabel[2];
+  return opt->AxesLabel[2];
 }
 
 char *opt_view_axes_format0(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(v->AxesFormat[0], val);
+    strcpy(opt->AxesFormat[0], val);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_input[7]->value(v->AxesFormat[0]);
+    WID->view_input[7]->value(opt->AxesFormat[0]);
 #endif
-  return v->AxesFormat[0];
+  return opt->AxesFormat[0];
 }
 
 char *opt_view_axes_format1(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(v->AxesFormat[1], val);
+    strcpy(opt->AxesFormat[1], val);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_input[8]->value(v->AxesFormat[1]);
+    WID->view_input[8]->value(opt->AxesFormat[1]);
 #endif
-  return v->AxesFormat[1];
+  return opt->AxesFormat[1];
 }
 
 char *opt_view_axes_format2(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(v->AxesFormat[2], val);
+    strcpy(opt->AxesFormat[2], val);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_input[9]->value(v->AxesFormat[2]);
+    WID->view_input[9]->value(opt->AxesFormat[2]);
 #endif
-  return v->AxesFormat[2];
+  return opt->AxesFormat[2];
 }
 
 char * opt_view_gen_raise0(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(v->GenRaiseX, val);
-    v->Changed = 1;
+    strcpy(opt->GenRaiseX, val);
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_input[4]->value(v->GenRaiseX);
+    WID->view_input[4]->value(opt->GenRaiseX);
 #endif
-  return v->GenRaiseX;
+  return opt->GenRaiseX;
 }
 
 char * opt_view_gen_raise1(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(v->GenRaiseY, val);
-    v->Changed = 1;
+    strcpy(opt->GenRaiseY, val);
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_input[5]->value(v->GenRaiseY);
+    WID->view_input[5]->value(opt->GenRaiseY);
 #endif
-  return v->GenRaiseY;
+  return opt->GenRaiseY;
 }
 
 char * opt_view_gen_raise2(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strcpy(v->GenRaiseZ, val);
-    v->Changed = 1;
+    strcpy(opt->GenRaiseZ, val);
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_input[6]->value(v->GenRaiseZ);
+    WID->view_input[6]->value(opt->GenRaiseZ);
 #endif
-  return v->GenRaiseZ;
+  return opt->GenRaiseZ;
 }
 
 int _h2d(char c)
@@ -2092,110 +2125,110 @@ char * opt_view_stipple0(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(v->StippleString[0], val, 31);
-    v->StippleString[0][31] = '\0'; // just as a precaution
-    _string2stipple(v->StippleString[0], v->Stipple[0][0], v->Stipple[0][1]);
+    strncpy(opt->StippleString[0], val, 31);
+    opt->StippleString[0][31] = '\0'; // just as a precaution
+    _string2stipple(opt->StippleString[0], opt->Stipple[0][0], opt->Stipple[0][1]);
   }
-  return v->StippleString[0];
+  return opt->StippleString[0];
 }
 
 char * opt_view_stipple1(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(v->StippleString[1], val, 31);
-    v->StippleString[1][31] = '\0'; // just as a precaution
-    _string2stipple(v->StippleString[1], v->Stipple[1][0], v->Stipple[1][1]);
+    strncpy(opt->StippleString[1], val, 31);
+    opt->StippleString[1][31] = '\0'; // just as a precaution
+    _string2stipple(opt->StippleString[1], opt->Stipple[1][0], opt->Stipple[1][1]);
   }
-  return v->StippleString[1];
+  return opt->StippleString[1];
 }
 
 char * opt_view_stipple2(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(v->StippleString[2], val, 31);
-    v->StippleString[2][31] = '\0'; // just as a precaution
-    _string2stipple(v->StippleString[2], v->Stipple[2][0], v->Stipple[2][1]);
+    strncpy(opt->StippleString[2], val, 31);
+    opt->StippleString[2][31] = '\0'; // just as a precaution
+    _string2stipple(opt->StippleString[2], opt->Stipple[2][0], opt->Stipple[2][1]);
   }
-  return v->StippleString[2];
+  return opt->StippleString[2];
 }
 
 char * opt_view_stipple3(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(v->StippleString[3], val, 31);
-    v->StippleString[3][31] = '\0'; // just as a precaution
-    _string2stipple(v->StippleString[3], v->Stipple[3][0], v->Stipple[3][1]);
+    strncpy(opt->StippleString[3], val, 31);
+    opt->StippleString[3][31] = '\0'; // just as a precaution
+    _string2stipple(opt->StippleString[3], opt->Stipple[3][0], opt->Stipple[3][1]);
   }
-  return v->StippleString[3];
+  return opt->StippleString[3];
 }
 
 char * opt_view_stipple4(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(v->StippleString[4], val, 31);
-    v->StippleString[4][31] = '\0'; // just as a precaution
-    _string2stipple(v->StippleString[4], v->Stipple[4][0], v->Stipple[4][1]);
+    strncpy(opt->StippleString[4], val, 31);
+    opt->StippleString[4][31] = '\0'; // just as a precaution
+    _string2stipple(opt->StippleString[4], opt->Stipple[4][0], opt->Stipple[4][1]);
   }
-  return v->StippleString[4];
+  return opt->StippleString[4];
 }
 
 char * opt_view_stipple5(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(v->StippleString[5], val, 31);
-    v->StippleString[5][31] = '\0'; // just as a precaution
-    _string2stipple(v->StippleString[5], v->Stipple[5][0], v->Stipple[5][1]);
+    strncpy(opt->StippleString[5], val, 31);
+    opt->StippleString[5][31] = '\0'; // just as a precaution
+    _string2stipple(opt->StippleString[5], opt->Stipple[5][0], opt->Stipple[5][1]);
   }
-  return v->StippleString[5];
+  return opt->StippleString[5];
 }
 
 char * opt_view_stipple6(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(v->StippleString[6], val, 31);
-    v->StippleString[6][31] = '\0'; // just as a precaution
-    _string2stipple(v->StippleString[6], v->Stipple[6][0], v->Stipple[6][1]);
+    strncpy(opt->StippleString[6], val, 31);
+    opt->StippleString[6][31] = '\0'; // just as a precaution
+    _string2stipple(opt->StippleString[6], opt->Stipple[6][0], opt->Stipple[6][1]);
   }
-  return v->StippleString[6];
+  return opt->StippleString[6];
 }
 
 char * opt_view_stipple7(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(v->StippleString[7], val, 31);
-    v->StippleString[7][31] = '\0'; // just as a precaution
-    _string2stipple(v->StippleString[7], v->Stipple[7][0], v->Stipple[7][1]);
+    strncpy(opt->StippleString[7], val, 31);
+    opt->StippleString[7][31] = '\0'; // just as a precaution
+    _string2stipple(opt->StippleString[7], opt->Stipple[7][0], opt->Stipple[7][1]);
   }
-  return v->StippleString[7];
+  return opt->StippleString[7];
 }
 
 char * opt_view_stipple8(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(v->StippleString[8], val, 31);
-    v->StippleString[8][31] = '\0'; // just as a precaution
-    _string2stipple(v->StippleString[8], v->Stipple[8][0], v->Stipple[8][1]);
+    strncpy(opt->StippleString[8], val, 31);
+    opt->StippleString[8][31] = '\0'; // just as a precaution
+    _string2stipple(opt->StippleString[8], opt->Stipple[8][0], opt->Stipple[8][1]);
   }
-  return v->StippleString[8];
+  return opt->StippleString[8];
 }
 
 char * opt_view_stipple9(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
-    strncpy(v->StippleString[9], val, 31);
-    v->StippleString[9][31] = '\0'; // just as a precaution
-    _string2stipple(v->StippleString[9], v->Stipple[9][0], v->Stipple[9][1]);
+    strncpy(opt->StippleString[9], val, 31);
+    opt->StippleString[9][31] = '\0'; // just as a precaution
+    _string2stipple(opt->StippleString[9], opt->Stipple[9][0], opt->Stipple[9][1]);
   }
-  return v->StippleString[9];
+  return opt->StippleString[9];
 }
 
 // Numeric option routines
@@ -3111,25 +3144,14 @@ double opt_general_alpha_blending(OPT_ARGS_NUM)
 
 double opt_general_vector_type(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
     CTX.vector_type = (int)val;
+    if(CTX.vector_type < 1 || CTX.vector_type > 4)
+      CTX.vector_type = 1;
+  }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)){
-    switch (CTX.vector_type) {
-    case DRAW_POST_SEGMENT:
-      WID->gen_choice[0]->value(0);
-      break;
-    case DRAW_POST_ARROW:
-      WID->gen_choice[0]->value(1);
-      break;
-    case DRAW_POST_PYRAMID:
-      WID->gen_choice[0]->value(2);
-      break;
-    case DRAW_POST_ARROW3D:
-    default:
-      WID->gen_choice[0]->value(3);
-      break;
-    }
+    WID->gen_choice[0]->value(CTX.vector_type - 1);
   }
 #endif
   return CTX.vector_type;
@@ -3176,7 +3198,7 @@ double opt_general_color_scheme(OPT_ARGS_NUM)
     Set_DefaultColorOptions(0, MeshOptions_Color);
     Set_DefaultColorOptions(0, SolverOptions_Color);
     Set_DefaultColorOptions(0, PostProcessingOptions_Color);
-    for(int i = 0; i < List_Nbr(CTX.post.list); i++)
+    for(unsigned int i = 0; i < PView::list.size(); i++)
       Set_DefaultColorOptions(i, ViewOptions_Color);
     Set_DefaultColorOptions(0, PrintOptions_Color);
 
@@ -3185,15 +3207,15 @@ double opt_general_color_scheme(OPT_ARGS_NUM)
     Set_ColorOptions_GUI(0, MeshOptions_Color);
     Set_ColorOptions_GUI(0, SolverOptions_Color);
     Set_ColorOptions_GUI(0, PostProcessingOptions_Color);
-    for(int i = 0; i < List_Nbr(CTX.post.list); i++)
+    for(unsigned int i = 0; i < PView::list.size(); i++)
       Set_ColorOptions_GUI(i, ViewOptions_Color);
     Set_ColorOptions_GUI(0, PrintOptions_Color);
 
-    // horrible trick so that the opt_view_XXX will act on the reference view
-    List_T *l = CTX.post.list;
-    CTX.post.list = NULL; 
+    // horrible trick so that opt_view_XXX will act on the reference view
+    std::vector<PView*> tmp = PView::list;
+    PView::list.clear();
     Set_DefaultColorOptions(0, ViewOptions_Color);
-    CTX.post.list = l;
+    PView::list = tmp;
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
@@ -4801,24 +4823,13 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
 double opt_mesh_recombine_algo(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
-    int algo = (int)val;
-    if(algo != 1 && algo != 2){
-      Msg(WARNING, "Unknown mesh algorithm: keeping existing value");
-    }
-    else{
-      CTX.mesh.algo_recombine = algo;
-    }
+    CTX.mesh.algo_recombine = (int)val;
+    if(CTX.mesh.algo_recombine < 1 && CTX.mesh.algo_recombine > 2)
+      CTX.mesh.algo_recombine = 1;
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
-    switch (CTX.mesh.algo_recombine) {
-    case 2:
-      WID->mesh_choice[5]->value(1);
-      break;
-    default :
-      WID->mesh_choice[5]->value(0);
-      break;
-    }
+    WID->mesh_choice[5]->value(CTX.mesh.algo_recombine - 1);
   }
 #endif
   return CTX.mesh.algo_recombine;
@@ -5352,7 +5363,7 @@ double opt_post_plugins(OPT_ARGS_NUM)
 
 double opt_post_nb_views(OPT_ARGS_NUM)
 {
-  return List_Nbr(CTX.post.list);
+  return PView::list.size();
 }
 
 double opt_post_file_format(OPT_ARGS_NUM)
@@ -5365,346 +5376,354 @@ double opt_post_file_format(OPT_ARGS_NUM)
 double opt_view_nb_timestep(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
-  if(action & GMSH_SET)
-    v->NbTimeStep = (int)val;
+  if(!data) return 1;
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[50]->maximum(v->NbTimeStep - 1);
+    WID->view_value[50]->maximum(data->getNumTimeSteps() - 1);
   if(WID)
     WID->check_anim_buttons();
 #endif
-  return v->NbTimeStep;
+  return data->getNumTimeSteps();
 }
 
 double opt_view_timestep(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
+  if(!data) return 0.;
   if(action & GMSH_SET) {
-    v->TimeStep = (int)val;
-    if(v->TimeStep > v->NbTimeStep - 1)
-      v->TimeStep = 0;
-    else if(v->TimeStep < 0)
-      v->TimeStep = v->NbTimeStep - 1;
-    v->Changed = 1;
+    opt->TimeStep = (int)val;
+    if(opt->TimeStep > data->getNumTimeSteps() - 1)
+      opt->TimeStep = 0;
+    else if(opt->TimeStep < 0)
+      opt->TimeStep = data->getNumTimeSteps() - 1;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[50]->value(v->TimeStep);
+    WID->view_value[50]->value(opt->TimeStep);
 #endif
-  return v->TimeStep;
+  return opt->TimeStep;
 }
 
 double opt_view_min(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
-  return v->Min;
+  if(!data) return 0.;
+  return data->getMin();
 }
 
 double opt_view_max(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
-  return v->Max;
+  if(!data) return 0.;
+  return data->getMax();
 }
 
 double opt_view_custom_min(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->CustomMin = val;
-    v->Changed = 1;
+    opt->CustomMin = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_value[31]->value(v->CustomMin);
+    WID->view_value[31]->value(opt->CustomMin);
   }
 #endif
-  return v->CustomMin;
+  return opt->CustomMin;
 }
 
 double opt_view_custom_max(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->CustomMax = val;
-    v->Changed = 1;
+    opt->CustomMax = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[32]->value(v->CustomMax);
+    WID->view_value[32]->value(opt->CustomMax);
 #endif
-  return v->CustomMax;
+  return opt->CustomMax;
 }
 
 double opt_view_xmin(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
-  return v->BBox[0];
+  if(!data) return 0.;
+  return data->getBoundingBox().min().x();
 }
 
 double opt_view_xmax(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
-  return v->BBox[1];
+  if(!data) return 0.;
+  return data->getBoundingBox().max().x();
 }
 
 double opt_view_ymin(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
-  return v->BBox[2];
+  if(!data) return 0.;
+  return data->getBoundingBox().min().y();
 }
 
 double opt_view_ymax(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
-  return v->BBox[3];
+  if(!data) return 0.;
+  return data->getBoundingBox().max().y();
 }
 
 double opt_view_zmin(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
-  return v->BBox[4];
+  if(!data) return 0.;
+  return data->getBoundingBox().min().z();
 }
 
 double opt_view_zmax(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
-  return v->BBox[5];
+  if(!data) return 0.;
+  return data->getBoundingBox().max().z();
 }
 
 double opt_view_offset0(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Offset[0] = val;
-    v->Changed = 1;
+    opt->Offset[0] = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[40]->value(v->Offset[0]);
+    WID->view_value[40]->value(opt->Offset[0]);
 #endif
-  return v->Offset[0];
+  return opt->Offset[0];
 }
 
 double opt_view_offset1(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Offset[1] = val;
-    v->Changed = 1;
+    opt->Offset[1] = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[41]->value(v->Offset[1]);
+    WID->view_value[41]->value(opt->Offset[1]);
 #endif
-  return v->Offset[1];
+  return opt->Offset[1];
 }
 
 double opt_view_offset2(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Offset[2] = val;
-    v->Changed = 1;
+    opt->Offset[2] = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[42]->value(v->Offset[2]);
+    WID->view_value[42]->value(opt->Offset[2]);
 #endif
-  return v->Offset[2];
+  return opt->Offset[2];
 }
 
 double opt_view_raise0(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Raise[0] = val;
-    v->Changed = 1;
+    opt->Raise[0] = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[43]->value(v->Raise[0]);
+    WID->view_value[43]->value(opt->Raise[0]);
 #endif
-  return v->Raise[0];
+  return opt->Raise[0];
 }
 
 double opt_view_raise1(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Raise[1] = val;
-    v->Changed = 1;
+    opt->Raise[1] = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[44]->value(v->Raise[1]);
+    WID->view_value[44]->value(opt->Raise[1]);
 #endif
-  return v->Raise[1];
+  return opt->Raise[1];
 }
 
 double opt_view_raise2(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Raise[2] = val;
-    v->Changed = 1;
+    opt->Raise[2] = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[45]->value(v->Raise[2]);
+    WID->view_value[45]->value(opt->Raise[2]);
 #endif
-  return v->Raise[2];
+  return opt->Raise[2];
 }
 
 double opt_view_transform00(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Transform[0][0] = val;
-    v->Changed = 1;
+    opt->Transform[0][0] = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[51]->value(v->Transform[0][0]);
+    WID->view_value[51]->value(opt->Transform[0][0]);
 #endif
-  return v->Transform[0][0];
+  return opt->Transform[0][0];
 }
 
 double opt_view_transform01(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Transform[0][1] = val;
-    v->Changed = 1;
+    opt->Transform[0][1] = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[52]->value(v->Transform[0][1]);
+    WID->view_value[52]->value(opt->Transform[0][1]);
 #endif
-  return v->Transform[0][1];
+  return opt->Transform[0][1];
 }
 
 double opt_view_transform02(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Transform[0][2] = val;
-    v->Changed = 1;
+    opt->Transform[0][2] = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[53]->value(v->Transform[0][2]);
+    WID->view_value[53]->value(opt->Transform[0][2]);
 #endif
-  return v->Transform[0][2];
+  return opt->Transform[0][2];
 }
 
 double opt_view_transform10(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Transform[1][0] = val;
-    v->Changed = 1;
+    opt->Transform[1][0] = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[54]->value(v->Transform[1][0]);
+    WID->view_value[54]->value(opt->Transform[1][0]);
 #endif
-  return v->Transform[1][0];
+  return opt->Transform[1][0];
 }
 
 double opt_view_transform11(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Transform[1][1] = val;
-    v->Changed = 1;
+    opt->Transform[1][1] = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[55]->value(v->Transform[1][1]);
+    WID->view_value[55]->value(opt->Transform[1][1]);
 #endif
-  return v->Transform[1][1];
+  return opt->Transform[1][1];
 }
 
 double opt_view_transform12(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Transform[1][2] = val;
-    v->Changed = 1;
+    opt->Transform[1][2] = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[56]->value(v->Transform[1][2]);
+    WID->view_value[56]->value(opt->Transform[1][2]);
 #endif
-  return v->Transform[1][2];
+  return opt->Transform[1][2];
 }
 
 double opt_view_transform20(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Transform[2][0] = val;
-    v->Changed = 1;
+    opt->Transform[2][0] = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[57]->value(v->Transform[2][0]);
+    WID->view_value[57]->value(opt->Transform[2][0]);
 #endif
-  return v->Transform[2][0];
+  return opt->Transform[2][0];
 }
 
 double opt_view_transform21(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Transform[2][1] = val;
-    v->Changed = 1;
+    opt->Transform[2][1] = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[58]->value(v->Transform[2][1]);
+    WID->view_value[58]->value(opt->Transform[2][1]);
 #endif
-  return v->Transform[2][1];
+  return opt->Transform[2][1];
 }
 
 double opt_view_transform22(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Transform[2][2] = val;
-    v->Changed = 1;
+    opt->Transform[2][2] = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[59]->value(v->Transform[2][2]);
+    WID->view_value[59]->value(opt->Transform[2][2]);
 #endif
-  return v->Transform[2][2];
+  return opt->Transform[2][2];
 }
 
 double opt_view_arrow_size(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->ArrowSize = val;
+    opt->ArrowSize = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[60]->value(v->ArrowSize);
+    WID->view_value[60]->value(opt->ArrowSize);
 #endif
-  return v->ArrowSize;
+  return opt->ArrowSize;
 }
 
 double opt_view_arrow_size_proportional(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->ArrowSizeProportional = (int)val;
+    opt->ArrowSizeProportional = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_butt[0]->value(v->ArrowSizeProportional);
+    WID->view_butt[0]->value(opt->ArrowSizeProportional);
 #endif
-  return v->ArrowSizeProportional;
+  return opt->ArrowSizeProportional;
 }
 
 double opt_view_arrow_head_radius(OPT_ARGS_NUM)
@@ -5713,9 +5732,9 @@ double opt_view_arrow_head_radius(OPT_ARGS_NUM)
   if(action & GMSH_SET){
     if(val < 0.) val = 0.;
     if(val > 1.) val = 1.;
-    v->ArrowRelHeadRadius = val;
+    opt->ArrowRelHeadRadius = val;
   }
-  return v->ArrowRelHeadRadius;
+  return opt->ArrowRelHeadRadius;
 }
 
 double opt_view_arrow_stem_length(OPT_ARGS_NUM)
@@ -5724,9 +5743,9 @@ double opt_view_arrow_stem_length(OPT_ARGS_NUM)
   if(action & GMSH_SET){
     if(val < 0.) val = 0.;
     if(val > 1.) val = 1.;
-    v->ArrowRelStemLength = val;
+    opt->ArrowRelStemLength = val;
   }
-  return v->ArrowRelStemLength;
+  return opt->ArrowRelStemLength;
 }
 
 double opt_view_arrow_stem_radius(OPT_ARGS_NUM)
@@ -5735,153 +5754,128 @@ double opt_view_arrow_stem_radius(OPT_ARGS_NUM)
   if(action & GMSH_SET){
     if(val < 0.) val = 0.;
     if(val > 1.) val = 1.;
-    v->ArrowRelStemRadius = val;
+    opt->ArrowRelStemRadius = val;
   }
-  return v->ArrowRelStemRadius;
+  return opt->ArrowRelStemRadius;
 }
 
 double opt_view_normals(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Normals = val;
+    opt->Normals = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[0]->value(v->Normals);
+    WID->view_value[0]->value(opt->Normals);
 #endif
-  return v->Normals;
+  return opt->Normals;
 }
 
 double opt_view_tangents(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Tangents = val;
+    opt->Tangents = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[1]->value(v->Tangents);
+    WID->view_value[1]->value(opt->Tangents);
 #endif
-  return v->Tangents;
+  return opt->Tangents;
 }
 
 double opt_view_displacement_factor(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->DisplacementFactor = val;
-    v->Changed = 1;
+    opt->DisplacementFactor = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[63]->value(v->DisplacementFactor);
+    WID->view_value[63]->value(opt->DisplacementFactor);
 #endif
-  return v->DisplacementFactor;
+  return opt->DisplacementFactor;
 }
 
 double opt_view_fake_transparency(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->FakeTransparency = (int)val;
-    v->Changed = 1;
+    opt->FakeTransparency = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_butt[24]->value(v->FakeTransparency);
+    WID->view_butt[24]->value(opt->FakeTransparency);
 #endif
-  return v->FakeTransparency;
+  return opt->FakeTransparency;
 }
 
 double opt_view_explode(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Explode = val;
-    v->Changed = 1;
+    opt->Explode = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[12]->value(v->Explode);
+    WID->view_value[12]->value(opt->Explode);
 #endif
-  return v->Explode;
+  return opt->Explode;
 }
 
 double opt_view_visible(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Visible = (int)val;
+    opt->Visible = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI) && (num < (int)WID->m_toggle_butt.size()))
-    WID->m_toggle_butt[num]->value(v->Visible);
+    WID->m_toggle_butt[num]->value(opt->Visible);
 #endif
-  Msg(DEBUG1, "View %d", v->Num);
-  Msg(DEBUG2, "  -> Name '%s'", v->Name);
-  Msg(DEBUG2, "  -> FileName '%s'", v->FileName);
-  Msg(DEBUG2, "  -> AliasOf %d", v->AliasOf);
-  Msg(DEBUG3, "  -> Links %d", v->Links);
-  return v->Visible;
+  return opt->Visible;
 }
 
 double opt_view_intervals_type(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    int type = (int)val;
-    if(type != DRAW_POST_ISO &&
-       type != DRAW_POST_DISCRETE &&
-       type != DRAW_POST_CONTINUOUS &&
-       type != DRAW_POST_NUMERIC){
-      Msg(WARNING, "Unknown interval type: keeping existing value");
-    }
-    else{
-      v->IntervalsType = type;
-      v->Changed = 1;
-    }
+    opt->IntervalsType = (int)val;
+    if(opt->IntervalsType < 1 || opt->IntervalsType > 4)
+      opt->IntervalsType = 1;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    switch (v->IntervalsType) {
-    case DRAW_POST_ISO:
-      WID->view_choice[0]->value(0);
-      break;
-    case DRAW_POST_DISCRETE:
-      WID->view_choice[0]->value(1);
-      break;
-    case DRAW_POST_NUMERIC:
-      WID->view_choice[0]->value(3);
-      break;
-    case DRAW_POST_CONTINUOUS:
-    default:
-      WID->view_choice[0]->value(2);
-      break;
-    }
+    WID->view_choice[0]->value(opt->IntervalsType - 1);
   }
 #endif
-  return v->IntervalsType;
+  return opt->IntervalsType;
 }
 
 double opt_view_saturate_values(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->SaturateValues = (int)val;
-    v->Changed = 1;
+    opt->SaturateValues = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_butt[38]->value(v->SaturateValues);
+    WID->view_butt[38]->value(opt->SaturateValues);
   }
 #endif
-  return v->SaturateValues;
+  return opt->SaturateValues;
 }
 
 
 double opt_view_max_recursion_level(OPT_ARGS_NUM)
 {
+  /*
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     if(v->adaptive)
@@ -5896,11 +5890,13 @@ double opt_view_max_recursion_level(OPT_ARGS_NUM)
 #endif
   if(v->adaptive)
     return v->adaptive->getGlobalResolutionLevel();
+  */
   return 0;
 }
 
 double opt_view_target_error(OPT_ARGS_NUM)
 {
+  /*
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     if(v->adaptive) {
@@ -5917,6 +5913,7 @@ double opt_view_target_error(OPT_ARGS_NUM)
 #endif
   if (v->adaptive)
     return v->adaptive->getTolerance();
+  */
   return 1.e-2;
 }
 
@@ -5925,1060 +5922,970 @@ double opt_view_type(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    int type = (int)val;
-    if(type != DRAW_POST_3D &&
-       type != DRAW_POST_2D_SPACE &&
-       type != DRAW_POST_2D_TIME){
-      Msg(WARNING, "Unknown view type: keeping existing value");
-    }
-    else{
-      v->Type = type;
-      v->Changed = 1;
-    }
+    opt->Type = (int)val;
+    if(opt->Type < 1 || opt->Type > 3)
+      opt->Type = 1;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    switch (v->Type) {
-    case DRAW_POST_3D:
-      WID->view_choice[13]->value(0);
-      break;
-    case DRAW_POST_2D_SPACE:
-      WID->view_choice[13]->value(1);
-      break;
-    case DRAW_POST_2D_TIME:
-    default:
-      WID->view_choice[13]->value(2);
-      break;
-    }
+    WID->view_choice[13]->value(opt->Type - 1);
   }
 #endif
-  return v->Type;
+  return opt->Type;
 }
 
 double opt_view_auto_position(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->AutoPosition = (int)val;
+    opt->AutoPosition = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_butt[7]->value(v->AutoPosition);
+    WID->view_butt[7]->value(opt->AutoPosition);
     activate_cb(NULL, (void*)"view_axes_auto_2d");
   }
 #endif
-  return v->AutoPosition;
+  return opt->AutoPosition;
 }
 
 double opt_view_position0(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Position[0] = (int)val;
+    opt->Position[0] = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[20]->value(v->Position[0]);
+    WID->view_value[20]->value(opt->Position[0]);
 #endif
-  return v->Position[0];
+  return opt->Position[0];
 }
 
 double opt_view_position1(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Position[1] = (int)val;
+    opt->Position[1] = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[21]->value(v->Position[1]);
+    WID->view_value[21]->value(opt->Position[1]);
 #endif
-  return v->Position[1];
+  return opt->Position[1];
 }
 
 double opt_view_size0(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Size[0] = (int)val;
+    opt->Size[0] = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[22]->value(v->Size[0]);
+    WID->view_value[22]->value(opt->Size[0]);
 #endif
-  return v->Size[0];
+  return opt->Size[0];
 }
 
 double opt_view_size1(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Size[1] = (int)val;
+    opt->Size[1] = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[23]->value(v->Size[1]);
+    WID->view_value[23]->value(opt->Size[1]);
 #endif
-  return v->Size[1];
+  return opt->Size[1];
 }
 
 double opt_view_axes(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Axes = (int)val;
-    if(v->Axes < 0 || v->Axes > 5)
-      v->Axes = 0;
+    opt->Axes = (int)val;
+    if(opt->Axes < 0 || opt->Axes > 5)
+      opt->Axes = 0;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_choice[8]->value(v->Axes);
+    WID->view_choice[8]->value(opt->Axes);
     activate_cb(NULL, (void*)"view_axes");
   }
 #endif
-  return v->Axes;
+  return opt->Axes;
 }
 
 double opt_view_axes_auto_position(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->AxesAutoPosition = (int)val;
+    opt->AxesAutoPosition = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_butt[25]->value(v->AxesAutoPosition);
+    WID->view_butt[25]->value(opt->AxesAutoPosition);
     activate_cb(NULL, (void*)"view_axes_auto_3d");
   }
 #endif
-  return v->AxesAutoPosition;
+  return opt->AxesAutoPosition;
 }
 
 double opt_view_axes_xmin(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->AxesPosition[0] = val;
+    opt->AxesPosition[0] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_value[13]->value(v->AxesPosition[0]);
+    WID->view_value[13]->value(opt->AxesPosition[0]);
   }
 #endif
-  return v->AxesPosition[0];
+  return opt->AxesPosition[0];
 }
 
 double opt_view_axes_xmax(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->AxesPosition[1] = val;
+    opt->AxesPosition[1] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_value[16]->value(v->AxesPosition[1]);
+    WID->view_value[16]->value(opt->AxesPosition[1]);
   }
 #endif
-  return v->AxesPosition[1];
+  return opt->AxesPosition[1];
 }
 
 double opt_view_axes_ymin(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->AxesPosition[2] = val;
+    opt->AxesPosition[2] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_value[14]->value(v->AxesPosition[2]);
+    WID->view_value[14]->value(opt->AxesPosition[2]);
   }
 #endif
-  return v->AxesPosition[2];
+  return opt->AxesPosition[2];
 }
 
 double opt_view_axes_ymax(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->AxesPosition[3] = val;
+    opt->AxesPosition[3] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_value[17]->value(v->AxesPosition[3]);
+    WID->view_value[17]->value(opt->AxesPosition[3]);
   }
 #endif
-  return v->AxesPosition[3];
+  return opt->AxesPosition[3];
 }
 
 double opt_view_axes_zmin(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->AxesPosition[4] = val;
+    opt->AxesPosition[4] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_value[15]->value(v->AxesPosition[4]);
+    WID->view_value[15]->value(opt->AxesPosition[4]);
   }
 #endif
-  return v->AxesPosition[4];
+  return opt->AxesPosition[4];
 }
 
 double opt_view_axes_zmax(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->AxesPosition[5] = val;
+    opt->AxesPosition[5] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_value[18]->value(v->AxesPosition[5]);
+    WID->view_value[18]->value(opt->AxesPosition[5]);
   }
 #endif
-  return v->AxesPosition[5];
+  return opt->AxesPosition[5];
 }
 
 double opt_view_axes_tics0(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->AxesTics[0] = (int)val;
+    opt->AxesTics[0] = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_value[3]->value(v->AxesTics[0]);
+    WID->view_value[3]->value(opt->AxesTics[0]);
   }
 #endif
-  return v->AxesTics[0];
+  return opt->AxesTics[0];
 }
 
 double opt_view_axes_tics1(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->AxesTics[1] = (int)val;
+    opt->AxesTics[1] = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_value[4]->value(v->AxesTics[1]);
+    WID->view_value[4]->value(opt->AxesTics[1]);
   }
 #endif
-  return v->AxesTics[1];
+  return opt->AxesTics[1];
 }
 
 double opt_view_axes_tics2(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->AxesTics[2] = (int)val;
+    opt->AxesTics[2] = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_value[5]->value(v->AxesTics[2]);
+    WID->view_value[5]->value(opt->AxesTics[2]);
   }
 #endif
-  return v->AxesTics[2];
+  return opt->AxesTics[2];
 }
 
 double opt_view_nb_iso(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->NbIso = (int)val;
-    v->Changed = 1;
+    opt->NbIso = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[30]->value(v->NbIso);
+    WID->view_value[30]->value(opt->NbIso);
 #endif
-  return v->NbIso;
+  return opt->NbIso;
 }
 
 double opt_view_boundary(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Boundary = (int)val;
-    if(v->Boundary < 0 || v->Boundary > 3)
-      v->Boundary = 0;
-    v->Changed = 1;
+    opt->Boundary = (int)val;
+    if(opt->Boundary < 0 || opt->Boundary > 3)
+      opt->Boundary = 0;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_choice[9]->value(v->Boundary);
+    WID->view_choice[9]->value(opt->Boundary);
   }
 #endif
-  return v->Boundary;
+  return opt->Boundary;
 }
 
 double opt_view_light(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->Light = (int)val;
-    v->Changed = 1;
+    opt->Light = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    WID->view_butt[11]->value(v->Light);
+    WID->view_butt[11]->value(opt->Light);
     activate_cb(NULL, (void*)"view_light");
   }
 #endif
-  return v->Light;
+  return opt->Light;
 }
 
 double opt_view_light_two_side(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->LightTwoSide = (int)val;
+    opt->LightTwoSide = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_butt[9]->value(v->LightTwoSide);
+    WID->view_butt[9]->value(opt->LightTwoSide);
 #endif
-  return v->LightTwoSide;
+  return opt->LightTwoSide;
 }
 
 double opt_view_light_lines(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->LightLines = (int)val;
+    opt->LightLines = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_butt[8]->value(v->LightLines);
+    WID->view_butt[8]->value(opt->LightLines);
 #endif
-  return v->LightLines;
+  return opt->LightLines;
 }
 
 double opt_view_smooth_normals(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->SmoothNormals = (int)val;
-    v->Changed = 1;
+    opt->SmoothNormals = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_butt[12]->value(v->SmoothNormals);
+    WID->view_butt[12]->value(opt->SmoothNormals);
 #endif
-  return v->SmoothNormals;
+  return opt->SmoothNormals;
 }
 
 double opt_view_angle_smooth_normals(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->AngleSmoothNormals = val;
-    v->Changed = 1;
+    opt->AngleSmoothNormals = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[10]->value(v->AngleSmoothNormals);
+    WID->view_value[10]->value(opt->AngleSmoothNormals);
 #endif
-  return v->AngleSmoothNormals;
+  return opt->AngleSmoothNormals;
 }
 
 double opt_view_show_element(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->ShowElement = (int)val;
+    opt->ShowElement = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_butt[10]->value(v->ShowElement);
+    WID->view_butt[10]->value(opt->ShowElement);
 #endif
-  return v->ShowElement;
+  return opt->ShowElement;
 }
 
 double opt_view_show_time(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->ShowTime = (int)val;
-    if(v->ShowTime < 0 || v->ShowTime > 4)
-      v->ShowTime = 0;
+    opt->ShowTime = (int)val;
+    if(opt->ShowTime < 0 || opt->ShowTime > 4)
+      opt->ShowTime = 0;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_choice[12]->value(v->ShowTime);
+    WID->view_choice[12]->value(opt->ShowTime);
 #endif
-  return v->ShowTime;
+  return opt->ShowTime;
 }
 
 double opt_view_show_scale(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->ShowScale = (int)val;
+    opt->ShowScale = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_butt[4]->value(v->ShowScale);
+    WID->view_butt[4]->value(opt->ShowScale);
 #endif
-  return v->ShowScale;
+  return opt->ShowScale;
 }
 
 double opt_view_draw_strings(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->DrawStrings = (int)val;
+    opt->DrawStrings = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_butt[5]->value(v->DrawStrings);
+    WID->view_butt[5]->value(opt->DrawStrings);
 #endif
-  return v->DrawStrings;
+  return opt->DrawStrings;
 }
 
 double opt_view_draw_points(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->DrawPoints = (int)val;
+    opt->DrawPoints = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    if(v->DrawPoints)
+    if(opt->DrawPoints)
       ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[0].set();
     else
       ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[0].clear();
   }
 #endif
-  return v->DrawPoints;
+  return opt->DrawPoints;
 }
 
 double opt_view_draw_lines(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->DrawLines = (int)val;
+    opt->DrawLines = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    if(v->DrawLines)
+    if(opt->DrawLines)
       ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[1].set();
     else
       ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[1].clear();
   }
 #endif
-  return v->DrawLines;
+  return opt->DrawLines;
 }
 
 double opt_view_draw_triangles(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->DrawTriangles = (int)val;
-    v->Changed = 1;
+    opt->DrawTriangles = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    if(v->DrawTriangles)
+    if(opt->DrawTriangles)
       ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[2].set();
     else
       ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[2].clear();
   }
 #endif
-  return v->DrawTriangles;
+  return opt->DrawTriangles;
 }
 
 double opt_view_draw_quadrangles(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->DrawQuadrangles = (int)val;
-    v->Changed = 1;
+    opt->DrawQuadrangles = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    if(v->DrawQuadrangles)
+    if(opt->DrawQuadrangles)
       ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[3].set();
     else
       ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[3].clear();
   }
 #endif
-  return v->DrawQuadrangles;
+  return opt->DrawQuadrangles;
 }
 
 double opt_view_draw_tetrahedra(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->DrawTetrahedra = (int)val;
-    v->Changed = 1;
+    opt->DrawTetrahedra = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    if(v->DrawTetrahedra)
+    if(opt->DrawTetrahedra)
       ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[4].set();
     else
       ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[4].clear();
   }
 #endif
-  return v->DrawTetrahedra;
+  return opt->DrawTetrahedra;
 }
 
 double opt_view_draw_hexahedra(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->DrawHexahedra = (int)val;
-    v->Changed = 1;
+    opt->DrawHexahedra = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    if(v->DrawHexahedra)
+    if(opt->DrawHexahedra)
       ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[5].set();
     else
       ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[5].clear();
   }
 #endif
-  return v->DrawHexahedra;
+  return opt->DrawHexahedra;
 }
 
 double opt_view_draw_prisms(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->DrawPrisms = (int)val;
-    v->Changed = 1;
+    opt->DrawPrisms = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    if(v->DrawPrisms)
+    if(opt->DrawPrisms)
       ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[6].set();
     else
       ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[6].clear();
   }
 #endif
-  return v->DrawPrisms;
+  return opt->DrawPrisms;
 }
 
 double opt_view_draw_pyramids(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->DrawPyramids = (int)val;
-    v->Changed = 1;
+    opt->DrawPyramids = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    if(v->DrawPyramids)
+    if(opt->DrawPyramids)
       ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[7].set();
     else
       ((Fl_Menu_Item*)WID->view_menu_butt[1]->menu())[7].clear();
   }
 #endif
-  return v->DrawPyramids;
+  return opt->DrawPyramids;
 }
 
 double opt_view_draw_scalars(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->DrawScalars = (int)val;
-    v->Changed = 1;
+    opt->DrawScalars = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    if(v->DrawScalars)
+    if(opt->DrawScalars)
       ((Fl_Menu_Item*)WID->view_menu_butt[0]->menu())[0].set();
     else
       ((Fl_Menu_Item*)WID->view_menu_butt[0]->menu())[0].clear();
   }
 #endif
-  return v->DrawScalars;
+  return opt->DrawScalars;
 }
 
 double opt_view_draw_vectors(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->DrawVectors = (int)val;
-    v->Changed = 1;
+    opt->DrawVectors = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    if(v->DrawVectors)
+    if(opt->DrawVectors)
       ((Fl_Menu_Item*)WID->view_menu_butt[0]->menu())[1].set();
     else
       ((Fl_Menu_Item*)WID->view_menu_butt[0]->menu())[1].clear();
   }
 #endif
-  return v->DrawVectors;
+  return opt->DrawVectors;
 }
 
 double opt_view_draw_tensors(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->DrawTensors = (int)val;
-    v->Changed = 1;
+    opt->DrawTensors = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    if(v->DrawTensors)
+    if(opt->DrawTensors)
       ((Fl_Menu_Item*)WID->view_menu_butt[0]->menu())[2].set();
     else
       ((Fl_Menu_Item*)WID->view_menu_butt[0]->menu())[2].clear();
   }
 #endif
-  return v->DrawTensors;
+  return opt->DrawTensors;
 }
 
 double opt_view_scale_type(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    int type = (int)val;
-    if(type != DRAW_POST_LINEAR &&
-       type != DRAW_POST_LOGARITHMIC &&
-       type != DRAW_POST_DOUBLELOGARITHMIC){
-      Msg(WARNING, "Unknown scale type: keeping existing value");
-    }
-    else{
-      v->ScaleType = type;
-      v->Changed = 1;
-    }
+    opt->ScaleType = (int)val;
+    if(opt->ScaleType < 1 || opt->ScaleType > 3)
+      opt->ScaleType = 1;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    switch (v->ScaleType) {
-    case DRAW_POST_LOGARITHMIC:
-      WID->view_choice[1]->value(1);
-      break;
-    case DRAW_POST_DOUBLELOGARITHMIC:
-      WID->view_choice[1]->value(2);
-      break;
-    case DRAW_POST_LINEAR:
-    default:
-      WID->view_choice[1]->value(0);
-      break;
-    }
+    WID->view_choice[1]->value(opt->ScaleType - 1);
   }
 #endif
-  return v->ScaleType;
+  return opt->ScaleType;
 }
 
 double opt_view_range_type(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->RangeType = (int)val;
-    v->Changed = 1;
+    opt->RangeType = (int)val;
+    if(opt->RangeType < 1 || opt->RangeType > 3)
+      opt->RangeType = 1;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    switch(v->RangeType){
-    case DRAW_POST_RANGE_PER_STEP:
-      WID->view_choice[7]->value(1);
-      break;
-    case DRAW_POST_RANGE_CUSTOM:
-      WID->view_choice[7]->value(2);
-      break;
-    case DRAW_POST_RANGE_DEFAULT:
-    default:
-      WID->view_choice[7]->value(0);
-      break;
-    }
+    WID->view_choice[7]->value(opt->RangeType - 1);
     activate_cb(NULL, (void*)"custom_range");
   }
 #endif
-  return v->RangeType;
+  return opt->RangeType;
 }
 
 double opt_view_tensor_type(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->TensorType = (int)val;
-    v->Changed = 1;
+    opt->TensorType = (int)val;
+    if(opt->TensorType != 1)
+      opt->TensorType = 1;
+    if(view) view->setChanged(true);
   }
  #if defined(HAVE_FLTK)
    if(_gui_action_valid(action, num)) {
-     switch (v->TensorType) {
-     case DRAW_POST_LMGC90:
-       WID->view_choice[4]->value(1);
-       break;
-     case DRAW_POST_LMGC90_TYPE:
-       WID->view_choice[4]->value(2);
-       break;
-     case DRAW_POST_LMGC90_COORD:
-       WID->view_choice[4]->value(3);
-       break;
-     case DRAW_POST_LMGC90_PRES:
-       WID->view_choice[4]->value(4);
-       break;
-     case DRAW_POST_LMGC90_SN:
-       WID->view_choice[4]->value(5);
-       break;
-     case DRAW_POST_LMGC90_DEPX:
-       WID->view_choice[4]->value(6);
-       break;
-     case DRAW_POST_LMGC90_DEPY:
-       WID->view_choice[4]->value(7);
-       break;
-     case DRAW_POST_LMGC90_DEPZ:
-       WID->view_choice[4]->value(8);
-       break;
-     case DRAW_POST_LMGC90_DEPAV:
-       WID->view_choice[4]->value(9);
-       break;
-     case DRAW_POST_LMGC90_DEPNORM:
-       WID->view_choice[4]->value(10);
-       break;
-     case DRAW_POST_VONMISES:
-     default:
-       WID->view_choice[4]->value(0);
-       break;
-     }
+     WID->view_choice[4]->value(opt->TensorType - 1);
    }
  #endif
-  return v->TensorType;
+  return opt->TensorType;
 }
 
 double opt_view_vector_type(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->VectorType = (int)val;
-    v->Changed = 1;
+    opt->VectorType = (int)val;
+    if(opt->VectorType < 1 || opt->VectorType > 5)
+      opt->VectorType = 1;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    switch (v->VectorType) {
-    case DRAW_POST_SEGMENT:
-      WID->view_choice[2]->value(0);
-      break;
-    case DRAW_POST_ARROW:
-      WID->view_choice[2]->value(1);
-      break;
-    case DRAW_POST_PYRAMID:
-      WID->view_choice[2]->value(2);
-      break;
-    case DRAW_POST_DISPLACEMENT:
-      WID->view_choice[2]->value(4);
-      break;
-    case DRAW_POST_ARROW3D:
-    default:
-      WID->view_choice[2]->value(3);
-      break;
-    }
+    WID->view_choice[2]->value(opt->VectorType - 1);
   }
 #endif
-  return v->VectorType;
+  return opt->VectorType;
 }
 
 double opt_view_glyph_location(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->GlyphLocation = (int)val;
+    opt->GlyphLocation = (int)val;
+    if(opt->GlyphLocation < 1 || opt->GlyphLocation > 2)
+      opt->GlyphLocation = 1;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    switch (v->GlyphLocation) {
-    case DRAW_POST_LOCATE_VERTEX:
-      WID->view_choice[3]->value(1);
-      break;
-    case DRAW_POST_LOCATE_COG:
-    default:
-      WID->view_choice[3]->value(0);
-      break;
-    }
+    WID->view_choice[3]->value(opt->GlyphLocation - 1);
   }
 #endif
-  return v->GlyphLocation;
+  return opt->GlyphLocation;
 }
 
 double opt_view_point_size(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->PointSize = val;
+    opt->PointSize = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[61]->value(v->PointSize);
+    WID->view_value[61]->value(opt->PointSize);
 #endif
-  return v->PointSize;
+  return opt->PointSize;
 }
 
 double opt_view_line_width(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->LineWidth = val;
+    opt->LineWidth = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[62]->value(v->LineWidth);
+    WID->view_value[62]->value(opt->LineWidth);
 #endif
-  return v->LineWidth;
+  return opt->LineWidth;
 }
 
 double opt_view_point_type(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->PointType = (int)val;
-    if(v->PointType < 0 || v->PointType > 2) v->PointType = 0;
+    opt->PointType = (int)val;
+    if(opt->PointType < 0 || opt->PointType > 2) 
+      opt->PointType = 0;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_choice[5]->value(v->PointType);
+    WID->view_choice[5]->value(opt->PointType);
   }
 #endif
-  return v->PointType;
+  return opt->PointType;
 }
 
 double opt_view_line_type(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->LineType = (int)val;
-    if(v->LineType < 0 || v->LineType > 2) v->LineType = 0;
-    v->Changed = 1;
+    opt->LineType = (int)val;
+    if(opt->LineType < 0 || opt->LineType > 2) 
+      opt->LineType = 0;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_choice[6]->value(v->LineType);
+    WID->view_choice[6]->value(opt->LineType);
   }
 #endif
-  return v->LineType;
+  return opt->LineType;
 }
 
 double opt_view_colormap_alpha(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->CT.dpar[COLORTABLE_ALPHA] = val;
-    ColorTable_Recompute(&v->CT);
-    v->Changed = 1;
+    opt->CT.dpar[COLORTABLE_ALPHA] = val;
+    ColorTable_Recompute(&opt->CT);
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     WID->view_colorbar_window->redraw();
   }
 #endif
-  return v->CT.dpar[COLORTABLE_ALPHA];
+  return opt->CT.dpar[COLORTABLE_ALPHA];
 }
 
 double opt_view_colormap_alpha_power(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->CT.dpar[COLORTABLE_ALPHAPOW] = val;
-    ColorTable_Recompute(&v->CT);
-    v->Changed = 1;
+    opt->CT.dpar[COLORTABLE_ALPHAPOW] = val;
+    ColorTable_Recompute(&opt->CT);
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     WID->view_colorbar_window->redraw();
   }
 #endif
-  return v->CT.dpar[COLORTABLE_ALPHAPOW];
+  return opt->CT.dpar[COLORTABLE_ALPHAPOW];
 }
 
 double opt_view_colormap_beta(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->CT.dpar[COLORTABLE_BETA] = val;
-    ColorTable_Recompute(&v->CT);
-    v->Changed = 1;
+    opt->CT.dpar[COLORTABLE_BETA] = val;
+    ColorTable_Recompute(&opt->CT);
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     WID->view_colorbar_window->redraw();
   }
 #endif
-  return v->CT.dpar[COLORTABLE_BETA];
+  return opt->CT.dpar[COLORTABLE_BETA];
 }
 
 double opt_view_colormap_bias(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->CT.dpar[COLORTABLE_BIAS] = val;
-    ColorTable_Recompute(&v->CT);
-    v->Changed = 1;
+    opt->CT.dpar[COLORTABLE_BIAS] = val;
+    ColorTable_Recompute(&opt->CT);
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     WID->view_colorbar_window->redraw();
   }
 #endif
-  return v->CT.dpar[COLORTABLE_BIAS];
+  return opt->CT.dpar[COLORTABLE_BIAS];
 }
 
 double opt_view_colormap_curvature(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->CT.dpar[COLORTABLE_CURVATURE] = val;
-    ColorTable_Recompute(&v->CT);
-    v->Changed = 1;
+    opt->CT.dpar[COLORTABLE_CURVATURE] = val;
+    ColorTable_Recompute(&opt->CT);
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     WID->view_colorbar_window->redraw();
   }
 #endif
-  return v->CT.dpar[COLORTABLE_CURVATURE];
+  return opt->CT.dpar[COLORTABLE_CURVATURE];
 }
 
 double opt_view_colormap_invert(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->CT.ipar[COLORTABLE_INVERT] = (int)val;
-    ColorTable_Recompute(&v->CT);
-    v->Changed = 1;
+    opt->CT.ipar[COLORTABLE_INVERT] = (int)val;
+    ColorTable_Recompute(&opt->CT);
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     WID->view_colorbar_window->redraw();
   }
 #endif
-  return v->CT.ipar[COLORTABLE_INVERT];
+  return opt->CT.ipar[COLORTABLE_INVERT];
 }
 
 double opt_view_colormap_number(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->CT.ipar[COLORTABLE_NUMBER] = (int)val;
-    ColorTable_Recompute(&v->CT);
-    v->Changed = 1;
+    opt->CT.ipar[COLORTABLE_NUMBER] = (int)val;
+    ColorTable_Recompute(&opt->CT);
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     WID->view_colorbar_window->redraw();
   }
 #endif
-  return v->CT.ipar[COLORTABLE_NUMBER];
+  return opt->CT.ipar[COLORTABLE_NUMBER];
 }
 
 double opt_view_colormap_rotation(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->CT.ipar[COLORTABLE_ROTATION] = (int)val;
-    ColorTable_Recompute(&v->CT);
-    v->Changed = 1;
+    opt->CT.ipar[COLORTABLE_ROTATION] = (int)val;
+    ColorTable_Recompute(&opt->CT);
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     WID->view_colorbar_window->redraw();
   }
 #endif
-  return v->CT.ipar[COLORTABLE_ROTATION];
+  return opt->CT.ipar[COLORTABLE_ROTATION];
 }
 
 double opt_view_colormap_swap(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->CT.ipar[COLORTABLE_SWAP] = (int)val;
-    ColorTable_Recompute(&v->CT);
-    v->Changed = 1;
+    opt->CT.ipar[COLORTABLE_SWAP] = (int)val;
+    ColorTable_Recompute(&opt->CT);
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
     WID->view_colorbar_window->redraw();
   }
 #endif
-  return v->CT.ipar[COLORTABLE_SWAP];
+  return opt->CT.ipar[COLORTABLE_SWAP];
 }
 
 double opt_view_external_view(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->ExternalViewIndex = (int)val;
-    v->Changed = 1;
+    opt->ExternalViewIndex = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
     // warning: Fl_Choice::size() returns number of items+1
-    int item = v->ExternalViewIndex + 1;
+    int item = opt->ExternalViewIndex + 1;
     if(item > -1 && item < WID->view_choice[10]->size()-1)
       WID->view_choice[10]->value(item);
     else
       WID->view_choice[10]->value(0);
   }
 #endif
-  return v->ExternalViewIndex;
+  return opt->ExternalViewIndex;
 }
 
 double opt_view_gen_raise_view(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->ViewIndexForGenRaise = (int)val;
-    v->Changed = 1;
+    opt->ViewIndexForGenRaise = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
     // warning: Fl_Choice::size() returns number of items+1
-    int item = v->ViewIndexForGenRaise + 1;
+    int item = opt->ViewIndexForGenRaise + 1;
     if(item > -1 && item < WID->view_choice[11]->size()-1)
       WID->view_choice[11]->value(item);
     else
       WID->view_choice[11]->value(0);
   }
 #endif
-  return v->ViewIndexForGenRaise;
+  return opt->ViewIndexForGenRaise;
 }
 
 double opt_view_gen_raise_factor(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->GenRaiseFactor = val;
-    v->Changed = 1;
+    opt->GenRaiseFactor = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
-    WID->view_value[2]->value(v->GenRaiseFactor);
+    WID->view_value[2]->value(opt->GenRaiseFactor);
 #endif
-  return v->GenRaiseFactor;
+  return opt->GenRaiseFactor;
 }
 
 double opt_view_use_gen_raise(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->UseGenRaise = (int)val;
-    v->Changed = 1;
+    opt->UseGenRaise = (int)val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    WID->view_butt[6]->value(v->UseGenRaise);
+    WID->view_butt[6]->value(opt->UseGenRaise);
     activate_cb(NULL, (void*)"general_transform");
   }
 #endif
-  return v->UseGenRaise;
+  return opt->UseGenRaise;
 }
 
 double opt_view_use_stipple(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(action & GMSH_SET) {
-    v->UseStipple = (int)val;
+    opt->UseStipple = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    WID->view_butt[26]->value(v->UseStipple);
+    WID->view_butt[26]->value(opt->UseStipple);
   }
 #endif
-  return v->UseStipple;
+  return opt->UseStipple;
 }
 
 double opt_print_format(OPT_ARGS_NUM)
@@ -7523,191 +7430,191 @@ unsigned int opt_view_color_points(OPT_ARGS_COL)
 {
   GET_VIEW(0);
   if(action & GMSH_SET) {
-    v->color.point = val;
-    v->Changed = 1;
+    opt->color.point = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(v->color.point, WID->view_col[0]);
+    CCC(opt->color.point, WID->view_col[0]);
   }
 #endif
-  return v->color.point;
+  return opt->color.point;
 }
 
 unsigned int opt_view_color_lines(OPT_ARGS_COL)
 {
   GET_VIEW(0);
   if(action & GMSH_SET) {
-    v->color.line = val;
-    v->Changed = 1;
+    opt->color.line = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(v->color.line, WID->view_col[1]);
+    CCC(opt->color.line, WID->view_col[1]);
   }
 #endif
-  return v->color.line;
+  return opt->color.line;
 }
 
 unsigned int opt_view_color_triangles(OPT_ARGS_COL)
 {
   GET_VIEW(0);
   if(action & GMSH_SET) {
-    v->color.triangle = val;
-    v->Changed = 1;
+    opt->color.triangle = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(v->color.triangle, WID->view_col[2]);
+    CCC(opt->color.triangle, WID->view_col[2]);
   }
 #endif
-  return v->color.triangle;
+  return opt->color.triangle;
 }
 
 unsigned int opt_view_color_quadrangles(OPT_ARGS_COL)
 {
   GET_VIEW(0);
   if(action & GMSH_SET) {
-    v->color.quadrangle = val;
-    v->Changed = 1;
+    opt->color.quadrangle = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(v->color.quadrangle, WID->view_col[3]);
+    CCC(opt->color.quadrangle, WID->view_col[3]);
   }
 #endif
-  return v->color.quadrangle;
+  return opt->color.quadrangle;
 }
 
 unsigned int opt_view_color_tetrahedra(OPT_ARGS_COL)
 {
   GET_VIEW(0);
   if(action & GMSH_SET) {
-    v->color.tetrahedron = val;
-    v->Changed = 1;
+    opt->color.tetrahedron = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(v->color.tetrahedron, WID->view_col[4]);
+    CCC(opt->color.tetrahedron, WID->view_col[4]);
   }
 #endif
-  return v->color.tetrahedron;
+  return opt->color.tetrahedron;
 }
 
 unsigned int opt_view_color_hexahedra(OPT_ARGS_COL)
 {
   GET_VIEW(0);
   if(action & GMSH_SET) {
-    v->color.hexahedron = val;
-    v->Changed = 1;
+    opt->color.hexahedron = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(v->color.hexahedron, WID->view_col[5]);
+    CCC(opt->color.hexahedron, WID->view_col[5]);
   }
 #endif
-  return v->color.hexahedron;
+  return opt->color.hexahedron;
 }
 
 unsigned int opt_view_color_prisms(OPT_ARGS_COL)
 {
   GET_VIEW(0);
   if(action & GMSH_SET) {
-    v->color.prism = val;
-    v->Changed = 1;
+    opt->color.prism = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(v->color.prism, WID->view_col[6]);
+    CCC(opt->color.prism, WID->view_col[6]);
   }
 #endif
-  return v->color.prism;
+  return opt->color.prism;
 }
 
 unsigned int opt_view_color_pyramids(OPT_ARGS_COL)
 {
   GET_VIEW(0);
   if(action & GMSH_SET) {
-    v->color.pyramid = val;
-    v->Changed = 1;
+    opt->color.pyramid = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(v->color.pyramid, WID->view_col[7]);
+    CCC(opt->color.pyramid, WID->view_col[7]);
   }
 #endif
-  return v->color.pyramid;
+  return opt->color.pyramid;
 }
 
 unsigned int opt_view_color_tangents(OPT_ARGS_COL)
 {
   GET_VIEW(0);
   if(action & GMSH_SET) {
-    v->color.tangents = val;
-    v->Changed = 1;
+    opt->color.tangents = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(v->color.tangents, WID->view_col[8]);
+    CCC(opt->color.tangents, WID->view_col[8]);
   }
 #endif
-  return v->color.tangents;
+  return opt->color.tangents;
 }
 
 unsigned int opt_view_color_normals(OPT_ARGS_COL)
 {
   GET_VIEW(0);
   if(action & GMSH_SET) {
-    v->color.normals = val;
-    v->Changed = 1;
+    opt->color.normals = val;
+    if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(v->color.normals, WID->view_col[9]);
+    CCC(opt->color.normals, WID->view_col[9]);
   }
 #endif
-  return v->color.normals;
+  return opt->color.normals;
 }
 
 unsigned int opt_view_color_text2d(OPT_ARGS_COL)
 {
   GET_VIEW(0);
   if(action & GMSH_SET) {
-    v->color.text2d = val;
+    opt->color.text2d = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(v->color.text2d, WID->view_col[10]);
+    CCC(opt->color.text2d, WID->view_col[10]);
   }
 #endif
-  return v->color.text2d;
+  return opt->color.text2d;
 }
 
 unsigned int opt_view_color_text3d(OPT_ARGS_COL)
 {
   GET_VIEW(0);
   if(action & GMSH_SET) {
-    v->color.text3d = val;
+    opt->color.text3d = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(v->color.text3d, WID->view_col[11]);
+    CCC(opt->color.text3d, WID->view_col[11]);
   }
 #endif
-  return v->color.text3d;
+  return opt->color.text3d;
 }
 
 unsigned int opt_view_color_axes(OPT_ARGS_COL)
 {
   GET_VIEW(0);
   if(action & GMSH_SET) {
-    v->color.axes = val;
+    opt->color.axes = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(v->color.axes, WID->view_col[12]);
+    CCC(opt->color.axes, WID->view_col[12]);
   }
 #endif
-  return v->color.axes;
+  return opt->color.axes;
 }
 

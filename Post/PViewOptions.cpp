@@ -1,4 +1,4 @@
-// $Id: PViewOptions.cpp,v 1.15 2007-09-01 14:27:55 geuzaine Exp $
+// $Id: PViewOptions.cpp,v 1.16 2007-09-10 04:47:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -29,92 +29,13 @@
 #include "matheval.h"
 #endif
 
+PViewOptions PViewOptions::reference;
+
 PViewOptions::PViewOptions()
 {
   for(int i = 0; i < 3; i++) GenRaise_f[i] = 0;
   ColorTable_InitParam(2, &CT);
   ColorTable_Recompute(&CT);
-
-  // FIXME: remove this once Options.cpp uses PViewOptions!
-
-  Type = Plot3D;
-  //Type = Plot2DTime;
-  //Type = Plot2DSpace;
-
-  AutoPosition = 1;
-  strcpy(Format, "%g");
-  Axes = 1;
-  AxesAutoPosition = 1;
-  for(int i = 0; i < 3; i++){
-    AxesTics[i] = 10;
-    strcpy(AxesFormat[i], "%g");
-    strcpy(AxesLabel[i], "");
-    Offset[i] = Raise[i] = 0.;
-    for(int j = 0; j < 3; j++){
-      Transform[i][j] = (i == j) ? 1. : 0.;
-    }
-  }
-  DisplacementFactor = 1.;
-  Explode = 1.;
-  ArrowSize = 60;
-  ArrowRelHeadRadius = 0.12;
-  ArrowRelStemRadius = 0.02;
-  ArrowRelStemLength = 0.56;
-  Normals = 0.;
-  Tangents = 0.;
-  Visible = 1;
-  IntervalsType = Continuous;
-  //IntervalsType = Discrete;
-  //IntervalsType = Iso;
-  //IntervalsType = Numeric;
-  NbIso = 15;
-  ArrowSizeProportional = 1;
-  Light = LightTwoSide = 1;
-  LightLines = 1;
-  SmoothNormals = 0;
-  AngleSmoothNormals = 30;
-  SaturateValues = 0;
-  FakeTransparency = 0;
-  ShowElement = 0;
-  ShowTime = ShowScale = 1;
-  ScaleType = Linear;
-  VectorType = Arrow3D;
-  //VectorType = Segment;
-  //VectorType = Displacement;
-  TensorType = VonMises;
-  GlyphLocation = COG;
-  CenterGlyphs = 0;
-  TimeStep = 0;
-  DrawStrings = DrawPoints = DrawLines = DrawTriangles = DrawQuadrangles =
-    DrawTetrahedra = DrawHexahedra = DrawPrisms = DrawPyramids =
-    DrawScalars = DrawVectors = DrawTensors = 1;
-  Boundary = 0;
-  PointType = LineType = 0;
-  PointSize = 6;
-  LineWidth = 2;
-  UseStipple = 0;
-  ExternalViewIndex = ViewIndexForGenRaise = -1;
-  UseGenRaise = 0;
-  GenRaiseFactor = 0.;
-  RangeType = Default;
-  RangeType = PerTimeStep;
-  //RangeType = Custom;
-  CustomMin = 0;
-  CustomMax = 1.;
-
-  color.point = 0;
-  color.line = 0;
-  color.triangle = 0;
-  color.quadrangle = 0;
-  color.tetrahedron = 0;
-  color.hexahedron = 0;
-  color.prism = 0;
-  color.pyramid = 0;
-  color.tangents = 0;
-  color.normals = 0;
-  color.text2d = 0;
-  color.text3d = 0;
-  color.axes = 0;
 }
 
 PViewOptions::~PViewOptions()

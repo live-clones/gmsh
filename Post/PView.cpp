@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.7 2007-09-08 21:26:04 geuzaine Exp $
+// $Id: PView.cpp,v 1.8 2007-09-10 04:47:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -29,35 +29,74 @@
 int PView::_globalNum = 0;
 std::vector<PView*> PView::list;
 
-PView::PView(bool allocate)
-  : _changed(true), _aliasOf(0), _links(0), _eye(0., 0., 0.), 
-    va_points(0), va_lines(0), va_triangles(0), va_vectors(0), 
-    normals(0)
+void PView::_init()
 {
   _num = ++_globalNum;
-  _data = new PViewDataList(allocate);
-  _options = new PViewOptions();
+  _changed = true;
+  _aliasOf = 0;
+  _links = 0;
+  _eye = SPoint3(0., 0., 0.);
+  va_points = va_lines = va_triangles = va_vectors = 0;
+  normals = 0;
   list.push_back(this);
-  // reset indices of all views
   for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
 }
 
-PView::PView(PView *ref, bool copyOptions)
-  : _changed(true), _links(0), _eye(0., 0., 0.), 
-    va_points(0), va_lines(0), va_triangles(0), va_vectors(0), 
-    normals(0)
+PView::PView(bool allocate)
 {
-  _num = ++_globalNum;
+  _init();
+  _data = new PViewDataList(allocate);
+  _options = new PViewOptions(PViewOptions::reference);
+}
+
+PView::PView(PViewData *data)
+{
+  _init();
+  _data = data;
+  _options = new PViewOptions(PViewOptions::reference);
+}
+
+PView::PView(PView *ref, bool copyOptions)
+{
+  _init();
   _aliasOf = ref->getNum();
   ref->getLinks()++;
   _data = ref->getData();
   if(copyOptions)
     _options = new PViewOptions(*ref->getOptions());
   else
-    _options = new PViewOptions();
-  list.push_back(this);
-  // reset indices of all views
-  for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
+    _options = new PViewOptions(PViewOptions::reference);
+}
+
+PView::PView(std::string xname, std::string yname,
+	     std::vector<double> &x, std::vector<double> &y)
+{
+  _init();
+  PViewDataList *data = new PViewDataList(true);
+  _data = data;
+  for(unsigned int i = 0; i < y.size(); i++){
+    double d;
+    if(x.size() == y.size()){
+      List_Add(data->SP, &x[i]);
+    }
+    else{
+      d = y.size() > 1 ? (double)i / (double)(y.size() - 1) : 0.;
+      List_Add(data->SP, &d);
+    }
+    d = 0.;
+    List_Add(data->SP, &d);
+    List_Add(data->SP, &d);
+    List_Add(data->SP, &y[i]);
+    data->NbSP++;
+  }
+  data->setName(yname);
+  data->setFileName(yname + ".pos");
+  data->finalize();
+
+  _options = new PViewOptions(PViewOptions::reference);
+  _options->Type = PViewOptions::Plot2DSpace;
+  _options->Axes = 2;
+  strcpy(_options->AxesLabel[0], xname.c_str());
 }
 
 PView::~PView()
@@ -94,6 +133,14 @@ PView::~PView()
 
   Msg(DEBUG, "Deleting data in ex-View[%d] (unique num = %d)", _index, _num);
   delete _data;
+}
+
+void PView::setOptions(PViewOptions *val)
+{
+  if(val)
+    _options = val;
+  else if(_options) // deep copy options from reference view
+    *_options = PViewOptions::reference;
 }
 
 void PView::setChanged(bool val)
@@ -191,6 +238,7 @@ bool PView::read(std::string filename, int fileIndex)
   }
 
   fclose(fp);
+
   return true;
 }
 
@@ -249,4 +297,17 @@ void PView::combine(bool time, int how, bool remove)
   if(remove)
     for(std::set<PView*>::iterator it = rm.begin(); it != rm.end(); it++)
       delete *it;
+}
+
+bool PView::write(std::string filename, int format, bool append)
+{
+  switch(format){
+  case 0: return _data->writePOS(filename, false, false, append); // ASCII
+  case 1: return _data->writePOS(filename, true, false, append); // binary
+  case 2: return _data->writePOS(filename, false, true, append); // parsed
+  case 3: return _data->writeSTL(filename); 
+  case 4: return _data->writeTXT(filename);
+  case 5: return _data->writeMSH(filename);
+  default: Msg(GERROR, "Unknown view format %d", format); return false;
+  }
 }

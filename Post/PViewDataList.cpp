@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.4 2007-09-09 00:18:04 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.5 2007-09-10 04:47:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -89,8 +89,30 @@ PViewDataList::~PViewDataList()
   if(adaptive) delete adaptive;
 }
 
-void PViewDataList::finalize()
+bool PViewDataList::finalize()
 {
+
+  // sanity checks
+  /*
+  if(View->adaptive) return 0; // hope for the best :-)
+
+  char *name[8] = { "point", "line", "triangle", "quadrangle", 
+		    "tetrahedron", "hexahedron", "prism", "pyramid" };
+  char *type[3] = { "scalar", "vector", "tensor" };
+
+  if(8 * 3 != VIEW_NB_ELEMENT_TYPES){
+    Msg(GERROR, "Please upgrade CheckViewErrorFlags!");
+    return 0;
+  }
+  
+  for(int i = 0; i < VIEW_NB_ELEMENT_TYPES; i++)
+    if(ViewErrorFlags[i])
+      Msg(GERROR, "%d %s %s%s in View[%d] contain%s a wrong number of values",
+	  ViewErrorFlags[i], type[i%3], name[i/3], (ViewErrorFlags[i] > 1) ? "s" : "",
+	  v->Index, (ViewErrorFlags[i] > 1) ? "" : "s");
+  */
+
+
   // finalize text strings first, to get the max value of NbTimeStep
   // for strings-only views (strings are designed to degrade
   // gracefully when some have fewer time steps than others). If there
@@ -136,6 +158,8 @@ void PViewDataList::finalize()
   if(CTX.post.smooth) smooth();
   
   setDirty(false);
+
+  return true;
 }
 
 int PViewDataList::getNumScalars()
@@ -701,7 +725,7 @@ bool PViewDataList::combineSpace(nameData &nd)
 
   setName(name);
   setFileName(std::string(name) + ".pos");
-  finalize();
+  return finalize();
 }
 
 void PViewDataList::getRawData(int type, List_T **l, int **ne, int *nc, int *nn)
@@ -870,7 +894,7 @@ bool PViewDataList::combineTime(nameData &nd)
 
   setName(name);
   setFileName(std::string(name) + ".pos");
-  finalize();
+  return finalize();
 }
 
 void PViewDataList::setGlobalResolutionLevel(int level)

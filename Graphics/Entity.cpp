@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.76 2007-08-29 18:41:06 geuzaine Exp $
+// $Id: Entity.cpp,v 1.77 2007-09-10 04:47:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,6 @@
 #include "GmshUI.h"
 #include "Numeric.h"
 #include "Draw.h"
-#include "Views.h"
 #include "Context.h"
 #include "gl2ps.h"
 
@@ -387,31 +386,29 @@ void Draw_Vector(int Type, int Fill,
 {
   double length = sqrt(dx * dx + dy * dy + dz * dz);
 
-  if(length == 0.0)
-    return;
+  if(length == 0.0) return;
 
   switch(Type){
-  case DRAW_POST_SEGMENT:
+  case 1:
     glBegin(GL_LINES);
     glVertex3d(x, y, z);
     glVertex3d(x + dx, y + dy, z + dz);
     glEnd();
     break;
-  case DRAW_POST_ARROW:
+  case 2:
     Draw_SimpleVector(1, Fill, relHeadRadius, relStemLength, relStemRadius,
 		      x, y, z, dx, dy, dz, length, light);
     break;
-  case DRAW_POST_PYRAMID:
+  case 3:
     Draw_SimpleVector(0, Fill, relHeadRadius, relStemLength, relStemRadius,
 		      x, y, z, dx, dy, dz, length, light);
     break;
-  case DRAW_POST_ARROW3D:
+  case 4:
   default:
     Draw_3DArrow(relHeadRadius, relStemLength, relStemRadius,
 		 x, y, z, dx, dy, dz, length, light);
     break;
   }
-
 }
 
 class point{

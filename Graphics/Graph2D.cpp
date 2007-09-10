@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.64 2007-09-02 21:05:20 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.65 2007-09-10 04:47:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,24 @@
 #include "Context.h"
 
 extern Context_T CTX;
+
+int Fix2DCoordinates(double *x, double *y)
+{
+  int ret = (*x > 99999 && *y > 99999) ? 3 : (*y > 99999) ? 2 : (*x > 99999) ? 1 : 0;
+
+  if(*x < 0) // measure from right border
+    *x = CTX.viewport[2] + *x;
+  else if(*x > 99999) // by convention, x-centered
+    *x = CTX.viewport[2]/2;
+
+  if(*y < 0) // measure from bottom border
+    *y = -(*y);
+  else if(*y > 99999) // by convention, y-centered
+    *y = CTX.viewport[3]/2.;
+  else
+    *y = CTX.viewport[3] - *y;
+  return ret;
+}
 
 void Draw_Text2D()
 {

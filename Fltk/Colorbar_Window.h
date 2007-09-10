@@ -48,14 +48,12 @@ class Colorbar_Window : public Fl_Window {
   int marker_pos;  // position of marker as index into table
   
   GmshColorTable *ct; // pointer to the color table (allocated in Post_View)
-  int *viewchanged;   // pointer to changed bit in view
+  bool *viewchanged;   // pointer to changed bit in view
   Fl_Color color_bg;
 
 public:
-
-  Colorbar_Window(int x,int y,int w,int h,const char *l=0);
-  void update(char *name, double min, double max, GmshColorTable *ct, int *changed);
-
+  Colorbar_Window(int x, int y, int w, int h, const char *l=0);
+  void update(char *name, double min, double max, GmshColorTable *ct, bool *changed);
 };
 
 #endif

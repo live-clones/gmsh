@@ -202,28 +202,7 @@ class Post_View{
 
 // Public functions
 
-int fcmpPostViewNum(const void *v1, const void *v2);
-int fcmpPostViewAliasOf(const void *v1, const void *v2);
-
 Post_View *BeginView(int alloc);
 void EndView(Post_View *v, int AddInUI, char *FileName, char *Name);
-void AliasView(int num, int withoptions);
-void FreeView(Post_View *v);
-bool RemoveViewByIndex(int index);
-bool RemoveViewByNumber(int num);
-int ReadView(char *filename);
-void WriteView(Post_View *v, char *filename, int format, int append);
-void CopyViewOptions(Post_View *src, Post_View *dest);
-void CombineViews(int time, int how, int remove);
-
-Post_View *Create2DGraph(char *xname, char *yname, int nbdata, double *x, double *y);
-
-GmshColorTable *Get_ColorTable(int num);
-void Print_ColorTable(int num, int diff, char *prefix, FILE *file);
-
-void InitGeneralizedRaise(Post_View *v);
-void FreeGeneralizedRaise(Post_View *v);
-void ApplyGeneralizedRaise(Post_View * v, int numNodes, int numComp, double *vals,
-			   double *x, double *y, double *z);
 
 #endif

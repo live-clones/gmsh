@@ -53,7 +53,7 @@ class PViewData {
   virtual ~PViewData(){}
   virtual bool getDirty(){ return _dirty; }
   virtual void setDirty(bool val){ _dirty = val; }
-  virtual void finalize(){ _dirty = false; }
+  virtual bool finalize(){ _dirty = false; return true; }
   virtual std::string getName(){ return _name; }
   virtual void setName(std::string val){ _name = val; }
   virtual std::string getFileName(){ return _filename; }
@@ -86,6 +86,7 @@ class PViewData {
   virtual void smooth(){}
   virtual bool combineTime(nameData &nd){ return false; }
   virtual bool combineSpace(nameData &nd){ return false; }
+  virtual bool isAdaptive(){ return false; }
   virtual void setGlobalResolutionLevel(int level){}
   virtual void setAdaptiveResolutionLevel(int level, GMSH_Post_Plugin *plugin=0){}
 

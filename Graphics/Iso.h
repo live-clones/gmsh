@@ -37,20 +37,4 @@ int CutTriangle(double *x, double *y, double *z, double *v,
 		double min, double max, 
 		double *xp, double *yp, double *zp, double *vp);
 
-
-// ******** FIXME: REMOVE EVERYTHING BELOW THIS LINE ***************
-
-#include "Views.h"
-
-void IsoLine_Old(Post_View *View, double *X, double *Y, double *Z, 
-		 double *Val, double V);
-
-void IsoTriangle_Old(Post_View *View, 
-		     double *X, double *Y, double *Z, double *Val, double V,
-		     unsigned int color);
-
-void IsoSimplex_Old(Post_View *View, int preproNormals, 
-		    double *X, double *Y, double *Z, double *Val, double V,
-		    unsigned int color);
-  
 #endif

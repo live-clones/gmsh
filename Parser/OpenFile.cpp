@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.158 2007-09-09 00:18:04 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.159 2007-09-10 04:47:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -31,7 +31,6 @@
 #include "Parser.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
-#include "Views.h"
 #include "PView.h"
 #include "ReadImg.h"
 #include "OS.h"
@@ -43,7 +42,7 @@
 #include "SelectBuffer.h"
 #include "GUI.h"
 extern GUI *WID;
-void UpdateViewsInGUI();
+extern void UpdateViewsInGUI();
 #endif
 
 extern Context_T CTX;
@@ -151,18 +150,9 @@ void SetBoundingBox(void)
 
   SBoundingBox3d bb = GModel::current()->bounds();
   
-  if(bb.empty() && List_Nbr(CTX.post.list)) {
-    for(int i = 0; i < List_Nbr(CTX.post.list); i++){
-      Post_View *v = *(Post_View **)List_Pointer(CTX.post.list, i);
-      if(fabs(v->BBox[0]) != VAL_INF && 
-	 fabs(v->BBox[2]) != VAL_INF &&
-	 fabs(v->BBox[4]) != VAL_INF)
-	bb += SPoint3(v->BBox[0], v->BBox[2], v->BBox[4]);
-      if(fabs(v->BBox[1]) != VAL_INF && 
-	 fabs(v->BBox[3]) != VAL_INF &&
-	 fabs(v->BBox[5]) != VAL_INF)
-      bb += SPoint3(v->BBox[1], v->BBox[3], v->BBox[5]);
-    }
+  if(bb.empty()) {
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      bb += PView::list[i]->getData()->getBoundingBox();
   }
 
   if(bb.empty()){
@@ -201,7 +191,7 @@ int ParseFile(char *f, int close, int warn_if_missing)
 {
   char yyname_old[256], tmp[256];
   FILE *yyin_old, *fp;
-  int yylineno_old, yyerrorstate_old, numviews_old;
+  int yylineno_old, yyerrorstate_old, yyviewindex_old;
 
   // add 'b' for pure Windows programs: opening in text mode messes up
   // fsetpos/fgetpos (used e.g. for user-defined functions)
@@ -210,16 +200,19 @@ int ParseFile(char *f, int close, int warn_if_missing)
     return 0;
   }
 
+  int numViewsBefore = PView::list.size();
+
   strncpy(yyname_old, yyname, 255);
   yyin_old = yyin;
   yyerrorstate_old = yyerrorstate;
   yylineno_old = yylineno;
-  numviews_old = List_Nbr(CTX.post.list);
+  yyviewindex_old = yyviewindex;
 
   strncpy(yyname, f, 255);
   yyin = fp;
   yyerrorstate = 0;
   yylineno = 1;
+  yyviewindex = 0;
 
   fpos_t position;
   fgetpos(yyin, &position);
@@ -235,20 +228,19 @@ int ParseFile(char *f, int close, int warn_if_missing)
     }
   }
 
-  if(close)
-    fclose(yyin);
+  if(close) fclose(yyin);
 
   strncpy(yyname, yyname_old, 255);
   yyin = yyin_old;
   yyerrorstate = yyerrorstate_old;
   yylineno = yylineno_old;
+  yyviewindex = yyviewindex_old;
 
-  if(List_Nbr(CTX.post.list) != numviews_old){
 #if defined(HAVE_FLTK)
+  if(numViewsBefore != PView::list.size())
     UpdateViewsInGUI();
 #endif
-  }
-  
+
   return 1;
 }
 
@@ -321,6 +313,8 @@ int MergeFile(char *name, int warn_if_missing)
 
   GModel *m = GModel::current();
 
+  int numViewsBefore = PView::list.size();
+
   int status = 0;
   if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL")){
     status = m->readSTL(name, CTX.geom.tolerance);
@@ -389,12 +383,7 @@ int MergeFile(char *name, int warn_if_missing)
     }
     else if(!strncmp(header, "$PostFormat", 11) || 
 	    !strncmp(header, "$View", 5)) {
-#if 0 // test new post-pro
       status = PView::read(name);
-      //PView::combine(true, 1, true);
-#else
-      status = ReadView(name);
-#endif
     }
     else {
       status = m->readGEO(name);
@@ -407,6 +396,11 @@ int MergeFile(char *name, int warn_if_missing)
   CTX.mesh.changed = ENT_ALL;
 
   checkHighOrderTriangles(m);
+
+#if defined(HAVE_FLTK)
+  if(numViewsBefore != PView::list.size())
+    UpdateViewsInGUI();
+#endif
 
   Msg(STATUS2, "Read '%s'", name);
   return status;

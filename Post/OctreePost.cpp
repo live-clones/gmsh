@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.1 2007-07-09 13:54:37 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.2 2007-09-10 04:47:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,7 +22,8 @@
 #include "Octree.h"
 #include "OctreePost.h"
 #include "List.h"
-#include "Views.h"
+#include "PView.h"
+#include "PViewDataList.h"
 #include "Numeric.h"
 #include "Message.h"
 #include "ShapeFunctions.h"
@@ -223,85 +224,94 @@ OctreePost::~OctreePost()
   Octree_Delete(SY); Octree_Delete(VY); Octree_Delete(TY);
 }
 
-OctreePost::OctreePost(Post_View *v) 
+OctreePost::OctreePost(PView *v) 
   : theView(v)
 {
-  double min [3] = {v->BBox[0], v->BBox[2], v->BBox[4]};
+  PViewDataList *l = dynamic_cast<PViewDataList*>(theView->getData());
 
-  double size[3] = {v->BBox[1] - v->BBox[0],
-		    v->BBox[3] - v->BBox[2],
-		    v->BBox[5] - v->BBox[4]};		    
+  if(!l){
+    Msg(GERROR, "OctreePost only accepts list-based view data for now");
+    return;
+  }
+
+  SBoundingBox3d bb = l->getBoundingBox();
+
+  double min[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
+
+  double size[3] = {bb.max().x() - bb.min().x(),
+		    bb.max().y() - bb.min().y(),
+		    bb.max().z() - bb.min().z()};		    
   
   const int maxElePerBucket = 100; // memory vs. speed trade-off
 
   SL = Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
-  addListOfStuff(SL, v->SL, 6 + 2 * v->NbTimeStep);
+  addListOfStuff(SL, l->SL, 6 + 2 * l->getNumTimeSteps());
   Octree_Arrange(SL);
   VL = Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
-  addListOfStuff(VL, v->VL, 6 + 6 * v->NbTimeStep);
+  addListOfStuff(VL, l->VL, 6 + 6 * l->getNumTimeSteps());
   Octree_Arrange(VL);
   TL = Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
-  addListOfStuff(TL, v->TL, 6 + 18 * v->NbTimeStep);
+  addListOfStuff(TL, l->TL, 6 + 18 * l->getNumTimeSteps());
   Octree_Arrange(TL);
 
   ST = Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
-  addListOfStuff(ST, v->ST, 9 + 3 * v->NbTimeStep);
+  addListOfStuff(ST, l->ST, 9 + 3 * l->getNumTimeSteps());
   Octree_Arrange(ST);
   VT = Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
-  addListOfStuff(VT, v->VT, 9 + 9 * v->NbTimeStep);
+  addListOfStuff(VT, l->VT, 9 + 9 * l->getNumTimeSteps());
   Octree_Arrange(VT);
   TT = Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
-  addListOfStuff(TT, v->TT, 9 + 27 * v->NbTimeStep);
+  addListOfStuff(TT, l->TT, 9 + 27 * l->getNumTimeSteps());
   Octree_Arrange(TT);
 
   SQ = Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
-  addListOfStuff(SQ, v->SQ, 12 + 4 * v->NbTimeStep);
+  addListOfStuff(SQ, l->SQ, 12 + 4 * l->getNumTimeSteps());
   Octree_Arrange(SQ);
   VQ = Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
-  addListOfStuff(VQ, v->VQ, 12 + 12 * v->NbTimeStep);
+  addListOfStuff(VQ, l->VQ, 12 + 12 * l->getNumTimeSteps());
   Octree_Arrange(VQ);
   TQ = Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
-  addListOfStuff(TQ, v->TQ, 12 + 36 * v->NbTimeStep);
+  addListOfStuff(TQ, l->TQ, 12 + 36 * l->getNumTimeSteps());
   Octree_Arrange(TQ);
 
   SS = Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
-  addListOfStuff(SS, v->SS, 12 + 4 * v->NbTimeStep);
+  addListOfStuff(SS, l->SS, 12 + 4 * l->getNumTimeSteps());
   Octree_Arrange(SS);
   VS = Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
-  addListOfStuff(VS, v->VS, 12 + 12 * v->NbTimeStep);
+  addListOfStuff(VS, l->VS, 12 + 12 * l->getNumTimeSteps());
   Octree_Arrange(VS);
   TS = Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
-  addListOfStuff(TS, v->TS, 12 + 36 * v->NbTimeStep);
+  addListOfStuff(TS, l->TS, 12 + 36 * l->getNumTimeSteps());
   Octree_Arrange(TS);
 
   SH = Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
-  addListOfStuff(SH, v->SH, 24 + 8 * v->NbTimeStep);
+  addListOfStuff(SH, l->SH, 24 + 8 * l->getNumTimeSteps());
   Octree_Arrange(SH);
   VH = Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
-  addListOfStuff(VH, v->VH, 24 + 24 * v->NbTimeStep);
+  addListOfStuff(VH, l->VH, 24 + 24 * l->getNumTimeSteps());
   Octree_Arrange(VH);
   TH = Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
-  addListOfStuff(TH, v->TH, 24 + 72 * v->NbTimeStep);
+  addListOfStuff(TH, l->TH, 24 + 72 * l->getNumTimeSteps());
   Octree_Arrange(TH);
 
   SI = Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
-  addListOfStuff(SI, v->SI, 18 + 6 * v->NbTimeStep);
+  addListOfStuff(SI, l->SI, 18 + 6 * l->getNumTimeSteps());
   Octree_Arrange(SI);
   VI = Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
-  addListOfStuff(VI, v->VI, 18 + 18 * v->NbTimeStep);
+  addListOfStuff(VI, l->VI, 18 + 18 * l->getNumTimeSteps());
   Octree_Arrange(VI);
   TI = Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
-  addListOfStuff(TI, v->TI, 18 + 54 * v->NbTimeStep);
+  addListOfStuff(TI, l->TI, 18 + 54 * l->getNumTimeSteps());
   Octree_Arrange(TI);
 
   SY = Octree_Create(maxElePerBucket, min, size, pyrBB, pyrCentroid, pyrInEle);
-  addListOfStuff(SY, v->SY, 15 + 5 * v->NbTimeStep);
+  addListOfStuff(SY, l->SY, 15 + 5 * l->getNumTimeSteps());
   Octree_Arrange(SY);
   VY = Octree_Create(maxElePerBucket, min, size, pyrBB, pyrCentroid, pyrInEle);
-  addListOfStuff(VY, v->VY, 15 + 15 * v->NbTimeStep);
+  addListOfStuff(VY, l->VY, 15 + 15 * l->getNumTimeSteps());
   Octree_Arrange(VY);
   TY = Octree_Create(maxElePerBucket, min, size, pyrBB, pyrCentroid, pyrInEle);
-  addListOfStuff(TY, v->TY, 15 + 45 * v->NbTimeStep);
+  addListOfStuff(TY, l->TY, 15 + 45 * l->getNumTimeSteps());
   Octree_Arrange(TY);
 }
 
@@ -318,7 +328,7 @@ bool OctreePost::getValue(void *in, int dim, int nbNod, int nbComp,
 
   e->xyz2uvw(P, U);
   if(timestep < 0){
-    for(int i = 0; i < theView->NbTimeStep; i++)
+    for(int i = 0; i < theView->getData()->getNumTimeSteps(); i++)
       for(int j = 0; j < nbComp; j++)
 	values[nbComp * i + j] = e->interpolate(&V[nbNod * nbComp * i + j], 
 						U[0], U[1], U[2], nbComp);
@@ -342,7 +352,7 @@ bool OctreePost::searchScalar(double x, double y, double z, double *values,
   double P[3] = {x, y, z};
 
   if(timestep < 0)
-    for(int i = 0; i < theView->NbTimeStep; i++)
+    for(int i = 0; i < theView->getData()->getNumTimeSteps(); i++)
       values[i] = 0.0; 
   else
     values[0] = 0.0;
@@ -364,7 +374,7 @@ bool OctreePost::searchVector(double x, double y, double z, double *values,
   double P[3] = {x, y, z};
 
   if(timestep < 0)
-    for(int i = 0; i < 3 * theView->NbTimeStep; i++)
+    for(int i = 0; i < 3 * theView->getData()->getNumTimeSteps(); i++)
       values[i] = 0.0; 
   else
     for(int i = 0; i < 3; i++)
@@ -387,7 +397,7 @@ bool OctreePost::searchTensor(double x, double y, double z, double *values,
   double P[3] = {x, y, z};
 
   if(timestep < 0)
-    for(int i = 0; i < 9 * theView->NbTimeStep; i++)
+    for(int i = 0; i < 9 * theView->getData()->getNumTimeSteps(); i++)
       values[i] = 0.0; 
   else
     for(int i = 0; i < 9; i++)

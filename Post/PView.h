@@ -47,19 +47,28 @@ class PView{
   PViewOptions *_options;
   // the data
   PViewData *_data;
+  // initialize private stuff
+  void _init();
  public:
-  // default constructor
+  // creates a new view with list-based data, allocated or not
   PView(bool allocate=true);
-  // alias constructor
+  // constructs a new view using the given data
+  PView(PViewData *data);
+  // constructs a new view, alias of the view "ref"
   PView(PView *ref, bool copyOptions=true);
+  // constructs a new list-based view from a simple 2D dataset
+  PView(std::string xname, std::string yname,
+	std::vector<double> &x, std::vector<double> &y);
   // default destructor
   ~PView();
   PViewOptions *getOptions(){ return _options; }  
+  void setOptions(PViewOptions *val=0);  
   PViewData *getData(){ return _data; }
+  void setData(PViewData *val){ _data = val; }
   int getNum(){ return _num; }
   int getIndex(){ return _index; }
   void setIndex(int val){ _index = val; }
-  bool getChanged(){ return _changed; }
+  bool &getChanged(){ return _changed; }
   void setChanged(bool val);
   int &getLinks(){ return _links; }
   int getAliasOf(){ return _aliasOf; }
@@ -74,6 +83,9 @@ class PView{
   static bool read(std::string filename, int fileIndex=-1);
   // combine view
   static void combine(bool time, int how, bool remove);
+
+  // write view to file in given format
+  bool write(std::string filename, int format, bool append=false);
 
   // vertex arrays to draw triangles and lines efficiently
   VertexArray *va_points, *va_lines, *va_triangles, *va_vectors;

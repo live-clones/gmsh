@@ -27,15 +27,15 @@
 class PViewOptions {
  public:
   enum PlotType {
-    Plot3D,
-    Plot2DSpace,
-    Plot2DTime
+    Plot3D = 1,
+    Plot2DSpace = 2,
+    Plot2DTime = 3
   };
   enum IntervalsType {
-    Iso,
-    Continuous,
-    Discrete,
-    Numeric
+    Iso = 1,
+    Continuous = 2,
+    Discrete = 3,
+    Numeric = 4
   };
   enum VectorType {
     Segment = 1,
@@ -45,31 +45,21 @@ class PViewOptions {
     Displacement = 5
   };
   enum TensorType {
-    VonMises,
-    LMGC90,
-    LMGC90_TYPE,
-    LMGC90_COORD,
-    LMGC90_PRES,
-    LMGC90_SN,
-    LMGC90_DEPX,
-    LMGC90_DEPY,
-    LMGC90_DEPZ,
-    LMGC90_DEPAV,
-    LMGC90_DEPNORM
+    VonMises = 1
   };
   enum GlyphLocation {
-    COG,
-    Vertex
+    COG = 1,
+    Vertex = 2
   };
   enum RangeType {
-    Default,
-    Custom,
-    PerTimeStep
+    Default = 1,
+    Custom = 2,
+    PerTimeStep = 3
   };
   enum ScaleType {
-    Linear,
-    Logarithmic,
-    DoubleLogarithmic
+    Linear = 1,
+    Logarithmic = 2,
+    DoubleLogarithmic = 3
   };
 
   int Type;

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.541 2007-09-04 13:47:01 remacle Exp $
+// $Id: Callbacks.cpp,v 1.542 2007-09-10 04:47:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -32,7 +32,7 @@
 #include "HighOrder.h"
 #include "Draw.h"
 #include "SelectBuffer.h"
-#include "Views.h"
+#include "PView.h"
 #include "CreateFile.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
@@ -270,7 +270,7 @@ void activate_cb(CALLBACK_ARGS)
     }
   }
   else if(!strcmp(str, "custom_range")){
-    if(WID->view_choice[7]->value() == 2){
+    if(WID->view_choice[7]->value() == 1){
       WID->view_value[31]->activate();
       WID->view_value[32]->activate();
       WID->view_push_butt[1]->activate();
@@ -501,22 +501,22 @@ void ManualPlay(int time, int step)
   if(busy) return;
   busy = 1;
   if(time) {
-    for(int i = 0; i < List_Nbr(CTX.post.list); i++)
+    for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_timestep(i, GMSH_SET | GMSH_GUI,
                           opt_view_timestep(i, GMSH_GET, 0) + step);
   }
   else { // hide all views except view_in_cycle
     if(step > 0) {
-      if((view_in_cycle += step) >= List_Nbr(CTX.post.list))
+      if((view_in_cycle += step) >= PView::list.size())
         view_in_cycle = 0;
-      for(int i = 0; i < List_Nbr(CTX.post.list); i += step)
+      for(unsigned int i = 0; i < PView::list.size(); i += step)
         opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
     }
     else {
       if((view_in_cycle += step) < 0)
-        view_in_cycle = List_Nbr(CTX.post.list) - 1;
-      for(int i = List_Nbr(CTX.post.list) - 1; i >= 0; i += step)
+        view_in_cycle = PView::list.size() - 1;
+      for(int i = PView::list.size() - 1; i >= 0; i += step)
         opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
     }
   }
@@ -549,14 +549,13 @@ void status_pause_cb(CALLBACK_ARGS)
 
 void status_rewind_cb(CALLBACK_ARGS)
 {
-  int i;
   if(!CTX.post.anim_cycle) {
-    for(i = 0; i < List_Nbr(CTX.post.list); i++)
+    for(unsigned int i = 0; i < PView::list.size(); i++)
       opt_view_timestep(i, GMSH_SET | GMSH_GUI, 0);
   }
   else {
     view_in_cycle = 0;
-    for(i = 0; i < List_Nbr(CTX.post.list); i++)
+    for(unsigned int i = 0; i < PView::list.size(); i++)
       opt_view_visible(i, GMSH_SET | GMSH_GUI, !i);
   }
   Draw();
@@ -630,25 +629,25 @@ static char *input_formats =
 
 void file_open_cb(CALLBACK_ARGS)
 {
-  int n = List_Nbr(CTX.post.list);
+  int n = PView::list.size();
   if(file_chooser(0, 0, "Open", input_formats)) {
     OpenProject(file_chooser_get_name(1));
     Draw();
   }
-  if(n != List_Nbr(CTX.post.list))
+  if(n != PView::list.size())
     WID->set_context(menu_post, 0);
 }
 
 void file_merge_cb(CALLBACK_ARGS)
 {
-  int n = List_Nbr(CTX.post.list);
+  int n = PView::list.size();
   int f = file_chooser(1, 0, "Merge", input_formats);
   if(f) {
     for(int i = 1; i <= f; i++)
       MergeFile(file_chooser_get_name(i));
     Draw();
   }
-  if(n != List_Nbr(CTX.post.list))
+  if(n != PView::list.size())
     WID->set_context(menu_post, 0);
 }
 
@@ -992,14 +991,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_axes_label1(0, GMSH_SET, (char *)WID->gen_input[7]->value());
   opt_general_axes_label2(0, GMSH_SET, (char *)WID->gen_input[8]->value());
 
-  int val;
-  switch (WID->gen_choice[0]->value()) {
-  case 0: val = DRAW_POST_SEGMENT; break;
-  case 1: val = DRAW_POST_ARROW; break;
-  case 2: val = DRAW_POST_PYRAMID; break;
-  default: val = DRAW_POST_ARROW3D; break;
-  }
-  opt_general_vector_type(0, GMSH_SET, val);
+  opt_general_vector_type(0, GMSH_SET, WID->gen_choice[0]->value() + 1);
   opt_general_graphics_font(0, GMSH_SET, (char *)WID->gen_choice[1]->text());
   opt_general_orthographic(0, GMSH_SET, !WID->gen_choice[2]->value());
   opt_general_axes(0, GMSH_SET, WID->gen_choice[4]->value());
@@ -1221,7 +1213,7 @@ void view_options_cb(CALLBACK_ARGS)
 void view_options_timestep_cb(CALLBACK_ARGS)
 {
   int links = (int)opt_post_link(0, GMSH_GET, 0);
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+  for(unsigned int i = 0; i < PView::list.size(); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
        (links == 0 && i == WID->view_number)) {
@@ -1234,7 +1226,7 @@ void view_options_timestep_cb(CALLBACK_ARGS)
 void view_options_timestep_decr_cb(CALLBACK_ARGS)
 {
   int links = (int)opt_post_link(0, GMSH_GET, 0);
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+  for(unsigned int i = 0; i < PView::list.size(); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
        (links == 0 && i == WID->view_number)) {
@@ -1248,7 +1240,7 @@ void view_options_timestep_decr_cb(CALLBACK_ARGS)
 void view_options_timestep_incr_cb(CALLBACK_ARGS)
 {
   int links = (int)opt_post_link(0, GMSH_GET, 0);
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+  for(unsigned int i = 0; i < PView::list.size(); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
        (links == 0 && i == WID->view_number)) {
@@ -1393,7 +1385,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   char gen_raise2[256]; strcpy(gen_raise2, opt_view_gen_raise2(current, GMSH_GET, NULL));
 
   // modify only the views that need to be updated
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+  for(unsigned int i = 0; i < PView::list.size(); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
        (links == 0 && i == current)) {
@@ -1405,20 +1397,11 @@ void view_options_ok_cb(CALLBACK_ARGS)
 
       // view_choice
 
-      switch (WID->view_choice[1]->value()) {
-      case 0: val = DRAW_POST_LINEAR; break;
-      case 1: val = DRAW_POST_LOGARITHMIC; break;
-      default: val = DRAW_POST_DOUBLELOGARITHMIC; break; // 2
-      }
+      val = WID->view_choice[1]->value() + 1;
       if(force || (val != scale_type))
         opt_view_scale_type(i, GMSH_SET, val);
 
-      switch (WID->view_choice[0]->value()) {
-      case 0: val = DRAW_POST_ISO; break;
-      case 1: val = DRAW_POST_DISCRETE; break;
-      case 2: val = DRAW_POST_CONTINUOUS; break;
-      default: val = DRAW_POST_NUMERIC; break; // 3
-      }
+      val = WID->view_choice[0]->value() + 1;
       if(force || (val != intervals_type))
 	opt_view_intervals_type(i, GMSH_SET, val);
       
@@ -1430,44 +1413,19 @@ void view_options_ok_cb(CALLBACK_ARGS)
       if(force || (val != line_type))
         opt_view_line_type(i, GMSH_SET, val);
 
-      switch (WID->view_choice[2]->value()) {
-      case 0: val = DRAW_POST_SEGMENT; break;
-      case 1: val = DRAW_POST_ARROW; break;
-      case 2: val = DRAW_POST_PYRAMID; break;
-      case 4: val = DRAW_POST_DISPLACEMENT; break;
-      default: val = DRAW_POST_ARROW3D; break; // 3
-      }
+      val = WID->view_choice[2]->value() + 1;
       if(force || (val != vector_type))
         opt_view_vector_type(i, GMSH_SET, val);
 
-      switch (WID->view_choice[3]->value()) {
-      case 0: val = DRAW_POST_LOCATE_COG; break;
-      default: val = DRAW_POST_LOCATE_VERTEX; break;
-      }
+      val = WID->view_choice[3]->value() + 1;
       if(force || (val != glyph_location))
         opt_view_glyph_location(i, GMSH_SET, val);
 
-     switch (WID->view_choice[4]->value()) {
-     case 0: val = DRAW_POST_VONMISES; break;
-     case 2: val = DRAW_POST_LMGC90_TYPE; break;
-     case 3: val = DRAW_POST_LMGC90_COORD; break;
-     case 4: val = DRAW_POST_LMGC90_PRES; break;
-     case 5: val = DRAW_POST_LMGC90_SN; break;
-     case 6: val = DRAW_POST_LMGC90_DEPX; break;
-     case 7: val = DRAW_POST_LMGC90_DEPY; break;
-     case 8: val = DRAW_POST_LMGC90_DEPZ; break;
-     case 9: val = DRAW_POST_LMGC90_DEPAV; break;
-     case 10: val = DRAW_POST_LMGC90_DEPNORM; break;
-     default: val = DRAW_POST_LMGC90; break; // 1
-     }
-     if(force || (val != tensor_type))
-       opt_view_tensor_type(i, GMSH_SET, val);
-
-      switch (WID->view_choice[7]->value()) {
-      case 0: val = DRAW_POST_RANGE_DEFAULT; break;
-      case 1: val = DRAW_POST_RANGE_PER_STEP; break;
-      default: val = DRAW_POST_RANGE_CUSTOM; break; // 2
-      }
+      val = WID->view_choice[4]->value() + 1;
+      if(force || (val != tensor_type))
+	opt_view_tensor_type(i, GMSH_SET, val);
+      
+      val = WID->view_choice[7]->value() + 1;
       if(force || (val != range_type))
         opt_view_range_type(i, GMSH_SET, val);
 
@@ -1491,11 +1449,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
       if(force || (val != show_time))
         opt_view_show_time(i, GMSH_SET, val);
       
-      switch(WID->view_choice[13]->value()){
-      case 0: val = DRAW_POST_3D; break;
-      case 1: val = DRAW_POST_2D_SPACE; break;
-      default: val = DRAW_POST_2D_TIME; break; // 2
-      }
+      val = WID->view_choice[13]->value() + 1;
       if(force || (val != type))
         opt_view_type(i, GMSH_SET, val);
 
@@ -1844,11 +1798,9 @@ void view_options_ok_cb(CALLBACK_ARGS)
       // colorbar window
 
       if(force || (i != current)) {
-	Post_View *src = *(Post_View **)List_Pointer(CTX.post.list, current);
-	Post_View *dest = *(Post_View **)List_Pointer(CTX.post.list, i);
-        ColorTable_Copy(&src->CT);
-        ColorTable_Paste(&dest->CT);
-	dest->Changed = 1;
+        ColorTable_Copy(&PView::list[current]->getOptions()->CT);
+        ColorTable_Paste(&PView::list[i]->getOptions()->CT);
+	PView::list[i]->setChanged(true);
       }
     }
   }
@@ -1881,7 +1833,10 @@ void statistics_histogram_cb(CALLBACK_ARGS)
     type = 1;
   else
     type = 2;
-  Create2DGraph(name, "# Elements", 100, 0, WID->quality[type]);
+  std::vector<double> x, y;
+  for(int i = 0; i < 100; i++) y.push_back(WID->quality[type][i]);
+  new PView(name, "# Elements", x, y);
+  UpdateViewsInGUI();
   Draw();
 }
 
@@ -4258,30 +4213,31 @@ void view_toggle_cb(CALLBACK_ARGS)
   Draw();
 }
 
-static void _view_reload(int num)
+static void _view_reload(int index)
 {
-  if(!CTX.post.list)
-    return;
+  if(index >= 0 && index < PView::list.size()){
+    PView *p = PView::list[index];
 
-  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, num);
+    if(StatFile((char*)p->getData()->getFileName().c_str())){
+      Msg(GERROR, "File '%s' does not exist", p->getData()->getFileName().c_str());
+      return;
+    }
 
-  if(StatFile(v->FileName)){
-    Msg(GERROR, "File '%s' does not exist", v->FileName);
-    return;
+    // FIXME: use fileIndex
+    MergeFile((char*)p->getData()->getFileName().c_str());
+
+    // delete old data and replace with new
+    delete p->getData();
+    p->setData(PView::list.back()->getData());
+    PView::list.back()->setData(0);
+
+    // delete new view
+    delete PView::list.back();
+
+    // in case the reloaded view has a different number of time steps
+    if(p->getOptions()->TimeStep > p->getData()->getNumTimeSteps() - 1)
+      p->getOptions()->TimeStep = 0;
   }
-
-  CTX.post.force_num = v->Num;
-  MergeFile(v->FileName);
-  CTX.post.force_num = 0;
-
-  Post_View *v2 = *(Post_View **) List_Pointer(CTX.post.list, num);
-  CopyViewOptions(v, v2);
-
-  // In case the reloaded view has a different number of time steps
-  if(v2->TimeStep > v2->NbTimeStep - 1)
-    v2->TimeStep = 0;
-
-  FreeView(v);
 }
 
 void view_reload_cb(CALLBACK_ARGS)
@@ -4292,14 +4248,14 @@ void view_reload_cb(CALLBACK_ARGS)
 
 void view_reload_all_cb(CALLBACK_ARGS)
 {
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++)
+  for(unsigned int i = 0; i < PView::list.size(); i++)
     _view_reload(i);
   Draw();
 }
 
 void view_reload_visible_cb(CALLBACK_ARGS)
 {
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++)
+  for(unsigned int i = 0; i < PView::list.size(); i++)
     if(opt_view_visible(i, GMSH_GET, 0))
       _view_reload(i);
   Draw();
@@ -4307,68 +4263,61 @@ void view_reload_visible_cb(CALLBACK_ARGS)
 
 void view_remove_other_cb(CALLBACK_ARGS)
 {
-  if(!CTX.post.list) return;
-  for(int i = List_Nbr(CTX.post.list) - 1; i >= 0; i--)
-    if(i != (long)data)
-      RemoveViewByIndex(i);
+  if(PView::list.empty()) return;
+  for(int i = PView::list.size() - 1; i >= 0; i--)
+    if(i != (long)data) delete PView::list[i];
   UpdateViewsInGUI();
   Draw();
 }
 
 void view_remove_all_cb(CALLBACK_ARGS)
 {
-  if(!CTX.post.list) return;
-  while(List_Nbr(CTX.post.list))
-    RemoveViewByIndex(0);
+  if(PView::list.empty()) return;
+  while(PView::list.size()) delete PView::list[0];
   UpdateViewsInGUI();
   Draw();
 }
 
 void view_remove_visible_cb(CALLBACK_ARGS)
 {
-  if(!CTX.post.list) return;
-  for(int i = List_Nbr(CTX.post.list) - 1; i >= 0; i--)
-    if(opt_view_visible(i, GMSH_GET, 0))
-      RemoveViewByIndex(i);
+  if(PView::list.empty()) return;
+  for(int i = PView::list.size() - 1; i >= 0; i--)
+    if(opt_view_visible(i, GMSH_GET, 0)) delete PView::list[i];
   UpdateViewsInGUI();
   Draw();
 }
 
 void view_remove_invisible_cb(CALLBACK_ARGS)
 {
-  if(!CTX.post.list) return;
-  for(int i = List_Nbr(CTX.post.list) - 1; i >= 0; i--)
-    if(!opt_view_visible(i, GMSH_GET, 0))
-      RemoveViewByIndex(i);
+  if(PView::list.empty()) return;
+  for(int i = PView::list.size() - 1; i >= 0; i--)
+    if(!opt_view_visible(i, GMSH_GET, 0)) delete PView::list[i];
   UpdateViewsInGUI();
   Draw();
 }
 
 void view_remove_empty_cb(CALLBACK_ARGS)
 {
-  if(!CTX.post.list) return;
-  for(int i = List_Nbr(CTX.post.list) - 1; i >= 0; i--){
-    Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, i);
-    if(v->empty())
-      RemoveViewByIndex(i);
-  }
+  if(PView::list.empty()) return;
+  for(int i = PView::list.size() - 1; i >= 0; i--)
+    if(PView::list[i]->getData()->empty()) delete PView::list[i];
   UpdateViewsInGUI();
   Draw();
 }
 
 void view_remove_cb(CALLBACK_ARGS)
 {
-  RemoveViewByIndex((int)(long)data);
+  delete PView::list[(int)(long)data];
   UpdateViewsInGUI();
   Draw();
 }
 
-static void _view_save_as(int view_num, char *title, int type)
+static void _view_save_as(int view_num, char *title, int format)
 {
-  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, view_num);
+  PView *view = PView::list[view_num];
   
  test:
-  if(file_chooser(0, 1, title, "*", v->FileName)) {
+  if(file_chooser(0, 1, title, "*", (char*)view->getData()->getFileName().c_str())){
     char *name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       if(!StatFile(name))
@@ -4376,7 +4325,7 @@ static void _view_save_as(int view_num, char *title, int type)
 		      "Cancel", "Replace", NULL, name))
           goto test;
     }
-    WriteView(v, name, type, 0);
+    view->write(name, format);
   }
 }
 
@@ -4412,55 +4361,63 @@ void view_save_msh_cb(CALLBACK_ARGS)
 
 void view_alias_cb(CALLBACK_ARGS)
 {
-  AliasView((int)(long)data, 0);
+  new PView(PView::list[(int)(long)data], false);
+  UpdateViewsInGUI();
   Draw();
 }
 
 void view_alias_with_options_cb(CALLBACK_ARGS)
 {
-  AliasView((int)(long)data, 1);
+  new PView(PView::list[(int)(long)data], true);
+  UpdateViewsInGUI();
   Draw();
 }
 
 void view_combine_space_all_cb(CALLBACK_ARGS)
 {
-  CombineViews(0, 1, CTX.post.combine_remove_orig);
+  PView::combine(false, 1, CTX.post.combine_remove_orig);
+  UpdateViewsInGUI();
   Draw();
 }
 
 void view_combine_space_visible_cb(CALLBACK_ARGS)
 {
-  CombineViews(0, 0, CTX.post.combine_remove_orig);
+  PView::combine(false, 0, CTX.post.combine_remove_orig);
+  UpdateViewsInGUI();
   Draw();
 }
 
 void view_combine_space_by_name_cb(CALLBACK_ARGS)
 {
-  CombineViews(0, 2, CTX.post.combine_remove_orig);
+  PView::combine(false, 2, CTX.post.combine_remove_orig);
+  UpdateViewsInGUI();
   Draw();
 }
 
 void view_combine_time_all_cb(CALLBACK_ARGS)
 {
-  CombineViews(1, 1, CTX.post.combine_remove_orig);
+  PView::combine(true, 1, CTX.post.combine_remove_orig);
+  UpdateViewsInGUI();
   Draw();
 }
 
 void view_combine_time_visible_cb(CALLBACK_ARGS)
 {
-  CombineViews(1, 0, CTX.post.combine_remove_orig);
+  PView::combine(true, 0, CTX.post.combine_remove_orig);
+  UpdateViewsInGUI();
   Draw();
 }
 
 void view_combine_time_by_name_cb(CALLBACK_ARGS)
 {
-  CombineViews(1, 2, CTX.post.combine_remove_orig);
+  PView::combine(true, 2, CTX.post.combine_remove_orig);
+  UpdateViewsInGUI();
   Draw();
 }
 
 void view_all_visible_cb(CALLBACK_ARGS)
 {
-  for(int i = 0; i < List_Nbr(CTX.post.list); i ++)
+  for(unsigned int i = 0; i < PView::list.size(); i++)
     opt_view_visible(i, GMSH_SET | GMSH_GUI, 
 		     (long)data < 0 ? !opt_view_visible(i, GMSH_GET, 0) :
 		     (long)data > 0 ? 1 : 0);
@@ -4469,15 +4426,13 @@ void view_all_visible_cb(CALLBACK_ARGS)
 
 void view_applybgmesh_cb(CALLBACK_ARGS)
 {
-  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, (int)(long)data);
-  if(!v->ScalarOnly || v->TextOnly) {
-    Msg(GERROR, "Background mesh generation impossible with non-scalar view");
-    return;
+  int index =  (int)(long)data;
+  if(index >= 0 && index < PView::list.size()){
+    Field *field = new PostViewField(PView::list[index]);
+    BGMReset();
+    BGMAddField(field);
+    fields.insert(field);
   }
-  Field *field = new PostViewField(v);
-  BGMReset();
-  BGMAddField(field);
-  fields.insert(field);
 }
 
 void view_plugin_cb(CALLBACK_ARGS)
@@ -4589,11 +4544,12 @@ void view_plugin_run_cb(CALLBACK_ARGS)
   for(int i = 1; i <= WID->plugin_view_browser->size(); i++) {
     if(WID->plugin_view_browser->selected(i)) {
       try {
-	Post_View **vv = (Post_View **) List_Pointer_Test(CTX.post.list, i - 1);
-	if(!vv)
-	  p->execute(0);
+	if(i - 1 >= 0 && i - 1 < PView::list.size()){
+	  Msg(FATAL, "need to reinterface plugin execute with pview");
+	  //p->execute(PView::list[i - 1]);
+	}
 	else
-	  p->execute(*vv);
+	  p->execute(0);
       }
       catch(GMSH_Plugin * err) {
 	char tmp[256];

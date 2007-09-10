@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.127 2007-09-08 21:26:04 geuzaine Exp $
+// $Id: Post.cpp,v 1.128 2007-09-10 04:47:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -256,8 +256,10 @@ void addScalarPoint(PView *p, double xyz[NMAX][3], double val[NMAX][9],
   if(pre) return;
 
   PViewOptions *opt = p->getOptions();
+
   double vmin = opt->TmpMin, vmax = opt->TmpMax;
   if(opt->SaturateValues) saturate(1, val, vmin, vmax, i0);
+
   if(val[i0][0] >= vmin && val[i0][0] <= vmax){
     unsigned int col = opt->getColor(val[i0][0], vmin, vmax);
     SVector3 n = getPointNormal(p, val[i0][0]);
@@ -297,6 +299,9 @@ void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9],
     return;
   }
 
+  double vmin = opt->TmpMin, vmax = opt->TmpMax;
+  if(opt->SaturateValues) saturate(2, val, vmin, vmax, i0, i1);
+
   double x[2] = {xyz[i0][0], xyz[i1][0]};
   double y[2] = {xyz[i0][1], xyz[i1][1]};
   double z[2] = {xyz[i0][2], xyz[i1][2]};
@@ -304,9 +309,6 @@ void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9],
 
   SVector3 n[2];
   getLineNormal(p, x, y, z, v, n, true);
-  double vmin = opt->TmpMin, vmax = opt->TmpMax;
-
-  if(opt->SaturateValues) saturate(2, val, vmin, vmax, i0, i1);
 
   if(opt->IntervalsType == PViewOptions::Continuous){
     if(val[i0][0] >= vmin && val[i0][0] <= vmax &&
@@ -402,15 +404,15 @@ void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9],
     return;
   }
 
+  double vmin = opt->TmpMin, vmax = opt->TmpMax;
+  if(opt->SaturateValues) saturate(3, val, vmin, vmax, i0, i1, i2);
+
   double x[3] = {xyz[i0][0], xyz[i1][0], xyz[i2][0]};
   double y[3] = {xyz[i0][1], xyz[i1][1], xyz[i2][1]};
   double z[3] = {xyz[i0][2], xyz[i1][2], xyz[i2][2]};
   double v[3] = {val[i0][0], val[i1][0], val[i2][0]};
 
   SVector3 nfac = normal3(xyz, i0, i1, i2);
-  double vmin = opt->TmpMin, vmax = opt->TmpMax;
-
-  if(opt->SaturateValues) saturate(3, val, vmin, vmax, i0, i1, i2);
 
   if(opt->IntervalsType == PViewOptions::Continuous){
     if(val[i0][0] >= vmin && val[i0][0] <= vmax &&
@@ -576,14 +578,13 @@ void addScalarTetrahedron(PView *p, double xyz[NMAX][3], double val[NMAX][9],
     return;
   }
 
+  double vmin = opt->TmpMin, vmax = opt->TmpMax;
+  if(opt->SaturateValues) saturate(4, val, vmin, vmax, i0, i1, i2, i3);
+
   double x[4] = {xyz[i0][0], xyz[i1][0], xyz[i2][0], xyz[i3][0]};
   double y[4] = {xyz[i0][1], xyz[i1][1], xyz[i2][1], xyz[i3][1]};
   double z[4] = {xyz[i0][2], xyz[i1][2], xyz[i2][2], xyz[i3][2]};
   double v[4] = {val[i0][0], val[i1][0], val[i2][0], val[i3][0]};
-
-  double vmin = opt->TmpMin, vmax = opt->TmpMax;
-
-  if(opt->SaturateValues) saturate(4, val, vmin, vmax, i0, i1, i2, i3);
 
   if(opt->IntervalsType == PViewOptions::Iso){
     for(int k = 0; k < opt->NbIso; k++) {

@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.29 2007-05-04 10:45:08 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.30 2007-09-10 04:47:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -156,6 +156,10 @@ void GMSH_EvaluatePlugin::evaluate(Post_View *v1, List_T *list1, int nbElm1,
   if(!nbElm1)
     return;
 
+  Msg(FATAL, "XXXXXXXXXXXXXXXXXXXXXX");
+  return;
+
+  /*
   void *f = evaluator_create(expression);
 
   if(!f){
@@ -220,6 +224,8 @@ void GMSH_EvaluatePlugin::evaluate(Post_View *v1, List_T *list1, int nbElm1,
   }
 
   evaluator_destroy(f);
+
+  */
 #endif
 }
 

@@ -23,7 +23,7 @@
 #include <vector>
 #include <map>
 #include <list>
-#include "Views.h"
+#include "PView.h"
 #ifdef HAVE_ANN_
 #include "ANN/ANN.h"
 #endif
@@ -105,7 +105,7 @@ class PostViewField : public Field{
   OctreePost *octree;
   int view_index;
 public:
-  PostViewField(Post_View *view);
+  PostViewField(PView *view);
   double operator()(double x, double y, double z);
   virtual ~PostViewField();
 };

@@ -78,7 +78,7 @@ class PViewDataList : public PViewData {
  public:
   PViewDataList(bool allocate=true);
   ~PViewDataList();
-  void finalize();
+  bool finalize();
   int getNumTimeSteps(){ return NbTimeStep; }
   double getTime(int step);
   double getMin(int step=-1);
@@ -103,6 +103,7 @@ class PViewDataList : public PViewData {
   void smooth();
   bool combineTime(nameData &nd);
   bool combineSpace(nameData &nd);
+  bool isAdaptive(){ return adaptive ? true : false; }
   void setGlobalResolutionLevel(int level);
   void setAdaptiveResolutionLevel(int level, GMSH_Post_Plugin *plugin=0);
 

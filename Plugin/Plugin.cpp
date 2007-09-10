@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.89 2007-05-07 07:50:33 remacle Exp $
+// $Id: Plugin.cpp,v 1.90 2007-09-10 04:47:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -63,6 +63,24 @@
 #include "Probe.h"
 #include "FieldView.h"
 #include "Context.h"
+
+
+//////////// FIXME ///////////////
+
+Post_View *BeginView(int alloc)
+{
+  return 0;
+}
+void EndView(Post_View *v, int AddInUI, char *FileName, char *Name)
+{
+
+}
+
+//////////////////////////////
+
+
+
+
 
 extern Context_T CTX;
 

@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.5 2007-09-04 13:47:02 remacle Exp $
+// $Id: Field.cpp,v 1.6 2007-09-10 04:47:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -264,8 +264,8 @@ FunctionField::~FunctionField()
 // PostViewField
 double PostViewField::operator()(double x, double y, double z) 
 {
-  // FIXME: temp fix until we manage correctly the removal of post views
-  if(view_index < 0 || view_index >= List_Nbr(CTX.post.list)) return MAX_LC;
+  // FIXME: should test unique view num instead, but that would be slower
+  if(view_index < 0 || view_index >= PView::list.size()) return MAX_LC;
 
   double l = 0.;
   double fact[9] = {0.001, 0.0025, 0.005, 0.0075, 0.01, 0.025, 0.05, 0.075, 0.1};
@@ -293,11 +293,11 @@ double PostViewField::operator()(double x, double y, double z)
   return l;
 }
 
-PostViewField::PostViewField(Post_View *view)
+PostViewField::PostViewField(PView *view)
 {
-  Msg(INFO, "Field from '%s'", view->Name);
+  Msg(INFO, "Field from '%s'", view->getData()->getName().c_str());
   octree = new OctreePost(view);
-  view_index = view->Index;
+  view_index = view->getIndex();
 }
 
 PostViewField::~PostViewField()

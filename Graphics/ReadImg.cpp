@@ -1,4 +1,4 @@
-// $Id: ReadImg.cpp,v 1.18 2007-09-04 13:47:01 remacle Exp $
+// $Id: ReadImg.cpp,v 1.19 2007-09-10 04:47:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,7 +22,8 @@
 #include "ReadImg.h"
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "Views.h"
+#include "PView.h"
+#include "PViewDataList.h"
   
 #include <FL/Fl_JPEG_Image.H>
 #include <FL/Fl_PNM_Image.H>
@@ -31,8 +32,8 @@
 
 // from an image, we create a post-procession view
 
-static Post_View *Img2Pos(Fl_RGB_Image & img_init, int quads=1, 
-			  int resizex=0, int resizey=0) 
+static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads=1,
+			       int resizex=0, int resizey=0) 
 {
   img_init.desaturate(); // convert to grayscale
 
@@ -50,10 +51,10 @@ static Post_View *Img2Pos(Fl_RGB_Image & img_init, int quads=1,
 
   if(dim != 1) {
     Msg(GERROR, "Unable to obtain one-channel image");
-    return NULL;
+    return 0;
   }
 
-  Post_View * v = BeginView(1);
+  PViewDataList *d = new PViewDataList(true);
 
   double z = 0.;
   for(int i = 0; i < height - 1; i++) {
@@ -69,73 +70,81 @@ static Post_View *Img2Pos(Fl_RGB_Image & img_init, int quads=1,
       double val3 = (double)a1[j + 1]/255.;
       double val4 = (double)a[j + 1]/255.;
       if(quads){ // generate quads
-	List_Add(v->SQ, &x); List_Add(v->SQ, &x); 
-	List_Add(v->SQ, &x1); List_Add(v->SQ, &x1);
-	List_Add(v->SQ, &y); List_Add(v->SQ, &y1);
-	List_Add(v->SQ, &y1); List_Add(v->SQ, &y);
-	List_Add(v->SQ, &z); List_Add(v->SQ, &z);
-	List_Add(v->SQ, &z); List_Add(v->SQ, &z);
-	List_Add(v->SQ, &val1); List_Add(v->SQ, &val2);
-	List_Add(v->SQ, &val3); List_Add(v->SQ, &val4);
-	v->NbSQ++;
+	List_Add(d->SQ, &x); List_Add(d->SQ, &x); 
+	List_Add(d->SQ, &x1); List_Add(d->SQ, &x1);
+	List_Add(d->SQ, &y); List_Add(d->SQ, &y1);
+	List_Add(d->SQ, &y1); List_Add(d->SQ, &y);
+	List_Add(d->SQ, &z); List_Add(d->SQ, &z);
+	List_Add(d->SQ, &z); List_Add(d->SQ, &z);
+	List_Add(d->SQ, &val1); List_Add(d->SQ, &val2);
+	List_Add(d->SQ, &val3); List_Add(d->SQ, &val4);
+	d->NbSQ++;
       }
       else{ // generate triangles
-	List_Add(v->ST, &x); List_Add(v->ST, &x); List_Add(v->ST, &x1);
-	List_Add(v->ST, &y); List_Add(v->ST, &y1); List_Add(v->ST, &y1);
-	List_Add(v->ST, &z); List_Add(v->ST, &z); List_Add(v->ST, &z);
-	List_Add(v->ST, &val1); List_Add(v->ST, &val2); List_Add(v->ST, &val3);
-	v->NbST++;
-	List_Add(v->ST, &x); List_Add(v->ST, &x1); List_Add(v->ST, &x1);
-	List_Add(v->ST, &y); List_Add(v->ST, &y1); List_Add(v->ST, &y);
-	List_Add(v->ST, &z); List_Add(v->ST, &z); List_Add(v->ST, &z);
-	List_Add(v->ST, &val1); List_Add(v->ST, &val3); List_Add(v->ST, &val4);
-	v->NbST++;
+	List_Add(d->ST, &x); List_Add(d->ST, &x); List_Add(d->ST, &x1);
+	List_Add(d->ST, &y); List_Add(d->ST, &y1); List_Add(d->ST, &y1);
+	List_Add(d->ST, &z); List_Add(d->ST, &z); List_Add(d->ST, &z);
+	List_Add(d->ST, &val1); List_Add(d->ST, &val2); List_Add(d->ST, &val3);
+	d->NbST++;
+	List_Add(d->ST, &x); List_Add(d->ST, &x1); List_Add(d->ST, &x1);
+	List_Add(d->ST, &y); List_Add(d->ST, &y1); List_Add(d->ST, &y);
+	List_Add(d->ST, &z); List_Add(d->ST, &z); List_Add(d->ST, &z);
+	List_Add(d->ST, &val1); List_Add(d->ST, &val3); List_Add(d->ST, &val4);
+	d->NbST++;
       }
     }
   }
   delete img;
-  return v;
+  return d;
 }
 
-static int EndPos(char *name, Post_View *v)
+static int EndPos(char *name, PViewData *d)
 {
-  if(!v) return 0;
+  if(!d) return 0;
   char name_pos[256], title[256];
   strcpy(name_pos, name);
   strcat(name_pos, ".pos");
   int i;
-  for(i = strlen(name)-1; i >= 0; i--){
+  for(i = strlen(name) - 1; i >= 0; i--){
     if(name[i] == '/' || name[i] == '\\')
       break;
   }
   if(i <= 0)
     strcpy(title, name);
   else
-    strcpy(title, &name[i+1]);
-  EndView(v, 1, name_pos, title);
-  return 1;
+    strcpy(title, &name[i + 1]);
+  d->setName(title);
+  d->setFileName(name_pos);
+  if(d->finalize()){
+    new PView(d);
+    return 1;
+  }
+  else{
+    delete d;
+    return 0;
+  }
 }
 
 int read_pnm(char *name) 
 {
   Fl_PNM_Image img(name);
-  return EndPos(name, Img2Pos(img));
+  return EndPos(name, Img2Data(img));
 }
 
 int read_jpeg(char *name) 
 {
   Fl_JPEG_Image img(name);
-  return EndPos(name, Img2Pos(img));
+  return EndPos(name, Img2Data(img));
 }
 
 int read_png(char *name) 
 {
   Fl_PNG_Image img(name);
-  return EndPos(name, Img2Pos(img));
+  return EndPos(name, Img2Data(img));
 }
 
 int read_bmp(char *name) 
 {
   Fl_BMP_Image img(name);
-  return EndPos(name, Img2Pos(img));
+  return EndPos(name, Img2Data(img));
 }

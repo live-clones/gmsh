@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.77 2007-09-04 13:47:02 remacle Exp $
+// $Id: BDS.cpp,v 1.78 2007-09-10 04:47:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -469,61 +469,10 @@ void recur_tag(BDS_Face * t, BDS_GeomEntity * g)
 double PointLessThanLexicographic::t = 0;
 double BDS_Vector::t = 0;
 
-bool BDS_Mesh::import_view(Post_View *view, const double tolerance)
+bool BDS_Mesh::import_view(PView *view, const double tolerance)
 {
-  // imports all the tris+quads from a post-processing view
-
-  Min[0] = view->BBox[0]; Max[0] = view->BBox[1];
-  Min[1] = view->BBox[2]; Max[1] = view->BBox[3];
-  Min[2] = view->BBox[4]; Max[2] = view->BBox[5];
-  LC = sqrt((Min[0] - Max[0]) * (Min[0] - Max[0]) +
-	    (Min[1] - Max[1]) * (Min[1] - Max[1]) +
-	    (Min[2] - Max[2]) * (Min[2] - Max[2]));
-  
-  PointLessThanLexicographic::t = tolerance;
-  std::set < BDS_Point *, PointLessThanLexicographic > pts;
-
-  for(int type = 0; type < 6; type++){
-    int nbList=0, nbNod=0;
-    List_T *list=0;
-    switch(type){
-    case 0: list = view->ST; nbList = view->NbST; nbNod = 3; break;
-    case 1: list = view->VT; nbList = view->NbVT; nbNod = 3; break;
-    case 2: list = view->TT; nbList = view->NbTT; nbNod = 3; break;
-    case 3: list = view->SQ; nbList = view->NbSQ; nbNod = 4; break;
-    case 4: list = view->VQ; nbList = view->NbVQ; nbNod = 4; break;
-    case 5: list = view->TQ; nbList = view->NbTQ; nbNod = 4; break;
-    }
-    if(nbList){
-      int nb = List_Nbr(list) / nbList;
-      for(int i = 0; i < List_Nbr(list); i += nb) {
-	double *x = (double *)List_Pointer_Fast(list, i);
-	double *y = (double *)List_Pointer_Fast(list, i + nbNod);
-	double *z = (double *)List_Pointer_Fast(list, i + 2 * nbNod);
-	BDS_Point *p[4];
-	for(int j = 0; j < nbNod; j++){
-	  BDS_Point P(0, x[j], y[j], z[j]);    
-	  std::set < BDS_Point *, PointLessThanLexicographic >::iterator it = pts.find(&P);
-	  if(it != pts.end()) {
-	    p[j] = *it;
-	  }
-	  else {
-	    MAXPOINTNUMBER++;
-	    p[j] = add_point(MAXPOINTNUMBER, P.X, P.Y, P.Z);
-	    pts.insert(p[j]);
-	  }
-	}
-	if(nbNod == 3){
-	  add_triangle(p[0]->iD, p[1]->iD, p[2]->iD);
-	}
-	else{
-	  add_triangle(p[0]->iD, p[1]->iD, p[2]->iD);
-	  add_triangle(p[0]->iD, p[2]->iD, p[3]->iD);
-	}
-      }
-    }
-  }
-  return true;
+  Msg(GERROR, "View import must be reinterfaced");
+  return false;
 }
 
 template < class IT > void DESTROOOY(IT beg, IT end)

@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.114 2007-08-31 17:29:45 geuzaine Exp $
+// $Id: Draw.cpp,v 1.115 2007-09-10 04:47:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,7 @@
 #include "Context.h"
 #include "Numeric.h"
 #include "GModel.h"
-#include "Views.h"
+#include "PView.h"
 
 extern Context_T CTX;
 
@@ -39,14 +39,9 @@ int NeedPolygonOffset()
   if(m->getMeshStatus() == 3 && 
      (CTX.mesh.surfaces_edges || CTX.mesh.volumes_edges))
     return 1;
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++){
-    Post_View *v = *(Post_View**)List_Pointer(CTX.post.list, i);
-    if(v->Visible){
-      if(v->ShowElement)
-	return 1;
-      if((v->NbST || v->NbSQ) && (v->Axes || v->IntervalsType == DRAW_POST_ISO))
-	return 1;
-    }
+  for(unsigned int i = 0; i < PView::list.size(); i++){
+    PViewOptions *opt = PView::list[i]->getOptions();
+    if(opt->Visible && opt->ShowElement) return 1;
   }
   return 0;
 }
@@ -77,7 +72,6 @@ void Draw3d()
   InitPosition();
   Draw_Geom();
   Draw_Mesh();
-  Draw_Post_Old();
   Draw_Post();
 }
 
@@ -95,10 +89,6 @@ void Draw2d()
   glTranslated(0., 0., CTX.clip_factor > 1. ? 1./CTX.clip_factor : CTX.clip_factor);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-
-  Draw_Graph2D_Old();
-  Draw_Text2D_Old();
-  if(CTX.post.draw) Draw_Scales_Old();
 
   Draw_Graph2D();
   Draw_Text2D();

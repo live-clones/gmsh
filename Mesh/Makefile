@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.181 2007-09-04 15:19:24 geuzaine Exp $
+# $Id: Makefile,v 1.182 2007-09-10 04:47:04 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -80,23 +80,23 @@ depend:
 Generator.o: Generator.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h ../Common/Context.h ../Post/Views.h \
-  ../Post/ColorTable.h ../Common/VertexArray.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Common/SmoothData.h ../Post/AdaptiveViews.h \
-  ../Common/GmshMatrix.h ../Common/OS.h ../Geo/GModel.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h \
-  ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h \
-  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Hash.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/ExtrudeParams.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
-  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h \
-  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GRegion.h \
-  ../Geo/GEntity.h ../Geo/MElement.h ../Geo/ExtrudeParams.h \
-  ../Geo/SBoundingBox3d.h meshGEdge.h meshGFace.h meshGRegion.h \
-  BackgroundMesh.h BoundaryLayer.h HighOrder.h
+  ../Numeric/Numeric.h ../Common/Context.h ../Post/PView.h \
+  ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Common/SmoothData.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint3.h ../Post/PViewOptions.h ../Post/ColorTable.h \
+  ../Common/OS.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
+  ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint3.h \
+  ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h \
+  ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
+  ../Geo/MElement.h ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h \
+  ../Geo/SVector3.h ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h \
+  ../Geo/SVector3.h ../Geo/ExtrudeParams.h ../Geo/GFace.h ../Geo/GPoint.h \
+  ../Geo/GEntity.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h \
+  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h \
+  ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h meshGEdge.h meshGFace.h \
+  meshGRegion.h BackgroundMesh.h BoundaryLayer.h HighOrder.h
 Field.o: Field.cpp ../Mesh/BDS.h ../Geo/GFace.h ../Geo/GPoint.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
@@ -108,9 +108,9 @@ Field.o: Field.cpp ../Mesh/BDS.h ../Geo/GFace.h ../Geo/GPoint.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Numeric/Numeric.h \
   ../Common/Context.h ../DataStr/List.h ../Geo/ExtrudeParams.h \
   ../Common/SmoothData.h ../Geo/MElement.h ../Geo/SPoint2.h \
-  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Post/Views.h \
-  ../Post/ColorTable.h ../Common/VertexArray.h ../Post/AdaptiveViews.h \
-  ../Common/GmshMatrix.h ../Common/Gmsh.h ../Common/Message.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Post/PView.h \
+  ../Common/VertexArray.h ../Post/PViewData.h ../Post/PViewOptions.h \
+  ../Post/ColorTable.h ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/Tree.h ../DataStr/avl.h \
   ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h Field.h \
   ../Geo/Geo.h ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h \
@@ -171,8 +171,8 @@ meshGFace.o: meshGFace.cpp meshGFace.h meshGFaceDelaunayInsertion.h \
   ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h ../Geo/GEntity.h \
   ../Geo/MElement.h ../Geo/ExtrudeParams.h ../Geo/MVertex.h \
   ../Geo/MEdge.h ../Geo/MElement.h ../Common/VertexArray.h \
-  ../Common/Message.h ../Common/OS.h BDS.h ../Post/Views.h \
-  ../Post/ColorTable.h ../Post/AdaptiveViews.h ../Common/GmshMatrix.h
+  ../Common/Message.h ../Common/OS.h BDS.h ../Post/PView.h \
+  ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h
 meshGFaceTransfinite.o: meshGFaceTransfinite.cpp meshGFace.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
@@ -213,8 +213,8 @@ meshGFaceDelaunayInsertion.o: meshGFaceDelaunayInsertion.cpp BDS.h \
   ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Geo/MElement.h \
   ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h \
-  ../Post/Views.h ../Post/ColorTable.h ../Common/VertexArray.h \
-  ../Post/AdaptiveViews.h ../Common/GmshMatrix.h BackgroundMesh.h \
+  ../Post/PView.h ../Common/VertexArray.h ../Post/PViewData.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h BackgroundMesh.h \
   meshGFaceDelaunayInsertion.h meshGFace.h ../Common/Message.h
 meshGFaceOptimize.o: meshGFaceOptimize.cpp meshGFaceOptimize.h \
   ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
@@ -251,8 +251,8 @@ meshGRegion.o: meshGRegion.cpp meshGRegion.h \
   ../Geo/ExtrudeParams.h ../Geo/GRegion.h ../Geo/MRep.h ../Geo/GEdge.h \
   ../Geo/GFace.h ../Geo/GRegion.h ../Geo/MVertex.h ../Geo/MEdge.h \
   ../Geo/MElement.h ../Common/VertexArray.h ../Common/Message.h \
-  ../Common/OS.h BDS.h ../Post/Views.h ../Post/ColorTable.h \
-  ../Post/AdaptiveViews.h ../Common/GmshMatrix.h
+  ../Common/OS.h BDS.h ../Post/PView.h ../Post/PViewData.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h
 meshGRegionDelaunayInsertion.o: meshGRegionDelaunayInsertion.cpp \
   BackgroundMesh.h meshGRegionDelaunayInsertion.h ../Geo/MElement.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint3.h \
@@ -320,27 +320,25 @@ DivideAndConquer.o: DivideAndConquer.cpp ../Common/Gmsh.h \
 BackgroundMesh.o: BackgroundMesh.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Post/Views.h ../Post/ColorTable.h ../Common/VertexArray.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Common/SmoothData.h \
-  ../Numeric/Numeric.h ../Post/AdaptiveViews.h ../Common/GmshMatrix.h \
-  BackgroundMesh.h ../Common/Context.h ../Post/OctreePost.h \
-  ../Common/Octree.h ../Common/OctreeInternals.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  BackgroundMesh.h ../Numeric/Numeric.h ../Common/Context.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
   ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h \
   ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h \
-  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Hash.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/ExtrudeParams.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
-  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h \
-  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GModel.h \
-  ../Geo/GVertex.h ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h \
-  ../Geo/GEntity.h ../Geo/MElement.h ../Geo/ExtrudeParams.h \
-  ../Geo/SBoundingBox3d.h Field.h ../Geo/Geo.h ../Geo/gmshSurface.h \
-  ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h \
-  ../Geo/SVector3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint2.h \
-  ../Geo/ExtrudeParams.h
+  ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h \
+  ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Geo/GFace.h \
+  ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
+  ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/ExtrudeParams.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEdge.h \
+  ../Geo/GFace.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h \
+  ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h Field.h ../Post/PView.h \
+  ../Common/VertexArray.h ../Post/PViewData.h ../Post/PViewOptions.h \
+  ../Post/ColorTable.h ../Geo/Geo.h ../Geo/gmshSurface.h ../Geo/Pair.h \
+  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
+  ../Post/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h
 BoundaryLayer.o: BoundaryLayer.cpp BoundaryLayer.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \
@@ -355,9 +353,7 @@ BoundaryLayer.o: BoundaryLayer.cpp BoundaryLayer.h ../Geo/GModel.h \
   ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/ExtrudeParams.h ../Geo/GRegion.h ../Geo/GEntity.h \
   ../Geo/MElement.h ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h \
-  meshGEdge.h meshGFace.h ../Common/Message.h ../Post/Views.h \
-  ../Post/ColorTable.h ../Common/VertexArray.h ../Post/AdaptiveViews.h \
-  ../Common/GmshMatrix.h
+  meshGEdge.h meshGFace.h ../Common/Message.h
 BDS.o: BDS.cpp ../Numeric/Numeric.h ../Common/GmshMatrix.h BDS.h \
   ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/Range.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
@@ -369,9 +365,9 @@ BDS.o: BDS.cpp ../Numeric/Numeric.h ../Common/GmshMatrix.h BDS.h \
   ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Common/Context.h ../DataStr/List.h ../Geo/ExtrudeParams.h \
   ../Common/SmoothData.h ../Geo/MElement.h ../Geo/SPoint2.h \
-  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Post/Views.h \
-  ../Post/ColorTable.h ../Common/VertexArray.h ../Post/AdaptiveViews.h \
-  ../Common/Message.h
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Post/PView.h \
+  ../Common/VertexArray.h ../Post/PViewData.h ../Post/PViewOptions.h \
+  ../Post/ColorTable.h ../Common/Message.h
 HighOrder.o: HighOrder.cpp HighOrder.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2007-09-08 21:26:04 geuzaine Exp $
+# $Id: Makefile,v 1.13 2007-09-10 04:47:08 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -32,8 +32,6 @@ SRC = PView.cpp\
           PViewDataList.cpp PViewDataListIO.cpp\
           PViewDataGModel.cpp\
         PViewOptions.cpp\
-      Views.cpp\
-        ViewsIO.cpp\
       AdaptiveViews.cpp\
       OctreePost.cpp\
       ColorTable.cpp
@@ -94,30 +92,19 @@ PViewDataGModel.o: PViewDataGModel.cpp PViewDataGModel.h PViewData.h \
   ../Geo/SBoundingBox3d.h
 PViewOptions.o: PViewOptions.cpp PViewOptions.h ColorTable.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/Message.h
-Views.o: Views.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Views.h ColorTable.h ../Common/VertexArray.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Common/SmoothData.h \
-  AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h \
-  ../Common/Options.h ../Mesh/BackgroundMesh.h
-ViewsIO.o: ViewsIO.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h Views.h ColorTable.h ../Common/VertexArray.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Common/SmoothData.h \
-  AdaptiveViews.h ../Common/GmshMatrix.h ../Common/Context.h
 AdaptiveViews.o: AdaptiveViews.cpp AdaptiveViews.h ../DataStr/List.h \
   ../Common/GmshMatrix.h ../Plugin/Plugin.h ../Common/Options.h \
-  ../Common/Message.h ../Post/Views.h ../Post/ColorTable.h \
-  ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Common/SmoothData.h ../Numeric/Numeric.h ../Post/AdaptiveViews.h \
-  ../Common/OS.h
+  ../Post/ColorTable.h ../Common/Message.h ../Post/Views.h \
+  ../Post/ColorTable.h ../Common/VertexArray.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Common/SmoothData.h ../Numeric/Numeric.h \
+  ../Post/AdaptiveViews.h ../Common/OS.h
 OctreePost.o: OctreePost.cpp ../Common/Octree.h \
-  ../Common/OctreeInternals.h OctreePost.h ../DataStr/List.h Views.h \
-  ColorTable.h ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Common/SmoothData.h ../Numeric/Numeric.h AdaptiveViews.h \
-  ../Common/GmshMatrix.h ../Common/Message.h ../Common/ShapeFunctions.h
+  ../Common/OctreeInternals.h OctreePost.h ../DataStr/List.h PView.h \
+  ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Common/SmoothData.h ../Numeric/Numeric.h PViewData.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h PViewOptions.h ColorTable.h \
+  PViewDataList.h AdaptiveViews.h ../Common/GmshMatrix.h \
+  ../Common/Message.h ../Common/ShapeFunctions.h
 ColorTable.o: ColorTable.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \

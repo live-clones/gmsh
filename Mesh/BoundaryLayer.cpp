@@ -1,4 +1,4 @@
-// $Id: BoundaryLayer.cpp,v 1.4 2007-09-03 20:09:14 geuzaine Exp $
+// $Id: BoundaryLayer.cpp,v 1.5 2007-09-10 04:47:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,7 +24,6 @@
 #include "meshGEdge.h"
 #include "meshGFace.h"
 #include "Message.h"
-#include "Views.h"
 
 template<class T>
 static void addExtrudeNormals(std::vector<T*> &elements)

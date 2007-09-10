@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.108 2007-08-21 19:05:39 geuzaine Exp $
+// $Id: Main.cpp,v 1.109 2007-09-10 04:47:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -53,7 +53,6 @@ int main(int argc, char *argv[])
   time_t now;
 
   // Log some info
-  
   time(&now);
   strcpy(currtime, ctime(&now));
   currtime[strlen(currtime) - 1] = '\0';
@@ -74,15 +73,12 @@ int main(int argc, char *argv[])
   THEM = new Mesh;
 
   // Initialize the symbol tree that will hold variable names
-  
   InitSymbols();
 
-  // Gmsh default options
-
+  // Load default options
   Init_Options(0);
 
   // Generate automatic documentation (before getting user-defined options)
-  
   if(argc == 2 && !strcmp(argv[1], "-doc")){
     // force all plugins for the doc
     GMSH_PluginManager::instance()->registerDefaultPlugins();
@@ -91,16 +87,13 @@ int main(int argc, char *argv[])
   }
 
   // Read configuration files and command line options
-
   Get_Options(argc, argv);
 
   // Always print info on terminal for non-interactive execution
-
   if(CTX.batch)
     CTX.terminal = 1;
 
-  // Signal handling
-
+  // Signal handling 
   // FIXME: could not make this work on IRIX
 #if !defined(__sgi__) 
   signal(SIGINT, Signal);
@@ -111,11 +104,9 @@ int main(int argc, char *argv[])
   CheckResources();
   
   // Initialize the default plugins
-
   GMSH_PluginManager::instance()->registerDefaultPlugins();
 
   // Non-interactive Gmsh
-
   if(CTX.batch) {
     check_gsl();
     Msg(INFO, "'%s' started on %s", cmdline, currtime);
@@ -126,13 +117,11 @@ int main(int argc, char *argv[])
       for(int i = 1; i < List_Nbr(CTX.files); i++)
         MergeFile(*(char**)List_Pointer(CTX.files, i));
       if(CTX.post.combine_time)
-	CombineViews(1, 2, CTX.post.combine_remove_orig);
+	PView::combine(true, 2, CTX.post.combine_remove_orig);
       if(CTX.bgm_filename) {
         MergeFile(CTX.bgm_filename);
-        if(List_Nbr(CTX.post.list)){
-	  Post_View *v;
-	  List_Read(CTX.post.list, List_Nbr(CTX.post.list) - 1, &v);
-	  Field *field = new PostViewField(v);
+        if(PView::list.size()){
+	  Field *field = new PostViewField(PView::list.back());
 	  BGMAddField(field);
 	  fields.insert(field);
         }
@@ -153,28 +142,22 @@ int main(int argc, char *argv[])
 
 
   // Interactive Gmsh
-
-  CTX.batch = -1;       // The GUI is not ready yet for interactivity
+  CTX.batch = -1; // The GUI is not ready yet for interactivity
 
   // Create the GUI
-
   WID = new GUI(argc, argv);
 
   // Set all previously defined options in the GUI
-
   Init_Options_GUI(0);
 
   // The GUI is ready
-
   CTX.batch = 0;
 
   // Say welcome!
-
   Msg(STATUS1N, "Geometry");
   Msg(STATUS2N, "Gmsh %s", Get_GmshVersion());
 
   // Log the following for bug reports
-
   Msg(INFO, "-------------------------------------------------------");
   Msg(INFO, "Gmsh version   : %s", Get_GmshVersion());
   Msg(INFO, gmsh_os);
@@ -190,23 +173,19 @@ int main(int argc, char *argv[])
   Free(cmdline);
 
   // Check for buggy obsolete GSL versions
-
   check_gsl();
 
   // Display the GUI immediately to have a quick "a la Windows" launch time
-
   WID->check();
 
   // Open project file and merge all other input files
-
   OpenProject(CTX.filename);
   for(int i = 1; i < List_Nbr(CTX.files); i++)
     MergeFile(*(char**)List_Pointer(CTX.files, i));
   if(CTX.post.combine_time)
-    CombineViews(1, 2, CTX.post.combine_remove_orig);
+    PView::combine(true, 2, CTX.post.combine_remove_orig);
   
   // Init first context
-
   switch (CTX.initial_context) {
   case 1:
     WID->set_context(menu_geometry, 0);
@@ -220,8 +199,8 @@ int main(int argc, char *argv[])
   case 4:
     WID->set_context(menu_post, 0);
     break;
-  default:     // automatic
-    if(List_Nbr(CTX.post.list))
+  default: // automatic
+    if(PView::list.size())
       WID->set_context(menu_post, 0);
     else
       WID->set_context(menu_geometry, 0);
@@ -229,13 +208,10 @@ int main(int argc, char *argv[])
   }
 
   // Read background mesh on disk
-
   if(CTX.bgm_filename) {
     MergeFile(CTX.bgm_filename);
-    if(List_Nbr(CTX.post.list)){
-      Post_View *v;
-      List_Read(CTX.post.list, List_Nbr(CTX.post.list) - 1, &v);
-      Field *field = new PostViewField(v);
+    if(PView::list.size()){
+      Field *field = new PostViewField(PView::list.back());
       BGMAddField(field);
       fields.insert(field);
     }

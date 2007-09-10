@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.635 2007-09-04 13:47:01 remacle Exp $
+// $Id: GUI.cpp,v 1.636 2007-09-10 04:47:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -35,6 +35,7 @@
 #include "Solvers.h"
 #include "PluginManager.h"
 #include "Shortcut_Window.h"
+#include "PView.h"
 
 #define NB_BUTT_SCROLL 25
 #define NB_HISTORY_MAX 1000
@@ -347,7 +348,7 @@ static Fl_Menu_Item menu_point_display[] = {
 static Fl_Menu_Item menu_point_display_post[] = {
   {"Color dot",      0, 0, 0},
   {"3D sphere",      0, 0, 0},
-  {"Growing sphere", 0, 0, 0},
+  {"Scaled sphere", 0, 0, 0},
   {0}
 };
 
@@ -488,8 +489,6 @@ int GetFontSize()
 
 int GUI::global_shortcuts(int event)
 {
-  int i, j;
-
   // we only handle shortcuts here
   if(event != FL_SHORTCUT)
     return 0;
@@ -603,16 +602,16 @@ int GUI::global_shortcuts(int event)
     return 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'w')) {
-    if(List_Nbr(CTX.post.list))
-      if(view_number >= 0 && view_number < List_Nbr(CTX.post.list))
+    if(PView::list.size())
+      if(view_number >= 0 && view_number < PView::list.size())
 	create_view_options_window(view_number);
       else
 	create_view_options_window(0);
     return 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'u')) {
-    if(List_Nbr(CTX.post.list))
-      if(view_number >= 0 && view_number < List_Nbr(CTX.post.list))
+    if(PView::list.size())
+      if(view_number >= 0 && view_number < PView::list.size())
 	create_plugin_window(view_number);
       else
 	create_plugin_window(0);
@@ -631,7 +630,7 @@ int GUI::global_shortcuts(int event)
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'i')) {
-    for(i = 0; i < List_Nbr(CTX.post.list); i++)
+    for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
 	opt_view_show_scale(i, GMSH_SET | GMSH_GUI,
 			    !opt_view_show_scale(i, GMSH_GET, 0));
@@ -649,7 +648,7 @@ int GUI::global_shortcuts(int event)
 		       !opt_geometry_light(0, GMSH_GET, 0));
     opt_mesh_light(0, GMSH_SET | GMSH_GUI,
 		   !opt_mesh_light(0, GMSH_GET, 0));
-    for(i = 0; i < List_Nbr(CTX.post.list); i++)
+    for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
 	opt_view_light(i, GMSH_SET | GMSH_GUI,
 		       !opt_view_light(i, GMSH_GET, 0));
@@ -685,7 +684,7 @@ int GUI::global_shortcuts(int event)
   else if(Fl::test_shortcut(FL_ALT + 'a')) {
     opt_general_axes(0, GMSH_SET | GMSH_GUI, 
 		     opt_general_axes(0, GMSH_GET, 0) + 1);
-    for(i = 0; i < List_Nbr(CTX.post.list); i++)
+    for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_axes(i, GMSH_SET | GMSH_GUI, opt_view_axes(i, GMSH_GET, 0)+1);
     redraw_opengl();
@@ -777,33 +776,23 @@ int GUI::global_shortcuts(int event)
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 't')) {
-    for(i = 0; i < List_Nbr(CTX.post.list); i++) {
-      if(opt_view_visible(i, GMSH_GET, 0)) {
-        j = (int)opt_view_intervals_type(i, GMSH_GET, 0);
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_intervals_type(i, GMSH_SET | GMSH_GUI,
-                                (j == DRAW_POST_ISO) ? DRAW_POST_DISCRETE :
-                                (j == DRAW_POST_DISCRETE) ? DRAW_POST_CONTINUOUS :
-                                DRAW_POST_ISO);
-      }
-    }
+				opt_view_intervals_type(i, GMSH_GET, 0) + 1);
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'r')) {
-    for(i = 0; i < List_Nbr(CTX.post.list); i++) {
-      if(opt_view_visible(i, GMSH_GET, 0)) {
-        j = (int)opt_view_range_type(i, GMSH_GET, 0);
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_range_type(i, GMSH_SET | GMSH_GUI,
-			    (j == DRAW_POST_RANGE_DEFAULT) ? DRAW_POST_RANGE_PER_STEP :
-			    (j == DRAW_POST_RANGE_PER_STEP) ? DRAW_POST_RANGE_CUSTOM :
-			    DRAW_POST_RANGE_DEFAULT);
-      }
-    }
+			    opt_view_range_type(i, GMSH_GET, 0) + 1);
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'n')) {
-    for(i = 0; i < List_Nbr(CTX.post.list); i++)
+    for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_draw_strings(i, GMSH_SET | GMSH_GUI,
                               !opt_view_draw_strings(i, GMSH_GET, 0));
@@ -811,7 +800,7 @@ int GUI::global_shortcuts(int event)
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'e')) {
-    for(i = 0; i < List_Nbr(CTX.post.list); i++)
+    for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_show_element(i, GMSH_SET | GMSH_GUI,
                               !opt_view_show_element(i, GMSH_GET, 0));
@@ -820,7 +809,7 @@ int GUI::global_shortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_ALT + 'h')) {
     static int show = 0;
-    for(i = 0; i < List_Nbr(CTX.post.list); i++)
+    for(unsigned int i = 0; i < PView::list.size(); i++)
       opt_view_visible(i, GMSH_SET | GMSH_GUI, show);
     redraw_opengl();
     show = !show;
@@ -1233,15 +1222,16 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
   // construct the dynamic menu
   int nb = 0;
   if(m_module_butt->value() == 3){ // post-processing context
-    for(nb = 0; nb < List_Nbr(CTX.post.list); nb++) {
-      Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, nb);
+    for(nb = 0; nb < (int)PView::list.size(); nb++) {
+      PViewData *data = PView::list[nb]->getData();
+      PViewOptions *opt = PView::list[nb]->getOptions();
       
       Fl_Light_Button *b1 = new Fl_Light_Button(0, MH + nb * BH, width - popw, BH);
       b1->callback(view_toggle_cb, (void *)nb);
       b1->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
-      b1->value(v->Visible);
-      b1->label(v->Name);
-      b1->tooltip(v->FileName);
+      b1->value(opt->Visible);
+      b1->label(data->getName().c_str());
+      b1->tooltip(data->getFileName().c_str());
       
       char *tmp = new char[32];
       sprintf(tmp, "[%d]@#-1>", nb);
@@ -1570,29 +1560,29 @@ void GUI::set_anim_buttons(int mode)
 
 void GUI::check_anim_buttons()
 {
-  int i, play = 0;
-  if(CTX.post.anim_cycle) {
-    play = 1;
+  bool play = false;
+  if(CTX.post.anim_cycle){
+    play = true;
   }
-  else {
-    for(i = 0; i < List_Nbr(CTX.post.list); i++) {
-      if((*(Post_View **) List_Pointer(CTX.post.list, i))->NbTimeStep > 1) {
-        play = 1;
+  else{
+    for(unsigned int i = 0; i < PView::list.size(); i++){
+      if(PView::list[i]->getData()->getNumTimeSteps() > 1){
+        play = true;
         break;
       }
     }
   }
-  if(!play) {
-    g_status_butt[6]->deactivate();
-    g_status_butt[7]->deactivate();
-    g_status_butt[10]->deactivate();
-    g_status_butt[11]->deactivate();
-  }
-  else {
+  if(play){
     g_status_butt[6]->activate();
     g_status_butt[7]->activate();
     g_status_butt[10]->activate();
     g_status_butt[11]->activate();
+  }
+  else{
+    g_status_butt[6]->deactivate();
+    g_status_butt[7]->deactivate();
+    g_status_butt[10]->deactivate();
+    g_status_butt[11]->deactivate();
   }
 }
 
@@ -1736,7 +1726,7 @@ void GUI::reset_option_browser()
   opt_browser->add("Mesh");
   opt_browser->add("Solver");
   opt_browser->add("Post-processing");
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+  for(unsigned int i = 0; i < PView::list.size(); i++) {
     sprintf(str, "View [%d]", i);
     opt_browser->add(str);
   }
@@ -1761,7 +1751,7 @@ void GUI::reset_external_view_list()
   view_choice[11]->clear();
   view_choice[10]->add("Self");
   view_choice[11]->add("Self");
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+  for(unsigned int i = 0; i < PView::list.size(); i++) {
     sprintf(str, "View [%d]", i);
     view_choice[10]->add(str, 0, NULL);
     view_choice[11]->add(str, 0, NULL);
@@ -2897,8 +2887,8 @@ void GUI::create_option_window()
       
       static Fl_Menu_Item menu_iso[] = {
         {"Iso-values", 0, 0, 0},
-        {"Filled iso-values", 0, 0, 0},
         {"Continuous map", 0, 0, 0},
+        {"Filled iso-values", 0, 0, 0},
         {"Numeric values", 0, 0, 0},
         {0}
       };
@@ -2910,8 +2900,8 @@ void GUI::create_option_window()
 
       static Fl_Menu_Item menu_range[] = {
         {"Default", 0, 0, 0},
-        {"Per time step", 0, 0, 0},
         {"Custom", 0, 0, 0},
+        {"Per time step", 0, 0, 0},
         {0}
       };
       view_choice[7] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Range mode");
@@ -3323,16 +3313,6 @@ void GUI::create_option_window()
       
       static Fl_Menu_Item menu_tensor[] = {
 	{"Von-Mises", 0, 0, 0},
-	{"LMGC90", 0, 0, 0}, 
-	{"LMGC90 Type", 0, 0, 0}, 
-	{"LMGC90 Coordinance", 0, 0, 0}, 
-	{"LMGC90 Pression", 0, 0, 0}, 
-	{"LMGC90 Normal stress", 0, 0, 0}, 
-	{"LMGC90 X displacement", 0, 0, 0}, 
-	{"LMGC90 Y displacement", 0, 0, 0}, 
-	{"LMGC90 Z displacement", 0, 0, 0}, 
-	{"LMGC90 Average displacement", 0, 0, 0}, 
-	{"LMGC90 Norm of displacement", 0, 0, 0}, 
 	{0}
       };
       view_choice[4] = new Fl_Choice(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tensor display");
@@ -3416,13 +3396,15 @@ void GUI::create_option_window()
 
 void GUI::update_view_window(int num)
 {
-  if(num < 0 || num >= List_Nbr(CTX.post.list))
-    return;
+  if(num < 0 || num >= PView::list.size()) return;
 
   view_number = num;
-  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, num);
 
-  double maxval = MAX(fabs(v->Min), fabs(v->Max));
+  PView *view = PView::list[num];
+  PViewData *data = view->getData();
+  PViewOptions *opt = view->getOptions();
+
+  double maxval = MAX(fabs(data->getMin()), fabs(data->getMax()));
   if(!maxval) maxval = 1.;
   double val1 = 10. * CTX.lc;
   double val2 = 2. * CTX.lc / maxval;
@@ -3435,7 +3417,7 @@ void GUI::update_view_window(int num)
 
   opt_view_max_recursion_level (num, GMSH_GUI, 0);
   opt_view_target_error (num, GMSH_GUI, 0);
-  if(v->adaptive){
+  if(data->isAdaptive()){
     view_value[33]->activate();
     view_value[34]->activate();
   }
@@ -3444,7 +3426,8 @@ void GUI::update_view_window(int num)
     view_value[34]->deactivate();
   }
 
-  if(v->NbSP) {
+  if(data->getNumElements(PViewData::Point) ||
+     data->getNumElements(PViewData::Line)){
     ((Fl_Menu_Item*)view_choice[13]->menu())[1].activate();
     ((Fl_Menu_Item*)view_choice[13]->menu())[2].activate();
   }
@@ -3482,13 +3465,13 @@ void GUI::update_view_window(int num)
     view_value[i]->maximum(CTX.lc);
   }
 
-  if(v->TextOnly) {
-    view_range->deactivate();
-    ((Fl_Menu_Item*)view_choice[13]->menu())[0].deactivate();
-  }
-  else {
+  if(data->getNumElements()) {
     view_range->activate();
     ((Fl_Menu_Item*)view_choice[13]->menu())[0].activate();
+  }
+  else {
+    view_range->deactivate();
+    ((Fl_Menu_Item*)view_choice[13]->menu())[0].deactivate();
   }
   opt_view_show_element(num, GMSH_GUI, 0);
   opt_view_light(num, GMSH_GUI, 0);
@@ -3555,7 +3538,7 @@ void GUI::update_view_window(int num)
   view_value[2]->minimum(-val2);
   view_value[2]->maximum(val2);
 
-  if(v->NbTimeStep == 1) {
+  if(data->getNumTimeSteps() == 1) {
     view_value[50]->deactivate();
     view_butt_rep[0]->deactivate();
     view_butt_rep[1]->deactivate();
@@ -3565,14 +3548,15 @@ void GUI::update_view_window(int num)
     view_butt_rep[0]->activate();
     view_butt_rep[1]->activate();
   }
-  view_value[50]->maximum(v->NbTimeStep - 1);
+  view_value[50]->maximum(data->getNumTimeSteps() - 1);
   opt_view_timestep(num, GMSH_GUI, 0);
   opt_view_show_time(num, GMSH_GUI, 0);
 
-  if(v->ScalarOnly)
-    view_vector->deactivate();
-  else
+  if(data->getNumVectors() || data->getNumTensors())
     view_vector->activate();
+  else
+    view_vector->deactivate();
+
   opt_view_point_size(num, GMSH_GUI, 0);
   opt_view_point_type(num, GMSH_GUI, 0);
   opt_view_line_width(num, GMSH_GUI, 0);
@@ -3606,7 +3590,8 @@ void GUI::update_view_window(int num)
   opt_view_color_text3d(num, GMSH_GUI, 0);
   opt_view_color_axes(num, GMSH_GUI, 0);
 
-  view_colorbar_window->update(v->Name, v->Min, v->Max, &v->CT, &v->Changed);
+  view_colorbar_window->update((char*)data->getName().c_str(), data->getMin(), 
+			       data->getMax(), &opt->CT, &view->getChanged());
 }
 
 // Create the plugin manager window
@@ -3689,9 +3674,9 @@ void GUI::reset_plugin_view_browser()
   char str[128];
   plugin_view_browser->clear();
 
-  if(List_Nbr(CTX.post.list)){
+  if(PView::list.size()){
     plugin_view_browser->activate();
-    for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+    for(unsigned int i = 0; i < PView::list.size(); i++) {
       sprintf(str, "View [%d]", i);
       plugin_view_browser->add(str);
     }
@@ -3718,7 +3703,7 @@ void GUI::create_plugin_window(int numview)
 
   if(plugin_window) {
     reset_plugin_view_browser();
-    if(numview >= 0 && numview < List_Nbr(CTX.post.list)){
+    if(numview >= 0 && numview < PView::list.size()){
       plugin_view_browser->deselect();
       plugin_view_browser->select(numview + 1);
       view_plugin_browser_cb(NULL, NULL);
@@ -3845,15 +3830,15 @@ void GUI::create_statistics_window()
     {
       g[2] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Post-processing");
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Views");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Visible points");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Visible lines");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 4 * BH, IW, BH, "Visible triangles");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 5 * BH, IW, BH, "Visible quadrangles");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 6 * BH, IW, BH, "Visible tetrahedra");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 7 * BH, IW, BH, "Visible hexahedra");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 8 * BH, IW, BH, "Visible prisms");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 9 * BH, IW, BH, "Visible pyramids");
-      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 10 * BH, IW, BH, "Visible strings");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Points");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Lines");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 4 * BH, IW, BH, "Triangles");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 5 * BH, IW, BH, "Quadrangles");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 6 * BH, IW, BH, "Tetrahedra");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 7 * BH, IW, BH, "Hexahedra");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 8 * BH, IW, BH, "Prisms");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 9 * BH, IW, BH, "Pyramids");
+      stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 10 * BH, IW, BH, "Strings");
       g[2]->end();
     }
     o->end();
@@ -3937,15 +3922,15 @@ void GUI::set_statistics(bool compute_quality)
 
   // post
   sprintf(label[num], "%g", s[26]); stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%g/%g", s[36], s[27]); stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%g/%g", s[37], s[28]); stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%g/%g", s[38], s[29]); stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%g/%g", s[39], s[30]); stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%g/%g", s[40], s[31]); stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%g/%g", s[41], s[32]); stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%g/%g", s[42], s[33]); stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%g/%g", s[43], s[34]); stat_value[num]->value(label[num]); num++;
-  sprintf(label[num], "%g/%g", s[44], s[35]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[27]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[28]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[29]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[30]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[31]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[32]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[33]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[34]); stat_value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[35]); stat_value[num]->value(label[num]); num++;
 }
 
 
@@ -4249,7 +4234,7 @@ void GUI::reset_clip_browser()
   clip_browser->clear();
   clip_browser->add("Geometry");
   clip_browser->add("Mesh");
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
+  for(unsigned int i = 0; i < PView::list.size(); i++) {
     sprintf(str, "View [%d]", i);
     clip_browser->add(str);
   }

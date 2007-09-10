@@ -30,7 +30,7 @@
 #include <list>
 #include <math.h>
 #include "GFace.h"
-#include "Views.h"
+#include "PView.h"
 
 class BDS_Edge;
 class BDS_Face;
@@ -462,7 +462,7 @@ public:
   void cleanup();
   void recombineIntoQuads (const double angle, GFace *gf);
   // io's 
-  bool import_view(Post_View *view, const double tolerance);
+  bool import_view(PView *view, const double tolerance);
 };
 
 void outputScalarField(std::list < BDS_Face * >t, const char *fn, int param);

@@ -1,4 +1,4 @@
-// $Id: ExtractEdges.cpp,v 1.4 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: ExtractEdges.cpp,v 1.5 2007-09-10 04:47:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -98,8 +98,8 @@ Post_View *GMSH_ExtractEdgesPlugin::execute(Post_View * v)
   Post_View *v2 = BeginView(1);
 
   BDS_Mesh bds;
-  bds.import_view(v1, CTX.lc * 1.e-12);
-  //  bds.classify(angle * M_PI / 180.);
+  //bds.import_view(v1, CTX.lc * 1.e-12);
+  //bds.classify(angle * M_PI / 180.);
 
   Msg(GERROR, "BDS->classify(angle, edge_prolongation) must be reinterfaced");
 

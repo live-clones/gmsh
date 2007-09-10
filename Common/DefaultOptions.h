@@ -22,7 +22,6 @@
 
 #include "GmshDefines.h"
 #include "Options.h"
-#include "Views.h"
 
 //          PLEASE RESPECT THE ALPHABETICAL ORDER WHEN 
 //                    INSERTING A NEW OPTION!
@@ -781,7 +780,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F,   "TranslationZ" , opt_general_translation2 , 0.0 , 
     "Z-axis translation (in model units)" },
 
-  { F|O, "VectorType" , opt_general_vector_type , DRAW_POST_ARROW3D ,
+  { F|O, "VectorType" , opt_general_vector_type , 4 ,
     "Default vector display type (for normals, etc.)" },
   { F|O, "Verbosity" , opt_general_verbosity , 3. ,
     "Level of information printed during processing (0=no information)" },
@@ -847,7 +846,7 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "PointSize" , opt_geometry_point_size , 4. , 
     "Display size of points (in pixels)" },
   { F|O, "PointType" , opt_geometry_point_type , 0. , 
-    "Display points as solid color dots (0), 3D spheres (1) or growing spheres (2)" },
+    "Display points as solid color dots (0), 3D spheres (1) or scaled spheres (2)" },
 
   { F|O, "ScalingFactor" , opt_geometry_scaling_factor , 1.0 , 
     "Global geometry scaling factor" },
@@ -1240,13 +1239,13 @@ StringXNumber ViewOptions_Number[] = {
     "Generalized raise amplification factor" },
   { F|O, "GeneralizedRaiseView" , opt_view_gen_raise_view , -1. ,
     "Index of the view used for generalized raise (-1=self)" },
-  { F|O, "GlyphLocation" , opt_view_glyph_location , DRAW_POST_LOCATE_COG , 
+  { F|O, "GlyphLocation" , opt_view_glyph_location , 1, 
     "Glyph (arrow, number, etc.) location (1=center of gravity, 2=node)" },
 
   { F|O, "Height" , opt_view_size1 , 200. , 
     "Height (in pixels) of the scale or 2D plot" }, 
 
-  { F|O, "IntervalsType" , opt_view_intervals_type , DRAW_POST_CONTINUOUS ,
+  { F|O, "IntervalsType" , opt_view_intervals_type , 2 ,
     "Type of interval display (1=iso, 2=continuous, 3=discrete, 4=numeric)" },
 
   { F|O, "Light" , opt_view_light , 1. ,
@@ -1306,12 +1305,12 @@ StringXNumber ViewOptions_Number[] = {
     "Elevation of the view along Y-axis (in model coordinates)" },
   { F,   "RaiseZ" , opt_view_raise2 , 0. , 
     "Elevation of the view along Z-axis (in model coordinates)" },
-  { F|O, "RangeType" , opt_view_range_type , DRAW_POST_RANGE_DEFAULT ,
+  { F|O, "RangeType" , opt_view_range_type , 1 ,
     "Value scale range type (1=default, 2=custom, 3=per time step)" },
 
   { F|O, "SaturateValues" , opt_view_saturate_values , 0. ,
     "Saturate the view values to custom min and max (1=true, 0=false)" },
-  { F|O, "ScaleType" , opt_view_scale_type , DRAW_POST_LINEAR ,
+  { F|O, "ScaleType" , opt_view_scale_type , 1 ,
     "Value scale type (1=linear, 2=logarithmic, 3=double logarithmic)" },
   { F|O, "ShowElement" , opt_view_show_element , 0. ,
     "Show element boundaries?" },
@@ -1348,13 +1347,13 @@ StringXNumber ViewOptions_Number[] = {
     "Element (3,2) of the 3x3 coordinate transformation matrix" },
   { F,   "Transform33" , opt_view_transform22 , 1. ,
     "Element (3,3) of the 3x3 coordinate transformation matrix" },
-  { F,   "Type" , opt_view_type , DRAW_POST_3D ,
+  { F,   "Type" , opt_view_type , 1 ,
     "Type of plot (1=3D, 2=2D space, 3=2D time)" },
 
   { F|O, "UseGeneralizedRaise" , opt_view_use_gen_raise , 0 ,
     "Use generalized raise?" },
 
-  { F|O, "VectorType" , opt_view_vector_type , DRAW_POST_ARROW3D ,
+  { F|O, "VectorType" , opt_view_vector_type , 4 ,
     "Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement)" },
   { F,   "Visible" , opt_view_visible , 1. ,
     "Is the view visible?" },

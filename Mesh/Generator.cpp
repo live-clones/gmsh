@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.122 2007-09-03 20:09:14 geuzaine Exp $
+// $Id: Generator.cpp,v 1.123 2007-09-10 04:47:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,7 +22,7 @@
 #include "Gmsh.h"
 #include "Numeric.h"
 #include "Context.h"
-#include "Views.h"
+#include "PView.h"
 #include "OS.h"
 #include "GModel.h"
 #include "meshGEdge.h"
@@ -128,56 +128,19 @@ void GetStatistics(double stat[50], double quality[3][100])
     stat[25] = rhoMax;
   }
 
-  stat[26] = List_Nbr(CTX.post.list);
-  for(int i = 0; i < List_Nbr(CTX.post.list); i++) {
-    Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, i);
-    stat[27] += v->NbSP + v->NbVP + v->NbTP;
-    stat[28] += v->NbSL + v->NbVL + v->NbTL;
-    stat[29] += v->NbST + v->NbVT + v->NbTT;
-    stat[30] += v->NbSQ + v->NbVQ + v->NbTQ;
-    stat[31] += v->NbSS + v->NbVS + v->NbTS;
-    stat[32] += v->NbSH + v->NbVH + v->NbTH;
-    stat[33] += v->NbSI + v->NbVI + v->NbTI;
-    stat[34] += v->NbSY + v->NbVY + v->NbTY;
-    stat[35] += v->NbT2 + v->NbT3;
-    if(v->Visible) {
-      if(v->DrawPoints)
-        stat[36] += 
-	  (v->DrawScalars ? v->NbSP : 0) + (v->DrawVectors ? v->NbVP : 0) + 
-	  (v->DrawTensors ? v->NbTP : 0);
-      if(v->DrawLines)
-        stat[37] += 
-	  (v->DrawScalars ? v->NbSL : 0) + (v->DrawVectors ? v->NbVL : 0) + 
-	  (v->DrawTensors ? v->NbTL : 0);
-      if(v->DrawTriangles)
-        stat[38] += 
-	  (v->DrawScalars ? v->NbST : 0) + (v->DrawVectors ? v->NbVT : 0) + 
-	  (v->DrawTensors ? v->NbTT : 0);
-      if(v->DrawQuadrangles)
-        stat[39] +=
-	  (v->DrawScalars ? v->NbSQ : 0) + (v->DrawVectors ? v->NbVQ : 0) + 
-	  (v->DrawTensors ? v->NbTQ : 0);
-      if(v->DrawTetrahedra)
-        stat[40] += 
-	  (v->DrawScalars ? v->NbSS : 0) + (v->DrawVectors ? v->NbVS : 0) + 
-	  (v->DrawTensors ? v->NbTS : 0);
-      if(v->DrawHexahedra)
-        stat[41] +=
-	  (v->DrawScalars ? v->NbSH : 0) + (v->DrawVectors ? v->NbVH : 0) +
-	  (v->DrawTensors ? v->NbTH : 0);
-      if(v->DrawPrisms)
-        stat[42] += 
-	  (v->DrawScalars ? v->NbSI : 0) + (v->DrawVectors ? v->NbVI : 0) +
-	  (v->DrawTensors ? v->NbTI : 0);
-      if(v->DrawPyramids)
-        stat[43] += 
-	  (v->DrawScalars ? v->NbSY : 0) + (v->DrawVectors ? v->NbVY : 0) + 
-	  (v->DrawTensors ? v->NbTY : 0);
-      if(v->DrawStrings)
-        stat[44] += v->NbT2 + v->NbT3;
-    }
+  stat[26] = PView::list.size();
+  for(unsigned int i = 0; i < PView::list.size(); i++) {
+    PViewData *data = PView::list[i]->getData();
+    stat[27] += data->getNumElements(PViewData::Point);
+    stat[28] += data->getNumElements(PViewData::Line);
+    stat[29] += data->getNumElements(PViewData::Triangle);
+    stat[30] += data->getNumElements(PViewData::Quadrangle);
+    stat[31] += data->getNumElements(PViewData::Tetrahedron);
+    stat[32] += data->getNumElements(PViewData::Hexahedron);
+    stat[33] += data->getNumElements(PViewData::Prism);
+    stat[34] += data->getNumElements(PViewData::Pyramid);
+    stat[35] += data->getNumStrings2D() + data->getNumStrings3D();
   }
-
 }
 
 bool TooManyElements(GModel *m, int dim)

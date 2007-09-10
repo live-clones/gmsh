@@ -1,4 +1,4 @@
-// $Id: CutGrid.cpp,v 1.21 2007-08-29 18:41:06 geuzaine Exp $
+// $Id: CutGrid.cpp,v 1.22 2007-09-10 04:47:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -330,6 +330,9 @@ Post_View * GMSH_CutGridPlugin::GenerateView(Post_View * v, int connect)
   if(getNbU() <= 0 || getNbV() <= 0)
     return v;
 
+  Msg(FATAL, "XXXXXXXXXXXXXXXXXXXXX");
+  return 0;
+  /*
   Post_View * View = BeginView(1);
 
   OctreePost o(v);
@@ -398,6 +401,8 @@ Post_View * GMSH_CutGridPlugin::GenerateView(Post_View * v, int connect)
   EndView(View, v->NbTimeStep, filename, name);
 
   return View;
+
+  */
 }
 
 Post_View *GMSH_CutGridPlugin::execute(Post_View * v)

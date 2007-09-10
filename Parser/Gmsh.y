@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.285 2007-09-09 00:18:04 geuzaine Exp $
+// $Id: Gmsh.y,v 1.286 2007-09-10 04:47:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -32,7 +32,8 @@
 #include "GeoInterpolation.h"
 #include "Generator.h"
 #include "Draw.h"
-#include "Views.h"
+#include "PView.h"
+#include "PViewDataList.h"
 #include "Options.h"
 #include "Colors.h"
 #include "Parser.h"
@@ -53,12 +54,10 @@ extern Mesh *THEM;
 
 static ExtrudeParams extr;
 
-static Post_View *View;
+static PViewDataList *ViewData;
 static List_T *ViewValueList;
 static double ViewCoord[100];
-static int *ViewNumList, ViewNumNodes, ViewNumComp, ViewNumListTmp;
-static int ViewCoordIdx, ViewElementIdx;
-static int ViewErrorFlags[VIEW_NB_ELEMENT_TYPES];
+static int *ViewNumList, ViewCoordIdx;
 
 #define MAX_RECUR_LOOPS 100
 static int ImbricatedLoop = 0;
@@ -72,7 +71,6 @@ void yyerror(char *s);
 void yymsg(int type, char *fmt, ...);
 void skip_until(char *skip, char *until);
 int PrintListOfDouble(char *format, List_T *list, char *buffer);
-int CheckViewErrorFlags(Post_View *v);
 %}
 
 %union {
@@ -101,7 +99,7 @@ int CheckViewErrorFlags(Post_View *v);
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
 %token tLoop tRecombine tDelete tCoherence tIntersect tBoundary
 %token tAttractor tLayers tHole tAlias tAliasWithOptions
-%token tText2D tText3D tInterpolationScheme  tTime tGrain tCombine
+%token tText2D tText3D tInterpolationScheme  tTime tCombine
 %token tBSpline tBezier tNurbs tOrder tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
 %token tField tThreshold tStructured tLatLon tGrad tPostView 
@@ -246,26 +244,32 @@ Printf :
 View :
     tSTRING tBIGSTR '{' Views '}' tEND
     { 
-      if(!strcmp($1, "View") && !CheckViewErrorFlags(View)){
-	EndView(View, 0, yyname, $2);
+      if(!strcmp($1, "View") && ViewData->finalize()){
+	ViewData->setName($2);
+	ViewData->setFileName(yyname);
+	ViewData->setFileIndex(yyviewindex++);
+	new PView(ViewData);
       }
+      else
+	delete ViewData;
       Free($1); Free($2);
     }
-  | tSTRING tBIGSTR tSTRING VExpr '{' Views '}' tEND
-    {
-      if(!strcmp($1, "View") && !CheckViewErrorFlags(View)){
-	EndView(View, 0, yyname, $2);
-      }
-      Free($1); Free($2); Free($3);
-    }  
   | tAlias tSTRING '[' FExpr ']' tEND
     {
-      if(!strcmp($2, "View")) AliasView((int)$4, 0);
+      if(!strcmp($2, "View")){
+	int index = (int)$4;
+	if(index >= 0 && index < PView::list.size())
+	  new PView(PView::list[index], false);
+      }
       Free($2);
     }
   | tAliasWithOptions tSTRING '[' FExpr ']' tEND
     {
-      if(!strcmp($2, "View")) AliasView((int)$4, 1);
+      if(!strcmp($2, "View")){
+	int index = (int)$4;
+	if(index >= 0 && index < PView::list.size())
+	  new PView(PView::list[index], true);
+      }
       Free($2);
     }
 ;
@@ -273,24 +277,20 @@ View :
 Views :
     // nothing
     {
-      View = BeginView(1); 
-      for(int i = 0; i < VIEW_NB_ELEMENT_TYPES; i++){
-	ViewErrorFlags[i] = 0;
-      }
+      ViewData = new PViewDataList(true); 
     }
   | Views Element
   | Views Text2D
   | Views Text3D
   | Views InterpolationMatrix
   | Views Time
-  | Views Grain
 ;
 
 ElementCoords :
     FExpr
-    { ViewCoord[ViewCoordIdx] = $1; ViewCoordIdx++; }
+    { ViewCoord[ViewCoordIdx++] = $1; }
   | ElementCoords ',' FExpr
-    { ViewCoord[ViewCoordIdx] = $3; ViewCoordIdx++; }
+    { ViewCoord[ViewCoordIdx++] = $3; }
 ;
 
 ElementValues :
@@ -304,189 +304,143 @@ Element :
     tSTRING 
     {
       if(!strcmp($1, "SP")){
-	ViewElementIdx = 0; ViewNumNodes = 1; ViewNumComp = 1;
-	ViewValueList = View->SP; ViewNumList = &View->NbSP;
+	ViewValueList = ViewData->SP; ViewNumList = &ViewData->NbSP;
       }
       else if(!strcmp($1, "VP")){
-	ViewElementIdx = 1; ViewNumNodes = 1; ViewNumComp = 3;
-	ViewValueList = View->VP; ViewNumList = &View->NbVP;
+	ViewValueList = ViewData->VP; ViewNumList = &ViewData->NbVP;
       }
       else if(!strcmp($1, "TP")){
-	ViewElementIdx = 2; ViewNumNodes = 1; ViewNumComp = 9;
-	ViewValueList = View->TP; ViewNumList = &View->NbTP;
+	ViewValueList = ViewData->TP; ViewNumList = &ViewData->NbTP;
       }
       else if(!strcmp($1, "SL")){
-	ViewElementIdx = 3; ViewNumNodes = 2; ViewNumComp = 1;
-	ViewValueList = View->SL; ViewNumList = &View->NbSL;
+	ViewValueList = ViewData->SL; ViewNumList = &ViewData->NbSL;
       }
       else if(!strcmp($1, "VL")){
-	ViewElementIdx = 4; ViewNumNodes = 2; ViewNumComp = 3;
-	ViewValueList = View->VL; ViewNumList = &View->NbVL;
+	ViewValueList = ViewData->VL; ViewNumList = &ViewData->NbVL;
       }
       else if(!strcmp($1, "TL")){
-	ViewElementIdx = 5; ViewNumNodes = 2; ViewNumComp = 9;
-	ViewValueList = View->TL; ViewNumList = &View->NbTL;
+	ViewValueList = ViewData->TL; ViewNumList = &ViewData->NbTL;
       }
       else if(!strcmp($1, "ST")){
-	ViewElementIdx = 6; ViewNumNodes = 3; ViewNumComp = 1;
-	ViewValueList = View->ST; ViewNumList = &View->NbST;
+	ViewValueList = ViewData->ST; ViewNumList = &ViewData->NbST;
       }
       else if(!strcmp($1, "VT")){
-	ViewElementIdx = 7; ViewNumNodes = 3; ViewNumComp = 3;
-	ViewValueList = View->VT; ViewNumList = &View->NbVT;
+	ViewValueList = ViewData->VT; ViewNumList = &ViewData->NbVT;
       }
       else if(!strcmp($1, "TT")){
-	ViewElementIdx = 8; ViewNumNodes = 3; ViewNumComp = 9;
-	ViewValueList = View->TT; ViewNumList = &View->NbTT;
+	ViewValueList = ViewData->TT; ViewNumList = &ViewData->NbTT;
       }
       else if(!strcmp($1, "SQ")){
-	ViewElementIdx = 9; ViewNumNodes = 4; ViewNumComp = 1;
-	ViewValueList = View->SQ; ViewNumList = &View->NbSQ;
+	ViewValueList = ViewData->SQ; ViewNumList = &ViewData->NbSQ;
       }
       else if(!strcmp($1, "VQ")){
-	ViewElementIdx = 10; ViewNumNodes = 4; ViewNumComp = 3;
-	ViewValueList = View->VQ; ViewNumList = &View->NbVQ;
+	ViewValueList = ViewData->VQ; ViewNumList = &ViewData->NbVQ;
       }
       else if(!strcmp($1, "TQ")){
-	ViewElementIdx = 11; ViewNumNodes = 4; ViewNumComp = 9;
-	ViewValueList = View->TQ; ViewNumList = &View->NbTQ;
+	ViewValueList = ViewData->TQ; ViewNumList = &ViewData->NbTQ;
       }
       else if(!strcmp($1, "SS")){
-	ViewElementIdx = 12; ViewNumNodes = 4; ViewNumComp = 1;
-	ViewValueList = View->SS; ViewNumList = &View->NbSS;
+	ViewValueList = ViewData->SS; ViewNumList = &ViewData->NbSS;
       }
       else if(!strcmp($1, "VS")){
-	ViewElementIdx = 13; ViewNumNodes = 4; ViewNumComp = 3;
-	ViewValueList = View->VS; ViewNumList = &View->NbVS;
+	ViewValueList = ViewData->VS; ViewNumList = &ViewData->NbVS;
       }
       else if(!strcmp($1, "TS")){
-	ViewElementIdx = 14; ViewNumNodes = 4; ViewNumComp = 9;
-	ViewValueList = View->TS; ViewNumList = &View->NbTS;
+	ViewValueList = ViewData->TS; ViewNumList = &ViewData->NbTS;
       }
       else if(!strcmp($1, "SH")){
-	ViewElementIdx = 15; ViewNumNodes = 8; ViewNumComp = 1;
-	ViewValueList = View->SH; ViewNumList = &View->NbSH;
+	ViewValueList = ViewData->SH; ViewNumList = &ViewData->NbSH;
       }
       else if(!strcmp($1, "VH")){
-	ViewElementIdx = 16; ViewNumNodes = 8; ViewNumComp = 3;
-	ViewValueList = View->VH; ViewNumList = &View->NbVH;
+	ViewValueList = ViewData->VH; ViewNumList = &ViewData->NbVH;
       }
       else if(!strcmp($1, "TH")){
-	ViewElementIdx = 17; ViewNumNodes = 8; ViewNumComp = 9;
-	ViewValueList = View->TH; ViewNumList = &View->NbTH;
+	ViewValueList = ViewData->TH; ViewNumList = &ViewData->NbTH;
       }
       else if(!strcmp($1, "SI")){
-	ViewElementIdx = 18; ViewNumNodes = 6; ViewNumComp = 1;
-	ViewValueList = View->SI; ViewNumList = &View->NbSI;
+	ViewValueList = ViewData->SI; ViewNumList = &ViewData->NbSI;
       }
       else if(!strcmp($1, "VI")){
-	ViewElementIdx = 19; ViewNumNodes = 6; ViewNumComp = 3;
-	ViewValueList = View->VI; ViewNumList = &View->NbVI;
+	ViewValueList = ViewData->VI; ViewNumList = &ViewData->NbVI;
       }
       else if(!strcmp($1, "TI")){
-	ViewElementIdx = 20; ViewNumNodes = 6; ViewNumComp = 9;
-	ViewValueList = View->TI; ViewNumList = &View->NbTI;
+	ViewValueList = ViewData->TI; ViewNumList = &ViewData->NbTI;
       }
       else if(!strcmp($1, "SY")){
-	ViewElementIdx = 21; ViewNumNodes = 5; ViewNumComp = 1;
-	ViewValueList = View->SY; ViewNumList = &View->NbSY;
+	ViewValueList = ViewData->SY; ViewNumList = &ViewData->NbSY;
       }
       else if(!strcmp($1, "VY")){
-	ViewElementIdx = 22; ViewNumNodes = 5; ViewNumComp = 3;
-	ViewValueList = View->VY; ViewNumList = &View->NbVY;
+	ViewValueList = ViewData->VY; ViewNumList = &ViewData->NbVY;
       }
       else if(!strcmp($1, "TY")){
-	ViewElementIdx = 23; ViewNumNodes = 5; ViewNumComp = 9;
-	ViewValueList = View->TY; ViewNumList = &View->NbTY;
+	ViewValueList = ViewData->TY; ViewNumList = &ViewData->NbTY;
       }
       else if(!strcmp($1, "SL2")){
-	ViewElementIdx = 3; ViewNumNodes = 3; ViewNumComp = 1;
-	ViewValueList = View->SL2; ViewNumList = &View->NbSL2;
+	ViewValueList = ViewData->SL2; ViewNumList = &ViewData->NbSL2;
       }
       else if(!strcmp($1, "VL2")){
-	ViewElementIdx = 4; ViewNumNodes = 3; ViewNumComp = 3;
-	ViewValueList = View->VL2; ViewNumList = &View->NbVL2;
+	ViewValueList = ViewData->VL2; ViewNumList = &ViewData->NbVL2;
       }
       else if(!strcmp($1, "TL2")){
-	ViewElementIdx = 5; ViewNumNodes = 3; ViewNumComp = 9;
-	ViewValueList = View->TL2; ViewNumList = &View->NbTL2;
+	ViewValueList = ViewData->TL2; ViewNumList = &ViewData->NbTL2;
       }
       else if(!strcmp($1, "ST2")){
-	ViewElementIdx = 6; ViewNumNodes = 6; ViewNumComp = 1;
-	ViewValueList = View->ST2; ViewNumList = &View->NbST2;
+	ViewValueList = ViewData->ST2; ViewNumList = &ViewData->NbST2;
       }
       else if(!strcmp($1, "VT2")){
-	ViewElementIdx = 7; ViewNumNodes = 6; ViewNumComp = 3;
-	ViewValueList = View->VT2; ViewNumList = &View->NbVT2;
+	ViewValueList = ViewData->VT2; ViewNumList = &ViewData->NbVT2;
       }
       else if(!strcmp($1, "TT2")){
-	ViewElementIdx = 8; ViewNumNodes = 6; ViewNumComp = 9;
-	ViewValueList = View->TT2; ViewNumList = &View->NbTT2;
+	ViewValueList = ViewData->TT2; ViewNumList = &ViewData->NbTT2;
       }
       else if(!strcmp($1, "SQ2")){
-	ViewElementIdx = 9; ViewNumNodes = 9; ViewNumComp = 1;
-	ViewValueList = View->SQ2; ViewNumList = &View->NbSQ2;
+	ViewValueList = ViewData->SQ2; ViewNumList = &ViewData->NbSQ2;
       }
       else if(!strcmp($1, "VQ2")){
-	ViewElementIdx = 10; ViewNumNodes = 9; ViewNumComp = 3;
-	ViewValueList = View->VQ2; ViewNumList = &View->NbVQ2;
+	ViewValueList = ViewData->VQ2; ViewNumList = &ViewData->NbVQ2;
       }
       else if(!strcmp($1, "TQ2")){
-	ViewElementIdx = 11; ViewNumNodes = 9; ViewNumComp = 9;
-	ViewValueList = View->TQ2; ViewNumList = &View->NbTQ2;
+	ViewValueList = ViewData->TQ2; ViewNumList = &ViewData->NbTQ2;
       }
       else if(!strcmp($1, "SS2")){
-	ViewElementIdx = 12; ViewNumNodes = 10; ViewNumComp = 1;
-	ViewValueList = View->SS2; ViewNumList = &View->NbSS2;
+	ViewValueList = ViewData->SS2; ViewNumList = &ViewData->NbSS2;
       }
       else if(!strcmp($1, "VS2")){
-	ViewElementIdx = 13; ViewNumNodes = 10; ViewNumComp = 3;
-	ViewValueList = View->VS2; ViewNumList = &View->NbVS2;
+	ViewValueList = ViewData->VS2; ViewNumList = &ViewData->NbVS2;
       }
       else if(!strcmp($1, "TS2")){
-	ViewElementIdx = 14; ViewNumNodes = 10; ViewNumComp = 9;
-	ViewValueList = View->TS2; ViewNumList = &View->NbTS2;
+	ViewValueList = ViewData->TS2; ViewNumList = &ViewData->NbTS2;
       }
       else if(!strcmp($1, "SH2")){
-	ViewElementIdx = 15; ViewNumNodes = 27; ViewNumComp = 1;
-	ViewValueList = View->SH2; ViewNumList = &View->NbSH2;
+	ViewValueList = ViewData->SH2; ViewNumList = &ViewData->NbSH2;
       }
       else if(!strcmp($1, "VH2")){
-	ViewElementIdx = 16; ViewNumNodes = 27; ViewNumComp = 3;
-	ViewValueList = View->VH2; ViewNumList = &View->NbVH2;
+	ViewValueList = ViewData->VH2; ViewNumList = &ViewData->NbVH2;
       }
       else if(!strcmp($1, "TH2")){
-	ViewElementIdx = 17; ViewNumNodes = 27; ViewNumComp = 9;
-	ViewValueList = View->TH2; ViewNumList = &View->NbTH2;
+	ViewValueList = ViewData->TH2; ViewNumList = &ViewData->NbTH2;
       }
       else if(!strcmp($1, "SI2")){
-	ViewElementIdx = 18; ViewNumNodes = 18; ViewNumComp = 1;
-	ViewValueList = View->SI2; ViewNumList = &View->NbSI2;
+	ViewValueList = ViewData->SI2; ViewNumList = &ViewData->NbSI2;
       }
       else if(!strcmp($1, "VI2")){
-	ViewElementIdx = 19; ViewNumNodes = 18; ViewNumComp = 3;
-	ViewValueList = View->VI2; ViewNumList = &View->NbVI2;
+	ViewValueList = ViewData->VI2; ViewNumList = &ViewData->NbVI2;
       }
       else if(!strcmp($1, "TI2")){
-	ViewElementIdx = 20; ViewNumNodes = 18; ViewNumComp = 9;
-	ViewValueList = View->TI2; ViewNumList = &View->NbTI2;
+	ViewValueList = ViewData->TI2; ViewNumList = &ViewData->NbTI2;
       }
       else if(!strcmp($1, "SY2")){
-	ViewElementIdx = 21; ViewNumNodes = 14; ViewNumComp = 1;
-	ViewValueList = View->SY2; ViewNumList = &View->NbSY2;
+	ViewValueList = ViewData->SY2; ViewNumList = &ViewData->NbSY2;
       }
       else if(!strcmp($1, "VY2")){
-	ViewElementIdx = 22; ViewNumNodes = 14; ViewNumComp = 3;
-	ViewValueList = View->VY2; ViewNumList = &View->NbVY2;
+	ViewValueList = ViewData->VY2; ViewNumList = &ViewData->NbVY2;
       }
       else if(!strcmp($1, "TY2")){
-	ViewElementIdx = 23; ViewNumNodes = 14; ViewNumComp = 9;
-	ViewValueList = View->TY2; ViewNumList = &View->NbTY2;
+	ViewValueList = ViewData->TY2; ViewNumList = &ViewData->NbTY2;
       }
       else{
 	yymsg(GERROR, "Unknown element type '%s'", $1);	
-	ViewElementIdx = -1; ViewNumNodes = 0; ViewNumComp = 0;
-	ViewValueList = NULL; ViewNumList = NULL;
+	ViewValueList = 0; ViewNumList = 0;
       }
       Free($1);
       ViewCoordIdx = 0;
@@ -494,36 +448,26 @@ Element :
     '(' ElementCoords ')'
     {
       if(ViewValueList){
-	if(ViewCoordIdx != 3 * ViewNumNodes){
- 	  // yymsg(GERROR, "Wrong number of node coordinates (%d != %d)", 
-	  //       ViewCoordIdx, 3 * ViewNumNodes);
-	  ViewNumNodes = ViewCoordIdx/3;
-	}
 	for(int i = 0; i < 3; i++)
-	  for(int j = 0; j < ViewNumNodes; j++)
-	    List_Add(ViewValueList, &ViewCoord[3*j+i]);
-	ViewNumListTmp = List_Nbr(ViewValueList);
+	  for(int j = 0; j < ViewCoordIdx / 3; j++)
+	    List_Add(ViewValueList, &ViewCoord[3 * j + i]);
       }
     }
     '{' ElementValues '}' tEND
     {
-      if(ViewValueList){  
-	if((List_Nbr(ViewValueList) - ViewNumListTmp) % (ViewNumComp * ViewCoordIdx/3)) 
-	  ViewErrorFlags[ViewElementIdx]++;
-	(*ViewNumList)++;
-      }
+      if(ViewValueList) (*ViewNumList)++;
     }
 ;
 
 Text2DValues :
     StringExprVar
     { 
-      for(int i = 0; i < (int)strlen($1)+1; i++) List_Add(View->T2C, &$1[i]); 
+      for(int i = 0; i < (int)strlen($1)+1; i++) List_Add(ViewData->T2C, &$1[i]); 
       Free($1);
     }
   | Text2DValues ',' StringExprVar
     { 
-      for(int i = 0; i < (int)strlen($3)+1; i++) List_Add(View->T2C, &$3[i]); 
+      for(int i = 0; i < (int)strlen($3)+1; i++) List_Add(ViewData->T2C, &$3[i]); 
       Free($3);
     }
 ;
@@ -531,26 +475,27 @@ Text2DValues :
 Text2D : 
     tText2D '(' FExpr ',' FExpr ',' FExpr ')'
     { 
-      List_Add(View->T2D, &$3); List_Add(View->T2D, &$5);
-      List_Add(View->T2D, &$7); 
-      double d = List_Nbr(View->T2C);
-      List_Add(View->T2D, &d); 
+      List_Add(ViewData->T2D, &$3); 
+      List_Add(ViewData->T2D, &$5);
+      List_Add(ViewData->T2D, &$7); 
+      double d = List_Nbr(ViewData->T2C);
+      List_Add(ViewData->T2D, &d); 
     }
     '{' Text2DValues '}' tEND
     {
-      View->NbT2++;
+      ViewData->NbT2++;
     }
 ;
 
 Text3DValues :
     StringExprVar
     { 
-      for(int i = 0; i < (int)strlen($1)+1; i++) List_Add(View->T3C, &$1[i]); 
+      for(int i = 0; i < (int)strlen($1)+1; i++) List_Add(ViewData->T3C, &$1[i]); 
       Free($1);
     }
   | Text3DValues ',' StringExprVar
     { 
-      for(int i = 0; i < (int)strlen($3)+1; i++) List_Add(View->T3C, &$3[i]); 
+      for(int i = 0; i < (int)strlen($3)+1; i++) List_Add(ViewData->T3C, &$3[i]); 
       Free($3);
     }
 ;
@@ -558,14 +503,14 @@ Text3DValues :
 Text3D : 
     tText3D '(' FExpr ',' FExpr ',' FExpr ',' FExpr ')'
     { 
-      List_Add(View->T3D, &$3); List_Add(View->T3D, &$5);
-      List_Add(View->T3D, &$7); List_Add(View->T3D, &$9); 
-      double d = List_Nbr(View->T3C);
-      List_Add(View->T3D, &d); 
+      List_Add(ViewData->T3D, &$3); List_Add(ViewData->T3D, &$5);
+      List_Add(ViewData->T3D, &$7); List_Add(ViewData->T3D, &$9); 
+      double d = List_Nbr(ViewData->T3C);
+      List_Add(ViewData->T3D, &d); 
     }
     '{' Text3DValues '}' tEND
     {
-      View->NbT3++;
+      ViewData->NbT3++;
     }
 ;
 
@@ -573,31 +518,26 @@ InterpolationMatrix :
     tInterpolationScheme '{' RecursiveListOfListOfDouble '}' 
                          '{' RecursiveListOfListOfDouble '}'  tEND
     {
-      View->adaptive = new Adaptive_Post_View(View, $3, $6);
+      yyerror("TODO: reinterface adaptive views");
+      //ViewData->adaptive = new Adaptive_Post_View(ViewData, $3, $6);
     }
  |  tInterpolationScheme '{' RecursiveListOfListOfDouble '}' 
                          '{' RecursiveListOfListOfDouble '}'  
                          '{' RecursiveListOfListOfDouble '}'  
                          '{' RecursiveListOfListOfDouble '}'  tEND
     {
-      View->adaptive = new Adaptive_Post_View(View, $3, $6, $9, $12);
+      yyerror("TODO: reinterface adaptive views");
+      //ViewData->adaptive = new Adaptive_Post_View(ViewData, $3, $6, $9, $12);
     }
 ;
 
 Time :
     tTime 
     {
-      ViewValueList = View->Time;
+      ViewValueList = ViewData->Time;
     }
    '{' ElementValues '}' tEND
     {
-    }
-;
-
-Grain :
-    tGrain '(' FExpr ')'  ListOfDouble  tEND
-    {
-      (*View->Grains) [(int)$3] = $5;
     }
 ;
 
@@ -1113,11 +1053,11 @@ Shape :
     }
   | tPostView tField '(' FExpr ')' tAFFECT FExpr tEND 
     {
-      Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, (int)$7);
-      if(vv) 
-        fields.insert(new PostViewField(*vv), (int)$4);
+      int index = (int)$7;
+      if(index >= 0 && index < PView::list.size()) 
+        fields.insert(new PostViewField(PView::list[index]), (int)$4);
       else
-        yymsg(GERROR, "Field %i error, view %i does not exist",(int)$4,(int)$7);
+        yymsg(GERROR, "Field %i error, view %i does not exist", (int)$4, (int)$7);
       // dummy values
       $$.Type = 0;
       $$.Num = 0;
@@ -1885,11 +1825,14 @@ Delete :
   | tDelete tSTRING '[' FExpr ']' tEND
     {
       if(!strcmp($2, "View")){
-	RemoveViewByIndex((int)$4);
+	int index = (int)$4;
+	if(index >= 0 && index < PView::list.size())
+	  delete PView::list[index];
+	else
+	  yymsg(GERROR, "Unknown view %d", index);
       }
-      else{
+      else
 	yymsg(GERROR, "Unknown command 'Delete %s'", $2);
-      }
       Free($2);
     }
   | tDelete tSTRING tEND
@@ -1903,23 +1846,18 @@ Delete :
 	List_Reset(THEM->PhysicalGroups);
 	GModel::current()->deletePhysicalGroups();
       }
-      else{
+      else
 	yymsg(GERROR, "Unknown command 'Delete %s'", $2);
-      }
       Free($2);
     }
   | tDelete tSTRING tSTRING tEND
     {
       if(!strcmp($2, "Empty") && !strcmp($3, "Views")){
-	for(int i = List_Nbr(CTX.post.list) - 1; i >= 0; i--){
-	  Post_View *v = *(Post_View **) List_Pointer(CTX.post.list, i);
-	  if(v->empty())
-	    RemoveViewByIndex(i);
-	}
+	for(int i = PView::list.size() - 1; i >= 0; i--)
+	  if(PView::list[i]->getData()->empty()) delete PView::list[i];
       }
-      else{
+      else
 	yymsg(GERROR, "Unknown command 'Delete %s %s'", $2, $3);
-      }
       Free($2); Free($3);
     }
 ;
@@ -2018,42 +1956,42 @@ Command :
 	FixRelativePath($2, tmpstring);
 	MergeFile(tmpstring, 1);
       }
-      else if(!strcmp($1, "System")){
+      else if(!strcmp($1, "System"))
 	SystemCall($2);
-      }
-      else{
+      else
 	yymsg(GERROR, "Unknown command '%s'", $1);
-      }
       Free($1); Free($2);
     } 
   | tSTRING tSTRING '[' FExpr ']' StringExprVar tEND
     {
       if(!strcmp($1, "Save") && !strcmp($2, "View")){
-	Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, (int)$4);
-	if(vv){
+	int index = (int)$4;
+	if(index >= 0 && index < PView::list.size()){
 	  char tmpstring[1024];
 	  FixRelativePath($6, tmpstring);
-	  WriteView(*vv, tmpstring, CTX.post.file_format, 0);
+	  PView::list[index]->write(tmpstring, CTX.post.file_format);
 	}
+	else
+	  yymsg(GERROR, "Unknown view %d", index);
       }
-      else{
+      else
 	yymsg(GERROR, "Unknown command '%s'", $1);
-      }
       Free($1); Free($2); Free($6);
     }
   | tSTRING tSTRING tSTRING '[' FExpr ']' tEND
     {
       if(!strcmp($1, "Background") && !strcmp($2, "Mesh")  && !strcmp($3, "View")){
-	Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, (int)$5);
-	if(vv){
-	  Field *field = new PostViewField(*vv);
+	int index = (int)$5;
+	if(index >= 0 && index < PView::list.size()){
+	  Field *field = new PostViewField(PView::list[index]);
 	  fields.insert(field);
 	  BGMAddField(field);
 	}
+	else
+	  yymsg(GERROR, "Unknown view %d", index);
       }
-      else{
+      else
 	yymsg(GERROR, "Unknown command '%s'", $1);
-      }
       Free($1); Free($2); Free($3);
     }
   | tSTRING FExpr tEND
@@ -2071,9 +2009,8 @@ Command :
       else if(!strcmp($1, "Status")){
 	yymsg(GERROR, "Mesh directives are not (yet) allowed in scripts");
       }
-      else{
+      else
 	yymsg(GERROR, "Unknown command '%s'", $1);
-      }
       Free($1);
     }
    | tPlugin '(' tSTRING ')' '.' tSTRING tEND
@@ -2089,21 +2026,21 @@ Command :
    | tCombine tSTRING tEND
     {
       if(!strcmp($2, "ElementsFromAllViews"))
-	CombineViews(0, 1, CTX.post.combine_remove_orig);
+	PView::combine(false, 1, CTX.post.combine_remove_orig);
       else if(!strcmp($2, "ElementsFromVisibleViews"))
-	CombineViews(0, 0, CTX.post.combine_remove_orig);
+	PView::combine(false, 0, CTX.post.combine_remove_orig);
       else if(!strcmp($2, "ElementsByViewName"))
-	CombineViews(0, 2, CTX.post.combine_remove_orig);
+	PView::combine(false, 2, CTX.post.combine_remove_orig);
       else if(!strcmp($2, "TimeStepsFromAllViews"))
-	CombineViews(1, 1, CTX.post.combine_remove_orig);
+	PView::combine(true, 1, CTX.post.combine_remove_orig);
       else if(!strcmp($2, "TimeStepsFromVisibleViews"))
-	CombineViews(1, 0, CTX.post.combine_remove_orig);
+	PView::combine(true, 0, CTX.post.combine_remove_orig);
       else if(!strcmp($2, "TimeStepsByViewName"))
-	CombineViews(1, 2, CTX.post.combine_remove_orig);
+	PView::combine(true, 2, CTX.post.combine_remove_orig);
       else if(!strcmp($2, "Views"))
-	CombineViews(0, 1, CTX.post.combine_remove_orig);
+	PView::combine(false, 1, CTX.post.combine_remove_orig);
       else if(!strcmp($2, "TimeSteps"))
-	CombineViews(1, 2, CTX.post.combine_remove_orig);
+	PView::combine(true, 2, CTX.post.combine_remove_orig);
       else
 	yymsg(GERROR, "Unknown 'Combine' command");
       Free($2);
@@ -2179,9 +2116,8 @@ Loop :
 	List_Put(TheSymbol.val, 0, &$5);
 	Tree_Add(Symbol_T, &TheSymbol);
       }
-      else{
+      else
 	List_Write(pSymbol->val, 0, &$5);
-      }
       fgetpos(yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = yylineno;
       ImbricatedLoop++;
@@ -2205,9 +2141,8 @@ Loop :
 	List_Put(TheSymbol.val, 0, &$5);
 	Tree_Add(Symbol_T, &TheSymbol);
       }
-      else{
+      else
 	List_Write(pSymbol->val, 0, &$5);
-      }
       fgetpos(yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = yylineno;
       ImbricatedLoop++;
@@ -2245,9 +2180,8 @@ Loop :
 	  fsetpos(yyin, &yyposImbricatedLoopsTab[ImbricatedLoop-1]);
 	  yylineno = yylinenoImbricatedLoopsTab[ImbricatedLoop-1];
 	}
-	else{
+	else
 	  ImbricatedLoop--;
-	}
       }
     }
   | tFunction tSTRING
@@ -2567,10 +2501,8 @@ ExtrudeParameter :
 	  extr.mesh.hLayer.push_back(d);
 	}
       }
-      else{
-	yymsg(GERROR, "Wrong layer definition {%d, %d}", 
-	      List_Nbr($3), List_Nbr($5));
-      }
+      else
+	yymsg(GERROR, "Wrong layer definition {%d, %d}", List_Nbr($3), List_Nbr($5));
       List_Delete($3);
       List_Delete($5);
     }
@@ -2590,10 +2522,9 @@ ExtrudeParameter :
 	  extr.mesh.hLayer.push_back(d);
 	}
       }
-      else{
-	yymsg(GERROR, "Wrong layer definition {%d, %d, %d}", 
-	      List_Nbr($3), List_Nbr($5), List_Nbr($7));
-      }
+      else
+	yymsg(GERROR, "Wrong layer definition {%d, %d, %d}", List_Nbr($3), 
+	      List_Nbr($5), List_Nbr($7));
       List_Delete($3);
       List_Delete($5);
       List_Delete($7);
@@ -2990,9 +2921,8 @@ FExpr_Single :
 	yymsg(GERROR, "Unknown variable '%s'", $2);
 	$$ = 0.;
       }
-      else{
+      else
 	$$ = List_Nbr(pSymbol->val);
-      }
       Free($2);
     }
   | tSTRING NumericIncrement
@@ -3382,9 +3312,8 @@ ColorExpr :
 	  yymsg(GERROR, "Unknown color option '%s.Color.%s'", $1, $5);
 	  $$ = 0;
 	}
-	else{
+	else
 	  $$ = pColOpt(0, GMSH_GET, 0);
-	}
       }
       Free($1); Free($5);
     }
@@ -3596,33 +3525,11 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer){
 	strcat(buffer, tmp2);
       }
     }
-    else{
+    else
       return List_Nbr(list)-i;
-    }
   }
   if(j != (int)strlen(format))
     return -1;
-  return 0;
-}
-
-int CheckViewErrorFlags(Post_View *v){
-  if(View->adaptive) return 0; // hope for the best :-)
-
-  char *name[8] = { "point", "line", "triangle", "quadrangle", 
-		    "tetrahedron", "hexahedron", "prism", "pyramid" };
-  char *type[3] = { "scalar", "vector", "tensor" };
-
-  if(8 * 3 != VIEW_NB_ELEMENT_TYPES){
-    Msg(GERROR, "Please upgrade CheckViewErrorFlags!");
-    return 0;
-  }
-  
-  for(int i = 0; i < VIEW_NB_ELEMENT_TYPES; i++)
-    if(ViewErrorFlags[i])
-      Msg(GERROR, "%d %s %s%s in View[%d] contain%s a wrong number of values",
-	  ViewErrorFlags[i], type[i%3], name[i/3], (ViewErrorFlags[i] > 1) ? "s" : "",
-	  v->Index, (ViewErrorFlags[i] > 1) ? "" : "s");
-  
   return 0;
 }
 

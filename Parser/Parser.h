@@ -38,6 +38,7 @@ void force_yyflush();
 
 extern FILE *yyin;
 extern int yylineno;
+extern int yyviewindex;
 extern char yyname[256];
 extern char *yytext;
 extern int yyerrorstate;

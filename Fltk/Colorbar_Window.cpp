@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.58 2007-06-12 07:04:08 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.59 2007-09-10 04:47:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -329,7 +329,7 @@ void Colorbar_Window::draw()
 // Update
 
 void Colorbar_Window::update(char *name, double min, double max,
-                             GmshColorTable * table, int *changed)
+                             GmshColorTable *table, bool *changed)
 {
   label = name;
   ct = table;
@@ -453,7 +453,7 @@ int Colorbar_Window::handle(int event)
     else if(Fl::test_shortcut(FL_CTRL + 'v')) {
       ColorTable_Paste(ct);
       redraw();
-      *viewchanged = 1;
+      *viewchanged = true;
     }
     else if(Fl::test_shortcut('h')) {
       help_flag = !help_flag;
@@ -545,7 +545,7 @@ int Colorbar_Window::handle(int event)
     if(compute) {
       ColorTable_Recompute(ct);
       redraw();
-      *viewchanged = 1;
+      *viewchanged = true;
       do_callback();
     }
     return 1;
@@ -659,7 +659,7 @@ int Colorbar_Window::handle(int event)
       else
         redraw_range(entry - 1, pentry + 1);
       pentry = entry;
-      *viewchanged = 1;
+      *viewchanged = true;
     }
     return 1;
   }

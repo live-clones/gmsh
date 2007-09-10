@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.24 2007-09-06 16:04:25 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.25 2007-09-10 04:47:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,11 +20,9 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Gmsh.h"
-#include "Views.h"
 #include "BackgroundMesh.h"
 #include "Numeric.h"
 #include "Context.h"
-#include "OctreePost.h"
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
