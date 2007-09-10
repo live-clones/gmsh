@@ -200,7 +200,6 @@ public :
   // post processing options 
   struct{
     List_T *list ;
-    int force_num, compute_bb, vertex_arrays;
     int draw, link, horizontal_scales ;
     int smooth, anim_cycle, combine_time, combine_remove_orig ;
     int file_format, plugins;

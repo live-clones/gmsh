@@ -1130,9 +1130,6 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "Smoothing" , opt_post_smooth , 0. ,
     "Apply (non-reversible) smoothing to post-processing view when merged" },
 
-  { F|O, "VertexArrays" , opt_post_vertex_arrays , 1. ,
-    "Use OpenGL vertex arrays to draw triangles in post-processing views?" },
-
   { 0, NULL , NULL , 0. }
 } ;
 

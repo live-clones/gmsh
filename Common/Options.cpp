@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.353 2007-09-10 04:47:02 geuzaine Exp $
+// $Id: Options.cpp,v 1.354 2007-09-10 04:57:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -134,7 +134,6 @@ void Init_Options(int num)
   CTX.mesh.draw = 1;
   CTX.post.draw = 1;
   CTX.post.list = NULL;
-  CTX.post.force_num = 0;
   CTX.threads_lock = 0; // very primitive locking
   CTX.mesh.changed = 0;
   CTX.post.combine_time = 0; // try to combine_time views at startup
@@ -5276,14 +5275,6 @@ double opt_solver_merge_views3(OPT_ARGS_NUM)
 double opt_solver_merge_views4(OPT_ARGS_NUM)
 {
   return opt_solver_merge_views(4, action, val);
-}
-
-double opt_post_vertex_arrays(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    CTX.post.vertex_arrays = (int)val;
-  }
-  return CTX.post.vertex_arrays;
 }
 
 double opt_post_horizontal_scales(OPT_ARGS_NUM)
