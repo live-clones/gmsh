@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.129 2007-09-10 05:13:12 geuzaine Exp $
+// $Id: Post.cpp,v 1.130 2007-09-11 13:54:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1186,11 +1186,6 @@ static int estimateNumVectors(PView *p)
   PViewOptions *opt = p->getOptions();
 
   int heuristic = data->getNumVectors();
-  if(opt->Normals)
-    heuristic += data->getNumElements(PViewData::Triangle) +
-      data->getNumElements(PViewData::Quadrangle);
-  if(opt->Tangents)
-    heuristic += data->getNumElements(PViewData::Line);
 
   return heuristic + 1000;
 }
