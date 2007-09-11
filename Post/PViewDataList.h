@@ -24,8 +24,8 @@
 #include <vector>
 #include <string>
 #include "PViewData.h"
-#include "SBoundingBox3d.h"
 #include "AdaptiveViews.h"
+#include "SBoundingBox3d.h"
 #include "List.h"
 
 #define VAL_INF 1.e200

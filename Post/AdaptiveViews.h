@@ -43,10 +43,6 @@ class adapt_point
   double shape_functions[128];
   static adapt_point *New(double x, double y, double z, 
 			  Double_Matrix *coeffs, Double_Matrix *eexps);
-  void print() const
-  {
-    printf("p %g %g\n", x, y);
-  }
   bool operator < (const adapt_point &other) const
   {
     if(other.x < x) return true;
@@ -77,10 +73,6 @@ class adapt_edge
   {
     sf[0] = (1 - u) / 2.;
     sf[1] = (1 + u) / 2.;
-  }
-  void print()
-  {
-    printf("p1 %g %g p2 %g %g\n", p[0]->x, p[0]->y, p[1]->x, p[1]->y);
   }
   static void Create(int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Recur_Create(adapt_edge *e, int maxlevel, int level, 
@@ -114,11 +106,6 @@ class adapt_triangle
     sf[0] = 1. - u - v;
     sf[1] = u;
     sf[2] = v;
-  }
-  void print()
-  {
-    printf("p1 %g %g p2 %g %g p3 %g %g\n", 
-	   p[0]->x, p[0]->y, p[1]->x, p[1]->y, p[2]->x, p[2]->y);
   }
   static void Create(int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Recur_Create(adapt_triangle *t, int maxlevel, int level,
@@ -155,11 +142,6 @@ class adapt_quad
     sf[2] = 0.25 * (1. + u) * (1. + v);
     sf[3] = 0.25 * (1. - u) * (1. + v);
   }
-  void print ()
-  {
-    printf("p1 %g %g p2 %g %g p3 %g %g\n",
-	   p[0]->x, p[0]->y, p[1]->x, p[1]->y, p[2]->x, p[2]->y);
-  }
   static void Create(int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Recur_Create(adapt_quad *q, int maxlevel, int level,
 			   Double_Matrix *coeffs, Double_Matrix *eexps);
@@ -195,11 +177,6 @@ class adapt_tet
   inline double V() const
   {
     return (p[0]->val + p[1]->val + p[2]->val + p[3]->val) / 4.;
-  }
-  void print()
-  {
-    printf("p1 %g %g p2 %g %g p3 %g %g\n",
-	   p[0]->x, p[0]->y, p[1]->x, p[1]->y, p[2]->x, p[2]->y);
   }
   static void Create(int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Recur_Create(adapt_tet *t, int maxlevel, int level, 
@@ -247,11 +224,6 @@ class adapt_hex
     return (p[0]->val + p[1]->val + p[2]->val+ p[3]->val +
 	    p[4]->val + p[5]->val + p[6]->val+ p[7]->val) / 8.;
   }
-  void print()
-  {
-    printf("p1 %g %g p2 %g %g p3 %g %g\n",
-	   p[0]->x, p[0]->y, p[1]->x, p[1]->y, p[2]->x, p[2]->y);
-  }
   static void Create(int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Recur_Create(adapt_hex *h, int maxlevel, int level,
 			   Double_Matrix *coeffs, Double_Matrix *eexps);
@@ -270,20 +242,20 @@ class Adaptive_Post_View
   double minval, maxval;
   int presentZoomLevel;
   double presentTol;
-  Double_Matrix * _eexps;
-  Double_Matrix * _coefs;
-  Double_Matrix * _coefsGeom;
-  Double_Matrix * _eexpsGeom;
-  Double_Matrix * _STposX;
-  Double_Matrix * _STposY;
-  Double_Matrix * _STposZ;
-  Double_Matrix * _STval;
+  Double_Matrix *_eexps;
+  Double_Matrix *_coefs;
+  Double_Matrix *_coefsGeom;
+  Double_Matrix *_eexpsGeom;
+  Double_Matrix *_STposX;
+  Double_Matrix *_STposY;
+  Double_Matrix *_STposZ;
+  Double_Matrix *_STval;
   // for vectors
-  Double_Matrix * _STvalX;
-  Double_Matrix * _STvalY;
-  Double_Matrix * _STvalZ;
-  Double_Matrix * _Interpolate;
-  Double_Matrix * _Geometry;
+  Double_Matrix *_STvalX;
+  Double_Matrix *_STvalY;
+  Double_Matrix *_STvalZ;
+  Double_Matrix *_Interpolate;
+  Double_Matrix *_Geometry;
 public:
   Adaptive_Post_View(PViewDataList *data, List_T *_coeffs, List_T *_eexps, 
 		     List_T *_coeffsGeom=0, List_T *_eexpsGeom=0);

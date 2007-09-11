@@ -193,8 +193,6 @@ void adapt_triangle::Recur_Create(adapt_triangle *t, int maxlevel, int level,
   t->e[3] = t4;
 }
 
-
-
 void adapt_quad::Recur_Create(adapt_quad *q, int maxlevel, int level,
                               Double_Matrix *coeffs, Double_Matrix *eexps)
 {
@@ -511,7 +509,6 @@ void adapt_triangle::Recur_Error(adapt_triangle *t, double AVG, double tol)
   }
 }
 
-
 void adapt_quad::Recur_Error(adapt_quad *q, double AVG, double tol)
 {
   if(!q->e[0])
@@ -674,8 +671,6 @@ void adapt_hex::Recur_Error(adapt_hex *h, double AVG, double tol)
   }
 }
 
-static double t0, t1, t2, t3;
-
 template < class ELEM >
 int Adaptive_Post_View::zoomElement(int ielem,
 				    int level,
@@ -687,8 +682,6 @@ int Adaptive_Post_View::zoomElement(int ielem,
 
   typename std::set < adapt_point >::iterator it = adapt_point::all_points.begin();
   typename std::set < adapt_point >::iterator ite = adapt_point::all_points.end();
-
-  double c0 = Cpu();
 
   const int N = _coefs->size1();
   
@@ -724,8 +717,6 @@ int Adaptive_Post_View::zoomElement(int ielem,
 
   _Geometry->mult(xyz, XYZ);
 
-  double c1 = Cpu();
-
   int kk = 0;
   for(; it !=ite; ++it){
     adapt_point *p = (adapt_point*) &(*it);
@@ -743,7 +734,6 @@ int Adaptive_Post_View::zoomElement(int ielem,
     if(maxval < p->val) maxval = p->val;
     kk++;
   }
-  double c2 = Cpu();
 
   typename std::list<ELEM*>::iterator itt = ELEM::all_elems.begin();
   typename std::list<ELEM*>::iterator itte = ELEM::all_elems.end();
@@ -759,7 +749,6 @@ int Adaptive_Post_View::zoomElement(int ielem,
   if(plug)
     plug->assignSpecificVisibility();
 
-  double c3 = Cpu();
   itt = ELEM::all_elems.begin();
 
   for(; itt != itte; itt++) {
@@ -790,16 +779,8 @@ int Adaptive_Post_View::zoomElement(int ielem,
     }
   }
   
-  double c4 = Cpu();
-  
-  t0 += c1 - c0;
-  t1 += c2 - c1;
-  t2 += c3 - c2;
-  t3 += c4 - c3;
-
   return 1;
 }
-
 
 /*
   We first do the adaptive stuff at level 2 and will only process
@@ -868,8 +849,6 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(PViewDataList *data, int lev
 
   data->NbTimeStep = 1;
 
-  t0 = t1 = t2 = t3 = 0;
-  
   while(1){
     if(TYP == 7)
       setAdaptiveResolutionLevel_TEMPL<adapt_edge>(level_act, level, plug, 
@@ -894,7 +873,6 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(PViewDataList *data, int lev
 						  &(data->SS), &(data->NbSS), done);
     int nbDone = 0;
     for(int i = 0; i < _STposX->size1(); ++i) nbDone += done[i];
-    // printf("adaptive %d %d %d %d\n", level, level_act, nbDone, _STposX->size1());
     if(nbDone == _STposX->size1())  break;
     if(level_act >= level) break;
     level_act++;
@@ -905,8 +883,7 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(PViewDataList *data, int lev
   presentZoomLevel = level;
   presentTol = tol;
 
-  //  printf("finished %g %g %g %g\n", t0, t1, t2, t3);
-  delete[]done;
+  delete [] done;
 }
 
 template<class ELEM> 
