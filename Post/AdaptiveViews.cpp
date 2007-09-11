@@ -25,27 +25,19 @@
 #include "AdaptiveViews.h"
 #include "Plugin.h"
 #include "OS.h"
-#include "Views.h"
 
 // A recursive effective implementation
 
-void adapt_triangle::GSF (const double u, const double v, double w, double sf[]) 
-{
-  sf[0] = 1. - u - v;
-  sf[1] = u;
-  sf[2] = v;
-}
-
-
-void computeShapeFunctions(Double_Matrix * coeffs, Double_Matrix * eexps,
+void computeShapeFunctions(Double_Matrix *coeffs, Double_Matrix *eexps,
                            double u, double v, double w, double *sf);
 
-std::set < adapt_point > adapt_point::all_points;
-std::list < adapt_edge * >adapt_edge::all_elems;
-std::list < adapt_triangle * >adapt_triangle::all_elems;
-std::list < adapt_tet * >adapt_tet::all_elems;
-std::list < adapt_quad * >adapt_quad::all_elems;
-std::list < adapt_hex * >adapt_hex::all_elems;
+std::set<adapt_point> adapt_point::all_points;
+std::list<adapt_edge*> adapt_edge::all_elems;
+std::list<adapt_triangle*> adapt_triangle::all_elems;
+std::list<adapt_tet*> adapt_tet::all_elems;
+std::list<adapt_quad*> adapt_quad::all_elems;
+std::list<adapt_hex*> adapt_hex::all_elems;
+
 #define MAX_NB_NOD 8
 int adapt_edge::nbNod = 2;
 int adapt_triangle::nbNod = 3;
@@ -54,7 +46,7 @@ int adapt_quad::nbNod = 4;
 int adapt_hex::nbNod = 8;
 
 adapt_point *adapt_point::New(double x, double y, double z,
-                              Double_Matrix * coeffs, Double_Matrix * eexps)
+                              Double_Matrix *coeffs, Double_Matrix *eexps)
 {
   adapt_point p;
   p.x = x;
@@ -66,28 +58,28 @@ adapt_point *adapt_point::New(double x, double y, double z,
     it = all_points.find(p);
     double *kkk = (double *)(it->shape_functions);
     computeShapeFunctions(coeffs, eexps, x, y, z, kkk);
-    return (adapt_point *) & (*it);
+    return (adapt_point *) &(*it);
   }
   else
-    return (adapt_point *) & (*it);
+    return (adapt_point *) &(*it);
 }
 
-void adapt_edge::Create(int maxlevel, Double_Matrix * coeffs,
-                        Double_Matrix * eexps)
+void adapt_edge::Create(int maxlevel, Double_Matrix *coeffs,
+                        Double_Matrix *eexps)
 {
   int level = 0;
-  cleanElement < adapt_edge > ();
+  cleanElement<adapt_edge>();
   adapt_point *p1 = adapt_point::New(-1, 0, 0, coeffs, eexps);
   adapt_point *p2 = adapt_point::New(1, 0, 0, coeffs, eexps);
   adapt_edge *t = new adapt_edge(p1, p2);
   Recur_Create(t, maxlevel, level, coeffs, eexps);
 }
 
-void adapt_triangle::Create(int maxlevel, Double_Matrix * coeffs,
-                            Double_Matrix * eexps)
+void adapt_triangle::Create(int maxlevel, Double_Matrix *coeffs,
+                            Double_Matrix *eexps)
 {
   int level = 0;
-  cleanElement < adapt_triangle > ();
+  cleanElement<adapt_triangle>();
   adapt_point *p1 = adapt_point::New(0, 0, 0, coeffs, eexps);
   adapt_point *p2 = adapt_point::New(0, 1, 0, coeffs, eexps);
   adapt_point *p3 = adapt_point::New(1, 0, 0, coeffs, eexps);
@@ -96,11 +88,11 @@ void adapt_triangle::Create(int maxlevel, Double_Matrix * coeffs,
 }
 
 
-void adapt_quad::Create(int maxlevel, Double_Matrix * coeffs,
-                        Double_Matrix * eexps)
+void adapt_quad::Create(int maxlevel, Double_Matrix *coeffs,
+                        Double_Matrix *eexps)
 {
   int level = 0;
-  cleanElement < adapt_quad > ();
+  cleanElement<adapt_quad>();
   adapt_point *p1 = adapt_point::New(-1, -1, 0, coeffs, eexps);
   adapt_point *p2 = adapt_point::New(1, -1, 0, coeffs, eexps);
   adapt_point *p3 = adapt_point::New(1, 1, 0, coeffs, eexps);
@@ -109,11 +101,11 @@ void adapt_quad::Create(int maxlevel, Double_Matrix * coeffs,
   Recur_Create(q, maxlevel, level, coeffs, eexps);
 }
 
-void adapt_tet::Create(int maxlevel, Double_Matrix * coeffs,
-                       Double_Matrix * eexps)
+void adapt_tet::Create(int maxlevel, Double_Matrix *coeffs,
+                       Double_Matrix *eexps)
 {
   int level = 0;
-  cleanElement < adapt_tet > ();
+  cleanElement<adapt_tet>();
   adapt_point *p1 = adapt_point::New(0, 0, 0, coeffs, eexps);
   adapt_point *p2 = adapt_point::New(0, 1, 0, coeffs, eexps);
   adapt_point *p3 = adapt_point::New(1, 0, 0, coeffs, eexps);
@@ -122,11 +114,11 @@ void adapt_tet::Create(int maxlevel, Double_Matrix * coeffs,
   Recur_Create(t, maxlevel, level, coeffs, eexps);
 }
 
-void adapt_hex::Create(int maxlevel, Double_Matrix * coeffs,
-                       Double_Matrix * eexps)
+void adapt_hex::Create(int maxlevel, Double_Matrix *coeffs,
+                       Double_Matrix *eexps)
 {
   int level = 0;
-  cleanElement < adapt_hex > ();
+  cleanElement<adapt_hex>();
   adapt_point *p1 = adapt_point::New(-1, -1, -1, coeffs, eexps);
   adapt_point *p2 = adapt_point::New(-1, 1, -1, coeffs, eexps);
   adapt_point *p3 = adapt_point::New(1, 1, -1, coeffs, eexps);
@@ -139,8 +131,8 @@ void adapt_hex::Create(int maxlevel, Double_Matrix * coeffs,
   Recur_Create(h, maxlevel, level, coeffs, eexps);
 }
 
-void adapt_edge::Recur_Create(adapt_edge * e, int maxlevel, int level,
-                              Double_Matrix * coeffs, Double_Matrix * eexps)
+void adapt_edge::Recur_Create(adapt_edge *e, int maxlevel, int level,
+                              Double_Matrix *coeffs, Double_Matrix *eexps)
 {
   all_elems.push_back(e);
   if(level++ >= maxlevel)
@@ -152,9 +144,8 @@ void adapt_edge::Recur_Create(adapt_edge * e, int maxlevel, int level,
 
   adapt_point *p1 = e->p[0];
   adapt_point *p2 = e->p[1];
-  adapt_point *p12 =
-    adapt_point::New((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5,
-                     (p1->z + p2->z) * 0.5, coeffs, eexps);
+  adapt_point *p12 = adapt_point::New((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5,
+				      (p1->z + p2->z) * 0.5, coeffs, eexps);
   adapt_edge *e1 = new adapt_edge(p1, p12);
   Recur_Create(e1, maxlevel, level, coeffs, eexps);
   adapt_edge *e2 = new adapt_edge(p12, p2);
@@ -163,9 +154,9 @@ void adapt_edge::Recur_Create(adapt_edge * e, int maxlevel, int level,
   e->e[1] = e2;
 }
 
-void adapt_triangle::Recur_Create(adapt_triangle * t, int maxlevel, int level,
-                                  Double_Matrix * coeffs,
-                                  Double_Matrix * eexps)
+void adapt_triangle::Recur_Create(adapt_triangle *t, int maxlevel, int level,
+                                  Double_Matrix *coeffs,
+                                  Double_Matrix *eexps)
 {
   all_elems.push_back(t);
   if(level++ >= maxlevel)
@@ -204,8 +195,8 @@ void adapt_triangle::Recur_Create(adapt_triangle * t, int maxlevel, int level,
 
 
 
-void adapt_quad::Recur_Create(adapt_quad * q, int maxlevel, int level,
-                              Double_Matrix * coeffs, Double_Matrix * eexps)
+void adapt_quad::Recur_Create(adapt_quad *q, int maxlevel, int level,
+                              Double_Matrix *coeffs, Double_Matrix *eexps)
 {
   all_elems.push_back(q);
   if(level++ >= maxlevel)
@@ -248,8 +239,8 @@ void adapt_quad::Recur_Create(adapt_quad * q, int maxlevel, int level,
   q->e[3] = q4;
 }
 
-void adapt_tet::Recur_Create(adapt_tet * t, int maxlevel, int level,
-                             Double_Matrix * coeffs, Double_Matrix * eexps)
+void adapt_tet::Recur_Create(adapt_tet *t, int maxlevel, int level,
+                             Double_Matrix *coeffs, Double_Matrix *eexps)
 {
   all_elems.push_back(t);
   if(level++ >= maxlevel)
@@ -300,8 +291,8 @@ void adapt_tet::Recur_Create(adapt_tet * t, int maxlevel, int level,
   t->e[7] = t8;
 }
 
-void adapt_hex::Recur_Create(adapt_hex * h, int maxlevel, int level,
-                             Double_Matrix * coeffs, Double_Matrix * eexps)
+void adapt_hex::Recur_Create(adapt_hex *h, int maxlevel, int level,
+                             Double_Matrix *coeffs, Double_Matrix *eexps)
 {
   all_elems.push_back(h);
   if(level++ >= maxlevel)
@@ -416,7 +407,7 @@ void adapt_hex::Error(double AVG, double tol)
   Recur_Error(h, AVG, tol);
 }
 
-void adapt_edge::Recur_Error(adapt_edge * e, double AVG, double tol)
+void adapt_edge::Recur_Error(adapt_edge *e, double AVG, double tol)
 {
   if(!e->e[0])
     e->visible = true;
@@ -427,9 +418,7 @@ void adapt_edge::Recur_Error(adapt_edge * e, double AVG, double tol)
       double v2 = e->e[1]->V();
       vr = (v1 + v2) / 2.;
       double v = e->V();
-      if(fabs(v - vr) > AVG * tol)
-        //if (fabs(v - vr) > ((fabs(v) + fabs(vr) + AVG * tol) * tol)) 
-      {
+      if(fabs(v - vr) > AVG * tol){
         e->visible = false;
         Recur_Error(e->e[0], AVG, tol);
         Recur_Error(e->e[1], AVG, tol);
@@ -460,7 +449,7 @@ void adapt_edge::Recur_Error(adapt_edge * e, double AVG, double tol)
   }
 }
 
-void adapt_triangle::Recur_Error(adapt_triangle * t, double AVG, double tol)
+void adapt_triangle::Recur_Error(adapt_triangle *t, double AVG, double tol)
 {
   if(!t->e[0])
     t->visible = true;
@@ -473,9 +462,7 @@ void adapt_triangle::Recur_Error(adapt_triangle * t, double AVG, double tol)
       double v4 = t->e[3]->V();
       vr = (2 * v1 + 2 * v2 + 2 * v3 + v4) / 7.;
       double v = t->V();
-      if(fabs(v - vr) > AVG * tol)
-        //if (fabs(v - vr) > ((fabs(v) + fabs(vr) + AVG * tol) * tol)) 
-      {
+      if(fabs(v - vr) > AVG * tol){
         t->visible = false;
         Recur_Error(t->e[0], AVG, tol);
         Recur_Error(t->e[1], AVG, tol);
@@ -511,13 +498,7 @@ void adapt_triangle::Recur_Error(adapt_triangle * t, double AVG, double tol)
          fabs(t->e[1]->V() - vr2) > AVG * tol ||
          fabs(t->e[2]->V() - vr3) > AVG * tol ||
          fabs(t->e[3]->V() - vr4) > AVG * tol ||
-         fabs(t->V() - vr) > AVG * tol)
-        //if (fabs(t->e[0]->V() - vr1) > (fabs(t->e[0]->V())+fabs(vr1)+AVG * tol)*tol  || 
-        //           fabs(t->e[1]->V() - vr2) > (fabs(t->e[1]->V())+fabs(vr2)+AVG * tol)*tol  || 
-        //           fabs(t->e[2]->V() - vr3) > (fabs(t->e[2]->V())+fabs(vr3)+AVG * tol)*tol  || 
-        //           fabs(t->e[3]->V() - vr4) > (fabs(t->e[3]->V())+fabs(vr4)+AVG * tol)*tol  || 
-        //           fabs(t->V() - vr) > (fabs(t->V())+fabs(vr)+AVG * tol) *tol)
-      {
+         fabs(t->V() - vr) > AVG * tol){
         t->visible = false;
         Recur_Error(t->e[0], AVG, tol);
         Recur_Error(t->e[1], AVG, tol);
@@ -531,7 +512,7 @@ void adapt_triangle::Recur_Error(adapt_triangle * t, double AVG, double tol)
 }
 
 
-void adapt_quad::Recur_Error(adapt_quad * q, double AVG, double tol)
+void adapt_quad::Recur_Error(adapt_quad *q, double AVG, double tol)
 {
   if(!q->e[0])
     q->visible = true;
@@ -544,9 +525,7 @@ void adapt_quad::Recur_Error(adapt_quad * q, double AVG, double tol)
       double v4 = q->e[3]->V();
       vr = (v1 + v2 + v3 + v4) / 4.;
       double v = q->V();
-      if(fabs(v - vr) > AVG * tol)
-        //if (fabs(v - vr) > ((fabs(v) + fabs(vr) + AVG * tol) * tol)) 
-      {
+      if(fabs(v - vr) > AVG * tol){
         q->visible = false;
         Recur_Error(q->e[0], AVG, tol);
         Recur_Error(q->e[1], AVG, tol);
@@ -582,13 +561,7 @@ void adapt_quad::Recur_Error(adapt_quad * q, double AVG, double tol)
          fabs(q->e[1]->V() - vr2) > AVG * tol ||
          fabs(q->e[2]->V() - vr3) > AVG * tol ||
          fabs(q->e[3]->V() - vr4) > AVG * tol ||
-         fabs(q->V() - vr) > AVG * tol)
-        //if (fabs(t->e[0]->V() - vr1) > (fabs(t->e[0]->V())+fabs(vr1)+AVG * tol)*tol  || 
-        //           fabs(t->e[1]->V() - vr2) > (fabs(t->e[1]->V())+fabs(vr2)+AVG * tol)*tol  || 
-        //           fabs(t->e[2]->V() - vr3) > (fabs(t->e[2]->V())+fabs(vr3)+AVG * tol)*tol  || 
-        //           fabs(t->e[3]->V() - vr4) > (fabs(t->e[3]->V())+fabs(vr4)+AVG * tol)*tol  || 
-        //           fabs(t->V() - vr) > (fabs(t->V())+fabs(vr)+AVG * tol) *tol)
-      {
+         fabs(q->V() - vr) > AVG * tol){
         q->visible = false;
         Recur_Error(q->e[0], AVG, tol);
         Recur_Error(q->e[1], AVG, tol);
@@ -601,7 +574,7 @@ void adapt_quad::Recur_Error(adapt_quad * q, double AVG, double tol)
   }
 }
 
-void adapt_tet::Recur_Error(adapt_tet * t, double AVG, double tol)
+void adapt_tet::Recur_Error(adapt_tet *t, double AVG, double tol)
 {
   if(!t->e[0])
     t->visible = true;
@@ -669,7 +642,7 @@ void adapt_tet::Recur_Error(adapt_tet * t, double AVG, double tol)
   }
 }
 
-void adapt_hex::Recur_Error(adapt_hex * h, double AVG, double tol)
+void adapt_hex::Recur_Error(adapt_hex *h, double AVG, double tol)
 {
   if(!h->e[0])
     h->visible = true;
@@ -704,12 +677,11 @@ void adapt_hex::Recur_Error(adapt_hex * h, double AVG, double tol)
 static double t0, t1, t2, t3;
 
 template < class ELEM >
-int Adaptive_Post_View::zoomElement(Post_View * view,
-				    int ielem,
+int Adaptive_Post_View::zoomElement(int ielem,
 				    int level,
 				    int levelmax,
-				    GMSH_Post_Plugin * plug,
-				    List_T * theList, int *counter)
+				    GMSH_Post_Plugin *plug,
+				    List_T *theList, int *counter)
 {
   const int nbNod = ELEM::nbNod;
 
@@ -720,8 +692,6 @@ int Adaptive_Post_View::zoomElement(Post_View * view,
 
   const int N = _coefs->size1();
   
-  //  printf("%d coefs %d nod %d points %d %d %d %d\n",N,nbNod,adapt_point::all_points.size(),_STposX->size1(),_STposX->size2(),_STval->size1(),_STval->size2());
-
   Double_Vector val(N), res(adapt_point::all_points.size());
   Double_Vector valx(N), resx(adapt_point::all_points.size());
   Double_Vector valy(N), resy(adapt_point::all_points.size());
@@ -735,7 +705,7 @@ int Adaptive_Post_View::zoomElement(Post_View * view,
     xyz(k, 2) = (*_STposZ)(ielem, k);
   }
 
-  for (int k = 0; k < N; ++k){
+  for(int k = 0; k < N; ++k){
     val(k) = (*_STval)(ielem, k);
   }
 
@@ -757,10 +727,10 @@ int Adaptive_Post_View::zoomElement(Post_View * view,
   double c1 = Cpu();
 
   int kk = 0;
-  for (; it !=ite; ++it){
+  for(; it !=ite; ++it){
     adapt_point *p = (adapt_point*) &(*it);
     p->val = res(kk);
-    if (_STvalX){
+    if(_STvalX){
       p->valx = resx(kk);
       p->valy = resy(kk);
       p->valz = resz(kk);
@@ -769,14 +739,14 @@ int Adaptive_Post_View::zoomElement(Post_View * view,
     p->X = XYZ(kk, 0);
     p->Y = XYZ(kk, 1);
     p->Z = XYZ(kk, 2);
-    if (minval > p->val) minval = p->val;
-    if (maxval < p->val) maxval = p->val;
+    if(minval > p->val) minval = p->val;
+    if(maxval < p->val) maxval = p->val;
     kk++;
   }
   double c2 = Cpu();
 
-  typename std::list < ELEM * >::iterator itt = ELEM::all_elems.begin();
-  typename std::list < ELEM * >::iterator itte = ELEM::all_elems.end();
+  typename std::list<ELEM*>::iterator itt = ELEM::all_elems.begin();
+  typename std::list<ELEM*>::iterator itte = ELEM::all_elems.end();
 
   for(; itt != itte; itt++) {
     (*itt)->visible = false;
@@ -835,21 +805,16 @@ int Adaptive_Post_View::zoomElement(Post_View * view,
   We first do the adaptive stuff at level 2 and will only process
   elements that have reached the maximal recursion level
 
-  We compute first the matrix at max recursion level (those should be stored
-  on disk once in the GMSHPLUGINSHOME directory, i'll do that at some point).
+  We compute first the matrix at max recursion level (those should be
+  stored on disk once in the GMSHPLUGINSHOME directory, i'll do that
+  at some point).
 */
 
-void Adaptive_Post_View::setAdaptiveResolutionLevel(Post_View * view,
-                                                    int level,
-                                                    GMSH_Post_Plugin * plug)
+void Adaptive_Post_View::setAdaptiveResolutionLevel(PViewDataList *data, int level,
+                                                    GMSH_Post_Plugin *plug)
 {
 
-  if(presentTol == tol && presentZoomLevel == level && !plug)
-    return;
-
-//   printf
-//     ("calling setAdaptive with level = %d and plug = %p tol %g presentTol %g\n",
-//      level, (void *)plug, tol, presentTol);
+  if(presentTol == tol && presentZoomLevel == level && !plug) return;
 
   int *done = new int[_STposX->size1()];
   for(int i = 0; i < _STposX->size1(); ++i)
@@ -858,88 +823,85 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(Post_View * view,
   int nbelm = _STposX->size1();
 
   int TYP = 0;
-  if(view->NbSL) {
+  if(data->NbSL) {
     TYP = 7;
-    List_Delete(view->SL);
-    view->NbSL = 0;
-    view->SL = List_Create(nbelm * 8, nbelm, sizeof(double));
+    List_Delete(data->SL);
+    data->NbSL = 0;
+    data->SL = List_Create(nbelm * 8, nbelm, sizeof(double));
   }
-  if (view->NbVT) {
+  if(data->NbVT) {
     TYP = 5;
-    List_Delete(view->VT); 
-    view->NbVT = 0;
-    view->VT =List_Create ( nbelm * 36, nbelm , sizeof(double));	
+    List_Delete(data->VT); 
+    data->NbVT = 0;
+    data->VT = List_Create(nbelm * 36, nbelm , sizeof(double));	
   }
-  else if(view->NbST) {
+  else if(data->NbST) {
     TYP = 1;
-    List_Delete(view->ST);
-    view->NbST = 0;
-    view->ST = List_Create(nbelm * 4, nbelm, sizeof(double));
+    List_Delete(data->ST);
+    data->NbST = 0;
+    data->ST = List_Create(nbelm * 4, nbelm, sizeof(double));
   }
-  if(view->NbSS) {
+  if(data->NbSS) {
     TYP = 3;
-    List_Delete(view->SS);
-    view->NbSS = 0;
-    view->SS = List_Create(nbelm * 4, nbelm, sizeof(double));
+    List_Delete(data->SS);
+    data->NbSS = 0;
+    data->SS = List_Create(nbelm * 4, nbelm, sizeof(double));
   }
-  if(view->NbSQ) {
+  if(data->NbSQ) {
     TYP = 2;
-    List_Delete(view->SQ);
-    view->NbSQ = 0;
-    view->SQ = List_Create(nbelm * 20, nbelm * 20, sizeof(double));
+    List_Delete(data->SQ);
+    data->NbSQ = 0;
+    data->SQ = List_Create(nbelm * 20, nbelm * 20, sizeof(double));
   }
-  if(view->NbVQ) {
+  if(data->NbVQ) {
     TYP = 6;
-    List_Delete(view->VQ);
-    view->NbVQ = 0;
-    view->VQ = List_Create(nbelm * 60, nbelm * 20, sizeof(double));
+    List_Delete(data->VQ);
+    data->NbVQ = 0;
+    data->VQ = List_Create(nbelm * 60, nbelm * 20, sizeof(double));
   }
-  if(view->NbSH) {
+  if(data->NbSH) {
     TYP = 4;
-    List_Delete(view->SH);
-    view->NbSH = 0;
-    view->SH = List_Create(nbelm * 4, nbelm, sizeof(double));
+    List_Delete(data->SH);
+    data->NbSH = 0;
+    data->SH = List_Create(nbelm * 4, nbelm, sizeof(double));
   }
 
-  view->NbTimeStep = 1;
+  data->NbTimeStep = 1;
 
   t0 = t1 = t2 = t3 = 0;
   
-  while (1){
+  while(1){
     if(TYP == 7)
-      setAdaptiveResolutionLevel_TEMPL < adapt_edge > (view, level_act, level, plug, 
-						       &(view->SL), &(view->NbSL), done);
-    if (TYP == 1)
-      setAdaptiveResolutionLevel_TEMPL <adapt_triangle> (view, level_act, level, plug,
-							 &(view->ST), &(view->NbST), done);
-    if (TYP == 5)
-      setAdaptiveResolutionLevel_TEMPL <adapt_triangle> (view, level_act, level, plug,
-							 &(view->VT), &(view->NbVT), done);
-    if (TYP == 2)
-      setAdaptiveResolutionLevel_TEMPL <adapt_quad> (view, level_act, level, plug,
-						     &(view->SQ), &(view->NbSQ), done);
-    if (TYP == 6)
-      setAdaptiveResolutionLevel_TEMPL <adapt_quad> (view, level_act, level, plug,
-						     &(view->VQ), &(view->NbVQ), done);
-    if (TYP == 4)
-      setAdaptiveResolutionLevel_TEMPL <adapt_hex> (view, level_act, level, plug,
-						    &(view->SH), &(view->NbSH), done);
-    if (TYP == 3)
-      setAdaptiveResolutionLevel_TEMPL <adapt_tet> (view, level_act, level, plug,
-						    &(view->SS), &(view->NbSS), done);
+      setAdaptiveResolutionLevel_TEMPL<adapt_edge>(level_act, level, plug, 
+						   &(data->SL), &(data->NbSL), done);
+    if(TYP == 1)
+      setAdaptiveResolutionLevel_TEMPL<adapt_triangle>(level_act, level, plug,
+						       &(data->ST), &(data->NbST), done);
+    if(TYP == 5)
+      setAdaptiveResolutionLevel_TEMPL<adapt_triangle>(level_act, level, plug,
+						       &(data->VT), &(data->NbVT), done);
+    if(TYP == 2)
+      setAdaptiveResolutionLevel_TEMPL<adapt_quad>(level_act, level, plug,
+						   &(data->SQ), &(data->NbSQ), done);
+    if(TYP == 6)
+      setAdaptiveResolutionLevel_TEMPL<adapt_quad>(level_act, level, plug,
+						   &(data->VQ), &(data->NbVQ), done);
+    if(TYP == 4)
+      setAdaptiveResolutionLevel_TEMPL<adapt_hex>(level_act, level, plug,
+						  &(data->SH), &(data->NbSH), done);
+    if(TYP == 3)
+      setAdaptiveResolutionLevel_TEMPL<adapt_tet>(level_act, level, plug,
+						  &(data->SS), &(data->NbSS), done);
     int nbDone = 0;
-    for(int i=0; i < _STposX->size1(); ++i) nbDone += done[i];
-    //    printf("adaptive %d %d %d %d\n", level, level_act, nbDone, _STposX->size1());
-    if (nbDone ==_STposX->size1())  break;
-    if (level_act >= level) break;
-    level_act ++;
+    for(int i = 0; i < _STposX->size1(); ++i) nbDone += done[i];
+    // printf("adaptive %d %d %d %d\n", level, level_act, nbDone, _STposX->size1());
+    if(nbDone == _STposX->size1())  break;
+    if(level_act >= level) break;
+    level_act++;
   }
 
-  // recompute min/max, etc.:
-  view->Min = VAL_INF;
-  view->Max = -VAL_INF;
-  //FIXME xxxxxxxxxxxxxxxxxxx  EndView(view, 0, view->FileName, view->Name);
-  view->Changed = 1;
+  data->finalize();
+
   presentZoomLevel = level;
   presentTol = tol;
 
@@ -947,18 +909,13 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(Post_View * view,
   delete[]done;
 }
 
-template < class ELEM >
-void Adaptive_Post_View::setAdaptiveResolutionLevel_TEMPL(Post_View * view,
-							  int level,
-							  int levelmax,
-							  GMSH_Post_Plugin *
-							  plug,
-							  List_T ** myList,
-							  int *counter,
-							  int *done)
+template<class ELEM> 
+void Adaptive_Post_View::setAdaptiveResolutionLevel_TEMPL(int level, int levelmax,
+							  GMSH_Post_Plugin *plug,
+							  List_T **myList,
+							  int *counter, int *done)
 {
   const int N = _coefs->size1();
-
   const int nbelm = _STposX->size1();
 
   double sf[100];
@@ -977,17 +934,15 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel_TEMPL(Post_View * view,
   for(; it != ite; ++it) {
     adapt_point *p = (adapt_point *) & (*it);
     for(int k = 0; k < N; ++k) {
-      (*_Interpolate) (kk, k) = p->shape_functions[k];
+      (*_Interpolate)(kk, k) = p->shape_functions[k];
     }
 
-    if (_coefsGeom)
-      {
-	computeShapeFunctions(_coefsGeom, _eexpsGeom, p->x, p->y, p->z, sf);
-      }
-    else
-      {
-	ELEM::GSF(p->x, p->y, p->z, sf);
-      }
+    if(_coefsGeom){
+      computeShapeFunctions(_coefsGeom, _eexpsGeom, p->x, p->y, p->z, sf);
+    }
+    else{
+      ELEM::GSF(p->x, p->y, p->z, sf);
+    }
     for(int k = 0; k < _STposX->size2(); k++)
       (*_Geometry) (kk, k) = sf[k];
     kk++;
@@ -995,156 +950,144 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel_TEMPL(Post_View * view,
 
   for(int i = 0; i < nbelm; ++i) {
     if(!done[i])
-      done[i] =
-        zoomElement < ELEM > (view, i, level, levelmax, plug, *myList,
-                              counter);
+      done[i] = zoomElement<ELEM>(i, level, levelmax, plug, *myList, counter);
   }
 }
 
-void computeShapeFunctions(Double_Matrix * coeffs, Double_Matrix * eexps,
+void computeShapeFunctions(Double_Matrix *coeffs, Double_Matrix *eexps,
                            double u, double v, double w, double *sf)
 {
   static double powsuvw[256];
   for(int j = 0; j < coeffs->size2(); ++j) {
-    double powu = (*eexps) (j, 0);
-    double powv = (*eexps) (j, 1);
-    double poww = (*eexps) (j, 2);
+    double powu = (*eexps)(j, 0);
+    double powv = (*eexps)(j, 1);
+    double poww = (*eexps)(j, 2);
     powsuvw[j] = pow(u, powu) * pow(v, powv) * pow(w, poww);
   }
 
   for(int i = 0; i < coeffs->size1(); ++i) {
     sf[i] = 0.0;
     for(int j = 0; j < coeffs->size2(); ++j) {
-      sf[i] += (*coeffs) (i, j) * powsuvw[j];
+      sf[i] += (*coeffs)(i, j) * powsuvw[j];
     }
   }
 }
 
-void Adaptive_Post_View::initWithLowResolution(Post_View * view)
+void Adaptive_Post_View::initWithLowResolution(PViewDataList *data)
 {
   List_T *myList;
   int nbelm;
   int nbnod;
-
   int nbComp = 1;
 
-  //  printf("%d\n",view->NbST);
-
-
-  if (view->NbST){
-    myList = view->ST;
-    nbelm = view->NbST;
+  if(data->NbST){
+    myList = data->ST;
+    nbelm = data->NbST;
     nbnod = 3;
   }
-  else if(view->NbSL){
-    myList = view->SL;
-    nbelm = view->NbSL;
+  else if(data->NbSL){
+    myList = data->SL;
+    nbelm = data->NbSL;
     nbnod = 2;
   }
-  else if (view->NbVT){
-    myList = view->VT;
-    nbelm = view->NbVT;
+  else if(data->NbVT){
+    myList = data->VT;
+    nbelm = data->NbVT;
     nbnod = 3;
     nbComp = 3;
   }
-  else if (view->NbVQ){
-    myList = view->VQ;
-    nbelm = view->NbVQ;
+  else if(data->NbVQ){
+    myList = data->VQ;
+    nbelm = data->NbVQ;
     nbnod = 4;
     nbComp = 3;
   }
-  else if (view->NbSS){
-    myList = view->SS;
-    nbelm = view->NbSS;
+  else if(data->NbSS){
+    myList = data->SS;
+    nbelm = data->NbSS;
     nbnod = 4;
   }
-  else if (view->NbSQ){
-    myList = view->SQ;
-    nbelm = view->NbSQ;
+  else if(data->NbSQ){
+    myList = data->SQ;
+    nbelm = data->NbSQ;
     nbnod = 4;
   }
-  else if (view->NbSH){
-    myList = view->SH;
-    nbelm = view->NbSH;
+  else if(data->NbSH){
+    myList = data->SH;
+    nbelm = data->NbSH;
     nbnod = 8;
   }
   else return;
 
   // if there exists a polynomial representation
   // of the geometry , then use it
-  if (_coefsGeom)
-    {
-      nbnod = _coefsGeom -> size1 ();
-      //      printf("THERE IS A GEOMETRY !!!!!!!! nbNod = %d\n",nbnod);
-    }  
-  else
-    {
-      printf("coucouc2\n");
-    }
+  if(_coefsGeom){
+    nbnod = _coefsGeom->size1();
+  }  
 
   minval = VAL_INF;
   maxval = -VAL_INF;
 
   int nb = List_Nbr(myList) / (nbelm);
 
-  _STposX = new Double_Matrix ( nbelm , nbnod        );
-  _STposY = new Double_Matrix ( nbelm , nbnod        );
-  _STposZ = new Double_Matrix ( nbelm , nbnod        );
-  _STval  = new Double_Matrix ( nbelm , (nb-3*nbnod)/nbComp   );
+  _STposX = new Double_Matrix(nbelm, nbnod);
+  _STposY = new Double_Matrix(nbelm, nbnod);
+  _STposZ = new Double_Matrix(nbelm, nbnod);
+  _STval = new Double_Matrix(nbelm, (nb - 3 * nbnod) / nbComp);
 
-  if (nbComp == 3){
-    _STvalX  = new Double_Matrix ( nbelm , (nb-3*nbnod)/nbComp   );
-    _STvalY  = new Double_Matrix ( nbelm , (nb-3*nbnod)/nbComp   );
-    _STvalZ  = new Double_Matrix ( nbelm , (nb-3*nbnod)/nbComp   );
+  if(nbComp == 3){
+    _STvalX = new Double_Matrix(nbelm, (nb - 3 * nbnod) / nbComp);
+    _STvalY = new Double_Matrix(nbelm, (nb - 3 * nbnod) / nbComp);
+    _STvalZ = new Double_Matrix(nbelm, (nb - 3 * nbnod) / nbComp);
   }
-  /// Store non interpolated data
 
-  int k=0;
-  for (int i=0;i<List_Nbr(myList);i+=nb){    
-    double *x = (double*)List_Pointer_Fast (myList,i);
-    double *y = (double*)List_Pointer_Fast (myList,i+nbnod); 
-    double *z = (double*)List_Pointer_Fast (myList,i+2*nbnod); 
-    for (int NN=0;NN<nbnod;NN++){
-      (*_STposX) ( k , NN) = x[NN]; 
-      (*_STposY) ( k , NN) = y[NN]; 
-      (*_STposZ) ( k , NN) = z[NN]; 
+  // Store non interpolated data
+  int k = 0;
+  for(int i = 0; i < List_Nbr(myList); i+= nb){    
+    double *x = (double*)List_Pointer_Fast(myList, i);
+    double *y = (double*)List_Pointer_Fast(myList, i + nbnod); 
+    double *z = (double*)List_Pointer_Fast(myList, i + 2 * nbnod); 
+    for(int NN = 0; NN < nbnod; NN++){
+      (*_STposX)(k, NN) = x[NN]; 
+      (*_STposY)(k, NN) = y[NN]; 
+      (*_STposZ)(k, NN) = z[NN]; 
     }
-    double *val = (double*)List_Pointer_Fast (myList,i+3*nbnod);
-    if (nbComp == 1){
-      for (int j=0;j<(nb-3*nbnod)/nbComp;j++){
-	(*_STval)(k,j)=val[j];      
+    double *val = (double*)List_Pointer_Fast(myList, i + 3 * nbnod);
+    if(nbComp == 1){
+      for(int j = 0; j < (nb - 3 * nbnod) / nbComp; j++){
+	(*_STval)(k, j) = val[j];
       }      	  
     }
-    else if (nbComp == 3){
-      int size = (nb-3*nbnod)/3;
-      for (int j=0;j<size;j++){
-	int index1  = j;
-	int index2  = j+size;
-	int index3  = j+2*size;
+    else if(nbComp == 3){
+      int size = (nb - 3 * nbnod) / 3;
+      for(int j = 0; j < size; j++){
+	int index1 = j;
+	int index2 = j + size;
+	int index3 = j + 2 * size;
 	// adaptation of the visualization mesh bases on the norm squared of the vector 
-	(*_STval)(k,j)=(val[index1]*val[index1] + val[index2]*val[index2] + 
-			val[index3]*val[index3]);      
-	(*_STvalX)(k,j)=val[index1];
-	(*_STvalY)(k,j)=val[index2];
-	(*_STvalZ)(k,j)=val[index3];
+	(*_STval)(k, j) = (val[index1] * val[index1] + val[index2] * val[index2] + 
+			   val[index3] * val[index3]);      
+	(*_STvalX)(k, j) = val[index1];
+	(*_STvalY)(k, j) = val[index2];
+	(*_STvalZ)(k, j) = val[index3];
       }      	  	  
     }
     k++;
   }
-  setAdaptiveResolutionLevel(view, 0);
+  setAdaptiveResolutionLevel(data, 0);
 }
 
-Adaptive_Post_View::Adaptive_Post_View(Post_View * view, 
-				       List_T * _c,
-                                       List_T * _pol,
-				       List_T * _cGeom,
-				       List_T * _polGeom)
-  :tol(1.e-3),_coefsGeom(0),_eexpsGeom(0)
+Adaptive_Post_View::Adaptive_Post_View(PViewDataList *data, 
+				       List_T *_c,
+                                       List_T *_pol,
+				       List_T *_cGeom,
+				       List_T *_polGeom)
+  :tol(1.e-3), _coefsGeom(0), _eexpsGeom(0)
 {
 
   _Interpolate = _Geometry = 0;
-  _coefs = new Double_Matrix ( List_Nbr (_c) , List_Nbr (_c)  );
-  _eexps  = new Double_Matrix ( List_Nbr (_c) , 3  );
+  _coefs = new Double_Matrix(List_Nbr(_c), List_Nbr(_c));
+  _eexps  = new Double_Matrix(List_Nbr(_c), 3);
 
   _STvalX = _STvalY = _STvalZ =0;
 
@@ -1158,46 +1101,38 @@ Adaptive_Post_View::Adaptive_Post_View(Post_View * view,
     List_Read(*eexp, 1, &dpowv);
     List_Read(*eexp, 2, &dpoww);
 
-    (*_eexps) (i, 0) = dpowu;
-    (*_eexps) (i, 1) = dpowv;
-    (*_eexps) (i, 2) = dpoww;
+    (*_eexps)(i, 0) = dpowu;
+    (*_eexps)(i, 1) = dpowv;
+    (*_eexps)(i, 2) = dpoww;
 
     for(int j = 0; j < List_Nbr(*line); ++j) {
       double val;
       List_Read(*line, j, &val);
-      (*_coefs) (i, j) = val;
+      (*_coefs)(i, j) = val;
     }
   }
 
-  if (_cGeom && _polGeom)
-    {
-
-      printf("coucou %d \n",List_Nbr (_cGeom));
-
-      _coefsGeom = new Double_Matrix ( List_Nbr (_cGeom) , List_Nbr (_cGeom)  );
-      _eexpsGeom = new Double_Matrix ( List_Nbr (_cGeom) , 3  );
-      for(int i = 0; i < List_Nbr(_cGeom); ++i) {
-	List_T **line = (List_T **) List_Pointer_Fast(_cGeom, i);
-	List_T **eexp = (List_T **) List_Pointer_Fast(_polGeom, i);
-	
-	double dpowu, dpowv, dpoww;
-	
-	List_Read(*eexp, 0, &dpowu);
-	List_Read(*eexp, 1, &dpowv);
-	List_Read(*eexp, 2, &dpoww);
-	
-	(*_eexpsGeom) (i, 0) = dpowu;
-	(*_eexpsGeom) (i, 1) = dpowv;
-	(*_eexpsGeom) (i, 2) = dpoww;
-	
-	for(int j = 0; j < List_Nbr(*line); ++j) {
-	  double val;
-	  List_Read(*line, j, &val);
-	  (*_coefsGeom) (i, j) = val;
-	}
-      }      
-    }
-  initWithLowResolution(view);
+  if(_cGeom && _polGeom){
+    _coefsGeom = new Double_Matrix(List_Nbr(_cGeom), List_Nbr(_cGeom));
+    _eexpsGeom = new Double_Matrix(List_Nbr(_cGeom), 3);
+    for(int i = 0; i < List_Nbr(_cGeom); ++i) {
+      List_T **line = (List_T **) List_Pointer_Fast(_cGeom, i);
+      List_T **eexp = (List_T **) List_Pointer_Fast(_polGeom, i);
+      double dpowu, dpowv, dpoww;
+      List_Read(*eexp, 0, &dpowu);
+      List_Read(*eexp, 1, &dpowv);
+      List_Read(*eexp, 2, &dpoww);
+      (*_eexpsGeom)(i, 0) = dpowu;
+      (*_eexpsGeom)(i, 1) = dpowv;
+      (*_eexpsGeom)(i, 2) = dpoww;
+      for(int j = 0; j < List_Nbr(*line); ++j) {
+	double val;
+	List_Read(*line, j, &val);
+	(*_coefsGeom)(i, j) = val;
+      }
+    }      
+  }
+  initWithLowResolution(data);
 }
 
 Adaptive_Post_View::~Adaptive_Post_View()
@@ -1209,18 +1144,19 @@ Adaptive_Post_View::~Adaptive_Post_View()
   delete _STposZ;
   delete _STval;
 
-  if (_coefsGeom)
+  if(_coefsGeom)
     delete _coefsGeom;
-  if (_eexpsGeom)
+  if(_eexpsGeom)
     delete _eexpsGeom;
 
   if(_Interpolate)
     delete _Interpolate;
   if(_Geometry)
     delete _Geometry;
-  cleanElement < adapt_edge > ();
-  cleanElement < adapt_triangle > ();
-  cleanElement < adapt_tet > ();
-  cleanElement < adapt_hex > ();
-  cleanElement < adapt_quad > ();
+
+  cleanElement<adapt_edge>();
+  cleanElement<adapt_triangle>();
+  cleanElement<adapt_tet>();
+  cleanElement<adapt_hex>();
+  cleanElement<adapt_quad>();
 }

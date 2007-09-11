@@ -1,4 +1,4 @@
-// $Id: Smooth.cpp,v 1.27 2007-09-11 14:01:55 geuzaine Exp $
+// $Id: Smooth.cpp,v 1.28 2007-09-11 15:29:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,13 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Plugin.h"
 #include "Smooth.h"
-#include "List.h"
-#include "Views.h"
-#include "Context.h"
-
-extern Context_T CTX;
 
 StringXNumber SmoothOptions_Number[] = {
   {GMSH_FULLRC, "iView", NULL, -1.}

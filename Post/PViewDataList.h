@@ -104,8 +104,6 @@ class PViewDataList : public PViewData {
   bool combineTime(nameData &nd);
   bool combineSpace(nameData &nd);
   bool isAdaptive(){ return adaptive ? true : false; }
-  void setGlobalResolutionLevel(int level);
-  void setAdaptiveResolutionLevel(int level, GMSH_Post_Plugin *plugin=0);
 
   // specific to list-based data sets
   void getRawData(int type, List_T **l, int **ne, int *nc, int *nn);

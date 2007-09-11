@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.355 2007-09-11 14:39:03 geuzaine Exp $
+// $Id: Options.cpp,v 1.356 2007-09-11 15:28:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -5865,46 +5865,52 @@ double opt_view_saturate_values(OPT_ARGS_NUM)
 
 double opt_view_max_recursion_level(OPT_ARGS_NUM)
 {
-  /*
   GET_VIEW(0.);
+
+  if(!data->isAdaptive()) return 0.;
+
+  PViewDataList *l = dynamic_cast<PViewDataList*>(data);
+  if(!l){
+    Msg(GERROR, "Adaptive views only available for list-based datasets");
+    return 0.;
+  }
+  
   if(action & GMSH_SET) {
-    if(v->adaptive)
-      v->adaptive->setGlobalResolutionLevel(v,(int)val);
+    l->adaptive->setGlobalResolutionLevel(l, (int)val);
+    view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    if (v->adaptive){
-      WID->view_value[33]->value(v->adaptive->getGlobalResolutionLevel());
-    }
+    WID->view_value[33]->value(l->adaptive->getGlobalResolutionLevel());
   }
 #endif
-  if(v->adaptive)
-    return v->adaptive->getGlobalResolutionLevel();
-  */
-  return 0;
+
+  return l->adaptive->getGlobalResolutionLevel();
 }
 
 double opt_view_target_error(OPT_ARGS_NUM)
 {
-  /*
   GET_VIEW(0.);
+
+  if(!data->isAdaptive()) return 0.;
+
+  PViewDataList *l = dynamic_cast<PViewDataList*>(data);
+  if(!l){
+    Msg(GERROR, "Adaptive views only available for list-based datasets");
+    return 0.;
+  }
+
   if(action & GMSH_SET) {
-    if(v->adaptive) {
-      v->adaptive->setTolerance(val);
-      v->adaptive->setGlobalResolutionLevel(v,v->adaptive->getGlobalResolutionLevel());
-    }
+    l->adaptive->setTolerance(val);
+    l->adaptive->setGlobalResolutionLevel(l, l->adaptive->getGlobalResolutionLevel());
+    view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    if(v->adaptive){
-      WID->view_value[34]->value(v->adaptive->getTolerance());
-    }
+    WID->view_value[34]->value(l->adaptive->getTolerance());
   }
 #endif
-  if (v->adaptive)
-    return v->adaptive->getTolerance();
-  */
-  return 1.e-2;
+  return l->adaptive->getTolerance();
 }
 
 
@@ -7607,4 +7613,3 @@ unsigned int opt_view_color_axes(OPT_ARGS_COL)
 #endif
   return opt->color.axes;
 }
-

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.131 2007-09-11 14:01:55 geuzaine Exp $
+# $Id: Makefile,v 1.132 2007-09-11 15:29:01 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -125,14 +125,13 @@ CutMap.o: CutMap.cpp CutMap.h Levelset.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Post/AdaptiveViews.h ../DataStr/List.h ../Common/GmshMatrix.h \
   ../Common/Context.h
-Smooth.o: Smooth.cpp Plugin.h ../Common/Options.h ../Post/ColorTable.h \
-  ../Common/Message.h ../Post/PView.h ../Common/VertexArray.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Common/SmoothData.h \
-  ../Numeric/Numeric.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h ../Post/PViewOptions.h ../Post/ColorTable.h \
-  ../Post/PViewDataList.h ../Post/PViewData.h ../Post/AdaptiveViews.h \
-  ../DataStr/List.h ../Common/GmshMatrix.h Smooth.h ../Post/Views.h \
-  ../Post/ColorTable.h ../Post/AdaptiveViews.h ../Common/Context.h
+Smooth.o: Smooth.cpp Smooth.h Plugin.h ../Common/Options.h \
+  ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
+  ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Common/SmoothData.h ../Numeric/Numeric.h ../Post/PViewData.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Post/PViewOptions.h \
+  ../Post/ColorTable.h ../Post/PViewDataList.h ../Post/PViewData.h \
+  ../Post/AdaptiveViews.h ../DataStr/List.h ../Common/GmshMatrix.h
 CutParametric.o: CutParametric.cpp ../Post/OctreePost.h \
   ../Common/Octree.h ../Common/OctreeInternals.h CutParametric.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/Message.h \

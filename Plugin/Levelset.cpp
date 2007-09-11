@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.34 2007-09-11 14:01:55 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.35 2007-09-11 15:29:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -546,8 +546,10 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
 
   if(dv->isAdaptive()){
     dv->adaptive->setTolerance(_targetError);
-    if(dv->NbST || dv->NbSS || dv->NbSQ || dv->NbSH)
-      dv->setAdaptiveResolutionLevel(_recurLevel, this);
+    if(dv->NbST || dv->NbSS || dv->NbSQ || dv->NbSH){
+      dv->adaptive->setAdaptiveResolutionLevel(dv, _recurLevel, this);
+      v->setChanged(true);
+    }
   }
 
   if(_valueView < 0) {

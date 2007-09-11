@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.6 2007-09-11 14:01:55 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.7 2007-09-11 15:29:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -885,12 +885,3 @@ bool PViewDataList::combineTime(nameData &nd)
   return finalize();
 }
 
-void PViewDataList::setGlobalResolutionLevel(int level)
-{
-  //if(adaptive) adaptive->setGlobalResolutionLevel(this, level);
-}
-
-void PViewDataList::setAdaptiveResolutionLevel(int level, GMSH_Post_Plugin *plugin)
-{
-  //if(adaptive) adaptive->setAdaptiveResolutionLevel(this, level, plugin);
-}
