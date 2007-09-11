@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.354 2007-09-10 04:57:35 geuzaine Exp $
+// $Id: Options.cpp,v 1.355 2007-09-11 14:39:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -133,7 +133,6 @@ void Init_Options(int num)
   CTX.geom.draw = 1;
   CTX.mesh.draw = 1;
   CTX.post.draw = 1;
-  CTX.post.list = NULL;
   CTX.threads_lock = 0; // very primitive locking
   CTX.mesh.changed = 0;
   CTX.post.combine_time = 0; // try to combine_time views at startup
