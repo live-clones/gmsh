@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.36 2007-09-04 13:47:05 remacle Exp $
+// $Id: Triangulate.cpp,v 1.37 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,13 +21,11 @@
 
 #include <vector>
 #include "Gmsh.h"
-#include "Plugin.h"
-#include "Triangulate.h"
-#include "Views.h"
-#include "Context.h"
-#include "Malloc.h"
-#include "MVertex.h"
 #include "gmshFace.h"
+#include "MVertex.h"
+#include "Triangulate.h"
+#include "Malloc.h"
+#include "Context.h"
 
 extern Context_T CTX;
 
@@ -205,33 +203,31 @@ static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
 
 #endif // !HAVE_TRIANGLE
 
-Post_View *GMSH_TriangulatePlugin::execute(Post_View * v)
+PView *GMSH_TriangulatePlugin::execute(PView *v)
 {
   int iView = (int)TriangulateOptions_Number[0].def;
 
-  if(iView < 0)
-    iView = v ? v->Index : 0;
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
 
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-  Post_View *v2 = BeginView(1);
+  PView *v2 = new PView(true);
 
-  Triangulate(v1->NbSP, v1->SP, &v2->NbST, v2->ST, v1->NbTimeStep, 1);
-  Triangulate(v1->NbVP, v1->VP, &v2->NbVT, v2->VT, v1->NbTimeStep, 3);
-  Triangulate(v1->NbTP, v1->TP, &v2->NbTT, v2->TT, v1->NbTimeStep, 9);
+  PViewDataList *data2 = getDataList(v2);
+  if(!data2) return v;
 
-  // copy time data
-  for(int i = 0; i < List_Nbr(v1->Time); i++)
-    List_Add(v2->Time, List_Pointer(v1->Time, i));
-  
-  // finalize
-  char name[1024], filename[1024];
-  sprintf(name, "%s_Triangulate", v1->Name);
-  sprintf(filename, "%s_Triangulate.pos", v1->Name);
-  EndView(v2, 1, filename, name);
+  int nts = data1->getNumTimeSteps();
+  Triangulate(data1->NbSP, data1->SP, &data2->NbST, data2->ST, nts, 1);
+  Triangulate(data1->NbVP, data1->VP, &data2->NbVT, data2->VT, nts, 3);
+  Triangulate(data1->NbTP, data1->TP, &data2->NbTT, data2->TT, nts, 9);
+
+  for(int i = 0; i < List_Nbr(data1->Time); i++)
+    List_Add(data2->Time, List_Pointer(data1->Time, i));
+  data2->setName(data1->getName() + "_Triangulate");
+  data2->setFileName(data1->getName() + "_Triangulate.pos");
+  data2->finalize();
+
   return v2;
 }

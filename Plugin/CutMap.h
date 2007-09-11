@@ -37,7 +37,7 @@ class GMSH_CutMapPlugin : public GMSH_LevelsetPlugin
   void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
   StringXNumber* getOption (int iopt);  
-  Post_View *execute (Post_View *);
+  PView *execute (PView *);
   static double callbackA(int, int, double);
   static double callbackVol(int, int, double);
   static double callbackRecur(int, int, double);

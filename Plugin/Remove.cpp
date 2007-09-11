@@ -1,4 +1,4 @@
-// $Id: Remove.cpp,v 1.10 2007-09-04 13:47:05 remacle Exp $
+// $Id: Remove.cpp,v 1.11 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,14 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Plugin.h"
 #include "Remove.h"
-#include "List.h"
-#include "Views.h"
-#include "Context.h"
-#include "Numeric.h"
-
-extern Context_T CTX;
 
 StringXNumber RemoveOptions_Number[] = {
   {GMSH_FULLRC, "Text2D", NULL, 1.},
@@ -91,21 +84,17 @@ void GMSH_RemovePlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Remove failed...");
 }
 
-Post_View *GMSH_RemovePlugin::execute(Post_View * v)
+PView *GMSH_RemovePlugin::execute(PView *v)
 {
   int iView = (int)RemoveOptions_Number[13].def;
 
-  if(iView < 0)
-    iView = v ? v->Index : 0;
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
-
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
   
-  if(v1->AliasOf || v1->Links){
+  if(v1->getAliasOf() || v1->getLinks()){
     Msg(GERROR, "Cannot remove data from aliased view");
     return v1;
   }
@@ -115,61 +104,54 @@ Post_View *GMSH_RemovePlugin::execute(Post_View * v)
   int tensor = (int)RemoveOptions_Number[12].def;
 
   if(RemoveOptions_Number[0].def){ 
-    v1->NbT2 = 0; List_Reset(v1->T2D); List_Reset(v1->T2C); 
+    data1->NbT2 = 0; List_Reset(data1->T2D); List_Reset(data1->T2C); 
   }
   if(RemoveOptions_Number[1].def){ 
-    v1->NbT3 = 0; List_Reset(v1->T3D); List_Reset(v1->T3C); 
+    data1->NbT3 = 0; List_Reset(data1->T3D); List_Reset(data1->T3C); 
   }
   if(RemoveOptions_Number[2].def){ 
-    if(scalar){ v1->NbSP = 0; List_Reset(v1->SP); }
-    if(vector){ v1->NbVP = 0; List_Reset(v1->VP); }
-    if(tensor){ v1->NbTP = 0; List_Reset(v1->TP); }
+    if(scalar){ data1->NbSP = 0; List_Reset(data1->SP); }
+    if(vector){ data1->NbVP = 0; List_Reset(data1->VP); }
+    if(tensor){ data1->NbTP = 0; List_Reset(data1->TP); }
   }
   if(RemoveOptions_Number[3].def){
-    if(scalar){ v1->NbSL = 0; List_Reset(v1->SL); }
-    if(vector){ v1->NbVL = 0; List_Reset(v1->VL); }
-    if(tensor){ v1->NbTL = 0; List_Reset(v1->TL); }
+    if(scalar){ data1->NbSL = 0; List_Reset(data1->SL); }
+    if(vector){ data1->NbVL = 0; List_Reset(data1->VL); }
+    if(tensor){ data1->NbTL = 0; List_Reset(data1->TL); }
   }
   if(RemoveOptions_Number[4].def){ 
-    if(scalar){ v1->NbST = 0; List_Reset(v1->ST); }
-    if(vector){ v1->NbVT = 0; List_Reset(v1->VT); }
-    if(tensor){ v1->NbTT = 0; List_Reset(v1->TT); }
+    if(scalar){ data1->NbST = 0; List_Reset(data1->ST); }
+    if(vector){ data1->NbVT = 0; List_Reset(data1->VT); }
+    if(tensor){ data1->NbTT = 0; List_Reset(data1->TT); }
   }
   if(RemoveOptions_Number[5].def){ 
-    if(scalar){ v1->NbSQ = 0; List_Reset(v1->SQ); }
-    if(vector){ v1->NbVQ = 0; List_Reset(v1->VQ); }
-    if(tensor){ v1->NbTQ = 0; List_Reset(v1->TQ); }
+    if(scalar){ data1->NbSQ = 0; List_Reset(data1->SQ); }
+    if(vector){ data1->NbVQ = 0; List_Reset(data1->VQ); }
+    if(tensor){ data1->NbTQ = 0; List_Reset(data1->TQ); }
   }
   if(RemoveOptions_Number[6].def){
-    if(scalar){ v1->NbSS = 0; List_Reset(v1->SS); }
-    if(vector){ v1->NbVS = 0; List_Reset(v1->VS); }
-    if(tensor){ v1->NbTS = 0; List_Reset(v1->TS); }
+    if(scalar){ data1->NbSS = 0; List_Reset(data1->SS); }
+    if(vector){ data1->NbVS = 0; List_Reset(data1->VS); }
+    if(tensor){ data1->NbTS = 0; List_Reset(data1->TS); }
   }
   if(RemoveOptions_Number[7].def){
-    if(scalar){ v1->NbSH = 0; List_Reset(v1->SH); }
-    if(vector){ v1->NbVH = 0; List_Reset(v1->VH); }
-    if(tensor){ v1->NbTH = 0; List_Reset(v1->TH); }
+    if(scalar){ data1->NbSH = 0; List_Reset(data1->SH); }
+    if(vector){ data1->NbVH = 0; List_Reset(data1->VH); }
+    if(tensor){ data1->NbTH = 0; List_Reset(data1->TH); }
   }
   if(RemoveOptions_Number[8].def){
-    if(scalar){ v1->NbSI = 0; List_Reset(v1->SI); }
-    if(vector){ v1->NbVI = 0; List_Reset(v1->VI); }
-    if(tensor){ v1->NbTI = 0; List_Reset(v1->TI); }
+    if(scalar){ data1->NbSI = 0; List_Reset(data1->SI); }
+    if(vector){ data1->NbVI = 0; List_Reset(data1->VI); }
+    if(tensor){ data1->NbTI = 0; List_Reset(data1->TI); }
   }
   if(RemoveOptions_Number[9].def){
-    if(scalar){ v1->NbSY = 0; List_Reset(v1->SY); }
-    if(vector){ v1->NbVY = 0; List_Reset(v1->VY); }
-    if(tensor){ v1->NbTY = 0; List_Reset(v1->TY); }
+    if(scalar){ data1->NbSY = 0; List_Reset(data1->SY); }
+    if(vector){ data1->NbVY = 0; List_Reset(data1->VY); }
+    if(tensor){ data1->NbTY = 0; List_Reset(data1->TY); }
   }
-  v1->Changed = 1;
 
-  // recompute min/max, etc.:
-  v1->Min = VAL_INF;
-  v1->Max = -VAL_INF;
-  for(int i = 0; i < 3; i++) {
-    v1->BBox[2 * i] = VAL_INF;
-    v1->BBox[2 * i + 1] = -VAL_INF;
-  }
-  EndView(v1, 0, v1->FileName, v1->Name);
+  data1->finalize();
+  v1->setChanged(true);
 
   return v1;
 }

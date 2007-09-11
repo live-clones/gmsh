@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.140 2007-09-10 04:47:02 geuzaine Exp $
+# $Id: Makefile,v 1.141 2007-09-11 14:01:54 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -77,7 +77,7 @@ Options.o: Options.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Mesh/Generator.h Context.h Options.h ../Mesh/BackgroundMesh.h \
   ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
-  ../Common/Message.h ../Post/Views.h ../Post/ColorTable.h \
+  ../Common/Message.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Post/AdaptiveViews.h ../Common/GmshMatrix.h ../Fltk/Solvers.h \
   ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
   ../Common/GmshUI.h ../Fltk/Popup_Button.h \

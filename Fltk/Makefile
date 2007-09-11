@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.148 2007-09-10 04:47:02 geuzaine Exp $
+# $Id: Makefile,v 1.149 2007-09-11 14:01:54 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -76,10 +76,11 @@ Main.o: Main.cpp GUI.h Opengl_Window.h Colorbar_Window.h \
   ../Mesh/Generator.h ../Parser/CreateFile.h ../Graphics/Draw.h \
   ../Common/Context.h ../Common/Options.h ../Parser/Parser.h \
   ../Parser/OpenFile.h ../Common/CommandLine.h Solvers.h \
-  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Post/Views.h \
-  ../Post/ColorTable.h ../Common/VertexArray.h ../Post/AdaptiveViews.h \
-  ../Common/GmshMatrix.h ../Geo/GModel.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Post/PView.h \
+  ../Common/VertexArray.h ../Post/PViewData.h ../Post/PViewOptions.h \
+  ../Post/ColorTable.h ../Post/PViewDataList.h ../Post/PViewData.h \
+  ../Post/AdaptiveViews.h ../Common/GmshMatrix.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/MVertex.h ../Geo/SPoint3.h \
   ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h \
   ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
@@ -90,9 +91,8 @@ Main.o: Main.cpp GUI.h Opengl_Window.h Colorbar_Window.h \
   ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h \
   ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h ../Mesh/Field.h \
-  ../Post/PView.h ../Post/PViewData.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Post/OctreePost.h ../Common/Octree.h \
-  ../Common/OctreeInternals.h ../Mesh/BackgroundMesh.h
+  ../Post/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h \
+  ../Mesh/BackgroundMesh.h
 Message.o: Message.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -108,11 +108,11 @@ GUI.o: GUI.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   Colorbar_Window.h Popup_Button.h SpherePosition_Widget.h Callbacks.h \
   Win32Icon.h ../Parser/OpenFile.h ../Common/CommandLine.h \
   ../Mesh/Generator.h Solvers.h ../Plugin/PluginManager.h \
-  ../Plugin/Plugin.h ../Post/Views.h ../Post/ColorTable.h \
-  ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Common/SmoothData.h ../Post/AdaptiveViews.h ../Common/GmshMatrix.h \
-  Shortcut_Window.h ../Post/PView.h ../Post/PViewData.h \
-  ../Post/PViewOptions.h ../Post/ColorTable.h
+  ../Plugin/Plugin.h ../Post/PView.h ../Common/VertexArray.h \
+  ../Geo/SVector3.h ../Geo/SPoint3.h ../Common/SmoothData.h \
+  ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Post/AdaptiveViews.h \
+  ../Common/GmshMatrix.h Shortcut_Window.h
 GUI_Extras.o: GUI_Extras.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
@@ -197,8 +197,8 @@ Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../Post/ColorTable.h ../Parser/CreateFile.h ../Parser/OpenFile.h \
   ../Common/CommandLine.h ../Common/Options.h GUI.h Opengl_Window.h \
   Colorbar_Window.h Popup_Button.h SpherePosition_Widget.h GUI_Extras.h \
-  Callbacks.h ../Plugin/Plugin.h ../Post/Views.h ../Post/ColorTable.h \
-  ../Post/AdaptiveViews.h ../Common/GmshMatrix.h \
+  Callbacks.h ../Plugin/Plugin.h ../Post/PViewDataList.h \
+  ../Post/PViewData.h ../Post/AdaptiveViews.h ../Common/GmshMatrix.h \
   ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Visibility.h \
   ../Common/GmshDefines.h Solvers.h ../Common/OS.h ../Mesh/Field.h \
   ../Post/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h \

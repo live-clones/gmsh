@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.21 2007-09-10 04:47:08 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.22 2007-09-11 14:01:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,11 +19,10 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <math.h>
 #include "OctreePost.h"
 #include "CutParametric.h"
-#include "List.h"
 #include "Context.h"
-#include <math.h>
 
 #if defined(HAVE_FLTK)
 #include "GmshUI.h"
@@ -290,76 +289,77 @@ static void addInView(int connect, int i, int nbcomp, int nbtime,
   }
 }
 
-Post_View *GMSH_CutParametricPlugin::execute(Post_View * v)
+PView *GMSH_CutParametricPlugin::execute(PView *v)
 {
   int iView = (int)CutParametricOptions_Number[4].def;
 
-  if(iView < 0)
-    iView = v ? v->Index : 0;
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
 
   if(!fillXYZ())
     return v;
 
-  Msg(FATAL, "XXXXXXXXXXXXXXX");
-  return 0;
-
-  /*
   int nbU = (int)CutParametricOptions_Number[2].def;
   int connect = (int)CutParametricOptions_Number[3].def;
   if(nbU < 2) connect = 0;
 
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
   OctreePost o(v1);
 
-  Post_View *v2 = BeginView(1);
-  double *res0 = new double[9*v1->NbTimeStep];
-  double *res1 = new double[9*v1->NbTimeStep];
+  PView *v2 = new PView(true);
+
+  PViewDataList *data2 = getDataList(v2);
+  if(!data2) return v;
+
+  double *res0 = new double[9 * data1->getNumTimeSteps()];
+  double *res1 = new double[9 * data1->getNumTimeSteps()];
   double x0 = 0., y0 = 0., z0 = 0., x1 = 0., y1 = 0., z1 = 0.;
 
-  for(int k = 0; k < 9*v1->NbTimeStep; ++k) res0[k] = res1[k] = 0.;
+  for(int k = 0; k < 9 * data1->getNumTimeSteps(); ++k) res0[k] = res1[k] = 0.;
 
   for(int i = 0; i < nbU; ++i){
     if(i && connect){
       x0 = x1;
       y0 = y1;
       z0 = z1;
-      for(int k = 0; k < 9*v1->NbTimeStep; ++k) res0[k] = res1[k];
+      for(int k = 0; k < 9 * data1->getNumTimeSteps(); ++k) res0[k] = res1[k];
     }
 
     x1 = x[i];
     y1 = y[i];
     z1 = z[i];
 
-    if(v1->NbST || v1->NbSQ || v1->NbSS || v1->NbSH || v1->NbSI || v1->NbSY){
+    if(data1->NbST || data1->NbSQ || data1->NbSS || 
+       data1->NbSH || data1->NbSI || data1->NbSY){
       o.searchScalar(x1, y1, z1, res1);
-      addInView(connect, i, 1, v1->NbTimeStep, x0, y0, z0, res0, x1, y1, z1, res1,
-		v2->SP, &v2->NbSP, v2->SL, &v2->NbSL);
+      addInView(connect, i, 1, data1->getNumTimeSteps(), 
+		x0, y0, z0, res0, x1, y1, z1, res1,
+		data2->SP, &data2->NbSP, data2->SL, &data2->NbSL);
     }
-    if(v1->NbVT || v1->NbVQ || v1->NbVS || v1->NbVH || v1->NbVI || v1->NbVY){
+    if(data1->NbVT || data1->NbVQ || data1->NbVS || 
+       data1->NbVH || data1->NbVI || data1->NbVY){
       o.searchVector(x1, y1, z1, res1);
-      addInView(connect, i, 3, v1->NbTimeStep, x0, y0, z0, res0, x1, y1, z1, res1,
-		v2->VP, &v2->NbVP, v2->VL, &v2->NbVL);
+      addInView(connect, i, 3, data1->getNumTimeSteps(), 
+		x0, y0, z0, res0, x1, y1, z1, res1,
+		data2->VP, &data2->NbVP, data2->VL, &data2->NbVL);
     }
-    if(v1->NbTT || v1->NbTQ || v1->NbTS || v1->NbTH || v1->NbTI || v1->NbTY){
+    if(data1->NbTT || data1->NbTQ || data1->NbTS ||
+       data1->NbTH || data1->NbTI || data1->NbTY){
       o.searchTensor(x1, y1, z1, res1);
-      addInView(connect, i, 9, v1->NbTimeStep, x0, y0, z0, res0, x1, y1, z1, res1,
-		v2->TP, &v2->NbTP, v2->TL, &v2->NbTL);
+      addInView(connect, i, 9, data1->getNumTimeSteps(),
+		x0, y0, z0, res0, x1, y1, z1, res1,
+		data2->TP, &data2->NbTP, data2->TL, &data2->NbTL);
     }
   }
-
-  char name[1024], filename[1024];
-  sprintf(name, "%s_CutParametric", v1->Name);
-  sprintf(filename, "%s_CutParametric.pos", v1->Name);
-  EndView(v2, 1, filename, name);
-
+    
   delete [] res0;
   delete [] res1;
 
+  data2->setName(data1->getName() + "_CutParametric");
+  data2->setFileName(data1->getName() + "_CutParametric.pos");
+  data2->finalize();
+
   return v2;
-  */
 }

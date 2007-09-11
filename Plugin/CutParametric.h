@@ -40,16 +40,14 @@ private:
   static std::vector<double> x, y, z;
 public:
   GMSH_CutParametricPlugin();
-  void getName  (char *name) const;
-  void getInfos (char *author, 
-  		 char *copyright,
-  		 char *help_text) const;
-  void catchErrorMessage (char *errorMessage) const;
+  void getName(char *name) const;
+  void getInfos(char *author, char *copyright, char *help_text) const;
+  void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
-  StringXNumber *getOption (int iopt);  
+  StringXNumber *getOption(int iopt);  
   int getNbOptionsStr() const;
   StringXString* getOptionStr(int iopt);  
-  Post_View *execute (Post_View *);
+  PView *execute(PView *);
 
   static double callbackMinU(int, int, double);
   static double callbackMaxU(int, int, double);

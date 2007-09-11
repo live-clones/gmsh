@@ -39,7 +39,7 @@ public:
   void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  
-  Post_View *execute(Post_View *);
+  PView *execute(PView *);
 
   static double callbackX(int, int, double);
   static double callbackY(int, int, double);

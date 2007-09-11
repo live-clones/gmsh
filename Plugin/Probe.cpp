@@ -1,4 +1,4 @@
-// $Id: Probe.cpp,v 1.16 2007-09-10 04:47:08 geuzaine Exp $
+// $Id: Probe.cpp,v 1.17 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,15 +20,13 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Probe.h"
-#include "List.h"
 #include "Context.h"
+#include "OctreePost.h"
 
 #if defined(HAVE_FLTK)
 #include "GmshUI.h"
 #include "Draw.h"
 #endif
-
-#include "OctreePost.h"
 
 extern Context_T CTX;
 
@@ -59,34 +57,34 @@ void GMSH_ProbePlugin::draw()
 #if defined(HAVE_FLTK)
   int num = (int)ProbeOptions_Number[3].def;
   if(num < 0) num = iview;
-  Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, num);
-  if(!vv) return;
-  Post_View *v = *vv;
-  double x = ProbeOptions_Number[0].def;
-  double y = ProbeOptions_Number[1].def;
-  double z = ProbeOptions_Number[2].def;
-  glColor4ubv((GLubyte *) & CTX.color.fg);
-  glLineWidth(CTX.line_width);
-  if(x >= v->BBox[0] && x <= v->BBox[1] &&
-     y >= v->BBox[2] && y <= v->BBox[3] &&
-     z >= v->BBox[4] && z <= v->BBox[5]){
-    // we're inside the bounding box: draw a large cross
-    glBegin(GL_LINES);
-    glVertex3d(v->BBox[0],y,z); glVertex3d(v->BBox[1],y,z);
-    glVertex3d(x,v->BBox[2],z); glVertex3d(x,v->BBox[3],z);
-    glVertex3d(x,y,v->BBox[4]); glVertex3d(x,y,v->BBox[5]);
-    glEnd();
+  if(num >= 0 && num < PView::list.size()){
+    double x = ProbeOptions_Number[0].def;
+    double y = ProbeOptions_Number[1].def;
+    double z = ProbeOptions_Number[2].def;
+    glColor4ubv((GLubyte *) & CTX.color.fg);
+    glLineWidth(CTX.line_width);
+    SBoundingBox3d bb = PView::list[num]->getData()->getBoundingBox();
+    if(x >= bb.min().x() && x <= bb.max().x() &&
+       y >= bb.min().y() && y <= bb.max().y() &&
+       z >= bb.min().z() && z <= bb.max().z()){
+      // we're inside the bounding box: draw a large cross
+      glBegin(GL_LINES);
+      glVertex3d(bb.min().x(), y, z); glVertex3d(bb.max().x(), y, z);
+      glVertex3d(x, bb.min().y(), z); glVertex3d(x, bb.max().y(), z);
+      glVertex3d(x, y, bb.min().z()); glVertex3d(x, y, bb.max().z());
+      glEnd();
+    }
+    else{
+      // draw 10-pixel marker
+      double d = 10 * CTX.pixel_equiv_x / CTX.s[0];
+      glBegin(GL_LINES);
+      glVertex3d(x - d, y, z); glVertex3d(x + d, y, z);
+      glVertex3d(x, y - d, z); glVertex3d(x, y + d, z);
+      glVertex3d(x, y, z - d); glVertex3d(x, y, z + d);
+      glEnd();
+    }
+    Draw_Sphere(CTX.point_size, x, y, z, 1);
   }
-  else{
-    // draw 10-pixel marker
-    double d = 10 * CTX.pixel_equiv_x / CTX.s[0];
-    glBegin(GL_LINES);
-    glVertex3d(x-d,y,z); glVertex3d(x+d,y,z);
-    glVertex3d(x,y-d,z); glVertex3d(x,y+d,z);
-    glVertex3d(x,y,z-d); glVertex3d(x,y,z+d);
-    glEnd();
-  }
-  Draw_Sphere(CTX.point_size, x, y, z, 1);
 #endif
 }
 
@@ -94,9 +92,9 @@ double GMSH_ProbePlugin::callback(int num, int action, double value, double *opt
 {
   if(action > 0) iview = num;
   switch(action){ // configure the input field
-  case 1: return CTX.lc/100.;
-  case 2: return -2*CTX.lc;
-  case 3: return 2*CTX.lc;
+  case 1: return CTX.lc / 100.;
+  case 2: return -2 * CTX.lc;
+  case 3: return 2 * CTX.lc;
   default: break;
   }
   *opt = value;
@@ -154,75 +152,65 @@ void GMSH_ProbePlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Probe failed...");
 }
 
-Post_View *GMSH_ProbePlugin::execute(Post_View * v)
+PView *GMSH_ProbePlugin::execute(PView *v)
 {
   double x = ProbeOptions_Number[0].def;
   double y = ProbeOptions_Number[1].def;
   double z = ProbeOptions_Number[2].def;
   int iView = (int)ProbeOptions_Number[3].def;
   
-  if(iView < 0)
-    iView = v ? v->Index : 0;
-  
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
 
-  Msg(FATAL, "XXXXXXXXXXXXXXXXXXXXX");
-  return 0;
+  PView *v2 = new PView(true);
 
-  /*
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-  Post_View *v2 = BeginView(1);
+  PViewDataList *data2 = getDataList(v2);
+  if(!data2) return v;
 
-  double *val = new double[9*v1->NbTimeStep];
+  double *val = new double[9 * data1->getNumTimeSteps()];
   OctreePost o(v1);
 
   if(o.searchScalar(x, y, z, val)){
-    List_Add(v2->SP, &x);
-    List_Add(v2->SP, &y);
-    List_Add(v2->SP, &z);
-    for(int i = 0; i < v1->NbTimeStep; i++)
-      List_Add(v2->SP, &val[i]);
-    v2->NbSP++;
+    List_Add(data2->SP, &x);
+    List_Add(data2->SP, &y);
+    List_Add(data2->SP, &z);
+    for(int i = 0; i < data1->getNumTimeSteps(); i++)
+      List_Add(data2->SP, &val[i]);
+    data2->NbSP++;
   }
 
   if(o.searchVector(x, y, z, val)){
-    List_Add(v2->VP, &x);
-    List_Add(v2->VP, &y);
-    List_Add(v2->VP, &z);
-    for(int i = 0; i < v1->NbTimeStep; i++){
+    List_Add(data2->VP, &x);
+    List_Add(data2->VP, &y);
+    List_Add(data2->VP, &z);
+    for(int i = 0; i < data1->getNumTimeSteps(); i++){
       for(int j = 0; j < 3; j++)
-	List_Add(v2->VP, &val[3*i+j]);
+	List_Add(data2->VP, &val[3*i+j]);
     }
-    v2->NbVP++;
+    data2->NbVP++;
   }
 
   if(o.searchTensor(x, y, z, val)){
-    List_Add(v2->TP, &x);
-    List_Add(v2->TP, &y);
-    List_Add(v2->TP, &z);
-    for(int i = 0; i < v1->NbTimeStep; i++){
+    List_Add(data2->TP, &x);
+    List_Add(data2->TP, &y);
+    List_Add(data2->TP, &z);
+    for(int i = 0; i < data1->getNumTimeSteps(); i++){
       for(int j = 0; j < 9; j++)
-	List_Add(v2->TP, &val[9*i+j]);
+	List_Add(data2->TP, &val[9*i+j]);
     }
-    v2->NbTP++;
+    data2->NbTP++;
   }
 
   delete [] val;
   
-  // copy time data
-  for(int i = 0; i < List_Nbr(v1->Time); i++)
-    List_Add(v2->Time, List_Pointer(v1->Time, i));
-  // finalize
-  char name[1024], filename[1024];
-  sprintf(name, "%s_Probe", v1->Name);
-  sprintf(filename, "%s_Probe.pos", v1->Name);
-  EndView(v2, 1, filename, name);
+  for(int i = 0; i < List_Nbr(data1->Time); i++)
+    List_Add(data2->Time, List_Pointer(data1->Time, i));
+  data2->setName(data1->getName() + "_Probe");
+  data2->setFileName(data1->getName() + "_Probe.pos");
+  data2->finalize();
+
   return v2;
-
-
-  */
 }

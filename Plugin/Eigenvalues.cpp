@@ -1,4 +1,4 @@
-// $Id: Eigenvalues.cpp,v 1.4 2007-05-04 10:45:08 geuzaine Exp $
+// $Id: Eigenvalues.cpp,v 1.5 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,15 +19,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Plugin.h"
 #include "Eigenvalues.h"
-#include "List.h"
-#include "Views.h"
-#include "Context.h"
-#include "Malloc.h"
 #include "Numeric.h"
-
-extern Context_T CTX;
 
 StringXNumber EigenvaluesOptions_Number[] = {
   {GMSH_FULLRC, "iView", NULL, -1.}
@@ -114,57 +107,55 @@ static void eigenvalues(List_T *inList, int inNb,
   }
 }
 
-Post_View *GMSH_EigenvaluesPlugin::execute(Post_View * v)
+PView *GMSH_EigenvaluesPlugin::execute(PView *v)
 {
   int iView = (int)EigenvaluesOptions_Number[0].def;
 
-  if(iView < 0)
-    iView = v ? v->Index : 0;
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
+
+  PView *min = new PView(true);
+  PView *mid = new PView(true);
+  PView *max = new PView(true);
+
+  PViewDataList *dmin = getDataList(min);
+  PViewDataList *dmid = getDataList(mid);
+  PViewDataList *dmax = getDataList(max);
+
+  eigenvalues(data1->TP, data1->NbTP, 1, data1->getNumTimeSteps(),
+	      dmin->SP, &dmin->NbSP, dmid->SP, &dmid->NbSP, dmax->SP, &dmax->NbSP);
+  eigenvalues(data1->TL, data1->NbTL, 2, data1->getNumTimeSteps(),
+	      dmin->SL, &dmin->NbSL, dmid->SL, &dmid->NbSL, dmax->SL, &dmax->NbSL);
+  eigenvalues(data1->TT, data1->NbTT, 3, data1->getNumTimeSteps(),
+	      dmin->ST, &dmin->NbST, dmid->ST, &dmid->NbST, dmax->ST, &dmax->NbST);
+  eigenvalues(data1->TQ, data1->NbTQ, 4, data1->getNumTimeSteps(),
+	      dmin->SQ, &dmin->NbSQ, dmid->SQ, &dmid->NbSQ, dmax->SQ, &dmax->NbSQ);
+  eigenvalues(data1->TS, data1->NbTS, 4, data1->getNumTimeSteps(),
+	      dmin->SS, &dmin->NbSS, dmid->SS, &dmid->NbSS, dmax->SS, &dmax->NbSS);
+  eigenvalues(data1->TH, data1->NbTH, 8, data1->getNumTimeSteps(),
+	      dmin->SH, &dmin->NbSH, dmid->SH, &dmid->NbSH, dmax->SH, &dmax->NbSH);
+  eigenvalues(data1->TI, data1->NbTI, 6, data1->getNumTimeSteps(),
+	      dmin->SI, &dmin->NbSI, dmid->SI, &dmid->NbSI, dmax->SI, &dmax->NbSI);
+  eigenvalues(data1->TY, data1->NbTY, 5, data1->getNumTimeSteps(),
+	      dmin->SY, &dmin->NbSY, dmid->SY, &dmid->NbSY, dmax->SY, &dmax->NbSY);
+
+  for(int i = 0; i < List_Nbr(data1->Time); i++){
+    List_Add(dmin->Time, List_Pointer(data1->Time, i));
+    List_Add(dmid->Time, List_Pointer(data1->Time, i));
+    List_Add(dmax->Time, List_Pointer(data1->Time, i));
   }
+  dmin->setName(data1->getName() + "_MinEigenvalues");
+  dmin->setFileName(data1->getName() + "_MinEigenvalues.pos");
+  dmin->finalize();
+  dmid->setName(data1->getName() + "_MidEigenvalues");
+  dmid->setFileName(data1->getName() + "_MidEigenvalues.pos");
+  dmid->finalize();
+  dmax->setName(data1->getName() + "_MaxEigenvalues");
+  dmax->setFileName(data1->getName() + "_MaxEigenvalues.pos");
+  dmax->finalize();
 
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-  Post_View *min = BeginView(1);
-  Post_View *mid = BeginView(1);
-  Post_View *max = BeginView(1);
-
-  eigenvalues(v1->TP, v1->NbTP, 1, v1->NbTimeStep,
-	      min->SP, &min->NbSP, mid->SP, &mid->NbSP, max->SP, &max->NbSP);
-  eigenvalues(v1->TL, v1->NbTL, 2, v1->NbTimeStep,
-	      min->SL, &min->NbSL, mid->SL, &mid->NbSL, max->SL, &max->NbSL);
-  eigenvalues(v1->TT, v1->NbTT, 3, v1->NbTimeStep,
-	      min->ST, &min->NbST, mid->ST, &mid->NbST, max->ST, &max->NbST);
-  eigenvalues(v1->TQ, v1->NbTQ, 4, v1->NbTimeStep,
-	      min->SQ, &min->NbSQ, mid->SQ, &mid->NbSQ, max->SQ, &max->NbSQ);
-  eigenvalues(v1->TS, v1->NbTS, 4, v1->NbTimeStep,
-	      min->SS, &min->NbSS, mid->SS, &mid->NbSS, max->SS, &max->NbSS);
-  eigenvalues(v1->TH, v1->NbTH, 8, v1->NbTimeStep,
-	      min->SH, &min->NbSH, mid->SH, &mid->NbSH, max->SH, &max->NbSH);
-  eigenvalues(v1->TI, v1->NbTI, 6, v1->NbTimeStep,
-	      min->SI, &min->NbSI, mid->SI, &mid->NbSI, max->SI, &max->NbSI);
-  eigenvalues(v1->TY, v1->NbTY, 5, v1->NbTimeStep,
-	      min->SY, &min->NbSY, mid->SY, &mid->NbSY, max->SY, &max->NbSY);
-
-  // copy time data
-  for(int i = 0; i < List_Nbr(v1->Time); i++){
-    List_Add(min->Time, List_Pointer(v1->Time, i));
-    List_Add(mid->Time, List_Pointer(v1->Time, i));
-    List_Add(max->Time, List_Pointer(v1->Time, i));
-  }
-  // finalize
-  char name[1024], filename[1024];
-  sprintf(name, "%s_MinEigenvalues", v1->Name);
-  sprintf(filename, "%s_MinEigenvalues.pos", v1->Name);
-  EndView(min, 1, filename, name);
-  sprintf(name, "%s_MidEigenvalue", v1->Name);
-  sprintf(filename, "%s_MidEigenvalues.pos", v1->Name);
-  EndView(mid, 1, filename, name);
-  sprintf(name, "%s_MaxEigenvalue", v1->Name);
-  sprintf(filename, "%s_MaxEigenvalues.pos", v1->Name);
-  EndView(max, 1, filename, name);
-
-  return NULL;
+  return 0;
 }

@@ -40,8 +40,8 @@ public:
   void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  
-  Post_View *execute(Post_View *);
-  virtual bool geometrical_filter ( Double_Matrix * geometrical_nodes_positions ) const;
+  PView *execute(PView *);
+  virtual bool geometricalFilter(Double_Matrix *) const;
 
   static double callbackA(int, int, double);
   static double callbackB(int, int, double);

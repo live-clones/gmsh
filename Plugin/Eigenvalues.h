@@ -21,7 +21,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Plugin.h"
-#include "List.h"
 
 extern "C"
 {
@@ -37,7 +36,7 @@ class GMSH_EigenvaluesPlugin : public GMSH_Post_Plugin
   void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  
-  Post_View *execute(Post_View *);
+  PView *execute(PView *);
 };
 
 #endif

@@ -36,18 +36,16 @@ class GMSH_PluginManager
  private:
   GMSH_PluginManager();
   static GMSH_PluginManager *_instance;
-  std::map<const char*,GMSH_Plugin*,ltstrpg> allPlugins;
+  std::map<const char*, GMSH_Plugin*, ltstrpg> allPlugins;
 
  public :
   virtual ~GMSH_PluginManager();
-  typedef std::map<const char*,GMSH_Plugin*,ltstrpg>::iterator iter;
+  typedef std::map<const char*, GMSH_Plugin*, ltstrpg>::iterator iter;
   
-  // Registering all default plugins that are in
-  // $(GMSHPLUGINSHOME). In fact, we will load all .so files in dir
-  // $(GMSHPLUGINSHOME). Note that loading a .so (or a .o) is not what
-  // is usually called a 'plugin'. We should call the plugins
-  // 'modules'. A plugin is an _executable_, but that can only be
-  // executed from inside another program...
+  // register all the plugins that are in $(GMSHPLUGINSHOME). (Note
+  // that loading a .so is not what is usually called a 'plugin': we
+  // should call the plugins 'modules'... A plugin is an executable,
+  // but that can only be executed from inside another program.)
   void registerDefaultPlugins();
   static GMSH_PluginManager *instance();
 
@@ -62,8 +60,8 @@ class GMSH_PluginManager
   void setPluginOption(char *pluginName, char *option, char *value);
 
   // Iterator on plugins
-  inline iter begin() {return allPlugins.begin();}
-  inline iter end() {return allPlugins.end();}
+  inline iter begin(){ return allPlugins.begin(); }
+  inline iter end(){ return allPlugins.end(); }
 
   // Find a plugin named pluginName
   GMSH_Plugin *find(char *pluginName);

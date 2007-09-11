@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.52 2007-05-04 10:45:08 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.53 2007-09-11 14:01:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -61,16 +61,17 @@ void GMSH_CutPlanePlugin::draw()
 #if defined(HAVE_FLTK)
   int num = (int)CutPlaneOptions_Number[7].def;
   if(num < 0) num = iview;
-  Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, num);
-  if(!vv) return;
-  glColor4ubv((GLubyte *) & CTX.color.fg);
-  glLineWidth(CTX.line_width);
-  Draw_PlaneInBoundingBox((*vv)->BBox[0], (*vv)->BBox[2], (*vv)->BBox[4],
-			  (*vv)->BBox[1], (*vv)->BBox[3], (*vv)->BBox[5],
-			  CutPlaneOptions_Number[0].def,
-			  CutPlaneOptions_Number[1].def,
-			  CutPlaneOptions_Number[2].def,
-			  CutPlaneOptions_Number[3].def);
+  if(num >= 0 && num < PView::list.size()){
+    glColor4ubv((GLubyte *) & CTX.color.fg);
+    glLineWidth(CTX.line_width);
+    SBoundingBox3d bb = PView::list[num]->getData()->getBoundingBox();
+    Draw_PlaneInBoundingBox(bb.min().x(), bb.min().y(), bb.min().z(), 
+			    bb.max().x(), bb.max().y(), bb.max().z(), 
+			    CutPlaneOptions_Number[0].def,
+			    CutPlaneOptions_Number[1].def,
+			    CutPlaneOptions_Number[2].def,
+			    CutPlaneOptions_Number[3].def);
+  }
 #endif
 }
 
@@ -176,19 +177,19 @@ double GMSH_CutPlanePlugin::levelset(double x, double y, double z, double val) c
     CutPlaneOptions_Number[2].def * z + CutPlaneOptions_Number[3].def;
 }
 
-bool GMSH_CutPlanePlugin::geometrical_filter(Double_Matrix *geometrical_nodes_positions) const
+bool GMSH_CutPlanePlugin::geometricalFilter(Double_Matrix *node_positions) const
 {
-  const double l0 = levelset((*geometrical_nodes_positions)(0,0),
-			     (*geometrical_nodes_positions)(0,1),
-			     (*geometrical_nodes_positions)(0,2),1);
-  for (int i=1;i<geometrical_nodes_positions->size1();i++)
-    if (levelset((*geometrical_nodes_positions)(i,0),
-		 (*geometrical_nodes_positions)(i,1),
-		 (*geometrical_nodes_positions)(i,2),1) * l0 < 0) return true;
+  const double l0 = levelset((*node_positions)(0, 0),
+			     (*node_positions)(0, 1),
+			     (*node_positions)(0, 2), 1);
+  for (int i = 1; i < node_positions->size1(); i++)
+    if (levelset((*node_positions)(i, 0),
+		 (*node_positions)(i, 1),
+		 (*node_positions)(i, 2), 1) * l0 < 0) return true;
   return false;
 }
 
-Post_View *GMSH_CutPlanePlugin::execute(Post_View * v)
+PView *GMSH_CutPlanePlugin::execute(PView *v)
 {
   int iView = (int)CutPlaneOptions_Number[7].def;
   _ref[0] = CutPlaneOptions_Number[0].def;
@@ -202,15 +203,8 @@ Post_View *GMSH_CutPlanePlugin::execute(Post_View * v)
   _recurLevel = (int)CutPlaneOptions_Number[5].def;
   _targetError = CutPlaneOptions_Number[6].def;
   
-  if(iView < 0)
-    iView = v ? v->Index : 0;
-  
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
-  
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-  
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
+
   return GMSH_LevelsetPlugin::execute(v1);
 }

@@ -1,4 +1,4 @@
-// $Id: Annotate.cpp,v 1.16 2007-05-04 10:45:08 geuzaine Exp $
+// $Id: Annotate.cpp,v 1.17 2007-09-11 14:01:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,14 +19,9 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <iostream>
 #include <vector>
-#include "Plugin.h"
 #include "Annotate.h"
-#include "List.h"
-#include "Views.h"
 #include "Context.h"
-#include "Numeric.h"
 
 #if defined(HAVE_FLTK)
 #include "GmshUI.h"
@@ -253,7 +248,7 @@ void GMSH_AnnotatePlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Annotate failed...");
 }
 
-Post_View *GMSH_AnnotatePlugin::execute(Post_View * v)
+PView *GMSH_AnnotatePlugin::execute(PView *v)
 {
   double X = AnnotateOptions_Number[0].def;
   double Y = AnnotateOptions_Number[1].def;
@@ -263,36 +258,32 @@ Post_View *GMSH_AnnotatePlugin::execute(Post_View * v)
   char *text = AnnotateOptions_String[0].def;
   double style = getStyle();
 
-  if(iView < 0)
-    iView = v ? v->Index : 0;
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
-
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
 
   if(dim3){
-    List_Add(v1->T3D, &X);
-    List_Add(v1->T3D, &Y);
-    List_Add(v1->T3D, &Z);
-    List_Add(v1->T3D, &style); 
-    double d = List_Nbr(v1->T3C);
-    List_Add(v1->T3D, &d); 
+    List_Add(data1->T3D, &X);
+    List_Add(data1->T3D, &Y);
+    List_Add(data1->T3D, &Z);
+    List_Add(data1->T3D, &style); 
+    double d = List_Nbr(data1->T3C);
+    List_Add(data1->T3D, &d); 
     for(int i = 0; i < (int)strlen(text)+1; i++) 
-      List_Add(v1->T3C, &text[i]); 
-    v1->NbT3++;
+      List_Add(data1->T3C, &text[i]); 
+    data1->NbT3++;
   }
   else{
-    List_Add(v1->T2D, &X);
-    List_Add(v1->T2D, &Y);
-    List_Add(v1->T2D, &style); 
-    double d = List_Nbr(v1->T2C);
-    List_Add(v1->T2D, &d); 
+    List_Add(data1->T2D, &X);
+    List_Add(data1->T2D, &Y);
+    List_Add(data1->T2D, &style); 
+    double d = List_Nbr(data1->T2C);
+    List_Add(data1->T2D, &d); 
     for(int i = 0; i < (int)strlen(text)+1; i++) 
-      List_Add(v1->T2C, &text[i]); 
-    v1->NbT2++;
+      List_Add(data1->T2C, &text[i]); 
+    data1->NbT2++;
   }
 
   return v1;

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2007-09-10 04:47:08 geuzaine Exp $
+# $Id: Makefile,v 1.14 2007-09-11 14:01:55 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -94,10 +94,12 @@ PViewOptions.o: PViewOptions.cpp PViewOptions.h ColorTable.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/Message.h
 AdaptiveViews.o: AdaptiveViews.cpp AdaptiveViews.h ../DataStr/List.h \
   ../Common/GmshMatrix.h ../Plugin/Plugin.h ../Common/Options.h \
-  ../Post/ColorTable.h ../Common/Message.h ../Post/Views.h \
-  ../Post/ColorTable.h ../Common/VertexArray.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Common/SmoothData.h ../Numeric/Numeric.h \
-  ../Post/AdaptiveViews.h ../Common/OS.h
+  ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
+  ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Common/SmoothData.h ../Numeric/Numeric.h ../Post/PViewData.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Post/PViewOptions.h \
+  ../Post/ColorTable.h ../Post/PViewDataList.h ../Post/PViewData.h \
+  ../Post/AdaptiveViews.h ../Common/OS.h Views.h ColorTable.h
 OctreePost.o: OctreePost.cpp ../Common/Octree.h \
   ../Common/OctreeInternals.h OctreePost.h ../DataStr/List.h PView.h \
   ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \

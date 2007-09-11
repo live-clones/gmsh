@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.30 2007-09-10 04:47:08 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.31 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,9 +20,8 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <math.h>
-#include "OctreePost.h"
 #include "StreamLines.h"
-#include "List.h"
+#include "OctreePost.h"
 #include "Context.h"
 
 #if defined(HAVE_FLTK)
@@ -235,49 +234,35 @@ void GMSH_StreamLinesPlugin::getPoint(int iU, int iV, double *X)
     v  * (StreamLinesOptions_Number[8].def-StreamLinesOptions_Number[2].def) ;
 }
 
-Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const 
+PView *GMSH_StreamLinesPlugin::GenerateView(PView *v1, PView *v2)
 {
   const double b1=1./3., b2=2./3., b3=1./3., b4=1./6.;
   const double a1=0.5, a2=0.5, a3=1.0, a4=1.0;
   const double DT = StreamLinesOptions_Number[12].def;
   double XINIT[3], X[3], DX[3], X1[3], X2[3], X3[3], X4[3];
-  double val[3], *val2 = NULL;
+  double val[3], *val2 = 0;
 
-  Msg(FATAL, "XXXXXXXXXXXXXXXXXXX");
-  return 0;
-  /*
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v1;
 
-  Post_View *View = BeginView(1);
+  PViewDataList *data2 = v2 ? getDataList(v2) : 0;
 
-  Post_View *v1;
-  if(List_Pointer_Test(CTX.post.list, iView))
-    List_Read(CTX.post.list, iView, &v1);
-  else
-    v1 = NULL;
+  PView *v = new PView(true);
 
-  Post_View *v2;
-  if(List_Pointer_Test(CTX.post.list, dView))
-    List_Read(CTX.post.list, dView, &v2);
-  else
-    v2 = NULL;
-
-  if(!v1) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return NULL;
-  }
+  PViewDataList *data = getDataList(v);
+  if(!data) return v1;
 
   int timestep = (int)StreamLinesOptions_Number[13].def;
-  if(timestep > v1->NbTimeStep - 1){
-    Msg(GERROR, "Invalid time step (%d) in View[%d]: using step 0 instead",
-	timestep, v1->Index);
+  if(timestep > data1->getNumTimeSteps() - 1){
+    Msg(GERROR, "Invalid time step (%d) in view: using step 0 instead",	timestep);
     timestep = 0;
   }
 
   OctreePost o(v1);
-  OctreePost *o2 = NULL;
+  OctreePost *o2 = 0;
 
-  if(v2){
-    val2 = new double[v2->NbTimeStep];
+  if(data2){
+    val2 = new double[data2->getNumTimeSteps()];
     o2 = new OctreePost(v2);
   }
 
@@ -286,14 +271,14 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const
       getPoint(i, j, XINIT);
       getPoint(i, j, X);
 	  
-      if(v2){
+      if(data2){
 	o2->searchScalar(X[0], X[1], X[2], val2, -1);
       }
       else{
-	View->NbVP++;
-	List_Add(View->VP, &X[0]);
-	List_Add(View->VP, &X[1]);
-	List_Add(View->VP, &X[2]);	      
+	data->NbVP++;
+	List_Add(data->VP, &X[0]);
+	List_Add(data->VP, &X[1]);
+	List_Add(data->VP, &X[2]);	      
       }
 
       int currentTimeStep = 0;
@@ -303,13 +288,13 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const
 	double XPREV[3] = { X[0], X[1], X[2] };
 
 	if(timestep < 0){
-	  double T0 = List_Nbr(v1->Time) ? *(double*)List_Pointer(v1->Time, 0) : 0.;
+	  double T0 = data1->getTime(0);
 	  double currentT = T0 + DT * iter;
-	  List_Add(View->Time, &currentT);
-	  for(; currentTimeStep < v1->NbTimeStep - 1 && currentT > 0.5 *
-		(*(double*)List_Pointer(v1->Time, currentTimeStep) +
-		 *(double*)List_Pointer(v1->Time, currentTimeStep + 1));
-              currentTimeStep++);
+	  List_Add(data->Time, &currentT);
+	  for(; currentTimeStep < data1->getNumTimeSteps() - 1 && 
+		currentT > 0.5 * (data1->getTime(currentTimeStep) + 
+				  data1->getTime(currentTimeStep + 1));
+	      currentTimeStep++);
 	}
 	else{
 	  currentTimeStep = timestep;
@@ -341,54 +326,53 @@ Post_View * GMSH_StreamLinesPlugin::GenerateView(int iView, int dView) const
 		   b3*(X3[k]-X[k]) + b4*(X4[k]-X[k])) ;
 	for(int k = 0; k < 3; k++) DX[k] = X[k] - XINIT[k];
 
-	if(v2){
-	  View->NbSL++;
-	  List_Add(View->SL, &XPREV[0]);
-	  List_Add(View->SL, &X[0]);
-	  List_Add(View->SL, &XPREV[1]);
-	  List_Add(View->SL, &X[1]);
-	  List_Add(View->SL, &XPREV[2]);
-	  List_Add(View->SL, &X[2]);
-	  for(int k = 0; k < v2->NbTimeStep; k++)
-	    List_Add(View->SL, &val2[k]);
+	if(data2){
+	  data->NbSL++;
+	  List_Add(data->SL, &XPREV[0]);
+	  List_Add(data->SL, &X[0]);
+	  List_Add(data->SL, &XPREV[1]);
+	  List_Add(data->SL, &X[1]);
+	  List_Add(data->SL, &XPREV[2]);
+	  List_Add(data->SL, &X[2]);
+	  for(int k = 0; k < data2->getNumTimeSteps(); k++)
+	    List_Add(data->SL, &val2[k]);
 	  o2->searchScalar(X[0], X[1], X[2], val2, -1);
-	  for(int k = 0; k < v2->NbTimeStep; k++)
-	    List_Add(View->SL, &val2[k]);
+	  for(int k = 0; k < data2->getNumTimeSteps(); k++)
+	    List_Add(data->SL, &val2[k]);
 	}
 	else{
-	  List_Add(View->VP, &DX[0]);
-	  List_Add(View->VP, &DX[1]);
-	  List_Add(View->VP, &DX[2]);	      
+	  List_Add(data->VP, &DX[0]);
+	  List_Add(data->VP, &DX[1]);
+	  List_Add(data->VP, &DX[2]);	      
 	}
       }
     }
   }
 
-  if(v2){
+  if(data2){
     delete [] val2;
     delete o2;
   }
   else{
-    View->VectorType = DRAW_POST_DISPLACEMENT;
+    v->getOptions()->VectorType = PViewOptions::Displacement;
   }
 
-  char name[1024], filename[1024];
-  sprintf(name, "%s_StreamLines", v1->Name);
-  sprintf(filename, "%s_StreamLines.pos", v1->Name);
-  EndView(View, 1, filename, name);
+  data->setName(data1->getName() + "_StreamLines");
+  data->setFileName(data1->getName() + "_StreamLines.pos");
+  data->finalize();
 
-  return View;
-
-  */
+  return v;
 }
 
-Post_View *GMSH_StreamLinesPlugin::execute(Post_View * v)
+PView *GMSH_StreamLinesPlugin::execute(PView *v)
 {
   int dView = (int)StreamLinesOptions_Number[14].def;
   int iView = (int)StreamLinesOptions_Number[15].def;
 
-  if(iView < 0)
-    iView = v ? v->Index : 0;
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  return GenerateView(iView, dView);
+  PView *v2 = getView(dView, v);
+
+  return GenerateView(v1, v2);
 }

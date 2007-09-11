@@ -1,4 +1,4 @@
-// $Id: Divergence.cpp,v 1.4 2007-05-04 10:45:08 geuzaine Exp $
+// $Id: Divergence.cpp,v 1.5 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,15 +19,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Plugin.h"
 #include "Divergence.h"
-#include "List.h"
-#include "Views.h"
-#include "Context.h"
-#include "Numeric.h"
 #include "ShapeFunctions.h"
-
-extern Context_T CTX;
 
 StringXNumber DivergenceOptions_Number[] = {
   {GMSH_FULLRC, "iView", NULL, -1.}
@@ -108,37 +101,35 @@ static void divergence(int inNb, List_T *inList, int *outNb, List_T *outList,
   }
 }
 
-Post_View *GMSH_DivergencePlugin::execute(Post_View * v)
+PView *GMSH_DivergencePlugin::execute(PView *v)
 {
   int iView = (int)DivergenceOptions_Number[0].def;
   
-  if(iView < 0)
-    iView = v ? v->Index : 0;
-  
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
-  
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-  Post_View *v2 = BeginView(1);
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  divergence(v1->NbVL, v1->VL, &v2->NbSL, v2->SL, 1, 2, v1->NbTimeStep);
-  divergence(v1->NbVT, v1->VT, &v2->NbST, v2->ST, 2, 3, v1->NbTimeStep);
-  divergence(v1->NbVQ, v1->VQ, &v2->NbSQ, v2->SQ, 2, 4, v1->NbTimeStep);
-  divergence(v1->NbVS, v1->VS, &v2->NbSS, v2->SS, 3, 4, v1->NbTimeStep);
-  divergence(v1->NbVH, v1->VH, &v2->NbSH, v2->SH, 3, 8, v1->NbTimeStep);
-  divergence(v1->NbVI, v1->VI, &v2->NbSI, v2->SI, 3, 6, v1->NbTimeStep);
-  divergence(v1->NbVY, v1->VY, &v2->NbSY, v2->SY, 3, 5, v1->NbTimeStep);
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
 
-  // copy time data
-  for(int i = 0; i < List_Nbr(v1->Time); i++)
-    List_Add(v2->Time, List_Pointer(v1->Time, i));
-  // finalize
-  char name[1024], filename[1024];
-  sprintf(name, "%s_Divergence", v1->Name);
-  sprintf(filename, "%s_Divergence.pos", v1->Name);
-  EndView(v2, 1, filename, name);
-  
+  PView *v2 = new PView(true);
+
+  PViewDataList *data2 = getDataList(v2);
+  if(!data2) return v;
+
+  int nts = data1->getNumTimeSteps();
+  divergence(data1->NbVL, data1->VL, &data2->NbSL, data2->SL, 1, 2, nts);
+  divergence(data1->NbVT, data1->VT, &data2->NbST, data2->ST, 2, 3, nts);
+  divergence(data1->NbVQ, data1->VQ, &data2->NbSQ, data2->SQ, 2, 4, nts);
+  divergence(data1->NbVS, data1->VS, &data2->NbSS, data2->SS, 3, 4, nts);
+  divergence(data1->NbVH, data1->VH, &data2->NbSH, data2->SH, 3, 8, nts);
+  divergence(data1->NbVI, data1->VI, &data2->NbSI, data2->SI, 3, 6, nts);
+  divergence(data1->NbVY, data1->VY, &data2->NbSY, data2->SY, 3, 5, nts);
+
+  for(int i = 0; i < List_Nbr(data1->Time); i++)
+    List_Add(data2->Time, List_Pointer(data1->Time, i));
+  data2->setName(data1->getName() + "_Divergence");
+  data2->setFileName(data1->getName() + "_Divergence.pos");
+  data2->finalize();
+
   return v2;
 }

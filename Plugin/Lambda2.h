@@ -21,12 +21,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Plugin.h"
-#include "List.h"
-#include "Numeric.h"
-#include <algorithm>
-#include <functional>
-#include <math.h>
-#include <stdio.h>
 
 extern "C"
 {
@@ -42,8 +36,7 @@ public:
   void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  
-
-  Post_View *execute(Post_View *);
+  PView *execute(PView *);
 };
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.5 2007-09-10 04:47:08 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.6 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -91,27 +91,15 @@ PViewDataList::~PViewDataList()
 
 bool PViewDataList::finalize()
 {
-
   // sanity checks
-  /*
-  if(View->adaptive) return 0; // hope for the best :-)
-
-  char *name[8] = { "point", "line", "triangle", "quadrangle", 
-		    "tetrahedron", "hexahedron", "prism", "pyramid" };
-  char *type[3] = { "scalar", "vector", "tensor" };
-
-  if(8 * 3 != VIEW_NB_ELEMENT_TYPES){
-    Msg(GERROR, "Please upgrade CheckViewErrorFlags!");
-    return 0;
+  if(!adaptive){ // if adaptive, just hope for the best ;-)
+    // check that number of values per element = 
+    // 3 * number of coordinates + (1,2,9) * integer * number of values
   }
-  
-  for(int i = 0; i < VIEW_NB_ELEMENT_TYPES; i++)
-    if(ViewErrorFlags[i])
-      Msg(GERROR, "%d %s %s%s in View[%d] contain%s a wrong number of values",
-	  ViewErrorFlags[i], type[i%3], name[i/3], (ViewErrorFlags[i] > 1) ? "s" : "",
-	  v->Index, (ViewErrorFlags[i] > 1) ? "" : "s");
-  */
 
+  BBox.reset();
+  Min = VAL_INF;
+  Max = -VAL_INF;
 
   // finalize text strings first, to get the max value of NbTimeStep
   // for strings-only views (strings are designed to degrade
@@ -206,13 +194,13 @@ double PViewDataList::getTime(int step)
 
 double PViewDataList::getMin(int step)
 {
-  if(step < 0) return Min;
+  if(step < 0 || step >= TimeStepMin.size()) return Min;
   return TimeStepMin[step];
 }
 
 double PViewDataList::getMax(int step)
 {
-  if(step < 0) return Max;
+  if(step < 0 || step >= TimeStepMax.size()) return Max;
   return TimeStepMax[step];
 }
 

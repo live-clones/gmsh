@@ -37,28 +37,28 @@ private:
   double _invert;
   void addElement(int timeStep, int np, int nbEdg, int dNbComp,
 		  double xp[12], double yp[12], double zp[12],
-		  double valp[12][9], std::vector<Post_View *> &out);
+		  double valp[12][9], std::vector<PViewDataList*> &out);
   void evalLevelset(int nbNod, int nbComp,
 		    double *x, double *y, double *z, double *val,
 		    double *levels, double *scalarVal);
   void nonZeroLevelset(int timeStep, int nbVert, int nbEdg, int exn[12][2],
 		       double *x, double *y, double *z, 
 		       double *iVal, int iNbComp, double *dVal, int dNbComp,
-		       std::vector<Post_View*> &out);
+		       std::vector<PViewDataList*> &out);
   int zeroLevelset(int timeStep, int nbVert, int nbEdg, int exn[12][2],
 		   double *x, double *y, double *z, 
 		   double *iVal, int iNbComp, double *dVal, int dNbComp,
-		   std::vector<Post_View*> &out);
-  void executeList(Post_View * iView, List_T * iList, 
+		   std::vector<PViewDataList*> &out);
+  void executeList(PViewDataList *iData, List_T *iList, 
 		   int iNbElm, int iNbComp,
-		   Post_View * dView, List_T * dList, 
+		   PViewDataList *dData, List_T *dList, 
 		   int dNbElm, int dNbComp,
 		   int nbVert, int nbEdg, int exn[12][2], 
-		   std::vector<Post_View *> &out);
-  virtual void assign_specific_visibility () const;
+		   std::vector<PViewDataList*> &out);
+  virtual void assignSpecificVisibility () const;
 public:
   GMSH_LevelsetPlugin();
-  virtual Post_View *execute(Post_View *);
+  virtual PView *execute(PView *);
 };
 
 #endif

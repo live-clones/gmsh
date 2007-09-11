@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.26 2007-05-05 11:36:32 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.27 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,14 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Plugin.h"
 #include "SphericalRaise.h"
-#include "List.h"
-#include "Views.h"
-#include "Context.h"
-#include "Numeric.h"
-
-extern Context_T CTX;
 
 StringXNumber SphericalRaiseOptions_Number[] = {
   {GMSH_FULLRC, "Xc", NULL, 0.},
@@ -95,9 +88,9 @@ void GMSH_SphericalRaisePlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "SphericalRaise failed...");
 }
 
-static void sphericalRaiseList(Post_View * v, List_T * list, int nbElm,
-                               int nbNod, int timeStep, double center[3], 
-			       double raise, double offset)
+static void sphericalRaise(PViewData *data, List_T *list, int nbElm,
+			   int nbNod, int timeStep, double center[3], 
+			   double raise, double offset)
 {
   double *x, *y, *z, *val, d[3], coef;
   int nb, i, j;
@@ -105,12 +98,10 @@ static void sphericalRaiseList(Post_View * v, List_T * list, int nbElm,
   if(!nbElm)
     return;
 
-  if(timeStep < 0 || timeStep > v->NbTimeStep - 1){
-    Msg(GERROR, "Invalid TimeStep (%d) in View[%d]", timeStep, v->Index);
+  if(timeStep < 0 || timeStep > data->getNumTimeSteps() - 1){
+    Msg(GERROR, "Invalid TimeStep (%d) in view", timeStep);
     return;
   }
-
-  v->Changed = 1;
 
   // for each element
   //   for each node
@@ -134,37 +125,13 @@ static void sphericalRaiseList(Post_View * v, List_T * list, int nbElm,
       x[j] += coef * d[0];
       y[j] += coef * d[1];
       z[j] += coef * d[2];
-      if(x[j] < v->BBox[0]) v->BBox[0] = x[j];
-      if(x[j] > v->BBox[1]) v->BBox[1] = x[j];
-      if(y[j] < v->BBox[2]) v->BBox[2] = y[j];
-      if(y[j] > v->BBox[3]) v->BBox[3] = y[j];
-      if(z[j] < v->BBox[4]) v->BBox[4] = z[j];
-      if(z[j] > v->BBox[5]) v->BBox[5] = z[j];
     }
   }
 }
 
-static void sphericalRaise(Post_View * v, int timeStep, double center[3], 
-			   double raise, double offset)
-{
-  for(int i = 0; i < 3; i++) {
-    v->BBox[2 * i] = VAL_INF;
-    v->BBox[2 * i + 1] = -VAL_INF;
-  }
-  sphericalRaiseList(v, v->SP, v->NbSP, 1, timeStep, center, raise, offset);
-  sphericalRaiseList(v, v->SL, v->NbSL, 2, timeStep, center, raise, offset);
-  sphericalRaiseList(v, v->ST, v->NbST, 3, timeStep, center, raise, offset);
-  sphericalRaiseList(v, v->SQ, v->NbSQ, 4, timeStep, center, raise, offset);
-  sphericalRaiseList(v, v->SS, v->NbSS, 4, timeStep, center, raise, offset);
-  sphericalRaiseList(v, v->SH, v->NbSH, 8, timeStep, center, raise, offset);
-  sphericalRaiseList(v, v->SI, v->NbSI, 6, timeStep, center, raise, offset);
-  sphericalRaiseList(v, v->SY, v->NbSY, 5, timeStep, center, raise, offset);
-}
-
-Post_View *GMSH_SphericalRaisePlugin::execute(Post_View * v)
+PView *GMSH_SphericalRaisePlugin::execute(PView *v)
 {
   double center[3];
-
   center[0] = SphericalRaiseOptions_Number[0].def;
   center[1] = SphericalRaiseOptions_Number[1].def;
   center[2] = SphericalRaiseOptions_Number[2].def;
@@ -173,17 +140,23 @@ Post_View *GMSH_SphericalRaisePlugin::execute(Post_View * v)
   int timeStep = (int)SphericalRaiseOptions_Number[5].def;
   int iView = (int)SphericalRaiseOptions_Number[6].def;
 
-  if(iView < 0)
-    iView = v ? v->Index : 0;
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
 
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
+  sphericalRaise(data1, data1->SP, data1->NbSP, 1, timeStep, center, raise, offset);
+  sphericalRaise(data1, data1->SL, data1->NbSL, 2, timeStep, center, raise, offset);
+  sphericalRaise(data1, data1->ST, data1->NbST, 3, timeStep, center, raise, offset);
+  sphericalRaise(data1, data1->SQ, data1->NbSQ, 4, timeStep, center, raise, offset);
+  sphericalRaise(data1, data1->SS, data1->NbSS, 4, timeStep, center, raise, offset);
+  sphericalRaise(data1, data1->SH, data1->NbSH, 8, timeStep, center, raise, offset);
+  sphericalRaise(data1, data1->SI, data1->NbSI, 6, timeStep, center, raise, offset);
+  sphericalRaise(data1, data1->SY, data1->NbSY, 5, timeStep, center, raise, offset);
 
-  sphericalRaise(v1, timeStep, center, raise, offset);
+  data1->finalize();
+  v1->setChanged(true);
+
   return v1;
 }
-

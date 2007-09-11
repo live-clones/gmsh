@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.21 2007-09-04 13:47:05 remacle Exp $
+// $Id: Integrate.cpp,v 1.22 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,15 +19,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Plugin.h"
 #include "Integrate.h"
-#include "List.h"
-#include "Views.h"
-#include "Context.h"
-#include "Numeric.h"
 #include "ShapeFunctions.h"
-
-extern Context_T CTX;
 
 StringXNumber IntegrateOptions_Number[] = {
   {GMSH_FULLRC, "iView", NULL, -1.}
@@ -111,57 +104,54 @@ static double integrate(int nbList, List_T *list, int dim,
   return res;
 }
 
-Post_View *GMSH_IntegratePlugin::execute(Post_View * v)
+PView *GMSH_IntegratePlugin::execute(PView * v)
 {
   int iView = (int)IntegrateOptions_Number[1].def;
   
-  if(iView < 0)
-    iView = v ? v->Index : 0;
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
+
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
+
+  PView *v2 = new PView(true);
+
+  PViewDataList *data2 = getDataList(v2);
+  if(!data2) return v;
   
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
-  
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-  Post_View *v2 = BeginView(1);
-  
-  double x = (v1->BBox[0]+v1->BBox[1])/2.;
-  double y = (v1->BBox[2]+v1->BBox[3])/2.;
-  double z = (v1->BBox[4]+v1->BBox[5])/2.;
-  List_Add(v2->SP, &x);
-  List_Add(v2->SP, &y);
-  List_Add(v2->SP, &z);
-  for(int ts = 0; ts < v1->NbTimeStep; ts++){
+  double x = data1->getBoundingBox().center().x();
+  double y = data1->getBoundingBox().center().y();
+  double z = data1->getBoundingBox().center().z();
+  List_Add(data2->SP, &x);
+  List_Add(data2->SP, &y);
+  List_Add(data2->SP, &z);
+  for(int ts = 0; ts < data1->getNumTimeSteps(); ts++){
     double val = 0;
     // scalar fields
-    val += integrate(v1->NbSP, v1->SP, 0, 1, 1, ts);
-    val += integrate(v1->NbSL, v1->SL, 1, 2, 1, ts);
-    val += integrate(v1->NbST, v1->ST, 2, 3, 1, ts);
-    val += integrate(v1->NbSQ, v1->SQ, 2, 4, 1, ts);
-    val += integrate(v1->NbSS, v1->SS, 3, 4, 1, ts);
-    val += integrate(v1->NbSH, v1->SH, 3, 8, 1, ts);
-    val += integrate(v1->NbSI, v1->SI, 3, 6, 1, ts);
-    val += integrate(v1->NbSY, v1->SY, 3, 5, 1, ts);
+    val += integrate(data1->NbSP, data1->SP, 0, 1, 1, ts);
+    val += integrate(data1->NbSL, data1->SL, 1, 2, 1, ts);
+    val += integrate(data1->NbST, data1->ST, 2, 3, 1, ts);
+    val += integrate(data1->NbSQ, data1->SQ, 2, 4, 1, ts);
+    val += integrate(data1->NbSS, data1->SS, 3, 4, 1, ts);
+    val += integrate(data1->NbSH, data1->SH, 3, 8, 1, ts);
+    val += integrate(data1->NbSI, data1->SI, 3, 6, 1, ts);
+    val += integrate(data1->NbSY, data1->SY, 3, 5, 1, ts);
     // circulations
-    val += integrate(v1->NbVL, v1->VL, 1, 2, 3, ts);
+    val += integrate(data1->NbVL, data1->VL, 1, 2, 3, ts);
     // fluxes
-    val += integrate(v1->NbVT, v1->VT, 2, 3, 3, ts);
-    val += integrate(v1->NbVQ, v1->VQ, 2, 4, 3, ts);
+    val += integrate(data1->NbVT, data1->VT, 2, 3, 3, ts);
+    val += integrate(data1->NbVQ, data1->VQ, 2, 4, 3, ts);
     Msg(INFO, "Step %d: integral = %.16g", ts, val);
-    List_Add(v2->SP, &val);
+    List_Add(data2->SP, &val);
   }
-  v2->NbSP = 1;
-  v2->IntervalsType = DRAW_POST_NUMERIC;
+  data2->NbSP = 1;
+  v2->getOptions()->IntervalsType = PViewOptions::Numeric;
   
-  // copy time data
-  for(int i = 0; i < List_Nbr(v1->Time); i++)
-    List_Add(v2->Time, List_Pointer(v1->Time, i));
-  // finalize
-  char name[1024], filename[1024];
-  sprintf(name, "%s_Integrate", v1->Name);
-  sprintf(filename, "%s_Integrate.pos", v1->Name);
-  EndView(v2, 1, filename, name);
+  for(int i = 0; i < List_Nbr(data1->Time); i++)
+    List_Add(data2->Time, List_Pointer(data1->Time, i));
+  data2->setName(data1->getName() + "_Integrate");
+  data2->setFileName(data1->getName() + "_Integrate.pos");
+  data2->finalize();
   
   return v2;
 }

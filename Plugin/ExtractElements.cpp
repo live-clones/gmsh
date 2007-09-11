@@ -1,4 +1,4 @@
-// $Id: ExtractElements.cpp,v 1.8 2007-05-04 10:45:09 geuzaine Exp $
+// $Id: ExtractElements.cpp,v 1.9 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,14 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Plugin.h"
 #include "ExtractElements.h"
-#include "List.h"
-#include "Views.h"
-#include "Context.h"
-#include "Malloc.h"
-
-extern Context_T CTX;
 
 StringXNumber ExtractElementsOptions_Number[] = {
   {GMSH_FULLRC, "MinVal", NULL, 0.},
@@ -122,69 +115,66 @@ static void extract(List_T *inList, int inNb,
   }
 }
 
-Post_View *GMSH_ExtractElementsPlugin::execute(Post_View * v)
+PView *GMSH_ExtractElementsPlugin::execute(PView *v)
 {
   int step = (int)ExtractElementsOptions_Number[2].def;
   int iView = (int)ExtractElementsOptions_Number[3].def;
 
-  if(iView < 0)
-    iView = v ? v->Index : 0;
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
 
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-  Post_View *v2 = BeginView(1);
+  PView *v2 = new PView(true);
 
-  if(step < 0 || step > v1->NbTimeStep-1){
+  PViewDataList *data2 = getDataList(v2);
+  if(!data2) return v;
+
+  if(step < 0 || step > data1->getNumTimeSteps() - 1){
     Msg(GERROR, "Invalid time step (%d) in View[%d]: using first step instead",
-	step, v1->Num);
+	step, v1->getIndex());
     step = 0;
   }
 
   // points
-  extract(v1->SP, v1->NbSP, v2->SP, &v2->NbSP, step, 1, 1);
-  extract(v1->VP, v1->NbVP, v2->SP, &v2->NbSP, step, 1, 3);
-  extract(v1->TP, v1->NbTP, v2->SP, &v2->NbSP, step, 1, 9);
+  extract(data1->SP, data1->NbSP, data2->SP, &data2->NbSP, step, 1, 1);
+  extract(data1->VP, data1->NbVP, data2->VP, &data2->NbVP, step, 1, 3);
+  extract(data1->TP, data1->NbTP, data2->TP, &data2->NbTP, step, 1, 9);
   // lines			                	
-  extract(v1->SL, v1->NbSL, v2->SL, &v2->NbSL, step, 2, 1);
-  extract(v1->VL, v1->NbVL, v2->SL, &v2->NbSL, step, 2, 3);
-  extract(v1->TL, v1->NbTL, v2->SL, &v2->NbSL, step, 2, 9);
+  extract(data1->SL, data1->NbSL, data2->SL, &data2->NbSL, step, 2, 1);
+  extract(data1->VL, data1->NbVL, data2->VL, &data2->NbVL, step, 2, 3);
+  extract(data1->TL, data1->NbTL, data2->TL, &data2->NbTL, step, 2, 9);
   // triangles			                	
-  extract(v1->ST, v1->NbST, v2->ST, &v2->NbST, step, 3, 1);
-  extract(v1->VT, v1->NbVT, v2->ST, &v2->NbST, step, 3, 3);
-  extract(v1->TT, v1->NbTT, v2->ST, &v2->NbST, step, 3, 9);
+  extract(data1->ST, data1->NbST, data2->ST, &data2->NbST, step, 3, 1);
+  extract(data1->VT, data1->NbVT, data2->VT, &data2->NbVT, step, 3, 3);
+  extract(data1->TT, data1->NbTT, data2->TT, &data2->NbTT, step, 3, 9);
   // quadrangles		                	
-  extract(v1->SQ, v1->NbSQ, v2->SQ, &v2->NbSQ, step, 4, 1);
-  extract(v1->VQ, v1->NbVQ, v2->SQ, &v2->NbSQ, step, 4, 3);
-  extract(v1->TQ, v1->NbTQ, v2->SQ, &v2->NbSQ, step, 4, 9);
+  extract(data1->SQ, data1->NbSQ, data2->SQ, &data2->NbSQ, step, 4, 1);
+  extract(data1->VQ, data1->NbVQ, data2->VQ, &data2->NbVQ, step, 4, 3);
+  extract(data1->TQ, data1->NbTQ, data2->TQ, &data2->NbTQ, step, 4, 9);
   // tets			                	
-  extract(v1->SS, v1->NbSS, v2->SS, &v2->NbSS, step, 4, 1);
-  extract(v1->VS, v1->NbVS, v2->SS, &v2->NbSS, step, 4, 3);
-  extract(v1->TS, v1->NbTS, v2->SS, &v2->NbSS, step, 4, 9);
+  extract(data1->SS, data1->NbSS, data2->SS, &data2->NbSS, step, 4, 1);
+  extract(data1->VS, data1->NbVS, data2->VS, &data2->NbVS, step, 4, 3);
+  extract(data1->TS, data1->NbTS, data2->TS, &data2->NbTS, step, 4, 9);
   // hexas			                	
-  extract(v1->SH, v1->NbSH, v2->SH, &v2->NbSH, step, 8, 1);
-  extract(v1->VH, v1->NbVH, v2->SH, &v2->NbSH, step, 8, 3);
-  extract(v1->TH, v1->NbTH, v2->SH, &v2->NbSH, step, 8, 9);
+  extract(data1->SH, data1->NbSH, data2->SH, &data2->NbSH, step, 8, 1);
+  extract(data1->VH, data1->NbVH, data2->VH, &data2->NbVH, step, 8, 3);
+  extract(data1->TH, data1->NbTH, data2->TH, &data2->NbTH, step, 8, 9);
   // prisms			                	
-  extract(v1->SI, v1->NbSI, v2->SI, &v2->NbSI, step, 6, 1);
-  extract(v1->VI, v1->NbVI, v2->SI, &v2->NbSI, step, 6, 3);
-  extract(v1->TI, v1->NbTI, v2->SI, &v2->NbSI, step, 6, 9);
+  extract(data1->SI, data1->NbSI, data2->SI, &data2->NbSI, step, 6, 1);
+  extract(data1->VI, data1->NbVI, data2->VI, &data2->NbVI, step, 6, 3);
+  extract(data1->TI, data1->NbTI, data2->TI, &data2->NbTI, step, 6, 9);
   // pyramids			                	
-  extract(v1->SY, v1->NbSY, v2->SY, &v2->NbSY, step, 5, 1);
-  extract(v1->VY, v1->NbVY, v2->SY, &v2->NbSY, step, 5, 3);
-  extract(v1->TY, v1->NbTY, v2->SY, &v2->NbSY, step, 5, 9);
+  extract(data1->SY, data1->NbSY, data2->SY, &data2->NbSY, step, 5, 1);
+  extract(data1->VY, data1->NbVY, data2->VY, &data2->NbVY, step, 5, 3);
+  extract(data1->TY, data1->NbTY, data2->TY, &data2->NbTY, step, 5, 9);
 
-  // copy time data
-  for(int i = 0; i < List_Nbr(v1->Time); i++)
-    List_Add(v2->Time, List_Pointer(v1->Time, i));
+  for(int i = 0; i < List_Nbr(data1->Time); i++)
+    List_Add(data2->Time, List_Pointer(data1->Time, i));
+  data2->setName(data1->getName() + "_ExtractElements");
+  data2->setFileName(data1->getName() + "_ExtractElements.pos");
+  data2->finalize();
 
-  // finalize
-  char name[1024], filename[1024];
-  sprintf(name, "%s_ExtractElements", v1->Name);
-  sprintf(filename, "%s_ExtractElements.pos", v1->Name);
-  EndView(v2, 1, filename, name);
   return v2;
 }

@@ -32,8 +32,8 @@ class GMSH_EvaluatePlugin : public GMSH_Post_Plugin
 {
 private:
   OctreePost *_octree;
-  void evaluate(Post_View *v, List_T *list, int nbElm,
-		Post_View *v2, List_T *list2, int nbElm2,
+  void evaluate(PView *v1, List_T *list1, int nbElm1,
+		PView *v2, List_T *list2, int nbElm2,
 		int nbNod, int nbComp, int comp, 
 		int timeStep, int timeStep2,
 		char *expression);
@@ -46,7 +46,7 @@ public:
   StringXNumber* getOption(int iopt);  
   int getNbOptionsStr() const;
   StringXString* getOptionStr(int iopt);  
-  Post_View *execute(Post_View *);
+  PView *execute(PView *);
 };
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: Warp.cpp,v 1.8 2007-09-04 13:47:05 remacle Exp $
+// $Id: Warp.cpp,v 1.9 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,15 +19,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Plugin.h"
 #include "Warp.h"
-#include "List.h"
-#include "Views.h"
-#include "Context.h"
-#include "Numeric.h"
 #include "SmoothData.h"
-
-extern Context_T CTX;
 
 StringXNumber WarpOptions_Number[] = {
   {GMSH_FULLRC, "Factor", NULL, 1.},
@@ -107,8 +100,8 @@ static void addNormals(List_T *listElm, int nbElm, int nbNod,
   }
 }
 
-static void warpList(Post_View * iView, List_T * iList, int iNbElm, 
-		     Post_View * dView, List_T * dList, int dNbElm,
+static void warpList(List_T *iList, int iNbElm,
+		     List_T *dList, int dNbElm,
 		     int nbNod, double factor, int TimeStep,
 		     int nbComp, smooth_normals *normals)
 {
@@ -116,13 +109,11 @@ static void warpList(Post_View * iView, List_T * iList, int iNbElm,
     return;
 
   if(!normals && (iNbElm != dNbElm)){
-    Msg(GERROR, "View[%d] and View[%d] have a different number of elements (%d != %d)",
-	iView->Index, dView->Index, iNbElm, dNbElm);
+    Msg(GERROR, "Views have a different number of elements (%d != %d)", 
+	iNbElm, dNbElm);
     return;
   }
   
-  iView->Changed = 1;
-
   // for each element
   //   for each node
   //      (x,y,z) += factor * (valx,valy,valz)
@@ -166,66 +157,56 @@ static void warpList(Post_View * iView, List_T * iList, int iNbElm,
 	y[k] += factor * val[3 * nbNod * TimeStep + 3 * k + 1];
 	z[k] += factor * val[3 * nbNod * TimeStep + 3 * k + 2];
       }
-      if(x[k] < iView->BBox[0]) iView->BBox[0] = x[k];
-      if(x[k] > iView->BBox[1]) iView->BBox[1] = x[k];
-      if(y[k] < iView->BBox[2]) iView->BBox[2] = y[k];
-      if(y[k] > iView->BBox[3]) iView->BBox[3] = y[k];
-      if(z[k] < iView->BBox[4]) iView->BBox[4] = z[k];
-      if(z[k] > iView->BBox[5]) iView->BBox[5] = z[k];
     }
   }
   
 }
 
-static void warp(Post_View * v, Post_View * w, double factor, int ts, double tol)
+static void warp(PViewDataList *data1, PViewDataList *data2, double factor, 
+		 int ts, double tol)
 {
-  for(int i = 0; i < 3; i++) {
-    v->BBox[2 * i] = VAL_INF;
-    v->BBox[2 * i + 1] = -VAL_INF;
-  }
-
   smooth_normals *nn = 0;
   if(WarpOptions_Number[3].def <  0){
     nn = new smooth_normals(tol);
-    addNormals(v->ST, v->NbST, 3, nn);
-    addNormals(v->VT, v->NbVT, 3, nn);
-    addNormals(v->TT, v->NbTT, 3, nn);
-    addNormals(v->SQ, v->NbSQ, 4, nn);
-    addNormals(v->VQ, v->NbVQ, 4, nn);
-    addNormals(v->TQ, v->NbTQ, 4, nn);
+    addNormals(data1->ST, data1->NbST, 3, nn);
+    addNormals(data1->VT, data1->NbVT, 3, nn);
+    addNormals(data1->TT, data1->NbTT, 3, nn);
+    addNormals(data1->SQ, data1->NbSQ, 4, nn);
+    addNormals(data1->VQ, data1->NbVQ, 4, nn);
+    addNormals(data1->TQ, data1->NbTQ, 4, nn);
   }
 
-  warpList(v, v->SP, v->NbSP, w, w->VP, w->NbVP, 1, factor, ts, 1, nn);
-  warpList(v, v->SL, v->NbSL, w, w->VL, w->NbVL, 2, factor, ts, 1, nn);
-  warpList(v, v->ST, v->NbST, w, w->VT, w->NbVT, 3, factor, ts, 1, nn);
-  warpList(v, v->SQ, v->NbSQ, w, w->VQ, w->NbVQ, 4, factor, ts, 1, nn);
-  warpList(v, v->SS, v->NbSS, w, w->VS, w->NbVS, 4, factor, ts, 1, nn);
-  warpList(v, v->SH, v->NbSH, w, w->VH, w->NbVH, 8, factor, ts, 1, nn);
-  warpList(v, v->SI, v->NbSI, w, w->VI, w->NbVI, 6, factor, ts, 1, nn);
-  warpList(v, v->SY, v->NbSY, w, w->VY, w->NbVY, 5, factor, ts, 1, nn);
-			   	       	  	                    
-  warpList(v, v->VP, v->NbVP, w, w->VP, w->NbVP, 1, factor, ts, 3, nn);
-  warpList(v, v->VL, v->NbVL, w, w->VL, w->NbVL, 2, factor, ts, 3, nn);
-  warpList(v, v->VT, v->NbVT, w, w->VT, w->NbVT, 3, factor, ts, 3, nn);
-  warpList(v, v->VQ, v->NbVQ, w, w->VQ, w->NbVQ, 4, factor, ts, 3, nn);
-  warpList(v, v->VS, v->NbVS, w, w->VS, w->NbVS, 4, factor, ts, 3, nn);
-  warpList(v, v->VH, v->NbVH, w, w->VH, w->NbVH, 8, factor, ts, 3, nn);
-  warpList(v, v->VI, v->NbVI, w, w->VI, w->NbVI, 6, factor, ts, 3, nn);
-  warpList(v, v->VY, v->NbVY, w, w->VY, w->NbVY, 5, factor, ts, 3, nn);
-			   	       	  	                    
-  warpList(v, v->TP, v->NbTP, w, w->VP, w->NbVP, 1, factor, ts, 9, nn);
-  warpList(v, v->TL, v->NbTL, w, w->VL, w->NbVL, 2, factor, ts, 9, nn);
-  warpList(v, v->TT, v->NbTT, w, w->VT, w->NbVT, 3, factor, ts, 9, nn);
-  warpList(v, v->TQ, v->NbTQ, w, w->VQ, w->NbVQ, 4, factor, ts, 9, nn);
-  warpList(v, v->TS, v->NbTS, w, w->VS, w->NbVS, 4, factor, ts, 9, nn);
-  warpList(v, v->TH, v->NbTH, w, w->VH, w->NbVH, 8, factor, ts, 9, nn);
-  warpList(v, v->TI, v->NbTI, w, w->VI, w->NbVI, 6, factor, ts, 9, nn);
-  warpList(v, v->TY, v->NbTY, w, w->VY, w->NbVY, 5, factor, ts, 9, nn);
+  warpList(data1->SP, data1->NbSP, data2->VP, data2->NbVP, 1, factor, ts, 1, nn);
+  warpList(data1->SL, data1->NbSL, data2->VL, data2->NbVL, 2, factor, ts, 1, nn);
+  warpList(data1->ST, data1->NbST, data2->VT, data2->NbVT, 3, factor, ts, 1, nn);
+  warpList(data1->SQ, data1->NbSQ, data2->VQ, data2->NbVQ, 4, factor, ts, 1, nn);
+  warpList(data1->SS, data1->NbSS, data2->VS, data2->NbVS, 4, factor, ts, 1, nn);
+  warpList(data1->SH, data1->NbSH, data2->VH, data2->NbVH, 8, factor, ts, 1, nn);
+  warpList(data1->SI, data1->NbSI, data2->VI, data2->NbVI, 6, factor, ts, 1, nn);
+  warpList(data1->SY, data1->NbSY, data2->VY, data2->NbVY, 5, factor, ts, 1, nn);
+	   		   	       	  	                    
+  warpList(data1->VP, data1->NbVP, data2->VP, data2->NbVP, 1, factor, ts, 3, nn);
+  warpList(data1->VL, data1->NbVL, data2->VL, data2->NbVL, 2, factor, ts, 3, nn);
+  warpList(data1->VT, data1->NbVT, data2->VT, data2->NbVT, 3, factor, ts, 3, nn);
+  warpList(data1->VQ, data1->NbVQ, data2->VQ, data2->NbVQ, 4, factor, ts, 3, nn);
+  warpList(data1->VS, data1->NbVS, data2->VS, data2->NbVS, 4, factor, ts, 3, nn);
+  warpList(data1->VH, data1->NbVH, data2->VH, data2->NbVH, 8, factor, ts, 3, nn);
+  warpList(data1->VI, data1->NbVI, data2->VI, data2->NbVI, 6, factor, ts, 3, nn);
+  warpList(data1->VY, data1->NbVY, data2->VY, data2->NbVY, 5, factor, ts, 3, nn);
+	   		   	       	  	                    
+  warpList(data1->TP, data1->NbTP, data2->VP, data2->NbVP, 1, factor, ts, 9, nn);
+  warpList(data1->TL, data1->NbTL, data2->VL, data2->NbVL, 2, factor, ts, 9, nn);
+  warpList(data1->TT, data1->NbTT, data2->VT, data2->NbVT, 3, factor, ts, 9, nn);
+  warpList(data1->TQ, data1->NbTQ, data2->VQ, data2->NbVQ, 4, factor, ts, 9, nn);
+  warpList(data1->TS, data1->NbTS, data2->VS, data2->NbVS, 4, factor, ts, 9, nn);
+  warpList(data1->TH, data1->NbTH, data2->VH, data2->NbVH, 8, factor, ts, 9, nn);
+  warpList(data1->TI, data1->NbTI, data2->VI, data2->NbVI, 6, factor, ts, 9, nn);
+  warpList(data1->TY, data1->NbTY, data2->VY, data2->NbVY, 5, factor, ts, 9, nn);
 
   if(nn) delete nn;
 }
 
-Post_View *GMSH_WarpPlugin::execute(Post_View * v)
+PView *GMSH_WarpPlugin::execute(PView *v)
 {
   double factor = WarpOptions_Number[0].def;
   int TimeStep = (int)WarpOptions_Number[1].def;
@@ -233,32 +214,30 @@ Post_View *GMSH_WarpPlugin::execute(Post_View * v)
   int dView = (int)WarpOptions_Number[3].def;
   int iView = (int)WarpOptions_Number[4].def;
 
-  if(iView < 0)
-    iView = v ? v->Index : 0;
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
 
-  if(dView < 0)
-    dView = iView;
+  if(dView < 0) dView = iView;
 
-  if(!List_Pointer_Test(CTX.post.list, dView)) {
-    Msg(GERROR, "View[%d] does not exist", dView);
-    return v;
-  }
+  PView *v2 = getView(dView, v);
+  if(!v2) return v;
 
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-  Post_View *v2 = *(Post_View **)List_Pointer(CTX.post.list, dView);
+  PViewDataList *data2 = getDataList(v2);
+  if(!data2) return v;
 
-  if(TimeStep > v2->NbTimeStep - 1){
+  if(TimeStep > data2->getNumTimeSteps() - 1){
     // we allow TimeStep < 0 (to apply fixed warps)
-    Msg(GERROR, "Invalid TimeStep (%d) in View[%d]", TimeStep, v2->Index);
+    Msg(GERROR, "Invalid TimeStep (%d) in View[%d]", TimeStep, v2->getIndex());
     return v;
   }
 
-  warp(v1, v2, factor, TimeStep, AngleTol);
+  warp(data1, data2, factor, TimeStep, AngleTol);
+
+  data1->finalize();
+  v1->setChanged(true);
 
   return v1;
 }

@@ -42,7 +42,7 @@ public:
   StringXNumber* getOption(int iopt);  
   int getNbOptionsStr() const;
   StringXString* getOptionStr(int iopt);  
-  Post_View *execute(Post_View *);
+  PView *execute(PView *);
 
   static double callbackX(int, int, double);
   static double callbackY(int, int, double);

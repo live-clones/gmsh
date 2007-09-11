@@ -1,4 +1,4 @@
-// $Id: Lambda2.cpp,v 1.11 2006-11-27 22:22:32 geuzaine Exp $
+// $Id: Lambda2.cpp,v 1.12 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,17 +19,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Plugin.h"
 #include "Lambda2.h"
-#include "List.h"
-#include "Views.h"
-#include "Context.h"
-#include "Numeric.h"
 #include "ShapeFunctions.h"
-#include <math.h>
-#include <stdio.h>
-
-extern Context_T CTX;
 
 StringXNumber Lambda2Options_Number[] = {
   {GMSH_FULLRC, "Eigenvalue", NULL, 2.},
@@ -253,50 +244,49 @@ static void eigen(List_T *inList, int inNb,
   }
 }
 
-Post_View *GMSH_Lambda2Plugin::execute(Post_View * v)
+PView *GMSH_Lambda2Plugin::execute(PView *v)
 {
   int ev = (int)Lambda2Options_Number[0].def;
   int iView = (int)Lambda2Options_Number[1].def;
   
-  if(iView < 0)
-    iView = v ? v->Index : 0;
-  
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);  
-  Post_View *v2 = BeginView(1);
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
+
+  PView *v2 = new PView(true);
+
+  PViewDataList *data2 = getDataList(v2);
+  if(!data2) return v;
   
   // assume that the tensors contain the velocity gradient tensor
-  eigen(v1->TP, v1->NbTP, v2->SP, &v2->NbSP, v1->NbTimeStep, 1, 9, ev);
-  eigen(v1->TL, v1->NbTL, v2->SL, &v2->NbSL, v1->NbTimeStep, 2, 9, ev);
-  eigen(v1->TT, v1->NbTT, v2->ST, &v2->NbST, v1->NbTimeStep, 3, 9, ev);
-  eigen(v1->TQ, v1->NbTQ, v2->SQ, &v2->NbSQ, v1->NbTimeStep, 4, 9, ev);
-  eigen(v1->TS, v1->NbTS, v2->SS, &v2->NbSS, v1->NbTimeStep, 4, 9, ev);
-  eigen(v1->TH, v1->NbTH, v2->SH, &v2->NbSH, v1->NbTimeStep, 8, 9, ev);
-  eigen(v1->TI, v1->NbTI, v2->SI, &v2->NbSI, v1->NbTimeStep, 6, 9, ev);
-  eigen(v1->TY, v1->NbTY, v2->SY, &v2->NbSY, v1->NbTimeStep, 5, 9, ev);
+  int nts = data1->getNumTimeSteps();
+  eigen(data1->TP, data1->NbTP, data2->SP, &data2->NbSP, nts, 1, 9, ev);
+  eigen(data1->TL, data1->NbTL, data2->SL, &data2->NbSL, nts, 2, 9, ev);
+  eigen(data1->TT, data1->NbTT, data2->ST, &data2->NbST, nts, 3, 9, ev);
+  eigen(data1->TQ, data1->NbTQ, data2->SQ, &data2->NbSQ, nts, 4, 9, ev);
+  eigen(data1->TS, data1->NbTS, data2->SS, &data2->NbSS, nts, 4, 9, ev);
+  eigen(data1->TH, data1->NbTH, data2->SH, &data2->NbSH, nts, 8, 9, ev);
+  eigen(data1->TI, data1->NbTI, data2->SI, &data2->NbSI, nts, 6, 9, ev);
+  eigen(data1->TY, data1->NbTY, data2->SY, &data2->NbSY, nts, 5, 9, ev);
 
   // assume that the vectors contain the velocities
   // FIXME: only implemented for tri/tet at the moment
-  //eigen(v1->VP, v1->NbVP, v2->SP, &v2->NbSP, v1->NbTimeStep, 1, 3, ev);
-  //eigen(v1->VL, v1->NbVL, v2->SL, &v2->NbSL, v1->NbTimeStep, 2, 3, ev);
-  eigen(v1->VT, v1->NbVT, v2->ST, &v2->NbST, v1->NbTimeStep, 3, 3, ev);
-  //eigen(v1->VQ, v1->NbVQ, v2->SQ, &v2->NbSQ, v1->NbTimeStep, 4, 3, ev);
-  eigen(v1->VS, v1->NbVS, v2->SS, &v2->NbSS, v1->NbTimeStep, 4, 3, ev);
-  //eigen(v1->VH, v1->NbVH, v2->SH, &v2->NbSH, v1->NbTimeStep, 8, 3, ev);
-  //eigen(v1->VI, v1->NbVI, v2->SI, &v2->NbSI, v1->NbTimeStep, 6, 3, ev);
-  //eigen(v1->VY, v1->NbVY, v2->SY, &v2->NbSY, v1->NbTimeStep, 5, 3, ev);
+  //eigen(data1->VP, data1->NbVP, data2->SP, &data2->NbSP, nts, 1, 3, ev);
+  //eigen(data1->VL, data1->NbVL, data2->SL, &data2->NbSL, nts, 2, 3, ev);
+  eigen(data1->VT, data1->NbVT, data2->ST, &data2->NbST, nts, 3, 3, ev);
+  //eigen(data1->VQ, data1->NbVQ, data2->SQ, &data2->NbSQ, nts, 4, 3, ev);
+  eigen(data1->VS, data1->NbVS, data2->SS, &data2->NbSS, nts, 4, 3, ev);
+  //eigen(data1->VH, data1->NbVH, data2->SH, &data2->NbSH, nts, 8, 3, ev);
+  //eigen(data1->VI, data1->NbVI, data2->SI, &data2->NbSI, nts, 6, 3, ev);
+  //eigen(data1->VY, data1->NbVY, data2->SY, &data2->NbSY, nts, 5, 3, ev);
 
-  // copy time data
-  for(int i = 0; i < List_Nbr(v1->Time); i++)
-    List_Add(v2->Time, List_Pointer(v1->Time, i));
-  // finalize
-  char name[1024], filename[1024];
-  sprintf(name, "%s_Lambda2", v1->Name);
-  sprintf(filename, "%s_Lambda2.pos", v1->Name);
-  EndView(v2, 1, filename, name);
+  for(int i = 0; i < List_Nbr(data1->Time); i++)
+    List_Add(data2->Time, List_Pointer(data1->Time, i));
+  data2->setName(data1->getName() + "_Lambda2");
+  data2->setFileName(data1->getName() + "_Lambda2.pos");
+  data2->finalize();
+
   return v2;
 }

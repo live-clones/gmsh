@@ -1,4 +1,4 @@
-// $Id: ExtractEdges.cpp,v 1.5 2007-09-10 04:47:08 geuzaine Exp $
+// $Id: ExtractEdges.cpp,v 1.6 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,16 +19,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Plugin.h"
 #include "ExtractEdges.h"
-#include "List.h"
-#include "Tree.h"
-#include "Views.h"
-#include "Context.h"
-#include "Malloc.h"
 #include "BDS.h"
-
-extern Context_T CTX;
 
 StringXNumber ExtractEdgesOptions_Number[] = {
   {GMSH_FULLRC, "Angle", NULL, 22.},
@@ -81,21 +73,21 @@ void GMSH_ExtractEdgesPlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Extract Edges failed...");
 }
 
-Post_View *GMSH_ExtractEdgesPlugin::execute(Post_View * v)
+PView *GMSH_ExtractEdgesPlugin::execute(PView *v)
 {
   int iView = (int)ExtractEdgesOptions_Number[1].def;
   double angle = ExtractEdgesOptions_Number[0].def;
 
-  if(iView < 0)
-    iView = v ? v->Index : 0;
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
 
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-  Post_View *v2 = BeginView(1);
+  PView *v2 = new PView(true);
+
+  PViewDataList *data2 = getDataList(v2);
+  if(!data2) return v;
 
   BDS_Mesh bds;
   //bds.import_view(v1, CTX.lc * 1.e-12);
@@ -108,21 +100,21 @@ Post_View *GMSH_ExtractEdgesPlugin::execute(Post_View * v)
   while (it != ite){
     BDS_GeomEntity *g = (*it)->g;
     if(g && g->classif_degree == 1) {
-      List_Add(v2->SL, &(*it)->p1->X); List_Add(v2->SL, &(*it)->p2->X);
-      List_Add(v2->SL, &(*it)->p1->Y); List_Add(v2->SL, &(*it)->p2->Y);
-      List_Add(v2->SL, &(*it)->p1->Z); List_Add(v2->SL, &(*it)->p2->Z);
+      List_Add(data2->SL, &(*it)->p1->X); List_Add(data2->SL, &(*it)->p2->X);
+      List_Add(data2->SL, &(*it)->p1->Y); List_Add(data2->SL, &(*it)->p2->Y);
+      List_Add(data2->SL, &(*it)->p1->Z); List_Add(data2->SL, &(*it)->p2->Z);
       double val = g->classif_tag;
-      List_Add(v2->SL, &val);
-      List_Add(v2->SL, &val);
-      v2->NbSL++;
+      List_Add(data2->SL, &val);
+      List_Add(data2->SL, &val);
+      data2->NbSL++;
     }
     ++it;
   }
 
-  // finalize
-  char name[1024], filename[1024];
-  sprintf(name, "%s_ExtractEdges", v1->Name);
-  sprintf(filename, "%s_ExtractEdges.pos", v1->Name);
-  EndView(v2, 1, filename, name);
+
+  data2->setName(data1->getName() + "_ExtractEdges");
+  data2->setFileName(data1->getName() + "_ExtractEdges.pos");
+  data2->finalize();
+
   return v2;
 }

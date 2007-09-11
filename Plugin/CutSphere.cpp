@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.47 2007-05-04 10:45:08 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.48 2007-09-11 14:01:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -176,7 +176,7 @@ double GMSH_CutSpherePlugin::levelset(double x, double y, double z,
   return (x - a) * (x - a) + (y - b) * (y - b) + (z - c) * (z - c) - r * r;
 }
 
-Post_View *GMSH_CutSpherePlugin::execute(Post_View * v)
+PView *GMSH_CutSpherePlugin::execute(PView *v)
 {
   int iView = (int)CutSphereOptions_Number[6].def;
   _ref[0] = CutSphereOptions_Number[0].def;
@@ -190,15 +190,8 @@ Post_View *GMSH_CutSpherePlugin::execute(Post_View * v)
   _valueTimeStep = -1;
   _orientation = GMSH_LevelsetPlugin::SPHERE;
 
-  if(iView < 0)
-    iView = v ? v->Index : 0;
-
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
-
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
   return GMSH_LevelsetPlugin::execute(v1);
 }

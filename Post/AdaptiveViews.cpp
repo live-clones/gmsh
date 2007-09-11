@@ -25,8 +25,7 @@
 #include "AdaptiveViews.h"
 #include "Plugin.h"
 #include "OS.h"
-
-
+#include "Views.h"
 
 // A recursive effective implementation
 
@@ -788,7 +787,7 @@ int Adaptive_Post_View::zoomElement(Post_View * view,
   }
 
   if(plug)
-    plug->assign_specific_visibility();
+    plug->assignSpecificVisibility();
 
   double c3 = Cpu();
   itt = ELEM::all_elems.begin();
@@ -939,7 +938,7 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(Post_View * view,
   // recompute min/max, etc.:
   view->Min = VAL_INF;
   view->Max = -VAL_INF;
-  EndView(view, 0, view->FileName, view->Name);
+  //FIXME xxxxxxxxxxxxxxxxxxx  EndView(view, 0, view->FileName, view->Name);
   view->Changed = 1;
   presentZoomLevel = level;
   presentTol = tol;

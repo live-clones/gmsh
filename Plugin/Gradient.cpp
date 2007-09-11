@@ -1,4 +1,4 @@
-// $Id: Gradient.cpp,v 1.9 2007-09-04 13:47:05 remacle Exp $
+// $Id: Gradient.cpp,v 1.10 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,15 +19,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Plugin.h"
 #include "Gradient.h"
-#include "List.h"
-#include "Views.h"
-#include "Context.h"
-#include "Numeric.h"
 #include "ShapeFunctions.h"
-
-extern Context_T CTX;
 
 StringXNumber GradientOptions_Number[] = {
   {GMSH_FULLRC, "iView", NULL, -1.}
@@ -112,45 +105,43 @@ static void gradient(int inNb, List_T *inList, int *outNb, List_T *outList,
   }
 }
 
-Post_View *GMSH_GradientPlugin::execute(Post_View * v)
+PView *GMSH_GradientPlugin::execute(PView *v)
 {
   int iView = (int)GradientOptions_Number[0].def;
   
-  if(iView < 0)
-    iView = v ? v->Index : 0;
-  
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
-  
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-  Post_View *v2 = BeginView(1);
-  
-  gradient(v1->NbSL, v1->SL, &v2->NbVL, v2->VL, 1, 2, 1, v1->NbTimeStep);
-  gradient(v1->NbST, v1->ST, &v2->NbVT, v2->VT, 2, 3, 1, v1->NbTimeStep);
-  gradient(v1->NbSQ, v1->SQ, &v2->NbVQ, v2->VQ, 2, 4, 1, v1->NbTimeStep);
-  gradient(v1->NbSS, v1->SS, &v2->NbVS, v2->VS, 3, 4, 1, v1->NbTimeStep);
-  gradient(v1->NbSH, v1->SH, &v2->NbVH, v2->VH, 3, 8, 1, v1->NbTimeStep);
-  gradient(v1->NbSI, v1->SI, &v2->NbVI, v2->VI, 3, 6, 1, v1->NbTimeStep);
-  gradient(v1->NbSY, v1->SY, &v2->NbVY, v2->VY, 3, 5, 1, v1->NbTimeStep);
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  gradient(v1->NbVL, v1->VL, &v2->NbTL, v2->TL, 1, 2, 3, v1->NbTimeStep);
-  gradient(v1->NbVT, v1->VT, &v2->NbTT, v2->TT, 2, 3, 3, v1->NbTimeStep);
-  gradient(v1->NbVQ, v1->VQ, &v2->NbTQ, v2->TQ, 2, 4, 3, v1->NbTimeStep);
-  gradient(v1->NbVS, v1->VS, &v2->NbTS, v2->TS, 3, 4, 3, v1->NbTimeStep);
-  gradient(v1->NbVH, v1->VH, &v2->NbTH, v2->TH, 3, 8, 3, v1->NbTimeStep);
-  gradient(v1->NbVI, v1->VI, &v2->NbTI, v2->TI, 3, 6, 3, v1->NbTimeStep);
-  gradient(v1->NbVY, v1->VY, &v2->NbTY, v2->TY, 3, 5, 3, v1->NbTimeStep);
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
 
-  // copy time data
-  for(int i = 0; i < List_Nbr(v1->Time); i++)
-    List_Add(v2->Time, List_Pointer(v1->Time, i));
-  // finalize
-  char name[1024], filename[1024];
-  sprintf(name, "%s_Gradient", v1->Name);
-  sprintf(filename, "%s_Gradient.pos", v1->Name);
-  EndView(v2, 1, filename, name);
+  PView *v2 = new PView(true);
+
+  PViewDataList *data2 = getDataList(v2);
+  if(!data2) return v;
+
+  int nts = data1->getNumTimeSteps();
+  gradient(data1->NbSL, data1->SL, &data2->NbVL, data2->VL, 1, 2, 1, nts);
+  gradient(data1->NbST, data1->ST, &data2->NbVT, data2->VT, 2, 3, 1, nts);
+  gradient(data1->NbSQ, data1->SQ, &data2->NbVQ, data2->VQ, 2, 4, 1, nts);
+  gradient(data1->NbSS, data1->SS, &data2->NbVS, data2->VS, 3, 4, 1, nts);
+  gradient(data1->NbSH, data1->SH, &data2->NbVH, data2->VH, 3, 8, 1, nts);
+  gradient(data1->NbSI, data1->SI, &data2->NbVI, data2->VI, 3, 6, 1, nts);
+  gradient(data1->NbSY, data1->SY, &data2->NbVY, data2->VY, 3, 5, 1, nts);
+
+  gradient(data1->NbVL, data1->VL, &data2->NbTL, data2->TL, 1, 2, 3, nts);
+  gradient(data1->NbVT, data1->VT, &data2->NbTT, data2->TT, 2, 3, 3, nts);
+  gradient(data1->NbVQ, data1->VQ, &data2->NbTQ, data2->TQ, 2, 4, 3, nts);
+  gradient(data1->NbVS, data1->VS, &data2->NbTS, data2->TS, 3, 4, 3, nts);
+  gradient(data1->NbVH, data1->VH, &data2->NbTH, data2->TH, 3, 8, 3, nts);
+  gradient(data1->NbVI, data1->VI, &data2->NbTI, data2->TI, 3, 6, 3, nts);
+  gradient(data1->NbVY, data1->VY, &data2->NbTY, data2->TY, 3, 5, 3, nts);
+
+  for(int i = 0; i < List_Nbr(data1->Time); i++)
+    List_Add(data2->Time, List_Pointer(data1->Time, i));
+  data2->setName(data1->getName() + "_Gradient");
+  data2->setFileName(data1->getName() + "_Gradient.pos");
+  data2->finalize();
   
   return v2;
 }

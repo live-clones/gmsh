@@ -1,4 +1,4 @@
-// $Id: Smooth.cpp,v 1.26 2007-09-10 04:47:08 geuzaine Exp $
+// $Id: Smooth.cpp,v 1.27 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -78,20 +78,14 @@ void GMSH_SmoothPlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Smooth failed...");
 }
 
-Post_View *GMSH_SmoothPlugin::execute(Post_View * v)
+PView *GMSH_SmoothPlugin::execute(PView *v)
 {
   int iView = (int)SmoothOptions_Number[0].def;
 
-  if(iView < 0)
-    iView = v ? v->Index : 0;
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
+  v1->getData()->smooth();
 
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-
-  //v1->smooth();
   return v1;
 }

@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.30 2007-09-10 04:47:08 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.31 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,18 +19,11 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Plugin.h"
 #include "Evaluate.h"
-#include "List.h"
-#include "Views.h"
-#include "Context.h"
-#include "Numeric.h"
 
 #if defined(HAVE_MATH_EVAL)
 #include "matheval.h"
 #endif
-
-extern Context_T CTX;
 
 StringXNumber EvaluateOptions_Number[] = {
   {GMSH_FULLRC, "Component", NULL, -1.},
@@ -141,8 +134,8 @@ void GMSH_EvaluatePlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Evaluate failed...");
 }
 
-void GMSH_EvaluatePlugin::evaluate(Post_View *v1, List_T *list1, int nbElm1,
-				   Post_View *v2, List_T *list2, int nbElm2,
+void GMSH_EvaluatePlugin::evaluate(PView *v1, List_T *list1, int nbElm1,
+				   PView *v2, List_T *list2, int nbElm2,
 				   int nbNod, int nbComp, int comp, 
 				   int timeStep1, int timeStep2,
 				   char *expression)
@@ -156,10 +149,6 @@ void GMSH_EvaluatePlugin::evaluate(Post_View *v1, List_T *list1, int nbElm1,
   if(!nbElm1)
     return;
 
-  Msg(FATAL, "XXXXXXXXXXXXXXXXXXXXXX");
-  return;
-
-  /*
   void *f = evaluator_create(expression);
 
   if(!f){
@@ -172,7 +161,7 @@ void GMSH_EvaluatePlugin::evaluate(Post_View *v1, List_T *list1, int nbElm1,
     _octree = new OctreePost(v2);
   }
 
-  v1->Changed = 1;
+  v1->setChanged(true);
 
   int nb = List_Nbr(list1) / nbElm1;
   int nb2 = nbElm2 ? List_Nbr(list2) / nbElm2 : 0;
@@ -211,7 +200,7 @@ void GMSH_EvaluatePlugin::evaluate(Post_View *v1, List_T *list1, int nbElm1,
 	for(int k = 0; k < nbComp; k++) w[k] = val2[k];
       }
       
-      double time = *(double*)List_Pointer(v1->Time, timeStep1);
+      double time = v1->getData()->getTime(timeStep1);
       double tstep = timeStep1; 
       char *names[] = { "x", "y", "z", "Time", "TimeStep",
 			"v", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8",
@@ -224,12 +213,10 @@ void GMSH_EvaluatePlugin::evaluate(Post_View *v1, List_T *list1, int nbElm1,
   }
 
   evaluator_destroy(f);
-
-  */
 #endif
 }
 
-Post_View *GMSH_EvaluatePlugin::execute(Post_View * v)
+PView *GMSH_EvaluatePlugin::execute(PView *v)
 {
   int comp = (int)EvaluateOptions_Number[0].def;
   int timeStep = (int)EvaluateOptions_Number[1].def;
@@ -238,44 +225,43 @@ Post_View *GMSH_EvaluatePlugin::execute(Post_View * v)
   int iView = (int)EvaluateOptions_Number[4].def;
   char *expr = EvaluateOptions_String[0].def;
 
-  if(iView < 0)
-    iView = v ? v->Index : 0;
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
 
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-
-  if(timeStep > v1->NbTimeStep - 1){
+  if(timeStep > data1->getNumTimeSteps() - 1){
     Msg(GERROR, "Invalid time step (%d) in View[%d]: using step 0 instead",
-	timeStep, v1->Index);
+	timeStep, v1->getIndex());
     timeStep = 0;
   }
 
-  Post_View *v2 = v1;
+  PView *v2 = v1;
 
   if(externalView >= 0){
-    if(!List_Pointer_Test(CTX.post.list, externalView))
+    if(externalView < PView::list.size())
       Msg(GERROR, "View[%d] does not exist: using self", externalView);
     else
-      v2 = *(Post_View **)List_Pointer(CTX.post.list, externalView);
+      v2 = PView::list[externalView];
   }
 
-  if(externalTimeStep < 0 && v2->NbTimeStep != v1->NbTimeStep){
+  PViewDataList *data2 = getDataList(v2);
+  if(!data2) return v;
+
+  if(externalTimeStep < 0 && data2->getNumTimeSteps() != data1->getNumTimeSteps()){
     Msg(GERROR, "Number of time steps don't match: using step 0");
     externalTimeStep = 0;
   }
-  else if(externalTimeStep > v2->NbTimeStep-1){
+  else if(externalTimeStep > data2->getNumTimeSteps() - 1){
     Msg(GERROR, "Invalid time step (%d) in View[%d]: using step 0 instead",
-	externalTimeStep, v2->Num);
+	externalTimeStep, v2->getIndex());
     externalTimeStep = 0;
   }
 
-  _octree = NULL;
+  _octree = 0;
 
-  for(int tt = 0; tt < v1->NbTimeStep; tt++){
+  for(int tt = 0; tt < data1->getNumTimeSteps(); tt++){
     if(timeStep < 0 || timeStep == tt){
 
       int t2;
@@ -284,38 +270,62 @@ Post_View *GMSH_EvaluatePlugin::execute(Post_View * v)
       else
 	t2 = externalTimeStep;
 
-      evaluate(v1, v1->SP, v1->NbSP, v2, v2->SP, v2->NbSP, 1, 1, 0, tt, t2, expr);
-      evaluate(v1, v1->SL, v1->NbSL, v2, v2->SL, v2->NbSL, 2, 1, 0, tt, t2, expr);
-      evaluate(v1, v1->ST, v1->NbST, v2, v2->ST, v2->NbST, 3, 1, 0, tt, t2, expr);
-      evaluate(v1, v1->SQ, v1->NbSQ, v2, v2->SQ, v2->NbSQ, 4, 1, 0, tt, t2, expr);      
-      evaluate(v1, v1->SS, v1->NbSS, v2, v2->SS, v2->NbSS, 4, 1, 0, tt, t2, expr);
-      evaluate(v1, v1->SH, v1->NbSH, v2, v2->SH, v2->NbSH, 8, 1, 0, tt, t2, expr);      
-      evaluate(v1, v1->SI, v1->NbSI, v2, v2->SI, v2->NbSI, 6, 1, 0, tt, t2, expr);
-      evaluate(v1, v1->SY, v1->NbSY, v2, v2->SY, v2->NbSY, 5, 1, 0, tt, t2, expr);
+      evaluate(v1, data1->SP, data1->NbSP, 
+	       v2, data2->SP, data2->NbSP, 1, 1, 0, tt, t2, expr);
+      evaluate(v1, data1->SL, data1->NbSL, 
+	       v2, data2->SL, data2->NbSL, 2, 1, 0, tt, t2, expr);
+      evaluate(v1, data1->ST, data1->NbST, 
+	       v2, data2->ST, data2->NbST, 3, 1, 0, tt, t2, expr);
+      evaluate(v1, data1->SQ, data1->NbSQ,
+	       v2, data2->SQ, data2->NbSQ, 4, 1, 0, tt, t2, expr);      
+      evaluate(v1, data1->SS, data1->NbSS, 
+	       v2, data2->SS, data2->NbSS, 4, 1, 0, tt, t2, expr);
+      evaluate(v1, data1->SH, data1->NbSH,
+	       v2, data2->SH, data2->NbSH, 8, 1, 0, tt, t2, expr);      
+      evaluate(v1, data1->SI, data1->NbSI, 
+	       v2, data2->SI, data2->NbSI, 6, 1, 0, tt, t2, expr);
+      evaluate(v1, data1->SY, data1->NbSY, 
+	       v2, data2->SY, data2->NbSY, 5, 1, 0, tt, t2, expr);
 
       for(int cc = 0; cc < 3; cc++){
 	if(comp < 0 || comp == cc){
-	  evaluate(v1, v1->VP, v1->NbVP, v2, v2->VP, v2->NbVP, 1, 3, cc, tt, t2, expr);
-	  evaluate(v1, v1->VL, v1->NbVL, v2, v2->VL, v2->NbVL, 2, 3, cc, tt, t2, expr);
-	  evaluate(v1, v1->VT, v1->NbVT, v2, v2->VT, v2->NbVT, 3, 3, cc, tt, t2, expr);
-	  evaluate(v1, v1->VQ, v1->NbVQ, v2, v2->VQ, v2->NbVQ, 4, 3, cc, tt, t2, expr);
-	  evaluate(v1, v1->VS, v1->NbVS, v2, v2->VS, v2->NbVS, 4, 3, cc, tt, t2, expr);
-	  evaluate(v1, v1->VH, v1->NbVH, v2, v2->VH, v2->NbVH, 8, 3, cc, tt, t2, expr);
-	  evaluate(v1, v1->VI, v1->NbVI, v2, v2->VI, v2->NbVI, 6, 3, cc, tt, t2, expr);
-	  evaluate(v1, v1->VY, v1->NbVY, v2, v2->VY, v2->NbVY, 5, 3, cc, tt, t2, expr);
+	  evaluate(v1, data1->VP, data1->NbVP, 
+		   v2, data2->VP, data2->NbVP, 1, 3, cc, tt, t2, expr);
+	  evaluate(v1, data1->VL, data1->NbVL,
+		   v2, data2->VL, data2->NbVL, 2, 3, cc, tt, t2, expr);
+	  evaluate(v1, data1->VT, data1->NbVT,
+		   v2, data2->VT, data2->NbVT, 3, 3, cc, tt, t2, expr);
+	  evaluate(v1, data1->VQ, data1->NbVQ,
+		   v2, data2->VQ, data2->NbVQ, 4, 3, cc, tt, t2, expr);
+	  evaluate(v1, data1->VS, data1->NbVS,
+		   v2, data2->VS, data2->NbVS, 4, 3, cc, tt, t2, expr);
+	  evaluate(v1, data1->VH, data1->NbVH,
+		   v2, data2->VH, data2->NbVH, 8, 3, cc, tt, t2, expr);
+	  evaluate(v1, data1->VI, data1->NbVI,
+		   v2, data2->VI, data2->NbVI, 6, 3, cc, tt, t2, expr);
+	  evaluate(v1, data1->VY, data1->NbVY,
+		   v2, data2->VY, data2->NbVY, 5, 3, cc, tt, t2, expr);
 	}
       }
 
       for(int cc = 0; cc < 9; cc++){
 	if(comp < 0 || comp == cc){
-	  evaluate(v1, v1->TP, v1->NbTP, v2, v2->TP, v2->NbTP, 1, 9, cc, tt, t2, expr);
-	  evaluate(v1, v1->TL, v1->NbTL, v2, v2->TL, v2->NbTL, 2, 9, cc, tt, t2, expr);
-	  evaluate(v1, v1->TT, v1->NbTT, v2, v2->TT, v2->NbTT, 3, 9, cc, tt, t2, expr);      
-	  evaluate(v1, v1->TQ, v1->NbTQ, v2, v2->TQ, v2->NbTQ, 4, 9, cc, tt, t2, expr);
-	  evaluate(v1, v1->TS, v1->NbTS, v2, v2->TS, v2->NbTS, 4, 9, cc, tt, t2, expr);
-	  evaluate(v1, v1->TH, v1->NbTH, v2, v2->TH, v2->NbTH, 8, 9, cc, tt, t2, expr);
-	  evaluate(v1, v1->TI, v1->NbTI, v2, v2->TI, v2->NbTI, 6, 9, cc, tt, t2, expr);
-	  evaluate(v1, v1->TY, v1->NbTY, v2, v2->TY, v2->NbTY, 5, 9, cc, tt, t2, expr);
+	  evaluate(v1, data1->TP, data1->NbTP,
+		   v2, data2->TP, data2->NbTP, 1, 9, cc, tt, t2, expr);
+	  evaluate(v1, data1->TL, data1->NbTL,
+		   v2, data2->TL, data2->NbTL, 2, 9, cc, tt, t2, expr);
+	  evaluate(v1, data1->TT, data1->NbTT,
+		   v2, data2->TT, data2->NbTT, 3, 9, cc, tt, t2, expr);      
+	  evaluate(v1, data1->TQ, data1->NbTQ,
+		   v2, data2->TQ, data2->NbTQ, 4, 9, cc, tt, t2, expr);
+	  evaluate(v1, data1->TS, data1->NbTS,
+		   v2, data2->TS, data2->NbTS, 4, 9, cc, tt, t2, expr);
+	  evaluate(v1, data1->TH, data1->NbTH,
+		   v2, data2->TH, data2->NbTH, 8, 9, cc, tt, t2, expr);
+	  evaluate(v1, data1->TI, data1->NbTI,
+		   v2, data2->TI, data2->NbTI, 6, 9, cc, tt, t2, expr);
+	  evaluate(v1, data1->TY, data1->NbTY,
+		   v2, data2->TY, data2->NbTY, 5, 9, cc, tt, t2, expr);
 	}
       }
     }
@@ -323,10 +333,7 @@ Post_View *GMSH_EvaluatePlugin::execute(Post_View * v)
 
   if(_octree) delete _octree;
 
-  // recompute min/max, etc.:
-  v1->Min = VAL_INF;
-  v1->Max = -VAL_INF;
-  EndView(v1, 0, v1->FileName, v1->Name);
+  data1->finalize();
 
   return v1;
 }

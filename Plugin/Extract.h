@@ -21,7 +21,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Plugin.h"
-#include "List.h"
 
 extern "C"
 {
@@ -39,7 +38,7 @@ class GMSH_ExtractPlugin : public GMSH_Post_Plugin
   StringXNumber* getOption(int iopt);  
   int getNbOptionsStr() const;
   StringXString* getOptionStr(int iopt);  
-  Post_View *execute(Post_View *);
+  PView *execute(PView *);
 };
 
 #endif

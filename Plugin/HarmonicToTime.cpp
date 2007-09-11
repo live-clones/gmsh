@@ -1,4 +1,4 @@
-// $Id: HarmonicToTime.cpp,v 1.11 2007-09-04 13:47:05 remacle Exp $
+// $Id: HarmonicToTime.cpp,v 1.12 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,14 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Plugin.h"
 #include "HarmonicToTime.h"
-#include "List.h"
-#include "Views.h"
-#include "Context.h"
-#include "Numeric.h"
-
-extern Context_T CTX;
 
 StringXNumber HarmonicToTimeOptions_Number[] = {
   {GMSH_FULLRC, "RealPart", NULL, 0.},
@@ -114,24 +107,21 @@ static void h2t(int nb1, List_T *list1, int *nb2, List_T *list2,
   *nb2 = nb1;
 }
 
-Post_View *GMSH_HarmonicToTimePlugin::execute(Post_View * v)
+PView *GMSH_HarmonicToTimePlugin::execute(PView * v)
 {
   int rIndex = (int)HarmonicToTimeOptions_Number[0].def;
   int iIndex = (int)HarmonicToTimeOptions_Number[1].def;
   int nSteps = (int)HarmonicToTimeOptions_Number[2].def;
   int iView = (int)HarmonicToTimeOptions_Number[3].def;
 
-  if(iView < 0)
-    iView = v ? v->Index : 0;
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
 
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-  if(rIndex < 0 || rIndex >= v1->NbTimeStep ||
-     iIndex < 0 || iIndex >= v1->NbTimeStep){
+  if(rIndex < 0 || rIndex >= data1->getNumTimeSteps() ||
+     iIndex < 0 || iIndex >= data1->getNumTimeSteps()){
     Msg(GERROR, "Wrong real or imaginary part index");
     return v1;
   }
@@ -141,43 +131,43 @@ Post_View *GMSH_HarmonicToTimePlugin::execute(Post_View * v)
     return v1;
   }
 
-  Post_View *v2 = BeginView(1);
+  PView *v2 = new PView(true);
 
-  h2t(v1->NbSP, v1->SP, &v2->NbSP, v2->SP, 1, 1, rIndex, iIndex, nSteps);
-  h2t(v1->NbVP, v1->VP, &v2->NbVP, v2->VP, 1, 3, rIndex, iIndex, nSteps);
-  h2t(v1->NbTP, v1->TP, &v2->NbTP, v2->TP, 1, 9, rIndex, iIndex, nSteps);
-  h2t(v1->NbSL, v1->SL, &v2->NbSL, v2->SL, 2, 1, rIndex, iIndex, nSteps);
-  h2t(v1->NbVL, v1->VL, &v2->NbVL, v2->VL, 2, 3, rIndex, iIndex, nSteps);
-  h2t(v1->NbTL, v1->TL, &v2->NbTL, v2->TL, 2, 9, rIndex, iIndex, nSteps);
-  h2t(v1->NbST, v1->ST, &v2->NbST, v2->ST, 3, 1, rIndex, iIndex, nSteps);
-  h2t(v1->NbVT, v1->VT, &v2->NbVT, v2->VT, 3, 3, rIndex, iIndex, nSteps);
-  h2t(v1->NbTT, v1->TT, &v2->NbTT, v2->TT, 3, 9, rIndex, iIndex, nSteps);
-  h2t(v1->NbSQ, v1->SQ, &v2->NbSQ, v2->SQ, 4, 1, rIndex, iIndex, nSteps);
-  h2t(v1->NbVQ, v1->VQ, &v2->NbVQ, v2->VQ, 4, 3, rIndex, iIndex, nSteps);
-  h2t(v1->NbTQ, v1->TQ, &v2->NbTQ, v2->TQ, 4, 9, rIndex, iIndex, nSteps);
-  h2t(v1->NbSS, v1->SS, &v2->NbSS, v2->SS, 4, 1, rIndex, iIndex, nSteps);
-  h2t(v1->NbVS, v1->VS, &v2->NbVS, v2->VS, 4, 3, rIndex, iIndex, nSteps);
-  h2t(v1->NbTS, v1->TS, &v2->NbTS, v2->TS, 4, 9, rIndex, iIndex, nSteps);
-  h2t(v1->NbSH, v1->SH, &v2->NbSH, v2->SH, 8, 1, rIndex, iIndex, nSteps);
-  h2t(v1->NbVH, v1->VH, &v2->NbVH, v2->VH, 8, 3, rIndex, iIndex, nSteps);
-  h2t(v1->NbTH, v1->TH, &v2->NbTH, v2->TH, 8, 9, rIndex, iIndex, nSteps);
-  h2t(v1->NbSI, v1->SI, &v2->NbSI, v2->SI, 6, 1, rIndex, iIndex, nSteps);
-  h2t(v1->NbVI, v1->VI, &v2->NbVI, v2->VI, 6, 3, rIndex, iIndex, nSteps);
-  h2t(v1->NbTI, v1->TI, &v2->NbTI, v2->TI, 6, 9, rIndex, iIndex, nSteps);
-  h2t(v1->NbSY, v1->SY, &v2->NbSY, v2->SY, 5, 1, rIndex, iIndex, nSteps);
-  h2t(v1->NbVY, v1->VY, &v2->NbVY, v2->VY, 5, 3, rIndex, iIndex, nSteps);
-  h2t(v1->NbTY, v1->TY, &v2->NbTY, v2->TY, 5, 9, rIndex, iIndex, nSteps);
+  PViewDataList *data2 = getDataList(v2);
+  if(!data2) return v;
 
-  // copy time data
+  h2t(data1->NbSP, data1->SP, &data2->NbSP, data2->SP, 1, 1, rIndex, iIndex, nSteps);
+  h2t(data1->NbVP, data1->VP, &data2->NbVP, data2->VP, 1, 3, rIndex, iIndex, nSteps);
+  h2t(data1->NbTP, data1->TP, &data2->NbTP, data2->TP, 1, 9, rIndex, iIndex, nSteps);
+  h2t(data1->NbSL, data1->SL, &data2->NbSL, data2->SL, 2, 1, rIndex, iIndex, nSteps);
+  h2t(data1->NbVL, data1->VL, &data2->NbVL, data2->VL, 2, 3, rIndex, iIndex, nSteps);
+  h2t(data1->NbTL, data1->TL, &data2->NbTL, data2->TL, 2, 9, rIndex, iIndex, nSteps);
+  h2t(data1->NbST, data1->ST, &data2->NbST, data2->ST, 3, 1, rIndex, iIndex, nSteps);
+  h2t(data1->NbVT, data1->VT, &data2->NbVT, data2->VT, 3, 3, rIndex, iIndex, nSteps);
+  h2t(data1->NbTT, data1->TT, &data2->NbTT, data2->TT, 3, 9, rIndex, iIndex, nSteps);
+  h2t(data1->NbSQ, data1->SQ, &data2->NbSQ, data2->SQ, 4, 1, rIndex, iIndex, nSteps);
+  h2t(data1->NbVQ, data1->VQ, &data2->NbVQ, data2->VQ, 4, 3, rIndex, iIndex, nSteps);
+  h2t(data1->NbTQ, data1->TQ, &data2->NbTQ, data2->TQ, 4, 9, rIndex, iIndex, nSteps);
+  h2t(data1->NbSS, data1->SS, &data2->NbSS, data2->SS, 4, 1, rIndex, iIndex, nSteps);
+  h2t(data1->NbVS, data1->VS, &data2->NbVS, data2->VS, 4, 3, rIndex, iIndex, nSteps);
+  h2t(data1->NbTS, data1->TS, &data2->NbTS, data2->TS, 4, 9, rIndex, iIndex, nSteps);
+  h2t(data1->NbSH, data1->SH, &data2->NbSH, data2->SH, 8, 1, rIndex, iIndex, nSteps);
+  h2t(data1->NbVH, data1->VH, &data2->NbVH, data2->VH, 8, 3, rIndex, iIndex, nSteps);
+  h2t(data1->NbTH, data1->TH, &data2->NbTH, data2->TH, 8, 9, rIndex, iIndex, nSteps);
+  h2t(data1->NbSI, data1->SI, &data2->NbSI, data2->SI, 6, 1, rIndex, iIndex, nSteps);
+  h2t(data1->NbVI, data1->VI, &data2->NbVI, data2->VI, 6, 3, rIndex, iIndex, nSteps);
+  h2t(data1->NbTI, data1->TI, &data2->NbTI, data2->TI, 6, 9, rIndex, iIndex, nSteps);
+  h2t(data1->NbSY, data1->SY, &data2->NbSY, data2->SY, 5, 1, rIndex, iIndex, nSteps);
+  h2t(data1->NbVY, data1->VY, &data2->NbVY, data2->VY, 5, 3, rIndex, iIndex, nSteps);
+  h2t(data1->NbTY, data1->TY, &data2->NbTY, data2->TY, 5, 9, rIndex, iIndex, nSteps);
+
   for(int i = 0; i < nSteps; i++){
-    double p = 2.*M_PI*i/(double)nSteps;
-    List_Add(v2->Time, &p);
+    double p = 2. * M_PI * i / (double)nSteps;
+    List_Add(data2->Time, &p);
   }
-  // finalize
-  char name[1024], filename[1024];
-  sprintf(name, "%s_HarmonicToTime", v1->Name);
-  sprintf(filename, "%s_HarmonicToTime.pos", v1->Name);
-  EndView(v2, 1, filename, name);
+  data2->setName(data1->getName() + "_HarmonicToTime");
+  data2->setFileName(data1->getName() + "_HarmonicToTime.pos");
+  data2->finalize();
 
   return v2;
 }

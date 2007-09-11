@@ -1,4 +1,4 @@
-// $Id: Eigenvectors.cpp,v 1.8 2007-05-04 10:45:08 geuzaine Exp $
+// $Id: Eigenvectors.cpp,v 1.9 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,16 +19,9 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Plugin.h"
 #include "Eigenvectors.h"
-#include "List.h"
-#include "Views.h"
-#include "Context.h"
-#include "Malloc.h"
 #include "Numeric.h"
 #include "EigSolve.h"
-
-extern Context_T CTX;
 
 StringXNumber EigenvectorsOptions_Number[] = {
   {GMSH_FULLRC, "ScaleByEigenvalues", NULL, 1.},
@@ -139,58 +132,56 @@ static void eigenvectors(List_T *inList, int inNb,
     Msg(GERROR, "%d tensors have complex eigenvalues/eigenvectors", nbcomplex);
 }
 
-Post_View *GMSH_EigenvectorsPlugin::execute(Post_View * v)
+PView *GMSH_EigenvectorsPlugin::execute(PView *v)
 {
   int scale = (int)EigenvectorsOptions_Number[0].def;
   int iView = (int)EigenvectorsOptions_Number[1].def;
 
-  if(iView < 0)
-    iView = v ? v->Index : 0;
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
+
+  PView *min = new PView(true);
+  PView *mid = new PView(true);
+  PView *max = new PView(true);
+
+  PViewDataList *dmin = getDataList(min);
+  PViewDataList *dmid = getDataList(mid);
+  PViewDataList *dmax = getDataList(max);
+
+  eigenvectors(data1->TP, data1->NbTP, 1, data1->getNumTimeSteps(), scale,
+	       dmin->VP, &dmin->NbVP, dmid->VP, &dmid->NbVP, dmax->VP, &dmax->NbVP);
+  eigenvectors(data1->TL, data1->NbTL, 2, data1->getNumTimeSteps(), scale,
+	       dmin->VL, &dmin->NbVL, dmid->VL, &dmid->NbVL, dmax->VL, &dmax->NbVL);
+  eigenvectors(data1->TT, data1->NbTT, 3, data1->getNumTimeSteps(), scale,
+	       dmin->VT, &dmin->NbVT, dmid->VT, &dmid->NbVT, dmax->VT, &dmax->NbVT);
+  eigenvectors(data1->TQ, data1->NbTQ, 4, data1->getNumTimeSteps(), scale,
+	       dmin->VQ, &dmin->NbVQ, dmid->VQ, &dmid->NbVQ, dmax->VQ, &dmax->NbVQ);
+  eigenvectors(data1->TS, data1->NbTS, 4, data1->getNumTimeSteps(), scale,
+	       dmin->VS, &dmin->NbVS, dmid->VS, &dmid->NbVS, dmax->VS, &dmax->NbVS);
+  eigenvectors(data1->TH, data1->NbTH, 8, data1->getNumTimeSteps(), scale,
+	       dmin->VH, &dmin->NbVH, dmid->VH, &dmid->NbVH, dmax->VH, &dmax->NbVH);
+  eigenvectors(data1->TI, data1->NbTI, 6, data1->getNumTimeSteps(), scale,
+	       dmin->VI, &dmin->NbVI, dmid->VI, &dmid->NbVI, dmax->VI, &dmax->NbVI);
+  eigenvectors(data1->TY, data1->NbTY, 5, data1->getNumTimeSteps(), scale,
+	       dmin->VY, &dmin->NbVY, dmid->VY, &dmid->NbVY, dmax->VY, &dmax->NbVY);
+
+  for(int i = 0; i < List_Nbr(data1->Time); i++){
+    List_Add(dmin->Time, List_Pointer(data1->Time, i));
+    List_Add(dmid->Time, List_Pointer(data1->Time, i));
+    List_Add(dmax->Time, List_Pointer(data1->Time, i));
   }
+  dmin->setName(data1->getName() + "_MinEigenvectors");
+  dmin->setFileName(data1->getName() + "_MinEigenvectors.pos");
+  dmin->finalize();
+  dmid->setName(data1->getName() + "_MidEigenvectors");
+  dmid->setFileName(data1->getName() + "_MidEigenvectors.pos");
+  dmid->finalize();
+  dmax->setName(data1->getName() + "_MaxEigenvectors");
+  dmax->setFileName(data1->getName() + "_MaxEigenvectors.pos");
+  dmax->finalize();
 
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-  Post_View *min = BeginView(1);
-  Post_View *mid = BeginView(1);
-  Post_View *max = BeginView(1);
-
-  eigenvectors(v1->TP, v1->NbTP, 1, v1->NbTimeStep, scale,
-	       min->VP, &min->NbVP, mid->VP, &mid->NbVP, max->VP, &max->NbVP);
-  eigenvectors(v1->TL, v1->NbTL, 2, v1->NbTimeStep, scale,
-	       min->VL, &min->NbVL, mid->VL, &mid->NbVL, max->VL, &max->NbVL);
-  eigenvectors(v1->TT, v1->NbTT, 3, v1->NbTimeStep, scale,
-	       min->VT, &min->NbVT, mid->VT, &mid->NbVT, max->VT, &max->NbVT);
-  eigenvectors(v1->TQ, v1->NbTQ, 4, v1->NbTimeStep, scale,
-	       min->VQ, &min->NbVQ, mid->VQ, &mid->NbVQ, max->VQ, &max->NbVQ);
-  eigenvectors(v1->TS, v1->NbTS, 4, v1->NbTimeStep, scale,
-	       min->VS, &min->NbVS, mid->VS, &mid->NbVS, max->VS, &max->NbVS);
-  eigenvectors(v1->TH, v1->NbTH, 8, v1->NbTimeStep, scale,
-	       min->VH, &min->NbVH, mid->VH, &mid->NbVH, max->VH, &max->NbVH);
-  eigenvectors(v1->TI, v1->NbTI, 6, v1->NbTimeStep, scale,
-	       min->VI, &min->NbVI, mid->VI, &mid->NbVI, max->VI, &max->NbVI);
-  eigenvectors(v1->TY, v1->NbTY, 5, v1->NbTimeStep, scale,
-	       min->VY, &min->NbVY, mid->VY, &mid->NbVY, max->VY, &max->NbVY);
-
-  // copy time data
-  for(int i = 0; i < List_Nbr(v1->Time); i++){
-    List_Add(min->Time, List_Pointer(v1->Time, i));
-    List_Add(mid->Time, List_Pointer(v1->Time, i));
-    List_Add(max->Time, List_Pointer(v1->Time, i));
-  }
-  // finalize
-  char name[1024], filename[1024];
-  sprintf(name, "%s_MinEigenvectors", v1->Name);
-  sprintf(filename, "%s_MinEigenvectors.pos", v1->Name);
-  EndView(min, 1, filename, name);
-  sprintf(name, "%s_MidEigenvector", v1->Name);
-  sprintf(filename, "%s_MidEigenvectors.pos", v1->Name);
-  EndView(mid, 1, filename, name);
-  sprintf(name, "%s_MaxEigenvector", v1->Name);
-  sprintf(filename, "%s_MaxEigenvectors.pos", v1->Name);
-  EndView(max, 1, filename, name);
-
-  return NULL;
+  return 0;
 }

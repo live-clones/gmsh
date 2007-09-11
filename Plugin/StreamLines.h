@@ -40,12 +40,12 @@ public:
   void catchErrorMessage (char *errorMessage) const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  
-  Post_View *execute(Post_View *);
-  virtual Post_View * GenerateView(int iView, int dView) const ;
+  PView *execute(PView *);
+  virtual PView *GenerateView(PView *v1, PView *v2);
 
   static int getNbU();
   static int getNbV();
-  static void getPoint(int iU, int iV, double *X );
+  static void getPoint(int iU, int iV, double *X);
 
   static double callbackX0(int, int, double);
   static double callbackY0(int, int, double);

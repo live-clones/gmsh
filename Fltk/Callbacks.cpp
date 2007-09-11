@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.543 2007-09-10 05:31:35 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.544 2007-09-11 14:01:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4530,11 +4530,9 @@ void view_plugin_run_cb(CALLBACK_ARGS)
   // run on all selected views
   for(int i = 1; i <= WID->plugin_view_browser->size(); i++) {
     if(WID->plugin_view_browser->selected(i)) {
-      try {
-	if(i - 1 >= 0 && i - 1 < PView::list.size()){
-	  Msg(FATAL, "need to reinterface plugin execute with pview");
-	  //p->execute(PView::list[i - 1]);
-	}
+      try{
+	if(i - 1 >= 0 && i - 1 < PView::list.size())
+	  p->execute(PView::list[i - 1]);
 	else
 	  p->execute(0);
       }
@@ -4546,6 +4544,7 @@ void view_plugin_run_cb(CALLBACK_ARGS)
     }
   }
 
+  WID->update_views();
   CTX.post.plugin_draw_function = NULL;
   Draw();
 }

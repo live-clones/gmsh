@@ -1,4 +1,4 @@
-// $Id: ModulusPhase.cpp,v 1.6 2007-09-04 13:47:05 remacle Exp $
+// $Id: ModulusPhase.cpp,v 1.7 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,14 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Plugin.h"
 #include "ModulusPhase.h"
-#include "List.h"
-#include "Views.h"
-#include "Context.h"
-#include "Numeric.h"
-
-extern Context_T CTX;
 
 StringXNumber ModulusPhaseOptions_Number[] = {
   {GMSH_FULLRC, "RealPart", NULL, 0.},
@@ -111,43 +104,52 @@ static void mp(int nb1, List_T *list1, int nbNod, int nbComp)
   }
 }
 
-Post_View *GMSH_ModulusPhasePlugin::execute(Post_View * v)
+PView *GMSH_ModulusPhasePlugin::execute(PView *v)
 {
   int rIndex = (int)ModulusPhaseOptions_Number[0].def;
   int iIndex = (int)ModulusPhaseOptions_Number[1].def;
   int iView = (int)ModulusPhaseOptions_Number[2].def;
 
-  if(iView < 0)
-    iView = v ? v->Index : 0;
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
 
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
+  PViewDataList *data1 = getDataList(v1);
+  if(!data1) return v;
 
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-  if(rIndex < 0 || rIndex >= v1->NbTimeStep ||
-     iIndex < 0 || iIndex >= v1->NbTimeStep){
+  if(rIndex < 0 || rIndex >= data1->getNumTimeSteps() ||
+     iIndex < 0 || iIndex >= data1->getNumTimeSteps()){
     Msg(GERROR, "Wrong real or imaginary part index");
     return v1;
   }
 
-  mp(v1->NbSP, v1->SP, 1, 1); mp(v1->NbVP, v1->VP, 1, 3); mp(v1->NbTP, v1->TP, 1, 9);
-  mp(v1->NbSL, v1->SL, 2, 1); mp(v1->NbVL, v1->VL, 2, 3); mp(v1->NbTL, v1->TL, 2, 9);
-  mp(v1->NbST, v1->ST, 3, 1); mp(v1->NbVT, v1->VT, 3, 3); mp(v1->NbTT, v1->TT, 3, 9);
-  mp(v1->NbSQ, v1->SQ, 4, 1); mp(v1->NbVQ, v1->VQ, 4, 3); mp(v1->NbTQ, v1->TQ, 4, 9);
-  mp(v1->NbSS, v1->SS, 4, 1); mp(v1->NbVS, v1->VS, 4, 3); mp(v1->NbTS, v1->TS, 4, 9);
-  mp(v1->NbSH, v1->SH, 8, 1); mp(v1->NbVH, v1->VH, 8, 3); mp(v1->NbTH, v1->TH, 8, 9);
-  mp(v1->NbSI, v1->SI, 6, 1); mp(v1->NbVI, v1->VI, 6, 3); mp(v1->NbTI, v1->TI, 6, 9);
-  mp(v1->NbSY, v1->SY, 5, 1); mp(v1->NbVY, v1->VY, 5, 3); mp(v1->NbTY, v1->TY, 5, 9);
+  mp(data1->NbSP, data1->SP, 1, 1); 
+  mp(data1->NbVP, data1->VP, 1, 3); 
+  mp(data1->NbTP, data1->TP, 1, 9);
+  mp(data1->NbSL, data1->SL, 2, 1);
+  mp(data1->NbVL, data1->VL, 2, 3); 
+  mp(data1->NbTL, data1->TL, 2, 9);
+  mp(data1->NbST, data1->ST, 3, 1); 
+  mp(data1->NbVT, data1->VT, 3, 3); 
+  mp(data1->NbTT, data1->TT, 3, 9);
+  mp(data1->NbSQ, data1->SQ, 4, 1); 
+  mp(data1->NbVQ, data1->VQ, 4, 3);
+  mp(data1->NbTQ, data1->TQ, 4, 9);
+  mp(data1->NbSS, data1->SS, 4, 1); 
+  mp(data1->NbVS, data1->VS, 4, 3); 
+  mp(data1->NbTS, data1->TS, 4, 9);
+  mp(data1->NbSH, data1->SH, 8, 1); 
+  mp(data1->NbVH, data1->VH, 8, 3);
+  mp(data1->NbTH, data1->TH, 8, 9);
+  mp(data1->NbSI, data1->SI, 6, 1); 
+  mp(data1->NbVI, data1->VI, 6, 3);
+  mp(data1->NbTI, data1->TI, 6, 9);
+  mp(data1->NbSY, data1->SY, 5, 1);
+  mp(data1->NbVY, data1->VY, 5, 3); 
+  mp(data1->NbTY, data1->TY, 5, 9);
 
-  // recompute min/max, etc.:
-  v1->Min = VAL_INF;
-  v1->Max = -VAL_INF;
-  char name[1024], filename[1024];
-  sprintf(name, "%s_ModulusPhase", v1->Name);
-  sprintf(filename, "%s_ModulusPhase.pos", v1->Name);
-  EndView(v1, 0, filename, name);
+  data1->setName(data1->getName() + "_ModulusPhase");
+  data1->setName(data1->getName() + ".pos");
+  data1->finalize();
 
   return v1;
 }

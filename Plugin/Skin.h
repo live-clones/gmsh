@@ -49,7 +49,7 @@ class GMSH_SkinPlugin : public GMSH_Post_Plugin
   void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
   StringXNumber* getOption(int iopt);  
-  Post_View *execute(Post_View *);
+  PView *execute(PView *);
 };
 
 #endif

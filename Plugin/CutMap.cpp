@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.53 2007-05-04 10:45:08 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.54 2007-09-11 14:01:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,7 +20,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "CutMap.h"
-#include "List.h"
 #include "Context.h"
 
 extern Context_T CTX;
@@ -54,14 +53,13 @@ double GMSH_CutMapPlugin::callbackA(int num, int action, double value)
   if(action > 0){
     int iview = (int)CutMapOptions_Number[6].def;
     if(iview < 0) iview = num;
-    Post_View **vv = (Post_View **)List_Pointer_Test(CTX.post.list, iview);
-    if(vv){
-      min = (*vv)->Min;
-      max = (*vv)->Max;
+    if(iview >= 0 && iview < PView::list.size()){
+      min = PView::list[iview]->getData()->getMin();
+      max = PView::list[iview]->getData()->getMax();
     }
   }
   switch(action){ // configure the input field
-  case 1: return (min-max)/200.;
+  case 1: return (min - max) / 200.;
   case 2: return min;
   case 3: return max;
   default: break;
@@ -153,7 +151,7 @@ double GMSH_CutMapPlugin::levelset(double x, double y, double z, double val) con
   return val - CutMapOptions_Number[0].def;
 }
 
-Post_View *GMSH_CutMapPlugin::execute(Post_View * v)
+PView *GMSH_CutMapPlugin::execute(PView *v)
 {
   int iView = (int)CutMapOptions_Number[6].def;
   _valueIndependent = 0;
@@ -164,15 +162,8 @@ Post_View *GMSH_CutMapPlugin::execute(Post_View * v)
   _targetError = CutMapOptions_Number[5].def;
   _orientation = GMSH_LevelsetPlugin::MAP;
   
-  if(iView < 0)
-    iView = v ? v->Index : 0;
-  
-  if(!List_Pointer_Test(CTX.post.list, iView)) {
-    Msg(GERROR, "View[%d] does not exist", iView);
-    return v;
-  }
-  
-  Post_View *v1 = *(Post_View **)List_Pointer(CTX.post.list, iView);
-  
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
+
   return GMSH_LevelsetPlugin::execute(v1);
 }

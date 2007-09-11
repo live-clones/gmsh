@@ -36,7 +36,8 @@
 
 #include "Options.h"
 #include "Message.h"
-#include "Views.h"
+#include "PView.h"
+#include "PViewDataList.h"
 #include "GmshMatrix.h"
 
 class PluginDialogBox;
@@ -44,38 +45,38 @@ class Vertex;
 
 class GMSH_Plugin
 {
-public :
-  // a dialog box for user interface
+ public :
+  // 4 kinds of plugins
+  typedef enum {
+    GMSH_CAD_PLUGIN, 
+    GMSH_MESH_PLUGIN, 
+    GMSH_POST_PLUGIN, 
+    GMSH_SOLVE_PLUGIN 
+  } GMSH_PLUGIN_TYPE;
+
+  // a dialog box for the user interface
   PluginDialogBox *dialogBox;
 
-  // this is there for internal use, this variable will be used by the
-  // PluginManager, just forget it
+  // for internal use by PluginManager
   void *hlib;
 
-  // 3 kind of plugins, one for cad, one for mesh, one for postpro
-  typedef enum {GMSH_CAD_PLUGIN, 
-		GMSH_MESH_PLUGIN, 
-		GMSH_POST_PLUGIN, 
-		GMSH_SOLVE_PLUGIN} GMSH_PLUGIN_TYPE ;
+  GMSH_Plugin() : dialogBox(0), hlib(0) {}
+  virtual ~GMSH_Plugin(){}
 
-  GMSH_Plugin() : dialogBox(0), hlib(0) {;};
-  virtual ~GMSH_Plugin() {;};
-  
-  // returns the type of plugin for downcasting GMSH_Plugin into
-  // GMSH_CAD_Plugin, GMSH_Mesh_Plugin and GMSH_Post_Plugin
+  // return plugin type, name and info
   virtual GMSH_PLUGIN_TYPE getType() const = 0;
   virtual void getName(char *name) const = 0;
   virtual void getInfos(char *author, char *copyright, char *helpText) const = 0;
 
-  // When an error is thrown by the plugin, the plugin manager will
+  // when an error is thrown by the plugin, the plugin manager will
   // show the message and hopefully continue
   virtual void catchErrorMessage(char *errorMessage) const = 0;
 
-  // gmsh style numeric options
+  // gmsh-style numeric options
   virtual int getNbOptions() const = 0;
   virtual StringXNumber *getOption(int iopt) = 0;
 
-  // gmsh style string options
+  // gmsh-style string options
   virtual int getNbOptionsStr() const = 0;
   virtual StringXString *getOptionStr(int iopt) = 0;
 
@@ -83,51 +84,53 @@ public :
   virtual void run() = 0;
 };
 
-
-// Base class for Post-Processing Plugins. The user can either modify
-// or duplicate a Post_View
-
+// The base class for post-processing plugins. The user can either
+// modify or duplicate a post-processing view
 class GMSH_Post_Plugin : public GMSH_Plugin
 {
-public:
+ public:
   inline GMSH_PLUGIN_TYPE getType() const { return GMSH_Plugin::GMSH_POST_PLUGIN; }
-  virtual int getNbOptionsStr() const { return 0; };
-  virtual StringXString *getOptionStr(int iopt) { return NULL; };
+  virtual int getNbOptionsStr() const { return 0; }
+  virtual StringXString *getOptionStr(int iopt) { return NULL; }
   virtual void run(){ execute(0); }
-  // If returned pointer is the same as the argument, then view is
-  // simply modified, else, a new view is added in the view list
-  virtual Post_View *execute(Post_View *) = 0;
-  virtual void assign_specific_visibility() const {}
-  virtual bool geometrical_filter(Double_Matrix *geometrical_nodes_positions) const {return true;}
-  virtual bool functional_filter(Double_Matrix *function_values) const {return true;}
+  // if the returned pointer is the same as the argument, then the
+  // view is simply modified, else, a new view is added in the view
+  // list
+  virtual PView *execute(PView *) = 0;
+  // get the view given an index and a default value
+  virtual PView *getView(int index, PView *view);
+  // get the data in list format
+  virtual PViewDataList *getDataList(PView *view);
+  virtual void assignSpecificVisibility() const {}
+  virtual bool geometricalFilter(Double_Matrix *) const { return true; }
+
 };
 
-// A solver plugin. The idea here is to be able to associate some
-// properties to physical entities. The goal is to be able to
-// interface gmsh with a solver (ABAQUS...) i.e. create the input file
-// for the solver.
-
+// The base class for solver plugins. The idea is to be able to
+// associate some properties to physical entities, so that we can
+// interface gmsh with a solver (ABAQUS...), i.e., create the input
+// file for the solver
 class GMSH_Solve_Plugin : public GMSH_Plugin
 {
-public:
-  virtual int getNbOptionsStr() const { return 0; };
-  virtual StringXString *getOptionStr(int iopt) { return NULL; };
-  virtual int getNbOptions() const { return 0; };
-  virtual StringXNumber *getOption(int iopt) { return NULL; };
+ public:
+  virtual int getNbOptionsStr() const { return 0; }
+  virtual StringXString *getOptionStr(int iopt) { return 0; }
+  virtual int getNbOptions() const { return 0; }
+  virtual StringXNumber *getOption(int iopt) { return 0; };
   inline GMSH_PLUGIN_TYPE getType() const { return GMSH_Plugin::GMSH_SOLVE_PLUGIN; }
-  virtual void run() {}; // do nothing
+  virtual void run() {} // do nothing
   // popup dialog box
   virtual void popupPropertiesForPhysicalEntity(int dim) = 0;
-  // add the given group to the solver data's
+  // add the given group to the solver data
   virtual void receiveNewPhysicalGroup(int dim, int id) = 0;
   // load the solver input file related to the gmsh geo file
   virtual void readSolverFile(const char *) = 0;
   // save the solver file  
   virtual void writeSolverFile(const char *) const = 0;
   // enhance graphics for a giver geo point
-  virtual bool GL_enhancePoint(Vertex *v) { return false; };
+  virtual bool GL_enhancePoint(Vertex *v) { return false; }
   // enhance graphics for a giver geo line
-  virtual bool GL_enhanceLine (int CurveId, Vertex *v1, Vertex *v2) { return false; };
+  virtual bool GL_enhanceLine(int CurveId, Vertex *v1, Vertex *v2) { return false; }
 };
 
 #endif

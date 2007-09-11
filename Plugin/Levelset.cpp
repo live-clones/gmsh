@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.33 2007-09-04 13:47:05 remacle Exp $
+// $Id: Levelset.cpp,v 1.34 2007-09-11 14:01:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,14 +22,7 @@
 #include "Levelset.h"
 #include "MakeSimplex.h"
 #include "List.h"
-#include "Tools.h"
-#include "Views.h"
-#include "Iso.h"
 #include "Numeric.h"
-#include "Context.h"
-#include "Malloc.h"
-
-extern Context_T CTX;
 
 GMSH_LevelsetPlugin::GMSH_LevelsetPlugin()
 {
@@ -189,60 +182,60 @@ void GMSH_LevelsetPlugin::evalLevelset(int nbNod, int nbComp,
 
 void GMSH_LevelsetPlugin::addElement(int timeStep, int np, int nbEdg, int dNbComp,
 				     double xp[12], double yp[12], double zp[12],
-				     double valp[12][9], std::vector<Post_View *> &out)
+				     double valp[12][9], std::vector<PViewDataList *> &out)
 {
-  // select the output view
-  Post_View *view = _valueIndependent ? out[0] : out[timeStep];
+  // select the output data
+  PViewDataList *data = _valueIndependent ? out[0] : out[timeStep];
   List_T *list;
   int *nbPtr;
   switch(np){
   case 1:
-    if(dNbComp == 1)      { list = view->SP; nbPtr = &view->NbSP; }
-    else if(dNbComp == 3) { list = view->VP; nbPtr = &view->NbVP; }
-    else                  { list = view->TP; nbPtr = &view->NbTP; }
+    if(dNbComp == 1)      { list = data->SP; nbPtr = &data->NbSP; }
+    else if(dNbComp == 3) { list = data->VP; nbPtr = &data->NbVP; }
+    else                  { list = data->TP; nbPtr = &data->NbTP; }
     break;
   case 2:
-    if(dNbComp == 1)      { list = view->SL; nbPtr = &view->NbSL; }
-    else if(dNbComp == 3) { list = view->VL; nbPtr = &view->NbVL; }
-    else                  { list = view->TL; nbPtr = &view->NbTL; }
+    if(dNbComp == 1)      { list = data->SL; nbPtr = &data->NbSL; }
+    else if(dNbComp == 3) { list = data->VL; nbPtr = &data->NbVL; }
+    else                  { list = data->TL; nbPtr = &data->NbTL; }
     break;
   case 3:
-    if(dNbComp == 1)      { list = view->ST; nbPtr = &view->NbST; }
-    else if(dNbComp == 3) { list = view->VT; nbPtr = &view->NbVT; }
-    else                  { list = view->TT; nbPtr = &view->NbTT; }
+    if(dNbComp == 1)      { list = data->ST; nbPtr = &data->NbST; }
+    else if(dNbComp == 3) { list = data->VT; nbPtr = &data->NbVT; }
+    else                  { list = data->TT; nbPtr = &data->NbTT; }
     break;
   case 4:
     if(!_extractVolume || nbEdg <= 4){
-      if(dNbComp == 1)      { list = view->SQ; nbPtr = &view->NbSQ; }
-      else if(dNbComp == 3) { list = view->VQ; nbPtr = &view->NbVQ; }
-      else                  { list = view->TQ; nbPtr = &view->NbTQ; }
+      if(dNbComp == 1)      { list = data->SQ; nbPtr = &data->NbSQ; }
+      else if(dNbComp == 3) { list = data->VQ; nbPtr = &data->NbVQ; }
+      else                  { list = data->TQ; nbPtr = &data->NbTQ; }
     }
     else{
-      if(dNbComp == 1)      { list = view->SS; nbPtr = &view->NbSS; }
-      else if(dNbComp == 3) { list = view->VS; nbPtr = &view->NbVS; }
-      else                  { list = view->TS; nbPtr = &view->NbTS; }
+      if(dNbComp == 1)      { list = data->SS; nbPtr = &data->NbSS; }
+      else if(dNbComp == 3) { list = data->VS; nbPtr = &data->NbVS; }
+      else                  { list = data->TS; nbPtr = &data->NbTS; }
     }
     break;
   case 5:
-    if(dNbComp == 1)      { list = view->SY; nbPtr = &view->NbSY; }
-    else if(dNbComp == 3) { list = view->VY; nbPtr = &view->NbVY; }
-    else                  { list = view->TY; nbPtr = &view->NbTY; }
+    if(dNbComp == 1)      { list = data->SY; nbPtr = &data->NbSY; }
+    else if(dNbComp == 3) { list = data->VY; nbPtr = &data->NbVY; }
+    else                  { list = data->TY; nbPtr = &data->NbTY; }
     break;
   case 6:
-    if(dNbComp == 1)      { list = view->SI; nbPtr = &view->NbSI; }
-    else if(dNbComp == 3) { list = view->VI; nbPtr = &view->NbVI; }
-    else                  { list = view->TI; nbPtr = &view->NbTI; }
+    if(dNbComp == 1)      { list = data->SI; nbPtr = &data->NbSI; }
+    else if(dNbComp == 3) { list = data->VI; nbPtr = &data->NbVI; }
+    else                  { list = data->TI; nbPtr = &data->NbTI; }
     break;
   case 8: // should never happen
-    if(dNbComp == 1)      { list = view->SH; nbPtr = &view->NbSH; }
-    else if(dNbComp == 3) { list = view->VH; nbPtr = &view->NbVH; }
-    else                  { list = view->TH; nbPtr = &view->NbTH; }
+    if(dNbComp == 1)      { list = data->SH; nbPtr = &data->NbSH; }
+    else if(dNbComp == 3) { list = data->VH; nbPtr = &data->NbVH; }
+    else                  { list = data->TH; nbPtr = &data->NbTH; }
     break;
   default:
     return;
   }
 
-  // copy the elements in the output view
+  // copy the elements in the output data
   if(!timeStep || !_valueIndependent) {
     for(int k = 0; k < np; k++) 
       List_Add(list, &xp[k]);
@@ -262,7 +255,7 @@ void GMSH_LevelsetPlugin::nonZeroLevelset(int timeStep,
 					  double *x, double *y, double *z, 
 					  double *iVal, int iNbComp,
 					  double *dVal, int dNbComp,
-					  std::vector<Post_View *> &out)
+					  std::vector<PViewDataList*> &out)
 {
   double levels[8], scalarVal[8];
   
@@ -295,7 +288,7 @@ int GMSH_LevelsetPlugin::zeroLevelset(int timeStep,
 				      double *x, double *y, double *z, 
 				      double *iVal, int iNbComp,
 				      double *dVal, int dNbComp,
-				      std::vector<Post_View *> &out)
+				      std::vector<PViewDataList*> &out)
 {
   double levels[8], scalarVal[8];
 
@@ -405,25 +398,24 @@ int GMSH_LevelsetPlugin::zeroLevelset(int timeStep,
   return 0;
 }
 
-void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList, 
+void GMSH_LevelsetPlugin::executeList(PViewDataList *iData, List_T *iList,
 				      int iNbElm, int iNbComp,
-				      Post_View * dView, List_T * dList, 
+				      PViewDataList *dData, List_T *dList,
 				      int dNbElm, int dNbComp,
 				      int nbNod, int nbEdg, int exn[12][2], 
-				      std::vector<Post_View *> &out)
+				      std::vector<PViewDataList*> &out)
 {
   if(!iNbElm || !dNbElm) 
     return;
   
   if(iNbElm != dNbElm) {
-    Msg(GERROR, "View[%d] and View[%d] have a different number of elements (%d != %d)",
-	iView->Index, dView->Index, iNbElm, dNbElm);
+    Msg(GERROR, "Views have a different number of elements (%d != %d)", iNbElm, dNbElm);
     return;
   }
 
   int dTimeStep = _valueTimeStep;
-  if(dTimeStep >= dView->NbTimeStep) {
-    Msg(GERROR, "Wrong time step %d in View[%d]", dTimeStep, dView->Index);
+  if(dTimeStep >= dData->getNumTimeSteps()) {
+    Msg(GERROR, "Wrong time step %d in view", dTimeStep);
     return;
   }
 
@@ -436,10 +428,10 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
 
     if(nbNod == 1 || nbNod == 2 || nbNod == 3 || (nbNod == 4 && nbEdg == 6)) {
       // easy for simplices: at most one element is created per time step 
-      for(int iTS = 0; iTS < iView->NbTimeStep; iTS++) {
+      for(int iTS = 0; iTS < iData->getNumTimeSteps(); iTS++) {
 	int dTS = (dTimeStep < 0) ? iTS : dTimeStep;
 	// don't compute the zero levelset of the value view
-	if(dTimeStep < 0 || iView != dView || dTS != iTS) {
+	if(dTimeStep < 0 || iData != dData || dTS != iTS) {
 	  double *iVal = (double *)List_Pointer_Fast(iList, i + 3 * nbNod + 
 						     iNbComp * nbNod * iTS); 
 	  double *dVal = (double *)List_Pointer_Fast(dList, j + 3 * nbNod + 
@@ -473,10 +465,10 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
 	if(zeroLevelset(0, nbNod, nbEdg, exn, x, y, z, NULL, 0, 
 			NULL, 0, out)) {
 	  for(int k = 0; k < iDec.numSimplices(); k++) {
-	    for(int iTS = 0; iTS < iView->NbTimeStep; iTS++) {
+	    for(int iTS = 0; iTS < iData->getNumTimeSteps(); iTS++) {
 	      int dTS = (dTimeStep < 0) ? iTS : dTimeStep;
 	      // don't compute the zero levelset of the value view
-	      if(dTimeStep < 0 || iView != dView || dTS != iTS) {
+	      if(dTimeStep < 0 || iData != dData || dTS != iTS) {
 		double *iVal = (double *)List_Pointer_Fast(iList, i + 3 * nbNod + 
 							   iNbComp * nbNod * iTS); 
 		double *dVal = (double *)List_Pointer_Fast(dList, j + 3 * nbNod + 
@@ -493,10 +485,10 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
 	  }
 	}
 	else if(_extractVolume){
-	  for(int iTS = 0; iTS < iView->NbTimeStep; iTS++) {
+	  for(int iTS = 0; iTS < iData->getNumTimeSteps(); iTS++) {
 	    int dTS = (dTimeStep < 0) ? iTS : dTimeStep;
 	    // don't compute the zero levelset of the value view
-	    if(dTimeStep < 0 || iView != dView || dTS != iTS) {
+	    if(dTimeStep < 0 || iData != dData || dTS != iTS) {
 	      double *iVal = (double *)List_Pointer_Fast(iList, i + 3 * nbNod + 
 							 iNbComp * nbNod * iTS); 
 	      double *dVal = (double *)List_Pointer_Fast(dList, j + 3 * nbNod + 
@@ -510,10 +502,10 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
       else{
 	// since we generate one view for each time step, we can
 	// generate multiple elements per time step without problem.
-	for(int iTS = 0; iTS < iView->NbTimeStep; iTS++) {
+	for(int iTS = 0; iTS < iData->getNumTimeSteps(); iTS++) {
 	  int dTS = (dTimeStep < 0) ? iTS : dTimeStep;
 	  // don't compute the zero levelset of the value view
-	  if(dTimeStep < 0 || iView != dView || dTS != iTS) {
+	  if(dTimeStep < 0 || iData != dData || dTS != iTS) {
 	    double *iVal = (double *)List_Pointer_Fast(iList, i + 3 * nbNod +
 						       iNbComp * nbNod * iTS); 
 	    double *dVal = (double *)List_Pointer_Fast(dList, j + 3 * nbNod +
@@ -544,40 +536,41 @@ void GMSH_LevelsetPlugin::executeList(Post_View * iView, List_T * iList,
   }
 }
   
-Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
+PView *GMSH_LevelsetPlugin::execute(PView *v)
 {
-  Post_View *w;
-  std::vector<Post_View *> out;
+  PView *w;
+  std::vector<PViewDataList*> out;
 
-  if(v->adaptive)
-    v->adaptive->setTolerance(_targetError);
-  if(v->adaptive && v->NbST)
-    v->setAdaptiveResolutionLevel(_recurLevel, this);
-  if(v->adaptive && v->NbSS)
-    v->setAdaptiveResolutionLevel(_recurLevel, this);
-  if(v->adaptive && v->NbSQ)
-    v->setAdaptiveResolutionLevel(_recurLevel, this);
-  if(v->adaptive && v->NbSH)
-    v->setAdaptiveResolutionLevel(_recurLevel, this);
-  
+  PViewDataList *dv = getDataList(v);
+  if(!dv) return v;
+
+  if(dv->isAdaptive()){
+    dv->adaptive->setTolerance(_targetError);
+    if(dv->NbST || dv->NbSS || dv->NbSQ || dv->NbSH)
+      dv->setAdaptiveResolutionLevel(_recurLevel, this);
+  }
+
   if(_valueView < 0) {
     w = v;
   }
-  else if(!List_Pointer_Test(CTX.post.list, _valueView)) {
-    Msg(GERROR, "View[%d] does not exist: reverting to View[%d]", _valueView, 
-	v->Index);
+  else if(_valueView < 0 || _valueView > PView::list.size() - 1){
+    Msg(GERROR, "View[%d] does not exist: reverting to View[%d]", 
+	_valueView, v->getIndex());
     w = v;
   }
   else{
-    w = *(Post_View **)List_Pointer(CTX.post.list, _valueView);
+    w = PView::list[_valueView];
   }
 
+  PViewDataList *dw = getDataList(w);
+  if(!dw) return v;
+
   if(_valueIndependent) {
-    out.push_back(BeginView(1));
+    out.push_back(getDataList(new PView(true)));
   }
   else{
-    for(int ts = 0; ts < v->NbTimeStep; ts++)
-      out.push_back(BeginView(1));
+    for(int ts = 0; ts < dv->getNumTimeSteps(); ts++)
+      out.push_back(getDataList(new PView(true)));
   }
 
   // We should definitely recode the View interface in C++ (and define
@@ -588,189 +581,189 @@ Post_View *GMSH_LevelsetPlugin::execute(Post_View * v)
   // as the levelset view (v).
 
   // points
-  executeList(v, v->SP, v->NbSP, 1, w, w->SP, w->NbSP, 1, 1, 0, 0, out);
-  if(v != w) {
-    executeList(v, v->SP, v->NbSP, 1, w, w->VP, w->NbVP, 3, 1, 0, 0, out);
-    executeList(v, v->SP, v->NbSP, 1, w, w->TP, w->NbTP, 9, 1, 0, 0, out);
+  executeList(dv, dv->SP, dv->NbSP, 1, dw, dw->SP, dw->NbSP, 1, 1, 0, 0, out);
+  if(dv != dw) {
+    executeList(dv, dv->SP, dv->NbSP, 1, dw, dw->VP, dw->NbVP, 3, 1, 0, 0, out);
+    executeList(dv, dv->SP, dv->NbSP, 1, dw, dw->TP, dw->NbTP, 9, 1, 0, 0, out);
   }
 
-  if(v != w) {
-    executeList(v, v->VP, v->NbVP, 3, w, w->SP, w->NbSP, 1, 1, 0, 0, out);
+  if(dv != dw) {
+    executeList(dv, dv->VP, dv->NbVP, 3, dw, dw->SP, dw->NbSP, 1, 1, 0, 0, out);
   }
-  executeList(v, v->VP, v->NbVP, 3, w, w->VP, w->NbVP, 3, 1, 0, 0, out);
-  if(v != w) {
-    executeList(v, v->VP, v->NbVP, 3, w, w->TP, w->NbTP, 9, 1, 0, 0, out);
+  executeList(dv, dv->VP, dv->NbVP, 3, dw, dw->VP, dw->NbVP, 3, 1, 0, 0, out);
+  if(dv != dw) {
+    executeList(dv, dv->VP, dv->NbVP, 3, dw, dw->TP, dw->NbTP, 9, 1, 0, 0, out);
   }
 
-  if(v != w) {
-    executeList(v, v->TP, v->NbTP, 9, w, w->SP, w->NbSP, 1, 1, 0, 0, out);
-    executeList(v, v->TP, v->NbTP, 9, w, w->VP, w->NbVP, 3, 1, 0, 0, out);
+  if(dv != dw) {
+    executeList(dv, dv->TP, dv->NbTP, 9, dw, dw->SP, dw->NbSP, 1, 1, 0, 0, out);
+    executeList(dv, dv->TP, dv->NbTP, 9, dw, dw->VP, dw->NbVP, 3, 1, 0, 0, out);
   }
-  executeList(v, v->TP, v->NbTP, 9, w, w->TP, w->NbTP, 9, 1, 0, 0, out);
+  executeList(dv, dv->TP, dv->NbTP, 9, dw, dw->TP, dw->NbTP, 9, 1, 0, 0, out);
 
   // lines
   int exnLin[12][2] = {{0,1}};
-  executeList(v, v->SL, v->NbSL, 1, w, w->SL, w->NbSL, 1, 2, 1, exnLin, out);
-  if(v != w) {
-    executeList(v, v->SL, v->NbSL, 1, w, w->VL, w->NbVL, 3, 2, 1, exnLin, out);
-    executeList(v, v->SL, v->NbSL, 1, w, w->TL, w->NbTL, 9, 2, 1, exnLin, out);
+  executeList(dv, dv->SL, dv->NbSL, 1, dw, dw->SL, dw->NbSL, 1, 2, 1, exnLin, out);
+  if(dv != dw) {
+    executeList(dv, dv->SL, dv->NbSL, 1, dw, dw->VL, dw->NbVL, 3, 2, 1, exnLin, out);
+    executeList(dv, dv->SL, dv->NbSL, 1, dw, dw->TL, dw->NbTL, 9, 2, 1, exnLin, out);
   }
 
-  if(v != w) {
-    executeList(v, v->VL, v->NbVL, 3, w, w->SL, w->NbSL, 1, 2, 1, exnLin, out);
+  if(dv != dw) {
+    executeList(dv, dv->VL, dv->NbVL, 3, dw, dw->SL, dw->NbSL, 1, 2, 1, exnLin, out);
   }
-  executeList(v, v->VL, v->NbVL, 3, w, w->VL, w->NbVL, 3, 2, 1, exnLin, out);
-  if(v != w) {
-    executeList(v, v->VL, v->NbVL, 3, w, w->TL, w->NbTL, 9, 2, 1, exnLin, out);
+  executeList(dv, dv->VL, dv->NbVL, 3, dw, dw->VL, dw->NbVL, 3, 2, 1, exnLin, out);
+  if(dv != dw) {
+    executeList(dv, dv->VL, dv->NbVL, 3, dw, dw->TL, dw->NbTL, 9, 2, 1, exnLin, out);
   }
 
-  if(v != w) {
-    executeList(v, v->TL, v->NbTL, 9, w, w->SL, w->NbSL, 1, 2, 1, exnLin, out);
-    executeList(v, v->TL, v->NbTL, 9, w, w->VL, w->NbVL, 3, 2, 1, exnLin, out);
+  if(dv != dw) {
+    executeList(dv, dv->TL, dv->NbTL, 9, dw, dw->SL, dw->NbSL, 1, 2, 1, exnLin, out);
+    executeList(dv, dv->TL, dv->NbTL, 9, dw, dw->VL, dw->NbVL, 3, 2, 1, exnLin, out);
   }
-  executeList(v, v->TL, v->NbTL, 9, w, w->TL, w->NbTL, 9, 2, 1, exnLin, out);
+  executeList(dv, dv->TL, dv->NbTL, 9, dw, dw->TL, dw->NbTL, 9, 2, 1, exnLin, out);
 
   // triangles
   int exnTri[12][2] = {{0,1}, {0,2}, {1,2}};
-  executeList(v, v->ST, v->NbST, 1, w, w->ST, w->NbST, 1, 3, 3, exnTri, out);
-  if(v != w) {
-    executeList(v, v->ST, v->NbST, 1, w, w->VT, w->NbVT, 3, 3, 3, exnTri, out);
-    executeList(v, v->ST, v->NbST, 1, w, w->TT, w->NbTT, 9, 3, 3, exnTri, out);
+  executeList(dv, dv->ST, dv->NbST, 1, dw, dw->ST, dw->NbST, 1, 3, 3, exnTri, out);
+  if(dv != dw) {
+    executeList(dv, dv->ST, dv->NbST, 1, dw, dw->VT, dw->NbVT, 3, 3, 3, exnTri, out);
+    executeList(dv, dv->ST, dv->NbST, 1, dw, dw->TT, dw->NbTT, 9, 3, 3, exnTri, out);
   }
 
-  if(v != w) {
-    executeList(v, v->VT, v->NbVT, 3, w, w->ST, w->NbST, 1, 3, 3, exnTri, out);
+  if(dv != dw) {
+    executeList(dv, dv->VT, dv->NbVT, 3, dw, dw->ST, dw->NbST, 1, 3, 3, exnTri, out);
   }
-  executeList(v, v->VT, v->NbVT, 3, w, w->VT, w->NbVT, 3, 3, 3, exnTri, out);
-  if(v != w) {
-    executeList(v, v->VT, v->NbVT, 3, w, w->TT, w->NbTT, 9, 3, 3, exnTri, out);
+  executeList(dv, dv->VT, dv->NbVT, 3, dw, dw->VT, dw->NbVT, 3, 3, 3, exnTri, out);
+  if(dv != dw) {
+    executeList(dv, dv->VT, dv->NbVT, 3, dw, dw->TT, dw->NbTT, 9, 3, 3, exnTri, out);
   }
 
-  if(v != w) {
-    executeList(v, v->TT, v->NbTT, 9, w, w->ST, w->NbST, 1, 3, 3, exnTri, out);
-    executeList(v, v->TT, v->NbTT, 9, w, w->VT, w->NbVT, 3, 3, 3, exnTri, out);
+  if(dv != dw) {
+    executeList(dv, dv->TT, dv->NbTT, 9, dw, dw->ST, dw->NbST, 1, 3, 3, exnTri, out);
+    executeList(dv, dv->TT, dv->NbTT, 9, dw, dw->VT, dw->NbVT, 3, 3, 3, exnTri, out);
   }
-  executeList(v, v->TT, v->NbTT, 9, w, w->TT, w->NbTT, 9, 3, 3, exnTri, out);
+  executeList(dv, dv->TT, dv->NbTT, 9, dw, dw->TT, dw->NbTT, 9, 3, 3, exnTri, out);
 
   // tets
   int exnTet[12][2] = {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
-  executeList(v, v->SS, v->NbSS, 1, w, w->SS, w->NbSS, 1, 4, 6, exnTet, out);
-  if(v != w) {
-    executeList(v, v->SS, v->NbSS, 1, w, w->VS, w->NbVS, 3, 4, 6, exnTet, out);
-    executeList(v, v->SS, v->NbSS, 1, w, w->TS, w->NbTS, 9, 4, 6, exnTet, out);
+  executeList(dv, dv->SS, dv->NbSS, 1, dw, dw->SS, dw->NbSS, 1, 4, 6, exnTet, out);
+  if(dv != dw) {
+    executeList(dv, dv->SS, dv->NbSS, 1, dw, dw->VS, dw->NbVS, 3, 4, 6, exnTet, out);
+    executeList(dv, dv->SS, dv->NbSS, 1, dw, dw->TS, dw->NbTS, 9, 4, 6, exnTet, out);
   }
 
-  if(v != w) {
-    executeList(v, v->VS, v->NbVS, 3, w, w->SS, w->NbSS, 1, 4, 6, exnTet, out);
+  if(dv != dw) {
+    executeList(dv, dv->VS, dv->NbVS, 3, dw, dw->SS, dw->NbSS, 1, 4, 6, exnTet, out);
   }
-  executeList(v, v->VS, v->NbVS, 3, w, w->VS, w->NbVS, 3, 4, 6, exnTet, out);
-  if(v != w) {
-    executeList(v, v->VS, v->NbVS, 3, w, w->TS, w->NbTS, 9, 4, 6, exnTet, out);
+  executeList(dv, dv->VS, dv->NbVS, 3, dw, dw->VS, dw->NbVS, 3, 4, 6, exnTet, out);
+  if(dv != dw) {
+    executeList(dv, dv->VS, dv->NbVS, 3, dw, dw->TS, dw->NbTS, 9, 4, 6, exnTet, out);
   }
 
-  if(v != w) {
-    executeList(v, v->TS, v->NbTS, 9, w, w->SS, w->NbSS, 1, 4, 6, exnTet, out);
-    executeList(v, v->TS, v->NbTS, 9, w, w->VS, w->NbVS, 3, 4, 6, exnTet, out);
+  if(dv != dw) {
+    executeList(dv, dv->TS, dv->NbTS, 9, dw, dw->SS, dw->NbSS, 1, 4, 6, exnTet, out);
+    executeList(dv, dv->TS, dv->NbTS, 9, dw, dw->VS, dw->NbVS, 3, 4, 6, exnTet, out);
   }
-  executeList(v, v->TS, v->NbTS, 9, w, w->TS, w->NbTS, 9, 4, 6, exnTet, out);
+  executeList(dv, dv->TS, dv->NbTS, 9, dw, dw->TS, dw->NbTS, 9, 4, 6, exnTet, out);
 
   // quads
   int exnQua[12][2] = {{0,1}, {0,3}, {1,2}, {2,3}};
-  executeList(v, v->SQ, v->NbSQ, 1, w, w->SQ, w->NbSQ, 1, 4, 4, exnQua, out);
-  if(v != w) {
-    executeList(v, v->SQ, v->NbSQ, 1, w, w->VQ, w->NbVQ, 3, 4, 4, exnQua, out);
-    executeList(v, v->SQ, v->NbSQ, 1, w, w->TQ, w->NbTQ, 9, 4, 4, exnQua, out);
+  executeList(dv, dv->SQ, dv->NbSQ, 1, dw, dw->SQ, dw->NbSQ, 1, 4, 4, exnQua, out);
+  if(dv != dw) {
+    executeList(dv, dv->SQ, dv->NbSQ, 1, dw, dw->VQ, dw->NbVQ, 3, 4, 4, exnQua, out);
+    executeList(dv, dv->SQ, dv->NbSQ, 1, dw, dw->TQ, dw->NbTQ, 9, 4, 4, exnQua, out);
   }
 
-  if(v != w) {
-    executeList(v, v->VQ, v->NbVQ, 3, w, w->SQ, w->NbSQ, 1, 4, 4, exnQua, out);
+  if(dv != dw) {
+    executeList(dv, dv->VQ, dv->NbVQ, 3, dw, dw->SQ, dw->NbSQ, 1, 4, 4, exnQua, out);
   }
-  executeList(v, v->VQ, v->NbVQ, 3, w, w->VQ, w->NbVQ, 3, 4, 4, exnQua, out);
-  if(v != w) {
-    executeList(v, v->VQ, v->NbVQ, 3, w, w->TQ, w->NbTQ, 9, 4, 4, exnQua, out);
+  executeList(dv, dv->VQ, dv->NbVQ, 3, dw, dw->VQ, dw->NbVQ, 3, 4, 4, exnQua, out);
+  if(dv != dw) {
+    executeList(dv, dv->VQ, dv->NbVQ, 3, dw, dw->TQ, dw->NbTQ, 9, 4, 4, exnQua, out);
   }
 
-  if(v != w) {
-    executeList(v, v->TQ, v->NbTQ, 9, w, w->SQ, w->NbSQ, 1, 4, 4, exnQua, out);
-    executeList(v, v->TQ, v->NbTQ, 9, w, w->VQ, w->NbVQ, 3, 4, 4, exnQua, out);
+  if(dv != dw) {
+    executeList(dv, dv->TQ, dv->NbTQ, 9, dw, dw->SQ, dw->NbSQ, 1, 4, 4, exnQua, out);
+    executeList(dv, dv->TQ, dv->NbTQ, 9, dw, dw->VQ, dw->NbVQ, 3, 4, 4, exnQua, out);
   }
-  executeList(v, v->TQ, v->NbTQ, 9, w, w->TQ, w->NbTQ, 9, 4, 4, exnQua, out);
+  executeList(dv, dv->TQ, dv->NbTQ, 9, dw, dw->TQ, dw->NbTQ, 9, 4, 4, exnQua, out);
 
   // hexes
   int exnHex[12][2] = {{0,1}, {0,3}, {0,4}, {1,2}, {1,5}, {2,3},
 		       {2,6}, {3,7}, {4,5}, {4,7}, {5,6}, {6,7}};
-  executeList(v, v->SH, v->NbSH, 1, w, w->SH, w->NbSH, 1, 8, 12, exnHex, out);
-  if(v != w) {
-    executeList(v, v->SH, v->NbSH, 1, w, w->VH, w->NbVH, 3, 8, 12, exnHex, out);
-    executeList(v, v->SH, v->NbSH, 1, w, w->TH, w->NbTH, 9, 8, 12, exnHex, out);
+  executeList(dv, dv->SH, dv->NbSH, 1, dw, dw->SH, dw->NbSH, 1, 8, 12, exnHex, out);
+  if(dv != dw) {
+    executeList(dv, dv->SH, dv->NbSH, 1, dw, dw->VH, dw->NbVH, 3, 8, 12, exnHex, out);
+    executeList(dv, dv->SH, dv->NbSH, 1, dw, dw->TH, dw->NbTH, 9, 8, 12, exnHex, out);
   }
 
-  if(v != w) {
-    executeList(v, v->VH, v->NbVH, 3, w, w->SH, w->NbSH, 1, 8, 12, exnHex, out);
+  if(dv != dw) {
+    executeList(dv, dv->VH, dv->NbVH, 3, dw, dw->SH, dw->NbSH, 1, 8, 12, exnHex, out);
   }
-  executeList(v, v->VH, v->NbVH, 3, w, w->VH, w->NbVH, 3, 8, 12, exnHex, out);
-  if(v != w) {
-    executeList(v, v->VH, v->NbVH, 3, w, w->TH, w->NbTH, 9, 8, 12, exnHex, out);
+  executeList(dv, dv->VH, dv->NbVH, 3, dw, dw->VH, dw->NbVH, 3, 8, 12, exnHex, out);
+  if(dv != dw) {
+    executeList(dv, dv->VH, dv->NbVH, 3, dw, dw->TH, dw->NbTH, 9, 8, 12, exnHex, out);
   }
 
-  if(v != w) {
-    executeList(v, v->TH, v->NbTH, 9, w, w->SH, w->NbSH, 1, 8, 12, exnHex, out);
-    executeList(v, v->TH, v->NbTH, 9, w, w->VH, w->NbVH, 3, 8, 12, exnHex, out);
+  if(dv != dw) {
+    executeList(dv, dv->TH, dv->NbTH, 9, dw, dw->SH, dw->NbSH, 1, 8, 12, exnHex, out);
+    executeList(dv, dv->TH, dv->NbTH, 9, dw, dw->VH, dw->NbVH, 3, 8, 12, exnHex, out);
   }
-  executeList(v, v->TH, v->NbTH, 9, w, w->TH, w->NbTH, 9, 8, 12, exnHex, out);
+  executeList(dv, dv->TH, dv->NbTH, 9, dw, dw->TH, dw->NbTH, 9, 8, 12, exnHex, out);
 
   // prisms
   int exnPri[12][2] = {{0,1}, {0,2}, {0,3}, {1,2}, {1,4}, {2,5},
 		       {3,4}, {3,5}, {4,5}};
-  executeList(v, v->SI, v->NbSI, 1, w, w->SI, w->NbSI, 1, 6, 9, exnPri, out);
-  if(v != w) {
-    executeList(v, v->SI, v->NbSI, 1, w, w->VI, w->NbVI, 3, 6, 9, exnPri, out);
-    executeList(v, v->SI, v->NbSI, 1, w, w->TI, w->NbTI, 9, 6, 9, exnPri, out);
+  executeList(dv, dv->SI, dv->NbSI, 1, dw, dw->SI, dw->NbSI, 1, 6, 9, exnPri, out);
+  if(dv != dw) {
+    executeList(dv, dv->SI, dv->NbSI, 1, dw, dw->VI, dw->NbVI, 3, 6, 9, exnPri, out);
+    executeList(dv, dv->SI, dv->NbSI, 1, dw, dw->TI, dw->NbTI, 9, 6, 9, exnPri, out);
   }
 
-  if(v != w) {
-    executeList(v, v->VI, v->NbVI, 3, w, w->SI, w->NbSI, 1, 6, 9, exnPri, out);
+  if(dv != dw) {
+    executeList(dv, dv->VI, dv->NbVI, 3, dw, dw->SI, dw->NbSI, 1, 6, 9, exnPri, out);
   }
-  executeList(v, v->VI, v->NbVI, 3, w, w->VI, w->NbVI, 3, 6, 9, exnPri, out);
-  if(v != w) {
-    executeList(v, v->VI, v->NbVI, 3, w, w->TI, w->NbTI, 9, 6, 9, exnPri, out);
+  executeList(dv, dv->VI, dv->NbVI, 3, dw, dw->VI, dw->NbVI, 3, 6, 9, exnPri, out);
+  if(dv != dw) {
+    executeList(dv, dv->VI, dv->NbVI, 3, dw, dw->TI, dw->NbTI, 9, 6, 9, exnPri, out);
   }
  
-  if(v != w) {
-    executeList(v, v->TI, v->NbTI, 9, w, w->SI, w->NbSI, 1, 6, 9, exnPri, out);
-    executeList(v, v->TI, v->NbTI, 9, w, w->VI, w->NbVI, 3, 6, 9, exnPri, out);
+  if(dv != dw) {
+    executeList(dv, dv->TI, dv->NbTI, 9, dw, dw->SI, dw->NbSI, 1, 6, 9, exnPri, out);
+    executeList(dv, dv->TI, dv->NbTI, 9, dw, dw->VI, dw->NbVI, 3, 6, 9, exnPri, out);
   }
-  executeList(v, v->TI, v->NbTI, 9, w, w->TI, w->NbTI, 9, 6, 9, exnPri, out);
+  executeList(dv, dv->TI, dv->NbTI, 9, dw, dw->TI, dw->NbTI, 9, 6, 9, exnPri, out);
 
   // pyramids
   int exnPyr[12][2] = {{0,1}, {0,3}, {0,4}, {1,2}, {1,4}, {2,3}, {2,4}, {3,4}};
-  executeList(v, v->SY, v->NbSY, 1, w, w->SY, w->NbSY, 1, 5, 8, exnPyr, out);
-  if(v != w) {
-    executeList(v, v->SY, v->NbSY, 1, w, w->VY, w->NbVY, 3, 5, 8, exnPyr, out);
-    executeList(v, v->SY, v->NbSY, 1, w, w->TY, w->NbTY, 9, 5, 8, exnPyr, out);
+  executeList(dv, dv->SY, dv->NbSY, 1, dw, dw->SY, dw->NbSY, 1, 5, 8, exnPyr, out);
+  if(dv != dw) {
+    executeList(dv, dv->SY, dv->NbSY, 1, dw, dw->VY, dw->NbVY, 3, 5, 8, exnPyr, out);
+    executeList(dv, dv->SY, dv->NbSY, 1, dw, dw->TY, dw->NbTY, 9, 5, 8, exnPyr, out);
   }
 
-  if(v != w) {
-    executeList(v, v->VY, v->NbVY, 3, w, w->SY, w->NbSY, 1, 5, 8, exnPyr, out);
+  if(dv != dw) {
+    executeList(dv, dv->VY, dv->NbVY, 3, dw, dw->SY, dw->NbSY, 1, 5, 8, exnPyr, out);
   }
-  executeList(v, v->VY, v->NbVY, 3, w, w->VY, w->NbVY, 3, 5, 8, exnPyr, out);
-  if(v != w) {
-    executeList(v, v->VY, v->NbVY, 3, w, w->TY, w->NbTY, 9, 5, 8, exnPyr, out);
+  executeList(dv, dv->VY, dv->NbVY, 3, dw, dw->VY, dw->NbVY, 3, 5, 8, exnPyr, out);
+  if(dv != dw) {
+    executeList(dv, dv->VY, dv->NbVY, 3, dw, dw->TY, dw->NbTY, 9, 5, 8, exnPyr, out);
   }
 
-  if(v != w) {
-    executeList(v, v->TY, v->NbTY, 9, w, w->SY, w->NbSY, 1, 5, 8, exnPyr, out);
-    executeList(v, v->TY, v->NbTY, 9, w, w->VY, w->NbVY, 3, 5, 8, exnPyr, out);
+  if(dv != dw) {
+    executeList(dv, dv->TY, dv->NbTY, 9, dw, dw->SY, dw->NbSY, 1, 5, 8, exnPyr, out);
+    executeList(dv, dv->TY, dv->NbTY, 9, dw, dw->VY, dw->NbVY, 3, 5, 8, exnPyr, out);
   }
-  executeList(v, v->TY, v->NbTY, 9, w, w->TY, w->NbTY, 9, 5, 8, exnPyr, out);
+  executeList(dv, dv->TY, dv->NbTY, 9, dw, dw->TY, dw->NbTY, 9, 5, 8, exnPyr, out);
 
   for(unsigned int i = 0; i < out.size(); i++) {
     // FIXME: create time data
-    // finalize
-    char name[1024], filename[1024];
-    sprintf(name, "%s_Levelset_%d", v->Name, i);
-    sprintf(filename, "%s_Levelset_%d.pos", v->Name, i);
-    EndView(out[i], 1, filename, name);
+    char tmp[246];
+    sprintf(tmp, "_Levelset_%d", i);
+    out[i]->setName(dv->getName() + tmp);
+    out[i]->setFileName(dv->getFileName() + tmp + ".pos");
+    out[i]->finalize();
   }
 
   return 0;
@@ -923,7 +916,7 @@ static bool recur_sign_change (adapt_quad *q, double val,
   }      
 }
 
-void GMSH_LevelsetPlugin::assign_specific_visibility () const
+void GMSH_LevelsetPlugin::assignSpecificVisibility () const
 {
   if(adapt_triangle::all_elems.size()){
     adapt_triangle *t = *adapt_triangle::all_elems.begin();
