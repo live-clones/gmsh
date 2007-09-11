@@ -47,7 +47,7 @@ class Colorbar_Window : public Fl_Window {
   int help_flag;   // if nonzero, print help message
   int marker_pos;  // position of marker as index into table
   
-  GmshColorTable *ct; // pointer to the color table (allocated in Post_View)
+  GmshColorTable *ct; // pointer to the color table (allocated in the view)
   bool *viewchanged;   // pointer to changed bit in view
   Fl_Color color_bg;
 
