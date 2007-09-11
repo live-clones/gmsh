@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.7 2007-09-11 15:29:02 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.8 2007-09-11 22:53:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -884,4 +884,3 @@ bool PViewDataList::combineTime(nameData &nd)
   setFileName(std::string(name) + ".pos");
   return finalize();
 }
-

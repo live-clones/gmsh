@@ -25,8 +25,6 @@
 #include "List.h"
 #include "GmshMatrix.h"
 
-#define MAX_LEVEL_OF_ZOOM 8
-
 class PViewDataList;
 class GMSH_Post_Plugin;
 
@@ -38,8 +36,8 @@ class GMSH_Post_Plugin;
 class adapt_point
 {
  public:
-  double x,y,z;
-  double X,Y,Z,val,valx,valy,valz;
+  double x, y, z;
+  double X, Y, Z, val, valx, valy, valz;
   double shape_functions[128];
   static adapt_point *New(double x, double y, double z, 
 			  Double_Matrix *coeffs, Double_Matrix *eexps);
@@ -58,7 +56,7 @@ class adapt_point
 class adapt_edge
 {
  public:
-  adapt_edge(adapt_point *p1,adapt_point *p2)
+  adapt_edge(adapt_point *p1, adapt_point *p2)
     : visible(false)
   {
     p[0] = p1;
@@ -266,7 +264,7 @@ public:
     setAdaptiveResolutionLevel(data, level);
   }
   void setAdaptiveResolutionLevel(PViewDataList *data, int levelmax, 
-				  GMSH_Post_Plugin *plug = 0);
+				  GMSH_Post_Plugin *plug=0);
   template <class ELEM>
   void setAdaptiveResolutionLevel_TEMPL(int level, int lemvelmax,
 					GMSH_Post_Plugin *plug, List_T **myList,
@@ -280,11 +278,11 @@ public:
 };
 
 template <class ELEM>
-void cleanElement ()
+void cleanElement()
 {  
   typename std::list<ELEM*>::iterator it = ELEM::all_elems.begin();
   typename std::list<ELEM*>::iterator ite = ELEM::all_elems.end();
-  for (; it != ite; ++it){
+  for(; it != ite; ++it){
     delete *it;
   }
   ELEM::all_elems.clear();

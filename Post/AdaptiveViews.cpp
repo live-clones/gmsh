@@ -18,13 +18,11 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <stdio.h>
 #include <math.h>
 #include <list>
 #include <set>
 #include "AdaptiveViews.h"
 #include "Plugin.h"
-#include "OS.h"
 
 // A recursive effective implementation
 
@@ -38,7 +36,6 @@ std::list<adapt_tet*> adapt_tet::all_elems;
 std::list<adapt_quad*> adapt_quad::all_elems;
 std::list<adapt_hex*> adapt_hex::all_elems;
 
-#define MAX_NB_NOD 8
 int adapt_edge::nbNod = 2;
 int adapt_triangle::nbNod = 3;
 int adapt_tet::nbNod = 4;
@@ -135,8 +132,7 @@ void adapt_edge::Recur_Create(adapt_edge *e, int maxlevel, int level,
                               Double_Matrix *coeffs, Double_Matrix *eexps)
 {
   all_elems.push_back(e);
-  if(level++ >= maxlevel)
-    return;
+  if(level++ >= maxlevel) return;
 
   /*
      p1    p12    p2
@@ -159,8 +155,7 @@ void adapt_triangle::Recur_Create(adapt_triangle *t, int maxlevel, int level,
                                   Double_Matrix *eexps)
 {
   all_elems.push_back(t);
-  if(level++ >= maxlevel)
-    return;
+  if(level++ >= maxlevel) return;
 
   /*
      p3
@@ -197,8 +192,7 @@ void adapt_quad::Recur_Create(adapt_quad *q, int maxlevel, int level,
                               Double_Matrix *coeffs, Double_Matrix *eexps)
 {
   all_elems.push_back(q);
-  if(level++ >= maxlevel)
-    return;
+  if(level++ >= maxlevel) return;
 
   /*
      p4   p34    p3
@@ -241,8 +235,7 @@ void adapt_tet::Recur_Create(adapt_tet *t, int maxlevel, int level,
                              Double_Matrix *coeffs, Double_Matrix *eexps)
 {
   all_elems.push_back(t);
-  if(level++ >= maxlevel)
-    return;
+  if(level++ >= maxlevel) return;
 
   adapt_point *p0 = t->p[0];
   adapt_point *p1 = t->p[1];
@@ -293,8 +286,7 @@ void adapt_hex::Recur_Create(adapt_hex *h, int maxlevel, int level,
                              Double_Matrix *coeffs, Double_Matrix *eexps)
 {
   all_elems.push_back(h);
-  if(level++ >= maxlevel)
-    return;
+  if(level++ >= maxlevel) return;
 
   adapt_point *p0 = h->p[0];
   adapt_point *p1 = h->p[1];
@@ -386,7 +378,6 @@ void adapt_triangle::Error(double AVG, double tol)
   adapt_triangle *t = *all_elems.begin();
   Recur_Error(t, AVG, tol);
 }
-
 
 void adapt_quad::Error(double AVG, double tol)
 {
@@ -680,8 +671,8 @@ int Adaptive_Post_View::zoomElement(int ielem,
 {
   const int nbNod = ELEM::nbNod;
 
-  typename std::set < adapt_point >::iterator it = adapt_point::all_points.begin();
-  typename std::set < adapt_point >::iterator ite = adapt_point::all_points.end();
+  typename std::set<adapt_point>::iterator it = adapt_point::all_points.begin();
+  typename std::set<adapt_point>::iterator ite = adapt_point::all_points.end();
 
   const int N = _coefs->size1();
   
@@ -897,8 +888,8 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel_TEMPL(int level, int levelma
 
   double sf[100];
   ELEM::Create(level, _coefs, _eexps);
-  std::set < adapt_point >::iterator it = adapt_point::all_points.begin();
-  std::set < adapt_point >::iterator ite = adapt_point::all_points.end();
+  std::set<adapt_point>::iterator it = adapt_point::all_points.begin();
+  std::set<adapt_point>::iterator ite = adapt_point::all_points.end();
 
   if(_Interpolate)
     delete _Interpolate;
@@ -1059,18 +1050,18 @@ Adaptive_Post_View::Adaptive_Post_View(PViewDataList *data,
                                        List_T *_pol,
 				       List_T *_cGeom,
 				       List_T *_polGeom)
-  :tol(1.e-3), _coefsGeom(0), _eexpsGeom(0)
+  : tol(1.e-3), _coefsGeom(0), _eexpsGeom(0)
 {
 
   _Interpolate = _Geometry = 0;
   _coefs = new Double_Matrix(List_Nbr(_c), List_Nbr(_c));
-  _eexps  = new Double_Matrix(List_Nbr(_c), 3);
+  _eexps = new Double_Matrix(List_Nbr(_c), 3);
 
   _STvalX = _STvalY = _STvalZ =0;
 
   for(int i = 0; i < List_Nbr(_c); ++i) {
-    List_T **line = (List_T **) List_Pointer_Fast(_c, i);
-    List_T **eexp = (List_T **) List_Pointer_Fast(_pol, i);
+    List_T **line = (List_T**)List_Pointer_Fast(_c, i);
+    List_T **eexp = (List_T**)List_Pointer_Fast(_pol, i);
 
     double dpowu, dpowv, dpoww;
 
@@ -1093,8 +1084,8 @@ Adaptive_Post_View::Adaptive_Post_View(PViewDataList *data,
     _coefsGeom = new Double_Matrix(List_Nbr(_cGeom), List_Nbr(_cGeom));
     _eexpsGeom = new Double_Matrix(List_Nbr(_cGeom), 3);
     for(int i = 0; i < List_Nbr(_cGeom); ++i) {
-      List_T **line = (List_T **) List_Pointer_Fast(_cGeom, i);
-      List_T **eexp = (List_T **) List_Pointer_Fast(_polGeom, i);
+      List_T **line = (List_T**)List_Pointer_Fast(_cGeom, i);
+      List_T **eexp = (List_T**)List_Pointer_Fast(_polGeom, i);
       double dpowu, dpowv, dpoww;
       List_Read(*eexp, 0, &dpowu);
       List_Read(*eexp, 1, &dpowv);

@@ -20,16 +20,12 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-// To create a plugin for gmsh:
-// 1) Create a dynamin lib (.so) containing 1 symbol 
-//    GMSH_Plugin * GMSH_RegisterPlugin ();
-// 2) When there is an unacceptable error in the plugin,
-//    just throw this, the plugin manager will be able to 
-//    catch the exception.
-
-//  Some Plugins are default gmsh plugins and are insterted
-//  directly in the executable. I think that it's a good 
-//  way to start.
+// To create a plugin:
+// 1) Create a dynamic lib containing GMSH_RegisterPlugin();
+// 2) When there is an unacceptable error in the plugin, just throw
+//    this, the plugin manager will be able to catch the exception.
+//  Some Plugins are default gmsh plugins and are insterted directly
+//  in the executable. I think that it's a good way to start.
 
 #include <string.h>
 #include <stdio.h>

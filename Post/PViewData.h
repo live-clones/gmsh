@@ -24,7 +24,6 @@
 #include <vector>
 #include "SBoundingBox3d.h"
 
-class GMSH_Post_Plugin;
 class nameData;
 
 // abstract interface to post-processing view data
@@ -87,8 +86,6 @@ class PViewData {
   virtual bool combineTime(nameData &nd){ return false; }
   virtual bool combineSpace(nameData &nd){ return false; }
   virtual bool isAdaptive(){ return false; }
-  virtual void setGlobalResolutionLevel(int level){}
-  virtual void setAdaptiveResolutionLevel(int level, GMSH_Post_Plugin *plugin=0){}
 
   // I/O routines
   virtual bool writePOS(std::string name, bool binary=false, bool parsed=true,

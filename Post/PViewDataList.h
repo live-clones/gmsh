@@ -29,7 +29,7 @@
 
 #define VAL_INF 1.e200
 
-// data container using old-style lists of `discontinuous' element
+// list-based datasets (all elements are discontinuous)
 class PViewDataList : public PViewData {
  public: 
   // FIXME: all these members will be made private once the plugins

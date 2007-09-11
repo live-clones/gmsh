@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.637 2007-09-10 05:31:35 geuzaine Exp $
+// $Id: GUI.cpp,v 1.638 2007-09-11 22:53:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3144,7 +3144,7 @@ void GUI::create_option_window()
       view_value[33] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Maximum recursion level");
       view_value[33]->align(FL_ALIGN_RIGHT);
       view_value[33]->minimum(0);
-      view_value[33]->maximum(MAX_LEVEL_OF_ZOOM);
+      view_value[33]->maximum(8);
       view_value[33]->step(1);
       view_value[33]->value(0);
       view_value[33]->when(FL_WHEN_RELEASE);
