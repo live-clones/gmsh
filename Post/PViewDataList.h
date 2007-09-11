@@ -20,7 +20,6 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <map>
 #include <vector>
 #include <string>
 #include "PViewData.h"
@@ -59,8 +58,6 @@ class PViewDataList : public PViewData {
   List_T *SY, *VY, *TY, *SY2, *VY2, *TY2; // pyramids
   int NbT2, NbT3;
   List_T *T2D, *T2C, *T3D, *T3C; // 2D and 3D text strings
-  std::map<int, List_T*> *Grains; // For LMGC90, grains shapes
-  std::map<int, int> *DisplayListsOfGrains; // For LMGC90, grains shapes
   Adaptive_Post_View *adaptive;
  private:
   int _index[24];
