@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.202 2007-09-12 20:14:34 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.203 2007-09-12 20:35:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -394,7 +394,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
     SPoint3 pc;
     if(CTX.mesh.explode != 1.) pc = ele->barycenter();
 
-    if(edges && ele->getNumEdgesRep()){
+    if(edges){
       for(int j = 0; j < ele->getNumEdgesRep(); j++){
 	double x[2], y[2], z[2];
 	SVector3 n[2];
@@ -413,7 +413,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
       }
     }
 
-    if(faces && ele->getNumFacesRep()){
+    if(faces){
       for(int j = 0; j < ele->getNumFacesRep(); j++){
 	double x[4], y[4], z[4];
 	SVector3 n[4];
