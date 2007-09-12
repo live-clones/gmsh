@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.203 2007-09-12 20:35:18 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.204 2007-09-12 20:39:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -409,7 +409,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
 	if(e->dim() == 2 && CTX.mesh.smooth_normals)
 	  for(int k = 0; k < 2; k++)
 	    e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1], n[k][2]);
-	e->va_lines->add(x, y, z, n, col, ele);
+	e->va_lines->add(x, y, z, n, col, ele, !CTX.pick_elements);
       }
     }
 
@@ -429,9 +429,9 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
 	  for(int k = 0; k < numverts; k++)
 	    e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1], n[k][2]);
 	if(numverts == 3)
-	  e->va_triangles->add(x, y, z, n, col, ele);
+	  e->va_triangles->add(x, y, z, n, col, ele, !CTX.pick_elements);
 	else if(numverts == 4)
-	  e->va_quads->add(x, y, z, n, col, ele);
+	  e->va_quads->add(x, y, z, n, col, ele, !CTX.pick_elements);
       }
     }
   }
