@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.544 2007-09-11 14:01:54 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.545 2007-09-12 06:00:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4210,20 +4210,24 @@ static void _view_reload(int index)
       return;
     }
 
+    int n = PView::list.size();
+
     // FIXME: use fileIndex
     MergeFile((char*)p->getData()->getFileName().c_str());
 
-    // delete old data and replace with new
-    delete p->getData();
-    p->setData(PView::list.back()->getData());
-    PView::list.back()->setData(0);
-
-    // delete new view
-    delete PView::list.back();
-
-    // in case the reloaded view has a different number of time steps
-    if(p->getOptions()->TimeStep > p->getData()->getNumTimeSteps() - 1)
-      p->getOptions()->TimeStep = 0;
+    if(PView::list.size() > n){ // we loaded a new view
+      // delete old data and replace with new
+      delete p->getData();
+      p->setData(PView::list.back()->getData());
+      PView::list.back()->setData(0);
+      // delete new view
+      delete PView::list.back();
+      // in case the reloaded view has a different number of time steps
+      if(p->getOptions()->TimeStep > p->getData()->getNumTimeSteps() - 1)
+	p->getOptions()->TimeStep = 0;
+      p->setChanged(true);
+      WID->update_views();
+    }
   }
 }
 
