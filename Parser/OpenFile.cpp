@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.160 2007-09-10 05:31:35 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.161 2007-09-12 21:17:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -236,7 +236,7 @@ int ParseFile(char *f, int close, int warn_if_missing)
   yyviewindex = yyviewindex_old;
 
 #if defined(HAVE_FLTK)
-  if(numViewsBefore != PView::list.size())
+  if(!CTX.batch && numViewsBefore != PView::list.size())
     WID->update_views();
 #endif
 
@@ -397,7 +397,7 @@ int MergeFile(char *name, int warn_if_missing)
   checkHighOrderTriangles(m);
 
 #if defined(HAVE_FLTK)
-  if(numViewsBefore != PView::list.size())
+  if(!CTX.batch && numViewsBefore != PView::list.size())
     WID->update_views();
 #endif
 
