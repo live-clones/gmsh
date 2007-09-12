@@ -1,5 +1,5 @@
 
-Mesh.CharacteristicLengthFactor = 0.7; // 32,000 tets
+//Mesh.CharacteristicLengthFactor = 0.7; // 32,000 tets
 //Mesh.CharacteristicLengthFactor = 0.5; // 91,000 tets
 //Mesh.CharacteristicLengthFactor = 0.4; // 163,000 tets
 //Mesh.CharacteristicLengthFactor = 0.3; // 340,000 tets

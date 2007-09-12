@@ -110,11 +110,11 @@ Recombine Surface (2048)  ;
 
 //5ème étape  : extrusion
 
-Extrude Surface {2038,{0,0,0.03}}{Layers{{4},{9000},{1}};Recombine;};
-Extrude Surface {2040,{0,0,0.03}}{Layers{{4},{9001},{1}};Recombine;};
-Extrude Surface {2042,{0,0,0.03}}{Layers{{4},{9002},{1}};Recombine;};
-Extrude Surface {2044,{0,0,0.03}}{Layers{{4},{9003},{1}};Recombine;};
-Extrude Surface {2048,{0,0,0.03}}{Layers{{4},{9004},{1}};Recombine;};
+Extrude Surface {2038,{0,0,0.03}}{Layers{4};Recombine;};
+Extrude Surface {2040,{0,0,0.03}}{Layers{4};Recombine;};
+Extrude Surface {2042,{0,0,0.03}}{Layers{4};Recombine;};
+Extrude Surface {2044,{0,0,0.03}}{Layers{4};Recombine;};
+Extrude Surface {2048,{0,0,0.03}}{Layers{4};Recombine;};
 
 
 
@@ -241,11 +241,11 @@ Ruled Surface(5048) = {5045,5047};
 
 //5ème étape  : extrusion
 
-Extrude Surface {5038,{0,0,0.03}}{Layers{{4},{10000},{1}};Recombine;};
-Extrude Surface {5040,{0,0,0.03}}{Layers{{4},{10001},{1}};Recombine;};
-Extrude Surface {5042,{0,0,0.03}}{Layers{{4},{10002},{1}};Recombine;};
-Extrude Surface {5044,{0,0,0.03}}{Layers{{4},{10003},{1}};Recombine;};
-Extrude Surface {5048,{0,0,0.03}}{Layers{{4},{10004},{1}};Recombine;};
+Extrude Surface {5038,{0,0,0.03}}{Layers{4};Recombine;};
+Extrude Surface {5040,{0,0,0.03}}{Layers{4};Recombine;};
+Extrude Surface {5042,{0,0,0.03}}{Layers{4};Recombine;};
+Extrude Surface {5044,{0,0,0.03}}{Layers{4};Recombine;};
+Extrude Surface {5048,{0,0,0.03}}{Layers{4};Recombine;};
 
 
 

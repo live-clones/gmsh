@@ -33,32 +33,32 @@ a=8.976-8.916436 ;
 b=(9.006-8.976) ;
 c = 0.139564 -a-b ;
 
-Extrude Line {1308,{0,0,a}}{Recombine;Layers{{3},{7000},{1}};};
+Extrude Line {1308,{0,0,a}}{Recombine;Layers{{3},{1}};};
 
-Extrude Line {1309,{0,0,h}}{Recombine;Layers{{3,4,4},{7003,7004,7005},{a/h,(a+b)/h,1}};};
+Extrude Line {1309,{0,0,h}}{Recombine;Layers{{3,4,4},{a/h,(a+b)/h,1}};};
 
-Extrude Line {1310,{0,0,a}}{Recombine;Layers{{3},{7006},{1}};};
+Extrude Line {1310,{0,0,a}}{Recombine;Layers{{3},{1}};};
 
-Extrude Line {1311,{0,0,h}}{Recombine;Layers{{3,4,4},{7009,7010,7011},{a/h,(a+b)/h,1}};};
+Extrude Line {1311,{0,0,h}}{Recombine;Layers{{3,4,4},{a/h,(a+b)/h,1}};};
 
-Extrude Line {1312,{0,0,a}}{Recombine;Layers{{3},{7012},{1}};};
+Extrude Line {1312,{0,0,a}}{Recombine;Layers{{3},{1}};};
 
-Extrude Line {1313,{0,0,h}}{Recombine;Layers{{3,4,4},{7015,7016,7017},{a/h,(a+b)/h,1}};};
+Extrude Line {1313,{0,0,h}}{Recombine;Layers{{3,4,4},{a/h,(a+b)/h,1}};};
 
-Extrude Line {1314,{0,0,a}}{Recombine;Layers{{3},{7018},{1}};};
+Extrude Line {1314,{0,0,a}}{Recombine;Layers{{3},{1}};};
 
-Extrude Line {1315,{0,0,h}}{Recombine;Layers{{3,4,4},{7021,7022,7023},{a/h,(a+b)/h,1}};};
+Extrude Line {1315,{0,0,h}}{Recombine;Layers{{3,4,4},{a/h,(a+b)/h,1}};};
 
 
-Extrude Line {1316,{0,0,b}}{Recombine;Layers{{4},{7001},{1}};};
-Extrude Line {1324,{0,0,b}}{Recombine;Layers{{4},{7007},{1}};};
-Extrude Line {1332,{0,0,b}}{Recombine;Layers{{4},{7013},{1}};};
-Extrude Line {1340,{0,0,b}}{Recombine;Layers{{4},{7019},{1}};};
+Extrude Line {1316,{0,0,b}}{Recombine;Layers{{4},{1}};};
+Extrude Line {1324,{0,0,b}}{Recombine;Layers{{4},{1}};};
+Extrude Line {1332,{0,0,b}}{Recombine;Layers{{4},{1}};};
+Extrude Line {1340,{0,0,b}}{Recombine;Layers{{4},{1}};};
 
-Extrude Line {1348,{0,0,c}}{Recombine;Layers{{4},{7002},{1}};};
-Extrude Line {1352,{0,0,c}}{Recombine;Layers{{4},{7008},{1}};};
-Extrude Line {1356,{0,0,c}}{Recombine;Layers{{4},{7014},{1}};};
-Extrude Line {1360,{0,0,c}}{Recombine;Layers{{4},{7020},{1}};};
+Extrude Line {1348,{0,0,c}}{Recombine;Layers{{4},{1}};};
+Extrude Line {1352,{0,0,c}}{Recombine;Layers{{4},{1}};};
+Extrude Line {1356,{0,0,c}}{Recombine;Layers{{4},{1}};};
+Extrude Line {1360,{0,0,c}}{Recombine;Layers{{4},{1}};};
 
 
 
@@ -91,32 +91,32 @@ a=9.006-9.056 ;
 b=(8.976-9.006) ;
 c = -0.139564 -a-b ;
 
-Extrude Line {1408,{0,0,a}}{Recombine;Layers{{3},{8000},{1}};};
+Extrude Line {1408,{0,0,a}}{Recombine;Layers{{3},{1}};};
 
-Extrude Line {1409,{0,0,-h}}{Recombine;Layers{{3,4,4},{8003,8004,8005},{-a/h,-(a+b)/h,1}};};
+Extrude Line {1409,{0,0,-h}}{Recombine;Layers{{3,4,4},{-a/h,-(a+b)/h,1}};};
 
-Extrude Line {1410,{0,0,a}}{Recombine;Layers{{3},{8006},{1}};};
+Extrude Line {1410,{0,0,a}}{Recombine;Layers{{3},{1}};};
 
-Extrude Line {1411,{0,0,-h}}{Recombine;Layers{{3,4,4},{8009,8010,8011},{-a/h,-(a+b)/h,1}};};
+Extrude Line {1411,{0,0,-h}}{Recombine;Layers{{3,4,4},{-a/h,-(a+b)/h,1}};};
 
-Extrude Line {1412,{0,0,a}}{Recombine;Layers{{3},{8012},{1}};};
+Extrude Line {1412,{0,0,a}}{Recombine;Layers{{3},{1}};};
 
-Extrude Line {1413,{0,0,-h}}{Recombine;Layers{{3,4,4},{8015,8016,8017},{-a/h,-(a+b)/h,1}};};
+Extrude Line {1413,{0,0,-h}}{Recombine;Layers{{3,4,4},{-a/h,-(a+b)/h,1}};};
 
-Extrude Line {1414,{0,0,a}}{Recombine;Layers{{3},{8018},{1}};};
+Extrude Line {1414,{0,0,a}}{Recombine;Layers{{3},{1}};};
 
-Extrude Line {1415,{0,0,-h}}{Recombine;Layers{{3,4,4},{8021,8022,8023},{-a/h,-(a+b)/h,1}};};
+Extrude Line {1415,{0,0,-h}}{Recombine;Layers{{3,4,4},{-a/h,-(a+b)/h,1}};};
 
 
-Extrude Line {1416,{0,0,b}}{Recombine;Layers{{4},{8001},{1}};};
-Extrude Line {1424,{0,0,b}}{Recombine;Layers{{4},{8007},{1}};};
-Extrude Line {1432,{0,0,b}}{Recombine;Layers{{4},{8013},{1}};};
-Extrude Line {1440,{0,0,b}}{Recombine;Layers{{4},{8019},{1}};};
+Extrude Line {1416,{0,0,b}}{Recombine;Layers{{4},{1}};};
+Extrude Line {1424,{0,0,b}}{Recombine;Layers{{4},{1}};};
+Extrude Line {1432,{0,0,b}}{Recombine;Layers{{4},{1}};};
+Extrude Line {1440,{0,0,b}}{Recombine;Layers{{4},{1}};};
 
-Extrude Line {1448,{0,0,c}}{Recombine;Layers{{4},{8002},{1}};};
-Extrude Line {1452,{0,0,c}}{Recombine;Layers{{4},{8008},{1}};};
-Extrude Line {1456,{0,0,c}}{Recombine;Layers{{4},{8014},{1}};};
-Extrude Line {1460,{0,0,c}}{Recombine;Layers{{4},{8020},{1}};};
+Extrude Line {1448,{0,0,c}}{Recombine;Layers{{4},{1}};};
+Extrude Line {1452,{0,0,c}}{Recombine;Layers{{4},{1}};};
+Extrude Line {1456,{0,0,c}}{Recombine;Layers{{4},{1}};};
+Extrude Line {1460,{0,0,c}}{Recombine;Layers{{4},{1}};};
 
 
 

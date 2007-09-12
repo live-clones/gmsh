@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.40 2007-09-04 13:47:02 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.41 2007-09-12 14:28:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -32,90 +32,81 @@ typedef struct{
   double t, lc, p;
 }IntPoint;
 
-
 struct xi2lc
 {
-  double xi,lc;
-  xi2lc (const double &_xi,const double _lc)
-    :xi(_xi),lc(_lc)
-  { }
-  bool operator < ( const xi2lc &other)
+  double xi, lc;
+  xi2lc(const double &_xi,const double _lc)
+    : xi(_xi), lc(_lc)
+  { 
+  }
+  bool operator < (const xi2lc &other)
   {
     return xi < other.xi; 
   }
 };
 
-std::vector<xi2lc> interpLc;
+static std::vector<xi2lc> interpLc;
 
-void smoothInterpLc (bool periodic, int nbSmooth)
+void smoothInterpLc(bool periodic, int nbSmooth)
 {
-  if (periodic)
-    {
-      for (int i=0 ; i<interpLc.size()*nbSmooth; i++)
-	{	  	  
-	  xi2lc &left  = interpLc[(i-1)%interpLc.size()];
-	  xi2lc &mid   = interpLc[i%interpLc.size()];
-	  xi2lc &right = interpLc[(i+1)%interpLc.size()];
-
-	  if (1./mid.lc > 1.1 * 1./left.lc)mid.lc = left.lc/1.1;
-	  if (1./mid.lc > 1.1 * 1./right.lc)mid.lc = right.lc/1.1;
-	}
-    } 
-  else
-    {
-      for (int j=0 ; j<nbSmooth; j++)
-	{
-	  for (int i=0 ; i<interpLc.size(); i++)
-	    {	  	  
-	      xi2lc &left  = (i==0)?interpLc[0]:interpLc[i-1];
-	      xi2lc &mid   = interpLc[i];
-	      xi2lc &right = (i==interpLc.size()-1)?interpLc[interpLc.size()-1]:interpLc[i+1];
-	      
-	      if (1./mid.lc > 1.1 * 1./left.lc)mid.lc = left.lc/1.1;
-	      if (1./mid.lc > 1.1 * 1./right.lc)mid.lc = right.lc/1.1;
-	    }
-	} 
+  if(periodic){
+    for(int i = 0; i < interpLc.size() * nbSmooth; i++){	  	  
+      xi2lc &left = interpLc[(i - 1) % interpLc.size()];
+      xi2lc &mid = interpLc[i % interpLc.size()];
+      xi2lc &right = interpLc[(i + 1) % interpLc.size()];
+      if(1. / mid.lc > 1.1 * 1. / left.lc) mid.lc = left.lc/ 1.1;
+      if(1. / mid.lc > 1.1 * 1. / right.lc) mid.lc = right.lc/ 1.1;
     }
+  } 
+  else{
+    for(int j = 0; j < nbSmooth; j++){
+      for(int i = 0 ; i < interpLc.size(); i++){	  	  
+	xi2lc &left = (i == 0) ? interpLc[0] : interpLc[i - 1];
+	xi2lc &mid = interpLc[i];
+	xi2lc &right = (i == interpLc.size() - 1) ?
+	  interpLc[interpLc.size() - 1] : interpLc[i+1];
+	if(1. / mid.lc > 1.1 * 1. / left.lc) mid.lc = left.lc / 1.1;
+	if(1. / mid.lc > 1.1 * 1. / right.lc) mid.lc = right.lc / 1.1;
+      }
+    } 
+  }
 }
 
-void printInterpLc (const char *name)
+void printInterpLc(const char *name)
 {
-  FILE *f = fopen (name,"w");
-  for (int i=0 ; i<interpLc.size(); i++)
-    {	  	  
-      xi2lc &interp  = interpLc[i];
-      fprintf(f,"%12.5E %12.5E\n",interp.xi,1/interp.lc);
-    }
+  FILE *f = fopen(name,"w");
+  for(int i = 0; i < interpLc.size(); i++){	  	  
+    xi2lc &interp = interpLc[i];
+    fprintf(f,"%12.5E %12.5E\n", interp.xi, 1 / interp.lc);
+  }
   fclose(f);
 }
 
-void buildInterpLc (List_T *lcPoints)
+void buildInterpLc(List_T *lcPoints)
 {
   IntPoint p;
   interpLc.clear();
-  for (int i=0;i<List_Nbr(lcPoints);i++)
-    {
-      List_Read(lcPoints, i, &p);
-      interpLc.push_back(xi2lc ( p.t,p.lc));
-    }
-  //  printf("interpLc with %d points\n",interpLc.size());
+  for(int i = 0; i < List_Nbr(lcPoints); i++){
+    List_Read(lcPoints, i, &p);
+    interpLc.push_back(xi2lc( p.t, p.lc));
+  }
 }
 
 double F_Lc_usingInterpLc(GEdge *ge, double t)
 {
-  std::vector<xi2lc>::iterator it = std::lower_bound (interpLc.begin(),interpLc.end(),xi2lc(t,0));
+  std::vector<xi2lc>::iterator it = std::lower_bound(interpLc.begin(),
+						     interpLc.end(), xi2lc(t, 0));
   double t1 = it->xi;
   double l1 = it->lc;
   it++;
   SVector3 der = ge->firstDer(t);
   const double d = norm(der);
-  if (it == interpLc.end())return d*l1;
+  if(it == interpLc.end()) return d * l1;
   double t2 = it->xi;
   double l2 = it->lc;
-  double l  = l1 + ((t-t1)/(t2-t1)) * (l2-l1);
-  return d*l;
+  double l = l1 + ((t - t1) / (t2 - t1)) * (l2 - l1);
+  return d * l;
 }
-
 
 double F_Lc_usingInterpLcBis(GEdge *ge, double t)
 {
@@ -135,7 +126,6 @@ double F_Lc_usingInterpLcBis(GEdge *ge, double t)
 
   return 1 / lc_here;
 }
-
 
 double F_Lc(GEdge *ge, double t)
 {
@@ -319,9 +309,6 @@ void meshGEdge::operator() (GEdge *ge)
   
   // first compute the length of the curve by integrating one
   double length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-8);
-
-  //  printf("%d points for the length\n",List_Nbr(Points));
-
   ge->setLength(length);
 
   List_Reset(Points);
@@ -334,29 +321,26 @@ void meshGEdge::operator() (GEdge *ge)
     N = ge->meshAttributes.nbPointsTransfinite;
   }
   else{
-    if (CTX.mesh.lc_integration_precision > 1.e-8)
-      {
-	Integration(ge, t_begin, t_end, F_Lc_usingInterpLcBis, lcPoints, CTX.mesh.lc_integration_precision);
-	buildInterpLc (lcPoints);
-	printInterpLc ("toto1.dat");
-	smoothInterpLc (ge->periodic(),20);
-	printInterpLc ("toto2.dat");
-	a = Integration(ge, t_begin, t_end, F_Lc_usingInterpLc, Points, 1.e-8);
-	//	printf("%d points for LC , %d points for the distribution interpLc %d\n",List_Nbr(lcPoints),List_Nbr(Points),interpLc.size());
-      }
-    else
-      {
-	a = Integration(ge, t_begin, t_end, F_Lc, Points, 1.e-8);
-      }
+    if(CTX.mesh.lc_integration_precision > 1.e-8){
+      Integration(ge, t_begin, t_end, F_Lc_usingInterpLcBis, lcPoints, 
+		  CTX.mesh.lc_integration_precision);
+      buildInterpLc(lcPoints);
+      printInterpLc("toto1.dat");
+      smoothInterpLc(ge->periodic(), 20);
+      printInterpLc("toto2.dat");
+      a = Integration(ge, t_begin, t_end, F_Lc_usingInterpLc, Points, 1.e-8);
+    }
+    else{
+      a = Integration(ge, t_begin, t_end, F_Lc, Points, 1.e-8);
+    }
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
 
-  const double b = a / (double)(N - 1);
-
-  // if the curve is periodic and if the begin vertex is identical to the end vertex
-  // and if this vertex has only one model curve adjacent to it, then the vertex is
-  // not connecting any other curve. So, the mesh vertex and its associated  geom vertex
-  // are not necessary at the same location
+  // if the curve is periodic and if the begin vertex is identical to
+  // the end vertex and if this vertex has only one model curve
+  // adjacent to it, then the vertex is not connecting any other
+  // curve. So, the mesh vertex and its associated geom vertex are not
+  // necessary at the same location
   GPoint beg_p, end_p;
   if(ge->getBeginVertex() == ge->getEndVertex() && 
      ge->getBeginVertex()->edges().size() == 1){
@@ -369,44 +353,30 @@ void meshGEdge::operator() (GEdge *ge)
     end_p = GPoint(v1->x(), v1->y(), v1->z());
   }
 
-  int count = 1, NUMP = 1, NUMP2 = 1;
-  IntPoint P1, P2;
-
   // do not consider the first and the last vertex (those are not
   // classified on this mesh edge)
-
   if(N > 1){
+    const double b = a / (double)(N - 1);
+    int count = 1, NUMP = 1;
+    IntPoint P1, P2;
     ge->mesh_vertices.resize(N - 2);
-    GPoint last_p = beg_p;
     while(NUMP < N - 1) {
       List_Read(Points, count - 1, &P1);
       List_Read(Points, count, &P2);
-      const double d = (double)NUMP *b;
+      const double d = (double)NUMP * b;
       if((fabs(P2.p) >= fabs(d)) && (fabs(P1.p) < fabs(d))) {
         double dt = P2.t - P1.t;
         double dp = P2.p - P1.p;
         double t  = P1.t + dt / dp * (d - P1.p);
         GPoint V = ge->point(t);
-	if(1 || ge->meshAttributes.Method == TRANSFINI){
-	  ge->mesh_vertices[NUMP2 - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t);
-	  NUMP2++;
-	}
-	else{
-	  double lc = BGM_MeshSize(ge, t, 0, V.x(), V.y(), V.z());
-	  if(V.distance(last_p) > 0.7 * lc && 
-	     !(NUMP == N - 2 && V.distance(end_p) < 0.7 * lc)){
-	    last_p = V;
-	    ge->mesh_vertices[NUMP2 - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t);
-	    NUMP2++;
-	  }
-	}
+	ge->mesh_vertices[NUMP - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t);
         NUMP++;
       }
       else {
         count++;
       }
     }
-    ge->mesh_vertices.resize(NUMP2 - 1);
+    ge->mesh_vertices.resize(NUMP - 1);
   }
   List_Delete(Points);
   List_Delete(lcPoints);
@@ -426,6 +396,4 @@ void meshGEdge::operator() (GEdge *ge)
     v0->y() = beg_p.y();
     v0->z() = beg_p.z();
   }
-
-
 }
