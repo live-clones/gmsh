@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.66 2007-09-11 13:54:34 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.67 2007-09-12 05:08:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -104,7 +104,7 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
 	    y[0].push_back(vy);
 	  }
 	  else{
-	    if(!numy) x.push_back(ts);
+	    if(!numy) x.push_back(data->getTime(ts));
 	    y[numy].push_back(vy);
 	  }
 	}
@@ -137,8 +137,8 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
     }
   }
   else{
-    xmin = 0;
-    xmax = data->getNumTimeSteps() - 1;
+    xmin = data->getTime(0);
+    xmax = data->getTime(data->getNumTimeSteps() - 1);
   }
   return true;
 }
