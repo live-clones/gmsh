@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.13 2007-08-21 19:05:40 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.14 2007-09-12 20:14:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,6 @@
 #include "Context.h"
 #include "SelectBuffer.h"
 #include "GModel.h"
-#include "MRep.h"
 
 extern Context_T CTX;
 
@@ -44,6 +43,27 @@ class hitDepthLessThan{
     return h1.depth < h2.depth;
   }
 };
+
+// returns the element at a given position in a vertex array (element
+// pointers are not always stored: returning 0 is not an error)
+MElement *getElement(GEntity *e, int va_type, int index)
+{
+  switch(va_type){
+  case 2: 
+    if(e->va_lines && index < e->va_lines->getNumElementPointers())
+      return *e->va_lines->getElementPointerArray(index);
+    break;
+  case 3:
+    if(e->va_triangles && index < e->va_triangles->getNumElementPointers())
+      return *e->va_triangles->getElementPointerArray(index);
+    break;
+  case 4:
+    if(e->va_quads && index < e->va_quads->getNumElementPointers())
+      return *e->va_quads->getElementPointerArray(index);
+    break;
+  }
+  return 0;
+}
 
 bool ProcessSelectionBuffer(int entityType,
 			    bool multipleSelection, bool meshSelection,
@@ -169,8 +189,8 @@ bool ProcessSelectionBuffer(int entityType,
 	    Msg(GERROR, "Problem in line selection processing");
 	    return false;
 	  }
-	  if(hits[i].type2 && e->meshRep){
-	    MElement *ele = e->meshRep->getElement(hits[i].type2, hits[i].ient2);
+	  if(hits[i].type2){
+	    MElement *ele = getElement(e, hits[i].type2, hits[i].ient2);
 	    if(ele) elements.push_back(ele);
 	  }
 	  edges.push_back(e);
@@ -184,8 +204,8 @@ bool ProcessSelectionBuffer(int entityType,
 	    Msg(GERROR, "Problem in surface selection processing");
 	    return false;
 	  }
-	  if(hits[i].type2 && f->meshRep){
-	    MElement *ele = f->meshRep->getElement(hits[i].type2, hits[i].ient2);
+	  if(hits[i].type2){
+	    MElement *ele = getElement(f, hits[i].type2, hits[i].ient2);
 	    if(ele) elements.push_back(ele);
 	  }
 	  faces.push_back(f);
@@ -199,8 +219,8 @@ bool ProcessSelectionBuffer(int entityType,
 	    Msg(GERROR, "Problem in volume selection processing");
 	    return false;
 	  }
-	  if(hits[i].type2 && r->meshRep){
-	    MElement *ele = r->meshRep->getElement(hits[i].type2, hits[i].ient2);
+	  if(hits[i].type2){
+	    MElement *ele = getElement(r, hits[i].type2, hits[i].ient2);
 	    if(ele) elements.push_back(ele);
 	  }
 	  regions.push_back(r);

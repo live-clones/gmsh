@@ -1,4 +1,4 @@
-// $Id: GEntity.cpp,v 1.12 2007-07-27 13:27:08 geuzaine Exp $
+// $Id: GEntity.cpp,v 1.13 2007-09-12 20:14:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,20 +20,27 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GEntity.h"
-#include "MRep.h"
 #include "Context.h"
 
 extern Context_T CTX;
 
 GEntity::GEntity(GModel *m, int t)
-  : _model(m), _tag(t), _visible(true), _selection(0), meshRep(0) 
+  : _model(m), _tag(t), _visible(true), _selection(0),
+    _allElementsVisible(1), va_lines(0), va_triangles(0), va_quads(0)
 {
   _color = CTX.PACK_COLOR(0, 0, 255, 0);
 }
 
 GEntity::~GEntity()
 {
-  if(meshRep) delete meshRep; 
+  deleteVertexArrays();
+}
+
+void GEntity::deleteVertexArrays()
+{
+  if(va_lines) delete va_lines; va_lines = 0;
+  if(va_triangles) delete va_triangles; va_triangles = 0;
+  if(va_quads) delete va_quads; va_quads = 0;
 }
 
 char GEntity::getVisibility()

@@ -57,6 +57,20 @@ class MEdge {
     t.normalize();
     return t;
   }
+  SVector3 normal() const 
+  {
+    // this computes one of the normals to the edge
+    SVector3 t = tangent(), ex(0., 0., 0.);
+    if(t[0] == 0.)
+      ex[0] = 1.;
+    else if(t[1] == 0.)
+      ex[1] = 1.;
+    else
+      ex[2] = 1.;
+    SVector3 n = crossprod(t, ex);
+    n.normalize();
+    return n;
+  }
   inline SPoint3 barycenter() const
   {
     return interpolate(0.5);

@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.38 2007-09-05 13:19:15 remacle Exp $
+// $Id: MElement.cpp,v 1.39 2007-09-12 20:14:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,6 @@
 #include "Numeric.h"
 #include "Message.h"
 #include "Context.h"
-
 
 extern Context_T CTX;
 
@@ -67,6 +66,44 @@ double MElement::rhoShapeMeasure()
     return min / max;
   else
     return 0.;
+}
+
+int MElement::getNumEdgesRep()
+{
+  return getNumEdges();
+}
+
+int MElement::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+{
+  MEdge e = getEdge(num);
+  SVector3 normal = (getDim() == 2) ? getFace(0).normal() : e.normal();
+  for(int i = 0; i < 2; i++){
+    MVertex *v = e.getVertex(i);
+    x[i] = v->x();
+    y[i] = v->y();
+    z[i] = v->z();
+    n[i] = normal;
+  }
+  return 2;
+}
+
+int MElement::getNumFacesRep()
+{
+  return getNumFaces();
+}
+
+int MElement::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
+{
+  MFace f = getFace(num);
+  SVector3 normal = f.normal();
+  for(int i = 0; i < f.getNumVertices(); i++){
+    MVertex *v = f.getVertex(i);
+    x[i] = v->x();
+    y[i] = v->y();
+    z[i] = v->z();
+    n[i] = normal;
+  }
+  return f.getNumVertices();
 }
 
 double MTetrahedron::gammaShapeMeasure()
@@ -344,17 +381,15 @@ bool MTriangle::invertmappingXY(double *p, double *uv, double tol)
   return false; 
 }
 
-
 bool MTriangle::invertmappingUV(GFace* gf, double *p, double *uv, double tol)
 {
   double mat[2][2];
   double b[2];
+  double u0, v0, u1, v1, u2, v2;
 
-  double u0,v0,u1,v1,u2,v2;
-
-  parametricCoordinates ( getVertex(0), gf, u0, v0);
-  parametricCoordinates ( getVertex(1), gf, u1, v1);
-  parametricCoordinates ( getVertex(2), gf, u2, v2);
+  parametricCoordinates(getVertex(0), gf, u0, v0);
+  parametricCoordinates(getVertex(1), gf, u1, v1);
+  parametricCoordinates(getVertex(2), gf, u2, v2);
   
   mat[0][0] = u1 - u0;
   mat[0][1] = u2 - u0;
@@ -375,14 +410,13 @@ bool MTriangle::invertmappingUV(GFace* gf, double *p, double *uv, double tol)
   return false; 
 }
 
-
 double MTriangle::getSurfaceUV(GFace *gf)
 {
-  double u3,v3,u1,v1,u2,v2;
+  double u3, v3, u1, v1, u2, v2;
 
-  parametricCoordinates ( getVertex(0), gf, u1, v1);
-  parametricCoordinates ( getVertex(1), gf, u2, v2);
-  parametricCoordinates ( getVertex(2), gf, u3, v3);
+  parametricCoordinates(getVertex(0), gf, u1, v1);
+  parametricCoordinates(getVertex(1), gf, u2, v2);
+  parametricCoordinates(getVertex(2), gf, u3, v3);
 
   const double vv1 [2] = {u2 - u1, v2 - v1};
   const double vv2 [2] = {u3 - u1, v3 - v1};
@@ -407,73 +441,32 @@ double MTriangle::getSurfaceXY() const
   return s * 0.5;
 }
 
-void MTriangle::circumcenterXYZ(double *p1, double *p2, double *p3,double *res, double *uv)
+void MTriangle::circumcenterXYZ(double *p1, double *p2, double *p3, 
+				double *res, double *uv)
 {
-  double v1[3] = {p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]};
-  double v2[3] = {p3[0]-p1[0],p3[1]-p1[1],p3[2]-p1[2]};
-  double vx[3] = {p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]};
-  double vy[3] = {p3[0]-p1[0],p3[1]-p1[1],p3[2]-p1[2]};
-  double vz[3]; prodve (vx,vy,vz);prodve (vz,vx,vy);
-  norme(vx); norme(vy);norme(vz);
-  double p1P[2] = {0.0,0.0};
-  double p2P[2];prosca(v1,vx,&p2P[0]);prosca(v1,vy,&p2P[1]);
-  double p3P[2];prosca(v2,vx,&p3P[0]);prosca(v2,vy,&p3P[1]);
+  double v1[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
+  double v2[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
+  double vx[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
+  double vy[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
+  double vz[3]; prodve(vx, vy, vz); prodve(vz, vx, vy);
+  norme(vx); norme(vy); norme(vz);
+  double p1P[2] = {0.0, 0.0};
+  double p2P[2]; prosca(v1, vx, &p2P[0]); prosca(v1, vy, &p2P[1]);
+  double p3P[2]; prosca(v2, vx, &p3P[0]); prosca(v2, vy, &p3P[1]);
   double resP[2];
 
   circumcenterXY(p1P, p2P, p3P,resP);
 
-  if (uv)
-    {
-      double mat[2][2] = {{p2P[0]-p1P[0],p3P[0]-p1P[0]},
-			  {p2P[1]-p1P[1],p3P[1]-p1P[1]}};
-      double rhs[2] = {resP[0]-p1P[0],resP[1]-p1P[1]};
-      sys2x2(mat,rhs,uv);
-    }
-
-
-
-//    double d1 = sqrt((p2P[0] - resP[0]) * (p2P[0] - resP[0]) +
-//  		   (p2P[1] - resP[1]) * (p2P[1] - resP[1]));
-
-//    double d2 = sqrt((p1P[0] - resP[0]) * (p1P[0] - resP[0]) +
-//  		   (p1P[1] - resP[1]) * (p1P[1] - resP[1])) ;
-
-//    double d3 = sqrt((p3P[0] - resP[0]) * (p3P[0] - resP[0]) +
-//  		   (p3P[1] - resP[1]) * (p3P[1] - resP[1]) );
-
-
-//   printf("%g %g - %g %g -- %g %g %g\n",p2P[0],p2P[1],p3P[0],p3P[1],d1,d2,d3);
+  if(uv){
+    double mat[2][2] = {{p2P[0] - p1P[0], p3P[0] - p1P[0]},
+			{p2P[1] - p1P[1], p3P[1] - p1P[1]}};
+    double rhs[2] = {resP[0] - p1P[0], resP[1] - p1P[1]};
+    sys2x2(mat, rhs, uv);
+  }
   
   res[0] = p1[0] + resP[0] * vx[0] + resP[1] * vy[0];
   res[1] = p1[1] + resP[0] * vx[1] + resP[1] * vy[1];
   res[2] = p1[2] + resP[0] * vx[2] + resP[1] * vy[2];
-
-
-//    double d2 = sqrt((p1P[0] - resP[0]) * (p1P[0] - resP[0]) +
-//  		   (p1P[1] - resP[1]) * (p1P[1] - resP[1])) ;
-
-//    double d3 = sqrt((p3P[0] - resP[0]) * (p3P[0] - resP[0]) +
-//  		   (p3P[1] - resP[1]) * (p3P[1] - resP[1]) );
-
-
-  
-
-  return;
-
-  double d1 = sqrt((res[0] - p1[0]) * (res[0] - p1[0]) +
-  		   (res[1] - p1[1]) * (res[1] - p1[1]) +
-  		   (res[2] - p1[2]) * (res[2] - p1[2]) );
-  double d2 = sqrt((res[0] - p2[0]) * (res[0] - p2[0]) +
-  		   (res[1] - p2[1]) * (res[1] - p2[1]) +
-  		   (res[2] - p2[2]) * (res[2] - p2[2]) );
-  double d3 = sqrt((res[0] - p3[0]) * (res[0] - p3[0]) +
-  		   (res[1] - p3[1]) * (res[1] - p3[1]) +
-  		   (res[2] - p3[2]) * (res[2] - p3[2]) );
-  		   
-   printf(" -- %g %g %g\n",d1,d2,d3);
-
-
-
 }
 
 void MTriangle::circumcenterXY(double *p1, double *p2, double *p3, double *res)
@@ -501,59 +494,27 @@ void MTriangle::circumcenterXY(double *p1, double *p2, double *p3, double *res)
   res[1] = (double)((a1 * (x2 - x3) + a2 * (x3 - x1) + a3 * (x1 - x2)) / d);
 }
 
-
 void MTriangle::circumcenterUV(GFace *gf, double *res)
 {
-  double u3,v3,u1,v1,u2,v2;
+  double u3, v3, u1, v1, u2, v2;
 
-  parametricCoordinates ( getVertex(0), gf, u1, v1);
-  parametricCoordinates ( getVertex(1), gf, u2, v2);
-  parametricCoordinates ( getVertex(2), gf, u3, v3);
+  parametricCoordinates(getVertex(0), gf, u1, v1);
+  parametricCoordinates(getVertex(1), gf, u2, v2);
+  parametricCoordinates(getVertex(2), gf, u3, v3);
 
-//   Pair<SVector3,SVector3> der = gf->firstDer(SPoint2((u1+u2+u3)/3.,(v1+v2+v3)/3.)) ;
-//   const double a = dot(der.first() ,der.first() );
-//   const double b = dot(der.second(),der.first() );
-//   const double d = dot(der.second(),der.second()); 
+  double p1[2] = {u1, v1};
+  double p2[2] = {u2, v2};
+  double p3[2] = {u3, v3};
 
-//   double sys[2][2];
-//   double rhs[2];
-
-//   sys[0][0] = 2. * a * (u1 - u2) + 2. * b * (v1 - v2);
-//   sys[0][1] = 2. * d * (v1 - v2) + 2. * b * (u1 - u2);
-//   sys[1][0] = 2. * a * (u1 - u3) + 2. * b * (v1 - v3);
-//   sys[1][1] = 2. * d * (v1 - v3) + 2. * b * (u1 - u3);
-
-//   rhs[0] =
-//     a * (u1 * u1 - u2 * u2) + d * (v1 * v1 - v2 * v2) + 2. * b * (u1 * v1 -
-//                                                                   u2 * v2);
-//   rhs[1] =
-//     a * (u1 * u1 - u3 * u3) + d * (v1 * v1 - v3 * v3) + 2. * b * (u1 * v1 -
-//                                                                   u3 * v3);
-//   sys2x2(sys, rhs, res);
-
-//   return;
-   double p1[2] ={u1,v1};
-   double p2[2] ={u2,v2};
-   double p3[2] ={u3,v3};
-  
-//   printf("%g %g vs ",res[0],res[1]);
-  circumcenterXY(p1,p2,p3,res);
-  //  printf("%g %g \n ",res[0],res[1]);
+  circumcenterXY(p1, p2, p3, res);
 }
 
 void MTriangle::circumcenterXY(double *res) const
 {
-  double p1[2] = {_v[0]->x(),_v[0]->y()};
-  double p2[2] = {_v[1]->x(),_v[1]->y()};
-  double p3[2] = {_v[2]->x(),_v[2]->y()};
-  circumcenterXY(p1,p2,p3,res);
-}
-
-int MTriangleN::getNumFacesRep(){ return 1; }
-
-MFace MTriangleN::getFaceRep(int num)
-{ 
-  return MFace(_v[0],_v[1],_v[2]);
+  double p1[2] = {_v[0]->x(), _v[0]->y()};
+  double p2[2] = {_v[1]->x(), _v[1]->y()};
+  double p3[2] = {_v[2]->x(), _v[2]->y()};
+  circumcenterXY(p1, p2, p3, res);
 }
 
 int MTriangleN::getNumFaceVertices(){
@@ -592,6 +553,7 @@ int P3[9][2] = {
   {2,1},
   {1,2}
 };
+
 int P4[12][2] = {
   {0,0},
   {1,0},
@@ -683,104 +645,98 @@ double coef5[15][15]={
 {  0.00000000,   0.00000000,  25.00000000,  -0.00000000, -160.41666667,  -0.00000000, 369.79166667,  -0.00000000, -364.58333333,   0.00000000, 130.20833333, -25.00000000,  60.41666667, -38.54166667,   6.25000000}
 };
 
-
-void GradGeomShapeFunctionP1 (double u, double v, double grads[6][2]) 
+void GradGeomShapeFunctionP1(double u, double v, double grads[6][2]) 
 {
-  for (int i=0;i<3;i++){
-    grads[i][0]  = 0;
-    grads[i][1]  = 0;
-    for (int j=0;j<3;j++){
-      if (P1[j][0] > 0)grads[i][0] += coef1[i][j] * pow(u,P1[j][0] - 1 ) * pow(v,P1[j][1] ) ;
-      if (P1[j][1] > 0)grads[i][1] += coef1[i][j] * pow(u,P1[j][0] ) * pow(v,P1[j][1] -1  ) ;
-    }
-  }
-}
-void GradGeomShapeFunctionP2 (double u, double v, double grads[6][2]) 
-{
-  for (int i=0;i<6;i++){
-    grads[i][0]  = 0;
-    grads[i][1]  = 0;
-    for (int j=0;j<6;j++){
-      if (P2[j][0] > 0)grads[i][0] += coef2[i][j] * pow(u,P2[j][0] - 1 ) * pow(v,P2[j][1] ) ;
-      if (P2[j][1] > 0)grads[i][1] += coef2[i][j] * pow(u,P2[j][0] ) * pow(v,P2[j][1] -1  ) ;
-    }
-  }
-}
-void GradGeomShapeFunctionP3 (double u, double v, double grads[9][2]) 
-{
-  for (int i=0;i<9;i++){
-    grads[i][0]  = 0;
-    grads[i][1]  = 0;
-    for (int j=0;j<9;j++){
-      if (P3[j][0] > 0)grads[i][0] += coef3[i][j] * pow(u,P3[j][0] - 1 ) * pow(v,P3[j][1] ) ;
-      if (P3[j][1] > 0)grads[i][1] += coef3[i][j] * pow(u,P3[j][0] ) * pow(v,P3[j][1] -1  ) ;
-    }
-  }
-}
-void GradGeomShapeFunctionP4 (double u, double v, double grads[12][2]) 
-{
-  for (int i=0;i<12;i++){
-    grads[i][0]  = 0;
-    grads[i][1]  = 0;
-    for (int j=0;j<12;j++){
-      if (P4[j][0] > 0)grads[i][0] += coef4[i][j] * pow(u,P4[j][0] - 1 ) * pow(v,P4[j][1] ) ;
-      if (P4[j][1] > 0)grads[i][1] += coef4[i][j] * pow(u,P4[j][0] ) * pow(v,P4[j][1] -1  ) ;
+  for (int i = 0; i < 3; i++){
+    grads[i][0] = 0;
+    grads[i][1] = 0;
+    for(int j = 0; j < 3; j++){
+      if(P1[j][0] > 0) grads[i][0] += coef1[i][j] * pow(u,P1[j][0] - 1) * pow(v, P1[j][1]);
+      if(P1[j][1] > 0) grads[i][1] += coef1[i][j] * pow(u,P1[j][0]) * pow(v, P1[j][1] - 1);
     }
   }
 }
 
-void GradGeomShapeFunctionP5 (double u, double v, double grads[15][2]) 
+void GradGeomShapeFunctionP2(double u, double v, double grads[6][2]) 
 {
-  for (int i=0;i<15;i++){
-    grads[i][0]  = 0;
-    grads[i][1]  = 0;
-    for (int j=0;j<15;j++){
-      if (P5[j][0] > 0)grads[i][0] += coef5[i][j] * pow(u,P5[j][0] - 1 ) * pow(v,P5[j][1] ) ;
-      if (P5[j][1] > 0)grads[i][1] += coef5[i][j] * pow(u,P5[j][0] ) * pow(v,P5[j][1] -1  ) ;
+  for(int i = 0; i < 6; i++){
+    grads[i][0] = 0;
+    grads[i][1] = 0;
+    for (int j = 0; j < 6; j++){
+      if(P2[j][0] > 0) grads[i][0] += coef2[i][j] * pow(u, P2[j][0] - 1) * pow(v, P2[j][1]);
+      if(P2[j][1] > 0) grads[i][1] += coef2[i][j] * pow(u, P2[j][0]) * pow(v, P2[j][1] - 1);
     }
   }
 }
 
+void GradGeomShapeFunctionP3 (double u, double v, double grads[9][2])
+{
+  for(int i = 0; i < 9; i++){
+    grads[i][0] = 0;
+    grads[i][1] = 0;
+    for(int j = 0; j < 9; j++){
+      if(P3[j][0] > 0) grads[i][0] += coef3[i][j] * pow(u, P3[j][0] - 1) * pow(v, P3[j][1]);
+      if(P3[j][1] > 0) grads[i][1] += coef3[i][j] * pow(u, P3[j][0]) * pow(v, P3[j][1] - 1);
+    }
+  }
+}
 
-void MTriangle::jac ( int ord, MVertex *vs[] , double uu, double vv , double j[2][2])  
+void GradGeomShapeFunctionP4(double u, double v, double grads[12][2]) 
+{
+  for(int i = 0; i < 12; i++){
+    grads[i][0] = 0;
+    grads[i][1] = 0;
+    for(int j = 0; j < 12; j++){
+      if(P4[j][0] > 0) grads[i][0] += coef4[i][j] * pow(u, P4[j][0] - 1) * pow(v, P4[j][1]);
+      if(P4[j][1] > 0) grads[i][1] += coef4[i][j] * pow(u, P4[j][0]) * pow(v, P4[j][1] - 1);
+    }
+  }
+}
+
+void GradGeomShapeFunctionP5(double u, double v, double grads[15][2]) 
+{
+  for(int i = 0; i < 15; i++){
+    grads[i][0] = 0;
+    grads[i][1] = 0;
+    for (int j = 0; j < 15; j++){
+      if(P5[j][0] > 0) grads[i][0] += coef5[i][j] * pow(u, P5[j][0] - 1) * pow(v, P5[j][1]);
+      if(P5[j][1] > 0) grads[i][1] += coef5[i][j] * pow(u, P5[j][0]) * pow(v, P5[j][1] - 1);
+    }
+  }
+}
+
+void MTriangle::jac(int ord, MVertex *vs[], double uu, double vv, double j[2][2])
 {
   double grads[256][2];
-  switch (ord)
-    {
-    case 1:
-      GradGeomShapeFunctionP1 ( uu , vv , grads );break;
-    case 2:
-      GradGeomShapeFunctionP2 ( uu , vv , grads );break;
-    case 3:
-      GradGeomShapeFunctionP3 ( uu , vv , grads );break;
-    case 4:
-      GradGeomShapeFunctionP4 ( uu , vv , grads );break;
-    case 5:
-      GradGeomShapeFunctionP5 ( uu , vv , grads );break;
-    default:
-      throw;
-    }
-  j[0][0] = 0 ; for (int i=0;i<3;i++)j[0][0] += grads [i][0] * _v[i] -> x() ; 
-  j[1][0] = 0 ; for (int i=0;i<3;i++)j[1][0] += grads [i][1] * _v[i] -> x() ; 
-  j[0][1] = 0 ; for (int i=0;i<3;i++)j[0][1] += grads [i][0] * _v[i] -> y() ; 
-  j[1][1] = 0 ; for (int i=0;i<3;i++)j[1][1] += grads [i][1] * _v[i] -> y() ; 
-  for (int i=3;i<3*ord;i++)j[0][0] += grads [i][0] * vs[i-3] -> x() ; 
-  for (int i=3;i<3*ord;i++)j[1][0] += grads [i][1] * vs[i-3] -> x() ; 
-  for (int i=3;i<3*ord;i++)j[0][1] += grads [i][0] * vs[i-3] -> y() ; 
-  for (int i=3;i<3*ord;i++)j[1][1] += grads [i][1] * vs[i-3] -> y() ; 
+  switch(ord){
+  case 1: GradGeomShapeFunctionP1(uu, vv, grads); break;
+  case 2: GradGeomShapeFunctionP2(uu, vv, grads); break;
+  case 3: GradGeomShapeFunctionP3(uu, vv, grads); break;
+  case 4: GradGeomShapeFunctionP4(uu, vv, grads); break;
+  case 5: GradGeomShapeFunctionP5(uu, vv, grads); break;
+  default: throw;
+  }
+  j[0][0] = 0 ; for(int i = 0; i < 3; i++) j[0][0] += grads [i][0] * _v[i] -> x();
+  j[1][0] = 0 ; for(int i = 0; i < 3; i++) j[1][0] += grads [i][1] * _v[i] -> x();
+  j[0][1] = 0 ; for(int i = 0; i < 3; i++) j[0][1] += grads [i][0] * _v[i] -> y();
+  j[1][1] = 0 ; for(int i = 0; i < 3; i++) j[1][1] += grads [i][1] * _v[i] -> y();
+  for(int i = 3; i < 3 * ord; i++) j[0][0] += grads[i][0] * vs[i - 3] -> x();
+  for(int i = 3; i < 3 * ord; i++) j[1][0] += grads[i][1] * vs[i - 3] -> x();
+  for(int i = 3; i < 3 * ord; i++) j[0][1] += grads[i][0] * vs[i - 3] -> y();
+  for(int i = 3; i < 3 * ord; i++) j[1][1] += grads[i][1] * vs[i - 3] -> y();
 }
 
-void MTriangleN::jac ( double uu, double vv , double j[2][2])  
+void MTriangleN::jac(double uu, double vv , double j[2][2])  
 {
-  MTriangle::jac (_order,&(*(_vs.begin())),uu,vv,j);
+  MTriangle::jac(_order, &(*(_vs.begin())), uu, vv, j);
 }
 
-void MTriangle6::jac ( double uu, double vv , double j[2][2])  
+void MTriangle6::jac(double uu, double vv , double j[2][2])  
 {
-  MTriangle::jac (2,_vs,uu,vv,j);
-}
-void MTriangle::jac ( double uu, double vv , double j[2][2])  
-{
-  jac (1,0,uu,vv,j);
+  MTriangle::jac(2, _vs, uu, vv, j);
 }
 
+void MTriangle::jac(double uu, double vv, double j[2][2])
+{
+  jac(1, 0, uu, vv, j);
+}

@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.32 2007-08-02 16:16:19 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.33 2007-09-12 20:14:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,6 @@
 #include "GFace.h"
 #include "GEdge.h"
 #include "gmshRegion.h"
-#include "MRep.h"
 #include "BDS.h"
 #include "Message.h"
 #include <vector>
@@ -137,7 +136,7 @@ void TransferTetgenMesh(GRegion *gr,
     for(unsigned int i = 0; i < gf->triangles.size(); i++)
       delete gf->triangles[i];
     gf->triangles.clear();
-    if(gf->meshRep) gf->meshRep->destroy();
+    gf->deleteVertexArrays();
     ++it;
   }    
   
@@ -361,7 +360,7 @@ void deMeshGRegion::operator() (GRegion *gr)
   for(unsigned int i = 0; i < gr->pyramids.size(); i++)
     delete gr->pyramids[i];
   gr->pyramids.clear();
-  if(gr->meshRep) gr->meshRep->destroy();
+  gr->deleteVertexArrays();
 }
 
 int intersect_line_triangle(double X[3], double Y[3], double Z[3] , 

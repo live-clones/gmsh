@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.41 2007-09-12 14:28:29 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.42 2007-09-12 20:14:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,6 @@
 #include "meshGEdge.h"
 #include "GEdge.h"
 #include "GFace.h"
-#include "MRep.h"
 #include "BackgroundMesh.h"
 #include "Message.h"
 
@@ -281,7 +280,7 @@ void deMeshGEdge::operator() (GEdge *ge)
   for (unsigned int i = 0; i < ge->lines.size(); i++) 
     delete ge->lines[i];
   ge->lines.clear();
-  if(ge->meshRep) ge->meshRep->destroy();
+  ge->deleteVertexArrays();
 }
 
 void meshGEdge::operator() (GEdge *ge) 

@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.46 2007-08-21 19:05:39 geuzaine Exp $
+// $Id: GModel.cpp,v 1.47 2007-09-12 20:14:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,8 +22,8 @@
 #include "GModel.h"
 #include "gmshSurface.h"
 #include "Field.h"
-#include "MRep.h"
 #include "BackgroundMesh.h"
+#include "Message.h"
 
 std::vector<GModel*> GModel::list;
 
@@ -154,18 +154,18 @@ void GModel::removeInvisibleElements()
     removeInvisible((*it)->hexahedra, all);
     removeInvisible((*it)->prisms, all);
     removeInvisible((*it)->pyramids, all);
-    if((*it)->meshRep) (*it)->meshRep->destroy();
+    (*it)->deleteVertexArrays();
   }
   for(fiter it = firstFace(); it != lastFace(); ++it){
     bool all = !(*it)->getVisibility(); 
     removeInvisible((*it)->triangles, all);
     removeInvisible((*it)->quadrangles, all);
-    if((*it)->meshRep) (*it)->meshRep->destroy();
+    (*it)->deleteVertexArrays();
   }
   for(eiter it = firstEdge(); it != lastEdge(); ++it){
     bool all = !(*it)->getVisibility(); 
     removeInvisible((*it)->lines, all);
-    if((*it)->meshRep) (*it)->meshRep->destroy();
+    (*it)->deleteVertexArrays();
   }
 }
 

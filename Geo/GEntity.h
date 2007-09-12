@@ -26,6 +26,7 @@
 #include "Range.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
+#include "VertexArray.h"
 #include "GmshDefines.h"
 
 class GModel;
@@ -34,7 +35,6 @@ class GEdge;
 class GFace;
 class GRegion;
 class MVertex;
-class MRep;
 
 // A geometric model entity.
 class GEntity {
@@ -48,6 +48,9 @@ class GEntity {
   // The visibility and the selection flag
   char _visible, _selection;
   
+  // Flag storing if all mesh elements are visible
+  char _allElementsVisible;
+
   // The color of the entity (ignored if set to transparent blue)
   unsigned int _color;
   
@@ -131,6 +134,8 @@ class GEntity {
 
   virtual ~GEntity();
 
+  void deleteVertexArrays();
+
   // Spatial dimension of the entity 
   virtual int dim() const { throw; }
 
@@ -213,14 +218,18 @@ class GEntity {
   // Resets the mesh attributes to default values
   virtual void resetMeshAttributes() { return; }
 
+  // Get/set all mesh element visibility flag
+  bool getAllElementsVisible(){ return _allElementsVisible ? true : false; }
+  void setAllElementsVisible(bool val){ _allElementsVisible = val ? 1 : 0; }
+
   // The mesh vertices uniquely owned by the entity
   std::vector<MVertex*> mesh_vertices;
 
   // The physical entitites (if any) that contain this entity
   std::vector<int> physicals;
 
-  // A representation of the mesh of the entity
-  MRep *meshRep;
+  // Vertex arrays to draw the mesh efficiently
+  VertexArray *va_lines, *va_triangles, *va_quads;
 };
 
 class GEntityLessThan {

@@ -103,16 +103,16 @@ class MElement
   virtual MEdge getEdge(int num) = 0;
 
   // get an edge representation for drawing
-  virtual int getNumEdgesRep(){ return getNumEdges(); }
-  virtual MEdge getEdgeRep(int num){ return getEdge(num); }
+  virtual int getNumEdgesRep();
+  virtual int getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
 
   // get the faces
   virtual int getNumFaces() = 0;
   virtual MFace getFace(int num) = 0;
 
   // get a face representation for drawing
-  virtual int getNumFacesRep(){ return getNumFaces(); }
-  virtual MFace getFaceRep(int num){ return getFace(num); }
+  virtual int getNumFacesRep();
+  virtual int getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
 
   // get the max/min edge length
   virtual double maxEdge();
@@ -229,6 +229,7 @@ class MLine3 : public MLine {
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 1; }
+  /*
   virtual int getNumEdgesRep(){ return 2; }
   virtual MEdge getEdgeRep(int num)
   { 
@@ -237,6 +238,7 @@ class MLine3 : public MLine {
     };
     return MEdge(getVertex(edges_lin3[num][0]), getVertex(edges_lin3[num][1]));
   }
+  */
   virtual int getTypeForMSH(){ return MSH_LIN_3; }
   virtual int getTypeForUNV(){ return 24; } // parabolic beam
   virtual const char *getStringForPOS(){ return "SL2"; }
@@ -272,11 +274,13 @@ class MLineN : public MLine {
     return  _vs[num-1];
   }
   virtual int getNumEdgeVertices(){ return _vs.size(); }
+  /*
   virtual int getNumEdgesRep(){ return _vs.size() + 1; }
   virtual MEdge getEdgeRep(int num)
   { 
     return MEdge(getVertexUNV(num),getVertexUNV(num+1));
   }
+  */
   virtual int getTypeForMSH(){ 
     if(_vs.size() == 2) return  MSH_LIN_4; 
     if(_vs.size() == 3) return  MSH_LIN_5; 
@@ -381,6 +385,7 @@ class MTriangle6 : public MTriangle {
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 3; }
+  /*
   virtual int getNumEdgesRep(){ return 6; }
   virtual MEdge getEdgeRep(int num)
   { 
@@ -401,6 +406,7 @@ class MTriangle6 : public MTriangle {
 		 getVertex(trifaces_tri2[num][1]),
 		 getVertex(trifaces_tri2[num][2]));
   }
+  */
   virtual int getTypeForMSH(){ return MSH_TRI_6; }
   virtual int getTypeForUNV(){ return 92; } // thin shell parabolic triangle
   virtual const char *getStringForPOS(){ return "ST2"; }
@@ -448,6 +454,7 @@ class MTriangleN : public MTriangle {
   }
   virtual int getNumFaceVertices();
   virtual int getNumEdgeVertices(){ return _order - 1; }
+  /*
   virtual int getNumEdgesRep(){ return 3 * _order ; }
   virtual MEdge getEdgeRep(int num)
   { 
@@ -455,6 +462,7 @@ class MTriangleN : public MTriangle {
   }
   virtual int getNumFacesRep();
   virtual MFace getFaceRep(int num);
+  */
   virtual int getTypeForMSH(){
     if (_order == 3 && _vs.size() == 6) return MSH_TRI_9; 
     if (_order == 3 && _vs.size() == 7) return MSH_TRI_10; 
@@ -586,6 +594,7 @@ class MQuadrangle8 : public MQuadrangle {
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 4; }
+  /*
   virtual int getNumEdgesRep(){ return 8; }
   virtual MEdge getEdgeRep(int num)
   { 
@@ -607,6 +616,7 @@ class MQuadrangle8 : public MQuadrangle {
 		 getVertex(trifaces_qua8[num][1]),
 		 getVertex(trifaces_qua8[num][2]));
   }
+  */
   virtual int getTypeForMSH(){ return MSH_QUA_8; }
   virtual int getTypeForUNV(){ return 95; } // shell parabolic quadrilateral
   virtual const char *getStringForPOS(){ return 0; } // not available
@@ -643,6 +653,7 @@ class MQuadrangle9 : public MQuadrangle {
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual int getNumEdgeVertices(){ return 4; }
   virtual int getNumFaceVertices(){ return 1; }
+  /*
   virtual int getNumEdgesRep(){ return 8; }
   virtual MEdge getEdgeRep(int num)
   { 
@@ -665,6 +676,7 @@ class MQuadrangle9 : public MQuadrangle {
 		 getVertex(trifaces_qua9[num][1]),
 		 getVertex(trifaces_qua9[num][2]));
   }
+  */
   virtual int getTypeForMSH(){ return MSH_QUA_9; }
   virtual int getTypeForUNV(){ return 0; } // not available
   virtual const char *getStringForPOS(){ return "SQ2"; }
@@ -835,6 +847,7 @@ class MTetrahedron10 : public MTetrahedron {
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 6; }
+  /*
   virtual int getNumEdgesRep(){ return 12; }
   virtual MEdge getEdgeRep(int num)
   { 
@@ -861,6 +874,7 @@ class MTetrahedron10 : public MTetrahedron {
 		 getVertex(trifaces_tetra10[num][1]),
 		 getVertex(trifaces_tetra10[num][2]));
   }
+  */
   virtual int getTypeForMSH(){ return MSH_TET_10; }
   virtual int getTypeForUNV(){ return 118; } // solid parabolic tetrahedron
   virtual const char *getStringForPOS(){ return "SS2"; }
@@ -994,6 +1008,7 @@ class MHexahedron20 : public MHexahedron {
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 12; }
+  /*
   virtual int getNumEdgesRep(){ return 24; }
   virtual MEdge getEdgeRep(int num)
   { 
@@ -1028,6 +1043,7 @@ class MHexahedron20 : public MHexahedron {
 		 getVertex(trifaces_hexa20[num][1]),
 		 getVertex(trifaces_hexa20[num][2]));
   }
+  */
   virtual int getTypeForMSH(){ return MSH_HEX_20; }
   virtual int getTypeForUNV(){ return 116; } // solid parabolic brick
   virtual const char *getStringForPOS(){ return 0; } // not available
@@ -1077,6 +1093,7 @@ class MHexahedron27 : public MHexahedron {
   virtual int getNumEdgeVertices(){ return 12; }
   virtual int getNumFaceVertices(){ return 6; }
   virtual int getNumVolumeVertices(){ return 1; }
+  /*
   virtual int getNumEdgesRep(){ return 24; }
   virtual MEdge getEdgeRep(int num)
   { 
@@ -1117,6 +1134,7 @@ class MHexahedron27 : public MHexahedron {
 		 getVertex(trifaces_hexa27[num][1]),
 		 getVertex(trifaces_hexa27[num][2]));
   }
+  */
   virtual int getTypeForMSH(){ return MSH_HEX_27; }
   virtual int getTypeForUNV(){ return 0; } // not available
   virtual const char *getStringForPOS(){ return "SH2"; }
@@ -1254,6 +1272,7 @@ class MPrism15 : public MPrism {
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 9; }
+  /*
   virtual int getNumEdgesRep(){ return 18; }
   virtual MEdge getEdgeRep(int num)
   { 
@@ -1284,6 +1303,7 @@ class MPrism15 : public MPrism {
 		 getVertex(trifaces_prism15[num][1]),
 		 getVertex(trifaces_prism15[num][2]));
   }
+  */
   virtual int getTypeForMSH(){ return MSH_PRI_15; }
   virtual int getTypeForUNV(){ return 113; } // solid parabolic wedge
   virtual const char *getStringForPOS(){ return 0; } // not available
@@ -1326,6 +1346,7 @@ class MPrism18 : public MPrism {
   virtual MVertex *getVertex(int num){ return num < 6 ? _v[num] : _vs[num - 6]; }
   virtual int getNumEdgeVertices(){ return 9; }
   virtual int getNumFaceVertices(){ return 3; }
+  /*
   virtual int getNumEdgesRep(){ return 18; }
   virtual MEdge getEdgeRep(int num)
   { 
@@ -1359,6 +1380,7 @@ class MPrism18 : public MPrism {
 		 getVertex(trifaces_prism18[num][1]),
 		 getVertex(trifaces_prism18[num][2]));
   }
+  */
   virtual int getTypeForMSH(){ return MSH_PRI_18; }
   virtual int getTypeForUNV(){ return 0; } // not available
   virtual const char *getStringForPOS(){ return "SI2"; }
@@ -1472,6 +1494,7 @@ class MPyramid13 : public MPyramid {
   virtual int getNumVertices(){ return 13; }
   virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }
   virtual int getNumEdgeVertices(){ return 8; }
+  /*
   virtual int getNumEdgesRep(){ return 16; }
   virtual MEdge getEdgeRep(int num)
   { 
@@ -1501,6 +1524,7 @@ class MPyramid13 : public MPyramid {
 		 getVertex(trifaces_pyramid13[num][1]),
 		 getVertex(trifaces_pyramid13[num][2]));
   }
+  */
   virtual int getTypeForMSH(){ return MSH_PYR_13; }
   virtual int getTypeForUNV(){ return 0; } // not available
   virtual const char *getStringForPOS(){ return 0; } // not available
@@ -1541,6 +1565,7 @@ class MPyramid14 : public MPyramid {
   virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }
   virtual int getNumEdgeVertices(){ return 8; }
   virtual int getNumFaceVertices(){ return 1; }
+  /*
   virtual int getNumEdgesRep(){ return 16; }
   virtual MEdge getEdgeRep(int num)
   { 
@@ -1571,6 +1596,7 @@ class MPyramid14 : public MPyramid {
 		 getVertex(trifaces_pyramid14[num][1]),
 		 getVertex(trifaces_pyramid14[num][2]));
   }
+  */
   virtual int getTypeForMSH(){ return MSH_PYR_14; }
   virtual int getTypeForUNV(){ return 0; } // not available
   virtual const char *getStringForPOS(){ return "SY2"; }

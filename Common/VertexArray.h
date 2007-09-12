@@ -89,6 +89,8 @@ class VertexArray{
 	   MElement *ele=0, bool unique=true);
   // sorts the elements back to front wrt the eye position
   void sort(double x, double y, double z);
+  // regain temporay memory once the array is constructed
+  void finalize(){ _barycenters.clear(); }
 };
 
 #endif

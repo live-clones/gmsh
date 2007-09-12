@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.14 2007-09-03 20:09:14 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.15 2007-09-12 20:14:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,6 @@
 
 #include "HighOrder.h"
 #include "MElement.h"
-#include "MRep.h"
 #include "Message.h"
 #include "OS.h"
 
@@ -479,8 +478,7 @@ void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear,
     delete l;
   }
   ge->lines = lines2;
-
-  if(ge->meshRep) ge->meshRep->destroy();
+  ge->deleteVertexArrays();
 }
 
 void setHighOrder(GFace *gf, edgeContainer &edgeVertices, 
@@ -534,8 +532,7 @@ void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
     delete q;
   }
   gf->quadrangles = quadrangles2;
-  
-  if(gf->meshRep) gf->meshRep->destroy();
+  gf->deleteVertexArrays();
 }
 
 void setHighOrder(GRegion *gr, edgeContainer &edgeVertices, 
@@ -627,8 +624,7 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
     delete p;
   }
   gr->pyramids = pyramids2;
-
-  if(gr->meshRep) gr->meshRep->destroy();
+  gr->deleteVertexArrays();
 }
 
 template<class T>
@@ -647,8 +643,7 @@ void setFirstOrder(GEntity *e, std::vector<T*> &elements)
     delete ele;
   }
   elements = elements1;
-  
-  if(e->meshRep) e->meshRep->destroy();
+  e->deleteVertexArrays();
 }
 
 void removeHighOrderVertices(GEntity *e)
