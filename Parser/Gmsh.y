@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.287 2007-09-11 15:29:01 geuzaine Exp $
+// $Id: Gmsh.y,v 1.288 2007-09-12 05:42:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -54,6 +54,8 @@ extern Mesh *THEM;
 
 static ExtrudeParams extr;
 
+static gmshSurface *myGmshSurface = 0;
+
 static PViewDataList *ViewData;
 static List_T *ViewValueList;
 static double ViewCoord[100];
@@ -61,7 +63,6 @@ static int *ViewNumList, ViewCoordIdx;
 
 #define MAX_RECUR_LOOPS 100
 static int ImbricatedLoop = 0;
-static gmshSurface *myGmshSurface = 0;
 static fpos_t yyposImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static int yylinenoImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
