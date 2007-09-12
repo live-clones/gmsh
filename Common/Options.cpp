@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.356 2007-09-11 15:28:59 geuzaine Exp $
+// $Id: Options.cpp,v 1.357 2007-09-12 04:49:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -355,7 +355,7 @@ void Print_Options(int num, int level, int diff, int help, char *filename)
   if(filename) fclose(file);
 }
 
-char * Get_OptionSaveLevel(int level){
+char *Get_OptionSaveLevel(int level){
   if(level & GMSH_SESSIONRC){
     return "General.SessionFileName";
   }
@@ -843,8 +843,8 @@ int Get_ColorForString(StringX4Int SX4I[], int alpha,
     opt = &PViewOptions::reference;				\
   else{								\
     if(num < 0 || num >= PView::list.size()){			\
-      Msg(WARNING, "View[%d] does not exist", num) ;		\
-      return (error_val) ;					\
+      Msg(WARNING, "View[%d] does not exist", num);		\
+      return (error_val);					\
     }								\
     view = PView::list[num];					\
     data = view->getData();					\
@@ -2046,7 +2046,7 @@ char *opt_view_axes_format2(OPT_ARGS_STR)
   return opt->AxesFormat[2];
 }
 
-char * opt_view_gen_raise0(OPT_ARGS_STR)
+char *opt_view_gen_raise0(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2060,7 +2060,7 @@ char * opt_view_gen_raise0(OPT_ARGS_STR)
   return opt->GenRaiseX;
 }
 
-char * opt_view_gen_raise1(OPT_ARGS_STR)
+char *opt_view_gen_raise1(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2074,7 +2074,7 @@ char * opt_view_gen_raise1(OPT_ARGS_STR)
   return opt->GenRaiseY;
 }
 
-char * opt_view_gen_raise2(OPT_ARGS_STR)
+char *opt_view_gen_raise2(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2119,7 +2119,7 @@ void _string2stipple(char str[32], int &repeat, int &pattern)
   }
 }
 
-char * opt_view_stipple0(OPT_ARGS_STR)
+char *opt_view_stipple0(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2130,7 +2130,7 @@ char * opt_view_stipple0(OPT_ARGS_STR)
   return opt->StippleString[0];
 }
 
-char * opt_view_stipple1(OPT_ARGS_STR)
+char *opt_view_stipple1(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2141,7 +2141,7 @@ char * opt_view_stipple1(OPT_ARGS_STR)
   return opt->StippleString[1];
 }
 
-char * opt_view_stipple2(OPT_ARGS_STR)
+char *opt_view_stipple2(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2152,7 +2152,7 @@ char * opt_view_stipple2(OPT_ARGS_STR)
   return opt->StippleString[2];
 }
 
-char * opt_view_stipple3(OPT_ARGS_STR)
+char *opt_view_stipple3(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2163,7 +2163,7 @@ char * opt_view_stipple3(OPT_ARGS_STR)
   return opt->StippleString[3];
 }
 
-char * opt_view_stipple4(OPT_ARGS_STR)
+char *opt_view_stipple4(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2174,7 +2174,7 @@ char * opt_view_stipple4(OPT_ARGS_STR)
   return opt->StippleString[4];
 }
 
-char * opt_view_stipple5(OPT_ARGS_STR)
+char *opt_view_stipple5(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2185,7 +2185,7 @@ char * opt_view_stipple5(OPT_ARGS_STR)
   return opt->StippleString[5];
 }
 
-char * opt_view_stipple6(OPT_ARGS_STR)
+char *opt_view_stipple6(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2196,7 +2196,7 @@ char * opt_view_stipple6(OPT_ARGS_STR)
   return opt->StippleString[6];
 }
 
-char * opt_view_stipple7(OPT_ARGS_STR)
+char *opt_view_stipple7(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2207,7 +2207,7 @@ char * opt_view_stipple7(OPT_ARGS_STR)
   return opt->StippleString[7];
 }
 
-char * opt_view_stipple8(OPT_ARGS_STR)
+char *opt_view_stipple8(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2218,7 +2218,7 @@ char * opt_view_stipple8(OPT_ARGS_STR)
   return opt->StippleString[8];
 }
 
-char * opt_view_stipple9(OPT_ARGS_STR)
+char *opt_view_stipple9(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -4786,10 +4786,6 @@ double opt_mesh_lc_integration_precision(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.mesh.lc_integration_precision = val;
-#if defined(HAVE_FLTK)
-  //  if(WID && (action & GMSH_GUI))
-  //    WID->mesh_value[0]->value(CTX.mesh.nb_smoothing);
-#endif
   return CTX.mesh.lc_integration_precision;
 }
 
@@ -5862,7 +5858,6 @@ double opt_view_saturate_values(OPT_ARGS_NUM)
   return opt->SaturateValues;
 }
 
-
 double opt_view_max_recursion_level(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
@@ -5912,7 +5907,6 @@ double opt_view_target_error(OPT_ARGS_NUM)
 #endif
   return l->adaptive->getTolerance();
 }
-
 
 double opt_view_type(OPT_ARGS_NUM)
 {
