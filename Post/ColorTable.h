@@ -35,7 +35,7 @@ typedef struct{
 #define COLORTABLE_RGB  1
 #define COLORTABLE_HSV  2
 
-// integrer parameters indices
+// integer parameters indices
 
 #define COLORTABLE_NUMBER    0  // predefined curve index
 #define COLORTABLE_INVERT    1  // invert (rbg<->255-rgb)
