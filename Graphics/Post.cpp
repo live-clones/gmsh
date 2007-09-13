@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.130 2007-09-11 13:54:35 geuzaine Exp $
+// $Id: Post.cpp,v 1.131 2007-09-13 06:57:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1130,67 +1130,53 @@ void drawGlyphs(PView *p)
   }
 }
 
-// We try to estimate how many primitives will end up in the vertex
-// arrays, since reallocating the arrays takes a HUGE amount of time
-// on Windows/Cygwin. A better way would be to slightly redesign the
-// drawing routines so we can have different pre-processing steps
-// (like the one we have for smooth normals right now), in order to
-// count how many primitives we will have.
-
-static int estimateNumPoints(PView *p)
-{
-  PViewData *data = p->getData();
-  PViewOptions *opt = p->getOptions();
-
-  int heuristic = data->getNumElements(PViewData::Point);
-  return heuristic + 10000;
-}
-
-static int estimateNumLines(PView *p)
-{
-  PViewData *data = p->getData();
-  PViewOptions *opt = p->getOptions();
-
-  int heuristic = data->getNumElements(PViewData::Line);
-  return heuristic + 10000;
-}
-
-static int estimateNumTriangles(PView *p)
-{
-  PViewData *data = p->getData();
-  PViewOptions *opt = p->getOptions();
-
-  int tris = data->getNumElements(PViewData::Triangle);
-  int quads = data->getNumElements(PViewData::Quadrangle);
-  int tets = data->getNumElements(PViewData::Tetrahedron);
-  int prisms = data->getNumElements(PViewData::Prism);
-  int pyrs = data->getNumElements(PViewData::Pyramid);
-  int hexas = data->getNumElements(PViewData::Hexahedron);
-
-  int heuristic = 0;
-  if(opt->IntervalsType == PViewOptions::Iso)
-    heuristic = (tets + prisms + pyrs + hexas) / 10;
-  else if(opt->IntervalsType == PViewOptions::Continuous)
-    heuristic = (tris + 2 * quads + 6 * tets + 
-      8 * prisms + 6 * pyrs + 12 * hexas);
-  else if(opt->IntervalsType == PViewOptions::Discrete)
-    heuristic = (tris + 2 * quads + 6 * tets + 
-      8 * prisms + 6 * pyrs + 12 * hexas) * 2;
-
-  return heuristic + 10000;
-}
-
-static int estimateNumVectors(PView *p)
-{
-  PViewData *data = p->getData();
-  PViewOptions *opt = p->getOptions();
-
-  int heuristic = data->getNumVectors();
-
-  return heuristic + 1000;
-}
-
 class initPView {
+ private:
+  // we try to estimate how many primitives will end up in the vertex
+  // arrays, since reallocating the arrays takes a huge amount of time
+  // on Windows/Cygwin
+  int _estimateNumPoints(PView *p)
+  {
+    PViewData *data = p->getData();
+    PViewOptions *opt = p->getOptions();
+    int heuristic = data->getNumElements(PViewData::Point);
+    return heuristic + 10000;
+  }
+  int _estimateNumLines(PView *p)
+  {
+    PViewData *data = p->getData();
+    PViewOptions *opt = p->getOptions();
+    int heuristic = data->getNumElements(PViewData::Line);
+    return heuristic + 10000;
+  }
+  int _estimateNumTriangles(PView *p)
+  {
+    PViewData *data = p->getData();
+    PViewOptions *opt = p->getOptions();
+    int tris = data->getNumElements(PViewData::Triangle);
+    int quads = data->getNumElements(PViewData::Quadrangle);
+    int tets = data->getNumElements(PViewData::Tetrahedron);
+    int prisms = data->getNumElements(PViewData::Prism);
+    int pyrs = data->getNumElements(PViewData::Pyramid);
+    int hexas = data->getNumElements(PViewData::Hexahedron);
+    int heuristic = 0;
+    if(opt->IntervalsType == PViewOptions::Iso)
+      heuristic = (tets + prisms + pyrs + hexas) / 10;
+    else if(opt->IntervalsType == PViewOptions::Continuous)
+      heuristic = (tris + 2 * quads + 6 * tets + 
+		   8 * prisms + 6 * pyrs + 12 * hexas);
+    else if(opt->IntervalsType == PViewOptions::Discrete)
+      heuristic = (tris + 2 * quads + 6 * tets + 
+		   8 * prisms + 6 * pyrs + 12 * hexas) * 2;
+    return heuristic + 10000;
+  }
+  int _estimateNumVectors(PView *p)
+  {
+    PViewData *data = p->getData();
+    PViewOptions *opt = p->getOptions();
+    int heuristic = data->getNumVectors();
+    return heuristic + 1000;
+  }
  public :
   void operator () (PView *p)
   {
@@ -1202,13 +1188,13 @@ class initPView {
     if(!opt->Visible || opt->Type != PViewOptions::Plot3D) return;
 
     if(p->va_points) delete p->va_points;
-    p->va_points = new VertexArray(1, estimateNumPoints(p));
+    p->va_points = new VertexArray(1, _estimateNumPoints(p));
     if(p->va_lines) delete p->va_lines;
-    p->va_lines = new VertexArray(2, estimateNumLines(p));
+    p->va_lines = new VertexArray(2, _estimateNumLines(p));
     if(p->va_triangles) delete p->va_triangles;
-    p->va_triangles = new VertexArray(3, estimateNumTriangles(p));
+    p->va_triangles = new VertexArray(3, _estimateNumTriangles(p));
     if(p->va_vectors) delete p->va_vectors;
-    p->va_vectors = new VertexArray(2, estimateNumVectors(p));
+    p->va_vectors = new VertexArray(2, _estimateNumVectors(p));
 
     if(p->normals) delete p->normals;
     p->normals = new smooth_normals(opt->AngleSmoothNormals);
