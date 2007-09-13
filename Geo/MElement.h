@@ -39,7 +39,11 @@ class MElement
   int _num;
   short _partition;
   char _visible;
-
+ protected:
+  int _getEdgeRep(const int edge[2], double *x, double *y, double *z, 
+		  SVector3 *n, int faceIndex=-1);
+  int _getFaceRep(const int face[3], double *x, double *y, double *z, 
+		  SVector3 *n);
  public :
   MElement(int num=0, int part=0) 
     : _visible(true) 
@@ -229,16 +233,14 @@ class MLine3 : public MLine {
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 1; }
-  /*
   virtual int getNumEdgesRep(){ return 2; }
-  virtual MEdge getEdgeRep(int num)
+  virtual int getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
     static const int edges_lin3[2][2] = {
       {0, 2}, {2, 1}
     };
-    return MEdge(getVertex(edges_lin3[num][0]), getVertex(edges_lin3[num][1]));
+    return _getEdgeRep(edges_lin3[num], x, y, z, n);
   }
-  */
   virtual int getTypeForMSH(){ return MSH_LIN_3; }
   virtual int getTypeForUNV(){ return 24; } // parabolic beam
   virtual const char *getStringForPOS(){ return "SL2"; }
@@ -267,27 +269,21 @@ class MLineN : public MLine {
   virtual int getPolynomialOrder(){ return _vs.size() + 1; }
   virtual int getNumVertices(){ return _vs.size() + 2; }
   virtual MVertex *getVertex(int num){ return num < 2 ? _v[num] : _vs[num - 2]; }
-  virtual MVertex *getVertexUNV(int num)
-  {
-    if(num == 0) return _v[0];
-    if(num == (int)_vs.size() + 1) return _v[1];
-    return  _vs[num-1];
-  }
   virtual int getNumEdgeVertices(){ return _vs.size(); }
-  /*
   virtual int getNumEdgesRep(){ return _vs.size() + 1; }
-  virtual MEdge getEdgeRep(int num)
+  virtual int getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
-    return MEdge(getVertexUNV(num),getVertexUNV(num+1));
+    const int edge[2] = {(num == 0) ? 0 : num + 1, 
+			 (num == getNumEdgesRep() - 1) ? 1 : num + 2};
+    return _getEdgeRep(edge, x, y, z, n);
   }
-  */
   virtual int getTypeForMSH(){ 
-    if(_vs.size() == 2) return  MSH_LIN_4; 
-    if(_vs.size() == 3) return  MSH_LIN_5; 
-    if(_vs.size() == 4) return  MSH_LIN_6; 
+    if(_vs.size() == 2) return MSH_LIN_4; 
+    if(_vs.size() == 3) return MSH_LIN_5; 
+    if(_vs.size() == 4) return MSH_LIN_6; 
     throw;
   }
-  virtual int getTypeForUNV(){ throw; } // not available
+  virtual int getTypeForUNV(){ return 0; } // not available
   virtual const char *getStringForPOS(){ return 0; } // not available
   virtual const char *getStringForBDF(){ return 0; } // not available
 };
@@ -295,7 +291,7 @@ class MLineN : public MLine {
 class MTriangle : public MElement {
  protected:
   MVertex *_v[3];
-  virtual void jac ( int order, MVertex *v[], double u, double v , double jac[2][2]) ;
+  virtual void jac(int order, MVertex *v[], double u, double v, double jac[2][2]);
  public :
   MTriangle(MVertex *v0, MVertex *v1, MVertex *v2, int num=0, int part=0) 
     : MElement(num, part)
@@ -309,7 +305,7 @@ class MTriangle : public MElement {
   }
   ~MTriangle(){}
   virtual int getDim(){ return 2; }
-  virtual void  getMat(double mat[2][2])
+  virtual void getMat(double mat[2][2])
   {
     mat[0][0] = _v[1]->x() - _v[0]->x();
     mat[0][1] = _v[2]->x() - _v[0]->x();
@@ -326,10 +322,11 @@ class MTriangle : public MElement {
   bool invertmappingUV(GFace*,double *p, double *uv, double tol = 1.e-8);
   virtual int getNumVertices(){ return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
-  virtual MVertex *getOtherVertex(MVertex *v1, MVertex *v2){ 
-    if( _v[0] != v1 && _v[0] != v2 ) return _v[0];
-    if( _v[1] != v1 && _v[1] != v2 ) return _v[1];
-    if( _v[2] != v1 && _v[2] != v2 ) return _v[2];
+  virtual MVertex *getOtherVertex(MVertex *v1, MVertex *v2)
+  { 
+    if(_v[0] != v1 && _v[0] != v2) return _v[0];
+    if(_v[1] != v1 && _v[1] != v2) return _v[1];
+    if(_v[2] != v1 && _v[2] != v2) return _v[2];
     throw;
   }
   virtual int getNumEdges(){ return 3; }
@@ -355,7 +352,7 @@ class MTriangle : public MElement {
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
-  virtual void jac ( double u, double v , double j[2][2])  ;
+  virtual void jac(double u, double v, double j[2][2]);
 };
 
 class MTriangle6 : public MTriangle {
@@ -385,28 +382,24 @@ class MTriangle6 : public MTriangle {
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 3; }
-  /*
   virtual int getNumEdgesRep(){ return 6; }
-  virtual MEdge getEdgeRep(int num)
+  virtual int getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
     static const int edges_tri6[6][2] = {
       {0, 3}, {3, 1},
       {1, 4}, {4, 2},
       {2, 5}, {5, 0}
     };
-    return MEdge(getVertex(edges_tri6[num][0]), getVertex(edges_tri6[num][1]));
+    return _getEdgeRep(edges_tri6[num], x, y, z, n, 0);
   }
   virtual int getNumFacesRep(){ return 4; }
-  virtual MFace getFaceRep(int num)
+  virtual int getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
-    static const int trifaces_tri2[4][3] = {
+    static const int faces_tri2[4][3] = {
       {0, 3, 5}, {1, 4, 3}, {2, 5, 4}, {3, 4, 5}
     };
-    return MFace(getVertex(trifaces_tri2[num][0]),
-		 getVertex(trifaces_tri2[num][1]),
-		 getVertex(trifaces_tri2[num][2]));
+    return _getFaceRep(faces_tri2[num], x, y, z, n);
   }
-  */
   virtual int getTypeForMSH(){ return MSH_TRI_6; }
   virtual int getTypeForUNV(){ return 92; } // thin shell parabolic triangle
   virtual const char *getStringForPOS(){ return "ST2"; }
@@ -424,6 +417,15 @@ class MTriangleN : public MTriangle {
  protected:
   std::vector<MVertex *> _vs;
   const short _order;
+  int _orderedIndex(int num)
+  {
+    if(num == 0) return 0;
+    else if(num < _order) return num + 2;
+    else if(num == _order) return 1;
+    else if(num < 2 * _order) return num + 1;
+    else if(num == 2 * _order) return 2;
+    else return num;
+  }
  public:
   MTriangleN(MVertex *v0, MVertex *v1, MVertex *v2, 
 	     std::vector<MVertex*> &v, int order, int num=0, int part=0) 
@@ -438,41 +440,39 @@ class MTriangleN : public MTriangle {
     for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
   }
   ~MTriangleN(){}
-  virtual int getPolynomialOrder(){
-    return _order;
-  }
+  virtual int getPolynomialOrder(){ return _order; }
   virtual int getNumVertices(){ return 3 + _vs.size() ; }
   virtual MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
-  virtual MVertex *getVertexUNV(int num)
+  virtual int getNumFaceVertices()
   {
-    if (num == 0) return _v[0];
-    if (num  < _order ) return _vs[num - 1];
-    if (num  == _order ) return _v[1];
-    if (num  < 2* _order ) return _vs[num - 2];
-    if (num  == 2*_order ) return _v[2];
-    return _vs[num - 3];
-  }
-  virtual int getNumFaceVertices();
-  virtual int getNumEdgeVertices(){ return _order - 1; }
-  /*
-  virtual int getNumEdgesRep(){ return 3 * _order ; }
-  virtual MEdge getEdgeRep(int num)
-  { 
-    return MEdge(getVertexUNV(num), getVertexUNV((num+1)%(3*_order)));
-  }
-  virtual int getNumFacesRep();
-  virtual MFace getFaceRep(int num);
-  */
-  virtual int getTypeForMSH(){
-    if (_order == 3 && _vs.size() == 6) return MSH_TRI_9; 
-    if (_order == 3 && _vs.size() == 7) return MSH_TRI_10; 
-    if (_order == 4 && _vs.size() == 9) return MSH_TRI_12; 
-    if (_order == 4 && _vs.size() == 12) return MSH_TRI_15; 
-    if (_order == 5 && _vs.size() == 12) return MSH_TRI_15I; 
-    if (_order == 5 && _vs.size() == 18) return MSH_TRI_21;
+    if(_order == 3 && _vs.size() == 6) return 0;
+    if(_order == 3 && _vs.size() == 7) return 1;
+    if(_order == 4 && _vs.size() == 9) return 0;
+    if(_order == 4 && _vs.size() == 12) return 3;
+    if(_order == 5 && _vs.size() == 12) return 0;
+    if(_order == 5 && _vs.size() == 18) return 6;
     throw;
   }
-  virtual int getTypeForUNV(){ throw; } // not available
+  virtual int getNumEdgeVertices(){ return _order - 1; }
+  virtual int getNumEdgesRep(){ return 3 * _order; }
+  virtual int getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+  { 
+    const int edge[2] = {_orderedIndex(num), _orderedIndex((num + 1) % (3 * _order))};
+    return _getEdgeRep(edge, x, y, z, n, 0);
+  }
+  //virtual int getNumFacesRep(){ TODO }
+  //virtual MFace getFaceRep(int num){ TODO }
+  virtual int getTypeForMSH()
+  {
+    if(_order == 3 && _vs.size() == 6) return MSH_TRI_9; 
+    if(_order == 3 && _vs.size() == 7) return MSH_TRI_10; 
+    if(_order == 4 && _vs.size() == 9) return MSH_TRI_12; 
+    if(_order == 4 && _vs.size() == 12) return MSH_TRI_15; 
+    if(_order == 5 && _vs.size() == 12) return MSH_TRI_15I; 
+    if(_order == 5 && _vs.size() == 18) return MSH_TRI_21;
+    throw;
+  }
+  virtual int getTypeForUNV(){ return 0; } // not available
   virtual const char *getStringForPOS(){ return 0; }
   virtual const char *getStringForBDF(){ return 0; }
   virtual void revert() 
@@ -480,13 +480,11 @@ class MTriangleN : public MTriangle {
     MVertex *tmp;
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
     std::vector<MVertex*> inv;
-    inv.insert (inv.begin(),_vs.rbegin(),_vs.rend());
+    inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
     _vs = inv;
   }
-  virtual void jac ( double u, double v , double jac[2][2])  ;
+  virtual void jac(double u, double v, double jac[2][2]);
 };
-
-
 
 template <class T> 
 void sort3(T *t[3])

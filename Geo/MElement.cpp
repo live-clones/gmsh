@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.39 2007-09-12 20:14:34 geuzaine Exp $
+// $Id: MElement.cpp,v 1.40 2007-09-13 21:02:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -87,6 +87,21 @@ int MElement::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   return 2;
 }
 
+int MElement::_getEdgeRep(const int edge[2], double *x, double *y, double *z,
+			  SVector3 *n, int faceIndex)
+{
+  MEdge e(getVertex(edge[0]), getVertex(edge[1]));
+  SVector3 normal = (faceIndex >= 0) ? getFace(faceIndex).normal() : e.normal();
+  for(int i = 0; i < 2; i++){
+    MVertex *v = e.getVertex(i);
+    x[i] = v->x(); 
+    y[i] = v->y(); 
+    z[i] = v->z();
+    n[i] = normal;
+  }
+  return 2;
+}
+
 int MElement::getNumFacesRep()
 {
   return getNumFaces();
@@ -104,6 +119,23 @@ int MElement::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
     n[i] = normal;
   }
   return f.getNumVertices();
+}
+
+int MElement::_getFaceRep(const int face[3], double *x, double *y, double *z,
+			  SVector3 *n)
+{
+  for(int i = 0; i < 3; i++){
+    MVertex *v = getVertex(face[i]);
+    x[i] = v->x(); 
+    y[i] = v->y(); 
+    z[i] = v->z();
+  }
+  SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
+  SVector3 t2(x[2] - x[0], y[2] - y[0], z[2] - z[0]);
+  SVector3 normal = crossprod(t1, t2);
+  normal.normalize();
+  for(int i = 0; i < 3; i++) n[i] = normal;
+  return 3;
 }
 
 double MTetrahedron::gammaShapeMeasure()
@@ -515,16 +547,6 @@ void MTriangle::circumcenterXY(double *res) const
   double p2[2] = {_v[1]->x(), _v[1]->y()};
   double p3[2] = {_v[2]->x(), _v[2]->y()};
   circumcenterXY(p1, p2, p3, res);
-}
-
-int MTriangleN::getNumFaceVertices(){
-  if (_order == 3 && _vs.size() == 6) return 0; 
-  if (_order == 3 && _vs.size() == 7) return 1; 
-  if (_order == 4 && _vs.size() == 9) return 0; 
-  if (_order == 4 && _vs.size() == 12) return 3; 
-  if (_order == 5 && _vs.size() == 12) return 0; 
-  if (_order == 5 && _vs.size() == 18) return 6;
-  throw;
 }
 
 int P1[3][2] = {
