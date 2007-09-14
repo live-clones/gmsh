@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.204 2007-09-12 20:39:05 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.205 2007-09-14 04:04:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -135,7 +135,7 @@ template<class T>
 static bool areSomeElementsCurved(std::vector<T*> &elements)
 {
   for(unsigned int i = 0; i < elements.size(); i++)
-    if(elements[i]->getPolynomialOrder() > 1 ) return true;
+    if(elements[i]->getPolynomialOrder() > 1) return true;
   return false;
 }
 
@@ -477,11 +477,9 @@ static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalAr
     glDisableClientState(GL_COLOR_ARRAY);
     glColor4ubv((GLubyte *) & color);
   }
-  else if(CTX.pick_elements){
-    glEnableClientState(GL_COLOR_ARRAY);
-  }
-  else if(!e->getSelection() && (CTX.mesh.color_carousel == 0 || 
-				 CTX.mesh.color_carousel == 3)){
+  else if(CTX.pick_elements || 
+	  (!e->getSelection() && (CTX.mesh.color_carousel == 0 || 
+				  CTX.mesh.color_carousel == 3))){
     glEnableClientState(GL_COLOR_ARRAY);
   }
   else{
@@ -545,7 +543,7 @@ class initMeshGEdge {
     if(!e->getVisibility()) return;
 
     e->deleteVertexArrays();
-    e->setAllElementsVisible(areAllElementsVisible(e->lines));
+    e->setAllElementsVisible(CTX.mesh.lines && areAllElementsVisible(e->lines));
 
     if(CTX.mesh.lines){
       e->va_lines = new VertexArray(2, _estimateNumLines(e));
