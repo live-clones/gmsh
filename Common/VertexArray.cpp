@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.22 2007-08-27 23:33:48 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.23 2007-09-14 18:51:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,7 @@
 extern Context_T CTX;
 
 VertexArray::VertexArray(int numVerticesPerElement, int numElements) 
-  : fill(0), _numVerticesPerElement(numVerticesPerElement)
+  : _numVerticesPerElement(numVerticesPerElement)
 {
   int nb = (numElements ? numElements : 1) * numVerticesPerElement;
   _vertices.reserve(nb * 3);
@@ -192,4 +192,3 @@ void VertexArray::sort(double x, double y, double z)
   _normals = sortedNormals;
   _colors = sortedColors;
 }
-

@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.67 2007-09-12 05:08:12 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.68 2007-09-14 18:51:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -85,6 +85,8 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
 
   bool space = (opt->Type == PViewOptions::Plot2DSpace);
 
+  SPoint3 p0;
+
   numy = 0;
   for(int i = 0; i < data->getNumElements(); i++){
     int dim = data->getDimension(i);
@@ -97,10 +99,16 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
 	  data->getNode(i, j, xyz[0], xyz[1], xyz[2]);
 	  for(int k = 0; k < numComp; k++)
 	    data->getValue(i, j, k, ts, val[k]);
-	  double vx = ComputeScalarRep(3, xyz);
 	  double vy = ComputeScalarRep(numComp, val);
 	  if(space){
-	    x.push_back(vx);
+	    // store offset to origin + distance to first point
+	    if(x.empty()){
+	      p0 = SPoint3(xyz[0], xyz[1], xyz[2]);
+	      x.push_back(ComputeScalarRep(3, xyz));
+	    }
+	    else{
+	      x.push_back(x[0] + p0.distance(SPoint3(xyz[0], xyz[1], xyz[2])));
+	    }
 	    y[0].push_back(vy);
 	  }
 	  else{

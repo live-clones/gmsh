@@ -52,8 +52,6 @@ class BarycenterLessThan{
 };
 
 class VertexArray{
- public:
-  int fill; // this must/will be removed
  private:
   int _numVerticesPerElement;
   std::vector<float> _vertices;

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.163 2007-09-12 20:14:34 geuzaine Exp $
+# $Id: Makefile,v 1.164 2007-09-14 18:51:37 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -205,7 +205,8 @@ GModel.o: GModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   ../Post/ColorTable.h ../Geo/Geo.h ../Geo/gmshSurface.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
   ../Geo/ExtrudeParams.h ../Geo/GEdge.h ../Post/OctreePost.h \
-  ../Common/Octree.h ../Common/OctreeInternals.h ../Mesh/BackgroundMesh.h
+  ../Common/Octree.h ../Common/OctreeInternals.h ../Mesh/BackgroundMesh.h \
+  ../Common/Message.h
 GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h ../Common/VertexArray.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Common/GmshDefines.h MVertex.h GPoint.h SPoint2.h \

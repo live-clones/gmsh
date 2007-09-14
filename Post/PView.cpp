@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.8 2007-09-10 04:47:08 geuzaine Exp $
+// $Id: PView.cpp,v 1.9 2007-09-14 18:51:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -301,13 +301,19 @@ void PView::combine(bool time, int how, bool remove)
 
 bool PView::write(std::string filename, int format, bool append)
 {
+  Msg(STATUS2, "Writing '%s'", filename.c_str());
+
+  bool ret;
   switch(format){
-  case 0: return _data->writePOS(filename, false, false, append); // ASCII
-  case 1: return _data->writePOS(filename, true, false, append); // binary
-  case 2: return _data->writePOS(filename, false, true, append); // parsed
-  case 3: return _data->writeSTL(filename); 
-  case 4: return _data->writeTXT(filename);
-  case 5: return _data->writeMSH(filename);
-  default: Msg(GERROR, "Unknown view format %d", format); return false;
+  case 0: ret = _data->writePOS(filename, false, false, append); break; // ASCII
+  case 1: ret = _data->writePOS(filename, true, false, append); break; // binary
+  case 2: ret = _data->writePOS(filename, false, true, append); break; // parsed
+  case 3: ret = _data->writeSTL(filename); break;
+  case 4: ret = _data->writeTXT(filename); break;
+  case 5: ret = _data->writeMSH(filename); break;
+  default: ret = false; Msg(GERROR, "Unknown view format %d", format); break;
   }
+
+  Msg(STATUS2, "Wrote '%s'", filename.c_str());
+  return ret;
 }
