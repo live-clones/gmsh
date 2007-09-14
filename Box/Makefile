@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.37 2007-07-12 16:30:16 geuzaine Exp $
+# $Id: Makefile,v 1.38 2007-09-14 19:30:21 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -60,20 +60,22 @@ Box.o: Box.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
   ../Mesh/Generator.h ../Parser/Parser.h ../Common/Context.h \
-  ../Common/Options.h ../Parser/OpenFile.h ../Common/CommandLine.h \
-  ../Parser/CreateFile.h ../Parallel/ParUtil.h ../Plugin/PluginManager.h \
-  ../Plugin/Plugin.h ../Post/Views.h ../Post/ColorTable.h \
-  ../Common/VertexArray.h ../Post/AdaptiveViews.h ../Common/GmshMatrix.h \
-  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/MVertex.h \
-  ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
-  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Hash.h ../Geo/MFace.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/ExtrudeParams.h \
-  ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/MElement.h ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h \
-  ../Mesh/Field.h ../contrib/ANN/include/ANN/ANN.h ../Post/OctreePost.h \
+  ../Common/Options.h ../Post/ColorTable.h ../Parser/OpenFile.h \
+  ../Common/CommandLine.h ../Parser/CreateFile.h ../Parallel/ParUtil.h \
+  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Post/PView.h \
+  ../Common/VertexArray.h ../Post/PViewData.h ../Post/PViewOptions.h \
+  ../Post/ColorTable.h ../Post/PViewDataList.h ../Post/PViewData.h \
+  ../Post/AdaptiveViews.h ../Common/GmshMatrix.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/MVertex.h ../Geo/SPoint3.h \
+  ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h \
+  ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
+  ../Geo/MElement.h ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h \
+  ../Geo/SVector3.h ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h \
+  ../Geo/SVector3.h ../Geo/ExtrudeParams.h ../Geo/GFace.h ../Geo/GPoint.h \
+  ../Geo/GEntity.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h \
+  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h \
+  ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h ../Mesh/Field.h \
+  ../contrib/ANN/include/ANN/ANN.h ../Post/OctreePost.h \
   ../Common/Octree.h ../Common/OctreeInternals.h ../Mesh/BackgroundMesh.h
