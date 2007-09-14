@@ -460,8 +460,6 @@ class MTriangleN : public MTriangle {
     const int edge[2] = {_orderedIndex(num), _orderedIndex((num + 1) % (3 * _order))};
     return _getEdgeRep(edge, x, y, z, n, 0);
   }
-  //virtual int getNumFacesRep(){ TODO }
-  //virtual MFace getFaceRep(int num){ TODO }
   virtual int getTypeForMSH()
   {
     if(_order == 3 && _vs.size() == 6) return MSH_TRI_9; 
@@ -484,44 +482,6 @@ class MTriangleN : public MTriangle {
     _vs = inv;
   }
   virtual void jac(double u, double v, double jac[2][2]);
-};
-
-template <class T> 
-void sort3(T *t[3])
-{
-  T *temp;
-  if(t[0] > t[1]){
-    temp = t[1];
-    t[1] = t[0];
-    t[0] = temp;
-  }
-  if(t[1] > t[2]){
-    temp = t[2];
-    t[2] = t[1];
-    t[1] = temp;
-  }
-  if(t[0] > t[1]){
-    temp = t[1];
-    t[1] = t[0];
-    t[0] = temp;
-  }
-}
-
-struct compareMTriangleLexicographic
-{
-  bool operator () (MTriangle *t1, MTriangle *t2) const
-  {
-    MVertex *_v1[3] = {t1->getVertex(0), t1->getVertex(1), t1->getVertex(2)};
-    MVertex *_v2[3] = {t2->getVertex(0), t2->getVertex(1), t2->getVertex(2)};
-    sort3(_v1);
-    sort3(_v2);
-    if(_v1[0] < _v2[0]) return true;
-    if(_v1[0] > _v2[0]) return false;
-    if(_v1[1] < _v2[1]) return true;
-    if(_v1[1] > _v2[1]) return false;
-    if(_v1[2] < _v2[2]) return true;
-    return false;
-  }
 };
 
 class MQuadrangle : public MElement {
@@ -592,9 +552,8 @@ class MQuadrangle8 : public MQuadrangle {
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 4; }
-  /*
   virtual int getNumEdgesRep(){ return 8; }
-  virtual MEdge getEdgeRep(int num)
+  virtual int getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
     static const int edges_qua8[8][2] = {
       {0, 4}, {4, 1},
@@ -602,19 +561,16 @@ class MQuadrangle8 : public MQuadrangle {
       {2, 6}, {6, 3},
       {3, 7}, {7, 0}
     };
-    return MEdge(getVertex(edges_qua8[num][0]), getVertex(edges_qua8[num][1]));
+    return _getEdgeRep(edges_qua8[num], x, y, z, n, 0);
   }
   virtual int getNumFacesRep(){ return 6; }
-  virtual MFace getFaceRep(int num)
+  virtual int getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
-    static const int trifaces_qua8[6][3] = {
+    static const int faces_qua8[6][3] = {
       {0, 4, 7}, {1, 5, 4}, {2, 6, 5}, {3, 7, 6}, {4, 5, 6}, {4, 6, 7}
     };
-    return MFace(getVertex(trifaces_qua8[num][0]),
-		 getVertex(trifaces_qua8[num][1]),
-		 getVertex(trifaces_qua8[num][2]));
+    return _getFaceRep(faces_qua8[num], x, y, z, n);
   }
-  */
   virtual int getTypeForMSH(){ return MSH_QUA_8; }
   virtual int getTypeForUNV(){ return 95; } // shell parabolic quadrilateral
   virtual const char *getStringForPOS(){ return 0; } // not available
@@ -651,9 +607,8 @@ class MQuadrangle9 : public MQuadrangle {
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual int getNumEdgeVertices(){ return 4; }
   virtual int getNumFaceVertices(){ return 1; }
-  /*
   virtual int getNumEdgesRep(){ return 8; }
-  virtual MEdge getEdgeRep(int num)
+  virtual int getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
     static const int edges_qua9[8][2] = {
       {0, 4}, {4, 1},
@@ -661,20 +616,17 @@ class MQuadrangle9 : public MQuadrangle {
       {2, 6}, {6, 3},
       {3, 7}, {7, 0}
     };
-    return MEdge(getVertex(edges_qua9[num][0]), getVertex(edges_qua9[num][1]));
+    return _getEdgeRep(edges_qua9[num], x, y, z, n, 0);
   }
   virtual int getNumFacesRep(){ return 8; }
-  virtual MFace getFaceRep(int num)
+  virtual int getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
-    static const int trifaces_qua9[8][4] = {
+    static const int faces_qua9[8][4] = {
       {0, 4, 8}, {0, 8, 7}, {1, 5, 8}, {1, 8, 4}, 
       {2, 6, 8}, {2, 8, 5}, {3, 7, 8}, {3, 8, 6}
     };
-    return MFace(getVertex(trifaces_qua9[num][0]),
-		 getVertex(trifaces_qua9[num][1]),
-		 getVertex(trifaces_qua9[num][2]));
+    return _getFaceRep(faces_qua9[num], x, y, z, n);
   }
-  */
   virtual int getTypeForMSH(){ return MSH_QUA_9; }
   virtual int getTypeForUNV(){ return 0; } // not available
   virtual const char *getStringForPOS(){ return "SQ2"; }
@@ -722,15 +674,15 @@ class MTetrahedron : public MElement {
   virtual int getNumFaces(){ return 4; }
   virtual MFace getFace(int num)
   {
-    static const int trifaces_tetra[4][3] = {
+    static const int faces_tetra[4][3] = {
       {0, 2, 1},
       {0, 1, 3},
       {0, 3, 2},
       {3, 1, 2}
     };
-    return MFace(_v[trifaces_tetra[num][0]],
-		 _v[trifaces_tetra[num][1]],
-		 _v[trifaces_tetra[num][2]]);
+    return MFace(_v[faces_tetra[num][0]],
+		 _v[faces_tetra[num][1]],
+		 _v[faces_tetra[num][2]]);
   }
   virtual int getTypeForMSH(){ return MSH_TET_4; }
   virtual int getTypeForUNV(){ return 111; } // solid linear tetrahedron
@@ -807,8 +759,7 @@ class MTetrahedron : public MElement {
     double X[4] = {_v[0]->x(), _v[1]->x(), _v[2]->x(), _v[3]->x()};
     double Y[4] = {_v[0]->y(), _v[1]->y(), _v[2]->y(), _v[3]->y()};
     double Z[4] = {_v[0]->z(), _v[1]->z(), _v[2]->z(), _v[3]->z()};
-
-    MTetrahedron::circumcenter (X,Y,Z,res); 
+    MTetrahedron::circumcenter(X, Y, Z, res); 
   }
 };
 
@@ -845,9 +796,8 @@ class MTetrahedron10 : public MTetrahedron {
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 6; }
-  /*
   virtual int getNumEdgesRep(){ return 12; }
-  virtual MEdge getEdgeRep(int num)
+  virtual int getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
     static const int edges_tetra10[12][2] = {
       {0, 4}, {4, 1},
@@ -857,22 +807,19 @@ class MTetrahedron10 : public MTetrahedron {
       {3, 8}, {8, 2},
       {3, 9}, {9, 1}
     };
-    return MEdge(getVertex(edges_tetra10[num][0]), getVertex(edges_tetra10[num][1]));
+    return _getEdgeRep(edges_tetra10[num], x, y, z, n);
   }
   virtual int getNumFacesRep(){ return 16; }
-  virtual MFace getFaceRep(int num)
+  virtual int getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
-    static const int trifaces_tetra10[16][3] = {
+    static const int faces_tetra10[16][3] = {
       {0, 6, 4}, {2, 5, 6}, {1, 4, 5}, {6, 5, 4},
       {0, 4, 7}, {1, 9, 4}, {3, 7, 9}, {4, 9, 7},
       {0, 7, 6}, {3, 8, 7}, {2, 6, 8}, {7, 8, 6},
       {3, 9, 8}, {1, 5, 9}, {2, 8, 5}, {9, 5, 8}
     };
-    return MFace(getVertex(trifaces_tetra10[num][0]),
-		 getVertex(trifaces_tetra10[num][1]),
-		 getVertex(trifaces_tetra10[num][2]));
+    return _getFaceRep(faces_tetra10[num], x, y, z, n);
   }
-  */
   virtual int getTypeForMSH(){ return MSH_TET_10; }
   virtual int getTypeForUNV(){ return 118; } // solid parabolic tetrahedron
   virtual const char *getStringForPOS(){ return "SS2"; }
@@ -928,7 +875,7 @@ class MHexahedron : public MElement {
   virtual int getNumFaces(){ return 6; }
   virtual MFace getFace(int num)
   {
-    static const int quadfaces_hexa[6][4] = {
+    static const int faces_hexa[6][4] = {
       {0, 3, 2, 1},
       {0, 1, 5, 4},
       {0, 4, 7, 3},
@@ -936,10 +883,10 @@ class MHexahedron : public MElement {
       {2, 3, 7, 6},
       {4, 5, 6, 7}
     };
-    return MFace(_v[quadfaces_hexa[num][0]],
-		 _v[quadfaces_hexa[num][1]],
-		 _v[quadfaces_hexa[num][2]],
-		 _v[quadfaces_hexa[num][3]]);
+    return MFace(_v[faces_hexa[num][0]],
+		 _v[faces_hexa[num][1]],
+		 _v[faces_hexa[num][2]],
+		 _v[faces_hexa[num][3]]);
   }
   virtual int getTypeForMSH(){ return MSH_HEX_8; }
   virtual int getTypeForUNV(){ return 115; } // solid linear brick
@@ -1006,9 +953,8 @@ class MHexahedron20 : public MHexahedron {
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 12; }
-  /*
   virtual int getNumEdgesRep(){ return 24; }
-  virtual MEdge getEdgeRep(int num)
+  virtual int getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
     static const int edges_hexa20[24][2] = {
       {0, 8}, {8, 1},
@@ -1024,12 +970,12 @@ class MHexahedron20 : public MHexahedron {
       {5, 18}, {18, 6},
       {6, 19}, {19, 7}
     };
-    return MEdge(getVertex(edges_hexa20[num][0]), getVertex(edges_hexa20[num][1]));
+    return _getEdgeRep(edges_hexa20[num], x, y, z, n);
   }
   virtual int getNumFacesRep(){ return 36; }
-  virtual MFace getFaceRep(int num)
+  virtual int getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
-    static const int trifaces_hexa20[36][3] = {
+    static const int faces_hexa20[36][3] = {
       {0, 9, 8}, {3, 13, 9}, {2, 11, 13}, {1, 8, 11}, {8, 9, 13}, {8, 13, 11},
       {0, 8, 10}, {1, 12, 8}, {5, 16, 12}, {4, 10, 16}, {8, 12, 16}, {8, 16, 10},
       {0, 10, 9}, {4, 17, 10}, {7, 15, 17}, {3, 9, 7}, {9, 10, 17}, {9, 17, 15},
@@ -1037,11 +983,8 @@ class MHexahedron20 : public MHexahedron {
       {2, 13, 14}, {3, 15, 13}, {7, 19, 15}, {6, 14, 19}, {13, 15, 19}, {13, 19, 14},
       {4, 16, 17}, {5, 18, 16}, {6, 19, 18}, {7, 17, 19}, {16, 18, 19}, {16, 19, 17}
     };
-    return MFace(getVertex(trifaces_hexa20[num][0]),
-		 getVertex(trifaces_hexa20[num][1]),
-		 getVertex(trifaces_hexa20[num][2]));
+    return _getFaceRep(faces_hexa20[num], x, y, z, n);
   }
-  */
   virtual int getTypeForMSH(){ return MSH_HEX_20; }
   virtual int getTypeForUNV(){ return 116; } // solid parabolic brick
   virtual const char *getStringForPOS(){ return 0; } // not available
@@ -1091,9 +1034,8 @@ class MHexahedron27 : public MHexahedron {
   virtual int getNumEdgeVertices(){ return 12; }
   virtual int getNumFaceVertices(){ return 6; }
   virtual int getNumVolumeVertices(){ return 1; }
-  /*
   virtual int getNumEdgesRep(){ return 24; }
-  virtual MEdge getEdgeRep(int num)
+  virtual int getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
     static const int edges_hexa27[24][2] = {
       {0, 8}, {8, 1},
@@ -1109,12 +1051,12 @@ class MHexahedron27 : public MHexahedron {
       {5, 18}, {18, 6},
       {6, 19}, {19, 7}
     };
-    return MEdge(getVertex(edges_hexa27[num][0]), getVertex(edges_hexa27[num][1]));
+    return _getEdgeRep(edges_hexa27[num], x, y, z, n);
   }
   virtual int getNumFacesRep(){ return 48; }
-  virtual MFace getFaceRep(int num)
+  virtual int getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
-    static const int trifaces_hexa27[48][3] = {
+    static const int faces_hexa27[48][3] = {
       {0, 9, 20}, {0, 20, 8}, {3, 13, 20}, {3, 20, 9}, 
       {2, 11, 20}, {2, 20, 13}, {1, 8, 20}, {1, 20, 11},
       {0, 8, 21}, {0, 21, 10}, {1, 12, 21}, {1, 21, 8}, 
@@ -1128,11 +1070,8 @@ class MHexahedron27 : public MHexahedron {
       {4, 16, 25}, {4, 25, 17}, {5, 18, 25}, {5, 25, 16}, 
       {6, 19, 25}, {6, 25, 18}, {7, 17, 25}, {7, 25, 19}  
     };
-    return MFace(getVertex(trifaces_hexa27[num][0]),
-		 getVertex(trifaces_hexa27[num][1]),
-		 getVertex(trifaces_hexa27[num][2]));
+    return _getFaceRep(faces_hexa27[num], x, y, z, n);
   }
-  */
   virtual int getTypeForMSH(){ return MSH_HEX_27; }
   virtual int getTypeForUNV(){ return 0; } // not available
   virtual const char *getStringForPOS(){ return "SH2"; }
@@ -1270,9 +1209,8 @@ class MPrism15 : public MPrism {
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 9; }
-  /*
   virtual int getNumEdgesRep(){ return 18; }
-  virtual MEdge getEdgeRep(int num)
+  virtual int getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
     static const int edges_prism15[18][2] = {
       {0, 6}, {6, 1},
@@ -1285,23 +1223,20 @@ class MPrism15 : public MPrism {
       {3, 13}, {13, 5},
       {4, 14}, {14, 5}
     };
-    return MEdge(getVertex(edges_prism15[num][0]), getVertex(edges_prism15[num][1]));
+    return _getEdgeRep(edges_prism15[num], x, y, z, n);
   }
   virtual int getNumFacesRep(){ return 26; }
-  virtual MFace getFaceRep(int num)
+  virtual int getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
-    static const int trifaces_prism15[26][3] = {
+    static const int faces_prism15[26][3] = {
       {0, 7, 6}, {2, 9, 7}, {1, 6, 9}, {6, 7, 9},
       {3, 12, 13}, {4, 14, 12}, {5, 13, 14}, {12, 14, 13},
       {0, 6, 8}, {1, 10, 6}, {4, 12, 10}, {3, 8, 12}, {6, 10, 12}, {6, 12, 8},
       {0, 8, 7}, {3, 13, 8}, {5, 11, 13}, {2, 7, 11}, {7, 8, 13}, {7, 13, 11},
       {1, 9, 10}, {2, 11, 9}, {5, 14, 11}, {4, 10, 14}, {9, 11, 14}, {9, 14, 10}
     };
-    return MFace(getVertex(trifaces_prism15[num][0]),
-		 getVertex(trifaces_prism15[num][1]),
-		 getVertex(trifaces_prism15[num][2]));
+    return _getFaceRep(faces_prism15[num], x, y, z, n);
   }
-  */
   virtual int getTypeForMSH(){ return MSH_PRI_15; }
   virtual int getTypeForUNV(){ return 113; } // solid parabolic wedge
   virtual const char *getStringForPOS(){ return 0; } // not available
@@ -1344,9 +1279,8 @@ class MPrism18 : public MPrism {
   virtual MVertex *getVertex(int num){ return num < 6 ? _v[num] : _vs[num - 6]; }
   virtual int getNumEdgeVertices(){ return 9; }
   virtual int getNumFaceVertices(){ return 3; }
-  /*
   virtual int getNumEdgesRep(){ return 18; }
-  virtual MEdge getEdgeRep(int num)
+  virtual int getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
     static const int edges_prism18[18][2] = {
       {0, 6}, {6, 1},
@@ -1359,12 +1293,12 @@ class MPrism18 : public MPrism {
       {3, 13}, {13, 5},
       {4, 14}, {14, 5}
     };
-    return MEdge(getVertex(edges_prism18[num][0]), getVertex(edges_prism18[num][1]));
+    return _getEdgeRep(edges_prism18[num], x, y, z, n);
   }
   virtual int getNumFacesRep(){ return 32; }
-  virtual MFace getFaceRep(int num)
+  virtual int getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
-    static const int trifaces_prism18[32][3] = {
+    static const int faces_prism18[32][3] = {
       {0, 7, 6}, {2, 9, 7}, {1, 6, 9}, {6, 7, 9},
       {3, 12, 13}, {4, 14, 12}, {5, 13, 14}, {12, 14, 13},
       {0, 6, 15}, {0, 15, 8}, {1, 10, 15}, {1, 15, 6},  
@@ -1374,11 +1308,8 @@ class MPrism18 : public MPrism {
       {1, 9, 17}, {1, 17, 10}, {2, 11, 17}, {2, 17, 9},  
       {5, 14, 17}, {5, 17, 11}, {4, 10, 17}, {4, 17, 14}
     };
-    return MFace(getVertex(trifaces_prism18[num][0]),
-		 getVertex(trifaces_prism18[num][1]),
-		 getVertex(trifaces_prism18[num][2]));
+    return _getFaceRep(faces_prism18[num], x, y, z, n);
   }
-  */
   virtual int getTypeForMSH(){ return MSH_PRI_18; }
   virtual int getTypeForUNV(){ return 0; } // not available
   virtual const char *getStringForPOS(){ return "SI2"; }
@@ -1431,16 +1362,16 @@ class MPyramid : public MElement {
   virtual int getNumFaces(){ return 5; }
   virtual MFace getFace(int num)
   {
-    static const int trifaces_pyramid[4][3] = {
+    static const int faces_pyramid[4][3] = {
       {0, 1, 4},
       {3, 0, 4},
       {1, 2, 4},
       {2, 3, 4}
     };
     if(num < 4)
-      return MFace(_v[trifaces_pyramid[num][0]],
-		   _v[trifaces_pyramid[num][1]],
-		   _v[trifaces_pyramid[num][2]]);
+      return MFace(_v[faces_pyramid[num][0]],
+		   _v[faces_pyramid[num][1]],
+		   _v[faces_pyramid[num][2]]);
     else
       return MFace(_v[0], _v[3], _v[2], _v[1]);
   }
@@ -1492,9 +1423,8 @@ class MPyramid13 : public MPyramid {
   virtual int getNumVertices(){ return 13; }
   virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }
   virtual int getNumEdgeVertices(){ return 8; }
-  /*
   virtual int getNumEdgesRep(){ return 16; }
-  virtual MEdge getEdgeRep(int num)
+  virtual int getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
     static const int edges_pyramid13[16][2] = {
       {0, 5}, {5, 1},
@@ -1506,23 +1436,20 @@ class MPyramid13 : public MPyramid {
       {2, 11}, {11, 4},
       {3, 12}, {12, 4}
     };
-    return MEdge(getVertex(edges_pyramid13[num][0]), getVertex(edges_pyramid13[num][1]));
+    return _getEdgeRep(edges_pyramid13[num], x, y, z, n);
   }
   virtual int getNumFacesRep(){ return 22; }
-  virtual MFace getFaceRep(int num)
+  virtual int getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
-    static const int trifaces_pyramid13[22][3] = {
+    static const int faces_pyramid13[22][3] = {
       {0, 5, 7}, {1, 9, 5}, {4, 7, 9}, {5, 9, 7},
       {3, 6, 12}, {0, 7, 6}, {4, 12, 7}, {6, 7, 12},
       {1, 8, 9}, {2, 11, 8}, {4, 9, 11}, {8, 11, 9},
       {2, 10, 11}, {3, 12, 10}, {4, 11, 12}, {10, 12, 11},
       {0, 6, 5}, {3, 10, 6}, {2, 8, 10}, {1, 5, 8}, {5, 6, 10}, {5, 10, 8}
     };
-    return MFace(getVertex(trifaces_pyramid13[num][0]),
-		 getVertex(trifaces_pyramid13[num][1]),
-		 getVertex(trifaces_pyramid13[num][2]));
+    return _getFaceRep(faces_pyramid13[num], x, y, z, n);
   }
-  */
   virtual int getTypeForMSH(){ return MSH_PYR_13; }
   virtual int getTypeForUNV(){ return 0; } // not available
   virtual const char *getStringForPOS(){ return 0; } // not available
@@ -1563,9 +1490,8 @@ class MPyramid14 : public MPyramid {
   virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }
   virtual int getNumEdgeVertices(){ return 8; }
   virtual int getNumFaceVertices(){ return 1; }
-  /*
   virtual int getNumEdgesRep(){ return 16; }
-  virtual MEdge getEdgeRep(int num)
+  virtual int getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
     static const int edges_pyramid14[16][2] = {
       {0, 5}, {5, 1},
@@ -1577,12 +1503,12 @@ class MPyramid14 : public MPyramid {
       {2, 11}, {11, 4},
       {3, 12}, {12, 4}
     };
-    return MEdge(getVertex(edges_pyramid14[num][0]), getVertex(edges_pyramid14[num][1]));
+    return _getEdgeRep(edges_pyramid14[num], x, y, z, n);
   }
   virtual int getNumFacesRep(){ return 24; }
-  virtual MFace getFaceRep(int num)
+  virtual int getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
-    static const int trifaces_pyramid14[24][3] = {
+    static const int faces_pyramid14[24][3] = {
       {0, 5, 7}, {1, 9, 5}, {4, 7, 9}, {5, 9, 7},
       {3, 6, 12}, {0, 7, 6}, {4, 12, 7}, {6, 7, 12},
       {1, 8, 9}, {2, 11, 8}, {4, 9, 11}, {8, 11, 9},
@@ -1590,11 +1516,8 @@ class MPyramid14 : public MPyramid {
       {0, 6, 13}, {0, 13, 5}, {3, 10, 13}, {3, 13, 6}, 
       {2, 8, 13}, {2, 13, 10}, {1, 5, 13}, {1, 13, 8}
     };
-    return MFace(getVertex(trifaces_pyramid14[num][0]),
-		 getVertex(trifaces_pyramid14[num][1]),
-		 getVertex(trifaces_pyramid14[num][2]));
+    return _getFaceRep(faces_pyramid14[num], x, y, z, n);
   }
-  */
   virtual int getTypeForMSH(){ return MSH_PYR_14; }
   virtual int getTypeForUNV(){ return 0; } // not available
   virtual const char *getStringForPOS(){ return "SY2"; }
@@ -1606,6 +1529,44 @@ class MPyramid14 : public MPyramid {
     tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
     tmp = _vs[1]; _vs[1] = _vs[5]; _vs[5] = tmp;
     tmp = _vs[2]; _vs[2] = _vs[6]; _vs[6] = tmp;
+  }
+};
+
+template <class T> 
+void sort3(T *t[3])
+{
+  T *temp;
+  if(t[0] > t[1]){
+    temp = t[1];
+    t[1] = t[0];
+    t[0] = temp;
+  }
+  if(t[1] > t[2]){
+    temp = t[2];
+    t[2] = t[1];
+    t[1] = temp;
+  }
+  if(t[0] > t[1]){
+    temp = t[1];
+    t[1] = t[0];
+    t[0] = temp;
+  }
+}
+
+struct compareMTriangleLexicographic
+{
+  bool operator () (MTriangle *t1, MTriangle *t2) const
+  {
+    MVertex *_v1[3] = {t1->getVertex(0), t1->getVertex(1), t1->getVertex(2)};
+    MVertex *_v2[3] = {t2->getVertex(0), t2->getVertex(1), t2->getVertex(2)};
+    sort3(_v1);
+    sort3(_v2);
+    if(_v1[0] < _v2[0]) return true;
+    if(_v1[0] > _v2[0]) return false;
+    if(_v1[1] < _v2[1]) return true;
+    if(_v1[1] > _v2[1]) return false;
+    if(_v1[2] < _v2[2]) return true;
+    return false;
   }
 };
 
