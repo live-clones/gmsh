@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.9 2007-09-15 15:47:05 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.10 2007-09-15 16:30:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -322,7 +322,7 @@ void PViewDataList::_setLast(int ele)
   else if(ele < _index[14]){ // tetrahedra
     if(ele < _index[12]) _setLast(ele - _index[11], 3, 4, 1, 6, SS, NbSS);
     else if(ele < _index[13]) _setLast(ele - _index[12], 3, 4, 3, 6, VS, NbVS);
-    else _setLast(ele - _index[13], 3, 2, 9, 6, TS, NbTS);
+    else _setLast(ele - _index[13], 3, 4, 9, 6, TS, NbTS);
   }
   else if(ele < _index[17]){ // hexahedra
     if(ele < _index[15]) _setLast(ele - _index[14], 3, 8, 1, 12, SH, NbSH);
