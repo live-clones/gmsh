@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.67 2007-09-02 21:05:20 geuzaine Exp $
+// $Id: Scale.cpp,v 1.68 2007-09-15 16:57:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -206,7 +206,7 @@ static void drawScale(PView *p, double xmin, double ymin, double width,
 
   if(opt->ExternalViewIndex >= 0){
     opt->TmpMin = opt->ExternalMin;
-    opt->TmpMin = opt->ExternalMax;
+    opt->TmpMax = opt->ExternalMax;
   }
   else if(opt->RangeType == PViewOptions::Custom){
     opt->TmpMin = opt->CustomMin;

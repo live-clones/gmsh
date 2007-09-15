@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.132 2007-09-15 15:01:02 geuzaine Exp $
+// $Id: Post.cpp,v 1.133 2007-09-15 16:57:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -976,15 +976,18 @@ void drawVectorArray(PView *p, VertexArray *va)
   PViewOptions *opt = p->getOptions();
   
   for(int i = 0; i < va->getNumVertices(); i += 2){
-    float *p = va->getVertexArray(3 * i);
+    float *s = va->getVertexArray(3 * i);
     float *v = va->getVertexArray(3 * (i + 1));
     glColor4ubv((GLubyte *)va->getColorArray(4 * i));
-    double norm = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-    if(norm && opt->TmpMax){
-      double f = CTX.pixel_equiv_x / CTX.s[0] * opt->ArrowSize / 
-	(opt->ArrowSizeProportional ? opt->TmpMax : norm);
+    double max;
+    if(opt->ArrowSizeProportional)
+      max = p->getData()->getMax(opt->TimeStep);
+    else
+      max = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    if(max){
+      double f = CTX.pixel_equiv_x / CTX.s[0] * opt->ArrowSize / max;
       double dx = v[0] * f, dy = v[1] * f, dz = v[2] * f;
-      double x = p[0], y = p[1], z = p[2];
+      double x = s[0], y = s[1], z = s[2];
       if(opt->CenterGlyphs){
 	x -= 0.5 * dx;
 	y -= 0.5 * dy;
