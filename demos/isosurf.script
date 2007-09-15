@@ -15,8 +15,9 @@ Delete Empty Views;
 
 Combine Views;
 
-Plugin(DecomposeInSimplex).iView = 0;
-Plugin(DecomposeInSimplex).Run;
+
+Plugin(MakeSimplex).iView = 0;
+Plugin(MakeSimplex).Run;
 
 View[0].ColormapAlpha = 0.6;
 View[0].SmoothNormals = 1;

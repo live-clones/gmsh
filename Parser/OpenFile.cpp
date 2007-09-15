@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.161 2007-09-12 21:17:01 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.162 2007-09-15 15:01:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -151,9 +151,10 @@ void SetBoundingBox(void)
   
   if(bb.empty()) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
-      bb += PView::list[i]->getData()->getBoundingBox();
+      if(!PView::list[i]->getData()->getBoundingBox().empty())
+	bb += PView::list[i]->getData()->getBoundingBox();
   }
-
+  
   if(bb.empty()){
     bb += SPoint3(-1., -1., -1.);
     bb += SPoint3(1., 1., 1.);

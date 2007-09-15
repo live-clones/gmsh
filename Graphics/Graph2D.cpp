@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.68 2007-09-14 18:51:37 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.69 2007-09-15 15:01:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -34,12 +34,12 @@ int Fix2DCoordinates(double *x, double *y)
   if(*x < 0) // measure from right border
     *x = CTX.viewport[2] + *x;
   else if(*x > 99999) // by convention, x-centered
-    *x = CTX.viewport[2]/2;
+    *x = CTX.viewport[2] / 2;
 
   if(*y < 0) // measure from bottom border
     *y = -(*y);
   else if(*y > 99999) // by convention, y-centered
-    *y = CTX.viewport[3]/2.;
+    *y = CTX.viewport[3] / 2.;
   else
     *y = CTX.viewport[3] - *y;
   return ret;

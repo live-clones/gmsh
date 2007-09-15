@@ -1,4 +1,4 @@
-// $Id: MakeSimplex.cpp,v 1.3 2007-09-11 14:01:55 geuzaine Exp $
+// $Id: MakeSimplex.cpp,v 1.4 2007-09-15 15:01:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -146,6 +146,7 @@ PView *GMSH_MakeSimplexPlugin::execute(PView *v)
   decomposeList(data1, 5, 3, &data1->VY, &data1->NbVY, data1->VS, &data1->NbVS);
   decomposeList(data1, 5, 9, &data1->TY, &data1->NbTY, data1->TS, &data1->NbTS);
 
+  data1->finalize();
   v1->setChanged(true);
 
   return v1;

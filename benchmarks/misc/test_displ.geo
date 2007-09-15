@@ -1,8 +1,10 @@
 Include "test_field.pos";
 Include "test_displ.pos";
 
-Plugin(DisplacementRaise).Factor = 1;
-Plugin(DisplacementRaise).Run;
+Plugin(Warp).iView = 0;
+Plugin(Warp).dView = 1;
+Plugin(Warp).Factor = 1;
+Plugin(Warp).Run;
 
 View[0].ShowElement = 1;
 

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.131 2007-09-13 06:57:21 geuzaine Exp $
+// $Id: Post.cpp,v 1.132 2007-09-15 15:01:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1339,11 +1339,13 @@ class drawPViewBoundingBox {
 
     if(!opt->Visible || opt->Type != PViewOptions::Plot3D) return;
 
+    SBoundingBox3d bb = data->getBoundingBox();
+    if(bb.empty()) return;
+
     glColor4ubv((GLubyte *) & CTX.color.fg);
     glLineWidth(CTX.line_width);
     gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
 
-    SBoundingBox3d bb = data->getBoundingBox();
     Draw_Box(bb.min().x(), bb.min().y(), bb.min().z(),
 	     bb.max().x(), bb.max().y(), bb.max().z());
     glColor3d(1., 0., 0.);
