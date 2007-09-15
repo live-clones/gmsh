@@ -324,6 +324,11 @@ Should second order vertices simply be created by linear interpolation?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.LcIntegrationPrecision
+Accuracy of evaluation of the LC field for 1D mesh generation@*
+Default value: @code{1e-09}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Smoothing
 Number of smoothing steps applied to the final mesh@*
 Default value: @code{1}@*

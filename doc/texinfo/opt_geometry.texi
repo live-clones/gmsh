@@ -50,7 +50,7 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LineType
-Display lines as solid color segments (0) or 3D cylinders (1)@*
+Display lines as solid color segments (0), 3D cylinders (1) or tapered cylinders (2)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -110,7 +110,7 @@ Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.PointType
-Display points as solid color dots (0) or 3D spheres (1)@*
+Display points as solid color dots (0), 3D spheres (1) or scaled spheres (2)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -141,6 +141,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.SurfaceNumbers
 Display surface numbers?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.SurfaceType
+Display surfaces as wireframe (0) or solid (1)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -212,6 +217,11 @@ Saved in: @code{General.OptionsFileName}
 @item Geometry.Color.Normals
 Normal geometry vectors color@*
 Default value: @code{@{255,0,0@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.Color.Projection
+Projection surface color@*
+Default value: @code{@{0,255,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @end ftable

@@ -649,8 +649,13 @@ Minimum model coordinate along the Z-axis (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item General.MouseHoverMeshes
+Enable mouse hover on meshes@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.MouseSelection
-Mouse hover and selection mode (0=none, 1=hover and select geometry but only select mesh, 2=hover and select geometry and mesh)@*
+Enable mouse selection@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -209,6 +209,11 @@ Draw the `N minus b'-dimensional boundary of the element (N=element dimension, b
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.CenterGlyphs
+Center glyphs (arrows, numbers, etc.)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.ColormapAlpha
 Colormap alpha channel value (used only if != 1)@*
 Default value: @code{1}@*
@@ -376,7 +381,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.LightLines
 Light element edges@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.LightTwoSide
@@ -396,42 +401,42 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.Max
 Maximum value in the view (read-only)@*
-Default value: @code{-2.22195e-146}@*
+Default value: @code{0}@*
 Saved in: @code{-}
 
 @item View.MaxX
 Maximum view coordinate along the X-axis (read-only)@*
-Default value: @code{-2.22195e-146}@*
+Default value: @code{0}@*
 Saved in: @code{-}
 
 @item View.MaxY
 Maximum view coordinate along the Y-axis (read-only)@*
-Default value: @code{-2.22195e-146}@*
+Default value: @code{0}@*
 Saved in: @code{-}
 
 @item View.MaxZ
 Maximum view coordinate along the Z-axis (read-only)@*
-Default value: @code{-2.22195e-146}@*
+Default value: @code{0}@*
 Saved in: @code{-}
 
 @item View.Min
 Minimum value in the view (read-only)@*
-Default value: @code{-2.22195e-146}@*
+Default value: @code{0}@*
 Saved in: @code{-}
 
 @item View.MinX
 Minimum view coordinate along the X-axis (read-only)@*
-Default value: @code{-2.22195e-146}@*
+Default value: @code{0}@*
 Saved in: @code{-}
 
 @item View.MinY
 Minimum view coordinate along the Y-axis (read-only)@*
-Default value: @code{-2.22195e-146}@*
+Default value: @code{0}@*
 Saved in: @code{-}
 
 @item View.MinZ
 Minimum view coordinate along the Z-axis (read-only)@*
-Default value: @code{-2.22195e-146}@*
+Default value: @code{0}@*
 Saved in: @code{-}
 
 @item View.NbIso
