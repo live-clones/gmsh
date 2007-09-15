@@ -29,7 +29,6 @@
 
 #include <string.h>
 #include <stdio.h>
-
 #include "Options.h"
 #include "Message.h"
 #include "PView.h"
@@ -99,7 +98,6 @@ class GMSH_Post_Plugin : public GMSH_Plugin
   virtual PViewDataList *getDataList(PView *view);
   virtual void assignSpecificVisibility() const {}
   virtual bool geometricalFilter(Double_Matrix *) const { return true; }
-
 };
 
 // The base class for solver plugins. The idea is to be able to
