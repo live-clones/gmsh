@@ -1,4 +1,4 @@
-// $Id: Smooth.cpp,v 1.28 2007-09-11 15:29:02 geuzaine Exp $
+// $Id: Smooth.cpp,v 1.29 2007-09-15 15:47:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -80,6 +80,7 @@ PView *GMSH_SmoothPlugin::execute(PView *v)
   if(!v1) return v;
 
   v1->getData()->smooth();
+  v1->setChanged(true);
 
   return v1;
 }

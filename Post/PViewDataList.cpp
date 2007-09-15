@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.8 2007-09-11 22:53:35 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.9 2007-09-15 15:47:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -548,9 +548,8 @@ void PViewDataList::_splitCurvedElements()
   splitCurvedElement(&TY2, &NbTY2, TS, &NbTS, 14,4, 9, 4, pyr2);
 }
 
-static void generateConnectivities(List_T *list, int nbList, 
-				   int nbTimeStep, int nbVert, 
-				   smooth_data &data)
+static void generateConnectivities(List_T *list, int nbList, int nbTimeStep, 
+				   int nbVert, smooth_data &data)
 {
   if(!nbList) return;
   double *vals = new double[nbTimeStep];
@@ -569,9 +568,8 @@ static void generateConnectivities(List_T *list, int nbList,
   delete [] vals;
 }
 
-static void smoothList(List_T *list, int nbList, double &min, double &max, 
-		       std::vector<double> &tsmin, std::vector<double> &tsmax, 
-		       int nbTimeStep, int nbVert, smooth_data &data)
+static void smoothList(List_T *list, int nbList, int nbTimeStep,
+		       int nbVert, smooth_data &data)
 {
   if(!nbList) return;
   double *vals = new double[nbTimeStep];
@@ -583,14 +581,8 @@ static void smoothList(List_T *list, int nbList, double &min, double &max,
     double *v = (double *)List_Pointer_Fast(list, i + 3 * nbVert);
     for(int j = 0; j < nbVert; j++) {
       if(data.get(x[j], y[j], z[j], nbTimeStep, vals)){
-	for(int k = 0; k < nbTimeStep; k++) {
-	  double dd = vals[k];
-          v[j + k * nbVert] = dd;
-	  min = std::min(min, dd);
-	  max = std::max(max, dd);
-          tsmin[k] = std::min(tsmin[k], dd);
-          tsmax[k] = std::max(tsmax[k], dd);
-        }
+	for(int k = 0; k < nbTimeStep; k++) 
+          v[j + k * nbVert] = vals[k];
       }
     }
   }
@@ -601,34 +593,23 @@ void PViewDataList::smooth()
 {
   double old_eps = xyzv::eps;
   xyzv::eps = CTX.lc * 1.e-8;
-  
-  if(NbSL || NbST || NbSQ || NbSS || NbSH || NbSI || NbSY) {
-    Min = VAL_INF;
-    Max = -VAL_INF;
-    TimeStepMin.clear();
-    TimeStepMax.clear();
-    for(int j = 0; j < NbTimeStep; j++){
-      TimeStepMin.push_back(VAL_INF);
-      TimeStepMax.push_back(-VAL_INF);
-    }
-    smooth_data data;
-    generateConnectivities(SL, NbSL, NbTimeStep, 2, data);
-    generateConnectivities(ST, NbST, NbTimeStep, 3, data);
-    generateConnectivities(SQ, NbSQ, NbTimeStep, 4, data);
-    generateConnectivities(SS, NbSS, NbTimeStep, 4, data);
-    generateConnectivities(SH, NbSH, NbTimeStep, 8, data);
-    generateConnectivities(SI, NbSI, NbTimeStep, 6, data);
-    generateConnectivities(SY, NbSY, NbTimeStep, 5, data);
-    smoothList(SL, NbSL, Min, Max, TimeStepMin, TimeStepMax, NbTimeStep, 2, data);
-    smoothList(ST, NbST, Min, Max, TimeStepMin, TimeStepMax, NbTimeStep, 3, data);
-    smoothList(SQ, NbSQ, Min, Max, TimeStepMin, TimeStepMax, NbTimeStep, 4, data);
-    smoothList(SS, NbSS, Min, Max, TimeStepMin, TimeStepMax, NbTimeStep, 4, data);
-    smoothList(SH, NbSH, Min, Max, TimeStepMin, TimeStepMax, NbTimeStep, 8, data);
-    smoothList(SI, NbSI, Min, Max, TimeStepMin, TimeStepMax, NbTimeStep, 6, data);
-    smoothList(SY, NbSY, Min, Max, TimeStepMin, TimeStepMax, NbTimeStep, 5, data);
-  }
-
-  xyzv::eps = old_eps;  
+  smooth_data data;
+  generateConnectivities(SL, NbSL, NbTimeStep, 2, data);
+  generateConnectivities(ST, NbST, NbTimeStep, 3, data);
+  generateConnectivities(SQ, NbSQ, NbTimeStep, 4, data);
+  generateConnectivities(SS, NbSS, NbTimeStep, 4, data);
+  generateConnectivities(SH, NbSH, NbTimeStep, 8, data);
+  generateConnectivities(SI, NbSI, NbTimeStep, 6, data);
+  generateConnectivities(SY, NbSY, NbTimeStep, 5, data);
+  smoothList(SL, NbSL, NbTimeStep, 2, data);
+  smoothList(ST, NbST, NbTimeStep, 3, data);
+  smoothList(SQ, NbSQ, NbTimeStep, 4, data);
+  smoothList(SS, NbSS, NbTimeStep, 4, data);
+  smoothList(SH, NbSH, NbTimeStep, 8, data);
+  smoothList(SI, NbSI, NbTimeStep, 6, data);
+  smoothList(SY, NbSY, NbTimeStep, 5, data);
+  xyzv::eps = old_eps;
+  finalize();
 }
 
 bool PViewDataList::combineSpace(nameData &nd)
