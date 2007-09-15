@@ -1174,6 +1174,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "Boundary" , opt_view_boundary , 0. ,
     "Draw the `N minus b'-dimensional boundary of the element (N=element dimension, b=option value)" },
 
+  { F|O, "CenterGlyphs" , opt_view_center_glyphs , 0, 
+    "Center glyphs (arrows, numbers, etc.)" },
   { F|O, "ColormapAlpha" , opt_view_colormap_alpha , 1.0 ,
     "Colormap alpha channel value (used only if != 1)" },
   { F|O, "ColormapAlphaPower" , opt_view_colormap_alpha_power , 0.0 ,

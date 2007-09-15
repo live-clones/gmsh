@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.545 2007-09-12 06:00:59 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.546 2007-09-15 17:11:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1315,6 +1315,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double use_gen_raise = opt_view_use_gen_raise(current, GMSH_GET, 0);
   double fake_transparency = opt_view_fake_transparency(current, GMSH_GET, 0);
   double use_stipple = opt_view_use_stipple(current, GMSH_GET, 0);
+  double center_glyphs = opt_view_center_glyphs(current, GMSH_GET, 0);
 
   double normals = opt_view_normals(current, GMSH_GET, 0);
   double tangents = opt_view_tangents(current, GMSH_GET, 0);
@@ -1541,6 +1542,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
       val = WID->view_butt[26]->value();
       if(force || (val != use_stipple))
         opt_view_use_stipple(i, GMSH_SET, val);
+
+      val = WID->view_butt[1]->value();
+      if(force || (val != center_glyphs))
+        opt_view_center_glyphs(i, GMSH_SET, val);
 
       // view_values
       

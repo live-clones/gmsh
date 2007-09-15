@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.639 2007-09-13 06:32:58 geuzaine Exp $
+// $Id: GUI.cpp,v 1.640 2007-09-15 17:11:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3323,6 +3323,10 @@ void GUI::create_option_window()
       view_choice[3]->menu(menu_vecloc);
       view_choice[3]->align(FL_ALIGN_RIGHT);
       view_choice[3]->callback(view_options_ok_cb);
+
+      view_butt[1] = new Fl_Check_Button(L + 2 * IW - 2 * WB, 2 * WB + 10 * BH, (int)(1.5*BB), BH, "Center glyphs");
+      view_butt[1]->type(FL_TOGGLE_BUTTON);
+      view_butt[1]->callback(view_options_ok_cb);
       
       static Fl_Menu_Item menu_tensor[] = {
 	{"Von-Mises", 0, 0, 0},
@@ -3585,6 +3589,7 @@ void GUI::update_view_window(int num)
 
   opt_view_external_view(num, GMSH_GUI, 0);
   opt_view_glyph_location(num, GMSH_GUI, 0);
+  opt_view_center_glyphs(num, GMSH_GUI, 0);
   opt_view_tensor_type(num, GMSH_GUI, 0);
 
   opt_view_fake_transparency(num, GMSH_GUI, 0);

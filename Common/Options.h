@@ -630,6 +630,7 @@ double opt_view_tensor_type(OPT_ARGS_NUM);
 double opt_view_range_type(OPT_ARGS_NUM);
 double opt_view_vector_type(OPT_ARGS_NUM);
 double opt_view_glyph_location(OPT_ARGS_NUM);
+double opt_view_center_glyphs(OPT_ARGS_NUM);
 double opt_view_point_size(OPT_ARGS_NUM);
 double opt_view_line_width(OPT_ARGS_NUM);
 double opt_view_point_type(OPT_ARGS_NUM);

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.357 2007-09-12 04:49:49 geuzaine Exp $
+// $Id: Options.cpp,v 1.358 2007-09-15 17:11:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -6588,6 +6588,21 @@ double opt_view_glyph_location(OPT_ARGS_NUM)
   }
 #endif
   return opt->GlyphLocation;
+}
+
+double opt_view_center_glyphs(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    opt->CenterGlyphs = val ? 1 : 0;
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_butt[1]->value(opt->CenterGlyphs);
+  }
+#endif
+  return opt->CenterGlyphs;
 }
 
 double opt_view_point_size(OPT_ARGS_NUM)
