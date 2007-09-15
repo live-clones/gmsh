@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.35 2007-09-11 15:29:01 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.36 2007-09-15 16:20:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -555,7 +555,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
   if(_valueView < 0) {
     w = v;
   }
-  else if(_valueView < 0 || _valueView > PView::list.size() - 1){
+  else if(_valueView > PView::list.size() - 1){
     Msg(GERROR, "View[%d] does not exist: reverting to View[%d]", 
 	_valueView, v->getIndex());
     w = v;

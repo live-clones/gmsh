@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.31 2007-09-11 14:01:55 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.32 2007-09-15 16:20:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -372,7 +372,7 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
   PView *v1 = getView(iView, v);
   if(!v1) return v;
 
-  PView *v2 = getView(dView, v);
+  PView *v2 = (dView < 0) ? 0 : getView(dView, v);
 
   return GenerateView(v1, v2);
 }
