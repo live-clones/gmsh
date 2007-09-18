@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.205 2007-09-14 04:04:34 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.206 2007-09-18 16:26:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -359,10 +359,10 @@ static void addSmoothNormals(GEntity *e, std::vector<T*> &elements)
     SPoint3 pc;
     if(CTX.mesh.explode != 1.) pc = ele->barycenter();
     for(int j = 0; j < ele->getNumFacesRep(); j++){
-      double x[4], y[4], z[4];
-      SVector3 n[4];
-      int numverts = ele->getFaceRep(j, x, y, z, n);
-      for(int k = 0; k < numverts; k++){
+      double x[3], y[3], z[3];
+      SVector3 n[3];
+      ele->getFaceRep(j, x, y, z, n);
+      for(int k = 0; k < 3; k++){
 	if(CTX.mesh.explode != 1.){
 	  x[k] = pc[0] + CTX.mesh.explode * (x[k] - pc[0]);
 	  y[k] = pc[1] + CTX.mesh.explode * (y[k] - pc[1]);
@@ -415,23 +415,20 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
 
     if(faces){
       for(int j = 0; j < ele->getNumFacesRep(); j++){
-	double x[4], y[4], z[4];
-	SVector3 n[4];
-	int numverts = ele->getFaceRep(j, x, y, z, n);
+	double x[3], y[3], z[3];
+	SVector3 n[3];
+	ele->getFaceRep(j, x, y, z, n);
 	if(CTX.mesh.explode != 1.){
-	  for(int k = 0; k < numverts; k++){
+	  for(int k = 0; k < 3; k++){
 	    x[k] = pc[0] + CTX.mesh.explode * (x[k] - pc[0]);
 	    y[k] = pc[1] + CTX.mesh.explode * (y[k] - pc[1]);
 	    z[k] = pc[2] + CTX.mesh.explode * (z[k] - pc[2]);
 	  }
 	}
 	if(e->dim() == 2 && CTX.mesh.smooth_normals)
-	  for(int k = 0; k < numverts; k++)
+	  for(int k = 0; k < 3; k++)
 	    e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1], n[k][2]);
-	if(numverts == 3)
-	  e->va_triangles->add(x, y, z, n, col, ele, !CTX.pick_elements);
-	else if(numverts == 4)
-	  e->va_quads->add(x, y, z, n, col, ele, !CTX.pick_elements);
+	e->va_triangles->add(x, y, z, n, col, ele, !CTX.pick_elements);
       }
     }
   }
@@ -615,16 +612,7 @@ class initMeshGFace {
   {
     int num = 0;
     if(CTX.mesh.surfaces_faces){
-      num += f->triangles.size();
-      if(_curved) num *= 4;
-    }
-    return num + 100;
-  }
-  int _estimateNumQuads(GFace *f)
-  {
-    int num = 0;
-    if(CTX.mesh.surfaces_faces){
-      num += f->quadrangles.size();
+      num += (f->triangles.size() + 2 * f->quadrangles.size());
       if(_curved) num *= 4;
     }
     return num + 100;
@@ -646,12 +634,10 @@ class initMeshGFace {
 		 areSomeElementsCurved(f->quadrangles));
       f->va_lines = new VertexArray(2, _estimateNumLines(f));
       f->va_triangles = new VertexArray(3, _estimateNumTriangles(f));
-      f->va_quads = new VertexArray(4, _estimateNumQuads(f));
       if(CTX.mesh.triangles) addElementsInArrays(f, f->triangles, edg, fac);
       if(CTX.mesh.quadrangles) addElementsInArrays(f, f->quadrangles, edg, fac);
       f->va_lines->finalize();
       f->va_triangles->finalize();
-      f->va_quads->finalize();
     }
   }
 };
@@ -670,7 +656,6 @@ class drawMeshGFace {
     drawArrays(f, f->va_lines, GL_LINES, CTX.mesh.light && CTX.mesh.light_lines, 
 	       CTX.mesh.surfaces_faces, CTX.color.mesh.line);
     drawArrays(f, f->va_triangles, GL_TRIANGLES, CTX.mesh.light);
-    drawArrays(f, f->va_quads, GL_QUADS, CTX.mesh.light);
 
     if(CTX.mesh.surfaces_num) {
       if(CTX.mesh.triangles)
@@ -726,19 +711,8 @@ class initMeshGRegion {
   {
     int num = 0;
     if(CTX.mesh.volumes_faces){
-      num += (4 * r->tetrahedra.size() + 2 * r->prisms.size() + 
-	      4 * r->pyramids.size()) / 2;
-      if(CTX.mesh.explode != 1.) num *= 2;
-      if(_curved) num *= 4;
-    }
-    return num + 100;
-  }
-  int _estimateNumQuads(GRegion *r)
-  {
-    int num = 0;
-    if(CTX.mesh.volumes_faces){
-      num += (6 * r->hexahedra.size() + 3 * r->prisms.size() +
-	      r->pyramids.size()) / 2;
+      num += (4 * r->tetrahedra.size() + 12 * r->hexahedra.size() +
+	      8 * r->prisms.size() + 6 * r->pyramids.size()) / 2;
       if(CTX.mesh.explode != 1.) num *= 2;
       if(_curved) num *= 4;
     }
@@ -765,14 +739,12 @@ class initMeshGRegion {
 		 areSomeElementsCurved(r->pyramids));
       r->va_lines = new VertexArray(2, _estimateNumLines(r));
       r->va_triangles = new VertexArray(3, _estimateNumTriangles(r));
-      r->va_quads = new VertexArray(4, _estimateNumQuads(r));
       if(CTX.mesh.tetrahedra) addElementsInArrays(r, r->tetrahedra, edg, fac);
       if(CTX.mesh.hexahedra) addElementsInArrays(r, r->hexahedra, edg, fac);
       if(CTX.mesh.prisms) addElementsInArrays(r, r->prisms, edg, fac);
       if(CTX.mesh.pyramids) addElementsInArrays(r, r->pyramids, edg, fac);
       r->va_lines->finalize();
       r->va_triangles->finalize();
-      r->va_quads->finalize();
     }
   }
 };
@@ -791,7 +763,6 @@ class drawMeshGRegion {
     drawArrays(r, r->va_lines, GL_LINES, CTX.mesh.light && CTX.mesh.light_lines, 
 	       CTX.mesh.volumes_faces, CTX.color.mesh.line);
     drawArrays(r, r->va_triangles, GL_TRIANGLES, CTX.mesh.light);
-    drawArrays(r, r->va_quads, GL_QUADS, CTX.mesh.light);
     
     if(CTX.mesh.volumes_num) {
       if(CTX.mesh.tetrahedra) 

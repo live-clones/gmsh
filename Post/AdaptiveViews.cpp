@@ -24,11 +24,6 @@
 #include "AdaptiveViews.h"
 #include "Plugin.h"
 
-// A recursive effective implementation
-
-void computeShapeFunctions(Double_Matrix *coeffs, Double_Matrix *eexps,
-                           double u, double v, double w, double *sf);
-
 std::set<adapt_point> adapt_point::all_points;
 std::list<adapt_edge*> adapt_edge::all_elems;
 std::list<adapt_triangle*> adapt_triangle::all_elems;
@@ -41,6 +36,25 @@ int adapt_triangle::nbNod = 3;
 int adapt_tet::nbNod = 4;
 int adapt_quad::nbNod = 4;
 int adapt_hex::nbNod = 8;
+
+void computeShapeFunctions(Double_Matrix *coeffs, Double_Matrix *eexps,
+                           double u, double v, double w, double *sf)
+{
+  static double powsuvw[256];
+  for(int j = 0; j < coeffs->size2(); ++j) {
+    double powu = (*eexps)(j, 0);
+    double powv = (*eexps)(j, 1);
+    double poww = (*eexps)(j, 2);
+    powsuvw[j] = pow(u, powu) * pow(v, powv) * pow(w, poww);
+  }
+
+  for(int i = 0; i < coeffs->size1(); ++i) {
+    sf[i] = 0.0;
+    for(int j = 0; j < coeffs->size2(); ++j) {
+      sf[i] += (*coeffs)(i, j) * powsuvw[j];
+    }
+  }
+}
 
 adapt_point *adapt_point::New(double x, double y, double z,
                               Double_Matrix *coeffs, Double_Matrix *eexps)
@@ -919,25 +933,6 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel_TEMPL(int level, int levelma
   for(int i = 0; i < nbelm; ++i) {
     if(!done[i])
       done[i] = zoomElement<ELEM>(i, level, levelmax, plug, *myList, counter);
-  }
-}
-
-void computeShapeFunctions(Double_Matrix *coeffs, Double_Matrix *eexps,
-                           double u, double v, double w, double *sf)
-{
-  static double powsuvw[256];
-  for(int j = 0; j < coeffs->size2(); ++j) {
-    double powu = (*eexps)(j, 0);
-    double powv = (*eexps)(j, 1);
-    double poww = (*eexps)(j, 2);
-    powsuvw[j] = pow(u, powu) * pow(v, powv) * pow(w, poww);
-  }
-
-  for(int i = 0; i < coeffs->size1(); ++i) {
-    sf[i] = 0.0;
-    for(int j = 0; j < coeffs->size2(); ++j) {
-      sf[i] += (*coeffs)(i, j) * powsuvw[j];
-    }
   }
 }
 

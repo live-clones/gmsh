@@ -39,8 +39,6 @@ class PView{
   bool _changed;
   // tag of the source view if this view is an alias, zero otherwise
   int _aliasOf;
-  // reference counter (how many views link to this one)
-  int _links;
   // eye position (for transparency sorting)
   SPoint3 _eye;
   // the options
@@ -70,15 +68,12 @@ class PView{
   void setIndex(int val){ _index = val; }
   bool &getChanged(){ return _changed; }
   void setChanged(bool val);
-  int &getLinks(){ return _links; }
   int getAliasOf(){ return _aliasOf; }
   SPoint3 &getEye(){ return _eye; }
   void setEye(SPoint3 &p){ _eye = p; }
 
   // the static list of all loaded views
   static std::vector<PView*> list;
-  // the current view
-  static PView *current();
   // read view(s) in list format from a file
   static bool read(std::string filename, int fileIndex=-1);
   // combine view

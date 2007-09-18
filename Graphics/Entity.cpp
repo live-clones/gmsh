@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.77 2007-09-10 04:47:03 geuzaine Exp $
+// $Id: Entity.cpp,v 1.78 2007-09-18 16:26:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -325,7 +325,6 @@ void Draw_SimpleVector(int arrow, int fill,
   }
 
 }
-
 
 void Draw_3DArrow(double relHeadRadius, double relStemLength, double relStemRadius,
 		  double x, double y, double z, double dx, double dy, double dz,

@@ -1,4 +1,4 @@
-// $Id: MakeSimplex.cpp,v 1.4 2007-09-15 15:01:03 geuzaine Exp $
+// $Id: MakeSimplex.cpp,v 1.5 2007-09-18 16:26:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -119,12 +119,6 @@ PView *GMSH_MakeSimplexPlugin::execute(PView *v)
 
   PViewDataList *data1 = getDataList(v1);
   if(!data1) return v;
-
-  // Bail out if the view is an alias or if other views duplicate it
-  if(v1->getAliasOf() || v1->getLinks()) {
-    Msg(GERROR, "MakeSimplex cannot be applied to an aliased view");
-    return 0;
-  }
 
   // quads
   decomposeList(data1, 4, 1, &data1->SQ, &data1->NbSQ, data1->ST, &data1->NbST);

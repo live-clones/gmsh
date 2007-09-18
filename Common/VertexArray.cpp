@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.23 2007-09-14 18:51:37 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.24 2007-09-18 16:26:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -145,13 +145,13 @@ void VertexArray::sort(double x, double y, double z)
   // twice. We should think about a more efficient way to sort the
   // three arrays in place.
 
-  AlphaElementLessThan::numVertices = getNumVerticesPerElement();
+  int npe = getNumVerticesPerElement();
+  int n = getNumVertices() / npe;
+
+  AlphaElementLessThan::numVertices = npe;
   AlphaElementLessThan::eye[0] = x;
   AlphaElementLessThan::eye[1] = y;
   AlphaElementLessThan::eye[2] = z;
-
-  int npe = getNumVerticesPerElement();
-  int n = getNumVertices() / npe;
 
   std::vector<AlphaElement> elements;
   elements.reserve(n);
@@ -176,7 +176,7 @@ void VertexArray::sort(double x, double y, double z)
   sortedColors.reserve(_colors.size());
 
   for(int i = 0; i < n; i++){
-    for(int j = 0; j < getNumVerticesPerElement(); j++){
+    for(int j = 0; j < npe; j++){
       for(int k = 0; k < 3; k++){
 	sortedVertices.push_back(elements[i].v[3 * j + k]);
 	if(elements[i].v)

@@ -229,7 +229,7 @@ class GEntity {
   std::vector<int> physicals;
 
   // Vertex arrays to draw the mesh efficiently
-  VertexArray *va_lines, *va_triangles, *va_quads;
+  VertexArray *va_lines, *va_triangles;
 };
 
 class GEntityLessThan {

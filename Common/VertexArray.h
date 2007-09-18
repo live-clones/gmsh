@@ -53,7 +53,7 @@ class BarycenterLessThan{
 
 class VertexArray{
  private:
-  int _numVerticesPerElement;
+  const int _numVerticesPerElement;
   std::vector<float> _vertices;
   std::vector<char> _normals;
   std::vector<unsigned char> _colors;

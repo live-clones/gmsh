@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.14 2007-09-12 20:14:34 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.15 2007-09-18 16:26:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -56,10 +56,6 @@ MElement *getElement(GEntity *e, int va_type, int index)
   case 3:
     if(e->va_triangles && index < e->va_triangles->getNumElementPointers())
       return *e->va_triangles->getElementPointerArray(index);
-    break;
-  case 4:
-    if(e->va_quads && index < e->va_quads->getNumElementPointers())
-      return *e->va_quads->getElementPointerArray(index);
     break;
   }
   return 0;

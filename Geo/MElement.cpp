@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.41 2007-09-14 01:54:20 geuzaine Exp $
+// $Id: MElement.cpp,v 1.42 2007-09-18 16:26:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -73,7 +73,7 @@ int MElement::getNumEdgesRep()
   return getNumEdges();
 }
 
-int MElement::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+void MElement::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
   MEdge e = getEdge(num);
   SVector3 normal = (getDim() == 2) ? getFace(0).normal() : e.normal();
@@ -84,11 +84,10 @@ int MElement::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
     z[i] = v->z();
     n[i] = normal;
   }
-  return 2;
 }
 
-int MElement::_getEdgeRep(const int edge[2], double *x, double *y, double *z,
-			  SVector3 *n, int faceIndex)
+void MElement::_getEdgeRep(const int edge[2], double *x, double *y, double *z,
+			   SVector3 *n, int faceIndex)
 {
   MEdge e(getVertex(edge[0]), getVertex(edge[1]));
   SVector3 normal = (faceIndex >= 0) ? getFace(faceIndex).normal() : e.normal();
@@ -99,7 +98,6 @@ int MElement::_getEdgeRep(const int edge[2], double *x, double *y, double *z,
     z[i] = v->z();
     n[i] = normal;
   }
-  return 2;
 }
 
 int MElement::getNumFacesRep()
@@ -107,22 +105,21 @@ int MElement::getNumFacesRep()
   return getNumFaces();
 }
 
-int MElement::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
+void MElement::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
   MFace f = getFace(num);
   SVector3 normal = f.normal();
-  for(int i = 0; i < f.getNumVertices(); i++){
+  for(int i = 0; i < 3; i++){
     MVertex *v = f.getVertex(i);
     x[i] = v->x();
     y[i] = v->y();
     z[i] = v->z();
     n[i] = normal;
   }
-  return f.getNumVertices();
 }
 
-int MElement::_getFaceRep(const int face[3], double *x, double *y, double *z,
-			  SVector3 *n)
+void MElement::_getFaceRep(const int face[3], double *x, double *y, double *z,
+			   SVector3 *n)
 {
   for(int i = 0; i < 3; i++){
     MVertex *v = getVertex(face[i]);
@@ -135,7 +132,6 @@ int MElement::_getFaceRep(const int face[3], double *x, double *y, double *z,
   SVector3 normal = crossprod(t1, t2);
   normal.normalize();
   for(int i = 0; i < 3; i++) n[i] = normal;
-  return 3;
 }
 
 double MTetrahedron::gammaShapeMeasure()
@@ -514,7 +510,7 @@ void MTriangle::circumcenterXY(double *p1, double *p2, double *p3, double *res)
 
   d = 2. * (double)(y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
   if(d == 0.0) {
-    Msg(GERROR, "Colinear points in circum circle computation");
+    Msg(WARNING, "Colinear points in circum circle computation");
     res[0] = res[1] = -99999.;
     return ;
   }

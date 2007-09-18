@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.9 2007-09-14 18:51:37 geuzaine Exp $
+// $Id: PView.cpp,v 1.10 2007-09-18 16:26:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -34,7 +34,6 @@ void PView::_init()
   _num = ++_globalNum;
   _changed = true;
   _aliasOf = 0;
-  _links = 0;
   _eye = SPoint3(0., 0., 0.);
   va_points = va_lines = va_triangles = va_vectors = 0;
   normals = 0;
@@ -60,7 +59,6 @@ PView::PView(PView *ref, bool copyOptions)
 {
   _init();
   _aliasOf = ref->getNum();
-  ref->getLinks()++;
   _data = ref->getData();
   if(copyOptions)
     _options = new PViewOptions(*ref->getOptions());
@@ -113,25 +111,21 @@ PView::~PView()
   if(it != list.end()) list.erase(it);
   for(unsigned int i = 0; i < list.size(); i++) list[i]->setIndex(i);
 
-  if(!_data || _links > 0) return;
+  if(!_data) return;
 
-  if(_aliasOf){
-    for(unsigned int i = 0; i < list.size(); i++){
-      if(list[i]->getNum() == _aliasOf){
-	// original data still exists, decrement ref counter
-	list[i]->getLinks()--;
+  // do not delete if another view is an alias of this one
+  for(unsigned int i = 0; i < list.size(); i++)
+    if(list[i]->getAliasOf() == _num)
+      return;
+  
+  // do not delete if this view is an alias and 1) if the original
+  // still exists, or 2) if there are other aliases to the same view
+  if(_aliasOf)
+    for(unsigned int i = 0; i < list.size(); i++)
+      if(list[i]->getNum() == _aliasOf || list[i]->getAliasOf() == _aliasOf)
 	return;
-      }
-    }
-    for(unsigned int i = 0; i < list.size(); i++){
-      if(list[i]->getAliasOf() == _aliasOf){
-	// original is gone, but other aliases exist
-	return;
-      }
-    }
-  }
-
-  Msg(DEBUG, "Deleting data in ex-View[%d] (unique num = %d)", _index, _num);
+  
+  Msg(DEBUG, "Deleting data in View[%d] (unique num = %d)", _index, _num);
   delete _data;
 }
 
@@ -149,16 +143,6 @@ void PView::setChanged(bool val)
   // reset the eye position everytime we change the view so that the
   // arrays get resorted for transparency
   if(_changed) _eye = SPoint3(0., 0., 0.); 
-}
-
-PView *PView::current()
-{ 
-  if(list.empty()){
-    Msg(GERROR, "No view available");
-    return 0;
-  }
-  // return the last one for now
-  return list.back();
 }
 
 bool PView::read(std::string filename, int fileIndex)

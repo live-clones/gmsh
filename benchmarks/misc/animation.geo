@@ -11,8 +11,7 @@ For(1:300)
   General.RotationX += 10 ;
   General.RotationY =  General.RotationX / 3 ;
 
-  View[0].TimeStep += 
-    (View[0].TimeStep < View[0].NbTimeStep-1) ? 1 : 0 ;
+  View[0].TimeStep++;
 
   Sleep 0.1;
   Draw;

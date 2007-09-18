@@ -1,4 +1,11 @@
-$Id: TODO,v 1.60 2007-08-23 06:59:53 geuzaine Exp $
+$Id: TODO,v 1.61 2007-09-18 16:26:04 geuzaine Exp $
+
+********************************************************************
+
+add set<BarycenterData> in VertexArray so that we can do automatic
+boundary constructions (should probably be ON by default for 3D scalar
+rendering when explode==1). Transfer data to actual arrays in
+VertexArray::finalize()
 
 ********************************************************************
 
@@ -14,7 +21,7 @@ GModel->checkMeshCoherence
 
 ********************************************************************
 
-add function to deform MESH with displacement post-pro view
+add function to deform the MESH with a displacement post-pro view
 
 ********************************************************************
 
@@ -41,9 +48,9 @@ reinterface Triangle for plane surfaces
 
 ********************************************************************
 
-Bug: need to better understand how Netgen deals with charact. lengths:
-a larger geometry (with appropriately scaled lcs) leads to a larger
-mesh!
+Bug: need to better understand how Netgen deals with characteristic
+lengths: a larger geometry (with appropriately scaled lcs) leads to a
+larger mesh
 
 ********************************************************************
 
@@ -64,11 +71,6 @@ add transformations on volumes
 
 ********************************************************************
 
-when we mesh->edit->delete elements (or maybe when we save meshes)
-we should delete any unused vertices [for akash]
-
-********************************************************************
-
 introduce Right/Left/Alternate for extruded meshes
 
 ********************************************************************
@@ -83,11 +85,7 @@ cases
 
 ********************************************************************
 
-recode BDS::extract edges
-
-********************************************************************
-
-recode BDS::remesh (for STL remeshing)
+implement STL remeshing
 
 ********************************************************************
 
@@ -143,7 +141,7 @@ surface.)
 
 ********************************************************************
 
-add a min_recursion option for adaptve views (to force at least a 
+add a min_recursion option for adaptive views (to force at least a 
 certain number of subdivisions)
 
 ********************************************************************
@@ -189,13 +187,6 @@ strategy
 
 ********************************************************************
 
-template the view handling/drawing routines so that we can actually
-use post-pro files with float values (50% file savings can be nice
-for very large maps; would bring the format up to par with an 
-index-based format)
-
-********************************************************************
-
 add/restore Parametric curve type (use MathEval!)
 
 ********************************************************************
@@ -215,15 +206,7 @@ be solved if we had dynamic labels?)
 
 ********************************************************************
 
-rewrite the View and ColorTable interface in C++
-
-********************************************************************
-
-post-processing file format:
-- add an integer per simplex (region num)?
-- add a format similar to the msh format (node list + simplex list)?
-- add a structured format?
-...or implement one of the "industry-standard" formats?
+rewrite ColorTable as a C++ class
 
 ********************************************************************
 
@@ -250,23 +233,3 @@ Yves Krahenbuhl wrote:
 > restreindre (automatiquement ou non) a une interpolation lineaire
 > entre les points en question.
 
-********************************************************************
-
-Pb avec View->Reload si plusieurs vues dans le meme fichier
-
-> > Hmm, je viens de tester sous Linux et je n'arrive pas a reproduire le
-> > bug. A moins que... Aurais-tu toutes tes vues stockees dans le meme
-> > fichier ? Car 'reload' relit simplement le fichier duquel provient la
-> > vue (et il le relit entierement).
-> 
-> Tout a fait, toutes les vues sont dans un fichier unique.
-
-C'est de la que vient le probleme. Le 'reload' recharge en fait le
-fichier duquel provient la vue, en *forcant* sa position dans la liste
-des vues chargees. Si le fichier contient plusieurs vues, il va
-recharger la premiere, lui affecter la position de celle que tu veux
-recharger, puis la deuxieme, en lui affectant le meme position, et
-ainsi de suite. Ca fait donc un supeeer memory leak : tu recharges
-bien toutes les vues, mais tu ne sais acceder qu'a la derniere... Pour
-corriger ca, il faudrait que l'on garde comme info supplementaire dans
-chaque vue quelle etait sa position dans le fichier.

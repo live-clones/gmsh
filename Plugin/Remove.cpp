@@ -1,4 +1,4 @@
-// $Id: Remove.cpp,v 1.11 2007-09-11 14:01:55 geuzaine Exp $
+// $Id: Remove.cpp,v 1.12 2007-09-18 16:26:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -94,11 +94,6 @@ PView *GMSH_RemovePlugin::execute(PView *v)
   PViewDataList *data1 = getDataList(v1);
   if(!data1) return v;
   
-  if(v1->getAliasOf() || v1->getLinks()){
-    Msg(GERROR, "Cannot remove data from aliased view");
-    return v1;
-  }
-
   int scalar = (int)RemoveOptions_Number[10].def;
   int vector = (int)RemoveOptions_Number[11].def;
   int tensor = (int)RemoveOptions_Number[12].def;
