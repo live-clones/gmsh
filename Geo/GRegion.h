@@ -52,6 +52,9 @@ class GRegion : public GEntity {
   // Delete the mesh partitions defined on this region.
   void deleteMeshPartitions();
 
+  // Returns a type-specific additional information string
+  virtual std::string getAdditionalInfoString();
+
   // Resets the mesh attributes to default values
   virtual void resetMeshAttributes();
 

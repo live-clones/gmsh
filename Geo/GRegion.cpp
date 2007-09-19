@@ -1,4 +1,4 @@
-// $Id: GRegion.cpp,v 1.17 2007-09-04 13:47:01 remacle Exp $
+// $Id: GRegion.cpp,v 1.18 2007-09-19 19:03:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -115,6 +115,28 @@ void GRegion::deleteMeshPartitions()
     prisms[i]->setPartition(0);
   for(unsigned int i = 0; i < pyramids.size(); i++)
     pyramids[i]->setPartition(0);
+}
+
+std::string GRegion::getAdditionalInfoString()
+{
+  if(l_faces.empty()) return std::string("");
+
+  char tmp[256];
+  if(l_faces.size() > 10){
+    sprintf(tmp, "{%d, ..., %d}", (*l_faces.begin())->tag(), (*l_faces.end())->tag());
+    return std::string(tmp);
+  }
+
+  std::string str("");
+  std::list<GFace*>::const_iterator it = l_faces.begin();
+  str += "{";
+  for(; it != l_faces.end(); it++){
+    if(it != l_faces.begin()) str += ",";
+    sprintf(tmp, "%d", (*it)->tag());
+    str += tmp;
+  }
+  str += "}";
+  return str;
 }
 
 std::list<GEdge*> GRegion::edges() const

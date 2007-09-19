@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.35 2007-08-03 00:44:28 geuzaine Exp $
+// $Id: GFace.cpp,v 1.36 2007-09-19 19:03:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -131,6 +131,28 @@ void GFace::deleteMeshPartitions()
     triangles[i]->setPartition(0);
   for(unsigned int i = 0; i < quadrangles.size(); i++)
     quadrangles[i]->setPartition(0);
+}
+
+std::string GFace::getAdditionalInfoString()
+{
+  if(l_edges.empty()) return std::string("");
+
+  char tmp[256];
+  if(l_edges.size() > 10){
+    sprintf(tmp, "{%d, ..., %d}", (*l_edges.begin())->tag(), (*l_edges.end())->tag());
+    return std::string(tmp);
+  }
+
+  std::string str("");
+  std::list<GEdge*>::const_iterator it = l_edges.begin();
+  str += "{";
+  for(; it != l_edges.end(); it++){
+    if(it != l_edges.begin()) str += ",";
+    sprintf(tmp, "%d", (*it)->tag());
+    str += tmp;
+  }
+  str += "}";
+  return str;
 }
 
 void GFace::computeMeanPlane()

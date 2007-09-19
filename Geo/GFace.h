@@ -144,6 +144,9 @@ class GFace : public GEntity
   // Delete the mesh partitions defined on this face.
   void deleteMeshPartitions();
 
+  // Returns a type-specific additional information string
+  virtual std::string getAdditionalInfoString();
+
   // Recompute the mean plane of the surface from a list of points
   void computeMeanPlane(const std::vector<MVertex*> &points);
   void computeMeanPlane(const std::vector<SPoint3> &points);
