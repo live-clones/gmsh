@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.42 2007-09-18 16:26:02 geuzaine Exp $
+// $Id: MElement.cpp,v 1.43 2007-09-19 23:42:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -31,6 +31,34 @@ extern Context_T CTX;
 
 int MElement::_globalNum = 0;
 double MElementLessThanLexicographic::tolerance = 1.e-6;
+
+void MElement::_getEdgeRep(MVertex *v0, MVertex *v1, 
+			   double *x, double *y, double *z, SVector3 *n, 
+			   int faceIndex)
+{
+  x[0] = v0->x(); y[0] = v0->y(); z[0] = v0->z();
+  x[1] = v1->x(); y[1] = v1->y(); z[1] = v1->z();
+  if(faceIndex >= 0){
+    n[0] = n[1] = getFace(faceIndex).normal();
+  }
+  else{
+    MEdge e(v0, v1);
+    n[0] = n[1] = e.normal();
+  }
+}
+
+void MElement::_getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2, 
+			   double *x, double *y, double *z, SVector3 *n)
+{
+  x[0] = v0->x(); x[1] = v1->x(); x[2] = v2->x(); 
+  y[0] = v0->y(); y[1] = v1->y(); y[2] = v2->y();
+  z[0] = v0->z(); z[1] = v1->z(); z[2] = v2->z();
+  SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
+  SVector3 t2(x[2] - x[0], y[2] - y[0], z[2] - z[0]);
+  SVector3 normal = crossprod(t1, t2);
+  normal.normalize();
+  for(int i = 0; i < 3; i++) n[i] = normal;
+}
 
 char MElement::getVisibility()
 {
@@ -66,72 +94,6 @@ double MElement::rhoShapeMeasure()
     return min / max;
   else
     return 0.;
-}
-
-int MElement::getNumEdgesRep()
-{
-  return getNumEdges();
-}
-
-void MElement::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-{
-  MEdge e = getEdge(num);
-  SVector3 normal = (getDim() == 2) ? getFace(0).normal() : e.normal();
-  for(int i = 0; i < 2; i++){
-    MVertex *v = e.getVertex(i);
-    x[i] = v->x();
-    y[i] = v->y();
-    z[i] = v->z();
-    n[i] = normal;
-  }
-}
-
-void MElement::_getEdgeRep(const int edge[2], double *x, double *y, double *z,
-			   SVector3 *n, int faceIndex)
-{
-  MEdge e(getVertex(edge[0]), getVertex(edge[1]));
-  SVector3 normal = (faceIndex >= 0) ? getFace(faceIndex).normal() : e.normal();
-  for(int i = 0; i < 2; i++){
-    MVertex *v = e.getVertex(i);
-    x[i] = v->x(); 
-    y[i] = v->y(); 
-    z[i] = v->z();
-    n[i] = normal;
-  }
-}
-
-int MElement::getNumFacesRep()
-{
-  return getNumFaces();
-}
-
-void MElement::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-{
-  MFace f = getFace(num);
-  SVector3 normal = f.normal();
-  for(int i = 0; i < 3; i++){
-    MVertex *v = f.getVertex(i);
-    x[i] = v->x();
-    y[i] = v->y();
-    z[i] = v->z();
-    n[i] = normal;
-  }
-}
-
-void MElement::_getFaceRep(const int face[3], double *x, double *y, double *z,
-			   SVector3 *n)
-{
-  for(int i = 0; i < 3; i++){
-    MVertex *v = getVertex(face[i]);
-    x[i] = v->x(); 
-    y[i] = v->y(); 
-    z[i] = v->z();
-  }
-  SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
-  SVector3 t2(x[2] - x[0], y[2] - y[0], z[2] - z[0]);
-  SVector3 normal = crossprod(t1, t2);
-  normal.normalize();
-  for(int i = 0; i < 3; i++) n[i] = normal;
 }
 
 double MTetrahedron::gammaShapeMeasure()
