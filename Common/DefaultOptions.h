@@ -1007,6 +1007,8 @@ StringXNumber MeshOptions_Number[] = {
     "Only display elements whose longest edge is smaller than RadiusSup" },
   { F|O, "RandomFactor" , opt_mesh_rand_factor , 1.e-9 ,
     "Random factor used in 2D and 3D meshing algorithm (test other values when the algorithm fails)" },
+  { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
+    "Number of refinement steps in the MeshAdapt-based 2D algorithms" }, 
   { F|O, "RecombineAlgo" , opt_mesh_recombine_algo , 1 ,
     "Recombine algorithm (1=mixed triangles-quadrangles, 2=all quadrangles)" }, 
   { F|O, "ReverseAllNormals" , opt_mesh_reverse_all_normals , 0. , 

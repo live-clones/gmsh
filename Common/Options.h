@@ -426,6 +426,7 @@ double opt_geometry_snap1(OPT_ARGS_NUM);
 double opt_geometry_snap2(OPT_ARGS_NUM);
 double opt_mesh_label_frequency(OPT_ARGS_NUM);
 double opt_mesh_optimize(OPT_ARGS_NUM);
+double opt_mesh_refine_steps(OPT_ARGS_NUM);
 double opt_mesh_normals(OPT_ARGS_NUM);
 double opt_mesh_tangents(OPT_ARGS_NUM);
 double opt_mesh_explode(OPT_ARGS_NUM);

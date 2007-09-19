@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.358 2007-09-15 17:11:50 geuzaine Exp $
+// $Id: Options.cpp,v 1.359 2007-09-19 14:21:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4204,6 +4204,13 @@ double opt_mesh_optimize(OPT_ARGS_NUM)
     WID->mesh_butt[2]->value(CTX.mesh.optimize);
 #endif
   return CTX.mesh.optimize;
+}
+
+double opt_mesh_refine_steps(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.refine_steps =(int) val;
+  return CTX.mesh.refine_steps;
 }
 
 double opt_mesh_normals(OPT_ARGS_NUM)

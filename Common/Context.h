@@ -172,7 +172,7 @@ public :
     double label_frequency;
     int point_type; // flat or 3D
     double point_size, line_width;
-    int optimize;
+    int optimize, refine_steps;
     int quality_type, label_type;
     double quality_inf, quality_sup, radius_inf, radius_sup;
     double scaling_factor, lc_factor, rand_factor, lc_integration_precision;
