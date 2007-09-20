@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.640 2007-09-15 17:11:50 geuzaine Exp $
+// $Id: GUI.cpp,v 1.641 2007-09-20 17:19:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -475,8 +475,7 @@ int GetFontSize()
     return CTX.fontsize;
   }
   else{
-    int x, y, w, h;
-    Fl::screen_xywh(x, y, w, h);
+    int w = Fl::w();
     if(w <= 860)       return 11;
     else if(w <= 1024) return 12;
     else if(w <= 1440) return 13;
