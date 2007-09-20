@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.134 2007-09-18 16:26:02 geuzaine Exp $
+// $Id: Post.cpp,v 1.135 2007-09-20 10:03:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -981,7 +981,7 @@ void drawVectorArray(PView *p, VertexArray *va)
     glColor4ubv((GLubyte *)va->getColorArray(4 * i));
     double max;
     if(opt->ArrowSizeProportional)
-      max = p->getData()->getMax(opt->TimeStep);
+      max = opt->TmpMax;
     else
       max = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
     if(max){
@@ -1289,6 +1289,19 @@ class drawPView {
 	  p->va_triangles->sort(p->getEye().x(), p->getEye().y(), p->getEye().z());
 	}
       }
+    }
+
+    if(opt->RangeType == PViewOptions::Custom){
+      opt->TmpMin = opt->CustomMin;
+      opt->TmpMax = opt->CustomMax;
+    }
+    else if(opt->RangeType == PViewOptions::PerTimeStep){
+      opt->TmpMin = data->getMin(opt->TimeStep);
+      opt->TmpMax = data->getMax(opt->TimeStep);
+    }
+    else{
+      opt->TmpMin = data->getMin();
+      opt->TmpMax = data->getMax();
     }
 
     // draw all the vertex arrays
