@@ -23,6 +23,11 @@
 #include <float.h>
 #include "SPoint3.h"
 
+#if defined(WIN32)
+#undef min
+#undef max
+#endif
+
 // A bounding box class - add points and it grows to be the bounding
 // box of the point set
 class SBoundingBox3d {
