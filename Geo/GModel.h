@@ -32,8 +32,6 @@
 
 // OCC Internals have to be stored in the model
 class OCC_Internals;
-// Fourier Internals have to be stored in the model
-class F_Internals;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel  
@@ -41,7 +39,6 @@ class GModel
  protected:
   void deleteOCCInternals();
   OCC_Internals *occ_internals;
-  F_Internals *f_internals;
 
   std::string modelName;
   std::set<GRegion*, GEntityLessThan> regions;
@@ -52,9 +49,8 @@ class GModel
   std::map<int, std::string> physicalNames;
 
  public:
-  GModel() : modelName("Untitled"), normals(0) {}
-  GModel(const std::string &name) : modelName(name), normals(0) {}
-  ~GModel(){ deleteOCCInternals(); destroy(); }
+  GModel(std::string name="");
+  ~GModel();
   
   // the static list of all loaded models
   static std::vector<GModel*> list;

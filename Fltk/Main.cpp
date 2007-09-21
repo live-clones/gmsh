@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.110 2007-09-10 05:31:35 geuzaine Exp $
+// $Id: Main.cpp,v 1.111 2007-09-21 21:14:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
   }
 
   // Create a new model
-  GModel::list.push_back(new GModel);
+  new GModel;
   THEM = new Mesh;
 
   // Initialize the symbol tree that will hold variable names

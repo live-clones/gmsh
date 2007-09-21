@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.47 2007-09-12 20:14:34 geuzaine Exp $
+// $Id: GModel.cpp,v 1.48 2007-09-21 21:14:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,20 @@
 #include "Message.h"
 
 std::vector<GModel*> GModel::list;
+
+GModel::GModel(std::string name)
+  : modelName(name), normals(0)
+{
+  list.push_back(this);
+}
+
+GModel::~GModel()
+{ 
+  std::vector<GModel*>::iterator it = std::find(list.begin(), list.end(), this);
+  if(it != list.end()) list.erase(it);
+  deleteOCCInternals();
+  destroy();
+}
 
 GModel *GModel::current()
 { 
@@ -68,7 +82,7 @@ void GModel::destroy()
   BGMReset();
 }
 
-GRegion * GModel::regionByTag(int n) const
+GRegion *GModel::regionByTag(int n) const
 {
   GEntity tmp((GModel*)this, n);
   riter it = regions.find((GRegion*)&tmp);
@@ -78,7 +92,7 @@ GRegion * GModel::regionByTag(int n) const
     return 0;
 }
 
-GFace * GModel::faceByTag(int n) const
+GFace *GModel::faceByTag(int n) const
 {
   GEntity tmp((GModel*)this, n);
   fiter it = faces.find((GFace*)&tmp);
@@ -88,7 +102,7 @@ GFace * GModel::faceByTag(int n) const
     return 0;
 }
 
-GEdge * GModel::edgeByTag(int n) const
+GEdge *GModel::edgeByTag(int n) const
 {
   GEntity tmp((GModel*)this, n);
   eiter it = edges.find((GEdge*)&tmp);
@@ -98,7 +112,7 @@ GEdge * GModel::edgeByTag(int n) const
     return 0;
 }
 
-GVertex * GModel::vertexByTag(int n) const
+GVertex *GModel::vertexByTag(int n) const
 {
   GEntity tmp((GModel*)this, n);
   viter it = vertices.find((GVertex*)&tmp);
@@ -291,7 +305,7 @@ bool GModel::noPhysicalGroups()
   return true;
 }
 
-static void addInGroup(GEntity* ge, std::map<int, std::vector<GEntity*> > &group)
+static void addInGroup(GEntity *ge, std::map<int, std::vector<GEntity*> > &group)
 {
   for(unsigned int i = 0; i < ge->physicals.size(); i++){
     // physicals can be stored with negative signs when the entity

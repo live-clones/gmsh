@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.37 2007-09-10 04:47:01 geuzaine Exp $
+// $Id: Box.cpp,v 1.38 2007-09-21 21:14:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -78,7 +78,7 @@ int GMSHBOX(int argc, char *argv[])
 {
   ParUtil::Instance()->init(argc, argv);
 
-  GModel::list.push_back(new GModel);
+  new GModel;
   THEM = new Mesh;
 
   InitSymbols();
