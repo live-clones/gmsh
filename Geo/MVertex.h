@@ -141,6 +141,6 @@ class MFaceVertex : public MVertex{
   virtual bool setParameter(int i, double par){ if(!i) _u = par; else _v = par; return true; }
 };
 
-void parametricCoordinates ( const MVertex*ver, const GFace *gf, double &u, double &v);
+void parametricCoordinates(const MVertex *ver, const GFace *gf, double &u, double &v);
 
 #endif

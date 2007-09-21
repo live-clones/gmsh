@@ -1,4 +1,4 @@
-// $Id: MVertex.cpp,v 1.15 2007-09-04 13:47:01 remacle Exp $
+// $Id: MVertex.cpp,v 1.16 2007-09-21 16:22:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -118,6 +118,16 @@ static void double_to_char8(double val, char *str){
     sprintf(str, "%f", val);
   else
     sprintf(str, "%.1E", val);
+
+#if defined(WIN32)
+  // Windows uses 3 digits in the exponent (which apparently does not
+  // conform with ANSI C): remove the extra 0
+  if(strlen(str) == 9 && (str[4] == 'E' || str[5] == 'E')){
+    str[6] = str[7];
+    str[7] = str[8];
+  }
+#endif
+
   str[8] = '\0';
 }
 
@@ -157,28 +167,25 @@ MVertex::linearSearch(std::set<MVertex*, MVertexLessThanLexicographic> &pos)
   return pos.end();
 }
 
-void parametricCoordinates ( const MVertex*ver, const GFace *gf, double &u, double &v)
+void parametricCoordinates(const MVertex *ver, const GFace *gf, double &u, double &v)
 {
   GEntity *ge = ver->onWhat();
-  if (ge->dim() == 2)
-    {
-      ver->getParameter ( 0,u);
-      ver->getParameter ( 1,v);	  
-    }
-  else if (ge->dim() == 1)
-    {
-      double t;
-      ver->getParameter ( 0,t);
-      GEdge *ged = dynamic_cast<GEdge*> (ge);
-      SPoint2 p = ged->reparamOnFace ( (GFace*)gf , t , 1);
-      u =p.x(); 
-      v =p.y(); 
-    }
-  else
-    {
-      GVertex *gver = dynamic_cast<GVertex*> (ge);
-      SPoint2 p = gver->reparamOnFace ( (GFace*)gf , 1);
-      u =p.x(); 
-      v =p.y(); 
-    }      
+  if(ge->dim() == 2){
+    ver->getParameter(0, u);
+    ver->getParameter(1, v);	  
+  }
+  else if(ge->dim() == 1){
+    double t;
+    ver->getParameter(0, t);
+    GEdge *ged = dynamic_cast<GEdge*>(ge);
+    SPoint2 p = ged->reparamOnFace((GFace*)gf, t, 1);
+    u = p.x();
+    v = p.y();
+  }
+  else{
+    GVertex *gver = dynamic_cast<GVertex*>(ge);
+    SPoint2 p = gver->reparamOnFace((GFace*)gf, 1);
+    u = p.x();
+    v = p.y();
+  }      
 }
