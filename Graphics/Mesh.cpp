@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.206 2007-09-18 16:26:02 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.207 2007-09-21 23:09:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -395,6 +395,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
     if(CTX.mesh.explode != 1.) pc = ele->barycenter();
 
     if(edges){
+      bool unique = e->dim() > 1 && !CTX.pick_elements;
       for(int j = 0; j < ele->getNumEdgesRep(); j++){
 	double x[2], y[2], z[2];
 	SVector3 n[2];
@@ -409,11 +410,12 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
 	if(e->dim() == 2 && CTX.mesh.smooth_normals)
 	  for(int k = 0; k < 2; k++)
 	    e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1], n[k][2]);
-	e->va_lines->add(x, y, z, n, col, ele, !CTX.pick_elements);
+	e->va_lines->add(x, y, z, n, col, ele, unique);
       }
     }
 
     if(faces){
+      bool unique = e->dim() > 2 && !CTX.pick_elements;
       for(int j = 0; j < ele->getNumFacesRep(); j++){
 	double x[3], y[3], z[3];
 	SVector3 n[3];
@@ -428,7 +430,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
 	if(e->dim() == 2 && CTX.mesh.smooth_normals)
 	  for(int k = 0; k < 3; k++)
 	    e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1], n[k][2]);
-	e->va_triangles->add(x, y, z, n, col, ele, !CTX.pick_elements);
+	e->va_triangles->add(x, y, z, n, col, ele, unique);
       }
     }
   }
