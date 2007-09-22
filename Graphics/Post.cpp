@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.137 2007-09-22 20:35:18 geuzaine Exp $
+// $Id: Post.cpp,v 1.138 2007-09-22 22:56:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -399,7 +399,7 @@ void addOutlineTriangle(PView *p, double xyz[NMAX][3], unsigned int color, bool 
 }
 
 void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool pre,
-		       int i0=0, int i1=1, int i2=2, bool unique=false)
+		       int i0=0, int i1=1, int i2=2, bool unique=false, bool skin=false)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -436,7 +436,7 @@ void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool 
 	}
 	col[i] = opt->getColor(v[i], vmin, vmax);
       }
-      if(!pre) p->va_triangles->add(x, y, z, n, col, 0, unique);
+      if(!pre) p->va_triangles->add(x, y, z, n, col, 0, unique, skin);
     }
     else{
       double x2[10], y2[10], z2[10], v2[10];
@@ -456,7 +456,7 @@ void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool 
 	    }
 	    col[i] = opt->getColor(v3[i], vmin, vmax);
 	  }
-	  if(!pre) p->va_triangles->add(x3, y3, z3, n, col, 0, unique);
+	  if(!pre) p->va_triangles->add(x3, y3, z3, n, col, 0, unique, skin);
 	}
       }
     }
@@ -483,7 +483,7 @@ void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool 
 	      else p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
 	    }
 	  }
-	  if(!pre) p->va_triangles->add(x3, y3, z3, n, col, 0, unique);
+	  if(!pre) p->va_triangles->add(x3, y3, z3, n, col, 0, unique, skin);
 	}
       }
       if(vmin == vmax) break;
@@ -580,7 +580,8 @@ void addScalarTetrahedron(PView *p, double xyz[NMAX][3], double val[NMAX][9], bo
      opt->IntervalsType == PViewOptions::Discrete){
     opt->Boundary--;
     for(int i = 0; i < 4; i++)
-      addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], true);
+      addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], true, 
+			(opt->Boundary > 0) ? false : opt->DrawSkinOnly);
     opt->Boundary++;
     return;
   }
@@ -614,7 +615,7 @@ void addScalarTetrahedron(PView *p, double xyz[NMAX][3], double val[NMAX][9], bo
 	      else p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
 	    }
 	  }
-	  if(!pre) p->va_triangles->add(x3, y3, z3, n, col, 0, false);
+	  if(!pre) p->va_triangles->add(x3, y3, z3, n, col, 0, false, false);
 	}
       }
       if(vmin == vmax) break;

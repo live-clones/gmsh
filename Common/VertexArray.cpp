@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.26 2007-09-22 20:35:18 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.27 2007-09-22 22:56:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -63,13 +63,11 @@ void VertexArray::add(float x, float y, float z, float n0, float n1, float n2,
   if(ele && CTX.pick_elements) _elements.push_back(ele);
 }
 
-void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
-		      unsigned int *col, MElement *ele, bool unique)
+void VertexArray::add(double *x, double *y, double *z, SVector3 *n, 
+		      unsigned int *col, MElement *ele, bool unique, bool boundary)
 {
   int npe = getNumVerticesPerElement();
 
-  /*
-  bool boundary = true;
   if(boundary && npe == 3){
     ElementData<3> e(x, y, z, n, col, ele);
     std::set<ElementData<3>, ElementDataLessThan<3> >::iterator it = _data3.find(e);
@@ -79,13 +77,13 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
       _data3.erase(it);
     return;
   }
-  */
 
   if(unique){
     Barycenter pc(0., 0., 0.);
     for(int i = 0; i < npe; i++)
       pc += Barycenter(x[i], y[i], z[i]);
-    if(_barycenters.find(pc) != _barycenters.end()) return;
+    if(_barycenters.find(pc) != _barycenters.end()) 
+      return;
     _barycenters.insert(pc);
   }
   
@@ -107,7 +105,7 @@ void VertexArray::finalize()
 }
 
 class AlphaElement {
-public:
+ public:
   AlphaElement(float *vp, char *np, unsigned char *cp) : v(vp), n(np), c(cp) {}
   float *v;
   char *n;

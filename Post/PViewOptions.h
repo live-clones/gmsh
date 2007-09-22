@@ -85,7 +85,7 @@ class PViewOptions {
   int DrawPoints, DrawLines, DrawTriangles, DrawQuadrangles;
   int DrawTetrahedra, DrawHexahedra, DrawPrisms, DrawPyramids;
   int DrawScalars, DrawVectors, DrawTensors;
-  int Boundary, PointType, LineType;
+  int Boundary, PointType, LineType, DrawSkinOnly;
   double PointSize, LineWidth;
   GmshColorTable CT;
   int UseStipple, Stipple[10][2];

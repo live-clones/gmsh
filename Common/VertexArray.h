@@ -80,7 +80,7 @@ class ElementDataLessThan{
   {
     SPoint3 p1 = e1.barycenter();
     SPoint3 p2 = e2.barycenter();
-    float tolerance = CTX.lc * 1.e-6;
+    float tolerance = CTX.lc * 1.e-12;
     if(p1.x() - p2.x() >  tolerance) return true;
     if(p1.x() - p2.x() < -tolerance) return false;
     if(p1.y() - p2.y() >  tolerance) return true;
@@ -105,7 +105,7 @@ class BarycenterLessThan{
  public:
   bool operator()(const Barycenter &p1, const Barycenter &p2) const
   {
-    float tolerance = CTX.lc * 1.e-6;
+    float tolerance = CTX.lc * 1.e-12;
     if(p1.x() - p2.x() >  tolerance) return true;
     if(p1.x() - p2.x() < -tolerance) return false;
     if(p1.y() - p2.y() >  tolerance) return true;
@@ -148,7 +148,7 @@ class VertexArray{
   // element if another one with the same barycenter is not already
   // present)
   void add(double *x, double *y, double *z, SVector3 *n, unsigned int *col,
-	   MElement *ele=0, bool unique=true);
+	   MElement *ele=0, bool unique=true, bool boundary=false);
   // finalize the arrays
   void finalize();
   // sorts the arrays with elements back to front wrt the eye position

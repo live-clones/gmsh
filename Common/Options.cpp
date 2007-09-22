@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.359 2007-09-19 14:21:56 geuzaine Exp $
+// $Id: Options.cpp,v 1.360 2007-09-22 22:56:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -6509,6 +6509,16 @@ double opt_view_draw_tensors(OPT_ARGS_NUM)
   }
 #endif
   return opt->DrawTensors;
+}
+
+double opt_view_draw_skin_only(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    opt->DrawSkinOnly = (int)val;
+    if(view) view->setChanged(true);
+  }
+  return opt->DrawSkinOnly;
 }
 
 double opt_view_scale_type(OPT_ARGS_NUM)
