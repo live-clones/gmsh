@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.547 2007-09-22 18:19:29 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.548 2007-09-22 23:25:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1293,6 +1293,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double max_recursion_level = opt_view_max_recursion_level(current, GMSH_GET, 0);
   double target_error = opt_view_target_error(current, GMSH_GET, 0);
   double show_element = opt_view_show_element(current, GMSH_GET, 0);
+  double draw_skin_only = opt_view_draw_skin_only(current, GMSH_GET, 0);
   double show_scale = opt_view_show_scale(current, GMSH_GET, 0);
   double auto_position = opt_view_auto_position(current, GMSH_GET, 0);
   double axes_auto_position = opt_view_axes_auto_position(current, GMSH_GET, 0);
@@ -1454,6 +1455,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
       val = WID->view_butt[10]->value();
       if(force || (val != show_element))
         opt_view_show_element(i, GMSH_SET, val);
+
+      val = WID->view_butt[2]->value();
+      if(force || (val != draw_skin_only))
+        opt_view_draw_skin_only(i, GMSH_SET, val);
 
       val = WID->view_butt[4]->value();
       if(force || (val != show_scale))

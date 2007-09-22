@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.138 2007-09-22 22:56:37 geuzaine Exp $
+// $Id: Post.cpp,v 1.139 2007-09-22 23:25:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -578,10 +578,10 @@ void addScalarTetrahedron(PView *p, double xyz[NMAX][3], double val[NMAX][9], bo
   if(opt->Boundary > 0 ||
      opt->IntervalsType == PViewOptions::Continuous ||
      opt->IntervalsType == PViewOptions::Discrete){
+    bool skin = (opt->Boundary > 0) ? false : opt->DrawSkinOnly;
     opt->Boundary--;
     for(int i = 0; i < 4; i++)
-      addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], true, 
-			(opt->Boundary > 0) ? false : opt->DrawSkinOnly);
+      addScalarTriangle(p, xyz, val, pre, it[i][0], it[i][1], it[i][2], true, skin);
     opt->Boundary++;
     return;
   }

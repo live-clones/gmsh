@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.360 2007-09-22 22:56:37 geuzaine Exp $
+// $Id: Options.cpp,v 1.361 2007-09-22 23:25:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -6518,6 +6518,10 @@ double opt_view_draw_skin_only(OPT_ARGS_NUM)
     opt->DrawSkinOnly = (int)val;
     if(view) view->setChanged(true);
   }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_butt[2]->value(opt->DrawSkinOnly);
+#endif
   return opt->DrawSkinOnly;
 }
 

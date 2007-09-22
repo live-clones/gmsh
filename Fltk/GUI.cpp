@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.641 2007-09-20 17:19:12 geuzaine Exp $
+// $Id: GUI.cpp,v 1.642 2007-09-22 23:25:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3080,10 +3080,14 @@ void GUI::create_option_window()
       view_butt[5]->type(FL_TOGGLE_BUTTON);
       view_butt[5]->callback(view_options_ok_cb);
 
-      view_butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Draw element outlines");
+      view_butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW / 2, BH, "Draw element outlines");
       view_butt[10]->tooltip("(Alt+e)");
       view_butt[10]->type(FL_TOGGLE_BUTTON);
       view_butt[10]->callback(view_options_ok_cb);
+
+      view_butt[2] = new Fl_Check_Button(L + 2 * WB + BW / 2, 2 * WB + 4 * BH, BW / 2, BH, "Draw 3D skin only");
+      view_butt[2]->type(FL_TOGGLE_BUTTON);
+      view_butt[2]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_view_element_types[] = {
 	{"Points",      0, 0, 0, FL_MENU_TOGGLE},
@@ -3490,6 +3494,7 @@ void GUI::update_view_window(int num)
     ((Fl_Menu_Item*)view_choice[13]->menu())[0].deactivate();
   }
   opt_view_show_element(num, GMSH_GUI, 0);
+  opt_view_draw_skin_only(num, GMSH_GUI, 0);
   opt_view_light(num, GMSH_GUI, 0);
   opt_view_light_two_side(num, GMSH_GUI, 0);
   opt_view_light_lines(num, GMSH_GUI, 0);
