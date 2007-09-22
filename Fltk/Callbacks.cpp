@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.546 2007-09-15 17:11:50 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.547 2007-09-22 18:19:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2164,14 +2164,16 @@ void visibility_interactive_cb(CALLBACK_ARGS)
     what = ENT_SURFACE;
     mode = 0;
     help = "surfaces to hide";
-    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
+    if(GModel::current()->getMeshStatus() < 2)
+      opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(str, "hide_volumes")){
     CTX.pick_elements = 0;
     what = ENT_VOLUME;
     mode = 0;
     help = "volumes to hide";
-    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
+    if(GModel::current()->getMeshStatus() < 3)
+      opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(str, "show_elements")){
     CTX.pick_elements = 1;
@@ -2198,14 +2200,16 @@ void visibility_interactive_cb(CALLBACK_ARGS)
     what = ENT_SURFACE;
     mode = 1;
     help = "surfaces to show";
-    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
+    if(GModel::current()->getMeshStatus() < 2)
+      opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(str, "show_volumes")){
     CTX.pick_elements = 0;
     what = ENT_VOLUME;
     mode = 1;
     help = "volumes to show";
-    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
+    if(GModel::current()->getMeshStatus() < 3)
+      opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(!strcmp(str, "show_all")){
     for(int i = 1; i <= 5; i++) // elements, points, lines, surfaces, volumes

@@ -79,10 +79,9 @@ class VertexArray{
   // adds a vertex in the arrays
   void add(float x, float y, float z, float n0, float n1, float n2, 
 	   unsigned int col, MElement *ele=0);
-  void add(float x, float y, float z, unsigned int col, MElement *ele=0);
-  // add a complete element in the arrays (if unique is set, only add
-  // the element if another one with the same barycenter is not
-  // already present)
+  // add an element in the arrays (if unique is set, only add the
+  // element if another one with the same barycenter is not already
+  // present)
   void add(double *x, double *y, double *z, SVector3 *n, unsigned int *col,
 	   MElement *ele=0, bool unique=true);
   // sorts the elements back to front wrt the eye position

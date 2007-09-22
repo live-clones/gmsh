@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.135 2007-09-20 10:03:48 geuzaine Exp $
+// $Id: Post.cpp,v 1.136 2007-09-22 18:19:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1195,18 +1195,6 @@ class initPView {
 
     if(!opt->Visible || opt->Type != PViewOptions::Plot3D) return;
 
-    if(p->va_points) delete p->va_points;
-    p->va_points = new VertexArray(1, _estimateNumPoints(p));
-    if(p->va_lines) delete p->va_lines;
-    p->va_lines = new VertexArray(2, _estimateNumLines(p));
-    if(p->va_triangles) delete p->va_triangles;
-    p->va_triangles = new VertexArray(3, _estimateNumTriangles(p));
-    if(p->va_vectors) delete p->va_vectors;
-    p->va_vectors = new VertexArray(2, _estimateNumVectors(p));
-
-    if(p->normals) delete p->normals;
-    p->normals = new smooth_normals(opt->AngleSmoothNormals);
-
     if(opt->UseGenRaise) opt->createGeneralRaise();
 
     if(opt->RangeType == PViewOptions::Custom){
@@ -1222,8 +1210,25 @@ class initPView {
       opt->TmpMax = data->getMax();
     }
 
+    if(p->va_points) delete p->va_points;
+    p->va_points = new VertexArray(1, _estimateNumPoints(p));
+    if(p->va_lines) delete p->va_lines;
+    p->va_lines = new VertexArray(2, _estimateNumLines(p));
+    if(p->va_triangles) delete p->va_triangles;
+    p->va_triangles = new VertexArray(3, _estimateNumTriangles(p));
+    if(p->va_vectors) delete p->va_vectors;
+    p->va_vectors = new VertexArray(2, _estimateNumVectors(p));
+
+    if(p->normals) delete p->normals;
+    p->normals = new smooth_normals(opt->AngleSmoothNormals);
+
     if(opt->SmoothNormals) addElementsInArrays(p, true);
     addElementsInArrays(p, false);
+
+    p->va_points->finalize();
+    p->va_lines->finalize();
+    p->va_triangles->finalize();
+    p->va_vectors->finalize();
 
     Msg(INFO, "Rendering %d vertices", p->va_points->getNumVertices() + 
 	p->va_lines->getNumVertices() + p->va_triangles->getNumVertices() + 

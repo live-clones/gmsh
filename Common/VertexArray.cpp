@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.24 2007-09-18 16:26:01 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.25 2007-09-22 18:19:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -63,24 +63,6 @@ void VertexArray::add(float x, float y, float z, float n0, float n1, float n2,
   if(ele && CTX.pick_elements) _elements.push_back(ele);
 }
 
-void VertexArray::add(float x, float y, float z, unsigned int col, MElement *ele)
-{
-  _vertices.push_back(x);
-  _vertices.push_back(y);
-  _vertices.push_back(z);
-
-  unsigned char r = CTX.UNPACK_RED(col);
-  unsigned char g = CTX.UNPACK_GREEN(col);
-  unsigned char b = CTX.UNPACK_BLUE(col);
-  unsigned char a = CTX.UNPACK_ALPHA(col);
-  _colors.push_back(r);
-  _colors.push_back(g);
-  _colors.push_back(b);
-  _colors.push_back(a);
-
-  if(ele && CTX.pick_elements) _elements.push_back(ele);
-}
-
 float BarycenterLessThan::tolerance = 0.;
 
 void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
@@ -96,12 +78,8 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
     _barycenters.insert(pc);
   }
 
-  for(int i = 0; i < npe; i++){
-    if(n) 
-      add(x[i], y[i], z[i], n[i].x(), n[i].y(), n[i].z(), col[i], ele);
-    else
-      add(x[i], y[i], z[i], 0., 0., 1., col[i], ele);
-  }
+  for(int i = 0; i < npe; i++)
+    add(x[i], y[i], z[i], n[i].x(), n[i].y(), n[i].z(), col[i], ele);
 }
 
 class AlphaElement {
