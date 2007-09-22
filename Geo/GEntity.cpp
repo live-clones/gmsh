@@ -1,4 +1,4 @@
-// $Id: GEntity.cpp,v 1.14 2007-09-18 16:26:02 geuzaine Exp $
+// $Id: GEntity.cpp,v 1.15 2007-09-22 20:35:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GEntity.h"
+#include "VertexArray.h"
 #include "Context.h"
 
 extern Context_T CTX;

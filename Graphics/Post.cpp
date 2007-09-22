@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.136 2007-09-22 18:19:29 geuzaine Exp $
+// $Id: Post.cpp,v 1.137 2007-09-22 20:35:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 #include "Draw.h"
 #include "Iso.h"
 #include "PView.h"
+#include "VertexArray.h"
 #include "Context.h"
 #include "gl2ps.h"
 
@@ -1210,13 +1211,10 @@ class initPView {
       opt->TmpMax = data->getMax();
     }
 
-    if(p->va_points) delete p->va_points;
+    p->deleteVertexArrays();
     p->va_points = new VertexArray(1, _estimateNumPoints(p));
-    if(p->va_lines) delete p->va_lines;
     p->va_lines = new VertexArray(2, _estimateNumLines(p));
-    if(p->va_triangles) delete p->va_triangles;
     p->va_triangles = new VertexArray(3, _estimateNumTriangles(p));
-    if(p->va_vectors) delete p->va_vectors;
     p->va_vectors = new VertexArray(2, _estimateNumVectors(p));
 
     if(p->normals) delete p->normals;

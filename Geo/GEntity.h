@@ -26,7 +26,6 @@
 #include "Range.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
-#include "VertexArray.h"
 #include "GmshDefines.h"
 
 class GModel;
@@ -35,6 +34,7 @@ class GEdge;
 class GFace;
 class GRegion;
 class MVertex;
+class VertexArray;
 
 // A geometric model entity.
 class GEntity {

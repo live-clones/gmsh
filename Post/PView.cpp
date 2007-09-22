@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.10 2007-09-18 16:26:02 geuzaine Exp $
+// $Id: PView.cpp,v 1.11 2007-09-22 20:35:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,7 @@
 
 #include "PView.h"
 #include "PViewDataList.h"
+#include "VertexArray.h"
 #include "Message.h"
 
 int PView::_globalNum = 0;
@@ -99,12 +100,8 @@ PView::PView(std::string xname, std::string yname,
 
 PView::~PView()
 {
-  if(va_points) delete va_points;
-  if(va_lines) delete va_lines;
-  if(va_triangles) delete va_triangles;
-  if(va_vectors) delete va_vectors;
+  deleteVertexArrays();
   if(normals) delete normals;
-
   if(_options) delete _options;
 
   std::vector<PView*>::iterator it = std::find(list.begin(), list.end(), this);
@@ -127,6 +124,14 @@ PView::~PView()
   
   Msg(DEBUG, "Deleting data in View[%d] (unique num = %d)", _index, _num);
   delete _data;
+}
+
+void PView::deleteVertexArrays()
+{
+  if(va_points) delete va_points; va_points = 0;
+  if(va_lines) delete va_lines; va_lines = 0;
+  if(va_triangles) delete va_triangles; va_triangles = 0;
+  if(va_vectors) delete va_vectors; va_vectors = 0;
 }
 
 void PView::setOptions(PViewOptions *val)

@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.15 2007-09-18 16:26:02 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.16 2007-09-22 20:35:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #include "Context.h"
 #include "SelectBuffer.h"
 #include "GModel.h"
+#include "VertexArray.h"
 
 extern Context_T CTX;
 

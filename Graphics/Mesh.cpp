@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.207 2007-09-21 23:09:27 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.208 2007-09-22 20:35:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #include "Context.h"
 #include "OS.h"
 #include "gl2ps.h"
+#include "VertexArray.h"
 
 extern Context_T CTX;
 

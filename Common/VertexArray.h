@@ -23,8 +23,72 @@
 #include <vector>
 #include <set>
 #include "SVector3.h"
+#include "Context.h"
+
+extern Context_T CTX;
 
 class MElement;
+
+template<int N>
+class ElementData {
+ private:
+  float _x[N], _y[N], _z[N], _nx[N], _ny[N], _nz[N];
+  unsigned int _col[N];
+  MElement *_ele;
+ public:
+  ElementData(double *x, double *y, double *z, SVector3 *n, unsigned int *col,
+	      MElement *ele)
+  {
+    for(int i = 0; i < N; i++){
+      _x[i] = x[i];
+      _y[i] = y[i];
+      _z[i] = z[i];
+      _nx[i] = n[i].x();
+      _ny[i] = n[i].y();
+      _nz[i] = n[i].z();
+      _col[i] = col[i];
+    }
+    _ele = ele;
+  }
+  float x(int i) const { return _x[i]; }
+  float y(int i) const { return _y[i]; }
+  float z(int i) const { return _z[i]; }
+  float nx(int i) const { return _nx[i]; }
+  float ny(int i) const { return _ny[i]; }
+  float nz(int i) const { return _nz[i]; }
+  unsigned int col(int i) const { return _col[i]; }
+  MElement *ele() const { return _ele; }
+  SPoint3 barycenter() const
+  {
+    SPoint3 p(0., 0., 0.);
+    for(int i = 0; i < N; i++){
+      p[0] += _x[i];
+      p[1] += _y[i];
+      p[2] += _z[i];
+    }
+    p[0] /= (double)N;
+    p[1] /= (double)N;
+    p[2] /= (double)N;
+    return p;
+  }
+};
+
+template<int N>
+class ElementDataLessThan{
+ public:
+  bool operator()(const ElementData<N> &e1, const ElementData<N> &e2) const
+  {
+    SPoint3 p1 = e1.barycenter();
+    SPoint3 p2 = e2.barycenter();
+    float tolerance = CTX.lc * 1.e-6;
+    if(p1.x() - p2.x() >  tolerance) return true;
+    if(p1.x() - p2.x() < -tolerance) return false;
+    if(p1.y() - p2.y() >  tolerance) return true;
+    if(p1.y() - p2.y() < -tolerance) return false;
+    if(p1.z() - p2.z() >  tolerance) return true;
+    return false;
+  }
+};
 
 class Barycenter {
  private:
@@ -39,9 +103,9 @@ class Barycenter {
 
 class BarycenterLessThan{
  public:
-  static float tolerance;
   bool operator()(const Barycenter &p1, const Barycenter &p2) const
   {
+    float tolerance = CTX.lc * 1.e-6;
     if(p1.x() - p2.x() >  tolerance) return true;
     if(p1.x() - p2.x() < -tolerance) return false;
     if(p1.y() - p2.y() >  tolerance) return true;
@@ -53,11 +117,12 @@ class BarycenterLessThan{
 
 class VertexArray{
  private:
-  const int _numVerticesPerElement;
+  int _numVerticesPerElement;
   std::vector<float> _vertices;
   std::vector<char> _normals;
   std::vector<unsigned char> _colors;
   std::vector<MElement*> _elements;
+  std::set<ElementData<3>, ElementDataLessThan<3> > _data3;
   std::set<Barycenter, BarycenterLessThan> _barycenters;
  public:
   VertexArray(int numVerticesPerElement, int numElements);
@@ -84,10 +149,10 @@ class VertexArray{
   // present)
   void add(double *x, double *y, double *z, SVector3 *n, unsigned int *col,
 	   MElement *ele=0, bool unique=true);
-  // sorts the elements back to front wrt the eye position
+  // finalize the arrays
+  void finalize();
+  // sorts the arrays with elements back to front wrt the eye position
   void sort(double x, double y, double z);
-  // regain temporay memory once the array is constructed
-  void finalize(){ _barycenters.clear(); }
 };
 
 #endif

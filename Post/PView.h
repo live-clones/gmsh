@@ -22,10 +22,11 @@
 
 #include <vector>
 #include <string>
-#include "VertexArray.h"
 #include "SmoothData.h"
 #include "PViewData.h"
 #include "PViewOptions.h"
+
+class VertexArray;
 
 // a post-processing view
 class PView{
@@ -59,6 +60,7 @@ class PView{
 	std::vector<double> &x, std::vector<double> &y);
   // default destructor
   ~PView();
+  void deleteVertexArrays();
   PViewOptions *getOptions(){ return _options; }  
   void setOptions(PViewOptions *val=0);  
   PViewData *getData(){ return _data; }
@@ -84,6 +86,7 @@ class PView{
 
   // vertex arrays to draw the elements efficiently
   VertexArray *va_points, *va_lines, *va_triangles, *va_vectors;
+
   // smoothed normals
   smooth_normals *normals;
 };

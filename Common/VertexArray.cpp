@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.25 2007-09-22 18:19:29 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.26 2007-09-22 20:35:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@ extern Context_T CTX;
 VertexArray::VertexArray(int numVerticesPerElement, int numElements) 
   : _numVerticesPerElement(numVerticesPerElement)
 {
-  int nb = (numElements ? numElements : 1) * numVerticesPerElement;
+  int nb = (numElements ? numElements : 1) * _numVerticesPerElement;
   _vertices.reserve(nb * 3);
   _normals.reserve(nb * 3);
   _colors.reserve(nb * 4);
@@ -63,23 +63,47 @@ void VertexArray::add(float x, float y, float z, float n0, float n1, float n2,
   if(ele && CTX.pick_elements) _elements.push_back(ele);
 }
 
-float BarycenterLessThan::tolerance = 0.;
-
 void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
 		      unsigned int *col, MElement *ele, bool unique)
 {
-  int npe = _numVerticesPerElement;
+  int npe = getNumVerticesPerElement();
+
+  /*
+  bool boundary = true;
+  if(boundary && npe == 3){
+    ElementData<3> e(x, y, z, n, col, ele);
+    std::set<ElementData<3>, ElementDataLessThan<3> >::iterator it = _data3.find(e);
+    if(it == _data3.end())
+      _data3.insert(e);
+    else
+      _data3.erase(it);
+    return;
+  }
+  */
+
   if(unique){
     Barycenter pc(0., 0., 0.);
     for(int i = 0; i < npe; i++)
       pc += Barycenter(x[i], y[i], z[i]);
-    BarycenterLessThan::tolerance = 1.e-6 * CTX.lc;
     if(_barycenters.find(pc) != _barycenters.end()) return;
     _barycenters.insert(pc);
   }
-
+  
   for(int i = 0; i < npe; i++)
     add(x[i], y[i], z[i], n[i].x(), n[i].y(), n[i].z(), col[i], ele);
+}
+
+void VertexArray::finalize()
+{
+  if(_data3.size()){
+    std::set<ElementData<3>, ElementDataLessThan<3> >::iterator it = _data3.begin();
+    for(; it != _data3.end(); it++)
+      for(int i = 0; i < 3; i++)
+	add(it->x(i), it->y(i), it->z(i), it->nx(i), it->ny(i), it->nz(i), 
+	    it->col(i), it->ele());
+    _data3.clear();
+  }
+  _barycenters.clear();
 }
 
 class AlphaElement {
