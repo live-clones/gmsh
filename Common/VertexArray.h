@@ -43,10 +43,17 @@ class ElementData {
       _x[i] = x[i];
       _y[i] = y[i];
       _z[i] = z[i];
-      _nx[i] = n[i].x();
-      _ny[i] = n[i].y();
-      _nz[i] = n[i].z();
-      _col[i] = col[i];
+      if(n){
+	_nx[i] = n[i].x();
+	_ny[i] = n[i].y();
+	_nz[i] = n[i].z();
+      }
+      else
+	_nx[i] = _ny[i] = _nz[i] = 0.;
+      if(col)
+	_col[i] = col[i];
+      else
+	_col[i] = 0;
     }
     _ele = ele;
   }
@@ -141,10 +148,12 @@ class VertexArray{
   unsigned char *getColorArray(int i=0){ return &_colors[i]; }
   // returns a pointer to the raw element array
   MElement **getElementPointerArray(int i=0){ return &_elements[i]; }
-  // adds a vertex in the arrays
-  void add(float x, float y, float z, float n0, float n1, float n2, 
-	   unsigned int col, MElement *ele=0);
-  // add an element in the arrays (if unique is set, only add the
+  // adds stuff in the arrays
+  void addVertex(float x, float y, float z);
+  void addNormal(float nx, float ny, float nz);
+  void addColor(unsigned int col);
+  void addElement(MElement *ele);
+  // add element data in the arrays (if unique is set, only add the
   // element if another one with the same barycenter is not already
   // present)
   void add(double *x, double *y, double *z, SVector3 *n, unsigned int *col,

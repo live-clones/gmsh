@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.27 2007-09-22 22:56:37 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.28 2007-09-24 14:59:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -35,22 +35,27 @@ VertexArray::VertexArray(int numVerticesPerElement, int numElements)
   _colors.reserve(nb * 4);
 }
 
-void VertexArray::add(float x, float y, float z, float n0, float n1, float n2,
-		      unsigned int col, MElement *ele)
+void VertexArray::addVertex(float x, float y, float z)
 {
   _vertices.push_back(x);
   _vertices.push_back(y);
   _vertices.push_back(z);
+}
 
+void VertexArray::addNormal(float nx, float ny, float nz)
+{
   // storing the normals as bytes hurts rendering performance, but it
   // significantly reduces the memory footprint
-  char c0 = float2char(n0);
-  char c1 = float2char(n1);
-  char c2 = float2char(n2);
-  _normals.push_back(c0);
-  _normals.push_back(c1);
-  _normals.push_back(c2);
+  char cx = float2char(nx);
+  char cy = float2char(ny);
+  char cz = float2char(nz);
+  _normals.push_back(cx);
+  _normals.push_back(cy);
+  _normals.push_back(cz);
+}
 
+void VertexArray::addColor(unsigned int col)
+{
   unsigned char r = CTX.UNPACK_RED(col);
   unsigned char g = CTX.UNPACK_GREEN(col);
   unsigned char b = CTX.UNPACK_BLUE(col);
@@ -59,7 +64,10 @@ void VertexArray::add(float x, float y, float z, float n0, float n1, float n2,
   _colors.push_back(g);
   _colors.push_back(b);
   _colors.push_back(a);
+}
 
+void VertexArray::addElement(MElement *ele)
+{
   if(ele && CTX.pick_elements) _elements.push_back(ele);
 }
 
@@ -87,18 +95,26 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
     _barycenters.insert(pc);
   }
   
-  for(int i = 0; i < npe; i++)
-    add(x[i], y[i], z[i], n[i].x(), n[i].y(), n[i].z(), col[i], ele);
+  for(int i = 0; i < npe; i++){
+    addVertex(x[i], y[i], z[i]);
+    if(n) addNormal(n[i].x(), n[i].y(), n[i].z());
+    if(col) addColor(col[i]);
+    addElement(ele);
+  }
 }
 
 void VertexArray::finalize()
 {
   if(_data3.size()){
     std::set<ElementData<3>, ElementDataLessThan<3> >::iterator it = _data3.begin();
-    for(; it != _data3.end(); it++)
-      for(int i = 0; i < 3; i++)
-	add(it->x(i), it->y(i), it->z(i), it->nx(i), it->ny(i), it->nz(i), 
-	    it->col(i), it->ele());
+    for(; it != _data3.end(); it++){
+      for(int i = 0; i < 3; i++){
+	addVertex(it->x(i), it->y(i), it->z(i));
+	addNormal(it->nx(i), it->ny(i), it->nz(i));
+	addColor(it->col(i));
+	addElement(it->ele());
+      }
+    }
     _data3.clear();
   }
   _barycenters.clear();
