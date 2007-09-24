@@ -1,11 +1,4 @@
-$Id: TODO,v 1.61 2007-09-18 16:26:04 geuzaine Exp $
-
-********************************************************************
-
-add set<BarycenterData> in VertexArray so that we can do automatic
-boundary constructions (should probably be ON by default for 3D scalar
-rendering when explode==1). Transfer data to actual arrays in
-VertexArray::finalize()
+$Id: TODO,v 1.62 2007-09-24 07:32:09 geuzaine Exp $
 
 ********************************************************************
 
@@ -44,7 +37,8 @@ add support for Patran mesh files
 
 ********************************************************************
 
-reinterface Triangle for plane surfaces
+reinterface Triangle for plane surfaces and/or for the generation of
+the initial mesh
 
 ********************************************************************
 
@@ -85,7 +79,7 @@ cases
 
 ********************************************************************
 
-implement STL remeshing
+re-implement STL remeshing
 
 ********************************************************************
 
@@ -187,7 +181,7 @@ strategy
 
 ********************************************************************
 
-add/restore Parametric curve type (use MathEval!)
+add/restore Parametric curve type using MathEval
 
 ********************************************************************
 
@@ -216,14 +210,6 @@ a straightforward way or using 3D textures)
 
 ********************************************************************
 
-"first order" quad/hexa/prism/pyramid mesh visu can actually be wrong,
-as we assume the faces are plane--which they don't have to be. We
-should subdivide in 2 triangles. And remove the va_quad vertex array
-altogether! (ps: should be careful about element boundary drawing;
-should then be done like we do it for 2nd order elements)
-
-********************************************************************
-
 Yves Krahenbuhl wrote:
 
 > Lors de la creation des elements du 2eme ordre, et selon la courbure
@@ -232,4 +218,3 @@ Yves Krahenbuhl wrote:
 > faudrait peut-etre faire apparaitre un message d'erreurs / ou se
 > restreindre (automatiquement ou non) a une interpolation lineaire
 > entre les points en question.
-
