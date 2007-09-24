@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.56 2007-09-10 04:47:02 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.57 2007-09-24 08:14:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -231,7 +231,7 @@ int Solver(int num, char *args)
 	    int n = PView::list.size();
 	    MergeFile(message);
 	    Draw();
-	    if(n != PView::list.size()) 
+	    if(n != (int)PView::list.size()) 
 	      WID->set_context(menu_post, 0);
 	  }
 	  break;

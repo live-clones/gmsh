@@ -119,7 +119,7 @@ void uvPlot::draw()
   static char min[256], max[256], pts[256];
   sprintf(min, "%g", _dmin);
   sprintf(max, "%g", _dmax);
-  sprintf(pts, "[%d pts]", _u.size());
+  sprintf(pts, "[%d pts]", (int)_u.size());
   fl_draw(min, 5, h() - 5);
   fl_draw(pts, pw / 2 - (int)fl_width(pts) / 2, h() - 5);
   fl_draw(max, pw - (int)fl_width(max) - 5, h() - 5);
@@ -369,10 +369,8 @@ projectionEditor::projectionEditor()
   }
 
   {
-    Fl_Button *b1 = new Fl_Button(WB, height - 2 * WB - 2 * BH, 
-				  BB, BH, "Blend");
-    Fl_Button *b2 = new Fl_Button(2 * WB + BB, height - 2 * WB - 2 * BH, 
-				  BB, BH, "Intersect");
+    new Fl_Button(WB, height - 2 * WB - 2 * BH, BB, BH, "Blend");
+    new Fl_Button(2 * WB + BB, height - 2 * WB - 2 * BH, BB, BH, "Intersect");
   }
 
   Fl_Button *b = new Fl_Button(width - WB - BB, height - WB - BH, BB, BH, "Cancel");
@@ -510,7 +508,6 @@ void set_position_cb(Fl_Widget *w, void *data)
   projectionEditor *e = (projectionEditor*)data;
   projection *p = e->getCurrentProjection();
   if(p){
-    FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
     std::vector<GVertex*> vertices;
     std::vector<GEdge*> edges;
     std::vector<GFace*> faces;
@@ -739,7 +736,7 @@ void filter_cb(Fl_Widget *w, void *data)
     for(unsigned int i = 0; i < ent.size(); i++){
       GVertex *gv = dynamic_cast<GVertex*>(ent[i]);
       if(gv){
-	double uu, vv, p[3], n[3];
+	double uu, vv, p[3];
 	ps->OrthoProjectionOnSurface(gv->x(), gv->y(), gv->z(), uu, vv);
 	ps->F(uu, vv, p[0], p[1], p[2]);
 	double dx = gv->x() - p[0], dy = gv->y() - p[1], dz = gv->z() - p[2];
@@ -753,7 +750,7 @@ void filter_cb(Fl_Widget *w, void *data)
     std::vector<MElement*> &ele(e->getElements());
     for(unsigned int i = 0; i < ele.size(); i++){
       SPoint3 pc = ele[i]->barycenter();
-      double uu, vv, p[3], n[3];
+      double uu, vv, p[3];
       ps->OrthoProjectionOnSurface(pc.x(), pc.y(), pc.z(), uu, vv);
       ps->F(uu, vv, p[0], p[1], p[2]);
       double dx = pc.x() - p[0], dy = pc.y() - p[1], dz = pc.z() - p[2];
@@ -816,7 +813,7 @@ void save_selection_cb(Fl_Widget *w, void *data)
 	    verts.insert(ele[i]->getVertex(j));
 	}
       }
-      fprintf(fp, "$NOD\n%d\n", verts.size());
+      fprintf(fp, "$NOD\n%d\n", (int)verts.size());
       for(std::set<MVertex*>::iterator it = verts.begin(); it != verts.end(); it++)
 	(*it)->writeMSH(fp);
       fprintf(fp, "$ENDNOD\n$ELM\n%d\n", nelm);
@@ -908,7 +905,7 @@ void compute_cb(Fl_Widget *w, void *data)
     int uModes = e->getMode(0);
     int vModes = e->getMode(1);
 
-    if(f.size() < uModes * vModes){
+    if((int)f.size() < uModes * vModes){
       Msg(GERROR, "Number of points < uModes * vModes");
       return;
     }

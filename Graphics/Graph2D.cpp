@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.69 2007-09-15 15:01:02 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.70 2007-09-24 08:14:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -85,7 +85,7 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
 
   bool space = (opt->Type == PViewOptions::Plot2DSpace);
 
-  SPoint3 p0;
+  SPoint3 p0(0., 0., 0.);
 
   numy = 0;
   for(int i = 0; i < data->getNumElements(); i++){
@@ -335,7 +335,6 @@ static void drawGraphCurves(PView *p, double xleft, double ytop, double width,
 			    double height, std::vector<double> &x, double xmin,
 			    double xmax, std::vector<std::vector<double> > &y)
 {
-  PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
 
   glPointSize(opt->PointSize);

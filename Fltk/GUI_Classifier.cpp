@@ -183,7 +183,7 @@ void class_color_cb(Fl_Widget* w, void* data)
     GModel::eiter ite = GModel::current()->lastEdge();
     for( ;it!=ite;++it)
       {
-	for (int i=0;i<(*it)->lines.size();i++)lines[(*it)->lines[i] ] = *it;
+	for (unsigned int i=0;i<(*it)->lines.size();i++)lines[(*it)->lines[i] ] = *it;
       }
   }
 
@@ -194,7 +194,7 @@ void class_color_cb(Fl_Widget* w, void* data)
     while (it != e->_faces.end())
       {
 	GFace *gf = *it;
-	for (int i=0;i<gf->triangles.size();i++)
+	for (unsigned int i=0;i<gf->triangles.size();i++)
 	  {
 	    tris.push_back (new MTri3 ( gf->triangles [i] , 0 ) );
 	  }
@@ -256,13 +256,13 @@ void updateedges_cb(Fl_Widget* w, void* data)
  
   //  printf("%d edges detected\n",e->edges_detected.size());
 
-  for (int i=0;i<e->temporary->lines.size();i++)
+  for (unsigned int i=0;i<e->temporary->lines.size();i++)
     {
       delete e->temporary->lines[i];
     }
   e->temporary->lines.clear();
 
-  for ( int i=0 ; i<e->edges_detected.size();i++)
+  for (unsigned int i=0 ; i<e->edges_detected.size();i++)
     {
       edge_angle ea =  e->edges_detected[i];
       //      printf("angle = %g\n",ea.angle);
@@ -273,7 +273,7 @@ void updateedges_cb(Fl_Widget* w, void* data)
 
   if (e->_togbuttons[CLASSTOGBUTTON_CLOS]->value())
     {
-      for ( int i=0 ; i<e->edges_lonly.size();i++)
+      for (unsigned int i=0 ; i<e->edges_lonly.size();i++)
 	{
 	  edge_angle ea =  e->edges_lonly[i];
 	  e->temporary->lines.push_back(new MLine(ea.v1, ea.v2));            
@@ -357,7 +357,7 @@ classificationEditor::classificationEditor()
 
   _window = new Dialog_Window(width, height, "Classify");
   
-  Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
+  new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
   {
     Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Edge Detection");
     edge_detec = o;
@@ -608,7 +608,7 @@ void class_deleteedge_cb(Fl_Widget *w, void *data)
   std::vector<MLine*> temp = e->temporary->lines;
   e->temporary->lines.clear();
        
-  for(int i=0;i<temp.size();i++)
+  for(unsigned int i=0;i<temp.size();i++)
     {      
       std::vector<MLine*>::iterator it = std::find (ele.begin(),ele.end(),temp[i]);
       if (it != ele.end())
@@ -645,7 +645,7 @@ void class_clear_cb(Fl_Widget *w, void *data)
 {
   classificationEditor *e = (classificationEditor*)data;
 
-  for (int i=0;i<e->temporary->lines.size();i++)
+  for (unsigned int i=0;i<e->temporary->lines.size();i++)
     {      
       delete e->temporary->lines[i];
     }

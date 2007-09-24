@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.361 2007-09-22 23:25:02 geuzaine Exp $
+// $Id: Options.cpp,v 1.362 2007-09-24 08:14:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -200,7 +200,7 @@ void Print_OptionCategory(int level, int diff, int help, char *cat, FILE * file)
 GmshColorTable *Get_ColorTable(int num)
 {
   PViewOptions *opt;
-  if(PView::list.empty() || num < 0 || num > PView::list.size() - 1)
+  if(PView::list.empty() || num < 0 || num > (int)PView::list.size() - 1)
     opt = &PViewOptions::reference;
   else{
     opt = PView::list[num]->getOptions();
@@ -213,7 +213,7 @@ GmshColorTable *Get_ColorTable(int num)
 void Print_ColorTable(int num, int diff, char *prefix, FILE *file)
 {
   PViewOptions *opt;
-  if(PView::list.empty() || num < 0 || num > PView::list.size() - 1)
+  if(PView::list.empty() || num < 0 || num > (int)PView::list.size() - 1)
     opt = &PViewOptions::reference;
   else
     opt = PView::list[num]->getOptions();
@@ -842,7 +842,7 @@ int Get_ColorForString(StringX4Int SX4I[], int alpha,
   if(PView::list.empty())					\
     opt = &PViewOptions::reference;				\
   else{								\
-    if(num < 0 || num >= PView::list.size()){			\
+    if(num < 0 || num >= (int)PView::list.size()){		\
       Msg(WARNING, "View[%d] does not exist", num);		\
       return (error_val);					\
     }								\

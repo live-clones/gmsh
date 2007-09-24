@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.4 2007-09-13 06:31:37 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.5 2007-09-24 08:14:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -71,20 +71,24 @@ bool PViewDataGModel::writePOS(std::string name, bool binary, bool parsed,
 			       bool append)
 {
   // model->writePOS()
+  return false;
 }
 
 bool PViewDataGModel::writeSTL(std::string name)
 {
   // model->writeSTL()
+  return false;
 }
 
 bool PViewDataGModel::writeTXT(std::string name)
 {
   // model->writeTXT()
+  return false;
 }
 
 bool PViewDataGModel::writeMSH(std::string name)
 {
   // model->writeMSH()
+  return false;
 }
 

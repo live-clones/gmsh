@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.10 2007-09-15 16:30:21 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.11 2007-09-24 08:14:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -33,22 +33,22 @@ extern Context_T CTX;
 PViewDataList::PViewDataList(bool allocate)
   : PViewData(), DataSize(sizeof(double)), NbTimeStep(0), 
     Min(VAL_INF), Max(-VAL_INF), Time(0),
-    NbSP(0), SP(0), NbVP(0), VP(0), NbTP(0), TP(0),
-    NbSL(0), SL(0), NbVL(0), VL(0), NbTL(0), TL(0),
-    NbSL2(0), SL2(0), NbVL2(0), VL2(0), NbTL2(0), TL2(0),
-    NbST(0), ST(0), NbVT(0), VT(0), NbTT(0), TT(0),
-    NbST2(0), ST2(0), NbVT2(0), VT2(0), NbTT2(0), TT2(0),
-    NbSQ(0), SQ(0), NbVQ(0), VQ(0), NbTQ(0), TQ(0),
-    NbSQ2(0), SQ2(0), NbVQ2(0), VQ2(0), NbTQ2(0), TQ2(0),
-    NbSS(0), SS(0), NbVS(0), VS(0), NbTS(0), TS(0),
-    NbSS2(0), SS2(0), NbVS2(0), VS2(0), NbTS2(0), TS2(0),
-    NbSH(0), SH(0), NbVH(0), VH(0), NbTH(0), TH(0),
-    NbSH2(0), SH2(0), NbVH2(0), VH2(0), NbTH2(0), TH2(0),
-    NbSI(0), SI(0), NbVI(0), VI(0), NbTI(0), TI(0),
-    NbSI2(0), SI2(0), NbVI2(0), VI2(0), NbTI2(0), TI2(0),
-    NbSY(0), SY(0), NbVY(0), VY(0), NbTY(0), TY(0),
-    NbSY2(0), SY2(0), NbVY2(0), VY2(0), NbTY2(0), TY2(0),
-    NbT2(0), T2D(0), T2C(0), NbT3(0), T3D(0), T3C(0), adaptive(0), 
+    NbSP(0), NbVP(0), NbTP(0), SP(0), VP(0), TP(0),
+    NbSL(0), NbVL(0), NbTL(0), NbSL2(0), NbVL2(0), NbTL2(0),
+    SL(0), VL(0), TL(0), SL2(0), VL2(0), TL2(0),
+    NbST(0), NbVT(0), NbTT(0), NbST2(0), NbVT2(0), NbTT2(0),
+    ST(0), VT(0), TT(0), ST2(0), VT2(0), TT2(0),
+    NbSQ(0), NbVQ(0), NbTQ(0), NbSQ2(0), NbVQ2(0), NbTQ2(0),
+    SQ(0), VQ(0), TQ(0), SQ2(0), VQ2(0), TQ2(0),
+    NbSS(0), NbVS(0), NbTS(0), NbSS2(0), NbVS2(0), NbTS2(0),
+    SS(0), VS(0), TS(0), SS2(0), VS2(0), TS2(0),
+    NbSH(0), NbVH(0), NbTH(0), NbSH2(0), NbVH2(0), NbTH2(0),
+    SH(0), VH(0), TH(0), SH2(0), VH2(0), TH2(0),
+    NbSI(0), NbVI(0), NbTI(0), NbSI2(0), NbVI2(0), NbTI2(0),
+    SI(0), VI(0), TI(0), SI2(0), VI2(0), TI2(0),
+    NbSY(0), NbVY(0), NbTY(0), NbSY2(0), NbVY2(0), NbTY2(0),
+    SY(0), VY(0), TY(0), SY2(0), VY2(0), TY2(0),
+    NbT2(0), NbT3(0), T2D(0), T2C(0), T3D(0), T3C(0), adaptive(0), 
     _lastElement(-1), _lastDimension(-1), _lastNumNodes(-1), 
     _lastNumComponents(-1), _lastNumEdges(-1), _lastXYZ(0), _lastVal(0)
 {
@@ -194,13 +194,13 @@ double PViewDataList::getTime(int step)
 
 double PViewDataList::getMin(int step)
 {
-  if(step < 0 || step >= TimeStepMin.size()) return Min;
+  if(step < 0 || step >= (int)TimeStepMin.size()) return Min;
   return TimeStepMin[step];
 }
 
 double PViewDataList::getMax(int step)
 {
-  if(step < 0 || step >= TimeStepMax.size()) return Max;
+  if(step < 0 || step >= (int)TimeStepMax.size()) return Max;
   return TimeStepMax[step];
 }
 
@@ -391,7 +391,6 @@ void PViewDataList::_getString(int dim, int i, int timestep, std::string &str,
   //     T2C is a list of chars: string\0,string\0,string\0,string\0,...
   //     Parser format is: T2(x,y,style){"str","str",...};
 
-  int nb = (dim == 2) ? NbT2 : NbT3;
   List_T *td = (dim == 2) ? T2D : T3D;
   List_T *tc = (dim == 2) ? T2C : T3C;
   int nbd = (dim == 2) ? 4 : 5;

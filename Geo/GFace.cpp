@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.36 2007-09-19 19:03:01 geuzaine Exp $
+// $Id: GFace.cpp,v 1.37 2007-09-24 08:14:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -538,7 +538,7 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p) const
 void GFace::computeGraphicsRep(int nu, int nv)
 {
   _graphicsRep.resize(nu);
-  for(unsigned int i = 0; i < nu; i++) _graphicsRep[i].resize(nv);
+  for(int i = 0; i < nu; i++) _graphicsRep[i].resize(nv);
 
   Range<double> ubounds = parBounds(0);
   Range<double> vbounds = parBounds(1);

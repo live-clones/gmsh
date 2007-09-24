@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.139 2007-09-03 20:09:14 geuzaine Exp $
+// $Id: Geom.cpp,v 1.140 2007-09-24 08:14:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -246,7 +246,7 @@ class drawGFace {
   {
     std::vector<std::vector<graphics_point> > &gr(f->getGraphicsRep());
 
-    const int N = 64;
+    const unsigned int N = 64;
 
     // We create data here and the routine is not designed to be
     // reentrant, so we must lock it to avoid race conditions when

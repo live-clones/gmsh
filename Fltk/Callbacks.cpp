@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.548 2007-09-22 23:25:02 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.549 2007-09-24 08:14:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -495,9 +495,9 @@ void ManualPlay(int time, int step)
   }
   else { // hide all views except view_in_cycle
     if(step > 0) {
-      if((view_in_cycle += step) >= PView::list.size())
+      if((view_in_cycle += step) >= (int)PView::list.size())
         view_in_cycle = 0;
-      for(unsigned int i = 0; i < PView::list.size(); i += step)
+      for(int i = 0; i < (int)PView::list.size(); i += step)
         opt_view_visible(i, GMSH_SET | GMSH_GUI, (i == view_in_cycle));
     }
     else {
@@ -621,7 +621,7 @@ void file_open_cb(CALLBACK_ARGS)
     OpenProject(file_chooser_get_name(1));
     Draw();
   }
-  if(n != PView::list.size())
+  if(n != (int)PView::list.size())
     WID->set_context(menu_post, 0);
 }
 
@@ -634,7 +634,7 @@ void file_merge_cb(CALLBACK_ARGS)
       MergeFile(file_chooser_get_name(i));
     Draw();
   }
-  if(n != PView::list.size())
+  if(n != (int)PView::list.size())
     WID->set_context(menu_post, 0);
 }
 
@@ -1200,7 +1200,7 @@ void view_options_cb(CALLBACK_ARGS)
 void view_options_timestep_cb(CALLBACK_ARGS)
 {
   int links = (int)opt_post_link(0, GMSH_GET, 0);
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(int i = 0; i < (int)PView::list.size(); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
        (links == 0 && i == WID->view_number)) {
@@ -1213,7 +1213,7 @@ void view_options_timestep_cb(CALLBACK_ARGS)
 void view_options_timestep_decr_cb(CALLBACK_ARGS)
 {
   int links = (int)opt_post_link(0, GMSH_GET, 0);
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(int i = 0; i < (int)PView::list.size(); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
        (links == 0 && i == WID->view_number)) {
@@ -1227,7 +1227,7 @@ void view_options_timestep_decr_cb(CALLBACK_ARGS)
 void view_options_timestep_incr_cb(CALLBACK_ARGS)
 {
   int links = (int)opt_post_link(0, GMSH_GET, 0);
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(int i = 0; i < (int)PView::list.size(); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
        (links == 0 && i == WID->view_number)) {
@@ -1374,7 +1374,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   char gen_raise2[256]; strcpy(gen_raise2, opt_view_gen_raise2(current, GMSH_GET, NULL));
 
   // modify only the views that need to be updated
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
+  for(int i = 0; i < (int)PView::list.size(); i++) {
     if((links == 2 || links == 4) ||
        ((links == 1 || links == 3) && opt_view_visible(i, GMSH_GET, 0)) ||
        (links == 0 && i == current)) {
@@ -4216,7 +4216,7 @@ void view_toggle_cb(CALLBACK_ARGS)
 
 static void _view_reload(int index)
 {
-  if(index >= 0 && index < PView::list.size()){
+  if(index >= 0 && index < (int)PView::list.size()){
     PView *p = PView::list[index];
 
     if(StatFile((char*)p->getData()->getFileName().c_str())){
@@ -4229,7 +4229,7 @@ static void _view_reload(int index)
     // FIXME: use fileIndex
     MergeFile((char*)p->getData()->getFileName().c_str());
 
-    if(PView::list.size() > n){ // we loaded a new view
+    if((int)PView::list.size() > n){ // we loaded a new view
       // delete old data and replace with new
       delete p->getData();
       p->setData(PView::list.back()->getData());
@@ -4432,7 +4432,7 @@ void view_all_visible_cb(CALLBACK_ARGS)
 void view_applybgmesh_cb(CALLBACK_ARGS)
 {
   int index =  (int)(long)data;
-  if(index >= 0 && index < PView::list.size()){
+  if(index >= 0 && index < (int)PView::list.size()){
     Field *field = new PostViewField(PView::list[index]);
     BGMReset();
     BGMAddField(field);
@@ -4549,7 +4549,7 @@ void view_plugin_run_cb(CALLBACK_ARGS)
   for(int i = 1; i <= WID->plugin_view_browser->size(); i++) {
     if(WID->plugin_view_browser->selected(i)) {
       try{
-	if(i - 1 >= 0 && i - 1 < PView::list.size())
+	if(i - 1 >= 0 && i - 1 < (int)PView::list.size())
 	  p->execute(PView::list[i - 1]);
 	else
 	  p->execute(0);

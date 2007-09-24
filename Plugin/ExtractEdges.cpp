@@ -1,4 +1,4 @@
-// $Id: ExtractEdges.cpp,v 1.6 2007-09-11 14:01:55 geuzaine Exp $
+// $Id: ExtractEdges.cpp,v 1.7 2007-09-24 08:14:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -76,7 +76,7 @@ void GMSH_ExtractEdgesPlugin::catchErrorMessage(char *errorMessage) const
 PView *GMSH_ExtractEdgesPlugin::execute(PView *v)
 {
   int iView = (int)ExtractEdgesOptions_Number[1].def;
-  double angle = ExtractEdgesOptions_Number[0].def;
+  //double angle = ExtractEdgesOptions_Number[0].def;
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

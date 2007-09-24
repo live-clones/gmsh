@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.42 2007-09-12 20:14:34 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.43 2007-09-24 08:14:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -49,7 +49,7 @@ static std::vector<xi2lc> interpLc;
 void smoothInterpLc(bool periodic, int nbSmooth)
 {
   if(periodic){
-    for(int i = 0; i < interpLc.size() * nbSmooth; i++){	  	  
+    for(int i = 0; i < (int)interpLc.size() * nbSmooth; i++){	  	  
       xi2lc &left = interpLc[(i - 1) % interpLc.size()];
       xi2lc &mid = interpLc[i % interpLc.size()];
       xi2lc &right = interpLc[(i + 1) % interpLc.size()];
@@ -59,10 +59,10 @@ void smoothInterpLc(bool periodic, int nbSmooth)
   } 
   else{
     for(int j = 0; j < nbSmooth; j++){
-      for(int i = 0 ; i < interpLc.size(); i++){	  	  
+      for(int i = 0 ; i < (int)interpLc.size(); i++){	  	  
 	xi2lc &left = (i == 0) ? interpLc[0] : interpLc[i - 1];
 	xi2lc &mid = interpLc[i];
-	xi2lc &right = (i == interpLc.size() - 1) ?
+	xi2lc &right = (i == (int)interpLc.size() - 1) ?
 	  interpLc[interpLc.size() - 1] : interpLc[i+1];
 	if(1. / mid.lc > 1.1 * 1. / left.lc) mid.lc = left.lc / 1.1;
 	if(1. / mid.lc > 1.1 * 1. / right.lc) mid.lc = right.lc / 1.1;
@@ -74,7 +74,7 @@ void smoothInterpLc(bool periodic, int nbSmooth)
 void printInterpLc(const char *name)
 {
   FILE *f = fopen(name,"w");
-  for(int i = 0; i < interpLc.size(); i++){	  	  
+  for(unsigned int i = 0; i < interpLc.size(); i++){	  	  
     xi2lc &interp = interpLc[i];
     fprintf(f,"%12.5E %12.5E\n", interp.xi, 1 / interp.lc);
   }

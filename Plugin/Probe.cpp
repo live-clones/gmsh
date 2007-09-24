@@ -1,4 +1,4 @@
-// $Id: Probe.cpp,v 1.17 2007-09-11 14:01:55 geuzaine Exp $
+// $Id: Probe.cpp,v 1.18 2007-09-24 08:14:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -57,7 +57,7 @@ void GMSH_ProbePlugin::draw()
 #if defined(HAVE_FLTK)
   int num = (int)ProbeOptions_Number[3].def;
   if(num < 0) num = iview;
-  if(num >= 0 && num < PView::list.size()){
+  if(num >= 0 && num < (int)PView::list.size()){
     double x = ProbeOptions_Number[0].def;
     double y = ProbeOptions_Number[1].def;
     double z = ProbeOptions_Number[2].def;

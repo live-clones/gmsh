@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.88 2007-09-19 14:21:56 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.89 2007-09-24 08:14:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -380,7 +380,6 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 		  mid  = m.add_point(++m.MAXPOINTNUMBER,
 				     coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
 				     coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v,gf);
-  		  double l1;
 		  //		  if (BGMExists())
 		  mid->lcBGM() = BGM_MeshSize(gf,
 					      (coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u)*m.scalingU,
@@ -482,7 +481,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 
 bool recover_medge ( BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, int pass_)
 {
-  BDS_GeomEntity *g;
+  BDS_GeomEntity *g=0;
   if (pass_ == 2)
     {
       m->add_geom (ge->tag(), 1);
@@ -761,7 +760,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
 	V = V_[num];
       }
 
-      BDS_Point *pp = m->add_point ( num, U,V, gf);
+      m->add_point ( num, U,V, gf);
     }
   
   Msg(DEBUG1,"Meshing of the convex hull (%d points) done",all_vertices.size());

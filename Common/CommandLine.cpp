@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.104 2007-09-10 04:47:01 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.105 2007-09-24 08:14:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -288,7 +288,7 @@ void Get_Options(int argc, char *argv[])
 	while(i < argc) {
 	  char filename[256];
 	  sprintf(filename, "%s_new", argv[i]);
-	  int n = PView::list.size();
+	  unsigned int n = PView::list.size();
           OpenProject(argv[i]);
 	  // convert post-processing views to latest binary format
           for(unsigned int j = n; j < PView::list.size(); j++)

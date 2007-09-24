@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.96 2007-09-08 21:26:04 geuzaine Exp $
+// $Id: Geo.cpp,v 1.97 2007-09-24 08:14:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3027,13 +3027,15 @@ bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shape
 	Shape s;
 	s.Type = MSH_POINT;
 	s.Num = v->Num;
-	double num = v->Num;
 	List_Add(shapes, &s);
       }
     }
-    else
+    else{
       Msg(GERROR, "Uknown curve %d", (int)curve_id);
+      return false;
+    }
   }
+  return true;
 }
 
 // Bunch of utility routines

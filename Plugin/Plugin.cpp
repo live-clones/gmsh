@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.91 2007-09-11 14:01:55 geuzaine Exp $
+// $Id: Plugin.cpp,v 1.92 2007-09-24 08:14:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,7 @@ PView *GMSH_Post_Plugin::getView(int index, PView *view)
   if(index < 0)
     index = view ? view->getIndex() : 0;
 
-  if(index >= 0 && index < PView::list.size()){
+  if(index >= 0 && index < (int)PView::list.size()){
     return PView::list[index];
   }
   else{

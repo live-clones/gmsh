@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.54 2007-09-11 14:01:54 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.55 2007-09-24 08:14:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -53,7 +53,7 @@ double GMSH_CutMapPlugin::callbackA(int num, int action, double value)
   if(action > 0){
     int iview = (int)CutMapOptions_Number[6].def;
     if(iview < 0) iview = num;
-    if(iview >= 0 && iview < PView::list.size()){
+    if(iview >= 0 && iview < (int)PView::list.size()){
       min = PView::list[iview]->getData()->getMin();
       max = PView::list[iview]->getData()->getMax();
     }

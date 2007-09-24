@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.139 2007-09-22 23:25:03 geuzaine Exp $
+// $Id: Post.cpp,v 1.140 2007-09-24 08:14:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -133,7 +133,7 @@ bool getExternalValues(PView *p, int index, int iele, int numNodes,
   opt->ExternalMin = opt->TmpMin;
   opt->ExternalMax = opt->TmpMax;
 
-  if(index < 0 || index >= PView::list.size()) return false;
+  if(index < 0 || index >= (int)PView::list.size()) return false;
 
   PView *p2 = PView::list[index];
   PViewData *data2 = p2->getData();
@@ -360,7 +360,7 @@ void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool pre,
     for(int k = 0; k < opt->NbIso; k++) {
       if(vmin == vmax) k = opt->NbIso / 2;
       double iso = opt->getScaleValue(k, opt->NbIso, vmin, vmax);
-      double x2[1], y2[1], z2[1], v2[1];
+      double x2[1], y2[1], z2[1];
       int nb = IsoLine(x, y, z, v, iso, x2, y2, z2);
       if(nb == 1){
 	unsigned int color = opt->getColor(k, opt->NbIso);
@@ -494,7 +494,7 @@ void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool 
     for(int k = 0; k < opt->NbIso; k++) {
       if(vmin == vmax) k = opt->NbIso / 2;
       double iso = opt->getScaleValue(k, opt->NbIso, vmin, vmax);
-      double x2[3], y2[3], z2[3], v2[3];
+      double x2[3], y2[3], z2[3];
       int nb = IsoTriangle(x, y, z, v, iso, x2, y2, z2);
       if(nb == 2){
 	unsigned int color = opt->getColor(k, opt->NbIso);
@@ -598,7 +598,7 @@ void addScalarTetrahedron(PView *p, double xyz[NMAX][3], double val[NMAX][9], bo
     for(int k = 0; k < opt->NbIso; k++) {
       if(vmin == vmax) k = opt->NbIso / 2;
       double iso = opt->getScaleValue(k, opt->NbIso, vmin, vmax);
-      double x2[NMAX], y2[NMAX], z2[NMAX], v2[NMAX], nn[3];
+      double x2[NMAX], y2[NMAX], z2[NMAX], nn[3];
       int nb = IsoSimplex(x, y, z, v, iso, x2, y2, z2, nn);
       if(nb >= 3){
 	unsigned int color = opt->getColor(k, opt->NbIso);
@@ -1148,14 +1148,12 @@ class initPView {
   int _estimateNumPoints(PView *p)
   {
     PViewData *data = p->getData();
-    PViewOptions *opt = p->getOptions();
     int heuristic = data->getNumElements(PViewData::Point);
     return heuristic + 10000;
   }
   int _estimateNumLines(PView *p)
   {
     PViewData *data = p->getData();
-    PViewOptions *opt = p->getOptions();
     int heuristic = data->getNumElements(PViewData::Line);
     return heuristic + 10000;
   }
@@ -1183,7 +1181,6 @@ class initPView {
   int _estimateNumVectors(PView *p)
   {
     PViewData *data = p->getData();
-    PViewOptions *opt = p->getOptions();
     int heuristic = data->getNumVectors();
     return heuristic + 1000;
   }

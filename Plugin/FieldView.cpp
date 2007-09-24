@@ -1,4 +1,4 @@
-// $Id: FieldView.cpp,v 1.3 2007-09-11 14:01:55 geuzaine Exp $
+// $Id: FieldView.cpp,v 1.4 2007-09-24 08:14:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -75,7 +75,7 @@ static void evaluate(Field *field, List_T *list1, int nbElm1, int nbNod,
 {
   if(!nbElm1) return;
   int nb = List_Nbr(list1) / nbElm1;
-  for(int i = 0, i2 = 0; i < List_Nbr(list1); i += nb) {
+  for(int i = 0; i < List_Nbr(list1); i += nb) {
     double *x = (double *)List_Pointer_Fast(list1, i);
     double *y = (double *)List_Pointer_Fast(list1, i + nbNod);
     double *z = (double *)List_Pointer_Fast(list1, i + 2 * nbNod);

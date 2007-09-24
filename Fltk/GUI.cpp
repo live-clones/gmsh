@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.642 2007-09-22 23:25:03 geuzaine Exp $
+// $Id: GUI.cpp,v 1.643 2007-09-24 08:14:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -602,7 +602,7 @@ int GUI::global_shortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'w')) {
     if(PView::list.size())
-      if(view_number >= 0 && view_number < PView::list.size())
+      if(view_number >= 0 && view_number < (int)PView::list.size())
 	create_view_options_window(view_number);
       else
 	create_view_options_window(0);
@@ -610,7 +610,7 @@ int GUI::global_shortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'u')) {
     if(PView::list.size())
-      if(view_number >= 0 && view_number < PView::list.size())
+      if(view_number >= 0 && view_number < (int)PView::list.size())
 	create_plugin_window(view_number);
       else
 	create_plugin_window(0);
@@ -3416,7 +3416,7 @@ void GUI::create_option_window()
 
 void GUI::update_view_window(int num)
 {
-  if(num < 0 || num >= PView::list.size()) return;
+  if(num < 0 || num >= (int)PView::list.size()) return;
 
   view_number = num;
 
@@ -3703,7 +3703,7 @@ void GUI::reset_plugin_view_browser()
       plugin_view_browser->add(str);
     }
     for(int i = 0; i < plugin_view_browser->size(); i++){
-      if(i < state.size() && state[i])
+      if(i < (int)state.size() && state[i])
 	plugin_view_browser->select(i + 1);
     }
   }
@@ -3725,7 +3725,7 @@ void GUI::create_plugin_window(int numview)
 
   if(plugin_window) {
     reset_plugin_view_browser();
-    if(numview >= 0 && numview < PView::list.size()){
+    if(numview >= 0 && numview < (int)PView::list.size()){
       plugin_view_browser->deselect();
       plugin_view_browser->select(numview + 1);
       view_plugin_browser_cb(NULL, NULL);

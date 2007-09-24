@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.6 2007-09-10 04:47:04 geuzaine Exp $
+// $Id: Field.cpp,v 1.7 2007-09-24 08:14:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -265,7 +265,7 @@ FunctionField::~FunctionField()
 double PostViewField::operator()(double x, double y, double z) 
 {
   // FIXME: should test unique view num instead, but that would be slower
-  if(view_index < 0 || view_index >= PView::list.size()) return MAX_LC;
+  if(view_index < 0 || view_index >= (int)PView::list.size()) return MAX_LC;
 
   double l = 0.;
   double fact[9] = {0.001, 0.0025, 0.005, 0.0075, 0.01, 0.025, 0.05, 0.075, 0.1};
@@ -408,45 +408,42 @@ void AttractorField::addGEdge(GEdge *c, int N)
   }
 }
 
-void addMapLc (std::map<MVertex*,double> &maplc, MVertex *v, double l)
+void addMapLc (std::map<MVertex*, double> &maplc, MVertex *v, double l)
 {
-  std::map<MVertex*,double> :: iterator it = maplc.find(v);
-  if (it == maplc.end())maplc[v] = l;
-  else if (it->second > l) it->second = l;
+  std::map<MVertex*, double>::iterator it = maplc.find(v);
+  if(it == maplc.end()) maplc[v] = l;
+  else if(it->second > l) it->second = l;
 }
 
-
-AttractorField_1DMesh::AttractorField_1DMesh (GModel *m, double dmax, double dmin, double lcmax)
+AttractorField_1DMesh::AttractorField_1DMesh(GModel *m, double dmax, double dmin, 
+					     double lcmax)
   : _dmax(dmax), _dmin(dmin), _lcmax(lcmax)
 {
   GModel::eiter it = m->firstEdge();
 
-  std::map<MVertex*,double> maplc;
+  std::map<MVertex*, double> maplc;
 
-  while (it != m->lastEdge())
-    {
-      MVertex *first = (*it)->getBeginVertex()->mesh_vertices[0];
-      for (int i=1;i<=(*it)->mesh_vertices.size();++i)
-	{
-	  MVertex *last = i==(*it)->mesh_vertices.size() ? (*it)->getEndVertex()->mesh_vertices[0]:(*it)->mesh_vertices[i];
-	  double l = sqrt((first->x()-last->x())*(first->x()-last->x())+
-			  (first->y()-last->y())*(first->y()-last->y())+
-			  (first->z()-last->z())*(first->z()-last->z()));
-	  addMapLc(maplc,first,l);
-	  addMapLc(maplc,last,l);
-	  first = last;
-	}
-    }      
-
-  std::map<MVertex*,double> :: iterator itm = maplc.begin();
+  while(it != m->lastEdge()){
+    MVertex *first = (*it)->getBeginVertex()->mesh_vertices[0];
+    for(unsigned int i = 1; i <= (*it)->mesh_vertices.size(); ++i){
+      MVertex *last = (i == (*it)->mesh_vertices.size()) ? 
+	(*it)->getEndVertex()->mesh_vertices[0] : (*it)->mesh_vertices[i];
+      double l = sqrt((first->x() - last->x()) * (first->x() - last->x()) +
+		      (first->y() - last->y()) * (first->y() - last->y()) +
+		      (first->z() - last->z()) * (first->z() - last->z()));
+      addMapLc(maplc, first, l);
+      addMapLc(maplc, last, l);
+      first = last;
+    }
+  }      
   
-  while (itm != maplc.end())
-    {
-      addPoint(itm->first->x(),itm->first->y(),itm->first->z());
-      lcs.push_back(itm->second);
-    }  
+  std::map<MVertex*, double>::iterator itm = maplc.begin();
+  
+  while(itm != maplc.end()){
+    addPoint(itm->first->x(), itm->first->y(), itm->first->z());
+    lcs.push_back(itm->second);
+  }
 }
-
 
 double AttractorField_1DMesh::operator()(double X, double Y, double Z)
 {
