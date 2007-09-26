@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.105 2007-09-24 08:14:28 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.106 2007-09-26 20:51:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,6 @@
 #include "Numeric.h"
 #include "Context.h"
 #include "Options.h"
-#include "Geo.h"
 #include "PView.h"
 #include "OpenFile.h"
 #include "CreateFile.h"

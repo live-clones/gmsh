@@ -1,5 +1,4 @@
 #include "GUI_Classifier.h"
-#include "Geo.h"
 #include "Gmsh.h"
 #include "Draw.h"
 #include "Options.h"
@@ -13,7 +12,6 @@
 #include "gmshEdge.h"
 #include "gmshFace.h"
 
-extern Mesh *THEM;
 extern Context_T CTX;
 
 void buildListOfEdgeAngle ( e2t_cont adj,std::vector<edge_angle> &edges_detected,std::vector<edge_angle> &edges_lonly);

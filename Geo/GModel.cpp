@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.48 2007-09-21 21:14:00 geuzaine Exp $
+// $Id: GModel.cpp,v 1.49 2007-09-26 20:51:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -28,15 +28,18 @@
 std::vector<GModel*> GModel::list;
 
 GModel::GModel(std::string name)
-  : modelName(name), normals(0)
+  : geo_internals(0), occ_internals(0), modelName(name), normals(0)
 {
   list.push_back(this);
+  // at the moment we always create (at least an empty) GEO model
+  createGEOInternals();
 }
 
 GModel::~GModel()
 { 
   std::vector<GModel*>::iterator it = std::find(list.begin(), list.end(), this);
   if(it != list.end()) list.erase(it);
+  deleteGEOInternals();
   deleteOCCInternals();
   destroy();
 }

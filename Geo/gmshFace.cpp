@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.41 2007-09-10 13:37:21 remacle Exp $
+// $Id: gmshFace.cpp,v 1.42 2007-09-26 20:51:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -27,8 +27,6 @@
 #include "GeoInterpolation.h"
 #include "Numeric.h"
 #include "Message.h"
-
-extern Mesh *THEM;
 
 gmshFace::gmshFace(GModel *m, Surface *face)
   : GFace(m, face->Num), s(face)
@@ -97,7 +95,7 @@ gmshFace::gmshFace(GModel *m, int num)
   : GFace(m, num)
 {
   s = Create_Surface(num, MSH_SURF_DISCRETE);
-  Tree_Add(THEM->Surfaces, &s);
+  Tree_Add(m->getGEOInternals()->Surfaces, &s);
 }
 
 void gmshFace::setModelEdges(std::list<GEdge*>&ed)

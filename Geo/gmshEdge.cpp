@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.37 2007-08-29 14:18:25 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.38 2007-09-26 20:51:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include "GModel.h"
 #include "GFace.h"
 #include "gmshEdge.h"
 #include "Geo.h"
@@ -27,19 +28,18 @@
 #include "Context.h"
 
 extern Context_T CTX;
-extern Mesh *THEM;
 
-gmshEdge::gmshEdge(GModel *model, Curve *edge, GVertex *v1, GVertex *v2)
-  : GEdge(model, edge->Num, v1, v2), c(edge)
+gmshEdge::gmshEdge(GModel *m, Curve *edge, GVertex *v1, GVertex *v2)
+  : GEdge(m, edge->Num, v1, v2), c(edge)
 {
   resetMeshAttributes();
 }
 
-gmshEdge::gmshEdge(GModel *model, int num)
-  : GEdge(model, num, 0, 0)
+gmshEdge::gmshEdge(GModel *m, int num)
+  : GEdge(m, num, 0, 0)
 {
   c = Create_Curve(num, MSH_SEGM_DISCRETE, 0, NULL, NULL, -1, -1, 0., 1.);
-  Tree_Add(THEM->Curves, &c);
+  Tree_Add(m->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
 }
 

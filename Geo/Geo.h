@@ -198,7 +198,7 @@ typedef struct{
   List_T *Entities;
 }PhysicalGroup;
 
-class Mesh{
+class GEO_Internals{
  private:
   void alloc_all();
   void free_all();
@@ -212,8 +212,8 @@ class Mesh{
   List_T *PhysicalGroups;
   int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
-  Mesh(){ alloc_all(); }
-  ~Mesh(){ free_all(); }
+  GEO_Internals(){ alloc_all(); }
+  ~GEO_Internals(){ free_all(); }
   void destroy(){ free_all(); alloc_all(); }
 };
 

@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.12 2007-09-04 13:47:01 remacle Exp $
+// $Id: GModelIO_Geo.cpp,v 1.13 2007-09-26 20:51:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -31,18 +31,26 @@
 #include "gmshRegion.h"
 #include "Parser.h" // for Symbol_T
 
-extern Mesh *THEM;
-
 int GModel::readGEO(const std::string &name)
 {
   ParseFile((char*)name.c_str(), 1);
-  return importTHEM();
+  return importGEOInternals();
 }
 
-int GModel::importTHEM()
+void GModel::createGEOInternals()
 {
-  if(Tree_Nbr(THEM->Points)) {
-    List_T *points = Tree2List(THEM->Points);
+  geo_internals = new GEO_Internals;
+}
+
+void GModel::deleteGEOInternals()
+{
+  delete geo_internals;
+}
+
+int GModel::importGEOInternals()
+{
+  if(Tree_Nbr(geo_internals->Points)) {
+    List_T *points = Tree2List(geo_internals->Points);
     for(int i = 0; i < List_Nbr(points); i++){
       Vertex *p;
       List_Read(points, i, &p);
@@ -55,8 +63,8 @@ int GModel::importTHEM()
     }
     List_Delete(points);
   }
-  if(Tree_Nbr(THEM->Curves)) {
-    List_T *curves = Tree2List(THEM->Curves);
+  if(Tree_Nbr(geo_internals->Curves)) {
+    List_T *curves = Tree2List(geo_internals->Curves);
     for(int i = 0; i < List_Nbr(curves); i++){
       Curve *c;
       List_Read(curves, i, &c);
@@ -76,8 +84,8 @@ int GModel::importTHEM()
     }
     List_Delete(curves);
   }
-  if(Tree_Nbr(THEM->Surfaces)) {
-    List_T *surfaces = Tree2List(THEM->Surfaces);
+  if(Tree_Nbr(geo_internals->Surfaces)) {
+    List_T *surfaces = Tree2List(geo_internals->Surfaces);
     for(int i = 0; i < List_Nbr(surfaces); i++){
       Surface *s;
       List_Read(surfaces, i, &s);
@@ -93,8 +101,8 @@ int GModel::importTHEM()
     }
     List_Delete(surfaces);
   } 
-  if(Tree_Nbr(THEM->Volumes)) {
-    List_T *volumes = Tree2List(THEM->Volumes);
+  if(Tree_Nbr(geo_internals->Volumes)) {
+    List_T *volumes = Tree2List(geo_internals->Volumes);
     for(int i = 0; i < List_Nbr(volumes); i++){
       Volume *v;
       List_Read(volumes, i, &v);
@@ -110,9 +118,9 @@ int GModel::importTHEM()
     }
     List_Delete(volumes);
   }
-  for(int i = 0; i < List_Nbr(THEM->PhysicalGroups); i++){
+  for(int i = 0; i < List_Nbr(geo_internals->PhysicalGroups); i++){
     PhysicalGroup *p;
-    List_Read(THEM->PhysicalGroups, i, &p);
+    List_Read(geo_internals->PhysicalGroups, i, &p);
     for(int j = 0; j < List_Nbr(p->Entities); j++){
       int num;
       List_Read(p->Entities, j, &num);

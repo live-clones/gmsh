@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.11 2007-08-27 19:53:43 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.12 2007-09-26 20:51:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -98,7 +98,7 @@ void add_infile(char *text, char *fich, bool deleted_something)
     // could have deleted some entities
     GModel::current()->destroy();
   }
-  GModel::current()->importTHEM();
+  GModel::current()->importGEOInternals();
   CTX.mesh.changed = ENT_ALL;
 
   FILE *file;

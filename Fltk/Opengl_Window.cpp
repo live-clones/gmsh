@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.79 2007-09-03 20:09:14 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.80 2007-09-26 20:51:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,6 @@
 #include "Numeric.h"
 #include "GmshUI.h"
 #include "Context.h"
-#include "Geo.h"
 #include "Draw.h"
 #include "SelectBuffer.h"
 #include "GUI.h"

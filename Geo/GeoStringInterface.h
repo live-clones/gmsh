@@ -20,10 +20,9 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Geo.h"
 #include "List.h"
 
-double evaluate_scalarfunction (char *var, double val, char *funct);
+double evaluate_scalarfunction(char *var, double val, char *funct);
 
 void coherence(char *fich);
 void delet(List_T *list, char *fich, char *what);

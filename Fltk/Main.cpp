@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.111 2007-09-21 21:14:00 geuzaine Exp $
+// $Id: Main.cpp,v 1.112 2007-09-26 20:51:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,6 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "OS.h"
-#include "Geo.h"
 #include "Generator.h"
 #include "CreateFile.h"
 #include "Draw.h"
@@ -44,7 +43,6 @@
 #include "PView.h"
 
 Context_T CTX;
-Mesh *THEM = 0;
 GUI *WID = 0;
 
 int main(int argc, char *argv[])
@@ -70,7 +68,6 @@ int main(int argc, char *argv[])
 
   // Create a new model
   new GModel;
-  THEM = new Mesh;
 
   // Initialize the symbol tree that will hold variable names
   InitSymbols();

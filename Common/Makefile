@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.143 2007-09-22 20:35:18 geuzaine Exp $
+# $Id: Makefile,v 1.144 2007-09-26 20:51:58 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -85,20 +85,17 @@ CommandLine.o: CommandLine.cpp Gmsh.h Message.h ../DataStr/Malloc.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h GmshUI.h GmshDefines.h \
   GmshVersion.h CommandLine.h ../Numeric/Numeric.h Context.h Options.h \
-  ../Post/ColorTable.h ../Geo/Geo.h ../Common/GmshDefines.h \
-  ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
-  ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
-  ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
-  ../Parser/OpenFile.h ../Parser/CreateFile.h ../Parser/Parser.h \
-  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/MVertex.h \
+  ../Post/ColorTable.h ../Post/PView.h ../Common/SmoothData.h \
+  ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h ../Parser/OpenFile.h \
+  ../Parser/CreateFile.h ../Parser/Parser.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Common/GmshDefines.h ../Geo/MVertex.h \
   ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
   ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Hash.h ../Geo/MFace.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Context.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h \
+  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Hash.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Context.h \
   ../Geo/ExtrudeParams.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GRegion.h \

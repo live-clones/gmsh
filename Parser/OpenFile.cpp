@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.163 2007-09-24 08:14:29 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.164 2007-09-26 20:52:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,6 @@ extern GUI *WID;
 #endif
 
 extern Context_T CTX;
-extern Mesh *THEM;
 
 void FixRelativePath(char *in, char *out){
   if(in[0] == '/' || in[0] == '\\' || (strlen(in)>2 && in[1] == ':')){
@@ -253,7 +252,7 @@ void ParseString(char *str)
     fprintf(fp, "\n");
     fclose(fp);
     ParseFile(CTX.tmp_filename_fullpath, 1);
-    GModel::current()->importTHEM();
+    GModel::current()->importGEOInternals();
   }
 }
 
@@ -415,7 +414,7 @@ void OpenProject(char *name)
   CTX.threads_lock = 1;
 
   GModel::current()->destroy();
-  THEM->destroy();
+  GModel::current()->getGEOInternals()->destroy();
 
   // Initialize pseudo random mesh generator to the same seed
   srand(1);

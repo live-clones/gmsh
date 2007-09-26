@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.288 2007-09-12 05:42:41 geuzaine Exp $
+// $Id: Gmsh.y,v 1.289 2007-09-26 20:52:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -50,7 +50,6 @@
 Tree_T *Symbol_T = NULL;
 
 extern Context_T CTX;
-extern Mesh *THEM;
 
 static ExtrudeParams extr;
 
@@ -973,8 +972,8 @@ PhysicalId :
     }
   | StringExpr
     { 
-      $$ = GModel::current()->setPhysicalName(std::string($1),
-					      ++THEM->MaxPhysicalNum);
+      $$ = GModel::current()->setPhysicalName
+	(std::string($1), ++GModel::current()->getGEOInternals()->MaxPhysicalNum);
       Free($1);
     }
 ;
@@ -1000,7 +999,7 @@ Shape :
 	  v = Create_Vertex(num, x, y, z, lc, 1.0);
 	else
 	  v = Create_Vertex(num, x, y, myGmshSurface, lc);
-	Tree_Add(THEM->Points, &v);
+	Tree_Add(GModel::current()->getGEOInternals()->Points, &v);
 	AddToTemporaryBoundingBox(v->Pos.X, v->Pos.Y, v->Pos.Z);
       }
       $$.Type = MSH_POINT;
@@ -1016,7 +1015,7 @@ Shape :
 	List_T *temp = ListOfDouble2ListOfInt($7);
 	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_POINT, temp);
 	List_Delete(temp);
-	List_Add(THEM->PhysicalGroups, &p);
+	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
       }
       List_Delete($7);
       $$.Type = MSH_PHYSICAL_POINT;
@@ -1220,7 +1219,7 @@ Shape :
 	List_T *temp = ListOfDouble2ListOfInt($6);
 	Curve *c = Create_Curve(num, MSH_SEGM_LINE, 1, temp, NULL,
 				-1, -1, 0., 1.);
-	Tree_Add(THEM->Curves, &c);
+	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
 	CreateReversedCurve(c);
 	List_Delete(temp);
       }
@@ -1238,7 +1237,7 @@ Shape :
 	List_T *temp = ListOfDouble2ListOfInt($6);
 	Curve *c = Create_Curve(num, MSH_SEGM_SPLN, 3, temp, NULL,
 				-1, -1, 0., 1.);
-	Tree_Add(THEM->Curves, &c);
+	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
 	CreateReversedCurve(c);
 	List_Delete(temp);
       }
@@ -1256,7 +1255,7 @@ Shape :
 	List_T *temp = ListOfDouble2ListOfInt($6);
 	Curve *c = Create_Curve(num, MSH_SEGM_CIRC, 2, temp, NULL,
 				-1, -1, 0., 1.);
-	Tree_Add(THEM->Curves, &c);
+	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
 	CreateReversedCurve(c);
 	List_Delete(temp);
       }
@@ -1278,7 +1277,7 @@ Shape :
 	c->Circle.n[1] = $8[1];
 	c->Circle.n[2] = $8[2];
 	End_Curve(c);
-	Tree_Add(THEM->Curves, &c);
+	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
 	Curve *rc = CreateReversedCurve(c);
 	rc->Circle.n[0] = $8[0];
 	rc->Circle.n[1] = $8[1];
@@ -1300,7 +1299,7 @@ Shape :
 	List_T *temp = ListOfDouble2ListOfInt($6);
 	Curve *c = Create_Curve(num, MSH_SEGM_ELLI, 2, temp, NULL,
 				-1, -1, 0., 1.);
-	Tree_Add(THEM->Curves, &c);
+	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
 	CreateReversedCurve(c);
 	List_Delete(temp);
       }
@@ -1322,7 +1321,7 @@ Shape :
 	c->Circle.n[1] = $8[1];
 	c->Circle.n[2] = $8[2];
 	End_Curve(c);
-	Tree_Add(THEM->Curves, &c);
+	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
 	Curve *rc = CreateReversedCurve(c);
 	rc->Circle.n[0] = $8[0];
 	rc->Circle.n[1] = $8[1];
@@ -1347,7 +1346,7 @@ Shape :
 	strcpy(c->functu, $11);
 	strcpy(c->functv, $13);
 	strcpy(c->functw, $15);
-	Tree_Add(THEM->Curves, &c);
+	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
 	CreateReversedCurve(c);
       }
       Free($11); Free($13); Free($15);
@@ -1364,7 +1363,7 @@ Shape :
 	List_T *temp = ListOfDouble2ListOfInt($6);
 	Curve *c = Create_Curve(num, MSH_SEGM_BSPLN, 2, temp, NULL,
 				-1, -1, 0., 1.);
-	Tree_Add(THEM->Curves, &c);
+	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
 	CreateReversedCurve(c);
 	List_Delete(temp);
       }
@@ -1382,7 +1381,7 @@ Shape :
 	List_T *temp = ListOfDouble2ListOfInt($6);
 	Curve *c = Create_Curve(num, MSH_SEGM_BEZIER, 2, temp, NULL,
 				-1, -1, 0., 1.);
-	Tree_Add(THEM->Curves, &c);
+	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
 	CreateReversedCurve(c);
 	List_Delete(temp);
       }
@@ -1406,7 +1405,7 @@ Shape :
 	  List_T *temp = ListOfDouble2ListOfInt($6);
 	  Curve *c = Create_Curve(num, MSH_SEGM_NURBS, (int)$10, temp, $8,
 				  -1, -1, 0., 1.);
-	  Tree_Add(THEM->Curves, &c);
+	  Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
 	  CreateReversedCurve(c);
 	  List_Delete(temp);
 	}
@@ -1426,7 +1425,7 @@ Shape :
 	List_T *temp = ListOfDouble2ListOfInt($7);
 	sortEdgesInLoop(num, temp);
 	EdgeLoop *l = Create_EdgeLoop(num, temp);
-	Tree_Add(THEM->EdgeLoops, &l);
+	Tree_Add(GModel::current()->getGEOInternals()->EdgeLoops, &l);
 	List_Delete(temp);
       }
       List_Delete($7);
@@ -1443,7 +1442,7 @@ Shape :
 	List_T *temp = ListOfDouble2ListOfInt($7);
 	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_LINE, temp);
 	List_Delete(temp);
-	List_Add(THEM->PhysicalGroups, &p);
+	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
       }
       List_Delete($7);
       $$.Type = MSH_PHYSICAL_LINE;
@@ -1464,7 +1463,7 @@ Shape :
 	setSurfaceGeneratrices(s, temp);
 	List_Delete(temp);
 	End_Surface(s);
-	Tree_Add(THEM->Surfaces, &s);
+	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
       }
       List_Delete($7);
       $$.Type = MSH_SURF_PLAN;
@@ -1501,7 +1500,7 @@ Shape :
 	  setSurfaceGeneratrices(s, temp);
 	  List_Delete(temp);
 	  End_Surface(s);
-	  Tree_Add(THEM->Surfaces, &s);
+	  Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
 	}
       }
       List_Delete($7);
@@ -1574,7 +1573,7 @@ Shape :
       else{
 	List_T *temp = ListOfDouble2ListOfInt($7);
 	SurfaceLoop *l = Create_SurfaceLoop(num, temp);
-	Tree_Add(THEM->SurfaceLoops, &l);
+	Tree_Add(GModel::current()->getGEOInternals()->SurfaceLoops, &l);
 	List_Delete(temp);
       }
       List_Delete($7);
@@ -1591,7 +1590,7 @@ Shape :
 	List_T *temp = ListOfDouble2ListOfInt($7);
 	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_SURFACE, temp);
 	List_Delete(temp);
-	List_Add(THEM->PhysicalGroups, &p);
+	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
       }
       List_Delete($7);
       $$.Type = MSH_PHYSICAL_SURFACE;
@@ -1612,7 +1611,7 @@ Shape :
 	List_T *temp = ListOfDouble2ListOfInt($7);
 	setVolumeSurfaces(v, temp);
 	List_Delete(temp);
-	Tree_Add(THEM->Volumes, &v);
+	Tree_Add(GModel::current()->getGEOInternals()->Volumes, &v);
       }
       List_Delete($7);
       $$.Type = MSH_VOLUME;
@@ -1629,7 +1628,7 @@ Shape :
 	List_T *temp = ListOfDouble2ListOfInt($6);
 	setVolumeSurfaces(v, temp);
 	List_Delete(temp);
-	Tree_Add(THEM->Volumes, &v);
+	Tree_Add(GModel::current()->getGEOInternals()->Volumes, &v);
       }
       List_Delete($6);
       $$.Type = MSH_VOLUME;
@@ -1645,7 +1644,7 @@ Shape :
 	List_T *temp = ListOfDouble2ListOfInt($7);
 	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_VOLUME, temp);
 	List_Delete(temp);
-	List_Add(THEM->PhysicalGroups, &p);
+	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
       }
       List_Delete($7);
       $$.Type = MSH_PHYSICAL_VOLUME;
@@ -1838,11 +1837,12 @@ Delete :
     {
       if(!strcmp($2, "Meshes") || !strcmp($2, "All")){
 	GModel::current()->destroy();
-	THEM->destroy();
+	GModel::current()->getGEOInternals()->destroy();
       }
       else if(!strcmp($2, "Physicals")){
-	List_Action(THEM->PhysicalGroups, Free_PhysicalGroup);
-	List_Reset(THEM->PhysicalGroups);
+	List_Action(GModel::current()->getGEOInternals()->PhysicalGroups, 
+		    Free_PhysicalGroup);
+	List_Reset(GModel::current()->getGEOInternals()->PhysicalGroups);
 	GModel::current()->deletePhysicalGroups();
       }
       else
@@ -1932,10 +1932,10 @@ Command :
       }
       else if(!strcmp($1, "Print")){
 #if defined(HAVE_FLTK)
-	// make sure we have the latest data from THEM in GModel
+	// make sure we have the latest data from GEO_Internals in GModel
 	// (fixes bug where we would have no geometry in the picture if
 	// the print command is in the same file as the geometry)
-	GModel::current()->importTHEM();
+	GModel::current()->importGEOInternals();
 	char tmpstring[1024];
 	FixRelativePath($2, tmpstring);
 	CreateOutputFile(tmpstring, CTX.print.format);
@@ -1943,7 +1943,7 @@ Command :
       }
       else if(!strcmp($1, "Save")){
 #if defined(HAVE_FLTK)
-	GModel::current()->importTHEM();
+	GModel::current()->importGEOInternals();
 	char tmpstring[1024];
 	FixRelativePath($2, tmpstring);
 	CreateOutputFile(tmpstring, CTX.mesh.format);
@@ -2540,7 +2540,7 @@ ExtrudeParameter :
       }
       else{
 	Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
-	Tree_Add(THEM->Surfaces, &s);
+	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
 	extr.mesh.Holes[num].first = $8;
 	extr.mesh.Holes[num].second.clear();
 	for(int i = 0; i < List_Nbr($6); i++){

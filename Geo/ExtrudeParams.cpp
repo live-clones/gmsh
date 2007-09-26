@@ -1,4 +1,4 @@
-// $Id: ExtrudeParams.cpp,v 1.24 2007-03-05 09:30:53 geuzaine Exp $
+// $Id: ExtrudeParams.cpp,v 1.25 2007-09-26 20:51:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //

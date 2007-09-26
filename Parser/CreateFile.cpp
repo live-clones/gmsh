@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.19 2007-08-21 19:05:40 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.20 2007-09-26 20:51:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,6 @@
 #include "OpenFile.h"
 #include "Context.h"
 #include "Options.h"
-#include "Geo.h"
 #include "GModel.h"
 
 #if defined(HAVE_FLTK)

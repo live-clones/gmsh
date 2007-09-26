@@ -1,4 +1,4 @@
-// $Id: gmshRegion.cpp,v 1.15 2007-09-04 13:47:01 remacle Exp $
+// $Id: gmshRegion.cpp,v 1.16 2007-09-26 20:51:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,8 +24,6 @@
 #include "gmshRegion.h"
 #include "Geo.h"
 #include "Message.h"
-
-extern Mesh *THEM;
 
 gmshRegion::gmshRegion(GModel *m, ::Volume * volume)
   : GRegion(m, volume->Num), v(volume)
@@ -62,7 +60,7 @@ gmshRegion::gmshRegion(GModel *m, int num)
   : GRegion(m, num)
 {
   v = Create_Volume(num, MSH_VOLUME_DISCRETE);
-  Tree_Add(THEM->Volumes, &v);
+  Tree_Add(m->getGEOInternals()->Volumes, &v);
 }
 
 void gmshRegion::resetMeshAttributes()

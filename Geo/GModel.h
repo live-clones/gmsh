@@ -30,16 +30,26 @@
 #include "SBoundingBox3d.h"
 #include "SmoothData.h"
 
-// OCC Internals have to be stored in the model
+// internal CAD representations
+class GEO_Internals;
 class OCC_Internals;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel  
 {
- protected:
+ private:
+  void createGEOInternals();
+  void deleteGEOInternals();
+  GEO_Internals *geo_internals;
+
   void deleteOCCInternals();
   OCC_Internals *occ_internals;
 
+ public:
+  GEO_Internals *getGEOInternals(){ return geo_internals; }
+  OCC_Internals *getOCCInternals(){ return occ_internals; }
+
+ protected:
   std::string modelName;
   std::set<GRegion*, GEntityLessThan> regions;
   std::set<GFace*, GEntityLessThan> faces;
@@ -165,7 +175,7 @@ class GModel
   // =========================================
 
   // Gmsh native CAD format
-  int importTHEM();
+  int importGEOInternals();
   int readGEO(const std::string &name);
   int writeGEO(const std::string &name, bool printLabels=true);
 
@@ -176,7 +186,6 @@ class GModel
   int readOCCBREP(const std::string &name);
   int readOCCIGES(const std::string &name);
   int readOCCSTEP(const std::string &name);
-  void deleleOCCInternals();
 
   // Mesh IO
   // =========================================
