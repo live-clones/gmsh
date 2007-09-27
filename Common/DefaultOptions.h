@@ -539,8 +539,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Horizontal position (in pixels) of the upper left corner of the clipping planes window" }, 
   { F|S, "ClipPositionY" , opt_general_clip_position1 , 150. , 
     "Vertical position (in pixels) of the upper left corner of the clipping planes window" }, 
-  { F|O, "ColorScheme", opt_general_color_scheme , 0. ,
-    "Default color scheme (0, 1 or 2)" },
+  { F|O, "ColorScheme", opt_general_color_scheme , 1. ,
+    "Default color scheme (0=dark, 1=light or 2=grayscale)" },
   { F|O, "ConfirmOverwrite" , opt_general_confirm_overwrite, 1. , 
     "Ask confirmation before overwriting files?" }, 
   { F|S, "ContextPositionX" , opt_general_context_position0 , 650. , 
@@ -1421,7 +1421,7 @@ StringXColor GeneralOptions_Color[] = {
     {0, 0, 0, 255}, {255, 255, 255, 255}, {255, 255, 255, 255}, 
     "Background color" },
   { F|O, "BackgroundGradient" , opt_general_color_background_gradient ,
-    {0, 0, 125, 255}, {0, 0, 125, 255}, {125, 125, 125, 255}, 
+    {0, 0, 125, 255}, {158, 187, 239, 255}, {125, 125, 125, 255}, 
     "Background gradient color" },
   { F|O, "Foreground" , opt_general_color_foreground ,
     {170, 170, 170, 255}, {85, 85, 85, 255}, {128, 128, 128, 255},
@@ -1449,7 +1449,7 @@ StringXColor GeneralOptions_Color[] = {
 
 StringXColor GeometryOptions_Color[] = {
   { F|O, "Points" , opt_geometry_color_points , 
-    {178, 182, 129, 255}, {178, 182, 129, 255}, {0, 0, 0, 255}, 
+    {178, 182, 129, 255}, {83, 85, 60, 255}, {0, 0, 0, 255}, 
     "Normal geometry point color" },
   { F|O, "Lines" , opt_geometry_color_lines ,
     {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255},
