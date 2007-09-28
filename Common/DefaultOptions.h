@@ -565,7 +565,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "FontSize" , opt_general_fontsize , -1. , 
     "Size of the font in the user interface (-1=automatic)" },
 
-  { F|O, "GraphicsFontSize" , opt_general_graphics_fontsize , 16. ,
+  { F|O, "GraphicsFontSize" , opt_general_graphics_fontsize , 17. ,
     "Size of the font in the graphic window" }, 
   { F|S, "GraphicsHeight" , opt_general_viewport3 , 600. , 
     "Height (in pixels) of the graphic window" }, 
@@ -1319,7 +1319,7 @@ StringXNumber ViewOptions_Number[] = {
     "Show element boundaries?" },
   { F|O, "ShowScale" , opt_view_show_scale , 1. ,
     "Show value scale?" },
-  { F|O, "ShowTime" , opt_view_show_time , 3. ,
+  { F|O, "ShowTime" , opt_view_show_time , 1. ,
     "Time display mode (0=hidden, 1=value if multi-step, 2=value always, 3=step if multi-step, 4=step always)" },
   { F|O, "SmoothNormals" , opt_view_smooth_normals , 0. ,
     "Smooth the normals?" },
@@ -1416,12 +1416,15 @@ StringXNumber PrintOptions_Number[] = {
 
 // CONTRARY TO THE PRECEDING OPTIONS, THE ORDERING OF COLOR OPTIONS MATTERS !
 
+// Solid Works (light blue to light gray): 94,198,255 -> 232,232,232
+// Catia (dark grey-blue to light gray-blue): 63,62,119 -> 181,182,202
+
 StringXColor GeneralOptions_Color[] = {
   { F|O, "Background" , opt_general_color_background ,
     {0, 0, 0, 255}, {255, 255, 255, 255}, {255, 255, 255, 255}, 
     "Background color" },
   { F|O, "BackgroundGradient" , opt_general_color_background_gradient ,
-    {0, 0, 125, 255}, {158, 187, 239, 255}, {125, 125, 125, 255}, 
+    {0, 0, 128, 255}, {128, 147, 255, 255}, {125, 125, 125, 255}, 
     "Background gradient color" },
   { F|O, "Foreground" , opt_general_color_foreground ,
     {170, 170, 170, 255}, {85, 85, 85, 255}, {128, 128, 128, 255},
