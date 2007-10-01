@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.550 2007-09-26 20:51:58 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.551 2007-10-01 08:45:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2232,7 +2232,8 @@ void visibility_interactive_cb(CALLBACK_ARGS)
   std::vector<MElement*> elements, elements_old;
 
   while(1) {
-    CTX.mesh.changed = ENT_ALL;
+    if(what == ENT_ALL) 
+      CTX.mesh.changed = ENT_ALL;
     Draw();
     Msg(ONSCREEN, "Select %s\n[Press %s'q' to abort]", 
 	help, mode ? "" : "'u' to undo or ");
