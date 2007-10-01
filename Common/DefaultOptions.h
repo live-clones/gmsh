@@ -1452,7 +1452,7 @@ StringXColor GeneralOptions_Color[] = {
 
 StringXColor GeometryOptions_Color[] = {
   { F|O, "Points" , opt_geometry_color_points , 
-    {178, 182, 129, 255}, {83, 85, 60, 255}, {0, 0, 0, 255}, 
+    {178, 182, 129, 255}, {90, 90, 90, 255}, {0, 0, 0, 255}, 
     "Normal geometry point color" },
   { F|O, "Lines" , opt_geometry_color_lines ,
     {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255},
