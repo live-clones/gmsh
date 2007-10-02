@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.208 2007-09-22 20:35:18 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.209 2007-10-02 20:07:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -417,6 +417,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
 
     if(faces){
       bool unique = e->dim() > 2 && !CTX.pick_elements;
+      bool skin = e->dim() > 2 && CTX.mesh.draw_skin_only;
       for(int j = 0; j < ele->getNumFacesRep(); j++){
 	double x[3], y[3], z[3];
 	SVector3 n[3];
@@ -431,7 +432,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
 	if(e->dim() == 2 && CTX.mesh.smooth_normals)
 	  for(int k = 0; k < 3; k++)
 	    e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1], n[k][2]);
-	e->va_triangles->add(x, y, z, n, col, ele, unique);
+	e->va_triangles->add(x, y, z, n, col, ele, unique, skin);
       }
     }
   }

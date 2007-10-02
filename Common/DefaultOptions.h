@@ -917,6 +917,8 @@ StringXNumber MeshOptions_Number[] = {
   { F,   "CutPlaneD" , opt_mesh_cut_planed , 0.0 , 
     "Fourth cut plane equation coefficient (`D' in `AX+BY+CZ+D=0')" },
 
+  { F|O, "DrawSkinOnly" , opt_mesh_draw_skin_only , 0. ,
+    "Draw only the skin of 3D meshes?" },
   { F|O, "Dual" , opt_mesh_dual , 0. ,
     "Display the dual mesh obtained by barycentric subdivision" },
 

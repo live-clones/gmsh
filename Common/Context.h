@@ -176,7 +176,7 @@ public :
     int quality_type, label_type;
     double quality_inf, quality_sup, radius_inf, radius_sup;
     double scaling_factor, lc_factor, rand_factor, lc_integration_precision;
-    int dual;
+    int dual, draw_skin_only;
     int light, light_two_side, light_lines;
     int format, nb_smoothing, algo2d, algo3d, algo_recombine;
     int order, second_order_linear, second_order_incomplete;

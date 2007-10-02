@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.362 2007-09-24 08:14:28 geuzaine Exp $
+// $Id: Options.cpp,v 1.363 2007-10-02 20:07:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4933,6 +4933,14 @@ double opt_mesh_dual(OPT_ARGS_NUM)
     CTX.mesh.dual = (int)val;
   }
   return CTX.mesh.dual;
+}
+
+double opt_mesh_draw_skin_only(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX.mesh.draw_skin_only = (int)val;
+  }
+  return CTX.mesh.draw_skin_only;
 }
 
 double opt_mesh_use_cut_plane(OPT_ARGS_NUM)

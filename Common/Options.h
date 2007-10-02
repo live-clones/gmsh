@@ -483,6 +483,7 @@ double opt_mesh_smooth_internal_edges(OPT_ARGS_NUM);
 double opt_mesh_second_order_linear(OPT_ARGS_NUM);
 double opt_mesh_second_order_incomplete(OPT_ARGS_NUM);
 double opt_mesh_dual(OPT_ARGS_NUM);
+double opt_mesh_draw_skin_only(OPT_ARGS_NUM);
 double opt_mesh_use_cut_plane(OPT_ARGS_NUM);
 double opt_mesh_cut_plane_draw_intersect(OPT_ARGS_NUM);
 double opt_mesh_cut_plane_only_volume(OPT_ARGS_NUM);
