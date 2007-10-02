@@ -1,4 +1,8 @@
-$Id: TODO,v 1.63 2007-10-01 09:01:53 geuzaine Exp $
+$Id: TODO,v 1.64 2007-10-02 19:26:42 geuzaine Exp $
+
+********************************************************************
+
+add way to invert element orientation (per element or per surface)
 
 ********************************************************************
 
