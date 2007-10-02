@@ -309,6 +309,11 @@ Display scalar values?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.DrawSkinOnly
+Draw only the skin of 3D scalar views?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.DrawStrings
 Display post-processing annotation strings?@*
 Default value: @code{1}@*
@@ -531,7 +536,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.ShowTime
 Time display mode (0=hidden, 1=value if multi-step, 2=value always, 3=step if multi-step, 4=step always)@*
-Default value: @code{3}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.SmoothNormals
@@ -631,42 +636,42 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.Color.Points
 Point color@*
-Default value: @code{@{255,255,255@}}@*
+Default value: @code{@{0,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Color.Lines
 Line color@*
-Default value: @code{@{255,255,255@}}@*
+Default value: @code{@{0,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Color.Triangles
 Triangle color@*
-Default value: @code{@{255,255,255@}}@*
+Default value: @code{@{0,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Color.Quadrangles
 Quadrangle color@*
-Default value: @code{@{255,255,255@}}@*
+Default value: @code{@{0,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Color.Tetrahedra
 Tetrahedron color@*
-Default value: @code{@{255,255,255@}}@*
+Default value: @code{@{0,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Color.Hexahedra
 Hexahedron color@*
-Default value: @code{@{255,255,255@}}@*
+Default value: @code{@{0,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Color.Prisms
 Prism color@*
-Default value: @code{@{255,255,255@}}@*
+Default value: @code{@{0,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Color.Pyramids
 Pyramid color@*
-Default value: @code{@{255,255,255@}}@*
+Default value: @code{@{0,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Color.Tangents
@@ -681,17 +686,17 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.Color.Text2D
 2D text color@*
-Default value: @code{@{255,255,255@}}@*
+Default value: @code{@{0,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Color.Text3D
 3D text color@*
-Default value: @code{@{255,255,255@}}@*
+Default value: @code{@{0,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.Color.Axes
 Axes color@*
-Default value: @code{@{255,255,255@}}@*
+Default value: @code{@{0,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ColorTable

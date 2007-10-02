@@ -89,6 +89,11 @@ Fourth cut plane equation coefficient (`D' in `AX+BY+CZ+D=0')@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item Mesh.DrawSkinOnly
+Draw only the skin of 3D meshes?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Dual
 Display the dual mesh obtained by barycentric subdivision@*
 Default value: @code{0}@*
@@ -287,6 +292,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.RandomFactor
 Random factor used in 2D and 3D meshing algorithm (test other values when the algorithm fails)@*
 Default value: @code{1e-09}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RefineSteps
+Number of refinement steps in the MeshAdapt-based 2D algorithms@*
+Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombineAlgo

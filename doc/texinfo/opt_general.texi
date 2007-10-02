@@ -340,8 +340,8 @@ Default value: @code{150}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.ColorScheme
-Default color scheme (0, 1 or 2)@*
-Default value: @code{0}@*
+Default color scheme (0=dark, 1=light or 2=grayscale)@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.ConfirmOverwrite
@@ -396,7 +396,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsFontSize
 Size of the font in the graphic window@*
-Default value: @code{16}@*
+Default value: @code{17}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsHeight
@@ -916,32 +916,32 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.Color.Background
 Background color@*
-Default value: @code{@{0,0,0@}}@*
+Default value: @code{@{255,255,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Color.BackgroundGradient
 Background gradient color@*
-Default value: @code{@{0,0,125@}}@*
+Default value: @code{@{128,147,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Color.Foreground
 Foreground color@*
-Default value: @code{@{170,170,170@}}@*
+Default value: @code{@{85,85,85@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Color.Text
 Text color@*
-Default value: @code{@{255,255,255@}}@*
+Default value: @code{@{0,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Color.Axes
 Axes color@*
-Default value: @code{@{255,255,255@}}@*
+Default value: @code{@{0,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Color.SmallAxes
 Small axes color@*
-Default value: @code{@{255,255,255@}}@*
+Default value: @code{@{0,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.Color.AmbientLight
