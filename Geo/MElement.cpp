@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.43 2007-09-19 23:42:10 geuzaine Exp $
+// $Id: MElement.cpp,v 1.44 2007-10-03 19:40:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -188,15 +188,14 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
   if(physical < 0) revert();
 }
 
-void MElement::writePOS(FILE *fp, double scalingFactor, int elementary)
+void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber, 
+			bool printGamma, bool printEta, bool printRho, 
+			double scalingFactor, int elementary)
 {
   const char *str = getStringForPOS();
   if(!str) return;
 
   int n = getNumVertices();
-  double gamma = gammaShapeMeasure();
-  double eta = etaShapeMeasure();
-  double rho = rhoShapeMeasure();
   fprintf(fp, "%s(", str);
   for(int i = 0; i < n; i++){
     if(i) fprintf(fp, ",");
@@ -204,19 +203,39 @@ void MElement::writePOS(FILE *fp, double scalingFactor, int elementary)
 	    getVertex(i)->y() * scalingFactor, getVertex(i)->z() * scalingFactor);
   }
   fprintf(fp, "){");
-  for(int i = 0; i < n; i++)
-    fprintf(fp, "%d,", elementary);
-  for(int i = 0; i < n; i++)
-    fprintf(fp, "%d,", getNum());
-  for(int i = 0; i < n; i++)
-    fprintf(fp, "%g,", gamma);
-  for(int i = 0; i < n; i++)
-    fprintf(fp, "%g,", eta);
-  for(int i = 0; i < n; i++){
-    if(i == n - 1)
+  bool first = true;
+  if(printElementary){
+    for(int i = 0; i < n; i++){
+      if(first) first = false; else fprintf(fp, ",");
+      fprintf(fp, "%d", elementary);
+    }
+  }
+  if(printElementNumber){
+    for(int i = 0; i < n; i++){
+      if(first) first = false; else fprintf(fp, ",");
+      fprintf(fp, "%d", getNum());
+    }
+  }
+  if(printGamma){
+    double gamma = gammaShapeMeasure();
+    for(int i = 0; i < n; i++){
+      if(first) first = false; else fprintf(fp, ",");
+      fprintf(fp, "%g", gamma);
+    }
+  }
+  if(printEta){
+    double eta = etaShapeMeasure();
+    for(int i = 0; i < n; i++){
+      if(first) first = false; else fprintf(fp, ",");
+      fprintf(fp, "%g", eta);
+    }
+  }
+  if(printRho){
+    double rho = rhoShapeMeasure();
+    for(int i = 0; i < n; i++){
+      if(first) first = false; else fprintf(fp, ",");
       fprintf(fp, "%g", rho);
-    else
-      fprintf(fp, "%g,", rho);
+    }
   }
   fprintf(fp, "};\n");
 }

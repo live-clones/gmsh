@@ -146,7 +146,9 @@ class MElement
   // IO routines
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
 			int num=0, int elementary=1, int physical=1);
-  virtual void writePOS(FILE *fp, double scalingFactor=1.0, int elementary=1);
+  virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber, 
+			bool printGamma, bool printEta, bool printRho, 
+			double scalingFactor=1.0, int elementary=1);
   virtual void writeSTL(FILE *fp, bool binary=false, double scalingFactor=1.0);
   virtual void writeVRML(FILE *fp);
   virtual void writeUNV(FILE *fp, int num=0, int elementary=1, int physical=1);

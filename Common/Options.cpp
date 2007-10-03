@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.363 2007-10-02 20:07:29 geuzaine Exp $
+// $Id: Options.cpp,v 1.364 2007-10-03 19:40:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -7004,6 +7004,41 @@ double opt_print_geo_labels(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.print.geo_labels = (int)val;
   return CTX.print.geo_labels;
+}
+
+double opt_print_pos_elementary(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.print.pos_elementary = (int)val;
+  return CTX.print.pos_elementary;
+}
+
+double opt_print_pos_element(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.print.pos_element = (int)val;
+  return CTX.print.pos_element;
+}
+
+double opt_print_pos_gamma(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.print.pos_gamma = (int)val;
+  return CTX.print.pos_gamma;
+}
+
+double opt_print_pos_eta(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.print.pos_eta = (int)val;
+  return CTX.print.pos_eta;
+}
+
+double opt_print_pos_rho(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.print.pos_rho = (int)val;
+  return CTX.print.pos_rho;
 }
 
 double opt_print_gif_dither(OPT_ARGS_NUM)

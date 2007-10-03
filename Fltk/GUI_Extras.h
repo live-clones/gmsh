@@ -36,6 +36,7 @@ int generic_bitmap_dialog(char *filename, char *title, int format);
 int generic_mesh_dialog(char *filename, char *title, int format);
 int gl2ps_dialog(char *filename, char *title, int format);
 int options_dialog(char *filename);
+int pos_dialog(char *filename);
 int msh_dialog(char *filename);
 int unv_dialog(char *filename);
 int bdf_dialog(char *filename);

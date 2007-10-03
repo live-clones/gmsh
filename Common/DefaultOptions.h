@@ -1406,6 +1406,17 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "JpegSmoothing" , opt_print_jpeg_smoothing , 0. ,
     "JPEG smoothing (between 0 and 100)" },
 
+  { F|O, "PostElementary" , opt_print_pos_elementary , 1. ,
+    "Save elementary region tags in mesh statistics exported as post-processing views" },
+  { F|O, "PostElement" , opt_print_pos_element , 0. ,
+    "Save element numbers in mesh statistics exported as post-processing views" },
+  { F|O, "PostGamma" , opt_print_pos_gamma , 0. ,
+    "Save Gamma quality measure in mesh statistics exported as post-processing views" },
+  { F|O, "PostEta" , opt_print_pos_eta , 0. ,
+    "Save Eta quality measure in mesh statistics exported as post-processing views" },
+  { F|O, "PostRho" , opt_print_pos_rho , 0. ,
+    "Save Rho quality measure in mesh statistics exported as post-processing views" },
+
   { F|O, "TexAsEquation" , opt_print_tex_as_equation , 0. ,
     "Print all TeX strings as equations" },
   { F|O, "Text" , opt_print_text , 1. ,

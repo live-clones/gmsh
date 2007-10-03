@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.20 2007-09-26 20:51:58 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.21 2007-10-03 19:40:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -188,7 +188,9 @@ void CreateOutputFile(char *filename, int format)
     break;
 
   case FORMAT_POS:
-    GModel::current()->writePOS(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
+    GModel::current()->writePOS(name, CTX.print.pos_elementary, CTX.print.pos_element, 
+				CTX.print.pos_gamma, CTX.print.pos_eta, CTX.print.pos_rho, 
+				CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_GEO:

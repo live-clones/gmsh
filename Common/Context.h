@@ -221,6 +221,7 @@ public :
     int jpeg_quality, jpeg_smoothing;
     int gif_dither, gif_sort, gif_interlace, gif_transparent;
     int geo_labels;
+    int pos_elementary, pos_element, pos_gamma, pos_eta, pos_rho;
     int text, tex_as_equation;
   } print;
 

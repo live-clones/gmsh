@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.22 2007-08-14 18:11:19 anand Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.23 2007-10-03 19:40:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -731,7 +731,9 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   return 1;
 }
 
-int GModel::writePOS(const std::string &name, bool saveAll, double scalingFactor)
+int GModel::writePOS(const std::string &name, bool printElementary, 
+		     bool printElementNumber, bool printGamma, bool printEta, 
+		     bool printRho, bool saveAll, double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
@@ -739,56 +741,75 @@ int GModel::writePOS(const std::string &name, bool saveAll, double scalingFactor
     return 0;
   }
 
+  bool f[5] = {printElementary, printElementNumber, printGamma, printEta, printRho};
+
+  bool first = true;  
+  std::string names;
+  if(f[0]){
+    if(first) first = false; else names += ",";
+    names += "\"Elementary Entity\"";
+  }
+  if(f[1]){
+    if(first) first = false; else names += ",";
+    names += "\"Element Number\"";
+  }
+  if(f[2]){
+    if(first) first = false; else names += ",";
+    names += "\"Gamma\"";
+  }
+  if(f[3]){
+    if(first) first = false; else names += ",";
+    names += "\"Eta\"";
+  }
+  if(f[4]){
+    if(first) first = false; else names += ",";
+    names += "\"Rho\"";
+  }
+
+  if(names.empty()) return 0;
+
   if(noPhysicalGroups()) saveAll = true;
 
-  int status = getMeshStatus();
+  fprintf(fp, "View \"Statistics\" {\n");
+  fprintf(fp, "T2(1.e5,30,%d){%s};\n", (1<<16)|(4<<8), names.c_str());
 
-  if(status >= 3){
-    fprintf(fp, "View \"Volumes\" {\n");
-    fprintf(fp, "T2(1.e5,30,%d){\"Elementary Entity\", \"Element Number\", "
-	    "\"Gamma\", \"Eta\", \"Rho\"};\n", (1<<16)|(4<<8));
-    for(riter it = firstRegion(); it != lastRegion(); ++it) {
-      if(saveAll || (*it)->physicals.size()){
-	for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
-	  (*it)->tetrahedra[i]->writePOS(fp, scalingFactor, (*it)->tag());
-	for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
-	  (*it)->hexahedra[i]->writePOS(fp, scalingFactor, (*it)->tag());
-	for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
-	  (*it)->prisms[i]->writePOS(fp, scalingFactor, (*it)->tag());
-	for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
-	  (*it)->pyramids[i]->writePOS(fp, scalingFactor, (*it)->tag());
-      }
+  for(eiter it = firstEdge(); it != lastEdge(); ++it) {
+    if(saveAll || (*it)->physicals.size()){
+      for(unsigned int i = 0; i < (*it)->lines.size(); i++)
+	(*it)->lines[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+				  scalingFactor, (*it)->tag());
     }
-    fprintf(fp, "};\n");
-  }
-  
-  if(status >= 2){
-    fprintf(fp, "View \"Surfaces\" {\n");
-    fprintf(fp, "T2(1.e5,30,%d){\"Elementary Entity\", \"Element Number\", "
-	    "\"Gamma\", \"Eta\", \"Rho\"};\n", (1<<16)|(4<<8));
-    for(fiter it = firstFace(); it != lastFace(); ++it) {
-      if(saveAll || (*it)->physicals.size()){
-	for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-	  (*it)->triangles[i]->writePOS(fp, scalingFactor, (*it)->tag());
-	for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-	  (*it)->quadrangles[i]->writePOS(fp, scalingFactor, (*it)->tag());
-      }
-    }
-    fprintf(fp, "};\n");
   }
 
-  if(status >= 1){
-    fprintf(fp, "View \"Lines\" {\n");
-    fprintf(fp, "T2(1.e5,30,%d){\"Elementary Entity\", \"Element Number\", "
-	    "\"Gamma\", \"Eta\", \"Rho\"};\n", (1<<16)|(4<<8));
-    for(eiter it = firstEdge(); it != lastEdge(); ++it) {
-      if(saveAll || (*it)->physicals.size()){
-	for(unsigned int i = 0; i < (*it)->lines.size(); i++)
-	  (*it)->lines[i]->writePOS(fp, scalingFactor, (*it)->tag());
-      }
+  for(fiter it = firstFace(); it != lastFace(); ++it) {
+    if(saveAll || (*it)->physicals.size()){
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+	(*it)->triangles[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+				      scalingFactor, (*it)->tag());
+      for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
+	(*it)->quadrangles[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+					scalingFactor, (*it)->tag());
     }
-    fprintf(fp, "};\n");
   }
+
+  for(riter it = firstRegion(); it != lastRegion(); ++it) {
+    if(saveAll || (*it)->physicals.size()){
+      for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
+	(*it)->tetrahedra[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4],
+				       scalingFactor, (*it)->tag());
+      for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
+	(*it)->hexahedra[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+				      scalingFactor, (*it)->tag());
+      for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
+	(*it)->prisms[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+				   scalingFactor, (*it)->tag());
+      for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
+	(*it)->pyramids[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+				     scalingFactor, (*it)->tag());
+    }
+  }
+
+  fprintf(fp, "};\n");
 
   fclose(fp);
   return 1;

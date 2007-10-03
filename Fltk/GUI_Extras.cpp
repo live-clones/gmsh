@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.36 2007-06-22 08:07:46 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.37 2007-10-03 19:40:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -685,6 +685,73 @@ int geo_dialog(char *name)
       if (o == dialog->ok) {
 	opt_print_geo_labels(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
 	CreateOutputFile(name, FORMAT_GEO);
+	dialog->window->hide();
+	return 1;
+      }
+      if (o == dialog->window || o == dialog->cancel){
+	dialog->window->hide();
+	return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+int pos_dialog(char *name)
+{
+  struct _pos_dialog{
+    Fl_Window *window;
+    Fl_Check_Button *b[6];
+    Fl_Button *ok, *cancel;
+  };
+  static _pos_dialog *dialog = NULL;
+
+  const int BH = 2 * GetFontSize() + 1;
+  const int BB = 7 * GetFontSize() + 9;
+  const int WB = 7;
+
+  if(!dialog){
+    dialog = new _pos_dialog;
+    int h = 3 * WB + 7 * BH, w = 2 * BB + 3 * WB, y = WB;
+    // not a "Dialog_Window" since it is modal 
+    dialog->window = new Fl_Double_Window(w, h, "POS Options");
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->b[0] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
+    dialog->b[1] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print elementary tags"); y += BH;
+    dialog->b[2] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print element numbers"); y += BH;
+    dialog->b[3] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print Gamma quality measure"); y += BH;
+    dialog->b[4] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print Eta quality measure"); y += BH;
+    dialog->b[5] = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Print Rho quality measure"); y += BH;
+    for(int i = 0; i < 5; i++)
+      dialog->b[i]->type(FL_TOGGLE_BUTTON);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
+    dialog->window->set_modal();
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+  
+  dialog->b[0]->value(CTX.mesh.save_all ? 1 : 0);
+  dialog->b[1]->value(CTX.print.pos_elementary ? 1 : 0);
+  dialog->b[2]->value(CTX.print.pos_element ? 1 : 0);
+  dialog->b[3]->value(CTX.print.pos_gamma ? 1 : 0);
+  dialog->b[4]->value(CTX.print.pos_eta ? 1 : 0);
+  dialog->b[5]->value(CTX.print.pos_rho ? 1 : 0);
+  dialog->window->show();
+
+  while(dialog->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == dialog->ok) {
+	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
+	opt_print_pos_elementary(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value() ? 1 : 0);
+	opt_print_pos_element(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value() ? 1 : 0);
+	opt_print_pos_gamma(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value() ? 1 : 0);
+	opt_print_pos_eta(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value() ? 1 : 0);
+	opt_print_pos_rho(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value() ? 1 : 0);
+	CreateOutputFile(name, FORMAT_POS);
 	dialog->window->hide();
 	return 1;
       }
