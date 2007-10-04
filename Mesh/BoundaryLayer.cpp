@@ -1,4 +1,4 @@
-// $Id: BoundaryLayer.cpp,v 1.5 2007-09-10 04:47:04 geuzaine Exp $
+// $Id: BoundaryLayer.cpp,v 1.6 2007-10-04 13:04:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -47,14 +47,12 @@ static void addExtrudeNormals(std::vector<T*> &elements)
 
 int Mesh2DWithBoundaryLayers(GModel *m)
 {
-  ExtrudeParams *ep = 0;
-
   std::set<GFace*> sourceFaces, otherFaces;
   std::set<GEdge*> sourceEdges, otherEdges;
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
     GFace *gf = *it;
     if(gf->geomType() == GEntity::BoundaryLayerSurface){
-      ep = gf->meshAttributes.extrude;
+      ExtrudeParams *ep = gf->meshAttributes.extrude;
       if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY){
 	GFace *from = m->faceByTag(std::abs(ep->geo.Source));
 	if(!from){
@@ -96,17 +94,29 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   ExtrudeParams::normals->normalize();
 
   // set the position of boundary layer points using the smooth normal
-  // field
-  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++){
-    GVertex *gv = *it;
-    if(gv->geomType() == GEntity::BoundaryLayerPoint){
-      GPoint p = gv->point();
-      ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
-		  p.x(), p.y(), p.z());
-      gv->setPosition(p);
+  // field 
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
+    GEdge *ge = *it;
+    if(ge->geomType() == GEntity::BoundaryLayerCurve){
+      ExtrudeParams *ep = ge->meshAttributes.extrude;
+      if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY){
+	GVertex *vsrc, *vdest;
+	if(ge->getBeginVertex()->geomType() == GEntity::BoundaryLayerPoint){
+	  vsrc = ge->getEndVertex();
+	  vdest = ge->getBeginVertex();
+	}
+	else{
+	  vsrc = ge->getBeginVertex();
+	  vdest = ge->getEndVertex();
+	}
+	GPoint p = vsrc->point();
+	ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
+		    p.x(), p.y(), p.z());
+	vdest->setPosition(p);
+      }
     }
   }
-
+  
   // remesh non-source edges (since they might have been modified by
   // the change in boundary layer points)
   std::for_each(otherFaces.begin(), otherFaces.end(), deMeshGFace());
