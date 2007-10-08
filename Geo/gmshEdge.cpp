@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.38 2007-09-26 20:51:58 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.39 2007-10-08 13:13:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -124,7 +124,7 @@ int gmshEdge::minimumMeshSegments () const
     return (int)(fabs(c->Circle.t1 - c->Circle.t2) *
 		 (double)CTX.mesh.min_circ_points / Pi) - 1;
   else
-    return GEdge::minimumMeshSegments () ;
+    return GEdge::minimumMeshSegments();
 }
 
 int gmshEdge::minimumDrawSegments () const

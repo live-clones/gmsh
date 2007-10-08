@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.235 2007-09-10 04:47:10 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.236 2007-10-08 13:13:23 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 @c
@@ -2876,9 +2876,10 @@ where
 is the number of nodes in the mesh.
 
 @item @var{node-number}
-is the number (index) of the @var{n}-th node in the mesh. Note that the
-@w{@var{node-number}s} do not have to be given in a consecutive (or even an
-ordered) way.
+is the number (index) of the @var{n}-th node in the mesh;
+@var{node-number} must be a postive (non-zero) integer. Note that the
+@w{@var{node-number}s} do not necessarily have to form a dense nor an
+ordered sequence.
 
 @item @var{x-coord} @var{y-coord} @var{z-coord}
 are the floating point values giving the X, Y and Z coordinates of the
@@ -2888,9 +2889,10 @@ are the floating point values giving the X, Y and Z coordinates of the
 is the number of elements in the mesh.
 
 @item @var{elm-number}
-is the number (index) of the @var{n}-th element in the mesh. Note that the
-@w{@var{elm-number}s} do not have to be given in a consecutive (or even an
-ordered) way.
+is the number (index) of the @var{n}-th element in the mesh;
+@var{elm-number} must be a postive (non-zero) integer. Note that the
+@w{@var{elm-number}s} do not necessarily have to form a dense nor an
+ordered sequence.
 
 @item @var{elm-type}
 defines the geometrical type of the @var{n}-th element:
@@ -2948,10 +2950,14 @@ with the edges).
 See below for the ordering of the nodes.
 
 @item @var{reg-phys}
-is the number of the physical entity to which the element belongs. 
+is the number of the physical entity to which the element belongs;
+@var{reg-phys} must be a postive integer, or zero. If @var{reg-phys} is
+equal to zero, the element is considered not to belong to any physical
+entity.
 
 @item @var{reg-elem}
-is the number of the elementary entity to which the element belongs.
+is the number of the elementary entity to which the element belongs;
+@var{reg-elem} must be a postive (non-zero) integer.
 
 @item @var{number-of-nodes}
 is the number of nodes for the @var{n}-th element. This is redundant, but
@@ -3016,9 +3022,10 @@ file (currently only @var{data-size} = sizeof(double) is supported).
 is the number of nodes in the mesh.
 
 @item @var{node-number}
-is the number (index) of the @var{n}-th node in the mesh. Note that the
-@w{@var{node-number}s} do not have to be given in a consecutive (or even an
-ordered) way.
+is the number (index) of the @var{n}-th node in the mesh;
+@var{node-number} must be a postive (non-zero) integer. Note that the
+@w{@var{node-number}s} do not necessarily have to form a dense nor an
+ordered sequence.
 
 @item @var{x-coord} @var{y-coord} @var{z-coord}
 are the floating point values giving the X, Y and Z coordinates of the
@@ -3028,9 +3035,10 @@ are the floating point values giving the X, Y and Z coordinates of the
 is the number of elements in the mesh.
 
 @item @var{elm-number}
-is the number (index) of the @var{n}-th element in the mesh. Note that the
-@w{@var{elm-number}s} do not have to be given in a consecutive (or even an
-ordered) way.
+is the number (index) of the @var{n}-th element in the mesh;
+@var{elm-number} must be a postive (non-zero) integer. Note that the
+@w{@var{elm-number}s} do not necessarily have to form a dense nor an
+ordered sequence.
 
 @item @var{elm-type}
 defines the geometrical type of the @var{n}-th element:
@@ -3093,11 +3101,12 @@ generates meshes with two tags and reads files with an arbitrary number of
 tags: see below.
 
 @item @var{tag}
-is an integer tag associated with the @var{n}-th element. By default, the
-first tag is the number of the physical entity to which the element belongs;
-the second is the number of the elementary geometrical entity to which the
-element belongs; the third is the number of a mesh partition to which the
-element belongs.
+is an integer tag associated with the @var{n}-th element. By default,
+the first tag is the number of the physical entity to which the element
+belongs; the second is the number of the elementary geometrical entity
+to which the element belongs; the third is the number of a mesh
+partition to which the element belongs. All tags must be postive
+integers, or zero. A zero tag is equivalent to no tag.
 
 @item @var{node-number-list}
 is the list of the node numbers of the @var{n}-th element. The ordering of

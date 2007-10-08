@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.22 2007-09-04 13:47:01 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.23 2007-10-08 13:13:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -210,22 +210,22 @@ double OCCEdge::curvature(double par) const
   Standard_Real Crv;
   if (curve.IsNull()){
     Geom2dLProp_CLProps2d aCLProps(curve2d, 2, eps);
-    aCLProps.SetParameter (par);
+    aCLProps.SetParameter(par);
     if(!aCLProps.IsTangentDefined())
-      Crv =eps;
+      Crv = eps;
     else
       Crv = aCLProps.Curvature();
   }
   else{
     BRepAdaptor_Curve brepc(c);
     BRepLProp_CLProps prop(brepc, 2, eps);
-    prop.SetParameter (par); 
-    if (!prop.IsTangentDefined())
+    prop.SetParameter(par); 
+    if(!prop.IsTangentDefined())
       Crv = eps;
     else
       Crv = prop.Curvature();
   }
-  if (Crv <= eps)Crv = eps;
+  if(Crv <= eps) Crv = eps;
   
   // std::list<GFace*> ff = faces();
   // std::list<GFace *>::iterator it =  ff.begin();
