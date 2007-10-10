@@ -26,5 +26,6 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
 bool BGMExists();
 void BGMAddField(Field *field);
 void BGMReset();
-
+bool Extend1dMeshIn2dSurfaces ();
+bool Extend2dMeshIn3dVolumes  ();
 #endif

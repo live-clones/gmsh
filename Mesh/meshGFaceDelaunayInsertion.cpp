@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.5 2007-09-10 13:37:21 remacle Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.6 2007-10-10 08:49:34 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -319,7 +319,7 @@ bool insertVertex (MVertex *v ,
 				   vSizesBGM [t->getVertex(1)->getNum()]+
 				   vSizesBGM [t->getVertex(2)->getNum()]);
       
-      MTri3 *t4 = new MTri3 ( t , std::min(lc,lcBGM)); 
+      MTri3 *t4 = new MTri3 ( t , Extend1dMeshIn2dSurfaces() ? std::min(lc,lcBGM) : lcBGM ); 
 //        fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {0,0,0};\n",
 // 	       Us [t->getVertex(0)->getNum()],
 // 	       Vs [t->getVertex(0)->getNum()],

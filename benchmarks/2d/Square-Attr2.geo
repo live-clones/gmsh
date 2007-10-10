@@ -36,4 +36,4 @@ Line(15) = {19,20};
 Attractor Line{7,8,9,10,11,12,13,14,15} = {.04,lc/30,lc,1000,7} ;
 // Argh:
 //Attractor Line{7,8,9,10,11,12,13,14,15} = {.2,0.002,10} ; 
-Mesh.Algorithm = 2;
+//Mesh.Algorithm = 2;

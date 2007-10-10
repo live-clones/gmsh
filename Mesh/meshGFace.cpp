@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.89 2007-09-24 08:14:29 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.90 2007-10-10 08:49:34 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -106,7 +106,7 @@ double F_LC_ANALY(double xx, double yy, double zz)
 
 double NewGetLc(BDS_Point *p)
 {
-  return std::min(p->lc(),p->lcBGM());
+  return Extend1dMeshIn2dSurfaces () ? std::min(p->lc(),p->lcBGM()) : p->lcBGM();
 }
 
 inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2)
@@ -297,6 +297,102 @@ void OptimizeMesh(GFace *gf, BDS_Mesh &m, const int NIT)
   }
 }
 
+void swapEdgePass ( GFace *gf, BDS_Mesh &m, int &nb_swap )
+{
+  int NN1 = m.edges.size();
+  int NN2 = 0;
+  std::list<BDS_Edge*>::iterator it = m.edges.begin();
+  while (1)
+    {
+      if (NN2++ >= NN1)break;
+      // result = -1 => forbid swap because too badly shaped elements
+      // result = 0  => whatever
+      // result = 1  => oblige to swap because the quality is greatly improved
+      if (!(*it)->deleted)
+	{
+	  int result = edgeSwapTestQuality(*it,5);
+	  if (result >= 0)
+	    if(edgeSwapTestDelaunay(*it,gf) || result > 0)
+	      if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))
+		nb_swap++;
+	  ++it;
+	}
+    }  
+}
+
+void splitEdgePass ( GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
+{
+  int NN1 = m.edges.size();
+  int NN2 = 0;
+  std::list<BDS_Edge*>::iterator it = m.edges.begin();
+  while (1)
+    {
+      if (NN2++ >= NN1)break;
+      if (!(*it)->deleted)
+	{
+	  double lone = NewGetLc ( *it,gf);
+	  if ((*it)->numfaces() == 2 && (lone >  MAXE_))
+	    {
+	      const double coord = 0.5;
+	      BDS_Point *mid ;
+	      mid  = m.add_point(++m.MAXPOINTNUMBER,
+				 coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
+				 coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v,gf);
+	      double l1;
+	      //		  if (BGMExists())
+	      mid->lcBGM() = BGM_MeshSize(gf,
+					  (coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u)*m.scalingU,
+					  (coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v)*m.scalingV,
+					  mid->X,mid->Y,mid->Z);
+	      //mid->lc() = 2./ ( 1./(*it)->p1->lc() +  1./(*it)->p2->lc() );		  
+	      mid->lc() = 0.5 * ( (*it)->p1->lc() +  (*it)->p2->lc() );		  
+	      m.split_edge ( *it, mid );
+	      nb_split++;
+	    } 
+	}
+      ++it;
+    }
+}
+
+
+void collapseEdgePass ( GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_collaps)
+{
+  int NN1 = m.edges.size();
+  int NN2 = 0;
+  std::list<BDS_Edge*>::iterator it = m.edges.begin();
+  while (1)
+    {
+      if (NN2++ >= NN1)break;
+      double lone = NewGetLc ( *it,gf);
+      //	  if (lone < 1.e-10 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
+      
+      if (!(*it)->deleted && (*it)->numfaces() == 2 && lone < MINE_ )
+	{
+	  bool res = false;
+	  if ( (*it)->p1->iD > MAXNP )
+	    res =m.collapse_edge_parametric ( *it, (*it)->p1);
+	  else if ( (*it)->p2->iD > MAXNP )
+	    res =m.collapse_edge_parametric ( *it, (*it)->p2);
+	  if (res)
+	    nb_collaps ++;
+	}
+      ++it;
+    }
+}
+
+
+void smoothVertexPass ( GFace *gf, BDS_Mesh &m, int &nb_smooth)
+{
+  std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
+  while (itp != m.points.end())
+    {
+      
+      if(m.smooth_point_centroid(*itp,gf))
+	nb_smooth ++;
+      ++itp;
+    }
+}
+
 void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 {
   int IT =0;
@@ -305,9 +401,9 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 
   int MAXNP = m.MAXPOINTNUMBER;
 
-  // computecharacteristic lengths using mesh edge spacing
+  // computecharacteristic lengths using 1D mesh edge spacing
   // those lengths will propagate in the 2D mesh.
-  if (NIT > 0)
+  if (0 && NIT > 0)
     {
       std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
       while (itp != m.points.end())
@@ -320,14 +416,15 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	    if (l<L && (*it)->g && (*it)->g->classif_degree == 1)L=l;
 	    ++it;
 	  }
-	  if(!CTX.mesh.constrained_bgmesh)
-	    (*itp)->lc() = L;
+	  (*itp)->lc() = L;
 	  (*itp)->lcBGM() = L;
 	  ++itp;
 	}
     }
 
   double OLDminL=1.E22,OLDmaxL=0;
+
+  double t_spl=0, t_sw=0,t_col=0,t_sm=0;
 
   const double MINE_ = 0.7, MAXE_=1.4;
   while (1)
@@ -342,6 +439,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
       // split long edges
 
       double minL=1.E22,maxL=0;
+
       int NN1 = m.edges.size();
       int NN2 = 0;
       std::list<BDS_Edge*>::iterator it = m.edges.begin();
@@ -364,116 +462,45 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
       
       if ((minL > MINE_ && maxL < MAXE_) || IT > (abs(NIT)))break;
 
-      NN1 = m.edges.size();
-      NN2 = 0;
-      it = m.edges.begin();
-      while (1)
-	{
-	  if (NN2++ >= NN1)break;
-	  if (!(*it)->deleted)
-	    {
-	      double lone = NewGetLc ( *it,gf);
-	      if ((*it)->numfaces() == 2 && (lone >  MAXE_))
-		{
-		  const double coord = 0.5;
-		  BDS_Point *mid ;
-		  mid  = m.add_point(++m.MAXPOINTNUMBER,
-				     coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
-				     coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v,gf);
-		  //		  if (BGMExists())
-		  mid->lcBGM() = BGM_MeshSize(gf,
-					      (coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u)*m.scalingU,
-					      (coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v)*m.scalingV,
-					      mid->X,mid->Y,mid->Z);
-		  //mid->lc() = 2./ ( 1./(*it)->p1->lc() +  1./(*it)->p2->lc() );		  
-		  mid->lc() = 0.5 * ( (*it)->p1->lc() +  (*it)->p2->lc() );		  
-		  m.split_edge ( *it, mid );
-		  nb_split++;
-		} 
-	    }
-	  ++it;
-	}
-
-      // swap edges that provide a better configuration
-
-      NN2 = 0;
-      it = m.edges.begin();
-      while (1)
-	{
-	  if (NN2++ >= NN1)break;
-	  // result = -1 => forbid swap because too badly shaped elements
-	  // result = 0  => whatever
-	  // result = 1  => oblige to swap because the quality is greatly improved
-	  if (!(*it)->deleted)
-	    {
-	      int result = edgeSwapTestQuality(*it,5);
-	      if (result >= 0)
-		if(edgeSwapTestDelaunay(*it,gf) || result > 0)
-		  if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))
-		    nb_swap++;
-	      ++it;
-	    }
-	}
-
-      // collapse short edges
-      NN1 = m.edges.size();
-      NN2 = 0;
-      it = m.edges.begin();
-      while (1)
-	{
-	  if (NN2++ >= NN1)break;
-	  double lone = NewGetLc ( *it,gf);
-	  //	  if (lone < 1.e-10 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
-
-	  if (!(*it)->deleted && (*it)->numfaces() == 2 && lone < MINE_ )
-	    {
-	      bool res = false;
-	      if ( (*it)->p1->iD > MAXNP )
-		res =m.collapse_edge_parametric ( *it, (*it)->p1);
-	      else if ( (*it)->p2->iD > MAXNP )
-		res =m.collapse_edge_parametric ( *it, (*it)->p2);
-	      if (res)
-		nb_collaps ++;
-	    }
-	  ++it;
-	}
-
-      // swap edges that provide a better configuration
-      NN1 = m.edges.size();
-      NN2 = 0;
-      it = m.edges.begin();
-      while (1)
-	{
-	  if (NN2++ >= NN1)break;
-	  if (!(*it)->deleted)
-	    {
-	      int result = edgeSwapTestQuality(*it,5);
-	      if (result >= 0)
-		if(edgeSwapTestDelaunay(*it,gf) || result > 0)
-		  if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))
-		    nb_swap++;
-	      ++it;
-	    }
-	}
-      // smooth resulting mesh
-      {
-	std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
-	while (itp != m.points.end())
-	  {
-	    
-	    if(m.smooth_point_centroid(*itp,gf))
-	      nb_smooth ++;
-	    ++itp;
-	  }
-      }
-
+      double maxE = MAXE_;//std::max(MAXE_,maxL / 5);
+      double minE = MINE_;//std::min(MINE_,minL * 1.2);
+      clock_t t1 = clock();
+      splitEdgePass ( gf, m, maxE, nb_split);
+      clock_t t2 = clock();
+      swapEdgePass ( gf, m, nb_swap);
+      clock_t t3 = clock();
+      collapseEdgePass ( gf, m, minE , MAXNP, nb_collaps);
+      clock_t t4 = clock();
+      swapEdgePass ( gf, m, nb_swap); 
+      clock_t t5 = clock();
+      smoothVertexPass ( gf, m, nb_smooth);
+      clock_t t6 = clock();
       // clean up the mesh
+
+
+      t_spl += (double)(t2-t1)/CLOCKS_PER_SEC;
+      t_sw  += (double)(t3-t2)/CLOCKS_PER_SEC;
+      t_sw  += (double)(t5-t4)/CLOCKS_PER_SEC;
+      t_col += (double)(t4-t3)/CLOCKS_PER_SEC;
+      t_sm  += (double)(t6-t5)/CLOCKS_PER_SEC;
+
       m.cleanup();  	
       IT++;
-      Msg(DEBUG1," iter %3d minL %8.3f maxL %8.3f : %6d splits, %6d swaps, %6d collapses, %6d moves",IT,minL,maxL,nb_split,nb_swap,nb_collaps,nb_smooth);
+      Msg(DEBUG1," iter %3d minL %8.3f/%8.3f maxL %8.3f/%8.3f : %6d splits, %6d swaps, %6d collapses, %6d moves",IT,minL,minE,maxL,maxE,nb_split,nb_swap,nb_collaps,nb_smooth);
       
       if (nb_split==0 && nb_collaps == 0)break;
     }  
+  double t_total = t_spl + t_sw + t_col + t_sm;
+  Msg(DEBUG1," ---------------------------------------");
+  Msg(DEBUG1," CPU Report ");
+  Msg(DEBUG1," ---------------------------------------");
+  Msg(DEBUG1," CPU SWAP    %12.5E sec (%3.0f %%)",t_sw,100 * t_sw/t_total);
+  Msg(DEBUG1," CPU SPLIT   %12.5E sec (%3.0f %%) ",t_spl,100 * t_spl/t_total);
+  Msg(DEBUG1," CPU COLLAPS %12.5E sec (%3.0f %%) ",t_col,100 * t_col/t_total);
+  Msg(DEBUG1," CPU SMOOTH  %12.5E sec (%3.0f %%) ",t_sm,100 * t_sm/t_total);
+  Msg(DEBUG1," ---------------------------------------");
+  Msg(DEBUG1," CPU TOTAL   %12.5E sec ",t_total);
+  Msg(DEBUG1," ---------------------------------------");
 }
 
 
@@ -760,7 +787,21 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
 	V = V_[num];
       }
 
-      m->add_point ( num, U,V, gf);
+      BDS_Point *pp = m->add_point ( num, U,V, gf);
+      
+      GEntity *ge       = here->onWhat();    
+      if(ge->dim() == 1)
+	{
+	  double t;
+	  here->getParameter(0,t);
+	  pp->lcBGM() = BGM_MeshSize(ge,t,-12,here->x(),here->y(),here->z());
+	}
+      else
+	{
+	  MEdgeVertex *eve = (MEdgeVertex*) here;
+	  pp->lcBGM() = eve->getLc();
+	}
+      pp->lc() = pp->lcBGM();
     }
   
   Msg(DEBUG1,"Meshing of the convex hull (%d points) done",all_vertices.size());
@@ -1189,19 +1230,22 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	 double U,V;
 	 SPoint2 param = coords [i];
 	 U = param.x() / m->scalingU ;
-	 V = param.y() / m->scalingV;
-	 BDS_Point *pp;
-	 pp = m->add_point ( count, U,V,gf );
-// 	 if(ge->dim() == 1)
-// 	   {
-// 	     double t;
-// 	     here->getParameter(0,t);
-// 	     pp->lc() = BGM_MeshSize(ge,t,-12,here->x(),here->y(),here->z());
-// 	   }
-// 	 else
-// 	   {
-// 	     pp->lc() = BGM_MeshSize(ge,param.x(),param.y(),here->x(),here->y(),here->z());
-// 	   }
+	 V = param.y() / m->scalingV;	
+	 BDS_Point *pp = m->add_point ( count, U,V,gf );
+ 	 if(ge->dim() == 1)
+ 	   {
+ 	     double t;
+ 	     here->getParameter(0,t);
+ 	     pp->lcBGM() = BGM_MeshSize(ge,t,-12,here->x(),here->y(),here->z());
+	     pp->lc() = pp->lcBGM();
+ 	   }
+ 	 else
+ 	   {
+	     MEdgeVertex *eve = (MEdgeVertex*) here;
+	     // 	     pp->lc() = BGM_MeshSize(ge,param.x(),param.y(),here->x(),here->y(),here->z());
+	     pp->lc() = eve->getLc();
+	     pp->lcBGM() = eve->getLc();
+ 	   }
 
 	 m->add_geom (ge->tag(), ge->dim());
 	 BDS_GeomEntity *g = m->get_geom(ge->tag(),ge->dim());

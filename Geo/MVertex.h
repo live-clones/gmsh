@@ -117,15 +117,16 @@ class MVertex{
 
 class MEdgeVertex : public MVertex{
  protected:
-  double _u;
+  double _u, _lc;
  public :
-  MEdgeVertex(double x, double y, double z, GEntity *ge, double u) 
-    : MVertex(x, y, z, ge), _u(u)
+ MEdgeVertex(double x, double y, double z, GEntity *ge, double u, double lc = -1.0) 
+   : MVertex(x, y, z, ge), _u(u),_lc(lc)
   {
   }
   virtual ~MEdgeVertex(){}
   virtual bool getParameter(int i, double &par) const{ par = _u; return true; }
   virtual bool setParameter(int i, double par){ _u = par; return true; }
+  double getLc () const {return _lc;}
 };
 
 class MFaceVertex : public MVertex{

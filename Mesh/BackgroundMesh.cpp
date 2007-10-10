@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.25 2007-09-10 04:47:03 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.26 2007-10-10 08:49:34 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -183,7 +183,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
   double l4 = lc_field.empty() ? MAX_LC : lc_field(X, Y, Z);
 
   // use the field unconstrained by other characteristic lengths
-  if(l4 < MAX_LC && !CTX.mesh.constrained_bgmesh)
+  if(!lc_field.empty() && !CTX.mesh.constrained_bgmesh)
     return l4 * CTX.mesh.lc_factor;
 
   if(CTX.mesh.lc_from_curvature && ge->dim() < 3)
@@ -195,5 +195,21 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
   //  printf("l1 = %12.5E l2 = %12.5E l4 = %12.5E\n",l1,l2,l4);
 
   double lc = std::min(std::min(std::min(l1, l2), l3), l4);
+
   return lc * CTX.mesh.lc_factor;
+}
+
+// we extend the 1d mesh in surfaces if no background mesh exists
+// in this case, it is the only way to have something smooth
+// we do it also if CTX.mesh.constrained_bgmesh is true;
+bool Extend1dMeshIn2dSurfaces ()
+{
+  if ( lc_field.empty()) return true;
+  if ( CTX.mesh.constrained_bgmesh == true) return true;
+  return false;
+}
+
+bool Extend2dMeshIn3dVolumes  ()
+{
+  return Extend1dMeshIn2dSurfaces ();
 }
