@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.78 2007-09-10 04:47:03 geuzaine Exp $
+// $Id: BDS.cpp,v 1.79 2007-10-10 13:59:30 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -236,7 +236,11 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2,std::set<EdgeToRecover> *e2r
 	      {
 		if (e2r && e2r->find(EdgeToRecover(e->p1->iD,e->p2->iD,0)) != e2r->end())
 		  {
-		    Msg(GERROR," edge %d %d cannot be recovered because it intersects %d %d",num1,num2,e->p1->iD,e->p2->iD);
+		    std::set<EdgeToRecover>::iterator itr1 = e2r->find(EdgeToRecover(e->p1->iD,e->p2->iD,0));		    
+		    std::set<EdgeToRecover>::iterator itr2 = e2r->find(EdgeToRecover(num1,num2,0));		    
+		    Msg(GERROR," edge %d %d on model edge %d cannot be recovered because it intersects %d %d on model edge %d",
+			num1,num2,itr2->ge->tag(),
+			e->p1->iD,e->p2->iD,itr1->ge->tag());
 		    return false;
 		  }
 		intersected.push_back(e);	  
@@ -1150,8 +1154,9 @@ void BDS_Mesh::recombineIntoQuads (const double angle_limit, GFace *gf)
 	smooth_point_parametric(*itpt,gf);
 	++itpt;
       }
-
-
   }
 }
 
+void FullQuadMesh ()
+{
+}

@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.90 2007-10-10 08:49:34 remacle Exp $
+// $Id: meshGFace.cpp,v 1.91 2007-10-10 13:59:30 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -400,27 +400,6 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
   //  printf("lc (1,1) = %g\n",Attractor::lc(1,1,0));
 
   int MAXNP = m.MAXPOINTNUMBER;
-
-  // computecharacteristic lengths using 1D mesh edge spacing
-  // those lengths will propagate in the 2D mesh.
-  if (0 && NIT > 0)
-    {
-      std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
-      while (itp != m.points.end())
-	{
-	  std::list<BDS_Edge*>::iterator it  = (*itp)->edges.begin();
-	  std::list<BDS_Edge*>::iterator ite = (*itp)->edges.end();
-	  double L = 1.e22;
-	  while(it!=ite){
-	    double l = (*it)->length();
-	    if (l<L && (*it)->g && (*it)->g->classif_degree == 1)L=l;
-	    ++it;
-	  }
-	  (*itp)->lc() = L;
-	  (*itp)->lcBGM() = L;
-	  ++itp;
-	}
-    }
 
   double OLDminL=1.E22,OLDmaxL=0;
 

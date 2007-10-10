@@ -188,10 +188,8 @@ void edgeSwappingLawson (GFace *gf)
   e2t_cont :: iterator it = adj.begin();
   
   while (it != adj.end())
-    {
-      
+    {      
       bool evalSwapLawson = edgeSwapTestDelaunay(it,gf);
-
       if ( evalSwapLawson )
 	{
 	  edgeSwap  (adj, it ,gf );
