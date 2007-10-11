@@ -47,6 +47,7 @@ double surface_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3);
 double surface_triangle_param(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3); 
 double quality_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3);
 
+
 class BDS_GeomEntity
 {
 public:
@@ -447,7 +448,7 @@ public:
   void add_geom(int degree, int tag);
   BDS_GeomEntity *get_geom(int p1, int p2);
   // 2D operators
-  BDS_Edge *recover_edge(int p1, int p2, std::set<EdgeToRecover> *e2r=0);
+  BDS_Edge *recover_edge(int p1, int p2, std::set<EdgeToRecover> *e2r=0, std::set<EdgeToRecover> *not_recovered = 0);
   bool swap_edge(BDS_Edge *, const BDS_SwapEdgeTest &theTest);
   bool collapse_edge_parametric(BDS_Edge *, BDS_Point*);
   void snap_point(BDS_Point* , BDS_Mesh *geom = 0);

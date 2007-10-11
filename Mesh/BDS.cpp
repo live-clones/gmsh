@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.79 2007-10-10 13:59:30 remacle Exp $
+// $Id: BDS.cpp,v 1.80 2007-10-11 08:59:22 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -206,7 +206,7 @@ int Intersect_Edges_2d(double x1, double y1, double x2, double y2,
   return 0;
 }
 
-BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2,std::set<EdgeToRecover> *e2r)
+BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2r, std::set<EdgeToRecover> *not_recovered )
 {
   BDS_Edge *e = find_edge (num1, num2);
 
@@ -220,6 +220,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2,std::set<EdgeToRecover> *e2r
   Msg(INFO," edge %d %d has to be recovered",num1,num2);
   
   int ix = 0;
+  int ixMax = 100;
   while(1)
     {
       std::vector<BDS_Edge *> intersected;
@@ -238,17 +239,21 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2,std::set<EdgeToRecover> *e2r
 		  {
 		    std::set<EdgeToRecover>::iterator itr1 = e2r->find(EdgeToRecover(e->p1->iD,e->p2->iD,0));		    
 		    std::set<EdgeToRecover>::iterator itr2 = e2r->find(EdgeToRecover(num1,num2,0));		    
-		    Msg(GERROR," edge %d %d on model edge %d cannot be recovered because it intersects %d %d on model edge %d",
+		    Msg(WARNING," edge %d %d on model edge %d cannot be recovered because it intersects %d %d on model edge %d",
 			num1,num2,itr2->ge->tag(),
 			e->p1->iD,e->p2->iD,itr1->ge->tag());
-		    return false;
+
+		    // now throw a class that contains the diagnostic
+		    not_recovered->insert (EdgeToRecover( num1 , num2, itr2->ge));
+		    not_recovered->insert (EdgeToRecover( e->p1->iD, e->p2->iD, itr1->ge));
+		    ixMax = -1;
 		  }
 		intersected.push_back(e);	  
 	      }
 	  ++it;
 	}
 
-      if (!intersected.size() || ix > 100)
+      if (!intersected.size() || ix > ixMax)
 	{
 	  BDS_Edge *eee = find_edge (num1, num2);
 	  if (!eee)

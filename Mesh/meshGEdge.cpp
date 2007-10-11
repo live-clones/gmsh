@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.44 2007-10-10 08:49:34 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.45 2007-10-11 08:59:22 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -365,12 +365,15 @@ void meshGEdge::operator() (GEdge *ge)
       const double d = (double)NUMP * b;
       if((fabs(P2.p) >= fabs(d)) && (fabs(P1.p) < fabs(d))) {
         double dt = P2.t - P1.t;
-        double dlc = P2.lc - P1.lc;
+	double dlc = P2.lc - P1.lc;
         double dp = P2.p - P1.p;
         double t   = P1.t + dt / dp * (d - P1.p);
-        double lc  = P1.lc + dlc / dp * (d - P1.p);
+	SVector3 der = ge->firstDer(t);
+	const double d = norm(der);  
+        double lc  = d/(P1.lc + dlc / dp * (d - P1.p));
         GPoint V = ge->point(t);
 	ge->mesh_vertices[NUMP - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t, lc);
+	//	printf("lc = %12.5E %12.5E \n",lc,P1.lc,P2.lc);
         NUMP++;
       }
       else {

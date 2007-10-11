@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.91 2007-10-10 13:59:30 remacle Exp $
+// $Id: meshGFace.cpp,v 1.92 2007-10-11 08:59:22 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -485,7 +485,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 
 
 
-bool recover_medge ( BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, int pass_)
+bool recover_medge ( BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, std::set<EdgeToRecover> *not_recovered, int pass_)
 {
   BDS_GeomEntity *g=0;
   if (pass_ == 2)
@@ -521,10 +521,10 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, int p
 	      BDS_GeomEntity *g0 = m->get_geom(vend->getNum(), 0);
 	      pend->g = g0;
 	    }
-	  BDS_Edge * e = m->recover_edge ( vstart->getNum(), vend->getNum(),e2r);
+	  BDS_Edge * e = m->recover_edge ( vstart->getNum(), vend->getNum(),e2r, not_recovered);
 	  if (e)e->g = g;
 	  else {
-	    Msg(GERROR,"The unrecoverable edge is on model edge %d",ge->tag());
+	    //	    Msg(GERROR,"The unrecoverable edge is on model edge %d",ge->tag());
 	    return false;
 	  }
 	  return true;
@@ -545,11 +545,11 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, int p
 	  BDS_GeomEntity *g0 = m->get_geom(vstart->getNum(), 0);
 	  pstart->g = g0;
 	}
-      e = m->recover_edge ( vstart->getNum(), vend->getNum(),e2r);
+      e = m->recover_edge ( vstart->getNum(), vend->getNum(),e2r, not_recovered);
       if (e)e->g = g;
       else {
-	Msg(GERROR,"The unrecoverable edge is on model edge %d",ge->tag());
-	return false;
+	//	Msg(GERROR,"The unrecoverable edge is on model edge %d",ge->tag());
+	//	return false;
       }
     }
 
@@ -560,11 +560,11 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, int p
       if (pass_ == 1)e2r->insert (EdgeToRecover (vstart->getNum(), vend->getNum(),ge));
       else
 	{
-	  e = m->recover_edge ( vstart->getNum(), vend->getNum(),e2r);
+	  e = m->recover_edge ( vstart->getNum(), vend->getNum(),e2r, not_recovered);
 	  if (e)e->g = g;
 	  else {
-	    Msg(GERROR,"Unable to recover an edge %g %g && %g %g (%d/%d)",vstart->x(),vstart->y(), vend->x(),vend->y(),i,ge->mesh_vertices.size());
-	    return false;
+	    //	    Msg(GERROR,"Unable to recover an edge %g %g && %g %g (%d/%d)",vstart->x(),vstart->y(), vend->x(),vend->y(),i,ge->mesh_vertices.size());
+	    //	    return false;
 	  }
 	}
     }    
@@ -573,11 +573,11 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, int p
   if (pass_ == 1)e2r->insert (EdgeToRecover (vstart->getNum(), vend->getNum(),ge));
   else
     {
-      e = m->recover_edge ( vstart->getNum(), vend->getNum(),e2r);
+      e = m->recover_edge ( vstart->getNum(), vend->getNum(),e2r, not_recovered);
       if (e)e->g = g;
       else {
-	Msg(GERROR,"Unable to recover an edge %g %g && %g %g (%d/%d)",vstart->x(),vstart->y(), vend->x(),vend->y(),ge->mesh_vertices.size(),ge->mesh_vertices.size());
-	return false;
+	//	Msg(GERROR,"Unable to recover an edge %g %g && %g %g (%d/%d)",vstart->x(),vstart->y(), vend->x(),vend->y(),ge->mesh_vertices.size(),ge->mesh_vertices.size());
+	//	return false;
       }
       BDS_Point *pend = m->find_point(vend->getNum());
       if(!pend->g)
@@ -769,18 +769,20 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
       BDS_Point *pp = m->add_point ( num, U,V, gf);
       
       GEntity *ge       = here->onWhat();    
-      if(ge->dim() == 1)
+      if(ge->dim() == 0)
 	{
-	  double t;
-	  here->getParameter(0,t);
-	  pp->lcBGM() = BGM_MeshSize(ge,t,-12,here->x(),here->y(),here->z());
+	  pp->lcBGM() = BGM_MeshSize(ge,0,0,here->x(),here->y(),here->z());
 	}
-      else
+      else if(ge->dim() == 1)
 	{
 	  MEdgeVertex *eve = (MEdgeVertex*) here;
 	  pp->lcBGM() = eve->getLc();
 	}
+      else
+	  pp->lcBGM() = 1.e22;
+	
       pp->lc() = pp->lcBGM();
+      //      printf("dim %d lc = %12.5E\n",ge->dim(),pp->lc());
     }
   
   Msg(DEBUG1,"Meshing of the convex hull (%d points) done",all_vertices.size());
@@ -821,17 +823,18 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   // 1D mesh have to be densified
 
   std::set<EdgeToRecover> edgesToRecover;
+  std::set<EdgeToRecover> edgesNotRecovered;
   it = edges.begin();
   while(it != edges.end())
     {
       if(!(*it)->is_mesh_degenerated())
-	recover_medge ( m, *it, &edgesToRecover,1);
+	recover_medge ( m, *it, &edgesToRecover, &edgesNotRecovered, 1);
       ++it;
     }
   it = emb_edges.begin();
   while(it != emb_edges.end())
     {
-      recover_medge ( m, *it, &edgesToRecover,1);
+      recover_medge ( m, *it, &edgesToRecover, &edgesNotRecovered, 1);
       ++it;
     }
 
@@ -843,14 +846,17 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   while(it != edges.end())
     {
       if(!(*it)->is_mesh_degenerated()){
-	if (!recover_medge ( m, *it, &edgesToRecover,2))
-	  {
-	    Msg(GERROR,"Face cannot be not meshed because 1D mesh self intersects !");
-	    return false;
-	  }
+	recover_medge ( m, *it, &edgesToRecover, &edgesNotRecovered, 2);	
       }
       ++it;
     }
+
+  if (edgesNotRecovered.size())
+  {
+    Msg(GERROR,"%d edges were not recovered on model face %d, gmsh goes back and refines the 1d mesh",edgesNotRecovered.size(),gf->tag());
+    return false;
+  }
+
   //  Msg(INFO,"Boundary Edges recovered for surface %d",gf->tag());
   // Look for an edge that is on the boundary for which one of the
   // two neighbors has a negative number node. The other triangle
@@ -886,7 +892,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   it = emb_edges.begin();
   while(it != emb_edges.end())
     {
-      recover_medge ( m, *it, &edgesToRecover,2);
+      recover_medge ( m, *it, &edgesToRecover, &edgesNotRecovered, 2);
       ++it;
     }
 
