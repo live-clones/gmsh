@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.93 2007-10-11 13:42:12 remacle Exp $
+// $Id: meshGFace.cpp,v 1.94 2007-10-11 14:34:04 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -96,6 +96,13 @@ void remeshUnrecoveredEdges ( std::set<EdgeToRecover> & edgesNotRecovered, std::
 	      lc2 = ev2->getLc();
 	      v2->getParameter(0,t2);
 	    }
+
+	    // periodic
+	    if (v1->onWhat() == g1 && v1->onWhat() == g2)
+		t1 = fabs(t2-bb.low()) < fabs(t2-bb.high()) ? bb.low() : bb.high();
+	    if (v2->onWhat() == g1 && v2->onWhat() == g2)
+		t2 = fabs(t1-bb.low()) < fabs(t1-bb.high()) ? bb.low() : bb.high();
+	    
 
 	    if (lc1 == -1)
 	      lc1 = BGM_MeshSize(v1->onWhat(),0,0,v1->x(),v1->y(),v1->z());
@@ -681,7 +688,7 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, std::
 // domain, including embedded points 
 // and surfaces
 
-bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
+bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
 {
 
   typedef std::set<MVertex*> v_container ;
@@ -938,16 +945,19 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
 
   if (edgesNotRecovered.size())
   {
-    Msg(GERROR,"%d edges were not recovered on model face %d, gmsh goes back and refines the 1d mesh",edgesNotRecovered.size(),gf->tag());
-    //    std::list<GFace *> facesToRemesh;
-    //    remeshUnrecoveredEdges ( edgesNotRecovered, facesToRemesh);
+    Msg(WARNING,"%d mesh edges intersect in the 1d mesh of model face %d",edgesNotRecovered.size(),gf->tag());
+    Msg(WARNING,"Gmsh now refine those edges and tries again (ITER %d)",RECUR_ITER);
+    std::list<GFace *> facesToRemesh;
+    remeshUnrecoveredEdges ( edgesNotRecovered, facesToRemesh);
     delete m;
     delete [] U_;
     delete [] V_;
-    //    if (facesToRemesh.size() == 0)
-    //      return gmsh2DMeshGenerator (gf,debug);    
+    if (RECUR_ITER < 10 && facesToRemesh.size() == 0)
+      return gmsh2DMeshGenerator (gf, RECUR_ITER+1, debug);    
     return false;
   }
+  if (RECUR_ITER > 0)
+    Msg(WARNING," :-) Gmsh was able to recover all edges using at ITER %d ",RECUR_ITER);
 
   //  Msg(INFO,"Boundary Edges recovered for surface %d",gf->tag());
   // Look for an edge that is on the boundary for which one of the
@@ -1722,7 +1732,7 @@ void meshGFace::operator() (GFace *gf)
   // temp fix until we create MEdgeLoops in gmshFace
   Msg(DEBUG1, "Generating the mesh");
   if(gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
-    gmsh2DMeshGenerator(gf,false);
+    gmsh2DMeshGenerator(gf,0, false);
   }
   else{
     if(!gmsh2DMeshGeneratorPeriodic(gf,false))

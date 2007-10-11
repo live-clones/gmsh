@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.80 2007-10-11 08:59:22 remacle Exp $
+// $Id: BDS.cpp,v 1.81 2007-10-11 14:34:04 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -217,7 +217,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
   
   if (!p1 || !p2) throw;;
 
-  Msg(INFO," edge %d %d has to be recovered",num1,num2);
+  Msg(DEBUG," edge %d %d has to be recovered",num1,num2);
   
   int ix = 0;
   int ixMax = 100;
