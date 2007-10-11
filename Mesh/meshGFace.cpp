@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.95 2007-10-11 14:44:01 remacle Exp $
+// $Id: meshGFace.cpp,v 1.96 2007-10-11 16:08:23 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -492,6 +492,27 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
   //  printf("lc (1,1) = %g\n",Attractor::lc(1,1,0));
 
   int MAXNP = m.MAXPOINTNUMBER;
+
+  if (NIT > 0)
+    {
+      std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
+      while (itp != m.points.end())
+	{
+	  std::list<BDS_Edge*>::iterator it  = (*itp)->edges.begin();
+	  std::list<BDS_Edge*>::iterator ite = (*itp)->edges.end();
+	  double L = 1.e22;
+	  while(it!=ite){
+	    double l = (*it)->length();
+	    if (l<L && (*it)->g && (*it)->g->classif_degree == 1)L=l;
+	    ++it;
+	  }
+	  if(!CTX.mesh.constrained_bgmesh)
+	    (*itp)->lc() = L;
+	  (*itp)->lcBGM() = L;
+	  ++itp;
+	}
+    }
+
 
   double OLDminL=1.E22,OLDmaxL=0;
 
