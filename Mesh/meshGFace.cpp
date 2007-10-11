@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.92 2007-10-11 08:59:22 remacle Exp $
+// $Id: meshGFace.cpp,v 1.93 2007-10-11 13:42:12 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -38,6 +38,91 @@
 extern Context_T CTX;
 
 static double SCALINGU=1,SCALINGV=1;
+
+void remeshUnrecoveredEdges ( std::set<EdgeToRecover> & edgesNotRecovered, std::list<GFace *> &facesToRemesh)
+{
+  facesToRemesh.clear();
+  deMeshGFace dem;
+
+  std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
+  for ( ; itr != edgesNotRecovered.end() ; ++itr)
+    {
+      std::list<GFace*> l_faces = itr->ge->faces();
+      // Un-mesh model faces adjacent to the model edge 
+      for ( std::list<GFace*>::iterator it = l_faces.begin() ;it != l_faces.end();++it)
+	{
+	  if ((*it)->triangles.size() ||(*it)->quadrangles.size())
+	    {
+	      facesToRemesh.push_back(*it);
+	      dem(*it);
+	    } 
+	}
+      //-----------------------------------------------------
+
+      
+      // add a new point in the middle of the intersecting segment
+      int p1 = itr->p1;
+      int p2 = itr->p2;
+      int index = 0;
+      int N = itr->ge->lines.size();
+      GVertex * g1 = itr->ge->getBeginVertex();
+      GVertex * g2 = itr->ge->getEndVertex();
+      Range<double> bb = itr->ge->parBounds(0);
+  
+      std::vector<MLine*> newLines;
+
+      for (int i=0;i<N;i++){
+	MVertex *v1 = itr->ge->lines[i]->getVertex(0);
+	MVertex *v2 = itr->ge->lines[i]->getVertex(1);
+	if (v1->getNum() == p1 && v2->getNum() == p2 ||
+	    v1->getNum() == p2 && v2->getNum() == p1 )
+	  {
+	    double t1;
+	    double lc1 = -1;
+	    if (v1->onWhat() == g1)t1 = bb.low();  
+	    else if (v1->onWhat() == g2)t1 = bb.high();  
+	    else {
+	      MEdgeVertex * ev1 = (MEdgeVertex*) v1;
+	      lc1 = ev1->getLc();
+	      v1->getParameter(0,t1);
+	    }
+
+	    double t2;
+	    double lc2= -1;
+	    if (v2->onWhat() == g1)t2 = bb.low();  
+	    else if (v2->onWhat() == g2)t2 = bb.high();  
+	    else {
+	      MEdgeVertex * ev2 = (MEdgeVertex*) v2;
+	      lc2 = ev2->getLc();
+	      v2->getParameter(0,t2);
+	    }
+
+	    if (lc1 == -1)
+	      lc1 = BGM_MeshSize(v1->onWhat(),0,0,v1->x(),v1->y(),v1->z());
+	    if (lc2 == -1)
+	      lc2 = BGM_MeshSize(v2->onWhat(),0,0,v2->x(),v2->y(),v2->z());
+	    // should be better, i.e. equidistant
+	    double t = 0.5*(t2+t1);
+	    double lc = 0.5*(lc1+lc2);
+	    GPoint V = itr->ge->point(t);
+	    MEdgeVertex * newv = new MEdgeVertex(V.x(), V.y(), V.z(), itr->ge, t, lc);
+	    newLines.push_back(new MLine(v1, newv));
+	    newLines.push_back(new MLine(newv, v2));
+	    delete itr->ge->lines[i];
+	  }
+	else {
+	  newLines.push_back(itr->ge->lines[i]);
+	}
+      }
+      itr->ge->lines = newLines;
+      itr->ge->mesh_vertices.clear();
+      N = itr->ge->lines.size();
+      for (int i=1;i<N;i++){
+	itr->ge->mesh_vertices.push_back(itr->ge->lines[i]->getVertex(0));
+      }            
+    }
+}
+
 
 bool AlgoDelaunay2D ( GFace *gf )
 {
@@ -834,7 +919,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   it = emb_edges.begin();
   while(it != emb_edges.end())
     {
-      recover_medge ( m, *it, &edgesToRecover, &edgesNotRecovered, 1);
+      recover_medge ( m, *it, &edgesToRecover, &edgesNotRecovered, 1);      
       ++it;
     }
 
@@ -854,6 +939,13 @@ bool gmsh2DMeshGenerator ( GFace *gf , bool debug = true)
   if (edgesNotRecovered.size())
   {
     Msg(GERROR,"%d edges were not recovered on model face %d, gmsh goes back and refines the 1d mesh",edgesNotRecovered.size(),gf->tag());
+    //    std::list<GFace *> facesToRemesh;
+    //    remeshUnrecoveredEdges ( edgesNotRecovered, facesToRemesh);
+    delete m;
+    delete [] U_;
+    delete [] V_;
+    //    if (facesToRemesh.size() == 0)
+    //      return gmsh2DMeshGenerator (gf,debug);    
     return false;
   }
 
