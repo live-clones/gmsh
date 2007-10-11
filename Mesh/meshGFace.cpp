@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.94 2007-10-11 14:34:04 remacle Exp $
+// $Id: meshGFace.cpp,v 1.95 2007-10-11 14:44:01 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -945,8 +945,8 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
 
   if (edgesNotRecovered.size())
   {
-    Msg(WARNING,"%d mesh edges intersect in the 1d mesh of model face %d",edgesNotRecovered.size(),gf->tag());
-    Msg(WARNING,"Gmsh now refine those edges and tries again (ITER %d)",RECUR_ITER);
+    Msg(WARNING,":-( There exists %d intersections in the 1d mesh",edgesNotRecovered.size());
+    Msg(WARNING,"8-| Gmsh splits those edges and tries again");
     std::list<GFace *> facesToRemesh;
     remeshUnrecoveredEdges ( edgesNotRecovered, facesToRemesh);
     delete m;
@@ -957,7 +957,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
     return false;
   }
   if (RECUR_ITER > 0)
-    Msg(WARNING," :-) Gmsh was able to recover all edges using at ITER %d ",RECUR_ITER);
+    Msg(WARNING,":-) Gmsh was able to recover all edges after %d ITERATIONS",RECUR_ITER);
 
   //  Msg(INFO,"Boundary Edges recovered for surface %d",gf->tag());
   // Look for an edge that is on the boundary for which one of the
