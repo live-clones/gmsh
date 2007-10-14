@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.96 2007-10-11 16:08:23 remacle Exp $
+// $Id: meshGFace.cpp,v 1.97 2007-10-14 17:30:42 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -255,6 +255,14 @@ double NewGetLc(BDS_Edge *e, GFace *f)
   return 2*linearLength / (l1 + l2);
 }
 
+double NewGetLc(BDS_Point *p1,BDS_Point *p2, GFace *f)
+{
+  double linearLength = computeEdgeLinearLength(p1,p2,f);
+  double l1 = NewGetLc(p1);
+  double l2 = NewGetLc(p2);
+  return 2*linearLength / (l1 + l2);
+}
+
 bool edgeSwapTest(BDS_Edge *e,GFace *gf)
 {
   BDS_Point *op[2];
@@ -318,9 +326,15 @@ bool edgeSwapTestDelaunay(BDS_Edge *e,GFace *gf)
   double p2x[3] =  {e->p2->X,e->p2->Y,e->p2->Z};
   double op1x[3] = {op[0]->X,op[0]->Y,op[0]->Z};
   double op2x[3] = {op[1]->X,op[1]->Y,op[1]->Z};
+  double p1u[2] =  {e->p1->u,e->p1->v};
+  double p2u[2] =  {e->p2->u,e->p2->v};
+  double op1u[2] = {op[0]->u,op[0]->v};
+  double op2u[2] = {op[1]->u,op[1]->v};
   double fourth[3];
   fourthPoint(p1x,p2x,op1x,fourth);
   double result = gmsh::insphere(p1x, p2x, op1x, fourth, op2x) * gmsh::orient3d(p1x, p2x, op1x, fourth);  
+    //double result = gmsh::incircle(p1u, p2u, op1u, op2u) * gmsh::orient2d(p1u, p2u, op1u);    
+  //  printf("result = a%12.5E\n",result);
   return result > 0.;
 }
 
@@ -404,11 +418,13 @@ void swapEdgePass ( GFace *gf, BDS_Mesh &m, int &nb_swap )
 	{
 	  int result = edgeSwapTestQuality(*it,5);
 	  if (result >= 0)
-	    if(edgeSwapTestDelaunay(*it,gf) || result > 0)
-	      if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))
-		nb_swap++;
-	  ++it;
+	    {
+	      if(edgeSwapTestDelaunay(*it,gf) || result > 0)
+		if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))
+		  nb_swap++;
+	    }
 	}
+      ++it;
     }  
 }
 
@@ -425,13 +441,18 @@ void splitEdgePass ( GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 	  double lone = NewGetLc ( *it,gf);
 	  if ((*it)->numfaces() == 2 && (lone >  MAXE_))
 	    {
+
+//  	      BDS_Point *op[2];
+//  	      (*it)->oppositeof(op);
+//  	      double lone1 = NewGetLc ( op[0],mid,gf);	      
+//  	      double lone2 = NewGetLc ( op[1],mid,gf);	      
+	      
 	      const double coord = 0.5;
 	      BDS_Point *mid ;
 	      mid  = m.add_point(++m.MAXPOINTNUMBER,
 				 coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
 				 coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v,gf);
-	      double l1;
-	      //		  if (BGMExists())
+
 	      mid->lcBGM() = BGM_MeshSize(gf,
 					  (coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u)*m.scalingU,
 					  (coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v)*m.scalingV,
@@ -440,6 +461,52 @@ void splitEdgePass ( GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 	      mid->lc() = 0.5 * ( (*it)->p1->lc() +  (*it)->p2->lc() );		  
 	      m.split_edge ( *it, mid );
 	      nb_split++;
+	    }
+	}
+      ++it;
+    }
+}
+
+void saturateEdgePass ( GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
+{
+  int NN1 = m.edges.size();
+  int NN2 = 0;
+  std::list<BDS_Edge*>::iterator it = m.edges.begin();
+  while (1)
+    {
+      if (NN2++ >= NN1)break;
+      if (!(*it)->deleted)
+	{
+	  double lone = NewGetLc ( *it,gf);
+	  if ((*it)->numfaces() == 2 && (lone >  MAXE_))
+	    {
+	      int nbSub = (int) (lone/MAXE_) ;
+	      //	      nbSub = std::min(nbSub,2);
+	      //	      printf("%d %g\n",nbSub,lone/MAXE_);
+	      std::vector<BDS_Point*> mids;
+	      for (int i=0;i<nbSub;i++)
+		{
+		  const double coord = (double)(i+1)/(nbSub+1);
+		  BDS_Point *mid ;
+		  mid  = m.add_point(++m.MAXPOINTNUMBER,
+				     (1.-coord) * (*it)->p1->u + coord * (*it)->p2->u,
+				     (1.-coord) * (*it)->p1->v + coord * (*it)->p2->v,gf);
+		  double l1;
+		  //		  if (BGMExists())
+		  mid->lcBGM() = BGM_MeshSize(gf,
+					      ((1.-coord) * (*it)->p1->u + (coord) * (*it)->p2->u)*m.scalingU,
+					      ((1.-coord) * (*it)->p1->v + (coord) * (*it)->p2->v)*m.scalingV,
+					      mid->X,mid->Y,mid->Z);
+		  //mid->lc() = 2./ ( 1./(*it)->p1->lc() +  1./(*it)->p2->lc() );		  
+		  mid->lc() = ( (1.-coord)*(*it)->p1->lc() +  coord*(*it)->p2->lc() );		 
+		  mids.push_back(mid);
+		  //		  printf("new point %g %g lc %g\n",mid->X,mid->Y,mid->lc());
+		}
+	      //	      printf("saturating an edge with %d points %d triangles\n",mids.size(),m.triangles.size());
+	      if(nbSub>0)m.saturate_edge ( *it, mids );
+	      //	      printf("-> %d triangles\n",m.triangles.size());
+	      nb_split++;
+	      //	      if (nb_split == )break;
 	    } 
 	}
       ++it;
@@ -518,7 +585,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 
   double t_spl=0, t_sw=0,t_col=0,t_sm=0;
 
-  const double MINE_ = 0.7, MAXE_=1.4;
+  const double MINE_ = 0.67, MAXE_=1.4;
   while (1)
     {
       // we count the number of local mesh modifs.
@@ -558,6 +625,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
       double minE = MINE_;//std::min(MINE_,minL * 1.2);
       clock_t t1 = clock();
       splitEdgePass ( gf, m, maxE, nb_split);
+      //saturateEdgePass ( gf, m, maxE, nb_split);
       clock_t t2 = clock();
       swapEdgePass ( gf, m, nb_swap);
       clock_t t3 = clock();
@@ -567,12 +635,15 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
       clock_t t5 = clock();
       smoothVertexPass ( gf, m, nb_smooth);
       clock_t t6 = clock();
+      swapEdgePass ( gf, m, nb_swap);
+      clock_t t7 = clock();
       // clean up the mesh
 
 
       t_spl += (double)(t2-t1)/CLOCKS_PER_SEC;
       t_sw  += (double)(t3-t2)/CLOCKS_PER_SEC;
       t_sw  += (double)(t5-t4)/CLOCKS_PER_SEC;
+      t_sw  += (double)(t7-t6)/CLOCKS_PER_SEC;
       t_col += (double)(t4-t3)/CLOCKS_PER_SEC;
       t_sm  += (double)(t6-t5)/CLOCKS_PER_SEC;
 

@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.81 2007-10-11 14:34:04 remacle Exp $
+// $Id: BDS.cpp,v 1.82 2007-10-14 17:30:42 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -645,6 +645,131 @@ void BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
 }
 
 
+void BDS_Mesh::saturate_edge(BDS_Edge * e, std::vector<BDS_Point *> &mids)
+{
+  BDS_Point *op[2];
+  BDS_Point *p1 = e->p1;
+  BDS_Point *p2 = e->p2;
+
+  BDS_Point *pts1[4];
+  e->faces(0)->getNodes(pts1);
+
+  int orientation = 0;
+  for(int i = 0; i < 3; i++) {
+    if(pts1[i] == p1) {
+      if(pts1[(i + 1) % 3] == p2)
+        orientation = 1;
+      else
+        orientation = -1;
+
+      break;
+    }
+  }
+
+  //  printf("sat %d\n",mids.size());
+
+  // we should project 
+  e->oppositeof(op);
+  BDS_GeomEntity *g1 = 0, *g2 = 0, *ge = e->g;
+
+  BDS_Edge *p1_op1 = find_edge(p1, op[0], e->faces(0));
+  BDS_Edge *op1_p2 = find_edge(op[0], p2, e->faces(0));
+  BDS_Edge *p1_op2 = find_edge(p1, op[1], e->faces(1));
+  BDS_Edge *op2_p2 = find_edge(op[1], p2, e->faces(1));
+
+  if(e->faces(0)) {
+    g1 = e->faces(0)->g;
+    del_face(e->faces(0));
+  }
+  // not a bug !!!
+  if(e->faces(0)) {
+    g2 = e->faces(0)->g;
+    del_face(e->faces(0));
+  }
+
+  //  double t_l = e->target_length;
+
+  del_edge(e);
+
+  // create all the sub-edges of e 
+  std::vector<BDS_Edge*> subs;
+  for (int i=0; i<mids.size()+1; i++)
+    {
+      BDS_Point *a,*b;
+      if (i == 0)a = p1;
+      else a = mids[i-1];
+      if (i == mids.size())b = p2;
+      else b = mids[i];
+      BDS_Edge *sub = new BDS_Edge(a, b);
+      //      printf("%g %g -> %g %g\n",a->X,a->Y,b->X,b->Y);
+      edges.push_back(sub); 
+      subs.push_back(sub);
+      sub->g = ge;
+    }
+  // create edges that connect op1 and op2
+  std::vector<BDS_Edge*> conn1,conn2;
+  for (int i=0;i<mids.size();i++)
+    {
+      BDS_Edge *c1 = new BDS_Edge(mids[i], op[0]);
+      edges.push_back(c1); 
+      conn1.push_back(c1);
+      BDS_Edge *c2 = new BDS_Edge(mids[i], op[1]);
+      edges.push_back(c2); 
+      conn2.push_back(c2);
+      c1->g = g1;
+      c2->g = g2;
+      mids[i]->g = ge;
+    }
+
+  // create the triangles
+
+  for (int i=0;i<mids.size()+1;i++)
+    {
+      BDS_Edge *e1,*e2,*e3=subs[i];
+
+      //      printf("--> %d %g %g ->%d  %g %g\n",e3->p1->iD,e3->p1->X,e3->p1->Y,e3->p2->iD,e3->p2->X,e3->p2->Y);
+
+
+      if (i==0)e1 = p1_op1;
+      else e1 = conn1[i-1];
+      if (i==mids.size())e2 = op1_p2;
+      else e2 = conn1[i];
+
+//       printf("--> %d %g %g ->%d  %g %g\n",e1->p1->iD,e1->p1->X,e1->p1->Y,e1->p2->iD,e1->p2->X,e1->p2->Y);
+//       printf("--> %d %g %g ->%d  %g %g\n",e2->p1->iD,e2->p1->X,e2->p1->Y,e2->p2->iD,e2->p2->X,e2->p2->Y);
+
+      BDS_Face *t1;
+      if(orientation == 1)
+	t1 = new BDS_Face(e3, e2, e1);
+      else 
+	t1 = new BDS_Face(e3, e1, e2);
+
+
+      if (i==0)e1 = p1_op2;
+      else e1 = conn2[i-1];
+      if (i==mids.size())e2 = op2_p2;
+      else e2 = conn2[i];
+
+      BDS_Face *t2;
+      if(orientation != 1)
+	t2 = new BDS_Face(e3, e2, e1);
+      else 
+	t2 = new BDS_Face(e3, e1, e2);
+      t1->g = g1;
+      t2->g = g2;
+
+      triangles.push_back(t1);
+      triangles.push_back(t2);
+    }
+  // config has changed
+  p1->config_modified = true;
+  p2->config_modified = true;
+  op[0]->config_modified = true;
+  op[1]->config_modified = true;
+}
+
+
+
 
 // This function does actually the swap without taking into account
 // the feasability of the operation. Those conditions have to be
@@ -682,6 +807,7 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
 
   // we test if the edge is deleted
   //  return false;
+
   if(e->deleted)
     return false;
   
@@ -691,6 +817,7 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
 
   if(e->g && e->g->classif_degree == 1)
     return false;
+
 
   BDS_Point *op[2];
   BDS_Point *p1 = e->p1;
