@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.82 2007-10-14 17:30:42 remacle Exp $
+// $Id: BDS.cpp,v 1.83 2007-10-14 19:54:16 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -778,15 +778,34 @@ void BDS_Mesh::saturate_edge(BDS_Edge * e, std::vector<BDS_Point *> &mids)
 bool BDS_SwapEdgeTestParametric::operator () (BDS_Point *_p1,BDS_Point *_p2,
 					      BDS_Point *_q1,BDS_Point *_q2) const
 {
-  double p1[2] =  {_p1->u,_p1->v};
-  double p2[2] =  {_p2->u,_p2->v};
-  double op1[2] = {_q1->u,_q1->v};
-  double op2[2] = {_q2->u,_q2->v};
+   double p1[2] =  {_p1->u,_p1->v};
+   double p2[2] =  {_p2->u,_p2->v};
+   double op1[2] = {_q1->u,_q1->v};
+   double op2[2] = {_q2->u,_q2->v};
 
-  double ori_t1 = gmsh::orient2d(op1, p1, op2);
-  double ori_t2 = gmsh::orient2d(op1,op2, p2);
+   double ori_t1 = gmsh::orient2d(op1, p1, op2);
+   double ori_t2 = gmsh::orient2d(op1,op2, p2);
+   
+   return( ori_t1 * ori_t2 > 0 ); // the quadrangle was strictly convex !
 
-  return (ori_t1 * ori_t2 > 0);
+//    double ori_t1 = gmsh::orient2d(p1, p2, op1);
+//    double ori_t2 = gmsh::orient2d(p1, p2, op2);
+
+//    double ori_t3 = gmsh::orient2d(op1, op2, p1);
+//    double ori_t4 = gmsh::orient2d(op1, op2, p2);
+//    return (ori_t1 * ori_t2 < 0 && ori_t3 * ori_t4 < 0);
+
+//   double t1 = fabs(surface_triangle_param(_p1,_p2,_q1));
+//   double t2 = fabs(surface_triangle_param(_p1,_p2,_q2));
+
+//   double t3 = fabs(surface_triangle_param(_q1,_q2,_p1));
+//   double t4 = fabs(surface_triangle_param(_q1,_q2,_p2));
+
+//   //  printf("%12.5E %12.5E %12.5E %12.5E -- %12.5E so %1d\n",t1,t2,t3,t4,fabs(t1+t2-t3-t4),fabs(t1+t2-t3-t4) > 1.e-15 * (t1+t2+t3+t4));
+
+//   if (fabs(t1+t2-t3-t4) > 1.e-13*(t1+t2+t3+t4))return false;
+//   return true;
+
 }
 
 bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
@@ -1174,25 +1193,25 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)
 
   double U = 0;
   double V = 0;
-  //  double tot_length = 0;
+  double tot_length = 0;
   double LC = 0;
 
   std::list < BDS_Edge * >::iterator eit = p->edges.begin();
   while(eit != p->edges.end()) {
     if ((*eit)->numfaces() == 1) return false;
     BDS_Point *op = ((*eit)->p1 == p) ? (*eit)->p2 : (*eit)->p1;
-    //    const double l_e = (*eit)->length();     
-    U += op->u; 
-    V += op->v;
-    //    tot_length += l_e;
+    const double l_e = (*eit)->length();     
+    U += op->u*l_e; 
+    V += op->v*l_e;
+    tot_length += l_e;
     LC += op->lc();
     ++eit;
   }
   
-  U /= (p->edges.size());
-  V /= (p->edges.size());
-  //  U /= tot_length;
-  //  V /= tot_length;
+  //U /= (p->edges.size());
+  //V /= (p->edges.size());
+  U /= tot_length;
+  V /= tot_length;
   LC /= p->edges.size();
 
   std::list < BDS_Face * >ts;

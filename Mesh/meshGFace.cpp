@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.97 2007-10-14 17:30:42 remacle Exp $
+// $Id: meshGFace.cpp,v 1.98 2007-10-14 19:54:16 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -326,10 +326,6 @@ bool edgeSwapTestDelaunay(BDS_Edge *e,GFace *gf)
   double p2x[3] =  {e->p2->X,e->p2->Y,e->p2->Z};
   double op1x[3] = {op[0]->X,op[0]->Y,op[0]->Z};
   double op2x[3] = {op[1]->X,op[1]->Y,op[1]->Z};
-  double p1u[2] =  {e->p1->u,e->p1->v};
-  double p2u[2] =  {e->p2->u,e->p2->v};
-  double op1u[2] = {op[0]->u,op[0]->v};
-  double op2u[2] = {op[1]->u,op[1]->v};
   double fourth[3];
   fourthPoint(p1x,p2x,op1x,fourth);
   double result = gmsh::insphere(p1x, p2x, op1x, fourth, op2x) * gmsh::orient3d(p1x, p2x, op1x, fourth);  
@@ -393,7 +389,7 @@ void OptimizeMesh(GFace *gf, BDS_Mesh &m, const int NIT)
 	    {
 	      int result = edgeSwapTestQuality(*it,5);
 	      if (result >= 0)
-		if(edgeSwapTestDelaunay(*it,gf) || result > 0)
+		if(edgeSwapTestDelaunay(*it,gf))
 		  m.swap_edge ( *it , BDS_SwapEdgeTestParametric());
 	    }
 	  ++it;
@@ -544,8 +540,7 @@ void smoothVertexPass ( GFace *gf, BDS_Mesh &m, int &nb_smooth)
 {
   std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
   while (itp != m.points.end())
-    {
-      
+    {      
       if(m.smooth_point_centroid(*itp,gf))
 	nb_smooth ++;
       ++itp;
@@ -627,15 +622,15 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
       splitEdgePass ( gf, m, maxE, nb_split);
       //saturateEdgePass ( gf, m, maxE, nb_split);
       clock_t t2 = clock();
-      swapEdgePass ( gf, m, nb_swap);
+      //      swapEdgePass ( gf, m, nb_swap);
       clock_t t3 = clock();
       collapseEdgePass ( gf, m, minE , MAXNP, nb_collaps);
       clock_t t4 = clock();
-      swapEdgePass ( gf, m, nb_swap); 
+      //      swapEdgePass ( gf, m, nb_swap); 
       clock_t t5 = clock();
       smoothVertexPass ( gf, m, nb_smooth);
       clock_t t6 = clock();
-      swapEdgePass ( gf, m, nb_swap);
+      //      swapEdgePass ( gf, m, nb_swap);
       clock_t t7 = clock();
       // clean up the mesh
 
@@ -653,6 +648,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
       
       if (nb_split==0 && nb_collaps == 0)break;
     }  
+
   double t_total = t_spl + t_sw + t_col + t_sm;
   Msg(DEBUG1," ---------------------------------------");
   Msg(DEBUG1," CPU Report ");
@@ -1143,9 +1139,9 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
   if (!AlgoDelaunay2D ( gf ))
     {
       RefineMesh (gf,*m, CTX.mesh.refine_steps);
-      OptimizeMesh(gf, *m, 2);
-      RefineMesh (gf,*m, -CTX.mesh.refine_steps);
-      OptimizeMesh(gf, *m, 2);
+//       OptimizeMesh(gf, *m, 2);
+//       RefineMesh (gf,*m, -CTX.mesh.refine_steps);
+//       OptimizeMesh(gf, *m, 2);
       if (gf->meshAttributes.recombine)
 	{
 	  m->recombineIntoQuads (gf->meshAttributes.recombineAngle,gf);
@@ -1824,7 +1820,7 @@ void meshGFace::operator() (GFace *gf)
   // temp fix until we create MEdgeLoops in gmshFace
   Msg(DEBUG1, "Generating the mesh");
   if(gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
-    gmsh2DMeshGenerator(gf,0, false);
+    gmsh2DMeshGenerator(gf,0, true);
   }
   else{
     if(!gmsh2DMeshGeneratorPeriodic(gf,false))
