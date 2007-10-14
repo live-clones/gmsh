@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.23 2007-10-08 13:13:23 geuzaine Exp $
+// $Id: OCCEdge.cpp,v 1.24 2007-10-14 09:51:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -186,22 +186,20 @@ GEntity::GeomType OCCEdge::geomType() const
 
 int OCCEdge::minimumMeshSegments() const
 {
-  if(geomType() == Line || geomType() == Unknown)
+  if(geomType() == Line)
     return GEdge::minimumMeshSegments();
   else
-    return 2; // always put at least one mid-point on non-straight lines
+    return CTX.mesh.min_curv_points - 1;
 }
 
 int OCCEdge::minimumDrawSegments() const
 {
-  int n = GEdge::minimumDrawSegments();
-
   if(geomType() == Line)
-    return n;
+    return GEdge::minimumDrawSegments();
   else if(geomType() == Circle || geomType() == Ellipse)
     return CTX.geom.circle_points;
   else
-    return 20 * n;
+    return 20 * GEdge::minimumDrawSegments();
 }
 
 double OCCEdge::curvature(double par) const 

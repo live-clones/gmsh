@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.364 2007-10-03 19:40:40 geuzaine Exp $
+// $Id: Options.cpp,v 1.365 2007-10-14 09:51:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4863,6 +4863,13 @@ double opt_mesh_min_circ_points(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.mesh.min_circ_points = (int)val;
   return CTX.mesh.min_circ_points;
+}
+
+double opt_mesh_min_curv_points(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.min_curv_points = (int)val;
+  return CTX.mesh.min_curv_points;
 }
 
 double opt_mesh_constrained_bgmesh(OPT_ARGS_NUM)

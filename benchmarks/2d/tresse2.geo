@@ -42,11 +42,11 @@ For jj In {1:nn}
 
    num = (2*jj-1)*10000+ii;
    Spline(num) = tab1[];
-   Extrude Line { num , {0,0,1}, {0,0,0}, nw*angm }{Layers{5,num,1};Recombine;} ;
+   Extrude Line { num , {0,0,1}, {0,0,0}, nw*angm }{Layers{5};Recombine;} ;
 
    num = (2*jj)*10000+ii;
    Spline(num) = tab2[];
-   Extrude Line { num , {0,0,1}, {0,0,0}, nw*angm }{Layers{5,num,1};Recombine;} ;
+   Extrude Line { num , {0,0,1}, {0,0,0}, nw*angm }{Layers{5};Recombine;} ;
 
 EndFor      
 

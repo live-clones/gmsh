@@ -181,7 +181,7 @@ public :
     int format, nb_smoothing, algo2d, algo3d, algo_recombine;
     int order, second_order_linear, second_order_incomplete;
     int smooth_internal_edges, c1_continuity;
-    int min_circ_points;
+    int min_circ_points, min_curv_points;
     int constrained_bgmesh, lc_from_curvature;
     double normals, tangents, explode;
     int color_carousel;

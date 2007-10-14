@@ -956,6 +956,8 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "MinimumCirclePoints" , opt_mesh_min_circ_points, 7. ,
     "Minimum number of points used to mesh a circle" },
+  { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
+    "Minimum number of points used to mesh a (non-straight) curve" },
   { F|O, "MshBinary" , opt_mesh_msh_binary , 0. , 
     "Write MSH files in binary format?" },
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 2.0 , 

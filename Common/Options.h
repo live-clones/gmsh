@@ -476,6 +476,7 @@ double opt_mesh_algo3d(OPT_ARGS_NUM);
 double opt_mesh_lc_integration_precision(OPT_ARGS_NUM);
 double opt_mesh_recombine_algo(OPT_ARGS_NUM);
 double opt_mesh_min_circ_points(OPT_ARGS_NUM);
+double opt_mesh_min_curv_points(OPT_ARGS_NUM);
 double opt_mesh_constrained_bgmesh(OPT_ARGS_NUM);
 double opt_mesh_order(OPT_ARGS_NUM);
 double opt_mesh_c1(OPT_ARGS_NUM);

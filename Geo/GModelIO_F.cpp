@@ -93,7 +93,7 @@ int GModel::readF(const std::string &filename)
 
 int GModel::readF(const std::string &fn)
 {
-  Msg(GERROR,"Gmsh has to be compiled with Fourier Model support to load %s",
+  Msg(GERROR,"Gmsh has to be compiled with Fourier Model support to load '%s'",
       fn.c_str());
   return 0;
 }

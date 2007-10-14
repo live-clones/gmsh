@@ -1,8 +1,18 @@
-$Id: TODO,v 1.64 2007-10-02 19:26:42 geuzaine Exp $
+$Id: TODO,v 1.65 2007-10-14 09:51:17 geuzaine Exp $
+
+********************************************************************
+
+Add a global "transparency slider" for the mesh; if value != 1, fill a
+global triangle vertex array in GModel instead of in each separate
+entity, and sort like in post-processing.
 
 ********************************************************************
 
 add way to invert element orientation (per element or per surface)
+
+********************************************************************
+
+add "make uninstall"
 
 ********************************************************************
 
