@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.22 2007-03-16 10:03:40 remacle Exp $
+// $Id: OCCFace.cpp,v 1.23 2007-10-16 20:00:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -70,7 +70,8 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
   _periodic[1] = surface.IsVPeriodic();
 
   ShapeAnalysis::GetFaceUVBounds(_s, umin, umax, vmin, vmax);
-  Msg(DEBUG2, "OCC Face %d with %d edges bounds (%g,%g)(%g,%g)", num, l_edges.size(),umin,umax,vmin,vmax);
+  Msg(DEBUG2, "OCC Face %d with %d edges bounds (%g,%g)(%g,%g)", 
+      num, l_edges.size(),umin,umax,vmin,vmax);
   // we do that for the projections to converge on the 
   // borders of the surface
   const double du = umax-umin;
@@ -204,23 +205,31 @@ int OCCFace::containsPoint(const SPoint3 &pt) const
 { 
   if(geomType() == Plane){
     gp_Pln pl = Handle(Geom_Plane)::DownCast(occface)->Pln();
-    
-    // OK to use the normal from the mean plane here: we compensate
-    // for the (possibly wrong) orientation at the end
-    double n[3] , c;
-    pl.Coefficients (n[0], n[1], n[2], c);
+    double n[3], c;
+    pl.Coefficients(n[0], n[1], n[2], c);
     norme(n);
     double angle = 0.;
     double v[3] = {pt.x(), pt.y(), pt.z()};
-    for(std::list<GEdge*>::const_iterator  it = l_edges.begin(); it != l_edges.end(); it++) {
+
+    std::list<int>::const_iterator ito = l_dirs.begin();
+    for(std::list<GEdge*>::const_iterator it = l_edges.begin(); it != l_edges.end(); it++){
       GEdge *c = *it;
-      int N=10;
+      int ori = 1;
+      if(ito != l_dirs.end()){
+	ori = *ito;
+	++ito;
+      }
+      int N = 10;
       Range<double> range = c->parBounds(0);
       for(int j = 0; j < N ; j++) {
 	double u1 = (double)j / (double)N;
 	double u2 = (double)(j + 1) / (double)N;
-	GPoint pp1 = c->point(range.low() + u1 * (range.high() - range.low() ));
-	GPoint pp2 = c->point(range.low() + u2 * (range.high() - range.low() ));
+	if(ori < 0){
+	  u1 = 1. - u1;
+	  u2 = 1. - u2;
+	}
+	GPoint pp1 = c->point(range.low() + u1 * (range.high() - range.low()));
+	GPoint pp2 = c->point(range.low() + u2 * (range.high() - range.low()));
 	double v1[3] = {pp1.x(), pp1.y(), pp1.z()};
 	double v2[3] = {pp2.x(), pp2.y(), pp2.z()};
 	angle += angle_plan(v, v1, v2, n);

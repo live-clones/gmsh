@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.37 2007-09-24 08:14:29 geuzaine Exp $
+// $Id: GFace.cpp,v 1.38 2007-10-16 20:00:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -92,9 +92,9 @@ std::list<GVertex*> GFace::vertices() const
   while (it != l_edges.end()){
     GVertex *v1 = (*it)->getBeginVertex();
     GVertex *v2 = (*it)->getEndVertex();
-    if(std::find(ret.begin(), ret.end(), v1) == ret.end())
+    if(v1 && std::find(ret.begin(), ret.end(), v1) == ret.end())
       ret.push_back(v1);
-    if(std::find(ret.begin(), ret.end(), v2) == ret.end())
+    if(v2 && std::find(ret.begin(), ret.end(), v2) == ret.end())
       ret.push_back(v2);
     ++it;
   }
