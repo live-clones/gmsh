@@ -3401,6 +3401,11 @@ fi
   else
     GMSH_LIBS="${GMSH_LIBS} `$FLTKCONFIG --use-gl --use-images --ldflags`"
     FLAGS="${FLAGS} `$FLTKCONFIG --use-gl --use-images --cxxflags`"
+        FIX_GL="yes"
+    expr "x${GMSH_LIBS}" : 'x.*GL.*' >/dev/null && FIX_GL="no"
+    if test "x${FIX_GL}" = "xyes"; then
+      GMSH_LIBS="${GMSH_LIBS} -lGLU -lGL"
+    fi
   fi
 
   FL_JPEG=""
@@ -4805,7 +4810,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:4808:" \
+echo "$as_me:4813:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
