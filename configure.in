@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.134 2007-10-19 12:03:41 geuzaine Exp $
+dnl $Id: configure.in,v 1.135 2007-10-19 12:07:19 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 dnl
@@ -241,10 +241,12 @@ if test "x$enable_gui" != "xno"; then
     GMSH_LIBS="${GMSH_LIBS} `$FLTKCONFIG --use-gl --use-images --ldflags`"
     FLAGS="${FLAGS} `$FLTKCONFIG --use-gl --use-images --cxxflags`"
     dnl Ugly fix for Debian bug (fltk-config does not return GL libs)
-    FIX_GL="yes"
-    expr "x${GMSH_LIBS}" : 'x.*GL.*' >/dev/null && FIX_GL="no"
-    if test "x${FIX_GL}" = "xyes"; then
-      GMSH_LIBS="${GMSH_LIBS} -lGLU -lGL"
+    if test "x${UNAME}" = "xLinux"; then
+      FIX_GL="yes"
+      expr "x${GMSH_LIBS}" : 'x.*GL.*' >/dev/null && FIX_GL="no"
+      if test "x${FIX_GL}" = "xyes"; then
+        GMSH_LIBS="${GMSH_LIBS} -lGLU -lGL"
+      fi
     fi
   fi
 
