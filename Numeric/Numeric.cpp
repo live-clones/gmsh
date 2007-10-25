@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.33 2007-08-31 09:18:16 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.34 2007-10-25 08:55:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -434,14 +434,15 @@ double triangle_area(double p0[3], double p1[3], double p2[3])
 char float2char(float f)
 {
   // f is supposed to be normalized in [-1, 1]
-  f = (f > 1.) ? 1. : (f < -1.) ? -1 : f;
+  f = (f > 1.) ? 1. : (f < -1.) ? -1. : f;
   // char is in [-128, 127]
-  return (char)(-128 + (f + 1.)/2. * 255);
+  return (char)(-128 + (f + 1.) / 2. * 255);
 }
 
 float char2float(char c)
 {
-  return -1. + (float)(c + 128)/255. * 2.;
+  float f = c;
+  return -1. + 2. * (f + 128.) / 255.;
 }
 
 double InterpolateIso(double *X, double *Y, double *Z,
