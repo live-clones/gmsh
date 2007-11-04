@@ -179,6 +179,15 @@ class GFace : public GEntity
     // edge loops
   } meshAttributes ;
 
+  typedef enum {PENDING,DONE,FAILED} meshGenerationStatus  ;
+  struct {
+    meshGenerationStatus status;
+    double worst_element_shape, best_element_shape, average_element_shape;
+    double smallest_edge_length, longest_edge_length, efficiency_index;
+    int nbEdge, nbTriangle;
+    int nbGoodQuality,nbGoodLength;
+  } meshStatistics;
+
   // a crude graphical representation using a "cross" defined by pairs
   // of start/end points
   std::vector<SPoint3> cross;

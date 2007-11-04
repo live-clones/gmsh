@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.24 2007-10-14 09:51:17 geuzaine Exp $
+// $Id: OCCEdge.cpp,v 1.25 2007-11-04 21:03:17 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -58,6 +58,7 @@ void OCCEdge::setTrimmed (OCCFace *f)
   }
 }
 
+// Plugin Netgen Salome !
 SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar,int dir) const
 {
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
@@ -106,9 +107,11 @@ int OCCEdge::isSeam(GFace *face) const
 {
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
   BRepAdaptor_Surface surface(*s);
-  if(surface.IsUPeriodic() || surface.IsVPeriodic()){
+  //  printf("asking if edge %d is a seam of face %d\n",tag(),face->tag());
+  //  printf("periodic %d %d\n",surface.IsUPeriodic(),surface.IsVPeriodic());
+  //  if(surface.IsUPeriodic() || surface.IsVPeriodic()){
     return BRep_Tool::IsClosed(c, *s);
-  }
+    //  }
   return 0;
 }
 

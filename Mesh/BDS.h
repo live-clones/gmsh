@@ -45,7 +45,6 @@ void vector_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]);
 void normal_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]); 
 double surface_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3); 
 double surface_triangle_param(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3); 
-double quality_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3);
 
 
 class BDS_GeomEntity
@@ -456,7 +455,7 @@ public:
   bool smooth_point_parametric(BDS_Point * p, GFace *gf);
   bool smooth_point_centroid(BDS_Point * p, GFace *gf);
   bool move_point(BDS_Point *p , double X, double Y, double Z);
-  void split_edge(BDS_Edge *, BDS_Point *);
+  bool split_edge(BDS_Edge *, BDS_Point *);
   void saturate_edge(BDS_Edge *, std::vector<BDS_Point *>&);
   bool edge_constraint    ( BDS_Point *p1, BDS_Point *p2 );
   bool recombine_edge    ( BDS_Edge *e );

@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.38 2007-10-16 20:00:06 geuzaine Exp $
+// $Id: GFace.cpp,v 1.39 2007-11-04 21:03:17 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -39,6 +39,7 @@ extern Context_T CTX;
 
 GFace::GFace(GModel *model, int tag) : GEntity(model, tag), r1(0), r2(0) 
 {
+  meshStatistics.status = GFace::PENDING;
   resetMeshAttributes();
 }
 

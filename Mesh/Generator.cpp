@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.123 2007-09-10 04:47:04 geuzaine Exp $
+// $Id: Generator.cpp,v 1.124 2007-11-04 21:03:17 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -177,6 +177,42 @@ void Mesh1D(GModel *m)
   Msg(STATUS1, "Mesh");
 }
 
+void PrintMesh2dStatistics (GModel *m)
+{
+  double worst=1,best=0,avg=0;
+  double e_long=0,e_short=1.e22,e_avg=0;
+  int nTotT=0,nTotE=0,nTotGoodLength=0,nTotGoodQuality=0;
+  Msg(INFO,"2D Mesh Statistics :");
+  for (GModel::fiter it = m->firstFace() ; it!=m->lastFace(); ++it)
+    {
+      worst = std::min((*it)->meshStatistics.worst_element_shape,worst);
+      best  = std::max((*it)->meshStatistics.best_element_shape,best);
+      avg += (*it)->meshStatistics.average_element_shape * (*it)->meshStatistics.nbTriangle ;
+
+      e_avg += (*it)->meshStatistics.efficiency_index ;//* (*it)->meshStatistics.nbEdge;
+
+      e_long = std::max((*it)->meshStatistics.longest_edge_length,e_long);
+      e_short = std::min((*it)->meshStatistics.smallest_edge_length,e_short);
+
+      if ((*it)->meshStatistics.worst_element_shape < 0.05)
+	Msg(INFO,"Badly Shaped Element (rho = %12.5E) on GFace %d (%d triangles)",(*it)->meshStatistics.worst_element_shape,(*it)->tag(),(*it)->meshStatistics.nbTriangle);
+      if ((*it)->meshStatistics.status == GFace::FAILED)
+	Msg(INFO,"GMSH was unable to mesh GFace %d ",(*it)->tag());
+
+      nTotT +=  (*it)->meshStatistics.nbTriangle ;
+      nTotE += (*it)->meshStatistics.nbEdge ;
+      nTotGoodLength += (*it)->meshStatistics.nbGoodLength ;
+      nTotGoodQuality+= (*it)->meshStatistics.nbGoodQuality ;
+    }
+
+  Msg(INFO,"Element Quality (%d triangles) : avg %8.7f best %8.7f worst %8.7f greaterthan90 %d (%12.5E\\%)",
+      nTotT,avg/(double)nTotT,best,worst,nTotGoodQuality,(double)nTotGoodQuality/nTotT);
+  Msg(INFO,"Size Field Accuracy (%d edges) : %8.7f (should be as close as 1 as possible) in good brackets %d (%12.5E\%)",
+      nTotE,exp(e_avg/(double)nTotE),nTotGoodLength,(double)nTotGoodLength/nTotE);
+
+
+}
+
 void Mesh2D(GModel *m)
 {
   if(TooManyElements(m, 2)) return;
@@ -198,6 +234,8 @@ void Mesh2D(GModel *m)
   // field generated from the surface mesh of the source surfaces
   if(!Mesh2DWithBoundaryLayers(m))
     std::for_each(m->firstFace(), m->lastFace(), meshGFace());  
+  
+  PrintMesh2dStatistics(m);
 
   double t2 = Cpu();
   CTX.mesh_timer[1] = t2 - t1;

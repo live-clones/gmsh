@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.33 2007-09-12 20:14:35 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.34 2007-11-04 21:03:17 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -229,6 +229,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 
   // now do insertion of points
   insertVerticesInRegion(gr); 
+  Msg(INFO, "Gmsh 3D Delaunay has generated %d tets", gr->tetrahedra.size());
 #endif
 }
 

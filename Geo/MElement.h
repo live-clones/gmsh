@@ -326,6 +326,7 @@ class MTriangle : public MElement {
     mat[1][1] = _v[2]->y() - _v[0]->y();
   }
   void circumcenterXY(double *res) const; 
+  virtual double gammaShapeMeasure();
   void circumcenterUV(GFace*,double *res); 
   static void circumcenterXYZ(double *p1, double *p2, double *p3, double *res,
 			      double *uv = 0);

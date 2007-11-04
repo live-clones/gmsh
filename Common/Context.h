@@ -195,6 +195,7 @@ public :
     char *triangle_options;
     int smooth_normals, reverse_all_normals;
     double angle_smooth_normals;
+    double allow_swap_edge_angle;
   } mesh;
 
   // post processing options 

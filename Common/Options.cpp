@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.365 2007-10-14 09:51:17 geuzaine Exp $
+// $Id: Options.cpp,v 1.366 2007-11-04 21:03:16 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4863,6 +4863,13 @@ double opt_mesh_min_circ_points(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.mesh.min_circ_points = (int)val;
   return CTX.mesh.min_circ_points;
+}
+
+double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.allow_swap_edge_angle = val;
+  return CTX.mesh.allow_swap_edge_angle;
 }
 
 double opt_mesh_min_curv_points(OPT_ARGS_NUM)

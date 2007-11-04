@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.83 2007-10-14 19:54:16 remacle Exp $
+// $Id: BDS.cpp,v 1.84 2007-11-04 21:03:17 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #include "BDS.h"
 #include "Message.h"
 #include "GFace.h"
+#include "qualityMeasures.h"
 
 bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS_Face *t);
 
@@ -82,12 +83,7 @@ void normal_triangle(BDS_Point * p1, BDS_Point * p2, BDS_Point * p3,
                      double c[3])
 {
   vector_triangle(p1, p2, p3, c);
-  double l = sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
-  if(l == 0)
-    return;
-  c[0] /= l;
-  c[1] /= l;
-  c[2] /= l;
+  norme(c);
 }
 
 double surface_triangle(BDS_Point * p1, BDS_Point * p2, BDS_Point * p3)
@@ -102,21 +98,6 @@ double surface_triangle_param(BDS_Point * p1, BDS_Point * p2, BDS_Point * p3)
   double c;
   vector_triangle_parametric (p1, p2, p3, c);
   return (0.5 * c);
-}
-
-double quality_triangle(BDS_Point * p1, BDS_Point * p2, BDS_Point * p3)
-{
-  double e12 = ((p1->X - p2->X) * (p1->X - p2->X) +
-                (p1->Y - p2->Y) * (p1->Y - p2->Y) +
-                (p1->Z - p2->Z) * (p1->Z - p2->Z));
-  double e22 = ((p1->X - p3->X) * (p1->X - p3->X) +
-                (p1->Y - p3->Y) * (p1->Y - p3->Y) +
-                (p1->Z - p3->Z) * (p1->Z - p3->Z));
-  double e32 = ((p3->X - p2->X) * (p3->X - p2->X) +
-                (p3->Y - p2->Y) * (p3->Y - p2->Y) +
-                (p3->Z - p2->Z) * (p3->Z - p2->Z));
-  double a = surface_triangle(p1, p2, p3);
-  return a / (e12 + e22 + e32);
 }
 
 void BDS_Point::getTriangles(std::list < BDS_Face * >&t) const
@@ -530,7 +511,7 @@ BDS_Mesh ::~ BDS_Mesh ()
 }
 
 
-void BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
+bool BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
 {
   /*
         p1
@@ -552,6 +533,13 @@ void BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
   BDS_Point *p1 = e->p1;
   BDS_Point *p2 = e->p2;
 
+  e->oppositeof(op);
+
+//     double l1 = sqrt((op[0]->X-op[1]->X) *(op[0]->X-op[1]->X) +
+//   		   (op[0]->Y-op[1]->Y) *(op[0]->Y-op[1]->Y) +
+//   		   (op[0]->Z-op[1]->Z) *(op[0]->Z-op[1]->Z) );
+//     if (l1 < 0.5* mid->lc()) return false;
+
   BDS_Point *pts1[4];
   e->faces(0)->getNodes(pts1);
 
@@ -568,7 +556,6 @@ void BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
   }
 
   // we should project 
-  e->oppositeof(op);
   BDS_GeomEntity *g1 = 0, *g2 = 0, *ge = e->g;
 
   BDS_Edge *p1_op1 = find_edge(p1, op[0], e->faces(0));
@@ -642,6 +629,7 @@ void BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
   p2->config_modified = true;
   op[0]->config_modified = true;
   op[1]->config_modified = true;
+  return true;
 }
 
 
@@ -1160,16 +1148,32 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point * p, GFace *gf)
   V /= (3.*sTot);
   LC /= (3.*sTot);
 
+  GPoint gp = gf->point(U*scalingU,V*scalingV);
+
+  const double oldX = p->X;
+  const double oldY = p->Y;
+  const double oldZ = p->Z;
+
+  double oldWorst=1.;
+  double newWorst=1.;
+
   it = ts.begin();
   while(it != ite) {
     BDS_Face *t = *it;
     if (!test_move_point_parametric_triangle ( p, U, V, t))
-      return false;
+      return false;    
+//     //    p->X = gp.x();
+//     //    p->Y = gp.y();
+//     //    p->Z = gp.z();
+//     //    newWorst = std::min(newWorst,qmTriangle(*it,QMTRI_RHO));
+//     //    p->X = oldX;
+//     //    p->Y = oldY;
+//     //    p->Z = oldZ;
+//     //    oldWorst = std::min(oldWorst,qmTriangle(*it,QMTRI_RHO));
     ++it;
   }
+  //  if (oldWorst > newWorst)return false;
   
-  
-  GPoint gp = gf->point(U*scalingU,V*scalingV);
   p->u = U;
   p->v = V;
   p->lc() = LC;
@@ -1190,10 +1194,10 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)
   if (!p->config_modified)return false;
   if(p->g && p->g->classif_degree <= 1)
     return false;
-
+  
   double U = 0;
   double V = 0;
-  double tot_length = 0;
+  double tot_length = 0; 
   double LC = 0;
 
   std::list < BDS_Edge * >::iterator eit = p->edges.begin();
@@ -1208,8 +1212,6 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point * p, GFace *gf)
     ++eit;
   }
   
-  //U /= (p->edges.size());
-  //V /= (p->edges.size());
   U /= tot_length;
   V /= tot_length;
   LC /= p->edges.size();

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.184 2007-09-22 20:35:18 geuzaine Exp $
+# $Id: Makefile,v 1.185 2007-11-04 21:03:17 remacle Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -46,6 +46,7 @@ SRC = Generator.cpp \
         meshGRegionCarveHole.cpp \
         DivideAndConquer.cpp \
         BackgroundMesh.cpp \
+        qualityMeasures.cpp \
         BoundaryLayer.cpp \
         BDS.cpp \
         HighOrder.cpp

@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.106 2007-09-26 20:51:57 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.107 2007-11-04 21:03:16 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -90,6 +90,7 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -clscale float        Set characteristic length scaling factor");
   Msg(DIRECT, "  -clcurv               Compute characteristic lengths from curvatures");
   Msg(DIRECT, "  -epslc1d              Set the accuracy of the evaluation of the LCFIELD for 1D mesh");
+  Msg(DIRECT, "  -swapangle            Set the treshold angle (in degree) between two adjacent faces below which a swap is allowed");
   Msg(DIRECT, "  -rand float           Set random perturbation factor");
   Msg(DIRECT, "  -bgm file             Load background mesh from file");
   Msg(DIRECT, "  -constrain            Constrain background mesh with characteristic lengths");
@@ -360,6 +361,21 @@ void Get_Options(int argc, char *argv[])
           if(CTX.mesh.lc_integration_precision <= 0.0) {
             fprintf(stderr, ERROR_STR
                     "Integration Accuraci for evaluation of 1D LC FIELD must be > 0\n");
+            exit(1);
+          }
+        }
+        else {
+          fprintf(stderr, ERROR_STR "Missing number\n");
+          exit(1);
+        }
+      }
+      else if(!strcmp(argv[i] + 1, "swapangle")) {
+        i++;
+        if(argv[i] != NULL) {
+          CTX.mesh.allow_swap_edge_angle = atof(argv[i++]);
+          if(CTX.mesh.allow_swap_edge_angle <= 0.0) {
+            fprintf(stderr, ERROR_STR
+                    "Treshold angle for edge swap  must be > 0\n");
             exit(1);
           }
         }

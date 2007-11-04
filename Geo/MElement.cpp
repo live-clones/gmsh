@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.44 2007-10-03 19:40:41 geuzaine Exp $
+// $Id: MElement.cpp,v 1.45 2007-11-04 21:03:17 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #include "Numeric.h"
 #include "Message.h"
 #include "Context.h"
+#include "qualityMeasures.h"
 
 extern Context_T CTX;
 
@@ -94,6 +95,11 @@ double MElement::rhoShapeMeasure()
     return min / max;
   else
     return 0.;
+}
+
+double MTriangle::gammaShapeMeasure()
+{
+  return qmTriangle(this,QMTRI_RHO);
 }
 
 double MTetrahedron::gammaShapeMeasure()

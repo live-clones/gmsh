@@ -888,10 +888,10 @@ StringXNumber MeshOptions_Number[] = {
     "3D mesh algorithm (1=Tetgen+Delaunay, 4=Netgen)" }, 
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" }, 
-
+  { F|O, "AllowSwapAngle" , opt_mesh_allow_swap_edge_angle , 10.0 ,
+    "Treshold angle (in degrees) between faces normals under which we allow an edge swap" }, 
   { F|O, "BdfFieldFormat" , opt_mesh_bdf_field_format , 1. , 
     "Field format for Nastran BDF files (0=free, 1=small, 2=large)" },
-
   { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
     "Factor applied to all characteristic lengths" },
   { F|O, "CharacteristicLengthFromCurvature" , opt_mesh_lc_from_curvature , 0. ,
