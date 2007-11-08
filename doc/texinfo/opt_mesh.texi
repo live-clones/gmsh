@@ -24,6 +24,11 @@ Threshold angle below which normals are not smoothed@*
 Default value: @code{30}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.AllowSwapAngle
+Treshold angle (in degrees) between faces normals under which we allow an edge swap@*
+Default value: @code{10}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.BdfFieldFormat
 Field format for Nastran BDF files (0=free, 1=small, 2=large)@*
 Default value: @code{1}@*

@@ -404,6 +404,11 @@ Display width of lines (in pixels)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.MaxRecursionLevel
+Maximum recursion level for adaptive views@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.Max
 Maximum value in the view (read-only)@*
 Default value: @code{0}@*
@@ -552,6 +557,11 @@ Saved in: @code{General.OptionsFileName}
 @item View.Tangents
 Display size of tangent vectors (in pixels)@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.TargetError
+Target representation error for adaptive views@*
+Default value: @code{0.01}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.TensorType
