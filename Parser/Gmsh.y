@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.289 2007-09-26 20:52:00 geuzaine Exp $
+// $Id: Gmsh.y,v 1.290 2007-11-08 19:30:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -248,6 +248,11 @@ View :
 	ViewData->setName($2);
 	ViewData->setFileName(yyname);
 	ViewData->setFileIndex(yyviewindex++);
+	if(ViewData->adaptive){
+	  ViewData->adaptive->setGlobalResolutionLevel
+	    (ViewData, PViewOptions::reference.MaxRecursionLevel);
+	  ViewData->adaptive->setTolerance(PViewOptions::reference.TargetError);
+	}
 	new PView(ViewData);
       }
       else

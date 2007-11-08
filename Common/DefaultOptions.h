@@ -1266,6 +1266,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "LineWidth" , opt_view_line_width , 1.0 , 
     "Display width of lines (in pixels)" },
 
+  { F|O,   "MaxRecursionLevel" , opt_view_max_recursion_level , 0. , 
+    "Maximum recursion level for adaptive views" },
   { F,   "Max" , opt_view_max , 0. , 
     "Maximum value in the view (read-only)" },
   { F,   "MaxX" , opt_view_xmax , 0. , 
@@ -1332,6 +1334,8 @@ StringXNumber ViewOptions_Number[] = {
 
   { F|O, "Tangents" , opt_view_tangents , 0. ,
     "Display size of tangent vectors (in pixels)" }, 
+  { F|O, "TargetError" , opt_view_target_error , 0.01 ,
+    "Target representation error for adaptive views" }, 
   { F|O, "TensorType" , opt_view_tensor_type , 1. ,
     "Tensor Visualization Type" },
   { F,   "TimeStep" , opt_view_timestep , 0. ,

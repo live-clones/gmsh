@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.643 2007-09-24 08:14:28 geuzaine Exp $
+// $Id: GUI.cpp,v 1.644 2007-11-08 19:30:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3149,15 +3149,14 @@ void GUI::create_option_window()
       view_value[33]->minimum(0);
       view_value[33]->maximum(8);
       view_value[33]->step(1);
-      view_value[33]->value(0);
       view_value[33]->when(FL_WHEN_RELEASE);
       view_value[33]->callback(view_options_ok_cb);
 
       view_value[34] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Target error");
       view_value[34]->align(FL_ALIGN_RIGHT);
-      view_value[34]->minimum(0);
-      view_value[34]->maximum(1);
-      view_value[34]->value(1.e-2);
+      view_value[34]->minimum(0.);
+      view_value[34]->maximum(1.);
+      view_value[34]->step(1.e-3);
       view_value[34]->when(FL_WHEN_RELEASE);
       view_value[34]->callback(view_options_ok_cb);
 
@@ -3435,8 +3434,8 @@ void GUI::update_view_window(int num)
   opt_view_show_scale(num, GMSH_GUI, 0);
   opt_view_draw_strings(num, GMSH_GUI, 0);
 
-  opt_view_max_recursion_level (num, GMSH_GUI, 0);
-  opt_view_target_error (num, GMSH_GUI, 0);
+  opt_view_max_recursion_level(num, GMSH_GUI, 0);
+  opt_view_target_error(num, GMSH_GUI, 0);
   if(data->isAdaptive()){
     view_value[33]->activate();
     view_value[34]->activate();

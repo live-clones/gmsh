@@ -95,6 +95,8 @@ class PViewOptions {
   double GenRaiseFactor;
   char GenRaiseX[256], GenRaiseY[256], GenRaiseZ[256];
   void *GenRaise_f[3];
+  double TargetError;
+  int MaxRecursionLevel;
   struct{
     unsigned int point, line, triangle, quadrangle;
     unsigned int tetrahedron, hexahedron, prism, pyramid;

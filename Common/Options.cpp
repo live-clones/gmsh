@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.366 2007-11-04 21:03:16 remacle Exp $
+// $Id: Options.cpp,v 1.367 2007-11-08 19:30:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -5891,50 +5891,44 @@ double opt_view_max_recursion_level(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
 
-  if(!data->isAdaptive()) return 0.;
-
-  PViewDataList *l = dynamic_cast<PViewDataList*>(data);
-  if(!l){
-    Msg(GERROR, "Adaptive views only available for list-based datasets");
-    return 0.;
-  }
-  
   if(action & GMSH_SET) {
-    l->adaptive->setGlobalResolutionLevel(l, (int)val);
-    view->setChanged(true);
+    opt->MaxRecursionLevel = (int)val;
+    if(data && data->isAdaptive()){
+      PViewDataList *l = dynamic_cast<PViewDataList*>(data);
+      if(l){
+	l->adaptive->setGlobalResolutionLevel(l, opt->MaxRecursionLevel);
+	view->setChanged(true);
+      }
+    }
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_value[33]->value(l->adaptive->getGlobalResolutionLevel());
+    WID->view_value[33]->value(opt->MaxRecursionLevel);
   }
 #endif
-
-  return l->adaptive->getGlobalResolutionLevel();
+  return opt->MaxRecursionLevel;
 }
 
 double opt_view_target_error(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
 
-  if(!data->isAdaptive()) return 0.;
-
-  PViewDataList *l = dynamic_cast<PViewDataList*>(data);
-  if(!l){
-    Msg(GERROR, "Adaptive views only available for list-based datasets");
-    return 0.;
-  }
-
   if(action & GMSH_SET) {
-    l->adaptive->setTolerance(val);
-    l->adaptive->setGlobalResolutionLevel(l, l->adaptive->getGlobalResolutionLevel());
-    view->setChanged(true);
+    opt->TargetError = val;
+    if(data && data->isAdaptive()){
+      PViewDataList *l = dynamic_cast<PViewDataList*>(data);
+      if(l){
+	l->adaptive->setTolerance(opt->TargetError);
+	view->setChanged(true);
+      }
+    }
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)) {
-    WID->view_value[34]->value(l->adaptive->getTolerance());
+    WID->view_value[34]->value(opt->TargetError);
   }
 #endif
-  return l->adaptive->getTolerance();
+  return opt->TargetError;
 }
 
 double opt_view_type(OPT_ARGS_NUM)
