@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.26 2007-10-10 08:49:34 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.27 2007-11-08 19:29:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -182,34 +182,39 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
   double l3 = CTX.lc;
   double l4 = lc_field.empty() ? MAX_LC : lc_field(X, Y, Z);
 
-  // use the field unconstrained by other characteristic lengths
-  if(!lc_field.empty() && !CTX.mesh.constrained_bgmesh)
-    return l4 * CTX.mesh.lc_factor;
+  double lc;
 
-  if(CTX.mesh.lc_from_curvature && ge->dim() < 3)
-    l1 = LC_MVertex_CURV(ge, U, V);
-
-  if(ge->dim() < 2) 
-    l2 = LC_MVertex_PNTS(ge, U, V);
+  if(!lc_field.empty() && !CTX.mesh.constrained_bgmesh){
+    // use the fields unconstrained by other characteristic lengths
+    lc = l4 * CTX.mesh.lc_factor;
+  }
+  else{
+    if(CTX.mesh.lc_from_curvature && ge->dim() < 3)
+      l1 = LC_MVertex_CURV(ge, U, V);
+    if(ge->dim() < 2) 
+      l2 = LC_MVertex_PNTS(ge, U, V);
+    lc = std::min(std::min(std::min(l1, l2), l3), l4) * CTX.mesh.lc_factor;
+  }
   
-  //  printf("l1 = %12.5E l2 = %12.5E l4 = %12.5E\n",l1,l2,l4);
+  if(lc <= 0.){
+    Msg(GERROR, "Incorrect char. length lc = %g: using default instead", lc);
+    return l3 * CTX.mesh.lc_factor;
+  }
 
-  double lc = std::min(std::min(std::min(l1, l2), l3), l4);
-
-  return lc * CTX.mesh.lc_factor;
+  return lc;
 }
 
 // we extend the 1d mesh in surfaces if no background mesh exists
 // in this case, it is the only way to have something smooth
 // we do it also if CTX.mesh.constrained_bgmesh is true;
-bool Extend1dMeshIn2dSurfaces ()
+bool Extend1dMeshIn2dSurfaces()
 {
-  if ( lc_field.empty()) return true;
-  if ( CTX.mesh.constrained_bgmesh == true) return true;
+  if(lc_field.empty()) return true;
+  if(CTX.mesh.constrained_bgmesh) return true;
   return false;
 }
 
-bool Extend2dMeshIn3dVolumes  ()
+bool Extend2dMeshIn3dVolumes()
 {
-  return Extend1dMeshIn2dSurfaces ();
+  return Extend1dMeshIn2dSurfaces();
 }
