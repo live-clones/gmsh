@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.140 2007-09-24 08:14:29 geuzaine Exp $
+// $Id: Post.cpp,v 1.141 2007-11-08 14:44:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -317,10 +317,9 @@ void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool pre,
   double z[2] = {xyz[i0][2], xyz[i1][2]};
   double v[2] = {val[i0][0], val[i1][0]};
 
-  SVector3 n[2];
-  getLineNormal(p, x, y, z, v, n, true);
-
   if(opt->IntervalsType == PViewOptions::Continuous){
+    SVector3 n[2];
+    getLineNormal(p, x, y, z, v, n, true);
     if(val[i0][0] >= vmin && val[i0][0] <= vmax &&
        val[i1][0] >= vmin && val[i1][0] <= vmax){
       unsigned int col[2];
@@ -350,6 +349,8 @@ void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool pre,
       if(nb == 2){
 	unsigned color = opt->getColor(k, opt->NbIso);
 	unsigned int col[2] = {color, color};
+	SVector3 n[2];
+	getLineNormal(p, x2, y2, z2, v2, n, true);
 	p->va_lines->add(x2, y2, z2, n, col, 0, unique);
       }
       if(vmin == vmax) break;
