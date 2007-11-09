@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.7 2007-09-24 08:14:29 geuzaine Exp $
+// $Id: Field.cpp,v 1.8 2007-11-09 08:07:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -268,9 +268,11 @@ double PostViewField::operator()(double x, double y, double z)
   if(view_index < 0 || view_index >= (int)PView::list.size()) return MAX_LC;
 
   double l = 0.;
-  double fact[9] = {0.001, 0.0025, 0.005, 0.0075, 0.01, 0.025, 0.05, 0.075, 0.1};
   if(!octree->searchScalar(x, y, z, &l, 0)){
-    // try really hard to find an element around the point
+    // uncomment the following to try really hard to find an element
+    // around the point
+    /*
+    double fact[9] = {0.001, 0.0025, 0.005, 0.0075, 0.01, 0.025, 0.05, 0.075, 0.1};
     for(int i = 0; i < 9; i++){
       double eps = CTX.lc * fact[i];
       if(octree->searchScalar(x + eps, y, z, &l, 0)) break;
@@ -288,6 +290,7 @@ double PostViewField::operator()(double x, double y, double z)
       if(octree->searchScalar(x - eps, y - eps, z + eps, &l, 0)) break;
       if(octree->searchScalar(x - eps, y + eps, z + eps, &l, 0)) break;
     }
+    */
   }
   if(l <= 0) return MAX_LC;
   return l;
