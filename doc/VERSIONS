@@ -1,8 +1,9 @@
-$Id: VERSIONS,v 1.392 2007-09-14 18:51:37 geuzaine Exp $
+$Id: VERSIONS,v 1.393 2007-11-09 11:42:32 geuzaine Exp $
 
 2.1.0 (XX): new post-processing database; complete rewrite of
-post-processing drawing code; improved 2D mesh algorithms; fix for
-'could not find extruded vertex' bug;
+post-processing drawing code; improved 2D mesh algorithms; fixed
+'could not find extruded vertex' in extrusions; many small
+improvements and small bug fixes.
 
 2.0.8 (Jul 13, 2007): unused vertices are not saved in mesh files
 anymore; new plugin GUI; automatic GUI font size selection; renamed
