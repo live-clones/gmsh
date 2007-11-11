@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.45 2007-10-11 08:59:22 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.46 2007-11-11 19:53:57 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -312,10 +312,12 @@ void meshGEdge::operator() (GEdge *ge)
 
   List_Reset(Points);
     
+
   // Integrate detJ/lc du 
   double a;
   int N;
-  if(ge->meshAttributes.Method == TRANSFINI){
+  if (ge->degenerate(0)){N=1;a=0.0;}
+  else if(ge->meshAttributes.Method == TRANSFINI){
     a = Integration(ge, t_begin, t_end, F_Transfinite, Points, 1.e-8);
     N = ge->meshAttributes.nbPointsTransfinite;
   }
@@ -324,9 +326,9 @@ void meshGEdge::operator() (GEdge *ge)
       Integration(ge, t_begin, t_end, F_Lc_usingInterpLcBis, lcPoints, 
 		  CTX.mesh.lc_integration_precision);
       buildInterpLc(lcPoints);
-      printInterpLc("toto1.dat");
+      //      printInterpLc("toto1.dat");
       smoothInterpLc(ge->periodic(), 20);
-      printInterpLc("toto2.dat");
+      //      printInterpLc("toto2.dat");
       a = Integration(ge, t_begin, t_end, F_Lc_usingInterpLc, Points, 1.e-8);
     }
     else{

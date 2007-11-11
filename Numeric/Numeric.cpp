@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.35 2007-10-25 19:54:06 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.36 2007-11-11 19:53:57 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -107,12 +107,6 @@ double myacos(double a)
     return acos(a);
 }
 
-void prodve(double a[3], double b[3], double c[3])
-{
-  c[2] = a[0] * b[1] - a[1] * b[0];
-  c[1] = -a[0] * b[2] + a[2] * b[0];
-  c[0] = a[1] * b[2] - a[2] * b[1];
-}
 
 void matvec(double mat[3][3], double vec[3], double res[3])
 {
@@ -121,26 +115,6 @@ void matvec(double mat[3][3], double vec[3], double res[3])
   res[2] = mat[2][0] * vec[0] + mat[2][1] * vec[1] + mat[2][2] * vec[2];
 }
 
-void prosca(double a[3], double b[3], double *c)
-{
-  *c = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-}
-
-double norm3(double a[3])
-{
-  return sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
-}
-
-double norme(double a[3])
-{
-  double mod = norm3(a);
-  if(mod != 0.0){
-    a[0] /= mod;
-    a[1] /= mod;
-    a[2] /= mod;
-  }
-  return mod;
-}
 
 void normal3points(double x0, double y0, double z0,
 		   double x1, double y1, double z1,

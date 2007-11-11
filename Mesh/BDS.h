@@ -364,23 +364,25 @@ class BDS_SwapEdgeTest
  public:
   virtual bool operator() (BDS_Point *p1,BDS_Point *p2,
 			   BDS_Point *q1,BDS_Point *q2) const = 0; 
+  virtual bool operator() (BDS_Point *p1,BDS_Point *p2, BDS_Point *p3,
+			   BDS_Point *q1,BDS_Point *q2, BDS_Point *q3,
+			   BDS_Point *op1,BDS_Point *op2, BDS_Point *op3,
+			   BDS_Point *oq1,BDS_Point *oq2, BDS_Point *oq3) const = 0; 
   virtual ~BDS_SwapEdgeTest(){}
 };
 
-class BDS_SwapEdgeTestParametric : public BDS_SwapEdgeTest
+class BDS_SwapEdgeTestQuality : public BDS_SwapEdgeTest
 {
+  bool testQuality;
  public:
+  BDS_SwapEdgeTestQuality (bool a) : testQuality(a){}
   virtual bool operator() (BDS_Point *p1,BDS_Point *p2,
 			   BDS_Point *q1,BDS_Point *q2) const ; 
-  virtual ~BDS_SwapEdgeTestParametric(){}
-};
-
-class BDS_SwapEdgeTestDelaunay : public BDS_SwapEdgeTest
-{
- public:
-  virtual bool operator() (BDS_Point *p1,BDS_Point *p2,
-			   BDS_Point *q1,BDS_Point *q2) const ; 
-  virtual ~BDS_SwapEdgeTestDelaunay(){}
+  virtual bool operator() (BDS_Point *p1,BDS_Point *p2, BDS_Point *p3,
+			   BDS_Point *q1,BDS_Point *q2, BDS_Point *q3,
+			   BDS_Point *op1,BDS_Point *op2, BDS_Point *op3,
+			   BDS_Point *oq1,BDS_Point *oq2, BDS_Point *oq3) const ; 
+  virtual ~BDS_SwapEdgeTestQuality(){}
 };
 
 struct EdgeToRecover 

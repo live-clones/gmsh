@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.100 2007-11-04 21:03:17 remacle Exp $
+// $Id: meshGFace.cpp,v 1.101 2007-11-11 19:53:57 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -134,7 +134,7 @@ void remeshUnrecoveredEdges ( std::set<EdgeToRecover> & edgesNotRecovered, std::
 
 bool AlgoDelaunay2D ( GFace *gf )
 {
-  if ( gf->getNativeType() == GEntity::GmshModel && CTX.mesh.algo2d == ALGO_2D_DELAUNAY && gf->geomType() == GEntity::Plane)
+  if ( /*gf->getNativeType() == GEntity::GmshModel &&*/ CTX.mesh.algo2d == ALGO_2D_DELAUNAY && gf->geomType() == GEntity::Plane)
     return true;
   return false;
 }
@@ -184,17 +184,6 @@ void computeEdgeLoops(const GFace *gf,
       for (int i = (*it)->mesh_vertices.size()-1; i >= 0; i--)
 	all_mvertices.push_back((*it)->mesh_vertices[i]);
   }
-}
-
-double F_LC_ANALY(double xx, double yy, double zz)
-{
-  //  return 0.005 + 0.05*fabs (sin(5*xx) + sin(15*yy) + sin(15*zz));
-  //  return 0.02;
-  //  return 0.002 + 0.04*fabs (sin(6*xx) + sin(6*yy) + sin(6*zz));
-  return 0.003 + 0.05*fabs(sin(8*xx) + sin(8*yy) + sin(8*zz));
-  return 0.02 + 0.1*fabs(sin(3*xx) + sin(3*yy) + sin(3*zz));
-  return 0.01 + 0.1*fabs(sin((xx*xx+(zz-0.7)*(zz-0.7)-.25))); 
-  return 0.05 + 0.1*fabs(xx*yy);
 }
 
 double NewGetLc(BDS_Point *p)
@@ -297,19 +286,20 @@ bool edgeSwapTestAngle(BDS_Edge *e, double min_cos)
   return cosa > min_cos; 
 }
 
-int edgeSwapTestQuality(BDS_Edge *e, double fact = 1.1)
+int edgeSwapTestQuality(BDS_Edge *e, double fact = 1.1, bool force = false)
 {
   BDS_Point *op[2];
   
-  if(!e->p1->config_modified && ! e->p2->config_modified) return 0;
+  if (!force)
+    if(!e->p1->config_modified && ! e->p2->config_modified) return 0;
   
   if(e->numfaces() != 2) return 0;
   
   e->oppositeof (op);
 
-  if (! edgeSwapTestAngle(e, cos(CTX.mesh.allow_swap_edge_angle*M_PI/180.)) ) return -1;
-  
-  
+  if (!force)
+    if (! edgeSwapTestAngle(e, cos(CTX.mesh.allow_swap_edge_angle*M_PI/180.)) ) return -1;
+    
   double qa1 = qmTriangle(e->p1, e->p2, op[0],QMTRI_RHO);
   double qa2 = qmTriangle(e->p1, e->p2, op[1],QMTRI_RHO);
   double qb1 = qmTriangle(e->p1, op[0], op[1],QMTRI_RHO);
@@ -347,45 +337,40 @@ bool edgeSwapTestDelaunay(BDS_Edge *e,GFace *gf)
 void OptimizeMesh(GFace *gf, BDS_Mesh &m, const int NIT)
 {
   // optimize
-  for(int i = 0 ; i < NIT ; i++){
+  //  if (0)
     {
-      std::set<BDS_Point*,PointLessThan> PTS (m.points);
-      std::set<BDS_Point*,PointLessThan>::iterator itp = PTS.begin();
-      while (itp != PTS.end())
+      for(int i = 0 ; i < NIT ; i++){
 	{
-	  std::list < BDS_Face * >t;
-	  (*itp)->getTriangles(t);
-	  if (t.size()==(*itp)->edges.size()  &&  t.size() < 5)
-	    for (std::list<BDS_Edge*>::iterator ite = (*itp)->edges.begin();ite!=(*itp)->edges.end();++ite)
-	      {
-		if(m.collapse_edge_parametric ( (*ite), (*itp)))break;
-	      }
-	  else
-	    m.smooth_point_centroid(*itp,gf);		
-	  ++itp;
-	}
-    }
-    for (int KK=0;KK<4;KK++){
-      // swap edges that provide a better configuration
-      int NN1 = m.edges.size();
-      int NN2 = 0;
-      std::list<BDS_Edge*>::iterator it = m.edges.begin();
-      while (1)
-	{
-	  if (NN2++ >= NN1)break;
-	  if (!(*it)->deleted)
+	  std::set<BDS_Point*,PointLessThan> PTS (m.points);
+	  std::set<BDS_Point*,PointLessThan>::iterator itp = PTS.begin();
+	  while (itp != PTS.end())
 	    {
-	      const double qual = CTX.mesh.algo2d == ALGO_2D_MESHADAPT ? 1 : 5;
-	      int result = edgeSwapTestQuality(*it,qual);
-	      if (CTX.mesh.algo2d == ALGO_2D_MESHADAPT && result == 1)
-		m.swap_edge ( *it , BDS_SwapEdgeTestParametric());
-	      else if ( result >= 0 && edgeSwapTestDelaunay(*it,gf))
-		m.swap_edge ( *it , BDS_SwapEdgeTestParametric());
+	      std::list < BDS_Face * >t;
+	      (*itp)->getTriangles(t);
+	      if (t.size()==(*itp)->edges.size()  &&  t.size() < 5)
+		for (std::list<BDS_Edge*>::iterator ite = (*itp)->edges.begin();ite!=(*itp)->edges.end();++ite)
+		  {
+		    if(m.collapse_edge_parametric ( (*ite), (*itp)))break;
+		  }
+	      else
+		m.smooth_point_centroid(*itp,gf);		
+	      ++itp;
 	    }
-	  ++it;
 	}
-      m.cleanup();  
+      }
     }
+  for (int KK=0;KK<4;KK++){
+    // swap edges that provide a better configuration
+    int NN1 = m.edges.size();
+    int NN2 = 0;
+    std::list<BDS_Edge*>::iterator it = m.edges.begin();
+    while (1)
+      {
+	if (NN2++ >= NN1)break;
+	m.swap_edge ( *it , BDS_SwapEdgeTestQuality(true));
+	++it;
+      }
+    m.cleanup();  
   }
 }
 
@@ -404,10 +389,10 @@ void swapEdgePass ( GFace *gf, BDS_Mesh &m, int &nb_swap )
 	{
 	  const double qual = CTX.mesh.algo2d == ALGO_2D_MESHADAPT ? 1 : 5;
 	  int result = edgeSwapTestQuality(*it,qual);
-	  if (CTX.mesh.algo2d == ALGO_2D_MESHADAPT && result == 1)
-	    { if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric()))nb_swap++; }
+	  if (CTX.mesh.algo2d == ALGO_2D_MESHADAPT )
+	    { if (m.swap_edge ( *it , BDS_SwapEdgeTestQuality(true)))nb_swap++; }
 	  else if ( result >= 0 && edgeSwapTestDelaunay(*it,gf))
-	    { if (m.swap_edge ( *it , BDS_SwapEdgeTestParametric())) nb_swap++; }
+	    { if (m.swap_edge ( *it , BDS_SwapEdgeTestQuality(false))) nb_swap++; }
 	}
       ++it;
     }  
@@ -444,6 +429,8 @@ void splitEdgePass ( GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 					  mid->X,mid->Y,mid->Z);
 	      //mid->lc() = 2./ ( 1./(*it)->p1->lc() +  1./(*it)->p2->lc() );		  
 	      mid->lc() = 0.5 * ( (*it)->p1->lc() +  (*it)->p2->lc() );		  
+	      //	      printf("%g %g\n",mid->lc(),mid->lcBGM());
+
 	      if(!m.split_edge ( *it, mid )) m.del_point(mid);
 	      else nb_split++;
 	    }
@@ -622,17 +609,20 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 	{
 	  std::list<BDS_Edge*>::iterator it  = (*itp)->edges.begin();
 	  std::list<BDS_Edge*>::iterator ite = (*itp)->edges.end();
-	  double L = 1.e22;
+	  double L=0;
 	  int ne = 0;
 	  while(it!=ite){
 	    double l = (*it)->length();
-	    if ((*it)->g && (*it)->g->classif_degree == 1){
-	      L=std::min(L,l);
+	    if ((*it)->g && (*it)->g->classif_degree == 1){	      
+	      L=ne?std::max(L,l):l;
+	      //	      L=ne?std::min(L,l):l;
+	      //	      L+=l;
 	      ne++;
 	    }
 	    ++it;
 	  }
 	  if (!ne) L = 1.e22;
+	  //	  else L/=ne;
 	  if(!CTX.mesh.constrained_bgmesh)
 	    (*itp)->lc() = L;
 	  (*itp)->lcBGM() = L;
@@ -689,6 +679,8 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
       splitEdgePass ( gf, m, maxE, nb_split);
       //saturateEdgePass ( gf, m, maxE, nb_split);
       clock_t t2 = clock();
+      swapEdgePass ( gf, m, nb_swap);
+      swapEdgePass ( gf, m, nb_swap);
       swapEdgePass ( gf, m, nb_swap);
       clock_t t3 = clock();
       collapseEdgePass ( gf, m, minE , MAXNP, nb_collaps);
@@ -849,12 +841,29 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, std::
 bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
 {
 
+  //  if (gf->tag() != 21) return true;
   typedef std::set<MVertex*> v_container ;
   v_container all_vertices;
   std::map<int, MVertex*>numbered_vertices;
   std::list<GEdge*> edges = gf->edges();
   std::list<GEdge*> emb_edges = gf->emb_edges();
   std::list<GEdge*>::iterator it = edges.begin();
+
+//   if (gf->geomType() == GEntity::Cylinder) 
+//     {
+//       Range<double> rangeU = gf->parBounds(0);
+//       Range<double> rangeV = gf->parBounds(1);  
+//       double du = rangeU.high() -rangeU.low();
+//       double dv = rangeV.high() -rangeV.low();
+//       surface_params params = gf->getSurfaceParams();
+//       printf("radius of the cylinder %g\n",params.radius);
+//   m->scalingU = fabs(du);
+//   m->scalingV = fabs(dv);
+//   SCALINGU = m->scalingU;
+//   SCALINGV = m->scalingV;
+//     }
+
+
 
   // build a set with all points of the boundaries
   it = edges.begin();
@@ -1025,14 +1034,19 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
 	}
       else if(ge->dim() == 1)
 	{
-	  MEdgeVertex *eve = (MEdgeVertex*) here;
-	  pp->lcBGM() = eve->getLc();
+	 double u;
+	 here->getParameter(0,u);	  
+	 pp->lcBGM() = BGM_MeshSize(ge,u,0,here->x(),here->y(),here->z());
+	  //	  MEdgeVertex *eve = (MEdgeVertex*) here;
+	  //	  pp->lcBGM() = eve->getLc();
 	}
       else
 	  pp->lcBGM() = 1.e22;
 	
       pp->lc() = pp->lcBGM();
       //      printf("dim %d lc = %12.5E\n",ge->dim(),pp->lc());
+
+
     }
   
   Msg(DEBUG1,"Meshing of the convex hull (%d points) done",all_vertices.size());
@@ -1211,6 +1225,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
       RefineMesh (gf,*m, CTX.mesh.refine_steps);
       OptimizeMesh(gf, *m, 2);
       RefineMesh (gf,*m, -CTX.mesh.refine_steps);
+      OptimizeMesh(gf, *m, 2);
 
       if (gf->meshAttributes.recombine)
 	{
@@ -1297,7 +1312,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
 
 // this function buils a list of vertices (BDS) that 
 // are consecutive in one given edge loop. We take
-// care of periodic surfaces. In the case of periodicity, some
+// care of periodic surfaces. In the case of periodicty, some
 // curves are present 2 times in the wire (seams). Those
 // must be meshed separately
 
@@ -1306,6 +1321,22 @@ inline double dist2 (const SPoint2 &p1,const SPoint2 &p2)
   const double dx = p1.x() - p2.x(); 
   const double dy = p1.y() - p2.y(); 
   return dx*dx+dy*dy;
+}
+
+
+
+bool noseam (  GFace *gf  )
+{
+  std::list<GEdge*> edges = gf->edges();
+  std::list<GEdge*>::iterator it = edges.begin();
+  while (it != edges.end())   
+   {
+     GEdge *ge = *it ;
+     bool seam = ge->isSeam(gf);
+     if (seam) return false;
+     ++it;
+   }
+  return true;
 }
 
 bool buildConsecutiveListOfVertices (  GFace *gf,
@@ -1326,9 +1357,14 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
   std::map<GEntity*,std::vector<SPoint2> > meshes;
   std::map<GEntity*,std::vector<SPoint2> > meshes_seam;  
 
+  const int _DEBUG = false;
+
   result.clear();
   
   GEdgeLoop::iter it  = gel.begin();  
+
+
+  if (_DEBUG)printf("face %d with %d edges\n",gf->tag(),gf->edges().size());
 
   while (it != gel.end())   
    {
@@ -1339,7 +1375,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 
      bool seam = ges.ge->isSeam(gf);
      
-     //     printf("face %d edge %d seam %d (%d %d)\n",gf->tag(),ges.ge->tag(),seam,ges.ge->getBeginVertex()->tag(),ges.ge->getEndVertex()->tag());
+     if (_DEBUG)printf("face %d edge %d seam %d (%d %d)\n",gf->tag(),ges.ge->tag(),seam,ges.ge->getBeginVertex()->tag(),ges.ge->getEndVertex()->tag());
      
      Range<double> range = ges.ge->parBounds(0);
 
@@ -1400,9 +1436,9 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	   {
 	     SPoint2 first_coord         = mesh1d[0];
 	     double d = dist2(last_coord,first_coord);
-	     //	     	     printf("d = %12.5E %d\n",d, coords.size());
 	     if (d < tol) 
 	       {
+		 if (_DEBUG)printf("d = %12.5E %d\n",d, coords.size());
 		 coords.clear();
 		 coords = mesh1d;
 		 found = GEdgeSigned(1,ge);
@@ -1411,10 +1447,10 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	       }
 	     SPoint2 first_coord_reversed = mesh1d_reversed[0];
 	     double d_reversed = dist2(last_coord,first_coord_reversed);
-	     //	     	     printf("d_r = %12.5E\n",d_reversed);
+	     if (_DEBUG)printf("d_r = %12.5E\n",d_reversed);
 	     if (d_reversed < tol) 
 	       {
-		 //		 		 printf("d_r = %12.5E\n",d_reversed);
+		 if (_DEBUG)printf("d_r = %12.5E\n",d_reversed);
 		 coords.clear();
 		 coords = mesh1d_reversed;
 		 found = (GEdgeSigned(-1,ge));
@@ -1426,9 +1462,9 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 		 SPoint2 first_coord_seam         = mesh1d_seam[0];
 		 SPoint2 first_coord_seam_reversed = mesh1d_seam_reversed[0];
 		 double d_seam = dist2(last_coord,first_coord_seam);
-		 //		 		 printf("d_seam = %12.5E\n",d_seam);
 		 if (d_seam < tol)
 		   {
+		     if (_DEBUG)printf("d_seam = %12.5E\n",d_seam);
 		     coords.clear();
 		     coords = mesh1d_seam;
 		     found = (GEdgeSigned(1,ge));
@@ -1436,9 +1472,9 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 		     goto Finalize;
 		   }
 		 double d_seam_reversed = dist2(last_coord,first_coord_seam_reversed);
-		 //		 		 printf("d_seam_reversed = %12.5E\n",d_seam_reversed);
 		 if (d_seam_reversed < tol)
 		   {
+		     if (_DEBUG)printf("d_seam_reversed = %12.5E\n",d_seam_reversed);
 		     coords.clear();
 		     coords = mesh1d_seam_reversed;
 		     found = (GEdgeSigned(-1,ge));
@@ -1452,6 +1488,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
        }
    Finalize:
 
+     if (_DEBUG)printf("Finalize\n");
      if (coords.size() == 0)return false;
      
      std::vector<MVertex*>    edgeLoop;
@@ -1468,7 +1505,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	   edgeLoop.push_back(found.ge->mesh_vertices[i]);
        }
      
-     //     printf("edge %d size %d size %d\n",found.ge->tag(),edgeLoop.size(), coords.size());
+     if (_DEBUG)printf("edge %d size %d size %d\n",found.ge->tag(),edgeLoop.size(), coords.size());
      
      std::vector<BDS_Point*>  edgeLoop_BDS;
      for (unsigned int i=0;i<edgeLoop.size();i++)	    
@@ -1480,32 +1517,37 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	 U = param.x() / m->scalingU ;
 	 V = param.y() / m->scalingV;	
 	 BDS_Point *pp = m->add_point ( count, U,V,gf );
- 	 if(ge->dim() == 1)
+ 	 if(ge->dim() == 0)
  	   {
- 	     double t;
- 	     here->getParameter(0,t);
- 	     pp->lcBGM() = BGM_MeshSize(ge,t,-12,here->x(),here->y(),here->z());
-	     pp->lc() = pp->lcBGM();
+	     pp->lcBGM() = BGM_MeshSize(ge,0,0,here->x(),here->y(),here->z());
  	   }
- 	 else
+ 	 else if (ge->dim() == 1)
  	   {
-	     MEdgeVertex *eve = (MEdgeVertex*) here;
-	     // 	     pp->lc() = BGM_MeshSize(ge,param.x(),param.y(),here->x(),here->y(),here->z());
-	     pp->lc() = eve->getLc();
-	     pp->lcBGM() = eve->getLc();
+	     double u;
+	     here->getParameter(0,u);	  
+	     pp->lcBGM() = BGM_MeshSize(ge,u,0,here->x(),here->y(),here->z());
+// 	     MEdgeVertex *eve = (MEdgeVertex*) here;
+// 	     // 	     pp->lc() = BGM_MeshSize(ge,param.x(),param.y(),here->x(),here->y(),here->z());
+// 	     pp->lcBGM() = eve->getLc();
  	   }
+	 else
+	     pp->lcBGM() = 1.e22;
+
+	 pp->lc() = pp->lcBGM();
+
+	 //	 printf("lc = %12.5E\n",pp->lc());
 
 	 m->add_geom (ge->tag(), ge->dim());
 	 BDS_GeomEntity *g = m->get_geom(ge->tag(),ge->dim());
 	 pp->g = g;
-	 //	 printf("point %3d (%8.5f %8.5f) (%2d,%2d)\n",count,pp->u,pp->v,pp->g->classif_tag,pp->g->classif_degree);
+	 if (_DEBUG)printf("point %3d (%8.5f %8.5f) (%2d,%2d)\n",count,pp->u,pp->v,pp->g->classif_tag,pp->g->classif_degree);
 	 bbox += SPoint3(U,V,0);	  
 	 edgeLoop_BDS.push_back(pp);
 	 recover_map[pp] = here;	 
 	 count++;
        }     
      last_coord = coords[coords.size()-1];
-     //     printf("last coord %g %g\n",last_coord.x(),last_coord.y());
+     if (_DEBUG)printf("last coord %g %g\n",last_coord.x(),last_coord.y());
      result.insert(result.end(),edgeLoop_BDS.begin(),edgeLoop_BDS.end());	         
 //    for (unsigned int i=0;i<result.size();i++)
 //      {
@@ -1529,7 +1571,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
 {
 
-  //  if (gf->tag() != 32) return true;
+  //  if (gf->tag() != 21) return true;
   std::map<BDS_Point*,MVertex*> recover_map;
 
   Range<double> rangeU = gf->parBounds(0);
@@ -1555,12 +1597,14 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
     for (std::list<GEdgeLoop>::iterator it = gf->edgeLoops.begin() ; it != gf->edgeLoops.end() ; it++)
       {
 	std::vector<BDS_Point* > edgeLoop_BDS;
-	//	if(buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsTotal, 1.e-7*LC2D)==false)
-	//	  if(buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsTotal, 1.e-6*LC2D)==false)
-	    if(buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsTotal, 1.e-7*LC2D)==false)
+	//	if(!buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsTotal, 1.e-7*LC2D))
+	  if(!buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsTotal, 1.e-5))
+	    if(!buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsTotal, 1.e-3*LC2D))
 	      {
 		gf->meshStatistics.status = GFace::FAILED;
 		Msg(GERROR,"The 1D Mesh seems not to be forming a closed loop");
+		m->scalingU = m->scalingV = SCALINGU = SCALINGV = 1.0;
+		SCALINGV = 1;
 		return false;
 	      }
 	edgeLoops_BDS.push_back(edgeLoop_BDS);
@@ -1906,7 +1950,7 @@ void meshGFace::operator() (GFace *gf)
 
   // temp fix until we create MEdgeLoops in gmshFace
   Msg(DEBUG1, "Generating the mesh");
-  if(gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
+  if(noseam (gf) || gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
     gmsh2DMeshGenerator(gf,0, false);
   }
   else{

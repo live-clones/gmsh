@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.35 2007-07-09 13:54:36 geuzaine Exp $
+# $Id: Makefile,v 1.36 2007-11-11 19:53:57 remacle Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -57,14 +57,86 @@ depend:
 Numeric.o: Numeric.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Numeric.h
+  Numeric.h /sw/include/gsl/gsl_version.h /sw/include/gsl/gsl_types.h \
+  /sw/include/gsl/gsl_errno.h /sw/include/gsl/gsl_vector.h \
+  /sw/include/gsl/gsl_vector_complex_long_double.h \
+  /sw/include/gsl/gsl_complex.h /sw/include/gsl/gsl_check_range.h \
+  /sw/include/gsl/gsl_vector_long_double.h \
+  /sw/include/gsl/gsl_block_long_double.h \
+  /sw/include/gsl/gsl_vector_complex.h \
+  /sw/include/gsl/gsl_block_complex_long_double.h \
+  /sw/include/gsl/gsl_vector_complex_double.h \
+  /sw/include/gsl/gsl_vector_double.h /sw/include/gsl/gsl_block_double.h \
+  /sw/include/gsl/gsl_block_complex_double.h \
+  /sw/include/gsl/gsl_vector_complex_float.h \
+  /sw/include/gsl/gsl_vector_float.h /sw/include/gsl/gsl_block_float.h \
+  /sw/include/gsl/gsl_block_complex_float.h \
+  /sw/include/gsl/gsl_vector_ulong.h /sw/include/gsl/gsl_block_ulong.h \
+  /sw/include/gsl/gsl_vector_long.h /sw/include/gsl/gsl_block_long.h \
+  /sw/include/gsl/gsl_vector_uint.h /sw/include/gsl/gsl_block_uint.h \
+  /sw/include/gsl/gsl_vector_int.h /sw/include/gsl/gsl_block_int.h \
+  /sw/include/gsl/gsl_vector_ushort.h /sw/include/gsl/gsl_block_ushort.h \
+  /sw/include/gsl/gsl_vector_short.h /sw/include/gsl/gsl_block_short.h \
+  /sw/include/gsl/gsl_vector_uchar.h /sw/include/gsl/gsl_block_uchar.h \
+  /sw/include/gsl/gsl_vector_char.h /sw/include/gsl/gsl_block_char.h \
+  /sw/include/gsl/gsl_linalg.h /sw/include/gsl/gsl_mode.h \
+  /sw/include/gsl/gsl_permutation.h /sw/include/gsl/gsl_matrix.h \
+  /sw/include/gsl/gsl_matrix_complex_long_double.h \
+  /sw/include/gsl/gsl_matrix_complex_double.h \
+  /sw/include/gsl/gsl_matrix_complex_float.h \
+  /sw/include/gsl/gsl_matrix_long_double.h \
+  /sw/include/gsl/gsl_matrix_double.h /sw/include/gsl/gsl_matrix_float.h \
+  /sw/include/gsl/gsl_matrix_ulong.h /sw/include/gsl/gsl_matrix_long.h \
+  /sw/include/gsl/gsl_matrix_uint.h /sw/include/gsl/gsl_matrix_int.h \
+  /sw/include/gsl/gsl_matrix_ushort.h /sw/include/gsl/gsl_matrix_short.h \
+  /sw/include/gsl/gsl_matrix_uchar.h /sw/include/gsl/gsl_matrix_char.h
 EigSolve.o: EigSolve.cpp
 predicates.o: predicates.cpp
 gsl_newt.o: gsl_newt.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Numeric.h
+  Numeric.h /sw/include/gsl/gsl_math.h /sw/include/gsl/gsl_sys.h \
+  /sw/include/gsl/gsl_machine.h /sw/include/gsl/gsl_precision.h \
+  /sw/include/gsl/gsl_types.h /sw/include/gsl/gsl_nan.h \
+  /sw/include/gsl/gsl_pow_int.h /sw/include/gsl/gsl_errno.h \
+  /sw/include/gsl/gsl_multiroots.h /sw/include/gsl/gsl_vector.h \
+  /sw/include/gsl/gsl_vector_complex_long_double.h \
+  /sw/include/gsl/gsl_complex.h /sw/include/gsl/gsl_check_range.h \
+  /sw/include/gsl/gsl_vector_long_double.h \
+  /sw/include/gsl/gsl_block_long_double.h \
+  /sw/include/gsl/gsl_vector_complex.h \
+  /sw/include/gsl/gsl_block_complex_long_double.h \
+  /sw/include/gsl/gsl_vector_complex_double.h \
+  /sw/include/gsl/gsl_vector_double.h /sw/include/gsl/gsl_block_double.h \
+  /sw/include/gsl/gsl_block_complex_double.h \
+  /sw/include/gsl/gsl_vector_complex_float.h \
+  /sw/include/gsl/gsl_vector_float.h /sw/include/gsl/gsl_block_float.h \
+  /sw/include/gsl/gsl_block_complex_float.h \
+  /sw/include/gsl/gsl_vector_ulong.h /sw/include/gsl/gsl_block_ulong.h \
+  /sw/include/gsl/gsl_vector_long.h /sw/include/gsl/gsl_block_long.h \
+  /sw/include/gsl/gsl_vector_uint.h /sw/include/gsl/gsl_block_uint.h \
+  /sw/include/gsl/gsl_vector_int.h /sw/include/gsl/gsl_block_int.h \
+  /sw/include/gsl/gsl_vector_ushort.h /sw/include/gsl/gsl_block_ushort.h \
+  /sw/include/gsl/gsl_vector_short.h /sw/include/gsl/gsl_block_short.h \
+  /sw/include/gsl/gsl_vector_uchar.h /sw/include/gsl/gsl_block_uchar.h \
+  /sw/include/gsl/gsl_vector_char.h /sw/include/gsl/gsl_block_char.h \
+  /sw/include/gsl/gsl_matrix.h \
+  /sw/include/gsl/gsl_matrix_complex_long_double.h \
+  /sw/include/gsl/gsl_matrix_complex_double.h \
+  /sw/include/gsl/gsl_matrix_complex_float.h \
+  /sw/include/gsl/gsl_matrix_long_double.h \
+  /sw/include/gsl/gsl_matrix_double.h /sw/include/gsl/gsl_matrix_float.h \
+  /sw/include/gsl/gsl_matrix_ulong.h /sw/include/gsl/gsl_matrix_long.h \
+  /sw/include/gsl/gsl_matrix_uint.h /sw/include/gsl/gsl_matrix_int.h \
+  /sw/include/gsl/gsl_matrix_ushort.h /sw/include/gsl/gsl_matrix_short.h \
+  /sw/include/gsl/gsl_matrix_uchar.h /sw/include/gsl/gsl_matrix_char.h \
+  /sw/include/gsl/gsl_linalg.h /sw/include/gsl/gsl_mode.h \
+  /sw/include/gsl/gsl_permutation.h
 gsl_brent.o: gsl_brent.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Numeric.h
+  Numeric.h /sw/include/gsl/gsl_errno.h /sw/include/gsl/gsl_types.h \
+  /sw/include/gsl/gsl_math.h /sw/include/gsl/gsl_sys.h \
+  /sw/include/gsl/gsl_machine.h /sw/include/gsl/gsl_precision.h \
+  /sw/include/gsl/gsl_nan.h /sw/include/gsl/gsl_pow_int.h \
+  /sw/include/gsl/gsl_min.h

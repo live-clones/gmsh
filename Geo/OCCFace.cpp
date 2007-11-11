@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.23 2007-10-16 20:00:06 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.24 2007-11-11 19:53:57 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -32,6 +32,9 @@
 #include "Geom_ConicalSurface.hxx"
 #include "Geom_BSplineSurface.hxx"
 #include "Geom_SphericalSurface.hxx"
+#include "Geom_ToroidalSurface.hxx"
+#include "Geom_SurfaceOfRevolution.hxx"
+#include "Geom_BezierSurface.hxx"
 #include "Geom_Plane.hxx"
 #include "gp_Pln.hxx"
 
@@ -177,10 +180,16 @@ GEntity::GeomType OCCFace::geomType() const
 {
   if (occface->DynamicType() == STANDARD_TYPE(Geom_Plane))
     return Plane;
+  else if (occface->DynamicType() == STANDARD_TYPE(Geom_ToroidalSurface))
+    return Torus;
+  else if (occface->DynamicType() == STANDARD_TYPE(Geom_BezierSurface))
+    return BezierSurface;
   else if (occface->DynamicType() == STANDARD_TYPE(Geom_CylindricalSurface))
     return Cylinder;
   else if (occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface))
     return Cone;
+  else if (occface->DynamicType() == STANDARD_TYPE(Geom_SurfaceOfRevolution))
+    return SurfaceOfRevolution;
   else if (occface->DynamicType() == STANDARD_TYPE(Geom_SphericalSurface))
     return Sphere;
   else if (occface->DynamicType() == STANDARD_TYPE(Geom_BSplineSurface))
@@ -244,6 +253,22 @@ int OCCFace::containsPoint(const SPoint3 &pt) const
     Msg(GERROR,"Not Done Yet ...");
   return false;
 }
+
+// retrieve surface params 
+surface_params OCCFace::getSurfaceParams() const 
+{
+  surface_params p;
+  switch (geomType()) 
+    {
+    case GEntity::Cylinder :
+      {
+	p.radius = Handle(Geom_CylindricalSurface)::DownCast(occface)->Radius();
+      }
+      break;
+    }
+  return p;
+}
+
 
 // void OCCFace::buildVisTriangulation ();
 // {

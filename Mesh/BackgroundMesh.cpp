@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.28 2007-11-09 08:07:53 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.29 2007-11-11 19:53:57 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -183,7 +183,6 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
   double l4 = lc_field.empty() ? MAX_LC : lc_field(X, Y, Z);
 
   double lc;
-
   if(l4 < MAX_LC && !CTX.mesh.constrained_bgmesh){
     // use the fields unconstrained by other characteristic lengths
     lc = l4 * CTX.mesh.lc_factor;

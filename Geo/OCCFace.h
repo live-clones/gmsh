@@ -64,6 +64,7 @@ class OCCFace : public GFace {
   virtual bool surfPeriodic(int dim) const {return _periodic[dim];}
   virtual SPoint2 parFromPoint(const SPoint3 &) const;
   virtual double curvature(const SPoint2 &param) const;
+  surface_params getSurfaceParams() const;
 };
 
 #endif

@@ -43,6 +43,11 @@ struct graphics_point
   float n[3];
 };
 
+struct surface_params
+{
+  double radius, radius2, height,cx,cy,cz;
+};
+
 class GRegion;
 
 // A model face. 
@@ -96,6 +101,9 @@ class GFace : public GEntity
 
   // The bounding box
   virtual SBoundingBox3d bounds() const; 
+
+  // retrieve surface params 
+  virtual surface_params getSurfaceParams() const {throw;}
 
   // Get the location of any parametric degeneracies on the face in
   // the given parametric direction.

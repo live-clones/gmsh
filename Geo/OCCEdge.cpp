@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.25 2007-11-04 21:03:17 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.26 2007-11-11 19:53:57 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -89,14 +89,14 @@ SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar,int dir) const
     const double dz = p1.z()-p2.z();
     if(sqrt(dx*dx+dy*dy+dz*dz) > 1.e-4 * CTX.lc){
       // return reparamOnFace(face, epar,-1);      
-      Msg(WARNING, "Reparam on face partially failed for curve %d surface %d at point %g",
-	  tag(), face->tag(), epar);
-      Msg(WARNING, "On the face %d local (%g %g) global (%g %g %g)",
-	  face->tag(), u, v, p2.x(), p2.y(), p2.z());
-      Msg(WARNING, "On the edge %d local (%g) global (%g %g %g)",
-	  tag(), epar, p1.x(), p1.y(), p1.z());
-      GPoint ppp = face->closestPoint(SPoint3(p1.x(), p1.y(), p1.z()));
-      return SPoint2(ppp.u(), ppp.v());
+//       Msg(WARNING, "Reparam on face partially failed for curve %d surface %d at point %g",
+// 	  tag(), face->tag(), epar);
+//       Msg(WARNING, "On the face %d local (%g %g) global (%g %g %g)",
+// 	  face->tag(), u, v, p2.x(), p2.y(), p2.z());
+//       Msg(WARNING, "On the edge %d local (%g) global (%g %g %g)",
+// 	  tag(), epar, p1.x(), p1.y(), p1.z());
+//      GPoint ppp = face->closestPoint(SPoint3(p1.x(), p1.y(), p1.z()));
+//      return SPoint2(ppp.u(), ppp.v());
     }
   }
   return SPoint2(u, v);
@@ -105,6 +105,7 @@ SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar,int dir) const
 // True if the edge is a seam for the given face
 int OCCEdge::isSeam(GFace *face) const
 {
+
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
   BRepAdaptor_Surface surface(*s);
   //  printf("asking if edge %d is a seam of face %d\n",tag(),face->tag());
@@ -189,10 +190,14 @@ GEntity::GeomType OCCEdge::geomType() const
 
 int OCCEdge::minimumMeshSegments() const
 {
+  int np;
   if(geomType() == Line)
-    return GEdge::minimumMeshSegments();
-  else
-    return CTX.mesh.min_curv_points - 1;
+    np= GEdge::minimumMeshSegments();
+  else if(geomType() == Circle)
+    np= CTX.mesh.min_circ_points - 1;
+  else 
+    np=CTX.mesh.min_curv_points - 1;
+  return np;
 }
 
 int OCCEdge::minimumDrawSegments() const
@@ -208,6 +213,7 @@ int OCCEdge::minimumDrawSegments() const
 double OCCEdge::curvature(double par) const 
 {
   const double eps = 1.e-15;
+
   Standard_Real Crv;
   if (curve.IsNull()){
     Geom2dLProp_CLProps2d aCLProps(curve2d, 2, eps);

@@ -58,11 +58,30 @@ int check_gsl();
 double myatan2(double a, double b);
 double myasin(double a);
 double myacos(double a);
-void prodve(double a[3], double b[3], double c[3]);
-void prosca(double a[3], double b[3], double *c);
+inline void prodve(double a[3], double b[3], double c[3])
+{
+  c[2] = a[0] * b[1] - a[1] * b[0];
+  c[1] = -a[0] * b[2] + a[2] * b[0];
+  c[0] = a[1] * b[2] - a[2] * b[1];
+}
+inline void prosca(double a[3], double b[3], double *c)
+{
+  *c = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
 void matvec(double mat[3][3], double vec[3], double res[3]);
-double norm3(double a[3]);
-double norme(double a[3]);
+inline double norm3(double a[3]){  return sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);}
+inline double norme(double a[3])
+{
+  const double mod = norm3(a);
+  if(mod != 0.0){
+    const double one_over_mod = 1./mod;
+    a[0] *= one_over_mod;
+    a[1] *= one_over_mod;
+    a[2] *= one_over_mod;
+  }
+  return mod;
+}
+
 void normal3points(double x0, double y0, double z0,
 		   double x1, double y1, double z1,
 		   double x2, double y2, double z2,

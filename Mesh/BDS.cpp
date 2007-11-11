@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.84 2007-11-04 21:03:17 remacle Exp $
+// $Id: BDS.cpp,v 1.85 2007-11-11 19:53:57 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -247,7 +247,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
 	}
       
       int ichoice = ix++ % intersected.size();
-      swap_edge ( intersected[ichoice] , BDS_SwapEdgeTestParametric () );	       
+      swap_edge ( intersected[ichoice] , BDS_SwapEdgeTestQuality (false) );	       
     }
   return 0;
 }
@@ -535,11 +535,22 @@ bool BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
 
   e->oppositeof(op);
 
-//     double l1 = sqrt((op[0]->X-op[1]->X) *(op[0]->X-op[1]->X) +
-//   		   (op[0]->Y-op[1]->Y) *(op[0]->Y-op[1]->Y) +
-//   		   (op[0]->Z-op[1]->Z) *(op[0]->Z-op[1]->Z) );
-//     if (l1 < 0.5* mid->lc()) return false;
+//   double qt1 = qmTriangle(p1,op[0],mid,QMTRI_RHO);
+//   double qt2 = qmTriangle(p2,op[0],mid,QMTRI_RHO);
+//   double qt3 = qmTriangle(p1,op[1],mid,QMTRI_RHO);
+//   double qt4 = qmTriangle(p2,op[1],mid,QMTRI_RHO);
+//   if (qt1 < 1.e-5 || qt2 < 1.e-5 || qt3 < 1.e-5 || qt4 < 1.e-5)
+//     {
+//       return false;
+//     }
 
+
+  
+//   double l1 = sqrt((op[0]->X-op[1]->X) *(op[0]->X-op[1]->X) +
+//    		   (op[0]->Y-op[1]->Y) *(op[0]->Y-op[1]->Y) +
+//    		   (op[0]->Z-op[1]->Z) *(op[0]->Z-op[1]->Z) );
+//   if (l1 < 0.1* mid->lc()) return false;
+  
   BDS_Point *pts1[4];
   e->faces(0)->getNodes(pts1);
 
@@ -611,6 +622,7 @@ bool BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
   t2->g = g2;
   t3->g = g1;
   t4->g = g2;
+
 
   p1_mid->g = ge;
   mid_p2->g = ge;
@@ -757,44 +769,59 @@ void BDS_Mesh::saturate_edge(BDS_Edge * e, std::vector<BDS_Point *> &mids)
 }
 
 
-
-
 // This function does actually the swap without taking into account
 // the feasability of the operation. Those conditions have to be
 // taken into account before doing the edge swap
 
-bool BDS_SwapEdgeTestParametric::operator () (BDS_Point *_p1,BDS_Point *_p2,
-					      BDS_Point *_q1,BDS_Point *_q2) const
+bool BDS_SwapEdgeTestQuality::operator () (BDS_Point *_p1,BDS_Point *_p2,
+					   BDS_Point *_q1,BDS_Point *_q2) const
 {
-   double p1[2] =  {_p1->u,_p1->v};
-   double p2[2] =  {_p2->u,_p2->v};
+   double p1 [2] = {_p1->u,_p1->v};
+   double p2 [2] = {_p2->u,_p2->v};
    double op1[2] = {_q1->u,_q1->v};
    double op2[2] = {_q2->u,_q2->v};
 
    double ori_t1 = gmsh::orient2d(op1, p1, op2);
-   double ori_t2 = gmsh::orient2d(op1,op2, p2);
+   double ori_t2 = gmsh::orient2d(op1, op2, p2);
    
-   return( ori_t1 * ori_t2 > 0 ); // the quadrangle was strictly convex !
+   return ( ori_t1 * ori_t2 > 0 ); // the quadrangle was strictly convex !
+}
 
-//    double ori_t1 = gmsh::orient2d(p1, p2, op1);
-//    double ori_t2 = gmsh::orient2d(p1, p2, op2);
+bool BDS_SwapEdgeTestQuality::operator () (BDS_Point *_p1,BDS_Point *_p2,BDS_Point *_p3,
+					   BDS_Point *_q1,BDS_Point *_q2,BDS_Point *_q3,
+					   BDS_Point *_op1,BDS_Point *_op2,BDS_Point *_op3,
+					   BDS_Point *_oq1,BDS_Point *_oq2,BDS_Point *_oq3 )const
+{
+  if (!testQuality) return true;
+  double n[3],q[3],on[3],oq[3];
+  normal_triangle(_p1,_p2,_p3,n); 
+  normal_triangle(_q1,_q2,_q3,q); 
+  normal_triangle(_op1,_op2,_op3,on); 
+  normal_triangle(_oq1,_oq2,_oq3,oq);
 
-//    double ori_t3 = gmsh::orient2d(op1, op2, p1);
-//    double ori_t4 = gmsh::orient2d(op1, op2, p2);
-//    return (ori_t1 * ori_t2 < 0 && ori_t3 * ori_t4 < 0);
+  double cosnq; prosca(n,q,&cosnq);
+  double cosonq; prosca(on,oq,&cosonq);
 
-//   double t1 = fabs(surface_triangle_param(_p1,_p2,_q1));
-//   double t2 = fabs(surface_triangle_param(_p1,_p2,_q2));
+  double qa1 = qmTriangle(_p1, _p2, _p3,QMTRI_RHO);
+  double qa2 = qmTriangle(_q1, _q2, _q3,QMTRI_RHO);
+  double qb1 = qmTriangle(_op1, _op2, _op3,QMTRI_RHO);
+  double qb2 = qmTriangle(_oq1, _oq2, _oq3,QMTRI_RHO);
 
-//   double t3 = fabs(surface_triangle_param(_q1,_q2,_p1));
-//   double t4 = fabs(surface_triangle_param(_q1,_q2,_p2));
+  // we swap for a better configuration 
+  double mina = std::min(qa1,qa2);
+  double minb = std::min(qb1,qb2);
 
-//   //  printf("%12.5E %12.5E %12.5E %12.5E -- %12.5E so %1d\n",t1,t2,t3,t4,fabs(t1+t2-t3-t4),fabs(t1+t2-t3-t4) > 1.e-15 * (t1+t2+t3+t4));
-
-//   if (fabs(t1+t2-t3-t4) > 1.e-13*(t1+t2+t3+t4))return false;
-//   return true;
+//   if (cosnq < .3 && cosonq > .5 && minb > .1)
+//     printf("mina = %g minb = %g cos %g %g\n",mina,minb,cosnq,cosonq);
+  
+  if (cosnq < .3 && cosonq > .5 && minb > .1) return true; 
+  
+  if (minb > mina) return true; 
+  //  if (mina > minb && cosnq <= cosonq)return true;
+  return false;
 
 }
+
 
 bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
 {
@@ -850,8 +877,24 @@ bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
     }
   }
 
+  if(orientation == 1) {
+    if (!theTest ( p1, p2, op[0],
+		   p2,p1,op[1],
+		   p1,op[1],op[0],
+		   op[1],p2,op[0]))
+    return false;
+  }
+  else{
+    if (!theTest ( p2, p1, op[0],
+		   p1,p2,op[1],
+		   p1,op[0],op[1],
+		   op[1],op[0],p2))
+      return false;
+  }
+
   if (!theTest ( p1, p2, op[0],op[1]))
     return false;
+
 
   BDS_Edge *p1_op1 = find_edge(p1, op[0], e->faces(0));
   BDS_Edge *op1_p2 = find_edge(op[0], p2, e->faces(0));
@@ -998,7 +1041,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge * e, BDS_Point * p)
   // printf("collapsing an edge :");
   // print_edge(e);
 
-  static int pt[3][1024];
+  static BDS_Point* pt[3][1024];
   static BDS_GeomEntity *gs[1024];
   static int ept[2][1024];
   static BDS_GeomEntity *egs[1024]; 
@@ -1009,21 +1052,27 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge * e, BDS_Point * p)
     std::list < BDS_Face * >::iterator ite = t.end();
     while(it != ite) {
       BDS_Face *t = *it;
-      //          print_face(t);
       if(t->e1 != e && t->e2 != e && t->e3 != e) {
-	if (!test_move_point_parametric_triangle ( p, o->u, o-> v, t))
+	if (!test_move_point_parametric_triangle ( p, o->u, o->v, t))
 	  return false;
         gs[nt] = t->g;
 	BDS_Point *pts[4];
 	t->getNodes(pts);
-        pt[0][nt] = (pts[0] == p) ? o->iD : pts[0]->iD;
-        pt[1][nt] = (pts[1] == p) ? o->iD : pts[1]->iD;
-        pt[2][nt++] = (pts[2] == p) ? o->iD : pts[2]->iD;
+        pt[0][nt] = (pts[0] == p) ? o : pts[0];
+        pt[1][nt] = (pts[1] == p) ? o : pts[1];
+        pt[2][nt] = (pts[2] == p) ? o : pts[2];
+
+//  	double qnew = qmTriangle(pt[0][nt],pt[1][nt],pt[2][nt],QMTRI_RHO);
+//  	double qold = qmTriangle(pts[0],pts[1],pts[2],QMTRI_RHO);
+//  	if ( qold > 1.e-4 && qnew < 1.e-4)return false;
+	nt++;
+//         pt[0][nt] = (pts[0] == p) ? o->iD : pts[0]->iD;
+//         pt[1][nt] = (pts[1] == p) ? o->iD : pts[1]->iD;
+//         pt[2][nt++] = (pts[2] == p) ? o->iD : pts[2]->iD;
       }
       ++it;
     }
   }
-
 
   {
     std::list < BDS_Face * >::iterator it = t.begin();
@@ -1057,7 +1106,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge * e, BDS_Point * p)
 
   {
     for(int k = 0; k < nt; k++) {
-      BDS_Face *t = add_triangle(pt[0][k], pt[1][k], pt[2][k]);
+      BDS_Face *t = add_triangle(pt[0][k]->iD, pt[1][k]->iD, pt[2][k]->iD);
       t->g = gs[k];
     }
   }
@@ -1162,17 +1211,23 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point * p, GFace *gf)
     BDS_Face *t = *it;
     if (!test_move_point_parametric_triangle ( p, U, V, t))
       return false;    
-//     //    p->X = gp.x();
-//     //    p->Y = gp.y();
-//     //    p->Z = gp.z();
-//     //    newWorst = std::min(newWorst,qmTriangle(*it,QMTRI_RHO));
-//     //    p->X = oldX;
-//     //    p->Y = oldY;
-//     //    p->Z = oldZ;
-//     //    oldWorst = std::min(oldWorst,qmTriangle(*it,QMTRI_RHO));
+//     p->X = gp.x();
+//     p->Y = gp.y();
+//     p->Z = gp.z();
+//     newWorst = std::min(newWorst,qmTriangle(*it,QMTRI_RHO));
+//     p->X = oldX;
+//     p->Y = oldY;
+//     p->Z = oldZ;
+//     oldWorst = std::min(oldWorst,qmTriangle(*it,QMTRI_RHO));
     ++it;
   }
-  //  if (oldWorst > newWorst)return false;
+  
+
+//   if (newWorst < 1.e-2)
+//     {
+//       printf("chmoochiong %g %g\n",oldWorst,newWorst);
+//       //      return false;
+//     }
   
   p->u = U;
   p->v = V;

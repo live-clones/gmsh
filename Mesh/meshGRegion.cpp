@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.34 2007-11-04 21:03:17 remacle Exp $
+// $Id: meshGRegion.cpp,v 1.35 2007-11-11 19:53:57 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -213,7 +213,30 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   char opts[128];
   buildTetgenStructure(gr, in, numberedV);
   sprintf(opts, "pe%c", (CTX.verbosity < 3) ? 'Q': (CTX.verbosity > 6)? 'V': '\0');
-  tetrahedralize(opts, &in, &out);
+  try{
+    tetrahedralize(opts, &in, &out);
+  }
+  catch (int error){
+    Msg (WARNING, "Self intersecting Surface Mesh, computing intersections (this could take a while)");
+    sprintf(opts, "dV");
+    try{
+      tetrahedralize(opts, &in, &out);    
+      Msg(INFO,"%d faces self-intersect",out.numberoftrifaces); 
+      for (int i=0;i<out.numberoftrifaces;i++)
+	{
+	  Msg(INFO,"face (%d %d %d) on model face %d",
+	      numberedV[out.trifacelist[i * 3 + 0] - 1]->getNum(),
+	      numberedV[out.trifacelist[i * 3 + 1] - 1]->getNum(),
+	      numberedV[out.trifacelist[i * 3 + 2] - 1]->getNum(),
+	      out.trifacemarkerlist[i]);
+	}
+    }
+    catch (int error2){
+      Msg (GERROR, "Surface Mesh is wrong, cannot do the 3D mesh");      
+    }
+    gr->set(faces);
+    return;
+  }
   TransferTetgenMesh(gr, in, out, numberedV);
 
   // sort triangles in all model faces in order to be able to search in vectors

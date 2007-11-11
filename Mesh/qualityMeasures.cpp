@@ -61,6 +61,8 @@ double qmTriangle ( const double    &xa, const double    &ya, const double    &z
     default:
       throw;
     }  
+
+
   return quality;
 }
 

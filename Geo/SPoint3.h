@@ -48,6 +48,16 @@ class SPoint3 {
   SPoint3 operator*(double mult);
   operator double *() { return P; }
   double distance(const SPoint3 &p);
+  // lexicographic
+  bool operator < (const SPoint3 &p) const
+  {
+    if (P[0] < p.P[0]) return true;
+    if (P[0] > p.P[0]) return false;
+    if (P[1] < p.P[1]) return true;
+    if (P[1] > p.P[1]) return false;
+    if (P[2] < p.P[2]) return true;
+    return false;
+  }
 };
 
 inline SPoint3 operator + (const SPoint3 &a, const SPoint3 &b)
