@@ -1,10 +1,17 @@
-$Id: TODO,v 1.65 2007-10-14 09:51:17 geuzaine Exp $
+$Id: TODO,v 1.66 2007-11-12 10:48:17 colignon Exp $
 
 ********************************************************************
 
 Add a global "transparency slider" for the mesh; if value != 1, fill a
 global triangle vertex array in GModel instead of in each separate
 entity, and sort like in post-processing.
+
+********************************************************************
+
+fix tetgen for non manifold geometries: with a single surface
+connected to a volume and tetgen modifies the volume boundary mesh, we
+get hanging nodes
+Plus we need to fix the 1D mesh in all cases
 
 ********************************************************************
 
