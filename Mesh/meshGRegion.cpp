@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.35 2007-11-11 19:53:57 remacle Exp $
+// $Id: meshGRegion.cpp,v 1.36 2007-11-12 10:41:52 colignon Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -147,7 +147,9 @@ void TransferTetgenMesh(GRegion *gr,
     v[1] = numberedV[out.edgelist[i * 2 + 1] -1];
   }
 
-  // re-create the triangular meshes
+  // re-create the triangular meshes FIXME: this can lead to hanging
+  // nodes for non manifold geometries (single surface connected to
+  // volume)
   for (int i = 0; i < out.numberoftrifaces; i++){
     MVertex *v[3];
     v[0] = numberedV[out.trifacelist[i * 3 + 0] - 1];
