@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.439 2007-09-10 04:47:01 geuzaine Exp $
+# $Id: Makefile,v 1.440 2007-11-20 17:37:37 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -33,20 +33,20 @@ GMSH_SHORT_LICENSE = "GNU General Public License"
 GMSH_VERSION_FILE = Common/GmshVersion.h
 GMSH_DATE = `date "+%Y%m%d"`
 
-all: variables initialtag compile link
+all: link
 
-compile: variables initialtag
-	@for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE}); done
-
-link: variables
+link: compile
 	${LINKER} ${OPTIM} -o bin/gmsh ${GMSH_LIBS}
 	${POSTBUILD}
 
-link-mac-universal: variables
+link-mac-universal: compile
 	${LINKER} -arch i386 ${OPTIM} -o bin/gmsh_i386 ${GMSH_LIBS}
 	${LINKER} -arch ppc ${OPTIM} -o bin/gmsh_ppc ${GMSH_LIBS}
 	lipo -create bin/gmsh_i386 bin/gmsh_ppc -output bin/gmsh
 	rm -f bin/gmsh_i386 bin/gmsh_ppc
+
+compile: variables initialtag
+	@for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE}); done
 
 install: variables
 	mkdir -p ${bindir}
