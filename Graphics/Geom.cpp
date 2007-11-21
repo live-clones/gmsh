@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.141 2007-11-21 14:37:09 geuzaine Exp $
+// $Id: Geom.cpp,v 1.142 2007-11-21 16:45:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -305,7 +305,7 @@ class drawGFace {
     // reentrant, so we must lock it to avoid race conditions when
     // redraw events are fired in rapid succession
     static bool busy = false;
-    if(!f->cross.size() && !basy) {
+    if(!f->cross.size() && !busy) {
       busy = true; 
       std::list<GEdge*> edges = f->edges();
       SBoundingBox3d bb;
