@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.140 2007-09-24 08:14:29 geuzaine Exp $
+// $Id: Geom.cpp,v 1.141 2007-11-21 14:37:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -252,10 +252,11 @@ class drawGFace {
     // reentrant, so we must lock it to avoid race conditions when
     // redraw events are fired in rapid succession
    
-    if(gr.size() != N && !CTX.threads_lock) {
-      CTX.threads_lock = 1; 
+    static bool busy = false;
+    if(gr.size() != N && !busy) {
+      busy = true; 
       f->computeGraphicsRep(N, N);
-      CTX.threads_lock = 0;
+      busy = false;
     }
 
     if(gr.size() != N) return;
@@ -303,8 +304,9 @@ class drawGFace {
     // We create data here and the routine is not designed to be
     // reentrant, so we must lock it to avoid race conditions when
     // redraw events are fired in rapid succession
-    if(!f->cross.size() && !CTX.threads_lock) {
-      CTX.threads_lock = 1; 
+    static bool busy = false;
+    if(!f->cross.size() && !basy) {
+      busy = true; 
       std::list<GEdge*> edges = f->edges();
       SBoundingBox3d bb;
       for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
@@ -314,7 +316,7 @@ class drawGFace {
 	  // don't try again
 	  f->cross.clear();
 	  f->cross.push_back(SPoint3(0., 0., 0.));
-	  CTX.threads_lock = 0;
+	  busy = false;
 	  return;
 	}
 	else{
@@ -364,7 +366,7 @@ class drawGFace {
       // if we couldn't determine a cross, add a dummy point so that
       // we won't try again
       if(!f->cross.size()) f->cross.push_back(SPoint3(0., 0., 0.));
-      CTX.threads_lock = 0;
+      busy = false;
     }
 
     if(f->cross.size() < 2) return;
