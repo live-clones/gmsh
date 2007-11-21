@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.209 2007-10-02 20:07:29 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.210 2007-11-21 14:22:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -832,8 +832,9 @@ void Draw_Mesh()
     else
       glDisable((GLenum)(GL_CLIP_PLANE0 + i));
   
-  if(!CTX.threads_lock){
-    CTX.threads_lock = 1; 
+  static bool busy = false;
+  if(!busy){
+    busy = true;
     GModel *m = GModel::current();
     int status = m->getMeshStatus();
     if(CTX.mesh.changed) {
@@ -859,7 +860,7 @@ void Draw_Mesh()
     if(status >= 3)
       std::for_each(m->firstRegion(), m->lastRegion(), drawMeshGRegion());
     CTX.mesh.changed = 0;
-    CTX.threads_lock = 0;
+    busy = false;
   }
 
   for(int i = 0; i < 6; i++)
