@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.441 2007-11-21 16:30:51 geuzaine Exp $
+# $Id: Makefile,v 1.442 2007-11-24 20:23:13 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -300,27 +300,33 @@ distrib-pre:
           Makefile.distrib > Makefile
 	make tag
 
+distrib-pre-nightly:
+	mv -f Makefile Makefile.distrib
+	sed -e "s/^GMSH_EXTRA_VERSION.*/GMSH_EXTRA_VERSION = \"-nightly-${GMSH_DATE}\"/g"\
+          Makefile.distrib > Makefile
+	make tag
+
 distrib-post:
 	mv -f Makefile.distrib Makefile
 	rm -f ${GMSH_VERSION_FILE}
 
 distrib-unix:
 	make distrib-pre
-	make all
+	make link
 	make package-unix
 	make distrib-post
 	ldd bin/gmsh
 
 distrib-win:
 	make distrib-pre
-	make all
+	make link
 	make package-win
 	make distrib-post
 	objdump -p bin/gmsh.exe | grep DLL
 
 distrib-mac:
 	make distrib-pre
-	make variables initialtag compile link-mac-universal
+	make link-mac-universal
 	make package-mac
 	make distrib-post
 	${POSTBUILD}
@@ -342,8 +348,6 @@ distrib-source-commercial:
 	make distrib-post
 
 distrib-source-nightly:
-	mv -f Makefile Makefile.distrib
-	sed -e "s/^GMSH_EXTRA_VERSION.*/GMSH_EXTRA_VERSION = \"-nightly-${GMSH_DATE}\"/g"\
-          Makefile.distrib > Makefile
+	make distrib-pre-nightly
 	make source
 	make distrib-post
