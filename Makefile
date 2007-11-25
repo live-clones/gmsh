@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.442 2007-11-24 20:23:13 geuzaine Exp $
+# $Id: Makefile,v 1.443 2007-11-25 08:35:11 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -24,7 +24,7 @@ include variables
 GMSH_MAJOR_VERSION = 2
 GMSH_MINOR_VERSION = 1
 GMSH_PATCH_VERSION = 0
-GMSH_EXTRA_VERSION = "-beta"
+GMSH_EXTRA_VERSION = 
 
 GMSH_VERSION = ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}
 
@@ -300,9 +300,9 @@ distrib-pre:
           Makefile.distrib > Makefile
 	make tag
 
-distrib-pre-nightly:
+distrib-pre-cvs:
 	mv -f Makefile Makefile.distrib
-	sed -e "s/^GMSH_EXTRA_VERSION.*/GMSH_EXTRA_VERSION = \"-nightly-${GMSH_DATE}\"/g"\
+	sed -e "s/^GMSH_EXTRA_VERSION.*/GMSH_EXTRA_VERSION = \"-cvs-${GMSH_DATE}\"/g"\
           Makefile.distrib > Makefile
 	make tag
 
@@ -317,12 +317,24 @@ distrib-unix:
 	make distrib-post
 	ldd bin/gmsh
 
+distrib-unix-nightly:
+	make distrib-pre-cvs
+	make link
+	make package-unix
+	make distrib-post
+
 distrib-win:
 	make distrib-pre
 	make link
 	make package-win
 	make distrib-post
 	objdump -p bin/gmsh.exe | grep DLL
+
+distrib-win-nightly:
+	make distrib-pre-cvs
+	make link
+	make package-win
+	make distrib-post
 
 distrib-mac:
 	make distrib-pre
@@ -332,9 +344,10 @@ distrib-mac:
 	${POSTBUILD}
 	otool -L bin/gmsh
 
-distrib-rpm:
-	make distrib-pre
-	make package-rpm
+distrib-mac-nightly:
+	make distrib-pre-cvs
+	make link-mac-universal
+	make package-mac
 	make distrib-post
 
 distrib-source:
@@ -342,12 +355,12 @@ distrib-source:
 	make source
 	make distrib-post
 
+distrib-source-nightly:
+	make distrib-pre-cvs
+	make source
+	make distrib-post
+
 distrib-source-commercial:
 	make distrib-pre
 	make source-commercial
-	make distrib-post
-
-distrib-source-nightly:
-	make distrib-pre-nightly
-	make source
 	make distrib-post
