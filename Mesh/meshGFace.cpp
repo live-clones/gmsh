@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.101 2007-11-11 19:53:57 remacle Exp $
+// $Id: meshGFace.cpp,v 1.102 2007-11-26 14:34:10 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -337,7 +337,7 @@ bool edgeSwapTestDelaunay(BDS_Edge *e,GFace *gf)
 void OptimizeMesh(GFace *gf, BDS_Mesh &m, const int NIT)
 {
   // optimize
-  //  if (0)
+  if (0)
     {
       for(int i = 0 ; i < NIT ; i++){
 	{
@@ -602,30 +602,41 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 
   int MAXNP = m.MAXPOINTNUMBER;
 
-  if (NIT > 0)
+  //  if (NIT > 0)
     {
       std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
       while (itp != m.points.end())
 	{
-	  std::list<BDS_Edge*>::iterator it  = (*itp)->edges.begin();
-	  std::list<BDS_Edge*>::iterator ite = (*itp)->edges.end();
-	  double L=0;
-	  int ne = 0;
-	  while(it!=ite){
-	    double l = (*it)->length();
-	    if ((*it)->g && (*it)->g->classif_degree == 1){	      
-	      L=ne?std::max(L,l):l;
-	      //	      L=ne?std::min(L,l):l;
-	      //	      L+=l;
-	      ne++;
+	  if (NIT > 0)
+	    {
+	      std::list<BDS_Edge*>::iterator it  = (*itp)->edges.begin();
+	      std::list<BDS_Edge*>::iterator ite = (*itp)->edges.end();
+	      double L=0;
+	      int ne = 0;
+	      while(it!=ite){
+		double l = (*it)->length();
+		if ((*it)->g && (*it)->g->classif_degree == 1){	      
+		  L=ne?std::max(L,l):l;
+		  //	      L=ne?std::min(L,l):l;
+		  //	      L+=l;
+		  ne++;
+		}
+		++it;
+	      }
+	      if (!ne) L = 1.e22;
+	      //	  else L/=ne;
+	      if(!CTX.mesh.constrained_bgmesh)
+		(*itp)->lc() = L;
+	      (*itp)->lcBGM() = L;
 	    }
-	    ++it;
-	  }
-	  if (!ne) L = 1.e22;
-	  //	  else L/=ne;
-	  if(!CTX.mesh.constrained_bgmesh)
-	    (*itp)->lc() = L;
-	  (*itp)->lcBGM() = L;
+//  	  else if (CTX.mesh.lc_from_curvature)
+//  	    {
+//  	      double Crv = gf->curvature(SPoint2((*itp)->u, (*itp)->v));
+//  	      double lc = Crv > 0 ? 2*M_PI / Crv / CTX.mesh.min_circ_points : 1.e22;
+//  	      lc *= CTX.mesh.lc_factor;
+//  	      printf("%d = %d %12.5e %12.5E %12.5E\n",gf->tag(),CTX.mesh.min_circ_points,Crv,lc,(*itp)->lcBGM());
+//  	      (*itp)->lc() = std::min(lc,(*itp)->lc());	      
+//  	    }
 	  ++itp;
 	}
     }
@@ -708,7 +719,7 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
       Msg(DEBUG1," iter %3d minL %8.3f/%8.3f maxL %8.3f/%8.3f : %6d splits, %6d swaps, %6d collapses, %6d moves, accuracy %7.5f, shapes (worst %7.6f, avg %7.6f, best %7.6f) ",IT,minL,minE,maxL,maxE,nb_split,nb_swap,nb_collaps,nb_smooth, exp(mesh_quality/nE), worst,avg/nT,best);
       
       if (nb_split==0 && nb_collaps == 0)break;
-      if (mesh_quality < old_mesh_quality && worst > 0.1 && maxL < 1.45) break;
+      //      if (mesh_quality < old_mesh_quality && worst > 0.1 && maxL < 1.45) break;
     }  
 
   double t_total = t_spl + t_sw + t_col + t_sm;
@@ -1185,14 +1196,6 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
   m->cleanup();
 
 
-  if (debug)
-    {
-      char name[245];
-      sprintf(name,"surface%d-recovered-real.pos",gf->tag());
-      outputScalarField(m->triangles, name,0);
-      sprintf(name,"surface%d-recovered-param.pos",gf->tag());
-      outputScalarField(m->triangles, name,1);
-    }
 
 
   {
@@ -1213,11 +1216,23 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
       }
   }
 
+
+
   m->cleanup();
   m->del_point(m->find_point(-1));
   m->del_point(m->find_point(-2));
   m->del_point(m->find_point(-3));
   m->del_point(m->find_point(-4));
+
+
+  if (debug)
+    {
+      char name[245];
+      sprintf(name,"surface%d-recovered-real.pos",gf->tag());
+      outputScalarField(m->triangles, name,0);
+      sprintf(name,"surface%d-recovered-param.pos",gf->tag());
+      outputScalarField(m->triangles, name,1);
+    }
 
   // start mesh generation
   if (!AlgoDelaunay2D ( gf ))
@@ -1597,8 +1612,8 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
     for (std::list<GEdgeLoop>::iterator it = gf->edgeLoops.begin() ; it != gf->edgeLoops.end() ; it++)
       {
 	std::vector<BDS_Point* > edgeLoop_BDS;
-	//	if(!buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsTotal, 1.e-7*LC2D))
-	  if(!buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsTotal, 1.e-5))
+	if(!buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsTotal, 1.e-7*LC2D))
+	  if(!buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsTotal, 1.e-5*LC2D))
 	    if(!buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsTotal, 1.e-3*LC2D))
 	      {
 		gf->meshStatistics.status = GFace::FAILED;
@@ -1949,15 +1964,20 @@ void meshGFace::operator() (GFace *gf)
   computeEdgeLoops(gf, points, indices);
 
   // temp fix until we create MEdgeLoops in gmshFace
-  Msg(DEBUG1, "Generating the mesh");
-  if(noseam (gf) || gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
-    gmsh2DMeshGenerator(gf,0, false);
-  }
-  else{
-    if(!gmsh2DMeshGeneratorPeriodic(gf,false))
-      Msg(GERROR, "Impossible to mesh face %d", gf->tag());
-  }
-  
+  //  if (gf->tag() == 2)
+    {
+      Msg(DEBUG1, "Generating the mesh");
+      if(noseam (gf) || gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
+	gmsh2DMeshGenerator(gf,0, false);
+      }
+      else{
+	if(!gmsh2DMeshGeneratorPeriodic(gf,false))
+	  Msg(GERROR, "Impossible to mesh face %d", gf->tag());
+      }
+    }
+//   else
+//     gf->meshStatistics.status = GFace::DONE;
+
   Msg(DEBUG1, "type %d %d triangles generated, %d internal vertices",
       gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 }  

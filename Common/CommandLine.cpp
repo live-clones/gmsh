@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.107 2007-11-04 21:03:16 remacle Exp $
+// $Id: CommandLine.cpp,v 1.108 2007-11-26 14:34:09 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -409,6 +409,30 @@ void Get_Options(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "c1")) {
         i++;
 	opt_mesh_c1(0, GMSH_SET, 1);
+      }
+      else if(!strcmp(argv[i] + 1, "statreport")) {
+        i++;
+	CTX.create_append_statreport = 1;
+        if(argv[i] != NULL) {
+          strcpy(CTX.statreport,argv[i]);
+          i++;
+        }
+        else {
+          fprintf(stderr, ERROR_STR "Missing argument\n");
+          exit(1);
+        }
+      }
+      else if(!strcmp(argv[i] + 1, "append_statreport")) {
+        i++;
+	CTX.create_append_statreport = 2;
+        if(argv[i] != NULL) {
+          strcpy(CTX.statreport,argv[i]);
+          i++;
+        }
+        else {
+          fprintf(stderr, ERROR_STR "Missing argument\n");
+          exit(1);
+        }
       }
       else if(!strcmp(argv[i] + 1, "optimize_hom")) {
         i++;

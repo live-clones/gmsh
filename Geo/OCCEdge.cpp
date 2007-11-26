@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.26 2007-11-11 19:53:57 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.27 2007-11-26 14:34:09 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -193,10 +193,12 @@ int OCCEdge::minimumMeshSegments() const
   int np;
   if(geomType() == Line)
     np= GEdge::minimumMeshSegments();
-  else if(geomType() == Circle)
-    np= CTX.mesh.min_circ_points - 1;
   else 
     np=CTX.mesh.min_curv_points - 1;
+  
+  // if the edge is closed, ensure that at least 3 points are generated 
+  if (getBeginVertex() == getEndVertex()) np=std::max(2,np);
+
   return np;
 }
 

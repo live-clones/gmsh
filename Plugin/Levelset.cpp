@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.37 2007-09-24 08:14:30 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.38 2007-11-26 14:34:10 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -781,7 +781,7 @@ static bool recur_sign_change(adapt_triangle *t, double val,
     double v1 = plug->levelset(t->p[0]->X, t->p[0]->Y, t->p[0]->Z, t->p[0]->val);
     double v2 = plug->levelset(t->p[1]->X, t->p[1]->Y, t->p[1]->Z, t->p[1]->val);
     double v3 = plug->levelset(t->p[2]->X, t->p[2]->Y, t->p[2]->Z, t->p[2]->val);
-    if(v1 * v2 > 0 && v1 * v3 > 0)
+    if(v1 * v2 > 0 && v1 * v3 > 0 && v2 * v3 > 0)
       t->visible = false;
     else
       t->visible = true;

@@ -756,10 +756,10 @@ int Adaptive_Post_View::zoomElement(int ielem,
 
   itt = ELEM::all_elems.begin();
 
-  for(; itt != itte; itt++) {
-    if((*itt)->visible && !(*itt)->e[0] && level != levelmax)
-      return 0;
-  }
+   for(; itt != itte; itt++) {
+     if((*itt)->visible && !(*itt)->e[0] && level != levelmax)
+       return 0;
+   }
 
   itt = ELEM::all_elems.begin();
   adapt_point **p;
@@ -930,8 +930,7 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel_TEMPL(int level, int levelma
     kk++;
   }
 
-  for(int i = 0; i < nbelm; ++i) {
-    if(!done[i])
+  for(int i = 0; i < nbelm; ++i) {//    if(!done[i])
       done[i] = zoomElement<ELEM>(i, level, levelmax, plug, *myList, counter);
   }
 }

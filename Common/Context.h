@@ -46,6 +46,12 @@ public :
   char *error_filename, error_filename_fullpath[256];
                               // the name of the error file
 
+  // gmsh enables to output some mesh stats in a test suite file
+  // mesh algorithms are very sensitive to small parameter modifications
+  // and a test suite is indeed useful ;-)
+  char statreport[256];
+  int  create_append_statreport; // do nothing 0 create 1 append 2 
+
   int session_save, options_save; // save session/option file on exit
   int confirm_overwrite;      // confirm overwrite when file->save as
   char *display;              // forced display host:0.0 under X11 

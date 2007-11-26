@@ -54,11 +54,18 @@ class MTet4
   MTet4 *neigh[4];
   GRegion *gr;
 
+
+ public :
+
   ~MTet4 (){}
   MTet4 () : deleted(false), base (0), gr(0),circum_radius(0.0)
     {
       neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
     }
+  MTet4 (MTetrahedron * t) : deleted(false),  gr(0),circum_radius(0.0),base(t)
+  {
+    neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
+  }
 
   void setup ( MTetrahedron * t, std::vector<double> & sizes)
   {
@@ -78,8 +85,6 @@ class MTet4
     circum_radius /= lc;
     deleted = false;
   } 
-
- public :
 
   inline GRegion * onWhat () const {return gr;}
   inline void      setOnWhat (GRegion *g) {gr=g;}
@@ -129,6 +134,7 @@ class MTet4
 };
 
 void connectTets ( std::list<MTet4*> & );
+void connectTets ( std::vector<MTet4*> & );
 void insertVerticesInRegion (GRegion *gr) ;
 
 class compareTet4Ptr

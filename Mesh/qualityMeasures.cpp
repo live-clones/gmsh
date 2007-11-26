@@ -66,3 +66,77 @@ double qmTriangle ( const double    &xa, const double    &ya, const double    &z
   return quality;
 }
 
+double qmTet ( MTetrahedron*t, const gmshQualityMeasure4Tet &cr, double *volume)
+{
+  return qmTet (t->getVertex(0),t->getVertex(1),t->getVertex(2),t->getVertex(3),cr,volume);
+}
+
+double qmTet ( const MVertex   *v1, const MVertex   *v2, const MVertex   *v3, const MVertex   *v4, const gmshQualityMeasure4Tet &cr, double *volume)
+{
+  return qmTet (v1->x(),v1->y(),v1->z(),v2->x(),v2->y(),v2->z(),v3->x(),v3->y(),v3->z(),v4->x(),v4->y(),v4->z(),cr,volume);
+}
+
+double qmTet ( const double    &x1, const double    &y1, const double    &z1, 
+	       const double    &x2, const double    &y2, const double    &z2, 
+	       const double    &x3, const double    &y3, const double    &z3, 
+	       const double    &x4, const double    &y4, const double    &z4, 
+	       const gmshQualityMeasure4Tet    &cr, double *volume ){
+  double quality;
+  switch(cr)
+    {
+    case QMTET_3:
+      {
+	double mat[3][3];
+	mat[0][0] = x2 - x1;
+	mat[0][1] = x3 - x1;
+	mat[0][2] = x4 - x1;
+	mat[1][0] = y2 - y1;
+	mat[1][1] = y3 - y1;
+	mat[1][2] = y4 - y1;
+	mat[2][0] = z2 - z1;
+	mat[2][1] = z3 - z1;
+	mat[2][2] = z4 - z1;
+	*volume = fabs(det3x3(mat)) / 6.;
+	double l = ((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)+(z2-z1)*(z2-z1));
+	l += ((x3-x1)*(x3-x1)+(y3-y1)*(y3-y1)+(z3-z1)*(z3-z1));
+	l +=((x4-x1)*(x4-x1)+(y4-y1)*(y4-y1)+(z4-z1)*(z4-z1));
+	l +=((x3-x2)*(x3-x2)+(y3-y2)*(y3-y2)+(z3-z2)*(z3-z2));
+	l +=((x4-x2)*(x4-x2)+(y4-y2)*(y4-y2)+(z4-z2)*(z4-z2));
+	l +=((x3-x4)*(x3-x4)+(y3-y4)*(y3-y4)+(z3-z4)*(z3-z4));
+	return 12. * pow(3*fabs(*volume),2./3.)/l;	
+      }
+    case QMTET_2:
+      {
+	double mat[3][3];
+	mat[0][0] = x2 - x1;
+	mat[0][1] = x3 - x1;
+	mat[0][2] = x4 - x1;
+	mat[1][0] = y2 - y1;
+	mat[1][1] = y3 - y1;
+	mat[1][2] = y4 - y1;
+	mat[2][0] = z2 - z1;
+	mat[2][1] = z3 - z1;
+	mat[2][2] = z4 - z1;
+	*volume = fabs(det3x3(mat)) / 6.;
+	double p0[3] = { x1,y1,z1};
+	double p1[3] = { x2,y2,z2};
+	double p2[3] = { x3,y3,z3};
+	double p3[3] = { x4,y4,z4};
+	double s1 = fabs(triangle_area(p0, p1, p2));
+	double s2 = fabs(triangle_area(p0, p2, p3));
+	double s3 = fabs(triangle_area(p0, p1, p3));
+	double s4 = fabs(triangle_area(p1, p2, p3));
+	double rhoin = 3. * fabs(*volume) / (s1 + s2 + s3 + s4);
+	double l = sqrt ((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)+(z2-z1)*(z2-z1));
+	l = std::max(l,sqrt ((x3-x1)*(x3-x1)+(y3-y1)*(y3-y1)+(z3-z1)*(z3-z1)));
+	l = std::max(l,sqrt ((x4-x1)*(x4-x1)+(y4-y1)*(y4-y1)+(z4-z1)*(z4-z1)));
+	l = std::max(l,sqrt ((x3-x2)*(x3-x2)+(y3-y2)*(y3-y2)+(z3-z2)*(z3-z2)));
+	l = std::max(l,sqrt ((x4-x2)*(x4-x2)+(y4-y2)*(y4-y2)+(z4-z2)*(z4-z2)));
+	l = std::max(l,sqrt ((x3-x4)*(x3-x4)+(y3-y4)*(y3-y4)+(z3-z4)*(z3-z4)));
+	return 2. * sqrt(6.) * rhoin / l;	
+      }
+      break;
+    default:
+      throw;
+    }
+}

@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.124 2007-11-04 21:03:17 remacle Exp $
+// $Id: Generator.cpp,v 1.125 2007-11-26 14:34:10 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -179,9 +179,16 @@ void Mesh1D(GModel *m)
 
 void PrintMesh2dStatistics (GModel *m)
 {
+  FILE *statreport = 0;
+  if (CTX.create_append_statreport == 1)
+    statreport = fopen (CTX.statreport,"w");
+  else if (CTX.create_append_statreport == 2)
+    statreport = fopen (CTX.statreport,"a");
+  else return;
+
   double worst=1,best=0,avg=0;
   double e_long=0,e_short=1.e22,e_avg=0;
-  int nTotT=0,nTotE=0,nTotGoodLength=0,nTotGoodQuality=0;
+  int nTotT=0,nTotE=0,nTotGoodLength=0,nTotGoodQuality=0,nUnmeshed=0,numFaces=0;
   Msg(INFO,"2D Mesh Statistics :");
   for (GModel::fiter it = m->firstFace() ; it!=m->lastFace(); ++it)
     {
@@ -194,22 +201,25 @@ void PrintMesh2dStatistics (GModel *m)
       e_long = std::max((*it)->meshStatistics.longest_edge_length,e_long);
       e_short = std::min((*it)->meshStatistics.smallest_edge_length,e_short);
 
-      if ((*it)->meshStatistics.worst_element_shape < 0.05)
-	Msg(INFO,"Badly Shaped Element (rho = %12.5E) on GFace %d (%d triangles)",(*it)->meshStatistics.worst_element_shape,(*it)->tag(),(*it)->meshStatistics.nbTriangle);
-      if ((*it)->meshStatistics.status == GFace::FAILED)
-	Msg(INFO,"GMSH was unable to mesh GFace %d ",(*it)->tag());
+      if ((*it)->meshStatistics.status == GFace::FAILED || (*it)->meshStatistics.status == GFace::PENDING)nUnmeshed++;
 
       nTotT +=  (*it)->meshStatistics.nbTriangle ;
       nTotE += (*it)->meshStatistics.nbEdge ;
       nTotGoodLength += (*it)->meshStatistics.nbGoodLength ;
       nTotGoodQuality+= (*it)->meshStatistics.nbGoodQuality ;
+      numFaces ++;
     }
 
-  Msg(INFO,"Element Quality (%d triangles) : avg %8.7f best %8.7f worst %8.7f greaterthan90 %d (%12.5E\\%)",
-      nTotT,avg/(double)nTotT,best,worst,nTotGoodQuality,(double)nTotGoodQuality/nTotT);
-  Msg(INFO,"Size Field Accuracy (%d edges) : %8.7f (should be as close as 1 as possible) in good brackets %d (%12.5E\%)",
-      nTotE,exp(e_avg/(double)nTotE),nTotGoodLength,(double)nTotGoodLength/nTotE);
+  if (CTX.create_append_statreport == 1){
+    fprintf(statreport,"2D stats\tname\t\t#faces\t\t#fail\t\t#t\t\tQavg\t\tQbest\t\tQworst\t\t#Q>90\t\t#Q>90/#t\t#e\t\ttau\t\t#Egood\t\t#Egood/#e\tCPU\n");
+  }
 
+  fprintf(statreport,"\t%16s\t%d\t\t%d\t\t",CTX.base_filename,numFaces, nUnmeshed);
+  fprintf(statreport,"%d\t\t%8.7f\t%8.7f\t%8.7f\t%d\t\t%8.7f\t",
+	  nTotT,avg/(double)nTotT,best,worst,nTotGoodQuality,(double)nTotGoodQuality/nTotT);
+  fprintf(statreport,"%d\t\t%8.7f\t%d\t\t%8.7f\t%8.1f\n",
+	  nTotE,exp(e_avg/(double)nTotE),nTotGoodLength,(double)nTotGoodLength/nTotE,CTX.mesh_timer[1]);
+  fclose (statreport);
 
 }
 
@@ -232,15 +242,29 @@ void Mesh2D(GModel *m)
   // boundary layers are special: their generation (including vertices
   // and curve meshes) is global as it depends on a smooth normal
   // field generated from the surface mesh of the source surfaces
-  if(!Mesh2DWithBoundaryLayers(m))
-    std::for_each(m->firstFace(), m->lastFace(), meshGFace());  
-  
-  PrintMesh2dStatistics(m);
+  if(!Mesh2DWithBoundaryLayers(m)){
+    std::for_each(m->firstFace(), m->lastFace(), meshGFace());        
+    int nIter = 0;
+    while(1)
+      {
+	meshGFace mesher;
+	int nbPending = 0;
+	for (GModel::fiter it = m->firstFace() ; it!=m->lastFace(); ++it)
+	  {
+	    if ((*it)->meshStatistics.status == GFace::PENDING){mesher(*it);nbPending++;}
+	  }
+	if (!nbPending)break;
+	if (nIter > 10)break;
+      }
+  }
+
 
   double t2 = Cpu();
   CTX.mesh_timer[1] = t2 - t1;
   Msg(INFO, "Mesh 2D complete (%g s)", CTX.mesh_timer[1]);
   Msg(STATUS1, "Mesh");
+
+  PrintMesh2dStatistics(m);
 }
 
 

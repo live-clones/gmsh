@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.367 2007-11-08 19:30:30 geuzaine Exp $
+// $Id: Options.cpp,v 1.368 2007-11-26 14:34:09 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -106,6 +106,9 @@ void Init_Options(int num)
   else
     strcpy(CTX.home_dir, "");
   
+  // By defaults, no stat report
+  CTX.create_append_statreport = 0;
+
   int len = strlen(CTX.home_dir);
   if(len && CTX.home_dir[len-1] != '/')
     strcat(CTX.home_dir, "/");

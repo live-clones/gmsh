@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.55 2007-09-24 08:14:29 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.56 2007-11-26 14:34:10 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,7 +25,7 @@
 extern Context_T CTX;
 
 StringXNumber CutMapOptions_Number[] = {
-  {GMSH_FULLRC, "A", GMSH_CutMapPlugin::callbackA, 1.},
+  {GMSH_FULLRC, "A", GMSH_CutMapPlugin::callbackA, 0.},
   {GMSH_FULLRC, "dTimeStep", NULL, -1.},
   {GMSH_FULLRC, "dView", NULL, -1.},
   {GMSH_FULLRC, "ExtractVolume", GMSH_CutMapPlugin::callbackVol, 0.},

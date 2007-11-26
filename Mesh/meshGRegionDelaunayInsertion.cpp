@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.20 2007-11-11 19:53:57 remacle Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.21 2007-11-26 14:34:10 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,9 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include "OS.h"
 #include "BackgroundMesh.h"
+#include "edgeSwap.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "GModel.h"
 #include "GRegion.h"
@@ -92,6 +94,8 @@ void connectTets ( ITER beg, ITER end)
       }
   }
 }
+void connectTets ( std::list<MTet4*> & l) {connectTets(l.begin(),l.end());} 
+void connectTets ( std::vector<MTet4*> &l ) {connectTets(l.begin(),l.end());}
 
 
 void recurFindCavity ( std::list<faceXtet> & shell, 
@@ -428,6 +432,98 @@ void recur_classify ( MTet4 *t ,
     }
 }
 
+template <class CONTAINER, class DATA> 
+void gmshOptimizeMesh (CONTAINER &allTets, DATA &vSizes)
+{
+  double t1 = Cpu();
+  {
+    double totalVolumeb = 0.0;
+    double worst = 1.0;
+    double avg = 0;
+    int count=0;
+    for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+      {
+	if (!(*it)->isDeleted()){
+	  double vol;
+	  double qual = qmTet((*it)->tet(),QMTET_2,&vol);
+	  worst = std::min(qual,worst);
+	  avg+=qual;
+	  count++;
+	  totalVolumeb+=vol;
+	}
+      }
+    Msg(INFO,"Optimization Vol = %12.5E QBAD %12.5E QAVG %12.5E",totalVolumeb,worst,avg/count);
+  }    
+    
+
+  while (1){
+    std::vector<MTet4*> newTets;
+    
+    // get a bad tet and try to swap each of its edges
+
+    for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+      {
+	if (!(*it)->isDeleted()){
+	  double vol;
+	  double qq = qmTet((*it)->tet(),QMTET_2,&vol);
+	  //	  gmshSmoothVertex(*it,IED%4);
+	  if (qq < .4)
+	    for (int i=0;i<6;i++){
+	      gmshEdgeSwap(newTets,*it,i,QMTET_2);
+	      if ((*it)->isDeleted())i=10;
+	    }
+	}
+      }
+    
+    // relocate vertices
+//     for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+//       {
+// 	if (!(*it)->isDeleted()){
+// 	  double vol;
+// 	  double qq = qmTet((*it)->tet(),QMTET_2,&vol);
+// 	  if (qq < .5)
+// 	    for (int i=0;i<4;i++){
+// 	      gmshSmoothVertex(*it,i);
+// 	    }
+// 	}
+//       }
+
+
+    // if no new tet is created, leave
+    if (!newTets.size())break;
+
+    // add all the new tets in the container
+    for (int i=0;i<newTets.size();i++){
+      if (!newTets[i]->isDeleted()){
+	newTets[i]->setup(newTets[i]->tet(),vSizes);
+	allTets.insert(newTets[i]);
+      }
+      else{
+	delete newTets[i];
+      }
+    }  
+
+    double totalVolumeb = 0.0;
+    double worst = 1.0;
+    double avg = 0;
+    int count=0;
+    for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+      {
+	if (!(*it)->isDeleted()){
+	  double vol;
+	  double qual = qmTet((*it)->tet(),QMTET_2,&vol);
+	  worst = std::min(qual,worst);
+	  avg+=qual;
+	  count++;
+	  totalVolumeb+=vol;
+	}
+      }
+    double t2 = Cpu();
+    Msg(INFO,"Optimization Vol = %12.5E QBAD %12.5E QAVG %12.5E (%8.3f sec)",totalVolumeb,worst,avg/count,t2-t1);
+  }
+}
+
+
 void insertVerticesInRegion (GRegion *gr) 
 {
 
@@ -542,7 +638,7 @@ void insertVerticesInRegion (GRegion *gr)
 	  else
 	    myFactory.changeTetRadius(allTets.begin(),0.0);
 	}
-      // Normally, a tet mesh contains about 5 to 6 times more tets than
+      // Normally, a tet mesh contains about 6 times more tets than
       // vertices
       // This allows to clean up the set of tets when lots of deleted ones
       // are present in the mesh
@@ -562,6 +658,7 @@ void insertVerticesInRegion (GRegion *gr)
 	  Msg(INFO,"cleaning up the memory %d -> %d ",n1,allTets.size());	  	  
 	}
     }
+  gmshOptimizeMesh (allTets,vSizes);
   
   while (1)
     {

@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.29 2007-11-11 19:53:57 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.30 2007-11-26 14:34:09 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -182,19 +182,22 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
   double l3 = CTX.lc;
   double l4 = lc_field.empty() ? MAX_LC : lc_field(X, Y, Z);
 
+
   double lc;
   if(l4 < MAX_LC && !CTX.mesh.constrained_bgmesh){
     // use the fields unconstrained by other characteristic lengths
     lc = l4 * CTX.mesh.lc_factor;
   }
   else{
-    if(CTX.mesh.lc_from_curvature && ge->dim() < 3)
-      l1 = LC_MVertex_CURV(ge, U, V);
     if(ge->dim() < 2) 
       l2 = LC_MVertex_PNTS(ge, U, V);
     lc = std::min(std::min(std::min(l1, l2), l3), l4) * CTX.mesh.lc_factor;
   }
-  
+
+
+  if(CTX.mesh.lc_from_curvature && ge->dim() < 3)
+    lc = std::min (lc,LC_MVertex_CURV(ge, U, V));
+
   if(lc <= 0.){
     Msg(GERROR, "Incorrect char. length lc = %g: using default instead", lc);
     return l3 * CTX.mesh.lc_factor;
@@ -208,7 +211,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
 // we do it also if CTX.mesh.constrained_bgmesh is true;
 bool Extend1dMeshIn2dSurfaces()
 {
-  if(lc_field.empty()) return true;
+  if(lc_field.empty() && !CTX.mesh.lc_from_curvature) return true;
   if(CTX.mesh.constrained_bgmesh) return true;
   return false;
 }
