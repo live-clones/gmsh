@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.136 2007-11-26 13:11:50 geuzaine Exp $
+dnl $Id: configure.in,v 1.137 2007-11-26 13:35:32 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 dnl
@@ -754,7 +754,7 @@ case "$UNAME" in
   Darwin*)
     FLAGS="-DHAVE_NO_DLL ${FLAGS}"
     if test "x$enable_universal" = "xyes"; then
-      FLAGS="-arch ppc -arch i686 ${FLAGS}"
+      FLAGS="-arch ppc -arch i386 ${FLAGS}"
     fi
     if test "x$enable_gui" = "xno"; then
       GMSH_LIBS="${GMSH_LIBS} -framework ApplicationServices"

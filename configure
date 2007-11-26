@@ -5450,7 +5450,7 @@ case "$UNAME" in
   Darwin*)
     FLAGS="-DHAVE_NO_DLL ${FLAGS}"
     if test "x$enable_universal" = "xyes"; then
-      FLAGS="-arch ppc -arch i686 ${FLAGS}"
+      FLAGS="-arch ppc -arch i386 ${FLAGS}"
     fi
     if test "x$enable_gui" = "xno"; then
       GMSH_LIBS="${GMSH_LIBS} -framework ApplicationServices"
