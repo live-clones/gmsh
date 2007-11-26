@@ -5,6 +5,7 @@ static int efaces[6][2] =   {{0,2},{0,1},{1,2},{0,3},{2,3},{1,3}};
 static int enofaces[6][2] = {{1,3},{2,3},{0,3},{1,2},{0,1},{0,2}};
 static int facesXedges[4][3] = {{0,1,3},{1,2,5},{0,2,4},{3,4,5}};
 static int faces[4][3] = {{0,1,2},{0,2,3},{0,1,3},{1,2,3}};
+static int vFac[4][3] = {{0,1,2},{0,2,3},{0,1,3},{1,2,3}};
 
 // as input, we give a tet and an edge, as return, we get
 // all tets that share this edge and all vertices that are
@@ -350,23 +351,28 @@ void gmshEdgeSwap (std::vector<MTet4 *> &newTets,
 void gmshBuildVertexCavity_recur ( MTet4 *t, 
 				   MVertex *v, 
 				   std::vector<MTet4*> &cavity){
+  int iV=-1;
   for (int i=0; i<4; i++){
-    MTet4 *neigh = t->getNeigh(i);
+    if (t->tet()->getVertex(i) == v){
+      iV = i;
+      break;
+    }
+  }
+  if (iV==-1)throw;
+  for (int i=0; i<3; i++){
+    MTet4 *neigh = t->getNeigh(vFac[iV][i]);
     if (neigh){
-      bool foundv = false;
-      for (int j=0;j<4;j++){if (t->tet()->getVertex(j) == v){foundv = true; break;}}
-      if (foundv)
-	{
-	  bool found = false;
-	  for (int j=0;j<cavity.size();j++){if (cavity[j] == neigh){found = true; break;}}
-	  if (!found){
-	    cavity.push_back(neigh);
-	    gmshBuildVertexCavity_recur ( neigh,v,cavity);
-	  }
-	}
+      bool found = false;
+      for (int j=0;j<cavity.size();j++){if (cavity[j] == neigh){found = true; break;}}
+      if (!found){
+	cavity.push_back(neigh);
+	gmshBuildVertexCavity_recur ( neigh,v,cavity);
+      }
     }
   }
 }
+
+
 void gmshSmoothVertex ( MTet4 *t, 
 			int iVertex){
   std::vector<MTet4*> cavity;

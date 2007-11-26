@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.21 2007-11-26 14:34:10 remacle Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.22 2007-11-26 15:08:34 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,7 @@
 
 #include "OS.h"
 #include "BackgroundMesh.h"
-#include "edgeSwap.h"
+#include "meshGRegionLocalMeshMod.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "GModel.h"
 #include "GRegion.h"
@@ -475,18 +475,18 @@ void gmshOptimizeMesh (CONTAINER &allTets, DATA &vSizes)
 	}
       }
     
-    // relocate vertices
-//     for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
-//       {
-// 	if (!(*it)->isDeleted()){
-// 	  double vol;
-// 	  double qq = qmTet((*it)->tet(),QMTET_2,&vol);
-// 	  if (qq < .5)
-// 	    for (int i=0;i<4;i++){
-// 	      gmshSmoothVertex(*it,i);
-// 	    }
-// 	}
-//       }
+   // relocate vertices
+//      for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+//        {
+// 	 if (!(*it)->isDeleted()){
+// 	   double vol;
+// 	   double qq = qmTet((*it)->tet(),QMTET_2,&vol);
+// 	   if (qq < .5)
+// 	     for (int i=0;i<4;i++){
+// 	       gmshSmoothVertex(*it,i);
+// 	     }
+// 	 }
+//        }
 
 
     // if no new tet is created, leave
