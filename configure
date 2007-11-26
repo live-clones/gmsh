@@ -879,6 +879,8 @@ Optional Features:
   --enable-occ            enable OpenCascade support (default=no)
   --enable-med            enable MED support (default=yes)
   --enable-fm             enable support for FourierModel (default=yes)
+  --enable-universal      enable support for universal binaries on Mac
+                          (default=no)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1529,6 +1531,12 @@ if test "${enable_fm+set}" = set; then
   enableval="$enable_fm"
 
 fi;
+# Check whether --enable-universal or --disable-universal was given.
+if test "${enable_universal+set}" = set; then
+  enableval="$enable_universal"
+
+fi;
+
 
 UNAME=`uname`
 
@@ -4812,7 +4820,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:4815:" \
+echo "$as_me:4823:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -5440,7 +5448,10 @@ case "$UNAME" in
     ;;
 
   Darwin*)
-        FLAGS="-DHAVE_NO_DLL ${FLAGS}"
+    FLAGS="-DHAVE_NO_DLL ${FLAGS}"
+    if test "x$enable_universal" = "xyes"; then
+      FLAGS="-arch ppc -arch i686 ${FLAGS}"
+    fi
     if test "x$enable_gui" = "xno"; then
       GMSH_LIBS="${GMSH_LIBS} -framework ApplicationServices"
     fi

@@ -1,4 +1,4 @@
-# $Id: variables.in,v 1.17 2007-09-05 08:36:21 geuzaine Exp $
+# $Id: variables.in,v 1.18 2007-11-26 13:11:50 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -35,8 +35,6 @@ LINKER=@LINKER@
 
 # All compiler flags except optimization flags
 FLAGS=@FLAGS@
-
-# FLAGS+=-arch i386 -arch ppc
 
 # Compiler optimization flags
 OPTIM=@OPTIM@
