@@ -1,0 +1,4 @@
+#
+# this will launch a new build every night at 2h01
+#
+1 2 * * * cd ${HOME}/src/gmsh/utils/nightly && make gmsh-windows-nightly

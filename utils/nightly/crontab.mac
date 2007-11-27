@@ -1,0 +1,4 @@
+#
+# this will launch a new build every night at 0h01
+#
+1 0 * * * cd ${HOME}/src/gmsh/utils/nightly && make gmsh-mac-nightly

@@ -1,0 +1,4 @@
+#
+# this will launch a new build every night at 1h01
+#
+1 1 * * * cd ${HOME}/src/gmsh/utils/nightly && make gmsh-linux-nightly
