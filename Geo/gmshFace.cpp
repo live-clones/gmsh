@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.42 2007-09-26 20:51:58 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.43 2007-11-27 16:45:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -96,6 +96,7 @@ gmshFace::gmshFace(GModel *m, int num)
 {
   s = Create_Surface(num, MSH_SURF_DISCRETE);
   Tree_Add(m->getGEOInternals()->Surfaces, &s);
+  meshStatistics.status = GFace::DONE;
 }
 
 void gmshFace::setModelEdges(std::list<GEdge*>&ed)

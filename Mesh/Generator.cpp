@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.125 2007-11-26 14:34:10 remacle Exp $
+// $Id: Generator.cpp,v 1.126 2007-11-27 16:45:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -177,50 +177,51 @@ void Mesh1D(GModel *m)
   Msg(STATUS1, "Mesh");
 }
 
-void PrintMesh2dStatistics (GModel *m)
+void PrintMesh2dStatistics(GModel *m)
 {
   FILE *statreport = 0;
-  if (CTX.create_append_statreport == 1)
-    statreport = fopen (CTX.statreport,"w");
-  else if (CTX.create_append_statreport == 2)
-    statreport = fopen (CTX.statreport,"a");
+  if(CTX.create_append_statreport == 1)
+    statreport = fopen(CTX.statreport, "w");
+  else if(CTX.create_append_statreport == 2)
+    statreport = fopen(CTX.statreport, "a");
   else return;
 
-  double worst=1,best=0,avg=0;
-  double e_long=0,e_short=1.e22,e_avg=0;
-  int nTotT=0,nTotE=0,nTotGoodLength=0,nTotGoodQuality=0,nUnmeshed=0,numFaces=0;
+  double worst = 1, best = 0, avg = 0;
+  double e_long = 0, e_short = 1.e22, e_avg = 0;
+  int nTotT = 0, nTotE = 0, nTotGoodLength = 0, nTotGoodQuality = 0;
+  int nUnmeshed = 0, numFaces = 0;
+
   Msg(INFO,"2D Mesh Statistics :");
-  for (GModel::fiter it = m->firstFace() ; it!=m->lastFace(); ++it)
-    {
-      worst = std::min((*it)->meshStatistics.worst_element_shape,worst);
-      best  = std::max((*it)->meshStatistics.best_element_shape,best);
-      avg += (*it)->meshStatistics.average_element_shape * (*it)->meshStatistics.nbTriangle ;
-
-      e_avg += (*it)->meshStatistics.efficiency_index ;//* (*it)->meshStatistics.nbEdge;
-
-      e_long = std::max((*it)->meshStatistics.longest_edge_length,e_long);
-      e_short = std::min((*it)->meshStatistics.smallest_edge_length,e_short);
-
-      if ((*it)->meshStatistics.status == GFace::FAILED || (*it)->meshStatistics.status == GFace::PENDING)nUnmeshed++;
-
-      nTotT +=  (*it)->meshStatistics.nbTriangle ;
-      nTotE += (*it)->meshStatistics.nbEdge ;
-      nTotGoodLength += (*it)->meshStatistics.nbGoodLength ;
-      nTotGoodQuality+= (*it)->meshStatistics.nbGoodQuality ;
-      numFaces ++;
-    }
-
-  if (CTX.create_append_statreport == 1){
-    fprintf(statreport,"2D stats\tname\t\t#faces\t\t#fail\t\t#t\t\tQavg\t\tQbest\t\tQworst\t\t#Q>90\t\t#Q>90/#t\t#e\t\ttau\t\t#Egood\t\t#Egood/#e\tCPU\n");
+  for(GModel::fiter it = m->firstFace() ; it!=m->lastFace(); ++it){
+    worst = std::min((*it)->meshStatistics.worst_element_shape, worst);
+    best = std::max((*it)->meshStatistics.best_element_shape, best);
+    avg += (*it)->meshStatistics.average_element_shape * (*it)->meshStatistics.nbTriangle;
+    e_avg += (*it)->meshStatistics.efficiency_index;//* (*it)->meshStatistics.nbEdge;
+    e_long = std::max((*it)->meshStatistics.longest_edge_length, e_long);
+    e_short = std::min((*it)->meshStatistics.smallest_edge_length, e_short);
+    if ((*it)->meshStatistics.status == GFace::FAILED || 
+	(*it)->meshStatistics.status == GFace::PENDING) nUnmeshed++;
+    nTotT += (*it)->meshStatistics.nbTriangle;
+    nTotE += (*it)->meshStatistics.nbEdge;
+    nTotGoodLength += (*it)->meshStatistics.nbGoodLength;
+    nTotGoodQuality += (*it)->meshStatistics.nbGoodQuality;
+    numFaces++;
   }
 
-  fprintf(statreport,"\t%16s\t%d\t\t%d\t\t",CTX.base_filename,numFaces, nUnmeshed);
-  fprintf(statreport,"%d\t\t%8.7f\t%8.7f\t%8.7f\t%d\t\t%8.7f\t",
-	  nTotT,avg/(double)nTotT,best,worst,nTotGoodQuality,(double)nTotGoodQuality/nTotT);
-  fprintf(statreport,"%d\t\t%8.7f\t%d\t\t%8.7f\t%8.1f\n",
-	  nTotE,exp(e_avg/(double)nTotE),nTotGoodLength,(double)nTotGoodLength/nTotE,CTX.mesh_timer[1]);
-  fclose (statreport);
+  if(CTX.create_append_statreport == 1){
+    fprintf(statreport, "2D stats\tname\t\t#faces\t\t#fail\t\t"
+	    "#t\t\tQavg\t\tQbest\t\tQworst\t\t#Q>90\t\t#Q>90/#t\t"
+	    "#e\t\ttau\t\t#Egood\t\t#Egood/#e\tCPU\n");
+  }
 
+  fprintf(statreport,"\t%16s\t%d\t\t%d\t\t", CTX.base_filename, numFaces, nUnmeshed);
+  fprintf(statreport,"%d\t\t%8.7f\t%8.7f\t%8.7f\t%d\t\t%8.7f\t",
+	  nTotT, avg / (double)nTotT, best, worst, nTotGoodQuality,
+	  (double)nTotGoodQuality / nTotT);
+  fprintf(statreport,"%d\t\t%8.7f\t%d\t\t%8.7f\t%8.1f\n",
+	  nTotE, exp(e_avg / (double)nTotE), nTotGoodLength,
+	  (double)nTotGoodLength / nTotE, CTX.mesh_timer[1]);
+  fclose(statreport);
 }
 
 void Mesh2D(GModel *m)
@@ -245,19 +246,19 @@ void Mesh2D(GModel *m)
   if(!Mesh2DWithBoundaryLayers(m)){
     std::for_each(m->firstFace(), m->lastFace(), meshGFace());        
     int nIter = 0;
-    while(1)
-      {
-	meshGFace mesher;
-	int nbPending = 0;
-	for (GModel::fiter it = m->firstFace() ; it!=m->lastFace(); ++it)
-	  {
-	    if ((*it)->meshStatistics.status == GFace::PENDING){mesher(*it);nbPending++;}
-	  }
-	if (!nbPending)break;
-	if (nIter > 10)break;
+    while(1){
+      meshGFace mesher;
+      int nbPending = 0;
+      for(GModel::fiter it = m->firstFace() ; it!=m->lastFace(); ++it){
+	if ((*it)->meshStatistics.status == GFace::PENDING){
+	  mesher(*it);
+	  nbPending++;
+	}
       }
+      if(!nbPending) break;
+      if(nIter++ > 10) break;
+    }
   }
-
 
   double t2 = Cpu();
   CTX.mesh_timer[1] = t2 - t1;

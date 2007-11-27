@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.21 2007-09-04 13:47:02 remacle Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.22 2007-11-27 16:45:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -401,5 +401,6 @@ int MeshTransfiniteSurface(GFace *gf)
     }
   }
 
+  gf->meshStatistics.status = GFace::DONE;
   return 1;
 }

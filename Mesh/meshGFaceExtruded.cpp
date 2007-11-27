@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.22 2007-08-02 16:16:19 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.23 2007-11-27 16:45:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -235,6 +235,7 @@ int MeshExtrudedSurface(GFace *gf,
 
   MVertexLessThanLexicographic::tolerance = old_tol; 
 
+  gf->meshStatistics.status = GFace::DONE;
   return 1;
 }
 
