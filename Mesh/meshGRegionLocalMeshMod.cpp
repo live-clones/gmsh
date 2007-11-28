@@ -1,10 +1,12 @@
 #include "meshGRegionLocalMeshMod.h"
+#include "GEntity.h"
 
 static int edges[6][2] =    {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
 static int efaces[6][2] =   {{0,2},{0,1},{1,2},{0,3},{2,3},{1,3}};
 static int enofaces[6][2] = {{1,3},{2,3},{0,3},{1,2},{0,1},{0,2}};
 static int facesXedges[4][3] = {{0,1,3},{1,2,5},{0,2,4},{3,4,5}};
 static int faces[4][3] = {{0,1,2},{0,2,3},{0,1,3},{1,2,3}};
+static int vnofaces[4] = {3,1,2,0};
 static int vFac[4][3] = {{0,1,2},{0,2,3},{0,1,3},{1,2,3}};
 
 // as input, we give a tet and an edge, as return, we get
@@ -21,23 +23,10 @@ bool gmshBuildEdgeCavity ( MTet4 *t,
   ring.clear();
   outside.clear();
 
-  //  FILE *f = fopen ("pts.pos","w");
-  //  fprintf(f,"View \"\"{\n");
-
   *v1 = t->tet()->getVertex(edges[iLocalEdge][0]);
   *v2 = t->tet()->getVertex(edges[iLocalEdge][1]);
 
-  //  printf("trying to swap %p %p (%p,%p,%p,%p)\n",(*v1),(*v2),t->tet()->getVertex(0),t->tet()->getVertex(1),t->tet()->getVertex(2),t->tet()->getVertex(3));
-
   MVertex *lastinring = t->tet()->getVertex(edges[5-iLocalEdge][0]);
-  
-  //  fprintf(f,"SP(%g,%g,%g){%d};\n",(*v1)->x(),(*v1)->y(),(*v1)->z(),-1);
-  //  fprintf(f,"SP(%g,%g,%g){%d};\n",(*v2)->x(),(*v2)->y(),(*v2)->z(),-2);
-
-  //  fprintf(f,"SP(%g,%g,%g){%d};\n",lastinring->x(),lastinring->y(),lastinring->z(),ring.size());
-
-  //  printf("the ring starts with %p \n",lastinring);
-
   ring.push_back(lastinring);
   cavity.push_back(t);
 
@@ -48,22 +37,7 @@ bool gmshBuildEdgeCavity ( MTet4 *t,
     lastinring = ov1 == lastinring ? ov2 : ov1;
     // look in the 2 faces sharing this edge the one that has vertex 
     // ov2 i.e. edges[5-iLocalEdge][1]
-
     int iFace;
-//     int iFaceOK;
-//     for (int i=0;i<4;i++)
-//       {
-// 	MVertex *f1 = t->tet()->getVertex(faces[i][0]);
-// 	MVertex *f2 = t->tet()->getVertex(faces[i][1]);
-// 	MVertex *f3 = t->tet()->getVertex(faces[i][2]);
-// 	if ((f1 == *v1 && f2 == *v2 && f3 == lastinring) ||
-// 	    (f1 == *v1 && f3 == *v2 && f2 == lastinring) ||
-// 	    (f2 == *v1 && f1 == *v2 && f3 == lastinring) ||
-// 	    (f2 == *v1 && f3 == *v2 && f1 == lastinring) ||
-// 	    (f3 == *v1 && f2 == *v2 && f1 == lastinring) ||
-// 	    (f3 == *v1 && f1 == *v2 && f2 == lastinring) )iFaceOK = i;
-//       }
-
     int iFace1 = efaces[iLocalEdge][0];
     int iFace2 = efaces[iLocalEdge][1];
     if (faces[iFace1][0] == edges[5-iLocalEdge][K] ||
@@ -73,22 +47,11 @@ bool gmshBuildEdgeCavity ( MTet4 *t,
 	     faces[iFace2][1] == edges[5-iLocalEdge][K] ||
 	     faces[iFace2][2] == edges[5-iLocalEdge][K] ) iFace = iFace2;
     else {printf("error of connexion\n");throw;}
-    //    else iFace = iFace2;
-
-    //    printf("iFaceOK %d iFace %d\n",iFaceOK,iFace);
-
-    if (!t->getNeigh(iFace))return false;
     t=t->getNeigh(iFace);
+    if (!t)return false;
     if (t->isDeleted())throw;
-    //    printf("next tet (%p,%p,%p,%p)\n",t->tet()->getVertex(0),t->tet()->getVertex(1),t->tet()->getVertex(2),t->tet()->getVertex(3));
-    //    int iNoFace1 = enofaces[iLocalEdge][0];
-    //    int iNoFace2 = enofaces[iLocalEdge][1];
-
-    if (t==*(cavity.begin())) break;
-    //    fprintf(f,"SP(%g,%g,%g){%d};\n",lastinring->x(),lastinring->y(),lastinring->z(),ring.size());
+    if (t==cavity[0]) break;
     ring.push_back(lastinring);    
-    //    printf("the ring continues with %p \n",lastinring);
-
     cavity.push_back(t);
     iLocalEdge = -1;
     for (int i=0;i<6;i++)
@@ -105,9 +68,6 @@ bool gmshBuildEdgeCavity ( MTet4 *t,
       throw;
     }
   }
-  //  fprintf(f,"};\n");
-  //  fclose(f);
-  //  getchar();
   
   for (int i=0;i<cavity.size();i++){
     for (int j=0;j<4;j++){
@@ -115,7 +75,19 @@ bool gmshBuildEdgeCavity ( MTet4 *t,
       if (neigh)
 	{
 	  bool found = false;
-	  for (int k=0;k<outside.size();k++)if(outside[k]==neigh)found=true;
+	  for (int k=0;k<outside.size();k++){
+	    if(outside[k]==neigh){
+	      found=true;
+	      break;
+	    }
+	  }
+	  if (!found){
+	    for (int k=0;k<cavity.size() ;k++){
+	      if(cavity[k] ==neigh){
+		found=true;
+	      }
+	    }
+	  }
 	  if(!found)outside.push_back(neigh);
 	}
     }
@@ -219,7 +191,7 @@ void BuildSwapPattern7(SwapPattern *sc)
 }
 
 
-void gmshEdgeSwap (std::vector<MTet4 *> &newTets,
+bool gmshEdgeSwap (std::vector<MTet4 *> &newTets,
 		   MTet4 *tet, 
 		   int iLocalEdge,
 		   const gmshQualityMeasure4Tet &cr){
@@ -232,14 +204,13 @@ void gmshEdgeSwap (std::vector<MTet4 *> &newTets,
   bool closed = gmshBuildEdgeCavity ( tet,iLocalEdge,&v1,&v2,cavity,outside,ring);
 
 
-  if (!closed)return;
+  if (!closed)return false;
   
   double volumeRef = 0.0;
   double tetQualityRef = 1;
   for (int i=0;i<cavity.size();i++){
     double vol;
     tetQualityRef = std::min(qmTet (cavity[i]->tet() ,  cr , &vol) , tetQualityRef);
-    //    printf("%p %p -> %p %p %p %p\n",v1,v2,cavity[i]->tet()->getVertex(0),cavity[i]->tet()->getVertex(1),cavity[i]->tet()->getVertex(2),cavity[i]->tet()->getVertex(3));
     volumeRef += fabs(vol);
   }
 
@@ -252,10 +223,8 @@ void gmshEdgeSwap (std::vector<MTet4 *> &newTets,
   case 5 : BuildSwapPattern5 (&sp); break;
   case 6 : BuildSwapPattern6 (&sp); break;
   case 7 : BuildSwapPattern7 (&sp); break;
-  default : return;
+  default : return false;
   }
-
-  //  printf("the cavity contains %d tets the ring is of size %d volume %12.5E qual %12.5E\n",cavity.size(),ring.size(),volumeRef,tetQualityRef);
 
   // compute qualities of all tets that appear in the patterns 
   double tetQuality1[100],tetQuality2[100];
@@ -266,10 +235,7 @@ void gmshEdgeSwap (std::vector<MTet4 *> &newTets,
     int p3 = sp.triangles[i][2];   
     tetQuality1[i] = qmTet ( ring[p1], ring[p2], ring[p3], v1 , cr , &(volume1[i]));
     tetQuality2[i] = qmTet ( ring[p1], ring[p2], ring[p3], v2 , cr , &(volume2[i]));  
-    //    printf("points %d %d %d vol %g %g qual %g %g\n",p1,p2,p3,volume1[i],volume2[i],tetQuality1[i],tetQuality2[i]);
   }
-
-
 
   // look for the best triangulation, i.e. the one
   // that maximize the minimum element quality
@@ -286,30 +252,26 @@ void gmshEdgeSwap (std::vector<MTet4 *> &newTets,
       volume += (volume1[iT] + volume2[iT] );
     }
     //    printf("config %3d qual %12.5E volume %12.5E\n",i,minQuality[i],volume);
-    if (fabs(volume-volumeRef) > 1.e-12 * (volume+volumeRef))minQuality[i] = 0;
+    if (fabs(volume-volumeRef) > 1.e-10 * (volume+volumeRef))minQuality[i] = -1;
   }
 
   int iBest;
   double best = 0.0;
   for (int i=0;i<sp.nbr_trianguls;i++){
-    if(minQuality[i] > best)
-      {
-	best = minQuality[i];
-	iBest = i;
-      }
+    if(minQuality[i] > best){
+      best = minQuality[i];
+      iBest = i;
+    }
   }
 
   // if there exist no swap that enhance the quality
-  if (best <= tetQualityRef) return;
+  if (best <= tetQualityRef) return false;
   
-//   printf("swap is performed\n");
-
-//   return;
-
   // we have the best configuration, so we swap
   //  printf("outside size = %d\n",outside.size());
 
-  double volumeAssert = 0;
+  //  printf("a swap with %d tets reconnect %d tets cavity %d tets\n",ring.size(),outside.size(),cavity.size());
+
   for (int j=0;j<sp.nbr_triangles_2;j++){
     int iT = sp.trianguls[iBest][j];
     int p1 = sp.triangles[iT][0];
@@ -326,8 +288,6 @@ void gmshEdgeSwap (std::vector<MTet4 *> &newTets,
 					   pv2,
 					   pv1,
 					   v2);
-    volumeAssert += (fabs(tr1->getVolume()) +fabs(tr2->getVolume()) ); 
-
     MTet4 *t41 = new MTet4 ( tr1 ); 
     MTet4 *t42 = new MTet4 ( tr2 );
     t41->setOnWhat(cavity[0]->onWhat());
@@ -337,20 +297,125 @@ void gmshEdgeSwap (std::vector<MTet4 *> &newTets,
     newTets.push_back(t41);
     newTets.push_back(t42);
   }
-  if (fabs(volumeRef-volumeAssert) > 1.e-10 * volumeRef) printf("volumes = %12.5E %12.5E\n",volumeRef,volumeAssert);
 
-  for (int i=0;i<cavity.size();i++){
-    cavity[i]->setDeleted(true);
-  }
-
+  for (int i=0;i<cavity.size();i++)cavity[i]->setDeleted(true);
+  
   connectTets ( outside );      
 
+//   for (int i=0;i<outside.size();i++){
+//     for (int j=0;j<4;j++){
+//       MTet4 *neigh = outside[i]->getNeigh(j);
+//       //      printf("out(%d,%p) neigh(%d) = %p\n",i,outside[i],j,neigh);
+
+//       if (neigh && neigh->isDeleted())
+// 	{
+// 	  bool found = false;
+// 	  for (int k=0;k<cavity.size();k++){
+// 	    if (cavity[k] == neigh) found = true;
+// 	  }
+// 	  printf ("some old deleted tets are still connected to new tets, %d\n",found);
+// 	}
+//     }
+//   }
+  return true;
+}
+
+// swap a face i.e. remove a face shared by 2 tets
+bool gmshFaceSwap (std::vector<MTet4 *> &newTets,
+		   MTet4 *t1, 
+		   int iLocalFace,
+		   const gmshQualityMeasure4Tet &cr){  
+
+  MTet4 *t2 = t1->getNeigh(iLocalFace);
+  if (!t2)return false;
+  if (t1->onWhat() != t2->onWhat())return false;
+
+  MVertex *v1 = t1->tet()->getVertex(vnofaces[iLocalFace]);
+  MVertex *f1 = t1->tet()->getVertex(faces[iLocalFace][0]);
+  MVertex *f2 = t1->tet()->getVertex(faces[iLocalFace][1]);
+  MVertex *f3 = t1->tet()->getVertex(faces[iLocalFace][2]);
+  MVertex *v2 = 0;
+  for (int i=0;i<4;i++){
+    MVertex *v = t2->tet()->getVertex(i);
+    if (v != f1 && v != f2 && v != f3 ){
+      v2 = v;
+      break;
+    }
+  }
+  if (!v2){printf("coucou\n");throw;}
+
+  //  printf("%p %p -- %p %p %p\n",v1,v2,f1,f2,f3);
+
+  double vol1;
+  double q1 = qmTet(t1->tet(),cr,&vol1);
+  double vol2;
+  double q2 = qmTet(t2->tet(),cr,&vol2);
+  
+  double vol3;
+  double q3 = qmTet(f1,f2,v1,v2,cr,&vol3);
+  double vol4;
+  double q4 = qmTet(f2,f3,v1,v2,cr,&vol4);
+  double vol5;
+  double q5 = qmTet(f3,f1,v1,v2,cr,&vol5);
+
+
+  if (fabs ( vol1 + vol2 - vol3 - vol4 - vol5 ) > 1.e-10 * (vol1+vol2)) return false;
+  if (std::min(q1,q2) > std::min(std::min(q3,q4),q5)) return false;
+  //  printf("%g %g %g\n",vol1 + vol2, vol3 + vol4 + vol5,vol1 + vol2 - vol3 - vol4 - vol5);
+  //  printf("qs = %g %g vs %g %g %g\n",q1,q2,q3,q4,q5);
+
+  std::vector<MTet4*> outside;
+  for (int i=0;i<4;i++){
+    if (t1->getNeigh(i) && t1->getNeigh(i) != t2){
+      bool found = false;
+      for (int j=0;j<outside.size();j++){
+	if (outside[j] == t1->getNeigh(i)) {found = true;break;}
+      }
+      if (!found)outside.push_back(t1->getNeigh(i));
+    }    
+  }
+  for (int i=0;i<4;i++){
+    if (t2->getNeigh(i) && t2->getNeigh(i) != t1){
+      bool found = false;
+      for (int j=0;j<outside.size();j++){
+	if (outside[j] == t2->getNeigh(i)) {found = true;break;}
+      }
+      if (!found)outside.push_back(t2->getNeigh(i));
+    }    
+  }
+
+  //  printf("we have a face swap %d\n",outside.size());
+
+  t1->setDeleted(true);
+  t2->setDeleted(true);
+
+  MTetrahedron *tr1 = new MTetrahedron ( f1,f2,v1,v2);
+  MTetrahedron *tr2 = new MTetrahedron ( f2,f3,v1,v2);
+  MTetrahedron *tr3 = new MTetrahedron ( f3,f1,v1,v2);
+  MTet4 *t41 = new MTet4 ( tr1 ); 
+  MTet4 *t42 = new MTet4 ( tr2 );
+  MTet4 *t43 = new MTet4 ( tr3 ); 
+  t41->setOnWhat(t1->onWhat());
+  t42->setOnWhat(t1->onWhat());
+  t43->setOnWhat(t1->onWhat());
+  outside.push_back(t41);
+  outside.push_back(t42);
+  outside.push_back(t43);
+  newTets.push_back(t41);
+  newTets.push_back(t42);  
+  newTets.push_back(t43);  
+  connectTets ( outside );      
+  return true;
 }
 
 
 void gmshBuildVertexCavity_recur ( MTet4 *t, 
 				   MVertex *v, 
 				   std::vector<MTet4*> &cavity){
+  //  if (recur > 20)printf("oufti %d\n",recur);
+  if(t->isDeleted()){
+    printf("a deleted triangle is a neighbor of a non deleted triangle\n");
+  }
   int iV=-1;
   for (int i=0; i<4; i++){
     if (t->tet()->getVertex(i) == v){
@@ -358,12 +423,19 @@ void gmshBuildVertexCavity_recur ( MTet4 *t,
       break;
     }
   }
-  if (iV==-1)throw;
+  if (iV==-1){
+    printf("this tet does not contain a given vertex\n");
+  }
   for (int i=0; i<3; i++){
     MTet4 *neigh = t->getNeigh(vFac[iV][i]);
     if (neigh){
       bool found = false;
-      for (int j=0;j<cavity.size();j++){if (cavity[j] == neigh){found = true; break;}}
+      for (int j=0;j<cavity.size();j++){
+	if (cavity[j] == neigh){
+	  found = true; 
+	  j=cavity.size();
+	}
+      }
       if (!found){
 	cavity.push_back(neigh);
 	gmshBuildVertexCavity_recur ( neigh,v,cavity);
@@ -373,8 +445,12 @@ void gmshBuildVertexCavity_recur ( MTet4 *t,
 }
 
 
-void gmshSmoothVertex ( MTet4 *t, 
+bool gmshSmoothVertex ( MTet4 *t, 
 			int iVertex){
+  
+  if(t->isDeleted())throw;
+  if(t->tet()->getVertex(iVertex)->onWhat()->dim() < 3)return false;
+
   std::vector<MTet4*> cavity;
   cavity.push_back(t);
   gmshBuildVertexCavity_recur (t,t->tet()->getVertex(iVertex),cavity);
@@ -388,9 +464,18 @@ void gmshSmoothVertex ( MTet4 *t,
     double volume;
     double q = qmTet(cavity[i]->tet(),QMTET_2,&volume);
     worst = std::min(worst,q);
-    xcg += 0.25*(cavity[i]->tet()->getVertex(0)->x()+cavity[i]->tet()->getVertex(1)->x()+cavity[i]->tet()->getVertex(2)->x()+cavity[i]->tet()->getVertex(3)->x())*volume;
-    ycg += 0.25*(cavity[i]->tet()->getVertex(0)->y()+cavity[i]->tet()->getVertex(1)->y()+cavity[i]->tet()->getVertex(2)->y()+cavity[i]->tet()->getVertex(3)->y())*volume;
-    zcg += 0.25*(cavity[i]->tet()->getVertex(0)->z()+cavity[i]->tet()->getVertex(1)->z()+cavity[i]->tet()->getVertex(2)->z()+cavity[i]->tet()->getVertex(3)->z())*volume;    
+    xcg += 0.25*(cavity[i]->tet()->getVertex(0)->x()+
+		 cavity[i]->tet()->getVertex(1)->x()+
+		 cavity[i]->tet()->getVertex(2)->x()+
+		 cavity[i]->tet()->getVertex(3)->x())*volume;
+    ycg += 0.25*(cavity[i]->tet()->getVertex(0)->y()+
+		 cavity[i]->tet()->getVertex(1)->y()+
+		 cavity[i]->tet()->getVertex(2)->y()+
+		 cavity[i]->tet()->getVertex(3)->y())*volume;
+    zcg += 0.25*(cavity[i]->tet()->getVertex(0)->z()+
+		 cavity[i]->tet()->getVertex(1)->z()+
+		 cavity[i]->tet()->getVertex(2)->z()+
+		 cavity[i]->tet()->getVertex(3)->z())*volume;    
     vTot += volume;
     
   }
@@ -418,7 +503,9 @@ void gmshSmoothVertex ( MTet4 *t,
     t->tet()->getVertex(iVertex)->x() = x;
     t->tet()->getVertex(iVertex)->y() = y;
     t->tet()->getVertex(iVertex)->z() = z;
+    return false;
   }
+  return true;
 }
 
 

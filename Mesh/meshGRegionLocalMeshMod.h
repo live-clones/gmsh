@@ -23,15 +23,15 @@
 #include "meshGRegionDelaunayInsertion.h"
 #include "qualityMeasures.h"
 
-void gmshEdgeSwap (std::vector<MTet4 *> &newTets,
+bool gmshEdgeSwap (std::vector<MTet4 *> &newTets,
 		   MTet4 *tet, 
 		   int iLocalEdge,
 		   const gmshQualityMeasure4Tet &cr);
-void gmshFaceSwap (std::vector<MTet4 *> &newTets,
+bool gmshFaceSwap (std::vector<MTet4 *> &newTets,
 		   MTet4 *tet, 
 		   int iLocalFace,
 		   const gmshQualityMeasure4Tet &cr);
-void gmshSmoothVertex ( MTet4 *t, 
+bool gmshSmoothVertex ( MTet4 *t, 
 			int iLocalVertex);
   
 #endif

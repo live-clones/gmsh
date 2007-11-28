@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.22 2007-11-26 15:08:34 remacle Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.23 2007-11-28 11:47:36 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -436,6 +436,11 @@ template <class CONTAINER, class DATA>
 void gmshOptimizeMesh (CONTAINER &allTets, DATA &vSizes)
 {
   double t1 = Cpu();
+  std::vector<MTet4*> illegals;
+  const int nbRanges=10;
+  int quality_ranges [nbRanges];
+
+
   {
     double totalVolumeb = 0.0;
     double worst = 1.0;
@@ -452,56 +457,136 @@ void gmshOptimizeMesh (CONTAINER &allTets, DATA &vSizes)
 	  totalVolumeb+=vol;
 	}
       }
-    Msg(INFO,"Optimization Vol = %12.5E QBAD %12.5E QAVG %12.5E",totalVolumeb,worst,avg/count);
+    Msg(INFO,"Opti : START with %12.5E QBAD %12.5E QAVG %12.5E",totalVolumeb,worst,avg/count);
   }    
     
+  double qMin = 0.5;
+  double sliverLimit = 0.2;
 
+  int nbESwap=0, nbFSwap=0, nbReloc=0;
+    
   while (1){
     std::vector<MTet4*> newTets;
     
-    // get a bad tet and try to swap each of its edges
+    // get a bad tet and try to swap each of its edges and faces
+
+    for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it){
+      if (!(*it)->isDeleted()){
+	double vol;
+	double qq = qmTet((*it)->tet(),QMTET_2,&vol);
+	if (qq < qMin){
+	  for (int i=0;i<4;i++){
+	    if (gmshFaceSwap(newTets,*it,i,QMTET_2)){nbFSwap++;break;}
+	  }
+	}
+      }
+    }
+ 
+    connectTets(allTets.begin(),allTets.end());
+
+    illegals.clear();
+    for (int i=0;i<nbRanges;i++)quality_ranges[i] = 0;
 
     for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
       {
 	if (!(*it)->isDeleted()){
 	  double vol;
 	  double qq = qmTet((*it)->tet(),QMTET_2,&vol);
-	  //	  gmshSmoothVertex(*it,IED%4);
-	  if (qq < .4)
+	  if (qq < qMin)
 	    for (int i=0;i<6;i++){
-	      gmshEdgeSwap(newTets,*it,i,QMTET_2);
-	      if ((*it)->isDeleted())i=10;
+	      if (gmshEdgeSwap(newTets,*it,i,QMTET_2)) {nbESwap++;break;}
 	    }
+	  if (!(*it)->isDeleted()){
+	    if (qq < sliverLimit)illegals.push_back(*it);
+	    for (int i=0;i<nbRanges;i++){
+	      double low  = (double)i/(nbRanges);
+	      double high = (double)(i+1)/(nbRanges);
+	      if (qq >= low && qq < high)quality_ranges[i]++;
+	    }	      	      
+	  }
+	  //	  if (newTets.size())break;
 	}
       }
-    
-   // relocate vertices
-//      for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
-//        {
-// 	 if (!(*it)->isDeleted()){
-// 	   double vol;
-// 	   double qq = qmTet((*it)->tet(),QMTET_2,&vol);
-// 	   if (qq < .5)
-// 	     for (int i=0;i<4;i++){
-// 	       gmshSmoothVertex(*it,i);
-// 	     }
-// 	 }
-//        }
-
 
     // if no new tet is created, leave
-    if (!newTets.size())break;
 
+    if (!newTets.size())break;
+    
     // add all the new tets in the container
     for (int i=0;i<newTets.size();i++){
       if (!newTets[i]->isDeleted()){
+	// it was bugged here because the setup fct removes 
+	// the neighbors. Now it seems to work fine
+	MTet4 *t0 = newTets[i]->getNeigh(0);
+	MTet4 *t1 = newTets[i]->getNeigh(1);
+	MTet4 *t2 = newTets[i]->getNeigh(2);
+	MTet4 *t3 = newTets[i]->getNeigh(3);
 	newTets[i]->setup(newTets[i]->tet(),vSizes);
+	newTets[i]->setNeigh(0,t0);
+	newTets[i]->setNeigh(1,t1);
+	newTets[i]->setNeigh(2,t2);
+	newTets[i]->setNeigh(3,t3);
 	allTets.insert(newTets[i]);
       }
       else{
+	delete newTets[i]->tet();
 	delete newTets[i];
       }
     }  
+
+//     int nbNeigh  = 0;
+//     int k =0;
+//     MTet4 *test [10000][4];
+//     for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+//       {
+// 	if (!(*it)->isDeleted()){
+// 	  for (int i=0;i<4;i++){
+// 	    MTet4 *neigh = (*it)->getNeigh(i);
+// 	    test[k][i] = neigh;
+// 	    if (neigh){
+// 	      nbNeigh++;
+// 	    }
+// 	  }
+// 	  k++;
+// 	}
+//       }
+    
+//     printf("nbNeigh = %d --> ",nbNeigh);
+
+    //    connectTets(allTets.begin(),allTets.end());
+
+//     nbNeigh  = 0;
+//     k = 0;
+//     for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+//       {
+// 	if (!(*it)->isDeleted()){
+// 	  for (int i=0;i<4;i++){
+// 	    MTet4 *neigh = (*it)->getNeigh(i);
+// 	    if (test[k][i] != neigh)
+// 	      {
+// 		printf("connexion tet %d %p , item %d differs %p %p\n",k,(*it),i,neigh,test[k][i]);
+// 	      }
+// 	    if (neigh){
+// 	      nbNeigh++;
+// 	    }
+// 	  }
+// 	  k++;
+// 	}
+//       }
+    
+//     printf("nbNeigh = %d\n",nbNeigh);
+    // relocate vertices
+    for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+      {
+	if (!(*it)->isDeleted()){
+	  double vol;
+	  double qq = qmTet((*it)->tet(),QMTET_2,&vol);
+	  if (qq < .5)
+	    for (int i=0;i<4;i++){
+	      if (gmshSmoothVertex(*it,i))nbReloc++;
+	    }
+	}
+      }
 
     double totalVolumeb = 0.0;
     double worst = 1.0;
@@ -519,8 +604,25 @@ void gmshOptimizeMesh (CONTAINER &allTets, DATA &vSizes)
 	}
       }
     double t2 = Cpu();
-    Msg(INFO,"Optimization Vol = %12.5E QBAD %12.5E QAVG %12.5E (%8.3f sec)",totalVolumeb,worst,avg/count,t2-t1);
+    Msg(INFO,"Opti : (%d,%d,%d) = %12.5E QBAD %12.5E QAVG %12.5E (%8.3f sec)",nbESwap,nbFSwap,nbReloc,totalVolumeb,worst,avg/count,t2-t1);
   }
+  
+  int nbSlivers = 0;
+  for (int i=0;i<illegals.size();i++)
+    if (!(illegals[i]->isDeleted()))nbSlivers ++;
+  
+  if (nbSlivers){
+    Msg(INFO,"Opti : %d illegal tets are still in the mesh, trying to remove them",nbSlivers);
+  }
+  else{
+    Msg(INFO,"Opti : no illegal tets in the mesh ;-)",nbSlivers);
+  }
+
+  for (int i=0;i<nbRanges;i++){
+    double low  = (double)i/(nbRanges);
+    double high = (double)(i+1)/(nbRanges);
+    Msg(INFO,"Opti : %3.2f < QUAL < %3.2f : %9d elements ",low,high,quality_ranges[i]);
+  }	      	      
 }
 
 
