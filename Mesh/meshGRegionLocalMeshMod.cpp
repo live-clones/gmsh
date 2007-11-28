@@ -203,15 +203,14 @@ bool gmshEdgeSwap (std::vector<MTet4 *> &newTets,
 
   bool closed = gmshBuildEdgeCavity ( tet,iLocalEdge,&v1,&v2,cavity,outside,ring);
 
-
   if (!closed)return false;
   
   double volumeRef = 0.0;
   double tetQualityRef = 1;
   for (int i=0;i<cavity.size();i++){
-    double vol;
-    tetQualityRef = std::min(qmTet (cavity[i]->tet() ,  cr , &vol) , tetQualityRef);
-    volumeRef += fabs(vol);
+    double vol = fabs(cavity[i]->tet()->getVolume());
+    tetQualityRef = std::min(tetQualityRef,cavity[i]->getQuality());
+    volumeRef += vol;
   }
 
   // build swap patterns
@@ -288,8 +287,8 @@ bool gmshEdgeSwap (std::vector<MTet4 *> &newTets,
 					   pv2,
 					   pv1,
 					   v2);
-    MTet4 *t41 = new MTet4 ( tr1 ); 
-    MTet4 *t42 = new MTet4 ( tr2 );
+    MTet4 *t41 = new MTet4 ( tr1 , tetQuality1[iT]); 
+    MTet4 *t42 = new MTet4 ( tr2 , tetQuality2[iT]);
     t41->setOnWhat(cavity[0]->onWhat());
     t42->setOnWhat(cavity[0]->onWhat());
     outside.push_back(t41);
@@ -346,10 +345,10 @@ bool gmshFaceSwap (std::vector<MTet4 *> &newTets,
 
   //  printf("%p %p -- %p %p %p\n",v1,v2,f1,f2,f3);
 
-  double vol1;
-  double q1 = qmTet(t1->tet(),cr,&vol1);
-  double vol2;
-  double q2 = qmTet(t2->tet(),cr,&vol2);
+  double vol1 = fabs(t1->tet()->getVolume());
+  double q1 = t1->getQuality();
+  double vol2 = fabs(t2->tet()->getVolume());
+  double q2 = t2->getQuality();
   
   double vol3;
   double q3 = qmTet(f1,f2,v1,v2,cr,&vol3);
@@ -392,9 +391,9 @@ bool gmshFaceSwap (std::vector<MTet4 *> &newTets,
   MTetrahedron *tr1 = new MTetrahedron ( f1,f2,v1,v2);
   MTetrahedron *tr2 = new MTetrahedron ( f2,f3,v1,v2);
   MTetrahedron *tr3 = new MTetrahedron ( f3,f1,v1,v2);
-  MTet4 *t41 = new MTet4 ( tr1 ); 
-  MTet4 *t42 = new MTet4 ( tr2 );
-  MTet4 *t43 = new MTet4 ( tr3 ); 
+  MTet4 *t41 = new MTet4 ( tr1 , q3); 
+  MTet4 *t42 = new MTet4 ( tr2 , q4);
+  MTet4 *t43 = new MTet4 ( tr3 , q5); 
   t41->setOnWhat(t1->onWhat());
   t42->setOnWhat(t1->onWhat());
   t43->setOnWhat(t1->onWhat());
@@ -446,7 +445,8 @@ void gmshBuildVertexCavity_recur ( MTet4 *t,
 
 
 bool gmshSmoothVertex ( MTet4 *t, 
-			int iVertex){
+			int iVertex,
+			const gmshQualityMeasure4Tet &cr){
   
   if(t->isDeleted())throw;
   if(t->tet()->getVertex(iVertex)->onWhat()->dim() < 3)return false;
@@ -455,14 +455,13 @@ bool gmshSmoothVertex ( MTet4 *t,
   cavity.push_back(t);
   gmshBuildVertexCavity_recur (t,t->tet()->getVertex(iVertex),cavity);
   
-  //  printf("cavity o size %d\n",cavity.size());
-
   double xcg=0,ycg=0,zcg=0;  
   double vTot=0;
   double worst = 1.0;
+
   for (int i=0 ; i< cavity.size() ; i++){
-    double volume;
-    double q = qmTet(cavity[i]->tet(),QMTET_2,&volume);
+    double volume = fabs(cavity[i]->tet()->getVolume());
+    double q = cavity[i]->getQuality();
     worst = std::min(worst,q);
     xcg += 0.25*(cavity[i]->tet()->getVertex(0)->x()+
 		 cavity[i]->tet()->getVertex(1)->x()+
@@ -492,11 +491,13 @@ bool gmshSmoothVertex ( MTet4 *t,
   t->tet()->getVertex(iVertex)->y() = ycg;
   t->tet()->getVertex(iVertex)->z() = zcg;
   double worstAfter = 1.0;
+  double newQuals[2000];
+  if (cavity.size() > 2000) throw;
   for (int i=0 ; i< cavity.size() ; i++){
     double volume;
-    double q = qmTet(cavity[i]->tet(),QMTET_2,&volume);
+    newQuals[i] = qmTet(cavity[i]->tet(),cr,&volume);
     volumeAfter += volume;
-    worstAfter =std::min(worstAfter,q);
+    worstAfter =std::min(worstAfter,newQuals[i]);
   }
 
   if (fabs(volumeAfter-vTot) > 1.e-10 * vTot || worstAfter < worst){
@@ -505,7 +506,14 @@ bool gmshSmoothVertex ( MTet4 *t,
     t->tet()->getVertex(iVertex)->z() = z;
     return false;
   }
-  return true;
+  else{
+    // restore new quality
+    for (int i=0 ; i< cavity.size() ; i++){
+      cavity[i]->setQuality(newQuals[i]);
+    }
+    
+    return true;
+  }
 }
 
 

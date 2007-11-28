@@ -25,5 +25,6 @@ class GModel;
 void GetStatistics(double stat[50], double quality[3][100]=0);
 void GenerateMesh(int dimension);
 void OptimizeMesh(GModel *m);
+void OptimizeMeshNetgen(GModel *m);
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.36 2007-11-12 10:41:52 colignon Exp $
+// $Id: meshGRegion.cpp,v 1.37 2007-11-28 14:18:10 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -565,7 +565,7 @@ void meshGRegion::operator() (GRegion *gr)
   }
 }
 
-void optimizeMeshGRegion::operator() (GRegion *gr) 
+void optimizeMeshGRegionNetgen::operator() (GRegion *gr) 
 {  
   if(gr->geomType() == GEntity::DiscreteVolume) return;
   
@@ -593,4 +593,19 @@ void optimizeMeshGRegion::operator() (GRegion *gr)
   Ng_DeleteMesh(ngmesh);
   Ng_Exit();
 #endif
+}
+
+void optimizeMeshGRegionGmsh::operator() (GRegion *gr) 
+{  
+  if(gr->geomType() == GEntity::DiscreteVolume) return;
+  
+  // don't optimize extruded meshes
+  ExtrudeParams *ep = gr->meshAttributes.extrude;
+  if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
+  
+  Msg(STATUS2, "Optimizing volume %d", gr->tag());
+  // import mesh into netgen, including volume tets
+  
+  gmshOptimizeMesh (gr, QMTET_2);  
+  
 }

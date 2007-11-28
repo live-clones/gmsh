@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.126 2007-11-27 16:45:27 geuzaine Exp $
+// $Id: Generator.cpp,v 1.127 2007-11-28 14:18:10 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -307,12 +307,24 @@ void Mesh3D(GModel *m)
   Msg(STATUS1, "Mesh");
 }
 
+void OptimizeMeshNetgen(GModel *m)
+{
+  Msg(STATUS1, "Optimizing 3D with Netgen...");
+  double t1 = Cpu();
+
+  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionNetgen());
+
+  double t2 = Cpu();
+  Msg(INFO, "Mesh 3D optimization with Netgen complete (%g s)", t2 - t1);
+  Msg(STATUS1, "Mesh");
+}
+
 void OptimizeMesh(GModel *m)
 {
   Msg(STATUS1, "Optimizing 3D...");
   double t1 = Cpu();
 
-  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegion());
+  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionGmsh());
 
   double t2 = Cpu();
   Msg(INFO, "Mesh 3D optimization complete (%g s)", t2 - t1);
@@ -359,6 +371,9 @@ void GenerateMesh(int ask)
   // Optimize quality
   if(m->getMeshStatus() == 3 && CTX.mesh.optimize)
     OptimizeMesh(m);
+  // Optimize quality with netgen
+  if(m->getMeshStatus() == 3 && CTX.mesh.optimizeNetgen)
+    OptimizeMeshNetgen(m);
   
   // Create high order elements
   if(m->getMeshStatus() && CTX.mesh.order > 1) 

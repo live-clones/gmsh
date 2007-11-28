@@ -21,6 +21,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "MElement.h"
+#include "qualityMeasures.h"
 #include <list>
 #include <set>
 #include <stack>
@@ -62,9 +63,15 @@ class MTet4
     {
       neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
     }
-  MTet4 (MTetrahedron * t) : deleted(false),  gr(0),circum_radius(0.0),base(t)
+  MTet4 (MTetrahedron * t, double qual) : deleted(false),  gr(0),circum_radius(qual),base(t)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
+  }
+  MTet4 (MTetrahedron * t, const gmshQualityMeasure4Tet &qm) : deleted(false), gr(0),base(t)
+  {
+    neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
+    double vol;
+    circum_radius = qmTet(t,qm,&vol);
   }
 
   void setup ( MTetrahedron * t, std::vector<double> & sizes)
@@ -91,10 +98,9 @@ class MTet4
   
   bool isDeleted () const {return deleted;}
   void   forceRadius (double r){circum_radius=r;}
-  inline double getRadius ()const {return circum_radius;}
-  
-
-
+  inline double getRadius  ()const {return circum_radius;}
+  inline double getQuality ()const {return circum_radius;} 
+  inline double setQuality (const double &q){circum_radius=q;} 
   inline MTetrahedron * tet() const {return base;}
   inline MTetrahedron * &tet() {return base;}
   inline void  setNeigh (int iN , MTet4 *n) {neigh[iN]=n;}
@@ -224,5 +230,7 @@ private:
   container & getAllTets () {return allTets;}
 
 };
+
+void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm);
 
 #endif

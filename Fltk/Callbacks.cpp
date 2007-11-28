@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.552 2007-10-03 19:40:40 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.553 2007-11-28 14:18:09 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1071,6 +1071,7 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_reverse_all_normals(0, GMSH_SET, WID->mesh_butt[0]->value());
   opt_mesh_lc_from_curvature(0, GMSH_SET, WID->mesh_butt[1]->value());
   opt_mesh_optimize(0, GMSH_SET, WID->mesh_butt[2]->value());
+  opt_mesh_optimize_netgen(0, GMSH_SET, WID->mesh_butt[24]->value());
   opt_mesh_order(0, GMSH_SET, WID->mesh_value[3]->value());
   opt_mesh_smooth_internal_edges(0, GMSH_SET, WID->mesh_butt[3]->value());
   opt_mesh_second_order_incomplete(0, GMSH_SET, WID->mesh_butt[4]->value());
@@ -3854,6 +3855,20 @@ void mesh_optimize_cb(CALLBACK_ARGS)
   }
   CTX.threads_lock = 1;
   OptimizeMesh(GModel::current());
+  CTX.threads_lock = 0;
+  CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+  Draw();
+  Msg(STATUS2N, " ");
+}
+
+void mesh_optimize_netgen_cb(CALLBACK_ARGS)
+{
+  if(CTX.threads_lock) {
+    Msg(INFO, "I'm busy! Ask me that later...");
+    return;
+  }
+  CTX.threads_lock = 1;
+  OptimizeMeshNetgen(GModel::current());
   CTX.threads_lock = 0;
   CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
   Draw();

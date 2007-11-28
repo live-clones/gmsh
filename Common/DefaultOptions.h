@@ -981,6 +981,8 @@ StringXNumber MeshOptions_Number[] = {
     "Display size of normal vectors (in pixels)" }, 
 
   { F|O, "Optimize" , opt_mesh_optimize , 0. , 
+    "Optimize the mesh to improve the quality of tetrahedral elements" },
+  { F|O, "OptimizeNetgen" , opt_mesh_optimize_netgen , 0. , 
     "Optimize the mesh using Netgen to improve the quality of tetrahedral elements" },
 
   { F|O, "Points" , opt_mesh_points , 0. , 

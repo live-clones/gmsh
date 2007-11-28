@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.23 2007-11-28 11:47:36 remacle Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.24 2007-11-28 14:18:10 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -432,32 +432,53 @@ void recur_classify ( MTet4 *t ,
     }
 }
 
-template <class CONTAINER, class DATA> 
-void gmshOptimizeMesh (CONTAINER &allTets, DATA &vSizes)
+//template <class CONTAINER, class DATA> 
+void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm)
 {
+  typedef std::list<MTet4 *> CONTAINER ;
+  CONTAINER allTets;
+  for (int i=0;i<gr->tetrahedra.size();i++){
+    allTets.push_back(new MTet4(gr->tetrahedra[i],qm));
+  }
+  gr->tetrahedra.clear();
+  
+  connectTets(allTets.begin(),allTets.end());
+
+
+
+
   double t1 = Cpu();
   std::vector<MTet4*> illegals;
   const int nbRanges=10;
   int quality_ranges [nbRanges];
-
-
   {
     double totalVolumeb = 0.0;
     double worst = 1.0;
     double avg = 0;
     int count=0;
-    for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+    for (int i=0;i<nbRanges;i++)quality_ranges[i] = 0;
+    for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
       {
 	if (!(*it)->isDeleted()){
-	  double vol;
-	  double qual = qmTet((*it)->tet(),QMTET_2,&vol);
+	  double vol = fabs((*it)->tet()->getVolume());
+	  double qual = (*it)->getQuality();
 	  worst = std::min(qual,worst);
 	  avg+=qual;
 	  count++;
 	  totalVolumeb+=vol;
+	  for (int i=0;i<nbRanges;i++){
+	    double low  = (double)i/(nbRanges);
+	    double high = (double)(i+1)/(nbRanges);
+	    if (qual >= low && qual < high)quality_ranges[i]++;
+	  }	      	      
 	}
       }
     Msg(INFO,"Opti : START with %12.5E QBAD %12.5E QAVG %12.5E",totalVolumeb,worst,avg/count);
+    for (int i=0;i<nbRanges;i++){
+      double low  = (double)i/(nbRanges);
+      double high = (double)(i+1)/(nbRanges);
+      Msg(INFO,"Opti : %3.2f < QUAL < %3.2f : %9d elements ",low,high,quality_ranges[i]);
+    }	      	      
   }    
     
   double qMin = 0.5;
@@ -466,35 +487,29 @@ void gmshOptimizeMesh (CONTAINER &allTets, DATA &vSizes)
   int nbESwap=0, nbFSwap=0, nbReloc=0;
     
   while (1){
-    std::vector<MTet4*> newTets;
-    
-    // get a bad tet and try to swap each of its edges and faces
-
-    for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it){
+    std::vector<MTet4*> newTets;    
+    for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it){
       if (!(*it)->isDeleted()){
 	double vol;
-	double qq = qmTet((*it)->tet(),QMTET_2,&vol);
+	double qq = (*it)->getQuality();
 	if (qq < qMin){
 	  for (int i=0;i<4;i++){
-	    if (gmshFaceSwap(newTets,*it,i,QMTET_2)){nbFSwap++;break;}
+	    if (gmshFaceSwap(newTets,*it,i,qm)){nbFSwap++;break;}
 	  }
 	}
       }
     }
  
-    connectTets(allTets.begin(),allTets.end());
-
     illegals.clear();
     for (int i=0;i<nbRanges;i++)quality_ranges[i] = 0;
 
-    for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+    for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
       {
 	if (!(*it)->isDeleted()){
-	  double vol;
-	  double qq = qmTet((*it)->tet(),QMTET_2,&vol);
+	  double qq = (*it)->getQuality();
 	  if (qq < qMin)
 	    for (int i=0;i<6;i++){
-	      if (gmshEdgeSwap(newTets,*it,i,QMTET_2)) {nbESwap++;break;}
+	      if (gmshEdgeSwap(newTets,*it,i,qm)) {nbESwap++;break;}
 	    }
 	  if (!(*it)->isDeleted()){
 	    if (qq < sliverLimit)illegals.push_back(*it);
@@ -504,29 +519,15 @@ void gmshOptimizeMesh (CONTAINER &allTets, DATA &vSizes)
 	      if (qq >= low && qq < high)quality_ranges[i]++;
 	    }	      	      
 	  }
-	  //	  if (newTets.size())break;
 	}
       }
-
-    // if no new tet is created, leave
 
     if (!newTets.size())break;
     
     // add all the new tets in the container
     for (int i=0;i<newTets.size();i++){
       if (!newTets[i]->isDeleted()){
-	// it was bugged here because the setup fct removes 
-	// the neighbors. Now it seems to work fine
-	MTet4 *t0 = newTets[i]->getNeigh(0);
-	MTet4 *t1 = newTets[i]->getNeigh(1);
-	MTet4 *t2 = newTets[i]->getNeigh(2);
-	MTet4 *t3 = newTets[i]->getNeigh(3);
-	newTets[i]->setup(newTets[i]->tet(),vSizes);
-	newTets[i]->setNeigh(0,t0);
-	newTets[i]->setNeigh(1,t1);
-	newTets[i]->setNeigh(2,t2);
-	newTets[i]->setNeigh(3,t3);
-	allTets.insert(newTets[i]);
+	allTets.push_back(newTets[i]);
       }
       else{
 	delete newTets[i]->tet();
@@ -534,56 +535,14 @@ void gmshOptimizeMesh (CONTAINER &allTets, DATA &vSizes)
       }
     }  
 
-//     int nbNeigh  = 0;
-//     int k =0;
-//     MTet4 *test [10000][4];
-//     for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
-//       {
-// 	if (!(*it)->isDeleted()){
-// 	  for (int i=0;i<4;i++){
-// 	    MTet4 *neigh = (*it)->getNeigh(i);
-// 	    test[k][i] = neigh;
-// 	    if (neigh){
-// 	      nbNeigh++;
-// 	    }
-// 	  }
-// 	  k++;
-// 	}
-//       }
-    
-//     printf("nbNeigh = %d --> ",nbNeigh);
-
-    //    connectTets(allTets.begin(),allTets.end());
-
-//     nbNeigh  = 0;
-//     k = 0;
-//     for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
-//       {
-// 	if (!(*it)->isDeleted()){
-// 	  for (int i=0;i<4;i++){
-// 	    MTet4 *neigh = (*it)->getNeigh(i);
-// 	    if (test[k][i] != neigh)
-// 	      {
-// 		printf("connexion tet %d %p , item %d differs %p %p\n",k,(*it),i,neigh,test[k][i]);
-// 	      }
-// 	    if (neigh){
-// 	      nbNeigh++;
-// 	    }
-// 	  }
-// 	  k++;
-// 	}
-//       }
-    
-//     printf("nbNeigh = %d\n",nbNeigh);
     // relocate vertices
-    for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+    for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
       {
 	if (!(*it)->isDeleted()){
-	  double vol;
-	  double qq = qmTet((*it)->tet(),QMTET_2,&vol);
-	  if (qq < .5)
+	  double qq = (*it)->getQuality();
+	  if (qq < qMin)
 	    for (int i=0;i<4;i++){
-	      if (gmshSmoothVertex(*it,i))nbReloc++;
+	      if (gmshSmoothVertex(*it,i,qm))nbReloc++;
 	    }
 	}
       }
@@ -592,11 +551,11 @@ void gmshOptimizeMesh (CONTAINER &allTets, DATA &vSizes)
     double worst = 1.0;
     double avg = 0;
     int count=0;
-    for (typename CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+    for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
       {
 	if (!(*it)->isDeleted()){
-	  double vol;
-	  double qual = qmTet((*it)->tet(),QMTET_2,&vol);
+	  double vol = fabs((*it)->tet()->getVolume());
+	  double qual = (*it)->getQuality();
 	  worst = std::min(qual,worst);
 	  avg+=qual;
 	  count++;
@@ -623,6 +582,19 @@ void gmshOptimizeMesh (CONTAINER &allTets, DATA &vSizes)
     double high = (double)(i+1)/(nbRanges);
     Msg(INFO,"Opti : %3.2f < QUAL < %3.2f : %9d elements ",low,high,quality_ranges[i]);
   }	      	      
+
+  for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+    {
+      if (!(*it)->isDeleted()){
+	gr->tetrahedra.push_back((*it)->tet());
+	delete *it;
+      }
+      else{
+	delete (*it)->tet();
+	delete *it;	
+      }
+    }
+
 }
 
 
@@ -760,7 +732,7 @@ void insertVerticesInRegion (GRegion *gr)
 	  Msg(INFO,"cleaning up the memory %d -> %d ",n1,allTets.size());	  	  
 	}
     }
-  gmshOptimizeMesh (allTets,vSizes);
+
   
   while (1)
     {

@@ -38,8 +38,14 @@ class meshGRegionExtruded {
   void operator () (GRegion *);
 };
 
-// Optimize the mesh of the region
-class optimizeMeshGRegion {
+// Optimize the mesh of the region using gmsh's algo
+class optimizeMeshGRegionGmsh {
+ public :
+  void operator () (GRegion *);
+};
+
+// Optimize the mesh of the region using netgen's algo
+class optimizeMeshGRegionNetgen {
  public :
   void operator () (GRegion *);
 };

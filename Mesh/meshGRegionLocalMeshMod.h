@@ -32,7 +32,8 @@ bool gmshFaceSwap (std::vector<MTet4 *> &newTets,
 		   int iLocalFace,
 		   const gmshQualityMeasure4Tet &cr);
 bool gmshSmoothVertex ( MTet4 *t, 
-			int iLocalVertex);
+			int iLocalVertex,
+			const gmshQualityMeasure4Tet &cr);
   
 #endif
 

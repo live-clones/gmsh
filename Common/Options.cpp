@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.368 2007-11-26 14:34:09 remacle Exp $
+// $Id: Options.cpp,v 1.369 2007-11-28 14:18:09 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4205,6 +4205,17 @@ double opt_mesh_optimize(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
     WID->mesh_butt[2]->value(CTX.mesh.optimize);
+#endif
+  return CTX.mesh.optimize;
+}
+
+double opt_mesh_optimize_netgen(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.optimize =(int) val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[2]->value(CTX.mesh.optimizeNetgen);
 #endif
   return CTX.mesh.optimize;
 }

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.644 2007-11-08 19:30:30 geuzaine Exp $
+// $Id: GUI.cpp,v 1.645 2007-11-28 14:18:10 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -288,8 +288,9 @@ Context_Item menu_mesh[] = {
   {"3D",           (Fl_Callback *)mesh_3d_cb} , 
   {"First order",  (Fl_Callback *)mesh_degree_cb, (void*)1 } , 
   {"Second order", (Fl_Callback *)mesh_degree_cb, (void*)2 } , 
+  {"Optimize", (Fl_Callback *)mesh_optimize_cb} , 
 #if defined(HAVE_NETGEN)
-  {"Optimize quality", (Fl_Callback *)mesh_optimize_cb} , 
+  {"Optimize (netgen)", (Fl_Callback *)mesh_optimize_netgen_cb} , 
 #endif
 #if defined(HAVE_FOURIER_MODEL)
   {"Reparameterize",   (Fl_Callback *)mesh_parameterize_cb} , 
@@ -2457,16 +2458,20 @@ void GUI::create_option_window()
 
       mesh_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Optimize quality of tetrahedra");
       mesh_butt[2]->type(FL_TOGGLE_BUTTON);
-#if !defined(HAVE_NETGEN)
-      mesh_butt[2]->deactivate();
-#endif
       mesh_butt[2]->callback(mesh_options_ok_cb);
 
-      mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Optimize high order mesh (only for 2D-plane)");
+      mesh_butt[24] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Optimize quality of tetrahedra with Netgen");
+      mesh_butt[24]->type(FL_TOGGLE_BUTTON);
+#if !defined(HAVE_NETGEN)
+      mesh_butt[24]->deactivate();
+#endif
+      mesh_butt[24]->callback(mesh_options_ok_cb);
+
+      mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Optimize high order mesh (only for 2D-plane)");
       mesh_butt[3]->type(FL_TOGGLE_BUTTON);
       mesh_butt[3]->callback(mesh_options_ok_cb);
 
-      mesh_butt[21] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Impose C1 continuity (only for 2D-plane, order 2 and 3)");
+      mesh_butt[21] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Impose C1 continuity (only for 2D-plane, order 2 and 3)");
       mesh_butt[21]->type(FL_TOGGLE_BUTTON);
       mesh_butt[21]->callback(mesh_options_ok_cb);
 
