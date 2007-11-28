@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.444 2007-11-27 22:37:00 geuzaine Exp $
+# $Id: Makefile,v 1.445 2007-11-28 09:26:01 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -121,10 +121,10 @@ tag:
 	echo "#define GMSH_PATCH_VERSION ${GMSH_PATCH_VERSION}" >> ${GMSH_VERSION_FILE}
 	echo "#define GMSH_EXTRA_VERSION \"${GMSH_EXTRA_VERSION}\"" >> ${GMSH_VERSION_FILE}
 	echo "#define GMSH_VERSION  \"${GMSH_VERSION}\"" >> ${GMSH_VERSION_FILE}
-	echo "#define GMSH_DATE     \"`date`\""     >> ${GMSH_VERSION_FILE}
-	echo "#define GMSH_HOST     \"`hostname`\"" >> ${GMSH_VERSION_FILE}
-	echo "#define GMSH_PACKAGER \"`whoami`\""   >> ${GMSH_VERSION_FILE}
-	echo "#define GMSH_OS       \"${UNAME}\""   >> ${GMSH_VERSION_FILE}
+	echo "#define GMSH_DATE     \"`date`\""          >> ${GMSH_VERSION_FILE}
+	echo "#define GMSH_HOST     \"${HOSTNAME}\""     >> ${GMSH_VERSION_FILE}
+	echo "#define GMSH_PACKAGER \"`whoami`\""        >> ${GMSH_VERSION_FILE}
+	echo "#define GMSH_OS       \"${UNAME}\""        >> ${GMSH_VERSION_FILE}
 	echo "#define GMSH_SHORT_LICENSE \"${GMSH_SHORT_LICENSE}\"" >> ${GMSH_VERSION_FILE}
 
 initialtag:

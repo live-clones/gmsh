@@ -1,4 +1,4 @@
-# $Id: variables.in,v 1.18 2007-11-26 13:11:50 geuzaine Exp $
+# $Id: variables.in,v 1.19 2007-11-28 09:26:01 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -19,8 +19,9 @@
 # 
 # Please report all bugs and problems to <gmsh@geuz.org>.
 
-# OS
+# OS and host
 UNAME=@UNAME@
+HOSTNAME=@HOSTNAME@
 
 # The names of the C and C++ compilers
 CC=@CC@

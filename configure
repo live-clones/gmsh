@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CPP RANLIB ac_ct_RANLIB AR FLTKCONFIG F77 FFLAGS ac_ct_F77 CXXCPP EGREP UNAME FLAGS OPTIM LINKER GMSH_DIRS GMSH_LIBS POSTBUILD LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CPP RANLIB ac_ct_RANLIB AR FLTKCONFIG F77 FFLAGS ac_ct_F77 CXXCPP EGREP UNAME HOSTNAME FLAGS OPTIM LINKER GMSH_DIRS GMSH_LIBS POSTBUILD LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1539,6 +1539,7 @@ fi;
 
 
 UNAME=`uname`
+HOSTNAME=`hostname`
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -4820,7 +4821,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:4823:" \
+echo "$as_me:4824:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6406,6 +6407,7 @@ fi
 
 
 
+
           ac_config_files="$ac_config_files variables"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -7062,6 +7064,7 @@ s,@ac_ct_F77@,$ac_ct_F77,;t t
 s,@CXXCPP@,$CXXCPP,;t t
 s,@EGREP@,$EGREP,;t t
 s,@UNAME@,$UNAME,;t t
+s,@HOSTNAME@,$HOSTNAME,;t t
 s,@FLAGS@,$FLAGS,;t t
 s,@OPTIM@,$OPTIM,;t t
 s,@LINKER@,$LINKER,;t t
@@ -7336,7 +7339,7 @@ fi
 
 echo "********************************************************************"
 echo "Gmsh is configured for"
-echo "- OS           : $UNAME"
+echo "- OS           : $UNAME on $HOSTNAME"
 echo "- C compiler   : $CC"
 echo "- C++ compiler : $CXX"
 echo "- Linker       : $LINKER"
