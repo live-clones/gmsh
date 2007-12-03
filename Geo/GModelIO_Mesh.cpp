@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.23 2007-10-03 19:40:41 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.24 2007-12-03 15:17:40 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <map>
+#include <cstring>
 #include <string>
 
 #include "Message.h"

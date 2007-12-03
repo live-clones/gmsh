@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.112 2007-09-26 20:51:58 geuzaine Exp $
+// $Id: Main.cpp,v 1.113 2007-12-03 15:17:39 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -125,7 +125,11 @@ int main(int argc, char *argv[])
         else
           Msg(GERROR, "Invalid background mesh (no view)");
       }
-      if(CTX.batch > 0) {
+      if(CTX.batch == 4) {
+        AdaptMesh();
+        CreateOutputFile(CTX.output_filename, CTX.mesh.format);
+      }
+      else if(CTX.batch > 0) {
         GenerateMesh(CTX.batch);
         CreateOutputFile(CTX.output_filename, CTX.mesh.format);
       }

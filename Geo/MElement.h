@@ -304,7 +304,7 @@ class MLineN : public MLine {
 class MTriangle : public MElement {
  protected:
   MVertex *_v[3];
-  virtual void jac(int order, MVertex *v[], double u, double v, double jac[2][2]);
+  virtual void jac(int order, MVertex *verts[], double u, double v, double jac[2][2]);
  public :
   MTriangle(MVertex *v0, MVertex *v1, MVertex *v2, int num=0, int part=0) 
     : MElement(num, part)

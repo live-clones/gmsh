@@ -1,4 +1,4 @@
-// $Id: MVertex.cpp,v 1.16 2007-09-21 16:22:51 geuzaine Exp $
+// $Id: MVertex.cpp,v 1.17 2007-12-03 15:17:40 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <math.h>
+#include <cstring>
+#include <cmath>
 #include "MVertex.h"
 #include "GEdge.h"
 #include "GFace.h"

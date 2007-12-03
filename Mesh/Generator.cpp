@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.127 2007-11-28 14:18:10 remacle Exp $
+// $Id: Generator.cpp,v 1.128 2007-12-03 15:17:40 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -328,6 +328,36 @@ void OptimizeMesh(GModel *m)
 
   double t2 = Cpu();
   Msg(INFO, "Mesh 3D optimization complete (%g s)", t2 - t1);
+  Msg(STATUS1, "Mesh");
+}
+
+void AdaptMesh()
+{
+  Msg(STATUS1, "Adapting the 3D Mesh...");
+  double t1 = Cpu();
+
+  if(CTX.threads_lock) {
+    Msg(INFO, "I'm busy! Ask me that later...");
+    return;
+  }
+
+  CTX.threads_lock = 1;
+
+  GModel *m = GModel::current();
+
+  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
+  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
+  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
+  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
+  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
+  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
+  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
+  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
+  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
+  std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
+
+  double t2 = Cpu();
+  Msg(INFO, "Mesh Adaptation complete (%g s)", t2 - t1);
   Msg(STATUS1, "Mesh");
 }
 

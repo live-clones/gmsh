@@ -1,4 +1,4 @@
-// $Id: GVertex.cpp,v 1.13 2007-09-03 12:00:28 geuzaine Exp $
+// $Id: GVertex.cpp,v 1.14 2007-12-03 15:17:40 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <algorithm>
+#include <cstring>
 #include "GVertex.h"
 #include "GFace.h"
 #include "Message.h"

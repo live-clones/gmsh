@@ -56,6 +56,13 @@ class deMeshGRegion {
   void operator () (GRegion *);
 };
 
+// adapt the mesh of a region
+class adaptMeshGRegion {
+ public :
+  void operator () (GRegion *);
+};
+
+
 void MeshDelaunayVolume(std::vector<GRegion*> &delaunay);
 int MeshTransfiniteVolume(GRegion *gr);
 int SubdivideExtrudedMesh(GModel *m);

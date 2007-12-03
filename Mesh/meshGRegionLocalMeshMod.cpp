@@ -1,5 +1,6 @@
 #include "meshGRegionLocalMeshMod.h"
 #include "GEntity.h"
+#include "Message.h"
 
 static int edges[6][2] =    {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
 static int efaces[6][2] =   {{0,2},{0,1},{1,2},{0,3},{2,3},{1,3}};
@@ -13,6 +14,35 @@ static int vFac[4][3] = {{0,1,2},{0,2,3},{0,1,3},{1,2,3}};
 // all tets that share this edge and all vertices that are
 // forming the outer ring of the cavity 
 // we return true if the cavity is closed and false if it is open
+
+void computeNeighboringTetsOfACavity (const std::vector<MTet4*> &cavity,std::vector<MTet4*> &outside)
+{
+  outside.clear();
+  for (int i=0;i<cavity.size();i++){
+    for (int j=0;j<4;j++){
+      MTet4 * neigh = cavity[i]->getNeigh(j);
+      if (neigh)
+	{
+	  bool found = false;
+	  for (int k=0;k<outside.size();k++){
+	    if(outside[k]==neigh){
+	      found=true;
+	      break;
+	    }
+	  }
+	  if (!found){
+	    for (int k=0;k<cavity.size() ;k++){
+	      if(cavity[k] ==neigh){
+		found=true;
+	      }
+	    }
+	  }
+	  if(!found)outside.push_back(neigh);
+	}
+    }
+  }
+}			   
+			   
 bool gmshBuildEdgeCavity ( MTet4 *t, 
 			   int iLocalEdge, 
 			   MVertex **v1,MVertex **v2,
@@ -21,7 +51,6 @@ bool gmshBuildEdgeCavity ( MTet4 *t,
 			   std::vector<MVertex*> &ring ){
   cavity.clear();
   ring.clear();
-  outside.clear();
 
   *v1 = t->tet()->getVertex(edges[iLocalEdge][0]);
   *v2 = t->tet()->getVertex(edges[iLocalEdge][1]);
@@ -68,31 +97,7 @@ bool gmshBuildEdgeCavity ( MTet4 *t,
       throw;
     }
   }
-  
-  for (int i=0;i<cavity.size();i++){
-    for (int j=0;j<4;j++){
-      MTet4 * neigh = cavity[i]->getNeigh(j);
-      if (neigh)
-	{
-	  bool found = false;
-	  for (int k=0;k<outside.size();k++){
-	    if(outside[k]==neigh){
-	      found=true;
-	      break;
-	    }
-	  }
-	  if (!found){
-	    for (int k=0;k<cavity.size() ;k++){
-	      if(cavity[k] ==neigh){
-		found=true;
-	      }
-	    }
-	  }
-	  if(!found)outside.push_back(neigh);
-	}
-    }
-  }
-
+  computeNeighboringTetsOfACavity (cavity,outside);
   return true;
 }
 
@@ -319,6 +324,47 @@ bool gmshEdgeSwap (std::vector<MTet4 *> &newTets,
   return true;
 }
 
+bool gmshEdgeSplit (std::vector<MTet4 *> &newTets,
+		    MTet4 *tet,
+		    MVertex *newVertex,
+		    int iLocalEdge,
+		    const gmshQualityMeasure4Tet &cr){
+  std::vector<MTet4*> cavity;
+  std::vector<MTet4*> outside;
+  std::vector<MVertex*> ring;
+  MVertex *v1,*v2;
+
+  bool closed = gmshBuildEdgeCavity ( tet,iLocalEdge,&v1,&v2,cavity,outside,ring);
+  if (!closed)return false;
+  
+  for (int j=0;j<ring.size();j++){
+    MVertex *pv1 = ring[j];
+    MVertex *pv2 = ring[(j+1)%ring.size()];
+    MTetrahedron *tr1 = new MTetrahedron ( pv1,
+					   pv2,
+					   newVertex,
+					   v1);
+    MTetrahedron *tr2 = new MTetrahedron ( newVertex,
+					   pv2,
+					   pv1,
+					   v2);
+    MTet4 *t41 = new MTet4 ( tr1 , cr) ; 
+    MTet4 *t42 = new MTet4 ( tr2 , cr);
+    t41->setOnWhat(cavity[0]->onWhat());
+    t42->setOnWhat(cavity[0]->onWhat());
+    outside.push_back(t41);
+    outside.push_back(t42);
+    newTets.push_back(t41);
+    newTets.push_back(t42);
+  }
+
+  for (int i=0;i<cavity.size();i++)cavity[i]->setDeleted(true);
+  
+  connectTets ( outside );      
+
+  return true;
+}
+
 // swap a face i.e. remove a face shared by 2 tets
 bool gmshFaceSwap (std::vector<MTet4 *> &newTets,
 		   MTet4 *t1, 
@@ -413,7 +459,7 @@ void gmshBuildVertexCavity_recur ( MTet4 *t,
 				   std::vector<MTet4*> &cavity){
   //  if (recur > 20)printf("oufti %d\n",recur);
   if(t->isDeleted()){
-    printf("a deleted triangle is a neighbor of a non deleted triangle\n");
+    Msg(FATAL,"a deleted triangle is a neighbor of a non deleted triangle");
   }
   int iV=-1;
   for (int i=0; i<4; i++){
@@ -423,7 +469,7 @@ void gmshBuildVertexCavity_recur ( MTet4 *t,
     }
   }
   if (iV==-1){
-    printf("this tet does not contain a given vertex\n");
+    Msg(FATAL,"trying to build a cavity of tets for a vertex that does not belong to this tet");
   }
   for (int i=0; i<3; i++){
     MTet4 *neigh = t->getNeigh(vFac[iV][i]);
@@ -441,6 +487,79 @@ void gmshBuildVertexCavity_recur ( MTet4 *t,
       }
     }
   }
+}
+
+
+bool gmshCollapseVertex ( std::vector<MTet4 *> &newTets,
+			  MTet4 *t, 
+			  int iVertex,
+			  int iTarget,
+			  const gmshQualityMeasure4Tet &cr){
+  
+  if(t->isDeleted())throw;
+
+  MVertex *v = t->tet()->getVertex(iVertex);
+  MVertex *tg = t->tet()->getVertex(iTarget);
+
+  if(v->onWhat()->dim() < 3)return false;
+  if(tg->onWhat()->dim() < 3)return false;
+
+  std::vector<MTet4*> cavity_v;
+  std::vector<MTet4*> outside;
+  cavity_v.push_back(t);
+  gmshBuildVertexCavity_recur (t,v,cavity_v);
+
+  std::vector<MTet4*> toDelete;
+  std::vector<MTet4*> toUpdate;
+  double volume = 0;
+  for (int i=0;i<cavity_v.size();i++){
+    bool found = false;
+    volume+=fabs(cavity_v[i]->tet()->getVolume());
+    for (int j=0;j<4;j++){
+      if (cavity_v[i]->tet()->getVertex(j) == tg)found=true;
+    }
+    if (found) toDelete.push_back(cavity_v[i]);
+    else toUpdate.push_back(cavity_v[i]);
+  }
+
+  double x = v->x();
+  double y = v->y();
+  double z = v->z();
+  v->x() = tg->x();
+  v->y() = tg->y();
+  v->z() = tg->z();
+
+  double volume_update=0;
+  for (int i=0;i<toUpdate.size();i++){
+    volume_update+=fabs(toUpdate[i]->tet()->getVolume());
+  }
+
+  //  printf("%12.5E %12.5E\n",volume,volume_update);
+
+  if (fabs(volume-volume_update) > 1.e-10 * volume)
+    {
+      v->x() = x;
+      v->y() = y;
+      v->z() = z;
+      return false;
+    }
+  // ok we collapse
+  computeNeighboringTetsOfACavity (cavity_v,outside);
+  for (int i=0;i<toUpdate.size();i++){
+    MTetrahedron *tr1 = new MTetrahedron ( toUpdate[i]->tet()->getVertex(0) == v ? tg : toUpdate[i]->tet()->getVertex(0),
+					   toUpdate[i]->tet()->getVertex(1) == v ? tg : toUpdate[i]->tet()->getVertex(1),
+					   toUpdate[i]->tet()->getVertex(2) == v ? tg : toUpdate[i]->tet()->getVertex(2),
+					   toUpdate[i]->tet()->getVertex(3) == v ? tg : toUpdate[i]->tet()->getVertex(3));
+    MTet4 *t41 = new MTet4 ( tr1 , cr) ; 
+    t41->setOnWhat(cavity_v[0]->onWhat());
+    outside.push_back(t41);
+    newTets.push_back(t41);
+  }
+  for (int i=0;i<cavity_v.size();i++)cavity_v[i]->setDeleted(true);
+  
+  connectTets ( outside );      
+  
+  return true;
 }
 
 
@@ -517,3 +636,303 @@ bool gmshSmoothVertex ( MTet4 *t,
 }
 
 
+// Edge split sets ...
+// Here, we only build a list of tets that are a subdivision
+// of the given 
+//static int edges[6][2] =    {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
+
+// the resulting triangles are 012 and 230 in vector res
+// void splitPrism (std::vector<MTet4 *> &newTets,
+// 		 std::vector<MVertex *> &steinerPoints,
+// 		 MVertex* v1,
+// 		 MVertex* v2,
+// 		 MVertex* v3,
+// 		 MVertex* v4,
+// 		 MVertex* v5,
+// 		 MVertex* v6, 
+// 		 const gmshQualityMeasure4Tet &cr,
+// 		 MVertex *res[4],
+// 		 fs_cont &search, 
+// 		 GFace *fakeFace){
+// }
+
+// void splitQuadFace (MVertex* newv1, 
+// 		    MVertex* newv2, 
+// 		    MVertex* v21, 
+// 		    MVertex* v11, 
+// 		    const gmshQualityMeasure4Tet &cr,
+// 		    MVertex *res[4],
+// 		    fs_cont &search, 
+// 		    GFace *fakeFace){
+//   GFace* gfound = findInFaceSearchStructure (newv1,newv2,v11,search);
+//   if (gfound){
+//     res[0] = newv2;
+//     res[1] = newv1;
+//     res[2] = v11;
+//     res[3] = v21;
+//   }
+//   else{
+//     GFace* gfound = findInFaceSearchStructure (newv1,newv2,v21,search);
+//     if (gfound){
+//       res[0] = newv1;
+//       res[1] = newv2;
+//       res[2] = v21;
+//       res[3] = v11;
+//     }
+//     // choose the best configuration
+//     else{
+//       double q1 = std::min(qmTri(newv1,newv2,v11,cr),qmTet(newv2,v11,v21,cr));
+//       double q2 = std::min(qmTet(newv1,newv2,v21,cr),qmTet(newv1,v11,v21,cr));
+//       if (q1 > q2){
+// 	res[0] = newv2;
+// 	res[1] = newv1;
+// 	res[2] = v11;
+// 	res[3] = v21;
+// 	MVertex *p1 = std::min(std::min(newv1,newv2),v11);
+// 	MVertex *p2 = std::min(std::min(newv2,v11),v21);
+// 	search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p1, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,newv2,v11),fakeFace)));	  
+// 	search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p2, std::pair<MTriangle*,GFace*>(new MTriangle(newv2,v11,v21),fakeFace)));	  
+//       }
+//       else{
+// 	res[0] = newv1;
+// 	res[1] = newv2;
+// 	res[2] = v21;
+// 	res[3] = v11;
+// 	MVertex *p1 = std::min(std::min(newv1,newv2),v21);
+// 	MVertex *p2 = std::min(std::min(newv2,v11),v21);
+// 	search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p1, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,newv2,v21),fakeFace)));	  
+// 	search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p2, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,v11,v21),fakeFace)));	  
+//       }
+//     }
+//   }	  
+// }
+// void splitQuadFace (std::vector<MTet4 *> &newTets,
+// 		    std::vector<MVertex *> &steinerPoints,
+// 		    MVertex* newv1, 
+// 		    MVertex* newv2, 
+// 		    MVertex* v21, 
+// 		    MVertex* v11, 
+// 		    MVertex* other,
+// 		    const gmshQualityMeasure4Tet &cr,
+// 		    fs_cont &search, 
+// 		    GFace *fakeFace){
+//   MTetrahedron *tr3,*tr4;
+//   // now we look if there exists a face with the same vertices
+//   GFace* gfound = findInFaceSearchStructure (newv1,newv2,v11,search);
+//   if (gfound){
+//     tr3 = new MTetrahedron ( newv1,newv2,v11,other);	  
+//     tr4 = new MTetrahedron ( newv2,v11,v21,other);	  
+//   }
+//   else{
+//     GFace* gfound = findInFaceSearchStructure (newv1,newv2,v21,search);
+//     if (gfound){
+//       tr3 = new MTetrahedron ( newv1,newv2,v21,other);	  
+//       tr4 = new MTetrahedron ( newv1,v11,v21,other);	  
+//     }
+//     // choose the best configuration
+//     else{
+//       double vol;
+//       double q1 = std::min(qmTet(newv1,newv2,v11,other,cr,vol),qmTet(newv2,v11,v21,other,cr,vol));
+//       double q2 = std::min(qmTet(newv1,newv2,v21,other,cr,vol),qmTet(newv1,v11,v21,other,cr,vol));
+//       if (q1 > q2){
+// 	tr3 = new MTetrahedron ( newv1,newv2,v11,other);	  
+// 	tr4 = new MTetrahedron ( newv2,v11,v21,other);
+// 	MVertex *p1 = std::min(std::min(newv1,newv2),v11);
+// 	MVertex *p2 = std::min(std::min(newv2,v11),v21);
+// 	search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p1, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,newv2,v11),fakeFace)));	  
+// 	search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p2, std::pair<MTriangle*,GFace*>(new MTriangle(newv2,v11,v21),fakeFace)));	  
+//       }
+//       else{
+// 	tr3 = new MTetrahedron ( newv1,newv2,v21,other);	  
+// 	tr4 = new MTetrahedron ( newv1,v11,v21,other);	  
+// 	MVertex *p1 = std::min(std::min(newv1,newv2),v21);
+// 	MVertex *p2 = std::min(std::min(newv2,v11),v21);
+// 	search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p1, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,newv2,v21),fakeFace)));	  
+// 	search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p2, std::pair<MTriangle*,GFace*>(new MTriangle(newv1,v11,v21),fakeFace)));	  
+//       }
+//     }
+//   }	  
+// }
+
+// bool splitEdgesOfTet (std::vector<MTet4 *> &newTets,
+// 		      std::vector<MVertex *> &steinerPoints,
+// 		      MTet4 *t1,
+// 		      int nbEdges,
+// 		      int e[6], 
+// 		      MVertex* pts[6],
+// 		      const gmshQualityMeasure4Tet &cr,
+// 		      fs_cont &search, 
+// 		      GFace *fakeFace){
+//   switch(nbEdges){
+//   case 1 :
+//     {
+//       int iE = edges[0];
+//       MVertex *newv = pts[0];
+//       MVertex *v1 = t1->tet()->getVertex(e[iE][0]);
+//       MVertex *v2 = t1->tet()->getVertex(e[iE][1]);
+//       int oE = 5-iE;
+//       MVertex *o1 = t1->tet()->getVertex(e[oE][0]);
+//       MVertex *o2 = t1->tet()->getVertex(e[oE][1]);
+//       MTetrahedron *tr1 = new MTetrahedron ( newv,v1,o1,o2);
+//       MTetrahedron *tr2 = new MTetrahedron ( newv,v2,o2,o1);
+//       MTet4 *t41 = new MTet4 (tr1,cr); 
+//       MTet4 *t42 = new MTet4 (tr2,cr);
+//       newTets.push_back(t41);
+//       newTets.push_back(t42);
+//       }
+//     break;
+//   case 2 :
+//     {
+//       int iE1 = edges[0];
+//       int iE2 = edges[1];
+
+//       MVertex *newv1 = pts[0];
+//       MVertex *newv2 = pts[1];
+
+//       MVertex *v11 = t1->tet()->getVertex(e[iE1][0]);
+//       MVertex *v12 = t1->tet()->getVertex(e[iE1][1]);
+//       MVertex *v21 = t1->tet()->getVertex(e[iE2][0]);
+//       MVertex *v22 = t1->tet()->getVertex(e[iE2][1]);
+
+//       if (iE1 == 5-iE2){ // two opposite edges
+// 	MTetrahedron *tr1 = new MTetrahedron ( newv1,newv2,v11,v21);
+// 	MTetrahedron *tr2 = new MTetrahedron ( newv1,newv2,v21,v12);
+// 	MTetrahedron *tr3 = new MTetrahedron ( newv1,newv2,v12,v22);
+// 	MTetrahedron *tr4 = new MTetrahedron ( newv1,newv2,v22,v11);
+// 	MTet4 *t41 = new MTet4 (tr1,cr); 
+// 	MTet4 *t42 = new MTet4 (tr2,cr);
+// 	MTet4 *t43 = new MTet4 (tr3,cr); 
+// 	MTet4 *t44 = new MTet4 (tr4,cr);
+// 	newTets.push_back(t41);
+// 	newTets.push_back(t42);
+// 	newTets.push_back(t43);
+// 	newTets.push_back(t44);
+//       }
+//       else{ //two adjacend edges
+// 	MVertex *vsame,*other=0;
+// 	if      (v11 == v21){vsame=v11; v11=v12; v21=v22;}
+// 	else if (v11 == v22){vsame=v11; v11=v12}
+// 	else if (v12 == v21){vsame=v12; v21=v22}
+// 	else if (v12 == v22){vsame=v12;}
+// 	else throw;
+// 	for (int i=0;i<4;i++){
+// 	  if (vsame != t1->tet()->getVertex(i) && 
+// 	      v11 != t1->tet()->getVertex(i) && 
+// 	      v21 != t1->tet()->getVertex(i)){
+// 	    other = t1->tet->getVertex(i);
+// 	    break;
+// 	  }
+// 	}
+// 	if (!other)throw;
+// 	MTetrahedron *tr1 = new MTetrahedron ( newv1,newv2,vsame,other);
+// 	splitQuadFace (newTets,steinerPoints,newv1,newv2,v21,v11,other,cr,search,fakeFace);
+//       }
+//     }
+//     break;    
+//   case 3 :
+//     {
+//       int iE1 = edges[0];
+//       int iE2 = edges[1];
+//       int iE3 = edges[2];
+//       MVertex *newv1;
+//       MVertex *newv2;
+//       MVertex *newv3;
+//       std::sort(edges,edges+3);
+//       if (iE1 == edges[0])newv1=pts[0];
+//       else if (iE2 == edges[0])newv1=pts[1];
+//       else if (iE3 == edges[0])newv1=pts[2];
+//       if (iE1 == edges[1])newv2=pts[0];
+//       else if (iE2 == edges[1])newv2=pts[1];
+//       else if (iE3 == edges[1])newv2=pts[2];
+//       if (iE1 == edges[2])newv3=pts[0];
+//       else if (iE2 == edges[2])newv3=pts[1];
+//       else if (iE3 == edges[2])newv3=pts[2];
+//       iE1 = edges[0];
+//       iE2 = edges[1];
+//       iE3 = edges[2];
+//       // edges are sorted and points correspond
+
+//       mVertex *v[4];
+//       // the 3 edges coincide at one vertex
+//       int config;
+//       if (iE1 == 0 && iE2 == 1 && iE3 == 2){
+// 	config = 1; 
+// 	v[0] = t1->tet()->getVertex(0);
+// 	v[1] = t1->tet()->getVertex(1);
+// 	v[2] = t1->tet()->getVertex(2);
+// 	v[3] = t1->tet()->getVertex(3);
+//       }      
+//       else if (iE1 == 0 && iE2 == 3 && iE3 == 4){
+// 	config = 1; 
+// 	v[0] = t1->tet()->getVertex(1);
+// 	v[1] = t1->tet()->getVertex(0);
+// 	v[2] = t1->tet()->getVertex(2);
+// 	v[3] = t1->tet()->getVertex(3);
+//       }      
+//       else if (iE1 == 1 && iE2 == 3 && iE3 == 5){
+// 	config = 1; 
+// 	v[0] = t1->tet()->getVertex(2);
+// 	v[1] = t1->tet()->getVertex(0);
+// 	v[2] = t1->tet()->getVertex(1);
+// 	v[3] = t1->tet()->getVertex(3);
+//       }      
+//       else if (iE1 == 2 && iE2 == 4 && iE3 == 5){
+// 	config = 1; 
+// 	v[0] = t1->tet()->getVertex(3);
+// 	v[1] = t1->tet()->getVertex(0);
+// 	v[2] = t1->tet()->getVertex(1);
+// 	v[3] = t1->tet()->getVertex(2);
+//       }
+//       // three edges of the same face are cut
+//       else if (iE1 == 0 && iE2 == 1 && iE3 == 3){
+// 	config = 2;
+// 	v[0] = t1->tet()->getVertex(3);
+// 	v[1] = t1->tet()->getVertex(1);
+// 	v[2] = t1->tet()->getVertex(0);
+// 	v[3] = t1->tet()->getVertex(2);      
+//       }
+//       else if (iE1 == 0 && iE2 == 2 && iE3 == 4){
+// 	config = 2;
+// 	v[0] = t1->tet()->getVertex(2);
+// 	v[1] = t1->tet()->getVertex(1);
+// 	v[2] = t1->tet()->getVertex(0);
+// 	v[3] = t1->tet()->getVertex(3);      
+//       }
+//       else if (iE1 == 1 && iE2 == 2 && iE3 == 5){
+// 	config = 2;
+// 	v[0] = t1->tet()->getVertex(1);
+// 	v[1] = t1->tet()->getVertex(2);
+// 	v[2] = t1->tet()->getVertex(0);
+// 	v[3] = t1->tet()->getVertex(3);      
+//       }
+//       else if (iE1 == 3 && iE2 == 4 && iE3 == 5){
+// 	config = 2;
+// 	v[0] = t1->tet()->getVertex(0);
+// 	v[1] = t1->tet()->getVertex(2);
+// 	v[2] = t1->tet()->getVertex(1);
+// 	v[3] = t1->tet()->getVertex(3);      
+//       }
+//       // the three edges for a kind of Z
+//       else if (iE1 == 0 && iE2 == 3 && iE3 == 5){
+// 	config = 3;
+//       }
+      
+//       if (config == 1){
+//       }
+//       else if (config == 2){
+//       }
+//       else{
+// 	throw; // for the moment.
+//       }
+//     }
+//   default :
+//     throw;
+//   }
+//   t1->setDeleted(true);
+    
+
+// }
+  
+
+
+// collapse

@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.27 2007-11-26 14:34:09 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.28 2007-12-03 15:17:40 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -190,14 +190,15 @@ GEntity::GeomType OCCEdge::geomType() const
 
 int OCCEdge::minimumMeshSegments() const
 {
-  int np;
-  if(geomType() == Line)
-    np= GEdge::minimumMeshSegments();
-  else 
+   int np;
+   if(geomType() == Line)
+     np= GEdge::minimumMeshSegments();
+   else 
     np=CTX.mesh.min_curv_points - 1;
   
-  // if the edge is closed, ensure that at least 3 points are generated 
-  if (getBeginVertex() == getEndVertex()) np=std::max(2,np);
+  // if the edge is closed, ensure that at least 3 points are generated in the
+  // 1D mesh (4 segments, one of which is degenerated)
+  if (getBeginVertex() == getEndVertex()) np=std::max(4,np);
 
   return np;
 }

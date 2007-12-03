@@ -20,6 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+class GModel;
 #include "MElement.h"
 #include <list>
 #include <set>
@@ -130,7 +131,6 @@ struct edgeXface
     return false;
   }
 };
-
 
 
 #endif

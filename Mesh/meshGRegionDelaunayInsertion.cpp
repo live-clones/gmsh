@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.24 2007-11-28 14:18:10 remacle Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.25 2007-12-03 15:17:40 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 #include "meshGRegionDelaunayInsertion.h"
 #include "GModel.h"
 #include "GRegion.h"
+#include "meshGRegion.h"
 #include "Numeric.h"
 #include "Message.h"
 #include <set>
@@ -324,7 +325,6 @@ static void setLcs ( MTetrahedron *t, std::map<MVertex*,double> &vSizes)
 
  }
 
-typedef std::multimap<MVertex*,std::pair<MTriangle*,GFace*> > fs_cont ;
 
 
 GFace* findInFaceSearchStructure ( MVertex *p1,MVertex *p2,MVertex *p3, const fs_cont&search )
@@ -432,6 +432,182 @@ void recur_classify ( MTet4 *t ,
     }
 }
 
+void adaptMeshGRegion::operator () (GRegion *gr)
+{
+  const gmshQualityMeasure4Tet qm = QMTET_2;
+
+  typedef std::list<MTet4 *> CONTAINER ;
+  CONTAINER allTets;
+  for (int i=0;i<gr->tetrahedra.size();i++){
+    allTets.push_back(new MTet4(gr->tetrahedra[i],qm));
+  }
+  gr->tetrahedra.clear();
+  
+  connectTets(allTets.begin(),allTets.end());
+
+  double t1 = Cpu();
+  std::vector<MTet4*> illegals;
+  const int nbRanges=10;
+  int quality_ranges [nbRanges];
+  {
+    double totalVolumeb = 0.0;
+    double worst = 1.0;
+    double avg = 0;
+    int count=0;
+    for (int i=0;i<nbRanges;i++)quality_ranges[i] = 0;
+    for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+      {
+	if (!(*it)->isDeleted()){
+	  double vol = fabs((*it)->tet()->getVolume());
+	  double qual = (*it)->getQuality();
+	  worst = std::min(qual,worst);
+	  avg+=qual;
+	  count++;
+	  totalVolumeb+=vol;
+	  for (int i=0;i<nbRanges;i++){
+	    double low  = (double)i/(nbRanges);
+	    double high = (double)(i+1)/(nbRanges);
+	    if (qual >= low && qual < high)quality_ranges[i]++;
+	  }	      	      
+	}
+      }
+    Msg(INFO,"Opti : START with %12.5E QBAD %12.5E QAVG %12.5E",totalVolumeb,worst,avg/count);
+    for (int i=0;i<nbRanges;i++){
+      double low  = (double)i/(nbRanges);
+      double high = (double)(i+1)/(nbRanges);
+      Msg(INFO,"Opti : %3.2f < QUAL < %3.2f : %9d elements ",low,high,quality_ranges[i]);
+    }	      	      
+  }    
+    
+  double qMin = 0.5;
+  double sliverLimit = 0.2;
+
+  int nbESwap=0, nbFSwap=0, nbReloc=0, nbCollapse = 0;
+    
+  while (1){
+    std::vector<MTet4*> newTets;    
+
+    for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it){
+      if (!(*it)->isDeleted()){
+	for (int i=0;i<4;i++){
+	  for (int j=0;j<4;j++){
+	    if (gmshCollapseVertex(newTets,*it,i,j,QMTET_2)){nbCollapse++;i=j=10;}
+	  }
+	}
+      }
+    }
+
+    printf("nbCollapses = %d\n",nbCollapse);
+
+    for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it){
+      if (!(*it)->isDeleted()){
+	double vol;
+	double qq = (*it)->getQuality();
+	if (qq < qMin){
+	  for (int i=0;i<4;i++){
+	    if (gmshFaceSwap(newTets,*it,i,qm)){nbFSwap++;break;}
+	  }
+	}
+      }
+    }
+ 
+    illegals.clear();
+    for (int i=0;i<nbRanges;i++)quality_ranges[i] = 0;
+
+    for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+      {
+	if (!(*it)->isDeleted()){
+	  double qq = (*it)->getQuality();
+	  if (qq < qMin)
+	    for (int i=0;i<6;i++){
+	      if (gmshEdgeSwap(newTets,*it,i,qm)) {nbESwap++;break;}
+	    }
+	  if (!(*it)->isDeleted()){
+	    if (qq < sliverLimit)illegals.push_back(*it);
+	    for (int i=0;i<nbRanges;i++){
+	      double low  = (double)i/(nbRanges);
+	      double high = (double)(i+1)/(nbRanges);
+	      if (qq >= low && qq < high)quality_ranges[i]++;
+	    }	      	      
+	  }
+	}
+      }
+
+    if (!newTets.size())break;
+    
+    // add all the new tets in the container
+    for (int i=0;i<newTets.size();i++){
+      if (!newTets[i]->isDeleted()){
+	allTets.push_back(newTets[i]);
+      }
+      else{
+	delete newTets[i]->tet();
+	delete newTets[i];
+      }
+    }  
+
+    // relocate vertices
+    for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+      {
+	if (!(*it)->isDeleted()){
+	  double qq = (*it)->getQuality();
+	  if (qq < qMin)
+	    for (int i=0;i<4;i++){
+	      if (gmshSmoothVertex(*it,i,qm))nbReloc++;
+	    }
+	}
+      }
+
+    double totalVolumeb = 0.0;
+    double worst = 1.0;
+    double avg = 0;
+    int count=0;
+    for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+      {
+	if (!(*it)->isDeleted()){
+	  double vol = fabs((*it)->tet()->getVolume());
+	  double qual = (*it)->getQuality();
+	  worst = std::min(qual,worst);
+	  avg+=qual;
+	  count++;
+	  totalVolumeb+=vol;
+	}
+      }
+    double t2 = Cpu();
+    Msg(INFO,"Opti : (%d,%d,%d) = %12.5E QBAD %12.5E QAVG %12.5E (%8.3f sec)",nbESwap,nbFSwap,nbReloc,totalVolumeb,worst,avg/count,t2-t1);
+    break;
+  }
+  
+  int nbSlivers = 0;
+  for (int i=0;i<illegals.size();i++)
+    if (!(illegals[i]->isDeleted()))nbSlivers ++;
+  
+  if (nbSlivers){
+    Msg(INFO,"Opti : %d illegal tets are still in the mesh, trying to remove them",nbSlivers);
+  }
+  else{
+    Msg(INFO,"Opti : no illegal tets in the mesh ;-)",nbSlivers);
+  }
+
+  for (int i=0;i<nbRanges;i++){
+    double low  = (double)i/(nbRanges);
+    double high = (double)(i+1)/(nbRanges);
+    Msg(INFO,"Opti : %3.2f < QUAL < %3.2f : %9d elements ",low,high,quality_ranges[i]);
+  }	      	      
+
+  for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it)
+    {
+      if (!(*it)->isDeleted()){
+	gr->tetrahedra.push_back((*it)->tet());
+	delete *it;
+      }
+      else{
+	delete (*it)->tet();
+	delete *it;	
+      }
+    }
+}
+
 //template <class CONTAINER, class DATA> 
 void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm)
 {
@@ -443,9 +619,6 @@ void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm)
   gr->tetrahedra.clear();
   
   connectTets(allTets.begin(),allTets.end());
-
-
-
 
   double t1 = Cpu();
   std::vector<MTet4*> illegals;

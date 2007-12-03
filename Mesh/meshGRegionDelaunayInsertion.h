@@ -24,10 +24,13 @@
 #include "qualityMeasures.h"
 #include <list>
 #include <set>
+#include <map>
 #include <stack>
 
 //#define _GMSH_PRE_ALLOCATE_STRATEGY_ 1
 class GRegion;
+class GFace;
+class GModel;
 
 class MTet4Factory;
 
@@ -232,5 +235,8 @@ private:
 };
 
 void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm);
+typedef std::multimap<MVertex*,std::pair<MTriangle*,GFace*> > fs_cont ;
+GFace* findInFaceSearchStructure ( MVertex *p1,MVertex *p2,MVertex *p3, const fs_cont&search );
+bool buildFaceSearchStructure ( GModel *model , fs_cont&search );
 
 #endif

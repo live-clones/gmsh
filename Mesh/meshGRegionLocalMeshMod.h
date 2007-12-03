@@ -22,19 +22,36 @@
 
 #include "meshGRegionDelaunayInsertion.h"
 #include "qualityMeasures.h"
-
+// local mesh modification operators. Those
+// operators only apply to the "bulk" of the
+// mesh and cannot be applied to boudnaries.
+// I'm working on it
 bool gmshEdgeSwap (std::vector<MTet4 *> &newTets,
 		   MTet4 *tet, 
 		   int iLocalEdge,
 		   const gmshQualityMeasure4Tet &cr);
+
 bool gmshFaceSwap (std::vector<MTet4 *> &newTets,
 		   MTet4 *tet, 
 		   int iLocalFace,
 		   const gmshQualityMeasure4Tet &cr);
+
 bool gmshSmoothVertex ( MTet4 *t, 
 			int iLocalVertex,
 			const gmshQualityMeasure4Tet &cr);
-  
+
+bool gmshCollapseVertex ( std::vector<MTet4 *> &newTets,
+			  MTet4 *t, 
+			  int iVertex,
+			  int iTarget,
+			  const gmshQualityMeasure4Tet &cr);
+
+bool gmshEdgeSplit (std::vector<MTet4 *> &newTets,
+		    MTet4 *tet,
+		    MVertex *newVertex,
+		    int iLocalEdge,
+		    const gmshQualityMeasure4Tet &cr);
+
 #endif
 
 

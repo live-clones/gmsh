@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.108 2007-11-26 14:34:09 remacle Exp $
+// $Id: CommandLine.cpp,v 1.109 2007-12-03 15:17:39 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -202,6 +202,10 @@ void Get_Options(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "3")) {
         CTX.batch = 3;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "4")) {
+        CTX.batch = 4;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "pid")) {
