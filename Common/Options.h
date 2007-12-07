@@ -553,6 +553,7 @@ double opt_view_offset2(OPT_ARGS_NUM);
 double opt_view_raise0(OPT_ARGS_NUM);
 double opt_view_raise1(OPT_ARGS_NUM);
 double opt_view_raise2(OPT_ARGS_NUM);
+double opt_view_normal_raise(OPT_ARGS_NUM);
 double opt_view_transform00(OPT_ARGS_NUM);
 double opt_view_transform01(OPT_ARGS_NUM);
 double opt_view_transform02(OPT_ARGS_NUM);

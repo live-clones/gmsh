@@ -1291,6 +1291,8 @@ StringXNumber ViewOptions_Number[] = {
     "Number of intervals" },
   { F,   "NbTimeStep" , opt_view_nb_timestep , 1. ,
     "Number of time steps in the view (do not change this!)" },
+  { F,   "NormalRaise" , opt_view_normal_raise , 0. , 
+    "Elevation of the view along the normal (in model coordinates)" },
   { F|O, "Normals" , opt_view_normals , 0. ,
     "Display size of normal vectors (in pixels)" }, 
 

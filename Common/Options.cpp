@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.370 2007-11-28 17:02:19 geuzaine Exp $
+// $Id: Options.cpp,v 1.371 2007-12-07 20:49:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -5601,6 +5601,20 @@ double opt_view_raise2(OPT_ARGS_NUM)
     WID->view_value[45]->value(opt->Raise[2]);
 #endif
   return opt->Raise[2];
+}
+
+double opt_view_normal_raise(OPT_ARGS_NUM)
+{
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    opt->NormalRaise = val;
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num))
+    WID->view_value[46]->value(opt->NormalRaise);
+#endif
+  return opt->NormalRaise;
 }
 
 double opt_view_transform00(OPT_ARGS_NUM)

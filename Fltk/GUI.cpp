@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.645 2007-11-28 14:18:10 remacle Exp $
+// $Id: GUI.cpp,v 1.646 2007-12-07 20:49:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -3197,7 +3197,9 @@ void GUI::create_option_window()
       view_value[44] = new Fl_Value_Input(L + 2 * WB + 2 * IW-WB, 2 * WB + 3 * BH, 7*IW/10, BH, "Y");
       view_value[45] = new Fl_Value_Input(L + 2 * WB + 2 * IW-WB, 2 * WB + 4 * BH, 7*IW/10, BH, "Z");
 
-      for(int i = 40; i <= 45; i++){
+      view_value[46] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, 3*ss, BH, "Normal raise");
+
+      for(int i = 40; i <= 46; i++){
 	view_value[i]->align(FL_ALIGN_RIGHT);
 	view_value[i]->when(FL_WHEN_RELEASE);
 	view_value[i]->callback(view_options_ok_cb);
@@ -3211,29 +3213,29 @@ void GUI::create_option_window()
 	view_value[i]->callback(view_options_ok_cb);
       }
 
-      view_butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Use general transformation expressions");
+      view_butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Use general transformation expressions");
       view_butt[6]->type(FL_TOGGLE_BUTTON);
       view_butt[6]->callback(view_options_ok_cb, (void*)"general_transform");
 
-      view_choice[11] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Data source");
+      view_choice[11] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Data source");
       view_choice[11]->align(FL_ALIGN_RIGHT);
       view_choice[11]->add("Self");
       view_choice[11]->callback(view_options_ok_cb);
 
-      view_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Factor");
+      view_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Factor");
       view_value[2]->align(FL_ALIGN_RIGHT);
       view_value[2]->when(FL_WHEN_RELEASE);
       view_value[2]->callback(view_options_ok_cb);
 
-      view_input[4] = new Fl_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "X expression");
+      view_input[4] = new Fl_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "X expression");
       view_input[4]->align(FL_ALIGN_RIGHT);
       view_input[4]->callback(view_options_ok_cb);
 
-      view_input[5] = new Fl_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Y expression");
+      view_input[5] = new Fl_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Y expression");
       view_input[5]->align(FL_ALIGN_RIGHT);
       view_input[5]->callback(view_options_ok_cb);
 
-      view_input[6] = new Fl_Input(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Z expression");
+      view_input[6] = new Fl_Input(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Z expression");
       view_input[6]->align(FL_ALIGN_RIGHT);
       view_input[6]->callback(view_options_ok_cb);
 
@@ -3548,7 +3550,8 @@ void GUI::update_view_window(int num)
   opt_view_raise0(num, GMSH_GUI, 0);
   opt_view_raise1(num, GMSH_GUI, 0);
   opt_view_raise2(num, GMSH_GUI, 0);
-  for(int i = 43; i <= 45; i++) {
+  opt_view_normal_raise(num, GMSH_GUI, 0);
+  for(int i = 43; i <= 46; i++) {
     view_value[i]->step(val2/100.);
     view_value[i]->minimum(-val2);
     view_value[i]->maximum(val2);

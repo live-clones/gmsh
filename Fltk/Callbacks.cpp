@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.553 2007-11-28 14:18:09 remacle Exp $
+// $Id: Callbacks.cpp,v 1.554 2007-12-07 20:49:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1338,6 +1338,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double raise0 = opt_view_raise0(current, GMSH_GET, 0);
   double raise1 = opt_view_raise1(current, GMSH_GET, 0);
   double raise2 = opt_view_raise2(current, GMSH_GET, 0);
+  double normal_raise = opt_view_normal_raise(current, GMSH_GET, 0);
   double timestep = opt_view_timestep(current, GMSH_GET, 0);
   double arrow_size = opt_view_arrow_size(current, GMSH_GET, 0);
   double arrow_size_proportional = opt_view_arrow_size_proportional(current, GMSH_GET, 0);
@@ -1641,6 +1642,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
       val = WID->view_value[45]->value();
       if(force || (val != raise2))
         opt_view_raise2(i, GMSH_SET, val);
+
+      val = WID->view_value[46]->value();
+      if(force || (val != normal_raise))
+        opt_view_normal_raise(i, GMSH_SET, val);
 
       val = WID->view_value[50]->value();
       if(force || (val != timestep))

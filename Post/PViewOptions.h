@@ -70,7 +70,8 @@ class PViewOptions {
   double AxesPosition[6];
   double CustomMin, CustomMax, TmpMin, TmpMax, ExternalMin, ExternalMax;
   SBoundingBox3d TmpBBox;
-  double Offset[3], Raise[3], Transform[3][3], DisplacementFactor, Explode;
+  double Offset[3], Raise[3], Transform[3][3], DisplacementFactor, NormalRaise;
+  double Explode;
   double ArrowSize, ArrowRelHeadRadius, ArrowRelStemRadius, ArrowRelStemLength;
   double Normals, Tangents;
   int Visible, IntervalsType, NbIso, ArrowSizeProportional;
