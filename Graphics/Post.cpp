@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.142 2007-12-07 20:49:05 geuzaine Exp $
+// $Id: Post.cpp,v 1.143 2007-12-08 07:09:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -75,31 +75,6 @@ SVector3 getPointNormal(PView *p, double v)
   return n;
 }
 
-SVector3 getLineNormal(PView *p, double x[2], double y[2], double z[2])
-{
-  SBoundingBox3d bb = p->getData()->getBoundingBox();
-  if(bb.min().z() == bb.max().z())
-    return SVector3(0., 0., 1.);
-  else if(bb.min().y() == bb.max().y())
-    return SVector3(0., 1., 0.);
-  else if(bb.min().x() == bb.max().x())
-    return SVector3(1., 0., 0.);
-  else{
-    // we don't have any info about the normal, just pick one
-    SVector3 t(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
-    SVector3 ex(0., 0., 0.);
-    if(t[0] == 0.)
-      ex[0] = 1.;
-    else if(t[1] == 0.)
-      ex[1] = 1.;
-    else
-      ex[2] = 1.;
-    SVector3 n = crossprod(t, ex);
-    n.normalize();
-    return n;
-  }
-}
-
 void getLineNormal(PView *p, double x[2], double y[2], double z[2],
 		   double *v, SVector3 n[2], bool computeNormal)
 {
@@ -127,8 +102,20 @@ void getLineNormal(PView *p, double x[2], double y[2], double z[2],
       n[0] = n[1] = SVector3(0., 1., 0.);
     else if(bb.min().x() == bb.max().x())
       n[0] = n[1] = SVector3(1., 0., 0.);
-    else
-      n[0] = n[1] = getLineNormal(p, x, y, z);
+    else{
+      // we don't have any info about the normal, just pick one
+      SVector3 t(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
+      SVector3 ex(0., 0., 0.);
+      if(t[0] == 0.)
+	ex[0] = 1.;
+      else if(t[1] == 0.)
+	ex[1] = 1.;
+      else
+	ex[2] = 1.;
+      n[0] = crossprod(t, ex);
+      n[0].normalize();
+      n[1] = n[0];
+    }
   }
 }
 
@@ -252,7 +239,7 @@ void changeCoordinates(PView *p, int iele, int numNodes, int numEdges,
   if(opt->NormalRaise && numEdges >= 1 && numEdges <= 4){
     SVector3 n;
     if(numEdges == 1){
-      // assumes lines in z=0 plane, and raises in that plane
+      // assumes lines in z=const plane, and raises in that plane
       double x[2] = {xyz[0][0], xyz[1][0]};
       double y[2] = {xyz[0][1], xyz[1][1]};
       double z[2] = {xyz[0][2], xyz[1][2]};
