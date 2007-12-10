@@ -437,7 +437,7 @@ class MTriangle6 : public MTriangle {
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
     tmp = _vs[0]; _vs[0] = _vs[2]; _vs[2] = tmp;
   }
-  virtual void jac ( double u, double v , double j[2][2]) ;
+  virtual void jac(double u, double v, double j[2][2]);
 };
 
 class MTriangleN : public MTriangle {

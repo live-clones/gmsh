@@ -33,6 +33,7 @@
 
 #include "kd_tree.h"					// kd-tree declarations
 #include "bd_tree.h"					// bd-tree declarations
+#include <string.h> // for gmsh
 #include <stdlib.h> // for gmsh
 
 using namespace std;					// make std:: available

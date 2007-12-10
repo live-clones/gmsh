@@ -8,6 +8,10 @@ How to build OpenCascade 6.2 for Gmsh:
   export CC="gcc -mno-cygwin -DWNT=1 -DWIN32 -DHAVE_NO_DLL"
   export CXX="g++ -mno-cygwin -DWNT=1 -DWIN32 -DHAVE_NO_DLL"
 
+- with new versions of gcc, add "-ffriend-injection" to the compiler
+  options (this prevents the "Standard_Transient_Type_ not declared"
+  error)
+
 - go to the ros/ directory and type
 
   ./configure --prefix=/usr/local/opencascade --enable-debug=no 
