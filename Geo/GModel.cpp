@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.49 2007-09-26 20:51:58 geuzaine Exp $
+// $Id: GModel.cpp,v 1.50 2007-12-15 03:41:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -535,7 +535,7 @@ static int checkElements(std::vector<T*> &elements,
   int num = 0;
   for(unsigned int i = 0; i < elements.size(); i++){
     MElement *e = elements[i];
-    std::set<MElement*, MVertexLessThanLexicographic>::iterator it = pos.find(e);
+    std::set<MElement*, MElementLessThanLexicographic>::iterator it = pos.find(e);
     if(it == pos.end()){
       pos.insert(e);
     }
