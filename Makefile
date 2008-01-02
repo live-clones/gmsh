@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.445 2007-11-28 09:26:01 geuzaine Exp $
+# $Id: Makefile,v 1.446 2008-01-02 16:26:54 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -218,56 +218,8 @@ package-mac:
 	mkdir gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Resources
 	mkdir gmsh-${GMSH_VERSION}/Gmsh.app/Contents/MacOS
 	echo "APPLGMSH" > gmsh-${GMSH_VERSION}/Gmsh.app/Contents/PkgInfo 
-	echo -e "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"\
-        "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\""\
-                              " \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"\
-        "<plist version=\"1.0\">\n"\
-        "  <dict>\n"\
-        "    <key>CFBundleName</key><string>Gmsh</string>\n"\
-        "    <key>CFBundleExecutable</key><string>Gmsh</string>\n"\
-        "    <key>CFBundlePackageType</key><string>APPL</string>\n"\
-        "    <key>CFBundleVersion</key><string>${GMSH_VERSION}</string>\n"\
-        "    <key>CFBundleShortVersionString</key><string>${GMSH_VERSION}</string>\n"\
-        "    <key>CFBundleIconFile</key><string>Gmsh.icns</string>\n"\
-        "    <key>CFBundleSignature</key><string>GMSH</string>\n"\
-        "    <key>CFBundleGetInfoString</key><string>Gmsh ${GMSH_VERSION},"\
-                  "Copyright (C) 1997-2007 C. Geuzaine and J.-F. Remacle</string>\n"\
-        "    <key>CFBundleIdentifier</key><string>org.geuz.Gmsh</string>\n"\
-        "    <key>CFBundleDocumentTypes</key>\n"\
-        "      <array>\n"\
-        "        <dict>\n"\
-        "          <key>CFBundleTypeExtensions</key><array>\n"\
-        "            <string>geo</string>\n"\
-        "            <string>brep</string><string>brp</string><string>rle</string>\n"\
-        "            <string>igs</string><string>iges</string>\n"\
-        "            <string>stp</string><string>step</string></array>\n"\
-        "          <key>CFBundleTypeIconFile</key><string>GmshGeo.icns</string>\n"\
-        "          <key>CFBundleTypeName</key><string>Gmsh Geometry File</string>\n"\
-        "          <key>CFBundleTypeOSTypes</key><array><string>GGEO</string></array>\n"\
-        "          <key>CFBundleTypeRole</key><string>Editor</string>\n"\
-        "        </dict>\n"\
-        "        <dict>\n"\
-        "          <key>CFBundleTypeExtensions</key><array>\n"\
-        "            <string>msh</string>\n"\
-        "            <string>unv</string>\n"\
-        "            <string>vrml</string><string>wrl</string><string>iv</string>\n"\
-        "            <string>bdf</string><string>nas</string>\n"\
-        "            <string>mesh</string></array>\n"\
-        "          <key>CFBundleTypeIconFile</key><string>GmshMsh.icns</string>\n"\
-        "          <key>CFBundleTypeName</key><string>Gmsh Mesh File</string>\n"\
-        "          <key>CFBundleTypeOSTypes</key><array><string>GMSH</string></array>\n"\
-        "          <key>CFBundleTypeRole</key><string>Viewer</string>\n"\
-        "        </dict>\n"\
-        "        <dict>\n"\
-        "          <key>CFBundleTypeExtensions</key><array><string>pos</string></array>\n"\
-        "          <key>CFBundleTypeIconFile</key><string>GmshPos.icns</string>\n"\
-        "          <key>CFBundleTypeName</key><string>Gmsh Post-Processing File</string>\n"\
-        "          <key>CFBundleTypeOSTypes</key><array><string>GPOS</string></array>\n"\
-        "          <key>CFBundleTypeRole</key><string>Viewer</string>\n"\
-        "        </dict>\n"\
-        "      </array>\n"\
-        "  </dict>\n"\
-        "</plist>" > gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Info.plist
+	sed -e "s/GMSH_VERSION/Gmsh ${GMSH_VERSION}/g" utils/misc/Info.plist\
+             > gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Info.plist
 	cp bin/gmsh gmsh-${GMSH_VERSION}/Gmsh.app/Contents/MacOS/Gmsh
 	strip gmsh-${GMSH_VERSION}/Gmsh.app/Contents/MacOS/Gmsh
 	cp Fltk/MacIcons.icns gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Resources/Gmsh.icns
