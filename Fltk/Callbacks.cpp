@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.555 2008-01-07 21:32:57 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.556 2008-01-07 23:16:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4129,7 +4129,7 @@ void solver_file_open_cb(CALLBACK_ARGS)
 
   // We allow to create the .pro file... Or should we add a "New file"
   // button?
-  if(file_chooser(0, 1, "Choose", tmp)) {
+  if(file_chooser(0, 0, "Choose", tmp)) {
     WID->solver[num].input[0]->value(file_chooser_get_name(1));
     if(SINFO[num].nboptions) {
       char file[1024];
