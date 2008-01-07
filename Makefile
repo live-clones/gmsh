@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.446 2008-01-02 16:26:54 geuzaine Exp $
+# $Id: Makefile,v 1.447 2008-01-07 21:32:57 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -78,7 +78,7 @@ utils:
 .PHONY: doc
 doc:
 	cd doc/texinfo && ${MAKE} all
-	cd doc && tar zcvf ../gmsh-${GMSH_VERSION}-doc.tgz\
+	cd doc && tar zcf ../gmsh-${GMSH_VERSION}-doc.tgz\
           FAQ CREDITS VERSIONS README.win32 gmsh.1\
           texinfo/gmsh.ps texinfo/gmsh.pdf texinfo/gmsh.txt\
           texinfo/*.html texinfo/gmsh-info.tgz
@@ -142,21 +142,21 @@ etags:
 
 source-tree: purge
 	rm -rf gmsh-${GMSH_VERSION}
-	tar zcvf gmsh.tgz --exclude "*.o" --exclude "*.a" --exclude "gmsh"\
+	tar zcf gmsh.tgz --exclude "*.o" --exclude "*.a" --exclude "gmsh"\
           --exclude "variables" --exclude "config.log" --exclude "config.status"\
           --exclude "autom4*" --exclude "Makefile.distrib" --exclude "Makefile.back"\
           --exclude "benchmarks" --exclude "zzz_*" --exclude "HTML"\
           --exclude "*TAGS*" --exclude "GSYMS" --exclude "GPATH" --exclude "CVS"\
           *
 	mkdir gmsh-${GMSH_VERSION}
-	cd gmsh-${GMSH_VERSION} && tar zxvf ../gmsh.tgz
+	cd gmsh-${GMSH_VERSION} && tar zxf ../gmsh.tgz
 	rm -f gmsh.tgz
 
 source: source-tree
 	cd gmsh-${GMSH_VERSION} && rm -rf ${GMSH_VERSION_FILE}\
           contrib/NR contrib/Triangle/triangle.* contrib/Tetgen/tetgen.*\
           contrib/Tetgen/predicates.* utils/commercial utils/nightly
-	tar zcvf gmsh-${GMSH_VERSION}-source.tgz gmsh-${GMSH_VERSION}
+	tar zcf gmsh-${GMSH_VERSION}-source.tgz gmsh-${GMSH_VERSION}
 
 source-commercial: source-tree
 	cd gmsh-${GMSH_VERSION} && rm -rf ${GMSH_VERSION_FILE}\
@@ -170,7 +170,7 @@ source-commercial: source-tree
 	cp -f utils/commercial/license.texi gmsh-${GMSH_VERSION}/doc/texinfo/license.texi
 	cp -f utils/commercial/copying.texi gmsh-${GMSH_VERSION}/doc/texinfo/copying.texi
 	utils/commercial/sanitize.sh gmsh-${GMSH_VERSION}
-	tar zcvf gmsh-${GMSH_VERSION}-source-commercial.tgz gmsh-${GMSH_VERSION}
+	tar zcf gmsh-${GMSH_VERSION}-source-commercial.tgz gmsh-${GMSH_VERSION}
 
 # Rules to package the binaries
 
@@ -185,7 +185,7 @@ package-unix:
 	rm -rf gmsh-${GMSH_VERSION}/*/CVS
 	rm -f gmsh-${GMSH_VERSION}/tutorial/*.msh
 	rm -f gmsh-${GMSH_VERSION}/*/*~
-	tar cvf gmsh-${GMSH_VERSION}-${UNAME}.tar gmsh-${GMSH_VERSION}
+	tar cf gmsh-${GMSH_VERSION}-${UNAME}.tar gmsh-${GMSH_VERSION}
 	gzip gmsh-${GMSH_VERSION}-${UNAME}.tar
 	mv gmsh-${GMSH_VERSION}-${UNAME}.tar.gz gmsh-${GMSH_VERSION}-${UNAME}.tgz
 
@@ -234,10 +234,10 @@ package-mac:
 	rm -rf gmsh-${GMSH_VERSION}/*/CVS\
                gmsh-${GMSH_VERSION}/tutorial/*.msh\
                gmsh-${GMSH_VERSION}/*/*~
-	tar zcvf gmsh-${GMSH_VERSION}-MacOSX.tgz gmsh-${GMSH_VERSION}
+	tar zcf gmsh-${GMSH_VERSION}-MacOSX.tgz gmsh-${GMSH_VERSION}
 
 package-rpm:
-	tar zcvf /usr/src/rpm/SOURCES/gmsh-${GMSH_VERSION}.tar.gz .
+	tar zcf /usr/src/rpm/SOURCES/gmsh-${GMSH_VERSION}.tar.gz .
 	rpmbuild -bb --define 'gmshversion ${GMSH_VERSION}' utils/misc/gmsh.spec
 	mv /usr/src/rpm/RPMS/i386/gmsh-${GMSH_VERSION}-?.i386.rpm .
 	mv /usr/src/rpm/BUILD/gmsh-${GMSH_VERSION}/gmsh-${GMSH_VERSION}-${UNAME}.tgz .

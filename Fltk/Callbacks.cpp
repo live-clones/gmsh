@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.554 2007-12-07 20:49:05 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.555 2008-01-07 21:32:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -476,7 +476,7 @@ void status_xyz1p_cb(CALLBACK_ARGS)
   WID->update_manip_window();
 }
 
-static int stop_anim, view_in_cycle = -1, busy = 0;
+static int stop_anim, view_in_cycle = -1;
 
 void ManualPlay(int time, int step)
 {
@@ -484,8 +484,9 @@ void ManualPlay(int time, int step)
   // the finger down on the arrow key: if the system generates too
   // many events, we can overflow the stack--that happened on my
   // powerbook with the new, optimzed FLTK event handler)
+  static bool busy = false;
   if(busy) return;
-  busy = 1;
+  busy = true;
   if(time) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
@@ -507,7 +508,7 @@ void ManualPlay(int time, int step)
     }
   }
   Draw();
-  busy = 0;
+  busy = false;
 }
 
 void status_play_cb(CALLBACK_ARGS)
@@ -585,33 +586,45 @@ void file_new_cb(CALLBACK_ARGS)
   }
 }
 
-static char *input_formats =
-  "*"
-  "\tGmsh geometry (*.geo)"
-  "\tGmsh mesh (*.msh)"
-  "\tGmsh post-processing view (*.pos)"
-#if defined(HAVE_OCC)
-  "\tSTEP model (*.step)"
-  "\tIGES model (*.iges)"
-  "\tBRep model (*.brep)"
+#if defined(HAVE_NATIVE_FILE_CHOOSER)
+#  define TT "\t"
+#  define NN "\n"
+#else
+#  define TT " ("
+#  define NN ")\t"
 #endif
-  "\tI-deas universal mesh (*.unv)"
-  "\tMedit mesh (*.mesh)"
-  "\tNastran bulk data file (*.bdf)"
-  "\tPlot3D structured mesh (*.p3d)"
-  "\tSTL surface mesh (*.stl)"
-  "\tVRML surface mesh (*.wrl)"
+
+static char *input_formats =
+  "All files" TT "*" NN
+  "Gmsh geometry" TT "*.geo" NN
+  "Gmsh mesh" TT "*.msh" NN
+  "Gmsh post-processing view" TT "*.pos" NN
+#if defined(HAVE_OCC)
+  "STEP model" TT "*.step" NN
+  "IGES model" TT "*.iges" NN
+  "BRep model" TT "*.brep" NN
+#endif
+  "I-deas universal mesh" TT "*.unv" NN
+  "Medit mesh" TT "*.mesh"
+  "Nastran bulk data file" TT "*.bdf" NN
+  "Plot3D structured mesh" TT "*.p3d" NN
+  "STL surface mesh" TT "*.stl" NN
+  "VRML surface mesh" TT "*.wrl" NN
 #if defined(HAVE_LIBJPEG)
-  "\tJPEG (*.png)"
+  "JPEG" TT "*.png" NN
 #endif
 #if defined(HAVE_LIBPNG)
-  "\tPNG (*.png)"
+  "PNG" TT "*.png" NN
 #endif
-  "\tBMP (*.bmp)"
-  "\tPPM (*.ppm)"
-  "\tPGM (*.pgm)"
-  "\tPBM (*.pbm)"
-  "\tPNM (*.pnm)";
+  "BMP" TT "*.bmp" NN
+  "PPM" TT "*.ppm" NN
+  "PGM" TT "*.pgm" NN
+  "PBM" TT "*.pbm" NN
+  "PNM" TT "*.pnm" NN;
+
+#undef TT
+#undef NN
+
 
 void file_open_cb(CALLBACK_ARGS)
 {
@@ -700,38 +713,47 @@ void file_save_as_cb(CALLBACK_ARGS)
 {
   int i, nbformats;
   static char *pat = NULL;
+
+#if defined(HAVE_NATIVE_FILE_CHOOSER)
+#  define TT "\t"
+#  define NN "\n"
+#else
+#  define TT " ("
+#  define NN ")\t"
+#endif
+
   static patXfunc formats[] = {
-    {"Guess from extension (*.*)", _save_auto},
-    {"Gmsh mesh (*.msh)", _save_msh},
-    {"Gmsh mesh statistics (*.pos)", _save_pos},
-    {"Gmsh options (*.opt)", _save_options},
-    {"Gmsh unrolled geometry (*.geo)", _save_geo},
+    {"Guess from extension" TT "*.*", _save_auto},
+    {"Gmsh mesh" TT "*.msh", _save_msh},
+    {"Gmsh mesh statistics" TT "*.pos", _save_pos},
+    {"Gmsh options" TT "*.opt", _save_options},
+    {"Gmsh unrolled geometry" TT "*.geo", _save_geo},
 #if defined(HAVE_LIBCGNS)
-    {"CGNS (*.cgns)", _save_cgns},
+    {"CGNS" TT "*.cgns", _save_cgns},
 #endif
-    {"I-deas universal mesh (*.unv)", _save_unv},
+    {"I-deas universal mesh" TT "*.unv", _save_unv},
 #if defined(HAVE_MED)
-    {"MED (*.med)", _save_med},
+    {"MED" TT "*.med", _save_med},
 #endif
-    {"Medit mesh (*.mesh)", _save_mesh},
-    {"Nastran bulk data file (*.bdf)", _save_bdf},
-    {"Plot3D structured mesh (*.p3d)", _save_p3d},
-    {"STL surface mesh (*.stl)", _save_stl},
-    {"VRML surface mesh (*.wrl)", _save_vrml},
-    {"Encapsulated PostScript (*.eps)", _save_eps},
-    {"GIF (*.gif)", _save_gif},
+    {"Medit mesh" TT "*.mesh", _save_mesh},
+    {"Nastran bulk data file" TT "*.bdf", _save_bdf},
+    {"Plot3D structured mesh" TT "*.p3d", _save_p3d},
+    {"STL surface mesh" TT "*.stl", _save_stl},
+    {"VRML surface mesh" TT "*.wrl", _save_vrml},
+    {"Encapsulated PostScript" TT "*.eps", _save_eps},
+    {"GIF" TT "*.gif", _save_gif},
 #if defined(HAVE_LIBJPEG)
-    {"JPEG (*.jpg)", _save_jpeg},
+    {"JPEG" TT "*.jpg", _save_jpeg},
 #endif
-    {"LaTeX (*.tex)", _save_tex},
-    {"PDF (*.pdf)", _save_pdf},
+    {"LaTeX" TT "*.tex", _save_tex},
+    {"PDF" TT "*.pdf", _save_pdf},
 #if defined(HAVE_LIBPNG)
-    {"PNG (*.png)", _save_png},
+    {"PNG" TT "*.png", _save_png},
 #endif
-    {"PostScript (*.ps)", _save_ps},
-    {"PPM (*.ppm)", _save_ppm},
-    {"SVG (*.svg)", _save_svg},
-    {"YUV (*.yuv)", _save_yuv},
+    {"PostScript" TT "*.ps", _save_ps},
+    {"PPM" TT "*.ppm", _save_ppm},
+    {"SVG" TT "*.svg", _save_svg},
+    {"YUV" TT "*.yuv", _save_yuv},
   };
 
   nbformats = sizeof(formats) / sizeof(formats[0]);
@@ -740,10 +762,13 @@ void file_save_as_cb(CALLBACK_ARGS)
     pat = (char *)Malloc(nbformats * 256 * sizeof(char));
     strcpy(pat, formats[0].pat);
     for(i = 1; i < nbformats; i++) {
-      strcat(pat, "\t");
+      strcat(pat, NN);
       strcat(pat, formats[i].pat);
     }
   }
+
+#undef TT
+#undef NN
 
  test:
   if(file_chooser(0, 1, "Save As", pat)) {

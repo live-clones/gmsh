@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.154 2007-11-12 10:49:16 geuzaine Exp $
+# $Id: Makefile,v 1.155 2008-01-07 21:32:58 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -24,12 +24,15 @@ include ../variables
 LIB     = ../lib/libGmshFltk.a
 INCLUDE = -I../Common -I../DataStr -I../Graphics -I../Geo -I../Mesh -I../Post\
           -I../Numeric -I../Parser -I../Fltk -I../Plugin -I../utils/solvers\
-          -I../contrib/ANN/include
+          -I../contrib/ANN/include -I../contrib/NativeFileChooser
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
 
 SRC = Main.cpp \
       Message.cpp \
-      GUI.cpp GUI_Extras.cpp GUI_Projection.cpp GUI_Classifier.cpp\
+      GUI.cpp\
+        GUI_Extras.cpp\
+        GUI_Projection.cpp\
+        GUI_Classifier.cpp\
       Callbacks.cpp\
       Opengl.cpp\
       Opengl_Window.cpp\
@@ -114,11 +117,11 @@ GUI.o: GUI.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
 GUI_Extras.o: GUI_Extras.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Common/GmshUI.h ../Common/GmshDefines.h File_Picker.h \
-  ../Parser/CreateFile.h ../Common/Options.h ../Post/ColorTable.h \
-  ../Common/Context.h ../Graphics/Draw.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h GUI.h Opengl_Window.h Colorbar_Window.h Popup_Button.h \
-  SpherePosition_Widget.h Shortcut_Window.h
+  ../Common/GmshUI.h ../Common/GmshDefines.h ../Parser/CreateFile.h \
+  ../Common/Options.h ../Post/ColorTable.h ../Common/Context.h \
+  ../Graphics/Draw.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h GUI.h \
+  Opengl_Window.h Colorbar_Window.h Popup_Button.h \
+  SpherePosition_Widget.h Shortcut_Window.h File_Picker.h
 GUI_Projection.o: GUI_Projection.cpp ../Geo/GModelIO_F.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshDefines.h \

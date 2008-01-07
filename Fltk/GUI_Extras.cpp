@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.37 2007-10-03 19:40:40 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.38 2008-01-07 21:32:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,7 +22,6 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "GmshDefines.h"
-#include "File_Picker.h"
 #include "CreateFile.h"
 #include "Options.h"
 #include "Context.h"
@@ -34,11 +33,17 @@
 #include <FL/Fl_Menu_Window.H>
 #include <errno.h>
 
+#if defined(HAVE_NATIVE_FILE_CHOOSER)
+#  include <FL/Fl_Native_File_Chooser.H>
+static Fl_Native_File_Chooser *fc = 0;
+#else
+#include "File_Picker.h"
+static File_Picker *fc = 0;
+#endif
+
 extern Context_T CTX;
 
 // File chooser
-
-static File_Picker *fc = NULL;
 
 int file_chooser(int multi, int create, const char *message,
 		 const char *filter, char *fname)
@@ -46,67 +51,83 @@ int file_chooser(int multi, int create, const char *message,
   static char thefilter[1024] = "";
   static int thefilterindex = 0;
 
-  Fl_File_Chooser::show_label = "Format:";
-  Fl_File_Chooser::all_files_label = "All files (*)";
-
   if(strncmp(thefilter, filter, 1024)) {
     // reset the filter and the selection if the filter has changed
     strncpy(thefilter, filter, 1024);
     thefilterindex = 0;
   }
 
+#if defined(HAVE_NATIVE_FILE_CHOOSER)
+  if(!fc) fc = new Fl_Native_File_Chooser();
+  if(multi)
+    fc->type(Fl_Native_File_Chooser::BROWSE_MULTI_FILE);
+  else if(create)
+    fc->type(Fl_Native_File_Chooser::BROWSE_SAVE_FILE);
+  else
+    fc->type(Fl_Native_File_Chooser::BROWSE_FILE);
+  fc->title(message);
+  fc->filter(filter);
+  fc->filter_value(thefilterindex);
+  if(fname) fc->preset_file(fname);
+  int ret = 0;
+  switch(fc->show()) {
+  case -1: break; // error
+  case  1: break; // cancel
+  default: if(fc->filename()) ret = fc->count(); break;
+  }
+  thefilterindex = fc->filter_value();
+  return ret;
+#else
+  Fl_File_Chooser::show_label = "Format:";
+  Fl_File_Chooser::all_files_label = "All files (*)";
   if(!fc) {
     fc = new File_Picker(getenv("PWD") ? "." : CTX.home_dir, thefilter, 
 			 Fl_File_Chooser::SINGLE, message);
     fc->position(CTX.file_chooser_position[0], CTX.file_chooser_position[1]);
   }
-
   if(multi)
     fc->type(Fl_File_Chooser::MULTI);
   else if(create)
     fc->type(Fl_File_Chooser::CREATE);
   else
     fc->type(Fl_File_Chooser::SINGLE);
-
   fc->label(message);
   fc->filter(thefilter);
   fc->filter_value(thefilterindex);
-  if(fname)
-    fc->value(fname);
-
+  if(fname) fc->value(fname);
   fc->show();
-
-  while(fc->shown())
-    Fl::wait();
-
+  while(fc->shown()) Fl::wait();
   thefilterindex = fc->filter_value();
-
   if(fc->value())
     return fc->count();
   else
     return 0;
+#endif
 }
 
 char *file_chooser_get_name(int num)
 {
-  if(!fc)
-    return "";
+  if(!fc) return "";
+#if defined(HAVE_NATIVE_FILE_CHOOSER)
+  return (char *)fc->filename(num - 1);
+#else
   return (char *)fc->value(num);
+#endif
 }
 
 int file_chooser_get_filter()
 {
-  if(!fc)
-    return 0;
+  if(!fc) return 0;
   return fc->filter_value();
 }
 
 void file_chooser_get_position(int *x, int *y)
 {
-  if(!fc)
-    return;
+  if(!fc) return;
+#if !defined(HAVE_NATIVE_FILE_CHOOSER)
   *x = fc->x();
   *y = fc->y();
+#endif
 }
 
 // Arrow editor
