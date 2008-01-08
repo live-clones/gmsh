@@ -3803,6 +3803,37 @@ fi
 
   fi
 
+    { echo "$as_me:$LINENO: checking for ./contrib/NativeFileChooser/Fl_Native_File_Chooser.cxx" >&5
+echo $ECHO_N "checking for ./contrib/NativeFileChooser/Fl_Native_File_Chooser.cxx... $ECHO_C" >&6; }
+if test "${ac_cv_file___contrib_NativeFileChooser_Fl_Native_File_Chooser_cxx+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "./contrib/NativeFileChooser/Fl_Native_File_Chooser.cxx"; then
+  ac_cv_file___contrib_NativeFileChooser_Fl_Native_File_Chooser_cxx=yes
+else
+  ac_cv_file___contrib_NativeFileChooser_Fl_Native_File_Chooser_cxx=no
+fi
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_file___contrib_NativeFileChooser_Fl_Native_File_Chooser_cxx" >&5
+echo "${ECHO_T}$ac_cv_file___contrib_NativeFileChooser_Fl_Native_File_Chooser_cxx" >&6; }
+if test $ac_cv_file___contrib_NativeFileChooser_Fl_Native_File_Chooser_cxx = yes; then
+  NATIVE="yes"
+else
+  NATIVE="no"
+fi
+
+  if test "x${NATIVE}" = "xyes"; then
+    if test "x$enable_native_file_chooser" != "xno"; then
+       GMSH_DIRS="${GMSH_DIRS} contrib/NativeFileChooser"
+       GMSH_LIBS="${GMSH_LIBS} -lGmshNativeFileChooser"
+       FLAGS="-DHAVE_NATIVE_FILE_CHOOSER ${FLAGS}"
+    fi
+  fi
+
   if test "x${OSMESA}" = "xyes"; then
     GMSH_LIBS="${GMSH_LIBS} `$FLTKCONFIG --use-images --ldflags` -lfltk_gl"
     FLAGS="${FLAGS} -DHAVE_OSMESA `$FLTKCONFIG --use-images --cxxflags`"
@@ -4060,37 +4091,6 @@ fi
           FLAGS="${FLAGS} -I${PNG_PREFIX} -I${PNG_PREFIX}/include"
         fi
       fi
-    fi
-  fi
-
-    { echo "$as_me:$LINENO: checking for ./contrib/NativeFileChooser/Fl_Native_File_Chooser.cxx" >&5
-echo $ECHO_N "checking for ./contrib/NativeFileChooser/Fl_Native_File_Chooser.cxx... $ECHO_C" >&6; }
-if test "${ac_cv_file___contrib_NativeFileChooser_Fl_Native_File_Chooser_cxx+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "./contrib/NativeFileChooser/Fl_Native_File_Chooser.cxx"; then
-  ac_cv_file___contrib_NativeFileChooser_Fl_Native_File_Chooser_cxx=yes
-else
-  ac_cv_file___contrib_NativeFileChooser_Fl_Native_File_Chooser_cxx=no
-fi
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_file___contrib_NativeFileChooser_Fl_Native_File_Chooser_cxx" >&5
-echo "${ECHO_T}$ac_cv_file___contrib_NativeFileChooser_Fl_Native_File_Chooser_cxx" >&6; }
-if test $ac_cv_file___contrib_NativeFileChooser_Fl_Native_File_Chooser_cxx = yes; then
-  NATIVE="yes"
-else
-  NATIVE="no"
-fi
-
-  if test "x${NATIVE}" = "xyes"; then
-    if test "x$enable_native_file_chooser" != "xno"; then
-       GMSH_DIRS="${GMSH_DIRS} contrib/NativeFileChooser"
-       GMSH_LIBS="${GMSH_LIBS} -lGmshNativeFileChooser"
-       FLAGS="-DHAVE_NATIVE_FILE_CHOOSER ${FLAGS}"
     fi
   fi
 

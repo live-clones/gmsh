@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.139 2008-01-07 21:32:57 geuzaine Exp $
+dnl $Id: configure.in,v 1.140 2008-01-08 10:28:27 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 dnl
@@ -235,6 +235,17 @@ if test "x$enable_gui" != "xno"; then
     AC_CHECK_LIB(OSMesa,main,OSMESA="yes",OSMESA="no")
   fi
 
+  dnl Check for native file chooser
+  AC_CHECK_FILE(./contrib/NativeFileChooser/Fl_Native_File_Chooser.cxx, 
+                NATIVE="yes", NATIVE="no")
+  if test "x${NATIVE}" = "xyes"; then
+    if test "x$enable_native_file_chooser" != "xno"; then
+       GMSH_DIRS="${GMSH_DIRS} contrib/NativeFileChooser"
+       GMSH_LIBS="${GMSH_LIBS} -lGmshNativeFileChooser"
+       FLAGS="-DHAVE_NATIVE_FILE_CHOOSER ${FLAGS}"
+    fi
+  fi
+
   if test "x${OSMESA}" = "xyes"; then
     GMSH_LIBS="${GMSH_LIBS} `$FLTKCONFIG --use-images --ldflags` -lfltk_gl"
     FLAGS="${FLAGS} -DHAVE_OSMESA `$FLTKCONFIG --use-images --cxxflags`"
@@ -322,17 +333,6 @@ if test "x$enable_gui" != "xno"; then
         fi
       fi
     fi 
-  fi
-
-  dnl Check for native file chooser
-  AC_CHECK_FILE(./contrib/NativeFileChooser/Fl_Native_File_Chooser.cxx, 
-                NATIVE="yes", NATIVE="no")
-  if test "x${NATIVE}" = "xyes"; then
-    if test "x$enable_native_file_chooser" != "xno"; then
-       GMSH_DIRS="${GMSH_DIRS} contrib/NativeFileChooser"
-       GMSH_LIBS="${GMSH_LIBS} -lGmshNativeFileChooser"
-       FLAGS="-DHAVE_NATIVE_FILE_CHOOSER ${FLAGS}"
-    fi
   fi
 
 else
