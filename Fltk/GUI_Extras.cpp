@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.39 2008-01-07 22:59:29 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.40 2008-01-08 10:47:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -76,11 +76,9 @@ int file_chooser(int multi, int create, const char *message,
   default: if(fc->filename()) ret = fc->count(); break;
   }
   thefilterindex = fc->filter_value();
-#if defined(__APPLE__)
-  // FIXME: hack to clear the KEYDOWN state that remains when calling
-  // the file chooser on Mac using a keyboard shortcut
+  // hack to clear the KEYDOWN state that remains when calling the
+  // file chooser on Mac and Windows using a keyboard shortcut
   Fl::e_state = 0;
-#endif
   return ret;
 #else
   Fl_File_Chooser::show_label = "Format:";
