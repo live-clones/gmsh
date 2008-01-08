@@ -30,7 +30,7 @@
 // Contributor(s):
 //   Christopher Stott
 
-void SystemCall(char *str);
+void SystemCall(const char *str);
 int WaitForData(int socket, int num, double waitint);
 
 #include <stdio.h>

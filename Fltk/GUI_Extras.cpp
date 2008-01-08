@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.40 2008-01-08 10:47:27 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.41 2008-01-08 12:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -46,7 +46,7 @@ extern Context_T CTX;
 // File chooser
 
 int file_chooser(int multi, int create, const char *message,
-		 const char *filter, char *fname)
+		 const char *filter, const char *fname)
 {
   static char thefilter[1024] = "";
   static int thefilterindex = 0;
@@ -108,13 +108,13 @@ int file_chooser(int multi, int create, const char *message,
 #endif
 }
 
-char *file_chooser_get_name(int num)
+std::string file_chooser_get_name(int num)
 {
   if(!fc) return "";
 #if defined(HAVE_NATIVE_FILE_CHOOSER)
-  return (char *)fc->filename(num - 1);
+  return std::string(fc->filename(num - 1));
 #else
-  return (char *)fc->value(num);
+  return std::string(fc->value(num));
 #endif
 }
 
@@ -135,7 +135,7 @@ void file_chooser_get_position(int *x, int *y)
 
 // Arrow editor
 
-int arrow_editor(char *title, double &a, double &b, double &c)
+int arrow_editor(const char *title, double &a, double &b, double &c)
 {
   struct _editor{
     Fl_Window *window;
@@ -243,7 +243,7 @@ int perspective_editor()
 
 // Generic save bitmap dialog
 
-int generic_bitmap_dialog(char *name, char *title, int format)
+int generic_bitmap_dialog(const char *name, const char *title, int format)
 {
   struct _generic_bitmap_dialog{
     Fl_Window *window;
@@ -297,7 +297,7 @@ int generic_bitmap_dialog(char *name, char *title, int format)
 
 // TeX dialog
 
-int latex_dialog(char *name)
+int latex_dialog(const char *name)
 {
   struct _latex_dialog{
     Fl_Window *window;
@@ -350,7 +350,7 @@ int latex_dialog(char *name)
 
 // Save jpeg dialog
 
-int jpeg_dialog(char *name)
+int jpeg_dialog(const char *name)
 {
   struct _jpeg_dialog{
     Fl_Window *window;
@@ -420,7 +420,7 @@ int jpeg_dialog(char *name)
 
 // Save gif dialog
 
-int gif_dialog(char *name)
+int gif_dialog(const char *name)
 {
   struct _gif_dialog{
     Fl_Window *window;
@@ -523,7 +523,7 @@ static void activate_gl2ps_choices(int format, int quality, Fl_Check_Button *b[5
   }
 }
 
-int gl2ps_dialog(char *name, char *title, int format)
+int gl2ps_dialog(const char *name, const char *title, int format)
 {
   struct _gl2ps_dialog{
     Fl_Window *window;
@@ -615,7 +615,7 @@ int gl2ps_dialog(char *name, char *title, int format)
 
 // Save options dialog
 
-int options_dialog(char *name)
+int options_dialog(const char *name)
 {
   struct _options_dialog{
     Fl_Window *window;
@@ -670,7 +670,7 @@ int options_dialog(char *name)
 
 // geo dialog
 
-int geo_dialog(char *name)
+int geo_dialog(const char *name)
 {
   struct _geo_dialog{
     Fl_Window *window;
@@ -721,7 +721,7 @@ int geo_dialog(char *name)
   return 0;
 }
 
-int pos_dialog(char *name)
+int pos_dialog(const char *name)
 {
   struct _pos_dialog{
     Fl_Window *window;
@@ -790,7 +790,7 @@ int pos_dialog(char *name)
 
 // Generic save mesh dialog
 
-int generic_mesh_dialog(char *name, char *title, int format)
+int generic_mesh_dialog(const char *name, const char *title, int format)
 {
   struct _generic_mesh_dialog{
     Fl_Window *window;
@@ -844,7 +844,7 @@ int generic_mesh_dialog(char *name, char *title, int format)
 
 // Save msh dialog
 
-int msh_dialog(char *name)
+int msh_dialog(const char *name)
 {
   struct _msh_dialog{
     Fl_Window *window;
@@ -914,7 +914,7 @@ int msh_dialog(char *name)
 
 // unv mesh dialog
 
-int unv_dialog(char *name)
+int unv_dialog(const char *name)
 {
   struct _unv_dialog{
     Fl_Window *window;
@@ -971,7 +971,7 @@ int unv_dialog(char *name)
 
 // Save bdf dialog
 
-int bdf_dialog(char *name)
+int bdf_dialog(const char *name)
 {
   struct _bdf_dialog{
     Fl_Window *window;
@@ -1037,7 +1037,7 @@ int bdf_dialog(char *name)
 
 // Save stl dialog
 
-int stl_dialog(char *name)
+int stl_dialog(const char *name)
 {
   struct _stl_dialog{
     Fl_Window *window;

@@ -1,4 +1,4 @@
-// $Id: OS.cpp,v 1.9 2007-09-04 13:47:00 remacle Exp $
+// $Id: OS.cpp,v 1.10 2008-01-08 12:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -125,7 +125,7 @@ int GetProcessId()
 #endif
 }
 
-int UnlinkFile(char *filename)
+int UnlinkFile(const char *filename)
 {
 #if !defined(WIN32) || defined(__CYGWIN__)
   return unlink(filename);
@@ -134,7 +134,7 @@ int UnlinkFile(char *filename)
 #endif
 }
 
-int StatFile(char *filename)
+int StatFile(const char *filename)
 {
 #if !defined(WIN32) || defined(__CYGWIN__)
   struct stat buf;
@@ -160,7 +160,7 @@ int KillProcess(int pid)
   return 1;
 }
 
-int SystemCall(char *command)
+int SystemCall(const char *command)
 {
 #if defined(WIN32)
   STARTUPINFO suInfo;

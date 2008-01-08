@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.646 2007-12-07 20:49:05 geuzaine Exp $
+// $Id: GUI.cpp,v 1.647 2008-01-08 12:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -403,7 +403,7 @@ Fl_Menu_Item menu_font_names[] = {
   {0}
 };
 
-int GetFontIndex(char *fontname)
+int GetFontIndex(const char *fontname)
 {
   if(fontname){
     for(int i = 0; i < NUM_FONTS; i++)
@@ -431,7 +431,7 @@ char *GetFontName(int index)
   return "Helvetica";
 }
 
-int GetFontAlign(char *alignstr)
+int GetFontAlign(const char *alignstr)
 {
   if(alignstr){
     if(!strcmp(alignstr, "BottomLeft") || !strcmp(alignstr, "Left") ||
@@ -1539,7 +1539,7 @@ void GUI::set_size(int new_w, int new_h)
 
 // Set graphic window title
 
-void GUI::set_title(char *str)
+void GUI::set_title(const char *str)
 {
   g_window->label(str);
 }
@@ -1601,7 +1601,7 @@ void GUI::check_anim_buttons()
 
 // Set the status messages
 
-void GUI::set_status(char *msg, int num)
+void GUI::set_status(const char *msg, int num)
 {
   if(num == 0 || num == 1){
     g_status_label[num]->label(msg);
@@ -1623,7 +1623,7 @@ void GUI::set_status(char *msg, int num)
   }
 }
 
-void GUI::add_multiline_in_browser(Fl_Browser * o, char *prefix, char *str)
+void GUI::add_multiline_in_browser(Fl_Browser * o, const char *prefix, const char *str)
 {
   int start = 0, len;
   char *buff;
@@ -4016,7 +4016,7 @@ void GUI::add_message(char *msg)
   msg_browser->bottomline(msg_browser->size());
 }
 
-void GUI::save_message(char *filename)
+void GUI::save_message(const char *filename)
 {
   FILE *fp;
 
@@ -4037,7 +4037,7 @@ void GUI::save_message(char *filename)
   fclose(fp);
 }
 
-void GUI::fatal_error(char *filename)
+void GUI::fatal_error(const char *filename)
 {
   fl_alert("A fatal error has occurred which will force Gmsh to abort.\n"
            "The error messages have been saved in the following file:\n\n%s",

@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.164 2007-09-26 20:52:01 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.165 2008-01-08 12:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -46,7 +46,7 @@ extern GUI *WID;
 
 extern Context_T CTX;
 
-void FixRelativePath(char *in, char *out){
+void FixRelativePath(const char *in, char *out){
   if(in[0] == '/' || in[0] == '\\' || (strlen(in)>2 && in[1] == ':')){
     // do nothing: 'in' is an absolute path
     strcpy(out, in);
@@ -61,7 +61,7 @@ void FixRelativePath(char *in, char *out){
   }
 }
 
-void FixWindowsPath(char *in, char *out){
+void FixWindowsPath(const char *in, char *out){
 #if defined(__CYGWIN__)
   cygwin_conv_to_win32_path(in, out);
 #else
@@ -69,7 +69,7 @@ void FixWindowsPath(char *in, char *out){
 #endif
 }
 
-void SplitFileName(char *name, char *no_ext, char *ext, char *base)
+void SplitFileName(const char *name, char *no_ext, char *ext, char *base)
 {
   strcpy(no_ext, name);
   strcpy(ext, "");
@@ -186,7 +186,7 @@ void AddToTemporaryBoundingBox(double x, double y, double z)
   FinishUpBoundingBox();
 }
 
-int ParseFile(char *f, int close, int warn_if_missing)
+int ParseFile(const char *f, int close, int warn_if_missing)
 {
   char yyname_old[256], tmp[256];
   FILE *yyin_old, *fp;
@@ -243,7 +243,7 @@ int ParseFile(char *f, int close, int warn_if_missing)
   return 1;
 }
 
-void ParseString(char *str)
+void ParseString(const char *str)
 {
   if(!str) return;
   FILE *fp;
@@ -256,7 +256,7 @@ void ParseString(char *str)
   }
 }
 
-void SetProjectName(char *name)
+void SetProjectName(const char *name)
 {
   char no_ext[256], ext[256], base[256];
   SplitFileName(name, no_ext, ext, base);
@@ -270,7 +270,7 @@ void SetProjectName(char *name)
 #endif
 }
 
-int MergeFile(char *name, int warn_if_missing)
+int MergeFile(const char *name, int warn_if_missing)
 {
   // added 'b' for pure Windows programs, since some of these files
   // contain binary data
@@ -405,7 +405,7 @@ int MergeFile(char *name, int warn_if_missing)
   return status;
 }
 
-void OpenProject(char *name)
+void OpenProject(const char *name)
 {
   if(CTX.threads_lock) {
     Msg(INFO, "I'm busy! Ask me that later...");

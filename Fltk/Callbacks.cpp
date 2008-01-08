@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.556 2008-01-07 23:16:18 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.557 2008-01-08 12:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,7 @@
 #include <signal.h>
 #include <time.h>
 #include <map>
+#include <string>
 
 #include "Gmsh.h"
 #include "GmshUI.h"
@@ -564,24 +565,24 @@ void file_new_cb(CALLBACK_ARGS)
 {
  test:
   if(file_chooser(0, 1, "New", "*")) {
-    char *name = file_chooser_get_name(1);
-    if(!StatFile(name)){
+    std::string name = file_chooser_get_name(1);
+    if(!StatFile(name.c_str())){
       if(fl_choice("File '%s' already exists.\n\nDo you want to erase it?",
-		   "Cancel", "Erase", NULL, name))
-	UnlinkFile(name);
+		   "Cancel", "Erase", NULL, name.c_str()))
+	UnlinkFile(name.c_str());
       else
 	goto test;
     }
-    FILE *fp = fopen(name, "w");
+    FILE *fp = fopen(name.c_str(), "w");
     if(!fp){
-      Msg(GERROR, "Unable to open file '%s'", name);
+      Msg(GERROR, "Unable to open file '%s'", name.c_str());
       return;
     }
     time_t now;
     time(&now);
     fprintf(fp, "// Gmsh project created on %s", ctime(&now));
     fclose(fp);
-    OpenProject(name);
+    OpenProject(name.c_str());
     Draw();
   }
 }
@@ -630,7 +631,7 @@ void file_open_cb(CALLBACK_ARGS)
 {
   int n = PView::list.size();
   if(file_chooser(0, 0, "Open", input_formats)) {
-    OpenProject(file_chooser_get_name(1));
+    OpenProject(file_chooser_get_name(1).c_str());
     Draw();
   }
   if(n != (int)PView::list.size())
@@ -643,37 +644,37 @@ void file_merge_cb(CALLBACK_ARGS)
   int f = file_chooser(1, 0, "Merge", input_formats);
   if(f) {
     for(int i = 1; i <= f; i++)
-      MergeFile(file_chooser_get_name(i));
+      MergeFile(file_chooser_get_name(i).c_str());
     Draw();
   }
   if(n != (int)PView::list.size())
     WID->set_context(menu_post, 0);
 }
 
-int _save_msh(char *name){ return msh_dialog(name); }
-int _save_pos(char *name){ return pos_dialog(name); }
-int _save_options(char *name){ return options_dialog(name); }
-int _save_geo(char *name){ return geo_dialog(name); }
-int _save_cgns(char *name){ CreateOutputFile(name, FORMAT_CGNS); return 1; }
-int _save_unv(char *name){ return unv_dialog(name); }
-int _save_med(char *name){ return generic_mesh_dialog(name, "MED Options", FORMAT_MED); }
-int _save_mesh(char *name){ return generic_mesh_dialog(name, "MESH Options", FORMAT_MESH); }
-int _save_bdf(char *name){ return bdf_dialog(name); }
-int _save_p3d(char *name){ return generic_mesh_dialog(name, "P3D Options", FORMAT_P3D); }
-int _save_stl(char *name){ return stl_dialog(name); }
-int _save_vrml(char *name){ return generic_mesh_dialog(name, "VRML Options", FORMAT_VRML); }
-int _save_eps(char *name){ return gl2ps_dialog(name, "EPS Options", FORMAT_EPS); }
-int _save_gif(char *name){ return gif_dialog(name); }
-int _save_jpeg(char *name){ return jpeg_dialog(name); }
-int _save_tex(char *name){ return latex_dialog(name); }
-int _save_pdf(char *name){ return gl2ps_dialog(name, "PDF Options", FORMAT_PDF); }
-int _save_png(char *name){ return generic_bitmap_dialog(name, "PNG Options", FORMAT_PNG); }
-int _save_ps(char *name){ return gl2ps_dialog(name, "PS Options", FORMAT_PS); }
-int _save_ppm(char *name){ return generic_bitmap_dialog(name, "PPM Options", FORMAT_PPM); }
-int _save_svg(char *name){ return gl2ps_dialog(name, "SVG Options", FORMAT_SVG); }
-int _save_yuv(char *name){ return generic_bitmap_dialog(name, "YUV Options", FORMAT_YUV); }
+int _save_msh(const char *name){ return msh_dialog(name); }
+int _save_pos(const char *name){ return pos_dialog(name); }
+int _save_options(const char *name){ return options_dialog(name); }
+int _save_geo(const char *name){ return geo_dialog(name); }
+int _save_cgns(const char *name){ CreateOutputFile(name, FORMAT_CGNS); return 1; }
+int _save_unv(const char *name){ return unv_dialog(name); }
+int _save_med(const char *name){ return generic_mesh_dialog(name, "MED Options", FORMAT_MED); }
+int _save_mesh(const char *name){ return generic_mesh_dialog(name, "MESH Options", FORMAT_MESH); }
+int _save_bdf(const char *name){ return bdf_dialog(name); }
+int _save_p3d(const char *name){ return generic_mesh_dialog(name, "P3D Options", FORMAT_P3D); }
+int _save_stl(const char *name){ return stl_dialog(name); }
+int _save_vrml(const char *name){ return generic_mesh_dialog(name, "VRML Options", FORMAT_VRML); }
+int _save_eps(const char *name){ return gl2ps_dialog(name, "EPS Options", FORMAT_EPS); }
+int _save_gif(const char *name){ return gif_dialog(name); }
+int _save_jpeg(const char *name){ return jpeg_dialog(name); }
+int _save_tex(const char *name){ return latex_dialog(name); }
+int _save_pdf(const char *name){ return gl2ps_dialog(name, "PDF Options", FORMAT_PDF); }
+int _save_png(const char *name){ return generic_bitmap_dialog(name, "PNG Options", FORMAT_PNG); }
+int _save_ps(const char *name){ return gl2ps_dialog(name, "PS Options", FORMAT_PS); }
+int _save_ppm(const char *name){ return generic_bitmap_dialog(name, "PPM Options", FORMAT_PPM); }
+int _save_svg(const char *name){ return gl2ps_dialog(name, "SVG Options", FORMAT_SVG); }
+int _save_yuv(const char *name){ return generic_bitmap_dialog(name, "YUV Options", FORMAT_YUV); }
 
-int _save_auto(char *name)
+int _save_auto(const char *name)
 {
   switch(GuessFileFormatFromFileName(name)){
   case FORMAT_MSH  : return _save_msh(name);
@@ -705,8 +706,8 @@ int _save_auto(char *name)
 }
 
 typedef struct{
-  char *pat;
-  int (*func) (char *name);
+  const char *pat;
+  int (*func) (const char *name);
 } patXfunc;
 
 void file_save_as_cb(CALLBACK_ARGS)
@@ -772,20 +773,20 @@ void file_save_as_cb(CALLBACK_ARGS)
 
  test:
   if(file_chooser(0, 1, "Save As", pat)) {
-    char *name = file_chooser_get_name(1);
+    std::string name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
-      if(!StatFile(name))
+      if(!StatFile(name.c_str()))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
-		      "Cancel", "Replace", NULL, name))
+		      "Cancel", "Replace", NULL, name.c_str()))
           goto test;
     }
     i = file_chooser_get_filter();
     if(i >= 0 && i < nbformats){
-      if(!formats[i].func(name))
+      if(!formats[i].func(name.c_str()))
 	goto test;
     }
     else // handle any additional automatic fltk filter
-      _save_auto(name);
+      _save_auto(name.c_str());
   }
 }
 
@@ -793,15 +794,15 @@ void file_rename_cb(CALLBACK_ARGS)
 {
  test:
   if(file_chooser(0, 1, "Rename", "*", CTX.filename)) {
-    char *name = file_chooser_get_name(1);
+    std::string name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
-      if(!StatFile(name))
+      if(!StatFile(name.c_str()))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
-		      "Cancel", "Replace", NULL, name))
+		      "Cancel", "Replace", NULL, name.c_str()))
           goto test;
     }
-    rename(CTX.filename, name);
-    OpenProject(name);
+    rename(CTX.filename, name.c_str());
+    OpenProject(name.c_str());
     Draw();
   }
 }
@@ -1907,14 +1908,14 @@ void message_save_cb(CALLBACK_ARGS)
 {
  test:
   if(file_chooser(0, 1, "Save", "*")) {
-    char *name = file_chooser_get_name(1);
+    std::string name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
-      if(!StatFile(name))
+      if(!StatFile(name.c_str()))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?", 
-		      "Cancel", "Replace", NULL, name))
+		      "Cancel", "Replace", NULL, name.c_str()))
           goto test;
     }
-    WID->save_message(name);
+    WID->save_message(name.c_str());
   }
 }
 
@@ -4130,10 +4131,10 @@ void solver_file_open_cb(CALLBACK_ARGS)
   // We allow to create the .pro file... Or should we add a "New file"
   // button?
   if(file_chooser(0, 0, "Choose", tmp)) {
-    WID->solver[num].input[0]->value(file_chooser_get_name(1));
+    WID->solver[num].input[0]->value(file_chooser_get_name(1).c_str());
     if(SINFO[num].nboptions) {
       char file[1024];
-      FixWindowsPath(file_chooser_get_name(1), file);
+      FixWindowsPath(file_chooser_get_name(1).c_str(), file);
       sprintf(tmp, "\"%s\"", file);
       sprintf(file, SINFO[num].name_command, tmp);
       sprintf(tmp, "%s %s", SINFO[num].option_command, file);
@@ -4156,7 +4157,7 @@ void solver_choose_mesh_cb(CALLBACK_ARGS)
 {
   int num = (int)(long)data;
   if(file_chooser(0, 0, "Choose", "*"))
-    WID->solver[num].input[1]->value(file_chooser_get_name(1));
+    WID->solver[num].input[1]->value(file_chooser_get_name(1).c_str());
 }
 
 int nbs(char *str)
@@ -4231,7 +4232,7 @@ void solver_choose_executable_cb(CALLBACK_ARGS)
                   "*"
 #endif
                   )){
-    WID->solver[num].input[2]->value(file_chooser_get_name(1));
+    WID->solver[num].input[2]->value(file_chooser_get_name(1).c_str());
     solver_ok_cb(w, data);
   }
 }
@@ -4368,14 +4369,14 @@ static void _view_save_as(int view_num, char *title, int format)
   
  test:
   if(file_chooser(0, 1, title, "*", (char*)view->getData()->getFileName().c_str())){
-    char *name = file_chooser_get_name(1);
+    std::string name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
-      if(!StatFile(name))
+      if(!StatFile(name.c_str()))
         if(!fl_choice("File '%s' already exists.\n\nDo you want to replace it?",
-		      "Cancel", "Replace", NULL, name))
+		      "Cancel", "Replace", NULL, name.c_str()))
           goto test;
     }
-    view->write(name, format);
+    view->write(name.c_str(), format);
   }
 }
 

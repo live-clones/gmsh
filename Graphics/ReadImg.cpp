@@ -1,4 +1,4 @@
-// $Id: ReadImg.cpp,v 1.19 2007-09-10 04:47:03 geuzaine Exp $
+// $Id: ReadImg.cpp,v 1.20 2008-01-08 12:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -98,7 +98,7 @@ static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads=1,
   return d;
 }
 
-static int EndPos(char *name, PViewData *d)
+static int EndPos(const char *name, PViewData *d)
 {
   if(!d) return 0;
   char name_pos[256], title[256];
@@ -125,25 +125,25 @@ static int EndPos(char *name, PViewData *d)
   }
 }
 
-int read_pnm(char *name) 
+int read_pnm(const char *name) 
 {
   Fl_PNM_Image img(name);
   return EndPos(name, Img2Data(img));
 }
 
-int read_jpeg(char *name) 
+int read_jpeg(const char *name) 
 {
   Fl_JPEG_Image img(name);
   return EndPos(name, Img2Data(img));
 }
 
-int read_png(char *name) 
+int read_png(const char *name) 
 {
   Fl_PNG_Image img(name);
   return EndPos(name, Img2Data(img));
 }
 
-int read_bmp(char *name) 
+int read_bmp(const char *name) 
 {
   Fl_BMP_Image img(name);
   return EndPos(name, Img2Data(img));

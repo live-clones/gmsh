@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.21 2007-10-03 19:40:41 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.22 2008-01-08 12:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,7 @@
 
 extern Context_T CTX;
 
-int GuessFileFormatFromFileName(char *name)
+int GuessFileFormatFromFileName(const char *name)
 {
   int len;
   char ext[256];
@@ -111,7 +111,7 @@ void GetDefaultFileName(int format, char *name)
   strcat(name, ext);
 }
 
-void CreateOutputFile(char *filename, int format)
+void CreateOutputFile(const char *filename, int format)
 {
   char name[256], no_ext[256], ext[256], base[256];
 

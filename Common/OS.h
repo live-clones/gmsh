@@ -26,9 +26,9 @@ void GetResources(double *s, long *mem);
 void CheckResources();
 double Cpu();
 int GetProcessId();
-int UnlinkFile(char *name);
-int StatFile(char *filename);
+int UnlinkFile(const char *name);
+int StatFile(const char *filename);
 int KillProcess(int pid);
-int SystemCall(char *command);
+int SystemCall(const char *command);
 
 #endif

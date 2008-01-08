@@ -790,9 +790,9 @@ void save_selection_cb(Fl_Widget *w, void *data)
 {
   projectionEditor *e = (projectionEditor*)data;
   if(file_chooser(0, 1, "Save Selection", "*.{geo,msh}")){
-    FILE *fp = fopen(file_chooser_get_name(1), "w");
+    FILE *fp = fopen(file_chooser_get_name(1).c_str(), "w");
     if(!fp){
-      Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1));
+      Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1).c_str());
       return;
     }
     std::vector<GEntity*> &ent(e->getEntities());
@@ -830,9 +830,9 @@ void load_projection_cb(Fl_Widget *w, void *data)
 {
   projectionEditor *e = (projectionEditor*)data;
   if(file_chooser(0, 0, "Load Projection", "*.pro")){
-    FILE *fp = fopen(file_chooser_get_name(1), "r");
+    FILE *fp = fopen(file_chooser_get_name(1).c_str(), "r");
     if(!fp){
-      Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1));
+      Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1).c_str());
       return;
     }
     int num;
@@ -874,14 +874,14 @@ void save_projection_cb(Fl_Widget *w, void *data)
   if(p){
     FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
     if(file_chooser(0, 1, "Save Projection", "*.pro")){
-      char *name = file_chooser_get_name(1);
-      FILE *fp = fopen(name, "w");
+      std::string name = file_chooser_get_name(1);
+      FILE *fp = fopen(name.c_str(), "w");
       if(!fp){
-	Msg(GERROR, "Unable to open file `%s'", name);
+	Msg(GERROR, "Unable to open file `%s'", name.c_str());
 	return;
       }
       char no_ext[256], ext[256], base[256];
-      SplitFileName(name, no_ext, ext, base);
+      SplitFileName(name.c_str(), no_ext, ext, base);
       fprintf(fp, "1\n%s\n%s\n", base, ps->GetName().c_str());
       for(unsigned int i = 0; i < p->parameters.size(); i++)
 	fprintf(fp, "%.16g\n", p->parameters[i]->value());
@@ -1021,9 +1021,9 @@ void action_cb(Fl_Widget *w, void *data)
   }
   else{
     if(file_chooser(0, 1, "Save Fourier Model", "*.fm")){
-      FILE *fp = fopen(file_chooser_get_name(1), "w");
+      FILE *fp = fopen(file_chooser_get_name(1).c_str(), "w");
       if(!fp){
-	Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1));
+	Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1).c_str());
 	return;
       }
       fprintf(fp, "%d\n", (int)faces.size());

@@ -20,14 +20,14 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-int ParseFile(char *filename, int close, int warn_if_missing=0);
-void ParseString(char *str);
-void OpenProject(char *filename);
+int ParseFile(const char *filename, int close, int warn_if_missing=0);
+void ParseString(const char *str);
+void OpenProject(const char *filename);
 void OpenProjectMacFinder(const char *filename);
-int MergeFile(char *filename, int warn_if_missing=0);
-void FixRelativePath(char *in, char *out);
-void FixWindowsPath(char *in, char *out);
-void SplitFileName(char *name, char *no_ext, char *ext, char *base);
+int MergeFile(const char *filename, int warn_if_missing=0);
+void FixRelativePath(const char *in, char *out);
+void FixWindowsPath(const char *in, char *out);
+void SplitFileName(const char *name, char *no_ext, char *ext, char *base);
 void SetBoundingBox(double xmin, double xmax,
 		    double ymin, double ymax, 
 		    double zmin, double zmax);

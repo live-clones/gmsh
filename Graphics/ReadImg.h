@@ -20,9 +20,9 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-int read_pnm(char *name);
-int read_jpeg(char *name);
-int read_png(char *name);
-int read_bmp(char *name);
+int read_pnm(const char *name);
+int read_jpeg(const char *name);
+int read_png(const char *name);
+int read_bmp(const char *name);
 
 #endif

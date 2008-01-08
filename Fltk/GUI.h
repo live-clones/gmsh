@@ -126,7 +126,7 @@ class GUI{
   int MH, fontsize;
   Fl_Scroll *m_scroll;
 
-  void add_multiline_in_browser(Fl_Browser *o, char* prefix, char *str);
+  void add_multiline_in_browser(Fl_Browser *o, const char *prefix, const char *str);
 
 public:
 
@@ -307,13 +307,13 @@ public:
   void update_views();
   void set_anim_buttons(int mode);
   void check_anim_buttons();
-  void set_status(char *msg, int num);
+  void set_status(const char *msg, int num);
   void add_message(char *msg);
-  void save_message(char *filename);
-  void fatal_error(char *filename);
+  void save_message(const char *filename);
+  void fatal_error(const char *filename);
   void set_statistics(bool compute_quality);
   void update_view_window(int numview);
-  void set_title(char *str);
+  void set_title(const char *str);
   void add_handler();
   int  global_shortcuts(int event);
   int  arrow_shortcuts();
@@ -329,10 +329,10 @@ public:
 };
 
 // some utility font functions
-int GetFontIndex(char *fontname);
+int GetFontIndex(const char *fontname);
 int GetFontEnum(int index);
 char *GetFontName(int index);
-int GetFontAlign(char *alignstr);
+int GetFontAlign(const char *alignstr);
 int GetFontSize();
 
 #endif

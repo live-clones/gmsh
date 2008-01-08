@@ -20,28 +20,30 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <string>
+
 int file_chooser(int multi, int create, const char *message,
-		 const char *pat, char *fname=NULL);
-char *file_chooser_get_name(int num);
+		 const char *pat, const char *fname=NULL);
+std::string file_chooser_get_name(int num);
 int file_chooser_get_filter();
 void file_chooser_get_position(int *x, int *y);
 
-int arrow_editor(char *title, double &a, double &b, double &c);
+int arrow_editor(const char *title, double &a, double &b, double &c);
 int perspective_editor();
 
-int jpeg_dialog(char *filename);
-int gif_dialog(char *filename);
-int geo_dialog(char *filename);
-int generic_bitmap_dialog(char *filename, char *title, int format);
-int generic_mesh_dialog(char *filename, char *title, int format);
-int gl2ps_dialog(char *filename, char *title, int format);
-int options_dialog(char *filename);
-int pos_dialog(char *filename);
-int msh_dialog(char *filename);
-int unv_dialog(char *filename);
-int bdf_dialog(char *filename);
-int stl_dialog(char *filename);
-int latex_dialog(char *filename);
+int jpeg_dialog(const char *filename);
+int gif_dialog(const char *filename);
+int geo_dialog(const char *filename);
+int generic_bitmap_dialog(const char *filename, const char *title, int format);
+int generic_mesh_dialog(const char *filename, const char *title, int format);
+int gl2ps_dialog(const char *filename, const char *title, int format);
+int options_dialog(const char *filename);
+int pos_dialog(const char *filename);
+int msh_dialog(const char *filename);
+int unv_dialog(const char *filename);
+int bdf_dialog(const char *filename);
+int stl_dialog(const char *filename);
+int latex_dialog(const char *filename);
 
 #endif
 

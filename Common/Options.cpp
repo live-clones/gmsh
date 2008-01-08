@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.371 2007-12-07 20:49:05 geuzaine Exp $
+// $Id: Options.cpp,v 1.372 2008-01-08 12:05:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -249,7 +249,7 @@ void Print_ColorTable(int num, int diff, char *prefix, FILE *file)
     Msg(DIRECT, tmp);
 }
 
-void Print_Options(int num, int level, int diff, int help, char *filename)
+void Print_Options(int num, int level, int diff, int help, const char *filename)
 {
   FILE *file;
 
