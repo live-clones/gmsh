@@ -1,4 +1,4 @@
-// $Id: OS.cpp,v 1.10 2008-01-08 12:05:45 geuzaine Exp $
+// $Id: OS.cpp,v 1.11 2008-01-09 07:57:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -168,7 +168,7 @@ int SystemCall(const char *command)
   memset(&suInfo, 0, sizeof(suInfo));
   suInfo.cb = sizeof(suInfo);
   Msg(INFO, "Calling '%s'", command);
-  CreateProcess(NULL, command, NULL, NULL, FALSE,
+  CreateProcess(NULL, (char*)command, NULL, NULL, FALSE,
                 NORMAL_PRIORITY_CLASS, NULL, NULL, &suInfo, &prInfo);
   return 0;
 #else
