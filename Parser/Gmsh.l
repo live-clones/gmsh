@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.92 2007-09-10 04:47:04 geuzaine Exp $
+// $Id: Gmsh.l,v 1.93 2008-01-09 08:17:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -31,7 +31,6 @@
 #include "Gmsh.tab.hpp"
 
 char yyname[256] = "";
-int  yylineno = 1;
 int  yyerrorstate = 0;
 int  yyviewindex = 0;
 
@@ -40,10 +39,7 @@ char  *strsave(char *ptr);
 void   skipcomments(void);
 void   skipline(void);
 
-#define YY_ALWAYS_INTERACTIVE 1
-
 #define YY_INPUT(buf,result,max_size)					\
-   if ( yy_current_buffer->yy_is_interactive )				\
      {									\
        int c = '*', n;							\
        for ( n = 0; n < max_size &&					\
@@ -57,9 +53,6 @@ void   skipline(void);
 	 Msg(FATAL, "Input in flex scanner failed");			\
        result = n;							\
      }									\
-   else if ( ((result = fread( buf, 1, max_size, yyin )) == 0)		\
-	     && ferror( yyin ) )					\
-     Msg(FATAL, "Input in flex scanner failed");
 
 %}
 
@@ -69,13 +62,6 @@ special	[\.]
 digit	[0-9]
 exp	[Ee][-+]?{digit}+
 string	{alpha}({alpha}|{digit})*
-
-%e       2000
-%p       7000
-%n       2000
-%k       1500
-%a       7000
-%o       7000
 
 %%
 
@@ -258,7 +244,8 @@ TIME                    return tTime;
 
 int yywrap() {return 1;}
 
-void skipcomments(void){
+void skipcomments(void)
+{
   int c;
 
   while (1) {
@@ -274,7 +261,8 @@ void skipcomments(void){
   }
 }
 
-void parsestring(char endchar){
+void parsestring(char endchar)
+{
   int c;
   char tmp[1024];
   
@@ -298,18 +286,21 @@ void parsestring(char endchar){
   yylval.c = strsave(tmp);
 }
 
-char *strsave(char *ptr){
+char *strsave(char *ptr)
+{
   return((char*)strcpy((char*)malloc(strlen(ptr)+1),ptr));
 }
 
-void skipline(void){
+void skipline(void)
+{
   int c;
   while ((c = yyinput()) != '\n'){
     if(c == EOF) return;
   }
 }
 
-void skip_until(char *skip, char *until){
+void skip_until(char *skip, char *until)
+{
   int i, nb_skip;
   int l, l_skip, l_until;
   char chars[256];
