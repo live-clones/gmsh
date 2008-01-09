@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.102 2007-11-26 14:34:10 remacle Exp $
+// $Id: meshGFace.cpp,v 1.103 2008-01-09 15:25:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -486,29 +486,30 @@ void saturateEdgePass ( GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 }
 
 
-void collapseEdgePass ( GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_collaps)
+void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_collaps)
 {
   int NN1 = m.edges.size();
   int NN2 = 0;
   std::list<BDS_Edge*>::iterator it = m.edges.begin();
-  while (1)
-    {
-      if (NN2++ >= NN1)break;
-      double lone = NewGetLc ( *it,gf);
-      //	  if (lone < 1.e-10 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) lone = 2;
-      
-      if (!(*it)->deleted && (*it)->numfaces() == 2 && lone < MINE_ )
-	{
-	  bool res = false;
-	  if ( (*it)->p1->iD > MAXNP )
-	    res =m.collapse_edge_parametric ( *it, (*it)->p1);
-	  else if ( (*it)->p2->iD > MAXNP )
-	    res =m.collapse_edge_parametric ( *it, (*it)->p2);
-	  if (res)
-	    nb_collaps ++;
-	}
-      ++it;
+  while (1){
+    if(NN2++ >= NN1) break;
+    
+    if(!(*it)->deleted){
+      double lone = NewGetLc(*it, gf);
+      // if (lone < 1.e-10 && computeParametricEdgeLength((*it)->p1,(*it)->p2) > 1.e-5) 
+      //   lone = 2;
+      if(!(*it)->deleted && (*it)->numfaces() == 2 && lone < MINE_){
+	bool res = false;
+	if((*it)->p1->iD > MAXNP)
+	  res = m.collapse_edge_parametric(*it, (*it)->p1);
+	else if((*it)->p2->iD > MAXNP)
+	  res = m.collapse_edge_parametric(*it, (*it)->p2);
+	if(res)
+	  nb_collaps++;
+      }
     }
+    ++it;
+  }
 }
 
 
