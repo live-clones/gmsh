@@ -1,4 +1,4 @@
-// $Id: FunctionManager.cpp,v 1.26 2007-09-04 13:47:03 remacle Exp $
+// $Id: FunctionManager.cpp,v 1.27 2008-01-09 15:35:03 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,7 @@
 #include <map>
 #include <stdio.h>
 #include <stack>
+#include <string.h>
 #include "FunctionManager.h"
 
 struct ltstr
