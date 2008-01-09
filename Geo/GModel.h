@@ -33,6 +33,8 @@
 // internal CAD representations
 class GEO_Internals;
 class OCC_Internals;
+class MVertex;
+class MElement;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel  
@@ -60,7 +62,7 @@ class GModel
 
  public:
   GModel(std::string name="");
-  ~GModel();
+  virtual ~GModel();
   
   // the static list of all loaded models
   static std::vector<GModel*> list;
