@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.27 2007-08-21 19:05:39 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.28 2008-01-10 14:56:54 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <string.h>
 #include "Visibility.h"
 #include "GModel.h"
 #include "Parser.h" // for Symbol_T

@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.11 2007-09-22 20:35:19 geuzaine Exp $
+// $Id: PView.cpp,v 1.12 2008-01-10 14:56:54 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,8 @@
 #include "PViewDataList.h"
 #include "VertexArray.h"
 #include "Message.h"
+#include <string.h>
+#include <algorithm>
 
 int PView::_globalNum = 0;
 std::vector<PView*> PView::list;

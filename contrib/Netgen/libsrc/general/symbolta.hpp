@@ -7,6 +7,7 @@
 /* Author: Joachim Schoeberl                                              */
 /* Date:   01. Jun. 95                                                    */
 /**************************************************************************/
+#include <string.h>
 
 /**
    Base class for the generic SYMBOLTABLE.

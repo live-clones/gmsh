@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.143 2007-12-08 07:09:29 geuzaine Exp $
+// $Id: Post.cpp,v 1.144 2008-01-10 14:56:54 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,7 @@
 #include "VertexArray.h"
 #include "Context.h"
 #include "gl2ps.h"
+#include <algorithm>
 
 #if defined(HAVE_MATH_EVAL)
 #include "matheval.h"

@@ -1,4 +1,4 @@
-// $Id: PViewDataListIO.cpp,v 1.3 2007-09-08 21:26:05 geuzaine Exp $
+// $Id: PViewDataListIO.cpp,v 1.4 2008-01-10 14:56:55 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,7 @@
 // Contributor(s):
 // 
 
+#include <string.h>
 #include <set>
 #include "PViewDataList.h"
 #include "Numeric.h"

@@ -1,4 +1,4 @@
-// $Id: PViewOptions.cpp,v 1.16 2007-09-10 04:47:08 geuzaine Exp $
+// $Id: PViewOptions.cpp,v 1.17 2008-01-10 14:56:55 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,7 @@
 // Contributor(s):
 // 
 
+#include <string.h>
 #include "PViewOptions.h"
 #include "Message.h"
 

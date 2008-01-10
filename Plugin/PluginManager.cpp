@@ -1,4 +1,4 @@
-// $Id: PluginManager.cpp,v 1.1 2007-09-11 14:01:55 geuzaine Exp $
+// $Id: PluginManager.cpp,v 1.2 2008-01-10 14:56:54 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -53,6 +53,7 @@
 #include "MakeSimplex.h"
 #include "Smooth.h"
 #include "Transform.h"
+#include "TransformLatLon.h"
 #include "Triangulate.h"
 #include "Warp.h"
 #include "SphericalRaise.h"
@@ -197,6 +198,8 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		      ("Smooth", GMSH_RegisterSmoothPlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Transform", GMSH_RegisterTransformPlugin()));
+    allPlugins.insert(std::pair < char *, GMSH_Plugin * >
+		      ("TransformLatLon", GMSH_RegisterTransformLatLonPlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Warp", GMSH_RegisterWarpPlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
