@@ -15,8 +15,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA.
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 // USA.
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
@@ -449,6 +448,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Relative radius of arrow stem" },
   { F|O, "Axes" , opt_general_axes , 0. ,
     "Axes (0=none, 1=simple axes, 2=box, 3=full grid, 4=open grid, 5=ruler)" },
+  { F|O, "AxesMikado" , opt_general_axes_mikado , 0. , 
+    "Mikado axes style" }, 
   { F|O, "AxesAutoPosition" , opt_general_axes_auto_position , 1. , 
     "Position the axes automatically" }, 
   { F|O, "AxesMaxX" , opt_general_axes_xmax , 1. , 
@@ -1158,6 +1159,8 @@ StringXNumber ViewOptions_Number[] = {
     "Position the scale or 2D plot automatically" }, 
   { F|O, "Axes" , opt_view_axes , 0 ,
     "Axes (0=none, 1=simple axes, 2=box, 3=full grid, 4=open grid, 5=ruler)" },
+  { F|O, "AxesMikado" , opt_view_axes_mikado , 0. , 
+    "Mikado axes style" }, 
   { F|O, "AxesAutoPosition" , opt_view_axes_auto_position , 1. , 
     "Position the axes automatically" }, 
   { F|O, "AxesMaxX" , opt_view_axes_xmax , 1. , 

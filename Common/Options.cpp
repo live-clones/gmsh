@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.372 2008-01-08 12:05:45 geuzaine Exp $
+// $Id: Options.cpp,v 1.373 2008-01-11 13:56:21 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2931,6 +2931,19 @@ double opt_general_axes(OPT_ARGS_NUM)
   }
 #endif
   return CTX.axes;
+}
+
+double opt_general_axes_mikado(OPT_ARGS_NUM){
+  if(action & GMSH_SET) {
+    CTX.axes_mikado = (int)val;
+  }
+/*#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_butt[25]->value(opt->AxesAutoPosition);
+    activate_cb(NULL, (void*)"view_axes_auto_3d");
+  }
+#endif*/
+  return CTX.axes_mikado;
 }
 
 double opt_general_axes_auto_position(OPT_ARGS_NUM)
@@ -6058,6 +6071,20 @@ double opt_view_axes(OPT_ARGS_NUM)
   }
 #endif
   return opt->Axes;
+}
+
+double opt_view_axes_mikado(OPT_ARGS_NUM){
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    opt->AxesMikado = (int)val;
+  }
+/*#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)) {
+    WID->view_butt[25]->value(opt->AxesAutoPosition);
+    activate_cb(NULL, (void*)"view_axes_auto_3d");
+  }
+#endif*/
+  return opt->AxesMikado;
 }
 
 double opt_view_axes_auto_position(OPT_ARGS_NUM)

@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.78 2007-09-18 16:26:02 geuzaine Exp $
+// $Id: Entity.cpp,v 1.79 2008-01-11 13:56:22 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -621,7 +621,7 @@ void Draw_SmallAxes()
 }
 
 int Draw_Tics(int comp, int n, char *format, char *label,
-	      double p1[3], double p2[3], double perp[3])
+	      double p1[3], double p2[3], double perp[3],int mikado)
 {
   // draws n tic marks (in direction perp) and labels along the line p1->p2
 
@@ -664,7 +664,7 @@ int Draw_Tics(int comp, int n, char *format, char *label,
     glVertex3d(q[0], q[1], q[2]);
     glEnd();
 
-    if(i < n-1){
+    if(i < n-1 && !mikado){
       for(int j = 1; j < 10; j++){
 	double dd = d + j * step/10.;
 	double pp[3] = { p1[0]+t[0]*dd, p1[1]+t[1]*dd, p1[2]+t[2]*dd };
@@ -738,16 +738,39 @@ void Draw_GridStipple(int n1, int n2, double p1[3], double p2[3], double p3[3])
 }
 
 void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256], 
-	       SBoundingBox3d &bb)
+	       SBoundingBox3d &bb, int mikado)
 {
   double bbox[6] = {bb.min().x(), bb.max().x(),
 		    bb.min().y(), bb.max().y(),
 		    bb.min().z(), bb.max().z()};
-  Draw_Axes(mode, tics, format, label, bbox);
+  Draw_Axes(mode, tics, format, label, bbox, mikado);
+}
+
+void Draw_Axe(double xmin,double ymin, double zmin,double xmax,double ymax,double zmax,int nticks,int mikado){
+	if(mikado){
+		nticks=(nticks-1)*mikado;
+		if(nticks<1)nticks=1;
+		double dd[3]={(xmax-xmin)/nticks,(ymax-ymin)/nticks,(zmax-zmin)/nticks};
+		double axe_color[4];
+		glGetDoublev(GL_CURRENT_COLOR,axe_color);
+		for(int i=1;i<=nticks;i++){
+			if(i%2)glColor4dv(axe_color);
+			else glColor3f(1,1,1);
+			double cx[2]={xmin+(i-1)*dd[0],xmin+i*dd[0]};
+			double cy[2]={ymin+(i-1)*dd[1],ymin+i*dd[1]};
+			double cz[2]={zmin+(i-1)*dd[2],zmin+i*dd[2]};
+			Draw_Cylinder(3.5,cx,cy,cz,1);
+		}
+		glColor4dv(axe_color);
+	}else{
+		glBegin(GL_LINES);
+		glVertex3d(xmin,ymin,zmin); glVertex3d(xmax,ymax,zmax);
+		glEnd();
+	}
 }
 
 void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256], 
-	       double bb[6])
+	       double bb[6], int mikado)
 {
   // mode 0: nothing
   //      1: axes
@@ -765,9 +788,6 @@ void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
   double orig[3] = {xmin, ymin, zmin};
 
   if(mode == 5){ // draw ruler from xyz_min to xyz_max
-    glBegin(GL_LINES);
-    glVertex3d(xmin, ymin, zmin); glVertex3d(xmax, ymax, zmax);
-    glEnd();
     double end[3] = {xmax, ymax, zmax};
     double dir[3] = {xmax-xmin, ymax-ymin, zmax-zmin};
     double perp[3];
@@ -778,42 +798,42 @@ void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
     else{
       perp[0] = 0.; perp[1] = dir[2]; perp[2] = -dir[1];
     }
-    Draw_Tics(-1, tics[0], format[0], label[0], orig, end, perp);
+    Draw_Tics(-1, tics[0], format[0], label[0], orig, end, perp,mikado);
+		Draw_Axe(xmin,ymin,zmin,xmax,ymax,zmax,tics[0],mikado);
     return;
   }
-  
-  glBegin(GL_LINES);
-  // 3 axes
-  glVertex3d(xmin, ymin, zmin); glVertex3d(xmax, ymin, zmin);
-  glVertex3d(xmin, ymin, zmin); glVertex3d(xmin, ymax, zmin);
-  glVertex3d(xmin, ymin, zmin); glVertex3d(xmin, ymin, zmax);
-  // open box
-  if(mode > 1){
-    glVertex3d(xmin, ymax, zmin); glVertex3d(xmax, ymax, zmin);
-    glVertex3d(xmax, ymin, zmin); glVertex3d(xmax, ymax, zmin);
-    glVertex3d(xmin, ymin, zmax); glVertex3d(xmax, ymin, zmax);
-    glVertex3d(xmax, ymin, zmin); glVertex3d(xmax, ymin, zmax);
-    glVertex3d(xmin, ymin, zmax); glVertex3d(xmin, ymax, zmax);
-    glVertex3d(xmin, ymax, zmin); glVertex3d(xmin, ymax, zmax);
-  }
-  // closed box
-  if(mode == 2 || mode == 3){
-    glVertex3d(xmax, ymax, zmax); glVertex3d(xmin, ymax, zmax);
-    glVertex3d(xmax, ymax, zmax); glVertex3d(xmax, ymin, zmax);
-    glVertex3d(xmax, ymax, zmax); glVertex3d(xmax, ymax, zmin);
-  }
-  glEnd();
-
   double xx[3] = {xmax, ymin, zmin};
   double yy[3] = {xmin, ymax, zmin};
   double zz[3] = {xmin, ymin, zmax};
   double dxm[3] = {0., (ymin != ymax) ? -1. : 0., (zmin != zmax) ? -1. : 0.};
   double dym[3] = {(xmin != xmax) ? -1. : 0., 0., (zmin != zmax) ? -1. : 0.};
   double dzm[3] = {(xmin != xmax) ? -1. : 0., (ymin != ymax) ? -1. : 0., 0.};
+  
 
-  int nx = (xmin != xmax) ? Draw_Tics(0, tics[0], format[0], label[0], orig, xx, dxm) : 0;
-  int ny = (ymin != ymax) ? Draw_Tics(1, tics[1], format[1], label[1], orig, yy, dym) : 0;
-  int nz = (zmin != zmax) ? Draw_Tics(2, tics[2], format[2], label[2], orig, zz, dzm) : 0;
+  int nx = (xmin != xmax) ? Draw_Tics(0, tics[0], format[0], label[0], orig, xx, dxm,mikado) : 0;
+  int ny = (ymin != ymax) ? Draw_Tics(1, tics[1], format[1], label[1], orig, yy, dym, mikado) : 0;
+  int nz = (zmin != zmax) ? Draw_Tics(2, tics[2], format[2], label[2], orig, zz, dzm,mikado) : 0;
+
+	Draw_Axe(xmin, ymin, zmin, xmax, ymin, zmin, nx, mikado);
+	Draw_Axe(xmin, ymin, zmin, xmin, ymax, zmin, ny, mikado);
+	Draw_Axe(xmin, ymin, zmin, xmin, ymin, zmax, nz, mikado);
+
+  // open box
+  if(mode > 1){
+    Draw_Axe(xmin, ymax, zmin, xmax, ymax, zmin, nx, mikado);
+    Draw_Axe(xmax, ymin, zmin, xmax, ymax, zmin, ny, mikado);
+    Draw_Axe(xmax, ymin, zmin, xmax, ymin, zmax, nz, mikado);
+    Draw_Axe(xmin, ymin, zmax, xmax, ymin, zmax, nx, mikado);
+    Draw_Axe(xmin, ymin, zmax, xmin, ymax, zmax, ny, mikado);
+    Draw_Axe(xmin, ymax, zmin, xmin, ymax, zmax, nz, mikado);
+  }
+
+  // closed box
+  if(mode == 2 || mode == 3){
+    Draw_Axe(xmin, ymax, zmax, xmax, ymax, zmax, nx, mikado);
+    Draw_Axe(xmax, ymin, zmax, xmax, ymax, zmax, ny, mikado);
+    Draw_Axe(xmax, ymax, zmin, xmax, ymax, zmax, nz, mikado);
+  }
   
   if(mode > 2){
     Draw_GridStipple(nx, ny, orig, xx, yy);

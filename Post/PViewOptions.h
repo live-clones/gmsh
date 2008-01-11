@@ -65,7 +65,7 @@ class PViewOptions {
   int Type;
   int Position[2], Size[2], AutoPosition;
   char Format[256];
-  int Axes, AxesAutoPosition, AxesTics[3];
+  int Axes, AxesAutoPosition,AxesMikado, AxesTics[3];
   char AxesFormat[3][256], AxesLabel[3][256];
   double AxesPosition[6];
   double CustomMin, CustomMax, TmpMin, TmpMax, ExternalMin, ExternalMax;

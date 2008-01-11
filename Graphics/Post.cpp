@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.144 2008-01-10 14:56:54 remacle Exp $
+// $Id: Post.cpp,v 1.145 2008-01-11 13:56:22 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1366,10 +1366,10 @@ class drawPView {
       gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
       if(!opt->AxesAutoPosition)
 	Draw_Axes(opt->Axes, opt->AxesTics, opt->AxesFormat, opt->AxesLabel,
-		  opt->AxesPosition);
+		  opt->AxesPosition,opt->AxesMikado);
       else if(!opt->TmpBBox.empty())
 	Draw_Axes(opt->Axes, opt->AxesTics, opt->AxesFormat, opt->AxesLabel,
-		  opt->TmpBBox);
+		  opt->TmpBBox,opt->AxesMikado);
     }
     
   }

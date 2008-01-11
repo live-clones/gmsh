@@ -71,9 +71,9 @@ void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
 			     double a, double b, double c, double d, int shade=0);
 void Draw_SmallAxes();
 void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
-	       double bbox[6]);
+	       double bbox[6],int mikado);
 void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
-	       SBoundingBox3d &bbox);
+	       SBoundingBox3d &bbox,int mikado);
 
 #endif
 

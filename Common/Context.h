@@ -103,7 +103,7 @@ public :
   int draw_bbox, draw_rotation_center; // draw the bounding boxes and the rot center?
   int fast_redraw;            // draw simplified model during user interaction
   int small_axes, small_axes_size, small_axes_pos[2]; // small axes
-  int axes, axes_auto_position, axes_tics[3]; // large axes
+  int axes, axes_auto_position, axes_tics[3],axes_mikado; // large axes
   double axes_position[6];  
   char axes_label[3][256], axes_format[3][256];
   int threads, threads_lock;  // threads?, lock (should be a mutex...) 
