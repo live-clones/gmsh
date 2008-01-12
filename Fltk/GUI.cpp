@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.647 2008-01-08 12:05:45 geuzaine Exp $
+// $Id: GUI.cpp,v 1.648 2008-01-12 18:40:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1889,6 +1889,10 @@ void GUI::create_option_window()
       gen_choice[4]->tooltip("(Alt+a)");
       gen_choice[4]->callback(general_options_ok_cb, (void*)"general_axes");
 
+      gen_butt[16] = new Fl_Check_Button(L + width / 2 + 4 * WB, 2 * WB + 1 * BH, IW, BH, "Mikado style");
+      gen_butt[16]->type(FL_TOGGLE_BUTTON);
+      gen_butt[16]->callback(general_options_ok_cb);
+
       gen_value[17] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW/3, BH);
       gen_value[17]->minimum(0.);
       gen_value[17]->step(1);
@@ -2975,6 +2979,10 @@ void GUI::create_option_window()
       view_choice[8]->tooltip("(Alt+a)");
       view_choice[8]->callback(view_options_ok_cb, (void*)"view_axes");
 
+      view_butt[3] = new Fl_Check_Button(L + width / 2 + 4 * WB, 2 * WB + 1 * BH, IW, BH, "Mikado style");
+      view_butt[3]->type(FL_TOGGLE_BUTTON);
+      view_butt[3]->callback(view_options_ok_cb);
+
       view_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW/3, BH);
       view_value[3]->minimum(0.);
       view_value[3]->step(1);
@@ -3469,6 +3477,7 @@ void GUI::update_view_window(int num)
   opt_view_size1(num, GMSH_GUI, 0);
 
   opt_view_axes(num, GMSH_GUI, 0);
+  opt_view_axes_mikado(num, GMSH_GUI, 0);
   opt_view_axes_format0(num, GMSH_GUI, NULL);
   opt_view_axes_format1(num, GMSH_GUI, NULL);
   opt_view_axes_format2(num, GMSH_GUI, NULL);

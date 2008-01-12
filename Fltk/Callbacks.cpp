@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.557 2008-01-08 12:05:45 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.558 2008-01-12 18:40:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -963,6 +963,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_rotation_center_cg(0, GMSH_SET, WID->gen_butt[15]->value());
   opt_general_draw_bounding_box(0, GMSH_SET, WID->gen_butt[6]->value());
   opt_general_polygon_offset_always(0, GMSH_SET, WID->gen_butt[4]->value());
+  opt_general_axes_mikado(0, GMSH_SET, WID->gen_butt[16]->value());
 
   opt_general_shine_exponent(0, GMSH_SET, WID->gen_value[0]->value());  
   opt_general_shine(0, GMSH_SET, WID->gen_value[1]->value());
@@ -1309,6 +1310,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   double tensor_type = opt_view_tensor_type(current, GMSH_GET, 0);
   double range_type = opt_view_range_type(current, GMSH_GET, 0);
   double axes = opt_view_axes(current, GMSH_GET, 0);
+  double mikado = opt_view_axes_mikado(current, GMSH_GET, 0);
   double boundary = opt_view_boundary(current, GMSH_GET, 0);
   double external_view = opt_view_external_view(current, GMSH_GET, 0);
   double gen_raise_view = opt_view_gen_raise_view(current, GMSH_GET, 0);
@@ -1490,6 +1492,10 @@ void view_options_ok_cb(CALLBACK_ARGS)
       val = WID->view_butt[4]->value();
       if(force || (val != show_scale))
         opt_view_show_scale(i, GMSH_SET, val);
+
+      val = WID->view_butt[3]->value();
+      if(force || (val != mikado))
+        opt_view_axes_mikado(i, GMSH_SET, val);
 
       val = WID->view_butt[7]->value();
       if(force || (val != auto_position))

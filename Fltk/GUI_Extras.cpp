@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.41 2008-01-08 12:05:45 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.42 2008-01-12 18:40:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -34,7 +34,7 @@
 #include <errno.h>
 
 #if defined(HAVE_NATIVE_FILE_CHOOSER)
-#  include <FL/Fl_Native_File_Chooser.H>
+#include <FL/Fl_Native_File_Chooser.H>
 static Fl_Native_File_Chooser *fc = 0;
 #else
 #include "File_Picker.h"
