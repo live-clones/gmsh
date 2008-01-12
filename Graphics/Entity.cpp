@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.79 2008-01-11 13:56:22 remacle Exp $
+// $Id: Entity.cpp,v 1.80 2008-01-12 15:14:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -621,7 +621,7 @@ void Draw_SmallAxes()
 }
 
 int Draw_Tics(int comp, int n, char *format, char *label,
-	      double p1[3], double p2[3], double perp[3],int mikado)
+	      double p1[3], double p2[3], double perp[3], int mikado)
 {
   // draws n tic marks (in direction perp) and labels along the line p1->p2
 
@@ -746,27 +746,33 @@ void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
   Draw_Axes(mode, tics, format, label, bbox, mikado);
 }
 
-void Draw_Axe(double xmin,double ymin, double zmin,double xmax,double ymax,double zmax,int nticks,int mikado){
-	if(mikado){
-		nticks=(nticks-1)*mikado;
-		if(nticks<1)nticks=1;
-		double dd[3]={(xmax-xmin)/nticks,(ymax-ymin)/nticks,(zmax-zmin)/nticks};
-		double axe_color[4];
-		glGetDoublev(GL_CURRENT_COLOR,axe_color);
-		for(int i=1;i<=nticks;i++){
-			if(i%2)glColor4dv(axe_color);
-			else glColor3f(1,1,1);
-			double cx[2]={xmin+(i-1)*dd[0],xmin+i*dd[0]};
-			double cy[2]={ymin+(i-1)*dd[1],ymin+i*dd[1]};
-			double cz[2]={zmin+(i-1)*dd[2],zmin+i*dd[2]};
-			Draw_Cylinder(3.5,cx,cy,cz,1);
-		}
-		glColor4dv(axe_color);
-	}else{
-		glBegin(GL_LINES);
-		glVertex3d(xmin,ymin,zmin); glVertex3d(xmax,ymax,zmax);
-		glEnd();
-	}
+void Draw_Axe(double xmin, double ymin, double zmin,
+	      double xmax, double ymax, double zmax, int nticks, int mikado)
+{
+  if(mikado){
+    nticks = (nticks - 1) * mikado;
+    if(nticks < 1) nticks = 1;
+    double dd[3] = {(xmax - xmin) / nticks, 
+		    (ymax - ymin) / nticks, 
+		    (zmax - zmin) / nticks};
+    double axe_color[4];
+    glGetDoublev(GL_CURRENT_COLOR, axe_color);
+    for(int i = 1; i <= nticks; i++){
+      if(i % 2) glColor4dv(axe_color);
+      else glColor3f(1, 1, 1);
+      double cx[2] ={xmin + (i - 1) * dd[0], xmin + i * dd[0]};
+      double cy[2] ={ymin + (i - 1) * dd[1], ymin + i * dd[1]};
+      double cz[2] ={zmin + (i - 1) * dd[2], zmin + i * dd[2]};
+      Draw_Cylinder(3.5, cx, cy, cz, 1);
+    }
+    glColor4dv(axe_color);
+  }
+  else{
+    glBegin(GL_LINES);
+    glVertex3d(xmin, ymin, zmin); 
+    glVertex3d(xmax, ymax, zmax);
+    glEnd();
+  }
 }
 
 void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256], 
@@ -798,8 +804,8 @@ void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
     else{
       perp[0] = 0.; perp[1] = dir[2]; perp[2] = -dir[1];
     }
-    Draw_Tics(-1, tics[0], format[0], label[0], orig, end, perp,mikado);
-		Draw_Axe(xmin,ymin,zmin,xmax,ymax,zmax,tics[0],mikado);
+    Draw_Tics(-1, tics[0], format[0], label[0], orig, end, perp, mikado);
+    Draw_Axe(xmin, ymin, zmin, xmax, ymax, zmax, tics[0], mikado);
     return;
   }
   double xx[3] = {xmax, ymin, zmin};
@@ -809,14 +815,16 @@ void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
   double dym[3] = {(xmin != xmax) ? -1. : 0., 0., (zmin != zmax) ? -1. : 0.};
   double dzm[3] = {(xmin != xmax) ? -1. : 0., (ymin != ymax) ? -1. : 0., 0.};
   
+  int nx = (xmin != xmax) ? 
+    Draw_Tics(0, tics[0], format[0], label[0], orig, xx, dxm, mikado) : 0;
+  int ny = (ymin != ymax) ? 
+    Draw_Tics(1, tics[1], format[1], label[1], orig, yy, dym, mikado) : 0;
+  int nz = (zmin != zmax) ? 
+    Draw_Tics(2, tics[2], format[2], label[2], orig, zz, dzm, mikado) : 0;
 
-  int nx = (xmin != xmax) ? Draw_Tics(0, tics[0], format[0], label[0], orig, xx, dxm,mikado) : 0;
-  int ny = (ymin != ymax) ? Draw_Tics(1, tics[1], format[1], label[1], orig, yy, dym, mikado) : 0;
-  int nz = (zmin != zmax) ? Draw_Tics(2, tics[2], format[2], label[2], orig, zz, dzm,mikado) : 0;
-
-	Draw_Axe(xmin, ymin, zmin, xmax, ymin, zmin, nx, mikado);
-	Draw_Axe(xmin, ymin, zmin, xmin, ymax, zmin, ny, mikado);
-	Draw_Axe(xmin, ymin, zmin, xmin, ymin, zmax, nz, mikado);
+  Draw_Axe(xmin, ymin, zmin, xmax, ymin, zmin, nx, mikado);
+  Draw_Axe(xmin, ymin, zmin, xmin, ymax, zmin, ny, mikado);
+  Draw_Axe(xmin, ymin, zmin, xmin, ymin, zmax, nz, mikado);
 
   // open box
   if(mode > 1){
