@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.103 2008-01-09 15:25:48 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.104 2008-01-14 21:29:14 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -35,10 +35,26 @@
 #include "Numeric.h"
 #include "BDS.h"
 #include "qualityMeasures.h"
+#include "Field.h"
 
 extern Context_T CTX;
 
 static double SCALINGU=1,SCALINGV=1;
+
+bool noseam (  GFace *gf  )
+{
+  std::list<GEdge*> edges = gf->edges();
+  std::list<GEdge*>::iterator it = edges.begin();
+  while (it != edges.end())   
+   {
+     GEdge *ge = *it ;
+     bool seam = ge->isSeam(gf);
+     if (seam) return false;
+     ++it;
+   }
+  return true;
+}
+
 
 void remeshUnrecoveredEdges ( std::set<EdgeToRecover> & edgesNotRecovered, std::list<GFace *> &facesToRemesh)
 {
@@ -133,8 +149,8 @@ void remeshUnrecoveredEdges ( std::set<EdgeToRecover> & edgesNotRecovered, std::
 
 
 bool AlgoDelaunay2D ( GFace *gf )
-{
-  if ( /*gf->getNativeType() == GEntity::GmshModel &&*/ CTX.mesh.algo2d == ALGO_2D_DELAUNAY && gf->geomType() == GEntity::Plane)
+{ 
+  if ( noseam(gf) && /*gf->getNativeType() == GEntity::GmshModel &&*/ CTX.mesh.algo2d == ALGO_2D_DELAUNAY /*&& gf->geomType() == GEntity::Plane*/)
     return true;
   return false;
 }
@@ -359,8 +375,19 @@ void OptimizeMesh(GFace *gf, BDS_Mesh &m, const int NIT)
 	}
       }
     }
-  for (int KK=0;KK<4;KK++){
-    // swap edges that provide a better configuration
+
+//   for(int i = 0 ; i < NIT ; i++){
+//     std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
+//     while (itp != m.points.end())
+//       {
+// 	optimize_vertex_position(gf,*itp,m.scalingU,m.scalingV);		
+// 	++itp;
+//       }
+//   }
+
+
+ for (int KK=0;KK<4;KK++){
+   // swap edges that provide a better configuration
     int NN1 = m.edges.size();
     int NN2 = 0;
     std::list<BDS_Edge*>::iterator it = m.edges.begin();
@@ -398,7 +425,279 @@ void swapEdgePass ( GFace *gf, BDS_Mesh &m, int &nb_swap )
     }  
 }
 
-void splitEdgePass ( GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
+int getTemplate (const BDS_Face *f, const std::map<BDS_Edge*,std::pair<BDS_Edge*,BDS_Edge*> >&splits,
+		 BDS_Edge *edges[3][2]){
+  int k = 0;
+  std::map< BDS_Edge*,std::pair<BDS_Edge*,BDS_Edge* > > ::const_iterator it;
+  it = splits.find ( f-> e1 );
+  if (it == splits.end()){
+    edges[0][0] = f->e1;
+    edges[0][1] = 0;
+  }
+  else{
+    edges[0][0] = it->second.first;
+    edges[0][1] = it->second.second;
+    k+=1;
+  }
+  it = splits.find ( f->e2 );
+  if (it == splits.end()){
+    edges[1][0] = f->e2;
+    edges[1][1] = 0;
+  }
+  else{
+    edges[1][0] = it->second.first;
+    edges[1][1] = it->second.second;
+    k+=10;
+  }
+  it = splits.find ( f->e3 );
+  if (it == splits.end()){
+    edges[2][0] = f->e3;
+    edges[2][1] = 0;
+  }
+  else{
+    edges[2][0] = it->second.first;
+    edges[2][1] = it->second.second;
+    k+=100;
+  }
+  return k;		     
+}
+
+void Template_1 ( BDS_Mesh &m , BDS_Face *f, BDS_Edge *e11, BDS_Edge *e12, BDS_Edge *e2, BDS_Edge *e3)
+{
+  BDS_Point *mid = e11->commonvertex(e12);
+  BDS_Point *opposite = e2->commonvertex(e3);
+
+  if (!mid || !opposite){
+    printf("strange bazar in template 1 : edges %d %d , %d %d , %d %d and %d %d\n",
+	   e11->p1->iD,e11->p2->iD,
+	   e12->p1->iD,e12->p2->iD,
+	   e2->p1->iD,e2->p2->iD,
+	   e3->p1->iD,e3->p2->iD);
+  }
+
+  BDS_Edge *emid = new BDS_Edge (mid,opposite);
+
+  if (!e11->commonvertex(e3)){
+    BDS_Edge *temp = e3;
+    e3 = e2; 
+    e2 = temp;
+  }
+
+  BDS_Face* t1 = new BDS_Face(e11,emid,e3);
+  BDS_Face* t2 = new BDS_Face(e12,e2,emid);
+  t1->g = f->g;
+  t2->g = t1->g;
+  emid->g = t1->g;  
+  m.triangles.push_back(t1);
+  m.triangles.push_back(t2);
+  m.edges.push_back(emid);
+  m.del_face(f);
+  e11->p1->config_modified = e11->p2->config_modified = true;
+  e12->p1->config_modified = e12->p2->config_modified = true;
+  e2->p1->config_modified = e2->p2->config_modified = true;
+  e3->p1->config_modified = e3->p2->config_modified = true;
+}
+
+void Template_2 ( BDS_Mesh &m , BDS_Face *f, BDS_Edge *e11, BDS_Edge *e12, BDS_Edge *e21, BDS_Edge *e22, BDS_Edge *e3)
+{
+  BDS_Point *mid1 = e11->commonvertex(e12);
+  BDS_Point *mid2 = e21->commonvertex(e22);
+
+  BDS_Edge *emid1 = new BDS_Edge (mid1,mid2);
+
+  if (!e11->commonvertex(e3)){
+    BDS_Edge *temp = e11;
+    e11 = e12; 
+    e12 = temp;
+  }
+  if (!e22->commonvertex(e3)){
+    BDS_Edge *temp = e22;
+    e22 = e21; 
+    e21 = temp;
+  }
+  BDS_Point *opposite1 = e3->commonvertex(e22);
+  BDS_Point *opposite2 = e3->commonvertex(e11);
+
+  //  if (!e12->commonvertex(e21))throw;
+
+  // build the best possible template to avoid subsequent swap
+  // first config, use and edge mid1->opposite1
+  double config1Q = std::min(qmTriangle(opposite2,mid1,opposite1,QMTRI_RHO),qmTriangle(mid1,mid2,opposite1,QMTRI_RHO)); 
+  // second config, use and edge mid2->opposite2
+  double config2Q = std::min(qmTriangle(opposite2,mid2,opposite1,QMTRI_RHO),qmTriangle(mid1,mid2,opposite2,QMTRI_RHO)); 
+  
+  // if the first one is the best
+  BDS_Face *t1,*t2,*t3;
+  BDS_Edge *emid2;
+  t1 = new BDS_Face(e12,e21,emid1);
+  if (config1Q > config2Q) {
+    emid2 = new BDS_Edge (mid1,opposite1);
+    t2 = new BDS_Face(e11,emid2,e3);
+    t3 = new BDS_Face(emid2,emid1,e22);
+  }
+  else{
+    emid2 = new BDS_Edge (mid2,opposite2);
+    t2 = new BDS_Face(e11,emid1,emid2);
+    t3 = new BDS_Face(emid2,e22,e3);
+  }
+  t1->g = f->g;
+  t2->g = t1->g;
+  t3->g = t1->g;
+  emid1->g = t1->g;  
+  emid2->g = t1->g;  
+  m.triangles.push_back(t1);
+  m.triangles.push_back(t2);
+  m.triangles.push_back(t3);
+  m.edges.push_back(emid1);
+  m.edges.push_back(emid2);
+  m.del_face(f);
+  e11->p1->config_modified = e11->p2->config_modified = true;
+  e12->p1->config_modified = e12->p2->config_modified = true;
+  e21->p1->config_modified = e21->p2->config_modified = true;
+  e22->p1->config_modified = e22->p2->config_modified = true;
+  e3->p1->config_modified = e3->p2->config_modified = true;
+}
+void Template_3 ( BDS_Mesh &m , BDS_Face *f, BDS_Edge *e11, BDS_Edge *e12, BDS_Edge *e21, BDS_Edge *e22, BDS_Edge *e31,BDS_Edge *e32)
+{
+  BDS_Point *mid1 = e11->commonvertex(e12);
+  BDS_Point *mid2 = e21->commonvertex(e22);
+  BDS_Point *mid3 = e31->commonvertex(e32);
+
+  BDS_Edge *emid12 = new BDS_Edge (mid1,mid2);
+  BDS_Edge *emid13 = new BDS_Edge (mid1,mid3);
+  BDS_Edge *emid23 = new BDS_Edge (mid2,mid3);
+
+  if (!e11->commonvertex(e31) && !e11->commonvertex(e32)){
+    BDS_Edge *temp = e11;
+    e11 = e12; 
+    e12 = temp;
+  }
+  if (!e11->commonvertex(e31)){
+    BDS_Edge *temp = e31;
+    e31 = e32; 
+    e32 = temp;
+  }
+  if (!e32->commonvertex(e22)){
+    BDS_Edge *temp = e21;
+    e21 = e22; 
+    e22 = temp;
+  }
+
+//   if (!e11->commonvertex(e31))throw;
+//   if (!e32->commonvertex(e22))throw;
+//   if (!e12->commonvertex(e21))throw;
+
+  BDS_Face *t1 = new BDS_Face(e11,emid13,e31);
+  BDS_Face *t2 = new BDS_Face(e12,e21,emid12);
+  BDS_Face *t3 = new BDS_Face(emid23,e22,e32);
+  BDS_Face *t4 = new BDS_Face(emid12,emid23,emid13);
+
+  t1->g = f->g;
+  t2->g = t1->g;
+  t3->g = t1->g;
+  t4->g = t1->g;
+  emid12->g = t1->g;  
+  emid13->g = t1->g;  
+  emid23->g = t1->g;  
+  m.triangles.push_back(t1);
+  m.triangles.push_back(t2);
+  m.triangles.push_back(t3);
+  m.triangles.push_back(t4);
+  m.edges.push_back(emid12);
+  m.edges.push_back(emid13);
+  m.edges.push_back(emid23);
+  m.del_face(f);
+  e11->p1->config_modified = e11->p2->config_modified = true;
+  e12->p1->config_modified = e12->p2->config_modified = true;
+  e21->p1->config_modified = e21->p2->config_modified = true;
+  e22->p1->config_modified = e22->p2->config_modified = true;
+  e31->p1->config_modified = e31->p2->config_modified = true;
+  e32->p1->config_modified = e32->p2->config_modified = true;
+}
+
+
+void splitEdgePass_templateRefine ( GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
+{
+  std::map<BDS_Edge*,std::pair<BDS_Edge*,BDS_Edge*> >splits;
+  // build a list of edges to split with their new vertices
+  int NN1 = m.edges.size();
+  int NN2 = 0;
+  std::list<BDS_Edge*>::iterator it = m.edges.begin();
+  while (1)
+    {
+      if (NN2++ >= NN1)break;
+      if (!(*it)->deleted && (*it)->numfaces() == 2)
+	{
+	  double lone = NewGetLc ( *it,gf);
+	  if (lone >  MAXE_){	    
+	    const double coord = 0.5;
+	    BDS_Point *mid ;
+	    mid  = m.add_point(++m.MAXPOINTNUMBER,
+			       coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
+			       coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v,gf);
+	    
+	    mid->lcBGM() = BGM_MeshSize(gf,
+					(coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u)*m.scalingU,
+					(coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v)*m.scalingV,
+					mid->X,mid->Y,mid->Z);
+	    mid->lc() = 0.5 * ( (*it)->p1->lc() +  (*it)->p2->lc() );
+	    BDS_Edge *e1 = new BDS_Edge ((*it)->p1,mid);
+	    BDS_Edge *e2 = new BDS_Edge (mid, (*it)->p2);
+	    e1->g = e2->g = (*it)->g;
+	    m.del_edge((*it));
+	    m.edges.push_back(e1);
+	    m.edges.push_back(e2);
+
+
+	    splits[*it] = std::make_pair<BDS_Edge*, BDS_Edge*> (e1,e2);
+	    nb_split++;
+	  }		  
+	}
+      ++it;
+    }
+
+  std::list<BDS_Face*>::iterator itt = m.triangles.begin();
+  // build a list of edges to split with their new vertices
+  while (itt != m.triangles.end())
+    {
+      if (!(*itt)->deleted)
+	{
+	  BDS_Edge *edges[3][2];
+	  int K = getTemplate ((*itt),splits,edges);
+	  switch(K){
+	  case   0: // no edge is split 
+	    break;
+	  case   1: // first edge is split 
+	    Template_1 ( m , *itt, edges[0][0],edges[0][1],edges[1][0],edges[2][0]);
+	    break;
+	  case  10: // second edge is split 
+	    Template_1 ( m , *itt, edges[1][0],edges[1][1],edges[2][0],edges[0][0]);
+	    break;
+	  case 100: // third edge is split 
+	    Template_1 ( m , *itt, edges[2][0],edges[2][1],edges[0][0],edges[1][0]);
+	    break;
+	  case  11: // fisrt and second
+	    Template_2 ( m , *itt, edges[0][0],edges[0][1],edges[1][0],edges[1][1],edges[2][0]);
+	    break;
+	  case 101: // fisrt and third
+	    Template_2 ( m , *itt, edges[2][0],edges[2][1],edges[0][0],edges[0][1],edges[1][0]);
+	    break;
+	  case 110: // second and third
+	    Template_2 ( m , *itt, edges[1][0],edges[1][1],edges[2][0],edges[2][1],edges[0][0]);
+	    break;
+	  case 111: // all splitted
+	    Template_3 ( m , *itt, edges[0][0],edges[0][1],edges[1][0],edges[1][1],edges[2][0],edges[2][1]);
+	    break;
+	  default :
+	    printf("strange template %d\n",K);
+	    throw;
+	  }
+	}
+      ++itt;
+    }
+}
+
+void splitEdgePass ( GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split, AttractorField_1DMesh *attr)
 {
   int NN1 = m.edges.size();
   int NN2 = 0;
@@ -428,7 +727,21 @@ void splitEdgePass ( GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 					  (coord * (*it)->p1->v + (1 - coord) * (*it)->p2->v)*m.scalingV,
 					  mid->X,mid->Y,mid->Z);
 	      //mid->lc() = 2./ ( 1./(*it)->p1->lc() +  1./(*it)->p2->lc() );		  
-	      mid->lc() = 0.5 * ( (*it)->p1->lc() +  (*it)->p2->lc() );		  
+	      if (!attr)
+		mid->lc() = 0.5 * ( (*it)->p1->lc() +  (*it)->p2->lc() );		  
+	      else{
+		double lcmin,lcpt, dist;
+		double FACT1 = 3, FACT2=25;
+		attr->eval(mid->X,mid->Y,mid->Z,lcmin,lcpt, dist);
+
+		if (dist < FACT1* lcmin) mid->lc() = lcmin;
+ 		else if (dist < FACT2 * lcmin) {
+ 		  double r = (dist - FACT1*lcmin) / ((FACT2-FACT1)*lcmin);
+ 		  mid->lc() = 1./(1./lcmin * r + 1./lcpt*(1-r));
+ 		}
+		else mid->lc() = lcpt;
+	      }
+		
 	      //	      printf("%g %g\n",mid->lc(),mid->lcBGM());
 
 	      if(!m.split_edge ( *it, mid )) m.del_point(mid);
@@ -598,50 +911,44 @@ void smoothVertexPass ( GFace *gf, BDS_Mesh &m, int &nb_smooth)
 void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
 {
   int IT =0;
+  AttractorField_1DMesh *attr = 0;
+//   if (CTX.mesh.lc_from_curvature){
+//     // parameters are not important
+//     attr = new AttractorField_1DMesh(gf,0.1,0,1);
+//     attr->buildFastSearchStructures();
+//   }
 
   //  printf("lc (1,1) = %g\n",Attractor::lc(1,1,0));
 
   int MAXNP = m.MAXPOINTNUMBER;
 
-  //  if (NIT > 0)
+  if (NIT > 0)
     {
       std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
       while (itp != m.points.end())
 	{
-	  if (NIT > 0)
-	    {
-	      std::list<BDS_Edge*>::iterator it  = (*itp)->edges.begin();
-	      std::list<BDS_Edge*>::iterator ite = (*itp)->edges.end();
-	      double L=0;
-	      int ne = 0;
-	      while(it!=ite){
-		double l = (*it)->length();
-		if ((*it)->g && (*it)->g->classif_degree == 1){	      
-		  L=ne?std::max(L,l):l;
-		  //	      L=ne?std::min(L,l):l;
-		  //	      L+=l;
-		  ne++;
-		}
-		++it;
-	      }
-	      if (!ne) L = 1.e22;
-	      //	  else L/=ne;
-	      if(!CTX.mesh.constrained_bgmesh)
-		(*itp)->lc() = L;
-	      (*itp)->lcBGM() = L;
+	  std::list<BDS_Edge*>::iterator it  = (*itp)->edges.begin();
+	  std::list<BDS_Edge*>::iterator ite = (*itp)->edges.end();
+	  double L=0;
+	  int ne = 0;
+	  while(it!=ite){
+	    double l = (*it)->length();
+	    if ((*it)->g && (*it)->g->classif_degree == 1){	      
+	      L=ne?std::max(L,l):l;
+	      //	      L=ne?std::min(L,l):l;
+	      //	      L+=l;
+	      ne++;
 	    }
-//  	  else if (CTX.mesh.lc_from_curvature)
-//  	    {
-//  	      double Crv = gf->curvature(SPoint2((*itp)->u, (*itp)->v));
-//  	      double lc = Crv > 0 ? 2*M_PI / Crv / CTX.mesh.min_circ_points : 1.e22;
-//  	      lc *= CTX.mesh.lc_factor;
-//  	      printf("%d = %d %12.5e %12.5E %12.5E\n",gf->tag(),CTX.mesh.min_circ_points,Crv,lc,(*itp)->lcBGM());
-//  	      (*itp)->lc() = std::min(lc,(*itp)->lc());	      
-//  	    }
+	    ++it;
+	  }
+	  if (!ne) L = 1.e22;
+	  //	  else L/=ne;
+	  if(!CTX.mesh.constrained_bgmesh)
+	    (*itp)->lc() = L;
+	  (*itp)->lcBGM() = L;
 	  ++itp;
 	}
     }
-
 
   double OLDminL=1.E22,OLDmaxL=0;
 
@@ -684,11 +991,12 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
       OLDminL = minL;OLDmaxL = maxL;
       
       if ((minL > MINE_ && maxL < MAXE_) || IT > (abs(NIT)))break;
-
-      double maxE = MAXE_;//std::max(MAXE_,maxL / 5);
-      double minE = MINE_;//std::min(MINE_,minL * 1.2);
+      double maxE = MAXE_;
+      double minE = MINE_;
       clock_t t1 = clock();
-      splitEdgePass ( gf, m, maxE, nb_split);
+      //      splitEdgePass_templateRefine ( gf, m, maxE, nb_split);
+      splitEdgePass ( gf, m, maxE, nb_split,attr);
+      //splitEdgePass_templateRefine ( gf, m, maxE, nb_split);
       //saturateEdgePass ( gf, m, maxE, nb_split);
       clock_t t2 = clock();
       swapEdgePass ( gf, m, nb_swap);
@@ -721,6 +1029,8 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
       
       if (nb_split==0 && nb_collaps == 0)break;
       //      if (mesh_quality < old_mesh_quality && worst > 0.1 && maxL < 1.45) break;
+      //      return;
+
     }  
 
   double t_total = t_spl + t_sw + t_col + t_sm;
@@ -734,6 +1044,8 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
   Msg(DEBUG1," ---------------------------------------");
   Msg(DEBUG1," CPU TOTAL   %12.5E sec ",t_total);
   Msg(DEBUG1," ---------------------------------------");
+
+  if (attr)delete attr;
 }
 
 
@@ -1196,9 +1508,6 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
   }
   m->cleanup();
 
-
-
-
   {
     std::list<BDS_Edge*>::iterator ite = m->edges.begin();
     while (ite != m->edges.end())
@@ -1225,7 +1534,6 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
   m->del_point(m->find_point(-3));
   m->del_point(m->find_point(-4));
 
-
   if (debug)
     {
       char name[245];
@@ -1238,10 +1546,11 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
   // start mesh generation
   if (!AlgoDelaunay2D ( gf ))
     {
+      //      RefineMesh (gf,*m, 1);
       RefineMesh (gf,*m, CTX.mesh.refine_steps);
       OptimizeMesh(gf, *m, 2);
       RefineMesh (gf,*m, -CTX.mesh.refine_steps);
-      OptimizeMesh(gf, *m, 2);
+      OptimizeMesh(gf, *m, -2);
 
       if (gf->meshAttributes.recombine)
 	{
@@ -1340,20 +1649,6 @@ inline double dist2 (const SPoint2 &p1,const SPoint2 &p2)
 }
 
 
-
-bool noseam (  GFace *gf  )
-{
-  std::list<GEdge*> edges = gf->edges();
-  std::list<GEdge*>::iterator it = edges.begin();
-  while (it != edges.end())   
-   {
-     GEdge *ge = *it ;
-     bool seam = ge->isSeam(gf);
-     if (seam) return false;
-     ++it;
-   }
-  return true;
-}
 
 bool buildConsecutiveListOfVertices (  GFace *gf,
 				       GEdgeLoop  &gel , 
@@ -1698,16 +1993,14 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
     
   BDS_GeomEntity CLASS_F (1,2);
   BDS_GeomEntity CLASS_E (1,1);
-  
 
-  if (debug)
-    {
-      char name[245];
-      sprintf(name,"surface%d-initial-real.pos",gf->tag());
-      outputScalarField(m->triangles, name,0);
-      sprintf(name,"surface%d-initial-param.pos",gf->tag());
-      outputScalarField(m->triangles, name,1);
-    }
+  if (debug){
+    char name[245];
+    sprintf(name,"surface%d-initial-real.pos",gf->tag());
+    outputScalarField(m->triangles, name,0);
+    sprintf(name,"surface%d-initial-param.pos",gf->tag());
+    outputScalarField(m->triangles, name,1);
+  }
 
 
   // build a list of edges to recover
@@ -1722,22 +2015,19 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
 //     }
 
 
-  for (unsigned int i=0;i<edgeLoops_BDS.size();i++)
-    {
+  for (unsigned int i=0;i<edgeLoops_BDS.size();i++){
       std::vector<BDS_Point*> &edgeLoop_BDS = edgeLoops_BDS[i];
-      for (unsigned int j=0;j<edgeLoop_BDS.size();j++)
-	{
-	  BDS_Edge * e = m->recover_edge ( edgeLoop_BDS[j]->iD,edgeLoop_BDS[(j+1)%edgeLoop_BDS.size()]->iD);	  
-	  if (!e)
-	    {
-	      Msg(GERROR,"impossible to recover the edge %d %d",edgeLoop_BDS[j]->iD,edgeLoop_BDS[(j+1)%edgeLoop_BDS.size()]->iD);
-	      gf->meshStatistics.status = GFace::FAILED;
-	      SCALINGU = SCALINGV = 1;
-	      return false;
-	    }
-	  else e->g = &CLASS_E;
+      for (unsigned int j=0;j<edgeLoop_BDS.size();j++){
+	BDS_Edge * e = m->recover_edge ( edgeLoop_BDS[j]->iD,edgeLoop_BDS[(j+1)%edgeLoop_BDS.size()]->iD);	  
+	if (!e){
+	  Msg(GERROR,"impossible to recover the edge %d %d",edgeLoop_BDS[j]->iD,edgeLoop_BDS[(j+1)%edgeLoop_BDS.size()]->iD);
+	  gf->meshStatistics.status = GFace::FAILED;
+	  SCALINGU = SCALINGV = 1;
+	  return false;
 	}
-    }	  
+	else e->g = &CLASS_E;
+      }
+  }	  
   
   //  Msg(INFO,"Boundary Edges recovered for surface %d",gf->tag());
   // Look for an edge that is on the boundary for which one of the
@@ -1747,40 +2037,34 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
   // recursive algorithm
   {
     std::list<BDS_Edge*>::iterator ite = m->edges.begin();
-    while (ite != m->edges.end())
-      {
-	BDS_Edge *e = *ite;
-	if ( e->g  && e->numfaces () == 2)
-	  {
-	    BDS_Point *oface[2];
-	    e->oppositeof(oface);
-	    if (oface[0]->iD < 0) 
-	      {
-		recur_tag ( e->faces(1) , &CLASS_F); 
-		break;
-	      }
-	    else if (oface[1]->iD < 0) 
-	      {
-		recur_tag ( e->faces(0) , &CLASS_F); 
-		break;
-	      }
-	    }
-	++ite;
+    while (ite != m->edges.end()){
+      BDS_Edge *e = *ite;
+      if ( e->g  && e->numfaces () == 2){
+	BDS_Point *oface[2];
+	e->oppositeof(oface);
+	if (oface[0]->iD < 0){
+	  recur_tag ( e->faces(1) , &CLASS_F); 
+	  break;
+	}
+	else if (oface[1]->iD < 0){
+	  recur_tag ( e->faces(0) , &CLASS_F); 
+	  break;
+	}
       }
+      ++ite;
+    }
   }
 
   // delete useless stuff
   {
     std::list<BDS_Face*>::iterator itt = m->triangles.begin();
-    while (itt != m->triangles.end())
-      {
-	BDS_Face *t = *itt;
-	if (!t->g)
-	  {
-	    m->del_face (t);
-	  }
-	++itt;
+    while (itt != m->triangles.end()){
+      BDS_Face *t = *itt;
+      if (!t->g){
+	m->del_face (t);
       }
+      ++itt;
+    }
   }
 
   m->cleanup();
@@ -1826,7 +2110,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
       RefineMesh (gf,*m,CTX.mesh.refine_steps);
       OptimizeMesh(gf, *m, 2);
       RefineMesh (gf,*m,-CTX.mesh.refine_steps);
-      OptimizeMesh(gf, *m, 2);
+      OptimizeMesh(gf, *m, -2);
 
       if (gf->meshAttributes.recombine)
 	{
@@ -1965,10 +2249,11 @@ void meshGFace::operator() (GFace *gf)
   computeEdgeLoops(gf, points, indices);
 
   // temp fix until we create MEdgeLoops in gmshFace
-  //  if (gf->tag() == 2)
+  if (1 || gf->tag() == 6)
     {
       Msg(DEBUG1, "Generating the mesh");
       if(noseam (gf) || gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
+	//	gmsh2DMeshGenerator(gf,0, true);
 	gmsh2DMeshGenerator(gf,0, false);
       }
       else{
@@ -1976,9 +2261,9 @@ void meshGFace::operator() (GFace *gf)
 	  Msg(GERROR, "Impossible to mesh face %d", gf->tag());
       }
     }
-//   else
-//     gf->meshStatistics.status = GFace::DONE;
-
+  else
+    gf->meshStatistics.status = GFace::DONE;
+  
   Msg(DEBUG1, "type %d %d triangles generated, %d internal vertices",
       gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 }  

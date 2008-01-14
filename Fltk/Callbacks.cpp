@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.558 2008-01-12 18:40:14 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.559 2008-01-14 21:29:13 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1130,6 +1130,7 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
 
   opt_mesh_nb_smoothing(0, GMSH_SET, WID->mesh_value[0]->value());
   opt_mesh_lc_factor(0, GMSH_SET, WID->mesh_value[2]->value());
+  opt_mesh_lc_min(0, GMSH_SET, WID->mesh_value[25]->value());
   opt_mesh_quality_inf(0, GMSH_SET, WID->mesh_value[4]->value());
   opt_mesh_quality_sup(0, GMSH_SET, WID->mesh_value[5]->value());
   opt_mesh_radius_inf(0, GMSH_SET, WID->mesh_value[6]->value());

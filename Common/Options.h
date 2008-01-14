@@ -433,6 +433,7 @@ double opt_mesh_normals(OPT_ARGS_NUM);
 double opt_mesh_tangents(OPT_ARGS_NUM);
 double opt_mesh_explode(OPT_ARGS_NUM);
 double opt_mesh_scaling_factor(OPT_ARGS_NUM);
+double opt_mesh_lc_min(OPT_ARGS_NUM);
 double opt_mesh_lc_factor(OPT_ARGS_NUM);
 double opt_mesh_lc_from_curvature(OPT_ARGS_NUM);
 double opt_mesh_rand_factor(OPT_ARGS_NUM);

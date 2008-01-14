@@ -624,7 +624,7 @@ Circle(409) = {4354,4351,4353};
 Circle(410) = {4353,4351,4352};
 
 // use an embedded curve
-Line {407,408,409,410} In Surface {406};
+//Line {407,408,409,410} In Surface {406};
 
 // or an attractor
 //Attractor Line {1 ... 12} = {1,lc_wing,lc_box,1000,3};

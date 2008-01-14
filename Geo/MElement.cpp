@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.46 2007-11-26 14:34:09 remacle Exp $
+// $Id: MElement.cpp,v 1.47 2008-01-14 21:29:13 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -687,14 +687,35 @@ double coef5[15][15]={
     60.41666667, -38.54166667,   6.25000000}
 };
 
+void GeomShapeFunctionP1(double u, double v, double *sf) 
+{
+  for (int i = 0; i < 3; i++){
+    sf[i] = 0;
+    for(int j = 0; j < 3; j++){
+      sf[i] += coef1[i][j] * pow(u,P1[j][0]) * pow(v, P1[j][1]);
+    }
+  }
+}
+
+
 void GradGeomShapeFunctionP1(double u, double v, double grads[6][2]) 
 {
   for (int i = 0; i < 3; i++){
     grads[i][0] = 0;
     grads[i][1] = 0;
     for(int j = 0; j < 3; j++){
-      if(P1[j][0] > 0) grads[i][0] += coef1[i][j] * pow(u,P1[j][0] - 1) * pow(v, P1[j][1]);
-      if(P1[j][1] > 0) grads[i][1] += coef1[i][j] * pow(u,P1[j][0]) * pow(v, P1[j][1] - 1);
+      if(P1[j][0] > 0) grads[i][0] += coef1[i][j] * P1[j][0] * pow(u,P1[j][0] - 1) * pow(v, P1[j][1]);
+      if(P1[j][1] > 0) grads[i][1] += coef1[i][j] * P1[j][1] * pow(u,P1[j][0]) * pow(v, P1[j][1] - 1);
+    }
+  }
+}
+
+void GeomShapeFunctionP2(double u, double v, double *sf) 
+{
+  for (int i = 0; i < 6; i++){
+    sf[i] = 0;
+    for(int j = 0; j < 6; j++){
+      sf[i] += coef2[i][j] * pow(u,P2[j][0]) * pow(v, P2[j][1]);
     }
   }
 }
@@ -705,8 +726,18 @@ void GradGeomShapeFunctionP2(double u, double v, double grads[6][2])
     grads[i][0] = 0;
     grads[i][1] = 0;
     for (int j = 0; j < 6; j++){
-      if(P2[j][0] > 0) grads[i][0] += coef2[i][j] * pow(u, P2[j][0] - 1) * pow(v, P2[j][1]);
-      if(P2[j][1] > 0) grads[i][1] += coef2[i][j] * pow(u, P2[j][0]) * pow(v, P2[j][1] - 1);
+      if(P2[j][0] > 0) grads[i][0] += coef2[i][j] * P2[j][0] * pow(u, P2[j][0] - 1) * pow(v, P2[j][1]);
+      if(P2[j][1] > 0) grads[i][1] += coef2[i][j] * P2[j][1] * pow(u, P2[j][0]) * pow(v, P2[j][1] - 1);
+    }
+  }
+}
+
+void GeomShapeFunctionP3(double u, double v, double *sf) 
+{
+  for (int i = 0; i < 9; i++){
+    sf[i] = 0;
+    for(int j = 0; j < 9; j++){
+      sf[i] += coef3[i][j] * pow(u,P3[j][0]) * pow(v, P3[j][1]);
     }
   }
 }
@@ -717,11 +748,22 @@ void GradGeomShapeFunctionP3 (double u, double v, double grads[9][2])
     grads[i][0] = 0;
     grads[i][1] = 0;
     for(int j = 0; j < 9; j++){
-      if(P3[j][0] > 0) grads[i][0] += coef3[i][j] * pow(u, P3[j][0] - 1) * pow(v, P3[j][1]);
-      if(P3[j][1] > 0) grads[i][1] += coef3[i][j] * pow(u, P3[j][0]) * pow(v, P3[j][1] - 1);
+      if(P3[j][0] > 0) grads[i][0] += coef3[i][j] * P3[j][0] * pow(u, P3[j][0] - 1) * pow(v, P3[j][1]);
+      if(P3[j][1] > 0) grads[i][1] += coef3[i][j] * P3[j][1] * pow(u, P3[j][0]) * pow(v, P3[j][1] - 1);
     }
   }
 }
+
+void GeomShapeFunctionP4(double u, double v, double *sf) 
+{
+  for (int i = 0; i < 12; i++){
+    sf[i] = 0;
+    for(int j = 0; j < 12; j++){
+      sf[i] += coef4[i][j] * pow(u,P4[j][0]) * pow(v, P4[j][1]);
+    }
+  }
+}
+
 
 void GradGeomShapeFunctionP4(double u, double v, double grads[12][2]) 
 {
@@ -729,8 +771,18 @@ void GradGeomShapeFunctionP4(double u, double v, double grads[12][2])
     grads[i][0] = 0;
     grads[i][1] = 0;
     for(int j = 0; j < 12; j++){
-      if(P4[j][0] > 0) grads[i][0] += coef4[i][j] * pow(u, P4[j][0] - 1) * pow(v, P4[j][1]);
-      if(P4[j][1] > 0) grads[i][1] += coef4[i][j] * pow(u, P4[j][0]) * pow(v, P4[j][1] - 1);
+      if(P4[j][0] > 0) grads[i][0] += coef4[i][j] * P4[j][0] * pow(u, P4[j][0] - 1) * pow(v, P4[j][1]);
+      if(P4[j][1] > 0) grads[i][1] += coef4[i][j] * P4[j][1] * pow(u, P4[j][0]) * pow(v, P4[j][1] - 1);
+    }
+  }
+}
+
+void GeomShapeFunctionP5(double u, double v, double *sf) 
+{
+  for (int i = 0; i < 15; i++){
+    sf[i] = 0;
+    for(int j = 0; j < 15; j++){
+      sf[i] += coef5[i][j] * pow(u,P5[j][0]) * pow(v, P5[j][1]);
     }
   }
 }
@@ -741,15 +793,17 @@ void GradGeomShapeFunctionP5(double u, double v, double grads[15][2])
     grads[i][0] = 0;
     grads[i][1] = 0;
     for (int j = 0; j < 15; j++){
-      if(P5[j][0] > 0) grads[i][0] += coef5[i][j] * pow(u, P5[j][0] - 1) * pow(v, P5[j][1]);
-      if(P5[j][1] > 0) grads[i][1] += coef5[i][j] * pow(u, P5[j][0]) * pow(v, P5[j][1] - 1);
+      if(P5[j][0] > 0) grads[i][0] += coef5[i][j] * P5[j][0] * pow(u, P5[j][0] - 1) * pow(v, P5[j][1]);
+      if(P5[j][1] > 0) grads[i][1] += coef5[i][j] * P5[j][1] * pow(u, P5[j][0]) * pow(v, P5[j][1] - 1);
     }
   }
 }
 
-void MTriangle::jac(int ord, MVertex *vs[], double uu, double vv, double j[2][2])
+void MTriangle::jac(int ord, MVertex *vs[], double uu, double vv, double j[2][3])
 {
   double grads[256][2];
+
+
   switch(ord){
   case 1: GradGeomShapeFunctionP1(uu, vv, grads); break;
   case 2: GradGeomShapeFunctionP2(uu, vv, grads); break;
@@ -762,23 +816,135 @@ void MTriangle::jac(int ord, MVertex *vs[], double uu, double vv, double j[2][2]
   j[1][0] = 0 ; for(int i = 0; i < 3; i++) j[1][0] += grads [i][1] * _v[i] -> x();
   j[0][1] = 0 ; for(int i = 0; i < 3; i++) j[0][1] += grads [i][0] * _v[i] -> y();
   j[1][1] = 0 ; for(int i = 0; i < 3; i++) j[1][1] += grads [i][1] * _v[i] -> y();
+  j[0][2] = 0 ; for(int i = 0; i < 3; i++) j[0][2] += grads [i][0] * _v[i] -> z();
+  j[1][2] = 0 ; for(int i = 0; i < 3; i++) j[1][2] += grads [i][1] * _v[i] -> z();
+
+
   for(int i = 3; i < 3 * ord; i++) j[0][0] += grads[i][0] * vs[i - 3] -> x();
   for(int i = 3; i < 3 * ord; i++) j[1][0] += grads[i][1] * vs[i - 3] -> x();
   for(int i = 3; i < 3 * ord; i++) j[0][1] += grads[i][0] * vs[i - 3] -> y();
   for(int i = 3; i < 3 * ord; i++) j[1][1] += grads[i][1] * vs[i - 3] -> y();
+  for(int i = 3; i < 3 * ord; i++) j[0][2] += grads[i][0] * vs[i - 3] -> z();
+  for(int i = 3; i < 3 * ord; i++) j[1][2] += grads[i][1] * vs[i - 3] -> z();
+
 }
 
-void MTriangleN::jac(double uu, double vv , double j[2][2])  
+void MTriangle::pnt(int ord, MVertex *vs[], double uu, double vv, SPoint3 &p)
+{
+  double sf[256];
+
+  switch(ord){
+  case 1: GeomShapeFunctionP1(uu, vv, sf); break;
+  case 2: GeomShapeFunctionP2(uu, vv, sf); break;
+  case 3: GeomShapeFunctionP3(uu, vv, sf); break;
+  case 4: GeomShapeFunctionP4(uu, vv, sf); break;
+  case 5: GeomShapeFunctionP5(uu, vv, sf); break;
+  default: throw;
+  }
+  
+  double x = 0 ; for(int i = 0; i < 3; i++) x += sf[i] * _v[i] -> x();
+  double y = 0 ; for(int i = 0; i < 3; i++) y += sf[i] * _v[i] -> y();
+  double z = 0 ; for(int i = 0; i < 3; i++) z += sf[i] * _v[i] -> z();
+
+  for(int i = 3; i < 3 * ord; i++) x += sf[i] * vs[i - 3] -> x();
+  for(int i = 3; i < 3 * ord; i++) y += sf[i] * vs[i - 3] -> y();
+  for(int i = 3; i < 3 * ord; i++) z += sf[i] * vs[i - 3] -> z();
+
+  p = SPoint3(x,y,z);
+
+}
+
+
+
+void MTriangleN::jac(double uu, double vv , double j[2][3])  
 {
   MTriangle::jac(_order, &(*(_vs.begin())), uu, vv, j);
 }
 
-void MTriangle6::jac(double uu, double vv , double j[2][2])  
+void MTriangleN::pnt(double uu, double vv, SPoint3 &p){
+  MTriangle::pnt(_order, &(*(_vs.begin())), uu, vv, p);
+}
+
+void MTriangle6::jac(double uu, double vv , double j[2][3])  
 {
   MTriangle::jac(2, _vs, uu, vv, j);
 }
 
-void MTriangle::jac(double uu, double vv, double j[2][2])
+void MTriangle6::pnt(double uu, double vv, SPoint3 &p){
+  MTriangle::pnt(2, _vs, uu, vv, p);
+}
+
+void MTriangle::jac(double uu, double vv, double j[2][3])
 {
   jac(1, 0, uu, vv, j);
+}
+
+void MTriangle::pnt(double uu, double vv, SPoint3 &p){
+  MTriangle::pnt(1, 0, uu, vv, p);
+}
+
+int MTriangle6::getNumEdgesRep(){ return 30; }
+void MTriangle6::getEdgeRep (int num, double *x, double *y, double *z, SVector3 *n){
+  if (num < 10){
+    SPoint3 pnt1,pnt2;
+    pnt ( (double)num/10.     , 0. , pnt1);
+    pnt ( (double)(num+1)/10. , 0. , pnt2);
+    x[0] = pnt1.x();x[1] = pnt2.x();
+    y[0] = pnt1.y();y[1] = pnt2.y();
+    z[0] = pnt1.z();z[1] = pnt2.z();
+    return;
+  }  
+
+  if (num < 20){
+    SPoint3 pnt1,pnt2;
+    num -=10;
+    pnt ( 1.-(double)num/10.     , (double)num/10. , pnt1);
+    pnt ( 1.-(double)(num+1)/10.     , (double)(num+1)/10. , pnt2);
+    x[0] = pnt1.x();x[1] = pnt2.x();
+    y[0] = pnt1.y();y[1] = pnt2.y();
+    z[0] = pnt1.z();z[1] = pnt2.z();
+    return ;
+  }  
+  {
+    SPoint3 pnt1,pnt2;
+    num -= 20;
+    pnt ( 0,(double)num/10.    , pnt1);
+    pnt ( 0,(double)(num+1)/10., pnt2);
+    x[0] = pnt1.x();x[1] = pnt2.x();
+    y[0] = pnt1.y();y[1] = pnt2.y();
+    z[0] = pnt1.z();z[1] = pnt2.z();
+  }
+}
+
+int MTriangleN::getNumEdgesRep(){ return 120; }
+void MTriangleN::getEdgeRep (int num, double *x, double *y, double *z, SVector3 *n){
+  if (num < 40){
+    SPoint3 pnt1,pnt2;
+    pnt ( (double)num/40.     , 0. , pnt1);
+    pnt ( (double)(num+1)/40. , 0. , pnt2);
+    x[0] = pnt1.x();x[1] = pnt2.x();
+    y[0] = pnt1.y();y[1] = pnt2.y();
+    z[0] = pnt1.z();z[1] = pnt2.z();
+    return;
+  }  
+
+  if (num < 80){
+    SPoint3 pnt1,pnt2;
+    num -=40;
+    pnt ( 1.-(double)num/40.     , (double)num/40. , pnt1);
+    pnt ( 1.-(double)(num+1)/40.     , (double)(num+1)/40. , pnt2);
+    x[0] = pnt1.x();x[1] = pnt2.x();
+    y[0] = pnt1.y();y[1] = pnt2.y();
+    z[0] = pnt1.z();z[1] = pnt2.z();
+    return ;
+  }  
+  {
+    SPoint3 pnt1,pnt2;
+    num -= 80;
+    pnt ( 0,(double)num/40.    , pnt1);
+    pnt ( 0,(double)(num+1)/40., pnt2);
+    x[0] = pnt1.x();x[1] = pnt2.x();
+    y[0] = pnt1.y();y[1] = pnt2.y();
+    z[0] = pnt1.z();z[1] = pnt2.z();
+  }
 }

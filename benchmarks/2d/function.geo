@@ -5,15 +5,15 @@ theloop = 0;
 
 Function myCircle
   p1 = newp;
-  Point (p1) = {x,y,0,0.2};
+  Point (p1) = {x,y,0,0.4};
   p2 = newp;
-  Point (p2) = {r+x,y,0,0.2};
+  Point (p2) = {r+x,y,0,0.4};
   p3 = newp;
-  Point (p3) = {x,r+y,0,0.2};
+  Point (p3) = {x,r+y,0,0.4};
   p4 = newp;
-  Point (p4) = {-r+x,y,0,0.2};
+  Point (p4) = {-r+x,y,0,0.4};
   p5 = newp;
-  Point (p5) = {x,-r+y,0,0.2};
+  Point (p5) = {x,-r+y,0,0.4};
   c1 = newreg;
   Circle (c1) = {p2,p1,p3};
   c2 = newreg;
@@ -51,7 +51,5 @@ Call myCircle;
 loop5 = theloop;
 
 Plane Surface(newreg) = {loop5,loop4,loop3,loop2,loop1};
-Line(10000) = {6,11};
-Attractor Line {10000} = {0.5,0.05,5,5,100};
 
 

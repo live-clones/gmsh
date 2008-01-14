@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.648 2008-01-12 18:40:14 geuzaine Exp $
+// $Id: GUI.cpp,v 1.649 2008-01-14 21:29:13 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2432,7 +2432,11 @@ void GUI::create_option_window()
       mesh_value[2]->align(FL_ALIGN_RIGHT);
       mesh_value[2]->callback(mesh_options_ok_cb);
 
-      mesh_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Element order");
+      mesh_value[25] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Minimum mesh size");
+      mesh_value[25]->align(FL_ALIGN_RIGHT);
+      mesh_value[25]->callback(mesh_options_ok_cb);
+
+      mesh_value[3] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Element order");
       mesh_value[3]->minimum(1);
       // FIXME: this makes it possible to set > 2 by hand, but not by
       // dragging (>2 is too buggy for general use)
@@ -2441,7 +2445,7 @@ void GUI::create_option_window()
       mesh_value[3]->align(FL_ALIGN_RIGHT);
       mesh_value[3]->callback(mesh_options_ok_cb);
 
-      mesh_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Use incomplete high order elements (8-node quads, etc.)");
+      mesh_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Use incomplete high order elements (8-node quads, etc.)");
       mesh_butt[4]->type(FL_TOGGLE_BUTTON);
       mesh_butt[4]->callback(mesh_options_ok_cb);
 

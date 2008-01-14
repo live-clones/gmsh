@@ -90,6 +90,7 @@ int sys2x2(double mat[2][2], double b[2], double res[2]);
 int sys3x3(double mat[3][3], double b[3], double res[3], double *det);
 int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det);
 double det2x2(double mat[2][2]);
+double det2x3(double mat[2][3]);
 double det3x3(double mat[3][3]);
 double trace3x3(double mat[3][3]);
 double trace2 (double mat[3][3]);
@@ -121,6 +122,19 @@ void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb,
 	    double *fc, double (*func)(double));
 void newt(double x[], int n, int *check,
 	  void (*vecfunc)(int, double [], double []));
+void minimize_2 ( double (*f) (double, double, void *data), 
+		  void (*df) (double, double, double &, double &, double &, void *data) ,
+		  void *data,int niter,
+		  double &U, double &V, double &res);
+void minimize_3 ( double (*f) (double, double, double, void *data), 
+		  void (*df) (double, double, double , double &, double &, double &, double &, void *data) ,
+		  void *data,int niter,
+		  double &U, double &V, double &W, double &res);
+void minimize_N (int N, 
+		 double (*f) (double*, void *data), 
+		 void (*df) (double*, double*, double &, void *data) ,
+		 void *data,int niter,
+		 double *, double &res);
 
 /* Robust geometrical predicates */
 namespace gmsh{

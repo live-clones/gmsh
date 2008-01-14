@@ -26,6 +26,9 @@
 // operators only apply to the "bulk" of the
 // mesh and cannot be applied to boudnaries.
 // I'm working on it
+
+enum gmshLocalMeshModAction {GMSH_DOIT,GMSH_EVALONLY};
+
 bool gmshEdgeSwap (std::vector<MTet4 *> &newTets,
 		   MTet4 *tet, 
 		   int iLocalEdge,
@@ -40,11 +43,17 @@ bool gmshSmoothVertex ( MTet4 *t,
 			int iLocalVertex,
 			const gmshQualityMeasure4Tet &cr);
 
+bool gmshSmoothVertexOptimize ( MTet4 *t, 
+				int iVertex,
+				const gmshQualityMeasure4Tet &cr);
+
 bool gmshCollapseVertex ( std::vector<MTet4 *> &newTets,
 			  MTet4 *t, 
 			  int iVertex,
 			  int iTarget,
-			  const gmshQualityMeasure4Tet &cr);
+			  const gmshQualityMeasure4Tet &cr,
+			  const gmshLocalMeshModAction = GMSH_DOIT,
+			  double *result = 0);
 
 bool gmshEdgeSplit (std::vector<MTet4 *> &newTets,
 		    MTet4 *tet,
@@ -52,6 +61,9 @@ bool gmshEdgeSplit (std::vector<MTet4 *> &newTets,
 		    int iLocalEdge,
 		    const gmshQualityMeasure4Tet &cr);
 
+bool gmshSliverRemoval ( std::vector<MTet4 *> &newTets,
+			 MTet4 *t, 
+			 const gmshQualityMeasure4Tet &cr);
 #endif
 
 

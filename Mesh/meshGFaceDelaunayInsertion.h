@@ -30,19 +30,22 @@ class GFace;
 class BDS_Mesh;
 class BDS_Point;
 
-struct gmsh2dMetric
-{
-  double a11,a21,a22;
-  gmsh2dMetric (double lc); // uniform metric
-  gmsh2dMetric (double _a11 = 1, double _a21= 0, double _a22=1)
-    : a11(_a11),a21(_a21),a22(_a22)
-  {}
-  inline double eval ( const double &x, const double &y ) const
-  {
-    return x * a11 * x + 2 * x * a21 * y + y * a22 * y;
-  }
-};
-
+void buildMetric ( GFace *gf , double *uv, double *metric);
+int inCircumCircleAniso ( GFace *gf, MTriangle *base, const double *uv , const double *metric,
+			  const std::vector<double> & Us, const std::vector<double> & Vs); 
+void circumCenterMetric ( MTriangle *base, 
+			  const double *metric,
+			  const std::vector<double> & Us,
+			  const std::vector<double> & Vs,
+			  double *x, double &Radius2);
+bool circumCenterMetricInTriangle ( MTriangle *base, 
+				    const double *metric,
+				    const std::vector<double> & Us,
+				    const std::vector<double> & Vs);
+bool invMapUV ( MTriangle   *t , 
+		double *p,
+		const std::vector<double> & Us,
+		const std::vector<double> & Vs , double *uv, double tol);
 
 class MTri3
 {
@@ -71,8 +74,6 @@ class MTri3
     return inCircumCircle ( v->x(), v->y() );
   }
 
-  void Center_Circum_Aniso(double a, double b, double d, double &x, double &y, double &r) const ;
-
   double getSurfaceXY () const { return base -> getSurfaceXY() ; };
   double getSurfaceUV (GFace* gf) const { return base -> getSurfaceUV(gf) ; };
   inline void setDeleted (bool d)
@@ -97,6 +98,7 @@ class MTri3
 };
 
 void connectTriangles ( std::list<MTri3*> & );
+void connectTriangles ( std::vector<MTri3*> & );
 void insertVerticesInFace (GFace *gf, BDS_Mesh *);
 
 class compareTri3Ptr

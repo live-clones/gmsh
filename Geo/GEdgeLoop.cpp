@@ -1,4 +1,4 @@
-// $Id: GEdgeLoop.cpp,v 1.6 2007-09-04 13:47:01 remacle Exp $
+// $Id: GEdgeLoop.cpp,v 1.7 2008-01-14 21:29:13 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -117,7 +117,7 @@ GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
 
   GEdgeSigned *prevOne = 0;
 
-  Msg(INFO,"Building a wire");
+  //  Msg(INFO,"Building a wire");
   GEdgeSigned ges(0,0);
   while(wire.size()){
     ges = nextOne(prevOne, wire);
@@ -126,7 +126,7 @@ GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
       break;
     }
     prevOne = &ges;
-    ges.print();
+    //    ges.print();
     loop.push_back(ges);
   }
 }

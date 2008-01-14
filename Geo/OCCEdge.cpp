@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.28 2007-12-03 15:17:40 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.29 2008-01-14 21:29:13 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -29,10 +29,14 @@ extern Context_T CTX;
 #if defined(HAVE_OCC)
 #include "Geom2dLProp_CLProps2d.hxx"
 #include "Geom_BezierCurve.hxx"
-#include "Geom_BezierCurve.hxx"
+#include "Geom_OffsetCurve.hxx"
 #include "Geom_Ellipse.hxx"
+#include "Geom_Parabola.hxx"
+#include "Geom_Hyperbola.hxx"
+#include "Geom_TrimmedCurve.hxx"
 #include "Geom_Circle.hxx"
 #include "Geom_Line.hxx"
+#include "Geom_Conic.hxx"
 
 OCCEdge::OCCEdge(GModel *model, TopoDS_Edge edge, int num, GVertex *v1, GVertex *v2)
   : GEdge(model, num, v1, v2), c(edge), trimmed(0)
@@ -89,12 +93,12 @@ SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar,int dir) const
     const double dz = p1.z()-p2.z();
     if(sqrt(dx*dx+dy*dy+dz*dz) > 1.e-4 * CTX.lc){
       // return reparamOnFace(face, epar,-1);      
-//       Msg(WARNING, "Reparam on face partially failed for curve %d surface %d at point %g",
-// 	  tag(), face->tag(), epar);
-//       Msg(WARNING, "On the face %d local (%g %g) global (%g %g %g)",
-// 	  face->tag(), u, v, p2.x(), p2.y(), p2.z());
-//       Msg(WARNING, "On the edge %d local (%g) global (%g %g %g)",
-// 	  tag(), epar, p1.x(), p1.y(), p1.z());
+       Msg(WARNING, "Reparam on face partially failed for curve %d surface %d at point %g",
+ 	  tag(), face->tag(), epar);
+       Msg(WARNING, "On the face %d local (%g %g) global (%g %g %g)",
+ 	  face->tag(), u, v, p2.x(), p2.y(), p2.z());
+       Msg(WARNING, "On the edge %d local (%g) global (%g %g %g)",
+ 	  tag(), epar, p1.x(), p1.y(), p1.z());
 //      GPoint ppp = face->closestPoint(SPoint3(p1.x(), p1.y(), p1.z()));
 //      return SPoint2(ppp.u(), ppp.v());
     }
@@ -118,14 +122,14 @@ int OCCEdge::isSeam(GFace *face) const
 
 GPoint OCCEdge::point(double par) const
 {
-  if(!curve.IsNull()){
-    gp_Pnt pnt = curve->Value (par);
-    return GPoint(pnt.X(), pnt.Y(), pnt.Z());
-  }
-  else if(trimmed){
+  if(trimmed){
     double u, v;
     curve2d->Value(par).Coord(u, v);
     return trimmed->point(u, v);
+  }
+  else if(!curve.IsNull()){
+    gp_Pnt pnt = curve->Value (par);
+    return GPoint(pnt.X(), pnt.Y(), pnt.Z());
   }
   else{
     Msg(WARNING, "OCC Curve %d is neither a 3D curve not a trimmed curve", tag());
@@ -167,10 +171,20 @@ GEntity::GeomType OCCEdge::geomType() const
       return Line;
     else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_Ellipse))
       return Ellipse;
+    else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_Parabola))
+      return Parabola;
+    else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_Hyperbola))
+      return Hyperbola;
+    else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_TrimmedCurve))
+      return TrimmedCurve;
+    else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_OffsetCurve))
+      return OffsetCurve;
     else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve))
       return BSpline;
     else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
       return Bezier;
+    else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_Conic))
+      return Conic;
     return Unknown;
   }
   else{
@@ -178,12 +192,22 @@ GEntity::GeomType OCCEdge::geomType() const
       return Circle;
     else if (curve->DynamicType() == STANDARD_TYPE(Geom_Line))
       return Line;
+    else if (curve->DynamicType() == STANDARD_TYPE(Geom_Parabola))
+      return Parabola;
+    else if (curve->DynamicType() == STANDARD_TYPE(Geom_Hyperbola))
+      return Hyperbola;
+    else if (curve->DynamicType() == STANDARD_TYPE(Geom_TrimmedCurve))
+      return TrimmedCurve;
+    else if (curve->DynamicType() == STANDARD_TYPE(Geom_OffsetCurve))
+      return OffsetCurve;
     else if (curve->DynamicType() == STANDARD_TYPE(Geom_Ellipse))
       return Ellipse;
     else if (curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve))
       return BSpline;
     else if (curve->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
       return Bezier;
+    else if (curve2d->DynamicType() == STANDARD_TYPE(Geom_Conic))
+      return Conic;
     return Unknown;
   }
 }

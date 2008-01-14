@@ -139,10 +139,13 @@ class AttractorField_1DMesh : public AttractorField
 {
 protected:
   std::vector<double> lcs;
+  std::vector<double> lcs2;
   double _dmax,_dmin,_lcmax;
 public:
-  AttractorField_1DMesh (GModel *m, double dmax, double dmin, double lcmax);
+  AttractorField_1DMesh (GModel *m , double dmax, double dmin, double lcmax);
+  AttractorField_1DMesh (GFace  *gf, double dmax, double dmin, double lcmax);
   virtual double operator()(double X, double Y, double Z) ;
+  virtual void eval(double X, double Y, double Z, double &l, double &lpt, double &dist) ;
 };
 
 

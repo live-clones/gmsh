@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.36 2007-11-11 19:53:57 remacle Exp $
+// $Id: Numeric.cpp,v 1.37 2008-01-14 21:29:14 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -234,6 +234,16 @@ int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det)
 double det2x2(double mat[2][2])
 {
   return mat[0][0] *mat[1][1] -mat[1][0] *mat[0][1];
+}
+
+double det2x3(double mat[2][3])
+{
+  double v1[3] = {mat[0][0],mat[0][1],mat[0][2]};
+  double v2[3] = {mat[1][0],mat[1][1],mat[1][2]};
+  double n[3];
+  
+  prodve (v1,v2,n);
+  return norm3(n);
 }
 
 double inv2x2(double mat[2][2], double inv[2][2])

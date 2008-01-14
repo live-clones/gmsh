@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.22 2007-10-14 09:51:17 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.23 2008-01-14 21:29:13 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -455,7 +455,40 @@ int GModel::readOCCBREP(const std::string &fn)
   occ_internals->loadBREP(fn.c_str());
   occ_internals->buildLists();
   occ_internals->buildGModel(this);
+  snapGVertices();
   return 1;
+}
+
+void GModel::snapGVertices (void)
+{
+  viter vit = firstVertex();
+  
+  double tol = CTX.geom.tolerance; 	       
+  
+  while (vit != lastVertex()){
+    std::list<GEdge*> edges = (*vit)->edges();
+    for (std::list<GEdge*>::iterator it = edges.begin() ;
+	 it != edges .end(); ++it){
+      Range<double> parb = (*it)->parBounds(0);
+      double t;	
+      if ((*it)->getBeginVertex() == *vit){
+	t = parb.low();
+      }
+      else if ((*it)->getEndVertex() == *vit){
+	t = parb.high();
+      }
+      else throw;
+      GPoint gp = (*it)->point(t);
+      double d = sqrt ((gp.x()-(*vit)->x())*(gp.x()-(*vit)->x())+
+		       (gp.y()-(*vit)->y())*(gp.y()-(*vit)->y())+
+		       (gp.z()-(*vit)->z())*(gp.z()-(*vit)->z()));
+      if (d > tol){
+	(*vit)->setPosition(gp);
+	Msg(WARNING, "Geom Vertex %d Corrupted (%12.5E)... Snap performed",(*vit)->tag(),d);
+      }      
+    }
+    vit++;
+  }
 }
 
 void GModel::deleteOCCInternals()

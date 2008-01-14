@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.86 2007-11-26 14:34:09 remacle Exp $
+// $Id: BDS.cpp,v 1.87 2008-01-14 21:29:13 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -44,7 +44,7 @@ void outputScalarField(std::list < BDS_Face * >t, const char *iii, int param)
       fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      pts[0]->u, pts[0]->v, 0.0,
 	      pts[1]->u, pts[1]->v, 0.0,
-	      pts[2]->u, pts[2]->v, 0.0,(double)pts[0]->iD,(double)pts[1]->iD,(double)pts[2]->iD);
+	      pts[2]->u, pts[2]->v, 0.0,(double)pts[0]->lc(),(double)pts[1]->lc(),(double)pts[2]->lc());
     else
       fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      pts[0]->X, pts[0]->Y, pts[0]->Z,
@@ -1166,6 +1166,103 @@ bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS
   return ori_init*ori_final > 0;
 }
 
+
+/**
+   d^2_i = (x^2_i - x)^T M (x_i - x)  
+         = M11 (x_i - x)^2 + 2 M21 (x_i-x)(y_i-y) + M22 (y_i-y)^2	 
+
+	~:-)
+
+
+*/
+
+struct smoothVertexData{
+  BDS_Point *p;
+  GFace *gf;
+  double scalu,scalv;
+  std::list < BDS_Face * >ts;
+}; 
+
+double smoothing_objective_function(double U, double V, BDS_Point *v, std::list < BDS_Face * >&ts,double su, double sv,GFace *gf){
+
+  GPoint gp = gf->point(U*su,V*sv);
+
+  const double oldX = v->X;
+  const double oldY = v->Y;
+  const double oldZ = v->Z;
+  v->X = gp.x();
+  v->Y = gp.y();
+  v->Z = gp.z();
+
+  std::list < BDS_Face * >::iterator it = ts.begin();
+  std::list < BDS_Face * >::iterator ite = ts.end();
+  double qMin=1;
+  while(it != ite) {
+    BDS_Face *t = *it;
+    qMin = std::min(qmTriangle(*it,QMTRI_RHO),qMin);
+    ++it;
+  }
+  v->X = oldX;
+  v->Y = oldY;
+  v->Z = oldZ;
+  return -qMin;  
+}
+
+void deriv_smoothing_objective_function(double U, double V, 
+					double &F, double &dFdU, double &dFdV,void *data){
+  smoothVertexData *svd = (smoothVertexData*)data;
+  BDS_Point *v = svd->p;
+  const double LARGE = 1.e5;
+  const double SMALL = 1./LARGE;
+  F   = smoothing_objective_function(U,V,v,svd->ts,svd->scalu,svd->scalv,svd->gf);
+  double F_U = smoothing_objective_function(U+SMALL,V,v,svd->ts,svd->scalu,svd->scalv,svd->gf);
+  double F_V = smoothing_objective_function(U,V+SMALL,v,svd->ts,svd->scalu,svd->scalv,svd->gf);
+  dFdU = (F_U-F)*LARGE;
+  dFdV = (F_V-F)*LARGE;
+}
+
+double smooth_obj(double U, double V, void *data){
+  smoothVertexData *svd = (smoothVertexData*)data;
+  return  smoothing_objective_function(U,V,svd->p,svd->ts,svd->scalu,svd->scalv,svd->gf); 
+}
+
+
+void optimize_vertex_position (GFace *GF, BDS_Point *data, double su, double sv){
+#ifdef HAVE_GSL
+  if(data->g && data->g->classif_degree <= 1)
+    return;
+  smoothVertexData vd;
+  vd.p = data;
+  vd.scalu = su;
+  vd.scalv = sv;
+  vd.gf = GF;
+  data->getTriangles(vd.ts);
+  double U=data->u,V=data->v,val;
+
+  val = smooth_obj(U, V, &vd);
+  if (val < -.90)return;
+
+  minimize_2 ( smooth_obj, deriv_smoothing_objective_function, &vd, 5, U,V,val);
+  std::list < BDS_Face * >::iterator it = vd.ts.begin();
+  std::list < BDS_Face * >::iterator ite = vd.ts.end();
+  while(it != ite) {
+    BDS_Face *t = *it;
+    if (!test_move_point_parametric_triangle ( data, U, V, t)){
+      return;          
+    }
+    ++it;
+  }
+
+  data->u = U;
+  data->v = V;
+  GPoint gp = GF->point(U*su,V*sv);
+  data->X = gp.x();
+  data->Y = gp.y();
+  data->Z = gp.z();  
+#endif
+}
+
+
 bool BDS_Mesh::smooth_point_centroid(BDS_Point * p, GFace *gf)
 {
 
@@ -1193,8 +1290,8 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point * p, GFace *gf)
     BDS_Face *t = *it;
     BDS_Point *n[4];
     t->getNodes(n);
-    double S = fabs(surface_triangle(n[0],n[1],n[2])); 
-    S = 1;
+    //    double S = fabs(surface_triangle(n[0],n[1],n[2])); 
+    double S = 1;
     sTot += S;
     U  += (n[0]->u + n[1]->u + n[2]->u) *S;
     V  += (n[0]->v + n[1]->v + n[2]->v) *S;
@@ -1211,14 +1308,25 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point * p, GFace *gf)
   const double oldY = p->Y;
   const double oldZ = p->Z;
 
-  double oldWorst=1.;
-  double newWorst=1.;
+  double oldU=U;
+  double oldV=V;
 
   it = ts.begin();
+  double s1=0,s2=0;
   while(it != ite) {
     BDS_Face *t = *it;
-    if (!test_move_point_parametric_triangle ( p, U, V, t))
-      return false;    
+    BDS_Point *n[4];
+    t->getNodes(n);
+    p->u = U;
+    p->v = V;
+    s1 += fabs(surface_triangle_param(n[0],n[1],n[2])); 
+    p->u = oldU;
+    p->v = oldV;
+    s2 += fabs(surface_triangle_param(n[0],n[1],n[2])); 
+
+//     if (!test_move_point_parametric_triangle ( p, U, V, t)){
+//       return false;    
+//     }
 //     p->X = gp.x();
 //     p->Y = gp.y();
 //     p->Z = gp.z();
@@ -1230,6 +1338,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point * p, GFace *gf)
     ++it;
   }
   
+  if (fabs(s2-s1) > 1.e-10 * (s2+s1))return false;
 
 //   if (newWorst < 1.e-2)
 //     {

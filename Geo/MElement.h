@@ -304,8 +304,9 @@ class MLineN : public MLine {
 class MTriangle : public MElement {
  protected:
   MVertex *_v[3];
-  virtual void jac(int order, MVertex *verts[], double u, double v, double jac[2][2]);
  public :
+  virtual void jac(int order, MVertex *verts[], double u, double v, double jac[2][3]);
+  virtual void pnt(int order, MVertex *verts[], double u, double v, SPoint3 &);
   MTriangle(MVertex *v0, MVertex *v1, MVertex *v2, int num=0, int part=0) 
     : MElement(num, part)
   {
@@ -378,7 +379,8 @@ class MTriangle : public MElement {
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
-  virtual void jac(double u, double v, double j[2][2]);
+  virtual void jac(double u, double v, double j[2][3]);
+  virtual void pnt(double u, double v, SPoint3&);
 };
 
 class MTriangle6 : public MTriangle {
@@ -408,16 +410,16 @@ class MTriangle6 : public MTriangle {
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 3; }
-  virtual int getNumEdgesRep(){ return 6; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
-    static const int e[6][2] = {
-      {0, 3}, {3, 1},
-      {1, 4}, {4, 2},
-      {2, 5}, {5, 0}
-    };
-    _getEdgeRep(getVertex(e[num][0]), getVertex(e[num][1]), x, y, z, n, 0);
-  }
+  virtual int getNumEdgesRep();
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
+/*   {  */
+/*     static const int e[6][2] = { */
+/*       {0, 3}, {3, 1}, */
+/*       {1, 4}, {4, 2}, */
+/*       {2, 5}, {5, 0} */
+/*     }; */
+/*     _getEdgeRep(getVertex(e[num][0]), getVertex(e[num][1]), x, y, z, n, 0); */
+/*   } */
   virtual int getNumFacesRep(){ return 4; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
@@ -437,7 +439,8 @@ class MTriangle6 : public MTriangle {
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
     tmp = _vs[0]; _vs[0] = _vs[2]; _vs[2] = tmp;
   }
-  virtual void jac(double u, double v, double j[2][2]);
+  virtual void jac ( double u, double v , double j[2][3]) ;
+  virtual void pnt(double u, double v, SPoint3&);
 };
 
 class MTriangleN : public MTriangle {
@@ -481,13 +484,8 @@ class MTriangleN : public MTriangle {
     throw;
   }
   virtual int getNumEdgeVertices(){ return _order - 1; }
-  virtual int getNumEdgesRep(){ return 3 * _order; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
-    _getEdgeRep(getVertex(_orderedIndex(num)), 
-		getVertex(_orderedIndex((num + 1) % (3 * _order))),
-		x, y, z, n, 0);
-  }
+  virtual int getNumEdgesRep();
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual int getNumFacesRep(){ return 0; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
@@ -514,7 +512,8 @@ class MTriangleN : public MTriangle {
     inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
     _vs = inv;
   }
-  virtual void jac(double u, double v, double jac[2][2]);
+  virtual void jac(double u, double v, double jac[2][3]);
+  virtual void pnt(double u, double v, SPoint3&);
 };
 
 class MQuadrangle : public MElement {

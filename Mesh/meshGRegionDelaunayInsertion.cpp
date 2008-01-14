@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.25 2007-12-03 15:17:40 remacle Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.26 2008-01-14 21:29:14 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,11 +21,11 @@
 
 #include "OS.h"
 #include "BackgroundMesh.h"
+#include "meshGRegion.h"
 #include "meshGRegionLocalMeshMod.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "GModel.h"
 #include "GRegion.h"
-#include "meshGRegion.h"
 #include "Numeric.h"
 #include "Message.h"
 #include <set>
@@ -327,42 +327,7 @@ static void setLcs ( MTetrahedron *t, std::map<MVertex*,double> &vSizes)
 
 
 
-GFace* findInFaceSearchStructure ( MVertex *p1,MVertex *p2,MVertex *p3, const fs_cont&search )
-{
-  MVertex *p = std::min(p1,std::min(p2,p3));
-  
-  for (fs_cont::const_iterator it = search.lower_bound(p);
-       it != search.upper_bound(p);
-       ++it)
-    {
-      MTriangle *t   = it->second.first;
-      GFace     *gf  = it->second.second;
-      if ((t->getVertex(0) == p1 ||t->getVertex(0) == p2 ||t->getVertex(0) == p3)&&
-	  (t->getVertex(1) == p1 ||t->getVertex(1) == p2 ||t->getVertex(1) == p3)&&
-	  (t->getVertex(2) == p1 ||t->getVertex(2) == p2 ||t->getVertex(2) == p3))return gf;
-    }
-  return 0;
-}
 
-bool buildFaceSearchStructure ( GModel *model , fs_cont&search )
-{  
-  search.clear();
-
-  GModel::fiter fit = model->firstFace() ;
-  while (fit != model->lastFace()){    
-    for (int i=0;i<(*fit)->triangles.size();i++)
-      {
-	MVertex *p1=(*fit)->triangles[i]->getVertex(0);
-	MVertex *p2=(*fit)->triangles[i]->getVertex(1);
-	MVertex *p3=(*fit)->triangles[i]->getVertex(2);
-	MVertex *p = std::min(p1,std::min(p2,p3));
-	search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p, std::pair<MTriangle*,GFace*>((*fit)->triangles[i],*fit)));
-      }
-    ++fit;
-  }
-  return true;
-
-}
 
 GRegion *getRegionFromBoundingFaces (GModel *model, 		      
 				    std::set<GFace *> &faces_bound)
@@ -471,7 +436,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
 	  }	      	      
 	}
       }
-    Msg(INFO,"Opti : START with %12.5E QBAD %12.5E QAVG %12.5E",totalVolumeb,worst,avg/count);
+    Msg(INFO,"Adaptation : START with %12.5E QBAD %12.5E QAVG %12.5E",totalVolumeb,worst,avg/count);
     for (int i=0;i<nbRanges;i++){
       double low  = (double)i/(nbRanges);
       double high = (double)(i+1)/(nbRanges);
@@ -614,7 +579,9 @@ void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm)
   typedef std::list<MTet4 *> CONTAINER ;
   CONTAINER allTets;
   for (int i=0;i<gr->tetrahedra.size();i++){
-    allTets.push_back(new MTet4(gr->tetrahedra[i],qm));
+    MTet4 * t = new MTet4(gr->tetrahedra[i],qm);
+    t->setOnWhat(gr);
+    allTets.push_back(t);
   }
   gr->tetrahedra.clear();
   
@@ -655,7 +622,7 @@ void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm)
   }    
     
   double qMin = 0.5;
-  double sliverLimit = 0.2;
+  double sliverLimit = 0.1;
 
   int nbESwap=0, nbFSwap=0, nbReloc=0;
     
@@ -695,7 +662,21 @@ void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm)
 	}
       }
 
-    if (!newTets.size())break;
+      if (!newTets.size()){
+        int nbSlivers = 0;
+        int nbSliversWeCanDoSomething = 0;
+        for (int i=0;i<illegals.size();i++)
+	  if (!(illegals[i]->isDeleted())){
+	    if (gmshSliverRemoval(newTets,illegals[i],qm))
+	      nbSliversWeCanDoSomething++;
+	    nbSlivers ++;
+	  }
+	Msg(INFO,"Opti : %d Sliver Removals",nbSliversWeCanDoSomething);
+      }
+
+    if (!newTets.size()){
+      break;
+    }
     
     // add all the new tets in the container
     for (int i=0;i<newTets.size();i++){
@@ -739,15 +720,12 @@ void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm)
     Msg(INFO,"Opti : (%d,%d,%d) = %12.5E QBAD %12.5E QAVG %12.5E (%8.3f sec)",nbESwap,nbFSwap,nbReloc,totalVolumeb,worst,avg/count,t2-t1);
   }
   
-  int nbSlivers = 0;
-  for (int i=0;i<illegals.size();i++)
-    if (!(illegals[i]->isDeleted()))nbSlivers ++;
-  
-  if (nbSlivers){
-    Msg(INFO,"Opti : %d illegal tets are still in the mesh, trying to remove them",nbSlivers);
+
+  if (illegals.size()){
+    Msg(INFO,"Opti : %d illegal tets are still in the mesh",illegals.size());
   }
   else{
-    Msg(INFO,"Opti : no illegal tets in the mesh ;-)",nbSlivers);
+    Msg(INFO,"Opti : no illegal tets in the mesh ;-)");
   }
 
   for (int i=0;i<nbRanges;i++){

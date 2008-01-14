@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.15 2007-09-12 20:14:34 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.16 2008-01-14 21:29:14 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "HighOrder.h"
+#include "meshGFaceOptimize.h"
 #include "MElement.h"
 #include "Message.h"
 #include "OS.h"
@@ -246,6 +247,7 @@ void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
 	     uc < u0 || uc > u1){ // need to treat periodic curves properly!
 	    SPoint3 pc = edge.interpolate(t);
 	    v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
+	    v->setParameter (0,t);
 	  }
 	  else {
 	    GPoint pc = ge->point(uc);
@@ -379,6 +381,8 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
 	      double vc = (1. - t1 - t2) * p0[1] + t1 * p1[1] + t2 * p2[1];
 	      GPoint pc = gf->point(uc, vc);
 	      v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
+	      v->setParameter (0,uc);
+	      v->setParameter (1,vc);
 	    }
 	    faceVertices[p].push_back(v);
 	    gf->mesh_vertices.push_back(v);
@@ -698,28 +702,285 @@ bool straightLine(std::vector<MVertex*> &l, MVertex *n1, MVertex *n2)
     double by = n1->y();
     double ay = n2->y() - by;
     double y = ay * t + by;
-    if(fabs(y-v->y()) > 1.e-11 * CTX.lc){
+    if(fabs(y-v->y()) > 1.e-07 * CTX.lc){
       return false;      
     }
   }
   return true;
 }
 
+FILE *MYFILE = 0;
+
 void getMinMaxJac (MTriangle *t, double &minJ, double &maxJ)
 {
-  double j[2][2];  
-  int n = 3;
+  double mat[2][3];  
+  int n = 10;
+
+  t->jac(1,0,0,0,mat);
+  double v1[3] = {mat[0][0],mat[0][1],mat[0][2]};
+  double v2[3] = {mat[1][0],mat[1][1],mat[1][2]};
+  double normal1[3],normal[3];  
+  prodve(v1,v2,normal1);
+  norme(normal1);
+  double sign = mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0];
+  double invsign = 1./(sign);
+
   for(int i = 0; i < n; i++){
     for(int k = 0; k < n - i; k++){
-      t->jac((double)i / (n - 1), (double)k / (n - 1), j);
-      double det = det2x2(j);
+      t->jac((double)i / (n - 1), (double)k / (n - 1), mat);
+      //      printf("%g %g\n",(double)i / (n - 1), (double)k / (n - 1));
+      //      SPoint3 pt;
+      //      t->pnt((double)i / (n - 1), (double)k / (n - 1),pt);
+      double v1b[3] = {mat[0][0],mat[0][1],mat[0][2]};
+      double v2b[3] = {mat[1][0],mat[1][1],mat[1][2]};
+      prodve(v1b,v2b,normal);
+      //double sign; prosca(normal1,normal,&sign);
+      //double det = norm3(normal) * (sign>0?1.:-1.);
+      double det = invsign*(mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0]) * (sign>0?1.:-1.);
+      //      double det2 = 1./det1;
+      //      double det = std::max(det1,det2);
+      //      if(MYFILE)fprintf(MYFILE,"SP(%g,%g,%g){%g};\n",pt.x(),pt.y(),pt.z(),det);
       minJ = std::min(det, minJ);
       maxJ = std::max(det, maxJ);
     }
   }
 }
 
-void smoothInternalEdges(GFace *gf, edgeContainer &edgeVertices)
+struct smoothVertexDataHO{
+  MVertex *v;
+  GFace *gf;
+  std::vector < MTriangle * >ts;
+}; 
+
+struct smoothVertexDataHON{
+  std::vector<MVertex*> v;
+  GFace *gf;
+  std::vector < MTriangle * >ts;
+}; 
+
+double smoothing_objective_function_HighOrder (double U, double V, MVertex *v, std::vector < MTriangle * >&ts ,GFace *gf){
+
+  GPoint gp = gf->point(U,V);
+  const double oldX = v->x();
+  const double oldY = v->y();
+  const double oldZ = v->z();
+
+  v->x() = gp.x();
+  v->y() = gp.y();
+  v->z() = gp.z();
+
+  double minJ =  1.e22;
+  double maxJ = -1.e22;
+  for (int i=0;i<ts.size();i++){
+    getMinMaxJac (ts[i], minJ, maxJ);
+  }
+  v->x() = oldX;
+  v->y() = oldY;
+  v->z() = oldZ;
+  
+  return -minJ;
+}
+
+void deriv_smoothing_objective_function_HighOrder(double U, double V, 
+						  double &F, double &dFdU, double &dFdV,void *data){
+  smoothVertexDataHO *svd = (smoothVertexDataHO*)data;
+  MVertex *v = svd->v;
+  const double LARGE = -1.e5;
+  const double SMALL = 1./LARGE;
+  F   = smoothing_objective_function_HighOrder(U,V,v,svd->ts,svd->gf);
+  double F_U = smoothing_objective_function_HighOrder(U+SMALL,V,v,svd->ts,svd->gf);
+  double F_V = smoothing_objective_function_HighOrder(U,V+SMALL,v,svd->ts,svd->gf);
+  dFdU = (F_U-F)*LARGE;
+  dFdV = (F_V-F)*LARGE;
+}
+
+double smooth_obj_HighOrder(double U, double V, void *data){
+  smoothVertexDataHO *svd = (smoothVertexDataHO*)data;
+  return  smoothing_objective_function_HighOrder(U,V,svd->v,svd->ts,svd->gf); 
+}
+
+double smooth_obj_HighOrderN(double *uv, void *data){
+  smoothVertexDataHON *svd = (smoothVertexDataHON*)data;
+  double oldX[10],oldY[10],oldZ[10];
+  for (int i=0;i<svd->v.size();i++){
+    GPoint gp = svd->gf->point(uv[2*i],uv[2*i+1]);
+    oldX[i] = svd->v[i]->x();
+    oldY[i] = svd->v[i]->y();
+    oldZ[i] = svd->v[i]->z();
+    svd->v[i]->x() = gp.x();
+    svd->v[i]->y() = gp.y();
+    svd->v[i]->z() = gp.z();
+  }
+  double minJ =  1.e22;
+  double maxJ = -1.e22;
+  for (int i=0;i<svd->ts.size();i++){
+    getMinMaxJac (svd->ts[i], minJ, maxJ);
+  }
+  for (int i=0;i<svd->v.size();i++){
+    svd->v[i]->x() = oldX[i];
+    svd->v[i]->y() = oldY[i];
+    svd->v[i]->z() = oldZ[i];
+  }
+  return -minJ;
+}
+
+
+void deriv_smoothing_objective_function_HighOrderN(double *uv, double *dF, double &F,void *data){
+  const double LARGE = -1.e2;
+  const double SMALL = 1./LARGE;
+  smoothVertexDataHON *svd = (smoothVertexDataHON*)data;
+  F   = smooth_obj_HighOrderN(uv,data);
+  for (int i=0;i<svd->v.size();i++){
+    uv[i] += SMALL;
+    dF[i] = (smooth_obj_HighOrderN(uv,data) - F)*LARGE;
+    uv[i] -= SMALL;
+  }
+}
+
+
+
+bool optimizeHighOrderMesh(GModel *modl, GFace *gf, edgeContainer &edgeVertices){
+
+  v2t_cont adjv;
+  buildVertexToTriangle ( gf->triangles ,  adjv );
+
+  int ITER=0;
+
+  typedef std::map<std::pair<MVertex*, MVertex*>, std::vector<MElement*> > edge2tris;
+  edge2tris e2t;
+  for(unsigned int i = 0; i < gf->triangles.size(); i++){
+    MTriangle *t = gf->triangles[i];
+    for(int j = 0; j < t->getNumEdges(); j++){
+      MEdge edge = t->getEdge(j);
+      std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
+      e2t[p].push_back(t);
+    }
+  }
+
+  bool success = false;
+  
+  for(edge2tris::iterator it = e2t.begin(); it != e2t.end(); ++it){
+    std::pair<MVertex*, MVertex*> edge = it->first;
+    std::vector<MVertex*> e;
+    std::vector<MElement*> triangles = it->second;
+    if(triangles.size() == 2){
+      MVertex *n2 = edge.first; 
+      MVertex *n4 = edge.second;
+      MTriangle *t1 = (MTriangle*)triangles[0];
+      MTriangle *t2 = (MTriangle*)triangles[1];
+      if(n2 < n4)
+	e = edgeVertices[std::make_pair<MVertex*, MVertex*> (n2, n4)];
+      else
+	e = edgeVertices[std::make_pair<MVertex*, MVertex*> (n4, n2)];
+
+      if (e.size() == -1){
+	double initu,initv;
+	e[0]->getParameter ( 0,initu);
+	e[0]->getParameter ( 1,initv);	  
+	smoothVertexDataHO vd;
+	vd.v = e[0];
+	vd.gf = gf;
+        vd.ts.push_back(t1);
+        vd.ts.push_back(t2);
+	double val;
+	minimize_2 ( smooth_obj_HighOrder, deriv_smoothing_objective_function_HighOrder, &vd, 1, initu,initv,val);
+	vd.v->setParameter(0,initu);
+	vd.v->setParameter(1,initv);
+	GPoint gp = gf->point(initu,initv);
+	vd.v->x() = gp.x();
+	vd.v->y() = gp.y();
+	vd.v->z() = gp.z();  				
+      }
+      else if (e.size() < 5){
+	double uv[20];
+	for (int i=0;i<e.size();i++){
+	  if (!e[i]->getParameter (0,uv[2*i]))throw;
+	  if (!e[i]->getParameter (1,uv[2*i+1]))throw;
+	}
+	smoothVertexDataHON vdN;
+	vdN.v = e;
+	vdN.gf = gf;
+	vdN.ts.clear();
+        vdN.ts.push_back(t1);
+        vdN.ts.push_back(t2);
+	double val;
+	double F = -smooth_obj_HighOrderN(uv, &vdN);
+	//	printf("F = %12.5E %p %p\n",F,t1,t2);
+	if (F < .2){
+	  minimize_N ( 2*e.size(), smooth_obj_HighOrderN, deriv_smoothing_objective_function_HighOrderN, &vdN, 1, uv,val);
+	  double Fafter = -smooth_obj_HighOrderN(uv, &vdN);
+	  if (F < Fafter){
+	    //	    printf("found a pattern with f = %22.15E -> %22.15E (%22.15E) %d points\n",F,Fafter,val,e.size());
+	    success = true;
+// 	    checkHighOrderTriangles(modl);
+// 	    double minJ=1.e22,maxJ=-1.e22;
+// 	    getMinMaxJac (t1, minJ, maxJ);
+// 	    printf("AVANT 1 minJ %22.15E maxJ %22.15E\n",minJ,maxJ);
+// 	    minJ=1.e22;maxJ=-1.e22;
+// 	    getMinMaxJac (t2, minJ, maxJ);
+// 	    printf("AVANT 2 minJ %22.15E maxJ %22.15E\n",minJ,maxJ);
+// 	    checkHighOrderTriangles(modl);
+
+	    for (int i=0;i<vdN.v.size();i++){
+	      vdN.v[i]->setParameter ( 0,uv[2*i]);
+	      vdN.v[i]->setParameter ( 1,uv[2*i+1]);
+	      GPoint gp = gf->point(uv[2*i],uv[2*i+1]);
+	      vdN.v[i]->x() = gp.x();
+	      vdN.v[i]->y() = gp.y();
+	      vdN.v[i]->z() = gp.z();
+	    }
+// 	    minJ=1.e22;maxJ=-1.e22;
+// 	    getMinMaxJac (t1, minJ, maxJ);
+// 	    printf("APRES 1 minJ %22.15E maxJ %22.15E\n",minJ,maxJ);
+// 	    minJ=1.e22;maxJ=-1.e22;
+// 	    getMinMaxJac (t2, minJ, maxJ);
+// 	    printf("APRES 2 minJ %22.15E maxJ %22.15E\n",minJ,maxJ);
+// 	    checkHighOrderTriangles(modl);
+// 	    return true;
+	  }	  
+	}
+      }
+    }
+  }
+
+  while (1){
+    v2t_cont :: iterator it = adjv.begin();      
+    while (it != adjv.end()){
+      MVertex *ver= it->first;
+      GEntity *ge = ver->onWhat();
+      if (ge->dim() == 2){
+	double initu,initv;
+	ver->getParameter ( 0,initu);
+	ver->getParameter ( 1,initv);	  
+	smoothVertexDataHO vd;
+	vd.v = ver;
+	vd.gf = gf;
+        vd.ts = it->second;
+	double val;
+
+	double F = -smooth_obj_HighOrder(initu,initv, &vd);
+	if (F < .2){
+	  minimize_2 ( smooth_obj_HighOrder, deriv_smoothing_objective_function_HighOrder, &vd, 1, initu,initv,val);
+	  double Fafter = -smooth_obj_HighOrder(initu,initv, &vd);
+	  if (F < Fafter){
+	    success = true;
+	    ver->setParameter(0,initu);
+	    ver->setParameter(1,initv);
+	    GPoint gp = gf->point(initu,initv);
+	    ver->x() = gp.x();
+	    ver->y() = gp.y();
+	    ver->z() = gp.z();  
+	  }
+	}				
+      }
+      ++it;
+    }
+    break;
+  }  
+  return success;
+}
+
+bool smoothInternalEdges(GFace *gf, edgeContainer &edgeVertices)
 {
   typedef std::map<std::pair<MVertex*, MVertex*>, std::vector<MElement*> > edge2tris;
   edge2tris e2t;
@@ -731,6 +992,10 @@ void smoothInternalEdges(GFace *gf, edgeContainer &edgeVertices)
       e2t[p].push_back(t);
     }
   }
+
+  bool success = false;
+
+  const int NBST = 10;
 
   for(edge2tris::iterator it = e2t.begin(); it != e2t.end(); ++it){
     std::pair<MVertex*, MVertex*> edge = it->first;
@@ -766,68 +1031,123 @@ void smoothInternalEdges(GFace *gf, edgeContainer &edgeVertices)
       
       if((!straightLine(e1, n1, n2) || !straightLine(e2, n2, n3) ||
 	  !straightLine(e3, n3, n4) || !straightLine(e4, n4, n1))){
+
+
+	double Unew[NBST][10],Vnew[NBST][10];
+	double Xold[10],Yold[10],Zold[10];
+	
 	for(unsigned int i = 0; i < e.size(); i++){
-	  double v = (double)(i + 1) / (e.size() + 1);
-	  double u = 1. - v;
-	  MVertex *vert  = (n2 < n4) ? e[i] : e[e.size() - i - 1];
-	  MVertex *vert1 = (n1 < n2) ? e1[e1.size() - i - 1] : e1[i];
-	  MVertex *vert3 = (n3 < n4) ? e3[i] : e3[e3.size() - i - 1];
-	  MVertex *vert4 = (n4 < n1) ? e4[e4.size() - i - 1] : e4[i];
-	  MVertex *vert2 = (n2 < n3) ? e2[i] : e2[e2.size() - i - 1];
-	  vert->x() = vert->x() + 0.05 * ( (1.-u) * vert4->x() + u * vert2->x() +
-					   (1.-v) * vert1->x() + v * vert3->x() -
-					   ( (1.-u)*(1.-v) * n1->x() 
-					     + u * (1.-v) * n2->x() 
-					     + u*v*n3->x() 
-					     + (1.-u) * v * n4->x()) - vert->x());
-	  vert->y() = vert->y() + 0.05 * ( (1.-u) * vert4->y() + u * vert2->y() +
-					   (1.-v) * vert1->y() + v * vert3->y() -
-					   ( (1.-u)*(1.-v) * n1->y() 
-					     + u * (1.-v) * n2->y() 
-					     + u*v*n3->y() 
-					     + (1.-u) * v * n4->y()) - vert->y());
+	  Xold[i] = e[i]->x();
+	  Yold[i] = e[i]->y();
+	  Zold[i] = e[i]->z();
+	}
+
+	double minJ = 1.e22;
+	double maxJ = -1.e22;	    
+	getMinMaxJac (t1, minJ, maxJ);
+	getMinMaxJac (t2, minJ, maxJ);
+	int kopt = -1; 
+	for (int k=0;k<NBST;k++){
+	  double relax = (k+1)/(double)NBST;
+	  for(unsigned int i = 0; i < e.size(); i++){
+	    double v = (double)(i + 1) / (e.size() + 1);
+	    double u = 1. - v;
+	    MVertex *vert  = (n2 < n4) ? e[i] : e[e.size() - i - 1];
+	    MVertex *vert1 = (n1 < n2) ? e1[e1.size() - i - 1] : e1[i];
+	    MVertex *vert3 = (n3 < n4) ? e3[i] : e3[e3.size() - i - 1];
+	    MVertex *vert4 = (n4 < n1) ? e4[e4.size() - i - 1] : e4[i];
+	    MVertex *vert2 = (n2 < n3) ? e2[i] : e2[e2.size() - i - 1];
+	    double U1,V1,U2,V2,U3,V3,U4,V4,U,V,nU1,nV1,nU2,nV2,nU3,nV3,nU4,nV4;
+	    parametricCoordinates(vert , gf,U,V);
+	    parametricCoordinates(vert1, gf,U1,V1);
+	    parametricCoordinates(vert2, gf,U2,V2);
+	    parametricCoordinates(vert3, gf,U3,V3);
+	    parametricCoordinates(vert4, gf,U4,V4);
+	    parametricCoordinates(n1, gf,nU1,nV1);
+	    parametricCoordinates(n2, gf,nU2,nV2);
+	    parametricCoordinates(n3, gf,nU3,nV3);
+	    parametricCoordinates(n4, gf,nU4,nV4);
+	    
+	    Unew[k][i] = U + relax * ( (1.-u) * U4 + u * U2 +
+				(1.-v) * U1 + v * U3 -
+				( (1.-u)*(1.-v) * nU1 
+				  + u * (1.-v) * nU2 
+				  + u*v*nU3 
+				  + (1.-u) * v * nU4) - U);
+	    Vnew[k][i] = V + relax * ( (1.-u) * V4 + u * V2 +
+				    (1.-v) * V1 + v * V3 -
+				    ( (1.-u)*(1.-v) * nV1 
+				      + u * (1.-v) * nV2 
+				      + u*v*nV3 
+				      + (1.-u) * v * nV4) - V);
+	    GPoint gp = gf->point(Unew[k][i],Vnew[k][i]);
+	    vert->x() = gp.x();
+	    vert->y() = gp.y();
+	    vert->z() = gp.z();
+	  }
+	  double minJloc = 1.e22;
+	  double maxJloc = -1.e22;	    
+	  getMinMaxJac (t1, minJloc, maxJloc);
+	  getMinMaxJac (t2, minJloc, maxJloc);
+
+	  //	  printf("relax %d minJ %12.5E minjLoc %12.5E\n",k,minJ,minJloc);
+
+	  if (minJloc > minJ){
+	    kopt = k;
+	    minJ = minJloc;
+	  }
+	}
+	if (kopt == -1){
+	  for(unsigned int i = 0; i < e.size(); i++){
+	    e[i]->x() = Xold[i];
+	    e[i]->y() = Yold[i];
+	    e[i]->z() = Zold[i];
+	  }	 
+	}
+	else{
+	  success = true;
+	  for(unsigned int i = 0; i < e.size(); i++){
+	    MVertex *vert  = (n2 < n4) ? e[i] : e[e.size() - i - 1];
+	    vert->setParameter(0,Unew[kopt][i]);
+	    vert->setParameter(1,Vnew[kopt][i]);
+	    GPoint gp = gf->point(Unew[kopt][i],Vnew[kopt][i]);
+	    vert->x() = gp.x();
+	    vert->y() = gp.y();
+	    vert->z() = gp.z();
+	  }	 
 	}
       }
     }
   }    
+  return success;
 }
 
 void checkHighOrderTriangles(GModel *m)
 {
+  double minJGlob = 1.e22;
+  double maxJGlob = -1.e22;
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
-    bool twod = true;
+    double minJ = 1.e22;
+    double maxJ = -1.e22;
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
+      double minJloc = 1.e22;
+      double maxJloc = -1.e22;	    
       MTriangle *t = (*it)->triangles[i];
-      if(t->getVertex(0)->z() != 0.0 || 
-	 t->getVertex(1)->z() != 0.0 ||
-	 t->getVertex(2)->z() != 0.0)
-	twod = false;
-    }      
-    if(twod){ // only perform the test for 2D/plane faces for now
-      double minJ = 1.e22;
-      double maxJ = -1.e22;
-      for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
-	double minJloc = 1.e22;
-	double maxJloc = -1.e22;	    
-	MTriangle *t = (*it)->triangles[i];
-	if(t->getPolynomialOrder() > 1 && t->getPolynomialOrder() < 6){
-	  getMinMaxJac (t, minJloc, maxJloc);
-	  minJ = std::min(minJ, minJloc);
-	  maxJ = std::max(maxJ, maxJloc);
-	  if(minJloc * maxJloc < 0)
-	    Msg(WARNING, "Triangle %d (%d %d %d) has negative Jacobian", t->getNum(),
-		t->getVertex(0)->getNum(), t->getVertex(1)->getNum(), t->getVertex(2)->getNum());
-	}
+      if(t->getPolynomialOrder() > 1 && t->getPolynomialOrder() < 6){
+	getMinMaxJac (t, minJloc, maxJloc);
+	//	printf("%p is %12.5E\n",t,minJloc);
+	minJ = std::min(minJ, minJloc);
+	maxJ = std::max(maxJ, maxJloc);
+// 	if(minJloc * maxJloc < 0)
+// 	  Msg(WARNING, "Triangle %d (%d %d %d) has negative Jacobian (on gFace %d)", t->getNum(),
+// 	      t->getVertex(0)->getNum(), t->getVertex(1)->getNum(), t->getVertex(2)->getNum(),(*it)->tag());
       }
-      if(minJ != 1.e22){
-	if(minJ * maxJ < 0)
-	  Msg(GERROR, "Some triangles have negative Jacobians in surface %d", (*it)->tag());
-	else 
-	  Msg(INFO, "No negative Jacobians detected on model face %d: range = (%g,%g)",
-	      (*it)->tag(), minJ, maxJ);
-      }
-    }  
+    }
+    minJGlob = std::min(minJGlob,minJ);
+    maxJGlob = std::max(maxJGlob,maxJ);
   }
+  if (minJGlob >= 0)Msg(INFO, "Jacobian Range (%12.5E,%12.5E)",minJGlob, maxJGlob);
+  else Msg(WARNING, "Jacobian Range (%12.5E,%12.5E)",minJGlob, maxJGlob);
 }  
 
 void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
@@ -866,11 +1186,28 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
 
   if(CTX.mesh.smooth_internal_edges){
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
-      for (int i = 0; i < 10; i++) smoothInternalEdges(*it, edgeVertices);
     checkHighOrderTriangles(m);
+     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){      
+       Msg(INFO, "Smoothing internal Edges in Surface %d",(*it)->tag());
+       for (int i = 0; i < 10; i++) {
+	 if (!smoothInternalEdges(*it, edgeVertices))break;
+ 	checkHighOrderTriangles(m);
+       }
+     }
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){      
+      for (int i=0;i<CTX.mesh.nb_smoothing;i++){
+	if(!optimizeHighOrderMesh(m,*it, edgeVertices))break;
+	checkHighOrderTriangles(m);
+      }
+    }
   }
-  
+
+  //  MYFILE = fopen("jacs.pos","w");
+  //  fprintf(MYFILE,"View \"\"{\n");
+  checkHighOrderTriangles(m);
+  //  fprintf(MYFILE,"};\n");
+  //  fclose(MYFILE);
+  MYFILE=0;
   double t2 = Cpu();
   Msg(INFO, "Mesh second order complete (%g s)", t2 - t1);
   Msg(STATUS1, "Mesh");

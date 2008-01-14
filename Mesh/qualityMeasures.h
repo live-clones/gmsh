@@ -7,7 +7,7 @@ class MVertex;
 class MTriangle;
 class MTetrahedron;
 enum gmshQualityMeasure4Triangle {QMTRI_RHO};
-enum gmshQualityMeasure4Tet      {QMTET_1,QMTET_2,QMTET_3};
+enum gmshQualityMeasure4Tet      {QMTET_1,QMTET_2,QMTET_3,QMTET_ONE};
 
 double qmTriangle ( MTriangle *f,  const gmshQualityMeasure4Triangle &cr); 
 double qmTriangle ( BDS_Face *f,  const gmshQualityMeasure4Triangle &cr); 

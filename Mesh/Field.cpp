@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.8 2007-11-09 08:07:53 geuzaine Exp $
+// $Id: Field.cpp,v 1.9 2008-01-14 21:29:14 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #include "Field.h"
 #include "Context.h"
 #include "GeoInterpolation.h"
+#include "BackgroundMesh.h"
 #include "GModel.h"
 #ifdef HAVE_MATH_EVAL
 #include "matheval.h"
@@ -448,6 +449,50 @@ AttractorField_1DMesh::AttractorField_1DMesh(GModel *m, double dmax, double dmin
   }
 }
 
+AttractorField_1DMesh::AttractorField_1DMesh(GFace *gf, double dmax, double dmin, 
+					     double lcmax)
+  : _dmax(dmax), _dmin(dmin), _lcmax(lcmax)
+{
+  std::list<GEdge*> edges = gf->edges(); 
+  std::list<GEdge*>::iterator it = edges.begin();
+
+  std::map<MVertex*, double> maplc;
+  std::map<MVertex*, double> maplc2;
+
+  while(it != edges.end()){
+    MVertex *first = (*it)->getBeginVertex()->mesh_vertices[0];
+    for(unsigned int i = 1; i <= (*it)->mesh_vertices.size(); ++i){
+      MVertex *last = (i == (*it)->mesh_vertices.size()) ? 
+	(*it)->getEndVertex()->mesh_vertices[0] : (*it)->mesh_vertices[i];
+      double l = sqrt((first->x() - last->x()) * (first->x() - last->x()) +
+		      (first->y() - last->y()) * (first->y() - last->y()) +
+		      (first->z() - last->z()) * (first->z() - last->z()));
+      double t;
+      last->getParameter(0,t);
+      double l2 = LC_MVertex_PNTS(last->onWhat(),t,0);
+      addMapLc(maplc, first, l);
+      addMapLc(maplc, last, l);
+      addMapLc(maplc2, first, l2);
+      addMapLc(maplc2, last, l2);
+      first = last;      
+    }
+    ++it;
+  }      
+  
+  std::map<MVertex*, double>::iterator itm = maplc.begin();  
+  while(itm != maplc.end()){
+    addPoint(itm->first->x(), itm->first->y(), itm->first->z());
+    lcs.push_back(itm->second);
+    ++itm;
+  }
+  itm = maplc2.begin();  
+  while(itm != maplc2.end()){
+    lcs2.push_back(itm->second);
+    ++itm;
+  }
+}
+
+
 double AttractorField_1DMesh::operator()(double X, double Y, double Z)
 {
 #ifdef HAVE_ANN_
@@ -459,6 +504,19 @@ double AttractorField_1DMesh::operator()(double X, double Y, double Z)
   r = std::max(std::min(r, 1.), 0.);
   double lc = lcmin * (1 - r) + _lcmax * r;
   return lc;
+#else
+  Msg(GERROR,"GMSH should be compiled with ANN in order to enable attractors");
+#endif
+}
+
+void AttractorField_1DMesh::eval(double X, double Y, double Z, double &lcmin, double &lcpt, double &d)
+{
+#ifdef HAVE_ANN_
+  double xyz[3] = {X, Y, Z};
+  kdtree->annkSearch(xyz, maxpts, index, dist);
+  d = sqrt(dist[0]);
+  lcmin = lcs[index[0]];
+  lcpt  = lcs2[index[0]] * CTX.mesh.lc_factor;
 #else
   Msg(GERROR,"GMSH should be compiled with ANN in order to enable attractors");
 #endif

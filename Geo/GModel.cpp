@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.50 2007-12-15 03:41:57 geuzaine Exp $
+// $Id: GModel.cpp,v 1.51 2008-01-14 21:29:13 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -529,7 +529,8 @@ static int checkVertices(std::vector<MVertex*> &vertices,
 }
 
 template <class T>
-static int checkElements(std::vector<T*> &elements,
+static int checkElements(int tag,
+			 std::vector<T*> &elements,
 			 std::set<MElement*, MElementLessThanLexicographic> &pos)
 {
   int num = 0;
@@ -540,8 +541,22 @@ static int checkElements(std::vector<T*> &elements,
       pos.insert(e);
     }
     else{
-      Msg(INFO, "Elements %d and %d have identical barycenter",
-	  (*it)->getNum(), e->getNum());
+      char temp[256];
+      char temp2[256];
+      sprintf(temp,"Elements %d tag %d(",(*it)->getNum(),tag);
+      for (int i=0;i<(*it)->getNumVertices();i++){
+	sprintf(temp2,"%d ",(*it)->getVertex(i)->getNum());	
+	strcat(temp,temp2);
+      }
+      sprintf(temp2,") and %d(",e->getNum());
+      strcat(temp,temp2);
+      for (int i=0;i<e->getNumVertices();i++){
+	sprintf(temp2,"%d ",e->getVertex(i)->getNum());	
+	strcat(temp,temp2);
+      }
+      sprintf(temp2,")have identical barycenter");      
+      strcat(temp,temp2);
+      Msg(INFO, "%s",temp);
       num++;
     }
   }
@@ -584,16 +599,16 @@ void GModel::checkMeshCoherence()
     std::set<MElement*, MElementLessThanLexicographic> pos;
     int num = 0;
     for(eiter it = firstEdge(); it != lastEdge(); ++it)
-      num += checkElements((*it)->lines, pos);
+      num += checkElements((*it)->tag(),(*it)->lines, pos);
     for(fiter it = firstFace(); it != lastFace(); ++it){
-      num += checkElements((*it)->triangles, pos);
-      num += checkElements((*it)->quadrangles, pos);
+      num += checkElements((*it)->tag(),(*it)->triangles, pos);
+      num += checkElements((*it)->tag(),(*it)->quadrangles, pos);
     }
     for(riter it = firstRegion(); it != lastRegion(); ++it){
-      num += checkElements((*it)->tetrahedra, pos);
-      num += checkElements((*it)->hexahedra, pos);
-      num += checkElements((*it)->prisms, pos);
-      num += checkElements((*it)->pyramids, pos);
+      num += checkElements((*it)->tag(),(*it)->tetrahedra, pos);
+      num += checkElements((*it)->tag(),(*it)->hexahedra, pos);
+      num += checkElements((*it)->tag(),(*it)->prisms, pos);
+      num += checkElements((*it)->tag(),(*it)->pyramids, pos);
     }
     if(num) Msg(WARNING, "%d duplicate elements", num);
     MElementLessThanLexicographic::tolerance = old_tol;

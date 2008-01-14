@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.46 2007-11-11 19:53:57 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.47 2008-01-14 21:29:14 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -288,8 +288,6 @@ void meshGEdge::operator() (GEdge *ge)
   if(ge->geomType() == GEntity::DiscreteCurve) return;
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
 
-  // Send a messsage to the GMSH environment
-  Msg(INFO, "Meshing curve %d", ge->tag());
 
   deMeshGEdge dem;
   dem(ge);
@@ -309,6 +307,10 @@ void meshGEdge::operator() (GEdge *ge)
   // first compute the length of the curve by integrating one
   double length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-8);
   ge->setLength(length);
+  // Send a messsage to the GMSH environment
+
+  if (length == 0.0)
+    Msg(GERROR,"Curve %d has a zero length\n",ge->tag());
 
   List_Reset(Points);
     
@@ -336,6 +338,8 @@ void meshGEdge::operator() (GEdge *ge)
     }
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
+
+  Msg(INFO, "Meshing curve %d (%s)", ge->tag(),ge->getTypeString().c_str());
 
   // if the curve is periodic and if the begin vertex is identical to
   // the end vertex and if this vertex has only one model curve

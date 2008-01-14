@@ -45,6 +45,7 @@ void vector_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]);
 void normal_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]); 
 double surface_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3); 
 double surface_triangle_param(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3); 
+void optimize_vertex_position (GFace *GF, BDS_Point *data, double su, double sv);
 
 
 class BDS_GeomEntity

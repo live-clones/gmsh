@@ -235,8 +235,5 @@ private:
 };
 
 void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm);
-typedef std::multimap<MVertex*,std::pair<MTriangle*,GFace*> > fs_cont ;
-GFace* findInFaceSearchStructure ( MVertex *p1,MVertex *p2,MVertex *p3, const fs_cont&search );
-bool buildFaceSearchStructure ( GModel *model , fs_cont&search );
 
 #endif

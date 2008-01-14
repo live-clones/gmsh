@@ -21,6 +21,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 #include "MElement.h"
 #include "MEdge.h"
+#include "meshGFaceDelaunayInsertion.h"
 #include <map>
 #include <vector>
 class GFace;
@@ -31,4 +32,49 @@ void buildVertexToTriangle ( std::vector<MTriangle*> & ,  v2t_cont &adj );
 void buildEdgeToTriangle ( std::vector<MTriangle*> & ,  e2t_cont &adj );
 void laplaceSmoothing   (GFace *gf);
 void edgeSwappingLawson (GFace *gf);
+enum gmshSwapCriterion  {SWCR_DEL, SWCR_QUAL,SWCR_NORM,SWCR_CLOSE};
+enum gmshSplitCriterion {SPCR_CLOSE, SPCR_QUAL,SPCR_ALLWAYS};
+int edgeSwapPass (GFace *gf, std::set<MTri3*,compareTri3Ptr> &allTris, 
+		  const gmshSwapCriterion &cr,		   
+		  const std::vector<double> & Us ,
+		  const std::vector<double> & Vs,
+		  const std::vector<double> & vSizes ,
+		  const std::vector<double> & vSizesBGM);
+
+
+bool gmshEdgeSwap(MTri3 *t1, 
+		  GFace *gf,
+		  int iLocalEdge,
+		  std::vector<MTri3*> &newTris,
+		  const gmshSwapCriterion &cr,		   
+		  const std::vector<double> & Us,
+		  const std::vector<double> & Vs,
+		  const std::vector<double> & vSizes,
+		  const std::vector<double> & vSizesBGM);
+
+bool gmshEdgeSplit(const double lMax,
+		   MTri3 *t1, 
+		   GFace *gf,
+		   int iLocalEdge,
+		   std::vector<MTri3*> &newTris,
+		   const gmshSplitCriterion &cr,		   
+		   std::vector<double> & Us,
+		   std::vector<double> & Vs,
+		   std::vector<double> & vSizes,
+		   std::vector<double> & vSizesBGM);
+
+int edgeSplitPass (double maxLC,
+		   GFace *gf, std::set<MTri3*,compareTri3Ptr> &allTris,
+		   const gmshSplitCriterion &cr,		   
+		   std::vector<double> & Us ,
+		   std::vector<double> & Vs,
+		   std::vector<double> & vSizes ,
+		   std::vector<double> & vSizesBGM);
+
+int edgeCollapsePass (double minLC,
+		      GFace *gf, std::set<MTri3*,compareTri3Ptr> &allTris,
+		      std::vector<double> & Us ,
+		      std::vector<double> & Vs,
+		      std::vector<double> & vSizes ,
+		      std::vector<double> & vSizesBGM);
 #endif

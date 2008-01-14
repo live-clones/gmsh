@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.109 2007-12-03 15:17:39 remacle Exp $
+// $Id: CommandLine.cpp,v 1.110 2008-01-14 21:29:13 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -241,6 +241,10 @@ void Get_Options(int argc, char *argv[])
         CTX.mesh.optimize = 1;
         i++;
       }
+      else if(!strcmp(argv[i] + 1, "optimize_netgen")) {
+        CTX.mesh.optimizeNetgen = 1;
+        i++;
+      }
       else if(!strcmp(argv[i] + 1, "nopopup")) {
         CTX.nopopup = 1;
         i++;
@@ -350,6 +354,17 @@ void Get_Options(int argc, char *argv[])
           if(CTX.mesh.lc_factor <= 0.0) {
             fprintf(stderr, ERROR_STR
                     "Characteristic length factor must be > 0\n");
+            exit(1);
+          }
+        }
+      }
+      else if(!strcmp(argv[i] + 1, "clmin")) {
+        i++;
+        if(argv[i] != NULL) {
+          CTX.mesh.lc_min = atof(argv[i++]);
+          if(CTX.mesh.lc_factor <= 0.0) {
+            fprintf(stderr, ERROR_STR
+                    "Minimum length size must be > 0\n");
             exit(1);
           }
         }

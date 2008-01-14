@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.37 2007-11-12 10:49:16 geuzaine Exp $
+# $Id: Makefile,v 1.38 2008-01-14 21:29:14 remacle Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -29,6 +29,7 @@ SRC = Numeric.cpp\
       EigSolve.cpp\
       predicates.cpp\
       gsl_newt.cpp\
+      gsl_min.cpp\
       gsl_brent.cpp
 
 OBJ = ${SRC:.cpp=.o}

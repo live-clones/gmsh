@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.37 2007-11-28 14:18:10 remacle Exp $
+// $Id: meshGRegion.cpp,v 1.38 2008-01-14 21:29:14 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -608,4 +608,74 @@ void optimizeMeshGRegionGmsh::operator() (GRegion *gr)
   
   gmshOptimizeMesh (gr, QMTET_2);  
   
+}
+
+bool buildFaceSearchStructure ( GModel *model , fs_cont&search )
+{  
+  search.clear();
+
+  GModel::fiter fit = model->firstFace() ;
+  while (fit != model->lastFace()){    
+    for (int i=0;i<(*fit)->triangles.size();i++)
+      {
+	MVertex *p1=(*fit)->triangles[i]->getVertex(0);
+	MVertex *p2=(*fit)->triangles[i]->getVertex(1);
+	MVertex *p3=(*fit)->triangles[i]->getVertex(2);
+	MVertex *p = std::min(p1,std::min(p2,p3));
+	search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p, std::pair<MTriangle*,GFace*>((*fit)->triangles[i],*fit)));
+      }
+    ++fit;
+  }
+  return true;
+}
+
+bool buildEdgeSearchStructure ( GModel *model , es_cont&search )
+{  
+  search.clear();
+
+  GModel::eiter eit = model->firstEdge() ;
+  while (eit != model->lastEdge()){    
+    for (int i=0;i<(*eit)->lines.size();i++)
+      {
+	MVertex *p1=(*eit)->lines[i]->getVertex(0);
+	MVertex *p2=(*eit)->lines[i]->getVertex(1);
+	MVertex *p = std::min(p1,p2);
+	search.insert ( std::pair<MVertex*,std::pair<MLine*,GEdge*> > ( p, std::pair<MLine*,GEdge*>((*eit)->lines[i],*eit)));
+      }
+    ++eit;
+  }
+  return true;
+}
+
+GFace* findInFaceSearchStructure ( MVertex *p1,MVertex *p2,MVertex *p3, const fs_cont&search )
+{
+  MVertex *p = std::min(p1,std::min(p2,p3));
+  
+  for (fs_cont::const_iterator it = search.lower_bound(p);
+       it != search.upper_bound(p);
+       ++it)
+    {
+      MTriangle *t   = it->second.first;
+      GFace     *gf  = it->second.second;
+      if ((t->getVertex(0) == p1 ||t->getVertex(0) == p2 ||t->getVertex(0) == p3)&&
+	  (t->getVertex(1) == p1 ||t->getVertex(1) == p2 ||t->getVertex(1) == p3)&&
+	  (t->getVertex(2) == p1 ||t->getVertex(2) == p2 ||t->getVertex(2) == p3))return gf;
+    }
+  return 0;
+}
+
+GEdge* findInEdgeSearchStructure ( MVertex *p1, MVertex *p2, const es_cont&search )
+{
+  MVertex *p = std::min(p1,p2);
+  
+  for (es_cont::const_iterator it = search.lower_bound(p);
+       it != search.upper_bound(p);
+       ++it)
+    {
+      MLine *l   = it->second.first;
+      GEdge     *ge  = it->second.second;
+      if ((l->getVertex(0) == p1 ||l->getVertex(0) == p2)&&
+	  (l->getVertex(1) == p1 ||l->getVertex(1) == p2))return ge;
+    }
+  return 0;
 }

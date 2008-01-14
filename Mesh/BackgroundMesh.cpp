@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.30 2007-11-26 14:34:09 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.31 2008-01-14 21:29:14 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -70,25 +70,6 @@ static double max_edge_curvature(const GVertex *gv)
   return max_curvature;
 }
 
-static double max_surf_curvature(const GVertex *gv)
-{
-  double max_curvature = 0;
-  std::list<GEdge*> l_edges = gv->edges();
-  for (std::list<GEdge*>::const_iterator ite = l_edges.begin(); 
-       ite != l_edges.end(); ++ite){
-    GEdge *_myGEdge = *ite;
-    std::list<GFace *> faces = _myGEdge->faces();
-    std::list<GFace *>::iterator it = faces.begin();
-    while (it != faces.end()){
-      SPoint2 par = gv->reparamOnFace((*it),1);
-      double cc = (*it)->curvature ( par );
-      max_curvature = std::max ( cc , max_curvature);  
-      ++it;
-    }  
-  }
-  return max_curvature;
-}
-
 static double max_surf_curvature(const GEdge *ge, double u)
 {
   double max_curvature = 0;
@@ -103,6 +84,23 @@ static double max_surf_curvature(const GEdge *ge, double u)
   return max_curvature;
 }
 
+static double max_surf_curvature(const GVertex *gv)
+{
+  double max_curvature = 0;
+  std::list<GEdge*> l_edges = gv->edges();
+  for (std::list<GEdge*>::const_iterator ite = l_edges.begin(); 
+       ite != l_edges.end(); ++ite){
+    GEdge *_myGEdge = *ite;
+    Range<double> bounds = _myGEdge->parBounds(0);
+    if (gv == _myGEdge->getBeginVertex())
+      max_curvature = std::max(max_curvature, max_surf_curvature(_myGEdge,bounds.low()));
+    else
+      max_curvature = std::max(max_curvature, max_surf_curvature(_myGEdge,bounds.high()));
+  }
+  return max_curvature;
+}
+
+
 // the mesh vertex is classified on a model vertex.  we compute the
 // maximum of the curvature of model faces surrounding this point if
 // it is classified on a model edge, we do the same for all model
@@ -114,17 +112,18 @@ double LC_MVertex_CURV(GEntity *ge, double U, double V)
   double Crv = 0;
   switch(ge->dim()){
   case 0:
-    Crv = max_edge_curvature ( (const GVertex *)ge);
-    Crv = std::max(max_surf_curvature ( (const GVertex *)ge),Crv);
+    //    Crv = max_edge_curvature ( (const GVertex *)ge);
+    //    Crv = std::max(max_surf_curvature ( (const GVertex *)ge),Crv);
+    Crv = max_surf_curvature ( (const GVertex *)ge);
     //    printf("point %d coucou %g\n",ge->tag(),Crv);
     break;
   case 1:
     {
       GEdge *ged = (GEdge *)ge;
-      Crv = ged->curvature(U);
+      //      Crv = ged->curvature(U);
       //      printf("coucou %12.5E %d\n",Crv,CTX.mesh.min_circ_points);
-      Crv = std::max(Crv,max_surf_curvature(ged, U));
-      
+      //      Crv = std::max(Crv,max_surf_curvature(ged, U));
+      Crv = max_surf_curvature(ged, U);      
     }
     break;
   case 2:
@@ -194,15 +193,16 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
     lc = std::min(std::min(std::min(l1, l2), l3), l4) * CTX.mesh.lc_factor;
   }
 
-
-  if(CTX.mesh.lc_from_curvature && ge->dim() < 3)
+  if(CTX.mesh.lc_from_curvature && ge->dim() <= 2 )
     lc = std::min (lc,LC_MVertex_CURV(ge, U, V));
+
+  lc = std::max(lc,CTX.mesh.lc_min*CTX.mesh.lc_factor);
 
   if(lc <= 0.){
     Msg(GERROR, "Incorrect char. length lc = %g: using default instead", lc);
     return l3 * CTX.mesh.lc_factor;
   }
-
+  
   return lc;
 }
 
@@ -211,7 +211,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
 // we do it also if CTX.mesh.constrained_bgmesh is true;
 bool Extend1dMeshIn2dSurfaces()
 {
-  if(lc_field.empty() && !CTX.mesh.lc_from_curvature) return true;
+  if(lc_field.empty()) return true;
   if(CTX.mesh.constrained_bgmesh) return true;
   return false;
 }

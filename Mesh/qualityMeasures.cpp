@@ -84,6 +84,8 @@ double qmTet ( const double    &x1, const double    &y1, const double    &z1,
   double quality;
   switch(cr)
     {
+    case QMTET_ONE:
+      return 1.0;
     case QMTET_3:
       {
 	double mat[3][3];
