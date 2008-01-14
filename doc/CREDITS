@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.46 2007-07-19 10:48:57 geuzaine Exp $
+$Id: CREDITS,v 1.47 2008-01-14 19:06:33 geuzaine Exp $
 
              Gmsh is copyright (C) 1997-2007
 
@@ -8,24 +8,19 @@ $Id: CREDITS,v 1.46 2007-07-19 10:48:57 geuzaine Exp $
                            and
 
                   Jean-Francois Remacle
-               <remacle at gce.ucl.ac.be>
+          <jean-francois.remacle at uclouvain.be>
 
 Major code contributions to Gmsh have been provided by Nicolas Tardieu
-<ntardieu at giref.ulaval.ca> (help with the GSL and Netgen
-integration), Stephen Guzik <sguzik at utias.utoronto.ca> (CGNS
-integration) and Pascale Noyret <pascale.noyret et edf.fr> (MED
-integration).
+(help with the GSL and Netgen integration), Stephen Guzik (CGNS
+integration) and Pascale Noyret (MED integration).
 
-Other code contributors include: David Colignon <David.Colignon at
-ulg.ac.be> for new colormaps and lots of testing and bug reports;
-Patrick Dular <patrick.dular at ulg.ac.be> for transfinite mesh bug
-fixes; Laurent Stainier <l.stainier at ulg.ac.be> for the eigenvalue
-solvers and for help with the MacOS port and the tensor display code;
-Pierre Badel <badel at freesurf.fr> for help with the GSL integration;
-Marc Ume <Marc.Ume at digitalgraphics.be> for the original list code;
-Matt Gundry <mjgundry at faa-engineers.com> for the Plot3d mesh
-format; Jozef Vesely <vesely at gjh.sk> for help with the Tetgen
-integration.
+Other code contributors include: David Colignon for new colormaps and
+lots of testing and bug reports; Patrick Dular for transfinite mesh
+bug fixes; Laurent Stainier for the eigenvalue solvers and for help
+with the MacOS port and the tensor display code; Pierre Badel for help
+with the GSL integration; Marc Ume for the original list code; Matt
+Gundry for the Plot3d mesh format; Jozef Vesely for help with the
+Tetgen integration.
 
 The AVL tree code (DataStr/avl.*) and the YUV image code
 (Graphics/gl2yuv.*) are copyright (C) 1988-1993, 1995 The Regents of
@@ -88,37 +83,27 @@ subdirectory) written by George Karypis (karypis at cs.umn.edu),
 copyright (C) 1998, Regents of the University of Minnesota: check the
 configuration options.
 
-Special thanks to Bill Spitzak <spitzak at users.sourceforge.net>,
-Michael Sweet <easysw at users.sourceforge.net>, Matthias Melcher <mm
-at matthiasm.com> and others for the Fast Light Tool Kit on which
-Gmsh's GUI is based. See http://www.fltk.org for more info on this
-excellent object-oriented, cross-platform toolkit.
+This version of Gmsh may contain code (in the
+contrib/NativeFileChooser subdirectory), copyright (C) 2004 by Greg
+Ercolano: check the configuration options.
+
+Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher and
+others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
+http://www.fltk.org for more info on this excellent object-oriented,
+cross-platform toolkit.
 
 Special thanks also to EDF for funding the OpenCascade integration.
 
 Thanks to the following folks who have contributed by providing fresh
 ideas on theoretical or programming topics, who have sent patches,
 requests for changes or improvements, or who gave us access to exotic
-machines for testing Gmsh: Juan Abanto <juanabanto at yahoo.com>,
-Olivier Adam <o.adam at ulg.ac.be>, Guillaume Alleon <guillaume.alleon
-at airbus.aeromatra.com>, Eric Bechet <eric.bechet at epost.de>,
-Laurent Champaney <laurent.champaney at meca.uvsq.fr>, Pascal Dupuis
-<Pascal.Dupuis at esat.kuleuven.ac.be>, Philippe Geuzaine <geuzaine at
-gnat.colorado.edu>, Johan Gyselinck <johan.gyselinck at ulg.ac.be>,
-Francois Henrotte <fhenrott at esat.kuleuven.ac.be>, Benoit Meys
-<bmeys at techspace-aero.be>, Nicolas Moes <moes at
-tam9.mech.nwu.edu>, Osamu Nakamura <naka at
-hasaki.sumitomometals.co.jp>, Chad Schmutzer <schmutze at
-acm.caltech.edu>, Jean-Luc Fl'ejou <jean-luc.flejou at edf.fr>, Xavier
-Dardenne <dardenne at tele.ucl.ac.be>, Christophe Prud'homme <prudhomm
-at debian.org>, Sebastien.Clerc <Sebastien.Clerc at space.alcatel.fr>,
-Jose Miguel Pasini <jmp84 at cornell.edu>, Philippe Lussou <plussou at
-necs.fr>, Jacques Kools <JKools at veeco.com>, Bayram Yenikaya
-<yenikaya at math.umn.edu>, Peter Hornby <p.hornby at arrc.csiro.au>,
-Krishna Mohan Gundu <gkmohan at gmail.com>, Christopher Stott <C.Stott
-at surrey.ac.uk>, Timmy Schumacher <Tim.Schumacher at colorado.edu>,
-Carl Osterwisch <osterwischc at asme.org>, Bruno Frackowiak
-<bruno.frackowiak at onecert.fr>, Philip Kelleners <P.H.Kelleners at
-ctw.utwente.nl>, Romuald Conty <conty at phimeca.com>, Ruth Sabariego
-<r.sabariego at ulg.ac.be>, Renaud Sizaire <renaud.sizaire at
-ferespost.be>, Michel Benhamou <mi.benham et free.fr>.
+machines for testing Gmsh: Juan Abanto, Olivier Adam, Guillaume
+Alleon, Eric Bechet, Laurent Champaney, Pascal Dupuis, Philippe
+Geuzaine, Johan Gyselinck, Francois Henrotte, Benoit Meys, Nicolas
+Moes, Osamu Nakamura, Chad Schmutzer, Jean-Luc Fl'ejou, Xavier
+Dardenne, Christophe Prud'homme, Sebastien.Clerc, Jose Miguel Pasini,
+Philippe Lussou, Jacques Kools, Bayram Yenikaya, Peter Hornby, Krishna
+Mohan Gundu, Christopher Stott, Timmy Schumacher, Carl Osterwisch,
+Bruno Frackowiak, Philip Kelleners, Romuald Conty, Ruth Sabariego,
+Renaud Sizaire, Michel Benhamou, Emilie Marchandise, Jonathan
+Lambrechts.
