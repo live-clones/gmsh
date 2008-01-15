@@ -895,7 +895,7 @@ StringXNumber MeshOptions_Number[] = {
     "Field format for Nastran BDF files (0=free, 1=small, 2=large)" },
   { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
     "Factor applied to all characteristic lengths" },
-  { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_min, 0.0 ,
+  { F|O, "CharacteristicLengthMin" , opt_mesh_lc_min, 0.0 ,
     "Minimum mesh size" },
   { F|O, "CharacteristicLengthFromCurvature" , opt_mesh_lc_from_curvature , 0. ,
     "Compute characteritic lenghts automatically from curvatures" },
