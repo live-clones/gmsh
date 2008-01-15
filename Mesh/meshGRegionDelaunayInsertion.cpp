@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.26 2008-01-14 21:29:14 remacle Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.27 2008-01-15 19:50:58 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -662,7 +662,7 @@ void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm)
 	}
       }
 
-      if (!newTets.size()){
+      if (0 && !newTets.size()){
         int nbSlivers = 0;
         int nbSliversWeCanDoSomething = 0;
         for (int i=0;i<illegals.size();i++)

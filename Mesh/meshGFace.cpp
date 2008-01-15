@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.104 2008-01-14 21:29:14 remacle Exp $
+// $Id: meshGFace.cpp,v 1.105 2008-01-15 19:50:58 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2253,7 +2253,7 @@ void meshGFace::operator() (GFace *gf)
     {
       Msg(DEBUG1, "Generating the mesh");
       if(noseam (gf) || gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
-	//	gmsh2DMeshGenerator(gf,0, true);
+	//gmsh2DMeshGenerator(gf,0, true);
 	gmsh2DMeshGenerator(gf,0, false);
       }
       else{

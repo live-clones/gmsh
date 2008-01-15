@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.87 2008-01-14 21:29:13 remacle Exp $
+// $Id: BDS.cpp,v 1.88 2008-01-15 19:50:58 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1308,21 +1308,25 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point * p, GFace *gf)
   const double oldY = p->Y;
   const double oldZ = p->Z;
 
-  double oldU=U;
-  double oldV=V;
+  double oldU=p->u;
+  double oldV=p->v;
 
   it = ts.begin();
   double s1=0,s2=0;
   while(it != ite) {
-    BDS_Face *t = *it;
+    BDS_Face *t = *it;   
     BDS_Point *n[4];
     t->getNodes(n);
     p->u = U;
     p->v = V;
-    s1 += fabs(surface_triangle_param(n[0],n[1],n[2])); 
+    double snew = fabs(surface_triangle_param(n[0],n[1],n[2])); 
+    s1 += snew;
     p->u = oldU;
     p->v = oldV;
-    s2 += fabs(surface_triangle_param(n[0],n[1],n[2])); 
+    double sold = fabs(surface_triangle_param(n[0],n[1],n[2])); 
+    s2 += sold;
+    //    printf("%22.15E %22.15E\n",snew,sold);
+    //    if ( snew < .1 * sold) return false;
 
 //     if (!test_move_point_parametric_triangle ( p, U, V, t)){
 //       return false;    
@@ -1338,7 +1342,9 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point * p, GFace *gf)
     ++it;
   }
   
-  if (fabs(s2-s1) > 1.e-10 * (s2+s1))return false;
+  //  printf("%22.15E %22.15E %22.15E\n",s1,s2,fabs(s2-s1));
+  if (fabs(s2-s1) > 1.e-14 * (s2+s1))return false;
+  
 
 //   if (newWorst < 1.e-2)
 //     {
