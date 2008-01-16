@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.165 2008-01-08 12:05:45 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.166 2008-01-16 20:25:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -261,7 +261,8 @@ void SetProjectName(const char *name)
   char no_ext[256], ext[256], base[256];
   SplitFileName(name, no_ext, ext, base);
 
-  strncpy(CTX.filename, name, 255);
+  if(CTX.filename != name) // yes, we mean to compare the pointers
+    strncpy(CTX.filename, name, 255);
   strncpy(CTX.no_ext_filename, no_ext, 255);
   strncpy(CTX.base_filename, base, 255);
 

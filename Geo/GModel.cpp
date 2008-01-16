@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.51 2008-01-14 21:29:13 remacle Exp $
+// $Id: GModel.cpp,v 1.52 2008-01-16 20:25:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -56,28 +56,33 @@ GModel *GModel::current()
 
 void GModel::destroy()
 {
-  std::vector<GFace*> to_keep;
-
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     delete *it;
   regions.clear();
+
+  std::vector<GFace*> to_keep;
   for(fiter it = firstFace(); it != lastFace(); ++it){
     // projection faces are persistent
-    if((*it)->geomType() == GEntity::ProjectionFace)
+    if((*it)->getNativeType() == GEntity::UnknownModel &&
+       (*it)->geomType() == GEntity::ProjectionFace)
       to_keep.push_back(*it);
     else
       delete *it;
   }
   faces.clear();
   faces.insert(to_keep.begin(), to_keep.end());
+
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     delete *it;
   edges.clear();
+
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     delete *it;
   vertices.clear();
+
   if(normals) delete normals;
   normals = 0;
+
   MVertex::resetGlobalNumber();
   MElement::resetGlobalNumber();
   gmshSurface::reset();
