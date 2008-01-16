@@ -226,9 +226,10 @@ private:
 
   void changeTetRadius ( iterator it , double r)
   {
+    MTet4 *t = *it;
     allTets.erase(it);
-    (*it)->forceRadius(r);
-    allTets.insert(*it);
+    t->forceRadius(r);
+    allTets.insert(t);
   }
   container & getAllTets () {return allTets;}
 
