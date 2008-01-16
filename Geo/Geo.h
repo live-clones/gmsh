@@ -125,8 +125,9 @@ typedef struct{
   int Typ;
   char Visible;
   int Method;
-  int ipar[4];
-  double dpar[4];
+  int nbPointsTransfinite;
+  int typeTransfinite;
+  double coeffTransfinite;
   double l;
   double mat[4][4];
   Vertex *beg, *end;
@@ -154,7 +155,6 @@ typedef struct{
   int Recombine;
   int Recombine_Dir; // -1 is left, +1 is right, 0 is alternated
   double RecombineAngle;
-  int ipar[5];
   List_T *Generatrices;
   List_T *EmbeddedCurves;
   List_T *EmbeddedPoints;
@@ -182,7 +182,6 @@ typedef struct {
   int Typ;
   char Visible;
   int Method;
-  int ipar[8];
   ExtrudeParams *Extrude;
   List_T *TrsfPoints;
   List_T *Surfaces;

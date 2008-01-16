@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.98 2007-09-26 20:51:58 geuzaine Exp $
+// $Id: Geo.cpp,v 1.99 2008-01-16 21:51:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -504,10 +504,9 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
   pC->Circle.n[1] = 0.0;
   pC->Circle.n[2] = 1.0;
   pC->geometry = 0;
-  for(int i = 0; i < 4; i++) {
-    pC->ipar[i] = 0;
-    pC->dpar[i] = 0.0;
-  }
+  pC->nbPointsTransfinite = 0;
+  pC->typeTransfinite = 0;
+  pC->coeffTransfinite = 0.;
 
   if(Typ == MSH_SEGM_SPLN) {
     for(int i = 0; i < 4; i++)
@@ -614,8 +613,6 @@ Surface *Create_Surface(int Num, int Typ)
     IMAX(GModel::current()->getGEOInternals()->MaxSurfaceNum, Num);
   pS->Typ = Typ;
   pS->Method = LIBRE;
-  for(int i = 0; i < 5; i++)
-    pS->ipar[i] = 0;
   pS->Recombine = 0;
   pS->Recombine_Dir = -1;
   pS->RecombineAngle = 75;
@@ -653,8 +650,6 @@ Volume *Create_Volume(int Num, int Typ)
     IMAX(GModel::current()->getGEOInternals()->MaxVolumeNum, Num);
   pV->Typ = Typ;
   pV->Method = LIBRE;
-  for(int i = 0; i < 8; i++)
-    pV->ipar[i] = 0;
   pV->TrsfPoints = List_Create(6, 6, sizeof(Vertex *));
   pV->Surfaces = List_Create(1, 2, sizeof(Surface *));
   pV->SurfacesOrientations = List_Create(1, 2, sizeof(int));
@@ -885,10 +880,9 @@ void CopyCurve(Curve *c, Curve *cc)
   // copied, the meshing algorithm will take care of it
   // (e.g. ExtrudeMesh()).
   //cc->Method = c->Method; 
-  for(i = 0; i < 4; i++)
-    cc->ipar[i] = c->ipar[i];
-  for(i = 0; i < 4; i++)
-    cc->dpar[i] = c->dpar[i];
+  cc->nbPointsTransfinite = c->nbPointsTransfinite;
+  cc->typeTransfinite = c->typeTransfinite;
+  cc->coeffTransfinite = c->coeffTransfinite;
   cc->l = c->l;
   for(i = 0; i < 4; i++)
     for(j = 0; j < 4; j++)
@@ -937,8 +931,6 @@ void CopySurface(Surface *s, Surface *ss)
   //ss->Method = s->Method;
   //ss->Recombine = s->Recombine;
   //ss->RecombineAngle = s->RecombineAngle;
-  for(i = 0; i < 4; i++)
-    ss->ipar[i] = s->ipar[i];
   ss->a = s->a;
   ss->b = s->b;
   ss->c = s->c;

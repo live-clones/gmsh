@@ -326,7 +326,7 @@
 /* Copy the first part of user declarations.  */
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.337 2008-01-09 08:17:12 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.338 2008-01-16 21:51:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -6629,9 +6629,9 @@ yyreduce:
 	  yymsg(WARNING, "Unknown curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
-	  c->ipar[0] = ((yyvsp[(5) - (6)].d)>2)?(int)(yyvsp[(5) - (6)].d):2;
-	  c->ipar[1] = sign(d);
-	  c->dpar[0] = 1.0;
+	  c->nbPointsTransfinite = ((yyvsp[(5) - (6)].d) > 2) ? (int)(yyvsp[(5) - (6)].d) : 2;
+	  c->typeTransfinite = sign(d);
+	  c->coeffTransfinite = 1.0;
 	}
       }
       List_Delete((yyvsp[(3) - (6)].l));
@@ -6650,9 +6650,9 @@ yyreduce:
 	  yymsg(WARNING, "Unknown curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
-	  c->ipar[0] = ((yyvsp[(5) - (9)].d)>2)?(int)(yyvsp[(5) - (9)].d):2;
-	  c->ipar[1] = sign(d); /* Progresion : code 1 ou -1 */
-	  c->dpar[0] = fabs((yyvsp[(8) - (9)].d));
+	  c->nbPointsTransfinite = ((yyvsp[(5) - (9)].d) > 2) ? (int)(yyvsp[(5) - (9)].d) : 2;
+	  c->typeTransfinite = sign(d); // Progresion : code 1 ou -1
+	  c->coeffTransfinite = fabs((yyvsp[(8) - (9)].d));
 	}
       }
       List_Delete((yyvsp[(3) - (9)].l));
@@ -6671,9 +6671,9 @@ yyreduce:
 	  yymsg(WARNING, "Unknown curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
-	  c->ipar[0] = ((yyvsp[(5) - (9)].d)>2)?(int)(yyvsp[(5) - (9)].d):2;
-	  c->ipar[1] = 2*sign(d); /* Bump : code 2 ou -2 */
-	  c->dpar[0] = fabs((yyvsp[(8) - (9)].d));
+	  c->nbPointsTransfinite = ((yyvsp[(5) - (9)].d) > 2) ? (int)(yyvsp[(5) - (9)].d) : 2;
+	  c->typeTransfinite = 2 * sign(d); // Bump : code 2 ou -2
+	  c->coeffTransfinite = fabs((yyvsp[(8) - (9)].d));
 	}
       }
       List_Delete((yyvsp[(3) - (9)].l));

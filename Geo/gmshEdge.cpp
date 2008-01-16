@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.40 2007-10-14 09:51:17 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.41 2008-01-16 21:51:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -46,9 +46,9 @@ gmshEdge::gmshEdge(GModel *m, int num)
 void gmshEdge::resetMeshAttributes()
 {
   meshAttributes.Method = c->Method;
-  meshAttributes.nbPointsTransfinite = c->ipar[0];
-  meshAttributes.coeffTransfinite = c->dpar[0];
-  meshAttributes.typeTransfinite = c->ipar[1];
+  meshAttributes.nbPointsTransfinite = c->nbPointsTransfinite;
+  meshAttributes.typeTransfinite = c->typeTransfinite;
+  meshAttributes.coeffTransfinite = c->coeffTransfinite;
   meshAttributes.extrude = c->Extrude;
 }
 

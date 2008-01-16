@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.27 2008-01-15 19:50:58 remacle Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.28 2008-01-16 21:51:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -857,11 +857,12 @@ void insertVerticesInRegion (GRegion *gr)
 		  myFactory.changeTetRadius(allTets.begin(),0.0);
 		  delete v;
 		}
-	      else 
+	      else
 		v->onWhat()->mesh_vertices.push_back(v);
 	    }
-	  else
+	  else{
 	    myFactory.changeTetRadius(allTets.begin(),0.0);
+	  }
 	}
       // Normally, a tet mesh contains about 6 times more tets than
       // vertices

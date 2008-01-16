@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.290 2007-11-08 19:30:32 geuzaine Exp $
+// $Id: Gmsh.y,v 1.291 2008-01-16 21:51:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -2572,9 +2572,9 @@ Transfinite :
 	  yymsg(WARNING, "Unknown curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
-	  c->ipar[0] = ($5>2)?(int)$5:2;
-	  c->ipar[1] = sign(d);
-	  c->dpar[0] = 1.0;
+	  c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
+	  c->typeTransfinite = sign(d);
+	  c->coeffTransfinite = 1.0;
 	}
       }
       List_Delete($3);
@@ -2590,9 +2590,9 @@ Transfinite :
 	  yymsg(WARNING, "Unknown curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
-	  c->ipar[0] = ($5>2)?(int)$5:2;
-	  c->ipar[1] = sign(d); /* Progresion : code 1 ou -1 */
-	  c->dpar[0] = fabs($8);
+	  c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
+	  c->typeTransfinite = sign(d); // Progresion : code 1 ou -1
+	  c->coeffTransfinite = fabs($8);
 	}
       }
       List_Delete($3);
@@ -2608,9 +2608,9 @@ Transfinite :
 	  yymsg(WARNING, "Unknown curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
-	  c->ipar[0] = ($5>2)?(int)$5:2;
-	  c->ipar[1] = 2*sign(d); /* Bump : code 2 ou -2 */
-	  c->dpar[0] = fabs($8);
+	  c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
+	  c->typeTransfinite = 2 * sign(d); // Bump : code 2 ou -2
+	  c->coeffTransfinite = fabs($8);
 	}
       }
       List_Delete($3);
