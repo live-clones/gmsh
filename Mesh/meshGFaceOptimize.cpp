@@ -127,9 +127,29 @@ double surfaceTriangleUV (MVertex *v1, MVertex *v2, MVertex *v3,
   return 0.5*fabs (v12[0]*v13[1]-v12[1]*v13[0]);
 }
 
+struct swapquad{
+  int v[4];
+  bool operator < (const swapquad &o) const{
+    if (v[0] < o.v[0])return true;
+    if (v[0] > o.v[0])return false;
+    if (v[1] < o.v[1])return true;
+    if (v[1] > o.v[1])return false;
+    if (v[2] < o.v[2])return true;
+    if (v[2] > o.v[2])return false;
+    if (v[3] < o.v[3])return true;
+    return false;
+  }
+  swapquad(MVertex *v1,MVertex *v2,MVertex *v3,MVertex *v4){
+    v[0] = v1->getNum();
+    v[1] = v2->getNum();
+    v[2] = v3->getNum();
+    v[3] = v4->getNum();
+    std::sort(v,v+4);
+  }
+};
 
-
-bool gmshEdgeSwap(MTri3 *t1, 
+bool gmshEdgeSwap(std::set<swapquad> & configs,
+		  MTri3 *t1, 
 		  GFace *gf,
 		  int iLocalEdge,
 		  std::vector<MTri3*> &newTris,
@@ -137,7 +157,7 @@ bool gmshEdgeSwap(MTri3 *t1,
 		  const std::vector<double> & Us,
 		  const std::vector<double> & Vs,
 		  const std::vector<double> & vSizes ,
-		  const std::vector<double> & vSizesBGM ){
+		  const std::vector<double> & vSizesBGM){
   
   MTri3 *t2 = t1->getNeigh(iLocalEdge);
   if (!t2) return false;
@@ -149,6 +169,16 @@ bool gmshEdgeSwap(MTri3 *t1,
   for (int i=0;i<3;i++)
     if (t2->tri()->getVertex(i) != v1 && t2->tri()->getVertex(i) != v2)
       v4 = t2->tri()->getVertex(i);
+  
+  //  printf("%d %d %d %d %d\n",Us.size(),v1->getNum(),v2->getNum(),v3->getNum(),v4->getNum());
+  
+  //  printf("%d %d %d %d\n",tv1,tv2,tv3,tv4);
+
+  swapquad sq (v1,v2,v3,v4);
+  if (configs.find(sq) != configs.end())return false;
+  configs.insert(sq);
+
+  //  if (tv1 != 0 && tv1 == tv2 && tv1 == tv3 && tv1 == tv4)return false;
 
   const double volumeRef = surfaceTriangleUV (v1,v2,v3,Us,Vs) + surfaceTriangleUV (v1,v2,v4,Us,Vs);
 
@@ -182,8 +212,8 @@ bool gmshEdgeSwap(MTri3 *t1,
     }
   case SWCR_DEL:
     {
-      double edgeCenter[2] ={(Us[v1->getNum()]+Us[v2->getNum()])*.5,
-			     (Vs[v1->getNum()]+Vs[v2->getNum()])*.5};
+      double edgeCenter[2] ={(Us[v1->getNum()]+Us[v2->getNum()]+Us[v3->getNum()]+Us[v4->getNum()])*.25,
+			     (Vs[v1->getNum()]+Vs[v2->getNum()]+Vs[v3->getNum()]+Vs[v4->getNum()])*.25};
       double uv4[2] ={Us[v4->getNum()],Vs[v4->getNum()]};
       double metric[3];
       buildMetric ( gf , edgeCenter , metric);
@@ -255,6 +285,7 @@ bool gmshEdgeSwap(MTri3 *t1,
   connectTriangles ( cavity );      
   newTris.push_back(t1b3);
   newTris.push_back(t2b3);
+
   return true;
 }
 
@@ -572,6 +603,8 @@ bool gmshVertexCollapse(const double lMin,
   return true;
 }
 
+
+
 int edgeSwapPass (GFace *gf, std::set<MTri3*,compareTri3Ptr> &allTris,
 		  const gmshSwapCriterion &cr,		   
 		  const std::vector<double> & Us ,
@@ -580,27 +613,34 @@ int edgeSwapPass (GFace *gf, std::set<MTri3*,compareTri3Ptr> &allTris,
 		  const std::vector<double> & vSizesBGM)
 {
   typedef std::set<MTri3*,compareTri3Ptr> CONTAINER ;
-  std::vector<MTri3*> newTris;
 
-  int nbSwap = 0;
-  
-  for (CONTAINER::iterator it = allTris.begin();it!=allTris.end();++it){
-    if (!(*it)->isDeleted()){
-      for (int i=0;i<3;i++){
-	if (gmshEdgeSwap(*it,gf,i,newTris,cr,Us,Vs,vSizes,vSizesBGM)) {nbSwap++;break;}
+  int nbSwapTot=0;
+  std::set<swapquad> configs;
+  for (int iter=0;iter<1200;iter++){
+    int nbSwap = 0;
+    std::vector<MTri3*> newTris;
+    for (CONTAINER::iterator it = allTris.begin();it!=allTris.end();++it){
+      if (!(*it)->isDeleted()){
+	for (int i=0;i<3;i++){
+	  if (gmshEdgeSwap(configs,*it,gf,i,newTris,cr,Us,Vs,vSizes,vSizesBGM)) {nbSwap++;break;}
+	}
+      }
+      else{
+	delete *it;
+	CONTAINER::iterator itb = it;
+	++it;
+	allTris.erase(itb);
       }
     }
-    else{
-      CONTAINER::iterator itb = it;
-      ++it;
-      delete *itb;
-      allTris.erase(itb);
-    }
+    allTris.insert(newTris.begin(),newTris.end());
+    //    printf("iter %d nbswam %d\n",iter,nbSwap);
+    nbSwapTot+=nbSwap;
+    if (nbSwap == 0)break;
   }  
+
   //  printf("B %d %d tris ",allTris.size(),newTris.size());
-  allTris.insert(newTris.begin(),newTris.end());
   //  printf("A %d %d tris\n",allTris.size(),newTris.size());
-  return nbSwap;
+  return nbSwapTot;
 }
 
 int edgeSplitPass (double maxLC,

@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.7 2008-01-14 21:29:14 remacle Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.8 2008-01-17 17:48:39 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -584,15 +584,13 @@ void insertVerticesInFace (GFace *gf, BDS_Mesh *bds)
 
   gf->triangles.clear();
   connectTris ( AllTris.begin(), AllTris.end() );      
+  Msg(DEBUG,"All %d tris were connected",AllTris.size());
 
   //  _printTris ("before.pos", AllTris, Us,Vs);
-  // this should be MUCH faster !
-  for (int i=0;i<1200;i++)
-    if(!edgeSwapPass(gf,AllTris,SWCR_DEL,Us,Vs,vSizes,vSizesBGM))break;
-
+  int nbSwaps = edgeSwapPass(gf,AllTris,SWCR_DEL,Us,Vs,vSizes,vSizesBGM);
   //  _printTris ("after2.pos", AllTris, Us,Vs);
+  Msg(DEBUG,"Delaunization of the initial mesh done (%d swaps)",nbSwaps);
   
-  Msg(DEBUG,"All %d tris were connected",AllTris.size());
 
   // here the classification should be done
 

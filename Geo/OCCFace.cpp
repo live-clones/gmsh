@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.24 2007-11-11 19:53:57 remacle Exp $
+// $Id: OCCFace.cpp,v 1.25 2008-01-17 17:48:38 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -52,6 +52,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
       GEdge *e = m->edgeByTag(index);
       if(!e) throw;
       l_wire.push_back(e);
+      Msg(DEBUG2,"Edge %d",e->tag());
       e->addFace(this);
       if(!e->is3D()){
 	OCCEdge *occe = (OCCEdge*)e;

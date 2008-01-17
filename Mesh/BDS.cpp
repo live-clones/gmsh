@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.88 2008-01-15 19:50:58 remacle Exp $
+// $Id: BDS.cpp,v 1.89 2008-01-17 17:48:38 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -44,7 +44,7 @@ void outputScalarField(std::list < BDS_Face * >t, const char *iii, int param)
       fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      pts[0]->u, pts[0]->v, 0.0,
 	      pts[1]->u, pts[1]->v, 0.0,
-	      pts[2]->u, pts[2]->v, 0.0,(double)pts[0]->lc(),(double)pts[1]->lc(),(double)pts[2]->lc());
+	      pts[2]->u, pts[2]->v, 0.0,(double)pts[0]->iD,(double)pts[1]->iD,(double)pts[2]->iD);
     else
       fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	      pts[0]->X, pts[0]->Y, pts[0]->Z,
@@ -1326,7 +1326,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point * p, GFace *gf)
     double sold = fabs(surface_triangle_param(n[0],n[1],n[2])); 
     s2 += sold;
     //    printf("%22.15E %22.15E\n",snew,sold);
-    //    if ( snew < .1 * sold) return false;
+    if ( snew < .1 * sold) return false;
 
 //     if (!test_move_point_parametric_triangle ( p, U, V, t)){
 //       return false;    
