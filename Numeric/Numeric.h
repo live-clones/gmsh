@@ -28,6 +28,10 @@
 #define Pi            3.1415926535897932
 #define Deux_Pi       6.2831853071795865
 
+#if !defined(M_PI)
+#define M_PI Pi
+#endif
+
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)<(b))?(b):(a))
 #define SQR(a)   ((a)*(a))

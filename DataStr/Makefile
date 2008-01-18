@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.39 2007-07-09 13:54:36 geuzaine Exp $
+# $Id: Makefile,v 1.40 2008-01-18 20:02:27 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,9 +21,9 @@
 
 include ../variables
 
-LIB     = ../lib/libGmshDataStr.a
-INCLUDE = -I../Common
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
+LIB     = ../lib/libGmshDataStr${LIBEXT}
+INCLUDE = ${ISYM}../Common
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
 
 SRC = List.cpp \
       Malloc.cpp \
@@ -32,19 +32,19 @@ SRC = List.cpp \
       avl.cpp \
       Tools.cpp
 
-OBJ = ${SRC:.cpp=.o}
+OBJ = ${SRC:.cpp=${OBJEXT}}
 
-.SUFFIXES: .o .cpp
+.SUFFIXES: ${OBJEXT} .cpp
 
 ${LIB}: ${OBJ}
-	${AR} ${LIB} ${OBJ}
+	${AR} ${ARFLAGS}${LIB} ${OBJ}
 	${RANLIB} ${LIB}
 
-.cpp.o:
-	${CXX} ${CFLAGS} -c $<
+.cpp${OBJEXT}:
+	${CXX} ${CFLAGS} ${CSYM} $<
 
 clean:
-	rm -f *.o
+	rm -f *${OBJEXT}
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
@@ -55,9 +55,3 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-List.o: List.cpp Malloc.h List.h ../Common/Message.h SafeIO.h
-Malloc.o: Malloc.cpp Malloc.h ../Common/Message.h
-SafeIO.o: SafeIO.cpp SafeIO.h ../Common/Message.h
-Tree.o: Tree.cpp Malloc.h Tree.h avl.h ../Common/Message.h
-avl.o: avl.cpp avl.h Malloc.h
-Tools.o: Tools.cpp Tools.h List.h Tree.h avl.h

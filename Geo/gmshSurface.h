@@ -28,6 +28,7 @@
 #include "SPoint3.h"
 #include "SVector3.h"
 #include "SBoundingBox3d.h"
+#include "Numeric.h"
 
 class gmshSurface
 {

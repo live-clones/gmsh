@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.291 2008-01-16 21:51:49 geuzaine Exp $
+// $Id: Gmsh.y,v 1.292 2008-01-18 20:02:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -36,7 +36,7 @@
 #include "PViewDataList.h"
 #include "Options.h"
 #include "Colors.h"
-#include "Parser.h"
+#include "GmshParser.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
 #include "FunctionManager.h"

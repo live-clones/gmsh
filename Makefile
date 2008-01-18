@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.447 2008-01-07 21:32:57 geuzaine Exp $
+# $Id: Makefile,v 1.448 2008-01-18 20:02:27 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -37,7 +37,6 @@ all: link
 
 link: compile
 	${LINKER} ${OPTIM} -o bin/gmsh ${GMSH_LIBS}
-	${POSTBUILD}
 
 link-mac-universal: compile
 	${LINKER} -arch i386 ${OPTIM} -o bin/gmsh_i386 ${GMSH_LIBS}
@@ -293,7 +292,6 @@ distrib-mac:
 	make link-mac-universal
 	make package-mac
 	make distrib-post
-	${POSTBUILD}
 	otool -L bin/gmsh
 
 distrib-mac-nightly:

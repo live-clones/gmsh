@@ -1,6 +1,3 @@
-namespace gmsh
-{
-
 /*****************************************************************************/
 /*                                                                           */
 /*  Routines for Arbitrary Precision Floating-point Arithmetic               */
@@ -125,6 +122,9 @@ namespace gmsh
 #ifdef LINUX
 #include <fpu_control.h>
 #endif /* LINUX */
+
+namespace gmsh
+{
 
 /* On some machines, the exact arithmetic routines might be defeated by the  */
 /*   use of internal extended precision floating-point registers.  Sometimes */

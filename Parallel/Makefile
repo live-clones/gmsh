@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.36 2007-07-09 13:54:37 geuzaine Exp $
+# $Id: Makefile,v 1.37 2008-01-18 20:02:29 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,25 +21,25 @@
 
 include ../variables
 
-LIB     = ../lib/libGmshParallel.a
-INCLUDE = -I../Common -I../DataStr
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
+LIB     = ../lib/libGmshParallel${LIBEXT}
+INCLUDE = ${ISYM}../Common ${ISYM}../DataStr
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
 
 SRC = ParUtil.cpp
 
-OBJ = ${SRC:.cpp=.o}
+OBJ = ${SRC:.cpp=${OBJEXT}}
 
-.SUFFIXES: .o .cpp
+.SUFFIXES: ${OBJEXT} .cpp
 
 ${LIB}: ${OBJ} 
-	${AR} ${LIB} ${OBJ} 
+	${AR} ${ARFLAGS}${LIB} ${OBJ} 
 	${RANLIB} ${LIB}
 
-.cpp.o:
-	${CXX} ${CFLAGS} -c $<
+.cpp${OBJEXT}:
+	${CXX} ${CFLAGS} ${CSYM} $<
 
 clean:
-	rm -f *.o
+	rm -f *${OBJEXT}
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
@@ -50,7 +50,3 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-ParUtil.o: ParUtil.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Common/OS.h ParUtil.h

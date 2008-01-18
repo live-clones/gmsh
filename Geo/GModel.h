@@ -69,11 +69,11 @@ class GModel
   // returns the current model
   static GModel *current();
 
-  typedef std::set<GRegion*, GEntityLessThan>::iterator riter;
-  typedef std::set<GFace*, GEntityLessThan>::iterator fiter;
-  typedef std::set<GEdge*, GEntityLessThan>::iterator eiter;
-  typedef std::set<GVertex*, GEntityLessThan>::iterator viter;
-  typedef std::map<int, std::string>::iterator piter;
+  typedef std::set<GRegion*, GEntityLessThan>::const_iterator riter;
+  typedef std::set<GFace*, GEntityLessThan>::const_iterator fiter;
+  typedef std::set<GEdge*, GEntityLessThan>::const_iterator eiter;
+  typedef std::set<GVertex*, GEntityLessThan>::const_iterator viter;
+  typedef std::map<int, std::string>::const_iterator piter;
 
   // Deletes everything in a GModel 
   void destroy();

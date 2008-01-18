@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.130 2007-09-26 20:52:01 geuzaine Exp $
+# $Id: Makefile,v 1.131 2008-01-18 20:02:29 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,11 +21,11 @@
 
 include ../variables
 
-LIB     = ../lib/libGmshParser.a
-INCLUDE = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Post\
-          -I../Graphics -I../Numeric -I../Fltk -I../Plugin -I../Parallel\
-          -I../contrib/ANN/include 
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
+LIB     = ../lib/libGmshParser${LIBEXT}
+INCLUDE = ${ISYM}../Common ${ISYM}../DataStr ${ISYM}../Geo ${ISYM}../Mesh\
+          ${ISYM}../Post ${ISYM}../Graphics ${ISYM}../Numeric ${ISYM}../Fltk\
+          ${ISYM}../Plugin ${ISYM}../Parallel ${ISYM}../contrib/ANN/include 
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
 
 SRC = Gmsh.tab.cpp\
       Gmsh.yy.cpp\
@@ -33,31 +33,21 @@ SRC = Gmsh.tab.cpp\
       CreateFile.cpp\
       FunctionManager.cpp
 
-OBJ = ${SRC:.cpp=.o}
+OBJ = ${SRC:.cpp=${OBJEXT}}
 
-.SUFFIXES: .o .cpp
+.SUFFIXES: ${OBJEXT} .cpp
 
 ${LIB}: ${OBJ} 
-	${AR} ${LIB} ${OBJ}
+	${AR} ${ARFLAGS}${LIB} ${OBJ}
 	${RANLIB} ${LIB}
 
-.cpp.o:
-	${CXX} ${CFLAGS} -c $<
+.cpp${OBJEXT}:
+	${CXX} ${CFLAGS} ${CSYM} $<
 
 # Don't optimize Gmsh.tab.o: on many architectures, g++ -O2 generates
 # assembly code too large to be addressed correctly
 Gmsh.tab.o:
-	${CXX} ${FLAGS} ${INCLUDE} -c Gmsh.tab.cpp
-
-# Don't do this: it would be triggered when we check out a new version via CVS
-# Gmsh.tab.cpp: Gmsh.y
-#	bison --output Gmsh.tab.cpp -d Gmsh.y 
-#	if [ -r Gmsh.tab.cpp.h ]; then mv Gmsh.tab.cpp.h Gmsh.tab.hpp ; fi
-#
-# Gmsh.yy.cpp: Gmsh.l
-#	flex -oGmsh.yy.cpp Gmsh.l
-#
-# parser: Gmsh.yy.cpp Gmsh.tab.cpp
+	${CXX} ${FLAGS} ${INCLUDE} ${SYSINCLUDE} ${CSYM} Gmsh.tab.cpp
 
 parser:
 	bison --output Gmsh.tab.cpp -d Gmsh.y 
@@ -76,89 +66,3 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-Gmsh.tab.o: Gmsh.tab.cpp ../Plugin/PluginManager.h ../Plugin/Plugin.h \
-  ../Common/Options.h ../Post/ColorTable.h ../Common/Message.h \
-  ../Post/PView.h ../Common/SmoothData.h ../Numeric/Numeric.h \
-  ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewDataList.h \
-  ../Post/PViewData.h ../Post/AdaptiveViews.h ../DataStr/List.h \
-  ../Common/GmshMatrix.h ../Parallel/ParUtil.h ../Common/Gmsh.h \
-  ../Common/Message.h ../DataStr/Malloc.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Common/Context.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
-  ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
-  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint3.h \
-  ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h \
-  ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Hash.h ../Geo/MFace.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/ExtrudeParams.h \
-  ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/MElement.h ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h \
-  ../Geo/Geo.h ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h \
-  ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
-  ../Geo/GeoInterpolation.h ../Geo/Geo.h ../Mesh/Generator.h \
-  ../Graphics/Draw.h ../Common/Colors.h ../Common/Options.h Parser.h \
-  OpenFile.h ../Common/CommandLine.h FunctionManager.h ../Common/OS.h \
-  CreateFile.h ../Mesh/Field.h ../Post/OctreePost.h ../Common/Octree.h \
-  ../Common/OctreeInternals.h ../Mesh/BackgroundMesh.h
-Gmsh.yy.o: Gmsh.yy.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Numeric/Numeric.h ../Geo/Geo.h ../Common/GmshDefines.h \
-  ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
-  ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/ExtrudeParams.h ../Common/SmoothData.h Gmsh.tab.hpp
-OpenFile.o: OpenFile.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../Geo/Geo.h ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
-  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
-  ../Numeric/Numeric.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
-  ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
-  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h \
-  ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h \
-  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Hash.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Context.h \
-  ../Geo/ExtrudeParams.h ../Geo/GFace.h ../Geo/GPoint.h ../Geo/GEntity.h \
-  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h ../Geo/SPoint2.h \
-  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h ../Geo/GRegion.h \
-  ../Geo/GEntity.h ../Geo/MElement.h ../Geo/ExtrudeParams.h \
-  ../Geo/SBoundingBox3d.h Parser.h OpenFile.h ../Common/CommandLine.h \
-  ../Post/PView.h ../Post/PViewData.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Graphics/ReadImg.h ../Common/OS.h \
-  ../Mesh/HighOrder.h ../Common/GmshUI.h ../Graphics/Draw.h \
-  ../Graphics/SelectBuffer.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
-  ../Fltk/Colorbar_Window.h ../Fltk/Popup_Button.h \
-  ../Fltk/SpherePosition_Widget.h
-CreateFile.o: CreateFile.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  OpenFile.h ../Common/Context.h ../Common/Options.h ../Post/ColorTable.h \
-  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint3.h \
-  ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h \
-  ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint2.h ../Geo/MElement.h ../Geo/MVertex.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Hash.h ../Geo/MFace.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Numeric/Numeric.h \
-  ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Geo/GFace.h \
-  ../Geo/GPoint.h ../Geo/GEntity.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
-  ../Geo/MElement.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/ExtrudeParams.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/MElement.h ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h \
-  ../Common/GmshUI.h ../Graphics/gl2ps.h ../Graphics/gl2gif.h \
-  ../Graphics/PixelBuffer.h ../Graphics/Draw.h ../Graphics/gl2jpeg.h \
-  ../Graphics/PixelBuffer.h ../Graphics/gl2png.h \
-  ../Graphics/PixelBuffer.h ../Graphics/gl2ppm.h \
-  ../Graphics/PixelBuffer.h ../Graphics/gl2yuv.h \
-  ../Graphics/PixelBuffer.h
-FunctionManager.o: FunctionManager.cpp FunctionManager.h

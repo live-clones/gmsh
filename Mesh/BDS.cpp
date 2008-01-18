@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.89 2008-01-17 17:48:38 remacle Exp $
+// $Id: BDS.cpp,v 1.90 2008-01-18 20:02:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1144,7 +1144,7 @@ bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS
   double a[2] = {pb[0]-pa[0],pb[1]-pa[1]};
   double b[2] = {pc[0]-pa[0],pc[1]-pa[1]};
 
-  double area_init = fabs(a[1] * b[2] - a[2] * b[1]);
+  double area_init = fabs(a[0] * b[1] - a[1] * b[0]);
 
   if (area_init == 0.0) return true;
 
@@ -1159,7 +1159,7 @@ bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS
   else
     return false;
 
-  double area_final = fabs(a[1] * b[2] - a[2] * b[1]);
+  double area_final = fabs(a[0] * b[1] - a[1] * b[0]);
   if (area_final < 0.1 * area_init)return false;
   double ori_final = gmsh::orient2d(pa, pb, pc);
   // allow to move a point when a triangle was flat

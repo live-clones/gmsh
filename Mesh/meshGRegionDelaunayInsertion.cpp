@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.28 2008-01-16 21:51:49 geuzaine Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.29 2008-01-18 20:02:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -787,11 +787,11 @@ void insertVerticesInRegion (GRegion *gr)
 	  std::list<MTet4*> theRegion;
 	  std::set<GFace *> faces_bound;
 	  GRegion *bidon = (GRegion*)123;
-	  clock_t _t1 = clock();
+	  double _t1 = Cpu();
 	  Msg (DEBUG2,"start with a non classified tet");	  
 	  recur_classify ( *it , theRegion, faces_bound, bidon , gr->model(),search);
-	  clock_t _t2 = clock();
-	  Msg (DEBUG2,"found %d tets with %d faces (%g sec for the classification)",theRegion.size(),faces_bound.size(),(double)(_t2-_t1)/CLOCKS_PER_SEC);
+	  double _t2 = Cpu();
+	  Msg (DEBUG2,"found %d tets with %d faces (%g sec for the classification)",theRegion.size(),faces_bound.size(), _t2 - _t1);
 	  GRegion *myGRegion = getRegionFromBoundingFaces (gr->model() , faces_bound ); 
 	  //	  Msg (INFO,"a region is found %p",myGRegion);
 	  if (myGRegion) // a geometrical region associated to the list of faces has been found	    

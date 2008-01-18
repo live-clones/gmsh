@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.93 2008-01-09 08:17:12 geuzaine Exp $
+// $Id: Gmsh.l,v 1.94 2008-01-18 20:02:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -53,6 +53,10 @@ void   skipline(void);
 	 Msg(FATAL, "Input in flex scanner failed");			\
        result = n;							\
      }									\
+
+#if defined(WIN32)
+#define isatty(arg) -1
+#endif
 
 %}
 

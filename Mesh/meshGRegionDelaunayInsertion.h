@@ -103,7 +103,7 @@ class MTet4
   void   forceRadius (double r){circum_radius=r;}
   inline double getRadius  ()const {return circum_radius;}
   inline double getQuality ()const {return circum_radius;} 
-  inline double setQuality (const double &q){circum_radius=q;} 
+  inline void setQuality (const double &q){circum_radius=q;} 
   inline MTetrahedron * tet() const {return base;}
   inline MTetrahedron * &tet() {return base;}
   inline void  setNeigh (int iN , MTet4 *n) {neigh[iN]=n;}

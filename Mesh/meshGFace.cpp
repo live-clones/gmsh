@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.106 2008-01-17 17:48:38 remacle Exp $
+// $Id: meshGFace.cpp,v 1.107 2008-01-18 20:02:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -36,6 +36,7 @@
 #include "BDS.h"
 #include "qualityMeasures.h"
 #include "Field.h"
+#include "OS.h"
 
 extern Context_T CTX;
 
@@ -834,8 +835,8 @@ void computeMeshSizeFieldAccuracy (GFace *gf, BDS_Mesh &m, double &avg, double &
   max_e = 0;
   nE = 0;
   GS = 0;
-  double oneoversqr2 = 1./sqrt(2);
-  double sqr2 = sqrt(2);
+  double oneoversqr2 = 1./sqrt(2.);
+  double sqr2 = sqrt(2.);
   while (it!= m.edges.end())
     {
       if (!(*it)->deleted)
@@ -852,7 +853,7 @@ void computeMeshSizeFieldAccuracy (GFace *gf, BDS_Mesh &m, double &avg, double &
     }
 }
 
-bool computeElementShapes (GFace *gf, BDS_Mesh &m, double &worst, double &avg, double &best, int &nT, int &nbGQ)
+void computeElementShapes (GFace *gf, BDS_Mesh &m, double &worst, double &avg, double &best, int &nT, int &nbGQ)
 {
   std::list<BDS_Face*>::iterator it = m.triangles.begin();
   worst = 1.e22;
@@ -877,7 +878,7 @@ bool computeElementShapes (GFace *gf, BDS_Mesh &m, double &worst, double &avg, d
 }
 
 
-bool computeElementShapes (GFace *gf, double &worst, double &avg, double &best, int &nT, int &greaterThan )
+void computeElementShapes (GFace *gf, double &worst, double &avg, double &best, int &nT, int &greaterThan )
 {
   worst = 1.e22;
   avg = 0.0;
@@ -993,32 +994,32 @@ void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
       if ((minL > MINE_ && maxL < MAXE_) || IT > (abs(NIT)))break;
       double maxE = MAXE_;
       double minE = MINE_;
-      clock_t t1 = clock();
+      double t1 = Cpu();
       //      splitEdgePass_templateRefine ( gf, m, maxE, nb_split);
       splitEdgePass ( gf, m, maxE, nb_split,attr);
       //splitEdgePass_templateRefine ( gf, m, maxE, nb_split);
       //saturateEdgePass ( gf, m, maxE, nb_split);
-      clock_t t2 = clock();
+      double t2 = Cpu();
       swapEdgePass ( gf, m, nb_swap);
       swapEdgePass ( gf, m, nb_swap);
       swapEdgePass ( gf, m, nb_swap);
-      clock_t t3 = clock();
+      double t3 = Cpu();
       collapseEdgePass ( gf, m, minE , MAXNP, nb_collaps);
-      clock_t t4 = clock();
+      double t4 = Cpu();
       //      swapEdgePass ( gf, m, nb_swap); 
-      clock_t t5 = clock();
+      double t5 = Cpu();
       smoothVertexPass ( gf, m, nb_smooth);
-      clock_t t6 = clock();
+      double t6 = Cpu();
       //      swapEdgePass ( gf, m, nb_swap);
-      clock_t t7 = clock();
+      double t7 = Cpu();
       // clean up the mesh
 
-      t_spl += (double)(t2-t1)/CLOCKS_PER_SEC;
-      t_sw  += (double)(t3-t2)/CLOCKS_PER_SEC;
-      t_sw  += (double)(t5-t4)/CLOCKS_PER_SEC;
-      t_sw  += (double)(t7-t6)/CLOCKS_PER_SEC;
-      t_col += (double)(t4-t3)/CLOCKS_PER_SEC;
-      t_sm  += (double)(t6-t5)/CLOCKS_PER_SEC;
+      t_spl += t2 - t1;
+      t_sw  += t3 - t2;
+      t_sw  += t5 - t4;
+      t_sw  += t7 - t6;
+      t_col += t4 - t3;
+      t_sm  += t6 - t5;
 
       double smallest, longest,  old_mesh_quality = mesh_quality;int nE,NG;
       computeMeshSizeFieldAccuracy (gf, m, mesh_quality, smallest, longest,nE,NG);

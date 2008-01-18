@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.38 2007-09-14 19:30:21 geuzaine Exp $
+# $Id: Makefile,v 1.39 2008-01-18 20:02:27 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,27 +21,28 @@
 
 include ../variables
 
-LIB     = ../lib/libGmshBox.a
-INCLUDE = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Post -I../Graphics\
-          -I../Numeric -I../Parser -I../Fltk -I../Plugin -I../Parallel\
-          -I../contrib/ANN/include
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
+LIB     = ../lib/libGmshBox${LIBEXT}
+INCLUDE = ${ISYM}../Common ${ISYM}../DataStr ${ISYM}../Geo ${ISYM}../Mesh\
+          ${ISYM}../Post ${ISYM}../Graphics ${ISYM}../Numeric ${ISYM}../Parser\
+          ${ISYM}../Fltk ${ISYM}../Plugin ${ISYM}../Parallel\
+          ${ISYM}../contrib/ANN/include
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
 
 SRC = Box.cpp
 
-OBJ = ${SRC:.cpp=.o}
+OBJ = ${SRC:.cpp=${OBJEXT}}
 
-.SUFFIXES: .o .cpp
+.SUFFIXES: ${OBJEXT} .cpp
 
-${LIB}: ${OBJ} Main.o
-	${AR} ${LIB} ${OBJ} 
+${LIB}: ${OBJ} Main${OBJEXT}
+	${AR} ${ARFLAGS}${LIB} ${OBJ} 
 	${RANLIB} ${LIB}
 
-.cpp.o:
-	${CXX} ${CFLAGS} -c $<
+.cpp${OBJEXT}:
+	${CXX} ${CFLAGS} ${CSYM} $<
 
 clean:
-	rm -f *.o
+	rm -f *${OBJEXT}
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
@@ -52,30 +53,3 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-Box.o: Box.cpp ../Common/Gmsh.h ../Common/Message.h ../DataStr/Malloc.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../DataStr/Tools.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../Common/OS.h ../Numeric/Numeric.h \
-  ../Geo/Geo.h ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
-  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
-  ../Mesh/Generator.h ../Parser/Parser.h ../Common/Context.h \
-  ../Common/Options.h ../Post/ColorTable.h ../Parser/OpenFile.h \
-  ../Common/CommandLine.h ../Parser/CreateFile.h ../Parallel/ParUtil.h \
-  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Post/PView.h \
-  ../Common/VertexArray.h ../Post/PViewData.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Post/PViewDataList.h ../Post/PViewData.h \
-  ../Post/AdaptiveViews.h ../Common/GmshMatrix.h ../Geo/GModel.h \
-  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/MVertex.h ../Geo/SPoint3.h \
-  ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h \
-  ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/MElement.h ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Geo/ExtrudeParams.h ../Geo/GFace.h ../Geo/GPoint.h \
-  ../Geo/GEntity.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/MElement.h \
-  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/ExtrudeParams.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/MElement.h \
-  ../Geo/ExtrudeParams.h ../Geo/SBoundingBox3d.h ../Mesh/Field.h \
-  ../contrib/ANN/include/ANN/ANN.h ../Post/OctreePost.h \
-  ../Common/Octree.h ../Common/OctreeInternals.h ../Mesh/BackgroundMesh.h

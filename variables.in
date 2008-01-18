@@ -1,4 +1,4 @@
-# $Id: variables.in,v 1.19 2007-11-28 09:26:01 geuzaine Exp $
+# $Id: variables.in,v 1.20 2008-01-18 20:02:27 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -37,6 +37,9 @@ LINKER=@LINKER@
 # All compiler flags except optimization flags
 FLAGS=@FLAGS@
 
+# Additional system includes
+SYSINCLUDE=@SYSINCLUDE@
+
 # Compiler optimization flags
 OPTIM=@OPTIM@
 
@@ -46,13 +49,17 @@ GMSH_LIBS=@GMSH_LIBS@
 
 # How you create a static library on this machine
 AR=@AR@
+ARFLAGS=@ARFLAGS@
 RANLIB=@RANLIB@
 
-# The extension to use for executables...
-EXEEXT=@EXEEXT@
+# The symbols used for includes and compiling
+ISYM=@ISYM@
+CSYM=@CSYM@
 
-# Any operation to perform on the executable after the link
-POSTBUILD=@POSTBUILD@
+# The extension to use for object files, libraries and executables
+OBJEXT=@OBJEXT@
+LIBEXT=@LIBEXT@
+EXEEXT=@EXEEXT@
 
 # Installation directories
 prefix=@prefix@
