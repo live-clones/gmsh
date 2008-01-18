@@ -8,4 +8,8 @@ To compile Gmsh with Microsoft VisualC++
 
 4) cd gmsh && ./configure --enable-vc
 
-5) make
+5) edit SYSINCLUDE in gmsh/variables to match your install of Visual C++
+
+5) cd gmsh && make
+
+
