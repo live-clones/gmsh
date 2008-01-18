@@ -326,7 +326,7 @@
 /* Copy the first part of user declarations.  */
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.338 2008-01-16 21:51:47 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.339 2008-01-18 20:13:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -363,7 +363,7 @@
 #include "PViewDataList.h"
 #include "Options.h"
 #include "Colors.h"
-#include "Parser.h"
+#include "GmshParser.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
 #include "FunctionManager.h"
