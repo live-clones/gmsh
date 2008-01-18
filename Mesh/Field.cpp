@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.9 2008-01-14 21:29:14 remacle Exp $
+// $Id: Field.cpp,v 1.10 2008-01-18 20:41:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -195,6 +195,7 @@ double ParametricField::operator()(double x, double y, double z)
 {
 #if !defined(HAVE_MATH_EVAL)
   Msg(GERROR, "MathEval is not compiled in this version of Gmsh");
+  return 0.;
 #else
   static char *names[3] = {"x", "y", "z"};
   double values [3] = {x, y, z};
@@ -233,6 +234,7 @@ double FunctionField::operator()(double x, double y, double z)
 {
 #if !defined(HAVE_MATH_EVAL)
   Msg(GERROR, "MathEval is not compiled in this version of Gmsh");
+  return 0.;
 #else
   values[0] = x;
   values[1] = y;
@@ -388,6 +390,7 @@ double AttractorField::operator()(double X, double Y, double Z)
     return sqrt(dist[0]);
 #else
     Msg(GERROR,"GMSH should be compiled with ANN in order to enable attractors");
+    return 0.;
 #endif
   }
 }
@@ -506,6 +509,7 @@ double AttractorField_1DMesh::operator()(double X, double Y, double Z)
   return lc;
 #else
   Msg(GERROR,"GMSH should be compiled with ANN in order to enable attractors");
+  return 1.e22;
 #endif
 }
 

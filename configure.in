@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.141 2008-01-18 20:02:27 geuzaine Exp $
+dnl $Id: configure.in,v 1.142 2008-01-18 20:41:33 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 dnl
@@ -869,6 +869,7 @@ AC_SUBST(OBJEXT)
 AC_SUBST(LIBEXT)
 AC_SUBST(ISYM)
 AC_SUBST(CSYM)
+AC_SUBST(DSYM)
 AC_SUBST(SYSINCLUDE)
 AC_OUTPUT(variables)
 

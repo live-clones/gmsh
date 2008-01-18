@@ -1,4 +1,4 @@
-// $Id: gsl_min.cpp,v 1.1 2008-01-14 21:29:53 remacle Exp $
+// $Id: gsl_min.cpp,v 1.2 2008-01-18 20:41:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -291,6 +291,33 @@ void minimize_N (int N,
   
 } 					    
 
+#else
 
+#include "Message.h"
+
+void minimize_2 ( double (*f) (double, double, void *data), 
+		  void (*df) (double, double, double &, double &, double &, void *data) ,
+		  void *data,int niter,
+		  double &U, double &V, double &res)
+{
+  Msg(GERROR, "Gmsh must be compiled with GSL support for minimize_2");
+}
+
+void minimize_3 ( double (*f) (double, double, double, void *data), 
+		  void (*df) (double, double, double , double &, double &, double &, double &, void *data) ,
+		  void *data,int niter,
+		  double &U, double &V, double &W, double &res)
+{
+  Msg(GERROR, "Gmsh must be compiled with GSL support for minimize_3");
+}
+
+void minimize_N (int N, 
+		 double (*f) (double*, void *data), 
+		 void (*df) (double*, double*, double &, void *data) ,
+		 void *data,int niter,
+		 double *, double &res)
+{
+  Msg(GERROR, "Gmsh must be compiled with GSL support for minimize_N");
+}
 
 #endif

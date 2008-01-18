@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2008-01-18 20:02:30 geuzaine Exp $
+# $Id: Makefile,v 1.6 2008-01-18 20:41:33 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,11 +21,10 @@
 
 include ../../variables
 
-LIB     = ../../lib/libGmshNR.a
-INCLUDE = -I../../Common -I../../DataStr -I../../Numeric
+LIB     = ../../lib/libGmshNR${LIBEXT}
+INCLUDE = ${ISYM}../../Common ${ISYM}../../DataStr ${ISYM}../../Numeric
 # don't optimize this library: there are some problems with gcc...
-OPTIM = -O0
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
+CFLAGS  = ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
 
 SRC = brent.cpp\
       dpythag.cpp\
@@ -39,19 +38,19 @@ SRC = brent.cpp\
       newt.cpp\
       nrutil.cpp
 
-OBJ = ${SRC:.cpp=.o}
+OBJ = ${SRC:.cpp=${OBJEXT}}
 
-.SUFFIXES: .o .cpp
+.SUFFIXES: ${OBJEXT} .cpp
 
 ${LIB}: ${OBJ}
-	${AR} ${LIB} ${OBJ}
+	${AR} ${ARFLAGS}${LIB} ${OBJ}
 	${RANLIB} ${LIB}
 
-.cpp.o:
-	${CXX} ${CFLAGS} -c $<
+.cpp${OBJEXT}:
+	${CXX} ${CFLAGS} ${CSYM} $<
 
 clean:
-	rm -f *.o 
+	rm -f *${OBJEXT} 
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

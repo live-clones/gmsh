@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2008-01-18 20:13:13 geuzaine Exp $
+# $Id: Makefile,v 1.7 2008-01-18 20:41:33 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,24 +21,24 @@
 
 include ../../variables
 
-LIB     = ../../lib/libGmshTetgen.a
+LIB     = ../../lib/libGmshTetgen${LIBEXT}
 # Do not optimize (same as Triangle...) 
-CFLAGS  =  ${FLAGS} -DTETLIBRARY
+CFLAGS  = ${FLAGS} ${DSYM}TETLIBRARY
 
 SRC = predicates.cxx tetgen.cxx
-OBJ = ${SRC:.cxx=.o}
+OBJ = ${SRC:.cxx=${OBJEXT}}
 
-.SUFFIXES: .o .cxx
+.SUFFIXES: ${OBJEXT} .cxx
 
 ${LIB}: ${OBJ} 
-	${AR} ${LIB} ${OBJ} 
+	${AR} ${ARFLAGS}${LIB} ${OBJ} 
 	${RANLIB} ${LIB}
 
-.cxx.o:
-	${CXX} ${CFLAGS} -c $<
+.cxx${OBJEXT}:
+	${CXX} ${CFLAGS} ${CSYM} $<
 
 clean:
-	rm -f *.o
+	rm -f *${OBJEXT}
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
