@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.143 2008-01-18 21:00:39 geuzaine Exp $
+dnl $Id: configure.in,v 1.144 2008-01-18 21:15:10 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 dnl
@@ -162,7 +162,7 @@ if test "x$enable_vc" = "xyes"; then
   OBJEXT=.obj
   LIBEXT=.lib
   DASH=/
-  FLAGS=/DWIN32 /DYY_NO_UNISTD_H /DHAVE_NO_DLL
+  FLAGS="/DWIN32 /DYY_NO_UNISTD_H /DHAVE_NO_DLL"
   OPTIM=/O2
   SYSINCLUDE="/I\"C:\Program Files\Microsoft Visual Studio 9.0\VC\INCLUDE\" /I\"C:\Program Files\Microsoft SDKs\Windows\v6.0A\include\""
   LINKER=cl
@@ -361,9 +361,9 @@ else
 
   GMSH_DIRS="${GMSH_DIRS} Box"
   if test "x$enable_vc" = "xyes"; then
-    GMSH_LIBS=lib/*.lib
+    GMSH_LIBS="Box/Main.obj lib/*.lib"
   else
-    GMSH_LIBS="-Llib Box/Main${OBJEXT} -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo"
+    GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo"
     GMSH_LIBS="${GMSH_LIBS} -lGmshPlugin -lGmshPost -lGmshCommon -lGmshDataStr"
     GMSH_LIBS="${GMSH_LIBS} -lGmshNumeric -lGmshParallel"
   fi

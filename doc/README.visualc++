@@ -6,7 +6,9 @@ To compile Gmsh with Microsoft VisualC++
 
 3) set PATH=%PATH%;C:\cygwin\bin   (or wherever the cygin binaries are installed)
 
-4) cd gmsh && ./configure --enable-vc
+4) cd gmsh && ./configure --enable-vc  --disable-gsl --disable-netgen 
+                          --disable-matheval --disable-triangle --disable-ann
+                          --disable-occ --disable-med
 
 5) edit SYSINCLUDE in gmsh/variables to match your install of Visual C++
 

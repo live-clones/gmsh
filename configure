@@ -1952,7 +1952,7 @@ if test "x$enable_vc" = "xyes"; then
   OBJEXT=.obj
   LIBEXT=.lib
   DASH=/
-  FLAGS=/DWIN32 /DYY_NO_UNISTD_H /DHAVE_NO_DLL
+  FLAGS="/DWIN32 /DYY_NO_UNISTD_H /DHAVE_NO_DLL"
   OPTIM=/O2
   SYSINCLUDE="/I\"C:\Program Files\Microsoft Visual Studio 9.0\VC\INCLUDE\" /I\"C:\Program Files\Microsoft SDKs\Windows\v6.0A\include\""
   LINKER=cl
@@ -4128,9 +4128,9 @@ else
 
   GMSH_DIRS="${GMSH_DIRS} Box"
   if test "x$enable_vc" = "xyes"; then
-    GMSH_LIBS=lib/*.lib
+    GMSH_LIBS="Box/Main.obj lib/*.lib"
   else
-    GMSH_LIBS="-Llib Box/Main${OBJEXT} -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo"
+    GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo"
     GMSH_LIBS="${GMSH_LIBS} -lGmshPlugin -lGmshPost -lGmshCommon -lGmshDataStr"
     GMSH_LIBS="${GMSH_LIBS} -lGmshNumeric -lGmshParallel"
   fi
