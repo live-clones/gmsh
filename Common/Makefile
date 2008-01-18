@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.146 2008-01-18 20:13:12 geuzaine Exp $
+# $Id: Makefile,v 1.147 2008-01-18 21:00:39 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -22,10 +22,10 @@
 include ../variables
 
 LIB     = ../lib/libGmshCommon${LIBEXT}
-INCLUDE = ${ISYM}../Common ${ISYM}../DataStr ${ISYM}../Geo ${ISYM}../Mesh\
-          ${ISYM}../Post ${ISYM}../Graphics ${ISYM}../Numeric ${ISYM}../Parser\
-          ${ISYM}../Plugin ${ISYM}../Fltk ${ISYM}../contrib/MathEval\
-          ${ISYM}../contrib/ANN/include
+INCLUDE = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo ${DASH}I../Mesh\
+          ${DASH}I../Post ${DASH}I../Graphics ${DASH}I../Numeric ${DASH}I../Parser\
+          ${DASH}I../Plugin ${DASH}I../Fltk ${DASH}I../contrib/MathEval\
+          ${DASH}I../contrib/ANN/include
 CFLAGS  =${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
 
 SRC = Context.cpp\
@@ -48,7 +48,7 @@ ${LIB}: ${OBJ}
 	${RANLIB} ${LIB}
 
 .cpp${OBJEXT}:
-	${CXX} ${CFLAGS} ${CSYM} $<
+	${CXX} ${CFLAGS} ${DASH}c $<
 
 clean:
 	rm -f *${OBJEXT}

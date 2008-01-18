@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.142 2008-01-18 20:41:33 geuzaine Exp $
+dnl $Id: configure.in,v 1.143 2008-01-18 21:00:39 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 dnl
@@ -161,9 +161,7 @@ if test "x$enable_vc" = "xyes"; then
   CXX="cl /EHsc"
   OBJEXT=.obj
   LIBEXT=.lib
-  ISYM=/I
-  CSYM=/c
-  DSYM=/D
+  DASH=/
   FLAGS=/DWIN32 /DYY_NO_UNISTD_H /DHAVE_NO_DLL
   OPTIM=/O2
   SYSINCLUDE="/I\"C:\Program Files\Microsoft Visual Studio 9.0\VC\INCLUDE\" /I\"C:\Program Files\Microsoft SDKs\Windows\v6.0A\include\""
@@ -178,9 +176,7 @@ else
   OBJEXT=.o
   LIBEXT=.a
   AC_PROG_CPP
-  ISYM=-I
-  CSYM=-c
-  DSYM=-D
+  DASH=-
   FLAGS=""
   OPTIM="${CXXFLAGS}"
   SYSINCLUDE=""
@@ -364,9 +360,13 @@ if test "x$enable_gui" != "xno" -a "x$enable_vc" != "xyes"; then
 else
 
   GMSH_DIRS="${GMSH_DIRS} Box"
-  GMSH_LIBS="-Llib Box/Main${OBJEXT} -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshPlugin -lGmshPost -lGmshCommon -lGmshDataStr"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshNumeric -lGmshParallel"
+  if test "x$enable_vc" = "xyes"; then
+    GMSH_LIBS=lib/*.lib
+  else
+    GMSH_LIBS="-Llib Box/Main${OBJEXT} -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshPlugin -lGmshPost -lGmshCommon -lGmshDataStr"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshNumeric -lGmshParallel"
+  fi
 
   dnl Check for libz
   ZLIB=""
@@ -406,7 +406,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x$enable_triangle" != "xno"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/Triangle"
        GMSH_LIBS="${GMSH_LIBS} -lGmshTriangle"
-       FLAGS="${DSYM}HAVE_TRIANGLE ${FLAGS}"
+       FLAGS="${DASH}DHAVE_TRIANGLE ${FLAGS}"
        echo "********************************************************************"
        echo "You are building a version of Gmsh that contains Jonathan"
        echo "Shewchuk's Triangle as an alternative isotropic 2D mesh generator."
@@ -439,7 +439,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x$enable_ann" != "xno"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/ANN"
        GMSH_LIBS="${GMSH_LIBS} -lGmshANN"
-       FLAGS="${DSYM}HAVE_ANN_ ${FLAGS}"
+       FLAGS="${DASH}DHAVE_ANN_ ${FLAGS}"
        echo "********************************************************************"
        echo "You are building a version of Gmsh that contains ANN, the"
        echo "Approximate Nearest Neighbor library."
@@ -467,7 +467,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x$enable_metis" = "xyes"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/Metis"
        GMSH_LIBS="${GMSH_LIBS} -lGmshMetis"
-       FLAGS="${DSYM}HAVE_METIS ${FLAGS}"
+       FLAGS="${DASH}DHAVE_METIS ${FLAGS}"
        echo "********************************************************************"
        echo "You are building a version of Gmsh that contains METIS, the"
        echo "Serial Graph Partitioner."
@@ -495,7 +495,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x$enable_netgen" != "xno"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/Netgen"
        GMSH_LIBS="${GMSH_LIBS} -lGmshNetgen"
-       FLAGS="${DSYM}HAVE_NETGEN ${FLAGS}"
+       FLAGS="${DASH}DHAVE_NETGEN ${FLAGS}"
        echo "********************************************************************"
        echo "You are building a version of Gmsh that contains Joachim Schoberl's"
        echo "Netgen as an alternative 3D mesh generator. Netgen is distributed"
@@ -524,7 +524,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x$enable_tetgen" != "xno"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/Tetgen"
        GMSH_LIBS="${GMSH_LIBS} -lGmshTetgen"
-       FLAGS="${DSYM}HAVE_TETGEN ${FLAGS}"
+       FLAGS="${DASH}DHAVE_TETGEN ${FLAGS}"
        echo "********************************************************************"
        echo "You are building a version of Gmsh that contains Hang Si's"
        echo "Tetgen as an alternative 3D mesh generator."
@@ -556,7 +556,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x${MATHEVAL}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/MathEval"
       GMSH_LIBS="${GMSH_LIBS} -lGmshMathEval"
-      FLAGS="${DSYM}HAVE_MATH_EVAL ${FLAGS}"
+      FLAGS="${DASH}DHAVE_MATH_EVAL ${FLAGS}"
     fi
   fi
 
@@ -570,12 +570,12 @@ if test "x$enable_gsl" != "xno"; then
   AC_CHECK_LIB(gslcblas,main)
   AC_CHECK_LIB(gsl,main,GSL="yes",GSL="no")
   if test "x${GSL}" = "xyes"; then
-    FLAGS="${DSYM}HAVE_GSL ${FLAGS}"
+    FLAGS="${DASH}DHAVE_GSL ${FLAGS}"
     if test "x${GSL_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lgsl -lgslcblas"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${GSL_PREFIX} -L${GSL_PREFIX}/lib -lgsl -lgslcblas"
-      FLAGS="${FLAGS} ${ISYM}${GSL_PREFIX} ${ISYM}${GSL_PREFIX}/include"
+      FLAGS="${FLAGS} ${DASH}I${GSL_PREFIX} ${DASH}I${GSL_PREFIX}/include"
     fi
   fi
 fi
@@ -622,10 +622,10 @@ if test "x$enable_cgns" = "xyes"; then
   if test "x${CGNS}" = "xyes"; then
     if test "x${CGNS_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lcgns"
-      FLAGS="${FLAGS} ${DSYM}HAVE_LIBCGNS"
+      FLAGS="${FLAGS} ${DASH}DHAVE_LIBCGNS"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${CGNS_PREFIX}/lib -lcgns"
-      FLAGS="${FLAGS} ${DSYM}HAVE_LIBCGNS ${ISYM}${CGNS_PREFIX}/include"
+      FLAGS="${FLAGS} ${DASH}DHAVE_LIBCGNS ${DASH}I${CGNS_PREFIX}/include"
     fi
   fi
 fi
@@ -653,10 +653,10 @@ if test "x$enable_occ" = "xyes"; then
     OCC_LIBS="${OCC_LIBS} -lTKAdvTools -lTKMath -lTKernel"
     if test "x${OCC_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} ${OCC_LIBS}"
-      FLAGS="${FLAGS} ${DSYM}HAVE_OCC"
+      FLAGS="${FLAGS} ${DASH}DHAVE_OCC"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib ${OCC_LIBS}"
-      FLAGS="${FLAGS} ${DSYM}HAVE_OCC ${ISYM}${OCC_PREFIX}/inc"
+      FLAGS="${FLAGS} ${DASH}DHAVE_OCC ${DASH}I${OCC_PREFIX}/inc"
     fi
   fi
 fi
@@ -690,16 +690,16 @@ if test "x$enable_fm" != "xno"; then
       else
         if test "x${FM_PREFIX}" = "x"; then
           GMSH_LIBS="${GMSH_LIBS} -lFourierModel"
-          FLAGS="${DSYM}HAVE_FOURIER_MODEL ${FLAGS}"
+          FLAGS="${DASH}DHAVE_FOURIER_MODEL ${FLAGS}"
         else
           GMSH_LIBS="${GMSH_LIBS} -L${FM_PREFIX}/lib -lFourierModel"
-          FLAGS="${DSYM}HAVE_FOURIER_MODEL ${ISYM}${FM_PREFIX} ${FLAGS}"
+          FLAGS="${DASH}DHAVE_FOURIER_MODEL ${DASH}I${FM_PREFIX} ${FLAGS}"
         fi
         if test "x${FFTW3_PREFIX}" = "x"; then
           GMSH_LIBS="${GMSH_LIBS} -lfftw3"
         else
           GMSH_LIBS="${GMSH_LIBS} -L${FFTW3_PREFIX}/lib -lfftw3"
-          FLAGS="${FLAGS} ${ISYM}${FFTW3_PREFIX}/include"
+          FLAGS="${FLAGS} ${DASH}I${FFTW3_PREFIX}/include"
         fi
         if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
           GMSH_LIBS="${GMSH_LIBS} -L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib"
@@ -730,7 +730,7 @@ if test "x${ZLIB}" = "xyes"; then
         GMSH_LIBS="${GMSH_LIBS} -lhdf5"
       else
         GMSH_LIBS="${GMSH_LIBS} -L${HDF5_PREFIX}/lib -lhdf5"
-        FLAGS="${FLAGS} ${ISYM}${HDF5_PREFIX}/include"
+        FLAGS="${FLAGS} ${DASH}I${HDF5_PREFIX}/include"
       fi
     fi
   fi
@@ -746,10 +746,10 @@ if test "x${HDF5}" = "xyes"; then
     if test "x${MED}" = "xyes"; then
       if test "x${MED_PREFIX}" = "x"; then
         GMSH_LIBS="${GMSH_LIBS} -lmed"
-        FLAGS="${FLAGS} ${DSYM}HAVE_MED"
+        FLAGS="${FLAGS} ${DASH}DHAVE_MED"
       else
         GMSH_LIBS="${GMSH_LIBS} -L${MED_PREFIX}/lib -lmed"
-        FLAGS="${FLAGS} ${DSYM}HAVE_MED ${ISYM}${MED_PREFIX}/include"
+        FLAGS="${FLAGS} ${DASH}DHAVE_MED ${DASH}I${MED_PREFIX}/include"
       fi
     fi
   fi
@@ -759,22 +759,22 @@ dnl Complete zlib link line (zlib must be linked in after libpng and libhdf5)
 if test "x${ZLIB}" = "xyes"; then
   dnl If provided by FLTK, use that one; otherwise, look for it
   if test "x${FL_ZLIB}" = "xyes"; then
-    FLAGS="${DSYM}HAVE_LIBZ ${FLAGS}"
+    FLAGS="${DASH}DHAVE_LIBZ ${FLAGS}"
   else
-    FLAGS="${DSYM}HAVE_LIBZ ${FLAGS}"
+    FLAGS="${DASH}DHAVE_LIBZ ${FLAGS}"
     if test "x${ZLIB_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lz"
     else
       dnl Find the libs/includes even if libz is _not_ properly installed (ugly hack!)
       GMSH_LIBS="${GMSH_LIBS} -L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib -lz"
-      FLAGS="${FLAGS} ${ISYM}${ZLIB_PREFIX} ${ISYM}${ZLIB_PREFIX}/include"
+      FLAGS="${FLAGS} ${DASH}I${ZLIB_PREFIX} ${DASH}I${ZLIB_PREFIX}/include"
     fi
   fi
 fi 
 
 dnl Check if we should build the parallel version
 if test "x$enable_parallel" = "xyes"; then
-  FLAGS="${DSYM}HAVE_PARALLEL ${FLAGS}"
+  FLAGS="${DASH}DHAVE_PARALLEL ${FLAGS}"
 fi
 
 dnl Finish link line
@@ -851,7 +851,7 @@ if test $ac_cv_sizeof_size_t != 4; then
   if test $ac_cv_sizeof_size_t != 8; then
     AC_MSG_WARN([Unsupported size of size_t - this may affect FNV hashing.])
   else
-    FLAGS="$FLAGS ${DSYM}HAVE_64BIT_SIZE_T"
+    FLAGS="$FLAGS ${DASH}DHAVE_64BIT_SIZE_T"
   fi
 fi
 
@@ -867,9 +867,7 @@ AC_SUBST(AR)
 AC_SUBST(ARFLAGS)
 AC_SUBST(OBJEXT)
 AC_SUBST(LIBEXT)
-AC_SUBST(ISYM)
-AC_SUBST(CSYM)
-AC_SUBST(DSYM)
+AC_SUBST(DASH)
 AC_SUBST(SYSINCLUDE)
 AC_OUTPUT(variables)
 

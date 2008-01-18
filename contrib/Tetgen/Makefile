@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2008-01-18 20:41:33 geuzaine Exp $
+# $Id: Makefile,v 1.8 2008-01-18 21:00:41 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,7 @@ include ../../variables
 
 LIB     = ../../lib/libGmshTetgen${LIBEXT}
 # Do not optimize (same as Triangle...) 
-CFLAGS  = ${FLAGS} ${DSYM}TETLIBRARY
+CFLAGS  = ${FLAGS} ${DASH}DTETLIBRARY
 
 SRC = predicates.cxx tetgen.cxx
 OBJ = ${SRC:.cxx=${OBJEXT}}
@@ -35,7 +35,7 @@ ${LIB}: ${OBJ}
 	${RANLIB} ${LIB}
 
 .cxx${OBJEXT}:
-	${CXX} ${CFLAGS} ${CSYM} $<
+	${CXX} ${CFLAGS} ${DASH}c $<
 
 clean:
 	rm -f *${OBJEXT}

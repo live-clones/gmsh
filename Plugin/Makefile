@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.137 2008-01-18 20:13:13 geuzaine Exp $
+# $Id: Makefile,v 1.138 2008-01-18 21:00:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -22,10 +22,10 @@
 include ../variables
 
 LIB     = ../lib/libGmshPlugin${LIBEXT}
-INCLUDE = ${ISYM}../Common ${ISYM}../Graphics ${ISYM}../DataStr ${ISYM}../Geo\
-          ${ISYM}../Mesh ${ISYM}../Post ${ISYM}../Fltk ${ISYM}../Numeric\
-          ${ISYM}../contrib/ANN/include ${ISYM}../contrib/Triangle\
-          ${ISYM}../contrib/MathEval
+INCLUDE = ${DASH}I../Common ${DASH}I../Graphics ${DASH}I../DataStr ${DASH}I../Geo\
+          ${DASH}I../Mesh ${DASH}I../Post ${DASH}I../Fltk ${DASH}I../Numeric\
+          ${DASH}I../contrib/ANN/include ${DASH}I../contrib/Triangle\
+          ${DASH}I../contrib/MathEval
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
 
 SRC = Plugin.cpp PluginManager.cpp\
@@ -57,7 +57,7 @@ ${LIB}: ${OBJ}
 	${RANLIB} ${LIB}
 
 .cpp${OBJEXT}:
-	${CXX} ${CFLAGS} ${CSYM} $<
+	${CXX} ${CFLAGS} ${DASH}c $<
 
 clean:
 	rm -f *${OBJEXT} 

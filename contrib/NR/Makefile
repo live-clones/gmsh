@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2008-01-18 20:41:33 geuzaine Exp $
+# $Id: Makefile,v 1.7 2008-01-18 21:00:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -22,7 +22,7 @@
 include ../../variables
 
 LIB     = ../../lib/libGmshNR${LIBEXT}
-INCLUDE = ${ISYM}../../Common ${ISYM}../../DataStr ${ISYM}../../Numeric
+INCLUDE = ${DASH}I../../Common ${DASH}I../../DataStr ${DASH}I../../Numeric
 # don't optimize this library: there are some problems with gcc...
 CFLAGS  = ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
 
@@ -47,7 +47,7 @@ ${LIB}: ${OBJ}
 	${RANLIB} ${LIB}
 
 .cpp${OBJEXT}:
-	${CXX} ${CFLAGS} ${CSYM} $<
+	${CXX} ${CFLAGS} ${DASH}c $<
 
 clean:
 	rm -f *${OBJEXT} 

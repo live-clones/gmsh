@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.191 2008-01-18 20:13:12 geuzaine Exp $
+# $Id: Makefile,v 1.192 2008-01-18 21:00:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -22,14 +22,14 @@
 include ../variables
 
 LIB     = ../lib/libGmshMesh${LIBEXT}
-INCLUDE = ${ISYM}../Numeric ${ISYM}../Common ${ISYM}../DataStr ${ISYM}../Geo\
-          ${ISYM}../Mesh ${ISYM}../Post ${ISYM}../Graphics ${ISYM}../Parser\
-          ${ISYM}../Fltk ${ISYM}../contrib/NR ${ISYM}../contrib/Triangle\
-          ${ISYM}../contrib/Tetgen ${ISYM}../contrib/Netgen\
-          ${ISYM}../contrib/Netgen/libsrc/include\
-          ${ISYM}../contrib/Netgen/libsrc/interface\
-          ${ISYM}../contrib/ANN/include ${ISYM}../contrib/Metis\
-          ${ISYM}../contrib/MathEval
+INCLUDE = ${DASH}I../Numeric ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo\
+          ${DASH}I../Mesh ${DASH}I../Post ${DASH}I../Graphics ${DASH}I../Parser\
+          ${DASH}I../Fltk ${DASH}I../contrib/NR ${DASH}I../contrib/Triangle\
+          ${DASH}I../contrib/Tetgen ${DASH}I../contrib/Netgen\
+          ${DASH}I../contrib/Netgen/libsrc/include\
+          ${DASH}I../contrib/Netgen/libsrc/interface\
+          ${DASH}I../contrib/ANN/include ${DASH}I../contrib/Metis\
+          ${DASH}I../contrib/MathEval
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
 
 SRC = Generator.cpp \
@@ -63,11 +63,11 @@ ${LIB}: ${OBJ}
 	${RANLIB} ${LIB}
 
 .cpp${OBJEXT}:
-	${CXX} ${CFLAGS} ${CSYM} $<
+	${CXX} ${CFLAGS} ${DASH}c $<
 
 # Don't optimize BDS: it crashes with some flavors of gcc 4.1 (e.g. on debian etch)
 BDS.o:
-	${CXX} ${FLAGS} ${INCLUDE} ${SYSINCLUDE} ${CSYM} BDS.cpp
+	${CXX} ${FLAGS} ${INCLUDE} ${SYSINCLUDE} ${DASH}c BDS.cpp
 
 clean:
 	rm -f *${OBJEXT}

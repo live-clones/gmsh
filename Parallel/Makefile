@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.38 2008-01-18 20:13:12 geuzaine Exp $
+# $Id: Makefile,v 1.39 2008-01-18 21:00:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -22,7 +22,7 @@
 include ../variables
 
 LIB     = ../lib/libGmshParallel${LIBEXT}
-INCLUDE = ${ISYM}../Common ${ISYM}../DataStr
+INCLUDE = ${DASH}I../Common ${DASH}I../DataStr
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
 
 SRC = ParUtil.cpp
@@ -36,7 +36,7 @@ ${LIB}: ${OBJ}
 	${RANLIB} ${LIB}
 
 .cpp${OBJEXT}:
-	${CXX} ${CFLAGS} ${CSYM} $<
+	${CXX} ${CFLAGS} ${DASH}c $<
 
 clean:
 	rm -f *${OBJEXT}

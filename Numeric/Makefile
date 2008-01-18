@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.40 2008-01-18 20:13:12 geuzaine Exp $
+# $Id: Makefile,v 1.41 2008-01-18 21:00:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -22,7 +22,7 @@
 include ../variables
 
 LIB     = ../lib/libGmshNumeric${LIBEXT}
-INCLUDE = ${ISYM}../Common ${ISYM}../DataStr ${ISYM}../Numeric ${ISYM}../contrib/NR
+INCLUDE = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Numeric ${DASH}I../contrib/NR
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
 
 SRC = Numeric.cpp\
@@ -41,7 +41,7 @@ ${LIB}: ${OBJ}
 	${RANLIB} ${LIB}
 
 .cpp${OBJEXT}:
-	${CXX} ${CFLAGS} ${CSYM} $<
+	${CXX} ${CFLAGS} ${DASH}c $<
 
 clean:
 	rm -f *${OBJEXT} 

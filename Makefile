@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.448 2008-01-18 20:02:27 geuzaine Exp $
+# $Id: Makefile,v 1.449 2008-01-18 21:00:39 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -36,7 +36,7 @@ GMSH_DATE = `date "+%Y%m%d"`
 all: link
 
 link: compile
-	${LINKER} ${OPTIM} -o bin/gmsh ${GMSH_LIBS}
+	${LINKER} ${OPTIM} ${DASH}o bin/gmsh${EXEEXT} ${GMSH_LIBS}
 
 link-mac-universal: compile
 	${LINKER} -arch i386 ${OPTIM} -o bin/gmsh_i386 ${GMSH_LIBS}

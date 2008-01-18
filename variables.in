@@ -1,4 +1,4 @@
-# $Id: variables.in,v 1.22 2008-01-18 20:41:33 geuzaine Exp $
+# $Id: variables.in,v 1.23 2008-01-18 21:00:39 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -54,10 +54,8 @@ AR=@AR@
 ARFLAGS=@ARFLAGS@
 RANLIB=@RANLIB@
 
-# The symbols used for includes and compiling
-ISYM=@ISYM@
-CSYM=@CSYM@
-DSYM=@DSYM@
+# The symbol used in front of compiler flags
+DASH=@DASH@
 
 # The extension to use for object files, libraries and executables
 OBJEXT=@OBJEXT@
