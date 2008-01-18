@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.31 2008-01-18 22:41:12 geuzaine Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.32 2008-01-18 22:45:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -863,9 +863,8 @@ void insertVerticesInRegion (GRegion *gr)
     }
 
     // Normally, a tet mesh contains about 6 times more tets than
-    // vertices
-    // This allows to clean up the set of tets when lots of deleted ones
-    // are present in the mesh
+    // vertices. This allows to clean up the set of tets when lots of
+    // deleted ones are present in the mesh
     if(allTets.size() > 7 * vSizes.size()){
       int n1 = allTets.size();
       std::set<MTet4*,compareTet4Ptr>::iterator itd = allTets.begin();
