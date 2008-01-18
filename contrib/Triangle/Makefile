@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.6 2008-01-18 20:02:30 geuzaine Exp $
+# $Id: Makefile,v 1.7 2008-01-18 20:13:13 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -52,3 +52,4 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
+triangle.o: triangle.c triangle.h

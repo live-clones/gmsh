@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.37 2008-01-18 20:02:29 geuzaine Exp $
+# $Id: Makefile,v 1.38 2008-01-18 20:13:12 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -50,3 +50,7 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
+ParUtil.o: ParUtil.cpp ../Common/Gmsh.h ../Common/Message.h \
+  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../Common/OS.h ParUtil.h

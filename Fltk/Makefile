@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.155 2008-01-07 21:32:58 geuzaine Exp $
+# $Id: Makefile,v 1.156 2008-01-18 20:13:12 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -166,13 +166,13 @@ GUI_Classifier.o: GUI_Classifier.cpp GUI_Classifier.h ../Common/GmshUI.h \
   ../Graphics/Draw.h ../Common/Options.h ../Graphics/SelectBuffer.h \
   GUI_Projection.h ../Geo/FProjectionFace.h ../Geo/GModel.h \
   ../Geo/Range.h GUI_Extras.h ../Mesh/meshGFaceDelaunayInsertion.h \
-  ../Mesh/meshGFaceOptimize.h ../Geo/gmshEdge.h ../Geo/Geo.h \
-  ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
-  ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Geo/GEdge.h \
-  ../Geo/gmshVertex.h ../Geo/Geo.h ../Geo/GVertex.h ../Geo/Range.h \
-  ../Geo/gmshFace.h ../Geo/Geo.h ../Geo/GFace.h ../Geo/gmshVertex.h \
-  ../Geo/Range.h
+  ../Mesh/meshGFaceOptimize.h ../Mesh/meshGFaceDelaunayInsertion.h \
+  ../Geo/gmshEdge.h ../Geo/Geo.h ../Geo/gmshSurface.h ../Geo/Pair.h \
+  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
+  ../Geo/GEdge.h ../Geo/gmshVertex.h ../Geo/Geo.h ../Geo/GVertex.h \
+  ../Geo/Range.h ../Geo/gmshFace.h ../Geo/Geo.h ../Geo/GFace.h \
+  ../Geo/gmshVertex.h ../Geo/Range.h
 Callbacks.o: Callbacks.cpp ../Common/Gmsh.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \

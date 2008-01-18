@@ -1,4 +1,4 @@
-// $Id: PViewDataListIO.cpp,v 1.4 2008-01-10 14:56:55 remacle Exp $
+// $Id: PViewDataListIO.cpp,v 1.5 2008-01-18 20:13:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -515,6 +515,7 @@ class pVertex{
  public:
   int Num;
   double X, Y, Z;
+  std::vector<double> Val;
   pVertex() : Num(0), X(0.), Y(0.), Z(0.) {}
   pVertex(double x, double y, double z) : Num(0), X(x), Y(y), Z(z) {}
 };
@@ -543,11 +544,13 @@ static void getNodeMSH(int nbelm, List_T *list, int nbnod, int nbcomp,
     double *x = (double *)List_Pointer_Fast(list, i);
     double *y = (double *)List_Pointer_Fast(list, i + nbnod);
     double *z = (double *)List_Pointer_Fast(list, i + 2 * nbnod);
+    double *v = (double *)List_Pointer_Fast(list, i + 3 * nbnod);
     for(int j = 0; j < nbnod; j++) {
       pVertex n(x[j], y[j], z[j]);
       std::set<pVertex, pVertexLessThan>::iterator it = nodes->find(n);
       if(it == nodes->end()){
 	n.Num = nodes->size() + 1;
+	for(int k = 0; k < nbcomp; k++) n.Val.push_back(v[nbcomp * j + k]);
 	nodes->insert(n);
       }
     }
@@ -680,10 +683,9 @@ bool PViewDataList::writeMSH(std::string name)
 
   fprintf(fp, "$NOD\n");
   fprintf(fp, "%d\n", (int)nodes.size());
-  std::set<pVertex, pVertexLessThan>::iterator it = nodes.begin();
-  for(; it != nodes.end(); ++it){
-    pVertex n = (pVertex)(*it);
-    fprintf(fp, "%d %.16g %.16g %.16g\n", n.Num, n.X, n.Y, n.Z);
+  for(std::set<pVertex, pVertexLessThan>::iterator it = nodes.begin();
+      it != nodes.end(); ++it){
+    fprintf(fp, "%d %.16g %.16g %.16g\n", it->Num, it->X, it->Y, it->Z);
   }
   fprintf(fp, "$ENDNOD\n");
 
@@ -715,6 +717,19 @@ bool PViewDataList::writeMSH(std::string name)
   writeElementsMSH(fp, NbVY, VY, 5, 3, 3, &nodes, &numelm);
   writeElementsMSH(fp, NbTY, TY, 5, 9, 3, &nodes, &numelm);
   fprintf(fp, "$ENDELM\n");
+
+  /*
+  fprintf(fp, "$NodeData\n");
+  fprintf(fp, "\"%s\"\n", getName().c_str());
+  fprintf(fp, "1 1 %d\n", nodes.size());
+  for(std::set<pVertex, pVertexLessThan>::iterator it = nodes.begin();
+      it != nodes.end(); ++it){
+    fprintf(fp, "%d", it->Num);
+    for(int i = 0; i < it->Val.size(); i++) fprintf(fp, " %d", it->Val[i]);
+    fprintf(fp, "\n");
+  }
+  fprintf(fp, "$EndNodeData\n");
+  */
 
   fclose(fp);
   return true;

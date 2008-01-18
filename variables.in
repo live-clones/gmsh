@@ -1,4 +1,4 @@
-# $Id: variables.in,v 1.20 2008-01-18 20:02:27 geuzaine Exp $
+# $Id: variables.in,v 1.21 2008-01-18 20:13:12 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -43,8 +43,10 @@ SYSINCLUDE=@SYSINCLUDE@
 # Compiler optimization flags
 OPTIM=@OPTIM@
 
-# Gmsh subdirectories and libraries
+# Gmsh subdirectories
 GMSH_DIRS=@GMSH_DIRS@
+
+# Gmsh libraries
 GMSH_LIBS=@GMSH_LIBS@
 
 # How you create a static library on this machine

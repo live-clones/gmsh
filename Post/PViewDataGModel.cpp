@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.5 2007-09-24 08:14:30 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.6 2008-01-18 20:13:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -62,9 +62,18 @@ nodes/elements--which are stored per entity too; avoids storing entity
 ptr in each value (I think we should have that info in the post-pro:
 it's one of the annoying shortcomings of the old format)
 
-f we choose 3, unfortunately, we need to keep track of some local
+if we choose 3, unfortunately, we need to keep track of some local
 indices to access the data with a single, continuous index. This is
 exactly the same problem as with PViewDataList. Maybe it's worth it?
+
+if we choose 4, we could have e.g. vectors of map<MVertex*, data> and
+map<MElement*, data>. The overhead is not negligeable... but it would
+be *very* simple to implement and maintain (very easy to load/discard
+time steps on the fly, do I/O; and the storage is completely separate
+from the model; it's good for handling errors too: when we loop over
+nodes/elements to generate vertex arrays, we just query the maps: if
+no answer, that's it).
+
 */
 
 bool PViewDataGModel::writePOS(std::string name, bool binary, bool parsed,

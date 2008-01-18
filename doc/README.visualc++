@@ -1,0 +1,11 @@
+To compile Gmsh with Microsoft VisualC++
+
+1) Install cygwin (yes, you have to): you need make
+    
+2) launch the Visual Studio command prompt
+
+3) set PATH=%PATH%;C:\cygwin\bin   (or wherever the cygin binaries are installed)
+
+4) cd gmsh && ./configure --enable-vc
+
+5) make
