@@ -1955,7 +1955,7 @@ if test "x$enable_vc" = "xyes"; then
   FLAGS="/DWIN32 /DYY_NO_UNISTD_H /DHAVE_NO_DLL"
   OPTIM=/O2
   SYSINCLUDE="/I\"C:\Program Files\Microsoft Visual Studio 9.0\VC\INCLUDE\" /I\"C:\Program Files\Microsoft SDKs\Windows\v6.0A\include\""
-  LINKER=cl
+      LINKER=cl /F16777216
   EXEEXT=".exe"
 else
   ac_ext=c
