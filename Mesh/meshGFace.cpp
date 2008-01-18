@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.107 2008-01-18 20:02:28 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.108 2008-01-18 22:23:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1486,8 +1486,6 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
       }
   }
 
-
-
   it = emb_edges.begin();
   while(it != emb_edges.end())
     {
@@ -1507,6 +1505,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
 	++itt;
       }
   }
+
   m->cleanup();
 
   {
@@ -1526,7 +1525,6 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
 	++ite;
       }
   }
-
 
 
   m->cleanup();
@@ -2254,8 +2252,8 @@ void meshGFace::operator() (GFace *gf)
     {
       Msg(DEBUG1, "Generating the mesh");
       if(noseam (gf) || gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
-	gmsh2DMeshGenerator(gf,0, true);
-	//gmsh2DMeshGenerator(gf,0, false);
+	//gmsh2DMeshGenerator(gf,0, true);
+	gmsh2DMeshGenerator(gf,0, false);
       }
       else{
 	if(!gmsh2DMeshGeneratorPeriodic(gf,false))

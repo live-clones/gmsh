@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.29 2008-01-18 20:02:28 geuzaine Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.30 2008-01-18 22:23:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -885,7 +885,7 @@ void insertVerticesInRegion (GRegion *gr)
 	}
     }
 
-  
+
   while (1)
     {
       if (allTets.begin() == allTets.end() ) break;

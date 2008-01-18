@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.90 2008-01-18 20:02:28 geuzaine Exp $
+// $Id: BDS.cpp,v 1.91 2008-01-18 22:23:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -484,28 +484,26 @@ template < class IT > void DESTROOOY(IT beg, IT end)
 void BDS_Mesh::cleanup()
 {
   {
-    for (std::list<BDS_Face*> :: iterator it = triangles.begin();
-	 it != triangles.end();
-	 it++)
-      {
-	while (it != triangles.end() && (*it)->deleted)
-	  {
-	    delete *it;
-	    it = triangles.erase (it);
-	  }
-      }	   
+    std::list<BDS_Face*> :: iterator it = triangles.begin();
+    while(it != triangles.end()){
+      if((*it)->deleted){
+	delete *it;
+	it = triangles.erase(it);
+      }
+      else
+	it++;
+    }
   }
   { 
-    for (std::list<BDS_Edge*> :: iterator it = edges.begin();
-	 it != edges.end();
-	 it++)
-      {
-	while (it != edges.end() && (*it)->deleted)
-	  {
-	    delete *it;
-	    it = edges.erase (it);
-	  }	
-      }	   
+    std::list<BDS_Edge*> :: iterator it = edges.begin();
+    while(it != edges.end()){
+      if((*it)->deleted){
+	delete *it;
+	it = edges.erase(it);
+      }	
+      else
+	it++;
+    }	   
   } 
 }
 
