@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.30 2008-01-18 22:23:03 geuzaine Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.31 2008-01-18 22:41:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -751,151 +751,144 @@ void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm)
 
 void insertVerticesInRegion (GRegion *gr) 
 {
-
-  printf("sizeof MTet4 = %d sizeof MTetrahedron %d sizeof(MVertex) %d\n",sizeof(MTet4),sizeof(MTetrahedron), sizeof(MVertex));
+  //printf("sizeof MTet4 = %d sizeof MTetrahedron %d sizeof(MVertex) %d\n",
+  // sizeof(MTet4),sizeof(MTetrahedron), sizeof(MVertex));
 
   std::map<MVertex*,double> vSizesMap;
   std::vector<double> vSizes;
-  MTet4Factory myFactory(1600000) ;
+  MTet4Factory myFactory(1600000);
   std::set<MTet4*,compareTet4Ptr> &allTets = myFactory.getAllTets();
 
-  for (unsigned int i=0;i<gr->tetrahedra.size();i++)setLcs ( gr->tetrahedra[i] , vSizesMap);
+  for(unsigned int i = 0; i < gr->tetrahedra.size(); i++)
+    setLcs(gr->tetrahedra[i], vSizesMap);
   
-  int NUM=0;
-  for (std::map<MVertex*,double>::iterator it = vSizesMap.begin();it!=vSizesMap.end();++it)
-    {
-      it->first->setNum(NUM++);
-      vSizes.push_back(it->second);
-    }
-
-  for (unsigned int i=0;i<gr->tetrahedra.size();i++)
-    allTets.insert(myFactory.Create ( gr->tetrahedra[i] ,vSizes ));
+  int NUM = 0;
+  for(std::map<MVertex*, double>::iterator it = vSizesMap.begin(); 
+      it != vSizesMap.end(); ++it){
+    it->first->setNum(NUM++);
+    vSizes.push_back(it->second);
+  }
+  
+  for(unsigned int i = 0; i < gr->tetrahedra.size(); i++)
+    allTets.insert(myFactory.Create(gr->tetrahedra[i], vSizes));
 
   gr->tetrahedra.clear();
-  connectTets ( allTets.begin(), allTets.end() );      
+  connectTets(allTets.begin(), allTets.end());
 
   // classify the tets on the right region
-  //  Msg (INFO,"reclassifying %d tets",allTets.size());
+  // Msg (INFO,"reclassifying %d tets", allTets.size());
 
   fs_cont search;
-  buildFaceSearchStructure ( gr->model(), search );
+  buildFaceSearchStructure(gr->model(), search );
 
-  for (MTet4Factory::iterator it = allTets.begin();it!=allTets.end();++it)
-    {
-      if (!(*it)->onWhat())
-	{
-	  std::list<MTet4*> theRegion;
-	  std::set<GFace *> faces_bound;
-	  GRegion *bidon = (GRegion*)123;
-	  double _t1 = Cpu();
-	  Msg (DEBUG2,"start with a non classified tet");	  
-	  recur_classify ( *it , theRegion, faces_bound, bidon , gr->model(),search);
-	  double _t2 = Cpu();
-	  Msg (DEBUG2,"found %d tets with %d faces (%g sec for the classification)",theRegion.size(),faces_bound.size(), _t2 - _t1);
-	  GRegion *myGRegion = getRegionFromBoundingFaces (gr->model() , faces_bound ); 
-	  //	  Msg (INFO,"a region is found %p",myGRegion);
-	  if (myGRegion) // a geometrical region associated to the list of faces has been found	    
-	    for (std::list<MTet4*>::iterator it2 = theRegion.begin();it2!=theRegion.end();++it2)(*it2)->setOnWhat(myGRegion);
-	  else // the tets are in the void 
-	    for (std::list<MTet4*>::iterator it2 = theRegion.begin();it2!=theRegion.end();++it2)(*it2)->setDeleted(true);
-	}
+  for(MTet4Factory::iterator it = allTets.begin(); it != allTets.end(); ++it){
+    if(!(*it)->onWhat()){
+      std::list<MTet4*> theRegion;
+      std::set<GFace *> faces_bound;
+      GRegion *bidon = (GRegion*)123;
+      double _t1 = Cpu();
+      Msg(DEBUG2,"start with a non classified tet");	  
+      recur_classify(*it, theRegion, faces_bound, bidon, gr->model(), search);
+      double _t2 = Cpu();
+      Msg(DEBUG2, "found %d tets with %d faces (%g sec for the classification)",
+	  theRegion.size(), faces_bound.size(), _t2 - _t1);
+      GRegion *myGRegion = getRegionFromBoundingFaces(gr->model(), faces_bound);
+      // Msg (INFO,"a region is found %p",myGRegion);
+      if(myGRegion) // a geometrical region associated to the list of faces has been found
+	for(std::list<MTet4*>::iterator it2 = theRegion.begin(); 
+	    it2 != theRegion.end(); ++it2) (*it2)->setOnWhat(myGRegion);
+      else // the tets are in the void 
+	for(std::list<MTet4*>::iterator it2 = theRegion.begin();
+	    it2 != theRegion.end(); ++it2)(*it2)->setDeleted(true);
     }
+  }
   search.clear();
   
-  for (MTet4Factory::iterator it = allTets.begin();it!=allTets.end();++it)
-    {
-      (*it)->setNeigh(0,0);
-      (*it)->setNeigh(1,0);
-      (*it)->setNeigh(2,0);
-      (*it)->setNeigh(3,0);
-    }
-  connectTets ( allTets.begin(), allTets.end() );      
-  Msg(DEBUG,"All %d tets were connected",allTets.size());
+  for(MTet4Factory::iterator it = allTets.begin(); it!=allTets.end(); ++it){
+    (*it)->setNeigh(0, 0);
+    (*it)->setNeigh(1, 0);
+    (*it)->setNeigh(2, 0);
+    (*it)->setNeigh(3, 0);
+  }
+  connectTets(allTets.begin(), allTets.end());
+  Msg(DEBUG,"All %d tets were connected", allTets.size());
 
   // here the classification should be done
 
   int ITER = 0;
 
-  while (1)
-    {
-      if (allTets.empty() ){
-	Msg(GERROR, "No tetrahedra in region %d", gr->tag());
-	break;
-      }
-      
-      MTet4 *worst = *allTets.begin();
-      
-      if (worst->isDeleted())
-	{
-	  myFactory.Free(worst);
-	  allTets.erase(allTets.begin());
-	  //	  Msg(INFO,"Worst tet is deleted");
-	}
-      else
-	{
-	  if(ITER++%5000 ==0)
-	    Msg(INFO,"%d points created -- Worst tet radius is %g",vSizes.size(),worst->getRadius());
-	  if (worst->getRadius() < 1) break;
-	  double center[3];
-	  worst->tet()->circumcenter(center);
-	  double uvw[3];
-	  bool inside = worst->tet()->invertmapping(center,uvw);
-	  if (inside)
-	    {
-	      MVertex *v = new MVertex (center[0],center[1],center[2], worst->onWhat());
-	      v->setNum(NUM++);
- 	      double lc1 = 
- 		(1-uvw[0]-uvw[1]-uvw[2])*vSizes[worst->tet()->getVertex(0)->getNum()] +
- 		(uvw[0])*vSizes[worst->tet()->getVertex(1)->getNum()] +
- 		(uvw[1])*vSizes[worst->tet()->getVertex(2)->getNum()] +
- 		(uvw[2])*vSizes[worst->tet()->getVertex(3)->getNum()];
-	      double lc = std::min(lc1,BGM_MeshSize(gr,0,0,center[0],center[1],center[2]));
-	      vSizes.push_back(lc);
-	      // compute mesh spacing there
-	      if (!insertVertex ( v  , worst, myFactory,allTets,vSizes))
-		{
-		  myFactory.changeTetRadius(allTets.begin(),0.0);
-		  delete v;
-		}
-	      else
-		v->onWhat()->mesh_vertices.push_back(v);
-	    }
-	  else{
-	    myFactory.changeTetRadius(allTets.begin(),0.0);
-	  }
-	}
-      // Normally, a tet mesh contains about 6 times more tets than
-      // vertices
-      // This allows to clean up the set of tets when lots of deleted ones
-      // are present in the mesh
-      if(allTets.size() > 7 * vSizes.size())
-	{
-	  int n1 = allTets.size();
-	  for(std::set<MTet4*,compareTet4Ptr>::iterator itd = allTets.begin() ; itd !=allTets.end() ; ++itd)
-	    {
-	      if ((*itd)->isDeleted())
-		{
-		  myFactory.Free((*itd));
-		  std::set<MTet4*,compareTet4Ptr>::iterator itdb = itd;
-		  itd++;
-		  allTets.erase(itdb);      
-		}	    
-	    }
-	  Msg(INFO,"cleaning up the memory %d -> %d ",n1,allTets.size());	  	  
-	}
+  while(1){
+    if(allTets.empty()){
+      Msg(GERROR, "No tetrahedra in region %d", gr->tag());
+      break;
     }
-
-
-  while (1)
-    {
-      if (allTets.begin() == allTets.end() ) break;
-      MTet4 *worst = *allTets.begin();
-      if (!worst->isDeleted())
-	{
-	  worst->onWhat()->tetrahedra.push_back(worst->tet());
-	  worst->tet() = 0;
-	}
+      
+    MTet4 *worst = *allTets.begin();
+      
+    if(worst->isDeleted()){
       myFactory.Free(worst);
-      allTets.erase(allTets.begin());      
+      allTets.erase(allTets.begin());
+      // Msg(INFO,"Worst tet is deleted");
     }
+    else{
+      if(ITER++ %5000 == 0)
+	Msg(INFO, "%d points created -- Worst tet radius is %g",
+	    vSizes.size(), worst->getRadius());
+      if(worst->getRadius() < 1) break;
+      double center[3];
+      worst->tet()->circumcenter(center);
+      double uvw[3];
+      bool inside = worst->tet()->invertmapping(center, uvw);
+      if(inside){
+	MVertex *v = new MVertex(center[0],center[1],center[2], worst->onWhat());
+	v->setNum(NUM++);
+	double lc1 = 
+	  (1 - uvw[0] - uvw[1] - uvw[2]) * vSizes[worst->tet()->getVertex(0)->getNum()] +
+	  uvw[0] * vSizes[worst->tet()->getVertex(1)->getNum()] +
+	  uvw[1] * vSizes[worst->tet()->getVertex(2)->getNum()] +
+	  uvw[2] * vSizes[worst->tet()->getVertex(3)->getNum()];
+	double lc = std::min(lc1, BGM_MeshSize(gr, 0, 0, center[0], center[1], center[2]));
+	vSizes.push_back(lc);
+	// compute mesh spacing there
+	if(!insertVertex(v, worst, myFactory, allTets, vSizes)){
+	  myFactory.changeTetRadius(allTets.begin(), 0.);
+	  delete v;
+	}
+	else
+	  v->onWhat()->mesh_vertices.push_back(v);
+      }
+      else{
+	myFactory.changeTetRadius(allTets.begin(), 0.);
+      }
+    }
+
+    // Normally, a tet mesh contains about 6 times more tets than
+    // vertices
+    // This allows to clean up the set of tets when lots of deleted ones
+    // are present in the mesh
+    if(allTets.size() > 7 * vSizes.size()){
+      int n1 = allTets.size();
+      std::set<MTet4*,compareTet4Ptr>::iterator itd = allTets.begin();
+      while(itd != allTets.end()){
+	if((*itd)->isDeleted()){
+	  myFactory.Free((*itd));
+	  allTets.erase(itd++);
+	}
+	else
+	  itd++;
+      }
+      Msg(INFO,"cleaning up the memory %d -> %d", n1, allTets.size());
+    }
+  }
+  
+  while(1){
+    if(allTets.begin() == allTets.end()) break;
+    MTet4 *worst = *allTets.begin();
+    if(!worst->isDeleted()){
+      worst->onWhat()->tetrahedra.push_back(worst->tet());
+      worst->tet() = 0;
+    }
+    myFactory.Free(worst);
+    allTets.erase(allTets.begin());      
+  }
 }
