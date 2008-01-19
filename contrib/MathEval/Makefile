@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2008-01-18 20:13:13 geuzaine Exp $
+# $Id: Makefile,v 1.17 2008-01-19 00:12:38 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,10 +21,10 @@
 
 include ../../variables
 
-LIB = ../../lib/libGmshMathEval.a
-INCLUDE = -I../../Common -I../../DataStr
+LIB = ../../lib/libGmshMathEval${LIBEXT}
+INCLUDE = ${DASH}I../../Common ${DASH}I../../DataStr
 
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} 
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
 
 SRC = matheval.cpp\
       node.cpp\
@@ -33,16 +33,16 @@ SRC = matheval.cpp\
       symbol_table.cpp\
       xmath.cpp
 
-OBJ = ${SRC:.cpp=.o}
+OBJ = ${SRC:.cpp=${OBJEXT}}
 
-.SUFFIXES: .o .cpp
+.SUFFIXES: ${OBJEXT} .cpp
 
 ${LIB}: ${OBJ}
-	${AR} ${LIB} ${OBJ}
+	${AR} ${ARFLAGS}${LIB} ${OBJ}
 	${RANLIB} ${LIB}
 
-.cpp.o:
-	${CXX} ${CFLAGS} -c $<
+.cpp${OBJEXT}:
+	${CXX} ${CFLAGS} ${DASH}c $<
 
 parser:
 	bison --output parser.tab.cpp -pme -d parser.y
@@ -50,7 +50,7 @@ parser:
 	flex -oscanner.yy.cpp -Pme scanner.l
 
 clean:
-	rm -f *.o
+	rm -f *${OBJEXT}
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

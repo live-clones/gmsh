@@ -87,7 +87,7 @@ x_actanh(double x)
   /*
    * Calculate inverse hyperbolic cotangent value.
    */
-  return atanh(1 / x);
+  return 0.5 * log((x + 1) / (x - 1));
 }
 
 double

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2008-01-18 20:13:13 geuzaine Exp $
+# $Id: Makefile,v 1.8 2008-01-19 00:14:19 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,27 +21,27 @@
 
 include ../../variables
 
-LIB = ../../lib/libGmshTriangle.a
+LIB = ../../lib/libGmshTriangle${LIBEXT}
 
 # Don't optimize triangle: it crashes on Linux
 # CFLAGS = ${OPTIM} ${FLAGS} -DTRILIBRARY -DNO_TIMER
-CFLAGS = ${FLAGS} -DTRILIBRARY -DNO_TIMER
+CFLAGS = ${FLAGS} ${DASH}DTRILIBRARY ${DASH}DNO_TIMER
 
 SRC = triangle.c
 
-OBJ = ${SRC:.c=.o}
+OBJ = ${SRC:.c=${OBJEXT}}
 
-.SUFFIXES: .o .c
+.SUFFIXES: ${OBJEXT} .c
 
 ${LIB}: ${OBJ} 
-	${AR} ${LIB} ${OBJ} 
+	${AR} ${ARFLAGS}${LIB} ${OBJ} 
 	${RANLIB} ${LIB}
 
-.c.o:
-	${CC} ${CFLAGS} -c $<
+.c${OBJEXT}:
+	${CC} ${CFLAGS} ${DASH}c $<
 
 clean:
-	rm -f *.o
+	rm -f *${OBJEXT}
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
