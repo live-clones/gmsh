@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.22 2008-01-19 00:24:34 geuzaine Exp $
+# $Id: Makefile,v 1.23 2008-01-19 00:49:08 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -136,6 +136,9 @@ ${LIB}: ${OBJ}
 
 .cpp${OBJEXT}:
 	${CXX} ${CFLAGS} ${DASH}c $< ${DASH}o ${<:.cpp=.obj}
+	if [ -r ${notdir ${<:.cpp=${OBJEXT}}} ]; then\
+           mv -f ${notdir ${<:.cpp=${OBJEXT}}} ${<:.cpp=${OBJEXT}};\
+        fi
 
 clean:
 	rm -f *${OBJEXT} libsrc/*/*${OBJEXT}

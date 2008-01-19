@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2008-01-18 20:13:13 geuzaine Exp $
+# $Id: Makefile,v 1.18 2008-01-19 00:49:08 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,9 +21,9 @@
 
 include ../../variables
 
-LIB     = ../../lib/libGmshANN.a
-INCLUDE = -I../../Common -I./include
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
+LIB     = ../../lib/libGmshANN${LIBEXT}
+INCLUDE = ${DASH}I../../Common ${DASH}I./include
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
 
 SRC = src/ANN.cpp\
       src/bd_fix_rad_search.cpp\
@@ -40,19 +40,22 @@ SRC = src/ANN.cpp\
       src/kd_util.cpp\
       src/perf.cpp
 
-OBJ = ${SRC:.cpp=.o}
+OBJ = ${SRC:.cpp=${OBJEXT}}
 
-.SUFFIXES: .o .cpp
+.SUFFIXES: ${OBJEXT} .cpp
 
 ${LIB}: ${OBJ} 
-	${AR} ${LIB} ${OBJ} 
+	${AR} ${ARFLAGS}${LIB} ${OBJ} 
 	${RANLIB} ${LIB}
 
-.cpp.o:
-	${CXX} ${CFLAGS} -c $< -o ${<:.cpp=.o}
+.cpp${OBJEXT}:
+	${CXX} ${CFLAGS} ${DASH}c $< ${DASH}o ${<:.cpp=${OBJEXT}}
+	if [ -r ${notdir ${<:.cpp=${OBJEXT}}} ]; then\
+           mv -f ${notdir ${<:.cpp=${OBJEXT}}} ${<:.cpp=${OBJEXT}};\
+        fi
 
 clean:
-	rm -f src/*.o
+	rm -f src/*${OBJEXT}
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
