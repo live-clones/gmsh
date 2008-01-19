@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.130 2007-09-22 20:35:18 geuzaine Exp $
+# $Id: Makefile,v 1.131 2008-01-19 01:08:15 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,11 +21,12 @@
 
 include ../variables
 
-LIB     = ../lib/libGmshGraphics.a
-INCLUDE = -I../Common -I../DataStr -I../Geo -I../Mesh -I../Post\
-          -I../Graphics -I../Fltk -I../Numeric -I../Parser -I../Plugin\
-          -I../contrib/MathEval -I../contrib/ANN/include
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
+LIB     = ../lib/libGmshGraphics${LIBEXT}
+INCLUDE = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo ${DASH}I../Mesh\
+          ${DASH}I../Post ${DASH}I../Graphics ${DASH}I../Fltk ${DASH}I../Numeric\
+          ${DASH}I../Parser ${DASH}I../Plugin ${DASH}I../contrib/MathEval\
+          ${DASH}I../contrib/ANN/include
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
 
 SRC = Draw.cpp \
       Mesh.cpp \
@@ -44,19 +45,19 @@ SRC = Draw.cpp \
       gl2ppm.cpp\
       gl2yuv.cpp
 
-OBJ = ${SRC:.cpp=.o}
+OBJ = ${SRC:.cpp=${OBJEXT}}
 
-.SUFFIXES: .o .cpp
+.SUFFIXES: ${OBJEXT} .cpp
 
 ${LIB}: ${OBJ} 
-	${AR} ${LIB} ${OBJ} 
+	${AR} ${ARFLAGS}${LIB} ${OBJ} 
 	${RANLIB} ${LIB}
 
 .cpp.o:
-	${CXX} ${CFLAGS} -c $<
+	${CXX} ${CFLAGS} ${DASH}c $<
 
 clean:
-	rm -f *.o
+	rm -f *${OBJEXT}
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

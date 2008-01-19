@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.156 2008-01-18 20:13:12 geuzaine Exp $
+# $Id: Makefile,v 1.157 2008-01-19 01:08:15 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,11 +21,12 @@
 
 include ../variables
 
-LIB     = ../lib/libGmshFltk.a
-INCLUDE = -I../Common -I../DataStr -I../Graphics -I../Geo -I../Mesh -I../Post\
-          -I../Numeric -I../Parser -I../Fltk -I../Plugin -I../utils/solvers\
-          -I../contrib/ANN/include -I../contrib/NativeFileChooser
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
+LIB     = ../lib/libGmshFltk${LIBEXT}
+INCLUDE = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Graphics\
+          ${DASH}I../Geo ${DASH}I../Mesh ${DASH}I../Post ${DASH}I../Numeric\
+          ${DASH}I../Parser ${DASH}I../Fltk ${DASH}I../Plugin ${DASH}I../utils/solvers\
+          ${DASH}I../contrib/ANN/include ${DASH}I../contrib/NativeFileChooser
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
 
 SRC = Main.cpp \
       Message.cpp \
@@ -39,23 +40,22 @@ SRC = Main.cpp \
       Colorbar_Window.cpp\
       Solvers.cpp
 
+OBJ = ${SRC:.cpp=${OBJEXT}}
 
-OBJ = ${SRC:.cpp=.o}
-
-.SUFFIXES: .o .cpp
+.SUFFIXES: ${OBJEXT} .cpp
 
 ${LIB}: ${OBJ} 
-	${AR} ${LIB} ${OBJ} 
+	${AR} ${ARFLAGS}${LIB} ${OBJ} 
 	${RANLIB} ${LIB}
 
 .cpp.o:
-	${CXX} ${CFLAGS} -c $<
+	${CXX} ${CFLAGS} ${DASH}c $<
 
 res:
 	windres Win32Icon.rc -O coff Win32Icon.res
 
 clean:
-	rm -f *.o
+	rm -f *${OBJEXT}
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

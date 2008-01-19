@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2008-01-18 20:13:13 geuzaine Exp $
+# $Id: Makefile,v 1.3 2008-01-19 01:08:15 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,24 +21,24 @@
 
 include ../../variables
 
-LIB     = ../../lib/libGmshNativeFileChooser.a
-INCLUDE = -I.
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} -DFLTK1
+LIB     = ../../lib/libGmshNativeFileChooser${LIBEXT}
+INCLUDE = ${DASH}I.
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE} ${DASH}DFLTK1
 
 SRC = Fl_Native_File_Chooser.cxx
-OBJ = ${SRC:.cxx=.o}
+OBJ = ${SRC:.cxx=${OBJEXT}}
 
-.SUFFIXES: .o .cxx
+.SUFFIXES: ${OBJEXT} .cxx
 
 ${LIB}: ${OBJ} 
-	${AR} ${LIB} ${OBJ} 
+	${AR} ${ARFLAGS}${LIB} ${OBJ} 
 	${RANLIB} ${LIB}
 
 .cxx.o:
-	${CXX} ${CFLAGS} -c $<
+	${CXX} ${CFLAGS} ${DASH}c $<
 
 clean:
-	rm -f *.o
+	rm -f *${OBJEXT}
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
