@@ -18,7 +18,7 @@ LINKER=cl /F16777216
 FLAGS=/DWIN32 /DYY_NO_UNISTD_H /DHAVE_NO_DLL /DHAVE_NO_VSNPRINTF /DHAVE_NO_SNPRINTF /DHAVE_NO_SOCKLEN_T /DHAVE_ANN /DHAVE_MATH_EVAL /DHAVE_NETGEN /DHAVE_TETGEN /DHAVE_TRIANGLE
 
 # Additional system includes
-SYSINCLUDE=/I\"C:\Program Files\Microsoft Visual Studio 9.0\VC\INCLUDE\" /I\"C:\Program Files\Microsoft SDKs\Windows\v6.0A\include\"
+SYSINCLUDE=/I"C:\Program Files\Microsoft Visual Studio 9.0\VC\INCLUDE" /I"C:\Program Files\Microsoft SDKs\Windows\v6.0A\include"
 
 # Compiler optimization flags
 OPTIM=/O2
