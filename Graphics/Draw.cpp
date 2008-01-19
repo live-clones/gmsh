@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.115 2007-09-10 04:47:02 geuzaine Exp $
+// $Id: Draw.cpp,v 1.116 2008-01-19 22:06:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,9 +19,9 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
 #include "GmshUI.h"
 #include "GmshDefines.h"
+#include "Message.h"
 #include "Draw.h"
 #include "Context.h"
 #include "Numeric.h"

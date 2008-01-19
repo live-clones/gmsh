@@ -1,4 +1,4 @@
-// $Id: ReadImg.cpp,v 1.20 2008-01-08 12:05:45 geuzaine Exp $
+// $Id: ReadImg.cpp,v 1.21 2008-01-19 22:06:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,7 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "ReadImg.h"
-#include "Gmsh.h"
+#include "Message.h"
 #include "GmshUI.h"
 #include "PView.h"
 #include "PViewDataList.h"

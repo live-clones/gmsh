@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.23 2008-01-14 21:29:13 remacle Exp $
+// $Id: GModelIO_OCC.cpp,v 1.24 2008-01-19 22:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -500,21 +500,21 @@ void GModel::deleteOCCInternals()
 
 int GModel::readOCCSTEP(const std::string &fn)
 {
-  Msg(GERROR,"Gmsh has to be compiled with OpenCascade support to load '%s'",
+  Msg(GERROR, "Gmsh has to be compiled with OpenCascade support to load '%s'",
       fn.c_str());
   return 0;
 }
 
 int GModel::readOCCIGES(const std::string &fn)
 {
-  Msg(GERROR,"Gmsh has to be compiled with OpenCascade support to load '%s'",
+  Msg(GERROR, "Gmsh has to be compiled with OpenCascade support to load '%s'",
       fn.c_str());
   return 0;
 }
 
 int GModel::readOCCBREP(const std::string &fn)
 {
-  Msg(GERROR,"Gmsh has to be compiled with OpenCascade support to load '%s'",
+  Msg(GERROR, "Gmsh has to be compiled with OpenCascade support to load '%s'",
       fn.c_str());
   return 0;
 }

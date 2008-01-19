@@ -1,4 +1,4 @@
-// $Id: meshGRegionCarveHole.cpp,v 1.2 2008-01-19 09:55:33 geuzaine Exp $
+// $Id: meshGRegionCarveHole.cpp,v 1.3 2008-01-19 22:06:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,6 +21,7 @@
 
 #include <set>
 #include "GModel.h"
+#include "MElement.h"
 #include "Message.h"
 
 #if !defined(HAVE_ANN)

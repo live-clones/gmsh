@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.80 2008-01-12 15:14:40 geuzaine Exp $
+// $Id: Entity.cpp,v 1.81 2008-01-19 22:06:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
+#include <string.h>
 #include "GmshUI.h"
 #include "Numeric.h"
 #include "Draw.h"

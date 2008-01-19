@@ -21,13 +21,17 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GEntity.h"
-#include "MElement.h"
-#include "ExtrudeParams.h"
+
+class MTetrahedron;
+class MHexahedron;
+class MPrism;
+class MPyramid;
+class ExtrudeParams;
 
 // A model region.
 class GRegion : public GEntity {
  protected:
-  std::list<GFace *> l_faces;
+  std::list<GFace*> l_faces;
   std::list<int> l_dirs;
 
  public:

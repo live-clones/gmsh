@@ -25,8 +25,9 @@
 #include "SVector3.h"
 #include "SPoint3.h"
 #include "SPoint2.h"
-#include "MElement.h"
-#include "ExtrudeParams.h"
+
+class MLine;
+class ExtrudeParams;
 
 // A model edge.
 class GEdge : public GEntity {

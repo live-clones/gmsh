@@ -20,6 +20,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <stdio.h>
+
 #define COLORTABLE_NBMAX_PARAM 10
 #define COLORTABLE_NBMAX_COLOR 1024
 

@@ -1,4 +1,4 @@
-// $Id: GRegion.cpp,v 1.18 2007-09-19 19:03:01 geuzaine Exp $
+// $Id: GRegion.cpp,v 1.19 2008-01-19 22:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,7 @@
 #include "GModel.h"
 #include "GRegion.h"
 #include "GFace.h"
+#include "MElement.h"
 
 GRegion::GRegion(GModel *model, int tag) : GEntity (model, tag)
 {

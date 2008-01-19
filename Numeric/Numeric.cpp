@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.37 2008-01-14 21:29:14 remacle Exp $
+// $Id: Numeric.cpp,v 1.38 2008-01-19 22:06:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,7 +22,7 @@
 // this file should contain only purely numerical routines (that do
 // not depend on any Gmsh structures)
 
-#include "Gmsh.h"
+#include "Message.h"
 #include "Numeric.h"
 
 // Check GSL version. We need at least 1.2, since all versions <=

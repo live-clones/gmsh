@@ -20,8 +20,9 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
 #include "GmshUI.h"
+#include "Message.h"
+#include "Malloc.h"
 #include "Draw.h"
 
 #if defined(HAVE_OSMESA)

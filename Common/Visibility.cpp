@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.28 2008-01-10 14:56:54 remacle Exp $
+// $Id: Visibility.cpp,v 1.29 2008-01-19 22:05:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,7 @@
 #include <string.h>
 #include "Visibility.h"
 #include "GModel.h"
+#include "MElement.h"
 #include "Parser.h" // for Symbol_T
 
 VisibilityManager *VisibilityManager::manager = 0;

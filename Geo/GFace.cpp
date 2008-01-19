@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.39 2007-11-04 21:03:17 remacle Exp $
+// $Id: GFace.cpp,v 1.40 2008-01-19 22:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,7 @@
 #include "GModel.h"
 #include "GFace.h"
 #include "GEdge.h"
+#include "MElement.h"
 #include "Message.h"
 #include "Numeric.h"
 #include "Context.h"

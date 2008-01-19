@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.145 2008-01-11 13:56:22 remacle Exp $
+// $Id: Post.cpp,v 1.146 2008-01-19 22:06:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
+#include "Message.h"
 #include "GmshUI.h"
 #include "Numeric.h"
 #include "Draw.h"

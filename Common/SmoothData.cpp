@@ -1,4 +1,4 @@
-// $Id: SmoothData.cpp,v 1.2 2007-03-05 09:30:53 geuzaine Exp $
+// $Id: SmoothData.cpp,v 1.3 2008-01-19 22:05:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,6 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
 #include "Numeric.h"
 #include "SmoothData.h"
 

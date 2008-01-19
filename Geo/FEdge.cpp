@@ -1,5 +1,7 @@
-#include "Message.h"
 #include "FEdge.h"
+#include "Context.h"
+
+extern Context_T CTX;
 
 #if defined(HAVE_FOURIER_MODEL)
 

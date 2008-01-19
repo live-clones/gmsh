@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.375 2008-01-14 21:29:13 remacle Exp $
+// $Id: Options.cpp,v 1.376 2008-01-19 22:05:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,9 +19,9 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
 #include "GmshUI.h"
 #include "GmshDefines.h"
+#include "MEssage.h"
 #include "Draw.h"
 #include "PView.h"
 #include "Generator.h"

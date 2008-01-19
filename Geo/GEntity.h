@@ -26,7 +26,6 @@
 #include "Range.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
-#include "GmshDefines.h"
 
 class GModel;
 class GVertex;

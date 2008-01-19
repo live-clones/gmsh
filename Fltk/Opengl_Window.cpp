@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.80 2007-09-26 20:51:58 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.81 2008-01-19 22:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,14 +19,16 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
-#include "Numeric.h"
 #include "GmshUI.h"
+#include "GmshDefines.h"
+#include "Message.h"
+#include "Numeric.h"
 #include "Context.h"
 #include "Draw.h"
 #include "SelectBuffer.h"
 #include "GUI.h"
 #include "Opengl_Window.h"
+#include "MElement.h"
 
 extern GUI *WID;
 extern Context_T CTX;

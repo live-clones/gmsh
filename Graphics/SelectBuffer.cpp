@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.16 2007-09-22 20:35:18 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.17 2008-01-19 22:06:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,13 +19,14 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
+#include "Message.h"
 #include "GmshUI.h"
 #include "GmshDefines.h"
+#include "GModel.h"
+#include "MElement.h"
 #include "Draw.h"
 #include "Context.h"
 #include "SelectBuffer.h"
-#include "GModel.h"
 #include "VertexArray.h"
 
 extern Context_T CTX;

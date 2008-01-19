@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.113 2007-12-03 15:17:39 remacle Exp $
+// $Id: Main.cpp,v 1.114 2008-01-19 22:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,10 +21,10 @@
 
 #include <signal.h>
 #include <time.h>
-
 #include "GUI.h"
-#include "Gmsh.h"
 #include "GmshUI.h"
+#include "Message.h"
+#include "Malloc.h"
 #include "OS.h"
 #include "Generator.h"
 #include "CreateFile.h"

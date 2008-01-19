@@ -1,4 +1,4 @@
-// $Id: meshGEdgeExtruded.cpp,v 1.7 2007-09-03 20:09:14 geuzaine Exp $
+// $Id: meshGEdgeExtruded.cpp,v 1.8 2008-01-19 22:06:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,8 +20,9 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <set>
-#include "ExtrudeParams.h"
 #include "GModel.h"
+#include "MElement.h"
+#include "ExtrudeParams.h"
 #include "Message.h"
 
 void extrudeMesh(GVertex *from, GEdge *to)

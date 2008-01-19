@@ -847,7 +847,7 @@ int yy_flex_debug = 0;
 char *yytext;
 #line 1 "Gmsh.l"
 #line 2 "Gmsh.l"
-// $Id: Gmsh.yy.cpp,v 1.340 2008-01-18 20:18:48 geuzaine Exp $
+// $Id: Gmsh.yy.cpp,v 1.341 2008-01-19 22:06:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -873,7 +873,7 @@ char *yytext;
 #include <string.h>
 #include <math.h>
 
-#include "Gmsh.h"
+#include "Message.h"
 #include "Numeric.h"
 #include "Geo.h"
 #include "Gmsh.tab.hpp"

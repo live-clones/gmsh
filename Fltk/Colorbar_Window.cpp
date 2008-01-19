@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.59 2007-09-10 04:47:02 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.60 2008-01-19 22:06:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,7 +24,6 @@
 // Copyright (C) 1990 - 1995 Bill Hibbard, Brian Paul, Dave Santek,
 // and Andre Battaiola.
    
-#include "Gmsh.h"
 #include "GmshUI.h"
 #include "GUI.h"
 #include "ColorTable.h"

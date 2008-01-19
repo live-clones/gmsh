@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.559 2008-01-14 21:29:13 remacle Exp $
+// $Id: Callbacks.cpp,v 1.560 2008-01-19 22:06:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,8 +24,12 @@
 #include <map>
 #include <string>
 
-#include "Gmsh.h"
 #include "GmshUI.h"
+#include "Message.h"
+#include "Malloc.h"
+#include "Tools.h"
+#include "GModel.h"
+#include "MElement.h"
 #include "GeoStringInterface.h"
 #include "findLinks.h"
 #include "Generator.h"
@@ -47,7 +51,6 @@
 #include "Numeric.h"
 #include "Solvers.h"
 #include "OS.h"
-#include "GModel.h"
 #include "Field.h"
 #include "BackgroundMesh.h"
 

@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.42 2008-01-12 18:40:14 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.43 2008-01-19 22:06:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,6 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "CreateFile.h"

@@ -28,13 +28,10 @@
 #include "GFace.h"
 #include "GRegion.h"
 #include "SBoundingBox3d.h"
-#include "SmoothData.h"
 
-// internal CAD representations
 class GEO_Internals;
 class OCC_Internals;
-class MVertex;
-class MElement;
+class smooth_normals;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel  

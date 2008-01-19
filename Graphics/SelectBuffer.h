@@ -26,6 +26,8 @@
 #include "GFace.h"
 #include "GRegion.h"
 
+class MElement;
+
 bool ProcessSelectionBuffer(int entityType, 
 			    bool multipleSelection, bool meshSelection,
 			    int x, int y, int w, int h, 

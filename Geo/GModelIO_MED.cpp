@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.6 2007-10-14 09:51:17 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.7 2008-01-19 22:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -215,7 +215,7 @@ int MedIO::SetFile(const std::string &FileName)
        return 0;
    }
    _boolOpen=1;
-    Msg(INFO,"File Open");
+    Msg(INFO, "File Open");
    return 1;
 }
  
@@ -381,7 +381,7 @@ int GModel::writeMED(const std::string &name)
 
 int GModel::writeMED(const std::string &name)
 {
-  Msg(GERROR,"Gmsh has to be compiled with MED support to write '%s'",
+  Msg(GERROR, "Gmsh has to be compiled with MED support to write '%s'",
       name.c_str());
   return 0;
 }

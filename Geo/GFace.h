@@ -21,14 +21,16 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <map>
-#include "GPoint.h"
 #include "GEntity.h"
+#include "GPoint.h"
 #include "GEdgeLoop.h"
-#include "MElement.h"
 #include "SPoint2.h"
 #include "SVector3.h"
 #include "Pair.h"
-#include "ExtrudeParams.h"
+
+class MTriangle;
+class MQuadrangle;
+class ExtrudeParams;
 
 struct mean_plane
 {

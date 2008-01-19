@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.22 2008-01-08 12:05:45 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.23 2008-01-19 22:06:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,11 +19,12 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
+#include "Message.h"
+#include "GModel.h"
+#include "GmshDefines.h"
 #include "OpenFile.h"
 #include "Context.h"
 #include "Options.h"
-#include "GModel.h"
 
 #if defined(HAVE_FLTK)
 #include "GmshUI.h"

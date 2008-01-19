@@ -20,6 +20,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <stdlib.h>
+
 void *Malloc(size_t size);
 void *Calloc(size_t num, size_t size);
 void *Realloc(void *ptr, size_t size);

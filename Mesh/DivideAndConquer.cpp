@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.10 2007-09-04 13:47:02 remacle Exp $
+// $Id: DivideAndConquer.cpp,v 1.11 2008-01-19 22:06:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -35,9 +35,10 @@
    eviter d'avoir 3 points alignes ou 4 points cocycliques !!!
 */
 
-#include "Gmsh.h"
+#include "Message.h"
 #include "Numeric.h"
 #include "DivideAndConquer.h"
+#include "Malloc.h"
 
 static PointRecord *pPointArray;
 

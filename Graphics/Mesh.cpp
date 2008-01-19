@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.210 2007-11-21 14:22:38 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.211 2008-01-19 22:06:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,14 +19,16 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
+#include "Message.h"
 #include "GmshUI.h"
 #include "GModel.h"
+#include "MElement.h"
 #include "Draw.h"
 #include "Context.h"
 #include "OS.h"
 #include "gl2ps.h"
 #include "VertexArray.h"
+#include "SmoothData.h"
 
 extern Context_T CTX;
 

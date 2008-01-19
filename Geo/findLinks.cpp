@@ -1,4 +1,4 @@
-// $Id: findLinks.cpp,v 1.2 2007-08-21 19:05:39 geuzaine Exp $
+// $Id: findLinks.cpp,v 1.3 2008-01-19 22:06:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,8 +19,11 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
+#include "Message.h"
 #include "GModel.h"
+#include "Tree.h"
+#include "List.h"
+#include "Tools.h"
 
 typedef struct{
   int n, a;

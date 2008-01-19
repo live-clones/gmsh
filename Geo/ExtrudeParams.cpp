@@ -1,4 +1,4 @@
-// $Id: ExtrudeParams.cpp,v 1.25 2007-09-26 20:51:58 geuzaine Exp $
+// $Id: ExtrudeParams.cpp,v 1.26 2008-01-19 22:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
+#include "Message.h"
 #include "Geo.h"
 #include "ExtrudeParams.h"
 

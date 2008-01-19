@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.48 2008-01-15 14:54:56 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.49 2008-01-19 22:06:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,11 +19,11 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
 #include "meshGEdge.h"
 #include "GEdge.h"
-#include "GFace.h"
+#include "MElement.h"
 #include "BackgroundMesh.h"
+#include "Numeric.h"
 #include "Message.h"
 
 typedef struct{

@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.74 2007-07-22 15:48:28 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.75 2008-01-19 22:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,8 +19,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
 #include "GmshUI.h"
+#include "GmshDefines.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "Draw.h"

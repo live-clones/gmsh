@@ -1,4 +1,4 @@
-// $Id: meshGRegionExtruded.cpp,v 1.19 2007-07-31 22:09:11 geuzaine Exp $
+// $Id: meshGRegionExtruded.cpp,v 1.20 2008-01-19 22:06:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,8 +20,9 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <set>
-#include "ExtrudeParams.h"
 #include "GModel.h"
+#include "MElement.h"
+#include "ExtrudeParams.h"
 #include "meshGFace.h"
 #include "meshGRegion.h"
 #include "Context.h"

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.94 2008-01-18 20:02:29 geuzaine Exp $
+// $Id: Gmsh.l,v 1.95 2008-01-19 22:06:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,7 +25,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "Gmsh.h"
+#include "Message.h"
 #include "Numeric.h"
 #include "Geo.h"
 #include "Gmsh.tab.hpp"

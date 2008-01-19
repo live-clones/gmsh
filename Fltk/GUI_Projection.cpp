@@ -1,4 +1,5 @@
 #include "GModelIO_F.h"
+#include "MElement.h"
 #include "Draw.h"
 #include "Options.h"
 #include "Context.h"

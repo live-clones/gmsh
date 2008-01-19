@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.23 2007-11-27 16:45:27 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.24 2008-01-19 22:06:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,8 +20,9 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <set>
-#include "ExtrudeParams.h"
 #include "GModel.h"
+#include "MElement.h"
+#include "ExtrudeParams.h"
 #include "Context.h"
 #include "Message.h"
 

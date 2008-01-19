@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.450 2008-01-19 10:13:34 geuzaine Exp $
+# $Id: Makefile,v 1.451 2008-01-19 22:05:58 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -58,6 +58,10 @@ install-mac: variables package-mac
 	cp -rf gmsh-${GMSH_VERSION}/Gmsh.app /Applications
 	rm -rf gmsh-${GMSH_VERSION} gmsh-${GMSH_VERSION}-MacOSX.tgz
 
+install-lib: compile
+	${AR} ${ARFLAGS}libGmsh${LIBEXT} lib/*${LIBEXT}
+	${RANLIB} libGmsh${LIBEXT}
+
 variables: configure
 	@echo "********************************************************************"
 	@echo "Please configure Gmsh by running ./configure"
@@ -73,10 +77,6 @@ parser:
 utils:
 	cd utils/converters/autocad && ${MAKE}
 	cd utils/misc && ${MAKE}
-
-biglib:
-	${AR} ${ARFLAGS}libGmsh${LIBEXT} lib/*${LIBEXT}
-	${RANLIB} libGmsh${LIBEXT}
 
 .PHONY: doc
 doc:

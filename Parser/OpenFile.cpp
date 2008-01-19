@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.166 2008-01-16 20:25:39 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.167 2008-01-19 22:06:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,7 @@
 #include <sys/cygwin.h>
 #endif
 
-#include "Gmsh.h"
+#include "Message.h"
 #include "Geo.h"
 #include "GModel.h"
 #include "Numeric.h"

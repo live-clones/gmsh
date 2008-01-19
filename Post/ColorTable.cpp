@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.2 2007-09-13 06:31:37 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.3 2008-01-19 22:06:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -28,7 +28,8 @@
 // Copyright (C) 1990 - 1995 Bill Hibbard, Brian Paul, Dave Santek,
 // and Andre Battaiola.
 
-#include "Gmsh.h"
+#include <string.h>
+#include "Message.h"
 #include "ColorTable.h"
 #include "Context.h"
 #include "Numeric.h"

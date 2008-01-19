@@ -1,4 +1,4 @@
-// $Id: ParUtil.cpp,v 1.18 2007-09-04 13:47:03 remacle Exp $
+// $Id: ParUtil.cpp,v 1.19 2008-01-19 22:06:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
+#include <string.h>
+#include <stdlib.h>
 #include "OS.h"
 #include "ParUtil.h"
 

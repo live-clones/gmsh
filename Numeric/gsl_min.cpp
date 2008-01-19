@@ -1,4 +1,4 @@
-// $Id: gsl_min.cpp,v 1.2 2008-01-18 20:41:33 geuzaine Exp $
+// $Id: gsl_min.cpp,v 1.3 2008-01-19 22:06:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,9 +19,10 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include "Message.h"
+
 #if defined(HAVE_GSL)
 
-#include "Gmsh.h"
 #include "Numeric.h"
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_math.h>
@@ -292,8 +293,6 @@ void minimize_N (int N,
 } 					    
 
 #else
-
-#include "Message.h"
 
 void minimize_2 ( double (*f) (double, double, void *data), 
 		  void (*df) (double, double, double &, double &, double &, void *data) ,

@@ -1,4 +1,4 @@
-// $Id: gsl_brent.cpp,v 1.16 2007-09-04 13:47:03 remacle Exp $
+// $Id: gsl_brent.cpp,v 1.17 2008-01-19 22:06:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,7 @@
 
 #if defined(HAVE_GSL)
 
-#include "Gmsh.h"
+#include "Message.h"
 #include "Numeric.h"
 
 #include <gsl/gsl_errno.h>

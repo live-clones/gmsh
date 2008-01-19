@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.41 2008-01-18 21:00:40 geuzaine Exp $
+# $Id: Makefile,v 1.42 2008-01-19 22:06:03 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -55,21 +55,9 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-Numeric.o: Numeric.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Numeric.h
+Numeric.o: Numeric.cpp ../Common/Message.h Numeric.h
 EigSolve.o: EigSolve.cpp
 predicates.o: predicates.cpp
-gsl_newt.o: gsl_newt.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Numeric.h
-gsl_min.o: gsl_min.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Numeric.h
-gsl_brent.o: gsl_brent.cpp ../Common/Gmsh.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h \
-  Numeric.h
+gsl_newt.o: gsl_newt.cpp ../Common/Message.h Numeric.h
+gsl_min.o: gsl_min.cpp ../Common/Message.h Numeric.h
+gsl_brent.o: gsl_brent.cpp ../Common/Message.h Numeric.h

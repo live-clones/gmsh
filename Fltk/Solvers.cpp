@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.57 2007-09-24 08:14:28 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.58 2008-01-19 22:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
+#include "Message.h"
 #include "Solvers.h"
 #include "GmshServer.h"
 #include "OpenFile.h"

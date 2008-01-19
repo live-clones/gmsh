@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.37 2007-09-11 14:01:55 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.38 2008-01-19 22:06:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,7 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <vector>
-#include "Gmsh.h"
+#include "Message.h"
 #include "gmshFace.h"
 #include "MVertex.h"
 #include "Triangulate.h"

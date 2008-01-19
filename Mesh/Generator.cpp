@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.128 2007-12-03 15:17:40 remacle Exp $
+// $Id: Generator.cpp,v 1.129 2008-01-19 22:06:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,12 +19,13 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
+#include "Message.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "PView.h"
 #include "OS.h"
 #include "GModel.h"
+#include "MElement.h"
 #include "meshGEdge.h"
 #include "meshGFace.h"
 #include "meshGRegion.h"

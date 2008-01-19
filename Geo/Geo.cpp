@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.99 2008-01-16 21:51:47 geuzaine Exp $
+// $Id: Geo.cpp,v 1.100 2008-01-19 22:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,8 +19,10 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Gmsh.h"
+#include "Message.h"
 #include "Numeric.h"
+#include "Malloc.h"
+#include "Tools.h"
 #include "Geo.h"
 #include "GModel.h"
 #include "GeoInterpolation.h"

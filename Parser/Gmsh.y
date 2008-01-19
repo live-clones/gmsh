@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.293 2008-01-18 20:18:48 geuzaine Exp $
+// $Id: Gmsh.y,v 1.294 2008-01-19 22:06:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,9 +22,11 @@
 
 #include <stdarg.h>
 #include <time.h>
+#include "Message.h"
+#include "Malloc.h"
+#include "Tools.h"
 #include "PluginManager.h"
 #include "ParUtil.h"
-#include "Gmsh.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "GModel.h"

@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.39 2007-09-26 20:51:57 geuzaine Exp $
+// $Id: Box.cpp,v 1.40 2008-01-19 22:05:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,7 +20,8 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <signal.h>
-#include "Gmsh.h"
+#include "GModel.h"
+#include "Message.h"
 #include "OS.h"
 #include "Numeric.h"
 #include "Generator.h"
@@ -32,7 +33,6 @@
 #include "CreateFile.h"
 #include "ParUtil.h"
 #include "PluginManager.h"
-#include "GModel.h"
 #include "Field.h"
 #include "BackgroundMesh.h"
 

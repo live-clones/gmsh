@@ -1,4 +1,4 @@
-// $Id: gsl_newt.cpp,v 1.16 2007-08-27 19:27:02 geuzaine Exp $
+// $Id: gsl_newt.cpp,v 1.17 2008-01-19 22:06:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,9 +25,10 @@
 
 // This implements a Newton method using the GSL.
 
+#include "Message.h"
+
 #if defined(HAVE_GSL)
 
-#include "Gmsh.h"
 #include "Numeric.h"
 
 #include <gsl/gsl_math.h>

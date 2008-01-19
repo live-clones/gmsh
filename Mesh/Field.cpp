@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.11 2008-01-19 09:55:33 geuzaine Exp $
+// $Id: Field.cpp,v 1.12 2008-01-19 22:06:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,8 +21,7 @@
 
 #include <fstream>
 #include <math.h>
-#include <BDS.h>
-#include "Gmsh.h"
+#include "Message.h"
 #include "Field.h"
 #include "Context.h"
 #include "GeoInterpolation.h"
