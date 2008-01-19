@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.21 2008-01-18 20:13:13 geuzaine Exp $
+# $Id: Makefile,v 1.22 2008-01-19 00:24:34 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,9 +21,10 @@
 
 include ../../variables
 
-LIB     = ../../lib/libGmshNetgen.a
-INCLUDE = -I../../Common -Ilibsrc/include -Ilibsrc/interface
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} -DNO_PARALLEL_THREADS -UWIN32
+LIB     = ../../lib/libGmshNetgen${LIBEXT}
+INCLUDE = ${DASH}I../../Common ${DASH}Ilibsrc/include ${DASH}Ilibsrc/interface
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}\
+          ${DASH}DNO_PARALLEL_THREADS ${DASH}UWIN32
 
 SRC = libsrc/opti/linopt.cpp \
 	libsrc/opti/bfgs.cpp \
@@ -125,19 +126,19 @@ SRC = libsrc/opti/linopt.cpp \
 	libsrc/general/mystring.cpp \
 	nglib_addon.cpp
 
-OBJ = ${SRC:.cpp=.o}
+OBJ = ${SRC:.cpp=${OBJEXT}}
 
-.SUFFIXES: .o .cpp
+.SUFFIXES: ${OBJEXT} .cpp
 
 ${LIB}: ${OBJ} 
-	${AR} ${LIB} ${OBJ} 
+	${AR} ${ARFLAGS}${LIB} ${OBJ} 
 	${RANLIB} ${LIB}
 
-.cpp.o:
-	${CXX} ${CFLAGS} -c $< -o ${<:.cpp=.o}
+.cpp${OBJEXT}:
+	${CXX} ${CFLAGS} ${DASH}c $< ${DASH}o ${<:.cpp=.obj}
 
 clean:
-	rm -f *.o libsrc/*/*.o
+	rm -f *${OBJEXT} libsrc/*/*${OBJEXT}
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
