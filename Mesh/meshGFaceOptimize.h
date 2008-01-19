@@ -19,11 +19,13 @@
 // USA.
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
+
+#include <map>
+#include <vector>
 #include "MElement.h"
 #include "MEdge.h"
 #include "meshGFaceDelaunayInsertion.h"
-#include <map>
-#include <vector>
+
 class GFace;
 class MVertex;
 typedef std::map<MVertex*,std::vector<MTriangle*> > v2t_cont ;

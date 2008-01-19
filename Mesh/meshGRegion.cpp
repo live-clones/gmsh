@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.38 2008-01-14 21:29:14 remacle Exp $
+// $Id: meshGRegion.cpp,v 1.39 2008-01-19 23:04:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <vector>
 #include "meshGRegion.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "GModel.h"
@@ -28,7 +29,9 @@
 #include "gmshRegion.h"
 #include "BDS.h"
 #include "Message.h"
-#include <vector>
+#include "Context.h"
+
+extern Context_T CTX;
 
 void getAllBoundingVertices(GRegion *gr, std::set<MVertex*> &allBoundingVertices)
 {

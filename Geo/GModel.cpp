@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.53 2008-01-19 22:06:01 geuzaine Exp $
+// $Id: GModel.cpp,v 1.54 2008-01-19 23:04:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,9 @@
 #include "Field.h"
 #include "BackgroundMesh.h"
 #include "Message.h"
+#include "Context.h"
+
+extern Context_T CTX;
 
 std::vector<GModel*> GModel::list;
 

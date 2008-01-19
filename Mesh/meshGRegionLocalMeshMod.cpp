@@ -2,6 +2,7 @@
 #include "GEntity.h"
 #include "GRegion.h"
 #include "Message.h"
+#include "Numeric.h"
 
 static int edges[6][2] =    {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
 static int efaces[6][2] =   {{0,2},{0,1},{1,2},{0,3},{2,3},{1,3}};

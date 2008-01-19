@@ -24,11 +24,6 @@
 #include <vector>
 #include "MVertex.h"
 #include "SVector3.h"
-#include "Numeric.h"
-#include "Context.h"
-#include "Hash.h"
-
-extern Context_T CTX;
 
 // A mesh face.
 class MFace {
@@ -37,60 +32,7 @@ class MFace {
   char _si[4];                          // sorted indices
 
  public:
-  MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3=0) 
-  {
-    if(CTX.mesh.reverse_all_normals){
-      // Note that we cannot simply change the normal computation,
-      // since OpenGL wants the normal to a polygon to be coherent
-      // with the ordering of its vertices
-      if(v3){
-	_v[0] = v0; _v[1] = v3; _v[2] = v2; _v[3] = v1;
-      }
-      else{
-	_v[0] = v0; _v[1] = v2; _v[2] = v1; _v[3] = v3;
-      }
-    }
-    else{
-      _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
-    }
-    // This is simply an unrolled insertion sort (hopefully fast).  Note that if
-    // _v[3] == 0, _v[3] is not sorted.
-    if(_v[1] < _v[0]) {
-      _si[0] = 1;
-      _si[1] = 0;
-    }
-    else {
-      _si[0] = 0;
-      _si[1] = 1;
-    }
-    if(_v[2] < _v[int(_si[1])]) {
-      _si[2] = _si[1];
-      if(_v[2] < _v[int(_si[0])]) {
-        _si[1] = _si[0];
-        _si[0] = 2;
-      }
-      else
-        _si[1] = 2;
-    }
-    else
-      _si[2] = 2;
-    if( _v[3] && _v[3] < _v[int(_si[2])]) {
-      _si[3] = _si[2];
-      if(_v[3] < _v[int(_si[1])]) {
-        _si[2] = _si[1];
-        if(_v[3] < _v[int(_si[0])]) {
-          _si[1] = _si[0];
-          _si[0] = 3;
-        }
-        else
-          _si[1] = 3;
-      }
-      else
-        _si[2] = 3;
-    }
-    else
-      _si[3] = 3;
-  }
+  MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3=0);
   inline int getNumVertices() const { return _v[3] ? 4 : 3; }
   inline MVertex *getVertex(const int i) const { return _v[i]; }
   inline MVertex *getSortedVertex(const int i) const { return _v[int(_si[i])]; }
@@ -106,14 +48,7 @@ class MFace {
     verts[2] = getSortedVertex(2);
     verts[3] = getSortedVertex(3);
   }
-  SVector3 normal() const
-  {
-    double n[3];
-    normal3points(_v[0]->x(), _v[0]->y(), _v[0]->z(),
-		  _v[1]->x(), _v[1]->y(), _v[1]->z(),
-		  _v[2]->x(), _v[2]->y(), _v[2]->z(), n);
-    return SVector3(n[0], n[1], n[2]);
-  }
+  SVector3 normal() const;
   SVector3 tangent(int num) const
   {
     SVector3 t0(_v[1]->x() - _v[0]->x(), 
@@ -170,9 +105,6 @@ class MFace {
   }
 };
 
-//--The following function objects compare the addresses of the mesh vertices.
-//--Equal, Less, and a Hash are defined.
-
 struct Equal_Face : public std::binary_function<MFace, MFace, bool> {
   bool operator()(const MFace &f1, const MFace &f2) const
   {
@@ -194,15 +126,6 @@ struct Less_Face : public std::binary_function<MFace, MFace, bool> {
     if(f1.getSortedVertex(2) > f2.getSortedVertex(2)) return false;
     if(f1.getSortedVertex(3) < f2.getSortedVertex(3)) return true;
     return false;
-  }
-};
-
-struct Hash_Face : public std::unary_function<MFace, size_t> {
-  size_t operator()(const MFace &f) const
-  {
-    const MVertex *v[4];
-    f.getOrderedVertices(v);
-    return HashFNV1a<sizeof(MVertex*[4])>::eval(v);
   }
 };
 

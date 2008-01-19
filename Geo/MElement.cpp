@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.47 2008-01-14 21:29:13 remacle Exp $
+// $Id: MElement.cpp,v 1.48 2008-01-19 23:04:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -112,6 +112,113 @@ double MTetrahedron::etaShapeMeasure()
 {
   double vol;
   return qmTet(this,QMTET_3,&vol);
+}
+
+void MTetrahedron::getMat(double mat[3][3])
+{
+  mat[0][0] = _v[1]->x() - _v[0]->x();
+  mat[0][1] = _v[2]->x() - _v[0]->x();
+  mat[0][2] = _v[3]->x() - _v[0]->x();
+  mat[1][0] = _v[1]->y() - _v[0]->y();
+  mat[1][1] = _v[2]->y() - _v[0]->y();
+  mat[1][2] = _v[3]->y() - _v[0]->y();
+  mat[2][0] = _v[1]->z() - _v[0]->z();
+  mat[2][1] = _v[2]->z() - _v[0]->z();
+  mat[2][2] = _v[3]->z() - _v[0]->z();
+}
+
+double MTetrahedron::getVolume()
+{ 
+  double mat[3][3];
+  getMat(mat);
+  return det3x3(mat) / 6.;
+}
+
+bool MTetrahedron::invertmapping(double *p, double *uvw, double tol)
+{
+  double mat[3][3];
+  double b[3], dum;
+  getMat(mat);
+  b[0] = p[0] - getVertex(0)->x();
+  b[1] = p[1] - getVertex(0)->y();
+  b[2] = p[2] - getVertex(0)->z();
+  sys3x3(mat, b, uvw, &dum);
+  if(uvw[0] >= -tol && uvw[1] >= -tol && uvw[2] >= -tol &&
+     uvw[0] <= 1. + tol && uvw[1] <= 1. + tol && uvw[2] <= 1. + tol &&
+     1. - uvw[0] - uvw[1] - uvw[2] > -tol) {
+    return true;
+  }
+  return false;
+}
+
+void MTetrahedron::circumcenter(double X[4], double Y[4], double Z[4], double *res)
+{
+  double mat[3][3], b[3], dum;    
+  b[0] = X[1] * X[1] - X[0] * X[0] +
+    Y[1] * Y[1] - Y[0] * Y[0] + Z[1] * Z[1] - Z[0] * Z[0];
+  b[1] = X[2] * X[2] - X[1] * X[1] +
+    Y[2] * Y[2] - Y[1] * Y[1] + Z[2] * Z[2] - Z[1] * Z[1];
+  b[2] = X[3] * X[3] - X[2] * X[2] +
+    Y[3] * Y[3] - Y[2] * Y[2] + Z[3] * Z[3] - Z[2] * Z[2];
+  for(int i = 0; i < 3; i++)
+    b[i] *= 0.5;
+  mat[0][0] = X[1] - X[0];
+  mat[0][1] = Y[1] - Y[0];
+  mat[0][2] = Z[1] - Z[0];
+  mat[1][0] = X[2] - X[1];
+  mat[1][1] = Y[2] - Y[1];
+  mat[1][2] = Z[2] - Z[1];
+  mat[2][0] = X[3] - X[2];
+  mat[2][1] = Y[3] - Y[2];
+  mat[2][2] = Z[3] - Z[2];
+  if(!sys3x3(mat, b, res, &dum)) {
+    res[0] = res[1] = res[2] = 10.0e10;
+  }
+}
+
+int MHexahedron::getVolumeSign()
+{ 
+  double mat[3][3];
+  mat[0][0] = _v[1]->x() - _v[0]->x();
+  mat[0][1] = _v[3]->x() - _v[0]->x();
+  mat[0][2] = _v[4]->x() - _v[0]->x();
+  mat[1][0] = _v[1]->y() - _v[0]->y();
+  mat[1][1] = _v[3]->y() - _v[0]->y();
+  mat[1][2] = _v[4]->y() - _v[0]->y();
+  mat[2][0] = _v[1]->z() - _v[0]->z();
+  mat[2][1] = _v[3]->z() - _v[0]->z();
+  mat[2][2] = _v[4]->z() - _v[0]->z();
+  return sign(det3x3(mat));
+}
+
+int MPrism::getVolumeSign()
+{ 
+  double mat[3][3];
+  mat[0][0] = _v[1]->x() - _v[0]->x();
+  mat[0][1] = _v[2]->x() - _v[0]->x();
+  mat[0][2] = _v[3]->x() - _v[0]->x();
+  mat[1][0] = _v[1]->y() - _v[0]->y();
+  mat[1][1] = _v[2]->y() - _v[0]->y();
+  mat[1][2] = _v[3]->y() - _v[0]->y();
+  mat[2][0] = _v[1]->z() - _v[0]->z();
+  mat[2][1] = _v[2]->z() - _v[0]->z();
+  mat[2][2] = _v[3]->z() - _v[0]->z();
+  return sign(det3x3(mat));
+}
+
+int MPyramid::getVolumeSign()
+{ 
+  double mat[3][3];
+  mat[0][0] = _v[1]->x() - _v[0]->x();
+  mat[0][1] = _v[3]->x() - _v[0]->x();
+  mat[0][2] = _v[4]->x() - _v[0]->x();
+  mat[1][0] = _v[1]->y() - _v[0]->y();
+  mat[1][1] = _v[3]->y() - _v[0]->y();
+  mat[1][2] = _v[4]->y() - _v[0]->y();
+  mat[2][0] = _v[1]->z() - _v[0]->z();
+  mat[2][1] = _v[3]->z() - _v[0]->z();
+  mat[2][2] = _v[4]->z() - _v[0]->z();
+  return sign(det3x3(mat));
 }
 
 SPoint3 MElement::barycenter()

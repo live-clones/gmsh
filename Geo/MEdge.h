@@ -23,7 +23,6 @@
 #include <functional>
 #include "MVertex.h"
 #include "SVector3.h"
-#include "Hash.h"
 
 // A mesh edge.
 class MEdge {
@@ -83,17 +82,12 @@ class MEdge {
   }
 };
 
-//--Operators for comparing edges
-
 inline bool operator!=(const MEdge &e1, const MEdge &e2)
 {
   return (e1.getMinVertex() != e2.getMinVertex() ||
           e1.getMaxVertex() != e2.getMaxVertex());
 }
   
-//--The following function objects compare the addresses of the mesh vertices.
-//--Equal, Less, and a Hash are defined.
-
 struct Equal_Edge : public std::binary_function<MEdge, MEdge, bool> {
   bool operator()(const MEdge &e1, const MEdge &e2) const
   {
@@ -109,16 +103,6 @@ struct Less_Edge : public std::binary_function<MEdge, MEdge, bool> {
     if(e1.getMinVertex() > e2.getMinVertex()) return false;
     if(e1.getMaxVertex() < e2.getMaxVertex()) return true;
     return false;
-  }
-};
-
-struct Hash_Edge : public std::unary_function<MEdge, size_t> {
-  size_t operator()(const MEdge &e) const
-  {
-    const MVertex *v[2];
-    v[0] = e.getMinVertex();
-    v[1] = e.getMaxVertex();
-    return HashFNV1a<sizeof(MVertex*[2])>::eval(v);
   }
 };
 

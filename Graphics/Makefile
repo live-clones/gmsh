@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.132 2008-01-19 22:06:02 geuzaine Exp $
+# $Id: Makefile,v 1.133 2008-01-19 23:04:13 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -90,10 +90,10 @@ Mesh.o: Mesh.cpp ../Common/Message.h ../Common/GmshUI.h ../Geo/GModel.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
   ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
   ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Common/Hash.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/Numeric.h ../Common/Context.h ../DataStr/List.h Draw.h \
-  ../Common/OS.h gl2ps.h ../Common/VertexArray.h ../Common/Context.h \
-  ../Common/SmoothData.h
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h Draw.h \
+  ../Common/Context.h ../DataStr/List.h ../Common/OS.h gl2ps.h \
+  ../Common/VertexArray.h ../Common/Context.h ../Common/SmoothData.h \
+  ../Numeric/Numeric.h
 Geom.o: Geom.cpp ../Common/GmshUI.h Draw.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Common/Context.h ../DataStr/List.h gl2ps.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
@@ -120,10 +120,10 @@ SelectBuffer.o: SelectBuffer.cpp ../Common/Message.h ../Common/GmshUI.h \
   ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
   ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Geo/MVertex.h \
-  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Hash.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h ../Numeric/Numeric.h \
-  ../Common/Context.h ../DataStr/List.h Draw.h SelectBuffer.h \
-  ../Common/VertexArray.h ../Common/Context.h
+  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h Draw.h ../Common/Context.h \
+  ../DataStr/List.h SelectBuffer.h ../Common/VertexArray.h \
+  ../Common/Context.h
 Iso.o: Iso.cpp ../Numeric/Numeric.h
 Entity.o: Entity.cpp ../Common/GmshUI.h ../Numeric/Numeric.h Draw.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/Context.h \

@@ -37,6 +37,8 @@
 #include "GEdge.h"
 #include "GFace.h"
 #include "GRegion.h"
+#include "MEdgeHash.h"
+#include "MFaceHash.h"
 #include "GmshDefines.h"
 
 // #define HAVE_HASH_MAP

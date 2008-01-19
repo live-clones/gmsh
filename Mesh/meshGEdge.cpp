@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.49 2008-01-19 22:06:03 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.50 2008-01-19 23:04:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,10 @@
 #include "BackgroundMesh.h"
 #include "Numeric.h"
 #include "Message.h"
+#include "List.h"
+#include "Context.h"
+
+extern Context_T CTX;
 
 typedef struct{
   int Num;
