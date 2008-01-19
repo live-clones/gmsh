@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.23 2008-01-19 00:49:08 geuzaine Exp $
+# $Id: Makefile,v 1.24 2008-01-19 00:59:31 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -135,7 +135,7 @@ ${LIB}: ${OBJ}
 	${RANLIB} ${LIB}
 
 .cpp${OBJEXT}:
-	${CXX} ${CFLAGS} ${DASH}c $< ${DASH}o ${<:.cpp=.obj}
+	${CXX} ${CFLAGS} ${DASH}c $< ${DASH}o ${<:.cpp=${OBJEXT}}
 	if [ -r ${notdir ${<:.cpp=${OBJEXT}}} ]; then\
            mv -f ${notdir ${<:.cpp=${OBJEXT}}} ${<:.cpp=${OBJEXT}};\
         fi
