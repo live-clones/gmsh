@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.146 2008-01-19 00:49:08 geuzaine Exp $
+dnl $Id: configure.in,v 1.147 2008-01-19 09:55:32 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 dnl
@@ -92,9 +92,6 @@ AC_ARG_ENABLE(gui,
 AC_ARG_ENABLE(cygwin,
               AC_HELP_STRING([--enable-cygwin],
                              [use the Cygwin library on Windows (default=no)]))
-AC_ARG_ENABLE(vc,
-              AC_HELP_STRING([--enable-vc],
-                             [use the Visual C++ toolchain on Windows (default=no)]))
 AC_ARG_ENABLE(parallel,
               AC_HELP_STRING([--enable-parallel],
                              [enable parallel version (default=no)]))
@@ -155,40 +152,19 @@ UNAME=`uname`
 HOSTNAME=`hostname`
 
 dnl Check for default compilers
-if test "x$enable_vc" = "xyes"; then
-  UNAME=VC
-  CC=cl
-  CXX="cl /EHsc"
-  OBJEXT=.obj
-  LIBEXT=.lib
-  DASH=/
-  FLAGS="/DWIN32 /DYY_NO_UNISTD_H /DHAVE_NO_DLL"
-  OPTIM=/O2
-  SYSINCLUDE="/I\"C:\Program Files\Microsoft Visual Studio 9.0\VC\INCLUDE\" /I\"C:\Program Files\Microsoft SDKs\Windows\v6.0A\include\""
-  dnl increase stack size to 16Mb to avoid stack overflows in recursive 
-  dnl tet classification for large 3D Delaunay grids
-  LINKER="cl /F16777216"
-  EXEEXT=".exe"
-else
-  AC_PROG_CC
-  AC_PROG_CXX
-  if test "x${CC}" = "x" -o "x${CXX}" = "x" ; then
-    AC_MSG_ERROR([Could not find required compilers, aborting.])
-  fi
-  OBJEXT=.o
-  LIBEXT=.a
-  AC_PROG_CPP
-  DASH=-
-  FLAGS=""
-  OPTIM="${CXXFLAGS}"
-  SYSINCLUDE=""
-  LINKER="${CXX}"
-  dnl See if we need a .exe extension on executables
-  AC_EXEEXT
+AC_PROG_CC
+AC_PROG_CXX
+if test "x${CC}" = "x" -o "x${CXX}" = "x" ; then
+  AC_MSG_ERROR([Could not find required compilers, aborting.])
 fi
 
-dnl Use c++ for all compilation tests
-AC_LANG(C++)
+dnl Set preprocessor and linker
+AC_PROG_CPP
+LINKER="${CXX}"
+
+dnl Set default compiler flags
+FLAGS=""
+OPTIM="${CXXFLAGS}"
 
 dnl Take care of no-cygwin option before doing any other tests
 case "$UNAME" in
@@ -204,17 +180,17 @@ case "$UNAME" in
     ;;
 esac
 
+dnl Use c++ for all compilation tests
+AC_LANG(C++)
+
+dnl See if we need a .exe extension on executables
+AC_EXEEXT
+
 dnl How to build static libraries?
 case "$UNAME" in
   Darwin*)
     RANLIB=true
     AR="libtool -o"
-    ARFLAGS=""
-    ;;
-  VC*)
-    RANLIB=true
-    AR="LIB"
-    ARFLAGS="/OUT:"
     ;;
   *)
     AC_PROG_RANLIB
@@ -223,7 +199,6 @@ case "$UNAME" in
       AC_MSG_ERROR([Could not find the library archiver, aborting.])
     fi
     AR="${AR} ruvs"
-    ARFLAGS=""
     ;;
 esac
 
@@ -231,7 +206,7 @@ dnl Set default subdirectories and libraries
 GMSH_DIRS="Common DataStr Geo Mesh Post Numeric Parallel Parser Plugin"
 
 dnl Choose blackbox or GUI version
-if test "x$enable_gui" != "xno" -a "x$enable_vc" != "xyes"; then
+if test "x$enable_gui" != "xno"; then
 
   GMSH_DIRS="${GMSH_DIRS} Graphics Fltk"
   GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo"
@@ -362,13 +337,9 @@ if test "x$enable_gui" != "xno" -a "x$enable_vc" != "xyes"; then
 else
 
   GMSH_DIRS="${GMSH_DIRS} Box"
-  if test "x$enable_vc" = "xyes"; then
-    GMSH_LIBS="Box/Main.obj lib/*.lib"
-  else
-    GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo"
-    GMSH_LIBS="${GMSH_LIBS} -lGmshPlugin -lGmshPost -lGmshCommon -lGmshDataStr"
-    GMSH_LIBS="${GMSH_LIBS} -lGmshNumeric -lGmshParallel"
-  fi
+  GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshPlugin -lGmshPost -lGmshCommon -lGmshDataStr"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshNumeric -lGmshParallel"
 
   dnl Check for libz
   ZLIB=""
@@ -381,23 +352,18 @@ else
 
 fi
 
-if test "x$enable_vc" = "xyes"; then
-  FLAGS="${FLAGS} /DHAVE_NO_VSNPRINTF /DHAVE_NO_SNPRINTF /DHAVE_NO_SOCKLEN_T"
-else
-  dnl Check for standard math library
-  AC_CHECK_LIB(m,main)
+dnl Check for standard math library
+AC_CHECK_LIB(m,main)
 
-  dnl Check for various functions
-  AC_CHECK_FUNC(vsnprintf,,FLAGS="-DHAVE_NO_VSNPRINTF ${FLAGS}")
-  AC_CHECK_FUNC(snprintf,,FLAGS="-DHAVE_NO_SNPRINTF ${FLAGS}")
+dnl Check for various functions
+AC_CHECK_FUNC(vsnprintf,,FLAGS="-DHAVE_NO_VSNPRINTF ${FLAGS}")
+AC_CHECK_FUNC(snprintf,,FLAGS="-DHAVE_NO_SNPRINTF ${FLAGS}")
 
-  dnl Check if Unix98 socklen_t type is available
-  AC_TRY_COMPILE(
-   [#include <sys/types.h>
-    #include <sys/socket.h>],
-   [socklen_t len = 42; return 0;],,FLAGS="-DHAVE_NO_SOCKLEN_T ${FLAGS}")
-fi  
-
+dnl Check if Unix98 socklen_t type is available
+AC_TRY_COMPILE(
+  [#include <sys/types.h>
+   #include <sys/socket.h>],
+  [socklen_t len = 42; return 0;],,FLAGS="-DHAVE_NO_SOCKLEN_T ${FLAGS}")
 
 dnl Check if we should consider the packages in contrib
 if test "x$enable_contrib" != "xno"; then
@@ -408,7 +374,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x$enable_triangle" != "xno"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/Triangle"
        GMSH_LIBS="${GMSH_LIBS} -lGmshTriangle"
-       FLAGS="${DASH}DHAVE_TRIANGLE ${FLAGS}"
+       FLAGS="-DHAVE_TRIANGLE ${FLAGS}"
        echo "********************************************************************"
        echo "You are building a version of Gmsh that contains Jonathan"
        echo "Shewchuk's Triangle as an alternative isotropic 2D mesh generator."
@@ -441,7 +407,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x$enable_ann" != "xno"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/ANN"
        GMSH_LIBS="${GMSH_LIBS} -lGmshANN"
-       FLAGS="${DASH}DHAVE_ANN_ ${FLAGS}"
+       FLAGS="-DHAVE_ANN ${FLAGS}"
        echo "********************************************************************"
        echo "You are building a version of Gmsh that contains ANN, the"
        echo "Approximate Nearest Neighbor library."
@@ -469,7 +435,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x$enable_metis" = "xyes"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/Metis"
        GMSH_LIBS="${GMSH_LIBS} -lGmshMetis"
-       FLAGS="${DASH}DHAVE_METIS ${FLAGS}"
+       FLAGS="-DHAVE_METIS ${FLAGS}"
        echo "********************************************************************"
        echo "You are building a version of Gmsh that contains METIS, the"
        echo "Serial Graph Partitioner."
@@ -497,7 +463,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x$enable_netgen" != "xno"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/Netgen"
        GMSH_LIBS="${GMSH_LIBS} -lGmshNetgen"
-       FLAGS="${DASH}DHAVE_NETGEN ${FLAGS}"
+       FLAGS="-DHAVE_NETGEN ${FLAGS}"
        echo "********************************************************************"
        echo "You are building a version of Gmsh that contains Joachim Schoberl's"
        echo "Netgen as an alternative 3D mesh generator. Netgen is distributed"
@@ -526,7 +492,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x$enable_tetgen" != "xno"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/Tetgen"
        GMSH_LIBS="${GMSH_LIBS} -lGmshTetgen"
-       FLAGS="${DASH}DHAVE_TETGEN ${FLAGS}"
+       FLAGS="-DHAVE_TETGEN ${FLAGS}"
        echo "********************************************************************"
        echo "You are building a version of Gmsh that contains Hang Si's"
        echo "Tetgen as an alternative 3D mesh generator."
@@ -558,7 +524,7 @@ if test "x$enable_contrib" != "xno"; then
     if test "x${MATHEVAL}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/MathEval"
       GMSH_LIBS="${GMSH_LIBS} -lGmshMathEval"
-      FLAGS="${DASH}DHAVE_MATH_EVAL ${FLAGS}"
+      FLAGS="-DHAVE_MATH_EVAL ${FLAGS}"
     fi
   fi
 
@@ -572,12 +538,12 @@ if test "x$enable_gsl" != "xno"; then
   AC_CHECK_LIB(gslcblas,main)
   AC_CHECK_LIB(gsl,main,GSL="yes",GSL="no")
   if test "x${GSL}" = "xyes"; then
-    FLAGS="${DASH}DHAVE_GSL ${FLAGS}"
+    FLAGS="-DHAVE_GSL ${FLAGS}"
     if test "x${GSL_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lgsl -lgslcblas"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${GSL_PREFIX} -L${GSL_PREFIX}/lib -lgsl -lgslcblas"
-      FLAGS="${FLAGS} ${DASH}I${GSL_PREFIX} ${DASH}I${GSL_PREFIX}/include"
+      FLAGS="${FLAGS} -I${GSL_PREFIX} -I${GSL_PREFIX}/include"
     fi
   fi
 fi
@@ -624,10 +590,10 @@ if test "x$enable_cgns" = "xyes"; then
   if test "x${CGNS}" = "xyes"; then
     if test "x${CGNS_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lcgns"
-      FLAGS="${FLAGS} ${DASH}DHAVE_LIBCGNS"
+      FLAGS="${FLAGS} -DHAVE_LIBCGNS"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${CGNS_PREFIX}/lib -lcgns"
-      FLAGS="${FLAGS} ${DASH}DHAVE_LIBCGNS ${DASH}I${CGNS_PREFIX}/include"
+      FLAGS="${FLAGS} -DHAVE_LIBCGNS -I${CGNS_PREFIX}/include"
     fi
   fi
 fi
@@ -655,10 +621,10 @@ if test "x$enable_occ" = "xyes"; then
     OCC_LIBS="${OCC_LIBS} -lTKAdvTools -lTKMath -lTKernel"
     if test "x${OCC_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} ${OCC_LIBS}"
-      FLAGS="${FLAGS} ${DASH}DHAVE_OCC"
+      FLAGS="${FLAGS} -DHAVE_OCC"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib ${OCC_LIBS}"
-      FLAGS="${FLAGS} ${DASH}DHAVE_OCC ${DASH}I${OCC_PREFIX}/inc"
+      FLAGS="${FLAGS} -DHAVE_OCC -I${OCC_PREFIX}/inc"
     fi
   fi
 fi
@@ -692,16 +658,16 @@ if test "x$enable_fm" != "xno"; then
       else
         if test "x${FM_PREFIX}" = "x"; then
           GMSH_LIBS="${GMSH_LIBS} -lFourierModel"
-          FLAGS="${DASH}DHAVE_FOURIER_MODEL ${FLAGS}"
+          FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS}"
         else
           GMSH_LIBS="${GMSH_LIBS} -L${FM_PREFIX}/lib -lFourierModel"
-          FLAGS="${DASH}DHAVE_FOURIER_MODEL ${DASH}I${FM_PREFIX} ${FLAGS}"
+          FLAGS="-DHAVE_FOURIER_MODEL -I${FM_PREFIX} ${FLAGS}"
         fi
         if test "x${FFTW3_PREFIX}" = "x"; then
           GMSH_LIBS="${GMSH_LIBS} -lfftw3"
         else
           GMSH_LIBS="${GMSH_LIBS} -L${FFTW3_PREFIX}/lib -lfftw3"
-          FLAGS="${FLAGS} ${DASH}I${FFTW3_PREFIX}/include"
+          FLAGS="${FLAGS} -I${FFTW3_PREFIX}/include"
         fi
         if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
           GMSH_LIBS="${GMSH_LIBS} -L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib"
@@ -732,7 +698,7 @@ if test "x${ZLIB}" = "xyes"; then
         GMSH_LIBS="${GMSH_LIBS} -lhdf5"
       else
         GMSH_LIBS="${GMSH_LIBS} -L${HDF5_PREFIX}/lib -lhdf5"
-        FLAGS="${FLAGS} ${DASH}I${HDF5_PREFIX}/include"
+        FLAGS="${FLAGS} -I${HDF5_PREFIX}/include"
       fi
     fi
   fi
@@ -748,10 +714,10 @@ if test "x${HDF5}" = "xyes"; then
     if test "x${MED}" = "xyes"; then
       if test "x${MED_PREFIX}" = "x"; then
         GMSH_LIBS="${GMSH_LIBS} -lmed"
-        FLAGS="${FLAGS} ${DASH}DHAVE_MED"
+        FLAGS="${FLAGS} -DHAVE_MED"
       else
         GMSH_LIBS="${GMSH_LIBS} -L${MED_PREFIX}/lib -lmed"
-        FLAGS="${FLAGS} ${DASH}DHAVE_MED ${DASH}I${MED_PREFIX}/include"
+        FLAGS="${FLAGS} -DHAVE_MED -I${MED_PREFIX}/include"
       fi
     fi
   fi
@@ -761,22 +727,22 @@ dnl Complete zlib link line (zlib must be linked in after libpng and libhdf5)
 if test "x${ZLIB}" = "xyes"; then
   dnl If provided by FLTK, use that one; otherwise, look for it
   if test "x${FL_ZLIB}" = "xyes"; then
-    FLAGS="${DASH}DHAVE_LIBZ ${FLAGS}"
+    FLAGS="-DHAVE_LIBZ ${FLAGS}"
   else
-    FLAGS="${DASH}DHAVE_LIBZ ${FLAGS}"
+    FLAGS="-DHAVE_LIBZ ${FLAGS}"
     if test "x${ZLIB_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lz"
     else
       dnl Find the libs/includes even if libz is _not_ properly installed (ugly hack!)
       GMSH_LIBS="${GMSH_LIBS} -L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib -lz"
-      FLAGS="${FLAGS} ${DASH}I${ZLIB_PREFIX} ${DASH}I${ZLIB_PREFIX}/include"
+      FLAGS="${FLAGS} -I${ZLIB_PREFIX} -I${ZLIB_PREFIX}/include"
     fi
   fi
 fi 
 
 dnl Check if we should build the parallel version
 if test "x$enable_parallel" = "xyes"; then
-  FLAGS="${DASH}DHAVE_PARALLEL ${FLAGS}"
+  FLAGS="-DHAVE_PARALLEL ${FLAGS}"
 fi
 
 dnl Finish link line
@@ -853,7 +819,7 @@ if test $ac_cv_sizeof_size_t != 4; then
   if test $ac_cv_sizeof_size_t != 8; then
     AC_MSG_WARN([Unsupported size of size_t - this may affect FNV hashing.])
   else
-    FLAGS="$FLAGS ${DASH}DHAVE_64BIT_SIZE_T"
+    FLAGS="$FLAGS -DHAVE_64BIT_SIZE_T"
   fi
 fi
 
@@ -866,11 +832,6 @@ AC_SUBST(LINKER)
 AC_SUBST(GMSH_DIRS)
 AC_SUBST(GMSH_LIBS)
 AC_SUBST(AR)
-AC_SUBST(ARFLAGS)
-AC_SUBST(OBJEXT)
-AC_SUBST(LIBEXT)
-AC_SUBST(DASH)
-AC_SUBST(SYSINCLUDE)
 AC_OUTPUT(variables)
 
 dnl Print some information

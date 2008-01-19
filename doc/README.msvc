@@ -1,0 +1,13 @@
+To compile Gmsh with Microsoft Visual C++
+
+1) Install GNU make (e.g. from cygwin or mingw)
+    
+2) launch the Visual Studio command prompt
+
+3) set PATH=%PATH%;C:\cygwin\bin  (or wherever the make binary is installed)
+
+4) go to the gmsh directory and rename "variables.msvc" to "variables"
+
+5) edit "variables" to match your local installation of Visual C++
+
+6) type "make"

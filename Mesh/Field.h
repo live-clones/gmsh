@@ -24,7 +24,7 @@
 #include <map>
 #include <list>
 #include "PView.h"
-#ifdef HAVE_ANN_
+#ifdef HAVE_ANN
 #include "ANN/ANN.h"
 #endif
 #include "Geo.h"
@@ -118,7 +118,7 @@ public:
 
 class AttractorField : public Field{
 protected :
-#ifdef HAVE_ANN_
+#ifdef HAVE_ANN
   ANNkd_tree* kdtree;
   ANNpointArray zeronodes;
   ANNidxArray index;

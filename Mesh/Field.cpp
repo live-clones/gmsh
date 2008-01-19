@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.10 2008-01-18 20:41:33 geuzaine Exp $
+// $Id: Field.cpp,v 1.11 2008-01-19 09:55:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -335,7 +335,7 @@ void AttractorField::addPoint(double X, double Y, double Z)
 
 AttractorField::~AttractorField()
 {
-#ifdef HAVE_ANN_
+#ifdef HAVE_ANN
   if(kdtree) delete kdtree;
   if(zeronodes) annDeallocPts(zeronodes);
   delete [] index;
@@ -344,11 +344,11 @@ AttractorField::~AttractorField()
 }
 
 AttractorField::AttractorField()
-#ifdef HAVE_ANN_
+#ifdef HAVE_ANN
   : kdtree (0), zeronodes(0)
 #endif
 {
-#ifdef HAVE_ANN_
+#ifdef HAVE_ANN
   index = new ANNidx[maxpts];
   dist = new ANNdist[maxpts];
 #endif
@@ -356,7 +356,7 @@ AttractorField::AttractorField()
 
 void AttractorField::buildFastSearchStructures()
 {
-#ifdef HAVE_ANN_
+#ifdef HAVE_ANN
   if(zeronodes){
     annDeallocPts(zeronodes);
     delete kdtree;
@@ -385,7 +385,7 @@ double AttractorField::operator()(double X, double Y, double Z)
 		(p.z() - Z) * (p.z() - Z));
   }
   else{
-#ifdef HAVE_ANN_
+#ifdef HAVE_ANN
     kdtree->annkSearch(xyz, maxpts, index, dist);
     return sqrt(dist[0]);
 #else
@@ -498,7 +498,7 @@ AttractorField_1DMesh::AttractorField_1DMesh(GFace *gf, double dmax, double dmin
 
 double AttractorField_1DMesh::operator()(double X, double Y, double Z)
 {
-#ifdef HAVE_ANN_
+#ifdef HAVE_ANN
   double xyz[3] = {X, Y, Z};
   kdtree->annkSearch(xyz, maxpts, index, dist);
   double d = sqrt(dist[0]);
@@ -515,7 +515,7 @@ double AttractorField_1DMesh::operator()(double X, double Y, double Z)
 
 void AttractorField_1DMesh::eval(double X, double Y, double Z, double &lcmin, double &lcpt, double &d)
 {
-#ifdef HAVE_ANN_
+#ifdef HAVE_ANN
   double xyz[3] = {X, Y, Z};
   kdtree->annkSearch(xyz, maxpts, index, dist);
   d = sqrt(dist[0]);

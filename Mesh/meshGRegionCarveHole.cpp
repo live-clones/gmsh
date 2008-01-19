@@ -1,4 +1,4 @@
-// $Id: meshGRegionCarveHole.cpp,v 1.1 2007-07-31 22:09:11 geuzaine Exp $
+// $Id: meshGRegionCarveHole.cpp,v 1.2 2008-01-19 09:55:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,7 @@
 #include "GModel.h"
 #include "Message.h"
 
-#if !defined(HAVE_ANN_)
+#if !defined(HAVE_ANN)
 
 void carveHole(GRegion *gr, int num, double distance, std::vector<int> &surfaces)
 {

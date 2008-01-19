@@ -677,10 +677,6 @@ OPTIM
 LINKER
 GMSH_DIRS
 GMSH_LIBS
-ARFLAGS
-LIBEXT
-DASH
-SYSINCLUDE
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files=''
@@ -1270,7 +1266,6 @@ Optional Features:
   --enable-gsl            use GSL as numerical toolkit (default=yes)
   --enable-gui            build the graphical user interface (default=yes)
   --enable-cygwin         use the Cygwin library on Windows (default=no)
-  --enable-vc             use the Visual C++ toolchain on Windows (default=no)
   --enable-parallel       enable parallel version (default=no)
   --enable-jpeg           enable JPEG support (default=yes)
   --enable-zlib           enable ZLIB support (default=yes)
@@ -1846,11 +1841,6 @@ if test "${enable_cygwin+set}" = set; then
   enableval=$enable_cygwin;
 fi
 
-# Check whether --enable-vc was given.
-if test "${enable_vc+set}" = set; then
-  enableval=$enable_vc;
-fi
-
 # Check whether --enable-parallel was given.
 if test "${enable_parallel+set}" = set; then
   enableval=$enable_parallel;
@@ -1945,20 +1935,7 @@ fi
 UNAME=`uname`
 HOSTNAME=`hostname`
 
-if test "x$enable_vc" = "xyes"; then
-  UNAME=VC
-  CC=cl
-  CXX="cl /EHsc"
-  OBJEXT=.obj
-  LIBEXT=.lib
-  DASH=/
-  FLAGS="/DWIN32 /DYY_NO_UNISTD_H /DHAVE_NO_DLL"
-  OPTIM=/O2
-  SYSINCLUDE="/I\"C:\Program Files\Microsoft Visual Studio 9.0\VC\INCLUDE\" /I\"C:\Program Files\Microsoft SDKs\Windows\v6.0A\include\""
-      LINKER="cl /F16777216"
-  EXEEXT=".exe"
-else
-  ac_ext=c
+ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -2877,7 +2854,7 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-  ac_ext=cpp
+ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -3241,14 +3218,13 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-  if test "x${CC}" = "x" -o "x${CXX}" = "x" ; then
-    { { echo "$as_me:$LINENO: error: Could not find required compilers, aborting." >&5
+if test "x${CC}" = "x" -o "x${CXX}" = "x" ; then
+  { { echo "$as_me:$LINENO: error: Could not find required compilers, aborting." >&5
 echo "$as_me: error: Could not find required compilers, aborting." >&2;}
    { (exit 1); exit 1; }; }
-  fi
-  OBJEXT=.o
-  LIBEXT=.a
-  ac_ext=c
+fi
+
+ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -3478,20 +3454,10 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-  DASH=-
-  FLAGS=""
-  OPTIM="${CXXFLAGS}"
-  SYSINCLUDE=""
-  LINKER="${CXX}"
+LINKER="${CXX}"
 
-fi
-
-ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
+FLAGS=""
+OPTIM="${CXXFLAGS}"
 
 case "$UNAME" in
   CYGWIN*)
@@ -3504,16 +3470,19 @@ case "$UNAME" in
     ;;
 esac
 
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+
+
+
 case "$UNAME" in
   Darwin*)
     RANLIB=true
     AR="libtool -o"
-    ARFLAGS=""
-    ;;
-  VC*)
-    RANLIB=true
-    AR="LIB"
-    ARFLAGS="/OUT:"
     ;;
   *)
     if test -n "$ac_tool_prefix"; then
@@ -3658,13 +3627,12 @@ echo "$as_me: error: Could not find the library archiver, aborting." >&2;}
    { (exit 1); exit 1; }; }
     fi
     AR="${AR} ruvs"
-    ARFLAGS=""
     ;;
 esac
 
 GMSH_DIRS="Common DataStr Geo Mesh Post Numeric Parallel Parser Plugin"
 
-if test "x$enable_gui" != "xno" -a "x$enable_vc" != "xyes"; then
+if test "x$enable_gui" != "xno"; then
 
   GMSH_DIRS="${GMSH_DIRS} Graphics Fltk"
   GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo"
@@ -4127,13 +4095,9 @@ fi
 else
 
   GMSH_DIRS="${GMSH_DIRS} Box"
-  if test "x$enable_vc" = "xyes"; then
-    GMSH_LIBS="Box/Main.obj lib/*.lib"
-  else
-    GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo"
-    GMSH_LIBS="${GMSH_LIBS} -lGmshPlugin -lGmshPost -lGmshCommon -lGmshDataStr"
-    GMSH_LIBS="${GMSH_LIBS} -lGmshNumeric -lGmshParallel"
-  fi
+  GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshPlugin -lGmshPost -lGmshCommon -lGmshDataStr"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshNumeric -lGmshParallel"
 
     ZLIB=""
   if test "x$enable_zlib" != "xno"; then
@@ -4205,9 +4169,6 @@ fi
 
 fi
 
-if test "x$enable_vc" = "xyes"; then
-  FLAGS="${FLAGS} /DHAVE_NO_VSNPRINTF /DHAVE_NO_SNPRINTF /DHAVE_NO_SOCKLEN_T"
-else
 
 { echo "$as_me:$LINENO: checking for main in -lm" >&5
 echo $ECHO_N "checking for main in -lm... $ECHO_C" >&6; }
@@ -4274,7 +4235,7 @@ _ACEOF
 fi
 
 
-    { echo "$as_me:$LINENO: checking for vsnprintf" >&5
+{ echo "$as_me:$LINENO: checking for vsnprintf" >&5
 echo $ECHO_N "checking for vsnprintf... $ECHO_C" >&6; }
 if test "${ac_cv_func_vsnprintf+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -4361,7 +4322,7 @@ else
   FLAGS="-DHAVE_NO_VSNPRINTF ${FLAGS}"
 fi
 
-  { echo "$as_me:$LINENO: checking for snprintf" >&5
+{ echo "$as_me:$LINENO: checking for snprintf" >&5
 echo $ECHO_N "checking for snprintf... $ECHO_C" >&6; }
 if test "${ac_cv_func_snprintf+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -4449,14 +4410,14 @@ else
 fi
 
 
-    cat >conftest.$ac_ext <<_ACEOF
+cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <sys/types.h>
-    #include <sys/socket.h>
+   #include <sys/socket.h>
 int
 main ()
 {
@@ -4491,8 +4452,6 @@ sed 's/^/| /' conftest.$ac_ext >&5
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-
 
 if test "x$enable_contrib" != "xno"; then
 
@@ -4523,7 +4482,7 @@ fi
     if test "x$enable_triangle" != "xno"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/Triangle"
        GMSH_LIBS="${GMSH_LIBS} -lGmshTriangle"
-       FLAGS="${DASH}DHAVE_TRIANGLE ${FLAGS}"
+       FLAGS="-DHAVE_TRIANGLE ${FLAGS}"
        echo "********************************************************************"
        echo "You are building a version of Gmsh that contains Jonathan"
        echo "Shewchuk's Triangle as an alternative isotropic 2D mesh generator."
@@ -4577,7 +4536,7 @@ fi
     if test "x$enable_ann" != "xno"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/ANN"
        GMSH_LIBS="${GMSH_LIBS} -lGmshANN"
-       FLAGS="${DASH}DHAVE_ANN_ ${FLAGS}"
+       FLAGS="-DHAVE_ANN ${FLAGS}"
        echo "********************************************************************"
        echo "You are building a version of Gmsh that contains ANN, the"
        echo "Approximate Nearest Neighbor library."
@@ -4626,7 +4585,7 @@ fi
     if test "x$enable_metis" = "xyes"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/Metis"
        GMSH_LIBS="${GMSH_LIBS} -lGmshMetis"
-       FLAGS="${DASH}DHAVE_METIS ${FLAGS}"
+       FLAGS="-DHAVE_METIS ${FLAGS}"
        echo "********************************************************************"
        echo "You are building a version of Gmsh that contains METIS, the"
        echo "Serial Graph Partitioner."
@@ -4675,7 +4634,7 @@ fi
     if test "x$enable_netgen" != "xno"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/Netgen"
        GMSH_LIBS="${GMSH_LIBS} -lGmshNetgen"
-       FLAGS="${DASH}DHAVE_NETGEN ${FLAGS}"
+       FLAGS="-DHAVE_NETGEN ${FLAGS}"
        echo "********************************************************************"
        echo "You are building a version of Gmsh that contains Joachim Schoberl's"
        echo "Netgen as an alternative 3D mesh generator. Netgen is distributed"
@@ -4725,7 +4684,7 @@ fi
     if test "x$enable_tetgen" != "xno"; then
        GMSH_DIRS="${GMSH_DIRS} contrib/Tetgen"
        GMSH_LIBS="${GMSH_LIBS} -lGmshTetgen"
-       FLAGS="${DASH}DHAVE_TETGEN ${FLAGS}"
+       FLAGS="-DHAVE_TETGEN ${FLAGS}"
        echo "********************************************************************"
        echo "You are building a version of Gmsh that contains Hang Si's"
        echo "Tetgen as an alternative 3D mesh generator."
@@ -4778,7 +4737,7 @@ fi
     if test "x${MATHEVAL}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/MathEval"
       GMSH_LIBS="${GMSH_LIBS} -lGmshMathEval"
-      FLAGS="${DASH}DHAVE_MATH_EVAL ${FLAGS}"
+      FLAGS="-DHAVE_MATH_EVAL ${FLAGS}"
     fi
   fi
 
@@ -4915,12 +4874,12 @@ else
 fi
 
   if test "x${GSL}" = "xyes"; then
-    FLAGS="${DASH}DHAVE_GSL ${FLAGS}"
+    FLAGS="-DHAVE_GSL ${FLAGS}"
     if test "x${GSL_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lgsl -lgslcblas"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${GSL_PREFIX} -L${GSL_PREFIX}/lib -lgsl -lgslcblas"
-      FLAGS="${FLAGS} ${DASH}I${GSL_PREFIX} ${DASH}I${GSL_PREFIX}/include"
+      FLAGS="${FLAGS} -I${GSL_PREFIX} -I${GSL_PREFIX}/include"
     fi
   fi
 fi
@@ -5049,10 +5008,10 @@ fi
   if test "x${CGNS}" = "xyes"; then
     if test "x${CGNS_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lcgns"
-      FLAGS="${FLAGS} ${DASH}DHAVE_LIBCGNS"
+      FLAGS="${FLAGS} -DHAVE_LIBCGNS"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${CGNS_PREFIX}/lib -lcgns"
-      FLAGS="${FLAGS} ${DASH}DHAVE_LIBCGNS ${DASH}I${CGNS_PREFIX}/include"
+      FLAGS="${FLAGS} -DHAVE_LIBCGNS -I${CGNS_PREFIX}/include"
     fi
   fi
 fi
@@ -5139,10 +5098,10 @@ fi
     OCC_LIBS="${OCC_LIBS} -lTKAdvTools -lTKMath -lTKernel"
     if test "x${OCC_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} ${OCC_LIBS}"
-      FLAGS="${FLAGS} ${DASH}DHAVE_OCC"
+      FLAGS="${FLAGS} -DHAVE_OCC"
     else
       GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib ${OCC_LIBS}"
-      FLAGS="${FLAGS} ${DASH}DHAVE_OCC ${DASH}I${OCC_PREFIX}/inc"
+      FLAGS="${FLAGS} -DHAVE_OCC -I${OCC_PREFIX}/inc"
     fi
   fi
 fi
@@ -5662,16 +5621,16 @@ echo "$as_me: WARNING: Could not find FFTW3: disabling FourierModel." >&2;}
       else
         if test "x${FM_PREFIX}" = "x"; then
           GMSH_LIBS="${GMSH_LIBS} -lFourierModel"
-          FLAGS="${DASH}DHAVE_FOURIER_MODEL ${FLAGS}"
+          FLAGS="-DHAVE_FOURIER_MODEL ${FLAGS}"
         else
           GMSH_LIBS="${GMSH_LIBS} -L${FM_PREFIX}/lib -lFourierModel"
-          FLAGS="${DASH}DHAVE_FOURIER_MODEL ${DASH}I${FM_PREFIX} ${FLAGS}"
+          FLAGS="-DHAVE_FOURIER_MODEL -I${FM_PREFIX} ${FLAGS}"
         fi
         if test "x${FFTW3_PREFIX}" = "x"; then
           GMSH_LIBS="${GMSH_LIBS} -lfftw3"
         else
           GMSH_LIBS="${GMSH_LIBS} -L${FFTW3_PREFIX}/lib -lfftw3"
-          FLAGS="${FLAGS} ${DASH}I${FFTW3_PREFIX}/include"
+          FLAGS="${FLAGS} -I${FFTW3_PREFIX}/include"
         fi
         if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
           GMSH_LIBS="${GMSH_LIBS} -L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib"
@@ -5761,7 +5720,7 @@ fi
         GMSH_LIBS="${GMSH_LIBS} -lhdf5"
       else
         GMSH_LIBS="${GMSH_LIBS} -L${HDF5_PREFIX}/lib -lhdf5"
-        FLAGS="${FLAGS} ${DASH}I${HDF5_PREFIX}/include"
+        FLAGS="${FLAGS} -I${HDF5_PREFIX}/include"
       fi
     fi
   fi
@@ -5836,10 +5795,10 @@ fi
     if test "x${MED}" = "xyes"; then
       if test "x${MED_PREFIX}" = "x"; then
         GMSH_LIBS="${GMSH_LIBS} -lmed"
-        FLAGS="${FLAGS} ${DASH}DHAVE_MED"
+        FLAGS="${FLAGS} -DHAVE_MED"
       else
         GMSH_LIBS="${GMSH_LIBS} -L${MED_PREFIX}/lib -lmed"
-        FLAGS="${FLAGS} ${DASH}DHAVE_MED ${DASH}I${MED_PREFIX}/include"
+        FLAGS="${FLAGS} -DHAVE_MED -I${MED_PREFIX}/include"
       fi
     fi
   fi
@@ -5847,20 +5806,20 @@ fi
 
 if test "x${ZLIB}" = "xyes"; then
     if test "x${FL_ZLIB}" = "xyes"; then
-    FLAGS="${DASH}DHAVE_LIBZ ${FLAGS}"
+    FLAGS="-DHAVE_LIBZ ${FLAGS}"
   else
-    FLAGS="${DASH}DHAVE_LIBZ ${FLAGS}"
+    FLAGS="-DHAVE_LIBZ ${FLAGS}"
     if test "x${ZLIB_PREFIX}" = "x"; then
       GMSH_LIBS="${GMSH_LIBS} -lz"
     else
             GMSH_LIBS="${GMSH_LIBS} -L${ZLIB_PREFIX} -L${ZLIB_PREFIX}/lib -lz"
-      FLAGS="${FLAGS} ${DASH}I${ZLIB_PREFIX} ${DASH}I${ZLIB_PREFIX}/include"
+      FLAGS="${FLAGS} -I${ZLIB_PREFIX} -I${ZLIB_PREFIX}/include"
     fi
   fi
 fi
 
 if test "x$enable_parallel" = "xyes"; then
-  FLAGS="${DASH}DHAVE_PARALLEL ${FLAGS}"
+  FLAGS="-DHAVE_PARALLEL ${FLAGS}"
 fi
 
 GMSH_LIBS="${GMSH_LIBS} -lm"
@@ -6966,14 +6925,9 @@ if test $ac_cv_sizeof_size_t != 4; then
     { echo "$as_me:$LINENO: WARNING: Unsupported size of size_t - this may affect FNV hashing." >&5
 echo "$as_me: WARNING: Unsupported size of size_t - this may affect FNV hashing." >&2;}
   else
-    FLAGS="$FLAGS ${DASH}DHAVE_64BIT_SIZE_T"
+    FLAGS="$FLAGS -DHAVE_64BIT_SIZE_T"
   fi
 fi
-
-
-
-
-
 
 
 
@@ -7677,15 +7631,11 @@ OPTIM!$OPTIM$ac_delim
 LINKER!$LINKER$ac_delim
 GMSH_DIRS!$GMSH_DIRS$ac_delim
 GMSH_LIBS!$GMSH_LIBS$ac_delim
-ARFLAGS!$ARFLAGS$ac_delim
-LIBEXT!$LIBEXT$ac_delim
-DASH!$DASH$ac_delim
-SYSINCLUDE!$SYSINCLUDE$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 70; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 66; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

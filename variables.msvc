@@ -1,0 +1,54 @@
+# This is a pre-filled variables file for building a blackbox version
+# of Gmsh with Microsoft Visual C++ 2008. See doc/README.msvc for
+# building instructions.
+
+# OS and host
+UNAME=VisualC++
+HOSTNAME=win
+
+# The names of the C and C++ compilers
+CC=cl
+CXX=cl /EHsc
+
+# increase stack size to 16Mb to avoid stack overflows in recursive 
+# tet classification for large 3D Delaunay grids
+LINKER=cl /F16777216
+
+# All compiler flags except optimization flags
+FLAGS=/DWIN32 /DYY_NO_UNISTD_H /DHAVE_NO_DLL /DHAVE_NO_VSNPRINTF /DHAVE_NO_SNPRINTF /DHAVE_NO_SOCKLEN_T /DHAVE_ANN /DHAVE_MATH_EVAL /DHAVE_NETGEN /DHAVE_TETGEN /DHAVE_TRIANGLE
+
+# Additional system includes
+SYSINCLUDE=/I\"C:\Program Files\Microsoft Visual Studio 9.0\VC\INCLUDE\" /I\"C:\Program Files\Microsoft SDKs\Windows\v6.0A\include\"
+
+# Compiler optimization flags
+OPTIM=/O2
+
+# Gmsh subdirectories
+GMSH_DIRS=Common DataStr Geo Mesh Post Numeric Parallel Parser Plugin contrib/ANN contrib/MathEval contrib/Netgen contrib/Tetgen contrib/Triangle
+
+# Gmsh libraries
+GMSH_LIBS=Box/Main.obj lib/*.lib
+
+# How you create a static library on this machine
+AR=LIB
+ARFLAGS=/OUT:
+RANLIB=true
+
+# The symbol used in front of compiler flags
+DASH=/
+
+# The extension to use for object files, libraries and executables
+OBJEXT=.obj
+LIBEXT=.lib
+EXEEXT=.exe
+
+# Installation directories
+prefix=/usr/local
+exec_prefix=${prefix}
+bindir=${exec_prefix}/bin
+datadir=${datarootdir}
+datarootdir=${prefix}/share
+includedir=${prefix}/include
+libdir=${exec_prefix}/lib
+mandir=${datarootdir}/man
+infodir=${datarootdir}/info

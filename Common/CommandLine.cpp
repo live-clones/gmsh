@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.110 2008-01-14 21:29:13 remacle Exp $
+// $Id: CommandLine.cpp,v 1.111 2008-01-19 09:55:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -155,7 +155,7 @@ char *Get_BuildOptions(void)
 #if defined(HAVE_METIS)
     strcat(opt, "METIS ");
 #endif
-#if defined(HAVE_ANN_)
+#if defined(HAVE_ANN)
     strcat(opt, "ANN ");
 #endif
 #if defined(HAVE_CGNS)

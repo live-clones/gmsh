@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.147 2008-01-18 21:00:39 geuzaine Exp $
+# $Id: Makefile,v 1.148 2008-01-19 09:55:33 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -26,7 +26,7 @@ INCLUDE = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo ${DASH}I../Mesh\
           ${DASH}I../Post ${DASH}I../Graphics ${DASH}I../Numeric ${DASH}I../Parser\
           ${DASH}I../Plugin ${DASH}I../Fltk ${DASH}I../contrib/MathEval\
           ${DASH}I../contrib/ANN/include
-CFLAGS  =${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
+CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
 
 SRC = Context.cpp\
       Octree.cpp OctreeInternals.cpp\
