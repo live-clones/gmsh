@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.449 2008-01-18 21:00:39 geuzaine Exp $
+# $Id: Makefile,v 1.450 2008-01-19 10:13:34 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -73,6 +73,10 @@ parser:
 utils:
 	cd utils/converters/autocad && ${MAKE}
 	cd utils/misc && ${MAKE}
+
+biglib:
+	${AR} ${ARFLAGS}libGmsh${LIBEXT} lib/*${LIBEXT}
+	${RANLIB} libGmsh${LIBEXT}
 
 .PHONY: doc
 doc:

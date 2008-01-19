@@ -8,7 +8,7 @@ HOSTNAME=win
 
 # The names of the C and C++ compilers
 CC=cl
-CXX=cl /EHsc
+CXX=cl /EHsc /nologo
 
 # increase stack size to 16Mb to avoid stack overflows in recursive 
 # tet classification for large 3D Delaunay grids
@@ -24,7 +24,7 @@ SYSINCLUDE=/I"C:\Program Files\Microsoft Visual Studio 9.0\VC\INCLUDE" /I"C:\Pro
 OPTIM=/O2
 
 # Gmsh subdirectories
-GMSH_DIRS=Common DataStr Geo Mesh Post Numeric Parallel Parser Plugin contrib/ANN contrib/MathEval contrib/Netgen contrib/Tetgen contrib/Triangle
+GMSH_DIRS=Box Common DataStr Geo Mesh Post Numeric Parallel Parser Plugin contrib/ANN contrib/MathEval contrib/Netgen contrib/NR contrib/Tetgen contrib/Triangle
 
 # Gmsh libraries
 GMSH_LIBS=Box/Main.obj lib/*.lib
