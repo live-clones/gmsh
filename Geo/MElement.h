@@ -27,7 +27,6 @@
 #include "MVertex.h"
 #include "MEdge.h"
 #include "MFace.h"
-#include "Numeric.h"
 
 class GFace;
 

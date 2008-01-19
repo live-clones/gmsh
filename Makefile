@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.451 2008-01-19 22:05:58 geuzaine Exp $
+# $Id: Makefile,v 1.452 2008-01-19 22:29:21 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -58,7 +58,7 @@ install-mac: variables package-mac
 	cp -rf gmsh-${GMSH_VERSION}/Gmsh.app /Applications
 	rm -rf gmsh-${GMSH_VERSION} gmsh-${GMSH_VERSION}-MacOSX.tgz
 
-install-lib: compile
+embed: compile
 	${AR} ${ARFLAGS}libGmsh${LIBEXT} lib/*${LIBEXT}
 	${RANLIB} libGmsh${LIBEXT}
 
