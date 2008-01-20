@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.453 2008-01-20 10:10:40 geuzaine Exp $
+# $Id: Makefile,v 1.454 2008-01-20 11:55:12 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -60,8 +60,8 @@ install-mac: variables package-mac
 
 .PHONY: lib
 lib: compile
-	${AR} ${ARFLAGS}libGmsh${LIBEXT} lib/*${LIBEXT}
-	${RANLIB} libGmsh${LIBEXT}
+	${AR} bin/${ARFLAGS}libGmsh${LIBEXT} lib/*${LIBEXT}
+	${RANLIB} bin/libGmsh${LIBEXT}
 
 install-lib: lib
 	mkdir -p ${includedir}/gmsh
@@ -73,7 +73,7 @@ install-lib: lib
               Geo/Pair.h Geo/Range.h\
               Common/GmshDefines.h\
           ${includedir}/gmsh
-	cp -f libGmsh${LIBEXT} ${libdir}
+	cp -f bin/libGmsh${LIBEXT} ${libdir}
 
 variables: configure
 	@echo "********************************************************************"
