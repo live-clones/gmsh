@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.455 2008-01-20 11:56:32 geuzaine Exp $
+# $Id: Makefile,v 1.456 2008-01-20 12:43:12 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -60,7 +60,7 @@ install-mac: variables package-mac
 
 .PHONY: lib
 lib: compile
-	${AR} bin/${ARFLAGS}libGmsh${LIBEXT} lib/*${LIBEXT}
+	${AR} ${ARFLAGS}bin/libGmsh${LIBEXT} lib/*${LIBEXT}
 	${RANLIB} bin/libGmsh${LIBEXT}
 
 install-lib: lib
