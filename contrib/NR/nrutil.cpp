@@ -7,7 +7,7 @@
 #define NR_END 1
 #define FREE_ARG char*
 
-#include "Gmsh.h"
+#include "Message.h"
 
 void nrerror(char error_text[])
 /* Numerical Recipes standard error handler */

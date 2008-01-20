@@ -4,7 +4,7 @@
 /* This file has been modified for inclusion in Gmsh */
 
 /* Gmsh: */
-#include "Gmsh.h"
+#include <math.h>
 #include "Numeric.h"
 
 /* Gmsh:
