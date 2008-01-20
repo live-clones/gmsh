@@ -444,39 +444,41 @@ bool gmshEdgeSplit(const double lMax,
   return true;
 }
 
-void computeNeighboringTrisOfACavity (const std::vector<MTri3*> &cavity,std::vector<MTri3*> &outside)
+void computeNeighboringTrisOfACavity(const std::vector<MTri3*> &cavity,
+				     std::vector<MTri3*> &outside)
 {
   outside.clear();
-  for (int i=0;i<cavity.size();i++){
-    for (int j=0;j<3;j++){
+  for (unsigned int i = 0; i < cavity.size(); i++){
+    for (int j = 0; j < 3; j++){
       MTri3 * neigh = cavity[i]->getNeigh(j);
-      if (neigh)
-	{
-	  bool found = false;
-	  for (int k=0;k<outside.size();k++){
-	    if(outside[k]==neigh){
-	      found=true;
-	      break;
-	    }
+      if(neigh){
+	bool found = false;
+	for(unsigned int k = 0; k < outside.size(); k++){
+	  if(outside[k] == neigh){
+	    found = true;
+	    break;
 	  }
-	  if (!found){
-	    for (int k=0;k<cavity.size() ;k++){
-	      if(cavity[k] ==neigh){
-		found=true;
-	      }
-	    }
-	  }
-	  if(!found)outside.push_back(neigh);
 	}
+	if(!found){
+	  for (unsigned int k = 0; k < cavity.size(); k++){
+	    if(cavity[k] == neigh){
+	      found = true;
+	    }
+	  }
+	}
+	if(!found)outside.push_back(neigh);
+      }
     }
   }
-}		
-bool gmshBuildVertexCavity ( MTri3 *t, 
-			     int iLocalVertex, 
-			     MVertex **v1,
-			     std::vector<MTri3*> &cavity,
-			     std::vector<MTri3*> &outside,
-			     std::vector<MVertex*> &ring ){
+}
+	
+bool gmshBuildVertexCavity(MTri3 *t, 
+			   int iLocalVertex, 
+			   MVertex **v1,
+			   std::vector<MTri3*> &cavity,
+			   std::vector<MTri3*> &outside,
+			   std::vector<MVertex*> &ring)
+{
   cavity.clear();
   ring.clear();
 
@@ -554,56 +556,54 @@ bool gmshVertexCollapse(const double lMin,
   
   double l_min = lMin;
   int iMin = -1;
-  for (int i=0;i<ring.size();i++){
-    double l = computeEdgeAdimLength(v, ring[i], gf,Us,Vs,vSizes,vSizesBGM);
+  for (unsigned int i = 0; i < ring.size(); i++){
+    double l = computeEdgeAdimLength(v, ring[i], gf, Us, Vs, vSizes, vSizesBGM);
     if (l < l_min){
       iMin = i;
     }
   }
-  if (iMin == -1) return false;
+  if(iMin == -1) return false;
 
   double surfBefore = 0.0;
-  for (int i=0;i<ring.size();i++){
+  for(unsigned int i = 0; i < ring.size(); i++){
     MVertex *v1 = ring[i];
-    MVertex *v2 = ring[(i + 1)%ring.size()];
-    surfBefore +=surfaceTriangleUV (v1,v2,v,Us,Vs);
+    MVertex *v2 = ring[(i + 1) % ring.size()];
+    surfBefore += surfaceTriangleUV(v1, v2, v, Us, Vs);
   }
 
   double surfAfter = 0.0;
-  for (int i=0;i<ring.size()-2;i++){
-    MVertex *v1 = ring[(iMin + 1 + i)%ring.size()];
-    MVertex *v2 = ring[(iMin + 1 + i + 1)%ring.size()];
-    double sAfter  = surfaceTriangleUV (v1,v2,ring[iMin],Us,Vs);
-    double sBefore = surfaceTriangleUV (v1,v2,v,Us,Vs);
-    if (sAfter < 0.1 * sBefore)return false;
+  for(unsigned int i = 0; i < ring.size() - 2; i++){
+    MVertex *v1 = ring[(iMin + 1 + i) % ring.size()];
+    MVertex *v2 = ring[(iMin + 1 + i + 1) % ring.size()];
+    double sAfter = surfaceTriangleUV(v1, v2, ring[iMin], Us, Vs);
+    double sBefore = surfaceTriangleUV(v1, v2, v, Us, Vs);
+    if(sAfter < 0.1 * sBefore) return false;
     surfAfter += sAfter;
   }
 
   //  printf("%12.5E %12.5E %d\n",surfBefore,surfAfter,iMin);
-  if (fabs(surfBefore - surfAfter) > 1.e-10*(surfBefore + surfAfter))return false;
+  if(fabs(surfBefore - surfAfter) > 1.e-10*(surfBefore + surfAfter)) return false;
 
-  for (int i=0;i<ring.size()-2;i++){
-    MVertex *v1 = ring[(iMin + 1 + i)%ring.size()];
-    MVertex *v2 = ring[(iMin + 1 + i + 1)%ring.size()];
+  for(unsigned int i = 0; i < ring.size() - 2; i++){
+    MVertex *v1 = ring[(iMin + 1 + i) % ring.size()];
+    MVertex *v2 = ring[(iMin + 1 + i + 1) % ring.size()];
     MTriangle *t = new MTriangle(v1,v2,ring[iMin]);
-    double lc    = 0.3333333333*(vSizes [t->getVertex(0)->getNum()]+
-				  vSizes [t->getVertex(1)->getNum()]+
-				  vSizes [t->getVertex(2)->getNum()]);
-    double lcBGM = 0.3333333333*(vSizesBGM [t->getVertex(0)->getNum()]+
-				vSizesBGM [t->getVertex(1)->getNum()]+
-				vSizesBGM [t->getVertex(2)->getNum()]);
-    MTri3 *t3 = new MTri3 ( t , Extend1dMeshIn2dSurfaces() ? std::min(lc,lcBGM) : lcBGM); 
-    //    printf("Creation %p = %d %d %d\n",t3,v1->getNum(),v2->getNum(),ring[iMin]->getNum());
+    double lc = 0.3333333333 * (vSizes[t->getVertex(0)->getNum()] +
+				vSizes[t->getVertex(1)->getNum()] +
+				vSizes[t->getVertex(2)->getNum()]);
+    double lcBGM = 0.3333333333 * (vSizesBGM[t->getVertex(0)->getNum()] +
+				   vSizesBGM[t->getVertex(1)->getNum()] +
+				   vSizesBGM[t->getVertex(2)->getNum()]);
+    MTri3 *t3 = new MTri3(t, Extend1dMeshIn2dSurfaces() ? std::min(lc, lcBGM) : lcBGM); 
+    // printf("Creation %p = %d %d %d\n",t3,v1->getNum(),v2->getNum(),ring[iMin]->getNum());
     outside.push_back(t3);
     newTris.push_back(t3);
   }
-  for (int i=0;i<cavity.size();i++)
+  for(unsigned int i = 0; i < cavity.size(); i++)
     cavity[i]->setDeleted(true);
-  connectTriangles ( outside ); 
+  connectTriangles(outside);
   return true;
 }
-
-
 
 int edgeSwapPass (GFace *gf, std::set<MTri3*,compareTri3Ptr> &allTris,
 		  const gmshSwapCriterion &cr,		   
@@ -670,9 +670,9 @@ int edgeSplitPass (double maxLC,
        if (it == allTris.end())break;
      }
   }  
-  printf("B %d %d tris ",allTris.size(),newTris.size());
+  printf("B %d %d tris ", (int)allTris.size(), (int)newTris.size());
   allTris.insert(newTris.begin(),newTris.end());
-  printf("A %d %d tris\n",allTris.size(),newTris.size());
+  printf("A %d %d tris\n", (int)allTris.size(), (int)newTris.size());
   return nbSplit;
 }
 
@@ -703,9 +703,9 @@ int edgeCollapsePass (double minLC,
 //      }
 //     if (nbCollapse == 114)break;
   }  
-  printf("B %d %d tris ",allTris.size(),newTris.size());
+  printf("B %d %d tris ", (int)allTris.size(), (int)newTris.size());
   allTris.insert(newTris.begin(),newTris.end());
-  printf("A %d %d tris\n",allTris.size(),newTris.size());
+  printf("A %d %d tris\n", (int)allTris.size(), (int)newTris.size());
   return nbCollapse;
 }
 

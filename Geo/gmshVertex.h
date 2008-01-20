@@ -22,6 +22,7 @@
 
 #include "Geo.h"
 #include "GVertex.h"
+#include "MVertex.h"
 
 class gmshVertex : public GVertex {
  protected:

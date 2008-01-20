@@ -6,8 +6,8 @@
 
 static int edges[6][2] =    {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
 static int efaces[6][2] =   {{0,2},{0,1},{1,2},{0,3},{2,3},{1,3}};
-static int enofaces[6][2] = {{1,3},{2,3},{0,3},{1,2},{0,1},{0,2}};
-static int facesXedges[4][3] = {{0,1,3},{1,2,5},{0,2,4},{3,4,5}};
+//static int enofaces[6][2] = {{1,3},{2,3},{0,3},{1,2},{0,1},{0,2}};
+//static int facesXedges[4][3] = {{0,1,3},{1,2,5},{0,2,4},{3,4,5}};
 static int faces[4][3] = {{0,1,2},{0,2,3},{0,1,3},{1,2,3}};
 static int vnofaces[4] = {3,1,2,0};
 static int vFac[4][3] = {{0,1,2},{0,2,3},{0,1,3},{1,2,3}};
@@ -17,39 +17,40 @@ static int vFac[4][3] = {{0,1,2},{0,2,3},{0,1,3},{1,2,3}};
 // forming the outer ring of the cavity 
 // we return true if the cavity is closed and false if it is open
 
-void computeNeighboringTetsOfACavity (const std::vector<MTet4*> &cavity,std::vector<MTet4*> &outside)
+void computeNeighboringTetsOfACavity(const std::vector<MTet4*> &cavity,
+				     std::vector<MTet4*> &outside)
 {
   outside.clear();
-  for (int i=0;i<cavity.size();i++){
-    for (int j=0;j<4;j++){
+  for (unsigned int i = 0; i < cavity.size(); i++){
+    for (int j = 0; j < 4; j++){
       MTet4 * neigh = cavity[i]->getNeigh(j);
-      if (neigh)
-	{
-	  bool found = false;
-	  for (int k=0;k<outside.size();k++){
-	    if(outside[k]==neigh){
-	      found=true;
-	      break;
-	    }
+      if(neigh){
+	bool found = false;
+	for (unsigned int k = 0; k < outside.size(); k++){
+	  if(outside[k] == neigh){
+	    found = true;
+	    break;
 	  }
-	  if (!found){
-	    for (int k=0;k<cavity.size() ;k++){
-	      if(cavity[k] ==neigh){
-		found=true;
-	      }
-	    }
-	  }
-	  if(!found)outside.push_back(neigh);
 	}
+	if(!found){
+	  for (unsigned int k = 0; k < cavity.size(); k++){
+	    if(cavity[k] == neigh){
+	      found = true;
+	    }
+	  }
+	}
+	if(!found)outside.push_back(neigh);
+      }
     }
   }
-}			   
-bool gmshBuildEdgeCavity ( MTet4 *t, 
-			   int iLocalEdge, 
-			   MVertex **v1,MVertex **v2,
-			   std::vector<MTet4*> &cavity,
-			   std::vector<MTet4*> &outside,
-			   std::vector<MVertex*> &ring ){
+}
+		   
+bool gmshBuildEdgeCavity(MTet4 *t, 
+			 int iLocalEdge, 
+			 MVertex **v1,MVertex **v2,
+			 std::vector<MTet4*> &cavity,
+			 std::vector<MTet4*> &outside,
+			 std::vector<MVertex*> &ring){
   cavity.clear();
   ring.clear();
 
@@ -116,8 +117,8 @@ typedef struct {
 
 void BuildSwapPattern3(SwapPattern *sc)
 {
-  static int trgl[][3] = { 0,1,2 } ;
-  static int trgul[][5] = { 0,-1,-1,-1,-1 } ;
+  static int trgl[][3] = { {0,1,2} };
+  static int trgul[][5] = { {0,-1,-1,-1,-1} };
 
   sc->nbr_triangles = 1 ;
   sc->nbr_triangles_2 = 1 ;
@@ -129,9 +130,9 @@ void BuildSwapPattern3(SwapPattern *sc)
 void BuildSwapPattern4(SwapPattern *sc)
 {
   static int trgl[][3] =
-    { 0,1,2, 0,2,3, 0,1,3, 1,2,3 } ;
+    { {0,1,2}, {0,2,3}, {0,1,3}, {1,2,3} };
   static int trgul[][5] = 
-    { 0,1,-1,-1,-1, 2,3,-1,-1,-1 } ;
+    { {0,1,-1,-1,-1}, {2,3,-1,-1,-1} };
 
   sc->nbr_triangles = 4 ;
   sc->nbr_triangles_2 = 2 ; 
@@ -144,9 +145,10 @@ void BuildSwapPattern4(SwapPattern *sc)
 void BuildSwapPattern5(SwapPattern *sc)
 {
   static int trgl[][3] = 
-    { 0,1,2, 0,2,3, 0,3,4, 0,1,4, 1,3,4, 1,2,3, 2,3,4, 0,2,4, 0,1,3, 1,2,4 } ;
+    { {0,1,2}, {0,2,3}, {0,3,4}, {0,1,4}, {1,3,4}, 
+      {1,2,3}, {2,3,4}, {0,2,4}, {0,1,3}, {1,2,4} };
   static int trgul[][5] =
-    { 0,1,2,-1,-1, 3,4,5,-1,-1, 0,6,7,-1,-1, 2,5,8,-1,-1, 3,6,9,-1,-1 } ;
+    { {0,1,2,-1,-1}, {3,4,5,-1,-1}, {0,6,7,-1,-1}, {2,5,8,-1,-1}, {3,6,9,-1,-1} };
 
   sc->nbr_triangles = 10 ;
   sc->nbr_triangles_2 = 3 ;
@@ -158,14 +160,14 @@ void BuildSwapPattern5(SwapPattern *sc)
 void BuildSwapPattern6(SwapPattern *sc)
 {
   static int trgl[][3] = 
-    { 0,1,2, 0,2,3, 0,3,4, 0,4,5, 0,2,5, 2,4,5, 2,3,4, 0,3,5,
-      3,4,5, 0,2,4, 2,3,5, 1,2,3, 0,1,3, 0,1,5, 1,4,5, 1,3,4,
-      0,1,4, 1,3,5, 1,2,4, 1,2,5 } ;
+    { {0,1,2}, {0,2,3}, {0,3,4}, {0,4,5}, {0,2,5}, {2,4,5}, {2,3,4}, {0,3,5},
+      {3,4,5}, {0,2,4}, {2,3,5}, {1,2,3}, {0,1,3}, {0,1,5}, {1,4,5}, {1,3,4},
+      {0,1,4}, {1,3,5}, {1,2,4}, {1,2,5} };
   static int trgul[][5] = 
-    { 0,1,2,3,-1, 0,4,5,6,-1, 0,1,7,8,-1, 0,3,6,9,-1, 0,4,8,10,-1,
-      2,3,11,12,-1, 11,13,14,15,-1, 7,8,11,12,-1, 3,11,15,16,-1,
-      8,11,13,17,-1, 6,13,14,18,-1, 3,6,16,18,-1, 5,6,13,19,-1, 
-      8,10,13,19,-1 } ;
+    { {0,1,2,3,-1}, {0,4,5,6,-1}, {0,1,7,8,-1}, {0,3,6,9,-1}, {0,4,8,10,-1},
+      {2,3,11,12,-1}, {11,13,14,15,-1}, {7,8,11,12,-1}, {3,11,15,16,-1},
+      {8,11,13,17,-1}, {6,13,14,18,-1}, {3,6,16,18,-1}, {5,6,13,19,-1}, 
+      {8,10,13,19,-1} };
 
   sc->nbr_triangles = 20 ; 
   sc->nbr_triangles_2 = 4 ; 
@@ -177,20 +179,20 @@ void BuildSwapPattern6(SwapPattern *sc)
 void BuildSwapPattern7(SwapPattern *sc)
 {
   static int trgl[][3] = 
-    { 0,1,2, 0,2,3, 0,3,4, 0,4,5, 0,5,6, 0,3,6, 3,5,6, 3,4,5, 0,4,6,
-      4,5,6, 0,3,5, 3,4,6, 0,2,4, 2,3,4, 0,2,6, 2,5,6, 2,4,5, 0,2,5,
-      2,4,6, 2,3,5, 2,3,6, 0,1,3, 1,2,3, 0,1,4, 1,3,4, 0,1,6, 1,5,6,
-      1,4,5, 0,1,5, 1,4,6, 1,3,5, 1,3,6, 1,2,4, 1,2,5, 1,2,6 };
+    { {0,1,2}, {0,2,3}, {0,3,4}, {0,4,5}, {0,5,6}, {0,3,6}, {3,5,6}, {3,4,5}, {0,4,6},
+      {4,5,6}, {0,3,5}, {3,4,6}, {0,2,4}, {2,3,4}, {0,2,6}, {2,5,6}, {2,4,5}, {0,2,5},
+      {2,4,6}, {2,3,5}, {2,3,6}, {0,1,3}, {1,2,3}, {0,1,4}, {1,3,4}, {0,1,6}, {1,5,6},
+      {1,4,5}, {0,1,5}, {1,4,6}, {1,3,5}, {1,3,6}, {1,2,4}, {1,2,5}, {1,2,6} };
   static int trgul[][5] = 
-    { 0,1,2,3,4, 0,1,5,6,7, 0,1,2,8,9, 0,1,4,7,10, 0,1,5,9,11, 0,3,4,12,13,
-      0,13,14,15,16, 0,8,9,12,13, 0,4,13,16,17, 0,9,13,14,18, 0,7,14,15,19,
-      0,4,7,17,19, 0,6,7,14,20, 0,9,11,14,20, 2,3,4,21,22, 5,6,7,21,22,
-      2,8,9,21,22, 4,7,10,21,22, 5,9,11,21,22, 3,4,22,23,24, 22,24,25,26,27,
-      8,9,22,23,24, 4,22,24,27,28, 9,22,24,25,29, 7,22,25,26,30, 4,7,22,28,30,
-      6,7,22,25,31, 9,11,22,25,31, 3,4,13,23,32, 13,25,26,27,32, 8,9,13,23,32,
-      4,13,27,28,32, 9,13,25,29,32, 13,16,25,26,33, 4,13,16,28,33, 
-      13,15,16,25,34, 9,13,18,25,34, 7,19,25,26,33, 4,7,19,28,33,
-      7,15,19,25,34, 6,7,20,25,34, 9,11,20,25,34 } ;
+    { {0,1,2,3,4}, {0,1,5,6,7}, {0,1,2,8,9}, {0,1,4,7,10}, {0,1,5,9,11}, {0,3,4,12,13},
+      {0,13,14,15,16}, {0,8,9,12,13}, {0,4,13,16,17}, {0,9,13,14,18}, {0,7,14,15,19},
+      {0,4,7,17,19}, {0,6,7,14,20}, {0,9,11,14,20}, {2,3,4,21,22}, {5,6,7,21,22},
+      {2,8,9,21,22}, {4,7,10,21,22}, {5,9,11,21,22}, {3,4,22,23,24}, {22,24,25,26,27},
+      {8,9,22,23,24}, {4,22,24,27,28}, {9,22,24,25,29}, {7,22,25,26,30}, {4,7,22,28,30},
+      {6,7,22,25,31}, {9,11,22,25,31}, {3,4,13,23,32}, {13,25,26,27,32}, {8,9,13,23,32},
+      {4,13,27,28,32}, {9,13,25,29,32}, {13,16,25,26,33}, {4,13,16,28,33},
+      {13,15,16,25,34}, {9,13,18,25,34}, {7,19,25,26,33}, {4,7,19,28,33},
+      {7,15,19,25,34}, {6,7,20,25,34}, {9,11,20,25,34} };
 
   sc->nbr_triangles = 35 ;
   sc->nbr_triangles_2 = 5 ;
@@ -198,7 +200,6 @@ void BuildSwapPattern7(SwapPattern *sc)
   sc->triangles = trgl ;
   sc->trianguls = trgul ;
 }
-
 
 bool gmshEdgeSwap (std::vector<MTet4 *> &newTets,
 		   MTet4 *tet, 
@@ -216,7 +217,7 @@ bool gmshEdgeSwap (std::vector<MTet4 *> &newTets,
   
   double volumeRef = 0.0;
   double tetQualityRef = 1;
-  for (int i=0;i<cavity.size();i++){
+  for(unsigned int i = 0; i < cavity.size(); i++){
     double vol = fabs(cavity[i]->tet()->getVolume());
     tetQualityRef = std::min(tetQualityRef,cavity[i]->getQuality());
     volumeRef += vol;
@@ -263,7 +264,7 @@ bool gmshEdgeSwap (std::vector<MTet4 *> &newTets,
     if (fabs(volume-volumeRef) > 1.e-10 * (volume+volumeRef))minQuality[i] = -1;
   }
 
-  int iBest;
+  int iBest = 0;
   double best = -1.0;
   for (int i=0;i<sp.nbr_trianguls;i++){
     if(minQuality[i] > best){
@@ -306,7 +307,7 @@ bool gmshEdgeSwap (std::vector<MTet4 *> &newTets,
     newTets.push_back(t42);
   }
 
-  for (int i=0;i<cavity.size();i++)cavity[i]->setDeleted(true);
+  for(unsigned int i = 0; i < cavity.size(); i++) cavity[i]->setDeleted(true);
   
   connectTets ( outside );      
 
@@ -326,7 +327,7 @@ bool gmshEdgeSplit (std::vector<MTet4 *> &newTets,
   bool closed = gmshBuildEdgeCavity ( tet,iLocalEdge,&v1,&v2,cavity,outside,ring);
   if (!closed)return false;
   
-  for (int j=0;j<ring.size();j++){
+  for(unsigned int j = 0; j < ring.size(); j++){
     MVertex *pv1 = ring[j];
     MVertex *pv2 = ring[(j+1)%ring.size()];
     MTetrahedron *tr1 = new MTetrahedron ( pv1,
@@ -347,9 +348,9 @@ bool gmshEdgeSplit (std::vector<MTet4 *> &newTets,
     newTets.push_back(t42);
   }
 
-  for (int i=0;i<cavity.size();i++)cavity[i]->setDeleted(true);
+  for(unsigned int i = 0; i < cavity.size(); i++) cavity[i]->setDeleted(true);
   
-  connectTets ( outside );      
+  connectTets(outside);
 
   return true;
 }
@@ -399,26 +400,26 @@ bool gmshFaceSwap (std::vector<MTet4 *> &newTets,
   //  printf("qs = %g %g vs %g %g %g\n",q1,q2,q3,q4,q5);
 
   std::vector<MTet4*> outside;
-  for (int i=0;i<4;i++){
-    if (t1->getNeigh(i) && t1->getNeigh(i) != t2){
+  for(int i = 0; i < 4; i++){
+    if(t1->getNeigh(i) && t1->getNeigh(i) != t2){
       bool found = false;
-      for (int j=0;j<outside.size();j++){
-	if (outside[j] == t1->getNeigh(i)) {found = true;break;}
+      for(unsigned int j = 0; j < outside.size(); j++){
+	if(outside[j] == t1->getNeigh(i)) { found = true; break; }
       }
-      if (!found)outside.push_back(t1->getNeigh(i));
+      if(!found) outside.push_back(t1->getNeigh(i));
     }    
   }
-  for (int i=0;i<4;i++){
-    if (t2->getNeigh(i) && t2->getNeigh(i) != t1){
+  for(int i = 0; i < 4; i++){
+    if(t2->getNeigh(i) && t2->getNeigh(i) != t1){
       bool found = false;
-      for (int j=0;j<outside.size();j++){
-	if (outside[j] == t2->getNeigh(i)) {found = true;break;}
+      for(unsigned int j = 0; j < outside.size(); j++){
+	if(outside[j] == t2->getNeigh(i)) { found = true; break; }
       }
-      if (!found)outside.push_back(t2->getNeigh(i));
+      if(!found) outside.push_back(t2->getNeigh(i));
     }    
   }
 
-  //  printf("we have a face swap %d\n",outside.size());
+  // printf("we have a face swap %d\n",outside.size());
 
   t1->setDeleted(true);
   t2->setDeleted(true);
@@ -464,15 +465,15 @@ void gmshBuildVertexCavity_recur ( MTet4 *t,
     MTet4 *neigh = t->getNeigh(vFac[iV][i]);
     if (neigh){
       bool found = false;
-      for (int j=0;j<cavity.size();j++){
-	if (cavity[j] == neigh){
+      for(unsigned int j = 0; j < cavity.size(); j++){
+	if(cavity[j] == neigh){
 	  found = true; 
-	  j=cavity.size();
+	  j = cavity.size();
 	}
       }
-      if (!found){
+      if(!found){
 	cavity.push_back(neigh);
-	gmshBuildVertexCavity_recur ( neigh,v,cavity);
+	gmshBuildVertexCavity_recur(neigh, v, cavity);
       }
     }
   }
@@ -496,7 +497,7 @@ bool gmshSliverRemoval ( std::vector<MTet4   *> &newTets,
   
   bool isClosed[6];  
   int nbSwappable = 0;
-  int iSwappable;
+  int iSwappable = 0;
   for (int i=0;i<6;i++){
      isClosed[i] = gmshBuildEdgeCavity ( t,i,&v1,&v2,cavity,outside,ring);    
      if (isClosed[i]){
@@ -531,10 +532,10 @@ bool gmshSliverRemoval ( std::vector<MTet4   *> &newTets,
  	}
      }
     
-    for (int i=0; i<newTets.size();i++){
+    for (unsigned int i = 0; i < newTets.size(); i++){
       MTet4 *new_t = newTets[i];
       if (!(new_t->isDeleted())){
-	for (int j=0;j<6;j++){
+	for (int j = 0; j < 6; j++){
 	  MVertex *va = new_t->tet()->getVertex(edges[j][0]);
 	  MVertex *vb = new_t->tet()->getVertex(edges[j][1]);
 	  if (va == newv &&
@@ -585,12 +586,12 @@ bool gmshCollapseVertex ( std::vector<MTet4 *> &newTets,
   std::vector<MTet4*> toUpdate;
   double volume = 0;
   double worst = 1.0;
-  for (int i=0;i<cavity_v.size();i++){
+  for(unsigned int i = 0; i < cavity_v.size(); i++){
     bool found = false;
-    volume+=fabs(cavity_v[i]->tet()->getVolume());
+    volume += fabs(cavity_v[i]->tet()->getVolume());
     double q = cavity_v[i]->getQuality();
     worst = std::min(worst,q);
-    for (int j=0;j<4;j++){
+    for (int j = 0; j < 4; j++){
       if (cavity_v[i]->tet()->getVertex(j) == tg)found=true;
     }
     if (found) toDelete.push_back(cavity_v[i]);
@@ -609,7 +610,7 @@ bool gmshCollapseVertex ( std::vector<MTet4 *> &newTets,
   double worstAfter = 1.0;
   double newQuals[2000];
   if (toUpdate.size() >= 2000) throw;
-  for (int i=0;i<toUpdate.size();i++){
+  for (unsigned int i = 0; i < toUpdate.size(); i++){
     double vv;
     newQuals[i] = qmTet(toUpdate[i]->tet(),cr,&vv);
     worstAfter = std::min(worstAfter,newQuals[i]);
@@ -631,20 +632,21 @@ bool gmshCollapseVertex ( std::vector<MTet4 *> &newTets,
   }
   // ok we collapse
   computeNeighboringTetsOfACavity (cavity_v,outside);
-  for (int i=0;i<toUpdate.size();i++){
-    MTetrahedron *tr1 = new MTetrahedron ( toUpdate[i]->tet()->getVertex(0) == v ? tg : toUpdate[i]->tet()->getVertex(0),
-					   toUpdate[i]->tet()->getVertex(1) == v ? tg : toUpdate[i]->tet()->getVertex(1),
-					   toUpdate[i]->tet()->getVertex(2) == v ? tg : toUpdate[i]->tet()->getVertex(2),
-					   toUpdate[i]->tet()->getVertex(3) == v ? tg : toUpdate[i]->tet()->getVertex(3));
-    MTet4 *t41 = new MTet4 ( tr1 , cr) ; 
+  for (unsigned int i = 0; i < toUpdate.size(); i++){
+    MTetrahedron *tr1 = new MTetrahedron 
+      (toUpdate[i]->tet()->getVertex(0) == v ? tg : toUpdate[i]->tet()->getVertex(0),
+       toUpdate[i]->tet()->getVertex(1) == v ? tg : toUpdate[i]->tet()->getVertex(1),
+       toUpdate[i]->tet()->getVertex(2) == v ? tg : toUpdate[i]->tet()->getVertex(2),
+       toUpdate[i]->tet()->getVertex(3) == v ? tg : toUpdate[i]->tet()->getVertex(3));
+    MTet4 *t41 = new MTet4(tr1, cr); 
     t41->setOnWhat(cavity_v[0]->onWhat());
     t41->setQuality(newQuals[i]);
     outside.push_back(t41);
     newTets.push_back(t41);
   }
-  for (int i=0;i<cavity_v.size();i++)cavity_v[i]->setDeleted(true);
+  for(unsigned int i = 0; i < cavity_v.size(); i++) cavity_v[i]->setDeleted(true);
   
-  connectTets ( outside );      
+  connectTets(outside);
   
   return true;
 }
@@ -664,7 +666,7 @@ bool gmshSmoothVertex( MTet4 *t,
   double vTot=0;
   double worst = 1.0;
 
-  for (int i=0 ; i< cavity.size() ; i++){
+  for(unsigned int i = 0 ; i < cavity.size(); i++){
     double volume = fabs(cavity[i]->tet()->getVolume());
     double q = cavity[i]->getQuality();
     worst = std::min(worst,q);
@@ -698,7 +700,7 @@ bool gmshSmoothVertex( MTet4 *t,
   double worstAfter = 1.0;
   double newQuals[2000];
   if (cavity.size() >= 2000) throw;
-  for (int i=0 ; i< cavity.size() ; i++){
+  for (unsigned int i = 0; i < cavity.size(); i++){
     double volume;
     newQuals[i] = qmTet(cavity[i]->tet(),cr,&volume);
     volumeAfter += volume;
@@ -713,7 +715,7 @@ bool gmshSmoothVertex( MTet4 *t,
   }
   else{
     // restore new quality
-    for (int i=0 ; i< cavity.size() ; i++){
+    for(unsigned int i = 0; i < cavity.size(); i++){
       cavity[i]->setQuality(newQuals[i]);
     }    
     return true;
@@ -791,7 +793,7 @@ bool gmshSmoothVertexOptimize ( MTet4 *t,
 
   double vTot=0;
 
-  for (int i=0 ; i< vd.ts.size() ; i++){
+  for(unsigned int i = 0; i < vd.ts.size(); i++){
     double volume = fabs(vd.ts[i]->tet()->getVolume());
     vTot += volume;    
   }
@@ -807,14 +809,14 @@ bool gmshSmoothVertexOptimize ( MTet4 *t,
   t->tet()->getVertex(iVertex)->z() = zopti;
 
   double newQuals[2000];
-  if (vd.ts.size() >= 2000) throw;
-  for (int i=0 ; i< vd.ts.size() ; i++){
+  if(vd.ts.size() >= 2000) throw;
+  for(unsigned int i = 0; i < vd.ts.size(); i++){
     double volume;
-    newQuals[i] = qmTet(vd.ts[i]->tet(),cr,&volume);
+    newQuals[i] = qmTet(vd.ts[i]->tet(), cr, &volume);
     volumeAfter += volume;
   }
 
-  if (fabs(volumeAfter-vTot) > 1.e-10 * vTot){
+  if(fabs(volumeAfter-vTot) > 1.e-10 * vTot){
     t->tet()->getVertex(iVertex)->x() = x;
     t->tet()->getVertex(iVertex)->y() = y;
     t->tet()->getVertex(iVertex)->z() = z;
@@ -822,7 +824,7 @@ bool gmshSmoothVertexOptimize ( MTet4 *t,
   }
   else{
     // restore new quality
-    for (int i=0 ; i< vd.ts.size() ; i++){
+    for(unsigned int i = 0; i < vd.ts.size(); i++){
       vd.ts[i]->setQuality(newQuals[i]);
     }    
     return true;

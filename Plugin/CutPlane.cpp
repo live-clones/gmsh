@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.53 2007-09-11 14:01:54 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.54 2008-01-20 10:10:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -61,7 +61,7 @@ void GMSH_CutPlanePlugin::draw()
 #if defined(HAVE_FLTK)
   int num = (int)CutPlaneOptions_Number[7].def;
   if(num < 0) num = iview;
-  if(num >= 0 && num < PView::list.size()){
+  if(num >= 0 && num < (int)PView::list.size()){
     glColor4ubv((GLubyte *) & CTX.color.fg);
     glLineWidth(CTX.line_width);
     SBoundingBox3d bb = PView::list[num]->getData()->getBoundingBox();

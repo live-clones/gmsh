@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.39 2008-01-19 23:04:13 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.40 2008-01-20 10:10:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -619,14 +619,14 @@ bool buildFaceSearchStructure ( GModel *model , fs_cont&search )
 
   GModel::fiter fit = model->firstFace() ;
   while (fit != model->lastFace()){    
-    for (int i=0;i<(*fit)->triangles.size();i++)
-      {
-	MVertex *p1=(*fit)->triangles[i]->getVertex(0);
-	MVertex *p2=(*fit)->triangles[i]->getVertex(1);
-	MVertex *p3=(*fit)->triangles[i]->getVertex(2);
-	MVertex *p = std::min(p1,std::min(p2,p3));
-	search.insert ( std::pair<MVertex*,std::pair<MTriangle*,GFace*> > ( p, std::pair<MTriangle*,GFace*>((*fit)->triangles[i],*fit)));
-      }
+    for (unsigned int i = 0; i < (*fit)->triangles.size(); i++){
+      MVertex *p1 = (*fit)->triangles[i]->getVertex(0);
+      MVertex *p2 = (*fit)->triangles[i]->getVertex(1);
+      MVertex *p3 = (*fit)->triangles[i]->getVertex(2);
+      MVertex *p = std::min(p1, std::min(p2, p3));
+      search.insert(std::pair<MVertex*, std::pair<MTriangle*, GFace*> >
+		    (p, std::pair<MTriangle*, GFace*>((*fit)->triangles[i], *fit)));
+    }
     ++fit;
   }
   return true;
@@ -638,13 +638,13 @@ bool buildEdgeSearchStructure ( GModel *model , es_cont&search )
 
   GModel::eiter eit = model->firstEdge() ;
   while (eit != model->lastEdge()){    
-    for (int i=0;i<(*eit)->lines.size();i++)
-      {
-	MVertex *p1=(*eit)->lines[i]->getVertex(0);
-	MVertex *p2=(*eit)->lines[i]->getVertex(1);
-	MVertex *p = std::min(p1,p2);
-	search.insert ( std::pair<MVertex*,std::pair<MLine*,GEdge*> > ( p, std::pair<MLine*,GEdge*>((*eit)->lines[i],*eit)));
-      }
+    for(unsigned int i = 0; i < (*eit)->lines.size(); i++){
+      MVertex *p1 = (*eit)->lines[i]->getVertex(0);
+      MVertex *p2 = (*eit)->lines[i]->getVertex(1);
+      MVertex *p = std::min(p1, p2);
+      search.insert(std::pair<MVertex*, std::pair<MLine*, GEdge*> > 
+		    (p, std::pair<MLine*, GEdge*>((*eit)->lines[i], *eit)));
+    }
     ++eit;
   }
   return true;

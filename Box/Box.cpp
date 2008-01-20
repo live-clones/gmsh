@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.40 2008-01-19 22:05:59 geuzaine Exp $
+// $Id: Box.cpp,v 1.41 2008-01-20 10:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -100,7 +100,7 @@ int GMSHBOX(int argc, char *argv[])
   check_gsl();
 
   OpenProject(CTX.filename);
-  if(yyerrorstate)
+  if(gmsh_yyerrorstate)
     ParUtil::Instance()->Abort();
   else {
     for(int i = 1; i < List_Nbr(CTX.files); i++)

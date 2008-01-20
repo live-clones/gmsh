@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.167 2008-01-19 22:06:07 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.168 2008-01-20 10:10:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -53,9 +53,9 @@ void FixRelativePath(const char *in, char *out){
   }
   else{
     // append 'in' to the path of the parent file
-    strcpy(out, yyname);
+    strcpy(out, gmsh_yyname);
     int i = strlen(out)-1 ;
-    while(i >= 0 && yyname[i] != '/' && yyname[i] != '\\') i-- ;
+    while(i >= 0 && gmsh_yyname[i] != '/' && gmsh_yyname[i] != '\\') i-- ;
     out[i+1] = '\0';
     strcat(out, in);
   }
@@ -201,39 +201,39 @@ int ParseFile(const char *f, int close, int warn_if_missing)
 
   int numViewsBefore = PView::list.size();
 
-  strncpy(yyname_old, yyname, 255);
-  yyin_old = yyin;
-  yyerrorstate_old = yyerrorstate;
-  yylineno_old = yylineno;
-  yyviewindex_old = yyviewindex;
+  strncpy(yyname_old, gmsh_yyname, 255);
+  yyin_old = gmsh_yyin;
+  yyerrorstate_old = gmsh_yyerrorstate;
+  yylineno_old = gmsh_yylineno;
+  yyviewindex_old = gmsh_yyviewindex;
 
-  strncpy(yyname, f, 255);
-  yyin = fp;
-  yyerrorstate = 0;
-  yylineno = 1;
-  yyviewindex = 0;
+  strncpy(gmsh_yyname, f, 255);
+  gmsh_yyin = fp;
+  gmsh_yyerrorstate = 0;
+  gmsh_yylineno = 1;
+  gmsh_yyviewindex = 0;
 
   fpos_t position;
-  fgetpos(yyin, &position);
-  fgets(tmp, sizeof(tmp), yyin);
-  fsetpos(yyin, &position);
+  fgetpos(gmsh_yyin, &position);
+  fgets(tmp, sizeof(tmp), gmsh_yyin);
+  fsetpos(gmsh_yyin, &position);
 
-  while(!feof(yyin)){
-    yyparse();
-    if(yyerrorstate > 20){
+  while(!feof(gmsh_yyin)){
+    gmsh_yyparse();
+    if(gmsh_yyerrorstate > 20){
       Msg(GERROR, "Too many errors: aborting...");
       force_yyflush();
       break;
     }
   }
 
-  if(close) fclose(yyin);
+  if(close) fclose(gmsh_yyin);
 
-  strncpy(yyname, yyname_old, 255);
-  yyin = yyin_old;
-  yyerrorstate = yyerrorstate_old;
-  yylineno = yylineno_old;
-  yyviewindex = yyviewindex_old;
+  strncpy(gmsh_yyname, yyname_old, 255);
+  gmsh_yyin = yyin_old;
+  gmsh_yyerrorstate = yyerrorstate_old;
+  gmsh_yylineno = yylineno_old;
+  gmsh_yyviewindex = yyviewindex_old;
 
 #if defined(HAVE_FLTK)
   if(!CTX.batch && numViewsBefore != (int)PView::list.size())

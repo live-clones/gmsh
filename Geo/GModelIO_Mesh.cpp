@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.25 2008-01-18 20:13:12 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.26 2008-01-20 10:10:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -473,9 +473,9 @@ int GModel::readMSH(const std::string &name)
 	return false;
       }
 
-      if(fscanf(fp, "%d %lf %d", &timeStep, &time, &numData, &numComponents) != 4) return 0;
+      if(fscanf(fp, "%d %lf %d %d", &timeStep, &time, &numData, &numComponents) != 4)
+	return 0;
       Msg(INFO, "%d node data", numData);
-
 
       /*
       //std::map<int, int> nodeNumber, nodeIndex      
@@ -490,8 +490,6 @@ int GModel::readMSH(const std::string &name)
       data.scalar.indices.append();
       data.scalar.values.append();
       */
-
-
     }
 
     do {

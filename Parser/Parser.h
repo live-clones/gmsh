@@ -32,15 +32,17 @@ void InitSymbols();
 
 extern Tree_T *Symbol_T;
 
-int yyparse();
-int yylex();
+int gmsh_yyparse();
+int gmsh_yylex();
+
 void force_yyflush();
 
-extern FILE *yyin;
-extern int yylineno;
-extern int yyviewindex;
-extern char yyname[256];
-extern char *yytext;
-extern int yyerrorstate;
+extern FILE *gmsh_yyin;
+extern int gmsh_yylineno;
+extern char *gmsh_yytext;
+
+extern int gmsh_yyviewindex;
+extern char gmsh_yyname[256];
+extern int gmsh_yyerrorstate;
 
 #endif

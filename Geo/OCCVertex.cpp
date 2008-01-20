@@ -1,4 +1,4 @@
-// $Id: OCCVertex.cpp,v 1.11 2007-01-22 16:31:43 geuzaine Exp $
+// $Id: OCCVertex.cpp,v 1.12 2008-01-20 10:10:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,8 @@
 
 #if defined(HAVE_OCC)
 
-double max_surf_curvature(const GVertex *gv, double x, double y, double z, const GEdge *_myGEdge)
+double max_surf_curvature(const GVertex *gv, double x, double y, double z, 
+			  const GEdge *_myGEdge)
 {
   std::list<GFace *> faces = _myGEdge->faces();
   std::list<GFace *>::iterator it =  faces.begin();
@@ -43,10 +44,13 @@ double max_surf_curvature(const GVertex *gv, double x, double y, double z, const
 double OCCVertex::max_curvature_of_surfaces() const
 {  
   if(max_curvature < 0){
-    for(std::list<GEdge*>::const_iterator it = l_edges.begin(); it != l_edges.end(); ++it ){
-      max_curvature = std::max(max_surf_curvature(this, x(), y(), z(), *it), max_curvature);
+    for(std::list<GEdge*>::const_iterator it = l_edges.begin(); 
+	it != l_edges.end(); ++it ){
+      max_curvature = std::max(max_surf_curvature(this, x(), y(), z(), *it),
+			       max_curvature);
     }
-    // printf("max curvature (%d) = %12.5E lc = %12.5E\n",tag(),max_curvature,prescribedMeshSizeAtVertex());
+    // printf("max curvature (%d) = %12.5E lc = %12.5E\n",tag(),
+    //        max_curvature, prescribedMeshSizeAtVertex());
   }
   return max_curvature;
 }

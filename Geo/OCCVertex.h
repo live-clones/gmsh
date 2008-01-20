@@ -23,7 +23,7 @@
 #include "GModel.h"
 #include "OCCIncludes.h"
 #include "GVertex.h"
-#include "Context.h"
+#include "MVertex.h"
 
 #if defined(HAVE_OCC)
 

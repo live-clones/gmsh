@@ -47,7 +47,7 @@ struct graphics_point
 
 struct surface_params
 {
-  double radius, radius2, height,cx,cy,cz;
+  double radius, radius2, height, cx, cy, cz;
 };
 
 class GRegion;
@@ -61,19 +61,18 @@ class GFace : public GEntity
   std::vector<std::vector<graphics_point> > _graphicsRep;
 
  protected: 
-  // edge loops, will replace what follows
-  // list of al the edges of the face
+  // edge loops, will replace what follows list of al the edges of the
+  // face
   std::list<GEdge *> l_edges;
   std::list<int> l_dirs;
   GRegion *r1, *r2;
   mean_plane meanPlane;
   std::list<GEdge *> embedded_edges;
   std::list<GVertex *> embedded_vertices;
-  // given a list of GEdges, the function builds a 
-  // list of wires, i.e. closed edge loops.
-  // the first wire is the one that is the
-  // outer contour of the face. 
-  void resolveWires ();
+  // given a list of GEdges, the function builds a list of wires,
+  // i.e. closed edge loops.  the first wire is the one that is the
+  // outer contour of the face.
+  void resolveWires();
 
  public:
   GFace(GModel *model, int tag);
@@ -82,14 +81,14 @@ class GFace : public GEntity
   std::list<GEdgeLoop> edgeLoops;
 
   void addRegion(GRegion *r){ r1 ? r2 = r : r1 = r; }
-  void delRegion(GRegion *r){ if(r1 == r) r1 = r2; r2=0; }
+  void delRegion(GRegion *r){ if(r1 == r) r1 = r2; r2 = 0; }
 
   // edge orientations.
   virtual std::list<int> orientations() const { return l_dirs; }
   // Edges that bound this entity or that this entity bounds.
   virtual std::list<GEdge*> edges() const { return l_edges; }
   // Edges that are embedded in this face.
-  virtual std::list<GEdge*> emb_edges() const { return embedded_edges; }
+  virtual std::list<GEdge*> embeddedEdges() const { return embedded_edges; }
   // Vertices that bound this entity or that this entity bounds.
   virtual std::list<GVertex*> vertices() const;
 
@@ -120,7 +119,7 @@ class GFace : public GEntity
   // this is a special feature for stereographic mappings of the sphere
   // that is used in 2D mesh generation !
 
-  virtual double getMetricEigenvalue ( const SPoint2 &) {throw;}
+  virtual double getMetricEigenvalue(const SPoint2 &){ throw; }
 
   // Return the parmater location on the face given a point in space
   // that is on the face.
@@ -189,13 +188,13 @@ class GFace : public GEntity
     // edge loops
   } meshAttributes ;
 
-  typedef enum {PENDING,DONE,FAILED} meshGenerationStatus  ;
+  typedef enum {PENDING,DONE,FAILED} meshGenerationStatus;
   struct {
     meshGenerationStatus status;
     double worst_element_shape, best_element_shape, average_element_shape;
     double smallest_edge_length, longest_edge_length, efficiency_index;
     int nbEdge, nbTriangle;
-    int nbGoodQuality,nbGoodLength;
+    int nbGoodQuality, nbGoodLength;
   } meshStatistics;
 
   // a crude graphical representation using a "cross" defined by pairs

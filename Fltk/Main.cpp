@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.114 2008-01-19 22:06:01 geuzaine Exp $
+// $Id: Main.cpp,v 1.115 2008-01-20 10:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
     check_gsl();
     Msg(INFO, "'%s' started on %s", cmdline, currtime);
     OpenProject(CTX.filename);
-    if(yyerrorstate)
+    if(gmsh_yyerrorstate)
       exit(1);
     else {
       for(int i = 1; i < List_Nbr(CTX.files); i++)

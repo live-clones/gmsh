@@ -45,15 +45,13 @@ class GEdge : public GEntity {
 
   void addFace(GFace *f);
   void delFace(GFace *f);
-  /* start==end and no more than 2 segments */
-  bool is_mesh_degenerated() const;
 
   virtual int dim() const {return 1;}
   virtual bool periodic(int dim=0) const = 0;
   virtual bool continuous(int dim=0) const = 0;
   virtual void setVisibility(char val, bool recursive=false);
 
-  /** True if the edge is a seam for the given face. */
+  // True if the edge is a seam for the given face.
   virtual int isSeam(GFace *face) const {return 0;}
 
   // The bounding box
@@ -92,26 +90,29 @@ class GEdge : public GEntity {
   void deleteMeshPartitions();
 
   // Returns the minimum number of segments used for meshing the edge
-  virtual int minimumMeshSegments() const {return 1;}
+  virtual int minimumMeshSegments() const { return 1; }
 
   // Returns the minimum number of segments used for drawing the edge
-  virtual int minimumDrawSegments() const {return 1;}
+  virtual int minimumDrawSegments() const { return 1; }
 
   // Returns a type-specific additional information string
   virtual std::string getAdditionalInfoString();
 
   // tells if the edge is a 3D edge (in opposition with a trimmed curve on a surface)
-  virtual bool is3D() const {return true;}
+  virtual bool is3D() const { return true; }
 
   // the length of the model edge
-  inline double length() const {return _length;}
-  inline void setLength(const double l) {_length = l;}
+  inline double length() const { return _length; }
+  inline void setLength(const double l) { _length = l; }
 
   // one can impose the mesh size at an edge
-  virtual double prescribedMeshSizeAtVertex() const {return meshAttributes.meshSize;}
+  virtual double prescribedMeshSizeAtVertex() const { return meshAttributes.meshSize; }
 
   // Resets the mesh attributes to default values
   virtual void resetMeshAttributes();
+
+  // True if start == end and no more than 2 segments
+  bool isMeshDegenerated() const{ return (v0 == v1 && mesh_vertices.size() < 2); }
 
   struct {
     char   Method;

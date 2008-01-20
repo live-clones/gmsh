@@ -21,7 +21,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GEntity.h"
-#include "MVertex.h"
 #include "GPoint.h"
 #include "SPoint2.h"
 
@@ -41,14 +40,14 @@ class GVertex : public GEntity
   virtual void setPosition(GPoint &p);
   void addEdge(GEdge *e);
   void delEdge(GEdge *e);
-  virtual int dim() const {return 0;}
-  virtual GeomType geomType() const {return Point;}
-  inline double prescribedMeshSizeAtVertex() const {return meshSize;}
-  virtual void setPrescribedMeshSizeAtVertex(double l) {meshSize = l;}
+  virtual int dim() const { return 0; }
+  virtual GeomType geomType() const { return Point; }
+  inline double prescribedMeshSizeAtVertex() const { return meshSize; }
+  virtual void setPrescribedMeshSizeAtVertex(double l) { meshSize = l; }
   virtual SBoundingBox3d bounds(){ return SBoundingBox3d(SPoint3(x(), y(), z())); }
-  virtual SPoint2 reparamOnFace ( GFace *gf , int) const;
+  virtual SPoint2 reparamOnFace(GFace *gf, int) const;
   virtual std::string getAdditionalInfoString();
-  virtual std::list<GEdge*> edges() const{return l_edges;}
+  virtual std::list<GEdge*> edges() const{ return l_edges; }
 };
 
 #endif

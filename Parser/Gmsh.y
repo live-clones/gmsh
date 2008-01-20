@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.294 2008-01-19 22:06:07 geuzaine Exp $
+// $Id: Gmsh.y,v 1.295 2008-01-20 10:10:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -248,8 +248,8 @@ View :
     { 
       if(!strcmp($1, "View") && ViewData->finalize()){
 	ViewData->setName($2);
-	ViewData->setFileName(yyname);
-	ViewData->setFileIndex(yyviewindex++);
+	ViewData->setFileName(gmsh_yyname);
+	ViewData->setFileIndex(gmsh_yyviewindex++);
 	if(ViewData->adaptive){
 	  ViewData->adaptive->setGlobalResolutionLevel
 	    (ViewData, PViewOptions::reference.MaxRecursionLevel);
@@ -265,7 +265,7 @@ View :
     {
       if(!strcmp($2, "View")){
 	int index = (int)$4;
-	if(index >= 0 && index < PView::list.size())
+	if(index >= 0 && index < (int)PView::list.size())
 	  new PView(PView::list[index], false);
       }
       Free($2);
@@ -274,7 +274,7 @@ View :
     {
       if(!strcmp($2, "View")){
 	int index = (int)$4;
-	if(index >= 0 && index < PView::list.size())
+	if(index >= 0 && index < (int)PView::list.size())
 	  new PView(PView::list[index], true);
       }
       Free($2);
@@ -1059,7 +1059,7 @@ Shape :
   | tPostView tField '(' FExpr ')' tAFFECT FExpr tEND 
     {
       int index = (int)$7;
-      if(index >= 0 && index < PView::list.size()) 
+      if(index >= 0 && index < (int)PView::list.size()) 
         fields.insert(new PostViewField(PView::list[index]), (int)$4);
       else
         yymsg(GERROR, "Field %i error, view %i does not exist", (int)$4, (int)$7);
@@ -1517,19 +1517,25 @@ Shape :
   | tEuclidian tCoordinates tEND
     {
       myGmshSurface = 0;
+      $$.Type = 0;
+      $$.Num = 0;
     }  
   | tCoordinates tSurface FExpr tEND
     {
-      myGmshSurface = gmshSurface :: surfaceByTag ( (int) $3);
+      myGmshSurface = gmshSurface::surfaceByTag((int)$3);
+      $$.Type = 0;
+      $$.Num = 0;
     }  
   | tParametric tSurface '(' FExpr ')' tAFFECT tBIGSTR tBIGSTR tBIGSTR tEND
     {
-      int num = (int)$4, type = 0;
-      myGmshSurface = gmshParametricSurface::NewParametricSurface ((int)$4,$7,$8,$9);
+      int num = (int)$4;
+      myGmshSurface = gmshParametricSurface::NewParametricSurface(num, $7, $8, $9);
+      $$.Type = 0;
+      $$.Num = num;
     }
   | tSphere '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      int num = (int)$3, type = 0;
+      int num = (int)$3;
       if (List_Nbr($6) != 2){
 	yymsg(GERROR, "Sphere %d has to be defined using 2 points (center + "
 	      "any point) and not %d", num, List_Nbr($6));
@@ -1548,10 +1554,12 @@ Shape :
 		(v2->Pos.Y - v1->Pos.Y) * (v2->Pos.Y - v1->Pos.Y) +
 		(v2->Pos.Z - v1->Pos.Z) * (v2->Pos.Z - v1->Pos.Z)));
       }      
+      $$.Type = 0;
+      $$.Num = num;
     }
   | tPolarSphere '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      int num = (int)$3, type = 0;
+      int num = (int)$3;
       if (List_Nbr($6) != 2){
 	yymsg(GERROR, "PolarSphere %d has to be defined using 2 points (center + "
 	      "any point) and not %d", num, List_Nbr($6));
@@ -1570,6 +1578,8 @@ Shape :
 		(v2->Pos.Y - v1->Pos.Y) * (v2->Pos.Y - v1->Pos.Y) +
 		(v2->Pos.Z - v1->Pos.Z) * (v2->Pos.Z - v1->Pos.Z)));
       }      
+      $$.Type = 0;
+      $$.Num = num;
     }
   | tSurface tLoop '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
@@ -1831,7 +1841,7 @@ Delete :
     {
       if(!strcmp($2, "View")){
 	int index = (int)$4;
-	if(index >= 0 && index < PView::list.size())
+	if(index >= 0 && index < (int)PView::list.size())
 	  delete PView::list[index];
 	else
 	  yymsg(GERROR, "Unknown view %d", index);
@@ -1972,7 +1982,7 @@ Command :
     {
       if(!strcmp($1, "Save") && !strcmp($2, "View")){
 	int index = (int)$4;
-	if(index >= 0 && index < PView::list.size()){
+	if(index >= 0 && index < (int)PView::list.size()){
 	  char tmpstring[1024];
 	  FixRelativePath($6, tmpstring);
 	  PView::list[index]->write(tmpstring, CTX.post.file_format);
@@ -1988,7 +1998,7 @@ Command :
     {
       if(!strcmp($1, "Background") && !strcmp($2, "Mesh")  && !strcmp($3, "View")){
 	int index = (int)$5;
-	if(index >= 0 && index < PView::list.size()){
+	if(index >= 0 && index < (int)PView::list.size()){
 	  Field *field = new PostViewField(PView::list[index]);
 	  fields.insert(field);
 	  BGMAddField(field);
@@ -2083,8 +2093,8 @@ Loop :
       LoopControlVariablesTab[ImbricatedLoop][1] = $5;
       LoopControlVariablesTab[ImbricatedLoop][2] = 1.0;
       LoopControlVariablesNameTab[ImbricatedLoop] = NULL;
-      fgetpos(yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
-      yylinenoImbricatedLoopsTab[ImbricatedLoop] = yylineno;
+      fgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       ImbricatedLoop++;
       if(ImbricatedLoop > MAX_RECUR_LOOPS-1){
 	yymsg(GERROR, "Reached maximum number of imbricated loops");
@@ -2098,8 +2108,8 @@ Loop :
       LoopControlVariablesTab[ImbricatedLoop][1] = $5;
       LoopControlVariablesTab[ImbricatedLoop][2] = $7;
       LoopControlVariablesNameTab[ImbricatedLoop] = NULL;
-      fgetpos(yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
-      yylinenoImbricatedLoopsTab[ImbricatedLoop] = yylineno;
+      fgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       ImbricatedLoop++;
       if(ImbricatedLoop > MAX_RECUR_LOOPS-1){
 	yymsg(GERROR, "Reached maximum number of imbricated loops");
@@ -2124,8 +2134,8 @@ Loop :
       }
       else
 	List_Write(pSymbol->val, 0, &$5);
-      fgetpos(yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
-      yylinenoImbricatedLoopsTab[ImbricatedLoop] = yylineno;
+      fgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       ImbricatedLoop++;
       if(ImbricatedLoop > MAX_RECUR_LOOPS-1){
 	yymsg(GERROR, "Reached maximum number of imbricated loops");
@@ -2149,8 +2159,8 @@ Loop :
       }
       else
 	List_Write(pSymbol->val, 0, &$5);
-      fgetpos(yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
-      yylinenoImbricatedLoopsTab[ImbricatedLoop] = yylineno;
+      fgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
+      yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       ImbricatedLoop++;
       if(ImbricatedLoop > MAX_RECUR_LOOPS-1){
 	yymsg(GERROR, "Reached maximum number of imbricated loops");
@@ -2183,8 +2193,8 @@ Loop :
 	      *(double*)List_Pointer_Fast(pSymbol->val, 0) += 
 		LoopControlVariablesTab[ImbricatedLoop-1][2];
 	  }
-	  fsetpos(yyin, &yyposImbricatedLoopsTab[ImbricatedLoop-1]);
-	  yylineno = yylinenoImbricatedLoopsTab[ImbricatedLoop-1];
+	  fsetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop-1]);
+	  gmsh_yylineno = yylinenoImbricatedLoopsTab[ImbricatedLoop-1];
 	}
 	else
 	  ImbricatedLoop--;
@@ -2192,19 +2202,19 @@ Loop :
     }
   | tFunction tSTRING
     {
-      if(!FunctionManager::Instance()->createFunction($2, yyin, yyname, yylineno))
+      if(!FunctionManager::Instance()->createFunction($2, gmsh_yyin, gmsh_yyname, gmsh_yylineno))
 	yymsg(GERROR, "Redefinition of function %s", $2);
       skip_until(NULL, "Return");
       //FIXME: wee leak $2
     }
   | tReturn
     {
-      if(!FunctionManager::Instance()->leaveFunction(&yyin, yyname, yylineno))
+      if(!FunctionManager::Instance()->leaveFunction(&gmsh_yyin, gmsh_yyname, gmsh_yylineno))
 	yymsg(GERROR, "Error while exiting function");
     } 
   | tCall tSTRING tEND
     {
-      if(!FunctionManager::Instance()->enterFunction($2, &yyin, yyname, yylineno))
+      if(!FunctionManager::Instance()->enterFunction($2, &gmsh_yyin, gmsh_yyname, gmsh_yylineno))
 	yymsg(GERROR, "Unknown function %s", $2);
       //FIXME: wee leak $2
     } 
@@ -3540,8 +3550,8 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer){
 }
 
 void yyerror(char *s){
-  Msg(GERROR, "'%s', line %d : %s (%s)", yyname, yylineno-1, s, yytext);
-  yyerrorstate++;
+  Msg(GERROR, "'%s', line %d : %s (%s)", gmsh_yyname, gmsh_yylineno - 1, s, gmsh_yytext);
+  gmsh_yyerrorstate++;
 }
 
 void yymsg(int type, char *fmt, ...){
@@ -3552,7 +3562,7 @@ void yymsg(int type, char *fmt, ...){
   vsprintf (tmp, fmt, args);
   va_end (args);
 
-  Msg(type, "'%s', line %d : %s", yyname, yylineno-1, tmp);
+  Msg(type, "'%s', line %d : %s", gmsh_yyname, gmsh_yylineno - 1, tmp);
 
-  if(type == GERROR) yyerrorstate++;
+  if(type == GERROR) gmsh_yyerrorstate++;
 }

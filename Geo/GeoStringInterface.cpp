@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.13 2008-01-19 22:06:02 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.14 2008-01-20 10:10:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -48,23 +48,23 @@ int snprintf(char *str, size_t size, const char* fmt, ...){
 double evaluate_scalarfunction(char *var, double val, char *funct)
 {
   FILE *tempf;
-  tempf = yyin;
+  tempf = gmsh_yyin;
 
-  if(!(yyin = fopen(CTX.tmp_filename_fullpath, "w"))) {
+  if(!(gmsh_yyin = fopen(CTX.tmp_filename_fullpath, "w"))) {
     Msg(GERROR, "Unable to open temporary file '%s'", CTX.tmp_filename_fullpath);
     return 0.;
   }
 
   // pose "variable = function" and evaluate function
-  fprintf(yyin, "%s = %.16g ;\n", var, val);
-  fprintf(yyin, "ValeurTemporaire__ = %s ;\n", funct);
-  fclose(yyin);
-  yyin = fopen(CTX.tmp_filename_fullpath, "r");
-  while(!feof(yyin)) {
-    yyparse();
+  fprintf(gmsh_yyin, "%s = %.16g ;\n", var, val);
+  fprintf(gmsh_yyin, "ValeurTemporaire__ = %s ;\n", funct);
+  fclose(gmsh_yyin);
+  gmsh_yyin = fopen(CTX.tmp_filename_fullpath, "r");
+  while(!feof(gmsh_yyin)) {
+    gmsh_yyparse();
   }
-  fclose(yyin);
-  yyin = tempf;
+  fclose(gmsh_yyin);
+  gmsh_yyin = tempf;
 
   // retreive value
   Symbol TheSymbol, *TheSymbol_P;
@@ -80,19 +80,19 @@ double evaluate_scalarfunction(char *var, double val, char *funct)
 
 void add_infile(char *text, char *fich, bool deleted_something)
 {
-  if(!(yyin = fopen(CTX.tmp_filename_fullpath, "w"))) {
+  if(!(gmsh_yyin = fopen(CTX.tmp_filename_fullpath, "w"))) {
     Msg(GERROR, "Unable to open temporary file '%s'", CTX.tmp_filename_fullpath);
     return;
   }
 
-  fprintf(yyin, "%s\n", text);
+  fprintf(gmsh_yyin, "%s\n", text);
   Msg(STATUS2, "%s", text);
-  fclose(yyin);
-  yyin = fopen(CTX.tmp_filename_fullpath, "r");
-  while(!feof(yyin)) {
-    yyparse();
+  fclose(gmsh_yyin);
+  gmsh_yyin = fopen(CTX.tmp_filename_fullpath, "r");
+  while(!feof(gmsh_yyin)) {
+    gmsh_yyparse();
   }
-  fclose(yyin);
+  fclose(gmsh_yyin);
 
   if(deleted_something){
     // we need to start from scratch since the command just parsed

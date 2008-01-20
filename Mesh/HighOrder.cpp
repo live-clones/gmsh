@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.17 2008-01-19 23:04:13 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.18 2008-01-20 10:10:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -775,7 +775,7 @@ double smoothing_objective_function_HighOrder (double U, double V, MVertex *v, s
 
   double minJ =  1.e22;
   double maxJ = -1.e22;
-  for (int i=0;i<ts.size();i++){
+  for (unsigned int i = 0; i < ts.size(); i++){
     getMinMaxJac (ts[i], minJ, maxJ);
   }
   v->x() = oldX;
@@ -806,7 +806,7 @@ double smooth_obj_HighOrder(double U, double V, void *data){
 double smooth_obj_HighOrderN(double *uv, void *data){
   smoothVertexDataHON *svd = (smoothVertexDataHON*)data;
   double oldX[10],oldY[10],oldZ[10];
-  for (int i=0;i<svd->v.size();i++){
+  for (unsigned int i = 0; i < svd->v.size(); i++){
     GPoint gp = svd->gf->point(uv[2*i],uv[2*i+1]);
     oldX[i] = svd->v[i]->x();
     oldY[i] = svd->v[i]->y();
@@ -817,10 +817,10 @@ double smooth_obj_HighOrderN(double *uv, void *data){
   }
   double minJ =  1.e22;
   double maxJ = -1.e22;
-  for (int i=0;i<svd->ts.size();i++){
+  for(unsigned int i = 0; i < svd->ts.size(); i++){
     getMinMaxJac (svd->ts[i], minJ, maxJ);
   }
-  for (int i=0;i<svd->v.size();i++){
+  for(unsigned int i = 0; i < svd->v.size(); i++){
     svd->v[i]->x() = oldX[i];
     svd->v[i]->y() = oldY[i];
     svd->v[i]->z() = oldZ[i];
@@ -834,7 +834,7 @@ void deriv_smoothing_objective_function_HighOrderN(double *uv, double *dF, doubl
   const double SMALL = 1./LARGE;
   smoothVertexDataHON *svd = (smoothVertexDataHON*)data;
   F   = smooth_obj_HighOrderN(uv,data);
-  for (int i=0;i<svd->v.size();i++){
+  for (unsigned int i = 0; i < svd->v.size(); i++){
     uv[i] += SMALL;
     dF[i] = (smooth_obj_HighOrderN(uv,data) - F)*LARGE;
     uv[i] -= SMALL;
@@ -847,8 +847,6 @@ bool optimizeHighOrderMesh(GModel *modl, GFace *gf, edgeContainer &edgeVertices)
 
   v2t_cont adjv;
   buildVertexToTriangle ( gf->triangles ,  adjv );
-
-  int ITER=0;
 
   typedef std::map<std::pair<MVertex*, MVertex*>, std::vector<MElement*> > edge2tris;
   edge2tris e2t;
@@ -877,7 +875,7 @@ bool optimizeHighOrderMesh(GModel *modl, GFace *gf, edgeContainer &edgeVertices)
       else
 	e = edgeVertices[std::make_pair<MVertex*, MVertex*> (n4, n2)];
 
-      if (e.size() == -1){
+      if (e.size() == 1){
 	double initu,initv;
 	e[0]->getParameter ( 0,initu);
 	e[0]->getParameter ( 1,initv);	  
@@ -897,7 +895,7 @@ bool optimizeHighOrderMesh(GModel *modl, GFace *gf, edgeContainer &edgeVertices)
       }
       else if (e.size() < 5){
 	double uv[20];
-	for (int i=0;i<e.size();i++){
+	for (unsigned int i = 0; i < e.size(); i++){
 	  if (!e[i]->getParameter (0,uv[2*i]))throw;
 	  if (!e[i]->getParameter (1,uv[2*i+1]))throw;
 	}
@@ -925,7 +923,7 @@ bool optimizeHighOrderMesh(GModel *modl, GFace *gf, edgeContainer &edgeVertices)
 // 	    printf("AVANT 2 minJ %22.15E maxJ %22.15E\n",minJ,maxJ);
 // 	    checkHighOrderTriangles(modl);
 
-	    for (int i=0;i<vdN.v.size();i++){
+	    for (unsigned int i = 0; i < vdN.v.size(); i++){
 	      vdN.v[i]->setParameter ( 0,uv[2*i]);
 	      vdN.v[i]->setParameter ( 1,uv[2*i+1]);
 	      GPoint gp = gf->point(uv[2*i],uv[2*i+1]);

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.452 2008-01-19 22:29:21 geuzaine Exp $
+# $Id: Makefile,v 1.453 2008-01-20 10:10:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -58,9 +58,22 @@ install-mac: variables package-mac
 	cp -rf gmsh-${GMSH_VERSION}/Gmsh.app /Applications
 	rm -rf gmsh-${GMSH_VERSION} gmsh-${GMSH_VERSION}-MacOSX.tgz
 
-embed: compile
+.PHONY: lib
+lib: compile
 	${AR} ${ARFLAGS}libGmsh${LIBEXT} lib/*${LIBEXT}
 	${RANLIB} libGmsh${LIBEXT}
+
+install-lib: lib
+	mkdir -p ${includedir}/gmsh
+	cp -f Geo/GModel.h\
+                Geo/GEntity.h Geo/GPoint.h\
+                Geo/GVertex.h Geo/GEdge.h Geo/GEdgeLoop.h Geo/GFace.h Geo/GRegion.h\
+              Geo/MVertex.h Geo/MEdge.h Geo/MFace.h Geo/MElement.h\
+              Geo/SPoint2.h Geo/SPoint3.h Geo/SVector3.h Geo/SBoundingBox3d.h\
+              Geo/Pair.h Geo/Range.h\
+              Common/GmshDefines.h\
+          ${includedir}/gmsh
+	cp -f libGmsh${LIBEXT} ${libdir}
 
 variables: configure
 	@echo "********************************************************************"

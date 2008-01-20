@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.32 2008-01-18 22:45:24 geuzaine Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.33 2008-01-20 10:10:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -403,8 +403,8 @@ void adaptMeshGRegion::operator () (GRegion *gr)
 
   typedef std::list<MTet4 *> CONTAINER ;
   CONTAINER allTets;
-  for (int i=0;i<gr->tetrahedra.size();i++){
-    allTets.push_back(new MTet4(gr->tetrahedra[i],qm));
+  for(unsigned int i=0;i<gr->tetrahedra.size();i++){
+    allTets.push_back(new MTet4(gr->tetrahedra[i], qm));
   }
   gr->tetrahedra.clear();
   
@@ -466,7 +466,6 @@ void adaptMeshGRegion::operator () (GRegion *gr)
 
     for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it){
       if (!(*it)->isDeleted()){
-	double vol;
 	double qq = (*it)->getQuality();
 	if (qq < qMin){
 	  for (int i=0;i<4;i++){
@@ -501,8 +500,8 @@ void adaptMeshGRegion::operator () (GRegion *gr)
     if (!newTets.size())break;
     
     // add all the new tets in the container
-    for (int i=0;i<newTets.size();i++){
-      if (!newTets[i]->isDeleted()){
+    for(unsigned int i = 0; i < newTets.size(); i++){
+      if(!newTets[i]->isDeleted()){
 	allTets.push_back(newTets[i]);
       }
       else{
@@ -544,8 +543,8 @@ void adaptMeshGRegion::operator () (GRegion *gr)
   }
   
   int nbSlivers = 0;
-  for (int i=0;i<illegals.size();i++)
-    if (!(illegals[i]->isDeleted()))nbSlivers ++;
+  for(unsigned int i = 0; i < illegals.size(); i++)
+    if(!(illegals[i]->isDeleted())) nbSlivers ++;
   
   if (nbSlivers){
     Msg(INFO,"Opti : %d illegal tets are still in the mesh, trying to remove them",nbSlivers);
@@ -578,7 +577,7 @@ void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm)
 {
   typedef std::list<MTet4 *> CONTAINER ;
   CONTAINER allTets;
-  for (int i=0;i<gr->tetrahedra.size();i++){
+  for(unsigned int i=0;i<gr->tetrahedra.size();i++){
     MTet4 * t = new MTet4(gr->tetrahedra[i],qm);
     t->setOnWhat(gr);
     allTets.push_back(t);
@@ -630,7 +629,6 @@ void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm)
     std::vector<MTet4*> newTets;    
     for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it){
       if (!(*it)->isDeleted()){
-	double vol;
 	double qq = (*it)->getQuality();
 	if (qq < qMin){
 	  for (int i=0;i<4;i++){
@@ -661,26 +659,26 @@ void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm)
 	  }
 	}
       }
-
-      if (0 && !newTets.size()){
-        int nbSlivers = 0;
-        int nbSliversWeCanDoSomething = 0;
-        for (int i=0;i<illegals.size();i++)
-	  if (!(illegals[i]->isDeleted())){
-	    if (gmshSliverRemoval(newTets,illegals[i],qm))
-	      nbSliversWeCanDoSomething++;
-	    nbSlivers ++;
-	  }
-	Msg(INFO,"Opti : %d Sliver Removals",nbSliversWeCanDoSomething);
-      }
-
+    
+    if (0 && !newTets.size()){
+      int nbSlivers = 0;
+      int nbSliversWeCanDoSomething = 0;
+      for(unsigned int i = 0; i < illegals.size(); i++)
+	if(!(illegals[i]->isDeleted())){
+	  if(gmshSliverRemoval(newTets, illegals[i], qm))
+	    nbSliversWeCanDoSomething++;
+	  nbSlivers ++;
+	}
+      Msg(INFO,"Opti : %d Sliver Removals",nbSliversWeCanDoSomething);
+    }
+    
     if (!newTets.size()){
       break;
     }
     
     // add all the new tets in the container
-    for (int i=0;i<newTets.size();i++){
-      if (!newTets[i]->isDeleted()){
+    for(unsigned int i = 0; i < newTets.size(); i++){
+      if(!newTets[i]->isDeleted()){
 	allTets.push_back(newTets[i]);
       }
       else{

@@ -3,6 +3,7 @@
 
 #include "GModel.h"
 #include "GVertex.h"
+#include "MVertex.h"
 
 #if defined(HAVE_FOURIER_MODEL)
 

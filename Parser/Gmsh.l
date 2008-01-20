@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.95 2008-01-19 22:06:04 geuzaine Exp $
+// $Id: Gmsh.l,v 1.96 2008-01-20 10:10:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -30,9 +30,9 @@
 #include "Geo.h"
 #include "Gmsh.tab.hpp"
 
-char yyname[256] = "";
-int  yyerrorstate = 0;
-int  yyviewindex = 0;
+char gmsh_yyname[256] = "";
+int  gmsh_yyerrorstate = 0;
+int  gmsh_yyviewindex = 0;
 
 void   parsestring(char endchar);
 char  *strsave(char *ptr);
@@ -73,16 +73,16 @@ string	{alpha}({alpha}|{digit})*
 ";"                     return tEND;
 "/*"			skipcomments();
 "//"			skipline();
-"\""			{parsestring('\"'); return tBIGSTR;}
-"\'"			{parsestring('\''); return tBIGSTR;}
-"newreg"		{yylval.d = NEWREG(); return tDOUBLE;}
-"newp"  		{yylval.d = NEWPOINT(); return tDOUBLE;}
-"newl"  		{yylval.d = NEWLINE(); return tDOUBLE;}
-"newc"  		{yylval.d = NEWLINE(); return tDOUBLE;}
-"newll"  		{yylval.d = NEWLINELOOP(); return tDOUBLE;}
-"news"  		{yylval.d = NEWSURFACE(); return tDOUBLE;}
-"newsl"  		{yylval.d = NEWSURFACELOOP(); return tDOUBLE;}
-"newv"  		{yylval.d = NEWVOLUME(); return tDOUBLE;}
+"\""			{ parsestring('\"'); return tBIGSTR; }
+"\'"			{ parsestring('\''); return tBIGSTR; }
+"newreg"		{ gmsh_yylval.d = NEWREG(); return tDOUBLE; }
+"newp"  		{ gmsh_yylval.d = NEWPOINT(); return tDOUBLE; }
+"newl"  		{ gmsh_yylval.d = NEWLINE(); return tDOUBLE; }
+"newc"  		{ gmsh_yylval.d = NEWLINE(); return tDOUBLE; }
+"newll"  		{ gmsh_yylval.d = NEWLINELOOP(); return tDOUBLE; }
+"news"  		{ gmsh_yylval.d = NEWSURFACE(); return tDOUBLE; }
+"newsl"  		{ gmsh_yylval.d = NEWSURFACELOOP(); return tDOUBLE; }
+"newv"  		{ gmsh_yylval.d = NEWVOLUME(); return tDOUBLE; }
 "="                     return tAFFECT;
 "+="                    return tAFFECTPLUS;
 "-="                    return tAFFECTMINUS;
@@ -236,17 +236,17 @@ TIME                    return tTime;
 {digit}+ |
 {digit}+"."{digit}*({exp})? |
 {digit}*"."{digit}+({exp})? |
-{digit}+{exp}           {yylval.d = atof((char *)yytext); return tDOUBLE;}
+{digit}+{exp}           { gmsh_yylval.d = atof((char *)yytext); return tDOUBLE; }
 
-{string}		{yylval.c = strsave((char*)yytext); return tSTRING;}
+{string}		{ gmsh_yylval.c = strsave((char*)yytext); return tSTRING; }
 
 .                       return yytext[0];
 
 %%
 
-#undef yywrap
+#undef gmsh_yywrap
 
-int yywrap() {return 1;}
+int gmsh_yywrap() {return 1;}
 
 void skipcomments(void)
 {
@@ -287,7 +287,7 @@ void parsestring(char endchar)
     }
   }
   tmp[i] = '\0';
-  yylval.c = strsave(tmp);
+  gmsh_yylval.c = strsave(tmp);
 }
 
 char *strsave(char *ptr)

@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.41 2007-09-08 21:26:03 geuzaine Exp $
+// $Id: List.cpp,v 1.42 2008-01-20 10:10:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -273,8 +273,8 @@ int List_Query(List_T * liste, void *data,
   return (1);
 }
 
-void *lolofind(void *data, void *array, int n, int size,
-               int (*fcmp) (const void *a, const void *b))
+static void *lolofind(void *data, void *array, int n, int size,
+		      int (*fcmp) (const void *a, const void *b))
 {
   char *ptr;
   int i;

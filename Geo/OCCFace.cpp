@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.25 2008-01-17 17:48:38 remacle Exp $
+// $Id: OCCFace.cpp,v 1.26 2008-01-20 10:10:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -255,18 +255,16 @@ int OCCFace::containsPoint(const SPoint3 &pt) const
   return false;
 }
 
-// retrieve surface params 
 surface_params OCCFace::getSurfaceParams() const 
 {
   surface_params p;
-  switch (geomType()) 
-    {
-    case GEntity::Cylinder :
-      {
-	p.radius = Handle(Geom_CylindricalSurface)::DownCast(occface)->Radius();
-      }
-      break;
-    }
+  switch(geomType()){
+  case GEntity::Cylinder:
+    p.radius = Handle(Geom_CylindricalSurface)::DownCast(occface)->Radius();
+    break;
+  default:
+    break;
+  }
   return p;
 }
 

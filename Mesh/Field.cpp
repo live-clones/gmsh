@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.12 2008-01-19 22:06:03 geuzaine Exp $
+// $Id: Field.cpp,v 1.13 2008-01-20 10:10:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,12 +21,13 @@
 
 #include <fstream>
 #include <math.h>
+#include "GModel.h"
+#include "MVertex.h"
 #include "Message.h"
 #include "Field.h"
 #include "Context.h"
 #include "GeoInterpolation.h"
 #include "BackgroundMesh.h"
-#include "GModel.h"
 #ifdef HAVE_MATH_EVAL
 #include "matheval.h"
 #endif

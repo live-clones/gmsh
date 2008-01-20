@@ -61,23 +61,23 @@ class MTet4
 
  public :
 
-  ~MTet4 (){}
-  MTet4 () : deleted(false), base (0), gr(0),circum_radius(0.0)
-    {
-      neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
-    }
-  MTet4 (MTetrahedron * t, double qual) : deleted(false),  gr(0),circum_radius(qual),base(t)
+  ~MTet4(){}
+  MTet4() : deleted(false), circum_radius(0.0), base(0), gr(0)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
   }
-  MTet4 (MTetrahedron * t, const gmshQualityMeasure4Tet &qm) : deleted(false), gr(0),base(t)
+  MTet4(MTetrahedron *t, double qual) : deleted(false), circum_radius(qual), base(t), gr(0)
+  {
+    neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
+  }
+  MTet4(MTetrahedron *t, const gmshQualityMeasure4Tet &qm) : deleted(false), base(t), gr(0)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
     double vol;
-    circum_radius = qmTet(t,qm,&vol);
+    circum_radius = qmTet(t, qm, &vol);
   }
 
-  void setup ( MTetrahedron * t, std::vector<double> & sizes)
+  void setup(MTetrahedron *t, std::vector<double> &sizes)
   {
     base = t;
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;

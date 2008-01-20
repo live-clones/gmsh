@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.91 2008-01-18 22:23:03 geuzaine Exp $
+// $Id: BDS.cpp,v 1.92 2008-01-20 10:10:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -699,7 +699,7 @@ void BDS_Mesh::saturate_edge(BDS_Edge * e, std::vector<BDS_Point *> &mids)
 
   // create all the sub-edges of e 
   std::vector<BDS_Edge*> subs;
-  for (int i=0; i<mids.size()+1; i++)
+  for (unsigned int i = 0; i < mids.size() + 1; i++)
     {
       BDS_Point *a,*b;
       if (i == 0)a = p1;
@@ -714,7 +714,7 @@ void BDS_Mesh::saturate_edge(BDS_Edge * e, std::vector<BDS_Point *> &mids)
     }
   // create edges that connect op1 and op2
   std::vector<BDS_Edge*> conn1,conn2;
-  for (int i=0;i<mids.size();i++)
+  for (unsigned int i = 0; i < mids.size(); i++)
     {
       BDS_Edge *c1 = new BDS_Edge(mids[i], op[0]);
       edges.push_back(c1); 
@@ -729,7 +729,7 @@ void BDS_Mesh::saturate_edge(BDS_Edge * e, std::vector<BDS_Point *> &mids)
 
   // create the triangles
 
-  for (int i=0;i<mids.size()+1;i++)
+  for (unsigned int i = 0; i < mids.size() + 1; i++)
     {
       BDS_Edge *e1,*e2,*e3=subs[i];
 

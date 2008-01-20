@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.108 2008-01-18 22:23:03 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.109 2008-01-20 10:10:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -81,7 +81,6 @@ void remeshUnrecoveredEdges ( std::set<EdgeToRecover> & edgesNotRecovered, std::
       // add a new point in the middle of the intersecting segment
       int p1 = itr->p1;
       int p2 = itr->p2;
-      int index = 0;
       int N = itr->ge->lines.size();
       GVertex * g1 = itr->ge->getBeginVertex();
       GVertex * g2 = itr->ge->getEndVertex();
@@ -777,7 +776,6 @@ void saturateEdgePass ( GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 		  mid  = m.add_point(++m.MAXPOINTNUMBER,
 				     (1.-coord) * (*it)->p1->u + coord * (*it)->p2->u,
 				     (1.-coord) * (*it)->p1->v + coord * (*it)->p2->v,gf);
-		  double l1;
 		  //		  if (BGMExists())
 		  mid->lcBGM() = BGM_MeshSize(gf,
 					      ((1.-coord) * (*it)->p1->u + (coord) * (*it)->p2->u)*m.scalingU,
@@ -878,40 +876,38 @@ void computeElementShapes (GFace *gf, BDS_Mesh &m, double &worst, double &avg, d
 }
 
 
-void computeElementShapes (GFace *gf, double &worst, double &avg, double &best, int &nT, int &greaterThan )
+void computeElementShapes(GFace *gf, double &worst, double &avg, double &best, 
+			  int &nT, int &greaterThan)
 {
   worst = 1.e22;
   avg = 0.0;
   best = 0.0;
   nT = 0;
   greaterThan = 0;
- for (int i=0;i<gf->triangles.size();i++)
-    {
-      double q  = qmTriangle(gf->triangles[i],QMTRI_RHO);
-      if (q>.9)greaterThan++;
-      avg+=q;
-      worst = std::min(worst,q);
-      best  = std::max(best,q);
-      nT++;
-    }
+  for(unsigned int i = 0; i < gf->triangles.size(); i++){
+    double q = qmTriangle(gf->triangles[i], QMTRI_RHO);
+    if(q > .9) greaterThan++;
+    avg += q;
+    worst = std::min(worst, q);
+    best  = std::max(best, q);
+    nT++;
+  }
   avg /= nT;
 }
 
-
-void smoothVertexPass ( GFace *gf, BDS_Mesh &m, int &nb_smooth)
+void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth)
 {
   std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
-  while (itp != m.points.end())
-    {      
-      if(m.smooth_point_centroid(*itp,gf))
-	nb_smooth ++;
-      ++itp;
-    }
+  while(itp != m.points.end()){      
+    if(m.smooth_point_centroid(*itp, gf))
+      nb_smooth ++;
+    ++itp;
+  }
 }
 
-void RefineMesh ( GFace *gf, BDS_Mesh &m , const int NIT)
+void RefineMesh(GFace *gf, BDS_Mesh &m, const int NIT)
 {
-  int IT =0;
+  int IT = 0;
   AttractorField_1DMesh *attr = 0;
 //   if (CTX.mesh.lc_from_curvature){
 //     // parameters are not important
@@ -1171,7 +1167,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
   v_container all_vertices;
   std::map<int, MVertex*>numbered_vertices;
   std::list<GEdge*> edges = gf->edges();
-  std::list<GEdge*> emb_edges = gf->emb_edges();
+  std::list<GEdge*> emb_edges = gf->embeddedEdges();
   std::list<GEdge*>::iterator it = edges.begin();
 
 //   if (gf->geomType() == GEntity::Cylinder) 
@@ -1195,7 +1191,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
   while(it != edges.end())
     {
       if ((*it)->isSeam(gf))return false;
-      if(!(*it)->is_mesh_degenerated()){
+      if(!(*it)->isMeshDegenerated()){
         all_vertices.insert ( (*it)->mesh_vertices.begin() , (*it)->mesh_vertices.end() );
         all_vertices.insert ( (*it)->getBeginVertex()->mesh_vertices.begin() , (*it)->getBeginVertex()->mesh_vertices.end() );
         all_vertices.insert ( (*it)->getEndVertex()->mesh_vertices.begin() , (*it)->getEndVertex()->mesh_vertices.end() );
@@ -1416,7 +1412,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
   it = edges.begin();
   while(it != edges.end())
     {
-      if(!(*it)->is_mesh_degenerated())
+      if(!(*it)->isMeshDegenerated())
 	recover_medge ( m, *it, &edgesToRecover, &edgesNotRecovered, 1);
       ++it;
     }
@@ -1434,8 +1430,8 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
   it = edges.begin();
   while(it != edges.end())
     {
-      if(!(*it)->is_mesh_degenerated()){
-	recover_medge ( m, *it, &edgesToRecover, &edgesNotRecovered, 2);	
+      if(!(*it)->isMeshDegenerated()){
+	recover_medge(m, *it, &edgesToRecover, &edgesNotRecovered, 2);	
       }
       ++it;
     }
@@ -1674,7 +1670,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
   GEdgeLoop::iter it  = gel.begin();  
 
 
-  if (_DEBUG)printf("face %d with %d edges\n",gf->tag(),gf->edges().size());
+  if (_DEBUG)printf("face %d with %d edges\n",gf->tag(), (int)gf->edges().size());
 
   while (it != gel.end())   
    {
@@ -1748,7 +1744,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	     double d = dist2(last_coord,first_coord);
 	     if (d < tol) 
 	       {
-		 if (_DEBUG)printf("d = %12.5E %d\n",d, coords.size());
+		 if (_DEBUG)printf("d = %12.5E %d\n",d, (int)coords.size());
 		 coords.clear();
 		 coords = mesh1d;
 		 found = GEdgeSigned(1,ge);
@@ -1815,7 +1811,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	   edgeLoop.push_back(found.ge->mesh_vertices[i]);
        }
      
-     if (_DEBUG)printf("edge %d size %d size %d\n",found.ge->tag(),edgeLoop.size(), coords.size());
+     if (_DEBUG)printf("edge %d size %d size %d\n",found.ge->tag(), (int)edgeLoop.size(), (int)coords.size());
      
      std::vector<BDS_Point*>  edgeLoop_BDS;
      for (unsigned int i=0;i<edgeLoop.size();i++)	    
