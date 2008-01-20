@@ -1,5 +1,5 @@
-#ifndef _GEDGELOOP_H_
-#define _GEDGELOOP_H_
+#ifndef _GEDGE_LOOP_H_
+#define _GEDGE_LOOP_H_
 
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GEdge.h"
-#include <list>
 
 struct GEdgeSigned
 {
