@@ -1,4 +1,4 @@
-// $Id: ExtractElements.cpp,v 1.9 2007-09-11 14:01:55 geuzaine Exp $
+// $Id: ExtractElements.cpp,v 1.10 2008-01-20 12:21:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "ExtractElements.h"
+#include "Numeric.h"
 
 StringXNumber ExtractElementsOptions_Number[] = {
   {GMSH_FULLRC, "MinVal", NULL, 0.},

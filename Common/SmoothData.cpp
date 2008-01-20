@@ -1,4 +1,4 @@
-// $Id: SmoothData.cpp,v 1.3 2008-01-19 22:05:59 geuzaine Exp $
+// $Id: SmoothData.cpp,v 1.4 2008-01-20 12:21:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,8 +19,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Numeric.h"
 #include "SmoothData.h"
+#include "Numeric.h"
 
 // Basic coordinate-based floting point value averager
 

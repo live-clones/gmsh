@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.70 2007-09-24 08:14:29 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.71 2008-01-20 12:21:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,7 @@
 #include "PView.h"
 #include "gl2ps.h"
 #include "Context.h"
+#include "Numeric.h"
 
 extern Context_T CTX;
 

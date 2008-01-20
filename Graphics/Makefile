@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.134 2008-01-20 10:10:41 geuzaine Exp $
+# $Id: Makefile,v 1.135 2008-01-20 12:21:30 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -78,8 +78,8 @@ Draw.o: Draw.cpp ../Common/GmshUI.h ../Common/GmshDefines.h \
   ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h \
-  ../Post/PView.h ../Common/SmoothData.h ../Post/PViewData.h \
-  ../Post/PViewOptions.h ../Post/ColorTable.h
+  ../Post/PView.h ../Post/PViewData.h ../Post/PViewOptions.h \
+  ../Post/ColorTable.h
 Mesh.o: Mesh.cpp ../Common/Message.h ../Common/GmshUI.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
@@ -92,8 +92,7 @@ Mesh.o: Mesh.cpp ../Common/Message.h ../Common/GmshUI.h ../Geo/GModel.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h Draw.h \
   ../Common/Context.h ../DataStr/List.h ../Common/OS.h gl2ps.h \
-  ../Common/VertexArray.h ../Common/Context.h ../Common/SmoothData.h \
-  ../Numeric/Numeric.h
+  ../Common/VertexArray.h ../Common/Context.h ../Common/SmoothData.h
 Geom.o: Geom.cpp ../Common/GmshUI.h Draw.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Common/Context.h ../DataStr/List.h gl2ps.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
@@ -105,10 +104,10 @@ Geom.o: Geom.cpp ../Common/GmshUI.h Draw.h ../Geo/SBoundingBox3d.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h
 Post.o: Post.cpp ../Common/Message.h ../Common/GmshUI.h \
   ../Numeric/Numeric.h Draw.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  Iso.h ../Post/PView.h ../Common/SmoothData.h ../Post/PViewData.h \
-  ../Post/PViewOptions.h ../Post/ColorTable.h ../Common/VertexArray.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Common/Context.h \
-  ../DataStr/List.h gl2ps.h
+  Iso.h ../Post/PView.h ../Post/PViewData.h ../Post/PViewOptions.h \
+  ../Post/ColorTable.h ../Common/VertexArray.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Common/Context.h ../DataStr/List.h \
+  ../Common/SmoothData.h gl2ps.h
 SelectBuffer.o: SelectBuffer.cpp ../Common/Message.h ../Common/GmshUI.h \
   ../Common/GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
@@ -127,19 +126,18 @@ Entity.o: Entity.cpp ../Common/GmshUI.h ../Numeric/Numeric.h Draw.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/Context.h \
   ../DataStr/List.h gl2ps.h
 ReadImg.o: ReadImg.cpp ReadImg.h ../Common/Message.h ../Common/GmshUI.h \
-  ../Post/PView.h ../Common/SmoothData.h ../Numeric/Numeric.h \
-  ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewDataList.h \
-  ../Post/PViewData.h ../Post/AdaptiveViews.h ../DataStr/List.h \
-  ../Common/GmshMatrix.h
+  ../Post/PView.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint3.h ../Post/PViewOptions.h ../Post/ColorTable.h \
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Post/AdaptiveViews.h \
+  ../DataStr/List.h ../Common/GmshMatrix.h
 Scale.o: Scale.cpp ../Common/GmshUI.h Draw.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h ../Post/PView.h ../Common/SmoothData.h \
-  ../Numeric/Numeric.h ../Post/PViewData.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Common/Context.h ../DataStr/List.h gl2ps.h
+  ../Geo/SPoint3.h ../Post/PView.h ../Post/PViewData.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h ../Common/Context.h \
+  ../DataStr/List.h gl2ps.h
 Graph2D.o: Graph2D.cpp ../Common/GmshUI.h Draw.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h ../Post/PView.h ../Common/SmoothData.h \
-  ../Numeric/Numeric.h ../Post/PViewData.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h gl2ps.h ../Common/Context.h ../DataStr/List.h
+  ../Geo/SPoint3.h ../Post/PView.h ../Post/PViewData.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h gl2ps.h ../Common/Context.h \
+  ../DataStr/List.h ../Numeric/Numeric.h
 gl2ps.o: gl2ps.cpp gl2ps.h
 gl2gif.o: gl2gif.cpp gl2gif.h PixelBuffer.h ../Common/GmshUI.h \
   ../Common/Message.h ../DataStr/Malloc.h Draw.h ../Geo/SBoundingBox3d.h \

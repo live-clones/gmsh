@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.12 2008-01-10 14:56:54 remacle Exp $
+// $Id: PView.cpp,v 1.13 2008-01-20 12:21:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,12 +22,13 @@
 // Contributor(s):
 // 
 
+#include <string.h>
+#include <algorithm>
 #include "PView.h"
 #include "PViewDataList.h"
 #include "VertexArray.h"
+#include "SmoothData.h"
 #include "Message.h"
-#include <string.h>
-#include <algorithm>
 
 int PView::_globalNum = 0;
 std::vector<PView*> PView::list;

@@ -23,7 +23,6 @@
 #include <set>
 #include <vector>
 #include <string>
-#include "Numeric.h"
 
 // Basic coordinate-based floating point data averager
 

@@ -22,11 +22,11 @@
 
 #include <vector>
 #include <string>
-#include "SmoothData.h"
 #include "PViewData.h"
 #include "PViewOptions.h"
 
 class VertexArray;
+class smooth_normals;
 
 // a post-processing view
 class PView{

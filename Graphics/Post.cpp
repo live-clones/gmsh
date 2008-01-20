@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.146 2008-01-19 22:06:02 geuzaine Exp $
+// $Id: Post.cpp,v 1.147 2008-01-20 12:21:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <algorithm>
 #include "Message.h"
 #include "GmshUI.h"
 #include "Numeric.h"
@@ -26,9 +27,10 @@
 #include "Iso.h"
 #include "PView.h"
 #include "VertexArray.h"
+#include "SmoothData.h"
 #include "Context.h"
 #include "gl2ps.h"
-#include <algorithm>
+
 
 #if defined(HAVE_MATH_EVAL)
 #include "matheval.h"

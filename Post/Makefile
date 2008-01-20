@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.23 2008-01-20 10:10:46 geuzaine Exp $
+# $Id: Makefile,v 1.24 2008-01-20 12:21:30 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -60,11 +60,11 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-PView.o: PView.cpp PView.h ../Common/SmoothData.h ../Numeric/Numeric.h \
-  PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h PViewOptions.h \
-  ColorTable.h PViewDataList.h AdaptiveViews.h ../DataStr/List.h \
-  ../Common/GmshMatrix.h ../Common/VertexArray.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Common/Context.h ../Common/Message.h
+PView.o: PView.cpp PView.h PViewData.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint3.h PViewOptions.h ColorTable.h PViewDataList.h \
+  AdaptiveViews.h ../DataStr/List.h ../Common/GmshMatrix.h \
+  ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Common/Context.h ../Common/SmoothData.h ../Common/Message.h
 PViewData.o: PViewData.cpp PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h
 PViewDataList.o: PViewDataList.cpp PViewDataList.h PViewData.h \
@@ -90,15 +90,13 @@ PViewOptions.o: PViewOptions.cpp PViewOptions.h ColorTable.h \
 AdaptiveViews.o: AdaptiveViews.cpp AdaptiveViews.h ../DataStr/List.h \
   ../Common/GmshMatrix.h ../Plugin/Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
-  ../Common/SmoothData.h ../Numeric/Numeric.h ../Post/PViewData.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Post/PViewDataList.h ../Post/PViewData.h \
-  ../Post/AdaptiveViews.h
+  ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewDataList.h \
+  ../Post/PViewData.h ../Post/AdaptiveViews.h
 OctreePost.o: OctreePost.cpp ../Common/Octree.h \
   ../Common/OctreeInternals.h OctreePost.h ../DataStr/List.h PView.h \
-  ../Common/SmoothData.h ../Numeric/Numeric.h PViewData.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h PViewOptions.h ColorTable.h \
-  PViewDataList.h AdaptiveViews.h ../Common/GmshMatrix.h \
-  ../Common/Message.h ../Common/ShapeFunctions.h
+  PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h PViewOptions.h \
+  ColorTable.h PViewDataList.h AdaptiveViews.h ../Common/GmshMatrix.h \
+  ../Numeric/Numeric.h ../Common/Message.h ../Common/ShapeFunctions.h
 ColorTable.o: ColorTable.cpp ../Common/Message.h ColorTable.h \
   ../Common/Context.h ../DataStr/List.h ../Numeric/Numeric.h

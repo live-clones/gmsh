@@ -1,4 +1,4 @@
-// $Id: Warp.cpp,v 1.10 2008-01-09 12:32:22 geuzaine Exp $
+// $Id: Warp.cpp,v 1.11 2008-01-20 12:21:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,6 +21,7 @@
 
 #include "Warp.h"
 #include "SmoothData.h"
+#include "Numeric.h"
 
 StringXNumber WarpOptions_Number[] = {
   {GMSH_FULLRC, "Factor", NULL, 1.},

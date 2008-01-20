@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.174 2008-01-20 10:10:41 geuzaine Exp $
+# $Id: Makefile,v 1.175 2008-01-20 12:21:29 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -153,11 +153,11 @@ GModel.o: GModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h gmshSurface.h ../Numeric/Numeric.h \
   MElement.h ../Common/GmshDefines.h MVertex.h MEdge.h MFace.h \
-  ../Mesh/Field.h ../Post/PView.h ../Common/SmoothData.h \
-  ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Geo/Geo.h ../Geo/gmshSurface.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
-  ../Geo/ExtrudeParams.h ../Geo/GEdge.h ../Post/OctreePost.h \
+  ../Mesh/Field.h ../Post/PView.h ../Post/PViewData.h \
+  ../Geo/SBoundingBox3d.h ../Post/PViewOptions.h ../Post/ColorTable.h \
+  ../Geo/Geo.h ../Geo/gmshSurface.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
+  ../Common/SmoothData.h ../Geo/GEdge.h ../Post/OctreePost.h \
   ../Common/Octree.h ../Common/OctreeInternals.h ../Mesh/BackgroundMesh.h \
   ../Common/Message.h ../Common/Context.h
 GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
@@ -191,8 +191,8 @@ GModelIO_CGNS.o: GModelIO_CGNS.cpp GModel.h GVertex.h GEntity.h Range.h \
   MEdgeHash.h ../Common/Hash.h MFaceHash.h
 GModelIO_MED.o: GModelIO_MED.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
-  GFace.h GEdgeLoop.h Pair.h GRegion.h MVertex.h MEdge.h \
-  ../Common/Message.h
+  GFace.h GEdgeLoop.h Pair.h GRegion.h MElement.h ../Common/GmshDefines.h \
+  MVertex.h MEdge.h MFace.h ../Common/Message.h
 ExtrudeParams.o: ExtrudeParams.cpp ../Common/Message.h Geo.h \
   ../Common/GmshDefines.h gmshSurface.h Pair.h Range.h SPoint2.h \
   SPoint3.h SVector3.h SBoundingBox3d.h ../Numeric/Numeric.h \
