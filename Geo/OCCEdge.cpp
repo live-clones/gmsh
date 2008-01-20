@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.29 2008-01-14 21:29:13 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.30 2008-01-20 14:05:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -63,10 +63,10 @@ void OCCEdge::setTrimmed (OCCFace *f)
 }
 
 // Plugin Netgen Salome !
-SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar,int dir) const
+SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar, int dir) const
 {
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
-  double t0,t1;
+  double t0, t1;
   Handle(Geom2d_Curve) c2d;
 
   if(dir == 1){
@@ -77,31 +77,30 @@ SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar,int dir) const
   }
   
   if(c2d.IsNull()){
-    Msg(FATAL,"Reparam on face failed : curve %d is not on surface %d",tag(),face->tag());
+    Msg(FATAL,"Reparam on face failed: curve %d is not on surface %d",
+	tag(), face->tag());
   }
 
-  double u,v;
+  double u, v;
   gp_Pnt2d pnt = c2d->Value(epar);
-  pnt.Coord(u,v);
+  pnt.Coord(u, v);
 
-  {
-    // sometimes OCC miserably fails ...
-    GPoint p1 = point(epar);
-    GPoint p2 = face->point(u,v);
-    const double dx = p1.x()-p2.x();
-    const double dy = p1.y()-p2.y();
-    const double dz = p1.z()-p2.z();
-    if(sqrt(dx*dx+dy*dy+dz*dz) > 1.e-4 * CTX.lc){
-      // return reparamOnFace(face, epar,-1);      
-       Msg(WARNING, "Reparam on face partially failed for curve %d surface %d at point %g",
- 	  tag(), face->tag(), epar);
-       Msg(WARNING, "On the face %d local (%g %g) global (%g %g %g)",
- 	  face->tag(), u, v, p2.x(), p2.y(), p2.z());
-       Msg(WARNING, "On the edge %d local (%g) global (%g %g %g)",
- 	  tag(), epar, p1.x(), p1.y(), p1.z());
-//      GPoint ppp = face->closestPoint(SPoint3(p1.x(), p1.y(), p1.z()));
-//      return SPoint2(ppp.u(), ppp.v());
-    }
+  // sometimes OCC miserably fails ...
+  GPoint p1 = point(epar);
+  GPoint p2 = face->point(u, v);
+  const double dx = p1.x()-p2.x();
+  const double dy = p1.y()-p2.y();
+  const double dz = p1.z()-p2.z();
+  if(sqrt(dx * dx + dy * dy + dz * dz) > 1.e-4 * CTX.lc){
+    // return reparamOnFace(face, epar,-1);      
+    Msg(WARNING, "Reparam on face partially failed for curve %d surface %d at point %g",
+	tag(), face->tag(), epar);
+    Msg(WARNING, "On the face %d local (%g %g) global (%g %g %g)",
+	face->tag(), u, v, p2.x(), p2.y(), p2.z());
+    Msg(WARNING, "On the edge %d local (%g) global (%g %g %g)",
+	tag(), epar, p1.x(), p1.y(), p1.z());
+    // GPoint ppp = face->closestPoint(SPoint3(p1.x(), p1.y(), p1.z()));
+    // return SPoint2(ppp.u(), ppp.v());
   }
   return SPoint2(u, v);
 }
@@ -109,14 +108,13 @@ SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar,int dir) const
 // True if the edge is a seam for the given face
 int OCCEdge::isSeam(GFace *face) const
 {
-
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
   BRepAdaptor_Surface surface(*s);
   //  printf("asking if edge %d is a seam of face %d\n",tag(),face->tag());
   //  printf("periodic %d %d\n",surface.IsUPeriodic(),surface.IsVPeriodic());
   //  if(surface.IsUPeriodic() || surface.IsVPeriodic()){
-    return BRep_Tool::IsClosed(c, *s);
-    //  }
+  return BRep_Tool::IsClosed(c, *s);
+  //  }
   return 0;
 }
 
@@ -214,15 +212,15 @@ GEntity::GeomType OCCEdge::geomType() const
 
 int OCCEdge::minimumMeshSegments() const
 {
-   int np;
-   if(geomType() == Line)
-     np= GEdge::minimumMeshSegments();
-   else 
-    np=CTX.mesh.min_curv_points - 1;
+  int np;
+  if(geomType() == Line)
+    np = GEdge::minimumMeshSegments();
+  else 
+    np = CTX.mesh.min_curv_points - 1;
   
   // if the edge is closed, ensure that at least 3 points are generated in the
   // 1D mesh (4 segments, one of which is degenerated)
-  if (getBeginVertex() == getEndVertex()) np=std::max(4,np);
+  if (getBeginVertex() == getEndVertex()) np = std::max(4, np);
 
   return np;
 }
