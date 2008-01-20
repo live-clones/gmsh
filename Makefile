@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.454 2008-01-20 11:55:12 geuzaine Exp $
+# $Id: Makefile,v 1.455 2008-01-20 11:56:32 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -65,6 +65,7 @@ lib: compile
 
 install-lib: lib
 	mkdir -p ${includedir}/gmsh
+	rm -f ${includedir}/gmsh/*
 	cp -f Geo/GModel.h\
                 Geo/GEntity.h Geo/GPoint.h\
                 Geo/GVertex.h Geo/GEdge.h Geo/GEdgeLoop.h Geo/GFace.h Geo/GRegion.h\
