@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.24 2008-01-19 00:59:31 geuzaine Exp $
+# $Id: Makefile,v 1.25 2008-01-20 11:30:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -139,6 +139,10 @@ ${LIB}: ${OBJ}
 	if [ -r ${notdir ${<:.cpp=${OBJEXT}}} ]; then\
            mv -f ${notdir ${<:.cpp=${OBJEXT}}} ${<:.cpp=${OBJEXT}};\
         fi
+
+# don't apply ugly hack above for files in this directory
+nllib_addon${OBJEXT}:
+	${CXX} ${CFLAGS} ${DASH}c $<
 
 clean:
 	rm -f *${OBJEXT} libsrc/*/*${OBJEXT}
