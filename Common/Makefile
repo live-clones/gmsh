@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.151 2008-01-20 10:10:40 geuzaine Exp $
+# $Id: Makefile,v 1.152 2008-01-20 11:22:35 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -67,7 +67,7 @@ Context.o: Context.cpp ../Numeric/Numeric.h Context.h ../DataStr/List.h \
   Trackball.h
 Octree.o: Octree.cpp Octree.h OctreeInternals.h
 OctreeInternals.o: OctreeInternals.cpp Message.h OctreeInternals.h
-Options.o: Options.cpp GmshUI.h GmshDefines.h MEssage.h \
+Options.o: Options.cpp GmshUI.h GmshDefines.h Message.h \
   ../Graphics/Draw.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Post/PView.h ../Common/SmoothData.h ../Numeric/Numeric.h \
   ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \

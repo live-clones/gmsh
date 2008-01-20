@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.41 2008-01-20 10:10:40 geuzaine Exp $
+// $Id: Box.cpp,v 1.42 2008-01-20 11:20:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -127,6 +127,7 @@ int GMSHBOX(int argc, char *argv[])
     return 1;
   }
   ParUtil::Instance()->Barrier(__LINE__, __FILE__);
+
   return 1;
 }
 

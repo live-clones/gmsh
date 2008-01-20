@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.41 2008-01-19 22:05:59 geuzaine Exp $
+# $Id: Makefile,v 1.42 2008-01-20 11:22:35 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -55,23 +55,22 @@ depend:
 # DO NOT DELETE THIS LINE
 Box.o: Box.cpp ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
   ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h \
-  ../Common/Message.h ../Common/OS.h ../Numeric/Numeric.h \
-  ../Mesh/Generator.h ../Parser/Parser.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../Common/Context.h \
-  ../Common/Options.h ../Post/ColorTable.h ../Parser/OpenFile.h \
-  ../Common/CommandLine.h ../Parser/CreateFile.h ../Parallel/ParUtil.h \
-  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Post/PView.h \
-  ../Common/SmoothData.h ../Post/PViewData.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Post/PViewDataList.h ../Post/PViewData.h \
-  ../Post/AdaptiveViews.h ../Common/GmshMatrix.h ../Mesh/Field.h \
-  ../Geo/Geo.h ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
-  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
-  ../Post/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h \
-  ../Mesh/BackgroundMesh.h
+  ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
+  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/SBoundingBox3d.h ../Common/Message.h ../Common/OS.h \
+  ../Numeric/Numeric.h ../Mesh/Generator.h ../Parser/Parser.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../Common/Context.h ../Common/Options.h ../Post/ColorTable.h \
+  ../Parser/OpenFile.h ../Common/CommandLine.h ../Parser/CreateFile.h \
+  ../Parallel/ParUtil.h ../Plugin/PluginManager.h ../Plugin/Plugin.h \
+  ../Post/PView.h ../Common/SmoothData.h ../Post/PViewData.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewDataList.h \
+  ../Post/PViewData.h ../Post/AdaptiveViews.h ../Common/GmshMatrix.h \
+  ../Mesh/Field.h ../Geo/Geo.h ../Common/GmshDefines.h \
+  ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Post/OctreePost.h \
+  ../Common/Octree.h ../Common/OctreeInternals.h ../Mesh/BackgroundMesh.h
