@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.25 2008-01-20 11:30:40 geuzaine Exp $
+# $Id: Makefile,v 1.26 2008-01-20 11:39:47 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -141,7 +141,7 @@ ${LIB}: ${OBJ}
         fi
 
 # don't apply ugly hack above for files in this directory
-nllib_addon${OBJEXT}:
+nglib_addon${OBJEXT}:
 	${CXX} ${CFLAGS} ${DASH}c $<
 
 clean:

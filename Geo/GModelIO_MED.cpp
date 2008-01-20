@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.7 2008-01-19 22:06:01 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.8 2008-01-20 11:39:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GModel.h"
+#include "MElement.h"
 #include "MVertex.h"
 #include "MEdge.h"
 #include "Message.h"
