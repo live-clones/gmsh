@@ -1,4 +1,4 @@
-// $Id: GUI_Classifier.cpp,v 1.7 2008-01-19 22:06:00 geuzaine Exp $
+// $Id: GUI_Classifier.cpp,v 1.8 2008-01-21 23:28:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -29,8 +29,8 @@
 #include "Message.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGFaceOptimize.h"
-#include "gmshEdge.h"
-#include "gmshFace.h"
+#include "discreteEdge.h"
+#include "discreteFace.h"
 
 extern Context_T CTX;
 
@@ -143,7 +143,7 @@ GEdge * getNewModelEdge (GFace *gf1, GFace *gf2, std::map< std::pair <int, int> 
   std::map< std::pair <int, int> , GEdge* >::iterator it = newEdges.find(std::make_pair<int,int>(i1,i2));
   if (it == newEdges.end())
     {
-      gmshEdge *temporary = new gmshEdge ( GModel::current(), maxEdgeNum() + 1);
+      discreteEdge *temporary = new discreteEdge(GModel::current(), maxEdgeNum() + 1);
       GModel::current()->add (temporary);
       newEdges[std::make_pair<int,int>(i1,i2)] = temporary;
       
@@ -233,9 +233,9 @@ void class_color_cb(Fl_Widget* w, void* data)
       {
 	if (!(*it)->isDeleted())
 	  {
-	    gmshFace *temporary = new gmshFace ( GModel::current(), maxFaceNum() + 1);
-	    recurClassify ( *it , temporary,lines, reverse); 
-	    GModel::current()->add (temporary);
+	    discreteFace *temporary = new discreteFace(GModel::current(), maxFaceNum() + 1);
+	    recurClassify(*it, temporary, lines, reverse);
+	    GModel::current()->add(temporary);
 	  }
 	++it;
       }
@@ -451,10 +451,10 @@ classificationEditor::classificationEditor()
   // saved for the ones that have been saved by the user
   // and that will be used for next step
 
-  temporary = new gmshEdge ( GModel::current(), maxEdgeNum() + 1 );
-  GModel::current()->add (temporary);
-  saved = new gmshEdge ( GModel::current(), maxEdgeNum() + 1 );
-  GModel::current()->add (saved);
+  temporary = new discreteEdge(GModel::current(), maxEdgeNum() + 1);
+  GModel::current()->add(temporary);
+  saved = new discreteEdge(GModel::current(), maxEdgeNum() + 1);
+  GModel::current()->add(saved);
   
   _window->end();
   _window->hotspot(_window);

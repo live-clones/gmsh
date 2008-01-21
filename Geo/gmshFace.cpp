@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.44 2008-01-21 19:22:50 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.45 2008-01-21 23:28:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,8 +20,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GModel.h"
-#include "gmshVertex.h"
-#include "gmshEdge.h"
 #include "gmshFace.h"
 #include "Geo.h"
 #include "GeoInterpolation.h"
@@ -84,27 +82,18 @@ gmshFace::gmshFace(GModel *m, Surface *face)
   resetMeshAttributes();
 }
 
-
-double gmshFace::getMetricEigenvalue ( const SPoint2 &pt) 
+double gmshFace::getMetricEigenvalue(const SPoint2 &pt)
 {
-  if(!s->geometry)return 1;
-  return s->geometry->getMetricEigenvalue (pt) ;
+  if(!s->geometry) return 1;
+  return s->geometry->getMetricEigenvalue(pt);
 }
 
-gmshFace::gmshFace(GModel *m, int num)
-  : GFace(m, num)
+void gmshFace::setModelEdges(std::list<GEdge*> &ed)
 {
-  s = Create_Surface(num, MSH_SURF_DISCRETE);
-  Tree_Add(m->getGEOInternals()->Surfaces, &s);
-  meshStatistics.status = GFace::DONE;
-}
-
-void gmshFace::setModelEdges(std::list<GEdge*>&ed)
-{
-  for (std::list<GEdge*>::iterator it = ed.begin(); it!=ed.end() ; ++it){
+  for (std::list<GEdge*>::iterator it = ed.begin(); it != ed.end() ; ++it){
     l_edges.push_back(*it);
     (*it)->addFace(this);
-    l_dirs.push_back( 1 );
+    l_dirs.push_back(1);
   }
 }
 

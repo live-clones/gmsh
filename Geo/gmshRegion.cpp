@@ -1,4 +1,4 @@
-// $Id: gmshRegion.cpp,v 1.16 2007-09-26 20:51:58 geuzaine Exp $
+// $Id: gmshRegion.cpp,v 1.17 2008-01-21 23:28:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,12 +20,11 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GModel.h"
-#include "gmshFace.h"
 #include "gmshRegion.h"
 #include "Geo.h"
 #include "Message.h"
 
-gmshRegion::gmshRegion(GModel *m, ::Volume * volume)
+gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
   : GRegion(m, volume->Num), v(volume)
 {
   for(int i = 0; i < List_Nbr(v->Surfaces); i++){
@@ -54,13 +53,6 @@ gmshRegion::gmshRegion(GModel *m, ::Volume * volume)
   }
 
   resetMeshAttributes();
-}
-
-gmshRegion::gmshRegion(GModel *m, int num)
-  : GRegion(m, num)
-{
-  v = Create_Volume(num, MSH_VOLUME_DISCRETE);
-  Tree_Add(m->getGEOInternals()->Volumes, &v);
 }
 
 void gmshRegion::resetMeshAttributes()

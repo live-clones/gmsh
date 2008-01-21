@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.177 2008-01-21 20:34:54 geuzaine Exp $
+# $Id: Makefile,v 1.178 2008-01-21 23:28:53 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -103,21 +103,20 @@ gmshEdge.o: gmshEdge.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h gmshEdge.h Geo.h ../Common/GmshDefines.h \
   gmshSurface.h ../Numeric/Numeric.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ExtrudeParams.h ../Common/SmoothData.h gmshVertex.h \
-  MVertex.h GeoInterpolation.h ../Common/Message.h ../Common/Context.h
+  ../DataStr/avl.h ExtrudeParams.h ../Common/SmoothData.h \
+  GeoInterpolation.h ../Common/Message.h ../Common/Context.h
 gmshFace.o: gmshFace.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
-  GEdgeLoop.h Pair.h GRegion.h gmshVertex.h Geo.h ../Common/GmshDefines.h \
+  GEdgeLoop.h Pair.h GRegion.h gmshFace.h Geo.h ../Common/GmshDefines.h \
   gmshSurface.h ../Numeric/Numeric.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ExtrudeParams.h ../Common/SmoothData.h MVertex.h \
-  gmshEdge.h gmshFace.h GeoInterpolation.h ../Common/Message.h
+  ../DataStr/avl.h ExtrudeParams.h ../Common/SmoothData.h \
+  GeoInterpolation.h ../Common/Message.h
 gmshRegion.o: gmshRegion.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
-  GFace.h GEdgeLoop.h Pair.h GRegion.h gmshFace.h Geo.h \
+  GFace.h GEdgeLoop.h Pair.h GRegion.h gmshRegion.h Geo.h \
   ../Common/GmshDefines.h gmshSurface.h ../Numeric/Numeric.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ExtrudeParams.h \
-  ../Common/SmoothData.h gmshVertex.h MVertex.h gmshRegion.h \
-  ../Common/Message.h
+  ../Common/SmoothData.h ../Common/Message.h
 gmshSurface.o: gmshSurface.cpp gmshSurface.h Pair.h Range.h SPoint2.h \
   SPoint3.h SVector3.h SBoundingBox3d.h ../Numeric/Numeric.h \
   ../Common/Message.h
@@ -171,10 +170,10 @@ GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
 GModelIO_Mesh.o: GModelIO_Mesh.cpp ../Common/Message.h \
   ../Common/GmshDefines.h GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
-  GEdgeLoop.h Pair.h GRegion.h gmshRegion.h Geo.h gmshSurface.h \
+  GEdgeLoop.h Pair.h GRegion.h discreteRegion.h Geo.h gmshSurface.h \
   ../Numeric/Numeric.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ExtrudeParams.h ../Common/SmoothData.h gmshFace.h \
-  gmshVertex.h MVertex.h gmshEdge.h MElement.h MEdge.h MFace.h
+  ../DataStr/avl.h ExtrudeParams.h ../Common/SmoothData.h discreteFace.h \
+  discreteEdge.h discreteVertex.h MVertex.h MElement.h MEdge.h MFace.h
 GModelIO_OCC.o: GModelIO_OCC.cpp GModelIO_OCC.h GModel.h GVertex.h \
   GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
   SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h OCCIncludes.h \

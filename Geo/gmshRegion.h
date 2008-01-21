@@ -28,7 +28,6 @@ class gmshRegion : public GRegion {
   ::Volume *v;
  public:
   gmshRegion(GModel *m, ::Volume *_v);
-  gmshRegion(GModel *m, int num);
   virtual ~gmshRegion() {}
   virtual GeomType geomType() const;
   ModelType getNativeType() const { return GmshModel; }

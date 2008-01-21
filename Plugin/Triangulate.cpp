@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.38 2008-01-19 22:06:08 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.39 2008-01-21 23:28:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -126,7 +126,7 @@ static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
 				 *(double *)List_Pointer_Fast(inList, i + 2),
 				 0, j++));
 
-  gmshFace *s = new gmshFace(0, 1);
+  gmshFace *s = new gmshFace(0, 0);
   s->computeMeanPlane(points);
   double plan[3][3];
   s->getMeanPlaneData(plan);

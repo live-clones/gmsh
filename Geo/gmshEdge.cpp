@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.42 2008-01-21 19:22:50 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.43 2008-01-21 23:28:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -35,14 +35,6 @@ gmshEdge::gmshEdge(GModel *m, Curve *edge, GVertex *v1, GVertex *v2)
   resetMeshAttributes();
 }
 
-gmshEdge::gmshEdge(GModel *m, int num)
-  : GEdge(m, num, 0, 0)
-{
-  c = Create_Curve(num, MSH_SEGM_DISCRETE, 0, NULL, NULL, -1, -1, 0., 1.);
-  Tree_Add(m->getGEOInternals()->Curves, &c);
-  CreateReversedCurve(c);
-}
-
 void gmshEdge::resetMeshAttributes()
 {
   meshAttributes.Method = c->Method;
@@ -60,7 +52,7 @@ Range<double> gmshEdge::parBounds(int i) const
 GPoint gmshEdge::point(double par) const
 {
   Vertex a = InterpolateCurve(c, par, 0);
-  return GPoint(a.Pos.X,a.Pos.Y,a.Pos.Z,this,par);
+  return GPoint(a.Pos.X, a.Pos.Y, a.Pos.Z, this, par);
 }
 
 GPoint gmshEdge::closestPoint(const SPoint3 &qp) const

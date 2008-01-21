@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.26 2008-01-20 10:10:41 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.27 2008-01-21 23:28:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,9 +26,10 @@
 #include "Message.h"
 #include "GmshDefines.h"
 #include "GModel.h"
-#include "gmshRegion.h"
-#include "gmshFace.h"
-#include "gmshEdge.h"
+#include "discreteRegion.h"
+#include "discreteFace.h"
+#include "discreteEdge.h"
+#include "discreteVertex.h"
 #include "MElement.h"
 #include "SBoundingBox3d.h"
 
@@ -62,7 +63,7 @@ static void storeElementsInEntities(GModel *m,
       {
 	GEdge *e = m->edgeByTag(it->first);
 	if(!e){
-	  e = new gmshEdge(m, it->first);
+	  e = new discreteEdge(m, it->first);
 	  m->add(e);
 	}
 	addElements(e->lines, it->second);
@@ -72,7 +73,7 @@ static void storeElementsInEntities(GModel *m,
       {
 	GFace *f = m->faceByTag(it->first);
 	if(!f){
-	  f = new gmshFace(m, it->first);
+	  f = new discreteFace(m, it->first);
 	  m->add(f);
 	}
 	if(numEdges == 3) addElements(f->triangles, it->second);
@@ -83,7 +84,7 @@ static void storeElementsInEntities(GModel *m,
       {
 	GRegion *r = m->regionByTag(it->first);
 	if(!r){
-	  r = new gmshRegion(m, it->first);
+	  r = new discreteRegion(m, it->first);
 	  m->add(r);
 	}
 	if(numEdges == 6) addElements(r->tetrahedra, it->second);
@@ -525,7 +526,7 @@ int GModel::readMSH(const std::string &name)
       it != points.end(); ++it){
     GVertex *v = vertexByTag(it->first);
     if(!v){
-      v = new gmshVertex(this, it->first);
+      v = new discreteVertex(this, it->first);
       add(v);
     }
     for(unsigned int i = 0; i < it->second.size(); i++) 
@@ -936,7 +937,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
   Msg(INFO, "%d facets", points.size() / 3);
 
   // create face
-  GFace *face = new gmshFace(this, numFace() + 1);
+  GFace *face = new discreteFace(this, numFace() + 1);
   add(face);
 
   // create (unique) vertices and triangles
@@ -2025,7 +2026,7 @@ int GModel::readP3D(const std::string &name)
 
   for(int n = 0; n < numBlocks; n++){
     if(Nk[n] == 1){
-      GFace *gf = new gmshFace(this, numFace() + 1);
+      GFace *gf = new discreteFace(this, numFace() + 1);
       add(gf);
       gf->transfinite_vertices.resize(Ni[n]);
       for(int i = 0; i < Ni[n]; i++)
@@ -2058,7 +2059,7 @@ int GModel::readP3D(const std::string &name)
 			     gf->transfinite_vertices[i    ][j + 1]));
     }
     else{
-      GRegion *gr = new gmshRegion(this, numRegion() + 1);
+      GRegion *gr = new discreteRegion(this, numRegion() + 1);
       add(gr);
       gr->transfinite_vertices.resize(Ni[n]);
       for(int i = 0; i < Ni[n]; i++){

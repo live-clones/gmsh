@@ -33,9 +33,6 @@ class gmshVertex : public GVertex {
   {
     mesh_vertices.push_back(new MVertex(x(), y(), z(), this));
   }
-  gmshVertex(GModel *m, int num) : GVertex(m, num), v(0)
-  {
-  }
   virtual ~gmshVertex() {}
   virtual GPoint point() const 
   {

@@ -22,8 +22,6 @@
 
 #include "Geo.h"
 #include "GFace.h"
-#include "gmshVertex.h"
-#include "Range.h"
 
 class gmshFace : public GFace {
  protected:
@@ -31,7 +29,6 @@ class gmshFace : public GFace {
 
  public:
   gmshFace(GModel *m, Surface *face);
-  gmshFace(GModel *m, int num);
   virtual ~gmshFace(){}
   Range<double> parBounds(int i) const; 
   void setModelEdges(std::list<GEdge*>&);

@@ -22,8 +22,6 @@
 
 #include "Geo.h"
 #include "GEdge.h"
-#include "gmshVertex.h"
-#include "Range.h"
 
 class gmshEdge : public GEdge {
  protected:
@@ -31,7 +29,6 @@ class gmshEdge : public GEdge {
 
  public:
   gmshEdge(GModel *model, Curve *edge, GVertex *v1, GVertex *v2);
-  gmshEdge(GModel *model, int num);
   virtual ~gmshEdge() {}
   virtual Range<double> parBounds(int i) const;
   virtual GeomType geomType() const;

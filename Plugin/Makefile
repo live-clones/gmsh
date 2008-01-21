@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.141 2008-01-20 12:21:30 geuzaine Exp $
+# $Id: Makefile,v 1.142 2008-01-21 23:28:53 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -188,8 +188,7 @@ Triangulate.o: Triangulate.cpp ../Common/Message.h ../Geo/gmshFace.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h ../Geo/gmshVertex.h ../Geo/Geo.h ../Geo/GVertex.h \
-  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/Range.h Triangulate.h Plugin.h \
+  ../Geo/Pair.h ../Geo/MVertex.h ../Geo/SPoint3.h Triangulate.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Post/PView.h \
   ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Post/AdaptiveViews.h \
