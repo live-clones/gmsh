@@ -1,11 +1,12 @@
 #include <list>
-#include "FVertex.h"
-#include "FFace.h"
+#include "fourierVertex.h"
+#include "fourierFace.h"
 #include "Message.h"
 
 #if defined(HAVE_FOURIER_MODEL)
 
-FFace::FFace(GModel *m, FM::TopoFace *face_, int tag, std::list<GEdge*> l_edges_) 
+fourierFace::fourierFace(GModel *m, FM::TopoFace *face_, int tag,
+			 std::list<GEdge*> l_edges_)
   : GFace(m,tag), face(face_)
 {
   for (std::list<GEdge*>::iterator it = l_edges_.begin();
@@ -15,8 +16,9 @@ FFace::FFace(GModel *m, FM::TopoFace *face_, int tag, std::list<GEdge*> l_edges_
   }
 }
 
-FFace::FFace(GModel *m, FM::TopoFace *face_, int tag, std::list<GEdge*> l_edges_,
-	     std::list<int> l_dirs_) : GFace(m,tag), face(face_)
+fourierFace::fourierFace(GModel *m, FM::TopoFace *face_, int tag, 
+			 std::list<GEdge*> l_edges_, std::list<int> l_dirs_) 
+  : GFace(m,tag), face(face_)
 {
   for (std::list<GEdge*>::iterator it = l_edges_.begin();
        it != l_edges_.end(); it++)
@@ -26,12 +28,12 @@ FFace::FFace(GModel *m, FM::TopoFace *face_, int tag, std::list<GEdge*> l_edges_
     l_dirs.push_back((*it));  
 }
 
-Range<double> FFace::parBounds(int i) const
+Range<double> fourierFace::parBounds(int i) const
 {
   return Range<double>(0.,1.);
 }
 
-GPoint FFace::point(double par1, double par2) const
+GPoint fourierFace::point(double par1, double par2) const
 {
   double pp[2] = {par1,par2};
   double x,y,z;
@@ -39,7 +41,7 @@ GPoint FFace::point(double par1, double par2) const
   return GPoint(x, y, z, this, pp);
 }
 
-SPoint2 FFace::parFromPoint(const SPoint3 &p) const
+SPoint2 fourierFace::parFromPoint(const SPoint3 &p) const
 {
   double u, v, x, y, z;
   x = p.x(); y = p.y(); z = p.z();
@@ -48,7 +50,7 @@ SPoint2 FFace::parFromPoint(const SPoint3 &p) const
   return SPoint2(u, v);
 }
 
-int FFace::containsParam(const SPoint2 &pt) const
+int fourierFace::containsParam(const SPoint2 &pt) const
 {
   const double tol = 1.e-6;
   if(pt[0] < 0. - tol || pt[0] > 1. + tol) return 0;
@@ -56,14 +58,14 @@ int FFace::containsParam(const SPoint2 &pt) const
   return 1;
 }
 
-SVector3 FFace::normal(const SPoint2 &param) const
+SVector3 fourierFace::normal(const SPoint2 &param) const
 {
   double x,y,z;
   face->GetUnitNormal(param[0],param[1],x,y,z);
   return SVector3(x, y, z); 
 }
 
-GEntity::GeomType FFace::geomType() const
+GEntity::GeomType fourierFace::geomType() const
 {
   return  GEntity::ParametricSurface;
 }

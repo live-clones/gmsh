@@ -1,5 +1,5 @@
-#ifndef _GMODELIO_F_H_
-#define _GMODELIO_F_H_
+#ifndef _GMODEL_IO_FOURIER_H_
+#define _GMODEL_IO_FOURIER_H_
 
 #include "GModel.h"
 

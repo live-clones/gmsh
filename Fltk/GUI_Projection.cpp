@@ -1,4 +1,4 @@
-#include "GModelIO_F.h"
+#include "GModelIO_Fourier.h"
 #include "MElement.h"
 #include "Draw.h"
 #include "Options.h"
@@ -7,7 +7,7 @@
 #include "SelectBuffer.h"
 #include "GUI_Projection.h"
 #include "GUI_Extras.h"
-#include "FFace.h"
+#include "fourierFace.h"
 #include "Message.h"
 
 extern Context_T CTX;
@@ -22,21 +22,21 @@ extern Context_T CTX;
 #include "FM_RevolvedParabolaProjectionSurface.h"
 #include "FM_TranslatedParabolaProjectionSurface.h"
 
-static FProjectionFace *createProjectionFaceFromName(char *name)
+static fourierProjectionFace *createProjectionFaceFromName(char *name)
 {
   GModel *m = GModel::current();
   int tag = m->numFace() + 1;
-  FProjectionFace *f = 0;
+  fourierProjectionFace *f = 0;
   if(!strcmp(name, "plane"))
-    f = new FProjectionFace(m, tag, new FM::PlaneProjectionSurface(tag));
+    f = new fourierProjectionFace(m, tag, new FM::PlaneProjectionSurface(tag));
   else if(!strcmp(name, "paraboloid"))
-    f = new FProjectionFace(m, tag, new FM::ParaboloidProjectionSurface(tag));
+    f = new fourierProjectionFace(m, tag, new FM::ParaboloidProjectionSurface(tag));
   else if(!strcmp(name, "cylinder"))
-    f = new FProjectionFace(m, tag, new FM::CylindricalProjectionSurface(tag));
+    f = new fourierProjectionFace(m, tag, new FM::CylindricalProjectionSurface(tag));
   else if(!strcmp(name, "revolvedParabola"))
-    f = new FProjectionFace(m, tag, new FM::RevolvedParabolaProjectionSurface(tag));
+    f = new fourierProjectionFace(m, tag, new FM::RevolvedParabolaProjectionSurface(tag));
   else if(!strcmp(name, "translatedParabola"))
-    f = new FProjectionFace(m, tag, new FM::TranslatedParabolaProjectionSurface(tag));
+    f = new fourierProjectionFace(m, tag, new FM::TranslatedParabolaProjectionSurface(tag));
   else
     Msg(GERROR, "Unknown projection face `%s'", name);
   if(f){
@@ -127,8 +127,8 @@ void uvPlot::draw()
   fl_draw(max, pw - (int)fl_width(max) - 5, h() - 5);
 }
 
-projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, int BH, 
-		       projectionEditor *e) 
+projection::projection(fourierProjectionFace *f, int x, int y, int w, int h, 
+		       int BB, int BH, projectionEditor *e) 
   : face(f)
 {
   group = new Fl_Scroll(x, y, w, h);
@@ -384,7 +384,7 @@ projectionEditor::projectionEditor()
   _window->size_range(width, (int)(0.85 * height));
 }
 
-void projectionEditor::load(FProjectionFace *face, std::string tag)
+void projectionEditor::load(fourierProjectionFace *face, std::string tag)
 {
   FM::ProjectionSurface *ps = (FM::ProjectionSurface*)face->getNativePtr();
   _browser->add(tag.size() ? tag.c_str() : ps->GetName().c_str());
@@ -848,7 +848,7 @@ void load_projection_cb(Fl_Widget *w, void *data)
 	Msg(GERROR, "Bad projection file format");
 	return;
       }
-      FProjectionFace *face = createProjectionFaceFromName(name);
+      fourierProjectionFace *face = createProjectionFaceFromName(name);
       if(face){
 	e->load(face, tag);
 	projection *p = e->getLastProjection();
@@ -1030,7 +1030,7 @@ void action_cb(Fl_Widget *w, void *data)
       }
       fprintf(fp, "%d\n", (int)faces.size());
       for(unsigned int i = 0; i < faces.size(); i++){
-	FFace* ff = (FFace*)faces[i];
+	fourierFace* ff = (fourierFace*)faces[i];
 	((FM::TopoFace*)ff->getNativePtr())->GetPatch()->Export(fp);
       }
       fclose(fp);

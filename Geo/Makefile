@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.176 2008-01-21 19:22:50 geuzaine Exp $
+# $Id: Makefile,v 1.177 2008-01-21 20:34:54 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -32,13 +32,12 @@ SRC = GEntity.cpp\
       GVertex.cpp GEdge.cpp GEdgeLoop.cpp GFace.cpp GRegion.cpp\
       gmshVertex.cpp gmshEdge.cpp gmshFace.cpp gmshRegion.cpp gmshSurface.cpp\
       OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp\
-      FEdge.cpp FFace.cpp\
-      FProjectionFace.cpp\
+      fourierEdge.cpp fourierFace.cpp fourierProjectionFace.cpp\
       GModel.cpp\
         GModelIO_Geo.cpp\
         GModelIO_Mesh.cpp\
         GModelIO_OCC.cpp\
-        GModelIO_F.cpp\
+        GModelIO_Fourier.cpp\
         GModelIO_CGNS.cpp\
         GModelIO_MED.cpp\
       ExtrudeParams.cpp \
@@ -138,17 +137,18 @@ OCCRegion.o: OCCRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h OCCVertex.h OCCIncludes.h MVertex.h \
   OCCEdge.h OCCFace.h OCCRegion.h ../Common/Message.h
-FEdge.o: FEdge.cpp FEdge.h GEdge.h GEntity.h Range.h SPoint3.h \
-  SBoundingBox3d.h GVertex.h GPoint.h SPoint2.h SVector3.h GModel.h \
-  GFace.h GEdgeLoop.h Pair.h GRegion.h FVertex.h MVertex.h \
+fourierEdge.o: fourierEdge.cpp fourierEdge.h GEdge.h GEntity.h Range.h \
+  SPoint3.h SBoundingBox3d.h GVertex.h GPoint.h SPoint2.h SVector3.h \
+  GModel.h GFace.h GEdgeLoop.h Pair.h GRegion.h fourierVertex.h MVertex.h \
   ../Common/Context.h ../DataStr/List.h
-FFace.o: FFace.cpp FVertex.h GModel.h GVertex.h GEntity.h Range.h \
-  SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
-  GFace.h GEdgeLoop.h Pair.h GRegion.h MVertex.h FFace.h FEdge.h \
-  ../Common/Message.h
-FProjectionFace.o: FProjectionFace.cpp FProjectionFace.h GModel.h \
-  GVertex.h GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h \
-  SPoint2.h GEdge.h SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h
+fourierFace.o: fourierFace.cpp fourierVertex.h GModel.h GVertex.h \
+  GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
+  SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h MVertex.h fourierFace.h \
+  fourierEdge.h ../Common/Message.h
+fourierProjectionFace.o: fourierProjectionFace.cpp \
+  fourierProjectionFace.h GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
+  SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
+  GEdgeLoop.h Pair.h GRegion.h
 GModel.o: GModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h gmshSurface.h ../Numeric/Numeric.h \
@@ -180,10 +180,11 @@ GModelIO_OCC.o: GModelIO_OCC.cpp GModelIO_OCC.h GModel.h GVertex.h \
   SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h OCCIncludes.h \
   ../Common/Message.h ../Common/Context.h ../DataStr/List.h OCCVertex.h \
   MVertex.h OCCEdge.h OCCFace.h OCCRegion.h
-GModelIO_F.o: GModelIO_F.cpp GModel.h GVertex.h GEntity.h Range.h \
-  SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
-  GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/Message.h FVertex.h \
-  MVertex.h FEdge.h FFace.h GModelIO_F.h
+GModelIO_Fourier.o: GModelIO_Fourier.cpp GModel.h GVertex.h GEntity.h \
+  Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
+  SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/Message.h \
+  fourierVertex.h MVertex.h fourierEdge.h fourierFace.h \
+  GModelIO_Fourier.h
 GModelIO_CGNS.o: GModelIO_CGNS.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/Message.h MElement.h \

@@ -3,7 +3,7 @@
 
 #include "GmshUI.h"
 #include "GModel.h"
-#include "FProjectionFace.h"
+#include "fourierProjectionFace.h"
 #include "GUI.h"
 #include "Shortcut_Window.h"
 #include "ColorTable.h"
@@ -55,10 +55,10 @@ class projectionEditor;
 
 class projection {
  public:
-  FProjectionFace *face;
+  fourierProjectionFace *face;
   Fl_Group *group;
   std::vector<Fl_Value_Input*> parameters;
-  projection(FProjectionFace *f, int x, int y, int w, int h, int BB, int BH,
+  projection(fourierProjectionFace *f, int x, int y, int w, int h, int BB, int BH,
 	     projectionEditor *e);
 };
 
@@ -77,7 +77,7 @@ class projectionEditor {
   Fl_Slider *_slider;
  public:
   projectionEditor();
-  void load(FProjectionFace *face, std::string tag="");
+  void load(fourierProjectionFace *face, std::string tag="");
   void show(){ _window->show(); select_cb(0, this); }
   uvPlot *uv() { return _uvPlot; }
   std::vector<MElement*> &getElements() { return _elements; }

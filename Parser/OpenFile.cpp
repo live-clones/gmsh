@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.168 2008-01-20 10:10:45 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.169 2008-01-21 20:34:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -350,7 +350,7 @@ int MergeFile(const char *name, int warn_if_missing)
     status = m->readP3D(name);
   }
   else if(!strcmp(ext, ".fm") || !strcmp(ext, ".FM")) {
-    status = m->readF(name);
+    status = m->readFourier(name);
   }
 #if defined(HAVE_FLTK)
   else if(!strcmp(ext, ".pnm") || !strcmp(ext, ".PNM") ||

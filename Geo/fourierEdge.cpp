@@ -1,11 +1,12 @@
-#include "FEdge.h"
+#include "fourierEdge.h"
 #include "Context.h"
 
 extern Context_T CTX;
 
 #if defined(HAVE_FOURIER_MODEL)
 
-FEdge::FEdge(GModel *model, FM::TopoEdge* edge_, int tag, GVertex *v0, GVertex *v1) 
+fourierEdge::fourierEdge(GModel *model, FM::TopoEdge* edge_, int tag,
+			 GVertex *v0, GVertex *v1) 
   : GEdge(model, tag, v0, v1), edge(edge_) 
 {
   //meshAttributes.Method = TRANSFINI; 
@@ -13,33 +14,33 @@ FEdge::FEdge(GModel *model, FM::TopoEdge* edge_, int tag, GVertex *v0, GVertex *
   //meshAttributes.nbPointsTransfinite = 10;
 }
 
-Range<double> FEdge::parBounds(int i) const
+Range<double> fourierEdge::parBounds(int i) const
 { 
   return(Range<double>(0.,1.));
 }
 
-GPoint FEdge::point(double p) const 
+GPoint fourierEdge::point(double p) const 
 {
   double x, y, z;
   edge->F(p,x,y,z);
   return GPoint(x,y,z);
 }
 
-double FEdge::parFromPoint(const SPoint3 &pt) const
+double fourierEdge::parFromPoint(const SPoint3 &pt) const
 {
   double p;
   edge->Inverse(pt.x(),pt.y(),pt.z(),p);
   return p;
 }
 
-SVector3 FEdge::firstDer(double par) const
+SVector3 fourierEdge::firstDer(double par) const
 {
   double x,y,z;
   edge->Dfdt(par,x,y,z);
   return SVector3(x,y,z);
 }
 
-int FEdge::minimumMeshSegments() const
+int fourierEdge::minimumMeshSegments() const
 {
   if(geomType() == Line || geomType() == Unknown)
     return GEdge::minimumMeshSegments();
@@ -47,7 +48,7 @@ int FEdge::minimumMeshSegments() const
     return 2; // always put at least one mid-point on non-straight lines
 }
 
-int FEdge::minimumDrawSegments() const
+int fourierEdge::minimumDrawSegments() const
 {
   int n = GEdge::minimumDrawSegments();
 

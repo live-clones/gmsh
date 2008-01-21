@@ -1,23 +1,23 @@
-#ifndef _F_FACE_H_
-#define _F_FACE_H_
+#ifndef _FOURIER_FACE_H_
+#define _FOURIER_FACE_H_
 
 #include "GFace.h"
 #include "GModel.h"
 #include "Range.h"
-#include "FEdge.h"
+#include "fourierEdge.h"
 
 #if defined(HAVE_FOURIER_MODEL)
 
 #include "FM_TopoFace.h"
 
-class FFace : public GFace {
+class fourierFace : public GFace {
  protected:
   FM::TopoFace *face;
  public:
-  FFace(GModel *m, FM::TopoFace *face_, int tag, std::list<GEdge*> l_edges_);
-  FFace(GModel *m, FM::TopoFace *face_, int tag, std::list<GEdge*> l_edges_,
+  fourierFace(GModel *m, FM::TopoFace *face_, int tag, std::list<GEdge*> l_edges_);
+  fourierFace(GModel *m, FM::TopoFace *face_, int tag, std::list<GEdge*> l_edges_,
 	std::list<int> l_dirs_);
-  virtual ~FFace() {}
+  virtual ~fourierFace() {}
   Range<double> parBounds(int i) const; 
   virtual GPoint point(double par1, double par2) const; 
   virtual SPoint2 parFromPoint(const SPoint3 &p) const;

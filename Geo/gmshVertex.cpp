@@ -8,20 +8,19 @@
 
 SPoint2 gmshVertex::reparamOnFace(GFace *face, int dir) const
 {
-  Surface *s = (Surface*) face->getNativePtr();
-  if (s->geometry)
-    {
-      // It is not always right if it is periodic.
-      if (l_edges.size() == 1 && 
-	  (*l_edges.begin())->getBeginVertex() == 
-	  (*l_edges.begin())->getEndVertex() )
-	{
-	  Range<double> bb = (*l_edges.begin())->parBounds(0);
-	  return (*l_edges.begin())->reparamOnFace ( face, bb.low(), dir);
-	} 
-      return v -> pntOnGeometry;
-    }
-  if (s->Typ ==  MSH_SURF_REGL){
+  Surface *s = (Surface*)face->getNativePtr();
+
+  if(s->geometry){
+    // It is not always right if it is periodic.
+    if (l_edges.size() == 1 && 
+	(*l_edges.begin())->getBeginVertex() == (*l_edges.begin())->getEndVertex()){
+      Range<double> bb = (*l_edges.begin())->parBounds(0);
+      return (*l_edges.begin())->reparamOnFace ( face, bb.low(), dir);
+    } 
+    return v -> pntOnGeometry;
+  }
+
+  if(s->Typ ==  MSH_SURF_REGL){
     Curve *C[4];
     for(int i = 0; i < 4; i++)
       List_Read(s->Generatrices, i, &C[i]);

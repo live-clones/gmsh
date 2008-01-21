@@ -1,22 +1,22 @@
-#ifndef _F_EDGE_H_
-#define _F_EDGE_H_
+#ifndef _FOURIER_EDGE_H_
+#define _FOURIER_EDGE_H_
 
 #include "GEdge.h"
 #include "GModel.h"
-#include "FVertex.h"
+#include "fourierVertex.h"
 
 #if defined(HAVE_FOURIER_MODEL)
 
 #include "FM_TopoEdge.h"
 #include "FM_TopoFace.h"
 
-class FEdge : public GEdge {
+class fourierEdge : public GEdge {
  protected:
   FM::TopoEdge *edge;
   int edgeNum;
  public:
-  FEdge(GModel *model, FM::TopoEdge *edge_, int tag, GVertex *v0, GVertex *v1);
-  virtual ~FEdge() {}
+  fourierEdge(GModel *model, FM::TopoEdge *edge_, int tag, GVertex *v0, GVertex *v1);
+  virtual ~fourierEdge() {}
   virtual Range<double> parBounds(int i) const;
   virtual GeomType geomType() const { return ParametricCurve; }
   virtual GPoint point(double p) const;

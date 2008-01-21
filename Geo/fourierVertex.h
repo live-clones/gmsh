@@ -1,5 +1,5 @@
-#ifndef _F_VERTEX_H_
-#define _F_VERTEX_H_
+#ifndef _FOURIER_VERTEX_H_
+#define _FOURIER_VERTEX_H_
 
 #include "GModel.h"
 #include "GVertex.h"
@@ -9,15 +9,15 @@
 
 #include "FM_TopoVertex.h"
 
-class FVertex : public GVertex {
+class fourierVertex : public GVertex {
  protected:
   FM::TopoVertex *v;
  public:
-  FVertex(GModel *m, int num, FM::TopoVertex* _v) : GVertex(m, num), v(_v)
+  fourierVertex(GModel *m, int num, FM::TopoVertex* _v) : GVertex(m, num), v(_v)
   {
     mesh_vertices.push_back(new MVertex(x(), y(), z(), this));
   }
-  virtual ~FVertex() {}
+  virtual ~fourierVertex() {}
   virtual GPoint point() const { return GPoint(x(),y(),z()); }
   virtual double x() const { return v->GetX(); }
   virtual double y() const { return v->GetY(); }
