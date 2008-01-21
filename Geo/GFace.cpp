@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.40 2008-01-19 22:06:01 geuzaine Exp $
+// $Id: GFace.cpp,v 1.41 2008-01-21 22:16:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -276,7 +276,7 @@ void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
   double ex[3], t1[3], t2[3];
 
   // check coherence of results for non-plane surfaces
-  if(geomType() != GEntity::Plane && geomType() != GEntity::DiscreteSurface) {
+  if(geomType() != Plane && geomType() != DiscreteSurface) {
     double res2[3], c[3], cosc, sinc, angplan;
     double eps = 1.e-3;
 
@@ -362,7 +362,7 @@ end:
       meanPlane.x, meanPlane.y, meanPlane.z);
 
   //check coherence for plane surfaces
-  if(geomType() == GEntity::Plane) {
+  if(geomType() == Plane) {
     SBoundingBox3d bb = bounds();
     double lc = norm(SVector3(bb.max(), bb.min()));
     std::list<GVertex*> verts = vertices();
@@ -405,7 +405,7 @@ void GFace::getMeanPlaneData(double plan[3][3]) const
 
 double GFace::curvature (const SPoint2 &param) const
 {
-  if (geomType() == Plane)return 0;
+  if (geomType() == Plane) return 0;
 
   // X=X(u,v) Y=Y(u,v) Z=Z(u,v)
   // curv = div n = dnx/dx + dny/dy + dnz/dz
@@ -413,30 +413,30 @@ double GFace::curvature (const SPoint2 &param) const
 
   const double eps = 1.e-3;
 
-  Pair<SVector3,SVector3> der = firstDer(param) ;
+  Pair<SVector3,SVector3> der = firstDer(param);
 
   SVector3 du = der.first();
   SVector3 dv = der.second();
-  SVector3 nml  = crossprod(du,dv);
+  SVector3 nml = crossprod(du, dv);
 
-  double detJ = norm ( nml );
+  double detJ = norm(nml);
 
   du.normalize();
   dv.normalize();
 
-  SVector3 n1 = normal(SPoint2(param.x() - eps ,  param.y()  )) ;
-  SVector3 n2 = normal(SPoint2(param.x() + eps ,  param.y()  )) ;
-  SVector3 n3 = normal(SPoint2(param.x() ,  param.y()  - eps )) ;
-  SVector3 n4 = normal(SPoint2(param.x() ,  param.y()  + eps )) ;
+  SVector3 n1 = normal(SPoint2(param.x() - eps, param.y()));
+  SVector3 n2 = normal(SPoint2(param.x() + eps, param.y()));
+  SVector3 n3 = normal(SPoint2(param.x(), param.y() - eps));
+  SVector3 n4 = normal(SPoint2(param.x(), param.y() + eps));
 
-  SVector3 dndu = 500 * ( n2-n1 );
-  SVector3 dndv = 500 * ( n4-n3 );
+  SVector3 dndu = 500 * (n2 - n1);
+  SVector3 dndv = 500 * (n4 - n3);
 
-  double c = fabs(dot(dndu,du) +  dot(dndv,dv)) / detJ; 
+  double c = fabs(dot(dndu, du) +  dot(dndv, dv)) / detJ; 
 
-  //  Msg (INFO,"c = %g detJ %g",c,detJ);
+  // Msg(INFO, "c = %g detJ %g", c, detJ);
 
-  return  c;
+  return c;
 }
 
 void GFace::XYZtoUV(const double X, const double Y, const double Z, 
@@ -483,12 +483,6 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
 	mat[1][0] = der.right().x();
 	mat[1][1] = der.right().y();
 	mat[1][2] = der.right().z();
-
-// 	printf("X = %g Y = %g Z = %g U %g V %g deru = %g %g %g derv = %g %g %g\n",P.x(),P.y(),P.z(),U,V
-// 	       ,der.left().x(),der.left().y(),der.left().z()
-// 	       ,der.right().x(),der.right().y(),der.right().z());
-// 	getchar();
-
 	mat[2][0] = 0.;
 	mat[2][1] = 0.;
 	mat[2][2] = 0.;
@@ -527,13 +521,10 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
   }  
 }
 
-
 SPoint2 GFace::parFromPoint(const SPoint3 &p) const
 {
   double U,V;
-
   XYZtoUV(p.x(),p.y(),p.z(),U,V,1.0);
-
   return SPoint2(U,V);
 }
 
@@ -563,5 +554,4 @@ void GFace::computeGraphicsRep(int nu, int nv)
       _graphicsRep[i][j] = gp;
     }
   }
-
 }

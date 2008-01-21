@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.33 2008-01-20 10:10:41 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.34 2008-01-21 22:16:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -73,7 +73,7 @@ SBoundingBox3d GEdge::bounds() const
   if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve){
     const int N = 10;
     for(int i = 0; i < N; i++){
-      double t = tr.low() + (double)i/(double)(N - 1) * (tr.high() - tr.low());
+      double t = tr.low() + (double)i / (double)(N - 1) * (tr.high() - tr.low());
       GPoint p = point(t);
       bbox += SPoint3(p.x(), p.y(), p.z());
     }
@@ -139,8 +139,8 @@ double GEdge::curvature(double par) const
   double eps2 = 1.e-5;
 
   Range<double> r = parBounds(0);
-  if (r.low() == par) eps2 = 0;
-  if (r.high() == par) eps1 = 0;
+  if(r.low() == par) eps2 = 0;
+  if(r.high() == par) eps1 = 0;
 
   SVector3 n1 = firstDer(par - eps1);
   SVector3 n2 = firstDer(par + eps2);
@@ -158,4 +158,3 @@ double GEdge::curvature(double par) const
   SVector3 d = one_over_D * (n2 - n1);
   return norm(d);
 }
-
