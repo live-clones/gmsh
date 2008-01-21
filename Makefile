@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.457 2008-01-21 19:22:49 geuzaine Exp $
+# $Id: Makefile,v 1.458 2008-01-21 20:42:16 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -117,7 +117,7 @@ clean-most:
 	rm -f ${GMSH_VERSION_FILE}
 
 clean-fm:
-	rm -f Geo/F*.o Geo/GModelIO_F.o Fltk/GUI_Projection.o 
+	rm -f Geo/fourier*.o Geo/GModelIO_Fourier.o Fltk/GUI_Projection.o 
 
 depend: initialtag
 	for i in ${GMSH_DIRS};\
