@@ -36,32 +36,17 @@ class OCCFace : public GFace {
   bool _periodic[2];
  public:
   OCCFace(GModel *m, TopoDS_Face s, int num, TopTools_IndexedMapOfShape &emap);
-
   virtual ~OCCFace(){}
   Range<double> parBounds(int i) const; 
-  virtual int paramDegeneracies(int dir, double *par) { return 0; }
-  
   virtual GPoint point(double par1, double par2) const; 
   virtual GPoint closestPoint(const SPoint3 & queryPoint) const; 
-  
   virtual int containsPoint(const SPoint3 &pt) const;  
   virtual int containsParam(const SPoint2 &pt) const; 
-  
   virtual SVector3 normal(const SPoint2 &param) const; 
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const; 
-  
   virtual GEntity::GeomType geomType() const; 
-  virtual int geomDirection() const { return 1; }
-  
-  virtual bool continuous(int dim) const { return true; }
-  virtual bool degenerate(int dim) const { return false; }
-  virtual double period(int dir) const 
-  {
-    return (dir)? vmax-vmin:umax-umin;
-  }
   ModelType getNativeType() const { return OpenCascadeModel; }
   void * getNativePtr() const { return (void*)&s; }
-  virtual bool surfPeriodic(int dim) const {return _periodic[dim];}
   virtual SPoint2 parFromPoint(const SPoint3 &) const;
   virtual double curvature(const SPoint2 &param) const;
   surface_params getSurfaceParams() const;

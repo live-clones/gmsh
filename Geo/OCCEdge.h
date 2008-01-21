@@ -40,15 +40,10 @@ class OCCEdge : public GEdge {
  public:
   OCCEdge(GModel *model, TopoDS_Edge _e, int num, GVertex *v1, GVertex *v2);
   virtual ~OCCEdge() {}
-  double period() const { throw ; }
-  virtual bool periodic(int dim=0) const { return 0; }
   virtual Range<double> parBounds(int i) const;
   virtual GeomType geomType() const;
   virtual bool degenerate(int) const { return BRep_Tool::Degenerated(c); }
-  virtual bool continuous(int dim) const { return true; }
   virtual GPoint point(double p) const;
-  virtual GPoint closestPoint(const SPoint3 & queryPoint);
-  virtual int containsPoint(const SPoint3 &pt) const { throw; }
   virtual int containsParam(double pt) const;
   virtual SVector3 firstDer(double par) const;
   virtual double curvature (double par) const;
@@ -58,9 +53,9 @@ class OCCEdge : public GEdge {
   virtual double parFromPoint(const SPoint3 &pt) const;
   virtual int minimumMeshSegments () const;
   virtual int minimumDrawSegments () const;
-  bool is3D() const {return !curve.IsNull();}
-  void setTrimmed (OCCFace *);
-  int isSeam (GFace *) const;
+  bool is3D() const { return !curve.IsNull(); }
+  void setTrimmed(OCCFace *);
+  int isSeam(GFace *) const;
 };
 
 #endif

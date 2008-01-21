@@ -8,6 +8,7 @@
 #include "GUI_Projection.h"
 #include "GUI_Extras.h"
 #include "FFace.h"
+#include "Message.h"
 
 extern Context_T CTX;
 
@@ -132,7 +133,7 @@ projection::projection(FProjectionFace *f, int x, int y, int w, int h, int BB, i
 {
   group = new Fl_Scroll(x, y, w, h);
   SBoundingBox3d bounds = GModel::current()->bounds();
-  FM::ProjectionSurface *ps = f->GetProjectionSurface();
+  FM::ProjectionSurface *ps = (FM::ProjectionSurface*)f->getNativePtr();
   
   Fl_Toggle_Button *b = new Fl_Toggle_Button(x, y, BB, BH, "Set position");
   b->callback(set_position_cb, e);
@@ -385,7 +386,7 @@ projectionEditor::projectionEditor()
 
 void projectionEditor::load(FProjectionFace *face, std::string tag)
 {
-  FM::ProjectionSurface *ps = face->GetProjectionSurface();
+  FM::ProjectionSurface *ps = (FM::ProjectionSurface*)face->getNativePtr();
   _browser->add(tag.size() ? tag.c_str() : ps->GetName().c_str());
   projection *p =  new projection(face, _paramWin[0], _paramWin[1], _paramWin[2],
 				  _paramWin[3], _paramWin[4], _paramWin[5], this);
@@ -475,7 +476,7 @@ void translate(void *data, int axis, bool plus)
   projectionEditor *e = (projectionEditor*)data;
   projection *p = e->getCurrentProjection();
   if(p){
-    FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
+    FM::ProjectionSurface *ps = (FM::ProjectionSurface*)p->face->getNativePtr();
     SVector3 origin(p->parameters[0]->value(),
 		    p->parameters[1]->value(),
 		    p->parameters[2]->value());
@@ -576,7 +577,7 @@ void update_cb(Fl_Widget *w, void *data)
 
   projection *p = e->getCurrentProjection();
   if(p){
-    FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
+    FM::ProjectionSurface *ps = (FM::ProjectionSurface*)p->face->getNativePtr();
     ps->SetOrigin(p->parameters[0]->value(),
 		  p->parameters[1]->value(),
 		  p->parameters[2]->value());
@@ -732,7 +733,7 @@ void filter_cb(Fl_Widget *w, void *data)
     SBoundingBox3d bbox = GModel::current()->bounds();
     double lc = norm(SVector3(bbox.max(), bbox.min()));
     double threshold = e->getThreshold() * lc;
-    FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
+    FM::ProjectionSurface *ps = (FM::ProjectionSurface*)p->face->getNativePtr();
     std::vector<GEntity*> &ent(e->getEntities());
     for(unsigned int i = 0; i < ent.size(); i++){
       GVertex *gv = dynamic_cast<GVertex*>(ent[i]);
@@ -873,7 +874,7 @@ void save_projection_cb(Fl_Widget *w, void *data)
   projectionEditor *e = (projectionEditor*)data;
   projection *p = e->getCurrentProjection();
   if(p){
-    FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
+    FM::ProjectionSurface *ps = (FM::ProjectionSurface*)p->face->getNativePtr();
     if(file_chooser(0, 1, "Save Projection", "*.pro")){
       std::string name = file_chooser_get_name(1);
       FILE *fp = fopen(name.c_str(), "w");
@@ -918,7 +919,7 @@ void compute_cb(Fl_Widget *w, void *data)
     int h2 = e->getHardEdge(2);
     int h3 = e->getHardEdge(3);
 
-    FM::ProjectionSurface *ps = p->face->GetProjectionSurface();
+    FM::ProjectionSurface *ps = (FM::ProjectionSurface*)p->face->getNativePtr();
     if (e->getPatchType()) {
       // create the US-FFT/Windowing faces (with boundaries)
       FM::Patch* patch =
@@ -1030,7 +1031,7 @@ void action_cb(Fl_Widget *w, void *data)
       fprintf(fp, "%d\n", (int)faces.size());
       for(unsigned int i = 0; i < faces.size(); i++){
 	FFace* ff = (FFace*)faces[i];
-	ff->GetFMFace()->GetPatch()->Export(fp);
+	((FM::TopoFace*)ff->getNativePtr())->GetPatch()->Export(fp);
       }
       fclose(fp);
     }

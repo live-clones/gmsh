@@ -85,10 +85,13 @@ class GFace : public GEntity
 
   // edge orientations.
   virtual std::list<int> orientations() const { return l_dirs; }
+
   // Edges that bound this entity or that this entity bounds.
   virtual std::list<GEdge*> edges() const { return l_edges; }
+
   // Edges that are embedded in this face.
   virtual std::list<GEdge*> embeddedEdges() const { return embedded_edges; }
+
   // Vertices that bound this entity or that this entity bounds.
   virtual std::list<GVertex*> vertices() const;
 
@@ -104,21 +107,17 @@ class GFace : public GEntity
   virtual SBoundingBox3d bounds() const; 
 
   // retrieve surface params 
-  virtual surface_params getSurfaceParams() const {throw;}
-
-  // Get the location of any parametric degeneracies on the face in
-  // the given parametric direction.
-  virtual int paramDegeneracies(int dir, double *par) = 0;
+  virtual surface_params getSurfaceParams() const { throw; }
 
   // Return the point on the face corresponding to the given parameter.
   virtual GPoint point(double par1, double par2) const = 0;
   virtual GPoint point(const SPoint2 &pt) const { return point(pt.x(), pt.y()); }
 
-  // If the mapping is a conforming mapping, i.e. a mapping that conserves angles,
-  // this function returns the eigenvalue of the metric at a given point
-  // this is a special feature for stereographic mappings of the sphere
-  // that is used in 2D mesh generation !
-
+  // If the mapping is a conforming mapping, i.e. a mapping that
+  // conserves angles, this function returns the eigenvalue of the
+  // metric at a given point this is a special feature for
+  // stereographic mappings of the sphere that is used in 2D mesh
+  // generation !
   virtual double getMetricEigenvalue(const SPoint2 &){ throw; }
 
   // Return the parmater location on the face given a point in space
@@ -128,11 +127,8 @@ class GFace : public GEntity
   // True if the parameter value is interior to the face.
   virtual int containsParam(const SPoint2 &pt) const = 0;
 
-  // Period of the face in the given direction.
-  virtual double period(int dir) const = 0;
-
   // Return the point on the face closest to the given point.
-  virtual GPoint closestPoint(const SPoint3 & queryPoint) const = 0;
+  virtual GPoint closestPoint(const SPoint3 & queryPoint) const { throw; }
 
   // Return the normal to the face at the given parameter location.
   virtual SVector3 normal(const SPoint2 &param) const = 0;
@@ -143,10 +139,6 @@ class GFace : public GEntity
   // Return the curvature i.e. the divergence of the normal
   virtual double curvature(const SPoint2 &param) const;
   
-  // True if the surface underlying the face is periodic and we need
-  // to worry about that.
-  virtual bool surfPeriodic(int dim) const = 0;
-
   // Recompute the mesh partitions defined on this face.
   void recomputeMeshPartitions();
 

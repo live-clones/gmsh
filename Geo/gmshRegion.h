@@ -26,7 +26,6 @@
 class gmshRegion : public GRegion {
  protected:
   ::Volume *v;
-
  public:
   gmshRegion(GModel *m, ::Volume *_v);
   gmshRegion(GModel *m, int num);

@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.43 2007-11-27 16:45:27 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.44 2008-01-21 19:22:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -101,12 +101,11 @@ gmshFace::gmshFace(GModel *m, int num)
 
 void gmshFace::setModelEdges(std::list<GEdge*>&ed)
 {
-  for (std::list<GEdge*>::iterator it = ed.begin(); it!=ed.end() ; ++it)
-    {
-      l_edges.push_back(*it);
-      (*it)->addFace(this);
-      l_dirs.push_back( 1 );
-    }
+  for (std::list<GEdge*>::iterator it = ed.begin(); it!=ed.end() ; ++it){
+    l_edges.push_back(*it);
+    (*it)->addFace(this);
+    l_dirs.push_back( 1 );
+  }
 }
 
 void gmshFace::resetMeshAttributes()

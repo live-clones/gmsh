@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.456 2008-01-20 12:43:12 geuzaine Exp $
+# $Id: Makefile,v 1.457 2008-01-21 19:22:49 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -72,7 +72,7 @@ install-lib: lib
               Geo/MVertex.h Geo/MEdge.h Geo/MFace.h Geo/MElement.h\
               Geo/SPoint2.h Geo/SPoint3.h Geo/SVector3.h Geo/SBoundingBox3d.h\
               Geo/Pair.h Geo/Range.h\
-              Common/GmshDefines.h\
+              Common/GmshDefines.h Common/GmshVersion.h\
           ${includedir}/gmsh
 	cp -f bin/libGmsh${LIBEXT} ${libdir}
 

@@ -11,32 +11,18 @@
 
 class FVertex : public GVertex {
  protected:
-  FM::TopoVertex* v;
-
+  FM::TopoVertex *v;
  public:
   FVertex(GModel *m, int num, FM::TopoVertex* _v) : GVertex(m, num), v(_v)
   {
     mesh_vertices.push_back(new MVertex(x(), y(), z(), this));
   }
   virtual ~FVertex() {}
-  virtual GPoint point() const 
-  {
-    return GPoint(x(),y(),z());
-  }
-  virtual double x() const 
-  {
-    return v->GetX();
-  }
-  virtual double y() const 
-  {
-    return v->GetY();
-  }
-  virtual double z() const 
-  {
-    return v->GetZ();
-  }
+  virtual GPoint point() const { return GPoint(x(),y(),z()); }
+  virtual double x() const { return v->GetX(); }
+  virtual double y() const { return v->GetY(); }
+  virtual double z() const { return v->GetZ(); }
   ModelType getNativeType() const { return FourierModel; }
-  //virtual SPoint2 reparamOnFace ( GFace *gf , int) const { throw; }
 };
 
 #endif

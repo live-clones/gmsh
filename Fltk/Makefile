@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.161 2008-01-20 12:21:29 geuzaine Exp $
+# $Id: Makefile,v 1.162 2008-01-21 19:22:50 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -129,8 +129,7 @@ GUI_Projection.o: GUI_Projection.cpp ../Geo/GModelIO_F.h ../Geo/GModel.h \
   Popup_Button.h SpherePosition_Widget.h Shortcut_Window.h GUI_Extras.h \
   ../Geo/FFace.h ../Geo/GFace.h ../Geo/GModel.h ../Geo/Range.h \
   ../Geo/FEdge.h ../Geo/GEdge.h ../Geo/GModel.h ../Geo/FVertex.h \
-  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/MVertex.h ../Geo/Range.h \
-  ../Common/Message.h
+  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/MVertex.h ../Common/Message.h
 GUI_Classifier.o: GUI_Classifier.cpp GUI_Classifier.h ../Common/GmshUI.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \

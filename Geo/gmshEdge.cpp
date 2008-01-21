@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.41 2008-01-16 21:51:47 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.42 2008-01-21 19:22:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -63,7 +63,7 @@ GPoint gmshEdge::point(double par) const
   return GPoint(a.Pos.X,a.Pos.Y,a.Pos.Z,this,par);
 }
 
-GPoint gmshEdge::closestPoint(const SPoint3 & qp)
+GPoint gmshEdge::closestPoint(const SPoint3 &qp) const
 {
   Vertex v;
   Vertex a;

@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.30 2008-01-20 14:05:08 geuzaine Exp $
+// $Id: OCCEdge.cpp,v 1.31 2008-01-21 19:22:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -133,11 +133,6 @@ GPoint OCCEdge::point(double par) const
     Msg(WARNING, "OCC Curve %d is neither a 3D curve not a trimmed curve", tag());
     return GPoint(0, 0, 0);
   }
-}
-
-GPoint OCCEdge::closestPoint(const SPoint3 & qp)
-{
-  throw;
 }
 
 int OCCEdge::containsParam(double pt) const

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.175 2008-01-20 12:21:29 geuzaine Exp $
+# $Id: Makefile,v 1.176 2008-01-21 19:22:50 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -141,7 +141,7 @@ OCCRegion.o: OCCRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
 FEdge.o: FEdge.cpp FEdge.h GEdge.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GVertex.h GPoint.h SPoint2.h SVector3.h GModel.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h FVertex.h MVertex.h \
-  ../Common/Message.h ../Common/Context.h ../DataStr/List.h
+  ../Common/Context.h ../DataStr/List.h
 FFace.o: FFace.cpp FVertex.h GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h MVertex.h FFace.h FEdge.h \

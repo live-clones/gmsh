@@ -1,4 +1,4 @@
-// $Id: OCCRegion.cpp,v 1.6 2007-09-04 13:47:01 remacle Exp $
+// $Id: OCCRegion.cpp,v 1.7 2008-01-21 19:22:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -17,7 +17,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
 // 
-// Please report all bugs and problems to <OCC@geuz.org>.
+// Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GModel.h"
 #include "OCCVertex.h"

@@ -22,7 +22,6 @@ GPoint FEdge::point(double p) const
 {
   double x, y, z;
   edge->F(p,x,y,z);
-
   return GPoint(x,y,z);
 }
 
@@ -30,7 +29,6 @@ double FEdge::parFromPoint(const SPoint3 &pt) const
 {
   double p;
   edge->Inverse(pt.x(),pt.y(),pt.z(),p);
-
   return p;
 }
 

@@ -47,18 +47,16 @@ class GEdge : public GEntity {
   void delFace(GFace *f);
 
   virtual int dim() const {return 1;}
-  virtual bool periodic(int dim=0) const = 0;
-  virtual bool continuous(int dim=0) const = 0;
   virtual void setVisibility(char val, bool recursive=false);
 
   // True if the edge is a seam for the given face.
-  virtual int isSeam(GFace *face) const {return 0;}
+  virtual int isSeam(GFace *face) const { return 0; }
 
   // The bounding box
   SBoundingBox3d bounds() const;
 
   // Faces that bound this entity or that this entity bounds.
-  virtual std::list<GFace*> faces() const{return l_faces;}
+  virtual std::list<GFace*> faces() const { return l_faces; }
 
   // Get the parameter location for a point in space on the edge.
   virtual double parFromPoint(const SPoint3 &) const = 0;
@@ -67,7 +65,7 @@ class GEdge : public GEntity {
   virtual GPoint point(double p) const = 0;
 
   // Get the closest point on the edge to the given point.
-  virtual GPoint closestPoint(const SPoint3 & queryPoint) =0;
+  virtual GPoint closestPoint(const SPoint3 & queryPoint) const { throw; }
 
   // True if the edge contains the given parameter.
   virtual int containsParam(double pt) const = 0;
@@ -77,11 +75,11 @@ class GEdge : public GEntity {
 
   // Get second derivative of edge at the given parameter.
   // Default implentation using central differences
-  virtual SVector3 secondDer(double par) const ;
-  virtual double curvature (double par) const;  
+  virtual SVector3 secondDer(double par) const;
+  virtual double curvature(double par) const;  
 
   // Reparmaterize the point onto the given face.
-  virtual SPoint2 reparamOnFace(GFace *face, double epar,int dir) const ;
+  virtual SPoint2 reparamOnFace(GFace *face, double epar,int dir) const;
 
   // Recompute the mesh partitions defined on this edge.
   void recomputeMeshPartitions();

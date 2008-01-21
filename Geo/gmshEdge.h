@@ -33,15 +33,10 @@ class gmshEdge : public GEdge {
   gmshEdge(GModel *model, Curve *edge, GVertex *v1, GVertex *v2);
   gmshEdge(GModel *model, int num);
   virtual ~gmshEdge() {}
-  double period() const { throw ; }
-  virtual bool periodic(int dim=0) const { return false; }
   virtual Range<double> parBounds(int i) const;
   virtual GeomType geomType() const;
-  virtual bool degenerate(int) const { return false; }
-  virtual bool continuous(int dim) const { return true; }
   virtual GPoint point(double p) const;
-  virtual GPoint closestPoint(const SPoint3 & queryPoint);
-  virtual int containsPoint(const SPoint3 &pt) const { throw; }
+  virtual GPoint closestPoint(const SPoint3 & queryPoint) const;
   virtual int containsParam(double pt) const;
   virtual SVector3 firstDer(double par) const;
   ModelType getNativeType() const { return GmshModel; }
@@ -50,7 +45,7 @@ class gmshEdge : public GEdge {
   virtual int minimumMeshSegments() const;
   virtual int minimumDrawSegments() const;
   virtual void resetMeshAttributes();
-  virtual SPoint2 reparamOnFace(GFace *face, double epar, int dir) const ;
+  virtual SPoint2 reparamOnFace(GFace *face, double epar, int dir) const;
 };
 
 #endif

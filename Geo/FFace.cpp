@@ -39,11 +39,6 @@ GPoint FFace::point(double par1, double par2) const
   return GPoint(x, y, z, this, pp);
 }
 
-GPoint FFace::point(const SPoint2 &pt) const
-{
-  return point(pt[0], pt[1]);
-}
-
 SPoint2 FFace::parFromPoint(const SPoint3 &p) const
 {
   double u, v, x, y, z;
@@ -51,16 +46,6 @@ SPoint2 FFace::parFromPoint(const SPoint3 &p) const
   face->Inverse(x,y,z,u,v);
 
   return SPoint2(u, v);
-}
-
-GPoint FFace::closestPoint(const SPoint3 & queryPoint) const
-{
-  throw;
-}
-
-int FFace::containsPoint(const SPoint3 &pt) const
-{
-  throw;
 }
 
 int FFace::containsParam(const SPoint2 &pt) const
@@ -82,16 +67,5 @@ GEntity::GeomType FFace::geomType() const
 {
   return  GEntity::ParametricSurface;
 }
-
-bool FFace::surfPeriodic(int dim) const
-{
-  return face->IsPeriodic(dim);
-}
-
-double FFace::period(int dir) const
-{
-    return 1.;
-}
-
 
 #endif

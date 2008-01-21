@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.50 2008-01-19 23:04:13 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.51 2008-01-21 19:22:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -50,29 +50,18 @@ struct xi2lc
 
 static std::vector<xi2lc> interpLc;
 
-void smoothInterpLc(bool periodic, int nbSmooth)
+void smoothInterpLc(int nbSmooth)
 {
-  if(periodic){
-    for(int i = 0; i < (int)interpLc.size() * nbSmooth; i++){	  	  
-      xi2lc &left = interpLc[(i - 1) % interpLc.size()];
-      xi2lc &mid = interpLc[i % interpLc.size()];
-      xi2lc &right = interpLc[(i + 1) % interpLc.size()];
-      if(1. / mid.lc > 1.1 * 1. / left.lc) mid.lc = left.lc/ 1.1;
-      if(1. / mid.lc > 1.1 * 1. / right.lc) mid.lc = right.lc/ 1.1;
+  for(int j = 0; j < nbSmooth; j++){
+    for(int i = 0 ; i < (int)interpLc.size(); i++){	  	  
+      xi2lc &left = (i == 0) ? interpLc[0] : interpLc[i - 1];
+      xi2lc &mid = interpLc[i];
+      xi2lc &right = (i == (int)interpLc.size() - 1) ?
+	interpLc[interpLc.size() - 1] : interpLc[i+1];
+      if(1. / mid.lc > 1.1 * 1. / left.lc) mid.lc = left.lc / 1.1;
+      if(1. / mid.lc > 1.1 * 1. / right.lc) mid.lc = right.lc / 1.1;
     }
   } 
-  else{
-    for(int j = 0; j < nbSmooth; j++){
-      for(int i = 0 ; i < (int)interpLc.size(); i++){	  	  
-	xi2lc &left = (i == 0) ? interpLc[0] : interpLc[i - 1];
-	xi2lc &mid = interpLc[i];
-	xi2lc &right = (i == (int)interpLc.size() - 1) ?
-	  interpLc[interpLc.size() - 1] : interpLc[i+1];
-	if(1. / mid.lc > 1.1 * 1. / left.lc) mid.lc = left.lc / 1.1;
-	if(1. / mid.lc > 1.1 * 1. / right.lc) mid.lc = right.lc / 1.1;
-      }
-    } 
-  }
 }
 
 void printInterpLc(const char *name)
@@ -333,7 +322,7 @@ void meshGEdge::operator() (GEdge *ge)
 		  CTX.mesh.lc_integration_precision);
       buildInterpLc(lcPoints);
       //      printInterpLc("toto1.dat");
-      smoothInterpLc(ge->periodic(), 20);
+      smoothInterpLc(20);
       //      printInterpLc("toto2.dat");
       a = Integration(ge, t_begin, t_end, F_Lc_usingInterpLc, Points, 1.e-8);
     }
