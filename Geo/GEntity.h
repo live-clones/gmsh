@@ -186,7 +186,7 @@ class GEntity {
   virtual int containsPoint(const SPoint3 &pt) const { throw; }
 
   // Get the native type of the particular representation
-  virtual ModelType getNativeType() const { return UnknownModel;}
+  virtual ModelType getNativeType() const { return UnknownModel; }
 
   // Get the native pointer of the particular representation
   virtual void * getNativePtr() const { throw; }
