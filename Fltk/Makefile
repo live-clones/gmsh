@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.164 2008-01-21 23:28:52 geuzaine Exp $
+# $Id: Makefile,v 1.165 2008-01-21 23:30:02 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -149,12 +149,12 @@ GUI_Classifier.o: GUI_Classifier.cpp GUI_Classifier.h ../Common/GmshUI.h \
   ../Geo/fourierProjectionFace.h ../Geo/GModel.h ../Geo/Range.h \
   GUI_Extras.h ../Common/Message.h ../Mesh/meshGFaceDelaunayInsertion.h \
   ../Mesh/meshGFaceOptimize.h ../Mesh/meshGFaceDelaunayInsertion.h \
-  ../Geo/gmshEdge.h ../Geo/Geo.h ../Geo/gmshSurface.h ../Geo/Pair.h \
-  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
-  ../Geo/SBoundingBox3d.h ../Numeric/Numeric.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
-  ../Common/SmoothData.h ../Geo/GEdge.h ../Geo/gmshFace.h ../Geo/Geo.h \
-  ../Geo/GFace.h
+  ../Geo/discreteEdge.h ../Geo/GModel.h ../Geo/GEdge.h ../Geo/Geo.h \
+  ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SBoundingBox3d.h \
+  ../Numeric/Numeric.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
+  ../Geo/discreteFace.h ../Geo/GModel.h ../Geo/GFace.h ../Geo/Geo.h
 Callbacks.o: Callbacks.cpp ../Common/GmshUI.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/Tools.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../Geo/GModel.h ../Geo/GVertex.h \
