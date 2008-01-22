@@ -31,6 +31,8 @@ class BDS_Mesh;
 class BDS_Point;
 
 void buildMetric ( GFace *gf , double *uv, double *metric);
+int inCircumCircleAniso ( GFace *gf, double *p1, double *p2, double *p3, double *p4, 
+			  double *metric);
 int inCircumCircleAniso ( GFace *gf, MTriangle *base, const double *uv , const double *metric,
 			  const std::vector<double> & Us, const std::vector<double> & Vs); 
 void circumCenterMetric ( MTriangle *base, 
@@ -97,10 +99,6 @@ class MTri3
 
 };
 
-void connectTriangles ( std::list<MTri3*> & );
-void connectTriangles ( std::vector<MTri3*> & );
-void insertVerticesInFace (GFace *gf, BDS_Mesh *);
-
 class compareTri3Ptr
 {
  public:
@@ -112,6 +110,12 @@ class compareTri3Ptr
    }
 };
 
+
+
+void connectTriangles ( std::list<MTri3*> & );
+void connectTriangles ( std::vector<MTri3*> & );
+void connectTriangles ( std::set<MTri3*,compareTri3Ptr> &AllTris);
+void insertVerticesInFace (GFace *gf, BDS_Mesh *);
 
 struct edgeXface
 {

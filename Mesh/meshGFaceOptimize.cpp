@@ -6,6 +6,88 @@
 #include "MVertex.h"
 #include "MElement.h"
 #include "BackgroundMesh.h"
+static void setLcsMax ( MTriangle *t, std::map<MVertex*,double> &vSizes)
+{
+  for (int i=0;i<3;i++)
+    {
+      for (int j=i+1;j<3;j++)
+	{
+	  MVertex *vi = t->getVertex(i);
+	  MVertex *vj = t->getVertex(j);
+	  vSizes[vi] = 1.e12;
+	  vSizes[vj] = 1.e12;
+	}
+    }
+}
+
+
+static void setLcs ( MTriangle *t, std::map<MVertex*,double> &vSizes)
+{
+  for (int i=0;i<3;i++)
+    {
+      for (int j=i+1;j<3;j++)
+	{
+	  MVertex *vi = t->getVertex(i);
+	  MVertex *vj = t->getVertex(j);
+
+	  double dx = vi->x()-vj->x();
+	  double dy = vi->y()-vj->y();
+	  double dz = vi->z()-vj->z();
+	  double l = sqrt(dx*dx+dy*dy+dz*dz);
+	  std::map<MVertex*,double>::iterator iti = vSizes.find(vi);	  
+	  std::map<MVertex*,double>::iterator itj = vSizes.find(vj);	  
+	  if (iti->second > l)iti->second = l;
+	  if (itj->second > l)itj->second = l;
+	}
+    }
+}
+
+
+void buidMeshGenerationDataStructures (GFace *gf, std::set<MTri3*,compareTri3Ptr> &AllTris,
+				       std::vector<double> & vSizes,
+				       std::vector<double> & vSizesBGM,
+				       std::vector<double> & Us,
+				       std::vector<double> & Vs ){
+  
+  std::map<MVertex*,double> vSizesMap;
+  for (unsigned int i=0;i<gf->triangles.size();i++)setLcsMax ( gf->triangles[i] , vSizesMap);
+  for (unsigned int i=0;i<gf->triangles.size();i++)setLcs    ( gf->triangles[i] , vSizesMap);
+  int NUM=0;
+  for (std::map<MVertex*,double>::iterator it = vSizesMap.begin();it!=vSizesMap.end();++it)
+    {
+      it->first->setNum(NUM++);      
+      vSizes.push_back(it->second); 
+      vSizesBGM.push_back(it->second); 
+      double u0,v0;
+      parametricCoordinates ( it->first, gf, u0, v0);
+      Us.push_back(u0);
+      Vs.push_back(v0);
+    }
+  for (unsigned int i=0;i<gf->triangles.size();i++)
+    {
+      double lc    = 0.3333333333*(vSizes [gf->triangles[i]->getVertex(0)->getNum()]+
+				   vSizes [gf->triangles[i]->getVertex(1)->getNum()]+
+				   vSizes [gf->triangles[i]->getVertex(2)->getNum()]);
+      AllTris.insert ( new MTri3 ( gf->triangles[i] ,lc ) );
+    }
+  gf->triangles.clear();
+  connectTriangles ( AllTris );      
+  //  Msg(DEBUG,"All %d tris were connected",AllTris.size());
+}
+
+void transferDataStructure (GFace *gf,std::set<MTri3*,compareTri3Ptr> &AllTris){
+  while (1) {
+    if (AllTris.begin() == AllTris.end() ) break;
+    MTri3 *worst = *AllTris.begin();
+    if (worst->isDeleted())
+      delete worst->tri();
+    else
+      gf->triangles.push_back(worst->tri());
+    delete worst;
+    AllTris.erase(AllTris.begin());      
+  }
+}
+
 
 void buildVertexToTriangle ( std::vector<MTriangle*> &triangles,  v2t_cont &adj )
 {
@@ -127,26 +209,6 @@ double surfaceTriangleUV (MVertex *v1, MVertex *v2, MVertex *v3,
   return 0.5*fabs (v12[0]*v13[1]-v12[1]*v13[0]);
 }
 
-struct swapquad{
-  int v[4];
-  bool operator < (const swapquad &o) const{
-    if (v[0] < o.v[0])return true;
-    if (v[0] > o.v[0])return false;
-    if (v[1] < o.v[1])return true;
-    if (v[1] > o.v[1])return false;
-    if (v[2] < o.v[2])return true;
-    if (v[2] > o.v[2])return false;
-    if (v[3] < o.v[3])return true;
-    return false;
-  }
-  swapquad(MVertex *v1,MVertex *v2,MVertex *v3,MVertex *v4){
-    v[0] = v1->getNum();
-    v[1] = v2->getNum();
-    v[2] = v3->getNum();
-    v[3] = v4->getNum();
-    std::sort(v,v+4);
-  }
-};
 
 bool gmshEdgeSwap(std::set<swapquad> & configs,
 		  MTri3 *t1, 
@@ -630,6 +692,7 @@ int edgeSwapPass (GFace *gf, std::set<MTri3*,compareTri3Ptr> &allTris,
 	CONTAINER::iterator itb = it;
 	++it;
 	allTris.erase(itb);
+	if (it == allTris.end())break;
       }
     }
     allTris.insert(newTris.begin(),newTris.end());

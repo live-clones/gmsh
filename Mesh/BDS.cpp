@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.92 2008-01-20 10:10:41 geuzaine Exp $
+// $Id: BDS.cpp,v 1.93 2008-01-22 17:24:29 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -155,9 +155,8 @@ BDS_Point *BDS_Mesh::find_point(int p)
     return 0;
 }
 
-BDS_Edge *BDS_Mesh::find_edge(int num1, int num2)
+BDS_Edge *BDS_Mesh::find_edge(BDS_Point *p, int num2)
 {
-  BDS_Point *p = find_point(num1);
   std::list < BDS_Edge * >::iterator eit = p->edges.begin();
   while(eit != p->edges.end()) {
     if((*eit)->p1 == p && (*eit)->p2->iD == num2)
@@ -167,6 +166,17 @@ BDS_Edge *BDS_Mesh::find_edge(int num1, int num2)
     ++eit;
   }
   return 0;
+}
+
+BDS_Edge *BDS_Mesh::find_edge(BDS_Point *p1, BDS_Point *p2)
+{
+  return find_edge (p1,p2->iD);
+}
+
+BDS_Edge *BDS_Mesh::find_edge(int num1, int num2)
+{
+  BDS_Point *p = find_point(num1);
+  return find_edge (p,num2);
 }
 
 int Intersect_Edges_2d(double x1, double y1, double x2, double y2,
@@ -782,6 +792,16 @@ void BDS_Mesh::saturate_edge(BDS_Edge * e, std::vector<BDS_Point *> &mids)
 bool BDS_SwapEdgeTestQuality::operator () (BDS_Point *_p1,BDS_Point *_p2,
 					   BDS_Point *_q1,BDS_Point *_q2) const
 {
+
+   double s1 = fabs(surface_triangle_param(_p1,_p2,_q1)); 
+   double s2 = fabs(surface_triangle_param(_p1,_p2,_q2)); 
+   double s3 = fabs(surface_triangle_param(_p1,_q1,_q2)); 
+   double s4 = fabs(surface_triangle_param(_p2,_q1,_q2)); 
+   if (fabs(s1+s2-s3-s4) > 1.e-10 * (s1+s2))return false;
+   if (s3 < .02 * (s1+s2) || s4 < .02 * (s1+s2))return false;
+   return true;
+		   
+
    double p1 [2] = {_p1->u,_p1->v};
    double p2 [2] = {_p2->u,_p2->v};
    double op1[2] = {_q1->u,_q1->v};
@@ -828,6 +848,67 @@ bool BDS_SwapEdgeTestQuality::operator () (BDS_Point *_p1,BDS_Point *_p2,BDS_Poi
 
 }
 
+
+
+void swap_config(BDS_Edge * e, 
+		 BDS_Point **p11,BDS_Point **p12,BDS_Point **p13,
+		 BDS_Point **p21,BDS_Point **p22,BDS_Point **p23,
+		 BDS_Point **p31,BDS_Point **p32,BDS_Point **p33,
+		 BDS_Point **p41,BDS_Point **p42,BDS_Point **p43)
+{
+  BDS_Point *op[2];
+  BDS_Point *p1 = e->p1;
+  BDS_Point *p2 = e->p2;
+  e->oppositeof(op);
+
+  BDS_Point *pts1[4];
+  e->faces(0)->getNodes(pts1);
+
+  // compute the orientation of the face
+  // with respect to the edge
+  int orientation = 0;
+  for(int i = 0; i < 3; i++) {
+    if(pts1[i] == p1) {
+      if(pts1[(i + 1) % 3] == p2)
+        orientation = 1;
+      else
+        orientation = -1;
+      break;
+    }
+  }
+  
+  if(orientation == 1) {
+    *p11 = p1;
+    *p12 = p2;
+    *p13 = op[0];
+
+    *p21 = p2;
+    *p22 = p1;
+    *p23 = op[1];
+
+    *p31 = p1;
+    *p32 = op[1];
+    *p33 = op[0];
+
+    *p41 = op[1];
+    *p42 = p2;
+    *p43 = op[0];
+  }
+  else{
+    *p11 = p2;
+    *p12 = p1;
+    *p13 = op[0];
+    *p21 = p1;
+    *p22 = p2;
+    *p23 = op[1];
+    *p31 = p1;
+    *p32 = op[0];
+    *p33 = op[1];
+    *p41 = op[1];
+    *p42 = op[0];
+    *p43 = p2;
+  }
+}
 
 bool BDS_Mesh::swap_edge(BDS_Edge * e, const BDS_SwapEdgeTest &theTest)
 {

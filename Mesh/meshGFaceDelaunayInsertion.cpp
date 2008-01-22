@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.8 2008-01-17 17:48:39 remacle Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.9 2008-01-22 17:24:29 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -43,22 +43,13 @@ bool circumCenterMetricInTriangle ( MTriangle *base,
   return invMapUV(base,x,Us,Vs,uv,1.e-8);
 }
 
-void circumCenterMetric ( MTriangle *base, 
+void circumCenterMetric ( double *pa, double *pb, double *pc,
 			  const double *metric,
-			  const std::vector<double> & Us,
-			  const std::vector<double> & Vs,
 			  double *x, double &Radius2) 
 {
   // d = (u2-u1) M (u2-u1) = u2 M u2 + u1 M u1 - 2 u2 M u1 
   double sys[2][2];
   double rhs[2];
-
-  double pa[2] = {Us[base->getVertex(0)->getNum()],
-		  Vs[base->getVertex(0)->getNum()]};
-  double pb[2] = {Us[base->getVertex(1)->getNum()],
-		  Vs[base->getVertex(1)->getNum()]};
-  double pc[2] = {Us[base->getVertex(2)->getNum()],
-		  Vs[base->getVertex(2)->getNum()]};
 
   const double a = metric[0];
   const double b = metric[1];
@@ -86,12 +77,48 @@ void circumCenterMetric ( MTriangle *base,
     2. * (x[0] - pa[0]) * (x[1] - pa[1]) * b;
 }
 
+void circumCenterMetric ( MTriangle *base, 
+			  const double *metric,
+			  const std::vector<double> & Us,
+			  const std::vector<double> & Vs,
+			  double *x, double &Radius2) 
+{
+  // d = (u2-u1) M (u2-u1) = u2 M u2 + u1 M u1 - 2 u2 M u1 
+
+
+  double sys[2][2];
+  double rhs[2];
+  double pa[2] = {Us[base->getVertex(0)->getNum()],
+		  Vs[base->getVertex(0)->getNum()]};
+  double pb[2] = {Us[base->getVertex(1)->getNum()],
+		  Vs[base->getVertex(1)->getNum()]};
+  double pc[2] = {Us[base->getVertex(2)->getNum()],
+		  Vs[base->getVertex(2)->getNum()]};
+  circumCenterMetric ( pa,pb,pc,metric,x,Radius2);
+}
+
+
 void buildMetric ( GFace *gf , double *uv, double *metric){
   Pair<SVector3,SVector3> der = gf->firstDer(SPoint2(uv[0],uv[1]));
   metric[0] = dot(der.first(),der.first());
   metric[1] = dot(der.second(),der.first());
   metric[2] = dot(der.second(),der.second());
 } 
+
+int inCircumCircleAniso ( GFace *gf, double *p1, double *p2, double *p3, double *uv, double *metric) 
+{
+  double x[2],Radius2;
+  circumCenterMetric ( p1,p2,p3,metric, x,Radius2);
+  const double a = metric[0];
+  const double b = metric[1];
+  const double d = metric[2];
+  double d2 = (x[0] - uv[0]) * (x[0] - uv[0]) * a
+    + (x[1] - uv[1]) * (x[1] - uv[1]) * d
+    + 2. * (x[0] - uv[0]) * (x[1] - uv[1]) * b;
+  //  printf("%22.15E %22.15E %d\n",d2,Radius2,d2 < Radius2);
+  
+  return d2 < Radius2;  
+}
 
 
 int inCircumCircleAniso ( GFace *gf,
@@ -104,6 +131,8 @@ int inCircumCircleAniso ( GFace *gf,
 
   double x[2],Radius2,metric[3];
 
+//   double pa[2] = {(Us[base->getVertex(0)->getNum()]+Us[base->getVertex(1)->getNum()]+Us[base->getVertex(2)->getNum()])/3.,
+//   		  (Vs[base->getVertex(0)->getNum()]+Vs[base->getVertex(1)->getNum()]+Vs[base->getVertex(2)->getNum()])/3.};
   double pa[2] = {(Us[base->getVertex(0)->getNum()]+Us[base->getVertex(1)->getNum()]+Us[base->getVertex(2)->getNum()])/3.,
   		  (Vs[base->getVertex(0)->getNum()]+Vs[base->getVertex(1)->getNum()]+Vs[base->getVertex(2)->getNum()])/3.};
   
@@ -120,11 +149,11 @@ int inCircumCircleAniso ( GFace *gf,
   const double b = metric[1];
   const double d = metric[2];
 
-
   double d2 = (x[0] - uv[0]) * (x[0] - uv[0]) * a
     + (x[1] - uv[1]) * (x[1] - uv[1]) * d
     + 2. * (x[0] - uv[0]) * (x[1] - uv[1]) * b;
   
+  //  printf("%22.15E %22.15E %d\n",d2,Radius2,d2 < Radius2);
   return d2 < Radius2;  
 }
 
@@ -221,6 +250,9 @@ void connectTriangles ( std::list<MTri3*> & l)
 }
 void connectTriangles ( std::vector<MTri3*> & l)
 {
+  connectTris(l.begin(),l.end());
+}
+void connectTriangles ( std::set<MTri3*,compareTri3Ptr> & l){
   connectTris(l.begin(),l.end());
 }
 
@@ -488,42 +520,6 @@ bool insertVertex (GFace *gf,
     }
 }
 
-static void setLcsMax ( MTriangle *t, std::map<MVertex*,double> &vSizes)
-{
-  for (int i=0;i<3;i++)
-    {
-      for (int j=i+1;j<3;j++)
-	{
-	  MVertex *vi = t->getVertex(i);
-	  MVertex *vj = t->getVertex(j);
-	  vSizes[vi] = 1.e12;
-	  vSizes[vj] = 1.e12;
-	}
-    }
-}
-
-
-static void setLcs ( MTriangle *t, std::map<MVertex*,double> &vSizes)
-{
-  for (int i=0;i<3;i++)
-    {
-      for (int j=i+1;j<3;j++)
-	{
-	  MVertex *vi = t->getVertex(i);
-	  MVertex *vj = t->getVertex(j);
-
-	  double dx = vi->x()-vj->x();
-	  double dy = vi->y()-vj->y();
-	  double dz = vi->z()-vj->z();
-	  double l = sqrt(dx*dx+dy*dy+dz*dz);
-	  std::map<MVertex*,double>::iterator iti = vSizes.find(vi);	  
-	  std::map<MVertex*,double>::iterator itj = vSizes.find(vj);	  
-	  if (iti->second > l)iti->second = l;
-	  if (itj->second > l)itj->second = l;
-	}
-    }
-}
-
 void _printTris (char *name,    std::set<MTri3*,compareTri3Ptr>&AllTris, std::vector<double>&Us, std::vector<double>&Vs)
 {
   FILE *ff = fopen (name,"w");
@@ -555,44 +551,15 @@ void insertVerticesInFace (GFace *gf, BDS_Mesh *bds)
 {
 
   std::set<MTri3*,compareTri3Ptr> AllTris;
-  std::map<MVertex*,double> vSizesMap;
   std::vector<double> vSizes, vSizesBGM,Us,Vs;
 
-  for (unsigned int i=0;i<gf->triangles.size();i++)setLcsMax ( gf->triangles[i] , vSizesMap);
 
-  // compute edge sizes on the contour and propagate thos sizes inside the surface
-  for (unsigned int i=0;i<gf->triangles.size();i++)setLcs ( gf->triangles[i] , vSizesMap);
-
-  int NUM=0;
-  for (std::map<MVertex*,double>::iterator it = vSizesMap.begin();it!=vSizesMap.end();++it)
-    {
-      it->first->setNum(NUM++);      
-      vSizes.push_back(it->second); 
-      vSizesBGM.push_back(it->second); 
-      double u0,v0;
-      parametricCoordinates ( it->first, gf, u0, v0);
-      Us.push_back(u0);
-      Vs.push_back(v0);
-    }
-  for (unsigned int i=0;i<gf->triangles.size();i++)
-    {
-      double lc    = 0.3333333333*(vSizes [gf->triangles[i]->getVertex(0)->getNum()]+
-				   vSizes [gf->triangles[i]->getVertex(1)->getNum()]+
-				   vSizes [gf->triangles[i]->getVertex(2)->getNum()]);
-      AllTris.insert ( new MTri3 ( gf->triangles[i] ,lc ) );
-    }
-
-  gf->triangles.clear();
-  connectTris ( AllTris.begin(), AllTris.end() );      
-  Msg(DEBUG,"All %d tris were connected",AllTris.size());
+  buidMeshGenerationDataStructures (gf,AllTris,vSizes,vSizesBGM,Us,Vs);
 
   //  _printTris ("before.pos", AllTris, Us,Vs);
   int nbSwaps = edgeSwapPass(gf,AllTris,SWCR_DEL,Us,Vs,vSizes,vSizesBGM);
   //  _printTris ("after2.pos", AllTris, Us,Vs);
   Msg(DEBUG,"Delaunization of the initial mesh done (%d swaps)",nbSwaps);
-  
-
-  // here the classification should be done
 
   int ITER = 0;
 
@@ -618,10 +585,10 @@ void insertVerticesInFace (GFace *gf, BDS_Mesh *bds)
 			(Vs[base->getVertex(0)->getNum()]+Vs[base->getVertex(1)->getNum()]+Vs[base->getVertex(2)->getNum()])/3.};
 	buildMetric ( gf , pa, metric);
 	circumCenterMetric ( worst->tri(),metric,Us,Vs,center,r2); 
-	//    	  buildMetric ( gf , center, metric);
-	//    	  circumCenterMetric ( worst->tri(),metric,Us,Vs,center,r2); 
-	//    	  buildMetric ( gf , center, metric);
-	//    	  circumCenterMetric ( worst->tri(),metric,Us,Vs,center,r2); 
+// 	buildMetric ( gf , center, metric);
+// 	circumCenterMetric ( worst->tri(),metric,Us,Vs,center,r2); 
+// 	buildMetric ( gf , center, metric);
+// 	circumCenterMetric ( worst->tri(),metric,Us,Vs,center,r2); 
 	
 	// 	  printf("%g %g %g\n",metric[0],metric[1],metric[2]);
 	
@@ -637,7 +604,7 @@ void insertVerticesInFace (GFace *gf, BDS_Mesh *bds)
 	  //	      Msg(INFO,"Point is inside");
 	  GPoint p = gf->point (center[0],center[1]);
 	  MVertex *v = new MFaceVertex (p.x(),p.y(),p.z(),gf,center[0],center[1]);
-	  v->setNum(NUM++);
+	  v->setNum(Us.size());
 	  double lc1 = ((1.-uv[0]-uv[1]) * vSizes [worst->tri()->getVertex(0)->getNum()] + 
 			uv[0] * vSizes [worst->tri()->getVertex(1)->getNum()] + 
 			uv[1] * vSizes [worst->tri()->getVertex(2)->getNum()] ); 
@@ -693,18 +660,8 @@ void insertVerticesInFace (GFace *gf, BDS_Mesh *bds)
   //   char name[245];
   //   sprintf(name,"paramFinal%d.pos",gf->tag());
   //  _printTris (name, AllTris, Us,Vs);
-  //  _printTris ("yo.pos", AllTris, Us,Vs);
-  // optimize the mesh
-  
+  _printTris ("yo.pos", AllTris, Us,Vs);
+
+  transferDataStructure (gf,AllTris); 
   // fill new gmsh structures with triangles
-  while (1) {
-    if (AllTris.begin() == AllTris.end() ) break;
-    MTri3 *worst = *AllTris.begin();
-    if (worst->isDeleted())
-      delete worst->tri();
-    else
-      gf->triangles.push_back(worst->tri());
-    delete worst;
-    AllTris.erase(AllTris.begin());      
-  }
 }

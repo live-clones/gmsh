@@ -46,6 +46,11 @@ void normal_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]);
 double surface_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3); 
 double surface_triangle_param(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3); 
 void optimize_vertex_position (GFace *GF, BDS_Point *data, double su, double sv);
+void swap_config(BDS_Edge * e, 
+		 BDS_Point **p11,BDS_Point **p12,BDS_Point **p13,
+		 BDS_Point **p21,BDS_Point **p22,BDS_Point **p23,
+		 BDS_Point **p31,BDS_Point **p32,BDS_Point **p33,
+		 BDS_Point **p41,BDS_Point **p42,BDS_Point **p43);
 
 
 class BDS_GeomEntity
@@ -437,6 +442,8 @@ public:
   BDS_Edge  * add_edge(int p1, int p2);
   void del_edge(BDS_Edge *e);
   BDS_Edge  *find_edge(int p1, int p2);
+  BDS_Edge  *find_edge(BDS_Point*p1, BDS_Point *p2);
+  BDS_Edge  *find_edge(BDS_Point*p1, int p2);
   BDS_Edge  *find_edge(BDS_Point *p1, BDS_Point *p2, BDS_Face *t)const;
   // Triangles & Quadrangles
   BDS_Face *add_triangle(int p1, int p2, int p3); 
