@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.22 2007-09-11 14:01:54 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.23 2008-01-22 20:44:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,7 @@ extern Context_T CTX;
 
 StringXNumber CutParametricOptions_Number[] = {
   {GMSH_FULLRC, "MinU", GMSH_CutParametricPlugin::callbackMinU, 0.},
-  {GMSH_FULLRC, "MaxU", GMSH_CutParametricPlugin::callbackMaxU, 2*M_PI},
+  {GMSH_FULLRC, "MaxU", GMSH_CutParametricPlugin::callbackMaxU, 2*3.1416},
   {GMSH_FULLRC, "nPointsU", GMSH_CutParametricPlugin::callbackN, 360.},
   {GMSH_FULLRC, "ConnectPoints", GMSH_CutParametricPlugin::callbackConnect, 0.},
   {GMSH_FULLRC, "iView", NULL, -1.}

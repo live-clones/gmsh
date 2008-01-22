@@ -1,4 +1,4 @@
-// $Id: HarmonicToTime.cpp,v 1.12 2007-09-11 14:01:55 geuzaine Exp $
+// $Id: HarmonicToTime.cpp,v 1.13 2008-01-22 20:44:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "HarmonicToTime.h"
+#include "Numeric.h"
 
 StringXNumber HarmonicToTimeOptions_Number[] = {
   {GMSH_FULLRC, "RealPart", NULL, 0.},

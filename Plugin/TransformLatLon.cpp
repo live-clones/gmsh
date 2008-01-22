@@ -1,4 +1,4 @@
-// $Id: TransformLatLon.cpp,v 1.1 2008-01-10 14:56:54 remacle Exp $
+// $Id: TransformLatLon.cpp,v 1.2 2008-01-22 20:44:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "TransformLatLon.h"
+#include "Numeric.h"
 
 StringXNumber TransformLatLonOptions_Number[] = {
   {GMSH_FULLRC,(char*) "iView", NULL, -1.},

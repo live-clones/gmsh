@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.26 2008-01-20 11:39:47 geuzaine Exp $
+# $Id: Makefile,v 1.27 2008-01-22 20:44:36 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -142,7 +142,7 @@ ${LIB}: ${OBJ}
 
 # don't apply ugly hack above for files in this directory
 nglib_addon${OBJEXT}:
-	${CXX} ${CFLAGS} ${DASH}c $<
+	${CXX} ${CFLAGS} ${DASH}c nglib_addon.cpp
 
 clean:
 	rm -f *${OBJEXT} libsrc/*/*${OBJEXT}
