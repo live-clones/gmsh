@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.39 2008-01-21 23:28:53 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.40 2008-01-22 20:38:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,8 +20,9 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <vector>
+#include "GModel.h"
+#include "discreteFace.h"
 #include "Message.h"
-#include "gmshFace.h"
 #include "MVertex.h"
 #include "Triangulate.h"
 #include "Malloc.h"
@@ -126,7 +127,7 @@ static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
 				 *(double *)List_Pointer_Fast(inList, i + 2),
 				 0, j++));
 
-  gmshFace *s = new gmshFace(0, 0);
+  discreteFace *s = new discreteFace(GModel::current(), GModel::current()->numFace() + 1);
   s->computeMeanPlane(points);
   double plan[3][3];
   s->getMeanPlaneData(plan);
