@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.109 2008-01-20 10:10:42 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.110 2008-01-22 09:12:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1031,6 +1031,7 @@ void RefineMesh(GFace *gf, BDS_Mesh &m, const int NIT)
     }  
 
   double t_total = t_spl + t_sw + t_col + t_sm;
+  if(!t_total) t_total = 1.e-6;
   Msg(DEBUG1," ---------------------------------------");
   Msg(DEBUG1," CPU Report ");
   Msg(DEBUG1," ---------------------------------------");
