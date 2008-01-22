@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.142 2008-01-21 23:28:53 geuzaine Exp $
+# $Id: Makefile,v 1.143 2008-01-22 17:06:58 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -95,7 +95,8 @@ Levelset.o: Levelset.cpp Levelset.h Plugin.h ../Common/Options.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Post/AdaptiveViews.h ../DataStr/List.h \
-  ../Common/GmshMatrix.h MakeSimplex.h ../Numeric/Numeric.h
+  ../Common/GmshMatrix.h MakeSimplex.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 CutPlane.o: CutPlane.cpp CutPlane.h Levelset.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/Message.h \
   ../Post/PView.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
@@ -135,20 +136,22 @@ Lambda2.o: Lambda2.cpp Lambda2.h Plugin.h ../Common/Options.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Post/AdaptiveViews.h ../DataStr/List.h \
-  ../Common/GmshMatrix.h ../Common/ShapeFunctions.h ../Numeric/Numeric.h
+  ../Common/GmshMatrix.h ../Common/ShapeFunctions.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 Eigenvectors.o: Eigenvectors.cpp Eigenvectors.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/Message.h \
   ../Post/PView.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Post/AdaptiveViews.h \
   ../DataStr/List.h ../Common/GmshMatrix.h ../Numeric/Numeric.h \
-  ../Numeric/EigSolve.h
+  ../Numeric/NumericEmbedded.h ../Numeric/EigSolve.h
 Eigenvalues.o: Eigenvalues.cpp Eigenvalues.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Post/AdaptiveViews.h ../DataStr/List.h \
-  ../Common/GmshMatrix.h ../Numeric/Numeric.h
+  ../Common/GmshMatrix.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 StreamLines.o: StreamLines.cpp StreamLines.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
@@ -181,14 +184,15 @@ Triangulate.o: Triangulate.cpp ../Common/Message.h ../Geo/gmshFace.h \
   ../Geo/Geo.h ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
   ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Numeric/Numeric.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
-  ../Common/SmoothData.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/Range.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
-  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h ../Geo/MVertex.h ../Geo/SPoint3.h Triangulate.h Plugin.h \
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
+  ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Geo/GFace.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
+  ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/GEntity.h \
+  ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint2.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/MVertex.h ../Geo/SPoint3.h Triangulate.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Post/PView.h \
   ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Post/AdaptiveViews.h \
@@ -198,13 +202,15 @@ Warp.o: Warp.cpp Warp.h Plugin.h ../Common/Options.h ../Post/ColorTable.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Post/PViewOptions.h \
   ../Post/ColorTable.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Post/AdaptiveViews.h ../DataStr/List.h ../Common/GmshMatrix.h \
-  ../Common/SmoothData.h ../Numeric/Numeric.h
+  ../Common/SmoothData.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 SphericalRaise.o: SphericalRaise.cpp SphericalRaise.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/Message.h \
   ../Post/PView.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Post/AdaptiveViews.h \
-  ../DataStr/List.h ../Common/GmshMatrix.h ../Numeric/Numeric.h
+  ../DataStr/List.h ../Common/GmshMatrix.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 Skin.o: Skin.cpp Skin.h Plugin.h ../Common/Options.h ../Post/ColorTable.h \
   ../Common/Message.h ../Post/PView.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Post/PViewOptions.h \
@@ -223,7 +229,8 @@ ExtractElements.o: ExtractElements.cpp ExtractElements.h Plugin.h \
   ../Post/PView.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Post/AdaptiveViews.h \
-  ../DataStr/List.h ../Common/GmshMatrix.h ../Numeric/Numeric.h
+  ../DataStr/List.h ../Common/GmshMatrix.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 ExtractEdges.o: ExtractEdges.cpp ExtractEdges.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/Message.h \
   ../Post/PView.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
@@ -258,9 +265,9 @@ FieldView.o: FieldView.cpp FieldView.h Plugin.h ../Common/Options.h \
   ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
   ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Numeric/Numeric.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
-  ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Geo/GEdge.h \
-  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Numeric/NumericEmbedded.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
+  ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/GVertex.h ../Geo/GEntity.h \
   ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/SPoint3.h \
   ../Geo/SPoint2.h ../Post/OctreePost.h ../Common/Octree.h \
@@ -270,25 +277,29 @@ Integrate.o: Integrate.cpp Integrate.h Plugin.h ../Common/Options.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Post/AdaptiveViews.h ../DataStr/List.h \
-  ../Common/GmshMatrix.h ../Common/ShapeFunctions.h ../Numeric/Numeric.h
+  ../Common/GmshMatrix.h ../Common/ShapeFunctions.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 Gradient.o: Gradient.cpp Gradient.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Post/AdaptiveViews.h ../DataStr/List.h \
-  ../Common/GmshMatrix.h ../Common/ShapeFunctions.h ../Numeric/Numeric.h
+  ../Common/GmshMatrix.h ../Common/ShapeFunctions.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 Curl.o: Curl.cpp Curl.h Plugin.h ../Common/Options.h ../Post/ColorTable.h \
   ../Common/Message.h ../Post/PView.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Post/PViewOptions.h \
   ../Post/ColorTable.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Post/AdaptiveViews.h ../DataStr/List.h ../Common/GmshMatrix.h \
-  ../Common/ShapeFunctions.h ../Numeric/Numeric.h
+  ../Common/ShapeFunctions.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 Divergence.o: Divergence.cpp Divergence.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Post/AdaptiveViews.h ../DataStr/List.h \
-  ../Common/GmshMatrix.h ../Common/ShapeFunctions.h ../Numeric/Numeric.h
+  ../Common/GmshMatrix.h ../Common/ShapeFunctions.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 Annotate.o: Annotate.cpp Annotate.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \

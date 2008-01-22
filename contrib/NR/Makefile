@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2008-01-18 21:00:40 geuzaine Exp $
+# $Id: Makefile,v 1.8 2008-01-22 17:06:58 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -61,3 +61,23 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
+brent.o: brent.cpp nrutil.h ../../Numeric/Numeric.h \
+  ../../Numeric/NumericEmbedded.h
+dpythag.o: dpythag.cpp nrutil.h ../../Numeric/Numeric.h \
+  ../../Numeric/NumericEmbedded.h
+dsvdcmp.o: dsvdcmp.cpp nrutil.h ../../Numeric/Numeric.h \
+  ../../Numeric/NumericEmbedded.h
+fdjac.o: fdjac.cpp nrutil.h ../../Numeric/Numeric.h \
+  ../../Numeric/NumericEmbedded.h
+fmin.o: fmin.cpp nrutil.h ../../Numeric/Numeric.h \
+  ../../Numeric/NumericEmbedded.h
+lnsrch.o: lnsrch.cpp nrutil.h ../../Numeric/Numeric.h \
+  ../../Numeric/NumericEmbedded.h
+lubksb.o: lubksb.cpp
+ludcmp.o: ludcmp.cpp nrutil.h ../../Numeric/Numeric.h \
+  ../../Numeric/NumericEmbedded.h
+mnbrak.o: mnbrak.cpp nrutil.h ../../Numeric/Numeric.h \
+  ../../Numeric/NumericEmbedded.h
+newt.o: newt.cpp nrutil.h ../../Numeric/Numeric.h \
+  ../../Numeric/NumericEmbedded.h
+nrutil.o: nrutil.cpp ../../Common/Message.h

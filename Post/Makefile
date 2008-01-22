@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.24 2008-01-20 12:21:30 geuzaine Exp $
+# $Id: Makefile,v 1.25 2008-01-22 17:06:58 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -70,11 +70,12 @@ PViewData.o: PViewData.cpp PViewData.h ../Geo/SBoundingBox3d.h \
 PViewDataList.o: PViewDataList.cpp PViewDataList.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h AdaptiveViews.h \
   ../DataStr/List.h ../Common/GmshMatrix.h ../Numeric/Numeric.h \
-  ../Common/SmoothData.h ../Common/Message.h ../Common/Context.h
+  ../Numeric/NumericEmbedded.h ../Common/SmoothData.h ../Common/Message.h \
+  ../Common/Context.h
 PViewDataListIO.o: PViewDataListIO.cpp PViewDataList.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h AdaptiveViews.h \
   ../DataStr/List.h ../Common/GmshMatrix.h ../Numeric/Numeric.h \
-  ../Common/Message.h ../Common/Context.h
+  ../Numeric/NumericEmbedded.h ../Common/Message.h ../Common/Context.h
 PViewDataGModel.o: PViewDataGModel.cpp PViewDataGModel.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h PViewDataList.h \
   AdaptiveViews.h ../DataStr/List.h ../Common/GmshMatrix.h \
@@ -97,6 +98,8 @@ OctreePost.o: OctreePost.cpp ../Common/Octree.h \
   ../Common/OctreeInternals.h OctreePost.h ../DataStr/List.h PView.h \
   PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h PViewOptions.h \
   ColorTable.h PViewDataList.h AdaptiveViews.h ../Common/GmshMatrix.h \
-  ../Numeric/Numeric.h ../Common/Message.h ../Common/ShapeFunctions.h
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Common/Message.h \
+  ../Common/ShapeFunctions.h
 ColorTable.o: ColorTable.cpp ../Common/Message.h ColorTable.h \
-  ../Common/Context.h ../DataStr/List.h ../Numeric/Numeric.h
+  ../Common/Context.h ../DataStr/List.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h

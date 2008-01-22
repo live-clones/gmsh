@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.135 2008-01-20 12:21:30 geuzaine Exp $
+# $Id: Makefile,v 1.136 2008-01-22 17:06:57 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -71,15 +71,15 @@ depend:
 Draw.o: Draw.cpp ../Common/GmshUI.h ../Common/GmshDefines.h \
   ../Common/Message.h Draw.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Common/Context.h ../DataStr/List.h ../Numeric/Numeric.h \
-  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h \
-  ../Post/PView.h ../Post/PViewData.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h
+  ../Numeric/NumericEmbedded.h ../Geo/GModel.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
+  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/SBoundingBox3d.h ../Post/PView.h ../Post/PViewData.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h
 Mesh.o: Mesh.cpp ../Common/Message.h ../Common/GmshUI.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
@@ -103,11 +103,11 @@ Geom.o: Geom.cpp ../Common/GmshUI.h Draw.h ../Geo/SBoundingBox3d.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h
 Post.o: Post.cpp ../Common/Message.h ../Common/GmshUI.h \
-  ../Numeric/Numeric.h Draw.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  Iso.h ../Post/PView.h ../Post/PViewData.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Common/VertexArray.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Common/Context.h ../DataStr/List.h \
-  ../Common/SmoothData.h gl2ps.h
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h Draw.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h Iso.h ../Post/PView.h \
+  ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
+  ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Common/Context.h ../DataStr/List.h ../Common/SmoothData.h gl2ps.h
 SelectBuffer.o: SelectBuffer.cpp ../Common/Message.h ../Common/GmshUI.h \
   ../Common/GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
@@ -121,10 +121,10 @@ SelectBuffer.o: SelectBuffer.cpp ../Common/Message.h ../Common/GmshUI.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
   ../Geo/SVector3.h Draw.h ../Common/Context.h ../DataStr/List.h \
   SelectBuffer.h ../Common/VertexArray.h ../Common/Context.h
-Iso.o: Iso.cpp ../Numeric/Numeric.h
-Entity.o: Entity.cpp ../Common/GmshUI.h ../Numeric/Numeric.h Draw.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/Context.h \
-  ../DataStr/List.h gl2ps.h
+Iso.o: Iso.cpp ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h
+Entity.o: Entity.cpp ../Common/GmshUI.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h Draw.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint3.h ../Common/Context.h ../DataStr/List.h gl2ps.h
 ReadImg.o: ReadImg.cpp ReadImg.h ../Common/Message.h ../Common/GmshUI.h \
   ../Post/PView.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Post/PViewOptions.h ../Post/ColorTable.h \
@@ -137,7 +137,7 @@ Scale.o: Scale.cpp ../Common/GmshUI.h Draw.h ../Geo/SBoundingBox3d.h \
 Graph2D.o: Graph2D.cpp ../Common/GmshUI.h Draw.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Post/PView.h ../Post/PViewData.h \
   ../Post/PViewOptions.h ../Post/ColorTable.h gl2ps.h ../Common/Context.h \
-  ../DataStr/List.h ../Numeric/Numeric.h
+  ../DataStr/List.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h
 gl2ps.o: gl2ps.cpp gl2ps.h
 gl2gif.o: gl2gif.cpp gl2gif.h PixelBuffer.h ../Common/GmshUI.h \
   ../Common/Message.h ../DataStr/Malloc.h Draw.h ../Geo/SBoundingBox3d.h \

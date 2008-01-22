@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.153 2008-01-20 12:21:29 geuzaine Exp $
+# $Id: Makefile,v 1.154 2008-01-22 17:06:57 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -62,9 +62,9 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-Context.o: Context.cpp ../Numeric/Numeric.h Context.h ../DataStr/List.h \
-  DefaultOptions.h GmshDefines.h Options.h ../Post/ColorTable.h \
-  Trackball.h
+Context.o: Context.cpp ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
+  Context.h ../DataStr/List.h DefaultOptions.h GmshDefines.h Options.h \
+  ../Post/ColorTable.h Trackball.h
 Octree.o: Octree.cpp Octree.h OctreeInternals.h
 OctreeInternals.o: OctreeInternals.cpp Message.h OctreeInternals.h
 Options.o: Options.cpp GmshUI.h GmshDefines.h Message.h \
@@ -78,18 +78,19 @@ Options.o: Options.cpp GmshUI.h GmshDefines.h Message.h \
   ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h ../Common/GmshUI.h \
   ../Fltk/Popup_Button.h ../Fltk/SpherePosition_Widget.h
 CommandLine.o: CommandLine.cpp GmshUI.h GmshDefines.h GmshVersion.h \
-  Message.h CommandLine.h ../Numeric/Numeric.h Context.h \
-  ../DataStr/List.h Options.h ../Post/ColorTable.h ../Post/PView.h \
-  ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Post/PViewOptions.h ../Post/ColorTable.h ../Parser/OpenFile.h \
-  ../Parser/CreateFile.h ../Parser/Parser.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
-  ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
-  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h OS.h
+  Message.h CommandLine.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h Context.h ../DataStr/List.h Options.h \
+  ../Post/ColorTable.h ../Post/PView.h ../Post/PViewData.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Post/PViewOptions.h \
+  ../Post/ColorTable.h ../Parser/OpenFile.h ../Parser/CreateFile.h \
+  ../Parser/Parser.h ../DataStr/Tree.h ../DataStr/avl.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
+  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/SBoundingBox3d.h OS.h
 OS.o: OS.cpp Message.h
 Visibility.o: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
@@ -106,6 +107,8 @@ Visibility.o: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h
 Trackball.o: Trackball.cpp Trackball.h
 VertexArray.o: VertexArray.cpp VertexArray.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h Context.h ../DataStr/List.h ../Numeric/Numeric.h
-SmoothData.o: SmoothData.cpp SmoothData.h ../Numeric/Numeric.h
+  ../Geo/SPoint3.h Context.h ../DataStr/List.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
+SmoothData.o: SmoothData.cpp SmoothData.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 License.o: License.cpp Message.h
