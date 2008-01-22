@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.96 2008-01-20 10:10:42 geuzaine Exp $
+// $Id: Gmsh.l,v 1.97 2008-01-22 17:02:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -56,6 +56,7 @@ void   skipline(void);
 
 #if defined(WIN32)
 #define isatty(arg) -1
+#define YY_NO_UNISTD_H
 #endif
 
 %}
