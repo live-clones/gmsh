@@ -22,11 +22,8 @@
 
 #include <math.h>
 
-#define RADTODEG      57.295779513082321
-#define RacineDeDeux  1.4142135623730950
-#define RacineDeTrois 1.7320508075688773
-#define Pi            3.1415926535897932
-#define Deux_Pi       6.2831853071795865
+#define Pi      3.1415926535897932
+#define Deux_Pi 6.2831853071795865
 
 #if !defined(M_PI)
 #define M_PI Pi
@@ -49,13 +46,8 @@
 #define DSQR SQR
 #define FSQR SQR
 
-#define THRESHOLD(a,b,c) (((a)>(c))?(c):((a)<(b)?(b):(a)))
-
 #define myhypot(a,b) (sqrt((a)*(a)+(b)*(b)))
 #define sign(x)      (((x)>=0)?1:-1)
-#define Pred(x)      ((x)->prev)
-#define Succ(x)      ((x)->next)
-#define square(x)    ((x)*(x))
 
 double myatan2(double a, double b);
 double myasin(double a);

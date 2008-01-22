@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.11 2008-01-19 22:06:03 geuzaine Exp $
+// $Id: DivideAndConquer.cpp,v 1.12 2008-01-22 19:54:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -39,6 +39,9 @@
 #include "Numeric.h"
 #include "DivideAndConquer.h"
 #include "Malloc.h"
+
+#define Pred(x) ((x)->prev)
+#define Succ(x) ((x)->next)
 
 static PointRecord *pPointArray;
 
