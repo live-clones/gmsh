@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.143 2008-01-22 17:06:58 geuzaine Exp $
+# $Id: Makefile,v 1.144 2008-01-22 20:45:27 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -179,24 +179,28 @@ TransformLatLon.o: TransformLatLon.cpp TransformLatLon.h Plugin.h \
   ../Post/PView.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Post/AdaptiveViews.h \
-  ../DataStr/List.h ../Common/GmshMatrix.h
-Triangulate.o: Triangulate.cpp ../Common/Message.h ../Geo/gmshFace.h \
-  ../Geo/Geo.h ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
-  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
-  ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Geo/GFace.h \
+  ../DataStr/List.h ../Common/GmshMatrix.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
+Triangulate.o: Triangulate.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
-  ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/GEntity.h \
-  ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint2.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/MVertex.h ../Geo/SPoint3.h Triangulate.h Plugin.h \
-  ../Common/Options.h ../Post/ColorTable.h ../Post/PView.h \
-  ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
-  ../Post/PViewDataList.h ../Post/PViewData.h ../Post/AdaptiveViews.h \
-  ../Common/GmshMatrix.h ../DataStr/Malloc.h ../Common/Context.h
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
+  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
+  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
+  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
+  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h \
+  ../Geo/discreteFace.h ../Geo/GModel.h ../Geo/GFace.h ../Geo/Geo.h \
+  ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
+  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
+  ../Geo/SBoundingBox3d.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
+  ../Common/SmoothData.h ../Common/Message.h ../Geo/MVertex.h \
+  ../Geo/SPoint3.h Triangulate.h Plugin.h ../Common/Options.h \
+  ../Post/ColorTable.h ../Post/PView.h ../Post/PViewData.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewDataList.h \
+  ../Post/PViewData.h ../Post/AdaptiveViews.h ../Common/GmshMatrix.h \
+  ../DataStr/Malloc.h ../Common/Context.h
 Warp.o: Warp.cpp Warp.h Plugin.h ../Common/Options.h ../Post/ColorTable.h \
   ../Common/Message.h ../Post/PView.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Post/PViewOptions.h \
@@ -328,7 +332,8 @@ HarmonicToTime.o: HarmonicToTime.cpp HarmonicToTime.h Plugin.h \
   ../Post/PView.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Post/AdaptiveViews.h \
-  ../DataStr/List.h ../Common/GmshMatrix.h
+  ../DataStr/List.h ../Common/GmshMatrix.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 ModulusPhase.o: ModulusPhase.cpp ModulusPhase.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/Message.h \
   ../Post/PView.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
