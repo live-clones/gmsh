@@ -1,4 +1,4 @@
-// $Id: NumericEmbedded.cpp,v 1.1 2008-01-22 16:47:10 geuzaine Exp $
+// $Id: NumericEmbedded.cpp,v 1.2 2008-01-22 19:41:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -180,28 +180,28 @@ int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det)
 
 double det2x2(double mat[2][2])
 {
-  return mat[0][0] *mat[1][1] -mat[1][0] *mat[0][1];
+  return mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1];
 }
 
 double det2x3(double mat[2][3])
 {
-  double v1[3] = {mat[0][0],mat[0][1],mat[0][2]};
-  double v2[3] = {mat[1][0],mat[1][1],mat[1][2]};
+  double v1[3] = {mat[0][0], mat[0][1], mat[0][2]};
+  double v2[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double n[3];
   
-  prodve (v1,v2,n);
+  prodve(v1, v2, n);
   return norm3(n);
 }
 
 double inv2x2(double mat[2][2], double inv[2][2])
 {
-  const double det = det2x2 ( mat );
+  const double det = det2x2(mat);
   if(det){
     double ud = 1. / det;
-    inv[0][0] =  ( mat[1][1] ) * ud ;
-    inv[1][0] = -( mat[1][0] ) * ud ;
-    inv[0][1] = -( mat[0][1] ) * ud ;
-    inv[1][1] =  ( mat[0][0] ) * ud ;
+    inv[0][0] =  mat[1][1] * ud;
+    inv[1][0] = -mat[1][0] * ud;
+    inv[0][1] = -mat[0][1] * ud;
+    inv[1][1] =  mat[0][0] * ud;
   }
   else{
     Msg(GERROR, "Singular matrix");
@@ -217,15 +217,15 @@ double inv3x3(double mat[3][3], double inv[3][3])
   double det = det3x3(mat);
   if(det){
     double ud = 1. / det;
-    inv[0][0] =  ( mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1] ) * ud ;
-    inv[1][0] = -( mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0] ) * ud ;
-    inv[2][0] =  ( mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0] ) * ud ;
-    inv[0][1] = -( mat[0][1] * mat[2][2] - mat[0][2] * mat[2][1] ) * ud ;
-    inv[1][1] =  ( mat[0][0] * mat[2][2] - mat[0][2] * mat[2][0] ) * ud ;
-    inv[2][1] = -( mat[0][0] * mat[2][1] - mat[0][1] * mat[2][0] ) * ud ;
-    inv[0][2] =  ( mat[0][1] * mat[1][2] - mat[0][2] * mat[1][1] ) * ud ;
-    inv[1][2] = -( mat[0][0] * mat[1][2] - mat[0][2] * mat[1][0] ) * ud ;
-    inv[2][2] =  ( mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0] ) * ud ;
+    inv[0][0] =  (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1]) * ud;
+    inv[1][0] = -(mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0]) * ud;
+    inv[2][0] =  (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]) * ud;
+    inv[0][1] = -(mat[0][1] * mat[2][2] - mat[0][2] * mat[2][1]) * ud;
+    inv[1][1] =  (mat[0][0] * mat[2][2] - mat[0][2] * mat[2][0]) * ud;
+    inv[2][1] = -(mat[0][0] * mat[2][1] - mat[0][1] * mat[2][0]) * ud;
+    inv[0][2] =  (mat[0][1] * mat[1][2] - mat[0][2] * mat[1][1]) * ud;
+    inv[1][2] = -(mat[0][0] * mat[1][2] - mat[0][2] * mat[1][0]) * ud;
+    inv[2][2] =  (mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0]) * ud;
   }
   else{
     Msg(GERROR, "Singular matrix");
@@ -286,7 +286,7 @@ double triangle_area(double p0[3], double p1[3], double p2[3])
   b[2] = p0[2] - p1[2];
   
   prodve(a, b, c);
-  return (0.5 * sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]));
+  return 0.5 * sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
 }
 
 char float2char(float f)
@@ -380,7 +380,7 @@ void eigenvalue(double mat[3][3], double v[3])
   double c[4];
   c[3] = 1.0;
   c[2] = - trace3x3(mat);
-  c[1] = 0.5 * (c[2]*c[2] - trace2(mat));
+  c[1] = 0.5 * (c[2] * c[2] - trace2(mat));
   c[0] = - det3x3(mat);
   
   //printf("%g %g %g\n", mat[0][0], mat[0][1], mat[0][2]);
