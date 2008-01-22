@@ -36,6 +36,7 @@ clean:
 	rm -f *${OBJEXT}
 
 distclean:
+	rm -f *${LIBEXT}
 	rm -f *${OBJEXT}
 	mkdir tmp
 	mv GmshEmbedded.* tmp
