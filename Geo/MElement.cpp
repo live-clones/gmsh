@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.48 2008-01-19 23:04:12 geuzaine Exp $
+// $Id: MElement.cpp,v 1.49 2008-01-22 13:48:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -99,19 +99,19 @@ double MElement::rhoShapeMeasure()
 
 double MTriangle::gammaShapeMeasure()
 {
-  return qmTriangle(this,QMTRI_RHO);
+  return qmTriangle(this, QMTRI_RHO);
 }
 
 double MTetrahedron::gammaShapeMeasure()
 {
   double vol;
-  return qmTet(this,QMTET_2,&vol);
+  return qmTet(this, QMTET_2, &vol);
 }
 
 double MTetrahedron::etaShapeMeasure()
 {
   double vol;
-  return qmTet(this,QMTET_3,&vol);
+  return qmTet(this, QMTET_3, &vol);
 }
 
 void MTetrahedron::getMat(double mat[3][3])
