@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.55 2008-01-22 16:47:10 geuzaine Exp $
+// $Id: GModel.cpp,v 1.56 2008-01-22 16:57:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,13 +23,13 @@
 #include "MElement.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
-#include "GmshEmbedded.h"
+#  include "GmshEmbedded.h"
 #else
-#include "Message.h"
-#include "gmshSurface.h"
-#include "Field.h"
-#include "BackgroundMesh.h"
-#include "Context.h"
+#  include "Message.h"
+#  include "gmshSurface.h"
+#  include "Field.h"
+#  include "BackgroundMesh.h"
+#  include "Context.h"
 #endif
 
 extern Context_T CTX;

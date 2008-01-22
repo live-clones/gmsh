@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.28 2008-01-22 16:47:10 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.29 2008-01-22 16:57:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -33,9 +33,9 @@
 #include "discreteVertex.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
-#include "GmshEmbedded.h"
+#  include "GmshEmbedded.h"
 #else
-#include "Message.h"
+#  include "Message.h"
 #endif
 
 static void swapBytes(char *array, int size, int n)

@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.50 2008-01-22 16:47:10 geuzaine Exp $
+// $Id: MElement.cpp,v 1.51 2008-01-22 16:57:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,12 +25,12 @@
 #include "GFace.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
-#include "GmshEmbedded.h"
+#  include "GmshEmbedded.h"
 #else
-#include "Numeric.h"
-#include "Message.h"
-#include "Context.h"
-#include "qualityMeasures.h"
+#  include "Numeric.h"
+#  include "Message.h"
+#  include "Context.h"
+#  include "qualityMeasures.h"
 #endif
 
 extern Context_T CTX;
