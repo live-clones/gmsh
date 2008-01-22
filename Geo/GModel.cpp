@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.54 2008-01-19 23:04:12 geuzaine Exp $
+// $Id: GModel.cpp,v 1.55 2008-01-22 16:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,12 +20,17 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GModel.h"
-#include "gmshSurface.h"
 #include "MElement.h"
+
+#if defined(HAVE_GMSH_EMBEDDED)
+#include "GmshEmbedded.h"
+#else
+#include "Message.h"
+#include "gmshSurface.h"
 #include "Field.h"
 #include "BackgroundMesh.h"
-#include "Message.h"
 #include "Context.h"
+#endif
 
 extern Context_T CTX;
 
@@ -89,9 +94,11 @@ void GModel::destroy()
 
   MVertex::resetGlobalNumber();
   MElement::resetGlobalNumber();
+#if !defined(HAVE_GMSH_EMBEDDED)
   gmshSurface::reset();
   fields.reset();
   BGMReset();
+#endif
 }
 
 GRegion *GModel::regionByTag(int n) const

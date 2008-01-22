@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.49 2008-01-22 13:48:48 geuzaine Exp $
+// $Id: MElement.cpp,v 1.50 2008-01-22 16:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,10 +23,15 @@
 #include "MElement.h"
 #include "GEntity.h"
 #include "GFace.h"
+
+#if defined(HAVE_GMSH_EMBEDDED)
+#include "GmshEmbedded.h"
+#else
 #include "Numeric.h"
 #include "Message.h"
 #include "Context.h"
 #include "qualityMeasures.h"
+#endif
 
 extern Context_T CTX;
 
@@ -99,19 +104,31 @@ double MElement::rhoShapeMeasure()
 
 double MTriangle::gammaShapeMeasure()
 {
+#if defined(HAVE_GMSH_EMBEDDED)
+  return 0.;
+#else
   return qmTriangle(this, QMTRI_RHO);
+#endif
 }
 
 double MTetrahedron::gammaShapeMeasure()
 {
+#if defined(HAVE_GMSH_EMBEDDED)
+  return 0.;
+#else
   double vol;
   return qmTet(this, QMTET_2, &vol);
+#endif
 }
 
 double MTetrahedron::etaShapeMeasure()
 {
+#if defined(HAVE_GMSH_EMBEDDED)
+  return 0.;
+#else
   double vol;
   return qmTet(this, QMTET_3, &vol);
+#endif
 }
 
 void MTetrahedron::getMat(double mat[3][3])

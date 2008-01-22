@@ -1,4 +1,4 @@
-// $Id: MVertex.cpp,v 1.17 2007-12-03 15:17:40 remacle Exp $
+// $Id: MVertex.cpp,v 1.18 2008-01-22 16:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,12 @@
 #include "MVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
+
+#if defined(HAVE_GMSH_EMBEDDED)
+#include "GmshEmbedded.h"
+#else
+#include "Message.h"
+#endif
 
 int MVertex::_globalNum = 0;
 double MVertexLessThanLexicographic::tolerance = 1.e-6;

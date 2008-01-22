@@ -1,4 +1,4 @@
-// $Id: GVertex.cpp,v 1.15 2008-01-20 10:10:41 geuzaine Exp $
+// $Id: GVertex.cpp,v 1.16 2008-01-22 16:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -24,7 +24,12 @@
 #include "GVertex.h"
 #include "GFace.h"
 #include "MVertex.h"
+
+#if defined(HAVE_GMSH_EMBEDDED)
+#include "GmshEmbedded.h"
+#else
 #include "Message.h"
+#endif
 
 GVertex::GVertex(GModel *m, int tag, double ms) : GEntity (m, tag), meshSize (ms) 
 {

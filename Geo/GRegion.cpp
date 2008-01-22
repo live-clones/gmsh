@@ -1,4 +1,4 @@
-// $Id: GRegion.cpp,v 1.19 2008-01-19 22:06:01 geuzaine Exp $
+// $Id: GRegion.cpp,v 1.20 2008-01-22 16:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,12 @@
 #include "GRegion.h"
 #include "GFace.h"
 #include "MElement.h"
+
+#if defined(HAVE_GMSH_EMBEDDED)
+#include "GmshEmbedded.h"
+#else
+#include "Message.h"
+#endif
 
 GRegion::GRegion(GModel *model, int tag) : GEntity (model, tag)
 {

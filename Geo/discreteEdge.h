@@ -4,7 +4,7 @@
 #include "GModel.h"
 #include "GEdge.h"
 
-#if !defined(HAVE_NO_GEO)
+#if !defined(HAVE_GMSH_EMBEDDED)
 #include "Geo.h"
 #endif
 
@@ -12,7 +12,7 @@ class discreteEdge : public GEdge {
  public:
   discreteEdge(GModel *model, int num) : GEdge(model, num, 0, 0) 
   {
-#if !defined(HAVE_NO_GEO)
+#if !defined(HAVE_GMSH_EMBEDDED)
     Curve *c = Create_Curve(num, MSH_SEGM_DISCRETE, 0, 0, 0, -1, -1, 0., 1.);
     Tree_Add(model->getGEOInternals()->Curves, &c);
     CreateReversedCurve(c);

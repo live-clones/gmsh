@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.34 2008-01-21 22:16:04 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.35 2008-01-22 16:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,12 @@
 #include "GFace.h"
 #include "MElement.h"
 #include "GmshDefines.h"
+
+#if defined(HAVE_GMSH_EMBEDDED)
+#include "GmshEmbedded.h"
+#else
+#include "Message.h"
+#endif
 
 GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
   : GEntity(model, tag), v0(_v0), v1(_v1)

@@ -1,4 +1,4 @@
-// $Id: GEdgeLoop.cpp,v 1.8 2008-01-20 11:19:27 geuzaine Exp $
+// $Id: GEdgeLoop.cpp,v 1.9 2008-01-22 16:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,12 @@
 
 #include <algorithm>
 #include "GEdgeLoop.h"
+
+#if defined(HAVE_GMSH_EMBEDDED)
+#include "GmshEmbedded.h"
+#else
 #include "Message.h"
+#endif
 
 void GEdgeSigned::print() const
 {

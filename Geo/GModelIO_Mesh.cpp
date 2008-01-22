@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.27 2008-01-21 23:28:52 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.28 2008-01-22 16:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,15 +23,20 @@
 #include <cstring>
 #include <string>
 
-#include "Message.h"
-#include "GmshDefines.h"
 #include "GModel.h"
+#include "GmshDefines.h"
+#include "MElement.h"
+#include "SBoundingBox3d.h"
 #include "discreteRegion.h"
 #include "discreteFace.h"
 #include "discreteEdge.h"
 #include "discreteVertex.h"
-#include "MElement.h"
-#include "SBoundingBox3d.h"
+
+#if defined(HAVE_GMSH_EMBEDDED)
+#include "GmshEmbedded.h"
+#else
+#include "Message.h"
+#endif
 
 static void swapBytes(char *array, int size, int n)
 {

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.42 2008-01-19 22:06:03 geuzaine Exp $
+# $Id: Makefile,v 1.43 2008-01-22 16:47:10 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -26,6 +26,7 @@ INCLUDE = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Numeric ${DASH}I../con
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
 
 SRC = Numeric.cpp\
+        NumericEmbedded.cpp\
       EigSolve.cpp\
       predicates.cpp\
       gsl_newt.cpp\

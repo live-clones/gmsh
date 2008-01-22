@@ -18,8 +18,13 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "MFace.h"
+
+#if defined(HAVE_GMSH_EMBEDDED)
+#include "GmshEmbedded.h"
+#else
 #include "Numeric.h"
 #include "Context.h"
+#endif
 
 extern Context_T CTX;
 

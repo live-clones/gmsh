@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.41 2008-01-21 22:16:04 geuzaine Exp $
+// $Id: GFace.cpp,v 1.42 2008-01-22 16:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,17 +23,21 @@
 #include "GFace.h"
 #include "GEdge.h"
 #include "MElement.h"
-#include "Message.h"
-#include "Numeric.h"
-#include "Context.h"
 
-#if defined(HAVE_GSL)
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_linalg.h>
+#if defined(HAVE_GMSH_EMBEDDED)
+#  include "GmshEmbedded.h"
 #else
-#define NRANSI
-#include "nrutil.h"
+#  include "Message.h"
+#  include "Numeric.h"
+#  include "Context.h"
+#  if defined(HAVE_GSL)
+#    include <gsl/gsl_vector.h>
+#    include <gsl/gsl_linalg.h>
+#  else
+#    define NRANSI
+#    include "nrutil.h"
 void dsvdcmp(double **a, int m, int n, double w[], double **v);
+#  endif
 #endif
 
 extern Context_T CTX;
@@ -194,6 +198,7 @@ void GFace::computeMeanPlane(const std::vector<MVertex*> &points)
 
 void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
 {
+#if !defined(HAVE_GMSH_EMBEDDED)
   // The concept of a mean plane computed in the sense of least
   // squares is fine for plane surfaces(!), but not really the best
   // one for non-plane surfaces. Indeed, imagine a quarter of a circle
@@ -380,6 +385,7 @@ end:
       }
     }
   }
+#endif
 }
 
 void GFace::getMeanPlaneData(double VX[3], double VY[3], 
@@ -443,6 +449,7 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
 		    double &U, double &V, const double relax,
 		    const bool onSurface) const
 {
+#if !defined(HAVE_GMSH_EMBEDDED)
   const double Precision = 1.e-8;
   const int MaxIter = 25;
   const int NumInitGuess = 11;
@@ -519,6 +526,7 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
     Msg(INFO, "point %g %g %g : Relaxation factor = %g",X,Y,Z, 0.75 * relax);
     XYZtoUV(X, Y, Z, U, V, 0.75 * relax);
   }  
+#endif
 }
 
 SPoint2 GFace::parFromPoint(const SPoint3 &p) const
