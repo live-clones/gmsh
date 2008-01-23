@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2008-01-19 00:12:38 geuzaine Exp $
+# $Id: Makefile,v 1.18 2008-01-23 07:45:30 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -50,7 +50,7 @@ parser:
 	flex -oscanner.yy.cpp -Pme scanner.l
 
 clean:
-	rm -f *${OBJEXT}
+	rm -f *.o *.obj
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

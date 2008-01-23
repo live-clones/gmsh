@@ -3,13 +3,9 @@ include ../../variables
 OBJEXT=.o
 LIBEXT=.a
 DASH=-
-OPTIM=-02
-FLAGS=
-SYSINCLUDE=
 
-
-LIB     = libGmsh${LIBEXT}
-INCLUDE = 
+LIB     = ../../lib/libGmshEmbedded${LIBEXT}
+INCLUDE = ${DASH}I.
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE} ${DASH}DHAVE_GMSH_EMBEDDED
 
 SRC = GModel.cpp\
@@ -33,11 +29,11 @@ ${LIB}: ${OBJ}
 	${CXX} ${CFLAGS} ${DASH}c $<
 
 clean:
-	rm -f *${OBJEXT}
+	rm -f *.o *.obj
 
 distclean:
-	rm -f *${LIBEXT}
-	rm -f *${OBJEXT}
+	rm -f *.a *.lib
+	rm -f *.o *.obj
 	mkdir tmp
 	mv GmshEmbedded.* tmp
 	rm -f *.cpp *.h

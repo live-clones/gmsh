@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2006-11-27 22:22:33 geuzaine Exp $
+# $Id: Makefile,v 1.14 2008-01-23 07:45:30 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -90,7 +90,7 @@ ${LIB}: ${OBJ}
 	${CC} ${CFLAGS} -c $< -o ${<:.c=.o}
 
 clean:
-	rm -f *.o
+	rm -f *.o *.obj
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

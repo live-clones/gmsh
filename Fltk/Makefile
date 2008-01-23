@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.166 2008-01-22 17:06:57 geuzaine Exp $
+# $Id: Makefile,v 1.167 2008-01-23 07:45:28 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -55,7 +55,7 @@ res:
 	windres Win32Icon.rc -O coff Win32Icon.res
 
 clean:
-	rm -f *${OBJEXT}
+	rm -f *.o *.obj
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

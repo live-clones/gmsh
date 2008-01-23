@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.27 2008-01-22 20:44:36 geuzaine Exp $
+# $Id: Makefile,v 1.28 2008-01-23 07:45:30 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -145,7 +145,7 @@ nglib_addon${OBJEXT}:
 	${CXX} ${CFLAGS} ${DASH}c nglib_addon.cpp
 
 clean:
-	rm -f *${OBJEXT} libsrc/*/*${OBJEXT}
+	rm -f *.o *.obj libsrc/*/*.o libsrc/*/*.obj
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.137 2008-01-22 17:06:58 geuzaine Exp $
+# $Id: Makefile,v 1.138 2008-01-23 07:45:29 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -46,7 +46,7 @@ ${LIB}: ${OBJ}
 
 # Don't optimize Gmsh.tab.o: on many architectures, g++ -O2 generates
 # assembly code too large to be addressed correctly
-Gmsh.tab.o:
+Gmsh.tab${OBJEXT}:
 	${CXX} ${FLAGS} ${INCLUDE} ${SYSINCLUDE} ${DASH}c Gmsh.tab.cpp
 
 parser:
@@ -55,7 +55,7 @@ parser:
 	flex -P gmsh_yy -oGmsh.yy.cpp Gmsh.l
 
 clean:
-	rm -f *.o
+	rm -f *.o *.obj
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
