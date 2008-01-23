@@ -148,7 +148,7 @@ public:
   }
   double angle_deg(const  BDS_Vector &v) const
   {
-    return angle(v) * 180. / 3.1415926535897932;
+    return angle(v) * 180. / M_PI;
   }
   double operator * (const  BDS_Vector &v) const
   {
