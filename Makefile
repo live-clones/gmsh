@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.461 2008-01-23 08:50:35 geuzaine Exp $
+# $Id: Makefile,v 1.462 2008-01-23 09:00:59 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -41,6 +41,13 @@ GMSH_API = Geo/GModel.h\
            Geo/Pair.h Geo/Range.h\
            Common/GmshDefines.h Common/GmshVersion.h
 
+GMSH_EMBEDDED = ${GMSH_API} Geo/discrete*.h Numeric/NumericEmbedded.h\
+                Geo/GModel.cpp Geo/GModelIO_Mesh.cpp\
+                Geo/GEntity.cpp Geo/GVertex.cpp Geo/GEdge.cpp\
+                Geo/GEdgeLoop.cpp Geo/GFace.cpp Geo/GRegion.cpp\
+                Geo/MElement.cpp Geo/MFace.cpp Geo/MVertex.cpp\
+                Numeric/NumericEmbedded.cpp
+
 all: link
 
 link: compile
@@ -78,13 +85,8 @@ install-lib: lib
 	cp -f bin/libGmsh${LIBEXT} ${libdir}
 
 embed:
-	rsync -av ${GMSH_API} Geo/discrete*.h Numeric/NumericEmbedded.h utils/embed
-	rsync -av Geo/GModel.cpp Geo/GModelIO_Mesh.cpp\
-             Geo/GEntity.cpp Geo/GVertex.cpp Geo/GEdge.cpp\
-             Geo/GEdgeLoop.cpp Geo/GFace.cpp Geo/GRegion.cpp\
-           Geo/MElement.cpp Geo/MFace.cpp Geo/MVertex.cpp\
-           Numeric/NumericEmbedded.cpp utils/embed
-#	rsync -av utils/embed/ ../getdp2/contrib/gmsh
+	rsync -av ${GMSH_EMBEDDED} utils/embed
+	rsync -av utils/embed/*.{cpp,h} utils/embed/Makefile ../getdp2/contrib/gmsh
 
 variables: configure
 	@echo "********************************************************************"
