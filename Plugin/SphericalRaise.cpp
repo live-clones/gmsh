@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.29 2008-01-23 09:16:07 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.30 2008-01-23 09:18:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "SphericalRaise.h"
+#include "Numeric.h"
 
 StringXNumber SphericalRaiseOptions_Number[] = {
   {GMSH_FULLRC, "Xc", NULL, 0.},

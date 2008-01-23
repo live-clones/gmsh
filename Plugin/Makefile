@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.145 2008-01-23 07:45:29 geuzaine Exp $
+# $Id: Makefile,v 1.146 2008-01-23 09:18:06 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -179,8 +179,7 @@ TransformLatLon.o: TransformLatLon.cpp TransformLatLon.h Plugin.h \
   ../Post/PView.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Post/AdaptiveViews.h \
-  ../DataStr/List.h ../Common/GmshMatrix.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h
+  ../DataStr/List.h ../Common/GmshMatrix.h
 Triangulate.o: Triangulate.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
@@ -332,8 +331,7 @@ HarmonicToTime.o: HarmonicToTime.cpp HarmonicToTime.h Plugin.h \
   ../Post/PView.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Post/AdaptiveViews.h \
-  ../DataStr/List.h ../Common/GmshMatrix.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h
+  ../DataStr/List.h ../Common/GmshMatrix.h
 ModulusPhase.o: ModulusPhase.cpp ModulusPhase.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/Message.h \
   ../Post/PView.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
