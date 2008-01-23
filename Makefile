@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.459 2008-01-22 16:47:10 geuzaine Exp $
+# $Id: Makefile,v 1.460 2008-01-23 07:54:59 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -78,8 +78,8 @@ install-lib: lib
 	cp -f bin/libGmsh${LIBEXT} ${libdir}
 
 embed:
-	cp -f ${GMSH_API} Geo/discrete*.h Numeric/NumericEmbedded.h utils/embed
-	cp Geo/GModel.cpp Geo/GModelIO_Mesh.cpp\
+	rsync -av ${GMSH_API} Geo/discrete*.h Numeric/NumericEmbedded.h utils/embed
+	rsync -av Geo/GModel.cpp Geo/GModelIO_Mesh.cpp\
              Geo/GEntity.cpp Geo/GVertex.cpp Geo/GEdge.cpp\
              Geo/GEdgeLoop.cpp Geo/GFace.cpp Geo/GRegion.cpp\
            Geo/MElement.cpp Geo/MFace.cpp Geo/MVertex.cpp\
