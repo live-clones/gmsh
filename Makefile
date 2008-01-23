@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.460 2008-01-23 07:54:59 geuzaine Exp $
+# $Id: Makefile,v 1.461 2008-01-23 08:50:35 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -84,6 +84,7 @@ embed:
              Geo/GEdgeLoop.cpp Geo/GFace.cpp Geo/GRegion.cpp\
            Geo/MElement.cpp Geo/MFace.cpp Geo/MVertex.cpp\
            Numeric/NumericEmbedded.cpp utils/embed
+#	rsync -av utils/embed/ ../getdp2/contrib/gmsh
 
 variables: configure
 	@echo "********************************************************************"

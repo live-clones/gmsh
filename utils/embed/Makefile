@@ -1,9 +1,5 @@
 include ../../variables
 
-OBJEXT=.o
-LIBEXT=.a
-DASH=-
-
 LIB     = ../../lib/libGmshEmbedded${LIBEXT}
 INCLUDE = ${DASH}I.
 CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE} ${DASH}DHAVE_GMSH_EMBEDDED
