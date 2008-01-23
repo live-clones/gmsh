@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.462 2008-01-23 09:00:59 geuzaine Exp $
+# $Id: Makefile,v 1.463 2008-01-23 09:04:05 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -86,7 +86,9 @@ install-lib: lib
 
 embed:
 	rsync -av ${GMSH_EMBEDDED} utils/embed
-	rsync -av utils/embed/*.{cpp,h} utils/embed/Makefile ../getdp2/contrib/gmsh
+	@if [ ! -r ../getdp2/contrib/gmsh/Makefile ]; then \
+          rsync -av utils/embed/*.{cpp,h} utils/embed/Makefile ../getdp2/contrib/gmsh;\
+        fi
 
 variables: configure
 	@echo "********************************************************************"
