@@ -1,4 +1,4 @@
-// $Id: Annotate.cpp,v 1.17 2007-09-11 14:01:54 geuzaine Exp $
+// $Id: Annotate.cpp,v 1.18 2008-01-23 17:27:13 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -35,7 +35,7 @@ StringXNumber AnnotateOptions_Number[] = {
   {GMSH_FULLRC, "X", GMSH_AnnotatePlugin::callbackX, 50.},
   {GMSH_FULLRC, "Y", GMSH_AnnotatePlugin::callbackY, 30.},
   {GMSH_FULLRC, "Z", GMSH_AnnotatePlugin::callbackZ, 0.},
-  {GMSH_FULLRC, "3D", GMSH_AnnotatePlugin::callback3D, 0.},
+  {GMSH_FULLRC, "ThereD", GMSH_AnnotatePlugin::callback3D, 0.},
   {GMSH_FULLRC, "FontSize", GMSH_AnnotatePlugin::callbackFontSize, 14.},
   {GMSH_FULLRC, "iView", NULL, -1.}
 };
@@ -212,9 +212,9 @@ void GMSH_AnnotatePlugin::getInfos(char *author, char *copyright,
   strcpy(help_text,
          "Plugin(Annotate) adds the text string `Text',\n"
 	 "in font `Font' and size `FontSize', in the view\n"
-	 "`iView'. If `3D' is equal to 1, the plugin inserts\n"
+	 "`iView'. If `ThreeD' is equal to 1, the plugin inserts\n"
 	 "the string in model coordinates at the position\n"
-	 "(`X',`Y',`Z'). If `3D' is equal to 0, the plugin\n"
+	 "(`X',`Y',`Z'). If `ThreeD' is equal to 0, the plugin\n"
 	 "inserts the string in screen coordinates at\n"
 	 "the position (`X',`Y'). The string is aligned\n"
 	 "according to `Align'. If `iView' < 0, the plugin\n"
