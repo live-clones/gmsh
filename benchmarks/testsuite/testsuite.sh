@@ -8,4 +8,6 @@ date >> statreport.dat
 ../../bin/gmsh 15_cylinder_head.brep -2 -clscale .1 -append_statreport statreport.dat
 ../../bin/gmsh sphere_Rhino3D_default.igs -clscale 1 -v 0 -2 -append_statreport statreport.dat
 ../../bin/gmsh Cone_1.brep -clscale 1 -v 0 -2 -append_statreport statreport.dat
+../../bin/gmsh Cylinder_1.brep -clscale 1 -v 0 -2 -append_statreport statreport.dat
+../../bin/gmsh A319.geo -clscale 3 -v 0 -2 -append_statreport statreport.dat
 
