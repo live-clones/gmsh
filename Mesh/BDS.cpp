@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.93 2008-01-22 17:24:29 remacle Exp $
+// $Id: BDS.cpp,v 1.94 2008-01-24 09:35:41 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1342,7 +1342,7 @@ void optimize_vertex_position (GFace *GF, BDS_Point *data, double su, double sv)
 }
 
 
-bool BDS_Mesh::smooth_point_centroid(BDS_Point * p, GFace *gf)
+bool BDS_Mesh::smooth_point_centroid(BDS_Point * p, GFace *gf, bool test_quality)
 {
 
   if (!p->config_modified)return false;
@@ -1392,6 +1392,9 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point * p, GFace *gf)
 
   it = ts.begin();
   double s1=0,s2=0;
+
+  double newWorst = 1.0;
+  double oldWorst = 1.0;
   while(it != ite) {
     BDS_Face *t = *it;   
     BDS_Point *n[4];
@@ -1407,17 +1410,16 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point * p, GFace *gf)
     //    printf("%22.15E %22.15E\n",snew,sold);
     if ( snew < .1 * sold) return false;
 
-//     if (!test_move_point_parametric_triangle ( p, U, V, t)){
-//       return false;    
-//     }
-//     p->X = gp.x();
-//     p->Y = gp.y();
-//     p->Z = gp.z();
-//     newWorst = std::min(newWorst,qmTriangle(*it,QMTRI_RHO));
-//     p->X = oldX;
-//     p->Y = oldY;
-//     p->Z = oldZ;
-//     oldWorst = std::min(oldWorst,qmTriangle(*it,QMTRI_RHO));
+    if (test_quality){
+      p->X = gp.x();
+      p->Y = gp.y();
+      p->Z = gp.z();
+      newWorst = std::min(newWorst,qmTriangle(*it,QMTRI_RHO));
+      p->X = oldX;
+      p->Y = oldY;
+      p->Z = oldZ;
+      oldWorst = std::min(oldWorst,qmTriangle(*it,QMTRI_RHO));
+    }
     ++it;
   }
   
@@ -1425,11 +1427,9 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point * p, GFace *gf)
   if (fabs(s2-s1) > 1.e-14 * (s2+s1))return false;
   
 
-//   if (newWorst < 1.e-2)
-//     {
-//       printf("chmoochiong %g %g\n",oldWorst,newWorst);
-//       //      return false;
-//     }
+   if (test_quality && newWorst < oldWorst){
+     return false;
+   }
   
   p->u = U;
   p->v = V;
