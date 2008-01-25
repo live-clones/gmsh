@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.112 2008-01-19 22:05:59 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.113 2008-01-25 21:37:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -242,7 +242,7 @@ void Get_Options(int argc, char *argv[])
         i++;
       }
       else if(!strcmp(argv[i] + 1, "optimize_netgen")) {
-        CTX.mesh.optimizeNetgen = 1;
+        CTX.mesh.optimize_netgen = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "nopopup")) {

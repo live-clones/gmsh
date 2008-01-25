@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.377 2008-01-20 11:20:58 geuzaine Exp $
+// $Id: Options.cpp,v 1.378 2008-01-25 21:37:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4223,12 +4223,12 @@ double opt_mesh_optimize(OPT_ARGS_NUM)
 double opt_mesh_optimize_netgen(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.mesh.optimize =(int) val;
+    CTX.mesh.optimize_netgen =(int) val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[24]->value(CTX.mesh.optimizeNetgen);
+    WID->mesh_butt[24]->value(CTX.mesh.optimize_netgen);
 #endif
-  return CTX.mesh.optimize;
+  return CTX.mesh.optimize_netgen;
 }
 
 double opt_mesh_refine_steps(OPT_ARGS_NUM)

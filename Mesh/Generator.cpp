@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.129 2008-01-19 22:06:03 geuzaine Exp $
+// $Id: Generator.cpp,v 1.130 2008-01-25 21:37:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -403,7 +403,7 @@ void GenerateMesh(int ask)
   if(m->getMeshStatus() == 3 && CTX.mesh.optimize)
     OptimizeMesh(m);
   // Optimize quality with netgen
-  if(m->getMeshStatus() == 3 && CTX.mesh.optimizeNetgen)
+  if(m->getMeshStatus() == 3 && CTX.mesh.optimize_netgen)
     OptimizeMeshNetgen(m);
   
   // Create high order elements
