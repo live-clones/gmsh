@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.112 2008-01-24 09:35:41 remacle Exp $
+// $Id: meshGFace.cpp,v 1.113 2008-01-26 17:47:58 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -1280,9 +1280,9 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
   if (!AlgoDelaunay2D ( gf ))
     {
       gmshRefineMeshBDS (gf,*m,CTX.mesh.refine_steps,true);
-      gmshOptimizeMeshBDS(gf, *m, 2,&recover_map);
+      gmshOptimizeMeshBDS(gf, *m, 2);
       gmshRefineMeshBDS (gf,*m,-CTX.mesh.refine_steps,false);
-      gmshOptimizeMeshBDS(gf, *m, -2,&recover_map);
+      gmshOptimizeMeshBDS(gf, *m, 2,&recover_map);
 
       if (gf->meshAttributes.recombine)
 	{
@@ -1424,7 +1424,7 @@ void meshGFace::operator() (GFace *gf)
     {
       Msg(DEBUG1, "Generating the mesh");
       if(noseam (gf) || gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
-	//gmsh2DMeshGenerator(gf,0, true);
+	//	gmsh2DMeshGenerator(gf,0, true);
 	gmsh2DMeshGenerator(gf,0, false);
       }
       else{

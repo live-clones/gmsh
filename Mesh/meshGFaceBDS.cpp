@@ -1,4 +1,4 @@
-// $Id: meshGFaceBDS.cpp,v 1.1 2008-01-24 09:35:41 remacle Exp $
+// $Id: meshGFaceBDS.cpp,v 1.2 2008-01-26 17:47:58 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -63,6 +63,30 @@ inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2, GFace *f,
   const double l2 = sqrt(dx2*dx2+dy2*dy2+dz2*dz2);
   //  printf("%g %g\n",l1,l2);
   return l1+l2;
+}
+
+inline double computeEdgeMiddleCoord(BDS_Point *p1, BDS_Point *p2, GFace *f,
+				     double SCALINGU, double SCALINGV)
+{
+
+  if (f->geomType() == GEntity::Plane)
+    return 0.5;
+
+  GPoint GP = f->point (SPoint2(0.5*(p1->u+p2->u)*SCALINGU,0.5*(p1->v+p2->v)*SCALINGV));
+
+  const double dx1 = p1->X-GP.x();
+  const double dy1 = p1->Y-GP.y();
+  const double dz1 = p1->Z-GP.z();
+  const double l1 = sqrt(dx1*dx1+dy1*dy1+dz1*dz1);
+  const double dx2 = p2->X-GP.x();
+  const double dy2 = p2->Y-GP.y();
+  const double dz2 = p2->Z-GP.z();
+  const double l2 = sqrt(dx2*dx2+dy2*dy2+dz2*dz2);
+
+  if (l1 > l2)
+    return 0.25 * (l1+l2) / l1;
+  else
+    return 0.25 * (3*l2-l1)/l2;
 }
 
 inline double computeEdgeLinearLength(BDS_Edge *e, GFace *f, double SCALINGU, double SCALINGV)
@@ -386,6 +410,7 @@ void splitEdgePass ( GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
       if ((*it)->numfaces() == 2 && (lone >  MAXE_)){
 	
 	const double coord = 0.5;
+	//const double coord = computeEdgeMiddleCoord((*it)->p1,(*it)->p2,gf,m.scalingU,m.scalingV);
 	BDS_Point *mid ;
 	mid  = m.add_point(++m.MAXPOINTNUMBER,
 			   coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
@@ -437,7 +462,6 @@ void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q)
     ++itp;
   }
 }
-
 
 void gmshRefineMeshBDS (GFace *gf, 
 			BDS_Mesh &m, 
@@ -554,6 +578,104 @@ void gmshRefineMeshBDS (GFace *gf,
   Msg(DEBUG1," ---------------------------------------");
 }
 
+void allowAppearanceofEdge (BDS_Point *p1, BDS_Point *p2){
+}
+
+
+void invalidEdgesPeriodic(BDS_Mesh &m, 
+			  std::map<BDS_Point*,MVertex*> *recover_map,
+			  std::set<BDS_Edge*> &toSplit)
+{
+
+  // first look for degenerated vertices
+
+  std::list<BDS_Edge*>::iterator it = m.edges.begin();
+  std::set<MVertex *> degenerated;
+  while (it != m.edges.end()){
+    BDS_Edge *e = *it;
+    if (!e->deleted && e->numfaces() == 1){
+      std::map<BDS_Point*,MVertex*>::iterator itp1 = recover_map->find(e->p1);
+      std::map<BDS_Point*,MVertex*>::iterator itp2 = recover_map->find(e->p2);    
+      if (itp1 != recover_map->end() && 
+	  itp2 != recover_map->end() && 
+	  itp1->second == itp2->second){
+	degenerated.insert(itp1->second);
+      }
+    }
+    ++it;
+  }
+
+  //  printf("%d degenerated\n",degenerated.size());
+
+  toSplit.clear();
+  it = m.edges.begin();
+  std::map< std::pair < MVertex*, BDS_Point*> , BDS_Edge *> touchPeriodic;
+  while (it != m.edges.end()){
+    BDS_Edge *e = *it;
+    if (!e->deleted && e->numfaces() == 2){
+      std::map<BDS_Point*,MVertex*>::iterator itp1 = recover_map->find(e->p1);
+      std::map<BDS_Point*,MVertex*>::iterator itp2 = recover_map->find(e->p2);    
+      if (itp1 != recover_map->end() && 
+	  itp2 != recover_map->end() && 
+	  itp1->second == itp2->second) toSplit.insert(e);
+      else if (itp1 != recover_map->end() && itp2 == recover_map->end()){
+	std::pair<MVertex*,BDS_Point*> a ( itp1->second, e->p2 );
+	std::map< std::pair < MVertex*, BDS_Point*> , BDS_Edge *> :: iterator itf = 
+	  touchPeriodic.find (a);
+	if (itf == touchPeriodic.end()) touchPeriodic[a] = e;
+	else if (degenerated.find(itp1->second)==degenerated.end()){toSplit.insert(e);toSplit.insert(itf->second);}
+      }    
+      else if (itp1 == recover_map->end() && itp2 != recover_map->end()){
+	std::pair<MVertex*,BDS_Point*> a ( itp2->second, e->p1 );
+	std::map< std::pair < MVertex*, BDS_Point*> , BDS_Edge *> :: iterator itf = 
+	  touchPeriodic.find (a);
+	if (itf == touchPeriodic.end()) touchPeriodic[a] = e;
+	else if (degenerated.find(itp2->second)==degenerated.end()){toSplit.insert(e);toSplit.insert(itf->second);}
+      }    
+    }
+    ++it;
+  }
+  //  printf("%d edges to splitounette\n",toSplit.size());
+}
+
+// consider p1 and p2, 2 vertices that are different in the parametric
+// plane BUT are the same in the real plane
+// consider a vertex v that is internal
+// if p1 is the start and the end of a degenerated edge, then allow edges p1 v and p2 v
+// if not do not allow p1 v and p2 v, split them
+// if p1 p2 exists and it is internal, split it
+
+int gmshSolveInvalidPeriodic(GFace *gf, 
+			     BDS_Mesh &m, 
+			     std::map<BDS_Point*,MVertex*> *recover_map){
+  //  return 0;
+  std::set<BDS_Edge*> toSplit;
+  invalidEdgesPeriodic(m,recover_map,toSplit);
+  std::set<BDS_Edge*>::iterator ite = toSplit.begin();
+  //	printf("%d edges to split\n",toSplit.size());
+  for (;ite !=toSplit.end();++ite){    
+    BDS_Edge *e = *ite;
+    if (!e->deleted && e->numfaces() == 2){
+      const double coord = 0.5;
+      BDS_Point *mid ;
+      //      printf("%d %d\n",e->p1->iD,e->p2->iD);
+      mid  = m.add_point(++m.MAXPOINTNUMBER,
+			 coord * e->p1->u + (1 - coord) * e->p2->u,
+			 coord * e->p1->v + (1 - coord) * e->p2->v,gf);	
+      mid->lcBGM() = BGM_MeshSize(gf,
+				  (coord * e->p1->u + (1 - coord) * e->p2->u)*m.scalingU,
+				  (coord * e->p1->v + (1 - coord) * e->p2->v)*m.scalingV,
+				  mid->X,mid->Y,mid->Z);
+      mid->lc() = 0.5 * ( e->p1->lc() +  e->p2->lc() );		  
+      if(!m.split_edge ( e, mid )) m.del_point(mid);
+    }
+  }
+  int nb_smooth;
+  if (toSplit.size())smoothVertexPass ( gf,m,nb_smooth,true);
+  m.cleanup();  
+  return toSplit.size();
+}
+
 void gmshOptimizeMeshBDS(GFace *gf, 
 			 BDS_Mesh &m, 
 			 const int NIT, 
@@ -562,101 +684,54 @@ void gmshOptimizeMeshBDS(GFace *gf,
   int nb_swap;
   gmshDelaunayizeBDS ( gf, m, nb_swap );
 
-
   for (int ITER = 0;ITER < 3;ITER++){
-    int nb_smooth;
-    smoothVertexPass ( gf,m,nb_smooth,true);
-
     double LIMIT = .1;
     for (int KK=0;KK<4;KK++){
       // swap edges that provide a better configuration
       int NN1 = m.edges.size();
       int NN2 = 0;
       std::list<BDS_Edge*>::iterator it = m.edges.begin();
-      while (1)
-	{
-	  if (NN2++ >= NN1)break;
-	  if (evalSwapForOptimize(*it,gf,m))	
-	    m.swap_edge ( *it , BDS_SwapEdgeTestQuality(false));
-	  ++it;
-	}
-      m.cleanup();  
-    }
-    
-
-    // then collapse small edges (take care not to create overlapping triangles)
-    
-    // in case of periodic surfaces, split all edges that are problematic
-    for (int KK=0;KK<1;KK++){
-      int NN1 = m.edges.size();
-      int NN2 = 0;
-      std::list<BDS_Edge*>::iterator it = m.edges.begin();
-      std::vector<BDS_Edge *> toSplit;
       while (1){
 	if (NN2++ >= NN1)break;
-	if((*it)->numfaces() == 2){
-	  if (recover_map){
-	    std::map<BDS_Point*,MVertex*>::iterator itp1 = recover_map->find((*it)->p1);
-	    std::map<BDS_Point*,MVertex*>::iterator itp2 = recover_map->find((*it)->p2);
-	    BDS_Point *op[2];
-	    (*it)->oppositeof (op);
-	    std::map<BDS_Point*,MVertex*>::iterator itp3 = recover_map->find(op[0]);
-	    std::map<BDS_Point*,MVertex*>::iterator itp4 = recover_map->find(op[1]);
-	    
-	    // this edge goes from one side to the other of the periodic parametric space !
-	    if (itp1 != recover_map->end() && itp2 != recover_map->end() && itp1->second == itp2->second)
-	      toSplit.push_back(*it);
-	    // this edge is internal but the 2 adjacent triangles are the same in the real space
-	    if (itp3 != recover_map->end() && itp4 != recover_map->end() && itp3->second == itp4->second)
-	      {
-		// the first point is internal, split both edges that go from this one to the two opposites (that are the same)
-		BDS_Edge *e1 , *e2 ;
-		//		  printf ("edge prob %d %d\n",(*it)->p1->iD,(*it)->p2->iD);
-		if (itp1 == recover_map->end()){
-		  e1 = m.find_edge ((*it)->p1,itp3->first);
-		  e2 = m.find_edge ((*it)->p1,itp4->first);
-		  if (e1 && e1->numfaces() == 2)
-		    toSplit.push_back(e1);
-		  if (e2 && e2->numfaces() == 2)
-		    toSplit.push_back(e2);
-		}
-		else if (itp2 == recover_map->end()){
-		  e1 = m.find_edge ((*it)->p2,itp3->first);
-		  e2 = m.find_edge ((*it)->p2,itp4->first);
-		  if (e1 && e1->numfaces() == 2)
-		    toSplit.push_back(e1);				      
-		  if (e2 && e2->numfaces() == 2)
-		    toSplit.push_back(e2);
-		}
-		else{
-		  printf("zarbi\n");
-		}
-	      }
-	    //	      toSplit.push_back(*it);	    
-	  }
-	}
+	if (evalSwapForOptimize(*it,gf,m))	
+	  m.swap_edge ( *it , BDS_SwapEdgeTestQuality(false));
 	++it;
       }
-      //	printf("%d edges to split\n",toSplit.size());
-      for (int i=0;i<toSplit.size();i++){
-	BDS_Edge *e = toSplit[i];
-	if (!e->deleted){
-	  const double coord = 0.5;
-	  BDS_Point *mid ;
-	  mid  = m.add_point(++m.MAXPOINTNUMBER,
-			     coord * e->p1->u + (1 - coord) * e->p2->u,
-			     coord * e->p1->v + (1 - coord) * e->p2->v,gf);	
-	  //	    printf("%d %d %d\n",e->p1->iD,e->p2->iD,mid->iD);
-	  mid->lcBGM() = BGM_MeshSize(gf,
-				      (coord * e->p1->u + (1 - coord) * e->p2->u)*m.scalingU,
-				      (coord * e->p1->v + (1 - coord) * e->p2->v)*m.scalingV,
-				      mid->X,mid->Y,mid->Z);
-	  mid->lc() = 0.5 * ( e->p1->lc() +  e->p2->lc() );		  
-	  if(!m.split_edge ( e, mid )) m.del_point(mid);
-	}
-      }
       m.cleanup();  
+      int nb_smooth;
+      smoothVertexPass ( gf,m,nb_smooth,true);
     }
+  }
+
+  int nbSplit = 0;
+  if (recover_map){
+    while(gmshSolveInvalidPeriodic(gf,m,recover_map)){}  
   }
 }
 
+// DELAUNAY BDS
+
+
+
+// void delaunayPointInsertionBDS ( GFace *gf, BDS_Mesh &m, BDS_Vertex *v, BDS_Face *f){
+//   const double p[2] = {v->u,v->v};
+
+//   BDS_Edge *e1 = f->e1;
+//   BDS_Edge *e2 = f->e2;
+//   BDS_Edge *e3 = f->e3;
+
+//   m.split_face ( f , v );
+  
+//   recur_delaunay_swap ( e1 );
+//   recur_delaunay_swap ( e2 );
+//   recur_delaunay_swap ( e3 );
+
+//   return;
+
+//   BDS_Point *n2[4];
+//   f1->getNodes(n1);
+
+//   const double a[2] = {v->u,v->v};
+//   const double b[2] = {v->u,v->v};
+//   const double c[2] = {v->u,v->v};
+// } 

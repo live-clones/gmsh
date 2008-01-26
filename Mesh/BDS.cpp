@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.94 2008-01-24 09:35:41 remacle Exp $
+// $Id: BDS.cpp,v 1.95 2008-01-26 17:47:58 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -221,18 +221,23 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
 	  e = (*it);
 	  //	  if (e->p1->iD >= 0 && e->p2->iD >= 0)Msg(INFO," %d %d %g %g - %g %g",e->p1->iD,e->p2->iD,e->p1->u,e->p1->v,e->p2->u,e->p2->v);
 	  if (!e->deleted && e->p1 != p1 && e->p1 != p2 && e->p2 != p1 && e->p2 != p2)
+// 	    if (e->p1->iD == 99 || e->p2->iD == 99) {
+// 	      printf("%d %d %d %d\n",e->p1->iD,e->p2->iD,p1->iD,p2->iD);
+// 	      printf("%g %g,%g %g,%g %g,%g %g\n",e->p1->u, e->p1->v,e->p2->u, e->p2->v,p1->u,p1->v,p2->u,p2->v);
+// 	    }
 	    if(Intersect_Edges_2d(e->p1->u, e->p1->v,
 				  e->p2->u, e->p2->v,
 				  p1->u, p1->v,
 				  p2->u, p2->v))
 	      {
+		//		printf("intersect\n");
 		if (e2r && e2r->find(EdgeToRecover(e->p1->iD,e->p2->iD,0)) != e2r->end())
 		  {
 		    std::set<EdgeToRecover>::iterator itr1 = e2r->find(EdgeToRecover(e->p1->iD,e->p2->iD,0));		    
 		    std::set<EdgeToRecover>::iterator itr2 = e2r->find(EdgeToRecover(num1,num2,0));		    
-		    //		    Msg(WARNING," edge %d %d on model edge %d cannot be recovered because it intersects %d %d on model edge %d",
-		    //			num1,num2,itr2->ge->tag(),
-		    //			e->p1->iD,e->p2->iD,itr1->ge->tag());
+		    Msg(WARNING," edge %d %d on model edge %d cannot be recovered because it intersects %d %d on model edge %d",
+			num1,num2,itr2->ge->tag(),
+			e->p1->iD,e->p2->iD,itr1->ge->tag());
 
 		    // now throw a class that contains the diagnostic
 		    not_recovered->insert (EdgeToRecover( num1 , num2, itr2->ge));
@@ -249,6 +254,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
 // 	    num1,num2,ix);	
 // 	ix = 0;
 //       }
+//      printf("%d %d\n",intersected.size(),ix);
       
       if (!intersected.size() || ix > 1000)
 	{
@@ -265,7 +271,9 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
 	}
       
       int ichoice = ix++ % intersected.size();
-      swap_edge ( intersected[ichoice] , BDS_SwapEdgeTestQuality (false) );	       
+      bool success = swap_edge ( intersected[ichoice] , BDS_SwapEdgeTestQuality (false,false) );	       
+//       printf("trying to swop %d %d = %d (%d %d)\n",intersected[ichoice]->p1->iD,intersected[ichoice]->p2->iD,success,
+// 	     intersected[ichoice]->deleted,intersected[ichoice]->numfaces());
     }
   return 0;
 }
@@ -375,24 +383,6 @@ BDS_Face *BDS_Mesh::add_quadrangle(BDS_Edge * e1, BDS_Edge * e2,
   return t;
 }
 
-
-// BDS_Tet *BDS_Mesh::add_tet(int p1, int p2, int p3, int p4)
-// {
-//   BDS_Edge *e1 = add_edge(p1, p2);
-//   BDS_Edge *e2 = add_edge(p2, p3);
-//   BDS_Edge *e3 = add_edge(p3, p1);
-//   BDS_Edge *e4 = add_edge(p1, p4);
-//   BDS_Edge *e5 = add_edge(p2, p4);
-//   BDS_Edge *e6 = add_edge(p3, p4);
-//   BDS_Face *t1 = add_triangle(e1, e2, e3);
-//   BDS_Face *t2 = add_triangle(e1, e4, e5);
-//   BDS_Face *t3 = add_triangle(e2, e6, e5);
-//   BDS_Face *t4 = add_triangle(e3, e4, e6);
-//   BDS_Tet *t = new BDS_Tet(t1, t2, t3, t4);
-//   tets.push_back(t);
-//   return t;
-// }
-
 void BDS_Mesh::del_face(BDS_Face * t)
 {
   t->e1->del(t);
@@ -404,11 +394,9 @@ void BDS_Mesh::del_face(BDS_Face * t)
 
 void BDS_Mesh::del_edge(BDS_Edge * e)
 {
-  // edges.erase(e);
   e->p1->del(e);
   e->p2->del(e);
   e->deleted = true;
-  // edges_to_delete.insert(e);
 }
 
 void BDS_Mesh::del_point(BDS_Point * p)
@@ -477,12 +465,6 @@ void recur_tag(BDS_Face * t, BDS_GeomEntity * g)
 double PointLessThanLexicographic::t = 0;
 double BDS_Vector::t = 0;
 
-bool BDS_Mesh::import_view(PView *view, const double tolerance)
-{
-  Msg(GERROR, "View import must be reinterfaced");
-  return false;
-}
-
 template < class IT > void DESTROOOY(IT beg, IT end)
 {
   while(beg != end) {
@@ -550,22 +532,6 @@ bool BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
   BDS_Point *p2 = e->p2;
 
   e->oppositeof(op);
-
-//   double qt1 = qmTriangle(p1,op[0],mid,QMTRI_RHO);
-//   double qt2 = qmTriangle(p2,op[0],mid,QMTRI_RHO);
-//   double qt3 = qmTriangle(p1,op[1],mid,QMTRI_RHO);
-//   double qt4 = qmTriangle(p2,op[1],mid,QMTRI_RHO);
-//   if (qt1 < 1.e-5 || qt2 < 1.e-5 || qt3 < 1.e-5 || qt4 < 1.e-5)
-//     {
-//       return false;
-//     }
-
-
-  
-//   double l1 = sqrt((op[0]->X-op[1]->X) *(op[0]->X-op[1]->X) +
-//    		   (op[0]->Y-op[1]->Y) *(op[0]->Y-op[1]->Y) +
-//    		   (op[0]->Z-op[1]->Z) *(op[0]->Z-op[1]->Z) );
-//   if (l1 < 0.1* mid->lc()) return false;
   
   BDS_Point *pts1[4];
   e->faces(0)->getNodes(pts1);
@@ -613,14 +579,6 @@ bool BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
   BDS_Edge *mid_op2 = new BDS_Edge(mid, op[1]);
   edges.push_back(mid_op2);
 
-  //  p1_mid->target_length = t_l;
-  //  op1_mid->target_length = t_l;
-  //  mid_p2->target_length = t_l;
-  //  mid_op2->target_length = t_l;
-
-  // printf("split ends 1 %d (%d %d) %d %d \n",
-  //         p1_op1->numfaces(), p1->iD, op[0]->iD, 
-  //         op1_mid->numfaces(),p1_mid->numfaces());
   BDS_Face *t1, *t2, *t3, *t4;
   if(orientation == 1) {
     t1 = new BDS_Face(op1_mid, p1_op1, p1_mid);
@@ -660,157 +618,39 @@ bool BDS_Mesh::split_edge(BDS_Edge * e, BDS_Point *mid)
   return true;
 }
 
-
-void BDS_Mesh::saturate_edge(BDS_Edge * e, std::vector<BDS_Point *> &mids)
-{
-  BDS_Point *op[2];
-  BDS_Point *p1 = e->p1;
-  BDS_Point *p2 = e->p2;
-
-  BDS_Point *pts1[4];
-  e->faces(0)->getNodes(pts1);
-
-  int orientation = 0;
-  for(int i = 0; i < 3; i++) {
-    if(pts1[i] == p1) {
-      if(pts1[(i + 1) % 3] == p2)
-        orientation = 1;
-      else
-        orientation = -1;
-
-      break;
-    }
-  }
-
-  //  printf("sat %d\n",mids.size());
-
-  // we should project 
-  e->oppositeof(op);
-  BDS_GeomEntity *g1 = 0, *g2 = 0, *ge = e->g;
-
-  BDS_Edge *p1_op1 = find_edge(p1, op[0], e->faces(0));
-  BDS_Edge *op1_p2 = find_edge(op[0], p2, e->faces(0));
-  BDS_Edge *p1_op2 = find_edge(p1, op[1], e->faces(1));
-  BDS_Edge *op2_p2 = find_edge(op[1], p2, e->faces(1));
-
-  if(e->faces(0)) {
-    g1 = e->faces(0)->g;
-    del_face(e->faces(0));
-  }
-  // not a bug !!!
-  if(e->faces(0)) {
-    g2 = e->faces(0)->g;
-    del_face(e->faces(0));
-  }
-
-  //  double t_l = e->target_length;
-
-  del_edge(e);
-
-  // create all the sub-edges of e 
-  std::vector<BDS_Edge*> subs;
-  for (unsigned int i = 0; i < mids.size() + 1; i++)
-    {
-      BDS_Point *a,*b;
-      if (i == 0)a = p1;
-      else a = mids[i-1];
-      if (i == mids.size())b = p2;
-      else b = mids[i];
-      BDS_Edge *sub = new BDS_Edge(a, b);
-      //      printf("%g %g -> %g %g\n",a->X,a->Y,b->X,b->Y);
-      edges.push_back(sub); 
-      subs.push_back(sub);
-      sub->g = ge;
-    }
-  // create edges that connect op1 and op2
-  std::vector<BDS_Edge*> conn1,conn2;
-  for (unsigned int i = 0; i < mids.size(); i++)
-    {
-      BDS_Edge *c1 = new BDS_Edge(mids[i], op[0]);
-      edges.push_back(c1); 
-      conn1.push_back(c1);
-      BDS_Edge *c2 = new BDS_Edge(mids[i], op[1]);
-      edges.push_back(c2); 
-      conn2.push_back(c2);
-      c1->g = g1;
-      c2->g = g2;
-      mids[i]->g = ge;
-    }
-
-  // create the triangles
-
-  for (unsigned int i = 0; i < mids.size() + 1; i++)
-    {
-      BDS_Edge *e1,*e2,*e3=subs[i];
-
-      //      printf("--> %d %g %g ->%d  %g %g\n",e3->p1->iD,e3->p1->X,e3->p1->Y,e3->p2->iD,e3->p2->X,e3->p2->Y);
-
-
-      if (i==0)e1 = p1_op1;
-      else e1 = conn1[i-1];
-      if (i==mids.size())e2 = op1_p2;
-      else e2 = conn1[i];
-
-//       printf("--> %d %g %g ->%d  %g %g\n",e1->p1->iD,e1->p1->X,e1->p1->Y,e1->p2->iD,e1->p2->X,e1->p2->Y);
-//       printf("--> %d %g %g ->%d  %g %g\n",e2->p1->iD,e2->p1->X,e2->p1->Y,e2->p2->iD,e2->p2->X,e2->p2->Y);
-
-      BDS_Face *t1;
-      if(orientation == 1)
-	t1 = new BDS_Face(e3, e2, e1);
-      else 
-	t1 = new BDS_Face(e3, e1, e2);
-
-
-      if (i==0)e1 = p1_op2;
-      else e1 = conn2[i-1];
-      if (i==mids.size())e2 = op2_p2;
-      else e2 = conn2[i];
-
-      BDS_Face *t2;
-      if(orientation != 1)
-	t2 = new BDS_Face(e3, e2, e1);
-      else 
-	t2 = new BDS_Face(e3, e1, e2);
-      t1->g = g1;
-      t2->g = g2;
-
-      triangles.push_back(t1);
-      triangles.push_back(t2);
-    }
-  // config has changed
-  p1->config_modified = true;
-  p2->config_modified = true;
-  op[0]->config_modified = true;
-  op[1]->config_modified = true;
-}
-
-
 // This function does actually the swap without taking into account
 // the feasability of the operation. Those conditions have to be
 // taken into account before doing the edge swap
 
 bool BDS_SwapEdgeTestQuality::operator () (BDS_Point *_p1,BDS_Point *_p2,
 					   BDS_Point *_q1,BDS_Point *_q2) const
-{
+{  
+  if (!testSmallTriangles){
+    
+    double p1 [2] = {_p1->u,_p1->v};
+    double p2 [2] = {_p2->u,_p2->v};
+    double op1[2] = {_q1->u,_q1->v};
+    double op2[2] = {_q2->u,_q2->v};
+    
+
+    double ori_t1 = gmsh::orient2d(op1, p1, op2);
+    double ori_t2 = gmsh::orient2d(op1, op2, p2);
+    
+    //    printf("%d %d %d %d %g %g\n",_p1->iD,_p2->iD,_q1->iD,_q2->iD,ori_t1,ori_t2);
+    return ( ori_t1 * ori_t2 > 0 ); // the quadrangle was strictly convex !
+  }
+
 
    double s1 = fabs(surface_triangle_param(_p1,_p2,_q1)); 
    double s2 = fabs(surface_triangle_param(_p1,_p2,_q2)); 
    double s3 = fabs(surface_triangle_param(_p1,_q1,_q2)); 
    double s4 = fabs(surface_triangle_param(_p2,_q1,_q2)); 
-   if (fabs(s1+s2-s3-s4) > 1.e-10 * (s1+s2))return false;
-   if (s3 < .02 * (s1+s2) || s4 < .02 * (s1+s2))return false;
+   if (fabs(s1+s2-s3-s4) > 1.e-12 * (s1+s2))return false;
+   if (s3 < .02 * (s1+s2) || s4 < .02 * (s1+s2))
+     return false;
    return true;
 		   
 
-   double p1 [2] = {_p1->u,_p1->v};
-   double p2 [2] = {_p2->u,_p2->v};
-   double op1[2] = {_q1->u,_q1->v};
-   double op2[2] = {_q2->u,_q2->v};
-
-   double ori_t1 = gmsh::orient2d(op1, p1, op2);
-   double ori_t2 = gmsh::orient2d(op1, op2, p2);
-   
-   return ( ori_t1 * ori_t2 > 0 ); // the quadrangle was strictly convex !
 }
 
 bool BDS_SwapEdgeTestQuality::operator () (BDS_Point *_p1,BDS_Point *_p2,BDS_Point *_p3,
@@ -847,8 +687,6 @@ bool BDS_SwapEdgeTestQuality::operator () (BDS_Point *_p1,BDS_Point *_p2,BDS_Poi
   return false;
 
 }
-
-
 
 void swap_config(BDS_Edge * e, 
 		 BDS_Point **p11,BDS_Point **p12,BDS_Point **p13,
@@ -1410,16 +1248,21 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point * p, GFace *gf, bool test_quality
     //    printf("%22.15E %22.15E\n",snew,sold);
     if ( snew < .1 * sold) return false;
 
-    if (test_quality){
+    if (1 || test_quality){
       p->X = gp.x();
       p->Y = gp.y();
       p->Z = gp.z();
       newWorst = std::min(newWorst,qmTriangle(*it,QMTRI_RHO));
+      double norm1[3],norm2[3];
+      normal_triangle(n[0],n[1],n[2],norm1);
       p->X = oldX;
       p->Y = oldY;
       p->Z = oldZ;
+      normal_triangle(n[0],n[1],n[2],norm2);
       oldWorst = std::min(oldWorst,qmTriangle(*it,QMTRI_RHO));
-    }
+      double ps; prosca (norm1,norm2,&ps);
+      if (ps < .5)return false;
+  }
     ++it;
   }
   
