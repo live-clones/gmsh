@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.130 2008-01-25 21:37:08 geuzaine Exp $
+// $Id: Generator.cpp,v 1.131 2008-01-28 11:05:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -373,6 +373,9 @@ void GenerateMesh(int ask)
   GModel *m = GModel::current();
 
   int old = m->getMeshStatus(false);
+
+  // Initialize pseudo random mesh generator with the same seed
+  srand(1);
 
   // Change any high order elements back into first order ones
   SetOrder1(m);

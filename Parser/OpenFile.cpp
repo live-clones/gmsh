@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.169 2008-01-21 20:34:54 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.170 2008-01-28 11:05:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -416,9 +416,6 @@ void OpenProject(const char *name)
 
   GModel::current()->destroy();
   GModel::current()->getGEOInternals()->destroy();
-
-  // Initialize pseudo random mesh generator to the same seed
-  srand(1);
 
   // temporary hack until we fill the current GModel on the fly during
   // parsing
