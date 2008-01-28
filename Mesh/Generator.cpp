@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.132 2008-01-28 16:00:19 geuzaine Exp $
+// $Id: Generator.cpp,v 1.133 2008-01-28 16:03:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -402,14 +402,14 @@ void GenerateMesh(int ask)
   if(m->getMeshStatus() >= 2)
     std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
   
-  // Optimize quality
-  for(int i = 0; i < std::max(CTX.mesh.optimize, CTX.mesh.optimize_netgen); i++){
-    if(m->getMeshStatus() == 3 && CTX.mesh.optimize > i)
-      OptimizeMesh(m);
-    if(m->getMeshStatus() == 3 && CTX.mesh.optimize_netgen > i)
-      OptimizeMeshNetgen(m);
+  // Optimize quality of 3D tet mesh
+  if(m->getMeshStatus() == 3){
+    for(int i = 0; i < std::max(CTX.mesh.optimize, CTX.mesh.optimize_netgen); i++){
+      if(CTX.mesh.optimize > i) OptimizeMesh(m);
+      if(CTX.mesh.optimize_netgen > i) OptimizeMeshNetgen(m);
+    }
   }
-
+  
   // Create high order elements
   if(m->getMeshStatus() && CTX.mesh.order > 1) 
     SetOrderN(m, CTX.mesh.order, CTX.mesh.second_order_linear, 
