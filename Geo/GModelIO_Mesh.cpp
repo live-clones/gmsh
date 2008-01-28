@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.29 2008-01-22 16:57:36 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.30 2008-01-28 09:59:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -469,6 +469,7 @@ int GModel::readMSH(const std::string &name)
       if(progress) Msg(PROGRESS, "");
 
     }
+    /*
     else if(!strncmp(&str[1], "NodeData", 8)) {
       if(!fgets(str, sizeof(str), fp)) return 0;
       // name = str[1] + remove final "
@@ -483,7 +484,6 @@ int GModel::readMSH(const std::string &name)
 	return 0;
       Msg(INFO, "%d node data", numData);
 
-      /*
       //std::map<int, int> nodeNumber, nodeIndex      
       PViewDataGModel *p = getPViewDataGModel(name)
       if(p){ // add data to existing view
@@ -495,8 +495,8 @@ int GModel::readMSH(const std::string &name)
       if(num
       data.scalar.indices.append();
       data.scalar.values.append();
-      */
     }
+      */
 
     do {
       if(!fgets(str, sizeof(str), fp) || feof(fp))

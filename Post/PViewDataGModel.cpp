@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.6 2008-01-18 20:13:13 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.7 2008-01-28 09:59:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -73,6 +73,21 @@ time steps on the fly, do I/O; and the storage is completely separate
 from the model; it's good for handling errors too: when we loop over
 nodes/elements to generate vertex arrays, we just query the maps: if
 no answer, that's it).
+
+
+5) store 2 hash_maps in PViewDataGModel: one for vertices, one for
+elements. Each entry in the hash_map is an array of size
+
+[num_time_steps_stored * max_num_values]
+
+where
+
+* num_time_steps_stored is either num_time_steps (by default) or some
+user-set default (so that we do not have to load all the time steps at
+once)
+
+* max_num_values??
+
 
 */
 

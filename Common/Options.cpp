@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.378 2008-01-25 21:37:08 geuzaine Exp $
+// $Id: Options.cpp,v 1.379 2008-01-28 09:59:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4212,7 +4212,7 @@ double opt_geometry_snap2(OPT_ARGS_NUM)
 double opt_mesh_optimize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.mesh.optimize =(int) val;
+    CTX.mesh.optimize = (int)val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
     WID->mesh_butt[2]->value(CTX.mesh.optimize);
@@ -4223,7 +4223,7 @@ double opt_mesh_optimize(OPT_ARGS_NUM)
 double opt_mesh_optimize_netgen(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.mesh.optimize_netgen =(int) val;
+    CTX.mesh.optimize_netgen = (int)val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
     WID->mesh_butt[24]->value(CTX.mesh.optimize_netgen);
