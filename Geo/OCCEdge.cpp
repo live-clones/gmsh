@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.31 2008-01-21 19:22:50 geuzaine Exp $
+// $Id: OCCEdge.cpp,v 1.32 2008-01-30 15:27:41 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -62,7 +62,6 @@ void OCCEdge::setTrimmed (OCCFace *f)
   }
 }
 
-// Plugin Netgen Salome !
 SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar, int dir) const
 {
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();

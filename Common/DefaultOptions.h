@@ -897,6 +897,8 @@ StringXNumber MeshOptions_Number[] = {
     "Factor applied to all characteristic lengths" },
   { F|O, "CharacteristicLengthMin" , opt_mesh_lc_min, 0.0 ,
     "Minimum mesh size" },
+  { F|O, "CharacteristicLengthMax" , opt_mesh_lc_max, 1.e22 ,
+    "Maximum mesh size" },
   { F|O, "CharacteristicLengthFromCurvature" , opt_mesh_lc_from_curvature , 0. ,
     "Compute characteritic lenghts automatically from curvatures" },
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,

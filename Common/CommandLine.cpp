@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.113 2008-01-25 21:37:08 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.114 2008-01-30 15:27:40 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -88,6 +88,8 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -order int            Set mesh order (1, ..., 5)");
   Msg(DIRECT, "  -optimize_hom         Optimize higher order meshes (in 2D)");
   Msg(DIRECT, "  -clscale float        Set characteristic length scaling factor");
+  Msg(DIRECT, "  -clmin   float        Set minimum characteristic length");
+  Msg(DIRECT, "  -clmax   float        Set maximum characteristic length");
   Msg(DIRECT, "  -clcurv               Compute characteristic lengths from curvatures");
   Msg(DIRECT, "  -epslc1d              Set the accuracy of the evaluation of the LCFIELD for 1D mesh");
   Msg(DIRECT, "  -swapangle            Set the treshold angle (in degree) between two adjacent faces below which a swap is allowed");
@@ -362,9 +364,24 @@ void Get_Options(int argc, char *argv[])
         i++;
         if(argv[i] != NULL) {
           CTX.mesh.lc_min = atof(argv[i++]);
-          if(CTX.mesh.lc_factor <= 0.0) {
+          if(CTX.mesh.lc_min <= 0.0) {
             fprintf(stderr, ERROR_STR
                     "Minimum length size must be > 0\n");
+            exit(1);
+          }
+        }
+        else {
+          fprintf(stderr, ERROR_STR "Missing number\n");
+          exit(1);
+        }
+      }
+      else if(!strcmp(argv[i] + 1, "clmax")) {
+        i++;
+        if(argv[i] != NULL) {
+          CTX.mesh.lc_max = atof(argv[i++]);
+          if(CTX.mesh.lc_max <= 0.0) {
+            fprintf(stderr, ERROR_STR
+                    "Maximum length size must be > 0\n");
             exit(1);
           }
         }

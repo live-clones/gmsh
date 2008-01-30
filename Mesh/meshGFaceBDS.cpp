@@ -1,4 +1,4 @@
-// $Id: meshGFaceBDS.cpp,v 1.2 2008-01-26 17:47:58 remacle Exp $
+// $Id: meshGFaceBDS.cpp,v 1.3 2008-01-30 15:27:41 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -713,25 +713,14 @@ void gmshOptimizeMeshBDS(GFace *gf,
 
 
 
-// void delaunayPointInsertionBDS ( GFace *gf, BDS_Mesh &m, BDS_Vertex *v, BDS_Face *f){
-//   const double p[2] = {v->u,v->v};
-
-//   BDS_Edge *e1 = f->e1;
-//   BDS_Edge *e2 = f->e2;
-//   BDS_Edge *e3 = f->e3;
-
-//   m.split_face ( f , v );
+void delaunayPointInsertionBDS ( GFace *gf, BDS_Mesh &m, BDS_Point *v, BDS_Face *f){
+  const double p[2] = {v->u,v->v};
   
-//   recur_delaunay_swap ( e1 );
-//   recur_delaunay_swap ( e2 );
-//   recur_delaunay_swap ( e3 );
-
-//   return;
-
-//   BDS_Point *n2[4];
-//   f1->getNodes(n1);
-
-//   const double a[2] = {v->u,v->v};
-//   const double b[2] = {v->u,v->v};
-//   const double c[2] = {v->u,v->v};
-// } 
+  BDS_Edge *e1 = f->e1;
+  BDS_Edge *e2 = f->e2;
+  BDS_Edge *e3 = f->e3;
+  // face is splitted, 
+  m.split_face ( f , v );
+  int nb_swap = 0;
+  gmshDelaunayizeBDS ( gf, m, nb_swap );
+}

@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.113 2008-01-26 17:47:58 remacle Exp $
+// $Id: meshGFace.cpp,v 1.114 2008-01-30 15:27:41 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -824,15 +824,63 @@ inline double dist2 (const SPoint2 &p1,const SPoint2 &p2)
   return dx*dx+dy*dy;
 }
 
+// bool buildConsecutiveListOfVertices_b (  GFace *gf,
+// 					 GEdgeLoop  &gel , 
+// 					 std::vector<BDS_Point*> &result,
+// 					 SBoundingBox3d &bbox,
+// 					 BDS_Mesh *m,
+// 					 std::map<BDS_Point*,MVertex*> &recover_map, 
+// 					 int &count, double tol){
+//   std::map<GEntity*,std::vector<SPoint2> > meshes;
+//   std::map<GEntity*,std::vector<SPoint2> > meshes_seam;  
 
+//   result.clear();
+  
+//   GEdgeLoop::iter it  = gel.begin();  
+
+//   while (it != gel.end())   
+//    {
+//      // I get the signed edge
+//      GEdgeSigned ges = *it ;      
+//      std::vector<SPoint2> mesh1d;
+//      // I look if it is a seam
+//      bool seam = ges.ge->isSeam(gf);
+//      // I get parameter bounds
+//      Range<double> range = ges.ge->parBounds(0);
+//      // I Get the first vertex
+//      MVertex *here = ges.ge->getBeginVertex()->mesh_vertices[0];
+//      if ( seam && ges._sign == 0 )mesh1d.push_back(ges.ge->reparamOnFace(gf,range.low(),-1));
+//      else mesh1d.push_back(ges.ge->reparamOnFace(gf,range.low(),1));
+//      for (unsigned int i=0;i<ges.ge->mesh_vertices.size();i++)
+//        {
+// 	 double u;
+// 	 here = ges.ge->mesh_vertices[i];
+// 	 here->getParameter(0,u);
+// 	 if ( seam && ges._sign == 0) mesh1d.push_back(ges.ge->reparamOnFace(gf,u,-1));
+// 	 else mesh1d.push_back(ges.ge->reparamOnFace(gf,u,1));
+//        }
+//      here = ges.ge->getEndVertex()->mesh_vertices[0];
+//      if ( seam && ges._sign == 0) mesh1d.push_back(ges.ge->reparamOnFace(gf,range.high(),-1));
+//      else mesh1d.push_back(ges.ge->reparamOnFace(gf,range.high(),1));
+//      it++;
+//    }
+// }
+
+
+static void printMesh1d (int iEdge, int seam, std::vector<SPoint2> &m){
+  printf("Mesh1D for edge %d seam %d\n",iEdge,seam);
+  for (int i=0;i<m.size();i++){
+    printf("%12.5E %12.5E\n",m[i].x(),m[i].y());
+  }
+}
 
 bool buildConsecutiveListOfVertices (  GFace *gf,
 				       GEdgeLoop  &gel , 
 				       std::vector<BDS_Point*> &result,
 				       SBoundingBox3d &bbox,
 				       BDS_Mesh *m,
-				       std::map<BDS_Point*,MVertex*> &recover_map, 
-				       int &count, double tol)
+				       std::map<BDS_Point*,MVertex*> &recover_map_global, 
+				       int &count, int countTot, double tol, bool seam_the_first = false)
 {
 
   // for each edge, we build a list of points that 
@@ -840,18 +888,19 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
   // for seams, we build the list for every side
   // for closed loops, we build it on both senses
 
-  //  printf("new edge loop\n");
   std::map<GEntity*,std::vector<SPoint2> > meshes;
   std::map<GEntity*,std::vector<SPoint2> > meshes_seam;  
 
   const int _DEBUG = false;
 
+  std::map<BDS_Point*,MVertex*> recover_map; 
+
   result.clear();
+  count = 0;
   
   GEdgeLoop::iter it  = gel.begin();  
 
-
-  if (_DEBUG)printf("face %d with %d edges\n",gf->tag(), (int)gf->edges().size());
+  if (_DEBUG)printf("face %d with %d edges case %d\n",gf->tag(), (int)gf->edges().size(),seam_the_first);
 
   while (it != gel.end())   
    {
@@ -861,8 +910,6 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
      std::vector<SPoint2> mesh1d_seam;
 
      bool seam = ges.ge->isSeam(gf);
-     
-     if (_DEBUG)printf("face %d edge %d seam %d (%d %d)\n",gf->tag(),ges.ge->tag(),seam,ges.ge->getBeginVertex()->tag(),ges.ge->getEndVertex()->tag());
      
      Range<double> range = ges.ge->parBounds(0);
 
@@ -882,6 +929,10 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
      if ( seam ) mesh1d_seam.push_back(ges.ge->reparamOnFace(gf,range.high(),-1));
      meshes.insert(std::pair<GEntity*,std::vector<SPoint2> > (ges.ge,mesh1d) );
      if(seam)meshes_seam.insert(std::pair<GEntity*,std::vector<SPoint2> > (ges.ge,mesh1d_seam) );     
+
+     //     printMesh1d (ges.ge->tag(), seam, mesh1d);
+     //     if (seam)printMesh1d (ges.ge->tag(), seam, mesh1d_seam);
+
      it++;
    }
 
@@ -896,6 +947,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 
   while (unordered.size())
    {
+     if (_DEBUG)printf("unordered.size() = %d\n",unordered.size());
      std::list<GEdgeSigned>::iterator it = unordered.begin();     
      std::vector<SPoint2>  coords;
 
@@ -914,18 +966,29 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	 if (!counter)
 	   {
 	     counter++;
-	     coords = ((*it)._sign == 1)?mesh1d:mesh1d_reversed;	 
-	     found = (*it);
+	     if (seam && seam_the_first){
+	       coords = ((*it)._sign == 1)?mesh1d_seam:mesh1d_seam_reversed;	 
+	       found = (*it);
+	       Msg(INFO,"This test case would have failed in Previous Gmsh Version ;-)");
+	     }
+	     else{
+	       coords = ((*it)._sign == 1)?mesh1d:mesh1d_reversed;	 
+	       found = (*it);
+	     }
 	     unordered.erase(it);
+	     if (_DEBUG)printf("Starting with edge = %d seam %d\n",(*it).ge->tag(),seam);
 	     break;
 	   }
 	 else
 	   {
+	     if (_DEBUG)printf("Followed by edge = %d\n",(*it).ge->tag());
 	     SPoint2 first_coord         = mesh1d[0];
-	     double d = dist2(last_coord,first_coord);
+	     double d=-1,d_reversed=-1,d_seam=-1,d_seam_reversed=-1;
+	     d = dist2(last_coord,first_coord);
+	     if (_DEBUG)printf("%g %g dist = %12.5E\n",first_coord.x(),first_coord.y(),d);
 	     if (d < tol) 
 	       {
-		 if (_DEBUG)printf("d = %12.5E %d\n",d, (int)coords.size());
+		 //		 if (_DEBUG)printf("d = %12.5E %d\n",d, (int)coords.size());
 		 coords.clear();
 		 coords = mesh1d;
 		 found = GEdgeSigned(1,ge);
@@ -933,11 +996,11 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 		 goto Finalize;
 	       }
 	     SPoint2 first_coord_reversed = mesh1d_reversed[0];
-	     double d_reversed = dist2(last_coord,first_coord_reversed);
-	     if (_DEBUG)printf("d_r = %12.5E\n",d_reversed);
+	     d_reversed = dist2(last_coord,first_coord_reversed);
+	     if (_DEBUG)printf("%g %g dist_reversed = %12.5E\n",first_coord_reversed.x(),first_coord_reversed.y(),d_reversed);
 	     if (d_reversed < tol) 
 	       {
-		 if (_DEBUG)printf("d_r = %12.5E\n",d_reversed);
+		 //		 if (_DEBUG)printf("d_r = %12.5E\n",d_reversed);
 		 coords.clear();
 		 coords = mesh1d_reversed;
 		 found = (GEdgeSigned(-1,ge));
@@ -948,20 +1011,20 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	       {
 		 SPoint2 first_coord_seam         = mesh1d_seam[0];
 		 SPoint2 first_coord_seam_reversed = mesh1d_seam_reversed[0];
-		 double d_seam = dist2(last_coord,first_coord_seam);
+		 d_seam = dist2(last_coord,first_coord_seam);
+		 if (_DEBUG)printf("dist_seam = %12.5E\n",d_seam);
 		 if (d_seam < tol)
 		   {
-		     if (_DEBUG)printf("d_seam = %12.5E\n",d_seam);
 		     coords.clear();
 		     coords = mesh1d_seam;
 		     found = (GEdgeSigned(1,ge));
 		     unordered.erase(it);
 		     goto Finalize;
 		   }
-		 double d_seam_reversed = dist2(last_coord,first_coord_seam_reversed);
+		 d_seam_reversed = dist2(last_coord,first_coord_seam_reversed);
+		 if (_DEBUG)printf("dist_seam_reversed = %12.5E\n",d_seam_reversed);
 		 if (d_seam_reversed < tol)
 		   {
-		     if (_DEBUG)printf("d_seam_reversed = %12.5E\n",d_seam_reversed);
 		     coords.clear();
 		     coords = mesh1d_seam_reversed;
 		     found = (GEdgeSigned(-1,ge));
@@ -975,8 +1038,17 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
        }
    Finalize:
 
-     if (_DEBUG)printf("Finalize\n");
-     if (coords.size() == 0)return false;
+     if (_DEBUG)printf("Finalize, found %d points\n",coords.size());
+     if (coords.size() == 0){
+       // It has not worked : either tolerance is wrong or the first seam edge
+       // has to be taken with the other parametric coordinates (because it is
+       // only present once in the closure of the domain). 
+       for (std::map<BDS_Point*,MVertex*> :: iterator it = recover_map.begin();
+	    it != recover_map.end(); ++it){
+	 m->del_point(it->first);
+       }
+       return false;
+     }
      
      std::vector<MVertex*>    edgeLoop;
      if ( found._sign == 1)
@@ -1003,7 +1075,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	 SPoint2 param = coords [i];
 	 U = param.x() / m->scalingU ;
 	 V = param.y() / m->scalingV;	
-	 BDS_Point *pp = m->add_point ( count, U,V,gf );
+	 BDS_Point *pp = m->add_point ( count+countTot, U,V,gf );
  	 if(ge->dim() == 0)
  	   {
 	     pp->lcBGM() = BGM_MeshSize(ge,0,0,here->x(),here->y(),here->z());
@@ -1027,7 +1099,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	 m->add_geom (ge->tag(), ge->dim());
 	 BDS_GeomEntity *g = m->get_geom(ge->tag(),ge->dim());
 	 pp->g = g;
-	 if (_DEBUG)printf("point %3d (%8.5f %8.5f) (%2d,%2d)\n",count,pp->u,pp->v,pp->g->classif_tag,pp->g->classif_degree);
+	 if (_DEBUG)printf("point %3d (%8.5f %8.5f : %8.5f %8.5f) (%2d,%2d)\n",count,pp->u,pp->v,param.x(),param.y(),pp->g->classif_tag,pp->g->classif_degree);
 	 bbox += SPoint3(U,V,0);	  
 	 edgeLoop_BDS.push_back(pp);
 	 recover_map[pp] = here;	 
@@ -1048,6 +1120,8 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 //       {
 //         printf("point %3d (%8.5f %8.5f) (%2d,%2d)\n",i,result[i]->u,result[i]->v,result[i]->g->classif_tag,result[i]->g->classif_degree);
 //       }
+  // It has worked, so we add all the points to the recover map
+  recover_map_global.insert(recover_map.begin(),recover_map.end());
 
   return true;
 }
@@ -1082,15 +1156,19 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
     for (std::list<GEdgeLoop>::iterator it = gf->edgeLoops.begin() ; it != gf->edgeLoops.end() ; it++)
       {
 	std::vector<BDS_Point* > edgeLoop_BDS;
-	if(!buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsTotal, 1.e-7*LC2D))
-	  if(!buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsTotal, 1.e-5*LC2D))
-	    if(!buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsTotal, 1.e-3*LC2D))
-	      {
-		gf->meshStatistics.status = GFace::FAILED;
-		Msg(GERROR,"The 1D Mesh seems not to be forming a closed loop");
-		m->scalingU = m->scalingV = 1.0;
-		return false;
-	      }
+	int nbPointsLocal;
+	if(!buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsLocal, nbPointsTotal, 1.e-7*LC2D))
+	  if(!buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsLocal, nbPointsTotal, 1.e-7*LC2D,true))
+	    if(!buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsLocal, nbPointsTotal, 1.e-5*LC2D))
+	      if(!buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsLocal, nbPointsTotal, 1.e-5*LC2D,true))
+		if(!buildConsecutiveListOfVertices ( gf, *it , edgeLoop_BDS, bbox, m, recover_map , nbPointsLocal, nbPointsTotal, 1.e-3*LC2D))
+		  {
+		    gf->meshStatistics.status = GFace::FAILED;
+		    Msg(GERROR,"The 1D Mesh seems not to be forming a closed loop");
+		    m->scalingU = m->scalingV = 1.0;
+		    return false;
+		  }
+	nbPointsTotal += nbPointsLocal;
 	edgeLoops_BDS.push_back(edgeLoop_BDS);
       }
   }
@@ -1114,7 +1192,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
 	  doc.points[count].where.h = U + XX;
 	  doc.points[count].where.v = V + YY;
 	  doc.points[count].adjacent = NULL;
-	  doc.points[count].data = pp;      
+	  doc.points[count].data = pp; 
 	  count++;	  
 	}
     }
@@ -1420,7 +1498,7 @@ void meshGFace::operator() (GFace *gf)
   computeEdgeLoops(gf, points, indices);
 
   // temp fix until we create MEdgeLoops in gmshFace
-  if (1 || gf->tag() == 6)
+  if (1 || gf->tag() == 46)
     {
       Msg(DEBUG1, "Generating the mesh");
       if(noseam (gf) || gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){

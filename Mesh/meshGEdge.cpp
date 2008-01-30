@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.51 2008-01-21 19:22:50 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.52 2008-01-30 15:27:41 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -303,7 +303,7 @@ void meshGEdge::operator() (GEdge *ge)
   // Send a messsage to the GMSH environment
 
   if (length == 0.0)
-    Msg(GERROR,"Curve %d has a zero length", ge->tag());
+    Msg(DEBUG2,"Curve %d has a zero length", ge->tag());
 
   List_Reset(Points);
     

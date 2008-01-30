@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.26 2008-01-20 10:10:41 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.27 2008-01-30 15:27:41 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -46,13 +46,15 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
     TopoDS_Shape wire = exp2.Current();
     Msg(DEBUG2,"OCC Face %d - New Wire",num);
     std::list<GEdge*> l_wire;
+    std::list<int> l_oris;
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){	  
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
       int index = emap.FindIndex(edge);
       GEdge *e = m->edgeByTag(index);
       if(!e) throw;
       l_wire.push_back(e);
-      Msg(DEBUG2,"Edge %d",e->tag());
+      l_oris.push_back(edge.Orientation());
+      Msg(DEBUG2,"Edge %d ori %d",e->tag(),edge.Orientation());
       e->addFace(this);
       if(!e->is3D()){
 	OCCEdge *occe = (OCCEdge*)e;
@@ -60,6 +62,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
       }
     }      
     
+    //    GEdgeLoop el(l_wire,l_oris);
     GEdgeLoop el(l_wire);
     
     for(GEdgeLoop::citer it = el.begin() ; it != el.end() ; ++it){

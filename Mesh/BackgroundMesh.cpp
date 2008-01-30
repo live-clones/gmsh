@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.32 2008-01-19 22:06:03 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.33 2008-01-30 15:27:41 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -197,6 +197,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
     lc = std::min (lc,LC_MVertex_CURV(ge, U, V));
 
   lc = std::max(lc,CTX.mesh.lc_min*CTX.mesh.lc_factor);
+  lc = std::min(lc,CTX.mesh.lc_max*CTX.mesh.lc_factor);
 
   if(lc <= 0.){
     Msg(GERROR, "Incorrect char. length lc = %g: using default instead", lc);

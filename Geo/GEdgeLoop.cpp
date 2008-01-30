@@ -1,4 +1,4 @@
-// $Id: GEdgeLoop.cpp,v 1.10 2008-01-22 16:57:36 geuzaine Exp $
+// $Id: GEdgeLoop.cpp,v 1.11 2008-01-30 15:27:41 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -136,3 +136,14 @@ GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
     loop.push_back(ges);
   }
 }
+
+
+GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire, const std::list<int> &dir)
+{
+  std::list<GEdge*>::const_iterator it = cwire.begin();
+  std::list<int>::const_iterator itdir = dir.begin();
+  for ( ; it != cwire.end() ; ++it,++itdir){
+    loop.push_back(GEdgeSigned(*itdir,*it));
+  }
+}
+

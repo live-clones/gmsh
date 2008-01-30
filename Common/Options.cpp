@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.379 2008-01-28 09:59:52 geuzaine Exp $
+// $Id: Options.cpp,v 1.380 2008-01-30 15:27:40 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4303,6 +4303,17 @@ double opt_mesh_lc_min(OPT_ARGS_NUM)
     WID->mesh_value[25]->value(CTX.mesh.lc_min);
 #endif
   return CTX.mesh.lc_min;
+}
+
+double opt_mesh_lc_max(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.lc_max = val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_value[26]->value(CTX.mesh.lc_max);
+#endif
+  return CTX.mesh.lc_max;
 }
 
 double opt_mesh_lc_from_curvature(OPT_ARGS_NUM)
