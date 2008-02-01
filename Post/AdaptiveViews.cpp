@@ -979,6 +979,16 @@ void Adaptive_Post_View::initWithLowResolution(PViewDataList *data)
     nbelm = data->NbSH;
     nbnod = 8;
   }
+	else if(data->NbSI){
+		myList = data->SI;
+		nbelm = data->NbSI;
+		nbnod = 6;
+	}
+	else if(data->NbVI){
+		myList = data->VI;
+		nbelm = data->NbVI;
+		nbnod = 6;
+	}
   else return;
 
   // if there exists a polynomial representation
