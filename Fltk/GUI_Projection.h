@@ -14,6 +14,9 @@
 
 #if defined(HAVE_FOURIER_MODEL)
 
+#include "FM_FPatch.h"
+#include "FM_WFPatch.h"
+
 void select_cb(Fl_Widget *w, void *data);
 void filter_cb(Fl_Widget *w, void *data);
 void browse_cb(Fl_Widget *w, void *data);
@@ -31,6 +34,7 @@ void hide_cb(Fl_Widget *w, void *data);
 void save_selection_cb(Fl_Widget *w, void *data);
 void load_projection_cb(Fl_Widget *w, void *data);
 void save_projection_cb(Fl_Widget *w, void *data);
+void blend_cb(Fl_Widget *w, void *data);
 void compute_cb(Fl_Widget *w, void *data);
 void action_cb(Fl_Widget *w, void *data);
 

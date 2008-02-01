@@ -14,9 +14,10 @@ extern Context_T CTX;
 
 #if defined(HAVE_FOURIER_MODEL)
 
-#include "FM_FPatch.h"
-#include "FM_WFPatch.h"
+#include "FM_BlendedPatch.h"
+#include "FM_BlendOperator.h"
 #include "FM_PlaneProjectionSurface.h"
+#include "FM_SphericalProjectionSurface.h"
 #include "FM_ParaboloidProjectionSurface.h"
 #include "FM_CylindricalProjectionSurface.h"
 #include "FM_RevolvedParabolaProjectionSurface.h"
@@ -29,6 +30,8 @@ static fourierProjectionFace *createProjectionFaceFromName(char *name)
   fourierProjectionFace *f = 0;
   if(!strcmp(name, "plane"))
     f = new fourierProjectionFace(m, tag, new FM::PlaneProjectionSurface(tag));
+  else if(!strcmp(name, "sphere"))
+    f = new fourierProjectionFace(m, tag, new FM::SphericalProjectionSurface(tag));
   else if(!strcmp(name, "paraboloid"))
     f = new fourierProjectionFace(m, tag, new FM::ParaboloidProjectionSurface(tag));
   else if(!strcmp(name, "cylinder"))
@@ -371,8 +374,12 @@ projectionEditor::projectionEditor()
   }
 
   {
-    new Fl_Button(WB, height - 2 * WB - 2 * BH, BB, BH, "Blend");
-    new Fl_Button(2 * WB + BB, height - 2 * WB - 2 * BH, BB, BH, "Intersect");
+    Fl_Button *b1 = new Fl_Button(WB, height - 2 * WB - 2 * BH, BB, BH, 
+				  "Blend");
+    b1->callback(blend_cb, this);
+    
+    Fl_Button *b2 = new Fl_Button(2 * WB + BB, height - 2 * WB - 2 * BH, BB, 
+				  BH, "Intersect");
   }
 
   Fl_Button *b = new Fl_Button(width - WB - BB, height - WB - BH, BB, BH, "Cancel");
@@ -986,6 +993,34 @@ void delete_fourier(GFace *gf)
   m->remove(gf);
 }
 
+void blend_cb(Fl_Widget *w, void *data)
+{
+  projectionEditor *e = (projectionEditor*)data;
+
+  std::vector<GFace*> faces;
+  std::vector<FM::Patch*> patches;
+
+  GModel *m = GModel::current();
+
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
+    if((*it)->getNativeType() == GEntity::FourierModel)
+      faces.push_back(*it);
+  for(unsigned int i = 0; i < faces.size(); i++){
+    fourierFace* ff = (fourierFace*)faces[i];
+    FM::TopoFace* tf = (FM::TopoFace*)ff->getNativePtr();
+    patches.push_back(tf->GetPatch());
+  }
+  FM::BlendOperator* blendOp = new FM::BlendOperator(patches);
+  for (int i = 0; i < patches.size(); i++) {
+    FM::BlendedPatch* patch = new FM::BlendedPatch(i,blendOp);
+    makeGFace(patch);
+  }
+  for(unsigned int i = 0; i < faces.size(); i++) {
+    delete_fourier(faces[i]);
+    //faces[i]->setVisibility(0, true);
+  }
+}
+
 void action_cb(Fl_Widget *w, void *data)
 {
   std::string what((char*)data);
@@ -1050,6 +1085,7 @@ void mesh_parameterize_cb(Fl_Widget* w, void* data)
   if(!editor){
     editor = new projectionEditor();
     editor->load(createProjectionFaceFromName("plane"));
+    editor->load(createProjectionFaceFromName("sphere"));
     editor->load(createProjectionFaceFromName("paraboloid"));
     editor->load(createProjectionFaceFromName("cylinder"));
     editor->load(createProjectionFaceFromName("revolvedParabola"));
