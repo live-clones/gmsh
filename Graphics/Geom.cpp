@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.144 2008-01-19 22:06:02 geuzaine Exp $
+// $Id: Geom.cpp,v 1.145 2008-02-03 08:25:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -27,6 +27,17 @@
 #include "SBoundingBox3d.h"
 
 extern Context_T CTX;
+
+void drawBBox(GEntity *e)
+{
+  return;
+  glColor4ubv((GLubyte *) & CTX.color.fg);
+  glLineWidth(CTX.line_width);
+  gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
+  SBoundingBox3d bb = e->bounds();
+  Draw_Box(bb.min().x(), bb.min().y(), bb.min().z(),
+	   bb.max().x(), bb.max().y(), bb.max().z());
+}
 
 class drawGVertex {
  public :
@@ -179,6 +190,8 @@ class drawGEdge {
 		  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
 		  p.x(), p.y(), p.z(), der[0], der[1], der[2], CTX.geom.light);
     }
+
+    if(CTX.draw_bbox) drawBBox(e);
     
     if(CTX.render_mode == GMSH_SELECT) {
       glPopName();
@@ -439,6 +452,8 @@ public :
     else
       _drawNonPlaneGFace(f);
     
+    if(CTX.draw_bbox) drawBBox(f);
+    
     if(CTX.render_mode == GMSH_SELECT) {
       glPopName();
       glPopName();
@@ -479,6 +494,8 @@ class drawGRegion {
 		    p.z() + offset / CTX.s[2]);
       Draw_String(Num);
     }
+
+    if(CTX.draw_bbox) drawBBox(r);
 
     if(CTX.render_mode == GMSH_SELECT) {
       glPopName();

@@ -9,7 +9,7 @@ class discreteVertex : public GVertex {
  public:
   discreteVertex(GModel *m, int num) : GVertex(m, num) {}
   virtual ~discreteVertex() {}
-  virtual GPoint point() const { return GPoint(x(), y(), z()); }
+  virtual GPoint point() const { return GPoint(x(), y(), z(), this); }
   virtual double x() const 
   { 
     return mesh_vertices.size() ? mesh_vertices[0]->x() : 0.;

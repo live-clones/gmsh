@@ -36,43 +36,20 @@ class gmshVertex : public GVertex {
   virtual ~gmshVertex() {}
   virtual GPoint point() const 
   {
-    if(v)
-      return GPoint(v->Pos.X, v->Pos.Y, v->Pos.Z, this);
-    else if(mesh_vertices.size())
-      return GPoint(mesh_vertices[0]->x(),
-		    mesh_vertices[0]->y(),
-		    mesh_vertices[0]->z(), this);
-    else
-      return GPoint(0., 0., 0., this);
+    return GPoint(v->Pos.X, v->Pos.Y, v->Pos.Z, this);
   }
-  virtual double x() const 
-  {
-    return v ? v->Pos.X : mesh_vertices.size() ? mesh_vertices[0]->x() : 0.;
-  }
-  virtual double y() const 
-  {
-    return v ? v->Pos.Y : mesh_vertices.size() ? mesh_vertices[0]->y() : 0.;
-  }
-  virtual double z() const 
-  {
-    return v ? v->Pos.Z : mesh_vertices.size() ? mesh_vertices[0]->z() : 0.;
-  }
+  virtual double x() const { return v->Pos.X; }
+  virtual double y() const { return v->Pos.Y; }
+  virtual double z() const { return v->Pos.Z; }
   virtual void setPosition(GPoint &p)
   {
-    if(v){
-      v->Pos.X = p.x();
-      v->Pos.Y = p.y();
-      v->Pos.Z = p.z();
-    }
-    if(mesh_vertices.size()){
-      mesh_vertices[0]->x() = p.x();
-      mesh_vertices[0]->y() = p.y();
-      mesh_vertices[0]->z() = p.z();
-    }
+    v->Pos.X = p.x();
+    v->Pos.Y = p.y();
+    v->Pos.Z = p.z();
   }
   virtual GeomType geomType() const;
   ModelType getNativeType() const { return GmshModel; }
-  void * getNativePtr() const { return v; }
+  void *getNativePtr() const { return v; }
   virtual void setPrescribedMeshSizeAtVertex(double l) 
   {
     meshSize = l;
