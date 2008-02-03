@@ -1,4 +1,4 @@
-// $Id: OCCVertex.cpp,v 1.12 2008-01-20 10:10:41 geuzaine Exp $
+// $Id: OCCVertex.cpp,v 1.13 2008-02-03 08:54:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -30,12 +30,12 @@ double max_surf_curvature(const GVertex *gv, double x, double y, double z,
 			  const GEdge *_myGEdge)
 {
   std::list<GFace *> faces = _myGEdge->faces();
-  std::list<GFace *>::iterator it =  faces.begin();
+  std::list<GFace *>::iterator it = faces.begin();
   double curv = 1.e-22;
   while(it != faces.end()){
-    SPoint2 par = gv->reparamOnFace((*it),1);
+    SPoint2 par = gv->reparamOnFace((*it), 1);
     double cc = (*it)->curvature(par);
-    if(cc > 0) curv = std::max(curv, cc);					      
+    if(cc > 0) curv = std::max(curv, cc);
     ++it;
   }  
   return curv;
@@ -45,7 +45,7 @@ double OCCVertex::max_curvature_of_surfaces() const
 {  
   if(max_curvature < 0){
     for(std::list<GEdge*>::const_iterator it = l_edges.begin(); 
-	it != l_edges.end(); ++it ){
+	it != l_edges.end(); ++it){
       max_curvature = std::max(max_surf_curvature(this, x(), y(), z(), *it),
 			       max_curvature);
     }
@@ -67,9 +67,9 @@ SPoint2 OCCVertex::reparamOnFace(GFace *gf, int dir) const
 	double s1,s0;
 	Handle(Geom2d_Curve) curve2d = BRep_Tool::CurveOnSurface(*c, *s, s0, s1);
 	if((*it)->getBeginVertex() == this)
-	  return (*it)->reparamOnFace(gf,s0,dir);
+	  return (*it)->reparamOnFace(gf, s0, dir);
 	else if((*it)->getEndVertex() == this)
-	  return (*it)->reparamOnFace(gf,s1,dir);
+	  return (*it)->reparamOnFace(gf, s1, dir);
       }
     }
     ++it;
@@ -83,9 +83,9 @@ SPoint2 OCCVertex::reparamOnFace(GFace *gf, int dir) const
       double s1,s0;
       Handle(Geom2d_Curve) curve2d = BRep_Tool::CurveOnSurface(*c, *s, s0, s1);
       if((*it)->getBeginVertex() == this)
-	return (*it)->reparamOnFace(gf,s0,dir);
+	return (*it)->reparamOnFace(gf, s0, dir);
       else if((*it)->getEndVertex() == this)
-	return (*it)->reparamOnFace(gf,s1,dir);
+	return (*it)->reparamOnFace(gf, s1, dir);
     }
     ++it;
   }

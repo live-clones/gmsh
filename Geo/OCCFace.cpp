@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.27 2008-01-30 15:27:41 remacle Exp $
+// $Id: OCCFace.cpp,v 1.28 2008-02-03 08:54:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -119,7 +119,7 @@ Pair<SVector3,SVector3> OCCFace::firstDer(const SPoint2 &param) const
 {
   gp_Pnt pnt;
   gp_Vec du, dv;
-  occface->D1(param.x(), param.y(),pnt,du,dv);
+  occface->D1(param.x(), param.y(), pnt, du, dv);
 
   return Pair<SVector3,SVector3>(SVector3(du.X(), du.Y(), du.Z()),
 				 SVector3(dv.X(), dv.Y(), dv.Z()));
@@ -143,11 +143,11 @@ GPoint OCCFace::closestPoint(const SPoint3 & qp) const
    }
    
   double pp[2];
-  proj.LowerDistanceParameters (pp[0], pp[1]);
+  proj.LowerDistanceParameters(pp[0], pp[1]);
 
   Msg(INFO,"projection lower distance parameters %g %g",pp[0],pp[1]);
 
-  if((pp[0]<umin || umax<pp[0]) || (pp[1]<vmin || vmax<pp[1])){
+  if((pp[0] < umin || umax < pp[0]) || (pp[1]<vmin || vmax<pp[1])){
     Msg(GERROR,"Point projection is out of face bounds");
     return GPoint(0, 0);
   }
@@ -175,8 +175,8 @@ SPoint2 OCCFace::parFromPoint(const SPoint3 &qp) const
     Msg(GERROR,"OCC Project Point on Surface FAIL");
     return GFace::parFromPoint(qp);
   }   
-  double U,V;
-  proj.LowerDistanceParameters (U, V);
+  double U, V;
+  proj.LowerDistanceParameters(U, V);
   return SPoint2(U, V);
 }
 

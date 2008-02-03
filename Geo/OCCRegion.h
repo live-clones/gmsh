@@ -28,7 +28,7 @@ class OCCRegion : public GRegion {
  protected:
   TopoDS_Solid s;
  public:
-  OCCRegion(GModel *m, TopoDS_Solid s , int num,  TopTools_IndexedMapOfShape &fmap);
+  OCCRegion(GModel *m, TopoDS_Solid s, int num, TopTools_IndexedMapOfShape &fmap);
   virtual ~OCCRegion() {}
   virtual GeomType geomType() const;
   ModelType getNativeType() const { return OpenCascadeModel; }
