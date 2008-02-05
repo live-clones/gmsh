@@ -12,7 +12,6 @@ class fourierProjectionFace : public GFace {
  protected:
   FM::ProjectionSurface *ps_;
  public:
-  fourierProjectionFace(GModel *m, int num);
   fourierProjectionFace(GModel *m, int num, FM::ProjectionSurface* ps);
   ~fourierProjectionFace();
   Range<double> parBounds(int i) const;
