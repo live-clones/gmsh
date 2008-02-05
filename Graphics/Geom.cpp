@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.147 2008-02-05 15:59:34 geuzaine Exp $
+// $Id: Geom.cpp,v 1.148 2008-02-05 21:26:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 #include "Draw.h"
 #include "Context.h"
 #include "gl2ps.h"
+#include "VertexArray.h"
 #include "GModel.h"
 #include "SBoundingBox3d.h"
 
@@ -200,14 +201,11 @@ class drawGEdge {
   }
 };
 
-void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalArray, 
-		int forceColor=0, unsigned int color=0);
-
 class drawGFace {
  private:
   void _drawNonPlaneGFace(GFace *f)
   {
-    if(CTX.geom.surfaces) {
+    if(CTX.geom.surfaces && !f->va_geom_triangles) {
       glEnable(GL_LINE_STIPPLE);
       glLineStipple(1, 0x1F1F);
       gl2psEnable(GL2PS_LINE_STIPPLE);
@@ -386,7 +384,7 @@ class drawGFace {
 
     if(f->cross.size() < 2) return;
 
-    if(CTX.geom.surfaces) {
+    if(CTX.geom.surfaces && !f->va_geom_triangles) {
       glEnable(GL_LINE_STIPPLE);
       glLineStipple(1, 0x1F1F);
       gl2psEnable(GL2PS_LINE_STIPPLE);
@@ -422,6 +420,35 @@ class drawGFace {
 		  p.x(), p.y(), p.z(), n[0], n[1], n[2], CTX.geom.light);
     }
   }
+  void _drawVertexArray(VertexArray *va, bool useNormalArray, int forceColor=0, 
+			unsigned int color=0)
+  {
+    if(!va) return;
+    glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
+    glNormalPointer(GL_BYTE, 0, va->getNormalArray());
+    glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
+    glEnableClientState(GL_VERTEX_ARRAY);
+    if(useNormalArray){
+      glEnable(GL_LIGHTING);
+      glEnableClientState(GL_NORMAL_ARRAY);
+    }
+    else
+      glDisableClientState(GL_NORMAL_ARRAY);
+    if(forceColor){
+      glDisableClientState(GL_COLOR_ARRAY);
+      glColor4ubv((GLubyte *) & color);
+    }
+    else{
+      glEnableClientState(GL_COLOR_ARRAY);
+    }
+    if(CTX.polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
+    glDrawArrays(GL_TRIANGLES, 0, va->getNumVertices());
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    glDisable(GL_LIGHTING);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+  }
   
 public :
   void operator () (GFace *f)
@@ -447,10 +474,11 @@ public :
       glColor4ubv((GLubyte *) & CTX.color.geom.surface);
     }
 
-    if(f->va_geom_triangles)
-      drawArrays(f, f->va_geom_triangles, GL_TRIANGLES, CTX.geom.light, 
-		 CTX.geom.surfaces, CTX.color.geom.surface);
-    else if(f->geomType() == GEntity::Plane)
+    if(CTX.geom.surfaces && f->va_geom_triangles)
+      _drawVertexArray(f->va_geom_triangles, CTX.geom.light, f->getSelection(), 
+		       CTX.color.geom.selection);
+    
+    if(f->geomType() == GEntity::Plane)
       _drawPlaneGFace(f);
     else if(f->geomType() == GEntity::ProjectionFace ||
 	    f->geomType() == GEntity::ParametricSurface)
