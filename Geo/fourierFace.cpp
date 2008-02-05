@@ -14,18 +14,7 @@ fourierFace::fourierFace(GModel *m, FM::TopoFace *face_, int tag,
     l_edges.push_back((*it));
     l_dirs.push_back(1);   
   }
-}
-
-fourierFace::fourierFace(GModel *m, FM::TopoFace *face_, int tag, 
-			 std::list<GEdge*> l_edges_, std::list<int> l_dirs_) 
-  : GFace(m,tag), face(face_)
-{
-  for (std::list<GEdge*>::iterator it = l_edges_.begin();
-       it != l_edges_.end(); it++)
-    l_edges.push_back((*it));  
-  for (std::list<int>::iterator it = l_dirs_.begin();
-       it != l_dirs_.end(); it++)
-    l_dirs.push_back((*it));  
+  buildSTLTriangulation();
 }
 
 Range<double> fourierFace::parBounds(int i) const

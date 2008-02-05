@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.44 2008-02-05 15:59:34 geuzaine Exp $
+// $Id: GFace.cpp,v 1.45 2008-02-05 23:16:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -541,10 +541,25 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p) const
   return SPoint2(U,V);
 }
 
-void GFace::computeGraphicsRep(int nu, int nv)
+struct graphics_point{
+  double xyz[3];
+  SVector3 n;
+};
+
+bool GFace::buildSTLTriangulation()
 {
-  _graphicsRep.resize(nu);
-  for(int i = 0; i < nu; i++) _graphicsRep[i].resize(nv);
+  // Build a simple triangulation for surfaces we know are not
+  // trimmed. Do nothing by default for complex surfaces (we might
+  // want to change this is the future)
+
+  if(geomType() != ParametricSurface && geomType() != ProjectionFace)
+    return false;
+
+  const int nu = 64, nv = 64;
+  graphics_point p[nu][nv];
+
+  if(va_geom_triangles) delete va_geom_triangles;
+  va_geom_triangles = new VertexArray(3, 2 * (nu - 1) * (nv - 1));
 
   Range<double> ubounds = parBounds(0);
   Range<double> vbounds = parBounds(1);
@@ -553,18 +568,35 @@ void GFace::computeGraphicsRep(int nu, int nv)
 
   for(int i = 0; i < nu; i++){
     for(int j = 0; j < nv; j++){
-      double u = umin + (double)i/(double)(nu-1) * (umax - umin);
-      double v = vmin + (double)j/(double)(nv-1) * (vmax - vmin);
-      struct graphics_point gp;
-      GPoint p = point(u, v);
-      gp.xyz[0] = p.x();
-      gp.xyz[1] = p.y();
-      gp.xyz[2] = p.z();
-      SVector3 n = normal(SPoint2(u, v));
-      gp.n[0] = n.x();
-      gp.n[1] = n.y();
-      gp.n[2] = n.z();
-      _graphicsRep[i][j] = gp;
+      double u = umin + (double)i / (double)(nu - 1) * (umax - umin);
+      double v = vmin + (double)j / (double)(nv - 1) * (vmax - vmin);
+      GPoint gp = point(u, v);
+      p[i][j].xyz[0] = gp.x();
+      p[i][j].xyz[1] = gp.y();
+      p[i][j].xyz[2] = gp.z();
+      p[i][j].n = normal(SPoint2(u, v));
     }
   }
+
+  // i,j+1 *---* i+1,j+1
+  //       | / |
+  //   i,j *---* i+1,j
+  unsigned int c = CTX.color.geom.surface;
+  unsigned int col[4] = {c, c, c, c};
+  for(int i = 0; i < nu - 1; i++){
+    for(int j = 0; j < nv - 1; j++){
+      double x1[3] = {p[i][j].xyz[0], p[i + 1][j].xyz[0], p[i + 1][j + 1].xyz[0]};
+      double y1[3] = {p[i][j].xyz[1], p[i + 1][j].xyz[1], p[i + 1][j + 1].xyz[1]};
+      double z1[3] = {p[i][j].xyz[2], p[i + 1][j].xyz[2], p[i + 1][j + 1].xyz[2]};
+      SVector3 n1[3] = {p[i][j].n, p[i + 1][j].n, p[i + 1][j + 1].n};
+      va_geom_triangles->add(x1, y1, z1, n1, col);
+      double x2[3] = {p[i][j].xyz[0], p[i + 1][j + 1].xyz[0], p[i][j + 1].xyz[0]};
+      double y2[3] = {p[i][j].xyz[1], p[i + 1][j + 1].xyz[1], p[i][j + 1].xyz[1]};
+      double z2[3] = {p[i][j].xyz[2], p[i + 1][j + 1].xyz[2], p[i][j + 1].xyz[2]};
+      SVector3 n2[3] = {p[i][j].n, p[i + 1][j + 1].n, p[i][j + 1].n};
+      va_geom_triangles->add(x2, y2, z2, n2, col);
+    }
+  }
+  va_geom_triangles->finalize();
+  return true;
 }

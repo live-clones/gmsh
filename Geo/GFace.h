@@ -39,12 +39,6 @@ struct mean_plane
   double x, y, z;
 };
 
-struct graphics_point
-{
-  float xyz[3];
-  float n[3];
-};
-
 struct surface_params
 {
   double radius, radius2, height, cx, cy, cz;
@@ -55,11 +49,6 @@ class GRegion;
 // A model face. 
 class GFace : public GEntity 
 {
- private:
-  // a graphical representation for topologically simple surfaces: a
-  // 2D array of points/normals
-  std::vector<std::vector<graphics_point> > _graphicsRep;
-
  protected: 
   // edge loops, will replace what follows list of al the edges of the
   // face
@@ -73,9 +62,7 @@ class GFace : public GEntity
   // i.e. closed edge loops.  the first wire is the one that is the
   // outer contour of the face.
   void resolveWires();
-  // builds a STL triangulation and fill the vertex array
-  // va_geom_triangles (by default, do nothing)
-  virtual bool buildSTLTriangulation () { return false; }
+
  public:
   GFace(GModel *model, int tag);
   virtual ~GFace();
@@ -150,6 +137,10 @@ class GFace : public GEntity
   // Returns a type-specific additional information string
   virtual std::string getAdditionalInfoString();
 
+  // Builds a STL triangulation and fills the vertex array
+  // va_geom_triangles
+  virtual bool buildSTLTriangulation();
+
   // Recompute the mean plane of the surface from a list of points
   void computeMeanPlane(const std::vector<MVertex*> &points);
   void computeMeanPlane(const std::vector<SPoint3> &points);
@@ -195,11 +186,8 @@ class GFace : public GEntity
   // of start/end points
   std::vector<SPoint3> cross;
 
-  // fill the graphics representation
-  void computeGraphicsRep(int nu, int nv);
-
-  // fill the graphics representation
-  std::vector<std::vector<graphics_point> > &getGraphicsRep(){ return _graphicsRep;}
+  // a vertex array containing an STL representation of the surface
+  VertexArray *va_geom_triangles;
 
   // a array for accessing the transfinite vertices using a pair of
   // indices
@@ -207,9 +195,6 @@ class GFace : public GEntity
 
   std::vector<MTriangle*> triangles;
   std::vector<MQuadrangle*> quadrangles;
-
-  // Vertex array to draw the geometry efficiently
-  VertexArray *va_geom_triangles;
 };
 
 #endif

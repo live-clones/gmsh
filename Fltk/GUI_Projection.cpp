@@ -603,7 +603,7 @@ void update_cb(Fl_Widget *w, void *data)
     for (int i = 0; i < ps->GetNumParameters(); i++)
       ps->SetParameter(i, p->parameters[i + 10]->value());
 
-    p->face->computeGraphicsRep(64, 64); // FIXME: hardcoded for now
+    p->face->buildSTLTriangulation();
 
     // project selected points and elements and update u,v display
     std::vector<double> u, v, dist;

@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.148 2008-02-05 21:26:42 geuzaine Exp $
+// $Id: Geom.cpp,v 1.149 2008-02-05 23:16:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -203,7 +203,7 @@ class drawGEdge {
 
 class drawGFace {
  private:
-  void _drawNonPlaneGFace(GFace *f)
+  void _drawParametricGFace(GFace *f)
   {
     if(CTX.geom.surfaces && !f->va_geom_triangles) {
       glEnable(GL_LINE_STIPPLE);
@@ -254,64 +254,6 @@ class drawGFace {
 		  p.x(), p.y(), p.z(), n[0], n[1], n[2], CTX.geom.light);
     }
   }
-  
-  void _drawParametricGFace(GFace *f)
-  {
-    std::vector<std::vector<graphics_point> > &gr(f->getGraphicsRep());
-
-    const unsigned int N = 64;
-
-    // We create data here and the routine is not designed to be
-    // reentrant, so we must lock it to avoid race conditions when
-    // redraw events are fired in rapid succession
-   
-    static bool busy = false;
-    if(gr.size() != N && !busy) {
-      busy = true; 
-      f->computeGraphicsRep(N, N);
-      busy = false;
-    }
-
-    if(gr.size() != N) return;
-
-    if(f->geomType() == GEntity::ProjectionFace)
-      glColor4ubv((GLubyte *) & CTX.color.geom.projection);
-
-    if(CTX.geom.surface_type > 0)
-      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    else
-      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-    if(CTX.geom.light) glEnable(GL_LIGHTING);
-    glBegin(GL_QUADS);
-    for(unsigned int i = 1; i < gr.size(); i++){
-      for(unsigned int j = 1; j < gr[0].size(); j++){
-        glNormal3fv(gr[i - 1][j - 1].n);
-        glVertex3fv(gr[i - 1][j - 1].xyz);
-        glNormal3fv(gr[i    ][j - 1].n);
-        glVertex3fv(gr[i    ][j - 1].xyz);
-        glNormal3fv(gr[i    ][j    ].n);
-        glVertex3fv(gr[i    ][j    ].xyz);
-        glNormal3fv(gr[i - 1][j    ].n);
-        glVertex3fv(gr[i - 1][j    ].xyz);
-      }
-    }
-    glEnd();
-    glDisable(GL_LIGHTING);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    if(CTX.geom.normals) {
-      GPoint p = f->point(0.5, 0.5);
-      SVector3 n = f->normal(SPoint2(0.5, 0.5));
-      for(int i = 0; i < 3; i++)
-	n[i] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[i];
-      glColor4ubv((GLubyte *) & CTX.color.geom.normals);
-      Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
-		  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-		  p.x(), p.y(), p.z(), n[0], n[1], n[2], CTX.geom.light);
-    }
-  }
-
   void _drawPlaneGFace(GFace *f)
   {
     // We create data here and the routine is not designed to be
@@ -442,9 +384,14 @@ class drawGFace {
       glEnableClientState(GL_COLOR_ARRAY);
     }
     if(CTX.polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
+    if(CTX.geom.surface_type > 0)
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    else
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glDrawArrays(GL_TRIANGLES, 0, va->getNumVertices());
     glDisable(GL_POLYGON_OFFSET_FILL);
     glDisable(GL_LIGHTING);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_COLOR_ARRAY);
@@ -475,16 +422,16 @@ public :
     }
 
     if(CTX.geom.surfaces && f->va_geom_triangles)
-      _drawVertexArray(f->va_geom_triangles, CTX.geom.light, f->getSelection(), 
-		       CTX.color.geom.selection);
+      _drawVertexArray
+	(f->va_geom_triangles, CTX.geom.light, 
+	 (f->geomType() == GEntity::ProjectionFace) ? true : f->getSelection(), 
+	 (f->geomType() == GEntity::ProjectionFace) ? CTX.color.geom.projection : 
+	 CTX.color.geom.selection);
     
     if(f->geomType() == GEntity::Plane)
       _drawPlaneGFace(f);
-    else if(f->geomType() == GEntity::ProjectionFace ||
-	    f->geomType() == GEntity::ParametricSurface)
-      _drawParametricGFace(f);
     else
-      _drawNonPlaneGFace(f);
+      _drawParametricGFace(f);
     
     if(CTX.draw_bbox) drawBBox(f);
     
@@ -596,12 +543,13 @@ void Draw_Geom()
     gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
     if(!CTX.axes_auto_position){
       Draw_Axes(CTX.axes, CTX.axes_tics, CTX.axes_format, CTX.axes_label, 
-		CTX.axes_position,CTX.axes_mikado);
+		CTX.axes_position, CTX.axes_mikado);
     }
     else if(geometryExists){
       double bb[6] = {CTX.min[0], CTX.max[0], CTX.min[1], 
 		      CTX.max[1], CTX.min[2], CTX.max[2]};
-      Draw_Axes(CTX.axes, CTX.axes_tics, CTX.axes_format, CTX.axes_label, bb,CTX.axes_mikado);
+      Draw_Axes(CTX.axes, CTX.axes_tics, CTX.axes_format, CTX.axes_label, 
+		bb, CTX.axes_mikado);
     }
   }
 

@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.31 2008-02-05 18:58:04 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.32 2008-02-05 23:16:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -321,7 +321,7 @@ bool OCCFace::buildSTLTriangulation()
   unsigned int col[4] = {c, c, c, c};
   for (int j = 1; j <= ntriangles; j++){
     Poly_Triangle triangle = (triangulation->Triangles())(j);
-    triangle.Get(p1,p2,p3);
+    triangle.Get(p1, p2, p3);
     gp_Pnt2d x1 = (triangulation->UVNodes())(p1);
     gp_Pnt2d x2 = (triangulation->UVNodes())(p2);
     gp_Pnt2d x3 = (triangulation->UVNodes())(p3);

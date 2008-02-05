@@ -15,8 +15,6 @@ class fourierFace : public GFace {
   FM::TopoFace *face;
  public:
   fourierFace(GModel *m, FM::TopoFace *face_, int tag, std::list<GEdge*> l_edges_);
-  fourierFace(GModel *m, FM::TopoFace *face_, int tag, std::list<GEdge*> l_edges_,
-	std::list<int> l_dirs_);
   virtual ~fourierFace() {}
   Range<double> parBounds(int i) const; 
   virtual GPoint point(double par1, double par2) const; 

@@ -1,4 +1,5 @@
 #include "fourierProjectionFace.h"
+#include "VertexArray.h"
 
 #if defined(HAVE_FOURIER_MODEL)
 
@@ -6,7 +7,10 @@ fourierProjectionFace::fourierProjectionFace(GModel *m, int num)
   : GFace(m,num), ps_(0) {}
 
 fourierProjectionFace::fourierProjectionFace(GModel *m, int num, FM::ProjectionSurface* ps)
-  : GFace(m,num), ps_(ps) {}
+  : GFace(m,num), ps_(ps) 
+{
+  buildSTLTriangulation();
+}
 
 fourierProjectionFace::~fourierProjectionFace() {}
 
