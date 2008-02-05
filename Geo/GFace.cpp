@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.43 2008-02-05 14:40:29 remacle Exp $
+// $Id: GFace.cpp,v 1.44 2008-02-05 15:59:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -23,13 +23,13 @@
 #include "GFace.h"
 #include "GEdge.h"
 #include "MElement.h"
-#include "VertexArray.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #  include "GmshEmbedded.h"
 #else
 #  include "Message.h"
 #  include "Numeric.h"
+#  include "VertexArray.h"
 #  include "Context.h"
 #  if defined(HAVE_GSL)
 #    include <gsl/gsl_vector.h>
@@ -43,7 +43,8 @@ void dsvdcmp(double **a, int m, int n, double w[], double **v);
 
 extern Context_T CTX;
 
-GFace::GFace(GModel *model, int tag) : GEntity(model, tag), r1(0), r2(0), va_geom_triangles(0)
+GFace::GFace(GModel *model, int tag) 
+  : GEntity(model, tag), r1(0), r2(0), va_geom_triangles(0)
 {
   meshStatistics.status = GFace::PENDING;
   resetMeshAttributes();
@@ -67,7 +68,7 @@ GFace::~GFace()
   for(unsigned int i = 0; i < quadrangles.size(); i++) 
     delete quadrangles[i];
 
-  if (va_geom_triangles)
+  if(va_geom_triangles)
     delete va_geom_triangles;
 }
 

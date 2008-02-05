@@ -1,4 +1,4 @@
-// merge a surface mesh
+// merge a surface mesh (any format will work: .msh, .unv, etc.)
 
 Merge "sphere-surf.stl";
 

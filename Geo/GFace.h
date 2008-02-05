@@ -73,9 +73,9 @@ class GFace : public GEntity
   // i.e. closed edge loops.  the first wire is the one that is the
   // outer contour of the face.
   void resolveWires();
-  // builds a STL triangulation and fill the vertex array va_geom_triangles
-  // by default, do nothing
-  virtual bool buildSTLTriangulation () {return false;}
+  // builds a STL triangulation and fill the vertex array
+  // va_geom_triangles (by default, do nothing)
+  virtual bool buildSTLTriangulation () { return false; }
  public:
   GFace(GModel *model, int tag);
   virtual ~GFace();
@@ -210,7 +210,6 @@ class GFace : public GEntity
 
   // Vertex array to draw the geometry efficiently
   VertexArray *va_geom_triangles;
-
 };
 
 #endif
