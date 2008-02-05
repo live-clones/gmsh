@@ -1,4 +1,4 @@
-// $Id: PluginManager.cpp,v 1.2 2008-01-10 14:56:54 remacle Exp $
+// $Id: PluginManager.cpp,v 1.3 2008-02-05 18:58:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -230,10 +230,8 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		      ("Probe", GMSH_RegisterProbePlugin()));
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("FieldView", GMSH_RegisterFieldViewPlugin()));
-#if defined(HAVE_TRIANGLE)
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Triangulate", GMSH_RegisterTriangulatePlugin()));
-#endif
 #if defined(HAVE_MATH_EVAL)
     allPlugins.insert(std::pair < char *, GMSH_Plugin * >
 		      ("Evaluate", GMSH_RegisterEvaluatePlugin()));

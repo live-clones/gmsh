@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.40 2008-01-22 20:38:24 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.41 2008-02-05 18:58:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,7 @@
 #include <vector>
 #include "GModel.h"
 #include "discreteFace.h"
+#include "DivideAndConquer.h"
 #include "Message.h"
 #include "MVertex.h"
 #include "Triangulate.h"
@@ -82,25 +83,6 @@ void GMSH_TriangulatePlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Triangulate failed...");
 }
 
-#if !defined(HAVE_TRIANGLE)
-
-static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
-			int nbTimeStep, int nbComp)
-{
-  Msg(GERROR, "Triangle is not compiled in this version of Gmsh");
-}
-
-#else
-
-#define ANSI_DECLARATORS
-#define REAL double
-#define VOID void
-
-extern "C"
-{
-#include "triangle.h"
-}
-
 static void Project(MVertex *v, double mat[3][3])
 {
   double X = v->x() * mat[0][0] + v->y() * mat[0][1] + v->z() * mat[0][2];
@@ -114,95 +96,64 @@ static void Project(MVertex *v, double mat[3][3])
 static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
 			int nbTimeStep, int nbComp)
 {
-  if(nbIn < 3)
-    return;
+  if(nbIn < 3) return;
 
+  // project points onto plane
   std::vector<MVertex*> points;
-
   int nb = List_Nbr(inList) / nbIn;
-  int j = 0;
   for(int i = 0; i < List_Nbr(inList); i += nb)
     points.push_back(new MVertex(*(double *)List_Pointer_Fast(inList, i),
 				 *(double *)List_Pointer_Fast(inList, i + 1),
-				 *(double *)List_Pointer_Fast(inList, i + 2),
-				 0, j++));
-
+				 *(double *)List_Pointer_Fast(inList, i + 2)));
   discreteFace *s = new discreteFace(GModel::current(), GModel::current()->numFace() + 1);
   s->computeMeanPlane(points);
   double plan[3][3];
   s->getMeanPlaneData(plan);
-  for(unsigned int i = 0; i < points.size(); i++)
-    Project(points[i], plan);
+  for(unsigned int i = 0; i < points.size(); i++) Project(points[i], plan);
   delete s;
 
-  struct triangulateio in;
-  in.numberofpoints = points.size();
-  in.pointlist = (REAL *) Malloc(in.numberofpoints * 2 * sizeof(REAL));
-  in.numberofpointattributes = 0;
-  in.pointattributelist = NULL;
-  in.pointmarkerlist = NULL;
-  in.numberofsegments = 0;
-  in.segmentlist = NULL;
-  in.segmentmarkerlist = NULL;
-  in.numberofregions = 0;
-  in.regionlist = NULL;
-  in.numberofholes = 0;
-  in.holelist = NULL;
+  // get lc
+  SBoundingBox3d bbox;
+  for(unsigned int i = 0; i < points.size(); i++) bbox += points[i]->point();
+  double lc = norm(SVector3(bbox.max(), bbox.min()));
 
-  j = 0;
-  for(unsigned int i = 0; i < points.size(); i++) {
-    in.pointlist[j] = points[i]->x();
-    in.pointlist[j + 1] = points[i]->y();
-    j += 2;
+  // build a point record structure for the divide and conquer
+  DocRecord doc;  
+  doc.points =  (PointRecord*)malloc(points.size() * sizeof(PointRecord));
+  for (unsigned int i = 0; i < points.size(); i++){
+    double XX = CTX.mesh.rand_factor * lc * (double)rand() / (double)RAND_MAX;
+    double YY = CTX.mesh.rand_factor * lc * (double)rand() / (double)RAND_MAX;
+    doc.points[i].where.h = points[i]->x() + XX;
+    doc.points[i].where.v = points[i]->y() + YY;
+    doc.points[i].adjacent = NULL;
+    doc.points[i].data = List_Pointer_Fast(inList, i * nb); 
+    delete points[i];
   }
 
-  for(unsigned int i = 0; i < points.size(); i++) 
-    delete points[i];
+  // triangulate
+  Make_Mesh_With_Points(&doc, doc.points, points.size());
 
-  struct triangulateio out;
-  out.pointlist = NULL;
-  out.pointattributelist = NULL;
-  out.pointmarkerlist = NULL;
-  out.trianglelist = NULL;
-  out.triangleattributelist = NULL;
-  out.neighborlist = NULL;
-  out.segmentlist = NULL;
-  out.segmentmarkerlist = NULL;
-  out.edgelist = NULL;
-  out.edgemarkerlist = NULL;
-
-  char opts[128] = "z";
-  if(CTX.verbosity < 4)
-    strcat(opts, "Q");
-  triangulate(opts, &in, &out, NULL);
-
-  Free(in.pointlist);
-  Free(out.pointlist);
-
-  for(int i = 0; i < out.numberoftriangles; i++) {
-    int j0 = out.trianglelist[i * out.numberofcorners + 0];
-    int j1 = out.trianglelist[i * out.numberofcorners + 1];
-    int j2 = out.trianglelist[i * out.numberofcorners + 2];
+  // create output (using unperturbed data)
+  for(int i = 0; i < doc.numTriangles; i++){
+    double *pa = (double*)doc.points[doc.delaunay[i].t.a].data;
+    double *pb = (double*)doc.points[doc.delaunay[i].t.b].data;
+    double *pc = (double*)doc.points[doc.delaunay[i].t.c].data;
     for(int j = 0; j < 3; j++) {
-      List_Add(outList, List_Pointer(inList, (j0 * nb) + j));
-      List_Add(outList, List_Pointer(inList, (j1 * nb) + j));
-      List_Add(outList, List_Pointer(inList, (j2 * nb) + j));
+      List_Add(outList, pa + j);
+      List_Add(outList, pb + j);
+      List_Add(outList, pc + j);
     }
     for(int j = 0; j < nbTimeStep; j++) {
-      for(int k = 0; k < nbComp; k++)
-	List_Add(outList, List_Pointer(inList, (j0 * nb) + 3 + j*nbComp + k));
-      for(int k = 0; k < nbComp; k++)
-	List_Add(outList, List_Pointer(inList, (j1 * nb) + 3 + j*nbComp + k));
-      for(int k = 0; k < nbComp; k++)
-	List_Add(outList, List_Pointer(inList, (j2 * nb) + 3 + j*nbComp + k));
+      for(int k = 0; k < nbComp; k++) List_Add(outList, pa + 3 + j * nbComp + k);
+      for(int k = 0; k < nbComp; k++) List_Add(outList, pb + 3 + j * nbComp + k);
+      for(int k = 0; k < nbComp; k++) List_Add(outList, pc + 3 + j * nbComp + k);
     }
     (*nbOut)++;
   }
 
-  Free(out.trianglelist);
+  free(doc.points);
+  free(doc.delaunay);
 }
-
-#endif // !HAVE_TRIANGLE
 
 PView *GMSH_TriangulatePlugin::execute(PView *v)
 {

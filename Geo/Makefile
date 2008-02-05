@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.180 2008-01-23 07:45:28 geuzaine Exp $
+# $Id: Makefile,v 1.181 2008-02-05 18:58:04 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -88,7 +88,8 @@ GFace.o: GFace.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h MElement.h ../Common/GmshDefines.h \
   MVertex.h MEdge.h MFace.h ../Common/Message.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Common/Context.h ../DataStr/List.h
+  ../Numeric/NumericEmbedded.h ../Common/VertexArray.h ../Geo/SVector3.h \
+  ../Common/Context.h ../DataStr/List.h
 GRegion.o: GRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h MElement.h ../Common/GmshDefines.h \
@@ -135,7 +136,8 @@ OCCFace.o: OCCFace.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h OCCVertex.h OCCIncludes.h MVertex.h \
   OCCEdge.h OCCFace.h ../Common/Message.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h
+  ../Numeric/NumericEmbedded.h ../Common/VertexArray.h ../Geo/SVector3.h \
+  ../Common/Context.h ../DataStr/List.h
 OCCRegion.o: OCCRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h OCCVertex.h OCCIncludes.h MVertex.h \

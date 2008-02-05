@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.146 2008-01-23 09:18:06 geuzaine Exp $
+# $Id: Makefile,v 1.147 2008-02-05 18:58:04 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -194,12 +194,12 @@ Triangulate.o: Triangulate.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/SBoundingBox3d.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
-  ../Common/SmoothData.h ../Common/Message.h ../Geo/MVertex.h \
-  ../Geo/SPoint3.h Triangulate.h Plugin.h ../Common/Options.h \
-  ../Post/ColorTable.h ../Post/PView.h ../Post/PViewData.h \
-  ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewDataList.h \
-  ../Post/PViewData.h ../Post/AdaptiveViews.h ../Common/GmshMatrix.h \
-  ../DataStr/Malloc.h ../Common/Context.h
+  ../Common/SmoothData.h ../Mesh/DivideAndConquer.h ../Common/Message.h \
+  ../Geo/MVertex.h ../Geo/SPoint3.h Triangulate.h Plugin.h \
+  ../Common/Options.h ../Post/ColorTable.h ../Post/PView.h \
+  ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Post/AdaptiveViews.h \
+  ../Common/GmshMatrix.h ../DataStr/Malloc.h ../Common/Context.h
 Warp.o: Warp.cpp Warp.h Plugin.h ../Common/Options.h ../Post/ColorTable.h \
   ../Common/Message.h ../Post/PView.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Post/PViewOptions.h \

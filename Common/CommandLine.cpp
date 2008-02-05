@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.114 2008-01-30 15:27:40 remacle Exp $
+// $Id: CommandLine.cpp,v 1.115 2008-02-05 18:58:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -132,9 +132,6 @@ char *Get_BuildOptions(void)
   if(first){
 #if defined(HAVE_GSL)
     strcat(opt, "GSL ");
-#endif
-#if defined(HAVE_TRIANGLE)
-    strcat(opt, "TRIANGLE ");
 #endif
 #if defined(HAVE_NETGEN)
     strcat(opt, "NETGEN ");

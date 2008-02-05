@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.30 2008-02-05 15:59:34 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.31 2008-02-05 18:58:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -38,8 +38,7 @@
 #include "Geom_BezierSurface.hxx"
 #include "Geom_Plane.hxx"
 #include "gp_Pln.hxx"
-// FIX THIS WHEN TRIANGLE IS GONE
-//#include "BRepMesh_FastDiscret.hxx"
+#include "BRepMesh_FastDiscret.hxx"
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape &emap)
   : GFace(m, num), s(_s)
@@ -277,9 +276,6 @@ surface_params OCCFace::getSurfaceParams() const
 
 bool OCCFace::buildSTLTriangulation()
 {
-  // FIX THIS WHEN TRIANGLE IS GONE
-  return false;
-  /*
   if(va_geom_triangles){
     delete va_geom_triangles;
     va_geom_triangles = 0;
@@ -304,7 +300,7 @@ bool OCCFace::buildSTLTriangulation()
   if(dZ > dMax) {
     dMax = dZ;
   }
-  //
+
   aCoeff = 0.01;
   aDiscret = aCoeff * dMax;
   BRepMesh_FastDiscret aMesher(aDiscret, 0.5, aBox, bWithShare, Standard_True,
@@ -343,7 +339,6 @@ bool OCCFace::buildSTLTriangulation()
   }  
   va_geom_triangles->finalize();
   return true;
-  */
 }
 
 #endif

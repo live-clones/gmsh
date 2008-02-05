@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.200 2008-01-28 09:59:52 geuzaine Exp $
+# $Id: Makefile,v 1.201 2008-02-05 18:58:04 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -96,7 +96,8 @@ Generator.o: Generator.cpp ../Common/Message.h ../Numeric/Numeric.h \
   ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h meshGEdge.h \
-  meshGFace.h meshGRegion.h BackgroundMesh.h BoundaryLayer.h HighOrder.h
+  meshGFace.h meshGFaceBDS.h meshGRegion.h BackgroundMesh.h \
+  BoundaryLayer.h HighOrder.h
 Field.o: Field.cpp ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
   ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
@@ -192,7 +193,9 @@ meshGFaceBDS.o: meshGFaceBDS.cpp meshGFace.h meshGFaceOptimize.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h \
   ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
   ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Common/Context.h \
-  ../DataStr/List.h ../Common/Message.h ../Numeric/Numeric.h \
+  ../DataStr/List.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEdge.h \
+  ../Geo/GFace.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/SBoundingBox3d.h ../Common/Message.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h BDS.h ../Post/PView.h ../Post/PViewData.h \
   ../Post/PViewOptions.h ../Post/ColorTable.h qualityMeasures.h Field.h \
   ../Geo/Geo.h ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h \

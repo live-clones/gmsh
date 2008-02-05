@@ -1271,7 +1271,6 @@ Optional Features:
   --enable-zlib           enable ZLIB support (default=yes)
   --enable-png            enable PNG support (default=yes)
   --enable-contrib        enable contrib packages (default=yes)
-  --enable-triangle       compile Triangle if available (default=yes)
   --enable-netgen         compile Netgen if available (default=yes)
   --enable-ann            compile ANN if available (default=yes)
   --enable-metis          compile METIS if available (default=no)
@@ -1864,11 +1863,6 @@ fi
 # Check whether --enable-contrib was given.
 if test "${enable_contrib+set}" = set; then
   enableval=$enable_contrib;
-fi
-
-# Check whether --enable-triangle was given.
-if test "${enable_triangle+set}" = set; then
-  enableval=$enable_triangle;
 fi
 
 # Check whether --enable-netgen was given.
@@ -4454,60 +4448,6 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 if test "x$enable_contrib" != "xno"; then
-
-    { echo "$as_me:$LINENO: checking for ./contrib/Triangle/triangle.c" >&5
-echo $ECHO_N "checking for ./contrib/Triangle/triangle.c... $ECHO_C" >&6; }
-if test "${ac_cv_file___contrib_Triangle_triangle_c+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  test "$cross_compiling" = yes &&
-  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
-echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
-   { (exit 1); exit 1; }; }
-if test -r "./contrib/Triangle/triangle.c"; then
-  ac_cv_file___contrib_Triangle_triangle_c=yes
-else
-  ac_cv_file___contrib_Triangle_triangle_c=no
-fi
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_file___contrib_Triangle_triangle_c" >&5
-echo "${ECHO_T}$ac_cv_file___contrib_Triangle_triangle_c" >&6; }
-if test $ac_cv_file___contrib_Triangle_triangle_c = yes; then
-  TRIANGLE="yes"
-else
-  TRIANGLE="no"
-fi
-
-  if test "x${TRIANGLE}" = "xyes"; then
-    if test "x$enable_triangle" != "xno"; then
-       GMSH_DIRS="${GMSH_DIRS} contrib/Triangle"
-       GMSH_LIBS="${GMSH_LIBS} -lGmshTriangle"
-       FLAGS="-DHAVE_TRIANGLE ${FLAGS}"
-       echo "********************************************************************"
-       echo "You are building a version of Gmsh that contains Jonathan"
-       echo "Shewchuk's Triangle as an alternative isotropic 2D mesh generator."
-       echo "Please note that by doing so, you agree with Triangle's licensing"
-       echo "requirements stated in ./contrib/Triangle/README. (Most notably, you"
-       echo "may then only redistribute Gmsh for non-commercial purposes.)"
-       echo "To disable Triangle, run configure again with the --disable-triangle"
-       echo "option."
-       echo "********************************************************************"
-    fi
-  else
-    if test "x$enable_triangle" != "xno"; then
-       echo "********************************************************************"
-       echo "If you want to use Jonathan Shewchuk's Triangle as an alternative"
-       echo "isotropic 2D mesh generator, please download Triangle from the"
-       echo "author's web site at http://www.cs.cmu.edu/~quake/triangle.html,"
-       echo "unpack the archive and copy the two files 'triangle.c' and"
-       echo "'triangle.h' in the ./contrib/Triangle subdirectory. Then run"
-       echo "./configure again."
-       echo "Please note that by doing so, you agree with Triangle's licensing"
-       echo "requirements stated in ./contrib/Triangle/README. (Most notably, you"
-       echo "may then only redistribute Gmsh if no compensation is received.)"
-       echo "********************************************************************"
-    fi
-  fi
 
     { echo "$as_me:$LINENO: checking for ./contrib/ANN/include/ANN/ANN.h" >&5
 echo $ECHO_N "checking for ./contrib/ANN/include/ANN/ANN.h... $ECHO_C" >&6; }
