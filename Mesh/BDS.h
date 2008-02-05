@@ -22,6 +22,9 @@
 // points may know the normals to the surface they are classified on
 // default values are 0,0,1
 
+#ifndef _BDS_GMSH_H_
+#define _BDS_GMSH_H_
+
 #include <string>
 #include <set>
 #include <map>
@@ -474,5 +477,7 @@ public:
   void recombineIntoQuads (const double angle, GFace *gf);
 };
 
-void outputScalarField(std::list < BDS_Face * >t, const char *fn, int param);
+void outputScalarField(std::list < BDS_Face * >t, const char *fn, int param, GFace *gf = 0);
 void recur_tag(BDS_Face * t, BDS_GeomEntity * g);
+
+#endif

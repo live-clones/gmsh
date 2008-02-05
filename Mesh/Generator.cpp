@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.133 2008-01-28 16:03:19 geuzaine Exp $
+// $Id: Generator.cpp,v 1.134 2008-02-05 14:40:30 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,7 @@
 #include "MElement.h"
 #include "meshGEdge.h"
 #include "meshGFace.h"
+#include "meshGFaceBDS.h"
 #include "meshGRegion.h"
 #include "BackgroundMesh.h"
 #include "BoundaryLayer.h"
@@ -260,6 +261,8 @@ void Mesh2D(GModel *m)
       if(nIter++ > 10) break;
     }
   }
+
+  gmshCollapseSmallEdges (*m);
 
   double t2 = Cpu();
   CTX.mesh_timer[1] = t2 - t1;

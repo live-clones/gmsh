@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.96 2008-01-30 15:27:41 remacle Exp $
+// $Id: BDS.cpp,v 1.97 2008-02-05 14:40:30 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,7 @@
 
 bool test_move_point_parametric_triangle (BDS_Point * p, double u, double v, BDS_Face *t);
 
-void outputScalarField(std::list < BDS_Face * >t, const char *iii, int param)
+void outputScalarField(std::list < BDS_Face * >t, const char *iii, int param, GFace *gf)
 {
   FILE *f = fopen(iii, "w");
   if(!f) return;
@@ -45,11 +45,21 @@ void outputScalarField(std::list < BDS_Face * >t, const char *iii, int param)
 	      pts[0]->u, pts[0]->v, 0.0,
 	      pts[1]->u, pts[1]->v, 0.0,
 	      pts[2]->u, pts[2]->v, 0.0,(double)pts[0]->iD,(double)pts[1]->iD,(double)pts[2]->iD);
-    else
-      fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-	      pts[0]->X, pts[0]->Y, pts[0]->Z,
-	      pts[1]->X, pts[1]->Y, pts[1]->Z,
-	      pts[2]->X, pts[2]->Y, pts[2]->Z,(double)pts[0]->iD,(double)pts[1]->iD,(double)pts[2]->iD);
+    else{
+      if (!gf)
+	fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+		pts[0]->X, pts[0]->Y, pts[0]->Z,
+		pts[1]->X, pts[1]->Y, pts[1]->Z,
+		pts[2]->X, pts[2]->Y, pts[2]->Z,(double)pts[0]->iD,(double)pts[1]->iD,(double)pts[2]->iD);
+      else
+	fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+		pts[0]->X, pts[0]->Y, pts[0]->Z,
+		pts[1]->X, pts[1]->Y, pts[1]->Z,
+		pts[2]->X, pts[2]->Y, pts[2]->Z,
+		gf->curvature (SPoint2(pts[0]->u, pts[0]->v)),
+		gf->curvature (SPoint2(pts[1]->u, pts[1]->v)),
+		gf->curvature (SPoint2(pts[2]->u, pts[2]->v)));
+    }
     ++tit;
   }
   fprintf(f, "};\n");
@@ -182,6 +192,26 @@ BDS_Edge *BDS_Mesh::find_edge(int num1, int num2)
 int Intersect_Edges_2d(double x1, double y1, double x2, double y2,
 		       double x3, double y3, double x4, double y4)
 {
+
+//   double p1[2] = {x1,y1};
+//   double p2[2] = {x2,y2};
+//   double q1[2] = {x3,y3};
+//   double q2[2] = {x4,y4};
+  
+//   double rp1 = gmsh::orient2d(p1, p2, q1);
+//   double rp2 = gmsh::orient2d(p1, p2, q2);
+//   double rq1 = gmsh::orient2d(q1, q2, p1);
+//   double rq2 = gmsh::orient2d(q1, q2, p2);
+
+//   if (rp1*rp2<=0 && rq1*rq2<=0){
+// //      printf("p1 %22.15E %22.15E %22.15E %22.15E \n",x1,y1,x2,y2);
+// //      printf("p2 %22.15E %22.15E %22.15E %22.15E \n",x3,y3,x4,y4);
+// //      printf("or %22.15E %22.15E %22.15E %22.15E\n",rp1,rp2,rq1,rq2);
+//     return 1;
+//   }
+//   return 0;
+
+
   double mat[2][2];
   double rhs[2], x[2];
   mat[0][0] = (x2 - x1);
@@ -235,7 +265,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
 		  {
 		    std::set<EdgeToRecover>::iterator itr1 = e2r->find(EdgeToRecover(e->p1->iD,e->p2->iD,0));		    
 		    std::set<EdgeToRecover>::iterator itr2 = e2r->find(EdgeToRecover(num1,num2,0));		    
-		    Msg(WARNING," edge %d %d on model edge %d cannot be recovered because it intersects %d %d on model edge %d",
+		    Msg(DEBUG2," edge %d %d on model edge %d cannot be recovered because it intersects %d %d on model edge %d",
 			num1,num2,itr2->ge->tag(),
 			e->p1->iD,e->p2->iD,itr1->ge->tag());
 

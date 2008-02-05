@@ -243,6 +243,7 @@ class GEntity {
 
   // Vertex arrays to draw the mesh efficiently
   VertexArray *va_lines, *va_triangles;
+
 };
 
 class GEntityLessThan {

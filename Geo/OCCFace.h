@@ -34,6 +34,7 @@ class OCCFace : public GFace {
   Handle(Geom_Surface) occface;
   double umin, umax, vmin, vmax;
   bool _periodic[2];
+  bool buildSTLTriangulation ();
  public:
   OCCFace(GModel *m, TopoDS_Face s, int num, TopTools_IndexedMapOfShape &emap);
   virtual ~OCCFace(){}

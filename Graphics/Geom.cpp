@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.145 2008-02-03 08:25:36 geuzaine Exp $
+// $Id: Geom.cpp,v 1.146 2008-02-05 14:40:30 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -200,6 +200,8 @@ class drawGEdge {
   }
 };
 
+void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalArray, 
+		int forceColor=0, unsigned int color=0);
 class drawGFace {
  private:
   void _drawNonPlaneGFace(GFace *f)
@@ -444,7 +446,9 @@ public :
       glColor4ubv((GLubyte *) & CTX.color.geom.surface);
     }
 
-    if(f->geomType() == GEntity::Plane)
+    if(f->va_geom_triangles)
+      drawArrays(f, f->va_geom_triangles, GL_TRIANGLES, CTX.geom.light, CTX.geom.surfaces,CTX.color.geom.surface);
+    else if(f->geomType() == GEntity::Plane)
       _drawPlaneGFace(f);
     else if(f->geomType() == GEntity::ProjectionFace ||
 	    f->geomType() == GEntity::ParametricSurface)

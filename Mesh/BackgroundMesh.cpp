@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.33 2008-01-30 15:27:41 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.34 2008-02-05 14:40:30 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -79,6 +79,7 @@ static double max_surf_curvature(const GEdge *ge, double u)
     SPoint2 par = ge->reparamOnFace((*it),u,1);
     double cc = (*it)->curvature(par);
     max_curvature = std::max(cc, max_curvature);
+    //    if (ge->tag() == 66)printf("%12.5E %12.5E %d %12.5E %12.5E\n",par.x(),par.y(),(*it)->tag(),cc,max_curvature);
     ++it;
   }  
   return max_curvature;
@@ -195,9 +196,14 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
 
   if(CTX.mesh.lc_from_curvature && ge->dim() <= 2 )
     lc = std::min (lc,LC_MVertex_CURV(ge, U, V));
+  
 
   lc = std::max(lc,CTX.mesh.lc_min*CTX.mesh.lc_factor);
   lc = std::min(lc,CTX.mesh.lc_max*CTX.mesh.lc_factor);
+
+//   if (ge->tag() == 200 || ge->tag() == 202|| ge->tag() == 162|| ge->tag() == 163|| ge->tag() == 161|| ge->tag() == 141){
+//     printf("%d %d %12.5E %12.5E %12.5E\n",ge->dim(),ge->tag(),LC_MVertex_CURV(ge, U, V),LC_MVertex_PNTS(ge, U, V),lc);
+//   }
 
   if(lc <= 0.){
     Msg(GERROR, "Incorrect char. length lc = %g: using default instead", lc);

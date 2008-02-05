@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.24 2008-01-19 22:06:01 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.25 2008-02-05 14:40:29 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -495,6 +495,122 @@ void GModel::deleteOCCInternals()
 {
   if(occ_internals) delete occ_internals;
 }
+
+
+/*
+  OCC Creation routines
+*/
+
+// This function has been inspired from SALOME
+// It removes all duplicates from the geometry, starting
+// from vertices, edges, faces, shells and solids
+// This 
+void OCC_Internals::removeAllDuplicates (const double &tolerance){
+}
+
+
+void AddSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape& theList)
+{
+  if (theShape.ShapeType() != TopAbs_COMPOUND &&
+      theShape.ShapeType() != TopAbs_COMPSOLID) {
+    theList.Append(theShape);
+    return;
+  }
+
+  TopTools_MapOfShape mapShape;
+  TopoDS_Iterator It (theShape, Standard_True, Standard_True);
+
+  for (; It.More(); It.Next()) {
+    TopoDS_Shape aShape_i = It.Value();
+    if (mapShape.Add(aShape_i)) {
+      if (aShape_i.ShapeType() == TopAbs_COMPOUND ||
+          aShape_i.ShapeType() == TopAbs_COMPSOLID) {
+        AddSimpleShapes(aShape_i, theList);
+      } else {
+        theList.Append(aShape_i);
+      }
+    }
+  }
+}
+
+void OCC_Internals::applyBooleanOperator ( TopoDS_Shape tool ,  const BooleanOperator & op ){
+  if (tool.IsNull())return;
+  if (shape.IsNull())shape = tool;
+  else{
+    switch(op){
+    case OCC_Internals::Add :
+      {
+	TopoDS_Shape theNewShape;	
+	BRep_Builder B;
+	TopoDS_Compound C;
+	B.MakeCompound(C);
+	TopTools_ListOfShape listShape1, listShape2;
+	AddSimpleShapes(shape, listShape1);
+	AddSimpleShapes(tool, listShape2);
+	Standard_Boolean isCompound =
+	  (listShape1.Extent() > 1 || listShape2.Extent() > 1);
+	
+	TopTools_ListIteratorOfListOfShape itSub1 (listShape1);
+	for (; itSub1.More(); itSub1.Next()) {
+	  TopoDS_Shape aValue1 = itSub1.Value();
+	  TopTools_ListIteratorOfListOfShape itSub2 (listShape2);
+	  for (; itSub2.More(); itSub2.Next()) {
+	    TopoDS_Shape aValue2 = itSub2.Value();
+	    BRepAlgoAPI_Common BO (aValue1, aValue2);
+	    if (!BO.IsDone()) {
+	      Msg(GERROR,"Boolean Add Operator can not be performed");
+	    }
+	    if (isCompound) {
+	      TopoDS_Shape aStepResult = BO.Shape();
+	      if (aStepResult.ShapeType() == TopAbs_COMPOUND) {
+		TopoDS_Iterator aCompIter (aStepResult);
+		for (; aCompIter.More(); aCompIter.Next()) {
+		  B.Add(C, aCompIter.Value());
+		}
+	      }
+	      else {
+		B.Add(C, aStepResult);
+	      }
+	    }
+	    else
+	      theNewShape = BO.Shape();
+	  }
+	}
+	if (isCompound) {
+	  TopTools_ListOfShape listShapeC;
+	  AddSimpleShapes(C, listShapeC);
+	  TopTools_ListIteratorOfListOfShape itSubC (listShapeC);
+	  bool isOnlySolids = true;
+	  for (; itSubC.More(); itSubC.Next()) {
+	    TopoDS_Shape aValueC = itSubC.Value();
+	    if (aValueC.ShapeType() != TopAbs_SOLID) isOnlySolids = false;
+	  }
+	  if (isOnlySolids)
+	    throw;
+	    //	    theNewShape = GEOMImpl_GlueDriver::GlueFaces(C, Precision::Confusion());
+	  else
+	    theNewShape = C;
+	}	
+      }
+      break;
+    case OCC_Internals::Cut :
+      {
+      }
+    default :
+      throw;
+    }
+  }
+}
+  
+void OCC_Internals::Sphere  ( const SPoint3 & center, const double & radius, const BooleanOperator & op ){
+  // build a sphere
+  gp_Pnt aP (center.x(), center.y(), center.z());  
+  TopoDS_Shape aShape = BRepPrimAPI_MakeSphere(aP, radius).Shape(); 
+  // either add it to the current shape, or use it as a tool and remove the
+  // sphere from the current shape
+  applyBooleanOperator ( aShape , op );
+}
+
 
 #else
 

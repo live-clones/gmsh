@@ -22,6 +22,7 @@
 
 #include <map>
 class GFace;
+class GModel;
 class BDS_Mesh;
 class BDS_Point;
 class MVertex;
@@ -38,4 +39,7 @@ void gmshOptimizeMeshBDS(GFace *gf,
 			 std::map<BDS_Point*,MVertex*> *recover_map = 0);
 
 void gmshDelaunayizeBDS ( GFace *gf, BDS_Mesh &m, int &nb_swap );
+
+void gmshCollapseSmallEdges (GModel &gm);
+
 #endif

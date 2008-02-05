@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.114 2008-01-30 15:27:41 remacle Exp $
+// $Id: meshGFace.cpp,v 1.115 2008-02-05 14:40:30 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -616,6 +616,16 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
     Msg(WARNING,"8-| Gmsh splits those edges and tries again");
     std::list<GFace *> facesToRemesh;
     remeshUnrecoveredEdges ( edgesNotRecovered, facesToRemesh);
+    std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
+    for ( ; itr != edgesNotRecovered.end() ; ++itr)
+    {
+      int p1 = itr->p1;
+      int p2 = itr->p2;
+      int tag = itr->ge->tag();
+      Msg(WARNING,"MEdge %d %d in GEdge %d",p1,p2,tag);
+    }
+
+
     delete m;
     delete [] U_;
     delete [] V_;
@@ -793,7 +803,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
   else if (debug){
     char name[256];
     sprintf(name,"real%d.pos",gf->tag());
-    outputScalarField(m->triangles, name,0);
+    outputScalarField(m->triangles, name,0,gf);
     sprintf(name,"param%d.pos",gf->tag());
     outputScalarField(m->triangles, name,1);
   }
@@ -1423,7 +1433,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
     {
       char name[245];
       sprintf(name,"surface%d-final-real.pos",gf->tag());
-      outputScalarField(m->triangles, name,0);
+      outputScalarField(m->triangles, name,0,gf);
       sprintf(name,"surface%d-final-param.pos",gf->tag());
       outputScalarField(m->triangles, name,1);
     }

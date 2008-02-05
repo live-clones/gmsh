@@ -109,7 +109,13 @@ using std::iostream;
 #include "ShapeBuild_ReShape.hxx"
 #include "ShapeFix.hxx"
 #include "ShapeFix_FixSmallFace.hxx"
-
+#include "TopoDS_Compound.hxx"
+#include "TopoDS_Iterator.hxx"
+#include "BRepPrimAPI_MakeSphere.hxx"
+#include "TopTools_ListIteratorOfListOfShape.hxx"
+#include "Precision.hxx"
+#include "BRepAlgoAPI_Common.hxx"
+#include "BRepAlgoAPI_Cut.hxx"
 #endif
 
 #endif

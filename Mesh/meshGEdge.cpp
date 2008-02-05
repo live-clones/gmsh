@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.52 2008-01-30 15:27:41 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.53 2008-02-05 14:40:30 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -322,7 +322,7 @@ void meshGEdge::operator() (GEdge *ge)
 		  CTX.mesh.lc_integration_precision);
       buildInterpLc(lcPoints);
       //      printInterpLc("toto1.dat");
-      smoothInterpLc(20);
+      //      smoothInterpLc(20);
       //      printInterpLc("toto2.dat");
       a = Integration(ge, t_begin, t_end, F_Lc_usingInterpLc, Points, 1.e-8);
     }

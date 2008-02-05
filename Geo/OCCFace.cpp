@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.28 2008-02-03 08:54:28 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.29 2008-02-05 14:40:29 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #include "OCCFace.h"
 #include "Message.h"
 #include "Numeric.h"
+#include "VertexArray.h"
 
 #if defined(HAVE_OCC)
 #include "Geom_CylindricalSurface.hxx"
@@ -37,6 +38,7 @@
 #include "Geom_BezierSurface.hxx"
 #include "Geom_Plane.hxx"
 #include "gp_Pln.hxx"
+#include "BRepMesh_FastDiscret.hxx"
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape &emap)
   : GFace(m, num), s(_s)
@@ -88,6 +90,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
   umax += fabs(du)/100.0;
   vmax += fabs(dv)/100.0;
   occface = BRep_Tool::Surface(s);
+  buildSTLTriangulation();
 }
 
 Range<double> OCCFace::parBounds(int i) const
@@ -272,14 +275,79 @@ surface_params OCCFace::getSurfaceParams() const
 }
 
 
-// void OCCFace::buildVisTriangulation ();
-// {
-//   TopLoc_Location loc;
-//   Handle(Poly_Triangulation) triangulation = BRep_Tool::Triangulation (occface, loc);
-//   int ntriangles = triangulation -> NbTriangles();
-//   for (int j = 1; j <= ntriangles; j++){
-//     Poly_Triangle triangle = (triangulation -> Triangles())(j);
-//   }  
-// }
+bool OCCFace::buildSTLTriangulation ()
+{
+
+  if (va_geom_triangles){
+    delete va_geom_triangles;
+    va_geom_triangles = 0;
+  }
+
+   TopLoc_Location loc;
+   int p1,p2,p3;
+   Bnd_Box aBox;
+   Standard_Boolean bWithShare;
+   Standard_Real aDiscret, aXmin, aYmin, aZmin, aXmax, aYmax, aZmax;
+   Standard_Real dX, dY, dZ, dMax, aCoeff, aAngle;     
+   BRepBndLib::Add(s, aBox);
+   aBox.Get(aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
+   
+   //   if (tag() > 100)return;
+   dX=aXmax-aXmin;
+   dY=aYmax-aYmin;
+   dZ=aZmax-aZmin;
+   dMax=dX;
+   if (dY>dMax) {
+     dMax=dY;
+   }
+   if (dZ>dMax) {
+     dMax=dZ;
+   }
+   //
+   aCoeff=0.01;
+   aDiscret=aCoeff*dMax;     
+   BRepMesh_FastDiscret aMesher(aDiscret,
+				0.5,
+				aBox,
+				bWithShare,
+				Standard_True,
+				Standard_False,
+				Standard_True);
+   aMesher.Add(s);
+   Handle(Poly_Triangulation) triangulation = BRep_Tool::Triangulation (s, loc);
+   if (triangulation.IsNull()){
+     Msg(WARNING,"OCC STL triangulation failed!\n");    //     return;
+     return false;
+   }
+
+   int ntriangles = triangulation -> NbTriangles();
+   if (!triangulation->HasUVNodes())
+     return false;
+   va_geom_triangles  = new VertexArray(3,ntriangles);
+
+
+   unsigned int c = CTX.color.geom.surface;
+   unsigned int col[4] = {c, c, c, c};
+   for (int j = 1; j <= ntriangles; j++){
+     Poly_Triangle triangle = (triangulation -> Triangles())(j);
+     triangle.Get (p1,p2,p3);
+     gp_Pnt2d x1 = (triangulation->UVNodes())(p1);
+     gp_Pnt2d x2 = (triangulation->UVNodes())(p2);
+     gp_Pnt2d x3 = (triangulation->UVNodes())(p3);
+     GPoint gp1 = point (x1.X(),x1.Y());
+     GPoint gp2 = point (x2.X(),x2.Y());
+     GPoint gp3 = point (x3.X(),x3.Y());
+     SVector3 n[3];
+     n[0] = normal (SPoint2(x1.X(),x1.Y()));
+     n[1] = normal (SPoint2(x2.X(),x2.Y()));
+     n[2] = normal (SPoint2(x3.X(),x3.Y()));
+     double x[3] = {gp1.x(),gp2.x(),gp3.x()};
+     double y[3] = {gp1.y(),gp2.y(),gp3.y()};
+     double z[3] = {gp1.z(),gp2.z(),gp3.z()};
+     va_geom_triangles->add (x,y,z,n,col);
+   }  
+   va_geom_triangles->finalize();
+   return true;
+}
 
 #endif

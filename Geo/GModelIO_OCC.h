@@ -1,7 +1,7 @@
 #ifndef _GMODELIO_OCC_H_
 #define _GMODELIO_OCC_H_
 
-// $Id: GModelIO_OCC.h,v 1.2 2007-04-23 08:04:16 geuzaine Exp $
+// $Id: GModelIO_OCC.h,v 1.3 2008-02-05 14:40:29 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -32,6 +32,9 @@ class OCC_Internals {
   TopoDS_Shape shape;
   TopTools_IndexedMapOfShape fmap, emap, vmap, somap, shmap, wmap;
  public:
+  
+  enum BooleanOperator { Add , Cut }; 
+
   OCC_Internals()
   {
     somap.Clear();
@@ -49,6 +52,11 @@ class OCC_Internals {
   void loadBREP(const char *);  
   void buildGModel(GModel *gm);
   void buildLists();
+  void removeAllDuplicates (const double &tolerance);
+
+  void Sphere  ( const SPoint3 & center, const double & radius, const BooleanOperator & op );
+  void Cylinder( const SPoint3 & bottom_center, const SVector3 & dir, const BooleanOperator & op );
+  void applyBooleanOperator ( TopoDS_Shape tool, const BooleanOperator & op);
 };
 
 #endif

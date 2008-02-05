@@ -1,4 +1,4 @@
-// $Id: meshGFaceBDS.cpp,v 1.3 2008-01-30 15:27:41 remacle Exp $
+// $Id: meshGFaceBDS.cpp,v 1.4 2008-02-05 14:40:30 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,7 @@
 #include "MElement.h"
 #include "Context.h"
 #include "GPoint.h"
+#include "GModel.h"
 #include "Message.h"
 #include "Numeric.h"
 #include "BDS.h"
@@ -711,8 +712,6 @@ void gmshOptimizeMeshBDS(GFace *gf,
 
 // DELAUNAY BDS
 
-
-
 void delaunayPointInsertionBDS ( GFace *gf, BDS_Mesh &m, BDS_Point *v, BDS_Face *f){
   const double p[2] = {v->u,v->v};
   
@@ -723,4 +722,52 @@ void delaunayPointInsertionBDS ( GFace *gf, BDS_Mesh &m, BDS_Point *v, BDS_Face 
   m.split_face ( f , v );
   int nb_swap = 0;
   gmshDelaunayizeBDS ( gf, m, nb_swap );
+}
+
+// build the BDS from a list of GFace
+// This is a TRUE copy
+BDS_Mesh * gmsh2BDS ( std::list<GFace*> & l){
+  BDS_Mesh *m = new BDS_Mesh;
+  for (std::list<GFace*>::iterator it = l.begin();it!=l.end();++it){
+    GFace *gf = *it;
+    m->add_geom (gf->tag(), 2);
+    BDS_GeomEntity *g2 = m->get_geom(gf->tag(), 2);
+    for (int i=0;i<gf->triangles.size();i++){
+      MTriangle *e = gf->triangles[i];
+      BDS_Point *p[3];
+      for (int j=0;j<3;j++){
+	p[j] = m->find_point(e->getVertex(j)->getNum());
+	if (!p[j]) {
+	  p[j] = m->add_point(e->getVertex(j)->getNum(),e->getVertex(j)->x(),e->getVertex(j)->y(),e->getVertex(j)->z());
+	  double u0,v0;
+	  parametricCoordinates ( e->getVertex(j), gf, u0, v0);
+	  p[j]->u = u0;
+	  p[j]->v = v0;
+	  m->add_geom (e->getVertex(j)->onWhat()->tag(), e->getVertex(j)->onWhat()->dim());
+	  BDS_GeomEntity *g = m->get_geom(e->getVertex(j)->onWhat()->tag(), e->getVertex(j)->onWhat()->dim());
+	  p[j]->g = g;
+	}
+      }
+      BDS_Face *f = m->add_triangle ( p[0]->iD,p[1]->iD,p[2]->iD);
+      f->g = g2;
+    }
+  }
+  return m;
+}
+
+void gmshCollapseSmallEdges (GModel &gm){
+  return;
+  gm.renumberMeshVertices(true);
+  std::list<GFace*> faces;
+  for (GModel::fiter fit = gm.firstFace(); fit != gm.lastFace(); fit++){
+    faces.push_back(*fit);
+  }
+  BDS_Mesh *pm = gmsh2BDS (faces);
+  outputScalarField(pm->triangles,"all.pos",0);
+
+  
+  for (GModel::eiter eit = gm.firstEdge(); eit != gm.lastEdge(); eit++){
+  }
+  
+
 }

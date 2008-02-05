@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.211 2008-01-19 22:06:02 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.212 2008-02-05 14:40:30 remacle Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -440,7 +440,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
   }
 }
 
-static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalArray, 
+void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalArray, 
 		       int forceColor=0, unsigned int color=0)
 {
   if(!va) return;
