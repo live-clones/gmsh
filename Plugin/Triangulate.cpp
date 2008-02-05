@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.42 2008-02-05 19:02:39 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.43 2008-02-05 21:03:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -100,10 +100,10 @@ static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
   // project points onto plane
   std::vector<MVertex*> points;
   int nb = List_Nbr(inList) / nbIn;
-  for(int i = 0; i < List_Nbr(inList); i += nb)
-    points.push_back(new MVertex(*(double *)List_Pointer_Fast(inList, i),
-				 *(double *)List_Pointer_Fast(inList, i + 1),
-				 *(double *)List_Pointer_Fast(inList, i + 2)));
+  for(int i = 0; i < List_Nbr(inList); i += nb){
+    double *p = (double *)List_Pointer_Fast(inList, i);
+    points.push_back(new MVertex(p[0], p[1], p[2]));
+  }
   discreteFace *s = new discreteFace(GModel::current(), GModel::current()->numFace() + 1);
   s->computeMeanPlane(points);
   double plan[3][3];
@@ -116,10 +116,10 @@ static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
   for(unsigned int i = 0; i < points.size(); i++) bbox += points[i]->point();
   double lc = norm(SVector3(bbox.max(), bbox.min()));
 
-  // build a point record structure for the divide and conquer
+  // build a point record structure for the divide and conquer algorithm
   DocRecord doc;  
   doc.points = (PointRecord*)malloc(points.size() * sizeof(PointRecord));
-  for (unsigned int i = 0; i < points.size(); i++){
+  for(unsigned int i = 0; i < points.size(); i++){
     double XX = CTX.mesh.rand_factor * lc * (double)rand() / (double)RAND_MAX;
     double YY = CTX.mesh.rand_factor * lc * (double)rand() / (double)RAND_MAX;
     doc.points[i].where.h = points[i]->x() + XX;
@@ -130,7 +130,7 @@ static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
   }
 
   // triangulate
-  Make_Mesh_With_Points(&doc, doc.points, points.size());
+  Make_Mesh_With_Points(&doc, doc.points, nbIn);
 
   // create output (using unperturbed data)
   for(int i = 0; i < doc.numTriangles; i++){

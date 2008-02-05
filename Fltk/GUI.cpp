@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.651 2008-01-30 15:27:41 remacle Exp $
+// $Id: GUI.cpp,v 1.652 2008-02-05 21:03:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -290,7 +290,7 @@ Context_Item menu_mesh[] = {
   {"Second order", (Fl_Callback *)mesh_degree_cb, (void*)2 } , 
   {"Optimize", (Fl_Callback *)mesh_optimize_cb} , 
 #if defined(HAVE_NETGEN)
-  {"Optimize (netgen)", (Fl_Callback *)mesh_optimize_netgen_cb} , 
+  {"Optimize (Netgen)", (Fl_Callback *)mesh_optimize_netgen_cb} , 
 #endif
 #if defined(HAVE_FOURIER_MODEL)
   {"Reparameterize",   (Fl_Callback *)mesh_parameterize_cb} , 

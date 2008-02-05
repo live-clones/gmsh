@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.12 2008-01-22 19:54:04 geuzaine Exp $
+// $Id: DivideAndConquer.cpp,v 1.13 2008-02-05 21:03:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -539,7 +539,7 @@ int Conversion(DocPeek doc)
 
   n = doc->numPoints;
   striangle = (Striangle *) Malloc(n * sizeof(Striangle));
-  count2 = (int)CountPointsOnHull(n, doc->points);
+  count2 = CountPointsOnHull(n, doc->points);
 
   // nombre de triangles que l'on doit obtenir
   count2 = 2 * (n - 1) - count2;
