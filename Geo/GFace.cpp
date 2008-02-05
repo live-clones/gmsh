@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.45 2008-02-05 23:16:43 geuzaine Exp $
+// $Id: GFace.cpp,v 1.46 2008-02-05 23:34:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -548,10 +548,8 @@ struct graphics_point{
 
 bool GFace::buildSTLTriangulation()
 {
-  // Build a simple triangulation for surfaces we know are not
-  // trimmed. Do nothing by default for complex surfaces (we might
-  // want to change this is the future)
-
+  // Build a simple triangulation for surfaces which we know are not
+  // trimmed
   if(geomType() != ParametricSurface && geomType() != ProjectionFace)
     return false;
 
