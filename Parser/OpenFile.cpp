@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.170 2008-01-28 11:05:33 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.171 2008-02-05 21:45:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -98,33 +98,39 @@ static void FinishUpBoundingBox()
     range[i] = CTX.max[i] - CTX.min[i];
   }
 
-  if(range[0] == 0. && range[1] == 0. && range[2] == 0.) {
+  if(range[0] < CTX.geom.tolerance && 
+     range[1] < CTX.geom.tolerance && 
+     range[2] < CTX.geom.tolerance) {
     CTX.min[0] -= 1.; CTX.min[1] -= 1.;
     CTX.max[0] += 1.; CTX.max[1] += 1.;
     CTX.lc = 1.;
   }
-  else if(range[0] == 0. && range[1] == 0.) {
+  else if(range[0] < CTX.geom.tolerance && 
+	  range[1] < CTX.geom.tolerance) {
     CTX.lc = range[2];
     CTX.min[0] -= CTX.lc; CTX.min[1] -= CTX.lc;
     CTX.max[0] += CTX.lc; CTX.max[1] += CTX.lc;
+    printf("hello!\n");
   }
-  else if(range[0] == 0. && range[2] == 0.) {
+  else if(range[0] < CTX.geom.tolerance && 
+	  range[2] < CTX.geom.tolerance) {
     CTX.lc = range[1];
     CTX.min[0] -= CTX.lc; CTX.max[0] += CTX.lc;
   }
-  else if(range[1] == 0. && range[2] == 0.) {
+  else if(range[1] < CTX.geom.tolerance && 
+	  range[2] < CTX.geom.tolerance) {
     CTX.lc = range[0];
     CTX.min[1] -= CTX.lc; CTX.max[1] += CTX.lc;
   }
-  else if(range[0] == 0.) {
+  else if(range[0] < CTX.geom.tolerance) {
     CTX.lc = sqrt(DSQR(range[1]) + DSQR(range[2]));
     CTX.min[0] -= CTX.lc; CTX.max[0] += CTX.lc;
   }
-  else if(range[1] == 0.) {
+  else if(range[1] < CTX.geom.tolerance) {
     CTX.lc = sqrt(DSQR(range[0]) + DSQR(range[2]));
     CTX.min[1] -= CTX.lc; CTX.max[1] += CTX.lc;
   }
-  else if(range[2] == 0.) {
+  else if(range[2] < CTX.geom.tolerance) {
     CTX.lc = sqrt(DSQR(range[0]) + DSQR(range[1]));
   }
   else {
