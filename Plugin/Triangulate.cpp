@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.41 2008-02-05 18:58:04 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.42 2008-02-05 19:02:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,6 @@
 #include "Message.h"
 #include "MVertex.h"
 #include "Triangulate.h"
-#include "Malloc.h"
 #include "Context.h"
 
 extern Context_T CTX;
@@ -119,7 +118,7 @@ static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
 
   // build a point record structure for the divide and conquer
   DocRecord doc;  
-  doc.points =  (PointRecord*)malloc(points.size() * sizeof(PointRecord));
+  doc.points = (PointRecord*)malloc(points.size() * sizeof(PointRecord));
   for (unsigned int i = 0; i < points.size(); i++){
     double XX = CTX.mesh.rand_factor * lc * (double)rand() / (double)RAND_MAX;
     double YY = CTX.mesh.rand_factor * lc * (double)rand() / (double)RAND_MAX;

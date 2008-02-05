@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.148 2008-02-05 18:58:04 geuzaine Exp $
+dnl $Id: configure.in,v 1.149 2008-02-05 19:00:19 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 dnl
@@ -206,9 +206,9 @@ dnl Choose blackbox or GUI version
 if test "x$enable_gui" != "xno"; then
 
   GMSH_DIRS="${GMSH_DIRS} Graphics Fltk"
-  GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshMesh -lGmshGeo"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshPlugin -lGmshPost -lGmshCommon -lGmshDataStr -lGmshNumeric"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshParallel"
+  GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshPlugin"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshMesh -lGmshGeo -lGmshPost -lGmshCommon"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshDataStr -lGmshNumeric -lGmshParallel"
   FLAGS="-DHAVE_FLTK ${FLAGS}"
 
   if test "x${FLTK_PREFIX}" != "x" ; then
@@ -334,9 +334,9 @@ if test "x$enable_gui" != "xno"; then
 else
 
   GMSH_DIRS="${GMSH_DIRS} Box"
-  GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshMesh -lGmshGeo"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshPlugin -lGmshPost -lGmshCommon -lGmshDataStr"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshNumeric -lGmshParallel"
+  GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshPlugin"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshMesh -lGmshGeo -lGmshPost -lGmshCommon"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshDataStr -lGmshNumeric -lGmshParallel"
 
   dnl Check for libz
   ZLIB=""
