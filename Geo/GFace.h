@@ -20,7 +20,6 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <map>
 #include "GEntity.h"
 #include "GPoint.h"
 #include "GEdgeLoop.h"

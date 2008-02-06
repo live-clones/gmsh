@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.46 2008-02-05 23:34:02 geuzaine Exp $
+// $Id: GFace.cpp,v 1.47 2008-02-06 07:33:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -548,6 +548,9 @@ struct graphics_point{
 
 bool GFace::buildSTLTriangulation()
 {
+#if defined(HAVE_GMSH_EMBEDDED)
+  return false;
+#else
   // Build a simple triangulation for surfaces which we know are not
   // trimmed
   if(geomType() != ParametricSurface && geomType() != ProjectionFace)
@@ -597,4 +600,5 @@ bool GFace::buildSTLTriangulation()
   }
   va_geom_triangles->finalize();
   return true;
+#endif
 }

@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.171 2008-02-05 21:45:16 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.172 2008-02-06 07:33:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -110,7 +110,6 @@ static void FinishUpBoundingBox()
     CTX.lc = range[2];
     CTX.min[0] -= CTX.lc; CTX.min[1] -= CTX.lc;
     CTX.max[0] += CTX.lc; CTX.max[1] += CTX.lc;
-    printf("hello!\n");
   }
   else if(range[0] < CTX.geom.tolerance && 
 	  range[2] < CTX.geom.tolerance) {
