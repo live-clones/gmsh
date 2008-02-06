@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.464 2008-02-06 07:33:49 geuzaine Exp $
+# $Id: Makefile,v 1.465 2008-02-06 08:51:20 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -83,6 +83,7 @@ install-lib: lib
 	mkdir -p ${includedir}/gmsh
 	rm -f ${includedir}/gmsh/*
 	cp -f ${GMSH_API} ${includedir}/gmsh
+	mkdir -p ${libdir}
 	cp -f bin/libGmsh${LIBEXT} ${libdir}
 
 embed:

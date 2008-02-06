@@ -3,8 +3,8 @@
 # building instructions.
 
 # OS and host
-UNAME=VisualC++
-HOSTNAME=win
+UNAME=WIN32MSVC
+HOSTNAME=localhost
 
 # The names of the C and C++ compilers
 CC=cl
