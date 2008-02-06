@@ -17,7 +17,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
-// 
+//
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <algorithm>
@@ -34,7 +34,7 @@ class OCC_Internals;
 class smooth_normals;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
-class GModel  
+class GModel
 {
  private:
   void createGEOInternals();
@@ -60,19 +60,19 @@ class GModel
  public:
   GModel(std::string name="");
   virtual ~GModel();
-  
+
   // the static list of all loaded models
   static std::vector<GModel*> list;
   // returns the current model
   static GModel *current();
 
-  typedef std::set<GRegion*, GEntityLessThan>::const_iterator riter;
-  typedef std::set<GFace*, GEntityLessThan>::const_iterator fiter;
-  typedef std::set<GEdge*, GEntityLessThan>::const_iterator eiter;
-  typedef std::set<GVertex*, GEntityLessThan>::const_iterator viter;
-  typedef std::map<int, std::string>::const_iterator piter;
+  typedef std::set<GRegion*, GEntityLessThan>::iterator riter;
+  typedef std::set<GFace*, GEntityLessThan>::iterator fiter;
+  typedef std::set<GEdge*, GEntityLessThan>::iterator eiter;
+  typedef std::set<GVertex*, GEntityLessThan>::iterator viter;
+  typedef std::map<int, std::string>::iterator piter;
 
-  // Deletes everything in a GModel 
+  // Deletes everything in a GModel
   void destroy();
 
   // Returns the geometric tolerance for the entire model.
@@ -196,7 +196,7 @@ class GModel
 	       bool saveAll=false, double scalingFactor=1.0);
 
   // Mesh statistics (as Gmsh post-processing views)
-  int writePOS(const std::string &name, bool printElementary, 
+  int writePOS(const std::string &name, bool printElementary,
 	       bool printElementNumber, bool printGamma, bool printEta, bool printRho,
 	       bool saveAll=false, double scalingFactor=1.0);
 
@@ -207,17 +207,17 @@ class GModel
 
   // Inventor/VRML format
   int readVRML(const std::string &name);
-  int writeVRML(const std::string &name, 
+  int writeVRML(const std::string &name,
 		bool saveAll=false, double scalingFactor=1.0);
 
   // I-deas universal mesh format
   int readUNV(const std::string &name);
-  int writeUNV(const std::string &name, bool saveAll=false, 
+  int writeUNV(const std::string &name, bool saveAll=false,
 	       bool saveGroupsOfNodes=false, double scalingFactor=1.0);
 
   // Medit (INRIA) mesh format
   int readMESH(const std::string &name);
-  int writeMESH(const std::string &name, 
+  int writeMESH(const std::string &name,
 		bool saveAll=false, double scalingFactor=1.0);
 
   // Nastran Bulk Data File format
@@ -227,7 +227,7 @@ class GModel
 
   // Plot3D structured mesh format
   int readP3D(const std::string &name);
-  int writeP3D(const std::string &name, 
+  int writeP3D(const std::string &name,
 	       bool saveAll=false, double scalingFactor=1.0);
 
   // CFD General Notation System files
