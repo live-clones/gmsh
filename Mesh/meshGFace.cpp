@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.115 2008-02-05 14:40:30 remacle Exp $
+// $Id: meshGFace.cpp,v 1.116 2008-02-06 11:15:01 miegroet Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -16,7 +16,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
-// 
+//
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "meshGFace.h"
@@ -61,7 +61,7 @@ bool noseam (  GFace *gf  )
 {
   std::list<GEdge*> edges = gf->edges();
   std::list<GEdge*>::iterator it = edges.begin();
-  while (it != edges.end())   
+  while (it != edges.end())
    {
      GEdge *ge = *it ;
      bool seam = ge->isSeam(gf);
@@ -81,18 +81,18 @@ void remeshUnrecoveredEdges ( std::set<EdgeToRecover> & edgesNotRecovered, std::
   for ( ; itr != edgesNotRecovered.end() ; ++itr)
     {
       std::list<GFace*> l_faces = itr->ge->faces();
-      // Un-mesh model faces adjacent to the model edge 
+      // Un-mesh model faces adjacent to the model edge
       for ( std::list<GFace*>::iterator it = l_faces.begin() ;it != l_faces.end();++it)
 	{
 	  if ((*it)->triangles.size() ||(*it)->quadrangles.size())
 	    {
 	      facesToRemesh.push_back(*it);
 	      dem(*it);
-	    } 
+	    }
 	}
       //-----------------------------------------------------
 
-      
+
       // add a new point in the middle of the intersecting segment
       int p1 = itr->p1;
       int p2 = itr->p2;
@@ -100,7 +100,7 @@ void remeshUnrecoveredEdges ( std::set<EdgeToRecover> & edgesNotRecovered, std::
       GVertex * g1 = itr->ge->getBeginVertex();
       GVertex * g2 = itr->ge->getEndVertex();
       Range<double> bb = itr->ge->parBounds(0);
-  
+
       std::vector<MLine*> newLines;
 
       for (int i=0;i<N;i++){
@@ -111,8 +111,8 @@ void remeshUnrecoveredEdges ( std::set<EdgeToRecover> & edgesNotRecovered, std::
 	  {
 	    double t1;
 	    double lc1 = -1;
-	    if (v1->onWhat() == g1)t1 = bb.low();  
-	    else if (v1->onWhat() == g2)t1 = bb.high();  
+	    if (v1->onWhat() == g1)t1 = bb.low();
+	    else if (v1->onWhat() == g2)t1 = bb.high();
 	    else {
 	      MEdgeVertex * ev1 = (MEdgeVertex*) v1;
 	      lc1 = ev1->getLc();
@@ -121,8 +121,8 @@ void remeshUnrecoveredEdges ( std::set<EdgeToRecover> & edgesNotRecovered, std::
 
 	    double t2;
 	    double lc2= -1;
-	    if (v2->onWhat() == g1)t2 = bb.low();  
-	    else if (v2->onWhat() == g2)t2 = bb.high();  
+	    if (v2->onWhat() == g1)t2 = bb.low();
+	    else if (v2->onWhat() == g2)t2 = bb.high();
 	    else {
 	      MEdgeVertex * ev2 = (MEdgeVertex*) v2;
 	      lc2 = ev2->getLc();
@@ -134,7 +134,7 @@ void remeshUnrecoveredEdges ( std::set<EdgeToRecover> & edgesNotRecovered, std::
 		t1 = fabs(t2-bb.low()) < fabs(t2-bb.high()) ? bb.low() : bb.high();
 	    if (v2->onWhat() == g1 && v2->onWhat() == g2)
 		t2 = fabs(t1-bb.low()) < fabs(t1-bb.high()) ? bb.low() : bb.high();
-	    
+
 
 	    if (lc1 == -1)
 	      lc1 = BGM_MeshSize(v1->onWhat(),0,0,v1->x(),v1->y(),v1->z());
@@ -158,13 +158,13 @@ void remeshUnrecoveredEdges ( std::set<EdgeToRecover> & edgesNotRecovered, std::
       N = itr->ge->lines.size();
       for (int i=1;i<N;i++){
 	itr->ge->mesh_vertices.push_back(itr->ge->lines[i]->getVertex(0));
-      }            
+      }
     }
 }
 
 
 bool AlgoDelaunay2D ( GFace *gf )
-{ 
+{
   if ( noseam(gf) && /*gf->getNativeType() == GEntity::GmshModel &&*/ CTX.mesh.algo2d == ALGO_2D_DELAUNAY /*&& gf->geomType() == GEntity::Plane*/)
     return true;
   return false;
@@ -178,7 +178,7 @@ void computeEdgeLoops(const GFace *gf,
   std::list<int> ori = gf->orientations();
   std::list<GEdge*>::iterator it = edges.begin();
   std::list<int>::iterator ito = ori.begin();
-    
+
   indices.push_back(0);
   GVertex *start = ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
   GVertex *v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
@@ -189,9 +189,9 @@ void computeEdgeLoops(const GFace *gf,
   else
     for (int i=(*it)->mesh_vertices.size()-1;i>=0;i--)
       all_mvertices.push_back((*it)->mesh_vertices[i]);
-  
+
   GVertex *v_start = start;
-  while(1){		
+  while(1){
     ++it;
     ++ito;
     if(v_end == start){
@@ -201,7 +201,7 @@ void computeEdgeLoops(const GFace *gf,
       v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
       v_start = start;
     }
-    else{	
+    else{
       if(it == edges.end ()) throw;
       v_start = ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
       if(v_start != v_end) throw;
@@ -217,7 +217,7 @@ void computeEdgeLoops(const GFace *gf,
   }
 }
 
-void computeElementShapes(GFace *gf, double &worst, double &avg, double &best, 
+void computeElementShapes(GFace *gf, double &worst, double &avg, double &best,
 			  int &nT, int &greaterThan)
 {
   worst = 1.e22;
@@ -260,7 +260,7 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, std::
 	{
 	  BDS_Point *pstart = m->find_point(vstart->getNum());
 	  BDS_Point *pend   = m->find_point(vend->getNum());
-	  
+
 	  if(!pstart->g)
 	    {
 	      m->add_geom (vstart->getNum(), 0);
@@ -288,7 +288,7 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, std::
   MVertex *vend   = *(ge->mesh_vertices.begin());
 
   if (pass_ == 1)e2r->insert (EdgeToRecover (vstart->getNum(), vend->getNum(),ge));
-  else 
+  else
     {
       BDS_Point *pstart = m->find_point(vstart->getNum());
       if(!pstart->g)
@@ -319,7 +319,7 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, std::
 	    //	    return false;
 	  }
 	}
-    }    
+    }
   vstart = vend;
   vend   = *(ge->getEndVertex()->mesh_vertices.begin());
   if (pass_ == 1)e2r->insert (EdgeToRecover (vstart->getNum(), vend->getNum(),ge));
@@ -345,7 +345,7 @@ bool recover_medge ( BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, std::
 
 // Builds An initial triangular mesh
 // that respects the boundaries of the
-// domain, including embedded points 
+// domain, including embedded points
 // and surfaces
 
 bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
@@ -401,7 +401,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
     }
     else if(here->onWhat()->dim() == 0){
       GVertex *gv = (GVertex*)here->onWhat();
-      param = gv->reparamOnFace(gf,1);      
+      param = gv->reparamOnFace(gf,1);
     }
     else if(here->onWhat()->dim() == 1){
       GEdge *ge = (GEdge*)here->onWhat();
@@ -422,11 +422,11 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
     V_[count] = param.y();
     (*itv)->setNum(count);
     numbered_vertices[(*itv)->getNum()] = *itv;
-    bbox += SPoint3 ( param.x(), param.y() , 0);      
+    bbox += SPoint3 ( param.x(), param.y() , 0);
     count ++;
     ++itv;
   }
-  
+
   //fprintf(fdeb,"};\n");
   //fclose(fdeb);
 
@@ -458,7 +458,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
       doc.points[j].where.h = U_[j] + XX;
       doc.points[j].where.v = V_[j] + YY;
       doc.points[j].adjacent = NULL;
-      doc.points[j].data = here;      
+      doc.points[j].data = here;
       j++;
       ++itv;
     }
@@ -473,7 +473,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
   bb[1] = new MVertex ( bbox.min().x(), bbox.max().y(), 0,gf,-2);
   bb[2] = new MVertex ( bbox.max().x(), bbox.min().y(), 0,gf,-3);
   bb[3] = new MVertex ( bbox.max().x(), bbox.max().y(), 0,gf,-4);
-    
+
   for ( int ip = 0 ; ip<4 ; ip++ )
     {
       doc.points[all_vertices.size()+ip].where.h  = bb[ip]->x();
@@ -484,7 +484,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
 
   /// Use "fast" inhouse recursive algo to generate the triangulation
   /// At this stage the triangulation is not what we need
-  ///   -) It does not necessary recover the boundaries 
+  ///   -) It does not necessary recover the boundaries
   ///   -) It contains triangles outside the domain (the first edge loop is the outer one)
   Msg(DEBUG1,"Meshing of the convex hull (%d points)",all_vertices.size());
   Make_Mesh_With_Points(&doc,doc.points,all_vertices.size()+4);
@@ -495,7 +495,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
   m->scalingU = 1;
   m->scalingV = 1;
 
-  for(int i = 0; i < doc.numPoints; i++) 
+  for(int i = 0; i < doc.numPoints; i++)
     {
       MVertex *here = (MVertex *)doc.points[i].data;
       int num = here->getNum();
@@ -509,7 +509,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
 
       // JFR : the fix was WRONG, I fixed the fix ;-)
 
-      if(num< 0){ // fake bbox points 
+      if(num< 0){ // fake bbox points
 	U = bb[-1-num]->x();
 	V = bb[-1-num]->y();
       }
@@ -520,8 +520,8 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
       }
 
       BDS_Point *pp = m->add_point ( num, U,V, gf);
-      
-      GEntity *ge       = here->onWhat();    
+
+      GEntity *ge       = here->onWhat();
       if(ge->dim() == 0)
 	{
 	  pp->lcBGM() = BGM_MeshSize(ge,0,0,here->x(),here->y(),here->z());
@@ -529,20 +529,20 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
       else if(ge->dim() == 1)
 	{
 	 double u;
-	 here->getParameter(0,u);	  
+	 here->getParameter(0,u);
 	 pp->lcBGM() = BGM_MeshSize(ge,u,0,here->x(),here->y(),here->z());
 	  //	  MEdgeVertex *eve = (MEdgeVertex*) here;
 	  //	  pp->lcBGM() = eve->getLc();
 	}
       else
 	  pp->lcBGM() = 1.e22;
-	
+
       pp->lc() = pp->lcBGM();
       //      printf("dim %d lc = %12.5E\n",ge->dim(),pp->lc());
 
 
     }
-  
+
   Msg(DEBUG1,"Meshing of the convex hull (%d points) done",all_vertices.size());
 
   for(int i = 0; i < doc.numTriangles; i++) {
@@ -550,7 +550,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
     MVertex *V2 = (MVertex*)doc.points[doc.delaunay[i].t.b].data;
     MVertex *V3 = (MVertex*)doc.points[doc.delaunay[i].t.c].data;
     m->add_triangle ( V1->getNum(), V2->getNum(), V3->getNum() );
-  }      
+  }
   free (doc.points);
   free (doc.delaunay);
   for ( int ip = 0 ; ip<4 ; ip++ ) delete bb[ip];
@@ -574,9 +574,9 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
       sprintf(name,"surface%d-initial-param.pos",gf->tag());
       outputScalarField(m->triangles, name,1);
     }
-    
+
   Msg(DEBUG1,"Recovering %d model Edges",edges.size());
-  
+
   // build a structure with all mesh edges that have to be
   // recovered. If two of these edges intersect, then the
   // 1D mesh have to be densified
@@ -593,7 +593,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
   it = emb_edges.begin();
   while(it != emb_edges.end())
     {
-      recover_medge ( m, *it, &edgesToRecover, &edgesNotRecovered, 1);      
+      recover_medge ( m, *it, &edgesToRecover, &edgesNotRecovered, 1);
       ++it;
     }
 
@@ -605,7 +605,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
   while(it != edges.end())
     {
       if(!(*it)->isMeshDegenerated()){
-	recover_medge(m, *it, &edgesToRecover, &edgesNotRecovered, 2);	
+	recover_medge(m, *it, &edgesToRecover, &edgesNotRecovered, 2);
       }
       ++it;
     }
@@ -630,7 +630,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
     delete [] U_;
     delete [] V_;
     if (RECUR_ITER < 10 && facesToRemesh.size() == 0)
-      return gmsh2DMeshGenerator (gf, RECUR_ITER+1, debug);    
+      return gmsh2DMeshGenerator (gf, RECUR_ITER+1, debug);
     return false;
   }
   if (RECUR_ITER > 0)
@@ -639,7 +639,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
   //  Msg(INFO,"Boundary Edges recovered for surface %d",gf->tag());
   // Look for an edge that is on the boundary for which one of the
   // two neighbors has a negative number node. The other triangle
-  // is inside the domain and, because all edges were recovered, 
+  // is inside the domain and, because all edges were recovered,
   // triangles inside the domain can be recovered using a  simple
   // recursive algorithm
   {
@@ -651,14 +651,14 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
 	  {
 	    BDS_Point *oface[2];
 	    e->oppositeof(oface);
-	    if (oface[0]->iD < 0) 
+	    if (oface[0]->iD < 0)
 	      {
-		recur_tag ( e->faces(1) , &CLASS_F); 
+		recur_tag ( e->faces(1) , &CLASS_F);
 		break;
 	      }
-	    else if (oface[1]->iD < 0) 
+	    else if (oface[1]->iD < 0)
 	      {
-		recur_tag ( e->faces(0) , &CLASS_F); 
+		recur_tag ( e->faces(0) , &CLASS_F);
 		break;
 	      }
 	  }
@@ -696,7 +696,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
 	if (e->numfaces() == 0)
 	  m->del_edge(e);
 	else
-	  { 
+	  {
 	    if (!e->g)
 	      e->g = &CLASS_F;
 	    if (!e->p1->g || e->p1->g->classif_degree > e->g->classif_degree)e->p1->g = e->g;
@@ -722,7 +722,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
       outputScalarField(m->triangles, name,1);
     }
 
-  int nb_swap; 
+  int nb_swap;
   //  outputScalarField(m->triangles, "beforeswop.pos",1);
 
   gmshDelaunayizeBDS ( gf, *m, nb_swap );
@@ -754,7 +754,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
 
   gf->meshStatistics.status = GFace::DONE;
   {
-    std::set<BDS_Point*,PointLessThan>::iterator itp =  m->points.begin(); 
+    std::set<BDS_Point*,PointLessThan>::iterator itp =  m->points.begin();
     while (itp != m->points.end())
       {
 	BDS_Point *p = *itp;
@@ -781,11 +781,11 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
 	    MVertex *v2 = numbered_vertices[n[1]->iD];
 	    MVertex *v3 = numbered_vertices[n[2]->iD];
 	    if (!n[3])
-	      gf->triangles.push_back(new MTriangle (v1,v2,v3) );	
+	      gf->triangles.push_back(new MTriangle (v1,v2,v3) );
 	    else
 	      {
 		MVertex *v4 = numbered_vertices[n[3]->iD];
-		gf->quadrangles.push_back(new MQuadrangle (v1,v2,v3,v4) );	
+		gf->quadrangles.push_back(new MQuadrangle (v1,v2,v3,v4) );
 	      }
 	  }
 	++itt;
@@ -821,7 +821,7 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
 
 }
 
-// this function buils a list of vertices (BDS) that 
+// this function buils a list of vertices (BDS) that
 // are consecutive in one given edge loop. We take
 // care of periodic surfaces. In the case of periodicty, some
 // curves are present 2 times in the wire (seams). Those
@@ -829,29 +829,29 @@ bool gmsh2DMeshGenerator ( GFace *gf , int RECUR_ITER, bool debug = true)
 
 inline double dist2 (const SPoint2 &p1,const SPoint2 &p2)
 {
-  const double dx = p1.x() - p2.x(); 
-  const double dy = p1.y() - p2.y(); 
+  const double dx = p1.x() - p2.x();
+  const double dy = p1.y() - p2.y();
   return dx*dx+dy*dy;
 }
 
 // bool buildConsecutiveListOfVertices_b (  GFace *gf,
-// 					 GEdgeLoop  &gel , 
+// 					 GEdgeLoop  &gel ,
 // 					 std::vector<BDS_Point*> &result,
 // 					 SBoundingBox3d &bbox,
 // 					 BDS_Mesh *m,
-// 					 std::map<BDS_Point*,MVertex*> &recover_map, 
+// 					 std::map<BDS_Point*,MVertex*> &recover_map,
 // 					 int &count, double tol){
 //   std::map<GEntity*,std::vector<SPoint2> > meshes;
-//   std::map<GEntity*,std::vector<SPoint2> > meshes_seam;  
+//   std::map<GEntity*,std::vector<SPoint2> > meshes_seam;
 
 //   result.clear();
-  
-//   GEdgeLoop::iter it  = gel.begin();  
 
-//   while (it != gel.end())   
+//   GEdgeLoop::iter it  = gel.begin();
+
+//   while (it != gel.end())
 //    {
 //      // I get the signed edge
-//      GEdgeSigned ges = *it ;      
+//      GEdgeSigned ges = *it ;
 //      std::vector<SPoint2> mesh1d;
 //      // I look if it is a seam
 //      bool seam = ges.ge->isSeam(gf);
@@ -885,42 +885,42 @@ static void printMesh1d (int iEdge, int seam, std::vector<SPoint2> &m){
 }
 
 bool buildConsecutiveListOfVertices (  GFace *gf,
-				       GEdgeLoop  &gel , 
+				       GEdgeLoop  &gel ,
 				       std::vector<BDS_Point*> &result,
 				       SBoundingBox3d &bbox,
 				       BDS_Mesh *m,
-				       std::map<BDS_Point*,MVertex*> &recover_map_global, 
+				       std::map<BDS_Point*,MVertex*> &recover_map_global,
 				       int &count, int countTot, double tol, bool seam_the_first = false)
 {
 
-  // for each edge, we build a list of points that 
+  // for each edge, we build a list of points that
   // are the mapping of the edge points on the face
   // for seams, we build the list for every side
   // for closed loops, we build it on both senses
 
   std::map<GEntity*,std::vector<SPoint2> > meshes;
-  std::map<GEntity*,std::vector<SPoint2> > meshes_seam;  
+  std::map<GEntity*,std::vector<SPoint2> > meshes_seam;
 
-  const int _DEBUG = false;
+  const int MYDEBUG = false;
 
-  std::map<BDS_Point*,MVertex*> recover_map; 
+  std::map<BDS_Point*,MVertex*> recover_map;
 
   result.clear();
   count = 0;
-  
-  GEdgeLoop::iter it  = gel.begin();  
 
-  if (_DEBUG)printf("face %d with %d edges case %d\n",gf->tag(), (int)gf->edges().size(),seam_the_first);
+  GEdgeLoop::iter it  = gel.begin();
 
-  while (it != gel.end())   
+  if (MYDEBUG)printf("face %d with %d edges case %d\n",gf->tag(), (int)gf->edges().size(),seam_the_first);
+
+  while (it != gel.end())
    {
      GEdgeSigned ges = *it ;
-      
+
      std::vector<SPoint2> mesh1d;
      std::vector<SPoint2> mesh1d_seam;
 
      bool seam = ges.ge->isSeam(gf);
-     
+
      Range<double> range = ges.ge->parBounds(0);
 
      MVertex *here = ges.ge->getBeginVertex()->mesh_vertices[0];
@@ -938,7 +938,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
      mesh1d.push_back(ges.ge->reparamOnFace(gf,range.high(),1));
      if ( seam ) mesh1d_seam.push_back(ges.ge->reparamOnFace(gf,range.high(),-1));
      meshes.insert(std::pair<GEntity*,std::vector<SPoint2> > (ges.ge,mesh1d) );
-     if(seam)meshes_seam.insert(std::pair<GEntity*,std::vector<SPoint2> > (ges.ge,mesh1d_seam) );     
+     if(seam)meshes_seam.insert(std::pair<GEntity*,std::vector<SPoint2> > (ges.ge,mesh1d_seam) );
 
      //     printMesh1d (ges.ge->tag(), seam, mesh1d);
      //     if (seam)printMesh1d (ges.ge->tag(), seam, mesh1d_seam);
@@ -949,19 +949,19 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 
   std::list<GEdgeSigned> unordered;
   unordered.insert(unordered.begin(),gel.begin(),gel.end());
-  
+
   GEdgeSigned found(0,0);
 
-  SPoint2 last_coord(0,0);  
+  SPoint2 last_coord(0,0);
   int counter = 0;
 
   while (unordered.size())
    {
-     if (_DEBUG)printf("unordered.size() = %d\n",unordered.size());
-     std::list<GEdgeSigned>::iterator it = unordered.begin();     
+     if (MYDEBUG)printf("unordered.size() = %d\n",unordered.size());
+     std::list<GEdgeSigned>::iterator it = unordered.begin();
      std::vector<SPoint2>  coords;
 
-     while (it != unordered.end())   
+     while (it != unordered.end())
        {
 	 std::vector<SPoint2>  mesh1d;
 	 std::vector<SPoint2>  mesh1d_seam;
@@ -977,28 +977,28 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	   {
 	     counter++;
 	     if (seam && seam_the_first){
-	       coords = ((*it)._sign == 1)?mesh1d_seam:mesh1d_seam_reversed;	 
+	       coords = ((*it)._sign == 1)?mesh1d_seam:mesh1d_seam_reversed;
 	       found = (*it);
 	       Msg(INFO,"This test case would have failed in Previous Gmsh Version ;-)");
 	     }
 	     else{
-	       coords = ((*it)._sign == 1)?mesh1d:mesh1d_reversed;	 
+	       coords = ((*it)._sign == 1)?mesh1d:mesh1d_reversed;
 	       found = (*it);
 	     }
 	     unordered.erase(it);
-	     if (_DEBUG)printf("Starting with edge = %d seam %d\n",(*it).ge->tag(),seam);
+	     if (MYDEBUG)printf("Starting with edge = %d seam %d\n",(*it).ge->tag(),seam);
 	     break;
 	   }
 	 else
 	   {
-	     if (_DEBUG)printf("Followed by edge = %d\n",(*it).ge->tag());
+	     if (MYDEBUG)printf("Followed by edge = %d\n",(*it).ge->tag());
 	     SPoint2 first_coord         = mesh1d[0];
 	     double d=-1,d_reversed=-1,d_seam=-1,d_seam_reversed=-1;
 	     d = dist2(last_coord,first_coord);
-	     if (_DEBUG)printf("%g %g dist = %12.5E\n",first_coord.x(),first_coord.y(),d);
-	     if (d < tol) 
+	     if (MYDEBUG)printf("%g %g dist = %12.5E\n",first_coord.x(),first_coord.y(),d);
+	     if (d < tol)
 	       {
-		 //		 if (_DEBUG)printf("d = %12.5E %d\n",d, (int)coords.size());
+		 //		 if (MYDEBUG)printf("d = %12.5E %d\n",d, (int)coords.size());
 		 coords.clear();
 		 coords = mesh1d;
 		 found = GEdgeSigned(1,ge);
@@ -1007,10 +1007,10 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	       }
 	     SPoint2 first_coord_reversed = mesh1d_reversed[0];
 	     d_reversed = dist2(last_coord,first_coord_reversed);
-	     if (_DEBUG)printf("%g %g dist_reversed = %12.5E\n",first_coord_reversed.x(),first_coord_reversed.y(),d_reversed);
-	     if (d_reversed < tol) 
+	     if (MYDEBUG)printf("%g %g dist_reversed = %12.5E\n",first_coord_reversed.x(),first_coord_reversed.y(),d_reversed);
+	     if (d_reversed < tol)
 	       {
-		 //		 if (_DEBUG)printf("d_r = %12.5E\n",d_reversed);
+		 //		 if (MYDEBUG)printf("d_r = %12.5E\n",d_reversed);
 		 coords.clear();
 		 coords = mesh1d_reversed;
 		 found = (GEdgeSigned(-1,ge));
@@ -1022,7 +1022,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 		 SPoint2 first_coord_seam         = mesh1d_seam[0];
 		 SPoint2 first_coord_seam_reversed = mesh1d_seam_reversed[0];
 		 d_seam = dist2(last_coord,first_coord_seam);
-		 if (_DEBUG)printf("dist_seam = %12.5E\n",d_seam);
+		 if (MYDEBUG)printf("dist_seam = %12.5E\n",d_seam);
 		 if (d_seam < tol)
 		   {
 		     coords.clear();
@@ -1032,7 +1032,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 		     goto Finalize;
 		   }
 		 d_seam_reversed = dist2(last_coord,first_coord_seam_reversed);
-		 if (_DEBUG)printf("dist_seam_reversed = %12.5E\n",d_seam_reversed);
+		 if (MYDEBUG)printf("dist_seam_reversed = %12.5E\n",d_seam_reversed);
 		 if (d_seam_reversed < tol)
 		   {
 		     coords.clear();
@@ -1048,18 +1048,18 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
        }
    Finalize:
 
-     if (_DEBUG)printf("Finalize, found %d points\n",coords.size());
+     if (MYDEBUG)printf("Finalize, found %d points\n",coords.size());
      if (coords.size() == 0){
        // It has not worked : either tolerance is wrong or the first seam edge
        // has to be taken with the other parametric coordinates (because it is
-       // only present once in the closure of the domain). 
+       // only present once in the closure of the domain).
        for (std::map<BDS_Point*,MVertex*> :: iterator it = recover_map.begin();
 	    it != recover_map.end(); ++it){
 	 m->del_point(it->first);
        }
        return false;
      }
-     
+
      std::vector<MVertex*>    edgeLoop;
      if ( found._sign == 1)
        {
@@ -1070,21 +1070,21 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
      else
        {
 	 edgeLoop.push_back(found.ge->getEndVertex()->mesh_vertices[0]);
-	 for (int i=found.ge->mesh_vertices.size()-1;i>=0;i--)	    
+	 for (int i=found.ge->mesh_vertices.size()-1;i>=0;i--)
 	   edgeLoop.push_back(found.ge->mesh_vertices[i]);
        }
-     
-     if (_DEBUG)printf("edge %d size %d size %d\n",found.ge->tag(), (int)edgeLoop.size(), (int)coords.size());
-     
+
+     if (MYDEBUG)printf("edge %d size %d size %d\n",found.ge->tag(), (int)edgeLoop.size(), (int)coords.size());
+
      std::vector<BDS_Point*>  edgeLoop_BDS;
-     for (unsigned int i=0;i<edgeLoop.size();i++)	    
+     for (unsigned int i=0;i<edgeLoop.size();i++)
        {
 	 MVertex *here     = edgeLoop[i];
-	 GEntity *ge       = here->onWhat();    
+	 GEntity *ge       = here->onWhat();
 	 double U,V;
 	 SPoint2 param = coords [i];
 	 U = param.x() / m->scalingU ;
-	 V = param.y() / m->scalingV;	
+	 V = param.y() / m->scalingV;
 	 BDS_Point *pp = m->add_point ( count+countTot, U,V,gf );
  	 if(ge->dim() == 0)
  	   {
@@ -1093,7 +1093,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
  	 else if (ge->dim() == 1)
  	   {
 	     double u;
-	     here->getParameter(0,u);	  
+	     here->getParameter(0,u);
 	     pp->lcBGM() = BGM_MeshSize(ge,u,0,here->x(),here->y(),here->z());
 // 	     MEdgeVertex *eve = (MEdgeVertex*) here;
 // 	     // 	     pp->lc() = BGM_MeshSize(ge,param.x(),param.y(),here->x(),here->y(),here->z());
@@ -1109,15 +1109,15 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	 m->add_geom (ge->tag(), ge->dim());
 	 BDS_GeomEntity *g = m->get_geom(ge->tag(),ge->dim());
 	 pp->g = g;
-	 if (_DEBUG)printf("point %3d (%8.5f %8.5f : %8.5f %8.5f) (%2d,%2d)\n",count,pp->u,pp->v,param.x(),param.y(),pp->g->classif_tag,pp->g->classif_degree);
-	 bbox += SPoint3(U,V,0);	  
+	 if (MYDEBUG)printf("point %3d (%8.5f %8.5f : %8.5f %8.5f) (%2d,%2d)\n",count,pp->u,pp->v,param.x(),param.y(),pp->g->classif_tag,pp->g->classif_degree);
+	 bbox += SPoint3(U,V,0);
 	 edgeLoop_BDS.push_back(pp);
-	 recover_map[pp] = here;	 
+	 recover_map[pp] = here;
 	 count++;
-       }     
+       }
      last_coord = coords[coords.size()-1];
-     if (_DEBUG)printf("last coord %g %g\n",last_coord.x(),last_coord.y());
-     result.insert(result.end(),edgeLoop_BDS.begin(),edgeLoop_BDS.end());	         
+     if (MYDEBUG)printf("last coord %g %g\n",last_coord.x(),last_coord.y());
+     result.insert(result.end(),edgeLoop_BDS.begin(),edgeLoop_BDS.end());
 //    for (unsigned int i=0;i<result.size();i++)
 //      {
 //        printf("point %3d (%8.5f %8.5f) (%2d,%2d)\n",i,result[i]->u,result[i]->v,result[i]->g->classif_tag,result[i]->g->classif_degree);
@@ -1147,15 +1147,15 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
 
   Range<double> rangeU = gf->parBounds(0);
   Range<double> rangeV = gf->parBounds(1);
-  
+
   double du = rangeU.high() -rangeU.low();
   double dv = rangeV.high() -rangeV.low();
-  
-  const double LC2D = sqrt ( du*du + dv*dv ); 
+
+  const double LC2D = sqrt ( du*du + dv*dv );
 
   //  printf("LC2D %g du %g (%g %g) dv %g\n",LC2D,du,rangeU.high(),rangeU.low(),dv);
 
-  // Buid a BDS_Mesh structure that is convenient for doing the actual meshing procedure    
+  // Buid a BDS_Mesh structure that is convenient for doing the actual meshing procedure
   BDS_Mesh *m = new BDS_Mesh;
   m->scalingU = fabs(du);
   m->scalingV = fabs(dv);
@@ -1184,7 +1184,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
   }
 
   // build a point record structure to create the initial mesh
-  DocRecord doc;  
+  DocRecord doc;
   doc.points =  (PointRecord*)malloc((nbPointsTotal+4) * sizeof(PointRecord));
   int count = 0;
   for (unsigned int i=0;i<edgeLoops_BDS.size();i++)
@@ -1202,8 +1202,8 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
 	  doc.points[count].where.h = U + XX;
 	  doc.points[count].where.v = V + YY;
 	  doc.points[count].adjacent = NULL;
-	  doc.points[count].data = pp; 
-	  count++;	  
+	  doc.points[count].data = pp;
+	  count++;
 	}
     }
   /// Increase the size of the bounding box by 20 %
@@ -1216,7 +1216,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
   bb[1] = new MVertex ( bbox.min().x(), bbox.max().y(), 0,0,-2);
   bb[2] = new MVertex ( bbox.max().x(), bbox.min().y(), 0,0,-3);
   bb[3] = new MVertex ( bbox.max().x(), bbox.max().y(), 0,0,-4);
-  
+
   for ( int ip = 0 ; ip<4 ; ip++ )
     {
       BDS_Point *pp = m->add_point ( -ip-1, bb[ip]->x(),bb[ip]->y(), gf);
@@ -1230,20 +1230,20 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
     }
 
   for ( int ip = 0 ; ip<4 ; ip++ ) delete bb[ip];
-  
+
   /// Use "fast" inhouse recursive algo to generate the triangulation
   /// At this stage the triangulation is not what we need
-  ///   -) It does not necessary recover the boundaries 
+  ///   -) It does not necessary recover the boundaries
   ///   -) It contains triangles outside the domain (the first edge loop is the outer one)
   Msg(DEBUG1,"Meshing of the convex hull (%d points)",nbPointsTotal);
   Make_Mesh_With_Points(&doc,doc.points,nbPointsTotal+4);
-  for(int i = 0; i < doc.numTriangles; i++) 
+  for(int i = 0; i < doc.numTriangles; i++)
     {
       BDS_Point *p1 = (BDS_Point*)doc.points[doc.delaunay[i].t.a].data;
       BDS_Point *p2 = (BDS_Point*)doc.points[doc.delaunay[i].t.b].data;
       BDS_Point *p3 = (BDS_Point*)doc.points[doc.delaunay[i].t.c].data;
       m->add_triangle ( p1->iD,p2->iD,p3->iD);
-    }  
+    }
   // Free stuff
   free (doc.points);
   free (doc.delaunay);
@@ -1251,7 +1251,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
 
   // Recover the boundary edges
   // and compute characteristic lenghts using mesh edge spacing
-    
+
   BDS_GeomEntity CLASS_F (1,2);
   BDS_GeomEntity CLASS_E (1,1);
 
@@ -1279,7 +1279,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
   for (unsigned int i=0;i<edgeLoops_BDS.size();i++){
       std::vector<BDS_Point*> &edgeLoop_BDS = edgeLoops_BDS[i];
       for (unsigned int j=0;j<edgeLoop_BDS.size();j++){
-	BDS_Edge * e = m->recover_edge ( edgeLoop_BDS[j]->iD,edgeLoop_BDS[(j+1)%edgeLoop_BDS.size()]->iD);	  
+	BDS_Edge * e = m->recover_edge ( edgeLoop_BDS[j]->iD,edgeLoop_BDS[(j+1)%edgeLoop_BDS.size()]->iD);
 	if (!e){
 	  Msg(GERROR,"impossible to recover the edge %d %d",edgeLoop_BDS[j]->iD,edgeLoop_BDS[(j+1)%edgeLoop_BDS.size()]->iD);
 	  gf->meshStatistics.status = GFace::FAILED;
@@ -1287,12 +1287,12 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
 	}
 	else e->g = &CLASS_E;
       }
-  }	  
-  
+  }
+
   //  Msg(INFO,"Boundary Edges recovered for surface %d",gf->tag());
   // Look for an edge that is on the boundary for which one of the
   // two neighbors has a negative number node. The other triangle
-  // is inside the domain and, because all edges were recovered, 
+  // is inside the domain and, because all edges were recovered,
   // triangles inside the domain can be recovered using a  simple
   // recursive algorithm
   {
@@ -1303,11 +1303,11 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
 	BDS_Point *oface[2];
 	e->oppositeof(oface);
 	if (oface[0]->iD < 0){
-	  recur_tag ( e->faces(1) , &CLASS_F); 
+	  recur_tag ( e->faces(1) , &CLASS_F);
 	  break;
 	}
 	else if (oface[1]->iD < 0){
-	  recur_tag ( e->faces(0) , &CLASS_F); 
+	  recur_tag ( e->faces(0) , &CLASS_F);
 	  break;
 	}
       }
@@ -1337,7 +1337,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
 	if (e->numfaces() == 0)
 	  m->del_edge(e);
 	else
-	  { 
+	  {
 	    if (!e->g)
 	      e->g = &CLASS_F;
 	    if (!e->p1->g || e->p1->g->classif_degree > e->g->classif_degree)e->p1->g = e->g;
@@ -1351,7 +1351,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
   m->del_point(m->find_point(-2));
   m->del_point(m->find_point(-3));
   m->del_point(m->find_point(-4));
-    
+
 
   if (debug)
     {
@@ -1364,7 +1364,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
 
   // goto hhh;
   // start mesh generation
-  
+
   if (!AlgoDelaunay2D ( gf ))
     {
       gmshRefineMeshBDS (gf,*m,CTX.mesh.refine_steps,true);
@@ -1380,11 +1380,11 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
       computeMeshSizeFieldAccuracy (gf,*m, gf->meshStatistics.efficiency_index,gf->meshStatistics.longest_edge_length,gf->meshStatistics.smallest_edge_length,gf->meshStatistics.nbEdge,gf->meshStatistics.nbGoodLength);
       gf->meshStatistics.status = GFace::DONE;
     }
-   
+
 
   // fill the small gmsh structures
   {
-    std::set<BDS_Point*,PointLessThan>::iterator itp =  m->points.begin(); 
+    std::set<BDS_Point*,PointLessThan>::iterator itp =  m->points.begin();
     while (itp != m->points.end())
       {
 	BDS_Point *p = *itp;
@@ -1397,7 +1397,7 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
 	++itp;
       }
   }
-  
+
   {
     std::list<BDS_Face*>::iterator itt = m->triangles.begin();
     while (itt != m->triangles.end())
@@ -1413,21 +1413,21 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
 	    if (!n[3])
 	      {
 		// when a singular point is present, degenerated triangles may be created,
-		// for example on a sphere that contains one pole 
+		// for example on a sphere that contains one pole
 		if (v1 != v2 && v1 != v3 && v2 != v3)
-		  gf->triangles.push_back(new MTriangle (v1,v2,v3) );	
+		  gf->triangles.push_back(new MTriangle (v1,v2,v3) );
 	      }
 	    else
 	      {
 		MVertex *v4 = recover_map[n[3]];
-		gf->quadrangles.push_back(new MQuadrangle (v1,v2,v3,v4) );	
+		gf->quadrangles.push_back(new MQuadrangle (v1,v2,v3,v4) );
 	      }
 	  }
 	++itt;
       }
   }
-  
-  
+
+
   // delete the mesh
   if (debug)
     {
@@ -1443,13 +1443,13 @@ bool gmsh2DMeshGeneratorPeriodic ( GFace *gf , bool debug = true)
        insertVerticesInFace (gf,m) ;
        laplaceSmoothing (gf);
      }
- 
-  delete m; 
+
+  delete m;
   computeElementShapes (gf, gf->meshStatistics.worst_element_shape,gf->meshStatistics.average_element_shape,gf->meshStatistics.best_element_shape,gf->meshStatistics.nbTriangle,gf->meshStatistics.nbGoodQuality);
   return true;
 }
 
-void deMeshGFace::operator() (GFace *gf) 
+void deMeshGFace::operator() (GFace *gf)
 {
   if(gf->geomType() == GEntity::DiscreteSurface) return;
 
@@ -1467,8 +1467,8 @@ void deMeshGFace::operator() (GFace *gf)
 
 }
 
-void meshGFace::operator() (GFace *gf) 
-{  
+void meshGFace::operator() (GFace *gf)
+{
   if(gf->geomType() == GEntity::DiscreteSurface) return;
   if(gf->geomType() == GEntity::BoundaryLayerSurface) return;
   if(gf->geomType() == GEntity::ProjectionFace) return;
@@ -1482,21 +1482,21 @@ void meshGFace::operator() (GFace *gf)
 
   char *algo = "Unknown";
   switch(CTX.mesh.algo2d){
-  case ALGO_2D_MESHADAPT: 
+  case ALGO_2D_MESHADAPT:
     algo = "MeshAdapt";
     break;
-  case ALGO_2D_DELAUNAY: 
+  case ALGO_2D_DELAUNAY:
     // FIXME: Delaunay not available in all cases at the moment
     if(AlgoDelaunay2D(gf))
       algo = "Delaunay";
     else
       algo = "MeshAdapt+Delaunay";
     break;
-  case ALGO_2D_MESHADAPT_DELAUNAY: 
-    algo = "MeshAdapt+Delaunay"; 
+  case ALGO_2D_MESHADAPT_DELAUNAY:
+    algo = "MeshAdapt+Delaunay";
     break;
   }
-  
+
   Msg(STATUS2, "Meshing surface %d (%s, %s)", gf->tag(),
       gf->getTypeString().c_str(), algo);
 
@@ -1522,10 +1522,10 @@ void meshGFace::operator() (GFace *gf)
     }
   else
     gf->meshStatistics.status = GFace::DONE;
-  
+
   Msg(DEBUG1, "type %d %d triangles generated, %d internal vertices",
       gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
-}  
+}
 
 template<class T>
 bool shouldRevert(MEdge &reference, std::vector<T*> &elements)
@@ -1537,7 +1537,7 @@ bool shouldRevert(MEdge &reference, std::vector<T*> &elements)
 	 e.getVertex(1) == reference.getVertex(1)){
 	return false;
       }
-      else if(e.getVertex(1) == reference.getVertex(0) && 
+      else if(e.getVertex(1) == reference.getVertex(0) &&
 	      e.getVertex(0) == reference.getVertex(1)){
 	return true;
       }
