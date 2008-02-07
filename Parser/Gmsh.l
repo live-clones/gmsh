@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.97 2008-01-22 17:02:22 geuzaine Exp $
+// $Id: Gmsh.l,v 1.98 2008-02-07 13:17:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -203,6 +203,7 @@ Ruled                   return tRuled;
 Rand                    return tRand;
 Return                  return tReturn;
 
+Smoother                return tSmoother;
 Sqrt                    return tSqrt;
 Sin                     return tSin;
 Sinh                    return tSinh;

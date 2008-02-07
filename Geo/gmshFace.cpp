@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.45 2008-01-21 23:28:53 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.46 2008-02-07 13:17:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -105,6 +105,7 @@ void gmshFace::resetMeshAttributes()
   meshAttributes.extrude = s->Extrude;
   if(meshAttributes.Method == TRANSFINI){
     meshAttributes.transfiniteArrangement = s->Recombine_Dir;
+    meshAttributes.transfiniteSmoothing = s->TransfiniteSmoothing;
     meshAttributes.corners.clear();
     for(int i = 0; i < List_Nbr(s->TrsfPoints); i++){
       Vertex *corn;

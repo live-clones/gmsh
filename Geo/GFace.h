@@ -156,7 +156,7 @@ class GFace : public GEntity
   virtual void resetMeshAttributes();
 
   struct {
-    // do we recombine the triangles of the mesh ?
+    // do we recombine the triangles of the mesh?
     int recombine;
     // what is the treshold angle for recombination
     double recombineAngle;
@@ -167,6 +167,8 @@ class GFace : public GEntity
     // all diagonals of the triangulation are left (1), right (2) or
     // alternated (3)
     int transfiniteArrangement;
+    // do we smooth (transfinite) mesh? (<0 to use default smoothing)
+    int transfiniteSmoothing;
     // the extrusion parameters (if any)
     ExtrudeParams *extrude;
     // edge loops

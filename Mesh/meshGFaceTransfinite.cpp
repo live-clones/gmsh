@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.23 2008-01-19 23:04:13 geuzaine Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.24 2008-02-07 13:17:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -300,8 +300,13 @@ int MeshTransfiniteSurface(GFace *gf)
   }  
 
   // elliptic smoother (don't apply this by default)
-  if(corners.size() == 4 && CTX.mesh.nb_smoothing > 1 && gf->geomType() == GEntity::Plane){
-    for (int IT = 0; IT< CTX.mesh.nb_smoothing; IT++){
+  if(corners.size() == 4 && gf->geomType() == GEntity::Plane){
+    int numSmooth = 0;
+    if(gf->meshAttributes.transfiniteSmoothing < 0 && CTX.mesh.nb_smoothing > 1)
+      numSmooth = CTX.mesh.nb_smoothing;
+    else if(gf->meshAttributes.transfiniteSmoothing > 0)
+      numSmooth = gf->meshAttributes.transfiniteSmoothing;
+    for (int IT = 0; IT < numSmooth; IT++){
       for(int i = 1; i < L; i++){
 	for(int j = 1; j < H; j++){
 	  MVertex *v11 = tab[i - 1][j - 1];

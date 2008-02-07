@@ -155,6 +155,7 @@ typedef struct{
   int Recombine;
   int Recombine_Dir; // -1 is left, +1 is right, 0 is alternated
   double RecombineAngle;
+  int TransfiniteSmoothing;
   List_T *Generatrices;
   List_T *EmbeddedCurves;
   List_T *EmbeddedPoints;

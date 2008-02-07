@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.236 2007-10-08 13:13:23 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.237 2008-02-07 13:17:21 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 @c
@@ -2133,6 +2133,11 @@ Shows the mesh of the entities in @var{expression-list}, if
 Shows the mesh of the entity @var{char-expression}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{2}
 (@var{char-expression} can for example be @code{"*"}).
+
+@item Smoother Surface @{ @var{expression-list} @} = @var{expression};
+Sets number of elliptic smoothing steps for the surfaces listed in
+@var{expression-list} (smothing only applies to transfinite meshes at
+the moment).
 @end ftable
 
 @c -------------------------------------------------------------------------

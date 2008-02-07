@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.295 2008-01-20 10:10:44 geuzaine Exp $
+// $Id: Gmsh.y,v 1.296 2008-02-07 13:17:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -99,7 +99,7 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer);
 %token tPlane tRuled tTransfinite tComplex tPhysical
 %token tUsing tBump tProgression tPlugin
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
-%token tLoop tRecombine tDelete tCoherence tIntersect tBoundary
+%token tLoop tRecombine tSmoother tDelete tCoherence tIntersect tBoundary
 %token tAttractor tLayers tHole tAlias tAliasWithOptions
 %token tText2D tText3D tInterpolationScheme  tTime tCombine
 %token tBSpline tBezier tNurbs tOrder tKnots
@@ -2747,6 +2747,17 @@ Transfinite :
 	if(s){
 	  s->Recombine = 1;
         }
+      }
+      List_Delete($3);
+    }
+  | tSmoother tSurface ListOfDouble tAFFECT FExpr tEND
+    {
+      for(int i = 0; i < List_Nbr($3); i++){
+	double d;
+	List_Read($3, i, &d);
+	int j = (int)d;
+	Surface *s = FindSurface(j);
+	if(s) s->TransfiniteSmoothing = $5;
       }
       List_Delete($3);
     }
