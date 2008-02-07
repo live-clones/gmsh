@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2008-01-23 07:45:30 geuzaine Exp $
+# $Id: Makefile,v 1.5 2008-02-07 21:29:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,9 +21,11 @@
 
 include ../../variables
 
-LIB     = ../../lib/libGmshNativeFileChooser${LIBEXT}
-INCLUDE = ${DASH}I.
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE} ${DASH}DFLTK1
+LIB = ../../lib/libGmshNativeFileChooser${LIBEXT}
+
+INC = ${DASH}I.
+
+CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE} ${DASH}DFLTK1
 
 SRC = Fl_Native_File_Chooser.cxx
 OBJ = ${SRC:.cxx=${OBJEXT}}
@@ -34,7 +36,7 @@ ${LIB}: ${OBJ}
 	${AR} ${ARFLAGS}${LIB} ${OBJ} 
 	${RANLIB} ${LIB}
 
-.cxx.o:
+.cxx${OBJEXT}:
 	${CXX} ${CFLAGS} ${DASH}c $<
 
 clean:

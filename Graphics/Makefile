@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.137 2008-01-23 07:45:28 geuzaine Exp $
+# $Id: Makefile,v 1.138 2008-02-07 21:29:39 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,12 +21,14 @@
 
 include ../variables
 
-LIB     = ../lib/libGmshGraphics${LIBEXT}
-INCLUDE = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo ${DASH}I../Mesh\
-          ${DASH}I../Post ${DASH}I../Graphics ${DASH}I../Fltk ${DASH}I../Numeric\
-          ${DASH}I../Parser ${DASH}I../Plugin ${DASH}I../contrib/MathEval\
-          ${DASH}I../contrib/ANN/include
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
+LIB = ../lib/libGmshGraphics${LIBEXT}
+
+INC = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo ${DASH}I../Mesh\
+      ${DASH}I../Post ${DASH}I../Graphics ${DASH}I../Fltk ${DASH}I../Numeric\
+      ${DASH}I../Parser ${DASH}I../Plugin ${DASH}I../contrib/MathEval\
+      ${DASH}I../contrib/ANN/include
+
+CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
 SRC = Draw.cpp \
       Mesh.cpp \

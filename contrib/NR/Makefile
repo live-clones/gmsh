@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2008-01-23 07:45:30 geuzaine Exp $
+# $Id: Makefile,v 1.10 2008-02-07 21:29:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,10 +21,12 @@
 
 include ../../variables
 
-LIB     = ../../lib/libGmshNR${LIBEXT}
-INCLUDE = ${DASH}I../../Common ${DASH}I../../DataStr ${DASH}I../../Numeric
+LIB = ../../lib/libGmshNR${LIBEXT}
+
+INC = ${DASH}I../../Common ${DASH}I../../DataStr ${DASH}I../../Numeric
+
 # don't optimize this library: there are some problems with gcc...
-CFLAGS  = ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
+CFLAGS  = ${FLAGS} ${INC} ${SYSINCLUDE}
 
 SRC = brent.cpp\
       dpythag.cpp\

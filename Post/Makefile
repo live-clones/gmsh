@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.26 2008-01-23 07:45:30 geuzaine Exp $
+# $Id: Makefile,v 1.27 2008-02-07 21:29:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,12 +21,14 @@
 
 include ../variables
 
-LIB     = ../lib/libGmshPost${LIBEXT}
-INCLUDE = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo ${DASH}I../Mesh\
-          ${DASH}I../Post ${DASH}I../Graphics ${DASH}I../Numeric ${DASH}I../Parser\
-          ${DASH}I../Plugin ${DASH}I../Fltk ${DASH}I../contrib/MathEval\
-          ${DASH}I../contrib/ANN/include
-CFLAGS  =${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
+LIB = ../lib/libGmshPost${LIBEXT}
+
+INC = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo ${DASH}I../Mesh\
+      ${DASH}I../Post ${DASH}I../Graphics ${DASH}I../Numeric ${DASH}I../Parser\
+      ${DASH}I../Plugin ${DASH}I../Fltk ${DASH}I../contrib/MathEval\
+      ${DASH}I../contrib/ANN/include
+
+CFLAGS =${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
 SRC = PView.cpp\
         PViewData.cpp\

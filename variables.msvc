@@ -1,6 +1,8 @@
 # This is a pre-filled variables file for building a blackbox version
-# of Gmsh with Microsoft Visual C++ 2008. See doc/README.msvc for
-# building instructions.
+# of Gmsh with Microsoft Visual C++ (MSVC). 
+#
+# This has been tested with MSVC 2003.NET and MSVC 2008. 
+# See doc/README.msvc for building instructions.
 
 # OS and host
 UNAME=WIN32MSVC
@@ -9,11 +11,8 @@ HOSTNAME=localhost
 # The names of the C and C++ compilers
 CC=cl
 CXX=cl /EHsc /nologo /GR 
-
-#MLd --> Single Thread debug ok?
-#MTd--> Multit hread debug 
-
-
+# Add /MLd for single-thread debug mode
+#     /MTd for multi-thread debug mode
 
 # increase stack size to 16Mb to avoid stack overflows in recursive 
 # tet classification for large 3D Delaunay grids
@@ -22,10 +21,9 @@ LINKER=cl /F16777216
 # All compiler flags except optimization flags
 FLAGS=/DWIN32 /D_USE_MATH_DEFINES /DHAVE_NO_DLL /DHAVE_NO_VSNPRINTF /DHAVE_NO_SNPRINTF /DHAVE_NO_SOCKLEN_T /DHAVE_ANN /DHAVE_MATH_EVAL /DHAVE_NETGEN /DHAVE_TETGEN
 
-# Additional system includes
-#SYSINCLUDE=/I"C:\Program Files\Microsoft Visual Studio 9.0\VC\INCLUDE" /I"C:\Program Files\Microsoft SDKs\Windows\v6.0A\include"
-
-SYSINCLUDE=/I"C:\Program Files\Microsoft Visual Studio .NET 2003\VC7\INCLUDE" /I"C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Include"
+# Additional system includes ($INCLUDE is automatically defined by MSVC when
+# you launch the MSVC command prompt)
+SYSINCLUDE=/I"${INCLUDE}"
 
 # Compiler optimization flags
 OPTIM=/O2

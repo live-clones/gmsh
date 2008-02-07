@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.19 2008-01-23 07:45:30 geuzaine Exp $
+# $Id: Makefile,v 1.20 2008-02-07 21:29:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,9 +21,11 @@
 
 include ../../variables
 
-LIB     = ../../lib/libGmshANN${LIBEXT}
-INCLUDE = ${DASH}I../../Common ${DASH}I./include
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
+LIB = ../../lib/libGmshANN${LIBEXT}
+
+INC = ${DASH}I../../Common ${DASH}I./include
+
+CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
 SRC = src/ANN.cpp\
       src/bd_fix_rad_search.cpp\

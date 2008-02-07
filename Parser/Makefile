@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.138 2008-01-23 07:45:29 geuzaine Exp $
+# $Id: Makefile,v 1.139 2008-02-07 21:29:39 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,11 +21,13 @@
 
 include ../variables
 
-LIB     = ../lib/libGmshParser${LIBEXT}
-INCLUDE = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo ${DASH}I../Mesh\
-          ${DASH}I../Post ${DASH}I../Graphics ${DASH}I../Numeric ${DASH}I../Fltk\
-          ${DASH}I../Plugin ${DASH}I../Parallel ${DASH}I../contrib/ANN/include 
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
+LIB = ../lib/libGmshParser${LIBEXT}
+
+INC = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo ${DASH}I../Mesh\
+      ${DASH}I../Post ${DASH}I../Graphics ${DASH}I../Numeric ${DASH}I../Fltk\
+      ${DASH}I../Plugin ${DASH}I../Parallel ${DASH}I../contrib/ANN/include 
+
+CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
 SRC = Gmsh.tab.cpp\
       Gmsh.yy.cpp\
@@ -47,7 +49,7 @@ ${LIB}: ${OBJ}
 # Don't optimize Gmsh.tab.o: on many architectures, g++ -O2 generates
 # assembly code too large to be addressed correctly
 Gmsh.tab${OBJEXT}:
-	${CXX} ${FLAGS} ${INCLUDE} ${SYSINCLUDE} ${DASH}c Gmsh.tab.cpp
+	${CXX} ${FLAGS} ${INC} ${SYSINCLUDE} ${DASH}c Gmsh.tab.cpp
 
 parser:
 	bison -p gmsh_yy --output Gmsh.tab.cpp -d Gmsh.y 

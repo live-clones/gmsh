@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.43 2008-01-23 07:45:27 geuzaine Exp $
+# $Id: Makefile,v 1.44 2008-02-07 21:29:38 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,9 +21,11 @@
 
 include ../variables
 
-LIB     = ../lib/libGmshDataStr${LIBEXT}
-INCLUDE = ${DASH}I../Common
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
+LIB = ../lib/libGmshDataStr${LIBEXT}
+
+INC = ${DASH}I../Common
+
+CFLAGS  = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
 SRC = List.cpp \
       Malloc.cpp \

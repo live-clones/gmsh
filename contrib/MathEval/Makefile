@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2008-01-23 07:45:30 geuzaine Exp $
+# $Id: Makefile,v 1.19 2008-02-07 21:29:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -22,9 +22,10 @@
 include ../../variables
 
 LIB = ../../lib/libGmshMathEval${LIBEXT}
-INCLUDE = ${DASH}I../../Common ${DASH}I../../DataStr
 
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
+INC = ${DASH}I../../Common ${DASH}I../../DataStr
+
+CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
 SRC = matheval.cpp\
       node.cpp\

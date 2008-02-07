@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.167 2008-01-23 07:45:28 geuzaine Exp $
+# $Id: Makefile,v 1.168 2008-02-07 21:29:39 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,12 +21,14 @@
 
 include ../variables
 
-LIB     = ../lib/libGmshFltk${LIBEXT}
-INCLUDE = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Graphics\
-          ${DASH}I../Geo ${DASH}I../Mesh ${DASH}I../Post ${DASH}I../Numeric\
-          ${DASH}I../Parser ${DASH}I../Fltk ${DASH}I../Plugin ${DASH}I../utils/solvers\
-          ${DASH}I../contrib/ANN/include ${DASH}I../contrib/NativeFileChooser
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
+LIB = ../lib/libGmshFltk${LIBEXT}
+
+INC = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Graphics\
+      ${DASH}I../Geo ${DASH}I../Mesh ${DASH}I../Post ${DASH}I../Numeric\
+      ${DASH}I../Parser ${DASH}I../Fltk ${DASH}I../Plugin ${DASH}I../utils/solvers\
+      ${DASH}I../contrib/ANN/include ${DASH}I../contrib/NativeFileChooser
+
+CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
 SRC = Main.cpp \
       Message.cpp \

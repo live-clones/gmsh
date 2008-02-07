@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2008-01-23 07:45:30 geuzaine Exp $
+# $Id: Makefile,v 1.15 2008-02-07 21:29:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -22,8 +22,10 @@
 include ../../variables
 
 LIB     = ../../lib/libGmshMetis.a
-INCLUDE = -I.
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE}
+
+INC = ${DASH}I.
+
+CFLAGS  = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
 SRC = balance.c \
       fm.c        \
@@ -78,16 +80,19 @@ SRC = balance.c \
       parmetis.c \
      stat.c
 
-OBJ = ${SRC:.c=.o}
+OBJ = ${SRC:.c=${OBJEXT}}
 
-.SUFFIXES: .o .c
+.SUFFIXES: ${OBJEXT} .c
 
 ${LIB}: ${OBJ} 
-	${AR} ${LIB} ${OBJ} 
+	${AR} ${ARFLAGS}${LIB} ${OBJ} 
 	${RANLIB} ${LIB}
 
-.c.o:
-	${CC} ${CFLAGS} -c $< -o ${<:.c=.o}
+.c${OBJEXT}:
+	${CC} ${CFLAGS} ${DASH}c $< ${DASH}o ${<:.c=${OBJEXT}}
+	if [ -r ${notdir ${<:.c=${OBJEXT}}} ]; then\
+           mv -f ${notdir ${<:.c=${OBJEXT}}} ${<:.c=${OBJEXT}};\
+        fi
 
 clean:
 	rm -f *.o *.obj

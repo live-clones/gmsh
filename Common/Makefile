@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.155 2008-01-23 07:45:27 geuzaine Exp $
+# $Id: Makefile,v 1.156 2008-02-07 21:29:38 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,12 +21,14 @@
 
 include ../variables
 
-LIB     = ../lib/libGmshCommon${LIBEXT}
-INCLUDE = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo ${DASH}I../Mesh\
-          ${DASH}I../Post ${DASH}I../Graphics ${DASH}I../Numeric ${DASH}I../Parser\
-          ${DASH}I../Plugin ${DASH}I../Fltk ${DASH}I../contrib/MathEval\
-          ${DASH}I../contrib/ANN/include
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
+LIB = ../lib/libGmshCommon${LIBEXT}
+
+INC = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo ${DASH}I../Mesh\
+      ${DASH}I../Post ${DASH}I../Graphics ${DASH}I../Numeric ${DASH}I../Parser\
+      ${DASH}I../Plugin ${DASH}I../Fltk ${DASH}I../contrib/MathEval\
+      ${DASH}I../contrib/ANN/include
+
+CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
 SRC = Context.cpp\
       Octree.cpp OctreeInternals.cpp\

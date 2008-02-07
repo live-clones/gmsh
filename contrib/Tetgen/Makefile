@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 2008-01-23 07:45:31 geuzaine Exp $
+# $Id: Makefile,v 1.10 2008-02-07 21:29:41 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,9 +21,10 @@
 
 include ../../variables
 
-LIB     = ../../lib/libGmshTetgen${LIBEXT}
+LIB = ../../lib/libGmshTetgen${LIBEXT}
+
 # Do not optimize (same as Triangle...) 
-CFLAGS  = ${FLAGS} ${DASH}DTETLIBRARY
+CFLAGS = ${FLAGS} ${DASH}DTETLIBRARY
 
 SRC = predicates.cxx tetgen.cxx
 OBJ = ${SRC:.cxx=${OBJEXT}}

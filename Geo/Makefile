@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.181 2008-02-05 18:58:04 geuzaine Exp $
+# $Id: Makefile,v 1.182 2008-02-07 21:29:39 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,12 +21,14 @@
 
 include ../variables
 
-LIB     = ../lib/libGmshGeo${LIBEXT}
-INCLUDE = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo ${DASH}I../Mesh\
-          ${DASH}I../Post ${DASH}I../Numeric ${DASH}I../Parser ${DASH}I../Fltk\
-          ${DASH}I../contrib/NR ${DASH}I../contrib/ANN/include\
-          ${DASH}I../contrib/MathEval
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
+LIB = ../lib/libGmshGeo${LIBEXT}
+
+INC = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo ${DASH}I../Mesh\
+      ${DASH}I../Post ${DASH}I../Numeric ${DASH}I../Parser ${DASH}I../Fltk\
+      ${DASH}I../contrib/NR ${DASH}I../contrib/ANN/include\
+      ${DASH}I../contrib/MathEval
+
+CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
 SRC = GEntity.cpp\
       GVertex.cpp GEdge.cpp GEdgeLoop.cpp GFace.cpp GRegion.cpp\

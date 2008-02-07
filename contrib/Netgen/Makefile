@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.28 2008-01-23 07:45:30 geuzaine Exp $
+# $Id: Makefile,v 1.29 2008-02-07 21:29:41 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,10 +21,12 @@
 
 include ../../variables
 
-LIB     = ../../lib/libGmshNetgen${LIBEXT}
-INCLUDE = ${DASH}I../../Common ${DASH}Ilibsrc/include ${DASH}Ilibsrc/interface
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}\
-          ${DASH}DNO_PARALLEL_THREADS ${DASH}UWIN32
+LIB = ../../lib/libGmshNetgen${LIBEXT}
+
+INC = ${DASH}I../../Common ${DASH}Ilibsrc/include ${DASH}Ilibsrc/interface
+
+CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}\
+         ${DASH}DNO_PARALLEL_THREADS ${DASH}UWIN32
 
 SRC = libsrc/opti/linopt.cpp \
 	libsrc/opti/bfgs.cpp \

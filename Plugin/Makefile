@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.148 2008-02-05 19:02:39 geuzaine Exp $
+# $Id: Makefile,v 1.149 2008-02-07 21:29:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -21,12 +21,14 @@
 
 include ../variables
 
-LIB     = ../lib/libGmshPlugin${LIBEXT}
-INCLUDE = ${DASH}I../Common ${DASH}I../Graphics ${DASH}I../DataStr ${DASH}I../Geo\
-          ${DASH}I../Mesh ${DASH}I../Post ${DASH}I../Fltk ${DASH}I../Numeric\
-          ${DASH}I../contrib/ANN/include ${DASH}I../contrib/Triangle\
-          ${DASH}I../contrib/MathEval
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE}
+LIB = ../lib/libGmshPlugin${LIBEXT}
+
+INC = ${DASH}I../Common ${DASH}I../Graphics ${DASH}I../DataStr ${DASH}I../Geo\
+      ${DASH}I../Mesh ${DASH}I../Post ${DASH}I../Fltk ${DASH}I../Numeric\
+      ${DASH}I../contrib/ANN/include ${DASH}I../contrib/Triangle\
+      ${DASH}I../contrib/MathEval
+
+CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
 SRC = Plugin.cpp PluginManager.cpp\
         Levelset.cpp\
