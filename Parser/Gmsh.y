@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.296 2008-02-07 13:17:20 geuzaine Exp $
+// $Id: Gmsh.y,v 1.297 2008-02-08 18:46:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -881,7 +881,8 @@ Affectation :
       if(!(pColCat = Get_ColorOptionCategory($1)))
 	yymsg(GERROR, "Unknown color option class '%s'", $1);
       else{
-	if(!(pColOpt =  (unsigned int (*) (int, int, unsigned int))Get_ColorOption($5, pColCat)))
+	if(!(pColOpt = (unsigned int (*) (int, int, unsigned int))
+	     Get_ColorOption($5, pColCat)))
 	  yymsg(GERROR, "Unknown color option '%s.Color.%s'", $1, $5);
 	else
 	  pColOpt(0, GMSH_SET|GMSH_GUI, $7);
@@ -895,7 +896,8 @@ Affectation :
       if(!(pColCat = Get_ColorOptionCategory($1)))
 	yymsg(GERROR, "Unknown color option class '%s'", $1);
       else{
-	if(!(pColOpt =  (unsigned int (*) (int, int, unsigned int))Get_ColorOption($8, pColCat)))
+	if(!(pColOpt =  (unsigned int (*) (int, int, unsigned int))
+	     Get_ColorOption($8, pColCat)))
 	  yymsg(GERROR, "Unknown color option '%s[%d].Color.%s'", $1, (int)$3, $8);
 	else
 	  pColOpt((int)$3, GMSH_SET|GMSH_GUI, $10);
@@ -2095,12 +2097,14 @@ Loop :
       LoopControlVariablesNameTab[ImbricatedLoop] = NULL;
       fgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
-      ImbricatedLoop++;
+      if($3 > $5)
+	skip_until("For", "EndFor");
+      else
+	ImbricatedLoop++;
       if(ImbricatedLoop > MAX_RECUR_LOOPS-1){
 	yymsg(GERROR, "Reached maximum number of imbricated loops");
 	ImbricatedLoop = MAX_RECUR_LOOPS-1;
       }
-      if($3 > $5) skip_until("For", "EndFor");
     }
   | tFor '(' FExpr tDOTS FExpr tDOTS FExpr ')'
     {
@@ -2110,13 +2114,14 @@ Loop :
       LoopControlVariablesNameTab[ImbricatedLoop] = NULL;
       fgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
-      ImbricatedLoop++;
+      if(($7 > 0. && $3 > $5) || ($7 < 0. && $3 < $5))
+	skip_until("For", "EndFor");
+      else
+	ImbricatedLoop++;
       if(ImbricatedLoop > MAX_RECUR_LOOPS-1){
 	yymsg(GERROR, "Reached maximum number of imbricated loops");
 	ImbricatedLoop = MAX_RECUR_LOOPS-1;
       }
-      if(($7 > 0. && $3 > $5) || ($7 < 0. && $3 < $5))
-	skip_until("For", "EndFor");
     }
   | tFor tSTRING tIn '{' FExpr tDOTS FExpr '}' 
     {
@@ -2136,12 +2141,14 @@ Loop :
 	List_Write(pSymbol->val, 0, &$5);
       fgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
-      ImbricatedLoop++;
+      if($5 > $7) 
+	skip_until("For", "EndFor");
+      else
+	ImbricatedLoop++;
       if(ImbricatedLoop > MAX_RECUR_LOOPS-1){
 	yymsg(GERROR, "Reached maximum number of imbricated loops");
 	ImbricatedLoop = MAX_RECUR_LOOPS-1;
       }
-      if($5 > $7) skip_until("For", "EndFor");
     }
   | tFor tSTRING tIn '{' FExpr tDOTS FExpr tDOTS FExpr '}' 
     {
@@ -2161,13 +2168,14 @@ Loop :
 	List_Write(pSymbol->val, 0, &$5);
       fgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
-      ImbricatedLoop++;
+      if(($9 > 0. && $5 > $7) || ($9 < 0. && $5 < $7))
+	skip_until("For", "EndFor");
+      else
+	ImbricatedLoop++;
       if(ImbricatedLoop > MAX_RECUR_LOOPS-1){
 	yymsg(GERROR, "Reached maximum number of imbricated loops");
 	ImbricatedLoop = MAX_RECUR_LOOPS-1;
       }
-      if(($9 > 0. && $5 > $7) || ($9 < 0. && $5 < $7))
-	skip_until("For", "EndFor");
     }
   | tEndFor 
     {
@@ -2202,19 +2210,22 @@ Loop :
     }
   | tFunction tSTRING
     {
-      if(!FunctionManager::Instance()->createFunction($2, gmsh_yyin, gmsh_yyname, gmsh_yylineno))
+      if(!FunctionManager::Instance()->createFunction($2, gmsh_yyin, gmsh_yyname,
+						      gmsh_yylineno))
 	yymsg(GERROR, "Redefinition of function %s", $2);
       skip_until(NULL, "Return");
       //FIXME: wee leak $2
     }
   | tReturn
     {
-      if(!FunctionManager::Instance()->leaveFunction(&gmsh_yyin, gmsh_yyname, gmsh_yylineno))
+      if(!FunctionManager::Instance()->leaveFunction(&gmsh_yyin, gmsh_yyname,
+						     gmsh_yylineno))
 	yymsg(GERROR, "Error while exiting function");
     } 
   | tCall tSTRING tEND
     {
-      if(!FunctionManager::Instance()->enterFunction($2, &gmsh_yyin, gmsh_yyname, gmsh_yylineno))
+      if(!FunctionManager::Instance()->enterFunction($2, &gmsh_yyin, gmsh_yyname,
+						     gmsh_yylineno))
 	yymsg(GERROR, "Unknown function %s", $2);
       //FIXME: wee leak $2
     } 

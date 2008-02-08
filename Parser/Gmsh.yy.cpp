@@ -852,7 +852,7 @@ int gmsh_yy_flex_debug = 0;
 char *gmsh_yytext;
 #line 1 "Gmsh.l"
 #line 2 "Gmsh.l"
-// $Id: Gmsh.yy.cpp,v 1.344 2008-02-07 13:17:21 geuzaine Exp $
+// $Id: Gmsh.yy.cpp,v 1.345 2008-02-08 18:46:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
