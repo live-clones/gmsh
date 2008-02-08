@@ -1,8 +1,10 @@
 include ../../variables
 
-LIB     = ../../lib/libGmshEmbedded${LIBEXT}
-INCLUDE = ${DASH}I.
-CFLAGS  = ${OPTIM} ${FLAGS} ${INCLUDE} ${SYSINCLUDE} ${DASH}DHAVE_GMSH_EMBEDDED
+LIB = ../../lib/libGmshEmbedded${LIBEXT}
+
+INC = ${DASH}I.
+
+CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE} ${DASH}DHAVE_GMSH_EMBEDDED
 
 SRC = GModel.cpp\
         GModelIO_Mesh.cpp\
