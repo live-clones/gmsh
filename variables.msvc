@@ -10,7 +10,7 @@ HOSTNAME=localhost
 
 # The names of the C and C++ compilers
 CC=cl
-CXX=cl /EHsc /nologo /GR 
+CXX=cl /EHsc /nologo /GR /MTd
 # Add /MLd for single-thread debug mode
 #     /MTd for multi-thread debug mode
 
