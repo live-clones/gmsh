@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.53 2008-02-05 14:40:30 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.54 2008-02-12 19:52:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -42,7 +42,7 @@ struct xi2lc
     : xi(_xi), lc(_lc)
   { 
   }
-  bool operator < (const xi2lc &other)
+  bool operator < (const xi2lc &other) const
   {
     return xi < other.xi; 
   }
