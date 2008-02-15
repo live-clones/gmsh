@@ -1,4 +1,4 @@
-// $Id: GVertex.cpp,v 1.17 2008-01-22 16:57:36 geuzaine Exp $
+// $Id: GVertex.cpp,v 1.18 2008-02-15 20:03:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -64,13 +64,12 @@ SPoint2 GVertex::reparamOnFace ( GFace *gf , int) const
 std::string GVertex::getAdditionalInfoString()
 {
   char str[256];
-  sprintf(str, "{%g,%g,%g", x(), y(), z());
+  sprintf(str, "{%g,%g,%g}", x(), y(), z());
   double lc = prescribedMeshSizeAtVertex();
-  if(lc > 0.){
+  if(lc < 1.e22){
     char str2[256];
-    sprintf(str2, ",%g", lc);
+    sprintf(str2, " (cl: %g)", lc);
     strcat(str, str2);
   }
-  strcat(str, "}");
   return std::string(str);
 }
