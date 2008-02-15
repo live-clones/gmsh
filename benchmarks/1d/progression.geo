@@ -20,10 +20,10 @@ Transfinite Line {1} = n+1 Using Progression r;
 
 a = (r - 1) / (r^n - 1);
 one[0] = 1;
-layer[0] = 0;
-For i In {1:n}
+layer[0] = a;
+For i In {1:n-1}
   one[i] = 1;
-  layer[i] = layer[i-1] + a * r^(i-1);
+  layer[i] = layer[i-1] + a * r^i;
 EndFor
 Point(10) = {0,0.8,0,1};
 Extrude {15,0,0} {
