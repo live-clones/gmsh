@@ -1,8 +1,8 @@
 # This is a pre-filled variables file for building a blackbox version
-# of Gmsh with Microsoft Visual C++ (MSVC). 
+# of Gmsh with Microsoft Visual C++ (MSVC).
 #
-# This has been tested with MSVC 2003.NET and MSVC 2008. 
-# See doc/README.msvc for building instructions.
+# This has been tested with MSVC 2003 and MSVC 2008.  See
+# doc/README.msvc for building instructions.
 
 # OS and host
 UNAME=WIN32MSVC
@@ -10,11 +10,18 @@ HOSTNAME=localhost
 
 # The names of the C and C++ compilers
 CC=cl
-OPTION=/EHsc /nologo /GR /MT
-# Add /MLd for single-thread debug mode
-#     /MTd for multi-thread debug mode
+CXX=/EHsc /nologo /GR /MT
 
-CXX=${CC} ${OPTION}
+# Use /MLd for single-thread debug mode
+#     /MTd for multi-thread debug mode
+#     /MT for multi-thread release mode
+
+# append different suffix for release or debug version of library
+ifneq (,${findstring MTd,${CXX}})
+  LIBSUFFIX=_d
+else
+  LIBSUFFIX=_r
+endif
 
 # increase stack size to 16Mb to avoid stack overflows in recursive 
 # tet classification for large 3D Delaunay grids
@@ -47,8 +54,6 @@ DASH=/
 # The extension to use for object files, libraries and executables
 OBJEXT=.obj
 LIBEXT=.lib
-LIBEXTRELEASE=_r.lib
-LIBEXTDEBUG=_d.lib
 EXEEXT=.exe
 
 # Installation directories
