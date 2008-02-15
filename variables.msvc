@@ -10,9 +10,11 @@ HOSTNAME=localhost
 
 # The names of the C and C++ compilers
 CC=cl
-CXX=cl /EHsc /nologo /GR /MTd
+OPTION=/EHsc /nologo /GR /MT
 # Add /MLd for single-thread debug mode
 #     /MTd for multi-thread debug mode
+
+CXX=${CC} ${OPTION}
 
 # increase stack size to 16Mb to avoid stack overflows in recursive 
 # tet classification for large 3D Delaunay grids
@@ -45,6 +47,8 @@ DASH=/
 # The extension to use for object files, libraries and executables
 OBJEXT=.obj
 LIBEXT=.lib
+LIBEXTRELEASE=_r.lib
+LIBEXTDEBUG=_d.lib
 EXEEXT=.exe
 
 # Installation directories
