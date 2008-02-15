@@ -1,4 +1,4 @@
-$Id: TODO,v 1.66 2007-11-12 10:48:17 colignon Exp $
+$Id: TODO,v 1.67 2008-02-15 20:02:24 geuzaine Exp $
 
 ********************************************************************
 
@@ -59,11 +59,6 @@ interface duplicate entity removal from opencascade
 ********************************************************************
 
 add support for Patran mesh files
-
-********************************************************************
-
-reinterface Triangle for plane surfaces and/or for the generation of
-the initial mesh
 
 ********************************************************************
 
