@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.30 2008-01-28 09:59:52 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.31 2008-02-16 21:37:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -277,10 +277,11 @@ int GModel::readMSH(const std::string &name)
   std::map<int, std::vector<MVertex*> > points;
   std::map<int, std::vector<MElement*> > elements[7];
   std::map<int, std::map<int, std::string> > physicals[4];
+  bool postpro = false;
 
   // we might want to cache those for post-processing lookups
-  std::map<int, MVertex*> _vertexMap;
-  std::vector<MVertex*> _vertexVector;
+  std::map<int, MVertex*> vertexMap;
+  std::vector<MVertex*> vertexVector;
  
   while(1) {
 
@@ -341,8 +342,8 @@ int GModel::readMSH(const std::string &name)
       if(sscanf(str, "%d", &numVertices) != 1) return 0;
       Msg(INFO, "%d vertices", numVertices);
 
-      _vertexVector.clear();
-      _vertexMap.clear();
+      vertexVector.clear();
+      vertexMap.clear();
 
       int progress = (numVertices > 100000) ? numVertices / 25 : 0;
       int minVertex = numVertices + 1, maxVertex = -1;
@@ -360,10 +361,10 @@ int GModel::readMSH(const std::string &name)
 	}
 	minVertex = std::min(minVertex, num);
 	maxVertex = std::max(maxVertex, num);
-	if(_vertexMap.count(num))
+	if(vertexMap.count(num))
 	  Msg(WARNING, "Skipping duplicate vertex %d", num);
 	else
-	  _vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
+	  vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
 	if(progress && (i % progress == progress - 1))
 	  Msg(PROGRESS, "Read %d vertices", i + 1);
       }
@@ -371,19 +372,19 @@ int GModel::readMSH(const std::string &name)
       
       // If the vertex numbering is dense, tranfer the map into a
       // vector to speed up element creation
-      if((int)_vertexMap.size() == numVertices && 
+      if((int)vertexMap.size() == numVertices && 
 	 ((minVertex == 1 && maxVertex == numVertices) ||
 	  (minVertex == 0 && maxVertex == numVertices - 1))){
 	Msg(INFO, "Vertex numbering is dense");
-	_vertexVector.resize(_vertexMap.size() + 1);
+	vertexVector.resize(vertexMap.size() + 1);
 	if(minVertex == 1) 
-	  _vertexVector[0] = 0;
+	  vertexVector[0] = 0;
 	else
-	  _vertexVector[numVertices] = 0;
-	std::map<int, MVertex*>::const_iterator it = _vertexMap.begin();
-	for(; it != _vertexMap.end(); ++it)
-	  _vertexVector[it->first] = it->second;
-	_vertexMap.clear();
+	  vertexVector[numVertices] = 0;
+	std::map<int, MVertex*>::const_iterator it = vertexMap.begin();
+	for(; it != vertexMap.end(); ++it)
+	  vertexVector[it->first] = it->second;
+	vertexMap.clear();
       }
 
     }
@@ -418,11 +419,11 @@ int GModel::readMSH(const std::string &name)
 	  int indices[30];
 	  for(int j = 0; j < numVertices; j++) fscanf(fp, "%d", &indices[j]);
 	  std::vector<MVertex*> vertices;
-	  if(_vertexVector.size()){
-	    if(!getVertices(numVertices, indices, _vertexVector, vertices)) return 0;
+	  if(vertexVector.size()){
+	    if(!getVertices(numVertices, indices, vertexVector, vertices)) return 0;
 	  }
 	  else{
-	    if(!getVertices(numVertices, indices, _vertexMap, vertices)) return 0;
+	    if(!getVertices(numVertices, indices, vertexMap, vertices)) return 0;
 	  }
 	  createElementMSH(this, num, type, physical, elementary, partition, 
 			   vertices, points, elements, physicals);
@@ -451,11 +452,11 @@ int GModel::readMSH(const std::string &name)
 	    int partition = (numTags > 2) ? data[4 - numTags + 2] : 0;
 	    int *indices = &data[numTags + 1];
 	    std::vector<MVertex*> vertices;
-	    if(_vertexVector.size()){
-	      if(!getVertices(numVertices, indices, _vertexVector, vertices)) return 0;
+	    if(vertexVector.size()){
+	      if(!getVertices(numVertices, indices, vertexVector, vertices)) return 0;
 	    }
 	    else{
-	      if(!getVertices(numVertices, indices, _vertexMap, vertices)) return 0;
+	      if(!getVertices(numVertices, indices, vertexMap, vertices)) return 0;
 	    }
 	    createElementMSH(this, num, type, physical, elementary, partition, 
 			     vertices, points, elements, physicals);
@@ -469,34 +470,10 @@ int GModel::readMSH(const std::string &name)
       if(progress) Msg(PROGRESS, "");
 
     }
-    /*
     else if(!strncmp(&str[1], "NodeData", 8)) {
-      if(!fgets(str, sizeof(str), fp)) return 0;
-      // name = str[1] + remove final "
-      int timeStep, numData, numComponents;
-      double time;
-      if(_vertexVector.empty() && _vertexMap.empty()){
-	Msg(GERROR, "Mesh vertex information missing: impossible to load dataset");
-	return false;
-      }
-
-      if(fscanf(fp, "%d %lf %d %d", &timeStep, &time, &numData, &numComponents) != 4)
-	return 0;
-      Msg(INFO, "%d node data", numData);
-
-      //std::map<int, int> nodeNumber, nodeIndex      
-      PViewDataGModel *p = getPViewDataGModel(name)
-      if(p){ // add data to existing view
-      if(!p.count(timeStep)){
-	// we don't have any data for this time step
-	p[timeStep] = new nodeData(numNodes);
-      }
-      data = p[timeStep];
-      if(num
-      data.scalar.indices.append();
-      data.scalar.values.append();
+      // there's some post-processing data to read later on
+      postpro = true;
     }
-      */
 
     do {
       if(!fgets(str, sizeof(str), fp) || feof(fp))
@@ -517,12 +494,12 @@ int GModel::readMSH(const std::string &name)
   // vertex for each mesh vertex
   if(noElements){
     Msg(INFO, "No elements in mesh: creating geometry vertices");
-    for(unsigned int i = 0; i < _vertexVector.size(); i++){
-      MVertex *v = _vertexVector[i];
+    for(unsigned int i = 0; i < vertexVector.size(); i++){
+      MVertex *v = vertexVector[i];
       if(v) points[v->getNum()].push_back(v);
     }
-    for(std::map<int, MVertex*>::iterator it = _vertexMap.begin(); 
-	it != _vertexMap.end(); ++it) 
+    for(std::map<int, MVertex*>::iterator it = vertexMap.begin(); 
+	it != vertexMap.end(); ++it) 
       points[it->second->getNum()].push_back(it->second);
   }
   
@@ -548,17 +525,17 @@ int GModel::readMSH(const std::string &name)
     (*it)->mesh_vertices.clear();
 
   // store the vertices in their associated geometrical entity
-  if(_vertexVector.size())
-    storeVerticesInEntities(_vertexVector);
+  if(vertexVector.size())
+    storeVerticesInEntities(vertexVector);
   else
-    storeVerticesInEntities(_vertexMap);
+    storeVerticesInEntities(vertexMap);
 
   // store the physical tags
   for(int i = 0; i < 4; i++)  
     storePhysicalTagsInEntities(this, i, physicals[i]);
 
   fclose(fp);
-  return 1;
+  return postpro ? 2 : 1;
 }
 
 static void writeElementHeaderMSH(bool binary, FILE *fp, std::map<int,int> &elements,

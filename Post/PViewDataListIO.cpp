@@ -1,4 +1,4 @@
-// $Id: PViewDataListIO.cpp,v 1.5 2008-01-18 20:13:13 geuzaine Exp $
+// $Id: PViewDataListIO.cpp,v 1.6 2008-02-16 21:37:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -718,7 +718,7 @@ bool PViewDataList::writeMSH(std::string name)
   writeElementsMSH(fp, NbTY, TY, 5, 9, 3, &nodes, &numelm);
   fprintf(fp, "$ENDELM\n");
 
-  /*
+#if 1 // test new postpro node-based storage
   fprintf(fp, "$NodeData\n");
   fprintf(fp, "\"%s\"\n", getName().c_str());
   fprintf(fp, "1 1 %d\n", nodes.size());
@@ -729,7 +729,7 @@ bool PViewDataList::writeMSH(std::string name)
     fprintf(fp, "\n");
   }
   fprintf(fp, "$EndNodeData\n");
-  */
+#endif
 
   fclose(fp);
   return true;

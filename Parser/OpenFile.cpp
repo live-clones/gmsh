@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.172 2008-02-06 07:33:49 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.173 2008-02-16 21:37:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -385,10 +385,12 @@ int MergeFile(const char *name, int warn_if_missing)
        !strncmp(header, "$PARA", 5) || !strncmp(header, "$ELM", 4) ||
        !strncmp(header, "$MeshFormat", 11)) {
       status = m->readMSH(name);
+      if(status > 1) 
+	status = PView::readMSH(name);
     }
     else if(!strncmp(header, "$PostFormat", 11) || 
 	    !strncmp(header, "$View", 5)) {
-      status = PView::read(name);
+      status = PView::readPOS(name);
     }
     else {
       status = m->readGEO(name);

@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.13 2008-01-20 12:21:30 geuzaine Exp $
+// $Id: PView.cpp,v 1.14 2008-02-16 21:37:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -153,7 +153,64 @@ void PView::setChanged(bool val)
   if(_changed) _eye = SPoint3(0., 0., 0.); 
 }
 
-bool PView::read(std::string filename, int fileIndex)
+void PView::combine(bool time, int how, bool remove)
+{
+  // time == true: combine the timesteps (oherwise combine the elements)
+  // how == 0: try to combine all visible views
+  //        1: try to combine all views
+  //        2: try to combine all views having identical names
+
+  std::vector<nameData> nds;
+  for(unsigned int i = 0; i < list.size(); i++) {
+    PView *p = list[i];
+    PViewData *data = p->getData();
+    if(how || p->getOptions()->Visible) {
+      nameData nd;
+      // this will lead to weird results if there are views named
+      // "__all__" or "__vis__" :-)
+      if(how == 2)
+	nd.name = data->getName();
+      else if(how == 1)
+	nd.name = "__all__";
+      else
+	nd.name = "__vis__";
+      unsigned int j = 0;
+      while(j < nds.size()){
+	if(nds[j].name == nd.name){
+	  nds[j].data.push_back(data);
+	  nds[j].indices.push_back(i);
+	  break;
+	}
+	j++;
+      }
+      if(j == nds.size()){
+	nd.data.push_back(data);
+	nd.indices.push_back(i);
+	nds.push_back(nd);
+      }
+    }
+  }
+
+  std::set<PView*> rm;
+  for(unsigned int i = 0; i < nds.size(); i++){
+    if(nds[i].data.size() > 1){
+      // there's potentially something to combine
+      PView *p = new PView(true);
+      PViewData *data = p->getData();
+      bool res = time ? data->combineTime(nds[i]): data->combineSpace(nds[i]);
+      if(res)
+	for(unsigned int j = 0; j < nds[i].indices.size(); j++)
+	  rm.insert(list[nds[i].indices[j]]);
+      else
+	delete p;
+    }
+  }
+  if(remove)
+    for(std::set<PView*>::iterator it = rm.begin(); it != rm.end(); it++)
+      delete *it;
+}
+
+bool PView::readPOS(std::string filename, int fileIndex)
 {
   FILE *fp = fopen(filename.c_str(), "rb");
   if(!fp){
@@ -234,61 +291,10 @@ bool PView::read(std::string filename, int fileIndex)
   return true;
 }
 
-void PView::combine(bool time, int how, bool remove)
+bool PView::readMSH(std::string filename, int fileIndex)
 {
-  // time == true: combine the timesteps (oherwise combine the elements)
-  // how == 0: try to combine all visible views
-  //        1: try to combine all views
-  //        2: try to combine all views having identical names
-
-  std::vector<nameData> nds;
-  for(unsigned int i = 0; i < list.size(); i++) {
-    PView *p = list[i];
-    PViewData *data = p->getData();
-    if(how || p->getOptions()->Visible) {
-      nameData nd;
-      // this will lead to weird results if there are views named
-      // "__all__" or "__vis__" :-)
-      if(how == 2)
-	nd.name = data->getName();
-      else if(how == 1)
-	nd.name = "__all__";
-      else
-	nd.name = "__vis__";
-      unsigned int j = 0;
-      while(j < nds.size()){
-	if(nds[j].name == nd.name){
-	  nds[j].data.push_back(data);
-	  nds[j].indices.push_back(i);
-	  break;
-	}
-	j++;
-      }
-      if(j == nds.size()){
-	nd.data.push_back(data);
-	nd.indices.push_back(i);
-	nds.push_back(nd);
-      }
-    }
-  }
-
-  std::set<PView*> rm;
-  for(unsigned int i = 0; i < nds.size(); i++){
-    if(nds[i].data.size() > 1){
-      // there's potentially something to combine
-      PView *p = new PView(true);
-      PViewData *data = p->getData();
-      bool res = time ? data->combineTime(nds[i]): data->combineSpace(nds[i]);
-      if(res)
-	for(unsigned int j = 0; j < nds[i].indices.size(); j++)
-	  rm.insert(list[nds[i].indices[j]]);
-      else
-	delete p;
-    }
-  }
-  if(remove)
-    for(std::set<PView*>::iterator it = rm.begin(); it != rm.end(); it++)
-      delete *it;
+  Msg(INFO, "Reading post-pro data from msh file");
+  return false;
 }
 
 bool PView::write(std::string filename, int format, bool append)

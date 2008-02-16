@@ -76,10 +76,14 @@ class PView{
 
   // the static list of all loaded views
   static std::vector<PView*> list;
-  // read view(s) in list format from a file
-  static bool read(std::string filename, int fileIndex=-1);
+
   // combine view
   static void combine(bool time, int how, bool remove);
+
+  // read view(s) in list format from a file
+  static bool readPOS(std::string filename, int fileIndex=-1);
+  // read view data from MSH file
+  static bool readMSH(std::string filename, int fileIndex=-1);
 
   // write view to file in given format
   bool write(std::string filename, int format, bool append=false);
