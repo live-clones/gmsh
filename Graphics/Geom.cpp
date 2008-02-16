@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.150 2008-02-16 22:25:13 geuzaine Exp $
+// $Id: Geom.cpp,v 1.151 2008-02-16 22:34:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -239,6 +239,11 @@ class drawGFace {
   }
   void _drawParametricGFace(GFace *f)
   {
+    Range<double> ubounds = f->parBounds(0);
+    Range<double> vbounds = f->parBounds(1);
+    const double uav = 0.5 * (ubounds.high() + ubounds.low());
+    const double vav = 0.5 * (vbounds.high() + vbounds.low());
+
     if(CTX.geom.surfaces){
       if(CTX.geom.surface_type > 0 && f->va_geom_triangles){
 	_drawVertexArray
@@ -252,10 +257,6 @@ class drawGFace {
 	glLineStipple(1, 0x1F1F);
 	gl2psEnable(GL2PS_LINE_STIPPLE);
 	int N = 20;
-	Range<double> ubounds = f->parBounds(0);
-	Range<double> vbounds = f->parBounds(1);
-	const double uav = 0.5 * (ubounds.high() + ubounds.low());
-	const double vav = 0.5 * (vbounds.high() + vbounds.low());
 	const double ud = (ubounds.high() - ubounds.low());
 	const double vd = (vbounds.high() - vbounds.low());
 	glBegin(GL_LINE_STRIP);
@@ -276,7 +277,7 @@ class drawGFace {
     }
 
     if(CTX.geom.surfaces_num) {
-      GPoint p = f->point(0.5, 0.5);
+      GPoint p = f->point(uav, vav);
       char Num[100];
       sprintf(Num, "%d", f->tag());
       double offset = 0.3 * CTX.gl_fontsize * CTX.pixel_equiv_x;
@@ -287,8 +288,8 @@ class drawGFace {
     }
     
     if(CTX.geom.normals) {
-      GPoint p = f->point(0.5, 0.5);
-      SVector3 n = f->normal(SPoint2(0.5, 0.5));
+      GPoint p = f->point(uav, vav);
+      SVector3 n = f->normal(SPoint2(uav, vav));
       for(int i = 0; i < 3; i++)
 	n[i] *= CTX.geom.normals * CTX.pixel_equiv_x / CTX.s[i];
       glColor4ubv((GLubyte *) & CTX.color.geom.normals);
