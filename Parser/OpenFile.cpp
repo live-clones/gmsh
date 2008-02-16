@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.173 2008-02-16 21:37:22 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.174 2008-02-16 21:42:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -401,8 +401,6 @@ int MergeFile(const char *name, int warn_if_missing)
 
   CTX.geom.draw = 1;
   CTX.mesh.changed = ENT_ALL;
-
-  checkHighOrderTriangles(m);
 
 #if defined(HAVE_FLTK)
   if(!CTX.batch && numViewsBefore != (int)PView::list.size())
