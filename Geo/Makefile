@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.182 2008-02-07 21:29:39 geuzaine Exp $
+# $Id: Makefile,v 1.183 2008-02-16 22:27:57 geuzaine Exp $
 #
 # Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 #
@@ -101,8 +101,7 @@ gmshVertex.o: gmshVertex.cpp GFace.h GEntity.h Range.h SPoint3.h \
   SVector3.h Pair.h gmshVertex.h Geo.h ../Common/GmshDefines.h \
   gmshSurface.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ExtrudeParams.h \
-  ../Common/SmoothData.h MVertex.h GeoInterpolation.h ../Common/Message.h \
-  ../Common/Context.h
+  ../Common/SmoothData.h MVertex.h GeoInterpolation.h ../Common/Message.h
 gmshEdge.o: gmshEdge.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h gmshEdge.h Geo.h ../Common/GmshDefines.h \
@@ -155,7 +154,8 @@ fourierFace.o: fourierFace.cpp fourierVertex.h GModel.h GVertex.h \
 fourierProjectionFace.o: fourierProjectionFace.cpp \
   fourierProjectionFace.h GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
-  GEdgeLoop.h Pair.h GRegion.h
+  GEdgeLoop.h Pair.h GRegion.h ../Common/VertexArray.h ../Geo/SVector3.h \
+  ../Common/Context.h ../DataStr/List.h
 GModel.o: GModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h MElement.h ../Common/GmshDefines.h \
