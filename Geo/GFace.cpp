@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.48 2008-02-07 13:17:18 geuzaine Exp $
+// $Id: GFace.cpp,v 1.49 2008-02-16 22:25:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -540,6 +540,79 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p) const
   double U,V;
   XYZtoUV(p.x(),p.y(),p.z(),U,V,1.0);
   return SPoint2(U,V);
+}
+
+bool GFace::buildRepresentationCross()
+{
+  if(geomType() != Plane){
+    // don't try again
+    cross.clear();
+    cross.push_back(SPoint3(0., 0., 0.));
+    return false;
+  }
+
+  std::list<GEdge*> ed = edges();
+  SBoundingBox3d bb;
+  for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++){
+    GEdge *ge = *it;
+    if(ge->geomType() == GEntity::DiscreteCurve || 
+       ge->geomType() == GEntity::BoundaryLayerCurve){
+      // don't try again
+      cross.clear();
+      cross.push_back(SPoint3(0., 0., 0.));
+      return false;
+    }
+    else{
+      Range<double> t_bounds = ge->parBounds(0);
+      GPoint p[3] = {ge->point(t_bounds.low()),
+		     ge->point(0.5 * (t_bounds.low() + t_bounds.high())),
+		     ge->point(t_bounds.high())};
+      for(int i = 0; i < 3; i++){
+	SPoint2 uv = parFromPoint(SPoint3(p[i].x(), p[i].y(), p[i].z()));
+	bb += SPoint3(uv.x(), uv.y(), 0.);
+      }
+    }
+  }
+  bb *= 1.1;
+  GPoint v0 = point(bb.min().x(), bb.min().y());
+  GPoint v1 = point(bb.max().x(), bb.min().y());
+  GPoint v2 = point(bb.max().x(), bb.max().y());
+  GPoint v3 = point(bb.min().x(), bb.max().y());
+  const int N = 100;
+  for(int dir = 0; dir < 2; dir++) {
+    int end_line = 0;
+    SPoint3 pt, pt_last_inside;
+    for(int i = 0; i < N; i++) {
+      double t = (double)i / (double)(N - 1);
+      double x, y, z;
+      if(!dir){
+	x = 0.5 * (t * (v0.x() + v1.x()) + (1. - t) * (v2.x() + v3.x()));
+	y = 0.5 * (t * (v0.y() + v1.y()) + (1. - t) * (v2.y() + v3.y()));
+	z = 0.5 * (t * (v0.z() + v1.z()) + (1. - t) * (v2.z() + v3.z()));
+      }
+      else{
+	x = 0.5 * (t * (v0.x() + v3.x()) + (1. - t) * (v2.x() + v1.x()));
+	y = 0.5 * (t * (v0.y() + v3.y()) + (1. - t) * (v2.y() + v1.y()));
+	z = 0.5 * (t * (v0.z() + v3.z()) + (1. - t) * (v2.z() + v1.z()));
+      }
+      pt.setPosition(x, y, z);
+      if(containsPoint(pt)){
+	pt_last_inside.setPosition(x, y, z);
+	if(!end_line) { cross.push_back(pt); end_line = 1; }
+      }
+      else {
+	if(end_line) { cross.push_back(pt_last_inside); end_line = 0; }
+      }
+    }
+    if(end_line) cross.push_back(pt_last_inside);
+  }
+  // if we couldn't determine a cross, add a dummy point so that
+  // we won't try again
+  if(!cross.size()){
+    cross.push_back(SPoint3(0., 0., 0.));
+    return false;
+  }
+  return true;
 }
 
 struct graphics_point{

@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.380 2008-01-30 15:27:40 remacle Exp $
+// $Id: Options.cpp,v 1.381 2008-02-16 22:25:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -4077,6 +4077,8 @@ double opt_geometry_surface_type(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     CTX.geom.surface_type = (int)val;
+    if(CTX.geom.surface_type < 0 || CTX.geom.surface_type > 2)
+      CTX.geom.surface_type = 0;
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {

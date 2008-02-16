@@ -136,6 +136,9 @@ class GFace : public GEntity
   // Returns a type-specific additional information string
   virtual std::string getAdditionalInfoString();
 
+  // Fills the crude representation cross
+  bool GFace::buildRepresentationCross();
+
   // Builds a STL triangulation and fills the vertex array
   // va_geom_triangles
   virtual bool buildSTLTriangulation();

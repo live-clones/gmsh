@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.149 2008-02-05 23:16:44 geuzaine Exp $
+// $Id: Geom.cpp,v 1.150 2008-02-16 22:25:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -203,35 +203,78 @@ class drawGEdge {
 
 class drawGFace {
  private:
+  void _drawVertexArray(VertexArray *va, bool useNormalArray, int forceColor=0, 
+			unsigned int color=0)
+  {
+    if(!va) return;
+    glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
+    glNormalPointer(GL_BYTE, 0, va->getNormalArray());
+    glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
+    glEnableClientState(GL_VERTEX_ARRAY);
+    if(useNormalArray){
+      glEnable(GL_LIGHTING);
+      glEnableClientState(GL_NORMAL_ARRAY);
+    }
+    else
+      glDisableClientState(GL_NORMAL_ARRAY);
+    if(forceColor){
+      glDisableClientState(GL_COLOR_ARRAY);
+      glColor4ubv((GLubyte *) & color);
+    }
+    else{
+      glEnableClientState(GL_COLOR_ARRAY);
+    }
+    if(CTX.polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
+    if(CTX.geom.surface_type > 1)
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    else
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glDrawArrays(GL_TRIANGLES, 0, va->getNumVertices());
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    glDisable(GL_LIGHTING);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+  }
   void _drawParametricGFace(GFace *f)
   {
-    if(CTX.geom.surfaces && !f->va_geom_triangles) {
-      glEnable(GL_LINE_STIPPLE);
-      glLineStipple(1, 0x1F1F);
-      gl2psEnable(GL2PS_LINE_STIPPLE);
-      int N = 20;
-      Range<double> ubounds = f->parBounds(0);
-      Range<double> vbounds = f->parBounds(1);
-      const double uav = 0.5 * (ubounds.high() + ubounds.low());
-      const double vav = 0.5 * (vbounds.high() + vbounds.low());
-      const double ud = (ubounds.high() - ubounds.low());
-      const double vd = (vbounds.high() - vbounds.low());
-      glBegin(GL_LINE_STRIP);
-      for(int i = 0; i < N; i++) {
-	GPoint p = f->point(ubounds.low() + ud * (double)i / (double)(N - 1), vav);
-	glVertex3d(p.x(), p.y(), p.z());
+    if(CTX.geom.surfaces){
+      if(CTX.geom.surface_type > 0 && f->va_geom_triangles){
+	_drawVertexArray
+	  (f->va_geom_triangles, CTX.geom.light, 
+	   (f->geomType() == GEntity::ProjectionFace) ? true : f->getSelection(), 
+	   (f->geomType() == GEntity::ProjectionFace) ? CTX.color.geom.projection : 
+	   CTX.color.geom.selection);
       }
-      glEnd();
-      glBegin(GL_LINE_STRIP);
-      for(int i = 0; i < N; i++) {
-	GPoint p = f->point(uav, vbounds.low() + vd * (double)i / (double)(N - 1));
-	glVertex3d(p.x(), p.y(), p.z());
+      else{
+	glEnable(GL_LINE_STIPPLE);
+	glLineStipple(1, 0x1F1F);
+	gl2psEnable(GL2PS_LINE_STIPPLE);
+	int N = 20;
+	Range<double> ubounds = f->parBounds(0);
+	Range<double> vbounds = f->parBounds(1);
+	const double uav = 0.5 * (ubounds.high() + ubounds.low());
+	const double vav = 0.5 * (vbounds.high() + vbounds.low());
+	const double ud = (ubounds.high() - ubounds.low());
+	const double vd = (vbounds.high() - vbounds.low());
+	glBegin(GL_LINE_STRIP);
+	for(int i = 0; i < N; i++) {
+	  GPoint p = f->point(ubounds.low() + ud * (double)i / (double)(N - 1), vav);
+	  glVertex3d(p.x(), p.y(), p.z());
+	}
+	glEnd();
+	glBegin(GL_LINE_STRIP);
+	for(int i = 0; i < N; i++) {
+	  GPoint p = f->point(uav, vbounds.low() + vd * (double)i / (double)(N - 1));
+	  glVertex3d(p.x(), p.y(), p.z());
+	}
+	glEnd();
+	glDisable(GL_LINE_STIPPLE);
+	gl2psDisable(GL2PS_LINE_STIPPLE);
       }
-      glEnd();
-      glDisable(GL_LINE_STIPPLE);
-      gl2psDisable(GL2PS_LINE_STIPPLE);
     }
-    
+
     if(CTX.geom.surfaces_num) {
       GPoint p = f->point(0.5, 0.5);
       char Num[100];
@@ -256,88 +299,39 @@ class drawGFace {
   }
   void _drawPlaneGFace(GFace *f)
   {
-    // We create data here and the routine is not designed to be
-    // reentrant, so we must lock it to avoid race conditions when
-    // redraw events are fired in rapid succession
-    static bool busy = false;
-    if(!f->cross.size() && !busy) {
-      busy = true; 
-      std::list<GEdge*> edges = f->edges();
-      SBoundingBox3d bb;
-      for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
-	GEdge *ge = *it;
-	if(ge->geomType() == GEntity::DiscreteCurve || 
-	   ge->geomType() == GEntity::BoundaryLayerCurve){
-	  // don't try again
-	  f->cross.clear();
-	  f->cross.push_back(SPoint3(0., 0., 0.));
-	  busy = false;
-	  return;
-	}
-	else{
-	  Range<double> t_bounds = ge->parBounds(0);
-	  GPoint p[3] = {ge->point(t_bounds.low()),
-			 ge->point(0.5 * (t_bounds.low() + t_bounds.high())),
-			 ge->point(t_bounds.high())};
-	  for(int i = 0; i < 3; i++){
-	    SPoint2 uv = f->parFromPoint(SPoint3(p[i].x(), p[i].y(), p[i].z()));
-	    bb += SPoint3(uv.x(), uv.y(), 0.);
-	  }
-	}
+    if(!CTX.geom.surface_type || !f->va_geom_triangles ||
+       CTX.geom.surfaces_num || CTX.geom.normals){
+      // We create data here and the routine is not designed to be
+      // reentrant, so we must lock it to avoid race conditions when
+      // redraw events are fired in rapid succession
+      static bool busy = false;
+      if(!f->cross.size() && !busy) {
+	busy = true; 
+	f->buildRepresentationCross();
+	busy = false;
       }
-      bb *= 1.1;
-      GPoint v0 = f->point(bb.min().x(), bb.min().y());
-      GPoint v1 = f->point(bb.max().x(), bb.min().y());
-      GPoint v2 = f->point(bb.max().x(), bb.max().y());
-      GPoint v3 = f->point(bb.min().x(), bb.max().y());
-      const int N = 100;
-      for(int dir = 0; dir < 2; dir++) {
-	int end_line = 0;
-	SPoint3 pt, pt_last_inside;
-	for(int i = 0; i < N; i++) {
-	  double t = (double)i / (double)(N - 1);
-	  double x, y, z;
-	  if(!dir){
-	    x = 0.5 * (t * (v0.x() + v1.x()) + (1. - t) * (v2.x() + v3.x()));
-	    y = 0.5 * (t * (v0.y() + v1.y()) + (1. - t) * (v2.y() + v3.y()));
-	    z = 0.5 * (t * (v0.z() + v1.z()) + (1. - t) * (v2.z() + v3.z()));
-	  }
-	  else{
-	    x = 0.5 * (t * (v0.x() + v3.x()) + (1. - t) * (v2.x() + v1.x()));
-	    y = 0.5 * (t * (v0.y() + v3.y()) + (1. - t) * (v2.y() + v1.y()));
-	    z = 0.5 * (t * (v0.z() + v3.z()) + (1. - t) * (v2.z() + v1.z()));
-	  }
-	  pt.setPosition(x, y, z);
-	  if(f->containsPoint(pt)){
-	    pt_last_inside.setPosition(x, y, z);
-	    if(!end_line) { f->cross.push_back(pt); end_line = 1; }
-	  }
-	  else {
-	    if(end_line) { f->cross.push_back(pt_last_inside); end_line = 0; }
-	  }
-	}
-	if(end_line) f->cross.push_back(pt_last_inside);
+    }
+
+    if(CTX.geom.surfaces) {
+      if(CTX.geom.surface_type > 0 && f->va_geom_triangles){
+	_drawVertexArray(f->va_geom_triangles, CTX.geom.light, 
+			 f->getSelection(), CTX.color.geom.selection);
       }
-      // if we couldn't determine a cross, add a dummy point so that
-      // we won't try again
-      if(!f->cross.size()) f->cross.push_back(SPoint3(0., 0., 0.));
-      busy = false;
+      else{
+	glEnable(GL_LINE_STIPPLE);
+	glLineStipple(1, 0x1F1F);
+	gl2psEnable(GL2PS_LINE_STIPPLE);
+	glBegin(GL_LINES);
+	for(unsigned int i = 0; i < f->cross.size(); i++)
+	  glVertex3d(f->cross[i].x(), f->cross[i].y(), f->cross[i].z());
+	glEnd();
+	glDisable(GL_LINE_STIPPLE);
+	gl2psDisable(GL2PS_LINE_STIPPLE);
+      }
     }
 
     if(f->cross.size() < 2) return;
-
-    if(CTX.geom.surfaces && !f->va_geom_triangles) {
-      glEnable(GL_LINE_STIPPLE);
-      glLineStipple(1, 0x1F1F);
-      gl2psEnable(GL2PS_LINE_STIPPLE);
-      glBegin(GL_LINES);
-      for(unsigned int i = 0; i < f->cross.size(); i++)
-	glVertex3d(f->cross[i].x(), f->cross[i].y(), f->cross[i].z());
-      glEnd();
-      glDisable(GL_LINE_STIPPLE);
-      gl2psDisable(GL2PS_LINE_STIPPLE);
-    }
-
+			  
     if(CTX.geom.surfaces_num) {
       char Num[100];
       sprintf(Num, "%d", f->tag());
@@ -361,40 +355,6 @@ class drawGFace {
 		  CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
 		  p.x(), p.y(), p.z(), n[0], n[1], n[2], CTX.geom.light);
     }
-  }
-  void _drawVertexArray(VertexArray *va, bool useNormalArray, int forceColor=0, 
-			unsigned int color=0)
-  {
-    if(!va) return;
-    glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
-    glNormalPointer(GL_BYTE, 0, va->getNormalArray());
-    glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
-    glEnableClientState(GL_VERTEX_ARRAY);
-    if(useNormalArray){
-      glEnable(GL_LIGHTING);
-      glEnableClientState(GL_NORMAL_ARRAY);
-    }
-    else
-      glDisableClientState(GL_NORMAL_ARRAY);
-    if(forceColor){
-      glDisableClientState(GL_COLOR_ARRAY);
-      glColor4ubv((GLubyte *) & color);
-    }
-    else{
-      glEnableClientState(GL_COLOR_ARRAY);
-    }
-    if(CTX.polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
-    if(CTX.geom.surface_type > 0)
-      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    else
-      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDrawArrays(GL_TRIANGLES, 0, va->getNumVertices());
-    glDisable(GL_POLYGON_OFFSET_FILL);
-    glDisable(GL_LIGHTING);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
   }
   
 public :
@@ -421,13 +381,6 @@ public :
       glColor4ubv((GLubyte *) & CTX.color.geom.surface);
     }
 
-    if(CTX.geom.surfaces && f->va_geom_triangles)
-      _drawVertexArray
-	(f->va_geom_triangles, CTX.geom.light, 
-	 (f->geomType() == GEntity::ProjectionFace) ? true : f->getSelection(), 
-	 (f->geomType() == GEntity::ProjectionFace) ? CTX.color.geom.projection : 
-	 CTX.color.geom.selection);
-    
     if(f->geomType() == GEntity::Plane)
       _drawPlaneGFace(f);
     else
@@ -441,7 +394,6 @@ public :
     }
   }
 };
-
 
 class drawGRegion {
  public :

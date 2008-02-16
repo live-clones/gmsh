@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.652 2008-02-05 21:03:13 geuzaine Exp $
+// $Id: GUI.cpp,v 1.653 2008-02-16 22:25:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
 //
@@ -367,6 +367,7 @@ static Fl_Menu_Item menu_line_display_post[] = {
 };
 
 static Fl_Menu_Item menu_surface_display[] = {
+  {"Cross",     0, 0, 0},
   {"Wireframe", 0, 0, 0},
   {"Solid",     0, 0, 0},
   {0}
@@ -745,7 +746,7 @@ int GUI::global_shortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_ALT + 'd')){
     opt_geometry_surface_type(0, GMSH_SET | GMSH_GUI,
-			      !opt_geometry_surface_type(0, GMSH_GET, 0));
+			      opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
     redraw_opengl();
     return 1;
   }
