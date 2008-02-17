@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.468 2008-02-17 08:47:55 geuzaine Exp $
+# $Id: Makefile,v 1.469 2008-02-17 10:24:50 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -60,6 +60,11 @@ link-mac-universal: compile
 	lipo -create bin/gmsh_i386 bin/gmsh_ppc -output bin/gmsh
 	rm -f bin/gmsh_i386 bin/gmsh_ppc
 
+.PHONY: lib
+lib: compile
+	${AR} ${ARFLAGS}bin/libGmsh${LIBEXT} lib/*${LIBEXT}
+	${RANLIB} bin/libGmsh${LIBEXT}
+
 compile: variables initialtag
 	@for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE}); done
 
@@ -70,14 +75,16 @@ install: variables
 	mkdir -p ${mandir}/man1
 	cp -f doc/gmsh.1 ${mandir}/man1
 
+uninstall:
+	rm -f ${bindir}/gmsh${EXEEXT}
+	rm -f ${mandir}/man1/gmsh.1
+
 install-mac: variables package-mac
 	cp -rf gmsh-${GMSH_VERSION}/Gmsh.app /Applications
 	rm -rf gmsh-${GMSH_VERSION} gmsh-${GMSH_VERSION}-MacOSX.tgz
 
-.PHONY: lib
-lib: compile
-	${AR} ${ARFLAGS}bin/libGmsh${LIBEXT} lib/*${LIBEXT}
-	${RANLIB} bin/libGmsh${LIBEXT}
+uninstall-mac:
+	rm -rf /Applications/Gmsh.app
 
 install-lib: lib
 	mkdir -p ${includedir}/gmsh
@@ -85,6 +92,10 @@ install-lib: lib
 	cp -f ${GMSH_API} ${includedir}/gmsh
 	mkdir -p ${libdir}
 	cp -f bin/libGmsh${LIBEXT} ${libdir}/libGmsh${LIBSUFFIX}${LIBEXT}
+
+uninstall-lib:
+	rm -rf ${includedir}/gmsh
+	rm -rf ${libdir}/libGmsh${LIBSUFFIX}${LIBEXT}
 
 embed:
 	@if [ -r ../getdp2/contrib/gmsh/Makefile ]; then \

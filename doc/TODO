@@ -1,4 +1,4 @@
-$Id: TODO,v 1.67 2008-02-15 20:02:24 geuzaine Exp $
+$Id: TODO,v 1.68 2008-02-17 10:24:50 geuzaine Exp $
 
 ********************************************************************
 
@@ -12,14 +12,6 @@ fix tetgen for non manifold geometries: with a single surface
 connected to a volume and tetgen modifies the volume boundary mesh, we
 get hanging nodes
 Plus we need to fix the 1D mesh in all cases
-
-********************************************************************
-
-add way to invert element orientation (per element or per surface)
-
-********************************************************************
-
-add "make uninstall"
 
 ********************************************************************
 
@@ -91,11 +83,6 @@ introduce Right/Left/Alternate for extruded meshes
 
 recode full-quad recombine algo + add full-hexa recombine by simply
 doing barycentric subdivision on tets
-
-********************************************************************
-
-bug: quads orientation is wrong after recombine + quads wrong in some
-cases
 
 ********************************************************************
 
