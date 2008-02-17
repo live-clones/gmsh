@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.654 2008-02-17 08:47:57 geuzaine Exp $
+// $Id: GUI.cpp,v 1.655 2008-02-17 10:17:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -3859,7 +3859,7 @@ void GUI::create_statistics_window()
       stat_value[num++] = new Fl_Output(2 * WB, 2 * WB + 12 * BH, IW, BH, "Time for 3D mesh");
 
       stat_value[num] = new Fl_Output(2 * WB, 2 * WB + 13 * BH, IW, BH, "Gamma"); 
-      stat_value[num]->tooltip("~ volume / sum_face_area / max_edge_length"); num++;
+      stat_value[num]->tooltip("~ inscribed_radius / circumscribed_radius"); num++;
       stat_value[num] = new Fl_Output(2 * WB, 2 * WB + 14 * BH, IW, BH, "Eta");
       stat_value[num]->tooltip("~ volume^(2/3) / sum_edge_length^2"); num++;
       stat_value[num] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "Rho");
