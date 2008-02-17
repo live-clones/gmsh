@@ -35,7 +35,6 @@ class gmshFace : public GFace {
   virtual GPoint point(double par1, double par2) const; 
   virtual GPoint closestPoint(const SPoint3 & queryPoint) const; 
   virtual int containsPoint(const SPoint3 &pt) const;  
-  virtual int containsParam(const SPoint2 &pt) const; 
   virtual double getMetricEigenvalue(const SPoint2 &);  
   virtual SVector3 normal(const SPoint2 &param) const; 
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const; 

@@ -113,7 +113,7 @@ class GFace : public GEntity
   virtual SPoint2 parFromPoint(const SPoint3 &) const;
 
   // True if the parameter value is interior to the face.
-  virtual int containsParam(const SPoint2 &pt) const = 0;
+  virtual int containsParam(const SPoint2 &pt) const;
 
   // Return the point on the face closest to the given point.
   virtual GPoint closestPoint(const SPoint3 & queryPoint) const { throw; }

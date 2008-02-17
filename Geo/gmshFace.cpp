@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.47 2008-02-17 08:47:59 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.48 2008-02-17 09:30:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -200,17 +200,6 @@ GPoint gmshFace::closestPoint(const SPoint3 & qp) const
   v.Pos.Z = qp.z();
   ProjectPointOnSurface(s, v, u);
   return GPoint(v.Pos.X, v.Pos.Y, v.Pos.Z, this, u);
-}
-
-int gmshFace::containsParam(const SPoint2 &pt) const
-{
-  Range<double> uu = parBounds(0);
-  Range<double> vv = parBounds(1);
-  if((pt.x() >= uu.low() && pt.x() <= uu.high()) && 
-     (pt.y() >= vv.low() && pt.y() <= vv.high()))
-    return 1;
-  else 
-    return 0;
 }
 
 SPoint2 gmshFace::parFromPoint(const SPoint3 &qp) const

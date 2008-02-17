@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.33 2008-02-17 08:47:59 geuzaine Exp $
+// $Id: OCCEdge.cpp,v 1.34 2008-02-17 09:30:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -132,12 +132,6 @@ GPoint OCCEdge::point(double par) const
     Msg(WARNING, "OCC Curve %d is neither a 3D curve not a trimmed curve", tag());
     return GPoint(0, 0, 0);
   }
-}
-
-int OCCEdge::containsParam(double pt) const
-{
-  Range<double> rg = parBounds(0);
-  return (pt >= rg.low() && pt <= rg.high());
 }
 
 SVector3 OCCEdge::firstDer(double par) const

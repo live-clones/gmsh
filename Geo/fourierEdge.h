@@ -20,7 +20,6 @@ class fourierEdge : public GEdge {
   virtual Range<double> parBounds(int i) const;
   virtual GeomType geomType() const { return ParametricCurve; }
   virtual GPoint point(double p) const;
-  virtual int containsParam(double pt) const { throw; }
   virtual SVector3 firstDer(double par) const;
   virtual double parFromPoint(const SPoint3 &pt) const;
   virtual int minimumMeshSegments () const;

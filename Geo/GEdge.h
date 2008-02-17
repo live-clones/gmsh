@@ -68,7 +68,7 @@ class GEdge : public GEntity {
   virtual GPoint closestPoint(const SPoint3 & queryPoint) const { throw; }
 
   // True if the edge contains the given parameter.
-  virtual int containsParam(double pt) const = 0;
+  virtual int containsParam(double pt) const;
 
   // Get first derivative of edge at the given parameter.
   virtual SVector3 firstDer(double par) const = 0;

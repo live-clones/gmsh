@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.50 2008-02-17 08:47:58 geuzaine Exp $
+// $Id: GFace.cpp,v 1.51 2008-02-17 09:30:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -540,6 +540,17 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p) const
   double U,V;
   XYZtoUV(p.x(),p.y(),p.z(),U,V,1.0);
   return SPoint2(U,V);
+}
+
+int GFace::containsParam(const SPoint2 &pt) const
+{
+  Range<double> uu = parBounds(0);
+  Range<double> vv = parBounds(1);
+  if((pt.x() >= uu.low() && pt.x() <= uu.high()) && 
+     (pt.y() >= vv.low() && pt.y() <= vv.high()))
+    return 1;
+  else 
+    return 0;
 }
 
 bool GFace::buildRepresentationCross()

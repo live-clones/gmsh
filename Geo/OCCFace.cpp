@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.33 2008-02-17 08:47:59 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.34 2008-02-17 09:30:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -157,17 +157,6 @@ GPoint OCCFace::closestPoint(const SPoint3 & qp) const
 
   pnt = proj.NearestPoint();
   return GPoint(pnt.X(), pnt.Y(), pnt.Z(), this, pp);
-}
-
-int OCCFace::containsParam(const SPoint2 &pt) const
-{
-  Range<double> uu = parBounds(0);
-  Range<double> vv = parBounds(1);
-  if((pt.x() >= uu.low() && pt.x() <= uu.high()) && 
-     (pt.y() >= vv.low() && pt.y() <= vv.high()))
-    return 1;
-  else 
-    return 0;
 }
 
 SPoint2 OCCFace::parFromPoint(const SPoint3 &qp) const

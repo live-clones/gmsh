@@ -34,7 +34,6 @@ class gmshEdge : public GEdge {
   virtual GeomType geomType() const;
   virtual GPoint point(double p) const;
   virtual GPoint closestPoint(const SPoint3 & queryPoint) const;
-  virtual int containsParam(double pt) const;
   virtual SVector3 firstDer(double par) const;
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return c; }

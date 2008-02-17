@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.44 2008-02-17 08:47:59 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.45 2008-02-17 09:30:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -46,7 +46,7 @@ void gmshEdge::resetMeshAttributes()
 
 Range<double> gmshEdge::parBounds(int i) const
 { 
-  return(Range<double>(c->ubeg, c->uend));
+  return Range<double>(c->ubeg, c->uend);
 }
 
 GPoint gmshEdge::point(double par) const
@@ -65,12 +65,6 @@ GPoint gmshEdge::closestPoint(const SPoint3 &qp) const
   v.Pos.Z = qp.z();
   ProjectPointOnCurve(c, &v, &a, &der);
   return GPoint(a.Pos.X, a.Pos.Y, a.Pos.Z, this, a.u);
-}
-
-int gmshEdge::containsParam(double pt) const
-{
-  Range<double> rg = parBounds(0);
-  return (pt >= rg.low() && pt <= rg.high());
 }
 
 SVector3 gmshEdge::firstDer(double par) const

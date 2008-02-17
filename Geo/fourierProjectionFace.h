@@ -19,7 +19,6 @@ class fourierProjectionFace : public GFace {
   SVector3 normal(const SPoint2 &param) const; 
   Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const; 
   SPoint2 parFromPoint(const SPoint3 &) const;
-  virtual int containsParam(const SPoint2 &pt) const { throw; }
   virtual GEntity::GeomType geomType() const { return GEntity::ProjectionFace; }
   ModelType getNativeType() const { return UnknownModel; }
   void *getNativePtr() const { return ps_; } 

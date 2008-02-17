@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.37 2008-02-17 08:47:58 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.38 2008-02-17 09:30:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -120,6 +120,12 @@ std::string GEdge::getAdditionalInfoString()
   char tmp[256];
   sprintf(tmp, "{%d,%d}", v0->tag(), v1->tag());
   return std::string(tmp);
+}
+
+int GEdge::containsParam(double pt) const
+{
+  Range<double> rg = parBounds(0);
+  return (pt >= rg.low() && pt <= rg.high());
 }
 
 SVector3 GEdge::secondDer(double par) const 

@@ -40,7 +40,6 @@ class discreteEdge : public GEdge {
   virtual ~discreteEdge() {}
   virtual GeomType geomType() const { return DiscreteCurve; }
   virtual GPoint point(double p) const { throw; }
-  virtual int containsParam(double pt) const { throw; }
   virtual SVector3 firstDer(double par) const { throw; }
   virtual double parFromPoint(const SPoint3 &pt) const { throw; }
 };

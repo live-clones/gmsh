@@ -44,7 +44,6 @@ class OCCEdge : public GEdge {
   virtual GeomType geomType() const;
   virtual bool degenerate(int) const { return BRep_Tool::Degenerated(c); }
   virtual GPoint point(double p) const;
-  virtual int containsParam(double pt) const;
   virtual SVector3 firstDer(double par) const;
   virtual double curvature (double par) const;
   virtual SPoint2 reparamOnFace(GFace * face, double epar, int dir) const ;
