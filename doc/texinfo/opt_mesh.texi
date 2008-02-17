@@ -39,6 +39,16 @@ Factor applied to all characteristic lengths@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.CharacteristicLengthMin
+Minimum mesh size@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CharacteristicLengthMax
+Maximum mesh size@*
+Default value: @code{1e+22}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.CharacteristicLengthFromCurvature
 Compute characteritic lenghts automatically from curvatures@*
 Default value: @code{0}@*
@@ -235,6 +245,11 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Optimize
+Optimize the mesh to improve the quality of tetrahedral elements@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.OptimizeNetgen
 Optimize the mesh using Netgen to improve the quality of tetrahedral elements@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}

@@ -1,6 +1,6 @@
-// $Id: Mesh.cpp,v 1.214 2008-02-05 21:26:42 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.215 2008-02-17 08:47:59 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

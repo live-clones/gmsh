@@ -1,6 +1,6 @@
-// $Id: Lambda2.cpp,v 1.12 2007-09-11 14:01:55 geuzaine Exp $
+// $Id: Lambda2.cpp,v 1.13 2008-02-17 08:48:07 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

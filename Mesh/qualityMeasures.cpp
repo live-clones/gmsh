@@ -1,6 +1,6 @@
-// $Id: qualityMeasures.cpp,v 1.6 2008-02-06 07:33:49 geuzaine Exp $
+// $Id: qualityMeasures.cpp,v 1.7 2008-02-17 08:48:01 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

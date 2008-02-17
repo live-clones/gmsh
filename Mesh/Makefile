@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.202 2008-02-07 21:29:39 geuzaine Exp $
+# $Id: Makefile,v 1.203 2008-02-17 08:48:00 geuzaine Exp $
 #
-# Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+# Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -354,15 +354,15 @@ BoundaryLayer.o: BoundaryLayer.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h BoundaryLayer.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h meshGEdge.h meshGFace.h \
   ../Common/Message.h
-BDS.o: BDS.cpp ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
-  ../Common/GmshMatrix.h BDS.h ../Geo/GFace.h ../Geo/GEntity.h \
-  ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
-  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint2.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Post/PView.h ../Post/PViewData.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Common/Message.h qualityMeasures.h
+BDS.o: BDS.cpp ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h BDS.h \
+  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
+  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Post/PView.h ../Post/PViewData.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h ../Common/Message.h \
+  qualityMeasures.h
 HighOrder.o: HighOrder.cpp HighOrder.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \

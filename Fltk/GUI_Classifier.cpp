@@ -1,6 +1,6 @@
-// $Id: GUI_Classifier.cpp,v 1.8 2008-01-21 23:28:52 geuzaine Exp $
+// $Id: GUI_Classifier.cpp,v 1.9 2008-02-17 08:47:57 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

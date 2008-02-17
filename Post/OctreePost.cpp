@@ -1,6 +1,6 @@
-// $Id: OctreePost.cpp,v 1.2 2007-09-10 04:47:08 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.3 2008-02-17 08:48:08 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

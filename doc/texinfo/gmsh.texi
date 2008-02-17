@@ -1,7 +1,7 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.237 2008-02-07 13:17:21 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.238 2008-02-17 08:48:11 geuzaine Exp $
 @c
-@c Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+@c Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 @c
 @c This program is free software; you can redistribute it and/or modify
 @c it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@
 @c %**start of header
 @setfilename        gmsh.info
 @set GMSH-VERSION   2.1
-@set COPYRIGHT      @copyright{} 1997-2007 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set COPYRIGHT      @copyright{} 1997-2008 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @c
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate
@@ -2116,8 +2116,10 @@ Hides the mesh of the entity @var{char-expression}, if
 Recombines the triangular meshes of the surfaces listed in
 @var{expression-list} into mixed triangular/quadrangular meshes. The
 optional @var{expression} on the right hand side specifies the maximum
-recombination angle allowed (a large @var{expression} leading to more
-triangle recombinations).
+difference (in degrees) allowed between the largest angle of a
+quadrangle and a right angle (a value of 0 would only accept quadrangles
+with right angles; a value of 90 would allow degenerate quadrangles;
+default value is 45).
 
 @item Save @var{char-expression};
 Saves the mesh in a file named @var{char-expression}, using the current

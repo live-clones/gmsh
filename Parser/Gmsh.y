@@ -1,7 +1,7 @@
 %{
-// $Id: Gmsh.y,v 1.297 2008-02-08 18:46:50 geuzaine Exp $
+// $Id: Gmsh.y,v 1.298 2008-02-17 08:48:04 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -2743,7 +2743,7 @@ Transfinite :
 	Surface *s = FindSurface(j);
 	if(s){
 	  s->Recombine = 1;
-	  s->RecombineAngle = ($5 > 0 && $5 < 90) ? $5 : 90;
+	  s->RecombineAngle = $5;
 	}
       }
       List_Delete($3);

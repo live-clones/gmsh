@@ -1,6 +1,6 @@
-// $Id: meshGRegionTransfinite.cpp,v 1.7 2007-05-10 22:08:06 geuzaine Exp $
+// $Id: meshGRegionTransfinite.cpp,v 1.8 2008-02-17 08:48:01 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

@@ -1,4 +1,4 @@
-/* $Id: Trackball.cpp,v 1.4 2004-11-01 15:10:36 geuzaine Exp $ */
+/* $Id: Trackball.cpp,v 1.5 2008-02-17 08:47:56 geuzaine Exp $ */
 /*
  * (c) Copyright 1993, 1994, Silicon Graphics, Inc.
  * ALL RIGHTS RESERVED

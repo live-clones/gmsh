@@ -1,6 +1,6 @@
-// $Id: meshGRegionLocalMeshMod.cpp,v 1.10 2008-02-06 07:33:49 geuzaine Exp $
+// $Id: meshGRegionLocalMeshMod.cpp,v 1.11 2008-02-17 08:48:01 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -466,7 +466,8 @@ void gmshBuildVertexCavity_recur(MTet4 *t,
     }
   }
   if (iV == -1){
-    Msg(FATAL, "trying to build a cavity of tets for a vertex that does not belong to this tet");
+    Msg(FATAL, "trying to build a cavity of tets for a vertex that does not "
+	"belong to this tet");
   }
   for (int i = 0; i < 3; i++){
     MTet4 *neigh = t->getNeigh(vFac[iV][i]);

@@ -1,4 +1,4 @@
-// $Id: avl.cpp,v 1.8 2005-05-16 00:50:10 geuzaine Exp $
+// $Id: avl.cpp,v 1.9 2008-02-17 08:47:56 geuzaine Exp $
 
 /*
  * avl package

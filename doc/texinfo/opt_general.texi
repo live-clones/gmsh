@@ -119,6 +119,11 @@ Axes (0=none, 1=simple axes, 2=box, 3=full grid, 4=open grid, 5=ruler)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.AxesMikado
+Mikado axes style@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.AxesAutoPosition
 Position the axes automatically@*
 Default value: @code{1}@*

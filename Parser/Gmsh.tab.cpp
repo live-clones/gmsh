@@ -336,9 +336,9 @@
 /* Copy the first part of user declarations.  */
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.345 2008-02-08 18:46:48 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.346 2008-02-17 08:48:02 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -6854,7 +6854,7 @@ yyreduce:
 	Surface *s = FindSurface(j);
 	if(s){
 	  s->Recombine = 1;
-	  s->RecombineAngle = ((yyvsp[(5) - (6)].d) > 0 && (yyvsp[(5) - (6)].d) < 90) ? (yyvsp[(5) - (6)].d) : 90;
+	  s->RecombineAngle = (yyvsp[(5) - (6)].d);
 	}
       }
       List_Delete((yyvsp[(3) - (6)].l));

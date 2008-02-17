@@ -1,6 +1,6 @@
-// $Id: VertexArray.cpp,v 1.28 2007-09-24 14:59:01 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.29 2008-02-17 08:47:56 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

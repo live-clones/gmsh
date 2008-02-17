@@ -145,8 +145,8 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.SurfaceType
-Display surfaces as wireframe (0) or solid (1)@*
-Default value: @code{0}@*
+Surface display type (0=cross, 1=wireframe, 2=solid@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Tangents

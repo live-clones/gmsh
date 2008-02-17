@@ -1,6 +1,6 @@
-// $Id: meshGRegion.cpp,v 1.40 2008-01-20 10:10:42 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.41 2008-02-17 08:48:01 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -222,7 +222,8 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     tetrahedralize(opts, &in, &out);
   }
   catch (int error){
-    Msg (WARNING, "Self intersecting Surface Mesh, computing intersections (this could take a while)");
+    Msg (WARNING, "Self intersecting Surface Mesh, computing intersections "
+	 "(this could take a while)");
     sprintf(opts, "dV");
     try{
       tetrahedralize(opts, &in, &out);    
@@ -613,13 +614,13 @@ void optimizeMeshGRegionGmsh::operator() (GRegion *gr)
   
 }
 
-bool buildFaceSearchStructure ( GModel *model , fs_cont&search )
+bool buildFaceSearchStructure(GModel *model, fs_cont &search)
 {  
   search.clear();
 
-  GModel::fiter fit = model->firstFace() ;
-  while (fit != model->lastFace()){    
-    for (unsigned int i = 0; i < (*fit)->triangles.size(); i++){
+  GModel::fiter fit = model->firstFace();
+  while(fit != model->lastFace()){    
+    for(unsigned int i = 0; i < (*fit)->triangles.size(); i++){
       MVertex *p1 = (*fit)->triangles[i]->getVertex(0);
       MVertex *p2 = (*fit)->triangles[i]->getVertex(1);
       MVertex *p3 = (*fit)->triangles[i]->getVertex(2);
@@ -632,12 +633,12 @@ bool buildFaceSearchStructure ( GModel *model , fs_cont&search )
   return true;
 }
 
-bool buildEdgeSearchStructure ( GModel *model , es_cont&search )
+bool buildEdgeSearchStructure(GModel *model, es_cont &search)
 {  
   search.clear();
 
-  GModel::eiter eit = model->firstEdge() ;
-  while (eit != model->lastEdge()){    
+  GModel::eiter eit = model->firstEdge();
+  while(eit != model->lastEdge()){    
     for(unsigned int i = 0; i < (*eit)->lines.size(); i++){
       MVertex *p1 = (*eit)->lines[i]->getVertex(0);
       MVertex *p2 = (*eit)->lines[i]->getVertex(1);
@@ -650,35 +651,36 @@ bool buildEdgeSearchStructure ( GModel *model , es_cont&search )
   return true;
 }
 
-GFace* findInFaceSearchStructure ( MVertex *p1,MVertex *p2,MVertex *p3, const fs_cont&search )
+GFace *findInFaceSearchStructure(MVertex *p1, MVertex *p2, MVertex *p3, 
+				 const fs_cont &search)
 {
-  MVertex *p = std::min(p1,std::min(p2,p3));
+  MVertex *p = std::min(p1, std::min(p2, p3));
   
-  for (fs_cont::const_iterator it = search.lower_bound(p);
-       it != search.upper_bound(p);
-       ++it)
-    {
-      MTriangle *t   = it->second.first;
-      GFace     *gf  = it->second.second;
-      if ((t->getVertex(0) == p1 ||t->getVertex(0) == p2 ||t->getVertex(0) == p3)&&
-	  (t->getVertex(1) == p1 ||t->getVertex(1) == p2 ||t->getVertex(1) == p3)&&
-	  (t->getVertex(2) == p1 ||t->getVertex(2) == p2 ||t->getVertex(2) == p3))return gf;
-    }
+  for(fs_cont::const_iterator it = search.lower_bound(p);
+      it != search.upper_bound(p);
+      ++it){
+    MTriangle *t = it->second.first;
+    GFace *gf= it->second.second;
+    if((t->getVertex(0) == p1 || t->getVertex(0) == p2 || t->getVertex(0) == p3) &&
+       (t->getVertex(1) == p1 || t->getVertex(1) == p2 || t->getVertex(1) == p3) &&
+       (t->getVertex(2) == p1 || t->getVertex(2) == p2 || t->getVertex(2) == p3)) 
+      return gf;
+  }
   return 0;
 }
 
-GEdge* findInEdgeSearchStructure ( MVertex *p1, MVertex *p2, const es_cont&search )
+GEdge *findInEdgeSearchStructure(MVertex *p1, MVertex *p2, const es_cont &search)
 {
-  MVertex *p = std::min(p1,p2);
+  MVertex *p = std::min(p1, p2);
   
-  for (es_cont::const_iterator it = search.lower_bound(p);
-       it != search.upper_bound(p);
-       ++it)
-    {
-      MLine *l   = it->second.first;
-      GEdge     *ge  = it->second.second;
-      if ((l->getVertex(0) == p1 ||l->getVertex(0) == p2)&&
-	  (l->getVertex(1) == p1 ||l->getVertex(1) == p2))return ge;
-    }
+  for(es_cont::const_iterator it = search.lower_bound(p);
+      it != search.upper_bound(p);
+      ++it){
+    MLine *l = it->second.first;
+    GEdge *ge = it->second.second;
+    if ((l->getVertex(0) == p1 || l->getVertex(0) == p2) &&
+	(l->getVertex(1) == p1 || l->getVertex(1) == p2)) 
+      return ge;
+  }
   return 0;
 }

@@ -1,6 +1,6 @@
-// $Id: Geom.cpp,v 1.151 2008-02-16 22:34:06 geuzaine Exp $
+// $Id: Geom.cpp,v 1.152 2008-02-17 08:47:59 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

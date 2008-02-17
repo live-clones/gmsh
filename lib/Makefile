@@ -1,6 +1,6 @@
-# $Id: Makefile,v 1.11 2007-09-04 13:47:07 remacle Exp $
+# $Id: Makefile,v 1.12 2008-02-17 08:48:12 geuzaine Exp $
 #
-# Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+# Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

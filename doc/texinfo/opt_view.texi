@@ -154,6 +154,11 @@ Axes (0=none, 1=simple axes, 2=box, 3=full grid, 4=open grid, 5=ruler)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.AxesMikado
+Mikado axes style@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.AxesAutoPosition
 Position the axes automatically@*
 Default value: @code{1}@*
@@ -457,6 +462,11 @@ Saved in: @code{General.OptionsFileName}
 @item View.NbTimeStep
 Number of time steps in the view (do not change this!)@*
 Default value: @code{1}@*
+Saved in: @code{-}
+
+@item View.NormalRaise
+Elevation of the view along the normal (in model coordinates)@*
+Default value: @code{0}@*
 Saved in: @code{-}
 
 @item View.Normals

@@ -1,9 +1,9 @@
 #ifndef _GMODELIO_OCC_H_
 #define _GMODELIO_OCC_H_
 
-// $Id: GModelIO_OCC.h,v 1.3 2008-02-05 14:40:29 remacle Exp $
+// $Id: GModelIO_OCC.h,v 1.4 2008-02-17 08:47:58 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

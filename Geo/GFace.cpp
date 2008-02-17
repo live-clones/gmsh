@@ -1,6 +1,6 @@
-// $Id: GFace.cpp,v 1.49 2008-02-16 22:25:13 geuzaine Exp $
+// $Id: GFace.cpp,v 1.50 2008-02-17 08:47:58 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

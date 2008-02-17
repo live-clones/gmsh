@@ -1,6 +1,6 @@
-// $Id: NumericEmbedded.cpp,v 1.2 2008-01-22 19:41:01 geuzaine Exp $
+// $Id: NumericEmbedded.cpp,v 1.3 2008-02-17 08:48:02 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

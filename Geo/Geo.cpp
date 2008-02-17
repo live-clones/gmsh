@@ -1,6 +1,6 @@
-// $Id: Geo.cpp,v 1.101 2008-02-07 13:17:18 geuzaine Exp $
+// $Id: Geo.cpp,v 1.102 2008-02-17 08:47:58 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -617,7 +617,7 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Method = LIBRE;
   pS->Recombine = 0;
   pS->Recombine_Dir = -1;
-  pS->RecombineAngle = 75;
+  pS->RecombineAngle = 45;
   pS->TransfiniteSmoothing = -1;
   pS->TrsfPoints = List_Create(4, 4, sizeof(Vertex *));
   pS->Control_Points = List_Create(1, 10, sizeof(Vertex *));

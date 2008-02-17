@@ -852,9 +852,9 @@ int gmsh_yy_flex_debug = 0;
 char *gmsh_yytext;
 #line 1 "Gmsh.l"
 #line 2 "Gmsh.l"
-// $Id: Gmsh.yy.cpp,v 1.345 2008-02-08 18:46:50 geuzaine Exp $
+// $Id: Gmsh.yy.cpp,v 1.346 2008-02-17 08:48:05 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

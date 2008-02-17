@@ -1,6 +1,6 @@
-// $Id: BDS.cpp,v 1.99 2008-02-16 21:25:45 geuzaine Exp $
+// $Id: BDS.cpp,v 1.100 2008-02-17 08:48:00 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@
 #include <math.h>
 #include <stdio.h>
 #include "Numeric.h"
-#include "GmshMatrix.h"
 #include "BDS.h"
 #include "Message.h"
 #include "GFace.h"
@@ -715,10 +714,10 @@ bool BDS_SwapEdgeTestQuality::operator () (BDS_Point *_p1, BDS_Point *_p2, BDS_P
   double cosnq; prosca(n, q, &cosnq);
   double cosonq; prosca(on, oq, &cosonq);
 
-  double qa1 = qmTriangle(_p1, _p2, _p3,QMTRI_RHO);
-  double qa2 = qmTriangle(_q1, _q2, _q3,QMTRI_RHO);
-  double qb1 = qmTriangle(_op1, _op2, _op3,QMTRI_RHO);
-  double qb2 = qmTriangle(_oq1, _oq2, _oq3,QMTRI_RHO);
+  double qa1 = qmTriangle(_p1, _p2, _p3, QMTRI_RHO);
+  double qa2 = qmTriangle(_q1, _q2, _q3, QMTRI_RHO);
+  double qb1 = qmTriangle(_op1, _op2, _op3, QMTRI_RHO);
+  double qb2 = qmTriangle(_oq1, _oq2, _oq3, QMTRI_RHO);
 
   // we swap for a better configuration 
   double mina = std::min(qa1,qa2);
@@ -912,8 +911,8 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest)
 int BDS_Edge::numTriangles() const
 {
   int NT = 0;
-  for(unsigned int i = 0; i < _faces.size(); i++) 
-    if(faces(i)->numEdges() == 3) NT++ ;
+  for(unsigned int i = 0; i < _faces.size(); i++)
+    if(faces(i)->numEdges() == 3) NT++;
   return NT;
 }
 
@@ -1259,7 +1258,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
     BDS_Face *t = *it;
     BDS_Point *n[4];
     t->getNodes(n);
-    // double S = fabs(surface_triangle(n[0],n[1],n[2])); 
+    // double S = fabs(surface_triangle(n[0], n[1], n[2])); 
     double S = 1;
     sTot += S;
     U  += (n[0]->u + n[1]->u + n[2]->u) *S;
@@ -1297,7 +1296,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
     p->v = oldV;
     double sold = fabs(surface_triangle_param(n[0], n[1], n[2])); 
     s2 += sold;
-    // printf("%22.15E %22.15E\n",snew,sold);
+    // printf("%22.15E %22.15E\n", snew, sold);
     if(snew < .1 * sold) return false;
 
     if(1 || test_quality){
@@ -1398,7 +1397,7 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point *p, GFace *gf)
 struct recombine_T
 {
   const BDS_Edge *e;
-  double angle ;
+  double angle;
   recombine_T(const BDS_Edge *_e); 
   bool operator < (const recombine_T &other) const
   {
@@ -1425,22 +1424,22 @@ recombine_T::recombine_T(const BDS_Edge *_e)
 
 void BDS_Mesh::recombineIntoQuads(const double angle_limit, GFace *gf)
 {
-  
   Msg(INFO,"Recombining triangles for surface %d", gf->tag());  
   for(int i = 0; i < 5; i++){
-    bool rec = false;
-    std::set<recombine_T> _pairs;
-    
+    std::set<recombine_T> pairs;
     for(std::list<BDS_Edge*>::const_iterator it = edges.begin();
 	it != edges.end(); ++it){
       if(!(*it)->deleted && (*it)->numfaces () == 2)
-	_pairs.insert(recombine_T(*it));
+	pairs.insert(recombine_T(*it));
     }  
-    
-    std::set<recombine_T>::iterator itp = _pairs.begin();
-    
-    while(itp != _pairs.end()){
-      rec |= recombine_edge((BDS_Edge*)itp->e);
+
+    bool rec = false;    
+    std::set<recombine_T>::iterator itp = pairs.begin();
+    while(itp != pairs.end()){
+      // recombine if difference between max quad angle and right
+      // angle is smaller than tol
+      if(itp->angle < gf->meshAttributes.recombineAngle)
+	rec |= recombine_edge((BDS_Edge*)itp->e);
       ++itp;
     }
 

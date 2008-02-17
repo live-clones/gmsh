@@ -1,6 +1,6 @@
-// $Id: SmoothData.cpp,v 1.4 2008-01-20 12:21:29 geuzaine Exp $
+// $Id: SmoothData.cpp,v 1.5 2008-02-17 08:47:56 geuzaine Exp $
 //
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

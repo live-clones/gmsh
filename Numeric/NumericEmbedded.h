@@ -1,7 +1,7 @@
 #ifndef _NUMERIC_EMBEDDED_H_
 #define _NUMERIC_EMBEDDED_H_
 
-// Copyright (C) 1997-2007 C. Geuzaine, J.-F. Remacle
+// Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

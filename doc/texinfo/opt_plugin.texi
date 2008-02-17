@@ -7,9 +7,9 @@
 @item Plugin(Annotate)
 Plugin(Annotate) adds the text string `Text',
 in font `Font' and size `FontSize', in the view
-`iView'. If `3D' is equal to 1, the plugin inserts
+`iView'. If `ThreeD' is equal to 1, the plugin inserts
 the string in model coordinates at the position
-(`X',`Y',`Z'). If `3D' is equal to 0, the plugin
+(`X',`Y',`Z'). If `ThreeD' is equal to 0, the plugin
 inserts the string in screen coordinates at
 the position (`X',`Y'). The string is aligned
 according to `Align'. If `iView' < 0, the plugin
@@ -34,7 +34,7 @@ Default value: @code{50}
 Default value: @code{30}
 @item Z
 Default value: @code{0}
-@item 3D
+@item ThereD
 Default value: @code{0}
 @item FontSize
 Default value: @code{14}
@@ -120,7 +120,7 @@ are time steps in `iView'.
 Numeric options:
 @table @code
 @item A
-Default value: @code{1}
+Default value: @code{0}
 @item dTimeStep
 Default value: @code{-1}
 @item dView
@@ -160,7 +160,7 @@ Numeric options:
 @item MinU
 Default value: @code{0}
 @item MaxU
-Default value: @code{6.28319}
+Default value: @code{6.2832}
 @item nPointsU
 Default value: @code{360}
 @item ConnectPoints
@@ -764,6 +764,27 @@ Default value: @code{0}
 Default value: @code{-1}
 @end table
 
+@item Plugin(TransformLatLon)
+Plugin(TransformLatLon) transforms the homogeneous
+node coordinates (x,y,z,1) of the elements in
+the view `iView' by the matrix
+[`A11' `A12' `A13' `Tx']
+[`A21' `A22' `A23' `Ty']
+[`A31' `A32' `A33' `Tz'].
+If `SwapOrientation' is set, the orientation of the
+elements is reversed. If `iView' < 0, the plugin
+is run on the current view.
+
+Plugin(TransformLatLon) is executed in-place.
+
+Numeric options:
+@table @code
+@item iView
+Default value: @code{-1}
+@item Longitude0
+Default value: @code{0}
+@end table
+
 @item Plugin(Triangulate)
 Plugin(Triangulate) triangulates the points in the
 view `iView', assuming that all the points belong
@@ -801,6 +822,8 @@ Default value: @code{1}
 Default value: @code{0}
 @item SmoothingAngle
 Default value: @code{180}
+@item Explode
+Default value: @code{1}
 @item dView
 Default value: @code{-1}
 @item iView
