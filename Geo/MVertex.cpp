@@ -1,4 +1,4 @@
-// $Id: MVertex.cpp,v 1.20 2008-02-17 08:47:58 geuzaine Exp $
+// $Id: MVertex.cpp,v 1.21 2008-02-18 18:46:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -112,7 +112,8 @@ void MVertex::writeMESH(FILE *fp, double scalingFactor)
 	  x() * scalingFactor, y() * scalingFactor, z() * scalingFactor, 0);
 }
 
-static void double_to_char8(double val, char *str){
+static void double_to_char8(double val, char *str)
+{
   if(val >= 1.e6)
     sprintf(str, "%.2E", val);
   else if(val >= 1.e-3)

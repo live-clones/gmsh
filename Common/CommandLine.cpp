@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.116 2008-02-17 08:47:56 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.117 2008-02-18 18:46:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -92,7 +92,8 @@ void Print_Usage(char *name){
   Msg(DIRECT, "  -clmax   float        Set maximum characteristic length");
   Msg(DIRECT, "  -clcurv               Compute characteristic lengths from curvatures");
   Msg(DIRECT, "  -epslc1d              Set the accuracy of the evaluation of the LCFIELD for 1D mesh");
-  Msg(DIRECT, "  -swapangle            Set the treshold angle (in degree) between two adjacent faces below which a swap is allowed");
+  Msg(DIRECT, "  -swapangle            Set the treshold angle (in degree) between two adjacent faces");
+  Msg(DIRECT, "                          below which a swap is allowed");
   Msg(DIRECT, "  -rand float           Set random perturbation factor");
   Msg(DIRECT, "  -bgm file             Load background mesh from file");
   Msg(DIRECT, "  -constrain            Constrain background mesh with characteristic lengths");
@@ -392,8 +393,8 @@ void Get_Options(int argc, char *argv[])
         if(argv[i] != NULL) {
           CTX.mesh.lc_integration_precision = atof(argv[i++]);
           if(CTX.mesh.lc_integration_precision <= 0.0) {
-            fprintf(stderr, ERROR_STR
-                    "Integration Accuraci for evaluation of 1D LC FIELD must be > 0\n");
+            fprintf(stderr, ERROR_STR 
+		    "Integration Accuraci for evaluation of 1D LC FIELD must be > 0\n");
             exit(1);
           }
         }
@@ -407,8 +408,7 @@ void Get_Options(int argc, char *argv[])
         if(argv[i] != NULL) {
           CTX.mesh.allow_swap_edge_angle = atof(argv[i++]);
           if(CTX.mesh.allow_swap_edge_angle <= 0.0) {
-            fprintf(stderr, ERROR_STR
-                    "Treshold angle for edge swap  must be > 0\n");
+            fprintf(stderr, ERROR_STR "Treshold angle for edge swap  must be > 0\n");
             exit(1);
           }
         }

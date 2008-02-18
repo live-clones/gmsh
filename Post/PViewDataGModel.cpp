@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.10 2008-02-18 18:32:54 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.11 2008-02-18 18:49:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 // 
 
 #include "PViewDataGModel.h"
+#include "Message.h"
 
 bool PViewDataGModel::readMSH(FILE *fp)
 {

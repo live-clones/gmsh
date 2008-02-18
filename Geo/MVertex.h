@@ -117,13 +117,23 @@ class MEdgeVertex : public MVertex{
   double _u, _lc;
  public :
  MEdgeVertex(double x, double y, double z, GEntity *ge, double u, double lc = -1.0) 
-   : MVertex(x, y, z, ge), _u(u),_lc(lc)
+   : MVertex(x, y, z, ge), _u(u), _lc(lc)
   {
   }
   virtual ~MEdgeVertex(){}
-  virtual bool getParameter(int i, double &par) const{ if(i)throw; par = _u; return true; }
-  virtual bool setParameter(int i, double par){ if(i)throw; _u = par; return true; }
-  double getLc () const {return _lc;}
+  virtual bool getParameter(int i, double &par) const 
+  { 
+    if(i) throw; 
+    par = _u; 
+    return true; 
+  }
+  virtual bool setParameter(int i, double par)
+  { 
+    if(i) throw; 
+    _u = par; 
+    return true; 
+  }
+  double getLc() const { return _lc; }
 };
 
 class MFaceVertex : public MVertex{
@@ -135,8 +145,19 @@ class MFaceVertex : public MVertex{
   {
   }
   virtual ~MFaceVertex(){}
-  virtual bool getParameter(int i, double &par)const { par = (i ? _v : _u); return true; }
-  virtual bool setParameter(int i, double par){ if(!i) _u = par; else _v = par; return true; }
+  virtual bool getParameter(int i, double &par) const 
+  { 
+    par = (i ? _v : _u);
+    return true; 
+  }
+  virtual bool setParameter(int i, double par)
+  {
+    if(!i) 
+      _u = par; 
+    else 
+      _v = par; 
+    return true; 
+  }
 };
 
 void parametricCoordinates(const MVertex *ver, const GFace *gf, double &u, double &v);
