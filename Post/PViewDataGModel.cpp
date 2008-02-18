@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.9 2008-02-17 08:48:08 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.10 2008-02-18 18:32:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,12 @@
 // 
 
 #include "PViewDataGModel.h"
+
+bool PViewDataGModel::readMSH(FILE *fp)
+{
+  Msg(INFO, "Filling PViewDataGModel...");
+  return false;
+}
 
 bool PViewDataGModel::writePOS(std::string name, bool binary, bool parsed,
 			       bool append)

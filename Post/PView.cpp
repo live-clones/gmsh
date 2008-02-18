@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.15 2008-02-17 08:48:08 geuzaine Exp $
+// $Id: PView.cpp,v 1.16 2008-02-18 18:32:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #include <algorithm>
 #include "PView.h"
 #include "PViewDataList.h"
+#include "PViewDataGModel.h"
 #include "VertexArray.h"
 #include "SmoothData.h"
 #include "Message.h"
@@ -262,16 +263,16 @@ bool PView::readPOS(std::string filename, int fileIndex)
 
       index++;
       if(fileIndex < 0 || fileIndex == index){
-	PView *p = new PView(false);
-	PViewDataList *d = dynamic_cast<PViewDataList*>(p->getData());
-	if(!d || !d->read(fp, version, format, size)){
+	PViewDataList *d = new PViewDataList(false);
+	if(!d->readPOS(fp, version, format, size)){
 	  Msg(GERROR, "Could not read data in list format");
-	  delete p;
+	  delete d;
 	  return false;
 	}
 	else{
 	  d->setFileName(filename);
 	  d->setFileIndex(index);
+	  new PView(d);
 	}
       }
 
@@ -293,8 +294,29 @@ bool PView::readPOS(std::string filename, int fileIndex)
 
 bool PView::readMSH(std::string filename, int fileIndex)
 {
-  Msg(INFO, "Reading post-pro data from msh file");
-  return false;
+  FILE *fp = fopen(filename.c_str(), "rb");
+  if(!fp){
+    Msg(GERROR, "Unable to open file '%s'", filename.c_str());
+    return false;
+  }
+
+  Msg(INFO, "Reading post-processing data from MSH file...");
+  
+  // FIXME: to be implemented!
+  int index = 0;
+  PViewDataGModel *d = new PViewDataGModel();
+  if(!d->readMSH(fp)){
+    Msg(GERROR, "Could not read data in msh file");
+    delete d;
+    return false;
+  }
+  else{
+    d->setFileName(filename);
+    d->setFileIndex(index);
+    new PView(d);
+  }
+  
+  return true;
 }
 
 bool PView::write(std::string filename, int format, bool append)

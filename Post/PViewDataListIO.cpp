@@ -1,4 +1,4 @@
-// $Id: PViewDataListIO.cpp,v 1.7 2008-02-17 08:48:08 geuzaine Exp $
+// $Id: PViewDataListIO.cpp,v 1.8 2008-02-18 18:32:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -31,7 +31,7 @@
 
 extern Context_T CTX;
 
-bool PViewDataList::read(FILE *fp, double version, int format, int size)
+bool PViewDataList::readPOS(FILE *fp, double version, int format, int size)
 {
   char name[256];
   int t2l, t3l;

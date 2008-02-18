@@ -106,7 +106,7 @@ class PViewDataList : public PViewData {
   void getRawData(int type, List_T **l, int **ne, int *nc, int *nn);
 
   // I/O routines
-  bool read(FILE *fp, double version, int format, int size);
+  bool readPOS(FILE *fp, double version, int format, int size);
   bool writePOS(std::string name, bool binary=false, bool parsed=true,
 		bool append=false);
   bool writeSTL(std::string name);

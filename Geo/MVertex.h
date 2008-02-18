@@ -42,11 +42,10 @@ class MVertex{
   char _visible, _order;
   double _x, _y, _z;
   GEntity *_ge;
-  //void *_data;
 
  public :
   MVertex(double x, double y, double z, GEntity *ge=0, int num=0) 
-    : _visible(true), _order(1), _x(x), _y(y), _z(z), _ge(ge) //, _data(0)
+    : _visible(true), _order(1), _x(x), _y(y), _z(z), _ge(ge)
   {
     if(num){
       _num = num;
@@ -102,9 +101,6 @@ class MVertex{
   // linear coordinate search for the vertex in a set
   std::set<MVertex*, MVertexLessThanLexicographic>::iterator 
   linearSearch(std::set<MVertex*, MVertexLessThanLexicographic> &pos);
-
-  // Get the data associated with this vertex
-  virtual void *getData(){ return 0 /* _data*/ ; }
 
   // IO routines
   void writeMSH(FILE *fp, bool binary=false, double scalingFactor=1.0);
