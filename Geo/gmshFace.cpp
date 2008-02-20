@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.48 2008-02-17 09:30:28 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.49 2008-02-20 09:20:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -32,7 +32,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
   for(int i = 0 ; i < List_Nbr(s->Generatrices); i++){
     Curve *c;
     List_Read(s->Generatrices, i, &c);
-    GEdge *e = m->edgeByTag(abs(c->Num));
+    GEdge *e = m->getEdge(abs(c->Num));
     if(e){
       l_edges.push_back(e);
       e->addFace(this);
@@ -59,7 +59,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
     for(int i = 0 ; i < List_Nbr(s->EmbeddedCurves); i++){
       Curve *c;
       List_Read(s->EmbeddedCurves, i, &c);
-      GEdge *e = m->edgeByTag(abs(c->Num));
+      GEdge *e = m->getEdge(abs(c->Num));
       if(e)
 	embedded_edges.push_back(e);
       else
@@ -70,7 +70,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
     for(int i = 0 ; i < List_Nbr(s->EmbeddedPoints); i++){
       Vertex *v;
       List_Read(s->EmbeddedPoints, i, &v);
-      GVertex *gv = m->vertexByTag(v->Num);
+      GVertex *gv = m->getVertex(v->Num);
       if(gv)
 	embedded_vertices.push_back(gv);
       else
@@ -110,7 +110,7 @@ void gmshFace::resetMeshAttributes()
     for(int i = 0; i < List_Nbr(s->TrsfPoints); i++){
       Vertex *corn;
       List_Read(s->TrsfPoints, i, &corn);
-      GVertex *gv = model()->vertexByTag(corn->Num);
+      GVertex *gv = model()->getVertex(corn->Num);
       if(gv)
 	meshAttributes.corners.push_back(gv);
       else

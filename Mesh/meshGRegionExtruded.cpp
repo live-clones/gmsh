@@ -1,4 +1,4 @@
-// $Id: meshGRegionExtruded.cpp,v 1.21 2008-02-17 08:48:01 geuzaine Exp $
+// $Id: meshGRegionExtruded.cpp,v 1.22 2008-02-20 09:20:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -212,7 +212,7 @@ void meshGRegionExtruded::operator() (GRegion *gr)
   insertAllVertices(gr, pos);
 
   // volume is extruded from a surface
-  GFace *from = gr->model()->faceByTag(std::abs(ep->geo.Source));
+  GFace *from = gr->model()->getFace(std::abs(ep->geo.Source));
   if(!from){
     Msg(GERROR, "Unknown source surface %d for extrusion", ep->geo.Source);
     return;
@@ -258,7 +258,7 @@ void phase1(GRegion *gr,
 	    std::set<std::pair<MVertex*, MVertex*> > &edges)
 {
   ExtrudeParams *ep = gr->meshAttributes.extrude;
-  GFace *from = gr->model()->faceByTag(std::abs(ep->geo.Source));
+  GFace *from = gr->model()->getFace(std::abs(ep->geo.Source));
   if(!from) return;
 
   for(unsigned int i = 0; i < from->triangles.size(); i++){
@@ -295,7 +295,7 @@ void phase2(GRegion *gr,
 	    int &swap)
 {
   ExtrudeParams *ep = gr->meshAttributes.extrude;
-  GFace *from = gr->model()->faceByTag(std::abs(ep->geo.Source));
+  GFace *from = gr->model()->getFace(std::abs(ep->geo.Source));
   if(!from) return;
 
   for(unsigned int i = 0; i < from->triangles.size(); i++){
@@ -361,7 +361,7 @@ void phase3(GRegion *gr,
 	    std::set<std::pair<MVertex*, MVertex*> > &edges)
 {
   ExtrudeParams *ep = gr->meshAttributes.extrude;
-  GFace *from = gr->model()->faceByTag(std::abs(ep->geo.Source));
+  GFace *from = gr->model()->getFace(std::abs(ep->geo.Source));
   if(!from) return;
 
   for(unsigned int i = 0; i < from->triangles.size(); i++){

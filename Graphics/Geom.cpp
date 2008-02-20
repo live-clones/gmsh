@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.152 2008-02-17 08:47:59 geuzaine Exp $
+// $Id: Geom.cpp,v 1.153 2008-02-20 09:20:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -467,8 +467,8 @@ void Draw_Geom()
   for(int i = 0; i < 6; i++)
     glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
-  bool geometryExists = 
-    m->numVertex() || m->numEdge() || m->numFace() || m->numRegion();
+  bool geometryExists = m->getNumVertices() || m->getNumEdges() || 
+    m->getNumFaces() || m->getNumRegions();
 
   if(geometryExists && (CTX.draw_bbox || !CTX.mesh.draw)) {
     glColor4ubv((GLubyte *) & CTX.color.fg);

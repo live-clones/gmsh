@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.58 2008-02-17 08:47:58 geuzaine Exp $
+// $Id: GModel.cpp,v 1.59 2008-02-20 09:20:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,7 @@ extern Context_T CTX;
 std::vector<GModel*> GModel::list;
 
 GModel::GModel(std::string name)
-  : geo_internals(0), occ_internals(0), modelName(name), normals(0)
+  : _geo_internals(0), _occ_internals(0), modelName(name), normals(0)
 {
   list.push_back(this);
   // at the moment we always create (at least an empty) GEO model
@@ -92,6 +92,8 @@ void GModel::destroy()
   if(normals) delete normals;
   normals = 0;
 
+  invalidateMeshVertexCache();
+
   MVertex::resetGlobalNumber();
   MElement::resetGlobalNumber();
 #if !defined(HAVE_GMSH_EMBEDDED)
@@ -101,40 +103,40 @@ void GModel::destroy()
 #endif
 }
 
-GRegion *GModel::regionByTag(int n) const
+GRegion *GModel::getRegion(int n) const
 {
   GEntity tmp((GModel*)this, n);
-  std::set<GRegion*,GEntityLessThan>::const_iterator it =regions.find((GRegion*)&tmp);
+  std::set<GRegion*, GEntityLessThan>::const_iterator it = regions.find((GRegion*)&tmp);
   if(it != regions.end())
     return *it;
   else
     return 0;
 }
 
-GFace *GModel::faceByTag(int n) const
+GFace *GModel::getFace(int n) const
 {
   GEntity tmp((GModel*)this, n);
-  std::set<GFace*,GEntityLessThan>::const_iterator it = faces.find((GFace*)&tmp);
+  std::set<GFace*, GEntityLessThan>::const_iterator it = faces.find((GFace*)&tmp);
   if(it != faces.end())
     return *it;
   else
     return 0;
 }
 
-GEdge *GModel::edgeByTag(int n) const
+GEdge *GModel::getEdge(int n) const
 {
   GEntity tmp((GModel*)this, n);
-  std::set<GEdge*,GEntityLessThan>::const_iterator  it = edges.find((GEdge*)&tmp);
+  std::set<GEdge*, GEntityLessThan>::const_iterator it = edges.find((GEdge*)&tmp);
   if(it != edges.end())
     return *it;
   else
     return 0;
 }
 
-GVertex *GModel::vertexByTag(int n) const
+GVertex *GModel::getVertex(int n) const
 {
   GEntity tmp((GModel*)this, n);
- std::set<GVertex*,GEntityLessThan>::const_iterator  it = vertices.find((GVertex*)&tmp);
+  std::set<GVertex*, GEntityLessThan>::const_iterator it = vertices.find((GVertex*)&tmp);
   if(it != vertices.end())
     return *it;
   else
@@ -144,8 +146,7 @@ GVertex *GModel::vertexByTag(int n) const
 void GModel::remove(GRegion *r)
 {
   riter it = std::find(firstRegion(), lastRegion(), r);
-  if(it != (riter)regions.end())
-  	regions.erase(it);
+  if(it != (riter)regions.end()) regions.erase(it);
 }
 
 void GModel::remove(GFace *f)
@@ -237,6 +238,8 @@ void GModel::associateEntityWithVertices()
 
 int GModel::renumberMeshVertices(bool saveAll)
 {
+  invalidateMeshVertexCache();
+
   // tag all mesh vertices with -1 (negative vertices will not be
   // saved)
   for(viter it = firstVertex(); it != lastVertex(); ++it)
@@ -472,7 +475,7 @@ int GModel::getMeshStatus(bool countDiscrete)
   return -1;
 }
 
-int GModel::numVertices()
+int GModel::getNumMeshVertices()
 {
   int n = 0;
   for(viter it = firstVertex(); it != lastVertex(); ++it)
@@ -486,7 +489,7 @@ int GModel::numVertices()
   return n;
 }
 
-int GModel::numElements()
+int GModel::getNumMeshElements()
 {
   int n = 0;
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
@@ -502,6 +505,59 @@ int GModel::numElements()
     n += (*it)->pyramids.size();
   }
   return n;
+}
+
+template <class T>
+static void insertMeshVertices(std::vector<MVertex*> &vertices, T &container)
+{
+  for(unsigned int i = 0; i < vertices.size(); i++)
+    container[vertices[i]->getNum()] = vertices[i];
+}
+
+void GModel::buildMeshVertexCache()
+{
+  _vertexVectorCache.clear();
+  _vertexMapCache.clear();
+  bool dense = (getNumMeshVertices() == MVertex::getGlobalNumber());
+ 
+  if(dense){
+    _vertexVectorCache.resize(MVertex::getGlobalNumber());
+    for(viter it = firstVertex(); it != lastVertex(); ++it)
+      insertMeshVertices((*it)->mesh_vertices, _vertexVectorCache);
+    for(eiter it = firstEdge(); it != lastEdge(); ++it)
+      insertMeshVertices((*it)->mesh_vertices, _vertexVectorCache);
+    for(fiter it = firstFace(); it != lastFace(); ++it)
+      insertMeshVertices((*it)->mesh_vertices, _vertexVectorCache);
+    for(riter it = firstRegion(); it != lastRegion(); ++it)
+      insertMeshVertices((*it)->mesh_vertices, _vertexVectorCache);
+  }
+  else{
+    for(viter it = firstVertex(); it != lastVertex(); ++it)
+      insertMeshVertices((*it)->mesh_vertices, _vertexMapCache);
+    for(eiter it = firstEdge(); it != lastEdge(); ++it)
+      insertMeshVertices((*it)->mesh_vertices, _vertexMapCache);
+    for(fiter it = firstFace(); it != lastFace(); ++it)
+      insertMeshVertices((*it)->mesh_vertices, _vertexMapCache);
+    for(riter it = firstRegion(); it != lastRegion(); ++it)
+      insertMeshVertices((*it)->mesh_vertices, _vertexMapCache);
+  }
+}
+
+void GModel::invalidateMeshVertexCache()
+{
+  _vertexVectorCache.clear();
+  _vertexMapCache.clear();
+}
+
+MVertex *GModel::getMeshVertex(int num)
+{
+  if(num < 0) return 0;
+  if(_vertexVectorCache.empty() && _vertexMapCache.empty())
+    buildMeshVertexCache();
+  if(num < _vertexVectorCache.size())
+    return _vertexVectorCache[num];
+  else
+    return _vertexMapCache[num];
 }
 
 std::set<int> &GModel::recomputeMeshPartitions()
@@ -582,7 +638,7 @@ static int checkElements(int tag,
 
 void GModel::checkMeshCoherence()
 {
-  int numEle = numElements();
+  int numEle = getNumMeshElements();
   if(!numEle) return;
 
   Msg(INFO, "Checking mesh coherence (%d elements)", numEle);

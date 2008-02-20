@@ -28,7 +28,7 @@ void makeGFace(FM::Patch* patch)
   
   GModel *m = GModel::current();
 
-  int tagVertex = m->numVertex();
+  int tagVertex = m->getNumVertices();
   patch->F(LL[0], LL[1], xx, yy, zz);
   FM::TopoVertex* vLL = new FM::TopoVertex(++tagVertex, xx, yy, zz);
   m->add(new fourierVertex(m, vLL->GetTag(), vLL));
@@ -47,35 +47,35 @@ void makeGFace(FM::Patch* patch)
   FM::Curve* curveT = new FM::FCurve(0, patch, UR, UL);
   FM::Curve* curveL = new FM::FCurve(0, patch, UL, LL);
   
-  int tagEdge = m->numEdge();
+  int tagEdge = m->getNumEdges();
   FM::TopoEdge* eB = new FM::TopoEdge(++tagEdge, curveB, vLL, vLR);
   i1 = eB->GetStartPoint()->GetTag();
   i2 = eB->GetEndPoint()->GetTag();
-  m->add(new fourierEdge(m, eB, eB->GetTag(), m->vertexByTag(i1),
-			 m->vertexByTag(i2)));
+  m->add(new fourierEdge(m, eB, eB->GetTag(), m->getVertex(i1),
+			 m->getVertex(i2)));
   FM::TopoEdge* eR = new FM::TopoEdge(++tagEdge, curveR, vLR, vUR); 
   i1 = eR->GetStartPoint()->GetTag();
   i2 = eR->GetEndPoint()->GetTag();
-  m->add(new fourierEdge(m, eR, eR->GetTag(), m->vertexByTag(i1),
-			 m->vertexByTag(i2))); 
+  m->add(new fourierEdge(m, eR, eR->GetTag(), m->getVertex(i1),
+			 m->getVertex(i2))); 
   FM::TopoEdge* eT = new FM::TopoEdge(++tagEdge, curveT, vUR, vUL);
   i1 = eT->GetStartPoint()->GetTag();
   i2 = eT->GetEndPoint()->GetTag();
-  m->add(new fourierEdge(m, eT, eT->GetTag(), m->vertexByTag(i1),
-			 m->vertexByTag(i2)));
+  m->add(new fourierEdge(m, eT, eT->GetTag(), m->getVertex(i1),
+			 m->getVertex(i2)));
   FM::TopoEdge* eL = new FM::TopoEdge(++tagEdge, curveL, vUL, vLL); 
   i1 = eL->GetStartPoint()->GetTag();
   i2 = eL->GetEndPoint()->GetTag();
-  m->add(new fourierEdge(m, eL, eL->GetTag(), m->vertexByTag(i1),
-			 m->vertexByTag(i2)));
+  m->add(new fourierEdge(m, eL, eL->GetTag(), m->getVertex(i1),
+			 m->getVertex(i2)));
   
-  FM::TopoFace* face = new FM::TopoFace(m->numFace() + 1, patch);
+  FM::TopoFace* face = new FM::TopoFace(m->getNumFaces() + 1, patch);
   face->AddEdge(eB); face->AddEdge(eR); 
   face->AddEdge(eT); face->AddEdge(eL);
   std::list<GEdge*> l_edges;
   for (int j = 0; j < face->GetNumEdges(); j++) {
     int tag = face->GetEdge(j)->GetTag(); 
-    l_edges.push_back(m->edgeByTag(tag));
+    l_edges.push_back(m->getEdge(tag));
   }
   m->add(new fourierFace(m, face, face->GetTag(), l_edges));
 }

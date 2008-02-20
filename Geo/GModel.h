@@ -37,16 +37,17 @@ class smooth_normals;
 class GModel
 {
  private:
+  // A vertex cache to speed-up direct access by vertex number (used
+  // for post-processing I/O)
+  std::vector<MVertex*> _vertexVectorCache;
+  std::map<int, MVertex*> _vertexMapCache;
+
+  GEO_Internals *_geo_internals;
   void createGEOInternals();
   void deleteGEOInternals();
-  GEO_Internals *geo_internals;
 
+  OCC_Internals *_occ_internals;
   void deleteOCCInternals();
-  OCC_Internals *occ_internals;
-
- public:
-  GEO_Internals *getGEOInternals(){ return geo_internals; }
-  OCC_Internals *getOCCInternals(){ return occ_internals; }
 
  protected:
   std::string modelName;
@@ -63,26 +64,28 @@ class GModel
 
   // the static list of all loaded models
   static std::vector<GModel*> list;
+
   // returns the current model
   static GModel *current();
+
+  // Deletes everything in a GModel
+  void destroy();
+
+  // Access internal CAD representations
+  GEO_Internals *getGEOInternals(){ return _geo_internals; }
+  OCC_Internals *getOCCInternals(){ return _occ_internals; }
+
+  // Get the number of regions in this model.
+  int getNumRegions() const { return regions.size(); }
+  int getNumFaces() const { return faces.size(); }
+  int getNumEdges() const { return edges.size(); }
+  int getNumVertices() const  { return vertices.size(); }
 
   typedef std::set<GRegion*, GEntityLessThan>::iterator riter;
   typedef std::set<GFace*, GEntityLessThan>::iterator fiter;
   typedef std::set<GEdge*, GEntityLessThan>::iterator eiter;
   typedef std::set<GVertex*, GEntityLessThan>::iterator viter;
   typedef std::map<int, std::string>::iterator piter;
-
-  // Deletes everything in a GModel
-  void destroy();
-
-  // Returns the geometric tolerance for the entire model.
-  double tolerance() const { return 1.e-14; }
-
-  // Get the number of regions in this model.
-  int numRegion() const { return regions.size(); }
-  int numFace() const { return faces.size(); }
-  int numEdge() const { return edges.size(); }
-  int numVertex() const  { return vertices.size(); }
 
   // Get an iterator initialized to the first entity in this model.
   riter firstRegion() { return regions.begin(); }
@@ -95,10 +98,10 @@ class GModel
   viter lastVertex() { return vertices.end(); }
 
   // Find the region with the given tag.
-  GRegion *regionByTag(int n) const;
-  GFace *faceByTag(int n) const;
-  GEdge *edgeByTag(int n) const;
-  GVertex *vertexByTag(int n) const;
+  GRegion *getRegion(int n) const;
+  GFace *getFace(int n) const;
+  GEdge *getEdge(int n) const;
+  GVertex *getVertex(int n) const;
 
   void add(GRegion *r) { regions.insert(r); }
   void add(GFace *f) { faces.insert(f); }
@@ -152,10 +155,17 @@ class GModel
   int getMeshStatus(bool countDiscrete=true);
 
   // Returns the total number of vertices in the mesh
-  int numVertices();
+  int getNumMeshVertices();
 
   // Returns the total number of elements in the mesh
-  int numElements();
+  int getNumMeshElements();
+
+  // Invalidate/Rebuild the vertex cache
+  void invalidateMeshVertexCache();
+  void buildMeshVertexCache();
+
+  // Access a mesh vertex by number, using the vertex cache
+  MVertex *getMeshVertex(int num);
 
   // The list of partitions
   std::set<int> &getMeshPartitions() { return meshPartitions; }

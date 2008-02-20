@@ -26,7 +26,7 @@ extern Context_T CTX;
 static fourierProjectionFace *createProjectionFaceFromName(char *name)
 {
   GModel *m = GModel::current();
-  int tag = m->numFace() + 1;
+  int tag = m->getNumFaces() + 1;
   fourierProjectionFace *f = 0;
   if(!strcmp(name, "plane"))
     f = new fourierProjectionFace(m, tag, new FM::PlaneProjectionSurface(tag));
@@ -238,7 +238,7 @@ projectionEditor::projectionEditor()
   Fl_Group *o = new Fl_Group(WB, WB, 2 * BB, 3 * BH);
   _select[0] = new Fl_Round_Button(2 * WB + BB / 2, WB, BB, BH, "Points");
   _select[1] = new Fl_Round_Button(2 * WB + BB / 2, WB + BH, BB, BH, "Elements");
-  if(GModel::current()->numElements())
+  if(GModel::current()->getNumMeshElements())
     _select[1]->value(1);
   else
     _select[0]->value(1);
@@ -1033,7 +1033,7 @@ void action_cb(Fl_Widget *w, void *data)
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
       if((*it)->getNativeType() == GEntity::FourierModel) 
 	id = std::max(id, (*it)->tag());
-    if(id > 0) faces.push_back(m->faceByTag(id));
+    if(id > 0) faces.push_back(m->getFace(id));
   }
   else if(what == "delete_all" || what == "save_all"){
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)

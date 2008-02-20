@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.14 2008-02-17 08:47:58 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.15 2008-02-20 09:20:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -39,22 +39,23 @@ int GModel::readGEO(const std::string &name)
 
 void GModel::createGEOInternals()
 {
-  geo_internals = new GEO_Internals;
+  _geo_internals = new GEO_Internals;
 }
 
 void GModel::deleteGEOInternals()
 {
-  delete geo_internals;
+  delete _geo_internals;
+  _geo_internals = 0;
 }
 
 int GModel::importGEOInternals()
 {
-  if(Tree_Nbr(geo_internals->Points)) {
-    List_T *points = Tree2List(geo_internals->Points);
+  if(Tree_Nbr(_geo_internals->Points)) {
+    List_T *points = Tree2List(_geo_internals->Points);
     for(int i = 0; i < List_Nbr(points); i++){
       Vertex *p;
       List_Read(points, i, &p);
-      GVertex *v = vertexByTag(p->Num);
+      GVertex *v = getVertex(p->Num);
       if(!v){
 	v = new gmshVertex(this, p);
 	add(v);
@@ -63,17 +64,17 @@ int GModel::importGEOInternals()
     }
     List_Delete(points);
   }
-  if(Tree_Nbr(geo_internals->Curves)) {
-    List_T *curves = Tree2List(geo_internals->Curves);
+  if(Tree_Nbr(_geo_internals->Curves)) {
+    List_T *curves = Tree2List(_geo_internals->Curves);
     for(int i = 0; i < List_Nbr(curves); i++){
       Curve *c;
       List_Read(curves, i, &c);
       if(c->Num >= 0 && c->beg && c->end){
-	GEdge *e = edgeByTag(c->Num);
+	GEdge *e = getEdge(c->Num);
 	if(!e){
 	  e = new gmshEdge(this, c,
-			   vertexByTag(c->beg->Num),
-			   vertexByTag(c->end->Num));
+			   getVertex(c->beg->Num),
+			   getVertex(c->end->Num));
 	  add(e);
 	}
 	else
@@ -84,12 +85,12 @@ int GModel::importGEOInternals()
     }
     List_Delete(curves);
   }
-  if(Tree_Nbr(geo_internals->Surfaces)) {
-    List_T *surfaces = Tree2List(geo_internals->Surfaces);
+  if(Tree_Nbr(_geo_internals->Surfaces)) {
+    List_T *surfaces = Tree2List(_geo_internals->Surfaces);
     for(int i = 0; i < List_Nbr(surfaces); i++){
       Surface *s;
       List_Read(surfaces, i, &s);
-      GFace *f = faceByTag(s->Num);
+      GFace *f = getFace(s->Num);
       if(!f){
 	f = new gmshFace(this, s);
 	add(f);
@@ -101,12 +102,12 @@ int GModel::importGEOInternals()
     }
     List_Delete(surfaces);
   } 
-  if(Tree_Nbr(geo_internals->Volumes)) {
-    List_T *volumes = Tree2List(geo_internals->Volumes);
+  if(Tree_Nbr(_geo_internals->Volumes)) {
+    List_T *volumes = Tree2List(_geo_internals->Volumes);
     for(int i = 0; i < List_Nbr(volumes); i++){
       Volume *v;
       List_Read(volumes, i, &v);
-      GRegion *r = regionByTag(v->Num);
+      GRegion *r = getRegion(v->Num);
       if(!r){
 	r = new gmshRegion(this, v);
 	add(r);
@@ -118,18 +119,18 @@ int GModel::importGEOInternals()
     }
     List_Delete(volumes);
   }
-  for(int i = 0; i < List_Nbr(geo_internals->PhysicalGroups); i++){
+  for(int i = 0; i < List_Nbr(_geo_internals->PhysicalGroups); i++){
     PhysicalGroup *p;
-    List_Read(geo_internals->PhysicalGroups, i, &p);
+    List_Read(_geo_internals->PhysicalGroups, i, &p);
     for(int j = 0; j < List_Nbr(p->Entities); j++){
       int num;
       List_Read(p->Entities, j, &num);
       GEntity *ge = 0;
       switch(p->Typ){
-      case MSH_PHYSICAL_POINT:   ge = vertexByTag(abs(num)); break;
-      case MSH_PHYSICAL_LINE:    ge = edgeByTag(abs(num)); break;
-      case MSH_PHYSICAL_SURFACE: ge = faceByTag(abs(num)); break;
-      case MSH_PHYSICAL_VOLUME:  ge = regionByTag(abs(num)); break;
+      case MSH_PHYSICAL_POINT:   ge = getVertex(abs(num)); break;
+      case MSH_PHYSICAL_LINE:    ge = getEdge(abs(num)); break;
+      case MSH_PHYSICAL_SURFACE: ge = getFace(abs(num)); break;
+      case MSH_PHYSICAL_VOLUME:  ge = getRegion(abs(num)); break;
       }
       int pnum = sign(num) * p->Num;
       if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) == 

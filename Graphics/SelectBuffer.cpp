@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.18 2008-02-17 08:48:00 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.19 2008-02-20 09:20:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -81,9 +81,9 @@ bool ProcessSelectionBuffer(int entityType,
   // In our case the selection buffer size is equal to between 5 and 7
   // times the maximum number of possible hits
   GModel *m = GModel::current();
-  int eles = (meshSelection && CTX.pick_elements) ? 4 * m->numElements() : 0;
-  int size = 7 * (m->numVertex() + m->numEdge() + m->numFace() + 
-		  m->numRegion() + eles) + 1000 ;
+  int eles = (meshSelection && CTX.pick_elements) ? 4 * m->getNumMeshElements() : 0;
+  int size = 7 * (m->getNumVertices() + m->getNumEdges() + m->getNumFaces() + 
+		  m->getNumRegions() + eles) + 1000 ;
 
   GLuint *selectionBuffer = new GLuint[size];
   glSelectBuffer(size, selectionBuffer);
@@ -171,7 +171,7 @@ bool ProcessSelectionBuffer(int entityType,
       switch (hits[i].type) {
       case 0:
 	{
-	  GVertex *v = m->vertexByTag(hits[i].ient);
+	  GVertex *v = m->getVertex(hits[i].ient);
 	  if(!v){
 	    Msg(GERROR, "Problem in point selection processing");
 	    return false;
@@ -182,7 +182,7 @@ bool ProcessSelectionBuffer(int entityType,
 	break;
       case 1:
 	{
-	  GEdge *e = m->edgeByTag(hits[i].ient);
+	  GEdge *e = m->getEdge(hits[i].ient);
 	  if(!e){
 	    Msg(GERROR, "Problem in line selection processing");
 	    return false;
@@ -197,7 +197,7 @@ bool ProcessSelectionBuffer(int entityType,
 	break;
       case 2:
 	{
-	  GFace *f = m->faceByTag(hits[i].ient);
+	  GFace *f = m->getFace(hits[i].ient);
 	  if(!f){
 	    Msg(GERROR, "Problem in surface selection processing");
 	    return false;
@@ -212,7 +212,7 @@ bool ProcessSelectionBuffer(int entityType,
 	break;
       case 3:
 	{
-	  GRegion *r = m->regionByTag(hits[i].ient);
+	  GRegion *r = m->getRegion(hits[i].ient);
 	  if(!r){
 	    Msg(GERROR, "Problem in volume selection processing");
 	    return false;
@@ -244,19 +244,19 @@ void HighlightEntityNum(int v, int c, int s, int r)
 {
   GModel *m = GModel::current();
   if(v) {
-    GVertex *pv = m->vertexByTag(v);
+    GVertex *pv = m->getVertex(v);
     if(pv) HighlightEntity(pv);
   }
   if(c) {
-    GEdge *pc = m->edgeByTag(c);
+    GEdge *pc = m->getEdge(c);
     if(pc) HighlightEntity(pc);
   }
   if(s) {
-    GFace *ps = m->faceByTag(s);
+    GFace *ps = m->getFace(s);
     if(ps) HighlightEntity(ps);
   }
   if(r) {
-    GRegion *pr = m->regionByTag(r);
+    GRegion *pr = m->getRegion(r);
     if(pr) HighlightEntity(pr);
   }
 }
@@ -278,19 +278,19 @@ void ZeroHighlightEntityNum(int v, int c, int s, int r)
 {
   GModel *m = GModel::current();
   if(v) {
-    GVertex *pv = m->vertexByTag(v);
+    GVertex *pv = m->getVertex(v);
     if(pv) ZeroHighlightEntity(pv);
   }
   if(c) {
-    GEdge *pc = m->edgeByTag(c);
+    GEdge *pc = m->getEdge(c);
     if(pc) ZeroHighlightEntity(pc);
   }
   if(s) {
-    GFace *ps = m->faceByTag(s);
+    GFace *ps = m->getFace(s);
     if(ps) ZeroHighlightEntity(ps);
   }
   if(r) {
-    GRegion *pr = m->regionByTag(r);
+    GRegion *pr = m->getRegion(r);
     if(pr) ZeroHighlightEntity(pr);
   }
 }

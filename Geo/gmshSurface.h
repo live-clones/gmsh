@@ -36,14 +36,14 @@ protected:
   static std::map<int, gmshSurface*> allGmshSurfaces;
 public:
   virtual ~gmshSurface(){}
-  static void reset () 
+  static void reset() 
   {
-    std::map<int,gmshSurface*>::iterator it = allGmshSurfaces.begin();
+    std::map<int, gmshSurface*>::iterator it = allGmshSurfaces.begin();
     for (; it != allGmshSurfaces.end(); ++it)
       delete it->second;
     allGmshSurfaces.clear();
   };
-  static gmshSurface* surfaceByTag(int tag);
+  static gmshSurface* getSurface(int tag);
   virtual Range<double> parBounds(int i) const = 0;
   /// Underlying geometric representation of this entity.
   enum gmshSurfaceType {
@@ -64,7 +64,7 @@ public:
   virtual SVector3 normal(const SPoint2 &param) const = 0;
   // Return the first derivate of the face at the parameter location.
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const = 0;
-  virtual double getMetricEigenvalue ( const SPoint2 &) {throw;}
+  virtual double getMetricEigenvalue(const SPoint2 &) { throw; }
 };
 
 class gmshSphere : public gmshSurface
@@ -145,7 +145,6 @@ public:
   }
 
 };
-
 
 class gmshParametricSurface : public gmshSurface
 {

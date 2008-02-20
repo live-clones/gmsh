@@ -1,4 +1,4 @@
-// $Id: gmshSurface.cpp,v 1.10 2008-02-17 08:47:59 geuzaine Exp $
+// $Id: gmshSurface.cpp,v 1.11 2008-02-20 09:20:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,7 @@
 
 std::map<int,gmshSurface*> gmshSurface::allGmshSurfaces;
 
-gmshSurface * gmshSphere::NewSphere(int iSphere, double x, double y, double z, double r)
+gmshSurface *gmshSphere::NewSphere(int iSphere, double x, double y, double z, double r)
 {
   gmshSphere *sph = new gmshSphere(x, y, z, r);
   
@@ -39,7 +39,7 @@ gmshSurface * gmshSphere::NewSphere(int iSphere, double x, double y, double z, d
   return sph;
 }
 
-gmshSurface * gmshSurface::surfaceByTag(int iSurface)
+gmshSurface *gmshSurface::getSurface(int iSurface)
 {
   std::map<int, gmshSurface*>::iterator it = allGmshSurfaces.find(iSurface);
   if(it == allGmshSurfaces.end()){
@@ -49,7 +49,7 @@ gmshSurface * gmshSurface::surfaceByTag(int iSurface)
   return it->second;
 }
 
-SPoint3  gmshSphere::point (double par1, double par2) const
+SPoint3 gmshSphere::point(double par1, double par2) const
 {
   par2 += M_PI*.5;
   const double x = xc + r * sin(par2) * cos(par1);
@@ -59,31 +59,33 @@ SPoint3  gmshSphere::point (double par1, double par2) const
   return SPoint3(x, y, z);
 }
 
-gmshSurface * gmshPolarSphere::NewPolarSphere(int iSphere, double x, double y, double z, double r)
+gmshSurface *gmshPolarSphere::NewPolarSphere(int iSphere, double x, double y, double z,
+					     double r)
 {
   gmshPolarSphere *sph = new gmshPolarSphere(x, y, z, r);
   
   if(allGmshSurfaces.find(iSphere) != allGmshSurfaces.end()){
-    Msg(GERROR,"gmshSurface %d already exists",iSphere);
+    Msg(GERROR, "gmshSurface %d already exists", iSphere);
   }
-  
+
   allGmshSurfaces[iSphere] = sph;
   return sph;
 }
-SPoint3  gmshPolarSphere::point (double parA, double parB) const
+
+SPoint3 gmshPolarSphere::point(double parA, double parB) const
 {
-	//stereographic projection from the south pole, origin of the axis at the center of the sphere
-	//parA=2rx/(r+z)
-	//parB=2ry/(r+z)
-	double rp2=parA*parA+parB*parB;
-	double z=r*(4*r*r-rp2)/(4*r*r+rp2);
-  return SPoint3((r+z)*parA/(2*r),(r+z)*parB/(2*r),z);
+  //stereographic projection from the south pole, origin of the axis
+  //at the center of the sphere 
+  //parA=2rx/(r+z) parB=2ry/(r+z)
+  double rp2 = parA * parA + parB * parB;
+  double z = r * (4 * r * r - rp2) / (4 * r * r + rp2);
+  return SPoint3((r + z) * parA / (2 * r), (r + z) * parB / (2 * r), z);
 }
 
-
-gmshSurface * gmshParametricSurface::NewParametricSurface(int iSurf,  char *valX,  char *valY,  char *valZ)
+gmshSurface *gmshParametricSurface::NewParametricSurface(int iSurf, char *valX,
+							 char *valY, char *valZ)
 {
-  gmshParametricSurface *sph = new gmshParametricSurface(valX,valY,valZ);
+  gmshParametricSurface *sph = new gmshParametricSurface(valX, valY, valZ);
   
   if(allGmshSurfaces.find(iSurf) != allGmshSurfaces.end()){
     Msg(GERROR,"gmshSurface %d already exists",iSurf);
@@ -92,7 +94,7 @@ gmshSurface * gmshParametricSurface::NewParametricSurface(int iSurf,  char *valX
   return sph;
 }
 
-gmshParametricSurface ::gmshParametricSurface(char *valX, char *valY, char *valZ)
+gmshParametricSurface::gmshParametricSurface(char *valX, char *valY, char *valZ)
 {
 #if !defined(HAVE_MATH_EVAL)
   Msg(GERROR, "MathEval is not compiled in this version of Gmsh");
@@ -103,7 +105,7 @@ gmshParametricSurface ::gmshParametricSurface(char *valX, char *valY, char *valZ
 #endif
 }
 
-gmshParametricSurface ::~gmshParametricSurface()
+gmshParametricSurface::~gmshParametricSurface()
 {
 #if !defined(HAVE_MATH_EVAL)
   Msg(GERROR, "MathEval is not compiled in this version of Gmsh");
@@ -113,17 +115,18 @@ gmshParametricSurface ::~gmshParametricSurface()
   evaluator_destroy(evalZ);
 #endif
 }
-SPoint3 gmshParametricSurface ::point(double par1, double par2) const
+
+SPoint3 gmshParametricSurface::point(double par1, double par2) const
 {
 #if !defined(HAVE_MATH_EVAL)
   Msg(GERROR, "MathEval is not compiled in this version of Gmsh");
   return SPoint3(0.,0.,0.);
 #else
-  char *names[2] = {"u","v"};
+  char *names[2] = {"u", "v"};
   double values [2] = {par1,par2};
   const double x = evaluator_evaluate(evalX, 2, names, values);
   const double y = evaluator_evaluate(evalY, 2, names, values);
   const double z = evaluator_evaluate(evalZ, 2, names, values);
-  return SPoint3(x,y,z);
+  return SPoint3(x, y, z);
 #endif
 }

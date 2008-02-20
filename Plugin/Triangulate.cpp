@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.44 2008-02-17 08:48:08 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.45 2008-02-20 09:20:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -104,7 +104,7 @@ static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
     double *p = (double *)List_Pointer_Fast(inList, i);
     points.push_back(new MVertex(p[0], p[1], p[2]));
   }
-  discreteFace *s = new discreteFace(GModel::current(), GModel::current()->numFace() + 1);
+  discreteFace *s = new discreteFace(GModel::current(), GModel::current()->getNumFaces() + 1);
   s->computeMeanPlane(points);
   double plan[3][3];
   s->getMeanPlaneData(plan);

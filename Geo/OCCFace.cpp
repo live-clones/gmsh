@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.34 2008-02-17 09:30:28 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.35 2008-02-20 09:20:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -52,7 +52,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){	  
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
       int index = emap.FindIndex(edge);
-      GEdge *e = m->edgeByTag(index);
+      GEdge *e = m->getEdge(index);
       if(!e) throw;
       l_wire.push_back(e);
       l_oris.push_back(edge.Orientation());

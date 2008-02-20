@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.32 2008-02-17 08:47:58 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.33 2008-02-20 09:20:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -66,7 +66,7 @@ static void storeElementsInEntities(GModel *m,
     switch(numEdges){
     case 1: 
       {
-	GEdge *e = m->edgeByTag(it->first);
+	GEdge *e = m->getEdge(it->first);
 	if(!e){
 	  e = new discreteEdge(m, it->first);
 	  m->add(e);
@@ -76,7 +76,7 @@ static void storeElementsInEntities(GModel *m,
       break;
     case 3: case 4: 
       {
-	GFace *f = m->faceByTag(it->first);
+	GFace *f = m->getFace(it->first);
 	if(!f){
 	  f = new discreteFace(m, it->first);
 	  m->add(f);
@@ -87,7 +87,7 @@ static void storeElementsInEntities(GModel *m,
       break;
     case 6: case 12: case 9: case 8:
       {
-	GRegion *r = m->regionByTag(it->first);
+	GRegion *r = m->getRegion(it->first);
 	if(!r){
 	  r = new discreteRegion(m, it->first);
 	  m->add(r);
@@ -136,10 +136,10 @@ static void storePhysicalTagsInEntities(GModel *m, int dim,
   for(; it != map.end(); ++it){
     GEntity *ge = 0;
     switch(dim){
-    case 0: ge = m->vertexByTag(it->first); break;
-    case 1: ge = m->edgeByTag(it->first); break;
-    case 2: ge = m->faceByTag(it->first); break;
-    case 3: ge = m->regionByTag(it->first); break;
+    case 0: ge = m->getVertex(it->first); break;
+    case 1: ge = m->getEdge(it->first); break;
+    case 2: ge = m->getFace(it->first); break;
+    case 3: ge = m->getRegion(it->first); break;
     }
     if(ge){
       std::map<int, std::string>::const_iterator it2 = it->second.begin();
@@ -471,7 +471,12 @@ int GModel::readMSH(const std::string &name)
 
     }
     else if(!strncmp(&str[1], "NodeData", 8)) {
-      // there's some post-processing data to read later on
+      // there's some post-processing data to read later on, so cache
+      // the vertex indexing data
+      if(vertexVector.size())
+	_vertexVectorCache = vertexVector;
+      else
+	_vertexMapCache = vertexMap;
       postpro = true;
     }
 
@@ -506,7 +511,7 @@ int GModel::readMSH(const std::string &name)
   // treat points separately
   for(std::map<int, std::vector<MVertex*> >::iterator it = points.begin(); 
       it != points.end(); ++it){
-    GVertex *v = vertexByTag(it->first);
+    GVertex *v = getVertex(it->first);
     if(!v){
       v = new discreteVertex(this, it->first);
       add(v);
@@ -919,7 +924,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
   Msg(INFO, "%d facets", points.size() / 3);
 
   // create face
-  GFace *face = new discreteFace(this, numFace() + 1);
+  GFace *face = new discreteFace(this, getNumFaces() + 1);
   add(face);
 
   // create (unique) vertices and triangles
@@ -2008,7 +2013,7 @@ int GModel::readP3D(const std::string &name)
 
   for(int n = 0; n < numBlocks; n++){
     if(Nk[n] == 1){
-      GFace *gf = new discreteFace(this, numFace() + 1);
+      GFace *gf = new discreteFace(this, getNumFaces() + 1);
       add(gf);
       gf->transfinite_vertices.resize(Ni[n]);
       for(int i = 0; i < Ni[n]; i++)
@@ -2041,7 +2046,7 @@ int GModel::readP3D(const std::string &name)
 			     gf->transfinite_vertices[i    ][j + 1]));
     }
     else{
-      GRegion *gr = new discreteRegion(this, numRegion() + 1);
+      GRegion *gr = new discreteRegion(this, getNumRegions() + 1);
       add(gr);
       gr->transfinite_vertices.resize(Ni[n]);
       for(int i = 0; i < Ni[n]; i++){

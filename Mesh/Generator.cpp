@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.135 2008-02-17 08:48:00 geuzaine Exp $
+// $Id: Generator.cpp,v 1.136 2008-02-20 09:20:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -70,10 +70,10 @@ void GetStatistics(double stat[50], double quality[3][100])
 
   GModel *m = GModel::current();
 
-  stat[0] = m->numVertex();
-  stat[1] = m->numEdge();
-  stat[2] = m->numFace();
-  stat[3] = m->numRegion();
+  stat[0] = m->getNumVertices();
+  stat[1] = m->getNumEdges();
+  stat[2] = m->getNumFaces();
+  stat[3] = m->getNumRegions();
   
   std::map<int, std::vector<GEntity*> > physicals[4];
   m->getPhysicalGroups(physicals);
@@ -147,7 +147,7 @@ void GetStatistics(double stat[50], double quality[3][100])
 
 bool TooManyElements(GModel *m, int dim)
 {
-  if(CTX.expert_mode || !m->numVertex()) return false;
+  if(CTX.expert_mode || !m->getNumVertices()) return false;
 
   // try to detect obvious mistakes in characteristic lenghts (one of
   // the most common cause for erroneous bug reports on the mailing
@@ -155,7 +155,7 @@ bool TooManyElements(GModel *m, int dim)
   double sumAllLc = 0.;
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it)
     sumAllLc += (*it)->prescribedMeshSizeAtVertex();
-  sumAllLc /= (double)m->numVertex();
+  sumAllLc /= (double)m->getNumVertices();
   if(!sumAllLc || pow(CTX.lc / sumAllLc, dim) > 1.e10) 
     return !GetBinaryAnswer("Your choice of characteristic lengths will likely produce\n"
 			    "a very large mesh. Do you really want to continue?\n\n"
@@ -418,7 +418,8 @@ void GenerateMesh(int ask)
     SetOrderN(m, CTX.mesh.order, CTX.mesh.second_order_linear, 
 	      CTX.mesh.second_order_incomplete);
 
-  Msg(INFO, "%d vertices %d elements", m->numVertices(), m->numElements());
+  Msg(INFO, "%d vertices %d elements",
+      m->getNumMeshVertices(), m->getNumMeshElements());
 
   CTX.threads_lock = 0;
   CTX.mesh.changed = ENT_ALL;

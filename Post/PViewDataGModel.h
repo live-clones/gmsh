@@ -37,7 +37,7 @@ class PViewDataGModel : public PViewData {
   double getMin(int step=-1){ return 0.; }
   double getMax(int step=-1){ return 1.; }
   SBoundingBox3d getBoundingBox(){ return SBoundingBox3d(); }
-  int getNumElements(int type=0){ return _model->numElements(); }
+  int getNumElements(int type=0){ return _model->getNumMeshElements(); }
   int getDimension(int ele){ return 0; }
   int getNumNodes(int ele){ return 0; }
   void getNode(int ele, int nod, double &x, double &y, double &z){}

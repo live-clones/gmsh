@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.26 2008-02-17 08:47:58 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.27 2008-02-20 09:20:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -410,8 +410,8 @@ void OCC_Internals::buildGModel(GModel *model)
     TopoDS_Edge edge = TopoDS::Edge(emap(i));
     int i1 = vmap.FindIndex(TopExp::FirstVertex(edge)); 
     int i2 = vmap.FindIndex(TopExp::LastVertex(edge));
-    GVertex *v1 = model->vertexByTag(i1);
-    GVertex *v2 = model->vertexByTag(i2);
+    GVertex *v1 = model->getVertex(i1);
+    GVertex *v2 = model->getVertex(i2);
     OCCEdge *e = new OCCEdge(model, edge, i, v1, v2);
     model->add(e);
   }
@@ -433,28 +433,28 @@ void OCC_Internals::buildGModel(GModel *model)
 
 int GModel::readOCCSTEP(const std::string &fn)
 {
-  occ_internals = new OCC_Internals;
-  occ_internals->loadSTEP(fn.c_str());
-  occ_internals->buildLists();
-  occ_internals->buildGModel(this);
+  _occ_internals = new OCC_Internals;
+  _occ_internals->loadSTEP(fn.c_str());
+  _occ_internals->buildLists();
+  _occ_internals->buildGModel(this);
   return 1;
 }
 
 int GModel::readOCCIGES(const std::string &fn)
 {
-  occ_internals = new OCC_Internals;
-  occ_internals->loadIGES(fn.c_str());
-  occ_internals->buildLists();
-  occ_internals->buildGModel(this);
+  _occ_internals = new OCC_Internals;
+  _occ_internals->loadIGES(fn.c_str());
+  _occ_internals->buildLists();
+  _occ_internals->buildGModel(this);
   return 1;
 }
 
 int GModel::readOCCBREP(const std::string &fn)
 {
-  occ_internals = new OCC_Internals;
-  occ_internals->loadBREP(fn.c_str());
-  occ_internals->buildLists();
-  occ_internals->buildGModel(this);
+  _occ_internals = new OCC_Internals;
+  _occ_internals->loadBREP(fn.c_str());
+  _occ_internals->buildLists();
+  _occ_internals->buildGModel(this);
   snapGVertices();
   return 1;
 }
@@ -493,9 +493,9 @@ void GModel::snapGVertices (void)
 
 void GModel::deleteOCCInternals()
 {
-  if(occ_internals) delete occ_internals;
+  if(_occ_internals) delete _occ_internals;
+  _occ_internals = 0;
 }
-
 
 /*
   OCC Creation routines
@@ -533,9 +533,10 @@ void AddSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape& theList)
   }
 }
 
-void OCC_Internals::applyBooleanOperator ( TopoDS_Shape tool ,  const BooleanOperator & op ){
-  if (tool.IsNull())return;
-  if (shape.IsNull())shape = tool;
+void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool,  const BooleanOperator & op)
+{
+  if (tool.IsNull()) return;
+  if (shape.IsNull()) shape = tool;
   else{
     switch(op){
     case OCC_Internals::Add :
@@ -602,15 +603,16 @@ void OCC_Internals::applyBooleanOperator ( TopoDS_Shape tool ,  const BooleanOpe
   }
 }
   
-void OCC_Internals::Sphere  ( const SPoint3 & center, const double & radius, const BooleanOperator & op ){
+void OCC_Internals::Sphere(const SPoint3 & center, const double & radius,
+			   const BooleanOperator & op)
+{
   // build a sphere
-  gp_Pnt aP (center.x(), center.y(), center.z());  
+  gp_Pnt aP(center.x(), center.y(), center.z());  
   TopoDS_Shape aShape = BRepPrimAPI_MakeSphere(aP, radius).Shape(); 
   // either add it to the current shape, or use it as a tool and remove the
   // sphere from the current shape
-  applyBooleanOperator ( aShape , op );
+  applyBooleanOperator(aShape,  op);
 }
-
 
 #else
 

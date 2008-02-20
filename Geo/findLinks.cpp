@@ -1,4 +1,4 @@
-// $Id: findLinks.cpp,v 1.4 2008-02-17 08:47:59 geuzaine Exp $
+// $Id: findLinks.cpp,v 1.5 2008-02-20 09:20:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -48,7 +48,7 @@ static int complink(const void *a, const void *b)
 static void recurFindLinkedEdges(int ed, List_T *edges, Tree_T *points,
 				 Tree_T *links)
 {
-  GEdge *ge = GModel::current()->edgeByTag(ed);
+  GEdge *ge = GModel::current()->getEdge(ed);
   if(!ge){
     Msg(GERROR, "Unknown curve %d", ed);
     return;
@@ -123,7 +123,7 @@ static void orientAndSortEdges(List_T *edges, Tree_T *links)
   List_Read(temp, 0, &num);
   List_Add(edges, &num);
 
-  GEdge *ge0 = GModel::current()->edgeByTag(abs(num));
+  GEdge *ge0 = GModel::current()->getEdge(abs(num));
   if(!ge0){
     Msg(GERROR, "Unknown curve %d", abs(num));
     return;
@@ -141,7 +141,7 @@ static void orientAndSortEdges(List_T *edges, Tree_T *links)
       nxa na;
       List_Read(lk.l, j, &na);
       if(ge0->tag() != na.a && List_Search(temp, &na.a, fcmp_absint)){
-	GEdge *ge1 = GModel::current()->edgeByTag(abs(na.a));
+	GEdge *ge1 = GModel::current()->getEdge(abs(na.a));
 	if(!ge1){
 	  Msg(GERROR, "Unknown curve %d", abs(na.a));
 	  return;
@@ -176,7 +176,7 @@ int allEdgesLinked(int ed, List_T *edges)
   for(int i = 0; i < List_Nbr(edges); i++){
     int num;
     List_Read(edges, i, &num);
-    GEdge *ge = GModel::current()->edgeByTag(abs(num));
+    GEdge *ge = GModel::current()->getEdge(abs(num));
     if(!ge){
       Msg(GERROR, "Unknown curve %d", abs(num));
       return 0;
@@ -220,7 +220,7 @@ int allEdgesLinked(int ed, List_T *edges)
 static void recurFindLinkedFaces(int fac, List_T *faces, Tree_T *edges, 
 				 Tree_T *links)
 {
-  GFace *gf = GModel::current()->faceByTag(abs(fac));
+  GFace *gf = GModel::current()->getFace(abs(fac));
   if(!gf){
     Msg(GERROR, "Unknown surface %d", abs(fac));
     return;
@@ -288,7 +288,7 @@ int allFacesLinked(int fac, List_T *faces)
   for(int i = 0; i < List_Nbr(faces); i++){
     int num;
     List_Read(faces, i, &num);
-    GFace *gf = GModel::current()->faceByTag(abs(num));
+    GFace *gf = GModel::current()->getFace(abs(num));
     if(!gf){
       Msg(GERROR, "Unknown surface %d", abs(num));
       return 0;

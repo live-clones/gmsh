@@ -42,10 +42,11 @@ class MVertex{
   char _visible, _order;
   double _x, _y, _z;
   GEntity *_ge;
+  void *_data;
 
  public :
   MVertex(double x, double y, double z, GEntity *ge=0, int num=0) 
-    : _visible(true), _order(1), _x(x), _y(y), _z(z), _ge(ge)
+    : _visible(true), _order(1), _x(x), _y(y), _z(z), _ge(ge), _data(0)
   {
     if(num){
       _num = num;
@@ -57,7 +58,8 @@ class MVertex{
   }
   virtual ~MVertex(){}
 
-  // reset the global node number
+  // get/reset the global node number
+  static int getGlobalNumber(){ return _globalNum; }
   static void resetGlobalNumber(){ _globalNum = 0; }
 
   // get/set the visibility flag
@@ -84,6 +86,10 @@ class MVertex{
   // get/set the number
   inline int getNum() const { return _num; }
   inline void setNum(int num) { _num = num; }
+
+  // get/set the data
+  inline void *getData() { return _data; }
+  inline void setData(void *data) { _data = data; }
 
   // get/set ith parameter
   virtual bool getParameter(int i, double &par) const{ return false; }

@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.25 2008-02-17 08:48:01 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.26 2008-02-20 09:20:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -217,7 +217,7 @@ int MeshExtrudedSurface(GFace *gf,
   
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
     // surface is extruded from a curve
-    GEdge *from = gf->model()->edgeByTag(std::abs(ep->geo.Source));
+    GEdge *from = gf->model()->getEdge(std::abs(ep->geo.Source));
     if(!from){
       Msg(GERROR, "Unknown source curve %d for extrusion", ep->geo.Source);
       return 0;
@@ -226,7 +226,7 @@ int MeshExtrudedSurface(GFace *gf,
   }
   else {
     // surface is a copy of another surface (the "top" of the extrusion)
-    GFace *from = gf->model()->faceByTag(std::abs(ep->geo.Source));
+    GFace *from = gf->model()->getFace(std::abs(ep->geo.Source));
     if(!from){ 
       Msg(GERROR, "Unknown source surface %d for extrusion", ep->geo.Source);
       return 0;

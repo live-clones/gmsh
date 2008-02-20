@@ -336,7 +336,7 @@
 /* Copy the first part of user declarations.  */
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.346 2008-02-17 08:48:02 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.347 2008-02-20 09:20:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -4819,7 +4819,7 @@ yyreduce:
         if(v)
           att->addPoint(v->Pos.X, v->Pos.Y, v->Pos.Z);
         else{
-          GVertex *gv = GModel::current()->vertexByTag((int)d);
+          GVertex *gv = GModel::current()->getVertex((int)d);
           if(gv) 
             att->addPoint(gv->x(), gv->y(), gv->z());
         }
@@ -4952,7 +4952,7 @@ yyreduce:
 	if(v)
 	  attractor->addPoint(v->Pos.X, v->Pos.Y, v->Pos.Z);
 	else{
-	  GVertex *gv = GModel::current()->vertexByTag((int)d);
+	  GVertex *gv = GModel::current()->getVertex((int)d);
 	  if(gv) 
 	    attractor->addPoint(gv->x(), gv->y(), gv->z());
 	}
@@ -4990,7 +4990,7 @@ yyreduce:
 	  att->addCurve(c, (int)pars[3]);
 	}
 	else{
-	  GEdge *ge = GModel::current()->edgeByTag((int)d);
+	  GEdge *ge = GModel::current()->getEdge((int)d);
 	  if(ge){
 	    att->addGEdge(ge, (int)pars[3]);
 	  }
@@ -5013,7 +5013,7 @@ yyreduce:
 	if(v)
 	  v->lc = (yyvsp[(5) - (6)].d);
 	else{
-	  GVertex *gv = GModel::current()->vertexByTag((int)d);
+	  GVertex *gv = GModel::current()->getVertex((int)d);
 	  if(gv) 
 	    gv->setPrescribedMeshSizeAtVertex((yyvsp[(5) - (6)].d));
 	}
@@ -5373,7 +5373,7 @@ yyreduce:
   case 111:
 #line 1526 "Gmsh.y"
     {
-      myGmshSurface = gmshSurface::surfaceByTag((int)(yyvsp[(3) - (4)].d));
+      myGmshSurface = gmshSurface::getSurface((int)(yyvsp[(3) - (4)].d));
       (yyval.s).Type = 0;
       (yyval.s).Num = 0;
     ;}
@@ -5642,7 +5642,7 @@ yyreduce:
 	  List_Add((yyval.l), &TheShape);
 	}
 	else{
-	  GVertex *gv = GModel::current()->vertexByTag(TheShape.Num);
+	  GVertex *gv = GModel::current()->getVertex(TheShape.Num);
 	  if(gv){
 	    TheShape.Type = MSH_POINT_FROM_GMODEL;
 	    List_Add((yyval.l), &TheShape);
@@ -5668,7 +5668,7 @@ yyreduce:
 	  List_Add((yyval.l), &TheShape);
 	}
 	else{
-	  GEdge *ge = GModel::current()->edgeByTag(TheShape.Num);
+	  GEdge *ge = GModel::current()->getEdge(TheShape.Num);
 	  if(ge){
 	    TheShape.Type = MSH_SEGM_FROM_GMODEL;
 	    List_Add((yyval.l), &TheShape);
@@ -5694,7 +5694,7 @@ yyreduce:
 	  List_Add((yyval.l), &TheShape);
 	}
 	else{
-	  GFace *gf = GModel::current()->faceByTag(TheShape.Num);
+	  GFace *gf = GModel::current()->getFace(TheShape.Num);
 	  if(gf){
 	    TheShape.Type = MSH_SURF_FROM_GMODEL;
 	    List_Add((yyval.l), &TheShape);
@@ -5720,7 +5720,7 @@ yyreduce:
 	  List_Add((yyval.l), &TheShape);
 	}
 	else{
-	  GRegion *gr = GModel::current()->regionByTag(TheShape.Num);
+	  GRegion *gr = GModel::current()->getRegion(TheShape.Num);
 	  if(gr){
 	    TheShape.Type = MSH_VOLUME_FROM_GMODEL;
 	    List_Add((yyval.l), &TheShape);
