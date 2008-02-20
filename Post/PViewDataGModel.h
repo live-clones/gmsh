@@ -31,7 +31,7 @@ class PViewDataGModel : public PViewData {
   GModel *_model;
   PViewDataList *_cloneToList(); // create old-style data from this
  public:
-  PViewDataGModel(){}
+  PViewDataGModel(GModel *model) : _model(model) {}
   ~PViewDataGModel(){}
   int getNumTimeSteps(){ return 1; }
   double getMin(int step=-1){ return 0.; }

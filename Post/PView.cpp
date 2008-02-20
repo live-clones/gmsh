@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.16 2008-02-18 18:32:54 geuzaine Exp $
+// $Id: PView.cpp,v 1.17 2008-02-20 09:24:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -304,7 +304,7 @@ bool PView::readMSH(std::string filename, int fileIndex)
   
   // FIXME: to be implemented!
   int index = 0;
-  PViewDataGModel *d = new PViewDataGModel();
+  PViewDataGModel *d = new PViewDataGModel(GModel::current());
   if(!d->readMSH(fp)){
     Msg(GERROR, "Could not read data in msh file");
     delete d;
