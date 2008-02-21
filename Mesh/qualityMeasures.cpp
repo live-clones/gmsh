@@ -1,4 +1,4 @@
-// $Id: qualityMeasures.cpp,v 1.11 2008-02-21 14:15:10 geuzaine Exp $
+// $Id: qualityMeasures.cpp,v 1.12 2008-02-21 19:20:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -63,26 +63,26 @@ double qmTriangle(const double &xa, const double &ya, const double &za,
   case QMTRI_RHO:
     {
       // quality = rho / R = 2 * inscribed radius / circumradius
-      double a [3] = {xc-xb,yc-yb,zc-zb};
-      double b [3] = {xa-xc,ya-yc,za-zc};
-      double c [3] = {xb-xa,yb-ya,zb-za};
+      double a [3] = {xc - xb, yc - yb, zc - zb};
+      double b [3] = {xa - xc, ya - yc, za - zc};
+      double c [3] = {xb - xa, yb - ya, zb - za};
       norme(a);
       norme(b);
       norme(c);
-      double pva [3]; prodve(b,c,pva); const double sina = norm3(pva); 
-      double pvb [3]; prodve(c,a,pvb); const double sinb = norm3(pvb);
-      double pvc [3]; prodve(a,b,pvc); const double sinc = norm3(pvc);
+      double pva [3]; prodve(b, c, pva); const double sina = norm3(pva); 
+      double pvb [3]; prodve(c, a, pvb); const double sinb = norm3(pvb);
+      double pvc [3]; prodve(a, b, pvc); const double sinc = norm3(pvc);
       
       if (sina == 0.0 && sinb == 0.0 && sinc == 0.0) quality = 0.0;
-      else quality = 2 * (2*sina*sinb*sinc/(sina + sinb + sinc) );
+      else quality = 2 * (2 * sina * sinb * sinc / (sina + sinb + sinc));
     }
     break;
     // condition number
   case QMTRI_COND:
     {
-      double a [3] = {xc-xa,yc-ya,zc-za};
-      double b [3] = {xb-xa,yb-ya,zb-za};
-      double c [3] ; prodve(a,b,c); norme(c);
+      double a [3] = {xc - xa, yc - ya, zc - za};
+      double b [3] = {xb - xa, yb - ya, zb - za};
+      double c [3] ; prodve(a, b, c); norme(c);
       double A[3][3] = {{a[0] , b[0] , c[0]} ,
 			{a[1] , b[1] , c[1]} ,
 			{a[2] , b[2] , c[2]}};
@@ -132,13 +132,15 @@ double qmTet(const double &x1, const double &y1, const double &z1,
       mat[2][1] = z3 - z1;
       mat[2][2] = z4 - z1;
       *volume = fabs(det3x3(mat)) / 6.;
-      double l = ((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)+(z2-z1)*(z2-z1));
-      l += ((x3-x1)*(x3-x1)+(y3-y1)*(y3-y1)+(z3-z1)*(z3-z1));
-      l += ((x4-x1)*(x4-x1)+(y4-y1)*(y4-y1)+(z4-z1)*(z4-z1));
-      l += ((x3-x2)*(x3-x2)+(y3-y2)*(y3-y2)+(z3-z2)*(z3-z2));
-      l += ((x4-x2)*(x4-x2)+(y4-y2)*(y4-y2)+(z4-z2)*(z4-z2));
-      l += ((x3-x4)*(x3-x4)+(y3-y4)*(y3-y4)+(z3-z4)*(z3-z4));
-      return 12. * pow(3*fabs(*volume),2./3.)/l;
+      double l = ((x2 - x1) * (x2 - x1) + 
+		  (y2 - y1) * (y2 - y1) +
+		  (z2 - z1) * (z2 - z1));
+      l += ((x3 - x1) * (x3 - x1) + (y3 - y1) * (y3 - y1) + (z3 - z1) * (z3 - z1));
+      l += ((x4 - x1) * (x4 - x1) + (y4 - y1) * (y4 - y1) + (z4 - z1) * (z4 - z1));
+      l += ((x3 - x2) * (x3 - x2) + (y3 - y2) * (y3 - y2) + (z3 - z2) * (z3 - z2));
+      l += ((x4 - x2) * (x4 - x2) + (y4 - y2) * (y4 - y2) + (z4 - z2) * (z4 - z2));
+      l += ((x3 - x4) * (x3 - x4) + (y3 - y4) * (y3 - y4) + (z3 - z4) * (z3 - z4));
+      return 12. * pow(3 * fabs(*volume), 2. / 3.) / l;
     }
   case QMTET_2:
     {
@@ -153,21 +155,28 @@ double qmTet(const double &x1, const double &y1, const double &z1,
       mat[2][1] = z3 - z1;
       mat[2][2] = z4 - z1;
       *volume = fabs(det3x3(mat)) / 6.;
-      double p0[3] = {x1,y1,z1};
-      double p1[3] = {x2,y2,z2};
-      double p2[3] = {x3,y3,z3};
-      double p3[3] = {x4,y4,z4};
+      double p0[3] = {x1, y1, z1};
+      double p1[3] = {x2, y2, z2};
+      double p2[3] = {x3, y3, z3};
+      double p3[3] = {x4, y4, z4};
       double s1 = fabs(triangle_area(p0, p1, p2));
       double s2 = fabs(triangle_area(p0, p2, p3));
       double s3 = fabs(triangle_area(p0, p1, p3));
       double s4 = fabs(triangle_area(p1, p2, p3));
       double rhoin = 3. * fabs(*volume) / (s1 + s2 + s3 + s4);
-      double l = sqrt ((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1)+(z2-z1)*(z2-z1));
-      l = std::max(l,sqrt ((x3-x1)*(x3-x1)+(y3-y1)*(y3-y1)+(z3-z1)*(z3-z1)));
-      l = std::max(l,sqrt ((x4-x1)*(x4-x1)+(y4-y1)*(y4-y1)+(z4-z1)*(z4-z1)));
-      l = std::max(l,sqrt ((x3-x2)*(x3-x2)+(y3-y2)*(y3-y2)+(z3-z2)*(z3-z2)));
-      l = std::max(l,sqrt ((x4-x2)*(x4-x2)+(y4-y2)*(y4-y2)+(z4-z2)*(z4-z2)));
-      l = std::max(l,sqrt ((x3-x4)*(x3-x4)+(y3-y4)*(y3-y4)+(z3-z4)*(z3-z4)));
+      double l = sqrt((x2 - x1) * (x2 - x1) +
+		      (y2 - y1) * (y2 - y1) + 
+		      (z2 - z1) * (z2 - z1));
+      l = std::max(l, sqrt((x3 - x1) * (x3 - x1) + (y3 - y1) * (y3 - y1) + 
+			   (z3 - z1) * (z3 - z1)));
+      l = std::max(l, sqrt((x4 - x1) * (x4 - x1) + (y4 - y1) * (y4 - y1) + 
+			   (z4 - z1) * (z4 - z1)));
+      l = std::max(l, sqrt((x3 - x2) * (x3 - x2) + (y3 - y2) * (y3 - y2) + 
+			   (z3 - z2) * (z3 - z2)));
+      l = std::max(l, sqrt((x4 - x2) * (x4 - x2) + (y4 - y2) * (y4 - y2) +
+			   (z4 - z2) * (z4 - z2)));
+      l = std::max(l, sqrt((x3 - x4) * (x3 - x4) + (y3 - y4) * (y3 - y4) +
+			   (z3 - z4) * (z3 - z4)));
       return 2. * sqrt(6.) * rhoin / l;	
     }
     break;

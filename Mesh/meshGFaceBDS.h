@@ -1,5 +1,5 @@
-#ifndef _MESH_GFACEBDS_H_
-#define _MESH_GFACEBDS_H_
+#ifndef _MESH_GFACE_BDS_H_
+#define _MESH_GFACE_BDS_H_
 
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
