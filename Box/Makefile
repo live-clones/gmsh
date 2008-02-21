@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.46 2008-02-17 08:47:56 geuzaine Exp $
+# $Id: Makefile,v 1.47 2008-02-21 12:42:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -71,8 +71,9 @@ Box.o: Box.cpp ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
   ../Post/PView.h ../Post/PViewData.h ../Post/PViewOptions.h \
   ../Post/ColorTable.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Post/AdaptiveViews.h ../Common/GmshMatrix.h ../Mesh/Field.h \
-  ../Geo/Geo.h ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
-  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
-  ../Common/SmoothData.h ../Post/OctreePost.h ../Common/Octree.h \
-  ../Common/OctreeInternals.h ../Mesh/BackgroundMesh.h
+  ../contrib/ANN/include/ANN/ANN.h ../Geo/Geo.h ../Common/GmshDefines.h \
+  ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
+  ../Post/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h \
+  ../Mesh/BackgroundMesh.h
