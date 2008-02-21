@@ -83,6 +83,6 @@ struct _DELAUNAY{
   Voronoi v;
 };
 
-void Make_Mesh_With_Points(DocRecord * ptr, PointRecord * Liste, int Numpoints);
+void Make_Mesh_With_Points(DocRecord *ptr, PointRecord *Liste, int Numpoints);
 
 #endif

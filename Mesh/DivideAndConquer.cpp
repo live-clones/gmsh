@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.14 2008-02-17 08:48:00 geuzaine Exp $
+// $Id: DivideAndConquer.cpp,v 1.15 2008-02-21 19:27:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -357,7 +357,7 @@ int DelaunayAndVoronoi(DocPeek doc)
 
 // This routine insert the point 'newPoint' in the list dlist,
 // respecting the clock-wise orientation
-int DListInsert(DListRecord ** dlist, MPoint center, PointNumero newPoint)
+int DListInsert(DListRecord **dlist, MPoint center, PointNumero newPoint)
 {
   DListRecord *p, *newp;
   double alpha1, alpha, beta, xx, yy;
@@ -427,7 +427,7 @@ int Insert(PointNumero a, PointNumero b)
   return rslt;
 }
 
-int DListDelete(DListPeek * dlist, PointNumero oldPoint)
+int DListDelete(DListPeek *dlist, PointNumero oldPoint)
 {
   DListPeek p;
 
@@ -469,7 +469,7 @@ int Delete(PointNumero a, PointNumero b)
 }
 
 // compte les points sur le polygone convexe
-int CountPointsOnHull(int n, PointRecord * pPointArray)
+int CountPointsOnHull(int n, PointRecord *pPointArray)
 {
   PointNumero p, p2, temp;
   int i;
@@ -488,7 +488,7 @@ int CountPointsOnHull(int n, PointRecord * pPointArray)
   return (i <= n) ? i : -1;
 }
 
-PointNumero *ConvertDlistToArray(DListPeek * dlist, int *n)
+PointNumero *ConvertDlistToArray(DListPeek *dlist, int *n)
 {
   DListPeek p, temp;
   int i, max = 0;
@@ -515,8 +515,8 @@ PointNumero *ConvertDlistToArray(DListPeek * dlist, int *n)
   return ptr;
 }
 
-void filldel(Delaunay * deladd, int aa, int bb, int cc,
-             PointRecord * points)
+void filldel(Delaunay *deladd, int aa, int bb, int cc,
+             PointRecord *points)
 {
   deladd->t.a = aa;
   deladd->t.b = bb;
@@ -581,7 +581,7 @@ int Conversion(DocPeek doc)
 }
 
 //  Cette routine efface toutes les listes d'adjacence du pPointArray
-void remove_all_dlist(int n, PointRecord * pPointArray)
+void remove_all_dlist(int n, PointRecord *pPointArray)
 {
   int i;
   DListPeek p, temp;
@@ -598,8 +598,7 @@ void remove_all_dlist(int n, PointRecord * pPointArray)
     }
 }
 
-void Make_Mesh_With_Points(DocRecord * ptr, PointRecord * Liste,
-                           int Numpoints)
+void Make_Mesh_With_Points(DocRecord *ptr, PointRecord *Liste, int Numpoints)
 {
   ptr->numTriangles = 0;
   ptr->points = Liste;

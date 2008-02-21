@@ -995,8 +995,6 @@ void delete_fourier(GFace *gf)
 
 void blend_cb(Fl_Widget *w, void *data)
 {
-  projectionEditor *e = (projectionEditor*)data;
-
   std::vector<GFace*> faces;
   std::vector<FM::Patch*> patches;
 
@@ -1011,8 +1009,8 @@ void blend_cb(Fl_Widget *w, void *data)
     patches.push_back(tf->GetPatch());
   }
   FM::BlendOperator* blendOp = new FM::BlendOperator(patches);
-  for (int i = 0; i < patches.size(); i++) {
-    FM::BlendedPatch* patch = new FM::BlendedPatch(i,blendOp);
+  for (unsigned int i = 0; i < patches.size(); i++) {
+    FM::BlendedPatch* patch = new FM::BlendedPatch(i, blendOp);
     makeGFace(patch);
   }
   for(unsigned int i = 0; i < faces.size(); i++) {
