@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.56 2008-02-21 12:49:49 geuzaine Exp $
+// $Id: MElement.cpp,v 1.57 2008-02-21 15:08:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -750,28 +750,31 @@ void MTriangle::jac(double uu, double vv, double j[2][3])
   jac(1, 0, uu, vv, j);
 }
 
-void MTriangle::pnt(double uu, double vv, SPoint3 &p){
+void MTriangle::pnt(double uu, double vv, SPoint3 &p)
+{
   MTriangle::pnt(1, 0, uu, vv, p);
 }
 
-int MTriangle6::getNumEdgesRep(){ return 30; }
+int MTriangle6::getNumEdgesRep(){ return 3 * 9; }
 
-void MTriangle6::getEdgeRep (int num, double *x, double *y, double *z, SVector3 *n)
+void MTriangle6::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
-  if (num < 10){
+  n[0] = n[1] = getFace(0).normal();
+  int N = getNumEdgesRep() / 3;
+  if (num < N){
     SPoint3 pnt1, pnt2;
-    pnt((double)num / 10., 0., pnt1);
-    pnt((double)(num + 1) / 10., 0., pnt2);
+    pnt((double)num / N, 0., pnt1);
+    pnt((double)(num + 1) / N, 0., pnt2);
     x[0] = pnt1.x(); x[1] = pnt2.x();
     y[0] = pnt1.y(); y[1] = pnt2.y();
     z[0] = pnt1.z(); z[1] = pnt2.z();
     return;
   }  
-  if (num < 20){
+  if (num < 2 * N){
     SPoint3 pnt1, pnt2;
-    num -= 10;
-    pnt(1. - (double)num / 10., (double)num / 10., pnt1);
-    pnt(1. - (double)(num + 1) / 10., (double)(num + 1) / 10., pnt2);
+    num -= N;
+    pnt(1. - (double)num / N, (double)num / N, pnt1);
+    pnt(1. - (double)(num + 1) / N, (double)(num + 1) / N, pnt2);
     x[0] = pnt1.x(); x[1] = pnt2.x();
     y[0] = pnt1.y(); y[1] = pnt2.y();
     z[0] = pnt1.z(); z[1] = pnt2.z();
@@ -779,33 +782,35 @@ void MTriangle6::getEdgeRep (int num, double *x, double *y, double *z, SVector3 
   }  
   {
     SPoint3 pnt1, pnt2;
-    num -= 20;
-    pnt(0, (double)num / 10., pnt1);
-    pnt(0, (double)(num + 1) / 10., pnt2);
+    num -= 2 * N;
+    pnt(0, (double)num / N, pnt1);
+    pnt(0, (double)(num + 1) / N, pnt2);
     x[0] = pnt1.x(); x[1] = pnt2.x();
     y[0] = pnt1.y(); y[1] = pnt2.y();
     z[0] = pnt1.z(); z[1] = pnt2.z();
   }
 }
 
-int MTriangleN::getNumEdgesRep(){ return 120; }
+int MTriangleN::getNumEdgesRep(){ return 3 * 9; }
 
 void MTriangleN::getEdgeRep (int num, double *x, double *y, double *z, SVector3 *n)
 {
-  if (num < 40){
+  n[0] = n[1] = getFace(0).normal();
+  int N = getNumEdgesRep() / 3;
+  if (num < N){
     SPoint3 pnt1, pnt2;
-    pnt((double)num / 40., 0., pnt1);
-    pnt((double)(num + 1) / 40., 0., pnt2);
+    pnt((double)num / N, 0., pnt1);
+    pnt((double)(num + 1) / N, 0., pnt2);
     x[0] = pnt1.x(); x[1] = pnt2.x();
     y[0] = pnt1.y(); y[1] = pnt2.y();
     z[0] = pnt1.z(); z[1] = pnt2.z();
     return;
   }  
-  if (num < 80){
+  if (num < 2 * N){
     SPoint3 pnt1, pnt2;
-    num -= 40;
-    pnt(1. - (double)num / 40., (double)num / 40., pnt1);
-    pnt(1. - (double)(num + 1) / 40., (double)(num + 1) / 40., pnt2);
+    num -= N;
+    pnt(1. - (double)num / N, (double)num / N, pnt1);
+    pnt(1. - (double)(num + 1) / N, (double)(num + 1) / N, pnt2);
     x[0] = pnt1.x(); x[1] = pnt2.x();
     y[0] = pnt1.y(); y[1] = pnt2.y();
     z[0] = pnt1.z(); z[1] = pnt2.z();
@@ -813,9 +818,9 @@ void MTriangleN::getEdgeRep (int num, double *x, double *y, double *z, SVector3 
   }  
   {
     SPoint3 pnt1, pnt2;
-    num -= 80;
-    pnt(0, (double)num / 40., pnt1);
-    pnt(0, (double)(num + 1) / 40., pnt2);
+    num -= 2 * N;
+    pnt(0, (double)num / N, pnt1);
+    pnt(0, (double)(num + 1) / N, pnt2);
     x[0] = pnt1.x(); x[1] = pnt2.x();
     y[0] = pnt1.y(); y[1] = pnt2.y();
     z[0] = pnt1.z(); z[1] = pnt2.z();
