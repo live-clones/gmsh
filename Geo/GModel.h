@@ -87,7 +87,7 @@ class GModel
   typedef std::set<GVertex*, GEntityLessThan>::iterator viter;
   typedef std::map<int, std::string>::iterator piter;
 
-  // Get an iterator initialized to the first entity in this model.
+  // Get an iterator initialized to the first/last entity in this model.
   riter firstRegion() { return regions.begin(); }
   fiter firstFace() { return faces.begin(); }
   eiter firstEdge() { return edges.begin(); }
@@ -97,30 +97,23 @@ class GModel
   eiter lastEdge() { return edges.end(); }
   viter lastVertex() { return vertices.end(); }
 
-  // Find the region with the given tag.
+  // Find the entity with the given tag.
   GRegion *getRegion(int n) const;
   GFace *getFace(int n) const;
   GEdge *getEdge(int n) const;
   GVertex *getVertex(int n) const;
 
+  // Add/remove an entity in the model
   void add(GRegion *r) { regions.insert(r); }
   void add(GFace *f) { faces.insert(f); }
   void add(GEdge *e) { edges.insert(e); }
   void add(GVertex *v) { vertices.insert(v); }
-
   void remove(GRegion *r);
   void remove(GFace *f);
   void remove(GEdge *e);
   void remove(GVertex *v);
 
-  // loop over all vertices connected to elements and associate geo entity
-  void associateEntityWithVertices();
-
-  // Renumber all the (used) mesh vertices in a continuous sequence
-  int renumberMeshVertices(bool saveAll);
-
-  // Deletes all invisble mesh elements
-  void removeInvisibleElements();
+  void snapVertices();
 
   // Checks if there are no physical entities in the model
   bool noPhysicalGroups();
@@ -167,6 +160,15 @@ class GModel
   // Access a mesh vertex by number, using the vertex cache
   MVertex *getMeshVertex(int num);
 
+  // loop over all vertices connected to elements and associate geo entity
+  void associateEntityWithMeshVertices();
+
+  // Renumber all the (used) mesh vertices in a continuous sequence
+  int renumberMeshVertices(bool saveAll);
+
+  // Deletes all invisble mesh elements
+  void removeInvisibleElements();
+
   // The list of partitions
   std::set<int> &getMeshPartitions() { return meshPartitions; }
   std::set<int> &recomputeMeshPartitions();
@@ -195,7 +197,6 @@ class GModel
   int readOCCBREP(const std::string &name);
   int readOCCIGES(const std::string &name);
   int readOCCSTEP(const std::string &name);
-  void snapGVertices (void);
 
   // Mesh IO
   // =========================================

@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.33 2008-02-20 09:20:44 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.34 2008-02-21 07:48:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -521,7 +521,7 @@ int GModel::readMSH(const std::string &name)
   }
 
   // associate the correct geometrical entity with each mesh vertex
-  associateEntityWithVertices();
+  associateEntityWithMeshVertices();
 
   // special case for geometry vertices: now that the correct
   // geometrical entity has been associated with the vertices, we
@@ -1157,7 +1157,7 @@ int GModel::readVRML(const std::string &name)
 
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
     storeElementsInEntities(this, elements[i]);
-  associateEntityWithVertices();
+  associateEntityWithMeshVertices();
   storeVerticesInEntities(allVertexVector);
 
   fclose(fp);
@@ -1360,7 +1360,7 @@ int GModel::readUNV(const std::string &name)
   
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
     storeElementsInEntities(this, elements[i]);
-  associateEntityWithVertices();
+  associateEntityWithMeshVertices();
   storeVerticesInEntities(vertexMap);
   for(int i = 0; i < 4; i++)  
     storePhysicalTagsInEntities(this, i, physicals[i]);
@@ -1588,7 +1588,7 @@ int GModel::readMESH(const std::string &name)
 
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
     storeElementsInEntities(this, elements[i]);
-  associateEntityWithVertices();
+  associateEntityWithMeshVertices();
   storeVerticesInEntities(vertexVector);
 
   fclose(fp);
@@ -1928,7 +1928,7 @@ int GModel::readBDF(const std::string &name)
   
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
     storeElementsInEntities(this, elements[i]);
-  associateEntityWithVertices();
+  associateEntityWithMeshVertices();
   storeVerticesInEntities(vertexMap);
 
   fclose(fp);

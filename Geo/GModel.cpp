@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.59 2008-02-20 09:20:44 geuzaine Exp $
+// $Id: GModel.cpp,v 1.60 2008-02-21 07:48:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -167,152 +167,36 @@ void GModel::remove(GVertex *v)
   if(it != vertices.end()) vertices.erase(it);
 }
 
-template <class T>
-static void removeInvisible(std::vector<T*> &elements, bool all)
+void GModel::snapVertices()
 {
-  std::vector<T*> tmp;
-  for(unsigned int i = 0; i < elements.size(); i++){
-    if(all || !elements[i]->getVisibility())
-      delete elements[i];
-    else
-      tmp.push_back(elements[i]);
-  }
-  elements.clear();
-  elements = tmp;
-}
-
-void GModel::removeInvisibleElements()
-{
-  for(riter it = firstRegion(); it != lastRegion(); ++it){
-    bool all = !(*it)->getVisibility();
-    removeInvisible((*it)->tetrahedra, all);
-    removeInvisible((*it)->hexahedra, all);
-    removeInvisible((*it)->prisms, all);
-    removeInvisible((*it)->pyramids, all);
-    (*it)->deleteVertexArrays();
-  }
-  for(fiter it = firstFace(); it != lastFace(); ++it){
-    bool all = !(*it)->getVisibility();
-    removeInvisible((*it)->triangles, all);
-    removeInvisible((*it)->quadrangles, all);
-    (*it)->deleteVertexArrays();
-  }
-  for(eiter it = firstEdge(); it != lastEdge(); ++it){
-    bool all = !(*it)->getVisibility();
-    removeInvisible((*it)->lines, all);
-    (*it)->deleteVertexArrays();
-  }
-}
-
-template<class T>
-static void associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &elements)
-{
-  for(unsigned int i = 0; i < elements.size(); i++)
-    for(int j = 0; j < elements[i]->getNumVertices(); j++)
-      elements[i]->getVertex(j)->setEntity(ge);
-}
-
-void GModel::associateEntityWithVertices()
-{
-  // loop on regions, then on faces, edges and vertices and store the
-  // entity pointer in the the elements' vertices (this way we
-  // associate the entity of lowest geometrical degree with each
-  // vertex)
-  for(riter it = firstRegion(); it != lastRegion(); ++it){
-    associateEntityWithElementVertices(*it, (*it)->tetrahedra);
-    associateEntityWithElementVertices(*it, (*it)->hexahedra);
-    associateEntityWithElementVertices(*it, (*it)->prisms);
-    associateEntityWithElementVertices(*it, (*it)->pyramids);
-  }
-  for(fiter it = firstFace(); it != lastFace(); ++it){
-    associateEntityWithElementVertices(*it, (*it)->triangles);
-    associateEntityWithElementVertices(*it, (*it)->quadrangles);
-  }
-  for(eiter it = firstEdge(); it != lastEdge(); ++it){
-    associateEntityWithElementVertices(*it, (*it)->lines);
-  }
-  for(viter it = firstVertex(); it != lastVertex(); ++it){
-    (*it)->mesh_vertices[0]->setEntity(*it);
-  }
-}
-
-int GModel::renumberMeshVertices(bool saveAll)
-{
-  invalidateMeshVertexCache();
-
-  // tag all mesh vertices with -1 (negative vertices will not be
-  // saved)
-  for(viter it = firstVertex(); it != lastVertex(); ++it)
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      (*it)->mesh_vertices[i]->setNum(-1);
-  for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      (*it)->mesh_vertices[i]->setNum(-1);
-  for(fiter it = firstFace(); it != lastFace(); ++it)
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      (*it)->mesh_vertices[i]->setNum(-1);
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      (*it)->mesh_vertices[i]->setNum(-1);
-
-  // tag all mesh vertices belonging to elements that need to be saved
-  // with 0
-  for(viter it = firstVertex(); it != lastVertex(); ++it)
-    if(saveAll || (*it)->physicals.size()){
-      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-	(*it)->mesh_vertices[i]->setNum(0);
+  viter vit = firstVertex();
+  
+  double tol = CTX.geom.tolerance; 	       
+  
+  while (vit != lastVertex()){
+    std::list<GEdge*> edges = (*vit)->edges();
+    for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
+      Range<double> parb = (*it)->parBounds(0);
+      double t;	
+      if ((*it)->getBeginVertex() == *vit){
+	t = parb.low();
+      }
+      else if ((*it)->getEndVertex() == *vit){
+	t = parb.high();
+      }
+      else throw;
+      GPoint gp = (*it)->point(t);
+      double d = sqrt((gp.x() - (*vit)->x()) * (gp.x() - (*vit)->x()) +
+		      (gp.y() - (*vit)->y()) * (gp.y() - (*vit)->y()) +
+		      (gp.z() - (*vit)->z()) * (gp.z() - (*vit)->z()));
+      if (d > tol){
+	(*vit)->setPosition(gp);
+	Msg(WARNING, "Geom Vertex %d Corrupted (%12.5E)... Snap performed",
+	    (*vit)->tag(), d);
+      }
     }
-  for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    if(saveAll || (*it)->physicals.size()){
-      for(unsigned int i = 0; i < (*it)->lines.size(); i++)
-	for(int j = 0; j < (*it)->lines[i]->getNumVertices(); j++)
-	  (*it)->lines[i]->getVertex(j)->setNum(0);
-    }
-  for(fiter it = firstFace(); it != lastFace(); ++it)
-    if(saveAll || (*it)->physicals.size()){
-      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-	for(int j = 0; j < (*it)->triangles[i]->getNumVertices(); j++)
-	  (*it)->triangles[i]->getVertex(j)->setNum(0);
-      for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-	for(int j = 0; j < (*it)->quadrangles[i]->getNumVertices(); j++)
-	  (*it)->quadrangles[i]->getVertex(j)->setNum(0);
-    }
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
-    if(saveAll || (*it)->physicals.size()){
-      for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
-	for(int j = 0; j < (*it)->tetrahedra[i]->getNumVertices(); j++)
-	  (*it)->tetrahedra[i]->getVertex(j)->setNum(0);
-      for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
-	for(int j = 0; j < (*it)->hexahedra[i]->getNumVertices(); j++)
-	  (*it)->hexahedra[i]->getVertex(j)->setNum(0);
-      for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
-	for(int j = 0; j < (*it)->prisms[i]->getNumVertices(); j++)
-	  (*it)->prisms[i]->getVertex(j)->setNum(0);
-      for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
-	for(int j = 0; j < (*it)->pyramids[i]->getNumVertices(); j++)
-	  (*it)->pyramids[i]->getVertex(j)->setNum(0);
-    }
-
-  // renumber all the mesh vertices tagged with 0
-  int numVertices = 0;
-  for(viter it = firstVertex(); it != lastVertex(); ++it)
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      if(!(*it)->mesh_vertices[i]->getNum())
-	(*it)->mesh_vertices[i]->setNum(++numVertices);
-  for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      if(!(*it)->mesh_vertices[i]->getNum())
-	(*it)->mesh_vertices[i]->setNum(++numVertices);
-  for(fiter it = firstFace(); it != lastFace(); ++it)
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      if(!(*it)->mesh_vertices[i]->getNum())
-	(*it)->mesh_vertices[i]->setNum(++numVertices);
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      if(!(*it)->mesh_vertices[i]->getNum())
-	(*it)->mesh_vertices[i]->setNum(++numVertices);
-
-  return numVertices;
+    vit++;
+  }
 }
 
 bool GModel::noPhysicalGroups()
@@ -560,6 +444,154 @@ MVertex *GModel::getMeshVertex(int num)
     return _vertexMapCache[num];
 }
 
+template <class T>
+static void removeInvisible(std::vector<T*> &elements, bool all)
+{
+  std::vector<T*> tmp;
+  for(unsigned int i = 0; i < elements.size(); i++){
+    if(all || !elements[i]->getVisibility())
+      delete elements[i];
+    else
+      tmp.push_back(elements[i]);
+  }
+  elements.clear();
+  elements = tmp;
+}
+
+void GModel::removeInvisibleElements()
+{
+  for(riter it = firstRegion(); it != lastRegion(); ++it){
+    bool all = !(*it)->getVisibility();
+    removeInvisible((*it)->tetrahedra, all);
+    removeInvisible((*it)->hexahedra, all);
+    removeInvisible((*it)->prisms, all);
+    removeInvisible((*it)->pyramids, all);
+    (*it)->deleteVertexArrays();
+  }
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+    bool all = !(*it)->getVisibility();
+    removeInvisible((*it)->triangles, all);
+    removeInvisible((*it)->quadrangles, all);
+    (*it)->deleteVertexArrays();
+  }
+  for(eiter it = firstEdge(); it != lastEdge(); ++it){
+    bool all = !(*it)->getVisibility();
+    removeInvisible((*it)->lines, all);
+    (*it)->deleteVertexArrays();
+  }
+}
+
+template<class T>
+static void associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &elements)
+{
+  for(unsigned int i = 0; i < elements.size(); i++)
+    for(int j = 0; j < elements[i]->getNumVertices(); j++)
+      elements[i]->getVertex(j)->setEntity(ge);
+}
+
+void GModel::associateEntityWithMeshVertices()
+{
+  // loop on regions, then on faces, edges and vertices and store the
+  // entity pointer in the the elements' vertices (this way we
+  // associate the entity of lowest geometrical degree with each
+  // vertex)
+  for(riter it = firstRegion(); it != lastRegion(); ++it){
+    associateEntityWithElementVertices(*it, (*it)->tetrahedra);
+    associateEntityWithElementVertices(*it, (*it)->hexahedra);
+    associateEntityWithElementVertices(*it, (*it)->prisms);
+    associateEntityWithElementVertices(*it, (*it)->pyramids);
+  }
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+    associateEntityWithElementVertices(*it, (*it)->triangles);
+    associateEntityWithElementVertices(*it, (*it)->quadrangles);
+  }
+  for(eiter it = firstEdge(); it != lastEdge(); ++it){
+    associateEntityWithElementVertices(*it, (*it)->lines);
+  }
+  for(viter it = firstVertex(); it != lastVertex(); ++it){
+    (*it)->mesh_vertices[0]->setEntity(*it);
+  }
+}
+
+int GModel::renumberMeshVertices(bool saveAll)
+{
+  invalidateMeshVertexCache();
+
+  // tag all mesh vertices with -1 (negative vertices will not be
+  // saved)
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+      (*it)->mesh_vertices[i]->setNum(-1);
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+      (*it)->mesh_vertices[i]->setNum(-1);
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+      (*it)->mesh_vertices[i]->setNum(-1);
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+      (*it)->mesh_vertices[i]->setNum(-1);
+
+  // tag all mesh vertices belonging to elements that need to be saved
+  // with 0
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    if(saveAll || (*it)->physicals.size()){
+      for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+	(*it)->mesh_vertices[i]->setNum(0);
+    }
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    if(saveAll || (*it)->physicals.size()){
+      for(unsigned int i = 0; i < (*it)->lines.size(); i++)
+	for(int j = 0; j < (*it)->lines[i]->getNumVertices(); j++)
+	  (*it)->lines[i]->getVertex(j)->setNum(0);
+    }
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    if(saveAll || (*it)->physicals.size()){
+      for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+	for(int j = 0; j < (*it)->triangles[i]->getNumVertices(); j++)
+	  (*it)->triangles[i]->getVertex(j)->setNum(0);
+      for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
+	for(int j = 0; j < (*it)->quadrangles[i]->getNumVertices(); j++)
+	  (*it)->quadrangles[i]->getVertex(j)->setNum(0);
+    }
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    if(saveAll || (*it)->physicals.size()){
+      for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
+	for(int j = 0; j < (*it)->tetrahedra[i]->getNumVertices(); j++)
+	  (*it)->tetrahedra[i]->getVertex(j)->setNum(0);
+      for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
+	for(int j = 0; j < (*it)->hexahedra[i]->getNumVertices(); j++)
+	  (*it)->hexahedra[i]->getVertex(j)->setNum(0);
+      for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
+	for(int j = 0; j < (*it)->prisms[i]->getNumVertices(); j++)
+	  (*it)->prisms[i]->getVertex(j)->setNum(0);
+      for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
+	for(int j = 0; j < (*it)->pyramids[i]->getNumVertices(); j++)
+	  (*it)->pyramids[i]->getVertex(j)->setNum(0);
+    }
+
+  // renumber all the mesh vertices tagged with 0
+  int numVertices = 0;
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+      if(!(*it)->mesh_vertices[i]->getNum())
+	(*it)->mesh_vertices[i]->setNum(++numVertices);
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+      if(!(*it)->mesh_vertices[i]->getNum())
+	(*it)->mesh_vertices[i]->setNum(++numVertices);
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+      if(!(*it)->mesh_vertices[i]->getNum())
+	(*it)->mesh_vertices[i]->setNum(++numVertices);
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+      if(!(*it)->mesh_vertices[i]->getNum())
+	(*it)->mesh_vertices[i]->setNum(++numVertices);
+
+  return numVertices;
+}
+
 std::set<int> &GModel::recomputeMeshPartitions()
 {
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
@@ -686,5 +718,4 @@ void GModel::checkMeshCoherence()
     if(num) Msg(WARNING, "%d duplicate elements", num);
     MElementLessThanLexicographic::tolerance = old_tol;
   }
-
 }
