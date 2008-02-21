@@ -182,9 +182,6 @@ class GModel
   // A container for smooth normals
   smooth_normals *normals;
 
-  // CAD IO
-  // =========================================
-
   // Gmsh native CAD format
   int importGEOInternals();
   int readGEO(const std::string &name);
@@ -197,9 +194,6 @@ class GModel
   int readOCCBREP(const std::string &name);
   int readOCCIGES(const std::string &name);
   int readOCCSTEP(const std::string &name);
-
-  // Mesh IO
-  // =========================================
 
   // Gmsh mesh file format
   int readMSH(const std::string &name);
