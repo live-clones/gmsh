@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.54 2008-02-21 12:11:12 geuzaine Exp $
+// $Id: MElement.cpp,v 1.55 2008-02-21 12:47:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -646,7 +646,7 @@ void MTriangle::circumcenterXY(double *res) const
 void MTriangle::jac(int ord, MVertex *vs[], double uu, double vv, double j[2][3])
 {
 #if defined(HAVE_GMSH_EMBEDDED)
-  return -1.;
+  return;
 #else
   double grads[256][2];
   int nf = getNumFaceVertices();
