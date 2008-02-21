@@ -100,11 +100,13 @@ class GFace : public GEntity
   // Return the point on the face corresponding to the given parameter.
   virtual GPoint point(double par1, double par2) const = 0;
   virtual GPoint point(const SPoint2 &pt) const { return point(pt.x(), pt.y()); }
+
   // computes, in parametric space, the interpolation from pt1 to pt2 alon the geodesic
   // of the surface
-  virtual SPoint2 geodesic ( const SPoint2 &pt1 , const SPoint2 &pt2 , double t);
+  virtual SPoint2 geodesic(const SPoint2 &pt1, const SPoint2 &pt2, double t);
+
   // computes the length of a geodesic between two points in parametric space
-  virtual double  length   ( const SPoint2 &pt1 , const SPoint2 &pt2, int n=4);
+  virtual double length(const SPoint2 &pt1, const SPoint2 &pt2, int n=4);
 
   // If the mapping is a conforming mapping, i.e. a mapping that
   // conserves angles, this function returns the eigenvalue of the

@@ -24,6 +24,6 @@
 
 void SetOrder1(GModel *m);
 void SetOrderN(GModel *m, int order, bool linear=true, bool incomplete=false);
-void checkHighOrderTriangles ( GModel *m );
+void checkHighOrderTriangles(GModel *m);
 
 #endif

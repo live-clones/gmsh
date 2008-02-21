@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.39 2008-02-21 09:45:15 remacle Exp $
+// $Id: GEdge.cpp,v 1.40 2008-02-21 12:11:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -25,12 +25,12 @@
 #include "GFace.h"
 #include "MElement.h"
 #include "GmshDefines.h"
-#include "GaussLegendre1D.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #  include "GmshEmbedded.h"
 #else
 #  include "Message.h"
+#  include "GaussLegendre1D.h"
 #endif
 
 GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
@@ -172,17 +172,21 @@ double GEdge::curvature(double par) const
   return norm(d);
 }
 
-
-double GEdge::length (const double &u0, const double &u1, const int nbQuadPoints){
-  double *t=0,*w=0;
-  gmshGaussLegendre1D (nbQuadPoints , &t, &w);
+double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
+{
+#if defined(HAVE_GMSH_EMBEDDED)
+  return -1.;
+#else
+  double *t = 0, *w = 0;
+  gmshGaussLegendre1D(nbQuadPoints, &t, &w);
   double L = 0.0;
-  const double rapJ = (u1-u0)*.5;
-  for (int i=0;i<nbQuadPoints;i++){    
-    const double ui = u0 * 0.5 * (1.-t[i]) + u1 * 0.5 * (1.+t[i]);
+  const double rapJ = (u1 - u0) * .5;
+  for (int i = 0; i < nbQuadPoints; i++){
+    const double ui = u0 * 0.5 * (1. - t[i]) + u1 * 0.5 * (1. + t[i]);
     SVector3 der = firstDer(ui);
     const double d = norm(der);
     L += d * w[i] * rapJ;
   }
   return L;
+#endif
 }

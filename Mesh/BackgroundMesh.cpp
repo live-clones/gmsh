@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.37 2008-02-21 09:45:15 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.38 2008-02-21 12:11:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -100,7 +100,6 @@ static double max_surf_curvature(const GVertex *gv)
   return max_curvature;
 }
 
-
 // the mesh vertex is classified on a model vertex.  we compute the
 // maximum of the curvature of model faces surrounding this point if
 // it is classified on a model edge, we do the same for all model
@@ -112,17 +111,15 @@ double LC_MVertex_CURV(GEntity *ge, double U, double V)
   double Crv = 0;
   switch(ge->dim()){
   case 0:        
-    //Crv = max_edge_curvature ( (const GVertex *)ge);
-    //  Crv = std::max(max_surf_curvature ( (const GVertex *)ge),Crv);
-    Crv = max_surf_curvature ( (const GVertex *)ge);
-    //    printf("point %d coucou %g\n",ge->tag(),Crv);
+    // Crv = max_edge_curvature((const GVertex *)ge);
+    // Crv = std::max(max_surf_curvature((const GVertex *)ge), Crv);
+    Crv = max_surf_curvature((const GVertex *)ge);
     break;
   case 1:
     {
       GEdge *ged = (GEdge *)ge;
-      //      Crv = ged->curvature(U);
-      //      printf("coucou %12.5E %d\n",Crv,CTX.mesh.min_circ_points);
-      //      Crv = std::max(Crv,max_surf_curvature(ged, U));
+      // Crv = ged->curvature(U);
+      // Crv = std::max(Crv, max_surf_curvature(ged, U));
       Crv = max_surf_curvature(ged, U);      
     }
     break;
@@ -137,12 +134,8 @@ double LC_MVertex_CURV(GEntity *ge, double U, double V)
   double lc = Crv > 0 ? 2*M_PI / Crv / CTX.mesh.min_circ_points : MAX_LC;
 
   //  double lc_min = CTX.lc /300;
-
-
   return lc;
-
 }
-
 
 // compute the mesh size at a given vertex due to prescribed sizes at
 // mesh vertices

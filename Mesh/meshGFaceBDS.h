@@ -27,19 +27,15 @@ class BDS_Mesh;
 class BDS_Point;
 class MVertex;
 
-void computeMeshSizeFieldAccuracy (GFace *gf, BDS_Mesh &m, double &avg, double &max_e, double &min_e, int &nE, int &GS);
-void computeElementShapes (GFace *gf, BDS_Mesh &m, double &worst, double &avg, double &best, int &nT, int &nbGQ);
-void gmshRefineMeshBDS (GFace *gf, 
-			BDS_Mesh &m, 
-			const int NIT, 
-			const bool computeNodalSizeField);
-void gmshOptimizeMeshBDS(GFace *gf, 
-			 BDS_Mesh &m, 
-			 const int NIT, 
-			 std::map<BDS_Point*,MVertex*> *recover_map = 0);
-
-void gmshDelaunayizeBDS ( GFace *gf, BDS_Mesh &m, int &nb_swap );
-
-void gmshCollapseSmallEdges (GModel &gm);
+void computeMeshSizeFieldAccuracy(GFace *gf, BDS_Mesh &m, double &avg, 
+				  double &max_e, double &min_e, int &nE, int &GS);
+void computeElementShapes(GFace *gf, BDS_Mesh &m, double &worst, double &avg, 
+			  double &best, int &nT, int &nbGQ);
+void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT, 
+		       const bool computeNodalSizeField);
+void gmshOptimizeMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT, 
+			 std::map<BDS_Point*,MVertex*> *recover_map=0);
+void gmshDelaunayizeBDS(GFace *gf, BDS_Mesh &m, int &nb_swap);
+void gmshCollapseSmallEdges(GModel &gm);
 
 #endif

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.186 2008-02-21 09:49:22 geuzaine Exp $
+# $Id: Makefile,v 1.187 2008-02-21 12:11:12 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -82,16 +82,16 @@ GVertex.o: GVertex.cpp GVertex.h GEntity.h Range.h SPoint3.h \
 GEdge.o: GEdge.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h MElement.h ../Common/GmshDefines.h \
-  MVertex.h MEdge.h MFace.h ../Numeric/GaussLegendre1D.h \
-  ../Common/Message.h
+  MVertex.h MEdge.h MFace.h ../Common/Message.h \
+  ../Numeric/GaussLegendre1D.h
 GEdgeLoop.o: GEdgeLoop.cpp GEdgeLoop.h GEdge.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GVertex.h GPoint.h SPoint2.h SVector3.h \
   ../Common/Message.h
 GFace.o: GFace.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h MElement.h ../Common/GmshDefines.h \
-  MVertex.h MEdge.h MFace.h ../Numeric/GaussLegendre1D.h \
-  ../Common/Message.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
+  MVertex.h MEdge.h MFace.h ../Common/Message.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h ../Numeric/GaussLegendre1D.h \
   ../Common/VertexArray.h ../Geo/SVector3.h ../Common/Context.h \
   ../DataStr/List.h
 GRegion.o: GRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
@@ -246,6 +246,7 @@ MFace.o: MFace.cpp MFace.h MVertex.h SPoint3.h SVector3.h \
 MElement.o: MElement.cpp MElement.h ../Common/GmshDefines.h MVertex.h \
   SPoint3.h MEdge.h SVector3.h MFace.h GEntity.h Range.h SBoundingBox3d.h \
   GFace.h GPoint.h GEdgeLoop.h GEdge.h GVertex.h SPoint2.h Pair.h \
-  ../Numeric/FunctionSpace.h ../Common/GmshMatrix.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Common/Message.h ../Common/Context.h \
-  ../DataStr/List.h ../Mesh/qualityMeasures.h
+  ../Common/GmshMatrix.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h ../Numeric/FunctionSpace.h \
+  ../Common/Message.h ../Common/Context.h ../DataStr/List.h \
+  ../Mesh/qualityMeasures.h

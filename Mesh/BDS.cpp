@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.101 2008-02-21 09:45:15 remacle Exp $
+// $Id: BDS.cpp,v 1.102 2008-02-21 12:11:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1248,8 +1248,8 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
   double U = 0;
   double V = 0;
   double LC = 0;
-  double oldU=p->u;
-  double oldV=p->v;
+  double oldU = p->u;
+  double oldV = p->v;
 
   std::list<BDS_Face*> ts;
   p->getTriangles(ts);
@@ -1290,7 +1290,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
 
   std::list<BDS_Face*>::iterator it = ts.begin();
   std::list<BDS_Face*>::iterator ite = ts.end();
-  double s1=0,s2=0;
+  double s1 = 0, s2 = 0;
 
   double newWorst = 1.0;
   double oldWorst = 1.0;

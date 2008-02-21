@@ -411,14 +411,14 @@ class MTriangle6 : public MTriangle {
   virtual int getNumEdgeVertices(){ return 3; }
   virtual int getNumEdgesRep();
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
-/*   {  */
-/*     static const int e[6][2] = { */
-/*       {0, 3}, {3, 1}, */
-/*       {1, 4}, {4, 2}, */
-/*       {2, 5}, {5, 0} */
-/*     }; */
-/*     _getEdgeRep(getVertex(e[num][0]), getVertex(e[num][1]), x, y, z, n, 0); */
-/*   } */
+  //{
+  //  static const int e[6][2] = {
+  //    {0, 3}, {3, 1},
+  //    {1, 4}, {4, 2},
+  //    {2, 5}, {5, 0}
+  //  }; 
+  //  _getEdgeRep(getVertex(e[num][0]), getVertex(e[num][1]), x, y, z, n, 0);
+  //} 
   virtual int getNumFacesRep(){ return 4; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 

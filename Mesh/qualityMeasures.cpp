@@ -1,4 +1,4 @@
-// $Id: qualityMeasures.cpp,v 1.8 2008-02-21 09:45:15 remacle Exp $
+// $Id: qualityMeasures.cpp,v 1.9 2008-02-21 12:11:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -71,9 +71,9 @@ double qmTriangle(const double &xa, const double &ya, const double &za,
       const double lb = norme (b); 
       const double lc = norme (c); 
       
-      double pva [3]; prodve (b,c,pva); const double sina = norm3 (pva); 
-      double pvb [3]; prodve (c,a,pvb); const double sinb = norm3 (pvb);
-      double pvc [3]; prodve (a,b,pvc); const double sinc = norm3 (pvc);
+      double pva [3]; prodve(b,c,pva); const double sina = norm3(pva); 
+      double pvb [3]; prodve(c,a,pvb); const double sinb = norm3(pvb);
+      double pvc [3]; prodve(a,b,pvc); const double sinc = norm3(pvc);
       
       if (sina == 0.0 && sinb == 0.0 && sinc == 0.0) quality = 0.0;
       else quality = 2 * (2*sina*sinb*sinc/(sina + sinb + sinc) );
@@ -85,9 +85,9 @@ double qmTriangle(const double &xa, const double &ya, const double &za,
       double a [3] = {xc-xa,yc-ya,zc-za};
       double b [3] = {xb-xa,yb-ya,zb-za};
       double c [3] ; prodve(a,b,c); norme(c);
-      double A[3][3] = { a[0] , b[0] , c[0] ,
-			 a[1] , b[1] , c[1] ,
-			 a[2] , b[2] , c[2] };            
+      double A[3][3] = {a[0] , b[0] , c[0] ,
+			a[1] , b[1] , c[1] ,
+			a[2] , b[2] , c[2]};
       quality = -1;
     }
     break;

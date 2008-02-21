@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.53 2008-02-21 09:45:15 remacle Exp $
+// $Id: MElement.cpp,v 1.54 2008-02-21 12:11:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -23,13 +23,13 @@
 #include "MElement.h"
 #include "GEntity.h"
 #include "GFace.h"
-#include "FunctionSpace.h"
 #include "GmshMatrix.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #  include "GmshEmbedded.h"
 #else
 #  include "Numeric.h"
+#  include "FunctionSpace.h"
 #  include "Message.h"
 #  include "Context.h"
 #  include "qualityMeasures.h"
@@ -643,88 +643,90 @@ void MTriangle::circumcenterXY(double *res) const
   circumcenterXY(p1, p2, p3, res);
 }
 
-
 void MTriangle::jac(int ord, MVertex *vs[], double uu, double vv, double j[2][3])
 {
+#if defined(HAVE_GMSH_EMBEDDED)
+  return -1.;
+#else
   double grads[256][2];
   int nf = getNumFaceVertices();
 
   if (!nf){
     switch(ord){
-    case 1: gmshFunctionSpaces::find(MSH_TRI_3).df(uu,vv,grads); break;
-    case 2: gmshFunctionSpaces::find(MSH_TRI_6).df(uu,vv,grads); break;
-    case 3: gmshFunctionSpaces::find(MSH_TRI_9).df(uu,vv,grads); break;
-    case 4: gmshFunctionSpaces::find(MSH_TRI_12).df(uu,vv,grads); break;
-    case 5: gmshFunctionSpaces::find(MSH_TRI_15I).df(uu,vv,grads); break;
+    case 1: gmshFunctionSpaces::find(MSH_TRI_3).df(uu, vv, grads); break;
+    case 2: gmshFunctionSpaces::find(MSH_TRI_6).df(uu, vv, grads); break;
+    case 3: gmshFunctionSpaces::find(MSH_TRI_9).df(uu, vv, grads); break;
+    case 4: gmshFunctionSpaces::find(MSH_TRI_12).df(uu, vv, grads); break;
+    case 5: gmshFunctionSpaces::find(MSH_TRI_15I).df(uu, vv, grads); break;
     default: throw;
     }
   }
   else{
     switch(ord){
-    case 1: gmshFunctionSpaces::find(MSH_TRI_3).df(uu,vv,grads); break;
-    case 2: gmshFunctionSpaces::find(MSH_TRI_6).df(uu,vv,grads); break;
-    case 3: gmshFunctionSpaces::find(MSH_TRI_10).df(uu,vv,grads); break;
-    case 4: gmshFunctionSpaces::find(MSH_TRI_15).df(uu,vv,grads); break;
-    case 5: gmshFunctionSpaces::find(MSH_TRI_21).df(uu,vv,grads); break;
+    case 1: gmshFunctionSpaces::find(MSH_TRI_3).df(uu, vv, grads); break;
+    case 2: gmshFunctionSpaces::find(MSH_TRI_6).df(uu, vv, grads); break;
+    case 3: gmshFunctionSpaces::find(MSH_TRI_10).df(uu, vv, grads); break;
+    case 4: gmshFunctionSpaces::find(MSH_TRI_15).df(uu, vv, grads); break;
+    case 5: gmshFunctionSpaces::find(MSH_TRI_21).df(uu, vv, grads); break;
     default: throw;
     }
   }
-  j[0][0] = 0 ; for(int i = 0; i < 3; i++) j[0][0] += grads [i][0] * _v[i] -> x();
-  j[1][0] = 0 ; for(int i = 0; i < 3; i++) j[1][0] += grads [i][1] * _v[i] -> x();
-  j[0][1] = 0 ; for(int i = 0; i < 3; i++) j[0][1] += grads [i][0] * _v[i] -> y();
-  j[1][1] = 0 ; for(int i = 0; i < 3; i++) j[1][1] += grads [i][1] * _v[i] -> y();
-  j[0][2] = 0 ; for(int i = 0; i < 3; i++) j[0][2] += grads [i][0] * _v[i] -> z();
-  j[1][2] = 0 ; for(int i = 0; i < 3; i++) j[1][2] += grads [i][1] * _v[i] -> z();
+  j[0][0] = 0 ; for(int i = 0; i < 3; i++) j[0][0] += grads [i][0] * _v[i]->x();
+  j[1][0] = 0 ; for(int i = 0; i < 3; i++) j[1][0] += grads [i][1] * _v[i]->x();
+  j[0][1] = 0 ; for(int i = 0; i < 3; i++) j[0][1] += grads [i][0] * _v[i]->y();
+  j[1][1] = 0 ; for(int i = 0; i < 3; i++) j[1][1] += grads [i][1] * _v[i]->y();
+  j[0][2] = 0 ; for(int i = 0; i < 3; i++) j[0][2] += grads [i][0] * _v[i]->z();
+  j[1][2] = 0 ; for(int i = 0; i < 3; i++) j[1][2] += grads [i][1] * _v[i]->z();
 
-  if (ord == 1)return;
+  if (ord == 1) return;
 
-  for(int i = 3; i < 3 * ord + nf; i++) j[0][0] += grads[i][0] * vs[i - 3] -> x();
-  for(int i = 3; i < 3 * ord + nf; i++) j[1][0] += grads[i][1] * vs[i - 3] -> x();
-  for(int i = 3; i < 3 * ord + nf; i++) j[0][1] += grads[i][0] * vs[i - 3] -> y();
-  for(int i = 3; i < 3 * ord + nf; i++) j[1][1] += grads[i][1] * vs[i - 3] -> y();
-  for(int i = 3; i < 3 * ord + nf; i++) j[0][2] += grads[i][0] * vs[i - 3] -> z();
-  for(int i = 3; i < 3 * ord + nf; i++) j[1][2] += grads[i][1] * vs[i - 3] -> z();
+  for(int i = 3; i < 3 * ord + nf; i++) j[0][0] += grads[i][0] * vs[i - 3]->x();
+  for(int i = 3; i < 3 * ord + nf; i++) j[1][0] += grads[i][1] * vs[i - 3]->x();
+  for(int i = 3; i < 3 * ord + nf; i++) j[0][1] += grads[i][0] * vs[i - 3]->y();
+  for(int i = 3; i < 3 * ord + nf; i++) j[1][1] += grads[i][1] * vs[i - 3]->y();
+  for(int i = 3; i < 3 * ord + nf; i++) j[0][2] += grads[i][0] * vs[i - 3]->z();
+  for(int i = 3; i < 3 * ord + nf; i++) j[1][2] += grads[i][1] * vs[i - 3]->z();
+#endif
 }
 
 void MTriangle::pnt(int ord, MVertex *vs[], double uu, double vv, SPoint3 &p)
 {
+#if !defined(HAVE_GMSH_EMBEDDED)
   double sf[256];
   int nf = getNumFaceVertices();
 
   if (!nf){
     switch(ord){
-    case 1: gmshFunctionSpaces::find(MSH_TRI_3).f(uu,vv,sf); break;
-    case 2: gmshFunctionSpaces::find(MSH_TRI_6).f(uu,vv,sf); break;
-    case 3: gmshFunctionSpaces::find(MSH_TRI_9).f(uu,vv,sf); break;
-    case 4: gmshFunctionSpaces::find(MSH_TRI_12).f(uu,vv,sf); break;
-    case 5: gmshFunctionSpaces::find(MSH_TRI_15I).f(uu,vv,sf); break;
+    case 1: gmshFunctionSpaces::find(MSH_TRI_3).f(uu, vv, sf); break;
+    case 2: gmshFunctionSpaces::find(MSH_TRI_6).f(uu, vv, sf); break;
+    case 3: gmshFunctionSpaces::find(MSH_TRI_9).f(uu, vv, sf); break;
+    case 4: gmshFunctionSpaces::find(MSH_TRI_12).f(uu, vv, sf); break;
+    case 5: gmshFunctionSpaces::find(MSH_TRI_15I).f(uu, vv, sf); break;
     default: throw;
     }
   }
   else{
     switch(ord){
-    case 1: gmshFunctionSpaces::find(MSH_TRI_3).f(uu,vv,sf); break;
-    case 2: gmshFunctionSpaces::find(MSH_TRI_6).f(uu,vv,sf); break;
-    case 3: gmshFunctionSpaces::find(MSH_TRI_10).f(uu,vv,sf); break;
-    case 4: gmshFunctionSpaces::find(MSH_TRI_15).f(uu,vv,sf); break;
-    case 5: gmshFunctionSpaces::find(MSH_TRI_21).f(uu,vv,sf); break;
+    case 1: gmshFunctionSpaces::find(MSH_TRI_3).f(uu, vv, sf); break;
+    case 2: gmshFunctionSpaces::find(MSH_TRI_6).f(uu, vv, sf); break;
+    case 3: gmshFunctionSpaces::find(MSH_TRI_10).f(uu, vv, sf); break;
+    case 4: gmshFunctionSpaces::find(MSH_TRI_15).f(uu, vv, sf); break;
+    case 5: gmshFunctionSpaces::find(MSH_TRI_21).f(uu, vv, sf); break;
     default: throw;
     }
   }
   
-  double x = 0 ; for(int i = 0; i < 3; i++) x += sf[i] * _v[i] -> x();
-  double y = 0 ; for(int i = 0; i < 3; i++) y += sf[i] * _v[i] -> y();
-  double z = 0 ; for(int i = 0; i < 3; i++) z += sf[i] * _v[i] -> z();
+  double x = 0 ; for(int i = 0; i < 3; i++) x += sf[i] * _v[i]->x();
+  double y = 0 ; for(int i = 0; i < 3; i++) y += sf[i] * _v[i]->y();
+  double z = 0 ; for(int i = 0; i < 3; i++) z += sf[i] * _v[i]->z();
 
-  for(int i = 3; i < 3 * ord + nf; i++) x += sf[i] * vs[i - 3] -> x();
-  for(int i = 3; i < 3 * ord + nf; i++) y += sf[i] * vs[i - 3] -> y();
-  for(int i = 3; i < 3 * ord + nf; i++) z += sf[i] * vs[i - 3] -> z();
+  for(int i = 3; i < 3 * ord + nf; i++) x += sf[i] * vs[i - 3]->x();
+  for(int i = 3; i < 3 * ord + nf; i++) y += sf[i] * vs[i - 3]->y();
+  for(int i = 3; i < 3 * ord + nf; i++) z += sf[i] * vs[i - 3]->z();
 
   p = SPoint3(x,y,z);
-
+#endif
 }
-
-
 
 void MTriangleN::jac(double uu, double vv , double j[2][3])  
 {
@@ -754,68 +756,69 @@ void MTriangle::pnt(double uu, double vv, SPoint3 &p){
 }
 
 int MTriangle6::getNumEdgesRep(){ return 30; }
-void MTriangle6::getEdgeRep (int num, double *x, double *y, double *z, SVector3 *n){
+
+void MTriangle6::getEdgeRep (int num, double *x, double *y, double *z, SVector3 *n)
+{
   if (num < 10){
-    SPoint3 pnt1,pnt2;
-    pnt ( (double)num/10.     , 0. , pnt1);
-    pnt ( (double)(num+1)/10. , 0. , pnt2);
-    x[0] = pnt1.x();x[1] = pnt2.x();
-    y[0] = pnt1.y();y[1] = pnt2.y();
-    z[0] = pnt1.z();z[1] = pnt2.z();
+    SPoint3 pnt1, pnt2;
+    pnt((double)num / 10., 0., pnt1);
+    pnt((double)(num + 1) / 10., 0., pnt2);
+    x[0] = pnt1.x(); x[1] = pnt2.x();
+    y[0] = pnt1.y(); y[1] = pnt2.y();
+    z[0] = pnt1.z(); z[1] = pnt2.z();
     return;
   }  
-
   if (num < 20){
-    SPoint3 pnt1,pnt2;
-    num -=10;
-    pnt ( 1.-(double)num/10.     , (double)num/10. , pnt1);
-    pnt ( 1.-(double)(num+1)/10.     , (double)(num+1)/10. , pnt2);
-    x[0] = pnt1.x();x[1] = pnt2.x();
-    y[0] = pnt1.y();y[1] = pnt2.y();
-    z[0] = pnt1.z();z[1] = pnt2.z();
+    SPoint3 pnt1, pnt2;
+    num -= 10;
+    pnt(1. - (double)num / 10., (double)num / 10., pnt1);
+    pnt(1. - (double)(num + 1) / 10., (double)(num + 1) / 10., pnt2);
+    x[0] = pnt1.x(); x[1] = pnt2.x();
+    y[0] = pnt1.y(); y[1] = pnt2.y();
+    z[0] = pnt1.z(); z[1] = pnt2.z();
     return ;
   }  
   {
-    SPoint3 pnt1,pnt2;
+    SPoint3 pnt1, pnt2;
     num -= 20;
-    pnt ( 0,(double)num/10.    , pnt1);
-    pnt ( 0,(double)(num+1)/10., pnt2);
-    x[0] = pnt1.x();x[1] = pnt2.x();
-    y[0] = pnt1.y();y[1] = pnt2.y();
-    z[0] = pnt1.z();z[1] = pnt2.z();
+    pnt(0, (double)num / 10., pnt1);
+    pnt(0, (double)(num + 1) / 10., pnt2);
+    x[0] = pnt1.x(); x[1] = pnt2.x();
+    y[0] = pnt1.y(); y[1] = pnt2.y();
+    z[0] = pnt1.z(); z[1] = pnt2.z();
   }
 }
 
 int MTriangleN::getNumEdgesRep(){ return 120; }
-void MTriangleN::getEdgeRep (int num, double *x, double *y, double *z, SVector3 *n){
+
+void MTriangleN::getEdgeRep (int num, double *x, double *y, double *z, SVector3 *n)
+{
   if (num < 40){
-    SPoint3 pnt1,pnt2;
-    pnt ( (double)num/40.     , 0. , pnt1);
-    pnt ( (double)(num+1)/40. , 0. , pnt2);
-    x[0] = pnt1.x();x[1] = pnt2.x();
-    y[0] = pnt1.y();y[1] = pnt2.y();
-    z[0] = pnt1.z();z[1] = pnt2.z();
+    SPoint3 pnt1, pnt2;
+    pnt((double)num / 40., 0., pnt1);
+    pnt((double)(num + 1) / 40., 0., pnt2);
+    x[0] = pnt1.x(); x[1] = pnt2.x();
+    y[0] = pnt1.y(); y[1] = pnt2.y();
+    z[0] = pnt1.z(); z[1] = pnt2.z();
     return;
   }  
-
   if (num < 80){
-    SPoint3 pnt1,pnt2;
-    num -=40;
-    pnt ( 1.-(double)num/40.     , (double)num/40. , pnt1);
-    pnt ( 1.-(double)(num+1)/40.     , (double)(num+1)/40. , pnt2);
-    x[0] = pnt1.x();x[1] = pnt2.x();
-    y[0] = pnt1.y();y[1] = pnt2.y();
-    z[0] = pnt1.z();z[1] = pnt2.z();
+    SPoint3 pnt1, pnt2;
+    num -= 40;
+    pnt(1. - (double)num / 40., (double)num / 40., pnt1);
+    pnt(1. - (double)(num + 1) / 40., (double)(num + 1) / 40., pnt2);
+    x[0] = pnt1.x(); x[1] = pnt2.x();
+    y[0] = pnt1.y(); y[1] = pnt2.y();
+    z[0] = pnt1.z(); z[1] = pnt2.z();
     return ;
   }  
   {
-    SPoint3 pnt1,pnt2;
+    SPoint3 pnt1, pnt2;
     num -= 80;
-    pnt ( 0,(double)num/40.    , pnt1);
-    pnt ( 0,(double)(num+1)/40., pnt2);
-    x[0] = pnt1.x();x[1] = pnt2.x();
-    y[0] = pnt1.y();y[1] = pnt2.y();
-    z[0] = pnt1.z();z[1] = pnt2.z();
+    pnt(0, (double)num / 40., pnt1);
+    pnt(0, (double)(num + 1) / 40., pnt2);
+    x[0] = pnt1.x(); x[1] = pnt2.x();
+    y[0] = pnt1.y(); y[1] = pnt2.y();
+    z[0] = pnt1.z(); z[1] = pnt2.z();
   }
 }
-

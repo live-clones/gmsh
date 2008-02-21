@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.52 2008-02-21 09:45:15 remacle Exp $
+// $Id: GFace.cpp,v 1.53 2008-02-21 12:11:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -23,13 +23,13 @@
 #include "GFace.h"
 #include "GEdge.h"
 #include "MElement.h"
-#include "GaussLegendre1D.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #  include "GmshEmbedded.h"
 #else
 #  include "Message.h"
 #  include "Numeric.h"
+#  include "GaussLegendre1D.h"
 #  include "VertexArray.h"
 #  include "Context.h"
 #  if defined(HAVE_GSL)
@@ -485,8 +485,7 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
 
       GPoint P = point(U,V);
       err2 = sqrt(DSQR(X - P.x()) + DSQR(Y - P.y()) + DSQR(Z - P.z()));
-      if (err2 < 1.e-8 * CTX.lc)return;
-
+      if (err2 < 1.e-8 * CTX.lc) return;
 
       while(err > Precision && iter < MaxIter) {
 	P = point(U,V);
@@ -688,28 +687,34 @@ bool GFace::buildSTLTriangulation()
   return true;
 #endif
 }
+
 // by default we assume that straight lines are geodesics
-SPoint2 GFace::geodesic(const SPoint2 &pt1 , const SPoint2 &pt2 , double t){
-  return pt1 + (pt2-pt1) * t;
+SPoint2 GFace::geodesic(const SPoint2 &pt1 , const SPoint2 &pt2 , double t)
+{
+  return pt1 + (pt2 - pt1) * t;
 }
+
 // length of a curve drawn on a surface
 // S = (X(u,v), Y(u,v), Z(u,v) );
 // u = u(t) , v = v(t)
 // C = C ( u(t), v(t) )
 // dC/dt = dC/du du/dt + dC/dv dv/dt
-double GFace::length(const SPoint2 &pt1 , const SPoint2 &pt2, int nbQuadPoints){
-  double *t=0,*w=0;
+double GFace::length(const SPoint2 &pt1, const SPoint2 &pt2, int nbQuadPoints)
+{
+#if defined(HAVE_GMSH_EMBEDDED)
+  return -1.;
+#else
+  double *t = 0, *w = 0;
   double L = 0.0;
-  gmshGaussLegendre1D (nbQuadPoints , &t, &w);
-  for (int i=0;i<nbQuadPoints;i++){    
-    const double ti = 0.5 * (1.+t[i]);
-    SPoint2 pi = geodesic (pt1, pt2, ti);
-    Pair<SVector3,SVector3> der2 = firstDer(pi);    
-    SVector3 der = der2.left() * (pt2.x()-pt1.x()) + der2.right() * (pt2.y()-pt1.y());
+  gmshGaussLegendre1D(nbQuadPoints, &t, &w);
+  for (int i = 0; i < nbQuadPoints; i++){
+    const double ti = 0.5 * (1. + t[i]);
+    SPoint2 pi = geodesic(pt1, pt2, ti);
+    Pair<SVector3, SVector3> der2 = firstDer(pi);    
+    SVector3 der = der2.left() * (pt2.x() - pt1.x()) + der2.right() * (pt2.y() - pt1.y());
     const double d = norm(der);
     L += d * w[i] ;
   }
   return L;
-
-
+#endif
 }
