@@ -1,4 +1,4 @@
-// $Id: FunctionSpace.cpp,v 1.2 2008-02-21 12:11:12 geuzaine Exp $
+// $Id: FunctionSpace.cpp,v 1.3 2008-02-21 13:44:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -423,7 +423,7 @@ Double_Matrix gmshGeneratePointsTetrahedron(int order, bool serendip)
 	if (!serendip && order > 3) {
   
           Double_Matrix interior = gmshGeneratePointsTetrahedron(order - 4, false);
-          for (size_t k = 0; k < interior.size1(); k++) {
+          for (int k = 0; k < interior.size1(); k++) {
             point(ns + k, 0) = 1. + interior(k, 0) * (order - 4);
             point(ns + k, 1) = 1. + interior(k, 1) * (order - 4);
             point(ns + k, 2) = 1. + interior(k, 2) * (order - 4);

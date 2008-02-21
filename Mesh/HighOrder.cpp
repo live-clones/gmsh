@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.21 2008-02-21 12:11:12 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.22 2008-02-21 13:44:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -116,8 +116,6 @@ bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N, double
   
   int iter = 1;
 
-  double L[100];
-
   while (iter < MAX_ITER){
     iter++;
     myresid(N, ge, u, R);
@@ -195,8 +193,6 @@ bool computeEquidistantParameters(GFace *gf, double u0, double uN, double v0, do
   Double_Vector Rp(M);
   
   int iter = 1 ;
-
-  double L[100];
 
   while (iter < MAX_ITER){
     iter++ ;
@@ -344,8 +340,6 @@ void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
 	  v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
 	}
 	else{
-	  double uc = (1. - t) * p0[0] + t * p1[0];
-	  double vc = (1. - t) * p0[1] + t * p1[1];
 	  GPoint pc = gf->point(US[j+1], VS[j+1]);
 	  v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, US[j+1], VS[j+1]);
 	}
@@ -1201,8 +1195,6 @@ void printJacobians(GModel *m, const char *nm)
   FILE *f = fopen(nm,"w");
   fprintf(f,"View \"\"{\n");
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
-    double minJ = 1.e22;
-    double maxJ = -1.e22;
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
       MTriangle *t = (*it)->triangles[i];
       double mat[2][3];  

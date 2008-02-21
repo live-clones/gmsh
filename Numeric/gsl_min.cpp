@@ -1,4 +1,4 @@
-// $Id: gsl_min.cpp,v 1.4 2008-02-17 08:48:02 geuzaine Exp $
+// $Id: gsl_min.cpp,v 1.5 2008-02-21 13:44:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -111,7 +111,7 @@ void minimize_2 ( double (*f) (double, double, void *data),
   f_stat = f;
   df_stat = df;
 
-  size_t iter = 0;
+  int iter = 0;
   int status;
   
   const gsl_multimin_fdfminimizer_type *T;
@@ -132,49 +132,35 @@ void minimize_2 ( double (*f) (double, double, void *data),
   T = gsl_multimin_fdfminimizer_conjugate_fr;
   s = gsl_multimin_fdfminimizer_alloc (T, 2);
 
-  gsl_multimin_fdfminimizer_set (s, &my_func, x, 0.01, 1e-4);
+  gsl_multimin_fdfminimizer_set(s, &my_func, x, 0.01, 1e-4);
 
-  //  printf("minimizing\n");
-
-  do
-    {
-      iter++;
-      status = gsl_multimin_fdfminimizer_iterate (s);
-      
-      if (status)
-        break;
-      
-      status = gsl_multimin_test_gradient (s->gradient, 1e-3);
-      
-//       if (status == GSL_SUCCESS)
-//         printf ("Minimum found at:\n");
-      
-//         printf ("%5d %.5f %.5f %22.15e\n", iter,
-//                 gsl_vector_get (s->x, 0), 
-//                 gsl_vector_get (s->x, 1), 
-//                 s->f);
-      
-    }
+  do{
+    iter++;
+    status = gsl_multimin_fdfminimizer_iterate(s);
+    if(status)
+      break;
+    status = gsl_multimin_test_gradient(s->gradient, 1e-3);
+  }
   while (status == GSL_CONTINUE && iter < niter);
 
-  U = gsl_vector_get (s->x, 0);
-  V = gsl_vector_get (s->x, 1);
+  U = gsl_vector_get(s->x, 0);
+  V = gsl_vector_get(s->x, 1);
   res = s->f;
   gsl_multimin_fdfminimizer_free (s);
   gsl_vector_free (x);
-  
 } 					    
 
-void minimize_3 ( double (*f) (double, double, double,void *data), 
-		  void (*df)  (double  , double  , double , 
-			       double &, double &, double &, double &,
-			       void *data) ,
-		  void *data,int niter,
-		  double &U, double &V, double &W, double &res){
+void minimize_3(double (*f) (double, double, double,void *data), 
+		void (*df) (double  , double  , double , 
+			    double &, double &, double &, double &,
+			    void *data) ,
+		void *data,int niter,
+		double &U, double &V, double &W, double &res)
+{
   f_stat3 = f;
   df_stat3 = df;
-
-  size_t iter = 0;
+  
+  int iter = 0;
   int status;
   
   const gsl_multimin_fdfminimizer_type *T;
@@ -189,37 +175,22 @@ void minimize_3 ( double (*f) (double, double, double,void *data),
   my_func.params = data;
 
   x = gsl_vector_alloc (3);
-  gsl_vector_set (x, 0, U);
-  gsl_vector_set (x, 1, V);
-  gsl_vector_set (x, 2, W);
+  gsl_vector_set(x, 0, U);
+  gsl_vector_set(x, 1, V);
+  gsl_vector_set(x, 2, W);
 
   T = gsl_multimin_fdfminimizer_conjugate_fr;
-  s = gsl_multimin_fdfminimizer_alloc (T, 3);
+  s = gsl_multimin_fdfminimizer_alloc(T, 3);
 
   gsl_multimin_fdfminimizer_set (s, &my_func, x, 0.01, 1e-4);
-
-  //    printf("minimizing\n");
-
-  do
-    {
-      iter++;
-      status = gsl_multimin_fdfminimizer_iterate (s);
-      
-      if (status)
-        break;
-      
-      status = gsl_multimin_test_gradient (s->gradient, 1e-3);
-      
-//       if (status == GSL_SUCCESS)
-//         printf ("Minimum found at:\n");
-      
-//          printf ("%5d %4.5f %4.5f %4.5f %10.5f\n", iter,
-//                  gsl_vector_get (s->x, 0), 
-//                  gsl_vector_get (s->x, 1), 
-//                  gsl_vector_get (s->x, 2), 
-//                  s->f);
-      
-    }
+  
+  do{
+    iter++;
+    status = gsl_multimin_fdfminimizer_iterate (s);
+    if (status)
+      break;
+    status = gsl_multimin_test_gradient (s->gradient, 1e-3);
+  }
   while (status == GSL_CONTINUE && iter < niter);
 
   U = gsl_vector_get (s->x, 0);
@@ -228,18 +199,17 @@ void minimize_3 ( double (*f) (double, double, double,void *data),
   res = s->f;
   gsl_multimin_fdfminimizer_free (s);
   gsl_vector_free (x);
-  
 } 					    
 
-void minimize_N (int N, 
-		 double (*f) (double*,void *data), 
-		 void (*df)  (double*,double*,double &,void *data) ,
-		 void *data,int niter,
-		 double *U, double &res){
+void minimize_N(int N, 
+		double (*f) (double*,void *data), 
+		void (*df)  (double*,double*,double &,void *data) ,
+		void *data,int niter,
+		double *U, double &res){
   f_statN = f;
   df_statN = df;
 
-  size_t iter = 0;
+  int iter = 0;
   int status;
   
   const gsl_multimin_fdfminimizer_type *T;
@@ -262,28 +232,17 @@ void minimize_N (int N,
 
   gsl_multimin_fdfminimizer_set (s, &my_func, x, 0.01, 1e-4);
 
-  do
-    {
-      iter++;
-      status = gsl_multimin_fdfminimizer_iterate (s);
-      
-      if (status)
-        break;
-      
-      status = gsl_multimin_test_gradient (s->gradient, 1e-3);
-      
-//       if (status == GSL_SUCCESS)
-//         printf ("Minimum found at:\n");
-      
-//          printf ("%5d %4.5f %4.5f %4.5f %10.5f\n", iter,
-//                  gsl_vector_get (s->x, 0), 
-//                  gsl_vector_get (s->x, 1), 
-//                  gsl_vector_get (s->x, 2), 
-//                  s->f);
-      
-    }
+  do{
+    iter++;
+    status = gsl_multimin_fdfminimizer_iterate (s);
+    
+    if (status)
+      break;
+    
+    status = gsl_multimin_test_gradient (s->gradient, 1e-3);
+  }
   while (status == GSL_CONTINUE && iter < niter);
-
+  
   for (int i=0;i<N;i++)
     U[i] = gsl_vector_get (s->x, i);
   res = s->f;
