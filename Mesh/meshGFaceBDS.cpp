@@ -1,4 +1,4 @@
-// $Id: meshGFaceBDS.cpp,v 1.7 2008-02-21 12:11:12 geuzaine Exp $
+// $Id: meshGFaceBDS.cpp,v 1.8 2008-02-21 13:34:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -217,9 +217,9 @@ bool evalSwapForOptimize(BDS_Edge *e, GFace *gf, BDS_Mesh &m)
   normal_triangle(p41, p42, p43, norm22);
   double cosa; prosca(norm11, norm12, &cosa);
   double cosb; prosca(norm21, norm22, &cosb);
-  double smoothIndicator = cosb - cosa;
-  bool smoothShouldSwap = (cosa < 0.1 && cosb > 0.3); 
-  bool smoothCouldSwap = !(cosb < cosa * .5); 
+  // double smoothIndicator = cosb - cosa;
+  // bool smoothShouldSwap = (cosa < 0.1 && cosb > 0.3); 
+  // bool smoothCouldSwap = !(cosb < cosa * .5); 
 
   double la  = computeEdgeLinearLength(p11, p12);
   double la_ = computeEdgeLinearLength(p11, p12, gf, m.scalingU, m.scalingV);
@@ -440,7 +440,7 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 
   std::sort(edges.begin(), edges.end());
 
-  for (int i = 0; i < edges.size(); ++i){
+  for (unsigned int i = 0; i < edges.size(); ++i){
     BDS_Edge *e = edges[i].second;
     if (!e->deleted){
       const double coord = 0.5;
@@ -477,7 +477,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_c
 
   std::sort(edges.begin(), edges.end());
 
-  for (int i = 0; i < edges.size(); i++){
+  for (unsigned int i = 0; i < edges.size(); i++){
     BDS_Edge *e = edges[i].second;
     if(!e->deleted){
       bool res = false;
@@ -562,7 +562,6 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
 
   const double MINE_ = 0.67, MAXE_ = 1.4;
 
-  double mesh_quality = 0;
   while (1){
     // we count the number of local mesh modifs.
     int nb_split =0;
@@ -733,7 +732,6 @@ void gmshOptimizeMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   gmshDelaunayizeBDS(gf, m, nb_swap);
 
   for (int ITER = 0; ITER < 3; ITER++){
-    double LIMIT = .1;
     for (int KK = 0; KK < 4; KK++){
       // swap edges that provide a better configuration
       int NN1 = m.edges.size();
@@ -751,7 +749,6 @@ void gmshOptimizeMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     }
   }
   
-  int nbSplit = 0;
   if (recover_map){
     while(gmshSolveInvalidPeriodic(gf, m, recover_map)){
     }  
@@ -762,12 +759,6 @@ void gmshOptimizeMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
 
 void delaunayPointInsertionBDS(GFace *gf, BDS_Mesh &m, BDS_Point *v, BDS_Face *f)
 {
-  const double p[2] = {v->u, v->v};
-  
-  BDS_Edge *e1 = f->e1;
-  BDS_Edge *e2 = f->e2;
-  BDS_Edge *e3 = f->e3;
-  // face is splitted, 
   m.split_face(f, v);
   int nb_swap = 0;
   gmshDelaunayizeBDS(gf, m, nb_swap);
@@ -782,7 +773,7 @@ BDS_Mesh *gmsh2BDS(std::list<GFace*> &l)
     GFace *gf = *it;
     m->add_geom(gf->tag(), 2);
     BDS_GeomEntity *g2 = m->get_geom(gf->tag(), 2);
-    for (int i = 0; i < gf->triangles.size(); i++){
+    for (unsigned int i = 0; i < gf->triangles.size(); i++){
       MTriangle *e = gf->triangles[i];
       BDS_Point *p[3];
       for (int j = 0; j < 3; j++){

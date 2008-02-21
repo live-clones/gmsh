@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.35 2008-02-20 09:20:45 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.36 2008-02-21 13:34:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -273,9 +273,9 @@ bool OCCFace::buildSTLTriangulation()
   TopLoc_Location loc;
   int p1, p2, p3;
   Bnd_Box aBox;
-  Standard_Boolean bWithShare;
+  Standard_Boolean bWithShare = Standard_False;
   Standard_Real aDiscret, aXmin, aYmin, aZmin, aXmax, aYmax, aZmax;
-  Standard_Real dX, dY, dZ, dMax, aCoeff, aAngle;     
+  Standard_Real dX, dY, dZ, dMax, aCoeff;     
   BRepBndLib::Add(s, aBox);
   aBox.Get(aXmin, aYmin, aZmin, aXmax, aYmax, aZmax);
    

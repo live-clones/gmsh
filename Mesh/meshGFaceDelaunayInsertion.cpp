@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.10 2008-02-17 08:48:01 geuzaine Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.11 2008-02-21 13:34:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -31,21 +31,19 @@
 #include <map>
 #include <algorithm>
 
-int III = 1;
-
-bool circumCenterMetricInTriangle ( MTriangle *base, 
-				    const double *metric,
-				    const std::vector<double> & Us,
-				    const std::vector<double> & Vs)
+bool circumCenterMetricInTriangle(MTriangle *base, 
+				  const double *metric,
+				  const std::vector<double> &Us,
+				  const std::vector<double> &Vs)
 {
-  double R,x[2],uv[2];
-  circumCenterMetric(base,metric,Us,Vs,x,R);
-  return invMapUV(base,x,Us,Vs,uv,1.e-8);
+  double R, x[2], uv[2];
+  circumCenterMetric(base, metric, Us, Vs, x, R);
+  return invMapUV(base, x, Us, Vs, uv, 1.e-8);
 }
 
-void circumCenterMetric ( double *pa, double *pb, double *pc,
-			  const double *metric,
-			  double *x, double &Radius2) 
+void circumCenterMetric(double *pa, double *pb, double *pc,
+			const double *metric,
+			double *x, double &Radius2) 
 {
   // d = (u2-u1) M (u2-u1) = u2 M u2 + u1 M u1 - 2 u2 M u1 
   double sys[2][2];
@@ -77,73 +75,57 @@ void circumCenterMetric ( double *pa, double *pb, double *pc,
     2. * (x[0] - pa[0]) * (x[1] - pa[1]) * b;
 }
 
-void circumCenterMetric ( MTriangle *base, 
-			  const double *metric,
-			  const std::vector<double> & Us,
-			  const std::vector<double> & Vs,
-			  double *x, double &Radius2) 
+void circumCenterMetric(MTriangle *base, 
+			const double *metric,
+			const std::vector<double> &Us,
+			const std::vector<double> &Vs,
+			double *x, double &Radius2) 
 {
   // d = (u2-u1) M (u2-u1) = u2 M u2 + u1 M u1 - 2 u2 M u1 
-
-
-  double sys[2][2];
-  double rhs[2];
   double pa[2] = {Us[base->getVertex(0)->getNum()],
 		  Vs[base->getVertex(0)->getNum()]};
   double pb[2] = {Us[base->getVertex(1)->getNum()],
 		  Vs[base->getVertex(1)->getNum()]};
   double pc[2] = {Us[base->getVertex(2)->getNum()],
 		  Vs[base->getVertex(2)->getNum()]};
-  circumCenterMetric ( pa,pb,pc,metric,x,Radius2);
+  circumCenterMetric(pa, pb, pc, metric, x, Radius2);
 }
 
-
-void buildMetric ( GFace *gf , double *uv, double *metric){
-  Pair<SVector3,SVector3> der = gf->firstDer(SPoint2(uv[0],uv[1]));
-  metric[0] = dot(der.first(),der.first());
-  metric[1] = dot(der.second(),der.first());
-  metric[2] = dot(der.second(),der.second());
+void buildMetric(GFace *gf, double *uv, double *metric)
+{
+  Pair<SVector3, SVector3> der = gf->firstDer(SPoint2(uv[0], uv[1]));
+  metric[0] = dot(der.first(), der.first());
+  metric[1] = dot(der.second(), der.first());
+  metric[2] = dot(der.second(), der.second());
 } 
 
-int inCircumCircleAniso ( GFace *gf, double *p1, double *p2, double *p3, double *uv, double *metric) 
+int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3, 
+			double *uv, double *metric) 
 {
-  double x[2],Radius2;
-  circumCenterMetric ( p1,p2,p3,metric, x,Radius2);
+  double x[2], Radius2;
+  circumCenterMetric(p1, p2, p3, metric, x, Radius2);
   const double a = metric[0];
   const double b = metric[1];
   const double d = metric[2];
   double d2 = (x[0] - uv[0]) * (x[0] - uv[0]) * a
     + (x[1] - uv[1]) * (x[1] - uv[1]) * d
     + 2. * (x[0] - uv[0]) * (x[1] - uv[1]) * b;
-  //  printf("%22.15E %22.15E %d\n",d2,Radius2,d2 < Radius2);
-  
   return d2 < Radius2;  
 }
 
-
-int inCircumCircleAniso ( GFace *gf,
-			  MTriangle *base, 
-			  const double *uv ,
-			  const double *metricb,
-			  const std::vector<double> & Us,
-			  const std::vector<double> & Vs) 
+int inCircumCircleAniso(GFace *gf, MTriangle *base, 
+			const double *uv, const double *metricb,
+			const std::vector<double> &Us,
+			const std::vector<double> &Vs) 
 {
-
-  double x[2],Radius2,metric[3];
-
-//   double pa[2] = {(Us[base->getVertex(0)->getNum()]+Us[base->getVertex(1)->getNum()]+Us[base->getVertex(2)->getNum()])/3.,
-//   		  (Vs[base->getVertex(0)->getNum()]+Vs[base->getVertex(1)->getNum()]+Vs[base->getVertex(2)->getNum()])/3.};
-  double pa[2] = {(Us[base->getVertex(0)->getNum()]+Us[base->getVertex(1)->getNum()]+Us[base->getVertex(2)->getNum()])/3.,
-  		  (Vs[base->getVertex(0)->getNum()]+Vs[base->getVertex(1)->getNum()]+Vs[base->getVertex(2)->getNum()])/3.};
+  double x[2], Radius2, metric[3];
+  double pa[2] = {(Us[base->getVertex(0)->getNum()] + Us[base->getVertex(1)->getNum()] +
+		   Us[base->getVertex(2)->getNum()]) / 3.,
+  		  (Vs[base->getVertex(0)->getNum()] + Vs[base->getVertex(1)->getNum()] + 
+		   Vs[base->getVertex(2)->getNum()]) / 3.};
   
-  buildMetric (gf,pa,metric);
-  circumCenterMetric ( base, metric, Us,Vs,x,Radius2);
-//   buildMetric (gf,pa,metric);
-//   circumCenterMetric ( base, metric, Us,Vs,x,Radius2);
-//   buildMetric (gf,pa,metric);
-//   circumCenterMetric ( base, metric, Us,Vs,x,Radius2);
-//   buildMetric (gf,pa,metric);
-//   circumCenterMetric ( base, metric, Us,Vs,x,Radius2);
+  buildMetric(gf, pa, metric);
+  circumCenterMetric(base, metric, Us, Vs, x, Radius2);
 
   const double a = metric[0];
   const double b = metric[1];
@@ -153,46 +135,43 @@ int inCircumCircleAniso ( GFace *gf,
     + (x[1] - uv[1]) * (x[1] - uv[1]) * d
     + 2. * (x[0] - uv[0]) * (x[1] - uv[1]) * b;
   
-  //  printf("%22.15E %22.15E %d\n",d2,Radius2,d2 < Radius2);
   return d2 < Radius2;  
 }
 
-MTri3::MTri3 ( MTriangle * t, double lc) : deleted(false), base (t)
+MTri3::MTri3(MTriangle *t, double lc) : deleted(false), base(t)
 {
   neigh[0] = neigh[1] = neigh[2] = 0;
 
   // compute the circumradius of the triangle
-  double pa[3] = {base->getVertex(0)->x(),base->getVertex(0)->y(),base->getVertex(0)->z()};
-  double pb[3] = {base->getVertex(1)->x(),base->getVertex(1)->y(),base->getVertex(1)->z()};
-  double pc[3] = {base->getVertex(2)->x(),base->getVertex(2)->y(),base->getVertex(2)->z()};
+  double pa[3] = {base->getVertex(0)->x(), base->getVertex(0)->y(), base->getVertex(0)->z()};
+  double pb[3] = {base->getVertex(1)->x(), base->getVertex(1)->y(), base->getVertex(1)->z()};
+  double pc[3] = {base->getVertex(2)->x(), base->getVertex(2)->y(), base->getVertex(2)->z()};
   double center[3];
-  base->circumcenterXYZ(pa,pb,pc,center);
+  base->circumcenterXYZ(pa, pb, pc, center);
   const double dx = base->getVertex(0)->x() - center[0];
   const double dy = base->getVertex(0)->y() - center[1];
   const double dz = base->getVertex(0)->z() - center[2];
   
-  circum_radius = sqrt ( dx*dx + dy*dy + dz*dz);
+  circum_radius = sqrt(dx * dx + dy * dy + dz * dz);
   circum_radius /= lc;
 }
 
-
-int MTri3::inCircumCircle ( const double *p ) const
+int MTri3::inCircumCircle(const double *p) const
 {
-  double pa[3] = {base->getVertex(0)->x(),base->getVertex(0)->y(),base->getVertex(0)->z()};
-  double pb[3] = {base->getVertex(1)->x(),base->getVertex(1)->y(),base->getVertex(1)->z()};
-  double pc[3] = {base->getVertex(2)->x(),base->getVertex(2)->y(),base->getVertex(2)->z()};
+  double pa[3] = {base->getVertex(0)->x(), base->getVertex(0)->y(), base->getVertex(0)->z()};
+  double pb[3] = {base->getVertex(1)->x(), base->getVertex(1)->y(), base->getVertex(1)->z()};
+  double pc[3] = {base->getVertex(2)->x(), base->getVertex(2)->y(), base->getVertex(2)->z()};
   double fourth[3];
-  fourthPoint ( pa,pb,pc,fourth);
+  fourthPoint(pa, pb, pc, fourth);
 
-  double result = gmsh::insphere(pa, pb, pc, fourth, (double*)p) * gmsh::orient3d(pa, pb, pc,fourth);  
+  double result = gmsh::insphere(pa, pb, pc, fourth, (double*)p) * 
+    gmsh::orient3d(pa, pb, pc,fourth);  
   return (result > 0) ? 1 : 0;  
 }
 
-int inCircumCircle ( MTriangle *base, 
-		     const double *p ,
-		     const double *param ,
-		     std::vector<double> & Us,
-		     std::vector<double> & Vs) 
+int inCircumCircle(MTriangle *base, 
+		   const double *p, const double *param ,
+		   std::vector<double> &Us, std::vector<double> &Vs) 
 {
   double pa[2] = {Us[base->getVertex(0)->getNum()],
 		  Vs[base->getVertex(0)->getNum()]};
@@ -203,147 +182,110 @@ int inCircumCircle ( MTriangle *base,
 
   double result = gmsh::incircle(pa, pb, pc, (double*)param) * gmsh::orient2d(pa, pb, pc);  
   return (result > 0) ? 1 : 0;  
-
-
-
-//   double pa[3] = {base->getVertex(0)->x(),base->getVertex(0)->y(),base->getVertex(0)->z()};
-//   double pb[3] = {base->getVertex(1)->x(),base->getVertex(1)->y(),base->getVertex(1)->z()};
-//   double pc[3] = {base->getVertex(2)->x(),base->getVertex(2)->y(),base->getVertex(2)->z()};
-//   double fourth[3];
-//   fourthPoint ( pa,pb,pc,fourth);
-
-//   double result = gmsh::insphere(pa, pb, pc, fourth, (double*)p) * gmsh::orient3d(pa, pb, pc,fourth);  
-//   return (result > 0) ? 1 : 0;  
 }
 
-
 template <class ITER>
-void connectTris ( ITER beg, ITER end)
+void connectTris(ITER beg, ITER end)
 {
   std::set<edgeXface> conn;
-  {
-    while (beg != end)
-      {
-	if (!(*beg)->isDeleted())
-	  {
-	    for (int i=0;i<3;i++)
-	      {
-		edgeXface fxt ( *beg ,  i );
-		std::set<edgeXface>::iterator found = conn.find (fxt);
-		if (found == conn.end())
-		  conn.insert ( fxt );
-		else if (found->t1 != *beg)
-		  {
-		    found->t1->setNeigh(found->i1,*beg);
-		    (*beg)->setNeigh ( i, found->t1);
-		  }
-	      }
-	  }
-	++beg;
+  while (beg != end){
+    if (!(*beg)->isDeleted()){
+      for (int i = 0; i < 3; i++){
+	edgeXface fxt(*beg, i);
+	std::set<edgeXface>::iterator found = conn.find(fxt);
+	if (found == conn.end())
+	  conn.insert(fxt);
+	else if (found->t1 != *beg){
+	  found->t1->setNeigh(found->i1, *beg);
+	  (*beg)->setNeigh(i, found->t1);
+	}
       }
+    }
+    ++beg;
   }
 }
 
-void connectTriangles ( std::list<MTri3*> & l)
+void connectTriangles(std::list<MTri3*> &l)
 {
-  connectTris(l.begin(),l.end());
-}
-void connectTriangles ( std::vector<MTri3*> & l)
-{
-  connectTris(l.begin(),l.end());
-}
-void connectTriangles ( std::set<MTri3*,compareTri3Ptr> & l){
-  connectTris(l.begin(),l.end());
+  connectTris(l.begin(), l.end());
 }
 
-void recurFindCavity (std::list<edgeXface> & shell, 
-		      std::list<MTri3*> & cavity, 
-		      double *v, 
-		      double *param, 
-		      MTri3 *t,
-		      std::vector<double> & Us,
-		      std::vector<double> & Vs)
+void connectTriangles(std::vector<MTri3*> &l)
+{
+  connectTris(l.begin(), l.end());
+}
+
+void connectTriangles(std::set<MTri3*, compareTri3Ptr> &l)
+{
+  connectTris(l.begin(), l.end());
+}
+
+void recurFindCavity(std::list<edgeXface> &shell, std::list<MTri3*> &cavity, 
+		     double *v, double *param, MTri3 *t,
+		     std::vector<double> &Us, std::vector<double> &Vs)
 {
   t->setDeleted(true);
   // the cavity that has to be removed
   // because it violates delaunay criterion
   cavity.push_back(t);
 
-  for (int i=0;i<3;i++)
-    {
-      MTri3 *neigh =  t->getNeigh(i) ;
-      if (!neigh)
-	  shell.push_back ( edgeXface ( t, i ) );
-      else  if (!neigh->isDeleted())
-	{
-	  int circ =  inCircumCircle (neigh->tri(), v , param, Us, Vs);
-	  if (circ)
-	    recurFindCavity ( shell, cavity,v, param, neigh,Us,Vs);
-	  else
-	    shell.push_back ( edgeXface ( t, i ) );
-	}
+  for (int i = 0; i < 3; i++){
+    MTri3 *neigh =  t->getNeigh(i) ;
+    if (!neigh)
+      shell.push_back(edgeXface(t, i));
+    else if (!neigh->isDeleted()){
+      int circ =  inCircumCircle(neigh->tri(), v , param, Us, Vs);
+      if (circ)
+	recurFindCavity(shell, cavity, v, param, neigh, Us, Vs);
+      else
+	shell.push_back(edgeXface(t, i));
     }
+  }
 }
 
 void recurFindCavityAniso (GFace *gf,
-			   std::list<edgeXface> & shell, 
-			   std::list<MTri3*> & cavity, 
-			   double *metric, 
-			   double *param, 
-			   MTri3 *t,
-			   std::vector<double> & Us,
-			   std::vector<double> & Vs)
+			   std::list<edgeXface> &shell, std::list<MTri3*> &cavity, 
+			   double *metric, double *param,  MTri3 *t,
+			   std::vector<double> &Us, std::vector<double> &Vs)
 {
   t->setDeleted(true);
   // the cavity that has to be removed
   // because it violates delaunay criterion
   cavity.push_back(t);
 
-  for (int i=0;i<3;i++)
-    {
-      MTri3 *neigh =  t->getNeigh(i) ;
-      if (!neigh)
-	  shell.push_back ( edgeXface ( t, i ) );
-      else  if (!neigh->isDeleted())
-	{
-	  int circ =  inCircumCircleAniso (gf, neigh->tri(), param, metric, Us, Vs);
-	  if (circ)
-	    recurFindCavityAniso ( gf, shell, cavity,metric, param, neigh,Us,Vs);
-	  else
-	    shell.push_back ( edgeXface ( t, i ) );
-	}
+  for (int i = 0; i < 3; i++){
+    MTri3 *neigh = t->getNeigh(i) ;
+    if (!neigh)
+      shell.push_back(edgeXface(t, i));
+    else  if (!neigh->isDeleted()){
+      int circ =  inCircumCircleAniso(gf, neigh->tri(), param, metric, Us, Vs);
+      if (circ)
+	recurFindCavityAniso(gf, shell, cavity,metric, param, neigh, Us, Vs);
+      else
+	shell.push_back(edgeXface(t, i));
     }
+  }
 }
 
-
-
-bool circUV ( MTriangle   *t , 
-	      std::vector<double> & Us,
-	      std::vector<double> & Vs , double *res, GFace *gf)
+bool circUV(MTriangle *t, std::vector<double> & Us, std::vector<double> &Vs,
+	    double *res, GFace *gf)
 {
-  double u1 [3] = {Us[t->getVertex(0)->getNum()],Vs[t->getVertex(0)->getNum()],0};
-  double u2 [3] = {Us[t->getVertex(1)->getNum()],Vs[t->getVertex(1)->getNum()],0};
-  double u3 [3] = {Us[t->getVertex(2)->getNum()],Vs[t->getVertex(2)->getNum()],0};
-  t->circumcenterXY ( u1, u2 , u3, res);
+  double u1 [3] = {Us[t->getVertex(0)->getNum()], Vs[t->getVertex(0)->getNum()], 0};
+  double u2 [3] = {Us[t->getVertex(1)->getNum()], Vs[t->getVertex(1)->getNum()], 0};
+  double u3 [3] = {Us[t->getVertex(2)->getNum()], Vs[t->getVertex(2)->getNum()], 0};
+  t->circumcenterXY(u1, u2, u3, res);
   return true;
-  double p1 [3] = {t->getVertex(0)->x(),t->getVertex(0)->y(),t->getVertex(0)->z()};
-  double p2 [3] = {t->getVertex(1)->x(),t->getVertex(1)->y(),t->getVertex(1)->z()};
-  double p3 [3] = {t->getVertex(2)->x(),t->getVertex(2)->y(),t->getVertex(2)->z()};
+  double p1 [3] = {t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z()};
+  double p2 [3] = {t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z()};
+  double p3 [3] = {t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z()};
   double resxy[3], uv[2];
-  t->circumcenterXYZ ( p1, p2 , p3, resxy,uv);
+  t->circumcenterXYZ(p1, p2, p3, resxy,uv);
   return true;
-  //  printf("uv = %g %g\n",uv[0],uv[1]);
-  //    printf("%g %g vs ",res[0],res[1]);
-  res[0] = u1[0] + uv[0] * ( u2[0] - u1[0] ) + uv[1] * ( u3[0] - u1[0] );
-  res[1] = u1[1] + uv[0] * ( u2[1] - u1[1] ) + uv[1] * ( u3[1] - u1[1] );
-  //    printf("%g %g \n",res[0],res[1]);
-  
 }
 
-bool invMapUV ( MTriangle   *t , 
-		double *p,
-		const std::vector<double> & Us,
-		const std::vector<double> & Vs , double *uv, double tol)
+bool invMapUV(MTriangle *t, double *p,
+	      const std::vector<double> &Us, const std::vector<double> &Vs,
+	      double *uv, double tol)
 {
   double mat[2][2];
   double b[2];
@@ -374,10 +316,7 @@ bool invMapUV ( MTriangle   *t ,
   return false; 
 }
 
-
-double getSurfUV ( MTriangle   *t , 
-		 std::vector<double> & Us,
-		 std::vector<double> & Vs )
+double getSurfUV(MTriangle *t, std::vector<double> &Us, std::vector<double> &Vs)
 {
   double u1 = Us[t->getVertex(0)->getNum()];
   double v1 = Vs[t->getVertex(0)->getNum()];
@@ -389,279 +328,190 @@ double getSurfUV ( MTriangle   *t ,
   const double vv2 [2] = {u3 - u1, v3 - v1};
   double s = vv1[0] * vv2[1] - vv1[1] * vv2[0]; 
   return s * 0.5;
-
 }
 
-bool insertVertex (GFace *gf,
-		   MVertex *v , 
-		   double  *param ,
-		   MTri3   *t ,
-		   std::set<MTri3*,compareTri3Ptr> &allTets,
-		   std::vector<double> & vSizes,
-		   std::vector<double> & vSizesBGM,
-		   std::vector<double> & Us,
-		   std::vector<double> & Vs,
-		   double *metric = 0)
+bool insertVertex(GFace *gf, MVertex *v, double *param , MTri3 *t,
+		  std::set<MTri3*, compareTri3Ptr> &allTets,
+		  std::vector<double> &vSizes, std::vector<double> &vSizesBGM,
+		  std::vector<double> &Us, std::vector<double> &Vs,
+		  double *metric = 0)
 {
-  std::list<edgeXface>  shell;
-  std::list<MTri3*>  cavity; 
-  std::list<MTri3*>  new_cavity;
+  std::list<edgeXface> shell;
+  std::list<MTri3*> cavity; 
+  std::list<MTri3*> new_cavity;
 
   if (!metric){
-    double p[3] = {v->x(),v->y(),v->z()};
-    recurFindCavity ( shell,  cavity, p , param, t, Us, Vs);  
+    double p[3] = {v->x(), v->y(), v->z()};
+    recurFindCavity(shell, cavity, p, param, t, Us, Vs);
   }
   else{
-    recurFindCavityAniso ( gf, shell,  cavity, metric , param, t, Us, Vs);  
+    recurFindCavityAniso(gf, shell, cavity, metric, param, t, Us, Vs);  
   }
   
   // check that volume is conserved
   double newVolume = 0;
   double oldVolume = 0;
 
-
   std::list<MTri3*>::iterator ittet = cavity.begin();
   std::list<MTri3*>::iterator ittete = cavity.end();
-  while ( ittet != ittete )
-    {
-      oldVolume += fabs(getSurfUV((*ittet)->tri(),Us,Vs));
-      ++ittet;
-    }
-
-//   fprintf(ff,"};\n");
-//   fclose (ff);
-//   char name[256];
-//   sprintf(name,"test.pos");
-//   FILE *ff = fopen (name,"w");
-//   fprintf(ff,"View\"test\"{\n");
-
-
-  MTri3** newTris = new MTri3*[shell.size()];;
+  while(ittet != ittete){
+    oldVolume += fabs(getSurfUV((*ittet)->tri(),Us,Vs));
+    ++ittet;
+  }
+  
+  MTri3 **newTris = new MTri3*[shell.size()];
   int k = 0;
-  std::list<edgeXface>::iterator it =   shell.begin();
+  std::list<edgeXface>::iterator it = shell.begin();
 
-  while (it != shell.end())
-    {
-      MTriangle *t = new MTriangle ( it->v[0],
-				     it->v[1],
-				     v);
-
-      double lc    = 0.3333333333*(vSizes [t->getVertex(0)->getNum()]+
-				   vSizes [t->getVertex(1)->getNum()]+
-				   vSizes [t->getVertex(2)->getNum()]);
-      double lcBGM = 0.3333333333*(vSizesBGM [t->getVertex(0)->getNum()]+
+  while (it != shell.end()){
+    MTriangle *t = new MTriangle(it->v[0], it->v[1], v);
+    double lc = 0.3333333333 * (vSizes [t->getVertex(0)->getNum()]+
+				vSizes [t->getVertex(1)->getNum()]+
+				vSizes [t->getVertex(2)->getNum()]);
+    double lcBGM = 0.3333333333 * (vSizesBGM [t->getVertex(0)->getNum()]+
 				   vSizesBGM [t->getVertex(1)->getNum()]+
 				   vSizesBGM [t->getVertex(2)->getNum()]);
-      
-      MTri3 *t4 = new MTri3 ( t , Extend1dMeshIn2dSurfaces() ? std::min(lc,lcBGM) : lcBGM ); 
-//        fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {0,0,0};\n",
-// 	       Us [t->getVertex(0)->getNum()],
-// 	       Vs [t->getVertex(0)->getNum()],
-// 	       0.0,
-// 	       Us [t->getVertex(1)->getNum()],
-// 	       Vs [t->getVertex(1)->getNum()],
-// 	       0.0,
-// 	       Us [t->getVertex(2)->getNum()],
-// 	       Vs [t->getVertex(2)->getNum()],
-// 	       0.0);
-//       fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {0,0,0};\n",
-// 	      t->getVertex(0)->x(),
-// 	      t->getVertex(0)->y(),
-// 	      t->getVertex(0)->z(),
-// 	      t->getVertex(1)->x(),
-// 	      t->getVertex(1)->y(),
-// 	      t->getVertex(1)->z(),
-// 	      t->getVertex(2)->x(),
-// 	      t->getVertex(2)->y(),
-// 	      t->getVertex(2)->z());
-      newTris[k++]=t4;
-      // all new triangles are pushed front in order to
-      // ba able to destroy them if the cavity is not
-      // star shaped around the new vertex.
-      new_cavity.push_back (t4);
-      MTri3 *otherSide = it->t1->getNeigh(it->i1);
-
-      if (otherSide)
-      	new_cavity.push_back (otherSide);
-      //      if (!it->t1->isDeleted())throw;
-      double ss = fabs(getSurfUV(t4->tri(),Us,Vs));
-      if (ss < 1.e-25)ss = 1256172121;
-      newVolume += ss;
-      ++it;
-    }
-//   fprintf(ff,"};\n");
-//   fclose (ff);
-//   printf("%d %d newVolume %g oldVolume %g\n",cavity.size(),new_cavity.size(),newVolume,oldVolume);
-//    getchar();
-
-
-  if (fabs(oldVolume - newVolume) < 1.e-12 * oldVolume )
-    {      
-      connectTris ( new_cavity.begin(),new_cavity.end() );      
-      allTets.insert(newTris,newTris+shell.size());
-      delete [] newTris;
-      return true;
-    }
+    MTri3 *t4 = new MTri3(t, Extend1dMeshIn2dSurfaces() ? std::min(lc, lcBGM) : lcBGM); 
+    newTris[k++] = t4;
+    // all new triangles are pushed front in order to
+    // ba able to destroy them if the cavity is not
+    // star shaped around the new vertex.
+    new_cavity.push_back (t4);
+    MTri3 *otherSide = it->t1->getNeigh(it->i1);
+    if (otherSide)
+      new_cavity.push_back (otherSide);
+    double ss = fabs(getSurfUV(t4->tri(),Us,Vs));
+    if (ss < 1.e-25)ss = 1256172121;
+    newVolume += ss;
+    ++it;
+  }
+  if (fabs(oldVolume - newVolume) < 1.e-12 * oldVolume){      
+    connectTris(new_cavity.begin(),new_cavity.end());      
+    allTets.insert(newTris,newTris+shell.size());
+    delete [] newTris;
+    return true;
+  }
   // The cavity is NOT star shaped
-  else
-    {      
-      //      printf("the cavity (%d members) is not star shaped %g vs %g\n",shell.size(),oldVolume,newVolume);
-
-      for (unsigned int i=0;i<shell.size();i++)delete newTris[i];
-      delete [] newTris;      
-      ittet = cavity.begin();
-      ittete = cavity.end();  
-      while ( ittet != ittete )
-	{
-	  (*ittet)->setDeleted(false);
-	  ++ittet;
-	}
-      return false;
+  else{      
+    for (unsigned int i = 0; i < shell.size(); i++) delete newTris[i];
+    delete [] newTris;      
+    ittet = cavity.begin();
+    ittete = cavity.end();  
+    while(ittet != ittete){
+      (*ittet)->setDeleted(false);
+      ++ittet;
     }
+    return false;
+  }
 }
 
-void _printTris (char *name,    std::set<MTri3*,compareTri3Ptr>&AllTris, std::vector<double>&Us, std::vector<double>&Vs)
+void _printTris(char *name, std::set<MTri3*, compareTri3Ptr> &AllTris,
+		std::vector<double> &Us, std::vector<double> &Vs)
 {
   FILE *ff = fopen (name,"w");
   fprintf(ff,"View\"test\"{\n");
   std::set<MTri3*,compareTri3Ptr>::iterator it = AllTris.begin();
-  while (it != AllTris.end() )
-    {
-      MTri3 *worst = *it;
-      if (!worst->isDeleted())
-	{
-	  fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {0,0,0};\n",
-		  Us [(worst)->tri()->getVertex(0)->getNum()],
-		  Vs [(worst)->tri()->getVertex(0)->getNum()],
-		  0.0,
-		  Us [(worst)->tri()->getVertex(1)->getNum()],
-		  Vs [(worst)->tri()->getVertex(1)->getNum()],
-		  0.0,
-		  Us [(worst)->tri()->getVertex(2)->getNum()],
-		  Vs [(worst)->tri()->getVertex(2)->getNum()],
-		  0.0);
-	}
-      ++it;
+  while (it != AllTris.end() ){
+    MTri3 *worst = *it;
+    if (!worst->isDeleted()){
+      fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {0,0,0};\n",
+	      Us [(worst)->tri()->getVertex(0)->getNum()],
+	      Vs [(worst)->tri()->getVertex(0)->getNum()],
+	      0.0,
+	      Us [(worst)->tri()->getVertex(1)->getNum()],
+	      Vs [(worst)->tri()->getVertex(1)->getNum()],
+	      0.0,
+	      Us [(worst)->tri()->getVertex(2)->getNum()],
+	      Vs [(worst)->tri()->getVertex(2)->getNum()],
+	      0.0);
     }
+    ++it;
+  }
   fprintf(ff,"};\n");
   fclose (ff);
 }
 
-void insertVerticesInFace (GFace *gf, BDS_Mesh *bds)
+void insertVerticesInFace(GFace *gf, BDS_Mesh *bds)
 {
-
   std::set<MTri3*,compareTri3Ptr> AllTris;
-  std::vector<double> vSizes, vSizesBGM,Us,Vs;
+  std::vector<double> vSizes, vSizesBGM, Us, Vs;
 
+  buidMeshGenerationDataStructures(gf, AllTris, vSizes, vSizesBGM, Us, Vs);
 
-  buidMeshGenerationDataStructures (gf,AllTris,vSizes,vSizesBGM,Us,Vs);
-
-  //  _printTris ("before.pos", AllTris, Us,Vs);
-  int nbSwaps = edgeSwapPass(gf,AllTris,SWCR_DEL,Us,Vs,vSizes,vSizesBGM);
-  //  _printTris ("after2.pos", AllTris, Us,Vs);
-  Msg(DEBUG,"Delaunization of the initial mesh done (%d swaps)",nbSwaps);
+  // _printTris ("before.pos", AllTris, Us,Vs);
+  int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, Us, Vs, vSizes, vSizesBGM);
+  // _printTris ("after2.pos", AllTris, Us,Vs);
+  Msg(DEBUG,"Delaunization of the initial mesh done (%d swaps)", nbSwaps);
 
   int ITER = 0;
-
-  while (1)
-    {
-      MTri3 *worst = *AllTris.begin();
-
-      if (worst->isDeleted()){
-	delete worst->tri();
-	delete worst;
-	AllTris.erase(AllTris.begin());
-	//	  Msg(INFO,"Worst tet is deleted");
-      }
-      else{
-	if(ITER++%5000 ==0)
-	  Msg(DEBUG,"%7d points created -- Worst tri radius is %8.3f",vSizes.size(),worst->getRadius());
-	double center[2],uv[2],metric[3],r2;
-	if (worst->getRadius() < 0.5 * sqrt(2.0)) break;	  
+  while (1){
+    MTri3 *worst = *AllTris.begin();
+    if (worst->isDeleted()){
+      delete worst->tri();
+      delete worst;
+      AllTris.erase(AllTris.begin());
+    }
+    else{
+      if(ITER++ % 5000 == 0)
+	Msg(DEBUG,"%7d points created -- Worst tri radius is %8.3f",
+	    vSizes.size(), worst->getRadius());
+      double center[2],uv[2],metric[3],r2;
+      if (worst->getRadius() < 0.5 * sqrt(2.0)) break;
+      circUV(worst->tri(), Us, Vs, center, gf);
+      MTriangle *base = worst->tri();
+      double pa[2] = {(Us[base->getVertex(0)->getNum()] + 
+		       Us[base->getVertex(1)->getNum()] + 
+		       Us[base->getVertex(2)->getNum()]) / 3.,
+		      (Vs[base->getVertex(0)->getNum()] + 
+		       Vs[base->getVertex(1)->getNum()] + 
+		       Vs[base->getVertex(2)->getNum()]) / 3.};
+      buildMetric(gf, pa, metric);
+      circumCenterMetric(worst->tri(), metric, Us, Vs, center, r2); 
+      bool inside = invMapUV(worst->tri(), center, Us, Vs, uv, 1.e-8);
+      if (inside) {
+	// we use here local coordinates as real coordinates
+	// x,y and z will be computed hereafter
+	//	      Msg(INFO,"Point is inside");
+	GPoint p = gf->point(center[0], center[1]);
+	MVertex *v = new MFaceVertex(p.x(), p.y(), p.z(), gf, center[0], center[1]);
+	v->setNum(Us.size());
+	double lc1 = ((1. - uv[0] - uv[1]) * vSizes[worst->tri()->getVertex(0)->getNum()] + 
+		      uv[0] * vSizes [worst->tri()->getVertex(1)->getNum()] + 
+		      uv[1] * vSizes [worst->tri()->getVertex(2)->getNum()]); 
+	// double eigMetricSurface = gf->getMetricEigenvalue(SPoint2(center[0],center[1]));
+	double lc = BGM_MeshSize(gf,center[0],center[1],p.x(),p.y(),p.z());
+	vSizesBGM.push_back(lc);
+	vSizes.push_back(lc1);
+	Us.push_back(center[0]);
+	Vs.push_back(center[1]);
 	
-	circUV(worst->tri(),Us,Vs,center,gf);
-	MTriangle *base = worst->tri();
-	double pa[2] = {(Us[base->getVertex(0)->getNum()]+Us[base->getVertex(1)->getNum()]+Us[base->getVertex(2)->getNum()])/3.,
-			(Vs[base->getVertex(0)->getNum()]+Vs[base->getVertex(1)->getNum()]+Vs[base->getVertex(2)->getNum()])/3.};
-	buildMetric ( gf , pa, metric);
-	circumCenterMetric ( worst->tri(),metric,Us,Vs,center,r2); 
-// 	buildMetric ( gf , center, metric);
-// 	circumCenterMetric ( worst->tri(),metric,Us,Vs,center,r2); 
-// 	buildMetric ( gf , center, metric);
-// 	circumCenterMetric ( worst->tri(),metric,Us,Vs,center,r2); 
-	
-	// 	  printf("%g %g %g\n",metric[0],metric[1],metric[2]);
-	
-	bool inside = invMapUV(worst->tri(),center,Us,Vs,uv,1.e-8);
-	// 	  if (!inside)
-	// 	    circUV(worst->tri(),Us,Vs,center,gf);
-	
-	// 	  inside = invMapUV(worst->tri(),center,Us,Vs,uv,1.e-8);
-	
-	if (inside) {	  
-	  // we use here local coordinates as real coordinates
-	  // x,y and z will be computed hereafter
-	  //	      Msg(INFO,"Point is inside");
-	  GPoint p = gf->point (center[0],center[1]);
-	  MVertex *v = new MFaceVertex (p.x(),p.y(),p.z(),gf,center[0],center[1]);
-	  v->setNum(Us.size());
-	  double lc1 = ((1.-uv[0]-uv[1]) * vSizes [worst->tri()->getVertex(0)->getNum()] + 
-			uv[0] * vSizes [worst->tri()->getVertex(1)->getNum()] + 
-			uv[1] * vSizes [worst->tri()->getVertex(2)->getNum()] ); 
-	  //	      double eigMetricSurface = gf->getMetricEigenvalue(SPoint2(center[0],center[1]));
-	  double lc = BGM_MeshSize(gf,center[0],center[1],p.x(),p.y(),p.z());
-	  //	      printf("lc1 %12.5E lc %12.5E\n",lc1,lc);
-	  
-	  vSizesBGM.push_back( lc );
-	  vSizes.push_back   ( lc1);
-	  Us.push_back( center[0] );
-	  Vs.push_back( center[1] );
-	  
-	  if (!insertVertex ( gf, v , center, worst, AllTris,vSizes,vSizesBGM,Us,Vs,metric)) {
-	    Msg(DEBUG,"2D Delaunay : a cavity is not star shaped");
-	    AllTris.erase(AllTris.begin());
-	    worst->forceRadius(-1);
-	    AllTris.insert(worst);		  
-	    delete v;
-	  }
-	  else 
-	    gf->mesh_vertices.push_back(v);
-	}
-	else {
-	  //	      printf("%g %g %g\n",metric[0],metric[1],metric[2]);
-	  //    	      Msg(DEBUG,"Point %g %g is outside %g %g - %g %g - %g %g (%22.15E %22.15E)",
-	  //    		  center[0],center[1],		  
-	  //    		  Us [(worst)->tri()->getVertex(0)->getNum()],
-	  //    		  Vs [(worst)->tri()->getVertex(0)->getNum()],
-	  //    		  Us [(worst)->tri()->getVertex(1)->getNum()],
-	  //    		  Vs [(worst)->tri()->getVertex(1)->getNum()],
-	  //    		  Us [(worst)->tri()->getVertex(2)->getNum()],
-	  //    		  Vs [(worst)->tri()->getVertex(2)->getNum()],
-	  //    		  uv[0],uv[1]);
-	  //	      throw;
+	if (!insertVertex(gf, v, center, worst, AllTris, vSizes, vSizesBGM, 
+			  Us, Vs, metric)) {
+	  Msg(DEBUG,"2D Delaunay : a cavity is not star shaped");
 	  AllTris.erase(AllTris.begin());
-	  worst->forceRadius(0);
-	  AllTris.insert(worst);
-	  //	      break;
+	  worst->forceRadius(-1);
+	  AllTris.insert(worst);		  
+	  delete v;
 	}
+	else 
+	  gf->mesh_vertices.push_back(v);
       }
-    }    
+      else {
+	AllTris.erase(AllTris.begin());
+	worst->forceRadius(0);
+	AllTris.insert(worst);
+      }
+    }
+  }    
   for (int i=0;i<10;i++){
-    //    bool splits = edgeSplitPass(1.4,gf,AllTris,SPCR_ALLWAYS,Us,Vs,vSizes,vSizesBGM);
-    //    edgeSwapPass(gf,AllTris,SWCR_QUAL,Us,Vs,vSizes,vSizesBGM);
-    //    bool collapses = edgeCollapsePass(0.67,gf,AllTris,Us,Vs,vSizes,vSizesBGM);
-    //    edgeSwapPass(gf,AllTris,SWCR_QUAL,Us,Vs,vSizes,vSizesBGM);
-    //    if (!collapses && !splits)break;
+    //  bool splits = edgeSplitPass(1.4, gf, AllTris, SPCR_ALLWAYS, Us, Vs, vSizes, vSizesBGM);
+    //  edgeSwapPass(gf, AllTris, SWCR_QUAL, Us, Vs, vSizes, vSizesBGM);
+    //  bool collapses = edgeCollapsePass(0.67, gf, AllTris, Us, Vs, vSizes, vSizesBGM);
+    //  edgeSwapPass(gf, AllTris, SWCR_QUAL, Us, Vs, vSizes, vSizesBGM);
+    //  if (!collapses && !splits) break;
   }
   
-  //  for (int i=0;i<1;i++)if(!edgeCollapsePass(100,gf,AllTris,Us,Vs,vSizes,vSizesBGM))break;
-  //  for (int i=0;i<100;i++)if(!edgeSwapPass(gf,AllTris,SWCR_QUAL,Us,Vs,vSizes,vSizesBGM))break;
-  
-  //   char name[245];
-  //   sprintf(name,"paramFinal%d.pos",gf->tag());
-  //  _printTris (name, AllTris, Us,Vs);
-  _printTris ("yo.pos", AllTris, Us,Vs);
+  //_printTris ("yo.pos", AllTris, Us, Vs);
 
-  transferDataStructure (gf,AllTris); 
-  // fill new gmsh structures with triangles
+  transferDataStructure(gf, AllTris); 
 }

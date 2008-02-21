@@ -187,11 +187,11 @@ class GSL_Matrix
 private:
   gsl_matrix_view view;
 public:
-  inline size_t size1() const { return data->size1; }
-  inline size_t size2() const { return data->size2; }
+  inline int size1() const { return data->size1; }
+  inline int size2() const { return data->size2; }
   gsl_matrix *data;
   GSL_Matrix(gsl_matrix_view _data) : view(_data), data(&view.matrix) {}
-  GSL_Matrix(size_t R, size_t C) { data = gsl_matrix_calloc(R, C); }
+  GSL_Matrix(int r, int  c) { data = gsl_matrix_calloc(r, c); }
   GSL_Matrix() : data(0) {}
   GSL_Matrix(const GSL_Matrix &other) : data(0)
   {

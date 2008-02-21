@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.117 2008-02-17 08:48:01 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.118 2008-02-21 13:34:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -877,9 +877,9 @@ inline double dist2 (const SPoint2 &p1,const SPoint2 &p2)
 // }
 
 
-static void printMesh1d (int iEdge, int seam, std::vector<SPoint2> &m){
+void printMesh1d (int iEdge, int seam, std::vector<SPoint2> &m){
   printf("Mesh1D for edge %d seam %d\n",iEdge,seam);
-  for (int i=0;i<m.size();i++){
+  for (unsigned int i = 0; i < m.size(); i++){
     printf("%12.5E %12.5E\n",m[i].x(),m[i].y());
   }
 }
@@ -957,7 +957,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 
   while (unordered.size())
    {
-     if (MYDEBUG)printf("unordered.size() = %d\n",unordered.size());
+     if (MYDEBUG)printf("unordered.size() = %d\n", (int)unordered.size());
      std::list<GEdgeSigned>::iterator it = unordered.begin();
      std::vector<SPoint2>  coords;
 
@@ -1048,7 +1048,7 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
        }
    Finalize:
 
-     if (MYDEBUG)printf("Finalize, found %d points\n",coords.size());
+     if (MYDEBUG) printf("Finalize, found %d points\n", (int)coords.size());
      if (coords.size() == 0){
        // It has not worked : either tolerance is wrong or the first seam edge
        // has to be taken with the other parametric coordinates (because it is
@@ -1074,7 +1074,9 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	   edgeLoop.push_back(found.ge->mesh_vertices[i]);
        }
 
-     if (MYDEBUG)printf("edge %d size %d size %d\n",found.ge->tag(), (int)edgeLoop.size(), (int)coords.size());
+     if (MYDEBUG)
+       printf("edge %d size %d size %d\n",
+	      found.ge->tag(), (int)edgeLoop.size(), (int)coords.size());
 
      std::vector<BDS_Point*>  edgeLoop_BDS;
      for (unsigned int i=0;i<edgeLoop.size();i++)
@@ -1109,7 +1111,10 @@ bool buildConsecutiveListOfVertices (  GFace *gf,
 	 m->add_geom (ge->tag(), ge->dim());
 	 BDS_GeomEntity *g = m->get_geom(ge->tag(),ge->dim());
 	 pp->g = g;
-	 if (MYDEBUG)printf("point %3d (%8.5f %8.5f : %8.5f %8.5f) (%2d,%2d)\n",count,pp->u,pp->v,param.x(),param.y(),pp->g->classif_tag,pp->g->classif_degree);
+	 if (MYDEBUG)
+	   printf("point %3d (%8.5f %8.5f : %8.5f %8.5f) (%2d,%2d)\n",
+		  count,pp->u,pp->v,param.x(),param.y(),pp->g->classif_tag,
+		  pp->g->classif_degree);
 	 bbox += SPoint3(U,V,0);
 	 edgeLoop_BDS.push_back(pp);
 	 recover_map[pp] = here;

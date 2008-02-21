@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.60 2008-02-21 07:48:49 geuzaine Exp $
+// $Id: GModel.cpp,v 1.61 2008-02-21 13:34:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -438,7 +438,7 @@ MVertex *GModel::getMeshVertex(int num)
   if(num < 0) return 0;
   if(_vertexVectorCache.empty() && _vertexMapCache.empty())
     buildMeshVertexCache();
-  if(num < _vertexVectorCache.size())
+  if(num < (int)_vertexVectorCache.size())
     return _vertexVectorCache[num];
   else
     return _vertexMapCache[num];

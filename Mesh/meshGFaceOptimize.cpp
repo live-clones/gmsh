@@ -1,4 +1,4 @@
-// $Id: meshGFaceOptimize.cpp,v 1.10 2008-02-17 08:48:01 geuzaine Exp $
+// $Id: meshGFaceOptimize.cpp,v 1.11 2008-02-21 13:34:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -28,76 +28,67 @@
 #include "MElement.h"
 #include "BackgroundMesh.h"
 
-static void setLcsMax ( MTriangle *t, std::map<MVertex*,double> &vSizes)
+static void setLcsMax(MTriangle *t, std::map<MVertex*, double> &vSizes)
 {
-  for (int i=0;i<3;i++)
-    {
-      for (int j=i+1;j<3;j++)
-	{
-	  MVertex *vi = t->getVertex(i);
-	  MVertex *vj = t->getVertex(j);
-	  vSizes[vi] = 1.e12;
-	  vSizes[vj] = 1.e12;
-	}
+  for (int i = 0; i < 3; i++){
+    for (int j = i + 1; j < 3; j++){
+      MVertex *vi = t->getVertex(i);
+      MVertex *vj = t->getVertex(j);
+      vSizes[vi] = 1.e12;
+      vSizes[vj] = 1.e12;
     }
+  }
 }
 
-
-static void setLcs ( MTriangle *t, std::map<MVertex*,double> &vSizes)
+static void setLcs(MTriangle *t, std::map<MVertex*,double> &vSizes)
 {
-  for (int i=0;i<3;i++)
-    {
-      for (int j=i+1;j<3;j++)
-	{
-	  MVertex *vi = t->getVertex(i);
-	  MVertex *vj = t->getVertex(j);
-
-	  double dx = vi->x()-vj->x();
-	  double dy = vi->y()-vj->y();
-	  double dz = vi->z()-vj->z();
-	  double l = sqrt(dx*dx+dy*dy+dz*dz);
-	  std::map<MVertex*,double>::iterator iti = vSizes.find(vi);	  
-	  std::map<MVertex*,double>::iterator itj = vSizes.find(vj);	  
-	  if (iti->second > l)iti->second = l;
-	  if (itj->second > l)itj->second = l;
-	}
+  for (int i = 0; i < 3; i++){
+    for (int j = i + 1; j < 3; j++){
+      MVertex *vi = t->getVertex(i);
+      MVertex *vj = t->getVertex(j);
+      double dx = vi->x()-vj->x();
+      double dy = vi->y()-vj->y();
+      double dz = vi->z()-vj->z();
+      double l = sqrt(dx * dx + dy * dy + dz * dz);
+      std::map<MVertex*,double>::iterator iti = vSizes.find(vi);	  
+      std::map<MVertex*,double>::iterator itj = vSizes.find(vj);	  
+      if (iti->second > l) iti->second = l;
+      if (itj->second > l) itj->second = l;
     }
+  }
 }
 
-
-void buidMeshGenerationDataStructures (GFace *gf, std::set<MTri3*,compareTri3Ptr> &AllTris,
-				       std::vector<double> & vSizes,
-				       std::vector<double> & vSizesBGM,
-				       std::vector<double> & Us,
-				       std::vector<double> & Vs ){
-  
-  std::map<MVertex*,double> vSizesMap;
-  for (unsigned int i=0;i<gf->triangles.size();i++)setLcsMax ( gf->triangles[i] , vSizesMap);
-  for (unsigned int i=0;i<gf->triangles.size();i++)setLcs    ( gf->triangles[i] , vSizesMap);
-  int NUM=0;
-  for (std::map<MVertex*,double>::iterator it = vSizesMap.begin();it!=vSizesMap.end();++it)
-    {
-      it->first->setNum(NUM++);      
-      vSizes.push_back(it->second); 
-      vSizesBGM.push_back(it->second); 
-      double u0,v0;
-      parametricCoordinates ( it->first, gf, u0, v0);
-      Us.push_back(u0);
-      Vs.push_back(v0);
-    }
-  for (unsigned int i=0;i<gf->triangles.size();i++)
-    {
-      double lc    = 0.3333333333*(vSizes [gf->triangles[i]->getVertex(0)->getNum()]+
-				   vSizes [gf->triangles[i]->getVertex(1)->getNum()]+
-				   vSizes [gf->triangles[i]->getVertex(2)->getNum()]);
-      AllTris.insert ( new MTri3 ( gf->triangles[i] ,lc ) );
-    }
+void buidMeshGenerationDataStructures(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
+				      std::vector<double> &vSizes,
+				      std::vector<double> &vSizesBGM,
+				      std::vector<double> &Us,
+				      std::vector<double> &Vs)
+{
+  std::map<MVertex*, double> vSizesMap;
+  for (unsigned int i = 0;i < gf->triangles.size(); i++) setLcsMax(gf->triangles[i], vSizesMap);
+  for (unsigned int i = 0;i < gf->triangles.size(); i++) setLcs(gf->triangles[i], vSizesMap);
+  int NUM = 0;
+  for (std::map<MVertex*, double>::iterator it = vSizesMap.begin(); it != vSizesMap.end(); ++it){
+    it->first->setNum(NUM++);
+    vSizes.push_back(it->second);
+    vSizesBGM.push_back(it->second);
+    double u0, v0;
+    parametricCoordinates(it->first, gf, u0, v0);
+    Us.push_back(u0);
+    Vs.push_back(v0);
+  }
+  for(unsigned int i = 0; i < gf->triangles.size(); i++){
+    double lc = 0.3333333333 * (vSizes [gf->triangles[i]->getVertex(0)->getNum()] +
+				vSizes [gf->triangles[i]->getVertex(1)->getNum()] +
+				vSizes [gf->triangles[i]->getVertex(2)->getNum()]);
+    AllTris.insert(new MTri3(gf->triangles[i], lc));
+  }
   gf->triangles.clear();
-  connectTriangles ( AllTris );      
-  //  Msg(DEBUG,"All %d tris were connected",AllTris.size());
+  connectTriangles(AllTris );
 }
 
-void transferDataStructure (GFace *gf,std::set<MTri3*,compareTri3Ptr> &AllTris){
+void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris)
+{
   while (1) {
     if (AllTris.begin() == AllTris.end() ) break;
     MTri3 *worst = *AllTris.begin();
@@ -110,173 +101,139 @@ void transferDataStructure (GFace *gf,std::set<MTri3*,compareTri3Ptr> &AllTris){
   }
 }
 
-
-void buildVertexToTriangle ( std::vector<MTriangle*> &triangles,  v2t_cont &adj )
+void buildVertexToTriangle(std::vector<MTriangle*> &triangles, v2t_cont &adj)
 {
   adj.clear();
-  for (unsigned int i=0;i<triangles.size();i++)
-    {
-      MTriangle *t = triangles[i];
-      for (unsigned int j=0;j<3;j++)
-	{
-	  MVertex *v = t->getVertex(j);
-	  v2t_cont :: iterator it = adj.find ( v );      
-	  if (it == adj.end())
-	    {
-	      std::vector<MTriangle*> one;
-	      one.push_back(t);
-	      adj[v] = one;
-	    }
-	  else
-	    {
-	      it->second.push_back(t);
-	    }
-	}
+  for (unsigned int i = 0; i < triangles.size(); i++){
+    MTriangle *t = triangles[i];
+    for (unsigned int j = 0; j < 3; j++){
+      MVertex *v = t->getVertex(j);
+      v2t_cont :: iterator it = adj.find(v);
+      if (it == adj.end()){
+	std::vector<MTriangle*> one;
+	one.push_back(t);
+	adj[v] = one;
+      }
+      else{
+	it->second.push_back(t);
+      }
     }
+  }
 }
 
-
-void buildEdgeToTriangle ( GFace *gf ,  e2t_cont &adj )
+void buildEdgeToTriangle(GFace *gf, e2t_cont &adj)
 {
-  buildEdgeToTriangle(gf->triangles,adj);
+  buildEdgeToTriangle(gf->triangles, adj);
 }
 
-void buildEdgeToTriangle ( std::vector<MTriangle*> &triangles ,  e2t_cont &adj )
+void buildEdgeToTriangle(std::vector<MTriangle*> &triangles, e2t_cont &adj)
 {
   adj.clear();
-  for (unsigned int i=0;i<triangles.size();i++)
-    {
-      MTriangle *t = triangles[i];
-      for (unsigned int j=0;j<3;j++)
+  for (unsigned int i = 0; i < triangles.size(); i++){
+    MTriangle *t = triangles[i];
+    for (unsigned int j = 0; j < 3; j++){
+      MVertex *v1 = t->getVertex(j);
+      MVertex *v2 = t->getVertex((j + 1) % 3);
+      MEdge e(v1, v2);
+      e2t_cont::iterator it = adj.find(e);
+      if (it == adj.end()){
+	std::pair<MTriangle*, MTriangle*> one = std::make_pair(t, (MTriangle*)0);
+	adj[e] = one;
+      }
+      else
 	{
-	  MVertex *v1 = t->getVertex(j);
-	  MVertex *v2 = t->getVertex((j+1)%3);
-	  MEdge e(v1,v2);
-	  e2t_cont :: iterator it = adj.find ( e );      
-	  if (it == adj.end())
-	    {
-	      std::pair<MTriangle*,MTriangle*> one = std::make_pair (t,(MTriangle*)0);
-	      adj[e] = one;
-	    }
-	  else
-	    {
-	      it->second.second = t;
-	    }
+	  it->second.second = t;
 	}
     }
+  }
 }
 
-
-void parametricCoordinates ( MTriangle *t , GFace *gf, double u[3], double v[3])
+void parametricCoordinates(MTriangle *t, GFace *gf, double u[3], double v[3])
 {
-  for (unsigned int j=0;j<3;j++)
-    {
-      MVertex *ver = t->getVertex(j);
-      parametricCoordinates ( ver , gf, u[j],  v[j]);
-    }
+  for (unsigned int j = 0; j < 3; j++){
+    MVertex *ver = t->getVertex(j);
+    parametricCoordinates(ver, gf, u[j], v[j]);
+  }
 }
 
-void laplaceSmoothing (GFace *gf)
+void laplaceSmoothing(GFace *gf)
 {
   v2t_cont adj;
-  buildVertexToTriangle ( gf->triangles ,  adj );
+  buildVertexToTriangle(gf->triangles, adj);
 
-   for (int i=0;i<5;i++)
-    {
-      v2t_cont :: iterator it = adj.begin();
-      
-      while (it != adj.end())
-	{
-	  MVertex *ver= it->first;
-	  GEntity *ge = ver->onWhat();
-	  // this vertex in internal to the face
-	  if (ge->dim() == 2)
-	    {
-	      double initu,initv;
-	      ver->getParameter ( 0,initu);
-	      ver->getParameter ( 1,initv);
-	      
-	      const std::vector<MTriangle*> & lt = it->second;
-	      
-	      double fact = lt.size() ? 1./(3.*lt.size()):0;
-	      
-	      double cu=0,cv=0;
-	      double pu[3],pv[3];
-	      for (unsigned int i=0;i<lt.size();i++)
-		{
-		  parametricCoordinates ( lt[i] , gf, pu, pv);
-		  cu += fact*(pu[0]+pu[1]+pu[2]);
-		  cv += fact*(pv[0]+pv[1]+pv[2]);
-		  // have to test validity !
-		}
-	      ver->setParameter(0,cu);
-	      ver->setParameter(1,cv);
-	      GPoint pt = gf->point(SPoint2(cu,cv));
-	      ver->x() = pt.x();
-	      ver->y() = pt.y();
-	      ver->z() = pt.z();
-	    }
-	  ++it;
-	}  
-    }
+  for (int i = 0; i < 5; i++){
+    v2t_cont :: iterator it = adj.begin();
+    while (it != adj.end()){
+      MVertex *ver= it->first;
+      GEntity *ge = ver->onWhat();
+      // this vertex in internal to the face
+      if (ge->dim() == 2){
+	double initu,initv;
+	ver->getParameter(0, initu);
+	ver->getParameter(1, initv);
+	const std::vector<MTriangle*> &lt = it->second;
+	double fact = lt.size() ? 1. / (3. * lt.size()) : 0;
+	double cu = 0, cv = 0;
+	double pu[3], pv[3];
+	for (unsigned int i = 0; i < lt.size(); i++){
+	  parametricCoordinates(lt[i], gf, pu, pv);
+	  cu += fact * (pu[0] + pu[1] + pu[2]);
+	  cv += fact * (pv[0] + pv[1] + pv[2]);
+	  // have to test validity !
+	}
+	ver->setParameter(0, cu);
+	ver->setParameter(1, cv);
+	GPoint pt = gf->point(SPoint2(cu, cv));
+	ver->x() = pt.x();
+	ver->y() = pt.y();
+	ver->z() = pt.z();
+      }
+      ++it;
+    }  
+  }
 }
 
-extern void fourthPoint (double *p1, double *p2, double *p3, double *p4);
+extern void fourthPoint(double *p1, double *p2, double *p3, double *p4);
 
-double surfaceTriangleUV (MVertex *v1, MVertex *v2, MVertex *v3,		  
-			  const std::vector<double> & Us,
-			  const std::vector<double> & Vs){
-  const double v12[2] = {Us[v2->getNum()]-Us[v1->getNum()],Vs[v2->getNum()]-Vs[v1->getNum()]};
-  const double v13[2] = {Us[v3->getNum()]-Us[v1->getNum()],Vs[v3->getNum()]-Vs[v1->getNum()]};
+double surfaceTriangleUV(MVertex *v1, MVertex *v2, MVertex *v3,		  
+			 const std::vector<double> &Us,
+			 const std::vector<double> &Vs)
+{
+  const double v12[2] = {Us[v2->getNum()] - Us[v1->getNum()],Vs[v2->getNum()] - Vs[v1->getNum()]};
+  const double v13[2] = {Us[v3->getNum()] - Us[v1->getNum()],Vs[v3->getNum()] - Vs[v1->getNum()]};
   return 0.5*fabs (v12[0]*v13[1]-v12[1]*v13[0]);
 }
 
-
-bool gmshEdgeSwap(std::set<swapquad> & configs,
-		  MTri3 *t1, 
-		  GFace *gf,
-		  int iLocalEdge,
-		  std::vector<MTri3*> &newTris,
-		  const gmshSwapCriterion &cr,		   
-		  const std::vector<double> & Us,
-		  const std::vector<double> & Vs,
-		  const std::vector<double> & vSizes ,
-		  const std::vector<double> & vSizesBGM){
-  
+bool gmshEdgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
+		  std::vector<MTri3*> &newTris, const gmshSwapCriterion &cr,		   
+		  const std::vector<double> &Us, const std::vector<double> &Vs,
+		  const std::vector<double> &vSizes, const std::vector<double> &vSizesBGM)
+{
   MTri3 *t2 = t1->getNeigh(iLocalEdge);
   if (!t2) return false;
 
-  MVertex *v1 = t1->tri()->getVertex(iLocalEdge==0 ? 2 : iLocalEdge -1);
-  MVertex *v2 = t1->tri()->getVertex((iLocalEdge)%3);
-  MVertex *v3 = t1->tri()->getVertex((iLocalEdge+1)%3);
-  MVertex *v4 = 0 ;
-  for (int i=0;i<3;i++)
+  MVertex *v1 = t1->tri()->getVertex(iLocalEdge == 0 ? 2 : iLocalEdge - 1);
+  MVertex *v2 = t1->tri()->getVertex((iLocalEdge) % 3);
+  MVertex *v3 = t1->tri()->getVertex((iLocalEdge + 1) % 3);
+  MVertex *v4 = 0;
+  for (int i = 0; i < 3; i++)
     if (t2->tri()->getVertex(i) != v1 && t2->tri()->getVertex(i) != v2)
       v4 = t2->tri()->getVertex(i);
   
-  //  printf("%d %d %d %d %d\n",Us.size(),v1->getNum(),v2->getNum(),v3->getNum(),v4->getNum());
-  
-  //  printf("%d %d %d %d\n",tv1,tv2,tv3,tv4);
-
-  swapquad sq (v1,v2,v3,v4);
-  if (configs.find(sq) != configs.end())return false;
+  swapquad sq (v1, v2, v3, v4);
+  if (configs.find(sq) != configs.end()) return false;
   configs.insert(sq);
 
-  //  if (tv1 != 0 && tv1 == tv2 && tv1 == tv3 && tv1 == tv4)return false;
+  const double volumeRef = surfaceTriangleUV(v1, v2, v3, Us, Vs) + surfaceTriangleUV(v1, v2, v4, Us, Vs);
 
-  const double volumeRef = surfaceTriangleUV (v1,v2,v3,Us,Vs) + surfaceTriangleUV (v1,v2,v4,Us,Vs);
-
-  ///  printf("%p %p %p %p\n",v2,v3,v4);
-  MTriangle *t1b = new MTriangle (v2,v3,v4);  
-  ///  printf("%p %p %p %p\n",v2,v3,v4); 
-  MTriangle *t2b = new MTriangle (v4,v3,v1); 
-
-  const double v1b = surfaceTriangleUV (v2,v3,v4,Us,Vs);
-  const double v2b = surfaceTriangleUV (v4,v3,v1,Us,Vs);
-  const double volume = v1b+v2b;
-  if (fabs(volume-volumeRef) > 1.e-10 * (volume+volumeRef) || 
-      v1b < 1.e-8 * (volume+volumeRef) ||
-      v2b < 1.e-8 * (volume+volumeRef)){
+  MTriangle *t1b = new MTriangle(v2, v3, v4);  
+  MTriangle *t2b = new MTriangle(v4, v3, v1); 
+  const double v1b = surfaceTriangleUV(v2, v3, v4, Us, Vs);
+  const double v2b = surfaceTriangleUV(v4, v3, v1, Us, Vs);
+  const double volume = v1b + v2b;
+  if (fabs(volume - volumeRef) > 1.e-10 * (volume + volumeRef) || 
+      v1b < 1.e-8 * (volume + volumeRef) ||
+      v2b < 1.e-8 * (volume + volumeRef)){
     delete t1b;
     delete t2b;
     return false;
@@ -285,8 +242,10 @@ bool gmshEdgeSwap(std::set<swapquad> & configs,
   switch(cr){
   case SWCR_QUAL:
     {
-      const double triQualityRef = std::min(qmTriangle(t1->tri(),QMTRI_RHO),qmTriangle(t2->tri(),QMTRI_RHO));
-      const double triQuality = std::min(qmTriangle(t1b,QMTRI_RHO),qmTriangle(t2b,QMTRI_RHO));
+      const double triQualityRef = std::min(qmTriangle(t1->tri(), QMTRI_RHO),
+					    qmTriangle(t2->tri(), QMTRI_RHO));
+      const double triQuality = std::min(qmTriangle(t1b, QMTRI_RHO),
+					 qmTriangle(t2b, QMTRI_RHO));
       if (triQuality < triQualityRef){
 	delete t1b;
 	delete t2b;
@@ -296,12 +255,14 @@ bool gmshEdgeSwap(std::set<swapquad> & configs,
     }
   case SWCR_DEL:
     {
-      double edgeCenter[2] ={(Us[v1->getNum()]+Us[v2->getNum()]+Us[v3->getNum()]+Us[v4->getNum()])*.25,
-			     (Vs[v1->getNum()]+Vs[v2->getNum()]+Vs[v3->getNum()]+Vs[v4->getNum()])*.25};
-      double uv4[2] ={Us[v4->getNum()],Vs[v4->getNum()]};
+      double edgeCenter[2] ={(Us[v1->getNum()] + Us[v2->getNum()] + Us[v3->getNum()] + 
+			      Us[v4->getNum()]) * .25,
+			     (Vs[v1->getNum()] + Vs[v2->getNum()] + Vs[v3->getNum()] + 
+			      Vs[v4->getNum()]) * .25};
+      double uv4[2] ={Us[v4->getNum()], Vs[v4->getNum()]};
       double metric[3];
-      buildMetric ( gf , edgeCenter , metric);
-      if (!inCircumCircleAniso (gf,t1->tri(),uv4,metric,Us,Vs)){
+      buildMetric(gf, edgeCenter, metric);
+      if (!inCircumCircleAniso(gf, t1->tri(), uv4, metric, Us, Vs)){
 	delete t1b;
 	delete t2b;
 	return false;
