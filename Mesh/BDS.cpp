@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.100 2008-02-17 08:48:00 geuzaine Exp $
+// $Id: BDS.cpp,v 1.101 2008-02-21 09:45:15 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 #include "BDS.h"
 #include "Message.h"
 #include "GFace.h"
+#include "meshGFaceDelaunayInsertion.h"
 #include "qualityMeasures.h"
 
 bool test_move_point_parametric_triangle(BDS_Point *p, double u, double v, BDS_Face *t);
@@ -1247,28 +1248,39 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
   double U = 0;
   double V = 0;
   double LC = 0;
+  double oldU=p->u;
+  double oldV=p->v;
 
   std::list<BDS_Face*> ts;
   p->getTriangles(ts);
-  std::list<BDS_Face*>::iterator it = ts.begin();
-  std::list<BDS_Face*>::iterator ite = ts.end();
+  std::list < BDS_Edge * >::iterator ited  = p->edges.begin();
+  std::list < BDS_Edge * >::iterator itede = p->edges.end();
 
   double sTot = 0;
-  while(it != ite) {
-    BDS_Face *t = *it;
-    BDS_Point *n[4];
-    t->getNodes(n);
-    // double S = fabs(surface_triangle(n[0], n[1], n[2])); 
-    double S = 1;
-    sTot += S;
-    U  += (n[0]->u + n[1]->u + n[2]->u) *S;
-    V  += (n[0]->v + n[1]->v + n[2]->v) *S;
-    LC += (n[0]->lc() + n[1]->lc() + n[2]->lc()) *S;
-    ++it;
+  while(ited != itede) {
+    BDS_Edge  *e = *ited;
+    BDS_Point *n = e->othervertex(p);
+//      double uv[2] = {(n->u + p->u)/2.0,(n->v + p->v)/2.0};
+//      double metric[3];
+//      buildMetric ( gf ,uv,metric);
+//      double du[2] = {n->u - p->u,n->v - p->v};
+//      double ldu = sqrt(DSQR(du[0])+DSQR(du[1]));
+//      du[0]/=ldu;
+//      du[1]/=ldu;
+//      double fact = 1./sqrt (metric[0] * du[0] * du[0] +
+//  		      2 * metric[1] * du[0] * du[1] + 
+//  		      metric[2] * du[1] * du[1]);
+    double fact = 1.0;
+    
+    sTot += fact;
+    U  += n->u * fact;
+    V  += n->v * fact;
+    LC += n->lc() * fact;
+    ++ited;
   }
-  U /= (3.*sTot); 
-  V /= (3.*sTot);
-  LC /= (3.*sTot);
+  U /= (sTot); 
+  V /= (sTot);
+  LC /= (sTot);
 
   GPoint gp = gf->point(U * scalingU, V * scalingV);
 
@@ -1276,11 +1288,9 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
   const double oldY = p->Y;
   const double oldZ = p->Z;
 
-  double oldU = p->u;
-  double oldV = p->v;
-
-  it = ts.begin();
-  double s1 = 0, s2 = 0;
+  std::list<BDS_Face*>::iterator it = ts.begin();
+  std::list<BDS_Face*>::iterator ite = ts.end();
+  double s1=0,s2=0;
 
   double newWorst = 1.0;
   double oldWorst = 1.0;

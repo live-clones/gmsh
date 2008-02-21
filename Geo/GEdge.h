@@ -102,6 +102,7 @@ class GEdge : public GEntity {
   // the length of the model edge
   inline double length() const { return _length; }
   inline void setLength(const double l) { _length = l; }
+  double length (const double &u0, const double &u1, const int nbQuadPoints = 4);
 
   // one can impose the mesh size at an edge
   virtual double prescribedMeshSizeAtVertex() const { return meshAttributes.meshSize; }

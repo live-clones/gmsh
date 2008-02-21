@@ -1,4 +1,4 @@
-// $Id: meshGFaceBDS.cpp,v 1.5 2008-02-17 08:48:01 geuzaine Exp $
+// $Id: meshGFaceBDS.cpp,v 1.6 2008-02-21 09:45:15 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -399,7 +399,7 @@ void gmshDelaunayizeBDS ( GFace *gf, BDS_Mesh &m, int &nb_swap )
   }
 }
 
-void splitEdgePass ( GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
+void splitEdgePassUnsorted ( GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 {
   int NN1 = m.edges.size();
   int NN2 = 0;
@@ -410,8 +410,8 @@ void splitEdgePass ( GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
       double lone = NewGetLc ( *it,gf,m.scalingU,m.scalingV);
       if ((*it)->numfaces() == 2 && (lone >  MAXE_)){
 	
-	const double coord = 0.5;
-	//const double coord = computeEdgeMiddleCoord((*it)->p1,(*it)->p2,gf,m.scalingU,m.scalingV);
+	//const double coord = 0.5;
+	const double coord = computeEdgeMiddleCoord((*it)->p1,(*it)->p2,gf,m.scalingU,m.scalingV);
 	BDS_Point *mid ;
 	mid  = m.add_point(++m.MAXPOINTNUMBER,
 			   coord * (*it)->p1->u + (1 - coord) * (*it)->p2->u,
@@ -430,11 +430,84 @@ void splitEdgePass ( GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
   }
 }
 
+void splitEdgePass ( GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
+{
+  std::list<BDS_Edge*>::iterator it = m.edges.begin();
+  std::vector<std::pair<double, BDS_Edge*> > edges;
+
+  while (it != m.edges.end()){
+    if(!(*it)->deleted && (*it)->numfaces() == 2){
+      double lone = NewGetLc(*it, gf,m.scalingU,m.scalingV);
+      if(lone > MAXE_){
+	edges.push_back (std::make_pair (-lone, *it) );
+      }
+    }
+    ++it;
+  }
+
+  std::sort(edges.begin(),edges.end());
+
+  for (int i=0;i<edges.size();++i){
+    BDS_Edge *e = edges[i].second;
+    if (!e->deleted){
+      const double coord = 0.5;
+      //const double coord = computeEdgeMiddleCoord(e->p1,e->p2,gf,m.scalingU,m.scalingV);
+      BDS_Point *mid ;
+      mid  = m.add_point(++m.MAXPOINTNUMBER,
+			 coord * e->p1->u + (1 - coord) * e->p2->u,
+			 coord * e->p1->v + (1 - coord) * e->p2->v,gf);
+      
+      mid->lcBGM() = BGM_MeshSize(gf,
+				  (coord * e->p1->u + (1 - coord) * e->p2->u)*m.scalingU,
+				  (coord * e->p1->v + (1 - coord) * e->p2->v)*m.scalingV,
+				  mid->X,mid->Y,mid->Z);
+      mid->lc() = 0.5 * ( e->p1->lc() +  e->p2->lc() );		  
+      if(!m.split_edge ( e, mid )) m.del_point(mid);
+      else nb_split++;
+    }
+  }
+}
+
+
 void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_collaps)
+{
+  std::list<BDS_Edge*>::iterator it = m.edges.begin();
+  std::vector<std::pair<double, BDS_Edge*> > edges;
+
+  while (it != m.edges.end()){
+    if(!(*it)->deleted && (*it)->numfaces() == 2){
+      double lone = NewGetLc(*it, gf,m.scalingU,m.scalingV);
+      if(lone < MINE_){
+	edges.push_back (std::make_pair (lone, *it) );
+      }
+    }
+    ++it;
+  }
+
+  std::sort(edges.begin(),edges.end());
+
+  for (int i=0;i<edges.size();i++){
+    BDS_Edge *e = edges[i].second;
+    //    printf("%12.5E\n",edges[i].first);
+    if(!e->deleted){
+      bool res = false;
+      if(e->p1->iD > MAXNP)
+	res = m.collapse_edge_parametric(e,e->p1);
+      else if(e->p2->iD > MAXNP)
+	res = m.collapse_edge_parametric(e,e->p2);
+      if(res)
+	nb_collaps++;
+    }
+  }
+}
+
+
+void collapseEdgePassUnSorted(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_collaps)
 {
   int NN1 = m.edges.size();
   int NN2 = 0;
   std::list<BDS_Edge*>::iterator it = m.edges.begin();
+
   while (1){
     if(NN2++ >= NN1) break;
     
@@ -454,8 +527,10 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_c
   }
 }
 
+
 void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q)
 {
+  //  return;
   std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
   while(itp != m.points.end()){      
     if(m.smooth_point_centroid(*itp, gf,q))
@@ -543,7 +618,7 @@ void gmshRefineMeshBDS (GFace *gf,
       double t3 = Cpu();
       collapseEdgePass ( gf, m, minE , MAXNP, nb_collaps);
       double t4 = Cpu();
-      //      swapEdgePass ( gf, m, nb_swap); 
+      //     swapEdgePass ( gf, m, nb_swap); 
       double t5 = Cpu();
       smoothVertexPass ( gf, m, nb_smooth,false);
       double t6 = Cpu();
@@ -764,10 +839,10 @@ void gmshCollapseSmallEdges (GModel &gm){
   }
   BDS_Mesh *pm = gmsh2BDS (faces);
   outputScalarField(pm->triangles,"all.pos",0);
-
   
   for (GModel::eiter eit = gm.firstEdge(); eit != gm.lastEdge(); eit++){
-  }
-  
+  } 
 
+
+  delete pm;
 }

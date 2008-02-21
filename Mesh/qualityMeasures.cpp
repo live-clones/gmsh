@@ -1,4 +1,4 @@
-// $Id: qualityMeasures.cpp,v 1.7 2008-02-17 08:48:01 geuzaine Exp $
+// $Id: qualityMeasures.cpp,v 1.8 2008-02-21 09:45:15 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -77,6 +77,18 @@ double qmTriangle(const double &xa, const double &ya, const double &za,
       
       if (sina == 0.0 && sinb == 0.0 && sinc == 0.0) quality = 0.0;
       else quality = 2 * (2*sina*sinb*sinc/(sina + sinb + sinc) );
+    }
+    break;
+    // condition number
+  case QMTRI_COND:
+    {
+      double a [3] = {xc-xa,yc-ya,zc-za};
+      double b [3] = {xb-xa,yb-ya,zb-za};
+      double c [3] ; prodve(a,b,c); norme(c);
+      double A[3][3] = { a[0] , b[0] , c[0] ,
+			 a[1] , b[1] , c[1] ,
+			 a[2] , b[2] , c[2] };            
+      quality = -1;
     }
     break;
   default:

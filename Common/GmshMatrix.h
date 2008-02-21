@@ -108,6 +108,18 @@ public:
   {
     throw;
   }
+  Gmsh_Matrix cofactor(int i,int j) const 
+  {
+    throw;
+  }
+  inline void invert ()
+  {
+    throw;
+  }
+  double determinant() const {
+    throw;
+  }
+
 };
 
 #ifdef HAVE_GSL
@@ -142,28 +154,60 @@ public:
   {
     return *gsl_vector_ptr (data,i);
   }
+  inline double norm(){
+    return gsl_blas_dnrm2(data);
+  }
+ inline void scale (const double & y)
+ {
+   if (y == 0.0)  gsl_vector_set_zero( data );
+   else gsl_vector_scale ( data, y );
+ }
 };
 
 class GSL_Matrix
 {
 private:
+  gsl_matrix_view view;
   int r,c;
 public:
-  inline int size1() const {return r;}
-  inline int size2() const {return c;}
+  inline size_t size1() const {return data->size1;}
+  inline size_t size2() const {return data->size2;}
   gsl_matrix *data;
-  ~GSL_Matrix() {gsl_matrix_free (data);}
-  GSL_Matrix(int R,int C)
-    : r(R),c(C)
+  GSL_Matrix(gsl_matrix_view _data)
+    : view(_data),data(&view.matrix)
+    {}
+  
+  GSL_Matrix(size_t R, size_t C)
+      { data = gsl_matrix_calloc (R, C);  }
+  
+  GSL_Matrix() : data(0)
+    {}
+
+  GSL_Matrix(const GSL_Matrix&other):
+    data(0)
+    {
+      if(data)gsl_matrix_free (data);
+      data = gsl_matrix_calloc (other.data->size1, other.data->size2);
+      gsl_matrix_memcpy (data, other.data);
+    }
+  virtual ~GSL_Matrix() {if(data && data->owner == 1)gsl_matrix_free (data);}
+  
+  GSL_Matrix & operator = (const GSL_Matrix&other)
+    {
+      if (&other != this)
+        {
+          if(data)gsl_matrix_free (data);
+          data = gsl_matrix_calloc (other.data->size1, other.data->size2);
+          gsl_matrix_memcpy (data, other.data);
+        }
+      return *this;
+    }
+
+  void memcpy (const GSL_Matrix&other)
   {
-    data = gsl_matrix_calloc (r, c);
-  }
-  GSL_Matrix(const GSL_Matrix&other)
-    : r(other.r),c(other.c)
-  {
-    data = gsl_matrix_calloc (r, c);
     gsl_matrix_memcpy (data, other.data);
   }
+
   inline double operator () (int i, int j) const
   {
     return gsl_matrix_get (data,i,j);
@@ -176,6 +220,10 @@ public:
   {
     gsl_blas_dgemm (CblasNoTrans,CblasNoTrans, 1.0, data, x.data, 1.0, b.data);
   }
+  inline void set_all (const double & m ) 
+    {
+      gsl_matrix_set_all (data, m);
+    }
   inline void least_squares (const GSL_Vector & rhs, GSL_Vector & result)
   {
     assert (r > c);
@@ -198,10 +246,81 @@ public:
     gsl_linalg_LU_solve ( data ,  p, rhs.data, result.data ) ;
     gsl_permutation_free (p);
   }
+  inline void invert ()
+  {
+    int s;
+    gsl_permutation * p = gsl_permutation_alloc (size1());
+    gsl_linalg_LU_decomp ( data, p, &s);
+    gsl_matrix *data_inv = gsl_matrix_calloc (size1(), size2());
+    gsl_linalg_LU_invert ( data ,  p, data_inv ) ;
+    gsl_matrix_memcpy (data, data_inv);
+    gsl_matrix_free (data_inv);
+    gsl_permutation_free (p);
+  }
+  inline bool invertSecure (double& det)
+    {
+      int s;
+      gsl_permutation * p = gsl_permutation_alloc (size1());
+      gsl_linalg_LU_decomp ( data, p, &s);
+      det = gsl_linalg_LU_det(data,s);
+      gsl_matrix *data_inv = gsl_matrix_calloc (size1(), size2());
+      gsl_linalg_LU_invert ( data ,  p, data_inv ) ;
+      gsl_matrix_memcpy (data, data_inv);
+      gsl_matrix_free (data_inv);
+      gsl_permutation_free (p);
+
+      return (det != 0.);
+    }
+  double determinant() const 
+  {
+    GSL_Matrix copy = *this;
+    double det;
+    copy.invertSecure(det);
+    return det;
+  } 
+  GSL_Matrix cofactor(int i,int j) const 
+    {
+      int ni = size1();
+      int nj = size2();
+      GSL_Matrix cof(ni-1,nj-1);
+      if (i>0) {
+	if (j>0)    GSL_Matrix(cof.touchSubmatrix(0,i,0,   j  )).memcpy(GSL_Matrix(seeSubmatrix(0,i,0  ,   j)));
+	if (j<nj-1) GSL_Matrix(cof.touchSubmatrix(0,i,j,nj-j-1)).memcpy(GSL_Matrix(seeSubmatrix(0,i,j+1,nj-j-1)));
+      }
+      
+      if (i<ni-1) {  
+	if (j<nj-1) GSL_Matrix(cof.touchSubmatrix(i,ni-i-1,j,nj-j-1)).memcpy(GSL_Matrix(seeSubmatrix(i+1,ni-i-1,j+1,nj-j-1)));
+	if (j>0)    GSL_Matrix(cof.touchSubmatrix(i,ni-i-1,0,     j)).memcpy(GSL_Matrix(seeSubmatrix(i+1,ni-i-1,0  ,   j)));
+      }      
+      return cof;
+    }
+ 
   inline void mult (const GSL_Vector & x, GSL_Vector & b )
   {
     gsl_blas_dgemv (CblasNoTrans, 1.0, data, x.data, 1.0, b.data);
   }
+  inline gsl_matrix_view touchSubmatrix(int i0,int ni,int j0,int nj) 
+  {
+    return gsl_matrix_submatrix (data,i0,j0,ni,nj);
+  }  
+  inline const gsl_matrix_view seeSubmatrix(int i0,int ni,int j0,int nj) const
+  {
+    return gsl_matrix_submatrix (data,i0,j0,ni,nj);
+  }
+  inline void scale (const double & m ) 
+    {
+      if (m == 0.0)  gsl_matrix_set_zero ( data );
+      else gsl_matrix_scale (data, m);
+    }
+  inline void add (const double & a ) 
+    {
+      gsl_matrix_add_constant (data, a);
+    }
+  inline void add (const GSL_Matrix & m ) 
+    {
+      gsl_matrix_add (data, m.data);
+    }
+
 };
 typedef GSL_Matrix Double_Matrix;
 typedef GSL_Vector Double_Vector;

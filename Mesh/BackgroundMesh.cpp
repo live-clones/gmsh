@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.36 2008-02-17 08:48:00 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.37 2008-02-21 09:45:15 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -111,9 +111,9 @@ double LC_MVertex_CURV(GEntity *ge, double U, double V)
 {
   double Crv = 0;
   switch(ge->dim()){
-  case 0:
-    //    Crv = max_edge_curvature ( (const GVertex *)ge);
-    //    Crv = std::max(max_surf_curvature ( (const GVertex *)ge),Crv);
+  case 0:        
+    //Crv = max_edge_curvature ( (const GVertex *)ge);
+    //  Crv = std::max(max_surf_curvature ( (const GVertex *)ge),Crv);
     Crv = max_surf_curvature ( (const GVertex *)ge);
     //    printf("point %d coucou %g\n",ge->tag(),Crv);
     break;
