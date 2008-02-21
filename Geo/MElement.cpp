@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.55 2008-02-21 12:47:37 geuzaine Exp $
+// $Id: MElement.cpp,v 1.56 2008-02-21 12:49:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,6 @@
 #include "MElement.h"
 #include "GEntity.h"
 #include "GFace.h"
-#include "GmshMatrix.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #  include "GmshEmbedded.h"

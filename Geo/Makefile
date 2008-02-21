@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.187 2008-02-21 12:11:12 geuzaine Exp $
+# $Id: Makefile,v 1.188 2008-02-21 12:49:49 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -246,7 +246,6 @@ MFace.o: MFace.cpp MFace.h MVertex.h SPoint3.h SVector3.h \
 MElement.o: MElement.cpp MElement.h ../Common/GmshDefines.h MVertex.h \
   SPoint3.h MEdge.h SVector3.h MFace.h GEntity.h Range.h SBoundingBox3d.h \
   GFace.h GPoint.h GEdgeLoop.h GEdge.h GVertex.h SPoint2.h Pair.h \
-  ../Common/GmshMatrix.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Numeric/FunctionSpace.h \
-  ../Common/Message.h ../Common/Context.h ../DataStr/List.h \
-  ../Mesh/qualityMeasures.h
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
+  ../Numeric/FunctionSpace.h ../Common/GmshMatrix.h ../Common/Message.h \
+  ../Common/Context.h ../DataStr/List.h ../Mesh/qualityMeasures.h
