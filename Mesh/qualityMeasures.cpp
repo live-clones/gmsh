@@ -1,4 +1,4 @@
-// $Id: qualityMeasures.cpp,v 1.10 2008-02-21 13:44:56 geuzaine Exp $
+// $Id: qualityMeasures.cpp,v 1.11 2008-02-21 14:15:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -66,7 +66,9 @@ double qmTriangle(const double &xa, const double &ya, const double &za,
       double a [3] = {xc-xb,yc-yb,zc-zb};
       double b [3] = {xa-xc,ya-yc,za-zc};
       double c [3] = {xb-xa,yb-ya,zb-za};
-      
+      norme(a);
+      norme(b);
+      norme(c);
       double pva [3]; prodve(b,c,pva); const double sina = norm3(pva); 
       double pvb [3]; prodve(c,a,pvb); const double sinb = norm3(pvb);
       double pvc [3]; prodve(a,b,pvc); const double sinc = norm3(pvc);
