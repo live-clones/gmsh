@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.49 2008-02-17 08:48:11 geuzaine Exp $
+$Id: CREDITS,v 1.50 2008-02-21 15:18:42 geuzaine Exp $
 
              Gmsh is copyright (C) 1997-2008
 
@@ -20,7 +20,8 @@ bug fixes; Laurent Stainier for the eigenvalue solvers and for help
 with the MacOS port and the tensor display code; Pierre Badel for help
 with the GSL integration; Marc Ume for the original list code; Matt
 Gundry for the Plot3d mesh format; Jozef Vesely for help with the
-Tetgen integration.
+Tetgen integration; Koen Hillewaert for high order element mappings
+and other improvements.
 
 The AVL tree code (DataStr/avl.*) and the YUV image code
 (Graphics/gl2yuv.*) are copyright (C) 1988-1993, 1995 The Regents of
