@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.104 2008-02-22 07:49:38 geuzaine Exp $
+// $Id: Geo.cpp,v 1.105 2008-02-22 21:09:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -3210,7 +3210,7 @@ void setVolumeSurfaces(Volume *v, List_T *loops)
 	  List_Add(v->SurfacesOrientations, &tmp);
 	}
 	else{
-	  GFace *gf = GModel::current()->getFace(abs(is));
+	  GFace *gf = GModel::current()->getFaceByTag(abs(is));
 	  if(gf) {
 	    List_Add(v->SurfacesByTag, &is);
 	  }

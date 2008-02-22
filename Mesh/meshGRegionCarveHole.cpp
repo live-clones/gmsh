@@ -1,4 +1,4 @@
-// $Id: meshGRegionCarveHole.cpp,v 1.5 2008-02-20 09:20:45 geuzaine Exp $
+// $Id: meshGRegionCarveHole.cpp,v 1.6 2008-02-22 21:09:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -86,7 +86,7 @@ void carveHole(GRegion *gr, int num, double distance, std::vector<int> &surfaces
   // add all points from carving surfaces into kdtree
   int numnodes = 0;
   for(unsigned int i = 0; i < surfaces.size(); i++){
-    GFace *gf = m->getFace(surfaces[i]);
+    GFace *gf = m->getFaceByTag(surfaces[i]);
     if(!gf){
       Msg(GERROR, "Unknown carving surface %d", surfaces[i]);
       return;
@@ -97,7 +97,7 @@ void carveHole(GRegion *gr, int num, double distance, std::vector<int> &surfaces
   ANNpointArray kdnodes = annAllocPts(numnodes, 4);
   int k = 0;
   for(unsigned int i = 0; i < surfaces.size(); i++){
-    GFace *gf = m->getFace(surfaces[i]);
+    GFace *gf = m->getFaceByTag(surfaces[i]);
     for(unsigned int j = 0; j < gf->mesh_vertices.size(); j++){
       kdnodes[k][0] = gf->mesh_vertices[j]->x();
       kdnodes[k][1] = gf->mesh_vertices[j]->y();
@@ -122,7 +122,7 @@ void carveHole(GRegion *gr, int num, double distance, std::vector<int> &surfaces
   // intersections o see who's inside)
 
   // generate discrete boundary mesh of the carved hole
-  GFace *gf = m->getFace(num);
+  GFace *gf = m->getFaceByTag(num);
   if(!gf) return;
   std::set<MFace, Less_Face> faces;
   std::list<GFace*> f = gr->faces();

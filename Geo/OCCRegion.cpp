@@ -1,4 +1,4 @@
-// $Id: OCCRegion.cpp,v 1.9 2008-02-20 09:20:45 geuzaine Exp $
+// $Id: OCCRegion.cpp,v 1.10 2008-02-22 21:09:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,7 @@ OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num, TopTools_IndexedMapOfS
     for(exp3.Init(shell, TopAbs_FACE); exp3.More(); exp3.Next()){	  
       TopoDS_Face face = TopoDS::Face(exp3.Current());
       int index = fmap.FindIndex(face);
-      GFace *f = m->getFace(index);
+      GFace *f = m->getFaceByTag(index);
       if(!f) throw;
       l_faces.push_back(f);
       f->addRegion(this);

@@ -1,4 +1,4 @@
-// $Id: gmshRegion.cpp,v 1.19 2008-02-20 09:20:45 geuzaine Exp $
+// $Id: gmshRegion.cpp,v 1.20 2008-02-22 21:09:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -32,7 +32,7 @@ gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
     List_Read(v->Surfaces, i, &s);
     int ori;
     List_Read(v->SurfacesOrientations, i, &ori);
-    GFace *f = m->getFace(abs(s->Num));
+    GFace *f = m->getFaceByTag(abs(s->Num));
     if(f){
       l_faces.push_back(f);
       l_dirs.push_back(ori);
@@ -43,7 +43,7 @@ gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
   for(int i = 0; i < List_Nbr(v->SurfacesByTag); i++){
     int is;
     List_Read(v->SurfacesByTag, i, &is);
-    GFace *f = m->getFace(abs(is));
+    GFace *f = m->getFaceByTag(abs(is));
     if(f){
       l_faces.push_back(f);
       l_dirs.push_back(sign(is));
@@ -64,7 +64,7 @@ void gmshRegion::resetMeshAttributes()
     for(int i = 0; i < List_Nbr(v->TrsfPoints); i++){
       Vertex *corn;
       List_Read(v->TrsfPoints, i, &corn);
-      GVertex *gv = model()->getVertex(corn->Num);
+      GVertex *gv = model()->getVertexByTag(corn->Num);
       if(gv)
 	meshAttributes.corners.push_back(gv);
       else

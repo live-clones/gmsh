@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.36 2008-02-21 13:34:40 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.37 2008-02-22 21:09:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -52,11 +52,11 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){	  
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
       int index = emap.FindIndex(edge);
-      GEdge *e = m->getEdge(index);
+      GEdge *e = m->getEdgeByTag(index);
       if(!e) throw;
       l_wire.push_back(e);
       l_oris.push_back(edge.Orientation());
-      Msg(DEBUG2,"Edge %d ori %d",e->tag(),edge.Orientation());
+      Msg(DEBUG2, "Edge %d ori %d", e->tag(), edge.Orientation());
       e->addFace(this);
       if(!e->is3D()){
 	OCCEdge *occe = (OCCEdge*)e;
@@ -80,15 +80,15 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
 
   ShapeAnalysis::GetFaceUVBounds(_s, umin, umax, vmin, vmax);
   Msg(DEBUG2, "OCC Face %d with %d edges bounds (%g,%g)(%g,%g)", 
-      num, l_edges.size(),umin,umax,vmin,vmax);
-  // we do that for the projections to converge on the 
-  // borders of the surface
-  const double du = umax-umin;
-  const double dv = vmax-vmin;
-  umin -= fabs(du)/100.0;
-  vmin -= fabs(dv)/100.0;
-  umax += fabs(du)/100.0;
-  vmax += fabs(dv)/100.0;
+      num, l_edges.size(), umin, umax, vmin, vmax);
+  // we do that for the projections to converge on the borders of the
+  // surface
+  const double du = umax - umin;
+  const double dv = vmax - vmin;
+  umin -= fabs(du) / 100.0;
+  vmin -= fabs(dv) / 100.0;
+  umax += fabs(du) / 100.0;
+  vmax += fabs(dv) / 100.0;
   occface = BRep_Tool::Surface(s);
   buildSTLTriangulation();
 }

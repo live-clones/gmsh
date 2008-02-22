@@ -98,10 +98,10 @@ class GModel
   viter lastVertex() { return vertices.end(); }
 
   // Find the entity with the given tag.
-  GRegion *getRegion(int n) const;
-  GFace *getFace(int n) const;
-  GEdge *getEdge(int n) const;
-  GVertex *getVertex(int n) const;
+  GRegion *getRegionByTag(int n) const;
+  GFace *getFaceByTag(int n) const;
+  GEdge *getEdgeByTag(int n) const;
+  GVertex *getVertexByTag(int n) const;
 
   // Add/remove an entity in the model
   void add(GRegion *r) { regions.insert(r); }
@@ -157,8 +157,8 @@ class GModel
   void invalidateMeshVertexCache();
   void buildMeshVertexCache();
 
-  // Access a mesh vertex by number, using the vertex cache
-  MVertex *getMeshVertex(int num);
+  // Access a mesh vertex by tag, using the vertex cache
+  MVertex *getMeshVertexByTag(int n);
 
   // loop over all vertices connected to elements and associate geo entity
   void associateEntityWithMeshVertices();

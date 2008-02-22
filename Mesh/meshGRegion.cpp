@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.42 2008-02-20 09:20:45 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.43 2008-02-22 21:09:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -158,7 +158,7 @@ void TransferTetgenMesh(GRegion *gr,
     v[0] = numberedV[out.trifacelist[i * 3 + 0] - 1];
     v[1] = numberedV[out.trifacelist[i * 3 + 1] - 1];
     v[2] = numberedV[out.trifacelist[i * 3 + 2] - 1];
-    GFace *gf = gr->model()->getFace(out.trifacemarkerlist[i]);
+    GFace *gf = gr->model()->getFaceByTag(out.trifacemarkerlist[i]);
     for(int j = 0; j < 3; j++){	  
       if(v[j]->onWhat()->dim() == 3){
 	v[j]->onWhat()->mesh_vertices.erase

@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.42 2008-02-22 20:28:06 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.43 2008-02-22 21:09:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -53,12 +53,12 @@ GEdge::~GEdge()
     delete lines[i];
 }
 
-int GEdge::getNumElements()
+int GEdge::getNumMeshElements()
 { 
   return lines.size();
 }
 
-MElement *GEdge::getElement(int index)
+MElement *GEdge::getMeshElement(int index)
 { 
   if(index < lines.size())
     return lines[index]; 

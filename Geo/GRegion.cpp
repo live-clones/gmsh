@@ -1,4 +1,4 @@
-// $Id: GRegion.cpp,v 1.24 2008-02-22 20:28:07 geuzaine Exp $
+// $Id: GRegion.cpp,v 1.25 2008-02-22 21:09:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -59,12 +59,12 @@ GRegion::~GRegion()
     delete pyramids[i];
 }
 
-int GRegion::getNumElements()
+int GRegion::getNumMeshElements()
 { 
   return tetrahedra.size() + hexahedra.size() + prisms.size() + pyramids.size();
 }
 
-MElement *GRegion::getElement(int index)
+MElement *GRegion::getMeshElement(int index)
 { 
   if(index < tetrahedra.size())
     return tetrahedra[index];

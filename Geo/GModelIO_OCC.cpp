@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.28 2008-02-21 07:48:49 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.29 2008-02-22 21:09:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -410,8 +410,8 @@ void OCC_Internals::buildGModel(GModel *model)
     TopoDS_Edge edge = TopoDS::Edge(emap(i));
     int i1 = vmap.FindIndex(TopExp::FirstVertex(edge)); 
     int i2 = vmap.FindIndex(TopExp::LastVertex(edge));
-    GVertex *v1 = model->getVertex(i1);
-    GVertex *v2 = model->getVertex(i2);
+    GVertex *v1 = model->getVertexByTag(i1);
+    GVertex *v2 = model->getVertexByTag(i2);
     OCCEdge *e = new OCCEdge(model, edge, i, v1, v2);
     model->add(e);
   }

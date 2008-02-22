@@ -1031,7 +1031,7 @@ void action_cb(Fl_Widget *w, void *data)
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
       if((*it)->getNativeType() == GEntity::FourierModel) 
 	id = std::max(id, (*it)->tag());
-    if(id > 0) faces.push_back(m->getFace(id));
+    if(id > 0) faces.push_back(m->getFaceByTag(id));
   }
   else if(what == "delete_all" || what == "save_all"){
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)

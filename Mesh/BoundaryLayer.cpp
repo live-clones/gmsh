@@ -1,4 +1,4 @@
-// $Id: BoundaryLayer.cpp,v 1.9 2008-02-20 09:20:45 geuzaine Exp $
+// $Id: BoundaryLayer.cpp,v 1.10 2008-02-22 21:09:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -56,7 +56,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
     if(gf->geomType() == GEntity::BoundaryLayerSurface){
       ExtrudeParams *ep = gf->meshAttributes.extrude;
       if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY){
-	GFace *from = m->getFace(std::abs(ep->geo.Source));
+	GFace *from = m->getFaceByTag(std::abs(ep->geo.Source));
 	if(!from){
 	  Msg(GERROR, "Unknown source face %d for boundary layer", ep->geo.Source);
 	  return 0;

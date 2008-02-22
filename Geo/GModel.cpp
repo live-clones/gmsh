@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.65 2008-02-22 20:43:18 geuzaine Exp $
+// $Id: GModel.cpp,v 1.66 2008-02-22 21:09:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -104,7 +104,7 @@ void GModel::destroy()
 #endif
 }
 
-GRegion *GModel::getRegion(int n) const
+GRegion *GModel::getRegionByTag(int n) const
 {
   GEntity tmp((GModel*)this, n);
   std::set<GRegion*, GEntityLessThan>::const_iterator it = regions.find((GRegion*)&tmp);
@@ -114,7 +114,7 @@ GRegion *GModel::getRegion(int n) const
     return 0;
 }
 
-GFace *GModel::getFace(int n) const
+GFace *GModel::getFaceByTag(int n) const
 {
   GEntity tmp((GModel*)this, n);
   std::set<GFace*, GEntityLessThan>::const_iterator it = faces.find((GFace*)&tmp);
@@ -124,7 +124,7 @@ GFace *GModel::getFace(int n) const
     return 0;
 }
 
-GEdge *GModel::getEdge(int n) const
+GEdge *GModel::getEdgeByTag(int n) const
 {
   GEntity tmp((GModel*)this, n);
   std::set<GEdge*, GEntityLessThan>::const_iterator it = edges.find((GEdge*)&tmp);
@@ -134,7 +134,7 @@ GEdge *GModel::getEdge(int n) const
     return 0;
 }
 
-GVertex *GModel::getVertex(int n) const
+GVertex *GModel::getVertexByTag(int n) const
 {
   GEntity tmp((GModel*)this, n);
   std::set<GVertex*, GEntityLessThan>::const_iterator it = vertices.find((GVertex*)&tmp);
@@ -434,15 +434,15 @@ void GModel::invalidateMeshVertexCache()
   _vertexMapCache.clear();
 }
 
-MVertex *GModel::getMeshVertex(int num)
+MVertex *GModel::getMeshVertexByTag(int n)
 {
-  if(num < 0) return 0;
+  if(n < 0) return 0;
   if(_vertexVectorCache.empty() && _vertexMapCache.empty())
     buildMeshVertexCache();
-  if(num < (int)_vertexVectorCache.size())
-    return _vertexVectorCache[num];
+  if(n < (int)_vertexVectorCache.size())
+    return _vertexVectorCache[n];
   else
-    return _vertexMapCache[num];
+    return _vertexMapCache[n];
 }
 
 template <class T>

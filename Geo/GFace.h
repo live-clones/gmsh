@@ -164,8 +164,8 @@ class GFace : public GEntity
   void getMeanPlaneData(double plan[3][3]) const;
 
   // Get number of elements in the mesh and get element by index
-  int getNumElements();
-  MElement *getElement(int index);
+  int getNumMeshElements();
+  MElement *getMeshElement(int index);
 
   // Resets the mesh attributes to default values
   virtual void resetMeshAttributes();

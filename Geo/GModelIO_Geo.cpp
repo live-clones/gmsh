@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.15 2008-02-20 09:20:44 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.16 2008-02-22 21:09:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -55,7 +55,7 @@ int GModel::importGEOInternals()
     for(int i = 0; i < List_Nbr(points); i++){
       Vertex *p;
       List_Read(points, i, &p);
-      GVertex *v = getVertex(p->Num);
+      GVertex *v = getVertexByTag(p->Num);
       if(!v){
 	v = new gmshVertex(this, p);
 	add(v);
@@ -70,11 +70,11 @@ int GModel::importGEOInternals()
       Curve *c;
       List_Read(curves, i, &c);
       if(c->Num >= 0 && c->beg && c->end){
-	GEdge *e = getEdge(c->Num);
+	GEdge *e = getEdgeByTag(c->Num);
 	if(!e){
 	  e = new gmshEdge(this, c,
-			   getVertex(c->beg->Num),
-			   getVertex(c->end->Num));
+			   getVertexByTag(c->beg->Num),
+			   getVertexByTag(c->end->Num));
 	  add(e);
 	}
 	else
@@ -90,7 +90,7 @@ int GModel::importGEOInternals()
     for(int i = 0; i < List_Nbr(surfaces); i++){
       Surface *s;
       List_Read(surfaces, i, &s);
-      GFace *f = getFace(s->Num);
+      GFace *f = getFaceByTag(s->Num);
       if(!f){
 	f = new gmshFace(this, s);
 	add(f);
@@ -107,7 +107,7 @@ int GModel::importGEOInternals()
     for(int i = 0; i < List_Nbr(volumes); i++){
       Volume *v;
       List_Read(volumes, i, &v);
-      GRegion *r = getRegion(v->Num);
+      GRegion *r = getRegionByTag(v->Num);
       if(!r){
 	r = new gmshRegion(this, v);
 	add(r);
@@ -127,10 +127,10 @@ int GModel::importGEOInternals()
       List_Read(p->Entities, j, &num);
       GEntity *ge = 0;
       switch(p->Typ){
-      case MSH_PHYSICAL_POINT:   ge = getVertex(abs(num)); break;
-      case MSH_PHYSICAL_LINE:    ge = getEdge(abs(num)); break;
-      case MSH_PHYSICAL_SURFACE: ge = getFace(abs(num)); break;
-      case MSH_PHYSICAL_VOLUME:  ge = getRegion(abs(num)); break;
+      case MSH_PHYSICAL_POINT:   ge = getVertexByTag(abs(num)); break;
+      case MSH_PHYSICAL_LINE:    ge = getEdgeByTag(abs(num)); break;
+      case MSH_PHYSICAL_SURFACE: ge = getFaceByTag(abs(num)); break;
+      case MSH_PHYSICAL_VOLUME:  ge = getRegionByTag(abs(num)); break;
       }
       int pnum = sign(num) * p->Num;
       if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) == 

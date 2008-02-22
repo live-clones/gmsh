@@ -1,4 +1,4 @@
-// $Id: meshGEdgeExtruded.cpp,v 1.10 2008-02-20 09:20:45 geuzaine Exp $
+// $Id: meshGEdgeExtruded.cpp,v 1.11 2008-02-22 21:09:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -76,7 +76,7 @@ int MeshExtrudedCurve(GEdge *ge)
   }
   else {
     // curve is a copy of another curve (the "top" of the extrusion)
-    GEdge *from = ge->model()->getEdge(std::abs(ep->geo.Source));
+    GEdge *from = ge->model()->getEdgeByTag(std::abs(ep->geo.Source));
     if(!from){
       Msg(GERROR, "Unknown source curve %d for extrusion", ep->geo.Source);
       return 0;

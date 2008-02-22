@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.56 2008-02-22 20:29:56 geuzaine Exp $
+// $Id: GFace.cpp,v 1.57 2008-02-22 21:09:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -73,12 +73,12 @@ GFace::~GFace()
     delete va_geom_triangles;
 }
 
-int GFace::getNumElements()
+int GFace::getNumMeshElements()
 { 
   return triangles.size() + quadrangles.size(); 
 }
 
-MElement *GFace::getElement(int index)
+MElement *GFace::getMeshElement(int index)
 { 
   if(index < triangles.size())
     return triangles[index];

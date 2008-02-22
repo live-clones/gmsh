@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.36 2008-02-22 07:59:00 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.37 2008-02-22 21:09:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -65,7 +65,7 @@ static void storeElementsInEntities(GModel *m,
     switch(numEdges){
     case 1: 
       {
-	GEdge *e = m->getEdge(it->first);
+	GEdge *e = m->getEdgeByTag(it->first);
 	if(!e){
 	  e = new discreteEdge(m, it->first);
 	  m->add(e);
@@ -75,7 +75,7 @@ static void storeElementsInEntities(GModel *m,
       break;
     case 3: case 4: 
       {
-	GFace *f = m->getFace(it->first);
+	GFace *f = m->getFaceByTag(it->first);
 	if(!f){
 	  f = new discreteFace(m, it->first);
 	  m->add(f);
@@ -86,7 +86,7 @@ static void storeElementsInEntities(GModel *m,
       break;
     case 6: case 12: case 9: case 8:
       {
-	GRegion *r = m->getRegion(it->first);
+	GRegion *r = m->getRegionByTag(it->first);
 	if(!r){
 	  r = new discreteRegion(m, it->first);
 	  m->add(r);
@@ -135,10 +135,10 @@ static void storePhysicalTagsInEntities(GModel *m, int dim,
   for(; it != map.end(); ++it){
     GEntity *ge = 0;
     switch(dim){
-    case 0: ge = m->getVertex(it->first); break;
-    case 1: ge = m->getEdge(it->first); break;
-    case 2: ge = m->getFace(it->first); break;
-    case 3: ge = m->getRegion(it->first); break;
+    case 0: ge = m->getVertexByTag(it->first); break;
+    case 1: ge = m->getEdgeByTag(it->first); break;
+    case 2: ge = m->getFaceByTag(it->first); break;
+    case 3: ge = m->getRegionByTag(it->first); break;
     }
     if(ge){
       std::map<int, std::string>::const_iterator it2 = it->second.begin();
@@ -510,7 +510,7 @@ int GModel::readMSH(const std::string &name)
   // treat points separately
   for(std::map<int, std::vector<MVertex*> >::iterator it = points.begin(); 
       it != points.end(); ++it){
-    GVertex *v = getVertex(it->first);
+    GVertex *v = getVertexByTag(it->first);
     if(!v){
       v = new discreteVertex(this, it->first);
       add(v);

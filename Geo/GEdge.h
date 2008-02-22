@@ -112,8 +112,8 @@ class GEdge : public GEntity {
   bool isMeshDegenerated() const{ return (v0 == v1 && mesh_vertices.size() < 2); }
 
   // Get number of elements in the mesh and get element by index
-  int getNumElements();
-  MElement *getElement(int index);
+  int getNumMeshElements();
+  MElement *getMeshElement(int index);
 
   // Resets the mesh attributes to default values
   virtual void resetMeshAttributes();

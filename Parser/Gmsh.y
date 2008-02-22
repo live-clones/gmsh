@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.300 2008-02-22 07:59:00 geuzaine Exp $
+// $Id: Gmsh.y,v 1.301 2008-02-22 21:09:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1041,7 +1041,7 @@ Shape :
         if(v)
           att->addPoint(v->Pos.X, v->Pos.Y, v->Pos.Z);
         else{
-          GVertex *gv = GModel::current()->getVertex((int)d);
+          GVertex *gv = GModel::current()->getVertexByTag((int)d);
           if(gv) 
             att->addPoint(gv->x(), gv->y(), gv->z());
         }
@@ -1151,7 +1151,7 @@ Shape :
 	if(v)
 	  attractor->addPoint(v->Pos.X, v->Pos.Y, v->Pos.Z);
 	else{
-	  GVertex *gv = GModel::current()->getVertex((int)d);
+	  GVertex *gv = GModel::current()->getVertexByTag((int)d);
 	  if(gv) 
 	    attractor->addPoint(gv->x(), gv->y(), gv->z());
 	}
@@ -1186,7 +1186,7 @@ Shape :
 	  att->addCurve(c, (int)pars[3]);
 	}
 	else{
-	  GEdge *ge = GModel::current()->getEdge((int)d);
+	  GEdge *ge = GModel::current()->getEdgeByTag((int)d);
 	  if(ge){
 	    att->addGEdge(ge, (int)pars[3]);
 	  }
@@ -1206,7 +1206,7 @@ Shape :
 	if(v)
 	  v->lc = $5;
 	else{
-	  GVertex *gv = GModel::current()->getVertex((int)d);
+	  GVertex *gv = GModel::current()->getVertexByTag((int)d);
 	  if(gv) 
 	    gv->setPrescribedMeshSizeAtVertex($5);
 	}
@@ -1747,7 +1747,7 @@ ListOfShapes :
 	  List_Add($$, &TheShape);
 	}
 	else{
-	  GVertex *gv = GModel::current()->getVertex(TheShape.Num);
+	  GVertex *gv = GModel::current()->getVertexByTag(TheShape.Num);
 	  if(gv){
 	    TheShape.Type = MSH_POINT_FROM_GMODEL;
 	    List_Add($$, &TheShape);
@@ -1770,7 +1770,7 @@ ListOfShapes :
 	  List_Add($$, &TheShape);
 	}
 	else{
-	  GEdge *ge = GModel::current()->getEdge(TheShape.Num);
+	  GEdge *ge = GModel::current()->getEdgeByTag(TheShape.Num);
 	  if(ge){
 	    TheShape.Type = MSH_SEGM_FROM_GMODEL;
 	    List_Add($$, &TheShape);
@@ -1793,7 +1793,7 @@ ListOfShapes :
 	  List_Add($$, &TheShape);
 	}
 	else{
-	  GFace *gf = GModel::current()->getFace(TheShape.Num);
+	  GFace *gf = GModel::current()->getFaceByTag(TheShape.Num);
 	  if(gf){
 	    TheShape.Type = MSH_SURF_FROM_GMODEL;
 	    List_Add($$, &TheShape);
@@ -1816,7 +1816,7 @@ ListOfShapes :
 	  List_Add($$, &TheShape);
 	}
 	else{
-	  GRegion *gr = GModel::current()->getRegion(TheShape.Num);
+	  GRegion *gr = GModel::current()->getRegionByTag(TheShape.Num);
 	  if(gr){
 	    TheShape.Type = MSH_VOLUME_FROM_GMODEL;
 	    List_Add($$, &TheShape);

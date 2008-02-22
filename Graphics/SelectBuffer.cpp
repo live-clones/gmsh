@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.19 2008-02-20 09:20:45 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.20 2008-02-22 21:09:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -171,7 +171,7 @@ bool ProcessSelectionBuffer(int entityType,
       switch (hits[i].type) {
       case 0:
 	{
-	  GVertex *v = m->getVertex(hits[i].ient);
+	  GVertex *v = m->getVertexByTag(hits[i].ient);
 	  if(!v){
 	    Msg(GERROR, "Problem in point selection processing");
 	    return false;
@@ -182,7 +182,7 @@ bool ProcessSelectionBuffer(int entityType,
 	break;
       case 1:
 	{
-	  GEdge *e = m->getEdge(hits[i].ient);
+	  GEdge *e = m->getEdgeByTag(hits[i].ient);
 	  if(!e){
 	    Msg(GERROR, "Problem in line selection processing");
 	    return false;
@@ -197,7 +197,7 @@ bool ProcessSelectionBuffer(int entityType,
 	break;
       case 2:
 	{
-	  GFace *f = m->getFace(hits[i].ient);
+	  GFace *f = m->getFaceByTag(hits[i].ient);
 	  if(!f){
 	    Msg(GERROR, "Problem in surface selection processing");
 	    return false;
@@ -212,7 +212,7 @@ bool ProcessSelectionBuffer(int entityType,
 	break;
       case 3:
 	{
-	  GRegion *r = m->getRegion(hits[i].ient);
+	  GRegion *r = m->getRegionByTag(hits[i].ient);
 	  if(!r){
 	    Msg(GERROR, "Problem in volume selection processing");
 	    return false;
@@ -244,19 +244,19 @@ void HighlightEntityNum(int v, int c, int s, int r)
 {
   GModel *m = GModel::current();
   if(v) {
-    GVertex *pv = m->getVertex(v);
+    GVertex *pv = m->getVertexByTag(v);
     if(pv) HighlightEntity(pv);
   }
   if(c) {
-    GEdge *pc = m->getEdge(c);
+    GEdge *pc = m->getEdgeByTag(c);
     if(pc) HighlightEntity(pc);
   }
   if(s) {
-    GFace *ps = m->getFace(s);
+    GFace *ps = m->getFaceByTag(s);
     if(ps) HighlightEntity(ps);
   }
   if(r) {
-    GRegion *pr = m->getRegion(r);
+    GRegion *pr = m->getRegionByTag(r);
     if(pr) HighlightEntity(pr);
   }
 }
@@ -278,19 +278,19 @@ void ZeroHighlightEntityNum(int v, int c, int s, int r)
 {
   GModel *m = GModel::current();
   if(v) {
-    GVertex *pv = m->getVertex(v);
+    GVertex *pv = m->getVertexByTag(v);
     if(pv) ZeroHighlightEntity(pv);
   }
   if(c) {
-    GEdge *pc = m->getEdge(c);
+    GEdge *pc = m->getEdgeByTag(c);
     if(pc) ZeroHighlightEntity(pc);
   }
   if(s) {
-    GFace *ps = m->getFace(s);
+    GFace *ps = m->getFaceByTag(s);
     if(ps) ZeroHighlightEntity(ps);
   }
   if(r) {
-    GRegion *pr = m->getRegion(r);
+    GRegion *pr = m->getRegionByTag(r);
     if(pr) ZeroHighlightEntity(pr);
   }
 }

@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.12 2008-02-20 09:24:41 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.13 2008-02-22 21:09:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@ bool PViewDataGModel::readMSH(FILE *fp)
 {
   Msg(INFO, "Filling PViewDataGModel...");
   
-  MVertex *v =  _model->getMeshVertex(10);
+  MVertex *v =  _model->getMeshVertexByTag(10);
   if(v){
     printf("vertex 10 in mesh is %p\n", v);
   }
