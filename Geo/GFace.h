@@ -162,6 +162,10 @@ class GFace : public GEntity
 			double &x, double &y, double &z) const;
   void getMeanPlaneData(double plan[3][3]) const;
 
+  // Get number of elements in the mesh and get element by index
+  int getNumElements();
+  MElement *getElement(int index);
+
   // Resets the mesh attributes to default values
   virtual void resetMeshAttributes();
 
@@ -184,7 +188,7 @@ class GFace : public GEntity
     // edge loops
   } meshAttributes ;
 
-  typedef enum {PENDING,DONE,FAILED} meshGenerationStatus;
+  typedef enum {PENDING, DONE, FAILED} meshGenerationStatus;
   struct {
     meshGenerationStatus status;
     double worst_element_shape, best_element_shape, average_element_shape;
@@ -206,9 +210,6 @@ class GFace : public GEntity
 
   std::vector<MTriangle*> triangles;
   std::vector<MQuadrangle*> quadrangles;
-
-  // Returns each type of element in the gentity
-  void getTypeOfElements(std::vector<int> &groups);
 };
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.63 2008-02-22 17:58:12 miegroet Exp $
+// $Id: GModel.cpp,v 1.64 2008-02-22 20:28:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -721,50 +721,3 @@ void GModel::checkMeshCoherence()
   }
 }
 
-//maybe UseLess as we can get each vector directly through the GEntities
-void GModel::getTypeOfElements(std::map<GEntity*, std::vector<int> > groups[3])
-{
-  //for(viter it = firstVertex(); it != lastVertex(); ++it)
-  //	(*it)->getTypeOfElements(groups[0][(*it)]);
-
-  for(eiter it = firstEdge(); it != lastEdge(); ++it)
-  	(*it)->getTypeOfElements(groups[0][(*it)]);
-
-
-  for(fiter it = firstFace(); it != lastFace(); ++it)
-	(*it)->getTypeOfElements(groups[1][(*it)]);
-
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
-	(*it)->getTypeOfElements(groups[2][(*it)]);
-
-}
-
-void GModel::getTypeOfElements(std::map<int, std::vector<int> > groups[3])
-{
-	//for(unsigned int i=0;i<(*it)->physicals.size();i++)
-	//	(*it)->getTypeOfElements(groups[0][i]);
-
-	for(eiter it = firstEdge(); it != lastEdge(); ++it){
-		if((*it)->physicals.size()){
-		(*it)->getTypeOfElements(groups[0][(*it)->physicals[0]]);
-		for(unsigned int i=1;i<(*it)->physicals.size();i++)
-			groups[0][(*it)->physicals[i]]=groups[0][(*it)->physicals[i-1]];
-		}
-	}
-
-	for(fiter it = firstFace(); it != lastFace(); ++it){
-		if((*it)->physicals.size()){
-		(*it)->getTypeOfElements(groups[1][(*it)->physicals[0]]);
-		for(unsigned int i=1;i<(*it)->physicals.size();i++)
-			groups[1][(*it)->physicals[i]]=groups[1][(*it)->physicals[i-1]];
-		}
-	}
-	for(riter it = firstRegion(); it != lastRegion(); ++it){
-		if((*it)->physicals.size()){
-		(*it)->getTypeOfElements(groups[2][(*it)->physicals[0]]);
-		for(unsigned int i=1;i<(*it)->physicals.size();i++)
-			groups[2][(*it)->physicals[i]]=groups[2][(*it)->physicals[i-1]];
-		}
-	}
-
-}

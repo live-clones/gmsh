@@ -244,10 +244,6 @@ class GEntity {
 
   // Vertex arrays to draw the mesh efficiently
   VertexArray *va_lines, *va_triangles;
-
-  // Returns all type of element in the GEntity
-  virtual void getTypeOfElements(std::vector<int>  &)const { throw; }
-  virtual void addThisTypeOfElement(int type,std::vector<int> &groups);
 };
 
 class GEntityLessThan {

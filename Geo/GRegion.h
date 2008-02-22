@@ -59,6 +59,10 @@ class GRegion : public GEntity {
   // Returns a type-specific additional information string
   virtual std::string getAdditionalInfoString();
 
+  // Get number of elements in the mesh and get element by index
+  int getNumElements();
+  MElement *getElement(int index);
+
   // Resets the mesh attributes to default values
   virtual void resetMeshAttributes();
 
@@ -73,10 +77,6 @@ class GRegion : public GEntity {
   // a array for accessing the transfinite vertices using a triplet of
   // indices
   std::vector<std::vector<std::vector<MVertex*> > > transfinite_vertices;
-
-// Returns each type of element in the gentity
-  void getTypeOfElements(std::vector<int> &groups);
-
 
   std::vector<MTetrahedron*> tetrahedra;
   std::vector<MHexahedron*> hexahedra;

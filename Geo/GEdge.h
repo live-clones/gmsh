@@ -107,14 +107,15 @@ class GEdge : public GEntity {
   // one can impose the mesh size at an edge
   virtual double prescribedMeshSizeAtVertex() const { return meshAttributes.meshSize; }
 
-  // Resets the mesh attributes to default values
-  virtual void resetMeshAttributes();
-
   // True if start == end and no more than 2 segments
   bool isMeshDegenerated() const{ return (v0 == v1 && mesh_vertices.size() < 2); }
 
-// Returns each type of element in the gentity
-  void getTypeOfElements(std::vector<int> &groups);
+  // Get number of elements in the mesh and get element by index
+  int getNumElements();
+  MElement *getElement(int index);
+
+  // Resets the mesh attributes to default values
+  virtual void resetMeshAttributes();
 
   struct {
     char   Method;

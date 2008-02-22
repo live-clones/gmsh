@@ -1,4 +1,4 @@
-// $Id: GEntity.cpp,v 1.19 2008-02-22 17:58:12 miegroet Exp $
+// $Id: GEntity.cpp,v 1.20 2008-02-22 20:28:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -89,20 +89,4 @@ std::string GEntity::getInfoString()
   }
 
   return out;
-}
-
-
-inline
-void GEntity::addThisTypeOfElement(int type,std::vector<int> &groups)
-{
-	unsigned int size=groups.size();
-	if(size==0)
-			groups.push_back(type);
-	for(unsigned int i=0;i<size;i++)
-	{
-		if(type==groups[i])
-			break;
-		else
-			groups.push_back(type);
-	}
 }

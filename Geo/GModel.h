@@ -121,12 +121,6 @@ class GModel
   // Returns all physical groups (one map per dimension: 0-D to 3-D)
   void getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]);
 
-  // Returns all type of element in each GEntity (one map per dimension: 1-D to 3-D)
-  void getTypeOfElements(std::map<GEntity*, std::vector<int> > groups[3]);
-
-  // Returns all type of element in each physical group (one map per dimension: 1-D to 3-D)
-  void getTypeOfElements(std::map<int, std::vector<int> > groups[3]);
-
   // Deletes physical groups in the model
   void deletePhysicalGroups();
   void deletePhysicalGroup(int dim, int num);

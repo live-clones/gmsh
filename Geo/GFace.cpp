@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.54 2008-02-22 17:58:12 miegroet Exp $
+// $Id: GFace.cpp,v 1.55 2008-02-22 20:28:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -71,6 +71,20 @@ GFace::~GFace()
 
   if(va_geom_triangles)
     delete va_geom_triangles;
+}
+
+int GFace::getNumElements()
+{ 
+  return triangles.size() + quadrangles.size(); 
+}
+
+MElement *GFace::getElement(int index)
+{ 
+  if(index < triangles.size())
+    return triangles[i];
+  else if(index < triangles.size() + quadrangles.size())
+    return quadrangles[index - triangles.size()];
+  return 0;
 }
 
 void GFace::resetMeshAttributes()
@@ -718,19 +732,3 @@ double GFace::length(const SPoint2 &pt1, const SPoint2 &pt2, int nbQuadPoints)
   return L;
 #endif
 }
-
-void GFace::getTypeOfElements(std::vector<int> &groups)
-{
- 	for(unsigned int j = 0; j < triangles.size(); j++)
-	{
-		int type = triangles[j]->getTypeForMSH();
-		addThisTypeOfElement(type,groups);
-	}
- 	for(unsigned int j = 0; j < quadrangles.size(); j++)
-	{
-		int type = quadrangles[j]->getTypeForMSH();
-		addThisTypeOfElement(type,groups);
-	}
-}
-
-

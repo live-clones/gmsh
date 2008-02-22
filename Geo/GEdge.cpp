@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.41 2008-02-22 17:58:12 miegroet Exp $
+// $Id: GEdge.cpp,v 1.42 2008-02-22 20:28:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -51,6 +51,18 @@ GEdge::~GEdge()
 
   for(unsigned int i = 0; i < lines.size(); i++)
     delete lines[i];
+}
+
+int GEdge::getNumElements()
+{ 
+  return lines.size();
+}
+
+MElement *GEdge::getElement(int index)
+{ 
+  if(index < lines.size())
+    return lines[index]; 
+  return 0;
 }
 
 void GEdge::resetMeshAttributes()
@@ -191,11 +203,3 @@ double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
 #endif
 }
 
-void GEdge::getTypeOfElements(std::vector<int> &groups)
-{
-	for(unsigned int j = 0; j < lines.size(); j++)
-	{
-		int type = lines[j]->getTypeForMSH();
-		this->addThisTypeOfElement(type,groups);
-	}
-}

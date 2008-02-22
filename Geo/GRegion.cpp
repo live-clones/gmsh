@@ -1,4 +1,4 @@
-// $Id: GRegion.cpp,v 1.23 2008-02-22 17:58:12 miegroet Exp $
+// $Id: GRegion.cpp,v 1.24 2008-02-22 20:28:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -57,6 +57,24 @@ GRegion::~GRegion()
 
   for(unsigned int i = 0; i < pyramids.size(); i++)
     delete pyramids[i];
+}
+
+int GRegion::getNumElements()
+{ 
+  return tetrahedra.size() + hexahedra.size() + prisms.size() + pyramids.size();
+}
+
+MElement *GRegion::getElement(int index)
+{ 
+  if(index < tetrahedra.size())
+    return tetrahedra[index];
+  else if(index < tetrahedra.size() + hexahedra.size())
+    return hexahedra[index - tetrahedra.size()];
+  else if(index < tetrahedra.size() + hexahedra.size() + prisms.size())
+    return prisms[index - tetrahedra.size() - hexahedra.size()];
+  else if(index < tetrahedra.size() + hexahedra.size() + prisms.size() + pyramids.size())
+    return pyramids[index - tetrahedra.size() - hexahedra.size() - prisms.size()];
+  return 0;
 }
 
 void GRegion::resetMeshAttributes()
@@ -176,29 +194,4 @@ bool GRegion::edgeConnected(GRegion *r) const
     ++it;
   }
   return false;
-}
-
-
-
-void GRegion::getTypeOfElements(std::vector<int>  &groups)
-{
-  for(unsigned int i = 0; i < tetrahedra.size(); i++){
-    int type = tetrahedra[i]->getTypeForMSH();
-	addThisTypeOfElement(type,groups);
-  }
-
-  for(unsigned int i = 0; i < hexahedra.size(); i++){
-    int type = hexahedra[i]->getTypeForMSH();
-	addThisTypeOfElement(type,groups);
-  }
-
-  for(unsigned int i = 0; i < prisms.size(); i++){
-    int type = prisms[i]->getTypeForMSH();
-  	addThisTypeOfElement(type,groups);
-  }
-
-  for(unsigned int i = 0; i < pyramids.size(); i++)  {
-    int type = pyramids[i]->getTypeForMSH();
-  	addThisTypeOfElement(type,groups);
-	}
 }
