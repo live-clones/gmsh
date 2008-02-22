@@ -27,6 +27,7 @@
 #include "SVector3.h"
 #include "Pair.h"
 
+class MElement;
 class MTriangle;
 class MQuadrangle;
 class ExtrudeParams;

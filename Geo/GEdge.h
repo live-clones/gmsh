@@ -26,6 +26,7 @@
 #include "SPoint3.h"
 #include "SPoint2.h"
 
+class MElement;
 class MLine;
 class ExtrudeParams;
 

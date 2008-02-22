@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.55 2008-02-22 20:28:07 geuzaine Exp $
+// $Id: GFace.cpp,v 1.56 2008-02-22 20:29:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -81,7 +81,7 @@ int GFace::getNumElements()
 MElement *GFace::getElement(int index)
 { 
   if(index < triangles.size())
-    return triangles[i];
+    return triangles[index];
   else if(index < triangles.size() + quadrangles.size())
     return quadrangles[index - triangles.size()];
   return 0;

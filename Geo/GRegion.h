@@ -22,6 +22,7 @@
 
 #include "GEntity.h"
 
+class MElement;
 class MTetrahedron;
 class MHexahedron;
 class MPrism;
