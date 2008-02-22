@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.57 2008-02-21 15:08:22 geuzaine Exp $
+// $Id: MElement.cpp,v 1.58 2008-02-22 07:19:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -755,7 +755,7 @@ void MTriangle::pnt(double uu, double vv, SPoint3 &p)
   MTriangle::pnt(1, 0, uu, vv, p);
 }
 
-int MTriangle6::getNumEdgesRep(){ return 3 * 9; }
+int MTriangle6::getNumEdgesRep(){ return 3 * 6; }
 
 void MTriangle6::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
@@ -791,9 +791,9 @@ void MTriangle6::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *
   }
 }
 
-int MTriangleN::getNumEdgesRep(){ return 3 * 9; }
+int MTriangleN::getNumEdgesRep(){ return 3 * 12; }
 
-void MTriangleN::getEdgeRep (int num, double *x, double *y, double *z, SVector3 *n)
+void MTriangleN::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
   n[0] = n[1] = getFace(0).normal();
   int N = getNumEdgesRep() / 3;

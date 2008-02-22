@@ -1,6 +1,6 @@
-$Id: VERSIONS,v 1.396 2008-02-21 20:09:33 geuzaine Exp $
+$Id: VERSIONS,v 1.397 2008-02-22 07:19:26 geuzaine Exp $
 
-2.1.0 (Feb 21, 2008): new post-processing database; complete rewrite
+2.1.0 (Feb 23, 2008): new post-processing database; complete rewrite
 of post-processing drawing code; improved surface mesh algorithms;
 improved STEP/IGES/BREP support; new 3D mesh optimization algorithm;
 new default native file choosers; fixed 'could not find extruded

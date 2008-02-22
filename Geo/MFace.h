@@ -29,7 +29,7 @@
 class MFace {
  private:
   MVertex *_v[4];
-  char _si[4];                          // sorted indices
+  char _si[4]; // sorted indices
 
  public:
   MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3=0);

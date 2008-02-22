@@ -28,7 +28,7 @@
 class MEdge {
  private:
   MVertex *_v[2];
-  char _si[2];                          // sorted indices
+  char _si[2]; // sorted indices
 
  public:
   MEdge(MVertex *v0, MVertex *v1)
