@@ -144,7 +144,7 @@ class GFace : public GEntity
   virtual std::string getAdditionalInfoString();
 
   // Fills the crude representation cross
-  bool GFace::buildRepresentationCross();
+  bool buildRepresentationCross();
 
   // Builds a STL triangulation and fills the vertex array
   // va_geom_triangles
