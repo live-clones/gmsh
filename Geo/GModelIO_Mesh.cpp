@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.34 2008-02-21 07:48:49 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.35 2008-02-22 07:49:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1890,34 +1890,38 @@ int GModel::readBDF(const std::string &name)
 	  elements[2][region].push_back(new MQuadrangle8(vertices, num));
       }
       else if(!strncmp(buffer, "CQUAD", 5)){
-	if(readElementBDF(fp, buffer, 5, -4, num, region, vertices, vertexMap))
+	if(readElementBDF(fp, buffer, 5, -4, num, region, vertices, vertexMap)){
 	  if(vertices.size() == 9)
 	    elements[2][region].push_back(new MQuadrangle9(vertices, num));
 	  else if(vertices.size() == 8)
 	    elements[2][region].push_back(new MQuadrangle8(vertices, num));
 	  else
 	    elements[2][region].push_back(new MQuadrangle(vertices, num));
+	}
       }
       else if(!strncmp(buffer, "CTETRA", 6)){
-	if(readElementBDF(fp, buffer, 6, -4, num, region, vertices, vertexMap))
+	if(readElementBDF(fp, buffer, 6, -4, num, region, vertices, vertexMap)){
 	  if(vertices.size() == 10)
 	    elements[3][region].push_back(new MTetrahedron10(vertices, num));
 	  else
 	    elements[3][region].push_back(new MTetrahedron(vertices, num));
+	}
       }
       else if(!strncmp(buffer, "CHEXA", 5)){
-	if(readElementBDF(fp, buffer, 5, -8, num, region, vertices, vertexMap))
+	if(readElementBDF(fp, buffer, 5, -8, num, region, vertices, vertexMap)){
 	  if(vertices.size() == 20)
 	    elements[4][region].push_back(new MHexahedron20(vertices, num));
 	  else
 	    elements[4][region].push_back(new MHexahedron(vertices, num));
+	}
       }
       else if(!strncmp(buffer, "CPENTA", 6)){
-	if(readElementBDF(fp, buffer, 6, -6, num, region, vertices, vertexMap))
+	if(readElementBDF(fp, buffer, 6, -6, num, region, vertices, vertexMap)){
 	  if(vertices.size() == 15)
 	    elements[5][region].push_back(new MPrism15(vertices, num));
 	  else
 	    elements[5][region].push_back(new MPrism(vertices, num));
+	}
       }
       else if(!strncmp(buffer, "CPYRAM", 6)){
 	if(readElementBDF(fp, buffer, 6, 5, num, region, vertices, vertexMap))

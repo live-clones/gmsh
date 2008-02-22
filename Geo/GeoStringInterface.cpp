@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.15 2008-02-17 08:47:58 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.16 2008-02-22 07:49:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <string.h>
 #include "Message.h"
 #include "Numeric.h"
 #include "Malloc.h"

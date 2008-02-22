@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.117 2008-02-18 18:46:49 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.118 2008-02-22 07:49:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <string.h>
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "GmshVersion.h"

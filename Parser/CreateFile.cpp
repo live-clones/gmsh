@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.24 2008-02-17 08:48:02 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.25 2008-02-22 07:49:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <string.h>
 #include "Message.h"
 #include "GModel.h"
 #include "GmshDefines.h"

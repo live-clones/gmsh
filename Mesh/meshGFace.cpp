@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.119 2008-02-21 19:20:58 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.120 2008-02-22 07:49:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -100,8 +100,8 @@ void remeshUnrecoveredEdges(std::set<EdgeToRecover> &edgesNotRecovered,
     for (int i = 0; i < N; i++){
       MVertex *v1 = itr->ge->lines[i]->getVertex(0);
       MVertex *v2 = itr->ge->lines[i]->getVertex(1);
-      if (v1->getNum() == p1 && v2->getNum() == p2 ||
-	  v1->getNum() == p2 && v2->getNum() == p1){
+      if ((v1->getNum() == p1 && v2->getNum() == p2) ||
+	  (v1->getNum() == p2 && v2->getNum() == p1)){
 	double t1;
 	double lc1 = -1;
 	if (v1->onWhat() == g1) t1 = bb.low();

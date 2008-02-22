@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.61 2008-02-21 13:34:40 geuzaine Exp $
+// $Id: GModel.cpp,v 1.62 2008-02-22 07:49:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 //
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <string.h>
 #include "GModel.h"
 #include "MElement.h"
 

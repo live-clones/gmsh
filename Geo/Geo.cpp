@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.103 2008-02-20 09:20:45 geuzaine Exp $
+// $Id: Geo.cpp,v 1.104 2008-02-22 07:49:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <string.h>
 #include "Message.h"
 #include "Numeric.h"
 #include "Malloc.h"
