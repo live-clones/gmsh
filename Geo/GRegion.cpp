@@ -1,4 +1,4 @@
-// $Id: GRegion.cpp,v 1.22 2008-02-17 08:47:58 geuzaine Exp $
+// $Id: GRegion.cpp,v 1.23 2008-02-22 17:58:12 miegroet Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -16,7 +16,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
-// 
+//
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GModel.h"
@@ -36,32 +36,32 @@ GRegion::GRegion(GModel *model, int tag) : GEntity (model, tag)
 }
 
 GRegion::~GRegion()
-{ 
+{
   std::list<GFace*>::iterator it = l_faces.begin();
   while(it != l_faces.end()){
     (*it)->delRegion(this);
     ++it;
   }
 
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++) 
+  for(unsigned int i = 0; i < mesh_vertices.size(); i++)
     delete mesh_vertices[i];
 
-  for(unsigned int i = 0; i < tetrahedra.size(); i++) 
+  for(unsigned int i = 0; i < tetrahedra.size(); i++)
     delete tetrahedra[i];
 
-  for(unsigned int i = 0; i < hexahedra.size(); i++) 
+  for(unsigned int i = 0; i < hexahedra.size(); i++)
     delete hexahedra[i];
 
-  for(unsigned int i = 0; i < prisms.size(); i++) 
+  for(unsigned int i = 0; i < prisms.size(); i++)
     delete prisms[i];
 
-  for(unsigned int i = 0; i < pyramids.size(); i++) 
+  for(unsigned int i = 0; i < pyramids.size(); i++)
     delete pyramids[i];
 }
 
 void GRegion::resetMeshAttributes()
 {
-  meshAttributes.Method = LIBRE; 
+  meshAttributes.Method = LIBRE;
   meshAttributes.extrude = 0;
 }
 
@@ -71,7 +71,7 @@ SBoundingBox3d GRegion::bounds() const
   if(geomType() != DiscreteVolume){
     std::list<GFace*>::const_iterator it = l_faces.begin();
     for(; it != l_faces.end(); it++)
-      res += (*it)->bounds();  
+      res += (*it)->bounds();
   }
   else{
     for(unsigned int i = 0; i < mesh_vertices.size(); i++)
@@ -168,7 +168,7 @@ bool GRegion::edgeConnected(GRegion *r) const
 {
   std::list<GEdge*> e = edges();
   std::list<GEdge*> e2 = r->edges();
-  
+
   std::list<GEdge*>::const_iterator it = e.begin();
   while(it != e.end()){
     if(std::find(e2.begin(), e2.end(), *it) != e2.end())
@@ -176,4 +176,29 @@ bool GRegion::edgeConnected(GRegion *r) const
     ++it;
   }
   return false;
+}
+
+
+
+void GRegion::getTypeOfElements(std::vector<int>  &groups)
+{
+  for(unsigned int i = 0; i < tetrahedra.size(); i++){
+    int type = tetrahedra[i]->getTypeForMSH();
+	addThisTypeOfElement(type,groups);
+  }
+
+  for(unsigned int i = 0; i < hexahedra.size(); i++){
+    int type = hexahedra[i]->getTypeForMSH();
+	addThisTypeOfElement(type,groups);
+  }
+
+  for(unsigned int i = 0; i < prisms.size(); i++){
+    int type = prisms[i]->getTypeForMSH();
+  	addThisTypeOfElement(type,groups);
+  }
+
+  for(unsigned int i = 0; i < pyramids.size(); i++)  {
+    int type = pyramids[i]->getTypeForMSH();
+  	addThisTypeOfElement(type,groups);
+	}
 }

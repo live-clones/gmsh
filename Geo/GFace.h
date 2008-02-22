@@ -17,7 +17,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
-// 
+//
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GEntity.h"
@@ -45,10 +45,10 @@ struct surface_params
 
 class GRegion;
 
-// A model face. 
-class GFace : public GEntity 
+// A model face.
+class GFace : public GEntity
 {
- protected: 
+ protected:
   // edge loops, will replace what follows list of al the edges of the
   // face
   std::list<GEdge *> l_edges;
@@ -87,14 +87,14 @@ class GFace : public GEntity
   virtual void setVisibility(char val, bool recursive=false);
 
   // compute the parameters UV from a point XYZ
-  void XYZtoUV(const double X, const double Y, const double Z, 
-	       double &U, double &V, const double relax, 
+  void XYZtoUV(const double X, const double Y, const double Z,
+	       double &U, double &V, const double relax,
 	       const bool onSurface=true) const;
 
   // The bounding box
-  virtual SBoundingBox3d bounds() const; 
+  virtual SBoundingBox3d bounds() const;
 
-  // retrieve surface params 
+  // retrieve surface params
   virtual surface_params getSurfaceParams() const { throw; }
 
   // Return the point on the face corresponding to the given parameter.
@@ -133,7 +133,7 @@ class GFace : public GEntity
 
   // Return the curvature i.e. the divergence of the normal
   virtual double curvature(const SPoint2 &param) const;
-  
+
   // Recompute the mesh partitions defined on this face.
   void recomputeMeshPartitions();
 
@@ -158,7 +158,7 @@ class GFace : public GEntity
   void computeMeanPlane();
 
   // Get the mean plane info
-  void getMeanPlaneData(double VX[3], double VY[3], 
+  void getMeanPlaneData(double VX[3], double VY[3],
 			double &x, double &y, double &z) const;
   void getMeanPlaneData(double plan[3][3]) const;
 
@@ -206,6 +206,9 @@ class GFace : public GEntity
 
   std::vector<MTriangle*> triangles;
   std::vector<MQuadrangle*> quadrangles;
+
+  // Returns each type of element in the gentity
+  void getTypeOfElements(std::vector<int> &groups);
 };
 
 #endif

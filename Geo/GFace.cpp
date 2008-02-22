@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.53 2008-02-21 12:11:12 geuzaine Exp $
+// $Id: GFace.cpp,v 1.54 2008-02-22 17:58:12 miegroet Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -16,7 +16,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
-// 
+//
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GModel.h"
@@ -44,7 +44,7 @@ void dsvdcmp(double **a, int m, int n, double w[], double **v);
 
 extern Context_T CTX;
 
-GFace::GFace(GModel *model, int tag) 
+GFace::GFace(GModel *model, int tag)
   : GEntity(model, tag), r1(0), r2(0), va_geom_triangles(0)
 {
   meshStatistics.status = GFace::PENDING;
@@ -52,7 +52,7 @@ GFace::GFace(GModel *model, int tag)
 }
 
 GFace::~GFace()
-{ 
+{
   std::list<GEdge*>::iterator it = l_edges.begin();
 
   while (it != l_edges.end()){
@@ -60,13 +60,13 @@ GFace::~GFace()
     ++it;
   }
 
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++) 
+  for(unsigned int i = 0; i < mesh_vertices.size(); i++)
     delete mesh_vertices[i];
 
-  for(unsigned int i = 0; i < triangles.size(); i++) 
+  for(unsigned int i = 0; i < triangles.size(); i++)
     delete triangles[i];
 
-  for(unsigned int i = 0; i < quadrangles.size(); i++) 
+  for(unsigned int i = 0; i < quadrangles.size(); i++)
     delete quadrangles[i];
 
   if(va_geom_triangles)
@@ -174,7 +174,7 @@ void GFace::computeMeanPlane()
   std::list<GVertex*> verts = vertices();
   std::list<GVertex*>::const_iterator itv = verts.begin();
   for(; itv != verts.end(); itv++){
-    const GVertex *v = *itv; 
+    const GVertex *v = *itv;
     pts.push_back(SPoint3(v->x(), v->y(), v->z()));
   }
 
@@ -183,7 +183,7 @@ void GFace::computeMeanPlane()
     std::list<GEdge*> edg = edges();
     std::list<GEdge*>::const_iterator ite = edg.begin();
     for(; ite != edg.end(); ite++){
-      const GEdge *e = *ite; 
+      const GEdge *e = *ite;
       Range<double> b = e->parBounds(0);
       GPoint p1 = e->point(b.low() + 0.333 * (b.high() - b.low()));
       pts.push_back(SPoint3(p1.x(), p1.y(), p1.z()));
@@ -305,7 +305,7 @@ void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
     norme(t2);
     // prodve(t1, t2, res2);
     // Warning: the rest of the code assumes res = t2 x t1, not t1 x t2 (WTF?)
-    prodve(t2, t1, res2); 
+    prodve(t2, t1, res2);
     norme(res2);
     prodve(res, res2, c);
     prosca(res, res2, &cosc);
@@ -350,27 +350,27 @@ end:
   meanPlane.d = res[3];
 
   meanPlane.x = meanPlane.y = meanPlane.z = 0.;
-  if(fabs(meanPlane.a) >= fabs(meanPlane.b) && 
+  if(fabs(meanPlane.a) >= fabs(meanPlane.b) &&
      fabs(meanPlane.a) >= fabs(meanPlane.c) ){
     meanPlane.x = meanPlane.d / meanPlane.a;
   }
-  else if(fabs(meanPlane.b) >= fabs(meanPlane.a) && 
+  else if(fabs(meanPlane.b) >= fabs(meanPlane.a) &&
 	  fabs(meanPlane.b) >= fabs(meanPlane.c)){
     meanPlane.y = meanPlane.d / meanPlane.b;
   }
   else{
     meanPlane.z = meanPlane.d / meanPlane.c;
   }
-  
+
   Msg(DEBUG1, "Surface: %d", tag());
   Msg(DEBUG2, "SVD    : %g,%g,%g (min=%d)", svd[0], svd[1], svd[2], min);
-  Msg(DEBUG2, "Plane  : (%g x + %g y + %g z = %g)", 
+  Msg(DEBUG2, "Plane  : (%g x + %g y + %g z = %g)",
       meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
-  Msg(DEBUG2, "Normal : (%g , %g , %g )", 
+  Msg(DEBUG2, "Normal : (%g , %g , %g )",
       meanPlane.a, meanPlane.b, meanPlane.c);
   Msg(DEBUG3, "t1     : (%g , %g , %g )", t1[0], t1[1], t1[2]);
   Msg(DEBUG3, "t2     : (%g , %g , %g )", t2[0], t2[1], t2[2]);
-  Msg(DEBUG3, "pt     : (%g , %g , %g )", 
+  Msg(DEBUG3, "pt     : (%g , %g , %g )",
       meanPlane.x, meanPlane.y, meanPlane.z);
 
   //check coherence for plane surfaces
@@ -380,8 +380,8 @@ end:
     std::list<GVertex*> verts = vertices();
     std::list<GVertex*>::const_iterator itv = verts.begin();
     for(; itv != verts.end(); itv++){
-      const GVertex *v = *itv; 
-      double d = meanPlane.a * v->x() + meanPlane.b * v->y() + 
+      const GVertex *v = *itv;
+      double d = meanPlane.a * v->x() + meanPlane.b * v->y() +
 	meanPlane.c * v->z() - meanPlane.d;
       if(fabs(d) > lc * 1.e-3) {
 	Msg(GERROR1, "Plane surface %d (%gx+%gy+%gz+%g=0) is not plane!",
@@ -395,7 +395,7 @@ end:
 #endif
 }
 
-void GFace::getMeanPlaneData(double VX[3], double VY[3], 
+void GFace::getMeanPlaneData(double VX[3], double VY[3],
 			     double &x, double &y, double &z) const
 {
   VX[0] = meanPlane.plan[0][0];
@@ -404,9 +404,9 @@ void GFace::getMeanPlaneData(double VX[3], double VY[3],
   VY[0] = meanPlane.plan[1][0];
   VY[1] = meanPlane.plan[1][1];
   VY[2] = meanPlane.plan[1][2];
-  x = meanPlane.x;  
-  y = meanPlane.y;  
-  z = meanPlane.z;  
+  x = meanPlane.x;
+  y = meanPlane.y;
+  z = meanPlane.z;
 }
 
 void GFace::getMeanPlaneData(double plan[3][3]) const
@@ -445,14 +445,14 @@ double GFace::curvature (const SPoint2 &param) const
   SVector3 dndu = 500 * (n2 - n1);
   SVector3 dndv = 500 * (n4 - n3);
 
-  double c = fabs(dot(dndu, du) +  dot(dndv, dv)) / detJ; 
+  double c = fabs(dot(dndu, du) +  dot(dndv, dv)) / detJ;
 
   // Msg(INFO, "c = %g detJ %g", c, detJ);
 
   return c;
 }
 
-void GFace::XYZtoUV(const double X, const double Y, const double Z, 
+void GFace::XYZtoUV(const double X, const double Y, const double Z,
 		    double &U, double &V, const double relax,
 		    const bool onSurface) const
 {
@@ -467,7 +467,7 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
   double umin, umax, vmin, vmax;
   double initu[NumInitGuess] = {0.487, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 1., 0., 0., 1.};
   double initv[NumInitGuess] = {0.487, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0., 1., 0., 1.};
-  
+
   Range<double> ru = parBounds(0);
   Range<double> rv = parBounds(1);
   umin = ru.low();
@@ -477,7 +477,7 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
 
   for(int i = 0; i < NumInitGuess; i++){
     for(int j = 0; j < NumInitGuess; j++){
-    
+
       U = initu[i];
       V = initv[j];
       err = 1.0;
@@ -489,7 +489,7 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
 
       while(err > Precision && iter < MaxIter) {
 	P = point(U,V);
-	Pair<SVector3,SVector3> der = firstDer(SPoint2(U,V)); 
+	Pair<SVector3,SVector3> der = firstDer(SPoint2(U,V));
 	mat[0][0] = der.left().x();
 	mat[0][1] = der.left().y();
 	mat[0][2] = der.left().z();
@@ -500,38 +500,38 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
 	mat[2][1] = 0.;
 	mat[2][2] = 0.;
 	invert_singular_matrix3x3(mat, jac);
-	
+
 	Unew = U + relax *
 	  (jac[0][0] * (X - P.x()) + jac[1][0] * (Y - P.y()) +
 	   jac[2][0] * (Z - P.z()));
-	Vnew = V + relax * 
+	Vnew = V + relax *
 	  (jac[0][1] * (X - P.x()) + jac[1][1] * (Y - P.y()) +
 	   jac[2][1] * (Z - P.z()));
-	
+
 	err = DSQR(Unew - U) + DSQR(Vnew - V);
 	err2 = sqrt(DSQR(X - P.x()) + DSQR(Y - P.y()) + DSQR(Z - P.z()));
 	iter++;
 	U = Unew;
 	V = Vnew;
       }
-      
-      if(iter < MaxIter && err <= Precision && 
-	 Unew <= umax && Vnew <= vmax && 
+
+      if(iter < MaxIter && err <= Precision &&
+	 Unew <= umax && Vnew <= vmax &&
 	 Unew >= umin && Vnew >= vmin){
 	if (onSurface && err2 > 1.e-4 * CTX.lc)
-	  Msg(WARNING,"Converged for i=%d j=%d (err=%g iter=%d) BUT xyz error = %g", 
+	  Msg(WARNING,"Converged for i=%d j=%d (err=%g iter=%d) BUT xyz error = %g",
 	      i, j, err, iter, err2);
-	return;	
+	return;
       }
     }
   }
-  
+
   if(relax < 1.e-6)
     Msg(GERROR, "Could not converge: surface mesh will be wrong");
   else {
     Msg(INFO, "point %g %g %g : Relaxation factor = %g",X,Y,Z, 0.75 * relax);
     XYZtoUV(X, Y, Z, U, V, 0.75 * relax);
-  }  
+  }
 #endif
 }
 
@@ -546,10 +546,10 @@ int GFace::containsParam(const SPoint2 &pt) const
 {
   Range<double> uu = parBounds(0);
   Range<double> vv = parBounds(1);
-  if((pt.x() >= uu.low() && pt.x() <= uu.high()) && 
+  if((pt.x() >= uu.low() && pt.x() <= uu.high()) &&
      (pt.y() >= vv.low() && pt.y() <= vv.high()))
     return 1;
-  else 
+  else
     return 0;
 }
 
@@ -566,7 +566,7 @@ bool GFace::buildRepresentationCross()
   SBoundingBox3d bb;
   for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++){
     GEdge *ge = *it;
-    if(ge->geomType() == GEntity::DiscreteCurve || 
+    if(ge->geomType() == GEntity::DiscreteCurve ||
        ge->geomType() == GEntity::BoundaryLayerCurve){
       // don't try again
       cross.clear();
@@ -710,7 +710,7 @@ double GFace::length(const SPoint2 &pt1, const SPoint2 &pt2, int nbQuadPoints)
   for (int i = 0; i < nbQuadPoints; i++){
     const double ti = 0.5 * (1. + t[i]);
     SPoint2 pi = geodesic(pt1, pt2, ti);
-    Pair<SVector3, SVector3> der2 = firstDer(pi);    
+    Pair<SVector3, SVector3> der2 = firstDer(pi);
     SVector3 der = der2.left() * (pt2.x() - pt1.x()) + der2.right() * (pt2.y() - pt1.y());
     const double d = norm(der);
     L += d * w[i] ;
@@ -718,3 +718,19 @@ double GFace::length(const SPoint2 &pt1, const SPoint2 &pt2, int nbQuadPoints)
   return L;
 #endif
 }
+
+void GFace::getTypeOfElements(std::vector<int> &groups)
+{
+ 	for(unsigned int j = 0; j < triangles.size(); j++)
+	{
+		int type = triangles[j]->getTypeForMSH();
+		addThisTypeOfElement(type,groups);
+	}
+ 	for(unsigned int j = 0; j < quadrangles.size(); j++)
+	{
+		int type = quadrangles[j]->getTypeForMSH();
+		addThisTypeOfElement(type,groups);
+	}
+}
+
+

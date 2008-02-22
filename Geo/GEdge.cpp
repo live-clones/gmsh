@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.40 2008-02-21 12:11:12 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.41 2008-02-22 17:58:12 miegroet Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -16,7 +16,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
-// 
+//
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <algorithm>
@@ -41,21 +41,21 @@ GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
   resetMeshAttributes();
 }
 
-GEdge::~GEdge() 
+GEdge::~GEdge()
 {
   if(v0) v0->delEdge(this);
   if(v1 && v1 != v0) v1->delEdge(this);
 
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++) 
+  for(unsigned int i = 0; i < mesh_vertices.size(); i++)
     delete mesh_vertices[i];
 
-  for(unsigned int i = 0; i < lines.size(); i++) 
+  for(unsigned int i = 0; i < lines.size(); i++)
     delete lines[i];
 }
 
-void GEdge::resetMeshAttributes() 
-{ 
-  meshAttributes.Method = LIBRE; 
+void GEdge::resetMeshAttributes()
+{
+  meshAttributes.Method = LIBRE;
   meshAttributes.coeffTransfinite = 0.;
   meshAttributes.nbPointsTransfinite = 0;
   meshAttributes.typeTransfinite = 0;
@@ -64,12 +64,12 @@ void GEdge::resetMeshAttributes()
 }
 
 void GEdge::addFace(GFace *e)
-{ 
-  l_faces.push_back(e);  
+{
+  l_faces.push_back(e);
 }
 
 void GEdge::delFace(GFace *e)
-{ 
+{
   l_faces.erase(std::find(l_faces.begin(), l_faces.end(), e));
 }
 
@@ -129,7 +129,7 @@ int GEdge::containsParam(double pt) const
   return (pt >= rg.low() && pt <= rg.high());
 }
 
-SVector3 GEdge::secondDer(double par) const 
+SVector3 GEdge::secondDer(double par) const
 {
   // use central differences
   const double eps = 1.e-3;
@@ -146,7 +146,7 @@ SPoint2 GEdge::reparamOnFace(GFace *face, double epar,int dir) const
   return face->parFromPoint(sp3);
 }
 
-double GEdge::curvature(double par) const 
+double GEdge::curvature(double par) const
 {
   double eps1 = 1.e-5;
   double eps2 = 1.e-5;
@@ -189,4 +189,13 @@ double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
   }
   return L;
 #endif
+}
+
+void GEdge::getTypeOfElements(std::vector<int> &groups)
+{
+	for(unsigned int j = 0; j < lines.size(); j++)
+	{
+		int type = lines[j]->getTypeForMSH();
+		this->addThisTypeOfElement(type,groups);
+	}
 }

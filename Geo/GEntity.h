@@ -17,12 +17,13 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
-// 
+//
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <list>
 #include <vector>
 #include <string>
+#include <map>
 #include "Range.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
@@ -40,19 +41,19 @@ class GEntity {
  private:
   // All entities are owned by a GModel
   GModel *_model;
-  
+
   // The tag (the number) of this entity
   int _tag;
-  
+
   // The visibility and the selection flag
   char _visible, _selection;
-  
+
   // Flag storing if all mesh elements are visible
   char _allElementsVisible;
 
   // The color of the entity (ignored if set to transparent blue)
   unsigned int _color;
-  
+
  public:
 
   // All known native model types
@@ -149,7 +150,7 @@ class GEntity {
 
   void deleteVertexArrays();
 
-  // Spatial dimension of the entity 
+  // Spatial dimension of the entity
   virtual int dim() const { throw; }
 
   // Regions that bound this entity or that this entity bounds.
@@ -244,6 +245,9 @@ class GEntity {
   // Vertex arrays to draw the mesh efficiently
   VertexArray *va_lines, *va_triangles;
 
+  // Returns all type of element in the GEntity
+  virtual void getTypeOfElements(std::vector<int>  &)const { throw; }
+  virtual void addThisTypeOfElement(int type,std::vector<int> &groups);
 };
 
 class GEntityLessThan {

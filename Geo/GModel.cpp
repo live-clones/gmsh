@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.62 2008-02-22 07:49:38 geuzaine Exp $
+// $Id: GModel.cpp,v 1.63 2008-02-22 17:58:12 miegroet Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -171,14 +171,14 @@ void GModel::remove(GVertex *v)
 void GModel::snapVertices()
 {
   viter vit = firstVertex();
-  
-  double tol = CTX.geom.tolerance; 	       
-  
+
+  double tol = CTX.geom.tolerance;
+
   while (vit != lastVertex()){
     std::list<GEdge*> edges = (*vit)->edges();
     for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
       Range<double> parb = (*it)->parBounds(0);
-      double t;	
+      double t;
       if ((*it)->getBeginVertex() == *vit){
 	t = parb.low();
       }
@@ -404,7 +404,7 @@ void GModel::buildMeshVertexCache()
   _vertexVectorCache.clear();
   _vertexMapCache.clear();
   bool dense = (getNumMeshVertices() == MVertex::getGlobalNumber());
- 
+
   if(dense){
     _vertexVectorCache.resize(MVertex::getGlobalNumber());
     for(viter it = firstVertex(); it != lastVertex(); ++it)
@@ -719,4 +719,52 @@ void GModel::checkMeshCoherence()
     if(num) Msg(WARNING, "%d duplicate elements", num);
     MElementLessThanLexicographic::tolerance = old_tol;
   }
+}
+
+//maybe UseLess as we can get each vector directly through the GEntities
+void GModel::getTypeOfElements(std::map<GEntity*, std::vector<int> > groups[3])
+{
+  //for(viter it = firstVertex(); it != lastVertex(); ++it)
+  //	(*it)->getTypeOfElements(groups[0][(*it)]);
+
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+  	(*it)->getTypeOfElements(groups[0][(*it)]);
+
+
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+	(*it)->getTypeOfElements(groups[1][(*it)]);
+
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+	(*it)->getTypeOfElements(groups[2][(*it)]);
+
+}
+
+void GModel::getTypeOfElements(std::map<int, std::vector<int> > groups[3])
+{
+	//for(unsigned int i=0;i<(*it)->physicals.size();i++)
+	//	(*it)->getTypeOfElements(groups[0][i]);
+
+	for(eiter it = firstEdge(); it != lastEdge(); ++it){
+		if((*it)->physicals.size()){
+		(*it)->getTypeOfElements(groups[0][(*it)->physicals[0]]);
+		for(unsigned int i=1;i<(*it)->physicals.size();i++)
+			groups[0][(*it)->physicals[i]]=groups[0][(*it)->physicals[i-1]];
+		}
+	}
+
+	for(fiter it = firstFace(); it != lastFace(); ++it){
+		if((*it)->physicals.size()){
+		(*it)->getTypeOfElements(groups[1][(*it)->physicals[0]]);
+		for(unsigned int i=1;i<(*it)->physicals.size();i++)
+			groups[1][(*it)->physicals[i]]=groups[1][(*it)->physicals[i-1]];
+		}
+	}
+	for(riter it = firstRegion(); it != lastRegion(); ++it){
+		if((*it)->physicals.size()){
+		(*it)->getTypeOfElements(groups[2][(*it)->physicals[0]]);
+		for(unsigned int i=1;i<(*it)->physicals.size();i++)
+			groups[2][(*it)->physicals[i]]=groups[2][(*it)->physicals[i-1]];
+		}
+	}
+
 }

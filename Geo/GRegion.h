@@ -17,7 +17,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
-// 
+//
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GEntity.h"
@@ -45,7 +45,7 @@ class GRegion : public GEntity {
   void set(std::list<GFace*> &f) { l_faces= f; }
 
   // The bounding box
-  virtual SBoundingBox3d bounds() const; 
+  virtual SBoundingBox3d bounds() const;
 
   // Checks if the region is connected to another region by an edge
   bool edgeConnected(GRegion *r) const;
@@ -73,6 +73,10 @@ class GRegion : public GEntity {
   // a array for accessing the transfinite vertices using a triplet of
   // indices
   std::vector<std::vector<std::vector<MVertex*> > > transfinite_vertices;
+
+// Returns each type of element in the gentity
+  void getTypeOfElements(std::vector<int> &groups);
+
 
   std::vector<MTetrahedron*> tetrahedra;
   std::vector<MHexahedron*> hexahedra;

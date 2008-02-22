@@ -17,7 +17,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
-// 
+//
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GEntity.h"
@@ -76,7 +76,7 @@ class GEdge : public GEntity {
   // Get second derivative of edge at the given parameter.
   // Default implentation using central differences
   virtual SVector3 secondDer(double par) const;
-  virtual double curvature(double par) const;  
+  virtual double curvature(double par) const;
 
   // Reparmaterize the point onto the given face.
   virtual SPoint2 reparamOnFace(GFace *face, double epar,int dir) const;
@@ -112,6 +112,9 @@ class GEdge : public GEntity {
 
   // True if start == end and no more than 2 segments
   bool isMeshDegenerated() const{ return (v0 == v1 && mesh_vertices.size() < 2); }
+
+// Returns each type of element in the gentity
+  void getTypeOfElements(std::vector<int> &groups);
 
   struct {
     char   Method;

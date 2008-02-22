@@ -1,4 +1,4 @@
-// $Id: GEntity.cpp,v 1.18 2008-02-17 08:47:58 geuzaine Exp $
+// $Id: GEntity.cpp,v 1.19 2008-02-22 17:58:12 miegroet Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -16,7 +16,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
-// 
+//
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GEntity.h"
@@ -49,15 +49,15 @@ void GEntity::deleteVertexArrays()
 }
 
 char GEntity::getVisibility()
-{ 
+{
   if(CTX.hide_unselected && !CTX.pick_elements && !getSelection() &&
-     geomType() != ProjectionFace) 
+     geomType() != ProjectionFace)
     return false;
-  return _visible; 
+  return _visible;
 }
 
 bool GEntity::useColor()
-{ 
+{
   int r = CTX.UNPACK_RED(_color);
   int g = CTX.UNPACK_GREEN(_color);
   int b = CTX.UNPACK_BLUE(_color);
@@ -75,7 +75,7 @@ std::string GEntity::getInfoString()
   std::string out = getTypeString() + tmp;
 
   std::string info = getAdditionalInfoString();
-  if(info.size()) 
+  if(info.size())
     out += " " + info;
 
   if(physicals.size()){
@@ -89,4 +89,20 @@ std::string GEntity::getInfoString()
   }
 
   return out;
+}
+
+
+inline
+void GEntity::addThisTypeOfElement(int type,std::vector<int> &groups)
+{
+	unsigned int size=groups.size();
+	if(size==0)
+			groups.push_back(type);
+	for(unsigned int i=0;i<size;i++)
+	{
+		if(type==groups[i])
+			break;
+		else
+			groups.push_back(type);
+	}
 }
