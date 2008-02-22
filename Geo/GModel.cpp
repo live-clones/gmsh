@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.64 2008-02-22 20:28:07 geuzaine Exp $
+// $Id: GModel.cpp,v 1.65 2008-02-22 20:43:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -647,22 +647,21 @@ static int checkElements(int tag,
       pos.insert(e);
     }
     else{
-      char temp[256];
-      char temp2[256];
-      sprintf(temp,"Elements %d tag %d(",(*it)->getNum(),tag);
-      for (int i=0;i<(*it)->getNumVertices();i++){
-	sprintf(temp2,"%d ",(*it)->getVertex(i)->getNum());
-	strcat(temp,temp2);
+      char temp[256], temp2[256];
+      sprintf(temp, "Elements %d tag %d(", (*it)->getNum(), tag);
+      for (int i = 0; i <(*it)->getNumVertices();i++){
+	sprintf(temp2, "%d ", (*it)->getVertex(i)->getNum());
+	strcat(temp, temp2);
       }
-      sprintf(temp2,") and %d(",e->getNum());
-      strcat(temp,temp2);
-      for (int i=0;i<e->getNumVertices();i++){
-	sprintf(temp2,"%d ",e->getVertex(i)->getNum());
-	strcat(temp,temp2);
+      sprintf(temp2, ") and %d(",e->getNum());
+      strcat(temp, temp2);
+      for (int i = 0; i < e->getNumVertices(); i++){
+	sprintf(temp2, "%d", e->getVertex(i)->getNum());
+	strcat(temp, temp2);
       }
-      sprintf(temp2,")have identical barycenter");
-      strcat(temp,temp2);
-      Msg(INFO, "%s",temp);
+      sprintf(temp2, ") have identical barycenter");
+      strcat(temp, temp2);
+      Msg(INFO, "%s", temp);
       num++;
     }
   }
@@ -705,19 +704,18 @@ void GModel::checkMeshCoherence()
     std::set<MElement*, MElementLessThanLexicographic> pos;
     int num = 0;
     for(eiter it = firstEdge(); it != lastEdge(); ++it)
-      num += checkElements((*it)->tag(),(*it)->lines, pos);
+      num += checkElements((*it)->tag(), (*it)->lines, pos);
     for(fiter it = firstFace(); it != lastFace(); ++it){
-      num += checkElements((*it)->tag(),(*it)->triangles, pos);
-      num += checkElements((*it)->tag(),(*it)->quadrangles, pos);
+      num += checkElements((*it)->tag(), (*it)->triangles, pos);
+      num += checkElements((*it)->tag(), (*it)->quadrangles, pos);
     }
     for(riter it = firstRegion(); it != lastRegion(); ++it){
-      num += checkElements((*it)->tag(),(*it)->tetrahedra, pos);
-      num += checkElements((*it)->tag(),(*it)->hexahedra, pos);
-      num += checkElements((*it)->tag(),(*it)->prisms, pos);
-      num += checkElements((*it)->tag(),(*it)->pyramids, pos);
+      num += checkElements((*it)->tag(), (*it)->tetrahedra, pos);
+      num += checkElements((*it)->tag(), (*it)->hexahedra, pos);
+      num += checkElements((*it)->tag(), (*it)->prisms, pos);
+      num += checkElements((*it)->tag(), (*it)->pyramids, pos);
     }
     if(num) Msg(WARNING, "%d duplicate elements", num);
     MElementLessThanLexicographic::tolerance = old_tol;
   }
 }
-
