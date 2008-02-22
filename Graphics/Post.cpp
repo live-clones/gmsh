@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.148 2008-02-17 08:47:59 geuzaine Exp $
+// $Id: Post.cpp,v 1.149 2008-02-22 15:14:03 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1015,7 +1015,7 @@ void drawVectorArray(PView *p, VertexArray *va)
       double scale = opt->ArrowSize / max;
       double px = v[0] * scale, py = v[1] * scale, pz = v[2] * scale;
       // only draw vectors larger than 1 pixel on screen
-      if(fabs(px) > 1. || fabs(py) > 1. || fabs(pz) > 1.){
+      if(1 || fabs(px) > 1. || fabs(py) > 1. || fabs(pz) > 1.){
 	double d = CTX.pixel_equiv_x / CTX.s[0];
 	double dx = px * d, dy = py * d, dz = pz * d;
 	double x = s[0], y = s[1], z = s[2];
