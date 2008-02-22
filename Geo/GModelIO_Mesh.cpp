@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.35 2008-02-22 07:49:38 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.36 2008-02-22 07:59:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,10 +19,9 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <string.h>
 #include <map>
-#include <cstring>
 #include <string>
-
 #include "GModel.h"
 #include "GmshDefines.h"
 #include "MElement.h"

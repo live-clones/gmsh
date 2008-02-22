@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.299 2008-02-20 09:20:46 geuzaine Exp $
+// $Id: Gmsh.y,v 1.300 2008-02-22 07:59:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <string.h>
 #include <stdarg.h>
 #include <time.h>
 #include "Message.h"

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.655 2008-02-17 10:17:02 geuzaine Exp $
+// $Id: GUI.cpp,v 1.656 2008-02-22 07:59:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <string.h>
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "Message.h"
