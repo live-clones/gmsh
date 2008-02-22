@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.30 2008-02-17 08:47:56 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.31 2008-02-22 09:12:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -156,7 +156,8 @@ std::string VisibilityManager::getStringForGEO()
     (*it)->getVisibility() ? 
       state[3][1].push_back((*it)->tag()) : state[3][0].push_back((*it)->tag());
   
-  char tmp[256], *labels[4] = {"Point", "Line", "Surface", "Volume"};
+  char tmp[256];
+  const char *labels[4] = {"Point", "Line", "Surface", "Volume"};
   std::string str;
   int mode;
 
