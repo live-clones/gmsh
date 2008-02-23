@@ -119,12 +119,12 @@ class GEdge : public GEntity {
   virtual void resetMeshAttributes();
 
   struct {
-    char   Method;
+    char Method;
     double coeffTransfinite;
     double meshSize;
-    int    nbPointsTransfinite;
-    int    typeTransfinite;
-    int   minimumMeshSegments;
+    int nbPointsTransfinite;
+    int typeTransfinite;
+    int minimumMeshSegments;
     // the extrusion parameters (if any)
     ExtrudeParams *extrude;
   } meshAttributes ;

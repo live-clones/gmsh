@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.52 2008-02-23 16:31:06 remacle Exp $
+// $Id: gmshFace.cpp,v 1.53 2008-02-23 17:38:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -31,7 +31,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
 {
   resetMeshAttributes();
 
-  for(int i = 0 ; i < List_Nbr(s->Generatrices); i++){
+  for(int i = 0; i < List_Nbr(s->Generatrices); i++){
     Curve *c;
     List_Read(s->Generatrices, i, &c);
     GEdge *e = m->getEdgeByTag(abs(c->Num));
@@ -42,7 +42,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
       l_dirs.push_back((c->Num > 0) ? 1 : -1);
       if (List_Nbr(s->Generatrices) == 2){
 	e->meshAttributes.minimumMeshSegments = 
-	  std::max(e->meshAttributes.minimumMeshSegments,2);
+	  std::max(e->meshAttributes.minimumMeshSegments, 2);
       }
     }
     else
@@ -63,7 +63,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
   }
   
   if(s->EmbeddedCurves){
-    for(int i = 0 ; i < List_Nbr(s->EmbeddedCurves); i++){
+    for(int i = 0; i < List_Nbr(s->EmbeddedCurves); i++){
       Curve *c;
       List_Read(s->EmbeddedCurves, i, &c);
       GEdge *e = m->getEdgeByTag(abs(c->Num));
@@ -74,7 +74,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
     }
   }
   if(s->EmbeddedPoints){
-    for(int i = 0 ; i < List_Nbr(s->EmbeddedPoints); i++){
+    for(int i = 0; i < List_Nbr(s->EmbeddedPoints); i++){
       Vertex *v;
       List_Read(s->EmbeddedPoints, i, &v);
       GVertex *gv = m->getVertexByTag(v->Num);
@@ -84,8 +84,6 @@ gmshFace::gmshFace(GModel *m, Surface *face)
 	Msg(GERROR, "Unknown point %d", v->Num);
     }
   }
-  //  face->print_info();
-
 }
 
 double gmshFace::getMetricEigenvalue(const SPoint2 &pt)

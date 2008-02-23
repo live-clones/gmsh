@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.46 2008-02-23 16:21:51 remacle Exp $
+// $Id: gmshEdge.cpp,v 1.47 2008-02-23 17:38:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -114,7 +114,7 @@ int gmshEdge::minimumMeshSegments () const
 		 (double)CTX.mesh.min_circ_points / Pi) - 1;
   else
     np = CTX.mesh.min_curv_points - 1;
-  return std::max(np,meshAttributes.minimumMeshSegments);
+  return std::max(np, meshAttributes.minimumMeshSegments);
 }
 
 int gmshEdge::minimumDrawSegments () const
