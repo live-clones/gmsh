@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.50 2008-02-22 21:09:00 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.51 2008-02-23 16:19:22 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -33,10 +33,15 @@ gmshFace::gmshFace(GModel *m, Surface *face)
     Curve *c;
     List_Read(s->Generatrices, i, &c);
     GEdge *e = m->getEdgeByTag(abs(c->Num));
+
     if(e){
       l_edges.push_back(e);
       e->addFace(this);
       l_dirs.push_back((c->Num > 0) ? 1 : -1);
+      if (List_Nbr(s->Generatrices) == 2){
+	e->meshAttributes.minimumMeshSegments = 
+	  std::max(e->meshAttributes.minimumMeshSegments,2);
+      }
     }
     else
       Msg(GERROR, "Unknown curve %d", c->Num);

@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.121 2008-02-23 15:30:07 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.122 2008-02-23 16:19:22 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -444,6 +444,13 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
     doc.points[all_vertices.size() + ip].where.v = bb[ip]->y();
     doc.points[all_vertices.size() + ip].adjacent = 0;
     doc.points[all_vertices.size() + ip].data = bb[ip];
+  }
+
+  // if the number of vertices is less or equal to 2, then no elements are generated
+  if (all_vertices.size() <= 2){
+    free(doc.points);
+    free(doc.delaunay);
+    for(int ip = 0; ip < 4; ip++) delete bb[ip];
   }
 
   // Use "fast" inhouse recursive algo to generate the triangulation

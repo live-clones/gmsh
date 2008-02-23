@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.45 2008-02-17 09:30:28 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.46 2008-02-23 16:21:51 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -106,13 +106,15 @@ GEntity::GeomType gmshEdge::geomType() const
 
 int gmshEdge::minimumMeshSegments () const
 {
+  int np;
   if(geomType() == Line)
-    return GEdge::minimumMeshSegments();
+    np = GEdge::minimumMeshSegments();
   else if(geomType() == Circle || geomType() == Ellipse)
-    return (int)(fabs(c->Circle.t1 - c->Circle.t2) *
+    np = (int)(fabs(c->Circle.t1 - c->Circle.t2) *
 		 (double)CTX.mesh.min_circ_points / Pi) - 1;
   else
-    return CTX.mesh.min_curv_points - 1;
+    np = CTX.mesh.min_curv_points - 1;
+  return std::max(np,meshAttributes.minimumMeshSegments);
 }
 
 int gmshEdge::minimumDrawSegments () const

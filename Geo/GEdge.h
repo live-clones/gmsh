@@ -124,6 +124,7 @@ class GEdge : public GEntity {
     double meshSize;
     int    nbPointsTransfinite;
     int    typeTransfinite;
+    int   minimumMeshSegments;
     // the extrusion parameters (if any)
     ExtrudeParams *extrude;
   } meshAttributes ;

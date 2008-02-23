@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.34 2008-02-17 09:30:28 geuzaine Exp $
+// $Id: OCCEdge.cpp,v 1.35 2008-02-23 16:19:22 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -210,7 +210,7 @@ int OCCEdge::minimumMeshSegments() const
   // 1D mesh (4 segments, one of which is degenerated)
   if (getBeginVertex() == getEndVertex()) np = std::max(4, np);
 
-  return np;
+  return std::max(np,meshAttributes.minimumMeshSegments);
 }
 
 int OCCEdge::minimumDrawSegments() const

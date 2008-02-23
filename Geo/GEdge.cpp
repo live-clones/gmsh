@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.44 2008-02-23 15:40:29 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.45 2008-02-23 16:19:22 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -73,6 +73,7 @@ void GEdge::resetMeshAttributes()
   meshAttributes.typeTransfinite = 0;
   meshAttributes.extrude = 0;
   meshAttributes.meshSize = 1.e22;
+  meshAttributes.minimumMeshSegments = 1;
 }
 
 void GEdge::addFace(GFace *e)

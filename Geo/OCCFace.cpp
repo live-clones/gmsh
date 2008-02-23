@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.37 2008-02-22 21:09:00 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.38 2008-02-23 16:19:22 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -65,11 +65,19 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
     }      
     
     //    GEdgeLoop el(l_wire,l_oris);
-    GEdgeLoop el(l_wire);
-    
+    GEdgeLoop el(l_wire);        
+
     for(GEdgeLoop::citer it = el.begin() ; it != el.end() ; ++it){
       l_edges.push_back(it->ge);
       l_dirs.push_back(it->_sign);
+      if (el.count() == 2){
+	it->ge->meshAttributes.minimumMeshSegments = 
+	  std::max(it->ge->meshAttributes.minimumMeshSegments,2);
+      }
+      if (el.count() == 1){
+	it->ge->meshAttributes.minimumMeshSegments = 
+	  std::max(it->ge->meshAttributes.minimumMeshSegments,3);
+      }
     }
     
     edgeLoops.push_back(el);
