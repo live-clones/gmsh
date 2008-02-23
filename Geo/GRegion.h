@@ -61,8 +61,8 @@ class GRegion : public GEntity {
   virtual std::string getAdditionalInfoString();
 
   // Get number of elements in the mesh and get element by index
-  int getNumMeshElements();
-  MElement *getMeshElement(int index);
+  unsigned int getNumMeshElements();
+  MElement *getMeshElement(unsigned int index);
 
   // Resets the mesh attributes to default values
   virtual void resetMeshAttributes();
