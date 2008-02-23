@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.153 2008-02-20 09:20:45 geuzaine Exp $
+// $Id: Geom.cpp,v 1.154 2008-02-23 08:24:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -168,7 +168,7 @@ class drawGEdge {
     }
     
     if(CTX.geom.lines_num) {
-      GPoint p = e->point(0.5 * (t_max - t_min));
+      GPoint p = e->point(t_min + 0.5 * (t_max - t_min));
       char Num[100];
       sprintf(Num, "%d", e->tag());
       double offset = (0.5 * CTX.geom.line_width + 0.3 * CTX.gl_fontsize) *
@@ -180,7 +180,7 @@ class drawGEdge {
     }
     
     if(CTX.geom.tangents) {
-      double t = 0.5 * (t_max - t_min);
+      double t = t_min + 0.5 * (t_max - t_min);
       GPoint p = e->point(t);
       SVector3 der = e->firstDer(t);
       der.normalize();
