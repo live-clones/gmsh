@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.119 2008-02-23 15:30:06 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.120 2008-02-23 19:49:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -86,12 +86,12 @@ void Print_Usage(const char *name)
   Msg(DIRECT, "  -bin                  Use binary format when available");  
   Msg(DIRECT, "  -algo string          Select mesh algorithm (iso, netgen, tetgen)");
   Msg(DIRECT, "  -smooth int           Set number of mesh smoothing steps");
-  Msg(DIRECT, "  -optimize             Optimize quality of tetrahedral elements");
+  Msg(DIRECT, "  -optimize[_netgen]    Optimize quality of tetrahedral elements");
   Msg(DIRECT, "  -order int            Set mesh order (1, ..., 5)");
   Msg(DIRECT, "  -optimize_hom         Optimize higher order meshes (in 2D)");
   Msg(DIRECT, "  -clscale float        Set characteristic length scaling factor");
-  Msg(DIRECT, "  -clmin   float        Set minimum characteristic length");
-  Msg(DIRECT, "  -clmax   float        Set maximum characteristic length");
+  Msg(DIRECT, "  -clmin float          Set minimum characteristic length");
+  Msg(DIRECT, "  -clmax float          Set maximum characteristic length");
   Msg(DIRECT, "  -clcurv               Compute characteristic lengths from curvatures");
   Msg(DIRECT, "  -epslc1d              Set the accuracy of the evaluation of the LCFIELD for 1D mesh");
   Msg(DIRECT, "  -swapangle            Set the treshold angle (in degree) between two adjacent faces");

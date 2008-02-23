@@ -2,7 +2,7 @@
 
 @ftable @code
 @item -0
-Output unrolled geometry, then exit
+Parse all input files, output unrolled geometry, and exit. 
 @item -tol float
 Set geometrical tolerance
 @end ftable
@@ -19,19 +19,23 @@ Save all elements (discard physical group definitions)
 @item -o file
 Specify mesh output file name
 @item -format string
-Set output mesh format (msh, unv, vrml, stl, mesh, bdf, p3d, cgns, med)
+Set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh, bdf, p3d, cgns, med)
 @item -bin
 Use binary format when available
 @item -algo string
 Select mesh algorithm (iso, netgen, tetgen)
 @item -smooth int
 Set number of mesh smoothing steps
-@item -optimize
+@item -optimize[_netgen]
 Optimize quality of tetrahedral elements
 @item -order int
 Set the order of the generated elements (1, 2)
 @item -clscale float
 Set characteristic length scaling factor
+@item -clmin float
+Set minimum characteristic length
+@item -clmax float
+Set maximum characteristic length
 @item -clcurv
 Compute characteristic lengths from curvatures
 @item -rand float
@@ -51,8 +55,6 @@ Constrain background mesh with characteristic lengths
 Hide all views on startup
 @item -link int
 Select link mode between views (0, 1, 2, 3, 4)
-@item -smoothview
-Smooth views
 @item -combine
 Combine views having identical names into multi-time-step views
 @end ftable

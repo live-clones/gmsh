@@ -4,11 +4,6 @@
 @c
 
 @ftable @code
-@item Mesh.TriangleOptions
-Options for Jonathan Shewchuk's Triangle isotropic algorithm@*
-Default value: @code{"praqzBPY"}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.Algorithm
 2D mesh algorithm (1=MeshAdapt+Delaunay, 4=MeshAdapt, 5=Delaunay)@*
 Default value: @code{1}@*
@@ -165,7 +160,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LightTwoSide
-Light both sides of mesh elements (leads to slower rendering)@*
+Light both sides of surfaces (leads to slower rendering)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -1,5 +1,5 @@
-.\" $Id: gmsh.1,v 1.81 2007-09-04 13:47:06 remacle Exp $
-.TH Gmsh 1 "09 March 2006" "Gmsh 2.0" "Gmsh Manual Pages"
+.\" $Id: gmsh.1,v 1.82 2008-02-23 19:49:35 geuzaine Exp $
+.TH Gmsh 1 "23 February 2008" "Gmsh 2.1" "Gmsh Manual Pages"
 .UC 4
 .\" ********************************************************************
 .SH NAME
@@ -49,7 +49,10 @@ save all elements (and discard all physical group definitions).
 specify mesh output file name.
 .TP 4
 .B \-format string
-set output mesh format (msh, unv, vrml, stl, mesh, bdf, p3d, cgns, med).
+set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh, bdf, p3d, cgns, med).
+.TP 4
+.B \-bin
+use binary format when available.
 .TP 4
 .B \-algo string
 select mesh algorithm (iso, netgen, tetgen).
@@ -57,17 +60,23 @@ select mesh algorithm (iso, netgen, tetgen).
 .B \-smooth int
 set number of mesh smoothing steps.
 .TP 4
-.B \-optimize
+.B \-optimize[_netgen]
 optimize quality of tetrahedral elements.
 .TP 4
 .B \-order int
-set mesh order (1, 2).
+set mesh order.
 .TP 4
 .B \-clscale float
 set global scaling factor to the mesh characteristic lengths in the
 model.
+.TP 4
+.B \-clmin float
+Set minimum characteristic length.
+.TP 4
+.B \-clmax float
+Set maximum characteristic length.
 .B \-clcurv
-Compute characteristic lengths from curvatures
+Compute characteristic lengths from curvatures.
 .TP 4
 .B \-rand float
 set random perturbation factor.
@@ -99,13 +108,16 @@ a remote host without GLX.
 .B \-fontsize int
 specify the font size for the GUI.
 .TP 4
-.B \-scheme string
+.B \-theme string
 specify the FLTK GUI scheme.
 .TP 4
 .B \-display string
 specify display.
 .\" ********************************************************************
 .SH OTHER OPTIONS
+.TP 4
+.B \-
+parse input files, then exit.
 .TP 4
 .B \-a, \-g, \-m, \-s, \-p
 start in automatic, geometry, mesh, solver or post-processing mode.
@@ -142,7 +154,7 @@ show help message.
 .\" ********************************************************************
 .SH AUTHORS
 Christophe Geuzaine (cgeuzaine@ulg.ac.be) and Jean-Francois Remacle
-(remacle@gce.ucl.ac.be).
+(jean-francois.remacle@uclouvain.be).
 .\" ********************************************************************
 .SH SEE ALSO
 .BR getdp (1),

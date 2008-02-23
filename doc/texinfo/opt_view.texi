@@ -395,7 +395,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.LightTwoSide
-Light both sides of view elements (leads to slower rendering)@*
+Light both sides of surfaces (leads to slower rendering)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

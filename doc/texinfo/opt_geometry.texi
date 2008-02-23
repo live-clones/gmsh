@@ -34,6 +34,11 @@ Enable lighting for the geometry@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.LightTwoSide
+Light both sides of surfaces (leads to slower rendering)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.Lines
 Display geometry curves?@*
 Default value: @code{1}@*
