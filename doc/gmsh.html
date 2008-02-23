@@ -25,7 +25,7 @@ generator with built-in pre- and post-processing facilities</h1>
 <p>
 <h3 align="center">Christophe Geuzaine and Jean-François Remacle</h3>
 <p>
-<h3 align=center>Version 2.0.8, July 13 2007</h3>
+<h3 align=center>Version 2.1.0, February 23 2008</h3>
 <p>
 <center>
   <a href="#Description">Description</a> |
@@ -66,10 +66,10 @@ binary). Tutorial and demos files are included in all the archives.
 <ul>
 <li>
 <strong>Current stable release</strong>:
-<a href="/gmsh/bin/Windows/gmsh-2.0.8-Windows.zip"><strong>Windows</strong></a>,
-<a href="/gmsh/bin/Linux/gmsh-2.0.8-Linux.tgz"><strong>Linux</strong></a>,
-<a href="/gmsh/bin/MacOSX/gmsh-2.0.8-MacOSX.tgz"><strong>Mac OS X</strong></a> and
-<a href="/gmsh/src/gmsh-2.0.8-source.tgz"><strong>source code</strong></a>
+<a href="/gmsh/bin/Windows/gmsh-2.1.0-Windows.zip"><strong>Windows</strong></a>,
+<a href="/gmsh/bin/Linux/gmsh-2.1.0-Linux.tgz"><strong>Linux</strong></a>,
+<a href="/gmsh/bin/MacOSX/gmsh-2.1.0-MacOSX.tgz"><strong>Mac OS X</strong></a> and
+<a href="/gmsh/src/gmsh-2.1.0-source.tgz"><strong>source code</strong></a>
 <a href="#build-footnote" name="build-footmark"><sup>2</sup></a>
 <p>
 <li>Experimental versions (these <em>will</em> be buggy, or might not
@@ -191,62 +191,55 @@ src="http://geuz.org/gmsh/gallery/thumbnail.png" alt="Screenshot
 thumbnail"></a>
 
 <ul>
-<li>Various screen captures:
-    <a href="/gmsh/gallery/screenshot1.gif">pict1</a>,
-    <a href="/gmsh/gallery/screenshot2.gif">pict2</a>,
-    <a href="/gmsh/gallery/screenshot3.gif">pict3</a>,
-    <a href="/gmsh/gallery/screenshot4.gif">pict4</a>.
 <li>Sample STEP models:
-    <a href="/gmsh/gallery/linkrods.png">pict1</a>,
-    <a href="/gmsh/gallery/hammer.png">pict2</a>,
-    <a href="/gmsh/gallery/propeller.png">pict3</a>,
-    <a href="/gmsh/gallery/A319.png">pict4</a>,
-    <a href="/gmsh/gallery/piston.png">pict5</a>.
+    <a href="/gmsh/gallery/Zylkopf3D.png">zylkopf</a>,
+    <a href="/gmsh/gallery/TapGeo.png">tap</a>,
+    <a href="/gmsh/gallery/linkrods.png">linkrods 1</a>,
+    <a href="/gmsh/gallery/linkrods3Db.png">linkrods 2</a>,
+    <a href="/gmsh/gallery/Block3D.png">block</a>,
+    <a href="/gmsh/gallery/hammer.png">hammer</a>,
+    <a href="/gmsh/gallery/propeller.png">propeller</a>,
+    <a href="/gmsh/gallery/A319.png">A319</a>,
+    <a href="/gmsh/gallery/piston.png">piston</a>,
+    <a href="/gmsh/gallery/pump.png">pump</a> (EDF R&amp;D).
+<li>Native models: 
+    <a href="/gmsh/gallery/MURUROA.png">ocean</a>,
+    <a href="/gmsh/gallery/magnetron1.gif">magnetron 1</a>,
+    <a href="/gmsh/gallery/magnetron2.gif">magnetron 2</a>,
+    <a href="/gmsh/gallery/magnetron3.gif">magnetron 3</a>,
+    <a href="/gmsh/gallery/magnetron4.gif">magnetron 4</a> (P. Lefèvre),
+    <a href="/gmsh/gallery/breaker.gif">circuit breaker</a> (S. K. Choi),
+    <a href="/gmsh/gallery/machine.gif">electrical machine</a> (J. Gyselinck),
+    <a href="/gmsh/gallery/tresse1.gif">braid 1</a>,
+    <a href="/gmsh/gallery/tresse2.gif">braid 2</a> (D. Colignon).
 <li>Mesh around an airplane:
-    <a href="/gmsh/gallery/a319_1.png">pict1</a>,
-    <a href="/gmsh/gallery/a319_2.png">pict2</a>,
-    <a href="/gmsh/gallery/a319_3.png">pict3</a>,
-    <a href="/gmsh/gallery/a319_4.png">pict4</a>.
-<li>Dynamic clipping and cutting:
-    <a href="/gmsh/gallery/spiranim.gif">pict1</a>.
-    <a href="/gmsh/gallery/select.png">pict2</a>,
-    <a href="/gmsh/gallery/runner.png">pict3</a>.
-<li>Lenna as background mesh:
-    <a href="/gmsh/gallery/lenna.gif">pict1</a>.
+    <a href="/gmsh/gallery/a319_1.png">A319 1</a>,
+    <a href="/gmsh/gallery/a319_2.png">A319 2</a>,
+    <a href="/gmsh/gallery/a319_3.png">A319 3</a>,
+    <a href="/gmsh/gallery/a319_4.png">A319 4</a>.
 <li>Structured vs. unstructured grids:
-    <a href="/gmsh/gallery/spirale.gif">pict1</a>,
-    <a href="/gmsh/gallery/piece1.gif">pict2</a>, 
-    <a href="/gmsh/gallery/piece2.gif">pict3</a>, 
-    <a href="/gmsh/gallery/piece3.gif">pict4</a>.
-<li>Various colormaps:
-    <a href="/gmsh/gallery/blob.gif">pict1</a>,
-    <a href="/gmsh/gallery/contact.png">pict2</a>,
-    <a href="/gmsh/gallery/cmap.png">pict3</a>.
-<li>Parts of a magnetron: 
-    <a href="/gmsh/gallery/magnetron1.gif">pict1</a>,
-    <a href="/gmsh/gallery/magnetron2.gif">pict2</a>,
-    <a href="/gmsh/gallery/magnetron3.gif">pict3</a>,
-    <a href="/gmsh/gallery/magnetron4.gif">pict4</a>
-    (P. Lefèvre).
-<li>Circuit breaker: 
-    <a href="/gmsh/gallery/breaker.gif">pict1</a>
-    (S. K. Choi).
-<li>Electrical machine:
-    <a href="/gmsh/gallery/machine.gif">pict1</a>
-    (J. Gyselinck).
-<li>CFD post-processing:
-    <a href="/gmsh/gallery/f16_stream.jpg">pict1</a>,
-    <a href="/gmsh/gallery/f18_stream.jpg">pict2</a>,
-    <a href="/gmsh/gallery/pressure-ring.png">pict3</a>,
-    <a href="/gmsh/gallery/boeing.jpg">pict4</a>
-    (P. Geuzaine).
-<li>Braids: 
-    <a href="/gmsh/gallery/tresse1.gif">pict1</a>,
-    <a href="/gmsh/gallery/tresse2.gif">pict2</a>
-    (D. Colignon).
-<li>Pump: 
-    <a href="/gmsh/gallery/pump.png">pict1</a>
-    (EDF R&amp;D)
+    <a href="/gmsh/gallery/spirale.gif">spirale</a>,
+    <a href="/gmsh/gallery/piece1.gif">unstructured</a>, 
+    <a href="/gmsh/gallery/piece2.gif">structured tet</a>, 
+    <a href="/gmsh/gallery/piece3.gif">structured hex/pri</a>.
+<li>Post-processing:
+    <a href="/gmsh/gallery/f16_stream.jpg">F16 streamlines</a>,
+    <a href="/gmsh/gallery/f18_stream.jpg">F18 streamlines</a>,
+    <a href="/gmsh/gallery/pressure-ring.png">pressure ring</a>,
+    <a href="/gmsh/gallery/boeing.jpg">Boing</a> (P. Geuzaine),
+    <a href="/gmsh/gallery/blob.gif">post-pro</a>,
+    <a href="/gmsh/gallery/contact.png">post-pro 2</a>,
+    <a href="/gmsh/gallery/cmap.png">colormaps</a>.
+<li>Miscellaneous features:
+    <a href="/gmsh/gallery/lenna.gif">Lenna as background mesh</a>,
+    <a href="/gmsh/gallery/spiranim.gif">animated cutting spiral</a>,
+    <a href="/gmsh/gallery/select.png">selection</a>,
+    <a href="/gmsh/gallery/runner.png">clipping</a>.
+<li>Various screen captures:
+    <a href="/gmsh/gallery/screenshot1.gif">magnetron</a>,
+    <a href="/gmsh/gallery/screenshot2.gif">F16</a>,
+    <a href="/gmsh/gallery/screenshot3.gif">electrical machine</a>,
+    <a href="/gmsh/gallery/screenshot4.gif">neutron scattering</a>.
 </ul>
 
 <h2><a name="Links"></a>Links</h2>
