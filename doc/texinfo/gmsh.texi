@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.238 2008-02-17 08:48:11 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.239 2008-02-23 22:16:32 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 @c
@@ -3104,8 +3104,8 @@ See below for the ordering of the nodes.
 
 @item @var{number-of-tags}
 gives the number of tags for the @var{n}-th element. By default, Gmsh
-generates meshes with two tags and reads files with an arbitrary number of
-tags: see below.
+generates meshes with three tags and reads files with an arbitrary
+number of tags: see below.
 
 @item @var{tag}
 is an integer tag associated with the @var{n}-th element. By default,
