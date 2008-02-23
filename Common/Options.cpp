@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.384 2008-02-23 10:43:44 geuzaine Exp $
+// $Id: Options.cpp,v 1.385 2008-02-23 15:30:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -72,12 +72,12 @@ void Init_Options_Safe(int num)
   Set_DefaultColorOptions(num, PrintOptions_Color);
 }
 
-char *gmsh_getenv(char *var)
+const char *gmsh_getenv(const char *var)
 {
 #if !defined(WIN32)
   return getenv(var);
 #else
-  char *tmp = getenv(var);
+  const char *tmp = getenv(var);
   // Don't accept top dir or anything partially expanded like
   // c:\Documents and Settings\%USERPROFILE%, etc.
   if(!tmp || !strcmp(tmp, "/") || strstr(tmp, "%") || strstr(tmp, "$"))
@@ -95,7 +95,7 @@ void Init_Options(int num)
   CTX.big_endian = (byte[0] ? 0 : 1);
 
   // Home directory
-  char *tmp;
+  const char *tmp;
   if((tmp = gmsh_getenv("GMSH_HOME")))
     strcpy(CTX.home_dir, tmp);
   else if((tmp = gmsh_getenv("HOME")))
@@ -185,7 +185,7 @@ void Init_Options_GUI(int num)
   Set_ColorOptions_GUI(num, PrintOptions_Color);
 }
 
-void Print_OptionCategory(int level, int diff, int help, char *cat, FILE * file)
+void Print_OptionCategory(int level, int diff, int help, const char *cat, FILE *file)
 {
   if(diff || !help || !(level & GMSH_FULLRC))
     return;
@@ -214,7 +214,7 @@ GmshColorTable *Get_ColorTable(int num)
   return &opt->CT;
 }
 
-void Print_ColorTable(int num, int diff, char *prefix, FILE *file)
+void Print_ColorTable(int num, int diff, const char *prefix, FILE *file)
 {
   PViewOptions *opt;
   if(PView::list.empty() || num < 0 || num > (int)PView::list.size() - 1)
@@ -359,7 +359,7 @@ void Print_Options(int num, int level, int diff, int help, const char *filename)
   if(filename) fclose(file);
 }
 
-char *Get_OptionSaveLevel(int level){
+const char *Get_OptionSaveLevel(int level){
   if(level & GMSH_SESSIONRC){
     return "General.SessionFileName";
   }
@@ -374,7 +374,7 @@ char *Get_OptionSaveLevel(int level){
 void Print_OptionsDoc()
 {
   FILE *file;
-  char *warn =
+  const char *warn =
     "@c\n"
     "@c This file is generated automatically by running \"gmsh -doc\".\n"
     "@c Do not edit by hand!\n"
@@ -517,7 +517,7 @@ void Print_OptionsDoc()
 
 // General routines for string options
 
-StringXString *Get_StringOptionCategory(char *cat)
+StringXString *Get_StringOptionCategory(const char *cat)
 {
   if(!strcmp(cat, "General"))
     return GeneralOptions_String;
@@ -555,7 +555,7 @@ void Set_StringOptions_GUI(int num, StringXString s[])
   }
 }
 
-void *Get_StringOption(char *str, StringXString s[])
+void *Get_StringOption(const char *str, StringXString s[])
 {
   int i = 0;
   while((s[i].str != NULL) && (strcmp(s[i].str, str)))
@@ -567,7 +567,7 @@ void *Get_StringOption(char *str, StringXString s[])
 }
 
 void Print_StringOptions(int num, int level, int diff, int help, 
-			 StringXString s[], char *prefix, FILE * file)
+			 StringXString s[], const char *prefix, FILE *file)
 {
   int i = 0;
   char tmp[1024];
@@ -587,7 +587,7 @@ void Print_StringOptions(int num, int level, int diff, int help,
   }
 }
 
-void Print_StringOptionsDoc(StringXString s[], char *prefix, FILE * file)
+void Print_StringOptionsDoc(StringXString s[], const char *prefix, FILE *file)
 {
   int i = 0, j;
   char tmp[1024];
@@ -597,7 +597,7 @@ void Print_StringOptionsDoc(StringXString s[], char *prefix, FILE * file)
     fprintf(file, "%s@*\n", s[i].help);
 
     // sanitize the string for texinfo
-    char *ptr = s[i].function(0, GMSH_GET, NULL);
+    const char *ptr = s[i].function(0, GMSH_GET, NULL);
     int len = strlen(ptr);
     j = 0;
     while(j < len){
@@ -617,7 +617,7 @@ void Print_StringOptionsDoc(StringXString s[], char *prefix, FILE * file)
 
 // General routines for numeric options
 
-StringXNumber *Get_NumberOptionCategory(char *cat)
+StringXNumber *Get_NumberOptionCategory(const char *cat)
 {
   if(!strcmp(cat, "General"))
     return GeneralOptions_Number;
@@ -655,7 +655,7 @@ void Set_NumberOptions_GUI(int num, StringXNumber s[])
   }
 }
 
-void *Get_NumberOption(char *str, StringXNumber s[])
+void *Get_NumberOption(const char *str, StringXNumber s[])
 {
   int i = 0;
 
@@ -669,7 +669,7 @@ void *Get_NumberOption(char *str, StringXNumber s[])
 }
 
 void Print_NumberOptions(int num, int level, int diff, int help,
-			 StringXNumber s[], char *prefix, FILE * file)
+			 StringXNumber s[], const char *prefix, FILE * file)
 {
   int i = 0;
   char tmp[1024];
@@ -689,7 +689,7 @@ void Print_NumberOptions(int num, int level, int diff, int help,
   }
 }
 
-void Print_NumberOptionsDoc(StringXNumber s[], char *prefix, FILE * file)
+void Print_NumberOptionsDoc(StringXNumber s[], const char *prefix, FILE * file)
 {
   int i = 0;
   while(s[i].str) {
@@ -703,7 +703,7 @@ void Print_NumberOptionsDoc(StringXNumber s[], char *prefix, FILE * file)
 
 // General routines for color options
 
-StringXColor *Get_ColorOptionCategory(char *cat)
+StringXColor *Get_ColorOptionCategory(const char *cat)
 {
   if(!strcmp(cat, "General"))
     return GeneralOptions_Color;
@@ -761,7 +761,7 @@ void Set_ColorOptions_GUI(int num, StringXColor s[])
   }
 }
 
-void *Get_ColorOption(char *str, StringXColor s[])
+void *Get_ColorOption(const char *str, StringXColor s[])
 {
   int i = 0;
   while((s[i].str != NULL) && (strcmp(s[i].str, str)))
@@ -773,7 +773,7 @@ void *Get_ColorOption(char *str, StringXColor s[])
 }
 
 void Print_ColorOptions(int num, int level, int diff, int help,
-			StringXColor s[], char *prefix, FILE * file)
+			StringXColor s[], const char *prefix, FILE * file)
 {
   int i = 0;
   char tmp[1024];
@@ -811,7 +811,7 @@ void Print_ColorOptions(int num, int level, int diff, int help,
   }
 }
 
-void Print_ColorOptionsDoc(StringXColor s[], char *prefix, FILE * file)
+void Print_ColorOptionsDoc(StringXColor s[], const char *prefix, FILE * file)
 {
   int i = 0;
   while(s[i].str) {
@@ -827,7 +827,7 @@ void Print_ColorOptionsDoc(StringXColor s[], char *prefix, FILE * file)
 }
 
 int Get_ColorForString(StringX4Int SX4I[], int alpha,
-                       char *str, int *FlagError)
+                       const char *str, int *FlagError)
 {
   int i = 0;
   while((SX4I[i].str != NULL) && (strcmp(SX4I[i].str, str)))
@@ -857,7 +857,7 @@ int Get_ColorForString(StringX4Int SX4I[], int alpha,
 
 // String option routines
 
-char *opt_general_axes_label0(OPT_ARGS_STR)
+const char *opt_general_axes_label0(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     strcpy(CTX.axes_label[0], val);
@@ -868,7 +868,7 @@ char *opt_general_axes_label0(OPT_ARGS_STR)
   return CTX.axes_label[0];
 }
 
-char *opt_general_axes_label1(OPT_ARGS_STR)
+const char *opt_general_axes_label1(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     strcpy(CTX.axes_label[1], val);
@@ -879,7 +879,7 @@ char *opt_general_axes_label1(OPT_ARGS_STR)
   return CTX.axes_label[1];
 }
 
-char *opt_general_axes_label2(OPT_ARGS_STR)
+const char *opt_general_axes_label2(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     strcpy(CTX.axes_label[2], val);
@@ -890,7 +890,7 @@ char *opt_general_axes_label2(OPT_ARGS_STR)
   return CTX.axes_label[2];
 }
 
-char *opt_general_axes_format0(OPT_ARGS_STR)
+const char *opt_general_axes_format0(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     strcpy(CTX.axes_format[0], val);
@@ -901,7 +901,7 @@ char *opt_general_axes_format0(OPT_ARGS_STR)
   return CTX.axes_format[0];
 }
 
-char *opt_general_axes_format1(OPT_ARGS_STR)
+const char *opt_general_axes_format1(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     strcpy(CTX.axes_format[1], val);
@@ -912,7 +912,7 @@ char *opt_general_axes_format1(OPT_ARGS_STR)
   return CTX.axes_format[1];
 }
 
-char *opt_general_axes_format2(OPT_ARGS_STR)
+const char *opt_general_axes_format2(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     strcpy(CTX.axes_format[2], val);
@@ -923,19 +923,19 @@ char *opt_general_axes_format2(OPT_ARGS_STR)
   return CTX.axes_format[2];
 }
 
-char *opt_general_display(OPT_ARGS_STR)
+const char *opt_general_display(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.display = val;
   return CTX.display;
 }
 
-char *opt_general_filename(OPT_ARGS_STR)
+const char *opt_general_filename(OPT_ARGS_STR)
 {
   return CTX.filename;
 }
 
-char *opt_general_default_filename(OPT_ARGS_STR)
+const char *opt_general_default_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET){
     CTX.default_filename = val;
@@ -949,7 +949,7 @@ char *opt_general_default_filename(OPT_ARGS_STR)
   return CTX.default_filename;
 }
 
-char *opt_general_tmp_filename(OPT_ARGS_STR)
+const char *opt_general_tmp_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET){
     CTX.tmp_filename = val;
@@ -959,7 +959,7 @@ char *opt_general_tmp_filename(OPT_ARGS_STR)
   return CTX.tmp_filename;
 }
 
-char *opt_general_error_filename(OPT_ARGS_STR)
+const char *opt_general_error_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET){
     CTX.error_filename = val;
@@ -969,7 +969,7 @@ char *opt_general_error_filename(OPT_ARGS_STR)
   return CTX.error_filename;
 }
 
-char *opt_general_session_filename(OPT_ARGS_STR)
+const char *opt_general_session_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) {
     CTX.session_filename = val;
@@ -979,7 +979,7 @@ char *opt_general_session_filename(OPT_ARGS_STR)
   return CTX.session_filename;
 }
 
-char *opt_general_options_filename(OPT_ARGS_STR)
+const char *opt_general_options_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) {
     CTX.options_filename = val;
@@ -989,7 +989,7 @@ char *opt_general_options_filename(OPT_ARGS_STR)
   return CTX.options_filename;
 }
 
-char *opt_general_editor(OPT_ARGS_STR)
+const char *opt_general_editor(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.editor = val;
@@ -1000,7 +1000,7 @@ char *opt_general_editor(OPT_ARGS_STR)
   return CTX.editor;
 }
 
-char *opt_general_web_browser(OPT_ARGS_STR)
+const char *opt_general_web_browser(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.web_browser = val;
@@ -1011,14 +1011,14 @@ char *opt_general_web_browser(OPT_ARGS_STR)
   return CTX.web_browser;
 }
 
-char *opt_general_gui_theme(OPT_ARGS_STR)
+const char *opt_general_gui_theme(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.gui_theme = val;
   return CTX.gui_theme;
 }
 
-char *opt_general_graphics_font(OPT_ARGS_STR)
+const char *opt_general_graphics_font(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.gl_font = val;
@@ -1035,13 +1035,7 @@ char *opt_general_graphics_font(OPT_ARGS_STR)
   return CTX.gl_font;
 }
 
-char *opt_mesh_triangle_options(OPT_ARGS_STR){
-  if(action & GMSH_SET)
-    CTX.mesh.triangle_options = val;
-  return CTX.mesh.triangle_options;
-}
-
-char *opt_solver_socket_name(OPT_ARGS_STR)
+const char *opt_solver_socket_name(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
     CTX.solver.socket_name = val;
@@ -1052,7 +1046,7 @@ char *opt_solver_socket_name(OPT_ARGS_STR)
   return CTX.solver.socket_name;
 }
 
-char *opt_solver_name(OPT_ARGS_STR)
+const char *opt_solver_name(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1065,32 +1059,32 @@ char *opt_solver_name(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_name0(OPT_ARGS_STR)
+const char *opt_solver_name0(OPT_ARGS_STR)
 {
   return opt_solver_name(0, action, val);
 }
 
-char *opt_solver_name1(OPT_ARGS_STR)
+const char *opt_solver_name1(OPT_ARGS_STR)
 {
   return opt_solver_name(1, action, val);
 }
 
-char *opt_solver_name2(OPT_ARGS_STR)
+const char *opt_solver_name2(OPT_ARGS_STR)
 {
   return opt_solver_name(2, action, val);
 }
 
-char *opt_solver_name3(OPT_ARGS_STR)
+const char *opt_solver_name3(OPT_ARGS_STR)
 {
   return opt_solver_name(3, action, val);
 }
 
-char *opt_solver_name4(OPT_ARGS_STR)
+const char *opt_solver_name4(OPT_ARGS_STR)
 {
   return opt_solver_name(4, action, val);
 }
 
-char *opt_solver_executable(OPT_ARGS_STR)
+const char *opt_solver_executable(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1103,32 +1097,32 @@ char *opt_solver_executable(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_executable0(OPT_ARGS_STR)
+const char *opt_solver_executable0(OPT_ARGS_STR)
 {
   return opt_solver_executable(0, action, val);
 }
 
-char *opt_solver_executable1(OPT_ARGS_STR)
+const char *opt_solver_executable1(OPT_ARGS_STR)
 {
   return opt_solver_executable(1, action, val);
 }
 
-char *opt_solver_executable2(OPT_ARGS_STR)
+const char *opt_solver_executable2(OPT_ARGS_STR)
 {
   return opt_solver_executable(2, action, val);
 }
 
-char *opt_solver_executable3(OPT_ARGS_STR)
+const char *opt_solver_executable3(OPT_ARGS_STR)
 {
   return opt_solver_executable(3, action, val);
 }
 
-char *opt_solver_executable4(OPT_ARGS_STR)
+const char *opt_solver_executable4(OPT_ARGS_STR)
 {
   return opt_solver_executable(4, action, val);
 }
 
-char *opt_solver_help(OPT_ARGS_STR)
+const char *opt_solver_help(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1139,32 +1133,32 @@ char *opt_solver_help(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_help0(OPT_ARGS_STR)
+const char *opt_solver_help0(OPT_ARGS_STR)
 {
   return opt_solver_help(0, action, val);
 }
 
-char *opt_solver_help1(OPT_ARGS_STR)
+const char *opt_solver_help1(OPT_ARGS_STR)
 {
   return opt_solver_help(1, action, val);
 }
 
-char *opt_solver_help2(OPT_ARGS_STR)
+const char *opt_solver_help2(OPT_ARGS_STR)
 {
   return opt_solver_help(2, action, val);
 }
 
-char *opt_solver_help3(OPT_ARGS_STR)
+const char *opt_solver_help3(OPT_ARGS_STR)
 {
   return opt_solver_help(3, action, val);
 }
 
-char *opt_solver_help4(OPT_ARGS_STR)
+const char *opt_solver_help4(OPT_ARGS_STR)
 {
   return opt_solver_help(4, action, val);
 }
 
-char *opt_solver_extension(OPT_ARGS_STR)
+const char *opt_solver_extension(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1175,32 +1169,32 @@ char *opt_solver_extension(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_extension0(OPT_ARGS_STR)
+const char *opt_solver_extension0(OPT_ARGS_STR)
 {
   return opt_solver_extension(0, action, val);
 }
 
-char *opt_solver_extension1(OPT_ARGS_STR)
+const char *opt_solver_extension1(OPT_ARGS_STR)
 {
   return opt_solver_extension(1, action, val);
 }
 
-char *opt_solver_extension2(OPT_ARGS_STR)
+const char *opt_solver_extension2(OPT_ARGS_STR)
 {
   return opt_solver_extension(2, action, val);
 }
 
-char *opt_solver_extension3(OPT_ARGS_STR)
+const char *opt_solver_extension3(OPT_ARGS_STR)
 {
   return opt_solver_extension(3, action, val);
 }
 
-char *opt_solver_extension4(OPT_ARGS_STR)
+const char *opt_solver_extension4(OPT_ARGS_STR)
 {
   return opt_solver_extension(4, action, val);
 }
 
-char *opt_solver_mesh_name(OPT_ARGS_STR)
+const char *opt_solver_mesh_name(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1211,32 +1205,32 @@ char *opt_solver_mesh_name(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_mesh_name0(OPT_ARGS_STR)
+const char *opt_solver_mesh_name0(OPT_ARGS_STR)
 {
   return opt_solver_mesh_name(0, action, val);
 }
 
-char *opt_solver_mesh_name1(OPT_ARGS_STR)
+const char *opt_solver_mesh_name1(OPT_ARGS_STR)
 {
   return opt_solver_mesh_name(1, action, val);
 }
 
-char *opt_solver_mesh_name2(OPT_ARGS_STR)
+const char *opt_solver_mesh_name2(OPT_ARGS_STR)
 {
   return opt_solver_mesh_name(2, action, val);
 }
 
-char *opt_solver_mesh_name3(OPT_ARGS_STR)
+const char *opt_solver_mesh_name3(OPT_ARGS_STR)
 {
   return opt_solver_mesh_name(3, action, val);
 }
 
-char *opt_solver_mesh_name4(OPT_ARGS_STR)
+const char *opt_solver_mesh_name4(OPT_ARGS_STR)
 {
   return opt_solver_mesh_name(4, action, val);
 }
 
-char *opt_solver_mesh_command(OPT_ARGS_STR)
+const char *opt_solver_mesh_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1249,32 +1243,32 @@ char *opt_solver_mesh_command(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_mesh_command0(OPT_ARGS_STR)
+const char *opt_solver_mesh_command0(OPT_ARGS_STR)
 {
   return opt_solver_mesh_command(0, action, val);
 }
 
-char *opt_solver_mesh_command1(OPT_ARGS_STR)
+const char *opt_solver_mesh_command1(OPT_ARGS_STR)
 {
   return opt_solver_mesh_command(1, action, val);
 }
 
-char *opt_solver_mesh_command2(OPT_ARGS_STR)
+const char *opt_solver_mesh_command2(OPT_ARGS_STR)
 {
   return opt_solver_mesh_command(2, action, val);
 }
 
-char *opt_solver_mesh_command3(OPT_ARGS_STR)
+const char *opt_solver_mesh_command3(OPT_ARGS_STR)
 {
   return opt_solver_mesh_command(3, action, val);
 }
 
-char *opt_solver_mesh_command4(OPT_ARGS_STR)
+const char *opt_solver_mesh_command4(OPT_ARGS_STR)
 {
   return opt_solver_mesh_command(4, action, val);
 }
 
-char *opt_solver_socket_command(OPT_ARGS_STR)
+const char *opt_solver_socket_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1285,32 +1279,32 @@ char *opt_solver_socket_command(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_socket_command0(OPT_ARGS_STR)
+const char *opt_solver_socket_command0(OPT_ARGS_STR)
 {
   return opt_solver_socket_command(0, action, val);
 }
 
-char *opt_solver_socket_command1(OPT_ARGS_STR)
+const char *opt_solver_socket_command1(OPT_ARGS_STR)
 {
   return opt_solver_socket_command(1, action, val);
 }
 
-char *opt_solver_socket_command2(OPT_ARGS_STR)
+const char *opt_solver_socket_command2(OPT_ARGS_STR)
 {
   return opt_solver_socket_command(2, action, val);
 }
 
-char *opt_solver_socket_command3(OPT_ARGS_STR)
+const char *opt_solver_socket_command3(OPT_ARGS_STR)
 {
   return opt_solver_socket_command(3, action, val);
 }
 
-char *opt_solver_socket_command4(OPT_ARGS_STR)
+const char *opt_solver_socket_command4(OPT_ARGS_STR)
 {
   return opt_solver_socket_command(4, action, val);
 }
 
-char *opt_solver_name_command(OPT_ARGS_STR)
+const char *opt_solver_name_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1321,32 +1315,32 @@ char *opt_solver_name_command(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_name_command0(OPT_ARGS_STR)
+const char *opt_solver_name_command0(OPT_ARGS_STR)
 {
   return opt_solver_name_command(0, action, val);
 }
 
-char *opt_solver_name_command1(OPT_ARGS_STR)
+const char *opt_solver_name_command1(OPT_ARGS_STR)
 {
   return opt_solver_name_command(1, action, val);
 }
 
-char *opt_solver_name_command2(OPT_ARGS_STR)
+const char *opt_solver_name_command2(OPT_ARGS_STR)
 {
   return opt_solver_name_command(2, action, val);
 }
 
-char *opt_solver_name_command3(OPT_ARGS_STR)
+const char *opt_solver_name_command3(OPT_ARGS_STR)
 {
   return opt_solver_name_command(3, action, val);
 }
 
-char *opt_solver_name_command4(OPT_ARGS_STR)
+const char *opt_solver_name_command4(OPT_ARGS_STR)
 {
   return opt_solver_name_command(4, action, val);
 }
 
-char *opt_solver_option_command(OPT_ARGS_STR)
+const char *opt_solver_option_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1357,32 +1351,32 @@ char *opt_solver_option_command(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_option_command0(OPT_ARGS_STR)
+const char *opt_solver_option_command0(OPT_ARGS_STR)
 {
   return opt_solver_option_command(0, action, val);
 }
 
-char *opt_solver_option_command1(OPT_ARGS_STR)
+const char *opt_solver_option_command1(OPT_ARGS_STR)
 {
   return opt_solver_option_command(1, action, val);
 }
 
-char *opt_solver_option_command2(OPT_ARGS_STR)
+const char *opt_solver_option_command2(OPT_ARGS_STR)
 {
   return opt_solver_option_command(2, action, val);
 }
 
-char *opt_solver_option_command3(OPT_ARGS_STR)
+const char *opt_solver_option_command3(OPT_ARGS_STR)
 {
   return opt_solver_option_command(3, action, val);
 }
 
-char *opt_solver_option_command4(OPT_ARGS_STR)
+const char *opt_solver_option_command4(OPT_ARGS_STR)
 {
   return opt_solver_option_command(4, action, val);
 }
 
-char *opt_solver_first_option(OPT_ARGS_STR)
+const char *opt_solver_first_option(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1393,32 +1387,32 @@ char *opt_solver_first_option(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_first_option0(OPT_ARGS_STR)
+const char *opt_solver_first_option0(OPT_ARGS_STR)
 {
   return opt_solver_first_option(0, action, val);
 }
 
-char *opt_solver_first_option1(OPT_ARGS_STR)
+const char *opt_solver_first_option1(OPT_ARGS_STR)
 {
   return opt_solver_first_option(1, action, val);
 }
 
-char *opt_solver_first_option2(OPT_ARGS_STR)
+const char *opt_solver_first_option2(OPT_ARGS_STR)
 {
   return opt_solver_first_option(2, action, val);
 }
 
-char *opt_solver_first_option3(OPT_ARGS_STR)
+const char *opt_solver_first_option3(OPT_ARGS_STR)
 {
   return opt_solver_first_option(3, action, val);
 }
 
-char *opt_solver_first_option4(OPT_ARGS_STR)
+const char *opt_solver_first_option4(OPT_ARGS_STR)
 {
   return opt_solver_first_option(4, action, val);
 }
 
-char *opt_solver_second_option(OPT_ARGS_STR)
+const char *opt_solver_second_option(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1429,32 +1423,32 @@ char *opt_solver_second_option(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_second_option0(OPT_ARGS_STR)
+const char *opt_solver_second_option0(OPT_ARGS_STR)
 {
   return opt_solver_second_option(0, action, val);
 }
 
-char *opt_solver_second_option1(OPT_ARGS_STR)
+const char *opt_solver_second_option1(OPT_ARGS_STR)
 {
   return opt_solver_second_option(1, action, val);
 }
 
-char *opt_solver_second_option2(OPT_ARGS_STR)
+const char *opt_solver_second_option2(OPT_ARGS_STR)
 {
   return opt_solver_second_option(2, action, val);
 }
 
-char *opt_solver_second_option3(OPT_ARGS_STR)
+const char *opt_solver_second_option3(OPT_ARGS_STR)
 {
   return opt_solver_second_option(3, action, val);
 }
 
-char *opt_solver_second_option4(OPT_ARGS_STR)
+const char *opt_solver_second_option4(OPT_ARGS_STR)
 {
   return opt_solver_second_option(4, action, val);
 }
 
-char *opt_solver_third_option(OPT_ARGS_STR)
+const char *opt_solver_third_option(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1465,32 +1459,32 @@ char *opt_solver_third_option(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_third_option0(OPT_ARGS_STR)
+const char *opt_solver_third_option0(OPT_ARGS_STR)
 {
   return opt_solver_third_option(0, action, val);
 }
 
-char *opt_solver_third_option1(OPT_ARGS_STR)
+const char *opt_solver_third_option1(OPT_ARGS_STR)
 {
   return opt_solver_third_option(1, action, val);
 }
 
-char *opt_solver_third_option2(OPT_ARGS_STR)
+const char *opt_solver_third_option2(OPT_ARGS_STR)
 {
   return opt_solver_third_option(2, action, val);
 }
 
-char *opt_solver_third_option3(OPT_ARGS_STR)
+const char *opt_solver_third_option3(OPT_ARGS_STR)
 {
   return opt_solver_third_option(3, action, val);
 }
 
-char *opt_solver_third_option4(OPT_ARGS_STR)
+const char *opt_solver_third_option4(OPT_ARGS_STR)
 {
   return opt_solver_third_option(4, action, val);
 }
 
-char *opt_solver_fourth_option(OPT_ARGS_STR)
+const char *opt_solver_fourth_option(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1501,32 +1495,32 @@ char *opt_solver_fourth_option(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_fourth_option0(OPT_ARGS_STR)
+const char *opt_solver_fourth_option0(OPT_ARGS_STR)
 {
   return opt_solver_fourth_option(0, action, val);
 }
 
-char *opt_solver_fourth_option1(OPT_ARGS_STR)
+const char *opt_solver_fourth_option1(OPT_ARGS_STR)
 {
   return opt_solver_fourth_option(1, action, val);
 }
 
-char *opt_solver_fourth_option2(OPT_ARGS_STR)
+const char *opt_solver_fourth_option2(OPT_ARGS_STR)
 {
   return opt_solver_fourth_option(2, action, val);
 }
 
-char *opt_solver_fourth_option3(OPT_ARGS_STR)
+const char *opt_solver_fourth_option3(OPT_ARGS_STR)
 {
   return opt_solver_fourth_option(3, action, val);
 }
 
-char *opt_solver_fourth_option4(OPT_ARGS_STR)
+const char *opt_solver_fourth_option4(OPT_ARGS_STR)
 {
   return opt_solver_fourth_option(4, action, val);
 }
 
-char *opt_solver_fifth_option(OPT_ARGS_STR)
+const char *opt_solver_fifth_option(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1537,32 +1531,32 @@ char *opt_solver_fifth_option(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_fifth_option0(OPT_ARGS_STR)
+const char *opt_solver_fifth_option0(OPT_ARGS_STR)
 {
   return opt_solver_fifth_option(0, action, val);
 }
 
-char *opt_solver_fifth_option1(OPT_ARGS_STR)
+const char *opt_solver_fifth_option1(OPT_ARGS_STR)
 {
   return opt_solver_fifth_option(1, action, val);
 }
 
-char *opt_solver_fifth_option2(OPT_ARGS_STR)
+const char *opt_solver_fifth_option2(OPT_ARGS_STR)
 {
   return opt_solver_fifth_option(2, action, val);
 }
 
-char *opt_solver_fifth_option3(OPT_ARGS_STR)
+const char *opt_solver_fifth_option3(OPT_ARGS_STR)
 {
   return opt_solver_fifth_option(3, action, val);
 }
 
-char *opt_solver_fifth_option4(OPT_ARGS_STR)
+const char *opt_solver_fifth_option4(OPT_ARGS_STR)
 {
   return opt_solver_fifth_option(4, action, val);
 }
 
-char *opt_solver_first_button(OPT_ARGS_STR)
+const char *opt_solver_first_button(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1573,32 +1567,32 @@ char *opt_solver_first_button(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_first_button0(OPT_ARGS_STR)
+const char *opt_solver_first_button0(OPT_ARGS_STR)
 {
   return opt_solver_first_button(0, action, val);
 }
 
-char *opt_solver_first_button1(OPT_ARGS_STR)
+const char *opt_solver_first_button1(OPT_ARGS_STR)
 {
   return opt_solver_first_button(1, action, val);
 }
 
-char *opt_solver_first_button2(OPT_ARGS_STR)
+const char *opt_solver_first_button2(OPT_ARGS_STR)
 {
   return opt_solver_first_button(2, action, val);
 }
 
-char *opt_solver_first_button3(OPT_ARGS_STR)
+const char *opt_solver_first_button3(OPT_ARGS_STR)
 {
   return opt_solver_first_button(3, action, val);
 }
 
-char *opt_solver_first_button4(OPT_ARGS_STR)
+const char *opt_solver_first_button4(OPT_ARGS_STR)
 {
   return opt_solver_first_button(4, action, val);
 }
 
-char *opt_solver_first_button_command(OPT_ARGS_STR)
+const char *opt_solver_first_button_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1609,32 +1603,32 @@ char *opt_solver_first_button_command(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_first_button_command0(OPT_ARGS_STR)
+const char *opt_solver_first_button_command0(OPT_ARGS_STR)
 {
   return opt_solver_first_button_command(0, action, val);
 }
 
-char *opt_solver_first_button_command1(OPT_ARGS_STR)
+const char *opt_solver_first_button_command1(OPT_ARGS_STR)
 {
   return opt_solver_first_button_command(1, action, val);
 }
 
-char *opt_solver_first_button_command2(OPT_ARGS_STR)
+const char *opt_solver_first_button_command2(OPT_ARGS_STR)
 {
   return opt_solver_first_button_command(2, action, val);
 }
 
-char *opt_solver_first_button_command3(OPT_ARGS_STR)
+const char *opt_solver_first_button_command3(OPT_ARGS_STR)
 {
   return opt_solver_first_button_command(3, action, val);
 }
 
-char *opt_solver_first_button_command4(OPT_ARGS_STR)
+const char *opt_solver_first_button_command4(OPT_ARGS_STR)
 {
   return opt_solver_first_button_command(4, action, val);
 }
 
-char *opt_solver_second_button(OPT_ARGS_STR)
+const char *opt_solver_second_button(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1645,32 +1639,32 @@ char *opt_solver_second_button(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_second_button0(OPT_ARGS_STR)
+const char *opt_solver_second_button0(OPT_ARGS_STR)
 {
   return opt_solver_second_button(0, action, val);
 }
 
-char *opt_solver_second_button1(OPT_ARGS_STR)
+const char *opt_solver_second_button1(OPT_ARGS_STR)
 {
   return opt_solver_second_button(1, action, val);
 }
 
-char *opt_solver_second_button2(OPT_ARGS_STR)
+const char *opt_solver_second_button2(OPT_ARGS_STR)
 {
   return opt_solver_second_button(2, action, val);
 }
 
-char *opt_solver_second_button3(OPT_ARGS_STR)
+const char *opt_solver_second_button3(OPT_ARGS_STR)
 {
   return opt_solver_second_button(3, action, val);
 }
 
-char *opt_solver_second_button4(OPT_ARGS_STR)
+const char *opt_solver_second_button4(OPT_ARGS_STR)
 {
   return opt_solver_second_button(4, action, val);
 }
 
-char *opt_solver_second_button_command(OPT_ARGS_STR)
+const char *opt_solver_second_button_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1681,32 +1675,32 @@ char *opt_solver_second_button_command(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_second_button_command0(OPT_ARGS_STR)
+const char *opt_solver_second_button_command0(OPT_ARGS_STR)
 {
   return opt_solver_second_button_command(0, action, val);
 }
 
-char *opt_solver_second_button_command1(OPT_ARGS_STR)
+const char *opt_solver_second_button_command1(OPT_ARGS_STR)
 {
   return opt_solver_second_button_command(1, action, val);
 }
 
-char *opt_solver_second_button_command2(OPT_ARGS_STR)
+const char *opt_solver_second_button_command2(OPT_ARGS_STR)
 {
   return opt_solver_second_button_command(2, action, val);
 }
 
-char *opt_solver_second_button_command3(OPT_ARGS_STR)
+const char *opt_solver_second_button_command3(OPT_ARGS_STR)
 {
   return opt_solver_second_button_command(3, action, val);
 }
 
-char *opt_solver_second_button_command4(OPT_ARGS_STR)
+const char *opt_solver_second_button_command4(OPT_ARGS_STR)
 {
   return opt_solver_second_button_command(4, action, val);
 }
 
-char *opt_solver_third_button(OPT_ARGS_STR)
+const char *opt_solver_third_button(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1717,32 +1711,32 @@ char *opt_solver_third_button(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_third_button0(OPT_ARGS_STR)
+const char *opt_solver_third_button0(OPT_ARGS_STR)
 {
   return opt_solver_third_button(0, action, val);
 }
 
-char *opt_solver_third_button1(OPT_ARGS_STR)
+const char *opt_solver_third_button1(OPT_ARGS_STR)
 {
   return opt_solver_third_button(1, action, val);
 }
 
-char *opt_solver_third_button2(OPT_ARGS_STR)
+const char *opt_solver_third_button2(OPT_ARGS_STR)
 {
   return opt_solver_third_button(2, action, val);
 }
 
-char *opt_solver_third_button3(OPT_ARGS_STR)
+const char *opt_solver_third_button3(OPT_ARGS_STR)
 {
   return opt_solver_third_button(3, action, val);
 }
 
-char *opt_solver_third_button4(OPT_ARGS_STR)
+const char *opt_solver_third_button4(OPT_ARGS_STR)
 {
   return opt_solver_third_button(4, action, val);
 }
 
-char *opt_solver_third_button_command(OPT_ARGS_STR)
+const char *opt_solver_third_button_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1753,32 +1747,32 @@ char *opt_solver_third_button_command(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_third_button_command0(OPT_ARGS_STR)
+const char *opt_solver_third_button_command0(OPT_ARGS_STR)
 {
   return opt_solver_third_button_command(0, action, val);
 }
 
-char *opt_solver_third_button_command1(OPT_ARGS_STR)
+const char *opt_solver_third_button_command1(OPT_ARGS_STR)
 {
   return opt_solver_third_button_command(1, action, val);
 }
 
-char *opt_solver_third_button_command2(OPT_ARGS_STR)
+const char *opt_solver_third_button_command2(OPT_ARGS_STR)
 {
   return opt_solver_third_button_command(2, action, val);
 }
 
-char *opt_solver_third_button_command3(OPT_ARGS_STR)
+const char *opt_solver_third_button_command3(OPT_ARGS_STR)
 {
   return opt_solver_third_button_command(3, action, val);
 }
 
-char *opt_solver_third_button_command4(OPT_ARGS_STR)
+const char *opt_solver_third_button_command4(OPT_ARGS_STR)
 {
   return opt_solver_third_button_command(4, action, val);
 }
 
-char *opt_solver_fourth_button(OPT_ARGS_STR)
+const char *opt_solver_fourth_button(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1789,32 +1783,32 @@ char *opt_solver_fourth_button(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_fourth_button0(OPT_ARGS_STR)
+const char *opt_solver_fourth_button0(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button(0, action, val);
 }
 
-char *opt_solver_fourth_button1(OPT_ARGS_STR)
+const char *opt_solver_fourth_button1(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button(1, action, val);
 }
 
-char *opt_solver_fourth_button2(OPT_ARGS_STR)
+const char *opt_solver_fourth_button2(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button(2, action, val);
 }
 
-char *opt_solver_fourth_button3(OPT_ARGS_STR)
+const char *opt_solver_fourth_button3(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button(3, action, val);
 }
 
-char *opt_solver_fourth_button4(OPT_ARGS_STR)
+const char *opt_solver_fourth_button4(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button(4, action, val);
 }
 
-char *opt_solver_fourth_button_command(OPT_ARGS_STR)
+const char *opt_solver_fourth_button_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1825,32 +1819,32 @@ char *opt_solver_fourth_button_command(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_fourth_button_command0(OPT_ARGS_STR)
+const char *opt_solver_fourth_button_command0(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button_command(0, action, val);
 }
 
-char *opt_solver_fourth_button_command1(OPT_ARGS_STR)
+const char *opt_solver_fourth_button_command1(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button_command(1, action, val);
 }
 
-char *opt_solver_fourth_button_command2(OPT_ARGS_STR)
+const char *opt_solver_fourth_button_command2(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button_command(2, action, val);
 }
 
-char *opt_solver_fourth_button_command3(OPT_ARGS_STR)
+const char *opt_solver_fourth_button_command3(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button_command(3, action, val);
 }
 
-char *opt_solver_fourth_button_command4(OPT_ARGS_STR)
+const char *opt_solver_fourth_button_command4(OPT_ARGS_STR)
 {
   return opt_solver_fourth_button_command(4, action, val);
 }
 
-char *opt_solver_fifth_button(OPT_ARGS_STR)
+const char *opt_solver_fifth_button(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1861,32 +1855,32 @@ char *opt_solver_fifth_button(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_fifth_button0(OPT_ARGS_STR)
+const char *opt_solver_fifth_button0(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button(0, action, val);
 }
 
-char *opt_solver_fifth_button1(OPT_ARGS_STR)
+const char *opt_solver_fifth_button1(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button(1, action, val);
 }
 
-char *opt_solver_fifth_button2(OPT_ARGS_STR)
+const char *opt_solver_fifth_button2(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button(2, action, val);
 }
 
-char *opt_solver_fifth_button3(OPT_ARGS_STR)
+const char *opt_solver_fifth_button3(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button(3, action, val);
 }
 
-char *opt_solver_fifth_button4(OPT_ARGS_STR)
+const char *opt_solver_fifth_button4(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button(4, action, val);
 }
 
-char *opt_solver_fifth_button_command(OPT_ARGS_STR)
+const char *opt_solver_fifth_button_command(OPT_ARGS_STR)
 {
 #if defined(HAVE_FLTK)
   if(action & GMSH_SET)
@@ -1897,27 +1891,27 @@ char *opt_solver_fifth_button_command(OPT_ARGS_STR)
 #endif
 }
 
-char *opt_solver_fifth_button_command0(OPT_ARGS_STR)
+const char *opt_solver_fifth_button_command0(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button_command(0, action, val);
 }
 
-char *opt_solver_fifth_button_command1(OPT_ARGS_STR)
+const char *opt_solver_fifth_button_command1(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button_command(1, action, val);
 }
 
-char *opt_solver_fifth_button_command2(OPT_ARGS_STR)
+const char *opt_solver_fifth_button_command2(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button_command(2, action, val);
 }
 
-char *opt_solver_fifth_button_command3(OPT_ARGS_STR)
+const char *opt_solver_fifth_button_command3(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button_command(3, action, val);
 }
 
-char *opt_solver_fifth_button_command4(OPT_ARGS_STR)
+const char *opt_solver_fifth_button_command4(OPT_ARGS_STR)
 {
   return opt_solver_fifth_button_command(4, action, val);
 }
@@ -1931,7 +1925,7 @@ int _gui_action_valid(int action, int num)
 }
 #endif
 
-char *opt_view_name(OPT_ARGS_STR)
+const char *opt_view_name(OPT_ARGS_STR)
 {
   GET_VIEW(""); 
   if(!data) return "";
@@ -1949,10 +1943,10 @@ char *opt_view_name(OPT_ARGS_STR)
     WID->view_input[0]->value(data->getName().c_str());
   }
 #endif
-  return (char*)data->getName().c_str();
+  return data->getName().c_str();
 }
 
-char *opt_view_format(OPT_ARGS_STR)
+const char *opt_view_format(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -1965,14 +1959,14 @@ char *opt_view_format(OPT_ARGS_STR)
   return opt->Format;
 }
 
-char *opt_view_filename(OPT_ARGS_STR)
+const char *opt_view_filename(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(!data) return "";
-  return (char*)data->getFileName().c_str();
+  return data->getFileName().c_str();
 }
 
-char *opt_view_axes_label0(OPT_ARGS_STR)
+const char *opt_view_axes_label0(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -1985,7 +1979,7 @@ char *opt_view_axes_label0(OPT_ARGS_STR)
   return opt->AxesLabel[0];
 }
 
-char *opt_view_axes_label1(OPT_ARGS_STR)
+const char *opt_view_axes_label1(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -1998,7 +1992,7 @@ char *opt_view_axes_label1(OPT_ARGS_STR)
   return opt->AxesLabel[1];
 }
 
-char *opt_view_axes_label2(OPT_ARGS_STR)
+const char *opt_view_axes_label2(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2011,7 +2005,7 @@ char *opt_view_axes_label2(OPT_ARGS_STR)
   return opt->AxesLabel[2];
 }
 
-char *opt_view_axes_format0(OPT_ARGS_STR)
+const char *opt_view_axes_format0(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2024,7 +2018,7 @@ char *opt_view_axes_format0(OPT_ARGS_STR)
   return opt->AxesFormat[0];
 }
 
-char *opt_view_axes_format1(OPT_ARGS_STR)
+const char *opt_view_axes_format1(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2037,7 +2031,7 @@ char *opt_view_axes_format1(OPT_ARGS_STR)
   return opt->AxesFormat[1];
 }
 
-char *opt_view_axes_format2(OPT_ARGS_STR)
+const char *opt_view_axes_format2(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2050,7 +2044,7 @@ char *opt_view_axes_format2(OPT_ARGS_STR)
   return opt->AxesFormat[2];
 }
 
-char *opt_view_gen_raise0(OPT_ARGS_STR)
+const char *opt_view_gen_raise0(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2064,7 +2058,7 @@ char *opt_view_gen_raise0(OPT_ARGS_STR)
   return opt->GenRaiseX;
 }
 
-char *opt_view_gen_raise1(OPT_ARGS_STR)
+const char *opt_view_gen_raise1(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2078,7 +2072,7 @@ char *opt_view_gen_raise1(OPT_ARGS_STR)
   return opt->GenRaiseY;
 }
 
-char *opt_view_gen_raise2(OPT_ARGS_STR)
+const char *opt_view_gen_raise2(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2123,7 +2117,7 @@ void _string2stipple(char str[32], int &repeat, int &pattern)
   }
 }
 
-char *opt_view_stipple0(OPT_ARGS_STR)
+const char *opt_view_stipple0(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2134,7 +2128,7 @@ char *opt_view_stipple0(OPT_ARGS_STR)
   return opt->StippleString[0];
 }
 
-char *opt_view_stipple1(OPT_ARGS_STR)
+const char *opt_view_stipple1(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2145,7 +2139,7 @@ char *opt_view_stipple1(OPT_ARGS_STR)
   return opt->StippleString[1];
 }
 
-char *opt_view_stipple2(OPT_ARGS_STR)
+const char *opt_view_stipple2(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2156,7 +2150,7 @@ char *opt_view_stipple2(OPT_ARGS_STR)
   return opt->StippleString[2];
 }
 
-char *opt_view_stipple3(OPT_ARGS_STR)
+const char *opt_view_stipple3(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2167,7 +2161,7 @@ char *opt_view_stipple3(OPT_ARGS_STR)
   return opt->StippleString[3];
 }
 
-char *opt_view_stipple4(OPT_ARGS_STR)
+const char *opt_view_stipple4(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2178,7 +2172,7 @@ char *opt_view_stipple4(OPT_ARGS_STR)
   return opt->StippleString[4];
 }
 
-char *opt_view_stipple5(OPT_ARGS_STR)
+const char *opt_view_stipple5(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2189,7 +2183,7 @@ char *opt_view_stipple5(OPT_ARGS_STR)
   return opt->StippleString[5];
 }
 
-char *opt_view_stipple6(OPT_ARGS_STR)
+const char *opt_view_stipple6(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2200,7 +2194,7 @@ char *opt_view_stipple6(OPT_ARGS_STR)
   return opt->StippleString[6];
 }
 
-char *opt_view_stipple7(OPT_ARGS_STR)
+const char *opt_view_stipple7(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2211,7 +2205,7 @@ char *opt_view_stipple7(OPT_ARGS_STR)
   return opt->StippleString[7];
 }
 
-char *opt_view_stipple8(OPT_ARGS_STR)
+const char *opt_view_stipple8(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {
@@ -2222,7 +2216,7 @@ char *opt_view_stipple8(OPT_ARGS_STR)
   return opt->StippleString[8];
 }
 
-char *opt_view_stipple9(OPT_ARGS_STR)
+const char *opt_view_stipple9(OPT_ARGS_STR)
 {
   GET_VIEW("");
   if(action & GMSH_SET) {

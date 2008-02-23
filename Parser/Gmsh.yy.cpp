@@ -852,7 +852,7 @@ int gmsh_yy_flex_debug = 0;
 char *gmsh_yytext;
 #line 1 "Gmsh.l"
 #line 2 "Gmsh.l"
-// $Id: Gmsh.yy.cpp,v 1.348 2008-02-22 21:09:02 geuzaine Exp $
+// $Id: Gmsh.yy.cpp,v 1.349 2008-02-23 15:30:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -2934,7 +2934,7 @@ char *strsave(char *ptr)
   return((char*)strcpy((char*)malloc(strlen(ptr)+1),ptr));
 }
 
-void skipline(void)
+void skipline()
 {
   int c;
   while ((c = yyinput()) != '\n'){
@@ -2942,7 +2942,7 @@ void skipline(void)
   }
 }
 
-void skip_until(char *skip, char *until)
+void skip_until(const char *skip, const char *until)
 {
   int i, nb_skip;
   int l, l_skip, l_until;

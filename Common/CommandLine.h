@@ -25,19 +25,19 @@ extern char gmsh_date[], gmsh_host[], gmsh_packager[], gmsh_url[];
 extern char gmsh_email[], gmsh_gui[], gmsh_options[], gmsh_license[];
 
 void Get_Options(int argc, char *argv[]);
-void Print_Usage(char *name);
+void Print_Usage(const char *name);
 
 char *Get_BuildOptions();
 
 int Get_GmshMajorVersion();
 int Get_GmshMinorVersion();
 int Get_GmshPatchVersion();
-char *Get_GmshExtraVersion();
-char *Get_GmshVersion();
-char *Get_GmshBuildDate();
-char *Get_GmshBuildHost();
-char *Get_GmshPackager();
-char *Get_GmshBuildOS();
-char *Get_GmshShortLicense();
+const char *Get_GmshExtraVersion();
+const char *Get_GmshVersion();
+const char *Get_GmshBuildDate();
+const char *Get_GmshBuildHost();
+const char *Get_GmshPackager();
+const char *Get_GmshBuildOS();
+const char *Get_GmshShortLicense();
 
 #endif

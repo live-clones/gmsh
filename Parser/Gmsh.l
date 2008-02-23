@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.99 2008-02-17 08:48:02 geuzaine Exp $
+// $Id: Gmsh.l,v 1.100 2008-02-23 15:30:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -297,7 +297,7 @@ char *strsave(char *ptr)
   return((char*)strcpy((char*)malloc(strlen(ptr)+1),ptr));
 }
 
-void skipline(void)
+void skipline()
 {
   int c;
   while ((c = yyinput()) != '\n'){
@@ -305,7 +305,7 @@ void skipline(void)
   }
 }
 
-void skip_until(char *skip, char *until)
+void skip_until(const char *skip, const char *until)
 {
   int i, nb_skip;
   int l, l_skip, l_until;

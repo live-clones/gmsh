@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.564 2008-02-23 10:43:44 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.565 2008-02-23 15:30:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -599,7 +599,7 @@ void file_new_cb(CALLBACK_ARGS)
 #  define NN ")\t"
 #endif
 
-static char *input_formats =
+static const char *input_formats =
   "All files" TT "*" NN
   "Gmsh geometry" TT "*.geo" NN
   "Gmsh mesh" TT "*.msh" NN
@@ -998,18 +998,18 @@ void general_options_ok_cb(CALLBACK_ARGS)
   opt_general_small_axes_position0(0, GMSH_SET, WID->gen_value[26]->value());
   opt_general_small_axes_position1(0, GMSH_SET, WID->gen_value[27]->value());
 
-  opt_general_default_filename(0, GMSH_SET, (char *)WID->gen_input[0]->value());
-  opt_general_editor(0, GMSH_SET, (char *)WID->gen_input[1]->value());
-  opt_general_web_browser(0, GMSH_SET, (char *)WID->gen_input[2]->value());
-  opt_general_axes_format0(0, GMSH_SET, (char *)WID->gen_input[3]->value());
-  opt_general_axes_format1(0, GMSH_SET, (char *)WID->gen_input[4]->value());
-  opt_general_axes_format2(0, GMSH_SET, (char *)WID->gen_input[5]->value());
-  opt_general_axes_label0(0, GMSH_SET, (char *)WID->gen_input[6]->value());
-  opt_general_axes_label1(0, GMSH_SET, (char *)WID->gen_input[7]->value());
-  opt_general_axes_label2(0, GMSH_SET, (char *)WID->gen_input[8]->value());
+  opt_general_default_filename(0, GMSH_SET, WID->gen_input[0]->value());
+  opt_general_editor(0, GMSH_SET, WID->gen_input[1]->value());
+  opt_general_web_browser(0, GMSH_SET, WID->gen_input[2]->value());
+  opt_general_axes_format0(0, GMSH_SET, WID->gen_input[3]->value());
+  opt_general_axes_format1(0, GMSH_SET, WID->gen_input[4]->value());
+  opt_general_axes_format2(0, GMSH_SET, WID->gen_input[5]->value());
+  opt_general_axes_label0(0, GMSH_SET, WID->gen_input[6]->value());
+  opt_general_axes_label1(0, GMSH_SET, WID->gen_input[7]->value());
+  opt_general_axes_label2(0, GMSH_SET, WID->gen_input[8]->value());
 
   opt_general_vector_type(0, GMSH_SET, WID->gen_choice[0]->value() + 1);
-  opt_general_graphics_font(0, GMSH_SET, (char *)WID->gen_choice[1]->text());
+  opt_general_graphics_font(0, GMSH_SET, WID->gen_choice[1]->text());
   opt_general_orthographic(0, GMSH_SET, !WID->gen_choice[2]->value());
   opt_general_axes(0, GMSH_SET, WID->gen_choice[4]->value());
   opt_general_background_gradient(0, GMSH_SET, WID->gen_choice[5]->value());
@@ -1191,7 +1191,7 @@ void solver_options_ok_cb(CALLBACK_ARGS)
 
   opt_solver_max_delay(0, GMSH_SET, WID->solver_value[0]->value());
 
-  opt_solver_socket_name(0, GMSH_SET, (char *)WID->solver_input[0]->value());
+  opt_solver_socket_name(0, GMSH_SET, WID->solver_input[0]->value());
 
   if(CTX.fast_redraw)
     CTX.post.draw = CTX.mesh.draw = 0;
@@ -1772,49 +1772,49 @@ void view_options_ok_cb(CALLBACK_ARGS)
 
       // view_inputs
 
-      char *str;
+      const char *str;
 
-      str = (char *)WID->view_input[0]->value();
+      str = WID->view_input[0]->value();
       if(force || strcmp(str, name))
         opt_view_name(i, GMSH_SET, str);
 
-      str = (char *)WID->view_input[1]->value();
+      str = WID->view_input[1]->value();
       if(force || strcmp(str, format))
         opt_view_format(i, GMSH_SET, str);
 
-      str = (char *)WID->view_input[10]->value();
+      str = WID->view_input[10]->value();
       if(force || strcmp(str, axes_label0))
         opt_view_axes_label0(i, GMSH_SET, str);
 
-      str = (char *)WID->view_input[11]->value();
+      str = WID->view_input[11]->value();
       if(force || strcmp(str, axes_label1))
         opt_view_axes_label1(i, GMSH_SET, str);
 
-      str = (char *)WID->view_input[12]->value();
+      str = WID->view_input[12]->value();
       if(force || strcmp(str, axes_label2))
         opt_view_axes_label2(i, GMSH_SET, str);
 
-      str = (char *)WID->view_input[7]->value();
+      str = WID->view_input[7]->value();
       if(force || strcmp(str, axes_format0))
         opt_view_axes_format0(i, GMSH_SET, str);
 
-      str = (char *)WID->view_input[8]->value();
+      str = WID->view_input[8]->value();
       if(force || strcmp(str, axes_format1))
         opt_view_axes_format1(i, GMSH_SET, str);
 
-      str = (char *)WID->view_input[9]->value();
+      str = WID->view_input[9]->value();
       if(force || strcmp(str, axes_format2))
         opt_view_axes_format2(i, GMSH_SET, str);
 
-      str = (char *)WID->view_input[4]->value();
+      str = WID->view_input[4]->value();
       if(force || strcmp(str, gen_raise0))
         opt_view_gen_raise0(i, GMSH_SET, str);
 
-      str = (char *)WID->view_input[5]->value();
+      str = WID->view_input[5]->value();
       if(force || strcmp(str, gen_raise1))
         opt_view_gen_raise1(i, GMSH_SET, str);
 
-      str = (char *)WID->view_input[6]->value();
+      str = WID->view_input[6]->value();
       if(force || strcmp(str, gen_raise2))
         opt_view_gen_raise2(i, GMSH_SET, str);
 
@@ -1995,7 +1995,7 @@ void visibility_ok_cb(CALLBACK_ARGS)
 void visibility_save_cb(CALLBACK_ARGS)
 {
   std::string str = VisibilityManager::instance()->getStringForGEO();
-  add_infile((char*)str.c_str(), CTX.filename);
+  add_infile(str.c_str(), CTX.filename);
 }
 
 void visibility_delete_cb(CALLBACK_ARGS)
@@ -2103,7 +2103,7 @@ void visibility_number_cb(CALLBACK_ARGS)
   else{ // hide
     val = 0;
   }
-  char *str = (char *)WID->vis_input[what]->value();
+  const char *str = WID->vis_input[what]->value();
   if(type == 1 && what >= 2 && what <= 5) what += 4;
 
   int num = (!strcmp(str, "all") || !strcmp(str, "*")) ? -1 : atoi(str);
@@ -2184,7 +2184,8 @@ static void _apply_visibility(char mode,
 
 void visibility_interactive_cb(CALLBACK_ARGS)
 {
-  char *str = (char*)data, *help;
+  char *str = (char*)data;
+  const char *help;
   int what;
   char mode;
 
@@ -2559,25 +2560,26 @@ void help_about_cb(CALLBACK_ARGS)
   WID->create_about_window();
 }
 
-void _replace_multi_format(char *in, char *val, char *out){
+void _replace_multi_format(const char *in, const char *val, char *out)
+{
   unsigned int i = 0, j = 0;
 
   out[0] = '\0';
   while(i < strlen(in)){
-    if(in[i] == '%' && i != strlen(in)-1){
-      if(in[i+1] == 's'){
+    if(in[i] == '%' && i != strlen(in) - 1){
+      if(in[i + 1] == 's'){
 	strcat(out, val);
 	i += 2;
 	j += strlen(val);
       }
       else{
-	Msg(WARNING, "Skipping unknown format '%%%c' in '%s'", in[i+1], in);
+	Msg(WARNING, "Skipping unknown format '%%%c' in '%s'", in[i + 1], in);
 	i += 2;
       }
     }
     else{
       out[j] = in[i];
-      out[j+1] = '\0';
+      out[j + 1] = '\0';
       i++;
       j++;
     }
@@ -2694,10 +2696,10 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
     char ib = SelectEntity(ENT_NONE, vertices, edges, faces, regions, elements);
     if(ib == 'e'){
       add_point(CTX.filename,
-		(char*)WID->context_geometry_input[2]->value(),
-		(char*)WID->context_geometry_input[3]->value(),
-		(char*)WID->context_geometry_input[4]->value(),
-		(char*)WID->context_geometry_input[5]->value());
+		WID->context_geometry_input[2]->value(),
+		WID->context_geometry_input[3]->value(),
+		WID->context_geometry_input[4]->value(),
+		WID->context_geometry_input[5]->value());
       WID->reset_visibility();
       Draw();
     }
@@ -3125,7 +3127,7 @@ void geometry_elementary_add_new_volume_cb(CALLBACK_ARGS)
   _new_surface_volume(2);
 }
 
-static void _action_point_line_surface_volume(int action, int mode, char *what)
+static void _action_point_line_surface_volume(int action, int mode, const char *what)
 {
   std::vector<GVertex*> vertices;
   std::vector<GEdge*> edges;
@@ -3133,7 +3135,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
   std::vector<GRegion*> regions;
   std::vector<MElement*> elements;
   int type;
-  char *str;
+  const char *str;
 
   if(!strcmp(what, "Point")) {
     type = ENT_POINT;
@@ -3278,49 +3280,49 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	switch (action) {
 	case 0:
 	  translate(mode, List1, CTX.filename, what,
-		    (char*)WID->context_geometry_input[6]->value(),
-		    (char*)WID->context_geometry_input[7]->value(),
-		    (char*)WID->context_geometry_input[8]->value());
+		    WID->context_geometry_input[6]->value(),
+		    WID->context_geometry_input[7]->value(),
+		    WID->context_geometry_input[8]->value());
 	  break;
 	case 1:
 	  rotate(mode, List1, CTX.filename, what,
-		 (char*)WID->context_geometry_input[12]->value(),
-		 (char*)WID->context_geometry_input[13]->value(),
-		 (char*)WID->context_geometry_input[14]->value(),
-		 (char*)WID->context_geometry_input[9]->value(),
-		 (char*)WID->context_geometry_input[10]->value(),
-		 (char*)WID->context_geometry_input[11]->value(),
-		 (char*)WID->context_geometry_input[15]->value());
+		 WID->context_geometry_input[12]->value(),
+		 WID->context_geometry_input[13]->value(),
+		 WID->context_geometry_input[14]->value(),
+		 WID->context_geometry_input[9]->value(),
+		 WID->context_geometry_input[10]->value(),
+		 WID->context_geometry_input[11]->value(),
+		 WID->context_geometry_input[15]->value());
 	  break;
 	case 2:
 	  dilate(mode, List1, CTX.filename, what,
-		 (char*)WID->context_geometry_input[16]->value(),
-		 (char*)WID->context_geometry_input[17]->value(),
-		 (char*)WID->context_geometry_input[18]->value(),
-		 (char*)WID->context_geometry_input[19]->value());
+		 WID->context_geometry_input[16]->value(),
+		 WID->context_geometry_input[17]->value(),
+		 WID->context_geometry_input[18]->value(),
+		 WID->context_geometry_input[19]->value());
 	  break;
 	case 3:
 	  symmetry(mode, List1, CTX.filename, what,
-		   (char*)WID->context_geometry_input[20]->value(),
-		   (char*)WID->context_geometry_input[21]->value(),
-		   (char*)WID->context_geometry_input[22]->value(),
-		   (char*)WID->context_geometry_input[23]->value());
+		   WID->context_geometry_input[20]->value(),
+		   WID->context_geometry_input[21]->value(),
+		   WID->context_geometry_input[22]->value(),
+		   WID->context_geometry_input[23]->value());
 	  break;
 	case 4:
 	  extrude(List1, CTX.filename, what,
-		  (char*)WID->context_geometry_input[6]->value(),
-		  (char*)WID->context_geometry_input[7]->value(),
-		  (char*)WID->context_geometry_input[8]->value());
+		  WID->context_geometry_input[6]->value(),
+		  WID->context_geometry_input[7]->value(),
+		  WID->context_geometry_input[8]->value());
 	  break;
 	case 5:
 	  protude(List1, CTX.filename, what,
-		  (char*)WID->context_geometry_input[12]->value(),
-		  (char*)WID->context_geometry_input[13]->value(),
-		  (char*)WID->context_geometry_input[14]->value(),
-		  (char*)WID->context_geometry_input[9]->value(),
-		  (char*)WID->context_geometry_input[10]->value(),
-		  (char*)WID->context_geometry_input[11]->value(),
-		  (char*)WID->context_geometry_input[15]->value());
+		  WID->context_geometry_input[12]->value(),
+		  WID->context_geometry_input[13]->value(),
+		  WID->context_geometry_input[14]->value(),
+		  WID->context_geometry_input[9]->value(),
+		  WID->context_geometry_input[10]->value(),
+		  WID->context_geometry_input[11]->value(),
+		  WID->context_geometry_input[15]->value());
 	  break;
 	case 6:
 	  delet(List1, CTX.filename, what);
@@ -3329,7 +3331,7 @@ static void _action_point_line_surface_volume(int action, int mode, char *what)
 	  add_physical(List1, CTX.filename, type);
 	  break;
 	case 8:
-	  add_charlength(List1, CTX.filename, (char*)WID->context_mesh_input[0]->value());
+	  add_charlength(List1, CTX.filename, WID->context_mesh_input[0]->value());
 	  break;
 	case 9:
 	  add_recosurf(List1, CTX.filename);
@@ -3982,9 +3984,9 @@ static void _add_transfinite(int dim)
       if(dim == 1) {
         if(n > 0)
           add_trsfline(n, p, CTX.filename,
-		       (char*)WID->context_mesh_choice[0]->text(),
-		       (char*)WID->context_mesh_input[2]->value(),
-		       (char*)WID->context_mesh_input[1]->value());
+		       WID->context_mesh_choice[0]->text(),
+		       WID->context_mesh_input[2]->value(),
+		       WID->context_mesh_input[1]->value());
       }
       ZeroHighlight();
       Draw();
@@ -4056,7 +4058,7 @@ static void _add_transfinite(int dim)
             case 2:
               if(n == 3 + 1 || n == 4 + 1)
                 add_trsfsurf(n, p, CTX.filename,
-			     (char*)WID->context_mesh_choice[1]->text());
+			     WID->context_mesh_choice[1]->text());
               else
                 Msg(GERROR, "Wrong number of points for transfinite surface");
               break;
@@ -4126,7 +4128,7 @@ void solver_cb(CALLBACK_ARGS)
   }
   if(SINFO[num].nboptions) {
     char file[256], tmp[256];
-    FixWindowsPath((char*)WID->solver[num].input[0]->value(), file);
+    FixWindowsPath(WID->solver[num].input[0]->value(), file);
     sprintf(tmp, "\"%s\"", file);
     sprintf(file, SINFO[num].name_command, tmp);
     sprintf(tmp, "%s %s", SINFO[num].option_command, file);           
@@ -4161,7 +4163,7 @@ void solver_file_edit_cb(CALLBACK_ARGS)
   char prog[1024], file[1024], cmd[1024];
   int num = (int)(long)data;
   FixWindowsPath(CTX.editor, prog);
-  FixWindowsPath((char*)WID->solver[num].input[0]->value(), file);
+  FixWindowsPath(WID->solver[num].input[0]->value(), file);
   _replace_multi_format(prog, file, cmd);
   SystemCall(cmd);
 }
@@ -4196,7 +4198,7 @@ void solver_command_cb(CALLBACK_ARGS)
     WID->create_message_window(true);
 
   if(strlen(WID->solver[num].input[1]->value())) {
-    FixWindowsPath((char*)WID->solver[num].input[1]->value(), mesh);
+    FixWindowsPath(WID->solver[num].input[1]->value(), mesh);
     sprintf(tmp, "\"%s\"", mesh);
     sprintf(mesh, SINFO[num].mesh_command, tmp);
   }
@@ -4218,7 +4220,7 @@ void solver_command_cb(CALLBACK_ARGS)
     strcpy(command, SINFO[num].button_command[idx]);
   }
 
-  FixWindowsPath((char*)WID->solver[num].input[0]->value(), tmp);
+  FixWindowsPath(WID->solver[num].input[0]->value(), tmp);
   sprintf(arg, "\"%s\"", tmp);
   sprintf(tmp, SINFO[num].name_command, arg);
   sprintf(arg, "%s %s %s", tmp, mesh, command);
@@ -4258,7 +4260,7 @@ void solver_ok_cb(CALLBACK_ARGS)
   opt_solver_client_server(num, GMSH_SET, WID->solver[num].butt[2]->value());
   if(strcmp(opt_solver_executable(num, GMSH_GET, NULL), WID->solver[num].input[2]->value()))
     retry = 1;
-  opt_solver_executable(num, GMSH_SET, (char *)WID->solver[num].input[2]->value());
+  opt_solver_executable(num, GMSH_SET, WID->solver[num].input[2]->value());
   if(retry)
     solver_cb(NULL, data);
 }
@@ -4278,7 +4280,7 @@ static void _view_reload(int index)
   if(index >= 0 && index < (int)PView::list.size()){
     PView *p = PView::list[index];
 
-    if(StatFile((char*)p->getData()->getFileName().c_str())){
+    if(StatFile(p->getData()->getFileName().c_str())){
       Msg(GERROR, "File '%s' does not exist", p->getData()->getFileName().c_str());
       return;
     }
@@ -4286,7 +4288,7 @@ static void _view_reload(int index)
     int n = PView::list.size();
 
     // FIXME: use fileIndex
-    MergeFile((char*)p->getData()->getFileName().c_str());
+    MergeFile(p->getData()->getFileName().c_str());
 
     if((int)PView::list.size() > n){ // we loaded a new view
       // delete old data and replace with new
@@ -4376,12 +4378,12 @@ void view_remove_cb(CALLBACK_ARGS)
   Draw();
 }
 
-static void _view_save_as(int view_num, char *title, int format)
+static void _view_save_as(int view_num, const char *title, int format)
 {
   PView *view = PView::list[view_num];
   
  test:
-  if(file_chooser(0, 1, title, "*", (char*)view->getData()->getFileName().c_str())){
+  if(file_chooser(0, 1, title, "*", view->getData()->getFileName().c_str())){
     std::string name = file_chooser_get_name(1);
     if(CTX.confirm_overwrite) {
       if(!StatFile(name.c_str()))
@@ -4513,9 +4515,9 @@ void view_plugin_input_value_cb(CALLBACK_ARGS)
 
 void view_plugin_input_cb(CALLBACK_ARGS)
 {
-  char* (*f)(int, int, char*) = (char* (*)(int, int, char*)) data;
+  const char* (*f)(int, int, const char*) = (const char* (*)(int, int, const char*)) data;
   Fl_Input *input = (Fl_Input*) w;
-  f(-1, 0, (char*)input->value());
+  f(-1, 0, input->value());
 }
 
 void view_plugin_browser_cb(CALLBACK_ARGS)
@@ -4596,7 +4598,7 @@ void view_plugin_run_cb(CALLBACK_ARGS)
     if(n > MAX_PLUGIN_OPTIONS) n = MAX_PLUGIN_OPTIONS;
     for(int i = 0; i < m; i++) {
       StringXString *sxs = p->getOptionStr(i);
-      sxs->def = (char*)p->dialogBox->input[i]->value();
+      sxs->def = p->dialogBox->input[i]->value();
     }
     for(int i = 0; i < n; i++) {
       StringXNumber *sxn = p->getOption(i);
@@ -4637,18 +4639,18 @@ void view_plugin_cancel_cb(CALLBACK_ARGS)
 
 void con_geometry_define_parameter_cb(CALLBACK_ARGS)
 {
-  add_param((char *)WID->context_geometry_input[0]->value(),
-            (char *)WID->context_geometry_input[1]->value(), CTX.filename);
+  add_param(WID->context_geometry_input[0]->value(),
+            WID->context_geometry_input[1]->value(), CTX.filename);
   WID->reset_visibility();
 }
 
 void con_geometry_define_point_cb(CALLBACK_ARGS)
 {
   add_point(CTX.filename,
-	    (char*)WID->context_geometry_input[2]->value(),
-	    (char*)WID->context_geometry_input[3]->value(),
-	    (char*)WID->context_geometry_input[4]->value(),
-	    (char*)WID->context_geometry_input[5]->value());
+	    WID->context_geometry_input[2]->value(),
+	    WID->context_geometry_input[3]->value(),
+	    WID->context_geometry_input[4]->value(),
+	    WID->context_geometry_input[5]->value());
   WID->reset_visibility();
   ZeroHighlight();
   SetBoundingBox();

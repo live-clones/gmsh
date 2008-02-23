@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.84 2008-02-22 07:59:00 geuzaine Exp $
+// $Id: Message.cpp,v 1.85 2008-02-23 15:30:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -69,7 +69,7 @@ void Msg(int level, const char *fmt, ...)
 {
   va_list args;
   int abort = 0, verb = 0, window = -1, log = 1, color = 0;
-  char *str = NULL;
+  const char *str = NULL;
 
   // standard messages in black
   // errors, wanrnings in red

@@ -23,7 +23,7 @@ extern Context_T CTX;
 #include "FM_RevolvedParabolaProjectionSurface.h"
 #include "FM_TranslatedParabolaProjectionSurface.h"
 
-static fourierProjectionFace *createProjectionFaceFromName(char *name)
+static fourierProjectionFace *createProjectionFaceFromName(const char *name)
 {
   GModel *m = GModel::current();
   int tag = m->getNumFaces() + 1;
@@ -637,7 +637,7 @@ void select_cb(Fl_Widget *w, void *data)
   projectionEditor *e = (projectionEditor*)data;
 
   int what = e->getSelectionMode();
-  char *str;
+  const char *str;
 
   switch(what){
   case ENT_ALL: CTX.pick_elements = 1; str = "Elements"; break;

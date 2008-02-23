@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.150 2008-02-22 20:28:07 geuzaine Exp $
+// $Id: Post.cpp,v 1.151 2008-02-23 15:30:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1070,7 +1070,7 @@ void drawNumberGlyphs(PView *p, int numNodes, int numComp,
       unsigned int col = opt->getColor(v, vmin, vmax);
       glColor4ubv((GLubyte *) & col);
       glRasterPos3d(pc.x(), pc.y(), pc.z());
-      char *txt = (char*)stringValue(numComp, d, v, opt->Format).c_str();
+      const char *txt = stringValue(numComp, d, v, opt->Format).c_str();
       if(opt->CenterGlyphs)
 	Draw_String_Center(txt);
       else
@@ -1084,7 +1084,7 @@ void drawNumberGlyphs(PView *p, int numNodes, int numComp,
 	unsigned int col = opt->getColor(v, vmin, vmax);
 	glColor4ubv((GLubyte *) & col);
 	glRasterPos3d(xyz[i][0], xyz[i][1], xyz[i][2]);
-	char *txt = (char*)stringValue(numComp, val[i], v, opt->Format).c_str();
+	const char *txt = stringValue(numComp, val[i], v, opt->Format).c_str();
 	if(opt->CenterGlyphs)
 	  Draw_String_Center(txt);
 	else
@@ -1350,7 +1350,7 @@ class drawPView {
 	std::string str;
 	data->getString3D(i, opt->TimeStep, str, x, y, z, style);
 	glRasterPos3d(x, y, z);
-	Draw_String((char*)str.c_str(), style);
+	Draw_String(str.c_str(), style);
       }
     }
     

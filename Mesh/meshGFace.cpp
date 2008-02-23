@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.120 2008-02-22 07:49:39 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.121 2008-02-23 15:30:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1290,7 +1290,7 @@ void meshGFace::operator() (GFace *gf)
   if(MeshTransfiniteSurface(gf)) return;
   if(MeshExtrudedSurface(gf)) return;
 
-  char *algo = "Unknown";
+  const char *algo = "Unknown";
   switch(CTX.mesh.algo2d){
   case ALGO_2D_MESHADAPT:
     algo = "MeshAdapt";

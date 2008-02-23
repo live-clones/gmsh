@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.118 2008-02-22 07:49:38 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.119 2008-02-23 15:30:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -60,15 +60,16 @@ char gmsh_email[]     = "Mailing list   : gmsh@geuz.org" ;
 int Get_GmshMajorVersion(){ return GMSH_MAJOR_VERSION; }
 int Get_GmshMinorVersion(){ return GMSH_MINOR_VERSION; }
 int Get_GmshPatchVersion(){ return GMSH_PATCH_VERSION; }
-char *Get_GmshExtraVersion(){ return GMSH_EXTRA_VERSION; }
-char *Get_GmshVersion(){ return GMSH_VERSION; }
-char *Get_GmshBuildDate(){ return GMSH_DATE; }
-char *Get_GmshBuildHost(){ return GMSH_HOST; }
-char *Get_GmshPackager(){ return GMSH_PACKAGER; }
-char *Get_GmshBuildOS(){ return GMSH_OS; }
-char *Get_GmshShortLicense(){ return GMSH_SHORT_LICENSE; }
+const char *Get_GmshExtraVersion(){ return GMSH_EXTRA_VERSION; }
+const char *Get_GmshVersion(){ return GMSH_VERSION; }
+const char *Get_GmshBuildDate(){ return GMSH_DATE; }
+const char *Get_GmshBuildHost(){ return GMSH_HOST; }
+const char *Get_GmshPackager(){ return GMSH_PACKAGER; }
+const char *Get_GmshBuildOS(){ return GMSH_OS; }
+const char *Get_GmshShortLicense(){ return GMSH_SHORT_LICENSE; }
 
-void Print_Usage(char *name){
+void Print_Usage(const char *name)
+{
   // If you make changes in this routine, please also change the
   // texinfo documentation (doc/texinfo/command_line.texi) as well as
   // the man page (doc/gmsh.1)

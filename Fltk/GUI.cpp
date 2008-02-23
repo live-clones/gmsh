@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.657 2008-02-23 10:43:44 geuzaine Exp $
+// $Id: GUI.cpp,v 1.658 2008-02-23 15:30:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -426,10 +426,10 @@ int GetFontEnum(int index)
   return FL_HELVETICA;
 }
 
-char *GetFontName(int index)
+const char *GetFontName(int index)
 {
   if(index >= 0 && index < NUM_FONTS)
-    return (char*)menu_font_names[index].label();
+    return menu_font_names[index].label();
   return "Helvetica";
 }
 
@@ -3642,7 +3642,7 @@ void GUI::update_view_window(int num)
   opt_view_color_text3d(num, GMSH_GUI, 0);
   opt_view_color_axes(num, GMSH_GUI, 0);
 
-  view_colorbar_window->update((char*)data->getName().c_str(), data->getMin(), 
+  view_colorbar_window->update(data->getName().c_str(), data->getMin(), 
 			       data->getMax(), &opt->CT, &view->getChanged());
 }
 

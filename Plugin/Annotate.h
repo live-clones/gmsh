@@ -32,7 +32,7 @@ class GMSH_AnnotatePlugin : public GMSH_Post_Plugin
 private:
   static double callback(int num, int action, double value, double *opt,
 			 double step, double min, double max);
-  static char *callbackStr(int num, int action, char *value, char **opt);
+  static const char *callbackStr(int num, int action, const char *value, const char **opt);
 public:
   GMSH_AnnotatePlugin();
   void getName(char *name) const;
@@ -49,9 +49,9 @@ public:
   static double callbackZ(int, int, double);
   static double callback3D(int, int, double);
   static double callbackFontSize(int, int, double);
-  static char *callbackText(int, int, char *);
-  static char *callbackFont(int, int, char *);
-  static char *callbackAlign(int, int, char *);
+  static const char *callbackText(int, int, const char *);
+  static const char *callbackFont(int, int, const char *);
+  static const char *callbackAlign(int, int, const char *);
   static void draw();
 };
 

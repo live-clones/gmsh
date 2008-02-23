@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.176 2008-02-22 07:59:00 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.177 2008-02-23 15:30:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -448,7 +448,7 @@ void OpenProjectMacFinder(const char *filename)
     first = 0;
   }
   else{
-    OpenProject((char*)filename);
+    OpenProject(filename);
 #if defined(HAVE_FLTK)
     Draw();
 #endif

@@ -64,7 +64,7 @@
 // The dynamic contexts
 
 typedef struct{
-  char *label;
+  const char *label;
   Fl_Callback* callback;
   void *arg;
 } Context_Item;
@@ -331,7 +331,7 @@ public:
 // some utility font functions
 int GetFontIndex(const char *fontname);
 int GetFontEnum(int index);
-char *GetFontName(int index);
+const char *GetFontName(int index);
 int GetFontAlign(const char *alignstr);
 int GetFontSize();
 

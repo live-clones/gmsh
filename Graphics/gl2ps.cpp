@@ -1,4 +1,4 @@
-/* $Id: gl2ps.cpp,v 1.113 2007-09-18 16:26:02 geuzaine Exp $ */
+/* $Id: gl2ps.cpp,v 1.114 2008-02-23 15:30:07 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2007 Christophe Geuzaine <geuz@geuz.org>
@@ -2937,7 +2937,7 @@ static void gl2psParseStipplePattern(GLushort pattern, GLint factor,
   }
 }
 
-static int gl2psPrintPostScriptDash(GLushort pattern, GLint factor, char *str)
+static int gl2psPrintPostScriptDash(GLushort pattern, GLint factor, const char *str)
 {
   int len = 0, i, n, array[10];
 

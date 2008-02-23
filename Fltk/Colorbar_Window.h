@@ -38,7 +38,7 @@ class Colorbar_Window : public Fl_Window {
   void redraw_marker();
 
   int font_height, marker_height, wedge_height;
-  char *label;
+  const char *label;
 
   double minval, maxval;  // min and max data values
   int wedge_y;     // top coord of color wedge
@@ -53,7 +53,8 @@ class Colorbar_Window : public Fl_Window {
 
 public:
   Colorbar_Window(int x, int y, int w, int h, const char *l=0);
-  void update(char *name, double min, double max, GmshColorTable *ct, bool *changed);
+  void update(const char *name, double min, double max, GmshColorTable *ct,
+	      bool *changed);
 };
 
 #endif

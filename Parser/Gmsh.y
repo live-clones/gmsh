@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.301 2008-02-22 21:09:02 geuzaine Exp $
+// $Id: Gmsh.y,v 1.302 2008-02-23 15:30:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -71,8 +71,8 @@ static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
 static char *LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
 
 void yyerror(char *s);
-void yymsg(int type, char *fmt, ...);
-void skip_until(char *skip, char *until);
+void yymsg(int type, const char *fmt, ...);
+void skip_until(const char *skip, const char *until);
 int PrintListOfDouble(char *format, List_T *list, char *buffer);
 %}
 
@@ -174,11 +174,11 @@ GeoFormatItem :
 SendToFile :
     '>'
     {
-      $$ = "w";
+      $$ = (char*)"w";
     }
   | '>' '>'
     {
-      $$ = "a";
+      $$ = (char*)"a";
     }
 ;
 
@@ -762,12 +762,13 @@ Affectation :
 
   | tSTRING '.' tSTRING tAFFECT StringExpr tEND 
     { 
-      char* (*pStrOpt)(int num, int action, char *value);
+      const char* (*pStrOpt)(int num, int action, const char *value);
       StringXString *pStrCat;
       if(!(pStrCat = Get_StringOptionCategory($1)))
 	yymsg(GERROR, "Unknown string option class '%s'", $1);
       else{
-	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption($3, pStrCat)))
+	if(!(pStrOpt = (const char *(*) (int, int, const char *))
+	     Get_StringOption($3, pStrCat)))
 	  yymsg(GERROR, "Unknown string option '%s.%s'", $1, $3);
 	else
 	  pStrOpt(0, GMSH_SET|GMSH_GUI, $5);
@@ -776,12 +777,13 @@ Affectation :
     }
   | tSTRING '[' FExpr ']' '.' tSTRING tAFFECT StringExpr tEND 
     { 
-      char* (*pStrOpt)(int num, int action, char *value);
+      const char* (*pStrOpt)(int num, int action, const char *value);
       StringXString *pStrCat;
       if(!(pStrCat = Get_StringOptionCategory($1)))
 	yymsg(GERROR, "Unknown string option class '%s'", $1);
       else{
-	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption($6, pStrCat)))
+	if(!(pStrOpt = (const char *(*) (int, int, const char *))
+	     Get_StringOption($6, pStrCat)))
 	  yymsg(GERROR, "Unknown string option '%s[%d].%s'", $1, (int)$3, $6);
 	else
 	  pStrOpt((int)$3, GMSH_SET|GMSH_GUI, $8);
@@ -3474,7 +3476,7 @@ StringExpr :
     }
   | tSprintf '(' tSTRING '.' tSTRING ')'
     { 
-      char* (*pStrOpt)(int num, int action, char *value);
+      const char* (*pStrOpt)(int num, int action, const char *value);
       StringXString *pStrCat;
       if(!(pStrCat = Get_StringOptionCategory($3))){
 	yymsg(GERROR, "Unknown string option class '%s'", $3);
@@ -3482,13 +3484,14 @@ StringExpr :
 	$$[0] = '\0';
       }
       else{
-	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption($5, pStrCat))){
+	if(!(pStrOpt = (const char *(*) (int, int, const char *))
+	     Get_StringOption($5, pStrCat))){
 	  yymsg(GERROR, "Unknown string option '%s.%s'", $3, $5);
 	  $$ = (char*)Malloc(sizeof(char));
 	  $$[0] = '\0';
 	}
 	else{
-	  char *str = pStrOpt(0, GMSH_GET, NULL);
+	  const char *str = pStrOpt(0, GMSH_GET, NULL);
 	  $$ = (char*)Malloc((strlen(str)+1)*sizeof(char));
 	  strcpy($$, str);
 	}
@@ -3496,7 +3499,7 @@ StringExpr :
     }
   | tSprintf '(' tSTRING '[' FExpr ']' '.' tSTRING ')'
     { 
-      char* (*pStrOpt)(int num, int action, char *value);
+      const char* (*pStrOpt)(int num, int action, const char *value);
       StringXString *pStrCat;
       if(!(pStrCat = Get_StringOptionCategory($3))){
 	yymsg(GERROR, "Unknown string option class '%s'", $3);
@@ -3504,13 +3507,14 @@ StringExpr :
 	$$[0] = '\0';
       }
       else{
-	if(!(pStrOpt = (char *(*) (int, int, char *))Get_StringOption($8, pStrCat))){
+	if(!(pStrOpt = (const char *(*) (int, int, const char *))
+	     Get_StringOption($8, pStrCat))){
 	  yymsg(GERROR, "Unknown string option '%s[%d].%s'", $3, (int)$5, $8);
 	  $$ = (char*)Malloc(sizeof(char));
 	  $$[0] = '\0';
 	}
 	else{
-	  char *str = pStrOpt((int)$5, GMSH_GET, NULL);
+	  const char *str = pStrOpt((int)$5, GMSH_GET, NULL);
 	  $$ = (char*)Malloc((strlen(str)+1)*sizeof(char));
 	  strcpy($$, str);
 	}
@@ -3520,17 +3524,20 @@ StringExpr :
 
 %%
 
-void DeleteSymbol(void *a, void *b){
+void DeleteSymbol(void *a, void *b)
+{
   Symbol *s = (Symbol*)a;
   Free(s->Name);
   List_Delete(s->val);
 }
 
-int CompareSymbols (const void *a, const void *b){
+int CompareSymbols (const void *a, const void *b)
+{
   return(strcmp(((Symbol*)a)->Name, ((Symbol*)b)->Name));
 }
 
-void InitSymbols(void){
+void InitSymbols()
+{
   if(Symbol_T){
     Tree_Action(Symbol_T, DeleteSymbol);
     Tree_Delete(Symbol_T);
@@ -3538,7 +3545,8 @@ void InitSymbols(void){
   Symbol_T = Tree_Create(sizeof(Symbol), CompareSymbols);
 }
 
-int PrintListOfDouble(char *format, List_T *list, char *buffer){
+int PrintListOfDouble(char *format, List_T *list, char *buffer)
+{
   int j, k;
   char tmp1[256], tmp2[256];
 
@@ -3572,12 +3580,14 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer){
   return 0;
 }
 
-void yyerror(char *s){
+void yyerror(char *s)
+{
   Msg(GERROR, "'%s', line %d : %s (%s)", gmsh_yyname, gmsh_yylineno - 1, s, gmsh_yytext);
   gmsh_yyerrorstate++;
 }
 
-void yymsg(int type, char *fmt, ...){
+void yymsg(int type, const char *fmt, ...)
+{
   va_list args;
   char tmp[1024];
 

@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.72 2008-02-17 08:47:59 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.73 2008-02-23 15:30:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -59,7 +59,7 @@ void Draw_Text2D()
 	data->getString2D(j, opt->TimeStep, str, x, y, style);
 	Fix2DCoordinates(&x, &y);
 	glRasterPos2d(x, y);
-	Draw_String((char*)str.c_str(), style);
+	Draw_String(str.c_str(), style);
       }
     }
   }

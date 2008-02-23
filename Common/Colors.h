@@ -683,8 +683,7 @@ StringX4Int ColorString[] = {
   { NULL                       ,  0  ,   0,   0, 255 }
 } ;
 
-int Get_ColorForString(StringX4Int SX4I[], int alpha, 
-		       char * string, int * FlagError);
-
+int Get_ColorForString(StringX4Int SX4I[], int alpha, const char *string,
+		       int *FlagError);
 
 #endif

@@ -36,7 +36,7 @@ private:
 		PView *v2, List_T *list2, int nbElm2,
 		int nbNod, int nbComp, int comp, 
 		int timeStep, int timeStep2,
-		char *expression);
+		const char *expression);
 public:
   GMSH_EvaluatePlugin();
   void getName(char *name) const;

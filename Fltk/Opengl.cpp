@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.77 2008-02-22 07:59:00 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.78 2008-02-23 15:30:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -46,7 +46,7 @@ void Draw(void)
   WID->redraw_opengl();
 }
 
-void SanitizeTeXString(char *in, char *out)
+void SanitizeTeXString(const char *in, char *out)
 {
   // if there is a '$' or a '\' in the string, assume the author knows
   // what he's doing:
@@ -74,7 +74,7 @@ void SanitizeTeXString(char *in, char *out)
   *out = '\0';
 }
 
-void Draw_String(char *s, char *font_name, int font_enum, int font_size, int align)
+void Draw_String(const char *s, const char *font_name, int font_enum, int font_size, int align)
 {
   if(CTX.printing && !CTX.print.text) return;
 
@@ -140,22 +140,22 @@ void Draw_String(char *s, char *font_name, int font_enum, int font_size, int ali
   }
 }
 
-void Draw_String(char *s)
+void Draw_String(const char *s)
 {
   Draw_String(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 0);
 }
 
-void Draw_String_Center(char *s)
+void Draw_String_Center(const char *s)
 {
   Draw_String(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 1);
 }
 
-void Draw_String_Right(char *s)
+void Draw_String_Right(const char *s)
 {
   Draw_String(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 2);
 }
 
-void Draw_String(char *s, double style)
+void Draw_String(const char *s, double style)
 {
   unsigned int bits = (unsigned int)style;
 
@@ -167,7 +167,7 @@ void Draw_String(char *s, double style)
     int font = (bits>>8 & 0xff);
     int align = (bits>>16 & 0xff);
     int font_enum = GetFontEnum(font);
-    char *font_name = GetFontName(font);
+    const char *font_name = GetFontName(font);
     if(!size) size = CTX.gl_fontsize;
     Draw_String(s, font_name, font_enum, size, align);
   }

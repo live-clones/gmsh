@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.16 2008-02-22 07:49:38 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.17 2008-02-23 15:30:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,7 @@ extern Context_T CTX;
 // Some old systems don't have snprintf... Just call sprintf instead.
 
 #if defined(HAVE_NO_SNPRINTF)
-int snprintf(char *str, size_t size, const char* fmt, ...){
+int snprintf(const char *str, size_t size, const char* fmt, ...){
   va_list args;
   va_start(args, fmt);
   int ret = vsprintf(str, fmt, args);
@@ -46,7 +46,7 @@ int snprintf(char *str, size_t size, const char* fmt, ...){
 }
 #endif
 
-double evaluate_scalarfunction(char *var, double val, char *funct)
+double evaluate_scalarfunction(const char *var, double val, const char *funct)
 {
   FILE *tempf;
   tempf = gmsh_yyin;
@@ -79,7 +79,7 @@ double evaluate_scalarfunction(char *var, double val, char *funct)
   return *(double *)List_Pointer(TheSymbol_P->val, 0);
 }
 
-void add_infile(char *text, char *fich, bool deleted_something)
+void add_infile(const char *text, const char *fich, bool deleted_something)
 {
   if(!(gmsh_yyin = fopen(CTX.tmp_filename_fullpath, "w"))) {
     Msg(GERROR, "Unable to open temporary file '%s'", CTX.tmp_filename_fullpath);
@@ -132,7 +132,7 @@ void add_infile(char *text, char *fich, bool deleted_something)
   fclose(file);
 }
 
-void coherence(char *fich)
+void coherence(const char *fich)
 {
   add_infile("Coherence;", fich, true);
 }
@@ -151,7 +151,7 @@ void strncat_list(char *text, List_T *list)
   }
 }
 
-void delet(List_T *list, char *fich, char *what)
+void delet(List_T *list, const char *fich, const char *what)
 {
   char text[BUFFSIZE];
 
@@ -161,7 +161,7 @@ void delet(List_T *list, char *fich, char *what)
   add_infile(text, fich, true);
 }
 
-void add_trsfsurf(int N, int *l, char *fich, char *dir)
+void add_trsfsurf(int N, int *l, const char *fich, const char *dir)
 {
   char text[BUFFSIZE], text2[BUFFSIZE];
 
@@ -182,7 +182,7 @@ void add_trsfsurf(int N, int *l, char *fich, char *dir)
   add_infile(text, fich);
 }
 
-void add_charlength(List_T *list, char *fich, char *lc)
+void add_charlength(List_T *list, const char *fich, const char *lc)
 {
   char text[BUFFSIZE];
 
@@ -194,7 +194,7 @@ void add_charlength(List_T *list, char *fich, char *lc)
   add_infile(text, fich);
 }
 
-void add_recosurf(List_T *list, char *fich)
+void add_recosurf(List_T *list, const char *fich)
 {
   char text[BUFFSIZE];
 
@@ -204,7 +204,8 @@ void add_recosurf(List_T *list, char *fich)
   add_infile(text, fich);
 }
 
-void add_trsfline(int N, int *l, char *fich, char *type, char *typearg, char *pts)
+void add_trsfline(int N, int *l, const char *fich, const char *type, 
+		  const char *typearg, const char *pts)
 {
   char text[BUFFSIZE], text2[BUFFSIZE];
 
@@ -224,14 +225,15 @@ void add_trsfline(int N, int *l, char *fich, char *type, char *typearg, char *pt
   add_infile(text, fich);
 }
 
-void add_param(char *par, char *value, char *fich)
+void add_param(const char *par, const char *value, const char *fich)
 {
   char text[BUFFSIZE];
   snprintf(text, BUFFSIZE, "%s = %s;", par, value);
   add_infile(text, fich);
 }
 
-void add_point(char *fich, char *x, char *y, char *z, char *lc)
+void add_point(const char *fich, const char *x, const char *y, const char *z, 
+	       const char *lc)
 {
   char text[BUFFSIZE];
   int ip = NEWPOINT();
@@ -239,7 +241,8 @@ void add_point(char *fich, char *x, char *y, char *z, char *lc)
   add_infile(text, fich);
 }
 
-void add_attractor(char *fich, int ip, int typ, char *ax, char *ay, char *ad)
+void add_attractor(const char *fich, int ip, int typ,
+		   const char *ax, const char *ay, const char *ad)
 {
   char text[BUFFSIZE];
   if(typ == 0) {
@@ -255,7 +258,7 @@ void add_attractor(char *fich, int ip, int typ, char *ax, char *ay, char *ad)
 }
 
 
-void add_line(int p1, int p2, char *fich)
+void add_line(int p1, int p2, const char *fich)
 {
   char text[BUFFSIZE];
   int iseg;
@@ -272,7 +275,7 @@ void add_line(int p1, int p2, char *fich)
   add_infile(text, fich);
 }
 
-void add_circ(int p1, int p2, int p3, char *fich)
+void add_circ(int p1, int p2, int p3, const char *fich)
 {
   char text[BUFFSIZE];
 
@@ -280,7 +283,7 @@ void add_circ(int p1, int p2, int p3, char *fich)
   add_infile(text, fich);
 }
 
-void add_ell(int p1, int p2, int p3, int p4, char *fich)
+void add_ell(int p1, int p2, int p3, int p4, const char *fich)
 {
   char text[BUFFSIZE];
 
@@ -289,7 +292,7 @@ void add_ell(int p1, int p2, int p3, int p4, char *fich)
   add_infile(text, fich);
 }
 
-void add_spline(int N, int *p, char *fich)
+void add_spline(int N, int *p, const char *fich)
 {
   char text[BUFFSIZE], text2[BUFFSIZE];
 
@@ -304,7 +307,7 @@ void add_spline(int N, int *p, char *fich)
   add_infile(text, fich);
 }
 
-void add_bezier(int N, int *p, char *fich)
+void add_bezier(int N, int *p, const char *fich)
 {
   char text[BUFFSIZE], text2[BUFFSIZE];
 
@@ -320,7 +323,7 @@ void add_bezier(int N, int *p, char *fich)
 }
 
 
-void add_bspline(int N, int *p, char *fich)
+void add_bspline(int N, int *p, const char *fich)
 {
   char text[BUFFSIZE], text2[BUFFSIZE];
 
@@ -335,7 +338,7 @@ void add_bspline(int N, int *p, char *fich)
   add_infile(text, fich);
 }
 
-void add_multline(int N, int *p, char *fich)
+void add_multline(int N, int *p, const char *fich)
 {
   char text[BUFFSIZE], text2[BUFFSIZE];
   int iseg;
@@ -360,7 +363,7 @@ void add_multline(int N, int *p, char *fich)
   add_infile(text, fich);
 }
 
-void add_lineloop(List_T *list, char *fich, int *numloop)
+void add_lineloop(List_T *list, const char *fich, int *numloop)
 {
   char text[BUFFSIZE];
 
@@ -375,7 +378,7 @@ void add_lineloop(List_T *list, char *fich, int *numloop)
 }
 
 
-void add_surf(List_T *list, char *fich, int support, int typ)
+void add_surf(List_T *list, const char *fich, int support, int typ)
 {
   char text[BUFFSIZE];
 
@@ -390,7 +393,7 @@ void add_surf(List_T *list, char *fich, int support, int typ)
   add_infile(text, fich);
 }
 
-void add_surfloop(List_T *list, char *fich, int *numvol)
+void add_surfloop(List_T *list, const char *fich, int *numvol)
 {
   char text[BUFFSIZE];
 
@@ -404,7 +407,7 @@ void add_surfloop(List_T *list, char *fich, int *numvol)
   add_infile(text, fich);
 }
 
-void add_vol(List_T *list, char *fich)
+void add_vol(List_T *list, const char *fich)
 {
   char text[BUFFSIZE];
 
@@ -414,7 +417,7 @@ void add_vol(List_T *list, char *fich)
   add_infile(text, fich);
 }
 
-void add_trsfvol(int N, int *l, char *fich)
+void add_trsfvol(int N, int *l, const char *fich)
 {
   char text[BUFFSIZE], text2[BUFFSIZE];
 
@@ -431,7 +434,7 @@ void add_trsfvol(int N, int *l, char *fich)
   add_infile(text, fich);
 }
 
-int add_physical(List_T *list, char *fich, int type)
+int add_physical(List_T *list, const char *fich, int type)
 {
   char text[BUFFSIZE];
   int num = NEWPHYSICAL();
@@ -458,7 +461,8 @@ int add_physical(List_T *list, char *fich, int type)
   return num;
 }
 
-void translate(int add, List_T *list, char *fich, char *what, char *tx, char *ty, char *tz)
+void translate(int add, List_T *list, const char *fich, const char *what,
+	       const char *tx, const char *ty, const char *tz)
 {
   char text[BUFFSIZE];
 
@@ -477,8 +481,9 @@ void translate(int add, List_T *list, char *fich, char *what, char *tx, char *ty
   add_infile(text, fich);
 }
 
-void rotate(int add, List_T *list, char *fich, char *what, char *ax, char *ay, char *az,
-	    char *px, char *py, char *pz, char *angle)
+void rotate(int add, List_T *list, const char *fich, const char *what, 
+	    const char *ax, const char *ay, const char *az,
+	    const char *px, const char *py, const char *pz, const char *angle)
 {
   char text[BUFFSIZE];
 
@@ -499,7 +504,8 @@ void rotate(int add, List_T *list, char *fich, char *what, char *ax, char *ay, c
   add_infile(text, fich);
 }
 
-void dilate(int add, List_T *list, char *fich, char *what, char *dx, char *dy, char *dz, char *df)
+void dilate(int add, List_T *list, const char *fich, const char *what,
+	    const char *dx, const char *dy, const char *dz, const char *df)
 {
   char text[BUFFSIZE];
 
@@ -520,7 +526,8 @@ void dilate(int add, List_T *list, char *fich, char *what, char *dx, char *dy, c
   add_infile(text, fich);
 }
 
-void symmetry(int add, List_T *list, char *fich, char *what, char *sa, char *sb, char *sc, char *sd)
+void symmetry(int add, List_T *list, const char *fich, const char *what,
+	      const char *sa, const char *sb, const char *sc, const char *sd)
 {
   char text[BUFFSIZE];
 
@@ -541,7 +548,8 @@ void symmetry(int add, List_T *list, char *fich, char *what, char *sa, char *sb,
   add_infile(text, fich);
 }
 
-void extrude(List_T *list, char *fich, char *what, char *tx, char *ty, char *tz)
+void extrude(List_T *list, const char *fich, const char *what, 
+	     const char *tx, const char *ty, const char *tz)
 {
   char text[BUFFSIZE];
 
@@ -551,8 +559,9 @@ void extrude(List_T *list, char *fich, char *what, char *tx, char *ty, char *tz)
   add_infile(text, fich);
 }
 
-void protude(List_T *list, char *fich, char *what, char *ax, char *ay, char *az,
-	     char *px, char *py, char *pz, char *angle)
+void protude(List_T *list, const char *fich, const char *what, 
+	     const char *ax, const char *ay, const char *az,
+	     const char *px, const char *py, const char *pz, const char *angle)
 {
   char text[BUFFSIZE];
 

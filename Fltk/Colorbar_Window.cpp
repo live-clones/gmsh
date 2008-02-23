@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.61 2008-02-17 08:47:57 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.62 2008-02-23 15:30:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -327,7 +327,7 @@ void Colorbar_Window::draw()
 
 // Update
 
-void Colorbar_Window::update(char *name, double min, double max,
+void Colorbar_Window::update(const char *name, double min, double max,
                              GmshColorTable *table, bool *changed)
 {
   label = name;

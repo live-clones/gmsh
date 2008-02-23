@@ -1,4 +1,4 @@
-// $Id: Annotate.cpp,v 1.19 2008-02-17 08:48:06 geuzaine Exp $
+// $Id: Annotate.cpp,v 1.20 2008-02-23 15:30:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -133,7 +133,8 @@ double GMSH_AnnotatePlugin::callback(int num, int action, double value, double *
   return 0.;
 }
 
-char *GMSH_AnnotatePlugin::callbackStr(int num, int action, char *value, char **opt)
+const char *GMSH_AnnotatePlugin::callbackStr(int num, int action, const char *value,
+					     const char **opt)
 {
   *opt = value;
 #if defined(HAVE_FLTK)
@@ -184,17 +185,17 @@ double GMSH_AnnotatePlugin::callbackFontSize(int num, int action, double value)
 		  1, 5, 100);
 }
 
-char *GMSH_AnnotatePlugin::callbackText(int num, int action, char *value)
+const char *GMSH_AnnotatePlugin::callbackText(int num, int action, const char *value)
 {
   return callbackStr(num, action, value, &AnnotateOptions_String[0].def);
 }
 
-char *GMSH_AnnotatePlugin::callbackFont(int num, int action, char *value)
+const char *GMSH_AnnotatePlugin::callbackFont(int num, int action, const char *value)
 {
   return callbackStr(num, action, value, &AnnotateOptions_String[1].def);
 }
 
-char *GMSH_AnnotatePlugin::callbackAlign(int num, int action, char *value)
+const char *GMSH_AnnotatePlugin::callbackAlign(int num, int action, const char *value)
 {
   return callbackStr(num, action, value, &AnnotateOptions_String[2].def);
 }
@@ -255,7 +256,7 @@ PView *GMSH_AnnotatePlugin::execute(PView *v)
   double Z = AnnotateOptions_Number[2].def;
   int dim3 = (int)AnnotateOptions_Number[3].def;
   int iView = (int)AnnotateOptions_Number[5].def;
-  char *text = AnnotateOptions_String[0].def;
+  const char *text = AnnotateOptions_String[0].def;
   double style = getStyle();
 
   PView *v1 = getView(iView, v);
@@ -271,8 +272,8 @@ PView *GMSH_AnnotatePlugin::execute(PView *v)
     List_Add(data1->T3D, &style); 
     double d = List_Nbr(data1->T3C);
     List_Add(data1->T3D, &d); 
-    for(int i = 0; i < (int)strlen(text)+1; i++) 
-      List_Add(data1->T3C, &text[i]); 
+    for(int i = 0; i < (int)strlen(text) + 1; i++) 
+      List_Add(data1->T3C, (void*)&text[i]); 
     data1->NbT3++;
   }
   else{
@@ -281,8 +282,8 @@ PView *GMSH_AnnotatePlugin::execute(PView *v)
     List_Add(data1->T2D, &style); 
     double d = List_Nbr(data1->T2C);
     List_Add(data1->T2D, &d); 
-    for(int i = 0; i < (int)strlen(text)+1; i++) 
-      List_Add(data1->T2C, &text[i]); 
+    for(int i = 0; i < (int)strlen(text) + 1; i++) 
+      List_Add(data1->T2C, (void*)&text[i]); 
     data1->NbT2++;
   }
 

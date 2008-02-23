@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.60 2008-02-22 07:59:00 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.61 2008-02-23 15:30:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -77,7 +77,7 @@ int WaitForData(int socket, int num, double waitint)
 // This routine either launches a solver and waits for some answer (if
 // num >= 0), or simply waits for messages (if num < 0)
 
-int Solver(int num, char *args)
+int Solver(int num, const char *args)
 {
   char command[1024], sockname[1024], prog[1024], tmp[1024], tmp2[1024];
 

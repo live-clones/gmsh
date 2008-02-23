@@ -44,10 +44,10 @@ void Draw2d();
 void DrawPlugin(void (*draw)());
 void Draw();
 
-void Draw_String(char *s);
-void Draw_String(char *s, double style);
-void Draw_String_Center(char *s);
-void Draw_String_Right(char *s);
+void Draw_String(const char *s);
+void Draw_String(const char *s, double style);
+void Draw_String_Center(const char *s);
+void Draw_String_Right(const char *s);
 void Draw_Geom();
 void Draw_Mesh();
 void Draw_Post();

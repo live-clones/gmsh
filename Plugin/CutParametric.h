@@ -34,7 +34,8 @@ class GMSH_CutParametricPlugin : public GMSH_Post_Plugin
 private:
   static double callback(int num, int action, double value, double *opt,
 			 double step, double min, double max);
-  static char *callbackStr(int num, int action, char *value, char **opt);
+  static const char *callbackStr(int num, int action, const char *value, 
+				 const char **opt);
   static int fillXYZ();
   static int recompute;
   static std::vector<double> x, y, z;
@@ -53,9 +54,9 @@ public:
   static double callbackMaxU(int, int, double);
   static double callbackN(int, int, double);
   static double callbackConnect(int, int, double);
-  static char *callbackX(int, int, char *);
-  static char *callbackY(int, int, char *);
-  static char *callbackZ(int, int, char *);
+  static const char *callbackX(int, int, const char *);
+  static const char *callbackY(int, int, const char *);
+  static const char *callbackZ(int, int, const char *);
   static void draw();
 };
 

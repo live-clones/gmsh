@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.24 2008-02-17 08:48:06 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.25 2008-02-23 15:30:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -86,26 +86,26 @@ int GMSH_CutParametricPlugin::fillXYZ()
   Msg(GERROR, "MathEval is not compiled in this version of Gmsh");
   return 0;
 #else
-  char *exprx = CutParametricOptions_String[0].def;
-  char *expry = CutParametricOptions_String[1].def;
-  char *exprz = CutParametricOptions_String[2].def;
+  const char *exprx = CutParametricOptions_String[0].def;
+  const char *expry = CutParametricOptions_String[1].def;
+  const char *exprz = CutParametricOptions_String[2].def;
   int nbU = (int)CutParametricOptions_Number[2].def;
 
   x.resize(nbU);
   y.resize(nbU);
   z.resize(nbU);
-  void *fx = evaluator_create(exprx);
+  void *fx = evaluator_create((char*)exprx);
   if(!fx){
     Msg(GERROR, "Invalid expression '%s'", exprx);
     return 0;
   }
-  void *fy = evaluator_create(expry);
+  void *fy = evaluator_create((char*)expry);
   if(!fy){
     evaluator_destroy(fx);
     Msg(GERROR, "Invalid expression '%s'", expry);
     return 0;
   }
-  void *fz = evaluator_create(exprz);
+  void *fz = evaluator_create((char*)exprz);
   if(!fz){
     Msg(GERROR, "Invalid expression '%s'", exprz);
     evaluator_destroy(fx);
@@ -163,7 +163,8 @@ double GMSH_CutParametricPlugin::callback(int num, int action, double value, dou
   return 0.;
 }
 
-char *GMSH_CutParametricPlugin::callbackStr(int num, int action, char *value, char **opt)
+const char *GMSH_CutParametricPlugin::callbackStr(int num, int action, const char *value,
+						  const char **opt)
 {
   *opt = value;
 #if defined(HAVE_FLTK)
@@ -197,17 +198,17 @@ double GMSH_CutParametricPlugin::callbackConnect(int num, int action, double val
 		  1, 0, 1);
 }
 
-char *GMSH_CutParametricPlugin::callbackX(int num, int action, char *value)
+const char *GMSH_CutParametricPlugin::callbackX(int num, int action, const char *value)
 {
   return callbackStr(num, action, value, &CutParametricOptions_String[0].def);
 }
 
-char *GMSH_CutParametricPlugin::callbackY(int num, int action, char *value)
+const char *GMSH_CutParametricPlugin::callbackY(int num, int action, const char *value)
 {
   return callbackStr(num, action, value, &CutParametricOptions_String[1].def);
 }
 
-char *GMSH_CutParametricPlugin::callbackZ(int num, int action, char *value)
+const char *GMSH_CutParametricPlugin::callbackZ(int num, int action, const char *value)
 {
   return callbackStr(num, action, value, &CutParametricOptions_String[2].def);
 }

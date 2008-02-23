@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.37 2008-02-22 21:09:00 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.38 2008-02-23 15:30:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -995,7 +995,7 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
   return 1;
 }
 
-static int skipUntil(FILE *fp, char *key)
+static int skipUntil(FILE *fp, const char *key)
 {
   char str[256], key_bracket[256];
   strcpy(key_bracket, key);
@@ -1036,7 +1036,8 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
   idx.push_back(i);
 
   // check if vertex indices are separated by commas
-  char tmp[256], *format;
+  char tmp[256];
+  const char *format;
   fpos_t position;
   fgetpos(fp, &position);
   fgets(tmp, sizeof(tmp), fp);

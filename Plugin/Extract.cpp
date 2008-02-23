@@ -1,4 +1,4 @@
-// $Id: Extract.cpp,v 1.25 2008-02-17 08:48:06 geuzaine Exp $
+// $Id: Extract.cpp,v 1.26 2008-02-23 15:30:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -117,7 +117,7 @@ void GMSH_ExtractPlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Extract failed...");
 }
 
-static void extract(char *expr[9], List_T *inList, int inNb, 
+static void extract(const char *expr[9], List_T *inList, int inNb, 
 		    List_T *outListScalar, int *outNbScalar, 
 		    List_T *outListVector, int *outNbVector, 
 		    List_T *outListTensor, int *outNbTensor, 
@@ -156,7 +156,7 @@ static void extract(char *expr[9], List_T *inList, int inNb,
 #if defined(HAVE_MATH_EVAL)
   void *f[9] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
   for(int i = 0; i < outNbComp; i++){
-    f[i] = evaluator_create(expr[i]);
+    f[i] = evaluator_create((char*)expr[i]);
     if(!f[i]){
       Msg(GERROR, "Invalid expression '%s'", expr[i]);
       for(int j = 0; j < i; j++)
@@ -226,15 +226,15 @@ PView *GMSH_ExtractPlugin::execute(PView *v)
 {
   int step = (int)ExtractOptions_Number[0].def;
   int iView = (int)ExtractOptions_Number[1].def;
-  char *expr[9] = { ExtractOptions_String[0].def, 
-		    ExtractOptions_String[1].def,
-		    ExtractOptions_String[2].def,
-		    ExtractOptions_String[3].def,
-		    ExtractOptions_String[4].def,
-		    ExtractOptions_String[5].def,
-		    ExtractOptions_String[6].def,
-		    ExtractOptions_String[7].def,
-		    ExtractOptions_String[8].def };
+  const char *expr[9] = { ExtractOptions_String[0].def, 
+			  ExtractOptions_String[1].def,
+			  ExtractOptions_String[2].def,
+			  ExtractOptions_String[3].def,
+			  ExtractOptions_String[4].def,
+			  ExtractOptions_String[5].def,
+			  ExtractOptions_String[6].def,
+			  ExtractOptions_String[7].def,
+			  ExtractOptions_String[8].def };
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

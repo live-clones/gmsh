@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.33 2008-02-17 08:48:06 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.34 2008-02-23 15:30:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -138,7 +138,7 @@ void GMSH_EvaluatePlugin::evaluate(PView *v1, List_T *list1, int nbElm1,
 				   PView *v2, List_T *list2, int nbElm2,
 				   int nbNod, int nbComp, int comp, 
 				   int timeStep1, int timeStep2,
-				   char *expression)
+				   const char *expression)
 {
 #if !defined(HAVE_MATH_EVAL)
 
@@ -149,7 +149,7 @@ void GMSH_EvaluatePlugin::evaluate(PView *v1, List_T *list1, int nbElm1,
   if(!nbElm1)
     return;
 
-  void *f = evaluator_create(expression);
+  void *f = evaluator_create((char*)expression);
 
   if(!f){
     Msg(GERROR, "Invalid expression '%s'", expression);
@@ -223,7 +223,7 @@ PView *GMSH_EvaluatePlugin::execute(PView *v)
   int externalView = (int)EvaluateOptions_Number[2].def;
   int externalTimeStep = (int)EvaluateOptions_Number[3].def;
   int iView = (int)EvaluateOptions_Number[4].def;
-  char *expr = EvaluateOptions_String[0].def;
+  const char *expr = EvaluateOptions_String[0].def;
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
