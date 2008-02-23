@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.154 2008-02-23 08:24:42 geuzaine Exp $
+// $Id: Geom.cpp,v 1.155 2008-02-23 10:43:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -442,7 +442,10 @@ void Draw_Geom()
 {
   if(!CTX.geom.draw) return;
 
-  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+  if(CTX.geom.light_two_side)
+    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+  else
+    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
   
   for(int i = 0; i < 6; i++)
     if(CTX.clip[i] & 1) 

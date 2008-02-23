@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.383 2008-02-22 07:59:00 geuzaine Exp $
+// $Id: Options.cpp,v 1.384 2008-02-23 10:43:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -4099,6 +4099,17 @@ double opt_geometry_light(OPT_ARGS_NUM)
   }
 #endif
   return CTX.geom.light;
+}
+
+double opt_geometry_light_two_side(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.geom.light_two_side = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->geo_butt[14]->value(CTX.geom.light_two_side);
+#endif
+  return CTX.geom.light_two_side;
 }
 
 double opt_geometry_occ_fix_small_edges(OPT_ARGS_NUM)

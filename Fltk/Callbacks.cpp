@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.563 2008-02-22 07:59:00 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.564 2008-02-23 10:43:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1059,6 +1059,7 @@ void geometry_options_ok_cb(CALLBACK_ARGS)
   opt_geometry_occ_fix_small_edges(0, GMSH_SET, WID->geo_butt[11]->value());
   opt_geometry_occ_fix_small_faces(0, GMSH_SET, WID->geo_butt[12]->value());
   opt_geometry_occ_sew_faces(0, GMSH_SET, WID->geo_butt[13]->value());
+  opt_geometry_light_two_side(0, GMSH_SET, WID->geo_butt[14]->value());
 
   opt_geometry_normals(0, GMSH_SET, WID->geo_value[0]->value());
   opt_geometry_tangents(0, GMSH_SET, WID->geo_value[1]->value());

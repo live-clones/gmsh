@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.656 2008-02-22 07:59:00 geuzaine Exp $
+// $Id: GUI.cpp,v 1.657 2008-02-23 10:43:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -2350,6 +2350,10 @@ void GUI::create_option_window()
       geo_butt[9]->type(FL_TOGGLE_BUTTON);
       geo_butt[9]->tooltip("(Alt+w)");
       geo_butt[9]->callback(geometry_options_ok_cb);
+
+      geo_butt[14] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Use two-side lighting");
+      geo_butt[14]->type(FL_TOGGLE_BUTTON);
+      geo_butt[14]->callback(geometry_options_ok_cb);
 
       o->end();
     }
