@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.51 2008-02-23 16:19:22 remacle Exp $
+// $Id: gmshFace.cpp,v 1.52 2008-02-23 16:31:06 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,8 @@
 gmshFace::gmshFace(GModel *m, Surface *face)
   : GFace(m, face->Num), s(face)
 {
+  resetMeshAttributes();
+
   for(int i = 0 ; i < List_Nbr(s->Generatrices); i++){
     Curve *c;
     List_Read(s->Generatrices, i, &c);
@@ -84,7 +86,6 @@ gmshFace::gmshFace(GModel *m, Surface *face)
   }
   //  face->print_info();
 
-  resetMeshAttributes();
 }
 
 double gmshFace::getMetricEigenvalue(const SPoint2 &pt)
