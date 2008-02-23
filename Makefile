@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.469 2008-02-17 10:24:50 geuzaine Exp $
+# $Id: Makefile,v 1.470 2008-02-23 20:56:36 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -123,7 +123,7 @@ doc:
 	cd doc/texinfo && ${MAKE} all
 	cd doc && tar zcf ../gmsh-${GMSH_VERSION}-doc.tgz\
           FAQ CREDITS VERSIONS README.win32 gmsh.1\
-          texinfo/gmsh.ps texinfo/gmsh.pdf texinfo/gmsh.txt\
+          texinfo/gmsh.pdf texinfo/gmsh.txt\
           texinfo/*.html texinfo/gmsh-info.tgz
 
 doc-info:

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.17 2008-02-17 08:48:11 geuzaine Exp $
+# $Id: Makefile,v 1.18 2008-02-23 20:56:36 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -52,7 +52,7 @@ infoz: info
 txt:
 	makeinfo --no-headers gmsh.texi -o gmsh.txt
 
-all: ps pdf html html1 infoz txt
+all: pdf html html1 infoz txt
 
 clean:
 	rm -f *.cp* *.fn* *.ky* *.pg* *.tp* *.vr* *.mv*\
