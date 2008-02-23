@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.35 2008-02-23 16:19:22 remacle Exp $
+// $Id: OCCEdge.cpp,v 1.36 2008-02-23 17:43:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -206,11 +206,12 @@ int OCCEdge::minimumMeshSegments() const
   else 
     np = CTX.mesh.min_curv_points - 1;
   
-  // if the edge is closed, ensure that at least 3 points are generated in the
-  // 1D mesh (4 segments, one of which is degenerated)
+  // if the edge is closed, ensure that at least 3 points are
+  // generated in the 1D mesh (4 segments, one of which is
+  // degenerated)
   if (getBeginVertex() == getEndVertex()) np = std::max(4, np);
 
-  return std::max(np,meshAttributes.minimumMeshSegments);
+  return std::max(np, meshAttributes.minimumMeshSegments);
 }
 
 int OCCEdge::minimumDrawSegments() const
