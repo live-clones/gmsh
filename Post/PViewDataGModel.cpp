@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.18 2008-02-24 20:42:10 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.19 2008-02-24 21:05:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -50,12 +50,16 @@ PViewDataGModel::PViewDataGModel(GModel *model) : _model(model)
      
      When reading a .msh file:
 
-     * get node number in file
-     * get vertex pointer from _model->getVertexByTag(num)
-     * if MVertex 
-         has no dataIndex, increment it (need global value stored in GModel)
-         it has one, do nothing
-     * fill nodeData[step][dataIndex]
+     nodeData.resize(std::max(_model->getMaxNodeDataIndex(), numDataInFile));
+     loop over lines:
+       * get node number in file
+       * get vertex pointer from _model->getVertexByTag(num)
+       * if MVertex has no dataIndex:
+           increment it (need global value stored in GModel)
+           fill std::vector<double> tmp
+           nodeData[step].push_back(tmp)
+         else:
+           add data nodeData[step][dataIndex]
 
      .msh file format:
 
