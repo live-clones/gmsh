@@ -84,13 +84,22 @@ class PViewDataList : public PViewData {
   int getNumScalars();
   int getNumVectors();
   int getNumTensors();
-  int getNumElements(int type=0);
-  int getDimension(int ele);
-  int getNumNodes(int ele);
-  void getNode(int ele, int nod, double &x, double &y, double &z);
-  int getNumComponents(int ele);
-  void getValue(int ele, int node, int comp, int step, double &val);
-  int getNumEdges(int ele);
+  int getNumPoints(){ return NbSP + NbVP + NbTP; }
+  int getNumLines(){ return NbSL + NbVL + NbTL; }
+  int getNumTriangles(){ return NbST + NbVT + NbTT; }
+  int getNumQuadrangles(){ return NbSQ + NbVQ + NbTQ; }
+  int getNumTetrahedra(){ return NbSS + NbVS + NbTS; }
+  int getNumHexahedra(){ return NbSH + NbVH + NbTH; }
+  int getNumPrisms(){ return NbSI + NbVI + NbTI; }
+  int getNumPyramids(){ return NbSY + NbVY + NbTY; }
+  int getNumEntities(){ return 1; }
+  int getNumElements(int ent=-1);
+  int getDimension(int ent, int ele);
+  int getNumNodes(int ent, int ele);
+  void getNode(int ent, int ele, int nod, double &x, double &y, double &z);
+  int getNumComponents(int ent, int ele);
+  void getValue(int ent, int ele, int node, int comp, int step, double &val);
+  int getNumEdges(int ent, int ele);
   int getNumStrings2D(){ return NbT2; }
   int getNumStrings3D(){ return NbT3; }
   void getString2D(int i, int step, std::string &str, 

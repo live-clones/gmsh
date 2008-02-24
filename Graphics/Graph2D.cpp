@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.73 2008-02-23 15:30:07 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.74 2008-02-24 14:55:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -77,8 +77,9 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
   }
   else if(opt->Type == PViewOptions::Plot2DTime){
     numy = 0;
-    for(int i = 0; i < data->getNumElements(); i++)
-      if(data->getDimension(i) < 2) numy++;
+    for(int ent = 0; ent < data->getNumEntities(); ent++)
+      for(int i = 0; i < data->getNumElements(ent); i++)
+	if(data->getDimension(ent, i) < 2) numy++;
   }
   
   if(!numy) return false;
@@ -89,36 +90,38 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
   SPoint3 p0(0., 0., 0.);
 
   numy = 0;
-  for(int i = 0; i < data->getNumElements(); i++){
-    int dim = data->getDimension(i);
-    if(dim < 2){
-      int numNodes = data->getNumNodes(i);
-      int numComp = data->getNumComponents(i);
-      for(int ts = space ? opt->TimeStep : 0; ts < opt->TimeStep + 1; ts++){
-	for(int j = 0; j < numNodes; j++){
-	  double val[9], xyz[3];
-	  data->getNode(i, j, xyz[0], xyz[1], xyz[2]);
-	  for(int k = 0; k < numComp; k++)
-	    data->getValue(i, j, k, ts, val[k]);
-	  double vy = ComputeScalarRep(numComp, val);
-	  if(space){
-	    // store offset to origin + distance to first point
-	    if(x.empty()){
-	      p0 = SPoint3(xyz[0], xyz[1], xyz[2]);
-	      x.push_back(ComputeScalarRep(3, xyz));
+  for(int ent = 0; ent < data->getNumEntities(); ent++){
+    for(int i = 0; i < data->getNumElements(ent); i++){
+      int dim = data->getDimension(ent, i);
+      if(dim < 2){
+	int numNodes = data->getNumNodes(ent, i);
+	int numComp = data->getNumComponents(ent, i);
+	for(int ts = space ? opt->TimeStep : 0; ts < opt->TimeStep + 1; ts++){
+	  for(int j = 0; j < numNodes; j++){
+	    double val[9], xyz[3];
+	    data->getNode(ent, i, j, xyz[0], xyz[1], xyz[2]);
+	    for(int k = 0; k < numComp; k++)
+	      data->getValue(ent, i, j, k, ts, val[k]);
+	    double vy = ComputeScalarRep(numComp, val);
+	    if(space){
+	      // store offset to origin + distance to first point
+	      if(x.empty()){
+		p0 = SPoint3(xyz[0], xyz[1], xyz[2]);
+		x.push_back(ComputeScalarRep(3, xyz));
+	      }
+	      else{
+		x.push_back(x[0] + p0.distance(SPoint3(xyz[0], xyz[1], xyz[2])));
+	      }
+	      y[0].push_back(vy);
 	    }
 	    else{
-	      x.push_back(x[0] + p0.distance(SPoint3(xyz[0], xyz[1], xyz[2])));
+	      if(!numy) x.push_back(data->getTime(ts));
+	      y[numy].push_back(vy);
 	    }
-	    y[0].push_back(vy);
-	  }
-	  else{
-	    if(!numy) x.push_back(data->getTime(ts));
-	    y[numy].push_back(vy);
 	  }
 	}
+	numy++;
       }
-      numy++;
     }
   }
 

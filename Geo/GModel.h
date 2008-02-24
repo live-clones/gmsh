@@ -37,8 +37,8 @@ class smooth_normals;
 class GModel
 {
  private:
-  // A vertex cache to speed-up direct access by vertex number (used
-  // for post-processing I/O)
+  // Vertex cache to speed-up direct access by vertex number (used for
+  // post-processing I/O)
   std::vector<MVertex*> _vertexVectorCache;
   std::map<int, MVertex*> _vertexMapCache;
 
@@ -147,15 +147,11 @@ class GModel
   // Returns the mesh status for the entire model
   int getMeshStatus(bool countDiscrete=true);
 
-  // Returns the total number of vertices in the mesh
-  int getNumMeshVertices();
-
   // Returns the total number of elements in the mesh
   int getNumMeshElements();
 
-  // Invalidate/Rebuild the vertex cache
-  void invalidateMeshVertexCache();
-  void buildMeshVertexCache();
+  // Returns the total number of vertices in the mesh
+  int getNumMeshVertices();
 
   // Access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(int n);

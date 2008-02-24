@@ -34,16 +34,18 @@ class PViewDataGModel : public PViewData {
   PViewDataGModel(GModel *model) : _model(model) {}
   ~PViewDataGModel(){}
   int getNumTimeSteps(){ return 1; }
-  double getMin(int step=-1){ return 0.; }
-  double getMax(int step=-1){ return 1.; }
-  SBoundingBox3d getBoundingBox(){ return SBoundingBox3d(); }
-  int getNumElements(int type=0){ return _model->getNumMeshElements(); }
-  int getDimension(int ele){ return 0; }
-  int getNumNodes(int ele){ return 0; }
-  void getNode(int ele, int nod, double &x, double &y, double &z){}
-  int getNumComponents(int ele){ return 1; }
-  void getValue(int ele, int node, int comp, int step, double &val){}
-  int getNumEdges(int ele){ return 0; }
+  double getTime(int step);
+  double getMin(int step=-1);
+  double getMax(int step=-1);
+  SBoundingBox3d getBoundingBox(){ return _model->bounds(); }
+  int getNumEntities();
+  int getNumElements(int ent=-1);
+  int getDimension(int ent, int ele);
+  int getNumNodes(int ent, int ele);
+  void getNode(int ent, int ele, int nod, double &x, double &y, double &z);
+  int getNumComponents(int ent, int ele);
+  void getValue(int ent, int ele, int node, int comp, int step, double &val);
+  int getNumEdges(int ent, int ele);
 
   // I/O routines
   bool readMSH(FILE *fp);

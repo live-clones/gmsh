@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.658 2008-02-23 15:30:06 geuzaine Exp $
+// $Id: GUI.cpp,v 1.659 2008-02-24 14:55:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -3474,8 +3474,7 @@ void GUI::update_view_window(int num)
     view_value[34]->deactivate();
   }
 
-  if(data->getNumElements(PViewData::Point) ||
-     data->getNumElements(PViewData::Line)){
+  if(data->getNumPoints() || data->getNumLines()){
     ((Fl_Menu_Item*)view_choice[13]->menu())[1].activate();
     ((Fl_Menu_Item*)view_choice[13]->menu())[2].activate();
   }

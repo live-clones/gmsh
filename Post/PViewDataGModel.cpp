@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.13 2008-02-22 21:09:02 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.14 2008-02-24 14:55:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,63 @@
 
 #include "PViewDataGModel.h"
 #include "Message.h"
+
+double PViewDataGModel::getTime(int step)
+{
+  return 0;
+}
+
+double PViewDataGModel::getMin(int step)
+{
+  return 0;
+}
+
+double PViewDataGModel::getMax(int step)
+{
+  return 1;
+}
+
+int PViewDataGModel::getNumEntities()
+{
+  return 0;
+}
+
+int PViewDataGModel::getNumElements(int ent)
+{
+  if(ent < 0)
+    return _model->getNumMeshElements(); 
+  else
+    return 0; // TODO
+}
+
+int PViewDataGModel::getDimension(int ent, int ele)
+{
+  return 0; 
+}
+
+int PViewDataGModel::getNumNodes(int ent, int ele)
+{
+  return 0; 
+}
+
+void PViewDataGModel::getNode(int ent, int ele, int nod, double &x, double &y, double &z)
+{
+}
+
+int PViewDataGModel::getNumComponents(int ent, int ele)
+{
+  return 1; 
+}
+
+void PViewDataGModel::getValue(int ent, int ele, int node, int comp, int step, double &val)
+{
+
+}
+
+int PViewDataGModel::getNumEdges(int ent, int ele)
+{ 
+  return 0; 
+}
 
 bool PViewDataGModel::readMSH(FILE *fp)
 {

@@ -34,6 +34,7 @@ class GEdge;
 class GFace;
 class GRegion;
 class MVertex;
+class MElement;
 class VertexArray;
 
 // A geometric model entity.
@@ -231,6 +232,12 @@ class GEntity {
 
   // Resets the mesh attributes to default values
   virtual void resetMeshAttributes() { return; }
+
+  // Gets the number of mesh elements in the entity
+  virtual unsigned int getNumMeshElements() { throw; }
+
+  // Gets the element at the given index
+  virtual MElement *getMeshElement(unsigned int index) { throw; }
 
   // Get/set all mesh element visibility flag
   bool getAllElementsVisible(){ return _allElementsVisible ? true : false; }

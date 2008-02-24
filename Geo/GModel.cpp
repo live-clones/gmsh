@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.66 2008-02-22 21:09:00 geuzaine Exp $
+// $Id: GModel.cpp,v 1.67 2008-02-24 14:55:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -93,7 +93,8 @@ void GModel::destroy()
   if(normals) delete normals;
   normals = 0;
 
-  invalidateMeshVertexCache();
+  _vertexVectorCache.clear();
+  _vertexMapCache.clear();
 
   MVertex::resetGlobalNumber();
   MElement::resetGlobalNumber();
@@ -376,19 +377,13 @@ int GModel::getNumMeshVertices()
 
 int GModel::getNumMeshElements()
 {
-  int n = 0;
+  unsigned int n = 0;
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    n += (*it)->lines.size();
-  for(fiter it = firstFace(); it != lastFace(); ++it){
-    n += (*it)->triangles.size();
-    n += (*it)->quadrangles.size();
-  }
-  for(riter it = firstRegion(); it != lastRegion(); ++it){
-    n += (*it)->tetrahedra.size();
-    n += (*it)->hexahedra.size();
-    n += (*it)->prisms.size();
-    n += (*it)->pyramids.size();
-  }
+    n += (*it)->getNumMeshElements();
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    n += (*it)->getNumMeshElements();
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    n += (*it)->getNumMeshElements();
   return n;
 }
 
@@ -399,46 +394,36 @@ static void insertMeshVertices(std::vector<MVertex*> &vertices, T &container)
     container[vertices[i]->getNum()] = vertices[i];
 }
 
-void GModel::buildMeshVertexCache()
-{
-  _vertexVectorCache.clear();
-  _vertexMapCache.clear();
-  bool dense = (getNumMeshVertices() == MVertex::getGlobalNumber());
-
-  if(dense){
-    _vertexVectorCache.resize(MVertex::getGlobalNumber());
-    for(viter it = firstVertex(); it != lastVertex(); ++it)
-      insertMeshVertices((*it)->mesh_vertices, _vertexVectorCache);
-    for(eiter it = firstEdge(); it != lastEdge(); ++it)
-      insertMeshVertices((*it)->mesh_vertices, _vertexVectorCache);
-    for(fiter it = firstFace(); it != lastFace(); ++it)
-      insertMeshVertices((*it)->mesh_vertices, _vertexVectorCache);
-    for(riter it = firstRegion(); it != lastRegion(); ++it)
-      insertMeshVertices((*it)->mesh_vertices, _vertexVectorCache);
-  }
-  else{
-    for(viter it = firstVertex(); it != lastVertex(); ++it)
-      insertMeshVertices((*it)->mesh_vertices, _vertexMapCache);
-    for(eiter it = firstEdge(); it != lastEdge(); ++it)
-      insertMeshVertices((*it)->mesh_vertices, _vertexMapCache);
-    for(fiter it = firstFace(); it != lastFace(); ++it)
-      insertMeshVertices((*it)->mesh_vertices, _vertexMapCache);
-    for(riter it = firstRegion(); it != lastRegion(); ++it)
-      insertMeshVertices((*it)->mesh_vertices, _vertexMapCache);
-  }
-}
-
-void GModel::invalidateMeshVertexCache()
-{
-  _vertexVectorCache.clear();
-  _vertexMapCache.clear();
-}
-
 MVertex *GModel::getMeshVertexByTag(int n)
 {
-  if(n < 0) return 0;
-  if(_vertexVectorCache.empty() && _vertexMapCache.empty())
-    buildMeshVertexCache();
+  if(_vertexVectorCache.empty() && _vertexMapCache.empty()){
+    Msg(DEBUG, "Rebuilding mesh vertex cache");
+    _vertexVectorCache.clear();
+    _vertexMapCache.clear();
+    bool dense = (getNumMeshVertices() == MVertex::getGlobalNumber());
+    if(dense){
+      _vertexVectorCache.resize(MVertex::getGlobalNumber());
+      for(viter it = firstVertex(); it != lastVertex(); ++it)
+	insertMeshVertices((*it)->mesh_vertices, _vertexVectorCache);
+      for(eiter it = firstEdge(); it != lastEdge(); ++it)
+	insertMeshVertices((*it)->mesh_vertices, _vertexVectorCache);
+      for(fiter it = firstFace(); it != lastFace(); ++it)
+	insertMeshVertices((*it)->mesh_vertices, _vertexVectorCache);
+      for(riter it = firstRegion(); it != lastRegion(); ++it)
+	insertMeshVertices((*it)->mesh_vertices, _vertexVectorCache);
+    }
+    else{
+      for(viter it = firstVertex(); it != lastVertex(); ++it)
+	insertMeshVertices((*it)->mesh_vertices, _vertexMapCache);
+      for(eiter it = firstEdge(); it != lastEdge(); ++it)
+	insertMeshVertices((*it)->mesh_vertices, _vertexMapCache);
+      for(fiter it = firstFace(); it != lastFace(); ++it)
+	insertMeshVertices((*it)->mesh_vertices, _vertexMapCache);
+      for(riter it = firstRegion(); it != lastRegion(); ++it)
+	insertMeshVertices((*it)->mesh_vertices, _vertexMapCache);
+    }
+  }
+
   if(n < (int)_vertexVectorCache.size())
     return _vertexVectorCache[n];
   else
@@ -516,7 +501,8 @@ void GModel::associateEntityWithMeshVertices()
 
 int GModel::renumberMeshVertices(bool saveAll)
 {
-  invalidateMeshVertexCache();
+  _vertexVectorCache.clear();
+  _vertexMapCache.clear();
 
   // tag all mesh vertices with -1 (negative vertices will not be
   // saved)

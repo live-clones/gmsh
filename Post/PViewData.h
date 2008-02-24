@@ -38,16 +38,6 @@ class PViewData {
   // index of the view in the file
   int _fileIndex;
  public:
-  enum ElementType {
-    Point=1,
-    Line=2,
-    Triangle=3,
-    Quadrangle=4,
-    Tetrahedron=5,
-    Hexahedron=6,
-    Prism=7,
-    Pyramid=8
-  };
   PViewData();
   virtual ~PViewData(){}
   virtual bool getDirty(){ return _dirty; }
@@ -67,14 +57,38 @@ class PViewData {
   virtual int getNumScalars(){ return 0; }
   virtual int getNumVectors(){ return 0; }
   virtual int getNumTensors(){ return 0; }
-  virtual int getNumElements(int type=0) = 0;
-  virtual int getDimension(int ele) = 0;
-  virtual int getEntity(int ele){ return 0; }
-  virtual int getNumNodes(int ele) = 0;
-  virtual void getNode(int ele, int nod, double &x, double &y, double &z) = 0;
-  virtual int getNumComponents(int ele) = 0;
-  virtual void getValue(int ele, int node, int comp, int step, double &val) = 0;
-  virtual int getNumEdges(int ele) = 0;
+  virtual int getNumPoints(){ return 0; }
+  virtual int getNumLines(){ return 0; }
+  virtual int getNumTriangles(){ return 0; }
+  virtual int getNumQuadrangles(){ return 0; }
+  virtual int getNumTetrahedra(){ return 0; }
+  virtual int getNumHexahedra(){ return 0; }
+  virtual int getNumPrisms(){ return 0; }
+  virtual int getNumPyramids(){ return 0; }
+  // Returns the number of geometrical entities in the view
+  virtual int getNumEntities() = 0;
+  // Returns the number of elements in the ent-th entity, or the total
+  // number of elements if ent < 0
+  virtual int getNumElements(int ent=-1) = 0;
+  // Returns the geometrical dimension of the ele-th element in the
+  // ent-th entity
+  virtual int getDimension(int ent, int ele) = 0;
+  // Returns the number of nodes of the ele-th element in the ent-th
+  // entity
+  virtual int getNumNodes(int ent, int ele) = 0;
+  // Returns the coordinates of the nod-th node from the ele-th element
+  // in the ent-th entity
+  virtual void getNode(int ent, int ele, int nod, double &x, double &y, double &z) = 0;
+  // Returns the number of componts available for the ele-th element
+  // in the ent-th entity
+  virtual int getNumComponents(int ent, int ele) = 0;
+  // Returns the comp-th component (at the step-th time step)
+  // associated with the node-th node from the ele-th element in the
+  // ent-th entity
+  virtual void getValue(int ent, int ele, int node, int comp, int step, double &val) = 0;
+  // Returns the number of edges of the ele-th element in the ent-th
+  // entity
+  virtual int getNumEdges(int ent, int ele) = 0;
   virtual int getNumStrings2D(){ return 0; }
   virtual int getNumStrings3D(){ return 0; }
   virtual void getString2D(int i, int step, std::string &str, 

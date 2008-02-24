@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.136 2008-02-20 09:20:45 geuzaine Exp $
+// $Id: Generator.cpp,v 1.137 2008-02-24 14:55:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -133,14 +133,14 @@ void GetStatistics(double stat[50], double quality[3][100])
   stat[26] = PView::list.size();
   for(unsigned int i = 0; i < PView::list.size(); i++) {
     PViewData *data = PView::list[i]->getData();
-    stat[27] += data->getNumElements(PViewData::Point);
-    stat[28] += data->getNumElements(PViewData::Line);
-    stat[29] += data->getNumElements(PViewData::Triangle);
-    stat[30] += data->getNumElements(PViewData::Quadrangle);
-    stat[31] += data->getNumElements(PViewData::Tetrahedron);
-    stat[32] += data->getNumElements(PViewData::Hexahedron);
-    stat[33] += data->getNumElements(PViewData::Prism);
-    stat[34] += data->getNumElements(PViewData::Pyramid);
+    stat[27] += data->getNumPoints();
+    stat[28] += data->getNumLines();
+    stat[29] += data->getNumTriangles();
+    stat[30] += data->getNumQuadrangles();
+    stat[31] += data->getNumTetrahedra();
+    stat[32] += data->getNumHexahedra();
+    stat[33] += data->getNumPrisms();
+    stat[34] += data->getNumPyramids();
     stat[35] += data->getNumStrings2D() + data->getNumStrings3D();
   }
 }

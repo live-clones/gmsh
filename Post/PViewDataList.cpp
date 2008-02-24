@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.12 2008-02-17 08:48:08 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.13 2008-02-24 14:55:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -165,22 +165,8 @@ int PViewDataList::getNumTensors()
   return NbTP + NbTL + NbTT + NbTQ + NbTS + NbTH + NbTI + NbTY; 
 }
 
-int PViewDataList::getNumElements(int type)
+int PViewDataList::getNumElements(int ent)
 {
-  if(type){
-    switch(type){
-    case Point: return NbSP + NbVP + NbTP;
-    case Line: return NbSL + NbVL + NbTL;
-    case Triangle: return NbST + NbVT + NbTT;
-    case Quadrangle: return NbSQ + NbVQ + NbTQ;
-    case Tetrahedron: return NbSS + NbVS + NbTS;
-    case Hexahedron: return NbSH + NbVH + NbTH;
-    case Prism: return NbSI + NbVI + NbTI;
-    case Pyramid: return NbSY + NbVY + NbTY;
-    default: Msg(GERROR, "Unknown element type"); return 0;
-    }
-  }
-
   return getNumScalars() + getNumVectors() + getNumTensors();
 }
 
@@ -341,19 +327,19 @@ void PViewDataList::_setLast(int ele)
   }
 }
 
-int PViewDataList::getDimension(int ele)
+int PViewDataList::getDimension(int ent, int ele)
 {
   if(ele != _lastElement) _setLast(ele);
   return _lastDimension;
 }
 
-int PViewDataList::getNumNodes(int ele)
+int PViewDataList::getNumNodes(int ent, int ele)
 {
   if(ele != _lastElement) _setLast(ele);
   return _lastNumNodes;
 }
 
-void PViewDataList::getNode(int ele, int nod, double &x, double &y, double &z)
+void PViewDataList::getNode(int ent, int ele, int nod, double &x, double &y, double &z)
 {
   if(ele != _lastElement) _setLast(ele);
   x = _lastXYZ[nod];
@@ -361,13 +347,13 @@ void PViewDataList::getNode(int ele, int nod, double &x, double &y, double &z)
   z = _lastXYZ[2 * _lastNumNodes + nod];
 }
 
-int PViewDataList::getNumComponents(int ele)
+int PViewDataList::getNumComponents(int ent, int ele)
 {
   if(ele != _lastElement) _setLast(ele);
   return _lastNumComponents;
 }
 
-void PViewDataList::getValue(int ele, int nod, int comp, int step, double &val)
+void PViewDataList::getValue(int ent, int ele, int nod, int comp, int step, double &val)
 {
   if(ele != _lastElement) _setLast(ele);
   val = _lastVal[step * _lastNumNodes  * _lastNumComponents + 
@@ -375,7 +361,7 @@ void PViewDataList::getValue(int ele, int nod, int comp, int step, double &val)
 		 comp];
 }
 
-int PViewDataList::getNumEdges(int ele)
+int PViewDataList::getNumEdges(int ent, int ele)
 {
   if(ele != _lastElement) _setLast(ele);
   return _lastNumEdges;
