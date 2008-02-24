@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.15 2008-02-24 16:18:19 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.16 2008-02-24 17:23:20 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -23,14 +23,21 @@
 // 
 
 #include "PViewDataGModel.h"
+#include "MElement.h"
 #include "Message.h"
 
 PViewDataGModel::PViewDataGModel(GModel *model) : _model(model)
 {
+  // store linear vector of GEntities so we can index in them
+  // efficiently
+  for(GModel::eiter it = _model->firstEdge(); it != _model->lastEdge(); ++it)
+    _entities.push_back(*it);
+  for(GModel::fiter it = _model->firstFace(); it != _model->lastFace(); ++it)
+    _entities.push_back(*it);
+  for(GModel::riter it = _model->firstRegion(); it != _model->lastRegion(); ++it)
+    _entities.push_back(*it);
+  
   /* 
-     store linear vector of GEntity* (index in that vector used for
-     all element access later)
-
      create a vector (one entry per time step) of 
 
      class data{
@@ -65,7 +72,6 @@ PViewDataGModel::PViewDataGModel(GModel *model) : _model(model)
 
 PViewDataGModel::~PViewDataGModel()
 {
-
 }
 
 double PViewDataGModel::getTime(int step)
@@ -85,29 +91,31 @@ double PViewDataGModel::getMax(int step)
 
 int PViewDataGModel::getNumEntities()
 {
-  return 0;
+  return _entities.size();
 }
 
 int PViewDataGModel::getNumElements(int ent)
 {
-  if(ent < 0)
-    return _model->getNumMeshElements(); 
-  else
-    return 0; // TODO
+  if(ent < 0) return _model->getNumMeshElements(); 
+  return _entities[ent]->getNumMeshElements();
 }
 
 int PViewDataGModel::getDimension(int ent, int ele)
 {
-  return 0; 
+  return _entities[ent]->getMeshElement(ele)->getDim();
 }
 
 int PViewDataGModel::getNumNodes(int ent, int ele)
 {
-  return 0; 
+  return _entities[ent]->getMeshElement(ele)->getNumVertices();
 }
 
 void PViewDataGModel::getNode(int ent, int ele, int nod, double &x, double &y, double &z)
 {
+  MVertex *v = _entities[ent]->getMeshElement(ele)->getVertex(nod);
+  x = v->x();
+  y = v->y();
+  z = v->z();
 }
 
 int PViewDataGModel::getNumComponents(int ent, int ele)
@@ -115,36 +123,38 @@ int PViewDataGModel::getNumComponents(int ent, int ele)
   return 1; 
 }
 
-void PViewDataGModel::getValue(int ent, int ele, int node, int comp, int step, double &val)
+void PViewDataGModel::getValue(int ent, int ele, int nod, int comp, int step, double &val)
 {
-
+  MVertex *v = _entities[ent]->getMeshElement(ele)->getVertex(nod);
+  val = v->x() * v->y() * v->z();
 }
 
 int PViewDataGModel::getNumEdges(int ent, int ele)
 { 
-  return 0; 
+  return _entities[ent]->getMeshElement(ele)->getNumEdges();
 }
 
 bool PViewDataGModel::skipEntity(int ent)
 {
-  return false;
+  return !_entities[ent]->getVisibility();
 }
 
 bool PViewDataGModel::skipElement(int ent, int ele)
 {
-  return false;
+  return !_entities[ent]->getMeshElement(ele)->getVisibility();
 }
 
 bool PViewDataGModel::readMSH(FILE *fp)
 {
   Msg(INFO, "Filling PViewDataGModel...");
   
-  MVertex *v =  _model->getMeshVertexByTag(10);
+  MVertex *v = _model->getMeshVertexByTag(10);
   if(v){
     printf("vertex 10 in mesh is %p\n", v);
   }
 
-  return false;
+  finalize();
+  return true;
 }
 
 bool PViewDataGModel::writePOS(std::string name, bool binary, bool parsed,

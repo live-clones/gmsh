@@ -29,6 +29,7 @@
 class PViewDataGModel : public PViewData {
  private:
   GModel *_model;
+  std::vector<GEntity*> _entities;
   PViewDataList *_cloneToList(); // create old-style data from this
  public:
   PViewDataGModel(GModel *model);
