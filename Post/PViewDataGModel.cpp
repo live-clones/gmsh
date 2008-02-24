@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.17 2008-02-24 19:59:03 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.18 2008-02-24 20:42:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -37,23 +37,25 @@ PViewDataGModel::PViewDataGModel(GModel *model) : _model(model)
     _entities.push_back(*it);
   
   /* 
-     create a vector (one entry per time step) of 
-
      class data{
-       // nodes       components
-       std::vector< std::vector<double > >
+      public:
+       time_t lastUsed; // to determine which one to free first?
+       std::string fileName; // we allow to read steps from different files
+       int fileIndex;
+       double time;
+       // vector of data, indexed by dataIndex
+       std::vector<std::vector<double> > values;
      }
-
+     std::vector<data*> nodeData, elementData;
+     
      When reading a .msh file:
 
      * get node number in file
-     * get vertex pointer from _model->_vertexCache
+     * get vertex pointer from _model->getVertexByTag(num)
      * if MVertex 
          has no dataIndex, increment it (need global value stored in GModel)
          it has one, do nothing
-     * fill the dataIndex entry in data{}
-
-
+     * fill nodeData[step][dataIndex]
 
      .msh file format:
 
@@ -64,8 +66,8 @@ PViewDataGModel::PViewDataGModel(GModel *model) : _model(model)
      ...
      $EndNodeData
 
-     number of time steps stored should be an option. should be able
-     to dynamically load/overwrite time step when reading new one
+     The number of time steps stored should be an option. We should be
+     able to dynamically load/unload time step data on-the-fly.
   */
 }
 
