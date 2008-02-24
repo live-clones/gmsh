@@ -100,6 +100,8 @@ class PViewData {
   virtual bool combineTime(nameData &nd){ return false; }
   virtual bool combineSpace(nameData &nd){ return false; }
   virtual bool isAdaptive(){ return false; }
+  virtual bool skipEntity(int ent){ return false; }
+  virtual bool skipElement(int ent, int ele){ return false; }
 
   // I/O routines
   virtual bool writePOS(std::string name, bool binary=false, bool parsed=true,

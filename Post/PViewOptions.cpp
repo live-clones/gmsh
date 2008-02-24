@@ -1,4 +1,4 @@
-// $Id: PViewOptions.cpp,v 1.18 2008-02-17 08:48:08 geuzaine Exp $
+// $Id: PViewOptions.cpp,v 1.19 2008-02-24 16:18:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -146,3 +146,17 @@ void PViewOptions::createGeneralRaise()
 #endif
 }
 
+bool PViewOptions::skipElement(int numEdges)
+{
+  switch(numEdges){
+  case 0: return !DrawPoints;
+  case 1: return !DrawLines;
+  case 3: return !DrawTriangles;
+  case 4: return !DrawQuadrangles;
+  case 6: return !DrawTetrahedra;
+  case 12: return !DrawHexahedra;
+  case 9: return !DrawPrisms;
+  case 8: return !DrawPyramids;
+  default: return true;
+  }
+}

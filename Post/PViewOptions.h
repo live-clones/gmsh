@@ -116,6 +116,7 @@ class PViewOptions {
 		    bool forceLinear=false);
   unsigned int getColor(int i, int nb);
   unsigned int getColor(double val, double min, double max, bool forceLinear=false);
+  bool skipElement(int numEdges);
 };
 
 #endif

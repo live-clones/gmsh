@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.152 2008-02-24 14:55:36 geuzaine Exp $
+// $Id: Post.cpp,v 1.153 2008-02-24 16:18:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -884,22 +884,6 @@ void addTensorElement(PView *p, int numNodes, int numEdges, double xyz[NMAX][3],
   }
 }
 
-bool skipElement(PView *p, int numEdges)
-{
-  PViewOptions *opt = p->getOptions();
-  switch(numEdges){
-  case 0: return !opt->DrawPoints;
-  case 1: return !opt->DrawLines;
-  case 3: return !opt->DrawTriangles;
-  case 4: return !opt->DrawQuadrangles;
-  case 6: return !opt->DrawTetrahedra;
-  case 12: return !opt->DrawHexahedra;
-  case 9: return !opt->DrawPrisms;
-  case 8: return !opt->DrawPyramids;
-  default: return true;
-  }
-}
-
 void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
 {
   PViewData *data = p->getData();
@@ -909,9 +893,11 @@ void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
 
   double xyz[NMAX][3], val[NMAX][9];
   for(int ent = 0; ent < data->getNumEntities(); ent++){
+    if(data->skipEntity(ent)) continue;
     for(int i = 0; i < data->getNumElements(ent); i++){
+      if(data->skipElement(ent, i)) continue;
       int numEdges = data->getNumEdges(ent, i);
-      if(skipElement(p, numEdges)) continue;
+      if(opt->skipElement(numEdges)) continue;
       int numComp = data->getNumComponents(ent, i);
       int numNodes = data->getNumNodes(ent, i);
       for(int j = 0; j < numNodes; j++){
@@ -1146,9 +1132,11 @@ void drawGlyphs(PView *p)
 
   double xyz[NMAX][3], val[NMAX][9];
   for(int ent = 0; ent < data->getNumEntities(); ent++){
+    if(data->skipEntity(ent)) continue;
     for(int i = 0; i < data->getNumElements(ent); i++){
+      if(data->skipElement(ent, i)) continue;
       int numEdges = data->getNumEdges(ent, i);
-      if(skipElement(p, numEdges)) continue;
+      if(opt->skipElement(numEdges)) continue;
       int dim = data->getDimension(ent, i);
       int numComp = data->getNumComponents(ent, i);
       int numNodes = data->getNumNodes(ent, i);

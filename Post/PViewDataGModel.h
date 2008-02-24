@@ -31,8 +31,8 @@ class PViewDataGModel : public PViewData {
   GModel *_model;
   PViewDataList *_cloneToList(); // create old-style data from this
  public:
-  PViewDataGModel(GModel *model) : _model(model) {}
-  ~PViewDataGModel(){}
+  PViewDataGModel(GModel *model);
+  ~PViewDataGModel();
   int getNumTimeSteps(){ return 1; }
   double getTime(int step);
   double getMin(int step=-1);
@@ -46,6 +46,8 @@ class PViewDataGModel : public PViewData {
   int getNumComponents(int ent, int ele);
   void getValue(int ent, int ele, int node, int comp, int step, double &val);
   int getNumEdges(int ent, int ele);
+  bool skipEntity(int ent);
+  bool skipElement(int ent, int ele);
 
   // I/O routines
   bool readMSH(FILE *fp);
