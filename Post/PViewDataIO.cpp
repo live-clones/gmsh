@@ -1,4 +1,4 @@
-// $Id: PViewDataIO.cpp,v 1.1 2008-02-24 19:59:03 geuzaine Exp $
+// $Id: PViewDataIO.cpp,v 1.2 2008-02-24 21:37:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -79,6 +79,37 @@ bool PViewData::writeSTL(std::string name)
   }
   fprintf(fp, "endsolid Created by Gmsh\n");
   
+  fclose(fp);
+  return true;
+}
+
+bool PViewDataList::writeTXT(std::string name)
+{
+  FILE *fp = fopen(name.c_str(), "w");
+  if(!fp){
+    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    return false;
+  }
+
+  for(int ent = 0; ent < getNumEntities(); ent++){
+    for(int ele = 0; ele < getNumElements(ent); ele++){
+      for(int nod = 0; nod < getNumNodes(ent, ele); nod++){
+	double x, y, z;
+	getNode(ent, ele, nod, x, y, z);
+	fprintf(file, "%.16g %.16g %.16g ", x, y, z);
+	for(int step = 0; step < getNumTimeSteps(); step++){	
+	  for(int comp = 0; comp < getNumComponents(ent, ele); comp++){	
+	    double val;
+	    getValue(ent, ele, nod, comp, step, val);
+	    fprintf(file, "%.16g ", val);
+	  }
+	}
+      }
+      fprintf(file, "\n");      
+    }
+    fprintf(file, "\n");    
+  }
+
   fclose(fp);
   return true;
 }

@@ -1,4 +1,4 @@
-// $Id: PViewDataListIO.cpp,v 1.10 2008-02-24 19:59:03 geuzaine Exp $
+// $Id: PViewDataListIO.cpp,v 1.11 2008-02-24 21:37:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -391,57 +391,6 @@ bool PViewDataList::writePOS(std::string name, bool binary, bool parsed, bool ap
     writeTextPOS(fp, 4, NbT2, T2D, T2C); writeTextPOS(fp, 5, NbT3, T3D, T3C);
     fprintf(fp, "};\n");
   }
-
-  fclose(fp);
-  return true;
-}
-
-static void writeElementTXT(FILE *file, int nbelm, List_T *list,
-			    int nbnod, int nbcomp, int nbtime)
-{
-  if(!nbelm) return;
-  int nb = List_Nbr(list) / nbelm;
-  for(int i = 0; i < List_Nbr(list); i += nb){
-    double *x = (double*)List_Pointer(list, i);
-    for(int j = 0; j < nbnod * (3 + nbcomp * nbtime); j++)
-      fprintf(file, "%.16g ", x[j]);
-    fprintf(file, "\n");
-  }
-  fprintf(file, "\n");
-}
-
-bool PViewDataList::writeTXT(std::string name)
-{
-  FILE *fp = fopen(name.c_str(), "w");
-  if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
-    return false;
-  }
-
-  writeElementTXT(fp, NbSP, SP, 1, 1, NbTimeStep);
-  writeElementTXT(fp, NbVP, VP, 1, 3, NbTimeStep);
-  writeElementTXT(fp, NbTP, TP, 1, 9, NbTimeStep);
-  writeElementTXT(fp, NbSL, SL, 2, 1, NbTimeStep);
-  writeElementTXT(fp, NbVL, VL, 2, 3, NbTimeStep);
-  writeElementTXT(fp, NbTL, TL, 2, 9, NbTimeStep);
-  writeElementTXT(fp, NbST, ST, 3, 1, NbTimeStep);
-  writeElementTXT(fp, NbVT, VT, 3, 3, NbTimeStep);
-  writeElementTXT(fp, NbTT, TT, 3, 9, NbTimeStep);
-  writeElementTXT(fp, NbSQ, SQ, 4, 1, NbTimeStep);
-  writeElementTXT(fp, NbVQ, VQ, 4, 3, NbTimeStep);
-  writeElementTXT(fp, NbTQ, TQ, 4, 9, NbTimeStep);
-  writeElementTXT(fp, NbSS, SS, 4, 1, NbTimeStep);
-  writeElementTXT(fp, NbVS, VS, 4, 3, NbTimeStep);
-  writeElementTXT(fp, NbTS, TS, 4, 9, NbTimeStep);
-  writeElementTXT(fp, NbSH, SH, 8, 1, NbTimeStep);
-  writeElementTXT(fp, NbVH, VH, 8, 3, NbTimeStep);
-  writeElementTXT(fp, NbTH, TH, 8, 9, NbTimeStep);
-  writeElementTXT(fp, NbSI, SI, 6, 1, NbTimeStep);
-  writeElementTXT(fp, NbVI, VI, 6, 3, NbTimeStep);
-  writeElementTXT(fp, NbTI, TI, 6, 9, NbTimeStep);
-  writeElementTXT(fp, NbSY, SY, 5, 1, NbTimeStep);
-  writeElementTXT(fp, NbVY, VY, 5, 3, NbTimeStep);
-  writeElementTXT(fp, NbTY, TY, 5, 9, NbTimeStep);
 
   fclose(fp);
   return true;

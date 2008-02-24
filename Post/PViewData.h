@@ -85,7 +85,7 @@ class PViewData {
   // Returns the comp-th component (at the step-th time step)
   // associated with the node-th node from the ele-th element in the
   // ent-th entity
-  virtual void getValue(int ent, int ele, int node, int comp, int step, double &val) = 0;
+  virtual void getValue(int ent, int ele, int nod, int comp, int step, double &val) = 0;
   // Returns the number of edges of the ele-th element in the ent-th
   // entity
   virtual int getNumEdges(int ent, int ele) = 0;
@@ -105,9 +105,9 @@ class PViewData {
 
   // I/O routines
   virtual bool writeSTL(std::string name);
+  virtual bool writeTXT(std::string name);
   virtual bool writePOS(std::string name, bool binary=false, bool parsed=true,
 			bool append=false){ return false; }
-  virtual bool writeTXT(std::string name){ return false; }
   virtual bool writeMSH(std::string name){ return false; }
 };
 
