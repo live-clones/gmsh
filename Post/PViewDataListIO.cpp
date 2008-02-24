@@ -1,4 +1,4 @@
-// $Id: PViewDataListIO.cpp,v 1.9 2008-02-21 13:44:56 geuzaine Exp $
+// $Id: PViewDataListIO.cpp,v 1.10 2008-02-24 19:59:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -391,70 +391,6 @@ bool PViewDataList::writePOS(std::string name, bool binary, bool parsed, bool ap
     writeTextPOS(fp, 4, NbT2, T2D, T2C); writeTextPOS(fp, 5, NbT3, T3D, T3C);
     fprintf(fp, "};\n");
   }
-
-  fclose(fp);
-  return true;
-}
-
-static void writeElementSTL(FILE *fp, int nbelm, List_T *list, int nbnod)
-{
-  if(!nbelm) return;
-  int nb = List_Nbr(list) / nbelm;
-  for(int i = 0; i < List_Nbr(list); i+=nb){
-    double *x = (double*)List_Pointer(list, i);
-    double n[3];
-    normal3points(x[0], x[3], x[6],
-		  x[1], x[4], x[7],
-		  x[2], x[5], x[8], n);
-    if(nbnod == 3){
-      fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
-      fprintf(fp, "  outer loop\n");
-      fprintf(fp, "    vertex %g %g %g\n", x[0], x[3], x[6]);
-      fprintf(fp, "    vertex %g %g %g\n", x[1], x[4], x[7]);
-      fprintf(fp, "    vertex %g %g %g\n", x[2], x[5], x[8]);
-      fprintf(fp, "  endloop\n");
-      fprintf(fp, "endfacet\n");
-    }
-    else{
-      fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
-      fprintf(fp, "  outer loop\n");
-      fprintf(fp, "    vertex %g %g %g\n", x[0], x[4], x[8]);
-      fprintf(fp, "    vertex %g %g %g\n", x[1], x[5], x[9]);
-      fprintf(fp, "    vertex %g %g %g\n", x[2], x[6], x[10]);
-      fprintf(fp, "  endloop\n");
-      fprintf(fp, "endfacet\n");
-      fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
-      fprintf(fp, "  outer loop\n");
-      fprintf(fp, "    vertex %g %g %g\n", x[0], x[4], x[8]);
-      fprintf(fp, "    vertex %g %g %g\n", x[2], x[6], x[10]);
-      fprintf(fp, "    vertex %g %g %g\n", x[3], x[7], x[11]);
-      fprintf(fp, "  endloop\n");
-      fprintf(fp, "endfacet\n");
-    }
-  }
-}
-
-bool PViewDataList::writeSTL(std::string name)
-{
-  FILE *fp = fopen(name.c_str(), "w");
-  if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
-    return false;
-  }
-
-  if(!NbST && !NbVT && !NbTT && !NbSQ && !NbVQ && !NbTQ){
-    Msg(GERROR, "No surface elements to save");
-    return false;
-  }
-
-  fprintf(fp, "solid Created by Gmsh\n");
-  writeElementSTL(fp, NbST, ST, 3);
-  writeElementSTL(fp, NbVT, VT, 3);
-  writeElementSTL(fp, NbTT, TT, 3);
-  writeElementSTL(fp, NbSQ, SQ, 4);
-  writeElementSTL(fp, NbVQ, VQ, 4);
-  writeElementSTL(fp, NbTQ, TQ, 4);
-  fprintf(fp, "endsolid Created by Gmsh\n");
 
   fclose(fp);
   return true;

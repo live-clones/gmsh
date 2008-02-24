@@ -52,11 +52,6 @@ class PViewDataGModel : public PViewData {
 
   // I/O routines
   bool readMSH(FILE *fp);
-  bool writePOS(std::string name, bool binary=false, bool parsed=true,
-		bool append=false);
-  bool writeSTL(std::string name);
-  bool writeTXT(std::string name);
-  bool writeMSH(std::string name);
 };
 
 #endif

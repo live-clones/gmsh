@@ -104,9 +104,9 @@ class PViewData {
   virtual bool skipElement(int ent, int ele){ return false; }
 
   // I/O routines
+  virtual bool writeSTL(std::string name);
   virtual bool writePOS(std::string name, bool binary=false, bool parsed=true,
 			bool append=false){ return false; }
-  virtual bool writeSTL(std::string name){ return false; }
   virtual bool writeTXT(std::string name){ return false; }
   virtual bool writeMSH(std::string name){ return false; }
 };

@@ -118,7 +118,6 @@ class PViewDataList : public PViewData {
   bool readPOS(FILE *fp, double version, int format, int size);
   bool writePOS(std::string name, bool binary=false, bool parsed=true,
 		bool append=false);
-  bool writeSTL(std::string name);
   bool writeTXT(std::string name);
   bool writeMSH(std::string name);
 };

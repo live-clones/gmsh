@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.16 2008-02-24 17:23:20 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.17 2008-02-24 19:59:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -28,8 +28,7 @@
 
 PViewDataGModel::PViewDataGModel(GModel *model) : _model(model)
 {
-  // store linear vector of GEntities so we can index in them
-  // efficiently
+  // store vector of GEntities so we can index them efficiently
   for(GModel::eiter it = _model->firstEdge(); it != _model->lastEdge(); ++it)
     _entities.push_back(*it);
   for(GModel::fiter it = _model->firstFace(); it != _model->lastFace(); ++it)
@@ -126,7 +125,7 @@ int PViewDataGModel::getNumComponents(int ent, int ele)
 void PViewDataGModel::getValue(int ent, int ele, int nod, int comp, int step, double &val)
 {
   MVertex *v = _entities[ent]->getMeshElement(ele)->getVertex(nod);
-  val = v->x() * v->y() * v->z();
+  val = v->z();
 }
 
 int PViewDataGModel::getNumEdges(int ent, int ele)
@@ -144,40 +143,3 @@ bool PViewDataGModel::skipElement(int ent, int ele)
   return !_entities[ent]->getMeshElement(ele)->getVisibility();
 }
 
-bool PViewDataGModel::readMSH(FILE *fp)
-{
-  Msg(INFO, "Filling PViewDataGModel...");
-  
-  MVertex *v = _model->getMeshVertexByTag(10);
-  if(v){
-    printf("vertex 10 in mesh is %p\n", v);
-  }
-
-  finalize();
-  return true;
-}
-
-bool PViewDataGModel::writePOS(std::string name, bool binary, bool parsed,
-			       bool append)
-{
-  // model->writePOS()
-  return false;
-}
-
-bool PViewDataGModel::writeSTL(std::string name)
-{
-  // model->writeSTL()
-  return false;
-}
-
-bool PViewDataGModel::writeTXT(std::string name)
-{
-  // model->writeTXT()
-  return false;
-}
-
-bool PViewDataGModel::writeMSH(std::string name)
-{
-  // model->writeMSH()
-  return false;
-}
