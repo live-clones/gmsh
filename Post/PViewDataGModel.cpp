@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.19 2008-02-24 21:05:04 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.20 2008-02-25 15:36:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -24,9 +24,9 @@
 
 #include "PViewDataGModel.h"
 #include "MElement.h"
-#include "Message.h"
 
 PViewDataGModel::PViewDataGModel(GModel *model) : _model(model)
+
 {
   // store vector of GEntities so we can index them efficiently
   for(GModel::eiter it = _model->firstEdge(); it != _model->lastEdge(); ++it)
@@ -50,16 +50,19 @@ PViewDataGModel::PViewDataGModel(GModel *model) : _model(model)
      
      When reading a .msh file:
 
-     nodeData.resize(std::max(_model->getMaxNodeDataIndex(), numDataInFile));
+     if(nodeData[step - 1].size())
+       nodeData[step].values.resize(nodeData[step - 1].size());
+     else
+       nodeData[step].values.resize(numDataInFile);
      loop over lines:
        * get node number in file
        * get vertex pointer from _model->getVertexByTag(num)
        * if MVertex has no dataIndex:
            increment it (need global value stored in GModel)
-           fill std::vector<double> tmp
-           nodeData[step].push_back(tmp)
-         else:
-           add data nodeData[step][dataIndex]
+         else
+           use the one that's stored
+       * if(dataIndex > nodeData[step].size()) nodeData[step].resize(dataIndex + 1)
+       * fill nodeData[step].value[dataIndex]
 
      .msh file format:
 

@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.17 2008-02-23 15:30:07 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.18 2008-02-25 15:36:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,7 @@ extern Context_T CTX;
 // Some old systems don't have snprintf... Just call sprintf instead.
 
 #if defined(HAVE_NO_SNPRINTF)
-int snprintf(const char *str, size_t size, const char* fmt, ...){
+int snprintf(char *str, size_t size, const char* fmt, ...){
   va_list args;
   va_start(args, fmt);
   int ret = vsprintf(str, fmt, args);
