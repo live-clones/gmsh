@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.105 2008-02-22 21:09:00 geuzaine Exp $
+// $Id: Geo.cpp,v 1.106 2008-02-26 08:28:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -255,17 +255,11 @@ static void direction(Vertex *v1, Vertex *v2, double d[3])
 
 void End_Curve(Curve *c)
 {
-  double R2, mat[3][3], R, A3, A1, A4;
-  Vertex *v[4], v0, v2, v3,*pV;
-  double f1, f2, dir32[3], dir12[3], n[3], m[3], dir42[3];
-  double rhs[2], sys[2][2], sol[2];
-  int i;
-  Curve *Curve;
-
   // if all control points of a curve are on the same geometry, then
   // the curve is also on the geometry
   if(c->Control_Points){
     int NN = List_Nbr(c->Control_Points);
+    Vertex *pV;
     List_Read (c->Control_Points, 0, &pV);
     c->geometry = pV->geometry;
     for(int i = 1; i < NN; i++){
@@ -280,35 +274,34 @@ void End_Curve(Curve *c)
   if(c->Typ == MSH_SEGM_CIRC || c->Typ == MSH_SEGM_CIRC_INV ||
      c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV) {
 
-    Curve = c;
-
     // v[0] = first point
     // v[1] = center
     // v[2] = last point
     // v[3] = major axis point
-
-    if(List_Nbr(Curve->Control_Points) == 4)
-      List_Read(Curve->Control_Points, 2, &v[3]);
+    Vertex *v[4];
+    if(List_Nbr(c->Control_Points) == 4)
+      List_Read(c->Control_Points, 2, &v[3]);
     else
       v[3] = NULL;
 
-    if(Curve->Typ == MSH_SEGM_CIRC_INV || Curve->Typ == MSH_SEGM_ELLI_INV) {
-      List_Read(Curve->Control_Points, 0, &v[2]);
-      List_Read(Curve->Control_Points, 1, &v[1]);
+    if(c->Typ == MSH_SEGM_CIRC_INV || c->Typ == MSH_SEGM_ELLI_INV) {
+      List_Read(c->Control_Points, 0, &v[2]);
+      List_Read(c->Control_Points, 1, &v[1]);
       if(!v[3])
-        List_Read(Curve->Control_Points, 2, &v[0]);
+        List_Read(c->Control_Points, 2, &v[0]);
       else
-        List_Read(Curve->Control_Points, 3, &v[0]);
+        List_Read(c->Control_Points, 3, &v[0]);
     }
     else {
-      List_Read(Curve->Control_Points, 0, &v[0]);
-      List_Read(Curve->Control_Points, 1, &v[1]);
+      List_Read(c->Control_Points, 0, &v[0]);
+      List_Read(c->Control_Points, 1, &v[1]);
       if(!v[3])
-        List_Read(Curve->Control_Points, 2, &v[2]);
+        List_Read(c->Control_Points, 2, &v[2]);
       else
-        List_Read(Curve->Control_Points, 3, &v[2]);
+        List_Read(c->Control_Points, 3, &v[2]);
     }
 
+    double dir12[3], dir32[3], dir42[3] = {0., 0. , 0.};
     direction(v[1], v[0], dir12);
     direction(v[1], v[2], dir32);
     if(v[3])
@@ -317,7 +310,7 @@ void End_Curve(Curve *c)
     // v0 = vector center->first pt
     // v2 = vector center->last pt
     // v3 = vector center->major axis pt
-
+    Vertex v0, v2, v3;
     v0.Pos.X = dir12[0];
     v0.Pos.Y = dir12[1];
     v0.Pos.Z = dir12[2];
@@ -329,43 +322,45 @@ void End_Curve(Curve *c)
       v3.Pos.Y = dir42[1];
       v3.Pos.Z = dir42[2];
     }
-
     norme(dir12);
     norme(dir32);
+    double n[3];
     prodve(dir12, dir32, n);
     norme(n);
     // use provided plane if unable to compute it from input points...
     if(fabs(n[0]) < 1.e-5 && fabs(n[1]) < 1.e-5 && fabs(n[2]) < 1.e-5) {
-      n[0] = Curve->Circle.n[0];
-      n[1] = Curve->Circle.n[1];
-      n[2] = Curve->Circle.n[2];
+      n[0] = c->Circle.n[0];
+      n[1] = c->Circle.n[1];
+      n[2] = c->Circle.n[2];
       norme(n);
     }
+    double m[3];
     prodve(n, dir12, m);
     norme(m);
 
-    mat[2][0] = Curve->Circle.invmat[0][2] = n[0];
-    mat[2][1] = Curve->Circle.invmat[1][2] = n[1];
-    mat[2][2] = Curve->Circle.invmat[2][2] = n[2];
-    mat[1][0] = Curve->Circle.invmat[0][1] = m[0];
-    mat[1][1] = Curve->Circle.invmat[1][1] = m[1];
-    mat[1][2] = Curve->Circle.invmat[2][1] = m[2];
-    mat[0][0] = Curve->Circle.invmat[0][0] = dir12[0];
-    mat[0][1] = Curve->Circle.invmat[1][0] = dir12[1];
-    mat[0][2] = Curve->Circle.invmat[2][0] = dir12[2];
+    double mat[3][3];
+    mat[2][0] = c->Circle.invmat[0][2] = n[0];
+    mat[2][1] = c->Circle.invmat[1][2] = n[1];
+    mat[2][2] = c->Circle.invmat[2][2] = n[2];
+    mat[1][0] = c->Circle.invmat[0][1] = m[0];
+    mat[1][1] = c->Circle.invmat[1][1] = m[1];
+    mat[1][2] = c->Circle.invmat[2][1] = m[2];
+    mat[0][0] = c->Circle.invmat[0][0] = dir12[0];
+    mat[0][1] = c->Circle.invmat[1][0] = dir12[1];
+    mat[0][2] = c->Circle.invmat[2][0] = dir12[2];
 
     // assume circle in z=0 plane
     if(CTX.geom.old_circle) {
       if(n[0] == 0.0 && n[1] == 0.0) {
-        mat[2][0] = Curve->Circle.invmat[0][2] = 0;
-        mat[2][1] = Curve->Circle.invmat[1][2] = 0;
-        mat[2][2] = Curve->Circle.invmat[2][2] = 1;
-        mat[1][0] = Curve->Circle.invmat[0][1] = 0;
-        mat[1][1] = Curve->Circle.invmat[1][1] = 1;
-        mat[1][2] = Curve->Circle.invmat[2][1] = 0;
-        mat[0][0] = Curve->Circle.invmat[0][0] = 1;
-        mat[0][1] = Curve->Circle.invmat[1][0] = 0;
-        mat[0][2] = Curve->Circle.invmat[2][0] = 0;
+        mat[2][0] = c->Circle.invmat[0][2] = 0;
+        mat[2][1] = c->Circle.invmat[1][2] = 0;
+        mat[2][2] = c->Circle.invmat[2][2] = 1;
+        mat[1][0] = c->Circle.invmat[0][1] = 0;
+        mat[1][1] = c->Circle.invmat[1][1] = 1;
+        mat[1][2] = c->Circle.invmat[2][1] = 0;
+        mat[0][0] = c->Circle.invmat[0][0] = 1;
+        mat[0][1] = c->Circle.invmat[1][0] = 0;
+        mat[0][2] = c->Circle.invmat[2][0] = 0;
       }
     }
 
@@ -374,8 +369,8 @@ void End_Curve(Curve *c)
     if(v[3])
       Projette(&v3, mat);
 
-    R = sqrt(v0.Pos.X * v0.Pos.X + v0.Pos.Y * v0.Pos.Y);
-    R2 = sqrt(v2.Pos.X * v2.Pos.X + v2.Pos.Y * v2.Pos.Y);
+    double R = sqrt(v0.Pos.X * v0.Pos.X + v0.Pos.Y * v0.Pos.Y);
+    double R2 = sqrt(v2.Pos.X * v2.Pos.X + v2.Pos.Y * v2.Pos.Y);
 
     if(!R || !R2){
       // check radius
@@ -390,7 +385,8 @@ void End_Curve(Curve *c)
     // A1 = angle first pt
     // A3 = angle last pt
     // A4 = angle major axis
-
+    double A3, A1, A4;
+    double f1, f2;
     if(v[3]) {
       A4 = myatan2(v3.Pos.Y, v3.Pos.X);
       A4 = angle_02pi(A4);
@@ -398,6 +394,7 @@ void End_Curve(Curve *c)
       double y1 = -v0.Pos.X * sin(A4) + v0.Pos.Y * cos(A4);
       double x3 = v2.Pos.X * cos(A4) + v2.Pos.Y * sin(A4);
       double y3 = -v2.Pos.X * sin(A4) + v2.Pos.Y * cos(A4);
+      double sys[2][2], rhs[2], sol[2];
       sys[0][0] = x1 * x1;
       sys[0][1] = y1 * y1;
       sys[1][0] = x3 * x3;
@@ -406,7 +403,7 @@ void End_Curve(Curve *c)
       rhs[1] = 1;
       sys2x2(sys, rhs, sol);
       if(sol[0] <= 0 || sol[1] <= 0) {
-        Msg(GERROR, "Ellipse %d is wrong", Curve->Num);
+        Msg(GERROR, "Ellipse %d is wrong", c->Num);
         A1 = A3 = 0.;
         f1 = f2 = R;
       }
@@ -438,18 +435,17 @@ void End_Curve(Curve *c)
     if(A1 >= A3)
       A3 += 2 * Pi;
 
-    Curve->Circle.t1 = A1;
-    Curve->Circle.t2 = A3;
-    Curve->Circle.incl = A4;
-    Curve->Circle.f1 = f1;
-    Curve->Circle.f2 = f2;
+    c->Circle.t1 = A1;
+    c->Circle.t2 = A3;
+    c->Circle.incl = A4;
+    c->Circle.f1 = f1;
+    c->Circle.f2 = f2;
 
-    for(i = 0; i < 4; i++)
-      Curve->Circle.v[i] = v[i];
+    for(int i = 0; i < 4; i++)
+      c->Circle.v[i] = v[i];
 
-    if(!CTX.expert_mode && Curve->Num > 0 && A3 - A1 > 1.01 * Pi){
-      Msg(GERROR1, "Circle or ellipse arc %d greater than Pi (angle=%g)",
-	  Curve->Num, A3-A1);
+    if(!CTX.expert_mode && c->Num > 0 && A3 - A1 > 1.01 * Pi){
+      Msg(GERROR1, "Circle or ellipse arc %d greater than Pi (angle=%g)", c->Num, A3-A1);
       Msg(GERROR2, "(If you understand what this implies, you can disable this error");
       Msg(GERROR2, "message by selecting `Enable expert mode' in the option dialog.");
       Msg(GERROR3, "Otherwise, please subdivide the arc in smaller pieces.)");

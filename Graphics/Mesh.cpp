@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.215 2008-02-17 08:47:59 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.216 2008-02-26 08:28:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -359,7 +359,7 @@ static void addSmoothNormals(GEntity *e, std::vector<T*> &elements)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
     MElement *ele = elements[i];
-    SPoint3 pc;
+    SPoint3 pc(0., 0., 0.);
     if(CTX.mesh.explode != 1.) pc = ele->barycenter();
     for(int j = 0; j < ele->getNumFacesRep(); j++){
       double x[3], y[3], z[3];
@@ -394,7 +394,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
     unsigned int c = getColorByElement(ele);
     unsigned int col[4] = {c, c, c, c};
 
-    SPoint3 pc;
+    SPoint3 pc(0., 0., 0.);
     if(CTX.mesh.explode != 1.) pc = ele->barycenter();
 
     if(edges){

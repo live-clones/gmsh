@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.659 2008-02-24 14:55:36 geuzaine Exp $
+// $Id: GUI.cpp,v 1.660 2008-02-26 08:28:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -604,19 +604,21 @@ int GUI::global_shortcuts(int event)
     return 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'w')) {
-    if(PView::list.size())
+    if(PView::list.size()){
       if(view_number >= 0 && view_number < (int)PView::list.size())
 	create_view_options_window(view_number);
       else
 	create_view_options_window(0);
+    }
     return 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'u')) {
-    if(PView::list.size())
+    if(PView::list.size()){
       if(view_number >= 0 && view_number < (int)PView::list.size())
 	create_plugin_window(view_number);
       else
 	create_plugin_window(0);
+    }
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'f')) {
