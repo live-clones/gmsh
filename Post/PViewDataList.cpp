@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.13 2008-02-24 14:55:37 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.14 2008-02-27 17:02:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -603,7 +603,7 @@ bool PViewDataList::combineSpace(nameData &nd)
   if(nd.data.size() < 2) return false;
   int ts = nd.data[0]->getNumTimeSteps();
   for(unsigned int i = 1; i < nd.data.size(); i++) {
-    if(nd.data[i]->getNumTimeSteps() != ts){
+    if(!nd.data[i]->empty() && nd.data[i]->getNumTimeSteps() != ts){
       Msg(GERROR, "Cannot combine views having different number of time steps");
       return false;
     }
