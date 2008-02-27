@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.22 2008-02-21 13:44:56 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.23 2008-02-27 12:39:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -389,7 +389,8 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
 		     faceContainer &faceVertices, bool linear, int nPts = 1)
 {
   Double_Matrix points;
-  int start;
+  int start = 0;
+
   switch (nPts){
   case 2 :
     points = gmshFunctionSpaces::find(MSH_TRI_10).points;
@@ -404,7 +405,8 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
     start = 15;
     break;
   default :  
-    throw;
+    // do nothing (e.g. for quad faces)
+    break;
   }
 
   for(int i = 0; i < ele->getNumFaces(); i++){
