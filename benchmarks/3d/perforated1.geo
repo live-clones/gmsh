@@ -219,7 +219,7 @@ lacir1 = newl ; Circle(lacir1) = {pa0,p0,pa1};
 lacir2 = newl ; Circle(lacir2) = {pa0,p0,pa3};
 lacir3 = newl ; Circle(lacir3) = {pa3,p0,pa1};
 
-Line Loop(newl)={lacir2,lacir3,-lacir1};
+Line Loop(newl)={-lacir1,lacir2,lacir3};
 surair= newl ; Ruled Surface(surair) = {newl-1};
 
 pa0_ = newp ; Point(pa0_) = { rfar2, 0, 0, p_air2};
@@ -231,7 +231,7 @@ lacir1_ = newl ; Circle(lacir1_) = {pa0_,p0,pa1_};
 lacir2_ = newl ; Circle(lacir2_) = {pa0_,p0,pa3_};
 lacir3_ = newl ; Circle(lacir3_) = {pa3_,p0,pa1_};
 
-Line Loop(newl)={lacir2_,lacir3_,-lacir1_};
+Line Loop(newl)={-lacir1_,lacir2_,lacir3_};
 surairinf= newl ; Ruled Surface(surairinf) = {newl-1};
 
 la1 = newl ; Line(la1) = {p1,pe[0]};
