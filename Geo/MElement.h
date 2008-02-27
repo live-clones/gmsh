@@ -1015,10 +1015,11 @@ class MHexahedron20 : public MHexahedron {
     tmp = _v[4]; _v[4] = _v[6]; _v[6] = tmp;
     MVertex *old[12];
     for(int i = 0; i < 12; i++) old[i] = _vs[i];
-    _vs[0] = old[3]; _vs[1] = old[5]; _vs[2] = old[6];
-    _vs[3] = old[0]; _vs[4] = old[4]; _vs[5] = old[1];
-    _vs[6] = old[2]; _vs[7] = old[7]; _vs[8] = old[10];
-    _vs[9] = old[11]; _vs[10] = old[8]; _vs[11] = old[9];
+    _vs[0] = old[3]; _vs[3] = old[0];
+    _vs[1] = old[5]; _vs[5] = old[1];
+    _vs[2] = old[6]; _vs[6] = old[2];
+    _vs[8] = old[10]; _vs[10] = old[8];
+    _vs[9] = old[11]; _vs[11] = old[9];
   }
 };
 
@@ -1102,12 +1103,17 @@ class MHexahedron27 : public MHexahedron {
     MVertex *tmp;
     tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
     tmp = _v[4]; _v[4] = _v[6]; _v[6] = tmp;
-    MVertex *old[12];
-    for(int i = 0; i < 12; i++) old[i] = _vs[i];
-    _vs[0] = old[3]; _vs[1] = old[5]; _vs[2] = old[6];
-    _vs[3] = old[0]; _vs[4] = old[4]; _vs[5] = old[1];
-    _vs[6] = old[2]; _vs[7] = old[7]; _vs[8] = old[10];
-    _vs[9] = old[11]; _vs[10] = old[8]; _vs[11] = old[9];
+    MVertex *old[19];
+    for(int i = 0; i < 19; i++) old[i] = _vs[i];
+    // edge vertices
+    _vs[0] = old[3]; _vs[3] = old[0];
+    _vs[1] = old[5]; _vs[5] = old[1];
+    _vs[2] = old[6]; _vs[6] = old[2];
+    _vs[8] = old[10]; _vs[10] = old[8];
+    _vs[9] = old[11]; _vs[11] = old[9];
+    // face vertices
+    _vs[13] = old[15]; _vs[15] = old[13];
+    _vs[14] = old[16]; _vs[16] = old[14];
   }
 };
 
@@ -1351,9 +1357,12 @@ class MPrism18 : public MPrism {
     MVertex *tmp;
     tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
     tmp = _v[3]; _v[3] = _v[4]; _v[4] = tmp;
+    // edge vertices
     tmp = _vs[1]; _vs[1] = _vs[3]; _vs[3] = tmp;
     tmp = _vs[2]; _vs[2] = _vs[4]; _vs[4] = tmp;
     tmp = _vs[7]; _vs[7] = _vs[8]; _vs[8] = tmp;
+    // quad face vertices
+    tmp = _vs[10]; _vs[10] = _vs[11]; _vs[11] = tmp;
   }
 };
 

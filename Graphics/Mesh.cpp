@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.216 2008-02-26 08:28:16 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.217 2008-02-27 12:39:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -222,6 +222,8 @@ static void drawTangents(std::vector<T*> &elements)
 
 static void drawVertexLabel(GEntity *e, MVertex *v, int partition=-1)
 {
+  if(!v->getVisibility()) return;
+
   int np = e->physicals.size();
   int physical = np ? e->physicals[np - 1] : 0;
   char str[256];

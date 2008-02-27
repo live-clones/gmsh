@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.239 2008-02-23 22:16:32 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.240 2008-02-27 12:39:28 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 @c
@@ -248,6 +248,7 @@ Gmsh post-processing file formats
 
 Programming notes
 
+* Main code structure::         
 * Coding style::                
 * Option handling::             
 
@@ -512,11 +513,6 @@ transfinite or extruded meshes;
 @item
 Gmsh is not a multi-bloc generator: all meshes produced by Gmsh are
 conforming in the sense of finite element meshes;
-@item
-the 3D unstructured algorithm is still experimental and not very robust.
-If this algorithm fail, try to change some characteristic lengths to
-generate meshes that better suit the geometrical details of the
-structures;
 @item
 Gmsh was designed to solve academic ``test cases'', not industrial-size
 problems. You may find that Gmsh is too slow for large problems (with
@@ -3827,30 +3823,40 @@ Pyramid:
 
 @cindex Programming, notes
 
-Gmsh was originally written in C, and later enhanced with various C++
-additions. The resulting code is a hybrid C/C++ beast, hopefully not too
-badly structured... The scripting language is parsed using Lex and Yacc
-(actually, Flex and Bison), while the GUI relies on OpenGL for the 3D
-graphics and FLTK for the widget set. See @uref{http://www.opengl.org},
-@uref{http://www.mesa3d.org} and @uref{http://www.fltk.org} for more
-information.
-
-Gmsh's build system is based on autoconf, and should work on most modern
-platforms providing standard compliant C and C++ compilers. Practical
-notes on how to compile Gmsh's source code are included in the
-distribution. See @ref{Frequently asked questions}, for more
-information.
+Gmsh is written in C++, the scripting language is parsed using Lex and
+Yacc (actually, Flex and Bison), and the GUI relies on OpenGL for the 3D
+graphics and FLTK (@uref{http://www.fltk.org}) for the widget
+set. Gmsh's build system is based on autoconf. Practical notes on how to
+compile Gmsh's source code are included in the distribution. See
+@ref{Frequently asked questions}, for more information.
 
 @menu
+* Main code structure::         
 * Coding style::                
 * Option handling::             
 @end menu
 
 @c -------------------------------------------------------------------------
+@c Main code structure
+@c -------------------------------------------------------------------------
+
+@node Main code structure, Coding style, Programming notes, Programming notes
+@section Main code structure
+
+Gmsh's code is structured in several libraries, roughly separated
+between the three main core modules (Geo, Mesh, Post) and associated
+utility libraries (Common, Numeric) on one hand, and graphics (Graphics)
+and interface (Fltk, Box) libraries on the other.
+
+The geometry and mesh modules are based on an object-oriented model
+class (Geo/GModel.h), built upon abstract geometrical entity classes
+(Geo/GVertex.h, Geo/Gedge.h, Geo/GFace.h and Geo/GRegion.h).
+
+@c -------------------------------------------------------------------------
 @c Coding style
 @c -------------------------------------------------------------------------
 
-@node Coding style, Option handling, Programming notes, Programming notes
+@node Coding style, Option handling, Main code structure, Programming notes
 @section Coding style
 
 If you plan to contribute code to the Gmsh project, here are some easy rules
@@ -3877,9 +3883,10 @@ To add a new option in Gmsh:
 
 @enumerate
 @item
-create the option in the @code{Context_T} class (@file{Common/Context.h}) if
-it's a classical option, or in the @code{Post_View} class
-(@file{Common/View.h}) if it's a post-processing view-dependent option;
+create the option in the @code{Context_T} class
+(@file{Common/Context.h}) if it's a classical option, or in the
+@code{PViewOptions} class (@file{Post/PViewOptions.h}) if it's a
+post-processing view-dependent option;
 @item
 in @file{Common/DefaultOptions.h}, give a name (for the parser to be able to
 access it), a reference to a handling routine (i.e. @code{opt_XXX}) and a
@@ -3897,6 +3904,8 @@ option panel (in @file{Fltk/Callbacks.cpp}).
 
 @c todo:
 @c Tools to check memory leaks
+@c * on mac: use GMALLOC
+     (gdb) set env DYLD_INSERT_LIBRARIES /usr/lib/libgmalloc.dylib
 @c * LIBNJAMD
 @c   export LD_PRELOAD=libnjamd.so
 @c   kill -USR1
@@ -3996,7 +4005,7 @@ You will then be able to access the documentation with the command
 directly. For example, @code{info gmsh surfaces} or @code{info gmsh surf}
 will take you directly to @ref{Surfaces}.
 @item
-Use emacs to edit your files, and load the C++ mode! This permits automatic
+Use emacs to edit your files, and load the C++ mode. This permits automatic
 syntax highlighting and easy indentation. Automatic loading of the C++ mode
 for @file{.geo} files can be achieved by adding the following command in
 your @code{.emacs} file: @code{(setq auto-mode-alist (append '(("\\.geo$"

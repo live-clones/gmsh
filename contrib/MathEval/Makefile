@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.20 2008-02-17 08:48:09 geuzaine Exp $
+# $Id: Makefile,v 1.21 2008-02-27 12:39:28 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -55,7 +55,7 @@ clean:
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	${CC} -MM ${CFLAGS} ${SRC} \
+	${CXX} -MM ${CFLAGS} ${SRC} \
 	) >Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
