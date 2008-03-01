@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.17 2008-02-20 09:24:41 geuzaine Exp $
+// $Id: PView.cpp,v 1.18 2008-03-01 01:32:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -300,22 +300,56 @@ bool PView::readMSH(std::string filename, int fileIndex)
     return false;
   }
 
-  Msg(INFO, "Reading post-processing data from MSH file...");
-  
-  // FIXME: to be implemented!
-  int index = 0;
-  PViewDataGModel *d = new PViewDataGModel(GModel::current());
-  if(!d->readMSH(fp)){
-    Msg(GERROR, "Could not read data in msh file");
-    delete d;
-    return false;
+  char str[256];
+  double version;
+  int format, size, index = -1;
+
+  while(1) {
+
+    do {
+      if(!fgets(str, 256, fp) || feof(fp))
+        break;
+    } while(str[0] != '$');
+    
+    if(feof(fp))
+      break;
+
+    if(!strncmp(&str[1], "NodeData", 8)) {
+      index++;
+      if(fileIndex < 0 || fileIndex == index){
+	// either get existing viewData, or create new one
+	// check timestep storage limit, do magic if exceeded
+	PView *p = 0;
+	PViewDataGModel *d;
+	// read view name and timestep
+	// if append
+	//   p = getView
+	//   d = p->getData()
+	// else
+   	d = new PViewDataGModel(GModel::current());
+	if(!d->readMSH(fp)){
+	  Msg(GERROR, "Could not read data in msh file");
+	  delete d;
+	  return false;
+	}
+	else{
+	  d->setFileName(filename);
+	  d->setFileIndex(index);
+	  if(!p) new PView(d);
+	}
+      }
+    }
+
+    do {
+      if(!fgets(str, 256, fp) || feof(fp)){
+        Msg(GERROR, "Prematured end of file");
+	break;
+      }
+    } while(str[0] != '$');
+
   }
-  else{
-    d->setFileName(filename);
-    d->setFileIndex(index);
-    new PView(d);
-  }
-  
+
+  fclose(fp);
   return true;
 }
 

@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.15 2008-02-21 19:27:58 geuzaine Exp $
+// $Id: DivideAndConquer.cpp,v 1.16 2008-03-01 01:32:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,21 +19,17 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-/*
-   A L G O R I T H M E    D I V I D E    A N D     C O N Q U E R   
-
-   le noeud de cette methode est de pouvoir fusionner deux
-   triangulations de Delaunay en une seule (routine merge) on procede
-   alors recursivement en separant les points en deux groupes puis en
-   separant les groupes en 2 ... jusqu'a n'obtenir que 1 2 ou 3 points
-   (la triangulation est alors triviale)
-
-   Dans le mailleur, on utilise cet algorithme pour construire le
-   maillage initial
-
-   !!! il faut PERTURBER les points d'une faible valeur aleatoire pour
-   eviter d'avoir 3 points alignes ou 4 points cocycliques !!!
-*/
+// Triangulation using a divide and conquer algorithm
+//
+// The main idea is to be able to merge two Delaunay triangulations
+// into a single one (see the 'merge' function). Points are then
+// separated into two groups, then each group into two, ... until
+// having 1, 2 or 3 points (the triangulation is then trivial).
+//
+// This is used to contruct the initial mesh.
+//
+// Warning: point positions must be PERTURBED by a small random
+// value to avoid 3 aligned points or 4 cocyclical points!
 
 #include "Message.h"
 #include "Numeric.h"
@@ -102,7 +98,7 @@ PointNumero First(PointNumero x)
   return (pPointArray[x].adjacent)->point_num;
 }
 
-int Is_left_of(PointNumero x, PointNumero y, PointNumero check)
+int IsLeftOf(PointNumero x, PointNumero y, PointNumero check)
 {
   double pa[2] = {(double)pPointArray[x].where.h, (double)pPointArray[x].where.v};
   double pb[2] = {(double)pPointArray[y].where.h, (double)pPointArray[y].where.v};
@@ -114,9 +110,9 @@ int Is_left_of(PointNumero x, PointNumero y, PointNumero check)
   return result > 0;
 }
 
-int Is_right_of(PointNumero x, PointNumero y, PointNumero check)
+int IsRightOf(PointNumero x, PointNumero y, PointNumero check)
 {
-  return Is_left_of(y, x, check);
+  return IsLeftOf(y, x, check);
 }
 
 Segment LowerCommonTangent(DT vl, DT vr)
@@ -130,12 +126,12 @@ Segment LowerCommonTangent(DT vl, DT vr)
   z1 = First(x);
   z2 = Predecessor(x, z1);
   for(;;) {
-    if(Is_right_of(x, y, z)) {
+    if(IsRightOf(x, y, z)) {
       temp = z;
       z = Successor(z, y);
       y = temp;
     }
-    else if(Is_right_of(x, y, z2)) {
+    else if(IsRightOf(x, y, z2)) {
       temp = z2;
       z2 = Predecessor(z2, x);
       x = temp;
@@ -159,12 +155,12 @@ Segment UpperCommonTangent(DT vl, DT vr)
   z1 = First(x);
   z2 = Predecessor(y, z);
   for(;;) {
-    if(Is_left_of(x, y, z2)) {
+    if(IsLeftOf(x, y, z2)) {
       temp = z2;
       z2 = Predecessor(z2, y);
       y = temp;
     }
-    else if(Is_left_of(x, y, z1)) {
+    else if(IsLeftOf(x, y, z1)) {
       temp = z1;
       z1 = Successor(z1, x);
       x = temp;
@@ -215,7 +211,7 @@ int merge(DT vl, DT vr)
     r1 = Predecessor(r, l);
     if(r1 == -1)
       return 0;
-    if(Is_right_of(l, r, r1))
+    if(IsRightOf(l, r, r1))
       a = 1;
     else {
       out = 0;
@@ -231,7 +227,7 @@ int merge(DT vl, DT vr)
           if(!Delete(r, r1))
             return 0;
           r1 = r2;
-          if(Is_right_of(l, r, r1))
+          if(IsRightOf(l, r, r1))
             out = a = 1;
         }
       }
@@ -240,7 +236,7 @@ int merge(DT vl, DT vr)
     l1 = Successor(l, r);
     if(l1 == -1)
       return 0;
-    if(Is_left_of(r, l, l1))
+    if(IsLeftOf(r, l, l1))
       b = 1;
     else {
       out = 0;
@@ -256,7 +252,7 @@ int merge(DT vl, DT vr)
           if(!Delete(l, l1))
             return 0;
           l1 = l2;
-          if(Is_left_of(r, l, l1))
+          if(IsLeftOf(r, l, l1))
             out = b = 1;
         }
       }
@@ -307,7 +303,7 @@ DT recur_trig(PointNumero left, PointNumero right)
     Insert(left, right);
     Insert(left, left + 1);
     Insert(left + 1, right);
-    if(Is_right_of(left, right, left + 1)) {
+    if(IsRightOf(left, right, left + 1)) {
       FixFirst(left, left + 1);
       FixFirst(left + 1, right);
       FixFirst(right, left);
@@ -340,18 +336,12 @@ int comparePoints(const void *i, const void *j)
     return (x < 0.) ? -1 : 1;
 }
 
-// this fonction builds the delaunay triangulation and the voronoi for
-// a window. All error handling is done here
-int DelaunayAndVoronoi(DocPeek doc)
+// this fonction builds the delaunay triangulation for a window
+int BuildDelaunay(DocRecord *doc)
 {
   pPointArray = doc->points;
-
-  if(doc->numPoints < 2)
-    return 1;
-
   qsort(doc->points, doc->numPoints, sizeof(PointRecord), comparePoints);
   recur_trig(0, doc->numPoints - 1);
-
   return 1;
 }
 
@@ -515,19 +505,8 @@ PointNumero *ConvertDlistToArray(DListPeek *dlist, int *n)
   return ptr;
 }
 
-void filldel(Delaunay *deladd, int aa, int bb, int cc,
-             PointRecord *points)
-{
-  deladd->t.a = aa;
-  deladd->t.b = bb;
-  deladd->t.c = cc;
-  deladd->v.voisin1 = NULL;
-  deladd->v.voisin2 = NULL;
-  deladd->v.voisin3 = NULL;
-}
-
 // Convertir les listes d'adjacence en triangles
-int Conversion(DocPeek doc)
+int ConvertDListToTriangles(DocRecord *doc)
 {
   // on suppose que n >= 3. gPointArray est suppose OK.
 
@@ -544,10 +523,7 @@ int Conversion(DocPeek doc)
   // nombre de triangles que l'on doit obtenir
   count2 = 2 * (n - 1) - count2;
 
-  if(doc->delaunay)
-    Free(doc->delaunay);
-
-  doc->delaunay = (Delaunay *) Malloc(2 * count2 * sizeof(Delaunay));
+  doc->triangles = (Triangle *) Malloc(2 * count2 * sizeof(Triangle));
 
   for(i = 0; i < n; i++) {
     // on cree une liste de points connectes au point i (t) + nombre
@@ -563,11 +539,13 @@ int Conversion(DocPeek doc)
   for(i = 0; i < n; i++) {
     for(j = 0; j < striangle[i].t_length; j++) {
       if((striangle[i].t[j] > i) && (striangle[i].t[j + 1] > i) &&
-         (Is_right_of(i, striangle[i].t[j], striangle[i].t[j + 1]))) {
+         (IsRightOf(i, striangle[i].t[j], striangle[i].t[j + 1]))) {
         aa = i;
         bb = striangle[i].t[j];
         cc = striangle[i].t[j + 1];
-        filldel(&doc->delaunay[count], aa, bb, cc, gPointArray);
+        doc->triangles[count].a = aa;
+	doc->triangles[count].b = bb;
+	doc->triangles[count].c = cc;
         count++;
       }
     }
@@ -581,7 +559,7 @@ int Conversion(DocPeek doc)
 }
 
 //  Cette routine efface toutes les listes d'adjacence du pPointArray
-void remove_all_dlist(int n, PointRecord *pPointArray)
+void RemoveAllDList(int n, PointRecord *pPointArray)
 {
   int i;
   DListPeek p, temp;
@@ -598,13 +576,23 @@ void remove_all_dlist(int n, PointRecord *pPointArray)
     }
 }
 
-void Make_Mesh_With_Points(DocRecord *ptr, PointRecord *Liste, int Numpoints)
+DocRecord::DocRecord(int n) 
+  : numPoints(n), points(NULL), numTriangles(0), triangles(NULL)
 {
-  ptr->numTriangles = 0;
-  ptr->points = Liste;
-  ptr->numPoints = Numpoints;
-  ptr->delaunay = 0;
-  DelaunayAndVoronoi(ptr);
-  Conversion(ptr);
-  remove_all_dlist(ptr->numPoints, ptr->points);
+  if(numPoints)
+    points = (PointRecord*)Malloc(numPoints * sizeof(PointRecord));
+}
+
+DocRecord::~DocRecord()
+{
+  Free(points);
+  Free(triangles);
+}
+
+void DocRecord::MakeMeshWithPoints()
+{
+  if(numPoints < 3) return;
+  BuildDelaunay(this);
+  ConvertDListToTriangles(this);
+  RemoveAllDList(numPoints, points);
 }

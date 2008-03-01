@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.1 2008-02-24 19:59:03 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.2 2008-03-01 01:32:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -27,30 +27,14 @@
 #include "PViewDataGModel.h"
 
 /*
-      if(!fgets(str, sizeof(str), fp)) return 0;
-      // name = str[1] + remove final "
-      int timeStep, numData, numComponents;
-      double time;
-      if(_vertexVector.empty() && _vertexMap.empty()){
-	Msg(GERROR, "Mesh vertex information missing: impossible to load dataset");
-	return false;
-      }
-
-      if(fscanf(fp, "%d %lf %d %d", &timeStep, &time, &numData, &numComponents) != 4)
-	return 0;
-      Msg(INFO, "%d node data", numData);
-
-      //std::map<int, int> nodeNumber, nodeIndex      
-      PViewDataGModel *p = getPViewDataGModel(name)
-      if(p){ // add data to existing view
-      if(!p.count(timeStep)){
-	// we don't have any data for this time step
-	p[timeStep] = new nodeData(numNodes);
-      }
-      data = p[timeStep];
-      if(num
-      data.scalar.indices.append();
-      data.scalar.values.append();
+  if(!fgets(str, sizeof(str), fp)) return 0;
+  // name = str[1] + remove final "
+  int timeStep, numData, numComponents;
+  double time;
+  if(fscanf(fp, "%d %lf %d %d", &timeStep, &time, &numData, &numComponents) != 4)
+    return 0;
+  Msg(INFO, "%d node data", numData);
+  fill in data
 */
 
 bool PViewDataGModel::readMSH(FILE *fp)

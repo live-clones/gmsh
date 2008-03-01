@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.38 2008-02-23 15:30:07 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.39 2008-03-01 01:32:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -297,7 +297,6 @@ int GModel::readMSH(const std::string &name)
       if(!fgets(str, sizeof(str), fp)) return 0;
       int format, size;
       if(sscanf(str, "%lf %d %d", &version, &format, &size) != 3) return 0;
-
       if(format){
 	binary = true;
 	Msg(INFO, "Mesh is in binary format");
@@ -340,10 +339,8 @@ int GModel::readMSH(const std::string &name)
       int numVertices;
       if(sscanf(str, "%d", &numVertices) != 1) return 0;
       Msg(INFO, "%d vertices", numVertices);
-
       vertexVector.clear();
       vertexMap.clear();
-
       int progress = (numVertices > 100000) ? numVertices / 25 : 0;
       int minVertex = numVertices + 1, maxVertex = -1;
       for(int i = 0; i < numVertices; i++) {
@@ -368,7 +365,6 @@ int GModel::readMSH(const std::string &name)
 	  Msg(PROGRESS, "Read %d vertices", i + 1);
       }
       if(progress) Msg(PROGRESS, "");
-      
       // If the vertex numbering is dense, tranfer the map into a
       // vector to speed up element creation
       if((int)vertexMap.size() == numVertices && 
@@ -393,7 +389,6 @@ int GModel::readMSH(const std::string &name)
       int numElements;
       sscanf(str, "%d", &numElements);
       Msg(INFO, "%d elements", numElements);
-
       int progress = (numElements > 100000) ? numElements / 25 : 0;
       if(!binary){
 	for(int i = 0; i < numElements; i++) {
@@ -470,13 +465,21 @@ int GModel::readMSH(const std::string &name)
 
     }
     else if(!strncmp(&str[1], "NodeData", 8)) {
-      // there's some post-processing data to read later on, so cache
-      // the vertex indexing data
+
+      // there's some nodal post-processing data to read later on, so
+      // cache the vertex indexing data
       if(vertexVector.size())
 	_vertexVectorCache = vertexVector;
       else
 	_vertexMapCache = vertexMap;
       postpro = true;
+
+    }
+    else if(!strncmp(&str[1], "ElementData", 11)) {
+
+      // there's some element post-processing data to read later on
+      postpro = true;
+
     }
 
     do {

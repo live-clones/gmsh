@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.45 2008-02-20 09:20:47 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.46 2008-03-01 01:32:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -117,8 +117,7 @@ static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
   double lc = norm(SVector3(bbox.max(), bbox.min()));
 
   // build a point record structure for the divide and conquer algorithm
-  DocRecord doc;  
-  doc.points = (PointRecord*)malloc(points.size() * sizeof(PointRecord));
+  DocRecord doc(points.size());
   for(unsigned int i = 0; i < points.size(); i++){
     double XX = CTX.mesh.rand_factor * lc * (double)rand() / (double)RAND_MAX;
     double YY = CTX.mesh.rand_factor * lc * (double)rand() / (double)RAND_MAX;
@@ -130,13 +129,13 @@ static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
   }
 
   // triangulate
-  Make_Mesh_With_Points(&doc, doc.points, nbIn);
+  doc.MakeMeshWithPoints();
 
   // create output (using unperturbed data)
   for(int i = 0; i < doc.numTriangles; i++){
-    double *pa = (double*)doc.points[doc.delaunay[i].t.a].data;
-    double *pb = (double*)doc.points[doc.delaunay[i].t.b].data;
-    double *pc = (double*)doc.points[doc.delaunay[i].t.c].data;
+    double *pa = (double*)doc.points[doc.triangles[i].a].data;
+    double *pb = (double*)doc.points[doc.triangles[i].b].data;
+    double *pc = (double*)doc.points[doc.triangles[i].c].data;
     for(int j = 0; j < 3; j++) {
       List_Add(outList, pa + j);
       List_Add(outList, pb + j);
@@ -149,9 +148,6 @@ static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
     }
     (*nbOut)++;
   }
-
-  free(doc.points);
-  free(doc.delaunay);
 }
 
 PView *GMSH_TriangulatePlugin::execute(PView *v)

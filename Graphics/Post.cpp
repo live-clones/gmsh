@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.153 2008-02-24 16:18:19 geuzaine Exp $
+// $Id: Post.cpp,v 1.154 2008-03-01 01:32:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,6 @@
 #include "SmoothData.h"
 #include "Context.h"
 #include "gl2ps.h"
-
 
 #if defined(HAVE_MATH_EVAL)
 #include "matheval.h"

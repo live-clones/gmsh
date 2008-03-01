@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.23 2008-02-27 12:39:08 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.24 2008-03-01 01:32:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -98,7 +98,7 @@ bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N, double
   // N is the total number of points (3 for quadratic, 4 for cubic ...)
   // u[0] = u0;
   // u[N-1] = uN;
-  // dist ( ge(u[i]), ge(u[i+1]) ) =  dist ( ge(u[i+1]), ge(u[i+2]) ) , i = 0,...,N-2
+  // dist(ge(u[i]), ge(u[i+1])) =  dist(ge(u[i+1]), ge(u[i+2])), i = 0,...,N-2
   
   // initialize as equidistant in parameter space
   u[0] = u0;
@@ -891,7 +891,7 @@ void deriv_smoothing_objective_function_HighOrderN(double *uv, double *dF,
   }
 }
 
-void optimizeNodeLocations ( GFace *gf, smoothVertexDataHON &vdN , double eps = .2)
+void optimizeNodeLocations(GFace *gf, smoothVertexDataHON &vdN, double eps = .2)
 {
   if(!vdN.v.size()) return;
   double uv[20];
@@ -958,8 +958,8 @@ bool optimizeHighOrderMesh(GFace *gf, edgeContainer &edgeVertices)
     GEntity *ge = ver->onWhat();
     if (ge->dim() == 2){
       double initu,initv;
-      ver->getParameter ( 0,initu);
-      ver->getParameter ( 1,initv);	  
+      ver->getParameter(0, initu);
+      ver->getParameter(1, initv);	  
 
       smoothVertexDataHON vdN;
       vdN.ts = it->second;
@@ -973,7 +973,7 @@ bool optimizeHighOrderMesh(GFace *gf, edgeContainer &edgeVertices)
       double val;      
       double F = -smooth_obj_HighOrder(initu,initv, &vd);
       if (F < .2){
-	minimize_2 ( smooth_obj_HighOrder, 
+	minimize_2(smooth_obj_HighOrder, 
 	     deriv_smoothing_objective_function_HighOrder, &vd, 1, initu,initv,val);
 	double Fafter = -smooth_obj_HighOrder(initu,initv, &vd);
 	if (F < Fafter){
@@ -1098,28 +1098,28 @@ bool smoothInternalEdges(GFace *gf, edgeContainer &edgeVertices)
 	    MVertex *vert4 = (n4 < n1) ? e4[e4.size() - i - 1] : e4[i];
 	    MVertex *vert2 = (n2 < n3) ? e2[i] : e2[e2.size() - i - 1];
 	    double U1,V1,U2,V2,U3,V3,U4,V4,U,V,nU1,nV1,nU2,nV2,nU3,nV3,nU4,nV4;
-	    parametricCoordinates(vert , gf,U,V);
-	    parametricCoordinates(vert1, gf,U1,V1);
-	    parametricCoordinates(vert2, gf,U2,V2);
-	    parametricCoordinates(vert3, gf,U3,V3);
-	    parametricCoordinates(vert4, gf,U4,V4);
-	    parametricCoordinates(n1, gf,nU1,nV1);
-	    parametricCoordinates(n2, gf,nU2,nV2);
-	    parametricCoordinates(n3, gf,nU3,nV3);
-	    parametricCoordinates(n4, gf,nU4,nV4);
+	    parametricCoordinates(vert , gf, U, V);
+	    parametricCoordinates(vert1, gf, U1, V1);
+	    parametricCoordinates(vert2, gf, U2, V2);
+	    parametricCoordinates(vert3, gf, U3, V3);
+	    parametricCoordinates(vert4, gf, U4, V4);
+	    parametricCoordinates(n1, gf, nU1, nV1);
+	    parametricCoordinates(n2, gf, nU2, nV2);
+	    parametricCoordinates(n3, gf, nU3, nV3);
+	    parametricCoordinates(n4, gf, nU4, nV4);
 	    
-	    Unew[k][i] = U + relax * ( (1.-u) * U4 + u * U2 +
-				(1.-v) * U1 + v * U3 -
-				( (1.-u)*(1.-v) * nU1 
-				  + u * (1.-v) * nU2 
-				  + u*v*nU3 
-				  + (1.-u) * v * nU4) - U);
-	    Vnew[k][i] = V + relax * ( (1.-u) * V4 + u * V2 +
-				    (1.-v) * V1 + v * V3 -
-				    ( (1.-u)*(1.-v) * nV1 
-				      + u * (1.-v) * nV2 
-				      + u*v*nV3 
-				      + (1.-u) * v * nV4) - V);
+	    Unew[k][i] = U + relax * ((1.-u) * U4 + u * U2 +
+				      (1.-v) * U1 + v * U3 -
+				      ((1.-u)*(1.-v) * nU1 
+				       + u * (1.-v) * nU2 
+				       + u * v * nU3 
+				       + (1.-u) * v * nU4) - U);
+	    Vnew[k][i] = V + relax * ((1.-u) * V4 + u * V2 +
+				      (1.-v) * V1 + v * V3 -
+				      ((1.-u)*(1.-v) * nV1 
+				       + u * (1.-v) * nV2 
+				       + u * v * nV3 
+				       + (1.-u) * v * nV4) - V);
 	    GPoint gp = gf->point(Unew[k][i],Vnew[k][i]);
 	    vert->x() = gp.x();
 	    vert->y() = gp.y();
@@ -1127,8 +1127,8 @@ bool smoothInternalEdges(GFace *gf, edgeContainer &edgeVertices)
 	  }
 	  double minJloc = 1.e22;
 	  double maxJloc = -1.e22;	    
-	  getMinMaxJac (t1, minJloc, maxJloc);
-	  getMinMaxJac (t2, minJloc, maxJloc);
+	  getMinMaxJac(t1, minJloc, maxJloc);
+	  getMinMaxJac(t2, minJloc, maxJloc);
 
 	  if (minJloc > minJ){
 	    kopt = k;

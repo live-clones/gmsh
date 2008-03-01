@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.122 2008-02-23 16:19:22 remacle Exp $
+// $Id: meshGFace.cpp,v 1.123 2008-03-01 01:32:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -259,7 +259,7 @@ bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
       BDS_Edge * e = m->recover_edge(vstart->getNum(), vend->getNum(), e2r, not_recovered);
       if (e) e->g = g;
       else {
-	// Msg(GERROR,"The unrecoverable edge is on model edge %d",ge->tag());
+	// Msg(GERROR, "The unrecoverable edge is on model edge %d",ge->tag());
 	return false;
       }
       return true;
@@ -281,7 +281,7 @@ bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
     e = m->recover_edge(vstart->getNum(), vend->getNum(), e2r, not_recovered);
     if (e) e->g = g;
     else {
-      // Msg(GERROR,"The unrecoverable edge is on model edge %d",ge->tag());
+      // Msg(GERROR, "The unrecoverable edge is on model edge %d",ge->tag());
       // return false;
     }
   }
@@ -294,7 +294,7 @@ bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
       e = m->recover_edge(vstart->getNum(), vend->getNum(), e2r, not_recovered);
       if (e) e->g = g;
       else {
-	// Msg(GERROR,"Unable to recover an edge %g %g && %g %g (%d/%d)",
+	// Msg(GERROR, "Unable to recover an edge %g %g && %g %g (%d/%d)",
 	//     vstart->x(), vstart->y(), vend->x(), vend->y(), i, 
 	//     ge->mesh_vertices.size());
 	// return false;
@@ -308,7 +308,7 @@ bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
     e = m->recover_edge(vstart->getNum(), vend->getNum(), e2r, not_recovered);
     if (e)e->g = g;
     else {
-      // Msg(GERROR,"Unable to recover an edge %g %g && %g %g (%d/%d)",
+      // Msg(GERROR, "Unable to recover an edge %g %g && %g %g (%d/%d)",
       //     vstart->x(), vstart->y(), vend->x(), vend->y(), 
       //     ge->mesh_vertices.size(), ge->mesh_vertices.size());
       // return false;
@@ -361,6 +361,11 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
     ++it;
   }
   
+  if (all_vertices.size() < 3){
+    Msg(WARNING, "Cannot triangulate less than 3 vertices");
+    return false;
+  }
+
   double *U_ = new double[all_vertices.size()];
   double *V_ = new double[all_vertices.size()];
 
@@ -407,112 +412,97 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
   SVector3 dd (bbox.max(), bbox.min());
   double LC2D = norm(dd);
 
-  // Use a divide & conquer type algorithm to create a triangulation
-  // We add to the triangulation a box with 4 points that encoses
-  // the domain.
-
-  /// Fill the DocRecord Data Structure with the points
-  DocRecord doc;
-
-  doc.points = (PointRecord*)malloc((all_vertices.size() + 4) * sizeof(PointRecord));
-  itv = all_vertices.begin();
-  int j = 0;
-  while(itv != all_vertices.end()){
-    MVertex *here = *itv;
-    double XX = CTX.mesh.rand_factor * LC2D * (double)rand() / (double)RAND_MAX;
-    double YY = CTX.mesh.rand_factor * LC2D * (double)rand() / (double)RAND_MAX;
-    doc.points[j].where.h = U_[j] + XX;
-    doc.points[j].where.v = V_[j] + YY;
-    doc.points[j].adjacent = NULL;
-    doc.points[j].data = here;
-    j++;
-    ++itv;
-  }
-
-  // Increase the size of the bounding box
-  bbox *= 2.5;
-  // add 4 points than encloses the domain (use negative number to
-  // distinguish thos fake vertices)
-  MVertex *bb[4];
-  bb[0] = new MVertex(bbox.min().x(), bbox.min().y(), 0, gf, -1);
-  bb[1] = new MVertex(bbox.min().x(), bbox.max().y(), 0, gf, -2);
-  bb[2] = new MVertex(bbox.max().x(), bbox.min().y(), 0, gf, -3);
-  bb[3] = new MVertex(bbox.max().x(), bbox.max().y(), 0, gf, -4);
-
-  for(int ip = 0; ip < 4; ip++){
-    doc.points[all_vertices.size() + ip].where.h = bb[ip]->x();
-    doc.points[all_vertices.size() + ip].where.v = bb[ip]->y();
-    doc.points[all_vertices.size() + ip].adjacent = 0;
-    doc.points[all_vertices.size() + ip].data = bb[ip];
-  }
-
-  // if the number of vertices is less or equal to 2, then no elements are generated
-  if (all_vertices.size() <= 2){
-    free(doc.points);
-    free(doc.delaunay);
-    for(int ip = 0; ip < 4; ip++) delete bb[ip];
-  }
-
-  // Use "fast" inhouse recursive algo to generate the triangulation
-  // At this stage the triangulation is not what we need
-  //   -) It does not necessary recover the boundaries
-  //   -) It contains triangles outside the domain (the first edge
-  //      loop is the outer one)
-  Msg(DEBUG1,"Meshing of the convex hull (%d points)", all_vertices.size());
-  Make_Mesh_With_Points(&doc, doc.points, all_vertices.size() + 4);
-
-  // Buid a BDS_Mesh structure that is convenient for doing the actual meshing procedure
+  // Buid a BDS_Mesh structure that is convenient for doing the actual
+  // meshing procedure
   BDS_Mesh *m = new BDS_Mesh;
   m->scalingU = 1;
   m->scalingV = 1;
 
-  for(int i = 0; i < doc.numPoints; i++){
-    MVertex *here = (MVertex *)doc.points[i].data;
-    int num = here->getNum();
-    double U, V;
-    // This test was missing in 2.0.0 and led to the seemingly random
-    // Windows/Mac slowdowns (we were passing random numbers to curve
-    // interpolation, and straight line interpol does "while(not in
-    // bounds) i--" which would take forever to get back into a
-    // reasonnable interval). 
-    // JFR : the fix was WRONG, I fixed the fix ;-)
-    if(num< 0){ // fake bbox points
-      U = bb[-1-num]->x();
-      V = bb[-1-num]->y();
-    }
-    else{
-      U = U_[num];
-      V = V_[num];
+  // Use a divide & conquer type algorithm to create a triangulation.
+  // We add to the triangulation a box with 4 points that encloses the
+  // domain.
+  {
+    DocRecord doc(all_vertices.size() + 4);
+    itv = all_vertices.begin();
+    int j = 0;
+    while(itv != all_vertices.end()){
+      MVertex *here = *itv;
+      double XX = CTX.mesh.rand_factor * LC2D * (double)rand() / (double)RAND_MAX;
+      double YY = CTX.mesh.rand_factor * LC2D * (double)rand() / (double)RAND_MAX;
+      doc.points[j].where.h = U_[j] + XX;
+      doc.points[j].where.v = V_[j] + YY;
+      doc.points[j].adjacent = NULL;
+      doc.points[j].data = here;
+      j++;
+      ++itv;
     }
     
-    BDS_Point *pp = m->add_point(num, U, V, gf);
+    // Increase the size of the bounding box
+    bbox *= 2.5;
+    // add 4 points than encloses the domain (use negative number to
+    // distinguish thos fake vertices)
+    MVertex *bb[4];
+    bb[0] = new MVertex(bbox.min().x(), bbox.min().y(), 0, gf, -1);
+    bb[1] = new MVertex(bbox.min().x(), bbox.max().y(), 0, gf, -2);
+    bb[2] = new MVertex(bbox.max().x(), bbox.min().y(), 0, gf, -3);
+    bb[3] = new MVertex(bbox.max().x(), bbox.max().y(), 0, gf, -4);
     
-    GEntity *ge = here->onWhat();
-    if(ge->dim() == 0){
-      pp->lcBGM() = BGM_MeshSize(ge,0,0,here->x(),here->y(),here->z());
+    for(int ip = 0; ip < 4; ip++){
+      doc.points[all_vertices.size() + ip].where.h = bb[ip]->x();
+      doc.points[all_vertices.size() + ip].where.v = bb[ip]->y();
+      doc.points[all_vertices.size() + ip].adjacent = 0;
+      doc.points[all_vertices.size() + ip].data = bb[ip];
     }
-    else if(ge->dim() == 1){
-      double u;
-      here->getParameter(0,u);
-      pp->lcBGM() = BGM_MeshSize(ge,u,0,here->x(),here->y(),here->z());
-    }
-    else
-      pp->lcBGM() = 1.e22;
     
-    pp->lc() = pp->lcBGM();
-  }
+    // Use "fast" inhouse recursive algo to generate the triangulation
+    // At this stage the triangulation is not what we need
+    //   -) It does not necessary recover the boundaries
+    //   -) It contains triangles outside the domain (the first edge
+    //      loop is the outer one)
+    Msg(DEBUG1, "Meshing of the convex hull (%d points)", all_vertices.size());
+    doc.MakeMeshWithPoints();
+    
+    for(int i = 0; i < doc.numPoints; i++){
+      MVertex *here = (MVertex *)doc.points[i].data;
+      int num = here->getNum();
+      double U, V;
+      if(num < 0){ // fake bbox points
+	U = bb[-1 - num]->x();
+	V = bb[-1 - num]->y();
+      }
+      else{
+	U = U_[num];
+	V = V_[num];
+      }
+      
+      BDS_Point *pp = m->add_point(num, U, V, gf);
+      
+      GEntity *ge = here->onWhat();
+      if(ge->dim() == 0){
+	pp->lcBGM() = BGM_MeshSize(ge, 0, 0, here->x(), here->y(), here->z());
+      }
+      else if(ge->dim() == 1){
+	double u;
+	here->getParameter(0,u);
+	pp->lcBGM() = BGM_MeshSize(ge, u, 0, here->x(), here->y(), here->z());
+      }
+      else
+	pp->lcBGM() = 1.e22;
+      
+      pp->lc() = pp->lcBGM();
+    }
+    
+    Msg(DEBUG1, "Meshing of the convex hull (%d points) done", all_vertices.size());
+    
+    for(int i = 0; i < doc.numTriangles; i++) {
+      MVertex *V1 = (MVertex*)doc.points[doc.triangles[i].a].data;
+      MVertex *V2 = (MVertex*)doc.points[doc.triangles[i].b].data;
+      MVertex *V3 = (MVertex*)doc.points[doc.triangles[i].c].data;
+      m->add_triangle(V1->getNum(), V2->getNum(), V3->getNum());
+    }
 
-  Msg(DEBUG1, "Meshing of the convex hull (%d points) done", all_vertices.size());
-
-  for(int i = 0; i < doc.numTriangles; i++) {
-    MVertex *V1 = (MVertex*)doc.points[doc.delaunay[i].t.a].data;
-    MVertex *V2 = (MVertex*)doc.points[doc.delaunay[i].t.b].data;
-    MVertex *V3 = (MVertex*)doc.points[doc.delaunay[i].t.c].data;
-    m->add_triangle(V1->getNum(), V2->getNum(), V3->getNum());
+    for(int ip = 0; ip < 4; ip++) delete bb[ip];
   }
-  free(doc.points);
-  free(doc.delaunay);
-  for(int ip = 0; ip < 4; ip++) delete bb[ip];
 
   // Recover the boundary edges and compute characteristic lenghts
   // using mesh edge spacing
@@ -544,7 +534,7 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
     ++it;
   }
 
-  Msg(DEBUG1,"Recovering %d mesh Edges", edgesToRecover.size());
+  Msg(DEBUG1, "Recovering %d mesh Edges", edgesToRecover.size());
 
   // effectively recover the medge
   it = edges.begin();
@@ -566,8 +556,9 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
       int p1 = itr->p1;
       int p2 = itr->p2;
       int tag = itr->ge->tag();
-      Msg(WARNING,"MEdge %d %d in GEdge %d",p1,p2,tag);
+      Msg(WARNING, "MEdge %d %d in GEdge %d",p1,p2,tag);
     }
+    // delete the mesh
     delete m;
     delete [] U_;
     delete [] V_;
@@ -576,10 +567,10 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
     return false;
   }
   if(RECUR_ITER > 0)
-    Msg(WARNING,":-) Gmsh was able to recover all edges after %d ITERATIONS",
+    Msg(WARNING, ":-) Gmsh was able to recover all edges after %d ITERATIONS",
 	RECUR_ITER);
 
-  //  Msg(INFO,"Boundary Edges recovered for surface %d",gf->tag());
+  //  Msg(INFO, "Boundary Edges recovered for surface %d",gf->tag());
   // Look for an edge that is on the boundary for which one of the two
   // neighbors has a negative number node. The other triangle is
   // inside the domain and, because all edges were recovered,
@@ -644,9 +635,9 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
 
   if (debug){
     char name[245];
-    sprintf(name,"surface%d-recovered-real.pos", gf->tag());
+    sprintf(name, "surface%d-recovered-real.pos", gf->tag());
     outputScalarField(m->triangles, name, 0);
-    sprintf(name,"surface%d-recovered-param.pos", gf->tag());
+    sprintf(name, "surface%d-recovered-param.pos", gf->tag());
     outputScalarField(m->triangles, name, 1);
   }
 
@@ -716,15 +707,14 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
   }
   else if (debug){
     char name[256];
-    sprintf(name,"real%d.pos",gf->tag());
-    outputScalarField(m->triangles, name,0,gf);
-    sprintf(name,"param%d.pos",gf->tag());
+    sprintf(name, "real%d.pos", gf->tag());
+    outputScalarField(m->triangles, name, 0, gf);
+    sprintf(name, "param%d.pos", gf->tag());
     outputScalarField(m->triangles, name,1);
   }
   
   // delete the mesh
   delete m;
-
   delete [] U_;
   delete [] V_;
 
@@ -843,7 +833,7 @@ bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop  &gel,
 	 if (seam && seam_the_first){
 	   coords = ((*it)._sign == 1) ? mesh1d_seam : mesh1d_seam_reversed;
 	   found = (*it);
-	   Msg(INFO,"This test case would have failed in Previous Gmsh Version ;-)");
+	   Msg(INFO, "This test case would have failed in Previous Gmsh Version ;-)");
 	 }
 	 else{
 	   coords = ((*it)._sign == 1) ? mesh1d : mesh1d_reversed;
@@ -1030,64 +1020,64 @@ bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
     }
   }
 
-  // build a point record structure to create the initial mesh
-  DocRecord doc;
-  doc.points =  (PointRecord*)malloc((nbPointsTotal + 4) * sizeof(PointRecord));
-  int count = 0;
-  for (unsigned int i = 0; i < edgeLoops_BDS.size(); i++){
-    std::vector<BDS_Point*> &edgeLoop_BDS = edgeLoops_BDS[i];
-    for (unsigned int j = 0; j < edgeLoop_BDS.size(); j++){
-      BDS_Point *pp = edgeLoop_BDS[j];
-      const double U = pp->u;
-      const double V = pp->v;
-      double XX = CTX.mesh.rand_factor * LC2D * (double)rand() / (double)RAND_MAX;
-      double YY = CTX.mesh.rand_factor * LC2D * (double)rand() / (double)RAND_MAX;
-      doc.points[count].where.h = U + XX;
-      doc.points[count].where.v = V + YY;
-      doc.points[count].adjacent = NULL;
-      doc.points[count].data = pp;
-      count++;
+  // Use a divide & conquer type algorithm to create a triangulation.
+  // We add to the triangulation a box with 4 points that encloses the
+  // domain.
+  {
+    DocRecord doc(nbPointsTotal + 4);
+    int count = 0;
+    for (unsigned int i = 0; i < edgeLoops_BDS.size(); i++){
+      std::vector<BDS_Point*> &edgeLoop_BDS = edgeLoops_BDS[i];
+      for (unsigned int j = 0; j < edgeLoop_BDS.size(); j++){
+	BDS_Point *pp = edgeLoop_BDS[j];
+	const double U = pp->u;
+	const double V = pp->v;
+	double XX = CTX.mesh.rand_factor * LC2D * (double)rand() / (double)RAND_MAX;
+	double YY = CTX.mesh.rand_factor * LC2D * (double)rand() / (double)RAND_MAX;
+	doc.points[count].where.h = U + XX;
+	doc.points[count].where.v = V + YY;
+	doc.points[count].adjacent = NULL;
+	doc.points[count].data = pp;
+	count++;
+      }
+    }
+
+    // Increase the size of the bounding box, add 4 points that enclose
+    // the domain, use negative number to distinguish those fake
+    // vertices
+    bbox *= 3.5;
+    MVertex *bb[4];
+    bb[0] = new MVertex(bbox.min().x(), bbox.min().y(), 0, 0, -1);
+    bb[1] = new MVertex(bbox.min().x(), bbox.max().y(), 0, 0, -2);
+    bb[2] = new MVertex(bbox.max().x(), bbox.min().y(), 0, 0, -3);
+    bb[3] = new MVertex(bbox.max().x(), bbox.max().y(), 0, 0, -4);    
+    for (int ip = 0; ip < 4; ip++){
+      BDS_Point *pp = m->add_point(-ip - 1, bb[ip]->x(), bb[ip]->y(), gf);
+      m->add_geom(gf->tag(), 2);
+      BDS_GeomEntity *g = m->get_geom(gf->tag(), 2);
+      pp->g = g;
+      doc.points[nbPointsTotal+ip].where.h = bb[ip]->x();
+      doc.points[nbPointsTotal+ip].where.v = bb[ip]->y();
+      doc.points[nbPointsTotal+ip].adjacent = 0;
+      doc.points[nbPointsTotal+ip].data = pp;
+    }
+    for (int ip = 0; ip < 4; ip++) delete bb[ip];
+    
+    // Use "fast" inhouse recursive algo to generate the triangulation
+    // At this stage the triangulation is not what we need
+    //   -) It does not necessary recover the boundaries
+    //   -) It contains triangles outside the domain (the first edge
+    //      loop is the outer one)
+    Msg(DEBUG1, "Meshing of the convex hull (%d points)", nbPointsTotal);
+    doc.MakeMeshWithPoints();
+    
+    for(int i = 0; i < doc.numTriangles; i++){
+      BDS_Point *p1 = (BDS_Point*)doc.points[doc.triangles[i].a].data;
+      BDS_Point *p2 = (BDS_Point*)doc.points[doc.triangles[i].b].data;
+      BDS_Point *p3 = (BDS_Point*)doc.points[doc.triangles[i].c].data;
+      m->add_triangle(p1->iD, p2->iD, p3->iD);
     }
   }
-  // Increase the size of the bounding box, add 4 points that encloses
-  // the domain, use negative number to distinguish those fake
-  // vertices
-  bbox *= 3.5;
-  MVertex *bb[4];
-  bb[0] = new MVertex(bbox.min().x(), bbox.min().y(), 0, 0, -1);
-  bb[1] = new MVertex(bbox.min().x(), bbox.max().y(), 0, 0, -2);
-  bb[2] = new MVertex(bbox.max().x(), bbox.min().y(), 0, 0, -3);
-  bb[3] = new MVertex(bbox.max().x(), bbox.max().y(), 0, 0, -4);
-
-  for ( int ip = 0; ip < 4; ip++){
-    BDS_Point *pp = m->add_point(-ip - 1, bb[ip]->x(), bb[ip]->y(), gf);
-    m->add_geom(gf->tag(), 2);
-    BDS_GeomEntity *g = m->get_geom(gf->tag(), 2);
-    pp->g = g;
-    doc.points[nbPointsTotal+ip].where.h = bb[ip]->x();
-    doc.points[nbPointsTotal+ip].where.v = bb[ip]->y();
-    doc.points[nbPointsTotal+ip].adjacent = 0;
-    doc.points[nbPointsTotal+ip].data = pp;
-  }
-
-  for (int ip = 0; ip < 4; ip++) delete bb[ip];
-  
-  // Use "fast" inhouse recursive algo to generate the triangulation
-  // At this stage the triangulation is not what we need
-  //   -) It does not necessary recover the boundaries
-  //   -) It contains triangles outside the domain (the first edge
-  //      loop is the outer one)
-  Msg(DEBUG1, "Meshing of the convex hull (%d points)", nbPointsTotal);
-  Make_Mesh_With_Points(&doc, doc.points,nbPointsTotal + 4);
-  for(int i = 0; i < doc.numTriangles; i++){
-    BDS_Point *p1 = (BDS_Point*)doc.points[doc.delaunay[i].t.a].data;
-    BDS_Point *p2 = (BDS_Point*)doc.points[doc.delaunay[i].t.b].data;
-    BDS_Point *p3 = (BDS_Point*)doc.points[doc.delaunay[i].t.c].data;
-    m->add_triangle(p1->iD, p2->iD, p3->iD);
-  }
-  // Free stuff
-  free(doc.points);
-  free(doc.delaunay);
 
   // Recover the boundary edges and compute characteristic lenghts
   // using mesh edge spacing
@@ -1117,7 +1107,7 @@ bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
     }
   }
 
-  // Msg(INFO,"Boundary Edges recovered for surface %d",gf->tag());
+  // Msg(INFO, "Boundary Edges recovered for surface %d",gf->tag());
   // Look for an edge that is on the boundary for which one of the two
   // neighbors has a negative number node. The other triangle is
   // inside the domain and, because all edges were recovered,
@@ -1244,7 +1234,6 @@ bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
     }
   }
   
-  // delete the mesh
   if (debug){
     char name[245];
     sprintf(name, "surface%d-final-real.pos", gf->tag());
@@ -1257,8 +1246,10 @@ bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
     insertVerticesInFace(gf, m);
     laplaceSmoothing(gf);
   }
-  
+
+  // delete the mesh  
   delete m;
+
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
 		       gf->meshStatistics.average_element_shape,
 		       gf->meshStatistics.best_element_shape,

@@ -20,29 +20,19 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-typedef struct _POINT PointRecord, *PointPeek;
-typedef struct _DOC DocRecord, *DocPeek;
 typedef struct _CDLIST DListRecord, *DListPeek;
-typedef struct _DELAUNAY Delaunay, *delpeek;
 typedef int PointNumero;
-
-struct _DOC{
-  PointRecord *points;  // points to triangulate
-  int numPoints;        // number of points
-  int numTriangles;     // number of triangles
-  Delaunay *delaunay;   // 2D results
-};
 
 typedef struct{
   double v;
   double h;
 }MPoint;
 
-struct _POINT{
+typedef struct{
   MPoint where;
   DListPeek adjacent;
   void *data;
-};
+}PointRecord;
 
 struct _CDLIST{
   PointNumero point_num;
@@ -74,15 +64,15 @@ typedef struct{
   PointNumero a, b, c;
 }Triangle;
 
-typedef struct {
-  Delaunay *voisin1, *voisin2, *voisin3;
-}Voronoi;
-
-struct _DELAUNAY{
-  Triangle t;
-  Voronoi v;
+class DocRecord{
+ public:
+  int numPoints;        // number of points
+  PointRecord *points;  // points to triangulate
+  int numTriangles;     // number of triangles
+  Triangle *triangles;  // 2D results
+  DocRecord(int n);
+  ~DocRecord();
+  void MakeMeshWithPoints();
 };
-
-void Make_Mesh_With_Points(DocRecord *ptr, PointRecord *Liste, int Numpoints);
 
 #endif
