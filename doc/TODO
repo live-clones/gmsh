@@ -1,4 +1,4 @@
-$Id: TODO,v 1.68 2008-02-17 10:24:50 geuzaine Exp $
+$Id: TODO,v 1.69 2008-03-01 10:52:05 geuzaine Exp $
 
 ********************************************************************
 
@@ -215,13 +215,3 @@ create "Volume visualization" range type? (interpolate on regular grid
 + create cut planes // to viewpoint with transparency; can be done in
 a straightforward way or using 3D textures)
 
-********************************************************************
-
-Yves Krahenbuhl wrote:
-
-> Lors de la creation des elements du 2eme ordre, et selon la courbure
-> du contour exterieur, le jacobien de l'element peut devenir negatif.
-> Cependant le programme genere le maillage sans protester. Il
-> faudrait peut-etre faire apparaitre un message d'erreurs / ou se
-> restreindre (automatiquement ou non) a une interpolation lineaire
-> entre les points en question.
