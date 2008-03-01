@@ -1,7 +1,7 @@
-$Id: VERSIONS,v 1.399 2008-03-01 01:32:03 geuzaine Exp $
+$Id: VERSIONS,v 1.400 2008-03-01 18:49:53 geuzaine Exp $
 
-2.1.1 (Feb , 2008): small bug fixes (second order meshes, combine
-views, divide and conquer crash).
+2.1.1 (Mar 1, 2008): small bug fixes (second order meshes, combine
+views, divide and conquer crash, ...).
 
 2.1.0 (Feb 23, 2008): new post-processing database; complete rewrite
 of post-processing drawing code; improved surface mesh algorithms;
