@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.32 2008-02-17 08:47:58 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.33 2008-03-03 22:04:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,7 @@
 
 // Curves
 
-Vertex InterpolateCubicSpline(Vertex * v[4], double t, double mat[4][4],
+Vertex InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
                               int derivee, double t1, double t2)
 {
   Vertex V;
@@ -55,7 +55,7 @@ Vertex InterpolateCubicSpline(Vertex * v[4], double t, double mat[4][4],
     vec[i] = 0.0;
   }
 
-  /* X */
+  // X
   for(i = 0; i < 4; i++) {
     for(j = 0; j < 4; j++) {
       vec[i] += mat[i][j] * v[j]->Pos.X;
@@ -67,7 +67,7 @@ Vertex InterpolateCubicSpline(Vertex * v[4], double t, double mat[4][4],
     vec[j] = 0.0;
   }
 
-  /* Y */
+  // Y
   for(i = 0; i < 4; i++) {
     for(j = 0; j < 4; j++) {
       vec[i] += mat[i][j] * v[j]->Pos.Y;
@@ -79,7 +79,7 @@ Vertex InterpolateCubicSpline(Vertex * v[4], double t, double mat[4][4],
     vec[j] = 0.0;
   }
 
-  /* Z */
+  // Z
   for(i = 0; i < 4; i++) {
     for(j = 0; j < 4; j++) {
       vec[i] += mat[i][j] * v[j]->Pos.Z;
@@ -100,7 +100,7 @@ Vertex InterpolateCubicSpline(Vertex * v[4], double t, double mat[4][4],
 }
 
 // interpolation in the parametric space !
-SPoint2 InterpolateCubicSpline(Vertex * v[4], double t, double mat[4][4],
+SPoint2 InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
                               int derivee, double t1, double t2, gmshSurface *s)
 {
   Vertex V;
@@ -126,11 +126,10 @@ SPoint2 InterpolateCubicSpline(Vertex * v[4], double t, double mat[4][4],
     p += coord[j] * T[j] ;
   }
   return p;
-
 }
 
 // Uniform BSplines
-Vertex InterpolateUBS(Curve * Curve, double u, int derivee) 
+Vertex InterpolateUBS(Curve *Curve, double u, int derivee) 
 {
   bool periodic = (Curve->end == Curve->beg);
   int NbControlPoints = List_Nbr(Curve->Control_Points);
@@ -149,7 +148,7 @@ Vertex InterpolateUBS(Curve * Curve, double u, int derivee)
   }
 
   if(Curve->geometry){
-    SPoint2 pp = InterpolateCubicSpline(v, t, Curve->mat, 0, t1, t2,Curve->geometry);
+    SPoint2 pp = InterpolateCubicSpline(v, t, Curve->mat, 0, t1, t2, Curve->geometry);
     SPoint3 pt = Curve->geometry->point(pp);
     Vertex V;
     V.Pos.X = pt.x();
@@ -204,7 +203,7 @@ void basisFuns(double u, int i, int deg, float *U, double *N)
   }
 }
 
-Vertex InterpolateNurbs(Curve * Curve, double u, int derivee)
+Vertex InterpolateNurbs(Curve *Curve, double u, int derivee)
 {
   static double Nb[1000];
   int span = findSpan(u, Curve->degre, List_Nbr(Curve->Control_Points), Curve->k);
@@ -223,7 +222,7 @@ Vertex InterpolateNurbs(Curve * Curve, double u, int derivee)
   return p;
 }
 
-Vertex InterpolateCurve(Curve * c, double u, int derivee)
+Vertex InterpolateCurve(Curve *c, double u, int derivee)
 {
   if(c->Num < 0) {
     Curve *C0 = FindCurve(-c->Num);
@@ -231,21 +230,21 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
       Msg(GERROR, "Unknown curve %d", -c->Num);
       return Vertex(0., 0., 0.);
     }
-    return InterpolateCurve(C0, C0->ubeg + (C0->uend - C0->ubeg) * (1.-u), derivee);
+    return InterpolateCurve(C0, C0->ubeg + (C0->uend - C0->ubeg) * (1. - u), derivee);
   }
   
   Vertex V;
   V.u = u;
 
   if(derivee) {
-    double eps1 = u==0?0:1.e-5;
-    double eps2 = u==1?0:1.e-5;
+    double eps1 = (u == 0) ? 0 : 1.e-5;
+    double eps2 = (u == 1) ? 0 : 1.e-5;
     Vertex D[2];
-    D[0] = InterpolateCurve(c, u-eps1, 0);
-    D[1] = InterpolateCurve(c, u+eps2, 0);
-    V.Pos.X = (D[1].Pos.X - D[0].Pos.X) / (eps1+eps2);
-    V.Pos.Y = (D[1].Pos.Y - D[0].Pos.Y) / (eps1+eps2);
-    V.Pos.Z = (D[1].Pos.Z - D[0].Pos.Z) / (eps1+eps2);
+    D[0] = InterpolateCurve(c, u - eps1, 0);
+    D[1] = InterpolateCurve(c, u + eps2, 0);
+    V.Pos.X = (D[1].Pos.X - D[0].Pos.X) / (eps1 + eps2);
+    V.Pos.Y = (D[1].Pos.Y - D[0].Pos.Y) / (eps1 + eps2);
+    V.Pos.Z = (D[1].Pos.Z - D[0].Pos.Z) / (eps1 + eps2);
     return V;
   }
 
@@ -394,9 +393,9 @@ Vertex InterpolateCurve(Curve * c, double u, int derivee)
 
 // Surfaces
 
-/* Interpolation transfinie sur un quadrangle :
-   f(u,v) = (1-u)c4(v) + u c2(v) + (1-v)c1(u) + v c3(u)
-            - [ (1-u)(1-v)s1 + u(1-v)s2 + uv s3 + (1-u)v s4 ] */
+// Interpolation transfinie sur un quadrangle :
+// f(u,v) = (1-u)c4(v) + u c2(v) + (1-v)c1(u) + v c3(u)
+//          - [ (1-u)(1-v)s1 + u(1-v)s2 + uv s3 + (1-u)v s4 ]
 
 #define TRAN_QUA(c1,c2,c3,c4,s1,s2,s3,s4,u,v) \
    (1.-u)*c4+u*c2+(1.-v)*c1+v*c3-((1.-u)*(1.-v)*s1+u*(1.-v)*s2+u*v*s3+(1.-u)*v*s4)
@@ -419,8 +418,8 @@ Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
   return (V);
 }
 
-/* Interpolation transfinie sur un triangle : TRAN_QUA avec s1=s4=c4
-   f(u,v) = u c2 (v) + (1-v) c1(u) + v c3(u) - u(1-v) s2 - uv s3 */
+// Interpolation transfinie sur un triangle : TRAN_QUA avec s1=s4=c4
+// f(u,v) = u c2 (v) + (1-v) c1(u) + v c3(u) - u(1-v) s2 - uv s3
 
 #define TRAN_TRI(c1,c2,c3,s1,s2,s3,u,v) u*c2+(1.-v)*c1+v*c3-(u*(1.-v)*s2+u*v*s3);
 
@@ -428,7 +427,6 @@ Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
                       Vertex s1, Vertex s2, Vertex s3, double u, double v)
 {
   Vertex V;
-
   V.lc = TRAN_TRI(c1.lc, c2.lc, c3.lc, s1.lc, s2.lc, s3.lc, u, v);
   V.w = TRAN_TRI(c1.w, c2.w, c3.w, s1.w, s2.w, s3.w, u, v);
   V.Pos.X = TRAN_TRI(c1.Pos.X, c2.Pos.X, c3.Pos.X,
@@ -437,53 +435,63 @@ Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
                      s1.Pos.Y, s2.Pos.Y, s3.Pos.Y, u, v);
   V.Pos.Z = TRAN_TRI(c1.Pos.Z, c2.Pos.Z, c3.Pos.Z,
                      s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, u, v);
-  return (V);
+  return V;
 }
 
-void TransfiniteSph(Vertex S, Vertex center, Vertex * T)
+void TransfiniteSph(Vertex S, Vertex center, Vertex *T)
 {
-  double r, s, dirx, diry, dirz;
+  double r = sqrt(DSQR(S.Pos.X - center.Pos.X) + DSQR(S.Pos.Y - center.Pos.Y)
+		  + DSQR(S.Pos.Z - center.Pos.Z));
 
-  r = sqrt(DSQR(S.Pos.X - center.Pos.X) + DSQR(S.Pos.Y - center.Pos.Y)
-           + DSQR(S.Pos.Z - center.Pos.Z));
+  double s = sqrt(DSQR(T->Pos.X - center.Pos.X) + DSQR(T->Pos.Y - center.Pos.Y)
+		  + DSQR(T->Pos.Z - center.Pos.Z));
 
-  s = sqrt(DSQR(T->Pos.X - center.Pos.X) + DSQR(T->Pos.Y - center.Pos.Y)
-           + DSQR(T->Pos.Z - center.Pos.Z));
-
-  dirx = (T->Pos.X - center.Pos.X) / s;
-  diry = (T->Pos.Y - center.Pos.Y) / s;
-  dirz = (T->Pos.Z - center.Pos.Z) / s;
+  double dirx = (T->Pos.X - center.Pos.X) / s;
+  double diry = (T->Pos.Y - center.Pos.Y) / s;
+  double dirz = (T->Pos.Z - center.Pos.Z) / s;
 
   T->Pos.X = center.Pos.X + r * dirx;
   T->Pos.Y = center.Pos.Y + r * diry;
   T->Pos.Z = center.Pos.Z + r * dirz;
 }
 
-Vertex InterpolateRuledSurface(Surface * s, double u, double v)
+Vertex InterpolateRuledSurface(Surface *s, double u, double v)
 {
-  Curve *C[4];
-  Vertex *c1, *c2;
-  int issphere = 1;
-  for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
-    if(i == 4) break; // we accept holes in ruled surfaces!
+  Curve *C[4] = {0, 0, 0, 0};
+  Vertex *O = 0;
+  bool isSphere = true;
+  for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++) {
     List_Read(s->Generatrices, i, &C[i]);
-    if(C[i]->Typ != MSH_SEGM_CIRC && C[i]->Typ != MSH_SEGM_CIRC_INV) {
-      issphere = 0;
+    if(C[i]->Typ != MSH_SEGM_CIRC && C[i]->Typ != MSH_SEGM_CIRC_INV){
+      isSphere = false;
     }
-    else if(issphere) {
-      if(!i) {
-	List_Read(C[i]->Control_Points, 1, &c1);
+    else if(isSphere){
+      if(!i){
+	List_Read(C[i]->Control_Points, 1, &O);
       }
-      else {
-	List_Read(C[i]->Control_Points, 1, &c2);
-	if(compareVertex(&c1, &c2))
-	  issphere = 0;
+      else{
+	Vertex *tmp;
+	List_Read(C[i]->Control_Points, 1, &tmp);
+	if(compareVertex(&O, &tmp))
+	  isSphere = false;
       }
     }
   }
 
+  if(isSphere){
+    double n[3] = {C[0]->Circle.invmat[0][2],
+		   C[0]->Circle.invmat[1][2],
+		   C[0]->Circle.invmat[2][2]};
+    bool isPlane = true;
+    for(int i = 1; i < std::min(List_Nbr(s->Generatrices), 4); i++)
+      isPlane &= (n[0] == C[i]->Circle.invmat[0][2] &&
+		  n[1] == C[i]->Circle.invmat[1][2] &&
+		  n[2] == C[i]->Circle.invmat[2][2]);
+    if(isPlane)
+      isSphere = false;
+  }
+  
   Vertex *S[4], V[4], T;
-
   if(s->Typ == MSH_SURF_REGL && List_Nbr(s->Generatrices) >= 4){
     S[0] = C[0]->beg;
     S[1] = C[1]->beg;
@@ -494,7 +502,7 @@ Vertex InterpolateRuledSurface(Surface * s, double u, double v)
     V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
     V[3] = InterpolateCurve(C[3], C[3]->ubeg + (C[3]->uend - C[3]->ubeg) * (1. - v), 0);
     T = TransfiniteQua(V[0], V[1], V[2], V[3], *S[0], *S[1], *S[2], *S[3], u, v);
-    if(issphere) TransfiniteSph(*S[0], *c1, &T);
+    if(isSphere) TransfiniteSph(*S[0], *O, &T);
   }
   else if(List_Nbr(s->Generatrices) >= 3){
     S[0] = C[0]->beg;
@@ -502,15 +510,15 @@ Vertex InterpolateRuledSurface(Surface * s, double u, double v)
     S[2] = C[2]->beg;
     V[0] = InterpolateCurve(C[0], C[0]->ubeg + (C[0]->uend - C[0]->ubeg) * u, 0);
     V[1] = InterpolateCurve(C[1], C[1]->ubeg + (C[1]->uend - C[1]->ubeg) * v, 0);
-    V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1.-u), 0);
+    V[2] = InterpolateCurve(C[2], C[2]->ubeg + (C[2]->uend - C[2]->ubeg) * (1. - u), 0);
     T = TransfiniteTri(V[0], V[1], V[2], *S[0], *S[1], *S[2], u, v);
-    if(issphere) TransfiniteSph(*S[0], *c1, &T);
+    if(isSphere) TransfiniteSph(*S[0], *O, &T);
   }
 
   return T;
 }
 
-Vertex InterpolateExtrudedSurface(Surface * s, double u, double v)
+Vertex InterpolateExtrudedSurface(Surface *s, double u, double v)
 {
   Curve *c = FindCurve(s->Extrude->geo.Source);
 
@@ -548,9 +556,8 @@ Vertex InterpolateExtrudedSurface(Surface * s, double u, double v)
   }
 }
 
-Vertex InterpolateSurface(Surface * s, double u, double v, int derivee, int u_v)
+Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
 {
-
   if(derivee) {
     double eps = 1.e-6;
     Vertex D[4], T;

@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.53 2008-02-23 17:38:34 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.54 2008-03-03 22:04:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -175,8 +175,8 @@ Pair<SVector3,SVector3> gmshFace::firstDer(const SPoint2 &param) const
 {
   Vertex vu = InterpolateSurface(s, param[0], param[1], 1, 1);
   Vertex vv = InterpolateSurface(s, param[0], param[1], 1, 2);
-  return Pair<SVector3,SVector3>(SVector3(vu.Pos.X, vu.Pos.Y, vu.Pos.Z),
-				 SVector3(vv.Pos.X, vv.Pos.Y, vv.Pos.Z));
+  return Pair<SVector3, SVector3>(SVector3(vu.Pos.X, vu.Pos.Y, vu.Pos.Z),
+				  SVector3(vv.Pos.X, vv.Pos.Y, vv.Pos.Z));
 }
 
 GPoint gmshFace::point(double par1, double par2) const

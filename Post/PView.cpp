@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.18 2008-03-01 01:32:03 geuzaine Exp $
+// $Id: PView.cpp,v 1.19 2008-03-03 22:04:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -209,6 +209,13 @@ void PView::combine(bool time, int how, bool remove)
   if(remove)
     for(std::set<PView*>::iterator it = rm.begin(); it != rm.end(); it++)
       delete *it;
+}
+
+PView *PView::getViewByName(std::string name)
+{
+  for(unsigned int i = 0; i < list.size(); i++)
+    if(list[i]->getData()->getName() == name) return list[i];
+  return 0;
 }
 
 bool PView::readPOS(std::string filename, int fileIndex)

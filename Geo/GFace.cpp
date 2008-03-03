@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.58 2008-02-23 15:40:29 geuzaine Exp $
+// $Id: GFace.cpp,v 1.59 2008-03-03 22:04:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -497,13 +497,13 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
       err = 1.0;
       iter = 1;
 
-      GPoint P = point(U,V);
+      GPoint P = point(U, V);
       err2 = sqrt(DSQR(X - P.x()) + DSQR(Y - P.y()) + DSQR(Z - P.z()));
       if (err2 < 1.e-8 * CTX.lc) return;
 
       while(err > Precision && iter < MaxIter) {
-	P = point(U,V);
-	Pair<SVector3,SVector3> der = firstDer(SPoint2(U,V));
+	P = point(U, V);
+	Pair<SVector3, SVector3> der = firstDer(SPoint2(U, V));
 	mat[0][0] = der.left().x();
 	mat[0][1] = der.left().y();
 	mat[0][2] = der.left().z();
@@ -522,6 +522,8 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
 	  (jac[0][1] * (X - P.x()) + jac[1][1] * (Y - P.y()) +
 	   jac[2][1] * (Z - P.z()));
 
+	//if(Unew > umax || Vnew > vmax || Unew < umin || Vnew < vmin) break;
+
 	err = DSQR(Unew - U) + DSQR(Vnew - V);
 	err2 = sqrt(DSQR(X - P.x()) + DSQR(Y - P.y()) + DSQR(Z - P.z()));
 	iter++;
@@ -529,11 +531,14 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
 	V = Vnew;
       }
 
+      //printf("i=%d j=%d err=%g iter=%d err2=%g u=%.16g v=%.16g x=%g y=%g z=%g\n", 
+      //     i, j, err, iter, err2, U, V, X, Y, Z);
+
       if(iter < MaxIter && err <= Precision &&
 	 Unew <= umax && Vnew <= vmax &&
 	 Unew >= umin && Vnew >= vmin){
 	if (onSurface && err2 > 1.e-4 * CTX.lc)
-	  Msg(WARNING,"Converged for i=%d j=%d (err=%g iter=%d) BUT xyz error = %g",
+	  Msg(WARNING, "Converged for i=%d j=%d (err=%g iter=%d) BUT xyz error = %g",
 	      i, j, err, iter, err2);
 	return;
       }
@@ -543,7 +548,7 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
   if(relax < 1.e-6)
     Msg(GERROR, "Could not converge: surface mesh will be wrong");
   else {
-    Msg(INFO, "point %g %g %g : Relaxation factor = %g",X,Y,Z, 0.75 * relax);
+    Msg(INFO, "point %g %g %g : Relaxation factor = %g", X, Y, Z, 0.75 * relax);
     XYZtoUV(X, Y, Z, U, V, 0.75 * relax);
   }
 #endif
@@ -551,9 +556,9 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
 
 SPoint2 GFace::parFromPoint(const SPoint3 &p) const
 {
-  double U,V;
-  XYZtoUV(p.x(),p.y(),p.z(),U,V,1.0);
-  return SPoint2(U,V);
+  double U, V;
+  XYZtoUV(p.x(), p.y(), p.z(), U, V, 1.0);
+  return SPoint2(U, V);
 }
 
 int GFace::containsParam(const SPoint2 &pt) const

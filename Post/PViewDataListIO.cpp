@@ -1,4 +1,4 @@
-// $Id: PViewDataListIO.cpp,v 1.11 2008-02-24 21:37:46 geuzaine Exp $
+// $Id: PViewDataListIO.cpp,v 1.12 2008-03-03 22:04:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -425,7 +425,7 @@ static void getNodeMSH(int nbelm, List_T *list, int nbnod, int nbcomp,
 {
   if(!nbelm) return;
   int nb = List_Nbr(list) / nbelm;
-  for(int i = 0; i < List_Nbr(list); i+=nb){
+  for(int i = 0; i < List_Nbr(list); i += nb){
     double *x = (double *)List_Pointer_Fast(list, i);
     double *y = (double *)List_Pointer_Fast(list, i + nbnod);
     double *z = (double *)List_Pointer_Fast(list, i + 2 * nbnod);
@@ -469,33 +469,33 @@ static void writeElementMSH(FILE *fp, int num, int nbnod, pVertex nod[8],
   
   switch(dim){
   case 0:
-    fprintf(fp, "%d 15 %d %d 1 %d\n", num, phys, ele, nod[0].Num);
+    fprintf(fp, "%d 15 2 %d %d %d\n", num, phys, ele, nod[0].Num);
     break;
   case 1:
-    fprintf(fp, "%d 1 %d %d 2 %d %d\n", num, phys, ele, nod[0].Num, nod[1].Num);
+    fprintf(fp, "%d 1 2 %d %d %d %d\n", num, phys, ele, nod[0].Num, nod[1].Num);
     break;
   case 2:
     if(nbnod == 3)
-      fprintf(fp, "%d 2 %d %d 3 %d %d %d\n", num, phys, ele, 
+      fprintf(fp, "%d 2 2 %d %d %d %d %d\n", num, phys, ele, 
 	      nod[0].Num, nod[1].Num, nod[2].Num);
     else
-      fprintf(fp, "%d 3 %d %d 4 %d %d %d %d\n", num, phys, ele, 
+      fprintf(fp, "%d 3 2 %d %d %d %d %d %d\n", num, phys, ele, 
 	      nod[0].Num, nod[1].Num, nod[2].Num, nod[3].Num);
     break;
   case 3:
   default:
     if(nbnod == 4)
-      fprintf(fp, "%d 4 %d %d 4 %d %d %d %d\n", num, phys, ele, 
+      fprintf(fp, "%d 4 2 %d %d %d %d %d %d\n", num, phys, ele, 
 	      nod[0].Num, nod[1].Num, nod[2].Num, nod[3].Num);
     else if(nbnod == 5)
-      fprintf(fp, "%d 7 %d %d 5 %d %d %d %d %d\n", num, phys, ele, 
+      fprintf(fp, "%d 7 2 %d %d %d %d %d %d %d\n", num, phys, ele, 
 	      nod[0].Num, nod[1].Num, nod[2].Num, nod[3].Num, nod[4].Num);
     else if(nbnod == 6)
-      fprintf(fp, "%d 6 %d %d 6 %d %d %d %d %d %d\n", num, phys, ele, 
+      fprintf(fp, "%d 6 2 %d %d %d %d %d %d %d %d\n", num, phys, ele, 
 	      nod[0].Num, nod[1].Num, nod[2].Num, nod[3].Num, nod[4].Num, 
 	      nod[5].Num);
     else
-      fprintf(fp, "%d 5 %d %d 8 %d %d %d %d %d %d %d %d\n", num, phys, ele, 
+      fprintf(fp, "%d 5 2 %d %d %d %d %d %d %d %d %d %d\n", num, phys, ele, 
 	      nod[0].Num, nod[1].Num, nod[2].Num, nod[3].Num, nod[4].Num, 
 	      nod[5].Num, nod[6].Num, nod[7].Num);
     break;
@@ -510,7 +510,7 @@ static void writeElementsMSH(FILE *fp, int nbelm, List_T *list,
   if(!nbelm) return;
   pVertex nod[8];
   int nb = List_Nbr(list) / nbelm;
-  for(int i = 0; i < List_Nbr(list); i+=nb){
+  for(int i = 0; i < List_Nbr(list); i += nb){
     double *x = (double *)List_Pointer_Fast(list, i);
     double *y = (double *)List_Pointer_Fast(list, i + nbnod);
     double *z = (double *)List_Pointer_Fast(list, i + 2 * nbnod);
@@ -566,15 +566,16 @@ bool PViewDataList::writeMSH(std::string name)
   getNodeMSH(NbVY, VY, 5, 3, &nodes, &numelm);
   getNodeMSH(NbTY, TY, 5, 9, &nodes, &numelm);
 
-  fprintf(fp, "$NOD\n");
+  fprintf(fp, "$MeshFormat\n2 0 8\n$EndMeshFormat\n");
+  fprintf(fp, "$Nodes\n");
   fprintf(fp, "%d\n", (int)nodes.size());
   for(std::set<pVertex, pVertexLessThan>::iterator it = nodes.begin();
       it != nodes.end(); ++it){
     fprintf(fp, "%d %.16g %.16g %.16g\n", it->Num, it->X, it->Y, it->Z);
   }
-  fprintf(fp, "$ENDNOD\n");
+  fprintf(fp, "$EndNodes\n");
 
-  fprintf(fp, "$ELM\n");
+  fprintf(fp, "$Elements\n");
   fprintf(fp, "%d\n", numelm);
   numelm = 0;
   writeElementsMSH(fp, NbSP, SP, 1, 1, 0, &nodes, &numelm);
@@ -601,19 +602,25 @@ bool PViewDataList::writeMSH(std::string name)
   writeElementsMSH(fp, NbSY, SY, 5, 1, 3, &nodes, &numelm);
   writeElementsMSH(fp, NbVY, VY, 5, 3, 3, &nodes, &numelm);
   writeElementsMSH(fp, NbTY, TY, 5, 9, 3, &nodes, &numelm);
-  fprintf(fp, "$ENDELM\n");
+  fprintf(fp, "$EndElements\n");
 
-#if 0 // test new postpro node-based storage
-  fprintf(fp, "$NodeData\n");
-  fprintf(fp, "\"%s\"\n", getName().c_str());
-  fprintf(fp, "1 1 %d\n", nodes.size());
-  for(std::set<pVertex, pVertexLessThan>::iterator it = nodes.begin();
-      it != nodes.end(); ++it){
-    fprintf(fp, "%d", it->Num);
-    for(int i = 0; i < it->Val.size(); i++) fprintf(fp, " %d", it->Val[i]);
-    fprintf(fp, "\n");
+#if 1 // test new postpro node-based storage
+  int numNodes = nodes.size();
+  if(numNodes){
+    fprintf(fp, "$NodeData\n");
+    fprintf(fp, "\"%s\"\n", getName().c_str());
+    int timeStep = 1, numComp = nodes.begin()->Val.size();
+    double time = 0.;
+    fprintf(fp, "%d %.16g %d %d\n", timeStep, time, numComp, numNodes);
+    for(std::set<pVertex, pVertexLessThan>::iterator it = nodes.begin();
+	it != nodes.end(); ++it){
+      fprintf(fp, "%d", it->Num);
+      for(int i = 0; i < it->Val.size(); i++)
+	fprintf(fp, " %.16g", it->Val[i]);
+      fprintf(fp, "\n");
+    }
+    fprintf(fp, "$EndNodeData\n");
   }
-  fprintf(fp, "$EndNodeData\n");
 #endif
 
   fclose(fp);

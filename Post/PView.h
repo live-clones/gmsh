@@ -80,6 +80,9 @@ class PView{
   // combine view
   static void combine(bool time, int how, bool remove);
 
+  // combine view
+  static PView *getViewByName(std::string name);
+
   // read view(s) in list format from a file
   static bool readPOS(std::string filename, int fileIndex=-1);
   // read view data from MSH file
