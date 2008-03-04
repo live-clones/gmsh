@@ -1,5 +1,5 @@
-#ifndef _DELAUNAYINSERTION_H_
-#define _DELAUNAYINSERTION_H_
+#ifndef _MESH_GREGION_DELAUNAY_INSERTION_H_
+#define _MESH_GREGION_DELAUNAY_INSERTION_H_
 
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -20,12 +20,12 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "MElement.h"
-#include "qualityMeasures.h"
 #include <list>
 #include <set>
 #include <map>
 #include <stack>
+#include "MElement.h"
+#include "qualityMeasures.h"
 
 //#define _GMSH_PRE_ALLOCATE_STRATEGY_ 1
 class GRegion;
@@ -34,49 +34,45 @@ class GModel;
 
 class MTet4Factory;
 
+// sizeof(MTet4) = 36 Bytes and sizeof(MTetrahedron) = 28 Bytes, so
+// normally it should take 36+28 = 64 MByte per million tets. We also
+// store a rb tree containing all pointers sorted with respect to tet
+// radius.  Each bucket of the tree contain 4 pointers, i.e. 16 Bytes
+// plus the data -> Extra cost of 20 Bytes/Tet, i.e., 84 MB per
+// million tets. A MVertex has a cost of 44 Bytes and there are about
+// 200000 of them per million tet, i.e., a new cost of 9MB per million
+// tets.
+
+// Grand total should be 92 MB per million tet (I observe 160M MB!)
+
 class MTet4
 {
   friend class MTet4Factory;
-  // a total of 36 Bytes for a MTet4
-  // Normally it should take 36 MByte in excess per million of tets
-  // 36 MB for 10e6 Tets
-  // Each MTetrahedron has a size of 28 Bytes
-  // The total memory required for a tet is 64 Bytes
-  // i.e. 64 MB per 10e6 Tet
-  // Yet, we store also a rb tree containing all pointers
-  // sorted with respect to tet radius.
-  // each bucket of the tree contain 4 pointers, i.e. 16 Bytes plus
-  // the data.  We have therefor an extra cost of 20 Bytes/Tet
-  // i.e. 84 MB/ million tets  
-  // A MVertex has a cost of 40 Bytes and there are about 200000 of them
-  // per million tet: a new cost of 8MB/10e6 tet  : total 92 MB/10e6 tet
-  // (I observe 160M MB !!!)
-
+ private:
   bool deleted;
   double circum_radius;
   MTetrahedron *base;
   MTet4 *neigh[4];
   GRegion *gr;
-
-
  public :
-
   ~MTet4(){}
-  MTet4() : deleted(false), circum_radius(0.0), base(0), gr(0)
+  MTet4() 
+    : deleted(false), circum_radius(0.0), base(0), gr(0)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
   }
-  MTet4(MTetrahedron *t, double qual) : deleted(false), circum_radius(qual), base(t), gr(0)
+  MTet4(MTetrahedron *t, double qual) 
+    : deleted(false), circum_radius(qual), base(t), gr(0)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
   }
-  MTet4(MTetrahedron *t, const gmshQualityMeasure4Tet &qm) : deleted(false), base(t), gr(0)
+  MTet4(MTetrahedron *t, const gmshQualityMeasure4Tet &qm) 
+    : deleted(false), base(t), gr(0)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
     double vol;
     circum_radius = qmTet(t, qm, &vol);
   }
-
   void setup(MTetrahedron *t, std::vector<double> &sizes)
   {
     base = t;
@@ -86,133 +82,123 @@ class MTet4
     const double dx = base->getVertex(0)->x() - center[0];
     const double dy = base->getVertex(0)->y() - center[1];
     const double dz = base->getVertex(0)->z() - center[2];
-    circum_radius = sqrt ( dx*dx + dy*dy + dz*dz);
-
-    double lc = 0.25*(sizes [base->getVertex(0)->getNum()]+
-		      sizes [base->getVertex(1)->getNum()]+
-		      sizes [base->getVertex(2)->getNum()]+
-		      sizes [base->getVertex(3)->getNum()]);
+    circum_radius = sqrt(dx * dx + dy * dy + dz * dz);
+    double lc = 0.25 * (sizes[base->getVertex(0)->getNum()] +
+			sizes[base->getVertex(1)->getNum()] +
+			sizes[base->getVertex(2)->getNum()] +
+			sizes[base->getVertex(3)->getNum()]);
     circum_radius /= lc;
     deleted = false;
   } 
-
-  inline GRegion * onWhat () const {return gr;}
-  inline void      setOnWhat (GRegion *g) {gr=g;}
-  
-  bool isDeleted () const {return deleted;}
-  void   forceRadius (double r){circum_radius=r;}
-  inline double getRadius  ()const {return circum_radius;}
-  inline double getQuality ()const {return circum_radius;} 
-  inline void setQuality (const double &q){circum_radius=q;} 
-  inline MTetrahedron * tet() const {return base;}
-  inline MTetrahedron * &tet() {return base;}
-  inline void  setNeigh (int iN , MTet4 *n) {neigh[iN]=n;}
-  inline MTet4 *getNeigh (int iN ) const {return neigh[iN];}
-  int inCircumSphere ( const double *p ) const; 
-  inline int inCircumSphere ( double x, double y, double z ) const 
+  inline GRegion *onWhat () const { return gr; }
+  inline void setOnWhat (GRegion *g) { gr = g; }
+  bool isDeleted () const { return deleted; }
+  void forceRadius (double r){ circum_radius = r; }
+  inline double getRadius () const { return circum_radius; }
+  inline double getQuality () const { return circum_radius; } 
+  inline void setQuality (const double &q){ circum_radius = q; } 
+  inline MTetrahedron *tet() const { return base; }
+  inline MTetrahedron *&tet() { return base; }
+  inline void setNeigh(int iN, MTet4 *n) { neigh[iN] = n; }
+  inline MTet4 *getNeigh(int iN) const { return neigh[iN]; }
+  int inCircumSphere(const double *p) const; 
+  inline int inCircumSphere(double x, double y, double z) const 
   {
-    const double p[3] = {x,y,z};
-    return inCircumSphere ( p );
+    const double p[3] = {x, y, z};
+    return inCircumSphere(p);
   }
-  inline int inCircumSphere ( const MVertex * v) const
+  inline int inCircumSphere(const MVertex *v) const
   {
-    return inCircumSphere ( v->x(), v->y(), v->z() );
+    return inCircumSphere(v->x(), v->y(), v->z());
   }
-
-  double getVolume () const { return base -> getVolume() ; };
-  inline void setDeleted (bool d)
+  double getVolume() const { return base->getVolume(); }
+  inline void setDeleted(bool d)
   {
-    //    circum_radius = d ? fabs(circum_radius) : fabs(circum_radius)
     deleted = d;
   }
   inline bool assertNeigh() const 
-    {
-      if (deleted) return true;
-      for (int i=0;i<4;i++)
-	if (neigh[i] && (neigh[i]->isNeigh(this)==false))return false;
-      return true;
-    }
-
-  inline bool isNeigh  (const MTet4 *t) const
   {
-    for (int i=0;i<4;i++)
-      if (neigh[i]==t) return true;
+    if (deleted) return true;
+    for (int i = 0; i < 4; i++)
+      if (neigh[i] && (neigh[i]->isNeigh(this) == false)) return false;
+    return true;
+  }
+  inline bool isNeigh(const MTet4 *t) const
+  {
+    for (int i = 0; i < 4; i++)
+      if (neigh[i] == t) return true;
     return false;
   }
-
 };
 
-void connectTets ( std::list<MTet4*> & );
-void connectTets ( std::vector<MTet4*> & );
-void insertVerticesInRegion (GRegion *gr) ;
+void connectTets(std::list<MTet4*> &);
+void connectTets(std::vector<MTet4*> &);
+void insertVerticesInRegion(GRegion *gr);
 
 class compareTet4Ptr
 {
  public:
-  inline bool operator () (  const MTet4 *a, const MTet4 *b ) 
-    { 
-      if (a->getRadius() > b->getRadius())return true;
-      if (a->getRadius() < b->getRadius())return false;
-      return a<b;
-   }
+  inline bool operator () (const MTet4 *a, const MTet4 *b) 
+  { 
+    if (a->getRadius() > b->getRadius()) return true;
+    if (a->getRadius() < b->getRadius()) return false;
+    return a<b;
+  }
 };
 
 class MTet4Factory
 {
-public:
-  typedef std::set<MTet4*,compareTet4Ptr> container;
+ public:
+  typedef std::set<MTet4*, compareTet4Ptr> container;
   typedef container::iterator iterator;
-private:
+ private:
   container allTets;
 #ifdef _GMSH_PRE_ALLOCATE_STRATEGY_
   MTet4* allSlots;
   int s_last, s_alloc;
   std::stack<MTet4*> emptySlots;
-
-  inline MTet4 * getANewSlot()
+  inline MTet4 *getANewSlot()
   {
-    if (s_last >= s_alloc)return 0;
+    if (s_last >= s_alloc) return 0;
     MTet4 * t  = &(allSlots[s_last]);
     s_last++;
     return t;
   }
-  inline MTet4 * getAnEmptySlot()
+  inline MTet4 *getAnEmptySlot()
   {
-    if(!emptySlots.empty())
-      {
-	MTet4* t = emptySlots.top();
-	emptySlots.pop();
-	return t;
-      }
+    if(!emptySlots.empty()){
+      MTet4* t = emptySlots.top();
+      emptySlots.pop();
+      return t;
+    }
     return getANewSlot();
   };    
 #endif
-  
-
  public :
-  MTet4Factory (int _size = 1000000) 
+  MTet4Factory(int _size = 1000000)
   {
 #ifdef _GMSH_PRE_ALLOCATE_STRATEGY_
-    s_last=0; s_alloc=_size;
-    allSlots = new MTet4 [s_alloc];
+    s_last = 0; s_alloc = _size;
+    allSlots = new MTet4[s_alloc];
 #endif
   }
-  ~MTet4Factory () {
+  ~MTet4Factory () 
+  {
 #ifdef _GMSH_PRE_ALLOCATE_STRATEGY_
     delete [] allSlots;
 #endif
   }
-  MTet4 * Create (MTetrahedron * t, std::vector<double> & sizes)
+  MTet4 *Create(MTetrahedron *t, std::vector<double> &sizes)
   {
 #ifdef _GMSH_PRE_ALLOCATE_STRATEGY_
-    MTet4 * t4 = getAnEmptySlot();
+    MTet4 *t4 = getAnEmptySlot();
 #else
-    MTet4 * t4 = new MTet4;
+    MTet4 *t4 = new MTet4;
 #endif
-    t4->setup(t,sizes);
+    t4->setup(t, sizes);
     return t4;
   }
-  void Free (MTet4* t)
+  void Free(MTet4 *t)
   {
     if (t->tet()) delete t->tet();
     t->tet() = 0;
@@ -223,18 +209,16 @@ private:
     delete t;
 #endif
   }
-
-  void changeTetRadius ( iterator it , double r)
+  void changeTetRadius(iterator it, double r)
   {
     MTet4 *t = *it;
     allTets.erase(it);
     t->forceRadius(r);
     allTets.insert(t);
   }
-  container & getAllTets () {return allTets;}
-
+  container &getAllTets(){ return allTets; }
 };
 
-void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm);
+void gmshOptimizeMesh(GRegion *gr, const gmshQualityMeasure4Tet &qm);
 
 #endif

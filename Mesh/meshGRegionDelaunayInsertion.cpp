@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.37 2008-02-21 12:11:12 geuzaine Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.38 2008-03-04 08:51:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -724,7 +724,7 @@ void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm)
 void insertVerticesInRegion (GRegion *gr) 
 {
   //printf("sizeof MTet4 = %d sizeof MTetrahedron %d sizeof(MVertex) %d\n",
-  // sizeof(MTet4),sizeof(MTetrahedron), sizeof(MVertex));
+  //       sizeof(MTet4), sizeof(MTetrahedron), sizeof(MVertex));
 
   std::map<MVertex*,double> vSizesMap;
   std::vector<double> vSizes;

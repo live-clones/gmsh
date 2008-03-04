@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.20 2008-02-25 15:36:38 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.21 2008-03-04 08:51:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -56,7 +56,7 @@ PViewDataGModel::PViewDataGModel(GModel *model) : _model(model)
        nodeData[step].values.resize(numDataInFile);
      loop over lines:
        * get node number in file
-       * get vertex pointer from _model->getVertexByTag(num)
+       * get vertex pointer from _model->getMeshVertexByTag(num)
        * if MVertex has no dataIndex:
            increment it (need global value stored in GModel)
          else
@@ -67,9 +67,10 @@ PViewDataGModel::PViewDataGModel(GModel *model) : _model(model)
      .msh file format:
 
      $NodeData
-     name precision-single-double step time-value
-     type node-or-ele-id num-comp val (num-comp times)
-     type node-or-ele-id num-comp val (num-comp times)
+     "name"
+     time-step time-value precision num-components num-nodes
+     num-node values...
+     num-node values...
      ...
      $EndNodeData
 
