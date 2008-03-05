@@ -6,14 +6,6 @@
  *
  *********************************************************************/
 
-// The anisotropic 2D mesh generator can be selected with:
-
-Mesh.Algorithm = 2 ;
-
-// One can force a 4 step Laplacian smoothing of the mesh with:
-
-Mesh.Smoothing = 4 ;
-
 lc = .3;
 
 Point(1) = {0.0,0.0,0,lc};
@@ -38,9 +30,10 @@ Line(5) = {11,22};
 
 Spline(7) = {4,5,12,2};
 
-// Isotropic and anisotropic attractors can be defined on points and
-// lines (this is still experimental and known to be unstable: use at
-// your own risk!):
-
-Attractor Line{7,5,3,2} = {0.01, 0.01, 10};
+num_pts = 100;
+lc_min = 0.005;
+lc_max = lc;
+r_min = 0.01;
+r_max = 0.5;
+Attractor Line{7,5,3,2} = {r_min, lc_min, lc_max, num_pts, r_max / r_min};
 

@@ -13,8 +13,12 @@ Line(4) = {4,3};
 Line Loop(5) = {1,2,3,4};                    
 Plane Surface(6) = {5};      
 Line(5) = {3,1};                    
-Attractor Line{5} = {1,0.01,3};                             
-Attractor Line{1,3} = {1,0.01,3};                             
-Attractor Line{2} =   {.1,0.1,3};                             
-Mesh.Algorithm = 2;
+
+num_pts = 100;
+lc_min = 0.005;
+lc_max = lc;
+r_min = 0.01;
+r_max = 0.5;
+Attractor Line{5,1,3,2} = {r_min, lc_min, lc_max, num_pts, r_max / r_min};
+
 
