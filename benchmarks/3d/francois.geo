@@ -21,13 +21,10 @@ Line Loop(10) = {4,1,2,3};
 Plane Surface(11) = {9,10};   
 Extrude Surface {11, {0,0.0,2.0}}
 {
-   Layers { {2,1,2} , {100,200,100} , {.05,.95,1.} } ;
+   Layers { {2,1,2} , {.05,.95,1.} } ;
 };
 Coherence; 
 Physical Surface(54) = {53};
 Physical Surface(55) = {11};
 Physical Surface(56) = {40,44,48,52};
 Physical Surface(57) = {53};
-
-//Surface Loop(58) = {53,24,11,28,32,36,40,44,48,52};
-//Complex Volume(59) = {58};

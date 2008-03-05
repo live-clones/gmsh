@@ -76,7 +76,7 @@ StringXString GeneralOptions_String[] = {
 #if defined(WIN32)
     "notepad.exe %s" , 
 #elif defined(__APPLE__)
-    "open -e %s" ,
+    "open -t %s" ,
 #else
     "emacs %s &" ,
 #endif
@@ -697,7 +697,12 @@ StringXNumber GeneralOptions_Number[] = {
     "Display size of points (in pixels)" },
   { F|O, "PolygonOffsetAlwaysOn" , opt_general_polygon_offset_always , 0. , 
     "Always apply polygon offset, instead of trying to detect when it is required" },
-  { F|O, "PolygonOffsetFactor" , opt_general_polygon_offset_factor , 1.0 ,
+  { F|O, "PolygonOffsetFactor" , opt_general_polygon_offset_factor , 
+#if defined(__APPLE__)
+    0.5 ,
+#else
+    1.0 ,
+#endif
     "Polygon offset factor (offset = factor * DZ + r * units)" },
   { F|O, "PolygonOffsetUnits" , opt_general_polygon_offset_units , 1. , 
     "Polygon offset units (offset = factor * DZ + r * units)" },
