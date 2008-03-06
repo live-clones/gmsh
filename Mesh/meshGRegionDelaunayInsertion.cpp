@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.38 2008-03-04 08:51:14 geuzaine Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.39 2008-03-06 14:19:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -76,7 +76,7 @@ struct faceXtet{
 };
 
 template <class ITER>
-void connectTets ( ITER beg, ITER end)
+void connectTets(ITER beg, ITER end)
 {
   std::set<faceXtet> conn;
   while (beg != end){
@@ -131,11 +131,9 @@ void recurFindCavity(std::list<faceXtet> & shell,
   }
 }
 
-bool insertVertex(MVertex *v, 
-		  MTet4 *t,
-		  MTet4Factory &myFactory,
-		  std::set<MTet4*,compareTet4Ptr> &allTets,
-		  std::vector<double> & vSizes)
+bool insertVertex(MVertex *v, MTet4 *t, MTet4Factory &myFactory,
+		  std::set<MTet4*, compareTet4Ptr> &allTets,
+		  std::vector<double> &vSizes)
 {
   std::list<faceXtet> shell;
   std::list<MTet4*> cavity; 
@@ -175,7 +173,7 @@ bool insertVertex(MVertex *v,
       ++ittet;
     }
 //   fprintf(ff2,"};\n");
-//   fclose (ff2);
+//   fclose(ff2);
 //  Msg(INFO,"cavity of size %d volume %g",cavity.size(),oldVolume);
   // create new tetrahedron using faces that are
   // on the border of the cavity
@@ -186,7 +184,7 @@ bool insertVertex(MVertex *v,
 //   char name[245];
 //   sprintf(name,"test%d.pos",III);
 
-//   FILE *ff = fopen (name,"w");
+//   FILE *ff = fopen(name,"w");
 //   fprintf(ff,"View\"test\"{\n");
 
   MTet4** newTets = new MTet4*[shell.size()];;
@@ -195,7 +193,7 @@ bool insertVertex(MVertex *v,
   std::list<faceXtet>::iterator it = shell.begin();
 
   while (it != shell.end()){
-    MTetrahedron *tr = new MTetrahedron (it->v[0], it->v[1], it->v[2], v);
+    MTetrahedron *tr = new MTetrahedron(it->v[0], it->v[1], it->v[2], v);
     //      Msg(INFO,"shell %d %d %d",it->v[0]->getNum(),it->v[1]->getNum(),it->v[2]->getNum());
 //            fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {0,0,0};\n",
 // 		   it->v[0]->x(),
@@ -229,8 +227,8 @@ bool insertVertex(MVertex *v,
 //  Msg(INFO,"new cavity of vol %g (%d boundaries)",newVolume,shell.size());
   // OK, the cavity is star shaped
   if (fabs(oldVolume - newVolume) < 1.e-10 * oldVolume){      
-    connectTets ( new_cavity.begin(),new_cavity.end());      
-    allTets.insert(newTets,newTets+shell.size());
+    connectTets(new_cavity.begin(), new_cavity.end());      
+    allTets.insert(newTets, newTets + shell.size());
     
 //     ittet = cavity.begin();
 //     ittete = cavity.end();
@@ -254,7 +252,7 @@ bool insertVertex(MVertex *v,
   }
 }
 
-static void setLcs(MTetrahedron *t, std::map<MVertex*,double> &vSizes)
+static void setLcs(MTetrahedron *t, std::map<MVertex*, double> &vSizes)
 {
   for (int i = 0; i < 4; i++){
     for (int j = i + 1; j < 4; j++){
@@ -319,12 +317,9 @@ GRegion *getRegionFromBoundingFaces(GModel *model,
   return 0;
 }
  
-void recur_classify(MTet4 *t ,
-		    std::list<MTet4*> &theRegion,		      
-		    std::set<GFace *> &faces_bound,
-		    GRegion *bidon ,
-		    GModel *model,
-		    const fs_cont &search)
+void recur_classify(MTet4 *t, std::list<MTet4*> &theRegion,		      
+		    std::set<GFace*> &faces_bound, GRegion *bidon,
+		    GModel *model, const fs_cont &search)
 {
   if (!t) Msg (GERROR,"a tet is not connected by a boundary face");
   if (t->onWhat()) return; // should never return here...
@@ -368,7 +363,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
 
   typedef std::list<MTet4 *> CONTAINER ;
   CONTAINER allTets;
-  for(unsigned int i=0;i<gr->tetrahedra.size();i++){
+  for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
     allTets.push_back(new MTet4(gr->tetrahedra[i], qm));
   }
   gr->tetrahedra.clear();
@@ -377,8 +372,8 @@ void adaptMeshGRegion::operator () (GRegion *gr)
 
   double t1 = Cpu();
   std::vector<MTet4*> illegals;
-  const int nbRanges=10;
-  int quality_ranges [nbRanges];
+  const int nbRanges = 10;
+  int quality_ranges[nbRanges];
   {
     double totalVolumeb = 0.0;
     double worst = 1.0;
@@ -545,7 +540,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
 }
 
 //template <class CONTAINER, class DATA> 
-void gmshOptimizeMesh (GRegion *gr, const gmshQualityMeasure4Tet &qm)
+void gmshOptimizeMesh(GRegion *gr, const gmshQualityMeasure4Tet &qm)
 {
   typedef std::list<MTet4 *> CONTAINER ;
   CONTAINER allTets;
@@ -726,19 +721,20 @@ void insertVerticesInRegion (GRegion *gr)
   //printf("sizeof MTet4 = %d sizeof MTetrahedron %d sizeof(MVertex) %d\n",
   //       sizeof(MTet4), sizeof(MTetrahedron), sizeof(MVertex));
 
-  std::map<MVertex*,double> vSizesMap;
   std::vector<double> vSizes;
   MTet4Factory myFactory(1600000);
-  std::set<MTet4*,compareTet4Ptr> &allTets = myFactory.getAllTets();
-
-  for(unsigned int i = 0; i < gr->tetrahedra.size(); i++)
-    setLcs(gr->tetrahedra[i], vSizesMap);
-  
+  std::set<MTet4*, compareTet4Ptr> &allTets = myFactory.getAllTets();
   int NUM = 0;
-  for(std::map<MVertex*, double>::iterator it = vSizesMap.begin(); 
-      it != vSizesMap.end(); ++it){
-    it->first->setNum(NUM++);
-    vSizes.push_back(it->second);
+
+  { // leave this in a block so the map gets deallocated directly
+    std::map<MVertex*, double> vSizesMap;
+    for(unsigned int i = 0; i < gr->tetrahedra.size(); i++)
+      setLcs(gr->tetrahedra[i], vSizesMap);
+    for(std::map<MVertex*, double>::iterator it = vSizesMap.begin(); 
+	it != vSizesMap.end(); ++it){
+      it->first->setNum(NUM++);
+      vSizes.push_back(it->second);
+    }
   }
   
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++)
@@ -751,7 +747,7 @@ void insertVerticesInRegion (GRegion *gr)
   // Msg (INFO,"reclassifying %d tets", allTets.size());
 
   fs_cont search;
-  buildFaceSearchStructure(gr->model(), search );
+  buildFaceSearchStructure(gr->model(), search);
 
   for(MTet4Factory::iterator it = allTets.begin(); it != allTets.end(); ++it){
     if(!(*it)->onWhat()){
@@ -812,7 +808,7 @@ void insertVerticesInRegion (GRegion *gr)
       double uvw[3];
       bool inside = worst->tet()->invertmapping(center, uvw);
       if(inside){
-	MVertex *v = new MVertex(center[0],center[1],center[2], worst->onWhat());
+	MVertex *v = new MVertex(center[0], center[1], center[2], worst->onWhat());
 	v->setNum(NUM++);
 	double lc1 = 
 	  (1 - uvw[0] - uvw[1] - uvw[2]) * vSizes[worst->tet()->getVertex(0)->getNum()] +

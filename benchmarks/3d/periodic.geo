@@ -46,7 +46,7 @@ Physical Line(18) = {2,3};
 Physical Surface(19) = {15};
 
 If(use_prisms)
-  Extrude Surface {15, {0.,0.,2.*R}}{Layers{nb_layers,83,1}; Recombine; };
+  Extrude Surface {15, {0.,0.,2.*R}}{ Layers{nb_layers}; Recombine; };
 EndIf
 
 If(!use_prisms)

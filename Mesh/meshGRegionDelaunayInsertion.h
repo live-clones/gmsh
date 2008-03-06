@@ -34,16 +34,28 @@ class GModel;
 
 class MTet4Factory;
 
-// sizeof(MTet4) = 36 Bytes and sizeof(MTetrahedron) = 28 Bytes, so
-// normally it should take 36+28 = 64 MByte per million tets. We also
-// store a rb tree containing all pointers sorted with respect to tet
-// radius.  Each bucket of the tree contain 4 pointers, i.e. 16 Bytes
-// plus the data -> Extra cost of 20 Bytes/Tet, i.e., 84 MB per
-// million tets. A MVertex has a cost of 44 Bytes and there are about
-// 200000 of them per million tet, i.e., a new cost of 9MB per million
-// tets.
-
-// Grand total should be 92 MB per million tet (I observe 160M MB!)
+// Memory usage for 1 million tets:
+//
+// * sizeof(MTet4) = 36 Bytes and sizeof(MTetrahedron) = 28 Bytes 
+//   -> 64 MB
+// * rb tree containing all pointers sorted with respect to tet
+//   radius: each bucket of the tree contains 4 pointers (16 Bytes)
+//   plus the data -> 20 MB
+// * sizeof(MVertex) = 44 Bytes and there are about 200000 verts per
+//   million tet -> 9MB
+// * vector of char lengths per vertex -> 1.6Mb
+// * vectors in GEntities to store the element and vertex pointers 
+//   -> 5Mb
+//
+// Grand total should thus be about 100 MB. 
+//
+// The observed mem usage with "demos/cube.geo -clscale 0.61" is
+// 157MB. Where do the extra 57 MB come from?
+//
+// * surface mesh + all other overheads (model, etc.) is 19Mb
+// * tetgen initial mesh is about 20Mb, but it is deleted before mesh
+//   refinement.
+// * ?
 
 class MTet4
 {
@@ -92,8 +104,8 @@ class MTet4
   } 
   inline GRegion *onWhat () const { return gr; }
   inline void setOnWhat (GRegion *g) { gr = g; }
-  bool isDeleted () const { return deleted; }
-  void forceRadius (double r){ circum_radius = r; }
+  inline bool isDeleted () const { return deleted; }
+  inline void forceRadius (double r){ circum_radius = r; }
   inline double getRadius () const { return circum_radius; }
   inline double getQuality () const { return circum_radius; } 
   inline void setQuality (const double &q){ circum_radius = q; } 
@@ -111,7 +123,7 @@ class MTet4
   {
     return inCircumSphere(v->x(), v->y(), v->z());
   }
-  double getVolume() const { return base->getVolume(); }
+  inline double getVolume() const { return base->getVolume(); }
   inline void setDeleted(bool d)
   {
     deleted = d;
@@ -142,7 +154,7 @@ class compareTet4Ptr
   { 
     if (a->getRadius() > b->getRadius()) return true;
     if (a->getRadius() < b->getRadius()) return false;
-    return a<b;
+    return a < b;
   }
 };
 
