@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.217 2008-02-27 12:39:28 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.218 2008-03-07 19:02:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -710,6 +710,8 @@ class initMeshGRegion {
       // suppose edge shared by 4 elements on averge (pessmistic)
       num += (12 * r->tetrahedra.size() + 24 * r->hexahedra.size() +
 	      18 * r->prisms.size() + 16 * r->pyramids.size()) / 4;
+      if(CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_draw_intersect)
+	num = (int)sqrt(num);
       if(CTX.mesh.explode != 1.) num *= 4;
       if(_curved) num *= 2;
     }
@@ -721,6 +723,8 @@ class initMeshGRegion {
     if(CTX.mesh.volumes_faces){
       num += (4 * r->tetrahedra.size() + 12 * r->hexahedra.size() +
 	      8 * r->prisms.size() + 6 * r->pyramids.size()) / 2;
+      if(CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_draw_intersect)
+	num = (int)sqrt(num);
       if(CTX.mesh.explode != 1.) num *= 2;
       if(_curved) num *= 4;
     }
