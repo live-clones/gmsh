@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.39 2008-03-01 01:32:02 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.40 2008-03-08 22:03:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -262,6 +262,18 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
   if(part) m->getMeshPartitions().insert(part);
 }
 
+std::string extractDoubleQuotedString(char *str, int len)
+{
+  char *c = strstr(str, "\"");
+  if(!c) return "";
+  std::string ret;
+  for(int i = 1; i < len; i++) {
+    if(c[i] == '"' || c[i] == EOF || c[i] == '\n' || c[i] == '\r') break;
+    ret.push_back(c[i]);
+  }
+  return ret;
+}
+
 int GModel::readMSH(const std::string &name)
 {
   FILE *fp = fopen(name.c_str(), "rb");
@@ -318,18 +330,8 @@ int GModel::readMSH(const std::string &name)
 	int num;
 	if(fscanf(fp, "%d", &num) != 1) return 0;
 	if(!fgets(str, sizeof(str), fp)) return 0;
-	char *c = strstr(str, "\"");
-	if(c){
-	  char name[256];
-	  int i = 0;
-	  while (*(++c) != '"') {
-	    if(*c == EOF || *c == '\n' || *c == '\r') break;
-	    if(i > 255) break;
-	    name[i++] = *c;
-	  }
-	  name[i] = '\0';
-	  setPhysicalName(std::string(name), num);
-	}
+	std::string name = extractDoubleQuotedString(str, 256);
+	if(name.size()) setPhysicalName(name, num);
       }
 
     }

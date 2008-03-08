@@ -24,6 +24,8 @@
 #include <vector>
 #include "SBoundingBox3d.h"
 
+#define VAL_INF 1.e200
+
 class nameData;
 
 // abstract interface to post-processing view data
@@ -101,7 +103,7 @@ class PViewData {
   virtual bool combineSpace(nameData &nd){ return false; }
   virtual bool isAdaptive(){ return false; }
   virtual bool skipEntity(int ent){ return false; }
-  virtual bool skipElement(int ent, int ele){ return false; }
+  virtual bool skipElement(int ent, int ele, int step){ return false; }
 
   // I/O routines
   virtual bool writeSTL(std::string name);

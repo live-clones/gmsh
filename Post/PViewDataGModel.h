@@ -25,16 +25,31 @@
 #include "GModel.h"
 #include "SBoundingBox3d.h"
 
+template<class real>
+class stepData{
+ public:
+  std::string fileName; // we allow to read steps from different files
+  int fileIndex;
+  double time, min, max;
+  // vector of data, indexed by dataIndex
+  std::vector<std::vector<real> > values;
+  stepData() : fileIndex(0), time(0.), min(VAL_INF), max(-VAL_INF){}
+  ~stepData() {}
+};
+
 // data container using elements from a GModel
 class PViewDataGModel : public PViewData {
  private:
   GModel *_model;
   std::vector<GEntity*> _entities;
+  std::vector<stepData<double>*> _nodeData, _elementData;
   PViewDataList *_cloneToList(); // create old-style data from this
+  double _min, _max;
  public:
   PViewDataGModel(GModel *model);
   ~PViewDataGModel();
-  int getNumTimeSteps(){ return 1; }
+  bool finalize();
+  int getNumTimeSteps();
   double getTime(int step);
   double getMin(int step=-1);
   double getMax(int step=-1);
@@ -48,10 +63,11 @@ class PViewDataGModel : public PViewData {
   void getValue(int ent, int ele, int node, int comp, int step, double &val);
   int getNumEdges(int ent, int ele);
   bool skipEntity(int ent);
-  bool skipElement(int ent, int ele);
+  bool skipElement(int ent, int ele, int step);
 
   // I/O routines
-  bool readMSH(FILE *fp);
+  bool readMSH(FILE *fp, bool binary, bool swap, int timeStep, double time, 
+	       int numComp, int numNodes);
 };
 
 #endif

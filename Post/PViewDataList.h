@@ -27,8 +27,6 @@
 #include "SBoundingBox3d.h"
 #include "List.h"
 
-#define VAL_INF 1.e200
-
 // list-based datasets (all elements are discontinuous)
 class PViewDataList : public PViewData {
  public: 

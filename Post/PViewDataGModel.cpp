@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.21 2008-03-04 08:51:14 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.22 2008-03-08 22:03:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -25,7 +25,8 @@
 #include "PViewDataGModel.h"
 #include "MElement.h"
 
-PViewDataGModel::PViewDataGModel(GModel *model) : _model(model)
+PViewDataGModel::PViewDataGModel(GModel *model) 
+  : _model(model), _min(VAL_INF), _max(-VAL_INF)
 
 {
   // store vector of GEntities so we can index them efficiently
@@ -35,67 +36,52 @@ PViewDataGModel::PViewDataGModel(GModel *model) : _model(model)
     _entities.push_back(*it);
   for(GModel::riter it = _model->firstRegion(); it != _model->lastRegion(); ++it)
     _entities.push_back(*it);
-  
-  /* 
-     class data{
-      public:
-       time_t lastUsed; // to determine which one to free first?
-       std::string fileName; // we allow to read steps from different files
-       int fileIndex;
-       double time;
-       // vector of data, indexed by dataIndex
-       std::vector<std::vector<double> > values;
-     }
-     std::vector<data*> nodeData, elementData;
-     
-     When reading a .msh file:
-
-     if(nodeData[step - 1].size())
-       nodeData[step].values.resize(nodeData[step - 1].size());
-     else
-       nodeData[step].values.resize(numDataInFile);
-     loop over lines:
-       * get node number in file
-       * get vertex pointer from _model->getMeshVertexByTag(num)
-       * if MVertex has no dataIndex:
-           increment it (need global value stored in GModel)
-         else
-           use the one that's stored
-       * if(dataIndex > nodeData[step].size()) nodeData[step].resize(dataIndex + 1)
-       * fill nodeData[step].value[dataIndex]
-
-     .msh file format:
-
-     $NodeData
-     "name"
-     time-step time-value precision num-components num-nodes
-     num-node values...
-     num-node values...
-     ...
-     $EndNodeData
-
-     The number of time steps stored should be an option. We should be
-     able to dynamically load/unload time step data on-the-fly.
-  */
 }
 
 PViewDataGModel::~PViewDataGModel()
 {
+  for(unsigned int i = 0; i < _nodeData.size(); i++)
+    if(_nodeData[i]) delete _nodeData[i];
+}
+
+bool PViewDataGModel::finalize()
+{
+  _min = VAL_INF;
+  _max = -VAL_INF;
+  for(unsigned int i = 0; i < _nodeData.size(); i++){
+    if(_nodeData[i]){
+      _min = std::min(_min, _nodeData[i]->min);
+      _max = std::max(_max, _nodeData[i]->max);
+    }
+  }
+  setDirty(false);
+  return true;
+}
+
+int PViewDataGModel::getNumTimeSteps()
+{
+  return std::max(_nodeData.size(), _elementData.size());
 }
 
 double PViewDataGModel::getTime(int step)
 {
-  return 0;
+  if(step < _nodeData.size() && _nodeData[step])
+    return _nodeData[step]->time;
+  return 0.;
 }
 
 double PViewDataGModel::getMin(int step)
 {
-  return 0;
+  if(step < 0) return _min;
+  if(step < _nodeData.size() && _nodeData[step]) return _nodeData[step]->min;
+  return 0.;
 }
 
 double PViewDataGModel::getMax(int step)
 {
-  return 1;
+  if(step < 0) return _max;
+  if(step < _nodeData.size() && _nodeData[step]) return _nodeData[step]->max;
+  return 0.;
 }
 
 int PViewDataGModel::getNumEntities()
@@ -129,13 +115,18 @@ void PViewDataGModel::getNode(int ent, int ele, int nod, double &x, double &y, d
 
 int PViewDataGModel::getNumComponents(int ent, int ele)
 {
-  return 1; 
+  MVertex *v = _entities[ent]->getMeshElement(ele)->getVertex(0);
+  int index = v->getDataIndex();
+  // no range check here: we assume this call is guarded by skipElement()
+  return _nodeData[0]->values[index].size();
 }
 
 void PViewDataGModel::getValue(int ent, int ele, int nod, int comp, int step, double &val)
 {
   MVertex *v = _entities[ent]->getMeshElement(ele)->getVertex(nod);
-  val = v->z();
+  int index = v->getDataIndex();
+  // no range check here: we assume this call is guarded by skipElement()
+  val = _nodeData[step]->values[index][comp];
 }
 
 int PViewDataGModel::getNumEdges(int ent, int ele)
@@ -148,8 +139,15 @@ bool PViewDataGModel::skipEntity(int ent)
   return !_entities[ent]->getVisibility();
 }
 
-bool PViewDataGModel::skipElement(int ent, int ele)
+bool PViewDataGModel::skipElement(int ent, int ele, int step)
 {
-  return !_entities[ent]->getMeshElement(ele)->getVisibility();
+  if(step >= _nodeData.size() || !_nodeData[step]) return true;
+  MElement *e = _entities[ent]->getMeshElement(ele);
+  if(!e->getVisibility()) return true;
+  for(int i = 0; i < e->getNumVertices(); i++){
+    int index = e->getVertex(i)->getDataIndex();
+    if(index < 0 || index >= _nodeData[step]->values.size()) return true;
+    if(_nodeData[step]->values[index].empty()) return true;
+  }
+  return false;
 }
-

@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.2 2008-03-01 01:32:03 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.3 2008-03-08 22:03:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -25,27 +25,49 @@
 #include <string.h>
 #include "Message.h"
 #include "PViewDataGModel.h"
+#include "MVertex.h"
+#include "Numeric.h"
 
-/*
-  if(!fgets(str, sizeof(str), fp)) return 0;
-  // name = str[1] + remove final "
-  int timeStep, numData, numComponents;
-  double time;
-  if(fscanf(fp, "%d %lf %d %d", &timeStep, &time, &numData, &numComponents) != 4)
-    return 0;
-  Msg(INFO, "%d node data", numData);
-  fill in data
-*/
-
-bool PViewDataGModel::readMSH(FILE *fp)
+bool PViewDataGModel::readMSH(FILE *fp, bool binary, bool swap, int timeStep, double time, 
+			      int numComp, int numNodes)
 {
-  Msg(INFO, "Filling PViewDataGModel...");
-  
-  MVertex *v = _model->getMeshVertexByTag(10);
-  if(v){
-    printf("vertex 10 in mesh is %p\n", v);
-  }
+  Msg(INFO, "Reading step %d (time %g): %d nodes", timeStep, time, numNodes);
 
+  while(timeStep >= _nodeData.size()) _nodeData.push_back(0);
+
+  if(!_nodeData[timeStep]) _nodeData[timeStep] = new stepData<double>();
+
+  _nodeData[timeStep]->time = time;
+  _nodeData[timeStep]->values.resize(numNodes);
+
+  if(binary){
+    Msg(GERROR, "not ready yet for binary");
+    return 0;
+  }
+  else{
+    for(int i = 0; i < numNodes; i++){
+      int num;
+      if(fscanf(fp, "%d", &num) != 1) return 0;
+      MVertex *v = _model->getMeshVertexByTag(num);
+      if(!v) return 0;
+      if(v->getDataIndex() < 0){
+	int max = _model->getMaxVertexDataIndex();
+	_model->setMaxVertexDataIndex(max + 1);
+	v->setDataIndex(max + 1);
+      }
+      int index = v->getDataIndex();
+      if(index >= _nodeData[timeStep]->values.size())
+	_nodeData[timeStep]->values.resize(index + 1);
+      for(int j = 0; j < numComp; j++){
+	double val;
+	if(fscanf(fp, "%lf", &val) != 1) return 0;
+	_nodeData[timeStep]->values[index].push_back(val);
+      }
+      double s = ComputeScalarRep(numComp, &_nodeData[timeStep]->values[index][0]);
+      _nodeData[timeStep]->min = std::min(_nodeData[timeStep]->min, s);
+      _nodeData[timeStep]->max = std::max(_nodeData[timeStep]->max, s);
+    }
+  }
   finalize();
   return true;
 }

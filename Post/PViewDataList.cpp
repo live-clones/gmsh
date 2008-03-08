@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.14 2008-02-27 17:02:47 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.15 2008-03-08 22:03:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -252,13 +252,7 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod)
     
     // update min/max
     for(int j = 0; j < N; j += nbcomp) {
-      double l0;
-      if(nbcomp == 1)
-	l0 = V[j];
-      else if(nbcomp == 3)
-	l0 = sqrt(DSQR(V[j]) + DSQR(V[j + 1]) + DSQR(V[j + 2]));
-      else
-	l0 = ComputeVonMises(V + j); // FIXME: can do better?
+      double l0 = ComputeScalarRep(nbcomp, &V[j]);
       Min = std::min(l0, Min);
       Max = std::max(l0, Max);
       int ts = j / (nbcomp * nbnod);

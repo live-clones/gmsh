@@ -1,4 +1,4 @@
-// $Id: PViewDataListIO.cpp,v 1.12 2008-03-03 22:04:22 geuzaine Exp $
+// $Id: PViewDataListIO.cpp,v 1.13 2008-03-08 22:03:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -609,7 +609,7 @@ bool PViewDataList::writeMSH(std::string name)
   if(numNodes){
     fprintf(fp, "$NodeData\n");
     fprintf(fp, "\"%s\"\n", getName().c_str());
-    int timeStep = 1, numComp = nodes.begin()->Val.size();
+    int timeStep = 0, numComp = nodes.begin()->Val.size();
     double time = 0.;
     fprintf(fp, "%d %.16g %d %d\n", timeStep, time, numComp, numNodes);
     for(std::set<pVertex, pVertexLessThan>::iterator it = nodes.begin();

@@ -1,3 +1,6 @@
+#ifndef _BDS_H_
+#define _BDS_H_
+
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,9 +24,6 @@
 // of shephard and beall
 // points may know the normals to the surface they are classified on
 // default values are 0,0,1
-
-#ifndef _BDS_GMSH_H_
-#define _BDS_GMSH_H_
 
 #include <string>
 #include <set>

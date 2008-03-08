@@ -41,6 +41,7 @@ class GModel
   // post-processing I/O)
   std::vector<MVertex*> _vertexVectorCache;
   std::map<int, MVertex*> _vertexMapCache;
+  int _maxVertexDataIndex;
 
   GEO_Internals *_geo_internals;
   void createGEOInternals();
@@ -126,7 +127,7 @@ class GModel
   void deletePhysicalGroup(int dim, int num);
 
   // Returns the highest number associated with a physical entity
-  int maxPhysicalNumber();
+  int getMaxPhysicalNumber();
 
   // Get an iterator on the physical name
   piter firstPhysicalName() { return physicalNames.begin(); }
@@ -161,6 +162,10 @@ class GModel
 
   // Renumber all the (used) mesh vertices in a continuous sequence
   int renumberMeshVertices(bool saveAll);
+
+  // Get/set the maximum data index used in mesh vertices
+  int getMaxVertexDataIndex(){ return _maxVertexDataIndex; }
+  void setMaxVertexDataIndex(int n){ _maxVertexDataIndex = n; }
 
   // Deletes all invisble mesh elements
   void removeInvisibleElements();

@@ -1,5 +1,5 @@
-#ifndef _GMSH_GAUSS_LEGENDRE_1D_H_
-#define _GMSH_GAUSS_LEGENDRE_1D_H_
+#ifndef _GAUSS_LEGENDRE_1D_H_
+#define _GAUSS_LEGENDRE_1D_H_
 
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -68,7 +68,7 @@ static double _GL_pt6[6]={
 static double _GL_wt6[6]={
   1.713244923791705e-01, 3.607615730481386e-01, 4.679139345726913e-01, 4.679139345726913e-01, 3.607615730481386e-01, 1.713244923791705e-01};
 
-inline void gmshGaussLegendre1D(int nbQuadPoints , double **t, double **w)
+inline void gmshGaussLegendre1D(int nbQuadPoints, double **t, double **w)
 {
   switch (nbQuadPoints){
   case 1:

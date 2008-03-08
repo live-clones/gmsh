@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.67 2008-02-24 14:55:36 geuzaine Exp $
+// $Id: GModel.cpp,v 1.68 2008-03-08 22:03:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,8 @@ extern Context_T CTX;
 std::vector<GModel*> GModel::list;
 
 GModel::GModel(std::string name)
-  : _geo_internals(0), _occ_internals(0), modelName(name), normals(0)
+  : _maxVertexDataIndex(-1), _geo_internals(0), _occ_internals(0), 
+    modelName(name), normals(0)
 {
   list.push_back(this);
   // at the moment we always create (at least an empty) GEO model
@@ -95,6 +96,7 @@ void GModel::destroy()
 
   _vertexVectorCache.clear();
   _vertexMapCache.clear();
+  _maxVertexDataIndex = -1;
 
   MVertex::resetGlobalNumber();
   MElement::resetGlobalNumber();
@@ -287,7 +289,7 @@ void GModel::deletePhysicalGroup(int dim, int num)
   }
 }
 
-int GModel::maxPhysicalNumber()
+int GModel::getMaxPhysicalNumber()
 {
   int num = 0;
   for(viter it = firstVertex(); it != lastVertex(); ++it)
@@ -314,7 +316,7 @@ int GModel::setPhysicalName(std::string name, int number)
     ++it;
   }
   // if no number is given, find the next available one
-  if(!number) number = maxPhysicalNumber() + 1;
+  if(!number) number = getMaxPhysicalNumber() + 1;
   physicalNames[number] = name;
   return number;
 }

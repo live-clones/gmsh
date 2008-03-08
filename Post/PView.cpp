@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.19 2008-03-03 22:04:22 geuzaine Exp $
+// $Id: PView.cpp,v 1.20 2008-03-08 22:03:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -211,10 +211,13 @@ void PView::combine(bool time, int how, bool remove)
       delete *it;
 }
 
-PView *PView::getViewByName(std::string name)
+PView *PView::getViewByName(std::string name, int noTimeStep)
 {
-  for(unsigned int i = 0; i < list.size(); i++)
-    if(list[i]->getData()->getName() == name) return list[i];
+  for(unsigned int i = 0; i < list.size(); i++){
+    if(list[i]->getData()->getName() == name &&
+       (noTimeStep < 0 || noTimeStep >= list[i]->getData()->getNumTimeSteps()))
+      return list[i];
+  }
   return 0;
 }
 
@@ -299,6 +302,8 @@ bool PView::readPOS(std::string filename, int fileIndex)
   return true;
 }
 
+extern std::string extractDoubleQuotedString(char *str, int len);
+
 bool PView::readMSH(std::string filename, int fileIndex)
 {
   FILE *fp = fopen(filename.c_str(), "rb");
@@ -308,8 +313,8 @@ bool PView::readMSH(std::string filename, int fileIndex)
   }
 
   char str[256];
-  double version;
-  int format, size, index = -1;
+  int index = -1;
+  bool binary = false, swap = false;
 
   while(1) {
 
@@ -321,28 +326,47 @@ bool PView::readMSH(std::string filename, int fileIndex)
     if(feof(fp))
       break;
 
-    if(!strncmp(&str[1], "NodeData", 8)) {
+    if(!strncmp(&str[1], "MeshFormat", 10)) {
+      double version;
+      int format, size;
+      if(fscanf(fp, "%lf %d %d", &version, &format, &size) != 3) return 0;
+      if(format){
+	binary = true;
+	Msg(INFO, "Mesh is in binary format");
+	int one;
+	if(fread(&one, sizeof(int), 1, fp) != 1) return 0;
+	if(one != 1){
+	  swap = true;
+	  Msg(INFO, "Swapping bytes from binary file");
+	}
+      }
+    }
+    else if(!strncmp(&str[1], "NodeData", 8)) {
       index++;
       if(fileIndex < 0 || fileIndex == index){
+	// read data info
+	if(!fgets(str, sizeof(str), fp)) return 0;
+	std::string name = extractDoubleQuotedString(str, 256);
+	int timeStep, numComp, numNodes;
+	double time;
+	if(fscanf(fp, "%d %lf %d %d", &timeStep, &time, &numComp, &numNodes) != 4)
+	  return 0;
 	// either get existing viewData, or create new one
-	// check timestep storage limit, do magic if exceeded
-	PView *p = 0;
-	PViewDataGModel *d;
-	// read view name and timestep
-	// if append
-	//   p = getView
-	//   d = p->getData()
-	// else
-   	d = new PViewDataGModel(GModel::current());
-	if(!d->readMSH(fp)){
+	PView *p = getViewByName(name, timeStep);
+	PViewDataGModel *d = 0;
+	if(p) d = dynamic_cast<PViewDataGModel*>(p->getData());
+	bool create = d ? false : true;
+	if(create) d = new PViewDataGModel(GModel::current());
+	if(!d->readMSH(fp, binary, swap, timeStep, time, numComp, numNodes)){
 	  Msg(GERROR, "Could not read data in msh file");
-	  delete d;
+	  if(create) delete d;
 	  return false;
 	}
 	else{
+	  d->setName(name);
 	  d->setFileName(filename);
 	  d->setFileIndex(index);
-	  if(!p) new PView(d);
+	  if(create) new PView(d);
 	}
       }
     }

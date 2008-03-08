@@ -80,8 +80,9 @@ class PView{
   // combine view
   static void combine(bool time, int how, bool remove);
 
-  // combine view
-  static PView *getViewByName(std::string name);
+  // find view by name (if noTimeStep >= 0, return view only if it
+  // does *not* contain that timestep)
+  static PView *getViewByName(std::string name, int noTimeStep=-1);
 
   // read view(s) in list format from a file
   static bool readPOS(std::string filename, int fileIndex=-1);

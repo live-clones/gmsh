@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.154 2008-03-01 01:32:02 geuzaine Exp $
+// $Id: Post.cpp,v 1.155 2008-03-08 22:03:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -894,7 +894,7 @@ void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
   for(int ent = 0; ent < data->getNumEntities(); ent++){
     if(data->skipEntity(ent)) continue;
     for(int i = 0; i < data->getNumElements(ent); i++){
-      if(data->skipElement(ent, i)) continue;
+      if(data->skipElement(ent, i, opt->TimeStep)) continue;
       int numEdges = data->getNumEdges(ent, i);
       if(opt->skipElement(numEdges)) continue;
       int numComp = data->getNumComponents(ent, i);
@@ -1133,7 +1133,7 @@ void drawGlyphs(PView *p)
   for(int ent = 0; ent < data->getNumEntities(); ent++){
     if(data->skipEntity(ent)) continue;
     for(int i = 0; i < data->getNumElements(ent); i++){
-      if(data->skipElement(ent, i)) continue;
+      if(data->skipElement(ent, i, opt->TimeStep)) continue;
       int numEdges = data->getNumEdges(ent, i);
       if(opt->skipElement(numEdges)) continue;
       int dim = data->getDimension(ent, i);
