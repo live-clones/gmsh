@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.22 2008-03-08 22:03:13 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.23 2008-03-09 14:47:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -36,6 +36,7 @@ PViewDataGModel::PViewDataGModel(GModel *model)
     _entities.push_back(*it);
   for(GModel::riter it = _model->firstRegion(); it != _model->lastRegion(); ++it)
     _entities.push_back(*it);
+  _bbox = _model->bounds();
 }
 
 PViewDataGModel::~PViewDataGModel()

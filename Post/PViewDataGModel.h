@@ -45,6 +45,7 @@ class PViewDataGModel : public PViewData {
   std::vector<stepData<double>*> _nodeData, _elementData;
   PViewDataList *_cloneToList(); // create old-style data from this
   double _min, _max;
+  SBoundingBox3d _bbox;
  public:
   PViewDataGModel(GModel *model);
   ~PViewDataGModel();
@@ -53,7 +54,7 @@ class PViewDataGModel : public PViewData {
   double getTime(int step);
   double getMin(int step=-1);
   double getMax(int step=-1);
-  SBoundingBox3d getBoundingBox(){ return _model->bounds(); }
+  SBoundingBox3d getBoundingBox(){ return _bbox; }
   int getNumEntities();
   int getNumElements(int ent=-1);
   int getDimension(int ent, int ele);

@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.3 2008-03-08 22:03:13 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.4 2008-03-09 14:47:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -40,7 +40,7 @@ bool PViewDataGModel::readMSH(FILE *fp, bool binary, bool swap, int timeStep, do
   _nodeData[timeStep]->time = time;
   _nodeData[timeStep]->values.resize(numNodes);
 
-  if(binary){
+  if(0 &&binary){
     Msg(GERROR, "not ready yet for binary");
     return 0;
   }
