@@ -1,4 +1,4 @@
-// $Id: PViewDataListIO.cpp,v 1.13 2008-03-08 22:03:13 geuzaine Exp $
+// $Id: PViewDataListIO.cpp,v 1.14 2008-03-09 21:36:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -419,9 +419,8 @@ class pVertexLessThan{
   }
 };
 
-static void getNodeMSH(int nbelm, List_T *list, int nbnod, int nbcomp, 
-		       std::set<pVertex, pVertexLessThan> *nodes,
-		       int *numelm)
+static void getNodeMSH(int nbelm, List_T *list, int nbnod, int nbcomp, int nbstep,
+		       std::set<pVertex, pVertexLessThan> *nodes, int *numelm)
 {
   if(!nbelm) return;
   int nb = List_Nbr(list) / nbelm;
@@ -435,7 +434,9 @@ static void getNodeMSH(int nbelm, List_T *list, int nbnod, int nbcomp,
       std::set<pVertex, pVertexLessThan>::iterator it = nodes->find(n);
       if(it == nodes->end()){
 	n.Num = nodes->size() + 1;
-	for(int k = 0; k < nbcomp; k++) n.Val.push_back(v[nbcomp * j + k]);
+	for(int ts = 0; ts < nbstep; ts++) 
+	  for(int k = 0; k < nbcomp; k++) 
+	    n.Val.push_back(v[nbcomp * nbnod * ts + nbcomp * j + k]);
 	nodes->insert(n);
       }
     }
@@ -446,58 +447,35 @@ static void getNodeMSH(int nbelm, List_T *list, int nbnod, int nbcomp,
 static void writeElementMSH(FILE *fp, int num, int nbnod, pVertex nod[8], 
 			    int nbcomp, double *vals, int dim)
 {
-  // compute average value in elm
-  double d = 0.;
-  for(int k = 0; k < nbnod; k++) {
-    double *v = &vals[nbcomp * k];
-    switch(nbcomp) {
-    case 1: // scalar
-      d += v[0];
-      break;
-    case 3 : // vector
-      d += sqrt(DSQR(v[0]) + DSQR(v[1]) + DSQR(v[2]));
-      break;
-    case 9 : // tensor
-      d += ComputeVonMises(v);
-      break;
-    }
-  }
-  d /= (double)nbnod;
-
-  // assign val as elementary region number
-  int ele = (int)fabs(d), phys = 1;
-  
   switch(dim){
   case 0:
-    fprintf(fp, "%d 15 2 %d %d %d\n", num, phys, ele, nod[0].Num);
+    fprintf(fp, "%d 15 0 %d\n", num, nod[0].Num);
     break;
   case 1:
-    fprintf(fp, "%d 1 2 %d %d %d %d\n", num, phys, ele, nod[0].Num, nod[1].Num);
+    fprintf(fp, "%d 1 0 %d %d\n", num, nod[0].Num, nod[1].Num);
     break;
   case 2:
     if(nbnod == 3)
-      fprintf(fp, "%d 2 2 %d %d %d %d %d\n", num, phys, ele, 
-	      nod[0].Num, nod[1].Num, nod[2].Num);
+      fprintf(fp, "%d 2 0 %d %d %d\n", num, nod[0].Num, nod[1].Num, nod[2].Num);
     else
-      fprintf(fp, "%d 3 2 %d %d %d %d %d %d\n", num, phys, ele, 
-	      nod[0].Num, nod[1].Num, nod[2].Num, nod[3].Num);
+      fprintf(fp, "%d 3 0 %d %d %d %d\n", num, nod[0].Num, nod[1].Num, 
+	      nod[2].Num, nod[3].Num);
     break;
   case 3:
   default:
     if(nbnod == 4)
-      fprintf(fp, "%d 4 2 %d %d %d %d %d %d\n", num, phys, ele, 
-	      nod[0].Num, nod[1].Num, nod[2].Num, nod[3].Num);
+      fprintf(fp, "%d 4 0 %d %d %d %d\n", num, nod[0].Num, nod[1].Num,
+	      nod[2].Num, nod[3].Num);
     else if(nbnod == 5)
-      fprintf(fp, "%d 7 2 %d %d %d %d %d %d %d\n", num, phys, ele, 
-	      nod[0].Num, nod[1].Num, nod[2].Num, nod[3].Num, nod[4].Num);
+      fprintf(fp, "%d 7 0 %d %d %d %d %d\n", num, nod[0].Num, nod[1].Num,
+	      nod[2].Num, nod[3].Num, nod[4].Num);
     else if(nbnod == 6)
-      fprintf(fp, "%d 6 2 %d %d %d %d %d %d %d %d\n", num, phys, ele, 
-	      nod[0].Num, nod[1].Num, nod[2].Num, nod[3].Num, nod[4].Num, 
-	      nod[5].Num);
+      fprintf(fp, "%d 6 0 %d %d %d %d %d %d\n", num, nod[0].Num, nod[1].Num,
+	      nod[2].Num, nod[3].Num, nod[4].Num, nod[5].Num);
     else
-      fprintf(fp, "%d 5 2 %d %d %d %d %d %d %d %d %d %d\n", num, phys, ele, 
-	      nod[0].Num, nod[1].Num, nod[2].Num, nod[3].Num, nod[4].Num, 
-	      nod[5].Num, nod[6].Num, nod[7].Num);
+      fprintf(fp, "%d 5 0 %d %d %d %d %d %d %d %d\n", num, nod[0].Num, 
+	      nod[1].Num, nod[2].Num, nod[3].Num, nod[4].Num, nod[5].Num,
+	      nod[6].Num, nod[7].Num);
     break;
   }
 }
@@ -541,30 +519,30 @@ bool PViewDataList::writeMSH(std::string name)
 
   std::set<pVertex, pVertexLessThan> nodes;
   int numelm = 0;
-  getNodeMSH(NbSP, SP, 1, 1, &nodes, &numelm);
-  getNodeMSH(NbVP, VP, 1, 3, &nodes, &numelm);
-  getNodeMSH(NbTP, TP, 1, 9, &nodes, &numelm);
-  getNodeMSH(NbSL, SL, 2, 1, &nodes, &numelm);
-  getNodeMSH(NbVL, VL, 2, 3, &nodes, &numelm);
-  getNodeMSH(NbTL, TL, 2, 9, &nodes, &numelm);
-  getNodeMSH(NbST, ST, 3, 1, &nodes, &numelm);
-  getNodeMSH(NbVT, VT, 3, 3, &nodes, &numelm);
-  getNodeMSH(NbTT, TT, 3, 9, &nodes, &numelm);
-  getNodeMSH(NbSQ, SQ, 4, 1, &nodes, &numelm);
-  getNodeMSH(NbVQ, VQ, 4, 3, &nodes, &numelm);
-  getNodeMSH(NbTQ, TQ, 4, 9, &nodes, &numelm);
-  getNodeMSH(NbSS, SS, 4, 1, &nodes, &numelm);
-  getNodeMSH(NbVS, VS, 4, 3, &nodes, &numelm);
-  getNodeMSH(NbTS, TS, 4, 9, &nodes, &numelm);
-  getNodeMSH(NbSH, SH, 8, 1, &nodes, &numelm);
-  getNodeMSH(NbVH, VH, 8, 3, &nodes, &numelm);
-  getNodeMSH(NbTH, TH, 8, 9, &nodes, &numelm);
-  getNodeMSH(NbSI, SI, 6, 1, &nodes, &numelm);
-  getNodeMSH(NbVI, VI, 6, 3, &nodes, &numelm);
-  getNodeMSH(NbTI, TI, 6, 9, &nodes, &numelm);
-  getNodeMSH(NbSY, SY, 5, 1, &nodes, &numelm);
-  getNodeMSH(NbVY, VY, 5, 3, &nodes, &numelm);
-  getNodeMSH(NbTY, TY, 5, 9, &nodes, &numelm);
+  getNodeMSH(NbSP, SP, 1, 1, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbVP, VP, 1, 3, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbTP, TP, 1, 9, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbSL, SL, 2, 1, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbVL, VL, 2, 3, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbTL, TL, 2, 9, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbST, ST, 3, 1, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbVT, VT, 3, 3, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbTT, TT, 3, 9, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbSQ, SQ, 4, 1, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbVQ, VQ, 4, 3, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbTQ, TQ, 4, 9, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbSS, SS, 4, 1, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbVS, VS, 4, 3, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbTS, TS, 4, 9, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbSH, SH, 8, 1, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbVH, VH, 8, 3, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbTH, TH, 8, 9, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbSI, SI, 6, 1, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbVI, VI, 6, 3, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbTI, TI, 6, 9, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbSY, SY, 5, 1, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbVY, VY, 5, 3, NbTimeStep, &nodes, &numelm);
+  getNodeMSH(NbTY, TY, 5, 9, NbTimeStep, &nodes, &numelm);
 
   fprintf(fp, "$MeshFormat\n2 0 8\n$EndMeshFormat\n");
   fprintf(fp, "$Nodes\n");
@@ -604,22 +582,24 @@ bool PViewDataList::writeMSH(std::string name)
   writeElementsMSH(fp, NbTY, TY, 5, 9, 3, &nodes, &numelm);
   fprintf(fp, "$EndElements\n");
 
-#if 1 // test new postpro node-based storage
+#if 1 // test new node-based storage
   int numNodes = nodes.size();
   if(numNodes){
-    fprintf(fp, "$NodeData\n");
-    fprintf(fp, "\"%s\"\n", getName().c_str());
-    int timeStep = 0, numComp = nodes.begin()->Val.size();
-    double time = 0.;
-    fprintf(fp, "%d %.16g %d %d\n", timeStep, time, numComp, numNodes);
-    for(std::set<pVertex, pVertexLessThan>::iterator it = nodes.begin();
-	it != nodes.end(); ++it){
-      fprintf(fp, "%d", it->Num);
-      for(int i = 0; i < it->Val.size(); i++)
-	fprintf(fp, " %.16g", it->Val[i]);
-      fprintf(fp, "\n");
+    int numComp = nodes.begin()->Val.size() / NbTimeStep;
+    for(int ts = 0; ts < NbTimeStep; ts++){
+      double time = getTime(ts);
+      fprintf(fp, "$NodeData\n");
+      fprintf(fp, "\"%s\"\n", getName().c_str());
+      fprintf(fp, "%d %.16g %d %d\n", ts, time, numComp, numNodes);
+      for(std::set<pVertex, pVertexLessThan>::iterator it = nodes.begin();
+	  it != nodes.end(); ++it){
+	fprintf(fp, "%d", it->Num);
+	for(int i = 0; i < numComp; i++)
+	  fprintf(fp, " %.16g", it->Val[ts * numComp + i]);
+        fprintf(fp, "\n");
+      }
+      fprintf(fp, "$EndNodeData\n");
     }
-    fprintf(fp, "$EndNodeData\n");
   }
 #endif
 
