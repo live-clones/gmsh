@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.24 2008-03-10 16:01:16 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.25 2008-03-10 19:59:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -66,7 +66,7 @@ int PViewDataGModel::getNumTimeSteps()
 
 double PViewDataGModel::getTime(int step)
 {
-  if(step < _nodeData.size() && _nodeData[step])
+  if(step < (int)_nodeData.size() && _nodeData[step])
     return _nodeData[step]->time;
   return 0.;
 }
@@ -74,14 +74,14 @@ double PViewDataGModel::getTime(int step)
 double PViewDataGModel::getMin(int step)
 {
   if(step < 0) return _min;
-  if(step < _nodeData.size() && _nodeData[step]) return _nodeData[step]->min;
+  if(step < (int)_nodeData.size() && _nodeData[step]) return _nodeData[step]->min;
   return 0.;
 }
 
 double PViewDataGModel::getMax(int step)
 {
   if(step < 0) return _max;
-  if(step < _nodeData.size() && _nodeData[step]) return _nodeData[step]->max;
+  if(step < (int)_nodeData.size() && _nodeData[step]) return _nodeData[step]->max;
   return 0.;
 }
 
@@ -142,12 +142,12 @@ bool PViewDataGModel::skipEntity(int ent)
 
 bool PViewDataGModel::skipElement(int ent, int ele, int step)
 {
-  if(step >= _nodeData.size() || !_nodeData[step]) return true;
+  if(step >= (int)_nodeData.size() || !_nodeData[step]) return true;
   MElement *e = _entities[ent]->getMeshElement(ele);
   if(!e->getVisibility()) return true;
   for(int i = 0; i < e->getNumVertices(); i++){
     int index = e->getVertex(i)->getDataIndex();
-    if(index < 0 || index >= _nodeData[step]->values.size()) return true;
+    if(index < 0 || index >= (int)_nodeData[step]->values.size()) return true;
     if(_nodeData[step]->values[index].empty()) return true;
   }
   return false;
@@ -155,8 +155,8 @@ bool PViewDataGModel::skipElement(int ent, int ele, int step)
 
 bool PViewDataGModel::hasTimeStep(int step)
 {
-  if(step < _nodeData.size() && _nodeData[step]) return true;
-  if(step < _elementData.size() && _elementData[step]) return true;
+  if(step < (int)_nodeData.size() && _nodeData[step]) return true;
+  if(step < (int)_elementData.size() && _elementData[step]) return true;
   return false;
 }
 

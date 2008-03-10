@@ -28,12 +28,10 @@
 template<class real>
 class stepData{
  public:
-  std::string fileName; // we allow to read steps from different files
-  int fileIndex;
   double time, min, max;
   // vector of data, indexed by dataIndex
   std::vector<std::vector<real> > values;
-  stepData() : fileIndex(0), time(0.), min(VAL_INF), max(-VAL_INF){}
+  stepData() : time(0.), min(VAL_INF), max(-VAL_INF){}
   ~stepData() {}
 };
 
@@ -52,8 +50,6 @@ class PViewDataGModel : public PViewData {
   SBoundingBox3d _bbox;
   // a set of all "partitions" encountered in the input data
   std::set<int> _partitions;
-  // create old-style list-based dataset from this one
-  PViewDataList *_cloneToList();
  public:
   PViewDataGModel(GModel *model);
   ~PViewDataGModel();
@@ -75,6 +71,9 @@ class PViewDataGModel : public PViewData {
   bool skipElement(int ent, int ele, int step);
   bool hasTimeStep(int step);
   bool hasPartition(int part);
+
+  // create old-style list-based dataset from this one
+  //PViewDataList *convertToPViewDataList();
 
   // I/O routines
   bool readMSH(FILE *fp, bool binary, bool swap, int timeStep, double time,

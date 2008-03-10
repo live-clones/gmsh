@@ -1,4 +1,4 @@
-// $Id: PViewDataListIO.cpp,v 1.15 2008-03-10 16:01:17 geuzaine Exp $
+// $Id: PViewDataListIO.cpp,v 1.16 2008-03-10 19:59:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -584,7 +584,6 @@ bool PViewDataList::writeMSH(std::string name, bool binary)
   writeElementsMSH(fp, NbTY, TY, 5, 9, 3, &nodes, &numelm);
   fprintf(fp, "$EndElements\n");
 
-#if 1 // test new node-based storage
   int numNodes = nodes.size();
   if(numNodes){
     int numComp = nodes.begin()->Val.size() / NbTimeStep;
@@ -603,7 +602,6 @@ bool PViewDataList::writeMSH(std::string name, bool binary)
       fprintf(fp, "$EndNodeData\n");
     }
   }
-#endif
 
   fclose(fp);
   return true;

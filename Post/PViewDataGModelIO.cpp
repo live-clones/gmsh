@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.5 2008-03-10 16:01:16 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.6 2008-03-10 19:59:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -35,7 +35,7 @@ bool PViewDataGModel::readMSH(FILE *fp, bool binary, bool swap, int timeStep,
   Msg(INFO, "Reading step %d (time %g) partition %d: %d nodes", 
       timeStep, time, partition, numNodes);
 
-  while(timeStep >= _nodeData.size()) _nodeData.push_back(0);
+  while(timeStep >= (int)_nodeData.size()) _nodeData.push_back(0);
 
   if(!_nodeData[timeStep]) _nodeData[timeStep] = new stepData<double>();
 
@@ -64,10 +64,10 @@ bool PViewDataGModel::readMSH(FILE *fp, bool binary, bool swap, int timeStep,
       v->setDataIndex(max + 1);
     }
     int index = v->getDataIndex();
-    if(index >= _nodeData[timeStep]->values.size())
+    if(index >= (int)_nodeData[timeStep]->values.size())
       _nodeData[timeStep]->values.resize(index + 100); // optimize this
     if(binary){
-      if(fread(&tmp[0], sizeof(double), numComp, fp) != numComp) return false;
+      if((int)fread(&tmp[0], sizeof(double), numComp, fp) != numComp) return false;
       if(swap) swapBytes((char*)&tmp[0], sizeof(double), numComp);
     }
     else{
@@ -124,7 +124,7 @@ bool PViewDataGModel::writeMSH(std::string name, bool binary)
       fprintf(fp, "\"%s\"\n", getName().c_str());
       fprintf(fp, "%d %.16g 0 0 %d %d\n", ts, _nodeData[ts]->time, numComp, numNodes);
       for(unsigned int i = 0; i < _nodeData[ts]->values.size(); i++){
-	if(_nodeData[ts]->values[i].size() >= numComp){
+	if((int)_nodeData[ts]->values[i].size() >= numComp){
 	  if(binary){
 	    fwrite(&tags[i], sizeof(int), 1, fp);
 	    fwrite(&_nodeData[ts]->values[i][0], sizeof(double), numComp, fp);
