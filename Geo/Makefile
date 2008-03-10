@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.190 2008-02-24 19:59:02 geuzaine Exp $
+# $Id: Makefile,v 1.191 2008-03-10 16:01:15 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -185,7 +185,7 @@ GModelIO_Mesh.o: GModelIO_Mesh.cpp GModel.h GVertex.h GEntity.h Range.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ExtrudeParams.h \
   ../Common/SmoothData.h discreteFace.h discreteEdge.h discreteVertex.h \
-  ../Common/Message.h
+  ../Common/StringUtils.h ../Common/Message.h
 GModelIO_OCC.o: GModelIO_OCC.cpp GModelIO_OCC.h GModel.h GVertex.h \
   GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
   SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h OCCIncludes.h \

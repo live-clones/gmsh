@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.472 2008-03-03 22:23:05 geuzaine Exp $
+# $Id: Makefile,v 1.473 2008-03-10 16:01:15 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -41,12 +41,12 @@ GMSH_API = Geo/GModel.h\
            Geo/Pair.h Geo/Range.h\
            Common/GmshDefines.h Common/GmshVersion.h
 
-GMSH_EMBEDDED = ${GMSH_API} Geo/discrete*.h Numeric/NumericEmbedded.h\
+GMSH_EMBEDDED = ${GMSH_API} Geo/discrete*.h\
                 Geo/GModel.cpp Geo/GModelIO_Mesh.cpp\
                 Geo/GEntity.cpp Geo/GVertex.cpp Geo/GEdge.cpp\
                 Geo/GEdgeLoop.cpp Geo/GFace.cpp Geo/GRegion.cpp\
                 Geo/MElement.cpp Geo/MFace.cpp Geo/MVertex.cpp\
-                Numeric/NumericEmbedded.cpp\
+                Common/StringUtils.{cpp,h} Numeric/NumericEmbedded.{cpp,h}\
                 utils/embed/GmshEmbedded.{cpp,h} utils/embed/Makefile
 
 all: link

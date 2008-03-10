@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.23 2008-03-09 14:47:32 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.24 2008-03-10 16:01:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -151,4 +151,16 @@ bool PViewDataGModel::skipElement(int ent, int ele, int step)
     if(_nodeData[step]->values[index].empty()) return true;
   }
   return false;
+}
+
+bool PViewDataGModel::hasTimeStep(int step)
+{
+  if(step < _nodeData.size() && _nodeData[step]) return true;
+  if(step < _elementData.size() && _elementData[step]) return true;
+  return false;
+}
+
+bool PViewDataGModel::hasPartition(int part)
+{
+  return _partitions.find(part) != _partitions.end();
 }

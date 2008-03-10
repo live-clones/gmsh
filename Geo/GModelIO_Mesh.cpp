@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.40 2008-03-08 22:03:12 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.41 2008-03-10 16:01:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,24 +30,13 @@
 #include "discreteFace.h"
 #include "discreteEdge.h"
 #include "discreteVertex.h"
+#include "StringUtils.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #  include "GmshEmbedded.h"
 #else
 #  include "Message.h"
 #endif
-
-static void swapBytes(char *array, int size, int n)
-{
-  char *x = new char[size];
-  for(int i = 0; i < n; i++) {
-    char *a = &array[i * size];
-    memcpy(x, a, size);
-    for(int c = 0; c < size; c++)
-      a[size - 1 - c] = x[c];
-  }
-  delete [] x;
-}
 
 template<class T>
 static void addElements(std::vector<T*> &dst, const std::vector<MElement*> &src)
@@ -260,18 +249,6 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
     physicals[dim][reg][physical] = "unnamed";
   
   if(part) m->getMeshPartitions().insert(part);
-}
-
-std::string extractDoubleQuotedString(char *str, int len)
-{
-  char *c = strstr(str, "\"");
-  if(!c) return "";
-  std::string ret;
-  for(int i = 1; i < len; i++) {
-    if(c[i] == '"' || c[i] == EOF || c[i] == '\n' || c[i] == '\r') break;
-    ret.push_back(c[i]);
-  }
-  return ret;
 }
 
 int GModel::readMSH(const std::string &name)

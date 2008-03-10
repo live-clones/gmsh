@@ -104,13 +104,15 @@ class PViewData {
   virtual bool isAdaptive(){ return false; }
   virtual bool skipEntity(int ent){ return false; }
   virtual bool skipElement(int ent, int ele, int step){ return false; }
+  virtual bool hasTimeStep(int step){ return step < getNumTimeSteps(); }
+  virtual bool hasPartition(int part){ return false; }
 
   // I/O routines
   virtual bool writeSTL(std::string name);
   virtual bool writeTXT(std::string name);
   virtual bool writePOS(std::string name, bool binary=false, bool parsed=true,
 			bool append=false){ return false; }
-  virtual bool writeMSH(std::string name){ return false; }
+  virtual bool writeMSH(std::string name, bool binary=false){ return false; }
 };
 
 class nameData{

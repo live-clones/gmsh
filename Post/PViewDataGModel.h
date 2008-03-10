@@ -40,12 +40,20 @@ class stepData{
 // data container using elements from a GModel
 class PViewDataGModel : public PViewData {
  private:
+  // a pointer to the underlying model
   GModel *_model;
+  // the unrolled list of all geometrical entities in the model
   std::vector<GEntity*> _entities;
+  // the node- and element-based data
   std::vector<stepData<double>*> _nodeData, _elementData;
-  PViewDataList *_cloneToList(); // create old-style data from this
+  // the global min/max of the view
   double _min, _max;
+  // the bounding box of the view (= model bbox for now)
   SBoundingBox3d _bbox;
+  // a set of all "partitions" encountered in the input data
+  std::set<int> _partitions;
+  // create old-style list-based dataset from this one
+  PViewDataList *_cloneToList();
  public:
   PViewDataGModel(GModel *model);
   ~PViewDataGModel();
@@ -65,10 +73,13 @@ class PViewDataGModel : public PViewData {
   int getNumEdges(int ent, int ele);
   bool skipEntity(int ent);
   bool skipElement(int ent, int ele, int step);
+  bool hasTimeStep(int step);
+  bool hasPartition(int part);
 
   // I/O routines
-  bool readMSH(FILE *fp, bool binary, bool swap, int timeStep, double time, 
-	       int numComp, int numNodes);
+  bool readMSH(FILE *fp, bool binary, bool swap, int timeStep, double time,
+	       int partition, int numComp, int numNodes);
+  bool writeMSH(std::string name, bool binary=false);
 };
 
 #endif

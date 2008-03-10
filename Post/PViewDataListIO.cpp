@@ -1,4 +1,4 @@
-// $Id: PViewDataListIO.cpp,v 1.14 2008-03-09 21:36:16 geuzaine Exp $
+// $Id: PViewDataListIO.cpp,v 1.15 2008-03-10 16:01:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -509,13 +509,15 @@ static void writeElementsMSH(FILE *fp, int nbelm, List_T *list,
   }
 }
 
-bool PViewDataList::writeMSH(std::string name)
+bool PViewDataList::writeMSH(std::string name, bool binary)
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
     Msg(GERROR, "Unable to open file '%s'", name.c_str());
     return false;
   }
+
+  if(binary) Msg(WARNING, "Binary write not implemented yet");
 
   std::set<pVertex, pVertexLessThan> nodes;
   int numelm = 0;
@@ -590,7 +592,7 @@ bool PViewDataList::writeMSH(std::string name)
       double time = getTime(ts);
       fprintf(fp, "$NodeData\n");
       fprintf(fp, "\"%s\"\n", getName().c_str());
-      fprintf(fp, "%d %.16g %d %d\n", ts, time, numComp, numNodes);
+      fprintf(fp, "%d %.16g 0 0 %d %d\n", ts, time, numComp, numNodes);
       for(std::set<pVertex, pVertexLessThan>::iterator it = nodes.begin();
 	  it != nodes.end(); ++it){
 	fprintf(fp, "%d", it->Num);

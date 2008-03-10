@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.177 2008-02-23 15:30:10 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.178 2008-03-10 16:01:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -47,7 +47,8 @@ extern GUI *WID;
 
 extern Context_T CTX;
 
-void FixRelativePath(const char *in, char *out){
+void FixRelativePath(const char *in, char *out)
+{
   if(in[0] == '/' || in[0] == '\\' || (strlen(in)>2 && in[1] == ':')){
     // do nothing: 'in' is an absolute path
     strcpy(out, in);
@@ -62,7 +63,8 @@ void FixRelativePath(const char *in, char *out){
   }
 }
 
-void FixWindowsPath(const char *in, char *out){
+void FixWindowsPath(const char *in, char *out)
+{
 #if defined(__CYGWIN__)
   cygwin_conv_to_win32_path(in, out);
 #else

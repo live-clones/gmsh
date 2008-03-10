@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.78 2008-02-23 15:30:07 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.79 2008-03-10 16:01:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,13 +19,13 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <string.h>
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "Draw.h"
 #include "SelectBuffer.h"
+#include "StringUtils.h"
 #include "GUI.h"
 #include "gl2ps.h"
 
@@ -44,34 +44,6 @@ void Draw(void)
 {
   if(!WID) return;
   WID->redraw_opengl();
-}
-
-void SanitizeTeXString(const char *in, char *out)
-{
-  // if there is a '$' or a '\' in the string, assume the author knows
-  // what he's doing:
-  if(strstr(in, "$") || strstr(in, "\\")){
-    strcpy(out, in);
-    return;
-  }
-
-  if(CTX.print.tex_as_equation) *out++ = '$';
-
-  // otherwise, escape the following special characters:
-  char bad[8] = { '%', '^', '#', '%', '&', '_', '{', '}' };
-  while(*in){
-    for(unsigned int i = 0; i < sizeof(bad); i++){
-      if(*in == bad[i]){
-	*out++ = '\\';
-	break;
-      }
-    }
-    *out++ = *in++;
-  }
-
-  if(CTX.print.tex_as_equation) *out++ = '$';
-
-  *out = '\0';
 }
 
 void Draw_String(const char *s, const char *font_name, int font_enum, int font_size, int align)
@@ -111,8 +83,7 @@ void Draw_String(const char *s, const char *font_name, int font_enum, int font_s
   }
   else{
     if(CTX.print.format == FORMAT_TEX){
-      char tmp[1024];
-      SanitizeTeXString(s, tmp);
+      std::string tmp = sanitizeTeXString(s, CTX.print.tex_as_equation);
       int opt;
       switch(align){
       case 1: opt = GL2PS_TEXT_B;   break; // bottom center
@@ -125,7 +96,7 @@ void Draw_String(const char *s, const char *font_name, int font_enum, int font_s
       case 8: opt = GL2PS_TEXT_CR;  break; // center right
       default: opt = GL2PS_TEXT_BL; break; // bottom left
       }
-      gl2psTextOpt(tmp, font_name, font_size, opt, 0.);
+      gl2psTextOpt(tmp.c_str(), font_name, font_size, opt, 0.);
     }
     else if(CTX.print.eps_quality && (CTX.print.format == FORMAT_PS ||
 				      CTX.print.format == FORMAT_EPS ||

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.159 2008-02-24 19:59:02 geuzaine Exp $
+# $Id: Makefile,v 1.160 2008-03-10 16:01:15 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -39,6 +39,7 @@ SRC = Context.cpp\
       Trackball.cpp\
       VertexArray.cpp\
       SmoothData.cpp\
+      StringUtils.cpp\
       License.cpp
 
 OBJ = ${SRC:.cpp=${OBJEXT}}
@@ -113,4 +114,5 @@ VertexArray.o: VertexArray.cpp VertexArray.h ../Geo/SVector3.h \
   ../Numeric/NumericEmbedded.h
 SmoothData.o: SmoothData.cpp SmoothData.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h
+StringUtils.o: StringUtils.cpp StringUtils.h
 License.o: License.cpp Message.h
