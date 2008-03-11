@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.69 2008-03-11 20:03:10 geuzaine Exp $
+// $Id: GModel.cpp,v 1.70 2008-03-11 22:37:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -646,18 +646,19 @@ static int checkElements(int tag,
     }
     else{
       char temp[256], temp2[256];
-      sprintf(temp, "Elements %d tag %d(", (*it)->getNum(), tag);
-      for (int i = 0; i <(*it)->getNumVertices();i++){
+      sprintf(temp, "Elements %d ( ", (*it)->getNum());
+      for (int i = 0; i < (*it)->getNumVertices();i++){
 	sprintf(temp2, "%d ", (*it)->getVertex(i)->getNum());
 	strcat(temp, temp2);
       }
-      sprintf(temp2, ") and %d(",e->getNum());
+      sprintf(temp2, ") on entity %d has same barycenter as element %d ( ",
+	      tag, e->getNum());
       strcat(temp, temp2);
       for (int i = 0; i < e->getNumVertices(); i++){
-	sprintf(temp2, "%d", e->getVertex(i)->getNum());
+	sprintf(temp2, "%d ", e->getVertex(i)->getNum());
 	strcat(temp, temp2);
       }
-      sprintf(temp2, ") have identical barycenter");
+      sprintf(temp2, ")");
       strcat(temp, temp2);
       Msg(INFO, "%s", temp);
       num++;
