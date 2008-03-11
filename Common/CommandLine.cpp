@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.121 2008-03-11 20:24:30 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.122 2008-03-11 22:30:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -24,15 +24,13 @@
 #include "GmshDefines.h"
 #include "GmshVersion.h"
 #include "Message.h"
+#include "OpenFile.h"
 #include "CommandLine.h"
-#include "Numeric.h"
 #include "Context.h"
 #include "Options.h"
-#include "PView.h"
-#include "OpenFile.h"
-#include "CreateFile.h"
-#include "Parser.h"
 #include "GModel.h"
+#include "PView.h"
+#include "CreateFile.h"
 #include "OS.h"
 
 #if !defined(GMSH_EXTRA_VERSION)
@@ -176,6 +174,10 @@ char *Get_BuildOptions(void)
 
 void Get_Options(int argc, char *argv[])
 {
+  // Create a dummy model during option processing so we cannot crash
+  // the parser, and so we can load files for -convert
+  GModel *dummy = new GModel();
+
   // Parse session and option files
   ParseFile(CTX.session_filename_fullpath, 1);
   ParseFile(CTX.options_filename_fullpath, 1);
@@ -677,4 +679,6 @@ void Get_Options(int argc, char *argv[])
     strncpy(CTX.filename, CTX.default_filename_fullpath, 255);
   else
     strncpy(CTX.filename, CTX.files[0].c_str(), 255);
+
+  delete dummy;
 }

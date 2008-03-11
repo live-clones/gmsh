@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.142 2008-02-24 19:59:03 geuzaine Exp $
+# $Id: Makefile,v 1.143 2008-03-11 22:30:32 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -128,10 +128,10 @@ CreateFile.o: CreateFile.cpp ../Common/Message.h ../Geo/GModel.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h \
   ../Common/GmshDefines.h OpenFile.h ../Common/Context.h \
-  ../DataStr/List.h ../Common/Options.h ../Post/ColorTable.h \
-  ../Common/GmshUI.h ../Graphics/gl2ps.h ../Graphics/gl2gif.h \
-  ../Graphics/PixelBuffer.h ../DataStr/Malloc.h ../Graphics/Draw.h \
-  ../Graphics/gl2jpeg.h ../Graphics/PixelBuffer.h ../Graphics/gl2png.h \
+  ../Common/Options.h ../Post/ColorTable.h ../Common/GmshUI.h \
+  ../Graphics/gl2ps.h ../Graphics/gl2gif.h ../Graphics/PixelBuffer.h \
+  ../DataStr/Malloc.h ../Graphics/Draw.h ../Graphics/gl2jpeg.h \
+  ../Graphics/PixelBuffer.h ../Graphics/gl2png.h \
   ../Graphics/PixelBuffer.h ../Graphics/gl2ppm.h \
   ../Graphics/PixelBuffer.h ../Graphics/gl2yuv.h \
   ../Graphics/PixelBuffer.h

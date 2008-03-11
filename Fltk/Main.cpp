@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.119 2008-03-11 20:24:30 geuzaine Exp $
+// $Id: Main.cpp,v 1.120 2008-03-11 22:30:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -49,10 +49,11 @@ int main(int argc, char *argv[])
   time_t now;
   time(&now);
   std::string currtime(ctime(&now));
+  currtime[currtime.size() - 1] = '\0';
   std::string cmdline;
   for(int i = 0; i < argc; i++){
+    if(i) cmdline += " ";
     cmdline += argv[i];
-    cmdline += " ";
   }
 
   // Hack to generate automatic documentation (before getting

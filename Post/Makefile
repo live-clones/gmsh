@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.32 2008-03-10 16:01:16 geuzaine Exp $
+# $Id: Makefile,v 1.33 2008-03-11 22:30:32 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -129,5 +129,4 @@ OctreePost.o: OctreePost.cpp ../Common/Octree.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Common/Message.h \
   ../Common/ShapeFunctions.h
 ColorTable.o: ColorTable.cpp ../Common/Message.h ColorTable.h \
-  ../Common/Context.h ../DataStr/List.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h
+  ../Common/Context.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h
