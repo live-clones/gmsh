@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.41 2008-03-10 16:01:15 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.42 2008-03-11 22:51:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -452,12 +452,14 @@ int GModel::readMSH(const std::string &name)
       else
 	_vertexMapCache = vertexMap;
       postpro = true;
+      break;
 
     }
     else if(!strncmp(&str[1], "ElementData", 11)) {
 
       // there's some element post-processing data to read later on
       postpro = true;
+      break;
 
     }
 
