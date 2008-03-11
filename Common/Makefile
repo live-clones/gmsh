@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.160 2008-03-10 16:01:15 geuzaine Exp $
+# $Id: Makefile,v 1.161 2008-03-11 20:03:09 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -34,6 +34,7 @@ SRC = Context.cpp\
       Octree.cpp OctreeInternals.cpp\
       Options.cpp\
       CommandLine.cpp\
+      Gmsh.cpp\
       OS.cpp\
       Visibility.cpp\
       Trackball.cpp\
@@ -94,6 +95,14 @@ CommandLine.o: CommandLine.cpp GmshUI.h GmshDefines.h GmshVersion.h \
   ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
   ../Geo/SBoundingBox3d.h OS.h
+Gmsh.o: Gmsh.cpp ../Parser/Parser.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h Options.h ../Post/ColorTable.h CommandLine.h OS.h \
+  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
+  ../Common/Message.h ../Post/PView.h ../Post/PViewData.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Post/PViewOptions.h \
+  ../Post/ColorTable.h ../Post/PViewDataList.h ../Post/PViewData.h \
+  ../Post/AdaptiveViews.h ../Common/GmshMatrix.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 OS.o: OS.cpp Message.h
 Visibility.o: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \

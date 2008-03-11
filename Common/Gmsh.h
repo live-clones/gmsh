@@ -1,5 +1,5 @@
-#ifndef _GENERATOR_H_
-#define _GENERATOR_H_
+#ifndef _GMSH_H_
+#define _GMSH_H_
 
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -15,17 +15,11 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-// USA.
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 // USA.
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-class GModel;
-
-void GetStatistics(double stat[50], double quality[3][100]=0);
-void AdaptMesh(GModel *m);
-void GenerateMesh(GModel *m, int dimension);
-void OptimizeMesh(GModel *m);
-void OptimizeMeshNetgen(GModel *m);
+int GmshInitialize(int argc, char **argv);
+int GmshFinalize();
 
 #endif

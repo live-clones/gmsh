@@ -7,6 +7,14 @@ void GModel::createGEOInternals(){}
 void GModel::deleteGEOInternals(){}
 void GModel::deleteOCCInternals(){}
 
+void GmshInitialize(int argc, char **argv)
+{
+}
+
+void GmshFinalize(int argc, char **argv)
+{
+}
+
 void Msg(int level, const char *fmt, ...)
 {
   va_list args;

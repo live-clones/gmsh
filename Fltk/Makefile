@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.172 2008-03-10 16:01:15 geuzaine Exp $
+# $Id: Makefile,v 1.173 2008-03-11 20:03:09 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -70,13 +70,12 @@ depend:
 # DO NOT DELETE THIS LINE
 Main.o: Main.cpp GUI.h Opengl_Window.h Colorbar_Window.h \
   ../Common/GmshUI.h ../Post/ColorTable.h Popup_Button.h \
-  SpherePosition_Widget.h ../Common/Message.h ../DataStr/Malloc.h \
-  ../Common/OS.h ../Mesh/Generator.h ../Parser/CreateFile.h \
-  ../Graphics/Draw.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Common/Context.h ../DataStr/List.h ../Common/Options.h \
-  ../Parser/Parser.h ../DataStr/Tree.h ../DataStr/avl.h \
-  ../Parser/OpenFile.h ../Common/CommandLine.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h Solvers.h ../Plugin/PluginManager.h \
+  SpherePosition_Widget.h ../Common/Gmsh.h ../Common/Message.h \
+  ../Mesh/Generator.h ../Parser/CreateFile.h ../Graphics/Draw.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/Context.h \
+  ../DataStr/List.h ../Common/Options.h ../Parser/Parser.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../Parser/OpenFile.h \
+  ../Common/CommandLine.h Solvers.h ../Plugin/PluginManager.h \
   ../Plugin/Plugin.h ../Post/PView.h ../Post/PViewData.h \
   ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Post/AdaptiveViews.h ../Common/GmshMatrix.h \
@@ -90,9 +89,9 @@ Main.o: Main.cpp GUI.h Opengl_Window.h Colorbar_Window.h \
   ../Mesh/Field.h ../Geo/Geo.h ../Common/GmshDefines.h \
   ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
-  ../Post/OctreePost.h ../Common/Octree.h ../Common/OctreeInternals.h \
-  ../Mesh/BackgroundMesh.h
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Geo/SPoint2.h \
+  ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/OctreePost.h \
+  ../Common/Octree.h ../Common/OctreeInternals.h ../Mesh/BackgroundMesh.h
 Message.o: Message.cpp ../Common/Message.h ../Common/GmshUI.h \
   ../Common/Context.h ../DataStr/List.h ../Common/Options.h \
   ../Post/ColorTable.h GUI.h Opengl_Window.h Colorbar_Window.h \

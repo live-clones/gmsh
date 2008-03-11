@@ -7,7 +7,7 @@
 
 #include "FM_Patch.h"
 
-void makeGFace(FM::Patch* patch);
+void makeGFace(GModel *m, FM::Patch* patch);
 
 #endif
 

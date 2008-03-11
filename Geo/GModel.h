@@ -183,6 +183,9 @@ class GModel
   // A container for smooth normals
   smooth_normals *normals;
 
+  // Mesh the model
+  int mesh(int dimension);
+
   // Gmsh native CAD format
   int importGEOInternals();
   int readGEO(const std::string &name);

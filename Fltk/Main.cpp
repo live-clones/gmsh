@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.117 2008-02-22 07:59:00 geuzaine Exp $
+// $Id: Main.cpp,v 1.118 2008-03-11 20:03:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,14 +19,12 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <string.h>
-#include <signal.h>
+#include <string>
 #include <time.h>
 #include "GUI.h"
+#include "Gmsh.h"
 #include "GmshUI.h"
 #include "Message.h"
-#include "Malloc.h"
-#include "OS.h"
 #include "Generator.h"
 #include "CreateFile.h"
 #include "Draw.h"
@@ -35,7 +33,6 @@
 #include "Parser.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
-#include "Numeric.h"
 #include "Solvers.h"
 #include "PluginManager.h"
 #include "GModel.h"
@@ -48,66 +45,37 @@ GUI *WID = 0;
 
 int main(int argc, char *argv[])
 {
-  char *cmdline, currtime[100];
-  time_t now;
-
   // Log some info
+  time_t now;
   time(&now);
-  strcpy(currtime, ctime(&now));
-  currtime[strlen(currtime) - 1] = '\0';
-
-  int cll = 0;
-  for(int i = 0; i < argc; i++) {
-    cll += strlen(argv[i]);
-  }
-  cmdline = (char*)Malloc((cll+argc+1)*sizeof(char));
-  cmdline[0] = '\0';
-  for(int i = 0; i < argc; i++) {
-    strcat(cmdline, argv[i]);
-    strcat(cmdline, " ");
+  std::string currtime(ctime(&now));
+  std::string cmdline;
+  for(int i = 0; i < argc; i++){
+    cmdline += argv[i];
+    cmdline += " ";
   }
 
-  // Create a new model
-  new GModel;
-
-  // Initialize the symbol tree that will hold variable names
-  InitSymbols();
-
-  // Load default options
-  Init_Options(0);
-
-  // Generate automatic documentation (before getting user-defined options)
-  if(argc == 2 && !strcmp(argv[1], "-doc")){
-    // force all plugins for the doc
+  // Hack to generate automatic documentation (before getting
+  // user-defined options)
+  if(argc == 2 && std::string(argv[1]) == "-doc"){
+    Init_Options(0);
     GMSH_PluginManager::instance()->registerDefaultPlugins();
     Print_OptionsDoc();
     exit(0);
   }
 
-  // Read configuration files and command line options
-  Get_Options(argc, argv);
+  // Initialize static stuff (parser symbols, options)
+  GmshInitialize(argc, argv);
 
   // Always print info on terminal for non-interactive execution
-  if(CTX.batch)
-    CTX.terminal = 1;
+  if(CTX.batch) CTX.terminal = 1;
 
-  // Signal handling 
-  // FIXME: could not make this work on IRIX
-#if !defined(__sgi__) 
-  signal(SIGINT, Signal);
-  signal(SIGSEGV, Signal);
-  signal(SIGFPE, Signal);
-#endif
-
-  CheckResources();
-  
-  // Initialize the default plugins
-  GMSH_PluginManager::instance()->registerDefaultPlugins();
+  // Create a new model
+  new GModel;
 
   // Non-interactive Gmsh
   if(CTX.batch) {
-    check_gsl();
-    Msg(INFO, "'%s' started on %s", cmdline, currtime);
+    Msg(INFO, "'%s' started on %s", cmdline.c_str(), currtime.c_str());
     OpenProject(CTX.filename);
     if(gmsh_yyerrorstate)
       exit(1);
@@ -127,11 +95,11 @@ int main(int argc, char *argv[])
           Msg(GERROR, "Invalid background mesh (no view)");
       }
       if(CTX.batch == 4) {
-        AdaptMesh();
+        AdaptMesh(GModel::current());
         CreateOutputFile(CTX.output_filename, CTX.mesh.format);
       }
       else if(CTX.batch > 0) {
-        GenerateMesh(CTX.batch);
+        GModel::current()->mesh(CTX.batch);
         CreateOutputFile(CTX.output_filename, CTX.mesh.format);
       }
       else if(CTX.batch == -1)
@@ -141,7 +109,6 @@ int main(int argc, char *argv[])
       exit(0);
     }
   }
-
 
   // Interactive Gmsh
   CTX.batch = -1; // The GUI is not ready yet for interactivity
@@ -168,14 +135,9 @@ int main(int argc, char *argv[])
   Msg(INFO, gmsh_host);
   Msg(INFO, gmsh_packager);
   Msg(INFO, "Home directory : %s", CTX.home_dir);
-  Msg(INFO, "Launch date    : %s", currtime);
-  Msg(INFO, "Command line   : %s", cmdline);
+  Msg(INFO, "Launch date    : %s", currtime.c_str());
+  Msg(INFO, "Command line   : %s", cmdline.c_str());
   Msg(INFO, "-------------------------------------------------------");
-
-  Free(cmdline);
-
-  // Check for buggy obsolete GSL versions
-  check_gsl();
 
   // Display the GUI immediately to have a quick "a la Windows" launch time
   WID->check();
@@ -191,18 +153,10 @@ int main(int argc, char *argv[])
 
   // Init first context
   switch (CTX.initial_context) {
-  case 1:
-    WID->set_context(menu_geometry, 0);
-    break;
-  case 2:
-    WID->set_context(menu_mesh, 0);
-    break;
-  case 3:
-    WID->set_context(menu_solver, 0);
-    break;
-  case 4:
-    WID->set_context(menu_post, 0);
-    break;
+  case 1: WID->set_context(menu_geometry, 0); break;
+  case 2: WID->set_context(menu_mesh, 0); break;
+  case 3: WID->set_context(menu_solver, 0); break;
+  case 4: WID->set_context(menu_post, 0); break;
   default: // automatic
     if(PView::list.size())
       WID->set_context(menu_post, 0);
@@ -227,8 +181,7 @@ int main(int argc, char *argv[])
   Draw();
 
   // Listen to external solvers
-  if(CTX.solver.listen)
-    Solver(-1, NULL);
+  if(CTX.solver.listen) Solver(-1, NULL);
 
   // loop
   return WID->run();

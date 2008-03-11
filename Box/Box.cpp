@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.43 2008-02-17 08:47:55 geuzaine Exp $
+// $Id: Box.cpp,v 1.44 2008-03-11 20:03:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,11 +19,9 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <signal.h>
 #include "GModel.h"
+#include "Gmsh.h"
 #include "Message.h"
-#include "OS.h"
-#include "Numeric.h"
 #include "Generator.h"
 #include "Parser.h"
 #include "Context.h"
@@ -32,7 +30,6 @@
 #include "CommandLine.h"
 #include "CreateFile.h"
 #include "ParUtil.h"
-#include "PluginManager.h"
 #include "Field.h"
 #include "BackgroundMesh.h"
 
@@ -40,7 +37,7 @@ Context_T CTX;
 
 // Print some help/info messages
 
-void Info(int level, char *arg0)
+static void Info(int level, char *arg0)
 {
   switch (level) {
   case 0:
@@ -76,28 +73,11 @@ int GMSHBOX(int argc, char *argv[])
 {
   ParUtil::Instance()->init(argc, argv);
 
+  if(argc < 2) Info(0, argv[0]);
+
+  GmshInitialize(argc, argv);
+
   new GModel;
-
-  InitSymbols();
-  Init_Options(0);
-
-  if(argc < 2)
-    Info(0, argv[0]);
-
-  Get_Options(argc, argv);
-
-  // FIXME: could not make this work on IRIX
-#if !defined(__sgi__) 
-  signal(SIGINT, Signal);
-  signal(SIGSEGV, Signal);
-  signal(SIGFPE, Signal);
-#endif
-
-  CheckResources();
-
-  GMSH_PluginManager::instance()->registerDefaultPlugins();
-
-  check_gsl();
 
   OpenProject(CTX.filename);
   if(gmsh_yyerrorstate)
@@ -118,7 +98,7 @@ int GMSHBOX(int argc, char *argv[])
       }
     }
     if(CTX.batch > 0) {
-      GenerateMesh(CTX.batch);
+      GModel::current()->mesh(CTX.batch);
       CreateOutputFile(CTX.output_filename, CTX.mesh.format);
     }
     else if(CTX.batch == -1)
@@ -128,27 +108,9 @@ int GMSHBOX(int argc, char *argv[])
   }
   ParUtil::Instance()->Barrier(__LINE__, __FILE__);
 
+  GmshFinalize();
+  
   return 1;
-}
-
-// Handle signals. We should not use Msg functions in these...
-
-void Signal(int sig_num)
-{
-  switch (sig_num) {
-  case SIGSEGV:
-    Msg(FATAL, "Segmentation violation (invalid memory reference)");
-    break;
-  case SIGFPE:
-    Msg(FATAL, "Floating point exception (division by zero?)");
-    break;
-  case SIGINT:
-    Msg(FATAL, "Interrupt (generated from terminal special char)");
-    break;
-  default:
-    Msg(FATAL, "Unknown signal");
-    break;
-  }
 }
 
 // General purpose message routine

@@ -1,6 +1,5 @@
-#ifndef _GENERATOR_H_
-#define _GENERATOR_H_
-
+// $Id: Gmsh.cpp,v 1.1 2008-03-11 20:03:09 geuzaine Exp $
+//
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
@@ -20,12 +19,37 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-class GModel;
+#include "Parser.h"
+#include "Options.h"
+#include "CommandLine.h"
+#include "OS.h"
+#include "PluginManager.h"
+#include "Numeric.h"
 
-void GetStatistics(double stat[50], double quality[3][100]=0);
-void AdaptMesh(GModel *m);
-void GenerateMesh(GModel *m, int dimension);
-void OptimizeMesh(GModel *m);
-void OptimizeMeshNetgen(GModel *m);
+int GmshInitialize(int argc, char **argv)
+{
+  // Initialize the symbol tree that will hold variable names in the
+  // parser
+  InitSymbols();
+  
+  // Load default options
+  Init_Options(0);
 
-#endif
+  // Read configuration files and command line options
+  Get_Options(argc, argv);
+
+  // Make sure we have enough resources (stack)
+  CheckResources();
+  
+  // Initialize the default plugins
+  GMSH_PluginManager::instance()->registerDefaultPlugins();
+
+  // Check for buggy obsolete GSL versions
+  check_gsl();
+  return 1;
+}
+
+int GmshFinalize()
+{
+  return 1;
+}

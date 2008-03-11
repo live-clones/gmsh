@@ -76,7 +76,7 @@ Saved in: @code{-}
 
 @item General.TextEditor
 System command to launch a text editor@*
-Default value: @code{"open -e %s"}@*
+Default value: @code{"open -t %s"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.TmpFileName
@@ -716,7 +716,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.PolygonOffsetFactor
 Polygon offset factor (offset = factor * DZ + r * units)@*
-Default value: @code{1}@*
+Default value: @code{0.5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.PolygonOffsetUnits

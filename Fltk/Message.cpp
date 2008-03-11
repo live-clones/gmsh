@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.85 2008-02-23 15:30:07 geuzaine Exp $
+// $Id: Message.cpp,v 1.86 2008-03-11 20:03:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -20,7 +20,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
-#include <signal.h>
 #include "Message.h"
 #include "GmshUI.h"
 #include "Context.h"
@@ -31,32 +30,6 @@
 
 extern GUI *WID;
 extern Context_T CTX;
-
-// Handle signals. It is a crime to call stdio functions in a signal
-// handler. But who cares? ;-)
-
-void Signal(int sig_num)
-{
-  switch (sig_num) {
-  case SIGSEGV:
-    Msg(FATAL1, "Segmentation violation (invalid memory reference)");
-    Msg(FATAL2, "------------------------------------------------------");
-    Msg(FATAL2, "You have discovered a bug in Gmsh! You may report it");
-    Msg(FATAL2, "by e-mail (together with any helpful data permitting to");
-    Msg(FATAL3, "reproduce it) to <gmsh@geuz.org>");
-    break;
-  case SIGFPE:
-    Msg(FATAL, "Floating point exception (division by zero?)");
-    break;
-  case SIGINT:
-    Msg(INFO, "Interrupt (generated from terminal special character)");
-    Exit(1);
-    break;
-  default:
-    Msg(FATAL, "Unknown signal");
-    break;
-  }
-}
 
 // General purpose message routine
 

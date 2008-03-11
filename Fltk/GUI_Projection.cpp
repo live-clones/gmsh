@@ -931,7 +931,7 @@ void compute_cb(Fl_Widget *w, void *data)
       // create the US-FFT/Windowing faces (with boundaries)
       FM::Patch* patch =
 	new FM::WFPatch(0, ps->clone(), u, v, f, 3, uModes, vModes);
-      makeGFace(patch);
+      makeGFace(GModel::current(), patch);
     }
     else {
       // create the Fourier faces (with boundaries)
@@ -941,13 +941,13 @@ void compute_cb(Fl_Widget *w, void *data)
 			 uM, vM, h0, h1, h2, h3);
 	patchL->SetMinU(-0.35);
 	patchL->SetMaxU(0.35);
-	makeGFace(patchL);
+	makeGFace(GModel::current(), patchL);
 	FM::Patch* patchR = 
 	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
 			 uM, vM, h0, h1, h2, h3);
 	patchR->SetMinU(0.15);
 	patchR->SetMaxU(0.85);
-	makeGFace(patchR);
+	makeGFace(GModel::current(), patchR);
       }
       else if (ps->IsVPeriodic()) {
 	FM::Patch* patchL = 
@@ -955,19 +955,19 @@ void compute_cb(Fl_Widget *w, void *data)
 			 uM, vM, h0, h1, h2, h3);
 	patchL->SetMinV(-0.35);
 	patchL->SetMaxV(0.35);
-	makeGFace(patchL);
+	makeGFace(GModel::current(), patchL);
 	FM::Patch* patchR = 
 	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
 			 uM, vM, h0, h1, h2, h3);
 	patchR->SetMinV(0.15);
 	patchR->SetMaxV(0.85);
-	makeGFace(patchR);
+	makeGFace(GModel::current(), patchR);
       }
       else {
 	FM::Patch* patch = 
 	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
 			 uM, vM, h0, h1, h2, h3);
-	makeGFace(patch);
+	makeGFace(GModel::current(), patch);
       }
     }
   }
@@ -1011,7 +1011,7 @@ void blend_cb(Fl_Widget *w, void *data)
   FM::BlendOperator* blendOp = new FM::BlendOperator(patches);
   for (unsigned int i = 0; i < patches.size(); i++) {
     FM::BlendedPatch* patch = new FM::BlendedPatch(i, blendOp);
-    makeGFace(patch);
+    makeGFace(GModel::current(), patch);
   }
   for(unsigned int i = 0; i < faces.size(); i++) {
     delete_fourier(faces[i]);

@@ -69,7 +69,6 @@
 #define DEBUG_STR          "Debug   : "
 #define STATUS_STR         "Info    : "
 
-void   Signal(int signum);
 void   Msg(int level, const char *fmt, ...);
 void   Exit(int);
 double GetValue(const char *text, double defaultval);

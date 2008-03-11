@@ -13,6 +13,7 @@ SRC = GModel.cpp\
       MElement.cpp\
         MFace.cpp MVertex.cpp\
       NumericEmbedded.cpp\
+      StringUtils.cpp\
       GmshEmbedded.cpp
 
 OBJ = ${SRC:.cpp=${OBJEXT}}

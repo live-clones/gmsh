@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.137 2008-02-24 14:55:36 geuzaine Exp $
+// $Id: Generator.cpp,v 1.138 2008-03-11 20:03:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,7 @@
 extern Context_T CTX;
 
 template<class T>
-static void GetQualityMeasure(std::vector<T*>& ele, 
+static void GetQualityMeasure(std::vector<T*> &ele, 
 			      double &gamma, double &gammaMin, double &gammaMax, 
 			      double &eta, double &etaMin, double &etaMax, 
 			      double &rho, double &rhoMin, double &rhoMax,
@@ -69,6 +69,8 @@ void GetStatistics(double stat[50], double quality[3][100])
   for(int i = 0; i < 50; i++) stat[i] = 0.;
 
   GModel *m = GModel::current();
+
+  if(!m) return;
 
   stat[0] = m->getNumVertices();
   stat[1] = m->getNumEdges();
@@ -145,7 +147,7 @@ void GetStatistics(double stat[50], double quality[3][100])
   }
 }
 
-bool TooManyElements(GModel *m, int dim)
+static bool TooManyElements(GModel *m, int dim)
 {
   if(CTX.expert_mode || !m->getNumVertices()) return false;
 
@@ -165,7 +167,7 @@ bool TooManyElements(GModel *m, int dim)
   return false;
 }
 
-void Mesh1D(GModel *m)
+static void Mesh1D(GModel *m)
 {
   if(TooManyElements(m, 1)) return;
   Msg(STATUS1, "Meshing 1D...");
@@ -179,7 +181,7 @@ void Mesh1D(GModel *m)
   Msg(STATUS1, "Mesh");
 }
 
-void PrintMesh2dStatistics(GModel *m)
+static void PrintMesh2dStatistics(GModel *m)
 {
   FILE *statreport = 0;
   if(CTX.create_append_statreport == 1)
@@ -194,7 +196,7 @@ void PrintMesh2dStatistics(GModel *m)
   int nUnmeshed = 0, numFaces = 0;
 
   Msg(INFO,"2D Mesh Statistics :");
-  for(GModel::fiter it = m->firstFace() ; it!=m->lastFace(); ++it){
+  for(GModel::fiter it = m->firstFace() ; it != m->lastFace(); ++it){
     worst = std::min((*it)->meshStatistics.worst_element_shape, worst);
     best = std::max((*it)->meshStatistics.best_element_shape, best);
     avg += (*it)->meshStatistics.average_element_shape * (*it)->meshStatistics.nbTriangle;
@@ -226,7 +228,7 @@ void PrintMesh2dStatistics(GModel *m)
   fclose(statreport);
 }
 
-void Mesh2D(GModel *m)
+static void Mesh2D(GModel *m)
 {
   if(TooManyElements(m, 2)) return;
 
@@ -272,15 +274,14 @@ void Mesh2D(GModel *m)
   PrintMesh2dStatistics(m);
 }
 
-
-void FindConnectedRegions(std::vector<GRegion*> &delaunay, 
+static void FindConnectedRegions(std::vector<GRegion*> &delaunay, 
 			  std::vector<std::vector<GRegion*> > &connected)
 {
   // FIXME: need to split region vector into connected components here!
   connected.push_back(delaunay);
 }
 
-void Mesh3D(GModel *m)
+static void Mesh3D(GModel *m)
 {
   if(TooManyElements(m, 3)) return;
   Msg(STATUS1, "Meshing 3D...");
@@ -335,7 +336,7 @@ void OptimizeMesh(GModel *m)
   Msg(STATUS1, "Mesh");
 }
 
-void AdaptMesh()
+void AdaptMesh(GModel *m)
 {
   Msg(STATUS1, "Adapting the 3D Mesh...");
   double t1 = Cpu();
@@ -346,8 +347,6 @@ void AdaptMesh()
   }
 
   CTX.threads_lock = 1;
-
-  GModel *m = GModel::current();
 
   std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
   std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
@@ -365,15 +364,13 @@ void AdaptMesh()
   Msg(STATUS1, "Mesh");
 }
 
-void GenerateMesh(int ask)
+void GenerateMesh(GModel *m, int ask)
 {
   if(CTX.threads_lock) {
     Msg(INFO, "I'm busy! Ask me that later...");
     return;
   }
   CTX.threads_lock = 1;
-
-  GModel *m = GModel::current();
 
   int old = m->getMeshStatus(false);
 

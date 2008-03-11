@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.385 2008-02-23 15:30:06 geuzaine Exp $
+// $Id: Options.cpp,v 1.386 2008-03-11 20:03:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -72,7 +72,7 @@ void Init_Options_Safe(int num)
   Set_DefaultColorOptions(num, PrintOptions_Color);
 }
 
-const char *gmsh_getenv(const char *var)
+static const char *gmsh_getenv(const char *var)
 {
 #if !defined(WIN32)
   return getenv(var);
@@ -185,7 +185,7 @@ void Init_Options_GUI(int num)
   Set_ColorOptions_GUI(num, PrintOptions_Color);
 }
 
-void Print_OptionCategory(int level, int diff, int help, const char *cat, FILE *file)
+static void Print_OptionCategory(int level, int diff, int help, const char *cat, FILE *file)
 {
   if(diff || !help || !(level & GMSH_FULLRC))
     return;
@@ -214,7 +214,7 @@ GmshColorTable *Get_ColorTable(int num)
   return &opt->CT;
 }
 
-void Print_ColorTable(int num, int diff, const char *prefix, FILE *file)
+static void Print_ColorTable(int num, int diff, const char *prefix, FILE *file)
 {
   PViewOptions *opt;
   if(PView::list.empty() || num < 0 || num > (int)PView::list.size() - 1)
@@ -359,7 +359,7 @@ void Print_Options(int num, int level, int diff, int help, const char *filename)
   if(filename) fclose(file);
 }
 
-const char *Get_OptionSaveLevel(int level){
+static const char *Get_OptionSaveLevel(int level){
   if(level & GMSH_SESSIONRC){
     return "General.SessionFileName";
   }

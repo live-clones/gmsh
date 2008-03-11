@@ -15,7 +15,7 @@
 #include "FM_TopoFace.h"
 #include "FM_Reader.h"
 
-void makeGFace(FM::Patch* patch)
+void makeGFace(GModel *m, FM::Patch* patch)
 {
   double LL[2], LR[2], UL[2], UR[2];
   LL[0] = 0.0; LL[1] = 0.0;
@@ -25,8 +25,6 @@ void makeGFace(FM::Patch* patch)
   
   int i1, i2;
   double xx,yy,zz;
-  
-  GModel *m = GModel::current();
 
   int tagVertex = m->getNumVertices();
   patch->F(LL[0], LL[1], xx, yy, zz);
@@ -82,9 +80,9 @@ void makeGFace(FM::Patch* patch)
 
 int GModel::readFourier(const std::string &filename)
 {
-  FM::Reader* reader = new FM::Reader(filename.c_str());
+  FM::Reader *reader = new FM::Reader(filename.c_str());
   for (int i = 0; i < reader->GetNumPatches(); i++)
-    makeGFace(reader->GetPatch(i));
+    makeGFace(this, reader->GetPatch(i));
   return 1;
 }
 

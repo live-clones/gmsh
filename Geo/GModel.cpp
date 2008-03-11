@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.68 2008-03-08 22:03:12 geuzaine Exp $
+// $Id: GModel.cpp,v 1.69 2008-03-11 20:03:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,7 @@
 #  include "Message.h"
 #  include "gmshSurface.h"
 #  include "Field.h"
+#  include "Generator.h"
 #  include "BackgroundMesh.h"
 #  include "Context.h"
 #endif
@@ -57,10 +58,8 @@ GModel::~GModel()
 
 GModel *GModel::current()
 {
-  if(list.empty()){
-    Msg(GERROR, "No model available");
-    return 0;
-  }
+  if(list.empty()) return 0; // not an error
+
   // return last one for now
   return list.back();
 }
@@ -344,6 +343,17 @@ SBoundingBox3d GModel::bounds()
       bb += (*it)->mesh_vertices[i]->point();
 
   return bb;
+}
+
+int GModel::mesh(int dimension)
+{
+#if !defined(HAVE_GMSH_EMBEDDED)
+  GenerateMesh(this, dimension);
+  return true;
+#else
+  Msg(GERROR, "Embedded Gmsh cannot do mesh generation");
+  return false;
+#endif
 }
 
 int GModel::getMeshStatus(bool countDiscrete)
