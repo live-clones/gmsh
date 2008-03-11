@@ -20,7 +20,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "List.h"
+#include <vector>
+#include <string>
 
 // Interface-independent context 
 
@@ -33,7 +34,7 @@ class Context_T {
   char no_ext_filename[256]; // the same without the extension
   char base_filename[256]; // the base filename (no path, no extension)
   const char *bgm_filename; // background mesh
-  List_T *files; // all the files on the command line
+  std::vector<std::string> files; // all the files on the command line
   const char *output_filename; // output file specified with command line option '-o'
   const char *default_filename;
   char default_filename_fullpath[256]; // the name of the default file

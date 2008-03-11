@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.44 2008-03-11 20:03:09 geuzaine Exp $
+// $Id: Box.cpp,v 1.45 2008-03-11 20:24:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -83,8 +83,8 @@ int GMSHBOX(int argc, char *argv[])
   if(gmsh_yyerrorstate)
     ParUtil::Instance()->Abort();
   else {
-    for(int i = 1; i < List_Nbr(CTX.files); i++)
-      MergeFile(*(char**)List_Pointer(CTX.files, i));
+    for(unsigned int i = 1; i < CTX.files.size(); i++)
+      MergeFile(CTX.files[i].c_str());
     if(CTX.bgm_filename) {
       MergeFile(CTX.bgm_filename);
       if(PView::list.size()){

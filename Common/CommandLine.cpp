@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.120 2008-02-23 19:49:35 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.121 2008-03-11 20:24:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -668,13 +668,13 @@ void Get_Options(int argc, char *argv[])
 
     }
     else {
-      List_Add(CTX.files, &argv[i++]);
+      CTX.files.push_back(argv[i++]);
     }
 
   }
 
-  if(!List_Nbr(CTX.files))
+  if(CTX.files.empty())
     strncpy(CTX.filename, CTX.default_filename_fullpath, 255);
   else
-    strncpy(CTX.filename, *(char**)List_Pointer(CTX.files, 0), 255);
+    strncpy(CTX.filename, CTX.files[0].c_str(), 255);
 }
