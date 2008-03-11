@@ -1,8 +1,9 @@
-// compile and install Gmsh as a library with
+// configure, compile and install Gmsh as a library with
 //
+//   ./configure --disable-gui
 //   make install-lib
 //
-// Then compile this driver with "g++ driver.cpp -lGmsh"
+// Then compile this driver with "g++ driver.cpp -lGmsh -lgsl -lgslcblas"
 
 #include <stdio.h>
 #include <gmsh/Gmsh.h>
