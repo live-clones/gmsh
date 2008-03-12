@@ -118,6 +118,9 @@ class GEdge : public GEntity {
   // Resets the mesh attributes to default values
   virtual void resetMeshAttributes();
 
+  // True if entity is periodic in the "dim" direction.
+  virtual bool periodic(int dim) const { return v0 == v1 ; }
+
   struct {
     char Method;
     double coeffTransfinite;

@@ -25,6 +25,7 @@
 #include <map>
 #include <stack>
 #include "MElement.h"
+#include "BackgroundMesh.h"
 #include "qualityMeasures.h"
 
 //#define _GMSH_PRE_ALLOCATE_STRATEGY_ 1
@@ -85,7 +86,8 @@ class MTet4
     double vol;
     circum_radius = qmTet(t, qm, &vol);
   }
-  void setup(MTetrahedron *t, std::vector<double> &sizes)
+
+  void setup(MTetrahedron *t, std::vector<double> &sizes, std::vector<double> &sizesBGM)
   {
     base = t;
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
@@ -94,11 +96,18 @@ class MTet4
     const double dx = base->getVertex(0)->x() - center[0];
     const double dy = base->getVertex(0)->y() - center[1];
     const double dz = base->getVertex(0)->z() - center[2];
-    circum_radius = sqrt(dx * dx + dy * dy + dz * dz);
-    double lc = 0.25 * (sizes[base->getVertex(0)->getNum()] +
-			sizes[base->getVertex(1)->getNum()] +
-			sizes[base->getVertex(2)->getNum()] +
-			sizes[base->getVertex(3)->getNum()]);
+    circum_radius = sqrt ( dx*dx + dy*dy + dz*dz);
+
+    double lc1 = 0.25*(sizes [base->getVertex(0)->getNum()]+
+		      sizes [base->getVertex(1)->getNum()]+
+		       sizes [base->getVertex(2)->getNum()]+
+		       sizes [base->getVertex(3)->getNum()]);
+    double lcBGM = 0.25*(sizesBGM [base->getVertex(0)->getNum()]+
+			 sizesBGM [base->getVertex(1)->getNum()]+
+			 sizesBGM [base->getVertex(2)->getNum()]+
+			 sizesBGM [base->getVertex(3)->getNum()]);
+    double lc = Extend2dMeshIn3dVolumes() ? std::min(lc1, lcBGM) : lcBGM;
+    
     circum_radius /= lc;
     deleted = false;
   } 
@@ -200,14 +209,14 @@ class MTet4Factory
     delete [] allSlots;
 #endif
   }
-  MTet4 *Create(MTetrahedron *t, std::vector<double> &sizes)
+  MTet4 * Create (MTetrahedron * t, std::vector<double> & sizes, std::vector<double> & sizesBGM)
   {
 #ifdef _GMSH_PRE_ALLOCATE_STRATEGY_
     MTet4 *t4 = getAnEmptySlot();
 #else
     MTet4 *t4 = new MTet4;
 #endif
-    t4->setup(t, sizes);
+    t4->setup(t,sizes,sizesBGM);
     return t4;
   }
   void Free(MTet4 *t)

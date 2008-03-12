@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.24 2008-03-01 01:32:03 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.25 2008-03-12 08:36:49 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -78,7 +78,7 @@ bool reparamOnFace(MVertex *v, GFace *gf, SPoint2 &param)
 
 static double mylength(GEdge *ge, int i, double *u)
 {
-  return ge->length(u[i], u[i+1], 6);
+  return ge->length(u[i], u[i+1], 10);
 }
 
 static void myresid(int N, GEdge *ge, double *u, Double_Vector &r)
@@ -88,7 +88,7 @@ static void myresid(int N, GEdge *ge, double *u, Double_Vector &r)
   for (int i = 0; i < N - 2; i++) r(i) = L[i + 1] - L[i];
 }
 
-bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N, double *u)
+bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N, double *u, double underRelax)
 {
   const double PRECISION = 1.e-6;
   const int MAX_ITER = 50;
@@ -98,8 +98,6 @@ bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N, double
   // N is the total number of points (3 for quadratic, 4 for cubic ...)
   // u[0] = u0;
   // u[N-1] = uN;
-  // dist(ge(u[i]), ge(u[i+1])) =  dist(ge(u[i+1]), ge(u[i+2])), i = 0,...,N-2
-  
   // initialize as equidistant in parameter space
   u[0] = u0;
   double du = (uN - u0) / (N - 1);
@@ -135,24 +133,29 @@ bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N, double
       J.lu_solve(R, DU);
     
     for (int i = 0; i < M; i++){
-      u[i+1] -= DU(i);
+      u[i+1] -= underRelax*DU(i);
     }
+    //    printf("N %d M %d u1 = %g u0 = %g uN1 = %22.15E uN = %22.15E\n",N,M,u[1],u0,u[N - 1],uN);
+
     if (u[1] < u0) break;
-    if (u[N - 1] > uN) break;
+    if (u[N - 2] > uN) break;
 
     double newt_norm = DU.norm();      
-    if (newt_norm < PRECISION) return true;
+    //    printf("%22.15E\n",newt_norm);
+    if (newt_norm < PRECISION) {/*printf("ok %g\n",underRelax);*/return true;}
   }
   // FAILED, use equidistant in param space
-  for (int i = 1; i < N; i++){
-    u[i] = u[i - 1] + du;
-  }
+  // printf("coucou FAILED\n");
+  //  printf("failed %g\n",underRelax);
+//   for (int i = 1; i < N; i++){
+//     u[i] = u[i - 1] + du;
+//   }
   return false;
 }
 
 static double mylength(GFace *gf, int i, double *u, double *v)
 {
-  return gf->length(SPoint2(u[i], v[i]), SPoint2(u[i + 1], v[i + 1]), 4);
+  return gf->length(SPoint2(u[i], v[i]), SPoint2(u[i + 1], v[i + 1]), 10);
 }
 
 static void myresid(int N, GFace *gf, double *u, double *v, Double_Vector &r)
@@ -267,17 +270,30 @@ void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
     }
     else{
       MVertex *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);            
+
       double u0 = 0., u1 = 0.;
       bool reparamOK = true;
       if(!linear && ge->geomType() != GEntity::DiscreteCurve &&
 	 ge->geomType() != GEntity::BoundaryLayerCurve){
 	reparamOK &= reparamOnEdge(v0, ge, u0);
-	reparamOK &= reparamOnEdge(v1, ge, u1);
+
+	if (ge->periodic(0) &&  v1 == ge->getEndVertex()->mesh_vertices[0]){
+	  Range<double> par = ge->parBounds(0);
+	  u1 = par.high();
+	}	  
+	else
+	  reparamOK &= reparamOnEdge(v1, ge, u1);
       }
       double US[100];
       if(reparamOK && !linear && ge->geomType() != GEntity::DiscreteCurve){
-	computeEquidistantParameters(ge, u0, u1, nPts + 2, US);
-      } 
+	double relax = 1.;
+	while (1){
+	  if (computeEquidistantParameters(ge, u0, u1, nPts + 2, US,relax))break;
+	  relax /= 2.0;
+	  if (relax < 1.e-2)break;
+	} 
+	if (relax < 1.e-2)printf("failure in computing equidistant parameters %g\n",relax);
+      }
       std::vector<MVertex*> temp;      
       for(int j = 0; j < nPts; j++){
 	const double t = (double)(j + 1)/(nPts + 1);
@@ -769,6 +785,32 @@ bool straightLine(std::vector<MVertex*> &l, MVertex *n1, MVertex *n2)
   return true;
 }
 
+static double mesh_functional_distorsion ( MTriangle *t, double u, double v){
+  // compute uncurved element jacobian d_u x and d_v x
+  double mat[2][3];  
+  t->jac(1, 0, 0, 0, mat);
+  double v1[3] = {mat[0][0], mat[0][1], mat[0][2]};
+  double v2[3] = {mat[1][0], mat[1][1], mat[1][2]};
+  double normal1[3];
+  prodve(v1, v2, normal1);
+  double nn = sqrt(DSQR(normal1[0]) + DSQR(normal1[1]) + DSQR(normal1[2]));
+  
+  // compute uncurved element jacobian d_u x and d_v x
+  t->jac(u, v, mat);
+  double v1b[3] = {mat[0][0], mat[0][1], mat[0][2]};
+  double v2b[3] = {mat[1][0], mat[1][1], mat[1][2]};
+  double normal[3];
+  prodve(v1b, v2b, normal);
+  
+  double sign;
+  prosca(normal1, normal, &sign);
+  double det = norm3(normal) * (sign > 0 ? 1. : -1.) / nn;  
+
+  // compute distorsion
+  double dist = std::min(1. / det, det); 
+  return dist;
+}
+
 void getMinMaxJac (MTriangle *t, double &minJ, double &maxJ)
 {
   double mat[2][3];  
@@ -1186,9 +1228,9 @@ void checkHighOrderTriangles(GModel *m)
 
 void printJacobians(GModel *m, const char *nm)
 {
-  return;
+  //  return;
 
-  const int n = 22;
+  const int n = 5;
   double D[n][n];
   double X[n][n];
   double Y[n][n];
@@ -1199,17 +1241,13 @@ void printJacobians(GModel *m, const char *nm)
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
       MTriangle *t = (*it)->triangles[i];
-      double mat[2][3];  
-      t->jac(1,0,0,0,mat);
-      double dj0 = mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0];
-
       for(int i = 0; i < n; i++){
 	for(int k = 0; k < n - i; k++){
 	  SPoint3 pt;
-	  t->jac((double)i / (n - 1), (double)k / (n - 1), mat);	  
-	  t->pnt((double)i / (n - 1), (double)k / (n - 1), pt);	  
-	  const double det = mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0];
-	  D[i][k] = std::min(det/dj0,dj0/det);
+	  double u = (double)i / (n - 1);
+	  double v = (double)k / (n - 1);	  
+	  t->pnt(u,v, pt);	  
+	  D[i][k] = mesh_functional_distorsion (t,u,v);
 	  X[i][k] = pt.x();
 	  Y[i][k] = pt.y();
 	  Z[i][k] = pt.z();
@@ -1277,6 +1315,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
 
   printJacobians(m, "detjIni.pos");  
 
+
   if(CTX.mesh.smooth_internal_edges){
     checkHighOrderTriangles(m);
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){      
@@ -1296,6 +1335,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   }
 
   printJacobians(m, "detjOpt.pos");  
+
   checkHighOrderTriangles(m);
 
   double t2 = Cpu();

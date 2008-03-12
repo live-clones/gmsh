@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.39 2008-03-06 14:19:01 geuzaine Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.40 2008-03-12 08:36:49 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -131,9 +131,12 @@ void recurFindCavity(std::list<faceXtet> & shell,
   }
 }
 
-bool insertVertex(MVertex *v, MTet4 *t, MTet4Factory &myFactory,
-		  std::set<MTet4*, compareTet4Ptr> &allTets,
-		  std::vector<double> &vSizes)
+bool insertVertex(MVertex *v, 
+		  MTet4 *t,
+		  MTet4Factory &myFactory,
+		  std::set<MTet4*,compareTet4Ptr> &allTets,
+		  std::vector<double> & vSizes,
+		  std::vector<double> & vSizesBGM)
 {
   std::list<faceXtet> shell;
   std::list<MTet4*> cavity; 
@@ -206,7 +209,7 @@ bool insertVertex(MVertex *v, MTet4 *t, MTet4Factory &myFactory,
 // 		   it->v[2]->y(),
 // 		   it->v[2]->z());
       
-      MTet4 *t4 = myFactory.Create(tr, vSizes); 
+    MTet4 *t4 = myFactory.Create(tr, vSizes, vSizesBGM); 
       t4->setOnWhat(t->onWhat());
       newTets[k++] = t4;
       // all new tets are pushed front in order to ba able to destroy
@@ -722,6 +725,7 @@ void insertVerticesInRegion (GRegion *gr)
   //       sizeof(MTet4), sizeof(MTetrahedron), sizeof(MVertex));
 
   std::vector<double> vSizes;
+  std::vector<double> vSizesBGM;
   MTet4Factory myFactory(1600000);
   std::set<MTet4*, compareTet4Ptr> &allTets = myFactory.getAllTets();
   int NUM = 0;
@@ -734,11 +738,12 @@ void insertVerticesInRegion (GRegion *gr)
 	it != vSizesMap.end(); ++it){
       it->first->setNum(NUM++);
       vSizes.push_back(it->second);
+      vSizesBGM.push_back(it->second);
     }
   }
   
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++)
-    allTets.insert(myFactory.Create(gr->tetrahedra[i], vSizes));
+    allTets.insert(myFactory.Create(gr->tetrahedra[i], vSizes,vSizesBGM));
 
   gr->tetrahedra.clear();
   connectTets(allTets.begin(), allTets.end());
@@ -815,10 +820,12 @@ void insertVerticesInRegion (GRegion *gr)
 	  uvw[0] * vSizes[worst->tet()->getVertex(1)->getNum()] +
 	  uvw[1] * vSizes[worst->tet()->getVertex(2)->getNum()] +
 	  uvw[2] * vSizes[worst->tet()->getVertex(3)->getNum()];
-	double lc = std::min(lc1, BGM_MeshSize(gr, 0, 0, center[0], center[1], center[2]));
-	vSizes.push_back(lc);
+	double lc =  BGM_MeshSize(gr, 0, 0, center[0], center[1], center[2]);
+	//	double lc = std::min(lc1, BGM_MeshSize(gr, 0, 0, center[0], center[1], center[2]));
+	vSizes.push_back(lc1);
+	vSizesBGM.push_back(lc);
 	// compute mesh spacing there
-	if(!insertVertex(v, worst, myFactory, allTets, vSizes)){
+	if(!insertVertex(v, worst, myFactory, allTets, vSizes,vSizesBGM)){
 	  myFactory.changeTetRadius(allTets.begin(), 0.);
 	  delete v;
 	}

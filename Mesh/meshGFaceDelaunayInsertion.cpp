@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.11 2008-02-21 13:34:40 geuzaine Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.12 2008-03-12 08:36:49 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -467,7 +467,14 @@ void insertVerticesInFace(GFace *gf, BDS_Mesh *bds)
 		       Vs[base->getVertex(2)->getNum()]) / 3.};
       buildMetric(gf, pa, metric);
       circumCenterMetric(worst->tri(), metric, Us, Vs, center, r2); 
+
       bool inside = invMapUV(worst->tri(), center, Us, Vs, uv, 1.e-8);
+      if (!inside && worst->getNeigh(0))
+	inside |= invMapUV(worst->getNeigh(0)->tri(), center, Us, Vs, uv, 1.e-8);
+      if (!inside && worst->getNeigh(1))
+	inside |= invMapUV(worst->getNeigh(1)->tri(), center, Us, Vs, uv, 1.e-8);
+      if (!inside && worst->getNeigh(2))
+	inside |= invMapUV(worst->getNeigh(2)->tri(), center, Us, Vs, uv, 1.e-8);
       if (inside) {
 	// we use here local coordinates as real coordinates
 	// x,y and z will be computed hereafter
@@ -497,6 +504,13 @@ void insertVerticesInFace(GFace *gf, BDS_Mesh *bds)
 	  gf->mesh_vertices.push_back(v);
       }
       else {
+	Msg(DEBUG,"Point %g %g is outside (%g %g , %g %g , %g %g) (metric %g %g %g)",center[0],center[1],
+	    Us[base->getVertex(0)->getNum()], 
+	    Vs[base->getVertex(0)->getNum()], 
+	    Us[base->getVertex(1)->getNum()], 
+	    Vs[base->getVertex(1)->getNum()], 
+	    Us[base->getVertex(2)->getNum()], 
+	    Vs[base->getVertex(2)->getNum()],metric[0],metric[1],metric[2]);
 	AllTris.erase(AllTris.begin());
 	worst->forceRadius(0);
 	AllTris.insert(worst);

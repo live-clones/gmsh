@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.123 2008-03-01 01:32:03 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.124 2008-03-12 08:36:49 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1275,8 +1275,15 @@ void deMeshGFace::operator() (GFace *gf)
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;
 }
 
+const int debugSurface = -1;
+
 void meshGFace::operator() (GFace *gf)
 {
+  if (debugSurface>=0 && gf->tag() != debugSurface){
+    gf->meshStatistics.status = GFace::DONE;
+    return;
+  }
+
   if(gf->geomType() == GEntity::DiscreteSurface) return;
   if(gf->geomType() == GEntity::BoundaryLayerSurface) return;
   if(gf->geomType() == GEntity::ProjectionFace) return;
@@ -1317,10 +1324,10 @@ void meshGFace::operator() (GFace *gf)
 
   Msg(DEBUG1, "Generating the mesh");
   if(noseam(gf) || gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
-    gmsh2DMeshGenerator(gf,0, false);
+    gmsh2DMeshGenerator(gf,0, debugSurface>=0);
   }
   else{
-    if(!gmsh2DMeshGeneratorPeriodic(gf, false))
+    if(!gmsh2DMeshGeneratorPeriodic(gf, debugSurface>=0))
       Msg(GERROR, "Impossible to mesh face %d", gf->tag());
   }
 
