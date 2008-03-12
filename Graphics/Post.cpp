@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.155 2008-03-08 22:03:12 geuzaine Exp $
+// $Id: Post.cpp,v 1.156 2008-03-12 21:28:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -142,7 +142,7 @@ bool getExternalValues(PView *p, int index, int ient, int iele, int numNodes,
 
   if(opt->TimeStep < data2->getNumTimeSteps() && iele < data2->getNumElements(ient)){
     if(data2->getNumNodes(ient, iele) == numNodes){
-      numComp2 = data2->getNumComponents(ient, iele);
+      numComp2 = data2->getNumComponents(ient, iele, opt->TimeStep);
       for(int i = 0; i < numNodes; i++)
 	for(int j = 0; j < numComp2; j++)
 	  data2->getValue(ient, iele, i, j, opt->TimeStep, val2[i][j]);
@@ -897,7 +897,7 @@ void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
       if(data->skipElement(ent, i, opt->TimeStep)) continue;
       int numEdges = data->getNumEdges(ent, i);
       if(opt->skipElement(numEdges)) continue;
-      int numComp = data->getNumComponents(ent, i);
+      int numComp = data->getNumComponents(ent, i, opt->TimeStep);
       int numNodes = data->getNumNodes(ent, i);
       for(int j = 0; j < numNodes; j++){
 	data->getNode(ent, i, j, xyz[j][0], xyz[j][1], xyz[j][2]);
@@ -1137,7 +1137,7 @@ void drawGlyphs(PView *p)
       int numEdges = data->getNumEdges(ent, i);
       if(opt->skipElement(numEdges)) continue;
       int dim = data->getDimension(ent, i);
-      int numComp = data->getNumComponents(ent, i);
+      int numComp = data->getNumComponents(ent, i, opt->TimeStep);
       int numNodes = data->getNumNodes(ent, i);
       for(int j = 0; j < numNodes; j++){
 	data->getNode(ent, i, j, xyz[j][0], xyz[j][1], xyz[j][2]);

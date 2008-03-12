@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.21 2008-03-10 16:01:16 geuzaine Exp $
+// $Id: PView.cpp,v 1.22 2008-03-12 21:28:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -223,11 +223,11 @@ PView *PView::getViewByName(std::string name, int timeStep, int partition)
   return 0;
 }
 
-bool PView::readPOS(std::string filename, int fileIndex)
+bool PView::readPOS(std::string fileName, int fileIndex)
 {
-  FILE *fp = fopen(filename.c_str(), "rb");
+  FILE *fp = fopen(fileName.c_str(), "rb");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", filename.c_str());
+    Msg(GERROR, "Unable to open file '%s'", fileName.c_str());
     return false;
   }
 
@@ -282,7 +282,7 @@ bool PView::readPOS(std::string filename, int fileIndex)
 	  return false;
 	}
 	else{
-	  d->setFileName(filename);
+	  d->setFileName(fileName);
 	  d->setFileIndex(index);
 	  new PView(d);
 	}
@@ -291,10 +291,8 @@ bool PView::readPOS(std::string filename, int fileIndex)
     }
 
     do {
-      if(!fgets(str, 256, fp) || feof(fp)){
-        Msg(GERROR, "Prematured end of file");
+      if(!fgets(str, 256, fp) || feof(fp))
 	break;
-      }
     } while(str[0] != '$');
 
   }
@@ -304,11 +302,11 @@ bool PView::readPOS(std::string filename, int fileIndex)
   return true;
 }
 
-bool PView::readMSH(std::string filename, int fileIndex)
+bool PView::readMSH(std::string fileName, int fileIndex)
 {
-  FILE *fp = fopen(filename.c_str(), "rb");
+  FILE *fp = fopen(fileName.c_str(), "rb");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", filename.c_str());
+    Msg(GERROR, "Unable to open file '%s'", fileName.c_str());
     return false;
   }
 
@@ -359,49 +357,47 @@ bool PView::readMSH(std::string filename, int fileIndex)
 	if(p) d = dynamic_cast<PViewDataGModel*>(p->getData());
 	bool create = d ? false : true;
 	if(create) d = new PViewDataGModel(GModel::current());
-	if(!d->readMSH(fp, binary, swap, timeStep, time, partition, 
-		       numComp, numNodes)){
+	if(!d->readMSH(fileName, fileIndex, fp, binary, swap, timeStep, 
+		       time, partition, numComp, numNodes)){
 	  Msg(GERROR, "Could not read data in msh file");
 	  if(create) delete d;
 	  return false;
 	}
 	else{
 	  d->setName(name);
-	  d->setFileName(filename);
+	  d->setFileName(fileName);
 	  d->setFileIndex(index);
 	  if(create) new PView(d);
 	}
       }
     }
-
+    
     do {
-      if(!fgets(str, 256, fp) || feof(fp)){
-        Msg(GERROR, "Prematured end of file");
+      if(!fgets(str, 256, fp) || feof(fp))
 	break;
-      }
     } while(str[0] != '$');
-
+    
   }
 
   fclose(fp);
   return true;
 }
 
-bool PView::write(std::string filename, int format, bool append)
+bool PView::write(std::string fileName, int format, bool append)
 {
-  Msg(STATUS2, "Writing '%s'", filename.c_str());
+  Msg(STATUS2, "Writing '%s'", fileName.c_str());
 
   bool ret;
   switch(format){
-  case 0: ret = _data->writePOS(filename, false, false, append); break; // ASCII
-  case 1: ret = _data->writePOS(filename, true, false, append); break; // binary
-  case 2: ret = _data->writePOS(filename, false, true, append); break; // parsed
-  case 3: ret = _data->writeSTL(filename); break;
-  case 4: ret = _data->writeTXT(filename); break;
-  case 5: ret = _data->writeMSH(filename); break;
+  case 0: ret = _data->writePOS(fileName, false, false, append); break; // ASCII
+  case 1: ret = _data->writePOS(fileName, true, false, append); break; // binary
+  case 2: ret = _data->writePOS(fileName, false, true, append); break; // parsed
+  case 3: ret = _data->writeSTL(fileName); break;
+  case 4: ret = _data->writeTXT(fileName); break;
+  case 5: ret = _data->writeMSH(fileName); break;
   default: ret = false; Msg(GERROR, "Unknown view format %d", format); break;
   }
 
-  Msg(STATUS2, "Wrote '%s'", filename.c_str());
+  Msg(STATUS2, "Wrote '%s'", fileName.c_str());
   return ret;
 }

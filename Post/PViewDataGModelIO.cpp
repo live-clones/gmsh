@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.6 2008-03-10 19:59:01 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.7 2008-03-12 21:28:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -29,8 +29,21 @@
 #include "Numeric.h"
 #include "StringUtils.h"
 
-bool PViewDataGModel::readMSH(FILE *fp, bool binary, bool swap, int timeStep, 
-			      double time, int partition, int numComp, int numNodes)
+// Todo: slightly change this as follows:
+// - always populate the _dataXX vector with stepData (for all time steps)
+// - make the actual data allocatable (e.g. ptr to vector<vector>>)
+// - only alloc data if...
+//     - e.g. only alloc data for first time step
+// in "skipElement": if no data, read it from file (using fileName/Index info
+// in stepData) and free another if...
+//
+// usage should be as simple as: "gmsh *.pos". This would not load all
+// time steps by default: only the 1st one(s). Then load/cache the
+// others as needed on the fly.
+
+bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
+			      bool binary, bool swap, int timeStep, double time, 
+			      int partition, int numComp, int numNodes)
 {
   Msg(INFO, "Reading step %d (time %g) partition %d: %d nodes", 
       timeStep, time, partition, numNodes);
@@ -39,6 +52,8 @@ bool PViewDataGModel::readMSH(FILE *fp, bool binary, bool swap, int timeStep,
 
   if(!_nodeData[timeStep]) _nodeData[timeStep] = new stepData<double>();
 
+  _nodeData[timeStep]->fileName = fileName;
+  _nodeData[timeStep]->fileIndex = fileIndex;
   _nodeData[timeStep]->time = time;
   _nodeData[timeStep]->values.resize(numNodes);
 

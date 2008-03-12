@@ -1,4 +1,4 @@
-// $Id: PViewDataIO.cpp,v 1.3 2008-02-24 21:43:17 geuzaine Exp $
+// $Id: PViewDataIO.cpp,v 1.4 2008-03-12 21:28:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -98,7 +98,7 @@ bool PViewData::writeTXT(std::string name)
 	getNode(ent, ele, nod, x, y, z);
 	fprintf(fp, "%.16g %.16g %.16g ", x, y, z);
 	for(int step = 0; step < getNumTimeSteps(); step++){	
-	  for(int comp = 0; comp < getNumComponents(ent, ele); comp++){	
+	  for(int comp = 0; comp < getNumComponents(ent, ele, step); comp++){	
 	    double val;
 	    getValue(ent, ele, nod, comp, step, val);
 	    fprintf(fp, "%.16g ", val);

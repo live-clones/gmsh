@@ -28,10 +28,15 @@
 template<class real>
 class stepData{
  public:
+  // the file the data was read from
+  std::string fileName;
+  // the index in the file
+  int fileIndex;
+  // the value of the time step and associated min/max
   double time, min, max;
-  // vector of data, indexed by dataIndex
+  // the vector of data, indexed by dataIndex
   std::vector<std::vector<real> > values;
-  stepData() : time(0.), min(VAL_INF), max(-VAL_INF){}
+  stepData() : fileIndex(-1), time(0.), min(VAL_INF), max(-VAL_INF){}
   ~stepData() {}
 };
 
@@ -64,7 +69,7 @@ class PViewDataGModel : public PViewData {
   int getDimension(int ent, int ele);
   int getNumNodes(int ent, int ele);
   void getNode(int ent, int ele, int nod, double &x, double &y, double &z);
-  int getNumComponents(int ent, int ele);
+  int getNumComponents(int ent, int ele, int step);
   void getValue(int ent, int ele, int node, int comp, int step, double &val);
   int getNumEdges(int ent, int ele);
   bool skipEntity(int ent);
@@ -76,8 +81,9 @@ class PViewDataGModel : public PViewData {
   //PViewDataList *convertToPViewDataList();
 
   // I/O routines
-  bool readMSH(FILE *fp, bool binary, bool swap, int timeStep, double time,
-	       int partition, int numComp, int numNodes);
+  bool readMSH(std::string fileName, int fileIndex, FILE *fp, bool binary, 
+	       bool swap, int timeStep, double time, int partition, 
+	       int numComp, int numNodes);
   bool writeMSH(std::string name, bool binary=false);
 };
 

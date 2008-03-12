@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.16 2008-03-10 16:01:16 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.17 2008-03-12 21:28:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -341,7 +341,7 @@ void PViewDataList::getNode(int ent, int ele, int nod, double &x, double &y, dou
   z = _lastXYZ[2 * _lastNumNodes + nod];
 }
 
-int PViewDataList::getNumComponents(int ent, int ele)
+int PViewDataList::getNumComponents(int ent, int ele, int step)
 {
   if(ele != _lastElement) _setLast(ele);
   return _lastNumComponents;

@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.25 2008-03-10 19:59:01 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.26 2008-03-12 21:28:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -114,12 +114,12 @@ void PViewDataGModel::getNode(int ent, int ele, int nod, double &x, double &y, d
   z = v->z();
 }
 
-int PViewDataGModel::getNumComponents(int ent, int ele)
+int PViewDataGModel::getNumComponents(int ent, int ele, int step)
 {
   MVertex *v = _entities[ent]->getMeshElement(ele)->getVertex(0);
   int index = v->getDataIndex();
   // no range check here: we assume this call is guarded by skipElement()
-  return _nodeData[0]->values[index].size();
+  return _nodeData[step]->values[index].size();
 }
 
 void PViewDataGModel::getValue(int ent, int ele, int nod, int comp, int step, double &val)

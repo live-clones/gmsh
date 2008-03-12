@@ -87,12 +87,12 @@ class PView{
 			      int partition=-1);
 
   // read view(s) in list format from a file
-  static bool readPOS(std::string filename, int fileIndex=-1);
+  static bool readPOS(std::string fileName, int fileIndex=-1);
   // read view data from MSH file
-  static bool readMSH(std::string filename, int fileIndex=-1);
+  static bool readMSH(std::string fileName, int fileIndex=-1);
 
   // write view to file in given format
-  bool write(std::string filename, int format, bool append=false);
+  bool write(std::string fileName, int format, bool append=false);
 
   // vertex arrays to draw the elements efficiently
   VertexArray *va_points, *va_lines, *va_triangles, *va_vectors;

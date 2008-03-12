@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.74 2008-02-24 14:55:36 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.75 2008-03-12 21:28:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -95,8 +95,8 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
       int dim = data->getDimension(ent, i);
       if(dim < 2){
 	int numNodes = data->getNumNodes(ent, i);
-	int numComp = data->getNumComponents(ent, i);
 	for(int ts = space ? opt->TimeStep : 0; ts < opt->TimeStep + 1; ts++){
+	  int numComp = data->getNumComponents(ent, i, ts);
 	  for(int j = 0; j < numNodes; j++){
 	    double val[9], xyz[3];
 	    data->getNode(ent, i, j, xyz[0], xyz[1], xyz[2]);

@@ -36,7 +36,7 @@ class PViewData {
   // name of the view
   std::string _name;
   // name of the file the data was loaded from
-  std::string _filename;
+  std::string _fileName;
   // index of the view in the file
   int _fileIndex;
  public:
@@ -47,8 +47,8 @@ class PViewData {
   virtual bool finalize(){ _dirty = false; return true; }
   virtual std::string getName(){ return _name; }
   virtual void setName(std::string val){ _name = val; }
-  virtual std::string getFileName(){ return _filename; }
-  virtual void setFileName(std::string val){ _filename = val; }
+  virtual std::string getFileName(){ return _fileName; }
+  virtual void setFileName(std::string val){ _fileName = val; }
   virtual int getFileIndex(){ return _fileIndex; }
   virtual void setFileIndex(int val){ _fileIndex = val; }
   virtual int getNumTimeSteps() = 0;
@@ -83,7 +83,7 @@ class PViewData {
   virtual void getNode(int ent, int ele, int nod, double &x, double &y, double &z) = 0;
   // Returns the number of componts available for the ele-th element
   // in the ent-th entity
-  virtual int getNumComponents(int ent, int ele) = 0;
+  virtual int getNumComponents(int ent, int ele, int step) = 0;
   // Returns the comp-th component (at the step-th time step)
   // associated with the node-th node from the ele-th element in the
   // ent-th entity

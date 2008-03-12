@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.11 2008-02-17 08:48:08 geuzaine Exp $
+// $Id: PViewData.cpp,v 1.12 2008-03-12 21:28:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -25,7 +25,7 @@
 #include "PViewData.h"
 
 PViewData::PViewData()
-  : _dirty(true), _name(""), _filename(""), _fileIndex(0)
+  : _dirty(true), _fileIndex(0)
 {
 }
 
