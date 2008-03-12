@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.12 2008-03-12 08:36:49 remacle Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.13 2008-03-12 14:52:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -365,12 +365,12 @@ bool insertVertex(GFace *gf, MVertex *v, double *param , MTri3 *t,
 
   while (it != shell.end()){
     MTriangle *t = new MTriangle(it->v[0], it->v[1], v);
-    double lc = 0.3333333333 * (vSizes [t->getVertex(0)->getNum()]+
-				vSizes [t->getVertex(1)->getNum()]+
-				vSizes [t->getVertex(2)->getNum()]);
-    double lcBGM = 0.3333333333 * (vSizesBGM [t->getVertex(0)->getNum()]+
-				   vSizesBGM [t->getVertex(1)->getNum()]+
-				   vSizesBGM [t->getVertex(2)->getNum()]);
+    double lc = 0.3333333333 * (vSizes[t->getVertex(0)->getNum()] +
+				vSizes[t->getVertex(1)->getNum()] +
+				vSizes[t->getVertex(2)->getNum()]);
+    double lcBGM = 0.3333333333 * (vSizesBGM[t->getVertex(0)->getNum()] +
+				   vSizesBGM[t->getVertex(1)->getNum()] +
+				   vSizesBGM[t->getVertex(2)->getNum()]);
     MTri3 *t4 = new MTri3(t, Extend1dMeshIn2dSurfaces() ? std::min(lc, lcBGM) : lcBGM); 
     newTris[k++] = t4;
     // all new triangles are pushed front in order to
@@ -504,13 +504,15 @@ void insertVerticesInFace(GFace *gf, BDS_Mesh *bds)
 	  gf->mesh_vertices.push_back(v);
       }
       else {
-	Msg(DEBUG,"Point %g %g is outside (%g %g , %g %g , %g %g) (metric %g %g %g)",center[0],center[1],
+	Msg(DEBUG,"Point %g %g is outside (%g %g , %g %g , %g %g) (metric %g %g %g)",
+	    center[0], center[1],
 	    Us[base->getVertex(0)->getNum()], 
 	    Vs[base->getVertex(0)->getNum()], 
 	    Us[base->getVertex(1)->getNum()], 
 	    Vs[base->getVertex(1)->getNum()], 
 	    Us[base->getVertex(2)->getNum()], 
-	    Vs[base->getVertex(2)->getNum()],metric[0],metric[1],metric[2]);
+	    Vs[base->getVertex(2)->getNum()], 
+	    metric[0], metric[1], metric[2]);
 	AllTris.erase(AllTris.begin());
 	worst->forceRadius(0);
 	AllTris.insert(worst);

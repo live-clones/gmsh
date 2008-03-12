@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.25 2008-03-12 08:36:49 remacle Exp $
+// $Id: HighOrder.cpp,v 1.26 2008-03-12 14:52:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -135,21 +135,21 @@ bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N, double
     for (int i = 0; i < M; i++){
       u[i+1] -= underRelax*DU(i);
     }
-    //    printf("N %d M %d u1 = %g u0 = %g uN1 = %22.15E uN = %22.15E\n",N,M,u[1],u0,u[N - 1],uN);
+    // printf("N %d M %d u1 = %g u0 = %g uN1 = %22.15E uN = %22.15E\n",
+    //        N, M, u[1], u0, u[N - 1], uN);
 
     if (u[1] < u0) break;
     if (u[N - 2] > uN) break;
 
     double newt_norm = DU.norm();      
-    //    printf("%22.15E\n",newt_norm);
-    if (newt_norm < PRECISION) {/*printf("ok %g\n",underRelax);*/return true;}
+    // printf("%22.15E\n",newt_norm);
+    if (newt_norm < PRECISION) { /*printf("ok %g\n",underRelax);*/ return true; }
   }
   // FAILED, use equidistant in param space
-  // printf("coucou FAILED\n");
-  //  printf("failed %g\n",underRelax);
-//   for (int i = 1; i < N; i++){
-//     u[i] = u[i - 1] + du;
-//   }
+  // printf("failed %g\n",underRelax);
+  // for (int i = 1; i < N; i++){
+  //   u[i] = u[i - 1] + du;
+  // }
   return false;
 }
 
@@ -785,7 +785,8 @@ bool straightLine(std::vector<MVertex*> &l, MVertex *n1, MVertex *n2)
   return true;
 }
 
-static double mesh_functional_distorsion ( MTriangle *t, double u, double v){
+static double mesh_functional_distorsion(MTriangle *t, double u, double v)
+{
   // compute uncurved element jacobian d_u x and d_v x
   double mat[2][3];  
   t->jac(1, 0, 0, 0, mat);
@@ -1228,7 +1229,7 @@ void checkHighOrderTriangles(GModel *m)
 
 void printJacobians(GModel *m, const char *nm)
 {
-  //  return;
+  return;
 
   const int n = 5;
   double D[n][n];
@@ -1314,7 +1315,6 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
 
   printJacobians(m, "detjIni.pos");  
-
 
   if(CTX.mesh.smooth_internal_edges){
     checkHighOrderTriangles(m);

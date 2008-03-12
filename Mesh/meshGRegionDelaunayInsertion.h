@@ -98,14 +98,14 @@ class MTet4
     const double dz = base->getVertex(0)->z() - center[2];
     circum_radius = sqrt ( dx*dx + dy*dy + dz*dz);
 
-    double lc1 = 0.25*(sizes [base->getVertex(0)->getNum()]+
-		      sizes [base->getVertex(1)->getNum()]+
-		       sizes [base->getVertex(2)->getNum()]+
-		       sizes [base->getVertex(3)->getNum()]);
-    double lcBGM = 0.25*(sizesBGM [base->getVertex(0)->getNum()]+
-			 sizesBGM [base->getVertex(1)->getNum()]+
-			 sizesBGM [base->getVertex(2)->getNum()]+
-			 sizesBGM [base->getVertex(3)->getNum()]);
+    double lc1 = 0.25*(sizes[base->getVertex(0)->getNum()]+
+		      sizes[base->getVertex(1)->getNum()]+
+		       sizes[base->getVertex(2)->getNum()]+
+		       sizes[base->getVertex(3)->getNum()]);
+    double lcBGM = 0.25*(sizesBGM[base->getVertex(0)->getNum()]+
+			 sizesBGM[base->getVertex(1)->getNum()]+
+			 sizesBGM[base->getVertex(2)->getNum()]+
+			 sizesBGM[base->getVertex(3)->getNum()]);
     double lc = Extend2dMeshIn3dVolumes() ? std::min(lc1, lcBGM) : lcBGM;
     
     circum_radius /= lc;
@@ -209,14 +209,15 @@ class MTet4Factory
     delete [] allSlots;
 #endif
   }
-  MTet4 * Create (MTetrahedron * t, std::vector<double> & sizes, std::vector<double> & sizesBGM)
+  MTet4 * Create (MTetrahedron * t, std::vector<double> &sizes, 
+		  std::vector<double> &sizesBGM)
   {
 #ifdef _GMSH_PRE_ALLOCATE_STRATEGY_
     MTet4 *t4 = getAnEmptySlot();
 #else
     MTet4 *t4 = new MTet4;
 #endif
-    t4->setup(t,sizes,sizesBGM);
+    t4->setup(t, sizes, sizesBGM);
     return t4;
   }
   void Free(MTet4 *t)
