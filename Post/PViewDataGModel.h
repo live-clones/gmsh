@@ -27,17 +27,62 @@
 
 template<class real>
 class stepData{
- public:
+ private:
   // the file the data was read from
-  std::string fileName;
+  std::string _fileName;
   // the index in the file
-  int fileIndex;
-  // the value of the time step and associated min/max
-  double time, min, max;
-  // the vector of data, indexed by dataIndex
-  std::vector<std::vector<real> > values;
-  stepData() : fileIndex(-1), time(0.), min(VAL_INF), max(-VAL_INF){}
-  ~stepData() {}
+  int _fileIndex;
+  // the value of the time step and value min/max
+  double _time, _min, _max;
+  // the number of components in the data (stepData only contain a
+  // single field type!)
+  int _numComp;
+  // the values, indexed by dataIndex in MVertex or MElement
+  std::vector<real*> *_data;
+ public:
+  stepData(int numComp, std::string fileName="", int fileIndex=-1, double time=0.,
+	   double min=VAL_INF, double max=-VAL_INF) 
+    : _numComp(numComp), _fileName(fileName), _fileIndex(fileIndex), _time(time), 
+      _min(min), _max(max), _data(0)
+  {
+  }
+  ~stepData(){ destroyData(); }
+  int getNumComp(){ return _numComp; }
+  std::string getFileName(){ return _fileName; }
+  void setFileName(std::string name){ _fileName = name; }
+  int getFileIndex(){ return _fileIndex; }
+  void setFileIndex(int index){ _fileIndex = index; }
+  double getTime(){ return _time; }
+  void setTime(double time){ _time = time; }
+  double getMin(){ return _min; }
+  void setMin(double min ){ _min = min; }
+  double getMax(){ return _max; }
+  void setMax(double max){ _max = max; }
+  int getNumData()
+  {
+    if(!_data) return 0;
+    return _data->size();
+  }
+  void resizeData(int n)
+  {  
+    if(!_data) _data = new std::vector<real*>(n, (real*)0);
+    if(n < _data->size()) _data->resize(n, (real*)0);
+  }
+  real *getData(int index, bool allocIfNeeded=false)
+  {
+    if(!_data || index >= _data->size()) resizeData(index + 100); // optimize this
+    if(allocIfNeeded && !(*_data)[index]) (*_data)[index] = new real[_numComp];
+    return (*_data)[index];
+  }
+  void destroyData()
+  {
+    if(_data){
+      for(unsigned int i = 0; i < _data->size(); i++)
+	if((*_data)[i]) delete [] (*_data)[i];
+      delete _data;
+    }
+    _data = 0;
+  }
 };
 
 // data container using elements from a GModel

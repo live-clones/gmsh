@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.7 2008-03-12 21:28:53 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.8 2008-03-13 22:02:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -29,18 +29,6 @@
 #include "Numeric.h"
 #include "StringUtils.h"
 
-// Todo: slightly change this as follows:
-// - always populate the _dataXX vector with stepData (for all time steps)
-// - make the actual data allocatable (e.g. ptr to vector<vector>>)
-// - only alloc data if...
-//     - e.g. only alloc data for first time step
-// in "skipElement": if no data, read it from file (using fileName/Index info
-// in stepData) and free another if...
-//
-// usage should be as simple as: "gmsh *.pos". This would not load all
-// time steps by default: only the 1st one(s). Then load/cache the
-// others as needed on the fly.
-
 bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
 			      bool binary, bool swap, int timeStep, double time, 
 			      int partition, int numComp, int numNodes)
@@ -48,16 +36,20 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
   Msg(INFO, "Reading step %d (time %g) partition %d: %d nodes", 
       timeStep, time, partition, numNodes);
 
-  while(timeStep >= (int)_nodeData.size()) _nodeData.push_back(0);
+  while(timeStep >= (int)_nodeData.size())
+    _nodeData.push_back(new stepData<double>(numComp));
+  
+  _nodeData[timeStep]->setFileName(fileName);
+  _nodeData[timeStep]->setFileIndex(fileIndex);
+  _nodeData[timeStep]->setTime(time);
 
-  if(!_nodeData[timeStep]) _nodeData[timeStep] = new stepData<double>();
+  // if we already have maxSteps for this view, return
+  int numSteps = 0, maxSteps = 1000000000;
+  for(unsigned int i = 0; i < _nodeData.size(); i++)
+    numSteps += _nodeData[i]->getNumData() ? 1 : 0;
+  if(numSteps > maxSteps) return true;
 
-  _nodeData[timeStep]->fileName = fileName;
-  _nodeData[timeStep]->fileIndex = fileIndex;
-  _nodeData[timeStep]->time = time;
-  _nodeData[timeStep]->values.resize(numNodes);
-
-  std::vector<double> tmp(numComp, 0.);
+  _nodeData[timeStep]->resizeData(numNodes);
 
   for(int i = 0; i < numNodes; i++){
     int num;
@@ -79,21 +71,18 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
       v->setDataIndex(max + 1);
     }
     int index = v->getDataIndex();
-    if(index >= (int)_nodeData[timeStep]->values.size())
-      _nodeData[timeStep]->values.resize(index + 100); // optimize this
+    double *d = _nodeData[timeStep]->getData(index, true);
     if(binary){
-      if((int)fread(&tmp[0], sizeof(double), numComp, fp) != numComp) return false;
-      if(swap) swapBytes((char*)&tmp[0], sizeof(double), numComp);
+      if((int)fread(d, sizeof(double), numComp, fp) != numComp) return false;
+      if(swap) swapBytes((char*)d, sizeof(double), numComp);
     }
     else{
       for(int j = 0; j < numComp; j++)
-	if(fscanf(fp, "%lf", &tmp[j]) != 1) return false;
+	if(fscanf(fp, "%lf", &d[j]) != 1) return false;
     }
-    for(int j = 0; j < numComp; j++)
-      _nodeData[timeStep]->values[index].push_back(tmp[j]);
-    double s = ComputeScalarRep(numComp, &_nodeData[timeStep]->values[index][0]);
-    _nodeData[timeStep]->min = std::min(_nodeData[timeStep]->min, s);
-    _nodeData[timeStep]->max = std::max(_nodeData[timeStep]->max, s);
+    double s = ComputeScalarRep(numComp, d);
+    _nodeData[timeStep]->setMin(std::min(_nodeData[timeStep]->getMin(), s));
+    _nodeData[timeStep]->setMax(std::max(_nodeData[timeStep]->getMax(), s));
   }
 
   _partitions.insert(partition);
@@ -125,29 +114,25 @@ bool PViewDataGModel::writeMSH(std::string name, bool binary)
     }
   }
 
-  for(unsigned int ts = 0; ts < _nodeData.size(); ts++){
-    if(!_nodeData[ts]) continue;
-    int numNodes = 0, numComp = 100;
-    for(unsigned int i = 0; i < _nodeData[ts]->values.size(); i++){
-      if(_nodeData[ts]->values[i].size()){
-	numComp = std::min(numComp, (int)_nodeData[ts]->values[i].size());
-	numNodes++;
-      }
-    }
-    if(numNodes && numComp){
+  for(unsigned int step = 0; step < _nodeData.size(); step++){
+    int numNodes = 0, numComp = _nodeData[step]->getNumComp();
+    for(unsigned int i = 0; i < _nodeData[step]->getNumData(); i++)
+      if(_nodeData[step]->getData(i)) numNodes++;
+    if(numNodes){
       fprintf(fp, "$NodeData\n");
       fprintf(fp, "\"%s\"\n", getName().c_str());
-      fprintf(fp, "%d %.16g 0 0 %d %d\n", ts, _nodeData[ts]->time, numComp, numNodes);
-      for(unsigned int i = 0; i < _nodeData[ts]->values.size(); i++){
-	if((int)_nodeData[ts]->values[i].size() >= numComp){
+      fprintf(fp, "%d %.16g 0 0 %d %d\n", step, _nodeData[step]->getTime(), 
+	      numComp, numNodes);
+      for(unsigned int i = 0; i < _nodeData[step]->getNumData(); i++){
+	if(_nodeData[step]->getData(i)){
 	  if(binary){
 	    fwrite(&tags[i], sizeof(int), 1, fp);
-	    fwrite(&_nodeData[ts]->values[i][0], sizeof(double), numComp, fp);
+	    fwrite(_nodeData[step]->getData(i), sizeof(double), numComp, fp);
 	  }
 	  else{
 	    fprintf(fp, "%d", tags[i]);
 	    for(int k = 0; k < numComp; k++)
-	      fprintf(fp, " %.16g", _nodeData[ts]->values[i][k]);
+	      fprintf(fp, " %.16g", _nodeData[step]->getData(i)[k]);
 	    fprintf(fp, "\n");
 	  }
 	}
