@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.663 2008-03-18 19:30:13 geuzaine Exp $
+// $Id: GUI.cpp,v 1.664 2008-03-18 19:36:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1320,7 +1320,7 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 		  (Fl_Callback *) view_options_cb, (void *)nb, 0);
 	p[j]->add("Plugins...", 'p', 
 		  (Fl_Callback *) view_plugin_cb, (void *)nb, 0);
-	p[j]->add("Fields...", 'p', 
+	p[j]->add("Fields...", 'f', 
 		  (Fl_Callback *) view_field_cb, (void *)nb, 0);
       }
 
