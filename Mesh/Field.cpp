@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.17 2008-03-18 11:33:04 remacle Exp $
+// $Id: Field.cpp,v 1.18 2008-03-18 11:41:08 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -892,7 +892,7 @@ void Field::put_on_view(PView *view,int comp)
 void FieldManager::set_background_mesh(int iView){
 	int id=new_id();
 	Field *f=new_field(id,"PostView");
-	f->options["IView"]->numerical_value(iView-1);
+	f->options["IView"]->numerical_value(iView);
 	(*this)[id]=f;
 	background_field=id;
 }
