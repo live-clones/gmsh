@@ -28,7 +28,9 @@
 #include "GFace.h"
 #include "GRegion.h"
 #include "SBoundingBox3d.h"
+#if !defined(HAVE_GMSH_EMBEDDED)
 #include "Field.h"
+#endif
 
 class GEO_Internals;
 class OCC_Internals;
@@ -38,7 +40,6 @@ class smooth_normals;
 class GModel
 {
  private:
-	std::set<Field*>mesh_size_fields;
   // Vertex cache to speed-up direct access by vertex number (used for
   // post-processing I/O)
   std::vector<MVertex*> _vertexVectorCache;
@@ -248,8 +249,10 @@ class GModel
   // Med interface ("Modele d'Echange de Donnees")
   int writeMED(const std::string &name);
 
-	// Characteristic Lengths fields
-	FieldManager fields;
+#if !defined(HAVE_GMSH_EMBEDDED)
+  // Characteristic Lengths fields
+  FieldManager fields;
+#endif
 };
 
 #endif

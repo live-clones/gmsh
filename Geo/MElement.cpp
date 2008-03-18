@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.58 2008-02-22 07:19:07 geuzaine Exp $
+// $Id: MElement.cpp,v 1.59 2008-03-18 19:30:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -132,19 +132,6 @@ double MTetrahedron::etaShapeMeasure()
 #endif
 }
 
-void MTetrahedron::getMat(double mat[3][3])
-{
-  mat[0][0] = _v[1]->x() - _v[0]->x();
-  mat[0][1] = _v[2]->x() - _v[0]->x();
-  mat[0][2] = _v[3]->x() - _v[0]->x();
-  mat[1][0] = _v[1]->y() - _v[0]->y();
-  mat[1][1] = _v[2]->y() - _v[0]->y();
-  mat[1][2] = _v[3]->y() - _v[0]->y();
-  mat[2][0] = _v[1]->z() - _v[0]->z();
-  mat[2][1] = _v[2]->z() - _v[0]->z();
-  mat[2][2] = _v[3]->z() - _v[0]->z();
-}
-
 double MTetrahedron::getVolume()
 { 
   double mat[3][3];
@@ -167,31 +154,6 @@ bool MTetrahedron::invertmapping(double *p, double *uvw, double tol)
     return true;
   }
   return false;
-}
-
-void MTetrahedron::circumcenter(double X[4], double Y[4], double Z[4], double *res)
-{
-  double mat[3][3], b[3], dum;    
-  b[0] = X[1] * X[1] - X[0] * X[0] +
-    Y[1] * Y[1] - Y[0] * Y[0] + Z[1] * Z[1] - Z[0] * Z[0];
-  b[1] = X[2] * X[2] - X[1] * X[1] +
-    Y[2] * Y[2] - Y[1] * Y[1] + Z[2] * Z[2] - Z[1] * Z[1];
-  b[2] = X[3] * X[3] - X[2] * X[2] +
-    Y[3] * Y[3] - Y[2] * Y[2] + Z[3] * Z[3] - Z[2] * Z[2];
-  for(int i = 0; i < 3; i++)
-    b[i] *= 0.5;
-  mat[0][0] = X[1] - X[0];
-  mat[0][1] = Y[1] - Y[0];
-  mat[0][2] = Z[1] - Z[0];
-  mat[1][0] = X[2] - X[1];
-  mat[1][1] = Y[2] - Y[1];
-  mat[1][2] = Z[2] - Z[1];
-  mat[2][0] = X[3] - X[2];
-  mat[2][1] = Y[3] - Y[2];
-  mat[2][2] = Z[3] - Z[2];
-  if(!sys3x3(mat, b, res, &dum)) {
-    res[0] = res[1] = res[2] = 10.0e10;
-  }
 }
 
 int MHexahedron::getVolumeSign()
@@ -487,161 +449,6 @@ void MElement::writeBDF(FILE *fp, int format, int elementary)
   }
 }
 
-bool MTriangle::invertmappingXY(double *p, double *uv, double tol)
-{
-  double mat[2][2];
-  double b[2];
-  getMat(mat);
-  b[0] = p[0] - getVertex(0)->x();
-  b[1] = p[1] - getVertex(0)->y();
-  sys2x2(mat, b, uv);
-
-  if(uv[0] >= -tol && 
-     uv[1] >= -tol && 
-     uv[0] <= 1. + tol && 
-     uv[1] <= 1. + tol && 
-     1. - uv[0] - uv[1] > -tol) {
-    return true;
-  }
-  return false; 
-}
-
-bool MTriangle::invertmappingUV(GFace* gf, double *p, double *uv, double tol)
-{
-  double mat[2][2];
-  double b[2];
-  double u0, v0, u1, v1, u2, v2;
-
-  parametricCoordinates(getVertex(0), gf, u0, v0);
-  parametricCoordinates(getVertex(1), gf, u1, v1);
-  parametricCoordinates(getVertex(2), gf, u2, v2);
-  
-  mat[0][0] = u1 - u0;
-  mat[0][1] = u2 - u0;
-  mat[1][0] = v1 - v0;
-  mat[1][1] = v2 - v0;
-
-  b[0] = p[0] - u0;
-  b[1] = p[1] - v0;
-  sys2x2(mat, b, uv);
-
-  if(uv[0] >= -tol && 
-     uv[1] >= -tol && 
-     uv[0] <= 1. + tol && 
-     uv[1] <= 1. + tol && 
-     1. - uv[0] - uv[1] > -tol) {
-    return true;
-  }
-  return false; 
-}
-
-double MTriangle::getSurfaceUV(GFace *gf)
-{
-  double u3, v3, u1, v1, u2, v2;
-
-  parametricCoordinates(getVertex(0), gf, u1, v1);
-  parametricCoordinates(getVertex(1), gf, u2, v2);
-  parametricCoordinates(getVertex(2), gf, u3, v3);
-
-  const double vv1 [2] = {u2 - u1, v2 - v1};
-  const double vv2 [2] = {u3 - u1, v3 - v1};
-
-  double s = vv1[0] * vv2[1] - vv1[1] * vv2[0]; 
-  return s * 0.5;
-}
-
-double MTriangle::getSurfaceXY() const
-{
-  const double x1 = _v[0]->x();
-  const double x2 = _v[1]->x();
-  const double x3 = _v[2]->x();
-  const double y1 = _v[0]->y();
-  const double y2 = _v[1]->y();
-  const double y3 = _v[2]->y();
-
-  const double v1 [2] = {x2 - x1, y2 - y1};
-  const double v2 [2] = {x3 - x1, y3 - y1};
-
-  double s = v1[0] * v2[1] - v1[1] * v2[0]; 
-  return s * 0.5;
-}
-
-void MTriangle::circumcenterXYZ(double *p1, double *p2, double *p3, 
-				double *res, double *uv)
-{
-  double v1[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
-  double v2[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
-  double vx[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
-  double vy[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
-  double vz[3]; prodve(vx, vy, vz); prodve(vz, vx, vy);
-  norme(vx); norme(vy); norme(vz);
-  double p1P[2] = {0.0, 0.0};
-  double p2P[2]; prosca(v1, vx, &p2P[0]); prosca(v1, vy, &p2P[1]);
-  double p3P[2]; prosca(v2, vx, &p3P[0]); prosca(v2, vy, &p3P[1]);
-  double resP[2];
-
-  circumcenterXY(p1P, p2P, p3P,resP);
-
-  if(uv){
-    double mat[2][2] = {{p2P[0] - p1P[0], p3P[0] - p1P[0]},
-			{p2P[1] - p1P[1], p3P[1] - p1P[1]}};
-    double rhs[2] = {resP[0] - p1P[0], resP[1] - p1P[1]};
-    sys2x2(mat, rhs, uv);
-  }
-  
-  res[0] = p1[0] + resP[0] * vx[0] + resP[1] * vy[0];
-  res[1] = p1[1] + resP[0] * vx[1] + resP[1] * vy[1];
-  res[2] = p1[2] + resP[0] * vx[2] + resP[1] * vy[2];
-}
-
-void MTriangle::circumcenterXY(double *p1, double *p2, double *p3, double *res)
-{
-  double d, a1, a2, a3;
-
-  const double x1 = p1[0];
-  const double x2 = p2[0];
-  const double x3 = p3[0];
-  const double y1 = p1[1];
-  const double y2 = p2[1];
-  const double y3 = p3[1];
-
-  d = 2. * (double)(y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
-  if(d == 0.0) {
-    Msg(WARNING, "Colinear points in circum circle computation");
-    res[0] = res[1] = -99999.;
-    return ;
-  }
-
-  a1 = x1 * x1 + y1 * y1;
-  a2 = x2 * x2 + y2 * y2;
-  a3 = x3 * x3 + y3 * y3;
-  res[0] = (double)((a1 * (y3 - y2) + a2 * (y1 - y3) + a3 * (y2 - y1)) / d);
-  res[1] = (double)((a1 * (x2 - x3) + a2 * (x3 - x1) + a3 * (x1 - x2)) / d);
-}
-
-void MTriangle::circumcenterUV(GFace *gf, double *res)
-{
-  double u3, v3, u1, v1, u2, v2;
-
-  parametricCoordinates(getVertex(0), gf, u1, v1);
-  parametricCoordinates(getVertex(1), gf, u2, v2);
-  parametricCoordinates(getVertex(2), gf, u3, v3);
-
-  double p1[2] = {u1, v1};
-  double p2[2] = {u2, v2};
-  double p3[2] = {u3, v3};
-
-  circumcenterXY(p1, p2, p3, res);
-}
-
-void MTriangle::circumcenterXY(double *res) const
-{
-  double p1[2] = {_v[0]->x(), _v[0]->y()};
-  double p2[2] = {_v[1]->x(), _v[1]->y()};
-  double p3[2] = {_v[2]->x(), _v[2]->y()};
-  circumcenterXY(p1, p2, p3, res);
-}
-
 void MTriangle::jac(int ord, MVertex *vs[], double uu, double vv, double j[2][3])
 {
 #if defined(HAVE_GMSH_EMBEDDED)
@@ -732,7 +539,8 @@ void MTriangleN::jac(double uu, double vv , double j[2][3])
   MTriangle::jac(_order, &(*(_vs.begin())), uu, vv, j);
 }
 
-void MTriangleN::pnt(double uu, double vv, SPoint3 &p){
+void MTriangleN::pnt(double uu, double vv, SPoint3 &p)
+{
   MTriangle::pnt(_order, &(*(_vs.begin())), uu, vv, p);
 }
 

@@ -25,6 +25,7 @@
 #include <map>
 #include <stack>
 #include "MElement.h"
+#include "Numeric.h"
 #include "BackgroundMesh.h"
 #include "qualityMeasures.h"
 
@@ -86,18 +87,47 @@ class MTet4
     double vol;
     circum_radius = qmTet(t, qm, &vol);
   }
-
+  void circumcenter(double *res)
+  {
+    MVertex *v0 = base->getVertex(0);
+    MVertex *v1 = base->getVertex(1);
+    MVertex *v2 = base->getVertex(2);
+    MVertex *v3 = base->getVertex(3);
+    double X[4] = {v0->x(), v1->x(), v2->x(), v3->x()};
+    double Y[4] = {v0->y(), v1->y(), v2->y(), v3->y()};
+    double Z[4] = {v0->z(), v1->z(), v2->z(), v3->z()};
+    double b[3], mat[3][3], dum;    
+    b[0] = X[1] * X[1] - X[0] * X[0] +
+      Y[1] * Y[1] - Y[0] * Y[0] + Z[1] * Z[1] - Z[0] * Z[0];
+    b[1] = X[2] * X[2] - X[1] * X[1] +
+      Y[2] * Y[2] - Y[1] * Y[1] + Z[2] * Z[2] - Z[1] * Z[1];
+    b[2] = X[3] * X[3] - X[2] * X[2] +
+      Y[3] * Y[3] - Y[2] * Y[2] + Z[3] * Z[3] - Z[2] * Z[2];
+    for(int i = 0; i < 3; i++)
+      b[i] *= 0.5;
+    mat[0][0] = X[1] - X[0];
+    mat[0][1] = Y[1] - Y[0];
+    mat[0][2] = Z[1] - Z[0];
+    mat[1][0] = X[2] - X[1];
+    mat[1][1] = Y[2] - Y[1];
+    mat[1][2] = Z[2] - Z[1];
+    mat[2][0] = X[3] - X[2];
+    mat[2][1] = Y[3] - Y[2];
+    mat[2][2] = Z[3] - Z[2];
+    if(!sys3x3(mat, b, res, &dum)) {
+      res[0] = res[1] = res[2] = 10.0e10;
+    }
+  }
   void setup(MTetrahedron *t, std::vector<double> &sizes, std::vector<double> &sizesBGM)
   {
     base = t;
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
     double center[3];
-    base->circumcenter(center);
+    circumcenter(center);
     const double dx = base->getVertex(0)->x() - center[0];
     const double dy = base->getVertex(0)->y() - center[1];
     const double dz = base->getVertex(0)->z() - center[2];
-    circum_radius = sqrt ( dx*dx + dy*dy + dz*dz);
-
+    circum_radius = sqrt(dx * dx + dy * dy + dz * dz);
     double lc1 = 0.25*(sizes[base->getVertex(0)->getNum()]+
 		      sizes[base->getVertex(1)->getNum()]+
 		       sizes[base->getVertex(2)->getNum()]+
@@ -107,17 +137,16 @@ class MTet4
 			 sizesBGM[base->getVertex(2)->getNum()]+
 			 sizesBGM[base->getVertex(3)->getNum()]);
     double lc = Extend2dMeshIn3dVolumes() ? std::min(lc1, lcBGM) : lcBGM;
-    
     circum_radius /= lc;
     deleted = false;
   } 
-  inline GRegion *onWhat () const { return gr; }
-  inline void setOnWhat (GRegion *g) { gr = g; }
-  inline bool isDeleted () const { return deleted; }
-  inline void forceRadius (double r){ circum_radius = r; }
-  inline double getRadius () const { return circum_radius; }
-  inline double getQuality () const { return circum_radius; } 
-  inline void setQuality (const double &q){ circum_radius = q; } 
+  inline GRegion *onWhat() const { return gr; }
+  inline void setOnWhat(GRegion *g) { gr = g; }
+  inline bool isDeleted() const { return deleted; }
+  inline void forceRadius(double r){ circum_radius = r; }
+  inline double getRadius() const { return circum_radius; }
+  inline double getQuality() const { return circum_radius; } 
+  inline void setQuality(const double &q){ circum_radius = q; } 
   inline MTetrahedron *tet() const { return base; }
   inline MTetrahedron *&tet() { return base; }
   inline void setNeigh(int iN, MTet4 *n) { neigh[iN] = n; }
@@ -203,14 +232,14 @@ class MTet4Factory
     allSlots = new MTet4[s_alloc];
 #endif
   }
-  ~MTet4Factory () 
+  ~MTet4Factory() 
   {
 #ifdef _GMSH_PRE_ALLOCATE_STRATEGY_
     delete [] allSlots;
 #endif
   }
-  MTet4 * Create (MTetrahedron * t, std::vector<double> &sizes, 
-		  std::vector<double> &sizesBGM)
+  MTet4 *Create(MTetrahedron * t, std::vector<double> &sizes, 
+		std::vector<double> &sizesBGM)
   {
 #ifdef _GMSH_PRE_ALLOCATE_STRATEGY_
     MTet4 *t4 = getAnEmptySlot();

@@ -318,23 +318,14 @@ class MTriangle : public MElement {
   }
   ~MTriangle(){}
   virtual int getDim(){ return 2; }
-  virtual void getMat(double mat[2][2])
+  void getMat(double mat[2][2])
   {
     mat[0][0] = _v[1]->x() - _v[0]->x();
     mat[0][1] = _v[2]->x() - _v[0]->x();
     mat[1][0] = _v[1]->y() - _v[0]->y();
     mat[1][1] = _v[2]->y() - _v[0]->y();
   }
-  void circumcenterXY(double *res) const; 
   virtual double gammaShapeMeasure();
-  void circumcenterUV(GFace*,double *res); 
-  static void circumcenterXYZ(double *p1, double *p2, double *p3, double *res,
-			      double *uv = 0);
-  static void circumcenterXY(double *p1, double *p2, double *p3, double *res);
-  double getSurfaceXY() const;
-  double getSurfaceUV(GFace*);
-  bool invertmappingXY(double *p, double *uv, double tol = 1.e-8);
-  bool invertmappingUV(GFace*,double *p, double *uv, double tol = 1.e-8);
   virtual int getNumVertices(){ return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual MVertex *getOtherVertex(MVertex *v1, MVertex *v2)
@@ -753,21 +744,24 @@ class MTetrahedron : public MElement {
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
   }
-  virtual void  getMat(double mat[3][3]);
+  void  getMat(double mat[3][3])
+  {
+    mat[0][0] = _v[1]->x() - _v[0]->x();
+    mat[0][1] = _v[2]->x() - _v[0]->x();
+    mat[0][2] = _v[3]->x() - _v[0]->x();
+    mat[1][0] = _v[1]->y() - _v[0]->y();
+    mat[1][1] = _v[2]->y() - _v[0]->y();
+    mat[1][2] = _v[3]->y() - _v[0]->y();
+    mat[2][0] = _v[1]->z() - _v[0]->z();
+    mat[2][1] = _v[2]->z() - _v[0]->z();
+    mat[2][2] = _v[3]->z() - _v[0]->z();
+  }
   virtual double getVolume();
   virtual int getVolumeSign(){ return (getVolume() >= 0) ? 1 : -1; }
   virtual double gammaShapeMeasure();
   virtual double etaShapeMeasure();
   // returns true if the point lies inside the tet
   bool invertmapping(double *p, double *uvw, double tol = 1.e-8);
-  static void circumcenter(double X[4],double Y[4],double Z[4],double *res);
-  void circumcenter(double *res)
-  {
-    double X[4] = {_v[0]->x(), _v[1]->x(), _v[2]->x(), _v[3]->x()};
-    double Y[4] = {_v[0]->y(), _v[1]->y(), _v[2]->y(), _v[3]->y()};
-    double Z[4] = {_v[0]->z(), _v[1]->z(), _v[2]->z(), _v[3]->z()};
-    MTetrahedron::circumcenter(X, Y, Z, res); 
-  }
 };
 
 class MTetrahedron10 : public MTetrahedron {

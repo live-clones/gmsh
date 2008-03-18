@@ -28,9 +28,9 @@
 template<class real>
 class stepData{
  private:
-  // the file the data was read from
+  // the file the data was read from (if empty, refer to PViewData)
   std::string _fileName;
-  // the index in the file
+  // the index in the file (if negative, refer to PViewData)
   int _fileIndex;
   // the value of the time step and value min/max
   double _time, _min, _max;
@@ -80,8 +80,8 @@ class stepData{
       for(unsigned int i = 0; i < _data->size(); i++)
 	if((*_data)[i]) delete [] (*_data)[i];
       delete _data;
+      _data = 0;
     }
-    _data = 0;
   }
 };
 

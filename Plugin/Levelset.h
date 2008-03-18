@@ -26,39 +26,26 @@
 
 class GMSH_LevelsetPlugin : public GMSH_Post_Plugin
 {
-public:
-  typedef enum {NONE, PLANE, SPHERE, MAP} ORIENTATION ;
-  virtual double levelset(double x, double y, double z, double val) const = 0;
-protected:
+ private:
+  double _invert;
+  void _addElement(int step, int np, int numEdges, int numComp,
+		   double xp[12], double yp[12], double zp[12],
+		   double valp[12][9], std::vector<PViewDataList*> &out);
+  void _cutAndAddElements(PViewData *vdata, PViewData *wdata,
+			  int ent, int ele, int step, int wstep,
+			  double x[8], double y[8], double z[8],
+			  double levels[8], double scalarValues[8],
+			  std::vector<PViewDataList*> &out);
+ protected:
   double _ref[3], _targetError;
   int _valueTimeStep, _valueView, _valueIndependent, _recurLevel, _extractVolume;  
+  typedef enum {NONE, PLANE, SPHERE, MAP} ORIENTATION;
   ORIENTATION _orientation;
-private:
-  double _invert;
-  void addElement(int timeStep, int np, int nbEdg, int dNbComp,
-		  double xp[12], double yp[12], double zp[12],
-		  double valp[12][9], std::vector<PViewDataList*> &out);
-  void evalLevelset(int nbNod, int nbComp,
-		    double *x, double *y, double *z, double *val,
-		    double *levels, double *scalarVal);
-  void nonZeroLevelset(int timeStep, int nbVert, int nbEdg, int exn[12][2],
-		       double *x, double *y, double *z, 
-		       double *iVal, int iNbComp, double *dVal, int dNbComp,
-		       std::vector<PViewDataList*> &out);
-  int zeroLevelset(int timeStep, int nbVert, int nbEdg, int exn[12][2],
-		   double *x, double *y, double *z, 
-		   double *iVal, int iNbComp, double *dVal, int dNbComp,
-		   std::vector<PViewDataList*> &out);
-  void executeList(PViewDataList *iData, List_T *iList, 
-		   int iNbElm, int iNbComp,
-		   PViewDataList *dData, List_T *dList, 
-		   int dNbElm, int dNbComp,
-		   int nbVert, int nbEdg, int exn[12][2], 
-		   std::vector<PViewDataList*> &out);
-  virtual void assignSpecificVisibility () const;
 public:
   GMSH_LevelsetPlugin();
+  virtual double levelset(double x, double y, double z, double val) const = 0;
   virtual PView *execute(PView *);
+  void assignSpecificVisibility() const;
 };
 
 #endif

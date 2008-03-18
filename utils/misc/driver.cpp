@@ -17,9 +17,10 @@ int main(int argc, char **argv)
   m->readGEO("../../tutorial/t5.geo");
   m->mesh(3);
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
-    printf("volume %d contains %d elements:\n", (*it)->tag(), (*it)->getNumMeshElements());
-    for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++)
-      printf(" %d", (*it)->getMeshElement(i)->getNum());
+    GRegion *r = *it;
+    printf("volume %d contains %d elements:\n", r->tag(), r->getNumMeshElements());
+    for(unsigned int i = 0; i < r->getNumMeshElements(); i++)
+      printf(" %d", r->getMeshElement(i)->getNum());
     printf("\n");
   }
   m->writeMSH("test.msh");

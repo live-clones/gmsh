@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.42 2008-03-11 22:51:08 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.43 2008-03-18 19:30:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -261,7 +261,7 @@ int GModel::readMSH(const std::string &name)
 
   double version = 1.0;
   bool binary = false, swap = false;
-  char str[256];
+  char str[256] = "XXX";
   std::map<int, std::vector<MVertex*> > points;
   std::map<int, std::vector<MElement*> > elements[7];
   std::map<int, std::map<int, std::string> > physicals[4];
@@ -273,11 +273,11 @@ int GModel::readMSH(const std::string &name)
  
   while(1) {
 
-    do {
+    while(str[0] != '$'){
       if(!fgets(str, sizeof(str), fp) || feof(fp))
         break;
-    } while(str[0] != '$');
-
+    }
+    
     if(feof(fp))
       break;
 
@@ -467,7 +467,6 @@ int GModel::readMSH(const std::string &name)
       if(!fgets(str, sizeof(str), fp) || feof(fp))
 	Msg(GERROR, "Prematured end of mesh file");
     } while(str[0] != '$');
-
   }
 
   // store the elements in their associated elementary entity. If the

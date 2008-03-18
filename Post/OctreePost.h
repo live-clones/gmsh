@@ -26,16 +26,20 @@ class PView;
 
 class OctreePost 
 {
-  Octree *SL, *VL, *TL;
-  Octree *ST, *VT, *TT;
-  Octree *SQ, *VQ, *TQ;
-  Octree *SS, *VS, *TS;
-  Octree *SH, *VH, *TH;
-  Octree *SI, *VI, *TI;
-  Octree *SY, *VY, *TY;
-  PView *theView;
-  bool getValue(void *in, int dim, int nbNod, int nbComp, 
-		double P[3], int timestep, double *values, double *size_elem);
+ private:
+  Octree *_SL, *_VL, *_TL;
+  Octree *_ST, *_VT, *_TT;
+  Octree *_SQ, *_VQ, *_TQ;
+  Octree *_SS, *_VS, *_TS;
+  Octree *_SH, *_VH, *_TH;
+  Octree *_SI, *_VI, *_TI;
+  Octree *_SY, *_VY, *_TY;
+  Octree *_GModel;
+  PView *_theView;
+  int _viewType; // internal view type (0=list, 1=GModel) 
+  bool _getValue(void *in, int dim, int nbNod, int nbComp, 
+		 double P[3], int step, double *values,
+		 double *elementSize);
  public :
   OctreePost(PView *);
   ~OctreePost();
@@ -45,11 +49,11 @@ class OctreePost
   // interpolated unless time step is set to a different value than
   // -1.
   bool searchScalar(double x, double y, double z, double *values, 
-		    int timestep = -1, double *size_elem = 0);
+		    int step = -1, double *size = 0);
   bool searchVector(double x, double y, double z, double *values, 
-		    int timestep = -1, double *size_elem = 0);
+		    int step = -1, double *size = 0);
   bool searchTensor(double x, double y, double z, double *values, 
-		    int timestep = -1, double *size_elem = 0);
+		    int step = -1, double *size = 0);
 };
 
 #endif

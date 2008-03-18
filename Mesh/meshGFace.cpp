@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.125 2008-03-12 14:52:58 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.126 2008-03-18 19:30:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -41,10 +41,10 @@
 
 extern Context_T CTX;
 
-void fourthPoint (double *p1, double *p2, double *p3, double *p4)
+void fourthPoint(double *p1, double *p2, double *p3, double *p4)
 {
   double c[3];
-  MTriangle::circumcenterXYZ(p1, p2, p3, c);
+  circumCenterXYZ(p1, p2, p3, c);
   double vx[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
   double vy[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
   double vz[3]; prodve(vx, vy, vz);

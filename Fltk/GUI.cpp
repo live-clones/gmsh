@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.662 2008-03-18 08:41:21 remacle Exp $
+// $Id: GUI.cpp,v 1.663 2008-03-18 19:30:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -72,7 +72,6 @@ Fl_Menu_Item m_menubar_table[] = {
   {"&Tools", 0, 0, 0, FL_SUBMENU},
     {"&Options...",      FL_CTRL+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
     {"Pl&ugins...",      FL_CTRL+FL_SHIFT+'u', (Fl_Callback *)view_plugin_cb, (void*)(-1)},
-    {"&Fields...",      FL_CTRL+FL_SHIFT+'f', (Fl_Callback *)view_field_cb, (void*)(-1)},
     {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"&Clipping Planes", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"&Manipulator",     FL_CTRL+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
@@ -114,7 +113,6 @@ Fl_Menu_Item m_sys_menubar_table[] = {
   {"Tools", 0, 0, 0, FL_SUBMENU},
     {"Options...",      FL_META+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
     {"Plugins...",      FL_META+FL_SHIFT+'u', (Fl_Callback *)view_plugin_cb, (void*)(-1)},
-    {"Fields...",      FL_META+FL_SHIFT+'f', (Fl_Callback *)view_field_cb, (void*)(-1)},
     {"Visibility",      FL_META+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"Clipping Planes", FL_META+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"Manipulator",     FL_META+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
@@ -312,6 +310,7 @@ Context_Item menu_mesh[] = {
 };  
     Context_Item menu_mesh_define[] = {
       {"1Mesh>Define", NULL} ,
+      {"Fields",  (Fl_Callback *)view_field_cb, (void*)(-1) },
       {"Characteristic length", (Fl_Callback *)mesh_define_length_cb  } ,
       {"Recombine",   (Fl_Callback *)mesh_define_recombine_cb  } ,
       {"Transfinite", (Fl_Callback *)mesh_define_transfinite_cb  } , 

@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.22 2008-03-12 21:28:53 geuzaine Exp $
+// $Id: PView.cpp,v 1.23 2008-03-18 19:30:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -231,16 +231,16 @@ bool PView::readPOS(std::string fileName, int fileIndex)
     return false;
   }
 
-  char str[256];
+  char str[256] = "XXX";
   double version;
   int format, size, index = -1;
 
   while(1) {
 
-    do {
-      if(!fgets(str, 256, fp) || feof(fp))
+    while(str[0] != '$'){
+      if(!fgets(str, sizeof(str), fp) || feof(fp))
         break;
-    } while(str[0] != '$');
+    } 
     
     if(feof(fp))
       break;
@@ -291,7 +291,7 @@ bool PView::readPOS(std::string fileName, int fileIndex)
     }
 
     do {
-      if(!fgets(str, 256, fp) || feof(fp))
+      if(!fgets(str, sizeof(str), fp) || feof(fp))
 	break;
     } while(str[0] != '$');
 
@@ -310,16 +310,16 @@ bool PView::readMSH(std::string fileName, int fileIndex)
     return false;
   }
 
-  char str[256];
+  char str[256] = "XXX";
   int index = -1;
   bool binary = false, swap = false;
 
   while(1) {
 
-    do {
-      if(!fgets(str, 256, fp) || feof(fp))
-        break;
-    } while(str[0] != '$');
+    while(str[0] != '$'){
+      if(!fgets(str, sizeof(str), fp) || feof(fp))
+	break;
+    }
     
     if(feof(fp))
       break;
@@ -345,7 +345,7 @@ bool PView::readMSH(std::string fileName, int fileIndex)
       if(fileIndex < 0 || fileIndex == index){
 	// read data info
 	if(!fgets(str, sizeof(str), fp)) return false;
-	std::string name = extractDoubleQuotedString(str, 256);
+	std::string name = extractDoubleQuotedString(str, sizeof(str));
 	int timeStep, partition, interpolationScheme, numComp, numNodes;
 	double time;
 	if(!fgets(str, sizeof(str), fp)) return false;
@@ -373,10 +373,9 @@ bool PView::readMSH(std::string fileName, int fileIndex)
     }
     
     do {
-      if(!fgets(str, 256, fp) || feof(fp))
+      if(!fgets(str, sizeof(str), fp) || feof(fp))
 	break;
     } while(str[0] != '$');
-    
   }
 
   fclose(fp);

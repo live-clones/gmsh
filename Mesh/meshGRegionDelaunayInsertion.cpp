@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.40 2008-03-12 08:36:49 remacle Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.41 2008-03-18 19:30:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -809,7 +809,7 @@ void insertVerticesInRegion (GRegion *gr)
 	    vSizes.size(), worst->getRadius());
       if(worst->getRadius() < 1) break;
       double center[3];
-      worst->tet()->circumcenter(center);
+      worst->circumcenter(center);
       double uvw[3];
       bool inside = worst->tet()->invertmapping(center, uvw);
       if(inside){

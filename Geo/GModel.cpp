@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.71 2008-03-18 08:41:21 remacle Exp $
+// $Id: GModel.cpp,v 1.72 2008-03-18 19:30:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -99,8 +99,8 @@ void GModel::destroy()
 
   MVertex::resetGlobalNumber();
   MElement::resetGlobalNumber();
-  fields.reset();
 #if !defined(HAVE_GMSH_EMBEDDED)
+  fields.reset();
   gmshSurface::reset();
   BGMReset();
 #endif

@@ -35,6 +35,7 @@ int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3, double *p
 			double *metric);
 int inCircumCircleAniso(GFace *gf, MTriangle *base, const double *uv, const double *metric,
 			const std::vector<double> &Us, const std::vector<double> &Vs); 
+void circumCenterXYZ(double *p1, double *p2, double *p3, double *res, double *uv=0);
 void circumCenterMetric(MTriangle *base, 
 			const double *metric,
 			const std::vector<double> &Us,
@@ -74,8 +75,6 @@ class MTri3
   {
     return inCircumCircle(v->x(), v->y());
   }
-  double getSurfaceXY () const { return base -> getSurfaceXY(); }
-  double getSurfaceUV (GFace* gf) const { return base -> getSurfaceUV(gf); }
   inline void setDeleted (bool d){ deleted = d; }
   inline bool assertNeigh() const 
   {

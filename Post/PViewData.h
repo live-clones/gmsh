@@ -88,6 +88,10 @@ class PViewData {
   // associated with the node-th node from the ele-th element in the
   // ent-th entity
   virtual void getValue(int ent, int ele, int nod, int comp, int step, double &val) = 0;
+  // Returns a scalar value (same as value for scalars, norm for
+  // vectors, etc.) associated with the node-th node from the ele-th
+  // element in the ent-th entity
+  virtual void getScalarValue(int ent, int ele, int nod, int step, double &val);
   // Returns the number of edges of the ele-th element in the ent-th
   // entity
   virtual int getNumEdges(int ent, int ele) = 0;
@@ -120,14 +124,6 @@ class nameData{
   std::string name;
   std::vector<int> indices;
   std::vector<PViewData*> data;
-};
-
-class nameDataLessThan{
- public:
-  bool operator()(const nameData &n1, const nameData &n2) const
-  {
-    return n1.name < n2.name;
-  }
 };
 
 #endif

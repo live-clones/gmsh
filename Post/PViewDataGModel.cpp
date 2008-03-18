@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.27 2008-03-13 22:02:08 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.28 2008-03-18 19:30:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,6 @@
 
 PViewDataGModel::PViewDataGModel(GModel *model) 
   : _model(model), _min(VAL_INF), _max(-VAL_INF)
-
 {
   // store vector of GEntities so we can index them efficiently
   for(GModel::eiter it = _model->firstEdge(); it != _model->lastEdge(); ++it)
@@ -53,6 +52,10 @@ bool PViewDataGModel::finalize()
     _min = std::min(_min, _nodeData[i]->getMin());
     _max = std::max(_max, _nodeData[i]->getMax());
   }
+  for(unsigned int i = 0; i < _elementData.size(); i++){
+    _min = std::min(_min, _elementData[i]->getMin());
+    _max = std::max(_max, _elementData[i]->getMax());
+  }
   setDirty(false);
   return true;
 }
@@ -66,20 +69,28 @@ double PViewDataGModel::getTime(int step)
 {
   if(step < (int)_nodeData.size())
     return _nodeData[step]->getTime();
+  else if(step < (int)_elementData.size())
+    return _elementData[step]->getTime();
   return 0.;
 }
 
 double PViewDataGModel::getMin(int step)
 {
   if(step < 0) return _min;
-  if(step < (int)_nodeData.size()) return _nodeData[step]->getMin();
+  if(step < (int)_nodeData.size()) 
+    return _nodeData[step]->getMin();
+  else if(step < (int)_elementData.size())
+    return _elementData[step]->getMin();
   return 0.;
 }
 
 double PViewDataGModel::getMax(int step)
 {
   if(step < 0) return _max;
-  if(step < (int)_nodeData.size()) return _nodeData[step]->getMax();
+  if(step < (int)_nodeData.size())
+    return _nodeData[step]->getMax();
+  else if(step < (int)_elementData.size())
+    return _elementData[step]->getMax();
   return 0.;
 }
 
@@ -114,16 +125,21 @@ void PViewDataGModel::getNode(int ent, int ele, int nod, double &x, double &y, d
 
 int PViewDataGModel::getNumComponents(int ent, int ele, int step)
 {
-  // no range check here: we assume this is guarded by skipElement()
-  return _nodeData[step]->getNumComp();
+  if(step < (int)_nodeData.size())
+    return _nodeData[step]->getNumComp();
+  else if(step < (int)_elementData.size())
+    return _elementData[step]->getNumComp();
+  return 1;
 }
 
 void PViewDataGModel::getValue(int ent, int ele, int nod, int comp, int step, double &val)
 {
   MVertex *v = _entities[ent]->getMeshElement(ele)->getVertex(nod);
   int index = v->getDataIndex();
-  // no range check here: we assume this is guarded by skipElement()
-  val = _nodeData[step]->getData(index)[comp];
+  if(step < (int)_nodeData.size())
+    val = _nodeData[step]->getData(index)[comp];
+  //else if(step < (int)_elementData.size())
+  //  val = _elementData[step]->getData(index)[nod * numComp + comp];
 }
 
 int PViewDataGModel::getNumEdges(int ent, int ele)

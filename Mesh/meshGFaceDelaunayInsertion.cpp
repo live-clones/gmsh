@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.13 2008-03-12 14:52:58 geuzaine Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.14 2008-03-18 19:30:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,6 +30,58 @@
 #include <set>
 #include <map>
 #include <algorithm>
+
+void circumCenterXY(double *p1, double *p2, double *p3, double *res)
+{
+  double d, a1, a2, a3;
+
+  const double x1 = p1[0];
+  const double x2 = p2[0];
+  const double x3 = p3[0];
+  const double y1 = p1[1];
+  const double y2 = p2[1];
+  const double y3 = p3[1];
+
+  d = 2. * (double)(y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
+  if(d == 0.0) {
+    Msg(WARNING, "Colinear points in circum circle computation");
+    res[0] = res[1] = -99999.;
+    return ;
+  }
+
+  a1 = x1 * x1 + y1 * y1;
+  a2 = x2 * x2 + y2 * y2;
+  a3 = x3 * x3 + y3 * y3;
+  res[0] = (double)((a1 * (y3 - y2) + a2 * (y1 - y3) + a3 * (y2 - y1)) / d);
+  res[1] = (double)((a1 * (x2 - x3) + a2 * (x3 - x1) + a3 * (x1 - x2)) / d);
+}
+
+void circumCenterXYZ(double *p1, double *p2, double *p3, double *res, double *uv)
+{
+  double v1[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
+  double v2[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
+  double vx[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
+  double vy[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
+  double vz[3]; prodve(vx, vy, vz); prodve(vz, vx, vy);
+  norme(vx); norme(vy); norme(vz);
+  double p1P[2] = {0.0, 0.0};
+  double p2P[2]; prosca(v1, vx, &p2P[0]); prosca(v1, vy, &p2P[1]);
+  double p3P[2]; prosca(v2, vx, &p3P[0]); prosca(v2, vy, &p3P[1]);
+  double resP[2];
+
+  circumCenterXY(p1P, p2P, p3P,resP);
+
+  if(uv){
+    double mat[2][2] = {{p2P[0] - p1P[0], p3P[0] - p1P[0]},
+			{p2P[1] - p1P[1], p3P[1] - p1P[1]}};
+    double rhs[2] = {resP[0] - p1P[0], resP[1] - p1P[1]};
+    sys2x2(mat, rhs, uv);
+  }
+  
+  res[0] = p1[0] + resP[0] * vx[0] + resP[1] * vy[0];
+  res[1] = p1[1] + resP[0] * vx[1] + resP[1] * vy[1];
+  res[2] = p1[2] + resP[0] * vx[2] + resP[1] * vy[2];
+}
 
 bool circumCenterMetricInTriangle(MTriangle *base, 
 				  const double *metric,
@@ -147,7 +199,7 @@ MTri3::MTri3(MTriangle *t, double lc) : deleted(false), base(t)
   double pb[3] = {base->getVertex(1)->x(), base->getVertex(1)->y(), base->getVertex(1)->z()};
   double pc[3] = {base->getVertex(2)->x(), base->getVertex(2)->y(), base->getVertex(2)->z()};
   double center[3];
-  base->circumcenterXYZ(pa, pb, pc, center);
+  circumCenterXYZ(pa, pb, pc, center);
   const double dx = base->getVertex(0)->x() - center[0];
   const double dy = base->getVertex(0)->y() - center[1];
   const double dz = base->getVertex(0)->z() - center[2];
@@ -273,13 +325,13 @@ bool circUV(MTriangle *t, std::vector<double> & Us, std::vector<double> &Vs,
   double u1 [3] = {Us[t->getVertex(0)->getNum()], Vs[t->getVertex(0)->getNum()], 0};
   double u2 [3] = {Us[t->getVertex(1)->getNum()], Vs[t->getVertex(1)->getNum()], 0};
   double u3 [3] = {Us[t->getVertex(2)->getNum()], Vs[t->getVertex(2)->getNum()], 0};
-  t->circumcenterXY(u1, u2, u3, res);
+  circumCenterXY(u1, u2, u3, res);
   return true;
   double p1 [3] = {t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z()};
   double p2 [3] = {t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z()};
   double p3 [3] = {t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z()};
   double resxy[3], uv[2];
-  t->circumcenterXYZ(p1, p2, p3, resxy,uv);
+  circumCenterXYZ(p1, p2, p3, resxy,uv);
   return true;
 }
 
