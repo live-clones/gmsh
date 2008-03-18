@@ -77,6 +77,8 @@ class FieldManager:public std::map<int, Field*>{
 	int max_id();
 	FieldManager();
 	int background_field;
+	/* compatibility with -bgm */
+	void set_background_mesh(int iView);
 };
 
 #endif

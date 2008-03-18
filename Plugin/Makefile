@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.153 2008-03-18 08:41:26 remacle Exp $
+# $Id: Makefile,v 1.154 2008-03-18 11:33:08 remacle Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -44,7 +44,7 @@ SRC = Plugin.cpp PluginManager.cpp\
         Skin.cpp\
         Extract.cpp ExtractElements.cpp ExtractEdges.cpp\
         MakeSimplex.cpp\
-        Evaluate.cpp FieldView.cpp\
+        Evaluate.cpp FieldView.cpp GSHHS.cpp\
         Integrate.cpp Gradient.cpp Curl.cpp Divergence.cpp\
         Annotate.cpp Remove.cpp\
         Probe.cpp\
@@ -135,7 +135,8 @@ CutParametric.o: CutParametric.cpp ../Post/OctreePost.h \
   ../Geo/SPoint3.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Post/PViewDataList.h ../Post/AdaptiveViews.h ../DataStr/List.h \
   ../Common/GmshMatrix.h ../Common/GmshMatrix.h ../Common/Context.h \
-  ../Common/GmshUI.h ../Graphics/Draw.h ../Geo/SBoundingBox3d.h
+  ../Common/GmshUI.h ../Graphics/Draw.h ../Geo/SBoundingBox3d.h \
+  ../contrib/MathEval/matheval.h
 Lambda2.o: Lambda2.cpp Lambda2.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
@@ -226,7 +227,7 @@ Extract.o: Extract.cpp Extract.h Plugin.h ../Common/Options.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewDataList.h \
   ../Post/AdaptiveViews.h ../DataStr/List.h ../Common/GmshMatrix.h \
-  ../Common/GmshMatrix.h
+  ../Common/GmshMatrix.h ../contrib/MathEval/matheval.h
 ExtractElements.o: ExtractElements.cpp ExtractElements.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/Message.h \
   ../Post/PView.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
@@ -255,7 +256,7 @@ Evaluate.o: Evaluate.cpp Evaluate.h Plugin.h ../Common/Options.h \
   ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewDataList.h \
   ../Post/AdaptiveViews.h ../DataStr/List.h ../Common/GmshMatrix.h \
   ../Common/GmshMatrix.h ../Post/OctreePost.h ../Common/Octree.h \
-  ../Common/OctreeInternals.h
+  ../Common/OctreeInternals.h ../contrib/MathEval/matheval.h
 FieldView.o: FieldView.cpp FieldView.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
@@ -270,6 +271,21 @@ FieldView.o: FieldView.cpp FieldView.h Plugin.h ../Common/Options.h \
   ../Post/PView.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
   ../Geo/GPoint.h ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GEdgeLoop.h \
   ../Geo/GRegion.h ../Mesh/Field.h
+GSHHS.o: GSHHS.cpp GSHHS.h Plugin.h ../Common/Options.h \
+  ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
+  ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewDataList.h \
+  ../Post/AdaptiveViews.h ../DataStr/List.h ../Common/GmshMatrix.h \
+  ../Common/GmshMatrix.h ../Mesh/Field.h ../Geo/Geo.h \
+  ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
+  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/SBoundingBox3d.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
+  ../Post/PView.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
+  ../Geo/GPoint.h ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GEdgeLoop.h \
+  ../Geo/GRegion.h ../Mesh/Field.h ../Geo/GeoStringInterface.h \
+  ../Common/Context.h GeoEarthImport.h ../Geo/SPoint3.h
 Integrate.o: Integrate.cpp Integrate.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \

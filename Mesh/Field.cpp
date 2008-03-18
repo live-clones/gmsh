@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.16 2008-03-18 08:41:21 remacle Exp $
+// $Id: Field.cpp,v 1.17 2008-03-18 11:33:04 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -487,9 +487,9 @@ class ParametricField : public Field{
 #endif
 
 class PostViewField:public Field{
-	int view_index;
   OctreePost *octree;
 	public : 
+	int view_index;
 	double operator()(double x, double y, double z) {
 		// FIXME: should test unique view num instead, but that would be slower
 		if(view_index < 0 || view_index >= (int)PView::list.size()) return MAX_LC;
@@ -888,3 +888,12 @@ void Field::put_on_view(PView *view,int comp)
   data->finalize();
   view->setChanged(true);
 }
+
+void FieldManager::set_background_mesh(int iView){
+	int id=new_id();
+	Field *f=new_field(id,"PostView");
+	f->options["IView"]->numerical_value(iView-1);
+	(*this)[id]=f;
+	background_field=id;
+}
+

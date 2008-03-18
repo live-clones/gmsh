@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.303 2008-03-18 08:41:25 remacle Exp $
+// $Id: Gmsh.y,v 1.304 2008-03-18 11:33:08 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1893,17 +1893,15 @@ Command :
     }
   | tSTRING tSTRING tSTRING '[' FExpr ']' tEND
     {
-     /* if(!strcmp($1, "Background") && !strcmp($2, "Mesh")  && !strcmp($3, "View")){
+      if(!strcmp($1, "Background") && !strcmp($2, "Mesh")  && !strcmp($3, "View")){
 	int index = (int)$5;
 	if(index >= 0 && index < (int)PView::list.size()){
-	  Field *field = new PostViewField(PView::list[index]);
-	  GModel::current()->fields.insert(field);
-	  BGMAddField(field);
+	  GModel::current()->fields.set_background_mesh(index);
 	}
 	else
 	  yymsg(GERROR, "Unknown view %d", index);
       }
-      else*/
+      else
 	yymsg(GERROR, "Unknown command '%s'", $1);
       Free($1); Free($2); Free($3);
     }
