@@ -55,11 +55,14 @@
 
 #include <vector>
 #include <string>
+#include <list>
 
 #include "Opengl_Window.h"
 #include "Colorbar_Window.h"
 #include "Popup_Button.h"
 #include "SpherePosition_Widget.h"
+
+#include "Field.h"
 
 // The dynamic contexts
 
@@ -106,6 +109,21 @@ struct PluginDialogBox
   Fl_Group *group;
   Fl_Value_Input *value[MAX_PLUGIN_OPTIONS];
   Fl_Input *input[MAX_PLUGIN_OPTIONS];
+};
+
+class FieldDialogBox
+{
+  std::list<Fl_Widget*> inputs;
+  std::list<std::string> inputs_values;
+	public:
+	Field *current_field;
+  Fl_Group *group;
+	Fl_Menu_Button *put_on_view_btn;
+	Fl_Check_Button *set_size_btn;
+	Fl_Button *apply_btn,*revert_btn;
+	FieldDialogBox(Field *field,int x,int y, int width, int height,int fontsize);
+	void load_field(Field *field);
+	void save_values();
 };
 
 // The dialog for solvers
@@ -211,6 +229,11 @@ public:
   Fl_Return_Button *view_ok;
   Fl_Menu_Button   *view_menu_butt[2];
 
+	// Field window
+  Fl_Window        *field_window;
+	Fl_Hold_Browser  *field_browser;
+	FieldDialogBox *selected_field_dialog_box;
+
   // Plugin window
   Fl_Window        *plugin_window;
   Fl_Hold_Browser  *plugin_browser;
@@ -283,6 +306,8 @@ public:
   void create_view_options_window(int numview);
   void create_plugin_dialog_box(GMSH_Plugin *p, int x, int y, int width, int height);
   void create_plugin_window(int numview);
+	void create_field_dialog_box(Field *f, int x, int y, int width, int height);
+  void create_field_window(int numview);
   void create_visibility_window(bool redraw_only=false);
   void create_clip_window();
   void create_manip_window();

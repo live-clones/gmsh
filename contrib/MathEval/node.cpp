@@ -657,3 +657,27 @@ node_write(Node * node, char *string)
     break;
   }
 }
+void
+node_flag_variables(Node * node)
+{
+	/* According to node type, flag variable in symbol table or
+	 * proceed with calling function recursively on node children. */
+	switch (node->type) {
+	case 'v':
+		node->data.variable->flag = true;
+		break;
+
+	case 'f':
+		node_flag_variables(node->data.function.child);
+		break;
+
+	case 'u':
+		node_flag_variables(node->data.un_op.child);
+		break;
+
+	case 'b':
+		node_flag_variables(node->data.bin_op.left);
+		node_flag_variables(node->data.bin_op.right);
+		break;
+	}
+}

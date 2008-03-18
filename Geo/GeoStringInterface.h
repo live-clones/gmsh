@@ -36,13 +36,16 @@ void add_recosurf(List_T *list, const char *fich);
 void add_param(const char *par, const char *value, const char *fich);
 void add_point(const char *fich, const char *x, const char *y, const char *z, 
 	       const char *lc);
-void add_attractor(const char *fich, int ip, int typ);
 void add_line(int p1, int p2, const char *fich);
 void add_circ(int p1, int p2, int p3, const char *fich);
 void add_ell(int p1, int p2, int p3, int p4, const char *fich);
 void add_spline(int N, int *p, const char *fich);
 void add_bezier(int N, int *p, const char *fich);
 void add_bspline(int N, int *p, const char *fich);
+void add_field_option(int field_id, const char *option_name, const char *option_value, const char *fich);
+void add_field(int field_id, const char *type_name, const char *fich);
+void delete_field(int field_id, const char *fich);
+void set_background_field(int field_id,const char *fich);
 void add_multline(int N, int *p, const char *fich);
 void add_lineloop(List_T *list, const char *fich, int *numloop);
 void add_surf(List_T *list, const char *fich, int support, int typ);

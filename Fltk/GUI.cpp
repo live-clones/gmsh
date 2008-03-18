@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.661 2008-03-01 20:01:37 geuzaine Exp $
+// $Id: GUI.cpp,v 1.662 2008-03-18 08:41:21 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <string.h>
+#include <string>
+#include <sstream>
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "Message.h"
@@ -37,6 +38,13 @@
 #include "PluginManager.h"
 #include "Shortcut_Window.h"
 #include "PView.h"
+#include "Field.h"
+#include "GModel.h"
+
+#include "GeoStringInterface.h"
+
+#include "FL/Fl_Int_Input.H"
+#include "FL/Fl_Float_Input.H"
 
 #define NB_BUTT_SCROLL 25
 #define NB_HISTORY_MAX 1000
@@ -64,6 +72,7 @@ Fl_Menu_Item m_menubar_table[] = {
   {"&Tools", 0, 0, 0, FL_SUBMENU},
     {"&Options...",      FL_CTRL+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
     {"Pl&ugins...",      FL_CTRL+FL_SHIFT+'u', (Fl_Callback *)view_plugin_cb, (void*)(-1)},
+    {"&Fields...",      FL_CTRL+FL_SHIFT+'f', (Fl_Callback *)view_field_cb, (void*)(-1)},
     {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"&Clipping Planes", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"&Manipulator",     FL_CTRL+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
@@ -105,6 +114,7 @@ Fl_Menu_Item m_sys_menubar_table[] = {
   {"Tools", 0, 0, 0, FL_SUBMENU},
     {"Options...",      FL_META+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
     {"Plugins...",      FL_META+FL_SHIFT+'u', (Fl_Callback *)view_plugin_cb, (void*)(-1)},
+    {"Fields...",      FL_META+FL_SHIFT+'f', (Fl_Callback *)view_field_cb, (void*)(-1)},
     {"Visibility",      FL_META+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"Clipping Planes", FL_META+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"Manipulator",     FL_META+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
@@ -860,6 +870,7 @@ GUI::GUI(int argc, char **argv)
   g_window = NULL;
   opt_window = NULL;
   plugin_window = NULL;
+  field_window = NULL;
   stat_window = NULL;
   msg_window = NULL;
   vis_window = NULL;
@@ -953,6 +964,7 @@ GUI::GUI(int argc, char **argv)
   
   create_option_window();
   create_plugin_window(0);
+  create_field_window(0);
   create_message_window();
   create_statistics_window();
   create_visibility_window();
@@ -1309,6 +1321,8 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 		  (Fl_Callback *) view_options_cb, (void *)nb, 0);
 	p[j]->add("Plugins...", 'p', 
 		  (Fl_Callback *) view_plugin_cb, (void *)nb, 0);
+	p[j]->add("Fields...", 'p', 
+		  (Fl_Callback *) view_field_cb, (void *)nb, 0);
       }
 
       m_toggle_butt.push_back(b1);
@@ -3808,6 +3822,242 @@ void GUI::create_plugin_window(int numview)
 
   plugin_window->position(CTX.plugin_position[0], CTX.plugin_position[1]);
   plugin_window->end();
+}
+
+void FieldDialogBox::save_values()
+{
+	std::list<Fl_Widget*>::iterator input=inputs.begin();
+	Field *f=current_field;
+	std::ostringstream sstream;
+	std::istringstream istream;
+	int i;
+	char a;
+	sstream.precision(16);
+	for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
+		FieldOption *option=it->second;
+		sstream.str("");
+		switch(option->get_type()){
+			case FIELD_OPTION_STRING:
+			case FIELD_OPTION_PATH:
+				sstream<<"\""<<((Fl_Input*)*input)->value()<<"\"";
+			break;
+			case FIELD_OPTION_INT:
+				sstream<<(int)((Fl_Value_Input*)*input)->value();
+			break;
+			case FIELD_OPTION_DOUBLE:
+				sstream<<((Fl_Value_Input*)*input)->value();
+			break;
+			case FIELD_OPTION_BOOL:
+				sstream<<(bool)((Fl_Check_Button*)*input)->value();
+			break;
+			case FIELD_OPTION_LIST:
+				sstream<<"{";
+				istream.str(((Fl_Input*)*input)->value());
+				while(istream>>i){
+					sstream<<i;
+					if(istream>>a){
+						if(a!=',')
+							Msg(GERROR, "Unexpected character \'%c\' while parsing option '%s' of field \'%s\'",a,it->first,f->id);
+						sstream<<", ";
+					}
+				}
+				sstream<<"}";
+			break;
+		}
+		if((*input)->changed()){
+			add_field_option(f->id,it->first,sstream.str().c_str(),CTX.filename);
+			(*input)->clear_changed();
+		}
+		input++;
+	}
+}
+
+void FieldDialogBox::load_field(Field *f){
+	current_field=f;
+	std::list<Fl_Widget*>::iterator input=inputs.begin();
+	for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
+		FieldOption *option=it->second;
+		std::ostringstream vstr;
+		std::list<int>::iterator list_it;;
+		switch(option->get_type()){
+			case FIELD_OPTION_STRING:
+			case FIELD_OPTION_PATH:
+				((Fl_Input*)(*input))->value(option->string().c_str());
+			break;
+			case FIELD_OPTION_INT:
+			case FIELD_OPTION_DOUBLE:
+				((Fl_Value_Input*)(*input))->value(option->numerical_value());
+			break;
+			case FIELD_OPTION_BOOL:
+				((Fl_Check_Button*)(*input))->value(option->numerical_value());
+			break;
+			case FIELD_OPTION_LIST:
+				vstr.str("");
+				for(list_it=option->list().begin();list_it!=option->list().end();list_it++){
+					if(list_it!=option->list().begin())
+						vstr<<", ";
+					vstr<<*list_it;
+				}
+				((Fl_Input*)(*input))->value(vstr.str().c_str());
+			break;
+		}
+		input++;
+	}
+  if(PView::list.size()){
+    put_on_view_btn->activate();
+    for(unsigned int i = 0; i < PView::list.size(); i++) {
+			std::ostringstream s;
+			s<<"View ["<<i<<"]";
+      put_on_view_btn->add(s.str().c_str());
+    }
+  }else{
+		put_on_view_btn->deactivate();
+	}
+	set_size_btn->value(GModel::current()->fields.background_field==f->id);
+}
+
+FieldDialogBox::FieldDialogBox(Field *f, int x, int y, int width, int height,int fontsize)
+{
+	current_field=NULL;
+	group=new Fl_Group(x, y, width, height);
+  {
+		Fl_Box *b = new Fl_Box(x, y, width, BH,f->get_name());
+		b->labelfont(FL_BOLD);
+    Fl_Tabs *o = new Fl_Tabs(x, y + BH + WB, width, height-2*BH-2*WB);
+		group->resizable(o);
+    {
+      Fl_Group *g = new Fl_Group(x, y + 2*BH + WB, width, height - 2*BH-3*WB, "Options");
+			apply_btn = new Fl_Return_Button(x+width - BB-WB ,y+ height - 2*BH -2*WB, BB, BH, "Apply");
+			apply_btn->callback(view_field_apply_cb,this);
+			revert_btn = new Fl_Button(x+width - 2*BB-2*WB ,y+ height - 2*BH -2*WB, BB, BH, "Revert");
+			revert_btn->callback(view_field_revert_cb,this);
+      Fl_Scroll *s = new Fl_Scroll(x + WB, y + 2*WB + 2*BH, width - 2 * WB, height - 4*BH - 5 * WB);
+			double yy=y+3*WB+2*BH;
+			for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
+				Fl_Widget *input;
+				switch(it->second->get_type()){
+					case FIELD_OPTION_INT:
+					case FIELD_OPTION_DOUBLE:
+						input=new Fl_Value_Input(x+WB,yy,IW,BH,it->first);
+						break;
+					case FIELD_OPTION_BOOL:
+						input=new Fl_Check_Button(x+WB,yy,BH,BH,it->first);
+						break;
+					case FIELD_OPTION_PATH:
+					case FIELD_OPTION_STRING:
+						input=new Fl_Input(x+WB,yy,IW,BH,it->first);
+					break;
+					case FIELD_OPTION_LIST:
+					/*{
+							Fl_Button *b=new Fl_Button(x+WB,yy,BH,BH);
+							b->label("@+");
+							b->callback(view_field_select_node_cb);
+						}
+						input=new Fl_Input(x+WB+2*BH,yy,IW-2*BH,BH,it->first);*/
+						input=new Fl_Input(x+WB,yy,IW,BH,it->first);
+						break;
+				}
+				input->align(FL_ALIGN_RIGHT);
+				inputs.push_back(input);
+				yy+=WB+BH;
+			}
+      o->resizable(g); // to avoid ugly resizing of tab labels
+			g->resizable(s);
+      s->end();
+      g->end();
+    }
+    {
+      Fl_Group *g = new Fl_Group(x, y + 2*BH + WB, width, height - 2*BH-3*WB, "Help");
+      Fl_Browser *o = new Fl_Browser(x + WB, y + 2*WB + 2*BH, width - 2 * WB, height - 4 * WB - 3 * BH);
+
+  //    char name[1024], copyright[256], author[256], help[4096];
+  //    p->getName(name);
+  //    p->getInfos(author, copyright, help);
+
+      o->add(" ");
+   //   add_multiline_in_browser(o, "@c@b@.", name);
+      o->add(" ");
+    //  add_multiline_in_browser(o, "", help);
+      o->add(" ");
+      //add_multiline_in_browser(o, "Author: ", author);
+      //add_multiline_in_browser(o, "Copyright (C) ", copyright);
+      o->add(" ");
+
+      g->end();
+    }
+    o->end();
+  }
+	{
+		Fl_Button *b = new Fl_Button(x+width - BB,y+ height - BH , BB, BH, "Delete");
+		b->callback(view_field_delete_cb,this);
+	}
+	put_on_view_btn = new Fl_Menu_Button(x+BB*3/2+WB,y+ height - BH ,BB*3/2,BH,"Put on view");
+	put_on_view_btn->callback(view_field_put_on_view_cb,this);
+
+	set_size_btn = new Fl_Check_Button(x,y+ height - BH ,BB*3/2,BH,"Background size");
+	set_size_btn->callback(view_field_set_size_btn_cb,this);
+
+	group->end();
+	group->hide();
+}
+
+void GUI::create_field_window(int numfield)
+{
+  int width0 = 40 * fontsize;
+  int height0 = 13 * BH + 5 * WB;
+
+  int width = (CTX.field_size[0] < width0) ? width0 : CTX.field_size[0];
+  int height = (CTX.field_size[1] < height0) ? height0 : CTX.field_size[1];
+
+  int L1 = BB;
+	int i_entry=1;
+  if(field_window) {
+		width=field_window->w();
+		height=field_window->h();
+		FieldManager &fields=GModel::current()->fields;
+		field_browser->clear();
+		for(FieldManager::iterator it=fields.begin();it!=fields.end();it++){
+			Field *field=it->second;
+			std::ostringstream sstream;
+			if(it->first==fields.background_field)
+				sstream<<"*";
+			sstream<<it->first;
+			sstream<<" "<<field->get_name();
+			field_browser->add(sstream.str().c_str(),field);
+			if(!field->dialog_box()){
+				field_window->begin();
+				field->dialog_box()=new FieldDialogBox(field, 2 * WB + L1 , WB, width - L1 - 3 * WB, height - 2*WB  ,fontsize);
+				field_window->end();
+			}
+			if(it->second->id==numfield){
+				field_browser->select(i_entry);
+				field_browser->do_callback();
+			}
+			i_entry++;
+		}
+    field_window->show();
+    return;
+  }
+
+	selected_field_dialog_box=NULL;
+  field_window = new Dialog_Window(width, height, "Fields");
+  field_window->box(GMSH_WINDOW_BOX);
+  Fl_Group *resize_box = new Fl_Group(2*WB+L1, 2*WB+BB,width-3*WB-L1, height - 3 * WB-BB);
+	resize_box->end();
+	{
+		Fl_Menu_Button *b= new Fl_Menu_Button(WB,WB,L1,BH,"New");
+		FieldManager &fields=GModel::current()->fields;
+		std::map<const std::string, FieldFactory*>::iterator it;
+		for(it=fields.map_type_name.begin();it!=fields.map_type_name.end();it++)
+			b->add(it->first.c_str());
+		b->callback(view_field_new_cb);
+	}
+  field_browser = new Fl_Hold_Browser(WB, 2*WB+BH, L1, height - 3 * WB - BH);
+  field_browser->callback(view_field_browser_cb);
+  field_window->resizable(resize_box);
+  field_window->size_range(width0, height0);
+  field_window->position(CTX.field_position[0], CTX.field_position[1]);
+  field_window->end();
 }
 
 // Create the window for the statistics

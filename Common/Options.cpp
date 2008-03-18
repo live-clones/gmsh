@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.387 2008-03-11 20:24:30 geuzaine Exp $
+// $Id: Options.cpp,v 1.388 2008-03-18 08:41:20 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -2445,6 +2445,34 @@ double opt_general_plugin_size1(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.plugin_size[1] = (int)val;
   return CTX.plugin_size[1];
+}
+
+double opt_general_field_position0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.field_position[0] = (int)val;
+  return CTX.field_position[0];
+}
+
+double opt_general_field_position1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.field_position[1] = (int)val;
+  return CTX.field_position[1];
+}
+
+double opt_general_field_size0(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.field_size[0] = (int)val;
+  return CTX.field_size[0];
+}
+
+double opt_general_field_size1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.field_size[1] = (int)val;
+  return CTX.field_size[1];
 }
 
 double opt_general_statistics_position0(OPT_ARGS_NUM)

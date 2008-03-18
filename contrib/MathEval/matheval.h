@@ -86,4 +86,17 @@ void    *evaluator_derivative_x(void *evaluator);
 void    *evaluator_derivative_y(void *evaluator);
 void    *evaluator_derivative_z(void *evaluator);
 
+/* Get array of strings with names of variables appearing in
+ * function represented by given evaluator.  Only variables
+ * referenced by evaluator after simplification are returned.
+ * Address of first string in array is stored into location
+ * pointed by function second argument.  Number of array elements
+ * is stored into location pointed by third argument.  Array is
+ * allocated, remembered and later destroyed by evaluator object,
+ * thus caller must not free any of string nor array itself.
+ * Returned information is valid until evaluator object destroyed. 
+ */
+extern void     evaluator_get_variables(void *evaluator,
+					char ***names, int *count);
+
 #endif

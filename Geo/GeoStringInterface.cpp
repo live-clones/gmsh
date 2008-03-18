@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.18 2008-02-25 15:36:38 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.19 2008-03-18 08:41:21 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
+#include <sstream>
 #include "Message.h"
 #include "Numeric.h"
 #include "Malloc.h"
@@ -241,22 +242,26 @@ void add_point(const char *fich, const char *x, const char *y, const char *z,
   add_infile(text, fich);
 }
 
-void add_attractor(const char *fich, int ip, int typ,
-		   const char *ax, const char *ay, const char *ad)
-{
-  char text[BUFFSIZE];
-  if(typ == 0) {
-    snprintf(text, BUFFSIZE, "Attractor Point {%d} = {%s,%s,%s} = ;", ip, ax, ay, ad);
-  }
-  else if(typ == 1) {
-    snprintf(text, BUFFSIZE, "Attractor Line {%d} = {%s,%s,%s};", ip, ax, ay, ad);
-  }
-  else if(typ == 2) {
-    snprintf(text, BUFFSIZE, "Attractor Surface {%d} = {%s,%s,%s};", ip, ax, ay, ad);
-  }
-  add_infile(text, fich);
+void add_field_option(int field_id, const char *option_name, const char *option_value, const char *fich){
+	std::ostringstream sstream;
+	sstream<<"Field["<<field_id<<"]."<<std::string(option_name)<<" = "<<std::string(option_value)<<";";
+	add_infile(sstream.str().c_str(),fich);
 }
-
+void add_field(int field_id, const char *type_name, const char *fich){
+	std::ostringstream sstream;
+	sstream<<"Field["<<field_id<<"] = "<<std::string(type_name)<<";";
+	add_infile(sstream.str().c_str(),fich);
+}
+void delete_field(int field_id, const char *fich){
+	std::ostringstream sstream;
+	sstream<<"Delete Field ["<<field_id<<"];";
+	add_infile(sstream.str().c_str(),fich);
+}
+void set_background_field(int field_id,const char *fich){
+	std::ostringstream sstream;
+	sstream<<"Background Field = "<<field_id<<";";
+	add_infile(sstream.str().c_str(),fich);
+}
 
 void add_line(int p1, int p2, const char *fich)
 {

@@ -70,6 +70,8 @@ class Context_T {
   int solver_position[2]; // position of the solver windows on the screen
   int plugin_position[2]; // position of the plugin window on the screen
   int plugin_size[2]; // size of the plugin window on the screen
+  int field_position[2]; // position of the field window on the screen
+  int field_size[2]; // size of the field window on the screen
   int file_chooser_position[2]; // position of the file chooser window on the screen
   int system_menu_bar; // use the system menu bar on MacOS?
   int batch; // 0=full gfx; -1=just parse; 1,2,3=batch 1D, 2D, 3D mesh 

@@ -105,8 +105,9 @@ public:
 };
 class gmshPolarSphere : public gmshSurface
 {
-  double xc, yc, zc, r;
-  gmshPolarSphere(double _x, double _y, double _z, double _r) : xc(_x), yc(_y), zc(_z), r(_r){}
+  double r;
+	SPoint3 o;
+  gmshPolarSphere(double x, double y, double z, double _r) : o(x,y,z), r(_r){}
 public:
   static gmshSurface *NewPolarSphere(int _iSphere, double _x, double _y, double _z, double _r);
   virtual Range<double> parBounds(int i) const 
@@ -127,8 +128,7 @@ public:
   virtual SVector3 normal(const SPoint2 &param) const
   {
     SPoint3  p1 = gmshSurface::point(param);
-    SPoint3  p2(xc, yc, zc);
-    SVector3 n(p1, p2);
+    SVector3 n(p1, o);
     n.normalize();
     return n;
   }

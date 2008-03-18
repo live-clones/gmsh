@@ -20,134 +20,63 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <vector>
 #include <map>
 #include <list>
-#include "PView.h"
-#ifdef HAVE_ANN
-#include "ANN/ANN.h"
-#endif
 #include "Geo.h"
-#include "GEdge.h"
-#include "OctreePost.h"
+#include "PView.h"
 
+class Field;
+typedef enum {FIELD_OPTION_DOUBLE=0,FIELD_OPTION_INT,FIELD_OPTION_STRING,FIELD_OPTION_PATH,FIELD_OPTION_BOOL,FIELD_OPTION_LIST}FieldOptionType;
+class FieldOption{
+	protected:
+	bool *status;
+	inline void modified(){if(status)*status=true;}
+	public:
+	FieldOption(bool *_status):status(_status){};
+	virtual FieldOptionType get_type()=0;
+	virtual void get_text_representation(std::string &v_str)=0;
+	virtual void numerical_value(double val){throw (1);}
+	virtual double numerical_value()const {throw (1);}
+	virtual const std::list<int> & list()const {throw (1);}
+	virtual std::list<int> & list(){throw (1);}
+	virtual const std::string & string()const{throw (1);}
+	virtual std::string & string(){throw (1);}
+};
+
+class FieldDialogBox;
 class Field{
+	struct lstr{
+		bool operator() (const char* s1, const char* s2 ) const{
+			return strcmp(s1,s2)<0;
+		}
+	};
 public:
+	int id;
+	std::map<const char *, FieldOption*,lstr> options;
   virtual double operator()(double x, double y, double z) = 0;
   virtual ~Field(){}
+	bool update_needed;
+	Field();
+	virtual const char *get_name()=0;
+	virtual FieldDialogBox *&dialog_box()=0;
+	void put_on_view(PView *view,int comp=-1);
 };
 
-class FieldManager{
-  std::map<int, Field*> id_map;
-public:
+class FieldFactory{
+	public:
+	virtual Field *operator()()=0;
+};
+class FieldManager:public std::map<int, Field*>{
+	public:
+	std::map<const std::string,FieldFactory*> map_type_name;
   void reset();
-  int insert(Field *field, int id=-1 /* -1 = automatic id */); /* returns the id */
   Field *get(int id);
+	Field *new_field(int id, const char *type_name);
+	void delete_field(int id);
+	int new_id();
+	int max_id();
+	FieldManager();
+	int background_field;
 };
-
-extern FieldManager fields;
-
-class StructuredField : public Field{
-  double o[3], d[3];
-  int n[3];
-  double *data;
-public :
-  StructuredField(const char *filename);
-  virtual ~StructuredField();
-  double operator()(double x, double y, double z);
-};
-
-class LatLonField : public Field{
-  Field *field;
-public:
-  LatLonField(Field *_field) : field(_field){};
-  double operator()(double x, double y, double z);
-};
-
-class ParametricField : public Field{
-  void *evalX, *evalY, *evalZ;
-  Field *field;
-public:
-  ParametricField(Field *_field, const char *strX, const char *strY, const char *strZ);
-  double operator()(double x, double y, double z);
-  virtual ~ParametricField();
-};
-
-class ThresholdField : public Field{
-  Field *field;
-  double dmin, dmax, lcmin, lcmax;
-public:
-  ThresholdField(Field *field, double dmin, double dmax, double lcmin, double lcmax);
-  double operator()(double x, double y, double z);
-};
-
-class GradField : public Field{
-  Field *field;
-  int kind; /* 0 x, 1 y, 2 z, 3 max */
-  double delta;
-public:
-  GradField(Field *field, int _kind=2, double _delta=-1);
-  double operator()(double x, double y, double z);
-};
-
-class FunctionField : public Field{
-  std::list<Field*> *list;
-  char **names;
-  double *values;
-  void *eval;
-public:
-  FunctionField(std::list<Field*> *_list, const char *fct);
-  double operator()(double x, double y, double z);
-  virtual ~FunctionField();
-};
-
-class PostViewField : public Field{
-  OctreePost *octree;
-  int view_index;
-public:
-  PostViewField(PView *view);
-  double operator()(double x, double y, double z);
-  virtual ~PostViewField();
-};
-
-class MinField : public Field, public std::list<Field*>{
-public:
-  MinField(){}
-  double operator()(double x, double y, double z);
-};
-
-class AttractorField : public Field{
-protected :
-#ifdef HAVE_ANN
-  ANNkd_tree* kdtree;
-  ANNpointArray zeronodes;
-  ANNidxArray index;
-  ANNdistArray dist;
-#endif
-  std::list<SPoint3> attractorPoints;  
-public :
-  AttractorField();
-  virtual ~AttractorField();
-  void addPoint(double X, double Y, double Z);
-  void buildFastSearchStructures() ;
-  void addGEdge(GEdge*, int);
-  void addCurve(Curve*, int);
-  virtual double operator()(double X, double Y, double Z) ;
-};
-
-class AttractorField_1DMesh : public AttractorField 
-{
-protected:
-  std::vector<double> lcs;
-  std::vector<double> lcs2;
-  double _dmax,_dmin,_lcmax;
-public:
-  AttractorField_1DMesh (GModel *m , double dmax, double dmin, double lcmax);
-  AttractorField_1DMesh (GFace  *gf, double dmax, double dmin, double lcmax);
-  virtual double operator()(double X, double Y, double Z) ;
-  virtual void eval(double X, double Y, double Z, double &l, double &lpt, double &dist) ;
-};
-
-
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.120 2008-03-11 22:30:31 geuzaine Exp $
+// $Id: Main.cpp,v 1.121 2008-03-18 08:41:21 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -88,9 +88,10 @@ int main(int argc, char *argv[])
       if(CTX.bgm_filename) {
         MergeFile(CTX.bgm_filename);
         if(PView::list.size()){
-	  Field *field = new PostViewField(PView::list.back());
-	  BGMAddField(field);
-	  fields.insert(field);
+	  /*Field *field = new PostViewField(PView::list.back());
+	  GModel::current()->fields.insert(field);
+		field->set_mesh_size=true;
+		GModel::current()->mesh_size_fields.insert(field);*/
         }
         else
           Msg(GERROR, "Invalid background mesh (no view)");
@@ -170,9 +171,10 @@ int main(int argc, char *argv[])
   if(CTX.bgm_filename) {
     MergeFile(CTX.bgm_filename);
     if(PView::list.size()){
-      Field *field = new PostViewField(PView::list.back());
-      BGMAddField(field);
-      fields.insert(field);
+			/*Field *field = new PostViewField(PView::list.back());
+			GModel::current()->fields.insert(field);
+			field->set_mesh_size=true;
+			GModel::current()->mesh_size_fields.insert(field);*/
     }
     else
       Msg(GERROR, "Invalid background mesh (no view)");

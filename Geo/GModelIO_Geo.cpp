@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.16 2008-02-22 21:09:00 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.17 2008-03-18 08:41:21 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -147,6 +147,30 @@ int GModel::importGEOInternals()
   
   return 1;
 }
+class writeFieldOptionGEO{
+ private :
+  FILE *geo;
+	Field *field;
+ public :
+  writeFieldOptionGEO(FILE *fp,Field *_field) { geo = fp ? fp : stdout; field=_field;}
+  void operator() (std::pair<const char *,FieldOption *> it)
+  {
+		std::string v;
+		it.second->get_text_representation(v);
+		fprintf(geo,"Field[%i].%s = %s;\n",field->id,it.first,v.c_str());
+	}
+};
+class writeFieldGEO{
+ private :
+  FILE *geo;
+ public :
+  writeFieldGEO(FILE *fp) { geo = fp ? fp : stdout; }
+  void operator() (std::pair<int, Field *> it)
+  {
+		fprintf(geo,"Field[%i] = %s;\n",it.first,it.second->get_name());
+		std::for_each(it.second->options.begin(),it.second->options.end(),writeFieldOptionGEO(geo,it.second));
+	}
+};
 
 class writeGVertexGEO {
  private :
@@ -409,6 +433,8 @@ int GModel::writeGEO(const std::string &name, bool printLabels)
     std::for_each(groups[i].begin(), groups[i].end(), 
 		  writePhysicalGroupGEO(fp, i, printLabels, labels, physicalNames));
 
+	std::for_each(fields.begin(),fields.end(), writeFieldGEO(fp));
+	if(fields.background_field>0)fprintf(fp,"Background Field = %i;\n",fields.background_field);
   if(fp) fclose(fp);
   return 1;
 }

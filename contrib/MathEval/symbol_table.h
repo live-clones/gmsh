@@ -33,6 +33,8 @@ typedef struct _Record {
     double (*function) (double); /* Pointer to function to calculate
 				  * its value.  */
   } data;
+	int             flag;	/* Record flag used for symbol table
+				 * selective traversal.  */
 } Record;
 
 /*
@@ -76,4 +78,16 @@ Record *symbol_table_lookup(SymbolTable * symbol_table, char *name);
  */
 SymbolTable *symbol_table_assign(SymbolTable * symbol_table);
 
+/* Clear flag for each symbol table record. */
+void            symbol_table_clear_flags(SymbolTable * symbol_table);
+
+/* Count number of flagged records in symbol table. */
+int             symbol_table_get_flagged_count(SymbolTable * symbol_table);
+
+/* Fill given array with pointers to records from given symbol table that
+ * have flag set.  Further arguments are array to store pointers and array 
+ * capacity.  Number of records that are actually put into array is
+ * returned. */
+int             symbol_table_get_flagged(SymbolTable * symbol_table,
+					 Record ** records, int length);
 #endif

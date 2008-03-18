@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.302 2008-02-23 15:30:09 geuzaine Exp $
+// $Id: Gmsh.y,v 1.303 2008-03-18 08:41:25 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -101,11 +101,11 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer);
 %token tUsing tBump tProgression tPlugin
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
 %token tLoop tRecombine tSmoother tDelete tCoherence tIntersect tBoundary
-%token tAttractor tLayers tHole tAlias tAliasWithOptions
+%token tLayers tHole tAlias tAliasWithOptions
 %token tText2D tText3D tInterpolationScheme  tTime tCombine
 %token tBSpline tBezier tNurbs tOrder tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
-%token tField tThreshold tStructured tLatLon tGrad tPostView 
+%token tField 
 %token tReturn tCall tFunction tShow tHide tGetValue
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 
@@ -950,7 +950,62 @@ Affectation :
       Free($1);
       List_Delete($8);
     }
-
+	| tSTRING tField tAFFECT FExpr tEND
+	{
+		if(!strcmp($1,"Background")){
+			GModel::current()->fields.background_field=(int)$4;
+		}else{
+			yymsg(GERROR, "Unknown command %s Field.",$1);
+		}
+	}
+	| tField '[' FExpr ']' tAFFECT tSTRING tEND
+	{
+		if(!GModel::current()->fields.new_field((int)$3,$6))
+				yymsg(GERROR, "Cannot create field %i of type '%s'.", (int)$3, $6);
+	}
+  | tField '[' FExpr ']' '.' tSTRING  tAFFECT FExpr tEND
+	{
+		Field *field=GModel::current()->fields.get((int)$3);
+		if(field){
+			FieldOption *option=field->options[$6];
+			if(option){
+				try {option->numerical_value($8);}
+				catch(...){
+					yymsg(GERROR, "Cannot assign a numerical value to  option '%s' in field %i of type '%s'", $6,(int)$3,field->get_name());
+				}
+			}else yymsg(GERROR, "Unknown option '%s' in field %i of type '%s'", $6,(int)$3,field->get_name());
+		}else yymsg(GERROR, "No field with id %i",(int)$3);
+			
+	}
+  | tField '['FExpr ']' '.' tSTRING  tAFFECT StringExpr tEND
+	{
+		Field *field=GModel::current()->fields.get((int)$3);
+		if(field){
+			FieldOption *option=field->options[$6];
+			if(option){
+				try {option->string()=$8;}
+				catch (...){
+					yymsg(GERROR, "Cannot assign a string value to  option '%s' in field %i of type '%s'", $6,(int)$3,field->get_name());
+				}
+			}else yymsg(GERROR, "Unknown option '%s' in field %i of type '%s'", $6,(int)$3,field->get_name());
+		}else yymsg(GERROR, "No field with id %i",(int)$3);
+	}
+  | tField '['FExpr ']' '.' tSTRING  tAFFECT ListOfDouble tEND
+	{
+		Field *field=GModel::current()->fields.get((int)$3);
+		if(field){
+			FieldOption *option=field->options[$6];
+			if(option){
+				std::list<int> &vl=option->list();
+				vl.clear();
+				for(int i=0;i<List_Nbr($8);i++){
+					double id;
+					List_Read($8,i,&id);
+					vl.push_back(id);
+				}
+			}else yymsg(GERROR, "Unknown option '%s' in field %i of type '%s'", $6,(int)$3,field->get_name());
+		}else yymsg(GERROR, "No field with id %i",(int)$3);
+	}
   // Plugins
 
   | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT FExpr tEND 
@@ -1032,172 +1087,6 @@ Shape :
       List_Delete($7);
       $$.Type = MSH_PHYSICAL_POINT;
       $$.Num = num;
-    }
-  | tAttractor tPoint tField '(' FExpr ')' tAFFECT ListOfDouble tEND 
-    {
-      AttractorField *att = new AttractorField();
-      for(int i = 0; i < List_Nbr($8); i++){
-        double d;
-        List_Read($8, i, &d);
-        Vertex *v = FindPoint((int)d); 
-        if(v)
-          att->addPoint(v->Pos.X, v->Pos.Y, v->Pos.Z);
-        else{
-          GVertex *gv = GModel::current()->getVertexByTag((int)d);
-          if(gv) 
-            att->addPoint(gv->x(), gv->y(), gv->z());
-        }
-      }
-      att->buildFastSearchStructures();
-      fields.insert(att, (int)$5);
-      // dummy values
-      $$.Type = 0;
-      $$.Num = 0;
-    }
-  | tLatLon tField '(' FExpr ')' tAFFECT FExpr tEND
-    {
-      fields.insert(new LatLonField(fields.get((int)$7)), (int)$4);
-      // dummy values
-      $$.Type = 0;
-      $$.Num = 0;
-    }
-  | tPostView tField '(' FExpr ')' tAFFECT FExpr tEND 
-    {
-      int index = (int)$7;
-      if(index >= 0 && index < (int)PView::list.size()) 
-        fields.insert(new PostViewField(PView::list[index]), (int)$4);
-      else
-        yymsg(GERROR, "Field %i error, view %i does not exist", (int)$4, (int)$7);
-      // dummy values
-      $$.Type = 0;
-      $$.Num = 0;
-    }
-  | tThreshold tField '(' FExpr ')' tAFFECT ListOfDouble tEND 
-    {
-      double pars[] = {0, CTX.lc/10, CTX.lc, CTX.lc/100, CTX.lc/20};
-      for(int i = 0; i < List_Nbr($7); i++){
-	if(i > 4)
-	  yymsg(GERROR, "Too many parameters for Thresold Field (max=5)");
-	else
-	  List_Read($7, i, &pars[i]);
-      }
-      fields.insert(new ThresholdField(fields.get((int)pars[0]), pars[1], 
-				       pars[2], pars[3], pars[4]), (int)$4);
-      // dummy values
-      $$.Type = 0;
-      $$.Num = 0;
-    }
-  | tFunction tField '(' FExpr ')' tAFFECT tBIGSTR tEND
-    {
-      std::list<Field*> *flist = new std::list<Field*>;
-      fields.insert(new FunctionField(flist,$7), (int)$4);
-      // dummy values
-      $$.Type = 0;
-      $$.Num = 0;
-    }
-  | tFunction tField '(' FExpr ')' tAFFECT tBIGSTR ListOfDouble tEND
-    {
-      std::list<Field*> *flist = new std::list<Field*>;
-      flist->resize(0);
-      for(int i = 0; i < List_Nbr($8); i++){
-	double id;
-	List_Read($8, i, &id);
-	Field *pfield = fields.get((int)id);
-	if(pfield) flist->push_front(pfield);
-      }
-      fields.insert(new FunctionField(flist,$7), (int)$4);
-      // dummy values
-      $$.Type = 0;
-      $$.Num = 0;
-    }
-  | tStructured tField '(' FExpr ')' tAFFECT tBIGSTR tEND
-    {
-      fields.insert(new StructuredField($7), (int)$4);
-      // dummy values
-      $$.Type = 0;
-      $$.Num = 0;
-    }
-  | tCharacteristic tLength tField ListOfDouble tEND 
-    {
-      for(int i = 0; i < List_Nbr($4); i++){
-	double id;
-	List_Read($4, i, &id);
-        BGMAddField(fields.get((int)id));
-      }
-      // dummy values
-      $$.Type = 0;
-      $$.Num = 0;
-    }
-  // backward compatibility
-  | tAttractor tPoint ListOfDouble tAFFECT ListOfDouble  tEND
-    {
-      double pars[] = { CTX.lc/10, CTX.lc/100., CTX.lc/20, 1, 3 };
-      for(int i = 0; i < List_Nbr($5); i++){
-	if(i > 4) 
-	  yymsg(GERROR, "Too many paramaters for attractor line (max = 5)");	  
-	else
-	  List_Read($5, i, &pars[i]);
-      }
-      // treshold attractor: first parameter is the treshold, next two
-      // are the in and out size fields, last is transition factor
-      AttractorField *attractor = new AttractorField();
-      fields.insert(attractor);
-      Field *threshold = new ThresholdField(attractor, pars[0], pars[0] * pars[4], 
-					    pars[1], pars[2]);
-      fields.insert(threshold);
-      BGMAddField(threshold);
-      for(int i = 0; i < List_Nbr($3); i++){
-	double d;
-	List_Read($3, i, &d);
-	Vertex *v = FindPoint((int)d); 
-	if(v)
-	  attractor->addPoint(v->Pos.X, v->Pos.Y, v->Pos.Z);
-	else{
-	  GVertex *gv = GModel::current()->getVertexByTag((int)d);
-	  if(gv) 
-	    attractor->addPoint(gv->x(), gv->y(), gv->z());
-	}
-      }
-      attractor->buildFastSearchStructures();
-      // dummy values
-      $$.Type = 0;
-      $$.Num = 0;
-    }
-  | tAttractor tLine ListOfDouble tAFFECT ListOfDouble tEND
-    {
-      double pars[] = { CTX.lc/10, CTX.lc/100., CTX.lc/20, 10, 3 };
-      for(int i = 0; i < List_Nbr($5); i++){
-	if(i > 4) 
-	  yymsg(GERROR, "Too many paramaters for attractor line (max = 5)");	  
-	else
-	  List_Read($5, i, &pars[i]);
-      }
-      // treshold attractor: first parameter is the treshold, next two
-      // are the in and out size fields, last is transition factor
-      AttractorField *att = new AttractorField();
-      fields.insert(att);
-      Field *threshold = new ThresholdField(att, pars[0], pars[0] * pars[4],
-					    pars[1], pars[2]);
-      fields.insert(threshold);
-      BGMAddField(threshold);
-      for(int i = 0; i < List_Nbr($3); i++){
-	double d;
-	List_Read($3, i, &d);
-	Curve *c = FindCurve((int)d); 
-	if(c){
-	  att->addCurve(c, (int)pars[3]);
-	}
-	else{
-	  GEdge *ge = GModel::current()->getEdgeByTag((int)d);
-	  if(ge){
-	    att->addGEdge(ge, (int)pars[3]);
-	  }
-	}
-      }
-      att->buildFastSearchStructures();
-      // dummy values
-      $$.Type = 0;
-      $$.Num = 0;
     }
   | tCharacteristic tLength ListOfDouble tAFFECT FExpr tEND
     {      
@@ -1842,6 +1731,9 @@ Delete :
       }
       List_Delete($3);
     }
+	| tDelete tField '[' FExpr ']' tEND{
+		GModel::current()->fields.delete_field((int)$4);
+	}
   | tDelete tSTRING '[' FExpr ']' tEND
     {
       if(!strcmp($2, "View")){
@@ -2001,17 +1893,17 @@ Command :
     }
   | tSTRING tSTRING tSTRING '[' FExpr ']' tEND
     {
-      if(!strcmp($1, "Background") && !strcmp($2, "Mesh")  && !strcmp($3, "View")){
+     /* if(!strcmp($1, "Background") && !strcmp($2, "Mesh")  && !strcmp($3, "View")){
 	int index = (int)$5;
 	if(index >= 0 && index < (int)PView::list.size()){
 	  Field *field = new PostViewField(PView::list[index]);
-	  fields.insert(field);
+	  GModel::current()->fields.insert(field);
 	  BGMAddField(field);
 	}
 	else
 	  yymsg(GERROR, "Unknown view %d", index);
       }
-      else
+      else*/
 	yymsg(GERROR, "Unknown command '%s'", $1);
       Free($1); Free($2); Free($3);
     }

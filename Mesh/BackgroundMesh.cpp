@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.39 2008-03-12 08:36:48 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.40 2008-03-18 08:41:21 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,23 +30,17 @@
 #include "Field.h"
 
 extern Context_T CTX;
-MinField lc_field;
 
 #define MAX_LC 1.e22
 
 bool BGMExists() 
 {
-  return !lc_field.empty();
-}
-
-void BGMAddField(Field *field)
-{
-  lc_field.push_front(field);
+	FieldManager &fields=GModel::current()->fields;
+	return (fields.background_field>0); 
 }
 
 void BGMReset()
 {
-  lc_field.clear();
 }
 
 // computes the characteristic length of the mesh at a vertex in order
@@ -172,10 +166,14 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
   double l1 = MAX_LC;
   double l2 = MAX_LC;
   double l3 = CTX.lc;
-  double l4 = lc_field.empty() ? MAX_LC : lc_field(X, Y, Z);
-
-
+  double l4 = MAX_LC;
   double lc;
+	FieldManager &fields=GModel::current()->fields;
+	if(fields.background_field>0){
+		Field *f=fields.get(fields.background_field);
+		if(f) l4=(*f)(X,Y,Z);
+	}
+		
   if(l4 < MAX_LC && !CTX.mesh.constrained_bgmesh){
     // use the fields unconstrained by other characteristic lengths
     lc = l4 * CTX.mesh.lc_factor;
@@ -205,7 +203,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
 // we do it also if CTX.mesh.constrained_bgmesh is true;
 bool Extend1dMeshIn2dSurfaces()
 {
-  if(lc_field.empty()) return true;
+  //if(lc_field.empty()) return true;
   if(CTX.mesh.constrained_bgmesh) return true;
   return false;
 }

@@ -49,6 +49,8 @@ typedef struct {
   Node           *root;	/* Root of tree representation of
 			 * function.  */
   SymbolTable    *symbol_table;	/* Evalutor symbol table.  */
+	char **names;
+	int count;
 } Evaluator;
 
 void *
@@ -107,6 +109,8 @@ evaluator_create(char *string)
   evaluator = XMALLOC(Evaluator, 1);
   evaluator->root = matheval_root;
   evaluator->symbol_table = matheval_symbol_table;
+	evaluator->count=0;
+	evaluator->names=NULL;
   
   return evaluator;
 }
@@ -120,6 +124,7 @@ evaluator_destroy(void *evaluator)
    */
   node_destroy(((Evaluator *) evaluator)->root);
   symbol_table_destroy(((Evaluator *) evaluator)->symbol_table);
+	XFREE(((Evaluator *) evaluator)->names);
   XFREE(evaluator);
 }
 
@@ -177,6 +182,8 @@ evaluator_derivative(void *evaluator, char *name)
   derivative->root = node_simplify(node_derivative(((Evaluator *) evaluator)->root, name,
 						   ((Evaluator *) evaluator)->symbol_table));
   derivative->symbol_table = symbol_table_assign(((Evaluator *) evaluator)->symbol_table);
+	derivative->count=0;
+	derivative->names=NULL;
   
   return derivative;
 }
@@ -245,4 +252,39 @@ evaluator_derivative_z(void *evaluator)
    * Differentiate function using derivation variable "z".
    */
   return evaluator_derivative(evaluator, "z");
+}
+
+void
+evaluator_get_variables(void *evaluator, char ***names, int *count)
+{
+	Record        **records;	/* Array of symbol table records
+					 * containing evaluator variables. 
+					 */
+	int             i;	/* Loop counter.  */
+
+	/* If not already, find and remember evaluator variable names. */
+	if (!((Evaluator *) evaluator)->names) {
+		symbol_table_clear_flags(((Evaluator *) evaluator)->
+					 symbol_table);
+		node_flag_variables(((Evaluator *) evaluator)->root);
+		((Evaluator *) evaluator)->count =
+		    symbol_table_get_flagged_count(((Evaluator *)
+						    evaluator)->
+						   symbol_table);
+		records =
+		    XMALLOC(Record *, ((Evaluator *) evaluator)->count);
+		symbol_table_get_flagged(((Evaluator *) evaluator)->
+					 symbol_table, records,
+					 ((Evaluator *) evaluator)->count);
+		((Evaluator *) evaluator)->names =
+		    XMALLOC(char *, ((Evaluator *) evaluator)->count);
+		for (i = 0; i < ((Evaluator *) evaluator)->count; i++)
+			((Evaluator *) evaluator)->names[i] =
+			    records[i]->name;
+		XFREE(records);
+	}
+
+	/* Return requested information. */
+	*count = ((Evaluator *) evaluator)->count;
+	*names = ((Evaluator *) evaluator)->names;
 }

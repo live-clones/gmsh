@@ -1,4 +1,4 @@
-// $Id: gmshSurface.cpp,v 1.11 2008-02-20 09:20:45 geuzaine Exp $
+// $Id: gmshSurface.cpp,v 1.12 2008-03-18 08:41:21 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -78,8 +78,10 @@ SPoint3 gmshPolarSphere::point(double parA, double parB) const
   //at the center of the sphere 
   //parA=2rx/(r+z) parB=2ry/(r+z)
   double rp2 = parA * parA + parB * parB;
-  double z = r * (4 * r * r - rp2) / (4 * r * r + rp2);
-  return SPoint3((r + z) * parA / (2 * r), (r + z) * parB / (2 * r), z);
+	SPoint3 p(2*parA/(1+rp2),2*parB/(1+rp2),(rp2-1)/(rp2+1));
+	p*=-r;
+	p+=o;
+	return p;
 }
 
 gmshSurface *gmshParametricSurface::NewParametricSurface(int iSurf, char *valX,

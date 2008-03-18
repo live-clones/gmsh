@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.106 2008-02-26 08:28:16 geuzaine Exp $
+// $Id: Geo.cpp,v 1.107 2008-03-18 08:41:21 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -716,6 +716,11 @@ int NEWVOLUME(void)
     return (GModel::current()->getGEOInternals()->MaxVolumeNum + 1);
 }
 
+int NEWFIELD(void)
+{
+	return (GModel::current()->fields.max_id()+1);
+}
+
 int NEWPHYSICAL(void)
 {
   if(CTX.geom.old_newreg)
@@ -1031,7 +1036,7 @@ void DeletePoint(int ip)
     List_Read(Curves, i, &c);
     for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
       if(!compareVertex(List_Pointer(c->Control_Points, j), &v)){
-	List_Delete(Curves);
+					List_Delete(Curves);
         return;
       }
     }

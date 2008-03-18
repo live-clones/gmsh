@@ -30,7 +30,6 @@ extern "C"
 class GMSH_FieldViewPlugin : public GMSH_Post_Plugin
 {
  public:
-  GMSH_FieldViewPlugin();
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *help_text) const;
   void catchErrorMessage(char *errorMessage) const;

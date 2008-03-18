@@ -108,4 +108,7 @@ int             node_calculate_length(Node * node);
  */
 void            node_write(Node * node, char *string);
 
+/* Flag each variable in symbol table that is used from subtree rooted at
+ * specified node. */
+void            node_flag_variables(Node * node);
 #endif

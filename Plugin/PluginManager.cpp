@@ -1,4 +1,4 @@
-// $Id: PluginManager.cpp,v 1.5 2008-02-23 15:30:10 geuzaine Exp $
+// $Id: PluginManager.cpp,v 1.6 2008-03-18 08:41:26 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -63,6 +63,7 @@
 #include "Evaluate.h"
 #include "Probe.h"
 #include "FieldView.h"
+#include "GSHHS.h"
 #include "Context.h"
 
 extern Context_T CTX;
@@ -237,6 +238,8 @@ void GMSH_PluginManager::registerDefaultPlugins()
 		      ("Evaluate", GMSH_RegisterEvaluatePlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
 		      ("CutParametric", GMSH_RegisterCutParametricPlugin()));
+    allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
+		      ("GSHHS", GMSH_RegisterGSHHSPlugin()));
 #endif
   }
 

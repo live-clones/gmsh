@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.100 2008-02-23 15:30:07 geuzaine Exp $
+// $Id: Gmsh.l,v 1.101 2008-03-18 08:41:22 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -84,6 +84,7 @@ string	{alpha}({alpha}|{digit})*
 "news"  		{ gmsh_yylval.d = NEWSURFACE(); return tDOUBLE; }
 "newsl"  		{ gmsh_yylval.d = NEWSURFACELOOP(); return tDOUBLE; }
 "newv"  		{ gmsh_yylval.d = NEWVOLUME(); return tDOUBLE; }
+"newf"  		{ gmsh_yylval.d = NEWFIELD(); return tDOUBLE; }
 "="                     return tAFFECT;
 "+="                    return tAFFECTPLUS;
 "-="                    return tAFFECTMINUS;
@@ -110,7 +111,6 @@ Atan                    return tAtan;
 ArcTan                  return tAtan;
 Atan2                   return tAtan2;
 ArcTan2                 return tAtan2;
-Attractor		return tAttractor;
 
 Bezier			return tBezier;
 Boundary		return tBoundary;
@@ -155,7 +155,6 @@ For                     return tFor;
 Function                return tFunction;
 
 GetValue                return tGetValue;
-Grad                    return tGrad;
 GMSH_MAJOR_VERSION      return tGMSH_MAJOR_VERSION;
 GMSH_MINOR_VERSION      return tGMSH_MINOR_VERSION;
 GMSH_PATCH_VERSION      return tGMSH_PATCH_VERSION;
@@ -170,7 +169,6 @@ Intersect               return tIntersect;
 
 Knots			return tKnots;
 
-LatLon                  return tLatLon;
 Length                  return tLength;
 Line                    return tLine;
 Loop                    return tLoop;
@@ -215,20 +213,17 @@ Sprintf                 return tSprintf;
 StrCat                  return tStrCat;
 StrPrefix               return tStrPrefix;
 StrRelative             return tStrRelative;
-Structured              return tStructured;
 Show                    return tShow;
 
 Transfinite             return tTransfinite;
 Translate               return tTranslate;
 Tanh                    return tTanh;
 Tan                     return tTan;
-Threshold               return tThreshold;
 Today                   return tToday;
 
 Using                   return tUsing;
 
 Volume                  return tVolume;
-PostView                return tPostView;
 
 T2                      return tText2D;
 T3                      return tText3D;

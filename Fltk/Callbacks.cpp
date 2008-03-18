@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.566 2008-03-11 20:03:09 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.567 2008-03-18 08:41:20 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,7 @@
 #include <time.h>
 #include <map>
 #include <string>
+#include <sstream>
 
 #include "GmshUI.h"
 #include "Message.h"
@@ -137,6 +138,7 @@ void window_cb(CALLBACK_ARGS)
     WID->g_window->iconize();
     if(WID->opt_window->shown()) WID->opt_window->iconize();
     if(WID->plugin_window->shown()) WID->plugin_window->iconize();
+    if(WID->field_window->shown()) WID->field_window->iconize();
     if(WID->vis_window->shown()) WID->vis_window->iconize();
     if(WID->clip_window->shown()) WID->clip_window->iconize();
     if(WID->manip_window->shown()) WID->manip_window->iconize();
@@ -165,6 +167,7 @@ void window_cb(CALLBACK_ARGS)
     WID->g_window->show();
     if(WID->opt_window->shown()) WID->opt_window->show();
     if(WID->plugin_window->shown()) WID->plugin_window->show();
+    if(WID->field_window->shown()) WID->field_window->show();
     if(WID->context_geometry_window->shown()) WID->context_geometry_window->show();
     if(WID->context_mesh_window->shown()) WID->context_mesh_window->show();
     for(int i = 0; i < MAXSOLVERS; i++) {
@@ -4492,18 +4495,115 @@ void view_all_visible_cb(CALLBACK_ARGS)
 
 void view_applybgmesh_cb(CALLBACK_ARGS)
 {
-  int index =  (int)(long)data;
+  /*int index =  (int)(long)data;
   if(index >= 0 && index < (int)PView::list.size()){
     Field *field = new PostViewField(PView::list[index]);
     BGMReset();
     BGMAddField(field);
-    fields.insert(field);
-  }
+    GModel::current()->fields.insert(field);
+  }*/
 }
 
 void view_plugin_cb(CALLBACK_ARGS)
 {
   WID->create_plugin_window((int)(long)data);
+}
+
+void view_field_cb(CALLBACK_ARGS)
+{
+  WID->create_field_window((int)(long)data);
+}
+
+void view_field_cancel_cb(CALLBACK_ARGS)
+{
+  WID->field_window->hide();
+}
+void view_field_delete_cb(CALLBACK_ARGS)
+{
+	FieldDialogBox *fdb=(FieldDialogBox*)data;
+	fdb->group->hide();
+	delete_field(fdb->current_field->id,CTX.filename);
+	WID->create_field_window(0);
+}
+void view_field_set_size_btn_cb(CALLBACK_ARGS){
+	FieldDialogBox *fdb=(FieldDialogBox*)data;
+	fdb->group->hide();
+	int v=((Fl_Check_Button*)w)->value();
+	if(v)
+		set_background_field(fdb->current_field->id,CTX.filename);
+	else
+		set_background_field(-1,CTX.filename);
+	WID->create_field_window(fdb->current_field->id);
+}
+void view_field_new_cb(CALLBACK_ARGS)
+{
+	Fl_Menu_Button* mb=((Fl_Menu_Button*)w);
+	int id=GModel::current()->fields.new_id();
+	add_field(id,mb->text(),CTX.filename);
+	WID->create_field_window(id);
+}
+void view_field_apply_cb(CALLBACK_ARGS){
+	FieldDialogBox *fdb=(FieldDialogBox*)data;
+	fdb->save_values();
+	int selected=WID->field_browser->value();
+		std::ostringstream sstream("");
+		sstream<<fdb->current_field->id;
+		sstream<<" "<<fdb->current_field->get_name();
+	WID->field_browser->text(selected,sstream.str().c_str());
+}
+void view_field_revert_cb(CALLBACK_ARGS){
+	FieldDialogBox *fdb=(FieldDialogBox*)data;
+	fdb->load_field(fdb->current_field);
+}
+void view_field_browser_cb(CALLBACK_ARGS)
+{
+	int selected=WID->field_browser->value();
+	if(WID->selected_field_dialog_box){
+		WID->selected_field_dialog_box->group->hide();
+	}
+	if(!selected)return;
+	Field *f=(Field*)WID->field_browser->data(selected);
+	f->dialog_box()->load_field(f);
+	WID->selected_field_dialog_box=f->dialog_box();
+  f->dialog_box()->group->show();
+}
+void view_field_put_on_view_cb(CALLBACK_ARGS){
+	Fl_Menu_Button* mb=((Fl_Menu_Button*)w);
+	Field *field=((FieldDialogBox*)data)->current_field;
+	int iView;
+	sscanf(mb->text(),"View [%i]",&iView);
+	field->put_on_view(PView::list[iView]);
+	Draw();
+}
+
+void view_field_select_node_cb(CALLBACK_ARGS){
+	const char *mode="select";
+	const char *help="vertices";
+  CTX.pick_elements = 1;
+  Draw();  
+  std::vector<GVertex*> vertices, vertices_old;
+  std::vector<GEdge*> edges, edges_old;
+  std::vector<GFace*> faces, faces_old;
+  std::vector<GRegion*> regions, regions_old;
+  std::vector<MElement*> elements, elements_old;
+	opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  while(1) {
+    Msg(ONSCREEN, "Select %s\n[Press %s'q' to abort]", 
+	help, mode ? "" : "'u' to undo or ");
+
+    char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
+		printf("char = %c\n",ib);
+    if(ib == 'q'){
+			for(std::vector<GVertex*>::iterator it=vertices.begin();it!=vertices.end();it++){
+				printf("%i\n",*it);
+			}
+      break;
+    }
+  }
+  CTX.mesh.changed = ENT_ALL;
+  CTX.pick_elements = 0;
+  Msg(ONSCREEN, "");
+  Draw();  
 }
 
 void view_plugin_input_value_cb(CALLBACK_ARGS)

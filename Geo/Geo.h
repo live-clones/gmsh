@@ -259,6 +259,7 @@ int NEWLINELOOP(void);
 int NEWSURFACE(void);
 int NEWSURFACELOOP(void);
 int NEWVOLUME(void);
+int NEWFIELD(void);
 int NEWPHYSICAL(void);
 int NEWREG(void);
 

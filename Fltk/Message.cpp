@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.86 2008-03-11 20:03:10 geuzaine Exp $
+// $Id: Message.cpp,v 1.87 2008-03-18 08:41:21 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -204,6 +204,10 @@ void Exit(int level)
       CTX.plugin_position[1] = WID->plugin_window->y();
       CTX.plugin_size[0] = WID->plugin_window->w();
       CTX.plugin_size[1] = WID->plugin_window->h();
+      CTX.field_position[0] = WID->field_window->x();
+      CTX.field_position[1] = WID->field_window->y();
+      CTX.field_size[0] = WID->field_window->w();
+      CTX.field_size[1] = WID->field_window->h();
       CTX.stat_position[0] = WID->stat_window->x();
       CTX.stat_position[1] = WID->stat_window->y();
       CTX.vis_position[0] = WID->vis_window->x();
