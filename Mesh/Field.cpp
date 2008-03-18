@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.18 2008-03-18 11:41:08 remacle Exp $
+// $Id: Field.cpp,v 1.19 2008-03-18 14:43:53 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -192,6 +192,7 @@ class StructuredField : public Field{
 public :
   StructuredField(){
 		options["FileName"]=new FieldOptionString(file_name,&update_needed);
+		data=NULL;
 	}
 	const char *get_name(){
 		return "Structured";

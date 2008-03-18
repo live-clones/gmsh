@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.55 2008-02-17 08:48:01 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.56 2008-03-18 14:43:53 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -27,6 +27,7 @@
 #include "Message.h"
 #include "List.h"
 #include "Context.h"
+#include "GModel.h"
 
 extern Context_T CTX;
 
@@ -298,7 +299,9 @@ void meshGEdge::operator() (GEdge *ge)
   double t_end = bounds.high();
   
   // first compute the length of the curve by integrating one
-  double length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-8);
+	SPoint3 p1=ge->model()->bounds().min();
+	SPoint3 p2=ge->model()->bounds().max();
+  double length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-8*p1.distance(p2));
   ge->setLength(length);
   // Send a messsage to the GMSH environment
 
