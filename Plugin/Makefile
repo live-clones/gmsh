@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.154 2008-03-18 11:33:08 remacle Exp $
+# $Id: Makefile,v 1.155 2008-03-18 11:35:28 remacle Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -44,7 +44,7 @@ SRC = Plugin.cpp PluginManager.cpp\
         Skin.cpp\
         Extract.cpp ExtractElements.cpp ExtractEdges.cpp\
         MakeSimplex.cpp\
-        Evaluate.cpp FieldView.cpp GSHHS.cpp\
+        Evaluate.cpp FieldView.cpp GSHHS.cpp GeoEarthImport.cpp\
         Integrate.cpp Gradient.cpp Curl.cpp Divergence.cpp\
         Annotate.cpp Remove.cpp\
         Probe.cpp\
