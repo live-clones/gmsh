@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.59 2008-03-18 19:30:14 geuzaine Exp $
+// $Id: MElement.cpp,v 1.60 2008-03-19 21:22:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -133,27 +133,20 @@ double MTetrahedron::etaShapeMeasure()
 }
 
 double MTetrahedron::getVolume()
-{ 
+{
   double mat[3][3];
   getMat(mat);
   return det3x3(mat) / 6.;
 }
 
-bool MTetrahedron::invertmapping(double *p, double *uvw, double tol)
+void MTetrahedron::xyz2uvw(double xyz[3], double uvw[3])
 {
-  double mat[3][3];
-  double b[3], dum;
+  double mat[3][3], b[3], det;
   getMat(mat);
-  b[0] = p[0] - getVertex(0)->x();
-  b[1] = p[1] - getVertex(0)->y();
-  b[2] = p[2] - getVertex(0)->z();
-  sys3x3(mat, b, uvw, &dum);
-  if(uvw[0] >= -tol && uvw[1] >= -tol && uvw[2] >= -tol &&
-     uvw[0] <= 1. + tol && uvw[1] <= 1. + tol && uvw[2] <= 1. + tol &&
-     1. - uvw[0] - uvw[1] - uvw[2] > -tol) {
-    return true;
-  }
-  return false;
+  b[0] = xyz[0] - getVertex(0)->x();
+  b[1] = xyz[1] - getVertex(0)->y();
+  b[2] = xyz[2] - getVertex(0)->z();
+  sys3x3(mat, b, uvw, &det);
 }
 
 int MHexahedron::getVolumeSign()
@@ -222,6 +215,172 @@ std::string MElement::getInfoString()
   char tmp[256];
   sprintf(tmp, "Element %d", getNum());
   return std::string(tmp);
+}
+
+double MElement::getJacobian(double u, double v, double w, double jac[3][3])
+{
+  jac[0][0] = jac[0][1] = jac[0][2] = 0.;
+  jac[1][0] = jac[1][1] = jac[1][2] = 0.;
+  jac[2][0] = jac[2][1] = jac[2][2] = 0.;
+  double s[3];
+  switch(getDim()){
+  case 3 :
+    for(int i = 0; i < getNumVertices(); i++) {
+      getGradShapeFunction(i, u, v, w, s);
+      MVertex *p = getVertex(i);
+      jac[0][0] += p->x() * s[0]; jac[0][1] += p->y() * s[0]; jac[0][2] += p->z() * s[0];
+      jac[1][0] += p->x() * s[1]; jac[1][1] += p->y() * s[1]; jac[1][2] += p->z() * s[1];
+      jac[2][0] += p->x() * s[2]; jac[2][1] += p->y() * s[2]; jac[2][2] += p->z() * s[2];
+    }
+    return fabs(jac[0][0] * jac[1][1] * jac[2][2] + jac[0][2] * jac[1][0] * jac[2][1] +
+		jac[0][1] * jac[1][2] * jac[2][0] - jac[0][2] * jac[1][1] * jac[2][0] -
+		jac[0][0] * jac[1][2] * jac[2][1] - jac[0][1] * jac[1][0] * jac[2][2]);
+  case 2 :
+    for(int i = 0; i < getNumVertices(); i++) {
+      getGradShapeFunction(i, u, v, w, s);
+      MVertex *p = getVertex(i);
+      jac[0][0] += p->x() * s[0]; jac[0][1] += p->y() * s[0]; jac[0][2] += p->z() * s[0];
+      jac[1][0] += p->x() * s[1]; jac[1][1] += p->y() * s[1]; jac[1][2] += p->z() * s[1];
+    }
+    {
+      double a[3], b[3], c[3];
+      a[0]= getVertex(1)->x() - getVertex(0)->x(); 
+      a[1]= getVertex(1)->y() - getVertex(0)->y();
+      a[2]= getVertex(1)->z() - getVertex(0)->z();	
+      b[0]= getVertex(2)->x() - getVertex(0)->x(); 
+      b[1]= getVertex(2)->y() - getVertex(0)->y();
+      b[2]= getVertex(2)->z() - getVertex(0)->z();	
+      prodve(a, b, c);
+      jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2]; 
+    }
+    return sqrt(SQR(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0]) +
+		SQR(jac[0][2] * jac[1][0] - jac[0][0] * jac[1][2]) +
+		SQR(jac[0][1] * jac[1][2] - jac[0][2] * jac[1][1]));
+  case 1:
+    for(int i = 0; i < getNumVertices(); i++) {
+      getGradShapeFunction(i, u, v, w, s);
+      MVertex *p = getVertex(i);
+      jac[0][0] += p->x() * s[0]; jac[0][1] += p->y() * s[0]; jac[0][2] += p->z() * s[0];
+    }
+    {
+      double a[3], b[3], c[3];
+      a[0]= getVertex(1)->x() - getVertex(0)->x(); 
+      a[1]= getVertex(1)->y() - getVertex(0)->y();
+      a[2]= getVertex(1)->z() - getVertex(0)->z();	
+      if((fabs(a[0]) >= fabs(a[1]) && fabs(a[0]) >= fabs(a[2])) ||
+	 (fabs(a[1]) >= fabs(a[0]) && fabs(a[1]) >= fabs(a[2]))) {
+	b[0] = a[1]; b[1] = -a[0]; b[2] = 0.;
+      }
+      else {
+	b[0] = 0.; b[1] = a[2]; b[2] = -a[1];
+      }
+      prodve(a, b, c);
+      jac[1][0] = b[0]; jac[1][1] = b[1]; jac[1][2] = b[2]; 
+      jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2]; 
+    }
+    return sqrt(SQR(jac[0][0]) + SQR(jac[0][1]) + SQR(jac[0][2]));
+  default:
+    return 1.;
+  }
+}
+
+void MElement::xyz2uvw(double xyz[3], double uvw[3])
+{
+  // general Newton routine for the nonlinear case (more efficient
+  // routines are implemented for simplices, where the basis functions
+  // are linear)
+  uvw[0] = uvw[1] = uvw[2] = 0.;
+  int iter = 1, maxiter = 20;
+  double error = 1., tol = 1.e-6;
+
+  while (error > tol && iter < maxiter){
+    double jac[3][3];
+    if(!getJacobian(uvw[0], uvw[1], uvw[2], jac)) break;
+    double xn = 0., yn = 0., zn = 0.;
+    for (int i = 0; i < getNumVertices(); i++) {
+      double s;
+      getShapeFunction(i, uvw[0], uvw[1], uvw[2], s);
+      MVertex *v = getVertex(i);
+      xn += v->x() * s;
+      yn += v->y() * s;
+      zn += v->z() * s;
+    }
+    double inv[3][3];
+    inv3x3(jac, inv);
+    double un = uvw[0] +
+      inv[0][0] * (xyz[0] - xn) + inv[1][0] * (xyz[1] - yn) + inv[2][0] * (xyz[2] - zn);
+    double vn = uvw[1] +
+      inv[0][1] * (xyz[0] - xn) + inv[1][1] * (xyz[1] - yn) + inv[2][1] * (xyz[2] - zn) ;
+    double wn = uvw[2] +
+      inv[0][2] * (xyz[0] - xn) + inv[1][2] * (xyz[1] - yn) + inv[2][2] * (xyz[2] - zn) ;
+    error = sqrt(SQR(un - uvw[0]) + SQR(vn - uvw[1]) + SQR(wn - uvw[2]));
+    uvw[0] = un;
+    uvw[1] = vn;
+    uvw[2] = wn;
+    iter++ ;
+  }
+}
+
+double MElement::interpolate(double val[], double u, double v, double w, int stride)
+{
+  double sum = 0;
+  int j = 0;
+  for(int i = 0; i < getNumVertices(); i++){
+    double s;
+    getShapeFunction(i, u, v, w, s);
+    sum += val[j] * s;
+    j += stride;
+  }
+  return sum;
+}
+
+void MElement::interpolateGrad(double val[], double u, double v, double w, double f[3],
+			       int stride, double invjac[3][3])
+{
+  double dfdu[3] = {0., 0., 0.};
+  int j = 0;
+  for(int i = 0; i < getNumVertices(); i++){
+    double s[3];
+    getGradShapeFunction(i, u, v, w, s);
+    dfdu[0] += val[j] * s[0];
+    dfdu[1] += val[j] * s[1];
+    dfdu[2] += val[j] * s[2];
+    j += stride;
+  }
+  if(invjac){
+    matvec(invjac, dfdu, f);
+  }
+  else{
+    double jac[3][3], inv[3][3];
+    getJacobian(u, v, w, jac);
+    inv3x3(jac, inv);
+    matvec(inv, dfdu, f);
+  }
+}
+
+void MElement::interpolateCurl(double val[], double u, double v, double w, double f[3],
+			       int stride)
+{
+  double fx[3], fy[3], fz[3], jac[3][3], inv[3][3];
+  getJacobian(u, v, w, jac);
+  inv3x3(jac, inv);
+  interpolateGrad(&val[0], u, v, w, fx, stride, inv);
+  interpolateGrad(&val[1], u, v, w, fy, stride, inv);
+  interpolateGrad(&val[2], u, v, w, fz, stride, inv);
+  f[0] = fz[1] - fy[2];
+  f[1] = -(fz[0] - fx[2]);
+  f[2] = fy[0] - fx[1];
+}
+
+double MElement::interpolateDiv(double val[], double u, double v, double w, int stride)
+{
+  double fx[3], fy[3], fz[3], jac[3][3], inv[3][3];
+  getJacobian(u, v, w, jac);
+  inv3x3(jac, inv);
+  interpolateGrad(&val[0], u, v, w, fx, stride, inv);
+  interpolateGrad(&val[1], u, v, w, fy, stride, inv);
+  interpolateGrad(&val[2], u, v, w, fz, stride, inv);
+  return fx[0] + fy[1] + fz[2];
 }
 
 void MElement::writeMSH(FILE *fp, double version, bool binary, int num, 
@@ -532,35 +691,6 @@ void MTriangle::pnt(int ord, MVertex *vs[], double uu, double vv, SPoint3 &p)
 
   p = SPoint3(x,y,z);
 #endif
-}
-
-void MTriangleN::jac(double uu, double vv , double j[2][3])  
-{
-  MTriangle::jac(_order, &(*(_vs.begin())), uu, vv, j);
-}
-
-void MTriangleN::pnt(double uu, double vv, SPoint3 &p)
-{
-  MTriangle::pnt(_order, &(*(_vs.begin())), uu, vv, p);
-}
-
-void MTriangle6::jac(double uu, double vv , double j[2][3])  
-{
-  MTriangle::jac(2, _vs, uu, vv, j);
-}
-
-void MTriangle6::pnt(double uu, double vv, SPoint3 &p){
-  MTriangle::pnt(2, _vs, uu, vv, p);
-}
-
-void MTriangle::jac(double uu, double vv, double j[2][3])
-{
-  jac(1, 0, uu, vv, j);
-}
-
-void MTriangle::pnt(double uu, double vv, SPoint3 &p)
-{
-  MTriangle::pnt(1, 0, uu, vv, p);
 }
 
 int MTriangle6::getNumEdgesRep(){ return 3 * 6; }

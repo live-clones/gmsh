@@ -142,6 +142,37 @@ class MElement
   // Returns an information string for the element
   virtual std::string getInfoString();
 
+  // Returns the interpolating nodal shape function associated with
+  // node num, evaluated at point (u,v,w) in parametric coordinates
+  virtual void getShapeFunction(int num, double u, double v, double w,
+				double &s) = 0;
+
+  // Returns the gradient of of the nodal shape function associated
+  // with node num, evaluated at point (u,v,w) in parametric
+  // coordinates
+  virtual void getGradShapeFunction(int num, double u, double v, double w,
+				    double s[3]) = 0;
+
+  // Returns the Jacobian of the element evaluated at point (u,v,w) in
+  // parametric coordinates
+  double getJacobian(double u, double v, double w, double jac[3][3]);
+
+  // Inverts the parametrisation
+  virtual void xyz2uvw(double xyz[3], double uvw[3]);
+
+  // Tests if a point, given in parametric coordinates, belongs to the
+  // element
+  virtual bool isInside(double u, double v, double w, double tol=1.e-8) = 0;
+
+  // Interpolate the given nodal data (resp. its gradient, curl and
+  // divergence) at point (u,v,w) in parametric coordinates
+  double interpolate(double val[], double u, double v, double w, int stride=1);
+  void interpolateGrad(double val[], double u, double v, double w, double f[3],
+		       int stride=1, double invjac[3][3]=0);
+  void interpolateCurl(double val[], double u, double v, double w, double f[3],
+		       int stride=3);
+  double interpolateDiv(double val[], double u, double v, double w, int stride=3);
+
   // IO routines
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
 			int num=0, int elementary=1, int physical=1);
@@ -217,6 +248,28 @@ class MLine : public MElement {
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
   }
+  virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
+  {
+    switch(num) {
+    case 0  : s = 0.5 * (1. - u); break;
+    case 1  : s = 0.5 * (1. + u); break;
+    default : s = 0.; break;
+    }
+  }
+  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  {
+    switch(num) {
+    case 0  : s[0] = -0.5; s[1] = 0.; s[2] = 0.; break;
+    case 1  : s[0] =  0.5; s[1] = 0.; s[2] = 0.; break;
+    default : s[0] = s[1] = s[2] = 0.; break;
+    }
+  }
+  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
+  {
+    if(u < -(1. + tol) || u > (1. + tol))
+      return false;
+    return true;
+  }
 };
 
 class MLine3 : public MLine {
@@ -274,7 +327,7 @@ class MLineN : public MLine {
   {
     for(unsigned int i = 2; i < v.size(); i++)
       _vs.push_back(v[i]);
-    for(unsigned int i = 0 ; i < _vs.size(); i++)
+    for(unsigned int i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_vs.size() + 1);
   }
   ~MLineN(){}
@@ -304,8 +357,6 @@ class MTriangle : public MElement {
  protected:
   MVertex *_v[3];
  public :
-  virtual void jac(int order, MVertex *verts[], double u, double v, double jac[2][3]);
-  virtual void pnt(int order, MVertex *verts[], double u, double v, SPoint3 &);
   MTriangle(MVertex *v0, MVertex *v1, MVertex *v2, int num=0, int part=0) 
     : MElement(num, part)
   {
@@ -318,13 +369,6 @@ class MTriangle : public MElement {
   }
   ~MTriangle(){}
   virtual int getDim(){ return 2; }
-  void getMat(double mat[2][2])
-  {
-    mat[0][0] = _v[1]->x() - _v[0]->x();
-    mat[0][1] = _v[2]->x() - _v[0]->x();
-    mat[1][0] = _v[1]->y() - _v[0]->y();
-    mat[1][1] = _v[2]->y() - _v[0]->y();
-  }
   virtual double gammaShapeMeasure();
   virtual int getNumVertices(){ return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
@@ -369,8 +413,40 @@ class MTriangle : public MElement {
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
-  virtual void jac(double u, double v, double j[2][3]);
-  virtual void pnt(double u, double v, SPoint3&);
+  virtual void jac(int order, MVertex *verts[], double u, double v, double jac[2][3]);
+  virtual void jac(double u, double v, double j[2][3])
+  {
+    jac(1, 0, u, v, j);
+  }
+  virtual void pnt(int order, MVertex *verts[], double u, double v, SPoint3 &);
+  virtual void pnt(double u, double v, SPoint3 &p)
+  {
+    pnt(1, 0, u, v, p);
+  }
+  virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
+  {
+    switch(num){
+    case 0  : s = 1. - u - v; break;
+    case 1  : s =      u    ; break;
+    case 2  : s =          v; break;
+    default : s = 0.; break;
+    }
+  }
+  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  {
+    switch(num) {
+    case 0  : s[0] = -1.; s[1] = -1.; s[2] =  0.; break;
+    case 1  : s[0] =  1.; s[1] =  0.; s[2] =  0.; break;
+    case 2  : s[0] =  0.; s[1] =  1.; s[2] =  0.; break;
+    default : s[0] = s[1] = s[2] = 0.; break;
+    }
+  }
+  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
+  {
+    if(u < (-tol) || v < (-tol) || u > ((1. + tol) - v))
+      return false; 
+    return true;
+  }
 };
 
 class MTriangle6 : public MTriangle {
@@ -429,8 +505,14 @@ class MTriangle6 : public MTriangle {
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
     tmp = _vs[0]; _vs[0] = _vs[2]; _vs[2] = tmp;
   }
-  virtual void jac ( double u, double v , double j[2][3]) ;
-  virtual void pnt(double u, double v, SPoint3&);
+  virtual void jac(double u, double v, double j[2][3])
+  {
+    MTriangle::jac(2, _vs, u, v, j);
+  }
+  virtual void pnt(double u, double v, SPoint3 &p)
+  {
+    MTriangle::pnt(2, _vs, u, v, p);
+  }
 };
 
 class MTriangleN : public MTriangle {
@@ -461,7 +543,7 @@ class MTriangleN : public MTriangle {
   }
   ~MTriangleN(){}
   virtual int getPolynomialOrder(){ return _order; }
-  virtual int getNumVertices(){ return 3 + _vs.size() ; }
+  virtual int getNumVertices(){ return 3 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
   virtual int getNumFaceVertices()
   {
@@ -502,8 +584,14 @@ class MTriangleN : public MTriangle {
     inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
     _vs = inv;
   }
-  virtual void jac(double u, double v, double jac[2][3]);
-  virtual void pnt(double u, double v, SPoint3&);
+  virtual void jac(double u, double v, double j[2][3])
+  {
+    MTriangle::jac(_order, &(*(_vs.begin())), u, v, j);
+  }
+  virtual void pnt(double u, double v, SPoint3 &p)
+  {
+    MTriangle::pnt(_order, &(*(_vs.begin())), u, v, p);
+  }
 };
 
 class MQuadrangle : public MElement {
@@ -559,6 +647,32 @@ class MQuadrangle : public MElement {
   virtual void revert() 
   {
     MVertex *tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
+  }
+  virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
+  {
+    switch(num) {
+    case 0  : s = 0.25 * (1. - u) * (1. - v); break;
+    case 1  : s = 0.25 * (1. + u) * (1. - v); break;
+    case 2  : s = 0.25 * (1. + u) * (1. + v); break;
+    case 3  : s = 0.25 * (1. - u) * (1. + v); break;
+    default : s = 0.; break;
+    }
+  }
+  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  {
+    switch(num) {
+    case 0  : s[0] = -0.25 * (1. - v); s[1] = -0.25 * (1. - u); s[2] = 0.; break;
+    case 1  : s[0] =  0.25 * (1. - v); s[1] = -0.25 * (1. + u); s[2] = 0.; break;
+    case 2  : s[0] =  0.25 * (1. + v); s[1] =  0.25 * (1. + u); s[2] = 0.; break;
+    case 3  : s[0] = -0.25 * (1. + v); s[1] =  0.25 * (1. - u); s[2] = 0.; break;
+    default : s[0] = s[1] = s[2] = 0.; break;
+    }
+  }
+  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
+  {
+    if(u < -(1. + tol) || v < -(1. + tol) || u > (1. + tol) || v > (1. + tol))
+      return false;
+    return true;
   }
 };
 
@@ -744,7 +858,7 @@ class MTetrahedron : public MElement {
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
   }
-  void  getMat(double mat[3][3])
+  void getMat(double mat[3][3])
   {
     mat[0][0] = _v[1]->x() - _v[0]->x();
     mat[0][1] = _v[2]->x() - _v[0]->x();
@@ -760,8 +874,33 @@ class MTetrahedron : public MElement {
   virtual int getVolumeSign(){ return (getVolume() >= 0) ? 1 : -1; }
   virtual double gammaShapeMeasure();
   virtual double etaShapeMeasure();
-  // returns true if the point lies inside the tet
-  bool invertmapping(double *p, double *uvw, double tol = 1.e-8);
+  void xyz2uvw(double xyz[3], double uvw[3]);
+  virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
+  {
+    switch(num) {
+    case 0  : s = 1. - u - v - w; break;
+    case 1  : s =      u        ; break;
+    case 2  : s =          v    ; break;
+    case 3  : s =              w; break;
+    default : s = 0.; break;
+    }
+  }
+  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  {
+    switch(num) {
+    case 0  : s[0] = -1.; s[1] = -1.; s[2] = -1.; break;
+    case 1  : s[0] =  1.; s[1] =  0.; s[2] =  0.; break;
+    case 2  : s[0] =  0.; s[1] =  1.; s[2] =  0.; break;
+    case 3  : s[0] =  0.; s[1] =  0.; s[2] =  1.; break;
+    default : s[0] = s[1] = s[2] = 0.; break;
+    }
+  }
+  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
+  {
+    if(u < (-tol) || v < (-tol) || w < (-tol) || u > ((1. + tol) - v - w))
+      return false;
+    return true;
+  }
 };
 
 class MTetrahedron10 : public MTetrahedron {
@@ -923,6 +1062,57 @@ class MHexahedron : public MElement {
     tmp = _v[4]; _v[4] = _v[6]; _v[6] = tmp;
   }
   virtual int getVolumeSign();
+  virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
+  {
+    switch(num) {
+    case 0  : s = (1. - u) * (1. - v) * (1. - w) * 0.125; break;
+    case 1  : s = (1. + u) * (1. - v) * (1. - w) * 0.125; break;
+    case 2  : s = (1. + u) * (1. + v) * (1. - w) * 0.125; break;
+    case 3  : s = (1. - u) * (1. + v) * (1. - w) * 0.125; break;
+    case 4  : s = (1. - u) * (1. - v) * (1. + w) * 0.125; break;
+    case 5  : s = (1. + u) * (1. - v) * (1. + w) * 0.125; break;
+    case 6  : s = (1. + u) * (1. + v) * (1. + w) * 0.125; break;
+    case 7  : s = (1. - u) * (1. + v) * (1. + w) * 0.125; break;
+    default : s = 0.; break;
+    }
+  }
+  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  {
+    switch(num) {
+    case 0  : s[0] = -0.125 * (1. - v) * (1. - w);
+              s[1] = -0.125 * (1. - u) * (1. - w);
+              s[2] = -0.125 * (1. - u) * (1. - v); break;
+    case 1  : s[0] =  0.125 * (1. - v) * (1. - w);
+              s[1] = -0.125 * (1. + u) * (1. - w);
+              s[2] = -0.125 * (1. + u) * (1. - v); break;
+    case 2  : s[0] =  0.125 * (1. + v) * (1. - w);
+              s[1] =  0.125 * (1. + u) * (1. - w);
+              s[2] = -0.125 * (1. + u) * (1. + v); break;
+    case 3  : s[0] = -0.125 * (1. + v) * (1. - w);
+              s[1] =  0.125 * (1. - u) * (1. - w);
+              s[2] = -0.125 * (1. - u) * (1. + v); break;
+    case 4  : s[0] = -0.125 * (1. - v) * (1. + w);
+              s[1] = -0.125 * (1. - u) * (1. + w);
+              s[2] =  0.125 * (1. - u) * (1. - v); break;
+    case 5  : s[0] =  0.125 * (1. - v) * (1. + w);
+              s[1] = -0.125 * (1. + u) * (1. + w);
+              s[2] =  0.125 * (1. + u) * (1. - v); break;
+    case 6  : s[0] =  0.125 * (1. + v) * (1. + w);
+              s[1] =  0.125 * (1. + u) * (1. + w);
+              s[2] =  0.125 * (1. + u) * (1. + v); break;
+    case 7  : s[0] = -0.125 * (1. + v) * (1. + w);
+              s[1] =  0.125 * (1. - u) * (1. + w);
+              s[2] =  0.125 * (1. - u) * (1. + v); break;
+    default : s[0] = s[1] = s[2] = 0.; break;
+    }
+  }
+  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
+  {
+    if(u < -(1. + tol) || v < -(1. + tol) || w < -(1. + tol) || 
+       u > (1. + tol) || v > (1. + tol) || w > (1. + tol))
+      return false;
+    return true;
+  }
 };
 
 class MHexahedron20 : public MHexahedron {
@@ -1200,6 +1390,49 @@ class MPrism : public MElement {
     tmp = _v[3]; _v[3] = _v[4]; _v[4] = tmp;
   }
   virtual int getVolumeSign();
+  virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
+  {
+    switch(num) {
+    case 0  : s = (1. - u - v) * (1. - w) * 0.5; break;
+    case 1  : s =       u      * (1. - w) * 0.5; break;
+    case 2  : s =           v  * (1. - w) * 0.5; break;
+    case 3  : s = (1. - u - v) * (1. + w) * 0.5; break;
+    case 4  : s =       u      * (1. + w) * 0.5; break;
+    case 5  : s =           v  * (1. + w) * 0.5; break;
+    default : s = 0.; break;
+    }
+  }
+  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  {
+    switch(num) {
+    case 0  : s[0] = -0.5 * (1. - w)    ; 
+              s[1] = -0.5 * (1. - w)    ;
+              s[2] = -0.5 * (1. - u - v); break;
+    case 1  : s[0] =  0.5 * (1. - w)    ; 
+              s[1] =  0.                ;
+              s[2] = -0.5 * u           ; break;
+    case 2  : s[0] =  0.                ; 
+              s[1] =  0.5 * (1. - w)    ;
+              s[2] = -0.5 * v           ; break;
+    case 3  : s[0] = -0.5 * (1. + w)    ; 
+              s[1] = -0.5 * (1. + w)    ;
+              s[2] =  0.5 * (1. - u - v); break;
+    case 4  : s[0] =  0.5 * (1. + w)    ; 
+              s[1] =  0.                ;
+              s[2] =  0.5 * u           ; break;
+    case 5  : s[0] =  0.                ; 
+              s[1] =  0.5 * (1. + w)    ;
+              s[2] =  0.5 * v           ; break;
+    default : s[0] = s[1] = s[2] = 0.; break;
+    }
+  }
+  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
+  {
+    if(w > (1. + tol) || w < -(1. + tol) || u < (1. + tol)
+       || v < (1. + tol) || u > ((1. + tol) - v))
+      return false;
+    return true;
+  }
 };
 
 class MPrism15 : public MPrism {
@@ -1439,6 +1672,55 @@ class MPyramid : public MElement {
     MVertex *tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
   }
   virtual int getVolumeSign();
+  virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
+  {
+    double r;
+    if(w != 1. && num != 4) r = u * v * w / (1. - w);
+    else                    r = 0.;
+    switch(num) {
+    case 0  : s = 0.25 * ((1. - u) * (1. - v) - w + r); break;
+    case 1  : s = 0.25 * ((1. + u) * (1. - v) - w - r); break;
+    case 2  : s = 0.25 * ((1. + u) * (1. + v) - w + r); break;
+    case 3  : s = 0.25 * ((1. - u) * (1. + v) - w - r); break;
+    case 4  : s = w; break;
+    default : s = 0.; break;
+    }
+  }
+  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  {
+    if(w == 1. && num != 4) {
+      s[0] =  0.25; 
+      s[1] =  0.25;
+      s[2] = -0.25; 
+    }
+    else{
+      switch(num) {
+      case 0  : s[0] = 0.25 * (-(1. - v) + v * w / (1. - w));
+	        s[1] = 0.25 * (-(1. - u) + u * w / (1. - w));
+      	        s[2] = 0.25 * (-1.       + u * v / (1. - w) / (1. - w)); break;
+      case 1  : s[0] = 0.25 * ( (1. - v) + v * w / (1. - w));
+	        s[1] = 0.25 * (-(1. + u) + u * w / (1. - w));
+	        s[2] = 0.25 * (-1.       + u * v / (1. - w) / (1. - w)); break;
+      case 2  : s[0] = 0.25 * ( (1. + v) + v * w / (1. - w));
+                s[1] = 0.25 * ( (1. + u) + u * w / (1. - w));
+                s[2] = 0.25 * (-1.       + u * v / (1. - w) / (1. - w)); break;
+      case 3  : s[0] = 0.25 * (-(1. + v) + v * w / (1. - w));
+                s[1] = 0.25 * ( (1. - u) + u * w / (1. - w));
+                s[2] = 0.25 * (-1.       + u * v / (1. - w) / (1. - w)); break;
+      case 4  : s[0] = 0.; 
+                s[1] = 0.;
+                s[2] = 1.; break;
+      default : s[0] = s[1] = s[2] = 0.; break;
+      }
+    }
+  }
+  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
+  {
+    if(u < (w - (1. + tol)) || u > ((1. + tol) - w) || v < (w - (1. + tol)) ||
+       v > ((1. + tol) - w) || w < (-tol) || w > (1. + tol))
+      return false;
+    return true;
+  }
 };
 
 class MPyramid13 : public MPyramid {

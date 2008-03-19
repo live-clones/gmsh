@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.41 2008-03-18 19:30:14 geuzaine Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.42 2008-03-19 21:22:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -811,8 +811,8 @@ void insertVerticesInRegion (GRegion *gr)
       double center[3];
       worst->circumcenter(center);
       double uvw[3];
-      bool inside = worst->tet()->invertmapping(center, uvw);
-      if(inside){
+      worst->tet()->xyz2uvw(center, uvw);
+      if(worst->tet()->isInside(uvw[0], uvw[1], uvw[2])){
 	MVertex *v = new MVertex(center[0], center[1], center[2], worst->onWhat());
 	v->setNum(NUM++);
 	double lc1 = 
@@ -820,8 +820,8 @@ void insertVerticesInRegion (GRegion *gr)
 	  uvw[0] * vSizes[worst->tet()->getVertex(1)->getNum()] +
 	  uvw[1] * vSizes[worst->tet()->getVertex(2)->getNum()] +
 	  uvw[2] * vSizes[worst->tet()->getVertex(3)->getNum()];
-	double lc =  BGM_MeshSize(gr, 0, 0, center[0], center[1], center[2]);
-	//	double lc = std::min(lc1, BGM_MeshSize(gr, 0, 0, center[0], center[1], center[2]));
+	double lc = BGM_MeshSize(gr, 0, 0, center[0], center[1], center[2]);
+	// double lc = std::min(lc1, BGM_MeshSize(gr, 0, 0, center[0], center[1], center[2]));
 	vSizes.push_back(lc1);
 	vSizesBGM.push_back(lc);
 	// compute mesh spacing there
