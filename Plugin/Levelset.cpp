@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.41 2008-03-19 16:38:16 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.42 2008-03-19 20:06:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -206,53 +206,52 @@ GMSH_LevelsetPlugin::GMSH_LevelsetPlugin()
 
 void GMSH_LevelsetPlugin::_addElement(int step, int np, int numEdges, int numComp,
 				      double xp[12], double yp[12], double zp[12],
-				      double valp[12][9], std::vector<PViewDataList*> &out)
+				      double valp[12][9], PViewDataList *out)
 {
-  PViewDataList *data = _valueIndependent ? out[0] : out[step];
   List_T *list;
   int *nbPtr;
   switch(np){
   case 1:
-    if(numComp == 1)      { list = data->SP; nbPtr = &data->NbSP; }
-    else if(numComp == 3) { list = data->VP; nbPtr = &data->NbVP; }
-    else                  { list = data->TP; nbPtr = &data->NbTP; }
+    if(numComp == 1)      { list = out->SP; nbPtr = &out->NbSP; }
+    else if(numComp == 3) { list = out->VP; nbPtr = &out->NbVP; }
+    else                  { list = out->TP; nbPtr = &out->NbTP; }
     break;
   case 2:
-    if(numComp == 1)      { list = data->SL; nbPtr = &data->NbSL; }
-    else if(numComp == 3) { list = data->VL; nbPtr = &data->NbVL; }
-    else                  { list = data->TL; nbPtr = &data->NbTL; }
+    if(numComp == 1)      { list = out->SL; nbPtr = &out->NbSL; }
+    else if(numComp == 3) { list = out->VL; nbPtr = &out->NbVL; }
+    else                  { list = out->TL; nbPtr = &out->NbTL; }
     break;
   case 3:
-    if(numComp == 1)      { list = data->ST; nbPtr = &data->NbST; }
-    else if(numComp == 3) { list = data->VT; nbPtr = &data->NbVT; }
-    else                  { list = data->TT; nbPtr = &data->NbTT; }
+    if(numComp == 1)      { list = out->ST; nbPtr = &out->NbST; }
+    else if(numComp == 3) { list = out->VT; nbPtr = &out->NbVT; }
+    else                  { list = out->TT; nbPtr = &out->NbTT; }
     break;
   case 4:
     if(!_extractVolume || numEdges <= 4){
-      if(numComp == 1)      { list = data->SQ; nbPtr = &data->NbSQ; }
-      else if(numComp == 3) { list = data->VQ; nbPtr = &data->NbVQ; }
-      else                  { list = data->TQ; nbPtr = &data->NbTQ; }
+      if(numComp == 1)      { list = out->SQ; nbPtr = &out->NbSQ; }
+      else if(numComp == 3) { list = out->VQ; nbPtr = &out->NbVQ; }
+      else                  { list = out->TQ; nbPtr = &out->NbTQ; }
     }
     else{
-      if(numComp == 1)      { list = data->SS; nbPtr = &data->NbSS; }
-      else if(numComp == 3) { list = data->VS; nbPtr = &data->NbVS; }
-      else                  { list = data->TS; nbPtr = &data->NbTS; }
+      if(numComp == 1)      { list = out->SS; nbPtr = &out->NbSS; }
+      else if(numComp == 3) { list = out->VS; nbPtr = &out->NbVS; }
+      else                  { list = out->TS; nbPtr = &out->NbTS; }
     }
     break;
   case 5:
-    if(numComp == 1)      { list = data->SY; nbPtr = &data->NbSY; }
-    else if(numComp == 3) { list = data->VY; nbPtr = &data->NbVY; }
-    else                  { list = data->TY; nbPtr = &data->NbTY; }
+    if(numComp == 1)      { list = out->SY; nbPtr = &out->NbSY; }
+    else if(numComp == 3) { list = out->VY; nbPtr = &out->NbVY; }
+    else                  { list = out->TY; nbPtr = &out->NbTY; }
     break;
   case 6:
-    if(numComp == 1)      { list = data->SI; nbPtr = &data->NbSI; }
-    else if(numComp == 3) { list = data->VI; nbPtr = &data->NbVI; }
-    else                  { list = data->TI; nbPtr = &data->NbTI; }
+    if(numComp == 1)      { list = out->SI; nbPtr = &out->NbSI; }
+    else if(numComp == 3) { list = out->VI; nbPtr = &out->NbVI; }
+    else                  { list = out->TI; nbPtr = &out->NbTI; }
     break;
   case 8:
-    if(numComp == 1)      { list = data->SH; nbPtr = &data->NbSH; }
-    else if(numComp == 3) { list = data->VH; nbPtr = &data->NbVH; }
-    else                  { list = data->TH; nbPtr = &data->NbTH; }
+    if(numComp == 1)      { list = out->SH; nbPtr = &out->NbSH; }
+    else if(numComp == 3) { list = out->VH; nbPtr = &out->NbVH; }
+    else                  { list = out->TH; nbPtr = &out->NbTH; }
     break;
   default:
     return;
@@ -277,7 +276,7 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
 					     int ent, int ele, int step, int wstep, 
 					     double x[8], double y[8], double z[8],
 					     double levels[8], double scalarValues[8],
-					     std::vector<PViewDataList*> &out)
+					     PViewDataList* out)
 {
   int numNodes = vdata->getNumNodes(step, ent, ele);
   int numEdges = vdata->getNumEdges(step, ent, ele);
@@ -433,8 +432,8 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
   }
 
   // sanity checks
-  if(vdata->getNumEntities(0) != wdata->getNumEntities(0) ||
-     vdata->getNumElements(0) != wdata->getNumElements(0)){
+  if(vdata->getNumEntities() != wdata->getNumEntities() ||
+     vdata->getNumElements() != wdata->getNumElements()){
     Msg(GERROR, "Incompatible views");
     return v;
   }
@@ -443,54 +442,57 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
     return v;
   }
 
-  // FIXME: generalize for steps with different #ele, #nodes
-  if(!vdata->hasSingleMesh()){
-    Msg(GERROR, "Levelset plugin not ready for multi-mesh views");
-    return v;
-  }
-  // create output dataset(s), in the list format
-  std::vector<PViewDataList*> out;
+  // Force creation of one view per time step if we have multi meshes
+  if(vdata->hasMultipleMeshes()) _valueIndependent = 0;
+
+  double x[8], y[8], z[8], levels[8];
+  double scalarValues[8] = {0., 0., 0., 0., 0., 0., 0., 0.};
+
   if(_valueIndependent) {
-    out.push_back(getDataList(new PView(true)));
+    // create a single output view containing the (possibly
+    // multi-step) levelset
+    PViewDataList *out = getDataList(new PView(true));
+    for(int ent = 0; ent < vdata->getNumEntities(0); ent++){
+      for(int ele = 0; ele < vdata->getNumElements(0, ent); ele++){
+	for(int nod = 0; nod < vdata->getNumNodes(0, ent, ele); nod++){
+	  vdata->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
+	  levels[nod] = levelset(x[nod], y[nod], z[nod], 0.);
+	}
+	for(int step = 0; step < vdata->getNumTimeSteps(); step++){
+	  int wstep = (_valueTimeStep < 0) ? step : _valueTimeStep;
+	  _cutAndAddElements(vdata, wdata, ent, ele, step, wstep, x, y, z,
+			     levels, scalarValues, out);
+	}
+      }
+    }
+    out->setName(vdata->getName() + "_Levelset");
+    out->setFileName(vdata->getFileName() + "_Levelset.pos");
+    out->finalize();
   }
   else{
-    for(int ts = 0; ts < vdata->getNumTimeSteps(); ts++)
-      out.push_back(getDataList(new PView(true)));
-  }
-  
-  for(int ent = 0; ent < vdata->getNumEntities(0); ent++){
-    for(int ele = 0; ele < vdata->getNumElements(0, ent); ele++){
-      int numNodes = vdata->getNumNodes(0, ent, ele);
-      int numEdges = vdata->getNumEdges(0, ent, ele);
-      double x[8], y[8], z[8], levels[8];
-      double scalarValues[8] = {0., 0., 0., 0., 0., 0., 0., 0.};
-      for(int nod = 0; nod < numNodes; nod++){
-	vdata->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
-	if(_valueIndependent) 
-	  levels[nod] = levelset(x[nod], y[nod], z[nod], 0.);
-      }
-      for(int step = 0; step < vdata->getNumTimeSteps(); step++){
-	if(!_valueIndependent){
-	  for(int nod = 0; nod < numNodes; nod++){
+    // create one view per timestep
+    for(int step = 0; step < vdata->getNumTimeSteps(); step++){
+      PViewDataList *out = getDataList(new PView(true));
+      for(int ent = 0; ent < vdata->getNumEntities(step); ent++){
+	for(int ele = 0; ele < vdata->getNumElements(step, ent); ele++){
+	  for(int nod = 0; nod < vdata->getNumNodes(step, ent, ele); nod++){
+	    vdata->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
 	    vdata->getScalarValue(step, ent, ele, nod, scalarValues[nod]);
 	    levels[nod] = levelset(x[nod], y[nod], z[nod], scalarValues[nod]);
 	  }
+	  int wstep = (_valueTimeStep < 0) ? step : _valueTimeStep;
+	  _cutAndAddElements(vdata, wdata, ent, ele, step, wstep, x, y, z,
+			     levels, scalarValues, out);
 	}
-	int wstep = (_valueTimeStep < 0) ? step : _valueTimeStep;
-	_cutAndAddElements(vdata, wdata, ent, ele, step, wstep, x, y, z,
-			   levels, scalarValues, out);
       }
+      char tmp[246];
+      sprintf(tmp, "_Levelset_%d", step);
+      out->setName(vdata->getName() + tmp);
+      out->setFileName(vdata->getFileName() + tmp + ".pos");
+      out->finalize();
     }
   }
   
-  for(unsigned int i = 0; i < out.size(); i++) {
-    char tmp[246];
-    sprintf(tmp, "_Levelset_%d", i);
-    out[i]->setName(vdata->getName() + tmp);
-    out[i]->setFileName(vdata->getFileName() + tmp + ".pos");
-    out[i]->finalize();
-  }
-
   return 0;
 }
 

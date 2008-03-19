@@ -68,7 +68,7 @@ class PViewData {
   virtual int getNumPrisms(int step=-1){ return 0; }
   virtual int getNumPyramids(int step=-1){ return 0; }
   // Returns the number of geometrical entities in the view
-  virtual int getNumEntities(int step) = 0;
+  virtual int getNumEntities(int step=-1) = 0;
   // Returns the number of elements in the ent-th entity, or the total
   // number of elements if ent < 0
   virtual int getNumElements(int step=-1, int ent=-1) = 0;
@@ -111,7 +111,7 @@ class PViewData {
   virtual bool skipElement(int step, int ent, int ele){ return false; }
   virtual bool hasTimeStep(int step){ return step < getNumTimeSteps(); }
   virtual bool hasPartition(int part){ return false; }
-  virtual bool hasSingleMesh(){ return true; }
+  virtual bool hasMultipleMeshes(){ return false; }
 
   // I/O routines
   virtual bool writeSTL(std::string name);

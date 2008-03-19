@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.76 2008-03-19 16:38:15 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.77 2008-03-19 20:06:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -71,7 +71,7 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
 
-  if(!data->hasSingleMesh()) return false; // cannot handle multi-mesh
+  if(data->hasMultipleMeshes()) return false; // cannot handle multi-mesh
 
   int numy = 0;
   if(opt->Type == PViewOptions::Plot2DSpace){

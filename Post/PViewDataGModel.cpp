@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.29 2008-03-19 16:38:16 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.30 2008-03-19 20:06:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -81,6 +81,12 @@ SBoundingBox3d PViewDataGModel::getBoundingBox(int step)
 
 int PViewDataGModel::getNumEntities(int step)
 {
+  if(step < 0){
+    int num = 0;
+    for(unsigned int i = 0; i < _steps.size(); i++)
+      num += _steps[i]->getNumEntities();
+    return num;
+  }
   return _steps[step]->getNumEntities();
 }
 
@@ -165,11 +171,11 @@ bool PViewDataGModel::hasPartition(int part)
   return _partitions.find(part) != _partitions.end();
 }
 
-bool PViewDataGModel::hasSingleMesh()
+bool PViewDataGModel::hasMultipleMeshes()
 {
-  if(_steps.size() <= 1) return true;
+  if(_steps.size() <= 1) return false;
   GModel *m = _steps[0]->getModel();
   for(unsigned int i = 1; i < _steps.size(); i++)
-    if(m != _steps[i]->getModel()) return false;
-  return true;
+    if(m != _steps[i]->getModel()) return true;
+  return false;
 }

@@ -90,7 +90,7 @@ class PViewDataList : public PViewData {
   int getNumHexahedra(int step=-1){ return NbSH + NbVH + NbTH; }
   int getNumPrisms(int step=-1){ return NbSI + NbVI + NbTI; }
   int getNumPyramids(int step=-1){ return NbSY + NbVY + NbTY; }
-  int getNumEntities(int step){ return 1; }
+  int getNumEntities(int step=-1){ return 1; }
   int getNumElements(int step=-1, int ent=-1);
   int getDimension(int step, int ent, int ele);
   int getNumNodes(int step, int ent, int ele);

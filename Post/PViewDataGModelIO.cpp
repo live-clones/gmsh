@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.9 2008-03-19 16:38:16 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.10 2008-03-19 20:06:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -96,7 +96,7 @@ bool PViewDataGModel::writeMSH(std::string name, bool binary)
 {
   if(_steps.empty()) return true;
 
-  if(!hasSingleMesh()){
+  if(hasMultipleMeshes()){
     Msg(GERROR, "Export not done for multi-mesh views");
     return false;
   }

@@ -134,7 +134,7 @@ class PViewDataGModel : public PViewData {
   double getMin(int step=-1);
   double getMax(int step=-1);
   SBoundingBox3d getBoundingBox(int step=-1);
-  int getNumEntities(int step);
+  int getNumEntities(int step=-1);
   int getNumElements(int step=-1, int ent=-1);
   int getDimension(int step, int ent, int ele);
   int getNumNodes(int step, int ent, int ele);
@@ -146,7 +146,7 @@ class PViewDataGModel : public PViewData {
   bool skipElement(int step, int ent, int ele);
   bool hasTimeStep(int step);
   bool hasPartition(int part);
-  bool hasSingleMesh();
+  bool hasMultipleMeshes();
 
   // create old-style list-based dataset from this one
   //PViewDataList *convertToPViewDataList();
