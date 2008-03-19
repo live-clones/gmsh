@@ -27,7 +27,22 @@
 
 template<class real>
 class stepData{
+ public:
+  enum DataType {
+    NodeData = 1,
+    ElementData = 2,
+    ElementNodeData = 3,
+    ElementGaussPointData = 4
+  };
  private:
+  // a pointer to the underlying model
+  GModel *_model;
+  // the unrolled list of all geometrical entities in the model
+  std::vector<GEntity*> _entities;
+  // the bounding box of the view (= model bbox for now)
+  SBoundingBox3d _bbox;
+  // the type of the dataset
+  DataType _type;
   // the file the data was read from (if empty, refer to PViewData)
   std::string _fileName;
   // the index in the file (if negative, refer to PViewData)
@@ -40,13 +55,29 @@ class stepData{
   // the values, indexed by dataIndex in MVertex or MElement
   std::vector<real*> *_data;
  public:
-  stepData(int numComp, std::string fileName="", int fileIndex=-1, double time=0.,
-	   double min=VAL_INF, double max=-VAL_INF) 
-    : _numComp(numComp), _fileName(fileName), _fileIndex(fileIndex), _time(time), 
-      _min(min), _max(max), _data(0)
+  stepData(GModel *model, DataType type, int numComp, 
+	   std::string fileName="", int fileIndex=-1, double time=0., 
+	   double min=VAL_INF, double max=-VAL_INF)
+    : _model(model), _type(type), _numComp(numComp),
+      _fileName(fileName), _fileIndex(fileIndex),
+      _time(time), _min(min), _max(max), _data(0)
   {
+    // store vector of GEntities so we can index them efficiently
+    for(GModel::eiter it = _model->firstEdge(); it != _model->lastEdge(); ++it)
+      _entities.push_back(*it);
+    for(GModel::fiter it = _model->firstFace(); it != _model->lastFace(); ++it)
+      _entities.push_back(*it);
+    for(GModel::riter it = _model->firstRegion(); it != _model->lastRegion(); ++it)
+      _entities.push_back(*it);
+    _bbox = _model->bounds();
   }
   ~stepData(){ destroyData(); }
+  GModel *getModel(){ return _model; }
+  SBoundingBox3d getBoundingBox(){ return _bbox; }
+  int getNumEntities(){ return _entities.size(); }
+  GEntity *getEntity(int ent){ return _entities[ent]; }
+  DataType getType(){ return _type; }
+  void setType(DataType type){ _type = type; }
   int getNumComp(){ return _numComp; }
   std::string getFileName(){ return _fileName; }
   void setFileName(std::string name){ _fileName = name; }
@@ -88,46 +119,41 @@ class stepData{
 // data container using elements from a GModel
 class PViewDataGModel : public PViewData {
  private:
-  // a pointer to the underlying model
-  GModel *_model;
-  // the unrolled list of all geometrical entities in the model
-  std::vector<GEntity*> _entities;
-  // the node- and element-based data
-  std::vector<stepData<double>*> _nodeData, _elementData;
+  // the data, indexed by time step
+  std::vector<stepData<double>*> _steps;
   // the global min/max of the view
   double _min, _max;
-  // the bounding box of the view (= model bbox for now)
-  SBoundingBox3d _bbox;
   // a set of all "partitions" encountered in the input data
   std::set<int> _partitions;
  public:
-  PViewDataGModel(GModel *model);
+  PViewDataGModel();
   ~PViewDataGModel();
   bool finalize();
   int getNumTimeSteps();
   double getTime(int step);
   double getMin(int step=-1);
   double getMax(int step=-1);
-  SBoundingBox3d getBoundingBox(){ return _bbox; }
-  int getNumEntities();
-  int getNumElements(int ent=-1);
-  int getDimension(int ent, int ele);
-  int getNumNodes(int ent, int ele);
-  void getNode(int ent, int ele, int nod, double &x, double &y, double &z);
-  int getNumComponents(int ent, int ele, int step);
-  void getValue(int ent, int ele, int node, int comp, int step, double &val);
-  int getNumEdges(int ent, int ele);
-  bool skipEntity(int ent);
-  bool skipElement(int ent, int ele, int step);
+  SBoundingBox3d getBoundingBox(int step=-1);
+  int getNumEntities(int step);
+  int getNumElements(int step=-1, int ent=-1);
+  int getDimension(int step, int ent, int ele);
+  int getNumNodes(int step, int ent, int ele);
+  void getNode(int step, int ent, int ele, int nod, double &x, double &y, double &z);
+  int getNumComponents(int step, int ent, int ele);
+  void getValue(int step, int ent, int ele, int node, int comp, double &val);
+  int getNumEdges(int step, int ent, int ele);
+  bool skipEntity(int step, int ent);
+  bool skipElement(int step, int ent, int ele);
   bool hasTimeStep(int step);
   bool hasPartition(int part);
+  bool hasSingleMesh();
 
   // create old-style list-based dataset from this one
   //PViewDataList *convertToPViewDataList();
 
   // I/O routines
   bool readMSH(std::string fileName, int fileIndex, FILE *fp, bool binary, 
-	       bool swap, int timeStep, double time, int partition, 
+	       bool swap, int step, double time, int partition, 
 	       int numComp, int numNodes);
   bool writeMSH(std::string name, bool binary=false);
 };

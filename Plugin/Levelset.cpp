@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.40 2008-03-18 19:30:14 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.41 2008-03-19 16:38:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -279,9 +279,9 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
 					     double levels[8], double scalarValues[8],
 					     std::vector<PViewDataList*> &out)
 {
-  int numNodes = vdata->getNumNodes(ent, ele);
-  int numEdges = vdata->getNumEdges(ent, ele);
-  int numComp = wdata->getNumComponents(ent, ele, wstep);
+  int numNodes = vdata->getNumNodes(step, ent, ele);
+  int numEdges = vdata->getNumEdges(step, ent, ele);
+  int numComp = wdata->getNumComponents(wstep, ent, ele);
 
   for(int simplex = 0; simplex < numSimplexDec(numEdges); simplex++){
     double xp[12], yp[12], zp[12], valp[12][9];
@@ -295,8 +295,8 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
 				  &xp[np], &yp[np], &zp[np]);
 	for(int comp = 0; comp < numComp; comp++){
 	  double v0, v1;
-	  wdata->getValue(ent, ele, n[n0], comp, wstep, v0);
-	  wdata->getValue(ent, ele, n[n1], comp, wstep, v1);
+	  wdata->getValue(wstep, ent, ele, n[n0], comp, v0);
+	  wdata->getValue(wstep, ent, ele, n[n1], comp, v1);
 	  valp[np][comp] = v0 + c * (v1 - v0);
 	}
 	ep[np++] = i + 1;
@@ -364,7 +364,7 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
 	  yp[np] = y[n[nod]];
 	  zp[np] = z[n[nod]];
 	  for(int comp = 0; comp < numComp; comp++)
-	    wdata->getValue(ent, ele, n[nod], comp, wstep, valp[np][comp]);
+	    wdata->getValue(wstep, ent, ele, n[nod], comp, valp[np][comp]);
 	  ep[np] = -(nod + 1); // store node num!
 	  np++;
 	}
@@ -399,7 +399,7 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
 	yp[nod] = y[nod];
 	zp[nod] = z[nod];
 	for(int comp = 0; comp < numComp; comp++)
-	  wdata->getValue(ent, ele, nod, comp, wstep, valp[nod][comp]);
+	  wdata->getValue(wstep, ent, ele, nod, comp, valp[nod][comp]);
       }
       _addElement(step, numNodes, numEdges, numComp, xp, yp, zp, valp, out);
     }
@@ -433,13 +433,21 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
   }
 
   // sanity checks
-  if(vdata->getNumEntities() != wdata->getNumEntities() ||
-     vdata->getNumElements() != wdata->getNumElements()) return v;
+  if(vdata->getNumEntities(0) != wdata->getNumEntities(0) ||
+     vdata->getNumElements(0) != wdata->getNumElements(0)){
+    Msg(GERROR, "Incompatible views");
+    return v;
+  }
   if(_valueTimeStep >= wdata->getNumTimeSteps()) {
     Msg(GERROR, "Wrong time step %d in view", _valueTimeStep);
     return v;
   }
 
+  // FIXME: generalize for steps with different #ele, #nodes
+  if(!vdata->hasSingleMesh()){
+    Msg(GERROR, "Levelset plugin not ready for multi-mesh views");
+    return v;
+  }
   // create output dataset(s), in the list format
   std::vector<PViewDataList*> out;
   if(_valueIndependent) {
@@ -450,21 +458,21 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
       out.push_back(getDataList(new PView(true)));
   }
   
-  for(int ent = 0; ent < vdata->getNumEntities(); ent++){
-    for(int ele = 0; ele < vdata->getNumElements(ent); ele++){
-      int numNodes = vdata->getNumNodes(ent, ele);
-      int numEdges = vdata->getNumEdges(ent, ele);
+  for(int ent = 0; ent < vdata->getNumEntities(0); ent++){
+    for(int ele = 0; ele < vdata->getNumElements(0, ent); ele++){
+      int numNodes = vdata->getNumNodes(0, ent, ele);
+      int numEdges = vdata->getNumEdges(0, ent, ele);
       double x[8], y[8], z[8], levels[8];
       double scalarValues[8] = {0., 0., 0., 0., 0., 0., 0., 0.};
       for(int nod = 0; nod < numNodes; nod++){
-	vdata->getNode(ent, ele, nod, x[nod], y[nod], z[nod]);
+	vdata->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
 	if(_valueIndependent) 
 	  levels[nod] = levelset(x[nod], y[nod], z[nod], 0.);
       }
       for(int step = 0; step < vdata->getNumTimeSteps(); step++){
 	if(!_valueIndependent){
 	  for(int nod = 0; nod < numNodes; nod++){
-	    vdata->getScalarValue(ent, ele, nod, step, scalarValues[nod]);
+	    vdata->getScalarValue(step, ent, ele, nod, scalarValues[nod]);
 	    levels[nod] = levelset(x[nod], y[nod], z[nod], scalarValues[nod]);
 	  }
 	}

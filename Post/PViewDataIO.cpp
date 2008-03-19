@@ -1,4 +1,4 @@
-// $Id: PViewDataIO.cpp,v 1.4 2008-03-12 21:28:53 geuzaine Exp $
+// $Id: PViewDataIO.cpp,v 1.5 2008-03-19 16:38:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -40,15 +40,17 @@ bool PViewData::writeSTL(std::string name)
     return false;
   }
 
+  int step = 0;
+
   fprintf(fp, "solid Created by Gmsh\n");
-  for(int ent = 0; ent < getNumEntities(); ent++){
-    for(int ele = 0; ele < getNumElements(ent); ele++){
-      if(getDimension(ent, ele) != 2) continue;
-      int N = getNumNodes(ent, ele);
+  for(int ent = 0; ent < getNumEntities(step); ent++){
+    for(int ele = 0; ele < getNumElements(step, ent); ele++){
+      if(getDimension(step, ent, ele) != 2) continue;
+      int N = getNumNodes(step, ent, ele);
       if(N != 3 && N != 4) continue;
       double x[4], y[4], z[4], n[3];
       for(int i = 0; i < N; i++)
-	getNode(ent, ele, i, x[i], y[i], z[i]);
+	getNode(step, ent, ele, i, x[i], y[i], z[i]);
       normal3points(x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], n);
       if(N == 3){
 	fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
@@ -91,16 +93,16 @@ bool PViewData::writeTXT(std::string name)
     return false;
   }
 
-  for(int ent = 0; ent < getNumEntities(); ent++){
-    for(int ele = 0; ele < getNumElements(ent); ele++){
-      for(int nod = 0; nod < getNumNodes(ent, ele); nod++){
-	double x, y, z;
-	getNode(ent, ele, nod, x, y, z);
-	fprintf(fp, "%.16g %.16g %.16g ", x, y, z);
-	for(int step = 0; step < getNumTimeSteps(); step++){	
-	  for(int comp = 0; comp < getNumComponents(ent, ele, step); comp++){	
+  for(int step = 0; step < getNumTimeSteps(); step++){	
+    for(int ent = 0; ent < getNumEntities(step); ent++){
+      for(int ele = 0; ele < getNumElements(step, ent); ele++){
+	for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
+	  double x, y, z;
+	  getNode(step, ent, ele, nod, x, y, z);
+	  fprintf(fp, "%.16g %.16g %.16g ", x, y, z);
+	  for(int comp = 0; comp < getNumComponents(step, ent, ele); comp++){	
 	    double val;
-	    getValue(ent, ele, nod, comp, step, val);
+	    getValue(step, ent, ele, nod, comp, val);
 	    fprintf(fp, "%.16g ", val);
 	  }
 	}

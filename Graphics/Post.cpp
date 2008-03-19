@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.156 2008-03-12 21:28:53 geuzaine Exp $
+// $Id: Post.cpp,v 1.157 2008-03-19 16:38:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -140,12 +140,13 @@ bool getExternalValues(PView *p, int index, int ient, int iele, int numNodes,
   PView *p2 = PView::list[index];
   PViewData *data2 = p2->getData();
 
-  if(opt->TimeStep < data2->getNumTimeSteps() && iele < data2->getNumElements(ient)){
-    if(data2->getNumNodes(ient, iele) == numNodes){
-      numComp2 = data2->getNumComponents(ient, iele, opt->TimeStep);
+  if(opt->TimeStep < data2->getNumTimeSteps() && 
+     iele < data2->getNumElements(opt->TimeStep, ient)){
+    if(data2->getNumNodes(opt->TimeStep, ient, iele) == numNodes){
+      numComp2 = data2->getNumComponents(opt->TimeStep, ient, iele);
       for(int i = 0; i < numNodes; i++)
 	for(int j = 0; j < numComp2; j++)
-	  data2->getValue(ient, iele, i, j, opt->TimeStep, val2[i][j]);
+	  data2->getValue(opt->TimeStep, ient, iele, i, j, val2[i][j]);
       if(opt->RangeType == PViewOptions::Custom){
 	opt->ExternalMin = opt->CustomMin;
 	opt->ExternalMax = opt->CustomMax;
@@ -798,9 +799,9 @@ void addVectorElement(PView *p, int ient, int iele, int numNodes, int numEdges,
       for(int ts = 0; ts < opt->TimeStep; ts++){
 	double xyz0[3], dxyz[3][2];
 	for(int j = 0; j < 3; j++){
-	  data->getNode(ient, iele, 0, xyz0[0], xyz0[1], xyz0[2]);
-	  data->getValue(ient, iele, 0, j, ts, dxyz[j][0]);
-	  data->getValue(ient, iele, 0, j, ts + 1, dxyz[j][1]);
+	  data->getNode(ts, ient, iele, 0, xyz0[0], xyz0[1], xyz0[2]);
+	  data->getValue(ts, ient, iele, 0, j, dxyz[j][0]);
+	  data->getValue(ts + 1, ient, iele, 0, j, dxyz[j][1]);
 	}
 	unsigned int col[2];
 	double norm[2];
@@ -891,18 +892,18 @@ void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
   opt->TmpBBox.reset();
 
   double xyz[NMAX][3], val[NMAX][9];
-  for(int ent = 0; ent < data->getNumEntities(); ent++){
-    if(data->skipEntity(ent)) continue;
-    for(int i = 0; i < data->getNumElements(ent); i++){
-      if(data->skipElement(ent, i, opt->TimeStep)) continue;
-      int numEdges = data->getNumEdges(ent, i);
+  for(int ent = 0; ent < data->getNumEntities(opt->TimeStep); ent++){
+    if(data->skipEntity(opt->TimeStep, ent)) continue;
+    for(int i = 0; i < data->getNumElements(opt->TimeStep, ent); i++){
+      if(data->skipElement(opt->TimeStep, ent, i)) continue;
+      int numEdges = data->getNumEdges(opt->TimeStep, ent, i);
       if(opt->skipElement(numEdges)) continue;
-      int numComp = data->getNumComponents(ent, i, opt->TimeStep);
-      int numNodes = data->getNumNodes(ent, i);
+      int numComp = data->getNumComponents(opt->TimeStep, ent, i);
+      int numNodes = data->getNumNodes(opt->TimeStep, ent, i);
       for(int j = 0; j < numNodes; j++){
-	data->getNode(ent, i, j, xyz[j][0], xyz[j][1], xyz[j][2]);
+	data->getNode(opt->TimeStep, ent, i, j, xyz[j][0], xyz[j][1], xyz[j][2]);
 	for(int k = 0; k < numComp; k++)
-	  data->getValue(ent, i, j, k, opt->TimeStep, val[j][k]);
+	  data->getValue(opt->TimeStep, ent, i, j, k, val[j][k]);
       }
       changeCoordinates(p, ent, i, numNodes, numEdges, numComp, xyz, val);
       
@@ -1130,19 +1131,19 @@ void drawGlyphs(PView *p)
   Msg(DEBUG, "drawing extra glyphs (this is slow...)");
 
   double xyz[NMAX][3], val[NMAX][9];
-  for(int ent = 0; ent < data->getNumEntities(); ent++){
-    if(data->skipEntity(ent)) continue;
-    for(int i = 0; i < data->getNumElements(ent); i++){
-      if(data->skipElement(ent, i, opt->TimeStep)) continue;
-      int numEdges = data->getNumEdges(ent, i);
+  for(int ent = 0; ent < data->getNumEntities(opt->TimeStep); ent++){
+    if(data->skipEntity(opt->TimeStep, ent)) continue;
+    for(int i = 0; i < data->getNumElements(opt->TimeStep, ent); i++){
+      if(data->skipElement(opt->TimeStep, ent, i)) continue;
+      int numEdges = data->getNumEdges(opt->TimeStep, ent, i);
       if(opt->skipElement(numEdges)) continue;
-      int dim = data->getDimension(ent, i);
-      int numComp = data->getNumComponents(ent, i, opt->TimeStep);
-      int numNodes = data->getNumNodes(ent, i);
+      int dim = data->getDimension(opt->TimeStep, ent, i);
+      int numComp = data->getNumComponents(opt->TimeStep, ent, i);
+      int numNodes = data->getNumNodes(opt->TimeStep, ent, i);
       for(int j = 0; j < numNodes; j++){
-	data->getNode(ent, i, j, xyz[j][0], xyz[j][1], xyz[j][2]);
+	data->getNode(opt->TimeStep, ent, i, j, xyz[j][0], xyz[j][1], xyz[j][2]);
 	for(int k = 0; k < numComp; k++)
-	  data->getValue(ent, i, j, k, opt->TimeStep, val[j][k]);
+	  data->getValue(opt->TimeStep, ent, i, j, k, val[j][k]);
       }
       changeCoordinates(p, ent, i, numNodes, numEdges, numComp, xyz, val);
       if(opt->IntervalsType == PViewOptions::Numeric)
@@ -1163,25 +1164,27 @@ class initPView {
   int _estimateNumPoints(PView *p)
   {
     PViewData *data = p->getData();
-    int heuristic = data->getNumPoints();
+    PViewOptions *opt = p->getOptions();
+    int heuristic = data->getNumPoints(opt->TimeStep);
     return heuristic + 10000;
   }
   int _estimateNumLines(PView *p)
   {
     PViewData *data = p->getData();
-    int heuristic = data->getNumLines();
+    PViewOptions *opt = p->getOptions();
+    int heuristic = data->getNumLines(opt->TimeStep);
     return heuristic + 10000;
   }
   int _estimateNumTriangles(PView *p)
   {
     PViewData *data = p->getData();
     PViewOptions *opt = p->getOptions();
-    int tris = data->getNumTriangles();
-    int quads = data->getNumQuadrangles();
-    int tets = data->getNumTetrahedra();
-    int prisms = data->getNumPrisms();
-    int pyrs = data->getNumPyramids();
-    int hexas = data->getNumHexahedra();
+    int tris = data->getNumTriangles(opt->TimeStep);
+    int quads = data->getNumQuadrangles(opt->TimeStep);
+    int tets = data->getNumTetrahedra(opt->TimeStep);
+    int prisms = data->getNumPrisms(opt->TimeStep);
+    int pyrs = data->getNumPyramids(opt->TimeStep);
+    int hexas = data->getNumHexahedra(opt->TimeStep);
     int heuristic = 0;
     if(opt->IntervalsType == PViewOptions::Iso)
       heuristic = (tets + prisms + pyrs + hexas) / 10;
@@ -1196,7 +1199,8 @@ class initPView {
   int _estimateNumVectors(PView *p)
   {
     PViewData *data = p->getData();
-    int heuristic = data->getNumVectors();
+    PViewOptions *opt = p->getOptions();
+    int heuristic = data->getNumVectors(opt->TimeStep);
     return heuristic + 1000;
   }
  public :
@@ -1376,7 +1380,7 @@ class drawPViewBoundingBox {
 
     if(!opt->Visible || opt->Type != PViewOptions::Plot3D) return;
 
-    SBoundingBox3d bb = data->getBoundingBox();
+    SBoundingBox3d bb = data->getBoundingBox(opt->TimeStep);
     if(bb.empty()) return;
 
     glColor4ubv((GLubyte *) & CTX.color.fg);

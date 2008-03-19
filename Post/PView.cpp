@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.23 2008-03-18 19:30:14 geuzaine Exp $
+// $Id: PView.cpp,v 1.24 2008-03-19 16:38:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -356,7 +356,7 @@ bool PView::readMSH(std::string fileName, int fileIndex)
 	PViewDataGModel *d = 0;
 	if(p) d = dynamic_cast<PViewDataGModel*>(p->getData());
 	bool create = d ? false : true;
-	if(create) d = new PViewDataGModel(GModel::current());
+	if(create) d = new PViewDataGModel();
 	if(!d->readMSH(fileName, fileIndex, fp, binary, swap, timeStep, 
 		       time, partition, numComp, numNodes)){
 	  Msg(GERROR, "Could not read data in msh file");

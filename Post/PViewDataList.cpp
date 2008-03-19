@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.17 2008-03-12 21:28:53 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.18 2008-03-19 16:38:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -150,22 +150,22 @@ bool PViewDataList::finalize()
   return true;
 }
 
-int PViewDataList::getNumScalars()
+int PViewDataList::getNumScalars(int step)
 { 
   return NbSP + NbSL + NbST + NbSQ + NbSS + NbSH + NbSI + NbSY; 
 }
 
-int PViewDataList::getNumVectors()
+int PViewDataList::getNumVectors(int step)
 {
   return NbVP + NbVL + NbVT + NbVQ + NbVS + NbVH + NbVI + NbVY; 
 }
 
-int PViewDataList::getNumTensors()
+int PViewDataList::getNumTensors(int step)
 { 
   return NbTP + NbTL + NbTT + NbTQ + NbTS + NbTH + NbTI + NbTY; 
 }
 
-int PViewDataList::getNumElements(int ent)
+int PViewDataList::getNumElements(int step, int ent)
 {
   return getNumScalars() + getNumVectors() + getNumTensors();
 }
@@ -321,19 +321,20 @@ void PViewDataList::_setLast(int ele)
   }
 }
 
-int PViewDataList::getDimension(int ent, int ele)
+int PViewDataList::getDimension(int step, int ent, int ele)
 {
   if(ele != _lastElement) _setLast(ele);
   return _lastDimension;
 }
 
-int PViewDataList::getNumNodes(int ent, int ele)
+int PViewDataList::getNumNodes(int step, int ent, int ele)
 {
   if(ele != _lastElement) _setLast(ele);
   return _lastNumNodes;
 }
 
-void PViewDataList::getNode(int ent, int ele, int nod, double &x, double &y, double &z)
+void PViewDataList::getNode(int step, int ent, int ele, int nod,
+			    double &x, double &y, double &z)
 {
   if(ele != _lastElement) _setLast(ele);
   x = _lastXYZ[nod];
@@ -341,13 +342,13 @@ void PViewDataList::getNode(int ent, int ele, int nod, double &x, double &y, dou
   z = _lastXYZ[2 * _lastNumNodes + nod];
 }
 
-int PViewDataList::getNumComponents(int ent, int ele, int step)
+int PViewDataList::getNumComponents(int step, int ent, int ele)
 {
   if(ele != _lastElement) _setLast(ele);
   return _lastNumComponents;
 }
 
-void PViewDataList::getValue(int ent, int ele, int nod, int comp, int step, double &val)
+void PViewDataList::getValue(int step, int ent, int ele, int nod, int comp, double &val)
 {
   if(ele != _lastElement) _setLast(ele);
   val = _lastVal[step * _lastNumNodes  * _lastNumComponents + 
@@ -355,13 +356,13 @@ void PViewDataList::getValue(int ent, int ele, int nod, int comp, int step, doub
 		 comp];
 }
 
-int PViewDataList::getNumEdges(int ent, int ele)
+int PViewDataList::getNumEdges(int step, int ent, int ele)
 {
   if(ele != _lastElement) _setLast(ele);
   return _lastNumEdges;
 }
 
-void PViewDataList::_getString(int dim, int i, int timestep, std::string &str, 
+void PViewDataList::_getString(int dim, int i, int step, std::string &str, 
 			       double &x, double &y, double &z, double &style)
 {
   // 3D: T3D is a list of double: x,y,z,style,index,x,y,z,style,index,...
@@ -403,11 +404,11 @@ void PViewDataList::_getString(int dim, int i, int timestep, std::string &str,
   
   char *c = (char *)List_Pointer(tc, index);
   int k = 0, l = 0;
-  while(k < nbchar && l != timestep) {
+  while(k < nbchar && l != step) {
     if(c[k++] == '\0')
       l++;
   }
-  if(k < nbchar && l == timestep)
+  if(k < nbchar && l == step)
     str = std::string(&c[k]);
   else
     str = std::string(c);
@@ -844,4 +845,3 @@ bool PViewDataList::combineTime(nameData &nd)
   setFileName(std::string(name) + ".pos");
   return finalize();
 }
-

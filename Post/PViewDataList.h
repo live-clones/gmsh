@@ -78,26 +78,26 @@ class PViewDataList : public PViewData {
   double getTime(int step);
   double getMin(int step=-1);
   double getMax(int step=-1);
-  SBoundingBox3d getBoundingBox(){ return BBox; }
-  int getNumScalars();
-  int getNumVectors();
-  int getNumTensors();
-  int getNumPoints(){ return NbSP + NbVP + NbTP; }
-  int getNumLines(){ return NbSL + NbVL + NbTL; }
-  int getNumTriangles(){ return NbST + NbVT + NbTT; }
-  int getNumQuadrangles(){ return NbSQ + NbVQ + NbTQ; }
-  int getNumTetrahedra(){ return NbSS + NbVS + NbTS; }
-  int getNumHexahedra(){ return NbSH + NbVH + NbTH; }
-  int getNumPrisms(){ return NbSI + NbVI + NbTI; }
-  int getNumPyramids(){ return NbSY + NbVY + NbTY; }
-  int getNumEntities(){ return 1; }
-  int getNumElements(int ent=-1);
-  int getDimension(int ent, int ele);
-  int getNumNodes(int ent, int ele);
-  void getNode(int ent, int ele, int nod, double &x, double &y, double &z);
-  int getNumComponents(int ent, int ele, int step);
-  void getValue(int ent, int ele, int nod, int comp, int step, double &val);
-  int getNumEdges(int ent, int ele);
+  SBoundingBox3d getBoundingBox(int step=-1){ return BBox; }
+  int getNumScalars(int step=-1);
+  int getNumVectors(int step=-1);
+  int getNumTensors(int step=-1);
+  int getNumPoints(int step=-1){ return NbSP + NbVP + NbTP; }
+  int getNumLines(int step=-1){ return NbSL + NbVL + NbTL; }
+  int getNumTriangles(int step=-1){ return NbST + NbVT + NbTT; }
+  int getNumQuadrangles(int step=-1){ return NbSQ + NbVQ + NbTQ; }
+  int getNumTetrahedra(int step=-1){ return NbSS + NbVS + NbTS; }
+  int getNumHexahedra(int step=-1){ return NbSH + NbVH + NbTH; }
+  int getNumPrisms(int step=-1){ return NbSI + NbVI + NbTI; }
+  int getNumPyramids(int step=-1){ return NbSY + NbVY + NbTY; }
+  int getNumEntities(int step){ return 1; }
+  int getNumElements(int step=-1, int ent=-1);
+  int getDimension(int step, int ent, int ele);
+  int getNumNodes(int step, int ent, int ele);
+  void getNode(int step, int ent, int ele, int nod, double &x, double &y, double &z);
+  int getNumComponents(int step, int ent, int ele);
+  void getValue(int step, int ent, int ele, int nod, int comp, double &val);
+  int getNumEdges(int step, int ent, int ele);
   int getNumStrings2D(){ return NbT2; }
   int getNumStrings3D(){ return NbT3; }
   void getString2D(int i, int step, std::string &str, 

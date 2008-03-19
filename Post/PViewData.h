@@ -55,46 +55,47 @@ class PViewData {
   virtual double getTime(int step){ return 0.; }
   virtual double getMin(int step=-1) = 0;
   virtual double getMax(int step=-1) = 0;
-  virtual SBoundingBox3d getBoundingBox() = 0;
-  virtual int getNumScalars(){ return 0; }
-  virtual int getNumVectors(){ return 0; }
-  virtual int getNumTensors(){ return 0; }
-  virtual int getNumPoints(){ return 0; }
-  virtual int getNumLines(){ return 0; }
-  virtual int getNumTriangles(){ return 0; }
-  virtual int getNumQuadrangles(){ return 0; }
-  virtual int getNumTetrahedra(){ return 0; }
-  virtual int getNumHexahedra(){ return 0; }
-  virtual int getNumPrisms(){ return 0; }
-  virtual int getNumPyramids(){ return 0; }
+  virtual SBoundingBox3d getBoundingBox(int step=-1) = 0;
+  virtual int getNumScalars(int step=-1){ return 0; }
+  virtual int getNumVectors(int step=-1){ return 0; }
+  virtual int getNumTensors(int step=-1){ return 0; }
+  virtual int getNumPoints(int step=-1){ return 0; }
+  virtual int getNumLines(int step=-1){ return 0; }
+  virtual int getNumTriangles(int step=-1){ return 0; }
+  virtual int getNumQuadrangles(int step=-1){ return 0; }
+  virtual int getNumTetrahedra(int step=-1){ return 0; }
+  virtual int getNumHexahedra(int step=-1){ return 0; }
+  virtual int getNumPrisms(int step=-1){ return 0; }
+  virtual int getNumPyramids(int step=-1){ return 0; }
   // Returns the number of geometrical entities in the view
-  virtual int getNumEntities() = 0;
+  virtual int getNumEntities(int step) = 0;
   // Returns the number of elements in the ent-th entity, or the total
   // number of elements if ent < 0
-  virtual int getNumElements(int ent=-1) = 0;
+  virtual int getNumElements(int step=-1, int ent=-1) = 0;
   // Returns the geometrical dimension of the ele-th element in the
   // ent-th entity
-  virtual int getDimension(int ent, int ele) = 0;
+  virtual int getDimension(int step, int ent, int ele) = 0;
   // Returns the number of nodes of the ele-th element in the ent-th
   // entity
-  virtual int getNumNodes(int ent, int ele) = 0;
+  virtual int getNumNodes(int step, int ent, int ele) = 0;
   // Returns the coordinates of the nod-th node from the ele-th element
   // in the ent-th entity
-  virtual void getNode(int ent, int ele, int nod, double &x, double &y, double &z) = 0;
+  virtual void getNode(int step, int ent, int ele, int nod, 
+		       double &x, double &y, double &z) = 0;
   // Returns the number of componts available for the ele-th element
   // in the ent-th entity
-  virtual int getNumComponents(int ent, int ele, int step) = 0;
+  virtual int getNumComponents(int step, int ent, int ele) = 0;
   // Returns the comp-th component (at the step-th time step)
   // associated with the node-th node from the ele-th element in the
   // ent-th entity
-  virtual void getValue(int ent, int ele, int nod, int comp, int step, double &val) = 0;
+  virtual void getValue(int step, int ent, int ele, int nod, int comp, double &val) = 0;
   // Returns a scalar value (same as value for scalars, norm for
   // vectors, etc.) associated with the node-th node from the ele-th
   // element in the ent-th entity
-  virtual void getScalarValue(int ent, int ele, int nod, int step, double &val);
+  virtual void getScalarValue(int step, int ent, int ele, int nod, double &val);
   // Returns the number of edges of the ele-th element in the ent-th
   // entity
-  virtual int getNumEdges(int ent, int ele) = 0;
+  virtual int getNumEdges(int step, int ent, int ele) = 0;
   virtual int getNumStrings2D(){ return 0; }
   virtual int getNumStrings3D(){ return 0; }
   virtual void getString2D(int i, int step, std::string &str, 
@@ -106,10 +107,11 @@ class PViewData {
   virtual bool combineTime(nameData &nd){ return false; }
   virtual bool combineSpace(nameData &nd){ return false; }
   virtual bool isAdaptive(){ return false; }
-  virtual bool skipEntity(int ent){ return false; }
-  virtual bool skipElement(int ent, int ele, int step){ return false; }
+  virtual bool skipEntity(int step, int ent){ return false; }
+  virtual bool skipElement(int step, int ent, int ele){ return false; }
   virtual bool hasTimeStep(int step){ return step < getNumTimeSteps(); }
   virtual bool hasPartition(int part){ return false; }
+  virtual bool hasSingleMesh(){ return true; }
 
   // I/O routines
   virtual bool writeSTL(std::string name);

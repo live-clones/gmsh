@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.28 2008-03-18 19:30:14 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.29 2008-03-19 16:38:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -25,36 +25,22 @@
 #include "PViewDataGModel.h"
 #include "MElement.h"
 
-PViewDataGModel::PViewDataGModel(GModel *model) 
-  : _model(model), _min(VAL_INF), _max(-VAL_INF)
+PViewDataGModel::PViewDataGModel() : _min(VAL_INF), _max(-VAL_INF)
 {
-  // store vector of GEntities so we can index them efficiently
-  for(GModel::eiter it = _model->firstEdge(); it != _model->lastEdge(); ++it)
-    _entities.push_back(*it);
-  for(GModel::fiter it = _model->firstFace(); it != _model->lastFace(); ++it)
-    _entities.push_back(*it);
-  for(GModel::riter it = _model->firstRegion(); it != _model->lastRegion(); ++it)
-    _entities.push_back(*it);
-  _bbox = _model->bounds();
 }
 
 PViewDataGModel::~PViewDataGModel()
 {
-  for(unsigned int i = 0; i < _nodeData.size(); i++) delete _nodeData[i];
-  for(unsigned int i = 0; i < _elementData.size(); i++) delete _elementData[i];  
+  for(unsigned int i = 0; i < _steps.size(); i++) delete _steps[i];
 }
 
 bool PViewDataGModel::finalize()
 {
   _min = VAL_INF;
   _max = -VAL_INF;
-  for(unsigned int i = 0; i < _nodeData.size(); i++){
-    _min = std::min(_min, _nodeData[i]->getMin());
-    _max = std::max(_max, _nodeData[i]->getMax());
-  }
-  for(unsigned int i = 0; i < _elementData.size(); i++){
-    _min = std::min(_min, _elementData[i]->getMin());
-    _max = std::max(_max, _elementData[i]->getMax());
+  for(unsigned int i = 0; i < _steps.size(); i++){
+    _min = std::min(_min, _steps[i]->getMin());
+    _max = std::max(_max, _steps[i]->getMax());
   }
   setDirty(false);
   return true;
@@ -62,117 +48,128 @@ bool PViewDataGModel::finalize()
 
 int PViewDataGModel::getNumTimeSteps()
 {
-  return std::max(_nodeData.size(), _elementData.size());
+  return _steps.size();
 }
 
 double PViewDataGModel::getTime(int step)
 {
-  if(step < (int)_nodeData.size())
-    return _nodeData[step]->getTime();
-  else if(step < (int)_elementData.size())
-    return _elementData[step]->getTime();
-  return 0.;
+  return _steps[step]->getTime();
 }
 
 double PViewDataGModel::getMin(int step)
 {
   if(step < 0) return _min;
-  if(step < (int)_nodeData.size()) 
-    return _nodeData[step]->getMin();
-  else if(step < (int)_elementData.size())
-    return _elementData[step]->getMin();
-  return 0.;
+  return _steps[step]->getMin();
 }
 
 double PViewDataGModel::getMax(int step)
 {
   if(step < 0) return _max;
-  if(step < (int)_nodeData.size())
-    return _nodeData[step]->getMax();
-  else if(step < (int)_elementData.size())
-    return _elementData[step]->getMax();
-  return 0.;
+  return _steps[step]->getMax();
 }
 
-int PViewDataGModel::getNumEntities()
-{
-  return _entities.size();
+SBoundingBox3d PViewDataGModel::getBoundingBox(int step)
+{ 
+  if(step < 0){
+    SBoundingBox3d tmp;
+    for(unsigned int i = 0; i < _steps.size(); i++)
+      tmp += _steps[i]->getBoundingBox();
+    return tmp;
+  }
+  return _steps[step]->getBoundingBox();
 }
 
-int PViewDataGModel::getNumElements(int ent)
+int PViewDataGModel::getNumEntities(int step)
 {
-  if(ent < 0) return _model->getNumMeshElements(); 
-  return _entities[ent]->getNumMeshElements();
+  return _steps[step]->getNumEntities();
 }
 
-int PViewDataGModel::getDimension(int ent, int ele)
+int PViewDataGModel::getNumElements(int step, int ent)
 {
-  return _entities[ent]->getMeshElement(ele)->getDim();
+  if(step < 0){
+    int num = 0;
+    for(unsigned int i = 0; i < _steps.size(); i++){
+      if(ent < 0)
+	num += _steps[i]->getModel()->getNumMeshElements();
+      else
+	num += _steps[i]->getEntity(ent)->getNumMeshElements();
+    }
+    return num;
+  }
+  if(ent < 0) return _steps[step]->getModel()->getNumMeshElements(); 
+  return _steps[step]->getEntity(ent)->getNumMeshElements();
 }
 
-int PViewDataGModel::getNumNodes(int ent, int ele)
+int PViewDataGModel::getDimension(int step, int ent, int ele)
 {
-  return _entities[ent]->getMeshElement(ele)->getNumVertices();
+  return _steps[step]->getEntity(ent)->getMeshElement(ele)->getDim();
 }
 
-void PViewDataGModel::getNode(int ent, int ele, int nod, double &x, double &y, double &z)
+int PViewDataGModel::getNumNodes(int step, int ent, int ele)
 {
-  MVertex *v = _entities[ent]->getMeshElement(ele)->getVertex(nod);
+  return _steps[step]->getEntity(ent)->getMeshElement(ele)->getNumVertices();
+}
+
+void PViewDataGModel::getNode(int step, int ent, int ele, int nod, 
+			      double &x, double &y, double &z)
+{
+  MVertex *v = _steps[step]->getEntity(ent)->getMeshElement(ele)->getVertex(nod);
   x = v->x();
   y = v->y();
   z = v->z();
 }
 
-int PViewDataGModel::getNumComponents(int ent, int ele, int step)
+int PViewDataGModel::getNumComponents(int step, int ent, int ele)
 {
-  if(step < (int)_nodeData.size())
-    return _nodeData[step]->getNumComp();
-  else if(step < (int)_elementData.size())
-    return _elementData[step]->getNumComp();
-  return 1;
+  return _steps[step]->getNumComp();
 }
 
-void PViewDataGModel::getValue(int ent, int ele, int nod, int comp, int step, double &val)
+void PViewDataGModel::getValue(int step, int ent, int ele, int nod, int comp, double &val)
 {
-  MVertex *v = _entities[ent]->getMeshElement(ele)->getVertex(nod);
+  MVertex *v = _steps[step]->getEntity(ent)->getMeshElement(ele)->getVertex(nod);
   int index = v->getDataIndex();
-  if(step < (int)_nodeData.size())
-    val = _nodeData[step]->getData(index)[comp];
-  //else if(step < (int)_elementData.size())
-  //  val = _elementData[step]->getData(index)[nod * numComp + comp];
+  val = _steps[step]->getData(index)[comp];
 }
 
-int PViewDataGModel::getNumEdges(int ent, int ele)
+int PViewDataGModel::getNumEdges(int step, int ent, int ele)
 { 
-  return _entities[ent]->getMeshElement(ele)->getNumEdges();
+  return _steps[step]->getEntity(ent)->getMeshElement(ele)->getNumEdges();
 }
 
-bool PViewDataGModel::skipEntity(int ent)
+bool PViewDataGModel::skipEntity(int step, int ent)
 {
-  return !_entities[ent]->getVisibility();
+  return !_steps[step]->getEntity(ent)->getVisibility();
 }
 
-bool PViewDataGModel::skipElement(int ent, int ele, int step)
+bool PViewDataGModel::skipElement(int step, int ent, int ele)
 {
-  if(step >= (int)_nodeData.size() || !_nodeData[step]->getNumData()) return true;
-  MElement *e = _entities[ent]->getMeshElement(ele);
+  if(step >= (int)_steps.size() || !_steps[step]->getNumData()) return true;
+  MElement *e = _steps[step]->getEntity(ent)->getMeshElement(ele);
   if(!e->getVisibility()) return true;
   for(int i = 0; i < e->getNumVertices(); i++){
     int index = e->getVertex(i)->getDataIndex();
-    if(index < 0 || index >= (int)_nodeData[step]->getNumData()) return true;
-    if(!_nodeData[step]->getData(index)) return true;
+    if(index < 0 || index >= (int)_steps[step]->getNumData()) return true;
+    if(!_steps[step]->getData(index)) return true;
   }
   return false;
 }
 
 bool PViewDataGModel::hasTimeStep(int step)
 {
-  if(step < (int)_nodeData.size() && _nodeData[step]->getNumData()) return true;
-  if(step < (int)_elementData.size() && _elementData[step]->getNumData()) return true;
+  if(step < (int)_steps.size() && _steps[step]->getNumData()) return true;
   return false;
 }
 
 bool PViewDataGModel::hasPartition(int part)
 {
   return _partitions.find(part) != _partitions.end();
+}
+
+bool PViewDataGModel::hasSingleMesh()
+{
+  if(_steps.size() <= 1) return true;
+  GModel *m = _steps[0]->getModel();
+  for(unsigned int i = 1; i < _steps.size(); i++)
+    if(m != _steps[i]->getModel()) return false;
+  return true;
 }

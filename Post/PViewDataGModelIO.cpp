@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.8 2008-03-13 22:02:08 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.9 2008-03-19 16:38:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,26 +30,27 @@
 #include "StringUtils.h"
 
 bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
-			      bool binary, bool swap, int timeStep, double time, 
+			      bool binary, bool swap, int step, double time, 
 			      int partition, int numComp, int numNodes)
 {
   Msg(INFO, "Reading step %d (time %g) partition %d: %d nodes", 
-      timeStep, time, partition, numNodes);
+      step, time, partition, numNodes);
 
-  while(timeStep >= (int)_nodeData.size())
-    _nodeData.push_back(new stepData<double>(numComp));
+  while(step >= (int)_steps.size())
+    _steps.push_back(new stepData<double>(GModel::current(), 
+					  stepData<double>::NodeData, numComp));
   
-  _nodeData[timeStep]->setFileName(fileName);
-  _nodeData[timeStep]->setFileIndex(fileIndex);
-  _nodeData[timeStep]->setTime(time);
+  _steps[step]->setFileName(fileName);
+  _steps[step]->setFileIndex(fileIndex);
+  _steps[step]->setTime(time);
 
   // if we already have maxSteps for this view, return
   int numSteps = 0, maxSteps = 1000000000;
-  for(unsigned int i = 0; i < _nodeData.size(); i++)
-    numSteps += _nodeData[i]->getNumData() ? 1 : 0;
+  for(unsigned int i = 0; i < _steps.size(); i++)
+    numSteps += _steps[i]->getNumData() ? 1 : 0;
   if(numSteps > maxSteps) return true;
 
-  _nodeData[timeStep]->resizeData(numNodes);
+  _steps[step]->resizeData(numNodes);
 
   for(int i = 0; i < numNodes; i++){
     int num;
@@ -60,18 +61,18 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
     else{
       if(fscanf(fp, "%d", &num) != 1) return false;
     }
-    MVertex *v = _model->getMeshVertexByTag(num);
+    MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(num);
     if(!v){
       Msg(GERROR, "Unknown vertex %d in data", num);
       return false;
     }
     if(v->getDataIndex() < 0){
-      int max = _model->getMaxVertexDataIndex();
-      _model->setMaxVertexDataIndex(max + 1);
+      int max = _steps[step]->getModel()->getMaxVertexDataIndex();
+      _steps[step]->getModel()->setMaxVertexDataIndex(max + 1);
       v->setDataIndex(max + 1);
     }
     int index = v->getDataIndex();
-    double *d = _nodeData[timeStep]->getData(index, true);
+    double *d = _steps[step]->getData(index, true);
     if(binary){
       if((int)fread(d, sizeof(double), numComp, fp) != numComp) return false;
       if(swap) swapBytes((char*)d, sizeof(double), numComp);
@@ -81,8 +82,8 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
 	if(fscanf(fp, "%lf", &d[j]) != 1) return false;
     }
     double s = ComputeScalarRep(numComp, d);
-    _nodeData[timeStep]->setMin(std::min(_nodeData[timeStep]->getMin(), s));
-    _nodeData[timeStep]->setMax(std::max(_nodeData[timeStep]->getMax(), s));
+    _steps[step]->setMin(std::min(_steps[step]->getMin(), s));
+    _steps[step]->setMax(std::max(_steps[step]->getMax(), s));
   }
 
   _partitions.insert(partition);
@@ -93,10 +94,19 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
 
 bool PViewDataGModel::writeMSH(std::string name, bool binary)
 {
+  if(_steps.empty()) return true;
+
+  if(!hasSingleMesh()){
+    Msg(GERROR, "Export not done for multi-mesh views");
+    return false;
+  }
+
+  GModel *model = _steps[0]->getModel();
+
   binary = true;
 
   bool saveAll = true;
-  if(!_model->writeMSH(name, 2.0, binary, saveAll)) return false;
+  if(!model->writeMSH(name, 2.0, binary, saveAll)) return false;
 
   // append data
   FILE *fp = fopen(name.c_str(), binary ? "ab" : "a");
@@ -106,33 +116,33 @@ bool PViewDataGModel::writeMSH(std::string name, bool binary)
   }
 
   // map data index to vertex tags
-  std::vector<int> tags(_model->getMaxVertexDataIndex() + 1, 0);
-  for(unsigned int i = 0; i < _entities.size(); i++){
-    for(unsigned int j = 0; j < _entities[i]->mesh_vertices.size(); j++){
-      MVertex *v = _entities[i]->mesh_vertices[j];
+  std::vector<int> tags(model->getMaxVertexDataIndex() + 1, 0);
+  for(int i = 0; i < _steps[0]->getNumEntities(); i++){
+    for(unsigned int j = 0; j < _steps[0]->getEntity(i)->mesh_vertices.size(); j++){
+      MVertex *v = _steps[0]->getEntity(i)->mesh_vertices[j];
       if(v->getDataIndex() >= 0) tags[v->getDataIndex()] = v->getNum();
     }
   }
 
-  for(unsigned int step = 0; step < _nodeData.size(); step++){
-    int numNodes = 0, numComp = _nodeData[step]->getNumComp();
-    for(unsigned int i = 0; i < _nodeData[step]->getNumData(); i++)
-      if(_nodeData[step]->getData(i)) numNodes++;
+  for(unsigned int step = 0; step < _steps.size(); step++){
+    int numNodes = 0, numComp = _steps[step]->getNumComp();
+    for(unsigned int i = 0; i < _steps[step]->getNumData(); i++)
+      if(_steps[step]->getData(i)) numNodes++;
     if(numNodes){
       fprintf(fp, "$NodeData\n");
       fprintf(fp, "\"%s\"\n", getName().c_str());
-      fprintf(fp, "%d %.16g 0 0 %d %d\n", step, _nodeData[step]->getTime(), 
+      fprintf(fp, "%d %.16g 0 0 %d %d\n", step, _steps[step]->getTime(), 
 	      numComp, numNodes);
-      for(unsigned int i = 0; i < _nodeData[step]->getNumData(); i++){
-	if(_nodeData[step]->getData(i)){
+      for(unsigned int i = 0; i < _steps[step]->getNumData(); i++){
+	if(_steps[step]->getData(i)){
 	  if(binary){
 	    fwrite(&tags[i], sizeof(int), 1, fp);
-	    fwrite(_nodeData[step]->getData(i), sizeof(double), numComp, fp);
+	    fwrite(_steps[step]->getData(i), sizeof(double), numComp, fp);
 	  }
 	  else{
 	    fprintf(fp, "%d", tags[i]);
 	    for(int k = 0; k < numComp; k++)
-	      fprintf(fp, " %.16g", _nodeData[step]->getData(i)[k]);
+	      fprintf(fp, " %.16g", _steps[step]->getData(i)[k]);
 	    fprintf(fp, "\n");
 	  }
 	}

@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.13 2008-03-18 19:30:14 geuzaine Exp $
+// $Id: PViewData.cpp,v 1.14 2008-03-19 16:38:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -35,7 +35,7 @@ bool PViewData::empty()
   return (!getNumElements() && !getNumStrings2D() && !getNumStrings3D());
 }
 
-void PViewData::getScalarValue(int ent, int ele, int nod, int step, double &val)
+void PViewData::getScalarValue(int step, int ent, int ele, int nod, double &val)
 {
   int numComp = getNumComponents(ent, ele, step);
   double d[9];

@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.75 2008-03-12 21:28:53 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.76 2008-03-19 16:38:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -71,15 +71,17 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
 
+  if(!data->hasSingleMesh()) return false; // cannot handle multi-mesh
+
   int numy = 0;
   if(opt->Type == PViewOptions::Plot2DSpace){
     numy = 1;
   }
   else if(opt->Type == PViewOptions::Plot2DTime){
     numy = 0;
-    for(int ent = 0; ent < data->getNumEntities(); ent++)
-      for(int i = 0; i < data->getNumElements(ent); i++)
-	if(data->getDimension(ent, i) < 2) numy++;
+    for(int ent = 0; ent < data->getNumEntities(0); ent++)
+      for(int i = 0; i < data->getNumElements(0, ent); i++)
+	if(data->getDimension(0, ent, i) < 2) numy++;
   }
   
   if(!numy) return false;
@@ -90,18 +92,18 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
   SPoint3 p0(0., 0., 0.);
 
   numy = 0;
-  for(int ent = 0; ent < data->getNumEntities(); ent++){
-    for(int i = 0; i < data->getNumElements(ent); i++){
-      int dim = data->getDimension(ent, i);
+  for(int ent = 0; ent < data->getNumEntities(0); ent++){
+    for(int i = 0; i < data->getNumElements(0, ent); i++){
+      int dim = data->getDimension(0, ent, i);
       if(dim < 2){
-	int numNodes = data->getNumNodes(ent, i);
+	int numNodes = data->getNumNodes(0, ent, i);
 	for(int ts = space ? opt->TimeStep : 0; ts < opt->TimeStep + 1; ts++){
-	  int numComp = data->getNumComponents(ent, i, ts);
+	  int numComp = data->getNumComponents(ts, ent, i);
 	  for(int j = 0; j < numNodes; j++){
 	    double val[9], xyz[3];
-	    data->getNode(ent, i, j, xyz[0], xyz[1], xyz[2]);
+	    data->getNode(ts, ent, i, j, xyz[0], xyz[1], xyz[2]);
 	    for(int k = 0; k < numComp; k++)
-	      data->getValue(ent, i, j, k, ts, val[k]);
+	      data->getValue(ts, ent, i, j, k, val[k]);
 	    double vy = ComputeScalarRep(numComp, val);
 	    if(space){
 	      // store offset to origin + distance to first point
