@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.19 2008-03-18 14:43:53 remacle Exp $
+// $Id: Field.cpp,v 1.20 2008-03-19 08:57:35 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -662,6 +662,7 @@ public :
 				}
 			}
 			kdtree = new ANNkd_tree(zeronodes, totpoints, 3);
+			update_needed=false;
 		}
 		double xyz[3] = {X, Y, Z};
 		kdtree->annkSearch(xyz, 1, index, dist);
