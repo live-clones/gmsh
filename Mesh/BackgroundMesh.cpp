@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.43 2008-03-19 17:26:48 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.44 2008-03-19 20:09:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -36,10 +36,6 @@ extern Context_T CTX;
 bool BGMExists() 
 {
   return (GModel::current()->getFields()->background_field > 0); 
-}
-
-void BGMReset()
-{
 }
 
 // computes the characteristic length of the mesh at a vertex in order

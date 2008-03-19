@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.73 2008-03-19 17:26:48 geuzaine Exp $
+// $Id: GModel.cpp,v 1.74 2008-03-19 20:09:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -110,7 +110,6 @@ void GModel::destroy()
 #if !defined(HAVE_GMSH_EMBEDDED)
   _fields->reset();
   gmshSurface::reset();
-  BGMReset();
 #endif
 }
 
