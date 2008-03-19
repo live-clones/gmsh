@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.14 2008-03-19 16:38:16 geuzaine Exp $
+// $Id: PViewData.cpp,v 1.15 2008-03-19 17:33:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -37,10 +37,10 @@ bool PViewData::empty()
 
 void PViewData::getScalarValue(int step, int ent, int ele, int nod, double &val)
 {
-  int numComp = getNumComponents(ent, ele, step);
+  int numComp = getNumComponents(step, ent, ele);
   double d[9];
   for(int comp = 0; comp < numComp; comp++)
-    getValue(ent, ele, nod, comp, step, d[comp]);
+    getValue(step, ent, ele, nod, comp, d[comp]);
   val = ComputeScalarRep(numComp, d);
 }
 

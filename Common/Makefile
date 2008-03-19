@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.164 2008-03-19 16:38:15 geuzaine Exp $
+# $Id: Makefile,v 1.165 2008-03-19 17:34:56 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -95,13 +95,7 @@ CommandLine.o: CommandLine.cpp GmshUI.h GmshDefines.h GmshVersion.h \
   ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
   ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/SBoundingBox3d.h ../Mesh/Field.h ../Geo/Geo.h \
-  ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
-  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
-  ../Geo/SBoundingBox3d.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
-  ../Common/SmoothData.h ../Post/PView.h ../Post/PViewData.h \
+  ../Geo/SBoundingBox3d.h ../Post/PView.h ../Post/PViewData.h \
   ../Post/PViewOptions.h ../Post/ColorTable.h ../Parser/CreateFile.h OS.h
 Gmsh.o: Gmsh.cpp ../Parser/Parser.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h Options.h ../Post/ColorTable.h CommandLine.h OS.h \
@@ -121,16 +115,10 @@ Visibility.o: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h ../Geo/SBoundingBox3d.h \
-  ../Mesh/Field.h ../Geo/Geo.h ../Common/GmshDefines.h \
-  ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
-  ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SBoundingBox3d.h \
-  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
-  ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
-  ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
-  ../Geo/MElement.h ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Parser/Parser.h
+  ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
+  ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h ../Parser/Parser.h \
+  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h
 Trackball.o: Trackball.cpp Trackball.h
 VertexArray.o: VertexArray.cpp VertexArray.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h Context.h ../Numeric/Numeric.h \
