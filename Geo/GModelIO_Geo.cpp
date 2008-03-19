@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.17 2008-03-18 08:41:21 remacle Exp $
+// $Id: GModelIO_Geo.cpp,v 1.18 2008-03-19 17:26:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,6 +30,7 @@
 #include "gmshEdge.h"
 #include "gmshRegion.h"
 #include "Parser.h" // for Symbol_T
+#include "Field.h"
 
 int GModel::readGEO(const std::string &name)
 {
@@ -147,19 +148,21 @@ int GModel::importGEOInternals()
   
   return 1;
 }
+
 class writeFieldOptionGEO{
  private :
   FILE *geo;
-	Field *field;
+  Field *field;
  public :
   writeFieldOptionGEO(FILE *fp,Field *_field) { geo = fp ? fp : stdout; field=_field;}
   void operator() (std::pair<const char *,FieldOption *> it)
   {
-		std::string v;
-		it.second->get_text_representation(v);
-		fprintf(geo,"Field[%i].%s = %s;\n",field->id,it.first,v.c_str());
-	}
+    std::string v;
+    it.second->get_text_representation(v);
+    fprintf(geo, "Field[%i].%s = %s;\n", field->id, it.first, v.c_str());
+  }
 };
+
 class writeFieldGEO{
  private :
   FILE *geo;
@@ -167,9 +170,10 @@ class writeFieldGEO{
   writeFieldGEO(FILE *fp) { geo = fp ? fp : stdout; }
   void operator() (std::pair<int, Field *> it)
   {
-		fprintf(geo,"Field[%i] = %s;\n",it.first,it.second->get_name());
-		std::for_each(it.second->options.begin(),it.second->options.end(),writeFieldOptionGEO(geo,it.second));
-	}
+    fprintf(geo, "Field[%i] = %s;\n", it.first, it.second->get_name());
+    std::for_each(it.second->options.begin(), it.second->options.end(),
+		  writeFieldOptionGEO(geo, it.second));
+  }
 };
 
 class writeGVertexGEO {
@@ -432,9 +436,11 @@ int GModel::writeGEO(const std::string &name, bool printLabels)
   for(int i = 0; i < 4; i++)
     std::for_each(groups[i].begin(), groups[i].end(), 
 		  writePhysicalGroupGEO(fp, i, printLabels, labels, physicalNames));
+  
+  std::for_each(getFields()->begin(), getFields()->end(), writeFieldGEO(fp));
+  if(getFields()->background_field > 0)
+    fprintf(fp, "Background Field = %i;\n", getFields()->background_field);
 
-	std::for_each(fields.begin(),fields.end(), writeFieldGEO(fp));
-	if(fields.background_field>0)fprintf(fp,"Background Field = %i;\n",fields.background_field);
   if(fp) fclose(fp);
   return 1;
 }

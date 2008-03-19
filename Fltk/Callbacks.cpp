@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.568 2008-03-18 11:33:04 remacle Exp $
+// $Id: Callbacks.cpp,v 1.569 2008-03-19 17:26:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -4497,7 +4497,7 @@ void view_applybgmesh_cb(CALLBACK_ARGS)
 {
   int index =  (int)(long)data;
   if(index >= 0 && index < (int)PView::list.size()){
-    GModel::current()->fields.set_background_mesh(index);
+    GModel::current()->getFields()->set_background_mesh(index);
   }
 }
 
@@ -4535,7 +4535,7 @@ void view_field_set_size_btn_cb(CALLBACK_ARGS){
 void view_field_new_cb(CALLBACK_ARGS)
 {
 	Fl_Menu_Button* mb=((Fl_Menu_Button*)w);
-	int id=GModel::current()->fields.new_id();
+	int id=GModel::current()->getFields()->new_id();
 	add_field(id,mb->text(),CTX.filename);
 	WID->create_field_window(id);
 }

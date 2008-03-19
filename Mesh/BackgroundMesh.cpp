@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.42 2008-03-18 18:46:47 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.43 2008-03-19 17:26:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -35,8 +35,7 @@ extern Context_T CTX;
 
 bool BGMExists() 
 {
-	FieldManager &fields=GModel::current()->fields;
-	return (fields.background_field>0); 
+  return (GModel::current()->getFields()->background_field > 0); 
 }
 
 void BGMReset()
@@ -168,7 +167,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
   double l3 = CTX.lc;
   double l4 = MAX_LC;
   double lc;
-	FieldManager &fields=GModel::current()->fields;
+  FieldManager &fields=*GModel::current()->getFields();
 	if(fields.background_field>0){
 		Field *f=fields.get(fields.background_field);
 		if(f) l4=(*f)(X,Y,Z);
@@ -203,7 +202,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
 // we do it also if CTX.mesh.constrained_bgmesh is true;
 bool Extend1dMeshIn2dSurfaces()
 {
-	if(GModel::current()->fields.background_field==-1)return true;
+  if(GModel::current()->getFields()->background_field==-1)return true;
   if(CTX.mesh.constrained_bgmesh) return true;
   return false;
 }

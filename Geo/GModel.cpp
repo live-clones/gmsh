@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.72 2008-03-18 19:30:13 geuzaine Exp $
+// $Id: GModel.cpp,v 1.73 2008-03-19 17:26:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -39,12 +39,16 @@ extern Context_T CTX;
 std::vector<GModel*> GModel::list;
 
 GModel::GModel(std::string name)
-  : _maxVertexDataIndex(-1), _geo_internals(0), _occ_internals(0), 
+  : _maxVertexDataIndex(-1), _geo_internals(0), _occ_internals(0), _fields(0),
     modelName(name), normals(0)
 {
   list.push_back(this);
   // at the moment we always create (at least an empty) GEO model
   createGEOInternals();
+
+#if !defined(HAVE_GMSH_EMBEDDED)
+  _fields = new FieldManager();
+#endif
 }
 
 GModel::~GModel()
@@ -54,6 +58,9 @@ GModel::~GModel()
   deleteGEOInternals();
   deleteOCCInternals();
   destroy();
+#if !defined(HAVE_GMSH_EMBEDDED)
+  delete _fields;
+#endif
 }
 
 GModel *GModel::current()
@@ -99,8 +106,9 @@ void GModel::destroy()
 
   MVertex::resetGlobalNumber();
   MElement::resetGlobalNumber();
+
 #if !defined(HAVE_GMSH_EMBEDDED)
-  fields.reset();
+  _fields->reset();
   gmshSurface::reset();
   BGMReset();
 #endif

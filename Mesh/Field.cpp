@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.20 2008-03-19 08:57:35 remacle Exp $
+// $Id: Field.cpp,v 1.21 2008-03-19 17:26:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -261,7 +261,7 @@ public:
 	}
 	const char *get_name(){return "LonLat";}
   double operator()(double x, double y, double z){
-		return (*GModel::current()->fields.get(field_id))(atan2(x,y),asin(z / sqrt(x * x + y * y + z * z)), 0);
+    return (*GModel::current()->getFields()->get(field_id))(atan2(x,y),asin(z / sqrt(x * x + y * y + z * z)), 0);
 	}
 	FieldDialogBox *&dialog_box(){
 		static FieldDialogBox *dialogBox=NULL;
@@ -315,7 +315,7 @@ class ThresholdField : public Field{
 		options["LcMax"]=new FieldOptionDouble(lcmax);
 	}
   double operator()(double x, double y, double z){
-		Field *field=GModel::current()->fields.get(iField);
+    Field *field=GModel::current()->getFields()->get(iField);
 		double r = ((*field)(x, y, z) - dmin) / (dmax - dmin);
 		r = std::max(std::min(r, 1.), 0.);
 		double lc = lcmin * (1 - r) + lcmax * r;
@@ -341,7 +341,7 @@ class GradientField : public Field{
 		options["Delta"]=new FieldOptionDouble(delta);
 	}
   double operator()(double x, double y, double z){
-		Field *field=GModel::current()->fields.get(iField);
+    Field *field=GModel::current()->getFields()->get(iField);
 		double gx, gy, gz;
 		switch(kind){
 		case 0 : /* x */
@@ -387,7 +387,7 @@ class MathEvalExpression{
 				case -2: values[i]=y; break;
 				case -3: values[i]=z; break;
 				default: {
-					f=GModel::current()->fields.get(evaluators_id[i]);
+				  f=GModel::current()->getFields()->get(evaluators_id[i]);
 					values[i] = f ? (*f)(x,y,z) : MAX_LC;
 				}
 			}
@@ -477,7 +477,7 @@ class ParametricField : public Field{
 			}
 			update_needed=false;
 		}
-		return (*GModel::current()->fields.get(ifield))(expr[0].evaluate(x,y,z),expr[1].evaluate(x,y,z),expr[2].evaluate(x,y,z));
+		return (*GModel::current()->getFields()->get(ifield))(expr[0].evaluate(x,y,z),expr[1].evaluate(x,y,z),expr[2].evaluate(x,y,z));
 	}
 	FieldDialogBox *&dialog_box(){
 		static FieldDialogBox *dialogBox=NULL;
@@ -550,7 +550,7 @@ class MinField : public Field{
   double operator()(double x, double y, double z){
 		double v=MAX_LC;
 		for(std::list<int>::iterator it=idlist.begin();it!=idlist.end();it++){
-			Field *f=(GModel::current()->fields.get(*it));
+		  Field *f=(GModel::current()->getFields()->get(*it));
 			if(f)
 				v=std::min(v,(*f)(x,y,z));
 		}
@@ -572,7 +572,7 @@ class MaxField : public Field{
   double operator()(double x, double y, double z){
 		double v=-MAX_LC;
 		for(std::list<int>::iterator it=idlist.begin();it!=idlist.end();it++){
-			Field *f=(GModel::current()->fields.get(*it));
+		  Field *f=(GModel::current()->getFields()->get(*it));
 			if(f)
 				v=std::max(v,(*f)(x,y,z));
 		}

@@ -28,13 +28,11 @@
 #include "GFace.h"
 #include "GRegion.h"
 #include "SBoundingBox3d.h"
-#if !defined(HAVE_GMSH_EMBEDDED)
-#include "Field.h"
-#endif
 
 class GEO_Internals;
 class OCC_Internals;
 class smooth_normals;
+class FieldManager;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel
@@ -52,6 +50,9 @@ class GModel
 
   OCC_Internals *_occ_internals;
   void deleteOCCInternals();
+
+  // Characteristic Lengths fields
+  FieldManager *_fields;
 
  protected:
   std::string modelName;
@@ -78,6 +79,9 @@ class GModel
   // Access internal CAD representations
   GEO_Internals *getGEOInternals(){ return _geo_internals; }
   OCC_Internals *getOCCInternals(){ return _occ_internals; }
+
+  // Access characteristic length fields
+  FieldManager *getFields(){ return _fields; }
 
   // Get the number of regions in this model.
   int getNumRegions() const { return regions.size(); }
@@ -248,11 +252,6 @@ class GModel
 
   // Med interface ("Modele d'Echange de Donnees")
   int writeMED(const std::string &name);
-
-#if !defined(HAVE_GMSH_EMBEDDED)
-  // Characteristic Lengths fields
-  FieldManager fields;
-#endif
 };
 
 #endif

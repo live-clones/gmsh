@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.664 2008-03-18 19:36:59 geuzaine Exp $
+// $Id: GUI.cpp,v 1.665 2008-03-19 17:26:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -3912,7 +3912,7 @@ void FieldDialogBox::load_field(Field *f){
   }else{
 		put_on_view_btn->deactivate();
 	}
-	set_size_btn->value(GModel::current()->fields.background_field==f->id);
+  set_size_btn->value(GModel::current()->getFields()->background_field==f->id);
 }
 
 FieldDialogBox::FieldDialogBox(Field *f, int x, int y, int width, int height,int fontsize)
@@ -4013,7 +4013,7 @@ void GUI::create_field_window(int numfield)
   if(field_window) {
 		width=field_window->w();
 		height=field_window->h();
-		FieldManager &fields=GModel::current()->fields;
+		FieldManager &fields=*GModel::current()->getFields();
 		field_browser->clear();
 		for(FieldManager::iterator it=fields.begin();it!=fields.end();it++){
 			Field *field=it->second;
@@ -4045,7 +4045,7 @@ void GUI::create_field_window(int numfield)
 	resize_box->end();
 	{
 		Fl_Menu_Button *b= new Fl_Menu_Button(WB,WB,L1,BH,"New");
-		FieldManager &fields=GModel::current()->fields;
+		FieldManager &fields=*GModel::current()->getFields();
 		std::map<const std::string, FieldFactory*>::iterator it;
 		for(it=fields.map_type_name.begin();it!=fields.map_type_name.end();it++)
 			b->add(it->first.c_str());

@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.304 2008-03-18 11:33:08 remacle Exp $
+// $Id: Gmsh.y,v 1.305 2008-03-19 17:26:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -105,8 +105,7 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer);
 %token tText2D tText3D tInterpolationScheme  tTime tCombine
 %token tBSpline tBezier tNurbs tOrder tKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit
-%token tField 
-%token tReturn tCall tFunction tShow tHide tGetValue
+%token tField tReturn tCall tFunction tShow tHide tGetValue
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 
 %type <d> FExpr FExpr_Single 
@@ -950,62 +949,83 @@ Affectation :
       Free($1);
       List_Delete($8);
     }
-	| tSTRING tField tAFFECT FExpr tEND
-	{
-		if(!strcmp($1,"Background")){
-			GModel::current()->fields.background_field=(int)$4;
-		}else{
-			yymsg(GERROR, "Unknown command %s Field.",$1);
-		}
-	}
-	| tField '[' FExpr ']' tAFFECT tSTRING tEND
-	{
-		if(!GModel::current()->fields.new_field((int)$3,$6))
-				yymsg(GERROR, "Cannot create field %i of type '%s'.", (int)$3, $6);
-	}
+
+  // Fields
+
+  | tSTRING tField tAFFECT FExpr tEND
+    {
+      if(!strcmp($1,"Background")){
+	GModel::current()->getFields()->background_field = (int)$4;
+      }
+      else{
+	yymsg(GERROR, "Unknown command %s Field", $1);
+      }
+    }
+  | tField '[' FExpr ']' tAFFECT tSTRING tEND
+    {
+      if(!GModel::current()->getFields()->new_field((int)$3, $6))
+	yymsg(GERROR, "Cannot create field %i of type '%s'", (int)$3, $6);
+    }
   | tField '[' FExpr ']' '.' tSTRING  tAFFECT FExpr tEND
-	{
-		Field *field=GModel::current()->fields.get((int)$3);
-		if(field){
-			FieldOption *option=field->options[$6];
-			if(option){
-				try {option->numerical_value($8);}
-				catch(...){
-					yymsg(GERROR, "Cannot assign a numerical value to  option '%s' in field %i of type '%s'", $6,(int)$3,field->get_name());
-				}
-			}else yymsg(GERROR, "Unknown option '%s' in field %i of type '%s'", $6,(int)$3,field->get_name());
-		}else yymsg(GERROR, "No field with id %i",(int)$3);
-			
+    {
+      Field *field = GModel::current()->getFields()->get((int)$3);
+      if(field){
+	FieldOption *option = field->options[$6];
+	if(option){
+	  try { option->numerical_value($8); }
+	  catch(...){
+	    yymsg(GERROR, "Cannot assign a numerical value to  option '%s' in field %i of type '%s'",
+		  $6, (int)$3, field->get_name());
+	  }
 	}
-  | tField '['FExpr ']' '.' tSTRING  tAFFECT StringExpr tEND
-	{
-		Field *field=GModel::current()->fields.get((int)$3);
-		if(field){
-			FieldOption *option=field->options[$6];
-			if(option){
-				try {option->string()=$8;}
-				catch (...){
-					yymsg(GERROR, "Cannot assign a string value to  option '%s' in field %i of type '%s'", $6,(int)$3,field->get_name());
-				}
-			}else yymsg(GERROR, "Unknown option '%s' in field %i of type '%s'", $6,(int)$3,field->get_name());
-		}else yymsg(GERROR, "No field with id %i",(int)$3);
+	else
+	  yymsg(GERROR, "Unknown option '%s' in field %i of type '%s'",
+		$6, (int)$3, field->get_name());
+      }
+      else
+	yymsg(GERROR, "No field with id %i", (int)$3);
+    }
+  | tField '[' FExpr ']' '.' tSTRING  tAFFECT StringExpr tEND
+    {
+      Field *field = GModel::current()->getFields()->get((int)$3);
+      if(field){
+	FieldOption *option = field->options[$6];
+	if(option){
+	  try { option->string() = $8; }
+	  catch (...){
+	    yymsg(GERROR, "Cannot assign a string value to  option '%s' in field %i of type '%s'",
+		  $6, (int)$3, field->get_name());
+	  }
 	}
-  | tField '['FExpr ']' '.' tSTRING  tAFFECT ListOfDouble tEND
-	{
-		Field *field=GModel::current()->fields.get((int)$3);
-		if(field){
-			FieldOption *option=field->options[$6];
-			if(option){
-				std::list<int> &vl=option->list();
-				vl.clear();
-				for(int i=0;i<List_Nbr($8);i++){
-					double id;
-					List_Read($8,i,&id);
-					vl.push_back(id);
-				}
-			}else yymsg(GERROR, "Unknown option '%s' in field %i of type '%s'", $6,(int)$3,field->get_name());
-		}else yymsg(GERROR, "No field with id %i",(int)$3);
+	else 
+	  yymsg(GERROR, "Unknown option '%s' in field %i of type '%s'", 
+		$6, (int)$3, field->get_name());
+      }
+      else 
+	yymsg(GERROR, "No field with id %i", (int)$3);
+    }
+  | tField '[' FExpr ']' '.' tSTRING  tAFFECT '{' RecursiveListOfDouble '}' tEND
+    {
+      Field *field = GModel::current()->getFields()->get((int)$3);
+      if(field){
+	FieldOption *option = field->options[$6];
+	if(option){
+	  std::list<int> &vl = option->list();
+	  vl.clear();
+	  for(int i = 0; i < List_Nbr($9); i++){
+	    double id;
+	    List_Read($9, i, &id);
+	    vl.push_back(id);
+	  }
 	}
+	else
+	  yymsg(GERROR, "Unknown option '%s' in field %i of type '%s'",
+		$6, (int)$3, field->get_name());
+      }
+      else 
+	yymsg(GERROR, "No field with id %i", (int)$3);
+    }
+
   // Plugins
 
   | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT FExpr tEND 
@@ -1732,7 +1752,7 @@ Delete :
       List_Delete($3);
     }
 	| tDelete tField '[' FExpr ']' tEND{
-		GModel::current()->fields.delete_field((int)$4);
+	  GModel::current()->getFields()->delete_field((int)$4);
 	}
   | tDelete tSTRING '[' FExpr ']' tEND
     {
@@ -1896,7 +1916,7 @@ Command :
       if(!strcmp($1, "Background") && !strcmp($2, "Mesh")  && !strcmp($3, "View")){
 	int index = (int)$5;
 	if(index >= 0 && index < (int)PView::list.size()){
-	  GModel::current()->fields.set_background_mesh(index);
+	  GModel::current()->getFields()->set_background_mesh(index);
 	}
 	else
 	  yymsg(GERROR, "Unknown view %d", index);

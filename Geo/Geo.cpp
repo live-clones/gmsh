@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.107 2008-03-18 08:41:21 remacle Exp $
+// $Id: Geo.cpp,v 1.108 2008-03-19 17:26:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,7 @@
 #include "GModel.h"
 #include "GeoInterpolation.h"
 #include "Parser.h"
+#include "Field.h"
 #include "Context.h"
 
 extern Context_T CTX;
@@ -718,7 +719,7 @@ int NEWVOLUME(void)
 
 int NEWFIELD(void)
 {
-	return (GModel::current()->fields.max_id()+1);
+  return (GModel::current()->getFields()->max_id() + 1);
 }
 
 int NEWPHYSICAL(void)

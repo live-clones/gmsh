@@ -1,4 +1,4 @@
-// $Id: GSHHS.cpp,v 1.1 2008-03-18 09:27:59 remacle Exp $
+// $Id: GSHHS.cpp,v 1.2 2008-03-19 17:26:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@
 #include "GeoEarthImport.h"
 extern Context_T CTX;
 
-/*	$Id: GSHHS.cpp,v 1.1 2008-03-18 09:27:59 remacle Exp $
+/*	$Id: GSHHS.cpp,v 1.2 2008-03-19 17:26:54 geuzaine Exp $
  *
  * PROGRAM:	gshhs.c
  * AUTHOR:	Paul Wessel (pwessel@hawaii.edu)
@@ -152,7 +152,7 @@ PView *GMSH_GSHHSPlugin::execute(PView *v)
 	Field *field=NULL;
 	GeoEarthImport geo_import(outfilename);
 	if(iField!=-1){
-		field = GModel::current()->fields.get(iField);
+	  field = GModel::current()->getFields()->get(iField);
 		if(!field){
 			Msg(GERROR, "Field[%d] does not exist", iField);
 			return NULL;
