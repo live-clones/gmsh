@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.74 2008-03-19 20:09:45 geuzaine Exp $
+// $Id: GModel.cpp,v 1.75 2008-03-19 20:13:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,6 @@
 #  include "gmshSurface.h"
 #  include "Field.h"
 #  include "Generator.h"
-#  include "BackgroundMesh.h"
 #  include "Context.h"
 #endif
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.195 2008-03-19 17:34:56 geuzaine Exp $
+# $Id: Makefile,v 1.196 2008-03-19 20:13:45 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -166,7 +166,7 @@ GModel.o: GModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   ../DataStr/avl.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
   ../Common/SmoothData.h ../Post/PView.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Post/PViewOptions.h ../Post/ColorTable.h \
-  ../Mesh/Generator.h ../Mesh/BackgroundMesh.h ../Common/Context.h
+  ../Mesh/Generator.h ../Common/Context.h
 GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h Geo.h ../Common/GmshDefines.h \
