@@ -1,25 +1,32 @@
 
-How to build OpenCascade 6.2 for Gmsh:
+How to build OpenCascade 6.2 (OCC) for Gmsh:
 
-- get the linux (source) distribution of occ
+- Get the linux (source) distribution of OCC and unpack it. In the
+  following <OpenCascade dir> refers to the directory where OCC is
+  installed (e.g ~/OpenCascade)
 
-- if you're using Cygwin/Mingw32 (Windows) define
+- If you're using Cygwin/Mingw32 (Windows) define
 
   export CC="gcc -mno-cygwin -DWNT=1 -DWIN32 -DHAVE_NO_DLL"
   export CXX="g++ -mno-cygwin -DWNT=1 -DWIN32 -DHAVE_NO_DLL"
 
-- with new versions of gcc, add "-ffriend-injection" to the compiler
-  options (this prevents the "Standard_Transient_Type_ not declared"
-  error)
+- With new versions of gcc, add "-ffriend-injection -fpermissive" to
+  the compiler options (this prevents the "Standard_Transient_Type_
+  not declared" error), i.e., define
 
-- go to the ros/ directory and type
+  export CXXFLAGS="${CXXFLAGS} -ffriend-injection -fpermissive"
+
+- Go to the <OpenCascade dir>/Linux/ros directory and type
 
   ./configure --prefix=/usr/local/opencascade --enable-debug=no 
     --enable-production=yes --enable-static=yes --enable-shared=no
     --disable-dependency-tracking
 
-- then go to the adm/make/ directory and run
+- Then go to the <OpenCascade dir>/Linux/ros/adm/make/ directory and
+  run "make" in the following subdirectories, e.g. by running the
+  following bash script:
 
+    #!/bin/bash
     for lib in TKernel TKMath TKAdvTools TKG2d TKG3d TKGeomBase TKBRep 
       TKGeomAlgo TKTopAlgo TKPrim TKBO TKHLR TKMesh TKShHealing TKBool 
       TKFillet TKFeat TKOffset TKXSBase TKIGES TKSTEPBase TKSTEPAttr 
@@ -27,15 +34,14 @@ How to build OpenCascade 6.2 for Gmsh:
         cd $lib && make; cd ..;
     done
 
-    (This is the same as doing 
-        make FoundationClasses
-        make ModelingData
-        make ModelingAlgorithms
-    and part of
-        make DataExchange)
+   Note that this is the same as doing "make FoundationClasses", "make
+   ModelingData", "make ModelingAlgorithms" and part of "make
+   DataExchange"
 
-- and finally do
+- Finally, run this other bash script in the same directory (to install
+  the libraries)
 
+    #!/bin/bash
     for lib in TKernel TKMath TKAdvTools TKG2d TKG3d TKGeomBase TKBRep 
       TKGeomAlgo TKTopAlgo TKPrim TKBO TKHLR TKMesh TKShHealing TKBool 
       TKFillet TKFeat TKOffset TKXSBase TKIGES TKSTEPBase TKSTEPAttr 
@@ -43,6 +49,29 @@ How to build OpenCascade 6.2 for Gmsh:
         cd $lib && make install; cd ..;
     done
 
-    and copy config.h and inc/ to /usr/local/opencascade (This is the 
-    same as a doing a partial 'make install')
+  and copy config.h and the <OpenCascade dir>/Linux/ros/inc/ subdirectory
+  to /usr/local/opencascade (This is the same as a doing a partial 
+  'make install')
 
+OpenCascade is now installed and ready to be used by Gmsh. To compile
+Gmsh with OpenCascade support:
+
+- Go to the gmsh source directory
+
+- Run "./configure --enable-occ --with-occ-prefix=/usr/local/opencascade" and
+  then "make"
+
+- If you get errors like
+
+    undefined reference to `pthread_create'
+    undefined reference to `pthread_detach'
+    ...
+
+  edit the "variables" file and add "-pthread" to the OPTIM variable, e.g.:
+
+    OPTIM="-g -O2 -pthread"
+   
+  and run make again
+
+- If compiling is successful then you are done and you can enjoy
+  importing IGES/STEP/BREP files into Gmsh!
