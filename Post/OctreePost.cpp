@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.4 2008-03-18 19:30:14 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.5 2008-03-20 07:34:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,10 @@
 #include "Numeric.h"
 #include "Message.h"
 #include "ShapeFunctions.h"
+#include "GModel.h"
+#include "MElement.h"
+
+// helper routines for list-based views
 
 static void minmax(int n, double *X, double *Y, double *Z,
 		   double *min, double *max)
@@ -215,6 +219,49 @@ static void addListOfStuff(Octree *o, List_T *l, int nbelm)
   }
 }
 
+// helper routines for GModel-based views
+
+void MElementBB(void *a, double *min, double *max)
+{
+  MElement *e = (MElement*)a;
+  MVertex *v = e->getVertex(0);
+  min[0] = max[0] = v->x(); 
+  min[1] = max[1] = v->y(); 
+  min[2] = max[2] = v->z();
+  for(int i = 1; i < e->getNumVertices(); i++){
+    v = e->getVertex(i);
+    min[0] = std::min(min[0], v->x()); max[0] = std::max(max[0], v->x());
+    min[1] = std::min(min[1], v->y()); max[1] = std::max(max[1], v->y());
+    min[2] = std::min(min[2], v->z()); max[2] = std::max(max[2], v->z());
+  }
+}
+
+void MElementCentroid(void *a, double *x)
+{
+  MElement *e = (MElement*)a;
+  MVertex *v = e->getVertex(0);
+  int n = e->getNumVertices();
+  x[0] = v->x(); x[1] = v->y(); x[2] = v->z();
+  for(int i = 1; i < n; i++) {
+    v = e->getVertex(i);
+    x[0] += v->x(); x[1] += v->y(); x[2] += v->z();
+  }
+  double oc = 1. / (double)n;
+  x[0] *= oc;
+  x[1] *= oc;
+  x[2] *= oc;
+}
+
+int MElementInEle(void *a, double *x)
+{
+  MElement *e = (MElement*)a;
+  double uvw[3];
+  e->xyz2uvw(x, uvw);
+  return e->isInside(uvw[0], uvw[1], uvw[2]) ? 1 : 0;
+}
+
+// OctreePost implementation
+
 OctreePost::~OctreePost() 
 {
   if(_ST) Octree_Delete(_ST); if(_VT) Octree_Delete(_VT); if(_TT) Octree_Delete(_TT);
@@ -229,7 +276,7 @@ OctreePost::~OctreePost()
 OctreePost::OctreePost(PView *v) 
   : _ST(0), _VT(0), _TT(0), _SQ(0), _VQ(0), _TQ(0), _SS(0), _VS(0), _TS(0),
     _SH(0), _VH(0), _TH(0), _SI(0), _VI(0), _TI(0), _SY(0), _VY(0), _TY(0),
-    _GModel(0), _theView(v), _viewType(-1)
+    _GModel(0), _theView(v), _theViewDataList(0), _theViewDataGModel(0)
 {
   SBoundingBox3d bb = v->getData()->getBoundingBox();
 
@@ -241,10 +288,9 @@ OctreePost::OctreePost(PView *v)
 
   const int maxElePerBucket = 100; // memory vs. speed trade-off
 
-  PViewDataList *l = dynamic_cast<PViewDataList*>(_theView->getData());
-  if(l){
-    _viewType = 0;
-
+  _theViewDataList = dynamic_cast<PViewDataList*>(_theView->getData());
+  if(_theViewDataList){
+    PViewDataList *l = _theViewDataList;
     _SL = Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
     addListOfStuff(_SL, l->SL, 6 + 2 * l->getNumTimeSteps());
     Octree_Arrange(_SL);
@@ -315,15 +361,16 @@ OctreePost::OctreePost(PView *v)
     addListOfStuff(_TY, l->TY, 15 + 45 * l->getNumTimeSteps());
     Octree_Arrange(_TY);
   }
-
-  PViewDataGModel *g = dynamic_cast<PViewDataGModel*>(_theView->getData());
-  if(g){
-    _viewType = 1;
-
-    //_GModel = Octree_Create(maxElePerBucket, min, size, 
-    //		    MElementBB, MElementCentroid, MElementInEle);
-    // add MElement pointers in
-    //Octree_Arrange(_GModel);
+  else{
+    _theViewDataGModel = dynamic_cast<PViewDataGModel*>(_theView->getData());
+    if(_theViewDataGModel){
+      _GModel = Octree_Create(maxElePerBucket, min, size, 
+			      MElementBB, MElementCentroid, MElementInEle);
+      for(int i = 0; i < _theViewDataGModel->getNumEntities(0); i++)
+	for(int j = 0; j < _theViewDataGModel->getEntity(0, i)->getNumMeshElements(); j++)
+	  Octree_Insert(_theViewDataGModel->getEntity(0, i)->getMeshElement(j), _GModel);
+      Octree_Arrange(_GModel);
+    }
   }
 
 }
@@ -342,7 +389,7 @@ bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp,
 
   e->xyz2uvw(P, U);
   if(step < 0){
-    for(int i = 0; i < _theView->getData()->getNumTimeSteps(); i++)
+    for(int i = 0; i < _theViewDataList->getNumTimeSteps(); i++)
       for(int j = 0; j < nbComp; j++)
 	values[nbComp * i + j] = e->interpolate(&V[nbNod * nbComp * i + j], 
 						U[0], U[1], U[2], nbComp);
@@ -359,6 +406,43 @@ bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp,
   return true;
 } 
 
+bool OctreePost::_getValue(void *in, int nbComp, double P[3], int step, double *values,
+			   double *elementSize)
+{
+  if(!in) return false;
+
+  if(_theViewDataGModel->getNumComponents(0, 0, 0) != nbComp) return false;
+
+  MElement *e = (MElement*)in;
+
+  if(e) printf("found ele %d!!\n", e->getNum());
+
+  int dataIndex[8];
+  for(int i = 0; i < e->getNumVertices(); i++){
+    dataIndex[i] = e->getVertex(i)->getDataIndex();
+    if(dataIndex[i] < 0) return false; // no data
+  }
+  
+  double U[3];
+  e->xyz2uvw(P, U);
+  /*
+  if(step < 0){
+    for(int i = 0; i < _theViewDataGModel->getNumTimeSteps(); i++)
+      for(int j = 0; j < nbComp; j++)
+	values[nbComp * i + j] = e->interpolate(&V[nbNod * nbComp * i + j], 
+						U[0], U[1], U[2], nbComp);
+  }
+  else{
+    for(int j = 0; j < nbComp; j++)
+      values[j] = e->interpolate(&V[nbNod * nbComp * step + j], 
+				 U[0], U[1], U[2], nbComp);
+  }
+  */
+
+  if(elementSize) *elementSize = e->maxEdge();
+  return true;
+} 
+
 bool OctreePost::searchScalar(double x, double y, double z, double *values, 
 			      int step, double *size)
 {
@@ -370,7 +454,7 @@ bool OctreePost::searchScalar(double x, double y, double z, double *values,
   else
     values[0] = 0.0;
 
-  if(_viewType == 0){
+  if(_theViewDataList){
     if(_getValue(Octree_Search(P, _SS), 3, 4, 1, P, step, values, size)) return true;
     if(_getValue(Octree_Search(P, _SH), 3, 8, 1, P, step, values, size)) return true;
     if(_getValue(Octree_Search(P, _SI), 3, 6, 1, P, step, values, size)) return true;
@@ -379,11 +463,10 @@ bool OctreePost::searchScalar(double x, double y, double z, double *values,
     if(_getValue(Octree_Search(P, _SQ), 2, 4, 1, P, step, values, size)) return true;
     if(_getValue(Octree_Search(P, _SL), 1, 2, 1, P, step, values, size)) return true;
   }
-
-  if(_viewType == 1){
-    
+  else if(_theViewDataGModel){
+    if(_getValue(Octree_Search(P, _GModel), 1, P, step, values, size)) return true;
   }
-
+  
   return false;
 }
 
@@ -399,7 +482,7 @@ bool OctreePost::searchVector(double x, double y, double z, double *values,
     for(int i = 0; i < 3; i++)
       values[i] = 0.0;
 
-  if(_viewType == 0){
+  if(_theViewDataList){
     if(_getValue(Octree_Search(P, _VS), 3, 4, 3, P, step, values, size)) return true;
     if(_getValue(Octree_Search(P, _VH), 3, 8, 3, P, step, values, size)) return true;
     if(_getValue(Octree_Search(P, _VI), 3, 6, 3, P, step, values, size)) return true;
@@ -408,9 +491,8 @@ bool OctreePost::searchVector(double x, double y, double z, double *values,
     if(_getValue(Octree_Search(P, _VQ), 2, 4, 3, P, step, values, size)) return true;
     if(_getValue(Octree_Search(P, _VL), 1, 2, 3, P, step, values, size)) return true;
   }
-
-  if(_viewType == 1){
-    
+  else if(_theViewDataGModel){
+    if(_getValue(Octree_Search(P, _GModel), 3, P, step, values, size)) return true;
   }
 
   return false;
@@ -428,7 +510,7 @@ bool OctreePost::searchTensor(double x, double y, double z, double *values,
     for(int i = 0; i < 9; i++)
       values[i] = 0.0;
 
-  if(_viewType == 0){
+  if(_theViewDataList){
     if(_getValue(Octree_Search(P, _TS), 3, 4, 9, P, step, values, size)) return true;
     if(_getValue(Octree_Search(P, _TH), 3, 8, 9, P, step, values, size)) return true;
     if(_getValue(Octree_Search(P, _TI), 3, 6, 9, P, step, values, size)) return true;
@@ -437,10 +519,9 @@ bool OctreePost::searchTensor(double x, double y, double z, double *values,
     if(_getValue(Octree_Search(P, _TQ), 2, 4, 9, P, step, values, size)) return true;
     if(_getValue(Octree_Search(P, _TL), 1, 2, 9, P, step, values, size)) return true;
   }
-
-  if(_viewType == 1){
-    
+  else if(_theViewDataGModel){
+    if(_getValue(Octree_Search(P, _GModel), 9, P, step, values, size)) return true;
   }
-
+  
   return false;
 }

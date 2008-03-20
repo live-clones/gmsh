@@ -23,6 +23,8 @@
 #include "Octree.h"
 
 class PView;
+class PViewDataList;
+class PViewDataGModel;
 
 class OctreePost 
 {
@@ -36,10 +38,13 @@ class OctreePost
   Octree *_SY, *_VY, *_TY;
   Octree *_GModel;
   PView *_theView;
-  int _viewType; // internal view type (0=list, 1=GModel) 
+  PViewDataList *_theViewDataList;
+  PViewDataGModel *_theViewDataGModel;
   bool _getValue(void *in, int dim, int nbNod, int nbComp, 
 		 double P[3], int step, double *values,
 		 double *elementSize);
+  bool _getValue(void *in, int nbComp, double P[3], int step, 
+		 double *values, double *elementSize);
  public :
   OctreePost(PView *);
   ~OctreePost();

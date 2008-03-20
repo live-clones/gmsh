@@ -1,4 +1,4 @@
-// $Id: Probe.cpp,v 1.19 2008-02-17 08:48:07 geuzaine Exp $
+// $Id: Probe.cpp,v 1.20 2008-03-20 07:34:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -162,22 +162,19 @@ PView *GMSH_ProbePlugin::execute(PView *v)
   PView *v1 = getView(iView, v);
   if(!v1) return v;
 
-  PViewDataList *data1 = getDataList(v1);
-  if(!data1) return v;
-
   PView *v2 = new PView(true);
-
   PViewDataList *data2 = getDataList(v2);
-  if(!data2) return v;
 
-  double *val = new double[9 * data1->getNumTimeSteps()];
+  int numSteps = v1->getData()->getNumTimeSteps();
+  double *val = new double[9 * numSteps];
+
   OctreePost o(v1);
 
   if(o.searchScalar(x, y, z, val)){
     List_Add(data2->SP, &x);
     List_Add(data2->SP, &y);
     List_Add(data2->SP, &z);
-    for(int i = 0; i < data1->getNumTimeSteps(); i++)
+    for(int i = 0; i < numSteps; i++)
       List_Add(data2->SP, &val[i]);
     data2->NbSP++;
   }
@@ -186,7 +183,7 @@ PView *GMSH_ProbePlugin::execute(PView *v)
     List_Add(data2->VP, &x);
     List_Add(data2->VP, &y);
     List_Add(data2->VP, &z);
-    for(int i = 0; i < data1->getNumTimeSteps(); i++){
+    for(int i = 0; i < numSteps; i++){
       for(int j = 0; j < 3; j++)
 	List_Add(data2->VP, &val[3*i+j]);
     }
@@ -197,7 +194,7 @@ PView *GMSH_ProbePlugin::execute(PView *v)
     List_Add(data2->TP, &x);
     List_Add(data2->TP, &y);
     List_Add(data2->TP, &z);
-    for(int i = 0; i < data1->getNumTimeSteps(); i++){
+    for(int i = 0; i < numSteps; i++){
       for(int j = 0; j < 9; j++)
 	List_Add(data2->TP, &val[9*i+j]);
     }
@@ -206,11 +203,13 @@ PView *GMSH_ProbePlugin::execute(PView *v)
 
   delete [] val;
   
-  for(int i = 0; i < List_Nbr(data1->Time); i++)
-    List_Add(data2->Time, List_Pointer(data1->Time, i));
-  data2->setName(data1->getName() + "_Probe");
-  data2->setFileName(data1->getName() + "_Probe.pos");
+  for(int i = 0; i < numSteps; i++){
+    double time = v1->getData()->getTime(i);
+    List_Add(data2->Time, &time);
+  }
+  data2->setName(v1->getData()->getName() + "_Probe");
+  data2->setFileName(v1->getData()->getName() + "_Probe.pos");
   data2->finalize();
-
+  
   return v2;
 }

@@ -151,6 +151,9 @@ class PViewDataGModel : public PViewData {
   // create old-style list-based dataset from this one
   //PViewDataList *convertToPViewDataList();
 
+  // acces GModel entities directly
+  GEntity *getEntity(int step, int ent);
+
   // I/O routines
   bool readMSH(std::string fileName, int fileIndex, FILE *fp, bool binary, 
 	       bool swap, int step, double time, int partition, 
