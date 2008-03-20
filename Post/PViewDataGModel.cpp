@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.32 2008-03-20 10:52:37 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.33 2008-03-20 11:05:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -206,6 +206,8 @@ GEntity *PViewDataGModel::getEntity(int step, int ent)
 bool PViewDataGModel::getValue(int step, int dataIndex, int comp, double &val)
 {
   if(dataIndex < 0 || dataIndex >= (int)_steps[step]->getNumData()) return false;
-  val = _steps[step]->getData(dataIndex)[comp];
+  double *d = _steps[step]->getData(dataIndex);
+  if(!d) return false;
+  val = d[comp];
   return true;
 }

@@ -154,9 +154,9 @@ class PViewDataGModel : public PViewData {
   // create old-style list-based dataset from this one
   //PViewDataList *convertToPViewDataList();
 
-  // direct access to GModel entities and direct access to value by
-  // dataIndex
+  // direct access to GModel entities
   GEntity *getEntity(int step, int ent);
+  // direct access to value by dataIndex
   bool getValue(int step, int dataIndex, int comp, double &val);
 
   // I/O routines
