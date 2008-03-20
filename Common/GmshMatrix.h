@@ -275,19 +275,19 @@ public:
     GSL_Matrix cof(ni - 1, nj - 1);
     if (i > 0) {
       if (j > 0)
-	GSL_Matrix(cof.touchSubmatrix(0, i , 0, j)).
-	  memcpy(GSL_Matrix(seeSubmatrix(0, i, 0, j)));
+        GSL_Matrix(cof.touchSubmatrix(0, i , 0, j)).
+          memcpy(GSL_Matrix(seeSubmatrix(0, i, 0, j)));
       if (j < nj - 1)
-	GSL_Matrix(cof.touchSubmatrix(0, i, j, nj - j - 1)).
-	  memcpy(GSL_Matrix(seeSubmatrix(0, i, j + 1,nj - j - 1)));
+        GSL_Matrix(cof.touchSubmatrix(0, i, j, nj - j - 1)).
+          memcpy(GSL_Matrix(seeSubmatrix(0, i, j + 1,nj - j - 1)));
     }
     if (i < ni - 1) {  
       if (j < nj - 1)
-	GSL_Matrix(cof.touchSubmatrix(i, ni - i - 1, j, nj - j - 1)).
-	  memcpy(GSL_Matrix(seeSubmatrix(i + 1, ni - i - 1, j + 1, nj - j - 1)));
+        GSL_Matrix(cof.touchSubmatrix(i, ni - i - 1, j, nj - j - 1)).
+          memcpy(GSL_Matrix(seeSubmatrix(i + 1, ni - i - 1, j + 1, nj - j - 1)));
       if (j > 0)
-	GSL_Matrix(cof.touchSubmatrix(i, ni - i - 1, 0, j)).
-	  memcpy(GSL_Matrix(seeSubmatrix(i + 1, ni - i - 1, 0, j)));
+        GSL_Matrix(cof.touchSubmatrix(i, ni - i - 1, 0, j)).
+          memcpy(GSL_Matrix(seeSubmatrix(i + 1, ni - i - 1, 0, j)));
     }      
     return cof;
   }

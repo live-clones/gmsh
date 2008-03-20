@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.54 2008-03-03 22:04:22 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.55 2008-03-20 11:44:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -41,8 +41,8 @@ gmshFace::gmshFace(GModel *m, Surface *face)
       e->addFace(this);
       l_dirs.push_back((c->Num > 0) ? 1 : -1);
       if (List_Nbr(s->Generatrices) == 2){
-	e->meshAttributes.minimumMeshSegments = 
-	  std::max(e->meshAttributes.minimumMeshSegments, 2);
+        e->meshAttributes.minimumMeshSegments = 
+          std::max(e->meshAttributes.minimumMeshSegments, 2);
       }
     }
     else
@@ -55,7 +55,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
     computeMeanPlane();
     for(int i = 0; i < 3; i++)
       for(int j = 0; j < 3; j++)
-	s->plan[i][j] = meanPlane.plan[i][j];
+        s->plan[i][j] = meanPlane.plan[i][j];
     s->a = meanPlane.a;
     s->b = meanPlane.b;
     s->c = meanPlane.c;
@@ -68,9 +68,9 @@ gmshFace::gmshFace(GModel *m, Surface *face)
       List_Read(s->EmbeddedCurves, i, &c);
       GEdge *e = m->getEdgeByTag(abs(c->Num));
       if(e)
-	embedded_edges.push_back(e);
+        embedded_edges.push_back(e);
       else
-	Msg(GERROR, "Unknown curve %d", c->Num);
+        Msg(GERROR, "Unknown curve %d", c->Num);
     }
   }
   if(s->EmbeddedPoints){
@@ -79,9 +79,9 @@ gmshFace::gmshFace(GModel *m, Surface *face)
       List_Read(s->EmbeddedPoints, i, &v);
       GVertex *gv = m->getVertexByTag(v->Num);
       if(gv)
-	embedded_vertices.push_back(gv);
+        embedded_vertices.push_back(gv);
       else
-	Msg(GERROR, "Unknown point %d", v->Num);
+        Msg(GERROR, "Unknown point %d", v->Num);
     }
   }
 }
@@ -116,9 +116,9 @@ void gmshFace::resetMeshAttributes()
       List_Read(s->TrsfPoints, i, &corn);
       GVertex *gv = model()->getVertexByTag(corn->Num);
       if(gv)
-	meshAttributes.corners.push_back(gv);
+        meshAttributes.corners.push_back(gv);
       else
-	Msg(GERROR, "Unknown vertex %d in transfinite attributes", corn->Num);
+        Msg(GERROR, "Unknown vertex %d in transfinite attributes", corn->Num);
     }
   }
 }
@@ -155,13 +155,13 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
       List_Read(s->Generatrices, i, &c);
       int N = (c->Typ == MSH_SEGM_LINE) ? 1 : 3;
       for(int j = 0; j < N; j++) {
-	double u1 = (double)j / (double)N;
-	double u2 = (double)(j + 1) / (double)N;
-	Vertex p1 = InterpolateCurve(c, u1, 0);
-	Vertex p2 = InterpolateCurve(c, u2, 0);
-	double v1[3] = {p1.Pos.X, p1.Pos.Y, p1.Pos.Z};
-	double v2[3] = {p2.Pos.X, p2.Pos.Y, p2.Pos.Z};
-	angle += angle_plan(v, v1, v2, n);
+        double u1 = (double)j / (double)N;
+        double u2 = (double)(j + 1) / (double)N;
+        Vertex p1 = InterpolateCurve(c, u1, 0);
+        Vertex p2 = InterpolateCurve(c, u2, 0);
+        double v1[3] = {p1.Pos.X, p1.Pos.Y, p1.Pos.Z};
+        double v2[3] = {p2.Pos.X, p2.Pos.Y, p2.Pos.Z};
+        angle += angle_plan(v, v1, v2, n);
       }
     }
     if(angle > 0)
@@ -176,7 +176,7 @@ Pair<SVector3,SVector3> gmshFace::firstDer(const SPoint2 &param) const
   Vertex vu = InterpolateSurface(s, param[0], param[1], 1, 1);
   Vertex vv = InterpolateSurface(s, param[0], param[1], 1, 2);
   return Pair<SVector3, SVector3>(SVector3(vu.Pos.X, vu.Pos.Y, vu.Pos.Z),
-				  SVector3(vv.Pos.X, vv.Pos.Y, vv.Pos.Z));
+                                  SVector3(vv.Pos.X, vv.Pos.Y, vv.Pos.Z));
 }
 
 GPoint gmshFace::point(double par1, double par2) const
@@ -186,8 +186,8 @@ GPoint gmshFace::point(double par1, double par2) const
     double x, y, z, VX[3], VY[3];
     getMeanPlaneData(VX, VY, x, y, z);
     return GPoint(x + VX[0] * par1 + VY[0] * par2,
-		  y + VX[1] * par1 + VY[1] * par2,
-		  z + VX[2] * par1 + VY[2] * par2, this, pp);
+                  y + VX[1] * par1 + VY[1] * par2,
+                  z + VX[2] * par1 + VY[2] * par2, this, pp);
   }
   else{
     Vertex v = InterpolateSurface(s, par1, par2, 0, 0);
@@ -247,13 +247,13 @@ int gmshFace::containsPoint(const SPoint3 &pt) const
       List_Read(s->Generatrices, i, &c);
       int N = (c->Typ == MSH_SEGM_LINE) ? 1 : 10;
       for(int j = 0; j < N; j++) {
-	double u1 = (double)j / (double)N;
-	double u2 = (double)(j + 1) / (double)N;
-	Vertex p1 = InterpolateCurve(c, u1, 0);
-	Vertex p2 = InterpolateCurve(c, u2, 0);
-	double v1[3] = {p1.Pos.X, p1.Pos.Y, p1.Pos.Z};
-	double v2[3] = {p2.Pos.X, p2.Pos.Y, p2.Pos.Z};
-	angle += angle_plan(v, v1, v2, n);
+        double u1 = (double)j / (double)N;
+        double u2 = (double)(j + 1) / (double)N;
+        Vertex p1 = InterpolateCurve(c, u1, 0);
+        Vertex p2 = InterpolateCurve(c, u2, 0);
+        double v1[3] = {p1.Pos.X, p1.Pos.Y, p1.Pos.Z};
+        double v2[3] = {p2.Pos.X, p2.Pos.Y, p2.Pos.Z};
+        angle += angle_plan(v, v1, v2, n);
       }
     }
     // we're inside if angle equals 2 * pi

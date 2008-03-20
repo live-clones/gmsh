@@ -1,4 +1,4 @@
-// $Id: MakeSimplex.cpp,v 1.7 2008-03-18 19:30:14 geuzaine Exp $
+// $Id: MakeSimplex.cpp,v 1.8 2008-03-20 11:44:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -44,19 +44,19 @@ void GMSH_MakeSimplexPlugin::getName(char *name) const
 }
 
 void GMSH_MakeSimplexPlugin::getInfos(char *author, char *copyright,
-				      char *help_text) const
+                                      char *help_text) const
 {
   strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(MakeSimplex) decomposes all non-\n"
-	 "simplectic elements (quadrangles, prisms,\n"
-	 "hexahedra, pyramids) in the view `iView' into\n"
-	 "simplices (triangles, tetrahedra). If `iView' < 0,\n"
-	 "the plugin is run on the current view.\n"
-	 "\n"
-	 "Plugin(MakeSimplex) is executed\n"
-	 "in-place.\n");
+         "simplectic elements (quadrangles, prisms,\n"
+         "hexahedra, pyramids) in the view `iView' into\n"
+         "simplices (triangles, tetrahedra). If `iView' < 0,\n"
+         "the plugin is run on the current view.\n"
+         "\n"
+         "Plugin(MakeSimplex) is executed\n"
+         "in-place.\n");
 }
 
 int GMSH_MakeSimplexPlugin::getNbOptions() const
@@ -75,7 +75,7 @@ void GMSH_MakeSimplexPlugin::catchErrorMessage(char *errorMessage) const
 }
 
 static void decomposeList(PViewDataList *data, int nbNod, int nbComp,
-			  List_T **listIn, int *nbIn, List_T *listOut, int *nbOut)
+                          List_T **listIn, int *nbIn, List_T *listOut, int *nbOut)
 {
   double xNew[4], yNew[4], zNew[4];
   double *valNew = new double[data->getNumTimeSteps() * nbComp * nbNod];
@@ -93,13 +93,13 @@ static void decomposeList(PViewDataList *data, int nbNod, int nbComp,
     for(int j = 0; j < dec.numSimplices(); j++){
       dec.decompose(j, x, y, z, val, xNew, yNew, zNew, valNew);
       for(int k = 0; k < dec.numSimplexNodes(); k++)
-	List_Add(listOut, &xNew[k]);
+        List_Add(listOut, &xNew[k]);
       for(int k = 0; k < dec.numSimplexNodes(); k++)
-	List_Add(listOut, &yNew[k]);
+        List_Add(listOut, &yNew[k]);
       for(int k = 0; k < dec.numSimplexNodes(); k++)
-	List_Add(listOut, &zNew[k]);
+        List_Add(listOut, &zNew[k]);
       for(int k = 0; k < dec.numSimplexNodes() * data->getNumTimeSteps() * nbComp; k++)
-	List_Add(listOut, &valNew[k]);
+        List_Add(listOut, &valNew[k]);
       (*nbOut)++;
     }
   }
@@ -124,18 +124,18 @@ PView *GMSH_MakeSimplexPlugin::execute(PView *v)
   decomposeList(data1, 4, 1, &data1->SQ, &data1->NbSQ, data1->ST, &data1->NbST);
   decomposeList(data1, 4, 3, &data1->VQ, &data1->NbVQ, data1->VT, &data1->NbVT);
   decomposeList(data1, 4, 9, &data1->TQ, &data1->NbTQ, data1->TT, &data1->NbTT);
-		          
-  // hexas	          
+                          
+  // hexas                
   decomposeList(data1, 8, 1, &data1->SH, &data1->NbSH, data1->SS, &data1->NbSS);
   decomposeList(data1, 8, 3, &data1->VH, &data1->NbVH, data1->VS, &data1->NbVS);
   decomposeList(data1, 8, 9, &data1->TH, &data1->NbTH, data1->TS, &data1->NbTS);
-		          
-  // prisms	          
+                          
+  // prisms               
   decomposeList(data1, 6, 1, &data1->SI, &data1->NbSI, data1->SS, &data1->NbSS);
   decomposeList(data1, 6, 3, &data1->VI, &data1->NbVI, data1->VS, &data1->NbVS);
   decomposeList(data1, 6, 9, &data1->TI, &data1->NbTI, data1->TS, &data1->NbTS);
-		          
-  // pyramids	          
+                          
+  // pyramids             
   decomposeList(data1, 5, 1, &data1->SY, &data1->NbSY, data1->SS, &data1->NbSS);
   decomposeList(data1, 5, 3, &data1->VY, &data1->NbVY, data1->VS, &data1->NbVS);
   decomposeList(data1, 5, 9, &data1->TY, &data1->NbTY, data1->TS, &data1->NbTS);
@@ -174,8 +174,8 @@ int MakeSimplex::numSimplexNodes()
 }
 
 void MakeSimplex::reorder(int map[4], int n,
-			  double *x, double *y, double *z, double *val,
-			  double *xn, double *yn, double *zn, double *valn)
+                          double *x, double *y, double *z, double *val,
+                          double *xn, double *yn, double *zn, double *valn)
 {
   for(int i = 0; i < n; i++) {
     xn[i] = x[map[i]];
@@ -187,14 +187,14 @@ void MakeSimplex::reorder(int map[4], int n,
   for(int ts = 0; ts < _numTimeSteps; ts++)
     for(int i = 0; i < n; i++) {
       for(int j = 0; j < _numComponents; j++)
-	valn[ts*n*_numComponents + i*_numComponents + j] = 
-	  val[ts*_numNodes*_numComponents + map2[i]*_numComponents + j];
+        valn[ts*n*_numComponents + i*_numComponents + j] = 
+          val[ts*_numNodes*_numComponents + map2[i]*_numComponents + j];
   }
 }
 
 void MakeSimplex::decompose(int num, 
-			    double *x, double *y, double *z, double *val,
-			    double *xn, double *yn, double *zn, double *valn)
+                            double *x, double *y, double *z, double *val,
+                            double *xn, double *yn, double *zn, double *valn)
 {
   int quadTri[2][4] = {{0,1,2,-1}, {0,2,3,-1}};
   int hexaTet[6][4] = {{0,1,3,7}, {0,4,1,7}, {1,4,5,7}, {1,2,3,7}, {1,6,2,7}, {1,5,6,7}};

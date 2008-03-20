@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.42 2008-03-19 20:06:17 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.43 2008-03-20 11:44:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -52,12 +52,12 @@ static int numSimplexDec(int numEdges)
 }
 
 static void getSimplexDec(int numNodes, int numEdges, int i, 
-			  int &n0, int &n1, int &n2, int &n3,
-			  int &nn, int &ne)
+                          int &n0, int &n1, int &n2, int &n3,
+                          int &nn, int &ne)
 {
   static const int qua[2][3] = {{0,1,2}, {0,2,3}};
   static const int hex[6][4] = {{0,1,3,7}, {0,4,1,7}, {1,4,5,7}, 
-				{1,2,3,7}, {1,6,2,7}, {1,5,6,7}};
+                                {1,2,3,7}, {1,6,2,7}, {1,5,6,7}};
   static const int pri[3][4] = {{0,1,2,4}, {0,2,4,5}, {0,3,4,5}};
   static const int pyr[2][4] = {{0,1,3,4}, {1,2,3,4}};
   switch(numEdges){
@@ -80,9 +80,9 @@ static void getSimplexDec(int numNodes, int numEdges, int i,
 }
 
 static void affect(double *xpi, double *ypi, double *zpi,
-		   double valpi[12][9], int epi[12], int i,
-		   double *xp, double *yp, double *zp,
-		   double valp[12][9], int ep[12], int j, int nb)
+                   double valpi[12][9], int epi[12], int i,
+                   double *xp, double *yp, double *zp,
+                   double valp[12][9], int ep[12], int j, int nb)
 {
   xpi[i] = xp[j];
   ypi[i] = yp[j];
@@ -92,8 +92,8 @@ static void affect(double *xpi, double *ypi, double *zpi,
 }
 
 static void removeIdenticalNodes(int *np, int numComp,
-				 double xp[12], double yp[12], double zp[12],
-				 double valp[12][9], int ep[12])
+                                 double xp[12], double yp[12], double zp[12],
+                                 double valp[12][9], int ep[12])
 {
   double xpi[12], ypi[12], zpi[12], valpi[12][9];
   int epi[12];
@@ -103,14 +103,14 @@ static void removeIdenticalNodes(int *np, int numComp,
   for(int j = 1; j < *np; j++) {
     for(int i = 0; i < npi; i++) {
       if(fabs(xp[j] - xpi[i]) < 1.e-12 &&
-	 fabs(yp[j] - ypi[i]) < 1.e-12 &&
-	 fabs(zp[j] - zpi[i]) < 1.e-12) {
-	break;
+         fabs(yp[j] - ypi[i]) < 1.e-12 &&
+         fabs(zp[j] - zpi[i]) < 1.e-12) {
+        break;
       }
       if(i == npi-1) {
-	affect(xpi, ypi, zpi, valpi, epi, npi, xp, yp, zp, valp, ep, j, numComp);
-	npi++;
-	break;
+        affect(xpi, ypi, zpi, valpi, epi, npi, xp, yp, zp, valp, ep, j, numComp);
+        npi++;
+        break;
       }
     }
   }
@@ -120,7 +120,7 @@ static void removeIdenticalNodes(int *np, int numComp,
 }
 
 static void reorderQuad(int numComp, double xp[12], double yp[12], double zp[12], 
-			double valp[12][9], int ep[12])
+                        double valp[12][9], int ep[12])
 {
   double xpi[1], ypi[1], zpi[1], valpi[1][9];
   int epi[12];
@@ -130,7 +130,7 @@ static void reorderQuad(int numComp, double xp[12], double yp[12], double zp[12]
 }
 
 static void reorderPrism(int numComp, double xp[12], double yp[12], double zp[12], 
-			 double valp[12][9], int ep[12], int nbCut)
+                         double valp[12][9], int ep[12], int nbCut)
 {
   double xpi[6], ypi[6], zpi[6], valpi[6][9];
   int epi[12];
@@ -144,9 +144,9 @@ static void reorderPrism(int numComp, double xp[12], double yp[12], double zp[12
     for(int i = 0; i < 3; i++){
       int edgecut = ep[i]-1;
       for(int j = 0; j < 3; j++){
-	int p = -epi[j]-1;
-	if(exn[9][edgecut][0] == p || exn[9][edgecut][1] == p)
-	  affect(xp, yp, zp, valp, ep, 3+i, xpi, ypi, zpi, valpi, epi, j, numComp);	  
+        int p = -epi[j]-1;
+        if(exn[9][edgecut][0] == p || exn[9][edgecut][1] == p)
+          affect(xp, yp, zp, valp, ep, 3+i, xpi, ypi, zpi, valpi, epi, j, numComp);       
       }
     }
   }
@@ -159,31 +159,31 @@ static void reorderPrism(int numComp, double xp[12], double yp[12], double zp[12
     if(exn[9][edgecut][0] == p0 || exn[9][edgecut][1] == p0){
       affect(xpi, ypi, zpi, valpi, epi, 1, xp, yp, zp, valp, ep, 4, numComp);
       if(exn[9][ep[1]-1][0] == p0 || exn[9][ep[1]-1][1] == p0){
-	affect(xpi, ypi, zpi, valpi, epi, 2, xp, yp, zp, valp, ep, 1, numComp);
-	affect(xpi, ypi, zpi, valpi, epi, 3, xp, yp, zp, valp, ep, 3, numComp);
-	affect(xpi, ypi, zpi, valpi, epi, 4, xp, yp, zp, valp, ep, 5, numComp);
-	affect(xpi, ypi, zpi, valpi, epi, 5, xp, yp, zp, valp, ep, 2, numComp);
+        affect(xpi, ypi, zpi, valpi, epi, 2, xp, yp, zp, valp, ep, 1, numComp);
+        affect(xpi, ypi, zpi, valpi, epi, 3, xp, yp, zp, valp, ep, 3, numComp);
+        affect(xpi, ypi, zpi, valpi, epi, 4, xp, yp, zp, valp, ep, 5, numComp);
+        affect(xpi, ypi, zpi, valpi, epi, 5, xp, yp, zp, valp, ep, 2, numComp);
       }
       else{
-	affect(xpi, ypi, zpi, valpi, epi, 2, xp, yp, zp, valp, ep, 3, numComp);
-	affect(xpi, ypi, zpi, valpi, epi, 3, xp, yp, zp, valp, ep, 1, numComp);
-	affect(xpi, ypi, zpi, valpi, epi, 4, xp, yp, zp, valp, ep, 5, numComp);
-	affect(xpi, ypi, zpi, valpi, epi, 5, xp, yp, zp, valp, ep, 2, numComp);
+        affect(xpi, ypi, zpi, valpi, epi, 2, xp, yp, zp, valp, ep, 3, numComp);
+        affect(xpi, ypi, zpi, valpi, epi, 3, xp, yp, zp, valp, ep, 1, numComp);
+        affect(xpi, ypi, zpi, valpi, epi, 4, xp, yp, zp, valp, ep, 5, numComp);
+        affect(xpi, ypi, zpi, valpi, epi, 5, xp, yp, zp, valp, ep, 2, numComp);
       }
     }
     else{
       affect(xpi, ypi, zpi, valpi, epi, 1, xp, yp, zp, valp, ep, 5, numComp);
       if(exn[9][ep[1]-1][0] == p0 || exn[9][ep[1]-1][1] == p0){
-	affect(xpi, ypi, zpi, valpi, epi, 2, xp, yp, zp, valp, ep, 1, numComp);
-	affect(xpi, ypi, zpi, valpi, epi, 3, xp, yp, zp, valp, ep, 3, numComp);
-	affect(xpi, ypi, zpi, valpi, epi, 4, xp, yp, zp, valp, ep, 4, numComp);
-	affect(xpi, ypi, zpi, valpi, epi, 5, xp, yp, zp, valp, ep, 2, numComp);
+        affect(xpi, ypi, zpi, valpi, epi, 2, xp, yp, zp, valp, ep, 1, numComp);
+        affect(xpi, ypi, zpi, valpi, epi, 3, xp, yp, zp, valp, ep, 3, numComp);
+        affect(xpi, ypi, zpi, valpi, epi, 4, xp, yp, zp, valp, ep, 4, numComp);
+        affect(xpi, ypi, zpi, valpi, epi, 5, xp, yp, zp, valp, ep, 2, numComp);
       }
       else{
-	affect(xpi, ypi, zpi, valpi, epi, 2, xp, yp, zp, valp, ep, 3, numComp);
-	affect(xpi, ypi, zpi, valpi, epi, 3, xp, yp, zp, valp, ep, 1, numComp);
-	affect(xpi, ypi, zpi, valpi, epi, 4, xp, yp, zp, valp, ep, 4, numComp);
-	affect(xpi, ypi, zpi, valpi, epi, 5, xp, yp, zp, valp, ep, 2, numComp);
+        affect(xpi, ypi, zpi, valpi, epi, 2, xp, yp, zp, valp, ep, 3, numComp);
+        affect(xpi, ypi, zpi, valpi, epi, 3, xp, yp, zp, valp, ep, 1, numComp);
+        affect(xpi, ypi, zpi, valpi, epi, 4, xp, yp, zp, valp, ep, 4, numComp);
+        affect(xpi, ypi, zpi, valpi, epi, 5, xp, yp, zp, valp, ep, 2, numComp);
       }
     }
     for(int i = 0; i < 6; i++)
@@ -205,8 +205,8 @@ GMSH_LevelsetPlugin::GMSH_LevelsetPlugin()
 }
 
 void GMSH_LevelsetPlugin::_addElement(int step, int np, int numEdges, int numComp,
-				      double xp[12], double yp[12], double zp[12],
-				      double valp[12][9], PViewDataList *out)
+                                      double xp[12], double yp[12], double zp[12],
+                                      double valp[12][9], PViewDataList *out)
 {
   List_T *list;
   int *nbPtr;
@@ -273,10 +273,10 @@ void GMSH_LevelsetPlugin::_addElement(int step, int np, int numEdges, int numCom
 }
 
 void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
-					     int ent, int ele, int step, int wstep, 
-					     double x[8], double y[8], double z[8],
-					     double levels[8], double scalarValues[8],
-					     PViewDataList* out)
+                                             int ent, int ele, int step, int wstep, 
+                                             double x[8], double y[8], double z[8],
+                                             double levels[8], double scalarValues[8],
+                                             PViewDataList* out)
 {
   int numNodes = vdata->getNumNodes(step, ent, ele);
   int numEdges = vdata->getNumEdges(step, ent, ele);
@@ -290,15 +290,15 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
     for(int i = 0; i < nse; i++){
       int n0 = exn[nse][i][0], n1 = exn[nse][i][1];
       if(levels[n[n0]] * levels[n[n1]] <= 0.) {
-	double c = InterpolateIso(x, y, z, levels, 0., n[n0], n[n1], 
-				  &xp[np], &yp[np], &zp[np]);
-	for(int comp = 0; comp < numComp; comp++){
-	  double v0, v1;
-	  wdata->getValue(wstep, ent, ele, n[n0], comp, v0);
-	  wdata->getValue(wstep, ent, ele, n[n1], comp, v1);
-	  valp[np][comp] = v0 + c * (v1 - v0);
-	}
-	ep[np++] = i + 1;
+        double c = InterpolateIso(x, y, z, levels, 0., n[n0], n[n1], 
+                                  &xp[np], &yp[np], &zp[np]);
+        for(int comp = 0; comp < numComp; comp++){
+          double v0, v1;
+          wdata->getValue(wstep, ent, ele, n[n0], comp, v0);
+          wdata->getValue(wstep, ent, ele, n[n1], comp, v1);
+          valp[np][comp] = v0 + c * (v1 - v0);
+        }
+        ep[np++] = i + 1;
       }
     }
 
@@ -318,36 +318,36 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
     // orient the triangles and the quads to get the normals right
     if(!_extractVolume && (np == 3 || np == 4)) {
       if(!step || !_valueIndependent) {
-	// test this only once for spatially-fixed views
-	double v1[3] = {xp[2] - xp[0], yp[2] - yp[0], zp[2] - zp[0]};
-	double v2[3] = {xp[1] - xp[0], yp[1] - yp[0], zp[1] - zp[0]};
-	double gr[3], normal[3];
-	prodve(v1, v2, normal);
-	switch (_orientation) {
-	case MAP:
-	  gradSimplex(x, y, z, scalarValues, gr);
-	  prosca(gr, normal, &_invert);
-	  break;
-	case PLANE:
-	  prosca(normal, _ref, &_invert);
-	  break;
-	case SPHERE:
-	  gr[0] = xp[0] - _ref[0];
-	  gr[1] = yp[0] - _ref[1];
-	  gr[2] = zp[0] - _ref[2];
-	  prosca(gr, normal, &_invert);
-	case NONE:
-	default:
-	  break;
-	}
+        // test this only once for spatially-fixed views
+        double v1[3] = {xp[2] - xp[0], yp[2] - yp[0], zp[2] - zp[0]};
+        double v2[3] = {xp[1] - xp[0], yp[1] - yp[0], zp[1] - zp[0]};
+        double gr[3], normal[3];
+        prodve(v1, v2, normal);
+        switch (_orientation) {
+        case MAP:
+          gradSimplex(x, y, z, scalarValues, gr);
+          prosca(gr, normal, &_invert);
+          break;
+        case PLANE:
+          prosca(normal, _ref, &_invert);
+          break;
+        case SPHERE:
+          gr[0] = xp[0] - _ref[0];
+          gr[1] = yp[0] - _ref[1];
+          gr[2] = zp[0] - _ref[2];
+          prosca(gr, normal, &_invert);
+        case NONE:
+        default:
+          break;
+        }
       }
       if(_invert > 0.) {
-	double xpi[12], ypi[12], zpi[12], valpi[12][9];
-	int epi[12];
-	for(int k = 0; k < np; k++)
-	  affect(xpi, ypi, zpi, valpi, epi, k, xp, yp, zp, valp, ep, k, numComp);
-	for(int k = 0; k < np; k++)
-	  affect(xp, yp, zp, valp, ep, k, xpi, ypi, zpi, valpi, epi, np - k - 1, numComp);
+        double xpi[12], ypi[12], zpi[12], valpi[12][9];
+        int epi[12];
+        for(int k = 0; k < np; k++)
+          affect(xpi, ypi, zpi, valpi, epi, k, xp, yp, zp, valp, ep, k, numComp);
+        for(int k = 0; k < np; k++)
+          affect(xp, yp, zp, valp, ep, k, xpi, ypi, zpi, valpi, epi, np - k - 1, numComp);
       }
     }
 
@@ -357,24 +357,24 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
     if(_extractVolume){
       int nbCut = np;
       for(int nod = 0; nod < nsn; nod++){
-	if((_extractVolume < 0. && levels[n[nod]] < 0.) ||
-	   (_extractVolume > 0. && levels[n[nod]] > 0.)){
-	  xp[np] = x[n[nod]];
-	  yp[np] = y[n[nod]];
-	  zp[np] = z[n[nod]];
-	  for(int comp = 0; comp < numComp; comp++)
-	    wdata->getValue(wstep, ent, ele, n[nod], comp, valp[np][comp]);
-	  ep[np] = -(nod + 1); // store node num!
-	  np++;
-	}
+        if((_extractVolume < 0. && levels[n[nod]] < 0.) ||
+           (_extractVolume > 0. && levels[n[nod]] > 0.)){
+          xp[np] = x[n[nod]];
+          yp[np] = y[n[nod]];
+          zp[np] = z[n[nod]];
+          for(int comp = 0; comp < numComp; comp++)
+            wdata->getValue(wstep, ent, ele, n[nod], comp, valp[np][comp]);
+          ep[np] = -(nod + 1); // store node num!
+          np++;
+        }
       }
       removeIdenticalNodes(&np, numComp, xp, yp, zp, valp, ep);
       if(np == 4 && numEdges <= 4)
-	reorderQuad(numComp, xp, yp, zp, valp, ep);
+        reorderQuad(numComp, xp, yp, zp, valp, ep);
       if(np == 6)
-	reorderPrism(numComp, xp, yp, zp, valp, ep, nbCut);
+        reorderPrism(numComp, xp, yp, zp, valp, ep, nbCut);
       if(np > 8) // can't deal with this
-	continue;
+        continue;
     }
 
     _addElement(step, np, numEdges, numComp, xp, yp, zp, valp, out);
@@ -386,19 +386,19 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(PViewData *vdata, PViewData *wdata,
     bool add = true;
     for(int nod = 0; nod < numNodes; nod++){
       if((_extractVolume < 0. && levels[nod] > 0.) ||
-	 (_extractVolume > 0. && levels[nod] < 0.)){
-	add = false;
-	break;
+         (_extractVolume > 0. && levels[nod] < 0.)){
+        add = false;
+        break;
       }
     }
     if(add){
       double xp[12], yp[12], zp[12], valp[12][9];
       for(int nod = 0; nod < numNodes; nod++){
-	xp[nod] = x[nod];
-	yp[nod] = y[nod];
-	zp[nod] = z[nod];
-	for(int comp = 0; comp < numComp; comp++)
-	  wdata->getValue(wstep, ent, ele, nod, comp, valp[nod][comp]);
+        xp[nod] = x[nod];
+        yp[nod] = y[nod];
+        zp[nod] = z[nod];
+        for(int comp = 0; comp < numComp; comp++)
+          wdata->getValue(wstep, ent, ele, nod, comp, valp[nod][comp]);
       }
       _addElement(step, numNodes, numEdges, numComp, xp, yp, zp, valp, out);
     }
@@ -412,8 +412,8 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
     if(dv){
       dv->adaptive->setTolerance(_targetError);
       if(dv->NbST || dv->NbSS || dv->NbSQ || dv->NbSH){
-	dv->adaptive->setAdaptiveResolutionLevel(dv, _recurLevel, this);
-	v->setChanged(true);
+        dv->adaptive->setAdaptiveResolutionLevel(dv, _recurLevel, this);
+        v->setChanged(true);
       }
     }
   }
@@ -424,7 +424,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
   }
   else if(_valueView > (int)PView::list.size() - 1){
     Msg(GERROR, "View[%d] does not exist: reverting to View[%d]", 
-	_valueView, v->getIndex());
+        _valueView, v->getIndex());
     wdata = vdata;
   }
   else{
@@ -454,15 +454,15 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
     PViewDataList *out = getDataList(new PView(true));
     for(int ent = 0; ent < vdata->getNumEntities(0); ent++){
       for(int ele = 0; ele < vdata->getNumElements(0, ent); ele++){
-	for(int nod = 0; nod < vdata->getNumNodes(0, ent, ele); nod++){
-	  vdata->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
-	  levels[nod] = levelset(x[nod], y[nod], z[nod], 0.);
-	}
-	for(int step = 0; step < vdata->getNumTimeSteps(); step++){
-	  int wstep = (_valueTimeStep < 0) ? step : _valueTimeStep;
-	  _cutAndAddElements(vdata, wdata, ent, ele, step, wstep, x, y, z,
-			     levels, scalarValues, out);
-	}
+        for(int nod = 0; nod < vdata->getNumNodes(0, ent, ele); nod++){
+          vdata->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
+          levels[nod] = levelset(x[nod], y[nod], z[nod], 0.);
+        }
+        for(int step = 0; step < vdata->getNumTimeSteps(); step++){
+          int wstep = (_valueTimeStep < 0) ? step : _valueTimeStep;
+          _cutAndAddElements(vdata, wdata, ent, ele, step, wstep, x, y, z,
+                             levels, scalarValues, out);
+        }
       }
     }
     out->setName(vdata->getName() + "_Levelset");
@@ -474,16 +474,16 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
     for(int step = 0; step < vdata->getNumTimeSteps(); step++){
       PViewDataList *out = getDataList(new PView(true));
       for(int ent = 0; ent < vdata->getNumEntities(step); ent++){
-	for(int ele = 0; ele < vdata->getNumElements(step, ent); ele++){
-	  for(int nod = 0; nod < vdata->getNumNodes(step, ent, ele); nod++){
-	    vdata->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
-	    vdata->getScalarValue(step, ent, ele, nod, scalarValues[nod]);
-	    levels[nod] = levelset(x[nod], y[nod], z[nod], scalarValues[nod]);
-	  }
-	  int wstep = (_valueTimeStep < 0) ? step : _valueTimeStep;
-	  _cutAndAddElements(vdata, wdata, ent, ele, step, wstep, x, y, z,
-			     levels, scalarValues, out);
-	}
+        for(int ele = 0; ele < vdata->getNumElements(step, ent); ele++){
+          for(int nod = 0; nod < vdata->getNumNodes(step, ent, ele); nod++){
+            vdata->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
+            vdata->getScalarValue(step, ent, ele, nod, scalarValues[nod]);
+            levels[nod] = levelset(x[nod], y[nod], z[nod], scalarValues[nod]);
+          }
+          int wstep = (_valueTimeStep < 0) ? step : _valueTimeStep;
+          _cutAndAddElements(vdata, wdata, ent, ele, step, wstep, x, y, z,
+                             levels, scalarValues, out);
+        }
       }
       char tmp[246];
       sprintf(tmp, "_Levelset_%d", step);
@@ -500,7 +500,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
 // the levelset, this is as accurate as it should be
 
 static bool recur_sign_change(adapt_triangle *t, double val,
-			      const GMSH_LevelsetPlugin *plug)
+                              const GMSH_LevelsetPlugin *plug)
 {
   if(!t->e[0] || t->visible){
     double v1 = plug->levelset(t->p[0]->X, t->p[0]->Y, t->p[0]->Z, t->p[0]->val);
@@ -530,7 +530,7 @@ static bool recur_sign_change(adapt_triangle *t, double val,
 }
 
 static bool recur_sign_change(adapt_tet *t, double val, 
-			      const GMSH_LevelsetPlugin *plug)
+                              const GMSH_LevelsetPlugin *plug)
 {
   if(!t->e[0] || t->visible){
     double v1 = plug->levelset(t->p[0]->X, t->p[0]->Y, t->p[0]->Z, t->p[0]->val);
@@ -569,7 +569,7 @@ static bool recur_sign_change(adapt_tet *t, double val,
 }
 
 static bool recur_sign_change(adapt_hex *t, double val,
-			      const GMSH_LevelsetPlugin *plug)
+                              const GMSH_LevelsetPlugin *plug)
 {
   if (!t->e[0] || t->visible){
     double v1 = plug->levelset(t->p[0]->X, t->p[0]->Y, t->p[0]->Z, t->p[0]->val);
@@ -613,7 +613,7 @@ static bool recur_sign_change(adapt_hex *t, double val,
 }
 
 static bool recur_sign_change(adapt_quad *q, double val,
-			      const GMSH_LevelsetPlugin *plug)
+                              const GMSH_LevelsetPlugin *plug)
 {
   if(!q->e[0]|| q->visible){
     double v1 = plug->levelset(q->p[0]->X, q->p[0]->Y, q->p[0]->Z, q->p[0]->val);

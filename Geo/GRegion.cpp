@@ -1,4 +1,4 @@
-// $Id: GRegion.cpp,v 1.26 2008-02-23 15:40:29 geuzaine Exp $
+// $Id: GRegion.cpp,v 1.27 2008-03-20 11:44:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -174,7 +174,7 @@ std::list<GEdge*> GRegion::edges() const
     std::list<GEdge*>::const_iterator it2 = e2.begin();
     while (it2 != e2.end()){
       if (std::find(e.begin(), e.end(), *it2) == e.end())
-	e.push_back(*it2);
+        e.push_back(*it2);
       ++it2;
     }
     ++it;

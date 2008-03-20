@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.45 2008-02-23 16:19:22 remacle Exp $
+// $Id: GEdge.cpp,v 1.46 2008-03-20 11:44:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -175,8 +175,8 @@ double GEdge::curvature(double par) const
   GPoint P2 = point(par + eps2);
 
   double D = sqrt ((P1.x() - P2.x()) * (P1.x() - P2.x()) +
-		   (P1.y() - P2.y()) * (P1.y() - P2.y()) +
-		   (P1.z() - P2.z()) * (P1.z() - P2.z()));
+                   (P1.y() - P2.y()) * (P1.y() - P2.y()) +
+                   (P1.z() - P2.z()) * (P1.z() - P2.z()));
 
   n1.normalize();
   n2.normalize();

@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.26 2008-03-20 10:52:36 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.27 2008-03-20 11:44:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -147,7 +147,7 @@ void GMSH_CutParametricPlugin::draw()
 }
 
 double GMSH_CutParametricPlugin::callback(int num, int action, double value, double *opt,
-					  double step, double min, double max)
+                                          double step, double min, double max)
 {
   switch(action){ // configure the input field
   case 1: return step;
@@ -164,7 +164,7 @@ double GMSH_CutParametricPlugin::callback(int num, int action, double value, dou
 }
 
 const char *GMSH_CutParametricPlugin::callbackStr(int num, int action, const char *value,
-						  const char **opt)
+                                                  const char **opt)
 {
   *opt = value;
 #if defined(HAVE_FLTK)
@@ -177,25 +177,25 @@ const char *GMSH_CutParametricPlugin::callbackStr(int num, int action, const cha
 double GMSH_CutParametricPlugin::callbackMinU(int num, int action, double value)
 {
   return callback(num, action, value, &CutParametricOptions_Number[0].def,
-		  0.01, 0., 10.);
+                  0.01, 0., 10.);
 }
 
 double GMSH_CutParametricPlugin::callbackMaxU(int num, int action, double value)
 {
   return callback(num, action, value, &CutParametricOptions_Number[1].def,
-		  0.01, 0., 10.);
+                  0.01, 0., 10.);
 }
 
 double GMSH_CutParametricPlugin::callbackN(int num, int action, double value)
 {
   return callback(num, action, value, &CutParametricOptions_Number[2].def,
-		  1, 1, 1000);
+                  1, 1, 1000);
 }
 
 double GMSH_CutParametricPlugin::callbackConnect(int num, int action, double value)
 {
   return callback(num, action, value, &CutParametricOptions_Number[3].def,
-		  1, 0, 1);
+                  1, 0, 1);
 }
 
 const char *GMSH_CutParametricPlugin::callbackX(int num, int action, const char *value)
@@ -225,14 +225,14 @@ void GMSH_CutParametricPlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(CutParametric) cuts the view `iView' with\n"
-	 "the parametric function (`X'(u), `Y'(u), `Z'(u)),\n"
-	 "using `nPointsU' values of the parameter u in\n"
-	 "[`MinU', `MaxU']. If `ConnectPoints' is set, the\n"
-	 "plugin creates line elements; otherwise, the\n"
-	 "plugin generates points. If `iView' < 0, the plugin\n"
-	 "is run on the current view.\n"
-	 "\n"
-	 "Plugin(CutParametric) creates one new view.\n");
+         "the parametric function (`X'(u), `Y'(u), `Z'(u)),\n"
+         "using `nPointsU' values of the parameter u in\n"
+         "[`MinU', `MaxU']. If `ConnectPoints' is set, the\n"
+         "plugin creates line elements; otherwise, the\n"
+         "plugin generates points. If `iView' < 0, the plugin\n"
+         "is run on the current view.\n"
+         "\n"
+         "Plugin(CutParametric) creates one new view.\n");
 }
 
 int GMSH_CutParametricPlugin::getNbOptions() const
@@ -261,9 +261,9 @@ void GMSH_CutParametricPlugin::catchErrorMessage(char *errorMessage) const
 }
 
 static void addInView(int connect, int i, int nbcomp, int nbtime,
-		      double x0, double y0, double z0, double *res0,
-		      double x, double y, double z, double *res,
-		      List_T *P, int *nP, List_T *L, int *nL)
+                      double x0, double y0, double z0, double *res0,
+                      double x, double y, double z, double *res,
+                      List_T *P, int *nP, List_T *L, int *nL)
 {
   if(connect){
     if(i){
@@ -271,10 +271,10 @@ static void addInView(int connect, int i, int nbcomp, int nbtime,
       List_Add(L, &y0); List_Add(L, &y);
       List_Add(L, &z0); List_Add(L, &z);
       for(int k = 0; k < nbtime; ++k){
-	for(int l = 0; l < nbcomp; ++l)
-	  List_Add(L, &res0[nbcomp*k+l]); 
-	for(int l = 0; l < nbcomp; ++l)
-	  List_Add(L, &res[nbcomp*k+l]);
+        for(int l = 0; l < nbcomp; ++l)
+          List_Add(L, &res0[nbcomp*k+l]); 
+        for(int l = 0; l < nbcomp; ++l)
+          List_Add(L, &res[nbcomp*k+l]);
       }
       (*nL)++;
     }
@@ -285,7 +285,7 @@ static void addInView(int connect, int i, int nbcomp, int nbtime,
     List_Add(P, &z);
     for(int k = 0; k < nbtime; ++k)
       for(int l = 0; l < nbcomp; ++l)
-	List_Add(P, &res[nbcomp*k+l]);
+        List_Add(P, &res[nbcomp*k+l]);
     (*nP)++;
   }
 }
@@ -332,17 +332,17 @@ PView *GMSH_CutParametricPlugin::execute(PView *v)
     if(data1->getNumScalars()){
       o.searchScalar(x1, y1, z1, res1);
       addInView(connect, i, 1, numSteps, x0, y0, z0, res0, x1, y1, z1, res1,
-		data2->SP, &data2->NbSP, data2->SL, &data2->NbSL);
+                data2->SP, &data2->NbSP, data2->SL, &data2->NbSL);
     }
     if(data1->getNumVectors()){
       o.searchVector(x1, y1, z1, res1);
       addInView(connect, i, 3, numSteps, x0, y0, z0, res0, x1, y1, z1, res1,
-		data2->VP, &data2->NbVP, data2->VL, &data2->NbVL);
+                data2->VP, &data2->NbVP, data2->VL, &data2->NbVL);
     }
     if(data1->getNumTensors()){
       o.searchTensor(x1, y1, z1, res1);
       addInView(connect, i, 9, numSteps, x0, y0, z0, res0, x1, y1, z1, res1,
-		data2->TP, &data2->NbTP, data2->TL, &data2->NbTL);
+                data2->TP, &data2->NbTP, data2->TL, &data2->NbTL);
     }
   }
     

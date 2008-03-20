@@ -1,4 +1,4 @@
-// $Id: findLinks.cpp,v 1.6 2008-02-22 21:09:00 geuzaine Exp $
+// $Id: findLinks.cpp,v 1.7 2008-03-20 11:44:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -46,7 +46,7 @@ static int complink(const void *a, const void *b)
 // to do multi-level, user-friendly undos in the GUI)
 
 static void recurFindLinkedEdges(int ed, List_T *edges, Tree_T *points,
-				 Tree_T *links)
+                                 Tree_T *links)
 {
   GEdge *ge = GModel::current()->getEdgeByTag(ed);
   if(!ge){
@@ -68,14 +68,14 @@ static void recurFindLinkedEdges(int ed, List_T *edges, Tree_T *points,
     Tree_Query(links, &lk);
     if(List_Nbr(lk.l) == 2) {
       for(int i = 0; i < 2; i++) {
-	nxa na;
-	List_Read(lk.l, i, &na);
-	if(na.a != ed) {
-	  if(List_ISearchSeq(edges, &na.a, fcmp_absint) < 0){
-	    List_Add(edges, &na.a);
-	    recurFindLinkedEdges(na.a, edges, points, links);
-	  }
-	}
+        nxa na;
+        List_Read(lk.l, i, &na);
+        if(na.a != ed) {
+          if(List_ISearchSeq(edges, &na.a, fcmp_absint) < 0){
+            List_Add(edges, &na.a);
+            recurFindLinkedEdges(na.a, edges, points, links);
+          }
+        }
       }
     }
   }
@@ -97,16 +97,16 @@ static int createEdgeLinks(Tree_T *links)
       ip[0] = ge->getBeginVertex()->tag();
       ip[1] = ge->getEndVertex()->tag();
       for(int k = 0; k < 2; k++){
-	lnk li, *pli;
-	li.n = ip[k];
-	if((pli = (lnk*)Tree_PQuery(links, &li))) {
-	  List_Add(pli->l, &na);
-	}
-	else {
-	  li.l = List_Create(20, 1, sizeof(nxa));
-	  List_Add(li.l, &na);
-	  Tree_Add(links, &li);
-	}
+        lnk li, *pli;
+        li.n = ip[k];
+        if((pli = (lnk*)Tree_PQuery(links, &li))) {
+          List_Add(pli->l, &na);
+        }
+        else {
+          li.l = List_Create(20, 1, sizeof(nxa));
+          List_Add(li.l, &na);
+          Tree_Add(links, &li);
+        }
       }
     }
   }
@@ -141,22 +141,22 @@ static void orientAndSortEdges(List_T *edges, Tree_T *links)
       nxa na;
       List_Read(lk.l, j, &na);
       if(ge0->tag() != na.a && List_Search(temp, &na.a, fcmp_absint)){
-	GEdge *ge1 = GModel::current()->getEdgeByTag(abs(na.a));
-	if(!ge1){
-	  Msg(GERROR, "Unknown curve %d", abs(na.a));
-	  return;
-	}
-	if(lk.n == ge1->getBeginVertex()->tag()){
-	  sign = 1;
-	  num = na.a;
-	}
-	else{
-	  sign = -1;
-	  num = -na.a;
-	}
-	List_Add(edges, &num);
-	ge0 = ge1;
-	break;
+        GEdge *ge1 = GModel::current()->getEdgeByTag(abs(na.a));
+        if(!ge1){
+          Msg(GERROR, "Unknown curve %d", abs(na.a));
+          return;
+        }
+        if(lk.n == ge1->getBeginVertex()->tag()){
+          sign = 1;
+          num = na.a;
+        }
+        else{
+          sign = -1;
+          num = -na.a;
+        }
+        List_Add(edges, &num);
+        ge0 = ge1;
+        break;
       }
     }
   }
@@ -186,9 +186,9 @@ int allEdgesLinked(int ed, List_T *edges)
     ip[1] = ge->getEndVertex()->tag();
     for(int k = 0; k < 2; k++){
       if(!Tree_Search(points, &ip[k]))
-	Tree_Add(points, &ip[k]);
+        Tree_Add(points, &ip[k]);
       else
-	Tree_Suppress(points, &ip[k]);
+        Tree_Suppress(points, &ip[k]);
     }
   }
 
@@ -218,7 +218,7 @@ int allEdgesLinked(int ed, List_T *edges)
 // Find all linked faces
 
 static void recurFindLinkedFaces(int fac, List_T *faces, Tree_T *edges, 
-				 Tree_T *links)
+                                 Tree_T *links)
 {
   GFace *gf = GModel::current()->getFaceByTag(abs(fac));
   if(!gf){
@@ -238,14 +238,14 @@ static void recurFindLinkedFaces(int fac, List_T *faces, Tree_T *edges,
     Tree_Query(links, &lk);
     if(List_Nbr(lk.l) == 2) {
       for(int i = 0; i < 2; i++) {
-	nxa na;
+        nxa na;
         List_Read(lk.l, i, &na);
         if(na.a != fac) {
           if(List_ISearchSeq(faces, &na.a, fcmp_absint) < 0){
-	    List_Add(faces, &na.a);
-	    recurFindLinkedFaces(na.a, faces, edges, links);
-	  }
-	}
+            List_Add(faces, &na.a);
+            recurFindLinkedFaces(na.a, faces, edges, links);
+          }
+        }
       }
     }
   }
@@ -261,17 +261,17 @@ static void createFaceLinks(Tree_T *links)
       na.a = gf->tag();
       std::list<GEdge*> l = gf->edges();
       for(std::list<GEdge*>::iterator ite = l.begin(); ite != l.end(); ite++) {
-	GEdge *ge = *ite;
-	lnk li, *pli;
-	li.n = abs(ge->tag());
-	if((pli = (lnk*)Tree_PQuery(links, &li))) {
-	  List_Add(pli->l, &na);
-	}
-	else {
-	  li.l = List_Create(20, 1, sizeof(nxa));
-	  List_Add(li.l, &na);
-	  Tree_Add(links, &li);
-	}
+        GEdge *ge = *ite;
+        lnk li, *pli;
+        li.n = abs(ge->tag());
+        if((pli = (lnk*)Tree_PQuery(links, &li))) {
+          List_Add(pli->l, &na);
+        }
+        else {
+          li.l = List_Create(20, 1, sizeof(nxa));
+          List_Add(li.l, &na);
+          Tree_Add(links, &li);
+        }
       }
     }
   }
@@ -298,9 +298,9 @@ int allFacesLinked(int fac, List_T *faces)
       GEdge *ge = *it;
       int ic = abs(ge->tag());
       if(!Tree_Search(edges, &ic))
-	Tree_Add(edges, &ic);
+        Tree_Add(edges, &ic);
       else
-	Tree_Suppress(edges, &ic);
+        Tree_Suppress(edges, &ic);
     }
   }
 

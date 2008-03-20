@@ -1,4 +1,4 @@
-// $Id: Iso.cpp,v 1.43 2008-02-17 08:47:59 geuzaine Exp $
+// $Id: Iso.cpp,v 1.44 2008-03-20 11:44:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -22,7 +22,7 @@
 #include "Numeric.h"
 
 static void affect(double *xi, double *yi, double *zi, int i,
-		   double *xp, double *yp, double *zp, int j)
+                   double *xp, double *yp, double *zp, int j)
 {
   xi[i] = xp[j];
   yi[i] = yp[j];
@@ -32,7 +32,7 @@ static void affect(double *xi, double *yi, double *zi, int i,
 // Compute an iso-point in a line
 
 int IsoLine(double *X, double *Y, double *Z, double *Val, double V,
-	    double *Xp, double *Yp, double *Zp)
+            double *Xp, double *Yp, double *Zp)
 {
   if(Val[0] == Val[1])
     return 0;
@@ -47,7 +47,7 @@ int IsoLine(double *X, double *Y, double *Z, double *Val, double V,
 // Compute an iso-line inside a triangle
 
 int IsoTriangle(double *X, double *Y, double *Z, double *Val, double V, 
-		double *Xp, double *Yp, double *Zp)
+                double *Xp, double *Yp, double *Zp)
 {
   if(Val[0] == Val[1] && Val[0] == Val[2]) return 0;
 
@@ -72,7 +72,7 @@ int IsoTriangle(double *X, double *Y, double *Z, double *Val, double V,
 // Compute an iso-polygon inside a tetrahedron
 
 int IsoSimplex(double *X, double *Y, double *Z, double *Val, double V,
-	       double *Xp, double *Yp, double *Zp, double n[3])
+               double *Xp, double *Yp, double *Zp, double n[3])
 {
   if(Val[0] == Val[1] && Val[0] == Val[2] && Val[0] == Val[3])
     return 0;
@@ -113,15 +113,15 @@ int IsoSimplex(double *X, double *Y, double *Z, double *Val, double V,
     int ni = 1;
     for(int j = 1; j < nb; j++) {
       for(int i = 0; i < ni; i++) {
-	if(fabs(Xp[j] - xi[i]) < 1.e-12 &&
-	   fabs(Yp[j] - yi[i]) < 1.e-12 &&
-	   fabs(Zp[j] - zi[i]) < 1.e-12) {
-	  break;
-	}
-	if(i == ni - 1) {
-	  affect(xi, yi, zi, i + 1, Xp, Yp, Zp, j);
-	  ni++;
-	}
+        if(fabs(Xp[j] - xi[i]) < 1.e-12 &&
+           fabs(Yp[j] - yi[i]) < 1.e-12 &&
+           fabs(Zp[j] - zi[i]) < 1.e-12) {
+          break;
+        }
+        if(i == ni - 1) {
+          affect(xi, yi, zi, i + 1, Xp, Yp, Zp, j);
+          ni++;
+        }
       }
     }
     for(int i = 0; i < ni; i++)
@@ -184,8 +184,8 @@ int IsoSimplex(double *X, double *Y, double *Z, double *Val, double V,
 // Compute the line between the two iso-points V1 and V2 in a line
 
 int CutLine(double *X, double *Y, double *Z, double *Val,
-	    double V1, double V2, 
-	    double *Xp2, double *Yp2, double *Zp2, double *Vp2)
+            double V1, double V2, 
+            double *Xp2, double *Yp2, double *Zp2, double *Vp2)
 {
   int io[2];
   if(Val[0] < Val[1]) {
@@ -238,8 +238,8 @@ int CutLine(double *X, double *Y, double *Z, double *Val,
 // triangle
 
 int CutTriangle(double *X, double *Y, double *Z, double *Val,
-		double V1, double V2, 
-		double *Xp2, double *Yp2, double *Zp2, double *Vp2)
+                double V1, double V2, 
+                double *Xp2, double *Yp2, double *Zp2, double *Vp2)
 {
   // fill io so that it contains an indexing of the nodes such that
   // Val[io[i]] > Val[io[j]] if i > j

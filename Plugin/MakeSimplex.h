@@ -49,8 +49,8 @@ class MakeSimplex{
   int _numTimeSteps;
   // create a simplex
   void reorder(int map[4], int n,
-	       double *x, double *y, double *z, double *val,
-	       double *xn, double *yn, double *zn, double *valn);
+               double *x, double *y, double *z, double *val,
+               double *xn, double *yn, double *zn, double *valn);
  public:
   // default constructor
   MakeSimplex(int numNodes, int numComponents, int numTimeSteps=1);
@@ -60,8 +60,8 @@ class MakeSimplex{
   int numSimplexNodes();
   // returns the i-th simplex in the decomposition
   void decompose(int num, 
-		 double *x, double *y, double *z, double *val,
-		 double *xn, double *yn, double *zn, double *valn);
+                 double *x, double *y, double *z, double *val,
+                 double *xn, double *yn, double *zn, double *valn);
 };
 
 #endif

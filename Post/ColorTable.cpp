@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.4 2008-02-17 08:48:08 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.5 2008-03-20 11:44:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -110,132 +110,132 @@ void ColorTable_Recompute(GmshColorTable * ct)
       break;
     case 2: // matlab "jet"
       {
-	double ii = (double)(s - bias) * 128.;
-	if(ii < 0) ii = 0;
-	if(ii > 128) ii = 128;
-	double rr = 
-	  ii <= 46 ? 0. : 
-	  ii >= 111 ? -0.03125 * (ii - 111) + 1. :
-	  ii >= 78 ? 1. : 
-	  0.03125 * (ii - 46);
-	double gg = 
-	  ii <= 14 || ii >= 111 ? 0. : 
-	  ii >= 79 ? -0.03125 * (ii - 111) : 
-	  ii <= 46 ? 0.03125 * (ii - 14) : 
-	  1.;
-	double bb =
-	  ii >= 79 ? 0. :
-	  ii >= 47 ? -0.03125 * (ii - 79) :
-	  ii <= 14 ? 0.03125 * (ii - 14) + 1.:
-	  1.;
-	r = (int)(rr * 255.);
-	g = (int)(gg * 255.);
-	b = (int)(bb * 255.);
+        double ii = (double)(s - bias) * 128.;
+        if(ii < 0) ii = 0;
+        if(ii > 128) ii = 128;
+        double rr = 
+          ii <= 46 ? 0. : 
+          ii >= 111 ? -0.03125 * (ii - 111) + 1. :
+          ii >= 78 ? 1. : 
+          0.03125 * (ii - 46);
+        double gg = 
+          ii <= 14 || ii >= 111 ? 0. : 
+          ii >= 79 ? -0.03125 * (ii - 111) : 
+          ii <= 46 ? 0.03125 * (ii - 14) : 
+          1.;
+        double bb =
+          ii >= 79 ? 0. :
+          ii >= 47 ? -0.03125 * (ii - 79) :
+          ii <= 14 ? 0.03125 * (ii - 14) + 1.:
+          1.;
+        r = (int)(rr * 255.);
+        g = (int)(gg * 255.);
+        b = (int)(bb * 255.);
       }
       break;
     case 3: // lucie, samcef (?)
       if(s - bias <= 0.) {
-	r = 0;
-	g = 0;
-	b = 255;
+        r = 0;
+        g = 0;
+        b = 255;
       }
       else if(s - bias <= 0.40) {
-	r = 0;
-	g = (int)((s - bias) * 637.5);
-	b = (int)(255. - (s - bias) * 637.5);
+        r = 0;
+        g = (int)((s - bias) * 637.5);
+        b = (int)(255. - (s - bias) * 637.5);
       }
       else if(s - bias <= 0.60) {
-	r = (int)(1275. * (s - bias - 0.4));
-	g = 255;
-	b = 0;
+        r = (int)(1275. * (s - bias - 0.4));
+        g = 255;
+        b = 0;
       }
       else if(s - bias <= 1.) {
-	r = 255;
-	g = (int)(255. - 637.5 * (s - bias - 0.6));
-	b = 0;
+        r = 255;
+        g = (int)(255. - 637.5 * (s - bias - 0.6));
+        b = 0;
       }
       else {
-	r = 255;
-	g = 0;
-	b = 0;
+        r = 255;
+        g = 0;
+        b = 0;
       }
       break;
     case 4: // rainbow
       if(s - bias <= 0.) {
-	r = 0;
-	g = 0;
-	b = 255;
+        r = 0;
+        g = 0;
+        b = 255;
       }
       else if(s - bias <= 0.25 + curvature) {
-	curvature = (curvature == -0.25) ? -0.26 : curvature;
-	r = 0;
-	g = (int)((s - bias) * (255. / (0.25 + curvature)));
-	b = 255;
+        curvature = (curvature == -0.25) ? -0.26 : curvature;
+        r = 0;
+        g = (int)((s - bias) * (255. / (0.25 + curvature)));
+        b = 255;
       }
       else if(s - bias <= 0.50) {
-	curvature = (curvature == 0.25) ? 0.26 : curvature;
-	r = 0;
-	g = 255;
-	b = (int)(255. - (255. / (0.25 - curvature)) * (s - bias - 0.25 - curvature));
+        curvature = (curvature == 0.25) ? 0.26 : curvature;
+        r = 0;
+        g = 255;
+        b = (int)(255. - (255. / (0.25 - curvature)) * (s - bias - 0.25 - curvature));
       }
       else if(s - bias <= 0.75 - curvature) {
-	curvature = (curvature == 0.25) ? 0.26 : curvature;
-	r = (int)((s - bias - 0.5) * (255. / (0.25 - curvature)));
-	g = 255;
-	b = 0;
+        curvature = (curvature == 0.25) ? 0.26 : curvature;
+        r = (int)((s - bias - 0.5) * (255. / (0.25 - curvature)));
+        g = 255;
+        b = 0;
       }
       else if(s - bias <= 1.) {
-	curvature = (curvature == -0.25) ? -0.26 : curvature;
-	r = 255;
-	g = (int)(255. - (255. / (0.25 + curvature)) * (s - bias - 0.75 + curvature));
-	b = 0;
+        curvature = (curvature == -0.25) ? -0.26 : curvature;
+        r = 255;
+        g = (int)(255. - (255. / (0.25 + curvature)) * (s - bias - 0.75 + curvature));
+        b = 0;
       }
       else {
-	r = 255;
-	g = 0;
-	b = 0;
+        r = 255;
+        g = 0;
+        b = 0;
       }
       break;
     case 5: // emc2000 (rainbow with black and white)
       if(s - bias <= 0.) {
-	r = 0;
-	g = 0;
-	b = 0;
+        r = 0;
+        g = 0;
+        b = 0;
       }
       else if(s - bias <= 0.2) {
-	r = (int)(57 * (1 - 100 * ((s - bias) - 0.1) * ((s - bias) - 0.1)));
-	g = 0;
-	b = (int)((s - bias) * (255. / 0.2));
+        r = (int)(57 * (1 - 100 * ((s - bias) - 0.1) * ((s - bias) - 0.1)));
+        g = 0;
+        b = (int)((s - bias) * (255. / 0.2));
       }
       else if(s - bias <= 0.3624) {
-	r = 0;
-	g = (int)((s - bias - 0.2) * (255. / 0.1624));
-	b = 255;
+        r = 0;
+        g = (int)((s - bias - 0.2) * (255. / 0.1624));
+        b = 255;
       }
       else if(s - bias <= 0.50) {
-	r = 0;
-	g = 255;
-	b = (int)(255. - (255. / 0.1376) * (s - bias - 0.3624));
+        r = 0;
+        g = 255;
+        b = (int)(255. - (255. / 0.1376) * (s - bias - 0.3624));
       }
       else if(s - bias <= 0.6376) {
-	r = (int)((s - bias - 0.5) * (255. / 0.1376));
-	g = 255;
-	b = 0;
+        r = (int)((s - bias - 0.5) * (255. / 0.1376));
+        g = 255;
+        b = 0;
       }
       else if(s - bias <= 0.8) {
-	r = 255;
-	g = (int)(255. - (255. / 0.1624) * (s - bias - 0.6376));
-	b = 0;
+        r = 255;
+        g = (int)(255. - (255. / 0.1624) * (s - bias - 0.6376));
+        b = 0;
       }
       else if(s - bias <= 1.0) {
-	r = 255;
-	g = (int)((255. / 0.2) * (s - bias - 0.8));
-	b = (int)(-3187.66 * (s - bias) * (s - bias) + 7012.76 * (s - bias) - 3570.61);
+        r = 255;
+        g = (int)((255. / 0.2) * (s - bias - 0.8));
+        b = (int)(-3187.66 * (s - bias) * (s - bias) + 7012.76 * (s - bias) - 3570.61);
       }
       else {
-	r = 255;
-	g = 255;
-	b = 255;
+        r = 255;
+        g = 255;
+        b = 255;
       }
       break;
     case 6: // darkblue->red->yellow->white
@@ -255,13 +255,13 @@ void ColorTable_Recompute(GmshColorTable * ct)
       break;
     case 9: // grayscale
       if(s - bias <= 0.) {
-	r = g = b = 0;
+        r = g = b = 0;
       }
       else if(s - bias <= 1.) {
-	r = g = b = (int)(255 * (1. - curvature) * (s - bias));
+        r = g = b = (int)(255 * (1. - curvature) * (s - bias));
       }
       else {
-	r = g = b = (int)(255 * (1. - curvature));
+        r = g = b = (int)(255 * (1. - curvature));
       }
       break;
     case 10: // all white
@@ -269,20 +269,20 @@ void ColorTable_Recompute(GmshColorTable * ct)
       break;
     case 11: // matlab "hsv"
       {
-	double H = 6. * s + 1.e-10, R, G, B;
-	HSV_to_RGB(H, 1., 1., &R, &G, &B);
-	r = (int)(255 * R);
-	g = (int)(255 * G);
-	b = (int)(255 * B);
+        double H = 6. * s + 1.e-10, R, G, B;
+        HSV_to_RGB(H, 1., 1., &R, &G, &B);
+        r = (int)(255 * R);
+        g = (int)(255 * G);
+        b = (int)(255 * B);
       }
       break;
     case 12: // spectrum (truncated hsv)
       {
-	double H = 5. * s + 1.e-10, R, G, B;
-	HSV_to_RGB(H, 1., 1., &R, &G, &B);
-	r = (int)(255 * R);
-	g = (int)(255 * G);
-	b = (int)(255 * B);
+        double H = 5. * s + 1.e-10, R, G, B;
+        HSV_to_RGB(H, 1., 1., &R, &G, &B);
+        r = (int)(255 * R);
+        g = (int)(255 * G);
+        b = (int)(255 * B);
       }
       break;
     case 13: // matlab "bone"
@@ -332,9 +332,9 @@ void ColorTable_Recompute(GmshColorTable * ct)
 
     if(ct->dpar[COLORTABLE_BETA]) {
       if(ct->dpar[COLORTABLE_BETA] > 0.0)
-	gamma = 1. - ct->dpar[COLORTABLE_BETA];
+        gamma = 1. - ct->dpar[COLORTABLE_BETA];
       else
-	gamma = 1. / (1.001 + ct->dpar[COLORTABLE_BETA]); // beta is thresholded to [-1,1]
+        gamma = 1. / (1.001 + ct->dpar[COLORTABLE_BETA]); // beta is thresholded to [-1,1]
       r = (int)(255. * pow((double)r / 255., gamma));
       g = (int)(255. * pow((double)g / 255., gamma));
       b = (int)(255. * pow((double)b / 255., gamma));
@@ -426,7 +426,7 @@ int ColorTable_IsAlpha(GmshColorTable * ct)
 // HSV/RBG conversion routines
 
 void HSV_to_RGB(double H, double S, double V, 
-		double *R, double *G, double *B) 
+                double *R, double *G, double *B) 
 {
   if(S < 5.0e-6) {
     *R = *G = *B = V;
@@ -449,7 +449,7 @@ void HSV_to_RGB(double H, double S, double V,
 }
 
 void RGB_to_HSV(double R, double G, double B, 
-		double *H, double *S, double *V) 
+                double *H, double *S, double *V) 
 {
   double maxv = R > G ? R : G; if(B > maxv) maxv = B;
   *V = maxv;

@@ -31,7 +31,7 @@ class GMSH_AnnotatePlugin : public GMSH_Post_Plugin
 {
 private:
   static double callback(int num, int action, double value, double *opt,
-			 double step, double min, double max);
+                         double step, double min, double max);
   static const char *callbackStr(int num, int action, const char *value, const char **opt);
 public:
   GMSH_AnnotatePlugin();

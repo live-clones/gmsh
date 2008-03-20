@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.44 2008-03-06 14:19:01 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.45 2008-03-20 11:44:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -43,8 +43,8 @@ void getAllBoundingVertices(GRegion *gr, std::set<MVertex*> &allBoundingVertices
     for(unsigned int i = 0; i < gf->triangles.size(); i++){
       MTriangle *t = gf->triangles[i];
       for(int k = 0; k < 3; k++)
-	if(allBoundingVertices.find(t->getVertex(k)) ==  allBoundingVertices.end())
-	  allBoundingVertices.insert(t->getVertex(k));
+        if(allBoundingVertices.find(t->getVertex(k)) ==  allBoundingVertices.end())
+          allBoundingVertices.insert(t->getVertex(k));
     }
     ++it;
   }
@@ -115,12 +115,12 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
 }
 
 void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out, 
-			std::vector<MVertex*> &numberedV)
+                        std::vector<MVertex*> &numberedV)
 {
   for(int i = numberedV.size(); i < out.numberofpoints; i++){
     MVertex *v = new MVertex(out.pointlist[i * 3 + 0],
-			     out.pointlist[i * 3 + 1],
-			     out.pointlist[i * 3 + 2], gr); 
+                             out.pointlist[i * 3 + 1],
+                             out.pointlist[i * 3 + 2], gr); 
     gr->mesh_vertices.push_back(v);
     numberedV.push_back(v);
   }
@@ -157,21 +157,21 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     v[1] = numberedV[out.trifacelist[i * 3 + 1] - 1];
     v[2] = numberedV[out.trifacelist[i * 3 + 2] - 1];
     GFace *gf = gr->model()->getFaceByTag(out.trifacemarkerlist[i]);
-    for(int j = 0; j < 3; j++){	  
+    for(int j = 0; j < 3; j++){   
       if(v[j]->onWhat()->dim() == 3){
-	v[j]->onWhat()->mesh_vertices.erase
-	  (std::find(v[j]->onWhat()->mesh_vertices.begin(),
-		     v[j]->onWhat()->mesh_vertices.end(),
-		     v[j]));
-	MVertex *v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
-	gf->mesh_vertices.push_back(v1b);
-	numberedV[out.trifacelist[i * 3 + j] - 1] = v1b;
-	delete v[j];
-	v[j] = v1b;
+        v[j]->onWhat()->mesh_vertices.erase
+          (std::find(v[j]->onWhat()->mesh_vertices.begin(),
+                     v[j]->onWhat()->mesh_vertices.end(),
+                     v[j]));
+        MVertex *v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
+        gf->mesh_vertices.push_back(v1b);
+        numberedV[out.trifacelist[i * 3 + j] - 1] = v1b;
+        delete v[j];
+        v[j] = v1b;
       }
     }
     MTriangle *t = new  MTriangle(v[0], v[1], v[2]);
-    gf->triangles.push_back(t);	  
+    gf->triangles.push_back(t);   
   }
   for(int i = 0; i < out.numberoftetrahedra; i++){
     MVertex *v1 = numberedV[out.tetrahedronlist[i * 4 + 0] - 1];
@@ -223,21 +223,21 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     }
     catch (int error){
       Msg (WARNING, "Self intersecting Surface Mesh, computing intersections "
-	   "(this could take a while)");
+           "(this could take a while)");
       sprintf(opts, "dV");
       try{
-	tetrahedralize(opts, &in, &out);
-	Msg(INFO,"%d faces self-intersect",out.numberoftrifaces);
-	for (int i = 0; i < out.numberoftrifaces; i++){
-	  Msg(INFO,"face (%d %d %d) on model face %d",
-	      numberedV[out.trifacelist[i * 3 + 0] - 1]->getNum(),
-	      numberedV[out.trifacelist[i * 3 + 1] - 1]->getNum(),
-	      numberedV[out.trifacelist[i * 3 + 2] - 1]->getNum(),
-	      out.trifacemarkerlist[i]);
-	}
+        tetrahedralize(opts, &in, &out);
+        Msg(INFO,"%d faces self-intersect",out.numberoftrifaces);
+        for (int i = 0; i < out.numberoftrifaces; i++){
+          Msg(INFO,"face (%d %d %d) on model face %d",
+              numberedV[out.trifacelist[i * 3 + 0] - 1]->getNum(),
+              numberedV[out.trifacelist[i * 3 + 1] - 1]->getNum(),
+              numberedV[out.trifacelist[i * 3 + 2] - 1]->getNum(),
+              out.trifacemarkerlist[i]);
+        }
       }
       catch (int error2){
-	Msg(GERROR, "Surface Mesh is wrong, cannot do the 3D mesh");      
+        Msg(GERROR, "Surface Mesh is wrong, cannot do the 3D mesh");      
       }
       gr->set(faces);
       return;
@@ -271,7 +271,7 @@ namespace nglib {
 using namespace nglib;
 
 Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
-			      std::vector<MVertex*> &numberedV)
+                              std::vector<MVertex*> &numberedV)
 {
   NgAddOn_Init();
   Ng_Mesh *ngmesh = Ng_NewMesh();
@@ -336,7 +336,7 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
 }
 
 void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh, 
-			std::vector<MVertex*> &numberedV)
+                        std::vector<MVertex*> &numberedV)
 {
   // Gets total number of vertices of Netgen's mesh
   int nbv = Ng_GetNP(ngmesh);  
@@ -361,9 +361,9 @@ void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh,
     int tmp[4];
     Ng_GetVolumeElement(ngmesh, i + 1, tmp);
     MTetrahedron *t = new MTetrahedron(numberedV[tmp[0] - 1],
-				       numberedV[tmp[1] - 1],
-				       numberedV[tmp[2] - 1],
-				       numberedV[tmp[3] - 1]);
+                                       numberedV[tmp[1] - 1],
+                                       numberedV[tmp[2] - 1],
+                                       numberedV[tmp[3] - 1]);
     gr->tetrahedra.push_back(t);
   }  
 }
@@ -394,7 +394,7 @@ void deMeshGRegion::operator() (GRegion *gr)
 }
 
 int intersect_line_triangle(double X[3], double Y[3], double Z[3] , 
-			    double P[3], double N[3] )
+                            double P[3], double N[3] )
 {
   double mat[3][3], det;
   double b[3], res[3];
@@ -428,8 +428,8 @@ int intersect_line_triangle(double X[3], double Y[3], double Z[3] ,
     return (res[2] > 0) ? 1 : 0;
   }
   else if(res[0] < -eps_prec || res[0] > 1.0 + eps_prec || 
-	  res[1] < -eps_prec || res[1] > 1.0 + eps_prec || 
-	  1 - res[0] - res[1] < -eps_prec || 1 - res[0] - res[1] > 1.0 + eps_prec){
+          res[1] < -eps_prec || res[1] > 1.0 + eps_prec || 
+          1 - res[0] - res[1] < -eps_prec || 1 - res[0] - res[1] > 1.0 + eps_prec){
     // the line clearly does NOT intersect the triangle
     return 0;
   }
@@ -452,7 +452,7 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
 
   double rrr[6];
   setRand(rrr);
-		   
+                   
   while(it != faces.end()){
     GFace *gf = (*it); 
     int nb_intersect = 0;
@@ -475,21 +475,21 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
       norme(N);
       std::list<GFace*>::iterator it_b = faces.begin();
       while(it_b != faces.end()){
-	GFace *gf_b = (*it_b);
-	for(unsigned int i_b = 0; i_b < gf_b->triangles.size(); i_b++){
-	  MTriangle *t_b = gf_b->triangles[i_b];
-	  if(t_b != t){
-	    double X_b[3] = {t_b->getVertex(0)->x(), t_b->getVertex(1)->x(), 
-			     t_b->getVertex(2)->x()};
-	    double Y_b[3] = {t_b->getVertex(0)->y(), t_b->getVertex(1)->y(),
-			     t_b->getVertex(2)->y()};
-	    double Z_b[3] = {t_b->getVertex(0)->z(), t_b->getVertex(1)->z(),
-			     t_b->getVertex(2)->z()};
-	    int inters = intersect_line_triangle(X_b, Y_b, Z_b, P, N);
-	    nb_intersect += inters;
-	  }
-	}
-	++it_b;
+        GFace *gf_b = (*it_b);
+        for(unsigned int i_b = 0; i_b < gf_b->triangles.size(); i_b++){
+          MTriangle *t_b = gf_b->triangles[i_b];
+          if(t_b != t){
+            double X_b[3] = {t_b->getVertex(0)->x(), t_b->getVertex(1)->x(), 
+                             t_b->getVertex(2)->x()};
+            double Y_b[3] = {t_b->getVertex(0)->y(), t_b->getVertex(1)->y(),
+                             t_b->getVertex(2)->y()};
+            double Z_b[3] = {t_b->getVertex(0)->z(), t_b->getVertex(1)->z(),
+                             t_b->getVertex(2)->z()};
+            int inters = intersect_line_triangle(X_b, Y_b, Z_b, P, N);
+            nb_intersect += inters;
+          }
+        }
+        ++it_b;
       }
       Msg(INFO,"Region %d Face %d, %d intersect", gr->tag(), gf->tag(), nb_intersect);
       if(nb_intersect >= 0) break; // negative value means intersection is not "robust"
@@ -500,10 +500,10 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
     }
     else{
       if(nb_intersect % 2 == 1){ 
-	// odd nb of intersections: the normal points inside the region 
-	for (unsigned int i = 0; i < gf->triangles.size(); i++){
-	  gf->triangles[i]->revert();
-	}
+        // odd nb of intersections: the normal points inside the region 
+        for (unsigned int i = 0; i < gf->triangles.size(); i++){
+          gf->triangles[i]->revert();
+        }
       }
       ++it;
     }
@@ -625,7 +625,7 @@ bool buildFaceSearchStructure(GModel *model, fs_cont &search)
       MVertex *p3 = (*fit)->triangles[i]->getVertex(2);
       MVertex *p = std::min(p1, std::min(p2, p3));
       search.insert(std::pair<MVertex*, std::pair<MTriangle*, GFace*> >
-		    (p, std::pair<MTriangle*, GFace*>((*fit)->triangles[i], *fit)));
+                    (p, std::pair<MTriangle*, GFace*>((*fit)->triangles[i], *fit)));
     }
     ++fit;
   }
@@ -643,7 +643,7 @@ bool buildEdgeSearchStructure(GModel *model, es_cont &search)
       MVertex *p2 = (*eit)->lines[i]->getVertex(1);
       MVertex *p = std::min(p1, p2);
       search.insert(std::pair<MVertex*, std::pair<MLine*, GEdge*> > 
-		    (p, std::pair<MLine*, GEdge*>((*eit)->lines[i], *eit)));
+                    (p, std::pair<MLine*, GEdge*>((*eit)->lines[i], *eit)));
     }
     ++eit;
   }
@@ -651,7 +651,7 @@ bool buildEdgeSearchStructure(GModel *model, es_cont &search)
 }
 
 GFace *findInFaceSearchStructure(MVertex *p1, MVertex *p2, MVertex *p3, 
-				 const fs_cont &search)
+                                 const fs_cont &search)
 {
   MVertex *p = std::min(p1, std::min(p2, p3));
   
@@ -678,7 +678,7 @@ GEdge *findInEdgeSearchStructure(MVertex *p1, MVertex *p2, const es_cont &search
     MLine *l = it->second.first;
     GEdge *ge = it->second.second;
     if ((l->getVertex(0) == p1 || l->getVertex(0) == p2) &&
-	(l->getVertex(1) == p1 || l->getVertex(1) == p2)) 
+        (l->getVertex(1) == p1 || l->getVertex(1) == p2)) 
       return ge;
   }
   return 0;

@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.24 2008-03-19 16:38:16 geuzaine Exp $
+// $Id: PView.cpp,v 1.25 2008-03-20 11:44:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -73,7 +73,7 @@ PView::PView(PView *ref, bool copyOptions)
 }
 
 PView::PView(std::string xname, std::string yname,
-	     std::vector<double> &x, std::vector<double> &y)
+             std::vector<double> &x, std::vector<double> &y)
 {
   _init();
   PViewDataList *data = new PViewDataList(true);
@@ -125,7 +125,7 @@ PView::~PView()
   if(_aliasOf)
     for(unsigned int i = 0; i < list.size(); i++)
       if(list[i]->getNum() == _aliasOf || list[i]->getAliasOf() == _aliasOf)
-	return;
+        return;
   
   Msg(DEBUG, "Deleting data in View[%d] (unique num = %d)", _index, _num);
   delete _data;
@@ -171,24 +171,24 @@ void PView::combine(bool time, int how, bool remove)
       // this will lead to weird results if there are views named
       // "__all__" or "__vis__" :-)
       if(how == 2)
-	nd.name = data->getName();
+        nd.name = data->getName();
       else if(how == 1)
-	nd.name = "__all__";
+        nd.name = "__all__";
       else
-	nd.name = "__vis__";
+        nd.name = "__vis__";
       unsigned int j = 0;
       while(j < nds.size()){
-	if(nds[j].name == nd.name){
-	  nds[j].data.push_back(data);
-	  nds[j].indices.push_back(i);
-	  break;
-	}
-	j++;
+        if(nds[j].name == nd.name){
+          nds[j].data.push_back(data);
+          nds[j].indices.push_back(i);
+          break;
+        }
+        j++;
       }
       if(j == nds.size()){
-	nd.data.push_back(data);
-	nd.indices.push_back(i);
-	nds.push_back(nd);
+        nd.data.push_back(data);
+        nd.indices.push_back(i);
+        nds.push_back(nd);
       }
     }
   }
@@ -201,10 +201,10 @@ void PView::combine(bool time, int how, bool remove)
       PViewData *data = p->getData();
       bool res = time ? data->combineTime(nds[i]): data->combineSpace(nds[i]);
       if(res)
-	for(unsigned int j = 0; j < nds[i].indices.size(); j++)
-	  rm.insert(list[nds[i].indices[j]]);
+        for(unsigned int j = 0; j < nds[i].indices.size(); j++)
+          rm.insert(list[nds[i].indices[j]]);
       else
-	delete p;
+        delete p;
     }
   }
   if(remove)
@@ -217,7 +217,7 @@ PView *PView::getViewByName(std::string name, int timeStep, int partition)
   for(unsigned int i = 0; i < list.size(); i++){
     if(list[i]->getData()->getName() == name &&
        ((timeStep < 0 || !list[i]->getData()->hasTimeStep(timeStep)) ||
-	(partition < 0 || !list[i]->getData()->hasPartition(partition))))
+        (partition < 0 || !list[i]->getData()->hasPartition(partition))))
       return list[i];
   }
   return 0;
@@ -275,24 +275,24 @@ bool PView::readPOS(std::string fileName, int fileIndex)
 
       index++;
       if(fileIndex < 0 || fileIndex == index){
-	PViewDataList *d = new PViewDataList(false);
-	if(!d->readPOS(fp, version, format, size)){
-	  Msg(GERROR, "Could not read data in list format");
-	  delete d;
-	  return false;
-	}
-	else{
-	  d->setFileName(fileName);
-	  d->setFileIndex(index);
-	  new PView(d);
-	}
+        PViewDataList *d = new PViewDataList(false);
+        if(!d->readPOS(fp, version, format, size)){
+          Msg(GERROR, "Could not read data in list format");
+          delete d;
+          return false;
+        }
+        else{
+          d->setFileName(fileName);
+          d->setFileIndex(index);
+          new PView(d);
+        }
       }
 
     }
 
     do {
       if(!fgets(str, sizeof(str), fp) || feof(fp))
-	break;
+        break;
     } while(str[0] != '$');
 
   }
@@ -318,7 +318,7 @@ bool PView::readMSH(std::string fileName, int fileIndex)
 
     while(str[0] != '$'){
       if(!fgets(str, sizeof(str), fp) || feof(fp))
-	break;
+        break;
     }
     
     if(feof(fp))
@@ -330,51 +330,51 @@ bool PView::readMSH(std::string fileName, int fileIndex)
       int format, size;
       if(sscanf(str, "%lf %d %d", &version, &format, &size) != 3) return false;
       if(format){
-	binary = true;
-	Msg(INFO, "Mesh is in binary format");
-	int one;
-	if(fread(&one, sizeof(int), 1, fp) != 1) return 0;
-	if(one != 1){
-	  swap = true;
-	  Msg(INFO, "Swapping bytes from binary file");
-	}
+        binary = true;
+        Msg(INFO, "Mesh is in binary format");
+        int one;
+        if(fread(&one, sizeof(int), 1, fp) != 1) return 0;
+        if(one != 1){
+          swap = true;
+          Msg(INFO, "Swapping bytes from binary file");
+        }
       }
     }
     else if(!strncmp(&str[1], "NodeData", 8)) {
       index++;
       if(fileIndex < 0 || fileIndex == index){
-	// read data info
-	if(!fgets(str, sizeof(str), fp)) return false;
-	std::string name = extractDoubleQuotedString(str, sizeof(str));
-	int timeStep, partition, interpolationScheme, numComp, numNodes;
-	double time;
-	if(!fgets(str, sizeof(str), fp)) return false;
-	if(sscanf(str, "%d %lf %d %d %d %d", &timeStep, &time, &partition,
-		  &interpolationScheme, &numComp, &numNodes) != 6) return false;
-	// either get existing viewData, or create new one
-	PView *p = getViewByName(name, timeStep, partition);
-	PViewDataGModel *d = 0;
-	if(p) d = dynamic_cast<PViewDataGModel*>(p->getData());
-	bool create = d ? false : true;
-	if(create) d = new PViewDataGModel();
-	if(!d->readMSH(fileName, fileIndex, fp, binary, swap, timeStep, 
-		       time, partition, numComp, numNodes)){
-	  Msg(GERROR, "Could not read data in msh file");
-	  if(create) delete d;
-	  return false;
-	}
-	else{
-	  d->setName(name);
-	  d->setFileName(fileName);
-	  d->setFileIndex(index);
-	  if(create) new PView(d);
-	}
+        // read data info
+        if(!fgets(str, sizeof(str), fp)) return false;
+        std::string name = extractDoubleQuotedString(str, sizeof(str));
+        int timeStep, partition, interpolationScheme, numComp, numNodes;
+        double time;
+        if(!fgets(str, sizeof(str), fp)) return false;
+        if(sscanf(str, "%d %lf %d %d %d %d", &timeStep, &time, &partition,
+                  &interpolationScheme, &numComp, &numNodes) != 6) return false;
+        // either get existing viewData, or create new one
+        PView *p = getViewByName(name, timeStep, partition);
+        PViewDataGModel *d = 0;
+        if(p) d = dynamic_cast<PViewDataGModel*>(p->getData());
+        bool create = d ? false : true;
+        if(create) d = new PViewDataGModel();
+        if(!d->readMSH(fileName, fileIndex, fp, binary, swap, timeStep, 
+                       time, partition, numComp, numNodes)){
+          Msg(GERROR, "Could not read data in msh file");
+          if(create) delete d;
+          return false;
+        }
+        else{
+          d->setName(name);
+          d->setFileName(fileName);
+          d->setFileIndex(index);
+          if(create) new PView(d);
+        }
       }
     }
     
     do {
       if(!fgets(str, sizeof(str), fp) || feof(fp))
-	break;
+        break;
     } while(str[0] != '$');
   }
 

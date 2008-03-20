@@ -37,23 +37,23 @@ class ElementData {
   MElement *_ele;
  public:
   ElementData(double *x, double *y, double *z, SVector3 *n, unsigned int *col,
-	      MElement *ele)
+              MElement *ele)
   {
     for(int i = 0; i < N; i++){
       _x[i] = x[i];
       _y[i] = y[i];
       _z[i] = z[i];
       if(n){
-	_nx[i] = n[i].x();
-	_ny[i] = n[i].y();
-	_nz[i] = n[i].z();
+        _nx[i] = n[i].x();
+        _ny[i] = n[i].y();
+        _nz[i] = n[i].z();
       }
       else
-	_nx[i] = _ny[i] = _nz[i] = 0.;
+        _nx[i] = _ny[i] = _nz[i] = 0.;
       if(col)
-	_col[i] = col[i];
+        _col[i] = col[i];
       else
-	_col[i] = 0;
+        _col[i] = 0;
     }
     _ele = ele;
   }
@@ -157,7 +157,7 @@ class VertexArray{
   // element if another one with the same barycenter is not already
   // present)
   void add(double *x, double *y, double *z, SVector3 *n, unsigned int *col,
-	   MElement *ele=0, bool unique=true, bool boundary=false);
+           MElement *ele=0, bool unique=true, bool boundary=false);
   // finalize the arrays
   void finalize();
   // sorts the arrays with elements back to front wrt the eye position

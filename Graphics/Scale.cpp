@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.69 2008-02-17 08:48:00 geuzaine Exp $
+// $Id: Scale.cpp,v 1.70 2008-03-20 11:44:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -28,7 +28,7 @@
 extern Context_T CTX;
 
 static void drawScaleBar(PView *p, double xmin, double ymin, double width, 
-			 double height, double tic, int horizontal)
+                         double height, double tic, int horizontal)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -40,16 +40,16 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
       glColor4ubv((GLubyte *) &col);
       glBegin(GL_QUADS);
       if(horizontal){
-	glVertex2d(xmin + i * box, ymin);
-	glVertex2d(xmin + (i + 1) * box, ymin);
-	glVertex2d(xmin + (i + 1) * box, ymin + height);
-	glVertex2d(xmin + i * box, ymin + height);
+        glVertex2d(xmin + i * box, ymin);
+        glVertex2d(xmin + (i + 1) * box, ymin);
+        glVertex2d(xmin + (i + 1) * box, ymin + height);
+        glVertex2d(xmin + i * box, ymin + height);
       }
       else{
-	glVertex2d(xmin, ymin + i * box);
-	glVertex2d(xmin + width, ymin + i * box);
-	glVertex2d(xmin + width, ymin + (i + 1) * box);
-	glVertex2d(xmin, ymin + (i + 1) * box);
+        glVertex2d(xmin, ymin + i * box);
+        glVertex2d(xmin + width, ymin + i * box);
+        glVertex2d(xmin + width, ymin + (i + 1) * box);
+        glVertex2d(xmin, ymin + (i + 1) * box);
       }
       glEnd();
     }
@@ -60,23 +60,23 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
       unsigned int col1 = opt->getColor(v1, opt->TmpMin, opt->TmpMax);
       glColor4ubv((GLubyte *) &col1);
       if(horizontal){
-	glVertex2d(xmin + i * box, ymin + height);
-	glVertex2d(xmin + i * box, ymin);
+        glVertex2d(xmin + i * box, ymin + height);
+        glVertex2d(xmin + i * box, ymin);
       }
       else{
-	glVertex2d(xmin, ymin + i * box);
-	glVertex2d(xmin + width, ymin + i * box);
+        glVertex2d(xmin, ymin + i * box);
+        glVertex2d(xmin + width, ymin + i * box);
       }
       double v2 = opt->TmpMin + (i + 1) * dv;
       unsigned int col2 = opt->getColor(v2, opt->TmpMin, opt->TmpMax);
       glColor4ubv((GLubyte *) &col2);
       if(horizontal){
-	glVertex2d(xmin + (i + 1) * box, ymin);
-	glVertex2d(xmin + (i + 1) * box, ymin + height);
+        glVertex2d(xmin + (i + 1) * box, ymin);
+        glVertex2d(xmin + (i + 1) * box, ymin + height);
       }
       else{
-	glVertex2d(xmin + width, ymin + (i + 1) * box);
-	glVertex2d(xmin, ymin + (i + 1) * box);
+        glVertex2d(xmin + width, ymin + (i + 1) * box);
+        glVertex2d(xmin, ymin + (i + 1) * box);
       }
       glEnd();
     }
@@ -85,12 +85,12 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
       glColor4ubv((GLubyte *) &col);
       glBegin(GL_LINES);
       if(horizontal){
-	glVertex2d(xmin + box / 2. + i * box, ymin);
-	glVertex2d(xmin + box / 2. + i * box, ymin + height);
+        glVertex2d(xmin + box / 2. + i * box, ymin);
+        glVertex2d(xmin + box / 2. + i * box, ymin + height);
       }
       else{
-	glVertex2d(xmin, ymin + box / 2. + i * box);
-	glVertex2d(xmin + width, ymin + box / 2. + i * box);
+        glVertex2d(xmin, ymin + box / 2. + i * box);
+        glVertex2d(xmin + width, ymin + box / 2. + i * box);
       }
       glEnd();
     }
@@ -98,7 +98,7 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
 }
 
 static void drawScaleValues(PView *p, double xmin, double ymin, double width, 
-			    double height, double tic, int horizontal)
+                            double height, double tic, int horizontal)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -114,7 +114,7 @@ static void drawScaleValues(PView *p, double xmin, double ymin, double width,
 
   int nbv = opt->NbIso;
   double f = (opt->IntervalsType == PViewOptions::Discrete ||
-	      opt->IntervalsType == PViewOptions::Continuous) ? 2 : 2.5;
+              opt->IntervalsType == PViewOptions::Continuous) ? 2 : 2.5;
 
   if(horizontal && width < nbv * maxw){
     if(width < f * maxw) nbv = 1;
@@ -136,12 +136,12 @@ static void drawScaleValues(PView *p, double xmin, double ymin, double width,
       double v = opt->getScaleValue(i, nbv + 1, opt->TmpMin, opt->TmpMax);
       sprintf(label, opt->Format, v);
       if(horizontal){
-	glRasterPos2d(xmin + i * vbox, ymin + height + tic);
-	Draw_String_Center(label);
+        glRasterPos2d(xmin + i * vbox, ymin + height + tic);
+        Draw_String_Center(label);
       }
       else{
-	glRasterPos2d(xmin + width + tic, ymin + i * vbox - font_a / 3.);
-	Draw_String(label);
+        glRasterPos2d(xmin + width + tic, ymin + i * vbox - font_a / 3.);
+        Draw_String(label);
       }
     }
   }
@@ -154,19 +154,19 @@ static void drawScaleValues(PView *p, double xmin, double ymin, double width,
       double v = opt->getScaleValue(i, nbv, opt->TmpMin, opt->TmpMax);
       sprintf(label, opt->Format, v);
       if(horizontal){
-	glRasterPos2d(xmin + box / 2. + i * vbox, ymin + height + tic);
-	Draw_String_Center(label);
+        glRasterPos2d(xmin + box / 2. + i * vbox, ymin + height + tic);
+        Draw_String_Center(label);
       }
       else{
-	glRasterPos2d(xmin + width + tic, ymin + box / 2. + i * vbox - font_a / 3.);
-	Draw_String(label);
+        glRasterPos2d(xmin + width + tic, ymin + box / 2. + i * vbox - font_a / 3.);
+        Draw_String(label);
       }
     }
   }
 }
 
 static void drawScaleLabel(PView *p, double xmin, double ymin, double width, 
-			   double height, double tic, int horizontal)
+                           double height, double tic, int horizontal)
 {
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
@@ -199,7 +199,7 @@ static void drawScaleLabel(PView *p, double xmin, double ymin, double width,
 }
 
 static void drawScale(PView *p, double xmin, double ymin, double width, 
-		      double height, double tic, int horizontal)
+                      double height, double tic, int horizontal)
 {
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
@@ -267,49 +267,49 @@ void Draw_Scales()
       double ysep = 20.;
       double xc = (CTX.viewport[2] - CTX.viewport[0]) / 2.;
       if(scales.size() == 1){
-	double w = (CTX.viewport[2] - CTX.viewport[0]) / 2., h = bar_size;
-	double x = xc - w / 2., y = CTX.viewport[1] + ysep;
-	drawScale(p, x, y, w, h, tic, 1);
+        double w = (CTX.viewport[2] - CTX.viewport[0]) / 2., h = bar_size;
+        double x = xc - w / 2., y = CTX.viewport[1] + ysep;
+        drawScale(p, x, y, w, h, tic, 1);
       }
       else{
-	double xsep = maxw / 4. + (CTX.viewport[2] - CTX.viewport[0]) / 10.;
-	double w = (CTX.viewport[2] - CTX.viewport[0] - 4 * xsep) / 2.;
-	if(w < 20.) w = 20.;
-	double h = bar_size;
-	double x = xc - (i % 2 ? -xsep / 1.5 : w + xsep / 1.5);
-	double y = CTX.viewport[1] + ysep + 
-	  (i / 2) * (bar_size + tic + 2 * gl_height() + ysep);
-	drawScale(p, x, y, w, h, tic, 1);
+        double xsep = maxw / 4. + (CTX.viewport[2] - CTX.viewport[0]) / 10.;
+        double w = (CTX.viewport[2] - CTX.viewport[0] - 4 * xsep) / 2.;
+        if(w < 20.) w = 20.;
+        double h = bar_size;
+        double x = xc - (i % 2 ? -xsep / 1.5 : w + xsep / 1.5);
+        double y = CTX.viewport[1] + ysep + 
+          (i / 2) * (bar_size + tic + 2 * gl_height() + ysep);
+        drawScale(p, x, y, w, h, tic, 1);
       }
     }
     else{
       double xsep = 20.;
       double dy = 2. * gl_height();
       if(scales.size() == 1){
-	double ysep = (CTX.viewport[3] - CTX.viewport[1]) / 6.;
-	double w = bar_size, h = CTX.viewport[3] - CTX.viewport[1] - 2 * ysep - dy;
-	double x = CTX.viewport[0] + xsep, y = CTX.viewport[1] + ysep + dy;
-	drawScale(p, x, y, w, h, tic, 0);
+        double ysep = (CTX.viewport[3] - CTX.viewport[1]) / 6.;
+        double w = bar_size, h = CTX.viewport[3] - CTX.viewport[1] - 2 * ysep - dy;
+        double x = CTX.viewport[0] + xsep, y = CTX.viewport[1] + ysep + dy;
+        drawScale(p, x, y, w, h, tic, 0);
       }
       else{
-	double ysep = (CTX.viewport[3] - CTX.viewport[1]) / 15.;
-	double w = bar_size;
-	double h = (CTX.viewport[3] - CTX.viewport[1] - 3 * ysep - 2.5 * dy) / 2.;
-	double x = CTX.viewport[0] + xsep + width_total + (i / 2) * xsep;
-	double y = CTX.viewport[1] + ysep + dy + (1 - i % 2) * (h + 1.5 * dy + ysep);
-	drawScale(p, x, y, w, h, tic, 0);
+        double ysep = (CTX.viewport[3] - CTX.viewport[1]) / 15.;
+        double w = bar_size;
+        double h = (CTX.viewport[3] - CTX.viewport[1] - 3 * ysep - 2.5 * dy) / 2.;
+        double x = CTX.viewport[0] + xsep + width_total + (i / 2) * xsep;
+        double y = CTX.viewport[1] + ysep + dy + (1 - i % 2) * (h + 1.5 * dy + ysep);
+        drawScale(p, x, y, w, h, tic, 0);
       }
       // compute width
       width_prev = width;
       sprintf(label, opt->Format, -M_PI * 1.e-4);
       width = bar_size + tic + gl_width(label);
       if(opt->ShowTime){
-	char tmp[256];
-	sprintf(tmp, opt->Format, data->getTime(opt->TimeStep));
-	sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
+        char tmp[256];
+        sprintf(tmp, opt->Format, data->getTime(opt->TimeStep));
+        sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
       }
       else
-	sprintf(label, "%s", data->getName().c_str());
+        sprintf(label, "%s", data->getName().c_str());
       width = std::max(width, gl_width(label));
       if(i % 2) width_total += std::max(bar_size + width, bar_size + width_prev);
     }

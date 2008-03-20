@@ -57,7 +57,7 @@ uvPlot::uvPlot(int x, int y, int w, int h, const char *l)
 }
 
 void uvPlot::set(std::vector<double> &u, std::vector<double> &v, 
-		 std::vector<double> &dist, std::vector<std::complex<double> > &f)
+                 std::vector<double> &dist, std::vector<std::complex<double> > &f)
 { 
   _u = u; 
   _v = v;
@@ -131,7 +131,7 @@ void uvPlot::draw()
 }
 
 projection::projection(fourierProjectionFace *f, int x, int y, int w, int h, 
-		       int BB, int BH, projectionEditor *e) 
+                       int BB, int BH, projectionEditor *e) 
   : face(f)
 {
   group = new Fl_Scroll(x, y, w, h);
@@ -156,11 +156,11 @@ projection::projection(fourierProjectionFace *f, int x, int y, int w, int h,
     Fl_Repeat_Button *bm[3], *bp[3];
     for(int i = 0; i < 3; i++){
       new Fl_Box(x + w - BB / 3 - BB / 6, y + (1 + i) * BH, BB / 8, BH, 
-		 (i == 0) ? "E0" : (i == 1) ? "E1" : "E2");
+                 (i == 0) ? "E0" : (i == 1) ? "E1" : "E2");
       bp[i] = new Fl_Repeat_Button(x + w - BB / 3, y + (1 + i) * BH, 
-				   BB / 8, BH / 2, "+");
+                                   BB / 8, BH / 2, "+");
       bm[i] = new Fl_Repeat_Button(x + w - BB / 3, y + (1 + i) * BH + BH / 2,
-				   BB / 8, BH / 2, "-");
+                                   BB / 8, BH / 2, "-");
     }
     bp[0]->callback(translate_p0_cb, e);
     bp[1]->callback(translate_p1_cb, e);
@@ -281,13 +281,13 @@ projectionEditor::projectionEditor()
   int uvh = height - 8 * WB - 15 * BH - 2 * hard;
 
   _hardEdges[0] = new Fl_Toggle_Button(WB, 3 * WB + 9 * BH + hard, 
-				       hard, uvh);
+                                       hard, uvh);
   _hardEdges[1] = new Fl_Toggle_Button(width - 4 * WB - hard, 3 * WB + 9 * BH + hard,
-				       hard, uvh);
+                                       hard, uvh);
   _hardEdges[2] = new Fl_Toggle_Button(WB + hard, 3 * WB + 9 * BH, 
-				       uvw, hard);
+                                       uvw, hard);
   _hardEdges[3] = new Fl_Toggle_Button(WB + hard, height - 5 * WB - 6 * BH - hard, 
-				       uvw, hard);
+                                       uvw, hard);
   for(int i = 0; i < 4; i++)
     _hardEdges[i]->tooltip("Push to mark edge as `hard'");
 
@@ -302,16 +302,16 @@ projectionEditor::projectionEditor()
   _slider->tooltip("Filter selection by distance to projection surface");
 
   _orientation = new Fl_Toggle_Button(width - 3 * WB, height - 5 * WB - 6 * BH - hard, 
-				      2 * WB, hard);
+                                      2 * WB, hard);
   _orientation->callback(filter_cb, this);
   _orientation->tooltip("Filter elements using orientation");
 
   new Fl_Box(WB, height - 4 * WB - 6 * BH, BB, BH, "Patch Type:");
   Fl_Group *oo = new Fl_Group( WB, height - 4 * WB - 6 * BH, 3 * BB, BH);
   _pselect[0] = new Fl_Round_Button(2 * WB + BB, height - 4 * WB - 6 * BH,
-				   BB, BH, "Continuation");
+                                   BB, BH, "Continuation");
   _pselect[1] = new Fl_Round_Button(3 * WB + 2 * BB, height - 4 * WB - 
-				   6 * BH, BB, BH, "Windowing");
+                                   6 * BH, BB, BH, "Windowing");
 
   for(int i = 0; i < 2; i++)
     _pselect[i]->type(FL_RADIO_BUTTON);
@@ -323,12 +323,12 @@ projectionEditor::projectionEditor()
   _modes[0] = new Fl_Value_Input(WB, height - 4 * WB - 5 * BH, BB  / 2, BH);
   _modes[0]->tooltip("Number of Fourier modes along u");
   _modes[1] = new Fl_Value_Input(WB + BB / 2, height - 4 * WB - 5 * BH, BB  / 2, BH, 
-				 "Fourier modes");
+                                 "Fourier modes");
   _modes[1]->tooltip("Number of Fourier modes along v");
   _modes[2] = new Fl_Value_Input(WB, height - 4 * WB - 4 * BH, BB  / 2, BH);
   _modes[2]->tooltip("Number of Chebyshev modes along u");
   _modes[3] = new Fl_Value_Input(WB + BB / 2, height - 4 * WB - 4 * BH, BB  / 2, BH, 
-				 "Chebyshev modes");
+                                 "Chebyshev modes");
   _modes[3]->tooltip("Number of Chebyshev modes along v");
   for(int i = 0; i < 4; i++){
     _modes[i]->value(8);
@@ -340,7 +340,7 @@ projectionEditor::projectionEditor()
 
   {
     Fl_Button *b = new Fl_Button(width - WB - BB, height - 4 * WB - 5 * BH, 
-				  BB, 2 * BH, "Generate\nPatch");
+                                  BB, 2 * BH, "Generate\nPatch");
     b->callback(compute_cb, this);
   }
 
@@ -348,13 +348,13 @@ projectionEditor::projectionEditor()
     int bb = (int)(0.37 * BB);
     new Fl_Box(WB, height - 3 * WB - 3 * BH, BB / 2, BH, "Delete:");
     Fl_Button *b1 = new Fl_Button(WB + BB / 2, height - 3 * WB - 3 * BH, 
-				  bb, BH, "last");
+                                  bb, BH, "last");
     b1->callback(action_cb, (void*)"delete_last");
     Fl_Button *b2 = new Fl_Button(WB + BB / 2 + bb, height - 3 * WB - 3 * BH,
-				  bb, BH, "all");
+                                  bb, BH, "all");
     b2->callback(action_cb, (void*)"delete_all");
     Fl_Button *b3 = new Fl_Button(WB + BB / 2 + 2 * bb, height - 3 * WB - 3 * BH,
-				  bb, BH, "sel.");
+                                  bb, BH, "sel.");
     b3->callback(action_cb, (void*)"delete_select");
   }
 
@@ -363,23 +363,23 @@ projectionEditor::projectionEditor()
     int s = width - WB - BB / 2 - 3 * bb;
     new Fl_Box(s, height - 3 * WB - 3 * BH, BB / 2, BH, "Save:");
     Fl_Button *b1 = new Fl_Button(s + BB / 2, height - 3 * WB - 3 * BH,
-				  bb, BH, "last");
+                                  bb, BH, "last");
     b1->callback(action_cb, (void*)"save_last");
     Fl_Button *b2 = new Fl_Button(s + BB / 2 + bb, height - 3 * WB - 3 * BH,
-				  bb, BH, "all");
+                                  bb, BH, "all");
     b2->callback(action_cb, (void*)"save_all");
     Fl_Button *b3 = new Fl_Button(s + BB / 2 + 2 * bb, height - 3 * WB - 3 * BH,
-				  bb, BH, "sel.");
+                                  bb, BH, "sel.");
     b3->callback(action_cb, (void*)"save_select");
   }
 
   {
     Fl_Button *b1 = new Fl_Button(WB, height - 2 * WB - 2 * BH, BB, BH, 
-				  "Blend");
+                                  "Blend");
     b1->callback(blend_cb, this);
     
     Fl_Button *b2 = new Fl_Button(2 * WB + BB, height - 2 * WB - 2 * BH, BB, 
-				  BH, "Intersect");
+                                  BH, "Intersect");
   }
 
   Fl_Button *b = new Fl_Button(width - WB - BB, height - WB - BH, BB, BH, "Cancel");
@@ -396,7 +396,7 @@ void projectionEditor::load(fourierProjectionFace *face, std::string tag)
   FM::ProjectionSurface *ps = (FM::ProjectionSurface*)face->getNativePtr();
   _browser->add(tag.size() ? tag.c_str() : ps->GetName().c_str());
   projection *p =  new projection(face, _paramWin[0], _paramWin[1], _paramWin[2],
-				  _paramWin[3], _paramWin[4], _paramWin[5], this);
+                                  _paramWin[3], _paramWin[4], _paramWin[5], this);
   _projections.push_back(p);
   _window->add(p->group);
 }
@@ -449,10 +449,10 @@ void browse_cb(Fl_Widget *w, void *data)
 }
 
 void project_point(FM::ProjectionSurface *ps, double x, double y, double z,
-		   std::vector<double> &u, std::vector<double> &v, 
-		   std::vector<double> &dist,
-		   std::vector<std::complex<double> > &f)
-{		   
+                   std::vector<double> &u, std::vector<double> &v, 
+                   std::vector<double> &dist,
+                   std::vector<std::complex<double> > &f)
+{                  
   double uu, vv, p[3], n[3];
   ps->OrthoProjectionOnSurface(x, y, z, uu, vv);
   if(uu >= 0. && uu <= 1. && vv >= 0. && vv <= 1.){
@@ -485,8 +485,8 @@ void translate(void *data, int axis, bool plus)
   if(p){
     FM::ProjectionSurface *ps = (FM::ProjectionSurface*)p->face->getNativePtr();
     SVector3 origin(p->parameters[0]->value(),
-		    p->parameters[1]->value(),
-		    p->parameters[2]->value());
+                    p->parameters[1]->value(),
+                    p->parameters[2]->value());
     SVector3 vec;
     if(axis == 0)
       ps->GetE0(vec[0], vec[1], vec[2]);
@@ -525,22 +525,22 @@ void set_position_cb(Fl_Widget *w, void *data)
     char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, elements);
     if(ib == 'l'){
       if(vertices.size()){
-	p->parameters[0]->value(vertices[0]->x());
-	p->parameters[1]->value(vertices[0]->y());
-	p->parameters[2]->value(vertices[0]->z());
+        p->parameters[0]->value(vertices[0]->x());
+        p->parameters[1]->value(vertices[0]->y());
+        p->parameters[2]->value(vertices[0]->z());
       }
       else if(elements.size()){
-	SPoint3 pc = elements[0]->barycenter();
-	p->parameters[0]->value(pc.x());
-	p->parameters[1]->value(pc.y());
-	p->parameters[2]->value(pc.z());
-	if(elements[0]->getNumFaces()){
-	  MFace f = elements[0]->getFace(0);
-	  SVector3 n = f.normal();
-	  p->parameters[3]->value(n[0]);
-	  p->parameters[4]->value(n[1]);
-	  p->parameters[5]->value(n[2]);
-	}
+        SPoint3 pc = elements[0]->barycenter();
+        p->parameters[0]->value(pc.x());
+        p->parameters[1]->value(pc.y());
+        p->parameters[2]->value(pc.z());
+        if(elements[0]->getNumFaces()){
+          MFace f = elements[0]->getFace(0);
+          SVector3 n = f.normal();
+          p->parameters[3]->value(n[0]);
+          p->parameters[4]->value(n[1]);
+          p->parameters[5]->value(n[2]);
+        }
       }
     }
     ((Fl_Toggle_Button*)w)->value(0);
@@ -586,11 +586,11 @@ void update_cb(Fl_Widget *w, void *data)
   if(p){
     FM::ProjectionSurface *ps = (FM::ProjectionSurface*)p->face->getNativePtr();
     ps->SetOrigin(p->parameters[0]->value(),
-		  p->parameters[1]->value(),
-		  p->parameters[2]->value());
+                  p->parameters[1]->value(),
+                  p->parameters[2]->value());
     SVector3 n(p->parameters[3]->value(),
-	       p->parameters[4]->value(),
-	       p->parameters[5]->value());
+               p->parameters[4]->value(),
+               p->parameters[5]->value());
     if(!n.normalize()) n[2] = 1.;
     SVector3 t1, t2;
     getTangents(n, t1, t2, p->parameters[6]->value());
@@ -598,8 +598,8 @@ void update_cb(Fl_Widget *w, void *data)
     ps->SetE1(t1[0], t1[1], t1[2]);
     ps->SetE2(t2[0], t2[1], t2[2]);
     ps->SetScale(p->parameters[7]->value(),
-		 p->parameters[8]->value(),
-		 p->parameters[9]->value());
+                 p->parameters[8]->value(),
+                 p->parameters[9]->value());
     for (int i = 0; i < ps->GetNumParameters(); i++)
       ps->SetParameter(i, p->parameters[i + 10]->value());
 
@@ -611,19 +611,19 @@ void update_cb(Fl_Widget *w, void *data)
     std::vector<GEntity*> &ent(e->getEntities());
     for(unsigned int i = 0; i < ent.size(); i++){
       if(ent[i]->getSelection()){
-	GVertex *gv = dynamic_cast<GVertex*>(ent[i]);
-	if(!gv)
-	  Msg(GERROR, "Problem in point selection processing");
-	else
-	  project_point(ps, gv->x(), gv->y(), gv->z(), u, v, dist, f);
+        GVertex *gv = dynamic_cast<GVertex*>(ent[i]);
+        if(!gv)
+          Msg(GERROR, "Problem in point selection processing");
+        else
+          project_point(ps, gv->x(), gv->y(), gv->z(), u, v, dist, f);
       }
     }
     std::vector<MElement*> &ele(e->getElements());
     std::set<MVertex*> verts;
     for(unsigned int i = 0; i < ele.size(); i++)
       if(ele[i]->getVisibility() == 2)
-	for(int j = 0; j < ele[i]->getNumVertices(); j++)
-	  verts.insert(ele[i]->getVertex(j));
+        for(int j = 0; j < ele[i]->getNumVertices(); j++)
+          verts.insert(ele[i]->getVertex(j));
     for(std::set<MVertex*>::iterator it = verts.begin(); it != verts.end(); it++)
       project_point(ps, (*it)->x(), (*it)->y(), (*it)->z(), u, v, dist, f);
     e->uv()->set(u, v, dist, f);
@@ -661,55 +661,55 @@ void select_cb(Fl_Widget *w, void *data)
 
     if(ele.size() || ent.size())
       Msg(ONSCREEN, "Select %s\n"
-	  "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
+          "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
     else
       Msg(ONSCREEN, "Select %s\n"
-	  "[Press 'e' to end selection or 'q' to abort]", str);
+          "[Press 'e' to end selection or 'q' to abort]", str);
 
     char ib = SelectEntity(what, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
       if(CTX.pick_elements){
-	for(unsigned int i = 0; i < elements.size(); i++){
-	  if(elements[i]->getVisibility() != 2){
-	    elements[i]->setVisibility(2); ele.push_back(elements[i]);
-	  }
-	}
+        for(unsigned int i = 0; i < elements.size(); i++){
+          if(elements[i]->getVisibility() != 2){
+            elements[i]->setVisibility(2); ele.push_back(elements[i]);
+          }
+        }
       }
       else{
-	for(unsigned int i = 0; i < vertices.size(); i++){
-	  if(vertices[i]->getSelection() != 1){
-	    vertices[i]->setSelection(1); ent.push_back(vertices[i]);
-	  }
-	}
-	for(unsigned int i = 0; i < faces.size(); i++){
-	  if(faces[i]->getSelection() != 1){
-	    faces[i]->setSelection(1); ent.push_back(faces[i]);
-	  }
-	}
+        for(unsigned int i = 0; i < vertices.size(); i++){
+          if(vertices[i]->getSelection() != 1){
+            vertices[i]->setSelection(1); ent.push_back(vertices[i]);
+          }
+        }
+        for(unsigned int i = 0; i < faces.size(); i++){
+          if(faces[i]->getSelection() != 1){
+            faces[i]->setSelection(1); ent.push_back(faces[i]);
+          }
+        }
       }
     }
     if(ib == 'r') {
       if(CTX.pick_elements){
-	for(unsigned int i = 0; i < elements.size(); i++)
-	  elements[i]->setVisibility(1);
+        for(unsigned int i = 0; i < elements.size(); i++)
+          elements[i]->setVisibility(1);
       }
       else{
-	for(unsigned int i = 0; i < vertices.size(); i++)
-	  vertices[i]->setSelection(0);
-	for(unsigned int i = 0; i < faces.size(); i++)
-	  faces[i]->setSelection(0);
+        for(unsigned int i = 0; i < vertices.size(); i++)
+          vertices[i]->setSelection(0);
+        for(unsigned int i = 0; i < faces.size(); i++)
+          faces[i]->setSelection(0);
       }
     }
     if(ib == 'u') {
       if(CTX.pick_elements){
-	if(ele.size()){
-	  ele[ele.size() - 1]->setVisibility(1); ele.pop_back();
-	}
+        if(ele.size()){
+          ele[ele.size() - 1]->setVisibility(1); ele.pop_back();
+        }
       }
       else{
-	if(ent.size()){
-	  ent[ent.size() - 1]->setSelection(0); ent.pop_back();
-	}
+        if(ent.size()){
+          ent[ent.size() - 1]->setSelection(0); ent.pop_back();
+        }
       }
     }
     if(ib == 'e') {
@@ -745,15 +745,15 @@ void filter_cb(Fl_Widget *w, void *data)
     for(unsigned int i = 0; i < ent.size(); i++){
       GVertex *gv = dynamic_cast<GVertex*>(ent[i]);
       if(gv){
-	double uu, vv, p[3];
-	ps->OrthoProjectionOnSurface(gv->x(), gv->y(), gv->z(), uu, vv);
-	ps->F(uu, vv, p[0], p[1], p[2]);
-	double dx = gv->x() - p[0], dy = gv->y() - p[1], dz = gv->z() - p[2];
-	if(uu >= 0. && uu <= 1. && vv >= 0. && vv < 1. &&
-	   sqrt(dx * dx + dy * dy + dz * dz) < threshold)
-	  gv->setSelection(true);
-	else
-	  gv->setSelection(false);
+        double uu, vv, p[3];
+        ps->OrthoProjectionOnSurface(gv->x(), gv->y(), gv->z(), uu, vv);
+        ps->F(uu, vv, p[0], p[1], p[2]);
+        double dx = gv->x() - p[0], dy = gv->y() - p[1], dz = gv->z() - p[2];
+        if(uu >= 0. && uu <= 1. && vv >= 0. && vv < 1. &&
+           sqrt(dx * dx + dy * dy + dz * dz) < threshold)
+          gv->setSelection(true);
+        else
+          gv->setSelection(false);
       }
     }
     std::vector<MElement*> &ele(e->getElements());
@@ -764,19 +764,19 @@ void filter_cb(Fl_Widget *w, void *data)
       ps->F(uu, vv, p[0], p[1], p[2]);
       double dx = pc.x() - p[0], dy = pc.y() - p[1], dz = pc.z() - p[2];
       if(uu >= 0. && uu <= 1. && vv >= 0. && vv < 1. &&
-	 sqrt(dx * dx + dy * dy + dz * dz) < threshold){
-	ele[i]->setVisibility(2);
-	// keep only the elements oriented in the same direction as
-	// the projection surface
-	if(e->getOrientation() && ele[i]->getNumFaces()){
-	  MFace f = ele[i]->getFace(0);
-	  SVector3 n = f.normal(), n2;
-	  ps->GetNormal(uu, vv, n2[0], n2[1], n2[2]);
-	  if(dot(n, n2) < 0.) ele[i]->setVisibility(1);
-	}
+         sqrt(dx * dx + dy * dy + dz * dz) < threshold){
+        ele[i]->setVisibility(2);
+        // keep only the elements oriented in the same direction as
+        // the projection surface
+        if(e->getOrientation() && ele[i]->getNumFaces()){
+          MFace f = ele[i]->getFace(0);
+          SVector3 n = f.normal(), n2;
+          ps->GetNormal(uu, vv, n2[0], n2[1], n2[2]);
+          if(dot(n, n2) < 0.) ele[i]->setVisibility(1);
+        }
       }
       else
-	ele[i]->setVisibility(1);
+        ele[i]->setVisibility(1);
     }
     if(ele.size()) CTX.mesh.changed = ENT_ALL;
   }
@@ -808,27 +808,27 @@ void save_selection_cb(Fl_Widget *w, void *data)
     for(unsigned int i = 0; i < ent.size(); i++){
       GVertex *gv = dynamic_cast<GVertex*>(ent[i]);
       if(gv && gv->getSelection())
-	fprintf(fp, "Point(%d) = {%.16g,%.16g,%.16g,1};\n", gv->tag(), 
-		gv->x(), gv->y(), gv->z());
+        fprintf(fp, "Point(%d) = {%.16g,%.16g,%.16g,1};\n", gv->tag(), 
+                gv->x(), gv->y(), gv->z());
     }
     std::vector<MElement*> &ele(e->getElements());
     if(ele.size()){
       int nelm = 0;
       std::set<MVertex*> verts;
       for(unsigned int i = 0; i < ele.size(); i++){
-	if(ele[i]->getVisibility() == 2){
-	  nelm++;
-	  for(int j = 0; j < ele[i]->getNumVertices(); j++)
-	    verts.insert(ele[i]->getVertex(j));
-	}
+        if(ele[i]->getVisibility() == 2){
+          nelm++;
+          for(int j = 0; j < ele[i]->getNumVertices(); j++)
+            verts.insert(ele[i]->getVertex(j));
+        }
       }
       fprintf(fp, "$NOD\n%d\n", (int)verts.size());
       for(std::set<MVertex*>::iterator it = verts.begin(); it != verts.end(); it++)
-	(*it)->writeMSH(fp);
+        (*it)->writeMSH(fp);
       fprintf(fp, "$ENDNOD\n$ELM\n%d\n", nelm);
       for(unsigned int i = 0; i < ele.size(); i++)
-	if(ele[i]->getVisibility() == 2)
-	  ele[i]->writeMSH(fp, 1.0);
+        if(ele[i]->getVisibility() == 2)
+          ele[i]->writeMSH(fp, 1.0);
       fprintf(fp, "$ENDELM\n");
     }
     fclose(fp);
@@ -852,23 +852,23 @@ void load_projection_cb(Fl_Widget *w, void *data)
     for(int proj = 0; proj < num; proj++){
       char name[256], tag[256];
       if(!fscanf(fp, "%s", tag) || !fscanf(fp, "%s", name)){
-	Msg(GERROR, "Bad projection file format");
-	return;
+        Msg(GERROR, "Bad projection file format");
+        return;
       }
       fourierProjectionFace *face = createProjectionFaceFromName(name);
       if(face){
-	e->load(face, tag);
-	projection *p = e->getLastProjection();
-	if(p){
-	  for(unsigned int i = 0; i < p->parameters.size(); i++){
-	    double val;
-	    if(!fscanf(fp, "%lf", &val)){
-	      Msg(GERROR, "Missing paramater for projection `%s'", name);
-	      break;
-	    }
-	    p->parameters[i]->value(val);
-	  }
-	}
+        e->load(face, tag);
+        projection *p = e->getLastProjection();
+        if(p){
+          for(unsigned int i = 0; i < p->parameters.size(); i++){
+            double val;
+            if(!fscanf(fp, "%lf", &val)){
+              Msg(GERROR, "Missing paramater for projection `%s'", name);
+              break;
+            }
+            p->parameters[i]->value(val);
+          }
+        }
       }
     }
     fclose(fp);
@@ -886,14 +886,14 @@ void save_projection_cb(Fl_Widget *w, void *data)
       std::string name = file_chooser_get_name(1);
       FILE *fp = fopen(name.c_str(), "w");
       if(!fp){
-	Msg(GERROR, "Unable to open file `%s'", name.c_str());
-	return;
+        Msg(GERROR, "Unable to open file `%s'", name.c_str());
+        return;
       }
       char no_ext[256], ext[256], base[256];
       SplitFileName(name.c_str(), no_ext, ext, base);
       fprintf(fp, "1\n%s\n%s\n", base, ps->GetName().c_str());
       for(unsigned int i = 0; i < p->parameters.size(); i++)
-	fprintf(fp, "%.16g\n", p->parameters[i]->value());
+        fprintf(fp, "%.16g\n", p->parameters[i]->value());
       fclose(fp);
     }
   }
@@ -930,44 +930,44 @@ void compute_cb(Fl_Widget *w, void *data)
     if (e->getPatchType()) {
       // create the US-FFT/Windowing faces (with boundaries)
       FM::Patch* patch =
-	new FM::WFPatch(0, ps->clone(), u, v, f, 3, uModes, vModes);
+        new FM::WFPatch(0, ps->clone(), u, v, f, 3, uModes, vModes);
       makeGFace(GModel::current(), patch);
     }
     else {
       // create the Fourier faces (with boundaries)
       if(ps->IsUPeriodic()) {
-	FM::Patch* patchL = 
-	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
-			 uM, vM, h0, h1, h2, h3);
-	patchL->SetMinU(-0.35);
-	patchL->SetMaxU(0.35);
-	makeGFace(GModel::current(), patchL);
-	FM::Patch* patchR = 
-	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
-			 uM, vM, h0, h1, h2, h3);
-	patchR->SetMinU(0.15);
-	patchR->SetMaxU(0.85);
-	makeGFace(GModel::current(), patchR);
+        FM::Patch* patchL = 
+          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+                         uM, vM, h0, h1, h2, h3);
+        patchL->SetMinU(-0.35);
+        patchL->SetMaxU(0.35);
+        makeGFace(GModel::current(), patchL);
+        FM::Patch* patchR = 
+          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
+                         uM, vM, h0, h1, h2, h3);
+        patchR->SetMinU(0.15);
+        patchR->SetMaxU(0.85);
+        makeGFace(GModel::current(), patchR);
       }
       else if (ps->IsVPeriodic()) {
-	FM::Patch* patchL = 
-	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
-			 uM, vM, h0, h1, h2, h3);
-	patchL->SetMinV(-0.35);
-	patchL->SetMaxV(0.35);
-	makeGFace(GModel::current(), patchL);
-	FM::Patch* patchR = 
-	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
-			 uM, vM, h0, h1, h2, h3);
-	patchR->SetMinV(0.15);
-	patchR->SetMaxV(0.85);
-	makeGFace(GModel::current(), patchR);
+        FM::Patch* patchL = 
+          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+                         uM, vM, h0, h1, h2, h3);
+        patchL->SetMinV(-0.35);
+        patchL->SetMaxV(0.35);
+        makeGFace(GModel::current(), patchL);
+        FM::Patch* patchR = 
+          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
+                         uM, vM, h0, h1, h2, h3);
+        patchR->SetMinV(0.15);
+        patchR->SetMaxV(0.85);
+        makeGFace(GModel::current(), patchR);
       }
       else {
-	FM::Patch* patch = 
-	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
-			 uM, vM, h0, h1, h2, h3);
-	makeGFace(GModel::current(), patch);
+        FM::Patch* patch = 
+          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+                         uM, vM, h0, h1, h2, h3);
+        makeGFace(GModel::current(), patch);
       }
     }
   }
@@ -1030,13 +1030,13 @@ void action_cb(Fl_Widget *w, void *data)
     int id = -1;
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
       if((*it)->getNativeType() == GEntity::FourierModel) 
-	id = std::max(id, (*it)->tag());
+        id = std::max(id, (*it)->tag());
     if(id > 0) faces.push_back(m->getFaceByTag(id));
   }
   else if(what == "delete_all" || what == "save_all"){
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
       if((*it)->getNativeType() == GEntity::FourierModel)
-	faces.push_back(*it);
+        faces.push_back(*it);
   }
   else if(what == "delete_select" || what == "save_select"){
     Msg(ONSCREEN, "Select Surface\n[Press 'e' to end selection 'q' to abort]");
@@ -1058,13 +1058,13 @@ void action_cb(Fl_Widget *w, void *data)
     if(file_chooser(0, 1, "Save Fourier Model", "*.fm")){
       FILE *fp = fopen(file_chooser_get_name(1).c_str(), "w");
       if(!fp){
-	Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1).c_str());
-	return;
+        Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1).c_str());
+        return;
       }
       fprintf(fp, "%d\n", (int)faces.size());
       for(unsigned int i = 0; i < faces.size(); i++){
-	fourierFace* ff = (fourierFace*)faces[i];
-	((FM::TopoFace*)ff->getNativePtr())->GetPatch()->Export(fp);
+        fourierFace* ff = (fourierFace*)faces[i];
+        ((FM::TopoFace*)ff->getNativePtr())->GetPatch()->Export(fp);
       }
       fclose(fp);
     }

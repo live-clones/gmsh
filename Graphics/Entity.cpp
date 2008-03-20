@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.82 2008-02-17 08:47:59 geuzaine Exp $
+// $Id: Entity.cpp,v 1.83 2008-03-20 11:44:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -65,8 +65,8 @@ void Draw_Sphere(double size, double x, double y, double z, int light)
 
 
 void Draw_TapCylinder(double width, double val1, double val2, 
-		      double ValMin, double ValMax, 
-		      double *x, double *y, double *z, int light)
+                      double ValMin, double ValMax, 
+                      double *x, double *y, double *z, int light)
 {
   if(light) glEnable(GL_LIGHTING);
 
@@ -157,10 +157,10 @@ void Draw_Line(int type, double width, double *x, double *y, double *z,
 }
 
 void Draw_SimpleVector(int arrow, int fill,
-		       double relHeadRadius, double relStemLength, double relStemRadius,
-		       double x, double y, double z,
-		       double dx, double dy, double dz, 
-		       double d, int light)
+                       double relHeadRadius, double relStemLength, double relStemRadius,
+                       double x, double y, double z,
+                       double dx, double dy, double dz, 
+                       double d, int light)
 {
   double n[3], t[3], u[3];
 
@@ -211,23 +211,23 @@ void Draw_SimpleVector(int arrow, int fill,
       if(light) glNormal3dv(u);
       glVertex3d(x + dx, y + dy, z + dz);
       glVertex3d(x + f2 * dx + b * (t[0]), y + f2 * dy + b * (t[1]),
-		 z + f2 * dz + b * (t[2]));
+                 z + f2 * dz + b * (t[2]));
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       glVertex3d(x + f2 * dx + b * (-t[0]), y + f2 * dy + b * (-t[1]),
-		 z + f2 * dz + b * (-t[2]));
+                 z + f2 * dz + b * (-t[2]));
       glVertex3d(x + dx, y + dy, z + dz);
       
       if(light) glNormal3dv(t);
       glVertex3d(x + dx, y + dy, z + dz);
       glVertex3d(x + f2 * dx + b * (-u[0]), y + f2 * dy + b * (-u[1]),
-		 z + f2 * dz + b * (-u[2]));
+                 z + f2 * dz + b * (-u[2]));
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
 
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);      
       glVertex3d(x + f2 * dx + b * (u[0]), y + f2 * dy + b * (u[1]),
-		 z + f2 * dz + b * (u[2]));
+                 z + f2 * dz + b * (u[2]));
       glVertex3d(x + dx, y + dy, z + dz);
       glEnd();
       glDisable(GL_LIGHTING);
@@ -237,16 +237,16 @@ void Draw_SimpleVector(int arrow, int fill,
       glVertex3d(x, y, z);
       glVertex3d(x + dx, y + dy, z + dz);
       glVertex3d(x + f2 * dx + b * (t[0]), y + f2 * dy + b * (t[1]),
-		 z + f2 * dz + b * (t[2]));
+                 z + f2 * dz + b * (t[2]));
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       glVertex3d(x + f2 * dx + b * (-t[0]), y + f2 * dy + b * (-t[1]),
-		 z + f2 * dz + b * (-t[2]));
+                 z + f2 * dz + b * (-t[2]));
       glVertex3d(x + dx, y + dy, z + dz);
       glVertex3d(x + f2 * dx + b * (-u[0]), y + f2 * dy + b * (-u[1]),
-		 z + f2 * dz + b * (-u[2]));
+                 z + f2 * dz + b * (-u[2]));
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       glVertex3d(x + f2 * dx + b * (u[0]), y + f2 * dy + b * (u[1]),
-		 z + f2 * dz + b * (u[2]));
+                 z + f2 * dz + b * (u[2]));
       glVertex3d(x + dx, y + dy, z + dz);
       glEnd();
     }
@@ -263,36 +263,36 @@ void Draw_SimpleVector(int arrow, int fill,
       if(light && fill) glEnable(GL_LIGHTING);
       glBegin(GL_TRIANGLES);
       if(light){
-	normal3points(tm[0], tm[1], tm[2], um[0], um[1], um[2],
-		      top[0], top[1], top[2], nn);
-	glNormal3dv(nn);
+        normal3points(tm[0], tm[1], tm[2], um[0], um[1], um[2],
+                      top[0], top[1], top[2], nn);
+        glNormal3dv(nn);
       }
       glVertex3d(tm[0], tm[1], tm[2]);
       glVertex3d(um[0], um[1], um[2]);
       glVertex3d(top[0], top[1], top[2]);
 
       if(light){
-	normal3points(um[0], um[1], um[2], tp[0], tp[1], tp[2],
-		      top[0], top[1], top[2], nn);
-	glNormal3dv(nn);
+        normal3points(um[0], um[1], um[2], tp[0], tp[1], tp[2],
+                      top[0], top[1], top[2], nn);
+        glNormal3dv(nn);
       }
       glVertex3d(um[0], um[1], um[2]);
       glVertex3d(tp[0], tp[1], tp[2]);
       glVertex3d(top[0], top[1], top[2]);
 
       if(light){
-	normal3points(tp[0], tp[1], tp[2], up[0], up[1], up[2],
-		      top[0], top[1], top[2], nn);
-	glNormal3dv(nn);
+        normal3points(tp[0], tp[1], tp[2], up[0], up[1], up[2],
+                      top[0], top[1], top[2], nn);
+        glNormal3dv(nn);
       }
       glVertex3d(tp[0], tp[1], tp[2]);
       glVertex3d(up[0], up[1], up[2]);
       glVertex3d(top[0], top[1], top[2]);
 
       if(light){
-	normal3points(up[0], up[1], up[2], tm[0], tm[1], tm[2],
-		      top[0], top[1], top[2], nn);
-	glNormal3dv(nn);
+        normal3points(up[0], up[1], up[2], tm[0], tm[1], tm[2],
+                      top[0], top[1], top[2], nn);
+        glNormal3dv(nn);
       }
       glVertex3d(up[0], up[1], up[2]);
       glVertex3d(tm[0], tm[1], tm[2]);
@@ -327,8 +327,8 @@ void Draw_SimpleVector(int arrow, int fill,
 }
 
 void Draw_3DArrow(double relHeadRadius, double relStemLength, double relStemRadius,
-		  double x, double y, double z, double dx, double dy, double dz,
-		  double length, int light)
+                  double x, double y, double z, double dx, double dy, double dz,
+                  double length, int light)
 {
   if(light) glEnable(GL_LIGHTING);
 
@@ -379,7 +379,7 @@ void Draw_3DArrow(double relHeadRadius, double relStemLength, double relStemRadi
 }
 
 void Draw_Vector(int Type, int Fill,
-		 double relHeadRadius, double relStemLength, double relStemRadius,
+                 double relHeadRadius, double relStemLength, double relStemRadius,
                  double x, double y, double z, double dx, double dy, double dz,
                  int light)
 {
@@ -396,16 +396,16 @@ void Draw_Vector(int Type, int Fill,
     break;
   case 2:
     Draw_SimpleVector(1, Fill, relHeadRadius, relStemLength, relStemRadius,
-		      x, y, z, dx, dy, dz, length, light);
+                      x, y, z, dx, dy, dz, length, light);
     break;
   case 3:
     Draw_SimpleVector(0, Fill, relHeadRadius, relStemLength, relStemRadius,
-		      x, y, z, dx, dy, dz, length, light);
+                      x, y, z, dx, dy, dz, length, light);
     break;
   case 4:
   default:
     Draw_3DArrow(relHeadRadius, relStemLength, relStemRadius,
-		 x, y, z, dx, dy, dz, length, light);
+                 x, y, z, dx, dy, dz, length, light);
     break;
   }
 }
@@ -424,35 +424,35 @@ private:
     double _a, _b, _c, _d;
 public:
     plane(double a, double b, double c, double d) :
-	_a(a), _b(b), _c(c), _d(d) {;};
+        _a(a), _b(b), _c(c), _d(d) {;};
     double val(point &p){
-	return _a*p.x + _b*p.y + _c*p.z + _d;
+        return _a*p.x + _b*p.y + _c*p.z + _d;
     };
     point intersect(point &p1, point &p2){
-	double v1 = val(p1), v2 = val(p2);
-	if(fabs(v1) < 1.e-12){
-	    if(fabs(v2) < 1.e-12)
-		return point();
-	    else
-		return point(p1.x, p1.y, p1.z);
-	}
-	else if(fabs(v2) < 1.e-12){
-	    return point(p2.x, p2.y, p2.z);
-	}
-	else if(v1 * v2 < 0.){
-	    double coef = - v1 / (v2 - v1);
-	    return point(coef * (p2.x - p1.x) + p1.x,
-			 coef * (p2.y - p1.y) + p1.y,
-			 coef * (p2.z - p1.z) + p1.z);
-	}
-	else
-	    return point();
+        double v1 = val(p1), v2 = val(p2);
+        if(fabs(v1) < 1.e-12){
+            if(fabs(v2) < 1.e-12)
+                return point();
+            else
+                return point(p1.x, p1.y, p1.z);
+        }
+        else if(fabs(v2) < 1.e-12){
+            return point(p2.x, p2.y, p2.z);
+        }
+        else if(v1 * v2 < 0.){
+            double coef = - v1 / (v2 - v1);
+            return point(coef * (p2.x - p1.x) + p1.x,
+                         coef * (p2.y - p1.y) + p1.y,
+                         coef * (p2.z - p1.z) + p1.z);
+        }
+        else
+            return point();
     };
 };
 
 void Draw_Box(double xmin, double ymin, double zmin,
-	      double xmax, double ymax, double zmax,
-	      bool labels)
+              double xmax, double ymax, double zmax,
+              bool labels)
 {
   glBegin(GL_LINE_LOOP);
   glVertex3d(xmin, ymin, zmin);
@@ -480,22 +480,22 @@ void Draw_Box(double xmin, double ymin, double zmin,
     char label[256];
     double offset = 0.3 * CTX.gl_fontsize * CTX.pixel_equiv_x;
     glRasterPos3d(xmin + offset / CTX.s[0], 
-		  ymin + offset / CTX.s[1], 
-		  zmin + offset / CTX.s[2]);
+                  ymin + offset / CTX.s[1], 
+                  zmin + offset / CTX.s[2]);
     sprintf(label, "(%g,%g,%g)", xmin, ymin, zmin);
     Draw_String(label);
     glRasterPos3d(xmax + offset / CTX.s[0], 
-		  ymax + offset / CTX.s[1], 
-		  zmax + offset / CTX.s[2]);
+                  ymax + offset / CTX.s[1], 
+                  zmax + offset / CTX.s[2]);
     sprintf(label, "(%g,%g,%g)", xmax, ymax, zmax);
     Draw_String(label);
   }
 }
 
 void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
-			     double xmax, double ymax, double zmax,
-			     double a, double b, double c, double d,
-			     int shade)
+                             double xmax, double ymax, double zmax,
+                             double a, double b, double c, double d,
+                             int shade)
 {
 
   plane pl(a, b, c, d);
@@ -544,25 +544,25 @@ void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
     point p[4];
     for(int j = 0; j < 4; j++){
       if(edge[face[i][j]].valid == true)
-	p[nb++] = edge[face[i][j]];
+        p[nb++] = edge[face[i][j]];
     }
     if(nb > 1){
       for(int j = 1; j < nb; j++){
-	double xx[2] = {p[j].x, p[j-1].x};
-	double yy[2] = {p[j].y, p[j-1].y};
-	double zz[2] = {p[j].z, p[j-1].z};
-	Draw_Cylinder(CTX.line_width, xx, yy, zz, 1);
+        double xx[2] = {p[j].x, p[j-1].x};
+        double yy[2] = {p[j].y, p[j-1].y};
+        double zz[2] = {p[j].z, p[j-1].z};
+        Draw_Cylinder(CTX.line_width, xx, yy, zz, 1);
       }
       for(int j = 0; j < nb; j++){
-	Draw_3DArrow(CTX.arrow_rel_head_radius, 
-		     CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
-		     p[j].x, p[j].y, p[j].z, n[0], n[1], n[2], length, 1);
-	if(shade){
-	  p_shade[n_shade].x = p[j].x;
-	  p_shade[n_shade].y = p[j].y;
-	  p_shade[n_shade].z = p[j].z;
-	  n_shade++;
-	}
+        Draw_3DArrow(CTX.arrow_rel_head_radius, 
+                     CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius,
+                     p[j].x, p[j].y, p[j].z, n[0], n[1], n[2], length, 1);
+        if(shade){
+          p_shade[n_shade].x = p[j].x;
+          p_shade[n_shade].y = p[j].y;
+          p_shade[n_shade].z = p[j].z;
+          n_shade++;
+        }
       }
     }
   }
@@ -577,7 +577,7 @@ void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
     glNormal3d(n[0], n[1], n[2]);
     for(int j = 0; j < n_shade; j++){
       glVertex3d(p_shade[j].x, p_shade[j].y, p_shade[j].z);
-    }	
+    }   
     glEnd();
     glDisable(GL_LIGHTING);
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, twoside);
@@ -621,7 +621,7 @@ void Draw_SmallAxes()
 }
 
 int Draw_Tics(int comp, int n, char *format, char *label,
-	      double p1[3], double p2[3], double perp[3], int mikado)
+              double p1[3], double p2[3], double perp[3], int mikado)
 {
   // draws n tic marks (in direction perp) and labels along the line p1->p2
 
@@ -666,13 +666,13 @@ int Draw_Tics(int comp, int n, char *format, char *label,
 
     if(i < n-1 && !mikado){
       for(int j = 1; j < 10; j++){
-	double dd = d + j * step/10.;
-	double pp[3] = { p1[0]+t[0]*dd, p1[1]+t[1]*dd, p1[2]+t[2]*dd };
-	double qq[3] = { pp[0]+perp[0]*w2, pp[1]+perp[1]*w2, pp[2]+perp[2]*w2 };
-	glBegin(GL_LINES);
-	glVertex3d(pp[0], pp[1], pp[2]);
-	glVertex3d(qq[0], qq[1], qq[2]);
-	glEnd();
+        double dd = d + j * step/10.;
+        double pp[3] = { p1[0]+t[0]*dd, p1[1]+t[1]*dd, p1[2]+t[2]*dd };
+        double qq[3] = { pp[0]+perp[0]*w2, pp[1]+perp[1]*w2, pp[2]+perp[2]*w2 };
+        glBegin(GL_LINES);
+        glVertex3d(pp[0], pp[1], pp[2]);
+        glVertex3d(qq[0], qq[1], qq[2]);
+        glEnd();
       }
     }
 
@@ -716,20 +716,20 @@ void Draw_GridStipple(int n1, int n2, double p1[3], double p2[3], double p3[3])
   for(int i = 1; i < n1-1; i++){
     double d = (double)i/(double)(n1-1) * l1;
     glVertex3d(p1[0] + t1[0]*d,
-	       p1[1] + t1[1]*d,
-	       p1[2] + t1[2]*d);
+               p1[1] + t1[1]*d,
+               p1[2] + t1[2]*d);
     glVertex3d(p1[0] + t1[0]*d + t2[0]*l2, 
-	       p1[1] + t1[1]*d + t2[1]*l2, 
-	       p1[2] + t1[2]*d + t2[2]*l2);
+               p1[1] + t1[1]*d + t2[1]*l2, 
+               p1[2] + t1[2]*d + t2[2]*l2);
   }
   for(int i = 1; i < n2-1; i++){
     double d = (double)i/(double)(n2-1) * l2;
     glVertex3d(p1[0] + t2[0]*d, 
-	       p1[1] + t2[1]*d, 
-	       p1[2] + t2[2]*d);
+               p1[1] + t2[1]*d, 
+               p1[2] + t2[2]*d);
     glVertex3d(p1[0] + t2[0]*d + t1[0]*l1, 
-	       p1[1] + t2[1]*d + t1[1]*l1, 
-	       p1[2] + t2[2]*d + t1[2]*l1);
+               p1[1] + t2[1]*d + t1[1]*l1, 
+               p1[2] + t2[2]*d + t1[2]*l1);
   }
 
   glEnd();
@@ -738,23 +738,23 @@ void Draw_GridStipple(int n1, int n2, double p1[3], double p2[3], double p3[3])
 }
 
 void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256], 
-	       SBoundingBox3d &bb, int mikado)
+               SBoundingBox3d &bb, int mikado)
 {
   double bbox[6] = {bb.min().x(), bb.max().x(),
-		    bb.min().y(), bb.max().y(),
-		    bb.min().z(), bb.max().z()};
+                    bb.min().y(), bb.max().y(),
+                    bb.min().z(), bb.max().z()};
   Draw_Axes(mode, tics, format, label, bbox, mikado);
 }
 
 void Draw_Axe(double xmin, double ymin, double zmin,
-	      double xmax, double ymax, double zmax, int nticks, int mikado)
+              double xmax, double ymax, double zmax, int nticks, int mikado)
 {
   if(mikado){
     nticks = (nticks - 1) * mikado;
     if(nticks < 1) nticks = 1;
     double dd[3] = {(xmax - xmin) / nticks, 
-		    (ymax - ymin) / nticks, 
-		    (zmax - zmin) / nticks};
+                    (ymax - ymin) / nticks, 
+                    (zmax - zmin) / nticks};
     double axe_color[4];
     glGetDoublev(GL_CURRENT_COLOR, axe_color);
     for(int i = 1; i <= nticks; i++){
@@ -776,7 +776,7 @@ void Draw_Axe(double xmin, double ymin, double zmin,
 }
 
 void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256], 
-	       double bb[6], int mikado)
+               double bb[6], int mikado)
 {
   // mode 0: nothing
   //      1: axes

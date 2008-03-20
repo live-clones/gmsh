@@ -17,7 +17,7 @@
 
 extern "C"
 {
-	   #include "med.h"
+           #include "med.h"
 }
 
 typedef std::map<med_geometrie_element,std::vector<int> >  connectivities;
@@ -33,15 +33,15 @@ class MedIO ;
 //
 class ConversionData 
 {
-	public :
+        public :
 
- 	   ConversionData();
+           ConversionData();
 
            std::map<int,med_geometrie_element> typesOfElts;
            std::map<int,std::list<int> > medVertexOrder;
 
-	   std::map<int,int> familleParDimension;
-	   std::map<int,int> famillefamille;
+           std::map<int,int> familleParDimension;
+           std::map<int,int> famillefamille;
 
 };
 
@@ -92,7 +92,7 @@ template <>
 struct TraiteMaille<GEdge> : public TraiteMailledeBase<GEdge> {
   static inline void AddElement(const GEdge & ele, MedIO& monDriver) 
   {
-	   RecupereElement (ele.lines,  RecupereFamille(ele, 1, monDriver), monDriver);
+           RecupereElement (ele.lines,  RecupereFamille(ele, 1, monDriver), monDriver);
   }
 };
 
@@ -100,8 +100,8 @@ template <>
 struct TraiteMaille<GFace> : public TraiteMailledeBase<GFace> {
   static inline void AddElement(const GFace & ele,  MedIO&  monDriver) 
   {
-	   RecupereElement (ele.triangles,   RecupereFamille(ele, 2, monDriver), monDriver);
-	   RecupereElement (ele.quadrangles, RecupereFamille(ele, 2, monDriver), monDriver);
+           RecupereElement (ele.triangles,   RecupereFamille(ele, 2, monDriver), monDriver);
+           RecupereElement (ele.quadrangles, RecupereFamille(ele, 2, monDriver), monDriver);
   }
 };
 
@@ -109,10 +109,10 @@ template <>
 struct TraiteMaille<GRegion> : public TraiteMailledeBase<GRegion>{
   static inline void AddElement(const GRegion & ele, MedIO &  monDriver) 
   {
-	   RecupereElement (ele.tetrahedra, RecupereFamille(ele, 3, monDriver), monDriver );
-	   RecupereElement (ele.hexahedra,  RecupereFamille(ele, 3, monDriver), monDriver);
-	   RecupereElement (ele.prisms,     RecupereFamille(ele, 3, monDriver), monDriver);
-	   RecupereElement (ele.pyramids,   RecupereFamille(ele, 3, monDriver), monDriver);
+           RecupereElement (ele.tetrahedra, RecupereFamille(ele, 3, monDriver), monDriver );
+           RecupereElement (ele.hexahedra,  RecupereFamille(ele, 3, monDriver), monDriver);
+           RecupereElement (ele.prisms,     RecupereFamille(ele, 3, monDriver), monDriver);
+           RecupereElement (ele.pyramids,   RecupereFamille(ele, 3, monDriver), monDriver);
      }
 };
 
@@ -130,7 +130,7 @@ class MedIO
       MedIO();
       int SetFile   (const std::string& theFileName);
       int AddNode   (MVertex* const v, const int famille );
-      int Ecrit	    ();
+      int Ecrit     ();
       int CloseFile ();
 
    private :
@@ -186,7 +186,7 @@ void TraiteMaille<GVertex>::AddElement(const GVertex & ele, MedIO& monDriver)
      monDriver.AddNode(ele.mesh_vertices[0],famille);
 }
 
-//					*-*-*-*-*-*-*-*-*-*
+//                                      *-*-*-*-*-*-*-*-*-*
 
 template<class T> int TraiteMailledeBase<T>::RecupereFamille(const T &ele, const int dimension, MedIO & monDriver)
 // 
@@ -204,16 +204,16 @@ template<class T> int TraiteMailledeBase<T>::RecupereFamille(const T &ele, const
      {
         if (monDriver.numFamilles.find(famille) == monDriver.numFamilles.end())
         {   monDriver.numFamilles.insert(famille);
-	    MyConversionData.familleParDimension[famille]=dimension;
+            MyConversionData.familleParDimension[famille]=dimension;
         }
-	 else famille=famille-1000;
+         else famille=famille-1000;
      }
 
      MyConversionData.famillefamille[familleInitiale]=famille;
      return famille;
 }
 
-//					*-*-*-*-*-*-*-*-*-*
+//                                      *-*-*-*-*-*-*-*-*-*
 
 template<class T>
 template<class G> void TraiteMailledeBase<T>::RecupereElement(const std::vector<G*> &ele, const int famille, MedIO& monDriver) 
@@ -228,16 +228,16 @@ template<class G> void TraiteMailledeBase<T>::RecupereElement(const std::vector<
      const med_geometrie_element medType= Data::MyConversionData.typesOfElts[type];
 
      for (unsigned int elt = 0; elt < ele.size(); ++elt) {
-	const int monNum=ele[elt]->getNum();
-	for (listIter monIter  = Data::MyConversionData.medVertexOrder[type].begin(); 
-	              monIter != Data::MyConversionData.medVertexOrder[type].end(); 
-		      ++monIter) {
-	      const int NoeudATraiter = *monIter - 1;
-	      const int Noeud = ele[elt]->getVertex(NoeudATraiter)->getNum();
-	      monDriver.AddNode(ele[elt]->getVertex(NoeudATraiter),0);
-	      monDriver.LesConn[medType].push_back(monDriver.elements[Noeud]);
+        const int monNum=ele[elt]->getNum();
+        for (listIter monIter  = Data::MyConversionData.medVertexOrder[type].begin(); 
+                      monIter != Data::MyConversionData.medVertexOrder[type].end(); 
+                      ++monIter) {
+              const int NoeudATraiter = *monIter - 1;
+              const int Noeud = ele[elt]->getVertex(NoeudATraiter)->getNum();
+              monDriver.AddNode(ele[elt]->getVertex(NoeudATraiter),0);
+              monDriver.LesConn[medType].push_back(monDriver.elements[Noeud]);
            }
-	monDriver.famElts[medType].push_back(famille);
+        monDriver.famElts[medType].push_back(famille);
         }
 }
 

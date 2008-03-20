@@ -56,8 +56,8 @@ class stepData{
   std::vector<real*> *_data;
  public:
   stepData(GModel *model, DataType type, int numComp, 
-	   std::string fileName="", int fileIndex=-1, double time=0., 
-	   double min=VAL_INF, double max=-VAL_INF)
+           std::string fileName="", int fileIndex=-1, double time=0., 
+           double min=VAL_INF, double max=-VAL_INF)
     : _model(model), _type(type), _numComp(numComp),
       _fileName(fileName), _fileIndex(fileIndex),
       _time(time), _min(min), _max(max), _data(0)
@@ -109,7 +109,7 @@ class stepData{
   {
     if(_data){
       for(unsigned int i = 0; i < _data->size(); i++)
-	if((*_data)[i]) delete [] (*_data)[i];
+        if((*_data)[i]) delete [] (*_data)[i];
       delete _data;
       _data = 0;
     }
@@ -161,8 +161,8 @@ class PViewDataGModel : public PViewData {
 
   // I/O routines
   bool readMSH(std::string fileName, int fileIndex, FILE *fp, bool binary, 
-	       bool swap, int step, double time, int partition, 
-	       int numComp, int numNodes);
+               bool swap, int step, double time, int partition, 
+               int numComp, int numNodes);
   bool writeMSH(std::string name, bool binary=false);
 };
 

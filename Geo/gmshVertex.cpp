@@ -1,4 +1,4 @@
-// $Id: gmshVertex.cpp,v 1.9 2008-02-17 08:47:59 geuzaine Exp $
+// $Id: gmshVertex.cpp,v 1.10 2008-03-20 11:44:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -48,29 +48,29 @@ SPoint2 gmshVertex::reparamOnFace(GFace *face, int dir) const
 
     double U, V;    
     if ((C[0]->beg == v && C[3]->beg == v) ||
-	(C[0]->end == v && C[3]->beg == v) ||
-	(C[0]->beg == v && C[3]->end == v) ||
-	(C[0]->end == v && C[3]->end == v)){
+        (C[0]->end == v && C[3]->beg == v) ||
+        (C[0]->beg == v && C[3]->end == v) ||
+        (C[0]->end == v && C[3]->end == v)){
       U = V = 0;
     }
     else if ((C[0]->beg == v && C[1]->beg == v) ||
-	     (C[0]->end == v && C[1]->beg == v) ||
-	     (C[0]->beg == v && C[1]->end == v) ||
-	     (C[0]->end == v && C[1]->end == v)){
+             (C[0]->end == v && C[1]->beg == v) ||
+             (C[0]->beg == v && C[1]->end == v) ||
+             (C[0]->end == v && C[1]->end == v)){
       U = 1;
       V = 0;
     }
     else if ((C[2]->beg == v && C[1]->beg == v) ||
-	     (C[2]->end == v && C[1]->beg == v) ||
-	     (C[2]->beg == v && C[1]->end == v) ||
-	     (C[2]->end == v && C[1]->end == v)){
+             (C[2]->end == v && C[1]->beg == v) ||
+             (C[2]->beg == v && C[1]->end == v) ||
+             (C[2]->end == v && C[1]->end == v)){
       U = 1;
       V = 1;
     }
     else if ((C[2]->beg == v && C[3]->beg == v) ||
-	     (C[2]->end == v && C[3]->beg == v) ||
-	     (C[2]->beg == v && C[3]->end == v) ||
-	     (C[2]->end == v && C[3]->end == v)){
+             (C[2]->end == v && C[3]->beg == v) ||
+             (C[2]->beg == v && C[3]->end == v) ||
+             (C[2]->end == v && C[3]->end == v)){
       U = 0;
       V = 1;
     }

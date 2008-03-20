@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.44 2008-02-17 08:47:57 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.45 2008-03-20 11:44:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,7 @@ extern Context_T CTX;
 // File chooser
 
 int file_chooser(int multi, int create, const char *message,
-		 const char *filter, const char *fname)
+                 const char *filter, const char *fname)
 {
   static char thefilter[1024] = "";
   static int thefilterindex = 0;
@@ -84,7 +84,7 @@ int file_chooser(int multi, int create, const char *message,
   Fl_File_Chooser::all_files_label = "All files (*)";
   if(!fc) {
     fc = new File_Picker(getenv("PWD") ? "." : CTX.home_dir, thefilter, 
-			 Fl_File_Chooser::SINGLE, message);
+                         Fl_File_Chooser::SINGLE, message);
     fc->position(CTX.file_chooser_position[0], CTX.file_chooser_position[1]);
   }
   if(multi)
@@ -177,14 +177,14 @@ int arrow_editor(const char *title, double &a, double &b, double &c)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == editor->apply) {
-	a = editor->sa->value();
-	b = editor->sb->value();
-	c = editor->sc->value();
-	return 1;
+        a = editor->sa->value();
+        b = editor->sb->value();
+        c = editor->sc->value();
+        return 1;
       }
       if (o == editor->window || o == editor->cancel){
-	editor->window->hide();
-	return 0;
+        editor->window->hide();
+        return 0;
       }
     }
   }
@@ -203,7 +203,7 @@ class Release_Slider : public Fl_Slider {
     switch (event) {
     case FL_RELEASE: 
       if(window())
-	window()->hide();
+        window()->hide();
       return 1;
     default:
       return Fl_Slider::handle(event);
@@ -280,14 +280,14 @@ int generic_bitmap_dialog(const char *name, const char *title, int format)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b->value());
-	CreateOutputFile(name, format);
-	dialog->window->hide();
-	return 1;
+        opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b->value());
+        CreateOutputFile(name, format);
+        dialog->window->hide();
+        return 1;
       }
       if (o == dialog->window || o == dialog->cancel){
-	dialog->window->hide();
-	return 0;
+        dialog->window->hide();
+        return 0;
       }
     }
   }
@@ -333,14 +333,14 @@ int latex_dialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	opt_print_tex_as_equation(0, GMSH_SET | GMSH_GUI, (int)dialog->b->value());
-	CreateOutputFile(name, FORMAT_TEX);
-	dialog->window->hide();
-	return 1;
+        opt_print_tex_as_equation(0, GMSH_SET | GMSH_GUI, (int)dialog->b->value());
+        CreateOutputFile(name, FORMAT_TEX);
+        dialog->window->hide();
+        return 1;
       }
       if (o == dialog->window || o == dialog->cancel){
-	dialog->window->hide();
-	return 0;
+        dialog->window->hide();
+        return 0;
       }
     }
   }
@@ -401,16 +401,16 @@ int jpeg_dialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	opt_print_jpeg_quality(0, GMSH_SET | GMSH_GUI, (int)dialog->s[0]->value());
-	opt_print_jpeg_smoothing(0, GMSH_SET | GMSH_GUI, (int)dialog->s[1]->value());
-	opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b->value());
-	CreateOutputFile(name, FORMAT_JPEG);
-	dialog->window->hide();
-	return 1;
+        opt_print_jpeg_quality(0, GMSH_SET | GMSH_GUI, (int)dialog->s[0]->value());
+        opt_print_jpeg_smoothing(0, GMSH_SET | GMSH_GUI, (int)dialog->s[1]->value());
+        opt_print_text(0, GMSH_SET | GMSH_GUI, (int)dialog->b->value());
+        CreateOutputFile(name, FORMAT_JPEG);
+        dialog->window->hide();
+        return 1;
       }
       if (o == dialog->window || o == dialog->cancel){
-	dialog->window->hide();
-	return 0;
+        dialog->window->hide();
+        return 0;
       }
     }
   }
@@ -466,18 +466,18 @@ int gif_dialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	opt_print_gif_dither(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value());
-	opt_print_gif_interlace(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value());
-	opt_print_gif_sort(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value());
-	opt_print_gif_transparent(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value());
-	opt_print_text(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value());
-	CreateOutputFile(name, FORMAT_GIF);
-	dialog->window->hide();
-	return 1;
+        opt_print_gif_dither(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value());
+        opt_print_gif_interlace(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value());
+        opt_print_gif_sort(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value());
+        opt_print_gif_transparent(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value());
+        opt_print_text(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value());
+        CreateOutputFile(name, FORMAT_GIF);
+        dialog->window->hide();
+        return 1;
       }
       if (o == dialog->window || o == dialog->cancel){
-	dialog->window->hide();
-	return 0;
+        dialog->window->hide();
+        return 0;
       }
     }
   }
@@ -589,23 +589,23 @@ int gl2ps_dialog(const char *name, const char *title, int format)
       if (!o) break;
 
       if (o == dialog->c){
-	activate_gl2ps_choices(format, dialog->c->value(), dialog->b);
+        activate_gl2ps_choices(format, dialog->c->value(), dialog->b);
       }
       if (o == dialog->ok) {
-	opt_print_eps_quality(0, GMSH_SET | GMSH_GUI, dialog->c->value());
-	opt_print_eps_compress(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value());
-	opt_print_eps_background(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value());
-	opt_print_eps_occlusion_culling(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value());
-	opt_print_eps_best_root(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value());
-	opt_print_eps_ps3shading(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value());
-	opt_print_text(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value());
-	CreateOutputFile(name, format);
-	dialog->window->hide();
-	return 1;
+        opt_print_eps_quality(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+        opt_print_eps_compress(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value());
+        opt_print_eps_background(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value());
+        opt_print_eps_occlusion_culling(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value());
+        opt_print_eps_best_root(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value());
+        opt_print_eps_ps3shading(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value());
+        opt_print_text(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value());
+        CreateOutputFile(name, format);
+        dialog->window->hide();
+        return 1;
       }
       if (o == dialog->window || o == dialog->cancel){
-	dialog->window->hide();
-	return 0;
+        dialog->window->hide();
+        return 0;
       }
     }
   }
@@ -654,13 +654,13 @@ int options_dialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	Print_Options(0, GMSH_FULLRC, dialog->b[0]->value(), dialog->b[1]->value(), name);
-	dialog->window->hide();
-	return 1;
+        Print_Options(0, GMSH_FULLRC, dialog->b[0]->value(), dialog->b[1]->value(), name);
+        dialog->window->hide();
+        return 1;
       }
       if (o == dialog->window || o == dialog->cancel){
-	dialog->window->hide();
-	return 0;
+        dialog->window->hide();
+        return 0;
       }
     }
   }
@@ -706,14 +706,14 @@ int geo_dialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	opt_print_geo_labels(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
-	CreateOutputFile(name, FORMAT_GEO);
-	dialog->window->hide();
-	return 1;
+        opt_print_geo_labels(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
+        CreateOutputFile(name, FORMAT_GEO);
+        dialog->window->hide();
+        return 1;
       }
       if (o == dialog->window || o == dialog->cancel){
-	dialog->window->hide();
-	return 0;
+        dialog->window->hide();
+        return 0;
       }
     }
   }
@@ -768,19 +768,19 @@ int pos_dialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
-	opt_print_pos_elementary(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value() ? 1 : 0);
-	opt_print_pos_element(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value() ? 1 : 0);
-	opt_print_pos_gamma(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value() ? 1 : 0);
-	opt_print_pos_eta(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value() ? 1 : 0);
-	opt_print_pos_rho(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value() ? 1 : 0);
-	CreateOutputFile(name, FORMAT_POS);
-	dialog->window->hide();
-	return 1;
+        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
+        opt_print_pos_elementary(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value() ? 1 : 0);
+        opt_print_pos_element(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value() ? 1 : 0);
+        opt_print_pos_gamma(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value() ? 1 : 0);
+        opt_print_pos_eta(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value() ? 1 : 0);
+        opt_print_pos_rho(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value() ? 1 : 0);
+        CreateOutputFile(name, FORMAT_POS);
+        dialog->window->hide();
+        return 1;
       }
       if (o == dialog->window || o == dialog->cancel){
-	dialog->window->hide();
-	return 0;
+        dialog->window->hide();
+        return 0;
       }
     }
   }
@@ -827,14 +827,14 @@ int generic_mesh_dialog(const char *name, const char *title, int format)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
-	CreateOutputFile(name, format);
-	dialog->window->hide();
-	return 1;
+        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
+        CreateOutputFile(name, format);
+        dialog->window->hide();
+        return 1;
       }
       if (o == dialog->window || o == dialog->cancel){
-	dialog->window->hide();
-	return 0;
+        dialog->window->hide();
+        return 0;
       }
     }
   }
@@ -883,7 +883,7 @@ int msh_dialog(const char *name)
   }
   
   dialog->c->value((CTX.mesh.msh_file_version == 1.0) ? 0 : 
-		   CTX.mesh.msh_binary ? 2 : 1);
+                   CTX.mesh.msh_binary ? 2 : 1);
   dialog->b->value(CTX.mesh.save_all ? 1 : 0);
   dialog->window->show();
 
@@ -893,18 +893,18 @@ int msh_dialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI, 
-				  (dialog->c->value() == 0) ? 1. : 2.);
-	opt_mesh_msh_binary(0, GMSH_SET | GMSH_GUI, 
-			    (dialog->c->value() == 2) ? 1 : 0);
-	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
-	CreateOutputFile(name, FORMAT_MSH);
-	dialog->window->hide();
-	return 1;
+        opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI, 
+                                  (dialog->c->value() == 0) ? 1. : 2.);
+        opt_mesh_msh_binary(0, GMSH_SET | GMSH_GUI, 
+                            (dialog->c->value() == 2) ? 1 : 0);
+        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
+        CreateOutputFile(name, FORMAT_MSH);
+        dialog->window->hide();
+        return 1;
       }
       if (o == dialog->window || o == dialog->cancel){
-	dialog->window->hide();
-	return 0;
+        dialog->window->hide();
+        return 0;
       }
     }
   }
@@ -953,15 +953,15 @@ int unv_dialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
-	opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value() ? 1 : 0);
-	CreateOutputFile(name, FORMAT_UNV);
-	dialog->window->hide();
-	return 1;
+        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
+        opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value() ? 1 : 0);
+        CreateOutputFile(name, FORMAT_UNV);
+        dialog->window->hide();
+        return 1;
       }
       if (o == dialog->window || o == dialog->cancel){
-	dialog->window->hide();
-	return 0;
+        dialog->window->hide();
+        return 0;
       }
     }
   }
@@ -1019,15 +1019,15 @@ int bdf_dialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	opt_mesh_bdf_field_format(0, GMSH_SET | GMSH_GUI, dialog->c->value());
-	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
-	CreateOutputFile(name, FORMAT_BDF);
-	dialog->window->hide();
-	return 1;
+        opt_mesh_bdf_field_format(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
+        CreateOutputFile(name, FORMAT_BDF);
+        dialog->window->hide();
+        return 1;
       }
       if (o == dialog->window || o == dialog->cancel){
-	dialog->window->hide();
-	return 0;
+        dialog->window->hide();
+        return 0;
       }
     }
   }
@@ -1084,15 +1084,15 @@ int stl_dialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	opt_mesh_stl_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
-	opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
-	CreateOutputFile(name, FORMAT_STL);
-	dialog->window->hide();
-	return 1;
+        opt_mesh_stl_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
+        CreateOutputFile(name, FORMAT_STL);
+        dialog->window->hide();
+        return 1;
       }
       if (o == dialog->window || o == dialog->cancel){
-	dialog->window->hide();
-	return 0;
+        dialog->window->hide();
+        return 0;
       }
     }
   }

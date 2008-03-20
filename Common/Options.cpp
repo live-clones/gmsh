@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.388 2008-03-18 08:41:20 remacle Exp $
+// $Id: Options.cpp,v 1.389 2008-03-20 11:44:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -463,7 +463,7 @@ void Print_OptionsDoc()
   fprintf(file, "@item View.ColorTable\n");
   fprintf(file, "Color table used to draw the view@*\n");
   fprintf(file, "Saved in: @code{%s}\n\n",
-	  Get_OptionSaveLevel(GMSH_FULLRC|GMSH_OPTIONSRC));
+          Get_OptionSaveLevel(GMSH_FULLRC|GMSH_OPTIONSRC));
   fprintf(file, "@end ftable\n");
   fclose(file);
 
@@ -485,26 +485,26 @@ void Print_OptionsDoc()
 
       int m = p->getNbOptionsStr();
       if(m){
-	fprintf(file, "String options:\n");
-	fprintf(file, "@table @code\n");
-	for(int i = 0; i < m; i++) {
-	  StringXString *sxs = p->getOptionStr(i);
-	  fprintf(file, "@item %s\n", sxs->str);
-	  fprintf(file, "Default value: @code{\"%s\"}\n", sxs->def);
-	}
-	fprintf(file, "@end table\n");
+        fprintf(file, "String options:\n");
+        fprintf(file, "@table @code\n");
+        for(int i = 0; i < m; i++) {
+          StringXString *sxs = p->getOptionStr(i);
+          fprintf(file, "@item %s\n", sxs->str);
+          fprintf(file, "Default value: @code{\"%s\"}\n", sxs->def);
+        }
+        fprintf(file, "@end table\n");
       }
 
       int n = p->getNbOptions();
       if(n){
-	fprintf(file, "Numeric options:\n");
-	fprintf(file, "@table @code\n");
-	for(int i = 0; i < n; i++) {
-	  StringXNumber *sxn = p->getOption(i);
-	  fprintf(file, "@item %s\n", sxn->str);
-	  fprintf(file, "Default value: @code{%g}\n", sxn->def);
-	}
-	fprintf(file, "@end table\n");
+        fprintf(file, "Numeric options:\n");
+        fprintf(file, "@table @code\n");
+        for(int i = 0; i < n; i++) {
+          StringXNumber *sxn = p->getOption(i);
+          fprintf(file, "@item %s\n", sxn->str);
+          fprintf(file, "Default value: @code{%g}\n", sxn->def);
+        }
+        fprintf(file, "@end table\n");
       }
 
     }
@@ -566,20 +566,20 @@ void *Get_StringOption(const char *str, StringXString s[])
 }
 
 void Print_StringOptions(int num, int level, int diff, int help, 
-			 StringXString s[], const char *prefix, FILE *file)
+                         StringXString s[], const char *prefix, FILE *file)
 {
   int i = 0;
   char tmp[1024];
   while(s[i].str) {
     if(s[i].level & level) {
       if(!diff || strcmp(s[i].function(num, GMSH_GET, NULL), s[i].def)){
-	sprintf(tmp, "%s%s = \"%s\";%s%s", prefix,
-		s[i].str, s[i].function(num, GMSH_GET, NULL), 
-		help ? " // " : "", help ? s[i].help : "");
-	if(file)
-	  fprintf(file, "%s\n", tmp);
-	else
-	  Msg(DIRECT, "%s", tmp);
+        sprintf(tmp, "%s%s = \"%s\";%s%s", prefix,
+                s[i].str, s[i].function(num, GMSH_GET, NULL), 
+                help ? " // " : "", help ? s[i].help : "");
+        if(file)
+          fprintf(file, "%s\n", tmp);
+        else
+          Msg(DIRECT, "%s", tmp);
       }
     }
     i++;
@@ -602,7 +602,7 @@ void Print_StringOptionsDoc(StringXString s[], const char *prefix, FILE *file)
     while(j < len){
       tmp[j] = *(ptr++);
       if(j && tmp[j] == '\n' && tmp[j-1] == '\n')
-	tmp[j-1] = '.';
+        tmp[j-1] = '.';
       j++;
       if(j == 1023) break;
     }
@@ -668,20 +668,20 @@ void *Get_NumberOption(const char *str, StringXNumber s[])
 }
 
 void Print_NumberOptions(int num, int level, int diff, int help,
-			 StringXNumber s[], const char *prefix, FILE * file)
+                         StringXNumber s[], const char *prefix, FILE * file)
 {
   int i = 0;
   char tmp[1024];
   while(s[i].str) {
     if(s[i].level & level) {
       if(!diff || (s[i].function(num, GMSH_GET, 0) != s[i].def)){
-	sprintf(tmp, "%s%s = %.16g;%s%s", prefix,
-		s[i].str, s[i].function(num, GMSH_GET, 0), 
-		help ? " // " : "", help ? s[i].help : "");
-	if(file)
-	  fprintf(file, "%s\n", tmp);
-	else
-	  Msg(DIRECT, tmp);
+        sprintf(tmp, "%s%s = %.16g;%s%s", prefix,
+                s[i].str, s[i].function(num, GMSH_GET, 0), 
+                help ? " // " : "", help ? s[i].help : "");
+        if(file)
+          fprintf(file, "%s\n", tmp);
+        else
+          Msg(DIRECT, tmp);
       }
     }
     i++;
@@ -730,21 +730,21 @@ void Set_DefaultColorOptions(int num, StringXColor s[])
   case 1:
     while(s[i].str) {
       s[i].function(num, GMSH_SET, CTX.PACK_COLOR(s[i].def2[0], s[i].def2[1],
-						  s[i].def2[2], s[i].def2[3]));
+                                                  s[i].def2[2], s[i].def2[3]));
       i++;
     }
     break;
   case 2:
     while(s[i].str) {
       s[i].function(num, GMSH_SET, CTX.PACK_COLOR(s[i].def3[0], s[i].def3[1],
-						  s[i].def3[2], s[i].def3[3]));
+                                                  s[i].def3[2], s[i].def3[3]));
       i++;
     }
     break;
   default:
     while(s[i].str) {
       s[i].function(num, GMSH_SET, CTX.PACK_COLOR(s[i].def1[0], s[i].def1[1],
-						  s[i].def1[2], s[i].def1[3]));
+                                                  s[i].def1[2], s[i].def1[3]));
       i++;
     }
     break;
@@ -772,7 +772,7 @@ void *Get_ColorOption(const char *str, StringXColor s[])
 }
 
 void Print_ColorOptions(int num, int level, int diff, int help,
-			StringXColor s[], const char *prefix, FILE * file)
+                        StringXColor s[], const char *prefix, FILE * file)
 {
   int i = 0;
   char tmp[1024];
@@ -781,29 +781,29 @@ void Print_ColorOptions(int num, int level, int diff, int help,
       unsigned int def;
       switch (CTX.color_scheme) {
       case 1: 
-	def = CTX.PACK_COLOR(s[i].def2[0], s[i].def2[1],
-			     s[i].def2[2], s[i].def2[3]);
-	break;
+        def = CTX.PACK_COLOR(s[i].def2[0], s[i].def2[1],
+                             s[i].def2[2], s[i].def2[3]);
+        break;
       case 2: 
-	def = CTX.PACK_COLOR(s[i].def3[0], s[i].def3[1], 
-			     s[i].def3[2], s[i].def3[3]);
-	break;
+        def = CTX.PACK_COLOR(s[i].def3[0], s[i].def3[1], 
+                             s[i].def3[2], s[i].def3[3]);
+        break;
       default: 
-	def = CTX.PACK_COLOR(s[i].def1[0], s[i].def1[1], 
-			     s[i].def1[2], s[i].def1[3]);
-	break;
+        def = CTX.PACK_COLOR(s[i].def1[0], s[i].def1[1], 
+                             s[i].def1[2], s[i].def1[3]);
+        break;
       }
       if(!diff || (s[i].function(num, GMSH_GET, 0) != def)){
-	sprintf(tmp, "%sColor.%s = {%d,%d,%d};%s%s",
-		prefix, s[i].str,
-		CTX.UNPACK_RED(s[i].function(num, GMSH_GET, 0)),
-		CTX.UNPACK_GREEN(s[i].function(num, GMSH_GET, 0)),
-		CTX.UNPACK_BLUE(s[i].function(num, GMSH_GET, 0)), 
-		help ? " // " : "", help ? s[i].help : "");
-	if(file)
-	  fprintf(file, "%s\n", tmp);
-	else
-	  Msg(DIRECT, tmp);
+        sprintf(tmp, "%sColor.%s = {%d,%d,%d};%s%s",
+                prefix, s[i].str,
+                CTX.UNPACK_RED(s[i].function(num, GMSH_GET, 0)),
+                CTX.UNPACK_GREEN(s[i].function(num, GMSH_GET, 0)),
+                CTX.UNPACK_BLUE(s[i].function(num, GMSH_GET, 0)), 
+                help ? " // " : "", help ? s[i].help : "");
+        if(file)
+          fprintf(file, "%s\n", tmp);
+        else
+          Msg(DIRECT, tmp);
       }
     }
     i++;
@@ -817,9 +817,9 @@ void Print_ColorOptionsDoc(StringXColor s[], const char *prefix, FILE * file)
     fprintf(file, "@item %sColor.%s\n", prefix, s[i].str);
     fprintf(file, "%s@*\n", s[i].help);
     fprintf(file, "Default value: @code{@{%d,%d,%d@}}@*\n",
-	    CTX.UNPACK_RED(s[i].function(0, GMSH_GET, 0)),
-	    CTX.UNPACK_GREEN(s[i].function(0, GMSH_GET, 0)),
-	    CTX.UNPACK_BLUE(s[i].function(0, GMSH_GET, 0)));
+            CTX.UNPACK_RED(s[i].function(0, GMSH_GET, 0)),
+            CTX.UNPACK_GREEN(s[i].function(0, GMSH_GET, 0)),
+            CTX.UNPACK_BLUE(s[i].function(0, GMSH_GET, 0)));
     fprintf(file, "Saved in: @code{%s}\n\n", Get_OptionSaveLevel(s[i].level));
     i++;
   }
@@ -838,20 +838,20 @@ int Get_ColorForString(StringX4Int SX4I[], int alpha,
     return CTX.PACK_COLOR(SX4I[i].int1, SX4I[i].int2, SX4I[i].int3, SX4I[i].int4);
 }
 
-#define GET_VIEW(error_val)					\
-  PView *view = 0;						\
-  PViewData *data = 0;						\
-  PViewOptions *opt;						\
-  if(PView::list.empty())					\
-    opt = &PViewOptions::reference;				\
-  else{								\
-    if(num < 0 || num >= (int)PView::list.size()){		\
-      Msg(WARNING, "View[%d] does not exist", num);		\
-      return (error_val);					\
-    }								\
-    view = PView::list[num];					\
-    data = view->getData();					\
-    opt = view->getOptions();					\
+#define GET_VIEW(error_val)                                     \
+  PView *view = 0;                                              \
+  PViewData *data = 0;                                          \
+  PViewOptions *opt;                                            \
+  if(PView::list.empty())                                       \
+    opt = &PViewOptions::reference;                             \
+  else{                                                         \
+    if(num < 0 || num >= (int)PView::list.size()){              \
+      Msg(WARNING, "View[%d] does not exist", num);             \
+      return (error_val);                                       \
+    }                                                           \
+    view = PView::list[num];                                    \
+    data = view->getData();                                     \
+    opt = view->getOptions();                                   \
   }
 
 // String option routines
@@ -1919,8 +1919,8 @@ const char *opt_solver_fifth_button_command4(OPT_ARGS_STR)
 int _gui_action_valid(int action, int num)
 {
   return ((WID) &&
-	  (action & GMSH_GUI) && 
-	  (num == WID->view_number));
+          (action & GMSH_GUI) && 
+          (num == WID->view_number));
 }
 #endif
 
@@ -3659,8 +3659,8 @@ double opt_general_light00(OPT_ARGS_NUM)
   if(WID && (action & GMSH_GUI)){
     WID->gen_value[2]->value(CTX.light_position[0][0]);
     WID->gen_sphere->setValue(CTX.light_position[0][0],
-			      CTX.light_position[0][1],
-			      CTX.light_position[0][2]);
+                              CTX.light_position[0][1],
+                              CTX.light_position[0][2]);
   }
 #endif
   return CTX.light_position[0][0];
@@ -3674,8 +3674,8 @@ double opt_general_light01(OPT_ARGS_NUM)
   if(WID && (action & GMSH_GUI)){
     WID->gen_value[3]->value(CTX.light_position[0][1]);
     WID->gen_sphere->setValue(CTX.light_position[0][0],
-			      CTX.light_position[0][1],
-			      CTX.light_position[0][2]);
+                              CTX.light_position[0][1],
+                              CTX.light_position[0][2]);
   }
 #endif
   return CTX.light_position[0][1];
@@ -3689,8 +3689,8 @@ double opt_general_light02(OPT_ARGS_NUM)
   if(WID && (action & GMSH_GUI)){
     WID->gen_value[4]->value(CTX.light_position[0][2]);
     WID->gen_sphere->setValue(CTX.light_position[0][0],
-			      CTX.light_position[0][1],
-			      CTX.light_position[0][2]);
+                              CTX.light_position[0][1],
+                              CTX.light_position[0][2]);
   }
 #endif
   return CTX.light_position[0][2];
@@ -5049,7 +5049,7 @@ double opt_mesh_use_cut_plane(OPT_ARGS_NUM)
     if(WID){
       double val1 = 0;
       for(int i = 0; i < 3; i++)
-	val1 = std::max(val1, std::max(fabs(CTX.min[i]), fabs(CTX.max[i])));
+        val1 = std::max(val1, std::max(fabs(CTX.min[i]), fabs(CTX.max[i])));
       val1 *= 1.5;
       WID->mesh_value[17]->step(val1/200.);
       WID->mesh_value[17]->minimum(-val1);
@@ -5992,8 +5992,8 @@ double opt_view_max_recursion_level(OPT_ARGS_NUM)
     if(data && data->isAdaptive()){
       PViewDataList *l = dynamic_cast<PViewDataList*>(data);
       if(l){
-	l->adaptive->setGlobalResolutionLevel(l, opt->MaxRecursionLevel);
-	view->setChanged(true);
+        l->adaptive->setGlobalResolutionLevel(l, opt->MaxRecursionLevel);
+        view->setChanged(true);
       }
     }
   }
@@ -6014,8 +6014,8 @@ double opt_view_target_error(OPT_ARGS_NUM)
     if(data && data->isAdaptive()){
       PViewDataList *l = dynamic_cast<PViewDataList*>(data);
       if(l){
-	l->adaptive->setTolerance(opt->TargetError);
-	view->setChanged(true);
+        l->adaptive->setTolerance(opt->TargetError);
+        view->setChanged(true);
       }
     }
   }
@@ -7204,14 +7204,14 @@ double opt_print_tex_as_equation(OPT_ARGS_NUM)
 
 #if defined(HAVE_FLTK)
 
-#define CCC(col,but)							\
-  if(WID && (action & GMSH_GUI)){					\
-    Fl_Color c = fl_color_cube(CTX.UNPACK_RED(col)*FL_NUM_RED/256, 	\
-			       CTX.UNPACK_GREEN(col)*FL_NUM_GREEN/256,	\
-			       CTX.UNPACK_BLUE(col)*FL_NUM_BLUE/256);	\
-    (but)->color(c);							\
-    (but)->labelcolor(fl_contrast(FL_BLACK,c));				\
-    (but)->redraw();							\
+#define CCC(col,but)                                                    \
+  if(WID && (action & GMSH_GUI)){                                       \
+    Fl_Color c = fl_color_cube(CTX.UNPACK_RED(col)*FL_NUM_RED/256,      \
+                               CTX.UNPACK_GREEN(col)*FL_NUM_GREEN/256,  \
+                               CTX.UNPACK_BLUE(col)*FL_NUM_BLUE/256);   \
+    (but)->color(c);                                                    \
+    (but)->labelcolor(fl_contrast(FL_BLACK,c));                         \
+    (but)->redraw();                                                    \
   }
 
 #endif

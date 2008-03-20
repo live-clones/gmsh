@@ -1,4 +1,4 @@
-// $Id: ExtractElements.cpp,v 1.11 2008-02-17 08:48:06 geuzaine Exp $
+// $Id: ExtractElements.cpp,v 1.12 2008-03-20 11:44:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -53,12 +53,12 @@ void GMSH_ExtractElementsPlugin::getInfos(char *author, char *copyright, char *h
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(ExtractElements) extracts the elements\n"
-	 "from the view `iView' whose `TimeStep'-th values\n"
-	 "(averaged by element) are comprised between\n"
-	 "`MinVal' and `MaxVal'. If `iView' < 0, the plugin\n"
-	 "is run on the current view.\n"
-	 "\n"
-	 "Plugin(ExtractElements) creates one new view.\n");
+         "from the view `iView' whose `TimeStep'-th values\n"
+         "(averaged by element) are comprised between\n"
+         "`MinVal' and `MaxVal'. If `iView' < 0, the plugin\n"
+         "is run on the current view.\n"
+         "\n"
+         "Plugin(ExtractElements) creates one new view.\n");
 }
 
 int GMSH_ExtractElementsPlugin::getNbOptions() const
@@ -77,8 +77,8 @@ void GMSH_ExtractElementsPlugin::catchErrorMessage(char *errorMessage) const
 }
 
 static void extract(List_T *inList, int inNb, 
-		    List_T *outList, int *outNb, 
-		    int timeStep, int nbNod, int nbComp)
+                    List_T *outList, int *outNb, 
+                    int timeStep, int nbNod, int nbComp)
 {
   if(!inNb)
     return;
@@ -89,20 +89,20 @@ static void extract(List_T *inList, int inNb,
   int nb = List_Nbr(inList) / inNb;
   for(int i = 0; i < List_Nbr(inList); i += nb) {
     double *vals = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + 
-					       timeStep * nbNod * nbComp);
+                                               timeStep * nbNod * nbComp);
     double d = 0.;
     for(int k = 0; k < nbNod; k++) {
       double *v = &vals[nbComp * k];
       switch(nbComp) {
       case 1: // scalar
-	d += v[0];
-	break;
+        d += v[0];
+        break;
       case 3 : // vector
-	d += sqrt(DSQR(v[0]) + DSQR(v[1]) + DSQR(v[2]));
-	break;
+        d += sqrt(DSQR(v[0]) + DSQR(v[1]) + DSQR(v[2]));
+        break;
       case 9 : // tensor
-	d += ComputeVonMises(v);
-	break;
+        d += ComputeVonMises(v);
+        break;
       }
     }
     d /= (double)nbNod;
@@ -110,7 +110,7 @@ static void extract(List_T *inList, int inNb,
     // worrying about roundoff errors
     if(d >= MinVal && d < MaxVal){
       for(int j = 0; j < nb; j++)
-	List_Add(outList, List_Pointer_Fast(inList, i + j));
+        List_Add(outList, List_Pointer_Fast(inList, i + j));
       (*outNb)++;
     }
   }
@@ -134,7 +134,7 @@ PView *GMSH_ExtractElementsPlugin::execute(PView *v)
 
   if(step < 0 || step > data1->getNumTimeSteps() - 1){
     Msg(GERROR, "Invalid time step (%d) in View[%d]: using first step instead",
-	step, v1->getIndex());
+        step, v1->getIndex());
     step = 0;
   }
 
@@ -142,31 +142,31 @@ PView *GMSH_ExtractElementsPlugin::execute(PView *v)
   extract(data1->SP, data1->NbSP, data2->SP, &data2->NbSP, step, 1, 1);
   extract(data1->VP, data1->NbVP, data2->VP, &data2->NbVP, step, 1, 3);
   extract(data1->TP, data1->NbTP, data2->TP, &data2->NbTP, step, 1, 9);
-  // lines			                	
+  // lines                                              
   extract(data1->SL, data1->NbSL, data2->SL, &data2->NbSL, step, 2, 1);
   extract(data1->VL, data1->NbVL, data2->VL, &data2->NbVL, step, 2, 3);
   extract(data1->TL, data1->NbTL, data2->TL, &data2->NbTL, step, 2, 9);
-  // triangles			                	
+  // triangles                                          
   extract(data1->ST, data1->NbST, data2->ST, &data2->NbST, step, 3, 1);
   extract(data1->VT, data1->NbVT, data2->VT, &data2->NbVT, step, 3, 3);
   extract(data1->TT, data1->NbTT, data2->TT, &data2->NbTT, step, 3, 9);
-  // quadrangles		                	
+  // quadrangles                                        
   extract(data1->SQ, data1->NbSQ, data2->SQ, &data2->NbSQ, step, 4, 1);
   extract(data1->VQ, data1->NbVQ, data2->VQ, &data2->NbVQ, step, 4, 3);
   extract(data1->TQ, data1->NbTQ, data2->TQ, &data2->NbTQ, step, 4, 9);
-  // tets			                	
+  // tets                                               
   extract(data1->SS, data1->NbSS, data2->SS, &data2->NbSS, step, 4, 1);
   extract(data1->VS, data1->NbVS, data2->VS, &data2->NbVS, step, 4, 3);
   extract(data1->TS, data1->NbTS, data2->TS, &data2->NbTS, step, 4, 9);
-  // hexas			                	
+  // hexas                                              
   extract(data1->SH, data1->NbSH, data2->SH, &data2->NbSH, step, 8, 1);
   extract(data1->VH, data1->NbVH, data2->VH, &data2->NbVH, step, 8, 3);
   extract(data1->TH, data1->NbTH, data2->TH, &data2->NbTH, step, 8, 9);
-  // prisms			                	
+  // prisms                                             
   extract(data1->SI, data1->NbSI, data2->SI, &data2->NbSI, step, 6, 1);
   extract(data1->VI, data1->NbVI, data2->VI, &data2->NbVI, step, 6, 3);
   extract(data1->TI, data1->NbTI, data2->TI, &data2->NbTI, step, 6, 9);
-  // pyramids			                	
+  // pyramids                                           
   extract(data1->SY, data1->NbSY, data2->SY, &data2->NbSY, step, 5, 1);
   extract(data1->VY, data1->NbVY, data2->VY, &data2->NbVY, step, 5, 3);
   extract(data1->TY, data1->NbTY, data2->TY, &data2->NbTY, step, 5, 9);

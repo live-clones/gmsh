@@ -33,9 +33,9 @@ class GMSH_CutParametricPlugin : public GMSH_Post_Plugin
 { 
 private:
   static double callback(int num, int action, double value, double *opt,
-			 double step, double min, double max);
+                         double step, double min, double max);
   static const char *callbackStr(int num, int action, const char *value, 
-				 const char **opt);
+                                 const char **opt);
   static int fillXYZ();
   static int recompute;
   static std::vector<double> x, y, z;

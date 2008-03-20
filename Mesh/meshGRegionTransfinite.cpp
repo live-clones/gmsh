@@ -1,4 +1,4 @@
-// $Id: meshGRegionTransfinite.cpp,v 1.8 2008-02-17 08:48:01 geuzaine Exp $
+// $Id: meshGRegionTransfinite.cpp,v 1.9 2008-03-20 11:44:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -60,66 +60,66 @@
 */
 
 #define CREATE_HEX new MHexahedron(tab[i    ][j    ][k    ], \
-				   tab[i + 1][j    ][k    ], \
-				   tab[i + 1][j + 1][k    ], \
-				   tab[i    ][j + 1][k    ], \
-				   tab[i    ][j    ][k + 1], \
-				   tab[i + 1][j    ][k + 1], \
-				   tab[i + 1][j + 1][k + 1], \
-				   tab[i    ][j + 1][k + 1])
+                                   tab[i + 1][j    ][k    ], \
+                                   tab[i + 1][j + 1][k    ], \
+                                   tab[i    ][j + 1][k    ], \
+                                   tab[i    ][j    ][k + 1], \
+                                   tab[i + 1][j    ][k + 1], \
+                                   tab[i + 1][j + 1][k + 1], \
+                                   tab[i    ][j + 1][k + 1])
 
 #define CREATE_PRISM_1 new MPrism(tab[i    ][j    ][k    ], \
-				  tab[i + 1][j    ][k    ], \
-				  tab[i    ][j + 1][k    ], \
-				  tab[i    ][j    ][k + 1], \
-				  tab[i + 1][j    ][k + 1], \
-				  tab[i    ][j + 1][k + 1])
+                                  tab[i + 1][j    ][k    ], \
+                                  tab[i    ][j + 1][k    ], \
+                                  tab[i    ][j    ][k + 1], \
+                                  tab[i + 1][j    ][k + 1], \
+                                  tab[i    ][j + 1][k + 1])
 
 #define CREATE_PRISM_2 new MPrism(tab[i + 1][j + 1][k    ], \
-				  tab[i    ][j + 1][k    ], \
-				  tab[i + 1][j    ][k    ], \
-				  tab[i + 1][j + 1][k + 1], \
-				  tab[i    ][j + 1][k + 1], \
-				  tab[i + 1][j    ][k + 1])
+                                  tab[i    ][j + 1][k    ], \
+                                  tab[i + 1][j    ][k    ], \
+                                  tab[i + 1][j + 1][k + 1], \
+                                  tab[i    ][j + 1][k + 1], \
+                                  tab[i + 1][j    ][k + 1])
 
 #define CREATE_SIM_1 new MTetrahedron(tab[i    ][j    ][k    ], \
-				      tab[i + 1][j    ][k    ], \
-				      tab[i    ][j + 1][k    ], \
-				      tab[i    ][j    ][k + 1])
+                                      tab[i + 1][j    ][k    ], \
+                                      tab[i    ][j + 1][k    ], \
+                                      tab[i    ][j    ][k + 1])
 
 #define CREATE_SIM_2 new MTetrahedron(tab[i + 1][j    ][k    ], \
-				      tab[i    ][j + 1][k    ], \
-				      tab[i    ][j    ][k + 1], \
-				      tab[i + 1][j    ][k + 1])
+                                      tab[i    ][j + 1][k    ], \
+                                      tab[i    ][j    ][k + 1], \
+                                      tab[i + 1][j    ][k + 1])
 
 #define CREATE_SIM_3 new MTetrahedron(tab[i    ][j    ][k + 1], \
-				      tab[i + 1][j    ][k + 1], \
-				      tab[i    ][j + 1][k    ], \
-				      tab[i    ][j + 1][k + 1])
+                                      tab[i + 1][j    ][k + 1], \
+                                      tab[i    ][j + 1][k    ], \
+                                      tab[i    ][j + 1][k + 1])
 
 #define CREATE_SIM_4 new MTetrahedron(tab[i + 1][j    ][k    ], \
-				      tab[i    ][j + 1][k    ], \
-				      tab[i + 1][j    ][k + 1], \
-				      tab[i + 1][j + 1][k    ])
+                                      tab[i    ][j + 1][k    ], \
+                                      tab[i + 1][j    ][k + 1], \
+                                      tab[i + 1][j + 1][k    ])
 
 #define CREATE_SIM_5 new MTetrahedron(tab[i    ][j + 1][k    ], \
-				      tab[i    ][j + 1][k + 1], \
-				      tab[i + 1][j    ][k + 1], \
-				      tab[i + 1][j + 1][k    ])
+                                      tab[i    ][j + 1][k + 1], \
+                                      tab[i + 1][j    ][k + 1], \
+                                      tab[i + 1][j + 1][k    ])
 
 #define CREATE_SIM_6 new MTetrahedron(tab[i + 1][j    ][k + 1], \
-				      tab[i    ][j + 1][k + 1], \
-				      tab[i + 1][j + 1][k + 1], \
-				      tab[i + 1][j + 1][k    ])
+                                      tab[i    ][j + 1][k + 1], \
+                                      tab[i + 1][j + 1][k + 1], \
+                                      tab[i + 1][j + 1][k    ])
 
 double transfiniteHex(double f1, double f2, double f3, double f4, 
-		      double f5, double f6,
-		      double c1, double c2, double c3, double c4, 
-		      double c5, double c6, double c7, double c8, 
-		      double c9, double c10, double c11, double c12,
-		      double s1, double s2, double s3, double s4, 
-		      double s5, double s6, double s7, double s8,
-		      double u, double v, double w)
+                      double f5, double f6,
+                      double c1, double c2, double c3, double c4, 
+                      double c5, double c6, double c7, double c8, 
+                      double c9, double c10, double c11, double c12,
+                      double s1, double s2, double s3, double s4, 
+                      double s5, double s6, double s7, double s8,
+                      double u, double v, double w)
 {
   return (1-u)*f4 + u*f2 + (1-v)*f1 + v*f3 + (1-w)*f5 + w*f6 -
     ((1-u)*(1-v)*c9 + (1-u)*v*c12 + u*(1-v)*c10 + u*v*c11) -
@@ -130,32 +130,32 @@ double transfiniteHex(double f1, double f2, double f3, double f4,
 }
 
 MVertex *transfiniteHex(MVertex *f1, MVertex *f2, MVertex *f3, MVertex *f4, 
-			MVertex *f5, MVertex *f6,
-			MVertex *c1, MVertex *c2, MVertex *c3, MVertex *c4, 
-			MVertex *c5, MVertex *c6, MVertex *c7, MVertex *c8, 
-			MVertex *c9, MVertex *c10, MVertex *c11, MVertex *c12,
-			MVertex *s1, MVertex *s2, MVertex *s3, MVertex *s4, 
-			MVertex *s5, MVertex *s6, MVertex *s7, MVertex *s8,
-			double u, double v, double w)
+                        MVertex *f5, MVertex *f6,
+                        MVertex *c1, MVertex *c2, MVertex *c3, MVertex *c4, 
+                        MVertex *c5, MVertex *c6, MVertex *c7, MVertex *c8, 
+                        MVertex *c9, MVertex *c10, MVertex *c11, MVertex *c12,
+                        MVertex *s1, MVertex *s2, MVertex *s3, MVertex *s4, 
+                        MVertex *s5, MVertex *s6, MVertex *s7, MVertex *s8,
+                        double u, double v, double w)
 {
   double x = transfiniteHex(f1->x(), f2->x(), f3->x(), f4->x(), f5->x(), f6->x(),
-			    c1->x(), c2->x(), c3->x(), c4->x(), c5->x(), c6->x(),
-			    c7->x(), c8->x(), c9->x(), c10->x(), c11->x(), c12->x(),
-			    s1->x(), s2->x(), s3->x(), s4->x(), 
-			    s5->x(), s6->x(), s7->x(), s8->x(),
-			    u, v, w);
+                            c1->x(), c2->x(), c3->x(), c4->x(), c5->x(), c6->x(),
+                            c7->x(), c8->x(), c9->x(), c10->x(), c11->x(), c12->x(),
+                            s1->x(), s2->x(), s3->x(), s4->x(), 
+                            s5->x(), s6->x(), s7->x(), s8->x(),
+                            u, v, w);
   double y = transfiniteHex(f1->y(), f2->y(), f3->y(), f4->y(), f5->y(), f6->y(),
-			    c1->y(), c2->y(), c3->y(), c4->y(), c5->y(), c6->y(),
-			    c7->y(), c8->y(), c9->y(), c10->y(), c11->y(), c12->y(),
-			    s1->y(), s2->y(), s3->y(), s4->y(), 
-			    s5->y(), s6->y(), s7->y(), s8->y(),
-			    u, v, w);
+                            c1->y(), c2->y(), c3->y(), c4->y(), c5->y(), c6->y(),
+                            c7->y(), c8->y(), c9->y(), c10->y(), c11->y(), c12->y(),
+                            s1->y(), s2->y(), s3->y(), s4->y(), 
+                            s5->y(), s6->y(), s7->y(), s8->y(),
+                            u, v, w);
   double z = transfiniteHex(f1->z(), f2->z(), f3->z(), f4->z(), f5->z(), f6->z(),
-			    c1->z(), c2->z(), c3->z(), c4->z(), c5->z(), c6->z(),
-			    c7->z(), c8->z(), c9->z(), c10->z(), c11->z(), c12->z(),
-			    s1->z(), s2->z(), s3->z(), s4->z(), 
-			    s5->z(), s6->z(), s7->z(), s8->z(),
-			    u, v, w);
+                            c1->z(), c2->z(), c3->z(), c4->z(), c5->z(), c6->z(),
+                            c7->z(), c8->z(), c9->z(), c10->z(), c11->z(), c12->z(),
+                            s1->z(), s2->z(), s3->z(), s4->z(), 
+                            s5->z(), s6->z(), s7->z(), s8->z(),
+                            u, v, w);
   return new MVertex(x, y, z);
 }
 
@@ -184,7 +184,7 @@ public:
     std::vector<MVertex*> s(8);
     if(corners.size() == 8){
       for(int i = 0; i < 8; i++)
-	s[i] = corners[i]->mesh_vertices[0];
+        s[i] = corners[i]->mesh_vertices[0];
     }
     else if(corners.size() == 6){
       s[0] = corners[0]->mesh_vertices[0];
@@ -218,9 +218,9 @@ public:
 
     // map the surface mesh onto the canonical transfinite hexahedron
     int faces[] = {0, 1, 5, 4,   1, 2, 6, 5,   3, 2, 6, 7, 
-		   0, 3, 7, 4,   0, 1, 2, 3,   4, 5, 6, 7};
+                   0, 3, 7, 4,   0, 1, 2, 3,   4, 5, 6, 7};
     int permutations[] = {0, 1, 2, 3,   1, 2, 3, 0,   2, 3, 0, 1,   3, 0, 1, 2,
-			  3, 2, 1, 0,   2, 1, 0, 3,   1, 0, 3, 2,   0, 3, 2, 1};
+                          3, 2, 1, 0,   2, 1, 0, 3,   1, 0, 3, 2,   0, 3, 2, 1};
     for(int p = 0; p < 8; p++) {
       for(int f = 0; f < 6; f++) {
         if(s[faces[4 * f + 0]] == c[permutations[4 * p + 0]] &&
@@ -229,14 +229,14 @@ public:
            s[faces[4 * f + 3]] == c[permutations[4 * p + 3]]) {
           _index = f;
           _permutation = p;
-	  break;
+          break;
         }
       }
     }
     Msg(DEBUG, "Found face index %d  (permutation = %d)", _index, _permutation);
     for(int i = 0; i <= _LL; i++)
       for(int j = 0; j <= _HH; j++)
-	_list.push_back(_gf->transfinite_vertices[i][j]);
+        _list.push_back(_gf->transfinite_vertices[i][j]);
   }
 
   // returns the index of the face in the reference hexahedron
@@ -269,7 +269,7 @@ public:
     if(index >= 0 && index < (int)_list.size()) v = _list[index];
     if(index < 0 || index >= (int)_list.size() || !v){
       Msg(GERROR, "Wrong index in transfinite mesh of surface %d: "
-	  "m=%d n=%d M=%d N=%d perm=%d", _gf->tag(), m, n, M, N, _permutation);
+          "m=%d n=%d M=%d N=%d perm=%d", _gf->tag(), m, n, M, N, _permutation);
       return _list[0];
     }
     return v;
@@ -293,7 +293,7 @@ int MeshTransfiniteVolume(GRegion *gr)
     GOrientedTransfiniteFace f(*it, gr->meshAttributes.corners);
     if(f.index() < 0){
       Msg(GERROR, "Incompatible surface %d in transfinite volume %d", 
-	  (*it)->tag(), gr->tag());
+          (*it)->tag(), gr->tag());
       return 0;
     }
     orientedFaces[f.index()] = f;
@@ -368,28 +368,28 @@ int MeshTransfiniteVolume(GRegion *gr)
       MVertex *f5 = orientedFaces[5].getVertex(i, j);
 
       for(int k = 0; k < N_k; k++) {
-	double w = lengths_k[k] / L_k;
+        double w = lengths_k[k] / L_k;
 
         MVertex *c8 = orientedFaces[0].getVertex(0, k);
         MVertex *c9 = orientedFaces[0].getVertex(N_i - 1, k);
         MVertex *c10 = orientedFaces[2].getVertex(N_i - 1, k);
         MVertex *c11 = orientedFaces[2].getVertex(0, k);
 
-	MVertex *f0 = orientedFaces[0].getVertex(i, k);
-	MVertex *f1 = orientedFaces[1].getVertex(j, k);
-	MVertex *f2 = orientedFaces[2].getVertex(i, k);
-	MVertex *f3;
+        MVertex *f0 = orientedFaces[0].getVertex(i, k);
+        MVertex *f1 = orientedFaces[1].getVertex(j, k);
+        MVertex *f2 = orientedFaces[2].getVertex(i, k);
+        MVertex *f3;
         if(gr->meshAttributes.corners.size() == 8)
           f3 = orientedFaces[3].getVertex(j, k);
-	else
+        else
           f3 = c8;
 
         if(i && j && k && i != N_i - 1 && j != N_j - 1 && k != N_k - 1) {
           MVertex *newv = transfiniteHex(f0, f1, f2, f3, f4, f5,
-					 c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11,
-					 s0, s1, s2, s3, s4, s5, s6, s7,
-					 u, v, w);
-	  gr->mesh_vertices.push_back(newv);
+                                         c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11,
+                                         s0, s1, s2, s3, s4, s5, s6, s7,
+                                         u, v, w);
+          gr->mesh_vertices.push_back(newv);
           tab[i][j][k] = newv;
         }
         else if(!i) {
@@ -421,51 +421,51 @@ int MeshTransfiniteVolume(GRegion *gr)
       for(int j = 0; j < N_j - 1; j++) {
         for(int k = 0; k < N_k - 1; k++) {
           if(orientedFaces[0].recombined() && orientedFaces[1].recombined() && 
-	     orientedFaces[2].recombined() && orientedFaces[3].recombined() && 
-	     orientedFaces[4].recombined() && orientedFaces[5].recombined()) {
+             orientedFaces[2].recombined() && orientedFaces[3].recombined() && 
+             orientedFaces[4].recombined() && orientedFaces[5].recombined()) {
             gr->hexahedra.push_back(CREATE_HEX);
           }
           else if(!orientedFaces[0].recombined() && orientedFaces[1].recombined() && 
-		  !orientedFaces[2].recombined() && orientedFaces[3].recombined() && 
-		  orientedFaces[4].recombined() && orientedFaces[5].recombined()) {
+                  !orientedFaces[2].recombined() && orientedFaces[3].recombined() && 
+                  orientedFaces[4].recombined() && orientedFaces[5].recombined()) {
             gr->prisms.push_back(new MPrism(tab[i    ][j    ][k    ],
-					    tab[i + 1][j    ][k    ],
-					    tab[i    ][j    ][k + 1],
-					    tab[i    ][j + 1][k    ],
-					    tab[i + 1][j + 1][k    ],
-					    tab[i    ][j + 1][k + 1]));
-	    gr->prisms.push_back(new MPrism(tab[i + 1][j    ][k + 1],
-					    tab[i    ][j    ][k + 1],
-					    tab[i + 1][j    ][k    ],
-					    tab[i + 1][j + 1][k + 1],
-					    tab[i    ][j + 1][k + 1],
-					    tab[i + 1][j + 1][k    ]));
+                                            tab[i + 1][j    ][k    ],
+                                            tab[i    ][j    ][k + 1],
+                                            tab[i    ][j + 1][k    ],
+                                            tab[i + 1][j + 1][k    ],
+                                            tab[i    ][j + 1][k + 1]));
+            gr->prisms.push_back(new MPrism(tab[i + 1][j    ][k + 1],
+                                            tab[i    ][j    ][k + 1],
+                                            tab[i + 1][j    ][k    ],
+                                            tab[i + 1][j + 1][k + 1],
+                                            tab[i    ][j + 1][k + 1],
+                                            tab[i + 1][j + 1][k    ]));
           }
           else if(orientedFaces[0].recombined() && !orientedFaces[1].recombined() && 
-		  orientedFaces[2].recombined() && !orientedFaces[3].recombined() && 
-		  orientedFaces[4].recombined() && orientedFaces[5].recombined()) {
+                  orientedFaces[2].recombined() && !orientedFaces[3].recombined() && 
+                  orientedFaces[4].recombined() && orientedFaces[5].recombined()) {
             gr->prisms.push_back(new MPrism(tab[i + 1][j    ][k    ],
-					    tab[i + 1][j + 1][k    ],
-					    tab[i + 1][j    ][k + 1],
-					    tab[i    ][j    ][k    ],
-					    tab[i    ][j + 1][k    ],
-					    tab[i    ][j    ][k + 1]));
+                                            tab[i + 1][j + 1][k    ],
+                                            tab[i + 1][j    ][k + 1],
+                                            tab[i    ][j    ][k    ],
+                                            tab[i    ][j + 1][k    ],
+                                            tab[i    ][j    ][k + 1]));
             gr->prisms.push_back(new MPrism(tab[i + 1][j + 1][k + 1],
-					    tab[i + 1][j    ][k + 1],
-					    tab[i + 1][j + 1][k    ],
-					    tab[i    ][j + 1][k + 1],
-					    tab[i    ][j    ][k + 1],
-					    tab[i    ][j + 1][k    ]));
+                                            tab[i + 1][j    ][k + 1],
+                                            tab[i + 1][j + 1][k    ],
+                                            tab[i    ][j + 1][k + 1],
+                                            tab[i    ][j    ][k + 1],
+                                            tab[i    ][j + 1][k    ]));
           }
           else if(orientedFaces[0].recombined() && orientedFaces[1].recombined() && 
-		  orientedFaces[2].recombined() && orientedFaces[3].recombined() && 
-		  !orientedFaces[4].recombined() && !orientedFaces[5].recombined()) {
+                  orientedFaces[2].recombined() && orientedFaces[3].recombined() && 
+                  !orientedFaces[4].recombined() && !orientedFaces[5].recombined()) {
             gr->prisms.push_back(CREATE_PRISM_1);
             gr->prisms.push_back(CREATE_PRISM_2);
           }
           else if(!orientedFaces[0].recombined() && !orientedFaces[1].recombined() &&
-		  !orientedFaces[2].recombined() && !orientedFaces[3].recombined() && 
-		  !orientedFaces[4].recombined() && !orientedFaces[5].recombined()) {
+                  !orientedFaces[2].recombined() && !orientedFaces[3].recombined() && 
+                  !orientedFaces[4].recombined() && !orientedFaces[5].recombined()) {
             gr->tetrahedra.push_back(CREATE_SIM_1);
             gr->tetrahedra.push_back(CREATE_SIM_2);
             gr->tetrahedra.push_back(CREATE_SIM_3);
@@ -485,33 +485,33 @@ int MeshTransfiniteVolume(GRegion *gr)
     for(int j = 0; j < N_j - 1; j++) {
       for(int k = 0; k < N_k - 1; k++) {
         if((orientedFaces[0].recombined() && orientedFaces[1].recombined() && 
-	    orientedFaces[2].recombined() && orientedFaces[4].recombined() && 
-	    orientedFaces[5].recombined()) ||
+            orientedFaces[2].recombined() && orientedFaces[4].recombined() && 
+            orientedFaces[5].recombined()) ||
            (orientedFaces[0].recombined() && orientedFaces[1].recombined() && 
-	    orientedFaces[2].recombined() && !orientedFaces[4].recombined() && 
-	    !orientedFaces[5].recombined())) {
+            orientedFaces[2].recombined() && !orientedFaces[4].recombined() && 
+            !orientedFaces[5].recombined())) {
           gr->prisms.push_back(new MPrism(tab[0    ][j    ][k    ],
-					  tab[1    ][j    ][k    ],
-					  tab[1    ][j + 1][k    ],
-					  tab[0    ][j    ][k + 1],
-					  tab[1    ][j    ][k + 1],
-					  tab[1    ][j + 1][k + 1]));
+                                          tab[1    ][j    ][k    ],
+                                          tab[1    ][j + 1][k    ],
+                                          tab[0    ][j    ][k + 1],
+                                          tab[1    ][j    ][k + 1],
+                                          tab[1    ][j + 1][k + 1]));
         }
         else if(!orientedFaces[0].recombined() && !orientedFaces[1].recombined() && 
-		!orientedFaces[2].recombined() && !orientedFaces[4].recombined() && 
-		!orientedFaces[5].recombined()) {
+                !orientedFaces[2].recombined() && !orientedFaces[4].recombined() && 
+                !orientedFaces[5].recombined()) {
           gr->tetrahedra.push_back(new MTetrahedron(tab[0    ][j    ][k    ],
-						    tab[1    ][j    ][k    ],
-						    tab[1    ][j + 1][k    ],
-						    tab[0    ][j    ][k + 1]));
+                                                    tab[1    ][j    ][k    ],
+                                                    tab[1    ][j + 1][k    ],
+                                                    tab[0    ][j    ][k + 1]));
           gr->tetrahedra.push_back(new MTetrahedron(tab[1    ][j    ][k    ],
-						    tab[1    ][j + 1][k    ],
-						    tab[0    ][j    ][k + 1],
-						    tab[1    ][j    ][k + 1]));
+                                                    tab[1    ][j + 1][k    ],
+                                                    tab[0    ][j    ][k + 1],
+                                                    tab[1    ][j    ][k + 1]));
           gr->tetrahedra.push_back(new MTetrahedron(tab[0    ][j    ][k + 1],
-						    tab[1    ][j + 1][k + 1],
-						    tab[1    ][j    ][k + 1],
-						    tab[1    ][j + 1][k    ]));
+                                                    tab[1    ][j + 1][k + 1],
+                                                    tab[1    ][j    ][k + 1],
+                                                    tab[1    ][j + 1][k    ]));
         }
         else {
           Msg(GERROR, "Wrong surface recombination in transfinite volume %d", gr->tag());
@@ -523,19 +523,19 @@ int MeshTransfiniteVolume(GRegion *gr)
       for(int j = 0; j < N_j - 1; j++) {
         for(int k = 0; k < N_k - 1; k++) {
           if(orientedFaces[0].recombined() && orientedFaces[1].recombined() && 
-	     orientedFaces[2].recombined() && orientedFaces[4].recombined() &&
-	     orientedFaces[5].recombined()) {
+             orientedFaces[2].recombined() && orientedFaces[4].recombined() &&
+             orientedFaces[5].recombined()) {
             gr->hexahedra.push_back(CREATE_HEX);
           }
           else if(orientedFaces[0].recombined() && orientedFaces[1].recombined() && 
-		  orientedFaces[2].recombined() && !orientedFaces[4].recombined() && 
-		  !orientedFaces[5].recombined()) {
+                  orientedFaces[2].recombined() && !orientedFaces[4].recombined() && 
+                  !orientedFaces[5].recombined()) {
             gr->prisms.push_back(CREATE_PRISM_1);
             gr->prisms.push_back(CREATE_PRISM_2);
           }
           else if(!orientedFaces[0].recombined() && !orientedFaces[1].recombined() && 
-		  !orientedFaces[2].recombined() && !orientedFaces[4].recombined() && 
-		  !orientedFaces[5].recombined()) {
+                  !orientedFaces[2].recombined() && !orientedFaces[4].recombined() && 
+                  !orientedFaces[5].recombined()) {
             gr->tetrahedra.push_back(CREATE_SIM_1);
             gr->tetrahedra.push_back(CREATE_SIM_2);
             gr->tetrahedra.push_back(CREATE_SIM_3);

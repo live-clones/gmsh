@@ -1,4 +1,4 @@
-// $Id: MVertex.cpp,v 1.21 2008-02-18 18:46:49 geuzaine Exp $
+// $Id: MVertex.cpp,v 1.22 2008-03-20 11:44:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -50,9 +50,9 @@ void MVertex::writeMSH(FILE *fp, bool binary, double scalingFactor)
 
   if(!binary){
     fprintf(fp, "%d %.16g %.16g %.16g\n", _num, 
-	    x() * scalingFactor, 
-	    y() * scalingFactor,
-	    z() * scalingFactor);
+            x() * scalingFactor, 
+            y() * scalingFactor,
+            z() * scalingFactor);
   }
   else{
     fwrite(&_num, sizeof(int), 1, fp);
@@ -62,7 +62,7 @@ void MVertex::writeMSH(FILE *fp, bool binary, double scalingFactor)
 }
 
 void MVertex::writeMSH(FILE *fp, double version, bool binary, int num, 
-		       int elementary, int physical)
+                       int elementary, int physical)
 {
   if(!binary){
     fprintf(fp, "%d 15", num);
@@ -85,7 +85,7 @@ void MVertex::writeVRML(FILE *fp, double scalingFactor)
   if(_num < 0) return; // negative vertices are never saved
 
   fprintf(fp, "%.16g %.16g %.16g,\n",
-	  x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
+          x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
 }
 
 void MVertex::writeUNV(FILE *fp, double scalingFactor)
@@ -99,7 +99,7 @@ void MVertex::writeUNV(FILE *fp, double scalingFactor)
   // hack to print the numbers with "D+XX" exponents
   char tmp[128];
   sprintf(tmp, "%25.16E%25.16E%25.16E\n", x() * scalingFactor, 
-	  y() * scalingFactor, z() * scalingFactor);
+          y() * scalingFactor, z() * scalingFactor);
   for(unsigned int i = 0; i < strlen(tmp); i++) if(tmp[i] == 'E') tmp[i] = 'D';
   fprintf(fp, tmp);
 }
@@ -109,7 +109,7 @@ void MVertex::writeMESH(FILE *fp, double scalingFactor)
   if(_num < 0) return; // negative vertices are never saved
 
   fprintf(fp, " %20.14G      %20.14G      %20.14G      %d\n", 
-	  x() * scalingFactor, y() * scalingFactor, z() * scalingFactor, 0);
+          x() * scalingFactor, y() * scalingFactor, z() * scalingFactor, 0);
 }
 
 static void double_to_char8(double val, char *str)
@@ -180,7 +180,7 @@ void parametricCoordinates(const MVertex *ver, const GFace *gf, double &u, doubl
   GEntity *ge = ver->onWhat();
   if(ge->dim() == 2){
     ver->getParameter(0, u);
-    ver->getParameter(1, v);	  
+    ver->getParameter(1, v);      
   }
   else if(ge->dim() == 1){
     double t;

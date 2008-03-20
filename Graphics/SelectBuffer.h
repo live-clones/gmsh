@@ -29,19 +29,19 @@
 class MElement;
 
 bool ProcessSelectionBuffer(int entityType, 
-			    bool multipleSelection, bool meshSelection,
-			    int x, int y, int w, int h, 
-			    std::vector<GVertex*> &vertices,
-			    std::vector<GEdge*> &edges,
-			    std::vector<GFace*> &faces,
-			    std::vector<GRegion*> &regions,
-			    std::vector<MElement*> &elements);
+                            bool multipleSelection, bool meshSelection,
+                            int x, int y, int w, int h, 
+                            std::vector<GVertex*> &vertices,
+                            std::vector<GEdge*> &edges,
+                            std::vector<GFace*> &faces,
+                            std::vector<GRegion*> &regions,
+                            std::vector<MElement*> &elements);
 char SelectEntity(int entityType,
-		  std::vector<GVertex*> &vertices,
-		  std::vector<GEdge*> &edges,
-		  std::vector<GFace*> &faces,
-		  std::vector<GRegion*> &regions,
-		  std::vector<MElement*> &elements);
+                  std::vector<GVertex*> &vertices,
+                  std::vector<GEdge*> &edges,
+                  std::vector<GFace*> &faces,
+                  std::vector<GRegion*> &regions,
+                  std::vector<MElement*> &elements);
 void HighlightEntity(GEntity *e);
 void HighlightEntityNum(int v, int c, int s, int r);
 void ZeroHighlightEntity(GEntity *e);

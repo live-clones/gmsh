@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.48 2008-03-19 17:26:48 geuzaine Exp $
+// $Id: Box.cpp,v 1.49 2008-03-20 11:44:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -88,11 +88,11 @@ int GMSHBOX(int argc, char *argv[])
     if(CTX.bgm_filename) {
       MergeFile(CTX.bgm_filename);
       if(PView::list.size()){
-	GModel::current()->getFields()->set_background_mesh(PView::list.back()->getNum() - 1);
+        GModel::current()->getFields()->set_background_mesh(PView::list.back()->getNum() - 1);
       }
       else{
         fprintf(stderr, ERROR_STR "Invalid background mesh (no view)\n");
-	exit(1);
+        exit(1);
       }
     }
     if(CTX.batch > 0) {
@@ -209,7 +209,7 @@ double GetValue(const char *text, double defaultval)
 }
 
 bool GetBinaryAnswer(const char *question, const char *yes, const char *no, 
-		     bool defaultval)
+                     bool defaultval)
 {
   if(CTX.nopopup || CTX.batch)
     return defaultval;

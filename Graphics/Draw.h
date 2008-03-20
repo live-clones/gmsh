@@ -59,21 +59,21 @@ void Draw_Scales();
 void Draw_Sphere(double size, double x, double y, double z, int light);
 void Draw_Cylinder(double width, double *x, double *y, double *z, int light);
 void Draw_TapCylinder(double width, double val1, double val2, double ValMin, 
-		      double ValMax, double *x, double *y, double *z, int light);
+                      double ValMax, double *x, double *y, double *z, int light);
 void Draw_Vector(int Type, int Fill,
-		 double relHeadRadius, double relStemLength, double relStemRadius,
-		 double x, double y, double z, double dx, double dy, double dz,
-		 int light);
+                 double relHeadRadius, double relStemLength, double relStemRadius,
+                 double x, double y, double z, double dx, double dy, double dz,
+                 int light);
 void Draw_Box(double xmin, double ymin, double zmin,
-	      double xmax, double ymax, double zmax, bool labels=true);
+              double xmax, double ymax, double zmax, bool labels=true);
 void Draw_PlaneInBoundingBox(double xmin, double ymin, double zmin,
-			     double xmax, double ymax, double zmax,
-			     double a, double b, double c, double d, int shade=0);
+                             double xmax, double ymax, double zmax,
+                             double a, double b, double c, double d, int shade=0);
 void Draw_SmallAxes();
 void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
-	       double bbox[6],int mikado);
+               double bbox[6],int mikado);
 void Draw_Axes(int mode, int tics[3], char format[3][256], char label[3][256],
-	       SBoundingBox3d &bbox,int mikado);
+               SBoundingBox3d &bbox,int mikado);
 
 #endif
 

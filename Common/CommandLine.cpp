@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.123 2008-03-18 11:33:04 remacle Exp $
+// $Id: CommandLine.cpp,v 1.124 2008-03-20 11:44:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -213,8 +213,8 @@ void Get_Options(int argc, char *argv[])
         i++;
       }
       else if(!strcmp(argv[i] + 1, "pid")) {
-	fprintf(stdout, "%d\n", GetProcessId());
-	fflush(stdout);
+        fprintf(stdout, "%d\n", GetProcessId());
+        fflush(stdout);
         i++;
       }
       else if(!strcmp(argv[i] + 1, "a")) {
@@ -256,7 +256,7 @@ void Get_Options(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "string")) {
         i++;
         if(argv[i] != NULL)
-	  ParseString(argv[i++]);
+          ParseString(argv[i++]);
         else {
           fprintf(stderr, ERROR_STR "Missing string\n");
           exit(1);
@@ -283,8 +283,8 @@ void Get_Options(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "bgm")) {
         i++;
         if(argv[i] != NULL){
-					CTX.bgm_filename=argv[i++];
-				} else {
+                                        CTX.bgm_filename=argv[i++];
+                                } else {
           fprintf(stderr, ERROR_STR "Missing file name\n");
           exit(1);
         }
@@ -297,21 +297,21 @@ void Get_Options(int argc, char *argv[])
         i++;
         CTX.terminal = 1;
         CTX.batch = 1;
-	while(i < argc) {
-	  char filename[256];
-	  sprintf(filename, "%s_new", argv[i]);
-	  unsigned int n = PView::list.size();
+        while(i < argc) {
+          char filename[256];
+          sprintf(filename, "%s_new", argv[i]);
+          unsigned int n = PView::list.size();
           OpenProject(argv[i]);
-	  // convert post-processing views to latest binary format
+          // convert post-processing views to latest binary format
           for(unsigned int j = n; j < PView::list.size(); j++)
-	    PView::list[j]->write(filename, 1, (j == n) ? false : true);
-	  // convert mesh to latest binary format
-	  if(GModel::current()->getMeshStatus() > 0){
-	    CTX.mesh.msh_file_version = 2.0;
-	    CTX.mesh.msh_binary = 1;
-	    CreateOutputFile(filename, FORMAT_MSH);
-	  }
-	  i++;
+            PView::list[j]->write(filename, 1, (j == n) ? false : true);
+          // convert mesh to latest binary format
+          if(GModel::current()->getMeshStatus() > 0){
+            CTX.mesh.msh_file_version = 2.0;
+            CTX.mesh.msh_binary = 1;
+            CreateOutputFile(filename, FORMAT_MSH);
+          }
+          i++;
         }
         exit(1);
       }
@@ -398,7 +398,7 @@ void Get_Options(int argc, char *argv[])
           CTX.mesh.lc_integration_precision = atof(argv[i++]);
           if(CTX.mesh.lc_integration_precision <= 0.0) {
             fprintf(stderr, ERROR_STR 
-		    "Integration Accuraci for evaluation of 1D LC FIELD must be > 0\n");
+                    "Integration Accuraci for evaluation of 1D LC FIELD must be > 0\n");
             exit(1);
           }
         }
@@ -445,11 +445,11 @@ void Get_Options(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "c1")) {
         i++;
-	opt_mesh_c1(0, GMSH_SET, 1);
+        opt_mesh_c1(0, GMSH_SET, 1);
       }
       else if(!strcmp(argv[i] + 1, "statreport")) {
         i++;
-	CTX.create_append_statreport = 1;
+        CTX.create_append_statreport = 1;
         if(argv[i] != NULL) {
           strcpy(CTX.statreport,argv[i]);
           i++;
@@ -461,7 +461,7 @@ void Get_Options(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "append_statreport")) {
         i++;
-	CTX.create_append_statreport = 2;
+        CTX.create_append_statreport = 2;
         if(argv[i] != NULL) {
           strcpy(CTX.statreport,argv[i]);
           i++;
@@ -473,26 +473,26 @@ void Get_Options(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "optimize_hom")) {
         i++;
-	opt_mesh_smooth_internal_edges(0, GMSH_SET, 1);
+        opt_mesh_smooth_internal_edges(0, GMSH_SET, 1);
       }
       else if(!strcmp(argv[i] + 1, "format") || !strcmp(argv[i] + 1, "f")) {
         i++;
         if(argv[i] != NULL) {
           if(!strcmp(argv[i], "msh1")){
             CTX.mesh.format = FORMAT_MSH;
-	    CTX.mesh.msh_file_version = 1.0;
-	  }
+            CTX.mesh.msh_file_version = 1.0;
+          }
           else if(!strcmp(argv[i], "msh2")){
             CTX.mesh.format = FORMAT_MSH;
-	    CTX.mesh.msh_file_version = 2.0;
-	  }
+            CTX.mesh.msh_file_version = 2.0;
+          }
           else if(!strcmp(argv[i], "msh"))
             CTX.mesh.format = FORMAT_MSH;
           else if(!strcmp(argv[i], "unv"))
             CTX.mesh.format = FORMAT_UNV;
           else if(!strcmp(argv[i], "vrml"))
             CTX.mesh.format = FORMAT_VRML;
-	  else if(!strcmp(argv[i], "stl"))
+          else if(!strcmp(argv[i], "stl"))
             CTX.mesh.format = FORMAT_STL;
           else if(!strcmp(argv[i], "mesh"))
             CTX.mesh.format = FORMAT_MESH;
@@ -517,7 +517,7 @@ void Get_Options(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "bin")) {
         i++;
-	CTX.mesh.stl_binary = CTX.mesh.msh_binary = 1;
+        CTX.mesh.stl_binary = CTX.mesh.msh_binary = 1;
       }
       else if(!strcmp(argv[i] + 1, "algo")) {
         i++;
@@ -531,7 +531,7 @@ void Get_Options(int argc, char *argv[])
           else if(!strncmp(argv[i], "bds", 3))
             CTX.mesh.algo2d = ALGO_2D_MESHADAPT;
           else if(!strncmp(argv[i], "del", 3) || !strncmp(argv[i], "iso", 3))
-	    CTX.mesh.algo2d = ALGO_2D_MESHADAPT_DELAUNAY;
+            CTX.mesh.algo2d = ALGO_2D_MESHADAPT_DELAUNAY;
           else {
             fprintf(stderr, ERROR_STR "Unknown mesh algorithm\n");
             exit(1);

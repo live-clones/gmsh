@@ -1,4 +1,4 @@
-// $Id: FunctionSpace.cpp,v 1.3 2008-02-21 13:44:56 geuzaine Exp $
+// $Id: FunctionSpace.cpp,v 1.4 2008-03-20 11:44:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -185,7 +185,7 @@ void nodepositionface0(int order, double *u,  double *v,  double *w)
   if (order > 2){
     int nbdoftemp = nbdoftriangle(order - 3);
     nodepositionface0(order - 3, &u[3 + 3 * (order - 1)], &v[3 + 3 * (order - 1)], 
-		      &w[3 + 3* (order - 1)]);
+                      &w[3 + 3* (order - 1)]);
     for (int k = 0; k < nbdoftemp; k++){
       u[3 + k + 3 * (order - 1)] = u[3 + k + 3 * (order - 1)] * (order - 3) + 1.;
       v[3 + k + 3 * (order - 1)] = v[3 + k + 3 * (order - 1)] * (order - 3) + 1.;
@@ -224,7 +224,7 @@ void nodepositionface1(int order,  double *u,  double *v,  double *w)
    if (order > 2){
      int nbdoftemp = nbdoftriangle(order - 3);
      nodepositionface1(order - 3, &u[3 + 3 * (order - 1)], &v[3 + 3 * (order -1 )],
-		       &w[3 + 3 * (order - 1)]);
+                       &w[3 + 3 * (order - 1)]);
      for (int k = 0; k < nbdoftemp; k++){
        u[3 + k + 3 * (order - 1)] = u[3 + k + 3 * (order - 1)] * (order - 3) + 1.;
        v[3 + k + 3 * (order - 1)] = v[3 + k + 3 * (order - 1)] * (order - 3);
@@ -263,7 +263,7 @@ void nodepositionface2(int order,  double *u,  double *v,  double *w)
    if (order > 2){
      int nbdoftemp = nbdoftriangle(order - 3);
      nodepositionface2(order - 3, &u[3 + 3 * (order - 1)], &v[3 + 3 * (order - 1)],
-		       &w[3 + 3 * (order - 1)]);
+                       &w[3 + 3 * (order - 1)]);
      for (int k = 0; k < nbdoftemp; k++){
        u[3 + k + 3 * (order - 1)] = u[3 + k + 3 * (order - 1)] * (order - 3) + 1.;
        v[3 + k + 3 * (order - 1)] = v[3 + k + 3 * (order - 1)] * (order - 3) + 1.;
@@ -302,7 +302,7 @@ void nodepositionface3(int order, double *u, double *v,  double *w)
    if (order > 2){
      int nbdoftemp = nbdoftriangle(order - 3);
      nodepositionface3(order - 3, &u[3 + 3 * (order - 1)], &v[3 + 3 * (order - 1)],
-		       &w[3 + 3 * (order - 1)]);
+                       &w[3 + 3 * (order - 1)]);
      for (int k = 0; k < nbdoftemp; k++){
        u[3 + k + 3 * (order - 1)] = u[3 + k + 3 * (order - 1)] * (order - 3);
        v[3 + k + 3 * (order - 1)] = v[3 + k + 3 * (order - 1)] * (order - 3) + 1.;
@@ -352,7 +352,7 @@ Double_Matrix gmshGeneratePointsTetrahedron(int order, bool serendip)
         point(4 + 3 * (order - 1) + k, 0) = 0.;
         point(4 + 4 * (order - 1) + k, 0) = order - 1 - k;
         point(4 + 5 * (order - 1) + k, 0) = 0.;
-	
+        
         point(4 + k, 1) = 0.;
         point(4 + order - 1 + k, 1) = k + 1;
         point(4 + 2 * (order - 1) + k, 1) = order - 1 - k; 
@@ -420,7 +420,7 @@ Double_Matrix gmshGeneratePointsTetrahedron(int order, bool serendip)
         delete [] v;
         delete [] w;
         
-	if (!serendip && order > 3) {
+        if (!serendip && order > 3) {
   
           Double_Matrix interior = gmshGeneratePointsTetrahedron(order - 4, false);
           for (int k = 0; k < interior.size1(); k++) {
@@ -496,7 +496,7 @@ Double_Matrix gmshGeneratePointsTriangle(int order, bool serendip)
 }
 
 Double_Matrix generateLagrangeMonomialCoefficients(const Double_Matrix& monomial,
-						   const Double_Matrix& point) 
+                                                   const Double_Matrix& point) 
 {
   if (monomial.size1() != point.size1()) throw;
   if (monomial.size2() != point.size2()) throw;

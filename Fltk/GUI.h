@@ -115,15 +115,15 @@ class FieldDialogBox
 {
   std::list<Fl_Widget*> inputs;
   std::list<std::string> inputs_values;
-	public:
-	Field *current_field;
+        public:
+        Field *current_field;
   Fl_Group *group;
-	Fl_Menu_Button *put_on_view_btn;
-	Fl_Check_Button *set_size_btn;
-	Fl_Button *apply_btn,*revert_btn;
-	FieldDialogBox(Field *field,int x,int y, int width, int height,int fontsize);
-	void load_field(Field *field);
-	void save_values();
+        Fl_Menu_Button *put_on_view_btn;
+        Fl_Check_Button *set_size_btn;
+        Fl_Button *apply_btn,*revert_btn;
+        FieldDialogBox(Field *field,int x,int y, int width, int height,int fontsize);
+        void load_field(Field *field);
+        void save_values();
 };
 
 // The dialog for solvers
@@ -229,10 +229,10 @@ public:
   Fl_Return_Button *view_ok;
   Fl_Menu_Button   *view_menu_butt[2];
 
-	// Field window
+        // Field window
   Fl_Window        *field_window;
-	Fl_Hold_Browser  *field_browser;
-	FieldDialogBox *selected_field_dialog_box;
+        Fl_Hold_Browser  *field_browser;
+        FieldDialogBox *selected_field_dialog_box;
 
   // Plugin window
   Fl_Window        *plugin_window;
@@ -306,7 +306,7 @@ public:
   void create_view_options_window(int numview);
   void create_plugin_dialog_box(GMSH_Plugin *p, int x, int y, int width, int height);
   void create_plugin_window(int numview);
-	void create_field_dialog_box(Field *f, int x, int y, int width, int height);
+        void create_field_dialog_box(Field *f, int x, int y, int width, int height);
   void create_field_window(int numview);
   void create_visibility_window(bool redraw_only=false);
   void create_clip_window();

@@ -45,9 +45,9 @@ public:
       _win->show();
       rescan(); // necessary since fltk 1.1.7
       if(_in)
-	_in->take_focus();
+        _in->take_focus();
       else
-	_win->take_focus();
+        _win->take_focus();
     }
     else
       Fl_File_Chooser::show();

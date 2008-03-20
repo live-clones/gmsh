@@ -1,4 +1,4 @@
-// $Id: OCCVertex.cpp,v 1.14 2008-02-17 08:47:59 geuzaine Exp $
+// $Id: OCCVertex.cpp,v 1.15 2008-03-20 11:44:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,7 @@
 #if defined(HAVE_OCC)
 
 double max_surf_curvature(const GVertex *gv, double x, double y, double z, 
-			  const GEdge *_myGEdge)
+                          const GEdge *_myGEdge)
 {
   std::list<GFace *> faces = _myGEdge->faces();
   std::list<GFace *>::iterator it = faces.begin();
@@ -45,9 +45,9 @@ double OCCVertex::max_curvature_of_surfaces() const
 {  
   if(max_curvature < 0){
     for(std::list<GEdge*>::const_iterator it = l_edges.begin(); 
-	it != l_edges.end(); ++it){
+        it != l_edges.end(); ++it){
       max_curvature = std::max(max_surf_curvature(this, x(), y(), z(), *it),
-			       max_curvature);
+                               max_curvature);
     }
     // printf("max curvature (%d) = %12.5E lc = %12.5E\n",tag(),
     //        max_curvature, prescribedMeshSizeAtVertex());
@@ -62,14 +62,14 @@ SPoint2 OCCVertex::reparamOnFace(GFace *gf, int dir) const
     std::list<GEdge*> l_edges = gf->edges();
     if(std::find(l_edges.begin(),l_edges.end(),*it) != l_edges.end()){
       if((*it)->isSeam(gf)){
-	const TopoDS_Face *s = (TopoDS_Face*)gf->getNativePtr();
-	const TopoDS_Edge *c = (TopoDS_Edge*)(*it)->getNativePtr();
-	double s1,s0;
-	Handle(Geom2d_Curve) curve2d = BRep_Tool::CurveOnSurface(*c, *s, s0, s1);
-	if((*it)->getBeginVertex() == this)
-	  return (*it)->reparamOnFace(gf, s0, dir);
-	else if((*it)->getEndVertex() == this)
-	  return (*it)->reparamOnFace(gf, s1, dir);
+        const TopoDS_Face *s = (TopoDS_Face*)gf->getNativePtr();
+        const TopoDS_Edge *c = (TopoDS_Edge*)(*it)->getNativePtr();
+        double s1,s0;
+        Handle(Geom2d_Curve) curve2d = BRep_Tool::CurveOnSurface(*c, *s, s0, s1);
+        if((*it)->getBeginVertex() == this)
+          return (*it)->reparamOnFace(gf, s0, dir);
+        else if((*it)->getEndVertex() == this)
+          return (*it)->reparamOnFace(gf, s1, dir);
       }
     }
     ++it;
@@ -83,9 +83,9 @@ SPoint2 OCCVertex::reparamOnFace(GFace *gf, int dir) const
       double s1,s0;
       Handle(Geom2d_Curve) curve2d = BRep_Tool::CurveOnSurface(*c, *s, s0, s1);
       if((*it)->getBeginVertex() == this)
-	return (*it)->reparamOnFace(gf, s0, dir);
+        return (*it)->reparamOnFace(gf, s0, dir);
       else if((*it)->getEndVertex() == this)
-	return (*it)->reparamOnFace(gf, s1, dir);
+        return (*it)->reparamOnFace(gf, s1, dir);
     }
     ++it;
   }

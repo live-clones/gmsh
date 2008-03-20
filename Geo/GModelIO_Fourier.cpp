@@ -50,22 +50,22 @@ void makeGFace(GModel *m, FM::Patch* patch)
   i1 = eB->GetStartPoint()->GetTag();
   i2 = eB->GetEndPoint()->GetTag();
   m->add(new fourierEdge(m, eB, eB->GetTag(), m->getVertexByTag(i1),
-			 m->getVertexByTag(i2)));
+                         m->getVertexByTag(i2)));
   FM::TopoEdge* eR = new FM::TopoEdge(++tagEdge, curveR, vLR, vUR); 
   i1 = eR->GetStartPoint()->GetTag();
   i2 = eR->GetEndPoint()->GetTag();
   m->add(new fourierEdge(m, eR, eR->GetTag(), m->getVertexByTag(i1),
-			 m->getVertexByTag(i2))); 
+                         m->getVertexByTag(i2))); 
   FM::TopoEdge* eT = new FM::TopoEdge(++tagEdge, curveT, vUR, vUL);
   i1 = eT->GetStartPoint()->GetTag();
   i2 = eT->GetEndPoint()->GetTag();
   m->add(new fourierEdge(m, eT, eT->GetTag(), m->getVertexByTag(i1),
-			 m->getVertexByTag(i2)));
+                         m->getVertexByTag(i2)));
   FM::TopoEdge* eL = new FM::TopoEdge(++tagEdge, curveL, vUL, vLL); 
   i1 = eL->GetStartPoint()->GetTag();
   i2 = eL->GetEndPoint()->GetTag();
   m->add(new fourierEdge(m, eL, eL->GetTag(), m->getVertexByTag(i1),
-			 m->getVertexByTag(i2)));
+                         m->getVertexByTag(i2)));
   
   FM::TopoFace* face = new FM::TopoFace(m->getNumFaces() + 1, patch);
   face->AddEdge(eB); face->AddEdge(eR); 

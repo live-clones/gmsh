@@ -52,8 +52,8 @@ class MFace {
   SVector3 tangent(int num) const
   {
     SVector3 t0(_v[1]->x() - _v[0]->x(), 
-		_v[1]->y() - _v[0]->y(),
-		_v[1]->z() - _v[0]->z());
+                _v[1]->y() - _v[0]->y(),
+                _v[1]->z() - _v[0]->z());
     t0.normalize();
     if(!num) return t0;
     SVector3 n = normal();
@@ -82,23 +82,23 @@ class MFace {
     if(n == 3){
       const double ff[3] = {1. - u - v, u, v};
       for(int i = 0; i < n; i++) {
-	MVertex *v = getVertex(i);
-	p[0] += v->x() * ff[i];
-	p[1] += v->y() * ff[i];
-	p[2] += v->z() * ff[i];
+        MVertex *v = getVertex(i);
+        p[0] += v->x() * ff[i];
+        p[1] += v->y() * ff[i];
+        p[2] += v->z() * ff[i];
       }
     }
     else if(n == 4){
       const double ff[4] = {(1 - u) * (1. - v),
-			    (1 + u) * (1. - v),
-			    (1 + u) * (1. + v),
-			    (1 - u) * (1. + v)};	
+                            (1 + u) * (1. - v),
+                            (1 + u) * (1. + v),
+                            (1 - u) * (1. + v)};        
       for(int i = 0; i < n; i++) {
-	MVertex *v = getVertex(i);
-	p[0] += v->x() * ff[i] * .25;
-	p[1] += v->y() * ff[i] * .25;
-	p[2] += v->z() * ff[i] * .25;
-      }	
+        MVertex *v = getVertex(i);
+        p[0] += v->x() * ff[i] * .25;
+        p[1] += v->y() * ff[i] * .25;
+        p[2] += v->z() * ff[i] * .25;
+      } 
     }
     else throw;
     return p;

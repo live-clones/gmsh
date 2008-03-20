@@ -43,9 +43,9 @@ class Popup_Button : public Fl_Menu_Button {
       return (box() && !type()) ? 1 : 0;
     case FL_PUSH:
       if (!box()) {
-	if (Fl::event_button() != 3) return 0;
+        if (Fl::event_button() != 3) return 0;
       } else if (type()) {
-	if (!(type() & (1 << (Fl::event_button()-1)))) return 0;
+        if (!(type() & (1 << (Fl::event_button()-1)))) return 0;
       }
       if (Fl::visible_focus()) Fl::focus(this);
       popup();
@@ -53,9 +53,9 @@ class Popup_Button : public Fl_Menu_Button {
     case FL_KEYBOARD:
       if (!box()) return 0;
       if (Fl::event_key() == ' ' &&
-	  !(Fl::event_state() & (FL_SHIFT | FL_CTRL | FL_ALT | FL_META))) {
-	popup();
-	return 1;
+          !(Fl::event_state() & (FL_SHIFT | FL_CTRL | FL_ALT | FL_META))) {
+        popup();
+        return 1;
       } else return 0;
     case FL_SHORTCUT:
       if (Fl_Widget::test_shortcut()) {popup(); return 1;}
@@ -63,8 +63,8 @@ class Popup_Button : public Fl_Menu_Button {
     case FL_FOCUS:
     case FL_UNFOCUS:
       if (box() && Fl::visible_focus()) {
-	redraw();
-	return 1;
+        redraw();
+        return 1;
       }
     default:
       return 0;

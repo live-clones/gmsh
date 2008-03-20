@@ -1,4 +1,4 @@
-// $Id: BoundaryLayer.cpp,v 1.10 2008-02-22 21:09:01 geuzaine Exp $
+// $Id: BoundaryLayer.cpp,v 1.11 2008-03-20 11:44:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -36,12 +36,12 @@ static void addExtrudeNormals(std::vector<T*> &elements)
       MFace fac = ele->getFace(j);
       SVector3 n = fac.normal();
       if(n[0] || n[1] || n[2]){
-	double nn[3] = {n[0], n[1], n[2]};
-	for(int k = 0; k < fac.getNumVertices(); k++){
-	  MVertex *v = fac.getVertex(k);
-	  SPoint3 p(v->x(), v->y(), v->z());
-	  ExtrudeParams::normals->add(p[0], p[1], p[2], 3, nn);
-	}
+        double nn[3] = {n[0], n[1], n[2]};
+        for(int k = 0; k < fac.getNumVertices(); k++){
+          MVertex *v = fac.getVertex(k);
+          SPoint3 p(v->x(), v->y(), v->z());
+          ExtrudeParams::normals->add(p[0], p[1], p[2], 3, nn);
+        }
       }
     }
   }
@@ -56,14 +56,14 @@ int Mesh2DWithBoundaryLayers(GModel *m)
     if(gf->geomType() == GEntity::BoundaryLayerSurface){
       ExtrudeParams *ep = gf->meshAttributes.extrude;
       if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY){
-	GFace *from = m->getFaceByTag(std::abs(ep->geo.Source));
-	if(!from){
-	  Msg(GERROR, "Unknown source face %d for boundary layer", ep->geo.Source);
-	  return 0;
-	}
-	sourceFaces.insert(from);
-	std::list<GEdge*> e = from->edges();
-	sourceEdges.insert(e.begin(), e.end());
+        GFace *from = m->getFaceByTag(std::abs(ep->geo.Source));
+        if(!from){
+          Msg(GERROR, "Unknown source face %d for boundary layer", ep->geo.Source);
+          return 0;
+        }
+        sourceFaces.insert(from);
+        std::list<GEdge*> e = from->edges();
+        sourceEdges.insert(e.begin(), e.end());
       }
     }
   }
@@ -102,19 +102,19 @@ int Mesh2DWithBoundaryLayers(GModel *m)
     if(ge->geomType() == GEntity::BoundaryLayerCurve){
       ExtrudeParams *ep = ge->meshAttributes.extrude;
       if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY){
-	GVertex *vsrc, *vdest;
-	if(ge->getBeginVertex()->geomType() == GEntity::BoundaryLayerPoint){
-	  vsrc = ge->getEndVertex();
-	  vdest = ge->getBeginVertex();
-	}
-	else{
-	  vsrc = ge->getBeginVertex();
-	  vdest = ge->getEndVertex();
-	}
-	GPoint p = vsrc->point();
-	ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
-		    p.x(), p.y(), p.z());
-	vdest->setPosition(p);
+        GVertex *vsrc, *vdest;
+        if(ge->getBeginVertex()->geomType() == GEntity::BoundaryLayerPoint){
+          vsrc = ge->getEndVertex();
+          vdest = ge->getBeginVertex();
+        }
+        else{
+          vsrc = ge->getBeginVertex();
+          vdest = ge->getEndVertex();
+        }
+        GPoint p = vsrc->point();
+        ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
+                    p.x(), p.y(), p.z());
+        vdest->setPosition(p);
       }
     }
   }

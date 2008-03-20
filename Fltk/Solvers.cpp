@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.61 2008-02-23 15:30:07 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.62 2008-03-20 11:44:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -68,7 +68,7 @@ int WaitForData(int socket, int num, double waitint)
     else{ 
       // an error happened
       if(num >= 0)
-	SINFO[num].pid = -1;
+        SINFO[num].pid = -1;
       return 1;
     }
   }
@@ -162,7 +162,7 @@ int Solver(int num, const char *args)
     }
     if(num >= 0){
       for(int i = 0; i < SINFO[num].nboptions; i++)
-	WID->solver[num].choice[i]->clear();
+        WID->solver[num].choice[i]->clear();
     }
     return 0;
   }
@@ -191,73 +191,73 @@ int Solver(int num, const char *args)
     if(server.ReceiveMessageHeader(&type, &length)){
       char *message = new char[length + 1];
       if(server.ReceiveMessageBody(length, message)){
-	switch (type) {
-	case GmshServer::CLIENT_START:
-	  if(num >= 0)
-	    SINFO[num].pid = atoi(message);
-	  break;
-	case GmshServer::CLIENT_STOP:
-	  stop = 1;
-	  if(num >= 0)
-	    SINFO[num].pid = -1;
-	  break;
-	case GmshServer::CLIENT_PROGRESS:
-	  if(num >= 0)
-	    Msg(STATUS2N, "%s %s", SINFO[num].name, message);
-	  else
-	    Msg(STATUS2N, "%s", message);
-	  break;
-	case GmshServer::CLIENT_OPTION_1:
-	  if(num >= 0)
-	    strcpy(SINFO[num].option[0][SINFO[num].nbval[0]++], message);
-	  break;
-	case GmshServer::CLIENT_OPTION_2:
-	  if(num >= 0)
-	    strcpy(SINFO[num].option[1][SINFO[num].nbval[1]++], message);
-	  break;
-	case GmshServer::CLIENT_OPTION_3:
-	  if(num >= 0)
-	    strcpy(SINFO[num].option[2][SINFO[num].nbval[2]++], message);
-	  break;
-	case GmshServer::CLIENT_OPTION_4:
-	  if(num >= 0)
-	    strcpy(SINFO[num].option[3][SINFO[num].nbval[3]++], message);
-	  break;
-	case GmshServer::CLIENT_OPTION_5:
-	  if(num >= 0)
-	    strcpy(SINFO[num].option[4][SINFO[num].nbval[4]++], message);
-	  break;
-	case GmshServer::CLIENT_MERGE_FILE:
-	  if(num < 0 || (num >= 0 && SINFO[num].merge_views)) {
-	    int n = PView::list.size();
-	    MergeFile(message);
-	    Draw();
-	    if(n != (int)PView::list.size()) 
-	      WID->set_context(menu_post, 0);
-	  }
-	  break;
-	case GmshServer::CLIENT_PARSE_STRING:
-	  ParseString(message);
-	  Draw();
-	  break;
-	case GmshServer::CLIENT_INFO:
-	  Msg(SOLVER, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
-	  break;
-	case GmshServer::CLIENT_WARNING:
-	case GmshServer::CLIENT_ERROR:
-	  Msg(SOLVERR, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
-	  break;
-	default:
-	  Msg(WARNING, "Unknown type of message received from %s",
-	      num >= 0 ? SINFO[num].name : "client");
-	  Msg(SOLVER, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
-	  break;
-	}
-	WID->check();
+        switch (type) {
+        case GmshServer::CLIENT_START:
+          if(num >= 0)
+            SINFO[num].pid = atoi(message);
+          break;
+        case GmshServer::CLIENT_STOP:
+          stop = 1;
+          if(num >= 0)
+            SINFO[num].pid = -1;
+          break;
+        case GmshServer::CLIENT_PROGRESS:
+          if(num >= 0)
+            Msg(STATUS2N, "%s %s", SINFO[num].name, message);
+          else
+            Msg(STATUS2N, "%s", message);
+          break;
+        case GmshServer::CLIENT_OPTION_1:
+          if(num >= 0)
+            strcpy(SINFO[num].option[0][SINFO[num].nbval[0]++], message);
+          break;
+        case GmshServer::CLIENT_OPTION_2:
+          if(num >= 0)
+            strcpy(SINFO[num].option[1][SINFO[num].nbval[1]++], message);
+          break;
+        case GmshServer::CLIENT_OPTION_3:
+          if(num >= 0)
+            strcpy(SINFO[num].option[2][SINFO[num].nbval[2]++], message);
+          break;
+        case GmshServer::CLIENT_OPTION_4:
+          if(num >= 0)
+            strcpy(SINFO[num].option[3][SINFO[num].nbval[3]++], message);
+          break;
+        case GmshServer::CLIENT_OPTION_5:
+          if(num >= 0)
+            strcpy(SINFO[num].option[4][SINFO[num].nbval[4]++], message);
+          break;
+        case GmshServer::CLIENT_MERGE_FILE:
+          if(num < 0 || (num >= 0 && SINFO[num].merge_views)) {
+            int n = PView::list.size();
+            MergeFile(message);
+            Draw();
+            if(n != (int)PView::list.size()) 
+              WID->set_context(menu_post, 0);
+          }
+          break;
+        case GmshServer::CLIENT_PARSE_STRING:
+          ParseString(message);
+          Draw();
+          break;
+        case GmshServer::CLIENT_INFO:
+          Msg(SOLVER, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
+          break;
+        case GmshServer::CLIENT_WARNING:
+        case GmshServer::CLIENT_ERROR:
+          Msg(SOLVERR, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
+          break;
+        default:
+          Msg(WARNING, "Unknown type of message received from %s",
+              num >= 0 ? SINFO[num].name : "client");
+          Msg(SOLVER, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
+          break;
+        }
+        WID->check();
       }
       else{
-	Msg(WARNING, "Failed to receive message body on socket: aborting");
-	break;
+        Msg(WARNING, "Failed to receive message body on socket: aborting");
+        break;
       }
       delete [] message;
     }
@@ -270,10 +270,10 @@ int Solver(int num, const char *args)
   if(num >= 0){
     for(int i = 0; i < SINFO[num].nboptions; i++) {
       if(SINFO[num].nbval[i]) {
-	WID->solver[num].choice[i]->clear();
-	for(int j = 0; j < SINFO[num].nbval[i]; j++)
-	  WID->solver[num].choice[i]->add(SINFO[num].option[i][j]);
-	WID->solver[num].choice[i]->value(0);
+        WID->solver[num].choice[i]->clear();
+        for(int j = 0; j < SINFO[num].nbval[i]; j++)
+          WID->solver[num].choice[i]->add(SINFO[num].option[i][j]);
+        WID->solver[num].choice[i]->value(0);
       }
     }
   }

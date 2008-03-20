@@ -1,4 +1,4 @@
-// $Id: Annotate.cpp,v 1.20 2008-02-23 15:30:10 geuzaine Exp $
+// $Id: Annotate.cpp,v 1.21 2008-03-20 11:44:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -97,7 +97,7 @@ void GMSH_AnnotatePlugin::draw()
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho((double)CTX.viewport[0], (double)CTX.viewport[2],
-	    (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
+            (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     Fix2DCoordinates(&X, &Y);
@@ -118,7 +118,7 @@ void GMSH_AnnotatePlugin::draw()
 }
 
 double GMSH_AnnotatePlugin::callback(int num, int action, double value, double *opt,
-				     double step, double min, double max)
+                                     double step, double min, double max)
 {
   switch(action){ // configure the input field
   case 1: return step;
@@ -134,7 +134,7 @@ double GMSH_AnnotatePlugin::callback(int num, int action, double value, double *
 }
 
 const char *GMSH_AnnotatePlugin::callbackStr(int num, int action, const char *value,
-					     const char **opt)
+                                             const char **opt)
 {
   *opt = value;
 #if defined(HAVE_FLTK)
@@ -148,9 +148,9 @@ double GMSH_AnnotatePlugin::callbackX(int num, int action, double value)
   // not perfect: the change will only take place if we reopen the dialog...
   int dim3 = (int)AnnotateOptions_Number[3].def;
   return callback(num, action, value, &AnnotateOptions_Number[0].def,
-		  dim3 ? CTX.lc/200. : 0.5, 
-		  dim3 ? -CTX.lc : -100., 
-		  dim3 ? CTX.lc : 100000.);
+                  dim3 ? CTX.lc/200. : 0.5, 
+                  dim3 ? -CTX.lc : -100., 
+                  dim3 ? CTX.lc : 100000.);
 }
 
 double GMSH_AnnotatePlugin::callbackY(int num, int action, double value)
@@ -158,9 +158,9 @@ double GMSH_AnnotatePlugin::callbackY(int num, int action, double value)
   // not perfect: the change will only take place if we reopen the dialog...
   int dim3 = (int)AnnotateOptions_Number[3].def;
   return callback(num, action, value, &AnnotateOptions_Number[1].def,
-		  dim3 ? CTX.lc/200. : 0.5, 
-		  dim3 ? -CTX.lc : -100., 
-		  dim3 ? CTX.lc : 100000.);
+                  dim3 ? CTX.lc/200. : 0.5, 
+                  dim3 ? -CTX.lc : -100., 
+                  dim3 ? CTX.lc : 100000.);
 }
 
 double GMSH_AnnotatePlugin::callbackZ(int num, int action, double value)
@@ -168,21 +168,21 @@ double GMSH_AnnotatePlugin::callbackZ(int num, int action, double value)
   // not perfect: the change will only take place if we reopen the dialog...
   int dim3 = (int)AnnotateOptions_Number[3].def;
   return callback(num, action, value, &AnnotateOptions_Number[2].def,
-		  dim3 ? CTX.lc/200. : 0.5, 
-		  dim3 ? -CTX.lc : -100., 
-		  dim3 ? CTX.lc : 100000.);
+                  dim3 ? CTX.lc/200. : 0.5, 
+                  dim3 ? -CTX.lc : -100., 
+                  dim3 ? CTX.lc : 100000.);
 }
 
 double GMSH_AnnotatePlugin::callback3D(int num, int action, double value)
 {
   return callback(num, action, value, &AnnotateOptions_Number[3].def,
-		  1, 0, 1);
+                  1, 0, 1);
 }
 
 double GMSH_AnnotatePlugin::callbackFontSize(int num, int action, double value)
 {
   return callback(num, action, value, &AnnotateOptions_Number[4].def,
-		  1, 5, 100);
+                  1, 5, 100);
 }
 
 const char *GMSH_AnnotatePlugin::callbackText(int num, int action, const char *value)
@@ -206,22 +206,22 @@ void GMSH_AnnotatePlugin::getName(char *name) const
 }
 
 void GMSH_AnnotatePlugin::getInfos(char *author, char *copyright,
-				   char *help_text) const
+                                   char *help_text) const
 {
   strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Annotate) adds the text string `Text',\n"
-	 "in font `Font' and size `FontSize', in the view\n"
-	 "`iView'. If `ThreeD' is equal to 1, the plugin inserts\n"
-	 "the string in model coordinates at the position\n"
-	 "(`X',`Y',`Z'). If `ThreeD' is equal to 0, the plugin\n"
-	 "inserts the string in screen coordinates at\n"
-	 "the position (`X',`Y'). The string is aligned\n"
-	 "according to `Align'. If `iView' < 0, the plugin\n"
-	 "is run on the current view.\n"
-	 "\n"
-	 "Plugin(Annotate) is executed in-place.\n");
+         "in font `Font' and size `FontSize', in the view\n"
+         "`iView'. If `ThreeD' is equal to 1, the plugin inserts\n"
+         "the string in model coordinates at the position\n"
+         "(`X',`Y',`Z'). If `ThreeD' is equal to 0, the plugin\n"
+         "inserts the string in screen coordinates at\n"
+         "the position (`X',`Y'). The string is aligned\n"
+         "according to `Align'. If `iView' < 0, the plugin\n"
+         "is run on the current view.\n"
+         "\n"
+         "Plugin(Annotate) is executed in-place.\n");
 }
 
 int GMSH_AnnotatePlugin::getNbOptions() const

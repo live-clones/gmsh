@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.37 2008-02-17 08:48:07 geuzaine Exp $
+// $Id: Transform.cpp,v 1.38 2008-03-20 11:44:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -63,16 +63,16 @@ void GMSH_TransformPlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Transform) transforms the homogeneous\n"
-	 "node coordinates (x,y,z,1) of the elements in\n"
-	 "the view `iView' by the matrix\n"
+         "node coordinates (x,y,z,1) of the elements in\n"
+         "the view `iView' by the matrix\n"
          "[`A11' `A12' `A13' `Tx']\n"
-	 "[`A21' `A22' `A23' `Ty']\n"
-	 "[`A31' `A32' `A33' `Tz'].\n"
-	 "If `SwapOrientation' is set, the orientation of the\n"
-	 "elements is reversed. If `iView' < 0, the plugin\n"
-	 "is run on the current view.\n"
-	 "\n"
-	 "Plugin(Transform) is executed in-place.\n");
+         "[`A21' `A22' `A23' `Ty']\n"
+         "[`A31' `A32' `A33' `Tz'].\n"
+         "If `SwapOrientation' is set, the orientation of the\n"
+         "elements is reversed. If `iView' < 0, the plugin\n"
+         "is run on the current view.\n"
+         "\n"
+         "Plugin(Transform) is executed in-place.\n");
 }
 
 int GMSH_TransformPlugin::getNbOptions() const
@@ -101,7 +101,7 @@ static void transform(double mat[3][4], double v[3],
 }
 
 static void transform_list(PViewDataList *data, List_T *list, int nbList, 
-			   int nbVert, int nbComp, double mat[3][4], int swap)
+                           int nbVert, int nbComp, double mat[3][4], int swap)
 {
   if(!nbList) return;
 
@@ -128,19 +128,19 @@ static void transform_list(PViewDataList *data, List_T *list, int nbList,
     }
     if(copy){
       for(int j = 0; j < nb; j++)
-	copy[j] = x[j];
+        copy[j] = x[j];
       for(int j = 0; j < nbVert; j++){
-	x[j] = copy[nbVert - j - 1];
-	x[nbVert + j] = copy[2 * nbVert - j - 1];
-	x[2 * nbVert + j] = copy[3 * nbVert - j - 1];
+        x[j] = copy[nbVert - j - 1];
+        x[nbVert + j] = copy[2 * nbVert - j - 1];
+        x[2 * nbVert + j] = copy[3 * nbVert - j - 1];
       }
       for(int ts = 0; ts < data->getNumTimeSteps(); ts++){
-	for(int j = 0; j < nbVert; j++){
-	  for(int k = 0; k < nbComp; k++){
-	    x[3 * nbVert + nbComp * nbVert * ts + nbComp * j + k] = 
-	      copy[3 * nbVert + nbComp * nbVert * ts + nbComp * (nbVert - j - 1) + k];
-	  }
-	}
+        for(int j = 0; j < nbVert; j++){
+          for(int k = 0; k < nbComp; k++){
+            x[3 * nbVert + nbComp * nbVert * ts + nbComp * j + k] = 
+              copy[3 * nbVert + nbComp * nbVert * ts + nbComp * (nbVert - j - 1) + k];
+          }
+        }
       }
     }
   }

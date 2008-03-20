@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.43 2008-03-18 19:30:14 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.44 2008-03-20 11:44:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,7 @@ static void addElements(std::vector<T*> &dst, const std::vector<MElement*> &src)
 }
 
 static void storeElementsInEntities(GModel *m, 
-				    std::map<int, std::vector<MElement*> > &map)
+                                    std::map<int, std::vector<MElement*> > &map)
 {
   std::map<int, std::vector<MElement*> >::const_iterator it = map.begin();
   for(; it != map.end(); ++it){
@@ -54,36 +54,36 @@ static void storeElementsInEntities(GModel *m,
     switch(numEdges){
     case 1: 
       {
-	GEdge *e = m->getEdgeByTag(it->first);
-	if(!e){
-	  e = new discreteEdge(m, it->first);
-	  m->add(e);
-	}
-	addElements(e->lines, it->second);
+        GEdge *e = m->getEdgeByTag(it->first);
+        if(!e){
+          e = new discreteEdge(m, it->first);
+          m->add(e);
+        }
+        addElements(e->lines, it->second);
       }
       break;
     case 3: case 4: 
       {
-	GFace *f = m->getFaceByTag(it->first);
-	if(!f){
-	  f = new discreteFace(m, it->first);
-	  m->add(f);
-	}
-	if(numEdges == 3) addElements(f->triangles, it->second);
-	else addElements(f->quadrangles, it->second);
+        GFace *f = m->getFaceByTag(it->first);
+        if(!f){
+          f = new discreteFace(m, it->first);
+          m->add(f);
+        }
+        if(numEdges == 3) addElements(f->triangles, it->second);
+        else addElements(f->quadrangles, it->second);
       }
       break;
     case 6: case 12: case 9: case 8:
       {
-	GRegion *r = m->getRegionByTag(it->first);
-	if(!r){
-	  r = new discreteRegion(m, it->first);
-	  m->add(r);
-	}
-	if(numEdges == 6) addElements(r->tetrahedra, it->second);
-	else if(numEdges == 12) addElements(r->hexahedra, it->second);
-	else if(numEdges == 9) addElements(r->prisms, it->second);
-	else addElements(r->pyramids, it->second);
+        GRegion *r = m->getRegionByTag(it->first);
+        if(!r){
+          r = new discreteRegion(m, it->first);
+          m->add(r);
+        }
+        if(numEdges == 6) addElements(r->tetrahedra, it->second);
+        else if(numEdges == 12) addElements(r->hexahedra, it->second);
+        else if(numEdges == 9) addElements(r->prisms, it->second);
+        else addElements(r->pyramids, it->second);
       }
       break;
     }
@@ -110,15 +110,15 @@ static void storeVerticesInEntities(std::vector<MVertex*> &vertices)
     if(v){ // the vector can have null entries (first or last element)
       GEntity *ge = v->onWhat();
       if(ge) 
-	ge->mesh_vertices.push_back(v);
+        ge->mesh_vertices.push_back(v);
       else
-	delete v; // we delete all unused vertices
+        delete v; // we delete all unused vertices
     }
   }
 }
 
 static void storePhysicalTagsInEntities(GModel *m, int dim,
-					std::map<int, std::map<int, std::string> > &map)
+                                        std::map<int, std::map<int, std::string> > &map)
 {
   std::map<int, std::map<int, std::string> >::const_iterator it = map.begin();
   for(; it != map.end(); ++it){
@@ -132,16 +132,16 @@ static void storePhysicalTagsInEntities(GModel *m, int dim,
     if(ge){
       std::map<int, std::string>::const_iterator it2 = it->second.begin();
       for(; it2 != it->second.end(); ++it2){
-	if(std::find(ge->physicals.begin(), ge->physicals.end(), it2->first) == 
-	   ge->physicals.end())
-	  ge->physicals.push_back(it2->first);
+        if(std::find(ge->physicals.begin(), ge->physicals.end(), it2->first) == 
+           ge->physicals.end())
+          ge->physicals.push_back(it2->first);
       }
     }
   }
 }
 
 static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map, 
-			std::vector<MVertex*> &vertices)
+                        std::vector<MVertex*> &vertices)
 {
   for(int i = 0; i < num; i++){
     if(!map.count(indices[i])){
@@ -155,7 +155,7 @@ static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
 }
 
 static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
-			std::vector<MVertex*> &vertices)
+                        std::vector<MVertex*> &vertices)
 {
   for(int i = 0; i < num; i++){
     if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)){
@@ -206,10 +206,10 @@ static int getNumVerticesForElementTypeMSH(int type)
 }
 
 static void createElementMSH(GModel *m, int num, int type, int physical, 
-			     int reg, int part, std::vector<MVertex*> &v, 
-			     std::map<int, std::vector<MVertex*> > &points,
-			     std::map<int, std::vector<MElement*> > elem[7],
-			     std::map<int, std::map<int, std::string> > physicals[4])
+                             int reg, int part, std::vector<MVertex*> &v, 
+                             std::map<int, std::vector<MVertex*> > &points,
+                             std::map<int, std::vector<MElement*> > elem[7],
+                             std::map<int, std::map<int, std::string> > physicals[4])
 {
   int dim = 0;
 
@@ -287,14 +287,14 @@ int GModel::readMSH(const std::string &name)
       int format, size;
       if(sscanf(str, "%lf %d %d", &version, &format, &size) != 3) return 0;
       if(format){
-	binary = true;
-	Msg(INFO, "Mesh is in binary format");
-	int one;
-	if(fread(&one, sizeof(int), 1, fp) != 1) return 0;
-	if(one != 1){
-	  swap = true;
-	  Msg(INFO, "Swapping bytes from binary file");
-	}
+        binary = true;
+        Msg(INFO, "Mesh is in binary format");
+        int one;
+        if(fread(&one, sizeof(int), 1, fp) != 1) return 0;
+        if(one != 1){
+          swap = true;
+          Msg(INFO, "Swapping bytes from binary file");
+        }
       }
 
     }
@@ -304,11 +304,11 @@ int GModel::readMSH(const std::string &name)
       int numNames;
       if(sscanf(str, "%d", &numNames) != 1) return 0;
       for(int i = 0; i < numNames; i++) {
-	int num;
-	if(fscanf(fp, "%d", &num) != 1) return 0;
-	if(!fgets(str, sizeof(str), fp)) return 0;
-	std::string name = extractDoubleQuotedString(str, 256);
-	if(name.size()) setPhysicalName(name, num);
+        int num;
+        if(fscanf(fp, "%d", &num) != 1) return 0;
+        if(!fgets(str, sizeof(str), fp)) return 0;
+        std::string name = extractDoubleQuotedString(str, 256);
+        if(name.size()) setPhysicalName(name, num);
       }
 
     }
@@ -323,42 +323,42 @@ int GModel::readMSH(const std::string &name)
       int progress = (numVertices > 100000) ? numVertices / 25 : 0;
       int minVertex = numVertices + 1, maxVertex = -1;
       for(int i = 0; i < numVertices; i++) {
-	int num;
-	double xyz[3];
-	if(!binary){
-	  if(fscanf(fp, "%d %lf %lf %lf", &num, &xyz[0], &xyz[1], &xyz[2]) != 4) return 0;
-	}
-	else{
-	  if(fread(&num, sizeof(int), 1, fp) != 1) return 0;
-	  if(swap) swapBytes((char*)&num, sizeof(int), 1);
-	  if(fread(xyz, sizeof(double), 3, fp) != 3) return 0;
-	  if(swap) swapBytes((char*)xyz, sizeof(double), 3);
-	}
-	minVertex = std::min(minVertex, num);
-	maxVertex = std::max(maxVertex, num);
-	if(vertexMap.count(num))
-	  Msg(WARNING, "Skipping duplicate vertex %d", num);
-	else
-	  vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
-	if(progress && (i % progress == progress - 1))
-	  Msg(PROGRESS, "Read %d vertices", i + 1);
+        int num;
+        double xyz[3];
+        if(!binary){
+          if(fscanf(fp, "%d %lf %lf %lf", &num, &xyz[0], &xyz[1], &xyz[2]) != 4) return 0;
+        }
+        else{
+          if(fread(&num, sizeof(int), 1, fp) != 1) return 0;
+          if(swap) swapBytes((char*)&num, sizeof(int), 1);
+          if(fread(xyz, sizeof(double), 3, fp) != 3) return 0;
+          if(swap) swapBytes((char*)xyz, sizeof(double), 3);
+        }
+        minVertex = std::min(minVertex, num);
+        maxVertex = std::max(maxVertex, num);
+        if(vertexMap.count(num))
+          Msg(WARNING, "Skipping duplicate vertex %d", num);
+        else
+          vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
+        if(progress && (i % progress == progress - 1))
+          Msg(PROGRESS, "Read %d vertices", i + 1);
       }
       if(progress) Msg(PROGRESS, "");
       // If the vertex numbering is dense, tranfer the map into a
       // vector to speed up element creation
       if((int)vertexMap.size() == numVertices && 
-	 ((minVertex == 1 && maxVertex == numVertices) ||
-	  (minVertex == 0 && maxVertex == numVertices - 1))){
-	Msg(INFO, "Vertex numbering is dense");
-	vertexVector.resize(vertexMap.size() + 1);
-	if(minVertex == 1) 
-	  vertexVector[0] = 0;
-	else
-	  vertexVector[numVertices] = 0;
-	std::map<int, MVertex*>::const_iterator it = vertexMap.begin();
-	for(; it != vertexMap.end(); ++it)
-	  vertexVector[it->first] = it->second;
-	vertexMap.clear();
+         ((minVertex == 1 && maxVertex == numVertices) ||
+          (minVertex == 0 && maxVertex == numVertices - 1))){
+        Msg(INFO, "Vertex numbering is dense");
+        vertexVector.resize(vertexMap.size() + 1);
+        if(minVertex == 1) 
+          vertexVector[0] = 0;
+        else
+          vertexVector[numVertices] = 0;
+        std::map<int, MVertex*>::const_iterator it = vertexMap.begin();
+        for(; it != vertexMap.end(); ++it)
+          vertexVector[it->first] = it->second;
+        vertexMap.clear();
       }
 
     }
@@ -370,75 +370,75 @@ int GModel::readMSH(const std::string &name)
       Msg(INFO, "%d elements", numElements);
       int progress = (numElements > 100000) ? numElements / 25 : 0;
       if(!binary){
-	for(int i = 0; i < numElements; i++) {
-	  int num, type, physical = 0, elementary = 0, partition = 0, numVertices;
-	  if(version <= 1.0){
-	    fscanf(fp, "%d %d %d %d %d", &num, &type, &physical, &elementary, &numVertices);
-	    if(numVertices != getNumVerticesForElementTypeMSH(type)) return 0;
-	  }
-	  else{
-	    int numTags;
-	    fscanf(fp, "%d %d %d", &num, &type, &numTags);
-	    for(int j = 0; j < numTags; j++){
-	      int tag;
-	      fscanf(fp, "%d", &tag);	    
-	      if(j == 0)      physical = tag;
-	      else if(j == 1) elementary = tag;
-	      else if(j == 2) partition = tag;
-	      // ignore any other tags for now
-	    }
-	    if(!(numVertices = getNumVerticesForElementTypeMSH(type))) return 0;
-	  }
-	  int indices[30];
-	  for(int j = 0; j < numVertices; j++) fscanf(fp, "%d", &indices[j]);
-	  std::vector<MVertex*> vertices;
-	  if(vertexVector.size()){
-	    if(!getVertices(numVertices, indices, vertexVector, vertices)) return 0;
-	  }
-	  else{
-	    if(!getVertices(numVertices, indices, vertexMap, vertices)) return 0;
-	  }
-	  createElementMSH(this, num, type, physical, elementary, partition, 
-			   vertices, points, elements, physicals);
-	  if(progress && (i % progress == progress - 1))
-	    Msg(PROGRESS, "Read %d elements", i + 1);
-	}
+        for(int i = 0; i < numElements; i++) {
+          int num, type, physical = 0, elementary = 0, partition = 0, numVertices;
+          if(version <= 1.0){
+            fscanf(fp, "%d %d %d %d %d", &num, &type, &physical, &elementary, &numVertices);
+            if(numVertices != getNumVerticesForElementTypeMSH(type)) return 0;
+          }
+          else{
+            int numTags;
+            fscanf(fp, "%d %d %d", &num, &type, &numTags);
+            for(int j = 0; j < numTags; j++){
+              int tag;
+              fscanf(fp, "%d", &tag);       
+              if(j == 0)      physical = tag;
+              else if(j == 1) elementary = tag;
+              else if(j == 2) partition = tag;
+              // ignore any other tags for now
+            }
+            if(!(numVertices = getNumVerticesForElementTypeMSH(type))) return 0;
+          }
+          int indices[30];
+          for(int j = 0; j < numVertices; j++) fscanf(fp, "%d", &indices[j]);
+          std::vector<MVertex*> vertices;
+          if(vertexVector.size()){
+            if(!getVertices(numVertices, indices, vertexVector, vertices)) return 0;
+          }
+          else{
+            if(!getVertices(numVertices, indices, vertexMap, vertices)) return 0;
+          }
+          createElementMSH(this, num, type, physical, elementary, partition, 
+                           vertices, points, elements, physicals);
+          if(progress && (i % progress == progress - 1))
+            Msg(PROGRESS, "Read %d elements", i + 1);
+        }
       }
       else{
-	int numElementsPartial = 0;
-	while(numElementsPartial < numElements){
-	  int header[3];
-	  if(fread(header, sizeof(int), 3, fp) != 3) return 0;
-	  if(swap) swapBytes((char*)header, sizeof(int), 3);
-	  int type = header[0];
-	  int numElms = header[1];
-	  int numTags = header[2];
-	  int numVertices = getNumVerticesForElementTypeMSH(type);
-	  unsigned int n = 1 + numTags + numVertices;
-	  int *data = new int[n];
-	  for(int i = 0; i < numElms; i++) {
-	    if(fread(data, sizeof(int), n, fp) != n) return 0;
-	    if(swap) swapBytes((char*)data, sizeof(int), n);
-	    int num = data[0];
-	    int physical = (numTags > 0) ? data[4 - numTags] : 0;
-	    int elementary = (numTags > 1) ? data[4 - numTags + 1] : 0;
-	    int partition = (numTags > 2) ? data[4 - numTags + 2] : 0;
-	    int *indices = &data[numTags + 1];
-	    std::vector<MVertex*> vertices;
-	    if(vertexVector.size()){
-	      if(!getVertices(numVertices, indices, vertexVector, vertices)) return 0;
-	    }
-	    else{
-	      if(!getVertices(numVertices, indices, vertexMap, vertices)) return 0;
-	    }
-	    createElementMSH(this, num, type, physical, elementary, partition, 
-			     vertices, points, elements, physicals);
-	    if(progress && ((numElementsPartial + i) % progress == progress - 1))
-	      Msg(PROGRESS, "Read %d elements", i + 1);
-	  }
-	  delete [] data;
-	  numElementsPartial += numElms;
-	}
+        int numElementsPartial = 0;
+        while(numElementsPartial < numElements){
+          int header[3];
+          if(fread(header, sizeof(int), 3, fp) != 3) return 0;
+          if(swap) swapBytes((char*)header, sizeof(int), 3);
+          int type = header[0];
+          int numElms = header[1];
+          int numTags = header[2];
+          int numVertices = getNumVerticesForElementTypeMSH(type);
+          unsigned int n = 1 + numTags + numVertices;
+          int *data = new int[n];
+          for(int i = 0; i < numElms; i++) {
+            if(fread(data, sizeof(int), n, fp) != n) return 0;
+            if(swap) swapBytes((char*)data, sizeof(int), n);
+            int num = data[0];
+            int physical = (numTags > 0) ? data[4 - numTags] : 0;
+            int elementary = (numTags > 1) ? data[4 - numTags + 1] : 0;
+            int partition = (numTags > 2) ? data[4 - numTags + 2] : 0;
+            int *indices = &data[numTags + 1];
+            std::vector<MVertex*> vertices;
+            if(vertexVector.size()){
+              if(!getVertices(numVertices, indices, vertexVector, vertices)) return 0;
+            }
+            else{
+              if(!getVertices(numVertices, indices, vertexMap, vertices)) return 0;
+            }
+            createElementMSH(this, num, type, physical, elementary, partition, 
+                             vertices, points, elements, physicals);
+            if(progress && ((numElementsPartial + i) % progress == progress - 1))
+              Msg(PROGRESS, "Read %d elements", i + 1);
+          }
+          delete [] data;
+          numElementsPartial += numElms;
+        }
       }
       if(progress) Msg(PROGRESS, "");
 
@@ -448,9 +448,9 @@ int GModel::readMSH(const std::string &name)
       // there's some nodal post-processing data to read later on, so
       // cache the vertex indexing data
       if(vertexVector.size())
-	_vertexVectorCache = vertexVector;
+        _vertexVectorCache = vertexVector;
       else
-	_vertexMapCache = vertexMap;
+        _vertexMapCache = vertexMap;
       postpro = true;
       break;
 
@@ -465,7 +465,7 @@ int GModel::readMSH(const std::string &name)
 
     do {
       if(!fgets(str, sizeof(str), fp) || feof(fp))
-	Msg(GERROR, "Prematured end of mesh file");
+        Msg(GERROR, "Prematured end of mesh file");
     } while(str[0] != '$');
   }
 
@@ -486,7 +486,7 @@ int GModel::readMSH(const std::string &name)
       if(v) points[v->getNum()].push_back(v);
     }
     for(std::map<int, MVertex*>::iterator it = vertexMap.begin(); 
-	it != vertexMap.end(); ++it) 
+        it != vertexMap.end(); ++it) 
       points[it->second->getNum()].push_back(it->second);
   }
   
@@ -526,8 +526,8 @@ int GModel::readMSH(const std::string &name)
 }
 
 static void writeElementHeaderMSH(bool binary, FILE *fp, std::map<int,int> &elements,
-				  int t1, int t2=0, int t3=0, int t4=0, 
-				  int t5=0, int t6=0, int t7=0, int t8=0)
+                                  int t1, int t2=0, int t3=0, int t4=0, 
+                                  int t5=0, int t6=0, int t7=0, int t8=0)
 {
   if(!binary) return;
 
@@ -569,19 +569,19 @@ static void writeElementHeaderMSH(bool binary, FILE *fp, std::map<int,int> &elem
 
 template<class T>
 static void writeElementsMSH(FILE *fp, const std::vector<T*> &ele, int saveAll, 
-			     double version, bool binary, int &num, int elementary, 
-			     std::vector<int> &physicals)
+                             double version, bool binary, int &num, int elementary, 
+                             std::vector<int> &physicals)
 {
   for(unsigned int i = 0; i < ele.size(); i++)
     if(saveAll)
       ele[i]->writeMSH(fp, version, binary, ++num, elementary, 0);
     else
       for(unsigned int j = 0; j < physicals.size(); j++)
-	ele[i]->writeMSH(fp, version, binary, ++num, elementary, physicals[j]);
+        ele[i]->writeMSH(fp, version, binary, ++num, elementary, physicals[j]);
 }
 
 int GModel::writeMSH(const std::string &name, double version, bool binary, 
-		     bool saveAll, double scalingFactor)
+                     bool saveAll, double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp){
@@ -651,7 +651,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
       fprintf(fp, "$PhysicalNames\n");
       fprintf(fp, "%d\n", numPhysicalNames());
       for(piter it = firstPhysicalName(); it != lastPhysicalName(); it++)
-	fprintf(fp, "%d \"%s\"\n", it->first, it->second.c_str());
+        fprintf(fp, "%d \"%s\"\n", it->first, it->second.c_str());
       fprintf(fp, "$EndPhysicalNames\n");
     }
 
@@ -691,36 +691,36 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   writeElementHeaderMSH(binary, fp, elements, MSH_PNT);
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     writeElementsMSH(fp, (*it)->mesh_vertices, saveAll, version, binary, num,
-		     (*it)->tag(), (*it)->physicals);
+                     (*it)->tag(), (*it)->physicals);
   writeElementHeaderMSH(binary, fp, elements, MSH_LIN_2, MSH_LIN_3, MSH_LIN_4, MSH_LIN_5);
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     writeElementsMSH(fp, (*it)->lines, saveAll, version, binary, num,
-		     (*it)->tag(), (*it)->physicals);
+                     (*it)->tag(), (*it)->physicals);
   writeElementHeaderMSH(binary, fp, elements, MSH_TRI_3, MSH_TRI_6, MSH_TRI_9, 
-			MSH_TRI_10, MSH_TRI_12, MSH_TRI_15, MSH_TRI_15I, MSH_TRI_21);
+                        MSH_TRI_10, MSH_TRI_12, MSH_TRI_15, MSH_TRI_15I, MSH_TRI_21);
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->triangles, saveAll, version, binary, num,
-		     (*it)->tag(), (*it)->physicals);
+                     (*it)->tag(), (*it)->physicals);
   writeElementHeaderMSH(binary, fp, elements, MSH_QUA_4, MSH_QUA_9, MSH_QUA_8);
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->quadrangles, saveAll, version, binary, num,
-		     (*it)->tag(), (*it)->physicals);
+                     (*it)->tag(), (*it)->physicals);
   writeElementHeaderMSH(binary, fp, elements, MSH_TET_4, MSH_TET_10);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->tetrahedra, saveAll, version, binary, num,
-		     (*it)->tag(), (*it)->physicals);
+                     (*it)->tag(), (*it)->physicals);
   writeElementHeaderMSH(binary, fp, elements, MSH_HEX_8, MSH_HEX_27, MSH_HEX_20);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->hexahedra, saveAll, version, binary, num,
-		     (*it)->tag(), (*it)->physicals);
+                     (*it)->tag(), (*it)->physicals);
   writeElementHeaderMSH(binary, fp, elements, MSH_PRI_6, MSH_PRI_18, MSH_PRI_15);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->prisms, saveAll, version, binary, num,
-		     (*it)->tag(), (*it)->physicals);
+                     (*it)->tag(), (*it)->physicals);
   writeElementHeaderMSH(binary, fp, elements, MSH_PYR_5, MSH_PYR_14, MSH_PYR_13);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->pyramids, saveAll, version, binary, num,
-		     (*it)->tag(), (*it)->physicals);
+                     (*it)->tag(), (*it)->physicals);
   
   if(binary) fprintf(fp, "\n");
 
@@ -736,8 +736,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
 }
 
 int GModel::writePOS(const std::string &name, bool printElementary, 
-		     bool printElementNumber, bool printGamma, bool printEta, 
-		     bool printRho, bool saveAll, double scalingFactor)
+                     bool printElementNumber, bool printGamma, bool printEta, 
+                     bool printRho, bool saveAll, double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
@@ -780,36 +780,36 @@ int GModel::writePOS(const std::string &name, bool printElementary,
   for(eiter it = firstEdge(); it != lastEdge(); ++it) {
     if(saveAll || (*it)->physicals.size()){
       for(unsigned int i = 0; i < (*it)->lines.size(); i++)
-	(*it)->lines[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
-				  scalingFactor, (*it)->tag());
+        (*it)->lines[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+                                  scalingFactor, (*it)->tag());
     }
   }
 
   for(fiter it = firstFace(); it != lastFace(); ++it) {
     if(saveAll || (*it)->physicals.size()){
       for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-	(*it)->triangles[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
-				      scalingFactor, (*it)->tag());
+        (*it)->triangles[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+                                      scalingFactor, (*it)->tag());
       for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-	(*it)->quadrangles[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
-					scalingFactor, (*it)->tag());
+        (*it)->quadrangles[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+                                        scalingFactor, (*it)->tag());
     }
   }
 
   for(riter it = firstRegion(); it != lastRegion(); ++it) {
     if(saveAll || (*it)->physicals.size()){
       for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
-	(*it)->tetrahedra[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4],
-				       scalingFactor, (*it)->tag());
+        (*it)->tetrahedra[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4],
+                                       scalingFactor, (*it)->tag());
       for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
-	(*it)->hexahedra[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
-				      scalingFactor, (*it)->tag());
+        (*it)->hexahedra[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+                                      scalingFactor, (*it)->tag());
       for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
-	(*it)->prisms[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
-				   scalingFactor, (*it)->tag());
+        (*it)->prisms[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+                                   scalingFactor, (*it)->tag());
       for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
-	(*it)->pyramids[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
-				     scalingFactor, (*it)->tag());
+        (*it)->pyramids[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+                                     scalingFactor, (*it)->tag());
     }
   }
 
@@ -848,11 +848,11 @@ int GModel::readSTL(const std::string &name, double tolerance)
       if(!fgets(buffer, sizeof(buffer), fp)) break;
       // "vertex x y z"
       for(int i = 0; i < 3; i++){
-	if(!fgets(buffer, sizeof(buffer), fp)) break;
-	sscanf(buffer, "%s %f %f %f", s1, &x, &y, &z);
-	SPoint3 p(x, y, z);
-	points.push_back(p);
-	bbox += p;
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        sscanf(buffer, "%s %f %f %f", s1, &x, &y, &z);
+        SPoint3 p(x, y, z);
+        points.push_back(p);
+        bbox += p;
       }
       // "endloop"
       if(!fgets(buffer, sizeof(buffer), fp)) break;
@@ -870,25 +870,25 @@ int GModel::readSTL(const std::string &name, double tolerance)
       size_t ret = fread(&nfacets, sizeof(unsigned int), 1, fp);
       bool swap = false;
       if(nfacets > 10000000){
-	Msg(INFO, "Swapping bytes from binary file");
-	swap = true;
-	swapBytes((char*)&nfacets, sizeof(unsigned int), 1);
+        Msg(INFO, "Swapping bytes from binary file");
+        swap = true;
+        swapBytes((char*)&nfacets, sizeof(unsigned int), 1);
       }
       if(ret && nfacets){
-	char *data = new char[nfacets * 50 * sizeof(char)];
-	ret = fread(data, sizeof(char), nfacets * 50, fp);
-	if(ret == nfacets * 50){
-	  for(unsigned int i = 0; i < nfacets; i++) {
-	    float *xyz = (float *)&data[i * 50 * sizeof(char)];
-	    if(swap) swapBytes((char*)xyz, sizeof(float), 12);
-	    for(int j = 0; j < 3; j++){
-	      SPoint3 p(xyz[3 + 3 * j], xyz[3 + 3 * j + 1], xyz[3 + 3 * j + 2]);
-	      points.push_back(p);
-	      bbox += p;
-	    }
-	  }
-	}
-	delete data;
+        char *data = new char[nfacets * 50 * sizeof(char)];
+        ret = fread(data, sizeof(char), nfacets * 50, fp);
+        if(ret == nfacets * 50){
+          for(unsigned int i = 0; i < nfacets; i++) {
+            float *xyz = (float *)&data[i * 50 * sizeof(char)];
+            if(swap) swapBytes((char*)xyz, sizeof(float), 12);
+            for(int j = 0; j < 3; j++){
+              SPoint3 p(xyz[3 + 3 * j], xyz[3 + 3 * j + 1], xyz[3 + 3 * j + 2]);
+              points.push_back(p);
+              bbox += p;
+            }
+          }
+        }
+        delete data;
       }
     }
   }
@@ -924,8 +924,8 @@ int GModel::readSTL(const std::string &name, double tolerance)
       }
       else {
         v[j] = new MVertex(x, y, z, face);
-	vertices.insert(v[j]);
-	face->mesh_vertices.push_back(v[j]);
+        vertices.insert(v[j]);
+        face->mesh_vertices.push_back(v[j]);
       }
     }
     face->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
@@ -936,7 +936,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
 }
 
 int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
-		     double scalingFactor)
+                     double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp){
@@ -956,7 +956,7 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
     unsigned int nfacets = 0;
     for(fiter it = firstFace(); it != lastFace(); ++it){
       if(saveAll || (*it)->physicals.size()){
-	nfacets += (*it)->triangles.size() + 2 * (*it)->quadrangles.size();
+        nfacets += (*it)->triangles.size() + 2 * (*it)->quadrangles.size();
       }
     }
     fwrite(&nfacets, sizeof(unsigned int), 1, fp);
@@ -965,9 +965,9 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
   for(fiter it = firstFace(); it != lastFace(); ++it) {
     if(saveAll || (*it)->physicals.size()){
       for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-	(*it)->triangles[i]->writeSTL(fp, binary, scalingFactor);
+        (*it)->triangles[i]->writeSTL(fp, binary, scalingFactor);
       for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-	(*it)->quadrangles[i]->writeSTL(fp, binary, scalingFactor);
+        (*it)->quadrangles[i]->writeSTL(fp, binary, scalingFactor);
     }
   }
 
@@ -996,7 +996,7 @@ static int skipUntil(FILE *fp, const char *key)
 }
 
 static int readVerticesVRML(FILE *fp, std::vector<MVertex*> &vertexVector,
-			    std::vector<MVertex*> &allVertexVector)
+                            std::vector<MVertex*> &allVertexVector)
 {
   double x, y, z;
   if(fscanf(fp, "%lf %lf %lf", &x, &y, &z) != 3) return 0;
@@ -1010,8 +1010,8 @@ static int readVerticesVRML(FILE *fp, std::vector<MVertex*> &vertexVector,
 }
 
 static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int region,
-			    std::map<int, std::vector<MElement*> > elements[3], 
-			    bool strips=false)
+                            std::map<int, std::vector<MElement*> > elements[3], 
+                            bool strips=false)
 {
   int i;
   std::vector<int> idx;
@@ -1039,32 +1039,32 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
       if(!getVertices(idx.size(), &idx[0], vertexVector, vertices)) return 0;
       idx.clear();
       if(vertices.size() < 2){
-	Msg(INFO, "Skipping %d-vertex element", (int)vertices.size());
+        Msg(INFO, "Skipping %d-vertex element", (int)vertices.size());
       }
       else if(vertices.size() == 2){
-	elements[0][region].push_back(new MLine(vertices));
+        elements[0][region].push_back(new MLine(vertices));
       }
       else if(vertices.size() == 3){
-	elements[1][region].push_back(new MTriangle(vertices));
+        elements[1][region].push_back(new MTriangle(vertices));
       }
       else if(!strips && vertices.size() == 4){
-	elements[2][region].push_back(new MQuadrangle(vertices));
+        elements[2][region].push_back(new MQuadrangle(vertices));
       }
       else if(strips){ // triangle strip
-	for(unsigned int j = 2; j < vertices.size(); j++){
-	  if(j % 2)
-	    elements[1][region].push_back
-	      (new MTriangle(vertices[j], vertices[j - 1], vertices[j - 2]));
-	  else
-	    elements[1][region].push_back
-	      (new MTriangle(vertices[j - 2], vertices[j - 1], vertices[j]));
-	}
+        for(unsigned int j = 2; j < vertices.size(); j++){
+          if(j % 2)
+            elements[1][region].push_back
+              (new MTriangle(vertices[j], vertices[j - 1], vertices[j - 2]));
+          else
+            elements[1][region].push_back
+              (new MTriangle(vertices[j - 2], vertices[j - 1], vertices[j]));
+        }
       }
       else{ // import polygon as triangle fan
-	for(unsigned int j = 2; j < vertices.size(); j++){
-	  elements[1][region].push_back
-	    (new MTriangle(vertices[0], vertices[j-1], vertices[j]));
-	}
+        for(unsigned int j = 2; j < vertices.size(); j++){
+          elements[1][region].push_back
+            (new MTriangle(vertices[0], vertices[j-1], vertices[j]));
+        }
       }
     }
   }
@@ -1097,43 +1097,43 @@ int GModel::readVRML(const std::string &name)
     if(buffer[0] != '#'){ // skip comments
       sscanf(buffer, "%s", str);
       if(!strcmp(str, "Coordinate3")){
-	vertexVector.clear();
-	if(!skipUntil(fp, "point")) break;
-	if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
+        vertexVector.clear();
+        if(!skipUntil(fp, "point")) break;
+        if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
       }
       else if(!strcmp(str, "coord")){
-	vertexVector.clear();
-	if(!skipUntil(fp, "point")) break;
-	if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
-	if(!skipUntil(fp, "coordIndex")) break;
-	if(!readElementsVRML(fp, vertexVector, region, elements, true)) break;
+        vertexVector.clear();
+        if(!skipUntil(fp, "point")) break;
+        if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
+        if(!skipUntil(fp, "coordIndex")) break;
+        if(!readElementsVRML(fp, vertexVector, region, elements, true)) break;
       }
       else if(!strcmp(str, "IndexedTriangleStripSet")){
-	region++;
-	vertexVector.clear();
-	if(!skipUntil(fp, "vertex")) break;
-	if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
-	if(!skipUntil(fp, "coordIndex")) break;
-	if(!readElementsVRML(fp, vertexVector, region, elements, true)) break;
+        region++;
+        vertexVector.clear();
+        if(!skipUntil(fp, "vertex")) break;
+        if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
+        if(!skipUntil(fp, "coordIndex")) break;
+        if(!readElementsVRML(fp, vertexVector, region, elements, true)) break;
       }
       else if(!strcmp(str, "IndexedFaceSet") || !strcmp(str, "IndexedLineSet")){
-	region++;
-	if(!skipUntil(fp, "coordIndex")) break;
-	if(!readElementsVRML(fp, vertexVector, region, elements)) break;
+        region++;
+        if(!skipUntil(fp, "coordIndex")) break;
+        if(!readElementsVRML(fp, vertexVector, region, elements)) break;
       }
       else if(!strcmp(str, "DEF")){
-	char str1[256], str2[256];
-	if(!sscanf(buffer, "%s %s %s", str1, str2, str)) break;
-	if(!strcmp(str, "Coordinate")){
-	  vertexVector.clear();
-	  if(!skipUntil(fp, "point")) break;
-	  if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
-	}
-	else if(!strcmp(str, "IndexedFaceSet") || !strcmp(str, "IndexedLineSet")){
-	  region++;
-	  if(!skipUntil(fp, "coordIndex")) break;
-	  if(!readElementsVRML(fp, vertexVector, region, elements)) break;
-	}
+        char str1[256], str2[256];
+        if(!sscanf(buffer, "%s %s %s", str1, str2, str)) break;
+        if(!strcmp(str, "Coordinate")){
+          vertexVector.clear();
+          if(!skipUntil(fp, "point")) break;
+          if(!readVerticesVRML(fp, vertexVector, allVertexVector)) break;
+        }
+        else if(!strcmp(str, "IndexedFaceSet") || !strcmp(str, "IndexedLineSet")){
+          region++;
+          if(!skipUntil(fp, "coordIndex")) break;
+          if(!readElementsVRML(fp, vertexVector, region, elements)) break;
+        }
       }
     }
   }
@@ -1182,7 +1182,7 @@ int GModel::writeVRML(const std::string &name, bool saveAll, double scalingFacto
       fprintf(fp, "DEF Curve%d IndexedLineSet {\n", (*it)->tag());
       fprintf(fp, "  coordIndex [\n");
       for(unsigned int i = 0; i < (*it)->lines.size(); i++)
-	(*it)->lines[i]->writeVRML(fp);
+        (*it)->lines[i]->writeVRML(fp);
       fprintf(fp, "  ]\n");
       fprintf(fp, "}\n");
     }
@@ -1193,9 +1193,9 @@ int GModel::writeVRML(const std::string &name, bool saveAll, double scalingFacto
       fprintf(fp, "DEF Surface%d IndexedFaceSet {\n", (*it)->tag());
       fprintf(fp, "  coordIndex [\n");
       for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-	(*it)->triangles[i]->writeVRML(fp);
+        (*it)->triangles[i]->writeVRML(fp);
       for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-	(*it)->quadrangles[i]->writeVRML(fp);
+        (*it)->quadrangles[i]->writeVRML(fp);
       fprintf(fp, "  ]\n");
       fprintf(fp, "}\n");
     }
@@ -1223,120 +1223,120 @@ int GModel::readUNV(const std::string &name)
     if(!strncmp(buffer, "    -1", 6)){
       if(!fgets(buffer, sizeof(buffer), fp)) break;      
       if(!strncmp(buffer, "    -1", 6))
-	if(!fgets(buffer, sizeof(buffer), fp)) break;
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
       int record = 0;
       sscanf(buffer, "%d", &record);
       if(record == 2411){ // nodes
-	while(fgets(buffer, sizeof(buffer), fp)){
-	  if(!strncmp(buffer, "    -1", 6)) break;
-	  int num, dum;
-	  if(sscanf(buffer, "%d %d %d %d", &num, &dum, &dum, &dum) != 4) break;
-	  if(!fgets(buffer, sizeof(buffer), fp)) break;
-	  double x, y, z;
-	  for(unsigned int i = 0; i < strlen(buffer); i++)
-	    if(buffer[i] == 'D') buffer[i] = 'E';
-	  if(sscanf(buffer, "%lf %lf %lf", &x, &y, &z) != 3) break;
-	  vertexMap[num] = new MVertex(x, y, z, 0, num);
-	}
+        while(fgets(buffer, sizeof(buffer), fp)){
+          if(!strncmp(buffer, "    -1", 6)) break;
+          int num, dum;
+          if(sscanf(buffer, "%d %d %d %d", &num, &dum, &dum, &dum) != 4) break;
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          double x, y, z;
+          for(unsigned int i = 0; i < strlen(buffer); i++)
+            if(buffer[i] == 'D') buffer[i] = 'E';
+          if(sscanf(buffer, "%lf %lf %lf", &x, &y, &z) != 3) break;
+          vertexMap[num] = new MVertex(x, y, z, 0, num);
+        }
       }
       else if(record == 2412){ // elements
-	while(fgets(buffer, sizeof(buffer), fp)){
-	  if(strlen(buffer) < 3) continue; // possible line ending after last fscanf
-	  if(!strncmp(buffer, "    -1", 6)) break;
-	  int num, type, elementary, physical, color, numNodes;
-	  if(sscanf(buffer, "%d %d %d %d %d %d", &num, &type, &elementary, &physical, 
-		    &color, &numNodes) != 6) break;
-	  if(elementary < 0) elementary = 1;
-	  if(physical < 0) physical = 0;
-	  switch(type){
-	  case 11: case 21: case 22: case 31:
-	  case 23: case 24: case 32:
-	    // beam elements
-	    if(!fgets(buffer, sizeof(buffer), fp)) break;
-	    int dum;
-	    if(sscanf(buffer, "%d %d %d", &dum, &dum, &dum) != 3) break;
-	    break;
-	  }
-	  int n[30];
-	  for(int i = 0; i < numNodes; i++) if(!fscanf(fp, "%d", &n[i])) return 0;
-	  std::vector<MVertex*> vertices;
-	  if(!getVertices(numNodes, n, vertexMap, vertices)) return 0;
+        while(fgets(buffer, sizeof(buffer), fp)){
+          if(strlen(buffer) < 3) continue; // possible line ending after last fscanf
+          if(!strncmp(buffer, "    -1", 6)) break;
+          int num, type, elementary, physical, color, numNodes;
+          if(sscanf(buffer, "%d %d %d %d %d %d", &num, &type, &elementary, &physical, 
+                    &color, &numNodes) != 6) break;
+          if(elementary < 0) elementary = 1;
+          if(physical < 0) physical = 0;
+          switch(type){
+          case 11: case 21: case 22: case 31:
+          case 23: case 24: case 32:
+            // beam elements
+            if(!fgets(buffer, sizeof(buffer), fp)) break;
+            int dum;
+            if(sscanf(buffer, "%d %d %d", &dum, &dum, &dum) != 3) break;
+            break;
+          }
+          int n[30];
+          for(int i = 0; i < numNodes; i++) if(!fscanf(fp, "%d", &n[i])) return 0;
+          std::vector<MVertex*> vertices;
+          if(!getVertices(numNodes, n, vertexMap, vertices)) return 0;
 
-	  int dim = -1;
-	  switch(type){
-	  case 11: case 21: case 22: case 31:
-	    elements[0][elementary].push_back(new MLine(vertices, num));
-	    dim = 1;
-	    break;
-	  case 23: case 24: case 32:
-	    elements[0][elementary].push_back
-	      (new MLine3(vertices[0], vertices[2], vertices[1], num));
-	    dim = 1;
-	    break;
-	  case 41: case 51: case 61: case 74: case 81: case 91: 
-	    elements[1][elementary].push_back(new MTriangle(vertices, num));
-	    dim = 2;
-	    break;
-	  case 42: case 52: case 62: case 72: case 82: case 92: 
-	    elements[1][elementary].push_back
-	      (new MTriangle6(vertices[0], vertices[2], vertices[4], vertices[1], 
-			      vertices[3], vertices[5], num));
-	    dim = 2;
-	    break;
-	  case 44: case 54: case 64: case 71: case 84: case 94: 
-	    elements[2][elementary].push_back(new MQuadrangle(vertices, num));
-	    dim = 2;
-	    break;
-	  case 45: case 55: case 65: case 75: case 85: case 95:
-	    elements[2][elementary].push_back
-	      (new MQuadrangle8(vertices[0], vertices[2], vertices[4], vertices[6], 
-				vertices[1], vertices[3], vertices[5], vertices[7],
-				num));
-	    dim = 2;
-	    break;
-	  case 111:
-	    elements[3][elementary].push_back(new MTetrahedron(vertices, num));
-	    dim = 3; 
-	    break;
-	  case 118: 
-	    elements[3][elementary].push_back
-	      (new MTetrahedron10(vertices[0], vertices[2], vertices[4], vertices[9], 
-				  vertices[1], vertices[3], vertices[5], vertices[8],
-				  vertices[6], vertices[7], num));
-	    dim = 3;
-	    break;
-	  case 104: case 115:  
-	    elements[4][elementary].push_back(new MHexahedron(vertices, num));
-	    dim = 3; 
-	    break;
-	  case 105: case 116:
-	    elements[4][elementary].push_back
-	      (new MHexahedron20(vertices[0], vertices[2], vertices[4], vertices[6], 
-				 vertices[12], vertices[14], vertices[16], vertices[18],
-				 vertices[1], vertices[7], vertices[8], vertices[3],  
-				 vertices[9], vertices[5], vertices[10], vertices[11], 
-				 vertices[13], vertices[19], vertices[15], vertices[17], 
-				 num));
-	    dim = 3; 
-	    break;
-	  case 101: case 112:
-	    elements[5][elementary].push_back(new MPrism(vertices, num));
-	    dim = 3; 
-	    break;
-	  case 102: case 113:
-	    elements[5][elementary].push_back
-	      (new MPrism15(vertices[0], vertices[2], vertices[4], vertices[9], 
-			    vertices[11], vertices[13], vertices[1], vertices[5], 
-			    vertices[6], vertices[3], vertices[7], vertices[8],
-			    vertices[10], vertices[14], vertices[12], num));
-	    dim = 3;
-	    break;
-	  }
+          int dim = -1;
+          switch(type){
+          case 11: case 21: case 22: case 31:
+            elements[0][elementary].push_back(new MLine(vertices, num));
+            dim = 1;
+            break;
+          case 23: case 24: case 32:
+            elements[0][elementary].push_back
+              (new MLine3(vertices[0], vertices[2], vertices[1], num));
+            dim = 1;
+            break;
+          case 41: case 51: case 61: case 74: case 81: case 91: 
+            elements[1][elementary].push_back(new MTriangle(vertices, num));
+            dim = 2;
+            break;
+          case 42: case 52: case 62: case 72: case 82: case 92: 
+            elements[1][elementary].push_back
+              (new MTriangle6(vertices[0], vertices[2], vertices[4], vertices[1], 
+                              vertices[3], vertices[5], num));
+            dim = 2;
+            break;
+          case 44: case 54: case 64: case 71: case 84: case 94: 
+            elements[2][elementary].push_back(new MQuadrangle(vertices, num));
+            dim = 2;
+            break;
+          case 45: case 55: case 65: case 75: case 85: case 95:
+            elements[2][elementary].push_back
+              (new MQuadrangle8(vertices[0], vertices[2], vertices[4], vertices[6], 
+                                vertices[1], vertices[3], vertices[5], vertices[7],
+                                num));
+            dim = 2;
+            break;
+          case 111:
+            elements[3][elementary].push_back(new MTetrahedron(vertices, num));
+            dim = 3; 
+            break;
+          case 118: 
+            elements[3][elementary].push_back
+              (new MTetrahedron10(vertices[0], vertices[2], vertices[4], vertices[9], 
+                                  vertices[1], vertices[3], vertices[5], vertices[8],
+                                  vertices[6], vertices[7], num));
+            dim = 3;
+            break;
+          case 104: case 115:  
+            elements[4][elementary].push_back(new MHexahedron(vertices, num));
+            dim = 3; 
+            break;
+          case 105: case 116:
+            elements[4][elementary].push_back
+              (new MHexahedron20(vertices[0], vertices[2], vertices[4], vertices[6], 
+                                 vertices[12], vertices[14], vertices[16], vertices[18],
+                                 vertices[1], vertices[7], vertices[8], vertices[3],  
+                                 vertices[9], vertices[5], vertices[10], vertices[11], 
+                                 vertices[13], vertices[19], vertices[15], vertices[17], 
+                                 num));
+            dim = 3; 
+            break;
+          case 101: case 112:
+            elements[5][elementary].push_back(new MPrism(vertices, num));
+            dim = 3; 
+            break;
+          case 102: case 113:
+            elements[5][elementary].push_back
+              (new MPrism15(vertices[0], vertices[2], vertices[4], vertices[9], 
+                            vertices[11], vertices[13], vertices[1], vertices[5], 
+                            vertices[6], vertices[3], vertices[7], vertices[8],
+                            vertices[10], vertices[14], vertices[12], num));
+            dim = 3;
+            break;
+          }
   
-	  if(dim >= 0 && physical && (!physicals[dim].count(elementary) || 
-				      !physicals[dim][elementary].count(physical)))
-	    physicals[dim][elementary][physical] = "unnamed";
-	}
+          if(dim >= 0 && physical && (!physicals[dim].count(elementary) || 
+                                      !physicals[dim][elementary].count(physical)))
+            physicals[dim][elementary][physical] = "unnamed";
+        }
       }
     }
   }
@@ -1354,18 +1354,18 @@ int GModel::readUNV(const std::string &name)
 
 template<class T>
 static void writeElementsUNV(FILE *fp, const std::vector<T*> &ele, int saveAll, 
-			     int &num, int elementary, std::vector<int> &physicals)
+                             int &num, int elementary, std::vector<int> &physicals)
 {
   for(unsigned int i = 0; i < ele.size(); i++)
     if(saveAll)
       ele[i]->writeUNV(fp, ++num, elementary, 0);
     else
       for(unsigned int j = 0; j < physicals.size(); j++)
-	ele[i]->writeUNV(fp, ++num, elementary, physicals[j]);
+        ele[i]->writeUNV(fp, ++num, elementary, physicals[j]);
 }
 
 int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNodes, 
-		     double scalingFactor)
+                     double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
@@ -1421,53 +1421,53 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
     int gr = 1;
     for(int dim = 1; dim <= 3; dim++){
       for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
-	  it != groups[dim].end(); it++){
-	std::set<MVertex*> nodes;
-	for(unsigned int i = 0; i < it->second.size(); i++){
-	  if(dim == 1){
-	    GEdge *ge = (GEdge*)it->second[i];
-	    for(unsigned int j = 0; j < ge->lines.size(); j++)
-	      for(int k = 0; k < ge->lines[j]->getNumVertices(); k++)
-		nodes.insert(ge->lines[j]->getVertex(k));
-	  }
-	  else if(dim == 2){
-	    GFace *gf = (GFace*)it->second[i];
-	    for(unsigned int j = 0; j < gf->triangles.size(); j++)
-	      for(int k = 0; k < gf->triangles[j]->getNumVertices(); k++)
-		nodes.insert(gf->triangles[j]->getVertex(k));
-	    for(unsigned int j = 0; j < gf->quadrangles.size(); j++)
-	      for(int k = 0; k < gf->quadrangles[j]->getNumVertices(); k++)
-		nodes.insert(gf->quadrangles[j]->getVertex(k));
-	  }
-	  else if(dim == 3){
-	    GRegion *gr = (GRegion*)it->second[i];
-	    for(unsigned int j = 0; j < gr->tetrahedra.size(); j++)
-	      for(int k = 0; k < gr->tetrahedra[j]->getNumVertices(); k++)
-		nodes.insert(gr->tetrahedra[j]->getVertex(k));
-	    for(unsigned int j = 0; j < gr->hexahedra.size(); j++)
-	      for(int k = 0; k < gr->hexahedra[j]->getNumVertices(); k++)
-		nodes.insert(gr->hexahedra[j]->getVertex(k));
-	    for(unsigned int j = 0; j < gr->prisms.size(); j++)
-	      for(int k = 0; k < gr->prisms[j]->getNumVertices(); k++)
-		nodes.insert(gr->prisms[j]->getVertex(k));
-	    for(unsigned int j = 0; j < gr->pyramids.size(); j++)
-	      for(int k = 0; k < gr->pyramids[j]->getNumVertices(); k++)
-		nodes.insert(gr->pyramids[j]->getVertex(k));
-	  }
-	}
-	fprintf(fp, "%10d%10d%10d%10d%10d%10d%10d%10d\n", 
-		gr, 0, 0, 0, 0, 0, 0, (int)nodes.size());
-	fprintf(fp, "PERMENENT GROUP%d\n", gr++);
-	int row = 0;
-	for(std::set<MVertex*>::iterator it2 = nodes.begin(); it2 != nodes.end(); it2++){
-	  if(row == 2) {
-	    fprintf(fp, "\n");
-	    row = 0;
-	  }
-	  fprintf(fp, "%10d%10d%10d%10d", 7, (*it2)->getNum(), 0, 0);
-	  row++;
-	}
-	fprintf(fp, "\n");
+          it != groups[dim].end(); it++){
+        std::set<MVertex*> nodes;
+        for(unsigned int i = 0; i < it->second.size(); i++){
+          if(dim == 1){
+            GEdge *ge = (GEdge*)it->second[i];
+            for(unsigned int j = 0; j < ge->lines.size(); j++)
+              for(int k = 0; k < ge->lines[j]->getNumVertices(); k++)
+                nodes.insert(ge->lines[j]->getVertex(k));
+          }
+          else if(dim == 2){
+            GFace *gf = (GFace*)it->second[i];
+            for(unsigned int j = 0; j < gf->triangles.size(); j++)
+              for(int k = 0; k < gf->triangles[j]->getNumVertices(); k++)
+                nodes.insert(gf->triangles[j]->getVertex(k));
+            for(unsigned int j = 0; j < gf->quadrangles.size(); j++)
+              for(int k = 0; k < gf->quadrangles[j]->getNumVertices(); k++)
+                nodes.insert(gf->quadrangles[j]->getVertex(k));
+          }
+          else if(dim == 3){
+            GRegion *gr = (GRegion*)it->second[i];
+            for(unsigned int j = 0; j < gr->tetrahedra.size(); j++)
+              for(int k = 0; k < gr->tetrahedra[j]->getNumVertices(); k++)
+                nodes.insert(gr->tetrahedra[j]->getVertex(k));
+            for(unsigned int j = 0; j < gr->hexahedra.size(); j++)
+              for(int k = 0; k < gr->hexahedra[j]->getNumVertices(); k++)
+                nodes.insert(gr->hexahedra[j]->getVertex(k));
+            for(unsigned int j = 0; j < gr->prisms.size(); j++)
+              for(int k = 0; k < gr->prisms[j]->getNumVertices(); k++)
+                nodes.insert(gr->prisms[j]->getVertex(k));
+            for(unsigned int j = 0; j < gr->pyramids.size(); j++)
+              for(int k = 0; k < gr->pyramids[j]->getNumVertices(); k++)
+                nodes.insert(gr->pyramids[j]->getVertex(k));
+          }
+        }
+        fprintf(fp, "%10d%10d%10d%10d%10d%10d%10d%10d\n", 
+                gr, 0, 0, 0, 0, 0, 0, (int)nodes.size());
+        fprintf(fp, "PERMENENT GROUP%d\n", gr++);
+        int row = 0;
+        for(std::set<MVertex*>::iterator it2 = nodes.begin(); it2 != nodes.end(); it2++){
+          if(row == 2) {
+            fprintf(fp, "\n");
+            row = 0;
+          }
+          fprintf(fp, "%10d%10d%10d%10d", 7, (*it2)->getNum(), 0, 0);
+          row++;
+        }
+        fprintf(fp, "\n");
       }
     }
     fprintf(fp, "%6d\n", -1);
@@ -1505,66 +1505,66 @@ int GModel::readMESH(const std::string &name)
     if(buffer[0] != '#'){ // skip comments
       sscanf(buffer, "%s", str);
       if(!strcmp(str, "Dimension")){
-	if(!fgets(buffer, sizeof(buffer), fp)) break;
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
       }
       else if(!strcmp(str, "Vertices")){
-	if(!fgets(buffer, sizeof(buffer), fp)) break;
-	int nbv;
-	sscanf(buffer, "%d", &nbv);
-	Msg(INFO, "%d vertices", nbv);
-	vertexVector.resize(nbv);
-	for(int i = 0; i < nbv; i++) {
-	  if(!fgets(buffer, sizeof(buffer), fp)) break;
-	  int dum;
-	  double x, y, z;
-	  sscanf(buffer, "%lf %lf %lf %d", &x, &y, &z, &dum);
-	  vertexVector[i] = new MVertex(x, y, z);
-	}
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int nbv;
+        sscanf(buffer, "%d", &nbv);
+        Msg(INFO, "%d vertices", nbv);
+        vertexVector.resize(nbv);
+        for(int i = 0; i < nbv; i++) {
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          int dum;
+          double x, y, z;
+          sscanf(buffer, "%lf %lf %lf %d", &x, &y, &z, &dum);
+          vertexVector[i] = new MVertex(x, y, z);
+        }
       }
       else if(!strcmp(str, "Triangles")){
-	if(!fgets(buffer, sizeof(buffer), fp)) break;
-	int nbe;
-	sscanf(buffer, "%d", &nbe);
-	Msg(INFO, "%d triangles", nbe);
-	for(int i = 0; i < nbe; i++) {
-	  if(!fgets(buffer, sizeof(buffer), fp)) break;
-	  int n[3], cl;
-	  sscanf(buffer, "%d %d %d %d", &n[0], &n[1], &n[2], &cl);
-	  for(int j = 0; j < 3; j++) n[j]--;
-	  std::vector<MVertex*> vertices;
-	  if(!getVertices(3, n, vertexVector, vertices)) return 0;
-	  elements[0][cl].push_back(new MTriangle(vertices));
-	}
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int nbe;
+        sscanf(buffer, "%d", &nbe);
+        Msg(INFO, "%d triangles", nbe);
+        for(int i = 0; i < nbe; i++) {
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          int n[3], cl;
+          sscanf(buffer, "%d %d %d %d", &n[0], &n[1], &n[2], &cl);
+          for(int j = 0; j < 3; j++) n[j]--;
+          std::vector<MVertex*> vertices;
+          if(!getVertices(3, n, vertexVector, vertices)) return 0;
+          elements[0][cl].push_back(new MTriangle(vertices));
+        }
       }
       else if(!strcmp(str, "Quadrilaterals")) {
-	if(!fgets(buffer, sizeof(buffer), fp)) break;
-	int nbe;
-	sscanf(buffer, "%d", &nbe);
-	Msg(INFO, "%d quadrangles", nbe);
-	for(int i = 0; i < nbe; i++) {
-	  if(!fgets(buffer, sizeof(buffer), fp)) break;
-	  int n[4], cl;
-	  sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
-	  for(int j = 0; j < 4; j++) n[j]--;
-	  std::vector<MVertex*> vertices;
-	  if(!getVertices(4, n, vertexVector, vertices)) return 0;
-	  elements[1][cl].push_back(new MQuadrangle(vertices));
-	}
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int nbe;
+        sscanf(buffer, "%d", &nbe);
+        Msg(INFO, "%d quadrangles", nbe);
+        for(int i = 0; i < nbe; i++) {
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          int n[4], cl;
+          sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
+          for(int j = 0; j < 4; j++) n[j]--;
+          std::vector<MVertex*> vertices;
+          if(!getVertices(4, n, vertexVector, vertices)) return 0;
+          elements[1][cl].push_back(new MQuadrangle(vertices));
+        }
       }
       else if(!strcmp(str, "Tetrahedra")) {
-	if(!fgets(buffer, sizeof(buffer), fp)) break;
-	int nbe;
-	sscanf(buffer, "%d", &nbe);
-	Msg(INFO, "%d tetrahedra", nbe);
-	for(int i = 0; i < nbe; i++) {
-	  if(!fgets(buffer, sizeof(buffer), fp)) break;
-	  int n[4], cl;
-	  sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
-	  for(int j = 0; j < 4; j++) n[j]--;
-	  std::vector<MVertex*> vertices;
-	  if(!getVertices(4, n, vertexVector, vertices)) return 0;
-	  elements[2][cl].push_back(new MTetrahedron(vertices));
-	}
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int nbe;
+        sscanf(buffer, "%d", &nbe);
+        Msg(INFO, "%d tetrahedra", nbe);
+        for(int i = 0; i < nbe; i++) {
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          int n[4], cl;
+          sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
+          for(int j = 0; j < 4; j++) n[j]--;
+          std::vector<MVertex*> vertices;
+          if(!getVertices(4, n, vertexVector, vertices)) return 0;
+          elements[2][cl].push_back(new MTetrahedron(vertices));
+        }
       }
     }
   }
@@ -1627,8 +1627,8 @@ int GModel::writeMESH(const std::string &name, bool saveAll, double scalingFacto
     fprintf(fp, " %d\n", numTriangles);
     for(fiter it = firstFace(); it != lastFace(); ++it){
       if(saveAll || (*it)->physicals.size()){
-	for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-	  (*it)->triangles[i]->writeMESH(fp, (*it)->tag());
+        for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+          (*it)->triangles[i]->writeMESH(fp, (*it)->tag());
       }
     }
   }
@@ -1637,8 +1637,8 @@ int GModel::writeMESH(const std::string &name, bool saveAll, double scalingFacto
     fprintf(fp, " %d\n", numQuadrangles);
     for(fiter it = firstFace(); it != lastFace(); ++it){
       if(saveAll || (*it)->physicals.size()){
-	for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-	  (*it)->quadrangles[i]->writeMESH(fp, (*it)->tag());
+        for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+          (*it)->quadrangles[i]->writeMESH(fp, (*it)->tag());
       }
     }
   }
@@ -1647,8 +1647,8 @@ int GModel::writeMESH(const std::string &name, bool saveAll, double scalingFacto
     fprintf(fp, " %d\n", numTetrahedra);
     for(riter it = firstRegion(); it != lastRegion(); ++it){
       if(saveAll || (*it)->physicals.size()){
-	for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
-	  (*it)->tetrahedra[i]->writeMESH(fp, (*it)->tag());
+        for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
+          (*it)->tetrahedra[i]->writeMESH(fp, (*it)->tag());
       }
     }
   }
@@ -1695,7 +1695,7 @@ static double atofBDF(char *str)
 }
 
 static int readVertexBDF(FILE *fp, char *buffer, int keySize, 
-			 int *num, double *x, double *y, double *z)
+                         int *num, double *x, double *y, double *z)
 {
   char tmp[5][32];
   int j = keySize;
@@ -1757,14 +1757,14 @@ static void readLineBDF(char *buffer, int format, std::vector<char*> &fields)
   else{ // small or long fields
     for(int i = 0; i < nmax + 1; i++){
       if(!emptyFieldBDF(&buffer[8 + cmax * i], cmax))
-	fields.push_back(&buffer[8 + cmax * i]);
+        fields.push_back(&buffer[8 + cmax * i]);
     }
   }
 }
 
 static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices, 
-			  int &num, int &region, std::vector<MVertex*> &vertices,
-			  std::map<int, MVertex*> &vertexMap)
+                          int &num, int &region, std::vector<MVertex*> &vertices,
+                          std::map<int, MVertex*> &vertexMap)
 {
   char buffer2[256], buffer3[256];
   std::vector<char*> fields;
@@ -1828,10 +1828,10 @@ int GModel::readBDF(const std::string &name)
     if(!fgets(buffer, sizeof(buffer), fp)) break;
     if(buffer[0] != '$'){ // skip comments
       if(!strncmp(buffer, "GRID", 4)){
-	int num;
-	double x, y, z;
-	if(!readVertexBDF(fp, buffer, 4, &num, &x, &y, &z)) break;
-	vertexMap[num] = new MVertex(x, y, z, 0, num);
+        int num;
+        double x, y, z;
+        if(!readVertexBDF(fp, buffer, 4, &num, &x, &y, &z)) break;
+        vertexMap[num] = new MVertex(x, y, z, 0, num);
       }
     }
   }
@@ -1845,70 +1845,70 @@ int GModel::readBDF(const std::string &name)
       int num, region;
       std::vector<MVertex*> vertices;
       if(!strncmp(buffer, "CBAR", 4)){
-	if(readElementBDF(fp, buffer, 4, 2, num, region, vertices, vertexMap))
-	  elements[0][region].push_back(new MLine(vertices, num));
+        if(readElementBDF(fp, buffer, 4, 2, num, region, vertices, vertexMap))
+          elements[0][region].push_back(new MLine(vertices, num));
       }
       else if(!strncmp(buffer, "CROD", 4)){
-	if(readElementBDF(fp, buffer, 4, 2, num, region, vertices, vertexMap))
-	  elements[0][region].push_back(new MLine(vertices, num));
+        if(readElementBDF(fp, buffer, 4, 2, num, region, vertices, vertexMap))
+          elements[0][region].push_back(new MLine(vertices, num));
       }
       else if(!strncmp(buffer, "CBEAM", 5)){
-	if(readElementBDF(fp, buffer, 5, 2, num, region, vertices, vertexMap))
-	  elements[0][region].push_back(new MLine(vertices, num));
+        if(readElementBDF(fp, buffer, 5, 2, num, region, vertices, vertexMap))
+          elements[0][region].push_back(new MLine(vertices, num));
       }
       else if(!strncmp(buffer, "CTRIA3", 6)){
-	if(readElementBDF(fp, buffer, 6, 3, num, region, vertices, vertexMap))
-	  elements[1][region].push_back(new MTriangle(vertices, num));
+        if(readElementBDF(fp, buffer, 6, 3, num, region, vertices, vertexMap))
+          elements[1][region].push_back(new MTriangle(vertices, num));
       }
       else if(!strncmp(buffer, "CTRIA6", 6)){
-	if(readElementBDF(fp, buffer, 6, 6, num, region, vertices, vertexMap))
-	  elements[1][region].push_back(new MTriangle6(vertices, num));
+        if(readElementBDF(fp, buffer, 6, 6, num, region, vertices, vertexMap))
+          elements[1][region].push_back(new MTriangle6(vertices, num));
       }
       else if(!strncmp(buffer, "CQUAD4", 6)){
-	if(readElementBDF(fp, buffer, 6, 4, num, region, vertices, vertexMap))
-	  elements[2][region].push_back(new MQuadrangle(vertices, num));
+        if(readElementBDF(fp, buffer, 6, 4, num, region, vertices, vertexMap))
+          elements[2][region].push_back(new MQuadrangle(vertices, num));
       }
       else if(!strncmp(buffer, "CQUAD8", 6)){
-	if(readElementBDF(fp, buffer, 6, 8, num, region, vertices, vertexMap))
-	  elements[2][region].push_back(new MQuadrangle8(vertices, num));
+        if(readElementBDF(fp, buffer, 6, 8, num, region, vertices, vertexMap))
+          elements[2][region].push_back(new MQuadrangle8(vertices, num));
       }
       else if(!strncmp(buffer, "CQUAD", 5)){
-	if(readElementBDF(fp, buffer, 5, -4, num, region, vertices, vertexMap)){
-	  if(vertices.size() == 9)
-	    elements[2][region].push_back(new MQuadrangle9(vertices, num));
-	  else if(vertices.size() == 8)
-	    elements[2][region].push_back(new MQuadrangle8(vertices, num));
-	  else
-	    elements[2][region].push_back(new MQuadrangle(vertices, num));
-	}
+        if(readElementBDF(fp, buffer, 5, -4, num, region, vertices, vertexMap)){
+          if(vertices.size() == 9)
+            elements[2][region].push_back(new MQuadrangle9(vertices, num));
+          else if(vertices.size() == 8)
+            elements[2][region].push_back(new MQuadrangle8(vertices, num));
+          else
+            elements[2][region].push_back(new MQuadrangle(vertices, num));
+        }
       }
       else if(!strncmp(buffer, "CTETRA", 6)){
-	if(readElementBDF(fp, buffer, 6, -4, num, region, vertices, vertexMap)){
-	  if(vertices.size() == 10)
-	    elements[3][region].push_back(new MTetrahedron10(vertices, num));
-	  else
-	    elements[3][region].push_back(new MTetrahedron(vertices, num));
-	}
+        if(readElementBDF(fp, buffer, 6, -4, num, region, vertices, vertexMap)){
+          if(vertices.size() == 10)
+            elements[3][region].push_back(new MTetrahedron10(vertices, num));
+          else
+            elements[3][region].push_back(new MTetrahedron(vertices, num));
+        }
       }
       else if(!strncmp(buffer, "CHEXA", 5)){
-	if(readElementBDF(fp, buffer, 5, -8, num, region, vertices, vertexMap)){
-	  if(vertices.size() == 20)
-	    elements[4][region].push_back(new MHexahedron20(vertices, num));
-	  else
-	    elements[4][region].push_back(new MHexahedron(vertices, num));
-	}
+        if(readElementBDF(fp, buffer, 5, -8, num, region, vertices, vertexMap)){
+          if(vertices.size() == 20)
+            elements[4][region].push_back(new MHexahedron20(vertices, num));
+          else
+            elements[4][region].push_back(new MHexahedron(vertices, num));
+        }
       }
       else if(!strncmp(buffer, "CPENTA", 6)){
-	if(readElementBDF(fp, buffer, 6, -6, num, region, vertices, vertexMap)){
-	  if(vertices.size() == 15)
-	    elements[5][region].push_back(new MPrism15(vertices, num));
-	  else
-	    elements[5][region].push_back(new MPrism(vertices, num));
-	}
+        if(readElementBDF(fp, buffer, 6, -6, num, region, vertices, vertexMap)){
+          if(vertices.size() == 15)
+            elements[5][region].push_back(new MPrism15(vertices, num));
+          else
+            elements[5][region].push_back(new MPrism(vertices, num));
+        }
       }
       else if(!strncmp(buffer, "CPYRAM", 6)){
-	if(readElementBDF(fp, buffer, 6, 5, num, region, vertices, vertexMap))
-	  elements[6][region].push_back(new MPyramid(vertices, num));
+        if(readElementBDF(fp, buffer, 6, 5, num, region, vertices, vertexMap))
+          elements[6][region].push_back(new MPyramid(vertices, num));
       }
     }
   }
@@ -1923,7 +1923,7 @@ int GModel::readBDF(const std::string &name)
 }
 
 int GModel::writeBDF(const std::string &name, int format, bool saveAll, 
-		     double scalingFactor)
+                     double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
@@ -1953,27 +1953,27 @@ int GModel::writeBDF(const std::string &name, int format, bool saveAll,
   for(eiter it = firstEdge(); it != lastEdge(); ++it){
     if(saveAll || (*it)->physicals.size()){
       for(unsigned int i = 0; i < (*it)->lines.size(); i++)
-	(*it)->lines[i]->writeBDF(fp, format, (*it)->tag());
+        (*it)->lines[i]->writeBDF(fp, format, (*it)->tag());
     }
   }
   for(fiter it = firstFace(); it != lastFace(); ++it){
     if(saveAll || (*it)->physicals.size()){
       for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-	(*it)->triangles[i]->writeBDF(fp, format, (*it)->tag());
+        (*it)->triangles[i]->writeBDF(fp, format, (*it)->tag());
       for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-	(*it)->quadrangles[i]->writeBDF(fp, format, (*it)->tag());
+        (*it)->quadrangles[i]->writeBDF(fp, format, (*it)->tag());
     }
   }
   for(riter it = firstRegion(); it != lastRegion(); ++it){
     if(saveAll || (*it)->physicals.size()){
       for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
-	(*it)->tetrahedra[i]->writeBDF(fp, format, (*it)->tag());
+        (*it)->tetrahedra[i]->writeBDF(fp, format, (*it)->tag());
       for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
-	(*it)->hexahedra[i]->writeBDF(fp, format, (*it)->tag());
+        (*it)->hexahedra[i]->writeBDF(fp, format, (*it)->tag());
       for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
-	(*it)->prisms[i]->writeBDF(fp, format, (*it)->tag());
+        (*it)->prisms[i]->writeBDF(fp, format, (*it)->tag());
       for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
-	(*it)->pyramids[i]->writeBDF(fp, format, (*it)->tag());
+        (*it)->pyramids[i]->writeBDF(fp, format, (*it)->tag());
     }
   }
   
@@ -2004,77 +2004,77 @@ int GModel::readP3D(const std::string &name)
       add(gf);
       gf->transfinite_vertices.resize(Ni[n]);
       for(int i = 0; i < Ni[n]; i++)
-	gf->transfinite_vertices[i].resize(Nj[n]);
+        gf->transfinite_vertices[i].resize(Nj[n]);
       for(int coord = 0; coord < 3; coord++){
-	for(int i = 0; i < Ni[n]; i++){
-	  for(int j = 0; j < Nj[n]; j++){
-	    double d;
-	    if(fscanf(fp, "%lf", &d) != 1) return 0;
-	    if(coord == 0){
-	      MVertex *v = new MVertex(d, 0., 0., gf);
-	      gf->transfinite_vertices[i][j] = v;
-	      gf->mesh_vertices.push_back(v);
-	    }
-	    else if(coord == 1){
-	      gf->transfinite_vertices[i][j]->y() = d;
-	    }
-	    else if(coord == 2){
-	      gf->transfinite_vertices[i][j]->z() = d;
-	    }
-	  }
-	}
+        for(int i = 0; i < Ni[n]; i++){
+          for(int j = 0; j < Nj[n]; j++){
+            double d;
+            if(fscanf(fp, "%lf", &d) != 1) return 0;
+            if(coord == 0){
+              MVertex *v = new MVertex(d, 0., 0., gf);
+              gf->transfinite_vertices[i][j] = v;
+              gf->mesh_vertices.push_back(v);
+            }
+            else if(coord == 1){
+              gf->transfinite_vertices[i][j]->y() = d;
+            }
+            else if(coord == 2){
+              gf->transfinite_vertices[i][j]->z() = d;
+            }
+          }
+        }
       }
       for(unsigned int i = 0; i < gf->transfinite_vertices.size() - 1; i++)
-	for(unsigned int j = 0; j < gf->transfinite_vertices[0].size() - 1; j++)
-	  gf->quadrangles.push_back
-	    (new MQuadrangle(gf->transfinite_vertices[i    ][j    ],
-			     gf->transfinite_vertices[i + 1][j    ],
-			     gf->transfinite_vertices[i + 1][j + 1],
-			     gf->transfinite_vertices[i    ][j + 1]));
+        for(unsigned int j = 0; j < gf->transfinite_vertices[0].size() - 1; j++)
+          gf->quadrangles.push_back
+            (new MQuadrangle(gf->transfinite_vertices[i    ][j    ],
+                             gf->transfinite_vertices[i + 1][j    ],
+                             gf->transfinite_vertices[i + 1][j + 1],
+                             gf->transfinite_vertices[i    ][j + 1]));
     }
     else{
       GRegion *gr = new discreteRegion(this, getNumRegions() + 1);
       add(gr);
       gr->transfinite_vertices.resize(Ni[n]);
       for(int i = 0; i < Ni[n]; i++){
-	gr->transfinite_vertices[i].resize(Nj[n]);
-	for(int j = 0; j < Nj[n]; j++){
-	  gr->transfinite_vertices[i][j].resize(Nk[n]);
-	}
+        gr->transfinite_vertices[i].resize(Nj[n]);
+        for(int j = 0; j < Nj[n]; j++){
+          gr->transfinite_vertices[i][j].resize(Nk[n]);
+        }
       }
       for(int coord = 0; coord < 3; coord++){
-	for(int i = 0; i < Ni[n]; i++){
-	  for(int j = 0; j < Nj[n]; j++){
-	    for(int k = 0; k < Nk[n]; k++){
-	      double d;
-	      if(fscanf(fp, "%lf", &d) != 1) return 0;
-	      if(coord == 0){
-		MVertex *v = new MVertex(d, 0., 0., gr);
-		gr->transfinite_vertices[i][j][k] = v;
-		gr->mesh_vertices.push_back(v);
-	      }
-	      else if(coord == 1){
-		gr->transfinite_vertices[i][j][k]->y() = d;
-	      }
-	      else if(coord == 2){
-		gr->transfinite_vertices[i][j][k]->z() = d;
-	      }
-	    }
-	  }
-	}
+        for(int i = 0; i < Ni[n]; i++){
+          for(int j = 0; j < Nj[n]; j++){
+            for(int k = 0; k < Nk[n]; k++){
+              double d;
+              if(fscanf(fp, "%lf", &d) != 1) return 0;
+              if(coord == 0){
+                MVertex *v = new MVertex(d, 0., 0., gr);
+                gr->transfinite_vertices[i][j][k] = v;
+                gr->mesh_vertices.push_back(v);
+              }
+              else if(coord == 1){
+                gr->transfinite_vertices[i][j][k]->y() = d;
+              }
+              else if(coord == 2){
+                gr->transfinite_vertices[i][j][k]->z() = d;
+              }
+            }
+          }
+        }
       }
       for(unsigned int i = 0; i < gr->transfinite_vertices.size() - 1; i++)
-	for(unsigned int j = 0; j < gr->transfinite_vertices[0].size() - 1; j++)
-	  for(unsigned int k = 0; k < gr->transfinite_vertices[0][0].size() - 1; k++)
-	    gr->hexahedra.push_back
-	      (new MHexahedron(gr->transfinite_vertices[i    ][j    ][k    ],
-			       gr->transfinite_vertices[i + 1][j    ][k    ],
-			       gr->transfinite_vertices[i + 1][j + 1][k    ],
-			       gr->transfinite_vertices[i    ][j + 1][k    ],
-			       gr->transfinite_vertices[i    ][j    ][k + 1],
-			       gr->transfinite_vertices[i + 1][j    ][k + 1],
-			       gr->transfinite_vertices[i + 1][j + 1][k + 1],
-			       gr->transfinite_vertices[i    ][j + 1][k + 1]));
+        for(unsigned int j = 0; j < gr->transfinite_vertices[0].size() - 1; j++)
+          for(unsigned int k = 0; k < gr->transfinite_vertices[0][0].size() - 1; k++)
+            gr->hexahedra.push_back
+              (new MHexahedron(gr->transfinite_vertices[i    ][j    ][k    ],
+                               gr->transfinite_vertices[i + 1][j    ][k    ],
+                               gr->transfinite_vertices[i + 1][j + 1][k    ],
+                               gr->transfinite_vertices[i    ][j + 1][k    ],
+                               gr->transfinite_vertices[i    ][j    ][k + 1],
+                               gr->transfinite_vertices[i + 1][j    ][k + 1],
+                               gr->transfinite_vertices[i + 1][j + 1][k + 1],
+                               gr->transfinite_vertices[i    ][j + 1][k + 1]));
     }
   }  
   
@@ -2115,25 +2115,25 @@ int GModel::writeP3D(const std::string &name, bool saveAll, double scalingFactor
   
   for(unsigned int i = 0; i < faces.size(); i++)
     fprintf(fp, "%d %d 1\n", 
-	    (int)faces[i]->transfinite_vertices.size(),
-	    (int)faces[i]->transfinite_vertices[0].size());
+            (int)faces[i]->transfinite_vertices.size(),
+            (int)faces[i]->transfinite_vertices[0].size());
 
   for(unsigned int i = 0; i < regions.size(); i++)
     fprintf(fp, "%d %d %d\n", 
-	    (int)regions[i]->transfinite_vertices.size(),
-	    (int)regions[i]->transfinite_vertices[0].size(),
-	    (int)regions[i]->transfinite_vertices[0][0].size());
+            (int)regions[i]->transfinite_vertices.size(),
+            (int)regions[i]->transfinite_vertices[0].size(),
+            (int)regions[i]->transfinite_vertices[0][0].size());
   
   for(unsigned int i = 0; i < faces.size(); i++){
     GFace *gf = faces[i];
     for(int coord = 0; coord < 3; coord++){
       for(unsigned int j = 0; j < gf->transfinite_vertices.size(); j++){
-	for(unsigned int k = 0; k < gf->transfinite_vertices[j].size(); k++){
-	  MVertex *v = gf->transfinite_vertices[j][k];
-	  double d = (coord == 0) ? v->x() : (coord == 1) ? v->y() : v->z();
-	  fprintf(fp, "%g ", d * scalingFactor);
-	}
-	fprintf(fp, "\n");
+        for(unsigned int k = 0; k < gf->transfinite_vertices[j].size(); k++){
+          MVertex *v = gf->transfinite_vertices[j][k];
+          double d = (coord == 0) ? v->x() : (coord == 1) ? v->y() : v->z();
+          fprintf(fp, "%g ", d * scalingFactor);
+        }
+        fprintf(fp, "\n");
       }
     }
   }
@@ -2142,14 +2142,14 @@ int GModel::writeP3D(const std::string &name, bool saveAll, double scalingFactor
     GRegion *gr = regions[i];
     for(int coord = 0; coord < 3; coord++){
       for(unsigned int j = 0; j < gr->transfinite_vertices.size(); j++){
-	for(unsigned int k = 0; k < gr->transfinite_vertices[j].size(); k++){
-	  for(unsigned int l = 0; l < gr->transfinite_vertices[j][k].size(); l++){
-	    MVertex *v = gr->transfinite_vertices[j][k][l];
-	    double d = (coord == 0) ? v->x() : (coord == 1) ? v->y() : v->z();
-	    fprintf(fp, "%g ", d * scalingFactor);
-	  }
-	  fprintf(fp, "\n");
-	}
+        for(unsigned int k = 0; k < gr->transfinite_vertices[j].size(); k++){
+          for(unsigned int l = 0; l < gr->transfinite_vertices[j][k].size(); l++){
+            MVertex *v = gr->transfinite_vertices[j][k][l];
+            double d = (coord == 0) ? v->x() : (coord == 1) ? v->y() : v->z();
+            fprintf(fp, "%g ", d * scalingFactor);
+          }
+          fprintf(fp, "\n");
+        }
       }
     }
   }

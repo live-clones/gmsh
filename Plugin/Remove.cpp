@@ -1,4 +1,4 @@
-// $Id: Remove.cpp,v 1.13 2008-02-17 08:48:07 geuzaine Exp $
+// $Id: Remove.cpp,v 1.14 2008-03-20 11:44:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -57,16 +57,16 @@ void GMSH_RemovePlugin::getName(char *name) const
 }
 
 void GMSH_RemovePlugin::getInfos(char *author, char *copyright,
-				   char *help_text) const
+                                   char *help_text) const
 {
   strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Remove) removes the marked items\n"
-	 "from the view `iView'. If `iView' < 0, the plugin\n"
-	 "is run on the current view.\n"
-	 "\n"
-	 "Plugin(Remove) is executed in-place.\n");
+         "from the view `iView'. If `iView' < 0, the plugin\n"
+         "is run on the current view.\n"
+         "\n"
+         "Plugin(Remove) is executed in-place.\n");
 }
 
 int GMSH_RemovePlugin::getNbOptions() const

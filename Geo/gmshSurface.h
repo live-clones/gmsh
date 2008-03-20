@@ -106,7 +106,7 @@ public:
 class gmshPolarSphere : public gmshSurface
 {
   double r;
-	SPoint3 o;
+        SPoint3 o;
   gmshPolarSphere(double x, double y, double z, double _r) : o(x,y,z), r(_r){}
 public:
   static gmshSurface *NewPolarSphere(int _iSphere, double _x, double _y, double _z, double _r);

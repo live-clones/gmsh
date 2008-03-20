@@ -1,4 +1,4 @@
-// $Id: PViewDataListIO.cpp,v 1.16 2008-03-10 19:59:01 geuzaine Exp $
+// $Id: PViewDataListIO.cpp,v 1.17 2008-03-20 11:44:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -39,8 +39,8 @@ bool PViewDataList::readPOS(FILE *fp, double version, int format, int size)
   if(version <= 1.0) {
     Msg(DEBUG, "Detected post-processing view format <= 1.0");
     if(!fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-	       name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
-	       &NbST, &NbVT, &NbTT, &NbSS, &NbVS, &NbTS)){
+               name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
+               &NbST, &NbVT, &NbTT, &NbSS, &NbVS, &NbTS)){
       Msg(GERROR, "Read error");
       return false;
     }
@@ -49,9 +49,9 @@ bool PViewDataList::readPOS(FILE *fp, double version, int format, int size)
   else if(version == 1.1) {
     Msg(DEBUG, "Detected post-processing view format 1.1");
     if(!fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-	       name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL, 
-	       &NbST, &NbVT, &NbTT, &NbSS, &NbVS, &NbTS, &NbT2, &t2l, &NbT3,
-	       &t3l)){
+               name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL, 
+               &NbST, &NbVT, &NbTT, &NbSS, &NbVS, &NbTS, &NbT2, &t2l, &NbT3,
+               &t3l)){
       Msg(GERROR, "Read error");
       return false;
     }
@@ -59,11 +59,11 @@ bool PViewDataList::readPOS(FILE *fp, double version, int format, int size)
   else if(version == 1.2 || version == 1.3) {
     Msg(DEBUG, "Detected post-processing view format %g", version);
     if(!fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
-	       "%d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-	       name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
-	       &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS, 
-	       &NbSH, &NbVH, &NbTH, &NbSI, &NbVI, &NbTI, &NbSY, &NbVY, &NbTY,
-	       &NbT2, &t2l, &NbT3, &t3l)){
+               "%d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+               name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
+               &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS, 
+               &NbSH, &NbVH, &NbTH, &NbSI, &NbVI, &NbTI, &NbSY, &NbVY, &NbTY,
+               &NbT2, &t2l, &NbT3, &t3l)){
       Msg(GERROR, "Read error");
       return false;
     }
@@ -71,14 +71,14 @@ bool PViewDataList::readPOS(FILE *fp, double version, int format, int size)
   else if(version == 1.4) {
     Msg(DEBUG, "Detected post-processing view format 1.4");
     if(!fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
-	       "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
-	       "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-	       name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
-	       &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS, 
-	       &NbSH, &NbVH, &NbTH, &NbSI, &NbVI, &NbTI, &NbSY, &NbVY, &NbTY,
-	       &NbSL2, &NbVL2, &NbTL2, &NbST2, &NbVT2, &NbTT2, &NbSQ2, &NbVQ2, 
-	       &NbTQ2, &NbSS2, &NbVS2, &NbTS2, &NbSH2, &NbVH2, &NbTH2, &NbSI2, 
-	       &NbVI2, &NbTI2, &NbSY2, &NbVY2, &NbTY2, &NbT2, &t2l, &NbT3, &t3l)){
+               "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
+               "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+               name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
+               &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS, 
+               &NbSH, &NbVH, &NbTH, &NbSI, &NbVI, &NbTI, &NbSY, &NbVY, &NbTY,
+               &NbSL2, &NbVL2, &NbTL2, &NbST2, &NbVT2, &NbTT2, &NbSQ2, &NbVQ2, 
+               &NbTQ2, &NbSS2, &NbVS2, &NbTS2, &NbSH2, &NbVH2, &NbTH2, &NbSI2, 
+               &NbVI2, &NbTI2, &NbSY2, &NbVY2, &NbTY2, &NbT2, &t2l, &NbT3, &t3l)){
       Msg(GERROR, "Read error");
       return false;
     }
@@ -263,7 +263,7 @@ static void writeTimePOS(FILE *fp, List_T *list)
 }
 
 static void writeElementPOS(FILE *fp, const char *str, int nbnod, int nb,
-			    List_T *list)
+                            List_T *list)
 {
   if(nb){
     int n = List_Nbr(list) / nb;
@@ -273,13 +273,13 @@ static void writeElementPOS(FILE *fp, const char *str, int nbnod, int nb,
       double *z = (double *)List_Pointer(list, i + 2 * nbnod);
       fprintf(fp, "%s(", str);
       for(int j = 0; j < nbnod; j++) {
-	if(j) fprintf(fp, ",");
-	fprintf(fp, "%.16g,%.16g,%.16g", x[j], y[j], z[j]);
+        if(j) fprintf(fp, ",");
+        fprintf(fp, "%.16g,%.16g,%.16g", x[j], y[j], z[j]);
       }
       fprintf(fp, "){");
       for(int j = 3 * nbnod; j < n; j++) {
-	if(j - 3 * nbnod) fprintf(fp, ",");
-	fprintf(fp, "%.16g", *(double *)List_Pointer(list, i + j));
+        if(j - 3 * nbnod) fprintf(fp, ",");
+        fprintf(fp, "%.16g", *(double *)List_Pointer(list, i + j));
       }
       fprintf(fp, "};\n");
     }
@@ -319,7 +319,7 @@ static void writeTextPOS(FILE *fp, int nbc, int nb, List_T *TD, List_T *TC)
 bool PViewDataList::writePOS(std::string name, bool binary, bool parsed, bool append)
 {
   FILE *fp = fopen(name.c_str(), 
-		   append ? (binary ? "ab" : "a") : (binary ? "wb" : "w"));
+                   append ? (binary ? "ab" : "a") : (binary ? "wb" : "w"));
   if(!fp){
     Msg(GERROR, "Unable to open file '%s'", name.c_str());
     return false;
@@ -340,19 +340,19 @@ bool PViewDataList::writePOS(std::string name, bool binary, bool parsed, bool ap
     fprintf(fp, "$View /* %s */\n", getName().c_str());
     fprintf(fp, "%s ", str);
     fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
-	    "%d %d %d %d %d %d %d %d %d %d %d %d\n",
-	    List_Nbr(Time),
-	    NbSP, NbVP, NbTP, NbSL, NbVL, NbTL,
-	    NbST, NbVT, NbTT, NbSQ, NbVQ, NbTQ,
-	    NbSS, NbVS, NbTS, NbSH, NbVH, NbTH,
-	    NbSI, NbVI, NbTI, NbSY, NbVY, NbTY,
-	    NbT2, List_Nbr(T2C), NbT3, List_Nbr(T3C));
+            "%d %d %d %d %d %d %d %d %d %d %d %d\n",
+            List_Nbr(Time),
+            NbSP, NbVP, NbTP, NbSL, NbVL, NbTL,
+            NbST, NbVT, NbTT, NbSQ, NbVQ, NbTQ,
+            NbSS, NbVS, NbTS, NbSH, NbVH, NbTH,
+            NbSI, NbVI, NbTI, NbSY, NbVY, NbTY,
+            NbT2, List_Nbr(T2C), NbT3, List_Nbr(T3C));
     int f = binary ? LIST_FORMAT_BINARY : LIST_FORMAT_ASCII;
     if(binary) {
       int one = 1;
       if(!fwrite(&one, sizeof(int), 1, fp)){
-	Msg(GERROR, "Write error");
-	return false;
+        Msg(GERROR, "Write error");
+        return false;
       }
     }
     List_WriteToFile(Time, fp, f);
@@ -420,7 +420,7 @@ class pVertexLessThan{
 };
 
 static void getNodeMSH(int nbelm, List_T *list, int nbnod, int nbcomp, int nbstep,
-		       std::set<pVertex, pVertexLessThan> *nodes, int *numelm)
+                       std::set<pVertex, pVertexLessThan> *nodes, int *numelm)
 {
   if(!nbelm) return;
   int nb = List_Nbr(list) / nbelm;
@@ -433,11 +433,11 @@ static void getNodeMSH(int nbelm, List_T *list, int nbnod, int nbcomp, int nbste
       pVertex n(x[j], y[j], z[j]);
       std::set<pVertex, pVertexLessThan>::iterator it = nodes->find(n);
       if(it == nodes->end()){
-	n.Num = nodes->size() + 1;
-	for(int ts = 0; ts < nbstep; ts++) 
-	  for(int k = 0; k < nbcomp; k++) 
-	    n.Val.push_back(v[nbcomp * nbnod * ts + nbcomp * j + k]);
-	nodes->insert(n);
+        n.Num = nodes->size() + 1;
+        for(int ts = 0; ts < nbstep; ts++) 
+          for(int k = 0; k < nbcomp; k++) 
+            n.Val.push_back(v[nbcomp * nbnod * ts + nbcomp * j + k]);
+        nodes->insert(n);
       }
     }
     (*numelm)++;
@@ -445,7 +445,7 @@ static void getNodeMSH(int nbelm, List_T *list, int nbnod, int nbcomp, int nbste
 }
 
 static void writeElementMSH(FILE *fp, int num, int nbnod, pVertex nod[8], 
-			    int nbcomp, double *vals, int dim)
+                            int nbcomp, double *vals, int dim)
 {
   switch(dim){
   case 0:
@@ -459,31 +459,31 @@ static void writeElementMSH(FILE *fp, int num, int nbnod, pVertex nod[8],
       fprintf(fp, "%d 2 0 %d %d %d\n", num, nod[0].Num, nod[1].Num, nod[2].Num);
     else
       fprintf(fp, "%d 3 0 %d %d %d %d\n", num, nod[0].Num, nod[1].Num, 
-	      nod[2].Num, nod[3].Num);
+              nod[2].Num, nod[3].Num);
     break;
   case 3:
   default:
     if(nbnod == 4)
       fprintf(fp, "%d 4 0 %d %d %d %d\n", num, nod[0].Num, nod[1].Num,
-	      nod[2].Num, nod[3].Num);
+              nod[2].Num, nod[3].Num);
     else if(nbnod == 5)
       fprintf(fp, "%d 7 0 %d %d %d %d %d\n", num, nod[0].Num, nod[1].Num,
-	      nod[2].Num, nod[3].Num, nod[4].Num);
+              nod[2].Num, nod[3].Num, nod[4].Num);
     else if(nbnod == 6)
       fprintf(fp, "%d 6 0 %d %d %d %d %d %d\n", num, nod[0].Num, nod[1].Num,
-	      nod[2].Num, nod[3].Num, nod[4].Num, nod[5].Num);
+              nod[2].Num, nod[3].Num, nod[4].Num, nod[5].Num);
     else
       fprintf(fp, "%d 5 0 %d %d %d %d %d %d %d %d\n", num, nod[0].Num, 
-	      nod[1].Num, nod[2].Num, nod[3].Num, nod[4].Num, nod[5].Num,
-	      nod[6].Num, nod[7].Num);
+              nod[1].Num, nod[2].Num, nod[3].Num, nod[4].Num, nod[5].Num,
+              nod[6].Num, nod[7].Num);
     break;
   }
 }
 
 static void writeElementsMSH(FILE *fp, int nbelm, List_T *list,
-			     int nbnod, int nbcomp, int dim, 
-			     std::set<pVertex, pVertexLessThan> *nodes,
-			     int *numelm)
+                             int nbnod, int nbcomp, int dim, 
+                             std::set<pVertex, pVertexLessThan> *nodes,
+                             int *numelm)
 {
   if(!nbelm) return;
   pVertex nod[8];
@@ -497,11 +497,11 @@ static void writeElementsMSH(FILE *fp, int nbelm, List_T *list,
       pVertex n(x[j], y[j], z[j]);
       std::set<pVertex, pVertexLessThan>::iterator it = nodes->find(n);
       if(it == nodes->end()){
-	Msg(GERROR, "Unknown node in element");
-	return;
+        Msg(GERROR, "Unknown node in element");
+        return;
       }
       else{
-	nod[j] = (pVertex)(*it);
+        nod[j] = (pVertex)(*it);
       }
     }
     (*numelm)++;
@@ -593,10 +593,10 @@ bool PViewDataList::writeMSH(std::string name, bool binary)
       fprintf(fp, "\"%s\"\n", getName().c_str());
       fprintf(fp, "%d %.16g 0 0 %d %d\n", ts, time, numComp, numNodes);
       for(std::set<pVertex, pVertexLessThan>::iterator it = nodes.begin();
-	  it != nodes.end(); ++it){
-	fprintf(fp, "%d", it->Num);
-	for(int i = 0; i < numComp; i++)
-	  fprintf(fp, " %.16g", it->Val[ts * numComp + i]);
+          it != nodes.end(); ++it){
+        fprintf(fp, "%d", it->Num);
+        for(int i = 0; i < numComp; i++)
+          fprintf(fp, " %.16g", it->Val[ts * numComp + i]);
         fprintf(fp, "\n");
       }
       fprintf(fp, "$EndNodeData\n");

@@ -74,18 +74,18 @@ class GmshServer {
   // receive data from a machine with a different byte ordering, and
   // we just swap the bytes)
   typedef enum{ CLIENT_START        = 1,
-		CLIENT_STOP         = 2,
-		CLIENT_INFO         = 10,
-		CLIENT_WARNING      = 11,
-		CLIENT_ERROR        = 12,
-		CLIENT_PROGRESS     = 13,
-		CLIENT_MERGE_FILE   = 20, // old name: CLIENT_VIEW
-		CLIENT_PARSE_STRING = 21,
-		CLIENT_OPTION_1     = 100,
-		CLIENT_OPTION_2     = 101,
-		CLIENT_OPTION_3     = 102,
-		CLIENT_OPTION_4     = 103,
-		CLIENT_OPTION_5     = 104 } MessageType;
+                CLIENT_STOP         = 2,
+                CLIENT_INFO         = 10,
+                CLIENT_WARNING      = 11,
+                CLIENT_ERROR        = 12,
+                CLIENT_PROGRESS     = 13,
+                CLIENT_MERGE_FILE   = 20, // old name: CLIENT_VIEW
+                CLIENT_PARSE_STRING = 21,
+                CLIENT_OPTION_1     = 100,
+                CLIENT_OPTION_2     = 101,
+                CLIENT_OPTION_3     = 102,
+                CLIENT_OPTION_4     = 103,
+                CLIENT_OPTION_5     = 104 } MessageType;
   static int init, s;
 
  private:
@@ -99,7 +99,7 @@ class GmshServer {
     do {
       ssize_t len = recv(_sock, buf + sofar, remaining, 0);
       if(len <= 0)
-	return 0;
+        return 0;
       sofar += len;
       remaining -= len;
     } while(remaining > 0);
@@ -112,7 +112,7 @@ class GmshServer {
       char *a = &array[i * size];
       memcpy(x, a, size);
       for(int c = 0; c < size; c++)
-	a[size - 1 - c] = x[c];
+        a[size - 1 - c] = x[c];
     }
     delete [] x;
   }
@@ -176,7 +176,7 @@ class GmshServer {
       // make the socket
       s = socket(PF_UNIX, SOCK_STREAM, 0);
       if(s < 0)
-	return -1;  // Error: Couldn't create socket
+        return -1;  // Error: Couldn't create socket
       
       // bind the socket to its name
       struct sockaddr_un addr_un;
@@ -184,7 +184,7 @@ class GmshServer {
       strcpy(addr_un.sun_path, _sockname);
       addr_un.sun_family = AF_UNIX;
       if(bind(s, (struct sockaddr *)&addr_un, sizeof(addr_un)) < 0)
-	return -2;  // Error: Couldn't bind socket to name
+        return -2;  // Error: Couldn't bind socket to name
 
       // change permissions on the socket name in case it has to be rm'd later
       chmod(_sockname, 0666);
@@ -195,34 +195,34 @@ class GmshServer {
     else{
 #if defined(WIN32) && !defined(__CYGWIN__)
       if(!init){ 
-	WSADATA wsaData;
-	int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
-	if(iResult != NO_ERROR)
-	  return -8;  // Error: Couldn't initialize Windows sockets
+        WSADATA wsaData;
+        int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+        if(iResult != NO_ERROR)
+          return -8;  // Error: Couldn't initialize Windows sockets
       }
 #endif
       if(init != _portno){ 
-	// We need a better solution to deal with addresses that have
-	// already been bound...
-	init = _portno;
-	
-	// make the socket
-	s = socket(AF_INET, SOCK_STREAM, 0);
+        // We need a better solution to deal with addresses that have
+        // already been bound...
+        init = _portno;
+        
+        // make the socket
+        s = socket(AF_INET, SOCK_STREAM, 0);
 #if !defined(WIN32) || defined(__CYGWIN__)
-	if(s < 0)
+        if(s < 0)
 #else
-	if(s == INVALID_SOCKET)
+        if(s == INVALID_SOCKET)
 #endif
-	  return -1;  // Error: Couldn't create socket
-	
-	// bind the socket to its name
-	struct sockaddr_in addr_in;
-	memset((char *) &addr_in, 0, sizeof(addr_in));
-	addr_in.sin_family = AF_INET;
-	addr_in.sin_addr.s_addr = INADDR_ANY;
-	addr_in.sin_port = htons(_portno);
-	if(bind(s, (struct sockaddr *)&addr_in, sizeof(addr_in)) < 0)
-	  return -2;  // Error: Couldn't bind socket to name
+          return -1;  // Error: Couldn't create socket
+        
+        // bind the socket to its name
+        struct sockaddr_in addr_in;
+        memset((char *) &addr_in, 0, sizeof(addr_in));
+        addr_in.sin_family = AF_INET;
+        addr_in.sin_addr.s_addr = INADDR_ANY;
+        addr_in.sin_port = htons(_portno);
+        if(bind(s, (struct sockaddr *)&addr_in, sizeof(addr_in)) < 0)
+          return -2;  // Error: Couldn't bind socket to name
       }
     }
 
@@ -237,13 +237,13 @@ class GmshServer {
     if(justwait){
       // wait indefinitely until we get data
       if(WaitForData(s, -1, 0.5))
-	return -6; // not an actual error: we just stopped listening
+        return -6; // not an actual error: we just stopped listening
     }
     else{
       // Wait at most _maxdelay seconds for data, issue error if no
       // connection in that amount of time
       if(!myselect(s, _maxdelay))
-	return -4;  // Error: Socket listening timeout
+        return -4;  // Error: Socket listening timeout
     }
 
     // accept connection request
@@ -258,15 +258,15 @@ class GmshServer {
     if(_ReceiveData(type, sizeof(int))){
       if(*type < 0) return 0;
       if(*type > 65535){ 
-	// the data comes from a machine with different endianness and
-	// we must swap the bytes
-	swap = true;
-	_SwapBytes((char*)type, sizeof(int), 1);
+        // the data comes from a machine with different endianness and
+        // we must swap the bytes
+        swap = true;
+        _SwapBytes((char*)type, sizeof(int), 1);
       }
       if(_ReceiveData(len, sizeof(int))){
-	if(*len < 0) return 0;
-	if(swap) _SwapBytes((char*)len, sizeof(int), 1);
-	return 1;
+        if(*len < 0) return 0;
+        if(swap) _SwapBytes((char*)len, sizeof(int), 1);
+        return 1;
       }
     }
     return 0;
@@ -285,7 +285,7 @@ class GmshServer {
     if(_portno < 0){
       // UNIX socket
       if(unlink(_sockname) == -1)
-	return -1;  // Impossible to unlink the socket
+        return -1;  // Impossible to unlink the socket
     }
     close(_sock);
 #else

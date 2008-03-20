@@ -1,4 +1,4 @@
-// $Id: gsl_brent.cpp,v 1.18 2008-02-17 08:48:02 geuzaine Exp $
+// $Id: gsl_brent.cpp,v 1.19 2008-03-20 11:44:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -112,8 +112,8 @@ double brent(double ax, double bx, double cx,
 #define SIGN(a,b)((b) >= 0.0 ? fabs(a) : -fabs(a))
 
 void mnbrak(double *ax, double *bx, double *cx, 
-	    double *fa_dummy, double *fb_dummy, double *fc_dummy, 
-	    double (*func) (double))
+            double *fa_dummy, double *fb_dummy, double *fc_dummy, 
+            double (*func) (double))
 {
   double ulim, u, r, q;
   volatile double f_a, f_b, f_c, f_u;

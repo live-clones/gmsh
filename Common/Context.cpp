@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.61 2008-02-17 08:47:56 geuzaine Exp $
+// $Id: Context.cpp,v 1.62 2008-03-20 11:44:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -44,7 +44,7 @@ void Context_T::buildRotationMatrix(void)
     double BD = B * D;
     rot[0] = C*E; rot[1] = BD*E+A*F; rot[2] =-AD*E+B*F; rot[3] = 0.;
     rot[4] =-C*F; rot[5] =-BD*F+A*E; rot[6] = AD*F+B*E; rot[7] = 0.;
-    rot[8] = D;   rot[9] =-B*C;	     rot[10] = A*C;     rot[11] = 0.;
+    rot[8] = D;   rot[9] =-B*C;      rot[10] = A*C;     rot[11] = 0.;
     rot[12] = 0.; rot[13] = 0.;      rot[14] = 0.;      rot[15] = 1.;
     setQuaternionFromEulerAngles();
   }

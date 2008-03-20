@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.16 2008-03-01 01:32:03 geuzaine Exp $
+// $Id: DivideAndConquer.cpp,v 1.17 2008-03-20 11:44:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -529,7 +529,7 @@ int ConvertDListToTriangles(DocRecord *doc)
     // on cree une liste de points connectes au point i (t) + nombre
     // de points (t_length)
     striangle[i].t = ConvertDlistToArray(&gPointArray[i].adjacent,
-					 &striangle[i].t_length);
+                                         &striangle[i].t_length);
     striangle[i].info = NULL;
     striangle[i].info_length = 0;
   }
@@ -544,8 +544,8 @@ int ConvertDListToTriangles(DocRecord *doc)
         bb = striangle[i].t[j];
         cc = striangle[i].t[j + 1];
         doc->triangles[count].a = aa;
-	doc->triangles[count].b = bb;
-	doc->triangles[count].c = cc;
+        doc->triangles[count].b = bb;
+        doc->triangles[count].c = cc;
         count++;
       }
     }

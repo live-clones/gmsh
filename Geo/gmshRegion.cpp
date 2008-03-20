@@ -1,4 +1,4 @@
-// $Id: gmshRegion.cpp,v 1.20 2008-02-22 21:09:00 geuzaine Exp $
+// $Id: gmshRegion.cpp,v 1.21 2008-03-20 11:44:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -66,9 +66,9 @@ void gmshRegion::resetMeshAttributes()
       List_Read(v->TrsfPoints, i, &corn);
       GVertex *gv = model()->getVertexByTag(corn->Num);
       if(gv)
-	meshAttributes.corners.push_back(gv);
+        meshAttributes.corners.push_back(gv);
       else
-	Msg(GERROR, "Unknown vertex %d in transfinite attributes", corn->Num);
+        Msg(GERROR, "Unknown vertex %d in transfinite attributes", corn->Num);
     }
   }
 }

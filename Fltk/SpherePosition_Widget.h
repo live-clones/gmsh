@@ -48,24 +48,24 @@ class SpherePosition_Widget : public Fl_Widget {
     case FL_DRAG:
     case FL_RELEASE: 
       {
-	int x1 = x() + 3;
-	int y1 = y() + 3;
-	int w1 = w() - 6;
-	int h1 = h() - 6;
-	double xx = (Fl::event_x() - x1) / (0.5 * w1) - 1.;
-	double yy = -((Fl::event_y() - y1) / (0.5 * h1) - 1.);
-	if(xx != _x || yy != _y) {
-	  double norm = sqrt(xx * xx + yy * yy);
-	  if(norm > 1.){
-	    xx /= norm;
-	    yy /= norm;
-	    norm = 1.;
-	  }
-	  _x = xx; _y = yy; _z = sqrt(1. - norm);
-	  set_changed();
-	  redraw();
-	  do_callback();
-	}
+        int x1 = x() + 3;
+        int y1 = y() + 3;
+        int w1 = w() - 6;
+        int h1 = h() - 6;
+        double xx = (Fl::event_x() - x1) / (0.5 * w1) - 1.;
+        double yy = -((Fl::event_y() - y1) / (0.5 * h1) - 1.);
+        if(xx != _x || yy != _y) {
+          double norm = sqrt(xx * xx + yy * yy);
+          if(norm > 1.){
+            xx /= norm;
+            yy /= norm;
+            norm = 1.;
+          }
+          _x = xx; _y = yy; _z = sqrt(1. - norm);
+          set_changed();
+          redraw();
+          do_callback();
+        }
       }
       return 1;
     default:

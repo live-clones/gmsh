@@ -1,4 +1,4 @@
-// $Id: PluginManager.cpp,v 1.6 2008-03-18 08:41:26 remacle Exp $
+// $Id: PluginManager.cpp,v 1.7 2008-03-20 11:44:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -174,72 +174,72 @@ void GMSH_PluginManager::registerDefaultPlugins()
 
   if(CTX.post.plugins){
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("StreamLines", GMSH_RegisterStreamLinesPlugin()));
+                      ("StreamLines", GMSH_RegisterStreamLinesPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("CutGrid", GMSH_RegisterCutGridPlugin()));
+                      ("CutGrid", GMSH_RegisterCutGridPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("CutMap", GMSH_RegisterCutMapPlugin()));
+                      ("CutMap", GMSH_RegisterCutMapPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("CutPlane", GMSH_RegisterCutPlanePlugin()));
+                      ("CutPlane", GMSH_RegisterCutPlanePlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("CutSphere", GMSH_RegisterCutSpherePlugin()));
+                      ("CutSphere", GMSH_RegisterCutSpherePlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("Skin", GMSH_RegisterSkinPlugin()));
+                      ("Skin", GMSH_RegisterSkinPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("Extract", GMSH_RegisterExtractPlugin()));
+                      ("Extract", GMSH_RegisterExtractPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("ExtractElements", GMSH_RegisterExtractElementsPlugin()));
+                      ("ExtractElements", GMSH_RegisterExtractElementsPlugin()));
 #if 0 // waiting for BDS rewrite
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("ExtractEdges", GMSH_RegisterExtractEdgesPlugin()));
+                      ("ExtractEdges", GMSH_RegisterExtractEdgesPlugin()));
 #endif
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("MakeSimplex", GMSH_RegisterMakeSimplexPlugin()));
+                      ("MakeSimplex", GMSH_RegisterMakeSimplexPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("Smooth", GMSH_RegisterSmoothPlugin()));
+                      ("Smooth", GMSH_RegisterSmoothPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("Transform", GMSH_RegisterTransformPlugin()));
+                      ("Transform", GMSH_RegisterTransformPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("TransformLatLon", GMSH_RegisterTransformLatLonPlugin()));
+                      ("TransformLatLon", GMSH_RegisterTransformLatLonPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("Warp", GMSH_RegisterWarpPlugin()));
+                      ("Warp", GMSH_RegisterWarpPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("SphericalRaise", GMSH_RegisterSphericalRaisePlugin()));
+                      ("SphericalRaise", GMSH_RegisterSphericalRaisePlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("HarmonicToTime", GMSH_RegisterHarmonicToTimePlugin()));
+                      ("HarmonicToTime", GMSH_RegisterHarmonicToTimePlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("ModulusPhase", GMSH_RegisterModulusPhasePlugin()));
+                      ("ModulusPhase", GMSH_RegisterModulusPhasePlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("Integrate", GMSH_RegisterIntegratePlugin()));
+                      ("Integrate", GMSH_RegisterIntegratePlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("Gradient", GMSH_RegisterGradientPlugin()));
+                      ("Gradient", GMSH_RegisterGradientPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("Curl", GMSH_RegisterCurlPlugin()));
+                      ("Curl", GMSH_RegisterCurlPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("Divergence", GMSH_RegisterDivergencePlugin()));
+                      ("Divergence", GMSH_RegisterDivergencePlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("Annotate", GMSH_RegisterAnnotatePlugin()));
+                      ("Annotate", GMSH_RegisterAnnotatePlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("Remove", GMSH_RegisterRemovePlugin()));
+                      ("Remove", GMSH_RegisterRemovePlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("Eigenvectors", GMSH_RegisterEigenvectorsPlugin()));
+                      ("Eigenvectors", GMSH_RegisterEigenvectorsPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("Eigenvalues", GMSH_RegisterEigenvaluesPlugin()));
+                      ("Eigenvalues", GMSH_RegisterEigenvaluesPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("Lambda2", GMSH_RegisterLambda2Plugin()));
+                      ("Lambda2", GMSH_RegisterLambda2Plugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("Probe", GMSH_RegisterProbePlugin()));
+                      ("Probe", GMSH_RegisterProbePlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("FieldView", GMSH_RegisterFieldViewPlugin()));
+                      ("FieldView", GMSH_RegisterFieldViewPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("Triangulate", GMSH_RegisterTriangulatePlugin()));
+                      ("Triangulate", GMSH_RegisterTriangulatePlugin()));
 #if defined(HAVE_MATH_EVAL)
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("Evaluate", GMSH_RegisterEvaluatePlugin()));
+                      ("Evaluate", GMSH_RegisterEvaluatePlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("CutParametric", GMSH_RegisterCutParametricPlugin()));
+                      ("CutParametric", GMSH_RegisterCutParametricPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-		      ("GSHHS", GMSH_RegisterGSHHSPlugin()));
+                      ("GSHHS", GMSH_RegisterGSHHSPlugin()));
 #endif
   }
 

@@ -1,4 +1,4 @@
-// $Id: FieldView.cpp,v 1.7 2008-03-19 17:26:54 geuzaine Exp $
+// $Id: FieldView.cpp,v 1.8 2008-03-20 11:44:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -43,12 +43,12 @@ void GMSH_FieldViewPlugin::getName(char *name) const
 }
 
 void GMSH_FieldViewPlugin::getInfos(char *author, char *copyright,
-				    char *help_text) const
+                                    char *help_text) const
 {
   strcpy(author, "J. Lambrechts (jonathanlambrechts@gmail.org)");
   strcpy(copyright, "GPL");
   strcpy(help_text,
-	 "Plugin(FieldView) evaluate a field on the choosen view.\n");
+         "Plugin(FieldView) evaluate a field on the choosen view.\n");
 }
 
 int GMSH_FieldViewPlugin::getNbOptions() const
@@ -78,6 +78,6 @@ PView *GMSH_FieldViewPlugin::execute(PView *v)
   }
   PView *v1 = getView(iView, v);
   if(!v1) return v;
-	field->put_on_view(v1);
+        field->put_on_view(v1);
   return v1;
 }

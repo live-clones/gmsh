@@ -1,4 +1,4 @@
-// $Id: Octree.cpp,v 1.4 2008-02-17 08:47:56 geuzaine Exp $
+// $Id: Octree.cpp,v 1.5 2008-03-20 11:44:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -29,13 +29,13 @@ using std::list;
 void free_buckets(octantBucket *);
 
 Octree* Octree_Create(int maxElements, double origin[3], double size[3],   
-		      void  (*BB)(void *, double*, double*),
-		      void  (*Centroid)(void *, double *),
-		      int   (*InEle)(void *, double *))
+                      void  (*BB)(void *, double*, double*),
+                      void  (*Centroid)(void *, double *),
+                      int   (*InEle)(void *, double *))
 {
   Octree *myOctree = new Octree;
   initializeOctantBuckets (origin, size, maxElements,
-                           &(myOctree->root), &(myOctree->info));  	
+                           &(myOctree->root), &(myOctree->info));       
   myOctree->function_BB = BB;
   myOctree->function_centroid = Centroid;
   myOctree->function_inElement = InEle;
@@ -57,7 +57,7 @@ void Octree_Insert(void * element, Octree *myOctree)
   (*(myOctree->function_centroid))(element, centroid);
   bucket = findElementBucket(myOctree->root, centroid);
   addElement2Bucket(bucket, element, minBB, maxBB,
-		    centroid, myOctree->info);	
+                    centroid, myOctree->info);  
 }
 
 void Octree_Arrange(Octree *myOctree)
@@ -75,7 +75,7 @@ void Octree_Arrange(Octree *myOctree)
 void * Octree_Search(double *pt, Octree *myOctree)
 {
   return searchElement(myOctree->root, pt, myOctree->info, 
-		       myOctree->function_BB, myOctree->function_inElement);
+                       myOctree->function_BB, myOctree->function_inElement);
 }
 
 void free_buckets(octantBucket * bucket)
@@ -95,7 +95,7 @@ void free_buckets(octantBucket * bucket)
   }
 
   for(i = numBuck-1; i >= 0; i--) 
-    free_buckets((bucket->next)+i);	    
+    free_buckets((bucket->next)+i);         
   delete []bucket->next;
   return;
 }
@@ -103,5 +103,5 @@ void free_buckets(octantBucket * bucket)
 void Octree_SearchAll(double * pt, Octree * myOctree, list<void *> * output)
 {
   searchAllElements(myOctree->root, pt, myOctree->info, myOctree->function_BB,
-                    myOctree->function_inElement, output);	
+                    myOctree->function_inElement, output);      
 }

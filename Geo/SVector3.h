@@ -83,8 +83,8 @@ inline double norm(const SVector3 &v)
 
 inline SVector3 crossprod(const SVector3 &a, const SVector3 &b)
 { return SVector3(a.y() * b.z() - b.y() * a.z(), 
-		  -(a.x() * b.z() - b.x() * a.z()), 
-		  a.x() * b.y() - b.x() * a.y()); }
+                  -(a.x() * b.z() - b.x() * a.z()), 
+                  a.x() * b.y() - b.x() * a.y()); }
 
 inline SVector3 operator*(double m,const SVector3 &v)
 { return SVector3(v[0] * m, v[1] * m, v[2] * m); }

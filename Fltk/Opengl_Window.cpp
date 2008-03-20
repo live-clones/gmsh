@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.82 2008-02-17 08:47:57 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.83 2008-03-20 11:44:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -116,7 +116,7 @@ void Opengl_Window::draw()
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho((double)CTX.viewport[0], (double)CTX.viewport[2],
-	    (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
+            (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glColor3d(1., 1., 1.);
@@ -199,56 +199,56 @@ int Opengl_Window::handle(int event)
        !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
       if(!LassoMode && Fl::event_state(FL_CTRL)) {
         LassoMode = true;
-	lasso.set();
+        lasso.set();
       }
       else if(LassoMode) {
         LassoMode = false;
-	if(SelectionMode && CTX.mouse_selection){
-	  WID->try_selection = 2; // will try to select multiple entities
-	  WID->try_selection_xywh[0] = (int)(click.win[0] + curr.win[0])/2;
-	  WID->try_selection_xywh[1] = (int)(click.win[1] + curr.win[1])/2;
-	  WID->try_selection_xywh[2] = (int)fabs(click.win[0] - curr.win[0]);
-	  WID->try_selection_xywh[3] = (int)fabs(click.win[1] - curr.win[1]);
-	}
-	else{
-	  lasso_zoom(click, curr);
-	}
+        if(SelectionMode && CTX.mouse_selection){
+          WID->try_selection = 2; // will try to select multiple entities
+          WID->try_selection_xywh[0] = (int)(click.win[0] + curr.win[0])/2;
+          WID->try_selection_xywh[1] = (int)(click.win[1] + curr.win[1])/2;
+          WID->try_selection_xywh[2] = (int)fabs(click.win[0] - curr.win[0]);
+          WID->try_selection_xywh[3] = (int)fabs(click.win[1] - curr.win[1]);
+        }
+        else{
+          lasso_zoom(click, curr);
+        }
       }
       else if(CTX.mouse_selection){
         WID->try_selection = 1; // will try to select clicked entity
-	WID->try_selection_xywh[0] = (int)curr.win[0];
-	WID->try_selection_xywh[1] = (int)curr.win[1];
-	WID->try_selection_xywh[2] = 5;
-	WID->try_selection_xywh[3] = 5;
+        WID->try_selection_xywh[0] = (int)curr.win[0];
+        WID->try_selection_xywh[1] = (int)curr.win[1];
+        WID->try_selection_xywh[2] = 5;
+        WID->try_selection_xywh[3] = 5;
       }
     }
     else if(Fl::event_button() == 2 || 
-	    (Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
+            (Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
       if(!LassoMode && Fl::event_state(FL_CTRL)) {
-	// make zoom isotropic
+        // make zoom isotropic
         CTX.s[1] = CTX.s[0];
         CTX.s[2] = CTX.s[0];
         redraw();
       }
       else if(LassoMode) {
-	LassoMode = false;
-	if(SelectionMode && CTX.mouse_selection){
-	  WID->try_selection = -2; // will try to unselect multiple entities
-	  WID->try_selection_xywh[0] = (int)(click.win[0] + curr.win[0])/2;
-	  WID->try_selection_xywh[1] = (int)(click.win[1] + curr.win[1])/2;
-	  WID->try_selection_xywh[2] = (int)fabs(click.win[0] - curr.win[0]);
-	  WID->try_selection_xywh[3] = (int)fabs(click.win[1] - curr.win[1]);
-	}
-	else{
-	  lasso_zoom(click, curr);
-	}
+        LassoMode = false;
+        if(SelectionMode && CTX.mouse_selection){
+          WID->try_selection = -2; // will try to unselect multiple entities
+          WID->try_selection_xywh[0] = (int)(click.win[0] + curr.win[0])/2;
+          WID->try_selection_xywh[1] = (int)(click.win[1] + curr.win[1])/2;
+          WID->try_selection_xywh[2] = (int)fabs(click.win[0] - curr.win[0]);
+          WID->try_selection_xywh[3] = (int)fabs(click.win[1] - curr.win[1]);
+        }
+        else{
+          lasso_zoom(click, curr);
+        }
       }
       else if(CTX.mouse_selection){
         WID->try_selection = -1; // will try to unselect clicked entity
-	WID->try_selection_xywh[0] = (int)curr.win[0];
-	WID->try_selection_xywh[1] = (int)curr.win[1];
-	WID->try_selection_xywh[2] = 5;
-	WID->try_selection_xywh[3] = 5;
+        WID->try_selection_xywh[0] = (int)curr.win[0];
+        WID->try_selection_xywh[1] = (int)curr.win[1];
+        WID->try_selection_xywh[2] = 5;
+        WID->try_selection_xywh[3] = 5;
       }
     }
     else {
@@ -257,8 +257,8 @@ int Opengl_Window::handle(int event)
           CTX.setQuaternion(0., 0., 0., 1.);
         else
           CTX.r[0] = CTX.r[1] = CTX.r[2] = 0.;
-	CTX.t[0] = CTX.t[1] = CTX.t[2] = 0.;
-	CTX.s[0] = CTX.s[1] = CTX.s[2] = 1.;
+        CTX.t[0] = CTX.t[1] = CTX.t[2] = 0.;
+        CTX.s[0] = CTX.s[1] = CTX.s[2] = 1.;
         redraw();
       }
       else {
@@ -300,52 +300,52 @@ int Opengl_Window::handle(int event)
       double dx = curr.win[0] - prev.win[0];
       double dy = curr.win[1] - prev.win[1];
       if(LassoMode) {
-	redraw();
+        redraw();
       }
       else {
-	if(Fl::event_state(FL_META)) {
-	  // will try to select or unselect entities on the fly
-	  WID->try_selection = Fl::event_state(FL_SHIFT) ? -1 : 1; 
-	  WID->try_selection_xywh[0] = (int)curr.win[0];
-	  WID->try_selection_xywh[1] = (int)curr.win[1];
-	  WID->try_selection_xywh[2] = 5;
-	  WID->try_selection_xywh[3] = 5;
-	}
-	else if(Fl::event_button() == 1 && 
-		!Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
-	  if(CTX.useTrackball)
-	    CTX.addQuaternion((2. * prev.win[0] - w()) / w(),
-			      (h() - 2. * prev.win[1]) / h(),
-			      (2. * curr.win[0] - w()) / w(),
-			      (h() - 2. * curr.win[1]) / h());
-	  else {
-	    CTX.r[1] += ((fabs(dx) > fabs(dy)) ? 180. * dx / (double)w() : 0.);
-	    CTX.r[0] += ((fabs(dx) > fabs(dy)) ? 0. : 180. * dy / (double)h());
-	  }
-	}
-	else if(Fl::event_button() == 2 ||
-		(Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
-	  if(fabs(dy) > fabs(dx)) {
-	    double fact = (CTX.zoom_factor * fabs(dy) + h()) / (double)h();
-	    CTX.s[0] *= ((dy > 0) ? fact : 1./fact);
-	    CTX.s[1] = CTX.s[0];
-	    CTX.s[2] = CTX.s[0];
-	    click.recenter();
-	  }
-	  else if(!CTX.useTrackball)
-	    CTX.r[2] += -180. * dx / (double)w();
-	}
-	else {
-	  CTX.t[0] += (curr.wnr[0] - click.wnr[0]);
-	  CTX.t[1] += (curr.wnr[1] - click.wnr[1]);
-	  CTX.t[2] = 0.;
-	}
-	CTX.draw_rotation_center = 1;
-	if(CTX.fast_redraw) {
-	  CTX.mesh.draw = 0;
-	  CTX.post.draw = 0;
-	}
-	redraw();
+        if(Fl::event_state(FL_META)) {
+          // will try to select or unselect entities on the fly
+          WID->try_selection = Fl::event_state(FL_SHIFT) ? -1 : 1; 
+          WID->try_selection_xywh[0] = (int)curr.win[0];
+          WID->try_selection_xywh[1] = (int)curr.win[1];
+          WID->try_selection_xywh[2] = 5;
+          WID->try_selection_xywh[3] = 5;
+        }
+        else if(Fl::event_button() == 1 && 
+                !Fl::event_state(FL_SHIFT) && !Fl::event_state(FL_ALT)) {
+          if(CTX.useTrackball)
+            CTX.addQuaternion((2. * prev.win[0] - w()) / w(),
+                              (h() - 2. * prev.win[1]) / h(),
+                              (2. * curr.win[0] - w()) / w(),
+                              (h() - 2. * curr.win[1]) / h());
+          else {
+            CTX.r[1] += ((fabs(dx) > fabs(dy)) ? 180. * dx / (double)w() : 0.);
+            CTX.r[0] += ((fabs(dx) > fabs(dy)) ? 0. : 180. * dy / (double)h());
+          }
+        }
+        else if(Fl::event_button() == 2 ||
+                (Fl::event_button() == 1 && Fl::event_state(FL_SHIFT))) {
+          if(fabs(dy) > fabs(dx)) {
+            double fact = (CTX.zoom_factor * fabs(dy) + h()) / (double)h();
+            CTX.s[0] *= ((dy > 0) ? fact : 1./fact);
+            CTX.s[1] = CTX.s[0];
+            CTX.s[2] = CTX.s[0];
+            click.recenter();
+          }
+          else if(!CTX.useTrackball)
+            CTX.r[2] += -180. * dx / (double)w();
+        }
+        else {
+          CTX.t[0] += (curr.wnr[0] - click.wnr[0]);
+          CTX.t[1] += (curr.wnr[1] - click.wnr[1]);
+          CTX.t[2] = 0.;
+        }
+        CTX.draw_rotation_center = 1;
+        if(CTX.fast_redraw) {
+          CTX.mesh.draw = 0;
+          CTX.post.draw = 0;
+        }
+        redraw();
       }
     }
     prev.set();
@@ -366,14 +366,14 @@ int Opengl_Window::handle(int event)
       double r[3] = {CTX.cg[0] - p[0], CTX.cg[1] - p[1], CTX.cg[2] - p[2]}, t;
       prosca(r, d, &t);
       for(int i = 0; i < 3; i++){
-	point[i] = p[i] + t * d[i];
-	if(CTX.geom.snap[i]){
-	  double d = point[i]/CTX.geom.snap[i];
-	  double f = floor(d);
-	  double c = ceil(d);
-	  double n = (d - f < c - d) ? f : c;
-	  point[i] = n * CTX.geom.snap[i];
-	}
+        point[i] = p[i] + t * d[i];
+        if(CTX.geom.snap[i]){
+          double d = point[i]/CTX.geom.snap[i];
+          double f = floor(d);
+          double c = ceil(d);
+          double n = (d - f < c - d) ? f : c;
+          point[i] = n * CTX.geom.snap[i];
+        }
       }
       char str[32];
       sprintf(str, "%g", point[0]); WID->context_geometry_input[2]->value(str);
@@ -383,34 +383,34 @@ int Opengl_Window::handle(int event)
     }
     else{ // hover mode
       if(curr.win[0] != prev.win[0] || curr.win[1] != prev.win[1]){
-	WID->make_opengl_current();
-	std::vector<GVertex*> vertices;
-	std::vector<GEdge*> edges;
-	std::vector<GFace*> faces;
-	std::vector<GRegion*> regions;
-	std::vector<MElement*> elements;
-	bool res = ProcessSelectionBuffer(WID->selection, false, 
-					  CTX.mouse_hover_meshes, 
-					  (int)curr.win[0], (int)curr.win[1], 5, 5, 
-					  vertices, edges, faces, regions,
-					  elements);
-	if((WID->selection == ENT_ALL && res) ||
-	   (WID->selection == ENT_POINT && vertices.size()) ||
-	   (WID->selection == ENT_LINE && edges.size()) || 
-	   (WID->selection == ENT_SURFACE && faces.size()) ||
-	   (WID->selection == ENT_VOLUME && regions.size()))
-	  WID->g_window->cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
-	else
-	  WID->g_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
-	GEntity *ge = 0;
-	if(vertices.size()) ge = vertices[0];
-	else if(edges.size()) ge = edges[0];
-	else if(faces.size()) ge = faces[0];
-	else if(regions.size()) ge = regions[0];
-	MElement *me = elements.size() ? elements[0] : 0;
-	Msg(STATUS2N, "%s %s",
-	    ge ? ge->getInfoString().c_str() : "", 
-	    me ? me->getInfoString().c_str() : "");
+        WID->make_opengl_current();
+        std::vector<GVertex*> vertices;
+        std::vector<GEdge*> edges;
+        std::vector<GFace*> faces;
+        std::vector<GRegion*> regions;
+        std::vector<MElement*> elements;
+        bool res = ProcessSelectionBuffer(WID->selection, false, 
+                                          CTX.mouse_hover_meshes, 
+                                          (int)curr.win[0], (int)curr.win[1], 5, 5, 
+                                          vertices, edges, faces, regions,
+                                          elements);
+        if((WID->selection == ENT_ALL && res) ||
+           (WID->selection == ENT_POINT && vertices.size()) ||
+           (WID->selection == ENT_LINE && edges.size()) || 
+           (WID->selection == ENT_SURFACE && faces.size()) ||
+           (WID->selection == ENT_VOLUME && regions.size()))
+          WID->g_window->cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
+        else
+          WID->g_window->cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
+        GEntity *ge = 0;
+        if(vertices.size()) ge = vertices[0];
+        else if(edges.size()) ge = edges[0];
+        else if(faces.size()) ge = faces[0];
+        else if(regions.size()) ge = regions[0];
+        MElement *me = elements.size() ? elements[0] : 0;
+        Msg(STATUS2N, "%s %s",
+            ge ? ge->getInfoString().c_str() : "", 
+            me ? me->getInfoString().c_str() : "");
       }
     }
     prev.set();

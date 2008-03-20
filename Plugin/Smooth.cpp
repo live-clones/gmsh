@@ -1,4 +1,4 @@
-// $Id: Smooth.cpp,v 1.30 2008-02-17 08:48:07 geuzaine Exp $
+// $Id: Smooth.cpp,v 1.31 2008-03-20 11:44:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -51,10 +51,10 @@ void GMSH_SmoothPlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Smooth) averages the values at the nodes\n"
-	 "of the scalar view `iView'. If `iView' < 0, the\n"
-	 "plugin is run on the current view.\n"
-	 "\n"
-	 "Plugin(Smooth) is executed in-place.\n");
+         "of the scalar view `iView'. If `iView' < 0, the\n"
+         "plugin is run on the current view.\n"
+         "\n"
+         "Plugin(Smooth) is executed in-place.\n");
 }
 
 int GMSH_SmoothPlugin::getNbOptions() const

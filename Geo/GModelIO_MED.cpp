@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.8 2008-01-20 11:39:47 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.9 2008-03-20 11:44:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -49,131 +49,131 @@ typedef std::list<int>::const_iterator listIter;
 
 ConversionData::ConversionData()
 { 
-	// Correspondance des types GMSH et MEd
-	static const med_geometrie_element ValuesTypesOfElts[] = {  MED_SEG2,    MED_TRIA3,  MED_QUAD4,   MED_TETRA4,
-								    MED_HEXA8,   MED_PENTA6, MED_PYRA5,   MED_SEG3, 
-								    MED_TRIA6,   MED_QUAD8,  MED_TETRA10, MED_HEXA20, 
-								    MED_PENTA15, MED_PYRA13, MED_POINT1,  MED_QUAD8,
-								    MED_HEXA20,  MED_PENTA15, MED_PYRA13,  MED_NONE};
-		
-	int i=0;
-	while (ValuesTypesOfElts[i] != MED_NONE)
-	{
-	   typesOfElts[i+1]=ValuesTypesOfElts[i];
-	   ++i;
-	}
+        // Correspondance des types GMSH et MEd
+        static const med_geometrie_element ValuesTypesOfElts[] = {  MED_SEG2,    MED_TRIA3,  MED_QUAD4,   MED_TETRA4,
+                                                                    MED_HEXA8,   MED_PENTA6, MED_PYRA5,   MED_SEG3, 
+                                                                    MED_TRIA6,   MED_QUAD8,  MED_TETRA10, MED_HEXA20, 
+                                                                    MED_PENTA15, MED_PYRA13, MED_POINT1,  MED_QUAD8,
+                                                                    MED_HEXA20,  MED_PENTA15, MED_PYRA13,  MED_NONE};
+                
+        int i=0;
+        while (ValuesTypesOfElts[i] != MED_NONE)
+        {
+           typesOfElts[i+1]=ValuesTypesOfElts[i];
+           ++i;
+        }
 
-	// **************************
-	// Numérotation des Noeuds
-	// **************************
-	//
-	// line ( 1er et 2nd Ordre)
-	i=1;
-	while ( i!=3 ) { 
-	   medVertexOrder[1].push_back(i);
-	   medVertexOrder[8].push_back(i);
-	   ++i;
-	}
-	medVertexOrder[8].push_back(3);
+        // **************************
+        // Numérotation des Noeuds
+        // **************************
+        //
+        // line ( 1er et 2nd Ordre)
+        i=1;
+        while ( i!=3 ) { 
+           medVertexOrder[1].push_back(i);
+           medVertexOrder[8].push_back(i);
+           ++i;
+        }
+        medVertexOrder[8].push_back(3);
 
-	// tria
-	i=1;
-	while ( i!=4 ) { 
-	   medVertexOrder[2].push_back(i);
-	   medVertexOrder[9].push_back(i);
-	   ++i;
-	}
-	medVertexOrder[9].push_back(4);
-	medVertexOrder[9].push_back(5);
-	medVertexOrder[9].push_back(6);
+        // tria
+        i=1;
+        while ( i!=4 ) { 
+           medVertexOrder[2].push_back(i);
+           medVertexOrder[9].push_back(i);
+           ++i;
+        }
+        medVertexOrder[9].push_back(4);
+        medVertexOrder[9].push_back(5);
+        medVertexOrder[9].push_back(6);
 
-	// quad
-	i=1;
-	while ( i!=5 ) { 
-	   medVertexOrder[3].push_back(i);
-	   medVertexOrder[10].push_back(i);
-	   medVertexOrder[16].push_back(i);
-	   ++i;
-	}
-	medVertexOrder[10].push_back(5);
-	medVertexOrder[16].push_back(5);
-	medVertexOrder[10].push_back(6);
-	medVertexOrder[16].push_back(6);
-	medVertexOrder[10].push_back(7);
-	medVertexOrder[16].push_back(7);
-	medVertexOrder[10].push_back(8);
-	medVertexOrder[16].push_back(8);
+        // quad
+        i=1;
+        while ( i!=5 ) { 
+           medVertexOrder[3].push_back(i);
+           medVertexOrder[10].push_back(i);
+           medVertexOrder[16].push_back(i);
+           ++i;
+        }
+        medVertexOrder[10].push_back(5);
+        medVertexOrder[16].push_back(5);
+        medVertexOrder[10].push_back(6);
+        medVertexOrder[16].push_back(6);
+        medVertexOrder[10].push_back(7);
+        medVertexOrder[16].push_back(7);
+        medVertexOrder[10].push_back(8);
+        medVertexOrder[16].push_back(8);
 
-	// tetra
-	static const int OrderforTetra[] = { 1, 3, 2, 4, 0 };
-	i=0;
-	while ( OrderforTetra[i] != 0 ) { 
-	   medVertexOrder[4].push_back(OrderforTetra[i]);
-	   medVertexOrder[11].push_back(OrderforTetra[i]);
-	   ++i;
-	}
-	static const int OrderforTetra2[] = { 7, 6 , 5, 8 , 9 , 10, 0 }; 
-	i=0;
-	while ( OrderforTetra2[i] != 0 ) { 
-	   medVertexOrder[11].push_back(OrderforTetra2[i]);
-	   ++i;
-	}
+        // tetra
+        static const int OrderforTetra[] = { 1, 3, 2, 4, 0 };
+        i=0;
+        while ( OrderforTetra[i] != 0 ) { 
+           medVertexOrder[4].push_back(OrderforTetra[i]);
+           medVertexOrder[11].push_back(OrderforTetra[i]);
+           ++i;
+        }
+        static const int OrderforTetra2[] = { 7, 6 , 5, 8 , 9 , 10, 0 }; 
+        i=0;
+        while ( OrderforTetra2[i] != 0 ) { 
+           medVertexOrder[11].push_back(OrderforTetra2[i]);
+           ++i;
+        }
 
-	// hexa
-	// le 1 MED est le 1er Gmsh,   le 2nd Med est le 4ieme Gmsh , le 3 le 6 ...
-	static const int OrderforHexa[] = { 1, 5, 8,  4, 2, 6, 7, 3, 0};
-	i=0;
-	while (OrderforHexa[i] != 0)
-	{
-	   medVertexOrder[5].push_back(OrderforHexa[i]);
-	   medVertexOrder[12].push_back(OrderforHexa[i]);
-	   medVertexOrder[17].push_back(OrderforHexa[i]);
-	   ++i;
-	};
-	static const int OrderforHexa2[] = { 11,18,16,10,13,19,15,16,9,17,20,14, 0 }; 
-	i=0;
-	while ( OrderforHexa2[i] != 0 ) { 
-	   medVertexOrder[12].push_back(OrderforHexa2[i]);
-	   medVertexOrder[17].push_back(OrderforHexa2[i]);
-	   ++i;
-	}
+        // hexa
+        // le 1 MED est le 1er Gmsh,   le 2nd Med est le 4ieme Gmsh , le 3 le 6 ...
+        static const int OrderforHexa[] = { 1, 5, 8,  4, 2, 6, 7, 3, 0};
+        i=0;
+        while (OrderforHexa[i] != 0)
+        {
+           medVertexOrder[5].push_back(OrderforHexa[i]);
+           medVertexOrder[12].push_back(OrderforHexa[i]);
+           medVertexOrder[17].push_back(OrderforHexa[i]);
+           ++i;
+        };
+        static const int OrderforHexa2[] = { 11,18,16,10,13,19,15,16,9,17,20,14, 0 }; 
+        i=0;
+        while ( OrderforHexa2[i] != 0 ) { 
+           medVertexOrder[12].push_back(OrderforHexa2[i]);
+           medVertexOrder[17].push_back(OrderforHexa2[i]);
+           ++i;
+        }
 
-	// Prism
-	static const int OrderforPrism[] = { 1, 3, 2, 4, 6, 5, 0};
-	i=0;
-	while (OrderforPrism[i] != 0)
-	{
-	   medVertexOrder[6].push_back(OrderforPrism[i]);
-	   medVertexOrder[13].push_back(OrderforPrism[i]);
-	   medVertexOrder[18].push_back(OrderforPrism[i]);
-	   ++i;
-	};
-	static const int OrderforPrism2[] = { 8, 10, 7, 14, 13, 15, 9, 12, 11, 0};
-	i=0;
-	while ( OrderforPrism2[i] != 0 ) { 
-	   medVertexOrder[13].push_back(OrderforPrism2[i]);
-	   medVertexOrder[18].push_back(OrderforPrism2[i]);
-	   ++i;
-	}
+        // Prism
+        static const int OrderforPrism[] = { 1, 3, 2, 4, 6, 5, 0};
+        i=0;
+        while (OrderforPrism[i] != 0)
+        {
+           medVertexOrder[6].push_back(OrderforPrism[i]);
+           medVertexOrder[13].push_back(OrderforPrism[i]);
+           medVertexOrder[18].push_back(OrderforPrism[i]);
+           ++i;
+        };
+        static const int OrderforPrism2[] = { 8, 10, 7, 14, 13, 15, 9, 12, 11, 0};
+        i=0;
+        while ( OrderforPrism2[i] != 0 ) { 
+           medVertexOrder[13].push_back(OrderforPrism2[i]);
+           medVertexOrder[18].push_back(OrderforPrism2[i]);
+           ++i;
+        }
 
 
-	//Pyra
-	static const int OrderforPyra[] = { 1, 4, 3, 2, 5, 0};
-	i=0;
-	while (OrderforPyra[i] != 0)
-	{
-	   medVertexOrder[7].push_back(OrderforPyra[i]);
-	   medVertexOrder[14].push_back(OrderforPyra[i]);
-	   medVertexOrder[19].push_back(OrderforPyra[i]);
-	   ++i;
-	};
-	static const int OrderforPyra2[] = { 7, 11 ,9 , 6, 8, 13, 12 , 10, 0};
-	i=0;
-	while ( OrderforPyra2[i] != 0 ) { 
-	   medVertexOrder[14].push_back(OrderforPyra2[i]);
-	   medVertexOrder[19].push_back(OrderforPyra2[i]);
-	   ++i;
-	}
+        //Pyra
+        static const int OrderforPyra[] = { 1, 4, 3, 2, 5, 0};
+        i=0;
+        while (OrderforPyra[i] != 0)
+        {
+           medVertexOrder[7].push_back(OrderforPyra[i]);
+           medVertexOrder[14].push_back(OrderforPyra[i]);
+           medVertexOrder[19].push_back(OrderforPyra[i]);
+           ++i;
+        };
+        static const int OrderforPyra2[] = { 7, 11 ,9 , 6, 8, 13, 12 , 10, 0};
+        i=0;
+        while ( OrderforPyra2[i] != 0 ) { 
+           medVertexOrder[14].push_back(OrderforPyra2[i]);
+           medVertexOrder[19].push_back(OrderforPyra2[i]);
+           ++i;
+        }
 };
 
 
@@ -247,21 +247,21 @@ int MedIO::CreateFamilles( )
    numFamilles.insert(0);
    std::set<int>::const_iterator itFam;
    for (itFam = numFamilles.begin(); itFam != numFamilles.end(); ++itFam) {
-	med_err CR;
-	if (*itFam != 0 )
-	{ std::ostringstream oss;
+        med_err CR;
+        if (*itFam != 0 )
+        { std::ostringstream oss;
           oss << *itFam;
           std::string fam = "F_" + oss.str();
           std::string group = "G_" + oss.str();
-	  while (group.size() < 80) group = group + " ";
+          while (group.size() < 80) group = group + " ";
           CR = MEDfamCr (_fid, (char *) _meshName.c_str(),(char *)fam.c_str(),*itFam, 0,0,0,0,(char *)group.c_str(),1);
-	  CR=0;
-	}
-	else
-	{
+          CR=0;
+        }
+        else
+        {
           std::string fam = "Famille0";
           CR = MEDfamCr (_fid, (char *) _meshName.c_str(),(char *)fam.c_str(),*itFam, 0,0,0,0,0,0);
-	}
+        }
         if ( CR < 0 )
         {
             Msg(GERROR, "Error in Family Creation '%d'", *itFam );
@@ -284,10 +284,10 @@ int MedIO::CreateElemt()
        int nbElements = LesConn[typemed].size() / nbNoeudElt;
        if (nbElements != 0 )
            med_err CR = MEDelementsEcr (_fid, (char*) _meshName.c_str(),(med_int) 3, 
-		         &LesConn[typemed][0], MED_FULL_INTERLACE,
-			 NULL, MED_FAUX, NULL, MED_FAUX,
-			 &famElts[typemed][0],nbElements,
-			   MED_MAILLE,typemed,MED_NOD);
+                         &LesConn[typemed][0], MED_FULL_INTERLACE,
+                         NULL, MED_FAUX, NULL, MED_FAUX,
+                         &famElts[typemed][0],nbElements,
+                           MED_MAILLE,typemed,MED_NOD);
 
     }
 };
@@ -298,14 +298,14 @@ int MedIO::Ecrit()
     if (_boolOpen != 1)
     {
         Msg(GERROR, "File not Open");
-	return 0;
+        return 0;
     }
 
     int nbNoeuds=coordonnees.size() / 3;
     if (nbNoeuds != families.size())
     {
         Msg(GERROR, "bad Vectors");
-	return 0;
+        return 0;
     }
 
     // *********************
@@ -325,10 +325,10 @@ int MedIO::Ecrit()
     char unicoo[3*MED_TAILLE_PNOM+1] = "inconnu         inconnu         inconnu         ";
 
     med_err CR = MEDnoeudsEcr(_fid, (char*) _meshName.c_str(),(med_int) 3, 
-		              &coordonnees[0], MED_FULL_INTERLACE, MED_CART,
-		              nomcoo,unicoo, NULL, MED_FAUX, 
-			      &numOpt[0], MED_VRAI, 
-			      &families[0], nbNoeuds);
+                              &coordonnees[0], MED_FULL_INTERLACE, MED_CART,
+                              nomcoo,unicoo, NULL, MED_FAUX, 
+                              &numOpt[0], MED_VRAI, 
+                              &families[0], nbNoeuds);
     Msg(INFO, "%d ", CR);
     if ( CR < 0 )
     {

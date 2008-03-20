@@ -1,4 +1,4 @@
-// $Id: NumericEmbedded.cpp,v 1.3 2008-02-17 08:48:02 geuzaine Exp $
+// $Id: NumericEmbedded.cpp,v 1.4 2008-03-20 11:44:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -66,9 +66,9 @@ void matvec(double mat[3][3], double vec[3], double res[3])
 }
 
 void normal3points(double x0, double y0, double z0,
-		   double x1, double y1, double z1,
-		   double x2, double y2, double z2,
-		   double n[3])
+                   double x1, double y1, double z1,
+                   double x2, double y2, double z2,
+                   double n[3])
 {
   double t1[3] = {x1 - x0, y1 - y0, z1 - z0};
   double t2[3] = {x2 - x0, y2 - y0, z2 - z0};
@@ -106,8 +106,8 @@ int sys2x2(double mat[2][2], double b[2], double res[2])
 double det3x3(double mat[3][3])
 {
   return (mat[0][0] * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1]) -
-	  mat[0][1] * (mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0]) +
-	  mat[0][2] * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]));
+          mat[0][1] * (mat[1][0] * mat[2][2] - mat[1][2] * mat[2][0]) +
+          mat[0][2] * (mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0]));
 }
 
 double trace3x3(double mat[3][3])
@@ -207,7 +207,7 @@ double inv2x2(double mat[2][2], double inv[2][2])
     Msg(GERROR, "Singular matrix");
     for(int i = 0; i < 2; i++)
       for(int j = 0; j < 2; j++)
-	inv[i][j] = 0.;
+        inv[i][j] = 0.;
   }
   return det;
 }
@@ -231,7 +231,7 @@ double inv3x3(double mat[3][3], double inv[3][3])
     Msg(GERROR, "Singular matrix");
     for(int i = 0; i < 3; i++)
       for(int j = 0; j < 3; j++)
-	inv[i][j] = 0.;
+        inv[i][j] = 0.;
   }
   return det;
 }

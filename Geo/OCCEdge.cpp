@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.36 2008-02-23 17:43:54 geuzaine Exp $
+// $Id: OCCEdge.cpp,v 1.37 2008-03-20 11:44:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -77,7 +77,7 @@ SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar, int dir) const
   
   if(c2d.IsNull()){
     Msg(FATAL,"Reparam on face failed: curve %d is not on surface %d",
-	tag(), face->tag());
+        tag(), face->tag());
   }
 
   double u, v;
@@ -93,11 +93,11 @@ SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar, int dir) const
   if(sqrt(dx * dx + dy * dy + dz * dz) > 1.e-4 * CTX.lc){
     // return reparamOnFace(face, epar,-1);      
     Msg(WARNING, "Reparam on face partially failed for curve %d surface %d at point %g",
-	tag(), face->tag(), epar);
+        tag(), face->tag(), epar);
     Msg(WARNING, "On the face %d local (%g %g) global (%g %g %g)",
-	face->tag(), u, v, p2.x(), p2.y(), p2.z());
+        face->tag(), u, v, p2.x(), p2.y(), p2.z());
     Msg(WARNING, "On the edge %d local (%g) global (%g %g %g)",
-	tag(), epar, p1.x(), p1.y(), p1.z());
+        tag(), epar, p1.x(), p1.y(), p1.z());
     // GPoint ppp = face->closestPoint(SPoint3(p1.x(), p1.y(), p1.z()));
     // return SPoint2(ppp.u(), ppp.v());
   }

@@ -89,16 +89,16 @@ class PixelBuffer{
     else{
 #if defined(HAVE_OSMESA)
       if(_format != GL_RGB && _type != GL_UNSIGNED_BYTE){
-	Msg(GERROR, "Offscreen rendering only implemented for GL_RGB/GL_UNSIGNED_BYTE");
-	return;
+        Msg(GERROR, "Offscreen rendering only implemented for GL_RGB/GL_UNSIGNED_BYTE");
+        return;
       }
       OSMesaContext ctx = OSMesaCreateContextExt(OSMESA_RGB, 16, 0, 0, NULL);
       if(!ctx){
-	Msg(GERROR, "OSMesaCreateContext failed");
-	return;
+        Msg(GERROR, "OSMesaCreateContext failed");
+        return;
       }
       if(!OSMesaMakeCurrent(ctx, _pixels, GL_UNSIGNED_BYTE, _width, _height)){
-	Msg(GERROR, "OSMesaMakeCurrent failed");
+        Msg(GERROR, "OSMesaMakeCurrent failed");
       }
       ClearOpengl();
       Draw3d();

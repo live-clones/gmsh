@@ -35,7 +35,7 @@ Pair<SVector3,SVector3> fourierProjectionFace::firstDer(const SPoint2 &param) co
 } 
 
 SVector3 fourierProjectionFace::normal(const SPoint2 &param) const
-{	
+{       
   double x, y, z;
   ps_->GetUnitNormal(param.x(),param.y(),x,y,z);
   return SVector3(x,y,z);

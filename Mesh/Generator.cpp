@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.138 2008-03-11 20:03:10 geuzaine Exp $
+// $Id: Generator.cpp,v 1.139 2008-03-20 11:44:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -38,10 +38,10 @@ extern Context_T CTX;
 
 template<class T>
 static void GetQualityMeasure(std::vector<T*> &ele, 
-			      double &gamma, double &gammaMin, double &gammaMax, 
-			      double &eta, double &etaMin, double &etaMax, 
-			      double &rho, double &rhoMin, double &rhoMax,
-			      double quality[3][100])
+                              double &gamma, double &gammaMin, double &gammaMax, 
+                              double &eta, double &etaMin, double &etaMax, 
+                              double &rho, double &rhoMin, double &rhoMax,
+                              double quality[3][100])
 {
   for(unsigned int i = 0; i < ele.size(); i++){
     double g = ele[i]->gammaShapeMeasure();
@@ -106,19 +106,19 @@ void GetStatistics(double stat[50], double quality[3][100])
   if(quality){
     for(int i = 0; i < 3; i++)
       for(int j = 0; j < 100; j++)
-	quality[i][j] = 0.;
+        quality[i][j] = 0.;
     double gamma=0., gammaMin=1., gammaMax=0.;
     double eta=0., etaMin=1., etaMax=0.;
     double rho=0., rhoMin=1., rhoMax=0.;
     for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
       GetQualityMeasure((*it)->tetrahedra, gamma, gammaMin, gammaMax,
-			eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
+                        eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
       GetQualityMeasure((*it)->hexahedra, gamma, gammaMin, gammaMax,
-			eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
+                        eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
       GetQualityMeasure((*it)->prisms, gamma, gammaMin, gammaMax,
-			eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
+                        eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
       GetQualityMeasure((*it)->pyramids, gamma, gammaMin, gammaMax,
-			eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
+                        eta, etaMin, etaMax, rho, rhoMin, rhoMax, quality);
     }
     double N = stat[9] + stat[10] + stat[11] + stat[12];
     stat[17] = N ? gamma / N : 0.;
@@ -160,10 +160,10 @@ static bool TooManyElements(GModel *m, int dim)
   sumAllLc /= (double)m->getNumVertices();
   if(!sumAllLc || pow(CTX.lc / sumAllLc, dim) > 1.e10) 
     return !GetBinaryAnswer("Your choice of characteristic lengths will likely produce\n"
-			    "a very large mesh. Do you really want to continue?\n\n"
-			    "(To disable this warning in the future, select `Enable\n"
-			    "expert mode' in the option dialog.)",
-			    "Continue", "Cancel");
+                            "a very large mesh. Do you really want to continue?\n\n"
+                            "(To disable this warning in the future, select `Enable\n"
+                            "expert mode' in the option dialog.)",
+                            "Continue", "Cancel");
   return false;
 }
 
@@ -204,7 +204,7 @@ static void PrintMesh2dStatistics(GModel *m)
     e_long = std::max((*it)->meshStatistics.longest_edge_length, e_long);
     e_short = std::min((*it)->meshStatistics.smallest_edge_length, e_short);
     if ((*it)->meshStatistics.status == GFace::FAILED || 
-	(*it)->meshStatistics.status == GFace::PENDING) nUnmeshed++;
+        (*it)->meshStatistics.status == GFace::PENDING) nUnmeshed++;
     nTotT += (*it)->meshStatistics.nbTriangle;
     nTotE += (*it)->meshStatistics.nbEdge;
     nTotGoodLength += (*it)->meshStatistics.nbGoodLength;
@@ -214,17 +214,17 @@ static void PrintMesh2dStatistics(GModel *m)
 
   if(CTX.create_append_statreport == 1){
     fprintf(statreport, "2D stats\tname\t\t#faces\t\t#fail\t\t"
-	    "#t\t\tQavg\t\tQbest\t\tQworst\t\t#Q>90\t\t#Q>90/#t\t"
-	    "#e\t\ttau\t\t#Egood\t\t#Egood/#e\tCPU\n");
+            "#t\t\tQavg\t\tQbest\t\tQworst\t\t#Q>90\t\t#Q>90/#t\t"
+            "#e\t\ttau\t\t#Egood\t\t#Egood/#e\tCPU\n");
   }
 
   fprintf(statreport,"\t%16s\t%d\t\t%d\t\t", CTX.base_filename, numFaces, nUnmeshed);
   fprintf(statreport,"%d\t\t%8.7f\t%8.7f\t%8.7f\t%d\t\t%8.7f\t",
-	  nTotT, avg / (double)nTotT, best, worst, nTotGoodQuality,
-	  (double)nTotGoodQuality / nTotT);
+          nTotT, avg / (double)nTotT, best, worst, nTotGoodQuality,
+          (double)nTotGoodQuality / nTotT);
   fprintf(statreport,"%d\t\t%8.7f\t%d\t\t%8.7f\t%8.1f\n",
-	  nTotE, exp(e_avg / (double)nTotE), nTotGoodLength,
-	  (double)nTotGoodLength / nTotE, CTX.mesh_timer[1]);
+          nTotE, exp(e_avg / (double)nTotE), nTotGoodLength,
+          (double)nTotGoodLength / nTotE, CTX.mesh_timer[1]);
   fclose(statreport);
 }
 
@@ -234,11 +234,11 @@ static void Mesh2D(GModel *m)
 
   if(CTX.mesh.algo2d == ALGO_2D_DELAUNAY && !CTX.expert_mode){
     if(!GetBinaryAnswer("The 2D Delaunay algorithm is still highly experimental\n"
-			"and produces triangles with random orientations. Do you\n"
-			"really want to continue?\n\n"
-			"(To disable this warning in the future, select `Enable\n"
-			"expert mode' in the option dialog.)",
-			"Continue", "Cancel")) return;
+                        "and produces triangles with random orientations. Do you\n"
+                        "really want to continue?\n\n"
+                        "(To disable this warning in the future, select `Enable\n"
+                        "expert mode' in the option dialog.)",
+                        "Continue", "Cancel")) return;
   }
 
   Msg(STATUS1, "Meshing 2D...");
@@ -254,10 +254,10 @@ static void Mesh2D(GModel *m)
       meshGFace mesher;
       int nbPending = 0;
       for(GModel::fiter it = m->firstFace() ; it!=m->lastFace(); ++it){
-	if ((*it)->meshStatistics.status == GFace::PENDING){
-	  mesher(*it);
-	  nbPending++;
-	}
+        if ((*it)->meshStatistics.status == GFace::PENDING){
+          mesher(*it);
+          nbPending++;
+        }
       }
       if(!nbPending) break;
       if(nIter++ > 10) break;
@@ -275,7 +275,7 @@ static void Mesh2D(GModel *m)
 }
 
 static void FindConnectedRegions(std::vector<GRegion*> &delaunay, 
-			  std::vector<std::vector<GRegion*> > &connected)
+                          std::vector<std::vector<GRegion*> > &connected)
 {
   // FIXME: need to split region vector into connected components here!
   connected.push_back(delaunay);
@@ -413,7 +413,7 @@ void GenerateMesh(GModel *m, int ask)
   // Create high order elements
   if(m->getMeshStatus() && CTX.mesh.order > 1) 
     SetOrderN(m, CTX.mesh.order, CTX.mesh.second_order_linear, 
-	      CTX.mesh.second_order_incomplete);
+              CTX.mesh.second_order_incomplete);
 
   Msg(INFO, "%d vertices %d elements",
       m->getNumMeshVertices(), m->getNumMeshElements());

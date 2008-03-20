@@ -1,4 +1,4 @@
-// $Id: meshGEdgeExtruded.cpp,v 1.11 2008-02-22 21:09:01 geuzaine Exp $
+// $Id: meshGEdgeExtruded.cpp,v 1.12 2008-03-20 11:44:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -35,7 +35,7 @@ void extrudeMesh(GVertex *from, GEdge *to)
       double x = v->x(), y = v->y(), z = v->z();
       ep->Extrude(j, k + 1, x, y, z);
       if(j != ep->mesh.NbLayer - 1 || k != ep->mesh.NbElmLayer[j] - 1)
-	to->mesh_vertices.push_back(new MEdgeVertex(x, y, z, to, ep->u(j, k + 1)));
+        to->mesh_vertices.push_back(new MEdgeVertex(x, y, z, to, ep->u(j, k + 1)));
     }
   }
 }
@@ -55,7 +55,7 @@ void copyMesh(GEdge *from, GEdge *to)
     MVertex *v = from->mesh_vertices[index];
     double x = v->x(), y = v->y(), z = v->z();
     ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], 
-		x, y, z);
+                x, y, z);
     double u;
     v->getParameter(0, u);
     double newu = (direction > 0) ? u : (u_max - u + u_min);

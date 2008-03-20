@@ -102,8 +102,8 @@ class Vertex {
   Vertex operator % (Vertex & autre) // cross product
   {
     return Vertex(Pos.Y * autre.Pos.Z - Pos.Z * autre.Pos.Y,
-		  -(Pos.X * autre.Pos.Z - Pos.Z * autre.Pos.X),
-		  Pos.X * autre.Pos.Y - Pos.Y * autre.Pos.X, lc, w);
+                  -(Pos.X * autre.Pos.Z - Pos.Z * autre.Pos.X),
+                  Pos.X * autre.Pos.Y - Pos.Y * autre.Pos.X, lc, w);
   }
 };
 
@@ -234,7 +234,7 @@ int comparePhysicalGroup(const void *a, const void *b);
 Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc, double u);
 Vertex *Create_Vertex(int Num, double u, double v, gmshSurface *s, double lc);
 Curve *Create_Curve(int Num, int Typ, int Order, List_T * Liste,
-		    List_T * Knots, int p1, int p2, double u1, double u2);
+                    List_T * Knots, int p1, int p2, double u1, double u2);
 Curve *CreateReversedCurve(Curve *c);
 Surface *Create_Surface(int Num, int Typ);
 Volume *Create_Volume(int Num, int Typ);
@@ -274,7 +274,7 @@ PhysicalGroup *FindPhysicalGroup(int inum, int type);
 void TranslateShapes(double X,double Y,double Z, List_T *shapes);
 void DilatShapes(double X,double Y,double Z, double A, List_T *shapes);
 void RotateShapes(double Ax,double Ay,double Az,
-		  double Px,double Py, double Pz, double alpha, List_T *shapes);
+                  double Px,double Py, double Pz, double alpha, List_T *shapes);
 void SymmetryShapes(double A,double B,double C, double D, List_T *shapes);
 void BoundaryShapes(List_T *shapes, List_T *shapesBoundary);
 void CopyShape(int Type, int Num, int *New);
@@ -283,17 +283,17 @@ void ColorShape(int Type, int Num, unsigned int Color);
 void VisibilityShape(int Type, int Num, int Mode);
 void VisibilityShape(char *str, int Type, int Mode);
 void ExtrudeShape(int extrude_type, int shape_type, int shape_num,
-		  double T0, double T1, double T2,
-		  double A0, double A1, double A2,
-		  double X0, double X1, double X2, double alpha,
-		  ExtrudeParams *e,
-		  List_T *out);
+                  double T0, double T1, double T2,
+                  double A0, double A1, double A2,
+                  double X0, double X1, double X2, double alpha,
+                  ExtrudeParams *e,
+                  List_T *out);
 void ExtrudeShapes(int extrude_type, List_T *in,
-		   double T0, double T1, double T2,
-		   double A0, double A1, double A2,
-		   double X0, double X1, double X2, double alpha,
-		   ExtrudeParams *e,
-		   List_T *out);
+                   double T0, double T1, double T2,
+                   double A0, double A1, double A2,
+                   double X0, double X1, double X2, double alpha,
+                   ExtrudeParams *e,
+                   List_T *out);
 
 void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e);
 

@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.77 2008-03-19 20:06:17 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.78 2008-03-20 11:44:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -54,19 +54,19 @@ void Draw_Text2D()
     if(opt->Visible && opt->DrawStrings){
       glColor4ubv((GLubyte *) & opt->color.text2d);
       for(int j = 0; j < data->getNumStrings2D(); j++){
-	double x, y, style;
-	std::string str;
-	data->getString2D(j, opt->TimeStep, str, x, y, style);
-	Fix2DCoordinates(&x, &y);
-	glRasterPos2d(x, y);
-	Draw_String(str.c_str(), style);
+        double x, y, style;
+        std::string str;
+        data->getString2D(j, opt->TimeStep, str, x, y, style);
+        Fix2DCoordinates(&x, &y);
+        glRasterPos2d(x, y);
+        Draw_String(str.c_str(), style);
       }
     }
   }
 }
 
 static bool getGraphData(PView *p, std::vector<double> &x, double &xmin, 
-			 double &xmax, std::vector<std::vector<double> > &y) 
+                         double &xmax, std::vector<std::vector<double> > &y) 
 {
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
@@ -81,7 +81,7 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
     numy = 0;
     for(int ent = 0; ent < data->getNumEntities(0); ent++)
       for(int i = 0; i < data->getNumElements(0, ent); i++)
-	if(data->getDimension(0, ent, i) < 2) numy++;
+        if(data->getDimension(0, ent, i) < 2) numy++;
   }
   
   if(!numy) return false;
@@ -96,33 +96,33 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
     for(int i = 0; i < data->getNumElements(0, ent); i++){
       int dim = data->getDimension(0, ent, i);
       if(dim < 2){
-	int numNodes = data->getNumNodes(0, ent, i);
-	for(int ts = space ? opt->TimeStep : 0; ts < opt->TimeStep + 1; ts++){
-	  int numComp = data->getNumComponents(ts, ent, i);
-	  for(int j = 0; j < numNodes; j++){
-	    double val[9], xyz[3];
-	    data->getNode(ts, ent, i, j, xyz[0], xyz[1], xyz[2]);
-	    for(int k = 0; k < numComp; k++)
-	      data->getValue(ts, ent, i, j, k, val[k]);
-	    double vy = ComputeScalarRep(numComp, val);
-	    if(space){
-	      // store offset to origin + distance to first point
-	      if(x.empty()){
-		p0 = SPoint3(xyz[0], xyz[1], xyz[2]);
-		x.push_back(ComputeScalarRep(3, xyz));
-	      }
-	      else{
-		x.push_back(x[0] + p0.distance(SPoint3(xyz[0], xyz[1], xyz[2])));
-	      }
-	      y[0].push_back(vy);
-	    }
-	    else{
-	      if(!numy) x.push_back(data->getTime(ts));
-	      y[numy].push_back(vy);
-	    }
-	  }
-	}
-	numy++;
+        int numNodes = data->getNumNodes(0, ent, i);
+        for(int ts = space ? opt->TimeStep : 0; ts < opt->TimeStep + 1; ts++){
+          int numComp = data->getNumComponents(ts, ent, i);
+          for(int j = 0; j < numNodes; j++){
+            double val[9], xyz[3];
+            data->getNode(ts, ent, i, j, xyz[0], xyz[1], xyz[2]);
+            for(int k = 0; k < numComp; k++)
+              data->getValue(ts, ent, i, j, k, val[k]);
+            double vy = ComputeScalarRep(numComp, val);
+            if(space){
+              // store offset to origin + distance to first point
+              if(x.empty()){
+                p0 = SPoint3(xyz[0], xyz[1], xyz[2]);
+                x.push_back(ComputeScalarRep(3, xyz));
+              }
+              else{
+                x.push_back(x[0] + p0.distance(SPoint3(xyz[0], xyz[1], xyz[2])));
+              }
+              y[0].push_back(vy);
+            }
+            else{
+              if(!numy) x.push_back(data->getTime(ts));
+              y[numy].push_back(vy);
+            }
+          }
+        }
+        numy++;
       }
     }
   }
@@ -133,15 +133,15 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
     bool monotone = true;
     for(unsigned int i = 1; i < x.size(); i++){
       if(x[i] < x[i - 1]){
-	monotone = false;
-	break;
+        monotone = false;
+        break;
       }
     }
     if(monotone){ // use the "coordinate"
       xmin = xmax = x[0];
       for(unsigned int i = 1; i < x.size(); i++){
-	xmin = std::min(xmin, x[i]);
-	xmax = std::max(xmax, x[i]);
+        xmin = std::min(xmin, x[i]);
+        xmax = std::max(xmax, x[i]);
       }
     }
     else{ // just use an index
@@ -158,7 +158,7 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
 }
 
 static void drawGraphAxes(PView *p, double xleft, double ytop, double width,
-			  double height, double xmin, double xmax)
+                          double height, double xmin, double xmax)
 {
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
@@ -223,32 +223,32 @@ static void drawGraphAxes(PView *p, double xleft, double ytop, double width,
     double dv = (opt->TmpMax - opt->TmpMin) / (double)nb;
     for(int i = 0; i < nb + 1; i++){
       if(opt->Axes > 0){
-	glBegin(GL_LINES);
-	glVertex2d(xleft, ytop - i * dy);
-	glVertex2d(xleft + tic, ytop - i * dy);
-	if(opt->Axes > 1){
-	  glVertex2d(xleft + width - tic, ytop - i * dy);
-	  glVertex2d(xleft + width, ytop - i * dy);
-	}
-	glEnd();
-	if(opt->Axes > 2 && i != 0 && i != nb){
-	  glEnable(GL_LINE_STIPPLE);
-	  glLineStipple(1, 0x1111);
-	  gl2psEnable(GL2PS_LINE_STIPPLE);
-	  gl2psLineWidth(1. * CTX.print.eps_line_width_factor);
-	  glBegin(GL_LINES);
-	  glVertex2d(xleft, ytop - i * dy);
-	  glVertex2d(xleft + width, ytop - i * dy);
-	  glEnd();
-	  glDisable(GL_LINE_STIPPLE);
-	  gl2psDisable(GL2PS_LINE_STIPPLE);
-	  gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
-	}
+        glBegin(GL_LINES);
+        glVertex2d(xleft, ytop - i * dy);
+        glVertex2d(xleft + tic, ytop - i * dy);
+        if(opt->Axes > 1){
+          glVertex2d(xleft + width - tic, ytop - i * dy);
+          glVertex2d(xleft + width, ytop - i * dy);
+        }
+        glEnd();
+        if(opt->Axes > 2 && i != 0 && i != nb){
+          glEnable(GL_LINE_STIPPLE);
+          glLineStipple(1, 0x1111);
+          gl2psEnable(GL2PS_LINE_STIPPLE);
+          gl2psLineWidth(1. * CTX.print.eps_line_width_factor);
+          glBegin(GL_LINES);
+          glVertex2d(xleft, ytop - i * dy);
+          glVertex2d(xleft + width, ytop - i * dy);
+          glEnd();
+          glDisable(GL_LINE_STIPPLE);
+          gl2psDisable(GL2PS_LINE_STIPPLE);
+          gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
+        }
       }
       if(opt->ShowScale){
-	sprintf(label, opt->Format, (i == nb) ? opt->TmpMin : (opt->TmpMax - i * dv));
-	glRasterPos2d(xleft - 2 * tic, ytop - i * dy - font_a / 3.);
-	Draw_String_Right(label);
+        sprintf(label, opt->Format, (i == nb) ? opt->TmpMin : (opt->TmpMax - i * dv));
+        glRasterPos2d(xleft - 2 * tic, ytop - i * dy - font_a / 3.);
+        Draw_String_Right(label);
       }
     }
   }
@@ -259,7 +259,7 @@ static void drawGraphAxes(PView *p, double xleft, double ytop, double width,
     if(opt->Axes){
       sprintf(label, opt->AxesFormat[0], - M_PI * 1.e-4);
       if((nb - 1) * gl_width(label) > width)
-	nb = (int)(width / gl_width(label)) + 1;
+        nb = (int)(width / gl_width(label)) + 1;
     }
     if(nb == 1) nb++;
     
@@ -268,35 +268,35 @@ static void drawGraphAxes(PView *p, double xleft, double ytop, double width,
     
     for(int i = 0; i < nb; i++){
       if(opt->Axes){
-	glBegin(GL_LINES);
-	glVertex2d(xleft + i * dx, ybot);
-	glVertex2d(xleft + i * dx, ybot + tic);
-	if(opt->Axes > 1){
-	  glVertex2d(xleft + i * dx, ytop);
-	  glVertex2d(xleft + i * dx, ytop - tic);
-	}
-	glEnd();
-	if(opt->Axes > 2 && i != 0 && i != nb - 1){
-	  glEnable(GL_LINE_STIPPLE);
-	  glLineStipple(1, 0x1111);
-	  gl2psEnable(GL2PS_LINE_STIPPLE);
-	  gl2psLineWidth(1. * CTX.print.eps_line_width_factor);
-	  glBegin(GL_LINES);
-	  glVertex2d(xleft + i * dx, ytop);
-	  glVertex2d(xleft + i * dx, ybot);
-	  glEnd();
-	  glDisable(GL_LINE_STIPPLE);
-	  gl2psDisable(GL2PS_LINE_STIPPLE);
-	  gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
-	}
-	
-	if(nb == 1)
-	  sprintf(label, opt->AxesFormat[0], xmin);
-	else
-	  sprintf(label, opt->AxesFormat[0],
-		  xmin + i * (xmax - xmin) / (double)(nb - 1));
-	glRasterPos2d(xleft + i * dx, ybot - font_h - tic);
-	Draw_String_Center(label);
+        glBegin(GL_LINES);
+        glVertex2d(xleft + i * dx, ybot);
+        glVertex2d(xleft + i * dx, ybot + tic);
+        if(opt->Axes > 1){
+          glVertex2d(xleft + i * dx, ytop);
+          glVertex2d(xleft + i * dx, ytop - tic);
+        }
+        glEnd();
+        if(opt->Axes > 2 && i != 0 && i != nb - 1){
+          glEnable(GL_LINE_STIPPLE);
+          glLineStipple(1, 0x1111);
+          gl2psEnable(GL2PS_LINE_STIPPLE);
+          gl2psLineWidth(1. * CTX.print.eps_line_width_factor);
+          glBegin(GL_LINES);
+          glVertex2d(xleft + i * dx, ytop);
+          glVertex2d(xleft + i * dx, ybot);
+          glEnd();
+          glDisable(GL_LINE_STIPPLE);
+          gl2psDisable(GL2PS_LINE_STIPPLE);
+          gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
+        }
+        
+        if(nb == 1)
+          sprintf(label, opt->AxesFormat[0], xmin);
+        else
+          sprintf(label, opt->AxesFormat[0],
+                  xmin + i * (xmax - xmin) / (double)(nb - 1));
+        glRasterPos2d(xleft + i * dx, ybot - font_h - tic);
+        Draw_String_Center(label);
       }
     }
   }
@@ -304,8 +304,8 @@ static void drawGraphAxes(PView *p, double xleft, double ytop, double width,
 }
 
 static void addGraphPoint(PView *p, double xleft, double ytop, double width, 
-			  double height, double x, double y, double xmin, 
-			  double xmax, double ymin, double ymax, bool numeric)
+                          double height, double x, double y, double xmin, 
+                          double xmax, double ymin, double ymax, bool numeric)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -338,8 +338,8 @@ static void addGraphPoint(PView *p, double xleft, double ytop, double width,
 }
 
 static void drawGraphCurves(PView *p, double xleft, double ytop, double width,
-			    double height, std::vector<double> &x, double xmin,
-			    double xmax, std::vector<std::vector<double> > &y)
+                            double height, std::vector<double> &x, double xmin,
+                            double xmax, std::vector<std::vector<double> > &y)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -352,8 +352,8 @@ static void drawGraphCurves(PView *p, double xleft, double ytop, double width,
   if(opt->IntervalsType == PViewOptions::Numeric){
     for(unsigned int i = 0; i < y.size(); i++)
       for(unsigned int j = 0; j < x.size(); j++)
-	addGraphPoint(p, xleft, ytop, width, height, x[j], y[i][j], 
-		      xmin, xmax, opt->TmpMin, opt->TmpMax, true);
+        addGraphPoint(p, xleft, ytop, width, height, x[j], y[i][j], 
+                      xmin, xmax, opt->TmpMin, opt->TmpMax, true);
   }
 
   if(opt->IntervalsType == PViewOptions::Iso ||
@@ -362,8 +362,8 @@ static void drawGraphCurves(PView *p, double xleft, double ytop, double width,
     glBegin(GL_POINTS);
     for(unsigned int i = 0; i < y.size(); i++)
       for(unsigned int j = 0; j < x.size(); j++)
-	addGraphPoint(p, xleft, ytop, width, height, x[j], y[i][j], 
-		      xmin, xmax, opt->TmpMin, opt->TmpMax, false);
+        addGraphPoint(p, xleft, ytop, width, height, x[j], y[i][j], 
+                      xmin, xmax, opt->TmpMin, opt->TmpMax, false);
     glEnd();    
   }
 
@@ -371,18 +371,18 @@ static void drawGraphCurves(PView *p, double xleft, double ytop, double width,
      opt->IntervalsType == PViewOptions::Continuous){
     for(unsigned int i = 0; i < y.size(); i++){
       if(opt->UseStipple){
-	glEnable(GL_LINE_STIPPLE);
-	glLineStipple(opt->Stipple[i % 10][0], opt->Stipple[i % 10][1]);
-	gl2psEnable(GL2PS_LINE_STIPPLE);
+        glEnable(GL_LINE_STIPPLE);
+        glLineStipple(opt->Stipple[i % 10][0], opt->Stipple[i % 10][1]);
+        gl2psEnable(GL2PS_LINE_STIPPLE);
       }
       glBegin(GL_LINE_STRIP);
       for(unsigned int j = 0; j < x.size(); j++)
-	addGraphPoint(p, xleft, ytop, width, height, x[j], y[i][j], 
-		      xmin, xmax, opt->TmpMin, opt->TmpMax, false);
+        addGraphPoint(p, xleft, ytop, width, height, x[j], y[i][j], 
+                      xmin, xmax, opt->TmpMin, opt->TmpMax, false);
       glEnd();
       if(opt->UseStipple){
-	glDisable(GL_LINE_STIPPLE);
-	gl2psDisable(GL2PS_LINE_STIPPLE);
+        glDisable(GL_LINE_STIPPLE);
+        gl2psDisable(GL2PS_LINE_STIPPLE);
       }
     }
   }
@@ -441,38 +441,38 @@ void Draw_Graph2D()
       double x = opt->Position[0], y = opt->Position[1];
       int center = Fix2DCoordinates(&x, &y);
       drawGraph(p, x - (center & 1 ? opt->Size[0] / 2. : 0), 
-		y + (center & 2 ? opt->Size[1] / 2. : 0), 
-		opt->Size[0], opt->Size[1]);
+                y + (center & 2 ? opt->Size[1] / 2. : 0), 
+                opt->Size[0], opt->Size[1]);
     }
     else{
       double winw = CTX.viewport[2] - CTX.viewport[0];
       double winh = CTX.viewport[3] - CTX.viewport[1];
       if(graphs.size() == 1){
-	double fracw = 0.75, frach = 0.75;
-	double w = fracw * winw - xsep;
-	double h = frach * winh - ysep;
-	double x = CTX.viewport[0] + (1 - fracw) / 2. * winw;
-	double y = CTX.viewport[1] + (1 - frach) / 2. * winh;
-	drawGraph(p, x + 0.95 * xsep, CTX.viewport[3] - (y + 0.4 * ysep), w, h);
+        double fracw = 0.75, frach = 0.75;
+        double w = fracw * winw - xsep;
+        double h = frach * winh - ysep;
+        double x = CTX.viewport[0] + (1 - fracw) / 2. * winw;
+        double y = CTX.viewport[1] + (1 - frach) / 2. * winh;
+        drawGraph(p, x + 0.95 * xsep, CTX.viewport[3] - (y + 0.4 * ysep), w, h);
       }
       else if(graphs.size() == 2){
-	double fracw = 0.75, frach = 0.85;
-	double w = fracw * winw - xsep;
-	double h = frach * winh / 2. - ysep;
-	double x = CTX.viewport[0] + (1 - fracw) / 2. * winw;
-	double y = CTX.viewport[1] + (1 - frach) / 3. * winh;
-	if(i == 1) y += (h + ysep + (1 - frach) / 3. * winh);
-	drawGraph(p, x + 0.95 * xsep, CTX.viewport[3] - (y + 0.4 * ysep), w, h);
+        double fracw = 0.75, frach = 0.85;
+        double w = fracw * winw - xsep;
+        double h = frach * winh / 2. - ysep;
+        double x = CTX.viewport[0] + (1 - fracw) / 2. * winw;
+        double y = CTX.viewport[1] + (1 - frach) / 3. * winh;
+        if(i == 1) y += (h + ysep + (1 - frach) / 3. * winh);
+        drawGraph(p, x + 0.95 * xsep, CTX.viewport[3] - (y + 0.4 * ysep), w, h);
       }
       else{
-	double fracw = 0.85, frach = 0.85;
-	double w = fracw * winw / 2. - xsep;
-	double h = frach * winh / 2. - ysep;
-	double x = CTX.viewport[0] + (1 - fracw) / 3. * winw;
-	if(i == 1 || i == 3) x += (w + xsep + (1-fracw)/3. * winw);
-	double y = CTX.viewport[1] + (1 - frach) / 3. * winh;
-	if(i == 2 || i == 3) y += (h + ysep + (1 - frach) / 3. * winh);
-	drawGraph(p, x + 0.95 * xsep, CTX.viewport[3] - (y + 0.4 * ysep), w, h);
+        double fracw = 0.85, frach = 0.85;
+        double w = fracw * winw / 2. - xsep;
+        double h = frach * winh / 2. - ysep;
+        double x = CTX.viewport[0] + (1 - fracw) / 3. * winw;
+        if(i == 1 || i == 3) x += (w + xsep + (1-fracw)/3. * winw);
+        double y = CTX.viewport[1] + (1 - frach) / 3. * winh;
+        if(i == 2 || i == 3) y += (h + ysep + (1 - frach) / 3. * winh);
+        drawGraph(p, x + 0.95 * xsep, CTX.viewport[3] - (y + 0.4 * ysep), w, h);
       }
     }
   }

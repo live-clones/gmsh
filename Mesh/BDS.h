@@ -50,10 +50,10 @@ double surface_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3);
 double surface_triangle_param(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3); 
 void optimize_vertex_position(GFace *GF, BDS_Point *data, double su, double sv);
 void swap_config(BDS_Edge *e, 
-		 BDS_Point **p11, BDS_Point **p12, BDS_Point **p13,
-		 BDS_Point **p21, BDS_Point **p22, BDS_Point **p23,
-		 BDS_Point **p31, BDS_Point **p32, BDS_Point **p33,
-		 BDS_Point **p41, BDS_Point **p42, BDS_Point **p43);
+                 BDS_Point **p11, BDS_Point **p12, BDS_Point **p13,
+                 BDS_Point **p21, BDS_Point **p22, BDS_Point **p23,
+                 BDS_Point **p31, BDS_Point **p32, BDS_Point **p33,
+                 BDS_Point **p41, BDS_Point **p42, BDS_Point **p43);
 
 
 class BDS_GeomEntity
@@ -104,8 +104,8 @@ public:
   inline BDS_Vector operator % (const BDS_Vector &other) const
   {
     return BDS_Vector(y * other.z - z * other.y,
-		      z * other.x - x * other.z,
-		      x * other.y - y * other.x);
+                      z * other.x - x * other.z,
+                      x * other.y - y * other.x);
   }
   BDS_Vector& operator += (const BDS_Vector &v)
   {
@@ -194,8 +194,8 @@ public:
     std::list<BDS_Edge*>::iterator ite = edges.end();
     while(it != ite){
       if(*it == e){
-	edges.erase(it);
-	break;
+        edges.erase(it);
+        break;
       }
       ++it;
     }
@@ -204,7 +204,7 @@ public:
   BDS_Point(int id, double x=0, double y=0, double z=0)
     : _lcBGM(1.e22), _lcPTS(1.e22), X(x), Y(y), Z(z), u(0), v(0),
       config_modified(true), iD(id), g(0)
-  {	    
+  {         
   }
 };
 
@@ -262,8 +262,8 @@ public:
   inline void del(BDS_Face *t)
   {
     _faces.erase(std::remove_if(_faces.begin(),_faces.end(), 
-				std::bind2nd(std::equal_to<BDS_Face*>(), t)), 
-		 _faces.end());
+                                std::bind2nd(std::equal_to<BDS_Face*>(), t)), 
+                 _faces.end());
   }
   
   void oppositeof(BDS_Point * oface[2]) const; 
@@ -271,13 +271,13 @@ public:
   void update()
   {
     _length = sqrt((p1->X - p2->X) * (p1->X - p2->X) + 
-		   (p1->Y - p2->Y) * (p1->Y - p2->Y) + 
-		   (p1->Z - p2->Z) * (p1->Z - p2->Z));
+                   (p1->Y - p2->Y) * (p1->Y - p2->Y) + 
+                   (p1->Z - p2->Z) * (p1->Z - p2->Z));
   }
 
   BDS_Edge(BDS_Point *A, BDS_Point *B)
     : deleted(false), g(0)
-  {	    
+  {         
     if(*A < *B){
       p1 = A;
       p2 = B;
@@ -317,7 +317,7 @@ public:
   
   BDS_Face(BDS_Edge *A, BDS_Edge *B, BDS_Edge *C,BDS_Edge *D = 0)
     : deleted(false), e1(A), e2(B), e3(C), e4(D), g(0)
-  {	
+  {     
     e1->addface(this);
     e2->addface(this);
     e3->addface(this);
@@ -371,11 +371,11 @@ class BDS_SwapEdgeTest
 {
  public:
   virtual bool operator() (BDS_Point *p1, BDS_Point *p2,
-			   BDS_Point *q1, BDS_Point *q2) const = 0; 
+                           BDS_Point *q1, BDS_Point *q2) const = 0; 
   virtual bool operator() (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3,
-			   BDS_Point *q1, BDS_Point *q2, BDS_Point *q3,
-			   BDS_Point *op1, BDS_Point *op2, BDS_Point *op3,
-			   BDS_Point *oq1, BDS_Point *oq2, BDS_Point *oq3) const = 0; 
+                           BDS_Point *q1, BDS_Point *q2, BDS_Point *q3,
+                           BDS_Point *op1, BDS_Point *op2, BDS_Point *op3,
+                           BDS_Point *oq1, BDS_Point *oq2, BDS_Point *oq3) const = 0; 
   virtual ~BDS_SwapEdgeTest(){}
 };
 
@@ -385,11 +385,11 @@ class BDS_SwapEdgeTestQuality : public BDS_SwapEdgeTest
  public:
   BDS_SwapEdgeTestQuality(bool a, bool b=true) : testQuality(a), testSmallTriangles(b) {}
   virtual bool operator() (BDS_Point *p1, BDS_Point *p2,
-			   BDS_Point *q1, BDS_Point *q2) const ; 
+                           BDS_Point *q1, BDS_Point *q2) const ; 
   virtual bool operator() (BDS_Point *p1, BDS_Point *p2, BDS_Point *p3,
-			   BDS_Point *q1, BDS_Point *q2, BDS_Point *q3,
-			   BDS_Point *op1, BDS_Point *op2, BDS_Point *op3,
-			   BDS_Point *oq1, BDS_Point *oq2, BDS_Point *oq3) const ; 
+                           BDS_Point *q1, BDS_Point *q2, BDS_Point *q3,
+                           BDS_Point *op1, BDS_Point *op2, BDS_Point *op3,
+                           BDS_Point *oq1, BDS_Point *oq2, BDS_Point *oq3) const ; 
   virtual ~BDS_SwapEdgeTestQuality(){}
 };
 
@@ -458,7 +458,7 @@ public:
   BDS_GeomEntity *get_geom(int p1, int p2);
   // 2D operators
   BDS_Edge *recover_edge(int p1, int p2, std::set<EdgeToRecover> *e2r=0,
-			 std::set<EdgeToRecover> *not_recovered=0);
+                         std::set<EdgeToRecover> *not_recovered=0);
   bool swap_edge(BDS_Edge*, const BDS_SwapEdgeTest &theTest);
   bool collapse_edge_parametric(BDS_Edge*, BDS_Point*);
   void snap_point(BDS_Point*, BDS_Mesh *geom = 0);

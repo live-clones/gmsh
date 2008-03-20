@@ -1,4 +1,4 @@
-// $Id: ExtractEdges.cpp,v 1.8 2008-02-17 08:48:06 geuzaine Exp $
+// $Id: ExtractEdges.cpp,v 1.9 2008-03-20 11:44:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -51,11 +51,11 @@ void GMSH_ExtractEdgesPlugin::getInfos(char *author, char *copyright, char *help
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(ExtractEdges) extracts the geometry edges\n"
-	 "from the surface view `iView', using `Angle' as\n"
-	 "the dihedral angle tolerance. If `iView' < 0, then\n"
-	 "plugin is run on the current view.\n"
-	 "\n"
-	 "Plugin(ExtractEdges) creates one new view.\n");
+         "from the surface view `iView', using `Angle' as\n"
+         "the dihedral angle tolerance. If `iView' < 0, then\n"
+         "plugin is run on the current view.\n"
+         "\n"
+         "Plugin(ExtractEdges) creates one new view.\n");
 }
 
 int GMSH_ExtractEdgesPlugin::getNbOptions() const

@@ -23,7 +23,7 @@
 #include <string>
 
 int file_chooser(int multi, int create, const char *message,
-		 const char *pat, const char *fname=NULL);
+                 const char *pat, const char *fname=NULL);
 std::string file_chooser_get_name(int num);
 int file_chooser_get_filter();
 void file_chooser_get_position(int *x, int *y);

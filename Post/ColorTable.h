@@ -62,8 +62,8 @@ int  ColorTable_IsAlpha(GmshColorTable *ct) ;
 int  ColorTable_Diff(GmshColorTable *ct1, GmshColorTable *ct2);
 
 void RGB_to_HSV(double R, double G, double B,
-		double *H, double *S, double *V);
+                double *H, double *S, double *V);
 void HSV_to_RGB(double H, double S, double V,
-		double *R, double *G, double *B);
+                double *R, double *G, double *B);
 
 #endif

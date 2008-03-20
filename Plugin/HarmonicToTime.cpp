@@ -1,4 +1,4 @@
-// $Id: HarmonicToTime.cpp,v 1.15 2008-02-17 08:48:06 geuzaine Exp $
+// $Id: HarmonicToTime.cpp,v 1.16 2008-03-20 11:44:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -54,15 +54,15 @@ void GMSH_HarmonicToTimePlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(HarmonicToTime) takes the values in the\n"
-	 "time steps `RealPart' and `ImaginaryPart' of\n"
+         "time steps `RealPart' and `ImaginaryPart' of\n"
          "the view `iView', and creates a new view\n"
          "containing (`iView'[`RealPart'] * cos(p) -\n"
          "`iView'[`ImaginaryPart'] * sin(p)), with\n"
          "p = 2*Pi*k/`nSteps', k = 0, ..., `nSteps'-1.\n"
-	 "If `iView' < 0, the plugin is run on the\n"
-	 "current view.\n"
-	 "\n"
-	 "Plugin(HarmonicToTime) creates one new view.\n");
+         "If `iView' < 0, the plugin is run on the\n"
+         "current view.\n"
+         "\n"
+         "Plugin(HarmonicToTime) creates one new view.\n");
 }
 
 int GMSH_HarmonicToTimePlugin::getNbOptions() const
@@ -82,7 +82,7 @@ void GMSH_HarmonicToTimePlugin::catchErrorMessage(char *errorMessage) const
 
 
 static void h2t(int nb1, List_T *list1, int *nb2, List_T *list2,
-		int nbNod, int nbComp, int rIndex, int iIndex, int nSteps)
+                int nbNod, int nbComp, int rIndex, int iIndex, int nSteps)
 {
   if(!nb1) return;
 
@@ -91,16 +91,16 @@ static void h2t(int nb1, List_T *list1, int *nb2, List_T *list2,
     for(int j = 0; j < 3 * nbNod; j++)
       List_Add(list2, List_Pointer_Fast(list1, i + j));
     double *valr = (double *)List_Pointer_Fast(list1, i + 3 * nbNod +
-					       nbNod * nbComp * rIndex);
+                                               nbNod * nbComp * rIndex);
     double *vali = (double *)List_Pointer_Fast(list1, i + 3 * nbNod +
-					       nbNod * nbComp * iIndex);
+                                               nbNod * nbComp * iIndex);
     for(int t = 0; t < nSteps; t++) {
       double p = 2. * M_PI * t / nSteps;
       for(int j = 0; j < nbNod; j++) {
-	for(int k = 0; k < nbComp; k++) {
-	  double val = valr[nbComp * j + k] * cos(p) - vali[nbComp * j + k] * sin(p);
-	  List_Add(list2, &val);	  
-	}
+        for(int k = 0; k < nbComp; k++) {
+          double val = valr[nbComp * j + k] * cos(p) - vali[nbComp * j + k] * sin(p);
+          List_Add(list2, &val);          
+        }
       }
     }
   }

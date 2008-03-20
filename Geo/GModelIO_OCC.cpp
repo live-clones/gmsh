@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.29 2008-02-22 21:09:00 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.30 2008-03-20 11:44:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -47,37 +47,37 @@ void OCC_Internals::buildLists()
       somap.Add(TopoDS::Solid(exp0.Current()));
 
       for(exp1.Init(exp0.Current(), TopAbs_SHELL); exp1.More(); exp1.Next()){
-	TopoDS_Shell shell = TopoDS::Shell(exp1.Current().Composed(exp0.Current().Orientation()));
-	if(shmap.FindIndex(shell) < 1){
-	  shmap.Add(shell);
+        TopoDS_Shell shell = TopoDS::Shell(exp1.Current().Composed(exp0.Current().Orientation()));
+        if(shmap.FindIndex(shell) < 1){
+          shmap.Add(shell);
 
-	  for(exp2.Init(shell, TopAbs_FACE); exp2.More(); exp2.Next()){
-	    TopoDS_Face face = TopoDS::Face(exp2.Current().Composed(shell.Orientation()));
-	    if(fmap.FindIndex(face) < 1){
-	      fmap.Add(face);
+          for(exp2.Init(shell, TopAbs_FACE); exp2.More(); exp2.Next()){
+            TopoDS_Face face = TopoDS::Face(exp2.Current().Composed(shell.Orientation()));
+            if(fmap.FindIndex(face) < 1){
+              fmap.Add(face);
 
-	      for(exp3.Init(exp2.Current(), TopAbs_WIRE); exp3.More(); exp3.Next()){
-		TopoDS_Wire wire = TopoDS::Wire(exp3.Current().Composed(face.Orientation()));
-		if(wmap.FindIndex(wire) < 1){
-		  wmap.Add(wire);
+              for(exp3.Init(exp2.Current(), TopAbs_WIRE); exp3.More(); exp3.Next()){
+                TopoDS_Wire wire = TopoDS::Wire(exp3.Current().Composed(face.Orientation()));
+                if(wmap.FindIndex(wire) < 1){
+                  wmap.Add(wire);
 
-		  for(exp4.Init(exp3.Current(), TopAbs_EDGE); exp4.More(); exp4.Next()){
-		    TopoDS_Edge edge = TopoDS::Edge(exp4.Current().Composed(wire.Orientation()));
-		    if(emap.FindIndex(edge) < 1){
-		      emap.Add(edge);
+                  for(exp4.Init(exp3.Current(), TopAbs_EDGE); exp4.More(); exp4.Next()){
+                    TopoDS_Edge edge = TopoDS::Edge(exp4.Current().Composed(wire.Orientation()));
+                    if(emap.FindIndex(edge) < 1){
+                      emap.Add(edge);
 
-		      for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More(); exp5.Next()){
-			TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
-			if(vmap.FindIndex(vertex) < 1)
-			  vmap.Add(vertex);
-		      }
-		    }
-		  }
-		}
-	      }
-	    }
-	  }
-	}
+                      for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More(); exp5.Next()){
+                        TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
+                        if(vmap.FindIndex(vertex) < 1)
+                          vmap.Add(vertex);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -89,30 +89,30 @@ void OCC_Internals::buildLists()
       shmap.Add(shell);
 
       for(exp2.Init(shell, TopAbs_FACE); exp2.More(); exp2.Next()){
-	TopoDS_Face face = TopoDS::Face(exp2.Current().Composed(shell.Orientation()));
-	if(fmap.FindIndex(face) < 1){
-	  fmap.Add(face);
-		  
-	  for(exp3.Init(exp2.Current(), TopAbs_WIRE); exp3.More(); exp3.Next()){
-	    TopoDS_Wire wire = TopoDS::Wire(exp3.Current());
-	    if(wmap.FindIndex(wire) < 1){
-	      wmap.Add(wire);
+        TopoDS_Face face = TopoDS::Face(exp2.Current().Composed(shell.Orientation()));
+        if(fmap.FindIndex(face) < 1){
+          fmap.Add(face);
+                  
+          for(exp3.Init(exp2.Current(), TopAbs_WIRE); exp3.More(); exp3.Next()){
+            TopoDS_Wire wire = TopoDS::Wire(exp3.Current());
+            if(wmap.FindIndex(wire) < 1){
+              wmap.Add(wire);
 
-	      for(exp4.Init(exp3.Current(), TopAbs_EDGE); exp4.More(); exp4.Next()){
-		TopoDS_Edge edge = TopoDS::Edge(exp4.Current());
-		if(emap.FindIndex(edge) < 1){
-		  emap.Add(edge);
+              for(exp4.Init(exp3.Current(), TopAbs_EDGE); exp4.More(); exp4.Next()){
+                TopoDS_Edge edge = TopoDS::Edge(exp4.Current());
+                if(emap.FindIndex(edge) < 1){
+                  emap.Add(edge);
 
-		  for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More(); exp5.Next()){
-		    TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
-		    if(vmap.FindIndex(vertex) < 1)
-		      vmap.Add(vertex);
-		  }
-		}
-	      }
-	    }
-	  }
-	}
+                  for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More(); exp5.Next()){
+                    TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
+                    if(vmap.FindIndex(vertex) < 1)
+                      vmap.Add(vertex);
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -122,25 +122,25 @@ void OCC_Internals::buildLists()
     TopoDS_Face face = TopoDS::Face(exp2.Current());
     if(fmap.FindIndex(face) < 1){
       fmap.Add(face);
-	  
+          
       for(exp3.Init(exp2.Current(), TopAbs_WIRE); exp3.More(); exp3.Next()){
-	TopoDS_Wire wire = TopoDS::Wire(exp3.Current());
-	if(wmap.FindIndex(wire) < 1){
-	  wmap.Add(wire);
-	  
-	  for(exp4.Init(exp3.Current(), TopAbs_EDGE); exp4.More(); exp4.Next()){
-	    TopoDS_Edge edge = TopoDS::Edge(exp4.Current());
-	    if(emap.FindIndex(edge) < 1){
-	      emap.Add(edge);
+        TopoDS_Wire wire = TopoDS::Wire(exp3.Current());
+        if(wmap.FindIndex(wire) < 1){
+          wmap.Add(wire);
+          
+          for(exp4.Init(exp3.Current(), TopAbs_EDGE); exp4.More(); exp4.Next()){
+            TopoDS_Edge edge = TopoDS::Edge(exp4.Current());
+            if(emap.FindIndex(edge) < 1){
+              emap.Add(edge);
 
-	      for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More(); exp5.Next()){
-		TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
-		if(vmap.FindIndex(vertex) < 1)
-		  vmap.Add(vertex);
-	      }
-	    }
-	  }
-	}
+              for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More(); exp5.Next()){
+                TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
+                if(vmap.FindIndex(vertex) < 1)
+                  vmap.Add(vertex);
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -152,16 +152,16 @@ void OCC_Internals::buildLists()
       wmap.Add(wire);
       
       for(exp4.Init(exp3.Current(), TopAbs_EDGE); exp4.More(); exp4.Next()){
-	TopoDS_Edge edge = TopoDS::Edge(exp4.Current());
-	if(emap.FindIndex(edge) < 1){
-	  emap.Add(edge);
+        TopoDS_Edge edge = TopoDS::Edge(exp4.Current());
+        if(emap.FindIndex(edge) < 1){
+          emap.Add(edge);
 
-	  for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More(); exp5.Next()){
-	    TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
-	    if(vmap.FindIndex(vertex) < 1)
-	      vmap.Add(vertex);
-	  }
-	}
+          for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More(); exp5.Next()){
+            TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
+            if(vmap.FindIndex(vertex) < 1)
+              vmap.Add(vertex);
+          }
+        }
       }
     }
   }
@@ -173,9 +173,9 @@ void OCC_Internals::buildLists()
       emap.Add(edge);
 
       for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More(); exp5.Next()){
-	TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
-	if(vmap.FindIndex(vertex) < 1)
-	  vmap.Add(vertex);
+        TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
+        if(vmap.FindIndex(vertex) < 1)
+          vmap.Add(vertex);
       }
     }
   }
@@ -190,8 +190,8 @@ void OCC_Internals::buildLists()
 }
 
 void OCC_Internals::HealGeometry(double tolerance, bool fixsmalledges, 
-				 bool fixspotstripfaces, bool sewfaces, 
-				 bool makesolids)
+                                 bool fixspotstripfaces, bool sewfaces, 
+                                 bool makesolids)
 {
   int nrc = 0, nrcs = 0;
   TopExp_Explorer e;
@@ -218,19 +218,19 @@ void OCC_Internals::HealGeometry(double tolerance, bool fixsmalledges,
     for(int i = 1; i <= fmap.Extent(); i++){
       TopExp_Explorer exp1;
       for(exp1.Init(fmap(i), TopAbs_WIRE); exp1.More(); exp1.Next()){
-	TopoDS_Wire oldwire = TopoDS::Wire(exp1.Current());
-	sfw = new ShapeFix_Wire(oldwire, TopoDS::Face(fmap(i)), tolerance);
-	sfw->ModifyTopologyMode() = Standard_True;
-	
-	if(sfw->FixSmall(false, tolerance)){
-	  Msg(INFO, "Fixed small edge in wire %d", wmap.FindIndex(oldwire));
-	  TopoDS_Wire newwire = sfw->Wire();
-	  rebuild->Replace(oldwire, newwire, Standard_False);
-	}
-	if((sfw->StatusSmall(ShapeExtend_FAIL1)) ||
-	   (sfw->StatusSmall(ShapeExtend_FAIL2)) ||
-	   (sfw->StatusSmall(ShapeExtend_FAIL3)))
-	  Msg(INFO, "Failed to fix small edge in wire %d",  wmap.FindIndex(oldwire));
+        TopoDS_Wire oldwire = TopoDS::Wire(exp1.Current());
+        sfw = new ShapeFix_Wire(oldwire, TopoDS::Face(fmap(i)), tolerance);
+        sfw->ModifyTopologyMode() = Standard_True;
+        
+        if(sfw->FixSmall(false, tolerance)){
+          Msg(INFO, "Fixed small edge in wire %d", wmap.FindIndex(oldwire));
+          TopoDS_Wire newwire = sfw->Wire();
+          rebuild->Replace(oldwire, newwire, Standard_False);
+        }
+        if((sfw->StatusSmall(ShapeExtend_FAIL1)) ||
+           (sfw->StatusSmall(ShapeExtend_FAIL2)) ||
+           (sfw->StatusSmall(ShapeExtend_FAIL3)))
+          Msg(INFO, "Failed to fix small edge in wire %d",  wmap.FindIndex(oldwire));
       }
     }
     shape = rebuild->Apply(shape);
@@ -240,16 +240,16 @@ void OCC_Internals::HealGeometry(double tolerance, bool fixsmalledges,
       rebuild->Apply(shape);
       TopExp_Explorer exp1;
       for(exp1.Init(shape, TopAbs_EDGE); exp1.More(); exp1.Next()){
-	TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
-	if(vmap.FindIndex(TopExp::FirstVertex(edge)) == 
-	   vmap.FindIndex(TopExp::LastVertex(edge))){
-	  GProp_GProps system;
-	  BRepGProp::LinearProperties(edge, system);
-	  if(system.Mass() < tolerance){
-	    Msg(INFO, "removing degenerated edge %d", emap.FindIndex(edge));
-	    rebuild->Remove(edge, false);
-	  }
-	}
+        TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
+        if(vmap.FindIndex(TopExp::FirstVertex(edge)) == 
+           vmap.FindIndex(TopExp::LastVertex(edge))){
+          GProp_GProps system;
+          BRepGProp::LinearProperties(edge, system);
+          if(system.Mass() < tolerance){
+            Msg(INFO, "removing degenerated edge %d", emap.FindIndex(edge));
+            rebuild->Remove(edge, false);
+          }
+        }
       }
       shape = rebuild->Apply(shape);
     }
@@ -325,27 +325,27 @@ void OCC_Internals::HealGeometry(double tolerance, bool fixsmalledges,
     else{
       BRepCheck_Analyzer ba(ms);
       if(ba.IsValid()){
-	Handle(ShapeFix_Shape) sfs = new ShapeFix_Shape;
-	sfs->Init(ms);
-	sfs->SetPrecision(tolerance);
-	sfs->SetMaxTolerance(tolerance);
-	sfs->Perform();
-	shape = sfs->Shape();
-	
-	for(exp0.Init(shape, TopAbs_SOLID); exp0.More(); exp0.Next()){
-	  TopoDS_Solid solid = TopoDS::Solid(exp0.Current());
-	  TopoDS_Solid newsolid = solid;
-	  BRepLib::OrientClosedSolid(newsolid);
-	  Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
-	  // rebuild->Apply(shape);
-	  rebuild->Replace(solid, newsolid, Standard_False);
-	  TopoDS_Shape newshape = rebuild->Apply(shape, TopAbs_COMPSOLID, 1);
-	  // TopoDS_Shape newshape = rebuild->Apply(shape);
-	  shape = newshape;
-	}
+        Handle(ShapeFix_Shape) sfs = new ShapeFix_Shape;
+        sfs->Init(ms);
+        sfs->SetPrecision(tolerance);
+        sfs->SetMaxTolerance(tolerance);
+        sfs->Perform();
+        shape = sfs->Shape();
+        
+        for(exp0.Init(shape, TopAbs_SOLID); exp0.More(); exp0.Next()){
+          TopoDS_Solid solid = TopoDS::Solid(exp0.Current());
+          TopoDS_Solid newsolid = solid;
+          BRepLib::OrientClosedSolid(newsolid);
+          Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
+          // rebuild->Apply(shape);
+          rebuild->Replace(solid, newsolid, Standard_False);
+          TopoDS_Shape newshape = rebuild->Apply(shape, TopAbs_COMPSOLID, 1);
+          // TopoDS_Shape newshape = rebuild->Apply(shape);
+          shape = newshape;
+        }
       }
       else
-	Msg(INFO, " not possible");
+        Msg(INFO, " not possible");
     }
   }
   buildLists();
@@ -358,9 +358,9 @@ void OCC_Internals::loadBREP(const char *fn)
   BRepTools::Clean(shape);
   buildLists();
   HealGeometry(CTX.geom.tolerance, 
- 	       CTX.geom.occ_fix_small_edges,
- 	       CTX.geom.occ_fix_small_faces,
- 	       CTX.geom.occ_sew_faces);
+               CTX.geom.occ_fix_small_edges,
+               CTX.geom.occ_fix_small_faces,
+               CTX.geom.occ_sew_faces);
   BRepTools::Clean(shape);
 }
 
@@ -374,9 +374,9 @@ void OCC_Internals::loadSTEP(const char *fn)
   BRepTools::Clean(shape);
   buildLists();
   HealGeometry(CTX.geom.tolerance, 
- 	       CTX.geom.occ_fix_small_edges,
- 	       CTX.geom.occ_fix_small_faces,
- 	       CTX.geom.occ_sew_faces);
+               CTX.geom.occ_fix_small_edges,
+               CTX.geom.occ_fix_small_faces,
+               CTX.geom.occ_sew_faces);
   BRepTools::Clean(shape);
 }
 
@@ -390,9 +390,9 @@ void OCC_Internals::loadIGES(const char *fn)
   BRepTools::Clean(shape);
   buildLists();
   HealGeometry(CTX.geom.tolerance, 
-	       CTX.geom.occ_fix_small_edges,
-	       CTX.geom.occ_fix_small_faces,
-	       CTX.geom.occ_sew_faces);
+               CTX.geom.occ_fix_small_edges,
+               CTX.geom.occ_fix_small_faces,
+               CTX.geom.occ_sew_faces);
   BRepTools::Clean(shape);
 }
 
@@ -509,57 +509,57 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool,  const BooleanOperat
     switch(op){
     case OCC_Internals::Add :
       {
-	TopoDS_Shape theNewShape;	
-	BRep_Builder B;
-	TopoDS_Compound C;
-	B.MakeCompound(C);
-	TopTools_ListOfShape listShape1, listShape2;
-	AddSimpleShapes(shape, listShape1);
-	AddSimpleShapes(tool, listShape2);
-	Standard_Boolean isCompound =
-	  (listShape1.Extent() > 1 || listShape2.Extent() > 1);
-	
-	TopTools_ListIteratorOfListOfShape itSub1 (listShape1);
-	for (; itSub1.More(); itSub1.Next()) {
-	  TopoDS_Shape aValue1 = itSub1.Value();
-	  TopTools_ListIteratorOfListOfShape itSub2 (listShape2);
-	  for (; itSub2.More(); itSub2.Next()) {
-	    TopoDS_Shape aValue2 = itSub2.Value();
-	    BRepAlgoAPI_Common BO (aValue1, aValue2);
-	    if (!BO.IsDone()) {
-	      Msg(GERROR,"Boolean Add Operator can not be performed");
-	    }
-	    if (isCompound) {
-	      TopoDS_Shape aStepResult = BO.Shape();
-	      if (aStepResult.ShapeType() == TopAbs_COMPOUND) {
-		TopoDS_Iterator aCompIter (aStepResult);
-		for (; aCompIter.More(); aCompIter.Next()) {
-		  B.Add(C, aCompIter.Value());
-		}
-	      }
-	      else {
-		B.Add(C, aStepResult);
-	      }
-	    }
-	    else
-	      theNewShape = BO.Shape();
-	  }
-	}
-	if (isCompound) {
-	  TopTools_ListOfShape listShapeC;
-	  AddSimpleShapes(C, listShapeC);
-	  TopTools_ListIteratorOfListOfShape itSubC (listShapeC);
-	  bool isOnlySolids = true;
-	  for (; itSubC.More(); itSubC.Next()) {
-	    TopoDS_Shape aValueC = itSubC.Value();
-	    if (aValueC.ShapeType() != TopAbs_SOLID) isOnlySolids = false;
-	  }
-	  if (isOnlySolids)
-	    throw;
-	    //	    theNewShape = GEOMImpl_GlueDriver::GlueFaces(C, Precision::Confusion());
-	  else
-	    theNewShape = C;
-	}	
+        TopoDS_Shape theNewShape;       
+        BRep_Builder B;
+        TopoDS_Compound C;
+        B.MakeCompound(C);
+        TopTools_ListOfShape listShape1, listShape2;
+        AddSimpleShapes(shape, listShape1);
+        AddSimpleShapes(tool, listShape2);
+        Standard_Boolean isCompound =
+          (listShape1.Extent() > 1 || listShape2.Extent() > 1);
+        
+        TopTools_ListIteratorOfListOfShape itSub1 (listShape1);
+        for (; itSub1.More(); itSub1.Next()) {
+          TopoDS_Shape aValue1 = itSub1.Value();
+          TopTools_ListIteratorOfListOfShape itSub2 (listShape2);
+          for (; itSub2.More(); itSub2.Next()) {
+            TopoDS_Shape aValue2 = itSub2.Value();
+            BRepAlgoAPI_Common BO (aValue1, aValue2);
+            if (!BO.IsDone()) {
+              Msg(GERROR,"Boolean Add Operator can not be performed");
+            }
+            if (isCompound) {
+              TopoDS_Shape aStepResult = BO.Shape();
+              if (aStepResult.ShapeType() == TopAbs_COMPOUND) {
+                TopoDS_Iterator aCompIter (aStepResult);
+                for (; aCompIter.More(); aCompIter.Next()) {
+                  B.Add(C, aCompIter.Value());
+                }
+              }
+              else {
+                B.Add(C, aStepResult);
+              }
+            }
+            else
+              theNewShape = BO.Shape();
+          }
+        }
+        if (isCompound) {
+          TopTools_ListOfShape listShapeC;
+          AddSimpleShapes(C, listShapeC);
+          TopTools_ListIteratorOfListOfShape itSubC (listShapeC);
+          bool isOnlySolids = true;
+          for (; itSubC.More(); itSubC.Next()) {
+            TopoDS_Shape aValueC = itSubC.Value();
+            if (aValueC.ShapeType() != TopAbs_SOLID) isOnlySolids = false;
+          }
+          if (isOnlySolids)
+            throw;
+            //      theNewShape = GEOMImpl_GlueDriver::GlueFaces(C, Precision::Confusion());
+          else
+            theNewShape = C;
+        }       
       }
       break;
     case OCC_Internals::Cut :
@@ -572,7 +572,7 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool,  const BooleanOperat
 }
   
 void OCC_Internals::Sphere(const SPoint3 & center, const double & radius,
-			   const BooleanOperator & op)
+                           const BooleanOperator & op)
 {
   // build a sphere
   gp_Pnt aP(center.x(), center.y(), center.z());  

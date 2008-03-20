@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.178 2008-03-10 16:01:16 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.179 2008-03-20 11:44:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -109,18 +109,18 @@ static void FinishUpBoundingBox()
     CTX.lc = 1.;
   }
   else if(range[0] < CTX.geom.tolerance && 
-	  range[1] < CTX.geom.tolerance) {
+          range[1] < CTX.geom.tolerance) {
     CTX.lc = range[2];
     CTX.min[0] -= CTX.lc; CTX.min[1] -= CTX.lc;
     CTX.max[0] += CTX.lc; CTX.max[1] += CTX.lc;
   }
   else if(range[0] < CTX.geom.tolerance && 
-	  range[2] < CTX.geom.tolerance) {
+          range[2] < CTX.geom.tolerance) {
     CTX.lc = range[1];
     CTX.min[0] -= CTX.lc; CTX.max[0] += CTX.lc;
   }
   else if(range[1] < CTX.geom.tolerance && 
-	  range[2] < CTX.geom.tolerance) {
+          range[2] < CTX.geom.tolerance) {
     CTX.lc = range[0];
     CTX.min[1] -= CTX.lc; CTX.max[1] += CTX.lc;
   }
@@ -141,8 +141,8 @@ static void FinishUpBoundingBox()
 }
 
 void SetBoundingBox(double xmin, double xmax,
-		    double ymin, double ymax, 
-		    double zmin, double zmax)
+                    double ymin, double ymax, 
+                    double zmin, double zmax)
 {
   CTX.min[0] = xmin; CTX.max[0] = xmax;
   CTX.min[1] = ymin; CTX.max[1] = ymax;
@@ -159,7 +159,7 @@ void SetBoundingBox(void)
   if(bb.empty()) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(!PView::list[i]->getData()->getBoundingBox().empty())
-	bb += PView::list[i]->getData()->getBoundingBox();
+        bb += PView::list[i]->getData()->getBoundingBox();
   }
   
   if(bb.empty()){
@@ -304,14 +304,14 @@ int MergeFile(const char *name, int warn_if_missing)
       // the real solution would be to rewrite all our I/O functions in
       // terms of gzFile, but until then, this is better than nothing
       if(fl_choice("File '%s' is in gzip format.\n\nDo you want to uncompress it?", 
-		   "Cancel", "Uncompress", NULL, name)){
-	char tmp[256];
-	sprintf(tmp, "gunzip -c %s > %s", name, no_ext);
-	if(SystemCall(tmp))
-	  Msg(GERROR, "Failed to uncompress `%s': check directory permissions", name);
-	if(!strcmp(CTX.filename, name)) // this is the project file
-	  SetProjectName(no_ext);
-	return MergeFile(no_ext);
+                   "Cancel", "Uncompress", NULL, name)){
+        char tmp[256];
+        sprintf(tmp, "gunzip -c %s > %s", name, no_ext);
+        if(SystemCall(tmp))
+          Msg(GERROR, "Failed to uncompress `%s': check directory permissions", name);
+        if(!strcmp(CTX.filename, name)) // this is the project file
+          SetProjectName(no_ext);
+        return MergeFile(no_ext);
       }
     }
   }
@@ -328,30 +328,30 @@ int MergeFile(const char *name, int warn_if_missing)
     status = m->readSTL(name, CTX.geom.tolerance);
   }
   else if(!strcmp(ext, ".brep") || !strcmp(ext, ".rle") ||
-	  !strcmp(ext, ".brp") || !strcmp(ext, ".BRP")){
+          !strcmp(ext, ".brp") || !strcmp(ext, ".BRP")){
     status = m->readOCCBREP(std::string(name));
   }
   else if(!strcmp(ext, ".iges") || !strcmp(ext, ".IGES") ||
-	  !strcmp(ext, ".igs") || !strcmp(ext, ".IGS")){
+          !strcmp(ext, ".igs") || !strcmp(ext, ".IGS")){
     status = m->readOCCIGES(std::string(name));
   }
   else if(!strcmp(ext, ".step") || !strcmp(ext, ".STEP") ||
-	  !strcmp(ext, ".stp") || !strcmp(ext, ".STP")){
+          !strcmp(ext, ".stp") || !strcmp(ext, ".STP")){
     status = m->readOCCSTEP(std::string(name));
   }
   else if(!strcmp(ext, ".unv") || !strcmp(ext, ".UNV")){
     status = m->readUNV(name);
   }
   else if(!strcmp(ext, ".wrl") || !strcmp(ext, ".WRL") || 
-	  !strcmp(ext, ".vrml") || !strcmp(ext, ".VRML") ||
-	  !strcmp(ext, ".iv") || !strcmp(ext, ".IV")){
+          !strcmp(ext, ".vrml") || !strcmp(ext, ".VRML") ||
+          !strcmp(ext, ".iv") || !strcmp(ext, ".IV")){
     status = m->readVRML(name);
   }
   else if(!strcmp(ext, ".mesh") || !strcmp(ext, ".MESH")){
     status = m->readMESH(name);
   }
   else if(!strcmp(ext, ".bdf") || !strcmp(ext, ".BDF") ||
-	  !strcmp(ext, ".nas") || !strcmp(ext, ".NAS")){
+          !strcmp(ext, ".nas") || !strcmp(ext, ".NAS")){
     status = m->readBDF(name);
   }
   else if(!strcmp(ext, ".p3d") || !strcmp(ext, ".P3D")){
@@ -362,9 +362,9 @@ int MergeFile(const char *name, int warn_if_missing)
   }
 #if defined(HAVE_FLTK)
   else if(!strcmp(ext, ".pnm") || !strcmp(ext, ".PNM") ||
-	  !strcmp(ext, ".pbm") || !strcmp(ext, ".PBM") ||
-	  !strcmp(ext, ".pgm") || !strcmp(ext, ".PGM") ||
-	  !strcmp(ext, ".ppm") || !strcmp(ext, ".PPM")) {
+          !strcmp(ext, ".pbm") || !strcmp(ext, ".PBM") ||
+          !strcmp(ext, ".pgm") || !strcmp(ext, ".PGM") ||
+          !strcmp(ext, ".ppm") || !strcmp(ext, ".PPM")) {
     status = read_pnm(name);
   }
   else if(!strcmp(ext, ".bmp") || !strcmp(ext, ".BMP")) {
@@ -372,7 +372,7 @@ int MergeFile(const char *name, int warn_if_missing)
   }
 #if defined(HAVE_LIBJPEG)
   else if(!strcmp(ext, ".jpg") || !strcmp(ext, ".JPG") ||
-	  !strcmp(ext, ".jpeg") || !strcmp(ext, ".JPEG")) {
+          !strcmp(ext, ".jpeg") || !strcmp(ext, ".JPEG")) {
     status = read_jpeg(name);
   }
 #endif
@@ -389,10 +389,10 @@ int MergeFile(const char *name, int warn_if_missing)
        !strncmp(header, "$MeshFormat", 11)) {
       status = m->readMSH(name);
       if(status > 1) 
-	status = PView::readMSH(name);
+        status = PView::readMSH(name);
     }
     else if(!strncmp(header, "$PostFormat", 11) || 
-	    !strncmp(header, "$View", 5)) {
+            !strncmp(header, "$View", 5)) {
       status = PView::readPOS(name);
     }
     else {

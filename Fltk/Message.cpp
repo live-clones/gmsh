@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.87 2008-03-18 08:41:21 remacle Exp $
+// $Id: Message.cpp,v 1.88 2008-03-20 11:44:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -65,25 +65,25 @@ void Msg(int level, const char *fmt, ...)
   case FATAL1   : str = FATAL_STR; break ;
   case FATAL2   : str = WHITE_STR; break ;
   case FATAL3   : str = WHITE_STR; abort = 1; break ;
-				     		  
-  case GERROR   : 		     		  
+                                                  
+  case GERROR   :                                 
   case GERROR1  : str = ERROR_STR; break ;
-  case GERROR2  : 		     
+  case GERROR2  :                    
   case GERROR3  : str = WHITE_STR; break ;
-				     	  
-  case WARNING  : 		     	  
+                                          
+  case WARNING  :                         
   case WARNING1 : str = WARNING_STR; verb = 1; break ;
-  case WARNING2 : 		     	  
+  case WARNING2 :                         
   case WARNING3 : str = WHITE_STR; verb = 1; break ;
-				     	  
-  case INFO     :		     	  
+                                          
+  case INFO     :                         
   case INFO1    : str = INFO_STR; verb = 3; break ;
-  case INFO2    :		     	  
+  case INFO2    :                         
   case INFO3    : str = WHITE_STR; verb = 3; break ;
-				     	  
-  case DEBUG    :		     	  
+                                          
+  case DEBUG    :                         
   case DEBUG1   : str = DEBUG_STR; verb = 4; break ;
-  case DEBUG2   :		     	  
+  case DEBUG2   :                         
   case DEBUG3   : str = WHITE_STR; verb = 4; break ;
 
   default : return;
@@ -109,12 +109,12 @@ void Msg(int level, const char *fmt, ...)
       // (mai3d(), CreateFile(), etc.) with 'CTX.threads_lock', but
       // this is far from perfect...
       if(level != DEBUG &&
-	 level != DEBUG1 &&
-	 level != DEBUG2 &&
-	 level != DEBUG3 &&
-	 level != STATUS1N &&
-	 level != STATUS2N){
-	WID->check();
+         level != DEBUG1 &&
+         level != DEBUG2 &&
+         level != DEBUG3 &&
+         level != STATUS1N &&
+         level != STATUS2N){
+        WID->check();
       }
     }
 
@@ -128,8 +128,8 @@ void Msg(int level, const char *fmt, ...)
 #endif
       WID->set_status(buff[window], window);
       if(log && strlen(buff[window])){
-	strcpy(buff1, str ? str : "");
-	strncat(buff1, buff[window], BUFFSIZE-strlen(buff1));
+        strcpy(buff1, str ? str : "");
+        strncat(buff1, buff[window], BUFFSIZE-strlen(buff1));
         WID->add_message(buff1);
       }
     }
@@ -221,7 +221,7 @@ void Exit(int level)
       CTX.solver_position[0] = WID->solver[0].window->x();
       CTX.solver_position[1] = WID->solver[0].window->y();
       file_chooser_get_position(&CTX.file_chooser_position[0],
-				&CTX.file_chooser_position[1]);
+                                &CTX.file_chooser_position[1]);
       Print_Options(0, GMSH_SESSIONRC, 0, 0, CTX.session_filename_fullpath);
     }
     if(CTX.options_save)
@@ -257,7 +257,7 @@ double GetValue(const char *text, double defaultval)
 }
 
 bool GetBinaryAnswer(const char *question, const char *yes, const char *no, 
-		     bool defaultval)
+                     bool defaultval)
 {
   if(CTX.nopopup || CTX.batch || !WID)
     return defaultval;

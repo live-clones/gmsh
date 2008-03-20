@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.18 2008-03-19 16:38:16 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.19 2008-03-20 11:44:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -135,8 +135,8 @@ bool PViewDataList::finalize()
 
   // compute starting element indices
   int nb[24] = {NbSP, NbVP, NbTP,  NbSL, NbVL, NbTL,  NbST, NbVT, NbTT, 
-		NbSQ, NbVQ, NbTQ,  NbSS, NbVS, NbTS,  NbSH, NbVH, NbTH, 
-		NbSI, NbVI, NbTI,  NbSY, NbVY, NbTY};
+                NbSQ, NbVQ, NbTQ,  NbSS, NbVS, NbTS,  NbSH, NbVH, NbTH, 
+                NbSI, NbVI, NbTI,  NbSY, NbVY, NbTY};
   for(int i = 0; i < 24; i++){
     _index[i] = 0;
     for(int j = 0; j <= i; j++)
@@ -241,8 +241,8 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod)
       TimeStepMin.clear();
       TimeStepMax.clear();
       for(int j = 0; j < NbTimeStep; j++){
-	TimeStepMin.push_back(VAL_INF);
-	TimeStepMax.push_back(-VAL_INF);
+        TimeStepMin.push_back(VAL_INF);
+        TimeStepMax.push_back(-VAL_INF);
       }
     }
     else if(N / (nbcomp * nbnod) < NbTimeStep){
@@ -257,15 +257,15 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod)
       Max = std::max(l0, Max);
       int ts = j / (nbcomp * nbnod);
       if(ts < NbTimeStep){ // security
-	TimeStepMin[ts] = std::min(l0, TimeStepMin[ts]);
-	TimeStepMax[ts] = std::max(l0, TimeStepMax[ts]);
+        TimeStepMin[ts] = std::min(l0, TimeStepMin[ts]);
+        TimeStepMax[ts] = std::max(l0, TimeStepMax[ts]);
       }
     }
   }
 }
 
 void PViewDataList::_setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
-			     List_T *list, int nblist)
+                             List_T *list, int nblist)
 {
   _lastDimension = dim;
   _lastNumNodes = nbnod;
@@ -334,7 +334,7 @@ int PViewDataList::getNumNodes(int step, int ent, int ele)
 }
 
 void PViewDataList::getNode(int step, int ent, int ele, int nod,
-			    double &x, double &y, double &z)
+                            double &x, double &y, double &z)
 {
   if(ele != _lastElement) _setLast(ele);
   x = _lastXYZ[nod];
@@ -352,8 +352,8 @@ void PViewDataList::getValue(int step, int ent, int ele, int nod, int comp, doub
 {
   if(ele != _lastElement) _setLast(ele);
   val = _lastVal[step * _lastNumNodes  * _lastNumComponents + 
-		 nod * _lastNumComponents +
-		 comp];
+                 nod * _lastNumComponents +
+                 comp];
 }
 
 int PViewDataList::getNumEdges(int step, int ent, int ele)
@@ -363,7 +363,7 @@ int PViewDataList::getNumEdges(int step, int ent, int ele)
 }
 
 void PViewDataList::_getString(int dim, int i, int step, std::string &str, 
-			       double &x, double &y, double &z, double &style)
+                               double &x, double &y, double &z, double &style)
 {
   // 3D: T3D is a list of double: x,y,z,style,index,x,y,z,style,index,...
   //     T3C is a list of chars: string\0,string\0,string\0,string\0,...
@@ -415,21 +415,21 @@ void PViewDataList::_getString(int dim, int i, int step, std::string &str,
 }
 
 void PViewDataList::getString2D(int i, int step, std::string &str, 
-				double &x, double &y, double &style)
+                                double &x, double &y, double &style)
 {
   double z;
   _getString(2, i, step, str, x, y, z, style);
 }
 
 void PViewDataList::getString3D(int i, int step, std::string &str, 
-				double &x, double &y, double &z, double &style)
+                                double &x, double &y, double &z, double &style)
 {
   _getString(3, i, step, str, x, y, z, style);
 }
 
 static void splitCurvedElement(List_T **in, int *nbin, List_T *out, int *nbout, 
-			       int nodin, int nodout, int nbcomp, int nbsplit,
-			       int split[][8], int remove=1)
+                               int nodin, int nodout, int nbcomp, int nbsplit,
+                               int split[][8], int remove=1)
 {
   if(*nbin){
     int nb = List_Nbr(*in) / *nbin;
@@ -438,20 +438,20 @@ static void splitCurvedElement(List_T **in, int *nbin, List_T *out, int *nbout,
       double *coord = (double *)List_Pointer_Fast(*in, i);
       double *val = (double *)List_Pointer_Fast(*in, i + 3 * nodin);
       for(int j = 0; j < nbsplit; j++){
-	for(int k = 0; k < nodout; k++)
-	  List_Add(out, &coord[split[j][k]]);
-	for(int k = 0; k < nodout; k++)
-	  List_Add(out, &coord[nodin + split[j][k]]);
-	for(int k = 0; k < nodout; k++)
-	  List_Add(out, &coord[2 * nodin + split[j][k]]);
-	for(int ts = 0; ts < nbstep; ts++){
-	  for(int k = 0; k < nodout; k++){
-	    for(int l = 0; l < nbcomp; l++){
-	      List_Add(out, &val[nodin * nbcomp * ts + nbcomp * split[j][k] + l]);
-	    }
-	  }
-	}
-	(*nbout)++;
+        for(int k = 0; k < nodout; k++)
+          List_Add(out, &coord[split[j][k]]);
+        for(int k = 0; k < nodout; k++)
+          List_Add(out, &coord[nodin + split[j][k]]);
+        for(int k = 0; k < nodout; k++)
+          List_Add(out, &coord[2 * nodin + split[j][k]]);
+        for(int ts = 0; ts < nbstep; ts++){
+          for(int k = 0; k < nodout; k++){
+            for(int l = 0; l < nbcomp; l++){
+              List_Add(out, &val[nodin * nbcomp * ts + nbcomp * split[j][k] + l]);
+            }
+          }
+        }
+        (*nbout)++;
       }
     }
   }
@@ -529,7 +529,7 @@ void PViewDataList::_splitCurvedElements()
 }
 
 static void generateConnectivities(List_T *list, int nbList, int nbTimeStep, 
-				   int nbVert, smooth_data &data)
+                                   int nbVert, smooth_data &data)
 {
   if(!nbList) return;
   double *vals = new double[nbTimeStep];
@@ -549,7 +549,7 @@ static void generateConnectivities(List_T *list, int nbList, int nbTimeStep,
 }
 
 static void smoothList(List_T *list, int nbList, int nbTimeStep,
-		       int nbVert, smooth_data &data)
+                       int nbVert, smooth_data &data)
 {
   if(!nbList) return;
   double *vals = new double[nbTimeStep];
@@ -561,7 +561,7 @@ static void smoothList(List_T *list, int nbList, int nbTimeStep,
     double *v = (double *)List_Pointer_Fast(list, i + 3 * nbVert);
     for(int j = 0; j < nbVert; j++) {
       if(data.get(x[j], y[j], z[j], nbTimeStep, vals)){
-	for(int k = 0; k < nbTimeStep; k++) 
+        for(int k = 0; k < nbTimeStep; k++) 
           v[j + k * nbVert] = vals[k];
       }
     }
@@ -634,12 +634,12 @@ bool PViewDataList::combineSpace(nameData &nd)
       double beg, end;
       List_Read(l->T2D, i + 3, &beg); 
       if(i > List_Nbr(l->T2D) - 8)
-	end = (double)List_Nbr(l->T2C);
+        end = (double)List_Nbr(l->T2C);
       else
-	List_Read(l->T2D, i + 3 + 4, &end); 
+        List_Read(l->T2D, i + 3 + 4, &end); 
       char *c = (char*)List_Pointer(l->T2C, (int)beg);
       for(int j = 0; j < (int)(end - beg); j++)
-	List_Add(T2C, &c[j]); 
+        List_Add(T2C, &c[j]); 
       NbT2++;
     }
     for(int i = 0; i < List_Nbr(l->T3D); i += 5){
@@ -652,12 +652,12 @@ bool PViewDataList::combineSpace(nameData &nd)
       double beg, end;
       List_Read(l->T3D, i + 4, &beg); 
       if(i > List_Nbr(l->T3D) - 10)
-	end = (double)List_Nbr(l->T3C);
+        end = (double)List_Nbr(l->T3C);
       else
-	List_Read(l->T3D, i + 4 + 5, &end); 
+        List_Read(l->T3D, i + 4 + 5, &end); 
       char *c = (char*)List_Pointer(l->T3C, (int)beg);
       for(int j = 0; j < (int)(end-beg); j++)
-	List_Add(T3C, &c[j]); 
+        List_Add(T3C, &c[j]); 
       NbT3++;
     }
   }
@@ -738,19 +738,19 @@ bool PViewDataList::combineTime(nameData &nd)
     getRawData(i, &list, &nbe, &nbc, &nbn);
     for(int j = 0; j < *nbe; j++){
       for(unsigned int k = 0; k < data.size(); k++){
-	data[k]->getRawData(i, &list2, &nbe2, &nbc2, &nbn2);
-	if(*nbe && *nbe == *nbe2){
-	  int nb2 = List_Nbr(list2) / *nbe2;
-	  if(!k){ 
-	    // copy coordinates of elm j (we are always here as
-	    // expected, since the ref view is the first one)
-	    for(int l = 0; l < 3 * nbn2; l++)
-	      List_Add(list, List_Pointer(list2, j * nb2 + l));
-	  }
-	  // copy values of elm j
-	  for(int l = 0; l < data[k]->getNumTimeSteps() * nbc2 * nbn2; l++)
-	    List_Add(list, List_Pointer(list2, j * nb2 + 3 * nbn2 + l));
-	}
+        data[k]->getRawData(i, &list2, &nbe2, &nbc2, &nbn2);
+        if(*nbe && *nbe == *nbe2){
+          int nb2 = List_Nbr(list2) / *nbe2;
+          if(!k){ 
+            // copy coordinates of elm j (we are always here as
+            // expected, since the ref view is the first one)
+            for(int l = 0; l < 3 * nbn2; l++)
+              List_Add(list, List_Pointer(list2, j * nb2 + l));
+          }
+          // copy values of elm j
+          for(int l = 0; l < data[k]->getNumTimeSteps() * nbc2 * nbn2; l++)
+            List_Add(list, List_Pointer(list2, j * nb2 + 3 * nbn2 + l));
+        }
       }
     }
   }
@@ -759,25 +759,25 @@ bool PViewDataList::combineTime(nameData &nd)
   for(int j = 0; j < NbT2; j++){
     for(unsigned int k = 0; k < data.size(); k++){
       if(NbT2 == data[k]->NbT2){
-	if(!k){
-	  // copy coordinates 
-	  List_Add(T2D, List_Pointer(data[k]->T2D, j * 4));
-	  List_Add(T2D, List_Pointer(data[k]->T2D, j * 4 + 1));
-	  List_Add(T2D, List_Pointer(data[k]->T2D, j * 4 + 2));
-	  // index
-	  double d = List_Nbr(T2C);
-	  List_Add(T2D, &d);
-	}
-	// copy char values
-	double beg, end;
-	List_Read(data[k]->T2D, j * 4 + 3, &beg);
-	if(j == NbT2 - 1)
-	  end = (double)List_Nbr(data[k]->T2C);
-	else
-	  List_Read(data[k]->T2D, j * 4 + 4 + 3, &end);
-	char *c = (char*)List_Pointer(data[k]->T2C, (int)beg);
-	for(int l = 0; l < (int)(end - beg); l++)
-	  List_Add(T2C, &c[l]);
+        if(!k){
+          // copy coordinates 
+          List_Add(T2D, List_Pointer(data[k]->T2D, j * 4));
+          List_Add(T2D, List_Pointer(data[k]->T2D, j * 4 + 1));
+          List_Add(T2D, List_Pointer(data[k]->T2D, j * 4 + 2));
+          // index
+          double d = List_Nbr(T2C);
+          List_Add(T2D, &d);
+        }
+        // copy char values
+        double beg, end;
+        List_Read(data[k]->T2D, j * 4 + 3, &beg);
+        if(j == NbT2 - 1)
+          end = (double)List_Nbr(data[k]->T2C);
+        else
+          List_Read(data[k]->T2D, j * 4 + 4 + 3, &end);
+        char *c = (char*)List_Pointer(data[k]->T2C, (int)beg);
+        for(int l = 0; l < (int)(end - beg); l++)
+          List_Add(T2C, &c[l]);
       }
     }
   }
@@ -786,26 +786,26 @@ bool PViewDataList::combineTime(nameData &nd)
   for(int j = 0; j < NbT3; j++){
     for(unsigned int k = 0; k < data.size(); k++){
       if(NbT3 == data[k]->NbT3){
-	if(!k){
-	  // copy coordinates 
-	  List_Add(T3D, List_Pointer(data[k]->T3D, j * 5));
-	  List_Add(T3D, List_Pointer(data[k]->T3D, j * 5 + 1));
-	  List_Add(T3D, List_Pointer(data[k]->T3D, j * 5 + 2));
-	  List_Add(T3D, List_Pointer(data[k]->T3D, j * 5 + 3));
-	  // index
-	  double d = List_Nbr(T3C);
-	  List_Add(T3D, &d);
-	}
-	// copy char values
-	double beg, end;
-	List_Read(data[k]->T3D, j * 5 + 4, &beg);
-	if(j == NbT3 - 1)
-	  end = (double)List_Nbr(data[k]->T3C);
-	else
-	  List_Read(data[k]->T3D, j * 5 + 5 + 4, &end);
-	char *c = (char*)List_Pointer(data[k]->T3C, (int)beg);
-	for(int l = 0; l < (int)(end - beg); l++)
-	  List_Add(T3C, &c[l]);
+        if(!k){
+          // copy coordinates 
+          List_Add(T3D, List_Pointer(data[k]->T3D, j * 5));
+          List_Add(T3D, List_Pointer(data[k]->T3D, j * 5 + 1));
+          List_Add(T3D, List_Pointer(data[k]->T3D, j * 5 + 2));
+          List_Add(T3D, List_Pointer(data[k]->T3D, j * 5 + 3));
+          // index
+          double d = List_Nbr(T3C);
+          List_Add(T3D, &d);
+        }
+        // copy char values
+        double beg, end;
+        List_Read(data[k]->T3D, j * 5 + 4, &beg);
+        if(j == NbT3 - 1)
+          end = (double)List_Nbr(data[k]->T3C);
+        else
+          List_Read(data[k]->T3D, j * 5 + 5 + 4, &end);
+        char *c = (char*)List_Pointer(data[k]->T3C, (int)beg);
+        for(int l = 0; l < (int)(end - beg); l++)
+          List_Add(T3C, &c[l]);
       }
     }
   }
@@ -824,8 +824,8 @@ bool PViewDataList::combineTime(nameData &nd)
     for(int i = 1; i < List_Nbr(Time); i++){
       List_Read(Time, i, &ti);
       if(ti != t0){
-	allTheSame = false;
-	break;
+        allTheSame = false;
+        break;
       }
     }
     if(allTheSame) List_Reset(Time);

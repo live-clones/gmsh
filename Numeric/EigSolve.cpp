@@ -1,4 +1,4 @@
-// $Id: EigSolve.cpp,v 1.9 2008-02-17 08:48:02 geuzaine Exp $
+// $Id: EigSolve.cpp,v 1.10 2008-03-20 11:44:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -640,13 +640,13 @@ static void normvec(int n, double *Z, double *wi)
     for (int i = 0; i < n; i++){
       double absxi = fabs(Z[j*n+i]);
       if (absxi > PREC){
-	double dummy = scale/absxi;
-	if (scale < absxi){
-	  ssq = 1.0 + ssq*dummy*dummy;
-	  scale = absxi;
-	}
-	else
-	  ssq += 1.0/dummy/dummy;
+        double dummy = scale/absxi;
+        if (scale < absxi){
+          ssq = 1.0 + ssq*dummy*dummy;
+          scale = absxi;
+        }
+        else
+          ssq += 1.0/dummy/dummy;
       }
     }
     
@@ -654,16 +654,16 @@ static void normvec(int n, double *Z, double *wi)
       // If complex eigenvalue, take into account imaginary part of
       // eigenvector
       for (int i = 0; i < n; i++){
-	double absxi = fabs(Z[(j + 1)*n+i]);
-	if (absxi > PREC){
-	  double dummy = scale/absxi;
-	  if (scale < absxi){
-	    ssq = 1.0 + ssq*dummy*dummy;
-	    scale = absxi;
-	  }
-	  else
-	    ssq += 1.0/dummy/dummy;
-	}
+        double absxi = fabs(Z[(j + 1)*n+i]);
+        if (absxi > PREC){
+          double dummy = scale/absxi;
+          if (scale < absxi){
+            ssq = 1.0 + ssq*dummy*dummy;
+            scale = absxi;
+          }
+          else
+            ssq += 1.0/dummy/dummy;
+        }
       }
     }
     
@@ -678,13 +678,13 @@ static void normvec(int n, double *Z, double *wi)
       // eigenvector
       j++;
       for (int i = 0; i < n; i++)
-	Z[j*n+i] /= norm;
+        Z[j*n+i] /= norm;
     }
   }
 }
 
 int EigSolve(int nm,int n,double *A,double *wr,double *wi,
-	     double *v,int *work1,double *work2) 
+             double *v,int *work1,double *work2) 
 {
   int is1,is2,ierr;
 
@@ -702,7 +702,7 @@ int EigSolve(int nm,int n,double *A,double *wr,double *wi,
 // algorithm (based on a routine from Laurent Stainier)
 
 int EigSolveSym(int n,int nm,double *A,double *d,double *V,
-		double *b,double *z)
+                double *b,double *z)
 {
   static const int NSWMAX = 50;
 
@@ -823,8 +823,8 @@ void EigSort(int n, double *wr, double *wi, double *B)
     for (int j = i + 1; j < n; j++){
       const double ej = wr[j];
       if(ej < ek){
-	k = j;
-	ek = ej;
+        k = j;
+        ek = ej;
       }
     }
     if (k != i){
@@ -845,16 +845,16 @@ int EigSolve3x3(const double A[9], double wr[3], double wi[3], double v[9])
      fabs(A[2]-A[6]) < PREC &&
      fabs(A[5]-A[7]) < PREC){
     double work1[3], work2[3], S[6] = { A[0], 
-					A[1], A[4], 
-					A[2], A[5], A[8]};
+                                        A[1], A[4], 
+                                        A[2], A[5], A[8]};
     ierr = EigSolveSym(3, 3, S, wr, v, work1, work2);
     wi[0] = wi[1] = wi[2] = 0.0;
   }
   else{
     int work1[3];
     double work2[3], M[9] = { A[0], A[1], A[2], 
-			      A[3], A[4], A[5],
-			      A[6], A[7], A[8]};
+                              A[3], A[4], A[5],
+                              A[6], A[7], A[8]};
     ierr = EigSolve(3, 3, M, wr, wi, v, work1, work2);
   }
   EigSort(3, wr, wi, v);
@@ -865,8 +865,8 @@ int EigSolve3x3(const double A[9], double wr[3], double wi[3], double v[9])
 int main ()
 {
   //double A[9] = {-0.00299043,-8.67362e-19,0, 
-  //	 -8.67362e-19,-0.00299043,-1.73472e-18, 
-  //	 0,-1.73472e-18,0.01};
+  //     -8.67362e-19,-0.00299043,-1.73472e-18, 
+  //     0,-1.73472e-18,0.01};
   double A[9] = {1, 2, 3,   2, 4, 5,   3, 5, 6};
   //double A[9] = {1, 2, 3,   1, 4, 5,   3, 5, 6};
   double wr[3], wi[3], B[9];

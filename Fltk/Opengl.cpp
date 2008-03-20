@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.79 2008-03-10 16:01:15 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.80 2008-03-20 11:44:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -99,9 +99,9 @@ void Draw_String(const char *s, const char *font_name, int font_enum, int font_s
       gl2psTextOpt(tmp.c_str(), font_name, font_size, opt, 0.);
     }
     else if(CTX.print.eps_quality && (CTX.print.format == FORMAT_PS ||
-				      CTX.print.format == FORMAT_EPS ||
-				      CTX.print.format == FORMAT_PDF ||
-				      CTX.print.format == FORMAT_SVG)){
+                                      CTX.print.format == FORMAT_EPS ||
+                                      CTX.print.format == FORMAT_PDF ||
+                                      CTX.print.format == FORMAT_SVG)){
       gl2psText(s, font_name, font_size);
     }
     else{
@@ -167,11 +167,11 @@ void Draw_OnScreenMessages()
 // Select entity routine
 
 char SelectEntity(int type, 
-		  std::vector<GVertex*> &vertices,
-		  std::vector<GEdge*> &edges,
-		  std::vector<GFace*> &faces,
-		  std::vector<GRegion*> &regions,
-		  std::vector<MElement*> &elements)
+                  std::vector<GVertex*> &vertices,
+                  std::vector<GEdge*> &edges,
+                  std::vector<GFace*> &faces,
+                  std::vector<GRegion*> &regions,
+                  std::vector<MElement*> &elements)
 {
   if(!WID) return 'q';
 
@@ -218,22 +218,22 @@ char SelectEntity(int type,
       bool multi = (abs(WID->try_selection) > 1) ? true : false;
       WID->try_selection = 0;
       if(WID->selection == ENT_NONE){ // just report the mouse click
-	WID->g_opengl_window->SelectionMode = false;
-	return 'c';
+        WID->g_opengl_window->SelectionMode = false;
+        return 'c';
       }
       else if(ProcessSelectionBuffer(WID->selection, multi, true,
-				     WID->try_selection_xywh[0],
-				     WID->try_selection_xywh[1], 
-				     WID->try_selection_xywh[2],
-				     WID->try_selection_xywh[3], 
-				     vertices, edges, faces, regions,
-				     elements)){
-	WID->selection = ENT_NONE;
-	WID->g_opengl_window->SelectionMode = false;
-	if(add)
-	  return 'l';
-	else
-	  return 'r';
+                                     WID->try_selection_xywh[0],
+                                     WID->try_selection_xywh[1], 
+                                     WID->try_selection_xywh[2],
+                                     WID->try_selection_xywh[3], 
+                                     vertices, edges, faces, regions,
+                                     elements)){
+        WID->selection = ENT_NONE;
+        WID->g_opengl_window->SelectionMode = false;
+        if(add)
+          return 'l';
+        else
+          return 'r';
       }
     }
   }

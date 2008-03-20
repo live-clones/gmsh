@@ -37,29 +37,29 @@ void edgeSwappingLawson(GFace *gf);
 enum gmshSwapCriterion {SWCR_DEL, SWCR_QUAL,SWCR_NORM, SWCR_CLOSE};
 enum gmshSplitCriterion {SPCR_CLOSE, SPCR_QUAL, SPCR_ALLWAYS};
 int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris, 
-		 const gmshSwapCriterion &cr,
-		 const std::vector<double> &Us,
-		 const std::vector<double> &Vs,
-		 const std::vector<double> &vSizes,
-		 const std::vector<double> &vSizesBGM);
+                 const gmshSwapCriterion &cr,
+                 const std::vector<double> &Us,
+                 const std::vector<double> &Vs,
+                 const std::vector<double> &vSizes,
+                 const std::vector<double> &vSizesBGM);
 int edgeSplitPass(double maxLC,
-		  GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
-		  const gmshSplitCriterion &cr,   
-		  std::vector<double> &Us ,
-		  std::vector<double> &Vs,
-		  std::vector<double> &vSizes ,
-		  std::vector<double> &vSizesBGM);
+                  GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
+                  const gmshSplitCriterion &cr,   
+                  std::vector<double> &Us ,
+                  std::vector<double> &Vs,
+                  std::vector<double> &vSizes ,
+                  std::vector<double> &vSizesBGM);
 int edgeCollapsePass(double minLC,
-		     GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
-		     std::vector<double> &Us,
-		     std::vector<double> &Vs,
-		     std::vector<double> &vSizes ,
-		     std::vector<double> &vSizesBGM);
+                     GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
+                     std::vector<double> &Us,
+                     std::vector<double> &Vs,
+                     std::vector<double> &vSizes ,
+                     std::vector<double> &vSizesBGM);
 void buidMeshGenerationDataStructures(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
-				      std::vector<double> &vSizes,
-				      std::vector<double> &vSizesBGM,
-				      std::vector<double> &Us,
-				      std::vector<double> &Vs);
+                                      std::vector<double> &vSizes,
+                                      std::vector<double> &vSizesBGM,
+                                      std::vector<double> &Us,
+                                      std::vector<double> &Vs);
 void transferDataStructure (GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris);
 
 struct swapquad{

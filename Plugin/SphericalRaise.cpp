@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.31 2008-02-17 08:48:07 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.32 2008-03-20 11:44:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -62,16 +62,16 @@ void GMSH_SphericalRaisePlugin::getInfos(char *author, char *copyright,
          "`iView' using the values associated with the\n"
          "`TimeStep'-th time step. Instead of elevating\n"
          "the nodes along the X, Y and Z axes as in\n"
-	 "View[`iView'].RaiseX, View[`iView'].RaiseY\n"
-	 "and View[`iView'].RaiseZ, the raise is applied\n"
-	 " along the radius of a sphere centered at\n"
-	 "(`Xc', `Yc', `Zc'). To produce a standard\n"
-	 "radiation pattern, set `Offset' to minus the\n"
-	 "radius of the sphere the original data lives on.\n"
-	 "If `iView' < 0, the plugin is run on the current\n"
-	 "view.\n"
-	 "\n"
-	 "Plugin(SphericalRaise) is executed in-place.\n");
+         "View[`iView'].RaiseX, View[`iView'].RaiseY\n"
+         "and View[`iView'].RaiseZ, the raise is applied\n"
+         " along the radius of a sphere centered at\n"
+         "(`Xc', `Yc', `Zc'). To produce a standard\n"
+         "radiation pattern, set `Offset' to minus the\n"
+         "radius of the sphere the original data lives on.\n"
+         "If `iView' < 0, the plugin is run on the current\n"
+         "view.\n"
+         "\n"
+         "Plugin(SphericalRaise) is executed in-place.\n");
 }
 
 int GMSH_SphericalRaisePlugin::getNbOptions() const
@@ -90,8 +90,8 @@ void GMSH_SphericalRaisePlugin::catchErrorMessage(char *errorMessage) const
 }
 
 static void sphericalRaise(PViewData *data, List_T *list, int nbElm,
-			   int nbNod, int timeStep, double center[3], 
-			   double raise, double offset)
+                           int nbNod, int timeStep, double center[3], 
+                           double raise, double offset)
 {
   double *x, *y, *z, *val, d[3], coef;
   int nb, i, j;

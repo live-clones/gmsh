@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.19 2008-03-18 08:41:21 remacle Exp $
+// $Id: GeoStringInterface.cpp,v 1.20 2008-03-20 11:44:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -116,15 +116,15 @@ void add_infile(const char *text, const char *fich, bool deleted_something)
     if(strlen(ext) && strcmp(ext, ".geo") && strcmp(ext, ".GEO")){
       char question[1024];
       sprintf(question, 
-	      "A scripting command is going to be appended to a non-`.geo' file.\n\n"
-	      "Are you sure you want to proceed?\n\n"
-	      "(You might want to create a new `.geo' file containing the command\n\n"
-	      "Merge \"%s\";\n\n"
-	      "and use that file instead. To disable this warning in the future, select\n"
-	      "`Enable expert mode' in the option dialog.)", fich);
+              "A scripting command is going to be appended to a non-`.geo' file.\n\n"
+              "Are you sure you want to proceed?\n\n"
+              "(You might want to create a new `.geo' file containing the command\n\n"
+              "Merge \"%s\";\n\n"
+              "and use that file instead. To disable this warning in the future, select\n"
+              "`Enable expert mode' in the option dialog.)", fich);
       if(!GetBinaryAnswer(question, "Proceed", "Cancel", false)){
-	fclose(file);
-	return;
+        fclose(file);
+        return;
       }
     }
   }
@@ -206,7 +206,7 @@ void add_recosurf(List_T *list, const char *fich)
 }
 
 void add_trsfline(int N, int *l, const char *fich, const char *type, 
-		  const char *typearg, const char *pts)
+                  const char *typearg, const char *pts)
 {
   char text[BUFFSIZE], text2[BUFFSIZE];
 
@@ -234,7 +234,7 @@ void add_param(const char *par, const char *value, const char *fich)
 }
 
 void add_point(const char *fich, const char *x, const char *y, const char *z, 
-	       const char *lc)
+               const char *lc)
 {
   char text[BUFFSIZE];
   int ip = NEWPOINT();
@@ -243,24 +243,24 @@ void add_point(const char *fich, const char *x, const char *y, const char *z,
 }
 
 void add_field_option(int field_id, const char *option_name, const char *option_value, const char *fich){
-	std::ostringstream sstream;
-	sstream<<"Field["<<field_id<<"]."<<std::string(option_name)<<" = "<<std::string(option_value)<<";";
-	add_infile(sstream.str().c_str(),fich);
+        std::ostringstream sstream;
+        sstream<<"Field["<<field_id<<"]."<<std::string(option_name)<<" = "<<std::string(option_value)<<";";
+        add_infile(sstream.str().c_str(),fich);
 }
 void add_field(int field_id, const char *type_name, const char *fich){
-	std::ostringstream sstream;
-	sstream<<"Field["<<field_id<<"] = "<<std::string(type_name)<<";";
-	add_infile(sstream.str().c_str(),fich);
+        std::ostringstream sstream;
+        sstream<<"Field["<<field_id<<"] = "<<std::string(type_name)<<";";
+        add_infile(sstream.str().c_str(),fich);
 }
 void delete_field(int field_id, const char *fich){
-	std::ostringstream sstream;
-	sstream<<"Delete Field ["<<field_id<<"];";
-	add_infile(sstream.str().c_str(),fich);
+        std::ostringstream sstream;
+        sstream<<"Delete Field ["<<field_id<<"];";
+        add_infile(sstream.str().c_str(),fich);
 }
 void set_background_field(int field_id,const char *fich){
-	std::ostringstream sstream;
-	sstream<<"Background Field = "<<field_id<<";";
-	add_infile(sstream.str().c_str(),fich);
+        std::ostringstream sstream;
+        sstream<<"Background Field = "<<field_id<<";";
+        add_infile(sstream.str().c_str(),fich);
 }
 
 void add_line(int p1, int p2, const char *fich)
@@ -467,7 +467,7 @@ int add_physical(List_T *list, const char *fich, int type)
 }
 
 void translate(int add, List_T *list, const char *fich, const char *what,
-	       const char *tx, const char *ty, const char *tz)
+               const char *tx, const char *ty, const char *tz)
 {
   char text[BUFFSIZE];
 
@@ -487,8 +487,8 @@ void translate(int add, List_T *list, const char *fich, const char *what,
 }
 
 void rotate(int add, List_T *list, const char *fich, const char *what, 
-	    const char *ax, const char *ay, const char *az,
-	    const char *px, const char *py, const char *pz, const char *angle)
+            const char *ax, const char *ay, const char *az,
+            const char *px, const char *py, const char *pz, const char *angle)
 {
   char text[BUFFSIZE];
 
@@ -510,7 +510,7 @@ void rotate(int add, List_T *list, const char *fich, const char *what,
 }
 
 void dilate(int add, List_T *list, const char *fich, const char *what,
-	    const char *dx, const char *dy, const char *dz, const char *df)
+            const char *dx, const char *dy, const char *dz, const char *df)
 {
   char text[BUFFSIZE];
 
@@ -532,7 +532,7 @@ void dilate(int add, List_T *list, const char *fich, const char *what,
 }
 
 void symmetry(int add, List_T *list, const char *fich, const char *what,
-	      const char *sa, const char *sb, const char *sc, const char *sd)
+              const char *sa, const char *sb, const char *sc, const char *sd)
 {
   char text[BUFFSIZE];
 
@@ -554,7 +554,7 @@ void symmetry(int add, List_T *list, const char *fich, const char *what,
 }
 
 void extrude(List_T *list, const char *fich, const char *what, 
-	     const char *tx, const char *ty, const char *tz)
+             const char *tx, const char *ty, const char *tz)
 {
   char text[BUFFSIZE];
 
@@ -565,8 +565,8 @@ void extrude(List_T *list, const char *fich, const char *what,
 }
 
 void protude(List_T *list, const char *fich, const char *what, 
-	     const char *ax, const char *ay, const char *az,
-	     const char *px, const char *py, const char *pz, const char *angle)
+             const char *ax, const char *ay, const char *az,
+             const char *px, const char *py, const char *pz, const char *angle)
 {
   char text[BUFFSIZE];
 

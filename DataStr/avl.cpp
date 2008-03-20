@@ -1,4 +1,4 @@
-// $Id: avl.cpp,v 1.9 2008-02-17 08:47:56 geuzaine Exp $
+// $Id: avl.cpp,v 1.10 2008-03-20 11:44:02 geuzaine Exp $
 
 /*
  * avl package
@@ -384,27 +384,27 @@ static int do_check_tree(avl_node *node,
     
     if (comp_height != node->height) {
         (void) printf("Bad height for %p: computed=%d stored=%d\n",
-		      (void*)node, comp_height, node->height);
+                      (void*)node, comp_height, node->height);
         ++*error;
     }
 
     if (bal > 1 || bal < -1) {
         (void) printf("Out of balance at node %p, balance = %d\n", 
-		      (void*)node, bal);
+                      (void*)node, bal);
         ++*error;
     }
 
     if (node->left != NIL(avl_node) && 
                     (*compar)(node->left->key, node->key) > 0) {
         (void) printf("Bad ordering between %p and %p", 
-		      (void*)node, (void*)node->left);
+                      (void*)node, (void*)node->left);
         ++*error;
     }
     
     if (node->right != NIL(avl_node) && 
                     (*compar)(node->key, node->right->key) > 0) {
         (void) printf("Bad ordering between %p and %p", 
-		      (void*)node, (void*)node->right);
+                      (void*)node, (void*)node->right);
         ++*error;
     }
 

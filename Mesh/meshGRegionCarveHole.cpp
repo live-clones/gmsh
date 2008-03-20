@@ -1,4 +1,4 @@
-// $Id: meshGRegionCarveHole.cpp,v 1.6 2008-02-22 21:09:01 geuzaine Exp $
+// $Id: meshGRegionCarveHole.cpp,v 1.7 2008-03-20 11:44:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -50,8 +50,8 @@ void carveHole(std::vector<T*> &elements, double distance, ANNkd_tree *kdtree)
       kdtree->annkSearch(xyz, 1, index, dist);
       double d = sqrt(dist[0]);
       if(d < distance){
-	delete elements[i];
-	break;
+        delete elements[i];
+        break;
       }
       else if(j == elements[i]->getNumVertices() - 1){
         temp.push_back(elements[i]);
@@ -71,9 +71,9 @@ void addFaces(std::vector<T*> &elements, std::set<MFace, Less_Face> &faces)
       MFace f = elements[i]->getFace(j);
       std::set<MFace, Less_Face>::iterator it = faces.find(f);
       if(it == faces.end())
-	faces.insert(f);
+        faces.insert(f);
       else
-	faces.erase(it);
+        faces.erase(it);
     }
   }
 }
@@ -143,10 +143,10 @@ void carveHole(GRegion *gr, int num, double distance, std::vector<int> &surfaces
     }
     if(it->getNumVertices() == 3)
       gf->triangles.push_back(new MTriangle(it->getVertex(0), it->getVertex(1),
-					    it->getVertex(2)));
+                                            it->getVertex(2)));
     else if(it->getNumVertices() == 4)
       gf->quadrangles.push_back(new MQuadrangle(it->getVertex(0), it->getVertex(1),
-						it->getVertex(2), it->getVertex(3)));
+                                                it->getVertex(2), it->getVertex(3)));
   }
 }
 

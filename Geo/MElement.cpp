@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.60 2008-03-19 21:22:36 geuzaine Exp $
+// $Id: MElement.cpp,v 1.61 2008-03-20 11:44:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -40,8 +40,8 @@ int MElement::_globalNum = 0;
 double MElementLessThanLexicographic::tolerance = 1.e-6;
 
 void MElement::_getEdgeRep(MVertex *v0, MVertex *v1, 
-			   double *x, double *y, double *z, SVector3 *n, 
-			   int faceIndex)
+                           double *x, double *y, double *z, SVector3 *n, 
+                           int faceIndex)
 {
   x[0] = v0->x(); y[0] = v0->y(); z[0] = v0->z();
   x[1] = v1->x(); y[1] = v1->y(); z[1] = v1->z();
@@ -55,7 +55,7 @@ void MElement::_getEdgeRep(MVertex *v0, MVertex *v1,
 }
 
 void MElement::_getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2, 
-			   double *x, double *y, double *z, SVector3 *n)
+                           double *x, double *y, double *z, SVector3 *n)
 {
   x[0] = v0->x(); x[1] = v1->x(); x[2] = v2->x(); 
   y[0] = v0->y(); y[1] = v1->y(); y[2] = v2->y();
@@ -233,8 +233,8 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3])
       jac[2][0] += p->x() * s[2]; jac[2][1] += p->y() * s[2]; jac[2][2] += p->z() * s[2];
     }
     return fabs(jac[0][0] * jac[1][1] * jac[2][2] + jac[0][2] * jac[1][0] * jac[2][1] +
-		jac[0][1] * jac[1][2] * jac[2][0] - jac[0][2] * jac[1][1] * jac[2][0] -
-		jac[0][0] * jac[1][2] * jac[2][1] - jac[0][1] * jac[1][0] * jac[2][2]);
+                jac[0][1] * jac[1][2] * jac[2][0] - jac[0][2] * jac[1][1] * jac[2][0] -
+                jac[0][0] * jac[1][2] * jac[2][1] - jac[0][1] * jac[1][0] * jac[2][2]);
   case 2 :
     for(int i = 0; i < getNumVertices(); i++) {
       getGradShapeFunction(i, u, v, w, s);
@@ -244,18 +244,18 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3])
     }
     {
       double a[3], b[3], c[3];
-      a[0]= getVertex(1)->x() - getVertex(0)->x(); 
-      a[1]= getVertex(1)->y() - getVertex(0)->y();
-      a[2]= getVertex(1)->z() - getVertex(0)->z();	
-      b[0]= getVertex(2)->x() - getVertex(0)->x(); 
-      b[1]= getVertex(2)->y() - getVertex(0)->y();
-      b[2]= getVertex(2)->z() - getVertex(0)->z();	
+      a[0] = getVertex(1)->x() - getVertex(0)->x(); 
+      a[1] = getVertex(1)->y() - getVertex(0)->y();
+      a[2] = getVertex(1)->z() - getVertex(0)->z();     
+      b[0] = getVertex(2)->x() - getVertex(0)->x(); 
+      b[1] = getVertex(2)->y() - getVertex(0)->y();
+      b[2] = getVertex(2)->z() - getVertex(0)->z();     
       prodve(a, b, c);
       jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2]; 
     }
     return sqrt(SQR(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0]) +
-		SQR(jac[0][2] * jac[1][0] - jac[0][0] * jac[1][2]) +
-		SQR(jac[0][1] * jac[1][2] - jac[0][2] * jac[1][1]));
+                SQR(jac[0][2] * jac[1][0] - jac[0][0] * jac[1][2]) +
+                SQR(jac[0][1] * jac[1][2] - jac[0][2] * jac[1][1]));
   case 1:
     for(int i = 0; i < getNumVertices(); i++) {
       getGradShapeFunction(i, u, v, w, s);
@@ -264,15 +264,15 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3])
     }
     {
       double a[3], b[3], c[3];
-      a[0]= getVertex(1)->x() - getVertex(0)->x(); 
-      a[1]= getVertex(1)->y() - getVertex(0)->y();
-      a[2]= getVertex(1)->z() - getVertex(0)->z();	
+      a[0] = getVertex(1)->x() - getVertex(0)->x(); 
+      a[1] = getVertex(1)->y() - getVertex(0)->y();
+      a[2] = getVertex(1)->z() - getVertex(0)->z();     
       if((fabs(a[0]) >= fabs(a[1]) && fabs(a[0]) >= fabs(a[2])) ||
-	 (fabs(a[1]) >= fabs(a[0]) && fabs(a[1]) >= fabs(a[2]))) {
-	b[0] = a[1]; b[1] = -a[0]; b[2] = 0.;
+         (fabs(a[1]) >= fabs(a[0]) && fabs(a[1]) >= fabs(a[2]))) {
+        b[0] = a[1]; b[1] = -a[0]; b[2] = 0.;
       }
       else {
-	b[0] = 0.; b[1] = a[2]; b[2] = -a[1];
+        b[0] = 0.; b[1] = a[2]; b[2] = -a[1];
       }
       prodve(a, b, c);
       jac[1][0] = b[0]; jac[1][1] = b[1]; jac[1][2] = b[2]; 
@@ -335,7 +335,7 @@ double MElement::interpolate(double val[], double u, double v, double w, int str
 }
 
 void MElement::interpolateGrad(double val[], double u, double v, double w, double f[3],
-			       int stride, double invjac[3][3])
+                               int stride, double invjac[3][3])
 {
   double dfdu[3] = {0., 0., 0.};
   int j = 0;
@@ -359,7 +359,7 @@ void MElement::interpolateGrad(double val[], double u, double v, double w, doubl
 }
 
 void MElement::interpolateCurl(double val[], double u, double v, double w, double f[3],
-			       int stride)
+                               int stride)
 {
   double fx[3], fy[3], fz[3], jac[3][3], inv[3][3];
   getJacobian(u, v, w, jac);
@@ -384,7 +384,7 @@ double MElement::interpolateDiv(double val[], double u, double v, double w, int 
 }
 
 void MElement::writeMSH(FILE *fp, double version, bool binary, int num, 
-			int elementary, int physical)
+                        int elementary, int physical)
 {
   int type = getTypeForMSH();
 
@@ -426,8 +426,8 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
 }
 
 void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber, 
-			bool printGamma, bool printEta, bool printRho, 
-			double scalingFactor, int elementary)
+                        bool printGamma, bool printEta, bool printRho, 
+                        double scalingFactor, int elementary)
 {
   const char *str = getStringForPOS();
   if(!str) return;
@@ -437,7 +437,7 @@ void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
   for(int i = 0; i < n; i++){
     if(i) fprintf(fp, ",");
     fprintf(fp, "%g,%g,%g", getVertex(i)->x() * scalingFactor, 
-	    getVertex(i)->y() * scalingFactor, getVertex(i)->z() * scalingFactor);
+            getVertex(i)->y() * scalingFactor, getVertex(i)->z() * scalingFactor);
   }
   fprintf(fp, "){");
   bool first = true;
@@ -487,19 +487,19 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
     fprintf(fp, "  outer loop\n");
     for(int j = 0; j < 3; j++)
       fprintf(fp, "    vertex %g %g %g\n", 
-	      getVertex(j)->x() * scalingFactor, 
-	      getVertex(j)->y() * scalingFactor, 
-	      getVertex(j)->z() * scalingFactor);
+              getVertex(j)->x() * scalingFactor, 
+              getVertex(j)->y() * scalingFactor, 
+              getVertex(j)->z() * scalingFactor);
     fprintf(fp, "  endloop\n");
     fprintf(fp, "endfacet\n");
     if(getNumVertices() == 4){
       fprintf(fp, "facet normal %g %g %g\n", n[0], n[1], n[2]);
       fprintf(fp, "  outer loop\n");
       for(int j = 0; j < 3; j++)
-	fprintf(fp, "    vertex %g %g %g\n", 
-		getVertex(qid[j])->x() * scalingFactor, 
-		getVertex(qid[j])->y() * scalingFactor, 
-		getVertex(qid[j])->z() * scalingFactor);
+        fprintf(fp, "    vertex %g %g %g\n", 
+                getVertex(qid[j])->x() * scalingFactor, 
+                getVertex(qid[j])->y() * scalingFactor, 
+                getVertex(qid[j])->z() * scalingFactor);
       fprintf(fp, "  endloop\n");
       fprintf(fp, "endfacet\n");
     }
@@ -519,9 +519,9 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
     fwrite(data, sizeof(char), 50, fp);
     if(getNumVertices() == 4){
       for(int j = 0; j < 3; j++){
-	coords[3 + 3 * j] = getVertex(qid[j])->x() * scalingFactor;
-	coords[3 + 3 * j + 1] = getVertex(qid[j])->y() * scalingFactor;
-	coords[3 + 3 * j + 2] = getVertex(qid[j])->z() * scalingFactor;
+        coords[3 + 3 * j] = getVertex(qid[j])->x() * scalingFactor;
+        coords[3 + 3 * j + 1] = getVertex(qid[j])->y() * scalingFactor;
+        coords[3 + 3 * j + 2] = getVertex(qid[j])->z() * scalingFactor;
       }
       fwrite(data, sizeof(char), 50, fp);
     }
@@ -546,7 +546,7 @@ void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
   int material_property = abs(physical);
   int color = 7;
   fprintf(fp, "%10d%10d%10d%10d%10d%10d\n",
-	  num ? num : _num, type, physical_property, material_property, color, n);
+          num ? num : _num, type, physical_property, material_property, color, n);
   if(type == 21 || type == 24) // linear beam or parabolic beam
     fprintf(fp, "%10d%10d%10d\n", 0, 0, 0);
 
@@ -585,8 +585,8 @@ void MElement::writeBDF(FILE *fp, int format, int elementary)
     for(int i = 0; i < n; i++){
       fprintf(fp, ",%d", getVertex(i)->getNum());
       if(i != n - 1 && !((i + 3) % 8)){
-	fprintf(fp, ",+%s%d\n+%s%d", cont[ncont], _num, cont[ncont], _num);
-	ncont++;
+        fprintf(fp, ",+%s%d\n+%s%d", cont[ncont], _num, cont[ncont], _num);
+        ncont++;
       }
     }
     if(n == 2) // CBAR
@@ -598,8 +598,8 @@ void MElement::writeBDF(FILE *fp, int format, int elementary)
     for(int i = 0; i < n; i++){
       fprintf(fp, "%-8d", getVertex(i)->getNum());
       if(i != n - 1 && !((i + 3) % 8)){
-	fprintf(fp, "+%s%-6d\n+%s%-6d", cont[ncont], _num, cont[ncont], _num);
-	ncont++;
+        fprintf(fp, "+%s%-6d\n+%s%-6d", cont[ncont], _num, cont[ncont], _num);
+        ncont++;
       }
     }
     if(n == 2) // CBAR

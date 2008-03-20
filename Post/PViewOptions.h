@@ -113,7 +113,7 @@ class PViewOptions {
   void destroyGeneralRaise();
   double getScaleValue(int iso, int numIso, double min, double max);
   int getScaleIndex(double val, int numIso, double min, double max, 
-		    bool forceLinear=false);
+                    bool forceLinear=false);
   unsigned int getColor(int i, int nb);
   unsigned int getColor(double val, double min, double max, bool forceLinear=false);
   bool skipElement(int numEdges);

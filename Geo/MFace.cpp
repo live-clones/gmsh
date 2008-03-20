@@ -70,11 +70,11 @@ MFace::MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3)
     if(_v[3] < _v[int(_si[1])]) {
       _si[2] = _si[1];
       if(_v[3] < _v[int(_si[0])]) {
-	_si[1] = _si[0];
-	_si[0] = 3;
+        _si[1] = _si[0];
+        _si[0] = 3;
       }
       else
-	_si[1] = 3;
+        _si[1] = 3;
     }
     else
       _si[2] = 3;
@@ -87,8 +87,8 @@ SVector3 MFace::normal() const
 {
   double n[3];
   normal3points(_v[0]->x(), _v[0]->y(), _v[0]->z(),
-		_v[1]->x(), _v[1]->y(), _v[1]->z(),
-		_v[2]->x(), _v[2]->y(), _v[2]->z(), n);
+                _v[1]->x(), _v[1]->y(), _v[1]->z(),
+                _v[2]->x(), _v[2]->y(), _v[2]->z(), n);
   return SVector3(n[0], n[1], n[2]);
 }
 

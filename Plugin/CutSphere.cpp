@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.49 2008-02-17 08:48:06 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.50 2008-03-20 11:44:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -70,8 +70,8 @@ void GMSH_CutSpherePlugin::draw()
   glColor4ubv((GLubyte *) & CTX.color.fg);
   glLineWidth(CTX.line_width);
   glTranslated(CutSphereOptions_Number[0].def,
-	       CutSphereOptions_Number[1].def,
-	       CutSphereOptions_Number[2].def);
+               CutSphereOptions_Number[1].def,
+               CutSphereOptions_Number[2].def);
   gluSphere(qua, CutSphereOptions_Number[3].def, 40, 40);
   glPopMatrix();
   glPolygonMode(GL_FRONT_AND_BACK, mode[1]);
@@ -79,7 +79,7 @@ void GMSH_CutSpherePlugin::draw()
 }
 
 double GMSH_CutSpherePlugin::callback(int num, int action, double value, double *opt,
-				      double step, double min, double max)
+                                      double step, double min, double max)
 {
   switch(action){ // configure the input field
   case 1: return step;
@@ -97,37 +97,37 @@ double GMSH_CutSpherePlugin::callback(int num, int action, double value, double 
 double GMSH_CutSpherePlugin::callbackX(int num, int action, double value)
 {
   return callback(num, action, value, &CutSphereOptions_Number[0].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_CutSpherePlugin::callbackY(int num, int action, double value)
 {
   return callback(num, action, value, &CutSphereOptions_Number[1].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_CutSpherePlugin::callbackZ(int num, int action, double value)
 {
   return callback(num, action, value, &CutSphereOptions_Number[2].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_CutSpherePlugin::callbackR(int num, int action, double value)
 {
   return callback(num, action, value, &CutSphereOptions_Number[3].def,
-		  CTX.lc/100., 0., 2*CTX.lc);
+                  CTX.lc/100., 0., 2*CTX.lc);
 }
 
 double GMSH_CutSpherePlugin::callbackVol(int num, int action, double value)
 {
   return callback(num, action, value, &CutSphereOptions_Number[4].def,
-		  1., -1., 1.);
+                  1., -1., 1.);
 }
 
 double GMSH_CutSpherePlugin::callbackRecur(int num, int action, double value)
 {
   return callback(num, action, value, &CutSphereOptions_Number[5].def,
-		  1, 0, 10);
+                  1, 0, 10);
 }
 
 void GMSH_CutSpherePlugin::getName(char *name) const
@@ -142,13 +142,13 @@ void GMSH_CutSpherePlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(CutSphere) cuts the view `iView' with the\n"
-	 "sphere (X-`Xc')^2 + (Y-`Yc')^2 + (Z-`Zc')^2 = `R'^2.\n"
-	 "If `ExtractVolume' is nonzero, the plugin extracts\n"
-	 "the elements inside (if `ExtractVolume' < 0) or\n"
-	 "outside (if `ExtractVolume' > 0) the sphere. If\n"
-	 "`iView' < 0, the plugin is run on the current view.\n"
-	 "\n"
-	 "Plugin(CutSphere) creates one new view.\n");
+         "sphere (X-`Xc')^2 + (Y-`Yc')^2 + (Z-`Zc')^2 = `R'^2.\n"
+         "If `ExtractVolume' is nonzero, the plugin extracts\n"
+         "the elements inside (if `ExtractVolume' < 0) or\n"
+         "outside (if `ExtractVolume' > 0) the sphere. If\n"
+         "`iView' < 0, the plugin is run on the current view.\n"
+         "\n"
+         "Plugin(CutSphere) creates one new view.\n");
 }
 
 int GMSH_CutSpherePlugin::getNbOptions() const

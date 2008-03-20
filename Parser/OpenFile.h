@@ -29,8 +29,8 @@ void FixRelativePath(const char *in, char *out);
 void FixWindowsPath(const char *in, char *out);
 void SplitFileName(const char *name, char *no_ext, char *ext, char *base);
 void SetBoundingBox(double xmin, double xmax,
-		    double ymin, double ymax, 
-		    double zmin, double zmax);
+                    double ymin, double ymax, 
+                    double zmin, double zmax);
 void SetBoundingBox(void);
 void AddToTemporaryBoundingBox(double x, double y, double z);
 

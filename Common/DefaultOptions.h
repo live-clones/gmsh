@@ -770,7 +770,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Terminal" , opt_general_terminal , 
 #if defined(HAVE_FLTK)
     0. ,
-#else		      
+#else                 
     1. ,
 #endif
     "Should information be printed on the terminal (if available)?" },

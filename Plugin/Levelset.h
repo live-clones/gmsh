@@ -27,13 +27,13 @@ class GMSH_LevelsetPlugin : public GMSH_Post_Plugin
  private:
   double _invert;
   void _addElement(int step, int np, int numEdges, int numComp,
-		   double xp[12], double yp[12], double zp[12],
-		   double valp[12][9], PViewDataList *out);
+                   double xp[12], double yp[12], double zp[12],
+                   double valp[12][9], PViewDataList *out);
   void _cutAndAddElements(PViewData *vdata, PViewData *wdata,
-			  int ent, int ele, int step, int wstep,
-			  double x[8], double y[8], double z[8],
-			  double levels[8], double scalarValues[8],
-			  PViewDataList *out);
+                          int ent, int ele, int step, int wstep,
+                          double x[8], double y[8], double z[8],
+                          double levels[8], double scalarValues[8],
+                          PViewDataList *out);
  protected:
   double _ref[3], _targetError;
   int _valueTimeStep, _valueView, _valueIndependent, _recurLevel, _extractVolume;  

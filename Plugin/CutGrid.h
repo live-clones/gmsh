@@ -30,19 +30,19 @@ extern "C"
 class GMSH_CutGridPlugin : public GMSH_Post_Plugin
 {
   static double callback(int num, int action, double value, double *opt,
-			 double step, double min, double max);
+                         double step, double min, double max);
   void addInView(int numsteps, int connect, int nbcomp, 
-		 double ***pnts, double ***vals, 
-		 List_T *P, int *nP, 
-		 List_T *L, int *nL, 
-		 List_T *Q, int *nQ);
+                 double ***pnts, double ***vals, 
+                 List_T *P, int *nP, 
+                 List_T *L, int *nL, 
+                 List_T *Q, int *nQ);
   PView *GenerateView (PView *v, int connectPoints);
 public:
   GMSH_CutGridPlugin();
   void getName  (char *name) const;
   void getInfos (char *author, 
-  		 char *copyright,
-  		 char *help_text) const;
+                 char *copyright,
+                 char *help_text) const;
   void catchErrorMessage (char *errorMessage) const;
   int getNbOptions() const;
   StringXNumber *getOption (int iopt);  

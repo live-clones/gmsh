@@ -40,12 +40,12 @@ public :
   static smooth_data *normals;
   ExtrudeParams(int Mode = EXTRUDED_ENTITY);
   void fill(int type,
-	    double T0, double T1, double T2,
-	    double A0, double A1, double A2,
-	    double X0, double X1, double X2, double angle);
+            double T0, double T1, double T2,
+            double A0, double A1, double A2,
+            double X0, double X1, double X2, double angle);
   double u(int iLayer, int iElemLayer);
   void Extrude(int iLayer, int iElemLayer,
-	       double &dx, double &dy, double &dz);
+               double &dx, double &dy, double &dz);
   void Extrude(double t, double &x, double &y, double &z);
   void Rotate(double matr[3][3]);
   struct{

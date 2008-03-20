@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.25 2008-02-17 08:48:01 geuzaine Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.26 2008-03-20 11:44:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -67,12 +67,12 @@ int MeshTransfiniteSurface(GFace *gf)
 
   if(corners.size () != 3 && corners.size () != 4){
     Msg(GERROR,"Surface %d is transfinite but has %d corners",
-	gf->tag(), corners.size());
+        gf->tag(), corners.size());
     return 0;
   }
   if(indices.size () != 2){
     Msg(GERROR,"Surface %d is transfinite but has %d holes",
-	gf->tag(), indices.size() - 2);
+        gf->tag(), indices.size() - 2);
     return 0;
   }
 
@@ -115,10 +115,10 @@ int MeshTransfiniteSurface(GFace *gf)
     MVertex *v = m_vertices[i];
     if(v == corners[0] || v == corners[1] || v == corners[2] || 
        (corners.size() == 4 && v == corners[3])){
-      N[iCorner++] = i;	  
+      N[iCorner++] = i;   
       if(iCorner > 4){
-	Msg(GERROR,"Surface %d transfinite parameters are incoherent", gf->tag());
-	return 0;
+        Msg(GERROR,"Surface %d transfinite parameters are incoherent", gf->tag());
+        return 0;
       }
     }
     SPoint2 param;
@@ -135,9 +135,9 @@ int MeshTransfiniteSurface(GFace *gf)
     else{
       double UU, VV;
       if(v->onWhat() == gf && v->getParameter(0, UU) && v->getParameter(1, VV))
-	param = SPoint2(UU, VV);
+        param = SPoint2(UU, VV);
       else
-	param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+        param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
     }
     U.push_back(param.x());
     V.push_back(param.y());
@@ -156,7 +156,7 @@ int MeshTransfiniteSurface(GFace *gf)
     int Hb = m_vertices.size() - N4;
     if(Lb != L || Hb != H){
       Msg(GERROR,"Surface %d cannot be meshed using the transfinite algo", 
-	  gf->tag());
+          gf->tag());
       return 0;
     }
   }
@@ -164,7 +164,7 @@ int MeshTransfiniteSurface(GFace *gf)
     int Lb = m_vertices.size() - N3;      
     if(Lb != L){
       Msg(GERROR,"Surface %d cannot be meshed using the transfinite algo %d != %d", 
-	  gf->tag(), L, Lb);
+          gf->tag(), L, Lb);
       return 0;
     }      
   }
@@ -247,17 +247,17 @@ int MeshTransfiniteSurface(GFace *gf)
     for(int i = 1; i < L; i++){
       double u = lengths_i[i] / L_i;
       for(int j = 1; j < H; j++){ 
-	double v = lengths_j[j] / L_j;
-	int iP1 = N1 + i;
-	int iP2 = N2 + j;
-	int iP3 = N4 - i;
-	int iP4 = (N4 + (N3 - N2) - j) % m_vertices.size();
-	double Up = TRAN_QUA(U[iP1], U[iP2], U[iP3], U[iP4], UC1, UC2, UC3, UC4, u, v); 
-	double Vp = TRAN_QUA(V[iP1], V[iP2], V[iP3], V[iP4], VC1, VC2, VC3, VC4, u, v); 
-	GPoint gp = gf->point(SPoint2(Up, Vp));
-	MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
-	gf->mesh_vertices.push_back(newv);
-	tab[i][j] = newv;
+        double v = lengths_j[j] / L_j;
+        int iP1 = N1 + i;
+        int iP2 = N2 + j;
+        int iP3 = N4 - i;
+        int iP4 = (N4 + (N3 - N2) - j) % m_vertices.size();
+        double Up = TRAN_QUA(U[iP1], U[iP2], U[iP3], U[iP4], UC1, UC2, UC3, UC4, u, v); 
+        double Vp = TRAN_QUA(V[iP1], V[iP2], V[iP3], V[iP4], VC1, VC2, VC3, VC4, u, v); 
+        GPoint gp = gf->point(SPoint2(Up, Vp));
+        MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
+        gf->mesh_vertices.push_back(newv);
+        tab[i][j] = newv;
       }
     }
   }
@@ -265,36 +265,36 @@ int MeshTransfiniteSurface(GFace *gf)
     for(int i = 1; i < L; i++){
       double u = lengths_i[i] / L_i;
       for(int j = 1; j < H; j++){ 
-	double v = lengths_j[j] / L_j;
-	int iP1 = N1 + i;
-	int iP2 = N2 + j;
-	int iP3 = ((N3 + N2) - i) % m_vertices.size();
-	double Up, Vp;
-	if(gf->geomType() != GEntity::RuledSurface){
-	  Up = TRAN_TRI(U[iP1], U[iP2], U[iP3], UC1, UC2, UC3, u, v);
-	  Vp = TRAN_TRI(V[iP1], V[iP2], V[iP3], VC1, VC2, VC3, u, v);
-	}
-	else{
-	  // FIXME: to get nice meshes we would need to make the u,v
-	  // coords match with the (degenerate) coordinates of the
-	  // underlying ruled surface; so instead we just interpolate
-	  // in real space
-	  double xp = TRAN_TRI(m_vertices[iP1]->x(), m_vertices[iP2]->x(), 	 
-			       m_vertices[iP3]->x(), m_vertices[N1]->x(), 	 
-			       m_vertices[N2]->x(), m_vertices[N3]->x(), u, v); 	 
-	  double yp = TRAN_TRI(m_vertices[iP1]->y(), m_vertices[iP2]->y(), 	 
-			       m_vertices[iP3]->y(), m_vertices[N1]->y(), 	 
-			       m_vertices[N2]->y(), m_vertices[N3]->y(), u, v); 	 
-	  double zp = TRAN_TRI(m_vertices[iP1]->z(), m_vertices[iP2]->z(), 	 
-			       m_vertices[iP3]->z(), m_vertices[N1]->z(), 	 
-			       m_vertices[N2]->z(), m_vertices[N3]->z(), u, v); 	 
-	  // xp,yp,zp can be off the surface so we cannot use parFromPoint
-	  gf->XYZtoUV(xp, yp, zp, Up, Vp, 1.0, false); 	 
-	}
- 	GPoint gp = gf->point(SPoint2(Up, Vp));
-	MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
-	gf->mesh_vertices.push_back(newv);
-	tab[i][j] = newv;
+        double v = lengths_j[j] / L_j;
+        int iP1 = N1 + i;
+        int iP2 = N2 + j;
+        int iP3 = ((N3 + N2) - i) % m_vertices.size();
+        double Up, Vp;
+        if(gf->geomType() != GEntity::RuledSurface){
+          Up = TRAN_TRI(U[iP1], U[iP2], U[iP3], UC1, UC2, UC3, u, v);
+          Vp = TRAN_TRI(V[iP1], V[iP2], V[iP3], VC1, VC2, VC3, u, v);
+        }
+        else{
+          // FIXME: to get nice meshes we would need to make the u,v
+          // coords match with the (degenerate) coordinates of the
+          // underlying ruled surface; so instead we just interpolate
+          // in real space
+          double xp = TRAN_TRI(m_vertices[iP1]->x(), m_vertices[iP2]->x(),       
+                               m_vertices[iP3]->x(), m_vertices[N1]->x(),        
+                               m_vertices[N2]->x(), m_vertices[N3]->x(), u, v);          
+          double yp = TRAN_TRI(m_vertices[iP1]->y(), m_vertices[iP2]->y(),       
+                               m_vertices[iP3]->y(), m_vertices[N1]->y(),        
+                               m_vertices[N2]->y(), m_vertices[N3]->y(), u, v);          
+          double zp = TRAN_TRI(m_vertices[iP1]->z(), m_vertices[iP2]->z(),       
+                               m_vertices[iP3]->z(), m_vertices[N1]->z(),        
+                               m_vertices[N2]->z(), m_vertices[N3]->z(), u, v);          
+          // xp,yp,zp can be off the surface so we cannot use parFromPoint
+          gf->XYZtoUV(xp, yp, zp, Up, Vp, 1.0, false);   
+        }
+        GPoint gp = gf->point(SPoint2(Up, Vp));
+        MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
+        gf->mesh_vertices.push_back(newv);
+        tab[i][j] = newv;
       }
     }
   }  
@@ -308,47 +308,47 @@ int MeshTransfiniteSurface(GFace *gf)
       numSmooth = gf->meshAttributes.transfiniteSmoothing;
     for (int IT = 0; IT < numSmooth; IT++){
       for(int i = 1; i < L; i++){
-	for(int j = 1; j < H; j++){
-	  MVertex *v11 = tab[i - 1][j - 1];
-	  MVertex *v12 = tab[i - 1][j    ];
-	  MVertex *v13 = tab[i - 1][j + 1];	      
-	  MVertex *v21 = tab[i    ][j - 1];
-	  MVertex *v22 = tab[i    ][j    ];
-	  MVertex *v23 = tab[i    ][j + 1];
-	  MVertex *v31 = tab[i + 1][j - 1];
-	  MVertex *v32 = tab[i + 1][j    ];
-	  MVertex *v33 = tab[i + 1][j + 1];
-	  double alpha = 0.25 * (DSQR(v23->x() - v21->x()) +
-				 DSQR(v23->y() - v21->y()) +
-				 DSQR(v23->z() - v21->z()));
-	  double gamma = 0.25 * (DSQR(v32->x() - v12->x()) +
-				 DSQR(v32->y() - v12->y()) +
-				 DSQR(v32->z() - v12->z()));
-	  double beta = 0.0625 * ((v32->x() - v12->x()) * (v23->x() - v21->x()) +
-				  (v32->y() - v12->y()) * (v23->y() - v21->y()) +
-				  (v32->z() - v12->z()) * (v23->z() - v21->z()));
-	  v22->x() = 0.5 * (alpha * (v32->x() + v12->x()) + 
-			    gamma * (v23->x() + v21->x()) -
-			    2. * beta * (v33->x() - v13->x() - 
-					 v31->x() + v11->x())) / (alpha + gamma);
-	  v22->y() = 0.5 * (alpha * (v32->y() + v12->y()) +
-			    gamma * (v23->y() + v21->y()) -
-			    2. * beta * (v33->y() - v13->y() -
-					 v31->y() + v11->y())) / (alpha + gamma);
-	  v22->z() = 0.5 * (alpha * (v32->z() + v12->z()) +
-			    gamma * (v23->z() + v21->z()) -
-			    2. * beta * (v33->z() - v13->z() -
-					 v31->z() + v11->z())) / (alpha + gamma);
-	}
+        for(int j = 1; j < H; j++){
+          MVertex *v11 = tab[i - 1][j - 1];
+          MVertex *v12 = tab[i - 1][j    ];
+          MVertex *v13 = tab[i - 1][j + 1];           
+          MVertex *v21 = tab[i    ][j - 1];
+          MVertex *v22 = tab[i    ][j    ];
+          MVertex *v23 = tab[i    ][j + 1];
+          MVertex *v31 = tab[i + 1][j - 1];
+          MVertex *v32 = tab[i + 1][j    ];
+          MVertex *v33 = tab[i + 1][j + 1];
+          double alpha = 0.25 * (DSQR(v23->x() - v21->x()) +
+                                 DSQR(v23->y() - v21->y()) +
+                                 DSQR(v23->z() - v21->z()));
+          double gamma = 0.25 * (DSQR(v32->x() - v12->x()) +
+                                 DSQR(v32->y() - v12->y()) +
+                                 DSQR(v32->z() - v12->z()));
+          double beta = 0.0625 * ((v32->x() - v12->x()) * (v23->x() - v21->x()) +
+                                  (v32->y() - v12->y()) * (v23->y() - v21->y()) +
+                                  (v32->z() - v12->z()) * (v23->z() - v21->z()));
+          v22->x() = 0.5 * (alpha * (v32->x() + v12->x()) + 
+                            gamma * (v23->x() + v21->x()) -
+                            2. * beta * (v33->x() - v13->x() - 
+                                         v31->x() + v11->x())) / (alpha + gamma);
+          v22->y() = 0.5 * (alpha * (v32->y() + v12->y()) +
+                            gamma * (v23->y() + v21->y()) -
+                            2. * beta * (v33->y() - v13->y() -
+                                         v31->y() + v11->y())) / (alpha + gamma);
+          v22->z() = 0.5 * (alpha * (v32->z() + v12->z()) +
+                            gamma * (v23->z() + v21->z()) -
+                            2. * beta * (v33->z() - v13->z() -
+                                         v31->z() + v11->z())) / (alpha + gamma);
+        }
       }
     }
     // recompute corresponding u,v coordinates (necessary e.g. for 2nd order algo)
     for(int i = 1; i < L; i++){
       for(int j = 1; j < H; j++){
-	MVertex *v = tab[i][j];
-	SPoint2 param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
-	v->setParameter(0, param[0]);
-	v->setParameter(1, param[1]);
+        MVertex *v = tab[i][j];
+        SPoint2 param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+        v->setParameter(0, param[0]);
+        v->setParameter(1, param[1]);
       }
     }
   }
@@ -357,23 +357,23 @@ int MeshTransfiniteSurface(GFace *gf)
     // create elements
     for(int i = 0; i < L ; i++){
       for(int j = 0; j < H; j++){
-	MVertex *v1 = tab[i    ][j    ];
-	MVertex *v2 = tab[i + 1][j    ];
-	MVertex *v3 = tab[i + 1][j + 1];
-	MVertex *v4 = tab[i    ][j + 1];
-	if(gf->meshAttributes.recombine)
-	  gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
-	else if(gf->meshAttributes.transfiniteArrangement == 1 ||
-		(gf->meshAttributes.transfiniteArrangement == 0 && 
-		 ((i % 2 == 0 && j % 2 == 1) ||
-		  (i % 2 == 1 && j % 2 == 0)))){
-	  gf->triangles.push_back(new MTriangle(v1, v2, v3));
-	  gf->triangles.push_back(new MTriangle(v3, v4, v1));
-	}	  
-	else{
-	  gf->triangles.push_back(new MTriangle(v1, v2, v4));
-	  gf->triangles.push_back(new MTriangle(v4, v2, v3));
-	}	  
+        MVertex *v1 = tab[i    ][j    ];
+        MVertex *v2 = tab[i + 1][j    ];
+        MVertex *v3 = tab[i + 1][j + 1];
+        MVertex *v4 = tab[i    ][j + 1];
+        if(gf->meshAttributes.recombine)
+          gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+        else if(gf->meshAttributes.transfiniteArrangement == 1 ||
+                (gf->meshAttributes.transfiniteArrangement == 0 && 
+                 ((i % 2 == 0 && j % 2 == 1) ||
+                  (i % 2 == 1 && j % 2 == 0)))){
+          gf->triangles.push_back(new MTriangle(v1, v2, v3));
+          gf->triangles.push_back(new MTriangle(v3, v4, v1));
+        }         
+        else{
+          gf->triangles.push_back(new MTriangle(v1, v2, v4));
+          gf->triangles.push_back(new MTriangle(v4, v2, v3));
+        }         
       }
     }
   }
@@ -386,23 +386,23 @@ int MeshTransfiniteSurface(GFace *gf)
     }
     for(int i = 1; i < L ; i++){
       for(int j = 0; j < H; j++){
-	MVertex *v1 = tab[i    ][j    ];
-	MVertex *v2 = tab[i + 1][j    ];
-	MVertex *v3 = tab[i + 1][j + 1];
-	MVertex *v4 = tab[i    ][j + 1];
-	if(gf->meshAttributes.recombine)
-	  gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
-	else if(gf->meshAttributes.transfiniteArrangement == 1 ||
-		(gf->meshAttributes.transfiniteArrangement == 0 && 
-		 ((i % 2 == 0 && j % 2 == 1) ||
-		  (i % 2 == 1 && j % 2 == 0)))){
-	  gf->triangles.push_back(new MTriangle(v1, v2, v3));
-	  gf->triangles.push_back(new MTriangle(v3, v4, v1));
-	}	  
-	else{
-	  gf->triangles.push_back(new MTriangle(v1, v2, v4));
-	  gf->triangles.push_back(new MTriangle(v4, v2, v3));
-	}	  
+        MVertex *v1 = tab[i    ][j    ];
+        MVertex *v2 = tab[i + 1][j    ];
+        MVertex *v3 = tab[i + 1][j + 1];
+        MVertex *v4 = tab[i    ][j + 1];
+        if(gf->meshAttributes.recombine)
+          gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+        else if(gf->meshAttributes.transfiniteArrangement == 1 ||
+                (gf->meshAttributes.transfiniteArrangement == 0 && 
+                 ((i % 2 == 0 && j % 2 == 1) ||
+                  (i % 2 == 1 && j % 2 == 0)))){
+          gf->triangles.push_back(new MTriangle(v1, v2, v3));
+          gf->triangles.push_back(new MTriangle(v3, v4, v1));
+        }         
+        else{
+          gf->triangles.push_back(new MTriangle(v1, v2, v4));
+          gf->triangles.push_back(new MTriangle(v4, v2, v3));
+        }         
       }
     }
   }

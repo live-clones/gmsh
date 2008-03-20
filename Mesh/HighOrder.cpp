@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.26 2008-03-12 14:52:58 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.27 2008-03-20 11:44:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -122,7 +122,7 @@ bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N, double
       u[i + 1] += eps;
       myresid(N, ge, u, Rp);
       for (int j = 0; j < M; j++){
-	J(i, j) = (Rp(j) - R(j)) / eps;
+        J(i, j) = (Rp(j) - R(j)) / eps;
       }
       u[i+1] -= eps;
     }
@@ -166,7 +166,7 @@ static void myresid(int N, GFace *gf, double *u, double *v, Double_Vector &r)
 }
 
 bool computeEquidistantParameters(GFace *gf, double u0, double uN, double v0, double vN, 
-				  int N, double *u, double *v)
+                                  int N, double *u, double *v)
 {
   const double PRECISION = 1.e-6;
   const int MAX_ITER = 50;
@@ -210,7 +210,7 @@ bool computeEquidistantParameters(GFace *gf, double u0, double uN, double v0, do
       v[i + 1] = p.y();
       myresid(N, gf, u, v, Rp);
       for (int j = 0; j < M; j++){
-	J(i, j) = (Rp(j) - R(j)) / eps;
+        J(i, j) = (Rp(j) - R(j)) / eps;
       }
       t[i + 1] -= eps;
       u[i + 1] = tempu;
@@ -257,16 +257,16 @@ bool reparamOnEdge(MVertex *v, GEdge *ge, double &param)
 }
 
 void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
-		     edgeContainer &edgeVertices, bool linear, int nPts = 1)
+                     edgeContainer &edgeVertices, bool linear, int nPts = 1)
 {
   for(int i = 0; i < ele->getNumEdges(); i++){
     MEdge edge = ele->getEdge(i);
     std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
     if(edgeVertices.count(p)){
       if(edge.getVertex(0) == edge.getMinVertex())
-	ve.insert(ve.end(), edgeVertices[p].begin(), edgeVertices[p].end());
+        ve.insert(ve.end(), edgeVertices[p].begin(), edgeVertices[p].end());
       else
-	ve.insert(ve.end(), edgeVertices[p].rbegin(), edgeVertices[p].rend());
+        ve.insert(ve.end(), edgeVertices[p].rbegin(), edgeVertices[p].rend());
     }
     else{
       MVertex *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);            
@@ -274,135 +274,135 @@ void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
       double u0 = 0., u1 = 0.;
       bool reparamOK = true;
       if(!linear && ge->geomType() != GEntity::DiscreteCurve &&
-	 ge->geomType() != GEntity::BoundaryLayerCurve){
-	reparamOK &= reparamOnEdge(v0, ge, u0);
+         ge->geomType() != GEntity::BoundaryLayerCurve){
+        reparamOK &= reparamOnEdge(v0, ge, u0);
 
-	if (ge->periodic(0) &&  v1 == ge->getEndVertex()->mesh_vertices[0]){
-	  Range<double> par = ge->parBounds(0);
-	  u1 = par.high();
-	}	  
-	else
-	  reparamOK &= reparamOnEdge(v1, ge, u1);
+        if (ge->periodic(0) &&  v1 == ge->getEndVertex()->mesh_vertices[0]){
+          Range<double> par = ge->parBounds(0);
+          u1 = par.high();
+        }         
+        else
+          reparamOK &= reparamOnEdge(v1, ge, u1);
       }
       double US[100];
       if(reparamOK && !linear && ge->geomType() != GEntity::DiscreteCurve){
-	double relax = 1.;
-	while (1){
-	  if (computeEquidistantParameters(ge, u0, u1, nPts + 2, US,relax))break;
-	  relax /= 2.0;
-	  if (relax < 1.e-2)break;
-	} 
-	if (relax < 1.e-2)printf("failure in computing equidistant parameters %g\n",relax);
+        double relax = 1.;
+        while (1){
+          if (computeEquidistantParameters(ge, u0, u1, nPts + 2, US,relax))break;
+          relax /= 2.0;
+          if (relax < 1.e-2)break;
+        } 
+        if (relax < 1.e-2)printf("failure in computing equidistant parameters %g\n",relax);
       }
       std::vector<MVertex*> temp;      
       for(int j = 0; j < nPts; j++){
-	const double t = (double)(j + 1)/(nPts + 1);
-	double uc = (1. - t) * u0 + t * u1;
-	MVertex *v;
-	if(!reparamOK || linear || ge->geomType() == GEntity::DiscreteCurve || 
-	   uc < u0 || uc > u1){ // need to treat periodic curves properly!
-	  SPoint3 pc = edge.interpolate(t);
-	  v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
-	  v->setParameter (0,t);
-	}
-	else {
-	  GPoint pc = ge->point(US[j+1]);
-	  v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, US[j+1]);
-	}
-	temp.push_back(v);
-	ge->mesh_vertices.push_back(v);
-	ve.push_back(v);
+        const double t = (double)(j + 1)/(nPts + 1);
+        double uc = (1. - t) * u0 + t * u1;
+        MVertex *v;
+        if(!reparamOK || linear || ge->geomType() == GEntity::DiscreteCurve || 
+           uc < u0 || uc > u1){ // need to treat periodic curves properly!
+          SPoint3 pc = edge.interpolate(t);
+          v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
+          v->setParameter (0,t);
+        }
+        else {
+          GPoint pc = ge->point(US[j+1]);
+          v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, US[j+1]);
+        }
+        temp.push_back(v);
+        ge->mesh_vertices.push_back(v);
+        ve.push_back(v);
       }
       if(edge.getVertex(0) == edge.getMinVertex())
-	edgeVertices[p].insert(edgeVertices[p].end(), temp.begin(), temp.end());
+        edgeVertices[p].insert(edgeVertices[p].end(), temp.begin(), temp.end());
       else
-	edgeVertices[p].insert(edgeVertices[p].end(), temp.rbegin(), temp.rend());
+        edgeVertices[p].insert(edgeVertices[p].end(), temp.rbegin(), temp.rend());
     }
   }
 }
 
 void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
-		     edgeContainer &edgeVertices, bool linear, int nPts = 1)
+                     edgeContainer &edgeVertices, bool linear, int nPts = 1)
 {
   for(int i = 0; i < ele->getNumEdges(); i++){
     MEdge edge = ele->getEdge(i);    
     std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
     if(edgeVertices.count(p)){
       if(edge.getVertex(0) == edge.getMinVertex())
-	ve.insert(ve.end(), edgeVertices[p].begin(), edgeVertices[p].end());
+        ve.insert(ve.end(), edgeVertices[p].begin(), edgeVertices[p].end());
       else
-	ve.insert(ve.end(), edgeVertices[p].rbegin(), edgeVertices[p].rend());
+        ve.insert(ve.end(), edgeVertices[p].rbegin(), edgeVertices[p].rend());
     }
     else{
       MVertex *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);
       SPoint2 p0, p1;
       bool reparamOK = true;
       if(!linear && 
-	 gf->geomType() != GEntity::DiscreteSurface &&
-	 gf->geomType() != GEntity::BoundaryLayerSurface){
-	reparamOK &= reparamOnFace(v0, gf, p0);
-	reparamOK &= reparamOnFace(v1, gf, p1);
+         gf->geomType() != GEntity::DiscreteSurface &&
+         gf->geomType() != GEntity::BoundaryLayerSurface){
+        reparamOK &= reparamOnFace(v0, gf, p0);
+        reparamOK &= reparamOnFace(v1, gf, p1);
       }
       double US[100], VS[100];
       if(reparamOK && !linear && gf->geomType() != GEntity::DiscreteCurve){
-	computeEquidistantParameters(gf, p0[0], p1[0], p0[1], p1[1], nPts + 2, US, VS);
+        computeEquidistantParameters(gf, p0[0], p1[0], p0[1], p1[1], nPts + 2, US, VS);
       }
       std::vector<MVertex*> temp;
       for(int j = 0; j < nPts; j++){
-	const double t = (double)(j + 1) / (nPts + 1);
-	MVertex *v;
-	if(!reparamOK || linear || gf->geomType() == GEntity::DiscreteSurface){
-	  SPoint3 pc = edge.interpolate(t);
-	  v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
-	}
-	else{
-	  GPoint pc = gf->point(US[j+1], VS[j+1]);
-	  v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, US[j+1], VS[j+1]);
-	}
-	temp.push_back(v);
-	gf->mesh_vertices.push_back(v);
-	ve.push_back(v);
+        const double t = (double)(j + 1) / (nPts + 1);
+        MVertex *v;
+        if(!reparamOK || linear || gf->geomType() == GEntity::DiscreteSurface){
+          SPoint3 pc = edge.interpolate(t);
+          v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
+        }
+        else{
+          GPoint pc = gf->point(US[j+1], VS[j+1]);
+          v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, US[j+1], VS[j+1]);
+        }
+        temp.push_back(v);
+        gf->mesh_vertices.push_back(v);
+        ve.push_back(v);
       }
       if(edge.getVertex(0) == edge.getMinVertex())
-	edgeVertices[p].insert(edgeVertices[p].end(), temp.begin(), temp.end());
+        edgeVertices[p].insert(edgeVertices[p].end(), temp.begin(), temp.end());
       else
-	edgeVertices[p].insert(edgeVertices[p].end(), temp.rbegin(), temp.rend());
+        edgeVertices[p].insert(edgeVertices[p].end(), temp.rbegin(), temp.rend());
     }
   }
 }
 
 void getEdgeVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &ve,
-		     edgeContainer &edgeVertices, bool linear, int nPts = 1)
+                     edgeContainer &edgeVertices, bool linear, int nPts = 1)
 {
   for(int i = 0; i < ele->getNumEdges(); i++){
     MEdge edge = ele->getEdge(i);
     std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
     if(edgeVertices.count(p)){
       if(edge.getVertex(0) == edge.getMinVertex())
-	ve.insert(ve.end(), edgeVertices[p].begin(), edgeVertices[p].end());
+        ve.insert(ve.end(), edgeVertices[p].begin(), edgeVertices[p].end());
       else
-	ve.insert(ve.end(), edgeVertices[p].rbegin(), edgeVertices[p].rend());
+        ve.insert(ve.end(), edgeVertices[p].rbegin(), edgeVertices[p].rend());
     }
     else{
       std::vector<MVertex*> temp;
       for(int j = 0; j < nPts; j++){
-	double t = (double)(j + 1) / (nPts + 1);
-	SPoint3 pc = edge.interpolate(t);
-	MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
-	temp.push_back(v);
-	gr->mesh_vertices.push_back(v);
-	ve.push_back(v);
+        double t = (double)(j + 1) / (nPts + 1);
+        SPoint3 pc = edge.interpolate(t);
+        MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
+        temp.push_back(v);
+        gr->mesh_vertices.push_back(v);
+        ve.push_back(v);
       }
       if(edge.getVertex(0) == edge.getMinVertex())
-	edgeVertices[p].insert(edgeVertices[p].end(), temp.begin(), temp.end());
+        edgeVertices[p].insert(edgeVertices[p].end(), temp.begin(), temp.end());
       else
-	edgeVertices[p].insert(edgeVertices[p].end(), temp.rbegin(), temp.rend());
+        edgeVertices[p].insert(edgeVertices[p].end(), temp.rbegin(), temp.rend());
     }
   }
 }
 
 void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
-		     faceContainer &faceVertices, bool linear, int nPts = 1)
+                     faceContainer &faceVertices, bool linear, int nPts = 1)
 {
   Double_Matrix points;
   int start = 0;
@@ -436,64 +436,64 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
       SPoint2 p0, p1, p2, p3;
       bool reparamOK = true;
       if(!linear && 
-	 gf->geomType() != GEntity::DiscreteSurface &&
-	 gf->geomType() != GEntity::BoundaryLayerSurface){
-	reparamOK &= reparamOnFace(ele->getVertex(0), gf, p0);
-	reparamOK &= reparamOnFace(ele->getVertex(1), gf, p1);
-	reparamOK &= reparamOnFace(ele->getVertex(2), gf, p2);
-	if(face.getNumVertices() == 4)
-	  reparamOK &= reparamOnFace(ele->getVertex(3), gf, p3);
+         gf->geomType() != GEntity::DiscreteSurface &&
+         gf->geomType() != GEntity::BoundaryLayerSurface){
+        reparamOK &= reparamOnFace(ele->getVertex(0), gf, p0);
+        reparamOK &= reparamOnFace(ele->getVertex(1), gf, p1);
+        reparamOK &= reparamOnFace(ele->getVertex(2), gf, p2);
+        if(face.getNumVertices() == 4)
+          reparamOK &= reparamOnFace(ele->getVertex(3), gf, p3);
       }
       if(face.getNumVertices() == 3){ // triangles
-	for(int k = start ; k < points.size1() ; k++){
-	  MVertex *v;
-	  const double t1 = points(k, 0);
-	  const double t2 = points(k, 1);
-	  if(!reparamOK || linear || gf->geomType() == GEntity::DiscreteSurface){
-	    SPoint3 pc = face.interpolate(t1, t2);
-	    v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
-	  }
-	  else{
-	    double uc = (1. - t1 - t2) * p0[0] + t1 * p1[0] + t2 * p2[0];
-	    double vc = (1. - t1 - t2) * p0[1] + t1 * p1[1] + t2 * p2[1];
-	    GPoint pc = gf->point(uc, vc);
-	    v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
-	    v->setParameter (0,uc);
-	    v->setParameter (1,vc);
-	  }
-	  faceVertices[p].push_back(v);
-	  gf->mesh_vertices.push_back(v);
-	  vf.push_back(v);
-	}
+        for(int k = start ; k < points.size1() ; k++){
+          MVertex *v;
+          const double t1 = points(k, 0);
+          const double t2 = points(k, 1);
+          if(!reparamOK || linear || gf->geomType() == GEntity::DiscreteSurface){
+            SPoint3 pc = face.interpolate(t1, t2);
+            v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
+          }
+          else{
+            double uc = (1. - t1 - t2) * p0[0] + t1 * p1[0] + t2 * p2[0];
+            double vc = (1. - t1 - t2) * p0[1] + t1 * p1[1] + t2 * p2[1];
+            GPoint pc = gf->point(uc, vc);
+            v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
+            v->setParameter (0,uc);
+            v->setParameter (1,vc);
+          }
+          faceVertices[p].push_back(v);
+          gf->mesh_vertices.push_back(v);
+          vf.push_back(v);
+        }
       }
       else if(face.getNumVertices() == 4){ // quadrangles
-	for(int j = 0; j < nPts; j++){
-	  for(int k = 0; k < nPts; k++){
-	    MVertex *v;
-	    // parameters are between -1 and 1
-	    double t1 = 2. * (double)(j + 1) / (nPts + 1) - 1.;
-	    double t2 = 2. * (double)(k + 1) / (nPts + 1) - 1.;
-	    if(!reparamOK || linear || gf->geomType() == GEntity::DiscreteSurface){
-	      SPoint3 pc = face.interpolate(t1, t2);
-	      v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
-	    }
-	    else{
-	      double uc = 0.25 * ((1 - t1) * (1 - t2) * p0[0] + 
-				  (1 + t1) * (1 - t2) * p1[0] + 
-				  (1 + t1) * (1 + t2) * p2[0] + 
-				  (1 - t1) * (1 + t2) * p3[0]); 
-	      double vc = 0.25 * ((1 - t1) * (1 - t2) * p0[1] + 
-				  (1 + t1) * (1 - t2) * p1[1] + 
-				  (1 + t1) * (1 + t2) * p2[1] + 
-				  (1 - t1) * (1 + t2) * p3[1]); 
-	      GPoint pc = gf->point(uc, vc);
-	      v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
-	    }
-	    faceVertices[p].push_back(v);
-	    gf->mesh_vertices.push_back(v);
-	    vf.push_back(v);
-	  }
-	}
+        for(int j = 0; j < nPts; j++){
+          for(int k = 0; k < nPts; k++){
+            MVertex *v;
+            // parameters are between -1 and 1
+            double t1 = 2. * (double)(j + 1) / (nPts + 1) - 1.;
+            double t2 = 2. * (double)(k + 1) / (nPts + 1) - 1.;
+            if(!reparamOK || linear || gf->geomType() == GEntity::DiscreteSurface){
+              SPoint3 pc = face.interpolate(t1, t2);
+              v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
+            }
+            else{
+              double uc = 0.25 * ((1 - t1) * (1 - t2) * p0[0] + 
+                                  (1 + t1) * (1 - t2) * p1[0] + 
+                                  (1 + t1) * (1 + t2) * p2[0] + 
+                                  (1 - t1) * (1 + t2) * p3[0]); 
+              double vc = 0.25 * ((1 - t1) * (1 - t2) * p0[1] + 
+                                  (1 + t1) * (1 - t2) * p1[1] + 
+                                  (1 + t1) * (1 + t2) * p2[1] + 
+                                  (1 - t1) * (1 + t2) * p3[1]); 
+              GPoint pc = gf->point(uc, vc);
+              v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
+            }
+            faceVertices[p].push_back(v);
+            gf->mesh_vertices.push_back(v);
+            vf.push_back(v);
+          }
+        }
       }
       else throw; // not tri or quad
     }
@@ -501,7 +501,7 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
 }
 
 void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
-		     faceContainer &faceVertices, bool linear, int nPts = 1)
+                     faceContainer &faceVertices, bool linear, int nPts = 1)
 {
   for(int i = 0; i < ele->getNumFaces(); i++){
     MFace face = ele->getFace(i);
@@ -512,31 +512,31 @@ void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
     }
     else{      
       if(face.getNumVertices() == 3){ // triangles
-	for(int j = 0; j < nPts; j++){
-	  for(int k = 0 ; k < nPts - j - 1; k++){
-	    double t1 = (double)(j + 1) / (nPts + 1);
-	    double t2 = (double)(k + 1) / (nPts + 1);
-	    SPoint3 pc = face.interpolate(t1, t2);
-	    MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
-	    faceVertices[p].push_back(v);
-	    gr->mesh_vertices.push_back(v);
-	    vf.push_back(v);
-	  }
-	}
+        for(int j = 0; j < nPts; j++){
+          for(int k = 0 ; k < nPts - j - 1; k++){
+            double t1 = (double)(j + 1) / (nPts + 1);
+            double t2 = (double)(k + 1) / (nPts + 1);
+            SPoint3 pc = face.interpolate(t1, t2);
+            MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
+            faceVertices[p].push_back(v);
+            gr->mesh_vertices.push_back(v);
+            vf.push_back(v);
+          }
+        }
       }
       else if(face.getNumVertices() == 4){ // quadrangles
-	for(int j = 0; j < nPts; j++){
-	  for(int k = 0; k < nPts; k++){
-	    // parameters are between -1 and 1
-	    double t1 = 2. * (double)(j + 1) / (nPts + 1) - 1.;
-	    double t2 = 2. * (double)(k + 1) / (nPts + 1) - 1.;
-	    SPoint3 pc = face.interpolate(t1, t2);
-	    MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
-	    faceVertices[p].push_back(v);
-	    gr->mesh_vertices.push_back(v);
-	    vf.push_back(v);
-	  }
-	}
+        for(int j = 0; j < nPts; j++){
+          for(int k = 0; k < nPts; k++){
+            // parameters are between -1 and 1
+            double t1 = 2. * (double)(j + 1) / (nPts + 1) - 1.;
+            double t2 = 2. * (double)(k + 1) / (nPts + 1) - 1.;
+            SPoint3 pc = face.interpolate(t1, t2);
+            MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
+            faceVertices[p].push_back(v);
+            gr->mesh_vertices.push_back(v);
+            vf.push_back(v);
+          }
+        }
       }
       else throw; // not tri or quad
     }
@@ -544,7 +544,7 @@ void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
 }
 
 void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear, 
-		  int nbPts = 1)
+                  int nbPts = 1)
 {
   std::vector<MLine*> lines2;
   for(unsigned int i = 0; i < ge->lines.size(); i++){
@@ -562,8 +562,8 @@ void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear,
 }
 
 void setHighOrder(GFace *gf, edgeContainer &edgeVertices, 
-		  faceContainer &faceVertices, bool linear, bool incomplete,
-		  int nPts = 1)
+                  faceContainer &faceVertices, bool linear, bool incomplete,
+                  int nPts = 1)
 {
   std::vector<MTriangle*> triangles2;
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
@@ -572,21 +572,21 @@ void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
     getEdgeVertices(gf, t, ve, edgeVertices, linear, nPts);
     if(nPts == 1){
       triangles2.push_back
-	(new MTriangle6(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-			ve[0], ve[1], ve[2]));
+        (new MTriangle6(t->getVertex(0), t->getVertex(1), t->getVertex(2),
+                        ve[0], ve[1], ve[2]));
     }
     else{
       if(incomplete){
-	triangles2.push_back
-	  (new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-			  ve, nPts + 1));
+        triangles2.push_back
+          (new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
+                          ve, nPts + 1));
       }
       else{
-	getFaceVertices(gf, t, vf, faceVertices, linear, nPts);
-	ve.insert(ve.end(), vf.begin(), vf.end());
-	triangles2.push_back
-	  (new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-			  ve, nPts + 1));
+        getFaceVertices(gf, t, vf, faceVertices, linear, nPts);
+        ve.insert(ve.end(), vf.begin(), vf.end());
+        triangles2.push_back
+          (new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
+                          ve, nPts + 1));
       }
     }
     delete t;
@@ -600,14 +600,14 @@ void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
     getEdgeVertices(gf, q, ve, edgeVertices, linear, nPts);
     if(incomplete){
       quadrangles2.push_back
-	(new MQuadrangle8(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-			  q->getVertex(3), ve[0], ve[1], ve[2], ve[3]));
+        (new MQuadrangle8(q->getVertex(0), q->getVertex(1), q->getVertex(2),
+                          q->getVertex(3), ve[0], ve[1], ve[2], ve[3]));
     }
     else{
       getFaceVertices(gf, q, vf, faceVertices, linear, nPts);
       quadrangles2.push_back
-	(new MQuadrangle9(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-			  q->getVertex(3), ve[0], ve[1], ve[2], ve[3], vf[0]));
+        (new MQuadrangle9(q->getVertex(0), q->getVertex(1), q->getVertex(2),
+                          q->getVertex(3), ve[0], ve[1], ve[2], ve[3], vf[0]));
     }
     delete q;
   }
@@ -616,8 +616,8 @@ void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
 }
 
 void setHighOrder(GRegion *gr, edgeContainer &edgeVertices, 
-		  faceContainer &faceVertices, bool linear, bool incomplete,
-		  int nPts = 1)
+                  faceContainer &faceVertices, bool linear, bool incomplete,
+                  int nPts = 1)
 {
   std::vector<MTetrahedron*> tetrahedra2;
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
@@ -626,7 +626,7 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
     getEdgeVertices(gr, t, ve, edgeVertices, linear, nPts);
     tetrahedra2.push_back
       (new MTetrahedron10(t->getVertex(0), t->getVertex(1), t->getVertex(2), 
-			  t->getVertex(3), ve[0], ve[1], ve[2], ve[3], ve[4], ve[5]));
+                          t->getVertex(3), ve[0], ve[1], ve[2], ve[3], ve[4], ve[5]));
     delete t;
   }
   gr->tetrahedra = tetrahedra2;
@@ -638,11 +638,11 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
     getEdgeVertices(gr, h, ve, edgeVertices, linear, nPts);
     if(incomplete){
       hexahedra2.push_back
-	(new MHexahedron20(h->getVertex(0), h->getVertex(1), h->getVertex(2), 
-			   h->getVertex(3), h->getVertex(4), h->getVertex(5), 
-			   h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2], 
-			   ve[3], ve[4], ve[5], ve[6], ve[7], ve[8], ve[9], ve[10], 
-			   ve[11]));
+        (new MHexahedron20(h->getVertex(0), h->getVertex(1), h->getVertex(2), 
+                           h->getVertex(3), h->getVertex(4), h->getVertex(5), 
+                           h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2], 
+                           ve[3], ve[4], ve[5], ve[6], ve[7], ve[8], ve[9], ve[10], 
+                           ve[11]));
     }
     else{
       getFaceVertices(gr, h, vf, faceVertices, linear, nPts);
@@ -650,11 +650,11 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
       MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
       gr->mesh_vertices.push_back(v);
       hexahedra2.push_back
-	(new MHexahedron27(h->getVertex(0), h->getVertex(1), h->getVertex(2), 
-			   h->getVertex(3), h->getVertex(4), h->getVertex(5), 
-			   h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2], 
-			   ve[3], ve[4], ve[5], ve[6], ve[7], ve[8], ve[9], ve[10], 
-			   ve[11], vf[0], vf[1], vf[2], vf[3], vf[4], vf[5], v));
+        (new MHexahedron27(h->getVertex(0), h->getVertex(1), h->getVertex(2), 
+                           h->getVertex(3), h->getVertex(4), h->getVertex(5), 
+                           h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2], 
+                           ve[3], ve[4], ve[5], ve[6], ve[7], ve[8], ve[9], ve[10], 
+                           ve[11], vf[0], vf[1], vf[2], vf[3], vf[4], vf[5], v));
     }
     delete h;
   }
@@ -667,17 +667,17 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
     getEdgeVertices(gr, p, ve, edgeVertices, linear, nPts);
     if(incomplete){
       prisms2.push_back
-	(new MPrism15(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
-		      p->getVertex(3), p->getVertex(4), p->getVertex(5), 
-		      ve[0], ve[1], ve[2], ve[3], ve[4], ve[5], ve[6], ve[7], ve[8]));
+        (new MPrism15(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
+                      p->getVertex(3), p->getVertex(4), p->getVertex(5), 
+                      ve[0], ve[1], ve[2], ve[3], ve[4], ve[5], ve[6], ve[7], ve[8]));
     }
     else{
       getFaceVertices(gr, p, vf, faceVertices, linear, nPts);
       prisms2.push_back
-	(new MPrism18(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
-		      p->getVertex(3), p->getVertex(4), p->getVertex(5), 
-		      ve[0], ve[1], ve[2], ve[3], ve[4], ve[5], ve[6], ve[7], ve[8],
-		      vf[0], vf[1], vf[2]));
+        (new MPrism18(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
+                      p->getVertex(3), p->getVertex(4), p->getVertex(5), 
+                      ve[0], ve[1], ve[2], ve[3], ve[4], ve[5], ve[6], ve[7], ve[8],
+                      vf[0], vf[1], vf[2]));
     }
     delete p;
   }
@@ -690,16 +690,16 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
     getEdgeVertices(gr, p, ve, edgeVertices, linear, nPts);
     if(incomplete){
       pyramids2.push_back
-	(new MPyramid13(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
-			p->getVertex(3), p->getVertex(4), ve[0], ve[1], ve[2], 
-			ve[3], ve[4], ve[5], ve[6], ve[7]));
+        (new MPyramid13(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
+                        p->getVertex(3), p->getVertex(4), ve[0], ve[1], ve[2], 
+                        ve[3], ve[4], ve[5], ve[6], ve[7]));
     }
     else{
       getFaceVertices(gr, p, vf, faceVertices, linear, nPts);
       pyramids2.push_back
-	(new MPyramid14(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
-			p->getVertex(3), p->getVertex(4), ve[0], ve[1], ve[2], 
-			ve[3], ve[4], ve[5], ve[6], ve[7], vf[0]));
+        (new MPyramid14(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
+                        p->getVertex(3), p->getVertex(4), ve[0], ve[1], ve[2], 
+                        ve[3], ve[4], ve[5], ve[6], ve[7], vf[0]));
     }
     delete p;
   }
@@ -850,7 +850,7 @@ struct smoothVertexDataHON{
 }; 
 
 double smoothing_objective_function_HighOrder(double U, double V, MVertex *v, 
-					      std::vector<MTriangle*> &ts, GFace *gf)
+                                              std::vector<MTriangle*> &ts, GFace *gf)
 {
   GPoint gp = gf->point(U, V);
   const double oldX = v->x();
@@ -874,8 +874,8 @@ double smoothing_objective_function_HighOrder(double U, double V, MVertex *v,
 }
 
 void deriv_smoothing_objective_function_HighOrder(double U, double V, 
-						  double &F, double &dFdU,
-						  double &dFdV, void *data)
+                                                  double &F, double &dFdU,
+                                                  double &dFdV, void *data)
 {
   smoothVertexDataHO *svd = (smoothVertexDataHO*)data;
   MVertex *v = svd->v;
@@ -921,7 +921,7 @@ double smooth_obj_HighOrderN(double *uv, void *data)
 }
 
 void deriv_smoothing_objective_function_HighOrderN(double *uv, double *dF, 
-						   double &F, void *data)
+                                                   double &F, void *data)
 {
   const double LARGE = -1.e2;
   const double SMALL = 1. / LARGE;
@@ -947,21 +947,21 @@ void optimizeNodeLocations(GFace *gf, smoothVertexDataHON &vdN, double eps = .2)
   if (F < eps){
     double val;
     minimize_N(2 * vdN.v.size(), 
-	       smooth_obj_HighOrderN, 
-	       deriv_smoothing_objective_function_HighOrderN, 
-	       &vdN, 1, uv,val);
+               smooth_obj_HighOrderN, 
+               deriv_smoothing_objective_function_HighOrderN, 
+               &vdN, 1, uv,val);
     double Fafter = -smooth_obj_HighOrderN(uv, &vdN);
     printf("%12.5E %12.5E\n", F, Fafter);
     if (F < Fafter){
       for (unsigned int i = 0; i < vdN.v.size(); i++){
-	vdN.v[i]->setParameter(0, uv[2 * i]);
-	vdN.v[i]->setParameter(1, uv[2 * i + 1]);
-	GPoint gp = gf->point(uv[2 * i], uv[2 * i + 1]);
-	vdN.v[i]->x() = gp.x();
-	vdN.v[i]->y() = gp.y();
-	vdN.v[i]->z() = gp.z();
+        vdN.v[i]->setParameter(0, uv[2 * i]);
+        vdN.v[i]->setParameter(1, uv[2 * i + 1]);
+        GPoint gp = gf->point(uv[2 * i], uv[2 * i + 1]);
+        vdN.v[i]->x() = gp.x();
+        vdN.v[i]->y() = gp.y();
+        vdN.v[i]->z() = gp.z();
       }
-    }	  
+    }     
   }
 }
 
@@ -1002,12 +1002,12 @@ bool optimizeHighOrderMesh(GFace *gf, edgeContainer &edgeVertices)
     if (ge->dim() == 2){
       double initu,initv;
       ver->getParameter(0, initu);
-      ver->getParameter(1, initv);	  
+      ver->getParameter(1, initv);        
 
       smoothVertexDataHON vdN;
       vdN.ts = it->second;
       for (int i=0;i<vdN.ts.size();i++){
-	MTriangle *t = vdN.ts[i];
+        MTriangle *t = vdN.ts[i];
       }
 
       vdN.v = e;
@@ -1016,19 +1016,19 @@ bool optimizeHighOrderMesh(GFace *gf, edgeContainer &edgeVertices)
       double val;      
       double F = -smooth_obj_HighOrder(initu,initv, &vd);
       if (F < .2){
-	minimize_2(smooth_obj_HighOrder, 
-	     deriv_smoothing_objective_function_HighOrder, &vd, 1, initu,initv,val);
-	double Fafter = -smooth_obj_HighOrder(initu,initv, &vd);
-	if (F < Fafter){
-	  success = true;
-	  ver->setParameter(0,initu);
-	  ver->setParameter(1,initv);
-	  GPoint gp = gf->point(initu,initv);
-	  ver->x() = gp.x();
-	  ver->y() = gp.y();
-	  ver->z() = gp.z();  
-	}
-      }				
+        minimize_2(smooth_obj_HighOrder, 
+             deriv_smoothing_objective_function_HighOrder, &vd, 1, initu,initv,val);
+        double Fafter = -smooth_obj_HighOrder(initu,initv, &vd);
+        if (F < Fafter){
+          success = true;
+          ver->setParameter(0,initu);
+          ver->setParameter(1,initv);
+          GPoint gp = gf->point(initu,initv);
+          ver->x() = gp.x();
+          ver->y() = gp.y();
+          ver->z() = gp.z();  
+        }
+      }                         
     }
     ++it;
   }
@@ -1045,18 +1045,18 @@ bool optimizeHighOrderMesh(GFace *gf, edgeContainer &edgeVertices)
       MTriangle *t1 = (MTriangle*)triangles[0];
       MTriangle *t2 = (MTriangle*)triangles[1];
       if(n2 < n4)
-	e = edgeVertices[std::make_pair<MVertex*, MVertex*> (n2, n4)];
+        e = edgeVertices[std::make_pair<MVertex*, MVertex*> (n2, n4)];
       else
-	e = edgeVertices[std::make_pair<MVertex*, MVertex*> (n4, n2)];
+        e = edgeVertices[std::make_pair<MVertex*, MVertex*> (n4, n2)];
 
       if (e.size() < 5){
-	smoothVertexDataHON vdN;
-	vdN.v = e;
-	vdN.gf = gf;
-	vdN.ts.clear();
+        smoothVertexDataHON vdN;
+        vdN.v = e;
+        vdN.gf = gf;
+        vdN.ts.clear();
         vdN.ts.push_back(t1);
-        vdN.ts.push_back(t2);	
-	optimizeNodeLocations(gf, vdN);
+        vdN.ts.push_back(t2);   
+        optimizeNodeLocations(gf, vdN);
       }
     }
   }
@@ -1093,110 +1093,110 @@ bool smoothInternalEdges(GFace *gf, edgeContainer &edgeVertices)
       MVertex *n1 = t1->getOtherVertex(n2, n4);
       MVertex *n3 = t2->getOtherVertex(n2, n4);
       if(n1 < n2)
-	e1 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n1, n2)];
+        e1 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n1, n2)];
       else
-	e1 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n2, n1)];
+        e1 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n2, n1)];
       if(n2 < n3)
-	e2 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n2, n3)];
+        e2 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n2, n3)];
       else
-	e2 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n3, n2)];
+        e2 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n3, n2)];
       if(n3 < n4)
-	e3 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n3, n4)];
+        e3 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n3, n4)];
       else
-	e3 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n4, n3)];
+        e3 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n4, n3)];
       if(n4 < n1)
-	e4 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n4, n1)];
+        e4 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n4, n1)];
       else
-	e4 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n1, n4)];
+        e4 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n1, n4)];
       if(n2 < n4)
-	e = edgeVertices[std::make_pair<MVertex*, MVertex*>(n2, n4)];
+        e = edgeVertices[std::make_pair<MVertex*, MVertex*>(n2, n4)];
       else
-	e = edgeVertices[std::make_pair<MVertex*, MVertex*>(n4, n2)];
+        e = edgeVertices[std::make_pair<MVertex*, MVertex*>(n4, n2)];
       
       if((!straightLine(e1, n1, n2) || !straightLine(e2, n2, n3) ||
-	  !straightLine(e3, n3, n4) || !straightLine(e4, n4, n1))){
+          !straightLine(e3, n3, n4) || !straightLine(e4, n4, n1))){
 
-	double Unew[NBST][10],Vnew[NBST][10];
-	double Xold[10],Yold[10],Zold[10];
-	
-	for(unsigned int i = 0; i < e.size(); i++){
-	  Xold[i] = e[i]->x();
-	  Yold[i] = e[i]->y();
-	  Zold[i] = e[i]->z();
-	}
+        double Unew[NBST][10],Vnew[NBST][10];
+        double Xold[10],Yold[10],Zold[10];
+        
+        for(unsigned int i = 0; i < e.size(); i++){
+          Xold[i] = e[i]->x();
+          Yold[i] = e[i]->y();
+          Zold[i] = e[i]->z();
+        }
 
-	double minJ = 1.e22;
-	double maxJ = -1.e22;	    
-	getMinMaxJac (t1, minJ, maxJ);
-	getMinMaxJac (t2, minJ, maxJ);
-	int kopt = -1; 
-	for (int k=0;k<NBST;k++){
-	  double relax = (k+1)/(double)NBST;
-	  for(unsigned int i = 0; i < e.size(); i++){
-	    double v = (double)(i + 1) / (e.size() + 1);
-	    double u = 1. - v;
-	    MVertex *vert  = (n2 < n4) ? e[i] : e[e.size() - i - 1];
-	    MVertex *vert1 = (n1 < n2) ? e1[e1.size() - i - 1] : e1[i];
-	    MVertex *vert3 = (n3 < n4) ? e3[i] : e3[e3.size() - i - 1];
-	    MVertex *vert4 = (n4 < n1) ? e4[e4.size() - i - 1] : e4[i];
-	    MVertex *vert2 = (n2 < n3) ? e2[i] : e2[e2.size() - i - 1];
-	    double U1,V1,U2,V2,U3,V3,U4,V4,U,V,nU1,nV1,nU2,nV2,nU3,nV3,nU4,nV4;
-	    parametricCoordinates(vert , gf, U, V);
-	    parametricCoordinates(vert1, gf, U1, V1);
-	    parametricCoordinates(vert2, gf, U2, V2);
-	    parametricCoordinates(vert3, gf, U3, V3);
-	    parametricCoordinates(vert4, gf, U4, V4);
-	    parametricCoordinates(n1, gf, nU1, nV1);
-	    parametricCoordinates(n2, gf, nU2, nV2);
-	    parametricCoordinates(n3, gf, nU3, nV3);
-	    parametricCoordinates(n4, gf, nU4, nV4);
-	    
-	    Unew[k][i] = U + relax * ((1.-u) * U4 + u * U2 +
-				      (1.-v) * U1 + v * U3 -
-				      ((1.-u)*(1.-v) * nU1 
-				       + u * (1.-v) * nU2 
-				       + u * v * nU3 
-				       + (1.-u) * v * nU4) - U);
-	    Vnew[k][i] = V + relax * ((1.-u) * V4 + u * V2 +
-				      (1.-v) * V1 + v * V3 -
-				      ((1.-u)*(1.-v) * nV1 
-				       + u * (1.-v) * nV2 
-				       + u * v * nV3 
-				       + (1.-u) * v * nV4) - V);
-	    GPoint gp = gf->point(Unew[k][i],Vnew[k][i]);
-	    vert->x() = gp.x();
-	    vert->y() = gp.y();
-	    vert->z() = gp.z();
-	  }
-	  double minJloc = 1.e22;
-	  double maxJloc = -1.e22;	    
-	  getMinMaxJac(t1, minJloc, maxJloc);
-	  getMinMaxJac(t2, minJloc, maxJloc);
+        double minJ = 1.e22;
+        double maxJ = -1.e22;       
+        getMinMaxJac (t1, minJ, maxJ);
+        getMinMaxJac (t2, minJ, maxJ);
+        int kopt = -1; 
+        for (int k=0;k<NBST;k++){
+          double relax = (k+1)/(double)NBST;
+          for(unsigned int i = 0; i < e.size(); i++){
+            double v = (double)(i + 1) / (e.size() + 1);
+            double u = 1. - v;
+            MVertex *vert  = (n2 < n4) ? e[i] : e[e.size() - i - 1];
+            MVertex *vert1 = (n1 < n2) ? e1[e1.size() - i - 1] : e1[i];
+            MVertex *vert3 = (n3 < n4) ? e3[i] : e3[e3.size() - i - 1];
+            MVertex *vert4 = (n4 < n1) ? e4[e4.size() - i - 1] : e4[i];
+            MVertex *vert2 = (n2 < n3) ? e2[i] : e2[e2.size() - i - 1];
+            double U1,V1,U2,V2,U3,V3,U4,V4,U,V,nU1,nV1,nU2,nV2,nU3,nV3,nU4,nV4;
+            parametricCoordinates(vert , gf, U, V);
+            parametricCoordinates(vert1, gf, U1, V1);
+            parametricCoordinates(vert2, gf, U2, V2);
+            parametricCoordinates(vert3, gf, U3, V3);
+            parametricCoordinates(vert4, gf, U4, V4);
+            parametricCoordinates(n1, gf, nU1, nV1);
+            parametricCoordinates(n2, gf, nU2, nV2);
+            parametricCoordinates(n3, gf, nU3, nV3);
+            parametricCoordinates(n4, gf, nU4, nV4);
+            
+            Unew[k][i] = U + relax * ((1.-u) * U4 + u * U2 +
+                                      (1.-v) * U1 + v * U3 -
+                                      ((1.-u)*(1.-v) * nU1 
+                                       + u * (1.-v) * nU2 
+                                       + u * v * nU3 
+                                       + (1.-u) * v * nU4) - U);
+            Vnew[k][i] = V + relax * ((1.-u) * V4 + u * V2 +
+                                      (1.-v) * V1 + v * V3 -
+                                      ((1.-u)*(1.-v) * nV1 
+                                       + u * (1.-v) * nV2 
+                                       + u * v * nV3 
+                                       + (1.-u) * v * nV4) - V);
+            GPoint gp = gf->point(Unew[k][i],Vnew[k][i]);
+            vert->x() = gp.x();
+            vert->y() = gp.y();
+            vert->z() = gp.z();
+          }
+          double minJloc = 1.e22;
+          double maxJloc = -1.e22;          
+          getMinMaxJac(t1, minJloc, maxJloc);
+          getMinMaxJac(t2, minJloc, maxJloc);
 
-	  if (minJloc > minJ){
-	    kopt = k;
-	    minJ = minJloc;
-	  }
-	}
-	if (kopt == -1){
-	  for(unsigned int i = 0; i < e.size(); i++){
-	    e[i]->x() = Xold[i];
-	    e[i]->y() = Yold[i];
-	    e[i]->z() = Zold[i];
-	  }	 
-	}
-	else{
-	  success = true;
-	  for(unsigned int i = 0; i < e.size(); i++){
-	    MVertex *vert  = (n2 < n4) ? e[i] : e[e.size() - i - 1];
-	    vert->setParameter(0,Unew[kopt][i]);
-	    vert->setParameter(1,Vnew[kopt][i]);
-	    GPoint gp = gf->point(Unew[kopt][i],Vnew[kopt][i]);
-	    vert->x() = gp.x();
-	    vert->y() = gp.y();
-	    vert->z() = gp.z();
-	  }	 
-	}
+          if (minJloc > minJ){
+            kopt = k;
+            minJ = minJloc;
+          }
+        }
+        if (kopt == -1){
+          for(unsigned int i = 0; i < e.size(); i++){
+            e[i]->x() = Xold[i];
+            e[i]->y() = Yold[i];
+            e[i]->z() = Zold[i];
+          }      
+        }
+        else{
+          success = true;
+          for(unsigned int i = 0; i < e.size(); i++){
+            MVertex *vert  = (n2 < n4) ? e[i] : e[e.size() - i - 1];
+            vert->setParameter(0,Unew[kopt][i]);
+            vert->setParameter(1,Vnew[kopt][i]);
+            GPoint gp = gf->point(Unew[kopt][i],Vnew[kopt][i]);
+            vert->x() = gp.x();
+            vert->y() = gp.y();
+            vert->z() = gp.z();
+          }      
+        }
       }
     }
   }    
@@ -1212,12 +1212,12 @@ void checkHighOrderTriangles(GModel *m)
     double maxJ = -1.e22;
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
       double minJloc = 1.e22;
-      double maxJloc = -1.e22;	    
+      double maxJloc = -1.e22;      
       MTriangle *t = (*it)->triangles[i];
       if(t->getPolynomialOrder() > 1 && t->getPolynomialOrder() < 6){
-	getMinMaxJac (t, minJloc, maxJloc);
-	minJ = std::min(minJ, minJloc);
-	maxJ = std::max(maxJ, maxJloc);
+        getMinMaxJac (t, minJloc, maxJloc);
+        minJ = std::min(minJ, minJloc);
+        maxJ = std::max(maxJ, maxJloc);
       }
     }
     minJGlob = std::min(minJGlob,minJ);
@@ -1243,35 +1243,35 @@ void printJacobians(GModel *m, const char *nm)
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
       MTriangle *t = (*it)->triangles[i];
       for(int i = 0; i < n; i++){
-	for(int k = 0; k < n - i; k++){
-	  SPoint3 pt;
-	  double u = (double)i / (n - 1);
-	  double v = (double)k / (n - 1);	  
-	  t->pnt(u,v, pt);	  
-	  D[i][k] = mesh_functional_distorsion (t,u,v);
-	  X[i][k] = pt.x();
-	  Y[i][k] = pt.y();
-	  Z[i][k] = pt.z();
-	}
+        for(int k = 0; k < n - i; k++){
+          SPoint3 pt;
+          double u = (double)i / (n - 1);
+          double v = (double)k / (n - 1);         
+          t->pnt(u,v, pt);        
+          D[i][k] = mesh_functional_distorsion (t,u,v);
+          X[i][k] = pt.x();
+          Y[i][k] = pt.y();
+          Z[i][k] = pt.z();
+        }
       }
       for(int i = 0; i < n -1; i++){
-	for(int k = 0; k < n - i -1; k++){
-	  fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%22.15E,%22.15E,%22.15E};\n",
-		  X[i][k],Y[i][k],Z[i][k],
-		  X[i+1][k],Y[i+1][k],Z[i+1][k],
-		  X[i][k+1],Y[i][k+1],Z[i][k+1],
-		  D[i][k],
-		  D[i+1][k],
-		  D[i][k+1]);
-	  if (i != n-2 && k != n - i -2)
-	    fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%22.15E,%22.15E,%22.15E};\n",
-		    X[i+1][k],Y[i+1][k],Z[i+1][k],
-		    X[i+1][k+1],Y[i+1][k+1],Z[i+1][k+1],
-		    X[i][k+1],Y[i][k+1],Z[i][k+1],
-		    D[i+1][k],
-		    D[i+1][k+1],
-		    D[i][k+1]);
-	}
+        for(int k = 0; k < n - i -1; k++){
+          fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%22.15E,%22.15E,%22.15E};\n",
+                  X[i][k],Y[i][k],Z[i][k],
+                  X[i+1][k],Y[i+1][k],Z[i+1][k],
+                  X[i][k+1],Y[i][k+1],Z[i][k+1],
+                  D[i][k],
+                  D[i+1][k],
+                  D[i][k+1]);
+          if (i != n-2 && k != n - i -2)
+            fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%22.15E,%22.15E,%22.15E};\n",
+                    X[i+1][k],Y[i+1][k],Z[i+1][k],
+                    X[i+1][k+1],Y[i+1][k+1],Z[i+1][k+1],
+                    X[i][k+1],Y[i][k+1],Z[i][k+1],
+                    D[i+1][k],
+                    D[i+1][k+1],
+                    D[i][k+1]);
+        }
       }
     }
   }
@@ -1321,15 +1321,15 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){      
       Msg(INFO, "Smoothing internal Edges in Surface %d",(*it)->tag());
       for (int i = 0; i < 10; i++) {
-	if (!smoothInternalEdges(*it, edgeVertices))break;
- 	checkHighOrderTriangles(m);
+        if (!smoothInternalEdges(*it, edgeVertices))break;
+        checkHighOrderTriangles(m);
       }
       optimizeHighOrderMeshInternalNodes(*it);
     }
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){      
       for (int i=0;i<CTX.mesh.nb_smoothing;i++){
-	if(!optimizeHighOrderMesh(*it, edgeVertices))break;
-	checkHighOrderTriangles(m);
+        if(!optimizeHighOrderMesh(*it, edgeVertices))break;
+        checkHighOrderTriangles(m);
       }
     }
   }

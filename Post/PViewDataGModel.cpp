@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.33 2008-03-20 11:05:08 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.34 2008-03-20 11:44:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -114,9 +114,9 @@ int PViewDataGModel::getNumElements(int step, int ent)
     int num = 0;
     for(unsigned int i = 0; i < _steps.size(); i++){
       if(ent < 0)
-	num += _steps[i]->getModel()->getNumMeshElements();
+        num += _steps[i]->getModel()->getNumMeshElements();
       else
-	num += _steps[i]->getEntity(ent)->getNumMeshElements();
+        num += _steps[i]->getEntity(ent)->getNumMeshElements();
     }
     return num;
   }
@@ -135,7 +135,7 @@ int PViewDataGModel::getNumNodes(int step, int ent, int ele)
 }
 
 void PViewDataGModel::getNode(int step, int ent, int ele, int nod, 
-			      double &x, double &y, double &z)
+                              double &x, double &y, double &z)
 {
   MVertex *v = _steps[step]->getEntity(ent)->getMeshElement(ele)->getVertex(nod);
   x = v->x();

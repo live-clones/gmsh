@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.33 2008-03-03 22:04:22 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.34 2008-03-20 11:44:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -337,14 +337,14 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
     List_Read(c->Control_Points, i + 1, &v[2]);
     if(!i) {
       if(c->beg == c->end){
-	List_Read(c->Control_Points, N - 2, &v[0]);
+        List_Read(c->Control_Points, N - 2, &v[0]);
       }
       else{
-	v[0] = &temp1;
-	v[0]->Pos.X = 2. * v[1]->Pos.X - v[2]->Pos.X;
-	v[0]->Pos.Y = 2. * v[1]->Pos.Y - v[2]->Pos.Y;
-	v[0]->Pos.Z = 2. * v[1]->Pos.Z - v[2]->Pos.Z;
-	v[0]->pntOnGeometry = v[1]->pntOnGeometry * 2. - v[2]->pntOnGeometry;
+        v[0] = &temp1;
+        v[0]->Pos.X = 2. * v[1]->Pos.X - v[2]->Pos.X;
+        v[0]->Pos.Y = 2. * v[1]->Pos.Y - v[2]->Pos.Y;
+        v[0]->Pos.Z = 2. * v[1]->Pos.Z - v[2]->Pos.Z;
+        v[0]->pntOnGeometry = v[1]->pntOnGeometry * 2. - v[2]->pntOnGeometry;
       }
     }
     else {
@@ -352,14 +352,14 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
     }
     if(i == N - 2) {
       if(c->beg == c->end){
-	List_Read(c->Control_Points, 1, &v[3]);
+        List_Read(c->Control_Points, 1, &v[3]);
       }
       else{
-	v[3] = &temp2;
-	v[3]->Pos.X = 2. * v[2]->Pos.X - v[1]->Pos.X;
-	v[3]->Pos.Y = 2. * v[2]->Pos.Y - v[1]->Pos.Y;
-	v[3]->Pos.Z = 2. * v[2]->Pos.Z - v[1]->Pos.Z;
-	v[3]->pntOnGeometry = v[2]->pntOnGeometry * 2. - v[1]->pntOnGeometry;
+        v[3] = &temp2;
+        v[3]->Pos.X = 2. * v[2]->Pos.X - v[1]->Pos.X;
+        v[3]->Pos.Y = 2. * v[2]->Pos.Y - v[1]->Pos.Y;
+        v[3]->Pos.Z = 2. * v[2]->Pos.Z - v[1]->Pos.Z;
+        v[3]->pntOnGeometry = v[2]->pntOnGeometry * 2. - v[1]->pntOnGeometry;
       }
     }
     else {
@@ -441,10 +441,10 @@ Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
 void TransfiniteSph(Vertex S, Vertex center, Vertex *T)
 {
   double r = sqrt(DSQR(S.Pos.X - center.Pos.X) + DSQR(S.Pos.Y - center.Pos.Y)
-		  + DSQR(S.Pos.Z - center.Pos.Z));
+                  + DSQR(S.Pos.Z - center.Pos.Z));
 
   double s = sqrt(DSQR(T->Pos.X - center.Pos.X) + DSQR(T->Pos.Y - center.Pos.Y)
-		  + DSQR(T->Pos.Z - center.Pos.Z));
+                  + DSQR(T->Pos.Z - center.Pos.Z));
 
   double dirx = (T->Pos.X - center.Pos.X) / s;
   double diry = (T->Pos.Y - center.Pos.Y) / s;
@@ -467,26 +467,26 @@ Vertex InterpolateRuledSurface(Surface *s, double u, double v)
     }
     else if(isSphere){
       if(!i){
-	List_Read(C[i]->Control_Points, 1, &O);
+        List_Read(C[i]->Control_Points, 1, &O);
       }
       else{
-	Vertex *tmp;
-	List_Read(C[i]->Control_Points, 1, &tmp);
-	if(compareVertex(&O, &tmp))
-	  isSphere = false;
+        Vertex *tmp;
+        List_Read(C[i]->Control_Points, 1, &tmp);
+        if(compareVertex(&O, &tmp))
+          isSphere = false;
       }
     }
   }
 
   if(isSphere){
     double n[3] = {C[0]->Circle.invmat[0][2],
-		   C[0]->Circle.invmat[1][2],
-		   C[0]->Circle.invmat[2][2]};
+                   C[0]->Circle.invmat[1][2],
+                   C[0]->Circle.invmat[2][2]};
     bool isPlane = true;
     for(int i = 1; i < std::min(List_Nbr(s->Generatrices), 4); i++)
       isPlane &= (n[0] == C[i]->Circle.invmat[0][2] &&
-		  n[1] == C[i]->Circle.invmat[1][2] &&
-		  n[2] == C[i]->Circle.invmat[2][2]);
+                  n[1] == C[i]->Circle.invmat[1][2] &&
+                  n[2] == C[i]->Circle.invmat[2][2]);
     if(isPlane)
       isSphere = false;
   }
@@ -611,9 +611,9 @@ Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
       Vertex V(s->a, s->b, s->c);
       Projette(&V, s->plan);
       if(V.Pos.Z != 0.)
-	T.Pos.Z = (s->d - V.Pos.X * T.Pos.X - V.Pos.Y * T.Pos.Y) / V.Pos.Z;
+        T.Pos.Z = (s->d - V.Pos.X * T.Pos.X - V.Pos.Y * T.Pos.Y) / V.Pos.Z;
       else
-	T.Pos.Z = 0.;
+        T.Pos.Z = 0.;
       return T;
     }
   case MSH_SURF_BND_LAYER:

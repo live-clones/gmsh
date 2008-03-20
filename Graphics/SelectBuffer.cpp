@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.20 2008-02-22 21:09:00 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.21 2008-03-20 11:44:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -64,13 +64,13 @@ MElement *getElement(GEntity *e, int va_type, int index)
 }
 
 bool ProcessSelectionBuffer(int entityType,
-			    bool multipleSelection, bool meshSelection,
-			    int x, int y, int w, int h,
-			    std::vector<GVertex*> &vertices,
-			    std::vector<GEdge*> &edges,
-			    std::vector<GFace*> &faces,
-			    std::vector<GRegion*> &regions,
-			    std::vector<MElement*> &elements)
+                            bool multipleSelection, bool meshSelection,
+                            int x, int y, int w, int h,
+                            std::vector<GVertex*> &vertices,
+                            std::vector<GEdge*> &edges,
+                            std::vector<GFace*> &faces,
+                            std::vector<GRegion*> &regions,
+                            std::vector<MElement*> &elements)
 {
   vertices.clear();
   edges.clear();
@@ -83,7 +83,7 @@ bool ProcessSelectionBuffer(int entityType,
   GModel *m = GModel::current();
   int eles = (meshSelection && CTX.pick_elements) ? 4 * m->getNumMeshElements() : 0;
   int size = 7 * (m->getNumVertices() + m->getNumEdges() + m->getNumFaces() + 
-		  m->getNumRegions() + eles) + 1000 ;
+                  m->getNumRegions() + eles) + 1000 ;
 
   GLuint *selectionBuffer = new GLuint[size];
   glSelectBuffer(size, selectionBuffer);
@@ -170,61 +170,61 @@ bool ProcessSelectionBuffer(int entityType,
        (entityType == ENT_VOLUME && hits[i].type == 3)){
       switch (hits[i].type) {
       case 0:
-	{
-	  GVertex *v = m->getVertexByTag(hits[i].ient);
-	  if(!v){
-	    Msg(GERROR, "Problem in point selection processing");
-	    return false;
-	  }
-	  vertices.push_back(v);
-	  if(!multipleSelection) return true;
-	}
-	break;
+        {
+          GVertex *v = m->getVertexByTag(hits[i].ient);
+          if(!v){
+            Msg(GERROR, "Problem in point selection processing");
+            return false;
+          }
+          vertices.push_back(v);
+          if(!multipleSelection) return true;
+        }
+        break;
       case 1:
-	{
-	  GEdge *e = m->getEdgeByTag(hits[i].ient);
-	  if(!e){
-	    Msg(GERROR, "Problem in line selection processing");
-	    return false;
-	  }
-	  if(hits[i].type2){
-	    MElement *ele = getElement(e, hits[i].type2, hits[i].ient2);
-	    if(ele) elements.push_back(ele);
-	  }
-	  edges.push_back(e);
-	  if(!multipleSelection) return true;
-	}
-	break;
+        {
+          GEdge *e = m->getEdgeByTag(hits[i].ient);
+          if(!e){
+            Msg(GERROR, "Problem in line selection processing");
+            return false;
+          }
+          if(hits[i].type2){
+            MElement *ele = getElement(e, hits[i].type2, hits[i].ient2);
+            if(ele) elements.push_back(ele);
+          }
+          edges.push_back(e);
+          if(!multipleSelection) return true;
+        }
+        break;
       case 2:
-	{
-	  GFace *f = m->getFaceByTag(hits[i].ient);
-	  if(!f){
-	    Msg(GERROR, "Problem in surface selection processing");
-	    return false;
-	  }
-	  if(hits[i].type2){
-	    MElement *ele = getElement(f, hits[i].type2, hits[i].ient2);
-	    if(ele) elements.push_back(ele);
-	  }
-	  faces.push_back(f);
-	  if(!multipleSelection) return true;
-	}
-	break;
+        {
+          GFace *f = m->getFaceByTag(hits[i].ient);
+          if(!f){
+            Msg(GERROR, "Problem in surface selection processing");
+            return false;
+          }
+          if(hits[i].type2){
+            MElement *ele = getElement(f, hits[i].type2, hits[i].ient2);
+            if(ele) elements.push_back(ele);
+          }
+          faces.push_back(f);
+          if(!multipleSelection) return true;
+        }
+        break;
       case 3:
-	{
-	  GRegion *r = m->getRegionByTag(hits[i].ient);
-	  if(!r){
-	    Msg(GERROR, "Problem in volume selection processing");
-	    return false;
-	  }
-	  if(hits[i].type2){
-	    MElement *ele = getElement(r, hits[i].type2, hits[i].ient2);
-	    if(ele) elements.push_back(ele);
-	  }
-	  regions.push_back(r);
-	  if(!multipleSelection) return true;
-	}
-	break;
+        {
+          GRegion *r = m->getRegionByTag(hits[i].ient);
+          if(!r){
+            Msg(GERROR, "Problem in volume selection processing");
+            return false;
+          }
+          if(hits[i].type2){
+            MElement *ele = getElement(r, hits[i].type2, hits[i].ient2);
+            if(ele) elements.push_back(ele);
+          }
+          regions.push_back(r);
+          if(!multipleSelection) return true;
+        }
+        break;
       }
     }
   }
@@ -311,29 +311,29 @@ void ZeroHighlight()
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
     for(unsigned int i = 0; i < (*it)->lines.size(); i++)
       if((*it)->lines[i]->getVisibility() == 2)
-	(*it)->lines[i]->setVisibility(1);
+        (*it)->lines[i]->setVisibility(1);
   }
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
       if((*it)->triangles[i]->getVisibility() == 2)
-	(*it)->triangles[i]->setVisibility(1);
+        (*it)->triangles[i]->setVisibility(1);
     for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
       if((*it)->quadrangles[i]->getVisibility() == 2) 
-	(*it)->quadrangles[i]->setVisibility(1);
+        (*it)->quadrangles[i]->setVisibility(1);
   }
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
     for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
       if((*it)->tetrahedra[i]->getVisibility() == 2)
-	(*it)->tetrahedra[i]->setVisibility(1);
+        (*it)->tetrahedra[i]->setVisibility(1);
     for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
       if((*it)->hexahedra[i]->getVisibility() == 2)
-	(*it)->hexahedra[i]->setVisibility(1);
+        (*it)->hexahedra[i]->setVisibility(1);
     for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
       if((*it)->prisms[i]->getVisibility() == 2)
-	(*it)->prisms[i]->setVisibility(1);
+        (*it)->prisms[i]->setVisibility(1);
     for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
       if((*it)->pyramids[i]->getVisibility() == 2)
-	(*it)->pyramids[i]->setVisibility(1);
+        (*it)->pyramids[i]->setVisibility(1);
   }
   
 }

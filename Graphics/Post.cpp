@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.157 2008-03-19 16:38:16 geuzaine Exp $
+// $Id: Post.cpp,v 1.158 2008-03-20 11:44:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -40,8 +40,8 @@ extern Context_T CTX;
 #define NMAX 20
 
 void saturate(int nb, double val[NMAX][9], double vmin, double vmax, 
-	      int i0=0, int i1=1, int i2=2, int i3=3, 
-	      int i4=4, int i5=5, int i6=6, int i7=7)
+              int i0=0, int i1=1, int i2=2, int i3=3, 
+              int i4=4, int i5=5, int i6=6, int i7=7)
 {
   int id[8] = {i0, i1, i2, i3, i4, i5, i6, i7};
   for(int i = 0; i < nb; i++){
@@ -53,11 +53,11 @@ void saturate(int nb, double val[NMAX][9], double vmin, double vmax,
 SVector3 normal3(double xyz[NMAX][3], int i0=0, int i1=1, int i2=2)
 {
   SVector3 t1(xyz[i1][0] - xyz[i0][0], 
-	      xyz[i1][1] - xyz[i0][1],
-	      xyz[i1][2] - xyz[i0][2]);
+              xyz[i1][1] - xyz[i0][1],
+              xyz[i1][2] - xyz[i0][2]);
   SVector3 t2(xyz[i2][0] - xyz[i0][0], 
-	      xyz[i2][1] - xyz[i0][1],
-	      xyz[i2][2] - xyz[i0][2]);
+              xyz[i2][1] - xyz[i0][1],
+              xyz[i2][2] - xyz[i0][2]);
   SVector3 n = crossprod(t1, t2);
   n.normalize();
   return n;
@@ -78,7 +78,7 @@ SVector3 getPointNormal(PView *p, double v)
 }
 
 void getLineNormal(PView *p, double x[2], double y[2], double z[2],
-		   double *v, SVector3 n[2], bool computeNormal)
+                   double *v, SVector3 n[2], bool computeNormal)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -109,11 +109,11 @@ void getLineNormal(PView *p, double x[2], double y[2], double z[2],
       SVector3 t(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
       SVector3 ex(0., 0., 0.);
       if(t[0] == 0.)
-	ex[0] = 1.;
+        ex[0] = 1.;
       else if(t[1] == 0.)
-	ex[1] = 1.;
+        ex[1] = 1.;
       else
-	ex[2] = 1.;
+        ex[2] = 1.;
       n[0] = crossprod(t, ex);
       n[0].normalize();
       n[1] = n[0];
@@ -122,8 +122,8 @@ void getLineNormal(PView *p, double x[2], double y[2], double z[2],
 }
 
 bool getExternalValues(PView *p, int index, int ient, int iele, int numNodes, 
-		       int numComp, double val[NMAX][9], 
-		       int &numComp2, double val2[NMAX][9])
+                       int numComp, double val[NMAX][9], 
+                       int &numComp2, double val2[NMAX][9])
 {
   PViewOptions *opt = p->getOptions();
 
@@ -145,19 +145,19 @@ bool getExternalValues(PView *p, int index, int ient, int iele, int numNodes,
     if(data2->getNumNodes(opt->TimeStep, ient, iele) == numNodes){
       numComp2 = data2->getNumComponents(opt->TimeStep, ient, iele);
       for(int i = 0; i < numNodes; i++)
-	for(int j = 0; j < numComp2; j++)
-	  data2->getValue(opt->TimeStep, ient, iele, i, j, val2[i][j]);
+        for(int j = 0; j < numComp2; j++)
+          data2->getValue(opt->TimeStep, ient, iele, i, j, val2[i][j]);
       if(opt->RangeType == PViewOptions::Custom){
-	opt->ExternalMin = opt->CustomMin;
-	opt->ExternalMax = opt->CustomMax;
+        opt->ExternalMin = opt->CustomMin;
+        opt->ExternalMax = opt->CustomMax;
       }
       else if(opt->RangeType == PViewOptions::PerTimeStep){
-	opt->ExternalMin = data2->getMin(opt->TimeStep);
-	opt->ExternalMax = data2->getMax(opt->TimeStep);
+        opt->ExternalMin = data2->getMin(opt->TimeStep);
+        opt->ExternalMax = data2->getMax(opt->TimeStep);
       }
       else{
-	opt->ExternalMin = data2->getMin();
-	opt->ExternalMax = data2->getMax();
+        opt->ExternalMin = data2->getMin();
+        opt->ExternalMax = data2->getMax();
       }
       return true;
     }
@@ -166,7 +166,7 @@ bool getExternalValues(PView *p, int index, int ient, int iele, int numNodes,
 }
 
 void applyGeneralRaise(PView *p, int numNodes, int numComp, 
-		       double vals[NMAX][9], double xyz[NMAX][3])
+                       double vals[NMAX][9], double xyz[NMAX][3])
 {
   PViewOptions *opt = p->getOptions();
 
@@ -175,26 +175,26 @@ void applyGeneralRaise(PView *p, int numNodes, int numComp,
     for(int l = 0; l < numComp; l++) d[l] = vals[k][l];
 #if defined(HAVE_MATH_EVAL)
     char *names[] = { "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8" ,
-		      "x", "y", "z" };
+                      "x", "y", "z" };
     double values[] = { d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8],
-			xyz[k][0], xyz[k][1], xyz[k][2] };
+                        xyz[k][0], xyz[k][1], xyz[k][2] };
     for(int i = 0; i < 3; i++) {
       if(opt->GenRaise_f[i])
         xyz[k][i] += opt->GenRaiseFactor * evaluator_evaluate
-	  (opt->GenRaise_f[i], sizeof(names) / sizeof(names[0]), names, values);
+          (opt->GenRaise_f[i], sizeof(names) / sizeof(names[0]), names, values);
     }
 #else
     for(int i = 0; i < 3; i++){
       int comp = (int)opt->GenRaise_f[i];
       if(comp >= 0)
-	xyz[k][i] += opt->GenRaiseFactor * d[comp];
+        xyz[k][i] += opt->GenRaiseFactor * d[comp];
     }
 #endif
   }
 }
 
 void changeCoordinates(PView *p, int ient, int iele, int numNodes, int numEdges, 
-		       int numComp, double xyz[NMAX][3], double val[NMAX][9])
+                       int numComp, double xyz[NMAX][3], double val[NMAX][9])
 {
   PViewOptions *opt = p->getOptions();
 
@@ -202,12 +202,12 @@ void changeCoordinates(PView *p, int ient, int iele, int numNodes, int numEdges,
     double barycenter[3] = {0., 0., 0.};
     for(int i = 0; i < numNodes; i++)
       for(int j = 0; j < 3; j++)
-	barycenter[j] += xyz[i][j];
+        barycenter[j] += xyz[i][j];
     for(int j = 0; j < 3; j++)
       barycenter[j] /= (double)numNodes;
     for(int i = 0; i < numNodes; i++)
       for(int j = 0; j < 3; j++)
-	xyz[i][j] = barycenter[j] + opt->Explode * (xyz[i][j] - barycenter[j]);
+        xyz[i][j] = barycenter[j] + opt->Explode * (xyz[i][j] - barycenter[j]);
   }
   
   if(opt->Transform[0][0] != 1. || opt->Transform[0][1] != 0. || 
@@ -218,9 +218,9 @@ void changeCoordinates(PView *p, int ient, int iele, int numNodes, int numEdges,
     for(int i = 0; i < numNodes; i++) {
       double old[3] = {xyz[i][0], xyz[i][1], xyz[i][2]};
       for(int j = 0; j < 3; j++){
-	xyz[i][j] = 0.;
-	for(int k = 0; k < 3; k++)
-	  xyz[i][j] += opt->Transform[j][k] * old[k];
+        xyz[i][j] = 0.;
+        for(int k = 0; k < 3; k++)
+          xyz[i][j] += opt->Transform[j][k] * old[k];
       }
     }
   }
@@ -228,14 +228,14 @@ void changeCoordinates(PView *p, int ient, int iele, int numNodes, int numEdges,
   if(opt->Offset[0] || opt->Offset[1] || opt->Offset[2]){
     for(int i = 0; i < numNodes; i++)
       for(int j = 0; j < 3; j++)
-	xyz[i][j] += opt->Offset[j];
+        xyz[i][j] += opt->Offset[j];
   }
   
   if(opt->Raise[0] || opt->Raise[1] || opt->Raise[2]){
     for(int i = 0; i < numNodes; i++){
       double v = ComputeScalarRep(numComp, val[i]);
       for(int j = 0; j < 3; j++)
-	xyz[i][j] += opt->Raise[j] * v;
+        xyz[i][j] += opt->Raise[j] * v;
     }
   }
 
@@ -256,14 +256,14 @@ void changeCoordinates(PView *p, int ient, int iele, int numNodes, int numEdges,
     for(int i = 0; i < numNodes; i++){
       double v = ComputeScalarRep(numComp, val[i]);
       for(int j = 0; j < 3; j++)
-	xyz[i][j] += n[j] * opt->NormalRaise * v;
+        xyz[i][j] += n[j] * opt->NormalRaise * v;
     }
   }
 
   if(numComp == 3 && opt->VectorType == PViewOptions::Displacement){
     for(int i = 0; i < numNodes; i++){
       for(int j = 0; j < 3; j++)
-	xyz[i][j] += opt->DisplacementFactor * val[i][j];
+        xyz[i][j] += opt->DisplacementFactor * val[i][j];
     }
   }
 
@@ -271,13 +271,13 @@ void changeCoordinates(PView *p, int ient, int iele, int numNodes, int numEdges,
     int numComp2;
     double val2[NMAX][9];
     getExternalValues(p, opt->ViewIndexForGenRaise, ient, iele, numNodes, 
-		      numComp, val, numComp2, val2);
+                      numComp, val, numComp2, val2);
     applyGeneralRaise(p, numNodes, numComp2, val2, xyz);
   }
 }
 
 void addOutlinePoint(PView *p, double xyz[NMAX][3], unsigned int color, bool pre,
-		     int i0=0)
+                     int i0=0)
 {
   if(pre) return;
   SVector3 n = getPointNormal(p, 1.);
@@ -285,7 +285,7 @@ void addOutlinePoint(PView *p, double xyz[NMAX][3], unsigned int color, bool pre
 }
 
 void addScalarPoint(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool pre,
-		    int i0=0, bool unique=false)
+                    int i0=0, bool unique=false)
 {
   if(pre) return;
 
@@ -302,7 +302,7 @@ void addScalarPoint(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool pre
 }
 
 void addOutlineLine(PView *p, double xyz[NMAX][3], unsigned int color, bool pre,
-		    int i0=0, int i1=1)
+                    int i0=0, int i1=1)
 {
   if(pre) return;
 
@@ -319,7 +319,7 @@ void addOutlineLine(PView *p, double xyz[NMAX][3], unsigned int color, bool pre,
 }
 
 void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool pre,
-		   int i0=0, int i1=1, bool unique=false)
+                   int i0=0, int i1=1, bool unique=false)
 {
   if(pre) return;
 
@@ -348,17 +348,17 @@ void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool pre,
        val[i1][0] >= vmin && val[i1][0] <= vmax){
       unsigned int col[2];
       for(int i = 0; i < 2; i++)
-	col[i] = opt->getColor(v[i], vmin, vmax);
+        col[i] = opt->getColor(v[i], vmin, vmax);
       p->va_lines->add(x, y, z, n, col, 0, unique);
     }
     else{
       double x2[2], y2[2], z2[2], v2[2];
       int nb = CutLine(x, y, z, v, vmin, vmax, x2, y2, z2, v2);
       if(nb == 2){
-	unsigned int col[2];
-	for(int i = 0; i < 2; i++)
-	  col[i] = opt->getColor(v2[i], vmin, vmax);
-	p->va_lines->add(x2, y2, z2, n, col, 0, unique);
+        unsigned int col[2];
+        for(int i = 0; i < 2; i++)
+          col[i] = opt->getColor(v2[i], vmin, vmax);
+        p->va_lines->add(x2, y2, z2, n, col, 0, unique);
       }
     }
   }
@@ -371,11 +371,11 @@ void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool pre,
       double x2[2], y2[2], z2[2], v2[2];
       int nb = CutLine(x, y, z, v, min, max, x2, y2, z2, v2);
       if(nb == 2){
-	unsigned color = opt->getColor(k, opt->NbIso);
-	unsigned int col[2] = {color, color};
-	SVector3 n[2];
-	getLineNormal(p, x2, y2, z2, v2, n, true);
-	p->va_lines->add(x2, y2, z2, n, col, 0, unique);
+        unsigned color = opt->getColor(k, opt->NbIso);
+        unsigned int col[2] = {color, color};
+        SVector3 n[2];
+        getLineNormal(p, x2, y2, z2, v2, n, true);
+        p->va_lines->add(x2, y2, z2, n, col, 0, unique);
       }
       if(vmin == vmax) break;
     }
@@ -388,9 +388,9 @@ void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool pre,
       double x2[1], y2[1], z2[1];
       int nb = IsoLine(x, y, z, v, iso, x2, y2, z2);
       if(nb == 1){
-	unsigned int color = opt->getColor(k, opt->NbIso);
-	SVector3 n = getPointNormal(p, iso);
-	p->va_points->add(x2, y2, z2, &n, &color, 0, unique);
+        unsigned int color = opt->getColor(k, opt->NbIso);
+        SVector3 n = getPointNormal(p, iso);
+        p->va_points->add(x2, y2, z2, &n, &color, 0, unique);
       }
       if(vmin == vmax) break;
     }
@@ -398,7 +398,7 @@ void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool pre,
 }
 
 void addOutlineTriangle(PView *p, double xyz[NMAX][3], unsigned int color, bool pre,
-			int i0=0, int i1=1, int i2=2)
+                        int i0=0, int i1=1, int i2=2)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -414,8 +414,8 @@ void addOutlineTriangle(PView *p, double xyz[NMAX][3], unsigned int color, bool 
     unsigned int col[2] = {color, color};
     if(opt->SmoothNormals){
       for(int j = 0; j < 2; j++){
-	if(pre) p->normals->add(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
-	else p->normals->get(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
+        if(pre) p->normals->add(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
+        else p->normals->get(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
       }
     }
     getLineNormal(p, x, y, z, 0, n, false);
@@ -424,7 +424,7 @@ void addOutlineTriangle(PView *p, double xyz[NMAX][3], unsigned int color, bool 
 }
 
 void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool pre,
-		       int i0=0, int i1=1, int i2=2, bool unique=false, bool skin=false)
+                       int i0=0, int i1=1, int i2=2, bool unique=false, bool skin=false)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -455,11 +455,11 @@ void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool 
       SVector3 n[3] = {nfac, nfac, nfac};
       unsigned int col[3];
       for(int i = 0; i < 3; i++){
-	if(opt->SmoothNormals){
-	  if(pre) p->normals->add(x[i], y[i], z[i], n[i][0], n[i][1], n[i][2]);
-	  else p->normals->get(x[i], y[i], z[i], n[i][0], n[i][1], n[i][2]);
-	}
-	col[i] = opt->getColor(v[i], vmin, vmax);
+        if(opt->SmoothNormals){
+          if(pre) p->normals->add(x[i], y[i], z[i], n[i][0], n[i][1], n[i][2]);
+          else p->normals->get(x[i], y[i], z[i], n[i][0], n[i][1], n[i][2]);
+        }
+        col[i] = opt->getColor(v[i], vmin, vmax);
       }
       if(!pre) p->va_triangles->add(x, y, z, n, col, 0, unique, skin);
     }
@@ -467,22 +467,22 @@ void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool 
       double x2[10], y2[10], z2[10], v2[10];
       int nb = CutTriangle(x, y, z, v, vmin, vmax, x2, y2, z2, v2);
       if(nb >= 3){
-	for(int j = 2; j < nb; j++){
-	  double x3[3] = {x2[0], x2[j - 1], x2[j]};
-	  double y3[3] = {y2[0], y2[j - 1], y2[j]};
-	  double z3[3] = {z2[0], z2[j - 1], z2[j]};
-	  double v3[3] = {v2[0], v2[j - 1], v2[j]};
-	  SVector3 n[3] = {nfac, nfac, nfac};
-	  unsigned int col[3];
-	  for(int i = 0; i < 3; i++){
-	    if(opt->SmoothNormals){
-	      if(pre) p->normals->add(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
-	      else p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
-	    }
-	    col[i] = opt->getColor(v3[i], vmin, vmax);
-	  }
-	  if(!pre) p->va_triangles->add(x3, y3, z3, n, col, 0, unique, skin);
-	}
+        for(int j = 2; j < nb; j++){
+          double x3[3] = {x2[0], x2[j - 1], x2[j]};
+          double y3[3] = {y2[0], y2[j - 1], y2[j]};
+          double z3[3] = {z2[0], z2[j - 1], z2[j]};
+          double v3[3] = {v2[0], v2[j - 1], v2[j]};
+          SVector3 n[3] = {nfac, nfac, nfac};
+          unsigned int col[3];
+          for(int i = 0; i < 3; i++){
+            if(opt->SmoothNormals){
+              if(pre) p->normals->add(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
+              else p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
+            }
+            col[i] = opt->getColor(v3[i], vmin, vmax);
+          }
+          if(!pre) p->va_triangles->add(x3, y3, z3, n, col, 0, unique, skin);
+        }
       }
     }
   }
@@ -495,21 +495,21 @@ void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool 
       double x2[10], y2[10], z2[10], v2[10];
       int nb = CutTriangle(x, y, z, v, min, max, x2, y2, z2, v2);
       if(nb >= 3){
-	unsigned color = opt->getColor(k, opt->NbIso);
-	unsigned int col[3] = {color, color, color};
-	for(int j = 2; j < nb; j++){
-	  double x3[3] = {x2[0], x2[j - 1], x2[j]};
-	  double y3[3] = {y2[0], y2[j - 1], y2[j]};
-	  double z3[3] = {z2[0], z2[j - 1], z2[j]};
-	  SVector3 n[3] = {nfac, nfac, nfac};
-	  if(opt->SmoothNormals){
-	    for(int i = 0; i < 3; i++){
-	      if(pre) p->normals->add(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
-	      else p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
-	    }
-	  }
-	  if(!pre) p->va_triangles->add(x3, y3, z3, n, col, 0, unique, skin);
-	}
+        unsigned color = opt->getColor(k, opt->NbIso);
+        unsigned int col[3] = {color, color, color};
+        for(int j = 2; j < nb; j++){
+          double x3[3] = {x2[0], x2[j - 1], x2[j]};
+          double y3[3] = {y2[0], y2[j - 1], y2[j]};
+          double z3[3] = {z2[0], z2[j - 1], z2[j]};
+          SVector3 n[3] = {nfac, nfac, nfac};
+          if(opt->SmoothNormals){
+            for(int i = 0; i < 3; i++){
+              if(pre) p->normals->add(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
+              else p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
+            }
+          }
+          if(!pre) p->va_triangles->add(x3, y3, z3, n, col, 0, unique, skin);
+        }
       }
       if(vmin == vmax) break;
     }
@@ -522,18 +522,18 @@ void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool 
       double x2[3], y2[3], z2[3];
       int nb = IsoTriangle(x, y, z, v, iso, x2, y2, z2);
       if(nb == 2){
-	unsigned int color = opt->getColor(k, opt->NbIso);
-	unsigned int col[2] = {color, color};
-	SVector3 n[2] = {nfac, nfac};
-	if(opt->SmoothNormals){
-	  for(int i = 0; i < 2; i++){
-	    if(pre) p->normals->add(x2[i], y2[i], z2[i], n[i][0], n[i][1], n[i][2]);
-	    else p->normals->get(x2[i], y2[i], z2[i], n[i][0], n[i][1], n[i][2]);
-	  }
-	}
-	double v[2] = {iso, iso};
-	getLineNormal(p, x, y, z, v, n, false);
-	if(!pre) p->va_lines->add(x2, y2, z2, n, col, 0, unique);
+        unsigned int color = opt->getColor(k, opt->NbIso);
+        unsigned int col[2] = {color, color};
+        SVector3 n[2] = {nfac, nfac};
+        if(opt->SmoothNormals){
+          for(int i = 0; i < 2; i++){
+            if(pre) p->normals->add(x2[i], y2[i], z2[i], n[i][0], n[i][1], n[i][2]);
+            else p->normals->get(x2[i], y2[i], z2[i], n[i][0], n[i][1], n[i][2]);
+          }
+        }
+        double v[2] = {iso, iso};
+        getLineNormal(p, x, y, z, v, n, false);
+        if(!pre) p->va_lines->add(x2, y2, z2, n, col, 0, unique);
       }
       if(vmin == vmax) break;
     }
@@ -541,7 +541,7 @@ void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool 
 }
 
 void addOutlineQuadrangle(PView *p, double xyz[NMAX][3], unsigned int color, bool pre,
-			  int i0=0, int i1=1, int i2=2, int i3=3)
+                          int i0=0, int i1=1, int i2=2, int i3=3)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -557,8 +557,8 @@ void addOutlineQuadrangle(PView *p, double xyz[NMAX][3], unsigned int color, boo
     unsigned int col[2] = {color, color};
     if(opt->SmoothNormals){
       for(int j = 0; j < 2; j++){
-	if(pre) p->normals->add(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
-	else p->normals->get(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
+        if(pre) p->normals->add(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
+        else p->normals->get(x[j], y[j], z[j], n[j][0], n[j][1], n[j][2]);
       }
     }
     getLineNormal(p, x, y, z, 0, n, false);
@@ -567,7 +567,7 @@ void addOutlineQuadrangle(PView *p, double xyz[NMAX][3], unsigned int color, boo
 }
 
 void addScalarQuadrangle(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool pre,
-			 int i0=0, int i1=1, int i2=2, int i3=3, bool unique=false)
+                         int i0=0, int i1=1, int i2=2, int i3=3, bool unique=false)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -594,7 +594,7 @@ void addOutlineTetrahedron(PView *p, double xyz[NMAX][3], unsigned int color, bo
 }
 
 void addScalarTetrahedron(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool pre,
-			  int i0=0, int i1=1, int i2=2, int i3=3)
+                          int i0=0, int i1=1, int i2=2, int i3=3)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -626,22 +626,22 @@ void addScalarTetrahedron(PView *p, double xyz[NMAX][3], double val[NMAX][9], bo
       double x2[NMAX], y2[NMAX], z2[NMAX], nn[3];
       int nb = IsoSimplex(x, y, z, v, iso, x2, y2, z2, nn);
       if(nb >= 3){
-	unsigned int color = opt->getColor(k, opt->NbIso);
-	unsigned int col[3] = {color, color, color};
-	for(int j = 2; j < nb; j++){
-	  double x3[3] = {x2[0], x2[j - 1], x2[j]};
-	  double y3[3] = {y2[0], y2[j - 1], y2[j]};
-	  double z3[3] = {z2[0], z2[j - 1], z2[j]};
-	  SVector3 n[3];
-	  for(int i = 0; i < 3; i++){
-	    n[i][0] = nn[0]; n[i][1] = nn[1]; n[i][2] = nn[2];
-	    if(opt->SmoothNormals){
-	      if(pre) p->normals->add(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
-	      else p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
-	    }
-	  }
-	  if(!pre) p->va_triangles->add(x3, y3, z3, n, col, 0, false, false);
-	}
+        unsigned int color = opt->getColor(k, opt->NbIso);
+        unsigned int col[3] = {color, color, color};
+        for(int j = 2; j < nb; j++){
+          double x3[3] = {x2[0], x2[j - 1], x2[j]};
+          double y3[3] = {y2[0], y2[j - 1], y2[j]};
+          double z3[3] = {z2[0], z2[j - 1], z2[j]};
+          SVector3 n[3];
+          for(int i = 0; i < 3; i++){
+            n[i][0] = nn[0]; n[i][1] = nn[1]; n[i][2] = nn[2];
+            if(opt->SmoothNormals){
+              if(pre) p->normals->add(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
+              else p->normals->get(x3[i], y3[i], z3[i], n[i][0], n[i][1], n[i][2]);
+            }
+          }
+          if(!pre) p->va_triangles->add(x3, y3, z3, n, col, 0, false, false);
+        }
       }
       if(vmin == vmax) break;
     }
@@ -651,11 +651,11 @@ void addScalarTetrahedron(PView *p, double xyz[NMAX][3], double val[NMAX][9], bo
 void addOutlineHexahedron(PView *p, double xyz[NMAX][3], unsigned int color, bool pre)
 {
   const int iq[6][4] = {{0, 3, 2, 1}, {0, 1, 5, 4}, {0, 4, 7, 3},
-			{1, 2, 6, 5}, {2, 3, 7, 6}, {4, 5, 6, 7}};
+                        {1, 2, 6, 5}, {2, 3, 7, 6}, {4, 5, 6, 7}};
 
   for(int i = 0; i < 6; i++)
     addOutlineQuadrangle(p, xyz, color, pre, iq[i][0], iq[i][1], 
-			 iq[i][2], iq[i][3]);
+                         iq[i][2], iq[i][3]);
 }
 
 void addScalarHexahedron(PView *p, double xyz[NMAX][3], double val[NMAX][9], bool pre)
@@ -663,9 +663,9 @@ void addScalarHexahedron(PView *p, double xyz[NMAX][3], double val[NMAX][9], boo
   PViewOptions *opt = p->getOptions();
 
   const int iq[6][4] = {{0, 3, 2, 1}, {0, 1, 5, 4}, {0, 4, 7, 3},
-			{1, 2, 6, 5}, {2, 3, 7, 6}, {4, 5, 6, 7}};
+                        {1, 2, 6, 5}, {2, 3, 7, 6}, {4, 5, 6, 7}};
   const int is[6][4] = {{0, 1, 3, 7}, {0, 4, 1, 7}, {1, 4, 5, 7},
-			{1, 2, 3, 7}, {1, 6, 2, 7}, {1, 5, 6, 7}};
+                        {1, 2, 3, 7}, {1, 6, 2, 7}, {1, 5, 6, 7}};
 
   if(opt->Boundary > 0){
     opt->Boundary--;
@@ -757,7 +757,7 @@ void addOutlineElement(PView *p, int numEdges, double xyz[NMAX][3], bool pre)
 }
 
 void addScalarElement(PView *p, int numEdges, double xyz[NMAX][3],
-		      double val[NMAX][9], bool pre)
+                      double val[NMAX][9], bool pre)
 {
   switch(numEdges){
   case 0: addScalarPoint(p, xyz, val, pre); break;
@@ -772,7 +772,7 @@ void addScalarElement(PView *p, int numEdges, double xyz[NMAX][3],
 }
 
 void addVectorElement(PView *p, int ient, int iele, int numNodes, int numEdges, 
-		      double xyz[NMAX][3], double val[NMAX][9], bool pre)
+                      double xyz[NMAX][3], double val[NMAX][9], bool pre)
 {
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
@@ -780,7 +780,7 @@ void addVectorElement(PView *p, int ient, int iele, int numNodes, int numEdges,
   int numComp2;
   double val2[NMAX][9];
   getExternalValues(p, opt->ExternalViewIndex, ient, iele, numNodes, 
-		    3, val, numComp2, val2);
+                    3, val, numComp2, val2);
 
   if(opt->VectorType == PViewOptions::Displacement){
     for(int i = 0; i < numNodes; i++)
@@ -797,27 +797,27 @@ void addVectorElement(PView *p, int ient, int iele, int numNodes, int numEdges,
     // add point trajectories
     if(!pre && numNodes == 1 && opt->TimeStep > 0 && opt->LineWidth){
       for(int ts = 0; ts < opt->TimeStep; ts++){
-	double xyz0[3], dxyz[3][2];
-	for(int j = 0; j < 3; j++){
-	  data->getNode(ts, ient, iele, 0, xyz0[0], xyz0[1], xyz0[2]);
-	  data->getValue(ts, ient, iele, 0, j, dxyz[j][0]);
-	  data->getValue(ts + 1, ient, iele, 0, j, dxyz[j][1]);
-	}
-	unsigned int col[2];
-	double norm[2];
-	for(int i = 0; i < 2; i++){
-	  norm[i] = sqrt(dxyz[0][i] * dxyz[0][i] + 
-			 dxyz[1][i] * dxyz[1][i] + 
-			 dxyz[2][i] * dxyz[2][i]);
-	  col[i] = opt->getColor(norm[i], opt->TmpMin, opt->TmpMax);
-	}
-	for(int j = 0; j < 3; j++){	
-	  dxyz[j][0] = xyz0[j] + dxyz[j][0] * opt->DisplacementFactor;
-	  dxyz[j][1] = xyz0[j] + dxyz[j][1] * opt->DisplacementFactor;
-	}
-	SVector3 n[2];
-	getLineNormal(p, dxyz[0], dxyz[1], dxyz[2], norm, n, true);
-	p->va_lines->add(dxyz[0], dxyz[1], dxyz[2], n, col, 0, false);
+        double xyz0[3], dxyz[3][2];
+        for(int j = 0; j < 3; j++){
+          data->getNode(ts, ient, iele, 0, xyz0[0], xyz0[1], xyz0[2]);
+          data->getValue(ts, ient, iele, 0, j, dxyz[j][0]);
+          data->getValue(ts + 1, ient, iele, 0, j, dxyz[j][1]);
+        }
+        unsigned int col[2];
+        double norm[2];
+        for(int i = 0; i < 2; i++){
+          norm[i] = sqrt(dxyz[0][i] * dxyz[0][i] + 
+                         dxyz[1][i] * dxyz[1][i] + 
+                         dxyz[2][i] * dxyz[2][i]);
+          col[i] = opt->getColor(norm[i], opt->TmpMin, opt->TmpMax);
+        }
+        for(int j = 0; j < 3; j++){     
+          dxyz[j][0] = xyz0[j] + dxyz[j][0] * opt->DisplacementFactor;
+          dxyz[j][1] = xyz0[j] + dxyz[j][1] * opt->DisplacementFactor;
+        }
+        SVector3 n[2];
+        getLineNormal(p, dxyz[0], dxyz[1], dxyz[2], norm, n, true);
+        p->va_lines->add(dxyz[0], dxyz[1], dxyz[2], n, col, 0, false);
       }
     }
     return;
@@ -829,14 +829,14 @@ void addVectorElement(PView *p, int ient, int iele, int numNodes, int numEdges,
     for(int i = 0; i < numNodes; i++){
       double v2 = ComputeScalarRep(numComp2, val2[i]);
       if(v2 >= opt->ExternalMin && v2 <= opt->ExternalMax){
-	unsigned int color = opt->getColor(v2, opt->ExternalMin, opt->ExternalMax);
-	unsigned int col[2] = {color, color};
-	double dxyz[3][2];
-	for(int j = 0; j < 3; j++){
-	  dxyz[j][0] = xyz[i][j];
-	  dxyz[j][1] = val[i][j];
-	}
-	p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], 0, col, 0, false);
+        unsigned int color = opt->getColor(v2, opt->ExternalMin, opt->ExternalMax);
+        unsigned int col[2] = {color, color};
+        double dxyz[3][2];
+        for(int j = 0; j < 3; j++){
+          dxyz[j][0] = xyz[i][j];
+          dxyz[j][1] = val[i][j];
+        }
+        p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], 0, col, 0, false);
       }
     }
   }
@@ -864,8 +864,8 @@ void addVectorElement(PView *p, int ient, int iele, int numNodes, int numEdges,
       unsigned int col[2] = {color, color};
       double dxyz[3][2];
       for(int i = 0; i < 3; i++){
-	dxyz[i][0] = pc[i];
-	dxyz[i][1] = d[i];
+        dxyz[i][0] = pc[i];
+        dxyz[i][1] = d[i];
       }
       p->va_vectors->add(dxyz[0], dxyz[1], dxyz[2], 0, col, 0, false);
     }
@@ -873,7 +873,7 @@ void addVectorElement(PView *p, int ient, int iele, int numNodes, int numEdges,
 }
 
 void addTensorElement(PView *p, int numNodes, int numEdges, double xyz[NMAX][3],
-		      double val[NMAX][9], bool pre)
+                      double val[NMAX][9], bool pre)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -901,25 +901,25 @@ void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
       int numComp = data->getNumComponents(opt->TimeStep, ent, i);
       int numNodes = data->getNumNodes(opt->TimeStep, ent, i);
       for(int j = 0; j < numNodes; j++){
-	data->getNode(opt->TimeStep, ent, i, j, xyz[j][0], xyz[j][1], xyz[j][2]);
-	for(int k = 0; k < numComp; k++)
-	  data->getValue(opt->TimeStep, ent, i, j, k, val[j][k]);
+        data->getNode(opt->TimeStep, ent, i, j, xyz[j][0], xyz[j][1], xyz[j][2]);
+        for(int k = 0; k < numComp; k++)
+          data->getValue(opt->TimeStep, ent, i, j, k, val[j][k]);
       }
       changeCoordinates(p, ent, i, numNodes, numEdges, numComp, xyz, val);
       
       for(int j = 0; j < numNodes; j++)
-	opt->TmpBBox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
+        opt->TmpBBox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
       
       if(opt->ShowElement) 
-	addOutlineElement(p, numEdges, xyz, preprocessNormalsOnly);
+        addOutlineElement(p, numEdges, xyz, preprocessNormalsOnly);
       
       if(opt->IntervalsType != PViewOptions::Numeric){
-	if(numComp == 1 && opt->DrawScalars)
-	  addScalarElement(p, numEdges, xyz, val, preprocessNormalsOnly);
-	else if(numComp == 3 && opt->DrawVectors)
-	  addVectorElement(p, ent, i, numNodes, numEdges, xyz, val, preprocessNormalsOnly);
-	else if(numComp == 9 && opt->DrawTensors)
-	  addTensorElement(p, numNodes, numEdges, xyz, val, preprocessNormalsOnly);
+        if(numComp == 1 && opt->DrawScalars)
+          addScalarElement(p, numEdges, xyz, val, preprocessNormalsOnly);
+        else if(numComp == 3 && opt->DrawVectors)
+          addVectorElement(p, ent, i, numNodes, numEdges, xyz, val, preprocessNormalsOnly);
+        else if(numComp == 9 && opt->DrawTensors)
+          addTensorElement(p, numNodes, numEdges, xyz, val, preprocessNormalsOnly);
       }
     }
   }
@@ -940,8 +940,8 @@ void drawArrays(PView *p, VertexArray *va, GLint type, bool useNormalArray)
       glColor4ubv((GLubyte *)va->getColorArray(4 * i));
       double f = 1.;
       if(opt->PointType == 2){
-	char *n = va->getNormalArray(3 * i);
-	f = char2float(*n);
+        char *n = va->getNormalArray(3 * i);
+        f = char2float(*n);
       }
       Draw_Sphere(opt->PointSize * f, p[0], p[1], p[2], opt->Light);
     }
@@ -953,13 +953,13 @@ void drawArrays(PView *p, VertexArray *va, GLint type, bool useNormalArray)
       double x[2] = {p0[0], p1[0]}, y[2] = {p0[1], p1[1]}, z[2] = {p0[2], p1[2]};
       glColor4ubv((GLubyte *)va->getColorArray(4 * i));
       if(opt->LineType == 2){
-	char *n0 = va->getNormalArray(3 * i);
-	char *n1 = va->getNormalArray(3 * (i + 1));
-	double v0 = char2float(*n0), v1 = char2float(*n1);
-	Draw_TapCylinder(opt->LineWidth, v0, v1, 0., 1., x, y, z, opt->Light);
+        char *n0 = va->getNormalArray(3 * i);
+        char *n1 = va->getNormalArray(3 * (i + 1));
+        double v0 = char2float(*n0), v1 = char2float(*n1);
+        Draw_TapCylinder(opt->LineWidth, v0, v1, 0., 1., x, y, z, opt->Light);
       }
       else
-	Draw_Cylinder(opt->LineWidth, x, y, z, opt->Light);
+        Draw_Cylinder(opt->LineWidth, x, y, z, opt->Light);
     }
   }
   else{
@@ -1004,17 +1004,17 @@ void drawVectorArray(PView *p, VertexArray *va)
       double px = v[0] * scale, py = v[1] * scale, pz = v[2] * scale;
       // only draw vectors larger than 1 pixel on screen
       if(fabs(px) > 1. || fabs(py) > 1. || fabs(pz) > 1.){
-	double d = CTX.pixel_equiv_x / CTX.s[0];
-	double dx = px * d, dy = py * d, dz = pz * d;
-	double x = s[0], y = s[1], z = s[2];
-	if(opt->CenterGlyphs){
-	  x -= 0.5 * dx;
-	  y -= 0.5 * dy;
-	  z -= 0.5 * dz;
-	}
-	Draw_Vector(opt->VectorType, opt->IntervalsType != PViewOptions::Iso,
-		    opt->ArrowRelHeadRadius, opt->ArrowRelStemLength,
-		    opt->ArrowRelStemRadius, x, y, z, dx, dy, dz, opt->Light);
+        double d = CTX.pixel_equiv_x / CTX.s[0];
+        double dx = px * d, dy = py * d, dz = pz * d;
+        double x = s[0], y = s[1], z = s[2];
+        if(opt->CenterGlyphs){
+          x -= 0.5 * dx;
+          y -= 0.5 * dy;
+          z -= 0.5 * dz;
+        }
+        Draw_Vector(opt->VectorType, opt->IntervalsType != PViewOptions::Iso,
+                    opt->ArrowRelHeadRadius, opt->ArrowRelStemLength,
+                    opt->ArrowRelStemRadius, x, y, z, dx, dy, dz, opt->Light);
       }
     }
   }
@@ -1038,7 +1038,7 @@ std::string stringValue(int numComp, double d[9], double norm, char *format)
 }
 
 void drawNumberGlyphs(PView *p, int numNodes, int numComp, 
-		      double xyz[NMAX][3], double val[NMAX][9])
+                      double xyz[NMAX][3], double val[NMAX][9])
 {
   PViewOptions *opt = p->getOptions();
   double d[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
@@ -1060,30 +1060,30 @@ void drawNumberGlyphs(PView *p, int numNodes, int numComp,
       glRasterPos3d(pc.x(), pc.y(), pc.z());
       const char *txt = stringValue(numComp, d, v, opt->Format).c_str();
       if(opt->CenterGlyphs)
-	Draw_String_Center(txt);
+        Draw_String_Center(txt);
       else
-	Draw_String(txt);
+        Draw_String(txt);
     }
   }
   else if(opt->GlyphLocation == PViewOptions::Vertex){
     for(int i = 0; i < numNodes; i++){
       double v = ComputeScalarRep(numComp, val[i]);
       if(v >= vmin && v <= vmax){
-	unsigned int col = opt->getColor(v, vmin, vmax);
-	glColor4ubv((GLubyte *) & col);
-	glRasterPos3d(xyz[i][0], xyz[i][1], xyz[i][2]);
-	const char *txt = stringValue(numComp, val[i], v, opt->Format).c_str();
-	if(opt->CenterGlyphs)
-	  Draw_String_Center(txt);
-	else
-	  Draw_String(txt);
+        unsigned int col = opt->getColor(v, vmin, vmax);
+        glColor4ubv((GLubyte *) & col);
+        glRasterPos3d(xyz[i][0], xyz[i][1], xyz[i][2]);
+        const char *txt = stringValue(numComp, val[i], v, opt->Format).c_str();
+        if(opt->CenterGlyphs)
+          Draw_String_Center(txt);
+        else
+          Draw_String(txt);
       }
     }
   }
 }
 
 void drawNormalVectorGlyphs(PView *p, int numNodes, double xyz[NMAX][3],
-			    double val[NMAX][9])
+                            double val[NMAX][9])
 {
   PViewOptions *opt = p->getOptions();
 
@@ -1098,12 +1098,12 @@ void drawNormalVectorGlyphs(PView *p, int numNodes, double xyz[NMAX][3],
     n[i] *= opt->Normals * CTX.pixel_equiv_x / CTX.s[i];
   glColor4ubv((GLubyte *) & opt->color.normals);
   Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
-	      CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
-	      pc[0], pc[1], pc[2], n[0], n[1], n[2], opt->Light);
+              CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
+              pc[0], pc[1], pc[2], n[0], n[1], n[2], opt->Light);
 }
 
 void drawTangentVectorGlyphs(PView *p, int numNodes, double xyz[NMAX][3],
-			     double val[NMAX][9])
+                             double val[NMAX][9])
 {
   PViewOptions *opt = p->getOptions();
 
@@ -1116,8 +1116,8 @@ void drawTangentVectorGlyphs(PView *p, int numNodes, double xyz[NMAX][3],
     t[i] *= opt->Tangents * CTX.pixel_equiv_x / CTX.s[i];
   glColor4ubv((GLubyte *) & opt->color.tangents);
   Draw_Vector(CTX.vector_type, 0, CTX.arrow_rel_head_radius, 
-	      CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
-	      pc[0], pc[1], pc[2], t[0], t[1], t[2], opt->Light);
+              CTX.arrow_rel_stem_length, CTX.arrow_rel_stem_radius, 
+              pc[0], pc[1], pc[2], t[0], t[1], t[2], opt->Light);
 }
 
 void drawGlyphs(PView *p)
@@ -1141,17 +1141,17 @@ void drawGlyphs(PView *p)
       int numComp = data->getNumComponents(opt->TimeStep, ent, i);
       int numNodes = data->getNumNodes(opt->TimeStep, ent, i);
       for(int j = 0; j < numNodes; j++){
-	data->getNode(opt->TimeStep, ent, i, j, xyz[j][0], xyz[j][1], xyz[j][2]);
-	for(int k = 0; k < numComp; k++)
-	  data->getValue(opt->TimeStep, ent, i, j, k, val[j][k]);
+        data->getNode(opt->TimeStep, ent, i, j, xyz[j][0], xyz[j][1], xyz[j][2]);
+        for(int k = 0; k < numComp; k++)
+          data->getValue(opt->TimeStep, ent, i, j, k, val[j][k]);
       }
       changeCoordinates(p, ent, i, numNodes, numEdges, numComp, xyz, val);
       if(opt->IntervalsType == PViewOptions::Numeric)
-	drawNumberGlyphs(p, numNodes, numComp, xyz, val);
+        drawNumberGlyphs(p, numNodes, numComp, xyz, val);
       if(dim == 2 && opt->Normals)
-	drawNormalVectorGlyphs(p, numNodes, xyz, val);
+        drawNormalVectorGlyphs(p, numNodes, xyz, val);
       else if(dim == 1 && opt->Tangents)
-	drawTangentVectorGlyphs(p, numNodes, xyz, val);  
+        drawTangentVectorGlyphs(p, numNodes, xyz, val);  
     }
   }
 }
@@ -1190,10 +1190,10 @@ class initPView {
       heuristic = (tets + prisms + pyrs + hexas) / 10;
     else if(opt->IntervalsType == PViewOptions::Continuous)
       heuristic = (tris + 2 * quads + 6 * tets + 
-		   8 * prisms + 6 * pyrs + 12 * hexas);
+                   8 * prisms + 6 * pyrs + 12 * hexas);
     else if(opt->IntervalsType == PViewOptions::Discrete)
       heuristic = (tris + 2 * quads + 6 * tets + 
-		   8 * prisms + 6 * pyrs + 12 * hexas) * 2;
+                   8 * prisms + 6 * pyrs + 12 * hexas) * 2;
     return heuristic + 10000;
   }
   int _estimateNumVectors(PView *p)
@@ -1246,8 +1246,8 @@ class initPView {
     p->va_vectors->finalize();
 
     Msg(INFO, "Rendering %d vertices", p->va_points->getNumVertices() + 
-	p->va_lines->getNumVertices() + p->va_triangles->getNumVertices() + 
-	p->va_vectors->getNumVertices());
+        p->va_lines->getNumVertices() + p->va_triangles->getNumVertices() + 
+        p->va_vectors->getNumVertices());
 
     p->setChanged(false);
   }
@@ -1286,28 +1286,28 @@ class drawPView {
     
     for(int i = 0; i < 6; i++)
       if(CTX.clip[i] & (1 << (2 + p->getIndex()))) 
-	glEnable((GLenum)(GL_CLIP_PLANE0 + i));
+        glEnable((GLenum)(GL_CLIP_PLANE0 + i));
       else
-	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+        glDisable((GLenum)(GL_CLIP_PLANE0 + i));
     
     if(CTX.alpha && ColorTable_IsAlpha(&opt->CT)){
       if(opt->FakeTransparency){
-	// simple additive blending "a la xpost":
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE); // glBlendEquation(GL_FUNC_ADD);
-	// maximum intensity projection "a la volsuite":
-	// glBlendFunc(GL_ONE, GL_ONE); // glBlendEquation(GL_MAX);
-	glEnable(GL_BLEND);
-	glDisable(GL_DEPTH_TEST);
+        // simple additive blending "a la xpost":
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE); // glBlendEquation(GL_FUNC_ADD);
+        // maximum intensity projection "a la volsuite":
+        // glBlendFunc(GL_ONE, GL_ONE); // glBlendEquation(GL_MAX);
+        glEnable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
       }
       else{
-	// real translucent blending (requires back-to-front traversal)
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	// glBlendEquation(GL_FUNC_ADD);
-	glEnable(GL_BLEND);
-	if(eyeChanged(p)){
-	  Msg(DEBUG, "Sorting View[%d] for transparency", p->getIndex());
-	  p->va_triangles->sort(p->getEye().x(), p->getEye().y(), p->getEye().z());
-	}
+        // real translucent blending (requires back-to-front traversal)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        // glBlendEquation(GL_FUNC_ADD);
+        glEnable(GL_BLEND);
+        if(eyeChanged(p)){
+          Msg(DEBUG, "Sorting View[%d] for transparency", p->getIndex());
+          p->va_triangles->sort(p->getEye().x(), p->getEye().y(), p->getEye().z());
+        }
       }
     }
 
@@ -1340,11 +1340,11 @@ class drawPView {
     if(opt->DrawStrings){
       glColor4ubv((GLubyte *) & opt->color.text3d);
       for(int i = 0; i < data->getNumStrings3D(); i++){
-	double x, y, z, style;
-	std::string str;
-	data->getString3D(i, opt->TimeStep, str, x, y, z, style);
-	glRasterPos3d(x, y, z);
-	Draw_String(str.c_str(), style);
+        double x, y, z, style;
+        std::string str;
+        data->getString3D(i, opt->TimeStep, str, x, y, z, style);
+        glRasterPos3d(x, y, z);
+        Draw_String(str.c_str(), style);
       }
     }
     
@@ -1361,11 +1361,11 @@ class drawPView {
       glLineWidth(CTX.line_width);
       gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
       if(!opt->AxesAutoPosition)
-	Draw_Axes(opt->Axes, opt->AxesTics, opt->AxesFormat, opt->AxesLabel,
-		  opt->AxesPosition,opt->AxesMikado);
+        Draw_Axes(opt->Axes, opt->AxesTics, opt->AxesFormat, opt->AxesLabel,
+                  opt->AxesPosition,opt->AxesMikado);
       else if(!opt->TmpBBox.empty())
-	Draw_Axes(opt->Axes, opt->AxesTics, opt->AxesFormat, opt->AxesLabel,
-		  opt->TmpBBox,opt->AxesMikado);
+        Draw_Axes(opt->Axes, opt->AxesTics, opt->AxesFormat, opt->AxesLabel,
+                  opt->TmpBBox,opt->AxesMikado);
     }
     
   }
@@ -1388,14 +1388,14 @@ class drawPViewBoundingBox {
     gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
 
     Draw_Box(bb.min().x(), bb.min().y(), bb.min().z(),
-	     bb.max().x(), bb.max().y(), bb.max().z());
+             bb.max().x(), bb.max().y(), bb.max().z());
     glColor3d(1., 0., 0.);
     for(int i = 0; i < 6; i++)
       if(CTX.clip[i] & (1 << (2 + p->getIndex())))
-	Draw_PlaneInBoundingBox(bb.min().x(), bb.min().y(), bb.min().z(),
-				bb.max().x(), bb.max().y(), bb.max().z(),
-				CTX.clip_plane[i][0], CTX.clip_plane[i][1], 
-				CTX.clip_plane[i][2], CTX.clip_plane[i][3]);
+        Draw_PlaneInBoundingBox(bb.min().x(), bb.min().y(), bb.min().z(),
+                                bb.max().x(), bb.max().y(), bb.max().z(),
+                                CTX.clip_plane[i][0], CTX.clip_plane[i][1], 
+                                CTX.clip_plane[i][2], CTX.clip_plane[i][3]);
   }
 };
 

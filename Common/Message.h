@@ -73,6 +73,6 @@ void   Msg(int level, const char *fmt, ...);
 void   Exit(int);
 double GetValue(const char *text, double defaultval);
 bool   GetBinaryAnswer(const char *question, const char *yes, const char *no, 
-		       bool defaultval=true);
+                       bool defaultval=true);
 
 #endif

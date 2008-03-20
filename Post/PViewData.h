@@ -81,7 +81,7 @@ class PViewData {
   // Returns the coordinates of the nod-th node from the ele-th element
   // in the ent-th entity
   virtual void getNode(int step, int ent, int ele, int nod, 
-		       double &x, double &y, double &z) = 0;
+                       double &x, double &y, double &z) = 0;
   // Returns the number of componts available for the ele-th element
   // in the ent-th entity
   virtual int getNumComponents(int step, int ent, int ele) = 0;
@@ -99,9 +99,9 @@ class PViewData {
   virtual int getNumStrings2D(){ return 0; }
   virtual int getNumStrings3D(){ return 0; }
   virtual void getString2D(int i, int step, std::string &str, 
-			   double &x, double &y, double &style){}
+                           double &x, double &y, double &style){}
   virtual void getString3D(int i, int step, std::string &str, 
-			   double &x, double &y, double &z, double &style){}
+                           double &x, double &y, double &z, double &style){}
   virtual bool empty();
   virtual void smooth(){}
   virtual bool combineTime(nameData &nd){ return false; }
@@ -117,7 +117,7 @@ class PViewData {
   virtual bool writeSTL(std::string name);
   virtual bool writeTXT(std::string name);
   virtual bool writePOS(std::string name, bool binary=false, bool parsed=true,
-			bool append=false){ return false; }
+                        bool append=false){ return false; }
   virtual bool writeMSH(std::string name, bool binary=false){ return false; }
 };
 

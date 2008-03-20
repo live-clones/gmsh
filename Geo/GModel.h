@@ -209,42 +209,42 @@ class GModel
   // Gmsh mesh file format
   int readMSH(const std::string &name);
   int writeMSH(const std::string &name, double version=1.0, bool binary=false,
-	       bool saveAll=false, double scalingFactor=1.0);
+               bool saveAll=false, double scalingFactor=1.0);
 
   // Mesh statistics (as Gmsh post-processing views)
   int writePOS(const std::string &name, bool printElementary,
-	       bool printElementNumber, bool printGamma, bool printEta, bool printRho,
-	       bool saveAll=false, double scalingFactor=1.0);
+               bool printElementNumber, bool printGamma, bool printEta, bool printRho,
+               bool saveAll=false, double scalingFactor=1.0);
 
   // Stereo lithography format
   int readSTL(const std::string &name, double tolerance=1.e-3);
   int writeSTL(const std::string &name, bool binary=false,
-	       bool saveAll=false, double scalingFactor=1.0);
+               bool saveAll=false, double scalingFactor=1.0);
 
   // Inventor/VRML format
   int readVRML(const std::string &name);
   int writeVRML(const std::string &name,
-		bool saveAll=false, double scalingFactor=1.0);
+                bool saveAll=false, double scalingFactor=1.0);
 
   // I-deas universal mesh format
   int readUNV(const std::string &name);
   int writeUNV(const std::string &name, bool saveAll=false,
-	       bool saveGroupsOfNodes=false, double scalingFactor=1.0);
+               bool saveGroupsOfNodes=false, double scalingFactor=1.0);
 
   // Medit (INRIA) mesh format
   int readMESH(const std::string &name);
   int writeMESH(const std::string &name,
-		bool saveAll=false, double scalingFactor=1.0);
+                bool saveAll=false, double scalingFactor=1.0);
 
   // Nastran Bulk Data File format
   int readBDF(const std::string &name);
   int writeBDF(const std::string &name, int format=0,
-	       bool saveAll=false, double scalingFactor=1.0);
+               bool saveAll=false, double scalingFactor=1.0);
 
   // Plot3D structured mesh format
   int readP3D(const std::string &name);
   int writeP3D(const std::string &name,
-	       bool saveAll=false, double scalingFactor=1.0);
+               bool saveAll=false, double scalingFactor=1.0);
 
   // CFD General Notation System files
   int readCGNS(const std::string &name);

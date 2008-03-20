@@ -1,4 +1,4 @@
-// $Id: qualityMeasures.cpp,v 1.12 2008-02-21 19:20:58 geuzaine Exp $
+// $Id: qualityMeasures.cpp,v 1.13 2008-03-20 11:44:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,7 @@
 #include "Numeric.h"
 
 double qmTriangle(const BDS_Point *p1, const BDS_Point *p2, const BDS_Point *p3, 
-		  const gmshQualityMeasure4Triangle &cr)
+                  const gmshQualityMeasure4Triangle &cr)
 {
   return qmTriangle(p1->X, p1->Y, p1->Z, p2->X, p2->Y, p2->Z, p3->X, p3->Y, p3->Z, cr);
 }
@@ -44,19 +44,19 @@ double qmTriangle(MTriangle*t, const gmshQualityMeasure4Triangle &cr)
 }
 
 double qmTriangle(const MVertex *v1, const MVertex *v2, const MVertex *v3, 
-		  const gmshQualityMeasure4Triangle &cr)
+                  const gmshQualityMeasure4Triangle &cr)
 {
   return qmTriangle(v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z(),
-		    v3->x(), v3->y(), v3->z(), cr);
+                    v3->x(), v3->y(), v3->z(), cr);
 }
 
 // Triangle abc
 // quality is between 0 and 1
 
 double qmTriangle(const double &xa, const double &ya, const double &za, 
-		  const double &xb, const double &yb, const double &zb, 
-		  const double &xc, const double &yc, const double &zc, 
-		  const gmshQualityMeasure4Triangle &cr)
+                  const double &xb, const double &yb, const double &zb, 
+                  const double &xc, const double &yc, const double &zc, 
+                  const gmshQualityMeasure4Triangle &cr)
 {
   double quality;
   switch(cr){
@@ -84,8 +84,8 @@ double qmTriangle(const double &xa, const double &ya, const double &za,
       double b [3] = {xb - xa, yb - ya, zb - za};
       double c [3] ; prodve(a, b, c); norme(c);
       double A[3][3] = {{a[0] , b[0] , c[0]} ,
-			{a[1] , b[1] , c[1]} ,
-			{a[2] , b[2] , c[2]}};
+                        {a[1] , b[1] , c[1]} ,
+                        {a[2] , b[2] , c[2]}};
       quality = -1;
     }
     break;
@@ -99,21 +99,21 @@ double qmTriangle(const double &xa, const double &ya, const double &za,
 double qmTet(MTetrahedron *t, const gmshQualityMeasure4Tet &cr, double *volume)
 {
   return qmTet(t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3),
-	       cr, volume);
+               cr, volume);
 }
 
 double qmTet(const MVertex *v1, const MVertex *v2, const MVertex *v3,
-	     const MVertex *v4, const gmshQualityMeasure4Tet &cr, double *volume)
+             const MVertex *v4, const gmshQualityMeasure4Tet &cr, double *volume)
 {
   return qmTet(v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z(), 
-	       v3->x(), v3->y(), v3->z(), v4->x(), v4->y(), v4->z(), cr, volume);
+               v3->x(), v3->y(), v3->z(), v4->x(), v4->y(), v4->z(), cr, volume);
 }
 
 double qmTet(const double &x1, const double &y1, const double &z1, 
-	     const double &x2, const double &y2, const double &z2, 
-	     const double &x3, const double &y3, const double &z3, 
-	     const double &x4, const double &y4, const double &z4, 
-	     const gmshQualityMeasure4Tet &cr, double *volume)
+             const double &x2, const double &y2, const double &z2, 
+             const double &x3, const double &y3, const double &z3, 
+             const double &x4, const double &y4, const double &z4, 
+             const gmshQualityMeasure4Tet &cr, double *volume)
 {
   double quality;
   switch(cr){
@@ -133,8 +133,8 @@ double qmTet(const double &x1, const double &y1, const double &z1,
       mat[2][2] = z4 - z1;
       *volume = fabs(det3x3(mat)) / 6.;
       double l = ((x2 - x1) * (x2 - x1) + 
-		  (y2 - y1) * (y2 - y1) +
-		  (z2 - z1) * (z2 - z1));
+                  (y2 - y1) * (y2 - y1) +
+                  (z2 - z1) * (z2 - z1));
       l += ((x3 - x1) * (x3 - x1) + (y3 - y1) * (y3 - y1) + (z3 - z1) * (z3 - z1));
       l += ((x4 - x1) * (x4 - x1) + (y4 - y1) * (y4 - y1) + (z4 - z1) * (z4 - z1));
       l += ((x3 - x2) * (x3 - x2) + (y3 - y2) * (y3 - y2) + (z3 - z2) * (z3 - z2));
@@ -165,19 +165,19 @@ double qmTet(const double &x1, const double &y1, const double &z1,
       double s4 = fabs(triangle_area(p1, p2, p3));
       double rhoin = 3. * fabs(*volume) / (s1 + s2 + s3 + s4);
       double l = sqrt((x2 - x1) * (x2 - x1) +
-		      (y2 - y1) * (y2 - y1) + 
-		      (z2 - z1) * (z2 - z1));
+                      (y2 - y1) * (y2 - y1) + 
+                      (z2 - z1) * (z2 - z1));
       l = std::max(l, sqrt((x3 - x1) * (x3 - x1) + (y3 - y1) * (y3 - y1) + 
-			   (z3 - z1) * (z3 - z1)));
+                           (z3 - z1) * (z3 - z1)));
       l = std::max(l, sqrt((x4 - x1) * (x4 - x1) + (y4 - y1) * (y4 - y1) + 
-			   (z4 - z1) * (z4 - z1)));
+                           (z4 - z1) * (z4 - z1)));
       l = std::max(l, sqrt((x3 - x2) * (x3 - x2) + (y3 - y2) * (y3 - y2) + 
-			   (z3 - z2) * (z3 - z2)));
+                           (z3 - z2) * (z3 - z2)));
       l = std::max(l, sqrt((x4 - x2) * (x4 - x2) + (y4 - y2) * (y4 - y2) +
-			   (z4 - z2) * (z4 - z2)));
+                           (z4 - z2) * (z4 - z2)));
       l = std::max(l, sqrt((x3 - x4) * (x3 - x4) + (y3 - y4) * (y3 - y4) +
-			   (z3 - z4) * (z3 - z4)));
-      return 2. * sqrt(6.) * rhoin / l;	
+                           (z3 - z4) * (z3 - z4)));
+      return 2. * sqrt(6.) * rhoin / l; 
     }
     break;
   default:

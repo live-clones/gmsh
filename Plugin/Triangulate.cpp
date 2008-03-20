@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.46 2008-03-01 01:32:03 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.47 2008-03-20 11:44:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -59,12 +59,12 @@ void GMSH_TriangulatePlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Triangulate) triangulates the points in the\n"
-	 "view `iView', assuming that all the points belong\n"
+         "view `iView', assuming that all the points belong\n"
          "to a surface that can be projected one-to-one\n"
-	 "onto a plane. If `iView' < 0, the plugin is run on\n"
-	 "the current view.\n"
-	 "\n"
-	 "Plugin(Triangulate) creates one new view.\n");
+         "onto a plane. If `iView' < 0, the plugin is run on\n"
+         "the current view.\n"
+         "\n"
+         "Plugin(Triangulate) creates one new view.\n");
 }
 
 int GMSH_TriangulatePlugin::getNbOptions() const
@@ -93,7 +93,7 @@ static void Project(MVertex *v, double mat[3][3])
 }
 
 static void Triangulate(int nbIn, List_T *inList, int *nbOut, List_T *outList,
-			int nbTimeStep, int nbComp)
+                        int nbTimeStep, int nbComp)
 {
   if(nbIn < 3) return;
 

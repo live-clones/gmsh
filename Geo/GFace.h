@@ -89,8 +89,8 @@ class GFace : public GEntity
 
   // compute the parameters UV from a point XYZ
   void XYZtoUV(const double X, const double Y, const double Z,
-	       double &U, double &V, const double relax,
-	       const bool onSurface=true) const;
+               double &U, double &V, const double relax,
+               const bool onSurface=true) const;
 
   // The bounding box
   virtual SBoundingBox3d bounds() const;
@@ -160,7 +160,7 @@ class GFace : public GEntity
 
   // Get the mean plane info
   void getMeanPlaneData(double VX[3], double VY[3],
-			double &x, double &y, double &z) const;
+                        double &x, double &y, double &z) const;
   void getMeanPlaneData(double plan[3][3]) const;
 
   // Get number of elements in the mesh and get element by index

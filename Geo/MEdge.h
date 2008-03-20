@@ -51,8 +51,8 @@ class MEdge {
   SVector3 tangent() const
   {
     SVector3 t(_v[1]->x() - _v[0]->x(), 
-	       _v[1]->y() - _v[0]->y(),
-	       _v[1]->z() - _v[0]->z());
+               _v[1]->y() - _v[0]->y(),
+               _v[1]->z() - _v[0]->z());
     t.normalize();
     return t;
   }
@@ -78,7 +78,7 @@ class MEdge {
   {
     return SPoint3(t * _v[1]->x() + (1. - t) * _v[0]->x(),
                    t * _v[1]->y() + (1. - t) * _v[0]->y(),
-		   t * _v[1]->z() + (1. - t) * _v[0]->z());
+                   t * _v[1]->z() + (1. - t) * _v[0]->z());
   }
 };
 

@@ -1,4 +1,4 @@
-// $Id: Gradient.cpp,v 1.11 2008-02-17 08:48:06 geuzaine Exp $
+// $Id: Gradient.cpp,v 1.12 2008-03-20 11:44:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -45,16 +45,16 @@ void GMSH_GradientPlugin::getName(char *name) const
 }
 
 void GMSH_GradientPlugin::getInfos(char *author, char *copyright,
-				    char *help_text) const
+                                    char *help_text) const
 {
   strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-	 "Plugin(Gradient) computes the gradient of the\n"
-	 "field in the view `iView'. If `iView' < 0, the\n"
-	 "plugin is run on the current view.\n"
-	 "\n"
-	 "Plugin(Gradient) creates one new view.\n");
+         "Plugin(Gradient) computes the gradient of the\n"
+         "field in the view `iView'. If `iView' < 0, the\n"
+         "plugin is run on the current view.\n"
+         "\n"
+         "Plugin(Gradient) creates one new view.\n");
 }
 
 int GMSH_GradientPlugin::getNbOptions() const
@@ -73,7 +73,7 @@ void GMSH_GradientPlugin::catchErrorMessage(char *errorMessage) const
 }
 
 static void gradient(int inNb, List_T *inList, int *outNb, List_T *outList, 
-		     int dim, int nbNod, int nbComp, int nbTime)
+                     int dim, int nbNod, int nbComp, int nbTime)
 {
   if(!inNb) return;
   
@@ -90,14 +90,14 @@ static void gradient(int inNb, List_T *inList, int *outNb, List_T *outList,
     for(int j = 0; j < nbTime; j++){
       double *val = (double *)List_Pointer(inList, i + 3 * nbNod + nbNod * nbComp * j);
       for(int k = 0; k < nbNod; k++){
-	double u, v, w, f[3];
-	element->getNode(k, u, v, w);
-	for(int l = 0; l < nbComp; l++){
-	  element->interpolateGrad(val+l, u, v, w, f, nbComp);
-	  List_Add(outList, &f[0]);
-	  List_Add(outList, &f[1]);
-	  List_Add(outList, &f[2]);
-	}
+        double u, v, w, f[3];
+        element->getNode(k, u, v, w);
+        for(int l = 0; l < nbComp; l++){
+          element->interpolateGrad(val+l, u, v, w, f, nbComp);
+          List_Add(outList, &f[0]);
+          List_Add(outList, &f[1]);
+          List_Add(outList, &f[2]);
+        }
       }
     }
     delete element;

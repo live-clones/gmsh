@@ -1,4 +1,4 @@
-// $Id: ReadImg.cpp,v 1.23 2008-02-22 07:49:39 geuzaine Exp $
+// $Id: ReadImg.cpp,v 1.24 2008-03-20 11:44:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -34,7 +34,7 @@
 // from an image, we create a post-procession view
 
 static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads=1,
-			       int resizex=0, int resizey=0) 
+                               int resizex=0, int resizey=0) 
 {
   img_init.desaturate(); // convert to grayscale
 
@@ -71,27 +71,27 @@ static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads=1,
       double val3 = (double)a1[j + 1]/255.;
       double val4 = (double)a[j + 1]/255.;
       if(quads){ // generate quads
-	List_Add(d->SQ, &x); List_Add(d->SQ, &x); 
-	List_Add(d->SQ, &x1); List_Add(d->SQ, &x1);
-	List_Add(d->SQ, &y); List_Add(d->SQ, &y1);
-	List_Add(d->SQ, &y1); List_Add(d->SQ, &y);
-	List_Add(d->SQ, &z); List_Add(d->SQ, &z);
-	List_Add(d->SQ, &z); List_Add(d->SQ, &z);
-	List_Add(d->SQ, &val1); List_Add(d->SQ, &val2);
-	List_Add(d->SQ, &val3); List_Add(d->SQ, &val4);
-	d->NbSQ++;
+        List_Add(d->SQ, &x); List_Add(d->SQ, &x); 
+        List_Add(d->SQ, &x1); List_Add(d->SQ, &x1);
+        List_Add(d->SQ, &y); List_Add(d->SQ, &y1);
+        List_Add(d->SQ, &y1); List_Add(d->SQ, &y);
+        List_Add(d->SQ, &z); List_Add(d->SQ, &z);
+        List_Add(d->SQ, &z); List_Add(d->SQ, &z);
+        List_Add(d->SQ, &val1); List_Add(d->SQ, &val2);
+        List_Add(d->SQ, &val3); List_Add(d->SQ, &val4);
+        d->NbSQ++;
       }
       else{ // generate triangles
-	List_Add(d->ST, &x); List_Add(d->ST, &x); List_Add(d->ST, &x1);
-	List_Add(d->ST, &y); List_Add(d->ST, &y1); List_Add(d->ST, &y1);
-	List_Add(d->ST, &z); List_Add(d->ST, &z); List_Add(d->ST, &z);
-	List_Add(d->ST, &val1); List_Add(d->ST, &val2); List_Add(d->ST, &val3);
-	d->NbST++;
-	List_Add(d->ST, &x); List_Add(d->ST, &x1); List_Add(d->ST, &x1);
-	List_Add(d->ST, &y); List_Add(d->ST, &y1); List_Add(d->ST, &y);
-	List_Add(d->ST, &z); List_Add(d->ST, &z); List_Add(d->ST, &z);
-	List_Add(d->ST, &val1); List_Add(d->ST, &val3); List_Add(d->ST, &val4);
-	d->NbST++;
+        List_Add(d->ST, &x); List_Add(d->ST, &x); List_Add(d->ST, &x1);
+        List_Add(d->ST, &y); List_Add(d->ST, &y1); List_Add(d->ST, &y1);
+        List_Add(d->ST, &z); List_Add(d->ST, &z); List_Add(d->ST, &z);
+        List_Add(d->ST, &val1); List_Add(d->ST, &val2); List_Add(d->ST, &val3);
+        d->NbST++;
+        List_Add(d->ST, &x); List_Add(d->ST, &x1); List_Add(d->ST, &x1);
+        List_Add(d->ST, &y); List_Add(d->ST, &y1); List_Add(d->ST, &y);
+        List_Add(d->ST, &z); List_Add(d->ST, &z); List_Add(d->ST, &z);
+        List_Add(d->ST, &val1); List_Add(d->ST, &val3); List_Add(d->ST, &val4);
+        d->NbST++;
       }
     }
   }

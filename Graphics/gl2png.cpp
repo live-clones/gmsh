@@ -1,4 +1,4 @@
-// $Id: gl2png.cpp,v 1.8 2008-02-17 08:48:00 geuzaine Exp $
+// $Id: gl2png.cpp,v 1.9 2008-03-20 11:44:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -74,8 +74,8 @@ void create_png(FILE *file, PixelBuffer *buffer, int quality)
   // Z_DEFAULT_COMPRESSION, Z_BEST_SPEED, Z_BEST_COMPRESSION, Z_NO_COMPRESSION
   png_set_compression_level(png_ptr, Z_DEFAULT_COMPRESSION);
   png_set_IHDR(png_ptr, info_ptr, width, height, 8, 
-	       (numcomp == 3) ? PNG_COLOR_TYPE_RGB : PNG_COLOR_TYPE_RGBA,
-	       PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+               (numcomp == 3) ? PNG_COLOR_TYPE_RGB : PNG_COLOR_TYPE_RGBA,
+               PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
   time_t now;
   time(&now);
   png_text text_ptr[10];  

@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.10 2008-03-19 20:06:17 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.11 2008-03-20 11:44:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,15 +30,15 @@
 #include "StringUtils.h"
 
 bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
-			      bool binary, bool swap, int step, double time, 
-			      int partition, int numComp, int numNodes)
+                              bool binary, bool swap, int step, double time, 
+                              int partition, int numComp, int numNodes)
 {
   Msg(INFO, "Reading step %d (time %g) partition %d: %d nodes", 
       step, time, partition, numNodes);
 
   while(step >= (int)_steps.size())
     _steps.push_back(new stepData<double>(GModel::current(), 
-					  stepData<double>::NodeData, numComp));
+                                          stepData<double>::NodeData, numComp));
   
   _steps[step]->setFileName(fileName);
   _steps[step]->setFileIndex(fileIndex);
@@ -79,7 +79,7 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
     }
     else{
       for(int j = 0; j < numComp; j++)
-	if(fscanf(fp, "%lf", &d[j]) != 1) return false;
+        if(fscanf(fp, "%lf", &d[j]) != 1) return false;
     }
     double s = ComputeScalarRep(numComp, d);
     _steps[step]->setMin(std::min(_steps[step]->getMin(), s));
@@ -132,20 +132,20 @@ bool PViewDataGModel::writeMSH(std::string name, bool binary)
       fprintf(fp, "$NodeData\n");
       fprintf(fp, "\"%s\"\n", getName().c_str());
       fprintf(fp, "%d %.16g 0 0 %d %d\n", step, _steps[step]->getTime(), 
-	      numComp, numNodes);
+              numComp, numNodes);
       for(unsigned int i = 0; i < _steps[step]->getNumData(); i++){
-	if(_steps[step]->getData(i)){
-	  if(binary){
-	    fwrite(&tags[i], sizeof(int), 1, fp);
-	    fwrite(_steps[step]->getData(i), sizeof(double), numComp, fp);
-	  }
-	  else{
-	    fprintf(fp, "%d", tags[i]);
-	    for(int k = 0; k < numComp; k++)
-	      fprintf(fp, " %.16g", _steps[step]->getData(i)[k]);
-	    fprintf(fp, "\n");
-	  }
-	}
+        if(_steps[step]->getData(i)){
+          if(binary){
+            fwrite(&tags[i], sizeof(int), 1, fp);
+            fwrite(_steps[step]->getData(i), sizeof(double), numComp, fp);
+          }
+          else{
+            fprintf(fp, "%d", tags[i]);
+            for(int k = 0; k < numComp; k++)
+              fprintf(fp, " %.16g", _steps[step]->getData(i)[k]);
+            fprintf(fp, "\n");
+          }
+        }
       }
       if(binary) fprintf(fp, "\n");
       fprintf(fp, "$EndNodeData\n");

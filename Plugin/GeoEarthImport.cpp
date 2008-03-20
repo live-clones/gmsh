@@ -99,19 +99,19 @@ void GeoEarthImport::end_surface()
 }
 
 /*static void projectLatLon(Point3D &psphere,Point &pplan){
-	pplan.x=asin(psphere.z);
-	pplan.y=atan2(psphere.y,psphere.x);
-	pplan.zone_id=psphere.zone_id;
+        pplan.x=asin(psphere.z);
+        pplan.y=atan2(psphere.y,psphere.x);
+        pplan.zone_id=psphere.zone_id;
 }
 static void projectInvStereo(Point &pplan,Point3D &psphere){
-	double rp2=pplan.x*pplan.x+pplan.y*pplan.y;
-	psphere.z= (4-rp2)/(4+rp2);
-	psphere.x= (1+psphere.z)/2*pplan.x;
-	psphere.y= (1+psphere.z)/2*pplan.y;
-	psphere.zone_id=pplan.zone_id;
+        double rp2=pplan.x*pplan.x+pplan.y*pplan.y;
+        psphere.z= (4-rp2)/(4+rp2);
+        psphere.x= (1+psphere.z)/2*pplan.x;
+        psphere.y= (1+psphere.z)/2*pplan.y;
+        psphere.zone_id=pplan.zone_id;
 }
 static void projectStereo(Point3D &psphere,Point &pplan){
-	pplan.x=2*psphere.x/(psphere.z+1);
-	pplan.y=2*psphere.y/(psphere.z+1);
-	pplan.zone_id=psphere.zone_id;
+        pplan.x=2*psphere.x/(psphere.z+1);
+        pplan.y=2*psphere.y/(psphere.z+1);
+        pplan.zone_id=psphere.zone_id;
 }*/

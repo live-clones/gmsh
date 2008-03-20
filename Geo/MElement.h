@@ -40,10 +40,10 @@ class MElement
   char _visible;
  protected:
   void _getEdgeRep(MVertex *v0, MVertex *v1, 
-		   double *x, double *y, double *z, SVector3 *n,
-		   int faceIndex=-1);
+                   double *x, double *y, double *z, SVector3 *n,
+                   int faceIndex=-1);
   void _getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2, 
-		   double *x, double *y, double *z, SVector3 *n);
+                   double *x, double *y, double *z, SVector3 *n);
  public :
   MElement(int num=0, int part=0) 
     : _visible(true) 
@@ -145,13 +145,13 @@ class MElement
   // Returns the interpolating nodal shape function associated with
   // node num, evaluated at point (u,v,w) in parametric coordinates
   virtual void getShapeFunction(int num, double u, double v, double w,
-				double &s) = 0;
+                                double &s) = 0;
 
   // Returns the gradient of of the nodal shape function associated
   // with node num, evaluated at point (u,v,w) in parametric
   // coordinates
   virtual void getGradShapeFunction(int num, double u, double v, double w,
-				    double s[3]) = 0;
+                                    double s[3]) = 0;
 
   // Returns the Jacobian of the element evaluated at point (u,v,w) in
   // parametric coordinates
@@ -168,17 +168,17 @@ class MElement
   // divergence) at point (u,v,w) in parametric coordinates
   double interpolate(double val[], double u, double v, double w, int stride=1);
   void interpolateGrad(double val[], double u, double v, double w, double f[3],
-		       int stride=1, double invjac[3][3]=0);
+                       int stride=1, double invjac[3][3]=0);
   void interpolateCurl(double val[], double u, double v, double w, double f[3],
-		       int stride=3);
+                       int stride=3);
   double interpolateDiv(double val[], double u, double v, double w, int stride=3);
 
   // IO routines
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
-			int num=0, int elementary=1, int physical=1);
+                        int num=0, int elementary=1, int physical=1);
   virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber, 
-			bool printGamma, bool printEta, bool printRho, 
-			double scalingFactor=1.0, int elementary=1);
+                        bool printGamma, bool printEta, bool printRho, 
+                        double scalingFactor=1.0, int elementary=1);
   virtual void writeSTL(FILE *fp, bool binary=false, double scalingFactor=1.0);
   virtual void writeVRML(FILE *fp);
   virtual void writeUNV(FILE *fp, int num=0, int elementary=1, int physical=1);
@@ -339,8 +339,8 @@ class MLineN : public MLine {
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
     _getEdgeRep(getVertex((num == 0) ? 0 : num + 1), 
-		getVertex((num == getNumEdgesRep() - 1) ? 1 : num + 2),
-		x, y, z, n);
+                getVertex((num == getNumEdgesRep() - 1) ? 1 : num + 2),
+                x, y, z, n);
   }
   virtual int getTypeForMSH(){ 
     if(_vs.size() == 2) return MSH_LIN_4; 
@@ -454,7 +454,7 @@ class MTriangle6 : public MTriangle {
   MVertex *_vs[3];
  public :
   MTriangle6(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-	     MVertex *v5, int num=0, int part=0) 
+             MVertex *v5, int num=0, int part=0) 
     : MTriangle(v0, v1, v2, num, part)
   {
     _vs[0] = v3; _vs[1] = v4; _vs[2] = v5;
@@ -493,7 +493,7 @@ class MTriangle6 : public MTriangle {
       {0, 3, 5}, {1, 4, 3}, {2, 5, 4}, {3, 4, 5}
     };
     _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-		x, y, z, n);
+                x, y, z, n);
   }
   virtual int getTypeForMSH(){ return MSH_TRI_6; }
   virtual int getTypeForUNV(){ return 92; } // thin shell parabolic triangle
@@ -530,7 +530,7 @@ class MTriangleN : public MTriangle {
   }
  public:
   MTriangleN(MVertex *v0, MVertex *v1, MVertex *v2, 
-	     std::vector<MVertex*> &v, int order, int num=0, int part=0) 
+             std::vector<MVertex*> &v, int order, int num=0, int part=0) 
     : MTriangle(v0, v1, v2, num, part) , _vs (v), _order(order)
   {
     for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
@@ -638,7 +638,7 @@ class MQuadrangle : public MElement {
       {0, 1, 2}, {0, 2, 3}
     };
     _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-		x, y, z, n);
+                x, y, z, n);
   }
   virtual int getTypeForMSH(){ return MSH_QUA_4; }
   virtual int getTypeForUNV(){ return 94; } // thin shell linear quadrilateral
@@ -681,7 +681,7 @@ class MQuadrangle8 : public MQuadrangle {
   MVertex *_vs[4];
  public :
   MQuadrangle8(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
-	       MVertex *v5, MVertex *v6, MVertex *v7, int num=0, int part=0) 
+               MVertex *v5, MVertex *v6, MVertex *v7, int num=0, int part=0) 
     : MQuadrangle(v0, v1, v2, v3, num, part)
   {
     _vs[0] = v4; _vs[1] = v5; _vs[2] = v6; _vs[3] = v7;
@@ -721,7 +721,7 @@ class MQuadrangle8 : public MQuadrangle {
       {0, 4, 7}, {1, 5, 4}, {2, 6, 5}, {3, 7, 6}, {4, 5, 6}, {4, 6, 7}
     };
     _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-		x, y, z, n);
+                x, y, z, n);
   }
   virtual int getTypeForMSH(){ return MSH_QUA_8; }
   virtual int getTypeForUNV(){ return 95; } // shell parabolic quadrilateral
@@ -741,7 +741,7 @@ class MQuadrangle9 : public MQuadrangle {
   MVertex *_vs[5];
  public :
   MQuadrangle9(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
-	       MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, int num=0, int part=0) 
+               MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, int num=0, int part=0) 
     : MQuadrangle(v0, v1, v2, v3, num, part)
   {
     _vs[0] = v4; _vs[1] = v5; _vs[2] = v6; _vs[3] = v7; _vs[4] = v8;
@@ -778,7 +778,7 @@ class MQuadrangle9 : public MQuadrangle {
       {2, 6, 8}, {2, 8, 5}, {3, 7, 8}, {3, 8, 6}
     };
     _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-		x, y, z, n);
+                x, y, z, n);
   }
   virtual int getTypeForMSH(){ return MSH_QUA_9; }
   virtual int getTypeForUNV(){ return 0; } // not available
@@ -841,8 +841,8 @@ class MTetrahedron : public MElement {
       {3, 1, 2}
     };
     return MFace(_v[faces_tetra[num][0]],
-		 _v[faces_tetra[num][1]],
-		 _v[faces_tetra[num][2]]);
+                 _v[faces_tetra[num][1]],
+                 _v[faces_tetra[num][2]]);
   }
   virtual int getNumFacesRep(){ return 4; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
@@ -908,8 +908,8 @@ class MTetrahedron10 : public MTetrahedron {
   MVertex *_vs[6];
  public :
   MTetrahedron10(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
-		 MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-		 int num=0, int part=0) 
+                 MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
+                 int num=0, int part=0) 
     : MTetrahedron(v0, v1, v2, v3, num, part)
   {
     _vs[0] = v4; _vs[1] = v5; _vs[2] = v6; _vs[3] = v7; _vs[4] = v8; _vs[5] = v9;
@@ -960,7 +960,7 @@ class MTetrahedron10 : public MTetrahedron {
       {3, 9, 8}, {1, 5, 9}, {2, 8, 5}, {9, 5, 8}
     };
     _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-		x, y, z, n);
+                x, y, z, n);
   }
   virtual int getTypeForMSH(){ return MSH_TET_10; }
   virtual int getTypeForUNV(){ return 118; } // solid parabolic tetrahedron
@@ -980,7 +980,7 @@ class MHexahedron : public MElement {
   MVertex *_v[8];
  public :
   MHexahedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
-	      MVertex *v5, MVertex *v6, MVertex *v7, int num=0, int part=0) 
+              MVertex *v5, MVertex *v6, MVertex *v7, int num=0, int part=0) 
     : MElement(num, part)
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
@@ -1033,9 +1033,9 @@ class MHexahedron : public MElement {
       {4, 5, 6, 7}
     };
     return MFace(_v[faces_hexa[num][0]],
-		 _v[faces_hexa[num][1]],
-		 _v[faces_hexa[num][2]],
-		 _v[faces_hexa[num][3]]);
+                 _v[faces_hexa[num][1]],
+                 _v[faces_hexa[num][2]],
+                 _v[faces_hexa[num][3]]);
   }
   virtual int getNumFacesRep(){ return 12; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
@@ -1049,7 +1049,7 @@ class MHexahedron : public MElement {
       {4, 5, 6}, {4, 6, 7}
     };
     _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-		x, y, z, n);
+                x, y, z, n);
   }
   virtual int getTypeForMSH(){ return MSH_HEX_8; }
   virtual int getTypeForUNV(){ return 115; } // solid linear brick
@@ -1120,10 +1120,10 @@ class MHexahedron20 : public MHexahedron {
   MVertex *_vs[12];
  public :
   MHexahedron20(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
-		MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-		MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
-		MVertex *v15, MVertex *v16, MVertex *v17, MVertex *v18, MVertex *v19,
-		int num=0, int part=0) 
+                MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
+                MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
+                MVertex *v15, MVertex *v16, MVertex *v17, MVertex *v18, MVertex *v19,
+                int num=0, int part=0) 
     : MHexahedron(v0, v1, v2, v3, v4, v5, v6, v7, num, part)
   {
     _vs[0] = v8; _vs[1] = v9; _vs[2] = v10; _vs[3] = v11; _vs[4] = v12; 
@@ -1144,13 +1144,13 @@ class MHexahedron20 : public MHexahedron {
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[20] = {0, 8, 1, 11, 2, 13, 3, 9, 10, 12, 
-				14, 15, 4, 16, 5, 18, 6, 19, 7, 17};
+                                14, 15, 4, 16, 5, 18, 6, 19, 7, 17};
     return getVertex(map[num]); 
   }
   virtual MVertex *getVertexBDF(int num)
   {
     static const int map[20] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 13, 
-				9, 10, 12, 14, 15, 16, 18, 19, 17};
+                                9, 10, 12, 14, 15, 16, 18, 19, 17};
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 12; }
@@ -1186,7 +1186,7 @@ class MHexahedron20 : public MHexahedron {
       {4, 16, 17}, {5, 18, 16}, {6, 19, 18}, {7, 17, 19}, {16, 18, 19}, {16, 19, 17}
     };
     _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-		x, y, z, n);
+                x, y, z, n);
   }
   virtual int getTypeForMSH(){ return MSH_HEX_20; }
   virtual int getTypeForUNV(){ return 116; } // solid parabolic brick
@@ -1212,11 +1212,11 @@ class MHexahedron27 : public MHexahedron {
   MVertex *_vs[19];
  public :
   MHexahedron27(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
-		MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-		MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
-		MVertex *v15, MVertex *v16, MVertex *v17, MVertex *v18, MVertex *v19,
-		MVertex *v20, MVertex *v21, MVertex *v22, MVertex *v23, MVertex *v24,
-		MVertex *v25, MVertex *v26, int num=0, int part=0) 
+                MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
+                MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
+                MVertex *v15, MVertex *v16, MVertex *v17, MVertex *v18, MVertex *v19,
+                MVertex *v20, MVertex *v21, MVertex *v22, MVertex *v23, MVertex *v24,
+                MVertex *v25, MVertex *v26, int num=0, int part=0) 
     : MHexahedron(v0, v1, v2, v3, v4, v5, v6, v7, num, part)
   {
     _vs[0] = v8; _vs[1] = v9; _vs[2] = v10; _vs[3] = v11; _vs[4] = v12; 
@@ -1276,7 +1276,7 @@ class MHexahedron27 : public MHexahedron {
       {6, 19, 25}, {6, 25, 18}, {7, 17, 25}, {7, 25, 19}  
     };
     _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-		x, y, z, n);
+                x, y, z, n);
   }
   virtual int getTypeForMSH(){ return MSH_HEX_27; }
   virtual int getTypeForUNV(){ return 0; } // not available
@@ -1306,7 +1306,7 @@ class MPrism : public MElement {
   MVertex *_v[6];
  public :
   MPrism(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
-	 MVertex *v5, int num=0, int part=0) 
+         MVertex *v5, int num=0, int part=0) 
     : MElement(num, part)
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3;
@@ -1358,13 +1358,13 @@ class MPrism : public MElement {
     };
     if(num < 2)
       return MFace(_v[trifaces_prism[num][0]],
-		   _v[trifaces_prism[num][1]],
-		   _v[trifaces_prism[num][2]]);
+                   _v[trifaces_prism[num][1]],
+                   _v[trifaces_prism[num][2]]);
     else
       return MFace(_v[quadfaces_prism[num - 2][0]],
-		   _v[quadfaces_prism[num - 2][1]],
-		   _v[quadfaces_prism[num - 2][2]],
-		   _v[quadfaces_prism[num - 2][3]]);
+                   _v[quadfaces_prism[num - 2][1]],
+                   _v[quadfaces_prism[num - 2][2]],
+                   _v[quadfaces_prism[num - 2][3]]);
   }
   virtual int getNumFacesRep(){ return 8; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
@@ -1377,7 +1377,7 @@ class MPrism : public MElement {
       {1, 2, 5}, {1, 5, 4}
     };
     _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-		x, y, z, n);
+                x, y, z, n);
   }
   virtual int getTypeForMSH(){ return MSH_PRI_6; }
   virtual int getTypeForUNV(){ return 112; } // solid linear wedge
@@ -1440,9 +1440,9 @@ class MPrism15 : public MPrism {
   MVertex *_vs[9];
  public :
   MPrism15(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
-	   MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-	   MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
-	   int num=0, int part=0) 
+           MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
+           MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
+           int num=0, int part=0) 
     : MPrism(v0, v1, v2, v3, v4, v5, num, part)
   {
     _vs[0] = v6; _vs[1] = v7; _vs[2] = v8; _vs[3] = v9; _vs[4] = v10; 
@@ -1498,7 +1498,7 @@ class MPrism15 : public MPrism {
       {1, 9, 10}, {2, 11, 9}, {5, 14, 11}, {4, 10, 14}, {9, 11, 14}, {9, 14, 10}
     };
     _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-		x, y, z, n);
+                x, y, z, n);
   }
   virtual int getTypeForMSH(){ return MSH_PRI_15; }
   virtual int getTypeForUNV(){ return 113; } // solid parabolic wedge
@@ -1520,9 +1520,9 @@ class MPrism18 : public MPrism {
   MVertex *_vs[12];
  public :
   MPrism18(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
-	   MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-	   MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
-	   MVertex *v15, MVertex *v16, MVertex *v17, int num=0, int part=0) 
+           MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
+           MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
+           MVertex *v15, MVertex *v16, MVertex *v17, int num=0, int part=0) 
     : MPrism(v0, v1, v2, v3, v4, v5, num, part)
   {
     _vs[0] = v6; _vs[1] = v7; _vs[2] = v8; _vs[3] = v9; _vs[4] = v10; 
@@ -1573,7 +1573,7 @@ class MPrism18 : public MPrism {
       {5, 14, 17}, {5, 17, 11}, {4, 10, 17}, {4, 17, 14}
     };
     _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-		x, y, z, n);
+                x, y, z, n);
   }
   virtual int getTypeForMSH(){ return MSH_PRI_18; }
   virtual int getTypeForUNV(){ return 0; } // not available
@@ -1598,7 +1598,7 @@ class MPyramid : public MElement {
   MVertex *_v[5];
  public :
   MPyramid(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
-	   int num=0, int part=0) 
+           int num=0, int part=0) 
     : MElement(num, part)
   {
     _v[0] = v0; _v[1] = v1; _v[2] = v2; _v[3] = v3; _v[4] = v4;
@@ -1645,8 +1645,8 @@ class MPyramid : public MElement {
     };
     if(num < 4)
       return MFace(_v[faces_pyramid[num][0]],
-		   _v[faces_pyramid[num][1]],
-		   _v[faces_pyramid[num][2]]);
+                   _v[faces_pyramid[num][1]],
+                   _v[faces_pyramid[num][2]]);
     else
       return MFace(_v[0], _v[3], _v[2], _v[1]);
   }
@@ -1661,7 +1661,7 @@ class MPyramid : public MElement {
       {0, 3, 2}, {0, 2, 1}
     };
     _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-		x, y, z, n);
+                x, y, z, n);
   }
   virtual int getTypeForMSH(){ return MSH_PYR_5; }
   virtual int getTypeForUNV(){ return 0; } // not available
@@ -1696,11 +1696,11 @@ class MPyramid : public MElement {
     else{
       switch(num) {
       case 0  : s[0] = 0.25 * (-(1. - v) + v * w / (1. - w));
-	        s[1] = 0.25 * (-(1. - u) + u * w / (1. - w));
-      	        s[2] = 0.25 * (-1.       + u * v / (1. - w) / (1. - w)); break;
+                s[1] = 0.25 * (-(1. - u) + u * w / (1. - w));
+                s[2] = 0.25 * (-1.       + u * v / (1. - w) / (1. - w)); break;
       case 1  : s[0] = 0.25 * ( (1. - v) + v * w / (1. - w));
-	        s[1] = 0.25 * (-(1. + u) + u * w / (1. - w));
-	        s[2] = 0.25 * (-1.       + u * v / (1. - w) / (1. - w)); break;
+                s[1] = 0.25 * (-(1. + u) + u * w / (1. - w));
+                s[2] = 0.25 * (-1.       + u * v / (1. - w) / (1. - w)); break;
       case 2  : s[0] = 0.25 * ( (1. + v) + v * w / (1. - w));
                 s[1] = 0.25 * ( (1. + u) + u * w / (1. - w));
                 s[2] = 0.25 * (-1.       + u * v / (1. - w) / (1. - w)); break;
@@ -1728,8 +1728,8 @@ class MPyramid13 : public MPyramid {
   MVertex *_vs[8];
  public :
   MPyramid13(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
-	     MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-	     MVertex *v10, MVertex *v11, MVertex *v12, int num=0, int part=0) 
+             MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
+             MVertex *v10, MVertex *v11, MVertex *v12, int num=0, int part=0) 
     : MPyramid(v0, v1, v2, v3, v4, num, part)
   {
     _vs[0] = v5; _vs[1] = v6; _vs[2] = v7; _vs[3] = v8; _vs[4] = v9; 
@@ -1774,7 +1774,7 @@ class MPyramid13 : public MPyramid {
       {0, 6, 5}, {3, 10, 6}, {2, 8, 10}, {1, 5, 8}, {5, 6, 10}, {5, 10, 8}
     };
     _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-		x, y, z, n);
+                x, y, z, n);
   }
   virtual int getTypeForMSH(){ return MSH_PYR_13; }
   virtual int getTypeForUNV(){ return 0; } // not available
@@ -1795,9 +1795,9 @@ class MPyramid14 : public MPyramid {
   MVertex *_vs[9];
  public :
   MPyramid14(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4, 
-	     MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-	     MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, 
-	     int num=0, int part=0) 
+             MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
+             MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, 
+             int num=0, int part=0) 
     : MPyramid(v0, v1, v2, v3, v4, num, part)
   {
     _vs[0] = v5; _vs[1] = v6; _vs[2] = v7; _vs[3] = v8; _vs[4] = v9; 
@@ -1844,7 +1844,7 @@ class MPyramid14 : public MPyramid {
       {2, 8, 13}, {2, 13, 10}, {1, 5, 13}, {1, 13, 8}
     };
     _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-		x, y, z, n);
+                x, y, z, n);
   }
   virtual int getTypeForMSH(){ return MSH_PYR_14; }
   virtual int getTypeForUNV(){ return 0; } // not available

@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.33 2008-02-17 08:48:07 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.34 2008-03-20 11:44:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -78,7 +78,7 @@ void GMSH_StreamLinesPlugin::draw()
 }
 
 double GMSH_StreamLinesPlugin::callback(int num, int action, double value, double *opt,
-					double step, double min, double max)
+                                        double step, double min, double max)
 {
   switch(action){ // configure the input field
   case 1: return step;
@@ -96,67 +96,67 @@ double GMSH_StreamLinesPlugin::callback(int num, int action, double value, doubl
 double GMSH_StreamLinesPlugin::callbackX0(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[0].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackY0(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[1].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackZ0(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[2].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackX1(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[3].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackY1(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[4].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackZ1(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[5].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackX2(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[6].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackY2(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[7].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackZ2(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[8].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_StreamLinesPlugin::callbackU(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[9].def,
-		  1, 1, 100);
+                  1, 1, 100);
 }
 
 double GMSH_StreamLinesPlugin::callbackV(int num, int action, double value)
 {
   return callback(num, action, value, &StreamLinesOptions_Number[10].def,
-		  1, 1, 100);
+                  1, 1, 100);
 }
 
 void GMSH_StreamLinesPlugin::getName(char *name) const
@@ -165,33 +165,33 @@ void GMSH_StreamLinesPlugin::getName(char *name) const
 }
 
 void GMSH_StreamLinesPlugin::getInfos(char *author, char *copyright,
-				      char *help_text) const
+                                      char *help_text) const
 {
   strcpy(author, "J.-F. Remacle");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-	 "Plugin(StreamLines) computes stream lines\n"
-	 "from the `TimeStep'-th time step of a vector\n"
-	 "view `iView' and optionally interpolates the\n"
-	 "scalar view `dView' on the resulting stream\n"
-	 "lines. The plugin takes as input a grid defined\n"
-	 "by the 3 points (`X0',`Y0',`Z0') (origin),\n"
-	 "(`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2')\n"
-	 "(axis of V). The number of points that are to\n"
-	 "be transported along U and V is set with the\n"
-	 "options `nPointsU' and `nPointsV'. The equation\n"
-	 "DX(t)/dt=V(x,y,z) is then solved with the initial\n"
-	 "condition X(t=0) chosen as the grid and with V(x,y,z)\n"
-	 "interpolated on the vector view. The time stepping\n"
-	 "scheme is a RK44 with step size `DT' and `MaxIter'\n"
-	 "maximum number of iterations. If `iView' < 0, the\n"
-	 "plugin is run on the current view. If `TimeStep' < 0,\n"
-	 "the plugin tries to compute streamlines of the unsteady\n"
-	 "flow.\n"
-	 "\n"
-	 "Plugin(StreamLines) creates one new view. This\n"
-	 "view contains multi-step vector points if `dView'\n"
-	 "< 0, or single-step scalar lines if `dView' >= 0.\n");
+         "Plugin(StreamLines) computes stream lines\n"
+         "from the `TimeStep'-th time step of a vector\n"
+         "view `iView' and optionally interpolates the\n"
+         "scalar view `dView' on the resulting stream\n"
+         "lines. The plugin takes as input a grid defined\n"
+         "by the 3 points (`X0',`Y0',`Z0') (origin),\n"
+         "(`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2')\n"
+         "(axis of V). The number of points that are to\n"
+         "be transported along U and V is set with the\n"
+         "options `nPointsU' and `nPointsV'. The equation\n"
+         "DX(t)/dt=V(x,y,z) is then solved with the initial\n"
+         "condition X(t=0) chosen as the grid and with V(x,y,z)\n"
+         "interpolated on the vector view. The time stepping\n"
+         "scheme is a RK44 with step size `DT' and `MaxIter'\n"
+         "maximum number of iterations. If `iView' < 0, the\n"
+         "plugin is run on the current view. If `TimeStep' < 0,\n"
+         "the plugin tries to compute streamlines of the unsteady\n"
+         "flow.\n"
+         "\n"
+         "Plugin(StreamLines) creates one new view. This\n"
+         "view contains multi-step vector points if `dView'\n"
+         "< 0, or single-step scalar lines if `dView' >= 0.\n");
 }
 
 int GMSH_StreamLinesPlugin::getNbOptions() const
@@ -254,7 +254,7 @@ PView *GMSH_StreamLinesPlugin::GenerateView(PView *v1, PView *v2)
 
   int timestep = (int)StreamLinesOptions_Number[13].def;
   if(timestep > data1->getNumTimeSteps() - 1){
-    Msg(GERROR, "Invalid time step (%d) in view: using step 0 instead",	timestep);
+    Msg(GERROR, "Invalid time step (%d) in view: using step 0 instead", timestep);
     timestep = 0;
   }
 
@@ -270,81 +270,81 @@ PView *GMSH_StreamLinesPlugin::GenerateView(PView *v1, PView *v2)
     for(int j = 0; j < getNbV(); ++j){
       getPoint(i, j, XINIT);
       getPoint(i, j, X);
-	  
+          
       if(data2){
-	o2->searchScalar(X[0], X[1], X[2], val2, -1);
+        o2->searchScalar(X[0], X[1], X[2], val2, -1);
       }
       else{
-	data->NbVP++;
-	List_Add(data->VP, &X[0]);
-	List_Add(data->VP, &X[1]);
-	List_Add(data->VP, &X[2]);	      
+        data->NbVP++;
+        List_Add(data->VP, &X[0]);
+        List_Add(data->VP, &X[1]);
+        List_Add(data->VP, &X[2]);            
       }
 
       int currentTimeStep = 0;
 
       for(int iter = 0; iter < (int)StreamLinesOptions_Number[11].def; iter++){
 
-	double XPREV[3] = { X[0], X[1], X[2] };
+        double XPREV[3] = { X[0], X[1], X[2] };
 
-	if(timestep < 0){
-	  double T0 = data1->getTime(0);
-	  double currentT = T0 + DT * iter;
-	  List_Add(data->Time, &currentT);
-	  for(; currentTimeStep < data1->getNumTimeSteps() - 1 && 
-		currentT > 0.5 * (data1->getTime(currentTimeStep) + 
-				  data1->getTime(currentTimeStep + 1));
-	      currentTimeStep++);
-	}
-	else{
-	  currentTimeStep = timestep;
-	}
-	//Msg(DEBUG, "iter = %d, currentTimeStep = %d", iter, currentTimeStep);
+        if(timestep < 0){
+          double T0 = data1->getTime(0);
+          double currentT = T0 + DT * iter;
+          List_Add(data->Time, &currentT);
+          for(; currentTimeStep < data1->getNumTimeSteps() - 1 && 
+                currentT > 0.5 * (data1->getTime(currentTimeStep) + 
+                                  data1->getTime(currentTimeStep + 1));
+              currentTimeStep++);
+        }
+        else{
+          currentTimeStep = timestep;
+        }
+        //Msg(DEBUG, "iter = %d, currentTimeStep = %d", iter, currentTimeStep);
 
-	// dX/dt = V
-	// X1 = X + a1 * DT * V(X)
-	// X2 = X + a2 * DT * V(X1)
-	// X3 = X + a3 * DT * V(X2)
-	// X4 = X + a4 * DT * V(X3)
-	// X = X + b1 X1 + b2 X2 + b3 X3 + b4 x4
+        // dX/dt = V
+        // X1 = X + a1 * DT * V(X)
+        // X2 = X + a2 * DT * V(X1)
+        // X3 = X + a3 * DT * V(X2)
+        // X4 = X + a4 * DT * V(X3)
+        // X = X + b1 X1 + b2 X2 + b3 X3 + b4 x4
 
-	// o.searchVector(X[0], X[1], X[2], val, currentTimeStep, &sizeElem);
-	// double normV = sqrt(val[0]*val[0]+val[1]*val[1]+val[2]*val[2]);	     
-	// if (normV==0.0) normV = 1.0;
-	// double DT = sizeElem / normV ; // CFL = 1 ==> secure 
-	o.searchVector(X[0], X[1], X[2], val, currentTimeStep);
-	for(int k = 0; k < 3; k++) X1[k] = X[k] + DT * val[k] * a1;
-	o.searchVector(X1[0], X1[1], X1[2], val, currentTimeStep);
-	for(int k = 0; k < 3; k++) X2[k] = X[k] + DT * val[k] * a2;
-	o.searchVector(X2[0], X2[1], X2[2], val, currentTimeStep);
-	for(int k = 0; k < 3; k++) X3[k] = X[k] + DT * val[k] * a3;
-	o.searchVector(X3[0], X3[1], X3[2], val, currentTimeStep);
-	for(int k = 0; k < 3; k++) X4[k] = X[k] + DT * val[k] * a4;
+        // o.searchVector(X[0], X[1], X[2], val, currentTimeStep, &sizeElem);
+        // double normV = sqrt(val[0]*val[0]+val[1]*val[1]+val[2]*val[2]);           
+        // if (normV==0.0) normV = 1.0;
+        // double DT = sizeElem / normV ; // CFL = 1 ==> secure 
+        o.searchVector(X[0], X[1], X[2], val, currentTimeStep);
+        for(int k = 0; k < 3; k++) X1[k] = X[k] + DT * val[k] * a1;
+        o.searchVector(X1[0], X1[1], X1[2], val, currentTimeStep);
+        for(int k = 0; k < 3; k++) X2[k] = X[k] + DT * val[k] * a2;
+        o.searchVector(X2[0], X2[1], X2[2], val, currentTimeStep);
+        for(int k = 0; k < 3; k++) X3[k] = X[k] + DT * val[k] * a3;
+        o.searchVector(X3[0], X3[1], X3[2], val, currentTimeStep);
+        for(int k = 0; k < 3; k++) X4[k] = X[k] + DT * val[k] * a4;
 
-	for(int k = 0; k < 3; k++) 
-	  X[k] += (b1*(X1[k]-X[k]) + b2*(X2[k]-X[k]) + 
-		   b3*(X3[k]-X[k]) + b4*(X4[k]-X[k])) ;
-	for(int k = 0; k < 3; k++) DX[k] = X[k] - XINIT[k];
+        for(int k = 0; k < 3; k++) 
+          X[k] += (b1*(X1[k]-X[k]) + b2*(X2[k]-X[k]) + 
+                   b3*(X3[k]-X[k]) + b4*(X4[k]-X[k])) ;
+        for(int k = 0; k < 3; k++) DX[k] = X[k] - XINIT[k];
 
-	if(data2){
-	  data->NbSL++;
-	  List_Add(data->SL, &XPREV[0]);
-	  List_Add(data->SL, &X[0]);
-	  List_Add(data->SL, &XPREV[1]);
-	  List_Add(data->SL, &X[1]);
-	  List_Add(data->SL, &XPREV[2]);
-	  List_Add(data->SL, &X[2]);
-	  for(int k = 0; k < data2->getNumTimeSteps(); k++)
-	    List_Add(data->SL, &val2[k]);
-	  o2->searchScalar(X[0], X[1], X[2], val2, -1);
-	  for(int k = 0; k < data2->getNumTimeSteps(); k++)
-	    List_Add(data->SL, &val2[k]);
-	}
-	else{
-	  List_Add(data->VP, &DX[0]);
-	  List_Add(data->VP, &DX[1]);
-	  List_Add(data->VP, &DX[2]);	      
-	}
+        if(data2){
+          data->NbSL++;
+          List_Add(data->SL, &XPREV[0]);
+          List_Add(data->SL, &X[0]);
+          List_Add(data->SL, &XPREV[1]);
+          List_Add(data->SL, &X[1]);
+          List_Add(data->SL, &XPREV[2]);
+          List_Add(data->SL, &X[2]);
+          for(int k = 0; k < data2->getNumTimeSteps(); k++)
+            List_Add(data->SL, &val2[k]);
+          o2->searchScalar(X[0], X[1], X[2], val2, -1);
+          for(int k = 0; k < data2->getNumTimeSteps(); k++)
+            List_Add(data->SL, &val2[k]);
+        }
+        else{
+          List_Add(data->VP, &DX[0]);
+          List_Add(data->VP, &DX[1]);
+          List_Add(data->VP, &DX[2]);         
+        }
       }
     }
   }

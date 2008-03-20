@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.36 2008-02-17 08:48:07 geuzaine Exp $
+// $Id: Skin.cpp,v 1.37 2008-03-20 11:44:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -60,10 +60,10 @@ void GMSH_SkinPlugin::getInfos(char *author, char *copyright, char *help_text) c
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Skin) extracts the skin (the boundary) of\n"
-	 "the view `iView'. If `iView' < 0, the plugin is run\n"
-	 "on the current view.\n"
-	 "\n"
-	 "Plugin(Skin) creates one new view.\n");
+         "the view `iView'. If `iView' < 0, the plugin is run\n"
+         "on the current view.\n"
+         "\n"
+         "Plugin(Skin) creates one new view.\n");
 }
 
 int GMSH_SkinPlugin::getNbOptions() const
@@ -132,7 +132,7 @@ void GMSH_SkinPlugin::addInView(void *a, void *b)
 }
 
 void GMSH_SkinPlugin::skinList(List_T *inList, int inNbList, 
-			       int inNbNod, int inNbFac, int fxn[6][4])
+                               int inNbNod, int inNbFac, int fxn[6][4])
 {
   if(!inNbList)
     return;
@@ -144,17 +144,17 @@ void GMSH_SkinPlugin::skinList(List_T *inList, int inNbList,
     for(int j = 0; j < inNbFac; j++) {
       Elm e, *pe;
       for(int k = 0; k < _nbNod; k++) {
-	e.coord[k] = coord[fxn[j][k]]; // x
-	e.coord[_nbNod + k] = coord[inNbNod + fxn[j][k]]; // y
-	e.coord[2 * _nbNod + k] = coord[2 * inNbNod + fxn[j][k]]; // z
+        e.coord[k] = coord[fxn[j][k]]; // x
+        e.coord[_nbNod + k] = coord[inNbNod + fxn[j][k]]; // y
+        e.coord[2 * _nbNod + k] = coord[2 * inNbNod + fxn[j][k]]; // z
       }
       if(!(pe = (Elm *)Tree_PQuery(_skin, &e))) {
-	e.val = (double *)Malloc(_nbNod * _nbComp * _nbTimeStep * sizeof(double));
-	for(int k = 0; k < _nbNod; k++)
-	  for(int ts = 0; ts < _nbTimeStep; ts++)
-	    for(int n = 0; n < _nbComp; n++)
-	      e.val[_nbNod * _nbComp * ts + _nbComp * k + n] =
-		val[inNbNod * _nbComp * ts + _nbComp * fxn[j][k] + n];
+        e.val = (double *)Malloc(_nbNod * _nbComp * _nbTimeStep * sizeof(double));
+        for(int k = 0; k < _nbNod; k++)
+          for(int ts = 0; ts < _nbTimeStep; ts++)
+            for(int n = 0; n < _nbComp; n++)
+              e.val[_nbNod * _nbComp * ts + _nbComp * k + n] =
+                val[inNbNod * _nbComp * ts + _nbComp * fxn[j][k] + n];
         Tree_Add(_skin, &e);
       }
       else {
@@ -186,7 +186,7 @@ PView *GMSH_SkinPlugin::execute(PView *v)
   int skinQua[6][4] = {{0,1,-1,-1}, {1,2,-1,-1}, {2,3,-1,-1}, {3,0,-1,-1}};
   int skinTet[6][4] = {{0,1,3,-1}, {0,2,1,-1}, {0,3,2,-1}, {1,2,3,-1}};
   int skinHex[6][4] = {{0,1,5,4}, {0,3,2,1}, {0,4,7,3},
-		       {1,2,6,5}, {2,3,7,6}, {4,5,6,7}};
+                       {1,2,6,5}, {2,3,7,6}, {4,5,6,7}};
   int skinPri1[6][4] = {{0,1,4,3}, {0,3,5,2}, {1,2,5,4}};
   int skinPri2[6][4] = {{0,2,1,-1}, {3,4,5,-1}};
   int skinPyr1[6][4] = {{0,3,2,1}};

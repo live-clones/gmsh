@@ -798,11 +798,11 @@ void * Get_NumberOption(const char *str, StringXNumber s[]);
 void * Get_ColorOption(const char *str, StringXColor s[]);
 
 void Print_StringOptions(int num, int level, int diff, int help,
-			 StringXString s[], const char *prefix, FILE *file);
+                         StringXString s[], const char *prefix, FILE *file);
 void Print_NumberOptions(int num, int level, int diff, int help,
-			 StringXNumber s[], const char *prefix, FILE *file);
+                         StringXNumber s[], const char *prefix, FILE *file);
 void Print_ColorOptions(int num, int level, int diff, int help,
-			StringXColor s[], const char *prefix, FILE *file);
+                        StringXColor s[], const char *prefix, FILE *file);
 
 void Print_StringOptionsDoc(StringXString s[], const char *prefix, FILE * file);
 void Print_NumberOptionsDoc(StringXNumber s[], const char *prefix, FILE * file);

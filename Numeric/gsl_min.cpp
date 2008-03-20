@@ -1,4 +1,4 @@
-// $Id: gsl_min.cpp,v 1.5 2008-02-21 13:44:56 geuzaine Exp $
+// $Id: gsl_min.cpp,v 1.6 2008-03-20 11:44:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -105,9 +105,9 @@ void fdfobjN (const gsl_vector * x, void * params, double * f, gsl_vector * g){
 }
 
 void minimize_2 ( double (*f) (double, double, void *data), 
-		  void (*df) (double, double, double &, double &, double &, void *data) ,
-		  void *data,int niter,
-		  double &U, double &V, double &res){
+                  void (*df) (double, double, double &, double &, double &, void *data) ,
+                  void *data,int niter,
+                  double &U, double &V, double &res){
   f_stat = f;
   df_stat = df;
 
@@ -148,14 +148,14 @@ void minimize_2 ( double (*f) (double, double, void *data),
   res = s->f;
   gsl_multimin_fdfminimizer_free (s);
   gsl_vector_free (x);
-} 					    
+}                                           
 
 void minimize_3(double (*f) (double, double, double,void *data), 
-		void (*df) (double  , double  , double , 
-			    double &, double &, double &, double &,
-			    void *data) ,
-		void *data,int niter,
-		double &U, double &V, double &W, double &res)
+                void (*df) (double  , double  , double , 
+                            double &, double &, double &, double &,
+                            void *data) ,
+                void *data,int niter,
+                double &U, double &V, double &W, double &res)
 {
   f_stat3 = f;
   df_stat3 = df;
@@ -199,13 +199,13 @@ void minimize_3(double (*f) (double, double, double,void *data),
   res = s->f;
   gsl_multimin_fdfminimizer_free (s);
   gsl_vector_free (x);
-} 					    
+}                                           
 
 void minimize_N(int N, 
-		double (*f) (double*,void *data), 
-		void (*df)  (double*,double*,double &,void *data) ,
-		void *data,int niter,
-		double *U, double &res){
+                double (*f) (double*,void *data), 
+                void (*df)  (double*,double*,double &,void *data) ,
+                void *data,int niter,
+                double *U, double &res){
   f_statN = f;
   df_statN = df;
 
@@ -249,31 +249,31 @@ void minimize_N(int N,
   gsl_multimin_fdfminimizer_free (s);
   gsl_vector_free (x);
   
-} 					    
+}                                           
 
 #else
 
 void minimize_2 ( double (*f) (double, double, void *data), 
-		  void (*df) (double, double, double &, double &, double &, void *data) ,
-		  void *data,int niter,
-		  double &U, double &V, double &res)
+                  void (*df) (double, double, double &, double &, double &, void *data) ,
+                  void *data,int niter,
+                  double &U, double &V, double &res)
 {
   Msg(GERROR, "Gmsh must be compiled with GSL support for minimize_2");
 }
 
 void minimize_3 ( double (*f) (double, double, double, void *data), 
-		  void (*df) (double, double, double , double &, double &, double &, double &, void *data) ,
-		  void *data,int niter,
-		  double &U, double &V, double &W, double &res)
+                  void (*df) (double, double, double , double &, double &, double &, double &, void *data) ,
+                  void *data,int niter,
+                  double &U, double &V, double &W, double &res)
 {
   Msg(GERROR, "Gmsh must be compiled with GSL support for minimize_3");
 }
 
 void minimize_N (int N, 
-		 double (*f) (double*, void *data), 
-		 void (*df) (double*, double*, double &, void *data) ,
-		 void *data,int niter,
-		 double *, double &res)
+                 double (*f) (double*, void *data), 
+                 void (*df) (double*, double*, double &, void *data) ,
+                 void *data,int niter,
+                 double *, double &res)
 {
   Msg(GERROR, "Gmsh must be compiled with GSL support for minimize_N");
 }

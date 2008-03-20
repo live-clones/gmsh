@@ -1,4 +1,4 @@
-// $Id: Eigenvectors.cpp,v 1.10 2008-02-17 08:48:06 geuzaine Exp $
+// $Id: Eigenvectors.cpp,v 1.11 2008-03-20 11:44:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -52,16 +52,16 @@ void GMSH_EigenvectorsPlugin::getInfos(char *author, char *copyright, char *help
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Eigenvectors) computes the three (right)\n"
-	 "eigenvectors of each tensor in the view `iView'\n"
-	 "and sorts them according to the value of the\n"
-	 "associated eigenvalues. If `ScaleByEigenvalues'\n"
-	 "is set, each eigenvector is scaled by its\n"
-	 "associated eigenvalue. The plugin gives an error\n"
-	 "if the eigenvectors are complex. If `iView' < 0,\n"
-	 "the plugin is run on the current view.\n"
-	 "\n"
-	 "Plugin(Eigenvectors) creates three new\n"
-	 "vector views.\n");
+         "eigenvectors of each tensor in the view `iView'\n"
+         "and sorts them according to the value of the\n"
+         "associated eigenvalues. If `ScaleByEigenvalues'\n"
+         "is set, each eigenvector is scaled by its\n"
+         "associated eigenvalue. The plugin gives an error\n"
+         "if the eigenvectors are complex. If `iView' < 0,\n"
+         "the plugin is run on the current view.\n"
+         "\n"
+         "Plugin(Eigenvectors) creates three new\n"
+         "vector views.\n");
 }
 
 int GMSH_EigenvectorsPlugin::getNbOptions() const
@@ -87,10 +87,10 @@ static int nonzero(double v[3])
 }
 
 static void eigenvectors(List_T *inList, int inNb, 
-			 int nbNod, int nbTime, int scale,
-			 List_T *minList, int *minNb, 
-			 List_T *midList, int *midNb, 
-			 List_T *maxList, int *maxNb)
+                         int nbNod, int nbTime, int scale,
+                         List_T *minList, int *minNb, 
+                         List_T *midList, int *midNb, 
+                         List_T *maxList, int *maxNb)
 {
   if(!inNb) return;
 
@@ -105,22 +105,22 @@ static void eigenvectors(List_T *inList, int inNb,
     }
     for(int j = 0; j < nbTime; j++){
       for(int k = 0; k < nbNod; k++){
-	double *val = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + 
-						  nbNod * 9 * j + 9 * k);
-	double wr[3], wi[3], B[9];
-	if(!EigSolve3x3(val, wr, wi, B))
-	  Msg(GERROR, "Eigensolver failed to converge");
-	nbcomplex += nonzero(wi); 
-	if(!scale)
-	  wr[0] = wr[1] = wr[2] = 1.;
-	for(int l = 0; l < 3; l++){
-	  double res;
-	  // wrong if there are complex eigenvals (B contains both
-	  // real and imag parts: cf. explanation in EigSolve.cpp)
-	  res = wr[0] * B[l]; List_Add(minList, &res);
-	  res = wr[1] * B[3+l]; List_Add(midList, &res);
-	  res = wr[2] * B[6+l]; List_Add(maxList, &res);
-	}
+        double *val = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + 
+                                                  nbNod * 9 * j + 9 * k);
+        double wr[3], wi[3], B[9];
+        if(!EigSolve3x3(val, wr, wi, B))
+          Msg(GERROR, "Eigensolver failed to converge");
+        nbcomplex += nonzero(wi); 
+        if(!scale)
+          wr[0] = wr[1] = wr[2] = 1.;
+        for(int l = 0; l < 3; l++){
+          double res;
+          // wrong if there are complex eigenvals (B contains both
+          // real and imag parts: cf. explanation in EigSolve.cpp)
+          res = wr[0] * B[l]; List_Add(minList, &res);
+          res = wr[1] * B[3+l]; List_Add(midList, &res);
+          res = wr[2] * B[6+l]; List_Add(maxList, &res);
+        }
       }
     }
     (*minNb)++;
@@ -152,21 +152,21 @@ PView *GMSH_EigenvectorsPlugin::execute(PView *v)
   PViewDataList *dmax = getDataList(max);
 
   eigenvectors(data1->TP, data1->NbTP, 1, data1->getNumTimeSteps(), scale,
-	       dmin->VP, &dmin->NbVP, dmid->VP, &dmid->NbVP, dmax->VP, &dmax->NbVP);
+               dmin->VP, &dmin->NbVP, dmid->VP, &dmid->NbVP, dmax->VP, &dmax->NbVP);
   eigenvectors(data1->TL, data1->NbTL, 2, data1->getNumTimeSteps(), scale,
-	       dmin->VL, &dmin->NbVL, dmid->VL, &dmid->NbVL, dmax->VL, &dmax->NbVL);
+               dmin->VL, &dmin->NbVL, dmid->VL, &dmid->NbVL, dmax->VL, &dmax->NbVL);
   eigenvectors(data1->TT, data1->NbTT, 3, data1->getNumTimeSteps(), scale,
-	       dmin->VT, &dmin->NbVT, dmid->VT, &dmid->NbVT, dmax->VT, &dmax->NbVT);
+               dmin->VT, &dmin->NbVT, dmid->VT, &dmid->NbVT, dmax->VT, &dmax->NbVT);
   eigenvectors(data1->TQ, data1->NbTQ, 4, data1->getNumTimeSteps(), scale,
-	       dmin->VQ, &dmin->NbVQ, dmid->VQ, &dmid->NbVQ, dmax->VQ, &dmax->NbVQ);
+               dmin->VQ, &dmin->NbVQ, dmid->VQ, &dmid->NbVQ, dmax->VQ, &dmax->NbVQ);
   eigenvectors(data1->TS, data1->NbTS, 4, data1->getNumTimeSteps(), scale,
-	       dmin->VS, &dmin->NbVS, dmid->VS, &dmid->NbVS, dmax->VS, &dmax->NbVS);
+               dmin->VS, &dmin->NbVS, dmid->VS, &dmid->NbVS, dmax->VS, &dmax->NbVS);
   eigenvectors(data1->TH, data1->NbTH, 8, data1->getNumTimeSteps(), scale,
-	       dmin->VH, &dmin->NbVH, dmid->VH, &dmid->NbVH, dmax->VH, &dmax->NbVH);
+               dmin->VH, &dmin->NbVH, dmid->VH, &dmid->NbVH, dmax->VH, &dmax->NbVH);
   eigenvectors(data1->TI, data1->NbTI, 6, data1->getNumTimeSteps(), scale,
-	       dmin->VI, &dmin->NbVI, dmid->VI, &dmid->NbVI, dmax->VI, &dmax->NbVI);
+               dmin->VI, &dmin->NbVI, dmid->VI, &dmid->NbVI, dmax->VI, &dmax->NbVI);
   eigenvectors(data1->TY, data1->NbTY, 5, data1->getNumTimeSteps(), scale,
-	       dmin->VY, &dmin->NbVY, dmid->VY, &dmid->NbVY, dmax->VY, &dmax->NbVY);
+               dmin->VY, &dmin->NbVY, dmid->VY, &dmid->NbVY, dmax->VY, &dmax->NbVY);
 
   for(int i = 0; i < List_Nbr(data1->Time); i++){
     List_Add(dmin->Time, List_Pointer(data1->Time, i));

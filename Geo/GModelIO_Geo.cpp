@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.18 2008-03-19 17:26:48 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.19 2008-03-20 11:44:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -58,8 +58,8 @@ int GModel::importGEOInternals()
       List_Read(points, i, &p);
       GVertex *v = getVertexByTag(p->Num);
       if(!v){
-	v = new gmshVertex(this, p);
-	add(v);
+        v = new gmshVertex(this, p);
+        add(v);
       }
       if(!p->Visible) v->setVisibility(0);
     }
@@ -71,17 +71,17 @@ int GModel::importGEOInternals()
       Curve *c;
       List_Read(curves, i, &c);
       if(c->Num >= 0 && c->beg && c->end){
-	GEdge *e = getEdgeByTag(c->Num);
-	if(!e){
-	  e = new gmshEdge(this, c,
-			   getVertexByTag(c->beg->Num),
-			   getVertexByTag(c->end->Num));
-	  add(e);
-	}
-	else
-	  e->resetMeshAttributes();
-	if(!c->Visible) e->setVisibility(0);
-	if(c->Color.type) e->setColor(c->Color.mesh);
+        GEdge *e = getEdgeByTag(c->Num);
+        if(!e){
+          e = new gmshEdge(this, c,
+                           getVertexByTag(c->beg->Num),
+                           getVertexByTag(c->end->Num));
+          add(e);
+        }
+        else
+          e->resetMeshAttributes();
+        if(!c->Visible) e->setVisibility(0);
+        if(c->Color.type) e->setColor(c->Color.mesh);
       }
     }
     List_Delete(curves);
@@ -93,11 +93,11 @@ int GModel::importGEOInternals()
       List_Read(surfaces, i, &s);
       GFace *f = getFaceByTag(s->Num);
       if(!f){
-	f = new gmshFace(this, s);
-	add(f);
+        f = new gmshFace(this, s);
+        add(f);
       }
       else
-	f->resetMeshAttributes();
+        f->resetMeshAttributes();
       if(!s->Visible) f->setVisibility(0);
       if(s->Color.type) f->setColor(s->Color.mesh);
     }
@@ -110,11 +110,11 @@ int GModel::importGEOInternals()
       List_Read(volumes, i, &v);
       GRegion *r = getRegionByTag(v->Num);
       if(!r){
-	r = new gmshRegion(this, v);
-	add(r);
+        r = new gmshRegion(this, v);
+        add(r);
       }
       else
-	r->resetMeshAttributes();	
+        r->resetMeshAttributes();       
       if(!v->Visible) r->setVisibility(0);
       if(v->Color.type) r->setColor(v->Color.mesh);
     }
@@ -135,8 +135,8 @@ int GModel::importGEOInternals()
       }
       int pnum = sign(num) * p->Num;
       if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) == 
-	 ge->physicals.end())
-	ge->physicals.push_back(pnum);
+         ge->physicals.end())
+        ge->physicals.push_back(pnum);
     }
   }
 
@@ -172,7 +172,7 @@ class writeFieldGEO{
   {
     fprintf(geo, "Field[%i] = %s;\n", it.first, it.second->get_name());
     std::for_each(it.second->options.begin(), it.second->options.end(),
-		  writeFieldOptionGEO(geo, it.second));
+                  writeFieldOptionGEO(geo, it.second));
   }
 };
 
@@ -187,12 +187,12 @@ class writeGVertexGEO {
       Vertex *v = (Vertex*)gv->getNativePtr();
       if(!v) return;
       fprintf(geo, "Point (%d) = {%.16g, %.16g, %.16g, %.16g};\n",
-	      v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc);
+              v->Num, v->Pos.X, v->Pos.Y, v->Pos.Z, v->lc);
     }
     else{
       fprintf(geo, "Point (%d) = {%.16g, %.16g, %.16g, %.16g};\n",
-	      gv->tag(), gv->x(), gv->y(), gv->z(), 
-	      gv->prescribedMeshSizeAtVertex());
+              gv->tag(), gv->x(), gv->y(), gv->z(), 
+              gv->prescribedMeshSizeAtVertex());
     }
   }
 };
@@ -211,89 +211,89 @@ class writeGEdgeGEO {
       if(!c || c->Num < 0) return;
       switch (c->Typ) {
       case MSH_SEGM_LINE:
-	fprintf(geo, "Line (%d) = ", c->Num);
-	break;
+        fprintf(geo, "Line (%d) = ", c->Num);
+        break;
       case MSH_SEGM_CIRC:
       case MSH_SEGM_CIRC_INV:
-	fprintf(geo, "Circle (%d) = ", c->Num);
-	break;
+        fprintf(geo, "Circle (%d) = ", c->Num);
+        break;
       case MSH_SEGM_ELLI:
       case MSH_SEGM_ELLI_INV:
-	fprintf(geo, "Ellipse (%d) = ", c->Num);
-	break;
+        fprintf(geo, "Ellipse (%d) = ", c->Num);
+        break;
       case MSH_SEGM_NURBS:
-	fprintf(geo, "Nurbs (%d) = {", c->Num);
-	for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
-	  Vertex *v;
-	  List_Read(c->Control_Points, i, &v);
-	  if(!i)
-	    fprintf(geo, "%d", v->Num);
-	  else
-	    fprintf(geo, ", %d", v->Num);
-	  if(i % 8 == 7 && i != List_Nbr(c->Control_Points) - 1)
-	    fprintf(geo, "\n");
-	}
-	fprintf(geo, "}\n");
-	fprintf(geo, "  Knots {");
-	for(int j = 0; j < List_Nbr(c->Control_Points) + c->degre + 1; j++) {
-	  if(!j)
-	    fprintf(geo, "%.16g", c->k[j]);
-	  else
-	    fprintf(geo, ", %.16g", c->k[j]);
-	  if(j % 5 == 4 && j != List_Nbr(c->Control_Points) + c->degre)
-	    fprintf(geo, "\n        ");
-	}
-	fprintf(geo, "}\n");
-	fprintf(geo, "  Order %d;\n", c->degre);
-	return;
+        fprintf(geo, "Nurbs (%d) = {", c->Num);
+        for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
+          Vertex *v;
+          List_Read(c->Control_Points, i, &v);
+          if(!i)
+            fprintf(geo, "%d", v->Num);
+          else
+            fprintf(geo, ", %d", v->Num);
+          if(i % 8 == 7 && i != List_Nbr(c->Control_Points) - 1)
+            fprintf(geo, "\n");
+        }
+        fprintf(geo, "}\n");
+        fprintf(geo, "  Knots {");
+        for(int j = 0; j < List_Nbr(c->Control_Points) + c->degre + 1; j++) {
+          if(!j)
+            fprintf(geo, "%.16g", c->k[j]);
+          else
+            fprintf(geo, ", %.16g", c->k[j]);
+          if(j % 5 == 4 && j != List_Nbr(c->Control_Points) + c->degre)
+            fprintf(geo, "\n        ");
+        }
+        fprintf(geo, "}\n");
+        fprintf(geo, "  Order %d;\n", c->degre);
+        return;
       case MSH_SEGM_SPLN:
-	fprintf(geo, "CatmullRom (%d) = ", c->Num);
-	break;
+        fprintf(geo, "CatmullRom (%d) = ", c->Num);
+        break;
       case MSH_SEGM_BSPLN:
-	fprintf(geo, "BSpline (%d) = ", c->Num);
-	break;
+        fprintf(geo, "BSpline (%d) = ", c->Num);
+        break;
       case MSH_SEGM_BEZIER:
-	fprintf(geo, "Bezier (%d) = ", c->Num);
-	break;
+        fprintf(geo, "Bezier (%d) = ", c->Num);
+        break;
       default:
-	Msg(GERROR, "Unknown curve type %d", c->Typ);
-	return;
+        Msg(GERROR, "Unknown curve type %d", c->Typ);
+        return;
       }
       for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
-	Vertex *v;
-	List_Read(c->Control_Points, i, &v);
-	if(i)
-	  fprintf(geo, ", %d", v->Num);
-	else
-	  fprintf(geo, "{%d", v->Num);
-	if(i % 6 == 7)
-	  fprintf(geo, "\n");
+        Vertex *v;
+        List_Read(c->Control_Points, i, &v);
+        if(i)
+          fprintf(geo, ", %d", v->Num);
+        else
+          fprintf(geo, "{%d", v->Num);
+        if(i % 6 == 7)
+          fprintf(geo, "\n");
       }
       fprintf(geo, "};\n");
     }
     else{
       if(ge->getBeginVertex() && ge->getEndVertex()){
-	if(ge->geomType() == GEntity::Line){
-	  fprintf(geo, "Line (%d) = {%d, %d};\n", 
-		  ge->tag(), ge->getBeginVertex()->tag(), ge->getEndVertex()->tag());
-	}
-	else{
-	  // approximate all other curves by splines
-	  Range<double> bounds = ge->parBounds(0);
-	  double umin = bounds.low();
-	  double umax = bounds.high();
-	  fprintf(geo, "p%d = newp;\n", ge->tag());
-	  for(int i = 1; i < ge->minimumDrawSegments(); i++){
-	    double u = umin + (double)i / ge->minimumDrawSegments() * (umax - umin);
-	    GPoint p = ge->point(u);
-	    fprintf(geo, "Point (p%d + %d) = {%.16g, %.16g, %.16g, 1.e+22};\n", 
-		    ge->tag(), i, p.x(), p.y(), p.z());
-	  }
-	  fprintf(geo, "CatmullRom (%d) = {%d", ge->tag(), ge->getBeginVertex()->tag());
-	  for(int i = 1; i < ge->minimumDrawSegments(); i++)
-	    fprintf(geo, ", p%d + %d", ge->tag(), i);
-	  fprintf(geo, ", %d};\n", ge->getEndVertex()->tag());
-	}
+        if(ge->geomType() == GEntity::Line){
+          fprintf(geo, "Line (%d) = {%d, %d};\n", 
+                  ge->tag(), ge->getBeginVertex()->tag(), ge->getEndVertex()->tag());
+        }
+        else{
+          // approximate all other curves by splines
+          Range<double> bounds = ge->parBounds(0);
+          double umin = bounds.low();
+          double umax = bounds.high();
+          fprintf(geo, "p%d = newp;\n", ge->tag());
+          for(int i = 1; i < ge->minimumDrawSegments(); i++){
+            double u = umin + (double)i / ge->minimumDrawSegments() * (umax - umin);
+            GPoint p = ge->point(u);
+            fprintf(geo, "Point (p%d + %d) = {%.16g, %.16g, %.16g, 1.e+22};\n", 
+                    ge->tag(), i, p.x(), p.y(), p.z());
+          }
+          fprintf(geo, "CatmullRom (%d) = {%d", ge->tag(), ge->getBeginVertex()->tag());
+          for(int i = 1; i < ge->minimumDrawSegments(); i++)
+            fprintf(geo, ", p%d + %d", ge->tag(), i);
+          fprintf(geo, ", %d};\n", ge->getEndVertex()->tag());
+        }
       }
     }
   }
@@ -313,25 +313,25 @@ class writeGFaceGEO {
     if(edges.size() && orientations.size() == edges.size()){
       std::vector<int> num, ori;
       for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++)
-	num.push_back((*it)->tag());
+        num.push_back((*it)->tag());
       for(std::list<int>::iterator it = orientations.begin(); it != orientations.end(); it++)
-	ori.push_back((*it) > 0 ? 1 : -1);
+        ori.push_back((*it) > 0 ? 1 : -1);
       fprintf(geo, "Line Loop (%d) = ", gf->tag());
       for(unsigned int i = 0; i < num.size(); i++){
-	if(i)
-	  fprintf(geo, ", %d", num[i] * ori[i]);
-	else
-	  fprintf(geo, "{%d", num[i] * ori[i]);
+        if(i)
+          fprintf(geo, ", %d", num[i] * ori[i]);
+        else
+          fprintf(geo, "{%d", num[i] * ori[i]);
       }
       fprintf(geo, "};\n");
       if(gf->geomType() == GEntity::Plane){
-	fprintf(geo, "Plane Surface (%d) = {%d};\n", gf->tag(), gf->tag());
+        fprintf(geo, "Plane Surface (%d) = {%d};\n", gf->tag(), gf->tag());
       }
       else if(edges.size() == 3 || edges.size() == 4){
-	fprintf(geo, "Ruled Surface (%d) = {%d};\n", gf->tag(), gf->tag());
+        fprintf(geo, "Ruled Surface (%d) = {%d};\n", gf->tag(), gf->tag());
       }
       else{
-	Msg(GERROR, "Skipping surface %d in export", gf->tag());
+        Msg(GERROR, "Skipping surface %d in export", gf->tag());
       }
     }
   }
@@ -350,10 +350,10 @@ class writeGRegionGEO {
     if(faces.size()){
       fprintf(geo, "Surface Loop (%d) = ", gr->tag());
       for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++) {
-	if(it != faces.begin())
-	  fprintf(geo, ", %d", (*it)->tag());
-	else
-	  fprintf(geo, "{%d", (*it)->tag());
+        if(it != faces.begin())
+          fprintf(geo, ", %d", (*it)->tag());
+        else
+          fprintf(geo, "{%d", (*it)->tag());
       }
       fprintf(geo, "};\n");
       fprintf(geo, "Volume (%d) = {%d};\n", gr->tag(), gr->tag());
@@ -369,8 +369,8 @@ class writePhysicalGroupGEO {
   std::map<int, std::string> &oldLabels, &newLabels;
  public :
   writePhysicalGroupGEO(FILE *fp, int i, bool labels,
-			std::map<int, std::string> &o,
-			std::map<int, std::string> &n)
+                        std::map<int, std::string> &o,
+                        std::map<int, std::string> &n)
     : dim(i), printLabels(labels), oldLabels(o), newLabels(n)
   { 
     geo = fp ? fp : stdout; 
@@ -380,11 +380,11 @@ class writePhysicalGroupGEO {
     std::string oldName, newName;
     if(printLabels){
       if(oldLabels.count(g.first)) {
-	oldName = oldLabels[g.first];
-	fprintf(geo, "%s = %d;\n", oldName.c_str(), g.first);
+        oldName = oldLabels[g.first];
+        fprintf(geo, "%s = %d;\n", oldName.c_str(), g.first);
       }
       else if(newLabels.count(g.first)) {
-	newName = newLabels[g.first];
+        newName = newLabels[g.first];
       }
     }
 
@@ -435,7 +435,7 @@ int GModel::writeGEO(const std::string &name, bool printLabels)
   getPhysicalGroups(groups);
   for(int i = 0; i < 4; i++)
     std::for_each(groups[i].begin(), groups[i].end(), 
-		  writePhysicalGroupGEO(fp, i, printLabels, labels, physicalNames));
+                  writePhysicalGroupGEO(fp, i, printLabels, labels, physicalNames));
   
   std::for_each(getFields()->begin(), getFields()->end(), writeFieldGEO(fp));
   if(getFields()->background_field > 0)

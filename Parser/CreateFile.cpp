@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.25 2008-02-22 07:49:39 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.26 2008-03-20 11:44:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -151,12 +151,12 @@ void CreateOutputFile(const char *filename, int format)
 
   case FORMAT_MSH:
     GModel::current()->writeMSH(name, CTX.mesh.msh_file_version, CTX.mesh.msh_binary, 
-				CTX.mesh.save_all, CTX.mesh.scaling_factor);
+                                CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_STL:
     GModel::current()->writeSTL(name, CTX.mesh.stl_binary,
-				CTX.mesh.save_all, CTX.mesh.scaling_factor);
+                                CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_VRML:
@@ -165,7 +165,7 @@ void CreateOutputFile(const char *filename, int format)
 
   case FORMAT_UNV:
     GModel::current()->writeUNV(name, CTX.mesh.save_all, CTX.mesh.save_groups_of_nodes,
-				CTX.mesh.scaling_factor);
+                                CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_MESH:
@@ -174,7 +174,7 @@ void CreateOutputFile(const char *filename, int format)
 
   case FORMAT_BDF:
     GModel::current()->writeBDF(name, CTX.mesh.bdf_field_format, 
-		     CTX.mesh.save_all, CTX.mesh.scaling_factor);
+                     CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_P3D:
@@ -191,8 +191,8 @@ void CreateOutputFile(const char *filename, int format)
 
   case FORMAT_POS:
     GModel::current()->writePOS(name, CTX.print.pos_elementary, CTX.print.pos_element, 
-				CTX.print.pos_gamma, CTX.print.pos_eta, CTX.print.pos_rho, 
-				CTX.mesh.save_all, CTX.mesh.scaling_factor);
+                                CTX.print.pos_gamma, CTX.print.pos_eta, CTX.print.pos_rho, 
+                                CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_GEO:
@@ -208,39 +208,39 @@ void CreateOutputFile(const char *filename, int format)
     {
       FILE *fp;
       if(!(fp = fopen(name, "wb"))) {
-	Msg(GERROR, "Unable to open file '%s'", name);
-	break;
+        Msg(GERROR, "Unable to open file '%s'", name);
+        break;
       }
 
       PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
 
       int old_bg_gradient = CTX.bg_gradient;
       if(format == FORMAT_GIF && CTX.print.gif_transparent)
-	CTX.bg_gradient = 0;
+        CTX.bg_gradient = 0;
       buffer.Fill(CTX.batch);
       CTX.bg_gradient = old_bg_gradient;
 
       if(format == FORMAT_PPM){
-	create_ppm(fp, &buffer);
+        create_ppm(fp, &buffer);
       }
       else if(format == FORMAT_YUV){
-	create_yuv(fp, &buffer);
+        create_yuv(fp, &buffer);
       }
       else if(format == FORMAT_GIF){
-	create_gif(fp, &buffer,
-		   CTX.print.gif_dither,
-		   CTX.print.gif_sort,
-		   CTX.print.gif_interlace,
-		   CTX.print.gif_transparent,
-		   CTX.UNPACK_RED(CTX.color.bg),
-		   CTX.UNPACK_GREEN(CTX.color.bg), 
-		   CTX.UNPACK_BLUE(CTX.color.bg));
+        create_gif(fp, &buffer,
+                   CTX.print.gif_dither,
+                   CTX.print.gif_sort,
+                   CTX.print.gif_interlace,
+                   CTX.print.gif_transparent,
+                   CTX.UNPACK_RED(CTX.color.bg),
+                   CTX.UNPACK_GREEN(CTX.color.bg), 
+                   CTX.UNPACK_BLUE(CTX.color.bg));
       }
       else if(format == FORMAT_JPEG){
-	create_jpeg(fp, &buffer, CTX.print.jpeg_quality, CTX.print.jpeg_smoothing);
+        create_jpeg(fp, &buffer, CTX.print.jpeg_quality, CTX.print.jpeg_smoothing);
       }
       else{
-	create_png(fp, &buffer, 100);
+        create_png(fp, &buffer, 100);
       }
       fclose(fp);
     }
@@ -253,24 +253,24 @@ void CreateOutputFile(const char *filename, int format)
     {
       FILE *fp;
       if(!(fp = fopen(name, "wb"))) {
-	Msg(GERROR, "Unable to open file '%s'", name);
-	break;
+        Msg(GERROR, "Unable to open file '%s'", name);
+        break;
       }
       
       int psformat;
       switch(format){
       case FORMAT_PDF:
-	psformat = GL2PS_PDF;
-	break;
+        psformat = GL2PS_PDF;
+        break;
       case FORMAT_PS:
-	psformat = GL2PS_PS;
-	break;
+        psformat = GL2PS_PS;
+        break;
       case FORMAT_SVG:
-	psformat = GL2PS_SVG;
-	break;
+        psformat = GL2PS_SVG;
+        break;
       default:
-	psformat = GL2PS_EPS;
-	break;
+        psformat = GL2PS_EPS;
+        break;
       }
 
       int old_bg_gradient = CTX.bg_gradient;
@@ -279,48 +279,48 @@ void CreateOutputFile(const char *filename, int format)
       PixelBuffer buffer(width, height, GL_RGB, GL_FLOAT);
       
       if(CTX.print.eps_quality == 0)
-	buffer.Fill(CTX.batch);
+        buffer.Fill(CTX.batch);
       
       int pssort = 
-	(CTX.print.eps_quality == 3) ? GL2PS_NO_SORT :
-	(CTX.print.eps_quality == 2) ? GL2PS_BSP_SORT : 
-	GL2PS_SIMPLE_SORT;
+        (CTX.print.eps_quality == 3) ? GL2PS_NO_SORT :
+        (CTX.print.eps_quality == 2) ? GL2PS_BSP_SORT : 
+        GL2PS_SIMPLE_SORT;
       int psoptions =
-	GL2PS_SIMPLE_LINE_OFFSET | GL2PS_SILENT |
-	(CTX.print.eps_occlusion_culling ? GL2PS_OCCLUSION_CULL : 0) |
-	(CTX.print.eps_best_root ? GL2PS_BEST_ROOT : 0) |
-	(CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0) |
-	(CTX.print.eps_compress ? GL2PS_COMPRESS : 0) |
-	(CTX.print.eps_ps3shading ? 0 : GL2PS_NO_PS3_SHADING);
+        GL2PS_SIMPLE_LINE_OFFSET | GL2PS_SILENT |
+        (CTX.print.eps_occlusion_culling ? GL2PS_OCCLUSION_CULL : 0) |
+        (CTX.print.eps_best_root ? GL2PS_BEST_ROOT : 0) |
+        (CTX.print.eps_background ? GL2PS_DRAW_BACKGROUND : 0) |
+        (CTX.print.eps_compress ? GL2PS_COMPRESS : 0) |
+        (CTX.print.eps_ps3shading ? 0 : GL2PS_NO_PS3_SHADING);
 
       GLint buffsize = 0;
       int res = GL2PS_OVERFLOW;
       while(res == GL2PS_OVERFLOW) {
-	buffsize += 2048 * 2048;
-	gl2psBeginPage(CTX.base_filename, "Gmsh", viewport, 
-		       psformat, pssort, psoptions, GL_RGBA, 0, NULL, 
-		       15, 20, 10, buffsize, fp, base);
-	if(CTX.print.eps_quality == 0){
-	  double modelview[16], projection[16];
-	  glGetDoublev(GL_PROJECTION_MATRIX, projection);
-	  glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
-	  glMatrixMode(GL_PROJECTION);
-	  glLoadIdentity();
-	  glOrtho((double)CTX.viewport[0], (double)CTX.viewport[2],
-		  (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
-	  glMatrixMode(GL_MODELVIEW);
-	  glLoadIdentity();
-	  glRasterPos2d(0, 0);
-	  gl2psDrawPixels(width, height, 0, 0, GL_RGB, GL_FLOAT, buffer.GetPixels());
-	  glMatrixMode(GL_PROJECTION);
-	  glLoadMatrixd(projection);
-	  glMatrixMode(GL_MODELVIEW);
-	  glLoadMatrixd(modelview);
-	}
-	else{
-	  buffer.Fill(CTX.batch);
-	}
-	res = gl2psEndPage();
+        buffsize += 2048 * 2048;
+        gl2psBeginPage(CTX.base_filename, "Gmsh", viewport, 
+                       psformat, pssort, psoptions, GL_RGBA, 0, NULL, 
+                       15, 20, 10, buffsize, fp, base);
+        if(CTX.print.eps_quality == 0){
+          double modelview[16], projection[16];
+          glGetDoublev(GL_PROJECTION_MATRIX, projection);
+          glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
+          glMatrixMode(GL_PROJECTION);
+          glLoadIdentity();
+          glOrtho((double)CTX.viewport[0], (double)CTX.viewport[2],
+                  (double)CTX.viewport[1], (double)CTX.viewport[3], -1., 1.);
+          glMatrixMode(GL_MODELVIEW);
+          glLoadIdentity();
+          glRasterPos2d(0, 0);
+          gl2psDrawPixels(width, height, 0, 0, GL_RGB, GL_FLOAT, buffer.GetPixels());
+          glMatrixMode(GL_PROJECTION);
+          glLoadMatrixd(projection);
+          glMatrixMode(GL_MODELVIEW);
+          glLoadMatrixd(modelview);
+        }
+        else{
+          buffer.Fill(CTX.batch);
+        }
+        res = gl2psEndPage();
       }
 
       CTX.bg_gradient = old_bg_gradient;
@@ -332,22 +332,22 @@ void CreateOutputFile(const char *filename, int format)
     {
       FILE *fp;
       if(!(fp = fopen(name, "w"))) {
-	Msg(GERROR, "Unable to open file '%s'", name);
-	break;
+        Msg(GERROR, "Unable to open file '%s'", name);
+        break;
       }
       GLint buffsize = 0;
       int res = GL2PS_OVERFLOW;
       while(res == GL2PS_OVERFLOW) {
-	buffsize += 2048 * 2048;
-	gl2psBeginPage(CTX.base_filename, "Gmsh", viewport,
-		       GL2PS_TEX, GL2PS_NO_SORT, GL2PS_NONE, GL_RGBA, 0, NULL, 
-		       0, 0, 0, buffsize, fp, base);
-	PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
-	int oldtext = CTX.print.text;
-	CTX.print.text = 1;
-	buffer.Fill(CTX.batch);
-	CTX.print.text = oldtext;
-	res = gl2psEndPage();
+        buffsize += 2048 * 2048;
+        gl2psBeginPage(CTX.base_filename, "Gmsh", viewport,
+                       GL2PS_TEX, GL2PS_NO_SORT, GL2PS_NONE, GL_RGBA, 0, NULL, 
+                       0, 0, 0, buffsize, fp, base);
+        PixelBuffer buffer(width, height, GL_RGB, GL_UNSIGNED_BYTE);
+        int oldtext = CTX.print.text;
+        CTX.print.text = 1;
+        buffer.Fill(CTX.batch);
+        CTX.print.text = oldtext;
+        res = gl2psEndPage();
       }
       fclose(fp);
     }

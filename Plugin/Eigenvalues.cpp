@@ -1,4 +1,4 @@
-// $Id: Eigenvalues.cpp,v 1.6 2008-02-17 08:48:06 geuzaine Exp $
+// $Id: Eigenvalues.cpp,v 1.7 2008-03-20 11:44:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -50,10 +50,10 @@ void GMSH_EigenvaluesPlugin::getInfos(char *author, char *copyright, char *help_
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Eigenvalues) computes the three real\n"
-	 "eigenvalues of each tensor in the view `iView'.\n"
-	 "If `iView' < 0, the plugin is run on the current view.\n"
-	 "\n"
-	 "Plugin(Eigenvalues) creates three new scalar views.\n");
+         "eigenvalues of each tensor in the view `iView'.\n"
+         "If `iView' < 0, the plugin is run on the current view.\n"
+         "\n"
+         "Plugin(Eigenvalues) creates three new scalar views.\n");
 }
 
 int GMSH_EigenvaluesPlugin::getNbOptions() const
@@ -72,10 +72,10 @@ void GMSH_EigenvaluesPlugin::catchErrorMessage(char *errorMessage) const
 }
 
 static void eigenvalues(List_T *inList, int inNb, 
-			int nbNod, int nbTime,
-			List_T *minList, int *minNb, 
-			List_T *midList, int *midNb, 
-			List_T *maxList, int *maxNb)
+                        int nbNod, int nbTime,
+                        List_T *minList, int *minNb, 
+                        List_T *midList, int *midNb, 
+                        List_T *maxList, int *maxNb)
 {
   if(!inNb) return;
 
@@ -88,17 +88,17 @@ static void eigenvalues(List_T *inList, int inNb,
     }
     for(int j = 0; j < nbTime; j++){
       for(int k = 0; k < nbNod; k++){
-	double *v = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + 
-						nbNod * 9 * j + 9 * k);
-	double w[3], A[3][3] = { {v[0], v[1], v[2]},
-				 {v[3], v[4], v[5]},
-				 {v[6], v[7], v[8]} };
-	eigenvalue(A, w);
-	for(int l = 0; l < 3; l++){
-	  List_Add(minList, &w[2]);
-	  List_Add(midList, &w[1]);
-	  List_Add(maxList, &w[0]);
-	}
+        double *v = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + 
+                                                nbNod * 9 * j + 9 * k);
+        double w[3], A[3][3] = { {v[0], v[1], v[2]},
+                                 {v[3], v[4], v[5]},
+                                 {v[6], v[7], v[8]} };
+        eigenvalue(A, w);
+        for(int l = 0; l < 3; l++){
+          List_Add(minList, &w[2]);
+          List_Add(midList, &w[1]);
+          List_Add(maxList, &w[0]);
+        }
       }
     }
     (*minNb)++;
@@ -126,21 +126,21 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
   PViewDataList *dmax = getDataList(max);
 
   eigenvalues(data1->TP, data1->NbTP, 1, data1->getNumTimeSteps(),
-	      dmin->SP, &dmin->NbSP, dmid->SP, &dmid->NbSP, dmax->SP, &dmax->NbSP);
+              dmin->SP, &dmin->NbSP, dmid->SP, &dmid->NbSP, dmax->SP, &dmax->NbSP);
   eigenvalues(data1->TL, data1->NbTL, 2, data1->getNumTimeSteps(),
-	      dmin->SL, &dmin->NbSL, dmid->SL, &dmid->NbSL, dmax->SL, &dmax->NbSL);
+              dmin->SL, &dmin->NbSL, dmid->SL, &dmid->NbSL, dmax->SL, &dmax->NbSL);
   eigenvalues(data1->TT, data1->NbTT, 3, data1->getNumTimeSteps(),
-	      dmin->ST, &dmin->NbST, dmid->ST, &dmid->NbST, dmax->ST, &dmax->NbST);
+              dmin->ST, &dmin->NbST, dmid->ST, &dmid->NbST, dmax->ST, &dmax->NbST);
   eigenvalues(data1->TQ, data1->NbTQ, 4, data1->getNumTimeSteps(),
-	      dmin->SQ, &dmin->NbSQ, dmid->SQ, &dmid->NbSQ, dmax->SQ, &dmax->NbSQ);
+              dmin->SQ, &dmin->NbSQ, dmid->SQ, &dmid->NbSQ, dmax->SQ, &dmax->NbSQ);
   eigenvalues(data1->TS, data1->NbTS, 4, data1->getNumTimeSteps(),
-	      dmin->SS, &dmin->NbSS, dmid->SS, &dmid->NbSS, dmax->SS, &dmax->NbSS);
+              dmin->SS, &dmin->NbSS, dmid->SS, &dmid->NbSS, dmax->SS, &dmax->NbSS);
   eigenvalues(data1->TH, data1->NbTH, 8, data1->getNumTimeSteps(),
-	      dmin->SH, &dmin->NbSH, dmid->SH, &dmid->NbSH, dmax->SH, &dmax->NbSH);
+              dmin->SH, &dmin->NbSH, dmid->SH, &dmid->NbSH, dmax->SH, &dmax->NbSH);
   eigenvalues(data1->TI, data1->NbTI, 6, data1->getNumTimeSteps(),
-	      dmin->SI, &dmin->NbSI, dmid->SI, &dmid->NbSI, dmax->SI, &dmax->NbSI);
+              dmin->SI, &dmin->NbSI, dmid->SI, &dmid->NbSI, dmax->SI, &dmax->NbSI);
   eigenvalues(data1->TY, data1->NbTY, 5, data1->getNumTimeSteps(),
-	      dmin->SY, &dmin->NbSY, dmid->SY, &dmid->NbSY, dmax->SY, &dmax->NbSY);
+              dmin->SY, &dmin->NbSY, dmid->SY, &dmid->NbSY, dmax->SY, &dmax->NbSY);
 
   for(int i = 0; i < List_Nbr(data1->Time); i++){
     List_Add(dmin->Time, List_Pointer(data1->Time, i));

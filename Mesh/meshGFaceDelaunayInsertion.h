@@ -32,22 +32,22 @@ class BDS_Point;
 
 void buildMetric(GFace *gf, double *uv, double *metric);
 int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3, double *p4, 
-			double *metric);
+                        double *metric);
 int inCircumCircleAniso(GFace *gf, MTriangle *base, const double *uv, const double *metric,
-			const std::vector<double> &Us, const std::vector<double> &Vs); 
+                        const std::vector<double> &Us, const std::vector<double> &Vs); 
 void circumCenterXYZ(double *p1, double *p2, double *p3, double *res, double *uv=0);
 void circumCenterMetric(MTriangle *base, 
-			const double *metric,
-			const std::vector<double> &Us,
-			const std::vector<double> &Vs,
-			double *x, double &Radius2);
+                        const double *metric,
+                        const std::vector<double> &Us,
+                        const std::vector<double> &Vs,
+                        double *x, double &Radius2);
 bool circumCenterMetricInTriangle(MTriangle *base, 
-				  const double *metric,
-				  const std::vector<double> &Us,
-				  const std::vector<double> &Vs);
+                                  const double *metric,
+                                  const std::vector<double> &Us,
+                                  const std::vector<double> &Vs);
 bool invMapUV(MTriangle *t, double *p,
-	      const std::vector<double> &Us, const std::vector<double> &Vs,
-	      double *uv, double tol);
+              const std::vector<double> &Us, const std::vector<double> &Vs,
+              double *uv, double tol);
 
 class MTri3
 {

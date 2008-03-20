@@ -1,4 +1,4 @@
-// $Id: ModulusPhase.cpp,v 1.8 2008-02-17 08:48:07 geuzaine Exp $
+// $Id: ModulusPhase.cpp,v 1.9 2008-03-20 11:44:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -53,13 +53,13 @@ void GMSH_ModulusPhasePlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(ModulusPhase) interprets the time steps\n"
-	 "`realPart' and `imaginaryPart' in the view `iView'\n"
-	 "as the real and imaginary parts of a complex field\n"
-	 "and replaces them with their corresponding\n"
-	 "modulus and phase. If `iView' < 0, the plugin is\n"
-	 "run on the current view.\n"
-	 "\n"
-	 "Plugin(ModulusPhase) is executed in-place.\n");
+         "`realPart' and `imaginaryPart' in the view `iView'\n"
+         "as the real and imaginary parts of a complex field\n"
+         "and replaces them with their corresponding\n"
+         "modulus and phase. If `iView' < 0, the plugin is\n"
+         "run on the current view.\n"
+         "\n"
+         "Plugin(ModulusPhase) is executed in-place.\n");
 }
 
 int GMSH_ModulusPhasePlugin::getNbOptions() const
@@ -88,17 +88,17 @@ static void mp(int nb1, List_T *list1, int nbNod, int nbComp)
   int nb = List_Nbr(list1) / nb1;
   for(int i = 0; i < List_Nbr(list1); i += nb) {
     double *valr = (double *)List_Pointer_Fast(list1, i + 3 * nbNod +
-					       nbNod * nbComp * rIndex);
+                                               nbNod * nbComp * rIndex);
     double *vali = (double *)List_Pointer_Fast(list1, i + 3 * nbNod +
-					       nbNod * nbComp * iIndex);
+                                               nbNod * nbComp * iIndex);
     for(int j = 0; j < nbNod; j++) {
       for(int k = 0; k < nbComp; k++) {
-	double vr = valr[nbComp * j + k];
-	double vi = vali[nbComp * j + k];
-	double modulus = sqrt(vr*vr+vi*vi);
-	double phase = atan2(vi, vr);
-	valr[nbComp * j + k] = modulus;
-	vali[nbComp * j + k] = phase;
+        double vr = valr[nbComp * j + k];
+        double vi = vali[nbComp * j + k];
+        double modulus = sqrt(vr*vr+vi*vi);
+        double phase = atan2(vi, vr);
+        valr[nbComp * j + k] = modulus;
+        vali[nbComp * j + k] = phase;
       }
     }
   }

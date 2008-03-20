@@ -41,8 +41,8 @@ class Dialog_Window : public Fl_Double_Window {
 #else
       if(Fl::test_shortcut(FL_CTRL+'w') || Fl::test_shortcut(FL_Escape)){
 #endif
-	do_callback();
-	return 1;
+        do_callback();
+        return 1;
       }
       break;
     }
@@ -73,9 +73,9 @@ class Main_Window : public Fl_Window {
 #else
       if(Fl::test_shortcut(FL_CTRL+'w')){
 #endif
-	if(fl_choice("Do you really want to quit?", "Cancel", "Quit", NULL))
-	  do_callback();
-	return 1;
+        if(fl_choice("Do you really want to quit?", "Cancel", "Quit", NULL))
+          do_callback();
+        return 1;
       }
       break;
     }

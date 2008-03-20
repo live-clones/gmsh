@@ -1,4 +1,4 @@
-// $Id: Probe.cpp,v 1.20 2008-03-20 07:34:43 geuzaine Exp $
+// $Id: Probe.cpp,v 1.21 2008-03-20 11:44:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -131,10 +131,10 @@ void GMSH_ProbePlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Probe) gets the value of the view `iView' at\n"
-	 "the point (`X',`Y',`Z'). If `iView' < 0, the plugin is\n"
-	 "run on the current view.\n"
-	 "\n"
-	 "Plugin(Probe) creates one new view.\n");
+         "the point (`X',`Y',`Z'). If `iView' < 0, the plugin is\n"
+         "run on the current view.\n"
+         "\n"
+         "Plugin(Probe) creates one new view.\n");
 }
 
 int GMSH_ProbePlugin::getNbOptions() const
@@ -185,7 +185,7 @@ PView *GMSH_ProbePlugin::execute(PView *v)
     List_Add(data2->VP, &z);
     for(int i = 0; i < numSteps; i++){
       for(int j = 0; j < 3; j++)
-	List_Add(data2->VP, &val[3*i+j]);
+        List_Add(data2->VP, &val[3*i+j]);
     }
     data2->NbVP++;
   }
@@ -196,7 +196,7 @@ PView *GMSH_ProbePlugin::execute(PView *v)
     List_Add(data2->TP, &z);
     for(int i = 0; i < numSteps; i++){
       for(int j = 0; j < 9; j++)
-	List_Add(data2->TP, &val[9*i+j]);
+        List_Add(data2->TP, &val[9*i+j]);
     }
     data2->NbTP++;
   }

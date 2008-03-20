@@ -71,8 +71,8 @@ typedef colorhist_list* colorhash_table;
 /* Public function */
 
 void create_gif(FILE *outfile, PixelBuffer *buffer, 
-		int dither, int sort, int interlace, 
-		int transparency, int r, int g, int b);
+                int dither, int sort, int interlace, 
+                int transparency, int r, int g, int b);
 
 
 #endif

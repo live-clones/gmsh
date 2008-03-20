@@ -66,9 +66,9 @@ class PViewDataList : public PViewData {
   void _stat(List_T *list, int nbcomp, int nbelm, int nbnod);
   void _setLast(int ele);
   void _setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
-		List_T *list, int nblist);
+                List_T *list, int nblist);
   void _getString(int dim, int i, int timestep, std::string &str, 
-		  double &x, double &y, double &z, double &style);
+                  double &x, double &y, double &z, double &style);
   void _splitCurvedElements();
  public:
   PViewDataList(bool allocate=true);
@@ -101,9 +101,9 @@ class PViewDataList : public PViewData {
   int getNumStrings2D(){ return NbT2; }
   int getNumStrings3D(){ return NbT3; }
   void getString2D(int i, int step, std::string &str, 
-		   double &x, double &y, double &style);
+                   double &x, double &y, double &style);
   void getString3D(int i, int step, std::string &str, 
-		   double &x, double &y, double &z, double &style);
+                   double &x, double &y, double &z, double &style);
   void smooth();
   bool combineTime(nameData &nd);
   bool combineSpace(nameData &nd);
@@ -115,7 +115,7 @@ class PViewDataList : public PViewData {
   // I/O routines
   bool readPOS(FILE *fp, double version, int format, int size);
   bool writePOS(std::string name, bool binary=false, bool parsed=true,
-		bool append=false);
+                bool append=false);
   bool writeMSH(std::string name, bool binary=false);
 };
 

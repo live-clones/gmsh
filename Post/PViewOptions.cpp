@@ -1,4 +1,4 @@
-// $Id: PViewOptions.cpp,v 1.19 2008-02-24 16:18:19 geuzaine Exp $
+// $Id: PViewOptions.cpp,v 1.20 2008-03-20 11:44:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -66,7 +66,7 @@ double PViewOptions::getScaleValue(int iso, int numIso, double min, double max)
 }
 
 int PViewOptions::getScaleIndex(double val, int numIso, double min, double max,
-				bool forceLinear)
+                                bool forceLinear)
 {
   if(min == max) return numIso / 2;
 
@@ -87,7 +87,7 @@ int PViewOptions::getScaleIndex(double val, int numIso, double min, double max,
 
 // val in [min, max]
 unsigned int PViewOptions::getColor(double val, double min, double max, 
-				    bool forceLinear)
+                                    bool forceLinear)
 {
   if(CT.size == 1) return CT.table[0];
   int index = getScaleIndex(val, CT.size, min, max, forceLinear);

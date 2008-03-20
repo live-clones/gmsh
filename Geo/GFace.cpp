@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.59 2008-03-03 22:04:22 geuzaine Exp $
+// $Id: GFace.cpp,v 1.60 2008-03-20 11:44:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -369,7 +369,7 @@ end:
     meanPlane.x = meanPlane.d / meanPlane.a;
   }
   else if(fabs(meanPlane.b) >= fabs(meanPlane.a) &&
-	  fabs(meanPlane.b) >= fabs(meanPlane.c)){
+          fabs(meanPlane.b) >= fabs(meanPlane.c)){
     meanPlane.y = meanPlane.d / meanPlane.b;
   }
   else{
@@ -396,13 +396,13 @@ end:
     for(; itv != verts.end(); itv++){
       const GVertex *v = *itv;
       double d = meanPlane.a * v->x() + meanPlane.b * v->y() +
-	meanPlane.c * v->z() - meanPlane.d;
+        meanPlane.c * v->z() - meanPlane.d;
       if(fabs(d) > lc * 1.e-3) {
-	Msg(GERROR1, "Plane surface %d (%gx+%gy+%gz+%g=0) is not plane!",
-	    tag(), meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
-	Msg(GERROR3, "Control point %d = (%g,%g,%g), val=%g",
-	    v->tag(), v->x(), v->y(), v->z(), d);
-	return;
+        Msg(GERROR1, "Plane surface %d (%gx+%gy+%gz+%g=0) is not plane!",
+            tag(), meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
+        Msg(GERROR3, "Control point %d = (%g,%g,%g), val=%g",
+            v->tag(), v->x(), v->y(), v->z(), d);
+        return;
       }
     }
   }
@@ -410,7 +410,7 @@ end:
 }
 
 void GFace::getMeanPlaneData(double VX[3], double VY[3],
-			     double &x, double &y, double &z) const
+                             double &x, double &y, double &z) const
 {
   VX[0] = meanPlane.plan[0][0];
   VX[1] = meanPlane.plan[0][1];
@@ -467,8 +467,8 @@ double GFace::curvature (const SPoint2 &param) const
 }
 
 void GFace::XYZtoUV(const double X, const double Y, const double Z,
-		    double &U, double &V, const double relax,
-		    const bool onSurface) const
+                    double &U, double &V, const double relax,
+                    const bool onSurface) const
 {
 #if !defined(HAVE_GMSH_EMBEDDED)
   const double Precision = 1.e-8;
@@ -502,45 +502,45 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
       if (err2 < 1.e-8 * CTX.lc) return;
 
       while(err > Precision && iter < MaxIter) {
-	P = point(U, V);
-	Pair<SVector3, SVector3> der = firstDer(SPoint2(U, V));
-	mat[0][0] = der.left().x();
-	mat[0][1] = der.left().y();
-	mat[0][2] = der.left().z();
-	mat[1][0] = der.right().x();
-	mat[1][1] = der.right().y();
-	mat[1][2] = der.right().z();
-	mat[2][0] = 0.;
-	mat[2][1] = 0.;
-	mat[2][2] = 0.;
-	invert_singular_matrix3x3(mat, jac);
+        P = point(U, V);
+        Pair<SVector3, SVector3> der = firstDer(SPoint2(U, V));
+        mat[0][0] = der.left().x();
+        mat[0][1] = der.left().y();
+        mat[0][2] = der.left().z();
+        mat[1][0] = der.right().x();
+        mat[1][1] = der.right().y();
+        mat[1][2] = der.right().z();
+        mat[2][0] = 0.;
+        mat[2][1] = 0.;
+        mat[2][2] = 0.;
+        invert_singular_matrix3x3(mat, jac);
 
-	Unew = U + relax *
-	  (jac[0][0] * (X - P.x()) + jac[1][0] * (Y - P.y()) +
-	   jac[2][0] * (Z - P.z()));
-	Vnew = V + relax *
-	  (jac[0][1] * (X - P.x()) + jac[1][1] * (Y - P.y()) +
-	   jac[2][1] * (Z - P.z()));
+        Unew = U + relax *
+          (jac[0][0] * (X - P.x()) + jac[1][0] * (Y - P.y()) +
+           jac[2][0] * (Z - P.z()));
+        Vnew = V + relax *
+          (jac[0][1] * (X - P.x()) + jac[1][1] * (Y - P.y()) +
+           jac[2][1] * (Z - P.z()));
 
-	//if(Unew > umax || Vnew > vmax || Unew < umin || Vnew < vmin) break;
+        //if(Unew > umax || Vnew > vmax || Unew < umin || Vnew < vmin) break;
 
-	err = DSQR(Unew - U) + DSQR(Vnew - V);
-	err2 = sqrt(DSQR(X - P.x()) + DSQR(Y - P.y()) + DSQR(Z - P.z()));
-	iter++;
-	U = Unew;
-	V = Vnew;
+        err = DSQR(Unew - U) + DSQR(Vnew - V);
+        err2 = sqrt(DSQR(X - P.x()) + DSQR(Y - P.y()) + DSQR(Z - P.z()));
+        iter++;
+        U = Unew;
+        V = Vnew;
       }
 
       //printf("i=%d j=%d err=%g iter=%d err2=%g u=%.16g v=%.16g x=%g y=%g z=%g\n", 
       //     i, j, err, iter, err2, U, V, X, Y, Z);
 
       if(iter < MaxIter && err <= Precision &&
-	 Unew <= umax && Vnew <= vmax &&
-	 Unew >= umin && Vnew >= vmin){
-	if (onSurface && err2 > 1.e-4 * CTX.lc)
-	  Msg(WARNING, "Converged for i=%d j=%d (err=%g iter=%d) BUT xyz error = %g",
-	      i, j, err, iter, err2);
-	return;
+         Unew <= umax && Vnew <= vmax &&
+         Unew >= umin && Vnew >= vmin){
+        if (onSurface && err2 > 1.e-4 * CTX.lc)
+          Msg(WARNING, "Converged for i=%d j=%d (err=%g iter=%d) BUT xyz error = %g",
+              i, j, err, iter, err2);
+        return;
       }
     }
   }
@@ -595,11 +595,11 @@ bool GFace::buildRepresentationCross()
     else{
       Range<double> t_bounds = ge->parBounds(0);
       GPoint p[3] = {ge->point(t_bounds.low()),
-		     ge->point(0.5 * (t_bounds.low() + t_bounds.high())),
-		     ge->point(t_bounds.high())};
+                     ge->point(0.5 * (t_bounds.low() + t_bounds.high())),
+                     ge->point(t_bounds.high())};
       for(int i = 0; i < 3; i++){
-	SPoint2 uv = parFromPoint(SPoint3(p[i].x(), p[i].y(), p[i].z()));
-	bb += SPoint3(uv.x(), uv.y(), 0.);
+        SPoint2 uv = parFromPoint(SPoint3(p[i].x(), p[i].y(), p[i].z()));
+        bb += SPoint3(uv.x(), uv.y(), 0.);
       }
     }
   }
@@ -616,22 +616,22 @@ bool GFace::buildRepresentationCross()
       double t = (double)i / (double)(N - 1);
       double x, y, z;
       if(!dir){
-	x = 0.5 * (t * (v0.x() + v1.x()) + (1. - t) * (v2.x() + v3.x()));
-	y = 0.5 * (t * (v0.y() + v1.y()) + (1. - t) * (v2.y() + v3.y()));
-	z = 0.5 * (t * (v0.z() + v1.z()) + (1. - t) * (v2.z() + v3.z()));
+        x = 0.5 * (t * (v0.x() + v1.x()) + (1. - t) * (v2.x() + v3.x()));
+        y = 0.5 * (t * (v0.y() + v1.y()) + (1. - t) * (v2.y() + v3.y()));
+        z = 0.5 * (t * (v0.z() + v1.z()) + (1. - t) * (v2.z() + v3.z()));
       }
       else{
-	x = 0.5 * (t * (v0.x() + v3.x()) + (1. - t) * (v2.x() + v1.x()));
-	y = 0.5 * (t * (v0.y() + v3.y()) + (1. - t) * (v2.y() + v1.y()));
-	z = 0.5 * (t * (v0.z() + v3.z()) + (1. - t) * (v2.z() + v1.z()));
+        x = 0.5 * (t * (v0.x() + v3.x()) + (1. - t) * (v2.x() + v1.x()));
+        y = 0.5 * (t * (v0.y() + v3.y()) + (1. - t) * (v2.y() + v1.y()));
+        z = 0.5 * (t * (v0.z() + v3.z()) + (1. - t) * (v2.z() + v1.z()));
       }
       pt.setPosition(x, y, z);
       if(containsPoint(pt)){
-	pt_last_inside.setPosition(x, y, z);
-	if(!end_line) { cross.push_back(pt); end_line = 1; }
+        pt_last_inside.setPosition(x, y, z);
+        if(!end_line) { cross.push_back(pt); end_line = 1; }
       }
       else {
-	if(end_line) { cross.push_back(pt_last_inside); end_line = 0; }
+        if(end_line) { cross.push_back(pt_last_inside); end_line = 0; }
       }
     }
     if(end_line) cross.push_back(pt_last_inside);

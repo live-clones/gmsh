@@ -30,13 +30,13 @@ extern "C"
 class GMSH_StreamLinesPlugin : public GMSH_Post_Plugin
 {
   static double callback(int num, int action, double value, double *opt,
-			 double step, double min, double max);
+                         double step, double min, double max);
 public:
   GMSH_StreamLinesPlugin();
   void getName(char *name) const;
   void getInfos(char *author, 
-		char *copyright,
-		char *help_text) const;
+                char *copyright,
+                char *help_text) const;
   void catchErrorMessage (char *errorMessage) const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  

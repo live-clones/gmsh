@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.27 2008-02-22 21:09:01 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.28 2008-03-20 11:44:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@
 extern Context_T CTX;
 
 void createQuaTri(std::vector<MVertex*> &v, GFace *to,
-		  std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
+                  std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
@@ -50,20 +50,20 @@ void createQuaTri(std::vector<MVertex*> &v, GFace *to,
     else{
       std::pair<MVertex*, MVertex*> p(std::min(v[1], v[2]), std::max(v[1], v[2]));
       if(constrainedEdges->count(p)){
-	to->triangles.push_back(new MTriangle(v[2], v[1], v[0]));
-	to->triangles.push_back(new MTriangle(v[2], v[3], v[1]));
+        to->triangles.push_back(new MTriangle(v[2], v[1], v[0]));
+        to->triangles.push_back(new MTriangle(v[2], v[3], v[1]));
       }
       else{
-	to->triangles.push_back(new MTriangle(v[2], v[3], v[0]));
-	to->triangles.push_back(new MTriangle(v[0], v[3], v[1]));
+        to->triangles.push_back(new MTriangle(v[2], v[3], v[0]));
+        to->triangles.push_back(new MTriangle(v[0], v[3], v[1]));
       }
     }
   }
 }
 
 void extrudeMesh(GEdge *from, GFace *to,
-		 std::set<MVertex*, MVertexLessThanLexicographic> &pos,
-		 std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
+                 std::set<MVertex*, MVertexLessThanLexicographic> &pos,
+                 std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
@@ -72,15 +72,15 @@ void extrudeMesh(GEdge *from, GFace *to,
     for(unsigned int i = 0; i < from->mesh_vertices.size(); i++){
       MVertex *v = from->mesh_vertices[i];
       for(int j = 0; j < ep->mesh.NbLayer; j++) {
-	for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
-	  double x = v->x(), y = v->y(), z = v->z();
-	  ep->Extrude(j, k + 1, x, y, z);
-	  if(j != ep->mesh.NbLayer - 1 || k != ep->mesh.NbElmLayer[j] - 1){
-	    MVertex *newv = new MVertex(x, y, z, to);
-	    to->mesh_vertices.push_back(newv);
-	    pos.insert(newv);
-	  }
-	}
+        for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
+          double x = v->x(), y = v->y(), z = v->z();
+          ep->Extrude(j, k + 1, x, y, z);
+          if(j != ep->mesh.NbLayer - 1 || k != ep->mesh.NbElmLayer[j] - 1){
+            MVertex *newv = new MVertex(x, y, z, to);
+            to->mesh_vertices.push_back(newv);
+            pos.insert(newv);
+          }
+        }
       }
     }
   }
@@ -94,36 +94,36 @@ void extrudeMesh(GEdge *from, GFace *to,
     MVertex *v1 = from->lines[i]->getVertex(1);
     for(int j = 0; j < ep->mesh.NbLayer; j++) {
       for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
-	std::vector<MVertex*> verts;
-	double x[4] = {v0->x(), v1->x(), v0->x(), v1->x()};
-	double y[4] = {v0->y(), v1->y(), v0->y(), v1->y()};
-	double z[4] = {v0->z(), v1->z(), v0->z(), v1->z()};
-	for(int p = 0; p < 2; p++){
-	  ep->Extrude(j, k, x[p], y[p], z[p]);
-	  ep->Extrude(j, k + 1, x[p + 2], y[p + 2], z[p + 2]);
-	}
-	for(int p = 0; p < 4; p++){
-	  MVertex tmp(x[p], y[p], z[p], 0, -1);
-	  itp = pos.find(&tmp);
-	  if(itp == pos.end()){ // FIXME: workaround
-	    Msg(INFO, "Linear search for (%.16g, %.16g, %.16g)", tmp.x(), tmp.y(), tmp.z());
-	    itp = tmp.linearSearch(pos);
-	  }
-	  if(itp == pos.end()){
-	    Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
-		tmp.x(), tmp.y(), tmp.z(), to->tag());
-	    return;
-	  }
-	  verts.push_back(*itp);
-	}
-	createQuaTri(verts, to, constrainedEdges);
+        std::vector<MVertex*> verts;
+        double x[4] = {v0->x(), v1->x(), v0->x(), v1->x()};
+        double y[4] = {v0->y(), v1->y(), v0->y(), v1->y()};
+        double z[4] = {v0->z(), v1->z(), v0->z(), v1->z()};
+        for(int p = 0; p < 2; p++){
+          ep->Extrude(j, k, x[p], y[p], z[p]);
+          ep->Extrude(j, k + 1, x[p + 2], y[p + 2], z[p + 2]);
+        }
+        for(int p = 0; p < 4; p++){
+          MVertex tmp(x[p], y[p], z[p], 0, -1);
+          itp = pos.find(&tmp);
+          if(itp == pos.end()){ // FIXME: workaround
+            Msg(INFO, "Linear search for (%.16g, %.16g, %.16g)", tmp.x(), tmp.y(), tmp.z());
+            itp = tmp.linearSearch(pos);
+          }
+          if(itp == pos.end()){
+            Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
+                tmp.x(), tmp.y(), tmp.z(), to->tag());
+            return;
+          }
+          verts.push_back(*itp);
+        }
+        createQuaTri(verts, to, constrainedEdges);
       }
     }
   }
 }
 
 void copyMesh(GFace *from, GFace *to,
-	      std::set<MVertex*, MVertexLessThanLexicographic> &pos)
+              std::set<MVertex*, MVertexLessThanLexicographic> &pos)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
@@ -132,7 +132,7 @@ void copyMesh(GFace *from, GFace *to,
     MVertex *v = from->mesh_vertices[i];
     double x = v->x(), y = v->y(), z = v->z();
     ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], 
-		x, y, z);
+                x, y, z);
     MVertex *newv = new MVertex(x, y, z, to);
     to->mesh_vertices.push_back(newv);
     pos.insert(newv);
@@ -146,16 +146,16 @@ void copyMesh(GFace *from, GFace *to,
       MVertex *v = from->triangles[i]->getVertex(j);
       MVertex tmp(v->x(), v->y(), v->z(), 0, -1);
       ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
-		  tmp.x(), tmp.y(), tmp.z());
+                  tmp.x(), tmp.y(), tmp.z());
       itp = pos.find(&tmp);
       if(itp == pos.end()){ // FIXME: workaround
-	Msg(INFO, "Linear search for (%.16g, %.16g, %.16g)", tmp.x(), tmp.y(), tmp.z());
-	itp = tmp.linearSearch(pos);
+        Msg(INFO, "Linear search for (%.16g, %.16g, %.16g)", tmp.x(), tmp.y(), tmp.z());
+        itp = tmp.linearSearch(pos);
       }
       if(itp == pos.end()) {
-	Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
-	    tmp.x(), tmp.y(), tmp.z(), to->tag());
-	return;
+        Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
+            tmp.x(), tmp.y(), tmp.z(), to->tag());
+        return;
       }
       verts.push_back(*itp);
     }
@@ -167,16 +167,16 @@ void copyMesh(GFace *from, GFace *to,
       MVertex *v = from->quadrangles[i]->getVertex(j);
       MVertex tmp(v->x(), v->y(), v->z(), 0, -1);
       ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
-		  tmp.x(), tmp.y(), tmp.z());
+                  tmp.x(), tmp.y(), tmp.z());
       itp = pos.find(&tmp);
       if(itp == pos.end()){ // FIXME: workaround
-	Msg(INFO, "Linear search for (%.16g, %.16g, %.16g)", tmp.x(), tmp.y(), tmp.z());
-	itp = tmp.linearSearch(pos);
+        Msg(INFO, "Linear search for (%.16g, %.16g, %.16g)", tmp.x(), tmp.y(), tmp.z());
+        itp = tmp.linearSearch(pos);
       }
       if(itp == pos.end()) {
-	Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d", 
-	    tmp.x(), tmp.y(), tmp.z(), to->tag());
-	return;
+        Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d", 
+            tmp.x(), tmp.y(), tmp.z(), to->tag());
+        return;
       }
       verts.push_back(*itp);
     }
@@ -185,7 +185,7 @@ void copyMesh(GFace *from, GFace *to,
 }
 
 int MeshExtrudedSurface(GFace *gf, 
-			std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
+                        std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
 {
   ExtrudeParams *ep = gf->meshAttributes.extrude;
 
@@ -204,9 +204,9 @@ int MeshExtrudedSurface(GFace *gf,
   while(it != edges.end()){
     pos.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
     pos.insert((*it)->getBeginVertex()->mesh_vertices.begin(),
-	       (*it)->getBeginVertex()->mesh_vertices.end());
+               (*it)->getBeginVertex()->mesh_vertices.end());
     pos.insert((*it)->getEndVertex()->mesh_vertices.begin(),
-	       (*it)->getEndVertex()->mesh_vertices.end());
+               (*it)->getEndVertex()->mesh_vertices.end());
     ++it;
   }
 

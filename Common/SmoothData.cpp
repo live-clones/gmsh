@@ -1,4 +1,4 @@
-// $Id: SmoothData.cpp,v 1.5 2008-02-17 08:47:56 geuzaine Exp $
+// $Id: SmoothData.cpp,v 1.6 2008-03-20 11:44:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -51,7 +51,7 @@ xyzv &xyzv::operator = (const xyzv &other)
     if(other.vals && other.nbvals) {
       vals = new double[other.nbvals];
       for(int i = 0; i < nbvals; i++)
-	vals[i] = other.vals[i];
+        vals[i] = other.vals[i];
     }
   }
   return *this;
@@ -121,11 +121,11 @@ bool smooth_data::exportview(std::string filename)
     switch(it->nbvals){
     case 1: 
       fprintf(fp, "SP(%.16g,%.16g,%.16g){%.16g};\n", 
-	      it->x, it->y, it->z, it->vals[0]);
+              it->x, it->y, it->z, it->vals[0]);
       break;
     case 3:
       fprintf(fp, "VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",
-	      it->x, it->y, it->z, it->vals[0], it->vals[1], it->vals[2]);
+              it->x, it->y, it->z, it->vals[0], it->vals[1], it->vals[2]);
       break;
     }
     it++;
@@ -144,11 +144,11 @@ float xyzn::angle(int i, char nx, char ny, char nz)
   // returns the angle (in [-180,180]) between the ith normal stored
   // at point xyz and the new normal nx,ny,nz
   double a[3] = {char2float(n[i].nx), 
-		 char2float(n[i].ny), 
-		 char2float(n[i].nz)};
+                 char2float(n[i].ny), 
+                 char2float(n[i].nz)};
   double b[3] = {char2float(nx), 
-		 char2float(ny), 
-		 char2float(nz)};
+                 char2float(ny), 
+                 char2float(nz)};
   norme(a);
   norme(b);
   double c[3];
@@ -175,12 +175,12 @@ void xyzn::update(char nx, char ny, char nz, float tol)
       // just ignore it if we have more than 100 contributions to a
       // single point...
       if(n[i].nb < 100){
-	float c1 = (float)(n[i].nb) / (float)(n[i].nb + 1);
-	float c2 = 1. / (float)(n[i].nb + 1);
-	n[i].nx = (char)(c1 * n[i].nx + c2 * nx);
-	n[i].ny = (char)(c1 * n[i].ny + c2 * ny);
-	n[i].nz = (char)(c1 * n[i].nz + c2 * nz);
-	n[i].nb++;
+        float c1 = (float)(n[i].nb) / (float)(n[i].nb + 1);
+        float c2 = 1. / (float)(n[i].nb + 1);
+        n[i].nx = (char)(c1 * n[i].nx + c2 * nx);
+        n[i].ny = (char)(c1 * n[i].ny + c2 * ny);
+        n[i].nz = (char)(c1 * n[i].nz + c2 * nz);
+        n[i].nb++;
       }
       return;
     }
@@ -192,7 +192,7 @@ void xyzn::update(char nx, char ny, char nz, float tol)
 }
 
 void smooth_normals::add(double x, double y, double z,
-			 double nx, double ny, double nz)
+                         double nx, double ny, double nz)
 {
   xyzn xyz(x, y, z);
   std::set<xyzn, lessthanxyzn>::const_iterator it = c.find(xyz);
@@ -209,7 +209,7 @@ void smooth_normals::add(double x, double y, double z,
 }
 
 bool smooth_normals::get(double x, double y, double z,
-			 double &nx, double &ny, double &nz)
+                         double &nx, double &ny, double &nz)
 {
   std::set<xyzn, lessthanxyzn>::const_iterator it = c.find(xyzn(x, y, z));
   if(it == c.end())

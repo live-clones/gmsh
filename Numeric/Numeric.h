@@ -28,25 +28,25 @@ void invert_singular_matrix3x3(double MM[3][3], double II[3][3]);
 // Numerical routines implemented using either Numerical Recipes or
 // the GSL
 double brent(double ax, double bx, double cx,
-	     double (*f)(double), double tol, double *xmin);
+             double (*f)(double), double tol, double *xmin);
 void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb,
-	    double *fc, double (*func)(double));
+            double *fc, double (*func)(double));
 void newt(double x[], int n, int *check,
-	  void (*vecfunc)(int, double [], double []));
+          void (*vecfunc)(int, double [], double []));
 void minimize_2 (double (*f) (double, double, void *data), 
-		 void (*df) (double, double, double &, double &, double &, void *data) ,
-		 void *data,int niter,
-		 double &U, double &V, double &res);
+                 void (*df) (double, double, double &, double &, double &, void *data) ,
+                 void *data,int niter,
+                 double &U, double &V, double &res);
 void minimize_3 (double (*f) (double, double, double, void *data), 
-		 void (*df) (double, double, double , double &, double &, 
-			     double &, double &, void *data),
-		 void *data,int niter,
-		 double &U, double &V, double &W, double &res);
+                 void (*df) (double, double, double , double &, double &, 
+                             double &, double &, void *data),
+                 void *data,int niter,
+                 double &U, double &V, double &W, double &res);
 void minimize_N (int N, 
-		 double (*f) (double*, void *data), 
-		 void (*df) (double*, double*, double &, void *data) ,
-		 void *data,int niter,
-		 double *, double &res);
+                 double (*f) (double*, void *data), 
+                 void (*df) (double*, double*, double &, void *data) ,
+                 void *data,int niter,
+                 double *, double &res);
 
 // Robust geometrical predicates
 namespace gmsh{

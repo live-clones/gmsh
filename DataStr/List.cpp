@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.43 2008-02-17 08:47:56 geuzaine Exp $
+// $Id: List.cpp,v 1.44 2008-03-20 11:44:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -274,7 +274,7 @@ int List_Query(List_T * liste, void *data,
 }
 
 static void *lolofind(void *data, void *array, int n, int size,
-		      int (*fcmp) (const void *a, const void *b))
+                      int (*fcmp) (const void *a, const void *b))
 {
   char *ptr;
   int i;
@@ -291,7 +291,7 @@ static void *lolofind(void *data, void *array, int n, int size,
 }
 
 int List_LQuery(List_T *liste, void *data,
-		 int (*fcmp)(const void *a, const void *b), int first)
+                 int (*fcmp)(const void *a, const void *b), int first)
 {
   char *ptr;
   
@@ -301,8 +301,8 @@ int List_LQuery(List_T *liste, void *data,
   else {
     if (startptr != NULL)
       ptr = (char *) lolofind(data,startptr,
-			      liste->n - (startptr-liste->array)/liste->size,
-			      liste->size,fcmp);
+                              liste->n - (startptr-liste->array)/liste->size,
+                              liste->size,fcmp);
     else
       return(0);
   }
@@ -452,37 +452,37 @@ List_T *List_CreateFromFile(int n, int incr, int size, FILE * file, int format,
     if(size == sizeof(double)){
       for(i = 0; i < n; i++){
         if(!fscanf(file, "%lf", (double *)&liste->array[i * size])){
-	  error = 1;
-	  break;
-	}
+          error = 1;
+          break;
+        }
       }
     }
     else if(size == sizeof(float)){
       for(i = 0; i < n; i++){
         if(!fscanf(file, "%f", (float *)&liste->array[i * size])){
-	  error = 1;
-	  break;
-	}
+          error = 1;
+          break;
+        }
       }
     }
     else if(size == sizeof(int)){
       for(i = 0; i < n; i++){
         if(!fscanf(file, "%d", (int *)&liste->array[i * size])){
-	  error = 1;
-	  break;
-	}
+          error = 1;
+          break;
+        }
       }
     }
     else if(size == sizeof(char)){
       for(i = 0; i < n; i++){
-	char c = (char)fgetc(file);
-	if(c == EOF){
-	  error = 1;
-	  break;
-	}
-	else{
-	  liste->array[i * size] = c;
-	}
+        char c = (char)fgetc(file);
+        if(c == EOF){
+          error = 1;
+          break;
+        }
+        else{
+          liste->array[i * size] = c;
+        }
       }
     }
     else{
@@ -532,7 +532,7 @@ void List_WriteToFile(List_T * liste, FILE * file, int format)
         fprintf(file, " %d", *((int *)&liste->array[i * liste->size]));
     else if(liste->size == sizeof(char))
       for(i = 0; i < n; i++)
-	fputc(*((char *)&liste->array[i * liste->size]), file);
+        fputc(*((char *)&liste->array[i * liste->size]), file);
     else
       Msg(GERROR, "Bad type of data to write list to file (size = %d)",
           liste->size);
@@ -549,7 +549,7 @@ void List_WriteToFile(List_T * liste, FILE * file, int format)
 // For backward compatibility purposes:
 
 List_T *List_CreateFromFileOld(int n, int incr, int size, FILE * file, int format,
-			       int swap)
+                               int swap)
 {
   int i, error = 0;
   List_T *liste;
@@ -566,33 +566,33 @@ List_T *List_CreateFromFileOld(int n, int incr, int size, FILE * file, int forma
     if(size == sizeof(double)){
       for(i = 0; i < n; i++){
         if(!fscanf(file, "%lf", (double *)&liste->array[i * size])){
-	  error = 1;
-	  break;
-	}
+          error = 1;
+          break;
+        }
       }
     }
     else if(size == sizeof(float)){
       for(i = 0; i < n; i++){
         if(!fscanf(file, "%f", (float *)&liste->array[i * size])){
-	  error = 1;
-	  break;
-	}
+          error = 1;
+          break;
+        }
       }
     }
     else if(size == sizeof(int)){
       for(i = 0; i < n; i++){
         if(!fscanf(file, "%d", (int *)&liste->array[i * size])){
-	  error = 1;
-	  break;
-	}
+          error = 1;
+          break;
+        }
       }
     }
     else if(size == sizeof(char)){
       for(i = 0; i < n; i++){
         if(!fscanf(file, "%c", (char *)&liste->array[i * size])){
-	  error = 1;
-	  break;
-	}
+          error = 1;
+          break;
+        }
         if(liste->array[i * size] == '^')
           liste->array[i * size] = '\0';
       }

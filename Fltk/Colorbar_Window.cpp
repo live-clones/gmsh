@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.62 2008-02-23 15:30:06 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.63 2008-03-20 11:44:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -319,8 +319,8 @@ void Colorbar_Window::draw()
   marker_y = label_y - marker_height - font_height;
   wedge_y = marker_y - wedge_height;
   color_bg = fl_color_cube(CTX.UNPACK_RED(CTX.color.bg) * FL_NUM_RED / 256,
-			   CTX.UNPACK_GREEN(CTX.color.bg) * FL_NUM_GREEN / 256,
-			   CTX.UNPACK_BLUE(CTX.color.bg) * FL_NUM_BLUE / 256);
+                           CTX.UNPACK_GREEN(CTX.color.bg) * FL_NUM_GREEN / 256,
+                           CTX.UNPACK_BLUE(CTX.color.bg) * FL_NUM_BLUE / 256);
   redraw_range(0, ct->size - 1);
   redraw_marker();
 }

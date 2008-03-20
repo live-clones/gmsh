@@ -54,7 +54,7 @@ class Colorbar_Window : public Fl_Window {
 public:
   Colorbar_Window(int x, int y, int w, int h, const char *l=0);
   void update(const char *name, double min, double max, GmshColorTable *ct,
-	      bool *changed);
+              bool *changed);
 };
 
 #endif

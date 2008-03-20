@@ -57,7 +57,7 @@ class PView{
   PView(PView *ref, bool copyOptions=true);
   // constructs a new list-based view from a simple 2D dataset
   PView(std::string xname, std::string yname,
-	std::vector<double> &x, std::vector<double> &y);
+        std::vector<double> &x, std::vector<double> &y);
   // default destructor
   ~PView();
   void deleteVertexArrays();
@@ -84,7 +84,7 @@ class PView{
   // does *not* contain that timestep; if partition >=0, return view
   // only if it does *not* contain that partition)
   static PView *getViewByName(std::string name, int timeStep=-1, 
-			      int partition=-1);
+                              int partition=-1);
 
   // read view(s) in list format from a file
   static bool readPOS(std::string fileName, int fileIndex=-1);

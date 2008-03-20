@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.124 2008-03-19 17:26:48 geuzaine Exp $
+// $Id: Main.cpp,v 1.125 2008-03-20 11:44:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -84,11 +84,11 @@ int main(int argc, char *argv[])
       for(unsigned int i = 1; i < CTX.files.size(); i++)
         MergeFile(CTX.files[i].c_str());
       if(CTX.post.combine_time)
-	PView::combine(true, 2, CTX.post.combine_remove_orig);
+        PView::combine(true, 2, CTX.post.combine_remove_orig);
       if(CTX.bgm_filename) {
         MergeFile(CTX.bgm_filename);
         if(PView::list.size()){
-	  GModel::current()->getFields()->set_background_mesh(PView::list.back()->getNum() - 1);
+          GModel::current()->getFields()->set_background_mesh(PView::list.back()->getNum() - 1);
         }
         else
           Msg(GERROR, "Invalid background mesh (no view)");
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
       else if(CTX.batch == -1)
         CreateOutputFile(CTX.output_filename, FORMAT_GEO);
       else if(CTX.batch == -2)
-	GModel::current()->checkMeshCoherence();
+        GModel::current()->checkMeshCoherence();
       exit(0);
     }
   }

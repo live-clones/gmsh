@@ -6,7 +6,7 @@
 #if defined(HAVE_FOURIER_MODEL)
 
 fourierFace::fourierFace(GModel *m, FM::TopoFace *face_, int tag,
-			 std::list<GEdge*> l_edges_)
+                         std::list<GEdge*> l_edges_)
   : GFace(m,tag), face(face_)
 {
   for (std::list<GEdge*>::iterator it = l_edges_.begin();

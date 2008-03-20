@@ -1,4 +1,4 @@
-// $Id: Warp.cpp,v 1.12 2008-02-17 08:48:08 geuzaine Exp $
+// $Id: Warp.cpp,v 1.13 2008-03-20 11:44:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -58,17 +58,17 @@ void GMSH_WarpPlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(Warp) transforms the elements in the\n"
-	 "view `iView' by adding to their node coordinates\n"
-	 "the vector field stored in the `TimeStep'-th time\n"
-	 "step of the view `dView', scaled by `Factor'. If\n"
-	 "`dView' < 0, the vector field is taken as the field\n"
-	 "of surface normals multiplied by the `TimeStep'\n"
-	 "value in `iView'. (The smoothing of the surface\n"
-	 "normals is controlled by the `SmoothingAngle'\n"
-	 "parameter.) If `iView' < 0, the plugin is run on\n"
-	 "the current view.\n"
-	 "\n"
-	 "Plugin(Warp) is executed in-place.\n");
+         "view `iView' by adding to their node coordinates\n"
+         "the vector field stored in the `TimeStep'-th time\n"
+         "step of the view `dView', scaled by `Factor'. If\n"
+         "`dView' < 0, the vector field is taken as the field\n"
+         "of surface normals multiplied by the `TimeStep'\n"
+         "value in `iView'. (The smoothing of the surface\n"
+         "normals is controlled by the `SmoothingAngle'\n"
+         "parameter.) If `iView' < 0, the plugin is run on\n"
+         "the current view.\n"
+         "\n"
+         "Plugin(Warp) is executed in-place.\n");
 }
 
 int GMSH_WarpPlugin::getNbOptions() const
@@ -87,7 +87,7 @@ void GMSH_WarpPlugin::catchErrorMessage(char *errorMessage) const
 }
 
 static void addNormals(List_T *listElm, int nbElm, int nbNod, 
-		       smooth_normals *normals)
+                       smooth_normals *normals)
 {
   if(!nbElm || nbNod < 3) return;
   int nb = List_Nbr(listElm) / nbElm;
@@ -103,16 +103,16 @@ static void addNormals(List_T *listElm, int nbElm, int nbNod,
 }
 
 static void warpList(List_T *iList, int iNbElm,
-		     List_T *dList, int dNbElm,
-		     int nbNod, double factor, int TimeStep,
-		     int nbComp, smooth_normals *normals, double explode)
+                     List_T *dList, int dNbElm,
+                     int nbNod, double factor, int TimeStep,
+                     int nbComp, smooth_normals *normals, double explode)
 {
   if(!iNbElm)
     return;
 
   if(!normals && (iNbElm != dNbElm)){
     Msg(GERROR, "Views have a different number of elements (%d != %d)", 
-	iNbElm, dNbElm);
+        iNbElm, dNbElm);
     return;
   }
   
@@ -138,41 +138,41 @@ static void warpList(List_T *iList, int iNbElm,
 
     for(int k = 0; k < nbNod; k++) {
       if(normals){
-	double d = 1.;
-	if(TimeStep >= 0){
-	  double *v = &val[nbComp * nbNod * TimeStep + nbComp * k];
-	  if(nbComp == 1)
-	    d = v[0];
-	  else if(nbComp == 3)
-	    d = sqrt(DSQR(v[0]) + DSQR(v[1]) + DSQR(v[2]));
-	  else if(nbComp == 9)
-	    d = ComputeVonMises(v);
-	}
-	normals->get(x[k], y[k], z[k], nn[0], nn[1], nn[2]);
-	x[k] += factor * d * nn[0];
-	y[k] += factor * d * nn[1];
-	z[k] += factor * d * nn[2];
+        double d = 1.;
+        if(TimeStep >= 0){
+          double *v = &val[nbComp * nbNod * TimeStep + nbComp * k];
+          if(nbComp == 1)
+            d = v[0];
+          else if(nbComp == 3)
+            d = sqrt(DSQR(v[0]) + DSQR(v[1]) + DSQR(v[2]));
+          else if(nbComp == 9)
+            d = ComputeVonMises(v);
+        }
+        normals->get(x[k], y[k], z[k], nn[0], nn[1], nn[2]);
+        x[k] += factor * d * nn[0];
+        y[k] += factor * d * nn[1];
+        z[k] += factor * d * nn[2];
       }
       else{
-	if(TimeStep < 0) TimeStep = 0;
-	x[k] += factor * val[3 * nbNod * TimeStep + 3 * k];
-	y[k] += factor * val[3 * nbNod * TimeStep + 3 * k + 1];
-	z[k] += factor * val[3 * nbNod * TimeStep + 3 * k + 2];
+        if(TimeStep < 0) TimeStep = 0;
+        x[k] += factor * val[3 * nbNod * TimeStep + 3 * k];
+        y[k] += factor * val[3 * nbNod * TimeStep + 3 * k + 1];
+        z[k] += factor * val[3 * nbNod * TimeStep + 3 * k + 2];
       }
     }
 
     if(explode != 1.){
       double cg[3] = {0., 0., 0.};
       for(int k = 0; k < nbNod; k++) {
-	cg[0] += x[k];
-	cg[1] += y[k];
-	cg[2] += z[k];
+        cg[0] += x[k];
+        cg[1] += y[k];
+        cg[2] += z[k];
       }
       for(int k = 0; k < 3; k++) cg[k] /= (double)nbNod;
       for(int k = 0; k < nbNod; k++) {
-	x[k] = cg[0] + explode * (x[k] - cg[0]);
-	y[k] = cg[1] + explode * (y[k] - cg[1]);
-	z[k] = cg[2] + explode * (z[k] - cg[2]);
+        x[k] = cg[0] + explode * (x[k] - cg[0]);
+        y[k] = cg[1] + explode * (y[k] - cg[1]);
+        z[k] = cg[2] + explode * (z[k] - cg[2]);
       }
     }
 
@@ -181,7 +181,7 @@ static void warpList(List_T *iList, int iNbElm,
 }
 
 static void warp(PViewDataList *data1, PViewDataList *data2, double factor, 
-		 int ts, double tol, double e)
+                 int ts, double tol, double e)
 {
   smooth_normals *nn = 0;
   if(WarpOptions_Number[4].def <  0){
@@ -202,7 +202,7 @@ static void warp(PViewDataList *data1, PViewDataList *data2, double factor,
   warpList(data1->SH, data1->NbSH, data2->VH, data2->NbVH, 8, factor, ts, 1, nn, e);
   warpList(data1->SI, data1->NbSI, data2->VI, data2->NbVI, 6, factor, ts, 1, nn, e);
   warpList(data1->SY, data1->NbSY, data2->VY, data2->NbVY, 5, factor, ts, 1, nn, e);
-	   		   	       	  	                    
+                                                                    
   warpList(data1->VP, data1->NbVP, data2->VP, data2->NbVP, 1, factor, ts, 3, nn, e);
   warpList(data1->VL, data1->NbVL, data2->VL, data2->NbVL, 2, factor, ts, 3, nn, e);
   warpList(data1->VT, data1->NbVT, data2->VT, data2->NbVT, 3, factor, ts, 3, nn, e);
@@ -211,7 +211,7 @@ static void warp(PViewDataList *data1, PViewDataList *data2, double factor,
   warpList(data1->VH, data1->NbVH, data2->VH, data2->NbVH, 8, factor, ts, 3, nn, e);
   warpList(data1->VI, data1->NbVI, data2->VI, data2->NbVI, 6, factor, ts, 3, nn, e);
   warpList(data1->VY, data1->NbVY, data2->VY, data2->NbVY, 5, factor, ts, 3, nn, e);
-	   		   	       	  	                    
+                                                                    
   warpList(data1->TP, data1->NbTP, data2->VP, data2->NbVP, 1, factor, ts, 9, nn, e);
   warpList(data1->TL, data1->NbTL, data2->VL, data2->NbVL, 2, factor, ts, 9, nn, e);
   warpList(data1->TT, data1->NbTT, data2->VT, data2->NbVT, 3, factor, ts, 9, nn, e);

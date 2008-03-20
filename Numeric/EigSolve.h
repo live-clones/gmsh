@@ -24,9 +24,9 @@
 //   Laurent Stainier
 
 int EigSolve(int nm,int n,double *A,double *wr,double *wi,
-	     double *v,int *work1,double *work2);
+             double *v,int *work1,double *work2);
 int EigSolveSym(int n,int nm,double *A,double *d,double *V,
-		double *b,double *z);
+                double *b,double *z);
 void EigSort(int n, double *wr, double *wi, double *B);
 
 int EigSolve3x3(const double A[9], double wr[3], double wi[3], double v[9]);

@@ -1,7 +1,7 @@
 #ifndef _GMODELIO_OCC_H_
 #define _GMODELIO_OCC_H_
 
-// $Id: GModelIO_OCC.h,v 1.4 2008-02-17 08:47:58 geuzaine Exp $
+// $Id: GModelIO_OCC.h,v 1.5 2008-03-20 11:44:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -45,8 +45,8 @@ class OCC_Internals {
     vmap.Clear();
   }
   void HealGeometry(double tolerance, bool fixsmalledges, 
-		    bool fixspotstripfaces, bool sewfaces, 
-		    bool makesolids=false);
+                    bool fixspotstripfaces, bool sewfaces, 
+                    bool makesolids=false);
   void loadSTEP(const char *);
   void loadIGES(const char *);
   void loadBREP(const char *);  

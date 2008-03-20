@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.108 2008-03-19 17:26:48 geuzaine Exp $
+// $Id: Geo.cpp,v 1.109 2008-03-20 11:44:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -266,9 +266,9 @@ void End_Curve(Curve *c)
     for(int i = 1; i < NN; i++){
       List_Read (c->Control_Points, i, &pV);
       if(c->geometry != pV->geometry){
-	c->geometry = 0;
-	break;
-      }	
+        c->geometry = 0;
+        break;
+      } 
     }
   }
 
@@ -467,9 +467,9 @@ void End_Surface(Surface *s)
     for (int i = 1; i < NN; i++){
       List_Read (s->Generatrices, i, &c);
       if (c->geometry != s->geometry){
-	s->geometry = 0;
-	break;
-      }	
+        s->geometry = 0;
+        break;
+      } 
     }
   }
 }
@@ -478,17 +478,17 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
                     List_T *Knots, int p1, int p2, double u1, double u2)
 {
   double matcr[4][4] = { {-0.5, 1.5, -1.5, 0.5},
-			 {1.0, -2.5, 2.0, -0.5},
-			 {-0.5, 0.0, 0.5, 0.0},
-			 {0.0, 1.0, 0.0, 0.0} };
+                         {1.0, -2.5, 2.0, -0.5},
+                         {-0.5, 0.0, 0.5, 0.0},
+                         {0.0, 1.0, 0.0, 0.0} };
   double matbs[4][4] = { {-1.0, 3, -3, 1},
-			 {3, -6, 3.0, 0},
-			 {-3, 0.0, 3, 0.0},
-			 {1, 4, 1, 0.0} };
+                         {3, -6, 3.0, 0},
+                         {-3, 0.0, 3, 0.0},
+                         {1, 4, 1, 0.0} };
   double matbez[4][4] = { {-1.0, 3, -3, 1},
-			  {3, -6, 3.0, 0},
-			  {-3, 3.0, 0, 0.0},
-			  {1, 0, 0, 0.0} };
+                          {3, -6, 3.0, 0},
+                          {-3, 3.0, 0, 0.0},
+                          {1, 0, 0, 0.0} };
 
   Curve *pC = (Curve *)Malloc(sizeof(Curve));
   pC->Color.type = 0;
@@ -847,7 +847,7 @@ PhysicalGroup *FindPhysicalGroup(int num, int type)
   pp->Typ = type;
   if((ppp = (PhysicalGroup **)
       List_PQuery(GModel::current()->getGEOInternals()->PhysicalGroups, &pp,
-		  comparePhysicalGroup))) {
+                  comparePhysicalGroup))) {
     return *ppp;
   }
   return NULL;
@@ -1037,7 +1037,7 @@ void DeletePoint(int ip)
     List_Read(Curves, i, &c);
     for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
       if(!compareVertex(List_Pointer(c->Control_Points, j), &v)){
-					List_Delete(Curves);
+                                        List_Delete(Curves);
         return;
       }
     }
@@ -1060,7 +1060,7 @@ void DeleteCurve(int ip)
     List_Read(Surfs, i, &s);
     for(int j = 0; j < List_Nbr(s->Generatrices); j++) {
       if(!compareAbsCurve(List_Pointer(s->Generatrices, j), &c)){
-	List_Delete(Surfs);
+        List_Delete(Surfs);
         return;
       }
     }
@@ -1083,7 +1083,7 @@ void DeleteSurface(int is)
     List_Read(Vols, i, &v);
     for(int j = 0; j < List_Nbr(v->Surfaces); j++) {
       if(!compareSurface(List_Pointer(v->Surfaces, j), &s)){
-	List_Delete(Vols);
+        List_Delete(Vols);
         return;
       }
     }
@@ -1305,7 +1305,7 @@ Curve *CreateReversedCurve(Curve *c)
 
   if(c->Typ == MSH_SEGM_NURBS && c->k) {
     newc->k = (float *)malloc((c->degre + List_Nbr(c->Control_Points) + 1) *
-			      sizeof(float));
+                              sizeof(float));
     for(i = 0; i < c->degre + List_Nbr(c->Control_Points) + 1; i++)
       newc->k[c->degre + List_Nbr(c->Control_Points) - i] = c->k[i];
   }
@@ -1573,7 +1573,7 @@ void printSurface(Surface *s)
 }
 
 void ApplyTransformationToPoint(double matrix[4][4], Vertex *v,
-				bool end_curve_surface=false)
+                                bool end_curve_surface=false)
 {
   double pos[4], vec[4];
 
@@ -1608,11 +1608,11 @@ void ApplyTransformationToPoint(double matrix[4][4], Vertex *v,
       Curve *c;
       List_Read(All, i, &c);
       for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
-	Vertex *pv = *(Vertex **)List_Pointer(c->Control_Points, j);
-	if(pv->Num == v->Num){
-	  End_Curve(c);
-	  break;
-	}
+        Vertex *pv = *(Vertex **)List_Pointer(c->Control_Points, j);
+        if(pv->Num == v->Num){
+          End_Curve(c);
+          break;
+        }
       }
     }
     List_Delete(All);
@@ -1621,11 +1621,11 @@ void ApplyTransformationToPoint(double matrix[4][4], Vertex *v,
       Surface *s;
       List_Read(All, i, &s);
       for(int j = 0; j < List_Nbr(s->Control_Points); j++) {
-	Vertex *pv = *(Vertex **)List_Pointer(s->Control_Points, j);
-	if(pv->Num == v->Num){
-	  End_Surface(s);
-	  break;
-	}
+        Vertex *pv = *(Vertex **)List_Pointer(s->Control_Points, j);
+        if(pv->Num == v->Num){
+          End_Surface(s);
+          break;
+        }
       }
     }
     List_Delete(All);
@@ -1815,23 +1815,23 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary)
     case MSH_SEGM_PARAMETRIC:
     case MSH_SEGM_BND_LAYER:
       {
-	Curve *c = FindCurve(O.Num);
-	if(c){
-	  if(c->beg){
-	    Shape sh;
-	    sh.Type = MSH_POINT;
-	    sh.Num = c->beg->Num;
-	    List_Add(shapesBoundary, &sh);
-	  }
-	  if(c->end){
-	    Shape sh;
-	    sh.Type = MSH_POINT;
-	    sh.Num = c->end->Num;
-	    List_Add(shapesBoundary, &sh);
-	  }
-	}
-	else
-	  Msg(GERROR, "Unknown curve %d", O.Num);
+        Curve *c = FindCurve(O.Num);
+        if(c){
+          if(c->beg){
+            Shape sh;
+            sh.Type = MSH_POINT;
+            sh.Num = c->beg->Num;
+            List_Add(shapesBoundary, &sh);
+          }
+          if(c->end){
+            Shape sh;
+            sh.Type = MSH_POINT;
+            sh.Num = c->end->Num;
+            List_Add(shapesBoundary, &sh);
+          }
+        }
+        else
+          Msg(GERROR, "Unknown curve %d", O.Num);
       }
       break;
     case MSH_SURF_PLAN:
@@ -1839,36 +1839,36 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary)
     case MSH_SURF_TRIC:
     case MSH_SURF_BND_LAYER:
       {
-	Surface *s = FindSurface(O.Num);
-	if(s){
-	  for(int j = 0; j < List_Nbr(s->Generatrices); j++){
-	    Curve *c;
-	    List_Read(s->Generatrices, j, &c);
-	    Shape sh;
-	    sh.Type = c->Typ;
-	    sh.Num = c->Num;
-	    List_Add(shapesBoundary, &sh);
-	  }
-	}
-	else
-	  Msg(GERROR, "Unknown surface %d", O.Num);
+        Surface *s = FindSurface(O.Num);
+        if(s){
+          for(int j = 0; j < List_Nbr(s->Generatrices); j++){
+            Curve *c;
+            List_Read(s->Generatrices, j, &c);
+            Shape sh;
+            sh.Type = c->Typ;
+            sh.Num = c->Num;
+            List_Add(shapesBoundary, &sh);
+          }
+        }
+        else
+          Msg(GERROR, "Unknown surface %d", O.Num);
       }
       break;
     case MSH_VOLUME:
       {
-	Volume *v = FindVolume(O.Num);
-	if(v){
-	  for(int j = 0; j < List_Nbr(v->Surfaces); j++){
-	    Surface *s;
-	    List_Read(v->Surfaces, j, &s);
-	    Shape sh;
-	    sh.Type = s->Typ;
-	    sh.Num = s->Num;
-	    List_Add(shapesBoundary, &sh);
-	  }
-	}
-	else
-	  Msg(GERROR, "Unknown volume %d", O.Num);
+        Volume *v = FindVolume(O.Num);
+        if(v){
+          for(int j = 0; j < List_Nbr(v->Surfaces); j++){
+            Surface *s;
+            List_Read(v->Surfaces, j, &s);
+            Shape sh;
+            sh.Type = s->Typ;
+            sh.Num = s->Num;
+            List_Add(shapesBoundary, &sh);
+          }
+        }
+        else
+          Msg(GERROR, "Unknown volume %d", O.Num);
       }
       break;
     default:
@@ -1913,11 +1913,11 @@ void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e)
 }
 
 int Extrude_ProtudePoint(int type, int ip,
-			 double T0, double T1, double T2,
-			 double A0, double A1, double A2,
-			 double X0, double X1, double X2, double alpha,
-			 Curve **pc, Curve **prc, int final, 
-			 ExtrudeParams *e)
+                         double T0, double T1, double T2,
+                         double A0, double A1, double A2,
+                         double X0, double X1, double X2, double alpha,
+                         Curve **pc, Curve **prc, int final, 
+                         ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3], d;
   Vertex V, *pv, *newp, *chapeau;
@@ -2077,11 +2077,11 @@ int Extrude_ProtudePoint(int type, int ip,
 }
 
 int Extrude_ProtudeCurve(int type, int ic,
-			 double T0, double T1, double T2,
-			 double A0, double A1, double A2,
-			 double X0, double X1, double X2, double alpha,
-			 Surface **ps, int final, 
-			 ExtrudeParams *e)
+                         double T0, double T1, double T2,
+                         double A0, double A1, double A2,
+                         double X0, double X1, double X2, double alpha,
+                         Surface **ps, int final, 
+                         ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3];
   Curve *CurveBeg, *CurveEnd;
@@ -2237,10 +2237,10 @@ int Extrude_ProtudeCurve(int type, int ic,
 }
 
 int Extrude_ProtudeSurface(int type, int is,
-			   double T0, double T1, double T2,
-			   double A0, double A1, double A2,
-			   double X0, double X1, double X2, double alpha,
-			   Volume **pv, ExtrudeParams *e)
+                           double T0, double T1, double T2,
+                           double A0, double A1, double A2,
+                           double X0, double X1, double X2, double alpha,
+                           Volume **pv, ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3];
   Curve *c, *c2;
@@ -2307,12 +2307,12 @@ int Extrude_ProtudeSurface(int type, int is,
   for(i = 0; i < List_Nbr(ps->Generatrices); i++) {
     List_Read(ps->Generatrices, i, &c);
     Extrude_ProtudeCurve(type, c->Num, T0, T1, T2, A0, A1, A2, X0, X1, X2,
-			 alpha, &s, 0, e);
+                         alpha, &s, 0, e);
     if(s){
       if(c->Num < 0)
-	ori = -1;
+        ori = -1;
       else
-	ori = 1;
+        ori = 1;
       List_Add(v->Surfaces, &s);
       List_Add(v->SurfacesOrientations, &ori);
     }
@@ -2409,11 +2409,11 @@ int Extrude_ProtudeSurface(int type, int is,
 }
 
 void ExtrudeShape(int extrude_type, int shape_type, int shape_num,
-		  double T0, double T1, double T2,
-		  double A0, double A1, double A2,
-		  double X0, double X1, double X2, double alpha,
-		  ExtrudeParams *e,
-		  List_T *list_out)
+                  double T0, double T1, double T2,
+                  double A0, double A1, double A2,
+                  double X0, double X1, double X2, double alpha,
+                  ExtrudeParams *e,
+                  List_T *list_out)
 {
   Shape shape;
   shape.Type = shape_type;
@@ -2421,20 +2421,20 @@ void ExtrudeShape(int extrude_type, int shape_type, int shape_num,
   List_T *tmp = List_Create(1, 1, sizeof(Shape));
   List_Add(tmp, &shape);
   ExtrudeShapes(extrude_type, tmp,
-		T0, T1, T2,
-		A0, A1, A2,
-		X0, X1, X2, alpha,
-		e,
-		list_out);
+                T0, T1, T2,
+                A0, A1, A2,
+                X0, X1, X2, alpha,
+                e,
+                list_out);
   List_Delete(tmp);
 }
 
 void ExtrudeShapes(int type, List_T *list_in, 
-		   double T0, double T1, double T2,
-		   double A0, double A1, double A2,
-		   double X0, double X1, double X2, double alpha,
-		   ExtrudeParams *e,
-		   List_T *list_out)
+                   double T0, double T1, double T2,
+                   double A0, double A1, double A2,
+                   double X0, double X1, double X2, double alpha,
+                   ExtrudeParams *e,
+                   List_T *list_out)
 {
   for(int i = 0; i < List_Nbr(list_in); i++){
     Shape shape;
@@ -2442,19 +2442,19 @@ void ExtrudeShapes(int type, List_T *list_in,
     switch(shape.Type){
     case MSH_POINT:
       {
-	Curve *pc = 0, *prc = 0;
-	Shape top;
-	top.Num = Extrude_ProtudePoint(type, shape.Num, T0, T1, T2,
-				       A0, A1, A2, X0, X1, X2, alpha,
-				       &pc, &prc, 1, e);
-	top.Type = MSH_POINT;
-	List_Add(list_out, &top);
-	if(pc){
-	  Shape body;
-	  body.Num = pc->Num;
-	  body.Type = pc->Typ;
-	  List_Add(list_out, &body);
-	}
+        Curve *pc = 0, *prc = 0;
+        Shape top;
+        top.Num = Extrude_ProtudePoint(type, shape.Num, T0, T1, T2,
+                                       A0, A1, A2, X0, X1, X2, alpha,
+                                       &pc, &prc, 1, e);
+        top.Type = MSH_POINT;
+        List_Add(list_out, &top);
+        if(pc){
+          Shape body;
+          body.Num = pc->Num;
+          body.Type = pc->Typ;
+          List_Add(list_out, &body);
+        }
       }
       break;
     case MSH_SEGM_LINE:
@@ -2468,32 +2468,32 @@ void ExtrudeShapes(int type, List_T *list_in,
     case MSH_SEGM_NURBS:
     case MSH_SEGM_PARAMETRIC:
       {
-	Surface *ps = 0;
-	Shape top;
-	top.Num = Extrude_ProtudeCurve(type, shape.Num, T0, T1, T2,
-				       A0, A1, A2, X0, X1, X2, alpha,
-				       &ps, 1, e);
-	Curve *pc = FindCurve(top.Num);
-	top.Type = pc ? pc->Typ : 0;
-	List_Add(list_out, &top);
-	if(ps){
-	  Shape body;
-	  body.Num = ps->Num;
-	  body.Type = ps->Typ;
-	  List_Add(list_out, &body);
-	  if(CTX.geom.extrude_return_lateral){
-	    for(int j = 0; j < List_Nbr(ps->Generatrices); j++){
-	      Curve *c;
-	      List_Read(ps->Generatrices, j, &c);
-	      if(abs(c->Num) != shape.Num && abs(c->Num) != top.Num){
-		Shape side;
-		side.Num = c->Num;
-		side.Type = c->Typ;
-		List_Add(list_out, &side);
-	      }
-	    }
-	  }
-	}
+        Surface *ps = 0;
+        Shape top;
+        top.Num = Extrude_ProtudeCurve(type, shape.Num, T0, T1, T2,
+                                       A0, A1, A2, X0, X1, X2, alpha,
+                                       &ps, 1, e);
+        Curve *pc = FindCurve(top.Num);
+        top.Type = pc ? pc->Typ : 0;
+        List_Add(list_out, &top);
+        if(ps){
+          Shape body;
+          body.Num = ps->Num;
+          body.Type = ps->Typ;
+          List_Add(list_out, &body);
+          if(CTX.geom.extrude_return_lateral){
+            for(int j = 0; j < List_Nbr(ps->Generatrices); j++){
+              Curve *c;
+              List_Read(ps->Generatrices, j, &c);
+              if(abs(c->Num) != shape.Num && abs(c->Num) != top.Num){
+                Shape side;
+                side.Num = c->Num;
+                side.Type = c->Typ;
+                List_Add(list_out, &side);
+              }
+            }
+          }
+        }
       }
       break;
     case MSH_SURF_REGL:
@@ -2501,37 +2501,37 @@ void ExtrudeShapes(int type, List_T *list_in,
     case MSH_SURF_PLAN:
     case MSH_SURF_DISCRETE:
       {
-	Volume *pv = 0;
-	Shape top;
-	top.Num = Extrude_ProtudeSurface(type, shape.Num, T0, T1, T2,
-					 A0, A1, A2, X0, X1, X2, alpha,
-					 &pv, e);
-	Surface *ps = FindSurface(top.Num);
-	top.Type = ps ? ps->Typ : 0;
-	List_Add(list_out, &top);
-	if(pv){
-	  Shape body;
-	  body.Num = pv->Num;
-	  body.Type = pv->Typ;
-	  List_Add(list_out, &body);
-	  if(CTX.geom.extrude_return_lateral){
-	    for(int j = 0; j < List_Nbr(pv->Surfaces); j++){
-	      Surface *s;
-	      List_Read(pv->Surfaces, j, &s);
-	      if(abs(s->Num) != shape.Num && abs(s->Num) != top.Num){
-		Shape side;
-		side.Num = s->Num;
-		side.Type = s->Typ;
-		List_Add(list_out, &side);
-	      }
-	    }
-	  }
-	}
+        Volume *pv = 0;
+        Shape top;
+        top.Num = Extrude_ProtudeSurface(type, shape.Num, T0, T1, T2,
+                                         A0, A1, A2, X0, X1, X2, alpha,
+                                         &pv, e);
+        Surface *ps = FindSurface(top.Num);
+        top.Type = ps ? ps->Typ : 0;
+        List_Add(list_out, &top);
+        if(pv){
+          Shape body;
+          body.Num = pv->Num;
+          body.Type = pv->Typ;
+          List_Add(list_out, &body);
+          if(CTX.geom.extrude_return_lateral){
+            for(int j = 0; j < List_Nbr(pv->Surfaces); j++){
+              Surface *s;
+              List_Read(pv->Surfaces, j, &s);
+              if(abs(s->Num) != shape.Num && abs(s->Num) != top.Num){
+                Shape side;
+                side.Num = s->Num;
+                side.Type = s->Typ;
+                List_Add(list_out, &side);
+              }
+            }
+          }
+        }
       }
       break;
     default:
       Msg(GERROR, "Impossible to extrude entity %d (of type %d)",
-	  shape.Num, shape.Type);
+          shape.Num, shape.Type);
       break;
     }
   }
@@ -2588,7 +2588,7 @@ int compareTwoCurves(const void *a, const void *b)
       List_Read(c2->Control_Points, i, &v2);
       comp = compareVertex(&v1, &v2);
       if(comp)
-	return comp;
+        return comp;
     }
   }
 
@@ -2715,9 +2715,9 @@ void ReplaceDuplicatePoints()
     for(j = 0; j < List_Nbr(s->TrsfPoints); j++){
       pv = (Vertex **)List_Pointer(s->TrsfPoints, j);
       if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
-	Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
+        Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
       else
-	List_Write(s->TrsfPoints, j, pv2);
+        List_Write(s->TrsfPoints, j, pv2);
     }
   }
   List_Delete(All);
@@ -2730,9 +2730,9 @@ void ReplaceDuplicatePoints()
     for(j = 0; j < List_Nbr(vol->TrsfPoints); j++){
       pv = (Vertex **)List_Pointer(vol->TrsfPoints, j);
       if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
-	Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
+        Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
       else
-	List_Write(vol->TrsfPoints, j, pv2);
+        List_Write(vol->TrsfPoints, j, pv2);
     }
   }
   List_Delete(All);
@@ -2928,7 +2928,7 @@ static double projectPC(double u)
   Vertex c = InterpolateCurve(CURVE, u, 0);
   return sqrt(DSQR(c.Pos.X - VERTEX->Pos.X) +
               DSQR(c.Pos.Y - VERTEX->Pos.Y) + 
-	      DSQR(c.Pos.Z - VERTEX->Pos.Z));
+              DSQR(c.Pos.Z - VERTEX->Pos.Z));
 }
 
 bool ProjectPointOnCurve(Curve *c, Vertex *v, Vertex *RES, Vertex *DER)
@@ -3030,13 +3030,13 @@ bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shape
     if(c){
       double x[4] = {0., 0.5, 0.5, 0.5};
       if(IntersectCurveSurface(c, s, x)){
-	Vertex p = InterpolateCurve(c, x[3], 0);
-	Vertex *v = Create_Vertex(NEWPOINT(), p.Pos.X, p.Pos.Y, p.Pos.Z, p.lc, p.u);
-	Tree_Insert(GModel::current()->getGEOInternals()->Points, &v);
-	Shape s;
-	s.Type = MSH_POINT;
-	s.Num = v->Num;
-	List_Add(shapes, &s);
+        Vertex p = InterpolateCurve(c, x[3], 0);
+        Vertex *v = Create_Vertex(NEWPOINT(), p.Pos.X, p.Pos.Y, p.Pos.Z, p.lc, p.u);
+        Tree_Insert(GModel::current()->getGEOInternals()->Points, &v);
+        Shape s;
+        s.Type = MSH_POINT;
+        s.Num = v->Num;
+        List_Add(shapes, &s);
       }
     }
     else{
@@ -3077,19 +3077,19 @@ void sortEdgesInLoop(int num, List_T *edges)
     for(int i = 0; i < List_Nbr(temp); i++) {
       c2 = *(Curve **)List_Pointer(temp, i);
       if(c1->end == c2->beg) {
-	List_Add(edges, &c2->Num);
-	List_PSuppress(temp, i);
-	c1 = c2;
-	if(c2->end == c0->beg) {
-	  if(List_Nbr(temp)) {
-	    Msg(INFO, "Starting subloop %d in Line Loop %d (are you sure about this?)",
-		++k, num);
-	    c0 = c1 = *(Curve **)List_Pointer(temp, 0);
-	    List_Add(edges, &c1->Num);
-	    List_PSuppress(temp, 0);
-	  }
-	}
-	break;
+        List_Add(edges, &c2->Num);
+        List_PSuppress(temp, i);
+        c1 = c2;
+        if(c2->end == c0->beg) {
+          if(List_Nbr(temp)) {
+            Msg(INFO, "Starting subloop %d in Line Loop %d (are you sure about this?)",
+                ++k, num);
+            c0 = c1 = *(Curve **)List_Pointer(temp, 0);
+            List_Add(edges, &c1->Num);
+            List_PSuppress(temp, 0);
+          }
+        }
+        break;
       }
     }
     if(j++ > nbEdges) {
@@ -3150,35 +3150,35 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
       int ic;
       Curve *c;
       if((i == 0 && iLoop > 0) || // exterior boundary
-	 (i != 0 && iLoop < 0)){  // hole
-	for(int j = 0; j < List_Nbr(el->Curves); j++) {
-	  List_Read(el->Curves, j, &ic);
-	  ic *= sign(iLoop);
-	  if(i != 0) ic *= -1; // hole
-	  if(!(c = FindCurve(ic))) {
-	    Msg(GERROR, "Unknown curve %d", ic);
-	    List_Delete(s->Generatrices);
-	    s->Generatrices = NULL;
-	    return;
-	  }
-	  else
-	    List_Add(s->Generatrices, &c);
-	}
+         (i != 0 && iLoop < 0)){  // hole
+        for(int j = 0; j < List_Nbr(el->Curves); j++) {
+          List_Read(el->Curves, j, &ic);
+          ic *= sign(iLoop);
+          if(i != 0) ic *= -1; // hole
+          if(!(c = FindCurve(ic))) {
+            Msg(GERROR, "Unknown curve %d", ic);
+            List_Delete(s->Generatrices);
+            s->Generatrices = NULL;
+            return;
+          }
+          else
+            List_Add(s->Generatrices, &c);
+        }
       }
       else{
-	for(int j = List_Nbr(el->Curves)-1; j >= 0; j--) {
-	  List_Read(el->Curves, j, &ic);
-	  ic *= sign(iLoop);
-	  if(i != 0) ic *= -1; // hole
-	  if(!(c = FindCurve(ic))) {
-	    Msg(GERROR, "Unknown curve %d", ic);
-	    List_Delete(s->Generatrices);
-	    s->Generatrices = NULL;
-	    return;
-	  }
-	  else
-	    List_Add(s->Generatrices, &c);
-	}
+        for(int j = List_Nbr(el->Curves)-1; j >= 0; j--) {
+          List_Read(el->Curves, j, &ic);
+          ic *= sign(iLoop);
+          if(i != 0) ic *= -1; // hole
+          if(!(c = FindCurve(ic))) {
+            Msg(GERROR, "Unknown curve %d", ic);
+            List_Delete(s->Generatrices);
+            s->Generatrices = NULL;
+            return;
+          }
+          else
+            List_Add(s->Generatrices, &c);
+        }
       }
     }
   }
@@ -3199,28 +3199,28 @@ void setVolumeSurfaces(Volume *v, List_T *loops)
     }
     else {
       for(int j = 0; j < List_Nbr(sl->Surfaces); j++) {
-	int is;
+        int is;
         List_Read(sl->Surfaces, j, &is);
-	Surface *s = FindSurface(abs(is));
+        Surface *s = FindSurface(abs(is));
         if(s) {
-	  // contrary to curves in edge loops, we don't actually
-	  // create "negative" surfaces. So we just store the signs in
-	  // another list
+          // contrary to curves in edge loops, we don't actually
+          // create "negative" surfaces. So we just store the signs in
+          // another list
           List_Add(v->Surfaces, &s);
-	  int tmp = sign(is) * sign(il);
-	  if(i > 0) tmp *= -1; // this is a hole
-	  List_Add(v->SurfacesOrientations, &tmp);
-	}
-	else{
-	  GFace *gf = GModel::current()->getFaceByTag(abs(is));
-	  if(gf) {
-	    List_Add(v->SurfacesByTag, &is);
-	  }
-	  else{
-	    Msg(GERROR, "Unknown surface %d", is);
-	    return;
-	  }
-	}
+          int tmp = sign(is) * sign(il);
+          if(i > 0) tmp *= -1; // this is a hole
+          List_Add(v->SurfacesOrientations, &tmp);
+        }
+        else{
+          GFace *gf = GModel::current()->getFaceByTag(abs(is));
+          if(gf) {
+            List_Add(v->SurfacesByTag, &is);
+          }
+          else{
+            Msg(GERROR, "Unknown surface %d", is);
+            return;
+          }
+        }
       }
     }
   }

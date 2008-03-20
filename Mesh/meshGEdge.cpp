@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.56 2008-03-18 14:43:53 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.57 2008-03-20 11:44:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -54,11 +54,11 @@ static std::vector<xi2lc> interpLc;
 void smoothInterpLc(int nbSmooth)
 {
   for(int j = 0; j < nbSmooth; j++){
-    for(int i = 0 ; i < (int)interpLc.size(); i++){	  	  
+    for(int i = 0 ; i < (int)interpLc.size(); i++){               
       xi2lc &left = (i == 0) ? interpLc[0] : interpLc[i - 1];
       xi2lc &mid = interpLc[i];
       xi2lc &right = (i == (int)interpLc.size() - 1) ?
-	interpLc[interpLc.size() - 1] : interpLc[i+1];
+        interpLc[interpLc.size() - 1] : interpLc[i+1];
       if(1. / mid.lc > 1.1 * 1. / left.lc) mid.lc = left.lc / 1.1;
       if(1. / mid.lc > 1.1 * 1. / right.lc) mid.lc = right.lc / 1.1;
     }
@@ -68,7 +68,7 @@ void smoothInterpLc(int nbSmooth)
 void printInterpLc(const char *name)
 {
   FILE *f = fopen(name,"w");
-  for(unsigned int i = 0; i < interpLc.size(); i++){	  	  
+  for(unsigned int i = 0; i < interpLc.size(); i++){              
     xi2lc &interp = interpLc[i];
     fprintf(f,"%12.5E %12.5E\n", interp.xi, 1 / interp.lc);
   }
@@ -88,7 +88,7 @@ void buildInterpLc(List_T *lcPoints)
 double F_Lc_usingInterpLc(GEdge *ge, double t)
 {
   std::vector<xi2lc>::iterator it = std::lower_bound(interpLc.begin(),
-						     interpLc.end(), xi2lc(t, 0));
+                                                     interpLc.end(), xi2lc(t, 0));
   double t1 = it->xi;
   double l1 = it->lc;
   it++;
@@ -161,32 +161,32 @@ double F_Transfinite(GEdge *ge, double t)
 
     case 1: // Geometric progression ar^i; Sum of n terms = length = a (r^n-1)/(r-1)
       {
-	if(sign(type) >= 0)
-	  r = coef;
-	else
-	  r = 1. / coef;
-	double a = ge->length() * (r - 1.) / (pow(r, nbpt - 1.) - 1.);
-	int i = (int)(log(t * ge->length() / a * (r - 1.) + 1.) / log(r));
-	val = d / (a * pow(r, (double)i));
+        if(sign(type) >= 0)
+          r = coef;
+        else
+          r = 1. / coef;
+        double a = ge->length() * (r - 1.) / (pow(r, nbpt - 1.) - 1.);
+        int i = (int)(log(t * ge->length() / a * (r - 1.) + 1.) / log(r));
+        val = d / (a * pow(r, (double)i));
       }
       break;
-	
+        
     case 2: // Bump
       {
-	double a;
-	if(coef > 1.0) {
-	  a = -4. * sqrt(coef - 1.) *
-	    atan2(1., sqrt(coef - 1.)) /
-	    ((double)nbpt *  ge->length());
-	}
-	else {
-	  a = 2. * sqrt(1. - coef) *
-	    log(fabs((1. + 1. / sqrt(1. - coef))
-		     / (1. - 1. / sqrt(1. - coef))))
-	    / ((double)nbpt * ge->length());
-	}
-	double b = -a * ge->length() * ge->length() / (4. * (coef - 1.));
-	val = d / (-a * DSQR(t * ge->length() - (ge->length()) * 0.5) + b);
+        double a;
+        if(coef > 1.0) {
+          a = -4. * sqrt(coef - 1.) *
+            atan2(1., sqrt(coef - 1.)) /
+            ((double)nbpt *  ge->length());
+        }
+        else {
+          a = 2. * sqrt(1. - coef) *
+            log(fabs((1. + 1. / sqrt(1. - coef))
+                     / (1. - 1. / sqrt(1. - coef))))
+            / ((double)nbpt * ge->length());
+        }
+        double b = -a * ge->length() * ge->length() / (4. * (coef - 1.));
+        val = d / (-a * DSQR(t * ge->length() - (ge->length()) * 0.5) + b);
       }
       break;
       
@@ -244,7 +244,7 @@ void RecursiveIntegration(GEdge *ge, IntPoint * from, IntPoint * to,
 }
 
 double Integration(GEdge *ge, double t1, double t2, 
-		   double (*f) (GEdge *e, double X),
+                   double (*f) (GEdge *e, double X),
                    List_T * pPoints, double Prec)
 {
   IntPoint from, to;
@@ -299,8 +299,8 @@ void meshGEdge::operator() (GEdge *ge)
   double t_end = bounds.high();
   
   // first compute the length of the curve by integrating one
-	SPoint3 p1=ge->model()->bounds().min();
-	SPoint3 p2=ge->model()->bounds().max();
+        SPoint3 p1=ge->model()->bounds().min();
+        SPoint3 p2=ge->model()->bounds().max();
   double length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-8*p1.distance(p2));
   ge->setLength(length);
   // Send a messsage to the GMSH environment
@@ -322,7 +322,7 @@ void meshGEdge::operator() (GEdge *ge)
   else{
     if(CTX.mesh.lc_integration_precision > 1.e-8){
       Integration(ge, t_begin, t_end, F_Lc_usingInterpLcBis, lcPoints, 
-		  CTX.mesh.lc_integration_precision);
+                  CTX.mesh.lc_integration_precision);
       buildInterpLc(lcPoints);
       //      printInterpLc("toto1.dat");
       //      smoothInterpLc(20);
@@ -367,15 +367,15 @@ void meshGEdge::operator() (GEdge *ge)
       const double d = (double)NUMP * b;
       if((fabs(P2.p) >= fabs(d)) && (fabs(P1.p) < fabs(d))) {
         double dt = P2.t - P1.t;
-	double dlc = P2.lc - P1.lc;
+        double dlc = P2.lc - P1.lc;
         double dp = P2.p - P1.p;
         double t   = P1.t + dt / dp * (d - P1.p);
-	SVector3 der = ge->firstDer(t);
-	const double d = norm(der);  
+        SVector3 der = ge->firstDer(t);
+        const double d = norm(der);  
         double lc  = d/(P1.lc + dlc / dp * (d - P1.p));
         GPoint V = ge->point(t);
-	ge->mesh_vertices[NUMP - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t, lc);
-	//	printf("lc = %12.5E %12.5E \n",lc,P1.lc,P2.lc);
+        ge->mesh_vertices[NUMP - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t, lc);
+        //      printf("lc = %12.5E %12.5E \n",lc,P1.lc,P2.lc);
         NUMP++;
       }
       else {

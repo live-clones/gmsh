@@ -41,7 +41,7 @@ class GMSH_SkinPlugin : public GMSH_Post_Plugin
   static int fcmpElm(const void *a, const void *b);
   static void addInView(void *a, void *b);
   void skinList(List_T *inList, int inNbList, 
-		int inNbNod, int inNbFac, int fxn[6][4]);
+                int inNbNod, int inNbFac, int fxn[6][4]);
  public:
   GMSH_SkinPlugin();
   void getName(char *name) const;

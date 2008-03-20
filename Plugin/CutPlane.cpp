@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.55 2008-02-17 08:48:06 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.56 2008-03-20 11:44:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -66,17 +66,17 @@ void GMSH_CutPlanePlugin::draw()
     glLineWidth(CTX.line_width);
     SBoundingBox3d bb = PView::list[num]->getData()->getBoundingBox();
     Draw_PlaneInBoundingBox(bb.min().x(), bb.min().y(), bb.min().z(), 
-			    bb.max().x(), bb.max().y(), bb.max().z(), 
-			    CutPlaneOptions_Number[0].def,
-			    CutPlaneOptions_Number[1].def,
-			    CutPlaneOptions_Number[2].def,
-			    CutPlaneOptions_Number[3].def);
+                            bb.max().x(), bb.max().y(), bb.max().z(), 
+                            CutPlaneOptions_Number[0].def,
+                            CutPlaneOptions_Number[1].def,
+                            CutPlaneOptions_Number[2].def,
+                            CutPlaneOptions_Number[3].def);
   }
 #endif
 }
 
 double GMSH_CutPlanePlugin::callback(int num, int action, double value, double *opt,
-				     double step, double min, double max)
+                                     double step, double min, double max)
 {
   if(action > 0) iview = num;
   switch(action){ // configure the input field
@@ -95,43 +95,43 @@ double GMSH_CutPlanePlugin::callback(int num, int action, double value, double *
 double GMSH_CutPlanePlugin::callbackA(int num, int action, double value)
 {
   return callback(num, action, value, &CutPlaneOptions_Number[0].def,
-		  0.01, -1, 1);
+                  0.01, -1, 1);
 }
 
 double GMSH_CutPlanePlugin::callbackB(int num, int action, double value)
 {
   return callback(num, action, value, &CutPlaneOptions_Number[1].def,
-		  0.01, -1, 1);
+                  0.01, -1, 1);
 }
 
 double GMSH_CutPlanePlugin::callbackC(int num, int action, double value)
 {
   return callback(num, action, value, &CutPlaneOptions_Number[2].def,
-		  0.01, -1, 1);
+                  0.01, -1, 1);
 }
 
 double GMSH_CutPlanePlugin::callbackD(int num, int action, double value)
 {
   return callback(num, action, value, &CutPlaneOptions_Number[3].def,
-		  CTX.lc/200., -CTX.lc, CTX.lc);
+                  CTX.lc/200., -CTX.lc, CTX.lc);
 }
 
 double GMSH_CutPlanePlugin::callbackVol(int num, int action, double value)
 {
   return callback(num, action, value, &CutPlaneOptions_Number[4].def,
-		  1., -1, 1);
+                  1., -1, 1);
 }
 
 double GMSH_CutPlanePlugin::callbackRecur(int num, int action, double value)
 {
   return callback(num, action, value, &CutPlaneOptions_Number[5].def,
-		  1, 0, 10);
+                  1, 0, 10);
 }
 
 double GMSH_CutPlanePlugin::callbackTarget(int num, int action, double value)
 {
   return callback(num, action, value, &CutPlaneOptions_Number[6].def,
-		  0.01, 0., 1.);
+                  0.01, 0., 1.);
 }
 
 void GMSH_CutPlanePlugin::getName(char *name) const
@@ -146,13 +146,13 @@ void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(CutPlane) cuts the view `iView' with\n"
-	 "the plane `A'*X + `B'*Y + `C'*Z + `D' = 0. If\n"
-	 "`ExtractVolume' is nonzero, the plugin extracts\n"
-	 "the elements on one side of the plane (depending\n"
-	 "on the sign of `ExtractVolume'). If `iView' < 0,\n"
-	 "the plugin is run on the current view.\n"
-	 "\n"
-	 "Plugin(CutPlane) creates one new view.\n");
+         "the plane `A'*X + `B'*Y + `C'*Z + `D' = 0. If\n"
+         "`ExtractVolume' is nonzero, the plugin extracts\n"
+         "the elements on one side of the plane (depending\n"
+         "on the sign of `ExtractVolume'). If `iView' < 0,\n"
+         "the plugin is run on the current view.\n"
+         "\n"
+         "Plugin(CutPlane) creates one new view.\n");
 }
 
 int GMSH_CutPlanePlugin::getNbOptions() const
@@ -180,12 +180,12 @@ double GMSH_CutPlanePlugin::levelset(double x, double y, double z, double val) c
 bool GMSH_CutPlanePlugin::geometricalFilter(Double_Matrix *node_positions) const
 {
   const double l0 = levelset((*node_positions)(0, 0),
-			     (*node_positions)(0, 1),
-			     (*node_positions)(0, 2), 1);
+                             (*node_positions)(0, 1),
+                             (*node_positions)(0, 2), 1);
   for (int i = 1; i < node_positions->size1(); i++)
     if (levelset((*node_positions)(i, 0),
-		 (*node_positions)(i, 1),
-		 (*node_positions)(i, 2), 1) * l0 < 0) return true;
+                 (*node_positions)(i, 1),
+                 (*node_positions)(i, 2), 1) * l0 < 0) return true;
   return false;
 }
 

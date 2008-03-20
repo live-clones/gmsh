@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.29 2008-02-17 08:47:56 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.30 2008-03-20 11:44:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -72,7 +72,7 @@ void VertexArray::addElement(MElement *ele)
 }
 
 void VertexArray::add(double *x, double *y, double *z, SVector3 *n, 
-		      unsigned int *col, MElement *ele, bool unique, bool boundary)
+                      unsigned int *col, MElement *ele, bool unique, bool boundary)
 {
   int npe = getNumVerticesPerElement();
 
@@ -109,10 +109,10 @@ void VertexArray::finalize()
     std::set<ElementData<3>, ElementDataLessThan<3> >::iterator it = _data3.begin();
     for(; it != _data3.end(); it++){
       for(int i = 0; i < 3; i++){
-	addVertex(it->x(i), it->y(i), it->z(i));
-	addNormal(it->nx(i), it->ny(i), it->nz(i));
-	addColor(it->col(i));
-	addElement(it->ele());
+        addVertex(it->x(i), it->y(i), it->z(i));
+        addNormal(it->nx(i), it->ny(i), it->nz(i));
+        addColor(it->col(i));
+        addElement(it->ele());
       }
     }
     _data3.clear();
@@ -174,13 +174,13 @@ void VertexArray::sort(double x, double y, double z)
   if(_normals.size())
     for(int i = 0; i < n; i++)
       elements.push_back(AlphaElement(&_vertices[3 * npe * i], 
-				      &_normals[3 * npe * i], 
-				      &_colors[4 * npe * i]));
+                                      &_normals[3 * npe * i], 
+                                      &_colors[4 * npe * i]));
   else
     for(int i = 0; i < n; i++)
       elements.push_back(AlphaElement(&_vertices[3 * npe * i], 
-				      0, 
-				      &_colors[4 * npe * i]));
+                                      0, 
+                                      &_colors[4 * npe * i]));
   
   std::sort(elements.begin(), elements.end(), AlphaElementLessThan());
 
@@ -194,12 +194,12 @@ void VertexArray::sort(double x, double y, double z)
   for(int i = 0; i < n; i++){
     for(int j = 0; j < npe; j++){
       for(int k = 0; k < 3; k++){
-	sortedVertices.push_back(elements[i].v[3 * j + k]);
-	if(elements[i].v)
-	  sortedNormals.push_back(elements[i].n[3 * j + k]);
+        sortedVertices.push_back(elements[i].v[3 * j + k]);
+        if(elements[i].v)
+          sortedNormals.push_back(elements[i].n[3 * j + k]);
       }
       for(int k = 0; k < 4; k++){
-	sortedColors.push_back(elements[i].c[4 * j + k]);
+        sortedColors.push_back(elements[i].c[4 * j + k]);
       }
     }
   }

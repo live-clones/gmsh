@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.44 2008-03-19 20:09:45 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.45 2008-03-20 11:44:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -146,7 +146,7 @@ double LC_MVertex_PNTS(GEntity *ge, double U, double V)
       Range<double> range = ged->parBounds(0);      
       double a = (U - range.low())/(range.high() - range.low()); 
       double lc = (1-a) * v1->prescribedMeshSizeAtVertex() +
-	(a) * v2->prescribedMeshSizeAtVertex() ;
+        (a) * v2->prescribedMeshSizeAtVertex() ;
       if(lc >= MAX_LC) return CTX.lc / 10.;
       return lc;
     }
@@ -164,11 +164,11 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
   double l4 = MAX_LC;
   double lc;
   FieldManager &fields=*GModel::current()->getFields();
-	if(fields.background_field>0){
-		Field *f=fields.get(fields.background_field);
-		if(f) l4=(*f)(X,Y,Z);
-	}
-		
+        if(fields.background_field>0){
+                Field *f=fields.get(fields.background_field);
+                if(f) l4=(*f)(X,Y,Z);
+        }
+                
   if(l4 < MAX_LC && !CTX.mesh.constrained_bgmesh){
     // use the fields unconstrained by other characteristic lengths
     lc = l4 * CTX.mesh.lc_factor;

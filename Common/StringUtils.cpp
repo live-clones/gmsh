@@ -1,4 +1,4 @@
-// $Id: StringUtils.cpp,v 1.1 2008-03-10 16:01:15 geuzaine Exp $
+// $Id: StringUtils.cpp,v 1.2 2008-03-20 11:44:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -62,8 +62,8 @@ std::string sanitizeTeXString(const char *in, int equation)
   while(*in){
     for(unsigned int i = 0; i < sizeof(bad); i++){
       if(*in == bad[i]){
-	out.push_back('\\');
-	break;
+        out.push_back('\\');
+        break;
       }
     }
     out.push_back(*in++);

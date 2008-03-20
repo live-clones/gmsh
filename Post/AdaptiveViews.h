@@ -40,7 +40,7 @@ class adapt_point
   double X, Y, Z, val, valx, valy, valz;
   double shape_functions[128];
   static adapt_point *New(double x, double y, double z, 
-			  Double_Matrix *coeffs, Double_Matrix *eexps);
+                          Double_Matrix *coeffs, Double_Matrix *eexps);
   bool operator < (const adapt_point &other) const
   {
     if(other.x < x) return true;
@@ -74,7 +74,7 @@ class adapt_edge
   }
   static void Create(int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Recur_Create(adapt_edge *e, int maxlevel, int level, 
-			   Double_Matrix *coeffs, Double_Matrix *eexps);
+                           Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Error(double AVG, double tol);
   static void Recur_Error(adapt_edge *e, double AVG, double tol);
   bool visible;
@@ -107,7 +107,7 @@ class adapt_triangle
   }
   static void Create(int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Recur_Create(adapt_triangle *t, int maxlevel, int level,
-			   Double_Matrix *coeffs, Double_Matrix *eexps);
+                           Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Error(double AVG, double tol);
   static void Recur_Error(adapt_triangle *t, double AVG, double tol);
   bool visible;
@@ -142,7 +142,7 @@ class adapt_quad
   }
   static void Create(int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Recur_Create(adapt_quad *q, int maxlevel, int level,
-			   Double_Matrix *coeffs, Double_Matrix *eexps);
+                           Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Error(double AVG, double tol);
   static void Recur_Error(adapt_quad *q, double AVG, double tol);
   bool visible;
@@ -178,7 +178,7 @@ class adapt_tet
   }
   static void Create(int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Recur_Create(adapt_tet *t, int maxlevel, int level, 
-			   Double_Matrix *coeffs, Double_Matrix *eexps);
+                           Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Error(double AVG, double tol);
   static void Recur_Error(adapt_tet *t, double AVG, double tol);
   bool visible;
@@ -192,7 +192,7 @@ class adapt_hex
 {
  public:
   adapt_hex(adapt_point *p1, adapt_point *p2, adapt_point *p3, adapt_point *p4,
-	    adapt_point *p5, adapt_point *p6, adapt_point *p7, adapt_point *p8)    
+            adapt_point *p5, adapt_point *p6, adapt_point *p7, adapt_point *p8)    
     : visible(false)
   {
     p[0] = p1;
@@ -220,11 +220,11 @@ class adapt_hex
   inline double V() const
   {
     return (p[0]->val + p[1]->val + p[2]->val+ p[3]->val +
-	    p[4]->val + p[5]->val + p[6]->val+ p[7]->val) / 8.;
+            p[4]->val + p[5]->val + p[6]->val+ p[7]->val) / 8.;
   }
   static void Create(int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Recur_Create(adapt_hex *h, int maxlevel, int level,
-			   Double_Matrix *coeffs, Double_Matrix *eexps);
+                           Double_Matrix *coeffs, Double_Matrix *eexps);
   static void Error(double AVG, double tol);
   static void Recur_Error(adapt_hex *h, double AVG, double tol);
   bool visible;
@@ -256,7 +256,7 @@ class Adaptive_Post_View
   Double_Matrix *_Geometry;
 public:
   Adaptive_Post_View(PViewDataList *data, List_T *_coeffs, List_T *_eexps, 
-		     List_T *_coeffsGeom=0, List_T *_eexpsGeom=0);
+                     List_T *_coeffsGeom=0, List_T *_eexpsGeom=0);
   ~Adaptive_Post_View();
   int getGlobalResolutionLevel() const { return presentZoomLevel; }
   void setGlobalResolutionLevel(PViewDataList *data, int level)
@@ -264,17 +264,17 @@ public:
     setAdaptiveResolutionLevel(data, level);
   }
   void setAdaptiveResolutionLevel(PViewDataList *data, int levelmax, 
-				  GMSH_Post_Plugin *plug=0);
+                                  GMSH_Post_Plugin *plug=0);
   template <class ELEM>
   void setAdaptiveResolutionLevel_TEMPL(int level, int lemvelmax,
-					GMSH_Post_Plugin *plug, List_T **myList,
-					int *counter, int *done);
+                                        GMSH_Post_Plugin *plug, List_T **myList,
+                                        int *counter, int *done);
   void initWithLowResolution(PViewDataList *data);
   void setTolerance(const double eps) { tol = eps; }
   double getTolerance() const { return tol; }
   template <class ELEM>
   int zoomElement(int ielem, int level, int levelmax, 
-		  GMSH_Post_Plugin *plug, List_T *theList, int *counter);
+                  GMSH_Post_Plugin *plug, List_T *theList, int *counter);
 };
 
 template <class ELEM>

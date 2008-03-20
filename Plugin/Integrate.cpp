@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.23 2008-02-17 08:48:07 geuzaine Exp $
+// $Id: Integrate.cpp,v 1.24 2008-03-20 11:44:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -45,18 +45,18 @@ void GMSH_IntegratePlugin::getName(char *name) const
 }
 
 void GMSH_IntegratePlugin::getInfos(char *author, char *copyright,
-				    char *help_text) const
+                                    char *help_text) const
 {
   strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
-	 "Plugin(Integrate) integrates scalar fields over\n"
-	 "all the elements in the view `iView', as well\n"
-	 "as the circulation/flux of vector fields over\n"
-	 "line/surface elements. If `iView' < 0, the\n"
-	 "plugin is run on the current view.\n"
-	 "\n"
-	 "Plugin(Integrate) creates one new view.\n");
+         "Plugin(Integrate) integrates scalar fields over\n"
+         "all the elements in the view `iView', as well\n"
+         "as the circulation/flux of vector fields over\n"
+         "line/surface elements. If `iView' < 0, the\n"
+         "plugin is run on the current view.\n"
+         "\n"
+         "Plugin(Integrate) creates one new view.\n");
 }
 
 int GMSH_IntegratePlugin::getNbOptions() const
@@ -75,7 +75,7 @@ void GMSH_IntegratePlugin::catchErrorMessage(char *errorMessage) const
 }
 
 static double integrate(int nbList, List_T *list, int dim, 
-			int nbNod, int nbComp, int step)
+                        int nbNod, int nbComp, int step)
 {
   if(!nbList) return 0.;
 
@@ -86,7 +86,7 @@ static double integrate(int nbList, List_T *list, int dim,
     double *y = (double *)List_Pointer_Fast(list, i + nbNod);
     double *z = (double *)List_Pointer_Fast(list, i + 2 * nbNod);
     double *v = (double *)List_Pointer_Fast(list, i + 3 * nbNod +
-					    nbNod * nbComp * step);
+                                            nbNod * nbComp * step);
     elementFactory factory;
     element *element = factory.create(nbNod, dim, x, y, z);
     if(!element) return 0.;
@@ -95,9 +95,9 @@ static double integrate(int nbList, List_T *list, int dim,
     }
     else if(nbComp == 3){
       if(dim == 1)
-	res += element->integrateCirculation(v);
+        res += element->integrateCirculation(v);
       else if(dim == 2)
-	res += element->integrateFlux(v);
+        res += element->integrateFlux(v);
     }
     delete element;
   }

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.665 2008-03-19 17:26:48 geuzaine Exp $
+// $Id: GUI.cpp,v 1.666 2008-03-20 11:44:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -168,124 +168,124 @@ Context_Item menu_geometry[] = {
       {0} 
     };  
         Context_Item menu_geometry_elementary_add[] = {
-	  {"0Geometry>Elementary>Add", NULL} ,
+          {"0Geometry>Elementary>Add", NULL} ,
           {"New",       (Fl_Callback *)geometry_elementary_add_new_cb} ,
-	  {"Translate", (Fl_Callback *)geometry_elementary_add_translate_cb} ,
-	  {"Rotate",    (Fl_Callback *)geometry_elementary_add_rotate_cb} ,
-	  {"Scale",     (Fl_Callback *)geometry_elementary_add_scale_cb} ,
-	  {"Symmetry",  (Fl_Callback *)geometry_elementary_add_symmetry_cb} ,
-	  {0} 
-	};  
+          {"Translate", (Fl_Callback *)geometry_elementary_add_translate_cb} ,
+          {"Rotate",    (Fl_Callback *)geometry_elementary_add_rotate_cb} ,
+          {"Scale",     (Fl_Callback *)geometry_elementary_add_scale_cb} ,
+          {"Symmetry",  (Fl_Callback *)geometry_elementary_add_symmetry_cb} ,
+          {0} 
+        };  
             Context_Item menu_geometry_elementary_add_new[] = {
-	      {"0Geometry>Elementary>Add>New", NULL} ,
+              {"0Geometry>Elementary>Add>New", NULL} ,
               {"Parameter",     (Fl_Callback *)geometry_elementary_add_new_parameter_cb} ,
-	      {"Point",         (Fl_Callback *)geometry_elementary_add_new_point_cb} ,
-	      {"Straight line", (Fl_Callback *)geometry_elementary_add_new_line_cb} ,
-	      {"Spline",        (Fl_Callback *)geometry_elementary_add_new_spline_cb} ,
-	      {"B-Spline",      (Fl_Callback *)geometry_elementary_add_new_bspline_cb} ,
-	      {"Circle arc",    (Fl_Callback *)geometry_elementary_add_new_circle_cb} ,
-	      {"Ellipse arc",   (Fl_Callback *)geometry_elementary_add_new_ellipse_cb} ,
-	      {"Plane surface", (Fl_Callback *)geometry_elementary_add_new_planesurface_cb} ,
-	      {"Ruled surface", (Fl_Callback *)geometry_elementary_add_new_ruledsurface_cb} ,
-	      {"Volume",        (Fl_Callback *)geometry_elementary_add_new_volume_cb} ,
-	      {0} 
-	    };  
+              {"Point",         (Fl_Callback *)geometry_elementary_add_new_point_cb} ,
+              {"Straight line", (Fl_Callback *)geometry_elementary_add_new_line_cb} ,
+              {"Spline",        (Fl_Callback *)geometry_elementary_add_new_spline_cb} ,
+              {"B-Spline",      (Fl_Callback *)geometry_elementary_add_new_bspline_cb} ,
+              {"Circle arc",    (Fl_Callback *)geometry_elementary_add_new_circle_cb} ,
+              {"Ellipse arc",   (Fl_Callback *)geometry_elementary_add_new_ellipse_cb} ,
+              {"Plane surface", (Fl_Callback *)geometry_elementary_add_new_planesurface_cb} ,
+              {"Ruled surface", (Fl_Callback *)geometry_elementary_add_new_ruledsurface_cb} ,
+              {"Volume",        (Fl_Callback *)geometry_elementary_add_new_volume_cb} ,
+              {0} 
+            };  
             Context_Item menu_geometry_elementary_add_translate[] = {
-	      {"0Geometry>Elementary>Add>Translate", NULL} ,
+              {"0Geometry>Elementary>Add>Translate", NULL} ,
               {"Point",   (Fl_Callback *)geometry_elementary_add_translate_point_cb} ,
-	      {"Line",    (Fl_Callback *)geometry_elementary_add_translate_line_cb} ,
-	      {"Surface", (Fl_Callback *)geometry_elementary_add_translate_surface_cb} ,
-	      {0} 
-	    };  
+              {"Line",    (Fl_Callback *)geometry_elementary_add_translate_line_cb} ,
+              {"Surface", (Fl_Callback *)geometry_elementary_add_translate_surface_cb} ,
+              {0} 
+            };  
             Context_Item menu_geometry_elementary_add_rotate[] = {
-	      {"0Geometry>Elementary>Add>Rotate", NULL} ,
+              {"0Geometry>Elementary>Add>Rotate", NULL} ,
               {"Point",   (Fl_Callback *)geometry_elementary_add_rotate_point_cb} ,
-	      {"Line",    (Fl_Callback *)geometry_elementary_add_rotate_line_cb} ,
-	      {"Surface", (Fl_Callback *)geometry_elementary_add_rotate_surface_cb} ,
-	      {0} 
-	    };  
+              {"Line",    (Fl_Callback *)geometry_elementary_add_rotate_line_cb} ,
+              {"Surface", (Fl_Callback *)geometry_elementary_add_rotate_surface_cb} ,
+              {0} 
+            };  
             Context_Item menu_geometry_elementary_add_scale[] = {
-	      {"0Geometry>Elementary>Add>Scale", NULL} ,
-	      {"Point",   (Fl_Callback *)geometry_elementary_add_scale_point_cb} ,
-	      {"Line",    (Fl_Callback *)geometry_elementary_add_scale_line_cb} ,
-	      {"Surface", (Fl_Callback *)geometry_elementary_add_scale_surface_cb} ,
-	      {0} 
-	    };  
+              {"0Geometry>Elementary>Add>Scale", NULL} ,
+              {"Point",   (Fl_Callback *)geometry_elementary_add_scale_point_cb} ,
+              {"Line",    (Fl_Callback *)geometry_elementary_add_scale_line_cb} ,
+              {"Surface", (Fl_Callback *)geometry_elementary_add_scale_surface_cb} ,
+              {0} 
+            };  
             Context_Item menu_geometry_elementary_add_symmetry[] = {
-	      {"0Geometry>Elementary>Add>Symmetry", NULL} ,
-	      {"Point",   (Fl_Callback *)geometry_elementary_add_symmetry_point_cb} ,
-	      {"Line",    (Fl_Callback *)geometry_elementary_add_symmetry_line_cb} ,
-	      {"Surface", (Fl_Callback *)geometry_elementary_add_symmetry_surface_cb} ,
-	      {0} 
-	    };  
+              {"0Geometry>Elementary>Add>Symmetry", NULL} ,
+              {"Point",   (Fl_Callback *)geometry_elementary_add_symmetry_point_cb} ,
+              {"Line",    (Fl_Callback *)geometry_elementary_add_symmetry_line_cb} ,
+              {"Surface", (Fl_Callback *)geometry_elementary_add_symmetry_surface_cb} ,
+              {0} 
+            };  
         Context_Item menu_geometry_elementary_translate[] = {
-	  {"0Geometry>Elementary>Translate", NULL} ,
-	  {"Point",   (Fl_Callback *)geometry_elementary_translate_point_cb} ,
-	  {"Line",    (Fl_Callback *)geometry_elementary_translate_line_cb} ,
-	  {"Surface", (Fl_Callback *)geometry_elementary_translate_surface_cb} ,
-	  {0} 
-	};  
+          {"0Geometry>Elementary>Translate", NULL} ,
+          {"Point",   (Fl_Callback *)geometry_elementary_translate_point_cb} ,
+          {"Line",    (Fl_Callback *)geometry_elementary_translate_line_cb} ,
+          {"Surface", (Fl_Callback *)geometry_elementary_translate_surface_cb} ,
+          {0} 
+        };  
         Context_Item menu_geometry_elementary_rotate[] = {
-	  {"0Geometry>Elementary>Rotate", NULL} ,
-	  {"Point",   (Fl_Callback *)geometry_elementary_rotate_point_cb} ,
-	  {"Line",    (Fl_Callback *)geometry_elementary_rotate_line_cb} ,
-	  {"Surface", (Fl_Callback *)geometry_elementary_rotate_surface_cb} ,
-	  {0} 
-	};  
+          {"0Geometry>Elementary>Rotate", NULL} ,
+          {"Point",   (Fl_Callback *)geometry_elementary_rotate_point_cb} ,
+          {"Line",    (Fl_Callback *)geometry_elementary_rotate_line_cb} ,
+          {"Surface", (Fl_Callback *)geometry_elementary_rotate_surface_cb} ,
+          {0} 
+        };  
         Context_Item menu_geometry_elementary_scale[] = {
-	  {"0Geometry>Elementary>Scale", NULL} ,
-	  {"Point",   (Fl_Callback *)geometry_elementary_scale_point_cb} ,
-	  {"Line",    (Fl_Callback *)geometry_elementary_scale_line_cb} ,
-	  {"Surface", (Fl_Callback *)geometry_elementary_scale_surface_cb} ,
-	  {0} 
-	};  
+          {"0Geometry>Elementary>Scale", NULL} ,
+          {"Point",   (Fl_Callback *)geometry_elementary_scale_point_cb} ,
+          {"Line",    (Fl_Callback *)geometry_elementary_scale_line_cb} ,
+          {"Surface", (Fl_Callback *)geometry_elementary_scale_surface_cb} ,
+          {0} 
+        };  
         Context_Item menu_geometry_elementary_symmetry[] = {
-	  {"0Geometry>Elementary>Symmetry", NULL} ,
-	  {"Point",   (Fl_Callback *)geometry_elementary_symmetry_point_cb} ,
-	  {"Line",    (Fl_Callback *)geometry_elementary_symmetry_line_cb} ,
-	  {"Surface", (Fl_Callback *)geometry_elementary_symmetry_surface_cb} ,
-	  {0} 
-	};  
+          {"0Geometry>Elementary>Symmetry", NULL} ,
+          {"Point",   (Fl_Callback *)geometry_elementary_symmetry_point_cb} ,
+          {"Line",    (Fl_Callback *)geometry_elementary_symmetry_line_cb} ,
+          {"Surface", (Fl_Callback *)geometry_elementary_symmetry_surface_cb} ,
+          {0} 
+        };  
         Context_Item menu_geometry_elementary_extrude[] = {
-	  {"0Geometry>Elementary>Extrude", NULL} ,
-	  {"Translate", (Fl_Callback *)geometry_elementary_extrude_translate_cb} ,
-	  {"Rotate",    (Fl_Callback *)geometry_elementary_extrude_rotate_cb} ,
-	  {0} 
- 	};  
+          {"0Geometry>Elementary>Extrude", NULL} ,
+          {"Translate", (Fl_Callback *)geometry_elementary_extrude_translate_cb} ,
+          {"Rotate",    (Fl_Callback *)geometry_elementary_extrude_rotate_cb} ,
+          {0} 
+        };  
             Context_Item menu_geometry_elementary_extrude_translate[] = {
-	      {"0Geometry>Elementary>Extrude>Translate", NULL} ,
-	      {"Point",   (Fl_Callback *)geometry_elementary_extrude_translate_point_cb} ,
-	      {"Line",    (Fl_Callback *)geometry_elementary_extrude_translate_line_cb} ,
-	      {"Surface", (Fl_Callback *)geometry_elementary_extrude_translate_surface_cb} ,
-	      {0} 
-	    };  
+              {"0Geometry>Elementary>Extrude>Translate", NULL} ,
+              {"Point",   (Fl_Callback *)geometry_elementary_extrude_translate_point_cb} ,
+              {"Line",    (Fl_Callback *)geometry_elementary_extrude_translate_line_cb} ,
+              {"Surface", (Fl_Callback *)geometry_elementary_extrude_translate_surface_cb} ,
+              {0} 
+            };  
             Context_Item menu_geometry_elementary_extrude_rotate[] = {
-	      {"0Geometry>Elementary>Extrude>Rotate", NULL} ,
-	      {"Point",   (Fl_Callback *)geometry_elementary_extrude_rotate_point_cb} ,
-	      {"Line",    (Fl_Callback *)geometry_elementary_extrude_rotate_line_cb} ,
-	      {"Surface", (Fl_Callback *)geometry_elementary_extrude_rotate_surface_cb} ,
-	      {0} 
-	    };  
+              {"0Geometry>Elementary>Extrude>Rotate", NULL} ,
+              {"Point",   (Fl_Callback *)geometry_elementary_extrude_rotate_point_cb} ,
+              {"Line",    (Fl_Callback *)geometry_elementary_extrude_rotate_line_cb} ,
+              {"Surface", (Fl_Callback *)geometry_elementary_extrude_rotate_surface_cb} ,
+              {0} 
+            };  
         Context_Item menu_geometry_elementary_delete[] = {
-	  {"0Geometry>Elementary>Delete", NULL} ,
-	  {"Point",   (Fl_Callback *)geometry_elementary_delete_point_cb} ,
-	  {"Line",    (Fl_Callback *)geometry_elementary_delete_line_cb} ,
-	  {"Surface", (Fl_Callback *)geometry_elementary_delete_surface_cb} ,
-	  {0} 
-	};  
+          {"0Geometry>Elementary>Delete", NULL} ,
+          {"Point",   (Fl_Callback *)geometry_elementary_delete_point_cb} ,
+          {"Line",    (Fl_Callback *)geometry_elementary_delete_line_cb} ,
+          {"Surface", (Fl_Callback *)geometry_elementary_delete_surface_cb} ,
+          {0} 
+        };  
     Context_Item menu_geometry_physical[] = {
       {"0Geometry>Physical", NULL} ,
       {"Add",    (Fl_Callback *)geometry_physical_add_cb} ,
       {0} 
     };  
         Context_Item menu_geometry_physical_add[] = {
-	  {"0Geometry>Physical>Add", NULL} ,
-	  {"Point",   (Fl_Callback *)geometry_physical_add_point_cb  } ,
-	  {"Line",    (Fl_Callback *)geometry_physical_add_line_cb  } ,
-	  {"Surface", (Fl_Callback *)geometry_physical_add_surface_cb  } ,
-	  {"Volume",  (Fl_Callback *)geometry_physical_add_volume_cb  } ,
-	  {0} 
-	};  
+          {"0Geometry>Physical>Add", NULL} ,
+          {"Point",   (Fl_Callback *)geometry_physical_add_point_cb  } ,
+          {"Line",    (Fl_Callback *)geometry_physical_add_line_cb  } ,
+          {"Surface", (Fl_Callback *)geometry_physical_add_surface_cb  } ,
+          {"Volume",  (Fl_Callback *)geometry_physical_add_volume_cb  } ,
+          {0} 
+        };  
 
 Context_Item menu_mesh[] = {
   {"1Mesh", NULL} ,
@@ -317,12 +317,12 @@ Context_Item menu_mesh[] = {
       {0} 
     };  
         Context_Item menu_mesh_define_transfinite[] = {
-	  {"1Mesh>Define>Transfinite", NULL} ,
-	  {"Line",    (Fl_Callback *)mesh_define_transfinite_line_cb} ,
-	  {"Surface", (Fl_Callback *)mesh_define_transfinite_surface_cb} ,
-	  {"Volume",  (Fl_Callback *)mesh_define_transfinite_volume_cb} , 
-	  {0} 
-	};  
+          {"1Mesh>Define>Transfinite", NULL} ,
+          {"Line",    (Fl_Callback *)mesh_define_transfinite_line_cb} ,
+          {"Surface", (Fl_Callback *)mesh_define_transfinite_surface_cb} ,
+          {"Volume",  (Fl_Callback *)mesh_define_transfinite_volume_cb} , 
+          {0} 
+        };  
     Context_Item menu_mesh_delete[] = {
       {"1Mesh>Edit>Delete", NULL} ,
       {"Elements", (Fl_Callback *)mesh_delete_parts_cb, (void*)"elements"} ,
@@ -419,7 +419,7 @@ int GetFontIndex(const char *fontname)
   if(fontname){
     for(int i = 0; i < NUM_FONTS; i++)
       if(!strcmp(menu_font_names[i].label(), fontname))
-	return i;
+        return i;
   }
   Msg(GERROR, "Unknown font \"%s\" (using \"Helvetica\" instead)", fontname);
   Msg(INFO, "Available fonts:");
@@ -449,10 +449,10 @@ int GetFontAlign(const char *alignstr)
        !strcmp(alignstr, "left"))
       return 0;
     else if(!strcmp(alignstr, "BottomCenter") || !strcmp(alignstr, "Center") ||
-	    !strcmp(alignstr, "center"))
+            !strcmp(alignstr, "center"))
       return 1;
     else if(!strcmp(alignstr, "BottomRight") || !strcmp(alignstr, "Right") ||
-	    !strcmp(alignstr, "right"))
+            !strcmp(alignstr, "right"))
       return 2;
     else if(!strcmp(alignstr, "TopLeft"))
       return 3;
@@ -575,10 +575,10 @@ int GUI::global_shortcuts(int event)
     return 0;   // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut(FL_Escape) ||
-	  Fl::test_shortcut(FL_META + FL_Escape) ||
-	  Fl::test_shortcut(FL_SHIFT + FL_Escape) ||
-	  Fl::test_shortcut(FL_CTRL + FL_Escape) ||
-	  Fl::test_shortcut(FL_ALT + FL_Escape)) {
+          Fl::test_shortcut(FL_META + FL_Escape) ||
+          Fl::test_shortcut(FL_SHIFT + FL_Escape) ||
+          Fl::test_shortcut(FL_CTRL + FL_Escape) ||
+          Fl::test_shortcut(FL_ALT + FL_Escape)) {
     if(g_opengl_window->LassoMode){
       g_opengl_window->LassoMode = false;
       redraw_opengl();
@@ -615,38 +615,38 @@ int GUI::global_shortcuts(int event)
   else if(Fl::test_shortcut(FL_SHIFT + 'w')) {
     if(PView::list.size()){
       if(view_number >= 0 && view_number < (int)PView::list.size())
-	create_view_options_window(view_number);
+        create_view_options_window(view_number);
       else
-	create_view_options_window(0);
+        create_view_options_window(0);
     }
     return 1;
   }
   else if(Fl::test_shortcut(FL_SHIFT + 'u')) {
     if(PView::list.size()){
       if(view_number >= 0 && view_number < (int)PView::list.size())
-	create_plugin_window(view_number);
+        create_plugin_window(view_number);
       else
-	create_plugin_window(0);
+        create_plugin_window(0);
     }
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'f')) {
     opt_general_fast_redraw(0, GMSH_SET | GMSH_GUI,
-			    !opt_general_fast_redraw(0, GMSH_GET, 0));
+                            !opt_general_fast_redraw(0, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'b')) {
     opt_general_draw_bounding_box(0, GMSH_SET | GMSH_GUI,
-				  !opt_general_draw_bounding_box(0, GMSH_GET, 0));
+                                  !opt_general_draw_bounding_box(0, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'i')) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-	opt_view_show_scale(i, GMSH_SET | GMSH_GUI,
-			    !opt_view_show_scale(i, GMSH_GET, 0));
+        opt_view_show_scale(i, GMSH_SET | GMSH_GUI,
+                            !opt_view_show_scale(i, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
@@ -658,45 +658,45 @@ int GUI::global_shortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_ALT + 'w')) {
     opt_geometry_light(0, GMSH_SET | GMSH_GUI,
-		       !opt_geometry_light(0, GMSH_GET, 0));
+                       !opt_geometry_light(0, GMSH_GET, 0));
     opt_mesh_light(0, GMSH_SET | GMSH_GUI,
-		   !opt_mesh_light(0, GMSH_GET, 0));
+                   !opt_mesh_light(0, GMSH_GET, 0));
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
-	opt_view_light(i, GMSH_SET | GMSH_GUI,
-		       !opt_view_light(i, GMSH_GET, 0));
+        opt_view_light(i, GMSH_SET | GMSH_GUI,
+                       !opt_view_light(i, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'w')) {
     opt_mesh_reverse_all_normals(0, GMSH_SET | GMSH_GUI,
-				 !opt_mesh_reverse_all_normals(0, GMSH_GET, 0));
+                                 !opt_mesh_reverse_all_normals(0, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'x') || 
-	  Fl::test_shortcut(FL_ALT + FL_SHIFT + 'x')) {
+          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'x')) {
     status_xyz1p_cb(0, (void *)"x");
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'y') ||
-	  Fl::test_shortcut(FL_ALT + FL_SHIFT + 'y')) {
+          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'y')) {
     status_xyz1p_cb(0, (void *)"y");
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'z') ||
-	  Fl::test_shortcut(FL_ALT + FL_SHIFT + 'z')) {
+          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'z')) {
     status_xyz1p_cb(0, (void *)"z");
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'o') ||
-	  Fl::test_shortcut(FL_ALT + FL_SHIFT + 'o')) {
+          Fl::test_shortcut(FL_ALT + FL_SHIFT + 'o')) {
     status_xyz1p_cb(0, (void *)"p");
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'a')) {
     opt_general_axes(0, GMSH_SET | GMSH_GUI, 
-		     opt_general_axes(0, GMSH_GET, 0) + 1);
+                     opt_general_axes(0, GMSH_GET, 0) + 1);
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_axes(i, GMSH_SET | GMSH_GUI, opt_view_axes(i, GMSH_GET, 0)+1);
@@ -740,37 +740,37 @@ int GUI::global_shortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'l')) {
     opt_mesh_lines(0, GMSH_SET | GMSH_GUI, 
-		   !opt_mesh_lines(0, GMSH_GET, 0));
+                   !opt_mesh_lines(0, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 's')) {
     opt_mesh_surfaces_edges(0, GMSH_SET | GMSH_GUI,
-			    !opt_mesh_surfaces_edges(0, GMSH_GET, 0));
+                            !opt_mesh_surfaces_edges(0, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'v')) {
     opt_mesh_volumes_edges(0, GMSH_SET | GMSH_GUI,
-			   !opt_mesh_volumes_edges(0, GMSH_GET, 0));
+                           !opt_mesh_volumes_edges(0, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + 'd')){
     opt_geometry_surface_type(0, GMSH_SET | GMSH_GUI,
-			      opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
+                              opt_geometry_surface_type(0, GMSH_GET, 0) + 1);
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'd')) {
     opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI,
-			    !opt_mesh_surfaces_faces(0, GMSH_GET, 0));
+                            !opt_mesh_surfaces_faces(0, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
   else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'b')) {
     opt_mesh_volumes_faces(0, GMSH_SET | GMSH_GUI,
-			   !opt_mesh_volumes_faces(0, GMSH_GET, 0));
+                           !opt_mesh_volumes_faces(0, GMSH_GET, 0));
     redraw_opengl();
     return 1;
   }
@@ -792,7 +792,7 @@ int GUI::global_shortcuts(int event)
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_intervals_type(i, GMSH_SET | GMSH_GUI,
-				opt_view_intervals_type(i, GMSH_GET, 0) + 1);
+                                opt_view_intervals_type(i, GMSH_GET, 0) + 1);
     redraw_opengl();
     return 1;
   }
@@ -800,7 +800,7 @@ int GUI::global_shortcuts(int event)
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0))
         opt_view_range_type(i, GMSH_SET | GMSH_GUI,
-			    opt_view_range_type(i, GMSH_GET, 0) + 1);
+                            opt_view_range_type(i, GMSH_GET, 0) + 1);
     redraw_opengl();
     return 1;
   }
@@ -948,9 +948,9 @@ GUI::GUI(int argc, char **argv)
     0x04, 0xa8, 0xea, 0x3f, 0x02, 0x55, 0x55, 0x7f, 0xa2, 0xaa, 0xaa, 0x7a,
     0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 };
   m_window->icon((char*)XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
-					      gmsh32x32, 32, 32));
+                                              gmsh32x32, 32, 32));
   g_window->icon((char*)XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
-					      gmsh32x32, 32, 32));
+                                              gmsh32x32, 32, 32));
 #endif
   
   // we must show() m_window first (at least on Win32, since the icon
@@ -1160,7 +1160,7 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
     menu[5].label = opt_solver_name4(0, GMSH_GET, 0);
     for(int i = 0; i < MAXSOLVERS; i++) {
       if(!strlen(menu[i + 1].label))
-	menu[i + 1].label = NULL;
+        menu[i + 1].label = NULL;
     }
   }
   else if(menu[0].label[0] == '3'){
@@ -1262,66 +1262,66 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
       p[1]->type(Fl_Menu_Button::POPUP3);
   
       for(int j = 0; j < 2; j++) {
-	p[j]->add("Reload/View", 'r', 
-		  (Fl_Callback *) view_reload_cb, (void *)nb, 0);
-	p[j]->add("Reload/Visible Views", 0, 
-		  (Fl_Callback *) view_reload_visible_cb, (void *)nb, 0);
-	p[j]->add("Reload/All Views", 0, 
-		  (Fl_Callback *) view_reload_all_cb, (void *)nb, 0);
-	p[j]->add("Remove/View", FL_Delete, 
-		  (Fl_Callback *) view_remove_cb, (void *)nb, 0);
-	p[j]->add("Remove/Other Views", 0, 
-		  (Fl_Callback *) view_remove_other_cb, (void *)nb, 0);
-	p[j]->add("Remove/Visible Views", 0, 
-		  (Fl_Callback *) view_remove_visible_cb, (void *)nb, 0);
-	p[j]->add("Remove/Invisible Views", 0, 
-		  (Fl_Callback *) view_remove_invisible_cb, (void *)nb, 0);
-	p[j]->add("Remove/Empty Views", 0, 
-		  (Fl_Callback *) view_remove_empty_cb, (void *)nb, 0);
-	p[j]->add("Remove/All Views", 0, 
-		  (Fl_Callback *) view_remove_all_cb, (void *)nb, 0);
-	p[j]->add("Alias/View without Options", 0, 
-		  (Fl_Callback *) view_alias_cb, (void *)nb, 0);
-	p[j]->add("Alias/View with Options", 0, 
-		  (Fl_Callback *) view_alias_with_options_cb, (void *)nb, 0);
-	p[j]->add("Combine/Elements from Visible Views", 0, 
-		  (Fl_Callback *) view_combine_space_visible_cb, (void *)nb, 0);
-	p[j]->add("Combine/Elements from All Views", 0, 
-		  (Fl_Callback *) view_combine_space_all_cb, (void *)nb, 0);
-	p[j]->add("Combine/Elements by View Name", 0, 
-		  (Fl_Callback *) view_combine_space_by_name_cb, (void *)nb, 0);
-	p[j]->add("Combine/Time Steps from Visible Views", 0, 
-		  (Fl_Callback *) view_combine_time_visible_cb, (void *)nb, 0);
-	p[j]->add("Combine/Time Steps from All Views", 0, 
-		  (Fl_Callback *) view_combine_time_all_cb, (void *)nb, 0);
-	p[j]->add("Combine/Time Steps by View Name", 0, 
-		 (Fl_Callback *) view_combine_time_by_name_cb, (void *)nb, 0);
-	p[j]->add("Set Visibility/All On", 0, 
-		  (Fl_Callback *) view_all_visible_cb, (void *)1, 0);
-	p[j]->add("Set Visibility/All Off", 0, 
-		  (Fl_Callback *) view_all_visible_cb, (void *)0, 0);
-	p[j]->add("Set Visibility/Invert", 0, 
-		  (Fl_Callback *) view_all_visible_cb, (void *)-1, 0);
-	p[j]->add("Save As/Parsed View...", 0, 
-		  (Fl_Callback *) view_save_parsed_cb, (void *)nb, 0);
-	p[j]->add("Save As/ASCII View...", 0, 
-		  (Fl_Callback *) view_save_ascii_cb, (void *)nb, 0);
-	p[j]->add("Save As/Binary View...", 0, 
-		  (Fl_Callback *) view_save_binary_cb, (void *)nb, 0);
-	p[j]->add("Save As/STL Triangulation...", 0, 
-		  (Fl_Callback *) view_save_stl_cb, (void *)nb, 0);
-	p[j]->add("Save As/Raw Text...", 0, 
-		  (Fl_Callback *) view_save_txt_cb, (void *)nb, 0);
-	p[j]->add("Save As/Gmsh Mesh...", 0, 
-		  (Fl_Callback *) view_save_msh_cb, (void *)nb, 0);
-	p[j]->add("Apply As Background Mesh", 0, 
-		  (Fl_Callback *) view_applybgmesh_cb, (void *)nb, FL_MENU_DIVIDER);
-	p[j]->add("Options...", 'o', 
-		  (Fl_Callback *) view_options_cb, (void *)nb, 0);
-	p[j]->add("Plugins...", 'p', 
-		  (Fl_Callback *) view_plugin_cb, (void *)nb, 0);
-	p[j]->add("Fields...", 'f', 
-		  (Fl_Callback *) view_field_cb, (void *)nb, 0);
+        p[j]->add("Reload/View", 'r', 
+                  (Fl_Callback *) view_reload_cb, (void *)nb, 0);
+        p[j]->add("Reload/Visible Views", 0, 
+                  (Fl_Callback *) view_reload_visible_cb, (void *)nb, 0);
+        p[j]->add("Reload/All Views", 0, 
+                  (Fl_Callback *) view_reload_all_cb, (void *)nb, 0);
+        p[j]->add("Remove/View", FL_Delete, 
+                  (Fl_Callback *) view_remove_cb, (void *)nb, 0);
+        p[j]->add("Remove/Other Views", 0, 
+                  (Fl_Callback *) view_remove_other_cb, (void *)nb, 0);
+        p[j]->add("Remove/Visible Views", 0, 
+                  (Fl_Callback *) view_remove_visible_cb, (void *)nb, 0);
+        p[j]->add("Remove/Invisible Views", 0, 
+                  (Fl_Callback *) view_remove_invisible_cb, (void *)nb, 0);
+        p[j]->add("Remove/Empty Views", 0, 
+                  (Fl_Callback *) view_remove_empty_cb, (void *)nb, 0);
+        p[j]->add("Remove/All Views", 0, 
+                  (Fl_Callback *) view_remove_all_cb, (void *)nb, 0);
+        p[j]->add("Alias/View without Options", 0, 
+                  (Fl_Callback *) view_alias_cb, (void *)nb, 0);
+        p[j]->add("Alias/View with Options", 0, 
+                  (Fl_Callback *) view_alias_with_options_cb, (void *)nb, 0);
+        p[j]->add("Combine/Elements from Visible Views", 0, 
+                  (Fl_Callback *) view_combine_space_visible_cb, (void *)nb, 0);
+        p[j]->add("Combine/Elements from All Views", 0, 
+                  (Fl_Callback *) view_combine_space_all_cb, (void *)nb, 0);
+        p[j]->add("Combine/Elements by View Name", 0, 
+                  (Fl_Callback *) view_combine_space_by_name_cb, (void *)nb, 0);
+        p[j]->add("Combine/Time Steps from Visible Views", 0, 
+                  (Fl_Callback *) view_combine_time_visible_cb, (void *)nb, 0);
+        p[j]->add("Combine/Time Steps from All Views", 0, 
+                  (Fl_Callback *) view_combine_time_all_cb, (void *)nb, 0);
+        p[j]->add("Combine/Time Steps by View Name", 0, 
+                 (Fl_Callback *) view_combine_time_by_name_cb, (void *)nb, 0);
+        p[j]->add("Set Visibility/All On", 0, 
+                  (Fl_Callback *) view_all_visible_cb, (void *)1, 0);
+        p[j]->add("Set Visibility/All Off", 0, 
+                  (Fl_Callback *) view_all_visible_cb, (void *)0, 0);
+        p[j]->add("Set Visibility/Invert", 0, 
+                  (Fl_Callback *) view_all_visible_cb, (void *)-1, 0);
+        p[j]->add("Save As/Parsed View...", 0, 
+                  (Fl_Callback *) view_save_parsed_cb, (void *)nb, 0);
+        p[j]->add("Save As/ASCII View...", 0, 
+                  (Fl_Callback *) view_save_ascii_cb, (void *)nb, 0);
+        p[j]->add("Save As/Binary View...", 0, 
+                  (Fl_Callback *) view_save_binary_cb, (void *)nb, 0);
+        p[j]->add("Save As/STL Triangulation...", 0, 
+                  (Fl_Callback *) view_save_stl_cb, (void *)nb, 0);
+        p[j]->add("Save As/Raw Text...", 0, 
+                  (Fl_Callback *) view_save_txt_cb, (void *)nb, 0);
+        p[j]->add("Save As/Gmsh Mesh...", 0, 
+                  (Fl_Callback *) view_save_msh_cb, (void *)nb, 0);
+        p[j]->add("Apply As Background Mesh", 0, 
+                  (Fl_Callback *) view_applybgmesh_cb, (void *)nb, FL_MENU_DIVIDER);
+        p[j]->add("Options...", 'o', 
+                  (Fl_Callback *) view_options_cb, (void *)nb, 0);
+        p[j]->add("Plugins...", 'p', 
+                  (Fl_Callback *) view_plugin_cb, (void *)nb, 0);
+        p[j]->add("Fields...", 'f', 
+                  (Fl_Callback *) view_field_cb, (void *)nb, 0);
       }
 
       m_toggle_butt.push_back(b1);
@@ -2034,9 +2034,9 @@ void GUI::create_option_window()
       o->hide();
 
       static Fl_Menu_Item menu_projection[] = {
-	{"Orthographic", 0, 0, 0},
-	{"Perspective", 0, 0, 0},
-	{0}
+        {"Orthographic", 0, 0, 0},
+        {"Perspective", 0, 0, 0},
+        {0}
       };
       gen_choice[2] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Projection mode");
       gen_choice[2]->menu(menu_projection);
@@ -2091,11 +2091,11 @@ void GUI::create_option_window()
       gen_value[7]->callback(general_options_ok_cb);
       
       static Fl_Menu_Item menu_genvectype[] = {
-	{"Line", 0, 0, 0},
-	{"Arrow", 0, 0, 0},
-	{"Pyramid", 0, 0, 0},
-	{"3D arrow", 0, 0, 0},
-	{0}
+        {"Line", 0, 0, 0},
+        {"Arrow", 0, 0, 0},
+        {"Pyramid", 0, 0, 0},
+        {"3D arrow", 0, 0, 0},
+        {0}
       };
       gen_choice[0] = new Fl_Choice(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Vector display");
       gen_choice[0]->menu(menu_genvectype);
@@ -2173,10 +2173,10 @@ void GUI::create_option_window()
       o->hide();
 
       static Fl_Menu_Item menu_color_scheme[] = {
-	{"Dark", 0, 0, 0},
-	{"Light", 0, 0, 0},
-	{"Grayscale", 0, 0, 0},
-	{0}
+        {"Dark", 0, 0, 0},
+        {"Light", 0, 0, 0},
+        {"Grayscale", 0, 0, 0},
+        {0}
       };
 
       gen_choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Predefined color scheme");
@@ -2186,11 +2186,11 @@ void GUI::create_option_window()
       gen_choice[3]->callback(general_options_color_scheme_cb);
 
       static Fl_Menu_Item menu_bg_grad[] = {
-	{"None", 0, 0, 0},
-	{"Vertical", 0, 0, 0},
-	{"Horizontal", 0, 0, 0},
-	{"Radial", 0, 0, 0},
-	{0}
+        {"None", 0, 0, 0},
+        {"Vertical", 0, 0, 0},
+        {"Horizontal", 0, 0, 0},
+        {"Radial", 0, 0, 0},
+        {0}
       };
 
       gen_choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Background gradient");
@@ -2332,7 +2332,7 @@ void GUI::create_option_window()
 
       geo_choice[1] = new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display");
       geo_choice[1]->menu(menu_line_display);
-      geo_choice[1]->align(FL_ALIGN_RIGHT);	
+      geo_choice[1]->align(FL_ALIGN_RIGHT);     
       geo_choice[1]->callback(geometry_options_ok_cb);
 
       geo_value[4] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width");
@@ -2351,7 +2351,7 @@ void GUI::create_option_window()
 
       geo_choice[2] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Surface display");
       geo_choice[2]->menu(menu_surface_display);
-      geo_choice[2]->align(FL_ALIGN_RIGHT);	
+      geo_choice[2]->align(FL_ALIGN_RIGHT);     
       geo_choice[2]->callback(geometry_options_ok_cb);
       geo_choice[2]->tooltip("(Alt+d)");
 
@@ -2582,13 +2582,13 @@ void GUI::create_option_window()
       mesh_value[12]->callback(mesh_options_ok_cb);
 
       static Fl_Menu_Item menu_mesh_element_types[] = {
-	{"Triangles",   0, 0, 0, FL_MENU_TOGGLE},
-	{"Quadrangles", 0, 0, 0, FL_MENU_TOGGLE},
-	{"Tetrahedra",  0, 0, 0, FL_MENU_TOGGLE},
-	{"Hexahedra",   0, 0, 0, FL_MENU_TOGGLE},
-	{"Prisms",      0, 0, 0, FL_MENU_TOGGLE},
-	{"Pyramids",    0, 0, 0, FL_MENU_TOGGLE},
-	{0}
+        {"Triangles",   0, 0, 0, FL_MENU_TOGGLE},
+        {"Quadrangles", 0, 0, 0, FL_MENU_TOGGLE},
+        {"Tetrahedra",  0, 0, 0, FL_MENU_TOGGLE},
+        {"Hexahedra",   0, 0, 0, FL_MENU_TOGGLE},
+        {"Prisms",      0, 0, 0, FL_MENU_TOGGLE},
+        {"Pyramids",    0, 0, 0, FL_MENU_TOGGLE},
+        {0}
       };
 
       mesh_menu_butt = new Fl_Menu_Button(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Elements");
@@ -2813,24 +2813,24 @@ void GUI::create_option_window()
     Fl_Tabs *o = new Fl_Tabs(L + WB, WB, width - 2 * WB, height - 2 * WB);
     {
       {
-	Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "General");
+        Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "General");
 
-	solver_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Maximum delay for solver response");
-	solver_value[0]->minimum(0);
-	solver_value[0]->maximum(10);
-	solver_value[0]->step(1);
-	solver_value[0]->align(FL_ALIGN_RIGHT);
-	solver_value[0]->callback(solver_options_ok_cb);
+        solver_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Maximum delay for solver response");
+        solver_value[0]->minimum(0);
+        solver_value[0]->maximum(10);
+        solver_value[0]->step(1);
+        solver_value[0]->align(FL_ALIGN_RIGHT);
+        solver_value[0]->callback(solver_options_ok_cb);
 
-	solver_input[0] = new Fl_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Socket name");
-	solver_input[0]->align(FL_ALIGN_RIGHT);
-	solver_input[0]->callback(solver_options_ok_cb);
+        solver_input[0] = new Fl_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Socket name");
+        solver_input[0]->align(FL_ALIGN_RIGHT);
+        solver_input[0]->callback(solver_options_ok_cb);
 
-	solver_butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Always listen to incoming connection requests");
-	solver_butt[0]->type(FL_TOGGLE_BUTTON);
-	solver_butt[0]->callback(solver_options_ok_cb);
-	
-	o->end();
+        solver_butt[0] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Always listen to incoming connection requests");
+        solver_butt[0]->type(FL_TOGGLE_BUTTON);
+        solver_butt[0]->callback(solver_options_ok_cb);
+        
+        o->end();
       }
     }
     o->end();
@@ -2896,10 +2896,10 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "General");
 
       static Fl_Menu_Item menu_plot_type[] = {
-	{"3D", 0, 0, 0},
-	{"2D space", 0, 0, 0},
-	{"2D time", 0, 0, 0},
-	{0}
+        {"3D", 0, 0, 0},
+        {"2D space", 0, 0, 0},
+        {"2D time", 0, 0, 0},
+        {0}
       };
       view_choice[13] = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Plot type");
       view_choice[13]->menu(menu_plot_type);
@@ -3105,12 +3105,12 @@ void GUI::create_option_window()
       view_butt[4]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item time_display[] = {
-	{"None", 0, 0, 0},
-	{"Value if multi-step", 0, 0, 0},
-	{"Value", 0, 0, 0},
-	{"Step if multi-step", 0, 0, 0},
-	{"Step", 0, 0, 0},
-	{0}
+        {"None", 0, 0, 0},
+        {"Value if multi-step", 0, 0, 0},
+        {"Value", 0, 0, 0},
+        {"Step if multi-step", 0, 0, 0},
+        {"Step", 0, 0, 0},
+        {0}
       };
       view_choice[12] = new Fl_Choice(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Time display mode");
       view_choice[12]->menu(time_display);
@@ -3132,15 +3132,15 @@ void GUI::create_option_window()
       view_butt[2]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_view_element_types[] = {
-	{"Points",      0, 0, 0, FL_MENU_TOGGLE},
-	{"Lines",       0, 0, 0, FL_MENU_TOGGLE},
-	{"Triangles",   0, 0, 0, FL_MENU_TOGGLE},
-	{"Quadrangles", 0, 0, 0, FL_MENU_TOGGLE},
-	{"Tetrahedra",  0, 0, 0, FL_MENU_TOGGLE},
-	{"Hexahedra",   0, 0, 0, FL_MENU_TOGGLE},
-	{"Prisms",      0, 0, 0, FL_MENU_TOGGLE},
-	{"Pyramids",    0, 0, 0, FL_MENU_TOGGLE},
-	{0}
+        {"Points",      0, 0, 0, FL_MENU_TOGGLE},
+        {"Lines",       0, 0, 0, FL_MENU_TOGGLE},
+        {"Triangles",   0, 0, 0, FL_MENU_TOGGLE},
+        {"Quadrangles", 0, 0, 0, FL_MENU_TOGGLE},
+        {"Tetrahedra",  0, 0, 0, FL_MENU_TOGGLE},
+        {"Hexahedra",   0, 0, 0, FL_MENU_TOGGLE},
+        {"Prisms",      0, 0, 0, FL_MENU_TOGGLE},
+        {"Pyramids",    0, 0, 0, FL_MENU_TOGGLE},
+        {0}
       };
 
       view_menu_butt[1] = new Fl_Menu_Button(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Elements");
@@ -3148,11 +3148,11 @@ void GUI::create_option_window()
       view_menu_butt[1]->callback(view_options_ok_cb);
       
       static Fl_Menu_Item menu_boundary[] = {
-	{"None", 0, 0, 0},
-	{"Dimension - 1", 0, 0, 0},
-	{"Dimension - 2", 0, 0, 0},
-	{"Dimension - 3", 0, 0, 0},
-	{0}
+        {"None", 0, 0, 0},
+        {"Dimension - 1", 0, 0, 0},
+        {"Dimension - 2", 0, 0, 0},
+        {"Dimension - 3", 0, 0, 0},
+        {0}
       };
       view_choice[9] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Element boundary mode");
       view_choice[9]->menu(menu_boundary);
@@ -3176,10 +3176,10 @@ void GUI::create_option_window()
       view_value[1]->callback(view_options_ok_cb);
 
       static Fl_Menu_Item menu_view_field_types[] = {
-	{"Scalar", 0, 0, 0, FL_MENU_TOGGLE},
-	{"Vector", 0, 0, 0, FL_MENU_TOGGLE},
-	{"Tensor", 0, 0, 0, FL_MENU_TOGGLE},
-	{0}
+        {"Scalar", 0, 0, 0, FL_MENU_TOGGLE},
+        {"Vector", 0, 0, 0, FL_MENU_TOGGLE},
+        {"Tensor", 0, 0, 0, FL_MENU_TOGGLE},
+        {0}
       };
 
       view_menu_butt[0] = new Fl_Menu_Button(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Fields");
@@ -3237,17 +3237,17 @@ void GUI::create_option_window()
       view_value[46] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, 3*ss, BH, "Normal raise");
 
       for(int i = 40; i <= 46; i++){
-	view_value[i]->align(FL_ALIGN_RIGHT);
-	view_value[i]->when(FL_WHEN_RELEASE);
-	view_value[i]->callback(view_options_ok_cb);
+        view_value[i]->align(FL_ALIGN_RIGHT);
+        view_value[i]->when(FL_WHEN_RELEASE);
+        view_value[i]->callback(view_options_ok_cb);
       }
       for(int i = 51; i <= 59; i++){
-	view_value[i]->minimum(-1.);
-	view_value[i]->maximum(1.);
-	view_value[i]->step(0.1);
-	view_value[i]->align(FL_ALIGN_RIGHT);
-	view_value[i]->when(FL_WHEN_RELEASE);
-	view_value[i]->callback(view_options_ok_cb);
+        view_value[i]->minimum(-1.);
+        view_value[i]->maximum(1.);
+        view_value[i]->step(0.1);
+        view_value[i]->align(FL_ALIGN_RIGHT);
+        view_value[i]->when(FL_WHEN_RELEASE);
+        view_value[i]->callback(view_options_ok_cb);
       }
 
       view_butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Use general transformation expressions");
@@ -3328,9 +3328,9 @@ void GUI::create_option_window()
         view_choice[2] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Vector display");
         view_choice[2]->menu(menu_vectype);
         view_choice[2]->align(FL_ALIGN_RIGHT);
-	view_choice[2]->callback(view_options_ok_cb);
+        view_choice[2]->callback(view_options_ok_cb);
 
-	view_push_butt[0] = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 6 * BH, (int)(1.5*BB), BH, "Edit arrow shape");
+        view_push_butt[0] = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 6 * BH, (int)(1.5*BB), BH, "Edit arrow shape");
         view_push_butt[0]->callback(view_arrow_param_cb);
 
         view_value[60] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Arrow size");
@@ -3338,32 +3338,32 @@ void GUI::create_option_window()
         view_value[60]->maximum(500);
         view_value[60]->step(1);
         view_value[60]->align(FL_ALIGN_RIGHT);
-	view_value[60]->callback(view_options_ok_cb);
+        view_value[60]->callback(view_options_ok_cb);
 
-	view_butt[0] = new Fl_Check_Button(L + 2 * IW - 2 * WB, 2 * WB + 7 * BH, (int)(1.5*BB), BH, "Proportional");
-	view_butt[0]->type(FL_TOGGLE_BUTTON);
-	view_butt[0]->callback(view_options_ok_cb);
+        view_butt[0] = new Fl_Check_Button(L + 2 * IW - 2 * WB, 2 * WB + 7 * BH, (int)(1.5*BB), BH, "Proportional");
+        view_butt[0]->type(FL_TOGGLE_BUTTON);
+        view_butt[0]->callback(view_options_ok_cb);
 
         view_value[63] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Displacement factor");
         view_value[63]->minimum(0.);
         view_value[63]->maximum(1.);
         view_value[63]->step(0.01);
         view_value[63]->align(FL_ALIGN_RIGHT);
-	view_value[63]->when(FL_WHEN_RELEASE);
-	view_value[63]->callback(view_options_ok_cb);
+        view_value[63]->when(FL_WHEN_RELEASE);
+        view_value[63]->callback(view_options_ok_cb);
 
         view_choice[10] = new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Data source");
         view_choice[10]->align(FL_ALIGN_RIGHT);
-	view_choice[10]->add("Self");
-	view_choice[10]->callback(view_options_ok_cb);
+        view_choice[10]->add("Self");
+        view_choice[10]->callback(view_options_ok_cb);
 
         view_vector->end();
       }
 
       static Fl_Menu_Item menu_vecloc[] = {
-	{"Barycenter", 0, 0, 0},
-	{"Vertex", 0, 0, 0},
-	{0}
+        {"Barycenter", 0, 0, 0},
+        {"Vertex", 0, 0, 0},
+        {0}
       };
       view_choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Glyph location");
       view_choice[3]->menu(menu_vecloc);
@@ -3375,8 +3375,8 @@ void GUI::create_option_window()
       view_butt[1]->callback(view_options_ok_cb);
       
       static Fl_Menu_Item menu_tensor[] = {
-	{"Von-Mises", 0, 0, 0},
-	{0}
+        {"Von-Mises", 0, 0, 0},
+        {0}
       };
       view_choice[4] = new Fl_Choice(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tensor display");
       view_choice[4]->menu(menu_tensor);
@@ -3657,7 +3657,7 @@ void GUI::update_view_window(int num)
   opt_view_color_axes(num, GMSH_GUI, 0);
 
   view_colorbar_window->update(data->getName().c_str(), data->getMin(), 
-			       data->getMax(), &opt->CT, &view->getChanged());
+                               data->getMax(), &opt->CT, &view->getChanged());
 }
 
 // Create the plugin manager window
@@ -3685,14 +3685,14 @@ void GUI::create_plugin_dialog_box(GMSH_Plugin *p, int x, int y, int width, int 
         p->dialogBox->input[i] = new Fl_Input(x + WB, y + WB + (k + 1) * BH, IW, BH, sxs->str);
         p->dialogBox->input[i]->align(FL_ALIGN_RIGHT);
         p->dialogBox->input[i]->value(sxs->def);
-	k++;
+        k++;
       }
       for(int i = 0; i < n; i++) {
         StringXNumber *sxn = p->getOption(i);
         p->dialogBox->value[i] = new Fl_Value_Input(x + WB, y + WB + (k + 1) * BH, IW, BH, sxn->str);
         p->dialogBox->value[i]->align(FL_ALIGN_RIGHT);
         p->dialogBox->value[i]->value(sxn->def);
-	k++;
+        k++;
       }
 
       s->end();
@@ -3748,7 +3748,7 @@ void GUI::reset_plugin_view_browser()
     }
     for(int i = 0; i < plugin_view_browser->size(); i++){
       if(i < (int)state.size() && state[i])
-	plugin_view_browser->select(i + 1);
+        plugin_view_browser->select(i + 1);
     }
   }
   else{
@@ -3809,8 +3809,8 @@ void GUI::create_plugin_window(int numview)
       create_plugin_dialog_box(p, 2 * WB + L1 + L2, WB, width - L1 - L2 - 3 * WB, height - 3 * WB - BH);
       // select first plugin by default
       if(it == GMSH_PluginManager::instance()->begin()){
-	plugin_browser->select(1);
-	p->dialogBox->group->show();
+        plugin_browser->select(1);
+        p->dialogBox->group->show();
       }
     }
   }
@@ -3825,143 +3825,143 @@ void GUI::create_plugin_window(int numview)
 
 void FieldDialogBox::save_values()
 {
-	std::list<Fl_Widget*>::iterator input=inputs.begin();
-	Field *f=current_field;
-	std::ostringstream sstream;
-	std::istringstream istream;
-	int i;
-	char a;
-	sstream.precision(16);
-	for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
-		FieldOption *option=it->second;
-		sstream.str("");
-		switch(option->get_type()){
-			case FIELD_OPTION_STRING:
-			case FIELD_OPTION_PATH:
-				sstream<<"\""<<((Fl_Input*)*input)->value()<<"\"";
-			break;
-			case FIELD_OPTION_INT:
-				sstream<<(int)((Fl_Value_Input*)*input)->value();
-			break;
-			case FIELD_OPTION_DOUBLE:
-				sstream<<((Fl_Value_Input*)*input)->value();
-			break;
-			case FIELD_OPTION_BOOL:
-				sstream<<(bool)((Fl_Check_Button*)*input)->value();
-			break;
-			case FIELD_OPTION_LIST:
-				sstream<<"{";
-				istream.str(((Fl_Input*)*input)->value());
-				while(istream>>i){
-					sstream<<i;
-					if(istream>>a){
-						if(a!=',')
-							Msg(GERROR, "Unexpected character \'%c\' while parsing option '%s' of field \'%s\'",a,it->first,f->id);
-						sstream<<", ";
-					}
-				}
-				sstream<<"}";
-			break;
-		}
-		if((*input)->changed()){
-			add_field_option(f->id,it->first,sstream.str().c_str(),CTX.filename);
-			(*input)->clear_changed();
-		}
-		input++;
-	}
+        std::list<Fl_Widget*>::iterator input=inputs.begin();
+        Field *f=current_field;
+        std::ostringstream sstream;
+        std::istringstream istream;
+        int i;
+        char a;
+        sstream.precision(16);
+        for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
+                FieldOption *option=it->second;
+                sstream.str("");
+                switch(option->get_type()){
+                        case FIELD_OPTION_STRING:
+                        case FIELD_OPTION_PATH:
+                                sstream<<"\""<<((Fl_Input*)*input)->value()<<"\"";
+                        break;
+                        case FIELD_OPTION_INT:
+                                sstream<<(int)((Fl_Value_Input*)*input)->value();
+                        break;
+                        case FIELD_OPTION_DOUBLE:
+                                sstream<<((Fl_Value_Input*)*input)->value();
+                        break;
+                        case FIELD_OPTION_BOOL:
+                                sstream<<(bool)((Fl_Check_Button*)*input)->value();
+                        break;
+                        case FIELD_OPTION_LIST:
+                                sstream<<"{";
+                                istream.str(((Fl_Input*)*input)->value());
+                                while(istream>>i){
+                                        sstream<<i;
+                                        if(istream>>a){
+                                                if(a!=',')
+                                                        Msg(GERROR, "Unexpected character \'%c\' while parsing option '%s' of field \'%s\'",a,it->first,f->id);
+                                                sstream<<", ";
+                                        }
+                                }
+                                sstream<<"}";
+                        break;
+                }
+                if((*input)->changed()){
+                        add_field_option(f->id,it->first,sstream.str().c_str(),CTX.filename);
+                        (*input)->clear_changed();
+                }
+                input++;
+        }
 }
 
 void FieldDialogBox::load_field(Field *f){
-	current_field=f;
-	std::list<Fl_Widget*>::iterator input=inputs.begin();
-	for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
-		FieldOption *option=it->second;
-		std::ostringstream vstr;
-		std::list<int>::iterator list_it;;
-		switch(option->get_type()){
-			case FIELD_OPTION_STRING:
-			case FIELD_OPTION_PATH:
-				((Fl_Input*)(*input))->value(option->string().c_str());
-			break;
-			case FIELD_OPTION_INT:
-			case FIELD_OPTION_DOUBLE:
-				((Fl_Value_Input*)(*input))->value(option->numerical_value());
-			break;
-			case FIELD_OPTION_BOOL:
-				((Fl_Check_Button*)(*input))->value(option->numerical_value());
-			break;
-			case FIELD_OPTION_LIST:
-				vstr.str("");
-				for(list_it=option->list().begin();list_it!=option->list().end();list_it++){
-					if(list_it!=option->list().begin())
-						vstr<<", ";
-					vstr<<*list_it;
-				}
-				((Fl_Input*)(*input))->value(vstr.str().c_str());
-			break;
-		}
-		input++;
-	}
+        current_field=f;
+        std::list<Fl_Widget*>::iterator input=inputs.begin();
+        for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
+                FieldOption *option=it->second;
+                std::ostringstream vstr;
+                std::list<int>::iterator list_it;;
+                switch(option->get_type()){
+                        case FIELD_OPTION_STRING:
+                        case FIELD_OPTION_PATH:
+                                ((Fl_Input*)(*input))->value(option->string().c_str());
+                        break;
+                        case FIELD_OPTION_INT:
+                        case FIELD_OPTION_DOUBLE:
+                                ((Fl_Value_Input*)(*input))->value(option->numerical_value());
+                        break;
+                        case FIELD_OPTION_BOOL:
+                                ((Fl_Check_Button*)(*input))->value(option->numerical_value());
+                        break;
+                        case FIELD_OPTION_LIST:
+                                vstr.str("");
+                                for(list_it=option->list().begin();list_it!=option->list().end();list_it++){
+                                        if(list_it!=option->list().begin())
+                                                vstr<<", ";
+                                        vstr<<*list_it;
+                                }
+                                ((Fl_Input*)(*input))->value(vstr.str().c_str());
+                        break;
+                }
+                input++;
+        }
   if(PView::list.size()){
     put_on_view_btn->activate();
     for(unsigned int i = 0; i < PView::list.size(); i++) {
-			std::ostringstream s;
-			s<<"View ["<<i<<"]";
+                        std::ostringstream s;
+                        s<<"View ["<<i<<"]";
       put_on_view_btn->add(s.str().c_str());
     }
   }else{
-		put_on_view_btn->deactivate();
-	}
+                put_on_view_btn->deactivate();
+        }
   set_size_btn->value(GModel::current()->getFields()->background_field==f->id);
 }
 
 FieldDialogBox::FieldDialogBox(Field *f, int x, int y, int width, int height,int fontsize)
 {
-	current_field=NULL;
-	group=new Fl_Group(x, y, width, height);
+        current_field=NULL;
+        group=new Fl_Group(x, y, width, height);
   {
-		Fl_Box *b = new Fl_Box(x, y, width, BH,f->get_name());
-		b->labelfont(FL_BOLD);
+                Fl_Box *b = new Fl_Box(x, y, width, BH,f->get_name());
+                b->labelfont(FL_BOLD);
     Fl_Tabs *o = new Fl_Tabs(x, y + BH + WB, width, height-2*BH-2*WB);
-		group->resizable(o);
+                group->resizable(o);
     {
       Fl_Group *g = new Fl_Group(x, y + 2*BH + WB, width, height - 2*BH-3*WB, "Options");
-			apply_btn = new Fl_Return_Button(x+width - BB-WB ,y+ height - 2*BH -2*WB, BB, BH, "Apply");
-			apply_btn->callback(view_field_apply_cb,this);
-			revert_btn = new Fl_Button(x+width - 2*BB-2*WB ,y+ height - 2*BH -2*WB, BB, BH, "Revert");
-			revert_btn->callback(view_field_revert_cb,this);
+                        apply_btn = new Fl_Return_Button(x+width - BB-WB ,y+ height - 2*BH -2*WB, BB, BH, "Apply");
+                        apply_btn->callback(view_field_apply_cb,this);
+                        revert_btn = new Fl_Button(x+width - 2*BB-2*WB ,y+ height - 2*BH -2*WB, BB, BH, "Revert");
+                        revert_btn->callback(view_field_revert_cb,this);
       Fl_Scroll *s = new Fl_Scroll(x + WB, y + 2*WB + 2*BH, width - 2 * WB, height - 4*BH - 5 * WB);
-			double yy=y+3*WB+2*BH;
-			for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
-				Fl_Widget *input;
-				switch(it->second->get_type()){
-					case FIELD_OPTION_INT:
-					case FIELD_OPTION_DOUBLE:
-						input=new Fl_Value_Input(x+WB,yy,IW,BH,it->first);
-						break;
-					case FIELD_OPTION_BOOL:
-						input=new Fl_Check_Button(x+WB,yy,BH,BH,it->first);
-						break;
-					case FIELD_OPTION_PATH:
-					case FIELD_OPTION_STRING:
-						input=new Fl_Input(x+WB,yy,IW,BH,it->first);
-					break;
-					case FIELD_OPTION_LIST:
-					/*{
-							Fl_Button *b=new Fl_Button(x+WB,yy,BH,BH);
-							b->label("@+");
-							b->callback(view_field_select_node_cb);
-						}
-						input=new Fl_Input(x+WB+2*BH,yy,IW-2*BH,BH,it->first);*/
-						input=new Fl_Input(x+WB,yy,IW,BH,it->first);
-						break;
-				}
-				input->align(FL_ALIGN_RIGHT);
-				inputs.push_back(input);
-				yy+=WB+BH;
-			}
+                        double yy=y+3*WB+2*BH;
+                        for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
+                                Fl_Widget *input;
+                                switch(it->second->get_type()){
+                                        case FIELD_OPTION_INT:
+                                        case FIELD_OPTION_DOUBLE:
+                                                input=new Fl_Value_Input(x+WB,yy,IW,BH,it->first);
+                                                break;
+                                        case FIELD_OPTION_BOOL:
+                                                input=new Fl_Check_Button(x+WB,yy,BH,BH,it->first);
+                                                break;
+                                        case FIELD_OPTION_PATH:
+                                        case FIELD_OPTION_STRING:
+                                                input=new Fl_Input(x+WB,yy,IW,BH,it->first);
+                                        break;
+                                        case FIELD_OPTION_LIST:
+                                        /*{
+                                                        Fl_Button *b=new Fl_Button(x+WB,yy,BH,BH);
+                                                        b->label("@+");
+                                                        b->callback(view_field_select_node_cb);
+                                                }
+                                                input=new Fl_Input(x+WB+2*BH,yy,IW-2*BH,BH,it->first);*/
+                                                input=new Fl_Input(x+WB,yy,IW,BH,it->first);
+                                                break;
+                                }
+                                input->align(FL_ALIGN_RIGHT);
+                                inputs.push_back(input);
+                                yy+=WB+BH;
+                        }
       o->resizable(g); // to avoid ugly resizing of tab labels
-			g->resizable(s);
+                        g->resizable(s);
       s->end();
       g->end();
     }
@@ -3986,18 +3986,18 @@ FieldDialogBox::FieldDialogBox(Field *f, int x, int y, int width, int height,int
     }
     o->end();
   }
-	{
-		Fl_Button *b = new Fl_Button(x+width - BB,y+ height - BH , BB, BH, "Delete");
-		b->callback(view_field_delete_cb,this);
-	}
-	put_on_view_btn = new Fl_Menu_Button(x+BB*3/2+WB,y+ height - BH ,BB*3/2,BH,"Put on view");
-	put_on_view_btn->callback(view_field_put_on_view_cb,this);
+        {
+                Fl_Button *b = new Fl_Button(x+width - BB,y+ height - BH , BB, BH, "Delete");
+                b->callback(view_field_delete_cb,this);
+        }
+        put_on_view_btn = new Fl_Menu_Button(x+BB*3/2+WB,y+ height - BH ,BB*3/2,BH,"Put on view");
+        put_on_view_btn->callback(view_field_put_on_view_cb,this);
 
-	set_size_btn = new Fl_Check_Button(x,y+ height - BH ,BB*3/2,BH,"Background size");
-	set_size_btn->callback(view_field_set_size_btn_cb,this);
+        set_size_btn = new Fl_Check_Button(x,y+ height - BH ,BB*3/2,BH,"Background size");
+        set_size_btn->callback(view_field_set_size_btn_cb,this);
 
-	group->end();
-	group->hide();
+        group->end();
+        group->hide();
 }
 
 void GUI::create_field_window(int numfield)
@@ -4009,48 +4009,48 @@ void GUI::create_field_window(int numfield)
   int height = (CTX.field_size[1] < height0) ? height0 : CTX.field_size[1];
 
   int L1 = BB;
-	int i_entry=1;
+        int i_entry=1;
   if(field_window) {
-		width=field_window->w();
-		height=field_window->h();
-		FieldManager &fields=*GModel::current()->getFields();
-		field_browser->clear();
-		for(FieldManager::iterator it=fields.begin();it!=fields.end();it++){
-			Field *field=it->second;
-			std::ostringstream sstream;
-			if(it->first==fields.background_field)
-				sstream<<"*";
-			sstream<<it->first;
-			sstream<<" "<<field->get_name();
-			field_browser->add(sstream.str().c_str(),field);
-			if(!field->dialog_box()){
-				field_window->begin();
-				field->dialog_box()=new FieldDialogBox(field, 2 * WB + L1 , WB, width - L1 - 3 * WB, height - 2*WB  ,fontsize);
-				field_window->end();
-			}
-			if(it->second->id==numfield){
-				field_browser->select(i_entry);
-				field_browser->do_callback();
-			}
-			i_entry++;
-		}
+                width=field_window->w();
+                height=field_window->h();
+                FieldManager &fields=*GModel::current()->getFields();
+                field_browser->clear();
+                for(FieldManager::iterator it=fields.begin();it!=fields.end();it++){
+                        Field *field=it->second;
+                        std::ostringstream sstream;
+                        if(it->first==fields.background_field)
+                                sstream<<"*";
+                        sstream<<it->first;
+                        sstream<<" "<<field->get_name();
+                        field_browser->add(sstream.str().c_str(),field);
+                        if(!field->dialog_box()){
+                                field_window->begin();
+                                field->dialog_box()=new FieldDialogBox(field, 2 * WB + L1 , WB, width - L1 - 3 * WB, height - 2*WB  ,fontsize);
+                                field_window->end();
+                        }
+                        if(it->second->id==numfield){
+                                field_browser->select(i_entry);
+                                field_browser->do_callback();
+                        }
+                        i_entry++;
+                }
     field_window->show();
     return;
   }
 
-	selected_field_dialog_box=NULL;
+        selected_field_dialog_box=NULL;
   field_window = new Dialog_Window(width, height, "Fields");
   field_window->box(GMSH_WINDOW_BOX);
   Fl_Group *resize_box = new Fl_Group(2*WB+L1, 2*WB+BB,width-3*WB-L1, height - 3 * WB-BB);
-	resize_box->end();
-	{
-		Fl_Menu_Button *b= new Fl_Menu_Button(WB,WB,L1,BH,"New");
-		FieldManager &fields=*GModel::current()->getFields();
-		std::map<const std::string, FieldFactory*>::iterator it;
-		for(it=fields.map_type_name.begin();it!=fields.map_type_name.end();it++)
-			b->add(it->first.c_str());
-		b->callback(view_field_new_cb);
-	}
+        resize_box->end();
+        {
+                Fl_Menu_Button *b= new Fl_Menu_Button(WB,WB,L1,BH,"New");
+                FieldManager &fields=*GModel::current()->getFields();
+                std::map<const std::string, FieldFactory*>::iterator it;
+                for(it=fields.map_type_name.begin();it!=fields.map_type_name.end();it++)
+                        b->add(it->first.c_str());
+                b->callback(view_field_new_cb);
+        }
   field_browser = new Fl_Hold_Browser(WB, 2*WB+BH, L1, height - 3 * WB - BH);
   field_browser->callback(view_field_browser_cb);
   field_window->resizable(resize_box);
@@ -4336,8 +4336,8 @@ class Vis_Browser : public Fl_Browser{
       switch(Fl::event_key()) {
       case FL_Enter:
       case FL_KP_Enter:
-	visibility_ok_cb(NULL, NULL);
-	return 1;
+        visibility_ok_cb(NULL, NULL);
+        return 1;
       }
     }
     return Fl_Browser::handle(event);
@@ -4376,7 +4376,7 @@ void GUI::create_visibility_window(bool redraw_only)
   vis_type->menu(type_table);
   
   vis_butt[0] = new Fl_Check_Button(WB + (width - 3 * WB) / 2 + WB, WB, (width - 3 * WB) / 2, BH, 
-				    "Set visibility recursively");
+                                    "Set visibility recursively");
   vis_butt[0]->type(FL_TOGGLE_BUTTON);
   vis_butt[0]->value(1);
 
@@ -4475,7 +4475,7 @@ void GUI::create_visibility_window(bool redraw_only)
     int ll = width/2 - BH - WB - IW;
 
     Fl_Box *b2 = new Fl_Box(FL_NO_BOX, ll, 3 * WB + 2 * BH, IW, BH, 
-			    "Hide with the mouse:");
+                            "Hide with the mouse:");
     b2->align(FL_ALIGN_INSIDE|FL_ALIGN_CENTER);
 
     Fl_Button *butt1 = new Fl_Button(ll, 3 * WB + 3 * BH, IW, BH, "Elements");
@@ -4495,7 +4495,7 @@ void GUI::create_visibility_window(bool redraw_only)
     int ll2 = ll + IW + WB + 2*BH + WB;
 
     Fl_Box *b12 = new Fl_Box(FL_NO_BOX, ll2, 3 * WB + 2 * BH, IW, BH, 
-			     "Show with the mouse:");
+                             "Show with the mouse:");
     b12->align(FL_ALIGN_INSIDE|FL_ALIGN_CENTER);
 
     Fl_Button *butt11 = new Fl_Button(ll2, 3 * WB + 3 * BH, IW, BH, "Elements");
@@ -4789,7 +4789,7 @@ void GUI::create_about_window()
     sprintf(buffer, "@c@.License: %s", Get_GmshShortLicense());
     o->add(buffer);
     sprintf(buffer, "@c@.Graphical user interface toolkit: FLTK %d.%d.%d", 
-	    FL_MAJOR_VERSION, FL_MINOR_VERSION, FL_PATCH_VERSION);
+            FL_MAJOR_VERSION, FL_MINOR_VERSION, FL_PATCH_VERSION);
     o->add(buffer);
     sprintf(buffer, "@c@.Build OS: %s", Get_GmshBuildOS());
     o->add(buffer);
@@ -4802,21 +4802,21 @@ void GUI::create_about_window()
       strcpy(str1, Get_BuildOptions());
       unsigned int len = 30;
       if(strlen(str1) > len){
-	int split;
-	for(split = len - 1; split >= 0; split--){
-	  if(str1[split] == ' '){
-	    str1[split] = '\0';
-	    break;
-	  }
-	}
-	sprintf(buffer, "@c@.Build options: %s", str1);
-	o->add(buffer);
-	sprintf(buffer, "@c@.%s", &str1[split+1]);
-	o->add(buffer);
+        int split;
+        for(split = len - 1; split >= 0; split--){
+          if(str1[split] == ' '){
+            str1[split] = '\0';
+            break;
+          }
+        }
+        sprintf(buffer, "@c@.Build options: %s", str1);
+        o->add(buffer);
+        sprintf(buffer, "@c@.%s", &str1[split+1]);
+        o->add(buffer);
       }
       else{
-	sprintf(buffer, "@c@.Options: %s", str1);
-	o->add(buffer);
+        sprintf(buffer, "@c@.Options: %s", str1);
+        o->add(buffer);
       }
     }
     sprintf(buffer, "@c@.Packaged by: %s", Get_GmshPackager());
@@ -4838,7 +4838,7 @@ void GUI::create_about_window()
   }
 
   about_window->position(Fl::x() + Fl::w()/2 - width / 2,
-			 Fl::y() + Fl::h()/2 - height / 2);
+                         Fl::y() + Fl::h()/2 - height / 2);
   about_window->end();
 }
 
@@ -5116,8 +5116,8 @@ void GUI::create_solver_window(int num)
       solver[num].butt[1] = new Fl_Check_Button(3 * WB + ww, 2 * WB + 2 * BH, ww, BH, "Auto-load results");
       
       for(int i = 0; i < 3; i++){
-	solver[num].butt[i]->type(FL_TOGGLE_BUTTON);
-	solver[num].butt[i]->callback(solver_ok_cb, (void *)num);
+        solver[num].butt[i]->type(FL_TOGGLE_BUTTON);
+        solver[num].butt[i]->callback(solver_ok_cb, (void *)num);
       }
 
       solver[num].input[0] = new Fl_Input(2 * WB + BB / 2, 2 * WB + 4 * BH, LL - BB / 2, BH, "Input");
@@ -5137,20 +5137,20 @@ void GUI::create_solver_window(int num)
 
       for(int i = 0; i < SINFO[num].nboptions; i++) {
         solver[num].choice[i] = new Fl_Choice(2 * WB, 2 * WB + (6 + i) * BH, LL, BH,
-					      SINFO[num].option_name[i]);
+                                              SINFO[num].option_name[i]);
         solver[num].choice[i]->align(FL_ALIGN_RIGHT);
       }
 
       static int arg[MAXSOLVERS][5][2];
       for(int i = 0; i < 5; i++) {
-	if(strlen(SINFO[num].button_name[i])) {
-	  arg[num][i][0] = num;
-	  arg[num][i][1] = i;
-	  solver[num].command[i] = new Fl_Button((2 + i) * WB + i * BBS, 
-						 3 * WB + (6 + SINFO[num].nboptions) * BH,
-						 BBS, BH, SINFO[num].button_name[i]);
-	  solver[num].command[i]->callback(solver_command_cb, (void *)arg[num][i]);
-	}
+        if(strlen(SINFO[num].button_name[i])) {
+          arg[num][i][0] = num;
+          arg[num][i][1] = i;
+          solver[num].command[i] = new Fl_Button((2 + i) * WB + i * BBS, 
+                                                 3 * WB + (6 + SINFO[num].nboptions) * BH,
+                                                 BBS, BH, SINFO[num].button_name[i]);
+          solver[num].command[i]->callback(solver_command_cb, (void *)arg[num][i]);
+        }
       }
 
       g->end();

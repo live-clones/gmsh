@@ -79,9 +79,9 @@ inline double norme(double a[3])
   return mod;
 }
 void normal3points(double x0, double y0, double z0,
-		   double x1, double y1, double z1,
-		   double x2, double y2, double z2,
-		   double n[3]);
+                   double x1, double y1, double z1,
+                   double x2, double y2, double z2,
+                   double n[3]);
 int sys2x2(double mat[2][2], double b[2], double res[2]);
 int sys3x3(double mat[3][3], double b[3], double res[3], double *det);
 int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det);
@@ -101,8 +101,8 @@ void eigenvalue(double mat[3][3], double re[3]);
 void FindCubicRoots(const double coeff[4], double re[3], double im[3]);
 void eigsort(double d[3]);
 double InterpolateIso(double *X, double *Y, double *Z, 
-		      double *Val, double V, int I1, int I2, 
-		      double *XI, double *YI ,double *ZI);
+                      double *Val, double V, int I1, int I2, 
+                      double *XI, double *YI ,double *ZI);
 void gradSimplex(double *x, double *y, double *z, double *v, double *grad);
 double ComputeVonMises(double *val);
 double ComputeScalarRep(int numComp, double *val);

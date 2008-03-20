@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.38 2008-02-23 16:19:22 remacle Exp $
+// $Id: OCCFace.cpp,v 1.39 2008-03-20 11:44:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -49,7 +49,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
     Msg(DEBUG2,"OCC Face %d - New Wire",num);
     std::list<GEdge*> l_wire;
     std::list<int> l_oris;
-    for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){	  
+    for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){          
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
       int index = emap.FindIndex(edge);
       GEdge *e = m->getEdgeByTag(index);
@@ -59,8 +59,8 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
       Msg(DEBUG2, "Edge %d ori %d", e->tag(), edge.Orientation());
       e->addFace(this);
       if(!e->is3D()){
-	OCCEdge *occe = (OCCEdge*)e;
-	occe->setTrimmed(this);
+        OCCEdge *occe = (OCCEdge*)e;
+        occe->setTrimmed(this);
       }
     }      
     
@@ -71,12 +71,12 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
       l_edges.push_back(it->ge);
       l_dirs.push_back(it->_sign);
       if (el.count() == 2){
-	it->ge->meshAttributes.minimumMeshSegments = 
-	  std::max(it->ge->meshAttributes.minimumMeshSegments,2);
+        it->ge->meshAttributes.minimumMeshSegments = 
+          std::max(it->ge->meshAttributes.minimumMeshSegments,2);
       }
       if (el.count() == 1){
-	it->ge->meshAttributes.minimumMeshSegments = 
-	  std::max(it->ge->meshAttributes.minimumMeshSegments,3);
+        it->ge->meshAttributes.minimumMeshSegments = 
+          std::max(it->ge->meshAttributes.minimumMeshSegments,3);
       }
     }
     
@@ -133,7 +133,7 @@ Pair<SVector3,SVector3> OCCFace::firstDer(const SPoint2 &param) const
   occface->D1(param.x(), param.y(), pnt, du, dv);
 
   return Pair<SVector3,SVector3>(SVector3(du.X(), du.Y(), du.Z()),
-				 SVector3(dv.X(), dv.Y(), dv.Z()));
+                                 SVector3(dv.X(), dv.Y(), dv.Z()));
 }
 
 GPoint OCCFace::point(double par1, double par2) const
@@ -229,23 +229,23 @@ int OCCFace::containsPoint(const SPoint3 &pt) const
       GEdge *c = *it;
       int ori = 1;
       if(ito != l_dirs.end()){
-	ori = *ito;
-	++ito;
+        ori = *ito;
+        ++ito;
       }
       int N = 10;
       Range<double> range = c->parBounds(0);
       for(int j = 0; j < N ; j++) {
-	double u1 = (double)j / (double)N;
-	double u2 = (double)(j + 1) / (double)N;
-	if(ori < 0){
-	  u1 = 1. - u1;
-	  u2 = 1. - u2;
-	}
-	GPoint pp1 = c->point(range.low() + u1 * (range.high() - range.low()));
-	GPoint pp2 = c->point(range.low() + u2 * (range.high() - range.low()));
-	double v1[3] = {pp1.x(), pp1.y(), pp1.z()};
-	double v2[3] = {pp2.x(), pp2.y(), pp2.z()};
-	angle += angle_plan(v, v1, v2, n);
+        double u1 = (double)j / (double)N;
+        double u2 = (double)(j + 1) / (double)N;
+        if(ori < 0){
+          u1 = 1. - u1;
+          u2 = 1. - u2;
+        }
+        GPoint pp1 = c->point(range.low() + u1 * (range.high() - range.low()));
+        GPoint pp2 = c->point(range.low() + u2 * (range.high() - range.low()));
+        double v1[3] = {pp1.x(), pp1.y(), pp1.z()};
+        double v2[3] = {pp2.x(), pp2.y(), pp2.z()};
+        angle += angle_plan(v, v1, v2, n);
       }
     }
     // we're inside if angle equals 2 * pi
@@ -301,7 +301,7 @@ bool OCCFace::buildSTLTriangulation()
   aCoeff = 0.01;
   aDiscret = aCoeff * dMax;
   BRepMesh_FastDiscret aMesher(aDiscret, 0.5, aBox, bWithShare, Standard_True,
-			       Standard_False, Standard_True);
+                               Standard_False, Standard_True);
   aMesher.Add(s);
   Handle(Poly_Triangulation) triangulation = BRep_Tool::Triangulation(s, loc);
   if (triangulation.IsNull()){

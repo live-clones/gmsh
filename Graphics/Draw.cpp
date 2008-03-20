@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.117 2008-02-17 08:47:59 geuzaine Exp $
+// $Id: Draw.cpp,v 1.118 2008-03-20 11:44:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -240,8 +240,8 @@ void InitProjection(int xpick, int ypick, int wpick, int hpick)
       glVertex3d(cx + r, cy, 0.);
       int ntheta = 36;
       for(int i = 1; i < ntheta + 1; i ++){
-	double theta = i * 2 * M_PI / (double)ntheta;
-	glVertex3d(cx + r * cos(theta), cy + r * sin(theta), 0.);	
+        double theta = i * 2 * M_PI / (double)ntheta;
+        glVertex3d(cx + r * cos(theta), cy + r * sin(theta), 0.);       
       }
       glEnd();
     }
@@ -261,9 +261,9 @@ void InitRenderModel()
   for(int i = 0; i < 6; i++) {
     if(CTX.light[i]) {
       GLfloat position[4] = {(GLfloat)CTX.light_position[i][0],
-			     (GLfloat)CTX.light_position[i][1],
-			     (GLfloat)CTX.light_position[i][2],
-			     (GLfloat)CTX.light_position[i][3]};
+                             (GLfloat)CTX.light_position[i][1],
+                             (GLfloat)CTX.light_position[i][2],
+                             (GLfloat)CTX.light_position[i][3]};
       glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
 
       r = CTX.UNPACK_RED(CTX.color.ambient_light[i])/255.;
@@ -326,8 +326,8 @@ void InitPosition()
     glTranslated(CTX.cg[0], CTX.cg[1], CTX.cg[2]);
   else
     glTranslated(CTX.rotation_center[0],
-		 CTX.rotation_center[1],
-		 CTX.rotation_center[2]);
+                 CTX.rotation_center[1],
+                 CTX.rotation_center[2]);
   
   CTX.buildRotationMatrix();
   glMultMatrixd(CTX.rot);
@@ -336,8 +336,8 @@ void InitPosition()
     glTranslated(-CTX.cg[0], -CTX.cg[1], -CTX.cg[2]);
   else
     glTranslated(-CTX.rotation_center[0],
-		 -CTX.rotation_center[1],
-		 -CTX.rotation_center[2]);
+                 -CTX.rotation_center[1],
+                 -CTX.rotation_center[2]);
 
   // store the projection and modelview matrices at this precise
   // moment (so that we can use them at any later time, even if the

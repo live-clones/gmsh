@@ -1,4 +1,4 @@
-// $Id: CutGrid.cpp,v 1.25 2008-03-20 10:52:36 geuzaine Exp $
+// $Id: CutGrid.cpp,v 1.26 2008-03-20 11:44:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -84,8 +84,8 @@ void GMSH_CutGridPlugin::draw()
   else{
     for(int i = 0; i < getNbU(); ++i){
       for(int j = 0; j < getNbV(); ++j){
-	getPoint(i, j, p);
-	Draw_Sphere(CTX.point_size, p[0], p[1], p[2], 1);
+        getPoint(i, j, p);
+        Draw_Sphere(CTX.point_size, p[0], p[1], p[2], 1);
       }
     }
   }
@@ -93,7 +93,7 @@ void GMSH_CutGridPlugin::draw()
 }
 
 double GMSH_CutGridPlugin::callback(int num, int action, double value, double *opt,
-				    double step, double min, double max)
+                                    double step, double min, double max)
 {
   switch(action){ // configure the input field
   case 1: return step;
@@ -111,73 +111,73 @@ double GMSH_CutGridPlugin::callback(int num, int action, double value, double *o
 double GMSH_CutGridPlugin::callbackX0(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[0].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackY0(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[1].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackZ0(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[2].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackX1(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[3].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackY1(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[4].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackZ1(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[5].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackX2(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[6].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackY2(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[7].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackZ2(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[8].def,
-		  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
+                  CTX.lc/100., -2*CTX.lc, 2*CTX.lc);
 }
 
 double GMSH_CutGridPlugin::callbackU(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[9].def,
-		  1, 1, 100);
+                  1, 1, 100);
 }
 
 double GMSH_CutGridPlugin::callbackV(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[10].def,
-		  1, 1, 100);
+                  1, 1, 100);
 }
 
 double GMSH_CutGridPlugin::callbackConnect(int num, int action, double value)
 {
   return callback(num, action, value, &CutGridOptions_Number[11].def,
-		  1, 0, 1);
+                  1, 0, 1);
 }
 
 void GMSH_CutGridPlugin::getName(char *name) const
@@ -192,18 +192,18 @@ void GMSH_CutGridPlugin::getInfos(char *author, char *copyright,
   strcpy(copyright, "DGR (www.multiphysics.com)");
   strcpy(help_text,
          "Plugin(CutGrid) cuts the view `iView' with a\n"
-	 "rectangular grid defined by the 3 points\n"
-	 "(`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of\n"
-	 "U) and (`X2',`Y2',`Z2') (axis of V). The number of\n"
-	 "points along U and V is set with the options\n"
-	 "`nPointsU' and `nPointsV'. If `ConnectPoints' is\n"
-	 "zero, the plugin creates points; otherwise, the\n"
-	 "plugin generates quadrangles, lines or points\n"
-	 " depending on the values of `nPointsU' and\n"
-	 "`nPointsV'. If `iView' < 0, the plugin is run on\n"
-	 "the current view.\n"
-	 "\n"
-	 "Plugin(CutGrid) creates one new view.\n");
+         "rectangular grid defined by the 3 points\n"
+         "(`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of\n"
+         "U) and (`X2',`Y2',`Z2') (axis of V). The number of\n"
+         "points along U and V is set with the options\n"
+         "`nPointsU' and `nPointsV'. If `ConnectPoints' is\n"
+         "zero, the plugin creates points; otherwise, the\n"
+         "plugin generates quadrangles, lines or points\n"
+         " depending on the values of `nPointsU' and\n"
+         "`nPointsV'. If `iView' < 0, the plugin is run on\n"
+         "the current view.\n"
+         "\n"
+         "Plugin(CutGrid) creates one new view.\n");
 }
 
 int GMSH_CutGridPlugin::getNbOptions() const
@@ -247,23 +247,23 @@ void GMSH_CutGridPlugin::getPoint(int iU, int iV, double *X)
 }
 
 void GMSH_CutGridPlugin::addInView(int numsteps, int connect, int nbcomp, 
-				   double ***pnts, double ***vals, 
-				   List_T *P, int *nP, 
-				   List_T *L, int *nL, 
-				   List_T *Q, int *nQ)
+                                   double ***pnts, double ***vals, 
+                                   List_T *P, int *nP, 
+                                   List_T *L, int *nL, 
+                                   List_T *Q, int *nQ)
 {
   if(!connect || (getNbU() == 1 && getNbV() == 1)){ // generate points
     
     for(int i = 0; i < getNbU(); ++i){
       for(int j = 0; j < getNbV(); ++j){
-	List_Add(P, &pnts[i][j][0]);
-	List_Add(P, &pnts[i][j][1]);
-	List_Add(P, &pnts[i][j][2]);
-	(*nP)++;
-	for(int k = 0; k < numsteps; ++k){
-	  for(int l = 0; l < nbcomp; ++l)
-	    List_Add(P, &vals[i][j][nbcomp*k+l]);
-	}
+        List_Add(P, &pnts[i][j][0]);
+        List_Add(P, &pnts[i][j][1]);
+        List_Add(P, &pnts[i][j][2]);
+        (*nP)++;
+        for(int k = 0; k < numsteps; ++k){
+          for(int l = 0; l < nbcomp; ++l)
+            List_Add(P, &vals[i][j][nbcomp*k+l]);
+        }
       }
     }
     
@@ -272,56 +272,56 @@ void GMSH_CutGridPlugin::addInView(int numsteps, int connect, int nbcomp,
     
     if(getNbU() == 1){
       for(int i = 0; i < getNbV()-1; ++i){
-	List_Add(L, &pnts[0][i][0]); List_Add(L, &pnts[0][i+1][0]);
-	List_Add(L, &pnts[0][i][1]); List_Add(L, &pnts[0][i+1][1]);
-	List_Add(L, &pnts[0][i][2]); List_Add(L, &pnts[0][i+1][2]);
-	(*nL)++;
-	for(int k = 0; k < numsteps; ++k){
-	  for(int l = 0; l < nbcomp; ++l)
-	    List_Add(L, &vals[0][i  ][nbcomp*k+l]);
-	  for(int l = 0; l < nbcomp; ++l)
-	    List_Add(L, &vals[0][i+1][nbcomp*k+l]);
-	}
+        List_Add(L, &pnts[0][i][0]); List_Add(L, &pnts[0][i+1][0]);
+        List_Add(L, &pnts[0][i][1]); List_Add(L, &pnts[0][i+1][1]);
+        List_Add(L, &pnts[0][i][2]); List_Add(L, &pnts[0][i+1][2]);
+        (*nL)++;
+        for(int k = 0; k < numsteps; ++k){
+          for(int l = 0; l < nbcomp; ++l)
+            List_Add(L, &vals[0][i  ][nbcomp*k+l]);
+          for(int l = 0; l < nbcomp; ++l)
+            List_Add(L, &vals[0][i+1][nbcomp*k+l]);
+        }
       }
     }
     else if(getNbV() == 1){
       for(int i = 0; i < getNbU()-1; ++i){
-	List_Add(L, &pnts[i][0][0]); List_Add(L, &pnts[i+1][0][0]);
-	List_Add(L, &pnts[i][0][1]); List_Add(L, &pnts[i+1][0][1]);
-	List_Add(L, &pnts[i][0][2]); List_Add(L, &pnts[i+1][0][2]);
-	(*nL)++;
-	for(int k = 0; k < numsteps; ++k){
-	  for(int l = 0; l < nbcomp; ++l)
-	    List_Add(L, &vals[i  ][0][nbcomp*k+l]);
-	  for(int l = 0; l < nbcomp; ++l)
-	    List_Add(L, &vals[i+1][0][nbcomp*k+l]);
-	}
+        List_Add(L, &pnts[i][0][0]); List_Add(L, &pnts[i+1][0][0]);
+        List_Add(L, &pnts[i][0][1]); List_Add(L, &pnts[i+1][0][1]);
+        List_Add(L, &pnts[i][0][2]); List_Add(L, &pnts[i+1][0][2]);
+        (*nL)++;
+        for(int k = 0; k < numsteps; ++k){
+          for(int l = 0; l < nbcomp; ++l)
+            List_Add(L, &vals[i  ][0][nbcomp*k+l]);
+          for(int l = 0; l < nbcomp; ++l)
+            List_Add(L, &vals[i+1][0][nbcomp*k+l]);
+        }
       }
     }
     else{
       for(int i = 0; i < getNbU()-1; ++i){
-	for(int j = 0; j < getNbV()-1; ++j){
-	  List_Add(Q, &pnts[i  ][j  ][0]); List_Add(Q, &pnts[i+1][j  ][0]);
-	  List_Add(Q, &pnts[i+1][j+1][0]); List_Add(Q, &pnts[i  ][j+1][0]);
-	  List_Add(Q, &pnts[i  ][j  ][1]); List_Add(Q, &pnts[i+1][j  ][1]);
-	  List_Add(Q, &pnts[i+1][j+1][1]); List_Add(Q, &pnts[i  ][j+1][1]);
-	  List_Add(Q, &pnts[i  ][j  ][2]); List_Add(Q, &pnts[i+1][j  ][2]);
-	  List_Add(Q, &pnts[i+1][j+1][2]); List_Add(Q, &pnts[i  ][j+1][2]);
-	  (*nQ)++;
-	  for(int k = 0; k < numsteps; ++k){
-	    for(int l = 0; l < nbcomp; ++l)
-	      List_Add(Q, &vals[i  ][j  ][nbcomp*k+l]);
-	    for(int l = 0; l < nbcomp; ++l)
-	      List_Add(Q, &vals[i+1][j  ][nbcomp*k+l]);
-	    for(int l = 0; l < nbcomp; ++l)
-	      List_Add(Q, &vals[i+1][j+1][nbcomp*k+l]);
-	    for(int l = 0; l < nbcomp; ++l)
-	      List_Add(Q, &vals[i  ][j+1][nbcomp*k+l]);
-	  }
-	}
+        for(int j = 0; j < getNbV()-1; ++j){
+          List_Add(Q, &pnts[i  ][j  ][0]); List_Add(Q, &pnts[i+1][j  ][0]);
+          List_Add(Q, &pnts[i+1][j+1][0]); List_Add(Q, &pnts[i  ][j+1][0]);
+          List_Add(Q, &pnts[i  ][j  ][1]); List_Add(Q, &pnts[i+1][j  ][1]);
+          List_Add(Q, &pnts[i+1][j+1][1]); List_Add(Q, &pnts[i  ][j+1][1]);
+          List_Add(Q, &pnts[i  ][j  ][2]); List_Add(Q, &pnts[i+1][j  ][2]);
+          List_Add(Q, &pnts[i+1][j+1][2]); List_Add(Q, &pnts[i  ][j+1][2]);
+          (*nQ)++;
+          for(int k = 0; k < numsteps; ++k){
+            for(int l = 0; l < nbcomp; ++l)
+              List_Add(Q, &vals[i  ][j  ][nbcomp*k+l]);
+            for(int l = 0; l < nbcomp; ++l)
+              List_Add(Q, &vals[i+1][j  ][nbcomp*k+l]);
+            for(int l = 0; l < nbcomp; ++l)
+              List_Add(Q, &vals[i+1][j+1][nbcomp*k+l]);
+            for(int l = 0; l < nbcomp; ++l)
+              List_Add(Q, &vals[i  ][j+1][nbcomp*k+l]);
+          }
+        }
       }
     }
-  }	
+  }     
 }
 
 PView *GMSH_CutGridPlugin::GenerateView(PView *v1, int connect)
@@ -357,25 +357,25 @@ PView *GMSH_CutGridPlugin::GenerateView(PView *v1, int connect)
   if(nbs){
     for(int i = 0; i < getNbU(); i++)
       for(int j = 0; j < getNbV(); j++)
-	o.searchScalar(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], vals[i][j]);
+        o.searchScalar(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], vals[i][j]);
     addInView(numsteps, connect, 1, pnts, vals, data2->SP, &data2->NbSP, 
-	      data2->SL, &data2->NbSL, data2->SQ, &data2->NbSQ);
+              data2->SL, &data2->NbSL, data2->SQ, &data2->NbSQ);
   }
 
   if(nbv){
     for(int i = 0; i < getNbU(); i++)
       for(int j = 0; j < getNbV(); j++)
-	o.searchVector(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], vals[i][j]);
+        o.searchVector(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], vals[i][j]);
     addInView(numsteps, connect, 3, pnts, vals, data2->VP, &data2->NbVP,
-	      data2->VL, &data2->NbVL, data2->VQ, &data2->NbVQ);
+              data2->VL, &data2->NbVL, data2->VQ, &data2->NbVQ);
   }
 
   if(nbt){
     for(int i = 0; i < getNbU(); i++)
       for(int j = 0; j < getNbV(); j++)
-	o.searchTensor(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], vals[i][j]);
+        o.searchTensor(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], vals[i][j]);
     addInView(numsteps, connect, 9, pnts, vals, data2->TP, &data2->NbTP, 
-	      data2->TL, &data2->NbTL, data2->TQ, &data2->NbTQ);
+              data2->TL, &data2->NbTL, data2->TQ, &data2->NbTQ);
   }
 
   for(int i = 0; i < getNbU(); i++){

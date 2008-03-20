@@ -1,4 +1,4 @@
-// $Id: OctreeInternals.cpp,v 1.4 2008-02-17 08:47:56 geuzaine Exp $
+// $Id: OctreeInternals.cpp,v 1.5 2008-03-20 11:44:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -35,7 +35,7 @@
 using std::list;
 
 int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
-			    octantBucket **buckets_head, globalInfo **globalPara)
+                            octantBucket **buckets_head, globalInfo **globalPara)
 // Initialize the buckets                                          
 // Given by user: orig and size -- information about the domain    
 //                maxElem -- maximum number of elements per bucket 
@@ -103,12 +103,12 @@ int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
   for (k = 0; k < tmp1; k++) {
     for (j = 0; j < tmp1; j++) {
       for (i = 0; i < tmp1; i++) {
-	buckets[i+j*tmp1+k*tmp1*tmp1].minPt[0] = (*buckets_head)->minPt[0] + tmp[0]*i;
-	buckets[i+j*tmp1+k*tmp1*tmp1].minPt[1] = (*buckets_head)->minPt[1] + tmp[1]*j;
-	buckets[i+j*tmp1+k*tmp1*tmp1].minPt[2] = (*buckets_head)->minPt[2] + tmp[2]*k;
-	buckets[i+j*tmp1+k*tmp1*tmp1].maxPt[0] = (*buckets_head)->minPt[0] + tmp[0]*(i+1);
-	buckets[i+j*tmp1+k*tmp1*tmp1].maxPt[1] = (*buckets_head)->minPt[1] + tmp[1]*(j+1);
-	buckets[i+j*tmp1+k*tmp1*tmp1].maxPt[2] = (*buckets_head)->minPt[2] + tmp[2]*(k+1);
+        buckets[i+j*tmp1+k*tmp1*tmp1].minPt[0] = (*buckets_head)->minPt[0] + tmp[0]*i;
+        buckets[i+j*tmp1+k*tmp1*tmp1].minPt[1] = (*buckets_head)->minPt[1] + tmp[1]*j;
+        buckets[i+j*tmp1+k*tmp1*tmp1].minPt[2] = (*buckets_head)->minPt[2] + tmp[2]*k;
+        buckets[i+j*tmp1+k*tmp1*tmp1].maxPt[0] = (*buckets_head)->minPt[0] + tmp[0]*(i+1);
+        buckets[i+j*tmp1+k*tmp1*tmp1].maxPt[1] = (*buckets_head)->minPt[1] + tmp[1]*(j+1);
+        buckets[i+j*tmp1+k*tmp1*tmp1].maxPt[2] = (*buckets_head)->minPt[2] + tmp[2]*(k+1);
       }
     }
   }
@@ -116,9 +116,9 @@ int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
 #if 0
   for (i = 0; i < 8; i++) {
     printf(" bucket %d : min[0]=%f, min[1]=%f, min[2]=%f, max[0]= %f, max[1]=%f, max[3]=%f\n",
-	   i,buckets[i].minPt[0],buckets[i].minPt[1],
-	   buckets[i].minPt[2], buckets[i].maxPt[0], buckets[i].maxPt[1],
-	   buckets[i].maxPt[2]);                   
+           i,buckets[i].minPt[0],buckets[i].minPt[1],
+           buckets[i].minPt[2], buckets[i].maxPt[0], buckets[i].maxPt[1],
+           buckets[i].maxPt[2]);                   
     printf("bucket elements link list: bucket->lhead = %d\n", buckets[i].lhead);
   }
 #endif
@@ -127,8 +127,8 @@ int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
 }
 
 int addElement2Bucket(octantBucket *_bucket, void * _element, 
-		      double *_minBB, double *_maxBB,
-		      double *_ele_centroid, globalInfo *_globalPara)
+                      double *_minBB, double *_maxBB,
+                      double *_ele_centroid, globalInfo *_globalPara)
 // Add another element to the octant bucket's list.                    
 // If the bucket contains too many elements after adding this element, 
 // refine this bucket and reallocate the elements of this bucket       
@@ -167,15 +167,15 @@ int addElement2Bucket(octantBucket *_bucket, void * _element,
   printf("bucket element list: bucket->lhead = %d", _bucket->lhead);
   printf(" numElements = %d\n",_bucket->numElements); 
   printf("the element is add to this bucket: (%f, %f, %f) to (%f, %f, %f)\n",
-	 _bucket->minPt[0],_bucket->minPt[1], _bucket->minPt[2], _bucket->maxPt[0],
-	 _bucket->maxPt[1], _bucket->maxPt[2]);
+         _bucket->minPt[0],_bucket->minPt[1], _bucket->minPt[2], _bucket->maxPt[0],
+         _bucket->maxPt[1], _bucket->maxPt[2]);
 #endif
 
   // check whether the number of elements in the bucket > maxElements 
   // if true, refine the bucket and reallocate the elements           
   while ( flag == 1) {
     flag = 0;
-    if (_bucket->numElements > _globalPara->maxElements) {	
+    if (_bucket->numElements > _globalPara->maxElements) {      
 
       // printf(" going to subdivide\n");
 
@@ -185,20 +185,20 @@ int addElement2Bucket(octantBucket *_bucket, void * _element,
 
       ptr1 = _bucket->lhead;
       while (ptr1 != NULL) {
-	ptrBucket = findElementBucket(_bucket, ptr1->centroid);
-	ptr2 = ptr1;
-	ptr1 = ptr1->next;
-	if (ptrBucket == NULL)
-	  Msg(GERROR, "Wrong , ptrBucket = NULL. A bug here!");
-	ptr2->next = ptrBucket->lhead;
-	ptrBucket->lhead = ptr2;
-	(ptrBucket->numElements)++;
-	if (ptrBucket->numElements > _globalPara->maxElements) {
-	  flag = 1;
-	  _bucket->lhead = NULL;	
-	  _bucket = ptrBucket;
-	}	
-      }       	
+        ptrBucket = findElementBucket(_bucket, ptr1->centroid);
+        ptr2 = ptr1;
+        ptr1 = ptr1->next;
+        if (ptrBucket == NULL)
+          Msg(GERROR, "Wrong , ptrBucket = NULL. A bug here!");
+        ptr2->next = ptrBucket->lhead;
+        ptrBucket->lhead = ptr2;
+        (ptrBucket->numElements)++;
+        if (ptrBucket->numElements > _globalPara->maxElements) {
+          flag = 1;
+          _bucket->lhead = NULL;        
+          _bucket = ptrBucket;
+        }       
+      }         
       if (flag == 0) _bucket->lhead = NULL;
     }
   }
@@ -220,11 +220,11 @@ int checkElementInBucket(octantBucket *_bucket, void* _element)
 
 
 octantBucket *findElementBucket(octantBucket *_buckets_head, double *_pt)
-// Find the leaf bucket which contains the point _pt	  
+// Find the leaf bucket which contains the point _pt      
 // given parameter: _buckets --- the point to buckets head 
 //                  _pt --- the point to find             
 // Return the pointer to the bucket contains the point    
-// if fail, return NULL                                   	 
+// if fail, return NULL                                          
 {
   int i, j;
   int num = 8;
@@ -233,21 +233,21 @@ octantBucket *findElementBucket(octantBucket *_buckets_head, double *_pt)
 
   while (tmpbucket != NULL) {
     for (i = 0; i < num; i ++) {
-      for (j = 0; j < 3; j++) {	
-	if (tmpbucket[i].minPt[j] > _pt[j] || 
-	    tmpbucket[i].maxPt[j] < _pt[j])
-	  break;
+      for (j = 0; j < 3; j++) { 
+        if (tmpbucket[i].minPt[j] > _pt[j] || 
+            tmpbucket[i].maxPt[j] < _pt[j])
+          break;
       }
       if (j == 3) {
-	prevbucket = tmpbucket+i;
-	tmpbucket = tmpbucket[i].next;
-	break;
-      }		
+        prevbucket = tmpbucket+i;
+        tmpbucket = tmpbucket[i].next;
+        break;
+      }         
     } // for loop i 
     if (i == num) {
-      //	printf("Error, no bucket contains the given point! ");
+      //        printf("Error, no bucket contains the given point! ");
       return NULL;
-    }		
+    }           
   } // for while loop 
   return prevbucket;
 }
@@ -302,7 +302,7 @@ int subdivideOctantBucket(octantBucket *_bucket, globalInfo *_globalPara)
 }
 
 void * searchElement(octantBucket *_buckets_head, double *_pt, globalInfo *_globalPara,
-		     BBFunction BBElement, InEleFunction xyzInElement) 
+                     BBFunction BBElement, InEleFunction xyzInElement) 
 {
   int flag;
   octantBucket *ptrBucket;
@@ -316,19 +316,19 @@ void * searchElement(octantBucket *_buckets_head, double *_pt, globalInfo *_glob
       flag = xyzInElement(ptrToEle, _pt);
     if (flag == 1) return ptrToEle;
   }
-    	
+        
   ptrBucket = findElementBucket(_buckets_head, _pt);
   if (ptrBucket == NULL) {
     // printf("Error! the point is not in the domain.\n");
     return NULL;
-  }	
+  }     
 
   ptr1 = ptrBucket->lhead;
 
 #if 0
   printf("point %lf %lf %lf has been found in bucket %lf %lf %fl -> %lf %lf %lf  %p\n",
-	 _pt[0],_pt[1],_pt[2], ptrBucket->minPt[0],ptrBucket->minPt[1],ptrBucket->minPt[2],
-	 ptrBucket->maxPt[0],ptrBucket->maxPt[1],ptrBucket->maxPt[2], ptr1);
+         _pt[0],_pt[1],_pt[2], ptrBucket->minPt[0],ptrBucket->minPt[1],ptrBucket->minPt[2],
+         ptrBucket->maxPt[0],ptrBucket->maxPt[1],ptrBucket->maxPt[2], ptr1);
   if (ptr1 == NULL) {
     printf("empty element list for centroid list!?\n, possible!");
   }
@@ -341,7 +341,7 @@ void * searchElement(octantBucket *_buckets_head, double *_pt, globalInfo *_glob
     if (flag == 1) {
       _globalPara->ptrToPrevElement = ptr1->region;
       return ptr1->region;
-    }	
+    }   
     ptr1 = ptr1->next;
   }
  
@@ -363,7 +363,7 @@ void * searchElement(octantBucket *_buckets_head, double *_pt, globalInfo *_glob
 int xyzInElementBB(double *_xyz, void * _region, BBFunction _BBElement)
 // Check if xyz is in the region's bounding box, return 1 if true, 0 otherwise 
 // BBElement is the function given by user to find the bounding box            
-{		   
+{                  
   int i;
   double minPt[3]; // corner with smallest x,y,z coords 
   double maxPt[3]; // corner with largest x,y,z coords 
@@ -392,17 +392,17 @@ void insertOneBB(void* _region, double *_minPt, double *_maxPt, octantBucket *_b
       ptr = ptr->next;
     }
 
-    _bucket->listBB.insert(_bucket->listBB.end(),_region);	
+    _bucket->listBB.insert(_bucket->listBB.end(),_region);      
     return;
   }
-    	
+        
   for (i = 0; i < 8; i++)
     insertOneBB(_region, _minPt, _maxPt, _bucket->next+i);
   return;
 }
 
 void * searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_globalPara,
-			 BBFunction BBElement, InEleFunction xyzInElement, list<void *> *_elements)
+                         BBFunction BBElement, InEleFunction xyzInElement, list<void *> *_elements)
 {
   int flag, flag1;
   octantBucket *ptrBucket;
@@ -416,8 +416,8 @@ void * searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_
 
 #if 0
   printf("point %lf %lf %lf has been found in bucket %lf %lf %fl -> %lf %lf %lf  %p\n",
-	 _pt[0],_pt[1],_pt[2], ptrBucket->minPt[0],ptrBucket->minPt[1],ptrBucket->minPt[2],
-	 ptrBucket->maxPt[0],ptrBucket->maxPt[1],ptrBucket->maxPt[2], ptr1);
+         _pt[0],_pt[1],_pt[2], ptrBucket->minPt[0],ptrBucket->minPt[1],ptrBucket->minPt[2],
+         ptrBucket->maxPt[0],ptrBucket->maxPt[1],ptrBucket->maxPt[2], ptr1);
   
   if (ptr1 == NULL) {
     printf("empty element list for centroid list!?\n, possible!");
@@ -427,14 +427,14 @@ void * searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_
   flag1 = 0;
   for (iter = (ptrBucket->listBB).begin(); 
        iter != (ptrBucket->listBB).end(); iter++){
-    // printf("Enter 1 \n");	
+    // printf("Enter 1 \n");    
     flag = xyzInElementBB(_pt, *iter, BBElement);
     if (flag == 1)
       flag = xyzInElement(*iter, _pt);
     if (flag == 1) { 
       _elements->push_back(*iter);        
       flag1 = 1;
-    }	
+    }   
   }
 
   if (flag1)

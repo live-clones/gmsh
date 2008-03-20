@@ -155,7 +155,7 @@ void adapt_edge::Recur_Create(adapt_edge *e, int maxlevel, int level,
   adapt_point *p1 = e->p[0];
   adapt_point *p2 = e->p[1];
   adapt_point *p12 = adapt_point::New((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5,
-				      (p1->z + p2->z) * 0.5, coeffs, eexps);
+                                      (p1->z + p2->z) * 0.5, coeffs, eexps);
   adapt_edge *e1 = new adapt_edge(p1, p12);
   Recur_Create(e1, maxlevel, level, coeffs, eexps);
   adapt_edge *e2 = new adapt_edge(p12, p2);
@@ -183,11 +183,11 @@ void adapt_triangle::Recur_Create(adapt_triangle *t, int maxlevel, int level,
   adapt_point *p2 = t->p[1];
   adapt_point *p3 = t->p[2];
   adapt_point *p12 = adapt_point::New((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, 0, 
-				      coeffs, eexps);
+                                      coeffs, eexps);
   adapt_point *p13 = adapt_point::New((p1->x + p3->x) * 0.5, (p1->y + p3->y) * 0.5, 0, 
-				      coeffs, eexps);
+                                      coeffs, eexps);
   adapt_point *p23 = adapt_point::New((p3->x + p2->x) * 0.5, (p3->y + p2->y) * 0.5, 0, 
-				      coeffs, eexps);
+                                      coeffs, eexps);
   adapt_triangle *t1 = new adapt_triangle(p1, p12, p13);
   Recur_Create(t1, maxlevel, level, coeffs, eexps);
   adapt_triangle *t2 = new adapt_triangle(p2, p23, p12);
@@ -221,16 +221,16 @@ void adapt_quad::Recur_Create(adapt_quad *q, int maxlevel, int level,
   adapt_point *p3 = q->p[2];
   adapt_point *p4 = q->p[3];
   adapt_point *p12 = adapt_point::New((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5, 0,
-				      coeffs, eexps);
+                                      coeffs, eexps);
   adapt_point *p23 = adapt_point::New((p2->x + p3->x) * 0.5, (p2->y + p3->y) * 0.5, 0,
-				      coeffs, eexps);
+                                      coeffs, eexps);
   adapt_point *p34 = adapt_point::New((p3->x + p4->x) * 0.5, (p3->y + p4->y) * 0.5, 0,
-				      coeffs, eexps);
+                                      coeffs, eexps);
   adapt_point *p14 = adapt_point::New((p1->x + p4->x) * 0.5, (p1->y + p4->y) * 0.5, 0, 
-				      coeffs, eexps);
+                                      coeffs, eexps);
   adapt_point *pc = adapt_point::New((p1->x + p2->x + p3->x + p4->x) * 0.25,
-				     (p1->y + p2->y + p3->y + p4->y) * 0.25, 0, 
-				     coeffs, eexps);
+                                     (p1->y + p2->y + p3->y + p4->y) * 0.25, 0, 
+                                     coeffs, eexps);
   adapt_quad *q1 = new adapt_quad(p1, p12, pc, p14);
   Recur_Create(q1, maxlevel, level, coeffs, eexps);
   adapt_quad *q2 = new adapt_quad(p2, p23, pc, p12);
@@ -256,17 +256,17 @@ void adapt_tet::Recur_Create(adapt_tet *t, int maxlevel, int level,
   adapt_point *p2 = t->p[2];
   adapt_point *p3 = t->p[3];
   adapt_point *pe0 =  adapt_point::New((p0->x + p1->x) * 0.5, (p0->y + p1->y) * 0.5,
-				       (p0->z + p1->z) * 0.5, coeffs, eexps);
+                                       (p0->z + p1->z) * 0.5, coeffs, eexps);
   adapt_point *pe1 =  adapt_point::New((p0->x + p2->x) * 0.5, (p0->y + p2->y) * 0.5,
-				       (p0->z + p2->z) * 0.5, coeffs, eexps);
+                                       (p0->z + p2->z) * 0.5, coeffs, eexps);
   adapt_point *pe2 =  adapt_point::New((p0->x + p3->x) * 0.5, (p0->y + p3->y) * 0.5,
-				       (p0->z + p3->z) * 0.5, coeffs, eexps);
+                                       (p0->z + p3->z) * 0.5, coeffs, eexps);
   adapt_point *pe3 =  adapt_point::New((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5,
-				       (p1->z + p2->z) * 0.5, coeffs, eexps);
+                                       (p1->z + p2->z) * 0.5, coeffs, eexps);
   adapt_point *pe4 =  adapt_point::New((p1->x + p3->x) * 0.5, (p1->y + p3->y) * 0.5,
-				       (p1->z + p3->z) * 0.5, coeffs, eexps);
+                                       (p1->z + p3->z) * 0.5, coeffs, eexps);
   adapt_point *pe5 =  adapt_point::New((p2->x + p3->x) * 0.5, (p2->y + p3->y) * 0.5,
-				       (p2->z + p3->z) * 0.5, coeffs, eexps);
+                                       (p2->z + p3->z) * 0.5, coeffs, eexps);
 
   adapt_tet *t1 = new adapt_tet(p0, pe0, pe2, pe1);
   Recur_Create(t1, maxlevel, level, coeffs, eexps);
@@ -311,48 +311,48 @@ void adapt_hex::Recur_Create(adapt_hex *h, int maxlevel, int level,
   adapt_point *p6 = h->p[6];
   adapt_point *p7 = h->p[7];
   adapt_point *p01 = adapt_point::New((p0->x + p1->x) * 0.5, (p0->y + p1->y) * 0.5,
-				      (p0->z + p1->z) * 0.5, coeffs, eexps);
+                                      (p0->z + p1->z) * 0.5, coeffs, eexps);
   adapt_point *p12 = adapt_point::New((p1->x + p2->x) * 0.5, (p1->y + p2->y) * 0.5,
-				      (p1->z + p2->z) * 0.5, coeffs, eexps);
+                                      (p1->z + p2->z) * 0.5, coeffs, eexps);
   adapt_point *p23 = adapt_point::New((p2->x + p3->x) * 0.5, (p2->y + p3->y) * 0.5,
-				      (p2->z + p3->z) * 0.5, coeffs, eexps);
+                                      (p2->z + p3->z) * 0.5, coeffs, eexps);
   adapt_point *p03 = adapt_point::New((p3->x + p0->x) * 0.5, (p3->y + p0->y) * 0.5,
-				      (p3->z + p0->z) * 0.5, coeffs, eexps);
+                                      (p3->z + p0->z) * 0.5, coeffs, eexps);
   adapt_point *p45 = adapt_point::New((p4->x + p5->x) * 0.5, (p4->y + p5->y) * 0.5,
-				      (p4->z + p5->z) * 0.5, coeffs, eexps);
+                                      (p4->z + p5->z) * 0.5, coeffs, eexps);
   adapt_point *p56 = adapt_point::New((p5->x + p6->x) * 0.5, (p5->y + p6->y) * 0.5,
-				      (p5->z + p6->z) * 0.5, coeffs, eexps);
+                                      (p5->z + p6->z) * 0.5, coeffs, eexps);
   adapt_point *p67 = adapt_point::New((p6->x + p7->x) * 0.5, (p6->y + p7->y) * 0.5,
-				      (p6->z + p7->z) * 0.5, coeffs, eexps);
+                                      (p6->z + p7->z) * 0.5, coeffs, eexps);
   adapt_point *p47 = adapt_point::New((p7->x + p4->x) * 0.5, (p7->y + p4->y) * 0.5,
-				      (p7->z + p4->z) * 0.5, coeffs, eexps);
+                                      (p7->z + p4->z) * 0.5, coeffs, eexps);
   adapt_point *p04 = adapt_point::New((p4->x + p0->x) * 0.5, (p4->y + p0->y) * 0.5,
-				      (p4->z + p0->z) * 0.5, coeffs, eexps);
+                                      (p4->z + p0->z) * 0.5, coeffs, eexps);
   adapt_point *p15 = adapt_point::New((p5->x + p1->x) * 0.5, (p5->y + p1->y) * 0.5,
-				      (p5->z + p1->z) * 0.5, coeffs, eexps);
+                                      (p5->z + p1->z) * 0.5, coeffs, eexps);
   adapt_point *p26 = adapt_point::New((p6->x + p2->x) * 0.5, (p6->y + p2->y) * 0.5,
-				      (p6->z + p2->z) * 0.5, coeffs, eexps);
+                                      (p6->z + p2->z) * 0.5, coeffs, eexps);
   adapt_point *p37 = adapt_point::New((p7->x + p3->x) * 0.5, (p7->y + p3->y) * 0.5,
-				      (p7->z + p3->z) * 0.5, coeffs, eexps);
+                                      (p7->z + p3->z) * 0.5, coeffs, eexps);
 
   adapt_point *p0145 = adapt_point::New((p45->x + p01->x) * 0.5, (p45->y + p01->y) * 0.5,
-					(p45->z + p01->z) * 0.5, coeffs, eexps);
+                                        (p45->z + p01->z) * 0.5, coeffs, eexps);
   adapt_point *p1256 = adapt_point::New((p12->x + p56->x) * 0.5, (p12->y + p56->y) * 0.5,
-					(p12->z + p56->z) * 0.5, coeffs, eexps);
+                                        (p12->z + p56->z) * 0.5, coeffs, eexps);
   adapt_point *p2367 = adapt_point::New((p23->x + p67->x) * 0.5, (p23->y + p67->y) * 0.5,
-					(p23->z + p67->z) * 0.5, coeffs, eexps);
+                                        (p23->z + p67->z) * 0.5, coeffs, eexps);
   adapt_point *p0347 = adapt_point::New((p03->x + p47->x) * 0.5, (p03->y + p47->y) * 0.5,
-					(p03->z + p47->z) * 0.5, coeffs, eexps);
+                                        (p03->z + p47->z) * 0.5, coeffs, eexps);
   adapt_point *p4756 = adapt_point::New((p47->x + p56->x) * 0.5, (p47->y + p56->y) * 0.5,
-					(p47->z + p56->z) * 0.5, coeffs, eexps);
+                                        (p47->z + p56->z) * 0.5, coeffs, eexps);
   adapt_point *p0312 = adapt_point::New((p03->x + p12->x) * 0.5, (p03->y + p12->y) * 0.5,
-					(p03->z + p12->z) * 0.5, coeffs, eexps);
+                                        (p03->z + p12->z) * 0.5, coeffs, eexps);
 
   adapt_point *pc = 
     adapt_point::New((p0->x + p1->x + p2->x + p3->x + p4->x + p5->x + p6->x + p7->x) * 0.125,
-		     (p0->y + p1->y + p2->y + p3->y + p4->y + p5->y + p6->y + p7->y) * 0.125,
-		     (p0->z + p1->z + p2->z + p3->z + p4->z + p5->z + p6->z + p7->z) * 0.125,
-		     coeffs, eexps);
+                     (p0->y + p1->y + p2->y + p3->y + p4->y + p5->y + p6->y + p7->y) * 0.125,
+                     (p0->z + p1->z + p2->z + p3->z + p4->z + p5->z + p6->z + p7->z) * 0.125,
+                     coeffs, eexps);
 
   adapt_hex *h1 = new adapt_hex(p0, p01, p0312, p03, p04, p0145, pc, p0347);    //p0
   Recur_Create(h1, maxlevel, level, coeffs, eexps);
@@ -678,10 +678,10 @@ void adapt_hex::Recur_Error(adapt_hex *h, double AVG, double tol)
 
 template < class ELEM >
 int Adaptive_Post_View::zoomElement(int ielem,
-				    int level,
-				    int levelmax,
-				    GMSH_Post_Plugin *plug,
-				    List_T *theList, int *counter)
+                                    int level,
+                                    int levelmax,
+                                    GMSH_Post_Plugin *plug,
+                                    List_T *theList, int *counter)
 {
   const int nbNod = ELEM::nbNod;
 
@@ -714,7 +714,7 @@ int Adaptive_Post_View::zoomElement(int ielem,
       valx(k) = (*_STvalX)(ielem, k);
       valy(k) = (*_STvalY)(ielem, k);
       valz(k) = (*_STvalZ)(ielem, k);
-    }	        
+    }           
     _Interpolate->mult(valx, resx);
     _Interpolate->mult(valy, resy);
     _Interpolate->mult(valz, resz);
@@ -771,14 +771,14 @@ int Adaptive_Post_View::zoomElement(int ielem,
       for(int k=0; k < nbNod; ++k) List_Add(theList, &p[k]->Y);
       for(int k=0; k < nbNod; ++k) List_Add(theList, &p[k]->Z);
       if(_STvalX){
-	for(int k = 0; k < nbNod; ++k){
-	  List_Add(theList, &p[k]->valx);
-	  List_Add(theList, &p[k]->valy);
-	  List_Add(theList, &p[k]->valz);
-	}
+        for(int k = 0; k < nbNod; ++k){
+          List_Add(theList, &p[k]->valx);
+          List_Add(theList, &p[k]->valy);
+          List_Add(theList, &p[k]->valz);
+        }
       }
       else{
-	for (int k = 0; k < nbNod; ++k) List_Add(theList, &p[k]->val);
+        for (int k = 0; k < nbNod; ++k) List_Add(theList, &p[k]->val);
       }
       (*counter)++;
     }
@@ -819,7 +819,7 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(PViewDataList *data, int lev
     TYP = 5;
     List_Delete(data->VT); 
     data->NbVT = 0;
-    data->VT = List_Create(nbelm * 36, nbelm , sizeof(double));	
+    data->VT = List_Create(nbelm * 36, nbelm , sizeof(double)); 
   }
   else if(data->NbST) {
     TYP = 1;
@@ -857,25 +857,25 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(PViewDataList *data, int lev
   while(1){
     if(TYP == 7)
       setAdaptiveResolutionLevel_TEMPL<adapt_edge>(level_act, level, plug, 
-						   &(data->SL), &(data->NbSL), done);
+                                                   &(data->SL), &(data->NbSL), done);
     if(TYP == 1)
       setAdaptiveResolutionLevel_TEMPL<adapt_triangle>(level_act, level, plug,
-						       &(data->ST), &(data->NbST), done);
+                                                       &(data->ST), &(data->NbST), done);
     if(TYP == 5)
       setAdaptiveResolutionLevel_TEMPL<adapt_triangle>(level_act, level, plug,
-						       &(data->VT), &(data->NbVT), done);
+                                                       &(data->VT), &(data->NbVT), done);
     if(TYP == 2)
       setAdaptiveResolutionLevel_TEMPL<adapt_quad>(level_act, level, plug,
-						   &(data->SQ), &(data->NbSQ), done);
+                                                   &(data->SQ), &(data->NbSQ), done);
     if(TYP == 6)
       setAdaptiveResolutionLevel_TEMPL<adapt_quad>(level_act, level, plug,
-						   &(data->VQ), &(data->NbVQ), done);
+                                                   &(data->VQ), &(data->NbVQ), done);
     if(TYP == 4)
       setAdaptiveResolutionLevel_TEMPL<adapt_hex>(level_act, level, plug,
-						  &(data->SH), &(data->NbSH), done);
+                                                  &(data->SH), &(data->NbSH), done);
     if(TYP == 3)
       setAdaptiveResolutionLevel_TEMPL<adapt_tet>(level_act, level, plug,
-						  &(data->SS), &(data->NbSS), done);
+                                                  &(data->SS), &(data->NbSS), done);
     int nbDone = 0;
     for(int i = 0; i < _STposX->size1(); ++i) nbDone += done[i];
     if(nbDone == _STposX->size1())  break;
@@ -893,9 +893,9 @@ void Adaptive_Post_View::setAdaptiveResolutionLevel(PViewDataList *data, int lev
 
 template<class ELEM> 
 void Adaptive_Post_View::setAdaptiveResolutionLevel_TEMPL(int level, int levelmax,
-							  GMSH_Post_Plugin *plug,
-							  List_T **myList,
-							  int *counter, int *done)
+                                                          GMSH_Post_Plugin *plug,
+                                                          List_T **myList,
+                                                          int *counter, int *done)
 {
   const int N = _coefs->size1();
   const int nbelm = _STposX->size1();
@@ -979,16 +979,16 @@ void Adaptive_Post_View::initWithLowResolution(PViewDataList *data)
     nbelm = data->NbSH;
     nbnod = 8;
   }
-	else if(data->NbSI){
-		myList = data->SI;
-		nbelm = data->NbSI;
-		nbnod = 6;
-	}
-	else if(data->NbVI){
-		myList = data->VI;
-		nbelm = data->NbVI;
-		nbnod = 6;
-	}
+        else if(data->NbSI){
+                myList = data->SI;
+                nbelm = data->NbSI;
+                nbnod = 6;
+        }
+        else if(data->NbVI){
+                myList = data->VI;
+                nbelm = data->NbVI;
+                nbnod = 6;
+        }
   else return;
 
   // if there exists a polynomial representation
@@ -1027,22 +1027,22 @@ void Adaptive_Post_View::initWithLowResolution(PViewDataList *data)
     double *val = (double*)List_Pointer_Fast(myList, i + 3 * nbnod);
     if(nbComp == 1){
       for(int j = 0; j < (nb - 3 * nbnod) / nbComp; j++){
-	(*_STval)(k, j) = val[j];
-      }      	  
+        (*_STval)(k, j) = val[j];
+      }           
     }
     else if(nbComp == 3){
       int size = (nb - 3 * nbnod) / 3;
       for(int j = 0; j < size; j++){
-	int index1 = j;
-	int index2 = j + size;
-	int index3 = j + 2 * size;
-	// adaptation of the visualization mesh bases on the norm squared of the vector 
-	(*_STval)(k, j) = (val[index1] * val[index1] + val[index2] * val[index2] + 
-			   val[index3] * val[index3]);      
-	(*_STvalX)(k, j) = val[index1];
-	(*_STvalY)(k, j) = val[index2];
-	(*_STvalZ)(k, j) = val[index3];
-      }      	  	  
+        int index1 = j;
+        int index2 = j + size;
+        int index3 = j + 2 * size;
+        // adaptation of the visualization mesh bases on the norm squared of the vector 
+        (*_STval)(k, j) = (val[index1] * val[index1] + val[index2] * val[index2] + 
+                           val[index3] * val[index3]);      
+        (*_STvalX)(k, j) = val[index1];
+        (*_STvalY)(k, j) = val[index2];
+        (*_STvalZ)(k, j) = val[index3];
+      }                   
     }
     k++;
   }
@@ -1050,10 +1050,10 @@ void Adaptive_Post_View::initWithLowResolution(PViewDataList *data)
 }
 
 Adaptive_Post_View::Adaptive_Post_View(PViewDataList *data, 
-				       List_T *_c,
+                                       List_T *_c,
                                        List_T *_pol,
-				       List_T *_cGeom,
-				       List_T *_polGeom)
+                                       List_T *_cGeom,
+                                       List_T *_polGeom)
   : tol(1.e-3), _coefsGeom(0), _eexpsGeom(0)
 {
 
@@ -1098,9 +1098,9 @@ Adaptive_Post_View::Adaptive_Post_View(PViewDataList *data,
       (*_eexpsGeom)(i, 1) = dpowv;
       (*_eexpsGeom)(i, 2) = dpoww;
       for(int j = 0; j < List_Nbr(*line); ++j) {
-	double val;
-	List_Read(*line, j, &val);
-	(*_coefsGeom)(i, j) = val;
+        double val;
+        List_Read(*line, j, &val);
+        (*_coefsGeom)(i, j) = val;
       }
     }      
   }

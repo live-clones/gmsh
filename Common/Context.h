@@ -91,7 +91,7 @@ class Context_T {
   double max[3]; // x, y and z max for the current geometry 
   double cg[3]; // "center of mass" of the current geometry
   double lc; // characteristic length for the whole problem (never
-	     // used in mesh generation ->only for geo/post)
+             // used in mesh generation ->only for geo/post)
   int db, antialiasing; // double buffer? antialiasing?
   int ortho; // orthogonal projection? 
   int draw_bbox, draw_rotation_center; // draw the bounding boxes and the rot center?

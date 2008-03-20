@@ -41,8 +41,8 @@ struct gmshFunctionSpace
     for(int i = 0; i < coefficients.size1(); i++){
       sf[i] = 0;
       for(int j = 0; j < coefficients.size2(); j++){
-	sf[i] += coefficients(i, j) * pow(u, monomials(j, 0)) * 
-	  pow(v, monomials(j, 1)) * pow(w, monomials(j, 2));
+        sf[i] += coefficients(i, j) * pow(u, monomials(j, 0)) * 
+          pow(v, monomials(j, 1)) * pow(w, monomials(j, 2));
       }
     }
   }
@@ -53,7 +53,7 @@ struct gmshFunctionSpace
     for (int i = 0; i < coefficients.size1(); i++){
       sf[i] = 0;
       for(int j = 0; j < coefficients.size2(); j++){
-	sf[i] += coefficients(i, j) * p[j][0] * p[j][1];
+        sf[i] += coefficients(i, j) * p[j][0] * p[j][1];
       }
     }
   }
@@ -64,18 +64,18 @@ struct gmshFunctionSpace
       grads[i][1] = 0;
       grads[i][2] = 0;
       for(int j = 0; j < coefficients.size2(); j++){
-	if ((monomials)(j, 0) > 0)
-	  grads[i][0] += (coefficients)(i, j) * pow(u, (monomials)(j, 0) - 1) *
-	    (monomials)(j, 0) * pow(v, (monomials)(j, 1)) * 
-	    pow(w, (monomials)(j, 2));
-	if ((monomials)(j, 1) > 0)
-	  grads[i][1] += (coefficients)(i, j) * pow(u,(monomials)(j, 0)) * 
-	    pow(v, (monomials)(j, 1) - 1) * (monomials)(j, 1) * 
-	    pow(w, (monomials)(j, 2));
-	if ((monomials)(j, 2) > 0)
-	  grads[i][2] += (coefficients)(i, j) * pow(u, (monomials)(j, 0)) *
-	    pow(v, (monomials)(j, 1)) * pow(w, (monomials)(j, 2) - 1) * 
-	    (monomials)(j, 2);
+        if ((monomials)(j, 0) > 0)
+          grads[i][0] += (coefficients)(i, j) * pow(u, (monomials)(j, 0) - 1) *
+            (monomials)(j, 0) * pow(v, (monomials)(j, 1)) * 
+            pow(w, (monomials)(j, 2));
+        if ((monomials)(j, 1) > 0)
+          grads[i][1] += (coefficients)(i, j) * pow(u,(monomials)(j, 0)) * 
+            pow(v, (monomials)(j, 1) - 1) * (monomials)(j, 1) * 
+            pow(w, (monomials)(j, 2));
+        if ((monomials)(j, 2) > 0)
+          grads[i][2] += (coefficients)(i, j) * pow(u, (monomials)(j, 0)) *
+            pow(v, (monomials)(j, 1)) * pow(w, (monomials)(j, 2) - 1) * 
+            (monomials)(j, 2);
       }
     }
   }
@@ -87,12 +87,12 @@ struct gmshFunctionSpace
       grads[i][0] = 0;
       grads[i][1] = 0;
       for(int j = 0; j < coefficients.size2(); j++){
-	if ((monomials)(j, 0)  > 0)
-	  grads[i][0] += (coefficients)(i, j) * 
-	    pow(u, (monomials)(j, 0) - 1) * (monomials)(j, 0) * p[j][1];
-	if ((monomials)(j, 1)  > 0)
-	  grads[i][1] += (coefficients)(i, j) * p[j][0] *
-	    pow(v, (monomials)(j, 1) - 1) * (monomials)(j, 1);
+        if ((monomials)(j, 0)  > 0)
+          grads[i][0] += (coefficients)(i, j) * 
+            pow(u, (monomials)(j, 0) - 1) * (monomials)(j, 0) * p[j][1];
+        if ((monomials)(j, 1)  > 0)
+          grads[i][1] += (coefficients)(i, j) * p[j][0] *
+            pow(v, (monomials)(j, 1) - 1) * (monomials)(j, 1);
       }
     }
   }

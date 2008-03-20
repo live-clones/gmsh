@@ -49,9 +49,9 @@ class uvPlot : public Fl_Window {
  public:
   uvPlot(int x, int y, int w, int h, const char *l=0);
   void set(std::vector<double> &u, std::vector<double> &v, std::vector<double> &dist, 
-	   std::vector<std::complex<double> > &f);
+           std::vector<std::complex<double> > &f);
   void get(std::vector<double> &u, std::vector<double> &v, std::vector<double> &dist,
-	   std::vector<std::complex<double> > &f)
+           std::vector<std::complex<double> > &f)
   { u = _u; v = _v; dist = _dist; f = _f; }
 };
 
@@ -63,7 +63,7 @@ class projection {
   Fl_Group *group;
   std::vector<Fl_Value_Input*> parameters;
   projection(fourierProjectionFace *f, int x, int y, int w, int h, int BB, int BH,
-	     projectionEditor *e);
+             projectionEditor *e);
 };
 
 class projectionEditor {

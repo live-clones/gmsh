@@ -1,4 +1,4 @@
-// $Id: GSHHS.cpp,v 1.3 2008-03-20 10:21:15 remacle Exp $
+// $Id: GSHHS.cpp,v 1.4 2008-03-20 11:44:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,34 +30,34 @@
 extern Context_T CTX;
 
 // ************** GSHHS ************** 
-/*	$Id: GSHHS.cpp,v 1.3 2008-03-20 10:21:15 remacle Exp $
+/*      $Id: GSHHS.cpp,v 1.4 2008-03-20 11:44:13 geuzaine Exp $
  *
- * PROGRAM:	gshhs.c
- * AUTHOR:	Paul Wessel (pwessel@hawaii.edu)
- * CREATED:	JAN. 28, 1996
- * PURPOSE:	To extract ASCII data from binary shoreline data
- *		as described in the 1996 Wessel & Smith JGR Data Analysis Note.
- * VERSION:	1.1 (Byte flipping added)
- *		1.2 18-MAY-1999:
- *		   Explicit binary open for DOS systems
- *		   POSIX.1 compliant
- *		1.3 08-NOV-1999: Released under GNU GPL
- *		1.4 05-SEPT-2000: Made a GMT supplement; FLIP no longer needed
- *		1.5 14-SEPT-2004: Updated to deal with latest GSHHS database (1.3)
+ * PROGRAM:     gshhs.c
+ * AUTHOR:      Paul Wessel (pwessel@hawaii.edu)
+ * CREATED:     JAN. 28, 1996
+ * PURPOSE:     To extract ASCII data from binary shoreline data
+ *              as described in the 1996 Wessel & Smith JGR Data Analysis Note.
+ * VERSION:     1.1 (Byte flipping added)
+ *              1.2 18-MAY-1999:
+ *                 Explicit binary open for DOS systems
+ *                 POSIX.1 compliant
+ *              1.3 08-NOV-1999: Released under GNU GPL
+ *              1.4 05-SEPT-2000: Made a GMT supplement; FLIP no longer needed
+ *              1.5 14-SEPT-2004: Updated to deal with latest GSHHS database (1.3)
  *
- *	Copyright (c) 1996-2004 by P. Wessel and W. H. F. Smith
- *	See COPYING file for copying and redistribution conditions.
+ *      Copyright (c) 1996-2004 by P. Wessel and W. H. F. Smith
+ *      See COPYING file for copying and redistribution conditions.
  *
- *	This program is free software; you can redistribute it and/or modify
- *	it under the terms of the GNU General Public License as published by
- *	the Free Software Foundation; version 2 of the License.
+ *      This program is free software; you can redistribute it and/or modify
+ *      it under the terms of the GNU General Public License as published by
+ *      the Free Software Foundation; version 2 of the License.
  *
- *	This program is distributed in the hope that it will be useful,
- *	but WITHOUT ANY WARRANTY; without even the implied warranty of
- *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *	GNU General Public License for more details.
+ *      This program is distributed in the hope that it will be useful,
+ *      but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *      GNU General Public License for more details.
  *
- *	Contact info: www.soest.hawaii.edu/pwessel */
+ *      Contact info: www.soest.hawaii.edu/pwessel */
 /* For byte swapping on little-endian systems (GSHHS is bigendian) */
 #define swabi2(i2) (((i2) >> 8) + (((i2) & 255) << 8))
 #define swabi4(i4) (((i4) >> 24) + (((i4) >> 8) & 65280) + (((i4) & 65280) << 8) + (((i4) & 255) << 24))

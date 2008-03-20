@@ -41,10 +41,10 @@ class OctreePost
   PViewDataList *_theViewDataList;
   PViewDataGModel *_theViewDataGModel;
   bool _getValue(void *in, int dim, int nbNod, int nbComp, 
-		 double P[3], int step, double *values,
-		 double *elementSize);
+                 double P[3], int step, double *values,
+                 double *elementSize);
   bool _getValue(void *in, int nbComp, double P[3], int step, 
-		 double *values, double *elementSize);
+                 double *values, double *elementSize);
  public :
   OctreePost(PView *);
   ~OctreePost();
@@ -54,11 +54,11 @@ class OctreePost
   // interpolated unless time step is set to a different value than
   // -1.
   bool searchScalar(double x, double y, double z, double *values, 
-		    int step = -1, double *size = 0);
+                    int step = -1, double *size = 0);
   bool searchVector(double x, double y, double z, double *values, 
-		    int step = -1, double *size = 0);
+                    int step = -1, double *size = 0);
   bool searchTensor(double x, double y, double z, double *values, 
-		    int step = -1, double *size = 0);
+                    int step = -1, double *size = 0);
 };
 
 #endif

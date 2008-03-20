@@ -44,7 +44,7 @@ struct bucket {
   int numElements; // number of elements contained by bucket 
   int precision;   // the level of precision of the bucket 
   ELink lhead; // list of elements in bucket, if NULL -> no elements 
-  std::list<void *> listBB; // list of elements in bucket by Bounding Box  	
+  std::list<void *> listBB; // list of elements in bucket by Bounding Box       
   struct bucket *next; // link to ragged digit extensions to bucket array 
   struct bucket *parent; // link to the parent bucket 
 };
@@ -57,7 +57,7 @@ struct global {
   int maxPrecision; // current maximum octant precision for model 
   double origin[3];   // smallest x,y, z of model's bounding box  
   double size[3];    // size in x, y, z of model bounding box 
-  void * ptrToPrevElement;	
+  void * ptrToPrevElement;      
   std::list<void *> listAllElements;
 };
 typedef struct global globalInfo;
@@ -72,23 +72,23 @@ typedef struct
 }Octree;
 
 void refineOctants(octantBucket *buckets,
-		   globalInfo *globalPara);
+                   globalInfo *globalPara);
 
 int addElement2Bucket(octantBucket *bucket, void * element, 
-		      double *minBB, double *maxBB,
-		      double *ele_centroid, globalInfo *globalPara);
+                      double *minBB, double *maxBB,
+                      double *ele_centroid, globalInfo *globalPara);
 int subdivideOctantBucket(octantBucket *bucket, globalInfo *globalPara);
 int initializeOctantBuckets(double *orig, double *size, int maxElem,
-			    octantBucket **buckets, globalInfo **globalPara);
+                            octantBucket **buckets, globalInfo **globalPara);
 int checkElementInBucket(octantBucket *bucket, void * element); 
 octantBucket* findElementBucket(octantBucket *buckets, double *pt);
 void * searchElement(octantBucket *buckets, double *pt, 
-		     globalInfo *globalPara, BBFunction BBElement, 
-		     InEleFunction xyzInElement);
+                     globalInfo *globalPara, BBFunction BBElement, 
+                     InEleFunction xyzInElement);
 int xyzInElementBB(double *xyz, void *region, BBFunction BBElement);
 void insertOneBB(void *, double *, double *, octantBucket *);
 void * searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_globalPara,
-			 BBFunction BBElement, InEleFunction xyzInElement, 
-			 std::list<void *> *_elements);
+                         BBFunction BBElement, InEleFunction xyzInElement, 
+                         std::list<void *> *_elements);
 
 #endif

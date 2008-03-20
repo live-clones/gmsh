@@ -52,12 +52,12 @@ class orientMeshGFace {
 // Compute edge loops of the face, all_mvertices are the vertices of
 // the
 void computeEdgeLoops(const GFace *gf,
-		      std::vector<MVertex*> &all_mvertices,
-		      std::vector<int> &indices);
+                      std::vector<MVertex*> &all_mvertices,
+                      std::vector<int> &indices);
 
 int MeshTransfiniteSurface(GFace *gf);
 int MeshExtrudedSurface(GFace *gf, 
-			std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges=0);
+                        std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges=0);
 
 void fourthPoint (double *p1, double *p2, double *p3, double *p4);
 #endif

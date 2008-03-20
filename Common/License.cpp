@@ -1,4 +1,4 @@
-// $Id: License.cpp,v 1.12 2008-02-17 08:47:56 geuzaine Exp $
+// $Id: License.cpp,v 1.13 2008-03-20 11:44:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -44,15 +44,15 @@ void print_license(void)
   Msg(DIRECT, " ");
   Msg(DIRECT, "End of exception.");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "		    GNU GENERAL PUBLIC LICENSE");
-  Msg(DIRECT, "		       Version 2, June 1991");
+  Msg(DIRECT, "             GNU GENERAL PUBLIC LICENSE");
+  Msg(DIRECT, "                Version 2, June 1991");
   Msg(DIRECT, " ");
   Msg(DIRECT, " Copyright (C) 1989, 1991 Free Software Foundation, Inc.");
   Msg(DIRECT, " 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA");
   Msg(DIRECT, " Everyone is permitted to copy and distribute verbatim copies");
   Msg(DIRECT, " of this license document, but changing it is not allowed.");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "			    Preamble");
+  Msg(DIRECT, "                     Preamble");
   Msg(DIRECT, " ");
   Msg(DIRECT, "  The licenses for most software are designed to take away your");
   Msg(DIRECT, "freedom to share and change it.  By contrast, the GNU General Public");
@@ -102,7 +102,7 @@ void print_license(void)
   Msg(DIRECT, "  The precise terms and conditions for copying, distribution and");
   Msg(DIRECT, "modification follow.");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "		    GNU GENERAL PUBLIC LICENSE");
+  Msg(DIRECT, "             GNU GENERAL PUBLIC LICENSE");
   Msg(DIRECT, "   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION");
   Msg(DIRECT, " ");
   Msg(DIRECT, "  0. This License applies to any program or other work which contains");
@@ -301,7 +301,7 @@ void print_license(void)
   Msg(DIRECT, "of preserving the free status of all derivatives of our free software and");
   Msg(DIRECT, "of promoting the sharing and reuse of software generally.");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "			    NO WARRANTY");
+  Msg(DIRECT, "                     NO WARRANTY");
   Msg(DIRECT, " ");
   Msg(DIRECT, "  11. BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY");
   Msg(DIRECT, "FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN");
@@ -323,9 +323,9 @@ void print_license(void)
   Msg(DIRECT, "PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE");
   Msg(DIRECT, "POSSIBILITY OF SUCH DAMAGES.");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "		     END OF TERMS AND CONDITIONS");
+  Msg(DIRECT, "              END OF TERMS AND CONDITIONS");
   Msg(DIRECT, " ");
-  Msg(DIRECT, "	    How to Apply These Terms to Your New Programs");
+  Msg(DIRECT, "     How to Apply These Terms to Your New Programs");
   Msg(DIRECT, " ");
   Msg(DIRECT, "  If you develop a new program, and you want it to be of the greatest");
   Msg(DIRECT, "possible use to the public, the best way to achieve this is to make it");
