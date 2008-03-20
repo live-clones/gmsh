@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.22 2008-03-20 10:21:15 remacle Exp $
+// $Id: Field.cpp,v 1.23 2008-03-20 14:55:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -91,7 +91,7 @@ FieldOptionInt(int &_val, bool * _status = NULL):FieldOption(_status),
   void numerical_value(double v)
   {
     modified();
-    val = v;
+    val = (int)v;
   };
   void get_text_representation(std::string & v_str)
   {
@@ -134,66 +134,61 @@ FieldOptionList(std::list < int >&_val, bool * _status = NULL):FieldOption(_stat
     v_str = sstream.str();
   }
 };
-class FieldOptionString:public FieldOption
-{
-public:
-  std::string & val;
+
+class FieldOptionString : public FieldOption {
+ public:
+  std::string &val;
   virtual FieldOptionType get_type()
   {
     return FIELD_OPTION_STRING;
-  };
-FieldOptionString(std::string & _val, bool * _status = NULL):FieldOption(_status),
-    val(_val) {
-  };
-  std::string & string() {
+  }
+  FieldOptionString(std::string &_val, bool *_status = NULL) 
+    : FieldOption(_status), val(_val) 
+  {
+  }
+  std::string &string()
+  {
     modified();
     return val;
   }
-  const std::string & string() const
+  const std::string &string() const
   {
     return val;
   }
-  void get_text_representation(std::string & v_str)
+  void get_text_representation(std::string &v_str)
   {
     std::ostringstream sstream;
     sstream << "\"" << val << "\"";
     v_str = sstream.str();
   }
 };
-class FieldOptionBool:public FieldOption
-{
-public:
-  bool & val;
+
+class FieldOptionBool : public FieldOption {
+ public:
+  bool &val;
   FieldOptionType get_type()
   {
     return FIELD_OPTION_BOOL;
-  };
-FieldOptionBool(bool & _val, bool * _status = NULL):FieldOption(_status),
-    val(_val) {
-  };
+  }
+  FieldOptionBool(bool &_val, bool *_status = NULL) 
+    : FieldOption(_status), val(_val)
+  {
+  }
   double numerical_value() const
   {
     return val;
-  };
+  }
   void numerical_value(double v)
   {
     modified();
     val = v;
-  };
+  }
   void get_text_representation(std::string & v_str)
   {
     std::ostringstream sstream;
     sstream << val;
     v_str = sstream.str();
   }
-};
-class FieldOptionPath:public FieldOptionString
-{
-public:
-  FieldOptionType get_type()
-  {
-    return FIELD_OPTION_PATH;
-  };
 };
 
 void FieldManager::reset()
@@ -252,6 +247,7 @@ int FieldManager::max_id()
   else
     return 0;
 }
+
 void FieldManager::delete_field(int id)
 {
   iterator it = find(id);
@@ -264,14 +260,14 @@ void FieldManager::delete_field(int id)
 }
 
 // StructuredField
-class StructuredField:public Field
-{
+class StructuredField : public Field{
   double o[3], d[3];
   int n[3];
   double *data;
   bool error_status;
   std::string file_name;
-public:StructuredField()
+ public:
+  StructuredField()
   {
     options["FileName"] = new FieldOptionString(file_name, &update_needed);
     data = NULL;
@@ -280,9 +276,9 @@ public:StructuredField()
   {
     return "Structured";
   }
-  virtual ~ StructuredField() {
-    if(data)
-      delete[]data;
+  virtual ~StructuredField() 
+  {
+    if(data) delete[]data;
   }
   double operator() (double x, double y, double z)
   {
@@ -344,10 +340,9 @@ public:StructuredField()
   }
 };
 
-class LonLatField:public Field
-{
+class LonLatField : public Field{
   int field_id;
-public:
+ public:
   LonLatField()
   {
     field_id = 1;
@@ -359,13 +354,8 @@ public:
   }
   double operator() (double x, double y, double z)
   {
-    return (*GModel::current()->getFields()->get(field_id)) (atan2(x, y),
-                                                             asin(z /
-                                                                  sqrt(x * x +
-                                                                       y * y +
-                                                                       z *
-                                                                       z)),
-                                                             0);
+    return (*GModel::current()->getFields()->get(field_id)) 
+      (atan2(x, y), asin(z / sqrt(x * x + y * y + z * z)), 0);
   }
   FieldDialogBox *&dialog_box()
   {
@@ -374,10 +364,9 @@ public:
   }
 };
 
-class BoxField:public Field
-{
+class BoxField : public Field {
   double v_in, v_out, x_min, x_max, y_min, y_max, z_min, z_max;
-public:
+ public:
   BoxField()
   {
     v_in = v_out = x_min = x_max = y_min = y_max = z_min = z_max = 0;
@@ -406,12 +395,10 @@ public:
   }
 };
 
-
-class ThresholdField:public Field
-{
+class ThresholdField : public Field {
   int iField;
   double dmin, dmax, lcmin, lcmax;
-public:
+ public:
   const char *get_name()
   {
     return "Threshold";
@@ -444,12 +431,10 @@ public:
   }
 };
 
-
-class GradientField:public Field
-{
+class GradientField : public Field {
   int iField, kind;
   double delta;
-public:
+ public:
   const char *get_name()
   {
     return "Gradient";
@@ -499,8 +484,7 @@ public:
 };
 
 #if defined(HAVE_MATH_EVAL)
-class MathEvalExpression
-{
+class MathEvalExpression {
   bool error_status;
   std::list < Field * >*list;
   int nvalues;
@@ -510,7 +494,7 @@ class MathEvalExpression
   int *evaluators_id;
   std::string function;
   char *c_str_function;
-public:
+ public:
   double evaluate(double x, double y, double z)
   {
     if(error_status)
@@ -588,11 +572,10 @@ public:
   }
 };
 
-class MathEvalField:public Field
-{
+class MathEvalField : public Field {
   MathEvalExpression expr;
   std::string f;
-public:
+ public:
   MathEvalField()
   {
     options["F"] = new FieldOptionString(f, &update_needed);
@@ -617,12 +600,12 @@ public:
     return "MathEval";
   }
 };
-class ParametricField:public Field
-{
+
+class ParametricField : public Field {
   MathEvalExpression expr[3];
   std::string f[3];
   int ifield;
-public:
+ public:
   ParametricField()
   {
     options["IField"] = new FieldOptionInt(ifield);
@@ -640,14 +623,9 @@ public:
       }
       update_needed = false;
     }
-    return (*GModel::current()->getFields()->get(ifield)) (expr[0].
-                                                           evaluate(x, y, z),
-                                                           expr[1].evaluate(x,
-                                                                            y,
-                                                                            z),
-                                                           expr[2].evaluate(x,
-                                                                            y,
-                                                                            z));
+    return (*GModel::current()->getFields()->get(ifield)) 
+      (expr[0].evaluate(x, y, z), expr[1].evaluate(x, y, z),
+       expr[2].evaluate(x, y, z));
   }
   FieldDialogBox *&dialog_box()
   {
@@ -661,17 +639,15 @@ public:
 };
 #endif
 
-class PostViewField:public Field
-{
+class PostViewField : public Field {
   OctreePost *octree;
-public:int view_index;
+ public:int view_index;
   double operator() (double x, double y, double z)
   {
     // FIXME: should test unique view num instead, but that would be slower
     if(view_index < 0 || view_index >= (int)PView::list.size())
       return MAX_LC;
-    if(update_needed)
-    {
+    if(update_needed){
       if(octree)
         delete octree;
       octree = new OctreePost(PView::list[view_index]);
@@ -702,18 +678,20 @@ public:int view_index;
          }
        */
     }
-    //if(l <= 0) return MAX_LC;
+    if(l <= 0) return MAX_LC;
     return l;
   }
   const char *get_name()
   {
     return "PostView";
   }
-  PostViewField() {
+  PostViewField() 
+  {
     octree = NULL;
     options["IView"] = new FieldOptionInt(view_index, &update_needed);
   }
-  ~PostViewField() {
+  ~PostViewField() 
+  {
     if(octree)
       delete octree;
   }
@@ -724,10 +702,9 @@ public:int view_index;
   }
 };
 
-class MinField:public Field
-{
+class MinField : public Field {
   std::list < int >idlist;
-public:
+ public:
   MinField()
   {
     options["FieldsList"] = new FieldOptionList(idlist, &update_needed);
@@ -754,10 +731,9 @@ public:
   }
 };
 
-class MaxField:public Field
-{
-  std::list < int >idlist;
-public:
+class MaxField : public Field {
+  std::list<int> idlist;
+ public:
   MaxField()
   {
     options["FieldsList"] = new FieldOptionList(idlist, &update_needed);
@@ -785,8 +761,7 @@ public:
 };
 
 #ifdef HAVE_ANN
-class AttractorField:public Field
-{
+class AttractorField : public Field {
   ANNkd_tree *kdtree;
   ANNpointArray zeronodes;
   ANNidxArray index;
@@ -794,7 +769,8 @@ class AttractorField:public Field
   std::list < int >nodes_id;
   std::list < int >edges_id;
   int n_nodes_by_edge;
-public:AttractorField():kdtree(0), zeronodes(0)
+ public:
+  AttractorField() : kdtree(0), zeronodes(0)
   {
     index = new ANNidx[1];
     dist = new ANNdist[1];
