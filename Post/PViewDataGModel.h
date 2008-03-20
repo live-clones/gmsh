@@ -134,6 +134,9 @@ class PViewDataGModel : public PViewData {
   double getMin(int step=-1);
   double getMax(int step=-1);
   SBoundingBox3d getBoundingBox(int step=-1);
+  int getNumScalars(int step=-1);
+  int getNumVectors(int step=-1);
+  int getNumTensors(int step=-1);
   int getNumEntities(int step=-1);
   int getNumElements(int step=-1, int ent=-1);
   int getDimension(int step, int ent, int ele);
@@ -151,8 +154,10 @@ class PViewDataGModel : public PViewData {
   // create old-style list-based dataset from this one
   //PViewDataList *convertToPViewDataList();
 
-  // acces GModel entities directly
+  // direct access to GModel entities and direct access to value by
+  // dataIndex
   GEntity *getEntity(int step, int ent);
+  bool getValue(int step, int dataIndex, int comp, double &val);
 
   // I/O routines
   bool readMSH(std::string fileName, int fileIndex, FILE *fp, bool binary, 

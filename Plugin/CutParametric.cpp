@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.25 2008-02-23 15:30:10 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.26 2008-03-20 10:52:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -297,12 +297,11 @@ PView *GMSH_CutParametricPlugin::execute(PView *v)
   PView *v1 = getView(iView, v);
   if(!v1) return v;
 
-  PViewDataList *data1 = getDataList(v1);
-  if(!data1) return v;
+  if(!fillXYZ()) return v;
 
-  if(!fillXYZ())
-    return v;
+  PViewData *data1 = v1->getData();
 
+  int numSteps = data1->getNumTimeSteps();
   int nbU = (int)CutParametricOptions_Number[2].def;
   int connect = (int)CutParametricOptions_Number[3].def;
   if(nbU < 2) connect = 0;
@@ -310,47 +309,39 @@ PView *GMSH_CutParametricPlugin::execute(PView *v)
   OctreePost o(v1);
 
   PView *v2 = new PView(true);
-
   PViewDataList *data2 = getDataList(v2);
-  if(!data2) return v;
 
-  double *res0 = new double[9 * data1->getNumTimeSteps()];
-  double *res1 = new double[9 * data1->getNumTimeSteps()];
+  double *res0 = new double[9 * numSteps];
+  double *res1 = new double[9 * numSteps];
   double x0 = 0., y0 = 0., z0 = 0., x1 = 0., y1 = 0., z1 = 0.;
 
-  for(int k = 0; k < 9 * data1->getNumTimeSteps(); ++k) res0[k] = res1[k] = 0.;
+  for(int k = 0; k < 9 * numSteps; ++k) res0[k] = res1[k] = 0.;
 
   for(int i = 0; i < nbU; ++i){
     if(i && connect){
       x0 = x1;
       y0 = y1;
       z0 = z1;
-      for(int k = 0; k < 9 * data1->getNumTimeSteps(); ++k) res0[k] = res1[k];
+      for(int k = 0; k < 9 * numSteps; ++k) res0[k] = res1[k];
     }
 
     x1 = x[i];
     y1 = y[i];
     z1 = z[i];
 
-    if(data1->NbST || data1->NbSQ || data1->NbSS || 
-       data1->NbSH || data1->NbSI || data1->NbSY){
+    if(data1->getNumScalars()){
       o.searchScalar(x1, y1, z1, res1);
-      addInView(connect, i, 1, data1->getNumTimeSteps(), 
-		x0, y0, z0, res0, x1, y1, z1, res1,
+      addInView(connect, i, 1, numSteps, x0, y0, z0, res0, x1, y1, z1, res1,
 		data2->SP, &data2->NbSP, data2->SL, &data2->NbSL);
     }
-    if(data1->NbVT || data1->NbVQ || data1->NbVS || 
-       data1->NbVH || data1->NbVI || data1->NbVY){
+    if(data1->getNumVectors()){
       o.searchVector(x1, y1, z1, res1);
-      addInView(connect, i, 3, data1->getNumTimeSteps(), 
-		x0, y0, z0, res0, x1, y1, z1, res1,
+      addInView(connect, i, 3, numSteps, x0, y0, z0, res0, x1, y1, z1, res1,
 		data2->VP, &data2->NbVP, data2->VL, &data2->NbVL);
     }
-    if(data1->NbTT || data1->NbTQ || data1->NbTS ||
-       data1->NbTH || data1->NbTI || data1->NbTY){
+    if(data1->getNumTensors()){
       o.searchTensor(x1, y1, z1, res1);
-      addInView(connect, i, 9, data1->getNumTimeSteps(),
-		x0, y0, z0, res0, x1, y1, z1, res1,
+      addInView(connect, i, 9, numSteps, x0, y0, z0, res0, x1, y1, z1, res1,
 		data2->TP, &data2->NbTP, data2->TL, &data2->NbTL);
     }
   }

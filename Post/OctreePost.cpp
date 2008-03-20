@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.5 2008-03-20 07:34:43 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.6 2008-03-20 10:52:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -406,7 +406,7 @@ bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp,
   return true;
 } 
 
-bool OctreePost::_getValue(void *in, int nbComp, double P[3], int step, double *values,
+bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep, double *values,
 			   double *elementSize)
 {
   if(!in) return false;
@@ -414,8 +414,6 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int step, double *
   if(_theViewDataGModel->getNumComponents(0, 0, 0) != nbComp) return false;
 
   MElement *e = (MElement*)in;
-
-  if(e) printf("found ele %d!!\n", e->getNum());
 
   int dataIndex[8];
   for(int i = 0; i < e->getNumVertices(); i++){
@@ -425,20 +423,27 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int step, double *
   
   double U[3];
   e->xyz2uvw(P, U);
-  /*
-  if(step < 0){
-    for(int i = 0; i < _theViewDataGModel->getNumTimeSteps(); i++)
-      for(int j = 0; j < nbComp; j++)
-	values[nbComp * i + j] = e->interpolate(&V[nbNod * nbComp * i + j], 
-						U[0], U[1], U[2], nbComp);
-  }
-  else{
-    for(int j = 0; j < nbComp; j++)
-      values[j] = e->interpolate(&V[nbNod * nbComp * step + j], 
-				 U[0], U[1], U[2], nbComp);
-  }
-  */
 
+  double nodeval[8 * 9];
+  for(int step = 0; step < _theViewDataGModel->getNumTimeSteps(); step++){
+    if(timestep < 0 || step == timestep){
+      for(int nod = 0; nod < e->getNumVertices(); nod++){
+	for(int comp = 0; comp < nbComp; comp++){
+	  if(!_theViewDataGModel->getValue(step, dataIndex[nod], comp, 
+					   nodeval[nod*nbComp+comp]))
+	    return false;
+	}
+      }
+      for(int comp = 0; comp < nbComp; comp++){
+	double val = e->interpolate(nodeval, U[0], U[1], U[2], nbComp);
+	if(timestep < 0)
+	  values[nbComp * step + comp] = val;
+	else
+	  values[comp] = val;
+      }
+    }
+  }
+  
   if(elementSize) *elementSize = e->maxEdge();
   return true;
 } 

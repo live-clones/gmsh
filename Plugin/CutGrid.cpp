@@ -1,4 +1,4 @@
-// $Id: CutGrid.cpp,v 1.24 2008-02-17 08:48:06 geuzaine Exp $
+// $Id: CutGrid.cpp,v 1.25 2008-03-20 10:52:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -246,7 +246,7 @@ void GMSH_CutGridPlugin::getPoint(int iU, int iV, double *X)
     v  * (CutGridOptions_Number[8].def-CutGridOptions_Number[2].def) ;
 }
 
-void GMSH_CutGridPlugin::addInView(PViewDataList *data, int connect, int nbcomp, 
+void GMSH_CutGridPlugin::addInView(int numsteps, int connect, int nbcomp, 
 				   double ***pnts, double ***vals, 
 				   List_T *P, int *nP, 
 				   List_T *L, int *nL, 
@@ -260,7 +260,7 @@ void GMSH_CutGridPlugin::addInView(PViewDataList *data, int connect, int nbcomp,
 	List_Add(P, &pnts[i][j][1]);
 	List_Add(P, &pnts[i][j][2]);
 	(*nP)++;
-	for(int k = 0; k < data->getNumTimeSteps(); ++k){
+	for(int k = 0; k < numsteps; ++k){
 	  for(int l = 0; l < nbcomp; ++l)
 	    List_Add(P, &vals[i][j][nbcomp*k+l]);
 	}
@@ -276,7 +276,7 @@ void GMSH_CutGridPlugin::addInView(PViewDataList *data, int connect, int nbcomp,
 	List_Add(L, &pnts[0][i][1]); List_Add(L, &pnts[0][i+1][1]);
 	List_Add(L, &pnts[0][i][2]); List_Add(L, &pnts[0][i+1][2]);
 	(*nL)++;
-	for(int k = 0; k < data->getNumTimeSteps(); ++k){
+	for(int k = 0; k < numsteps; ++k){
 	  for(int l = 0; l < nbcomp; ++l)
 	    List_Add(L, &vals[0][i  ][nbcomp*k+l]);
 	  for(int l = 0; l < nbcomp; ++l)
@@ -290,7 +290,7 @@ void GMSH_CutGridPlugin::addInView(PViewDataList *data, int connect, int nbcomp,
 	List_Add(L, &pnts[i][0][1]); List_Add(L, &pnts[i+1][0][1]);
 	List_Add(L, &pnts[i][0][2]); List_Add(L, &pnts[i+1][0][2]);
 	(*nL)++;
-	for(int k = 0; k < data->getNumTimeSteps(); ++k){
+	for(int k = 0; k < numsteps; ++k){
 	  for(int l = 0; l < nbcomp; ++l)
 	    List_Add(L, &vals[i  ][0][nbcomp*k+l]);
 	  for(int l = 0; l < nbcomp; ++l)
@@ -308,7 +308,7 @@ void GMSH_CutGridPlugin::addInView(PViewDataList *data, int connect, int nbcomp,
 	  List_Add(Q, &pnts[i  ][j  ][2]); List_Add(Q, &pnts[i+1][j  ][2]);
 	  List_Add(Q, &pnts[i+1][j+1][2]); List_Add(Q, &pnts[i  ][j+1][2]);
 	  (*nQ)++;
-	  for(int k = 0; k < data->getNumTimeSteps(); ++k){
+	  for(int k = 0; k < numsteps; ++k){
 	    for(int l = 0; l < nbcomp; ++l)
 	      List_Add(Q, &vals[i  ][j  ][nbcomp*k+l]);
 	    for(int l = 0; l < nbcomp; ++l)
@@ -329,29 +329,18 @@ PView *GMSH_CutGridPlugin::GenerateView(PView *v1, int connect)
   if(getNbU() <= 0 || getNbV() <= 0)
     return v1;
 
-  PViewDataList *data1 = getDataList(v1);
-  if(!data1) return v1;
+  PViewData *data1 = v1->getData();
 
   PView *v2 = new PView(true);
-
   PViewDataList *data2 = getDataList(v2);
-  if(!data2) return v1;
  
   OctreePost o(v1);
 
-  int nbs = 0, nbv = 0, nbt = 0;
-
-  if(data1->NbST || data1->NbSQ || data1->NbSS || 
-     data1->NbSH || data1->NbSI || data1->NbSY)
-    nbs = 1;
-  if(data1->NbVT || data1->NbVQ || data1->NbVS || 
-     data1->NbVH || data1->NbVI || data1->NbVY)
-    nbv = 1;
-  if(data1->NbTT || data1->NbTQ || data1->NbTS || 
-     data1->NbTH || data1->NbTI || data1->NbTY)
-    nbt = 1;
-
+  int nbs = data1->getNumScalars();
+  int nbv = data1->getNumVectors();
+  int nbt = data1->getNumTensors();
   int maxcomp = nbt ? 9 : (nbv ? 3 : 1);
+  int numsteps = data1->getNumTimeSteps();
 
   double ***pnts = new double** [getNbU()];
   double ***vals = new double** [getNbU()];
@@ -360,7 +349,7 @@ PView *GMSH_CutGridPlugin::GenerateView(PView *v1, int connect)
     vals[i] = new double* [getNbV()];
     for(int j = 0; j < getNbV(); j++){
       pnts[i][j] = new double[3];
-      vals[i][j] = new double[maxcomp * data1->getNumTimeSteps()];
+      vals[i][j] = new double[maxcomp * numsteps];
       getPoint(i, j, pnts[i][j]);
     }
   }
@@ -369,24 +358,24 @@ PView *GMSH_CutGridPlugin::GenerateView(PView *v1, int connect)
     for(int i = 0; i < getNbU(); i++)
       for(int j = 0; j < getNbV(); j++)
 	o.searchScalar(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], vals[i][j]);
-    addInView(data1, connect, 1, pnts, vals, data2->SP, &data2->NbSP, data2->SL, 
-	      &data2->NbSL, data2->SQ, &data2->NbSQ);
+    addInView(numsteps, connect, 1, pnts, vals, data2->SP, &data2->NbSP, 
+	      data2->SL, &data2->NbSL, data2->SQ, &data2->NbSQ);
   }
 
   if(nbv){
     for(int i = 0; i < getNbU(); i++)
       for(int j = 0; j < getNbV(); j++)
 	o.searchVector(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], vals[i][j]);
-    addInView(data1, connect, 3, pnts, vals, data2->VP, &data2->NbVP, data2->VL, 
-	      &data2->NbVL, data2->VQ, &data2->NbVQ);
+    addInView(numsteps, connect, 3, pnts, vals, data2->VP, &data2->NbVP,
+	      data2->VL, &data2->NbVL, data2->VQ, &data2->NbVQ);
   }
 
   if(nbt){
     for(int i = 0; i < getNbU(); i++)
       for(int j = 0; j < getNbV(); j++)
 	o.searchTensor(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], vals[i][j]);
-    addInView(data1, connect, 9, pnts, vals, data2->TP, &data2->NbTP, data2->TL,
-	      &data2->NbTL, data2->TQ, &data2->NbTQ);
+    addInView(numsteps, connect, 9, pnts, vals, data2->TP, &data2->NbTP, 
+	      data2->TL, &data2->NbTL, data2->TQ, &data2->NbTQ);
   }
 
   for(int i = 0; i < getNbU(); i++){
@@ -399,7 +388,6 @@ PView *GMSH_CutGridPlugin::GenerateView(PView *v1, int connect)
   }
   delete [] pnts;
   delete [] vals;
-
 
   data2->setName(data1->getName() + "_CutGrid");
   data2->setFileName(data1->getName() + "_CutGrid.pos");

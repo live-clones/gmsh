@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.31 2008-03-20 07:34:43 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.32 2008-03-20 10:52:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -77,6 +77,24 @@ SBoundingBox3d PViewDataGModel::getBoundingBox(int step)
     return tmp;
   }
   return _steps[step]->getBoundingBox();
+}
+
+int PViewDataGModel::getNumScalars(int step)
+{
+  if(_steps[0]->getNumComp() == 1) return getNumElements(0);
+  return 0;
+}
+
+int PViewDataGModel::getNumVectors(int step)
+{
+  if(_steps[0]->getNumComp() == 3) return getNumElements(0);
+  return 0;
+}
+
+int PViewDataGModel::getNumTensors(int step)
+{
+  if(_steps[0]->getNumComp() == 9) return getNumElements(0);
+  return 0;
 }
 
 int PViewDataGModel::getNumEntities(int step)
@@ -183,4 +201,11 @@ bool PViewDataGModel::hasMultipleMeshes()
 GEntity *PViewDataGModel::getEntity(int step, int ent)
 {
   return _steps[step]->getEntity(ent);
+}
+
+bool PViewDataGModel::getValue(int step, int dataIndex, int comp, double &val)
+{
+  if(dataIndex < 0 || dataIndex >= (int)_steps[step]->getNumData()) return false;
+  val = _steps[step]->getData(dataIndex)[comp];
+  return true;
 }

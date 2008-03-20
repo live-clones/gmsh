@@ -31,7 +31,7 @@ class GMSH_CutGridPlugin : public GMSH_Post_Plugin
 {
   static double callback(int num, int action, double value, double *opt,
 			 double step, double min, double max);
-  void addInView(PViewDataList *data, int connect, int nbcomp, 
+  void addInView(int numsteps, int connect, int nbcomp, 
 		 double ***pnts, double ***vals, 
 		 List_T *P, int *nP, 
 		 List_T *L, int *nL, 
