@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.57 2008-03-20 11:44:08 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.58 2008-03-21 22:22:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -31,15 +31,14 @@
 
 extern Context_T CTX;
 
-typedef struct{
+typedef struct {
   int Num;
   double t, lc, p;
-}IntPoint;
+} IntPoint;
 
-struct xi2lc
-{
+struct xi2lc {
   double xi, lc;
-  xi2lc(const double &_xi,const double _lc)
+  xi2lc(const double &_xi, const double _lc)
     : xi(_xi), lc(_lc)
   { 
   }
@@ -282,7 +281,6 @@ void meshGEdge::operator() (GEdge *ge)
   if(ge->geomType() == GEntity::DiscreteCurve) return;
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
 
-
   deMeshGEdge dem;
   dem(ge);
 
@@ -299,22 +297,24 @@ void meshGEdge::operator() (GEdge *ge)
   double t_end = bounds.high();
   
   // first compute the length of the curve by integrating one
-        SPoint3 p1=ge->model()->bounds().min();
-        SPoint3 p2=ge->model()->bounds().max();
-  double length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-8*p1.distance(p2));
+  SPoint3 p1 = ge->model()->bounds().min();
+  SPoint3 p2 = ge->model()->bounds().max();
+  double length = Integration(ge, t_begin, t_end, F_One, Points, 
+			      1.e-8 * p1.distance(p2));
   ge->setLength(length);
-  // Send a messsage to the GMSH environment
 
-  if (length == 0.0)
-    Msg(DEBUG2,"Curve %d has a zero length", ge->tag());
-
+  if(length == 0.0)
+    Msg(DEBUG2, "Curve %d has a zero length", ge->tag());
+  
   List_Reset(Points);
-    
 
   // Integrate detJ/lc du 
   double a;
   int N;
-  if (ge->degenerate(0)){N=1;a=0.0;}
+  if (ge->degenerate(0)){
+    a = 0.;
+    N = 1;
+  }
   else if(ge->meshAttributes.Method == TRANSFINI){
     a = Integration(ge, t_begin, t_end, F_Transfinite, Points, 1.e-8);
     N = ge->meshAttributes.nbPointsTransfinite;
@@ -324,9 +324,9 @@ void meshGEdge::operator() (GEdge *ge)
       Integration(ge, t_begin, t_end, F_Lc_usingInterpLcBis, lcPoints, 
                   CTX.mesh.lc_integration_precision);
       buildInterpLc(lcPoints);
-      //      printInterpLc("toto1.dat");
-      //      smoothInterpLc(20);
-      //      printInterpLc("toto2.dat");
+      // printInterpLc("toto1.dat");
+      // smoothInterpLc(20);
+      // printInterpLc("toto2.dat");
       a = Integration(ge, t_begin, t_end, F_Lc_usingInterpLc, Points, 1.e-8);
     }
     else{
@@ -334,7 +334,7 @@ void meshGEdge::operator() (GEdge *ge)
     }
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
-
+  
   Msg(INFO, "Meshing curve %d (%s)", ge->tag(),ge->getTypeString().c_str());
 
   // if the curve is periodic and if the begin vertex is identical to
@@ -375,7 +375,7 @@ void meshGEdge::operator() (GEdge *ge)
         double lc  = d/(P1.lc + dlc / dp * (d - P1.p));
         GPoint V = ge->point(t);
         ge->mesh_vertices[NUMP - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t, lc);
-        //      printf("lc = %12.5E %12.5E \n",lc,P1.lc,P2.lc);
+        // printf("lc = %12.5E %12.5E \n",lc,P1.lc,P2.lc);
         NUMP++;
       }
       else {
