@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.305 2008-03-19 17:26:53 geuzaine Exp $
+// $Id: Gmsh.y,v 1.306 2008-03-21 07:21:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -974,8 +974,8 @@ Affectation :
 	if(option){
 	  try { option->numerical_value($8); }
 	  catch(...){
-	    yymsg(GERROR, "Cannot assign a numerical value to  option '%s' in field %i of type '%s'",
-		  $6, (int)$3, field->get_name());
+	    yymsg(GERROR, "Cannot assign a numerical value to option '%s' "
+		  "in field %i of type '%s'", $6, (int)$3, field->get_name());
 	  }
 	}
 	else
@@ -993,8 +993,8 @@ Affectation :
 	if(option){
 	  try { option->string() = $8; }
 	  catch (...){
-	    yymsg(GERROR, "Cannot assign a string value to  option '%s' in field %i of type '%s'",
-		  $6, (int)$3, field->get_name());
+	    yymsg(GERROR, "Cannot assign a string value to  option '%s' "
+		  "in field %i of type '%s'", $6, (int)$3, field->get_name());
 	  }
 	}
 	else 
@@ -1751,9 +1751,10 @@ Delete :
       }
       List_Delete($3);
     }
-	| tDelete tField '[' FExpr ']' tEND{
-	  GModel::current()->getFields()->delete_field((int)$4);
-	}
+  | tDelete tField '[' FExpr ']' tEND
+    {
+      GModel::current()->getFields()->delete_field((int)$4);
+    }
   | tDelete tSTRING '[' FExpr ']' tEND
     {
       if(!strcmp($2, "View")){

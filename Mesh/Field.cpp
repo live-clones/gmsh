@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.23 2008-03-20 14:55:34 geuzaine Exp $
+// $Id: Field.cpp,v 1.24 2008-03-21 07:21:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -340,7 +340,7 @@ class StructuredField : public Field{
   }
 };
 
-class LonLatField : public Field{
+class LonLatField : public Field {
   int field_id;
  public:
   LonLatField()
@@ -439,7 +439,7 @@ class GradientField : public Field {
   {
     return "Gradient";
   }
-  GradientField():iField(0), kind(3), delta(CTX.lc / 1e4)
+  GradientField() : iField(0), kind(3), delta(CTX.lc / 1e4)
   {
     options["IField"] = new FieldOptionInt(iField);
     options["Kind"] = new FieldOptionInt(kind);

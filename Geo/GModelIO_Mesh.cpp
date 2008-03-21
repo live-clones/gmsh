@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.44 2008-03-20 11:44:05 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.45 2008-03-21 07:21:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -465,7 +465,7 @@ int GModel::readMSH(const std::string &name)
 
     do {
       if(!fgets(str, sizeof(str), fp) || feof(fp))
-        Msg(GERROR, "Prematured end of mesh file");
+        break;
     } while(str[0] != '$');
   }
 
@@ -730,6 +730,38 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   else{
     fprintf(fp, "$ENDELM\n");
   }
+
+#if 0 // test NodeData
+  std::vector<MVertex*> allVertices;
+  for(viter it = firstVertex(); it != lastVertex(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
+      allVertices.push_back((*it)->mesh_vertices[i]);
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+      allVertices.push_back((*it)->mesh_vertices[i]);
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
+      allVertices.push_back((*it)->mesh_vertices[i]);
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
+      allVertices.push_back((*it)->mesh_vertices[i]);
+  fprintf(fp, "$NodeData\n");
+  fprintf(fp, "\"test\"\n");
+  fprintf(fp, "0 0 0 0 1 %d\n", allVertices.size());
+  for(unsigned int i = 0; i < allVertices.size(); i++){
+    int tag = allVertices[i]->getNum();
+    double val = allVertices[i]->x() * allVertices[i]->y();
+    if(binary){
+      fwrite(&tag, sizeof(int), 1, fp);
+      fwrite(&val, sizeof(double), 1, fp);
+    }
+    else{
+      fprintf(fp, "%d %.16g\n", tag, val);
+    }
+  }
+  if(binary) fprintf(fp, "\n");
+  fprintf(fp, "$EndNodeData\n");
+#endif
 
   fclose(fp);
   return 1;

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.570 2008-03-20 11:44:02 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.571 2008-03-21 07:21:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -4515,67 +4515,79 @@ void view_field_cancel_cb(CALLBACK_ARGS)
 {
   WID->field_window->hide();
 }
+
 void view_field_delete_cb(CALLBACK_ARGS)
 {
-        FieldDialogBox *fdb=(FieldDialogBox*)data;
-        fdb->group->hide();
-        delete_field(fdb->current_field->id,CTX.filename);
-        WID->create_field_window(0);
-}
-void view_field_set_size_btn_cb(CALLBACK_ARGS){
-        FieldDialogBox *fdb=(FieldDialogBox*)data;
-        fdb->group->hide();
-        int v=((Fl_Check_Button*)w)->value();
-        if(v)
-                set_background_field(fdb->current_field->id,CTX.filename);
-        else
-                set_background_field(-1,CTX.filename);
-        WID->create_field_window(fdb->current_field->id);
-}
-void view_field_new_cb(CALLBACK_ARGS)
-{
-        Fl_Menu_Button* mb=((Fl_Menu_Button*)w);
-        int id=GModel::current()->getFields()->new_id();
-        add_field(id,mb->text(),CTX.filename);
-        WID->create_field_window(id);
-}
-void view_field_apply_cb(CALLBACK_ARGS){
-        FieldDialogBox *fdb=(FieldDialogBox*)data;
-        fdb->save_values();
-        int selected=WID->field_browser->value();
-                std::ostringstream sstream("");
-                sstream<<fdb->current_field->id;
-                sstream<<" "<<fdb->current_field->get_name();
-        WID->field_browser->text(selected,sstream.str().c_str());
-}
-void view_field_revert_cb(CALLBACK_ARGS){
-        FieldDialogBox *fdb=(FieldDialogBox*)data;
-        fdb->load_field(fdb->current_field);
-}
-void view_field_browser_cb(CALLBACK_ARGS)
-{
-        int selected=WID->field_browser->value();
-        if(WID->selected_field_dialog_box){
-                WID->selected_field_dialog_box->group->hide();
-        }
-        if(!selected)return;
-        Field *f=(Field*)WID->field_browser->data(selected);
-        f->dialog_box()->load_field(f);
-        WID->selected_field_dialog_box=f->dialog_box();
-  f->dialog_box()->group->show();
-}
-void view_field_put_on_view_cb(CALLBACK_ARGS){
-        Fl_Menu_Button* mb=((Fl_Menu_Button*)w);
-        Field *field=((FieldDialogBox*)data)->current_field;
-        int iView;
-        sscanf(mb->text(),"View [%i]",&iView);
-        field->put_on_view(PView::list[iView]);
-        Draw();
+  FieldDialogBox *fdb = (FieldDialogBox*)data;
+  fdb->group->hide();
+  delete_field(fdb->current_field->id, CTX.filename);
+  WID->create_field_window(0);
 }
 
-void view_field_select_node_cb(CALLBACK_ARGS){
-        const char *mode="select";
-        const char *help="vertices";
+void view_field_set_size_btn_cb(CALLBACK_ARGS)
+{
+  FieldDialogBox *fdb = (FieldDialogBox*)data;
+  fdb->group->hide();
+  int v = ((Fl_Check_Button*)w)->value();
+  if(v)
+    set_background_field(fdb->current_field->id, CTX.filename);
+  else
+    set_background_field(-1, CTX.filename);
+  WID->create_field_window(fdb->current_field->id);
+}
+
+void view_field_new_cb(CALLBACK_ARGS)
+{
+  Fl_Menu_Button* mb = ((Fl_Menu_Button*)w);
+  int id = GModel::current()->getFields()->new_id();
+  add_field(id, mb->text(), CTX.filename);
+  WID->create_field_window(id);
+}
+
+void view_field_apply_cb(CALLBACK_ARGS)
+{
+  FieldDialogBox *fdb = (FieldDialogBox*)data;
+  fdb->save_values();
+  int selected = WID->field_browser->value();
+  std::ostringstream sstream("");
+  sstream << fdb->current_field->id;
+  sstream << " " << fdb->current_field->get_name();
+  WID->field_browser->text(selected, sstream.str().c_str());
+}
+
+void view_field_revert_cb(CALLBACK_ARGS)
+{
+  FieldDialogBox *fdb = (FieldDialogBox*)data;
+  fdb->load_field(fdb->current_field);
+}
+
+void view_field_browser_cb(CALLBACK_ARGS)
+{
+  int selected = WID->field_browser->value();
+  if(WID->selected_field_dialog_box){
+    WID->selected_field_dialog_box->group->hide();
+  }
+  if(!selected) return;
+  Field *f = (Field*)WID->field_browser->data(selected);
+  f->dialog_box()->load_field(f);
+  WID->selected_field_dialog_box = f->dialog_box();
+  f->dialog_box()->group->show();
+}
+
+void view_field_put_on_view_cb(CALLBACK_ARGS)
+{
+  Fl_Menu_Button* mb = ((Fl_Menu_Button*)w);
+  Field *field = ((FieldDialogBox*)data)->current_field;
+  int iView;
+  sscanf(mb->text(), "View [%i]", &iView);
+  field->put_on_view(PView::list[iView]);
+  Draw();
+}
+
+void view_field_select_node_cb(CALLBACK_ARGS)
+{
+  const char *mode = "select";
+  const char *help = "vertices";
   CTX.pick_elements = 1;
   Draw();  
   std::vector<GVertex*> vertices, vertices_old;
@@ -4583,17 +4595,17 @@ void view_field_select_node_cb(CALLBACK_ARGS){
   std::vector<GFace*> faces, faces_old;
   std::vector<GRegion*> regions, regions_old;
   std::vector<MElement*> elements, elements_old;
-        opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   while(1) {
     Msg(ONSCREEN, "Select %s\n[Press %s'q' to abort]", 
         help, mode ? "" : "'u' to undo or ");
-
+    
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
-                printf("char = %c\n",ib);
+    printf("char = %c\n", ib);
     if(ib == 'q'){
-                        for(std::vector<GVertex*>::iterator it=vertices.begin();it!=vertices.end();it++){
-                                printf("%i\n",*it);
-                        }
+      for(std::vector<GVertex*>::iterator it = vertices.begin(); it != vertices.end(); it++){
+	printf("%i\n", *it);
+      }
       break;
     }
   }
