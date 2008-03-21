@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.666 2008-03-20 11:44:03 geuzaine Exp $
+// $Id: GUI.cpp,v 1.667 2008-03-21 07:26:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -310,7 +310,7 @@ Context_Item menu_mesh[] = {
 };  
     Context_Item menu_mesh_define[] = {
       {"1Mesh>Define", NULL} ,
-      {"Fields",  (Fl_Callback *)view_field_cb, (void*)(-1) },
+      {"Fields",      (Fl_Callback *)view_field_cb, (void*)(-1) },
       {"Characteristic length", (Fl_Callback *)mesh_define_length_cb  } ,
       {"Recombine",   (Fl_Callback *)mesh_define_recombine_cb  } ,
       {"Transfinite", (Fl_Callback *)mesh_define_transfinite_cb  } , 
@@ -1320,8 +1320,6 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
                   (Fl_Callback *) view_options_cb, (void *)nb, 0);
         p[j]->add("Plugins...", 'p', 
                   (Fl_Callback *) view_plugin_cb, (void *)nb, 0);
-        p[j]->add("Fields...", 'f', 
-                  (Fl_Callback *) view_field_cb, (void *)nb, 0);
       }
 
       m_toggle_butt.push_back(b1);
@@ -3825,232 +3823,234 @@ void GUI::create_plugin_window(int numview)
 
 void FieldDialogBox::save_values()
 {
-        std::list<Fl_Widget*>::iterator input=inputs.begin();
-        Field *f=current_field;
-        std::ostringstream sstream;
-        std::istringstream istream;
-        int i;
-        char a;
-        sstream.precision(16);
-        for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
-                FieldOption *option=it->second;
-                sstream.str("");
-                switch(option->get_type()){
-                        case FIELD_OPTION_STRING:
-                        case FIELD_OPTION_PATH:
-                                sstream<<"\""<<((Fl_Input*)*input)->value()<<"\"";
-                        break;
-                        case FIELD_OPTION_INT:
-                                sstream<<(int)((Fl_Value_Input*)*input)->value();
-                        break;
-                        case FIELD_OPTION_DOUBLE:
-                                sstream<<((Fl_Value_Input*)*input)->value();
-                        break;
-                        case FIELD_OPTION_BOOL:
-                                sstream<<(bool)((Fl_Check_Button*)*input)->value();
-                        break;
-                        case FIELD_OPTION_LIST:
-                                sstream<<"{";
-                                istream.str(((Fl_Input*)*input)->value());
-                                while(istream>>i){
-                                        sstream<<i;
-                                        if(istream>>a){
-                                                if(a!=',')
-                                                        Msg(GERROR, "Unexpected character \'%c\' while parsing option '%s' of field \'%s\'",a,it->first,f->id);
-                                                sstream<<", ";
-                                        }
-                                }
-                                sstream<<"}";
-                        break;
-                }
-                if((*input)->changed()){
-                        add_field_option(f->id,it->first,sstream.str().c_str(),CTX.filename);
-                        (*input)->clear_changed();
-                }
-                input++;
-        }
+  std::list<Fl_Widget*>::iterator input=inputs.begin();
+  Field *f=current_field;
+  std::ostringstream sstream;
+  std::istringstream istream;
+  int i;
+  char a;
+  sstream.precision(16);
+  for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
+    FieldOption *option=it->second;
+    sstream.str("");
+    switch(option->get_type()){
+    case FIELD_OPTION_STRING:
+    case FIELD_OPTION_PATH:
+      sstream<<"\""<<((Fl_Input*)*input)->value()<<"\"";
+      break;
+    case FIELD_OPTION_INT:
+      sstream<<(int)((Fl_Value_Input*)*input)->value();
+      break;
+    case FIELD_OPTION_DOUBLE:
+      sstream<<((Fl_Value_Input*)*input)->value();
+      break;
+    case FIELD_OPTION_BOOL:
+      sstream<<(bool)((Fl_Check_Button*)*input)->value();
+      break;
+    case FIELD_OPTION_LIST:
+      sstream<<"{";
+      istream.str(((Fl_Input*)*input)->value());
+      while(istream>>i){
+	sstream<<i;
+	if(istream>>a){
+	  if(a!=',')
+	    Msg(GERROR, "Unexpected character \'%c\' while parsing option '%s' of field \'%s\'",a,it->first,f->id);
+	  sstream<<", ";
+	}
+      }
+      sstream<<"}";
+      break;
+    }
+    if((*input)->changed()){
+      add_field_option(f->id,it->first,sstream.str().c_str(),CTX.filename);
+      (*input)->clear_changed();
+    }
+    input++;
+  }
 }
 
-void FieldDialogBox::load_field(Field *f){
-        current_field=f;
-        std::list<Fl_Widget*>::iterator input=inputs.begin();
-        for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
-                FieldOption *option=it->second;
-                std::ostringstream vstr;
-                std::list<int>::iterator list_it;;
-                switch(option->get_type()){
-                        case FIELD_OPTION_STRING:
-                        case FIELD_OPTION_PATH:
-                                ((Fl_Input*)(*input))->value(option->string().c_str());
-                        break;
-                        case FIELD_OPTION_INT:
-                        case FIELD_OPTION_DOUBLE:
-                                ((Fl_Value_Input*)(*input))->value(option->numerical_value());
-                        break;
-                        case FIELD_OPTION_BOOL:
-                                ((Fl_Check_Button*)(*input))->value(option->numerical_value());
-                        break;
-                        case FIELD_OPTION_LIST:
-                                vstr.str("");
-                                for(list_it=option->list().begin();list_it!=option->list().end();list_it++){
-                                        if(list_it!=option->list().begin())
-                                                vstr<<", ";
-                                        vstr<<*list_it;
-                                }
-                                ((Fl_Input*)(*input))->value(vstr.str().c_str());
-                        break;
-                }
-                input++;
-        }
+void FieldDialogBox::load_field(Field *f)
+{
+  current_field=f;
+  std::list<Fl_Widget*>::iterator input=inputs.begin();
+  for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
+    FieldOption *option=it->second;
+    std::ostringstream vstr;
+    std::list<int>::iterator list_it;;
+    switch(option->get_type()){
+    case FIELD_OPTION_STRING:
+    case FIELD_OPTION_PATH:
+      ((Fl_Input*)(*input))->value(option->string().c_str());
+      break;
+    case FIELD_OPTION_INT:
+    case FIELD_OPTION_DOUBLE:
+      ((Fl_Value_Input*)(*input))->value(option->numerical_value());
+      break;
+    case FIELD_OPTION_BOOL:
+      ((Fl_Check_Button*)(*input))->value(option->numerical_value());
+      break;
+    case FIELD_OPTION_LIST:
+      vstr.str("");
+      for(list_it=option->list().begin();list_it!=option->list().end();list_it++){
+	if(list_it!=option->list().begin())
+	  vstr<<", ";
+	vstr<<*list_it;
+      }
+      ((Fl_Input*)(*input))->value(vstr.str().c_str());
+      break;
+    }
+    input++;
+  }
   if(PView::list.size()){
     put_on_view_btn->activate();
     for(unsigned int i = 0; i < PView::list.size(); i++) {
-                        std::ostringstream s;
-                        s<<"View ["<<i<<"]";
+      std::ostringstream s;
+      s<<"View ["<<i<<"]";
       put_on_view_btn->add(s.str().c_str());
     }
-  }else{
-                put_on_view_btn->deactivate();
-        }
+  }
+  else{
+    put_on_view_btn->deactivate();
+  }
   set_size_btn->value(GModel::current()->getFields()->background_field==f->id);
 }
 
 FieldDialogBox::FieldDialogBox(Field *f, int x, int y, int width, int height,int fontsize)
 {
-        current_field=NULL;
-        group=new Fl_Group(x, y, width, height);
+  current_field=NULL;
+  group=new Fl_Group(x, y, width, height);
   {
-                Fl_Box *b = new Fl_Box(x, y, width, BH,f->get_name());
-                b->labelfont(FL_BOLD);
+    Fl_Box *b = new Fl_Box(x, y, width, BH,f->get_name());
+    b->labelfont(FL_BOLD);
     Fl_Tabs *o = new Fl_Tabs(x, y + BH + WB, width, height-2*BH-2*WB);
-                group->resizable(o);
+    group->resizable(o);
     {
       Fl_Group *g = new Fl_Group(x, y + 2*BH + WB, width, height - 2*BH-3*WB, "Options");
-                        apply_btn = new Fl_Return_Button(x+width - BB-WB ,y+ height - 2*BH -2*WB, BB, BH, "Apply");
-                        apply_btn->callback(view_field_apply_cb,this);
-                        revert_btn = new Fl_Button(x+width - 2*BB-2*WB ,y+ height - 2*BH -2*WB, BB, BH, "Revert");
-                        revert_btn->callback(view_field_revert_cb,this);
+      apply_btn = new Fl_Return_Button(x+width - BB-WB ,y+ height - 2*BH -2*WB, BB, BH, "Apply");
+      apply_btn->callback(view_field_apply_cb,this);
+      revert_btn = new Fl_Button(x+width - 2*BB-2*WB ,y+ height - 2*BH -2*WB, BB, BH, "Revert");
+      revert_btn->callback(view_field_revert_cb,this);
       Fl_Scroll *s = new Fl_Scroll(x + WB, y + 2*WB + 2*BH, width - 2 * WB, height - 4*BH - 5 * WB);
-                        double yy=y+3*WB+2*BH;
-                        for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
-                                Fl_Widget *input;
-                                switch(it->second->get_type()){
-                                        case FIELD_OPTION_INT:
-                                        case FIELD_OPTION_DOUBLE:
-                                                input=new Fl_Value_Input(x+WB,yy,IW,BH,it->first);
-                                                break;
-                                        case FIELD_OPTION_BOOL:
-                                                input=new Fl_Check_Button(x+WB,yy,BH,BH,it->first);
-                                                break;
-                                        case FIELD_OPTION_PATH:
-                                        case FIELD_OPTION_STRING:
-                                                input=new Fl_Input(x+WB,yy,IW,BH,it->first);
-                                        break;
-                                        case FIELD_OPTION_LIST:
-                                        /*{
-                                                        Fl_Button *b=new Fl_Button(x+WB,yy,BH,BH);
-                                                        b->label("@+");
-                                                        b->callback(view_field_select_node_cb);
-                                                }
-                                                input=new Fl_Input(x+WB+2*BH,yy,IW-2*BH,BH,it->first);*/
-                                                input=new Fl_Input(x+WB,yy,IW,BH,it->first);
-                                                break;
-                                }
-                                input->align(FL_ALIGN_RIGHT);
-                                inputs.push_back(input);
-                                yy+=WB+BH;
-                        }
+      double yy=y+3*WB+2*BH;
+      for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
+	Fl_Widget *input;
+	switch(it->second->get_type()){
+	case FIELD_OPTION_INT:
+	case FIELD_OPTION_DOUBLE:
+	  input=new Fl_Value_Input(x+WB,yy,IW,BH,it->first);
+	  break;
+	case FIELD_OPTION_BOOL:
+	  input=new Fl_Check_Button(x+WB,yy,BH,BH,it->first);
+	  break;
+	case FIELD_OPTION_PATH:
+	case FIELD_OPTION_STRING:
+	  input=new Fl_Input(x+WB,yy,IW,BH,it->first);
+	  break;
+	case FIELD_OPTION_LIST:
+	  /*{
+	    Fl_Button *b=new Fl_Button(x+WB,yy,BH,BH);
+	    b->label("@+");
+	    b->callback(view_field_select_node_cb);
+	    }
+	    input=new Fl_Input(x+WB+2*BH,yy,IW-2*BH,BH,it->first);*/
+	  input=new Fl_Input(x+WB,yy,IW,BH,it->first);
+	  break;
+	}
+	input->align(FL_ALIGN_RIGHT);
+	inputs.push_back(input);
+	yy+=WB+BH;
+      }
       o->resizable(g); // to avoid ugly resizing of tab labels
-                        g->resizable(s);
+      g->resizable(s);
       s->end();
       g->end();
     }
     {
       Fl_Group *g = new Fl_Group(x, y + 2*BH + WB, width, height - 2*BH-3*WB, "Help");
       Fl_Browser *o = new Fl_Browser(x + WB, y + 2*WB + 2*BH, width - 2 * WB, height - 4 * WB - 3 * BH);
-
-  //    char name[1024], copyright[256], author[256], help[4096];
-  //    p->getName(name);
-  //    p->getInfos(author, copyright, help);
-
+      
+      //    char name[1024], copyright[256], author[256], help[4096];
+      //    p->getName(name);
+      //    p->getInfos(author, copyright, help);
+      
       o->add(" ");
-   //   add_multiline_in_browser(o, "@c@b@.", name);
+      //   add_multiline_in_browser(o, "@c@b@.", name);
       o->add(" ");
-    //  add_multiline_in_browser(o, "", help);
+      //  add_multiline_in_browser(o, "", help);
       o->add(" ");
       //add_multiline_in_browser(o, "Author: ", author);
       //add_multiline_in_browser(o, "Copyright (C) ", copyright);
       o->add(" ");
-
+      
       g->end();
     }
     o->end();
   }
-        {
-                Fl_Button *b = new Fl_Button(x+width - BB,y+ height - BH , BB, BH, "Delete");
-                b->callback(view_field_delete_cb,this);
-        }
-        put_on_view_btn = new Fl_Menu_Button(x+BB*3/2+WB,y+ height - BH ,BB*3/2,BH,"Put on view");
-        put_on_view_btn->callback(view_field_put_on_view_cb,this);
-
-        set_size_btn = new Fl_Check_Button(x,y+ height - BH ,BB*3/2,BH,"Background size");
-        set_size_btn->callback(view_field_set_size_btn_cb,this);
-
-        group->end();
-        group->hide();
+  {
+    Fl_Button *b = new Fl_Button(x+width - BB,y+ height - BH , BB, BH, "Delete");
+    b->callback(view_field_delete_cb,this);
+  }
+  put_on_view_btn = new Fl_Menu_Button(x+BB*3/2+WB,y+ height - BH ,BB*3/2,BH,"Put on view");
+  put_on_view_btn->callback(view_field_put_on_view_cb,this);
+  
+  set_size_btn = new Fl_Check_Button(x,y+ height - BH ,BB*3/2,BH,"Background size");
+  set_size_btn->callback(view_field_set_size_btn_cb,this);
+  
+  group->end();
+  group->hide();
 }
 
 void GUI::create_field_window(int numfield)
 {
   int width0 = 40 * fontsize;
   int height0 = 13 * BH + 5 * WB;
-
+  
   int width = (CTX.field_size[0] < width0) ? width0 : CTX.field_size[0];
   int height = (CTX.field_size[1] < height0) ? height0 : CTX.field_size[1];
-
+  
   int L1 = BB;
-        int i_entry=1;
+  int i_entry=1;
   if(field_window) {
-                width=field_window->w();
-                height=field_window->h();
-                FieldManager &fields=*GModel::current()->getFields();
-                field_browser->clear();
-                for(FieldManager::iterator it=fields.begin();it!=fields.end();it++){
-                        Field *field=it->second;
-                        std::ostringstream sstream;
-                        if(it->first==fields.background_field)
-                                sstream<<"*";
-                        sstream<<it->first;
-                        sstream<<" "<<field->get_name();
-                        field_browser->add(sstream.str().c_str(),field);
-                        if(!field->dialog_box()){
-                                field_window->begin();
-                                field->dialog_box()=new FieldDialogBox(field, 2 * WB + L1 , WB, width - L1 - 3 * WB, height - 2*WB  ,fontsize);
-                                field_window->end();
-                        }
-                        if(it->second->id==numfield){
-                                field_browser->select(i_entry);
-                                field_browser->do_callback();
-                        }
-                        i_entry++;
-                }
+    width=field_window->w();
+    height=field_window->h();
+    FieldManager &fields=*GModel::current()->getFields();
+    field_browser->clear();
+    for(FieldManager::iterator it=fields.begin();it!=fields.end();it++){
+      Field *field=it->second;
+      std::ostringstream sstream;
+      if(it->first==fields.background_field)
+	sstream<<"*";
+      sstream<<it->first;
+      sstream<<" "<<field->get_name();
+      field_browser->add(sstream.str().c_str(),field);
+      if(!field->dialog_box()){
+	field_window->begin();
+	field->dialog_box()=new FieldDialogBox(field, 2 * WB + L1 , WB, width - L1 - 3 * WB, height - 2*WB  ,fontsize);
+	field_window->end();
+      }
+      if(it->second->id==numfield){
+	field_browser->select(i_entry);
+	field_browser->do_callback();
+      }
+      i_entry++;
+    }
     field_window->show();
     return;
   }
-
-        selected_field_dialog_box=NULL;
+  
+  selected_field_dialog_box=NULL;
   field_window = new Dialog_Window(width, height, "Fields");
   field_window->box(GMSH_WINDOW_BOX);
   Fl_Group *resize_box = new Fl_Group(2*WB+L1, 2*WB+BB,width-3*WB-L1, height - 3 * WB-BB);
-        resize_box->end();
-        {
-                Fl_Menu_Button *b= new Fl_Menu_Button(WB,WB,L1,BH,"New");
-                FieldManager &fields=*GModel::current()->getFields();
-                std::map<const std::string, FieldFactory*>::iterator it;
-                for(it=fields.map_type_name.begin();it!=fields.map_type_name.end();it++)
-                        b->add(it->first.c_str());
-                b->callback(view_field_new_cb);
-        }
+  resize_box->end();
+  {
+    Fl_Menu_Button *b= new Fl_Menu_Button(WB,WB,L1,BH,"New");
+    FieldManager &fields=*GModel::current()->getFields();
+    std::map<const std::string, FieldFactory*>::iterator it;
+    for(it=fields.map_type_name.begin();it!=fields.map_type_name.end();it++)
+      b->add(it->first.c_str());
+    b->callback(view_field_new_cb);
+  }
   field_browser = new Fl_Hold_Browser(WB, 2*WB+BH, L1, height - 3 * WB - BH);
   field_browser->callback(view_field_browser_cb);
   field_window->resizable(resize_box);
