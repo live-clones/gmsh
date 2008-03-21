@@ -1,4 +1,4 @@
-// $Id: gmshSurface.cpp,v 1.13 2008-03-20 11:44:07 geuzaine Exp $
+// $Id: gmshSurface.cpp,v 1.14 2008-03-21 18:27:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -125,7 +125,7 @@ SPoint3 gmshParametricSurface::point(double par1, double par2) const
   return SPoint3(0.,0.,0.);
 #else
   char *names[2] = {"u", "v"};
-  double values [2] = {par1,par2};
+  double values [2] = {par1, par2};
   const double x = evaluator_evaluate(evalX, 2, names, values);
   const double y = evaluator_evaluate(evalY, 2, names, values);
   const double z = evaluator_evaluate(evalZ, 2, names, values);

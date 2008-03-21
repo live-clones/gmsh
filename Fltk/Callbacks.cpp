@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.571 2008-03-21 07:21:04 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.572 2008-03-21 18:27:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -4604,7 +4604,7 @@ void view_field_select_node_cb(CALLBACK_ARGS)
     printf("char = %c\n", ib);
     if(ib == 'q'){
       for(std::vector<GVertex*>::iterator it = vertices.begin(); it != vertices.end(); it++){
-	printf("%i\n", *it);
+	printf("%p\n", *it);
       }
       break;
     }

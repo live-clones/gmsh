@@ -58,9 +58,8 @@ class stepData{
   stepData(GModel *model, DataType type, int numComp, 
            std::string fileName="", int fileIndex=-1, double time=0., 
            double min=VAL_INF, double max=-VAL_INF)
-    : _model(model), _type(type), _numComp(numComp),
-      _fileName(fileName), _fileIndex(fileIndex),
-      _time(time), _min(min), _max(max), _data(0)
+    : _model(model), _type(type), _fileName(fileName), _fileIndex(fileIndex),
+      _time(time), _min(min), _max(max), _numComp(numComp), _data(0)
   {
     // store vector of GEntities so we can index them efficiently
     for(GModel::eiter it = _model->firstEdge(); it != _model->lastEdge(); ++it)
@@ -97,11 +96,11 @@ class stepData{
   void resizeData(int n)
   {  
     if(!_data) _data = new std::vector<real*>(n, (real*)0);
-    if(n < _data->size()) _data->resize(n, (real*)0);
+    if(n < (int)_data->size()) _data->resize(n, (real*)0);
   }
   real *getData(int index, bool allocIfNeeded=false)
   {
-    if(!_data || index >= _data->size()) resizeData(index + 100); // optimize this
+    if(!_data || index >= (int)_data->size()) resizeData(index + 100); // optimize this
     if(allocIfNeeded && !(*_data)[index]) (*_data)[index] = new real[_numComp];
     return (*_data)[index];
   }

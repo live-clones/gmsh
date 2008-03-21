@@ -1,4 +1,4 @@
-// $Id: GSHHS.cpp,v 1.4 2008-03-20 11:44:13 geuzaine Exp $
+// $Id: GSHHS.cpp,v 1.5 2008-03-21 18:27:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,7 @@
 extern Context_T CTX;
 
 // ************** GSHHS ************** 
-/*      $Id: GSHHS.cpp,v 1.4 2008-03-20 11:44:13 geuzaine Exp $
+/*      $Id: GSHHS.cpp,v 1.5 2008-03-21 18:27:38 geuzaine Exp $
  *
  * PROGRAM:     gshhs.c
  * AUTHOR:      Paul Wessel (pwessel@hawaii.edu)
@@ -93,7 +93,7 @@ void import_gshhs(FILE * fp, GeoEarthImport & geo_import)
 {
   double w, e, s, n;
   char source;
-  int k, max_east = 270000000, info, n_read, flip;
+  int k, max_east = 270000000, n_read, flip;
   struct POINT p;
   struct GSHHS h;
   while(1) {

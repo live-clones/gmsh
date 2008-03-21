@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.11 2008-03-20 11:44:15 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.12 2008-03-21 18:27:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -126,14 +126,14 @@ bool PViewDataGModel::writeMSH(std::string name, bool binary)
 
   for(unsigned int step = 0; step < _steps.size(); step++){
     int numNodes = 0, numComp = _steps[step]->getNumComp();
-    for(unsigned int i = 0; i < _steps[step]->getNumData(); i++)
+    for(int i = 0; i < _steps[step]->getNumData(); i++)
       if(_steps[step]->getData(i)) numNodes++;
     if(numNodes){
       fprintf(fp, "$NodeData\n");
       fprintf(fp, "\"%s\"\n", getName().c_str());
       fprintf(fp, "%d %.16g 0 0 %d %d\n", step, _steps[step]->getTime(), 
               numComp, numNodes);
-      for(unsigned int i = 0; i < _steps[step]->getNumData(); i++){
+      for(int i = 0; i < _steps[step]->getNumData(); i++){
         if(_steps[step]->getData(i)){
           if(binary){
             fwrite(&tags[i], sizeof(int), 1, fp);

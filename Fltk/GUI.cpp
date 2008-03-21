@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.667 2008-03-21 07:26:03 geuzaine Exp $
+// $Id: GUI.cpp,v 1.668 2008-03-21 18:27:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -3947,6 +3947,7 @@ FieldDialogBox::FieldDialogBox(Field *f, int x, int y, int width, int height,int
 	  input=new Fl_Input(x+WB,yy,IW,BH,it->first);
 	  break;
 	case FIELD_OPTION_LIST:
+	default:
 	  /*{
 	    Fl_Button *b=new Fl_Button(x+WB,yy,BH,BH);
 	    b->label("@+");

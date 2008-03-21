@@ -22,6 +22,7 @@
 
 #include <map>
 #include <list>
+#include <string.h>
 #include "Geo.h"
 #include "PView.h"
 
