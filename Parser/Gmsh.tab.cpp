@@ -324,7 +324,7 @@
 /* Copy the first part of user declarations.  */
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.354 2008-03-21 07:21:05 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.355 2008-03-21 09:39:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //

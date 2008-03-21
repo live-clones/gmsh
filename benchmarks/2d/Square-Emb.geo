@@ -22,5 +22,3 @@ Spline(5) = {11,22,33,44};
 Line Loop(5) = {1,2,3,4};       
 Plane Surface(6) = {5};       
 Line {5} In  Surface {6};
-//Attractor Point{2} = {0.05,0.05,2};
-//Mesh.Algorithm = 2;

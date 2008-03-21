@@ -30,6 +30,15 @@ Line(13) = {17,18};
 Line(14) = {18,19};
 Line(15) = {19,20};
 
-r_min = 0.03;
-r_max = 0.06;
-Attractor Line{7,8,9,10,11,12,13,14,15} = {r_min,lc/30,lc,100,r_max/r_min};
+Field[1] = Attractor;
+Field[1].NNodesByEdge = 100;
+Field[1].EdgesList = {7,8,9,10,11,12,13,14,15};
+
+Field[2] = Threshold;
+Field[2].IField = 1;
+Field[2].LcMin = lc/20;
+Field[2].LcMax = lc;
+Field[2].DistMin = 0.03;
+Field[2].DistMax = 0.06;
+
+Background Field = 2;

@@ -323,13 +323,6 @@ PS122003=news;	Plane Surface(PS122003) =	{LL122003};
 PS122004=news;	Plane Surface(PS122004) =	{LL122004};
 PS122005=news;	Plane Surface(PS122005) =	{LL122005};
 //
-// __________
-// ATTRACTORS
-//
-// Attractor Line{L201100} = {.5, .5, .1}; 
-// Attractor Line{L201110} = {.5, .5, .1}; 
-// Attractor Line{L201125} = {.5, .5, .1}; 
-//
 //
 /********************************************************************* 
  *
@@ -608,18 +601,7 @@ PS136012=news;	Plane Surface(PS136012) =	{LL136012};
 PS136013=news;	Plane Surface(PS136013) =	{LL136013};
 PS136014=news;	Plane Surface(PS136014) =	{LL136014};
 //
-// __________
-// ATTRACTORS
-//
-// Attractor Line{L202100} = {.5, .5, .1}; 
-// Attractor Line{L202110} = {.5, .5, .1}; 
-// Attractor Line{L202210} = {.5, .5, .1}; 
-// Attractor Line{L202410} = {.5, .5, .1}; 
-// Attractor Line{L202125} = {.5, .5, .1}; 
-//
-//Attractor Point{L236000} = {.25, .25, .1}; 
-//
-//
+
 //
 /********************************************************************* 
  *
@@ -825,37 +807,6 @@ PS103902=news;	Plane Surface(PS103902) =	{LL103902};
 PS103903=news;	Plane Surface(PS103903) =	{LL103903};
 PS103904=news;	Plane Surface(PS103904) =	{LL103904};
 PS103905=news;	Plane Surface(PS103905) =	{LL103905};
-//
-// __________
-// ATTRACTORS
-//
-//
-// Attractor Line{L103100} = {.5, .5, .1}; 
-// Attractor Line{L103108} = {.5, .5, .1}; 
-// Attractor Line{L103110} = {.5, .5, .1}; 
-// Attractor Line{L103112} = {.5, .5, .1}; 
-//
-// Attractor Line{L103400} = {.5, .5, .1}; 
-// Attractor Line{L103405} = {.5, .5, .1}; 
-// Attractor Line{L103408} = {.5, .5, .1}; 
-// Attractor Line{L103410} = {.5, .5, .1}; 
-// Attractor Line{L103412} = {.5, .5, .1}; 
-// Attractor Line{L103418} = {.5, .5, .1}; 
-//
-//
-//// Attractor Line{L203100} = {.5, .5, .1};
-// Attractor Line{L203200} = {.25, .25, .05}; 
-//// Attractor Line{L203300} = {.5, .5, .1};
-// Attractor Line{L203205} = {.5, .5, .1}; 
-// Attractor Line{L203305} = {.5, .5, .1}; 
-// Attractor Line{L203110} = {.5, .5, .1}; 
-// Attractor Line{L203210} = {.5, .5, .1}; 
-// Attractor Line{L203310} = {.5, .5, .1}; 
-// Attractor Line{L203215} = {.5, .5, .1}; 
-// Attractor Line{L203315} = {.5, .5, .1}; 
-//Attractor Line{L203125} = {.5, .5, .1};
-// Attractor Line{L203225} = {.25, .25, .05}; 
-//Attractor Line{L203325} = {.5, .5, .1}; 
 //
 //
 //
@@ -1314,39 +1265,6 @@ PS104008=news;	Plane Surface(PS104008) =	{LL104008};
 PS104009=news;	Plane Surface(PS104009) =	{LL104009};
 PS104010=news;	Plane Surface(PS104010) =	{LL104010};
 //
-// __________
-// ATTRACTORS
-//
-//
-// Attractor Line{L104100} = {.5, .5, .1}; 
-// Attractor Line{L104108} = {.5, .5, .1}; 
-// Attractor Line{L104110} = {.5, .5, .1}; 
-// Attractor Line{L104112} = {.5, .5, .1}; 
-//
-// Attractor Line{L104400} = {.5, .5, .1}; 
-// Attractor Line{L104405} = {.5, .5, .1}; 
-// Attractor Line{L104408} = {.5, .5, .1}; 
-// Attractor Line{L104410} = {.5, .5, .1}; 
-// Attractor Line{L104412} = {.5, .5, .1}; 
-// Attractor Line{L104415} = {.5, .5, .1}; 
-// Attractor Line{L104420} = {.5, .5, .1}; 
-//
-//
-//// Attractor Line{L204100} = {.5, .5, .1};
-// Attractor Line{L204200} = {.25, .25, .05}; 
-//// Attractor Line{L204300} = {.5, .5, .1};
-// Attractor Line{L204205} = {.5, .5, .1}; 
-// Attractor Line{L204305} = {.5, .5, .1}; 
-// Attractor Line{L204110} = {.5, .5, .1}; 
-// Attractor Line{L204210} = {.5, .5, .1}; 
-// Attractor Line{L204310} = {.5, .5, .1}; 
-// Attractor Line{L204220} = {.5, .5, .1}; 
-// Attractor Line{L204320} = {.5, .5, .1}; 
-//// Attractor Line{L204125} = {.5, .5, .1};
-// Attractor Line{L204225} = {.25, .25, .05}; 
-//Attractor Line{L204325} = {.5, .5, .1}; 
-//
-//
 /********************************************************************* 
  *
  *  FLOORBEAM TOP FLANGE
@@ -1524,45 +1442,6 @@ PS106022=news;	Plane Surface(PS106022) =	{LL106022};
 PS106023=news;	Plane Surface(PS106023) =	{LL106023};
 PS106024=news;	Plane Surface(PS106024) =	{LL106024};
 //
-// __________
-// ATTRACTORS
-// Attractor Line{L106200} = {.5, .5, .1}; 
-// Attractor Line{L106220} = {.5, .5, .1}; 
-// Attractor Line{L106300} = {.5, .5, .1}; 
-// Attractor Line{L106310} = {.5, .5, .1}; 
-// Attractor Line{L106315} = {.5, .5, .1}; 
-// Attractor Line{L106320} = {.5, .5, .1}; 
-// Attractor Line{L106325} = {.5, .5, .1}; 
-// Attractor Line{L106330} = {.5, .5, .1}; 
-// Attractor Line{L106400} = {.5, .5, .1}; 
-// Attractor Line{L106410} = {.5, .5, .1}; 
-// Attractor Line{L106415} = {.5, .5, .1}; 
-// Attractor Line{L106420} = {.5, .5, .1}; 
-// Attractor Line{L106425} = {.5, .5, .1}; 
-// Attractor Line{L106430} = {.5, .5, .1}; 
-// Attractor Line{L106500} = {.5, .5, .1}; 
-// Attractor Line{L106520} = {.5, .5, .1}; 
-//
-// Attractor Line{L206100} = {.5, .5, .1}; 
-// Attractor Line{L206200} = {.5, .5, .1}; 
-// Attractor Line{L206300} = {.5, .5, .1}; 
-// Attractor Line{L206400} = {.5, .5, .1}; 
-//
-// Attractor Line{L206120} = {.5, .5, .1}; 
-// Attractor Line{L206151} = {.5, .5, .1}; 
-// Attractor Line{L206220} = {.5, .5, .1}; 
-// Attractor Line{L206252} = {.5, .5, .1}; 
-// Attractor Line{L206320} = {.5, .5, .1}; 
-// Attractor Line{L206352} = {.5, .5, .1}; 
-// Attractor Line{L206362} = {.5, .5, .1}; 
-// Attractor Line{L206420} = {.5, .5, .1}; 
-//
-// Attractor Line{L206140} = {.5, .5, .1}; 
-// Attractor Line{L206240} = {.5, .5, .1}; 
-// Attractor Line{L206340} = {.5, .5, .1}; 
-// Attractor Line{L206440} = {.5, .5, .1}; 
-//
-//
 /********************************************************************* 
  *
  *  FLOORBEAM BOT FLANGE
@@ -1667,35 +1546,6 @@ PS107005=news;	Plane Surface(PS107005) =	{LL107005};
 PS107006=news;	Plane Surface(PS107006) =	{LL107006};
 PS107007=news;	Plane Surface(PS107007) =	{LL107007};
 PS107008=news;	Plane Surface(PS107008) =	{LL107008};
-//
-// __________
-// ATTRACTORS
-// Attractor Line{L107200} = {.5, .5, .1}; 
-// Attractor Line{L107220} = {.5, .5, .1}; 
-// Attractor Line{L107300} = {.5, .5, .1}; 
-// Attractor Line{L107310} = {.5, .5, .1}; 
-// Attractor Line{L107320} = {.5, .5, .1}; 
-// Attractor Line{L107330} = {.5, .5, .1}; 
-// Attractor Line{L107400} = {.5, .5, .1}; 
-// Attractor Line{L107410} = {.5, .5, .1}; 
-// Attractor Line{L107420} = {.5, .5, .1}; 
-// Attractor Line{L107430} = {.5, .5, .1}; 
-// Attractor Line{L107500} = {.25, .25, .05}; 
-// Attractor Line{L107520} = {.25, .25, .05}; 
-//
-// Attractor Line{L207100} = {.5, .5, .1}; 
-// Attractor Line{L207200} = {.5, .5, .1}; 
-// Attractor Line{L207300} = {.5, .5, .1}; 
-// Attractor Line{L207400} = {.5, .5, .1}; 
-// Attractor Line{L207120} = {.5, .5, .1}; 
-// Attractor Line{L207220} = {.5, .5, .1}; 
-// Attractor Line{L207320} = {.5, .5, .1}; 
-// Attractor Line{L207420} = {.5, .5, .1}; 
-// Attractor Line{L207140} = {.5, .5, .1}; 
-// Attractor Line{L207240} = {.5, .5, .1}; 
-// Attractor Line{L207340} = {.5, .5, .1}; 
-// Attractor Line{L207440} = {.5, .5, .1}; 
-//
 //
 /********************************************************************* 
  *
@@ -1803,25 +1653,6 @@ PS105004=news;	Plane Surface(PS105004) =	{LL105004};
 PS105005=news;	Plane Surface(PS105005) =	{LL105005};
 PS105006=news;	Plane Surface(PS105006) =	{LL105006};
 //
-// __________
-// ATTRACTORS
-//
-// Attractor Line{L105215} = {.5, .5, .1}; 
-// Attractor Line{L105415} = {.5, .5, .1}; 
-//
-// Attractor Line{L205115} = {.5, .5, .1}; 
-// Attractor Line{L205215} = {.5, .5, .1}; 
-// Attractor Line{L205315} = {.5, .5, .1}; 
-// Attractor Line{L205415} = {.5, .5, .1}; 
-//Attractor Line{L205220} = {.25, .25, .1}; 
-//Attractor Line{L205320} = {.25, .25, .1}; 
-//
-// Attractor Line{L205130} = {.5, .5, .1}; 
-// Attractor Line{L205140} = {.5, .5, .1}; 
-// Attractor Line{L205150} = {.5, .5, .1}; 
-// Attractor Line{L303000} = {.5, .5, .1}; 
-//
-//
 /********************************************************************* 
  *
  *  FLOORBEAM STIFFENERS
@@ -1899,14 +1730,6 @@ PS112100=news;	Plane Surface(PS112100) =	{LL112100};
 PS113100=news;	Plane Surface(PS113100) =	{LL113100};
 PS114100=news;	Plane Surface(PS114100) =	{LL114100};
 //
-// __________
-// ATTRACTORS
-// Attractor Line{L211110} = {.5, .5, .1}; 
-// Attractor Line{L212110} = {.5, .5, .1}; 
-// Attractor Line{L213110} = {.5, .5, .1}; 
-// Attractor Line{L214110} = {.5, .5, .1}; 
-//
-//
 /********************************************************************* 
  *
  *  LOWER LATERAL BRACING BOT FLANGE
@@ -1943,14 +1766,6 @@ LL117100=newl;	Line Loop(LL117100) =	{L117100,L217200,-L117110,-L217100};
 // ________
 // SURFACES
 PS117100=news;	Plane Surface(PS117100) =	{LL117100};
-//
-// __________
-// ATTRACTORS
-// Attractor Line{L117100} = {.25, .25, .15}; 
-// Attractor Line{L117110} = {.25, .25, .15}; 
-// Attractor Line{L217100} = {.25, .25, .15}; 
-// Attractor Line{L217200} = {.25, .25, .15}; 
-//
 //
 /********************************************************************* 
  *
@@ -1989,14 +1804,6 @@ LL118100=newl;	Line Loop(LL118100) =	{L118100,L218200,-L118110,-L218100};
 // SURFACES
 PS118100=news;	Plane Surface(PS118100) =	{LL118100};
 //
-// __________
-// ATTRACTORS
-// Attractor Line{L118100} = {.25, .25, .15}; 
-// Attractor Line{L118110} = {.25, .25, .15}; 
-// Attractor Line{L218100} = {.25, .25, .15}; 
-// Attractor Line{L218200} = {.25, .25, .15}; 
-//
-//
 /********************************************************************* 
  *
  *  LOWER LATERAL BRACING EAST WEB
@@ -2033,11 +1840,6 @@ LL115100=newl;	Line Loop(LL115100) =	{L115100,L215110,-L115200,-L215100};
 // ________
 // SURFACES
 PS115100=news;	Plane Surface(PS115100) =	{LL115100};
-//
-// __________
-// ATTRACTORS
-// Attractor Line{L215100} = {.25, .25, .15}; 
-// Attractor Line{L215110} = {.25, .25, .15}; 
 //
 //
 /********************************************************************* 
@@ -2076,12 +1878,6 @@ LL116100=newl;	Line Loop(LL116100) =	{L116100,L216110,-L116200,-L216100};
 // ________
 // SURFACES
 PS116100=news;	Plane Surface(PS116100) =	{LL116100};
-//
-// __________
-// ATTRACTORS
-// Attractor Line{L216100} = {.25, .25, .15}; 
-// Attractor Line{L216110} = {.25, .25, .15}; 
-//
 //
 /********************************************************************* 
  *
@@ -2136,14 +1932,6 @@ LL108100=newl;	Line Loop(LL108100) =	{L108101,L108102,L108103,L108104,L108105,L1
 // SURFACES
 PS108100=news;	Plane Surface(PS108100) =	{LL108100};
 //
-// __________
-// ATTRACTORS
-// Attractor Line{L108101} = {.5, .5, .1}; 
-// Attractor Line{L108102} = {.5, .5, .1}; 
-// Attractor Line{L108105} = {.5, .5, .1}; 
-// Attractor Line{L108106} = {.5, .5, .1}; 
-//
-//
 /********************************************************************* 
  *
  *  GUSSET TOP
@@ -2190,13 +1978,6 @@ LL109100=newl;	Line Loop(LL109100) =	{L109101,L109102,L109103,L109104,L109105,L1
 // ________
 // SURFACES
 PS109100=news;	Plane Surface(PS109100) =	{LL109100};
-//
-// __________
-// ATTRACTORS
-// Attractor Line{L109101} = {.5, .5, .1}; 
-// Attractor Line{L109102} = {.5, .5, .1}; 
-// Attractor Line{L109106} = {.5, .5, .1}; 
-// Attractor Line{L109107} = {.5, .5, .1}; 
 //
 //
 /********************************************************************* 
@@ -2269,22 +2050,6 @@ LL110102=newl;	Line Loop(LL110102) =	{L110601,L110602,L110603,L110604,L110605,L1
 // ________
 // SURFACES
 PS110101=news;	Plane Surface(PS110101) =	{LL110101,LL110102};
-//
-// __________
-// ATTRACTORS
-// Attractor Line{L110102} = {.5, .5, .10}; 
-// Attractor Line{L110104} = {.5, .5, .10}; 
-// Attractor Line{L110106} = {.5, .5, .10}; 
-// Attractor Line{L110109} = {.5, .5, .10}; 
-//
-// Attractor Line{L110601} = {.25, .25, .15}; 
-// Attractor Line{L110602} = {.25, .25, .15}; 
-// Attractor Line{L110603} = {.25, .25, .15}; 
-// Attractor Line{L110604} = {.25, .25, .15}; 
-// Attractor Line{L110605} = {.25, .25, .15}; 
-// Attractor Line{L110606} = {.25, .25, .15}; 
-// Attractor Line{L110607} = {.25, .25, .15}; 
-// Attractor Line{L110608} = {.25, .25, .15}; 
 //
 //
 /********************************************************************* 
@@ -2469,11 +2234,6 @@ PS120102=news;	Plane Surface(PS120102) =	{LL120102};
 PS120103=news;	Plane Surface(PS120103) =	{LL120103};
 PS120104=news;	Plane Surface(PS120104) =	{LL120104};
 PS120105=news;	Plane Surface(PS120105) =	{LL120105};
-//
-// __________
-// ATTRACTORS
-//Attractor Line{L1201} = {.5, .5, .1}; 
-//Attractor Point{p110001} = {.4, .4, .2}; // hole at L6U7
 //
 //
 /********************************************************************* 
@@ -2667,11 +2427,6 @@ PS134102=news;	Plane Surface(PS134102) =	{LL134102};
 PS134103=news;	Plane Surface(PS134103) =	{LL134103};
 PS134104=news;	Plane Surface(PS134104) =	{LL134104};
 PS134105=news;	Plane Surface(PS134105) =	{LL134105};
-//
-// __________
-// ATTRACTORS
-//Attractor Line{L1201} = {.5, .5, .1}; 
-//Attractor Point{p110001} = {.4, .4, .2}; // hole at L6U7
 //
 //
 /********************************************************************* 
@@ -2867,10 +2622,6 @@ PS126103=news;	Plane Surface(PS126103) =	{LL126103};
 PS126104=news;	Plane Surface(PS126104) =	{LL126104};
 PS126105=news;	Plane Surface(PS126105) =	{LL126105};
 //
-// __________
-// ATTRACTORS
-//Attractor Line{L1201} = {.5, .5, .1}; 
-//Attractor Point{p110001} = {.4, .4, .2}; // hole at L6U7
 //
 //
 /********************************************************************* 
@@ -3066,11 +2817,6 @@ PS140103=news;	Plane Surface(PS140103) =	{LL140103};
 PS140104=news;	Plane Surface(PS140104) =	{LL140104};
 PS140105=news;	Plane Surface(PS140105) =	{LL140105};
 //
-// __________
-// ATTRACTORS
-//Attractor Line{L1201} = {.5, .5, .1}; 
-//Attractor Point{p110001} = {.4, .4, .2}; // hole at L6U7
-//
 //
 /********************************************************************* 
  *
@@ -3151,10 +2897,6 @@ PS128101=news;	Plane Surface(PS128101) =	{LL128101};
 PS129101=news;	Plane Surface(PS129101) =	{LL129101};
 PS130101=news;	Plane Surface(PS130101) =	{LL130101};
 //
-// __________
-// ATTRACTORS
-//Attractor Line{L1201} = {.5, .5, .1}; 
-//Attractor Point{p110001} = {.4, .4, .2}; // hole at L6U7
 //
 //
 /********************************************************************* 
@@ -3235,11 +2977,6 @@ PS141101=news;	Plane Surface(PS141101) =	{LL141101};
 PS142101=news;	Plane Surface(PS142101) =	{LL142101};
 PS143101=news;	Plane Surface(PS143101) =	{LL143101};
 PS144101=news;	Plane Surface(PS144101) =	{LL144101};
-//
-// __________
-// ATTRACTORS
-//Attractor Line{L1201} = {.5, .5, .1}; 
-//Attractor Point{p110001} = {.4, .4, .2}; // hole at L6U7
 //
 //
 /********************************************************************* 

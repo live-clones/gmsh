@@ -905,8 +905,12 @@ StringXNumber MeshOptions_Number[] = {
     "Threshold angle below which normals are not smoothed" }, 
   { F|O, "AllowSwapAngle" , opt_mesh_allow_swap_edge_angle , 10.0 ,
     "Treshold angle (in degrees) between faces normals under which we allow an edge swap" }, 
+
   { F|O, "BdfFieldFormat" , opt_mesh_bdf_field_format , 1. , 
     "Field format for Nastran BDF files (0=free, 1=small, 2=large)" },
+
+  { F|O, "C1Continuity" , opt_mesh_c1 , 0. ,
+    "Impose C1 continuity to high order meshes (only valid in 2D plane and ElemenOrder = 2)" },
   { F|O, "CharacteristicLengthFactor" , opt_mesh_lc_factor , 1.0 ,
     "Factor applied to all characteristic lengths" },
   { F|O, "CharacteristicLengthMin" , opt_mesh_lc_min, 0.0 ,
@@ -943,10 +947,6 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "ElementOrder" , opt_mesh_order , 1. , // "Order" is a reserved token in the parser
     "Element order (1=linear elements, N (<6) = elements of higher order)" },
-  { F|O, "C1Continuity" , opt_mesh_c1 , 0. ,
-    "Impose C1 continuity to high order meshes, only valid in 2D plane and ElemenOrder = 2 and 3 (todo) (Default : C0 continuity)" },
-  { F|O, "SmoothInternalEdges" , opt_mesh_smooth_internal_edges , 0 ,
-    "Number of smoothing steps of internal edges for high order meshes" },
   { F|O, "Explode" , opt_mesh_explode , 1.0 ,
     "Element shrinking factor (between 0 and 1)" },
 
@@ -1053,6 +1053,8 @@ StringXNumber MeshOptions_Number[] = {
     "Accuracy of evaluation of the LC field for 1D mesh generation" },
   { F|O, "Smoothing" , opt_mesh_nb_smoothing , 1. ,
     "Number of smoothing steps applied to the final mesh" },
+  { F|O, "SmoothInternalEdges" , opt_mesh_smooth_internal_edges , 0 ,
+    "Number of smoothing steps of internal edges for high order meshes" },
   { F|O, "SmoothNormals" , opt_mesh_smooth_normals , 0. , 
     "Smooth the mesh normals?" },
   { F|O, "StlBinary" , opt_mesh_stl_binary , 0. , 

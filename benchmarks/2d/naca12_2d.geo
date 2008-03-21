@@ -225,7 +225,3 @@ Plane Surface(11) = {9,10};
 
 Point(9999) = {0.6,0,0,1};
 
-//Attractor Point{9999} = {0.2,0.02,lc3*10,2};
-
-//Attractor Line{1,2,3,4} = {1,.05,3};
-//Mesh.Algorithm = 2;

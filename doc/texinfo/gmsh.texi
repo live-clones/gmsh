@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.240 2008-02-27 12:39:28 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.241 2008-03-21 09:39:43 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 @c
@@ -370,9 +370,10 @@ the discretization of an ``isolated'' (@var{n}-1)-th dimensional entity
 inside an @var{n}-th dimensional entity does @emph{not} constrain the
 @var{n}-th dimensional mesh.  Every meshing step is constrained by the
 characteristic length field, which can be uniform, specified by
-characteristic lengths associated with elementary geometrical entities,
-associated with another mesh (the ``background mesh''), or defined by
-point or line ``attractors''.
+characteristic lengths associated with points in the geometry, or
+defined by general ``fields'' (a scalar field defined on another mesh
+using post-processing view, threshold fields associated with point or
+line ``attractors'', etc.).
 
 For each meshing step, all structured mesh directives are executed
 first, and serve as additional constraints for the unstructured parts
@@ -450,8 +451,8 @@ algorithms is pretty good; the 3D algorithm is still experimental and slow
 @item
 specify target element sizes accurately. Gmsh provides several
 mechanisms to control the size of the elements in the final mesh:
-through interpolation from sizes specified at geometry points or on a
-background mesh, or using attractors (@pxref{Mesh commands});
+through interpolation from sizes specified at geometry points or using
+flexible mesh size fields (@pxref{Mesh commands});
 @item
 create simple extruded geometries and meshes (see @ref{Geometry commands},
 and @ref{Mesh commands});
@@ -1939,10 +1940,8 @@ either in the GUI or on the command line (see @ref{Running Gmsh}, and
 @cindex Mesh, background
 @cindex Background mesh
 
-The `size' of a mesh element is defined as the length of the segment for a
-line segment, the radius of the circumscribed circle for a triangle and the
-radius of the circumscribed sphere for a tetrahedron. There are three main
-ways to specify the size of the mesh elements for a given geometry:
+There are two ways to specify the size of the mesh elements for a given
+geometry:
 
 @enumerate
 @item
@@ -1959,24 +1958,43 @@ module. The final element sizes are of course constrained by the structured
 algorithms for which the element sizes are explicitly specified (e.g.,
 transfinite and extruded grids: see @ref{Structured grids}).
 @item
-You can give Gmsh an explicit background mesh in the form of a scalar
-post-processing view (see @ref{Post-processing commands}, and @ref{File
-formats}) in which the nodal values are the target element sizes.  This
-method is very general but it requires a first (usually rough) mesh and
-a way to compute the target sizes on this mesh (usually through an error
-estimation procedure, in an iterative process of mesh adaptation). Note
-that the target element sizes can be constrained by the characteristic
-lengths defined in the geometrical model if the
-@code{Mesh.ConstrainedBackgroundMesh} option is set. To load a
-background mesh, you can use the @code{-bgm} command-line option
-(@pxref{Command-line options}), select `Apply as background mesh' in the
-post-processing view option menu, or use the @code{Background Mesh}
-command in a script (@pxref{Post-processing commands}).
+You can specify characteristic lengths using mesh size
+``fields''. Various fields exist: 
+@itemize @bullet
+@item 
+A @code{PostView} field specifies an explicit background mesh in the
+form of a scalar post-processing view (see @ref{Post-processing
+commands}, and @ref{File formats}) in which the nodal values are the
+target element sizes.  This method is very general but it requires a
+first (usually rough) mesh and a way to compute the target sizes on this
+mesh (usually through an error estimation procedure, in an iterative
+process of mesh adaptation).
 
-Background meshes are supported by all algorithms except the algorithms
-based on Netgen.
-@item
-You can define point or line attractors. [More to come here later.]
+(Note that you can also load a background mesh directly from the command
+line using the @code{-bgm} option (@pxref{Command-line options}), or in
+the GUI by selecting `Apply as background mesh' in the post-processing
+view option menu.)
+@item 
+A @code{Box} field specifies the size of the elements inside and outside
+of a parallelipipedic region.
+@item 
+A @code{Threshold} field specifies the size of the mesh according to the
+distance to some geometrical entities. These entities can for example be
+geometry points and lines specified by an @code{Attractor} field.
+@item 
+A @code{MathEval} field specifies the size of the mesh using an explicit
+mathematical function.
+@item 
+A @code{Min} field specifies the size as the minimum of the sizes
+computed using other fields
+@item 
+@dots
+@end itemize
+All target element sizes specified by fields can also be constrained by
+the characteristic lengths defined in the geometrical model if the
+@code{Mesh.ConstrainedBackgroundMesh} option is set. 
+
+Fields are supported by all the algorithms except those based on Netgen.
 @end enumerate
 
 Here are the mesh commands that are related to the specification of
@@ -1987,10 +2005,9 @@ characteristic lengths:
 Modifies the characteristic length of the points whose identification
 numbers are listed in @var{expression-list}. The new value is given by
 @var{expression}.
-@item Attractor Point @{ @var{expression-list} @} = @{ @var{expression-list} @};
-[More to come here later.]
-@item Attractor Line @{ @var{expression-list} @} = @{ @var{expression-list} @};
-[More to come here later.]
+@item Field[@var{expression}] = @var{string};
+@item Field[@var{expression}].@var{string} = @var{char-expression} | @var{expression} | @var{expression-list};
+@item Background Field = @var{expression};
 @end ftable
 
 @c .........................................................................
