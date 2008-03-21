@@ -46,6 +46,7 @@ class FieldOption {
   }
  public:
   FieldOption(bool *_status) : status(_status) {}
+  virtual ~FieldOption() {}
   virtual FieldOptionType get_type() = 0;
   virtual void get_text_representation(std::string & v_str) = 0;
   virtual void numerical_value(double val) { throw(1); }
@@ -79,6 +80,7 @@ class Field {
 
 class FieldFactory {
  public:
+  virtual ~FieldFactory() {}
   virtual Field * operator() () = 0;
 };
 

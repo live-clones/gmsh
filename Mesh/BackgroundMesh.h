@@ -22,9 +22,7 @@
 
 class GEntity;
 double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double Z);
-bool BGMExists();
-bool Extend1dMeshIn2dSurfaces ();
-bool Extend2dMeshIn3dVolumes  ();
-double LC_MVertex_CURV(GEntity *ge, double U, double V);
-double LC_MVertex_PNTS(GEntity *ge, double U, double V);
+bool Extend1dMeshIn2dSurfaces();
+bool Extend2dMeshIn3dVolumes();
+
 #endif
