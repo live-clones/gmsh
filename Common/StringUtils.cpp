@@ -1,4 +1,4 @@
-// $Id: StringUtils.cpp,v 1.2 2008-03-20 11:44:02 geuzaine Exp $
+// $Id: StringUtils.cpp,v 1.3 2008-03-21 18:08:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -35,7 +35,7 @@ void swapBytes(char *array, int size, int n)
 
 std::string extractDoubleQuotedString(const char *str, int len)
 {
-  char *c = strstr(str, "\"");
+  char *c = strstr((char*)str, "\"");
   if(!c) return "";
   std::string ret;
   for(int i = 1; i < len; i++) {
@@ -44,7 +44,6 @@ std::string extractDoubleQuotedString(const char *str, int len)
   }
   return ret;
 }
-
 
 std::string sanitizeTeXString(const char *in, int equation)
 {
