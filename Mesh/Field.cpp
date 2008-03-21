@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.24 2008-03-21 07:21:05 geuzaine Exp $
+// $Id: Field.cpp,v 1.25 2008-03-21 09:55:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -44,26 +44,26 @@
 
 extern Context_T CTX;
 
-class FieldOptionDouble:public FieldOption
-{
-public:
+class FieldOptionDouble : public FieldOption {
+ public:
   double &val;
   FieldOptionType get_type()
   {
     return FIELD_OPTION_DOUBLE;
-  };
-FieldOptionDouble(double &_val, bool * _status = NULL):FieldOption(_status),
-    val(_val) {
-  };
+  }
+  FieldOptionDouble(double &_val, bool * _status = NULL)
+    : FieldOption(_status), val(_val) 
+  {
+  }
   double numerical_value() const
   {
     return val;
-  };
+  }
   void numerical_value(double v)
   {
     modified();
     val = v;
-  };
+  }
   void get_text_representation(std::string & v_str)
   {
     std::ostringstream sstream;
@@ -73,26 +73,26 @@ FieldOptionDouble(double &_val, bool * _status = NULL):FieldOption(_status),
   }
 };
 
-class FieldOptionInt:public FieldOption
-{
+class FieldOptionInt : public FieldOption {
 public:
   int &val;
   FieldOptionType get_type()
   {
     return FIELD_OPTION_INT;
-  };
-FieldOptionInt(int &_val, bool * _status = NULL):FieldOption(_status),
-    val(_val) {
-  };
+  }
+  FieldOptionInt(int &_val, bool * _status = NULL)
+    : FieldOption(_status), val(_val) 
+  {
+  }
   double numerical_value() const
   {
     return val;
-  };
+  }
   void numerical_value(double v)
   {
     modified();
     val = (int)v;
-  };
+  }
   void get_text_representation(std::string & v_str)
   {
     std::ostringstream sstream;
@@ -100,24 +100,24 @@ FieldOptionInt(int &_val, bool * _status = NULL):FieldOption(_status),
     v_str = sstream.str();
   }
 };
-class FieldOptionList:public FieldOption
-{
-public:
-  std::list < int >&val;
+
+class FieldOptionList : public FieldOption {
+ public:
+  std::list<int> &val;
   FieldOptionType get_type()
   {
     return FIELD_OPTION_LIST;
-  };
-FieldOptionList(std::list < int >&_val, bool * _status = NULL):FieldOption(_status),
-    val(_val)
+  }
+  FieldOptionList(std::list < int >&_val, bool * _status = NULL)
+    : FieldOption(_status), val(_val)
   {
-  };
-  std::list < int >&list()
+  }
+  std::list<int> &list()
   {
     modified();
     return val;
   }
-  const std::list < int >&list() const
+  const std::list<int> &list() const
   {
     return val;
   }
@@ -193,7 +193,7 @@ class FieldOptionBool : public FieldOption {
 
 void FieldManager::reset()
 {
-  for(std::map < int, Field * >::iterator it = begin(); it != end(); it++) {
+  for(std::map<int, Field*>::iterator it = begin(); it != end(); it++) {
     delete it->second;
   }
   clear();
@@ -484,6 +484,7 @@ class GradientField : public Field {
 };
 
 #if defined(HAVE_MATH_EVAL)
+
 class MathEvalExpression {
   bool error_status;
   std::list < Field * >*list;
@@ -637,6 +638,7 @@ class ParametricField : public Field {
     return "Param";
   }
 };
+
 #endif
 
 class PostViewField : public Field {
@@ -644,7 +646,6 @@ class PostViewField : public Field {
  public:int view_index;
   double operator() (double x, double y, double z)
   {
-    // FIXME: should test unique view num instead, but that would be slower
     if(view_index < 0 || view_index >= (int)PView::list.size())
       return MAX_LC;
     if(update_needed){
@@ -654,30 +655,7 @@ class PostViewField : public Field {
       update_needed = false;
     }
     double l = 0.;
-    if(!octree->searchScalar(x, y, z, &l, 0)) {
-      // uncomment the following to try really hard to find an element
-      // around the point
-      /*
-         double fact[9] = {0.001, 0.0025, 0.005, 0.0075, 0.01, 0.025, 0.05, 0.075, 0.1};
-         for(int i = 0; i < 9; i++){
-         double eps = CTX.lc * fact[i];
-         if(octree->searchScalar(x + eps, y, z, &l, 0)) break;
-         if(octree->searchScalar(x - eps, y, z, &l, 0)) break;
-         if(octree->searchScalar(x, y + eps, z, &l, 0)) break;
-         if(octree->searchScalar(x, y - eps, z, &l, 0)) break;
-         if(octree->searchScalar(x, y, z + eps, &l, 0)) break;
-         if(octree->searchScalar(x, y, z - eps, &l, 0)) break;
-         if(octree->searchScalar(x + eps, y - eps, z - eps, &l, 0)) break;
-         if(octree->searchScalar(x + eps, y + eps, z - eps, &l, 0)) break;
-         if(octree->searchScalar(x - eps, y - eps, z - eps, &l, 0)) break;
-         if(octree->searchScalar(x - eps, y + eps, z - eps, &l, 0)) break;
-         if(octree->searchScalar(x + eps, y - eps, z + eps, &l, 0)) break;
-         if(octree->searchScalar(x + eps, y + eps, z + eps, &l, 0)) break;
-         if(octree->searchScalar(x - eps, y - eps, z + eps, &l, 0)) break;
-         if(octree->searchScalar(x - eps, y + eps, z + eps, &l, 0)) break;
-         }
-       */
-    }
+    octree->searchScalar(x, y, z, &l, 0);
     if(l <= 0) return MAX_LC;
     return l;
   }
@@ -761,6 +739,7 @@ class MaxField : public Field {
 };
 
 #ifdef HAVE_ANN
+
 class AttractorField : public Field {
   ANNkd_tree *kdtree;
   ANNpointArray zeronodes;
@@ -861,168 +840,39 @@ class AttractorField : public Field {
     return dialogBox;
   }
 };
+
 #endif
 
-#if 0
-void addMapLc(std::map < MVertex *, double >&maplc, MVertex * v, double l)
-{
-  std::map < MVertex *, double >::iterator it = maplc.find(v);
-  if(it == maplc.end())
-    maplc[v] = l;
-  else if(it->second > l)
-    it->second = l;
-}
-#endif
-
-#if 0
-/*class AttractorField_1DMesh : public AttractorField 
-{
-protected:
-  std::vector<double> lcs;
-  std::vector<double> lcs2;
-  double _dmax,_dmin,_lcmax;
-public:
-  AttractorField_1DMesh (GModel *m , double dmax, double dmin, double lcmax);
-  AttractorField_1DMesh (GFace  *gf, double dmax, double dmin, double lcmax);
-  virtual double operator()(double X, double Y, double Z) ;
-  virtual void eval(double X, double Y, double Z, double &l, double &lpt, double &dist) ;
-};*/
-AttractorField_1DMesh::AttractorField_1DMesh(GModel * m, double dmax,
-                                             double dmin, double lcmax)
-:_dmax(dmax), _dmin(dmin), _lcmax(lcmax)
-{
-  GModel::eiter it = m->firstEdge();
-
-  std::map < MVertex *, double >maplc;
-
-  while(it != m->lastEdge()) {
-    MVertex *first = (*it)->getBeginVertex()->mesh_vertices[0];
-    for(unsigned int i = 1; i <= (*it)->mesh_vertices.size(); ++i) {
-      MVertex *last = (i == (*it)->mesh_vertices.size())?
-        (*it)->getEndVertex()->mesh_vertices[0] : (*it)->mesh_vertices[i];
-      double l = sqrt((first->x() - last->x()) * (first->x() - last->x()) +
-                      (first->y() - last->y()) * (first->y() - last->y()) +
-                      (first->z() - last->z()) * (first->z() - last->z()));
-      addMapLc(maplc, first, l);
-      addMapLc(maplc, last, l);
-      first = last;
-    }
-  }
-
-  std::map < MVertex *, double >::iterator itm = maplc.begin();
-
-  while(itm != maplc.end()) {
-    addPoint(itm->first->x(), itm->first->y(), itm->first->z());
-    lcs.push_back(itm->second);
-  }
-}
-
-AttractorField_1DMesh::AttractorField_1DMesh(GFace * gf, double dmax,
-                                             double dmin, double lcmax)
-:_dmax(dmax), _dmin(dmin), _lcmax(lcmax)
-{
-  std::list < GEdge * >edges = gf->edges();
-  std::list < GEdge * >::iterator it = edges.begin();
-
-  std::map < MVertex *, double >maplc;
-  std::map < MVertex *, double >maplc2;
-
-  while(it != edges.end()) {
-    MVertex *first = (*it)->getBeginVertex()->mesh_vertices[0];
-    for(unsigned int i = 1; i <= (*it)->mesh_vertices.size(); ++i) {
-      MVertex *last = (i == (*it)->mesh_vertices.size())?
-        (*it)->getEndVertex()->mesh_vertices[0] : (*it)->mesh_vertices[i];
-      double l = sqrt((first->x() - last->x()) * (first->x() - last->x()) +
-                      (first->y() - last->y()) * (first->y() - last->y()) +
-                      (first->z() - last->z()) * (first->z() - last->z()));
-      double t;
-      last->getParameter(0, t);
-      double l2 = LC_MVertex_PNTS(last->onWhat(), t, 0);
-      addMapLc(maplc, first, l);
-      addMapLc(maplc, last, l);
-      addMapLc(maplc2, first, l2);
-      addMapLc(maplc2, last, l2);
-      first = last;
-    }
-    ++it;
-  }
-
-  std::map < MVertex *, double >::iterator itm = maplc.begin();
-  while(itm != maplc.end()) {
-    addPoint(itm->first->x(), itm->first->y(), itm->first->z());
-    lcs.push_back(itm->second);
-    ++itm;
-  }
-  itm = maplc2.begin();
-  while(itm != maplc2.end()) {
-    lcs2.push_back(itm->second);
-    ++itm;
-  }
-}
-
-double AttractorField_1DMesh::operator() (double X, double Y, double Z)
-{
-#ifdef HAVE_ANN
-  double xyz[3] = { X, Y, Z };
-  kdtree->annkSearch(xyz, maxpts, index, dist);
-  double d = sqrt(dist[0]);
-  double lcmin = lcs[index[0]];
-  double r = (d - _dmin) / (_dmax - _dmin);
-  r = std::max(std::min(r, 1.), 0.);
-  double lc = lcmin * (1 - r) + _lcmax * r;
-  return lc;
-#else
-  Msg(GERROR,
-      "GMSH should be compiled with ANN in order to enable attractors");
-  return 1.e22;
-#endif
-}
-
-void AttractorField_1DMesh::eval(double X, double Y, double Z, double &lcmin,
-                                 double &lcpt, double &d)
-{
-#ifdef HAVE_ANN
-  double xyz[3] = { X, Y, Z };
-  kdtree->annkSearch(xyz, maxpts, index, dist);
-  d = sqrt(dist[0]);
-  lcmin = lcs[index[0]];
-  lcpt = lcs2[index[0]] * CTX.mesh.lc_factor;
-#else
-  Msg(GERROR,
-      "GMSH should be compiled with ANN in order to enable attractors");
-#endif
-}
-#endif
-
-template < class F > class FieldFactoryT:public FieldFactory {
-public:
-  Field * operator()() {
+template<class F> class FieldFactoryT : public FieldFactory {
+ public:
+  Field *operator()()
+  {
     return new F;
-  };
+  }
 };
 
-template < class F > Field * field_factory()
+template<class F> Field *field_factory()
 {
   return new F();
 };
 
 FieldManager::FieldManager()
 {
-  map_type_name["Structured"] = new FieldFactoryT < StructuredField > ();
-  map_type_name["Threshold"] = new FieldFactoryT < ThresholdField > ();
-  map_type_name["Box"] = new FieldFactoryT < BoxField > ();
-  map_type_name["LonLat"] = new FieldFactoryT < LonLatField > ();
+  map_type_name["Structured"] = new FieldFactoryT<StructuredField> ();
+  map_type_name["Threshold"] = new FieldFactoryT<ThresholdField> ();
+  map_type_name["Box"] = new FieldFactoryT<BoxField> ();
+  map_type_name["LonLat"] = new FieldFactoryT<LonLatField> ();
 #if defined(HAVE_MATH_EVAL)
-  map_type_name["Param"] = new FieldFactoryT < ParametricField > ();
-  map_type_name["MathEval"] = new FieldFactoryT < MathEvalField > ();
+  map_type_name["Param"] = new FieldFactoryT<ParametricField> ();
+  map_type_name["MathEval"] = new FieldFactoryT<MathEvalField> ();
 #endif
 #if defined(HAVE_ANN)
-  map_type_name["Attractor"] = new FieldFactoryT < AttractorField > ();
+  map_type_name["Attractor"] = new FieldFactoryT<AttractorField> ();
 #endif
-  map_type_name["PostView"] = new FieldFactoryT < PostViewField > ();
-  map_type_name["Gradient"] = new FieldFactoryT < GradientField > ();
-  map_type_name["Min"] = new FieldFactoryT < MinField > ();
-  map_type_name["Max"] = new FieldFactoryT < MaxField > ();
+  map_type_name["PostView"] = new FieldFactoryT<PostViewField> ();
+  map_type_name["Gradient"] = new FieldFactoryT<GradientField> ();
+  map_type_name["Min"] = new FieldFactoryT< MinField> ();
+  map_type_name["Max"] = new FieldFactoryT< MaxField> ();
   background_field = -1;
 }
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.36 2008-03-19 17:34:57 geuzaine Exp $
+# $Id: Makefile,v 1.37 2008-03-21 09:55:43 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -134,6 +134,8 @@ OctreePost.o: OctreePost.cpp ../Common/Octree.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Common/Message.h \
-  ../Common/ShapeFunctions.h
+  ../Common/ShapeFunctions.h ../Geo/MElement.h ../Common/GmshDefines.h \
+  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
+  ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h
 ColorTable.o: ColorTable.cpp ../Common/Message.h ColorTable.h \
   ../Common/Context.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h
