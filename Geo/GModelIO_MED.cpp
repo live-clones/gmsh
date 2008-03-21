@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.9 2008-03-20 11:44:05 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.10 2008-03-21 17:09:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -35,7 +35,7 @@
 #include "GModelIO_MED.h"
 
 extern "C" {
-#include "med.h"
+#include <med.h>
 }
 
 ConversionData Data::MyConversionData;

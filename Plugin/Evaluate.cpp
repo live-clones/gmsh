@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.35 2008-03-20 11:44:13 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.36 2008-03-21 17:09:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -241,9 +241,9 @@ PView *GMSH_EvaluatePlugin::execute(PView *v)
 
   if(externalView >= 0){
     if(externalView < (int)PView::list.size())
-      Msg(GERROR, "View[%d] does not exist: using self", externalView);
-    else
       v2 = PView::list[externalView];
+    else
+      Msg(GERROR, "View[%d] does not exist: using self", externalView);
   }
 
   PViewDataList *data2 = getDataList(v2);

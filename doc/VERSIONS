@@ -1,4 +1,7 @@
-$Id: VERSIONS,v 1.400 2008-03-01 18:49:53 geuzaine Exp $
+$Id: VERSIONS,v 1.401 2008-03-21 17:09:06 geuzaine Exp $
+
+2.1.2 (xx): new Fields interface; more work on new post-processing
+API; fixed various bugs.
 
 2.1.1 (Mar 1, 2008): small bug fixes (second order meshes, combine
 views, divide and conquer crash, ...).
