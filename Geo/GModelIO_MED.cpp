@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.11 2008-03-23 21:42:57 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.12 2008-03-23 22:14:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -242,7 +242,149 @@ int GModel::writeMED(const std::string &name, double scalingFactor)
 
 int GModel::readMED(const std::string &name)
 {
+  med_idt fid = MEDouvrir((char*)name.c_str(), MED_LECTURE);
+  if(fid < 0) {
+    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+  
+  int numMeshes = MEDnMaa(fid);
+  if(!numMeshes){
+    Msg(INFO, "No mesh found in MED file");
+    return 0;
+  }
+  if(numMeshes > 1)
+    Msg(WARNING, "There are %d meshes in the MED file: reading only the first");
 
+  // read mesh info
+  char meshName[MED_TAILLE_NOM + 1], meshDesc[MED_TAILLE_DESC + 1];
+  med_int meshDim;
+  med_maillage meshType;
+  if(MEDmaaInfo(fid, 1, meshName, &meshDim, &meshType, meshDesc) < 0){
+    Msg(GERROR, "Unable to read mesh information");
+    return 0;
+  }
+  if(meshType != MED_NON_STRUCTURE || meshDim != 3){
+    Msg(GERROR, "Cannot read structured and/or non 3-D mesh");
+    return 0;
+  }
+  
+  // read nodes
+  med_int numNodes = MEDnEntMaa(fid, meshName, MED_COOR, MED_NOEUD, 
+				(med_geometrie_element)0, (med_connectivite)0);
+  if(numNodes < 0){
+    Msg(GERROR, "Could not read number of MED nodes");
+    return 0;
+  }
+  if(numNodes == 0){
+    Msg(GERROR, "No nodes in MED mesh");
+    return 0;
+  }
+  std::vector<MVertex*> verts(numNodes);
+  std::vector<med_float> coord(3 * numNodes);
+  char coordName[3 * MED_TAILLE_PNOM + 1], coordUnit[3 * MED_TAILLE_PNOM + 1]; 
+  med_repere rep;
+  if(MEDcoordLire(fid, meshName, meshDim, &coord[0], MED_FULL_INTERLACE,
+		  MED_ALL, 0, 0, &rep, coordName, coordUnit) < 0){
+    Msg(GERROR, "Could not read node coordinates");
+    return 0;
+  }
+  std::vector<med_int> nodeTags(numNodes);
+  if(MEDnumLire(fid, meshName, &nodeTags[0], numNodes, MED_NOEUD,
+		(med_geometrie_element)0) < 0)
+    nodeTags.clear();
+  for(int i = 0; i < numNodes; i++){
+    verts[i] = new MVertex(coord[3 * i], coord[3 * i + 1], coord[3 * i + 2],
+			   0, nodeTags.empty() ? 0 : nodeTags[i]);
+  }
+
+  // read elements
+  for(int mshType = 0; mshType < 100; mshType++){ // loop over all possible MSH types
+    med_geometrie_element type;
+    int numNodPerEle = getTypeForMED(mshType, type);
+    if(type == MED_NONE) continue;
+    med_int numEle = MEDnEntMaa(fid, meshName, MED_CONN, MED_MAILLE, type, MED_NOD);
+    if(numEle <= 0) continue;
+    std::vector<med_int> conn(numEle * numNodPerEle);
+    if(MEDconnLire(fid, meshName, meshDim, &conn[0], MED_FULL_INTERLACE, 0, MED_ALL,
+		   MED_MAILLE, type, MED_NOD) < 0) {
+      Msg(GERROR, "Could not read MED elements");
+      return 0;
+    }
+    std::vector<med_int> fam(numEle);
+    if(MEDfamLire(fid, meshName, &fam[0], numEle, MED_MAILLE, type) < 0) {
+      Msg(GERROR, "Could not read MED families");
+      return 0;
+    }
+    std::vector<med_int> eleTags(numEle);
+    if(MEDnumLire(fid, meshName, &eleTags[0], numEle, MED_MAILLE, type) < 0)
+      eleTags.clear();
+    std::map<int, std::vector<MElement*> > elements;
+    MElementFactory factory;
+    for(int j = 0; j < numEle; j++){    
+      std::vector<MVertex*> v(numNodPerEle);
+      for(int k = 0; k < numNodPerEle; k++)
+	v[k] = verts[conn[numNodPerEle * j + k] - 1];
+      MElement *e = factory.create(mshType, v, eleTags.empty() ? 0 : eleTags[j]);
+      if(e) elements[-fam[j]].push_back(e);
+    }
+    _storeElementsInEntities(elements);	
+  }
+  _associateEntityWithMeshVertices();
+  for(unsigned int i = 0; i < verts.size(); i++){
+    GEntity *ge = verts[i]->onWhat();
+    if(ge) ge->mesh_vertices.push_back(verts[i]);
+    else delete verts[i]; // delete all unused vertices
+  }
+
+  // read family info
+  med_int numFamilies = MEDnFam(fid, meshName);
+  if(numFamilies < 0) {
+    Msg(GERROR, "Could not read MED families");
+    return 0;
+  }
+  for (int i = 0; i < numFamilies; i++) {
+    med_int numAttrib = MEDnAttribut(fid, meshName, i + 1);
+    med_int numGroups = MEDnGroupe(fid, meshName, i + 1);
+    if(numAttrib < 0 || numGroups < 0){
+      Msg(GERROR, "Could not read MED groups or attributes");
+      return 0;
+    }
+    if(numGroups > 0){ // get physicals
+      std::vector<med_int> attribId(numAttrib + 1);
+      std::vector<med_int> attribVal(numAttrib + 1);
+      std::vector<char> attribDes(MED_TAILLE_DESC * numAttrib + 1);
+      std::vector<char> groupNames(MED_TAILLE_LNOM * numGroups + 1);
+      char familyName[MED_TAILLE_NOM + 1];
+      med_int familyNum;
+      if(MEDfamInfo(fid, meshName, i + 1, familyName, &familyNum, &attribId[0], 
+		    &attribVal[0], &attribDes[0], &numAttrib, &groupNames[0],
+		    &numGroups) < 0) {
+	Msg(GERROR, "Could not read info for MED family %d", i + 1);
+      }
+      else{
+	GEntity *ge;
+	if((ge = getRegionByTag(-familyNum))){}
+	else if((ge = getFaceByTag(-familyNum))){}
+	else if((ge = getEdgeByTag(-familyNum))){}
+	else ge = getVertexByTag(-familyNum);
+	if(ge){
+	  for(int j = 0; j < numGroups; j++) {
+	    char tmp[MED_TAILLE_LNOM + 1];
+	    strncpy(tmp, &groupNames[j * MED_TAILLE_LNOM], MED_TAILLE_LNOM);
+	    tmp[MED_TAILLE_LNOM] = '\0';
+	    ge->physicals.push_back(setPhysicalName(tmp));
+	  }
+	}
+      }
+    }
+  }
+  
+  if(MEDfermer(fid) < 0){
+    Msg(GERROR, "Unable to close file '%s'", (char*)name.c_str());
+    return 0;
+  }
+  
   return 1;
 }
 
