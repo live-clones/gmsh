@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.196 2008-03-19 20:13:45 geuzaine Exp $
+# $Id: Makefile,v 1.197 2008-03-23 21:42:57 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -202,8 +202,7 @@ GModelIO_CGNS.o: GModelIO_CGNS.cpp GModel.h GVertex.h GEntity.h Range.h \
   MEdgeHash.h ../Common/Hash.h MFaceHash.h
 GModelIO_MED.o: GModelIO_MED.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
-  GFace.h GEdgeLoop.h Pair.h GRegion.h MElement.h ../Common/GmshDefines.h \
-  MVertex.h MEdge.h MFace.h ../Common/Message.h
+  GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/Message.h
 ExtrudeParams.o: ExtrudeParams.cpp ../Common/Message.h Geo.h \
   ../Common/GmshDefines.h gmshSurface.h Pair.h Range.h SPoint2.h \
   SPoint3.h SVector3.h SBoundingBox3d.h ../Numeric/Numeric.h \

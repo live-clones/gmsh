@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.179 2008-03-20 11:44:12 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.180 2008-03-23 21:43:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -274,6 +274,8 @@ void SetProjectName(const char *name)
   strncpy(CTX.no_ext_filename, no_ext, 255);
   strncpy(CTX.base_filename, base, 255);
 
+  GModel::current()->setName(base);
+    
 #if defined(HAVE_FLTK)
   if(!CTX.batch) WID->set_title(CTX.filename);
 #endif
@@ -349,6 +351,9 @@ int MergeFile(const char *name, int warn_if_missing)
   }
   else if(!strcmp(ext, ".mesh") || !strcmp(ext, ".MESH")){
     status = m->readMESH(name);
+  }
+  else if(!strcmp(ext, ".med") || !strcmp(ext, ".MED")){
+    status = m->readMED(name);
   }
   else if(!strcmp(ext, ".bdf") || !strcmp(ext, ".BDF") ||
           !strcmp(ext, ".nas") || !strcmp(ext, ".NAS")){

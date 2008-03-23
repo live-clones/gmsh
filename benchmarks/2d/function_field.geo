@@ -11,5 +11,6 @@ Line(4) = {4,1} ;
 Line Loop(5) = {4,1,-2,3} ;
 Plane Surface(6) = {5} ;
 
-Function Field(1) = "Cos(2*3.14*x)/5 + 0.21";
-Characteristic Length Field{1};
+Field[1] = MathEval;
+Field[1].F = "Cos(2*3.14*x)/5 + 0.21";
+Background Field = 1;

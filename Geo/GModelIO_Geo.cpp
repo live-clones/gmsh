@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.19 2008-03-20 11:44:05 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.20 2008-03-23 21:42:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -32,21 +32,21 @@
 #include "Parser.h" // for Symbol_T
 #include "Field.h"
 
-int GModel::readGEO(const std::string &name)
-{
-  ParseFile((char*)name.c_str(), 1);
-  return importGEOInternals();
-}
-
-void GModel::createGEOInternals()
+void GModel::_createGEOInternals()
 {
   _geo_internals = new GEO_Internals;
 }
 
-void GModel::deleteGEOInternals()
+void GModel::_deleteGEOInternals()
 {
   delete _geo_internals;
   _geo_internals = 0;
+}
+
+int GModel::readGEO(const std::string &name)
+{
+  ParseFile((char*)name.c_str(), 1);
+  return importGEOInternals();
 }
 
 int GModel::importGEOInternals()

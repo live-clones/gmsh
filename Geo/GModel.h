@@ -45,14 +45,22 @@ class GModel
   int _maxVertexDataIndex;
 
   GEO_Internals *_geo_internals;
-  void createGEOInternals();
-  void deleteGEOInternals();
+  void _createGEOInternals();
+  void _deleteGEOInternals();
 
   OCC_Internals *_occ_internals;
-  void deleteOCCInternals();
+  void _deleteOCCInternals();
 
   // Characteristic Lengths fields
   FieldManager *_fields;
+
+  // Store the elements in the map (indexed by elementary region
+  // number) into the model, creating discrete geometrical entities on
+  // the fly if needed
+  void _storeElementsInEntities(std::map<int, std::vector<MElement*> > &map);
+
+  // loop over all vertices connected to elements and associate geo entity
+  void _associateEntityWithMeshVertices();
 
  protected:
   std::string modelName;
@@ -82,6 +90,10 @@ class GModel
 
   // Access characteristic length fields
   FieldManager *getFields(){ return _fields; }
+
+  // Get/set the model name
+  void setName(std::string name){ modelName = name; }
+  std::string getName(){ return modelName; }
 
   // Get the number of regions in this model.
   int getNumRegions() const { return regions.size(); }
@@ -163,9 +175,6 @@ class GModel
 
   // Access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(int n);
-
-  // loop over all vertices connected to elements and associate geo entity
-  void associateEntityWithMeshVertices();
 
   // Renumber all the (used) mesh vertices in a continuous sequence
   int renumberMeshVertices(bool saveAll);
@@ -251,7 +260,8 @@ class GModel
   int writeCGNS(const std::string &name, double scalingFactor=1.0);
 
   // Med interface ("Modele d'Echange de Donnees")
-  int writeMED(const std::string &name);
+  int readMED(const std::string &name);
+  int writeMED(const std::string &name, double scalingFactor=1.0);
 };
 
 #endif

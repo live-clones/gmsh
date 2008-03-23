@@ -89,6 +89,9 @@ class MElement
   // get the vertex using the Nastran BDF ordering
   virtual MVertex *getVertexBDF(int num){ return getVertex(num); }
 
+  // get the vertex using MED ordering
+  virtual MVertex *getVertexMED(int num){ return getVertex(num); }
+
   // get the number of vertices associated with edges, faces and
   // volumes (nonzero only for higher order elements)
   virtual int getNumEdgeVertices(){ return 0; }
@@ -206,6 +209,11 @@ class MElementLessThanLexicographic{
     if(b1.z() - b2.z() >  tolerance) return true;
     return false;
   }
+};
+
+class MElementFactory{
+ public:
+  MElement *create(int type, std::vector<MVertex*> &v, int num=0, int part=0);
 };
 
 class MLine : public MElement {
@@ -372,6 +380,11 @@ class MTriangle : public MElement {
   virtual double gammaShapeMeasure();
   virtual int getNumVertices(){ return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual MVertex *getVertexMED(int num)
+  {
+    static const int map[3] = {0, 2, 1};
+    return getVertex(map[num]); 
+  }
   virtual MVertex *getOtherVertex(MVertex *v1, MVertex *v2)
   { 
     if(_v[0] != v1 && _v[0] != v2) return _v[0];
@@ -473,6 +486,11 @@ class MTriangle6 : public MTriangle {
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[6] = {0, 3, 1, 4, 2, 5};
+    return getVertex(map[num]); 
+  }
+  virtual MVertex *getVertexMED(int num)
+  {
+    static const int map[6] = {0, 2, 1, 5, 4, 3};
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 3; }
@@ -612,6 +630,11 @@ class MQuadrangle : public MElement {
   virtual int getDim(){ return 2; }
   virtual int getNumVertices(){ return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual MVertex *getVertexMED(int num)
+  {
+    static const int map[4] = {0, 3, 2, 1};
+    return getVertex(map[num]); 
+  }
   virtual int getNumEdges(){ return 4; }
   virtual MEdge getEdge(int num)
   {
@@ -700,6 +723,11 @@ class MQuadrangle8 : public MQuadrangle {
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[8] = {0, 4, 1, 5, 2, 6, 3, 7};
+    return getVertex(map[num]); 
+  }
+  virtual MVertex *getVertexMED(int num)
+  {
+    static const int map[8] = {0, 3, 2, 1, 7, 6, 5, 4};
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 4; }
@@ -811,6 +839,11 @@ class MTetrahedron : public MElement {
   virtual int getDim(){ return 3; }
   virtual int getNumVertices(){ return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual MVertex *getVertexMED(int num)
+  {
+    static const int map[4] = {0, 2, 1, 3};
+    return getVertex(map[num]); 
+  }
   virtual int getNumEdges(){ return 6; }
   virtual MEdge getEdge(int num)
   {
@@ -933,6 +966,11 @@ class MTetrahedron10 : public MTetrahedron {
   virtual MVertex *getVertexBDF(int num)
   {
     static const int map[10] = {0, 1, 2, 3, 4, 5, 6, 7, 9, 8};
+    return getVertex(map[num]); 
+  }
+  virtual MVertex *getVertexMED(int num)
+  {
+    static const int map[10] = {0, 2, 1, 3, 6, 5, 4, 7, 8, 9};
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 6; }

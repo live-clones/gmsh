@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.306 2008-03-21 07:21:07 geuzaine Exp $
+// $Id: Gmsh.y,v 1.307 2008-03-23 21:43:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1916,9 +1916,8 @@ Command :
     {
       if(!strcmp($1, "Background") && !strcmp($2, "Mesh")  && !strcmp($3, "View")){
 	int index = (int)$5;
-	if(index >= 0 && index < (int)PView::list.size()){
+	if(index >= 0 && index < (int)PView::list.size())
 	  GModel::current()->getFields()->set_background_mesh(index);
-	}
 	else
 	  yymsg(GERROR, "Unknown view %d", index);
       }

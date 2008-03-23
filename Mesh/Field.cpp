@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.25 2008-03-21 09:55:43 geuzaine Exp $
+// $Id: Field.cpp,v 1.26 2008-03-23 21:42:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -74,7 +74,7 @@ class FieldOptionDouble : public FieldOption {
 };
 
 class FieldOptionInt : public FieldOption {
-public:
+ public:
   int &val;
   FieldOptionType get_type()
   {
@@ -643,7 +643,8 @@ class ParametricField : public Field {
 
 class PostViewField : public Field {
   OctreePost *octree;
- public:int view_index;
+ public:
+  int view_index;
   double operator() (double x, double y, double z)
   {
     if(view_index < 0 || view_index >= (int)PView::list.size())

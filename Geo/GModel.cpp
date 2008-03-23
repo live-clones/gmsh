@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.76 2008-03-20 11:44:04 geuzaine Exp $
+// $Id: GModel.cpp,v 1.77 2008-03-23 21:42:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,10 @@
 #include <string.h>
 #include "GModel.h"
 #include "MElement.h"
+#include "discreteRegion.h"
+#include "discreteFace.h"
+#include "discreteEdge.h"
+#include "discreteVertex.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #  include "GmshEmbedded.h"
@@ -43,7 +47,7 @@ GModel::GModel(std::string name)
 {
   list.push_back(this);
   // at the moment we always create (at least an empty) GEO model
-  createGEOInternals();
+  _createGEOInternals();
 
 #if !defined(HAVE_GMSH_EMBEDDED)
   _fields = new FieldManager();
@@ -54,8 +58,8 @@ GModel::~GModel()
 {
   std::vector<GModel*>::iterator it = std::find(list.begin(), list.end(), this);
   if(it != list.end()) list.erase(it);
-  deleteGEOInternals();
-  deleteOCCInternals();
+  _deleteGEOInternals();
+  _deleteOCCInternals();
   destroy();
 #if !defined(HAVE_GMSH_EMBEDDED)
   delete _fields;
@@ -485,38 +489,6 @@ void GModel::removeInvisibleElements()
   }
 }
 
-template<class T>
-static void associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &elements)
-{
-  for(unsigned int i = 0; i < elements.size(); i++)
-    for(int j = 0; j < elements[i]->getNumVertices(); j++)
-      elements[i]->getVertex(j)->setEntity(ge);
-}
-
-void GModel::associateEntityWithMeshVertices()
-{
-  // loop on regions, then on faces, edges and vertices and store the
-  // entity pointer in the the elements' vertices (this way we
-  // associate the entity of lowest geometrical degree with each
-  // vertex)
-  for(riter it = firstRegion(); it != lastRegion(); ++it){
-    associateEntityWithElementVertices(*it, (*it)->tetrahedra);
-    associateEntityWithElementVertices(*it, (*it)->hexahedra);
-    associateEntityWithElementVertices(*it, (*it)->prisms);
-    associateEntityWithElementVertices(*it, (*it)->pyramids);
-  }
-  for(fiter it = firstFace(); it != lastFace(); ++it){
-    associateEntityWithElementVertices(*it, (*it)->triangles);
-    associateEntityWithElementVertices(*it, (*it)->quadrangles);
-  }
-  for(eiter it = firstEdge(); it != lastEdge(); ++it){
-    associateEntityWithElementVertices(*it, (*it)->lines);
-  }
-  for(viter it = firstVertex(); it != lastVertex(); ++it){
-    (*it)->mesh_vertices[0]->setEntity(*it);
-  }
-}
-
 int GModel::renumberMeshVertices(bool saveAll)
 {
   _vertexVectorCache.clear();
@@ -722,5 +694,88 @@ void GModel::checkMeshCoherence()
     }
     if(num) Msg(WARNING, "%d duplicate elements", num);
     MElementLessThanLexicographic::tolerance = old_tol;
+  }
+}
+
+template<class T>
+static void _addElements(std::vector<T*> &dst, const std::vector<MElement*> &src)
+{
+  for(unsigned int i = 0; i < src.size(); i++) dst.push_back((T*)src[i]);
+}
+
+void GModel::_storeElementsInEntities(std::map<int, std::vector<MElement*> > &map)
+{
+  std::map<int, std::vector<MElement*> >::const_iterator it = map.begin();
+  for(; it != map.end(); ++it){
+    if(!it->second.size()) continue;
+    int numEdges = it->second[0]->getNumEdges();
+    switch(numEdges){
+    case 1: 
+      {
+        GEdge *e = getEdgeByTag(it->first);
+        if(!e){
+          e = new discreteEdge(this, it->first);
+          add(e);
+        }
+        _addElements(e->lines, it->second);
+      }
+      break;
+    case 3: case 4: 
+      {
+        GFace *f = getFaceByTag(it->first);
+        if(!f){
+          f = new discreteFace(this, it->first);
+          add(f);
+        }
+        if(numEdges == 3) _addElements(f->triangles, it->second);
+        else _addElements(f->quadrangles, it->second);
+      }
+      break;
+    case 6: case 12: case 9: case 8:
+      {
+        GRegion *r = getRegionByTag(it->first);
+        if(!r){
+          r = new discreteRegion(this, it->first);
+          add(r);
+        }
+        if(numEdges == 6) _addElements(r->tetrahedra, it->second);
+        else if(numEdges == 12) _addElements(r->hexahedra, it->second);
+        else if(numEdges == 9) _addElements(r->prisms, it->second);
+        else _addElements(r->pyramids, it->second);
+      }
+      break;
+    }
+  }
+}
+
+template<class T>
+static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &elements)
+{
+  for(unsigned int i = 0; i < elements.size(); i++)
+    for(int j = 0; j < elements[i]->getNumVertices(); j++)
+      elements[i]->getVertex(j)->setEntity(ge);
+}
+
+void GModel::_associateEntityWithMeshVertices()
+{
+  // loop on regions, then on faces, edges and vertices and store the
+  // entity pointer in the the elements' vertices (this way we
+  // associate the entity of lowest geometrical degree with each
+  // vertex)
+  for(riter it = firstRegion(); it != lastRegion(); ++it){
+    _associateEntityWithElementVertices(*it, (*it)->tetrahedra);
+    _associateEntityWithElementVertices(*it, (*it)->hexahedra);
+    _associateEntityWithElementVertices(*it, (*it)->prisms);
+    _associateEntityWithElementVertices(*it, (*it)->pyramids);
+  }
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+    _associateEntityWithElementVertices(*it, (*it)->triangles);
+    _associateEntityWithElementVertices(*it, (*it)->quadrangles);
+  }
+  for(eiter it = firstEdge(); it != lastEdge(); ++it){
+    _associateEntityWithElementVertices(*it, (*it)->lines);
+  }
+  for(viter it = firstVertex(); it != lastVertex(); ++it){
+    (*it)->mesh_vertices[0]->setEntity(*it);
   }
 }

@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.30 2008-03-20 11:44:05 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.31 2008-03-23 21:42:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -431,6 +431,12 @@ void OCC_Internals::buildGModel(GModel *model)
   }
 }
 
+void GModel::_deleteOCCInternals()
+{
+  if(_occ_internals) delete _occ_internals;
+  _occ_internals = 0;
+}
+
 int GModel::readOCCSTEP(const std::string &fn)
 {
   _occ_internals = new OCC_Internals;
@@ -457,12 +463,6 @@ int GModel::readOCCBREP(const std::string &fn)
   _occ_internals->buildGModel(this);
   snapVertices();
   return 1;
-}
-
-void GModel::deleteOCCInternals()
-{
-  if(_occ_internals) delete _occ_internals;
-  _occ_internals = 0;
 }
 
 /*
@@ -584,6 +584,10 @@ void OCC_Internals::Sphere(const SPoint3 & center, const double & radius,
 
 #else
 
+void GModel::_deleteOCCInternals()
+{
+}
+
 int GModel::readOCCSTEP(const std::string &fn)
 {
   Msg(GERROR, "Gmsh has to be compiled with OpenCascade support to load '%s'",
@@ -603,10 +607,6 @@ int GModel::readOCCBREP(const std::string &fn)
   Msg(GERROR, "Gmsh has to be compiled with OpenCascade support to load '%s'",
       fn.c_str());
   return 0;
-}
-
-void GModel::deleteOCCInternals()
-{
 }
 
 #endif

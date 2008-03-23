@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.10 2008-03-21 17:09:06 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.11 2008-03-23 21:42:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -19,373 +19,247 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <string>
 #include "GModel.h"
-#include "MElement.h"
-#include "MVertex.h"
-#include "MEdge.h"
 #include "Message.h"
 
 #if defined(HAVE_MED)
 
 #include <map>
-#include <string>
-#include <vector>
-#include <iostream>
 #include <sstream>
-#include "GModelIO_MED.h"
+#include <vector>
+#include "MElement.h"
+#include "MVertex.h"
 
 extern "C" {
 #include <med.h>
 }
 
-ConversionData Data::MyConversionData;
-
-typedef std::list<int>::const_iterator listIter;
-
-// _____________________________________________ //
-//                                               //
-// Implementation  de la classe  ConversionData  //
-//  ____________________________________________ //
-
-ConversionData::ConversionData()
-{ 
-        // Correspondance des types GMSH et MEd
-        static const med_geometrie_element ValuesTypesOfElts[] = {  MED_SEG2,    MED_TRIA3,  MED_QUAD4,   MED_TETRA4,
-                                                                    MED_HEXA8,   MED_PENTA6, MED_PYRA5,   MED_SEG3, 
-                                                                    MED_TRIA6,   MED_QUAD8,  MED_TETRA10, MED_HEXA20, 
-                                                                    MED_PENTA15, MED_PYRA13, MED_POINT1,  MED_QUAD8,
-                                                                    MED_HEXA20,  MED_PENTA15, MED_PYRA13,  MED_NONE};
-                
-        int i=0;
-        while (ValuesTypesOfElts[i] != MED_NONE)
-        {
-           typesOfElts[i+1]=ValuesTypesOfElts[i];
-           ++i;
-        }
-
-        // **************************
-        // Numérotation des Noeuds
-        // **************************
-        //
-        // line ( 1er et 2nd Ordre)
-        i=1;
-        while ( i!=3 ) { 
-           medVertexOrder[1].push_back(i);
-           medVertexOrder[8].push_back(i);
-           ++i;
-        }
-        medVertexOrder[8].push_back(3);
-
-        // tria
-        i=1;
-        while ( i!=4 ) { 
-           medVertexOrder[2].push_back(i);
-           medVertexOrder[9].push_back(i);
-           ++i;
-        }
-        medVertexOrder[9].push_back(4);
-        medVertexOrder[9].push_back(5);
-        medVertexOrder[9].push_back(6);
-
-        // quad
-        i=1;
-        while ( i!=5 ) { 
-           medVertexOrder[3].push_back(i);
-           medVertexOrder[10].push_back(i);
-           medVertexOrder[16].push_back(i);
-           ++i;
-        }
-        medVertexOrder[10].push_back(5);
-        medVertexOrder[16].push_back(5);
-        medVertexOrder[10].push_back(6);
-        medVertexOrder[16].push_back(6);
-        medVertexOrder[10].push_back(7);
-        medVertexOrder[16].push_back(7);
-        medVertexOrder[10].push_back(8);
-        medVertexOrder[16].push_back(8);
-
-        // tetra
-        static const int OrderforTetra[] = { 1, 3, 2, 4, 0 };
-        i=0;
-        while ( OrderforTetra[i] != 0 ) { 
-           medVertexOrder[4].push_back(OrderforTetra[i]);
-           medVertexOrder[11].push_back(OrderforTetra[i]);
-           ++i;
-        }
-        static const int OrderforTetra2[] = { 7, 6 , 5, 8 , 9 , 10, 0 }; 
-        i=0;
-        while ( OrderforTetra2[i] != 0 ) { 
-           medVertexOrder[11].push_back(OrderforTetra2[i]);
-           ++i;
-        }
-
-        // hexa
-        // le 1 MED est le 1er Gmsh,   le 2nd Med est le 4ieme Gmsh , le 3 le 6 ...
-        static const int OrderforHexa[] = { 1, 5, 8,  4, 2, 6, 7, 3, 0};
-        i=0;
-        while (OrderforHexa[i] != 0)
-        {
-           medVertexOrder[5].push_back(OrderforHexa[i]);
-           medVertexOrder[12].push_back(OrderforHexa[i]);
-           medVertexOrder[17].push_back(OrderforHexa[i]);
-           ++i;
-        };
-        static const int OrderforHexa2[] = { 11,18,16,10,13,19,15,16,9,17,20,14, 0 }; 
-        i=0;
-        while ( OrderforHexa2[i] != 0 ) { 
-           medVertexOrder[12].push_back(OrderforHexa2[i]);
-           medVertexOrder[17].push_back(OrderforHexa2[i]);
-           ++i;
-        }
-
-        // Prism
-        static const int OrderforPrism[] = { 1, 3, 2, 4, 6, 5, 0};
-        i=0;
-        while (OrderforPrism[i] != 0)
-        {
-           medVertexOrder[6].push_back(OrderforPrism[i]);
-           medVertexOrder[13].push_back(OrderforPrism[i]);
-           medVertexOrder[18].push_back(OrderforPrism[i]);
-           ++i;
-        };
-        static const int OrderforPrism2[] = { 8, 10, 7, 14, 13, 15, 9, 12, 11, 0};
-        i=0;
-        while ( OrderforPrism2[i] != 0 ) { 
-           medVertexOrder[13].push_back(OrderforPrism2[i]);
-           medVertexOrder[18].push_back(OrderforPrism2[i]);
-           ++i;
-        }
-
-
-        //Pyra
-        static const int OrderforPyra[] = { 1, 4, 3, 2, 5, 0};
-        i=0;
-        while (OrderforPyra[i] != 0)
-        {
-           medVertexOrder[7].push_back(OrderforPyra[i]);
-           medVertexOrder[14].push_back(OrderforPyra[i]);
-           medVertexOrder[19].push_back(OrderforPyra[i]);
-           ++i;
-        };
-        static const int OrderforPyra2[] = { 7, 11 ,9 , 6, 8, 13, 12 , 10, 0};
-        i=0;
-        while ( OrderforPyra2[i] != 0 ) { 
-           medVertexOrder[14].push_back(OrderforPyra2[i]);
-           medVertexOrder[19].push_back(OrderforPyra2[i]);
-           ++i;
-        }
-};
-
-
-// ____________________________________ //
-//                                      //
-// Implementation  de la classe  MedIO  //
-//  ___________________________________ //
-
-MedIO::MedIO() : _numOfNode(1), _boolOpen(0), _meshName("monMaillage")
-{ 
-};
-
-// --------------------------------------------
-int MedIO::SetFile(const std::string &FileName)
-// --------------------------------------------
-// Open Med File
-// Headers Creation in Med File 
-// Mesh Creation in Med File
+static int getTypeForMED(int msh, med_geometrie_element &med)
 {
-   _FileName = FileName;
-   // All Meshes are 3D and unstructured Meshes
-   med_err ret = 0;
-   char des[MED_TAILLE_DESC+1]="Med file generated by  Gmsh";
-
-   _fid = MEDouvrir((char *) _FileName.c_str(),MED_CREATION);
-   if (_fid < 0) {
-       Msg(GERROR, "Unable to open file '%s'", _FileName.c_str());
-       return 0;
-   }
-
-   if (MEDfichDesEcr(_fid,des) < 0) {
-       Msg(GERROR, "Unable to write descriptor in file '%s'", _FileName.c_str());
-       return 0;
-   }
-
-   std::string description = "gmsh";
-   if (MEDmaaCr(_fid,(char *) _meshName.c_str(),3,MED_NON_STRUCTURE,(char *) description.c_str()) < 0) 
-   {
-       Msg(GERROR, "Error in Mesh Creation '%s'", _FileName.c_str());
-       return 0;
-   }
-   _boolOpen=1;
-    Msg(INFO, "File Open");
-   return 1;
-}
- 
-// -------------------------------------------------
-int MedIO::AddNode(MVertex* v, const int famille)
-// -------------------------------------------------
-{ 
-    //Msg(INFO, "Creation %d", v->getNum());
-   
-   if ( elements.find(v->getNum()) != elements.end() ) return 1;
-   coordonnees.push_back((med_float)v->x());
-   coordonnees.push_back((med_float)v->y());
-   coordonnees.push_back((med_float)v->z());
-
-   numOpt.push_back(v->getNum());
-   elements[v->getNum()] = _numOfNode ;
-   _numOfNode = _numOfNode + 1;
-
-   families.push_back(famille);
-   numFamilles.insert(famille);
-   return 1;
+  switch(msh) {
+  case MSH_LIN_2: med = MED_SEG2; return 2; 
+  case MSH_TRI_3: med = MED_TRIA3; return 3; 
+  case MSH_QUA_4: med = MED_QUAD4; return 4; 
+  case MSH_TET_4: med = MED_TETRA4; return 4; 
+  case MSH_HEX_8: med = MED_HEXA8; return 8; 
+  case MSH_PRI_6: med = MED_PENTA6; return 6; 
+  case MSH_PYR_5: med = MED_PYRA5; return 5; 
+  case MSH_LIN_3: med = MED_SEG3; return 3; 
+  case MSH_TRI_6: med = MED_TRIA6; return 6; 
+  case MSH_TET_10: med = MED_TETRA10; return 10;
+  case MSH_PNT: med = MED_POINT1; return 1; 
+  case MSH_QUA_8: med = MED_QUAD8; return 8; 
+  case MSH_HEX_20: med = MED_HEXA20; return 20;
+  case MSH_PRI_15: med = MED_PENTA15; return 15;
+  case MSH_PYR_13: med = MED_PYRA13; return 13;
+  default: med = MED_NONE; return 0; 
+  }
 }
 
-// -------------------------------
-int MedIO::CreateFamilles( )
-// -------------------------------
+template<class T>
+static void fillElementsMED(med_int family, std::vector<T*> &elements, med_int &ele, 
+			    std::vector<med_int> &num, std::vector<med_int> &conn,
+			    std::vector<med_int> &fam, med_geometrie_element &type)
 {
-   numFamilles.insert(0);
-   std::set<int>::const_iterator itFam;
-   for (itFam = numFamilles.begin(); itFam != numFamilles.end(); ++itFam) {
-        med_err CR;
-        if (*itFam != 0 )
-        { std::ostringstream oss;
-          oss << *itFam;
-          std::string fam = "F_" + oss.str();
-          std::string group = "G_" + oss.str();
-          while (group.size() < 80) group = group + " ";
-          CR = MEDfamCr (_fid, (char *) _meshName.c_str(),(char *)fam.c_str(),*itFam, 0,0,0,0,(char *)group.c_str(),1);
-          CR=0;
-        }
-        else
-        {
-          std::string fam = "Famille0";
-          CR = MEDfamCr (_fid, (char *) _meshName.c_str(),(char *)fam.c_str(),*itFam, 0,0,0,0,0,0);
-        }
-        if ( CR < 0 )
-        {
-            Msg(GERROR, "Error in Family Creation '%d'", *itFam );
-            return 0;
-         }
-   }
-   return 1;
+  for(unsigned int i = 0; i < elements.size(); i++){
+    num.push_back(++ele);
+    for(int j = 0; j < elements[i]->getNumVertices(); j++)
+      conn.push_back(elements[i]->getVertexMED(j)->getNum());
+    fam.push_back(family);
+    if(!i) getTypeForMED(elements[i]->getTypeForMSH(), type);
+  }
 }
 
-
-// -------------------------------
-int MedIO::CreateElemt()
-// -------------------------------
+static void writeElementsMED(med_idt &fid, char *meshName,
+			     std::vector<med_int> &num, std::vector<med_int> &conn, 
+			     std::vector<med_int> &fam, med_geometrie_element type)
 {
-    std::map<int,med_geometrie_element>::const_iterator eltIter = Data::MyConversionData.typesOfElts.begin();
-    for ( ; eltIter != Data::MyConversionData.typesOfElts.end(); ++eltIter ) {
-       med_geometrie_element typemed =(*eltIter).second;
-       if (typemed == MED_POINT1) continue;
-       int nbNoeudElt = typemed % 100 ;
-       int nbElements = LesConn[typemed].size() / nbNoeudElt;
-       if (nbElements != 0 )
-           med_err CR = MEDelementsEcr (_fid, (char*) _meshName.c_str(),(med_int) 3, 
-                         &LesConn[typemed][0], MED_FULL_INTERLACE,
-                         NULL, MED_FAUX, NULL, MED_FAUX,
-                         &famElts[typemed][0],nbElements,
-                           MED_MAILLE,typemed,MED_NOD);
-
-    }
-};
-// ------------------------------------------
-int MedIO::Ecrit()
-// ------------------------------------------
-{
-    if (_boolOpen != 1)
-    {
-        Msg(GERROR, "File not Open");
-        return 0;
-    }
-
-    int nbNoeuds=coordonnees.size() / 3;
-    if (nbNoeuds != families.size())
-    {
-        Msg(GERROR, "bad Vectors");
-        return 0;
-    }
-
-    // *********************
-    // Creation des Familles
-    // *********************
-    int CRFam = CreateFamilles();
-    if ( CRFam < 0 )
-    {
-       Msg(GERROR, "Error in Nodes Families Creation ");
-       return 0;
-    }
-
-    // *************************
-    // Creation des Coordonnees
-    // *************************
-    char nomcoo[3*MED_TAILLE_PNOM+1] = "x               y               z               ";
-    char unicoo[3*MED_TAILLE_PNOM+1] = "inconnu         inconnu         inconnu         ";
-
-    med_err CR = MEDnoeudsEcr(_fid, (char*) _meshName.c_str(),(med_int) 3, 
-                              &coordonnees[0], MED_FULL_INTERLACE, MED_CART,
-                              nomcoo,unicoo, NULL, MED_FAUX, 
-                              &numOpt[0], MED_VRAI, 
-                              &families[0], nbNoeuds);
-    Msg(INFO, "%d ", CR);
-    if ( CR < 0 )
-    {
-       Msg(GERROR, "Error in Nodes Creation ");
-       return 0;
-    }
-    // ***************************
-    // Creation des connectivités
-    // ***************************
-    int CRElt = CreateElemt();
-    if ( CRElt < 0 )
-    {
-       Msg(GERROR, "Error in Elements Creation ");
-       return 0;
-    }
-    return 1;
+  if(num.empty()) return;
+  if(MEDelementsEcr(fid, meshName, (med_int)3, &conn[0], MED_FULL_INTERLACE,
+		    0, MED_FAUX, 0, MED_FAUX, &fam[0], (med_int)num.size(),
+		    MED_MAILLE, type, MED_NOD) < 0)
+    Msg(GERROR, "Could not write elements");
 }
 
-//--------------------
-int MedIO::CloseFile()
-//--------------------
+int GModel::writeMED(const std::string &name, double scalingFactor)
 {
-   if (MEDfermer(_fid) < 0) 
-   {
-       Msg(GERROR, "Unable to close file '%s'",(char * ) _FileName.c_str());
-       return 0;
-   }
+  med_idt fid = MEDouvrir((char*)name.c_str(), MED_CREATION);
+  if(fid < 0) {
+    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  // write header
+  char des[MED_TAILLE_DESC + 1] = "MED file generated by Gmsh";
+  if(MEDfichDesEcr(fid, des) < 0) {
+    Msg(GERROR, "Unable to write MED descriptor");
+    return 0;
+  }
+
+  char *meshName = (char*)getName().c_str();
+  
+  // create 3D unstructured mesh
+  if(MEDmaaCr(fid, meshName, 3, MED_NON_STRUCTURE, (char*)"gmsh") < 0){
+    Msg(GERROR, "Could not create MED mesh");
+    return 0;
+  }
+  
+  // renumber all the vertices in a continuous sequence (MED
+  // connectivity is given in terms of vertex indices)
+  renumberMeshVertices(true);
+
+  // fill a vector containing all the geometrical entities in the model
+  std::vector<GEntity*> entities;
+  entities.insert(entities.end(), vertices.begin(), vertices.end());
+  entities.insert(entities.end(), edges.begin(), edges.end());
+  entities.insert(entities.end(), faces.begin(), faces.end());
+  entities.insert(entities.end(), regions.begin(), regions.end());
+
+  std::map<GEntity*, int> families;
+
+  // write the families
+  {
+    // always create a "0" family, with no groups or attributes
+    if(MEDfamCr(fid, meshName, (char*)"F_0", 0, 0, 0, 0, 0, 0, 0) < 0)
+      Msg(GERROR, "Could not create MED family 0");
+
+    // create one family per elementary entity, with one group per
+    // physical entity and no attributes
+    for(unsigned int i = 0; i < entities.size(); i++){
+      int num = - (families.size() + 1);
+      families[entities[i]] = num;
+      std::ostringstream fs;
+      fs << entities[i]->dim() << "D_" << entities[i]->tag();
+      std::string familyName = "F_" + fs.str();
+      std::string groupName;
+      for(unsigned j = 0; j < entities[i]->physicals.size(); j++){
+	std::string tmp = getPhysicalName(entities[i]->physicals[j]);
+	std::ostringstream gs;
+	gs << entities[i]->dim() << "D_" << tmp;
+	if(tmp.empty()) gs << entities[i]->physicals[j];
+	groupName += "G_" + gs.str();
+	groupName.resize((j + 1) * 80, ' ');
+      }
+      if(MEDfamCr(fid, meshName, (char*)familyName.c_str(), 
+		  (med_int)num, 0, 0, 0, 0, (char*)groupName.c_str(),
+		  (med_int)entities[i]->physicals.size()) < 0)
+	Msg(GERROR, "Could not create MED family %d", num);
+    }
+  }
+  
+  // write the nodes
+  {
+    std::vector<med_float> coord;
+    std::vector<med_int> num, fam;
+    for(unsigned int i = 0; i < entities.size(); i++){
+      for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+	MVertex *v = entities[i]->mesh_vertices[j];
+	if(v->getNum() >= 0){
+	  coord.push_back(v->x() * scalingFactor);
+	  coord.push_back(v->y() * scalingFactor);
+	  coord.push_back(v->z() * scalingFactor);
+	  num.push_back(v->getNum());
+	  fam.push_back(0); // we never create node families
+	}
+      }
+    }
+    char coordName[3 * MED_TAILLE_PNOM + 1] = 
+      "x               y               z               ";
+    char coordUnit[3 * MED_TAILLE_PNOM + 1] = 
+      "inconnu         inconnu         inconnu         ";
+    if(MEDnoeudsEcr(fid, meshName, (med_int)3, &coord[0], MED_FULL_INTERLACE, 
+		    MED_CART, coordName, coordUnit, 0, MED_FAUX, &num[0], 
+		    MED_VRAI, &fam[0], (med_int)num.size()) < 0)
+      Msg(GERROR, "Could not write nodes");
+  }
+  
+  // write the elements
+  {
+    med_geometrie_element typ;
+    med_int ele = 0;
+
+    { // points
+      std::vector<med_int> num, conn, fam;
+      for(viter it = firstVertex(); it != lastVertex(); it++){
+	num.push_back(++ele);
+	conn.push_back((*it)->mesh_vertices[0]->getNum());
+	fam.push_back(families[*it]);
+      }
+      writeElementsMED(fid, meshName, num, conn, fam, MED_POINT1);
+    }
+    { // lines
+      std::vector<med_int> num, conn, fam;
+      for(eiter it = firstEdge(); it != lastEdge(); it++)
+	fillElementsMED(families[*it], (*it)->lines, ele, num, conn, fam, typ);
+      writeElementsMED(fid, meshName, num, conn, fam, typ);
+    }
+    { // triangles
+      std::vector<med_int> num, conn, fam;
+      for(fiter it = firstFace(); it != lastFace(); it++)
+	fillElementsMED(families[*it], (*it)->triangles, ele, num, conn, fam, typ);
+      writeElementsMED(fid, meshName, num, conn, fam, typ);
+    }
+    { // quads
+      std::vector<med_int> num, conn, fam;
+      for(fiter it = firstFace(); it != lastFace(); it++)
+	fillElementsMED(families[*it], (*it)->quadrangles, ele, num, conn, fam, typ);
+      writeElementsMED(fid, meshName, num, conn, fam, typ);
+    }
+    { // tets
+      std::vector<med_int> num, conn, fam;
+      for(riter it = firstRegion(); it != lastRegion(); it++)
+	fillElementsMED(families[*it], (*it)->tetrahedra, ele, num, conn, fam, typ);
+      writeElementsMED(fid, meshName, num, conn, fam, typ);
+    }
+    { // hexas
+      std::vector<med_int> num, conn, fam;
+      for(riter it = firstRegion(); it != lastRegion(); it++)
+	fillElementsMED(families[*it], (*it)->hexahedra, ele, num, conn, fam, typ);
+      writeElementsMED(fid, meshName, num, conn, fam, typ);
+    }
+    { // prisms
+      std::vector<med_int> num, conn, fam;
+      for(riter it = firstRegion(); it != lastRegion(); it++)
+	fillElementsMED(families[*it], (*it)->prisms, ele, num, conn, fam, typ);
+      writeElementsMED(fid, meshName, num, conn, fam, typ);
+    }
+    { // pyramids
+      std::vector<med_int> num, conn, fam;
+      for(riter it = firstRegion(); it != lastRegion(); it++)
+	fillElementsMED(families[*it], (*it)->pyramids, ele, num, conn, fam, typ);
+      writeElementsMED(fid, meshName, num, conn, fam, typ);
+    }
+  }
+  
+  if(MEDfermer(fid) < 0){
+    Msg(GERROR, "Unable to close file '%s'", (char*)name.c_str());
+    return 0;
+  }
+  
   return 1;
 }
 
-
-int GModel::writeMED(const std::string &name)
+int GModel::readMED(const std::string &name)
 {
 
-   MedIO MedDriver = MedIO();
-   int CR1 = MedDriver.SetFile(name);
-
-   renumberMeshVertices(noPhysicalGroups());
-   MedDriver.TraiteMed(vertices);
-   MedDriver.TraiteMed(edges);
-   MedDriver.TraiteMed(faces);
-   MedDriver.TraiteMed(regions);
-
-   int CR2 = MedDriver.Ecrit();
-   int CR3 = MedDriver.CloseFile();
-
-   return CR1 * CR2 * CR3 ;
+  return 1;
 }
 
 #else
 
-int GModel::writeMED(const std::string &name)
+int GModel::writeMED(const std::string &name, double scalingFactor)
 {
   Msg(GERROR, "Gmsh has to be compiled with MED support to write '%s'",
       name.c_str());
   return 0;
 }
 
-#endif                // du HAVE_LIBMED
+int GModel::readMED(const std::string &name)
+{
+  Msg(GERROR, "Gmsh has to be compiled with MED support to read '%s'",
+      name.c_str());
+  return 0;
+}
 
+#endif

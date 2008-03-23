@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.45 2008-03-21 07:21:05 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.46 2008-03-23 21:42:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -37,58 +37,6 @@
 #else
 #  include "Message.h"
 #endif
-
-template<class T>
-static void addElements(std::vector<T*> &dst, const std::vector<MElement*> &src)
-{
-  for(unsigned int i = 0; i < src.size(); i++) dst.push_back((T*)src[i]);
-}
-
-static void storeElementsInEntities(GModel *m, 
-                                    std::map<int, std::vector<MElement*> > &map)
-{
-  std::map<int, std::vector<MElement*> >::const_iterator it = map.begin();
-  for(; it != map.end(); ++it){
-    if(!it->second.size()) continue;
-    int numEdges = it->second[0]->getNumEdges();
-    switch(numEdges){
-    case 1: 
-      {
-        GEdge *e = m->getEdgeByTag(it->first);
-        if(!e){
-          e = new discreteEdge(m, it->first);
-          m->add(e);
-        }
-        addElements(e->lines, it->second);
-      }
-      break;
-    case 3: case 4: 
-      {
-        GFace *f = m->getFaceByTag(it->first);
-        if(!f){
-          f = new discreteFace(m, it->first);
-          m->add(f);
-        }
-        if(numEdges == 3) addElements(f->triangles, it->second);
-        else addElements(f->quadrangles, it->second);
-      }
-      break;
-    case 6: case 12: case 9: case 8:
-      {
-        GRegion *r = m->getRegionByTag(it->first);
-        if(!r){
-          r = new discreteRegion(m, it->first);
-          m->add(r);
-        }
-        if(numEdges == 6) addElements(r->tetrahedra, it->second);
-        else if(numEdges == 12) addElements(r->hexahedra, it->second);
-        else if(numEdges == 9) addElements(r->prisms, it->second);
-        else addElements(r->pyramids, it->second);
-      }
-      break;
-    }
-  }
-}
 
 static void storeVerticesInEntities(std::map<int, MVertex*> &vertices)
 {
@@ -211,38 +159,31 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
                              std::map<int, std::vector<MElement*> > elem[7],
                              std::map<int, std::map<int, std::string> > physicals[4])
 {
-  int dim = 0;
-
-  switch (type) {
-  case MSH_PNT:    points[reg].push_back(v[0]); dim = 0; break;
-  case MSH_LIN_2:  elem[0][reg].push_back(new MLine(v, num, part)); dim = 1; break;
-  case MSH_LIN_3:  elem[0][reg].push_back(new MLine3(v, num, part)); dim = 1; break;
-  case MSH_LIN_4:  elem[0][reg].push_back(new MLineN(v, num, part)); dim = 1; break;
-  case MSH_LIN_5:  elem[0][reg].push_back(new MLineN(v, num, part)); dim = 1; break;
-  case MSH_LIN_6:  elem[0][reg].push_back(new MLineN(v, num, part)); dim = 1; break;
-  case MSH_TRI_3:  elem[1][reg].push_back(new MTriangle(v, num, part)); dim = 2; break;
-  case MSH_TRI_6:  elem[1][reg].push_back(new MTriangle6(v, num, part)); dim = 2; break;
-  case MSH_TRI_9:  elem[1][reg].push_back(new MTriangleN(v, 3, num, part)); dim = 2; break;
-  case MSH_TRI_10: elem[1][reg].push_back(new MTriangleN(v, 3, num, part)); dim = 2; break;
-  case MSH_TRI_12: elem[1][reg].push_back(new MTriangleN(v, 4, num, part)); dim = 2; break;
-  case MSH_TRI_15: elem[1][reg].push_back(new MTriangleN(v, 4, num, part)); dim = 2; break;
-  case MSH_TRI_15I:elem[1][reg].push_back(new MTriangleN(v, 5, num, part)); dim = 2; break;
-  case MSH_TRI_21: elem[1][reg].push_back(new MTriangleN(v, 5, num, part)); dim = 2; break;
-  case MSH_QUA_4:  elem[2][reg].push_back(new MQuadrangle(v, num, part)); dim = 2; break;
-  case MSH_QUA_8:  elem[2][reg].push_back(new MQuadrangle8(v, num, part)); dim = 2; break;
-  case MSH_QUA_9:  elem[2][reg].push_back(new MQuadrangle9(v, num, part)); dim = 2; break;
-  case MSH_TET_4:  elem[3][reg].push_back(new MTetrahedron(v, num, part)); dim = 3; break;
-  case MSH_TET_10: elem[3][reg].push_back(new MTetrahedron10(v, num, part)); dim = 3; break;
-  case MSH_HEX_8:  elem[4][reg].push_back(new MHexahedron(v, num, part)); dim = 3; break;
-  case MSH_HEX_20: elem[4][reg].push_back(new MHexahedron20(v, num, part)); dim = 3; break;
-  case MSH_HEX_27: elem[4][reg].push_back(new MHexahedron27(v, num, part)); dim = 3; break;
-  case MSH_PRI_6:  elem[5][reg].push_back(new MPrism(v, num, part)); dim = 3; break;
-  case MSH_PRI_15: elem[5][reg].push_back(new MPrism15(v, num, part)); dim = 3; break;
-  case MSH_PRI_18: elem[5][reg].push_back(new MPrism18(v, num, part)); dim = 3; break;
-  case MSH_PYR_5:  elem[6][reg].push_back(new MPyramid(v, num, part)); dim = 3; break;
-  case MSH_PYR_13: elem[6][reg].push_back(new MPyramid13(v, num, part)); dim = 3; break;
-  case MSH_PYR_14: elem[6][reg].push_back(new MPyramid14(v, num, part)); dim = 3; break;
-  default: Msg(GERROR, "Unknown type (%d) for element %d", type, num); break;
+  int dim;
+  if(type == MSH_POINT){
+    dim = 0;
+    points[reg].push_back(v[0]);
+  }
+  else{
+    MElementFactory factory;
+    MElement *e = factory.create(type, v, num, part);
+    if(!e){
+      Msg(GERROR, "Unknown type of element %d", type);
+      return;
+    }
+    dim = e->getDim();
+    int idx;
+    switch(e->getNumEdges()){
+    case 1 : idx = 0; break;
+    case 3 : idx = 1; break;
+    case 4 : idx = 2; break;
+    case 6 : idx = 3; break;
+    case 12 : idx = 4; break;
+    case 9 : idx = 5; break;
+    case 8 : idx = 6; break;
+    default : Msg(GERROR, "Wrong number of edges in element"); return;
+    }
+    elem[idx][reg].push_back(e);
   }
   
   if(physical && (!physicals[dim].count(reg) || !physicals[dim][reg].count(physical)))
@@ -474,7 +415,7 @@ int GModel::readMSH(const std::string &name)
   bool noElements = true;
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++){
     noElements &= elements[i].empty();
-    storeElementsInEntities(this, elements[i]);
+    _storeElementsInEntities(elements[i]);
   }
 
   // special case: if there are no elements, create one geometry
@@ -503,7 +444,7 @@ int GModel::readMSH(const std::string &name)
   }
 
   // associate the correct geometrical entity with each mesh vertex
-  associateEntityWithMeshVertices();
+  _associateEntityWithMeshVertices();
 
   // special case for geometry vertices: now that the correct
   // geometrical entity has been associated with the vertices, we
@@ -1171,8 +1112,8 @@ int GModel::readVRML(const std::string &name)
   }
 
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
-    storeElementsInEntities(this, elements[i]);
-  associateEntityWithMeshVertices();
+    _storeElementsInEntities(elements[i]);
+  _associateEntityWithMeshVertices();
   storeVerticesInEntities(allVertexVector);
 
   fclose(fp);
@@ -1374,8 +1315,8 @@ int GModel::readUNV(const std::string &name)
   }
   
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
-    storeElementsInEntities(this, elements[i]);
-  associateEntityWithMeshVertices();
+    _storeElementsInEntities(elements[i]);
+  _associateEntityWithMeshVertices();
   storeVerticesInEntities(vertexMap);
   for(int i = 0; i < 4; i++)  
     storePhysicalTagsInEntities(this, i, physicals[i]);
@@ -1602,8 +1543,8 @@ int GModel::readMESH(const std::string &name)
   }
 
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
-    storeElementsInEntities(this, elements[i]);
-  associateEntityWithMeshVertices();
+    _storeElementsInEntities(elements[i]);
+  _associateEntityWithMeshVertices();
   storeVerticesInEntities(vertexVector);
 
   fclose(fp);
@@ -1946,8 +1887,8 @@ int GModel::readBDF(const std::string &name)
   }
   
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
-    storeElementsInEntities(this, elements[i]);
-  associateEntityWithMeshVertices();
+    _storeElementsInEntities(elements[i]);
+  _associateEntityWithMeshVertices();
   storeVerticesInEntities(vertexMap);
 
   fclose(fp);

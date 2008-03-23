@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.61 2008-03-20 11:44:06 geuzaine Exp $
+// $Id: MElement.cpp,v 1.62 2008-03-23 21:42:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -762,5 +762,41 @@ void MTriangleN::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *
     x[0] = pnt1.x(); x[1] = pnt2.x();
     y[0] = pnt1.y(); y[1] = pnt2.y();
     z[0] = pnt1.z(); z[1] = pnt2.z();
+  }
+}
+
+MElement *MElementFactory::create(int type, std::vector<MVertex*> &v, 
+				  int num, int part)
+{
+  switch (type) {
+  case MSH_PNT:    return 0;
+  case MSH_LIN_2:  return new MLine(v, num, part);
+  case MSH_LIN_3:  return new MLine3(v, num, part);
+  case MSH_LIN_4:  return new MLineN(v, num, part);
+  case MSH_LIN_5:  return new MLineN(v, num, part);
+  case MSH_LIN_6:  return new MLineN(v, num, part);
+  case MSH_TRI_3:  return new MTriangle(v, num, part);
+  case MSH_TRI_6:  return new MTriangle6(v, num, part);
+  case MSH_TRI_9:  return new MTriangleN(v, 3, num, part);
+  case MSH_TRI_10: return new MTriangleN(v, 3, num, part);
+  case MSH_TRI_12: return new MTriangleN(v, 4, num, part);
+  case MSH_TRI_15: return new MTriangleN(v, 4, num, part);
+  case MSH_TRI_15I:return new MTriangleN(v, 5, num, part);
+  case MSH_TRI_21: return new MTriangleN(v, 5, num, part);
+  case MSH_QUA_4:  return new MQuadrangle(v, num, part);
+  case MSH_QUA_8:  return new MQuadrangle8(v, num, part);
+  case MSH_QUA_9:  return new MQuadrangle9(v, num, part);
+  case MSH_TET_4:  return new MTetrahedron(v, num, part);
+  case MSH_TET_10: return new MTetrahedron10(v, num, part);
+  case MSH_HEX_8:  return new MHexahedron(v, num, part);
+  case MSH_HEX_20: return new MHexahedron20(v, num, part);
+  case MSH_HEX_27: return new MHexahedron27(v, num, part);
+  case MSH_PRI_6:  return new MPrism(v, num, part);
+  case MSH_PRI_15: return new MPrism15(v, num, part);
+  case MSH_PRI_18: return new MPrism18(v, num, part);
+  case MSH_PYR_5:  return new MPyramid(v, num, part);
+  case MSH_PYR_13: return new MPyramid13(v, num, part);
+  case MSH_PYR_14: return new MPyramid14(v, num, part);
+  default:         return 0;
   }
 }
