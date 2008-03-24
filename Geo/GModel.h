@@ -261,7 +261,8 @@ class GModel
 
   // Med interface ("Modele d'Echange de Donnees")
   int readMED(const std::string &name);
-  int writeMED(const std::string &name, double scalingFactor=1.0);
+  int writeMED(const std::string &name, 
+	       bool saveAll=false, double scalingFactor=1.0);
 };
 
 #endif

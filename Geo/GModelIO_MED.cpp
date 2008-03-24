@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.13 2008-03-24 06:39:13 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.14 2008-03-24 20:51:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -31,6 +31,7 @@
 #include <cstring>
 #include "MElement.h"
 #include "MVertex.h"
+#include "discreteVertex.h"
 
 extern "C" {
 #include <med.h>
@@ -83,7 +84,7 @@ static void writeElementsMED(med_idt &fid, char *meshName,
     Msg(GERROR, "Could not write elements");
 }
 
-int GModel::writeMED(const std::string &name, double scalingFactor)
+int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor)
 {
   med_idt fid = MEDouvrir((char*)name.c_str(), MED_CREATION);
   if(fid < 0) {
@@ -106,9 +107,12 @@ int GModel::writeMED(const std::string &name, double scalingFactor)
     return 0;
   }
   
-  // renumber all the vertices in a continuous sequence (MED
+  // if there are no physicals we save all the elements
+  if(noPhysicalGroups()) saveAll = true;
+
+  // renumber the vertices we will save in a continuous sequence (MED
   // connectivity is given in terms of vertex indices)
-  renumberMeshVertices(true);
+  renumberMeshVertices(saveAll);
 
   // fill a vector containing all the geometrical entities in the model
   std::vector<GEntity*> entities;
@@ -128,24 +132,26 @@ int GModel::writeMED(const std::string &name, double scalingFactor)
     // create one family per elementary entity, with one group per
     // physical entity and no attributes
     for(unsigned int i = 0; i < entities.size(); i++){
-      int num = - (families.size() + 1);
-      families[entities[i]] = num;
-      std::ostringstream fs;
-      fs << entities[i]->dim() << "D_" << entities[i]->tag();
-      std::string familyName = "F_" + fs.str();
-      std::string groupName;
-      for(unsigned j = 0; j < entities[i]->physicals.size(); j++){
-	std::string tmp = getPhysicalName(entities[i]->physicals[j]);
-	std::ostringstream gs;
-	gs << entities[i]->dim() << "D_" << tmp;
-	if(tmp.empty()) gs << entities[i]->physicals[j];
-	groupName += "G_" + gs.str();
-	groupName.resize((j + 1) * 80, ' ');
+      if(saveAll || entities[i]->physicals.size()){
+	int num = - (families.size() + 1);
+	families[entities[i]] = num;
+	std::ostringstream fs;
+	fs << entities[i]->dim() << "D_" << entities[i]->tag();
+	std::string familyName = "F_" + fs.str();
+	std::string groupName;
+	for(unsigned j = 0; j < entities[i]->physicals.size(); j++){
+	  std::string tmp = getPhysicalName(entities[i]->physicals[j]);
+	  std::ostringstream gs;
+	  gs << entities[i]->dim() << "D_" << tmp;
+	  if(tmp.empty()) gs << entities[i]->physicals[j];
+	  groupName += "G_" + gs.str();
+	  groupName.resize((j + 1) * 80, ' ');
+	}
+	if(MEDfamCr(fid, meshName, (char*)familyName.c_str(), 
+		    (med_int)num, 0, 0, 0, 0, (char*)groupName.c_str(),
+		    (med_int)entities[i]->physicals.size()) < 0)
+	  Msg(GERROR, "Could not create MED family %d", num);
       }
-      if(MEDfamCr(fid, meshName, (char*)familyName.c_str(), 
-		  (med_int)num, 0, 0, 0, 0, (char*)groupName.c_str(),
-		  (med_int)entities[i]->physicals.size()) < 0)
-	Msg(GERROR, "Could not create MED family %d", num);
     }
   }
   
@@ -165,6 +171,10 @@ int GModel::writeMED(const std::string &name, double scalingFactor)
 	}
       }
     }
+    if(num.empty()){
+      Msg(GERROR, "No nodes to write in MED mesh");
+      return 0;
+    }
     char coordName[3 * MED_TAILLE_PNOM + 1] = 
       "x               y               z               ";
     char coordUnit[3 * MED_TAILLE_PNOM + 1] = 
@@ -183,52 +193,61 @@ int GModel::writeMED(const std::string &name, double scalingFactor)
     { // points
       std::vector<med_int> num, conn, fam;
       for(viter it = firstVertex(); it != lastVertex(); it++){
-	num.push_back(++ele);
-	conn.push_back((*it)->mesh_vertices[0]->getNum());
-	fam.push_back(families[*it]);
+	if(saveAll || (*it)->physicals.size()){
+	  num.push_back(++ele);
+	  conn.push_back((*it)->mesh_vertices[0]->getNum());
+	  fam.push_back(families[*it]);
+	}
       }
       writeElementsMED(fid, meshName, num, conn, fam, MED_POINT1);
     }
     { // lines
       std::vector<med_int> num, conn, fam;
       for(eiter it = firstEdge(); it != lastEdge(); it++)
-	fillElementsMED(families[*it], (*it)->lines, ele, num, conn, fam, typ);
+	if(saveAll || (*it)->physicals.size())
+	  fillElementsMED(families[*it], (*it)->lines, ele, num, conn, fam, typ);
       writeElementsMED(fid, meshName, num, conn, fam, typ);
     }
     { // triangles
       std::vector<med_int> num, conn, fam;
       for(fiter it = firstFace(); it != lastFace(); it++)
-	fillElementsMED(families[*it], (*it)->triangles, ele, num, conn, fam, typ);
+	if(saveAll || (*it)->physicals.size())
+	  fillElementsMED(families[*it], (*it)->triangles, ele, num, conn, fam, typ);
       writeElementsMED(fid, meshName, num, conn, fam, typ);
     }
     { // quads
       std::vector<med_int> num, conn, fam;
       for(fiter it = firstFace(); it != lastFace(); it++)
-	fillElementsMED(families[*it], (*it)->quadrangles, ele, num, conn, fam, typ);
+	if(saveAll || (*it)->physicals.size())
+	  fillElementsMED(families[*it], (*it)->quadrangles, ele, num, conn, fam, typ);
       writeElementsMED(fid, meshName, num, conn, fam, typ);
     }
     { // tets
       std::vector<med_int> num, conn, fam;
       for(riter it = firstRegion(); it != lastRegion(); it++)
-	fillElementsMED(families[*it], (*it)->tetrahedra, ele, num, conn, fam, typ);
+	if(saveAll || (*it)->physicals.size())
+	  fillElementsMED(families[*it], (*it)->tetrahedra, ele, num, conn, fam, typ);
       writeElementsMED(fid, meshName, num, conn, fam, typ);
     }
     { // hexas
       std::vector<med_int> num, conn, fam;
       for(riter it = firstRegion(); it != lastRegion(); it++)
-	fillElementsMED(families[*it], (*it)->hexahedra, ele, num, conn, fam, typ);
+	if(saveAll || (*it)->physicals.size())
+	  fillElementsMED(families[*it], (*it)->hexahedra, ele, num, conn, fam, typ);
       writeElementsMED(fid, meshName, num, conn, fam, typ);
     }
     { // prisms
       std::vector<med_int> num, conn, fam;
       for(riter it = firstRegion(); it != lastRegion(); it++)
-	fillElementsMED(families[*it], (*it)->prisms, ele, num, conn, fam, typ);
+	if(saveAll || (*it)->physicals.size())
+	  fillElementsMED(families[*it], (*it)->prisms, ele, num, conn, fam, typ);
       writeElementsMED(fid, meshName, num, conn, fam, typ);
     }
     { // pyramids
       std::vector<med_int> num, conn, fam;
       for(riter it = firstRegion(); it != lastRegion(); it++)
-	fillElementsMED(families[*it], (*it)->pyramids, ele, num, conn, fam, typ);
+	if(saveAll || (*it)->physicals.size())
+	  fillElementsMED(families[*it], (*it)->pyramids, ele, num, conn, fam, typ);
       writeElementsMED(fid, meshName, num, conn, fam, typ);
     }
   }
@@ -255,8 +274,7 @@ int GModel::readMED(const std::string &name)
     return 0;
   }
   if(numMeshes > 1)
-    Msg(WARNING, "There are %d meshes in the MED file: reading only the first",
-	numMeshes);
+    Msg(WARNING, "Reading mesh 1 of %d (ignoring the other)", numMeshes);
 
   // read mesh info
   char meshName[MED_TAILLE_NOM + 1], meshDesc[MED_TAILLE_DESC + 1];
@@ -327,22 +345,34 @@ int GModel::readMED(const std::string &name)
     std::vector<med_int> eleTags(numEle);
     if(MEDnumLire(fid, meshName, &eleTags[0], numEle, MED_MAILLE, type) < 0)
       eleTags.clear();
-    std::map<int, std::vector<MElement*> > elements;
-    MElementFactory factory;
-    for(int j = 0; j < numEle; j++){    
-      std::vector<MVertex*> v(numNodPerEle);
-      for(int k = 0; k < numNodPerEle; k++)
-	v[k] = verts[conn[numNodPerEle * j + k] - 1];
-      MElement *e = factory.create(mshType, v, eleTags.empty() ? 0 : eleTags[j]);
-      if(e) elements[-fam[j]].push_back(e);
+    if(numNodPerEle == 1){ // special case for points
+      for(int j = 0; j < numEle; j++){    
+	GVertex *v = getVertexByTag(-fam[j]);
+	if(!v){
+	  v = new discreteVertex(this, -fam[j]);
+	  add(v);
+	}
+	v->mesh_vertices.push_back(verts[conn[j] - 1]);
+      }
     }
-    _storeElementsInEntities(elements);	
+    else{
+      std::map<int, std::vector<MElement*> > elements;
+      MElementFactory factory;
+      for(int j = 0; j < numEle; j++){    
+	std::vector<MVertex*> v(numNodPerEle);
+	for(int k = 0; k < numNodPerEle; k++)
+	  v[k] = verts[conn[numNodPerEle * j + k] - 1];
+	MElement *e = factory.create(mshType, v, eleTags.empty() ? 0 : eleTags[j]);
+	if(e) elements[-fam[j]].push_back(e);
+      }
+      _storeElementsInEntities(elements);
+    }
   }
   _associateEntityWithMeshVertices();
   for(unsigned int i = 0; i < verts.size(); i++){
     GEntity *ge = verts[i]->onWhat();
-    if(ge) ge->mesh_vertices.push_back(verts[i]);
-    else delete verts[i]; // delete all unused vertices
+    if(ge && ge->dim()) ge->mesh_vertices.push_back(verts[i]);
+    if(!ge) delete verts[i]; // delete unused vertices
   }
 
   // read family info

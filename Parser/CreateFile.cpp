@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.27 2008-03-23 21:42:57 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.28 2008-03-24 20:51:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -186,7 +186,7 @@ void CreateOutputFile(const char *filename, int format)
     break;
 
   case FORMAT_MED:
-    GModel::current()->writeMED(name, CTX.mesh.scaling_factor);
+    GModel::current()->writeMED(name, CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_POS:
