@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.12 2008-03-23 22:14:02 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.13 2008-03-24 06:39:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,7 @@
 #include <map>
 #include <sstream>
 #include <vector>
+#include <cstring>
 #include "MElement.h"
 #include "MVertex.h"
 
@@ -254,7 +255,8 @@ int GModel::readMED(const std::string &name)
     return 0;
   }
   if(numMeshes > 1)
-    Msg(WARNING, "There are %d meshes in the MED file: reading only the first");
+    Msg(WARNING, "There are %d meshes in the MED file: reading only the first",
+	numMeshes);
 
   // read mesh info
   char meshName[MED_TAILLE_NOM + 1], meshDesc[MED_TAILLE_DESC + 1];
@@ -264,11 +266,15 @@ int GModel::readMED(const std::string &name)
     Msg(GERROR, "Unable to read mesh information");
     return 0;
   }
-  if(meshType != MED_NON_STRUCTURE || meshDim != 3){
-    Msg(GERROR, "Cannot read structured and/or non 3-D mesh");
+
+  if(meshType == MED_NON_STRUCTURE){
+    Msg(INFO, "Reading %d-D unstructured mesh <<%s>>", meshDim, meshName);
+  }
+  else{
+    Msg(GERROR, "Cannot read structured mesh");
     return 0;
   }
-  
+
   // read nodes
   med_int numNodes = MEDnEntMaa(fid, meshName, MED_COOR, MED_NOEUD, 
 				(med_geometrie_element)0, (med_connectivite)0);
@@ -281,25 +287,27 @@ int GModel::readMED(const std::string &name)
     return 0;
   }
   std::vector<MVertex*> verts(numNodes);
-  std::vector<med_float> coord(3 * numNodes);
-  char coordName[3 * MED_TAILLE_PNOM + 1], coordUnit[3 * MED_TAILLE_PNOM + 1]; 
+  std::vector<med_float> coord(meshDim * numNodes);
+  std::vector<char> coordName(meshDim * MED_TAILLE_PNOM + 1);
+  std::vector<char> coordUnit(meshDim * MED_TAILLE_PNOM + 1);
   med_repere rep;
   if(MEDcoordLire(fid, meshName, meshDim, &coord[0], MED_FULL_INTERLACE,
-		  MED_ALL, 0, 0, &rep, coordName, coordUnit) < 0){
-    Msg(GERROR, "Could not read node coordinates");
+		  MED_ALL, 0, 0, &rep, &coordName[0], &coordUnit[0]) < 0){
+    Msg(GERROR, "Could not read MED node coordinates");
     return 0;
   }
   std::vector<med_int> nodeTags(numNodes);
   if(MEDnumLire(fid, meshName, &nodeTags[0], numNodes, MED_NOEUD,
 		(med_geometrie_element)0) < 0)
     nodeTags.clear();
-  for(int i = 0; i < numNodes; i++){
-    verts[i] = new MVertex(coord[3 * i], coord[3 * i + 1], coord[3 * i + 2],
+  for(int i = 0; i < numNodes; i++)
+    verts[i] = new MVertex(coord[meshDim * i], 
+			   (meshDim > 1) ? coord[meshDim * i + 1] : 0., 
+			   (meshDim > 2) ? coord[meshDim * i + 2] : 0.,
 			   0, nodeTags.empty() ? 0 : nodeTags[i]);
-  }
 
   // read elements
-  for(int mshType = 0; mshType < 100; mshType++){ // loop over all possible MSH types
+  for(int mshType = 0; mshType < 50; mshType++){ // loop over all possible MSH types
     med_geometrie_element type;
     int numNodPerEle = getTypeForMED(mshType, type);
     if(type == MED_NONE) continue;
@@ -343,7 +351,7 @@ int GModel::readMED(const std::string &name)
     Msg(GERROR, "Could not read MED families");
     return 0;
   }
-  for (int i = 0; i < numFamilies; i++) {
+  for(int i = 0; i < numFamilies; i++) {
     med_int numAttrib = MEDnAttribut(fid, meshName, i + 1);
     med_int numGroups = MEDnGroupe(fid, meshName, i + 1);
     if(numAttrib < 0 || numGroups < 0){
@@ -363,7 +371,7 @@ int GModel::readMED(const std::string &name)
 	Msg(GERROR, "Could not read info for MED family %d", i + 1);
       }
       else{
-	GEntity *ge;
+	GEntity *ge; // family tags are unique (for all dims)
 	if((ge = getRegionByTag(-familyNum))){}
 	else if((ge = getFaceByTag(-familyNum))){}
 	else if((ge = getEdgeByTag(-familyNum))){}
