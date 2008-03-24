@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.14 2008-03-24 20:51:04 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.15 2008-03-24 21:03:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -371,7 +371,7 @@ int GModel::readMED(const std::string &name)
   _associateEntityWithMeshVertices();
   for(unsigned int i = 0; i < verts.size(); i++){
     GEntity *ge = verts[i]->onWhat();
-    if(ge && ge->dim()) ge->mesh_vertices.push_back(verts[i]);
+    if(ge && ge->dim() > 0) ge->mesh_vertices.push_back(verts[i]);
     if(!ge) delete verts[i]; // delete unused vertices
   }
 
@@ -428,7 +428,7 @@ int GModel::readMED(const std::string &name)
 
 #else
 
-int GModel::writeMED(const std::string &name, double scalingFactor)
+int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor)
 {
   Msg(GERROR, "Gmsh has to be compiled with MED support to write '%s'",
       name.c_str());
