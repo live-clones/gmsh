@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.124 2008-03-20 11:44:02 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.125 2008-03-24 21:39:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -283,9 +283,10 @@ void Get_Options(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "bgm")) {
         i++;
         if(argv[i] != NULL){
-                                        CTX.bgm_filename=argv[i++];
-                                } else {
-          fprintf(stderr, ERROR_STR "Missing file name\n");
+	  CTX.bgm_filename = argv[i++];
+	}
+	else{
+	  fprintf(stderr, ERROR_STR "Missing file name\n");
           exit(1);
         }
       }

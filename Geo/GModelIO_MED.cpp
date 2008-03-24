@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.15 2008-03-24 21:03:18 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.16 2008-03-24 21:39:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -323,7 +323,6 @@ int GModel::readMED(const std::string &name)
 			   (meshDim > 1) ? coord[meshDim * i + 1] : 0., 
 			   (meshDim > 2) ? coord[meshDim * i + 2] : 0.,
 			   0, nodeTags.empty() ? 0 : nodeTags[i]);
-
   // read elements
   for(int mshType = 0; mshType < 50; mshType++){ // loop over all possible MSH types
     med_geometrie_element type;
