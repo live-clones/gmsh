@@ -1,4 +1,4 @@
-// $Id: GSHHS.cpp,v 1.5 2008-03-21 18:27:38 geuzaine Exp $
+// $Id: GSHHS.cpp,v 1.6 2008-03-25 20:25:35 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,7 @@
 extern Context_T CTX;
 
 // ************** GSHHS ************** 
-/*      $Id: GSHHS.cpp,v 1.5 2008-03-21 18:27:38 geuzaine Exp $
+/*      $Id: GSHHS.cpp,v 1.6 2008-03-25 20:25:35 remacle Exp $
  *
  * PROGRAM:     gshhs.c
  * AUTHOR:      Paul Wessel (pwessel@hawaii.edu)
@@ -341,64 +341,71 @@ void GMSH_GSHHSPlugin::catchErrorMessage(char *errorMessage) const
 PView *GMSH_GSHHSPlugin::execute(PView * v)
 {
   int iField = (int)GSHHSOptions_Number[0].def;
-  char *filename = (char *)GSHHSOptions_String[0].def;
-  char *outfilename = (char *)GSHHSOptions_String[1].def;
-  std::string format(GSHHSOptions_String[2].def);
-  std::string coordinate_name(GSHHSOptions_String[3].def);
-  double scale = GSHHSOptions_Number[3].def;
-  double shiftx = GSHHSOptions_Number[4].def;
-  double shifty = GSHHSOptions_Number[5].def;
-  if(coordinate_name != "cartesian" && coordinate_name != "utm") {
-    Msg(GERROR, "gshhs: unknown coordinate system %s.\n",
-        coordinate_name.c_str());
-    return NULL;
-  }
-  Field *field = NULL;
+  char *filename=(char*)GSHHSOptions_String[0].def;
+  char *outfilename=(char*)GSHHSOptions_String[1].def;
+  Field *field=NULL;
   GeoEarthImport geo_import(outfilename);
-  if(iField != -1) {
+  if(iField!=-1){
     field = GModel::current()->getFields()->get(iField);
-    if(!field) {
+    if(!field){
       Msg(GERROR, "Field[%d] does not exist", iField);
       return NULL;
-    }
-    else {
+    }else{
       geo_import.set_size_field(field);
     }
   }
   FILE *fp;
-  if((fp = fopen(filename, "rb")) == NULL) {
-    Msg(GERROR, "gshhs: Could not open file %s.\n", filename);
+  if ((fp = fopen (filename, "rb")) == NULL ) {
+    Msg(GERROR, "gshhs: Could not find file %s.\n", filename);
     return NULL;
   }
-  if(format == "gshhs") {
-    import_gshhs(fp, geo_import);
-  }
-  else if(format == "loops2") {
-    int npoints_in_loop;
-    UTMConverter utmc((double)GSHHSOptions_Number[1].def,
-                      (double)GSHHSOptions_Number[2].def);
-    UTM utm;
-    while(fscanf(fp, "%d", &npoints_in_loop) == 1) {
-      utm.zone = (int)GSHHSOptions_Number[6].def;
-      for(int i = 0; i < npoints_in_loop; i++) {
-        if(fscanf(fp, "%le %le", &utm.x, &utm.y) != 2) {
-          Msg(GERROR, "gshhs:  Error reading loops2 file \'%s\'.\n",
-              filename);
-          return NULL;
-        }
-        double lat, lon;
-        utm.x = utm.x * scale + shiftx;
-        utm.y = utm.y * scale + shifty;
-        utmc.utm2latlon(utm, lat, lon);
-        geo_import.add_point_lon_lat(SPoint2(lon, lat));
-      }
-      geo_import.end_loop();
+  double w, e, s, n;
+  char source;
+  int	k, max_east = 270000000, info, n_read, flip;
+  struct	POINT p;
+  struct GSHHS h;
+  while(1){
+    n_read = fread ((void *)&h, (size_t)sizeof (struct GSHHS), (size_t)1, fp);
+    if(n_read!=1)break;
+    flip = (! (h.level > 0 && h.level < 5));	/* Take as sign that byte-swabbing is needed */
+    if (flip) {
+      h.id = swabi4 ((unsigned int)h.id);
+      h.n  = swabi4 ((unsigned int)h.n);
+      h.level = swabi4 ((unsigned int)h.level);
+      h.west  = swabi4 ((unsigned int)h.west);
+      h.east  = swabi4 ((unsigned int)h.east);
+      h.south = swabi4 ((unsigned int)h.south);
+      h.north = swabi4 ((unsigned int)h.north);
+      h.area  = swabi4 ((unsigned int)h.area);
+      h.version  = swabi4 ((unsigned int)h.version);
+      h.greenwich = swabi2 ((unsigned int)h.greenwich);
+      h.source = swabi2 ((unsigned int)h.source);
     }
-    geo_import.end_surface();
-  }
-  else {
-    Msg(GERROR, "gshhs: Unknown format %s.\n", format.c_str());
-    return NULL;
-  }
+    w = h.west  * 1.0e-6;	/* Convert from microdegrees to degrees */
+    e = h.east  * 1.0e-6;
+    s = h.south * 1.0e-6;
+    n = h.north * 1.0e-6;
+    source = (h.source == 1) ? 'W' : 'C';	/* Either WVS or CIA (WDBII) pedigree */
+    if ( h.level!=1) {	// Skip data (lake,island,pond)
+      fseek (fp, (long)(h.n * sizeof(struct POINT)), SEEK_CUR);
+      continue;
+    } 
+    for (k = 0; k < h.n; k++) {
+      if (fread ((void *)&p, (size_t)sizeof(struct POINT), (size_t)1, fp) != 1) {
+	Msg(GERROR, "gshhs:  Error reading gshhs file for polygon %d, point %d.\n",h.id, k);
+	return NULL;
+      }
+      if (flip) {
+	p.x = swabi4 ((unsigned int)p.x);
+	p.y = swabi4 ((unsigned int)p.y);
+      }
+      SPoint2 ll(
+		 ((h.greenwich && p.x > max_east) ? p.x * 1.0e-6 - 360.0 : p.x * 1.0e-6)*M_PI/180,
+		 (p.y * 1.0e-6)*M_PI/180);
+      geo_import.add_point_lon_lat(ll);
+    }
+    geo_import.end_loop();
+  } 
+  geo_import.end_surface();
   return NULL;
 }

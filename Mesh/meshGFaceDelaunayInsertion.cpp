@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.15 2008-03-20 11:44:08 geuzaine Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.16 2008-03-25 20:25:35 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -483,7 +483,67 @@ void _printTris(char *name, std::set<MTri3*, compareTri3Ptr> &AllTris,
   fclose (ff);
 }
 
-void insertVerticesInFace(GFace *gf, BDS_Mesh *bds)
+
+static void insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it, double center[2],double metric[3], 
+			 std::vector<double> &Us, std::vector<double> &Vs,
+			 std::vector<double> &vSizes, std::vector<double> &vSizesBGM,
+			 std::set<MTri3*,compareTri3Ptr> &AllTris){
+  MTri3 *worst = *it;
+  double uv[2];
+  MTriangle *base = worst->tri();
+  bool inside = invMapUV(worst->tri(), center, Us, Vs, uv, 1.e-8);
+  if (!inside && worst->getNeigh(0))
+    inside |= invMapUV(worst->getNeigh(0)->tri(), center, Us, Vs, uv, 1.e-8);
+  if (!inside && worst->getNeigh(1))
+    inside |= invMapUV(worst->getNeigh(1)->tri(), center, Us, Vs, uv, 1.e-8);
+  if (!inside && worst->getNeigh(2))
+    inside |= invMapUV(worst->getNeigh(2)->tri(), center, Us, Vs, uv, 1.e-8);
+  if (inside) {
+    // we use here local coordinates as real coordinates
+    // x,y and z will be computed hereafter
+    //	      Msg(INFO,"Point is inside");
+    GPoint p = gf->point(center[0], center[1]);
+    //    printf("the new point is %g %g\n",p.x(),p.y());
+    MVertex *v = new MFaceVertex(p.x(), p.y(), p.z(), gf, center[0], center[1]);
+    v->setNum(Us.size());
+    double lc1 = ((1. - uv[0] - uv[1]) * vSizes[worst->tri()->getVertex(0)->getNum()] + 
+		  uv[0] * vSizes [worst->tri()->getVertex(1)->getNum()] + 
+		  uv[1] * vSizes [worst->tri()->getVertex(2)->getNum()]); 
+    // double eigMetricSurface = gf->getMetricEigenvalue(SPoint2(center[0],center[1]));
+    double lc = BGM_MeshSize(gf,center[0],center[1],p.x(),p.y(),p.z());
+    vSizesBGM.push_back(lc);
+    vSizes.push_back(lc1);
+    Us.push_back(center[0]);
+    Vs.push_back(center[1]);
+    
+    if (!insertVertex(gf, v, center, worst, AllTris, vSizes, vSizesBGM, 
+		      Us, Vs, metric)) {
+      Msg(DEBUG2,"2D Delaunay : a cavity is not star shaped");
+      AllTris.erase(it);
+      worst->forceRadius(-1);
+      AllTris.insert(worst);		  
+      delete v;
+    }
+    else 
+      gf->mesh_vertices.push_back(v);
+  }
+  else {
+    Msg(DEBUG2,"Point %g %g is outside (%g %g , %g %g , %g %g) (metric %g %g %g)",
+	center[0], center[1],
+	Us[base->getVertex(0)->getNum()], 
+	Vs[base->getVertex(0)->getNum()], 
+	Us[base->getVertex(1)->getNum()], 
+	Vs[base->getVertex(1)->getNum()], 
+	Us[base->getVertex(2)->getNum()], 
+	Vs[base->getVertex(2)->getNum()], 
+	metric[0], metric[1], metric[2]);
+    AllTris.erase(it);
+    worst->forceRadius(0);
+    AllTris.insert(worst);
+  }
+}
+
+void gmshBowyerWatson(GFace *gf)
 {
   std::set<MTri3*,compareTri3Ptr> AllTris;
   std::vector<double> vSizes, vSizesBGM, Us, Vs;
@@ -493,7 +553,7 @@ void insertVerticesInFace(GFace *gf, BDS_Mesh *bds)
   // _printTris ("before.pos", AllTris, Us,Vs);
   int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, Us, Vs, vSizes, vSizesBGM);
   // _printTris ("after2.pos", AllTris, Us,Vs);
-  Msg(DEBUG,"Delaunization of the initial mesh done (%d swaps)", nbSwaps);
+  Msg(DEBUG2,"Delaunization of the initial mesh done (%d swaps)", nbSwaps);
 
   int ITER = 0;
   while (1){
@@ -505,8 +565,8 @@ void insertVerticesInFace(GFace *gf, BDS_Mesh *bds)
     }
     else{
       if(ITER++ % 5000 == 0)
-        Msg(DEBUG,"%7d points created -- Worst tri radius is %8.3f",
-            vSizes.size(), worst->getRadius());
+	Msg(DEBUG1,"%7d points created -- Worst tri radius is %8.3f",
+	    vSizes.size(), worst->getRadius());
       double center[2],uv[2],metric[3],r2;
       if (worst->getRadius() < 0.5 * sqrt(2.0)) break;
       circUV(worst->tri(), Us, Vs, center, gf);
@@ -518,68 +578,143 @@ void insertVerticesInFace(GFace *gf, BDS_Mesh *bds)
                        Vs[base->getVertex(1)->getNum()] + 
                        Vs[base->getVertex(2)->getNum()]) / 3.};
       buildMetric(gf, pa, metric);
-      circumCenterMetric(worst->tri(), metric, Us, Vs, center, r2); 
-
-      bool inside = invMapUV(worst->tri(), center, Us, Vs, uv, 1.e-8);
-      if (!inside && worst->getNeigh(0))
-        inside |= invMapUV(worst->getNeigh(0)->tri(), center, Us, Vs, uv, 1.e-8);
-      if (!inside && worst->getNeigh(1))
-        inside |= invMapUV(worst->getNeigh(1)->tri(), center, Us, Vs, uv, 1.e-8);
-      if (!inside && worst->getNeigh(2))
-        inside |= invMapUV(worst->getNeigh(2)->tri(), center, Us, Vs, uv, 1.e-8);
-      if (inside) {
-        // we use here local coordinates as real coordinates
-        // x,y and z will be computed hereafter
-        //            Msg(INFO,"Point is inside");
-        GPoint p = gf->point(center[0], center[1]);
-        MVertex *v = new MFaceVertex(p.x(), p.y(), p.z(), gf, center[0], center[1]);
-        v->setNum(Us.size());
-        double lc1 = ((1. - uv[0] - uv[1]) * vSizes[worst->tri()->getVertex(0)->getNum()] + 
-                      uv[0] * vSizes [worst->tri()->getVertex(1)->getNum()] + 
-                      uv[1] * vSizes [worst->tri()->getVertex(2)->getNum()]); 
-        // double eigMetricSurface = gf->getMetricEigenvalue(SPoint2(center[0],center[1]));
-        double lc = BGM_MeshSize(gf,center[0],center[1],p.x(),p.y(),p.z());
-        vSizesBGM.push_back(lc);
-        vSizes.push_back(lc1);
-        Us.push_back(center[0]);
-        Vs.push_back(center[1]);
-        
-        if (!insertVertex(gf, v, center, worst, AllTris, vSizes, vSizesBGM, 
-                          Us, Vs, metric)) {
-          Msg(DEBUG,"2D Delaunay : a cavity is not star shaped");
-          AllTris.erase(AllTris.begin());
-          worst->forceRadius(-1);
-          AllTris.insert(worst);                  
-          delete v;
-        }
-        else 
-          gf->mesh_vertices.push_back(v);
-      }
-      else {
-        Msg(DEBUG,"Point %g %g is outside (%g %g , %g %g , %g %g) (metric %g %g %g)",
-            center[0], center[1],
-            Us[base->getVertex(0)->getNum()], 
-            Vs[base->getVertex(0)->getNum()], 
-            Us[base->getVertex(1)->getNum()], 
-            Vs[base->getVertex(1)->getNum()], 
-            Us[base->getVertex(2)->getNum()], 
-            Vs[base->getVertex(2)->getNum()], 
-            metric[0], metric[1], metric[2]);
-        AllTris.erase(AllTris.begin());
-        worst->forceRadius(0);
-        AllTris.insert(worst);
-      }
+      circumCenterMetric(worst->tri(), metric, Us, Vs, center, r2);       
+      insertAPoint(gf,AllTris.begin(),center,metric,Us,Vs,vSizes,vSizesBGM,AllTris);
     }
   }    
-  for (int i=0;i<10;i++){
-    //  bool splits = edgeSplitPass(1.4, gf, AllTris, SPCR_ALLWAYS, Us, Vs, vSizes, vSizesBGM);
-    //  edgeSwapPass(gf, AllTris, SWCR_QUAL, Us, Vs, vSizes, vSizesBGM);
-    //  bool collapses = edgeCollapsePass(0.67, gf, AllTris, Us, Vs, vSizes, vSizesBGM);
-    //  edgeSwapPass(gf, AllTris, SWCR_QUAL, Us, Vs, vSizes, vSizesBGM);
-    //  if (!collapses && !splits) break;
-  }
-  
-  //_printTris ("yo.pos", AllTris, Us, Vs);
-
   transferDataStructure(gf, AllTris); 
 }
+
+/*
+  Let's try a frontal delaunay approach now that the delaunay mesher is stable
+
+  We use the approach of Rebay (JCP 1993) that we extend to anisotropic metrics
+
+  The point isertion is done on the Voronoi Edges
+  
+*/
+
+static bool isActive ( MTri3 *t , double limit_, int &active){
+  if (t->isDeleted()) return false;
+  for (active=0;active<3;active++){
+    MTri3 *neigh = t->getNeigh(active);
+    if (!neigh || neigh->getRadius() < limit_)return true;
+  }
+  return false;
+}
+
+static double length_metric ( const double p[2], const double q[2], const double metric[3])
+{
+  return sqrt (   (p[0]-q[0]) * metric [0] * (p[0]-q[0]) +
+		2*(p[0]-q[0]) * metric [1] * (p[1]-q[1]) +
+		  (p[1]-q[1]) * metric [2] * (p[1]-q[1]) );
+}
+
+/*
+          /|
+         / |
+        /  |
+       /   |
+   lc /    |  r
+     /     |
+    /      |  
+   /       x
+  /        |    
+ /         |  r/2
+/          |  
+-----------+
+     lc/2
+
+     (3 r/2)^2 = lc^2 - lc^2/4 
+     -> lc^2 3/4 = 9r^2/4
+     -> lc^2 = 3 r^2
+
+     r^2 /4 + lc^2/4 = r^2
+     -> lc^2 = 3 r^2
+     
+*/
+
+
+void gmshBowyerWatson2(GFace *gf){
+//void gmshFrontalDelaunay (GFace *gf){
+  std::set<MTri3*,compareTri3Ptr> AllTris;
+  std::vector<double> vSizes, vSizesBGM, Us, Vs;
+  buidMeshGenerationDataStructures(gf, AllTris, vSizes, vSizesBGM, Us, Vs);
+
+  // delaunise the initial mesh
+  int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, Us, Vs, vSizes, vSizesBGM);
+  Msg(DEBUG2,"Delaunization of the initial mesh done (%d swaps)", nbSwaps);
+  
+  const double LIMIT_ = 0.5 * sqrt(2.0);
+
+  // insert points
+  int ITER = 0, active_edge;
+  while (1){
+    MTri3 *worst = 0;
+    std::set<MTri3*,compareTri3Ptr>::iterator it = AllTris.begin();
+    for ( ; it!=AllTris.end();++it){
+      if ((*it)->isDeleted()){
+ 	delete (*it)->tri();
+ 	delete (*it);
+ 	AllTris.erase(it++);
+      }
+      else if(isActive(*it,LIMIT_,active_edge)) worst = *it;
+
+      if (worst)break;
+    }
+    
+    if (!worst ||worst->getRadius() < LIMIT_) break;
+
+    // compute circum center of that guy
+    double center[2],uv[2],metric[3],r2;
+    MTriangle *base = worst->tri();
+    circUV(base, Us, Vs, center, gf);
+    double pa[2] = {(Us[base->getVertex(0)->getNum()] + 
+		     Us[base->getVertex(1)->getNum()] + 
+		     Us[base->getVertex(2)->getNum()]) / 3.,
+		    (Vs[base->getVertex(0)->getNum()] + 
+		     Vs[base->getVertex(1)->getNum()] + 
+		     Vs[base->getVertex(2)->getNum()]) / 3.};
+    buildMetric(gf, pa, metric);
+    circumCenterMetric(worst->tri(), metric, Us, Vs, center, r2); 
+    // compute the middle point of the edge
+    int ip1 = active_edge - 1 < 0 ? 2 : active_edge - 1;
+    int ip2 = active_edge;
+//     printf("the active edge is %d : %g %g -> %g %g\n",active_edge,base->getVertex(ip1)->x(),base->getVertex(ip1)->y(),
+// 	   base->getVertex(ip2)->x(),base->getVertex(ip2)->y());
+    double P[2] =  {Us[base->getVertex(ip1)->getNum()],  
+		    Vs[base->getVertex(ip1)->getNum()]};
+    double Q[2] =  {Us[base->getVertex(ip2)->getNum()], 
+		    Vs[base->getVertex(ip2)->getNum()]};
+    double midpoint[2] =  {0.5*(P[0]+Q[0]),0.5*(P[1]+Q[1])};
+
+    // now we have the edge center and the center of the circumcircle, 
+    // we try to find a point that would produce a perfect triangle while
+    // connecting the 2 points of the active edge
+
+    const double p    = 0.5*length_metric (P,Q,metric);
+    const double q    = length_metric (center,midpoint,metric);
+    const double rhoM = 0.5 * (vSizes[base->getVertex(ip1)->getNum()] + vSizes[base->getVertex(ip2)->getNum()] ) / sqrt(3);
+
+    //    printf("%g vs %g\n",2*p,rhoM);
+
+    //    const double rhoM_hat = std::max(rhoM,2*p);
+    const double rhoM_hat = std::min(std::max(rhoM,p),(p*p+q*q)/(2*q));
+    const double d = rhoM_hat + sqrt (rhoM_hat*rhoM_hat - p*p);
+    double dir[2] = {center[0]-midpoint[0],center[1]-midpoint[1]};
+    double L = sqrt(dir[0]*dir[0]+dir[1]*dir[1]);
+    double newPoint[2] = 
+      {
+	midpoint[0] + d * dir[0]/L,
+	midpoint[1] + d * dir[1]/L
+      };
+
+    //    printf("%g %g -- %g %g -- %g %g\n",midpoint[0],midpoint[1],pa[0],pa[1],newPoint[0],newPoint[1]);
+    
+    //    char name[245];
+    //    sprintf(name,"pt%d.pos",ITER++);
+    insertAPoint(gf,it,newPoint,metric,Us,Vs,vSizes,vSizesBGM,AllTris);
+  } 
+  _printTris ("frontal.pos", AllTris, Us,Vs);
+  transferDataStructure(gf, AllTris); 
+} 

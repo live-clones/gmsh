@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.88 2008-03-20 11:44:03 geuzaine Exp $
+// $Id: Message.cpp,v 1.89 2008-03-25 20:25:35 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -83,8 +83,8 @@ void Msg(int level, const char *fmt, ...)
                                           
   case DEBUG    :                         
   case DEBUG1   : str = DEBUG_STR; verb = 4; break ;
-  case DEBUG2   :                         
-  case DEBUG3   : str = WHITE_STR; verb = 4; break ;
+  case DEBUG2   :		     	  
+  case DEBUG3   : str = WHITE_STR; verb = 5; break ;
 
   default : return;
   }

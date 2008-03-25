@@ -1,4 +1,4 @@
-// $Id: meshGFaceOptimize.cpp,v 1.13 2008-03-20 11:44:08 geuzaine Exp $
+// $Id: meshGFaceOptimize.cpp,v 1.14 2008-03-25 20:25:35 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -28,14 +28,14 @@
 #include "MElement.h"
 #include "BackgroundMesh.h"
 
-static void setLcsMax(MTriangle *t, std::map<MVertex*, double> &vSizes)
+static void setLcsInit(MTriangle *t, std::map<MVertex*, double> &vSizes)
 {
   for (int i = 0; i < 3; i++){
     for (int j = i + 1; j < 3; j++){
       MVertex *vi = t->getVertex(i);
       MVertex *vj = t->getVertex(j);
-      vSizes[vi] = 1.e12;
-      vSizes[vj] = 1.e12;
+      vSizes[vi] = -1;
+      vSizes[vj] = -1;
     }
   }
 }
@@ -50,12 +50,26 @@ static void setLcs(MTriangle *t, std::map<MVertex*,double> &vSizes)
       double dy = vi->y()-vj->y();
       double dz = vi->z()-vj->z();
       double l = sqrt(dx * dx + dy * dy + dz * dz);
-      std::map<MVertex*,double>::iterator iti = vSizes.find(vi);          
-      std::map<MVertex*,double>::iterator itj = vSizes.find(vj);          
-      if (iti->second > l) iti->second = l;
-      if (itj->second > l) itj->second = l;
+      std::map<MVertex*,double>::iterator iti = vSizes.find(vi);	  
+      std::map<MVertex*,double>::iterator itj = vSizes.find(vj);	  
+      if (iti->second < 0 || iti->second < l) iti->second = l;
+      if (itj->second < 0 || itj->second < l) itj->second = l;
     }
   }
+}
+
+static void setLcs(MLine *t, std::map<MVertex*,double> &vSizes)
+{
+  MVertex *vi = t->getVertex(0);
+  MVertex *vj = t->getVertex(1);
+  double dx = vi->x()-vj->x();
+  double dy = vi->y()-vj->y();
+  double dz = vi->z()-vj->z();
+  double l = sqrt(dx * dx + dy * dy + dz * dz);
+  std::map<MVertex*,double>::iterator iti = vSizes.find(vi);	  
+  std::map<MVertex*,double>::iterator itj = vSizes.find(vj);	  
+  if (iti->second < 0 || iti->second < l) iti->second = l;
+  if (itj->second < 0 || itj->second < l) itj->second = l;
 }
 
 void buidMeshGenerationDataStructures(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
@@ -65,10 +79,23 @@ void buidMeshGenerationDataStructures(GFace *gf, std::set<MTri3*, compareTri3Ptr
                                       std::vector<double> &Vs)
 {
   std::map<MVertex*, double> vSizesMap;
+  std::list<GEdge*> edges = gf->edges();
+
   for (unsigned int i = 0;i < gf->triangles.size(); i++)
-    setLcsMax(gf->triangles[i], vSizesMap);
-  for (unsigned int i = 0;i < gf->triangles.size(); i++)
-    setLcs(gf->triangles[i], vSizesMap);
+    setLcsInit(gf->triangles[i], vSizesMap);
+
+  std::list<GEdge*>::iterator it = edges.begin();
+  while (it != edges.end()){
+    GEdge *ge = *it ;
+    for (int i=0;i<ge->lines.size();i++){
+      setLcs(ge->lines[i], vSizesMap);      
+    }
+    ++it;
+  }
+
+  //  for (unsigned int i = 0;i < gf->triangles.size(); i++)
+  //    setLcs(gf->triangles[i], vSizesMap);
+
   int NUM = 0;
   for (std::map<MVertex*, double>::iterator it = vSizesMap.begin();
        it != vSizesMap.end(); ++it){
