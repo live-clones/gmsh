@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.12 2008-03-21 18:27:39 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.13 2008-03-25 20:48:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -105,8 +105,7 @@ bool PViewDataGModel::writeMSH(std::string name, bool binary)
 
   binary = true;
 
-  bool saveAll = true;
-  if(!model->writeMSH(name, 2.0, binary, saveAll)) return false;
+  if(!model->writeMSH(name, 2.0, binary, true)) return false;
 
   // append data
   FILE *fp = fopen(name.c_str(), binary ? "ab" : "a");
@@ -149,6 +148,63 @@ bool PViewDataGModel::writeMSH(std::string name, bool binary)
       }
       if(binary) fprintf(fp, "\n");
       fprintf(fp, "$EndNodeData\n");
+    }
+  }
+    
+  fclose(fp);
+  return true;
+}
+
+bool PViewDataGModel::writeMED(std::string name)
+{
+  if(_steps.empty()) return true;
+
+  if(hasMultipleMeshes()){
+    Msg(GERROR, "Export not done for multi-mesh views");
+    return false;
+  }
+
+  GModel *model = _steps[0]->getModel();
+
+  //  if(!model->writeMSH(name, 2.0, binary, true)) return false;
+
+  // append data
+  FILE *fp = fopen(name.c_str(), "ab");
+  if(!fp){
+    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    return false;
+  }
+
+  // map data index to vertex tags
+  std::vector<int> tags(model->getMaxVertexDataIndex() + 1, 0);
+  for(int i = 0; i < _steps[0]->getNumEntities(); i++){
+    for(unsigned int j = 0; j < _steps[0]->getEntity(i)->mesh_vertices.size(); j++){
+      MVertex *v = _steps[0]->getEntity(i)->mesh_vertices[j];
+      if(v->getDataIndex() >= 0) tags[v->getDataIndex()] = v->getNum();
+    }
+  }
+
+  for(unsigned int step = 0; step < _steps.size(); step++){
+    int numNodes = 0, numComp = _steps[step]->getNumComp();
+    for(int i = 0; i < _steps[step]->getNumData(); i++)
+      if(_steps[step]->getData(i)) numNodes++;
+
+    if(numNodes){
+      /*
+      fprintf(fp, "$NodeData\n");
+      fprintf(fp, "\"%s\"\n", getName().c_str());
+      fprintf(fp, "%d %.16g 0 0 %d %d\n", step, _steps[step]->getTime(), 
+              numComp, numNodes);
+      for(int i = 0; i < _steps[step]->getNumData(); i++){
+        if(_steps[step]->getData(i)){
+          fprintf(fp, "%d", tags[i]);
+          for(int k = 0; k < numComp; k++)
+            fprintf(fp, " %.16g", _steps[step]->getData(i)[k]);
+          fprintf(fp, "\n");
+        }
+      }
+      fprintf(fp, "$EndNodeData\n");
+      */
     }
   }
     

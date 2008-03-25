@@ -39,7 +39,7 @@ class stepData{
   GModel *_model;
   // the unrolled list of all geometrical entities in the model
   std::vector<GEntity*> _entities;
-  // the bounding box of the view (= model bbox for now)
+  // the bounding box of the view
   SBoundingBox3d _bbox;
   // the type of the dataset
   DataType _type;
@@ -49,8 +49,8 @@ class stepData{
   int _fileIndex;
   // the value of the time step and value min/max
   double _time, _min, _max;
-  // the number of components in the data (stepData only contain a
-  // single field type!)
+  // the number of components in the data (one stepData contains only
+  // a single field type)
   int _numComp;
   // the values, indexed by dataIndex in MVertex or MElement
   std::vector<real*> *_data;
@@ -163,6 +163,7 @@ class PViewDataGModel : public PViewData {
                bool swap, int step, double time, int partition, 
                int numComp, int numNodes);
   bool writeMSH(std::string name, bool binary=false);
+  bool writeMED(std::string name);
 };
 
 #endif

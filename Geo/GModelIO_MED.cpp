@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.16 2008-03-24 21:39:47 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.17 2008-03-25 20:48:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -274,7 +274,7 @@ int GModel::readMED(const std::string &name)
     return 0;
   }
   if(numMeshes > 1)
-    Msg(WARNING, "Reading mesh 1 of %d (ignoring the other)", numMeshes);
+    Msg(WARNING, "Reading mesh 1 of %d (ignoring the others)", numMeshes);
 
   // read mesh info
   char meshName[MED_TAILLE_NOM + 1], meshDesc[MED_TAILLE_DESC + 1];

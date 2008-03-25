@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.46 2008-03-23 21:42:57 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.47 2008-03-25 20:48:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -160,7 +160,7 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
                              std::map<int, std::map<int, std::string> > physicals[4])
 {
   int dim;
-  if(type == MSH_POINT){
+  if(type == MSH_PNT){
     dim = 0;
     points[reg].push_back(v[0]);
   }

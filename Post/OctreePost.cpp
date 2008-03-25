@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.7 2008-03-20 11:44:15 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.8 2008-03-25 20:48:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -368,9 +368,11 @@ OctreePost::OctreePost(PView *v)
       // that we can reuse it multiple times
       _GModel = Octree_Create(maxElePerBucket, min, size, 
                               MElementBB, MElementCentroid, MElementInEle);
-      for(int i = 0; i < _theViewDataGModel->getNumEntities(0); i++)
-        for(int j = 0; j < _theViewDataGModel->getEntity(0, i)->getNumMeshElements(); j++)
-          Octree_Insert(_theViewDataGModel->getEntity(0, i)->getMeshElement(j), _GModel);
+      for(int i = 0; i < _theViewDataGModel->getNumEntities(0); i++){
+	GEntity *ge = _theViewDataGModel->getEntity(0, i);
+        for(unsigned int j = 0; j < ge->getNumMeshElements(); j++)
+          Octree_Insert(ge->getMeshElement(j), _GModel);
+      }
       Octree_Arrange(_GModel);
     }
   }
