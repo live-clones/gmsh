@@ -30,8 +30,9 @@ void GeoEarthImport::add_point(const SPoint3 &point){
   SPoint3 midpoint = point;
   SPoint2 stereo(-point.x()/(1+point.z()),-point.y()/(1+point.z()));
   midpoint+=lastpoint;
-  midpoint/=2;
-  if( ip==first_point_in_loop || !size_field || point.distance(lastpoint)*6361e3 > (*size_field)(midpoint[0],midpoint[1],midpoint[2])){
+  midpoint/=2;  
+  //  printf("%g\n",sqrt(midpoint[0]*midpoint[0]+midpoint[1]*midpoint[1]+midpoint[2]*midpoint[2]));
+  if( ip==first_point_in_loop || !size_field || point.distance(lastpoint)*6361e3 > (*size_field)(midpoint[0]*6361e3,midpoint[1]*6361e3,midpoint[2]*6361e3)){
     loop_buff<<"Point ( IP + "<<ip++<<" ) = {"<<stereo.x()<<", "<<stereo.y()<<", "<<0<<", 1};\n";
     lastpoint=point;
   }

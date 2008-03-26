@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.125 2008-03-24 21:39:46 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.126 2008-03-26 09:37:49 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -82,7 +82,7 @@ void Print_Usage(const char *name)
   Msg(DIRECT, "  -format string        Set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh,");
   Msg(DIRECT, "                          bdf, p3d, cgns, med)");
   Msg(DIRECT, "  -bin                  Use binary format when available");  
-  Msg(DIRECT, "  -algo string          Select mesh algorithm (iso, netgen, tetgen)");
+  Msg(DIRECT, "  -algo string          Select mesh algorithm (de, del2d, frontal, iso, netgen, tetgen)");
   Msg(DIRECT, "  -smooth int           Set number of mesh smoothing steps");
   Msg(DIRECT, "  -optimize[_netgen]    Optimize quality of tetrahedral elements");
   Msg(DIRECT, "  -order int            Set mesh order (1, ..., 5)");
@@ -527,6 +527,8 @@ void Get_Options(int argc, char *argv[])
             CTX.mesh.algo2d = ALGO_3D_TETGEN_DELAUNAY;
           else if(!strncmp(argv[i], "netgen", 6))
             CTX.mesh.algo3d = ALGO_3D_NETGEN;
+          else if(!strncmp(argv[i], "frontal", 7))
+            CTX.mesh.algo2d = ALGO_2D_FRONTAL;
           else if(!strncmp(argv[i], "del2d", 5) || !strncmp(argv[i], "tri", 3))
             CTX.mesh.algo2d = ALGO_2D_DELAUNAY;
           else if(!strncmp(argv[i], "bds", 3))

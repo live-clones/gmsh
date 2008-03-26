@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.16 2008-03-25 20:25:35 remacle Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.17 2008-03-26 09:37:49 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,6 +30,9 @@
 #include <set>
 #include <map>
 #include <algorithm>
+
+#include "Context.h"
+extern Context_T CTX;
 
 void circumCenterXY(double *p1, double *p2, double *p3, double *res)
 {
@@ -545,6 +548,10 @@ static void insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
 
 void gmshBowyerWatson(GFace *gf)
 {
+  if (CTX.mesh.algo2d == ALGO_2D_FRONTAL){
+    gmshBowyerWatsonFrontal(gf);
+    return;
+  }
   std::set<MTri3*,compareTri3Ptr> AllTris;
   std::vector<double> vSizes, vSizesBGM, Us, Vs;
 
@@ -635,7 +642,7 @@ static double length_metric ( const double p[2], const double q[2], const double
 */
 
 
-void gmshBowyerWatson2(GFace *gf){
+void gmshBowyerWatsonFrontal(GFace *gf){
 //void gmshFrontalDelaunay (GFace *gf){
   std::set<MTri3*,compareTri3Ptr> AllTris;
   std::vector<double> vSizes, vSizesBGM, Us, Vs;
@@ -692,21 +699,29 @@ void gmshBowyerWatson2(GFace *gf){
     // we try to find a point that would produce a perfect triangle while
     // connecting the 2 points of the active edge
 
-    const double p    = 0.5*length_metric (P,Q,metric);
-    const double q    = length_metric (center,midpoint,metric);
-    const double rhoM = 0.5 * (vSizes[base->getVertex(ip1)->getNum()] + vSizes[base->getVertex(ip2)->getNum()] ) / sqrt(3);
+
+    double dir[2] = {center[0]-midpoint[0],center[1]-midpoint[1]};
+    double q = sqrt(dir[0]*dir[0]+dir[1]*dir[1]);
+    dir[0]/=q;
+    dir[1]/=q;
+    const double RATIO = sqrt(  dir[0]*dir[0]*metric[0]+
+			      2*dir[1]*dir[0]*metric[1]+
+			        dir[1]*dir[1]*metric[2]);    
+
+    const double p    = 0.5*sqrt(DSQR(P[0]-Q[0])+DSQR(P[1]-Q[1]));//length_metric (P,Q,metric);
+    //    const double q    = length_metric (center,midpoint,metric);
+    const double rhoM = 0.5 * (vSizes[base->getVertex(ip1)->getNum()] + vSizes[base->getVertex(ip2)->getNum()] ) / sqrt(3) / RATIO;
 
     //    printf("%g vs %g\n",2*p,rhoM);
 
     //    const double rhoM_hat = std::max(rhoM,2*p);
     const double rhoM_hat = std::min(std::max(rhoM,p),(p*p+q*q)/(2*q));
     const double d = rhoM_hat + sqrt (rhoM_hat*rhoM_hat - p*p);
-    double dir[2] = {center[0]-midpoint[0],center[1]-midpoint[1]};
-    double L = sqrt(dir[0]*dir[0]+dir[1]*dir[1]);
+    
     double newPoint[2] = 
       {
-	midpoint[0] + d * dir[0]/L,
-	midpoint[1] + d * dir[1]/L
+	midpoint[0] + d * dir[0],
+	midpoint[1] + d * dir[1]
       };
 
     //    printf("%g %g -- %g %g -- %g %g\n",midpoint[0],midpoint[1],pa[0],pa[1],newPoint[0],newPoint[1]);

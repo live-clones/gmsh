@@ -94,6 +94,7 @@
 #define ALGO_2D_TRIANGLE            3 // unused
 #define ALGO_2D_MESHADAPT           4
 #define ALGO_2D_DELAUNAY            5
+#define ALGO_2D_FRONTAL             6
 
 // 3D mesh algorithms
 #define ALGO_3D_TETGEN_DELAUNAY    1

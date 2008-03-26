@@ -106,6 +106,7 @@ void connectTriangles(std::list<MTri3*> &);
 void connectTriangles(std::vector<MTri3*> &);
 void connectTriangles(std::set<MTri3*,compareTri3Ptr> &AllTris);
 void gmshBowyerWatson(GFace *gf);
+void gmshBowyerWatsonFrontal(GFace *gf);
 
 struct edgeXface
 {

@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.128 2008-03-25 20:25:35 remacle Exp $
+// $Id: meshGFace.cpp,v 1.129 2008-03-26 09:37:49 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -156,7 +156,7 @@ void remeshUnrecoveredEdges(std::set<EdgeToRecover> &edgesNotRecovered,
 bool AlgoDelaunay2D(GFace *gf)
 {
   if(noseam(gf) && /*gf->getNativeType() == GEntity::GmshModel &&*/ 
-     CTX.mesh.algo2d == ALGO_2D_DELAUNAY /*&& gf->geomType() == GEntity::Plane*/)
+     (CTX.mesh.algo2d == ALGO_2D_DELAUNAY || CTX.mesh.algo2d == ALGO_2D_FRONTAL) /*&& gf->geomType() == GEntity::Plane*/)
     return true;
   return false;
 }
@@ -721,7 +721,7 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
   // vertices
   if(AlgoDelaunay2D(gf)){
     gmshBowyerWatson(gf);
-    //    laplaceSmoothing(gf);
+    laplaceSmoothing(gf);
   }
   else if (debug){
     char name[256];
@@ -1322,6 +1322,13 @@ void meshGFace::operator() (GFace *gf)
     // FIXME: Delaunay not available in all cases at the moment
     if(AlgoDelaunay2D(gf))
       algo = "Delaunay";
+    else
+      algo = "MeshAdapt+Delaunay";
+    break;
+  case ALGO_2D_FRONTAL:
+    // FIXME: Delaunay not available in all cases at the moment
+    if(AlgoDelaunay2D(gf))
+      algo = "Frontal";
     else
       algo = "MeshAdapt+Delaunay";
     break;
