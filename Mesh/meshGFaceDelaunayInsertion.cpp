@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.18 2008-03-26 10:33:37 remacle Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.19 2008-03-26 20:32:40 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -508,15 +508,23 @@ static void insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
 			 std::vector<double> &vSizes, std::vector<double> &vSizesBGM,
 			 std::set<MTri3*,compareTri3Ptr> &AllTris){
   MTri3 *worst = *it;
+  MTri3 *ptin = 0;
   double uv[2];
   MTriangle *base = worst->tri();
-  bool inside = invMapUV(worst->tri(), center, Us, Vs, uv, 1.e-8);
-  if (!inside && worst->getNeigh(0))
+  bool inside = invMapUV(worst->tri(), center, Us, Vs, uv, 1.e-8);    
+  if (inside)ptin = worst;
+  if (!inside && worst->getNeigh(0)){
     inside |= invMapUV(worst->getNeigh(0)->tri(), center, Us, Vs, uv, 1.e-8);
-  if (!inside && worst->getNeigh(1))
+    if (inside)ptin = worst->getNeigh(0);
+  }
+  if (!inside && worst->getNeigh(1)){
     inside |= invMapUV(worst->getNeigh(1)->tri(), center, Us, Vs, uv, 1.e-8);
-  if (!inside && worst->getNeigh(2))
+    if (inside)ptin = worst->getNeigh(1);
+  }
+  if (!inside && worst->getNeigh(2)){
     inside |= invMapUV(worst->getNeigh(2)->tri(), center, Us, Vs, uv, 1.e-8);
+    if (inside)ptin = worst->getNeigh(2);
+  }
   if (inside) {
     // we use here local coordinates as real coordinates
     // x,y and z will be computed hereafter
@@ -525,9 +533,9 @@ static void insertAPoint(GFace *gf, std::set<MTri3*,compareTri3Ptr>::iterator it
     //    printf("the new point is %g %g\n",p.x(),p.y());
     MVertex *v = new MFaceVertex(p.x(), p.y(), p.z(), gf, center[0], center[1]);
     v->setNum(Us.size());
-    double lc1 = ((1. - uv[0] - uv[1]) * vSizes[worst->tri()->getVertex(0)->getNum()] + 
-		  uv[0] * vSizes [worst->tri()->getVertex(1)->getNum()] + 
-		  uv[1] * vSizes [worst->tri()->getVertex(2)->getNum()]); 
+    double lc1 = ((1. - uv[0] - uv[1]) * vSizes[ptin->tri()->getVertex(0)->getNum()] + 
+		  uv[0] * vSizes [ptin->tri()->getVertex(1)->getNum()] + 
+		  uv[1] * vSizes [ptin->tri()->getVertex(2)->getNum()]); 
     // double eigMetricSurface = gf->getMetricEigenvalue(SPoint2(center[0],center[1]));
     double lc = BGM_MeshSize(gf,center[0],center[1],p.x(),p.y(),p.z());
     vSizesBGM.push_back(lc);
@@ -687,6 +695,9 @@ void gmshBowyerWatsonFrontal(GFace *gf){
     }
     
     if (!worst ||worst->getRadius() < LIMIT_) break;
+    if(ITER++ % 5000 == 0)
+      Msg(DEBUG1,"%7d points created -- Worst tri radius is %8.3f",
+	  vSizes.size(), worst->getRadius());
 
     // compute circum center of that guy
     double center[2],uv[2],metric[3],r2;
@@ -744,10 +755,12 @@ void gmshBowyerWatsonFrontal(GFace *gf){
 
     //    printf("%g %g -- %g %g -- %g %g\n",midpoint[0],midpoint[1],pa[0],pa[1],newPoint[0],newPoint[1]);
     
+//     ITER++;
 //     char name[245];
 //     sprintf(name,"pt%d.pos",ITER++);
 //     _printTris (name, AllTris, Us,Vs,false);
-     insertAPoint(gf,it,newPoint,metric,Us,Vs,vSizes,vSizesBGM,AllTris);
+
+    insertAPoint(gf,it,newPoint,metric,Us,Vs,vSizes,vSizesBGM,AllTris);
     //    if (ITER++ == 5)break;
   } 
   _printTris ("frontal.pos", AllTris, Us,Vs);
