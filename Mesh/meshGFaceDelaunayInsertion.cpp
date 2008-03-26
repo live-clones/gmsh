@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.17 2008-03-26 09:37:49 remacle Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.18 2008-03-26 10:33:37 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -461,7 +461,7 @@ bool insertVertex(GFace *gf, MVertex *v, double *param , MTri3 *t,
 }
 
 void _printTris(char *name, std::set<MTri3*, compareTri3Ptr> &AllTris,
-                std::vector<double> &Us, std::vector<double> &Vs)
+                std::vector<double> &Us, std::vector<double> &Vs, bool param=true)
 {
   FILE *ff = fopen (name,"w");
   fprintf(ff,"View\"test\"{\n");
@@ -469,16 +469,32 @@ void _printTris(char *name, std::set<MTri3*, compareTri3Ptr> &AllTris,
   while (it != AllTris.end() ){
     MTri3 *worst = *it;
     if (!worst->isDeleted()){
-      fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {0,0,0};\n",
-              Us [(worst)->tri()->getVertex(0)->getNum()],
-              Vs [(worst)->tri()->getVertex(0)->getNum()],
-              0.0,
-              Us [(worst)->tri()->getVertex(1)->getNum()],
-              Vs [(worst)->tri()->getVertex(1)->getNum()],
-              0.0,
-              Us [(worst)->tri()->getVertex(2)->getNum()],
-              Vs [(worst)->tri()->getVertex(2)->getNum()],
-              0.0);
+      if (param)
+	fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {0,0,0};\n",
+		Us [(worst)->tri()->getVertex(0)->getNum()],
+		Vs [(worst)->tri()->getVertex(0)->getNum()],
+		0.0,
+		Us [(worst)->tri()->getVertex(1)->getNum()],
+		Vs [(worst)->tri()->getVertex(1)->getNum()],
+		0.0,
+		Us [(worst)->tri()->getVertex(2)->getNum()],
+		Vs [(worst)->tri()->getVertex(2)->getNum()],
+		0.0);
+      else
+	fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
+		(worst)->tri()->getVertex(0)->x(),
+		(worst)->tri()->getVertex(0)->y(),
+		(worst)->tri()->getVertex(0)->z(),
+		(worst)->tri()->getVertex(1)->x(),
+		(worst)->tri()->getVertex(1)->y(),
+		(worst)->tri()->getVertex(1)->z(),
+		(worst)->tri()->getVertex(2)->x(),
+		(worst)->tri()->getVertex(2)->y(),
+		(worst)->tri()->getVertex(2)->z(),
+		(worst)->getRadius(),
+		(worst)->getRadius(),
+		(worst)->getRadius()
+		);
     }
     ++it;
   }
@@ -699,7 +715,6 @@ void gmshBowyerWatsonFrontal(GFace *gf){
     // we try to find a point that would produce a perfect triangle while
     // connecting the 2 points of the active edge
 
-
     double dir[2] = {center[0]-midpoint[0],center[1]-midpoint[1]};
     double q = sqrt(dir[0]*dir[0]+dir[1]*dir[1]);
     dir[0]/=q;
@@ -707,10 +722,13 @@ void gmshBowyerWatsonFrontal(GFace *gf){
     const double RATIO = sqrt(  dir[0]*dir[0]*metric[0]+
 			      2*dir[1]*dir[0]*metric[1]+
 			        dir[1]*dir[1]*metric[2]);    
+    
+    //    printf("ratio = %12.5E %g %g %g\n",RATIO,metric[0],metric[1],metric[2]); 
 
-    const double p    = 0.5*sqrt(DSQR(P[0]-Q[0])+DSQR(P[1]-Q[1]));//length_metric (P,Q,metric);
+    const double p    = 0.5*length_metric (P,Q,metric) / RATIO;
+    //    const double p    = 0.5*sqrt(DSQR(P[0]-Q[0])+DSQR(P[1]-Q[1]));//length_metric (P,Q,metric);
     //    const double q    = length_metric (center,midpoint,metric);
-    const double rhoM = 0.5 * (vSizes[base->getVertex(ip1)->getNum()] + vSizes[base->getVertex(ip2)->getNum()] ) / sqrt(3) / RATIO;
+    const double rhoM = 0.5 * (vSizes[base->getVertex(ip1)->getNum()] + vSizes[base->getVertex(ip2)->getNum()] ) / sqrt(3) * RATIO;
 
     //    printf("%g vs %g\n",2*p,rhoM);
 
@@ -726,9 +744,11 @@ void gmshBowyerWatsonFrontal(GFace *gf){
 
     //    printf("%g %g -- %g %g -- %g %g\n",midpoint[0],midpoint[1],pa[0],pa[1],newPoint[0],newPoint[1]);
     
-    //    char name[245];
-    //    sprintf(name,"pt%d.pos",ITER++);
-    insertAPoint(gf,it,newPoint,metric,Us,Vs,vSizes,vSizesBGM,AllTris);
+//     char name[245];
+//     sprintf(name,"pt%d.pos",ITER++);
+//     _printTris (name, AllTris, Us,Vs,false);
+     insertAPoint(gf,it,newPoint,metric,Us,Vs,vSizes,vSizesBGM,AllTris);
+    //    if (ITER++ == 5)break;
   } 
   _printTris ("frontal.pos", AllTris, Us,Vs);
   transferDataStructure(gf, AllTris); 
