@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.19 2008-03-26 20:32:40 remacle Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.20 2008-03-27 08:42:20 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -682,6 +682,13 @@ void gmshBowyerWatsonFrontal(GFace *gf){
   int ITER = 0, active_edge;
   while (1){
     MTri3 *worst = 0;
+
+    /////////////////////////////////
+    // TODO JFR :
+    // THIS PART IS VERY SLOW
+    // AN ALTERATIVE STRATEGY FOR
+    // STORING ACTIVE TRIANGLES HAS
+    // TO BE PUT INTO PLACE
     std::set<MTri3*,compareTri3Ptr>::iterator it = AllTris.begin();
     for ( ; it!=AllTris.end();++it){
       if ((*it)->isDeleted()){
@@ -693,7 +700,9 @@ void gmshBowyerWatsonFrontal(GFace *gf){
 
       if (worst)break;
     }
-    
+    // END TO DO
+    /////////////////////////////////
+
     if (!worst ||worst->getRadius() < LIMIT_) break;
     if(ITER++ % 5000 == 0)
       Msg(DEBUG1,"%7d points created -- Worst tri radius is %8.3f",
