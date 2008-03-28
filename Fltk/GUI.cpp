@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.668 2008-03-21 18:27:38 geuzaine Exp $
+// $Id: GUI.cpp,v 1.669 2008-03-28 22:18:48 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -2404,7 +2404,7 @@ void GUI::create_option_window()
       o->hide();
 
       static Fl_Menu_Item menu_2d_algo[] = {
-        {"MeshAdapt", 0, 0, 0},
+        {"Frontal", 0, 0, 0},
         {"Delaunay", 0, 0, 0},
         {"MeshAdapt+Delaunay", 0, 0, 0},
         {0}

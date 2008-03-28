@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.47 2008-03-25 20:25:35 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.48 2008-03-28 22:18:48 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -191,8 +191,8 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
 bool Extend1dMeshIn2dSurfaces()
 {
   if(GModel::current()->getFields()->background_field!=-1)return false;
-  if(!CTX.mesh.constrained_bgmesh) return true;
-  return false;
+  if(CTX.mesh.constrained_bgmesh) return true;
+  return true;
 }
 
 bool Extend2dMeshIn3dVolumes()

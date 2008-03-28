@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.574 2008-03-24 20:51:04 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.575 2008-03-28 22:18:47 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1158,7 +1158,7 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
 
   opt_mesh_point_type(0, GMSH_SET, WID->mesh_choice[0]->value());
   opt_mesh_algo2d(0, GMSH_SET,
-                  (WID->mesh_choice[2]->value() == 0) ? ALGO_2D_MESHADAPT : 
+                  (WID->mesh_choice[2]->value() == 0) ? ALGO_2D_FRONTAL : 
                   (WID->mesh_choice[2]->value() == 1) ? ALGO_2D_DELAUNAY :
                   ALGO_2D_MESHADAPT_DELAUNAY);
   opt_mesh_algo3d(0, GMSH_SET,

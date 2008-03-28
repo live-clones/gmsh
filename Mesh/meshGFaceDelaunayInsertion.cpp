@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.20 2008-03-27 08:42:20 remacle Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.21 2008-03-28 22:18:48 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -743,18 +743,16 @@ void gmshBowyerWatsonFrontal(GFace *gf){
 			      2*dir[1]*dir[0]*metric[1]+
 			        dir[1]*dir[1]*metric[2]);    
     
-    //    printf("ratio = %12.5E %g %g %g\n",RATIO,metric[0],metric[1],metric[2]); 
+    //    printf("ratio = %12.5E dir %g %g m %g %g %g\n",RATIO,dir[0],dir[1],metric[0],metric[1],metric[2]); 
 
-    const double p    = 0.5*length_metric (P,Q,metric) / RATIO;
+    const double p    = 0.5*length_metric (P,Q,metric);// / RATIO;
     //    const double p    = 0.5*sqrt(DSQR(P[0]-Q[0])+DSQR(P[1]-Q[1]));//length_metric (P,Q,metric);
     //    const double q    = length_metric (center,midpoint,metric);
-    const double rhoM = 0.5 * (vSizes[base->getVertex(ip1)->getNum()] + vSizes[base->getVertex(ip2)->getNum()] ) / sqrt(3) * RATIO;
-
-    //    printf("%g vs %g\n",2*p,rhoM);
+    const double rhoM = 0.5 * (vSizes[base->getVertex(ip1)->getNum()] + vSizes[base->getVertex(ip2)->getNum()] ) / sqrt(3);// * RATIO;
 
     //    const double rhoM_hat = std::max(rhoM,2*p);
     const double rhoM_hat = std::min(std::max(rhoM,p),(p*p+q*q)/(2*q));
-    const double d = rhoM_hat + sqrt (rhoM_hat*rhoM_hat - p*p);
+    const double d = (rhoM_hat + sqrt (rhoM_hat*rhoM_hat - p*p))/RATIO;
     
     double newPoint[2] = 
       {
@@ -765,9 +763,9 @@ void gmshBowyerWatsonFrontal(GFace *gf){
     //    printf("%g %g -- %g %g -- %g %g\n",midpoint[0],midpoint[1],pa[0],pa[1],newPoint[0],newPoint[1]);
     
 //     ITER++;
-//     char name[245];
-//     sprintf(name,"pt%d.pos",ITER++);
-//     _printTris (name, AllTris, Us,Vs,false);
+//      char name[245];
+//      sprintf(name,"pt%d.pos",ITER);
+//      _printTris (name, AllTris, Us,Vs,false);
 
     insertAPoint(gf,it,newPoint,metric,Us,Vs,vSizes,vSizesBGM,AllTris);
     //    if (ITER++ == 5)break;
