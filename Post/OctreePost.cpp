@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.8 2008-03-25 20:48:32 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.9 2008-03-29 21:36:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -420,10 +420,8 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep, doub
   MElement *e = (MElement*)in;
 
   int dataIndex[8];
-  for(int i = 0; i < e->getNumVertices(); i++){
-    dataIndex[i] = e->getVertex(i)->getDataIndex();
-    if(dataIndex[i] < 0) return false; // no data
-  }
+  for(int i = 0; i < e->getNumVertices(); i++)
+    dataIndex[i] = e->getVertex(i)->getNum();
   
   double U[3];
   e->xyz2uvw(P, U);

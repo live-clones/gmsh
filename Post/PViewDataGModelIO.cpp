@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.16 2008-03-29 15:36:02 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.17 2008-03-29 21:36:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -61,18 +61,7 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
     else{
       if(fscanf(fp, "%d", &num) != 1) return false;
     }
-    MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(num);
-    if(!v){
-      Msg(GERROR, "Unknown vertex %d in data", num);
-      return false;
-    }
-    if(v->getDataIndex() < 0){
-      int max = _steps[step]->getModel()->getMaxVertexDataIndex();
-      _steps[step]->getModel()->setMaxVertexDataIndex(max + 1);
-      v->setDataIndex(max + 1);
-    }
-    int index = v->getDataIndex();
-    double *d = _steps[step]->getData(index, true);
+    double *d = _steps[step]->getData(num, true);
     if(binary){
       if((int)fread(d, sizeof(double), numComp, fp) != numComp) return false;
       if(swap) swapBytes((char*)d, sizeof(double), numComp);
@@ -114,15 +103,6 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
     return false;
   }
 
-  // map data index to vertex tags
-  std::vector<int> tags(model->getMaxVertexDataIndex() + 1, 0);
-  for(int i = 0; i < _steps[0]->getNumEntities(); i++){
-    for(unsigned int j = 0; j < _steps[0]->getEntity(i)->mesh_vertices.size(); j++){
-      MVertex *v = _steps[0]->getEntity(i)->mesh_vertices[j];
-      if(v->getDataIndex() >= 0) tags[v->getDataIndex()] = v->getNum();
-    }
-  }
-
   for(unsigned int step = 0; step < _steps.size(); step++){
     int numNodes = 0, numComp = _steps[step]->getNumComponents();
     for(int i = 0; i < _steps[step]->getNumData(); i++)
@@ -134,12 +114,18 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
               numComp, numNodes);
       for(int i = 0; i < _steps[step]->getNumData(); i++){
         if(_steps[step]->getData(i)){
+	  MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(i);
+	  if(!v){
+	    Msg(GERROR, "Unknown vertex %d in data", i);
+	    return false;
+	  }
+	  int num = v->getIndex();
           if(binary){
-            fwrite(&tags[i], sizeof(int), 1, fp);
+            fwrite(&num, sizeof(int), 1, fp);
             fwrite(_steps[step]->getData(i), sizeof(double), numComp, fp);
           }
           else{
-            fprintf(fp, "%d", tags[i]);
+            fprintf(fp, "%d", num);
             for(int k = 0; k < numComp; k++)
               fprintf(fp, " %.16g", _steps[step]->getData(i)[k]);
             fprintf(fp, "\n");
@@ -294,17 +280,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	  nodeTags.clear();
 	for(unsigned int i = 0; i < profile.size(); i++){
 	  int num = nodeTags.empty() ? profile[i] : nodeTags[profile[i] - 1];
-	  MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(num);
-	  if(!v){
-	    Msg(GERROR, "Unknown vertex %d in data", num);
-	    return false;
-	  }
-	  if(v->getDataIndex() < 0){
-	    int max = _steps[step]->getModel()->getMaxVertexDataIndex();
-	    _steps[step]->getModel()->setMaxVertexDataIndex(max + 1);
-	    v->setDataIndex(max + 1);
-	  }
-	  fillData(_steps[step], v->getDataIndex(), val, i, numComp);
+	  fillData(_steps[step], num, val, profile[i] - 1, numComp);
 	}
       }
       else{
@@ -346,23 +322,21 @@ bool PViewDataGModel::writeMED(std::string fileName)
     return false;
   }
 
-  // map data index to vertex tags
-  std::vector<int> tags(model->getMaxVertexDataIndex() + 1, 0);
-  for(int i = 0; i < _steps[0]->getNumEntities(); i++){
-    for(unsigned int j = 0; j < _steps[0]->getEntity(i)->mesh_vertices.size(); j++){
-      MVertex *v = _steps[0]->getEntity(i)->mesh_vertices[j];
-      if(v->getDataIndex() >= 0) tags[v->getDataIndex()] = v->getNum();
+  // compute profile
+  std::vector<med_int> profile, nums;
+  for(int i = 0; i < _steps[0]->getNumData(); i++){
+    if(_steps[0]->getData(i)){
+      MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
+      if(!v){
+	Msg(GERROR, "Unknown vertex %d in data", i);
+	return false;
+      }
+      profile.push_back(v->getIndex());
+      nums.push_back(i);
     }
   }
-
-  // compute profile
-  std::vector<med_int> prof;
-  for(int i = 0; i < _steps[0]->getNumData(); i++){
-    if(_steps[0]->getData(i))
-      prof.push_back(tags[i]);
-  }
   char *profileName = (char*)"nodeProfile";
-  if(MEDprofilEcr(fid, &prof[0], (med_int)prof.size(), profileName) < 0){
+  if(MEDprofilEcr(fid, &profile[0], (med_int)profile.size(), profileName) < 0){
     Msg(GERROR, "Could not create MED profile");
     return false;
   }
@@ -385,18 +359,15 @@ bool PViewDataGModel::writeMED(std::string fileName)
     unsigned int n = 0;
     for(int i = 0; i < _steps[step]->getNumData(); i++)
       if(_steps[step]->getData(i)) n++;
-    if(n != prof.size() || numComp != _steps[step]->getNumComponents()){
+    if(n != profile.size() || numComp != _steps[step]->getNumComponents()){
       Msg(GERROR, "Skipping incompatible step");
       continue;
     }
     double time = _steps[step]->getTime();
     std::vector<double> val(numNodes * numComp);
-    for(int i = 0; i < _steps[step]->getNumData(); i++){
-      if(_steps[step]->getData(i)){
-	for(int k = 0; k < numComp; k++)
-	  val[i * numComp + k] = _steps[step]->getData(i)[k];
-      }
-    }
+    for(unsigned int i = 0; i < profile.size(); i++)
+      for(int k = 0; k < numComp; k++)
+	val[(profile[i] - 1) * numComp + k] = _steps[step]->getData(nums[i])[k];
     if(MEDchampEcr(fid, meshName, fieldName, (unsigned char*)&val[0], 
 		   MED_FULL_INTERLACE, numNodes, MED_NOGAUSS, MED_ALL,
 		   profileName, MED_COMPACT, MED_NOEUD, MED_NONE, (med_int)step,

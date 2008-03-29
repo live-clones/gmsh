@@ -42,7 +42,6 @@ class GModel
   // post-processing I/O)
   std::vector<MVertex*> _vertexVectorCache;
   std::map<int, MVertex*> _vertexMapCache;
-  int _maxVertexDataIndex;
 
   GEO_Internals *_geo_internals;
   void _createGEOInternals();
@@ -176,12 +175,8 @@ class GModel
   // Access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(int n);
 
-  // Renumber all the (used) mesh vertices in a continuous sequence
-  int renumberMeshVertices(bool saveAll);
-
-  // Get/set the maximum data index used in mesh vertices
-  int getMaxVertexDataIndex(){ return _maxVertexDataIndex; }
-  void setMaxVertexDataIndex(int n){ _maxVertexDataIndex = n; }
+  // index all the (used) mesh vertices in a continuous sequence
+  int indexMeshVertices(bool all);
 
   // Deletes all invisble mesh elements
   void removeInvisibleElements();

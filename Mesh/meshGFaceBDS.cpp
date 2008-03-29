@@ -1,4 +1,4 @@
-// $Id: meshGFaceBDS.cpp,v 1.10 2008-03-20 11:44:08 geuzaine Exp $
+// $Id: meshGFaceBDS.cpp,v 1.11 2008-03-29 21:36:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -802,7 +802,7 @@ BDS_Mesh *gmsh2BDS(std::list<GFace*> &l)
 void gmshCollapseSmallEdges(GModel &gm)
 {
   return;
-  gm.renumberMeshVertices(true);
+  // gm.renumberMeshVertices(true);
   std::list<GFace*> faces;
   for (GModel::fiter fit = gm.firstFace(); fit != gm.lastFace(); fit++){
     faces.push_back(*fit);

@@ -34,9 +34,14 @@ class GFace;
 class MElement 
 {
  private:
+  // the maximum element id number in the mesh
   static int _globalNum;
+  // the id number of the element (this number is unique and is
+  // guaranteed never to change once a mesh has been generated)
   int _num;
+  // the number of the mesh partition the element belongs to
   short _partition;
+  // a visibility flag
   char _visible;
  protected:
   void _getEdgeRep(MVertex *v0, MVertex *v1, 

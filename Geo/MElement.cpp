@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.62 2008-03-23 21:42:57 geuzaine Exp $
+// $Id: MElement.cpp,v 1.63 2008-03-29 21:36:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -411,7 +411,7 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
 
   int verts[30];
   for(int i = 0; i < n; i++)
-    verts[i] = getVertex(i)->getNum();
+    verts[i] = getVertex(i)->getIndex();
 
   if(!binary){
     for(int i = 0; i < n; i++)
@@ -531,7 +531,7 @@ void MElement::writeSTL(FILE *fp, bool binary, double scalingFactor)
 void MElement::writeVRML(FILE *fp)
 {
   for(int i = 0; i < getNumVertices(); i++)
-    fprintf(fp, "%d,", getVertex(i)->getNum() - 1);
+    fprintf(fp, "%d,", getVertex(i)->getIndex() - 1);
   fprintf(fp, "-1,\n");
 }
 
@@ -553,7 +553,7 @@ void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
   if(physical < 0) revert();
 
   for(int k = 0; k < n; k++) {
-    fprintf(fp, "%10d", getVertexUNV(k)->getNum());
+    fprintf(fp, "%10d", getVertexUNV(k)->getIndex());
     if(k % 8 == 7)
       fprintf(fp, "\n");
   }
@@ -566,7 +566,7 @@ void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
 void MElement::writeMESH(FILE *fp, int elementary)
 {
   for(int i = 0; i < getNumVertices(); i++)
-    fprintf(fp, " %d", getVertex(i)->getNum());
+    fprintf(fp, " %d", getVertex(i)->getIndex());
   fprintf(fp, " %d\n", elementary);
 }
 
@@ -583,7 +583,7 @@ void MElement::writeBDF(FILE *fp, int format, int elementary)
   if(format == 0){ // free field format
     fprintf(fp, "%s,%d,%d", str, _num, elementary);
     for(int i = 0; i < n; i++){
-      fprintf(fp, ",%d", getVertex(i)->getNum());
+      fprintf(fp, ",%d", getVertex(i)->getIndex());
       if(i != n - 1 && !((i + 3) % 8)){
         fprintf(fp, ",+%s%d\n+%s%d", cont[ncont], _num, cont[ncont], _num);
         ncont++;
@@ -596,7 +596,7 @@ void MElement::writeBDF(FILE *fp, int format, int elementary)
   else{ // small or large field format
     fprintf(fp, "%-8s%-8d%-8d", str, _num, elementary);
     for(int i = 0; i < n; i++){
-      fprintf(fp, "%-8d", getVertex(i)->getNum());
+      fprintf(fp, "%-8d", getVertex(i)->getIndex());
       if(i != n - 1 && !((i + 3) % 8)){
         fprintf(fp, "+%s%-6d\n+%s%-6d", cont[ncont], _num, cont[ncont], _num);
         ncont++;

@@ -29,7 +29,7 @@ class gmshVertex : public GVertex {
   Vertex *v;
 
  public:
-  gmshVertex(GModel *m, Vertex *_v) : GVertex(m, _v->Num,_v->lc), v(_v)
+  gmshVertex(GModel *m, Vertex *_v) : GVertex(m, _v->Num, _v->lc), v(_v)
   {
     mesh_vertices.push_back(new MVertex(x(), y(), z(), this));
   }

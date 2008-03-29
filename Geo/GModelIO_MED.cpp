@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.19 2008-03-29 15:36:02 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.20 2008-03-29 21:36:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -228,25 +228,23 @@ int GModel::readMED(const std::string &name)
 
 template<class T>
 static void fillElementsMED(med_int family, std::vector<T*> &elements, med_int &ele, 
-			    std::vector<med_int> &num, std::vector<med_int> &conn,
-			    std::vector<med_int> &fam, med_geometrie_element &type)
+			    std::vector<med_int> &conn, std::vector<med_int> &fam, 
+			    med_geometrie_element &type)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
-    num.push_back(++ele);
     for(int j = 0; j < elements[i]->getNumVertices(); j++)
-      conn.push_back(elements[i]->getVertexMED(j)->getNum());
+      conn.push_back(elements[i]->getVertexMED(j)->getIndex());
     fam.push_back(family);
     if(!i) getElementTypeForMED(elements[i]->getTypeForMSH(), type);
   }
 }
 
-static void writeElementsMED(med_idt &fid, char *meshName,
-			     std::vector<med_int> &num, std::vector<med_int> &conn, 
+static void writeElementsMED(med_idt &fid, char *meshName, std::vector<med_int> &conn, 
 			     std::vector<med_int> &fam, med_geometrie_element type)
 {
-  if(num.empty()) return;
+  if(fam.empty()) return;
   if(MEDelementsEcr(fid, meshName, (med_int)3, &conn[0], MED_FULL_INTERLACE,
-		    0, MED_FAUX, 0, MED_FAUX, &fam[0], (med_int)num.size(),
+		    0, MED_FAUX, 0, MED_FAUX, &fam[0], (med_int)fam.size(),
 		    MED_MAILLE, type, MED_NOD) < 0)
     Msg(GERROR, "Could not write elements");
 }
@@ -276,11 +274,13 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
   // if there are no physicals we save all the elements
   if(noPhysicalGroups()) saveAll = true;
 
-  // renumber the vertices we will save in a continuous sequence (MED
+  // index the vertices we save in a continuous sequence (MED
   // connectivity is given in terms of vertex indices)
-  renumberMeshVertices(saveAll);
+  indexMeshVertices(saveAll);
 
-  // fill a vector containing all the geometrical entities in the model
+  // fill a vector containing all the geometrical entities in the
+  // model (the ordering of the entities must be the same as the one
+  // used during the indexing of the vertices)
   std::vector<GEntity*> entities;
   entities.insert(entities.end(), vertices.begin(), vertices.end());
   entities.insert(entities.end(), edges.begin(), edges.end());
@@ -324,20 +324,19 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
   // write the nodes
   {
     std::vector<med_float> coord;
-    std::vector<med_int> num, fam;
+    std::vector<med_int> fam;
     for(unsigned int i = 0; i < entities.size(); i++){
       for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
 	MVertex *v = entities[i]->mesh_vertices[j];
-	if(v->getNum() >= 0){
+	if(v->getIndex() >= 0){
 	  coord.push_back(v->x() * scalingFactor);
 	  coord.push_back(v->y() * scalingFactor);
 	  coord.push_back(v->z() * scalingFactor);
-	  num.push_back(v->getNum());
 	  fam.push_back(0); // we never create node families
 	}
       }
     }
-    if(num.empty()){
+    if(fam.empty()){
       Msg(GERROR, "No nodes to write in MED mesh");
       return 0;
     }
@@ -346,8 +345,8 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
     char coordUnit[3 * MED_TAILLE_PNOM + 1] = 
       "unknown         unknown         unknown         ";
     if(MEDnoeudsEcr(fid, meshName, (med_int)3, &coord[0], MED_FULL_INTERLACE, 
-		    MED_CART, coordName, coordUnit, 0, MED_FAUX, &num[0], 
-		    MED_VRAI, &fam[0], (med_int)num.size()) < 0)
+		    MED_CART, coordName, coordUnit, 0, MED_FAUX, 0, MED_FAUX, 
+		    &fam[0], (med_int)fam.size()) < 0)
       Msg(GERROR, "Could not write nodes");
   }
   
@@ -357,64 +356,63 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
     med_int ele = 0;
 
     { // points
-      std::vector<med_int> num, conn, fam;
+      std::vector<med_int> conn, fam;
       for(viter it = firstVertex(); it != lastVertex(); it++){
 	if(saveAll || (*it)->physicals.size()){
-	  num.push_back(++ele);
-	  conn.push_back((*it)->mesh_vertices[0]->getNum());
+	  conn.push_back((*it)->mesh_vertices[0]->getIndex());
 	  fam.push_back(families[*it]);
 	}
       }
-      writeElementsMED(fid, meshName, num, conn, fam, MED_POINT1);
+      writeElementsMED(fid, meshName, conn, fam, MED_POINT1);
     }
     { // lines
-      std::vector<med_int> num, conn, fam;
+      std::vector<med_int> conn, fam;
       for(eiter it = firstEdge(); it != lastEdge(); it++)
 	if(saveAll || (*it)->physicals.size())
-	  fillElementsMED(families[*it], (*it)->lines, ele, num, conn, fam, typ);
-      writeElementsMED(fid, meshName, num, conn, fam, typ);
+	  fillElementsMED(families[*it], (*it)->lines, ele, conn, fam, typ);
+      writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // triangles
-      std::vector<med_int> num, conn, fam;
+      std::vector<med_int> conn, fam;
       for(fiter it = firstFace(); it != lastFace(); it++)
 	if(saveAll || (*it)->physicals.size())
-	  fillElementsMED(families[*it], (*it)->triangles, ele, num, conn, fam, typ);
-      writeElementsMED(fid, meshName, num, conn, fam, typ);
+	  fillElementsMED(families[*it], (*it)->triangles, ele, conn, fam, typ);
+      writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // quads
-      std::vector<med_int> num, conn, fam;
+      std::vector<med_int> conn, fam;
       for(fiter it = firstFace(); it != lastFace(); it++)
 	if(saveAll || (*it)->physicals.size())
-	  fillElementsMED(families[*it], (*it)->quadrangles, ele, num, conn, fam, typ);
-      writeElementsMED(fid, meshName, num, conn, fam, typ);
+	  fillElementsMED(families[*it], (*it)->quadrangles, ele, conn, fam, typ);
+      writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // tets
-      std::vector<med_int> num, conn, fam;
+      std::vector<med_int> conn, fam;
       for(riter it = firstRegion(); it != lastRegion(); it++)
 	if(saveAll || (*it)->physicals.size())
-	  fillElementsMED(families[*it], (*it)->tetrahedra, ele, num, conn, fam, typ);
-      writeElementsMED(fid, meshName, num, conn, fam, typ);
+	  fillElementsMED(families[*it], (*it)->tetrahedra, ele, conn, fam, typ);
+      writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // hexas
-      std::vector<med_int> num, conn, fam;
+      std::vector<med_int> conn, fam;
       for(riter it = firstRegion(); it != lastRegion(); it++)
 	if(saveAll || (*it)->physicals.size())
-	  fillElementsMED(families[*it], (*it)->hexahedra, ele, num, conn, fam, typ);
-      writeElementsMED(fid, meshName, num, conn, fam, typ);
+	  fillElementsMED(families[*it], (*it)->hexahedra, ele, conn, fam, typ);
+      writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // prisms
-      std::vector<med_int> num, conn, fam;
+      std::vector<med_int> conn, fam;
       for(riter it = firstRegion(); it != lastRegion(); it++)
 	if(saveAll || (*it)->physicals.size())
-	  fillElementsMED(families[*it], (*it)->prisms, ele, num, conn, fam, typ);
-      writeElementsMED(fid, meshName, num, conn, fam, typ);
+	  fillElementsMED(families[*it], (*it)->prisms, ele, conn, fam, typ);
+      writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // pyramids
-      std::vector<med_int> num, conn, fam;
+      std::vector<med_int> conn, fam;
       for(riter it = firstRegion(); it != lastRegion(); it++)
 	if(saveAll || (*it)->physicals.size())
-	  fillElementsMED(families[*it], (*it)->pyramids, ele, num, conn, fam, typ);
-      writeElementsMED(fid, meshName, num, conn, fam, typ);
+	  fillElementsMED(families[*it], (*it)->pyramids, ele, conn, fam, typ);
+      writeElementsMED(fid, meshName, conn, fam, typ);
     }
   }
   

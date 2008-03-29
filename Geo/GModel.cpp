@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.79 2008-03-29 15:36:02 geuzaine Exp $
+// $Id: GModel.cpp,v 1.80 2008-03-29 21:36:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -42,7 +42,7 @@ extern Context_T CTX;
 std::vector<GModel*> GModel::list;
 
 GModel::GModel(std::string name)
-  : _maxVertexDataIndex(-1), _geo_internals(0), _occ_internals(0), _fields(0),
+  : _geo_internals(0), _occ_internals(0), _fields(0),
     modelName(name), normals(0)
 {
   list.push_back(this);
@@ -108,7 +108,6 @@ void GModel::destroy()
 
   _vertexVectorCache.clear();
   _vertexMapCache.clear();
-  _maxVertexDataIndex = -1;
 
   MVertex::resetGlobalNumber();
   MElement::resetGlobalNumber();
@@ -493,82 +492,79 @@ void GModel::removeInvisibleElements()
   }
 }
 
-int GModel::renumberMeshVertices(bool saveAll)
+int GModel::indexMeshVertices(bool all)
 {
-  _vertexVectorCache.clear();
-  _vertexMapCache.clear();
-
   // tag all mesh vertices with -1 (negative vertices will not be
   // saved)
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      (*it)->mesh_vertices[i]->setNum(-1);
+      (*it)->mesh_vertices[i]->setIndex(-1);
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      (*it)->mesh_vertices[i]->setNum(-1);
+      (*it)->mesh_vertices[i]->setIndex(-1);
   for(fiter it = firstFace(); it != lastFace(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      (*it)->mesh_vertices[i]->setNum(-1);
+      (*it)->mesh_vertices[i]->setIndex(-1);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      (*it)->mesh_vertices[i]->setNum(-1);
+      (*it)->mesh_vertices[i]->setIndex(-1);
 
   // tag all mesh vertices belonging to elements that need to be saved
   // with 0
   for(viter it = firstVertex(); it != lastVertex(); ++it)
-    if(saveAll || (*it)->physicals.size()){
+    if(all || (*it)->physicals.size()){
       for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-        (*it)->mesh_vertices[i]->setNum(0);
+        (*it)->mesh_vertices[i]->setIndex(0);
     }
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    if(saveAll || (*it)->physicals.size()){
+    if(all || (*it)->physicals.size()){
       for(unsigned int i = 0; i < (*it)->lines.size(); i++)
         for(int j = 0; j < (*it)->lines[i]->getNumVertices(); j++)
-          (*it)->lines[i]->getVertex(j)->setNum(0);
+          (*it)->lines[i]->getVertex(j)->setIndex(0);
     }
   for(fiter it = firstFace(); it != lastFace(); ++it)
-    if(saveAll || (*it)->physicals.size()){
+    if(all || (*it)->physicals.size()){
       for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
         for(int j = 0; j < (*it)->triangles[i]->getNumVertices(); j++)
-          (*it)->triangles[i]->getVertex(j)->setNum(0);
+          (*it)->triangles[i]->getVertex(j)->setIndex(0);
       for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
         for(int j = 0; j < (*it)->quadrangles[i]->getNumVertices(); j++)
-          (*it)->quadrangles[i]->getVertex(j)->setNum(0);
+          (*it)->quadrangles[i]->getVertex(j)->setIndex(0);
     }
   for(riter it = firstRegion(); it != lastRegion(); ++it)
-    if(saveAll || (*it)->physicals.size()){
+    if(all || (*it)->physicals.size()){
       for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
         for(int j = 0; j < (*it)->tetrahedra[i]->getNumVertices(); j++)
-          (*it)->tetrahedra[i]->getVertex(j)->setNum(0);
+          (*it)->tetrahedra[i]->getVertex(j)->setIndex(0);
       for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
         for(int j = 0; j < (*it)->hexahedra[i]->getNumVertices(); j++)
-          (*it)->hexahedra[i]->getVertex(j)->setNum(0);
+          (*it)->hexahedra[i]->getVertex(j)->setIndex(0);
       for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
         for(int j = 0; j < (*it)->prisms[i]->getNumVertices(); j++)
-          (*it)->prisms[i]->getVertex(j)->setNum(0);
+          (*it)->prisms[i]->getVertex(j)->setIndex(0);
       for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
         for(int j = 0; j < (*it)->pyramids[i]->getNumVertices(); j++)
-          (*it)->pyramids[i]->getVertex(j)->setNum(0);
+          (*it)->pyramids[i]->getVertex(j)->setIndex(0);
     }
 
   // renumber all the mesh vertices tagged with 0
   int numVertices = 0;
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      if(!(*it)->mesh_vertices[i]->getNum())
-        (*it)->mesh_vertices[i]->setNum(++numVertices);
+      if(!(*it)->mesh_vertices[i]->getIndex())
+        (*it)->mesh_vertices[i]->setIndex(++numVertices);
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      if(!(*it)->mesh_vertices[i]->getNum())
-        (*it)->mesh_vertices[i]->setNum(++numVertices);
+      if(!(*it)->mesh_vertices[i]->getIndex())
+        (*it)->mesh_vertices[i]->setIndex(++numVertices);
   for(fiter it = firstFace(); it != lastFace(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      if(!(*it)->mesh_vertices[i]->getNum())
-        (*it)->mesh_vertices[i]->setNum(++numVertices);
+      if(!(*it)->mesh_vertices[i]->getIndex())
+        (*it)->mesh_vertices[i]->setIndex(++numVertices);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      if(!(*it)->mesh_vertices[i]->getNum())
-        (*it)->mesh_vertices[i]->setNum(++numVertices);
+      if(!(*it)->mesh_vertices[i]->getIndex())
+        (*it)->mesh_vertices[i]->setIndex(++numVertices);
 
   return numVertices;
 }

@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.47 2008-03-25 20:48:32 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.48 2008-03-29 21:36:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -412,25 +412,9 @@ int GModel::readMSH(const std::string &name)
 
   // store the elements in their associated elementary entity. If the
   // entity does not exist, create a new one.
-  bool noElements = true;
-  for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++){
-    noElements &= elements[i].empty();
+  for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
     _storeElementsInEntities(elements[i]);
-  }
 
-  // special case: if there are no elements, create one geometry
-  // vertex for each mesh vertex
-  if(noElements){
-    Msg(INFO, "No elements in mesh: creating geometry vertices");
-    for(unsigned int i = 0; i < vertexVector.size(); i++){
-      MVertex *v = vertexVector[i];
-      if(v) points[v->getNum()].push_back(v);
-    }
-    for(std::map<int, MVertex*>::iterator it = vertexMap.begin(); 
-        it != vertexMap.end(); ++it) 
-      points[it->second->getNum()].push_back(it->second);
-  }
-  
   // treat points separately
   for(std::map<int, std::vector<MVertex*> >::iterator it = points.begin(); 
       it != points.end(); ++it){
@@ -533,9 +517,9 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   // if there are no physicals we save all the elements
   if(noPhysicalGroups()) saveAll = true;
 
-  // get the number of vertices and renumber the vertices in a
-  // continuous sequence
-  int numVertices = renumberMeshVertices(saveAll);
+  // get the number of vertices and index the vertices in a continuous
+  // sequence
+  int numVertices = indexMeshVertices(saveAll);
   
   // binary format exists only in version 2
   if(binary) version = 2.0;
@@ -671,38 +655,6 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   else{
     fprintf(fp, "$ENDELM\n");
   }
-
-#if 0 // test NodeData
-  std::vector<MVertex*> allVertices;
-  for(viter it = firstVertex(); it != lastVertex(); ++it)
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
-      allVertices.push_back((*it)->mesh_vertices[i]);
-  for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
-      allVertices.push_back((*it)->mesh_vertices[i]);
-  for(fiter it = firstFace(); it != lastFace(); ++it)
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
-      allVertices.push_back((*it)->mesh_vertices[i]);
-  for(riter it = firstRegion(); it != lastRegion(); ++it)
-    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++) 
-      allVertices.push_back((*it)->mesh_vertices[i]);
-  fprintf(fp, "$NodeData\n");
-  fprintf(fp, "\"test\"\n");
-  fprintf(fp, "0 0 0 0 1 %d\n", allVertices.size());
-  for(unsigned int i = 0; i < allVertices.size(); i++){
-    int tag = allVertices[i]->getNum();
-    double val = allVertices[i]->x() * allVertices[i]->y();
-    if(binary){
-      fwrite(&tag, sizeof(int), 1, fp);
-      fwrite(&val, sizeof(double), 1, fp);
-    }
-    else{
-      fprintf(fp, "%d %.16g\n", tag, val);
-    }
-  }
-  if(binary) fprintf(fp, "\n");
-  fprintf(fp, "$EndNodeData\n");
-#endif
 
   fclose(fp);
   return 1;
@@ -1130,7 +1082,7 @@ int GModel::writeVRML(const std::string &name, bool saveAll, double scalingFacto
 
   if(noPhysicalGroups()) saveAll = true;
 
-  renumberMeshVertices(saveAll);
+  indexMeshVertices(saveAll);
 
   fprintf(fp, "#VRML V1.0 ascii\n");
   fprintf(fp, "#created by Gmsh\n");
@@ -1348,7 +1300,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
 
   if(noPhysicalGroups()) saveAll = true;
 
-  renumberMeshVertices(saveAll);
+  indexMeshVertices(saveAll);
 
   // nodes
   fprintf(fp, "%6d\n", -1);
@@ -1437,7 +1389,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
             fprintf(fp, "\n");
             row = 0;
           }
-          fprintf(fp, "%10d%10d%10d%10d", 7, (*it2)->getNum(), 0, 0);
+          fprintf(fp, "%10d%10d%10d%10d", 7, (*it2)->getIndex(), 0, 0);
           row++;
         }
         fprintf(fp, "\n");
@@ -1561,7 +1513,7 @@ int GModel::writeMESH(const std::string &name, bool saveAll, double scalingFacto
 
   if(noPhysicalGroups()) saveAll = true;
 
-  int numVertices = renumberMeshVertices(saveAll);
+  int numVertices = indexMeshVertices(saveAll);
 
   fprintf(fp, " MeshVersionFormatted 1\n");
   fprintf(fp, " Dimension\n");
@@ -1906,7 +1858,7 @@ int GModel::writeBDF(const std::string &name, int format, bool saveAll,
 
   if(noPhysicalGroups()) saveAll = true;
 
-  renumberMeshVertices(saveAll);
+  indexMeshVertices(saveAll);
 
   fprintf(fp, "$ Created by Gmsh\n");
 

@@ -51,7 +51,12 @@ class stepData{
   // the number of components in the data (one stepData contains only
   // a single field type)
   int _numComp;
-  // the values, indexed by dataIndex in MVertex or MElement
+  // the values, indexed by MVertex or MElement id numbers (If the
+  // numbering is sparse, or if we only have data for high-id
+  // entities, the vector has zero entries and is thus not
+  // optimal. This is the price to pay if we want 1) rapid access to
+  // the data and 2) not to store any additional info in MVertex or
+  // MElement)
   std::vector<real*> *_data;
  public:
   stepData(GModel *model, DataType type, int numComp, 
@@ -99,8 +104,13 @@ class stepData{
   }
   real *getData(int index, bool allocIfNeeded=false)
   {
-    if(!_data || index >= (int)_data->size()) resizeData(index + 100); // optimize this
-    if(allocIfNeeded && !(*_data)[index]) (*_data)[index] = new real[_numComp];
+    if(allocIfNeeded){
+      if(index >= getNumData()) resizeData(index + 100); // optimize this
+      if(!(*_data)[index]) (*_data)[index] = new real[_numComp];
+    }
+    else{
+      if(index >= getNumData()) return 0;
+    }
     return (*_data)[index];
   }
   void destroyData()
@@ -154,7 +164,7 @@ class PViewDataGModel : public PViewData {
 
   // direct access to GModel entities
   GEntity *getEntity(int step, int ent);
-  // direct access to value by dataIndex
+  // direct access to value by index
   bool getValue(int step, int dataIndex, int comp, double &val);
 
   // I/O routines

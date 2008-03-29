@@ -37,16 +37,25 @@ class MVertexLessThanLexicographic{
 // A mesh vertex.
 class MVertex{
  private:
+  // the maximum vertex id number in the mesh
   static int _globalNum;
+  // the id number of the vertex (this number is unique and is
+  // guaranteed never to change once a mesh has been generated)
   int _num;
+  // a vertex index, used for example when saving a mesh (this index
+  // is not necessarily unique, can change after mesh renumbering,
+  // etc.)
+  int _index;
+  // a visibility and polynomial order flags
   char _visible, _order;
+  // the cartesian coordinates of the vertex
   double _x, _y, _z;
+  // the geometrical entity the vertex is associated with
   GEntity *_ge;
-  int _dataIndex;
 
  public :
   MVertex(double x, double y, double z, GEntity *ge=0, int num=0) 
-    : _visible(true), _order(1), _x(x), _y(y), _z(z), _ge(ge), _dataIndex(-1)
+    : _visible(true), _order(1), _x(x), _y(y), _z(z), _ge(ge)
   {
     if(num){
       _num = num;
@@ -55,6 +64,7 @@ class MVertex{
     else{
       _num = ++_globalNum;
     }
+    _index = num;
   }
   virtual ~MVertex(){}
 
@@ -87,9 +97,9 @@ class MVertex{
   inline int getNum() const { return _num; }
   inline void setNum(int num) { _num = num; }
 
-  // get/set the data index
-  inline int getDataIndex() { return _dataIndex; }
-  inline void setDataIndex(int index) { _dataIndex = index; }
+  // get/set the index
+  inline int getIndex() const { return _index; }
+  inline void setIndex(int index) { _index = index; }
 
   // get/set ith parameter
   virtual bool getParameter(int i, double &par) const{ return false; }
