@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.34 2008-03-20 11:44:15 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.35 2008-03-29 11:51:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -53,24 +53,25 @@ int PViewDataGModel::getNumTimeSteps()
 
 double PViewDataGModel::getTime(int step)
 {
+  if(_steps.empty()) return 0.;
   return _steps[step]->getTime();
 }
 
 double PViewDataGModel::getMin(int step)
 {
-  if(step < 0) return _min;
+  if(step < 0 || _steps.empty()) return _min;
   return _steps[step]->getMin();
 }
 
 double PViewDataGModel::getMax(int step)
 {
-  if(step < 0) return _max;
+  if(step < 0 || _steps.empty()) return _max;
   return _steps[step]->getMax();
 }
 
 SBoundingBox3d PViewDataGModel::getBoundingBox(int step)
 { 
-  if(step < 0){
+  if(step < 0 || _steps.empty()){
     SBoundingBox3d tmp;
     for(unsigned int i = 0; i < _steps.size(); i++)
       tmp += _steps[i]->getBoundingBox();
@@ -81,25 +82,28 @@ SBoundingBox3d PViewDataGModel::getBoundingBox(int step)
 
 int PViewDataGModel::getNumScalars(int step)
 {
+  if(_steps.empty()) return 0;
   if(_steps[0]->getNumComp() == 1) return getNumElements(0);
   return 0;
 }
 
 int PViewDataGModel::getNumVectors(int step)
 {
+  if(_steps.empty()) return 0;
   if(_steps[0]->getNumComp() == 3) return getNumElements(0);
   return 0;
 }
 
 int PViewDataGModel::getNumTensors(int step)
 {
+  if(_steps.empty()) return 0;
   if(_steps[0]->getNumComp() == 9) return getNumElements(0);
   return 0;
 }
 
 int PViewDataGModel::getNumEntities(int step)
 {
-  if(step < 0){
+  if(step < 0 || _steps.empty()){
     int num = 0;
     for(unsigned int i = 0; i < _steps.size(); i++)
       num += _steps[i]->getNumEntities();
@@ -110,7 +114,7 @@ int PViewDataGModel::getNumEntities(int step)
 
 int PViewDataGModel::getNumElements(int step, int ent)
 {
-  if(step < 0){
+  if(step < 0 || _steps.empty()){
     int num = 0;
     for(unsigned int i = 0; i < _steps.size(); i++){
       if(ent < 0)

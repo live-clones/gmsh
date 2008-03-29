@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.14 2008-03-29 10:19:43 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.15 2008-03-29 11:51:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -189,8 +189,8 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
   setName(name);
 
   med_int numSteps = MEDnPasdetemps(fid, name, MED_NOEUD, MED_NONE);
-  if(numSteps <= 0){
-    Msg(GERROR, "Invalid umber of steps");
+  if(numSteps < 0){
+    Msg(GERROR, "Could not get number of steps");
     return false;
   }
 
@@ -205,6 +205,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
       Msg(GERROR, "Could not get step info");
       return false;
     }
+
     med_int numNodes = MEDnVal(fid, name, MED_NOEUD, MED_NONE, numdt, numo, 
 			       meshName, MED_COMPACT);
     if(numNodes <= 0) continue;
@@ -218,8 +219,9 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
       return false;
     }
 
-    stepData<double> *sd = new stepData<double>(GModel::current(), 
-						stepData<double>::NodeData, numComp);
+    int numCompGmsh = (numComp == 2) ? 3 : numComp;
+    stepData<double> *sd = new stepData<double>
+      (GModel::current(), stepData<double>::NodeData, numCompGmsh);
     _steps.push_back(sd);
     sd->setFileName(fileName);
     sd->setFileIndex(fileIndex);
@@ -263,7 +265,9 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
       double *d = sd->getData(index, true);
       for(int j = 0; j < numComp; j++)
         d[j] = val[numComp * i + j];
-      double s = ComputeScalarRep(numComp, d);
+      for(int j = numComp; j < numCompGmsh; j++)
+        d[j] = 0.;
+      double s = ComputeScalarRep(numCompGmsh, d);
       sd->setMin(std::min(sd->getMin(), s));
       sd->setMax(std::max(sd->getMax(), s));
     }

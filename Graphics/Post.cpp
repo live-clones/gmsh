@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.159 2008-03-29 10:19:36 geuzaine Exp $
+// $Id: Post.cpp,v 1.160 2008-03-29 11:51:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1209,8 +1209,7 @@ class initPView {
     PViewData *data = p->getData();
     PViewOptions *opt = p->getOptions();
 
-    if(data->getDirty() || !p->getChanged()) return;
-
+    if(data->getDirty() || !data->getNumTimeSteps() || !p->getChanged()) return;
     if(!opt->Visible || opt->Type != PViewOptions::Plot3D) return;
 
     if(opt->UseGenRaise) opt->createGeneralRaise();
@@ -1271,10 +1270,9 @@ class drawPView {
     PViewData *data = p->getData();
     PViewOptions *opt = p->getOptions();
 
+    if(data->getDirty() || !data->getNumTimeSteps()) return;
     if(!opt->Visible || opt->Type != PViewOptions::Plot3D) return;
-
-    if(data->getDirty()) return;
-    
+   
     glPointSize(opt->PointSize);
     gl2psPointSize(opt->PointSize * CTX.print.eps_point_size_factor);
     
