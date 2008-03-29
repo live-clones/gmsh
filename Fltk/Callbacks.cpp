@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.575 2008-03-28 22:18:47 remacle Exp $
+// $Id: Callbacks.cpp,v 1.576 2008-03-29 10:19:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -4426,6 +4426,11 @@ void view_save_txt_cb(CALLBACK_ARGS)
 void view_save_msh_cb(CALLBACK_ARGS)
 {
   _view_save_as((int)(long)data, "Save As Gmsh Mesh", 5);
+}
+
+void view_save_med_cb(CALLBACK_ARGS)
+{
+  _view_save_as((int)(long)data, "Save As MED file", 6);
 }
 
 void view_alias_cb(CALLBACK_ARGS)

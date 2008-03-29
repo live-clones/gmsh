@@ -114,11 +114,12 @@ class PViewData {
   virtual bool hasMultipleMeshes(){ return false; }
 
   // I/O routines
-  virtual bool writeSTL(std::string name);
-  virtual bool writeTXT(std::string name);
-  virtual bool writePOS(std::string name, bool binary=false, bool parsed=true,
+  virtual bool writeSTL(std::string fileName);
+  virtual bool writeTXT(std::string fileName);
+  virtual bool writePOS(std::string fileName, bool binary=false, bool parsed=true,
                         bool append=false){ return false; }
-  virtual bool writeMSH(std::string name, bool binary=false){ return false; }
+  virtual bool writeMSH(std::string fileName, bool binary=false){ return false; }
+  virtual bool writeMED(std::string fileName){ return false; }
 };
 
 class nameData{

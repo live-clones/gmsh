@@ -36,7 +36,7 @@ Line Loop(25) = {-5,1,3};
 Ruled Surface(26) = {25};
 
 Surface Loop(27) = {24,-22,-18,20,-26};
-Complex Volume(28) = {27};
+Volume(28) = {27};
 
 Transfinite Line {1,2,3,4,5,6} = nbdiv+1 ;
 Transfinite Line {-8,-10,-12} = nbdiv+1 ;

@@ -22,7 +22,7 @@ Extrude Surface {6, {0,0.0,2}} ;
 
 
 Surface Loop(51) = {6,37,41,45,49,50}; 
-Complex Volume(52) = {51}; 
+Volume(52) = {51}; 
 
 
 Extrude Surface {45, {0,2,0.0}}

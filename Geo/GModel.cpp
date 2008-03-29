@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.77 2008-03-23 21:42:57 geuzaine Exp $
+// $Id: GModel.cpp,v 1.78 2008-03-29 10:19:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -424,7 +424,8 @@ MVertex *GModel::getMeshVertexByTag(int n)
     _vertexMapCache.clear();
     bool dense = (getNumMeshVertices() == MVertex::getGlobalNumber());
     if(dense){
-      _vertexVectorCache.resize(MVertex::getGlobalNumber());
+      // numbering starts at 1
+      _vertexVectorCache.resize(MVertex::getGlobalNumber() + 1);
       for(viter it = firstVertex(); it != lastVertex(); ++it)
         insertMeshVertices((*it)->mesh_vertices, _vertexVectorCache);
       for(eiter it = firstEdge(); it != lastEdge(); ++it)

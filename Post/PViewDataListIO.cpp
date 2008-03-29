@@ -1,4 +1,4 @@
-// $Id: PViewDataListIO.cpp,v 1.17 2008-03-20 11:44:15 geuzaine Exp $
+// $Id: PViewDataListIO.cpp,v 1.18 2008-03-29 10:19:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -316,12 +316,12 @@ static void writeTextPOS(FILE *fp, int nbc, int nb, List_T *TD, List_T *TC)
   }
 }
 
-bool PViewDataList::writePOS(std::string name, bool binary, bool parsed, bool append)
+bool PViewDataList::writePOS(std::string fileName, bool binary, bool parsed, bool append)
 {
-  FILE *fp = fopen(name.c_str(), 
+  FILE *fp = fopen(fileName.c_str(), 
                    append ? (binary ? "ab" : "a") : (binary ? "wb" : "w"));
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg(GERROR, "Unable to open file '%s'", fileName.c_str());
     return false;
   }
 
@@ -509,11 +509,11 @@ static void writeElementsMSH(FILE *fp, int nbelm, List_T *list,
   }
 }
 
-bool PViewDataList::writeMSH(std::string name, bool binary)
+bool PViewDataList::writeMSH(std::string fileName, bool binary)
 {
-  FILE *fp = fopen(name.c_str(), "w");
+  FILE *fp = fopen(fileName.c_str(), "w");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg(GERROR, "Unable to open file '%s'", fileName.c_str());
     return false;
   }
 

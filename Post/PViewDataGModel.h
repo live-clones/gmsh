@@ -96,7 +96,7 @@ class stepData{
   void resizeData(int n)
   {  
     if(!_data) _data = new std::vector<real*>(n, (real*)0);
-    if(n < (int)_data->size()) _data->resize(n, (real*)0);
+    if(n > (int)_data->size()) _data->resize(n, (real*)0);
   }
   real *getData(int index, bool allocIfNeeded=false)
   {
@@ -162,8 +162,9 @@ class PViewDataGModel : public PViewData {
   bool readMSH(std::string fileName, int fileIndex, FILE *fp, bool binary, 
                bool swap, int step, double time, int partition, 
                int numComp, int numNodes);
-  bool writeMSH(std::string name, bool binary=false);
-  bool writeMED(std::string name);
+  bool writeMSH(std::string fileName, bool binary=false);
+  bool readMED(std::string fileName, int fileIndex);
+  bool writeMED(std::string fileName);
 };
 
 #endif

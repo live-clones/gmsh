@@ -1,4 +1,4 @@
-// $Id: PViewDataIO.cpp,v 1.6 2008-03-20 11:44:15 geuzaine Exp $
+// $Id: PViewDataIO.cpp,v 1.7 2008-03-29 10:19:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -27,11 +27,11 @@
 #include "Numeric.h"
 #include "PViewData.h"
 
-bool PViewData::writeSTL(std::string name)
+bool PViewData::writeSTL(std::string fileName)
 {
-  FILE *fp = fopen(name.c_str(), "w");
+  FILE *fp = fopen(fileName.c_str(), "w");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg(GERROR, "Unable to open file '%s'", fileName.c_str());
     return false;
   }
 
@@ -85,11 +85,11 @@ bool PViewData::writeSTL(std::string name)
   return true;
 }
 
-bool PViewData::writeTXT(std::string name)
+bool PViewData::writeTXT(std::string fileName)
 {
-  FILE *fp = fopen(name.c_str(), "w");
+  FILE *fp = fopen(fileName.c_str(), "w");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg(GERROR, "Unable to open file '%s'", fileName.c_str());
     return false;
   }
 

@@ -26,8 +26,8 @@ Plane Surface(34) = {33};
 Extrude Surface { 34, {0,0,-1} };
 Coherence;
 Surface Loop(57) = {56,43,34,47,51,55};
-Complex Volume(58) = {57};
+Volume(58) = {57};
 
 Surface Loop(58) = {28,15,6,19,23,27};
-Complex Volume(59) = {58};
+Volume(59) = {58};
 

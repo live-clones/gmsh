@@ -27,7 +27,7 @@ Line Loop(18) = {1,2,3};
 Plane Surface(19) = {18};
 
 Surface Loop(20) = {13,15,17,-11,-19};
-Complex Volume(21) = {20};
+Volume(21) = {20};
 
 Transfinite Line {1,2,3,4,5,6,7,8,9} = 3;
 

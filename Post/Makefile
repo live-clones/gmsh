@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.37 2008-03-21 09:55:43 geuzaine Exp $
+# $Id: Makefile,v 1.38 2008-03-29 10:19:43 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -30,7 +30,7 @@ INC = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo ${DASH}I../Mesh\
 
 CFLAGS =${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
-SRC = PView.cpp\
+SRC = PView.cpp PViewIO.cpp\
         PViewData.cpp PViewDataIO.cpp\
           PViewDataList.cpp PViewDataListIO.cpp\
           PViewDataGModel.cpp PViewDataGModelIO.cpp\
@@ -65,6 +65,11 @@ depend:
 PView.o: PView.cpp PView.h PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h PViewOptions.h ColorTable.h PViewDataList.h \
   AdaptiveViews.h ../DataStr/List.h ../Common/GmshMatrix.h \
+  ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Common/Context.h ../Common/SmoothData.h ../Common/Message.h
+PViewIO.o: PViewIO.cpp PView.h PViewData.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint3.h PViewOptions.h ColorTable.h PViewDataList.h \
+  AdaptiveViews.h ../DataStr/List.h ../Common/GmshMatrix.h \
   PViewDataGModel.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
   ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
   ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
@@ -72,7 +77,6 @@ PView.o: PView.cpp PView.h PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h \
-  ../Common/VertexArray.h ../Common/Context.h ../Common/SmoothData.h \
   ../Common/StringUtils.h ../Common/Message.h
 PViewData.o: PViewData.cpp PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h

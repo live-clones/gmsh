@@ -39,7 +39,7 @@ Line Loop(23) = {-9,10,11,3};
 Ruled Surface(24) = {23};
 
 Surface Loop(25) = {16,20,24,18,6,22};
-Complex Volume(26) = {25};
+Volume(26) = {25};
 
 Transfinite Line {7,9,11,12} = 5;
 Transfinite Line {3,10,14} = 10;

@@ -32,4 +32,4 @@ Plane Surface(12) = {11};
 Line Loop(13) = {-1,10,6};
 Plane Surface(14) = {13};
 Surface Loop(15) = {12,9,-5,-14};
-Complex Volume(16) = {15};
+Volume(16) = {15};

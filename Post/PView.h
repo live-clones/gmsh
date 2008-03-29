@@ -86,12 +86,14 @@ class PView{
   static PView *getViewByName(std::string name, int timeStep=-1, 
                               int partition=-1);
 
-  // read view(s) in list format from a file
+  // read view(s) from POS file
   static bool readPOS(std::string fileName, int fileIndex=-1);
-  // read view data from MSH file
+  // read view(s) from MSH file
   static bool readMSH(std::string fileName, int fileIndex=-1);
+  // read view(s) from MED file
+  static bool readMED(std::string fileName, int fileIndex=-1);
 
-  // write view to file in given format
+  // write view in given format
   bool write(std::string fileName, int format, bool append=false);
 
   // vertex arrays to draw the elements efficiently

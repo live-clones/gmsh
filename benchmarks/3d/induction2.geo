@@ -138,7 +138,7 @@ Plane Surface(79) = {78};
 Line Loop(80) = {-47,39,45,28};
 Plane Surface(81) = {80};
 Surface Loop(82) = {79,71,-73,-81,-77,75};
-Complex Volume(83) = {82};
+Volume(83) = {82};
 
 /* boite air */
 
@@ -157,7 +157,7 @@ Plane Surface(95) = {94};
 Line Loop(96) = {16,68,13,14,15};
 Plane Surface(97) = {96};
 Surface Loop(98) = {95,-87,-85,-97,89,93,91};
-Complex Volume(99) = {98};
+Volume(99) = {98};
 
 /* inducteur */
 
@@ -178,7 +178,7 @@ Plane Surface(113) = {112};
 Line Loop(114) = {11,12,6,-24,-23,-22,-21,3,9,10};
 Plane Surface(115) = {114};
 Surface Loop(116) = {91,93,89,-109,107,-113,-105,115,-103,-101,-111,-85};
-Complex Volume(117) = {116};
+Volume(117) = {116};
 
 /* air */
 Line Loop(118) = {-35,-34,-33,30};
@@ -195,7 +195,7 @@ Line Loop(128) = {-37,-41,44,26};
 Line Loop(129) = {8,68,1,2,3,69,6,7};
 Plane Surface(130) = {128,129};
 Surface Loop(131) = {97,-113,-130,127,125,79,-77,121,123,119,-101,-103,-105,107,115,-95};
-Complex Volume(132) = {131};
+Volume(132) = {131};
 
 Physical Volume(500) = { 99 , 132 }; /* boite air + air */
 Physical Volume(501) = { 83 }; /* tole */

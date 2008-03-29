@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.307 2008-03-23 21:43:02 geuzaine Exp $
+// $Id: Gmsh.y,v 1.308 2008-03-29 10:19:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1462,12 +1462,13 @@ Shape :
 	Vertex *v2 = FindPoint((int)p2);
 	if(!v1) yymsg(GERROR, "Sphere %d : unknown point %d", num, (int)p1);
 	if(!v2) yymsg(GERROR, "Sphere %d : unknown point %d", num, (int)p2);
-	myGmshSurface = gmshSphere::NewSphere
-	  (num, v1->Pos.X, v1->Pos.Y, v1->Pos.Z,
-	   sqrt((v2->Pos.X - v1->Pos.X) * (v2->Pos.X - v1->Pos.X) +
-		(v2->Pos.Y - v1->Pos.Y) * (v2->Pos.Y - v1->Pos.Y) +
-		(v2->Pos.Z - v1->Pos.Z) * (v2->Pos.Z - v1->Pos.Z)));
-      }      
+	if(v1 && v2)
+	  myGmshSurface = gmshSphere::NewSphere
+	    (num, v1->Pos.X, v1->Pos.Y, v1->Pos.Z,
+	     sqrt((v2->Pos.X - v1->Pos.X) * (v2->Pos.X - v1->Pos.X) +
+		  (v2->Pos.Y - v1->Pos.Y) * (v2->Pos.Y - v1->Pos.Y) +
+		  (v2->Pos.Z - v1->Pos.Z) * (v2->Pos.Z - v1->Pos.Z)));
+      }
       $$.Type = 0;
       $$.Num = num;
     }
@@ -1486,12 +1487,13 @@ Shape :
 	Vertex *v2 = FindPoint((int)p2);
 	if(!v1) yymsg(GERROR, "PolarSphere %d : unknown point %d", num, (int)p1);
 	if(!v2) yymsg(GERROR, "PolarSphere %d : unknown point %d", num, (int)p2);
-	myGmshSurface = gmshPolarSphere::NewPolarSphere
-	  (num, v1->Pos.X, v1->Pos.Y, v1->Pos.Z,
-	   sqrt((v2->Pos.X - v1->Pos.X) * (v2->Pos.X - v1->Pos.X) +
-		(v2->Pos.Y - v1->Pos.Y) * (v2->Pos.Y - v1->Pos.Y) +
-		(v2->Pos.Z - v1->Pos.Z) * (v2->Pos.Z - v1->Pos.Z)));
-      }      
+	if(v1 && v2)
+	  myGmshSurface = gmshPolarSphere::NewPolarSphere
+	    (num, v1->Pos.X, v1->Pos.Y, v1->Pos.Z,
+	     sqrt((v2->Pos.X - v1->Pos.X) * (v2->Pos.X - v1->Pos.X) +
+		  (v2->Pos.Y - v1->Pos.Y) * (v2->Pos.Y - v1->Pos.Y) +
+		  (v2->Pos.Z - v1->Pos.Z) * (v2->Pos.Z - v1->Pos.Z)));
+      }
       $$.Type = 0;
       $$.Num = num;
     }
@@ -1533,6 +1535,7 @@ Shape :
   // for backward compatibility:
   | tComplex tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
+      yymsg(GERROR, "'Complex Volume' command is deprecated: use 'Volume' instead");
       int num = (int)$4;
       if(FindVolume(num)){
 	yymsg(GERROR, "Volume %d already exists", num);

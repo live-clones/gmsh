@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.180 2008-03-23 21:43:03 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.181 2008-03-29 10:19:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -354,6 +354,7 @@ int MergeFile(const char *name, int warn_if_missing)
   }
   else if(!strcmp(ext, ".med") || !strcmp(ext, ".MED")){
     status = m->readMED(name);
+    if(status > 1) status = PView::readMED(name);
   }
   else if(!strcmp(ext, ".bdf") || !strcmp(ext, ".BDF") ||
           !strcmp(ext, ".nas") || !strcmp(ext, ".NAS")){
@@ -393,8 +394,7 @@ int MergeFile(const char *name, int warn_if_missing)
        !strncmp(header, "$PARA", 5) || !strncmp(header, "$ELM", 4) ||
        !strncmp(header, "$MeshFormat", 11)) {
       status = m->readMSH(name);
-      if(status > 1) 
-        status = PView::readMSH(name);
+      if(status > 1) status = PView::readMSH(name);
     }
     else if(!strncmp(header, "$PostFormat", 11) || 
             !strncmp(header, "$View", 5)) {
