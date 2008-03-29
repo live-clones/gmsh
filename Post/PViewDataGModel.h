@@ -27,12 +27,6 @@
 
 template<class real>
 class stepData{
- public:
-  enum DataType {
-    NodeData = 1,
-    ElementData = 2,
-    ElementNodeData = 3
-  };
  private:
   // a pointer to the underlying model
   GModel *_model;
@@ -40,8 +34,6 @@ class stepData{
   std::vector<GEntity*> _entities;
   // the bounding box of the view
   SBoundingBox3d _bbox;
-  // the type of the dataset
-  DataType _type;
   // the file the data was read from (if empty, refer to PViewData)
   std::string _fileName;
   // the index in the file (if negative, refer to PViewData)
@@ -59,11 +51,10 @@ class stepData{
   // MElement)
   std::vector<real*> *_data;
  public:
-  stepData(GModel *model, DataType type, int numComp, 
-           std::string fileName="", int fileIndex=-1, double time=0., 
-           double min=VAL_INF, double max=-VAL_INF)
-    : _model(model), _type(type), _fileName(fileName), _fileIndex(fileIndex),
-      _time(time), _min(min), _max(max), _numComp(numComp), _data(0)
+  stepData(GModel *model, int numComp, std::string fileName="", int fileIndex=-1, 
+	   double time=0., double min=VAL_INF, double max=-VAL_INF)
+    : _model(model), _fileName(fileName), _fileIndex(fileIndex), _time(time), 
+      _min(min), _max(max), _numComp(numComp), _data(0)
   {
     // store vector of GEntities so we can index them efficiently
     for(GModel::eiter it = _model->firstEdge(); it != _model->lastEdge(); ++it)
@@ -79,8 +70,6 @@ class stepData{
   SBoundingBox3d getBoundingBox(){ return _bbox; }
   int getNumEntities(){ return _entities.size(); }
   GEntity *getEntity(int ent){ return _entities[ent]; }
-  DataType getType(){ return _type; }
-  void setType(DataType type){ _type = type; }
   int getNumComponents(){ return _numComp; }
   std::string getFileName(){ return _fileName; }
   void setFileName(std::string name){ _fileName = name; }
@@ -126,6 +115,12 @@ class stepData{
 
 // data container using elements from a GModel
 class PViewDataGModel : public PViewData {
+ public:
+  enum DataType {
+    NodeData = 1,
+    ElementData = 2,
+    ElementNodeData = 3
+  };
  private:
   // the data, indexed by time step
   std::vector<stepData<double>*> _steps;
@@ -133,6 +128,8 @@ class PViewDataGModel : public PViewData {
   double _min, _max;
   // a set of all "partitions" encountered in the input data
   std::set<int> _partitions;
+  // the type of the dataset
+  DataType _type;
  public:
   PViewDataGModel();
   ~PViewDataGModel();
@@ -159,9 +156,9 @@ class PViewDataGModel : public PViewData {
   bool hasPartition(int part);
   bool hasMultipleMeshes();
 
-  // create old-style list-based dataset from this one
-  //PViewDataList *convertToPViewDataList();
-
+  // get/set the data type
+  DataType getType(){ return _type; }
+  void setType(DataType type){ _type = type; }
   // direct access to GModel entities
   GEntity *getEntity(int step, int ent);
   // direct access to value by index

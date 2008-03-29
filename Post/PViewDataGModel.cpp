@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.37 2008-03-29 21:36:30 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.38 2008-03-29 23:40:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -24,8 +24,10 @@
 
 #include "PViewDataGModel.h"
 #include "MElement.h"
+#include "Message.h"
 
-PViewDataGModel::PViewDataGModel() : _min(VAL_INF), _max(-VAL_INF)
+PViewDataGModel::PViewDataGModel() 
+  : _min(VAL_INF), _max(-VAL_INF), _type(NodeData)
 {
 }
 
@@ -159,8 +161,13 @@ int PViewDataGModel::getNumComponents(int step, int ent, int ele)
 void PViewDataGModel::getValue(int step, int ent, int ele, int nod, int comp, double &val)
 {
   // no sanity checks (assumed to be guarded by skipElement)
-  MVertex *v = _steps[step]->getEntity(ent)->getMeshElement(ele)->getVertex(nod);
-  val = _steps[step]->getData(v->getNum())[comp];
+  if(_type == NodeData){
+    MVertex *v = _steps[step]->getEntity(ent)->getMeshElement(ele)->getVertex(nod);
+    val = _steps[step]->getData(v->getNum())[comp];
+  }
+  else{
+    Msg(GERROR, "Element-based data sets not yet ready!");
+  }
 }
 
 int PViewDataGModel::getNumEdges(int step, int ent, int ele)
@@ -181,8 +188,13 @@ bool PViewDataGModel::skipElement(int step, int ent, int ele)
   if(!_steps[step]->getNumData()) return true;
   MElement *e = data->getEntity(ent)->getMeshElement(ele);
   if(!e->getVisibility()) return true;
-  for(int i = 0; i < e->getNumVertices(); i++)
-    if(!data->getData(e->getVertex(i)->getNum())) return true;
+  if(_type == NodeData){
+    for(int i = 0; i < e->getNumVertices(); i++)
+      if(!data->getData(e->getVertex(i)->getNum())) return true;
+  }
+  else{
+    if(!data->getData(e->getNum())) return true;
+  }
   return false;
 }
 

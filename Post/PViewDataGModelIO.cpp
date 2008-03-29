@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.19 2008-03-29 22:58:45 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.20 2008-03-29 23:40:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -37,8 +37,7 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
       step, time, partition, numNodes);
 
   while(step >= (int)_steps.size())
-    _steps.push_back(new stepData<double>(GModel::current(), 
-                                          stepData<double>::NodeData, numComp));
+    _steps.push_back(new stepData<double>(GModel::current(), numComp));
   
   _steps[step]->setFileName(fileName);
   _steps[step]->setFileIndex(fileIndex);
@@ -213,15 +212,16 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
     Msg(GERROR, "Nothing to import from MED file");
     return false;
   }
-
-  for(int step = 0; step < numSteps; step++){
+  else{
     med_entite_maillage ent = entType[pairs[0].first];
-    stepData<double>::DataType entGmsh =
-      (ent == MED_NOEUD) ? stepData<double>::NodeData : 
-      (ent == MED_MAILLE) ? stepData<double>::ElementData :
-      stepData<double>::ElementNodeData;
+    setType((ent == MED_NOEUD) ? NodeData : 
+	    (ent == MED_MAILLE) ? ElementData :
+	    ElementNodeData);
+  }
+  
+  for(int step = 0; step < numSteps; step++){
     int numCompGmsh = (numComp == 2) ? 3 : numComp;
-    _steps.push_back(new stepData<double>(GModel::current(), entGmsh, numCompGmsh));
+    _steps.push_back(new stepData<double>(GModel::current(), numCompGmsh));
     _steps.back()->setFileName(fileName);
     _steps.back()->setFileIndex(fileIndex);
   }
@@ -286,6 +286,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	}
       }
       else{
+	Msg(GERROR, "Element-based MED import not ready yet!");
 	// TODO... PS: since MED index elements by subgroups of
 	// elements of the same type, we need to define an order of
 	// element types in stepData and STICK WITH IT! We need a
@@ -342,6 +343,10 @@ bool PViewDataGModel::writeMED(std::string fileName)
       nums.push_back(i);
     }
   }
+  if(profile.empty()){
+    Msg(GERROR, "Nothing to save");
+    return false;
+  }
   char *profileName = (char*)"nodeProfile";
   if(MEDprofilEcr(fid, &profile[0], (med_int)profile.size(), profileName) < 0){
     Msg(GERROR, "Could not create MED profile");
@@ -371,10 +376,10 @@ bool PViewDataGModel::writeMED(std::string fileName)
       continue;
     }
     double time = _steps[step]->getTime();
-    std::vector<double> val(numNodes * numComp);
+    std::vector<double> val(profile.size() * numComp);
     for(unsigned int i = 0; i < profile.size(); i++)
       for(int k = 0; k < numComp; k++)
-	val[(profile[i] - 1) * numComp + k] = _steps[step]->getData(nums[i])[k];
+	val[i * numComp + k] = _steps[step]->getData(nums[i])[k];
     if(MEDchampEcr(fid, meshName, fieldName, (unsigned char*)&val[0], 
 		   MED_FULL_INTERLACE, numNodes, MED_NOGAUSS, MED_ALL,
 		   profileName, MED_COMPACT, MED_NOEUD, MED_NONE, (med_int)step,
