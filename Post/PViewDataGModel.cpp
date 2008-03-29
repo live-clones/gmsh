@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.35 2008-03-29 11:51:37 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.36 2008-03-29 15:36:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -83,21 +83,21 @@ SBoundingBox3d PViewDataGModel::getBoundingBox(int step)
 int PViewDataGModel::getNumScalars(int step)
 {
   if(_steps.empty()) return 0;
-  if(_steps[0]->getNumComp() == 1) return getNumElements(0);
+  if(_steps[0]->getNumComponents() == 1) return getNumElements(0);
   return 0;
 }
 
 int PViewDataGModel::getNumVectors(int step)
 {
   if(_steps.empty()) return 0;
-  if(_steps[0]->getNumComp() == 3) return getNumElements(0);
+  if(_steps[0]->getNumComponents() == 3) return getNumElements(0);
   return 0;
 }
 
 int PViewDataGModel::getNumTensors(int step)
 {
   if(_steps.empty()) return 0;
-  if(_steps[0]->getNumComp() == 9) return getNumElements(0);
+  if(_steps[0]->getNumComponents() == 9) return getNumElements(0);
   return 0;
 }
 
@@ -149,7 +149,7 @@ void PViewDataGModel::getNode(int step, int ent, int ele, int nod,
 
 int PViewDataGModel::getNumComponents(int step, int ent, int ele)
 {
-  return _steps[step]->getNumComp();
+  return _steps[step]->getNumComponents();
 }
 
 void PViewDataGModel::getValue(int step, int ent, int ele, int nod, int comp, double &val)

@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.78 2008-03-29 10:19:36 geuzaine Exp $
+// $Id: GModel.cpp,v 1.79 2008-03-29 15:36:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -52,6 +52,9 @@ GModel::GModel(std::string name)
 #if !defined(HAVE_GMSH_EMBEDDED)
   _fields = new FieldManager();
 #endif
+
+  //printf("sizeof(MVertex) = %d\n", sizeof(MVertex));
+  //printf("sizeof(MElement) = %d\n", sizeof(MElement));
 }
 
 GModel::~GModel()

@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.18 2008-03-29 10:19:36 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.19 2008-03-29 15:36:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,7 @@ extern "C" {
 #include <med.h>
 }
 
-static int getTypeForMED(int msh, med_geometrie_element &med)
+static int getElementTypeForMED(int msh, med_geometrie_element &med)
 {
   switch(msh) {
   case MSH_LIN_2: med = MED_SEG2; return 2; 
@@ -124,7 +124,7 @@ int GModel::readMED(const std::string &name)
   // read elements
   for(int mshType = 0; mshType < 50; mshType++){ // loop over all possible MSH types
     med_geometrie_element type;
-    int numNodPerEle = getTypeForMED(mshType, type);
+    int numNodPerEle = getElementTypeForMED(mshType, type);
     if(type == MED_NONE) continue;
     med_int numEle = MEDnEntMaa(fid, meshName, MED_CONN, MED_MAILLE, type, MED_NOD);
     if(numEle <= 0) continue;
@@ -236,7 +236,7 @@ static void fillElementsMED(med_int family, std::vector<T*> &elements, med_int &
     for(int j = 0; j < elements[i]->getNumVertices(); j++)
       conn.push_back(elements[i]->getVertexMED(j)->getNum());
     fam.push_back(family);
-    if(!i) getTypeForMED(elements[i]->getTypeForMSH(), type);
+    if(!i) getElementTypeForMED(elements[i]->getTypeForMSH(), type);
   }
 }
 

@@ -31,8 +31,7 @@ class stepData{
   enum DataType {
     NodeData = 1,
     ElementData = 2,
-    ElementNodeData = 3,
-    ElementGaussPointData = 4
+    ElementNodeData = 3
   };
  private:
   // a pointer to the underlying model
@@ -77,7 +76,7 @@ class stepData{
   GEntity *getEntity(int ent){ return _entities[ent]; }
   DataType getType(){ return _type; }
   void setType(DataType type){ _type = type; }
-  int getNumComp(){ return _numComp; }
+  int getNumComponents(){ return _numComp; }
   std::string getFileName(){ return _fileName; }
   void setFileName(std::string name){ _fileName = name; }
   int getFileIndex(){ return _fileIndex; }
