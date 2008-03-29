@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.670 2008-03-29 10:19:36 geuzaine Exp $
+// $Id: GUI.cpp,v 1.671 2008-03-29 22:58:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1314,8 +1314,10 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
                   (Fl_Callback *) view_save_txt_cb, (void *)nb, 0);
         p[j]->add("Save As/Gmsh Mesh...", 0, 
                   (Fl_Callback *) view_save_msh_cb, (void *)nb, 0);
+#if defined(HAVE_MED)
         p[j]->add("Save As/MED file...", 0, 
                   (Fl_Callback *) view_save_med_cb, (void *)nb, 0);
+#endif
         p[j]->add("Apply As Background Mesh", 0, 
                   (Fl_Callback *) view_applybgmesh_cb, (void *)nb, FL_MENU_DIVIDER);
         p[j]->add("Options...", 'o', 

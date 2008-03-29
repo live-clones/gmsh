@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.18 2008-03-29 22:46:01 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.19 2008-03-29 22:58:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -275,8 +275,10 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
       }
 
       if(ent == MED_NOEUD){
-	std::vector<med_int> nodeTags(numVal);
-	if(MEDnumLire(fid, meshName, &nodeTags[0], numVal, MED_NOEUD, MED_NONE) < 0)
+	med_int numNodes = MEDnEntMaa(fid, meshName, MED_COOR, MED_NOEUD, 
+				      MED_NONE, (med_connectivite)0);
+	std::vector<med_int> nodeTags(numNodes);
+	if(MEDnumLire(fid, meshName, &nodeTags[0], numNodes, MED_NOEUD, MED_NONE) < 0)
 	  nodeTags.clear();
 	for(unsigned int i = 0; i < profile.size(); i++){
 	  int num = nodeTags.empty() ? profile[i] : nodeTags[profile[i] - 1];
@@ -284,7 +286,12 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	}
       }
       else{
-	// TODO!
+	// TODO... PS: since MED index elements by subgroups of
+	// elements of the same type, we need to define an order of
+	// element types in stepData and STICK WITH IT! We need a
+	// single routine to compute element order and indices, which
+	// can also map to element numbers (+ deal with special case
+	// for points)
       }
 
     }
