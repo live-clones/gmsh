@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.17 2008-03-29 21:36:30 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.18 2008-03-29 22:46:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -280,7 +280,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	  nodeTags.clear();
 	for(unsigned int i = 0; i < profile.size(); i++){
 	  int num = nodeTags.empty() ? profile[i] : nodeTags[profile[i] - 1];
-	  fillData(_steps[step], num, val, profile[i] - 1, numComp);
+	  fillData(_steps[step], num, val, i, numComp);
 	}
       }
       else{
