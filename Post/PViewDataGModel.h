@@ -122,7 +122,8 @@ class PViewDataGModel : public PViewData {
   enum DataType {
     NodeData = 1,
     ElementData = 2,
-    ElementNodeData = 3
+    ElementNodeData = 3,
+    GaussPointData = 4
   };
  private:
   // the data, indexed by time step

@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.41 2008-03-30 14:04:21 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.42 2008-03-30 22:59:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -162,16 +162,26 @@ int PViewDataGModel::getNumComponents(int step, int ent, int ele)
 void PViewDataGModel::getValue(int step, int ent, int ele, int nod, int comp, double &val)
 {
   // no sanity checks (assumed to be guarded by skipElement)
+  stepData<double> *sd = _steps[step];
   if(_type == NodeData){
-    MVertex *v = _steps[step]->getEntity(ent)->getMeshElement(ele)->getVertex(nod);
-    val = _steps[step]->getData(v->getNum())[comp];
+    MVertex *v = sd->getEntity(ent)->getMeshElement(ele)->getVertex(nod);
+    val = sd->getData(v->getNum())[comp];
   }
   else{
-    MElement *e = _steps[step]->getEntity(ent)->getMeshElement(ele);
-    if(_type == ElementData)
-      val = _steps[step]->getData(e->getNum())[comp];
-    else
-      Msg(GERROR, "ElementNode data not ready yet!");
+    MElement *e = sd->getEntity(ent)->getMeshElement(ele);
+    switch(_type){
+    case ElementNodeData:
+      val = sd->getData(e->getNum())[sd->getNumComponents() * nod + comp];
+      break;
+    case GaussPointData:
+      Msg(WARNING, "GaussPoint data not ready yet!");
+      val = sd->getData(e->getNum())[comp];
+      break;
+    case ElementData: 
+    default:
+      val = sd->getData(e->getNum())[comp];
+      break;
+    }
   }
 }
 

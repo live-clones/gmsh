@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.27 2008-03-30 21:35:07 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.28 2008-03-30 22:59:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -146,6 +146,8 @@ extern "C" {
 #include <med.h>
 }
 
+extern int med2msh(med_geometrie_element med, int k);
+
 bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 {
   med_idt fid = MEDouvrir((char*)fileName.c_str(), MED_LECTURE);
@@ -249,8 +251,14 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 			       MED_COMPACT);
       if(numVal <= 0) continue;
       int mult = 1;
-      if(getType() == ElementNodeData) mult = nodesPerEle[pairs[pair].second];
-      if(ngauss) mult *= ngauss;
+      if(ent == MED_NOEUD_ELEMENT){
+	mult = nodesPerEle[pairs[pair].second];
+      }
+      else if(ngauss > 1){
+	mult = ngauss;
+	setType(GaussPointData);
+      }
+      
       // only a guess, since several element types may be combined
       _steps[step]->resizeData(numVal / mult);
 
@@ -314,18 +322,17 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	else{
 	  if(profile[i] == 0 || profile[i] > tags.size()){
 	    Msg(GERROR, "Wrong index in profile");
-	    Msg(DEBUG, "nodal=%d prof[%d]=%d #prof=%d #tags=%d numVal=%d mult=%d", 
-		nodal, i, profile[i], profile.size(), tags.size(), numVal, mult);
 	    return false;
 	  }
 	  num = tags[profile[i] - 1];
 	}
 	double *d = _steps[step]->getData(num, true, mult);
-	// FIXME: for ElementNodeData, we need to reorder the data
-	// before storing it, using med2msh()). Also: what should we
-	// do with Gauss point data?
-	for(int j = 0; j < numComp * mult; j++)
-	  d[j] = val[numComp * mult * i + j];
+	for(int j = 0; j < mult; j++){
+	  // reorder nodes if we have ElementNode data
+	  int j2 = (ent == MED_NOEUD_ELEMENT) ? med2msh(ele, j) : j;
+	  for(int k = 0; k < numComp; k++)
+	    d[numComp * j + k] = val[numComp * mult * i + numComp * j2 + k];
+	}
 	double s = ComputeScalarRep(_steps[step]->getNumComponents(), d);
 	_steps[step]->setMin(std::min(_steps[step]->getMin(), s));
 	_steps[step]->setMax(std::max(_steps[step]->getMax(), s));
