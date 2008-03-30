@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.20 2008-03-29 23:40:56 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.21 2008-03-30 10:25:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -146,19 +146,6 @@ extern "C" {
 #include <med.h>
 }
 
-static void fillData(stepData<double> *data, int dataIndex,
-		     std::vector<double> &val, int valIndex, int numComp)
-{
-  double *d = data->getData(dataIndex, true);
-  for(int j = 0; j < numComp; j++)
-    d[j] = val[numComp * valIndex + j];
-  for(int j = numComp; j < data->getNumComponents(); j++)
-    d[j] = 0.;
-  double s = ComputeScalarRep(data->getNumComponents(), d);
-  data->setMin(std::min(data->getMin(), s));
-  data->setMax(std::max(data->getMax(), s));
-}
-
 bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 {
   med_idt fid = MEDouvrir((char*)fileName.c_str(), MED_LECTURE);
@@ -183,17 +170,23 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
     return false;
   }
 
-  Msg(INFO, "Reading %d-component field <<%s>>\n", numComp, name);
+  Msg(INFO, "Reading %d-component field <<%s>>", numComp, name);
   setName(name);
 
+  // the ordering of the elements in the following lists is important:
+  // it should match the ordering of the MSH element types (when
+  // elements are saved without tags, this governs the order with
+  // which we implicitly index them in GModel::readMED)
   const med_entite_maillage entType[] = 
     {MED_NOEUD, MED_MAILLE, MED_NOEUD_ELEMENT};
+  // don't import points for now (points are not numbered in the same
+  // sequence as MElements)
   const med_geometrie_element eleType[] = 
-    {MED_NONE, MED_SEG2, MED_TRIA3, MED_QUAD4, MED_TETRA4, MED_HEXA8, MED_PENTA6, 
-     MED_PYRA5, MED_SEG3, MED_TRIA6, MED_TETRA10, MED_POINT1, MED_QUAD8,
-     MED_HEXA20, MED_PENTA15, MED_PYRA13};
+    {MED_NONE, MED_SEG2, MED_TRIA3, MED_QUAD4, MED_TETRA4, MED_HEXA8, 
+     MED_PENTA6, MED_PYRA5, MED_SEG3, MED_TRIA6, MED_TETRA10, 
+     /* MED_POINT1, */ MED_QUAD8, MED_HEXA20, MED_PENTA15, MED_PYRA13};
   const int nodesPerEle[] = 
-    {0, 2, 3, 4, 4, 8, 6, 5, 3, 6, 10, 1, 8, 20, 15, 13};
+    {0, 2, 3, 4, 4, 8, 6, 5, 3, 6, 10, /* 1, */ 8, 20, 15, 13};
 
   med_int numSteps = 0;
   std::vector<std::pair<int, int> > pairs;
@@ -218,16 +211,12 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	    (ent == MED_MAILLE) ? ElementData :
 	    ElementNodeData);
   }
-  
-  for(int step = 0; step < numSteps; step++){
-    int numCompGmsh = (numComp == 2) ? 3 : numComp;
-    _steps.push_back(new stepData<double>(GModel::current(), numCompGmsh));
-    _steps.back()->setFileName(fileName);
-    _steps.back()->setFileIndex(fileIndex);
-  }
 
+  _steps.clear();
   for(int step = 0; step < numSteps; step++){
+    int eleIndex = 0;
     for(unsigned int pair = 0; pair < pairs.size(); pair++){
+      // get step info
       med_entite_maillage ent = entType[pairs[pair].first];
       med_geometrie_element ele = eleType[pairs[pair].second];
       med_int numdt, numo, ngauss, numMeshes;
@@ -236,27 +225,43 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
       med_booleen local;
       if(MEDpasdetempsInfo(fid, name, ent, ele, step + 1, &ngauss, &numdt, &numo,
 			   dtunit, &dt, meshName, &local, &numMeshes) < 0){
-	Msg(GERROR, "Could not get step info");
+	Msg(GERROR, "Could not read step info");
 	return false;
       }
-      _steps[step]->setTime(dt);
 
-      med_int numVal = MEDnVal(fid, name, ent, ele, numdt, numo,
-			       meshName, MED_COMPACT);
+      // create step data
+      if(!pair){
+	int numCompMsh = (numComp == 1) ? 1 : (numComp < 3) ? 3 : 9;
+	while(step >= (int)_steps.size())
+	  _steps.push_back(new stepData<double>(GModel::current(), numCompMsh));
+	_steps[step]->setFileName(fileName);
+	_steps[step]->setFileIndex(fileIndex);
+	_steps[step]->setTime(dt);
+      }
+
+      // get number of values in the field (numVal takes the number of
+      // Gauss points or the number of nodes per element into account,
+      // but not the number of components)
+      med_int numVal = MEDnVal(fid, name, ent, ele, numdt, numo, meshName,
+			       MED_COMPACT);
       if(numVal <= 0) continue;
-      _steps[step]->resizeData(numVal);
-
       int mult = 1;
-      if(ent == MED_NOEUD_ELEMENT) mult = nodesPerEle[pairs[pair].second];
-      std::vector<double> val(numVal * numComp * mult);
+      if(getType() == ElementNodeData) mult = nodesPerEle[pairs[pair].second];
+      if(ngauss) mult *= ngauss;
+      // only a guess, since several element types may be combined
+      _steps[step]->resizeData(numVal / mult);
+
+      // read field data
+      std::vector<double> val(numVal * numComp);
       char locname[MED_TAILLE_NOM + 1], profileName[MED_TAILLE_NOM + 1];
       if(MEDchampLire(fid, meshName, name, (unsigned char*)&val[0], MED_FULL_INTERLACE,
 		      MED_ALL, locname, profileName, MED_COMPACT, ent, ele, 
 		      numdt, numo) < 0){
-	Msg(GERROR, "Could not get field values");
+	Msg(GERROR, "Could not read field values");
 	return false;
       }
 
+      // compute profile (indices in full array of entities of given type)
       std::vector<med_int> profile;
       if(std::string(profileName) != MED_NOPFL){
 	med_int n = MEDnValProfil(fid, profileName);
@@ -269,32 +274,49 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	}
       }
       if(profile.empty()){
-	profile.resize(numVal);
-	for(int i = 0; i < numVal; i++)
+	profile.resize(numVal / mult);
+	for(unsigned int i = 0; i < profile.size(); i++)
 	  profile[i] = i + 1;
       }
 
-      if(ent == MED_NOEUD){
-	med_int numNodes = MEDnEntMaa(fid, meshName, MED_COOR, MED_NOEUD, 
-				      MED_NONE, (med_connectivite)0);
-	std::vector<med_int> nodeTags(numNodes);
-	if(MEDnumLire(fid, meshName, &nodeTags[0], numNodes, MED_NOEUD, MED_NONE) < 0)
-	  nodeTags.clear();
-	for(unsigned int i = 0; i < profile.size(); i++){
-	  int num = nodeTags.empty() ? profile[i] : nodeTags[profile[i] - 1];
-	  fillData(_steps[step], num, val, i, numComp);
+      // get size of full array and tags (if any) of entities
+      bool nodal = (ent == MED_NOEUD);
+      med_int numEnt = MEDnEntMaa(fid, meshName, nodal ? MED_COOR : MED_CONN, 
+				  nodal ? MED_NOEUD : MED_MAILLE, 
+				  nodal ? MED_NONE : ele, 
+				  nodal ? (med_connectivite)0 : MED_NOD);
+      std::vector<med_int> tags(numEnt);
+      if(MEDnumLire(fid, meshName, &tags[0], numEnt, nodal ? MED_NOEUD : MED_MAILLE,
+		    nodal ? MED_NONE : ele) < 0)
+	tags.clear();
+
+      // compute entity numbers using profile, then fill step data
+      for(unsigned int i = 0; i < profile.size(); i++){
+	int num;
+	if(tags.empty()){
+	  num = profile[i];
+	  if(!nodal) num += eleIndex;
 	}
-      }
-      else{
-	Msg(GERROR, "Element-based MED import not ready yet!");
-	// TODO... PS: since MED index elements by subgroups of
-	// elements of the same type, we need to define an order of
-	// element types in stepData and STICK WITH IT! We need a
-	// single routine to compute element order and indices, which
-	// can also map to element numbers (+ deal with special case
-	// for points)
+	else{
+	  if(profile[i] == 0 || profile[i] > tags.size()){
+	    Msg(GERROR, "Wrong index in profile");
+	    Msg(DEBUG, "nodal=%d prof[%d]=%d #prof=%d #tags=%d numVal=%d mult=%d", 
+		nodal, i, profile[i], profile.size(), tags.size(), numVal, mult);
+	    return false;
+	  }
+	  num = tags[profile[i] - 1];
+	}
+	double *d = _steps[step]->getData(num, true, mult);
+	for(int j = 0; j < numComp * mult; j++)
+	  d[j] = val[numComp * i + j];
+	for(int j = numComp; j < _steps[step]->getNumComponents(); j++)
+	  d[j] = 0.;
+	double s = ComputeScalarRep(_steps[step]->getNumComponents(), d);
+	_steps[step]->setMin(std::min(_steps[step]->getMin(), s));
+	_steps[step]->setMax(std::max(_steps[step]->getMax(), s));
       }
 
+      if(!nodal) eleIndex += numEnt;
     }
   }
 

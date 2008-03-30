@@ -91,11 +91,11 @@ class stepData{
     if(!_data) _data = new std::vector<real*>(n, (real*)0);
     if(n > (int)_data->size()) _data->resize(n, (real*)0);
   }
-  real *getData(int index, bool allocIfNeeded=false)
+  real *getData(int index, bool allocIfNeeded=false, int mult=1)
   {
     if(allocIfNeeded){
       if(index >= getNumData()) resizeData(index + 100); // optimize this
-      if(!(*_data)[index]) (*_data)[index] = new real[_numComp];
+      if(!(*_data)[index]) (*_data)[index] = new real[_numComp * mult];
     }
     else{
       if(index >= getNumData()) return 0;

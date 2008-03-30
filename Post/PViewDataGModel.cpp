@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.38 2008-03-29 23:40:56 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.39 2008-03-30 10:25:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -166,7 +166,11 @@ void PViewDataGModel::getValue(int step, int ent, int ele, int nod, int comp, do
     val = _steps[step]->getData(v->getNum())[comp];
   }
   else{
-    Msg(GERROR, "Element-based data sets not yet ready!");
+    MElement *e = _steps[step]->getEntity(ent)->getMeshElement(ele);
+    if(_type == ElementData)
+      val = _steps[step]->getData(e->getNum())[comp];
+    else
+      Msg(GERROR, "ElementNode data not ready yet!");
   }
 }
 
