@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.21 2008-03-30 10:25:09 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.22 2008-03-30 11:25:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -214,7 +214,6 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 
   _steps.clear();
   for(int step = 0; step < numSteps; step++){
-    int eleIndex = 0;
     for(unsigned int pair = 0; pair < pairs.size(); pair++){
       // get step info
       med_entite_maillage ent = entType[pairs[pair].first];
@@ -290,12 +289,23 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 		    nodal ? MED_NONE : ele) < 0)
 	tags.clear();
 
+      // if we don't have tags, compute the starting index (i.e., how
+      // many elements of different type are the the mesh before these
+      // ones)
+      int startIndex = 0;
+      if(!nodal && tags.empty()){
+	for(int i = 1; i < pairs[pair].second; i++){
+	  med_int n = MEDnEntMaa(fid, meshName, MED_CONN, MED_MAILLE,
+				 eleType[i], MED_NOD);
+	  if(n > 0) startIndex += n;
+	}
+      }
+      
       // compute entity numbers using profile, then fill step data
       for(unsigned int i = 0; i < profile.size(); i++){
 	int num;
 	if(tags.empty()){
-	  num = profile[i];
-	  if(!nodal) num += eleIndex;
+	  num = startIndex + profile[i];
 	}
 	else{
 	  if(profile[i] == 0 || profile[i] > tags.size()){
@@ -315,8 +325,6 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	_steps[step]->setMin(std::min(_steps[step]->getMin(), s));
 	_steps[step]->setMax(std::max(_steps[step]->getMax(), s));
       }
-
-      if(!nodal) eleIndex += numEnt;
     }
   }
 
