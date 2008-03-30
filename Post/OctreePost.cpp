@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.9 2008-03-29 21:36:30 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.10 2008-03-30 15:37:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -420,9 +420,13 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep, doub
   MElement *e = (MElement*)in;
 
   int dataIndex[8];
-  for(int i = 0; i < e->getNumVertices(); i++)
-    dataIndex[i] = e->getVertex(i)->getNum();
-  
+  if(_theViewDataGModel->getType() == PViewDataGModel::NodeData)
+    for(int i = 0; i < e->getNumVertices(); i++)
+      dataIndex[i] = e->getVertex(i)->getNum();
+  else
+    for(int i = 0; i < e->getNumVertices(); i++)
+      dataIndex[i] = e->getNum();
+    
   double U[3];
   e->xyz2uvw(P, U);
 
@@ -432,7 +436,7 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep, doub
       for(int nod = 0; nod < e->getNumVertices(); nod++){
         for(int comp = 0; comp < nbComp; comp++){
           if(!_theViewDataGModel->getValue(step, dataIndex[nod], comp, 
-                                           nodeval[nod*nbComp+comp]))
+                                           nodeval[nod * nbComp + comp]))
             return false;
         }
       }
