@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.26 2008-03-30 20:45:27 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.27 2008-03-30 21:35:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -229,12 +229,12 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 
       // create step data
       if(!pair){
-	int numCompMsh = (numComp == 1) ? 1 : (numComp < 3) ? 3 : 9;
 	GModel *m = GModel::findByName(meshName);
 	if(!m){
 	  Msg(GERROR, "Could not find mesh <<%s>>", meshName);
 	  return false;
 	}
+	int numCompMsh = (numComp == 1) ? 1 : (numComp < 3) ? 3 : 9;
 	while(step >= (int)_steps.size())
 	  _steps.push_back(new stepData<double>(m, numCompMsh));
 	_steps[step]->setFileName(fileName);
@@ -304,7 +304,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	  if(n > 0) startIndex += n;
 	}
       }
-      
+
       // compute entity numbers using profile, then fill step data
       for(unsigned int i = 0; i < profile.size(); i++){
 	int num;
@@ -325,7 +325,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	// before storing it, using med2msh()). Also: what should we
 	// do with Gauss point data?
 	for(int j = 0; j < numComp * mult; j++)
-	  d[j] = val[numComp * i + j];
+	  d[j] = val[numComp * mult * i + j];
 	double s = ComputeScalarRep(_steps[step]->getNumComponents(), d);
 	_steps[step]->setMin(std::min(_steps[step]->getMin(), s));
 	_steps[step]->setMax(std::max(_steps[step]->getMax(), s));

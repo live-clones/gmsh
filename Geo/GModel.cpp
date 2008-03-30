@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.81 2008-03-30 17:45:11 geuzaine Exp $
+// $Id: GModel.cpp,v 1.82 2008-03-30 21:35:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -76,7 +76,8 @@ GModel *GModel::current()
 
 GModel *GModel::findByName(std::string name)
 {
-  for(unsigned int i = 0; i < list.size(); i++)
+  // return last mesh with given name
+  for(int i = list.size() - 1; i >= 0; i--)
     if(list[i]->getName() == name) return list[i];
   return 0;
 }
