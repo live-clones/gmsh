@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.40 2008-03-30 13:21:04 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.41 2008-03-30 14:04:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -194,13 +194,15 @@ void PViewDataGModel::smooth()
     for(int ent = 0; ent < getNumEntities(step); ent++){
       for(int ele = 0; ele < getNumElements(step, ent); ele++){
 	MElement *e = _steps[step]->getEntity(ent)->getMeshElement(ele);
+	double val;
+	if(!getValue(step, e->getNum(), 0, val)) continue;
 	for(int nod = 0; nod < e->getNumVertices(); nod++){
 	  MVertex *v = e->getVertex(nod);
 	  if(nodeConnect.count(v->getNum()))
 	    nodeConnect[v->getNum()]++;
 	  else
 	    nodeConnect[v->getNum()] = 1;
-	  double *d = _steps2.back()->getData(v->getNum(), true), val;
+	  double *d = _steps2.back()->getData(v->getNum(), true);
 	  for(int j = 0; j < numComp; j++)
 	    if(getValue(step, e->getNum(), j, val)) d[j] += val;
 	}
