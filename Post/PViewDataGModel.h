@@ -95,7 +95,10 @@ class stepData{
   {
     if(allocIfNeeded){
       if(index >= getNumData()) resizeData(index + 100); // optimize this
-      if(!(*_data)[index]) (*_data)[index] = new real[_numComp * mult];
+      if(!(*_data)[index]){
+	(*_data)[index] = new real[_numComp * mult];
+	for(int i = 0; i < _numComp * mult; i++) (*_data)[index][i] = 0.;
+      }
     }
     else{
       if(index >= getNumData()) return 0;
@@ -150,6 +153,7 @@ class PViewDataGModel : public PViewData {
   int getNumComponents(int step, int ent, int ele);
   void getValue(int step, int ent, int ele, int node, int comp, double &val);
   int getNumEdges(int step, int ent, int ele);
+  void smooth();
   bool skipEntity(int step, int ent);
   bool skipElement(int step, int ent, int ele);
   bool hasTimeStep(int step);

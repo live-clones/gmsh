@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.39 2008-03-30 10:25:09 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.40 2008-03-30 13:21:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,7 @@
 
 #include "PViewDataGModel.h"
 #include "MElement.h"
+#include "Numeric.h"
 #include "Message.h"
 
 PViewDataGModel::PViewDataGModel() 
@@ -178,6 +179,48 @@ int PViewDataGModel::getNumEdges(int step, int ent, int ele)
 { 
   // no sanity checks (assumed to be guarded by skipElement)
   return _steps[step]->getEntity(ent)->getMeshElement(ele)->getNumEdges();
+}
+
+void PViewDataGModel::smooth()
+{
+  if(_type == NodeData) return;
+  std::vector<stepData<double>*> _steps2;
+  for(unsigned int step = 0; step < _steps.size(); step++){
+    GModel *m = _steps[step]->getModel();
+    int numComp = _steps[step]->getNumComponents();
+    _steps2.push_back(new stepData<double>(m, numComp, _steps[step]->getFileName(),
+					   _steps[step]->getFileIndex()));
+    std::map<int, int> nodeConnect;
+    for(int ent = 0; ent < getNumEntities(step); ent++){
+      for(int ele = 0; ele < getNumElements(step, ent); ele++){
+	MElement *e = _steps[step]->getEntity(ent)->getMeshElement(ele);
+	for(int nod = 0; nod < e->getNumVertices(); nod++){
+	  MVertex *v = e->getVertex(nod);
+	  if(nodeConnect.count(v->getNum()))
+	    nodeConnect[v->getNum()]++;
+	  else
+	    nodeConnect[v->getNum()] = 1;
+	  double *d = _steps2.back()->getData(v->getNum(), true), val;
+	  for(int j = 0; j < numComp; j++)
+	    if(getValue(step, e->getNum(), j, val)) d[j] += val;
+	}
+      }
+    }
+    for(int i = 0; i < _steps2.back()->getNumData(); i++){
+      double *d = _steps2.back()->getData(i);
+      if(d){
+	double f = nodeConnect[i];
+	if(f) for(int j = 0; j < numComp; j++) d[j] /= f;
+	double s = ComputeScalarRep(numComp, d);
+	_steps2[step]->setMin(std::min(_steps2[step]->getMin(), s));
+	_steps2[step]->setMax(std::max(_steps2[step]->getMax(), s));
+      }
+    }
+  }
+  for(unsigned int i = 0; i < _steps.size(); i++) delete _steps[i];
+  _steps = _steps2;
+  _type = NodeData;
+  finalize();
 }
 
 bool PViewDataGModel::skipEntity(int step, int ent)
