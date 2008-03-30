@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.22 2008-03-30 11:25:11 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.23 2008-03-30 11:53:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -229,6 +229,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
       }
 
       // create step data
+      // FIXME: search for model (i.e., mesh) by name and use the right one!
       if(!pair){
 	int numCompMsh = (numComp == 1) ? 1 : (numComp < 3) ? 3 : 9;
 	while(step >= (int)_steps.size())
@@ -290,7 +291,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	tags.clear();
 
       // if we don't have tags, compute the starting index (i.e., how
-      // many elements of different type are the the mesh before these
+      // many elements of different type are in the mesh before these
       // ones)
       int startIndex = 0;
       if(!nodal && tags.empty()){
