@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.181 2008-03-29 10:19:42 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.182 2008-03-30 17:45:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -353,7 +353,7 @@ int MergeFile(const char *name, int warn_if_missing)
     status = m->readMESH(name);
   }
   else if(!strcmp(ext, ".med") || !strcmp(ext, ".MED")){
-    status = m->readMED(name);
+    status = GModel::readMED(name);
     if(status > 1) status = PView::readMED(name);
   }
   else if(!strcmp(ext, ".bdf") || !strcmp(ext, ".BDF") ||

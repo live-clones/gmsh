@@ -80,6 +80,9 @@ class GModel
   // returns the current model
   static GModel *current();
 
+  // returns the model of name
+  static GModel *findByName(std::string name);
+
   // Deletes everything in a GModel
   void destroy();
 
@@ -254,8 +257,10 @@ class GModel
   int readCGNS(const std::string &name);
   int writeCGNS(const std::string &name, double scalingFactor=1.0);
 
-  // Med interface ("Modele d'Echange de Donnees")
-  int readMED(const std::string &name);
+  // Med "Modele d'Echange de Donnees" file format (the static routine
+  // is allowed to load multiple models/meshes)
+  static int readMED(const std::string &name);
+  int readMED(const std::string &name, int meshIndex);
   int writeMED(const std::string &name, 
 	       bool saveAll=false, double scalingFactor=1.0);
 };

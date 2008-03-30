@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.80 2008-03-29 21:36:29 geuzaine Exp $
+// $Id: GModel.cpp,v 1.81 2008-03-30 17:45:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -52,9 +52,6 @@ GModel::GModel(std::string name)
 #if !defined(HAVE_GMSH_EMBEDDED)
   _fields = new FieldManager();
 #endif
-
-  //printf("sizeof(MVertex) = %d\n", sizeof(MVertex));
-  //printf("sizeof(MElement) = %d\n", sizeof(MElement));
 }
 
 GModel::~GModel()
@@ -75,6 +72,13 @@ GModel *GModel::current()
 
   // return last one for now
   return list.back();
+}
+
+GModel *GModel::findByName(std::string name)
+{
+  for(unsigned int i = 0; i < list.size(); i++)
+    if(list[i]->getName() == name) return list[i];
+  return 0;
 }
 
 void GModel::destroy()

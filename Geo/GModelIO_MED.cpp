@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.20 2008-03-29 21:36:29 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.21 2008-03-30 17:45:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -66,24 +66,46 @@ int GModel::readMED(const std::string &name)
     Msg(GERROR, "Unable to open file '%s'", name.c_str());
     return 0;
   }
-  
-  int numMeshes = MEDnMaa(fid);
-  if(!numMeshes){
-    Msg(INFO, "No mesh found in MED file");
+
+  med_int numMeshes = MEDnMaa(fid);
+
+  if(MEDfermer(fid) < 0){
+    Msg(GERROR, "Unable to close file '%s'", (char*)name.c_str());
     return 0;
   }
-  if(numMeshes > 1)
-    Msg(WARNING, "Reading mesh 1 of %d (ignoring the others)", numMeshes);
+
+  int ret;
+  for(int i = 0; i < numMeshes; i++){
+    GModel *m = new GModel;
+    ret = m->readMED(name, i);
+    if(!ret) return 0;
+  }
+  return ret;
+}
+
+int GModel::readMED(const std::string &name, int meshIndex)
+{
+  med_idt fid = MEDouvrir((char*)name.c_str(), MED_LECTURE);
+  if(fid < 0) {
+    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+  
+  int numMeshes = MEDnMaa(fid);
+  if(meshIndex >= numMeshes){
+    Msg(INFO, "Could not find mesh %d in MED file", meshIndex);
+    return 0;
+  }
 
   // read mesh info
   char meshName[MED_TAILLE_NOM + 1], meshDesc[MED_TAILLE_DESC + 1];
   med_int meshDim;
   med_maillage meshType;
-  if(MEDmaaInfo(fid, 1, meshName, &meshDim, &meshType, meshDesc) < 0){
+  if(MEDmaaInfo(fid, meshIndex + 1, meshName, &meshDim, &meshType, meshDesc) < 0){
     Msg(GERROR, "Unable to read mesh information");
     return 0;
   }
-
+  setName(meshName);
   if(meshType == MED_NON_STRUCTURE){
     Msg(INFO, "Reading %d-D unstructured mesh <<%s>>", meshDim, meshName);
   }
@@ -168,8 +190,10 @@ int GModel::readMED(const std::string &name)
   _associateEntityWithMeshVertices();
   for(unsigned int i = 0; i < verts.size(); i++){
     GEntity *ge = verts[i]->onWhat();
+    // store vertices (except for points, which ok already)
     if(ge && ge->dim() > 0) ge->mesh_vertices.push_back(verts[i]);
-    if(!ge) delete verts[i]; // delete unused vertices
+    // delete unused vertices
+    if(!ge) delete verts[i];
   }
 
   // read family info
@@ -198,7 +222,7 @@ int GModel::readMED(const std::string &name)
 	Msg(GERROR, "Could not read info for MED family %d", i + 1);
       }
       else{
-	GEntity *ge; // family tags are unique (for all dims)
+	GEntity *ge; // family tags are unique (for all dimensions)
 	if((ge = getRegionByTag(-familyNum))){}
 	else if((ge = getFaceByTag(-familyNum))){}
 	else if((ge = getEdgeByTag(-familyNum))){}
@@ -265,7 +289,7 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
 
   char *meshName = (char*)getName().c_str();
   
-  // create 3D unstructured mesh
+  // Gmsh always writes 3D unstructured meshes
   if(MEDmaaCr(fid, meshName, 3, MED_NON_STRUCTURE, (char*)"gmsh") < 0){
     Msg(GERROR, "Could not create MED mesh");
     return 0;
@@ -427,6 +451,13 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
 #else
 
 int GModel::readMED(const std::string &name)
+{
+  Msg(GERROR, "Gmsh has to be compiled with MED support to read '%s'",
+      name.c_str());
+  return 0;
+}
+
+int GModel::readMED(const std::string &name, int meshIndex)
 {
   Msg(GERROR, "Gmsh has to be compiled with MED support to read '%s'",
       name.c_str());

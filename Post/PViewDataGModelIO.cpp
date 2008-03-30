@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.24 2008-03-30 13:21:04 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.25 2008-03-30 17:45:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -212,7 +212,6 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	    ElementNodeData);
   }
 
-  _steps.clear();
   for(int step = 0; step < numSteps; step++){
     for(unsigned int pair = 0; pair < pairs.size(); pair++){
       // get step info
@@ -229,11 +228,15 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
       }
 
       // create step data
-      // FIXME: search for model (i.e., mesh) by name and use the right one!
       if(!pair){
 	int numCompMsh = (numComp == 1) ? 1 : (numComp < 3) ? 3 : 9;
+	GModel *m = GModel::findByName(meshName);
+	if(!m){
+	  Msg(GERROR, "Could not find mesh <<%s>>", meshName);
+	  return false;
+	}
 	while(step >= (int)_steps.size())
-	  _steps.push_back(new stepData<double>(GModel::current(), numCompMsh));
+	  _steps.push_back(new stepData<double>(m, numCompMsh));
 	_steps[step]->setFileName(fileName);
 	_steps[step]->setFileIndex(fileIndex);
 	_steps[step]->setTime(dt);
@@ -318,6 +321,9 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	  num = tags[profile[i] - 1];
 	}
 	double *d = _steps[step]->getData(num, true, mult);
+	// FIXME: for ElementNodeData, we need to reorder the data before
+	// storing it
+	// FIXME: what should we do with Gauss point data?
 	for(int j = 0; j < numComp * mult; j++)
 	  d[j] = val[numComp * i + j];
 	double s = ComputeScalarRep(_steps[step]->getNumComponents(), d);
