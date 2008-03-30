@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.63 2008-03-29 21:36:29 geuzaine Exp $
+// $Id: MElement.cpp,v 1.64 2008-03-30 20:45:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -583,7 +583,7 @@ void MElement::writeBDF(FILE *fp, int format, int elementary)
   if(format == 0){ // free field format
     fprintf(fp, "%s,%d,%d", str, _num, elementary);
     for(int i = 0; i < n; i++){
-      fprintf(fp, ",%d", getVertex(i)->getIndex());
+      fprintf(fp, ",%d", getVertexBDF(i)->getIndex());
       if(i != n - 1 && !((i + 3) % 8)){
         fprintf(fp, ",+%s%d\n+%s%d", cont[ncont], _num, cont[ncont], _num);
         ncont++;
@@ -596,7 +596,7 @@ void MElement::writeBDF(FILE *fp, int format, int elementary)
   else{ // small or large field format
     fprintf(fp, "%-8s%-8d%-8d", str, _num, elementary);
     for(int i = 0; i < n; i++){
-      fprintf(fp, "%-8d", getVertex(i)->getIndex());
+      fprintf(fp, "%-8d", getVertexBDF(i)->getIndex());
       if(i != n - 1 && !((i + 3) % 8)){
         fprintf(fp, "+%s%-6d\n+%s%-6d", cont[ncont], _num, cont[ncont], _num);
         ncont++;

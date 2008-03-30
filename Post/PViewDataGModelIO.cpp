@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.25 2008-03-30 17:45:12 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.26 2008-03-30 20:45:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -321,9 +321,9 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	  num = tags[profile[i] - 1];
 	}
 	double *d = _steps[step]->getData(num, true, mult);
-	// FIXME: for ElementNodeData, we need to reorder the data before
-	// storing it
-	// FIXME: what should we do with Gauss point data?
+	// FIXME: for ElementNodeData, we need to reorder the data
+	// before storing it, using med2msh()). Also: what should we
+	// do with Gauss point data?
 	for(int j = 0; j < numComp * mult; j++)
 	  d[j] = val[numComp * i + j];
 	double s = ComputeScalarRep(_steps[step]->getNumComponents(), d);

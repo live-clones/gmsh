@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.48 2008-03-29 21:36:29 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.49 2008-03-30 20:45:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1810,7 +1810,10 @@ int GModel::readBDF(const std::string &name)
       else if(!strncmp(buffer, "CTETRA", 6)){
         if(readElementBDF(fp, buffer, 6, -4, num, region, vertices, vertexMap)){
           if(vertices.size() == 10)
-            elements[3][region].push_back(new MTetrahedron10(vertices, num));
+            elements[3][region].push_back
+	      (new MTetrahedron10(vertices[0], vertices[1], vertices[2], vertices[3], 
+				  vertices[4], vertices[5], vertices[6], vertices[7], 
+				  vertices[9], vertices[8], num));
           else
             elements[3][region].push_back(new MTetrahedron(vertices, num));
         }
@@ -1818,7 +1821,13 @@ int GModel::readBDF(const std::string &name)
       else if(!strncmp(buffer, "CHEXA", 5)){
         if(readElementBDF(fp, buffer, 5, -8, num, region, vertices, vertexMap)){
           if(vertices.size() == 20)
-            elements[4][region].push_back(new MHexahedron20(vertices, num));
+            elements[4][region].push_back
+	      (new MHexahedron20(vertices[0], vertices[1], vertices[2], vertices[3], 
+				 vertices[4], vertices[5], vertices[6], vertices[7], 
+				 vertices[8], vertices[11], vertices[12], vertices[9], 
+				 vertices[13], vertices[10], vertices[14], vertices[15], 
+				 vertices[16], vertices[19], vertices[17], vertices[18], 
+				 num));
           else
             elements[4][region].push_back(new MHexahedron(vertices, num));
         }
@@ -1826,7 +1835,11 @@ int GModel::readBDF(const std::string &name)
       else if(!strncmp(buffer, "CPENTA", 6)){
         if(readElementBDF(fp, buffer, 6, -6, num, region, vertices, vertexMap)){
           if(vertices.size() == 15)
-            elements[5][region].push_back(new MPrism15(vertices, num));
+            elements[5][region].push_back
+	      (new MPrism15(vertices[0], vertices[1], vertices[2], vertices[3],
+			    vertices[4], vertices[5], vertices[6], vertices[8],
+			    vertices[9], vertices[7], vertices[10], vertices[11],
+			    vertices[12], vertices[14], vertices[13], num));
           else
             elements[5][region].push_back(new MPrism(vertices, num));
         }

@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.21 2008-03-30 17:45:12 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.22 2008-03-30 20:45:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -56,6 +56,67 @@ static int getElementTypeForMED(int msh, med_geometrie_element &med)
   case MSH_PRI_15: med = MED_PENTA15; return 15;
   case MSH_PYR_13: med = MED_PYRA13; return 13;
   default: med = MED_NONE; return 0; 
+  }
+}
+
+int med2msh(med_geometrie_element med, int k)
+{
+  switch(med) {
+  case MED_SEG2: return k;
+  case MED_TRIA3: {
+    static const int map[3] = {0, 2, 1}; 
+    return map[k]; 
+  }
+  case MED_QUAD4: { 
+    static const int map[4] = {0, 3, 2, 1};
+    return map[k];
+  }
+  case MED_TETRA4: {
+    static const int map[4] = {0, 2, 1, 3};
+    return map[k];
+  }
+  case MED_HEXA8: {
+    static const int map[8] = {0, 3, 2, 1, 4, 7, 6, 5};
+    return map[k];
+  }
+  case MED_PENTA6: {
+    static const int map[6] = {0, 2, 1, 3, 5, 4};
+    return map[k];
+  }
+  case MED_PYRA5: {
+    static const int map[5] = {0, 3, 2, 1, 4};
+    return map[k];
+  }
+  case MED_SEG3: return k;
+  case MED_TRIA6: {
+    static const int map[6] = {0, 2, 1, 5, 4, 3};
+    return map[k];
+  }
+  case MED_TETRA10: {
+    static const int map[10] = {0, 2, 1, 3, 6, 5, 4, 7, 8, 9};
+    return map[k];
+  }
+  case MED_POINT1: return k;
+  case MED_QUAD8: {
+    static const int map[8] = {0, 3, 2, 1, 7, 6, 5, 4};
+    return map[k];
+  }
+  case MED_HEXA20: {
+    static const int map[20] = {0, 3, 2, 1, 4, 7, 6, 5, 11, 8, 16,
+				10, 19, 9, 18, 17, 15, 12, 14, 13};
+    return map[k];
+  }
+  case MED_PENTA15: {
+    static const int map[15] = {0, 2, 1, 3, 5, 4, 8, 6, 12, 7, 14, 13, 11, 9, 10};
+    return map[k];
+  }
+  case MED_PYRA13: {
+    static const int map[13] = {0, 3, 2, 1, 4, 8, 5, 9, 7, 12, 6, 11, 10};
+    return map[k];
+  }
+  default:
+    Msg(GERROR, "Unknown MED element type");
+    return k;
   }
 }
 
@@ -180,7 +241,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
       for(int j = 0; j < numEle; j++){    
 	std::vector<MVertex*> v(numNodPerEle);
 	for(int k = 0; k < numNodPerEle; k++)
-	  v[k] = verts[conn[numNodPerEle * j + k] - 1];
+	  v[k] = verts[conn[numNodPerEle * j + med2msh(type, k)] - 1];
 	MElement *e = factory.create(mshType, v, eleTags.empty() ? 0 : eleTags[j]);
 	if(e) elements[-fam[j]].push_back(e);
       }

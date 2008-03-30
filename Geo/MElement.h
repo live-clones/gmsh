@@ -1038,6 +1038,11 @@ class MHexahedron : public MElement {
   virtual int getDim(){ return 3; }
   virtual int getNumVertices(){ return 8; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual MVertex *getVertexMED(int num)
+  {
+    static const int map[8] = {0, 3, 2, 1, 4, 7, 6, 5};
+    return getVertex(map[num]); 
+  }
   virtual int getNumEdges(){ return 12; }
   virtual MEdge getEdge(int num)
   {
@@ -1194,6 +1199,12 @@ class MHexahedron20 : public MHexahedron {
   {
     static const int map[20] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 13, 
                                 9, 10, 12, 14, 15, 16, 18, 19, 17};
+    return getVertex(map[num]); 
+  }
+  virtual MVertex *getVertexMED(int num)
+  {
+    static const int map[20] = {0, 3, 2, 1, 4, 7, 6, 5, 9, 13, 11, 
+				8, 17, 19, 18, 16, 10, 15, 14, 12};
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices(){ return 12; }
@@ -1364,6 +1375,11 @@ class MPrism : public MElement {
   virtual int getDim(){ return 3; }
   virtual int getNumVertices(){ return 6; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual MVertex *getVertexMED(int num)
+  {
+    static const int map[6] = {0, 2, 1, 3, 5, 4};
+    return getVertex(map[num]); 
+  }
   virtual int getNumEdges(){ return 9; }
   virtual MEdge getEdge(int num)
   {
@@ -1512,6 +1528,11 @@ class MPrism15 : public MPrism {
     static const int map[15] = {0, 1, 2, 3, 4, 5, 6, 9, 7, 8, 10, 11, 12, 14, 13};
     return getVertex(map[num]); 
   }
+  virtual MVertex *getVertexMED(int num)
+  {
+    static const int map[15] = {0, 2, 1, 3, 5, 4, 7, 9, 6, 13, 14, 12, 8, 11, 10};
+    return getVertex(map[num]); 
+  }
   virtual int getNumEdgeVertices(){ return 9; }
   virtual int getNumEdgesRep(){ return 18; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
@@ -1655,6 +1676,11 @@ class MPyramid : public MElement {
   virtual int getDim(){ return 3; }
   virtual int getNumVertices(){ return 5; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
+  virtual MVertex *getVertexMED(int num)
+  {
+    static const int map[5] = {0, 3, 2, 1, 4};
+    return getVertex(map[num]); 
+  }
   virtual int getNumEdges(){ return 8; }
   virtual MEdge getEdge(int num)
   {
@@ -1789,6 +1815,11 @@ class MPyramid13 : public MPyramid {
   virtual int getPolynomialOrder(){ return 2; }
   virtual int getNumVertices(){ return 13; }
   virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }
+  virtual MVertex *getVertexMED(int num)
+  {
+    static const int map[13] = {0, 3, 2, 1, 4, 6, 10, 8, 5, 7, 12, 11, 9};
+    return getVertex(map[num]); 
+  }
   virtual int getNumEdgeVertices(){ return 8; }
   virtual int getNumEdgesRep(){ return 16; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
