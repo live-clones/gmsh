@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.21 2008-03-28 22:18:48 remacle Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.22 2008-03-30 13:10:16 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -736,19 +736,21 @@ void gmshBowyerWatsonFrontal(GFace *gf){
     // connecting the 2 points of the active edge
 
     double dir[2] = {center[0]-midpoint[0],center[1]-midpoint[1]};
-    double q = sqrt(dir[0]*dir[0]+dir[1]*dir[1]);
-    dir[0]/=q;
-    dir[1]/=q;
+    double norm = sqrt(dir[0]*dir[0]+dir[1]*dir[1]);
+    dir[0]/=norm;
+    dir[1]/=norm;
     const double RATIO = sqrt(  dir[0]*dir[0]*metric[0]+
 			      2*dir[1]*dir[0]*metric[1]+
 			        dir[1]*dir[1]*metric[2]);    
     
-    //    printf("ratio = %12.5E dir %g %g m %g %g %g\n",RATIO,dir[0],dir[1],metric[0],metric[1],metric[2]); 
 
     const double p    = 0.5*length_metric (P,Q,metric);// / RATIO;
     //    const double p    = 0.5*sqrt(DSQR(P[0]-Q[0])+DSQR(P[1]-Q[1]));//length_metric (P,Q,metric);
-    //    const double q    = length_metric (center,midpoint,metric);
-    const double rhoM = 0.5 * (vSizes[base->getVertex(ip1)->getNum()] + vSizes[base->getVertex(ip2)->getNum()] ) / sqrt(3);// * RATIO;
+    const double q    = length_metric (center,midpoint,metric);
+    const double rhoM = 0.5 * (vSizes[base->getVertex(ip1)->getNum()] + vSizes[base->getVertex(ip2)->getNum()] ) / sqrt(3.);// * RATIO;
+
+    double ps = dir[0]*(P[0]-Q[0]) + dir[1]*(P[1]-Q[1]) ;
+    //    printf("ratio = %12.5E dir %g %g m %g %g %g %g ps = %12.5E\n",RATIO,dir[0],dir[1],metric[0],metric[1],metric[2],rhoM*sqrt(3.),ps); 
 
     //    const double rhoM_hat = std::max(rhoM,2*p);
     const double rhoM_hat = std::min(std::max(rhoM,p),(p*p+q*q)/(2*q));
@@ -763,13 +765,13 @@ void gmshBowyerWatsonFrontal(GFace *gf){
     //    printf("%g %g -- %g %g -- %g %g\n",midpoint[0],midpoint[1],pa[0],pa[1],newPoint[0],newPoint[1]);
     
 //     ITER++;
-//      char name[245];
-//      sprintf(name,"pt%d.pos",ITER);
-//      _printTris (name, AllTris, Us,Vs,false);
+//     char name[245];
+//     sprintf(name,"pt%d.pos",ITER);
+//     _printTris (name, AllTris, Us,Vs);
 
     insertAPoint(gf,it,newPoint,metric,Us,Vs,vSizes,vSizesBGM,AllTris);
     //    if (ITER++ == 5)break;
   } 
-  _printTris ("frontal.pos", AllTris, Us,Vs);
+  //  _printTris ("frontal.pos", AllTris, Us,Vs);
   transferDataStructure(gf, AllTris); 
 } 
