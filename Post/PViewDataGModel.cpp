@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.43 2008-03-31 16:04:42 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.44 2008-03-31 21:12:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -140,27 +140,31 @@ int PViewDataGModel::getDimension(int step, int ent, int ele)
 int PViewDataGModel::getNumNodes(int step, int ent, int ele)
 {
   // no sanity checks (assumed to be guarded by skipElement)
-  if(_type == GaussPointData) return 1; // FIXME!
-
-  return _steps[step]->getEntity(ent)->getMeshElement(ele)->getNumVertices();
-  //return _steps[step]->getEntity(ent)->getMeshElement(ele)->getNumPrimaryVertices();
+  if(_type == GaussPointData){
+    return 1; // FIXME
+  }
+  else{
+    return _steps[step]->getEntity(ent)->getMeshElement(ele)->getNumVertices();
+    //return _steps[step]->getEntity(ent)->getMeshElement(ele)->getNumPrimaryVertices();
+  }
 }
 
 void PViewDataGModel::getNode(int step, int ent, int ele, int nod, 
                               double &x, double &y, double &z)
 {
-  if(_type == GaussPointData){ // FIXME!
+  // no sanity checks (assumed to be guarded by skipElement)
+  if(_type == GaussPointData){ 
+    // FIXME
     MElement *e = _steps[step]->getEntity(ent)->getMeshElement(ele);
     SPoint3 bc = e->barycenter();
     x = bc.x(); y = bc.y(); z = bc.z();
-    return;
   }
-
-  // no sanity checks (assumed to be guarded by skipElement)
-  MVertex *v = _steps[step]->getEntity(ent)->getMeshElement(ele)->getVertex(nod);
-  x = v->x();
-  y = v->y();
-  z = v->z();
+  else{
+    MVertex *v = _steps[step]->getEntity(ent)->getMeshElement(ele)->getVertex(nod);
+    x = v->x();
+    y = v->y();
+    z = v->z();
+  }
 }
 
 int PViewDataGModel::getNumComponents(int step, int ent, int ele)

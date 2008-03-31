@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.29 2008-03-31 16:04:42 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.30 2008-03-31 21:12:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -175,6 +175,8 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
   Msg(INFO, "Reading %d-component field <<%s>>", numComp, name);
   setName(name);
 
+  int numCompMsh = (numComp == 1) ? 1 : (numComp < 3) ? 3 : 9;
+
   // the ordering of the elements in the following lists is important:
   // it should match the ordering of the MSH element types (when
   // elements are saved without tags, this governs the order with
@@ -236,7 +238,6 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	  Msg(GERROR, "Could not find mesh <<%s>>", meshName);
 	  return false;
 	}
-	int numCompMsh = (numComp == 1) ? 1 : (numComp < 3) ? 3 : 9;
 	while(step >= (int)_steps.size())
 	  _steps.push_back(new stepData<double>(m, numCompMsh));
 	_steps[step]->setFileName(fileName);
@@ -254,7 +255,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
       if(ent == MED_NOEUD_ELEMENT){
 	mult = nodesPerEle[pairs[pair].second];
       }
-      else if(ngauss > 1){
+      else if(ngauss != MED_NOPG){
 	mult = ngauss;
 	setType(GaussPointData);
       }
@@ -270,6 +271,21 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 		      numdt, numo) < 0){
 	Msg(GERROR, "Could not read field values");
 	return false;
+      }
+
+      // read Gauss point data
+      if(ngauss != MED_NOPG){
+	std::vector<med_float> refcoo((ele % 100) * (ele / 100));
+	std::vector<med_float> gscoo(ngauss * ele / 100);
+	std::vector<med_float> wg(ngauss);
+	if(MEDgaussLire(fid, &refcoo[0], &gscoo[0], &wg[0], MED_FULL_INTERLACE,
+			locname) < 0){
+	  Msg(GERROR, "Could not read Gauss points");
+	  return false;
+	}
+	// FIXME: store this in stepData, e.g. in a vector indexed by
+	// mshEleType std::vector<std::vector<u,v,w, u,v,w, u,v,w, ...> >
+	// (ele/100==geo dim, ele%100==num nodes)
       }
 
       // compute profile (indices in full array of entities of given type)
@@ -331,8 +347,8 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	  // reorder nodes if we have ElementNode data
 	  int j2 = (ent == MED_NOEUD_ELEMENT) ? med2msh(ele, j) : j;
 	  for(int k = 0; k < numComp; k++)
-	    d[numComp * j + k] = val[numComp * mult * i + numComp * j2 + k];
-	  double s = ComputeScalarRep(_steps[step]->getNumComponents(), &d[numComp * j]);
+	    d[numCompMsh * j + k] = val[numComp * mult * i + numComp * j2 + k];
+	  double s = ComputeScalarRep(numCompMsh, &d[numCompMsh * j]);
 	  _steps[step]->setMin(std::min(_steps[step]->getMin(), s));
 	  _steps[step]->setMax(std::max(_steps[step]->getMax(), s));
 	}
