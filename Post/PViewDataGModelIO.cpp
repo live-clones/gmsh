@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.30 2008-03-31 21:12:41 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.31 2008-03-31 21:17:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -273,8 +273,9 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	return false;
       }
 
-      // read Gauss point data
-      if(ngauss != MED_NOPG){
+      // read Gauss point data (if locname is MED_GAUSS_ELNO, the
+      // points are the element vertices)
+      if(ngauss != MED_NOPG && std::string(locname) != MED_GAUSS_ELNO){
 	std::vector<med_float> refcoo((ele % 100) * (ele / 100));
 	std::vector<med_float> gscoo(ngauss * ele / 100);
 	std::vector<med_float> wg(ngauss);
