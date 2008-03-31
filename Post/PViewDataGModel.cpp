@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.42 2008-03-30 22:59:26 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.43 2008-03-31 16:04:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -140,12 +140,22 @@ int PViewDataGModel::getDimension(int step, int ent, int ele)
 int PViewDataGModel::getNumNodes(int step, int ent, int ele)
 {
   // no sanity checks (assumed to be guarded by skipElement)
+  if(_type == GaussPointData) return 1; // FIXME!
+
   return _steps[step]->getEntity(ent)->getMeshElement(ele)->getNumVertices();
+  //return _steps[step]->getEntity(ent)->getMeshElement(ele)->getNumPrimaryVertices();
 }
 
 void PViewDataGModel::getNode(int step, int ent, int ele, int nod, 
                               double &x, double &y, double &z)
 {
+  if(_type == GaussPointData){ // FIXME!
+    MElement *e = _steps[step]->getEntity(ent)->getMeshElement(ele);
+    SPoint3 bc = e->barycenter();
+    x = bc.x(); y = bc.y(); z = bc.z();
+    return;
+  }
+
   // no sanity checks (assumed to be guarded by skipElement)
   MVertex *v = _steps[step]->getEntity(ent)->getMeshElement(ele)->getVertex(nod);
   x = v->x();
@@ -163,22 +173,24 @@ void PViewDataGModel::getValue(int step, int ent, int ele, int nod, int comp, do
 {
   // no sanity checks (assumed to be guarded by skipElement)
   stepData<double> *sd = _steps[step];
-  if(_type == NodeData){
-    MVertex *v = sd->getEntity(ent)->getMeshElement(ele)->getVertex(nod);
-    val = sd->getData(v->getNum())[comp];
-  }
-  else{
-    MElement *e = sd->getEntity(ent)->getMeshElement(ele);
-    switch(_type){
-    case ElementNodeData:
+  switch(_type){
+  case NodeData: 
+    {
+      MVertex *v = sd->getEntity(ent)->getMeshElement(ele)->getVertex(nod);
+      val = sd->getData(v->getNum())[comp];
+      break;
+    }
+  case ElementNodeData:
+  case GaussPointData: 
+    {
+      MElement *e = sd->getEntity(ent)->getMeshElement(ele);
       val = sd->getData(e->getNum())[sd->getNumComponents() * nod + comp];
       break;
-    case GaussPointData:
-      Msg(WARNING, "GaussPoint data not ready yet!");
-      val = sd->getData(e->getNum())[comp];
-      break;
-    case ElementData: 
-    default:
+    }
+  case ElementData: 
+  default: 
+    {
+      MElement *e = sd->getEntity(ent)->getMeshElement(ele);
       val = sd->getData(e->getNum())[comp];
       break;
     }

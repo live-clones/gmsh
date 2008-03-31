@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.28 2008-03-30 22:59:26 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.29 2008-03-31 16:04:42 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -332,10 +332,10 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	  int j2 = (ent == MED_NOEUD_ELEMENT) ? med2msh(ele, j) : j;
 	  for(int k = 0; k < numComp; k++)
 	    d[numComp * j + k] = val[numComp * mult * i + numComp * j2 + k];
+	  double s = ComputeScalarRep(_steps[step]->getNumComponents(), &d[numComp * j]);
+	  _steps[step]->setMin(std::min(_steps[step]->getMin(), s));
+	  _steps[step]->setMax(std::max(_steps[step]->getMax(), s));
 	}
-	double s = ComputeScalarRep(_steps[step]->getNumComponents(), d);
-	_steps[step]->setMin(std::min(_steps[step]->getMin(), s));
-	_steps[step]->setMax(std::max(_steps[step]->getMax(), s));
       }
     }
   }

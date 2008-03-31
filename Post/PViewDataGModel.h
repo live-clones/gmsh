@@ -160,6 +160,7 @@ class PViewDataGModel : public PViewData {
   bool hasTimeStep(int step);
   bool hasPartition(int part);
   bool hasMultipleMeshes();
+  bool useGaussPoints(){ return _type == GaussPointData; }
 
   // get/set the data type
   DataType getType(){ return _type; }

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.160 2008-03-29 11:51:37 geuzaine Exp $
+// $Id: Post.cpp,v 1.161 2008-03-31 16:04:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -914,7 +914,23 @@ void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
         addOutlineElement(p, numEdges, xyz, preprocessNormalsOnly);
       
       if(opt->IntervalsType != PViewOptions::Numeric){
-        if(numComp == 1 && opt->DrawScalars)
+	if(data->useGaussPoints()){
+	  for(int j = 0; j < numNodes; j++){
+	    double xyz2[NMAX][3], val2[NMAX][9];
+	    xyz2[0][0] = xyz[j][0];
+	    xyz2[0][1] = xyz[j][1];
+	    xyz2[0][2] = xyz[j][2];
+	    for(int k = 0; k < numComp; k++)
+	      val2[0][k] = val[j][k];
+	    if(numComp == 1 && opt->DrawScalars)
+	      addScalarElement(p, 0, xyz2, val2, preprocessNormalsOnly);
+	    else if(numComp == 3 && opt->DrawVectors)
+	      addVectorElement(p, ent, i, 1, 0, xyz2, val2, preprocessNormalsOnly);
+	    else if(numComp == 9 && opt->DrawTensors)
+	      addTensorElement(p, 1, 0, xyz2, val2, preprocessNormalsOnly);
+	  }
+	}
+        else if(numComp == 1 && opt->DrawScalars)
           addScalarElement(p, numEdges, xyz, val, preprocessNormalsOnly);
         else if(numComp == 3 && opt->DrawVectors)
           addVectorElement(p, ent, i, numNodes, numEdges, xyz, val, preprocessNormalsOnly);

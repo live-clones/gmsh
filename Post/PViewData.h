@@ -112,6 +112,7 @@ class PViewData {
   virtual bool hasTimeStep(int step){ return step < getNumTimeSteps(); }
   virtual bool hasPartition(int part){ return false; }
   virtual bool hasMultipleMeshes(){ return false; }
+  virtual bool useGaussPoints(){ return false; }
 
   // I/O routines
   virtual bool writeSTL(std::string fileName);
