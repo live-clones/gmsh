@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.44 2008-03-31 21:12:41 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.45 2008-04-01 18:20:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -140,12 +140,13 @@ int PViewDataGModel::getDimension(int step, int ent, int ele)
 int PViewDataGModel::getNumNodes(int step, int ent, int ele)
 {
   // no sanity checks (assumed to be guarded by skipElement)
+  MElement *e = _steps[step]->getEntity(ent)->getMeshElement(ele);
   if(_type == GaussPointData){
-    return 1; // FIXME
+    return _steps[step]->getGaussPoints(e->getTypeForMSH()).size() / 3;
   }
   else{
-    return _steps[step]->getEntity(ent)->getMeshElement(ele)->getNumVertices();
-    //return _steps[step]->getEntity(ent)->getMeshElement(ele)->getNumPrimaryVertices();
+    //return e->getNumVertices();
+    return e->getNumPrimaryVertices();
   }
 }
 
@@ -153,14 +154,29 @@ void PViewDataGModel::getNode(int step, int ent, int ele, int nod,
                               double &x, double &y, double &z)
 {
   // no sanity checks (assumed to be guarded by skipElement)
+  MElement *e = _steps[step]->getEntity(ent)->getMeshElement(ele);
   if(_type == GaussPointData){ 
-    // FIXME
-    MElement *e = _steps[step]->getEntity(ent)->getMeshElement(ele);
-    SPoint3 bc = e->barycenter();
-    x = bc.x(); y = bc.y(); z = bc.z();
+    std::vector<double> &p(_steps[step]->getGaussPoints(e->getTypeForMSH()));
+    if(p[0] == 1.e22){
+      // hack: the points are the element vertices
+      x = e->getVertex(nod)->x();
+      y = e->getVertex(nod)->y();
+      z = e->getVertex(nod)->z();
+    }
+    else{
+      double vx[8], vy[8], vz[8];
+      for(int i = 0; i < e->getNumPrimaryVertices(); i++){
+	vx[i] = e->getVertex(i)->x();
+	vy[i] = e->getVertex(i)->y();
+	vz[i] = e->getVertex(i)->z();
+      }
+      x = e->interpolate(vx, p[3 * nod], p[3 * nod + 1], p[3 * nod + 2]);
+      y = e->interpolate(vy, p[3 * nod], p[3 * nod + 1], p[3 * nod + 2]);
+      z = e->interpolate(vz, p[3 * nod], p[3 * nod + 1], p[3 * nod + 2]);
+    }
   }
   else{
-    MVertex *v = _steps[step]->getEntity(ent)->getMeshElement(ele)->getVertex(nod);
+    MVertex *v = e->getVertex(nod);
     x = v->x();
     y = v->y();
     z = v->z();

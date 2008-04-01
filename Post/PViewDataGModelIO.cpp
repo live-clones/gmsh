@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.33 2008-04-01 13:41:33 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.34 2008-04-01 18:20:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -275,22 +275,30 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	return false;
       }
 
-      // read Gauss point data (if locname is MED_GAUSS_ELNO, the
-      // points are the element vertices)
-      if(_type == GaussPointData && std::string(locname) != MED_GAUSS_ELNO){
-	std::vector<med_float> refcoo((ele % 100) * (ele / 100));
-	std::vector<med_float> gscoo(ngauss * ele / 100);
-	std::vector<med_float> wg(ngauss);
-	if(MEDgaussLire(fid, &refcoo[0], &gscoo[0], &wg[0], MED_FULL_INTERLACE,
-			locname) < 0){
-	  Msg(GERROR, "Could not read Gauss points");
-	  return false;
+      // read Gauss point data
+      if(_type == GaussPointData){
+	std::vector<double> &p(_steps[step]->getGaussPoints(med2mshElementType(ele)));
+	if(std::string(locname) == MED_GAUSS_ELNO){
+	  // hack: the points are the vertices
+	  p.resize(ngauss * 3, 1.e22);
 	}
-	// FIXME: store this in stepData, e.g. in a vector indexed by
-	// mshEleType std::vector<std::vector<u,v,w, u,v,w, u,v,w, ...> >
-	// (ele/100==geo dim, ele%100==num nodes)
-	// int msh = med2mshElementTupe(ele);
-	// gaussPointsCoordinates[msh] = gscoo; // zero pad
+	else{
+	  int dim = ele / 100;
+	  std::vector<med_float> refcoo((ele % 100) * dim);
+	  std::vector<med_float> gscoo(ngauss * dim);
+	  std::vector<med_float> wg(ngauss);
+	  if(MEDgaussLire(fid, &refcoo[0], &gscoo[0], &wg[0], MED_FULL_INTERLACE,
+			  locname) < 0){
+	    Msg(GERROR, "Could not read Gauss points");
+	    return false;
+	  }
+	  // we should check that refcoo corresponds to our internal
+	  // reference element
+	  for(unsigned int i = 0; i < gscoo.size(); i++){
+	    p.push_back(gscoo[i]);
+	    if(i % dim == dim - 1) for(int j = 0; j < 3 - dim; j++) p.push_back(0.); 
+	  }
+	}
       }
 
       // compute profile (indices in full array of entities of given type)

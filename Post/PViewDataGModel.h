@@ -50,6 +50,9 @@ class stepData{
   // the data and 2) not to store any additional info in MVertex or
   // MElement)
   std::vector<real*> *_data;
+  // a vector, indexed by MSH element type, of Gauss point locations
+  // in parametric space
+  std::vector<std::vector<double> > _gaussPoints;
  public:
   stepData(GModel *model, int numComp, std::string fileName="", int fileIndex=-1, 
 	   double time=0., double min=VAL_INF, double max=-VAL_INF)
@@ -113,6 +116,11 @@ class stepData{
       delete _data;
       _data = 0;
     }
+  }
+  std::vector<double> &getGaussPoints(int msh)
+  {
+    if(_gaussPoints.size() <= msh) _gaussPoints.resize(msh + 1);
+    return _gaussPoints[msh];
   }
 };
 
