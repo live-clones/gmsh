@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.22 2008-03-30 20:45:27 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.23 2008-04-01 13:41:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -37,29 +37,51 @@ extern "C" {
 #include <med.h>
 }
 
-static int getElementTypeForMED(int msh, med_geometrie_element &med)
+static med_geometrie_element msh2medElementType(int msh)
 {
   switch(msh) {
-  case MSH_LIN_2: med = MED_SEG2; return 2; 
-  case MSH_TRI_3: med = MED_TRIA3; return 3; 
-  case MSH_QUA_4: med = MED_QUAD4; return 4; 
-  case MSH_TET_4: med = MED_TETRA4; return 4; 
-  case MSH_HEX_8: med = MED_HEXA8; return 8; 
-  case MSH_PRI_6: med = MED_PENTA6; return 6; 
-  case MSH_PYR_5: med = MED_PYRA5; return 5; 
-  case MSH_LIN_3: med = MED_SEG3; return 3; 
-  case MSH_TRI_6: med = MED_TRIA6; return 6; 
-  case MSH_TET_10: med = MED_TETRA10; return 10;
-  case MSH_PNT: med = MED_POINT1; return 1; 
-  case MSH_QUA_8: med = MED_QUAD8; return 8; 
-  case MSH_HEX_20: med = MED_HEXA20; return 20;
-  case MSH_PRI_15: med = MED_PENTA15; return 15;
-  case MSH_PYR_13: med = MED_PYRA13; return 13;
-  default: med = MED_NONE; return 0; 
+  case MSH_LIN_2: return MED_SEG2;
+  case MSH_TRI_3: return MED_TRIA3;
+  case MSH_QUA_4: return MED_QUAD4;
+  case MSH_TET_4: return MED_TETRA4;
+  case MSH_HEX_8: return MED_HEXA8;
+  case MSH_PRI_6: return MED_PENTA6;
+  case MSH_PYR_5: return MED_PYRA5;
+  case MSH_LIN_3: return MED_SEG3;
+  case MSH_TRI_6: return MED_TRIA6;
+  case MSH_TET_10: return MED_TETRA10;
+  case MSH_PNT: return MED_POINT1;
+  case MSH_QUA_8: return MED_QUAD8;
+  case MSH_HEX_20: return MED_HEXA20;
+  case MSH_PRI_15: return MED_PENTA15;
+  case MSH_PYR_13: return MED_PYRA13;
+  default: return MED_NONE;
   }
 }
 
-int med2msh(med_geometrie_element med, int k)
+int med2mshElementType(med_geometrie_element med)
+{
+  switch(med) {
+  case MED_SEG2: return MSH_LIN_2;
+  case MED_TRIA3: return MSH_TRI_3;
+  case MED_QUAD4: return MSH_QUA_4;
+  case MED_TETRA4: return MSH_TET_4;
+  case MED_HEXA8: return MSH_HEX_8;
+  case MED_PENTA6: return MSH_PRI_6;
+  case MED_PYRA5: return MSH_PYR_5;
+  case MED_SEG3: return MSH_LIN_3;
+  case MED_TRIA6: return MSH_TRI_6;
+  case MED_TETRA10: return MSH_TET_10;
+  case MED_POINT1: return MSH_PNT;
+  case MED_QUAD8: return MSH_QUA_8;
+  case MED_HEXA20: return MSH_HEX_20;
+  case MED_PENTA15: return MSH_PRI_15;
+  case MED_PYRA13: return MSH_PYR_13;
+  default: return 0;
+  }
+}
+
+int med2mshNodeIndex(med_geometrie_element med, int k)
 {
   switch(med) {
   case MED_SEG2: return k;
@@ -206,11 +228,11 @@ int GModel::readMED(const std::string &name, int meshIndex)
 			   0, nodeTags.empty() ? 0 : nodeTags[i]);
   // read elements
   for(int mshType = 0; mshType < 50; mshType++){ // loop over all possible MSH types
-    med_geometrie_element type;
-    int numNodPerEle = getElementTypeForMED(mshType, type);
+    med_geometrie_element type = msh2medElementType(mshType);
     if(type == MED_NONE) continue;
     med_int numEle = MEDnEntMaa(fid, meshName, MED_CONN, MED_MAILLE, type, MED_NOD);
     if(numEle <= 0) continue;
+    int numNodPerEle = type % 100;
     std::vector<med_int> conn(numEle * numNodPerEle);
     if(MEDconnLire(fid, meshName, meshDim, &conn[0], MED_FULL_INTERLACE, 0, MED_ALL,
 		   MED_MAILLE, type, MED_NOD) < 0) {
@@ -241,7 +263,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
       for(int j = 0; j < numEle; j++){    
 	std::vector<MVertex*> v(numNodPerEle);
 	for(int k = 0; k < numNodPerEle; k++)
-	  v[k] = verts[conn[numNodPerEle * j + med2msh(type, k)] - 1];
+	  v[k] = verts[conn[numNodPerEle * j + med2mshNodeIndex(type, k)] - 1];
 	MElement *e = factory.create(mshType, v, eleTags.empty() ? 0 : eleTags[j]);
 	if(e) elements[-fam[j]].push_back(e);
       }
@@ -320,7 +342,7 @@ static void fillElementsMED(med_int family, std::vector<T*> &elements, med_int &
     for(int j = 0; j < elements[i]->getNumVertices(); j++)
       conn.push_back(elements[i]->getVertexMED(j)->getIndex());
     fam.push_back(family);
-    if(!i) getElementTypeForMED(elements[i]->getTypeForMSH(), type);
+    if(!i) type = msh2medElementType(elements[i]->getTypeForMSH());
   }
 }
 

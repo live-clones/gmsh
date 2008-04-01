@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.32 2008-04-01 12:47:10 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.33 2008-04-01 13:41:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -146,7 +146,8 @@ extern "C" {
 #include <med.h>
 }
 
-extern int med2msh(med_geometrie_element med, int k);
+extern int med2mshElementType(med_geometrie_element med);
+extern int med2mshNodeIndex(med_geometrie_element med, int k);
 
 bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 {
@@ -262,8 +263,6 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	mult = ngauss;
 	setType(GaussPointData);
       }
-
-      // only a guess, since several element types may be combined
       _steps[step]->resizeData(numVal / mult);
 
       // read field data
@@ -290,6 +289,8 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	// FIXME: store this in stepData, e.g. in a vector indexed by
 	// mshEleType std::vector<std::vector<u,v,w, u,v,w, u,v,w, ...> >
 	// (ele/100==geo dim, ele%100==num nodes)
+	// int msh = med2mshElementTupe(ele);
+	// gaussPointsCoordinates[msh] = gscoo; // zero pad
       }
 
       // compute profile (indices in full array of entities of given type)
@@ -349,7 +350,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	double *d = _steps[step]->getData(num, true, mult);
 	for(int j = 0; j < mult; j++){
 	  // reorder nodes if we have ElementNode data
-	  int j2 = (ent == MED_NOEUD_ELEMENT) ? med2msh(ele, j) : j;
+	  int j2 = (ent == MED_NOEUD_ELEMENT) ? med2mshNodeIndex(ele, j) : j;
 	  for(int k = 0; k < numComp; k++)
 	    d[numCompMsh * j + k] = val[numComp * mult * i + numComp * j2 + k];
 	  double s = ComputeScalarRep(numCompMsh, &d[numCompMsh * j]);
