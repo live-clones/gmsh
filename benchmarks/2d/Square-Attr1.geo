@@ -26,5 +26,5 @@ Field[2].DistMax = 0.3;
 
 Background Field = 2;
 
-Mesh.CharacteristicLengthFromPoints = 0;
-Mesh.CharacteristicLengthExtendFromBoundary = 0;
+//Mesh.CharacteristicLengthFromPoints = 1;
+//Mesh.CharacteristicLengthExtendFromBoundary = 1;
