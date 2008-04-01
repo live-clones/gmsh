@@ -29,34 +29,44 @@ Field format for Nastran BDF files (0=free, 1=small, 2=large)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.C1Continuity
+Impose C1 continuity to high order meshes (only valid in 2D plane and ElemenOrder = 2)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CharacteristicLengthExtendFromBoundary
+Extend characteristic lengths from the boundaries inside the surface/volume@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.CharacteristicLengthFactor
 Factor applied to all characteristic lengths@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CharacteristicLengthMin
-Minimum mesh size@*
+Minimum characteristic length@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CharacteristicLengthMax
-Maximum mesh size@*
+Maximum characteristic length@*
 Default value: @code{1e+22}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CharacteristicLengthFromCurvature
-Compute characteritic lenghts automatically from curvatures@*
+Compute characteristic lengths from curvature@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CharacteristicLengthFromPoints
+Compute characteristic lengths from values given at geometry points@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ColorCarousel
 Mesh coloring (0=by element type, 1=by elementary entity, 2=by physical entity, 3=by partition)@*
 Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ConstrainedBackgroundMesh
-Should the background mesh be constrained by the characteristic lengths associated with the geometry?@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CpuTime
@@ -112,16 +122,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.ElementOrder
 Element order (1=linear elements, N (<6) = elements of higher order)@*
 Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.C1Continuity
-Impose C1 continuity to high order meshes, only valid in 2D plane and ElemenOrder = 2 and 3 (todo) (Default : C0 continuity)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.SmoothInternalEdges
-Number of smoothing steps of internal edges for high order meshes@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Explode
@@ -362,6 +362,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Smoothing
 Number of smoothing steps applied to the final mesh@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.SmoothInternalEdges
+Number of smoothing steps of internal edges for high order meshes@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SmoothNormals

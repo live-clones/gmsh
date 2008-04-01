@@ -422,8 +422,40 @@ Numeric options:
 Default value: @code{-1}
 @item iView
 Default value: @code{-1}
-@item Field
+@item iField
 Default value: @code{-1}
+@end table
+
+@item Plugin(GSHHS)
+Plugin(GSHHS) import GSHHS data.
+
+String options:
+@table @code
+@item InFileName
+Default value: @code{"gshhs_c.b"}
+@item OutFileName
+Default value: @code{"earth.geo"}
+@item Format
+Default value: @code{"gshhs"}
+@item Coordinate
+Default value: @code{"cartesian"}
+@end table
+Numeric options:
+@table @code
+@item iField
+Default value: @code{-1}
+@item UTMEquatorialRadius
+Default value: @code{6.37814e+06}
+@item UTMPolarRadius
+Default value: @code{6.35675e+06}
+@item UTMScale
+Default value: @code{1}
+@item UTMShiftX
+Default value: @code{0}
+@item UTMShiftY
+Default value: @code{0}
+@item UTMZone
+Default value: @code{0}
 @end table
 
 @item Plugin(Gradient)
