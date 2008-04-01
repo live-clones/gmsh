@@ -5655,14 +5655,6 @@ else
   HDF5="no"
 fi
 
-    if test "x${HDF5}" = "xyes"; then
-      if test "x${HDF5_PREFIX}" = "x"; then
-        GMSH_LIBS="${GMSH_LIBS} -lhdf5"
-      else
-        GMSH_LIBS="${GMSH_LIBS} -L${HDF5_PREFIX}/lib -lhdf5"
-        FLAGS="${FLAGS} -I${HDF5_PREFIX}/include"
-      fi
-    fi
   fi
 fi
 
@@ -5741,6 +5733,15 @@ fi
         FLAGS="${FLAGS} -DHAVE_MED -I${MED_PREFIX}/include"
       fi
     fi
+  fi
+fi
+
+if test "x${HDF5}" = "xyes"; then
+  if test "x${HDF5_PREFIX}" = "x"; then
+    GMSH_LIBS="${GMSH_LIBS} -lhdf5"
+  else
+    GMSH_LIBS="${GMSH_LIBS} -L${HDF5_PREFIX}/lib -lhdf5"
+    FLAGS="${FLAGS} -I${HDF5_PREFIX}/include"
   fi
 fi
 

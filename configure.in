@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.150 2008-02-17 08:47:55 geuzaine Exp $
+dnl $Id: configure.in,v 1.151 2008-04-01 21:20:35 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 dnl
@@ -657,14 +657,6 @@ if test "x${ZLIB}" = "xyes"; then
       LDFLAGS="-L${HDF5_PREFIX}/lib ${LDFLAGS}"
     fi
     AC_CHECK_LIB(hdf5,main,HDF5="yes",HDF5="no")
-    if test "x${HDF5}" = "xyes"; then
-      if test "x${HDF5_PREFIX}" = "x"; then
-        GMSH_LIBS="${GMSH_LIBS} -lhdf5"
-      else
-        GMSH_LIBS="${GMSH_LIBS} -L${HDF5_PREFIX}/lib -lhdf5"
-        FLAGS="${FLAGS} -I${HDF5_PREFIX}/include"
-      fi
-    fi
   fi
 fi
 
@@ -684,6 +676,16 @@ if test "x${HDF5}" = "xyes"; then
         FLAGS="${FLAGS} -DHAVE_MED -I${MED_PREFIX}/include"
       fi
     fi
+  fi
+fi
+
+dnl Complete HDF5 link line (zlib must be linked in after libmed)
+if test "x${HDF5}" = "xyes"; then
+  if test "x${HDF5_PREFIX}" = "x"; then
+    GMSH_LIBS="${GMSH_LIBS} -lhdf5"
+  else
+    GMSH_LIBS="${GMSH_LIBS} -L${HDF5_PREFIX}/lib -lhdf5"
+    FLAGS="${FLAGS} -I${HDF5_PREFIX}/include"
   fi
 fi
 
