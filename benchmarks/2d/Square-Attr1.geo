@@ -26,5 +26,5 @@ Field[2].DistMax = 0.3;
 
 Background Field = 2;
 
-// comment this to NOT take into account lc/200 at Point(2):
-Mesh.ConstrainedBackgroundMesh = 1;
+Mesh.CharacteristicLengthFromPoints = 0;
+Mesh.CharacteristicLengthExtendFromBoundary = 0;

@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.49 2008-04-01 12:47:10 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.50 2008-04-01 16:04:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -187,10 +187,6 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
 
 bool Extend1dMeshIn2dSurfaces()
 {
-  // never extend the 1d mesh in surfaces if there is a background
-  // field
-  if(GModel::current()->getFields()->background_field != -1) return false;
-
   return CTX.mesh.lc_extend_from_boundary ? true : false;
 }
 
