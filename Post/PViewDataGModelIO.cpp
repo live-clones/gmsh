@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.31 2008-03-31 21:17:37 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.32 2008-04-01 12:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -175,7 +175,10 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
   Msg(INFO, "Reading %d-component field <<%s>>", numComp, name);
   setName(name);
 
-  int numCompMsh = (numComp == 1) ? 1 : (numComp < 3) ? 3 : 9;
+  int numCompMsh = 
+    (numComp <= 1) ? 1 : (numComp <= 3) ? 3 : (numComp <= 9) ? 9 : numComp;
+
+  if(numCompMsh > 9) Msg(WARNING, "More than 9 components in field");
 
   // the ordering of the elements in the following lists is important:
   // it should match the ordering of the MSH element types (when
@@ -259,7 +262,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	mult = ngauss;
 	setType(GaussPointData);
       }
-      
+
       // only a guess, since several element types may be combined
       _steps[step]->resizeData(numVal / mult);
 
@@ -275,7 +278,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 
       // read Gauss point data (if locname is MED_GAUSS_ELNO, the
       // points are the element vertices)
-      if(ngauss != MED_NOPG && std::string(locname) != MED_GAUSS_ELNO){
+      if(_type == GaussPointData && std::string(locname) != MED_GAUSS_ELNO){
 	std::vector<med_float> refcoo((ele % 100) * (ele / 100));
 	std::vector<med_float> gscoo(ngauss * ele / 100);
 	std::vector<med_float> wg(ngauss);

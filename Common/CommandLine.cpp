@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.126 2008-03-26 09:37:49 remacle Exp $
+// $Id: CommandLine.cpp,v 1.127 2008-04-01 12:47:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -96,7 +96,6 @@ void Print_Usage(const char *name)
   Msg(DIRECT, "                          below which a swap is allowed");
   Msg(DIRECT, "  -rand float           Set random perturbation factor");
   Msg(DIRECT, "  -bgm file             Load background mesh from file");
-  Msg(DIRECT, "  -constrain            Constrain background mesh with characteristic lengths");
 #if defined(HAVE_FLTK)
   Msg(DIRECT, "Post-processing options:");
   Msg(DIRECT, "  -noview               Hide all views on startup");
@@ -289,10 +288,6 @@ void Get_Options(int argc, char *argv[])
 	  fprintf(stderr, ERROR_STR "Missing file name\n");
           exit(1);
         }
-      }
-      else if(!strcmp(argv[i] + 1, "constrain")) {
-        CTX.mesh.constrained_bgmesh = 1;
-        i++;
       }
       else if(!strcmp(argv[i] + 1, "convert")) {
         i++;

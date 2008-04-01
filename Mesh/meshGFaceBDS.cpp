@@ -1,4 +1,4 @@
-// $Id: meshGFaceBDS.cpp,v 1.11 2008-03-29 21:36:30 geuzaine Exp $
+// $Id: meshGFaceBDS.cpp,v 1.12 2008-04-01 12:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -551,7 +551,7 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
         ++it;
       }
       if (!ne) L = 1.e22;
-      if(!CTX.mesh.constrained_bgmesh)
+      if(CTX.mesh.lc_from_points)
         (*itp)->lc() = L;
       (*itp)->lcBGM() = L;
       ++itp;

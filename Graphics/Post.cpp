@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.161 2008-03-31 16:04:41 geuzaine Exp $
+// $Id: Post.cpp,v 1.162 2008-04-01 12:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -910,7 +910,7 @@ void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
       for(int j = 0; j < numNodes; j++)
         opt->TmpBBox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
       
-      if(opt->ShowElement) 
+      if(opt->ShowElement && !data->useGaussPoints()) 
         addOutlineElement(p, numEdges, xyz, preprocessNormalsOnly);
       
       if(opt->IntervalsType != PViewOptions::Numeric){

@@ -167,14 +167,14 @@ class Context_T {
     int optimize, optimize_netgen, refine_steps;
     int quality_type, label_type;
     double quality_inf, quality_sup, radius_inf, radius_sup;
-    double scaling_factor, lc_factor, rand_factor, lc_integration_precision,lc_min,lc_max;
+    double scaling_factor, lc_factor, rand_factor, lc_integration_precision, lc_min, lc_max;
+    int lc_from_points, lc_from_curvature, lc_extend_from_boundary;
     int dual, draw_skin_only;
     int light, light_two_side, light_lines;
     int format, nb_smoothing, algo2d, algo3d, algo_recombine;
     int order, second_order_linear, second_order_incomplete;
     int smooth_internal_edges, c1_continuity;
     int min_circ_points, min_curv_points;
-    int constrained_bgmesh, lc_from_curvature;
     double normals, tangents, explode;
     int color_carousel;
     int use_cut_plane, cut_plane_draw_intersect, cut_plane_only_volume;

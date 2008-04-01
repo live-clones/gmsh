@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.671 2008-03-29 22:58:45 geuzaine Exp $
+// $Id: GUI.cpp,v 1.672 2008-04-01 12:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -2455,11 +2455,11 @@ void GUI::create_option_window()
       mesh_value[2]->align(FL_ALIGN_RIGHT);
       mesh_value[2]->callback(mesh_options_ok_cb);
 
-      mesh_value[25] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Minimum mesh size");
+      mesh_value[25] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Minimum characteristic length");
       mesh_value[25]->align(FL_ALIGN_RIGHT);
       mesh_value[25]->callback(mesh_options_ok_cb);
 
-      mesh_value[26] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Maximum mesh size");
+      mesh_value[26] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Maximum characteristic length");
       mesh_value[26]->align(FL_ALIGN_RIGHT);
       mesh_value[26]->callback(mesh_options_ok_cb);
 
@@ -2483,11 +2483,11 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Advanced");
       o->hide();
 
-      mesh_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Compute characteritic lengths from curvatures" );
+      mesh_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Compute characteristic lengths from curvature" );
       mesh_butt[1]->type(FL_TOGGLE_BUTTON);
       mesh_butt[1]->callback(mesh_options_ok_cb);
 
-      mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Constrain background mesh with other length fields");
+      mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Compute characteristic lengths from values at points");
       mesh_butt[5]->type(FL_TOGGLE_BUTTON);
       mesh_butt[5]->callback(mesh_options_ok_cb);
 

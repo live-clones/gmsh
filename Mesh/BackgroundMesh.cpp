@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.48 2008-03-28 22:18:48 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.49 2008-04-01 12:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -151,48 +151,47 @@ static double LC_MVertex_PNTS(GEntity *ge, double U, double V)
 // This is the only function that is used by the meshers
 double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double Z)
 {
+  // default lc (mesh size == size of the domain)
   double l1 = CTX.lc;
-  double l2 = MAX_LC;
-  double l3 = MAX_LC;
-  double lc;
 
+  // lc from points
+  double l2 = MAX_LC;
+  if(CTX.mesh.lc_from_points && ge->dim() < 2) 
+    l2 = LC_MVertex_PNTS(ge, U, V);
+
+  // lc from curvature
+  double l3 = MAX_LC;
+  if(CTX.mesh.lc_from_curvature && ge->dim() < 3)
+    l3 = LC_MVertex_CURV(ge, U, V);
+
+  // lc from fields
+  double l4 = MAX_LC;
   FieldManager &fields = *GModel::current()->getFields();
   if(fields.background_field > 0){
     Field *f = fields.get(fields.background_field);
-    if(f) l3 = (*f)(X, Y, Z);
-  }
-  
-  if(l3 < MAX_LC && !CTX.mesh.constrained_bgmesh){
-    // use the fields unconstrained by other characteristic lengths
-    lc = l3 * CTX.mesh.lc_factor;
-  }
-  else{
-    if(ge->dim() < 2) 
-      l2 = LC_MVertex_PNTS(ge, U, V);
-    lc = std::min(std::min(l1, l2), l3) * CTX.mesh.lc_factor;
-    if(CTX.mesh.lc_from_curvature && ge->dim() <= 2)
-      lc = std::min(lc, LC_MVertex_CURV(ge, U, V));
+    if(f) l4 = (*f)(X, Y, Z);
   }
 
-  lc = std::max(lc, CTX.mesh.lc_min * CTX.mesh.lc_factor);
-  lc = std::min(lc, CTX.mesh.lc_max * CTX.mesh.lc_factor);
+  // take the minimum, then contrain by lc_min and lc_max
+  double lc = std::min(std::min(std::min(l1, l2), l3), l4);
+  lc = std::max(lc, CTX.mesh.lc_min);
+  lc = std::min(lc, CTX.mesh.lc_max);
 
   if(lc <= 0.){
-    Msg(GERROR, "Incorrect char. length lc = %g: using default instead", lc);
-    return l1 * CTX.mesh.lc_factor;
+    Msg(GERROR, "Wrong characteristic length lc = %g", lc);
+    lc = l1;
   }
-  
-  return lc;
+
+  return lc * CTX.mesh.lc_factor;
 }
 
-// We extend the 1d mesh in surfaces if no background mesh exists (in
-// this case, it is the only way to have something smooth). We do it
-// also if CTX.mesh.constrained_bgmesh is true;
 bool Extend1dMeshIn2dSurfaces()
 {
-  if(GModel::current()->getFields()->background_field!=-1)return false;
-  if(CTX.mesh.constrained_bgmesh) return true;
-  return true;
+  // never extend the 1d mesh in surfaces if there is a background
+  // field
+  if(GModel::current()->getFields()->background_field != -1) return false;
+
+  return CTX.mesh.lc_extend_from_boundary ? true : false;
 }
 
 bool Extend2dMeshIn3dVolumes()

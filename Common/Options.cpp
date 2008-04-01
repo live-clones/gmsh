@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.389 2008-03-20 11:44:02 geuzaine Exp $
+// $Id: Options.cpp,v 1.390 2008-04-01 12:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -4362,6 +4362,31 @@ double opt_mesh_lc_from_curvature(OPT_ARGS_NUM)
   return CTX.mesh.lc_from_curvature;
 }
 
+double opt_mesh_lc_from_points(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.lc_from_points = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[5]->value(CTX.mesh.lc_from_points);
+#endif
+  return CTX.mesh.lc_from_points;
+}
+
+double opt_mesh_lc_extend_from_boundary(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.lc_extend_from_boundary = val;
+  return CTX.mesh.lc_extend_from_boundary;
+}
+
+double opt_mesh_lc_integration_precision(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.lc_integration_precision = val;
+  return CTX.mesh.lc_integration_precision;
+}
+
 double opt_mesh_rand_factor(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -4871,13 +4896,6 @@ double opt_mesh_nb_smoothing(OPT_ARGS_NUM)
   return CTX.mesh.nb_smoothing;
 }
 
-double opt_mesh_lc_integration_precision(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.lc_integration_precision = val;
-  return CTX.mesh.lc_integration_precision;
-}
-
 double opt_mesh_algo2d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -4959,17 +4977,6 @@ double opt_mesh_min_curv_points(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.mesh.min_curv_points = (int)val;
   return CTX.mesh.min_curv_points;
-}
-
-double opt_mesh_constrained_bgmesh(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.constrained_bgmesh = (int)val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[5]->value(CTX.mesh.constrained_bgmesh);
-#endif
-  return CTX.mesh.constrained_bgmesh;
 }
 
 double opt_mesh_order(OPT_ARGS_NUM)

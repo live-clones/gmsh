@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.576 2008-03-29 10:19:35 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.577 2008-04-01 12:47:10 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1105,13 +1105,13 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
 
   opt_mesh_reverse_all_normals(0, GMSH_SET, WID->mesh_butt[0]->value());
   opt_mesh_lc_from_curvature(0, GMSH_SET, WID->mesh_butt[1]->value());
+  opt_mesh_lc_from_points(0, GMSH_SET, WID->mesh_butt[5]->value());
   opt_mesh_optimize(0, GMSH_SET, WID->mesh_butt[2]->value());
   opt_mesh_optimize_netgen(0, GMSH_SET, WID->mesh_butt[24]->value());
   opt_mesh_order(0, GMSH_SET, WID->mesh_value[3]->value());
   opt_mesh_smooth_internal_edges(0, GMSH_SET, WID->mesh_butt[3]->value());
   opt_mesh_second_order_incomplete(0, GMSH_SET, WID->mesh_butt[4]->value());
   opt_mesh_c1(0, GMSH_SET, WID->mesh_butt[21]->value());
-  opt_mesh_constrained_bgmesh(0, GMSH_SET, WID->mesh_butt[5]->value());
   opt_mesh_points(0, GMSH_SET, WID->mesh_butt[6]->value());
   opt_mesh_lines(0, GMSH_SET, WID->mesh_butt[7]->value());
   opt_mesh_triangles(0, GMSH_SET, WID->mesh_menu_butt->menu()[0].value() ? 1 : 0);
