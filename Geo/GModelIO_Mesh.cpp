@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.49 2008-03-30 20:45:27 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.50 2008-04-02 17:21:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -396,7 +396,8 @@ int GModel::readMSH(const std::string &name)
       break;
 
     }
-    else if(!strncmp(&str[1], "ElementData", 11)) {
+    else if(!strncmp(&str[1], "ElementData", 11) ||
+	    !strncmp(&str[1], "ElementNodeData", 15)) {
 
       // there's some element post-processing data to read later on
       postpro = true;
