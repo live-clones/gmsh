@@ -80,7 +80,7 @@ class GModel
   // returns the current model
   static GModel *current();
 
-  // returns the model of name
+  // finds the model by name
   static GModel *findByName(std::string name);
 
   // Deletes everything in a GModel
