@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.23 2008-04-01 13:41:33 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.24 2008-04-02 18:57:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -334,7 +334,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
 }
 
 template<class T>
-static void fillElementsMED(med_int family, std::vector<T*> &elements, med_int &ele, 
+static void fillElementsMED(med_int family, std::vector<T*> &elements,
 			    std::vector<med_int> &conn, std::vector<med_int> &fam, 
 			    med_geometrie_element &type)
 {
@@ -460,8 +460,6 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
   // write the elements
   {
     med_geometrie_element typ;
-    med_int ele = 0;
-
     { // points
       std::vector<med_int> conn, fam;
       for(viter it = firstVertex(); it != lastVertex(); it++){
@@ -476,49 +474,49 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
       std::vector<med_int> conn, fam;
       for(eiter it = firstEdge(); it != lastEdge(); it++)
 	if(saveAll || (*it)->physicals.size())
-	  fillElementsMED(families[*it], (*it)->lines, ele, conn, fam, typ);
+	  fillElementsMED(families[*it], (*it)->lines, conn, fam, typ);
       writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // triangles
       std::vector<med_int> conn, fam;
       for(fiter it = firstFace(); it != lastFace(); it++)
 	if(saveAll || (*it)->physicals.size())
-	  fillElementsMED(families[*it], (*it)->triangles, ele, conn, fam, typ);
+	  fillElementsMED(families[*it], (*it)->triangles, conn, fam, typ);
       writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // quads
       std::vector<med_int> conn, fam;
       for(fiter it = firstFace(); it != lastFace(); it++)
 	if(saveAll || (*it)->physicals.size())
-	  fillElementsMED(families[*it], (*it)->quadrangles, ele, conn, fam, typ);
+	  fillElementsMED(families[*it], (*it)->quadrangles, conn, fam, typ);
       writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // tets
       std::vector<med_int> conn, fam;
       for(riter it = firstRegion(); it != lastRegion(); it++)
 	if(saveAll || (*it)->physicals.size())
-	  fillElementsMED(families[*it], (*it)->tetrahedra, ele, conn, fam, typ);
+	  fillElementsMED(families[*it], (*it)->tetrahedra, conn, fam, typ);
       writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // hexas
       std::vector<med_int> conn, fam;
       for(riter it = firstRegion(); it != lastRegion(); it++)
 	if(saveAll || (*it)->physicals.size())
-	  fillElementsMED(families[*it], (*it)->hexahedra, ele, conn, fam, typ);
+	  fillElementsMED(families[*it], (*it)->hexahedra, conn, fam, typ);
       writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // prisms
       std::vector<med_int> conn, fam;
       for(riter it = firstRegion(); it != lastRegion(); it++)
 	if(saveAll || (*it)->physicals.size())
-	  fillElementsMED(families[*it], (*it)->prisms, ele, conn, fam, typ);
+	  fillElementsMED(families[*it], (*it)->prisms, conn, fam, typ);
       writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // pyramids
       std::vector<med_int> conn, fam;
       for(riter it = firstRegion(); it != lastRegion(); it++)
 	if(saveAll || (*it)->physicals.size())
-	  fillElementsMED(families[*it], (*it)->pyramids, ele, conn, fam, typ);
+	  fillElementsMED(families[*it], (*it)->pyramids, conn, fam, typ);
       writeElementsMED(fid, meshName, conn, fam, typ);
     }
   }

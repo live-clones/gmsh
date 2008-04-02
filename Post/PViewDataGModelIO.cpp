@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.34 2008-04-01 18:20:02 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.35 2008-04-02 18:57:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #include "Message.h"
 #include "PViewDataGModel.h"
 #include "MVertex.h"
+#include "MElement.h"
 #include "Numeric.h"
 #include "StringUtils.h"
 
@@ -387,6 +388,11 @@ bool PViewDataGModel::writeMED(std::string fileName)
     return false;
   }
 
+  if(_type != NodeData){
+    Msg(GERROR, "Can only export node-based datasets for now");
+    return false;
+  }
+
   GModel *model = _steps[0]->getModel();
 
   // save the mesh
@@ -402,23 +408,53 @@ bool PViewDataGModel::writeMED(std::string fileName)
   }
 
   // compute profile
-  std::vector<med_int> profile, nums;
-  for(int i = 0; i < _steps[0]->getNumData(); i++){
-    if(_steps[0]->getData(i)){
-      MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
-      if(!v){
-	Msg(GERROR, "Unknown vertex %d in data", i);
-	return false;
+  char *profileName;
+  std::vector<med_int> profile, indices, mult;
+  if(_type == NodeData){
+    profileName = (char*)"nodeProfile";
+    for(int i = 0; i < _steps[0]->getNumData(); i++){
+      if(_steps[0]->getData(i)){
+	MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
+	if(!v){
+	  Msg(GERROR, "Unknown vertex %d in data", i);
+	  return false;
+	}
+	profile.push_back(v->getIndex());
+	indices.push_back(i);
+	mult.push_back(1);
       }
-      profile.push_back(v->getIndex());
-      nums.push_back(i);
+    }
+  }
+  else{
+    // FIXME: not tested
+    profileName = (char*)"elementProfile";
+    std::vector<MElement*> elements;
+    int offset = model->getNumVertices();
+    for(int i = 0; i < _steps[0]->getNumEntities(); i++)
+      for(int j = 0; j < _steps[0]->getEntity(i)->getNumMeshElements(); j++)
+	elements.push_back(_steps[0]->getEntity(i)->getMeshElement(j));
+    for(int i = 0; i < _steps[0]->getNumData(); i++){
+      if(_steps[0]->getData(i)){
+	int idx = i - offset;
+	if(idx < 0 || idx >= elements.size()){
+	  Msg(GERROR, "Unknown element %d in data", idx);
+	  return false;
+	}
+	MElement *e = elements[idx];
+	profile.push_back(idx);
+	indices.push_back(i);
+	if(_type == GaussPointData)
+	  mult.push_back(_steps[0]->getGaussPoints(e->getTypeForMSH()).size() / 3);
+	else
+	  mult.push_back(e->getNumVertices());
+      }
     }
   }
   if(profile.empty()){
     Msg(GERROR, "Nothing to save");
     return false;
   }
-  char *profileName = (char*)"nodeProfile";
+
   if(MEDprofilEcr(fid, &profile[0], (med_int)profile.size(), profileName) < 0){
     Msg(GERROR, "Could not create MED profile");
     return false;
@@ -431,6 +467,7 @@ bool PViewDataGModel::writeMED(std::string fileName)
     return false;
   }
 
+  // FIXME: generalize following for all _types
   med_int numNodes = MEDnEntMaa(fid, meshName, MED_COOR, MED_NOEUD, 
 				MED_NONE, (med_connectivite)0);
   if(numNodes <= 0){
@@ -450,7 +487,7 @@ bool PViewDataGModel::writeMED(std::string fileName)
     std::vector<double> val(profile.size() * numComp);
     for(unsigned int i = 0; i < profile.size(); i++)
       for(int k = 0; k < numComp; k++)
-	val[i * numComp + k] = _steps[step]->getData(nums[i])[k];
+	val[i * numComp + k] = _steps[step]->getData(indices[i])[k];
     if(MEDchampEcr(fid, meshName, fieldName, (unsigned char*)&val[0], 
 		   MED_FULL_INTERLACE, numNodes, MED_NOGAUSS, MED_ALL,
 		   profileName, MED_COMPACT, MED_NOEUD, MED_NONE, (med_int)step,
