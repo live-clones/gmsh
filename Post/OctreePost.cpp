@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.10 2008-03-30 15:37:42 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.11 2008-04-02 16:30:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -435,7 +435,7 @@ bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep, doub
     if(timestep < 0 || step == timestep){
       for(int nod = 0; nod < e->getNumVertices(); nod++){
         for(int comp = 0; comp < nbComp; comp++){
-          if(!_theViewDataGModel->getValue(step, dataIndex[nod], comp, 
+          if(!_theViewDataGModel->getValue(step, dataIndex[nod], nod, comp, 
                                            nodeval[nod * nbComp + comp]))
             return false;
         }

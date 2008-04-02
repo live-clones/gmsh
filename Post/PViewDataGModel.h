@@ -176,7 +176,7 @@ class PViewDataGModel : public PViewData {
   // direct access to GModel entities
   GEntity *getEntity(int step, int ent);
   // direct access to value by index
-  bool getValue(int step, int dataIndex, int comp, double &val);
+  bool getValue(int step, int dataIndex, int node, int comp, double &val);
 
   // I/O routines
   bool readMSH(std::string fileName, int fileIndex, FILE *fp, bool binary, 

@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.45 2008-04-01 18:20:02 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.46 2008-04-02 16:30:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -193,27 +193,19 @@ void PViewDataGModel::getValue(int step, int ent, int ele, int nod, int comp, do
 {
   // no sanity checks (assumed to be guarded by skipElement)
   stepData<double> *sd = _steps[step];
+  MElement *e = sd->getEntity(ent)->getMeshElement(ele);
   switch(_type){
   case NodeData: 
-    {
-      MVertex *v = sd->getEntity(ent)->getMeshElement(ele)->getVertex(nod);
-      val = sd->getData(v->getNum())[comp];
-      break;
-    }
+    val = sd->getData(e->getVertex(nod)->getNum())[comp];
+    break;
   case ElementNodeData:
   case GaussPointData: 
-    {
-      MElement *e = sd->getEntity(ent)->getMeshElement(ele);
-      val = sd->getData(e->getNum())[sd->getNumComponents() * nod + comp];
-      break;
-    }
+    val = sd->getData(e->getNum())[sd->getNumComponents() * nod + comp];
+    break;
   case ElementData: 
   default: 
-    {
-      MElement *e = sd->getEntity(ent)->getMeshElement(ele);
-      val = sd->getData(e->getNum())[comp];
-      break;
-    }
+    val = sd->getData(e->getNum())[comp];
+    break;
   }
 }
 
@@ -225,7 +217,7 @@ int PViewDataGModel::getNumEdges(int step, int ent, int ele)
 
 void PViewDataGModel::smooth()
 {
-  if(_type == NodeData) return;
+  if(_type == NodeData || _type == GaussPointData) return;
   std::vector<stepData<double>*> _steps2;
   for(unsigned int step = 0; step < _steps.size(); step++){
     GModel *m = _steps[step]->getModel();
@@ -237,7 +229,7 @@ void PViewDataGModel::smooth()
       for(int ele = 0; ele < getNumElements(step, ent); ele++){
 	MElement *e = _steps[step]->getEntity(ent)->getMeshElement(ele);
 	double val;
-	if(!getValue(step, e->getNum(), 0, val)) continue;
+	if(!getValue(step, e->getNum(), 0, 0, val)) continue;
 	for(int nod = 0; nod < e->getNumVertices(); nod++){
 	  MVertex *v = e->getVertex(nod);
 	  if(nodeConnect.count(v->getNum()))
@@ -246,7 +238,7 @@ void PViewDataGModel::smooth()
 	    nodeConnect[v->getNum()] = 1;
 	  double *d = _steps2.back()->getData(v->getNum(), true);
 	  for(int j = 0; j < numComp; j++)
-	    if(getValue(step, e->getNum(), j, val)) d[j] += val;
+	    if(getValue(step, e->getNum(), nod, j, val)) d[j] += val;
 	}
       }
     }
@@ -275,16 +267,16 @@ bool PViewDataGModel::skipEntity(int step, int ent)
 bool PViewDataGModel::skipElement(int step, int ent, int ele)
 {
   if(step >= getNumTimeSteps()) return true;
-  stepData<double> *data = _steps[step];
+  stepData<double> *sd = _steps[step];
   if(!_steps[step]->getNumData()) return true;
-  MElement *e = data->getEntity(ent)->getMeshElement(ele);
+  MElement *e = sd->getEntity(ent)->getMeshElement(ele);
   if(!e->getVisibility()) return true;
   if(_type == NodeData){
     for(int i = 0; i < e->getNumVertices(); i++)
-      if(!data->getData(e->getVertex(i)->getNum())) return true;
+      if(!sd->getData(e->getVertex(i)->getNum())) return true;
   }
   else{
-    if(!data->getData(e->getNum())) return true;
+    if(!sd->getData(e->getNum())) return true;
   }
   return false;
 }
@@ -314,10 +306,14 @@ GEntity *PViewDataGModel::getEntity(int step, int ent)
   return _steps[step]->getEntity(ent);
 }
 
-bool PViewDataGModel::getValue(int step, int dataIndex, int comp, double &val)
+bool PViewDataGModel::getValue(int step, int dataIndex, int nod, int comp, double &val)
 {
   double *d = _steps[step]->getData(dataIndex);
   if(!d) return false;
-  val = d[comp];
+
+  if(_type == NodeData || _type == ElementData)
+    val = d[comp];
+  else
+    val = d[_steps[step]->getNumComponents() * nod + comp];
   return true;
 }
