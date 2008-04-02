@@ -1,4 +1,4 @@
-// $Id: PViewDataIO.cpp,v 1.7 2008-03-29 10:19:43 geuzaine Exp $
+// $Id: PViewDataIO.cpp,v 1.8 2008-04-02 20:00:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -115,4 +115,22 @@ bool PViewData::writeTXT(std::string fileName)
 
   fclose(fp);
   return true;
+}
+
+bool PViewData::writePOS(std::string fileName, bool binary, bool parsed, bool append)
+{ 
+  Msg(GERROR, "POS export not implemented for this view type");
+  return false; 
+}
+
+bool PViewData::writeMSH(std::string fileName, bool binary)
+{ 
+  Msg(GERROR, "MSH export not implemented for this view type");
+  return false; 
+}
+
+bool PViewData::writeMED(std::string fileName)
+{
+  Msg(GERROR, "MED export not implemented for this view type");
+  return false; 
 }

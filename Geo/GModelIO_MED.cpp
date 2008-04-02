@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.24 2008-04-02 18:57:57 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.25 2008-04-02 20:00:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,7 @@ extern "C" {
 #include <med.h>
 }
 
-static med_geometrie_element msh2medElementType(int msh)
+med_geometrie_element msh2medElementType(int msh)
 {
   switch(msh) {
   case MSH_LIN_2: return MED_SEG2;
