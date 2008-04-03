@@ -143,7 +143,7 @@ class PViewDataGModel : public PViewData {
   // the type of the dataset
   DataType _type;
  public:
-  PViewDataGModel();
+  PViewDataGModel(DataType type=NodeData);
   ~PViewDataGModel();
   bool finalize();
   int getNumTimeSteps();
@@ -170,9 +170,8 @@ class PViewDataGModel : public PViewData {
   bool hasMultipleMeshes();
   bool useGaussPoints(){ return _type == GaussPointData; }
 
-  // get/set the data type
+  // get the data type
   DataType getType(){ return _type; }
-  void setType(DataType type){ _type = type; }
   // direct access to GModel entities
   GEntity *getEntity(int step, int ent);
   // direct access to value by index

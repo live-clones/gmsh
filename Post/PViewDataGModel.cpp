@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.46 2008-04-02 16:30:29 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.47 2008-04-03 07:48:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -27,8 +27,8 @@
 #include "Numeric.h"
 #include "Message.h"
 
-PViewDataGModel::PViewDataGModel() 
-  : _min(VAL_INF), _max(-VAL_INF), _type(NodeData)
+PViewDataGModel::PViewDataGModel(DataType type) 
+  : _min(VAL_INF), _max(-VAL_INF), _type(type)
 {
 }
 

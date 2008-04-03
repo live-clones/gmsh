@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.36 2008-04-02 20:00:38 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.37 2008-04-03 07:48:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -32,10 +32,10 @@
 
 bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
                               bool binary, bool swap, int step, double time, 
-                              int partition, int numComp, int numNodes)
+                              int partition, int numComp, int numEnt)
 {
-  Msg(INFO, "Reading step %d (time %g) partition %d: %d nodes", 
-      step, time, partition, numNodes);
+  Msg(INFO, "Reading step %d (time %g) partition %d: %d records", 
+      step, time, partition, numEnt);
 
   while(step >= (int)_steps.size())
     _steps.push_back(new stepData<double>(GModel::current(), numComp));
@@ -50,9 +50,9 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
     numSteps += _steps[i]->getNumData() ? 1 : 0;
   if(numSteps > maxSteps) return true;
 
-  _steps[step]->resizeData(numNodes);
+  _steps[step]->resizeData(numEnt);
 
-  for(int i = 0; i < numNodes; i++){
+  for(int i = 0; i < numEnt; i++){
     int num;
     if(binary){
       if(fread(&num, sizeof(int), 1, fp) != 1) return false;
@@ -61,18 +61,31 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
     else{
       if(fscanf(fp, "%d", &num) != 1) return false;
     }
-    double *d = _steps[step]->getData(num, true);
+    int mult = 1;
+    if(_type == ElementNodeData || _type == GaussPointData){
+      if(binary){
+	if(fread(&mult, sizeof(int), 1, fp) != 1) return false;
+	if(swap) swapBytes((char*)&mult, sizeof(int), 1);
+      }
+      else{
+	if(fscanf(fp, "%d", &mult) != 1) return false;
+      }
+    }
+    double *d = _steps[step]->getData(num, true, mult);
     if(binary){
-      if((int)fread(d, sizeof(double), numComp, fp) != numComp) return false;
-      if(swap) swapBytes((char*)d, sizeof(double), numComp);
+      if((int)fread(d, sizeof(double), numComp * mult, fp) != numComp * mult) 
+	return false;
+      if(swap) swapBytes((char*)d, sizeof(double), numComp * mult);
     }
     else{
-      for(int j = 0; j < numComp; j++)
+      for(int j = 0; j < numComp * mult; j++)
         if(fscanf(fp, "%lf", &d[j]) != 1) return false;
     }
-    double s = ComputeScalarRep(numComp, d);
-    _steps[step]->setMin(std::min(_steps[step]->getMin(), s));
-    _steps[step]->setMax(std::max(_steps[step]->getMax(), s));
+    for(int j = 0; j < mult; j++){
+      double s = ComputeScalarRep(numComp, &d[numComp *j]);
+      _steps[step]->setMin(std::min(_steps[step]->getMin(), s));
+      _steps[step]->setMax(std::max(_steps[step]->getMax(), s));
+    }
   }
 
   _partitions.insert(partition);
@@ -87,6 +100,11 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
 
   if(hasMultipleMeshes()){
     Msg(GERROR, "Export not done for multi-mesh views");
+    return false;
+  }
+
+  if(_type != NodeData){
+    Msg(GERROR, "Can only export node-based datasets for now");
     return false;
   }
 
@@ -217,9 +235,8 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
   }
   else{
     med_entite_maillage ent = entType[pairs[0].first];
-    setType((ent == MED_NOEUD) ? NodeData : 
-	    (ent == MED_MAILLE) ? ElementData :
-	    ElementNodeData);
+    _type = (ent == MED_NOEUD) ? NodeData : (ent == MED_MAILLE) ? ElementData : 
+      ElementNodeData;
   }
 
   for(int step = 0; step < numSteps; step++){
@@ -263,7 +280,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
       }
       else if(ngauss != MED_NOPG){
 	mult = ngauss;
-	setType(GaussPointData);
+	_type = GaussPointData;
       }
       _steps[step]->resizeData(numVal / mult);
 

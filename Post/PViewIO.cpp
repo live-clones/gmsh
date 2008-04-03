@@ -1,4 +1,4 @@
-// $Id: PViewIO.cpp,v 1.3 2008-03-29 10:19:43 geuzaine Exp $
+// $Id: PViewIO.cpp,v 1.4 2008-04-03 07:48:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -145,25 +145,34 @@ bool PView::readMSH(std::string fileName, int fileIndex)
         }
       }
     }
-    else if(!strncmp(&str[1], "NodeData", 8)) {
+    else if(!strncmp(&str[1], "NodeData", 8) ||
+	    !strncmp(&str[1], "ElementData", 11) ||
+	    !strncmp(&str[1], "ElementNodeData", 15)) {
       index++;
       if(fileIndex < 0 || fileIndex == index){
+	PViewDataGModel::DataType type;
+	if(!strncmp(&str[1], "NodeData", 8))
+	  type = PViewDataGModel::NodeData;
+	else if(!strncmp(&str[1], "ElementData", 11))
+	  type = PViewDataGModel::ElementData;
+	else
+	  type = PViewDataGModel::ElementNodeData;
         // read data info
         if(!fgets(str, sizeof(str), fp)) return false;
         std::string name = extractDoubleQuotedString(str, sizeof(str));
-        int timeStep, partition, interpolationScheme, numComp, numNodes;
+        int timeStep, partition, interpolationScheme, numComp, numEnt;
         double time;
         if(!fgets(str, sizeof(str), fp)) return false;
         if(sscanf(str, "%d %lf %d %d %d %d", &timeStep, &time, &partition,
-                  &interpolationScheme, &numComp, &numNodes) != 6) return false;
+                  &interpolationScheme, &numComp, &numEnt) != 6) return false;
         // either get existing viewData, or create new one
         PView *p = getViewByName(name, timeStep, partition);
         PViewDataGModel *d = 0;
         if(p) d = dynamic_cast<PViewDataGModel*>(p->getData());
         bool create = d ? false : true;
-        if(create) d = new PViewDataGModel();
+	if(create) d = new PViewDataGModel(type);
         if(!d->readMSH(fileName, fileIndex, fp, binary, swap, timeStep, 
-                       time, partition, numComp, numNodes)){
+                       time, partition, numComp, numEnt)){
           Msg(GERROR, "Could not read data in msh file");
           if(create) delete d;
           return false;
