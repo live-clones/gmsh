@@ -31,13 +31,13 @@ class GMSH_CutMapPlugin : public GMSH_LevelsetPlugin
 {
   double levelset(double x, double y, double z, double val) const;
  public:
-  GMSH_CutMapPlugin();
+  GMSH_CutMapPlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *helpText) const;
   void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
-  StringXNumber* getOption (int iopt);  
-  PView *execute (PView *);
+  StringXNumber *getOption(int iopt);  
+  PView *execute(PView *);
   static double callbackA(int, int, double);
   static double callbackVol(int, int, double);
   static double callbackRecur(int, int, double);

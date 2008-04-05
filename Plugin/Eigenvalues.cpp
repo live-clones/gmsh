@@ -1,4 +1,4 @@
-// $Id: Eigenvalues.cpp,v 1.7 2008-03-20 11:44:13 geuzaine Exp $
+// $Id: Eigenvalues.cpp,v 1.8 2008-04-05 17:49:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -71,39 +71,18 @@ void GMSH_EigenvaluesPlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Eigenvalues failed...");
 }
 
-static void eigenvalues(List_T *inList, int inNb, 
-                        int nbNod, int nbTime,
-                        List_T *minList, int *minNb, 
-                        List_T *midList, int *midNb, 
-                        List_T *maxList, int *maxNb)
+static List_T *incrementList(PViewDataList *data2, int numEdges)
 {
-  if(!inNb) return;
-
-  int nb = List_Nbr(inList) / inNb;
-  for(int i = 0; i < List_Nbr(inList); i += nb) {
-    for(int j = 0; j < 3 * nbNod; j++){
-      List_Add(minList, List_Pointer_Fast(inList, i + j));
-      List_Add(midList, List_Pointer_Fast(inList, i + j));
-      List_Add(maxList, List_Pointer_Fast(inList, i + j));
-    }
-    for(int j = 0; j < nbTime; j++){
-      for(int k = 0; k < nbNod; k++){
-        double *v = (double *)List_Pointer_Fast(inList, i + 3 * nbNod + 
-                                                nbNod * 9 * j + 9 * k);
-        double w[3], A[3][3] = { {v[0], v[1], v[2]},
-                                 {v[3], v[4], v[5]},
-                                 {v[6], v[7], v[8]} };
-        eigenvalue(A, w);
-        for(int l = 0; l < 3; l++){
-          List_Add(minList, &w[2]);
-          List_Add(midList, &w[1]);
-          List_Add(maxList, &w[0]);
-        }
-      }
-    }
-    (*minNb)++;
-    (*midNb)++;
-    (*maxNb)++;
+  switch(numEdges){
+  case 0: data2->NbSP++; return data2->SP;
+  case 1: data2->NbSL++; return data2->SL;
+  case 3: data2->NbST++; return data2->ST;
+  case 4: data2->NbSQ++; return data2->SQ;
+  case 6: data2->NbSS++; return data2->SS;
+  case 12: data2->NbSH++; return data2->SH;
+  case 9: data2->NbSI++; return data2->SI;
+  case 8: data2->NbSY++; return data2->SY;
+  default: return 0;
   }
 }
 
@@ -114,8 +93,11 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
   PView *v1 = getView(iView, v);
   if(!v1) return v;
 
-  PViewDataList *data1 = getDataList(v1);
-  if(!data1) return v;
+  PViewData *data1 = v1->getData();
+  if(data1->hasMultipleMeshes()){
+    Msg(GERROR, "Eigenvalues plugin cannot be run on multi-mesh views");
+    return v;
+  }
 
   PView *min = new PView(true);
   PView *mid = new PView(true);
@@ -125,27 +107,57 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
   PViewDataList *dmid = getDataList(mid);
   PViewDataList *dmax = getDataList(max);
 
-  eigenvalues(data1->TP, data1->NbTP, 1, data1->getNumTimeSteps(),
-              dmin->SP, &dmin->NbSP, dmid->SP, &dmid->NbSP, dmax->SP, &dmax->NbSP);
-  eigenvalues(data1->TL, data1->NbTL, 2, data1->getNumTimeSteps(),
-              dmin->SL, &dmin->NbSL, dmid->SL, &dmid->NbSL, dmax->SL, &dmax->NbSL);
-  eigenvalues(data1->TT, data1->NbTT, 3, data1->getNumTimeSteps(),
-              dmin->ST, &dmin->NbST, dmid->ST, &dmid->NbST, dmax->ST, &dmax->NbST);
-  eigenvalues(data1->TQ, data1->NbTQ, 4, data1->getNumTimeSteps(),
-              dmin->SQ, &dmin->NbSQ, dmid->SQ, &dmid->NbSQ, dmax->SQ, &dmax->NbSQ);
-  eigenvalues(data1->TS, data1->NbTS, 4, data1->getNumTimeSteps(),
-              dmin->SS, &dmin->NbSS, dmid->SS, &dmid->NbSS, dmax->SS, &dmax->NbSS);
-  eigenvalues(data1->TH, data1->NbTH, 8, data1->getNumTimeSteps(),
-              dmin->SH, &dmin->NbSH, dmid->SH, &dmid->NbSH, dmax->SH, &dmax->NbSH);
-  eigenvalues(data1->TI, data1->NbTI, 6, data1->getNumTimeSteps(),
-              dmin->SI, &dmin->NbSI, dmid->SI, &dmid->NbSI, dmax->SI, &dmax->NbSI);
-  eigenvalues(data1->TY, data1->NbTY, 5, data1->getNumTimeSteps(),
-              dmin->SY, &dmin->NbSY, dmid->SY, &dmid->NbSY, dmax->SY, &dmax->NbSY);
-
-  for(int i = 0; i < List_Nbr(data1->Time); i++){
-    List_Add(dmin->Time, List_Pointer(data1->Time, i));
-    List_Add(dmid->Time, List_Pointer(data1->Time, i));
-    List_Add(dmax->Time, List_Pointer(data1->Time, i));
+  for(int ent = 0; ent < data1->getNumEntities(0); ent++){
+    for(int ele = 0; ele < data1->getNumElements(0, ent); ele++){
+      if(data1->skipElement(0, ent, ele)) continue;
+      int numComp = data1->getNumComponents(0, ent, ele);
+      if(numComp != 9) continue;
+      int numEdges = data1->getNumEdges(0, ent, ele);
+      List_T *outmin = incrementList(dmin, numEdges);
+      List_T *outmid = incrementList(dmid, numEdges);
+      List_T *outmax = incrementList(dmax, numEdges);
+      if(!outmin || !outmid || !outmax) continue;
+      int numNodes = data1->getNumNodes(0, ent, ele);
+      double x[8], y[8], z[8];
+      for(int nod = 0; nod < numNodes; nod++)
+	data1->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
+      for(int nod = 0; nod < numNodes; nod++){
+	List_Add(outmin, &x[nod]);
+	List_Add(outmid, &x[nod]);
+	List_Add(outmax, &x[nod]);
+      }
+      for(int nod = 0; nod < numNodes; nod++){
+	List_Add(outmin, &y[nod]);
+	List_Add(outmid, &y[nod]);
+	List_Add(outmax, &y[nod]);
+      }
+      for(int nod = 0; nod < numNodes; nod++){
+	List_Add(outmin, &z[nod]);
+	List_Add(outmid, &z[nod]);
+	List_Add(outmax, &z[nod]);
+      }
+      for(int step = 0; step < data1->getNumTimeSteps(); step++){
+	for(int nod = 0; nod < numNodes; nod++){
+	  double val[9];
+	  for(int comp = 0; comp < numComp; comp++)
+	    data1->getValue(step, ent, ele, nod, comp, val[comp]);
+	  double w[3], A[3][3] = { {val[0], val[1], val[2]},
+				   {val[3], val[4], val[5]},
+				   {val[6], val[7], val[8]} };
+	  eigenvalue(A, w);
+	  List_Add(outmin, &w[2]);
+	  List_Add(outmid, &w[1]);
+	  List_Add(outmax, &w[0]);
+	}
+      }
+    }
+  }
+  
+  for(int i = 0; i < data1->getNumTimeSteps(); i++){
+    double time = data1->getTime(i);
+    List_Add(dmin->Time, &time);
+    List_Add(dmid->Time, &time);
+    List_Add(dmax->Time, &time);
   }
   dmin->setName(data1->getName() + "_MinEigenvalues");
   dmin->setFileName(data1->getName() + "_MinEigenvalues.pos");

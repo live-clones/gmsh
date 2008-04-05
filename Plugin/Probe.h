@@ -33,7 +33,7 @@ class GMSH_ProbePlugin : public GMSH_Post_Plugin
   static double callback(int num, int action, double value, double *opt);
   static int iview;
 public:
-  GMSH_ProbePlugin();
+  GMSH_ProbePlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *helpText) const;
   void catchErrorMessage(char *errorMessage) const;

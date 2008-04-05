@@ -38,15 +38,13 @@ class GMSH_CutGridPlugin : public GMSH_Post_Plugin
                  List_T *Q, int *nQ);
   PView *GenerateView (PView *v, int connectPoints);
 public:
-  GMSH_CutGridPlugin();
-  void getName  (char *name) const;
-  void getInfos (char *author, 
-                 char *copyright,
-                 char *help_text) const;
-  void catchErrorMessage (char *errorMessage) const;
+  GMSH_CutGridPlugin(){}
+  void getName(char *name) const;
+  void getInfos(char *author, char *copyright, char *help_text) const;
+  void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
-  StringXNumber *getOption (int iopt);  
-  PView *execute (PView *);
+  StringXNumber *getOption(int iopt);  
+  PView *execute(PView *);
 
   static int getNbU ();
   static int getNbV ();

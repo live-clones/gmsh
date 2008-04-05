@@ -34,14 +34,14 @@ private:
                          double step, double min, double max);
   static const char *callbackStr(int num, int action, const char *value, const char **opt);
 public:
-  GMSH_AnnotatePlugin();
+  GMSH_AnnotatePlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *helpText) const;
   void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);  
+  StringXNumber *getOption(int iopt);  
   int getNbOptionsStr() const;
-  StringXString* getOptionStr(int iopt);  
+  StringXString *getOptionStr(int iopt);  
   PView *execute(PView *);
 
   static double callbackX(int, int, double);

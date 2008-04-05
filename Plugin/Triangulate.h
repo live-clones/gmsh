@@ -30,7 +30,7 @@ extern "C"
 class GMSH_TriangulatePlugin : public GMSH_Post_Plugin
 {
 public:
-  GMSH_TriangulatePlugin();
+  GMSH_TriangulatePlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *helpText) const;
   void catchErrorMessage(char *errorMessage) const;

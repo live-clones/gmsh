@@ -1,4 +1,4 @@
-// $Id: Gradient.cpp,v 1.13 2008-04-05 09:21:37 geuzaine Exp $
+// $Id: Gradient.cpp,v 1.14 2008-04-05 17:49:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -34,18 +34,13 @@ extern "C"
   }
 }
 
-GMSH_GradientPlugin::GMSH_GradientPlugin()
-{
-  ;
-}
-
 void GMSH_GradientPlugin::getName(char *name) const
 {
   strcpy(name, "Gradient");
 }
 
 void GMSH_GradientPlugin::getInfos(char *author, char *copyright,
-                                    char *help_text) const
+				   char *help_text) const
 {
   strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");

@@ -1,4 +1,4 @@
-// $Id: CutMap.cpp,v 1.58 2008-03-20 11:44:12 geuzaine Exp $
+// $Id: CutMap.cpp,v 1.59 2008-04-05 17:49:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -40,11 +40,6 @@ extern "C"
   {
     return new GMSH_CutMapPlugin();
   }
-}
-
-GMSH_CutMapPlugin::GMSH_CutMapPlugin()
-{
-  ;
 }
 
 double GMSH_CutMapPlugin::callbackA(int num, int action, double value)

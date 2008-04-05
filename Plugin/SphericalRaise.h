@@ -30,12 +30,12 @@ extern "C"
 class GMSH_SphericalRaisePlugin : public GMSH_Post_Plugin
 {
 public:
-  GMSH_SphericalRaisePlugin();
+  GMSH_SphericalRaisePlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *helpText) const;
   void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);  
+  StringXNumber *getOption(int iopt);  
   PView *execute(PView *);
 };
 

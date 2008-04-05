@@ -1,4 +1,4 @@
-// $Id: CutSphere.cpp,v 1.50 2008-03-20 11:44:13 geuzaine Exp $
+// $Id: CutSphere.cpp,v 1.51 2008-04-05 17:49:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -47,11 +47,6 @@ extern "C"
   {
     return new GMSH_CutSpherePlugin();
   }
-}
-
-GMSH_CutSpherePlugin::GMSH_CutSpherePlugin()
-{
-  ;
 }
 
 void GMSH_CutSpherePlugin::draw()

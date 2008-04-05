@@ -1,4 +1,4 @@
-// $Id: Probe.cpp,v 1.21 2008-03-20 11:44:14 geuzaine Exp $
+// $Id: Probe.cpp,v 1.22 2008-04-05 17:49:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -45,11 +45,6 @@ extern "C"
   {
     return new GMSH_ProbePlugin();
   }
-}
-
-GMSH_ProbePlugin::GMSH_ProbePlugin()
-{
-  ;
 }
 
 void GMSH_ProbePlugin::draw()

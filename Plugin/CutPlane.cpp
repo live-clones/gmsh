@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.56 2008-03-20 11:44:13 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.57 2008-04-05 17:49:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -49,11 +49,6 @@ extern "C"
   {
     return new GMSH_CutPlanePlugin();
   }
-}
-
-GMSH_CutPlanePlugin::GMSH_CutPlanePlugin()
-{
-  ;
 }
 
 void GMSH_CutPlanePlugin::draw()

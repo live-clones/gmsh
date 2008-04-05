@@ -38,7 +38,7 @@ private:
                 int timeStep, int timeStep2,
                 const char *expression);
 public:
-  GMSH_EvaluatePlugin();
+  GMSH_EvaluatePlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *helpText) const;
   void catchErrorMessage(char *errorMessage) const;

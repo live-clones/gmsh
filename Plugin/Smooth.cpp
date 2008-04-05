@@ -1,4 +1,4 @@
-// $Id: Smooth.cpp,v 1.31 2008-03-20 11:44:14 geuzaine Exp $
+// $Id: Smooth.cpp,v 1.32 2008-04-05 17:49:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -31,12 +31,6 @@ extern "C"
   {
     return new GMSH_SmoothPlugin();
   }
-}
-
-
-GMSH_SmoothPlugin::GMSH_SmoothPlugin()
-{
-  ;
 }
 
 void GMSH_SmoothPlugin::getName(char *name) const

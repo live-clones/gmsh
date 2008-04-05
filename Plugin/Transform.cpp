@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.39 2008-04-05 09:21:37 geuzaine Exp $
+// $Id: Transform.cpp,v 1.40 2008-04-05 17:49:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -44,11 +44,6 @@ extern "C"
   {
     return new GMSH_TransformPlugin();
   }
-}
-
-GMSH_TransformPlugin::GMSH_TransformPlugin()
-{
-  ;
 }
 
 void GMSH_TransformPlugin::getName(char *name) const

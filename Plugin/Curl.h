@@ -30,12 +30,12 @@ extern "C"
 class GMSH_CurlPlugin : public GMSH_Post_Plugin
 {
  public:
-  GMSH_CurlPlugin();
+  GMSH_CurlPlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *help_text) const;
   void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);  
+  StringXNumber *getOption(int iopt);  
   PView *execute(PView *);
 };
 

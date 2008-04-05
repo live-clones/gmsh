@@ -1,4 +1,4 @@
-// $Id: CutGrid.cpp,v 1.26 2008-03-20 11:44:12 geuzaine Exp $
+// $Id: CutGrid.cpp,v 1.27 2008-04-05 17:49:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -52,11 +52,6 @@ extern "C"
   {
     return new GMSH_CutGridPlugin();
   }
-}
-
-GMSH_CutGridPlugin::GMSH_CutGridPlugin()
-{
-  ;
 }
 
 void GMSH_CutGridPlugin::draw()

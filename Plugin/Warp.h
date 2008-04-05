@@ -30,12 +30,12 @@ extern "C"
 class GMSH_WarpPlugin : public GMSH_Post_Plugin
 {
 public:
-  GMSH_WarpPlugin();
+  GMSH_WarpPlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *help_text) const;
   void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);  
+  StringXNumber *getOption(int iopt);  
   PView *execute(PView *);
 };
 

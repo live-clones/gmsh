@@ -1,4 +1,4 @@
-// $Id: Annotate.cpp,v 1.21 2008-03-20 11:44:12 geuzaine Exp $
+// $Id: Annotate.cpp,v 1.22 2008-04-05 17:49:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -52,11 +52,6 @@ extern "C"
   {
     return new GMSH_AnnotatePlugin();
   }
-}
-
-GMSH_AnnotatePlugin::GMSH_AnnotatePlugin()
-{
-  ;
 }
 
 static double getStyle()

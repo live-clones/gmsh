@@ -33,12 +33,12 @@ class GMSH_CutSpherePlugin : public GMSH_LevelsetPlugin
   static double callback(int num, int action, double value, double *opt,
                          double step, double min, double max);
 public:
-  GMSH_CutSpherePlugin();
+  GMSH_CutSpherePlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *helpText) const;
   void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);  
+  StringXNumber *getOption(int iopt);  
   PView *execute(PView *);
 
   static double callbackX(int, int, double);

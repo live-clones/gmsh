@@ -1,4 +1,4 @@
-// $Id: ExtractElements.cpp,v 1.12 2008-03-20 11:44:13 geuzaine Exp $
+// $Id: ExtractElements.cpp,v 1.13 2008-04-05 17:49:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -35,11 +35,6 @@ extern "C"
   {
     return new GMSH_ExtractElementsPlugin();
   }
-}
-
-GMSH_ExtractElementsPlugin::GMSH_ExtractElementsPlugin()
-{
-  ;
 }
 
 void GMSH_ExtractElementsPlugin::getName(char *name) const

@@ -1,4 +1,4 @@
-// $Id: Remove.cpp,v 1.14 2008-03-20 11:44:14 geuzaine Exp $
+// $Id: Remove.cpp,v 1.15 2008-04-05 17:49:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -44,11 +44,6 @@ extern "C"
   {
     return new GMSH_RemovePlugin();
   }
-}
-
-GMSH_RemovePlugin::GMSH_RemovePlugin()
-{
-  ;
 }
 
 void GMSH_RemovePlugin::getName(char *name) const

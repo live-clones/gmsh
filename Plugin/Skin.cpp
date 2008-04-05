@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.37 2008-03-20 11:44:14 geuzaine Exp $
+// $Id: Skin.cpp,v 1.38 2008-04-05 17:49:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -42,11 +42,6 @@ extern "C"
   {
     return new GMSH_SkinPlugin();
   }
-}
-
-GMSH_SkinPlugin::GMSH_SkinPlugin()
-{
-  ;
 }
 
 void GMSH_SkinPlugin::getName(char *name) const

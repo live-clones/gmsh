@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.32 2008-03-20 11:44:14 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.33 2008-04-05 17:49:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -38,12 +38,6 @@ extern "C"
   {
     return new GMSH_SphericalRaisePlugin();
   }
-}
-
-
-GMSH_SphericalRaisePlugin::GMSH_SphericalRaisePlugin()
-{
-  ;
 }
 
 void GMSH_SphericalRaisePlugin::getName(char *name) const
@@ -89,47 +83,6 @@ void GMSH_SphericalRaisePlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "SphericalRaise failed...");
 }
 
-static void sphericalRaise(PViewData *data, List_T *list, int nbElm,
-                           int nbNod, int timeStep, double center[3], 
-                           double raise, double offset)
-{
-  double *x, *y, *z, *val, d[3], coef;
-  int nb, i, j;
-
-  if(!nbElm)
-    return;
-
-  if(timeStep < 0 || timeStep > data->getNumTimeSteps() - 1){
-    Msg(GERROR, "Invalid TimeStep (%d) in view", timeStep);
-    return;
-  }
-
-  // for each element
-  //   for each node
-  //      compute d=(x-Xc,y-Yc,z-Zc)
-  //      norm d
-  //      get nodal value val at xyz
-  //      compute (x,y,z)_new = (x,y,z)_old + (offset+raise*val)*(dx,dy,dz)
-
-  nb = List_Nbr(list) / nbElm;
-  for(i = 0; i < List_Nbr(list); i += nb) {
-    x = (double *)List_Pointer_Fast(list, i);
-    y = (double *)List_Pointer_Fast(list, i + nbNod);
-    z = (double *)List_Pointer_Fast(list, i + 2 * nbNod);
-    val = (double *)List_Pointer_Fast(list, i + 3 * nbNod);
-    for(j = 0; j < nbNod; j++) {
-      d[0] = x[j] - center[0];
-      d[1] = y[j] - center[1];
-      d[2] = z[j] - center[2];
-      norme(d);
-      coef = offset + raise * val[nbNod * timeStep + j];
-      x[j] += coef * d[0];
-      y[j] += coef * d[1];
-      z[j] += coef * d[2];
-    }
-  }
-}
-
 PView *GMSH_SphericalRaisePlugin::execute(PView *v)
 {
   double center[3];
@@ -144,17 +97,55 @@ PView *GMSH_SphericalRaisePlugin::execute(PView *v)
   PView *v1 = getView(iView, v);
   if(!v1) return v;
 
-  PViewDataList *data1 = getDataList(v1);
-  if(!data1) return v;
+  PViewData *data1 = v1->getData();
 
-  sphericalRaise(data1, data1->SP, data1->NbSP, 1, timeStep, center, raise, offset);
-  sphericalRaise(data1, data1->SL, data1->NbSL, 2, timeStep, center, raise, offset);
-  sphericalRaise(data1, data1->ST, data1->NbST, 3, timeStep, center, raise, offset);
-  sphericalRaise(data1, data1->SQ, data1->NbSQ, 4, timeStep, center, raise, offset);
-  sphericalRaise(data1, data1->SS, data1->NbSS, 4, timeStep, center, raise, offset);
-  sphericalRaise(data1, data1->SH, data1->NbSH, 8, timeStep, center, raise, offset);
-  sphericalRaise(data1, data1->SI, data1->NbSI, 6, timeStep, center, raise, offset);
-  sphericalRaise(data1, data1->SY, data1->NbSY, 5, timeStep, center, raise, offset);
+  // sanity checks
+  if(timeStep < 0 || timeStep > data1->getNumTimeSteps() - 1){
+    Msg(GERROR, "Invalid TimeStep (%d) in view", timeStep);
+    return v;
+  }
+
+  // tag all the nodes with "0" (the default tag)
+  for(int step = 0; step < data1->getNumTimeSteps(); step++){
+    for(int ent = 0; ent < data1->getNumEntities(step); ent++){
+      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
+	if(data1->skipElement(step, ent, ele)) continue;
+	int numNodes = data1->getNumNodes(step, ent, ele);
+	for(int nod = 0; nod < numNodes; nod++){
+	  double x, y, z;
+	  data1->getNode(step, ent, ele, nod, x, y, z);
+	  data1->setNode(step, ent, ele, nod, x, y, z, 0);
+	}
+      }
+    }
+  }
+
+  // transform all "0" nodes
+  for(int step = 0; step < data1->getNumTimeSteps(); step++){
+    for(int ent = 0; ent < data1->getNumEntities(step); ent++){
+      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
+	if(data1->skipElement(step, ent, ele)) continue;
+	int numNodes = data1->getNumNodes(step, ent, ele);
+	for(int nod = 0; nod < numNodes; nod++){
+	  double x, y, z;
+	  int tag = data1->getNode(step, ent, ele, nod, x, y, z);
+	  if(!tag){
+	    double r[3], val;
+	    r[0] = x - center[0];
+	    r[1] = y - center[1];
+	    r[2] = z - center[2];
+	    norme(r);
+	    data1->getScalarValue(step, ent, ele, nod, val);
+	    double coef = offset + raise * val;
+	    x += coef * r[0];
+	    y += coef * r[1];
+	    z += coef * r[2];
+	    data1->setNode(step, ent, ele, nod, x, y, z, 1);
+	  }
+	}
+      }
+    }
+  }
 
   data1->finalize();
   v1->setChanged(true);

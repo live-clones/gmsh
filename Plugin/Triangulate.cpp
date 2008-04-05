@@ -1,4 +1,4 @@
-// $Id: Triangulate.cpp,v 1.47 2008-03-20 11:44:15 geuzaine Exp $
+// $Id: Triangulate.cpp,v 1.48 2008-04-05 17:49:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -40,11 +40,6 @@ extern "C"
   {
     return new GMSH_TriangulatePlugin();
   }
-}
-
-GMSH_TriangulatePlugin::GMSH_TriangulatePlugin()
-{
-  ;
 }
 
 void GMSH_TriangulatePlugin::getName(char *name) const

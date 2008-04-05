@@ -35,7 +35,7 @@ class GMSH_EigenvaluesPlugin : public GMSH_Post_Plugin
   void getInfos(char *author, char *copyright, char *helpText) const;
   void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);  
+  StringXNumber *getOption(int iopt);  
   PView *execute(PView *);
 };
 

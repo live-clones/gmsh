@@ -30,7 +30,7 @@ extern "C"
 class GMSH_ExtractPlugin : public GMSH_Post_Plugin
 {
  public:
-  GMSH_ExtractPlugin();
+  GMSH_ExtractPlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *helpText) const;
   void catchErrorMessage(char *errorMessage) const;

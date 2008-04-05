@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.36 2008-03-21 17:09:06 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.37 2008-04-05 17:49:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -43,12 +43,6 @@ extern "C"
   {
     return new GMSH_EvaluatePlugin();
   }
-}
-
-
-GMSH_EvaluatePlugin::GMSH_EvaluatePlugin()
-{
-  ;
 }
 
 void GMSH_EvaluatePlugin::getName(char *name) const

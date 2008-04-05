@@ -1,4 +1,4 @@
-// $Id: Curl.cpp,v 1.8 2008-04-05 09:21:37 geuzaine Exp $
+// $Id: Curl.cpp,v 1.9 2008-04-05 17:49:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -34,18 +34,13 @@ extern "C"
   }
 }
 
-GMSH_CurlPlugin::GMSH_CurlPlugin()
-{
-  ;
-}
-
 void GMSH_CurlPlugin::getName(char *name) const
 {
   strcpy(name, "Curl");
 }
 
 void GMSH_CurlPlugin::getInfos(char *author, char *copyright,
-                                    char *help_text) const
+			       char *help_text) const
 {
   strcpy(author, "C. Geuzaine");
   strcpy(copyright, "DGR (www.multiphysics.com)");

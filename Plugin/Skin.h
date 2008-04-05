@@ -43,12 +43,12 @@ class GMSH_SkinPlugin : public GMSH_Post_Plugin
   void skinList(List_T *inList, int inNbList, 
                 int inNbNod, int inNbFac, int fxn[6][4]);
  public:
-  GMSH_SkinPlugin();
+  GMSH_SkinPlugin(){}
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *helpText) const;
   void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);  
+  StringXNumber *getOption(int iopt);  
   PView *execute(PView *);
 };
 
