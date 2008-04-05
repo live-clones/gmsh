@@ -1,4 +1,4 @@
-// $Id: Curl.cpp,v 1.7 2008-03-20 11:44:12 geuzaine Exp $
+// $Id: Curl.cpp,v 1.8 2008-04-05 09:21:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -72,34 +72,18 @@ void GMSH_CurlPlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Curl failed...");
 }
 
-static void curl(int inNb, List_T *inList, int *outNb, List_T *outList, 
-                     int dim, int nbNod, int nbTime)
+static List_T *incrementList(PViewDataList *data2, int numEdges)
 {
-  if(!inNb) return;
-  
-  int nb = List_Nbr(inList) / inNb;
-  for(int i = 0; i < List_Nbr(inList); i += nb) {
-    double *x = (double *)List_Pointer_Fast(inList, i);
-    double *y = (double *)List_Pointer_Fast(inList, i + nbNod);
-    double *z = (double *)List_Pointer_Fast(inList, i + 2 * nbNod);
-    elementFactory factory;
-    element *element = factory.create(nbNod, dim, x, y, z);
-    if(!element) return;
-    for(int j = 0; j < 3 * nbNod; j++)
-      List_Add(outList, &x[j]);
-    for(int j = 0; j < nbTime; j++){
-      double *val = (double *)List_Pointer(inList, i + 3 * nbNod + nbNod * 3 * j);
-      for(int k = 0; k < nbNod; k++){
-        double u, v, w, f[3];
-        element->getNode(k, u, v, w);
-        element->interpolateCurl(val, u, v, w, f, 3);
-        List_Add(outList, &f[0]);
-        List_Add(outList, &f[1]);
-        List_Add(outList, &f[2]);
-      }
-    }
-    delete element;
-    (*outNb)++;
+  switch(numEdges){
+  case 0: data2->NbVP++; return data2->VP;
+  case 1: data2->NbVL++; return data2->VL;
+  case 3: data2->NbVT++; return data2->VT;
+  case 4: data2->NbVQ++; return data2->VQ;
+  case 6: data2->NbVS++; return data2->VS;
+  case 12: data2->NbVH++; return data2->VH;
+  case 9: data2->NbVI++; return data2->VI;
+  case 8: data2->NbVY++; return data2->VY;
+  default: return 0;
   }
 }
 
@@ -110,25 +94,55 @@ PView *GMSH_CurlPlugin::execute(PView *v)
   PView *v1 = getView(iView, v);
   if(!v1) return v;
 
-  PViewDataList *data1 = getDataList(v1);
-  if(!data1) return v;
+  PViewData *data1 = v1->getData();
+  if(data1->hasMultipleMeshes()){
+    Msg(GERROR, "Curl plugin cannot be run on multi-mesh views");
+    return v;
+  }
 
   PView *v2 = new PView(true);
-
   PViewDataList *data2 = getDataList(v2);
-  if(!data2) return v;
 
-  int nts = data1->getNumTimeSteps();
-  curl(data1->NbVL, data1->VL, &data2->NbVL, data2->VL, 1, 2, nts);
-  curl(data1->NbVT, data1->VT, &data2->NbVT, data2->VT, 2, 3, nts);
-  curl(data1->NbVQ, data1->VQ, &data2->NbVQ, data2->VQ, 2, 4, nts);
-  curl(data1->NbVS, data1->VS, &data2->NbVS, data2->VS, 3, 4, nts);
-  curl(data1->NbVH, data1->VH, &data2->NbVH, data2->VH, 3, 8, nts);
-  curl(data1->NbVI, data1->VI, &data2->NbVI, data2->VI, 3, 6, nts);
-  curl(data1->NbVY, data1->VY, &data2->NbVY, data2->VY, 3, 5, nts);
+  for(int ent = 0; ent < data1->getNumEntities(0); ent++){
+    for(int ele = 0; ele < data1->getNumElements(0, ent); ele++){
+      if(data1->skipElement(0, ent, ele)) continue;
+      int numComp = data1->getNumComponents(0, ent, ele);
+      if(numComp != 3) continue;
+      int numEdges = data1->getNumEdges(0, ent, ele);
+      List_T *out = incrementList(data2, numEdges);
+      if(!out) continue;
+      int numNodes = data1->getNumNodes(0, ent, ele);
+      double x[8], y[8], z[8], val[8 * 3];
+      for(int nod = 0; nod < numNodes; nod++)
+	data1->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
+      int dim = data1->getDimension(0, ent, ele);
+      elementFactory factory;
+      element *element = factory.create(numNodes, dim, x, y, z);
+      if(!element) continue;
+      for(int nod = 0; nod < numNodes; nod++) List_Add(out, &x[nod]);
+      for(int nod = 0; nod < numNodes; nod++) List_Add(out, &y[nod]);
+      for(int nod = 0; nod < numNodes; nod++) List_Add(out, &z[nod]);
+      for(int step = 0; step < data1->getNumTimeSteps(); step++){
+	for(int nod = 0; nod < numNodes; nod++)
+	  for(int comp = 0; comp < numComp; comp++)
+	    data1->getValue(step, ent, ele, nod, comp, val[numComp * nod + comp]);
+	for(int nod = 0; nod < numNodes; nod++){
+	  double u, v, w, f[3];
+	  element->getNode(nod, u, v, w);
+	  element->interpolateCurl(val, u, v, w, f, 3);
+	  List_Add(out, &f[0]);
+	  List_Add(out, &f[1]);
+	  List_Add(out, &f[2]);
+	}
+      }
+      delete element;
+    }
+  }
 
-  for(int i = 0; i < List_Nbr(data1->Time); i++)
-    List_Add(data2->Time, List_Pointer(data1->Time, i));
+  for(int i = 0; i < data1->getNumTimeSteps(); i++){
+    double time = data1->getTime(i);
+    List_Add(data2->Time, &time);
+  }
   data2->setName(data1->getName() + "_Curl");
   data2->setFileName(data1->getName() + "_Curl.pos");
   data2->finalize();

@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.15 2008-03-19 17:33:54 geuzaine Exp $
+// $Id: PViewData.cpp,v 1.16 2008-04-05 09:21:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,7 @@
 
 #include "PViewData.h"
 #include "Numeric.h"
+#include "Message.h"
 
 PViewData::PViewData()
   : _dirty(true), _fileIndex(0)
@@ -44,3 +45,13 @@ void PViewData::getScalarValue(int step, int ent, int ele, int nod, double &val)
   val = ComputeScalarRep(numComp, d);
 }
 
+void PViewData::setNode(int step, int ent, int ele, int nod, double x, double y, double z,
+			int tag)
+{
+  Msg(GERROR, "Cannot change node coordinates in this view");
+}
+
+void PViewData::setValue(int step, int ent, int ele, int nod, int comp, double val)
+{
+  Msg(GERROR, "Cannot change field value in this view");
+}

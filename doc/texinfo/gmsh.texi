@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.241 2008-03-21 09:39:43 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.242 2008-04-05 09:21:37 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 @c
@@ -230,21 +230,16 @@ Running Gmsh
 
 File formats
 
-* Gmsh mesh file formats::      
-* Gmsh post-processing file formats::  
-* Gmsh node ordering::          
+* MSH ASCII file format::       
+* MSH binary file format::      
+* Node ordering::               
+* Legacy formats::              
 
-Gmsh mesh file formats
+Legacy formats
 
-* Version 1.0::                 
-* Version 2.0 ASCII::           
-* Version 2.0 Binary::          
-
-Gmsh post-processing file formats
-
-* Parsed post-processing file format::  
-* ASCII post-processing file format::  
-* Binary post-processing file format::  
+* MSH file format version 1.0::  
+* POS ASCII file format::       
+* POS binary file format::      
 
 Programming notes
 
@@ -1873,7 +1868,7 @@ number of the elementary entities they discretize as their elementary
 region number (and 0 as their physical region number@footnote{This
 behaviour was introduced in Gmsh 2.0. In older versions, both the
 elementary and the physical region numbers would be set to the
-identification number of the elementary region.}; @ref{Gmsh mesh file
+identification number of the elementary region.}; @ref{File
 formats}). This can sometimes be inconvenient:
 
 @itemize @bullet
@@ -1898,11 +1893,10 @@ physical entities in large models usually greatly facilitates the
 manipulation of the model (e.g., using `Tools->Visibility' in the GUI)
 and the interfacing with external solvers.  
 
-In the @file{.msh} file format (@pxref{Gmsh mesh file formats}), if
-physical entities are defined, the output mesh only contains those
-elements that belong to physical entities. Other file formats each treat
-physical entities in slightly different ways, depending on their
-capability to define groups.
+In the MSH file format (@pxref{File formats}), if physical entities are
+defined, the output mesh only contains those elements that belong to
+physical entities. Other file formats each treat physical entities in
+slightly different ways, depending on their capability to define groups.
 
 @c -------------------------------------------------------------------------
 @c Mesh commands
@@ -1988,7 +1982,7 @@ mathematical function.
 A @code{Min} field specifies the size as the minimum of the sizes
 computed using other fields
 @item 
-@dots
+@dots{}
 @end itemize
 All target element sizes specified by fields can also be constrained by
 the characteristic lengths defined in the geometrical model if the
@@ -2309,9 +2303,9 @@ peculiar to 3D (lightning, element selection, etc.) or 2D plots (abscissa
 labels, etc.). Note that 2D plots can be positioned explicitly inside the
 graphical window, or be automatically positioned in order to avoid overlaps.
 
-Sample post-processing files in human-readable ``parsed'' format
-(@pxref{Parsed post-processing file format}) are available in the
-@file{tutorial} directory of Gmsh's distribution (@file{.pos} files).
+Sample post-processing files in human-readable ``parsed'' format are
+available in the @file{tutorial} directory of Gmsh's distribution
+(@file{.pos} files).
 
 @menu
 * Post-processing commands::    
@@ -2402,16 +2396,149 @@ Saves the the @var{expression}-th post-processing view in a file named
 @var{char-expression}. If the path in @var{char-expression} is not absolute,
 @var{char-expression} is appended to the path of the current file.
 
-@item View "@var{string}" @{ @var{string} ( @var{expression-list} ) @{ @var{expression-list} @}; @dots{} @};
-Creates a new post-processing view, named @code{"@var{string}"}. This is the
-easiest way to create a post-processing view, but also the least efficient
-(the view is read through Gmsh's script parser, which can become a bit slow
-if the view is very large---e.g., with one million elements). Nevertheless,
-this ``parsed'' post-processing format (explained in detail in @ref{Parsed
-post-processing file format}) is very powerful, since all the values are
-@var{expressions}. Two other formats, better suited for very large data
-sets, are described in @ref{ASCII post-processing file format}, and
-@ref{Binary post-processing file format}.
+@item View "@var{string}" @{ @var{string} < ( @var{expression-list} ) > @{ @var{expression-list} @}; @dots{} @};
+Creates a new post-processing view, named @code{"@var{string}"}.  This
+is an easy and quite powerful way to import post-processing data: all
+the values are @var{expressions}, you can embed datasets directly into
+your geometrical descriptions (see, e.g., @ref{t4.geo}), the data can be
+easily generated ``on-the-fly'' (there is no header containing @emph{a
+priori} information on the size of the dataset). The syntax is also very
+permissive, which makes it ideal for testing purposes.
+
+However this ``parsed format'' is read by Gmsh's script parser, which
+makes it inefficient if there are many elements in the dataset. Also,
+there is no connectivity information in parsed views and all the
+elements are independent (all fields can be discontinuous), so a lot of
+information can be duplicated. For large datasets, you should thus use
+the mesh-based post-processing file format described in @ref{File
+formats}, or use one of the standard formats like MED.
+
+More explicitly, the syntax for a parsed @code{View} is the following
+
+@example
+@group
+View "@var{string}" @{
+  < TIME @{ @var{expression-list} @}; >
+  @var{type} ( @var{list-of-coords} ) @{ @var{list-of-values} @};
+  @dots{}
+@};
+@end group
+@end example
+
+where the 47 object @w{@var{type}s} that can be displayed are:
+
+@smallexample
+                              @var{type}  #@var{list-of-coords}  #@var{list-of-values}
+--------------------------------------------------------------------
+Scalar point                  SP    3            1  * @var{nb-time-steps}
+Vector point                  VP    3            3  * @var{nb-time-steps}
+Tensor point                  TP    3            9  * @var{nb-time-steps}
+Scalar line                   SL    6            2  * @var{nb-time-steps}
+Vector line                   VL    6            6  * @var{nb-time-steps}
+Tensor line                   TL    6            18 * @var{nb-time-steps}
+Scalar triangle               ST    9            3  * @var{nb-time-steps}
+Vector triangle               VT    9            9  * @var{nb-time-steps}
+Tensor triangle               TT    9            27 * @var{nb-time-steps}
+Scalar quadrangle             SQ    12           4  * @var{nb-time-steps}
+Vector quadrangle             VQ    12           12 * @var{nb-time-steps}
+Tensor quadrangle             TQ    12           36 * @var{nb-time-steps}
+Scalar tetrahedron            SS    12           4  * @var{nb-time-steps}
+Vector tetrahedron            VS    12           12 * @var{nb-time-steps}
+Tensor tetrahedron            TS    12           36 * @var{nb-time-steps}
+Scalar hexahedron             SH    24           8  * @var{nb-time-steps}
+Vector hexahedron             VH    24           24 * @var{nb-time-steps}
+Tensor hexahedron             TH    24           72 * @var{nb-time-steps}
+Scalar prism                  SI    18           6  * @var{nb-time-steps}
+Vector prism                  VI    18           18 * @var{nb-time-steps}
+Tensor prism                  TI    18           54 * @var{nb-time-steps}
+Scalar pyramid                SY    15           5  * @var{nb-time-steps}
+Vector pyramid                VY    15           15 * @var{nb-time-steps}
+Tensor pyramid                TY    15           45 * @var{nb-time-steps}
+2nd order scalar line         SL2   9            3  * @var{nb-time-steps}
+2nd order vector line         VL2   9            9  * @var{nb-time-steps}
+2nd order tensor line         TL2   9            27 * @var{nb-time-steps}
+2nd order scalar triangle     ST2   18           6  * @var{nb-time-steps}
+2nd order vector triangle     VT2   18           18 * @var{nb-time-steps}
+2nd order tensor triangle     TT2   18           54 * @var{nb-time-steps}
+2nd order scalar quadrangle   SQ2   27           9  * @var{nb-time-steps}
+2nd order vector quadrangle   VQ2   27           27 * @var{nb-time-steps}
+2nd order tensor quadrangle   TQ2   27           81 * @var{nb-time-steps}
+2nd order scalar tetrahedron  SS2   30           10 * @var{nb-time-steps}
+2nd order vector tetrahedron  VS2   30           30 * @var{nb-time-steps}
+2nd order tensor tetrahedron  TS2   30           90 * @var{nb-time-steps}
+2nd order scalar hexahedron   SH2   81           27 * @var{nb-time-steps}
+2nd order vector hexahedron   VH2   81           81 * @var{nb-time-steps}
+2nd order tensor hexahedron   TH2   81           243* @var{nb-time-steps}
+2nd order scalar prism        SI2   54           18 * @var{nb-time-steps}
+2nd order vector prism        VI2   54           54 * @var{nb-time-steps}
+2nd order tensor prism        TI2   54           162* @var{nb-time-steps}
+2nd order scalar pyramid      SY2   42           14 * @var{nb-time-steps}
+2nd order vector pyramid      VY2   42           42 * @var{nb-time-steps}
+2nd order tensor pyramid      TY2   42           126* @var{nb-time-steps}
+2D text                       T2    3            arbitrary
+3D text                       T3    4            arbitrary
+@end smallexample
+
+The coordinates are given `by node', i.e.,
+
+@itemize @bullet
+@item
+@code{(@var{coord1}, @var{coord2}, @var{coord3})} for a point,
+@item 
+@code{(@var{coord1-node1}, @var{coord2-node1}, @var{coord3-node1},}@* 
+@code{ @var{coord1-node2}, @var{coord2-node2}, @var{coord3-node2})} for a line,
+@item 
+@code{(@var{coord1-node1}, @var{coord2-node1}, @var{coord3-node1},}@*
+@code{ @var{coord1-node2}, @var{coord2-node2}, @var{coord3-node2},}@*
+@code{ @var{coord1-node3}, @var{coord2-node3}, @var{coord3-node3})} for a triangle,
+@item
+etc.
+@end itemize
+
+The ordering of the nodes is given in @ref{Node ordering}. For second
+order elements, the first order nodes are given first, followed by the nodes
+associated with the edges, followed by the nodes associated with the
+quadrangular faces (if any), followed by the nodes associated with the
+volume (if any). The ordering of these additional nodes follows the ordering
+of the edges and quadrangular faces given in @ref{Node ordering}.
+
+The values are given by time step, by node and by component, i.e.:
+@example
+@var{comp1-node1-time1}, @var{comp2-node1-time1}, @var{comp3-node1-time1},
+@var{comp1-node2-time1}, @var{comp2-node2-time1}, @var{comp3-node2-time1},
+@var{comp1-node3-time1}, @var{comp2-node3-time1}, @var{comp3-node3-time1},
+@var{comp1-node1-time2}, @var{comp2-node1-time2}, @var{comp3-node1-time2},
+@var{comp1-node2-time2}, @var{comp2-node2-time2}, @var{comp3-node2-time2},
+@var{comp1-node3-time2}, @var{comp2-node3-time2}, @var{comp3-node3-time2},
+@dots{}
+@end example
+
+For the 2D text objects, the two first @w{@var{expression}s} in
+@var{list-of-coords} give the X-Y position of the string in screen
+coordinates, measured from the top-left corner of the window. If the first
+(respectively second) @var{expression} is negative, the position is measured
+from the right (respectively bottom) edge of the window. If the value of the
+first (respectively second) @var{expression} is larger than 99999, the
+string is centered horizontally (respectively vertically). If the third
+@var{expression} is equal to zero, the text is aligned bottom-left and
+displayed using the default font and size. Otherwise, the third
+@var{expression} is converted into an integer whose eight lower bits give
+the font size, whose eight next bits select the font (the index corresponds
+to the position in the font menu in the GUI), and whose eight next bits
+define the text alignment (0=bottom-left, 1=bottom-center, 2=bottom-right,
+3=top-left, 4=top-center, 5=top-right, 6=center-left, 7=center-center,
+8=center-right).
+
+For the 3D text objects, the three first @w{@var{expression}s} in
+@var{list-of-coords} give the XYZ position of the string in model (real
+world) coordinates.  The fourth @var{expression} has the same meaning as the
+third @var{expression} in 2D text objects.
+
+For both 2D and 3D text objects, the @var{list-of-values} can contain an
+arbitrary number of @w{@var{char-expression}s}.
+
+The optional @code{TIME} list can contain a list of expressions giving the
+value of the time (or any other variable) for which an evolution was saved.
 @end ftable
 
 @c -------------------------------------------------------------------------
@@ -2828,193 +2955,43 @@ below.)
 
 @cindex File formats
 
-This chapter describes Gmsh's native mesh and post-processing file
-formats. (These formats have version numbers that are independent of Gmsh's
-main version number.)
-
-All non-parsed file formats have sections enclosed between @code{$Key} and
-@code{$EndKey} tags.
+This chapter describes Gmsh's native ``MSH'' file format, used to allows
+store meshes and associated post-processing datasets. The MSH format
+exists in two flavor: ASCII and binary. The format has a version number
+(currently 2.0) that is independent of Gmsh's main version number.
 
 @menu
-* Gmsh mesh file formats::      
-* Gmsh post-processing file formats::  
-* Gmsh node ordering::          
+* MSH ASCII file format::       
+* MSH binary file format::      
+* Node ordering::               
+* Legacy formats::              
 @end menu
 
 @c -------------------------------------------------------------------------
-@c Gmsh mesh file formats
+@c MSH ASCII file format
 @c -------------------------------------------------------------------------
 
-@node Gmsh mesh file formats, Gmsh post-processing file formats, File formats, File formats
-@section Gmsh mesh file formats
+@node MSH ASCII file format, MSH binary file format, File formats, File formats
+@section MSH ASCII file format
 
 @cindex Mesh, file format
 @cindex File format, mesh
-@cindex @file{.msh} file
+@cindex MSH file
 
-Please note that the list of nodes and elements in Gmsh's mesh files do
-not have to be dense or ordered (i.e., the node and element numbers do
-not have to be given in a consecutive or even an ordered way).
+The MSH ASCII file format contains one mandatory section giving
+information about the file (@code{$MeshFormat}), followed by several
+optional sections defining the nodes (@code{$Nodes}), elements
+(@code{$Elements}), region names (@code{$PhysicalName}) or
+post-processing datasets (@code{$NodeData}, @code{$ElementData},
+@code{$ElememtNodeData}). Sections can be repeated in the same file, and
+post-processing sections can be put into separate files (e.g. one file
+per time step).
 
-@menu
-* Version 1.0::                 
-* Version 2.0 ASCII::           
-* Version 2.0 Binary::          
-@end menu
-
-@c .........................................................................
-@c Version 1.0
-@c .........................................................................
-
-@node Version 1.0, Version 2.0 ASCII, Gmsh mesh file formats, Gmsh mesh file formats
-@subsection Version 1.0
-
-The @file{.msh} file format, version 1.0, is Gmsh's old native mesh file
-format, now superseded by the format described in @ref{Version 2.0 ASCII}.
-
-In the @file{.msh} file format, version 1.0, the file is divided in two
-sections, defining the nodes (@code{$NOD}-@code{$ENDNOD}) and the elements
-(@code{$ELM}-@code{$ENDELM}) in the mesh:
-
-@example
-$NOD
-@var{number-of-nodes}
-@var{node-number} @var{x-coord} @var{y-coord} @var{z-coord}
-@dots{}
-$ENDNOD
-$ELM
-@var{number-of-elements}
-@var{elm-number} @var{elm-type} @var{reg-phys} @var{reg-elem} @var{number-of-nodes} @var{node-number-list}
-@dots{}
-$ENDELM
-@end example
-
-@noindent
-where
-@table @code
-@item @var{number-of-nodes}
-is the number of nodes in the mesh.
-
-@item @var{node-number}
-is the number (index) of the @var{n}-th node in the mesh;
-@var{node-number} must be a postive (non-zero) integer. Note that the
-@w{@var{node-number}s} do not necessarily have to form a dense nor an
-ordered sequence.
-
-@item @var{x-coord} @var{y-coord} @var{z-coord}
-are the floating point values giving the X, Y and Z coordinates of the
-@var{n}-th node.
-
-@item @var{number-of-elements}
-is the number of elements in the mesh.
-
-@item @var{elm-number}
-is the number (index) of the @var{n}-th element in the mesh;
-@var{elm-number} must be a postive (non-zero) integer. Note that the
-@w{@var{elm-number}s} do not necessarily have to form a dense nor an
-ordered sequence.
-
-@item @var{elm-type}
-defines the geometrical type of the @var{n}-th element:
-@table @code
-@item 1
-2-node line.
-@item 2
-3-node triangle.
-@item 3
-4-node quadrangle.
-@item 4
-4-node tetrahedron.
-@item 5
-8-node hexahedron.
-@item 6
-6-node prism.
-@item 7
-5-node pyramid.
-@item 8
-3-node second order line (2 nodes associated with the vertices and 1
-with the edge).
-@item 9
-6-node second order triangle (3 nodes associated with the vertices and 3
-with the edges).
-@item 10
-9-node second order quadrangle (4 nodes associated with the vertices, 4
-with the edges and 1 with the face).
-@item 11
-10-node second order tetrahedron (4 nodes associated with the vertices
-and 6 with the edges).
-@item 12
-27-node second order hexahedron (8 nodes associated with the vertices,
-12 with the edges, 6 with the faces and 1 with the volume).
-@item 13
-18-node second order prism (6 nodes associated with the vertices, 9 with
-the edges and 3 with the quadrangular faces).
-@item 14
-14-node second order pyramid (5 nodes associated with the vertices, 8
-with the edges and 1 with the quadrangular face).
-@item 15
-1-node point.
-@item 16
-8-node second order quadrangle (4 nodes associated with the vertices and
-4 with the edges).
-@item 17
-20-node second order hexahedron (8 nodes associated with the vertices
-and 12 with the edges).
-@item 18
-15-node second order prism (6 nodes associated with the vertices and 9
-with the edges).
-@item 19
-13-node second order pyramid (5 nodes associated with the vertices and 8
-with the edges).
-@end table
-See below for the ordering of the nodes.
-
-@item @var{reg-phys}
-is the number of the physical entity to which the element belongs;
-@var{reg-phys} must be a postive integer, or zero. If @var{reg-phys} is
-equal to zero, the element is considered not to belong to any physical
-entity.
-
-@item @var{reg-elem}
-is the number of the elementary entity to which the element belongs;
-@var{reg-elem} must be a postive (non-zero) integer.
-
-@item @var{number-of-nodes}
-is the number of nodes for the @var{n}-th element. This is redundant, but
-kept for backward compatibility.
-
-@item @var{node-number-list}
-is the list of the @var{number-of-nodes} node numbers of the @var{n}-th
-element. The ordering of the nodes is given in @ref{Gmsh node ordering}; for
-second order elements, the first order nodes are given first, followed by
-the nodes associated with the edges, followed by the nodes associated with
-the quadrangular faces (if any), followed by the nodes associated with the
-volume (if any). The ordering of these additional nodes follows the ordering
-of the edges and quadrangular faces given in @ref{Gmsh node ordering}.
-@end table
-
-@c .........................................................................
-@c Version 2.0 ASCII
-@c .........................................................................
-
-@node Version 2.0 ASCII, Version 2.0 Binary, Version 1.0, Gmsh mesh file formats
-@subsection Version 2.0 ASCII
-
-The version 2.0 of the @file{.msh} file format is Gmsh's new native mesh
-file format. It is very similar to the old one (@pxref{Version 1.0}),
-but is more general: it contains information about itself and allows to
-associate an arbitrary number of integer tags with each element. Ialso
-exists in both ASCII and binary form.
-
-The @file{.msh} file format, version 2.0, is divided in three main
-sections, defining the file format
-(@code{$MeshFormat}-@code{$EndMeshFormat}), the nodes
-(@code{$Nodes}-@code{$EndNodes}) and the elements
-(@code{$Elements}-@code{$EndElements}) in the mesh:
+The format is defined as follows:
 
 @example
 $MeshFormat
-2.0 @var{file-type} @var{data-size}
+@var{version-number} @var{file-type} @var{data-size}
 $EndMeshFormat
 $Nodes
 @var{number-of-nodes}
@@ -3026,11 +3003,35 @@ $Elements
 @var{elm-number} @var{elm-type} @var{number-of-tags} < @var{tag} > @dots{} @var{node-number-list}
 @dots{}
 $EndElements
+$PhysicalNames
+@var{number-of-names}
+@var{phyical-number} "@var{physical-name}"
+@dots{}
+$EndPhysicalNames
+$NodeData
+"@var{view-name}"
+@var{step} @var{time} @var{partition} @var{interpolation-id} @var{number-of-components} @var{number-of-nodes}
+@var{node-number} @var{value} @dots{}
+@dots{}
+$EndNodeData
+$ElementData
+@var{step} @var{time} @var{partition} @var{interpolation-id} @var{number-of-components} @var{number-of-elements}
+@var{elm-number} @var{value} @dots{}
+@dots{}
+$EndElementData
+$ElementNodeData
+@var{step} @var{time} @var{partition} @var{interpolation-id} @var{number-of-components} @var{number-of-elements}
+@var{elm-number} @var{number-of-nodes-per-element} @var{value} @dots{}
+@dots{}
+$ElementEndNodeData
 @end example
 
 @noindent
 where
 @table @code
+@item @var{version-number}
+is a real number equal to 2.0
+
 @item @var{file-type}
 is an integer equal to 0 in the ASCII file format.
 
@@ -3130,38 +3131,63 @@ integers, or zero. A zero tag is equivalent to no tag.
 
 @item @var{node-number-list}
 is the list of the node numbers of the @var{n}-th element. The ordering of
-the nodes is given in @ref{Gmsh node ordering}; for second order elements,
+the nodes is given in @ref{Node ordering}; for second order elements,
 the first order nodes are given first, followed by the nodes associated with
 the edges, followed by the nodes associated with the quadrangular faces (if
 any), followed by the nodes associated with the volume (if any). The
 ordering of these additional nodes follows the ordering of the edges and
-quadrangular faces given in @ref{Gmsh node ordering}.
+quadrangular faces given in @ref{Node ordering}.
+
+@item @var{view-name}
+gives the name of the post-processing dataset
+
+@item @var{step}
+is an integer giving an index for the view (e.g. a time step number)
+
+@item @var{time}
+is a real number associating some floating point to the step value
+
+@item @var{partition}
+is an integer giving a partition index for the view data. If another
+view is loaded with the same name, but a different partition index, then
+their contents will be merged.
+
+@item @var{interpolation-id}
+index of an interpolation scheme used to interpret the view values
+
+@item @var{number-of-components} 
+gives the number of components of the data in the view
+
+@item @var{number-of-nodes}
+gives the number of nodes in a node-based view
+
+@item @var{number-of-elements}
+gives the number of elements in an element-based view
+
+@item @var{number-of-nodes-per-elements}
+gives the number of node values for an element in an element-based view
+
+@item @var{value}
+is a real number giving the value associated with a node or an
+element. For @code{NodeData} (respectively @code{ElementData}) views,
+there are @var{number-of-components} values per node (resp. per
+element). For @code{ElementNodeData} views, there are
+@var{number-of-components} times @var{number-of-nodes-per-elements}
+values per element.
 @end table
 
-Additional sections can be present in the file, which an external parser
-can simply ignore. One such additional section
-(@code{$PhysicalNames}-@code{$EndPhysicalNames}) associates names with
-physical entity identification numbers:
-@example
-$PhysicalNames
-@var{number-of-names}
-@var{phyical-number} "@var{physical-name}"
-$EndPhysicalNames
-@end example
+@c -------------------------------------------------------------------------
+@c MSH binary file format
+@c -------------------------------------------------------------------------
 
-@c .........................................................................
-@c Version 2.0 BINARY
-@c .........................................................................
+@node MSH binary file format, Node ordering, MSH ASCII file format, File formats
+@section MSH binary file format
 
-@node Version 2.0 Binary,  , Version 2.0 ASCII, Gmsh mesh file formats
-@subsection Version 2.0 Binary
-
-The binary file format is similar to the ASCII format described in
-@ref{Version 2.0 ASCII}:
+The binary file format is similar to the ASCII format described above:
 
 @example
 $MeshFormat
-2.0 @var{file-type} @var{data-size}
+@var{version-number} @var{file-type} @var{data-size}
 @var{one-binary}
 $EndMeshFormat
 $Nodes
@@ -3176,11 +3202,17 @@ $Elements
 @var{elements-binary}
 @dots{}
 $EndElements
+
+[ all other sections are identical to ASCII, except that @var{node-number},
+  @var{elm-number}, @var{number-of-nodes} and @var{values} are written in binary ]
 @end example
 
 @noindent
 where
 @table @code
+@item @var{version-number}
+is a real number equal to 2.0.
+
 @item @var{file-type}
 is an integer equal to 1.
 
@@ -3254,449 +3286,21 @@ for(i = 0; i < number_of_triangles; i++)@{
 @end example
 @end table
 
-The same additional sections as in the ASCII format can be present in
-the file.
-
 @c -------------------------------------------------------------------------
-@c Gmsh post-processing file formats
+@c Node ordering
 @c -------------------------------------------------------------------------
 
-@node Gmsh post-processing file formats, Gmsh node ordering, Gmsh mesh file formats, File formats
-@section Gmsh post-processing file formats
-
-@cindex @file{.pos} file
-
-Gmsh can read and write data sets in three different file formats: the
-``parsed'', ``ASCII'' and ``binary'' file formats. The parsed format is the
-oldest and most flexible, but also the slowest to read/write. The ASCII and
-binary formats are less flexible but allow for faster read/write operations,
-which is useful for (very) large data sets.
-
-Gmsh can convert any format to any other, either in a script (cf. @code{Save
-View} and @code{PostProcessing.Format} in @ref{Post-processing commands},
-and @ref{Post-processing options}, respectively) or in the graphical user
-interface (using the `View->Save As' menu).
-
-@menu
-* Parsed post-processing file format::  
-* ASCII post-processing file format::  
-* Binary post-processing file format::  
-@end menu
-
-@c .........................................................................
-@c Parsed post-processing file format
-@c .........................................................................
-
-@node Parsed post-processing file format, ASCII post-processing file format, Gmsh post-processing file formats, Gmsh post-processing file formats
-@subsection Parsed post-processing file format
-
-@cindex Post-processing, parsed file format
-@cindex File format, post-processing, parsed
-@cindex @file{.pos} file
-
-Gmsh's oldest post-processing format (``parsed'') is read by Gmsh's script
-parser (see also @ref{Post-processing commands}). You can thus, for example,
-embed parsed post-processing views directly into your geometrical
-descriptions (see, e.g., @ref{t4.geo}). 
-
-The parsed format is very powerful, since all the values are
-@var{expressions}, and it can be easily generated ``on-the-fly'', as there
-is no header containing @emph{a priori} information on the size of the data
-set. Its syntax is also very permissive, which makes it ideal for testing
-purposes. Its main disadvantage resides in the overhead introduced by the
-parser, which makes loading a view in parsed format slower than loading a
-view in ASCII or binary format. This is only a disadvantage for very large
-data sets, though.
-
-A post-processing view in parsed format is defined as follows (there can be
-one or more views in the same file):
-
-@example
-@group
-View "@var{string}" @{
-  < TIME @{ @var{expression-list} @}; >
-  @var{type} ( @var{list-of-coords} ) @{ @var{list-of-values} @};
-  @dots{}
-@};
-@end group
-@end example
-
-where the 47 object @w{@var{type}s} that can be displayed are:
-
-@example
-                                 @var{type}  #@var{list-of-coords}  #@var{list-of-values}
---------------------------------------------------------------------
-Scalar point                     SP    3            1  * @var{nb-time-steps}
-Vector point                     VP    3            3  * @var{nb-time-steps}
-Tensor point                     TP    3            9  * @var{nb-time-steps}
-Scalar line                      SL    6            2  * @var{nb-time-steps}
-Vector line                      VL    6            6  * @var{nb-time-steps}
-Tensor line                      TL    6            18 * @var{nb-time-steps}
-Scalar triangle                  ST    9            3  * @var{nb-time-steps}
-Vector triangle                  VT    9            9  * @var{nb-time-steps}
-Tensor triangle                  TT    9            27 * @var{nb-time-steps}
-Scalar quadrangle                SQ    12           4  * @var{nb-time-steps}
-Vector quadrangle                VQ    12           12 * @var{nb-time-steps}
-Tensor quadrangle                TQ    12           36 * @var{nb-time-steps}
-Scalar tetrahedron               SS    12           4  * @var{nb-time-steps}
-Vector tetrahedron               VS    12           12 * @var{nb-time-steps}
-Tensor tetrahedron               TS    12           36 * @var{nb-time-steps}
-Scalar hexahedron                SH    24           8  * @var{nb-time-steps}
-Vector hexahedron                VH    24           24 * @var{nb-time-steps}
-Tensor hexahedron                TH    24           72 * @var{nb-time-steps}
-Scalar prism                     SI    18           6  * @var{nb-time-steps}
-Vector prism                     VI    18           18 * @var{nb-time-steps}
-Tensor prism                     TI    18           54 * @var{nb-time-steps}
-Scalar pyramid                   SY    15           5  * @var{nb-time-steps}
-Vector pyramid                   VY    15           15 * @var{nb-time-steps}
-Tensor pyramid                   TY    15           45 * @var{nb-time-steps}
-Second order scalar line         SL2   9            3  * @var{nb-time-steps}
-Second order vector line         VL2   9            9  * @var{nb-time-steps}
-Second order tensor line         TL2   9            27 * @var{nb-time-steps}
-Second order scalar triangle     ST2   18           6  * @var{nb-time-steps}
-Second order vector triangle     VT2   18           18 * @var{nb-time-steps}
-Second order tensor triangle     TT2   18           54 * @var{nb-time-steps}
-Second order scalar quadrangle   SQ2   27           9  * @var{nb-time-steps}
-Second order vector quadrangle   VQ2   27           27 * @var{nb-time-steps}
-Second order tensor quadrangle   TQ2   27           81 * @var{nb-time-steps}
-Second order scalar tetrahedron  SS2   30           10 * @var{nb-time-steps}
-Second order vector tetrahedron  VS2   30           30 * @var{nb-time-steps}
-Second order tensor tetrahedron  TS2   30           90 * @var{nb-time-steps}
-Second order scalar hexahedron   SH2   81           27 * @var{nb-time-steps}
-Second order vector hexahedron   VH2   81           81 * @var{nb-time-steps}
-Second order tensor hexahedron   TH2   81           243* @var{nb-time-steps}
-Second order scalar prism        SI2   54           18 * @var{nb-time-steps}
-Second order vector prism        VI2   54           54 * @var{nb-time-steps}
-Second order tensor prism        TI2   54           162* @var{nb-time-steps}
-Second order scalar pyramid      SY2   42           14 * @var{nb-time-steps}
-Second order vector pyramid      VY2   42           42 * @var{nb-time-steps}
-Second order tensor pyramid      TY2   42           126* @var{nb-time-steps}
-2D text                          T2    3            arbitrary
-3D text                          T3    4            arbitrary
-@end example
-
-The coordinates are given `by node'@footnote{Beware that this is different
-from the ordering of the node coordinates in the ASCII and binary
-post-processing file formats.}, i.e.,
-
-@itemize @bullet
-@item
-@code{(@var{coord1}, @var{coord2}, @var{coord3})} for a point,
-@item 
-@code{(@var{coord1-node1}, @var{coord2-node1}, @var{coord3-node1},}@* 
-@code{ @var{coord1-node2}, @var{coord2-node2}, @var{coord3-node2})} for a line,
-@item 
-@code{(@var{coord1-node1}, @var{coord2-node1}, @var{coord3-node1},}@*
-@code{ @var{coord1-node2}, @var{coord2-node2}, @var{coord3-node2},}@*
-@code{ @var{coord1-node3}, @var{coord2-node3}, @var{coord3-node3})} for a triangle,
-@item
-etc.
-@end itemize
-
-The ordering of the nodes is given in @ref{Gmsh node ordering}. For second
-order elements, the first order nodes are given first, followed by the nodes
-associated with the edges, followed by the nodes associated with the
-quadrangular faces (if any), followed by the nodes associated with the
-volume (if any). The ordering of these additional nodes follows the ordering
-of the edges and quadrangular faces given in @ref{Gmsh node ordering}.
-
-The values are given by time step, by node and by component, i.e.:
-@example
-@var{comp1-node1-time1}, @var{comp2-node1-time1}, @var{comp3-node1-time1},
-@var{comp1-node2-time1}, @var{comp2-node2-time1}, @var{comp3-node2-time1},
-@var{comp1-node3-time1}, @var{comp2-node3-time1}, @var{comp3-node3-time1},
-@var{comp1-node1-time2}, @var{comp2-node1-time2}, @var{comp3-node1-time2},
-@var{comp1-node2-time2}, @var{comp2-node2-time2}, @var{comp3-node2-time2},
-@var{comp1-node3-time2}, @var{comp2-node3-time2}, @var{comp3-node3-time2},
-@dots{}
-@end example
-
-For the 2D text objects, the two first @w{@var{expression}s} in
-@var{list-of-coords} give the X-Y position of the string in screen
-coordinates, measured from the top-left corner of the window. If the first
-(respectively second) @var{expression} is negative, the position is measured
-from the right (respectively bottom) edge of the window. If the value of the
-first (respectively second) @var{expression} is larger than 99999, the
-string is centered horizontally (respectively vertically). If the third
-@var{expression} is equal to zero, the text is aligned bottom-left and
-displayed using the default font and size. Otherwise, the third
-@var{expression} is converted into an integer whose eight lower bits give
-the font size, whose eight next bits select the font (the index corresponds
-to the position in the font menu in the GUI), and whose eight next bits
-define the text alignment (0=bottom-left, 1=bottom-center, 2=bottom-right,
-3=top-left, 4=top-center, 5=top-right, 6=center-left, 7=center-center,
-8=center-right).
-
-For the 3D text objects, the three first @w{@var{expression}s} in
-@var{list-of-coords} give the XYZ position of the string in model (real
-world) coordinates.  The fourth @var{expression} has the same meaning as the
-third @var{expression} in 2D text objects.
-
-For both 2D and 3D text objects, the @var{list-of-values} can contain an
-arbitrary number of @w{@var{char-expression}s}.
-
-The optional @code{TIME} list can contain a list of expressions giving the
-value of the time (or any other variable) for which an evolution was saved.
-
-@c .........................................................................
-@c ASCII post-processing file format
-@c .........................................................................
-
-@node ASCII post-processing file format, Binary post-processing file format, Parsed post-processing file format, Gmsh post-processing file formats
-@subsection ASCII post-processing file format
-
-@cindex Post-processing, ASCII file format
-@cindex File format, post-processing, ASCII
-
-The ASCII post-processing file is divided in several sections: one format
-section, enclosed between @code{$PostFormat}-@code{$EndPostFormat} tags, and
-one or more post-processing views, enclosed between
-@code{$View}-@code{$EndView} tags:
-
-@example
-$PostFormat
-1.4 @var{file-type} @var{data-size}
-$EndPostFormat
-$View
-@var{view-name} @var{nb-time-steps}
-@var{nb-scalar-points} @var{nb-vector-points} @var{nb-tensor-points}
-@var{nb-scalar-lines} @var{nb-vector-lines} @var{nb-tensor-lines}
-@var{nb-scalar-triangles} @var{nb-vector-triangles} @var{nb-tensor-triangles}
-@var{nb-scalar-quadrangles} @var{nb-vector-quadrangles} @var{nb-tensor-quadrangles}
-@var{nb-scalar-tetrahedra} @var{nb-vector-tetrahedra} @var{nb-tensor-tetrahedra}
-@var{nb-scalar-hexahedra} @var{nb-vector-hexahedra} @var{nb-tensor-hexahedra}
-@var{nb-scalar-prisms} @var{nb-vector-prisms} @var{nb-tensor-prisms}
-@var{nb-scalar-pyramids} @var{nb-vector-pyramids} @var{nb-tensor-pyramids}
-@var{nb-scalar-lines2} @var{nb-vector-lines2} @var{nb-tensor-lines2}
-@var{nb-scalar-triangles2} @var{nb-vector-triangles2} @var{nb-tensor-triangles2}
-@var{nb-scalar-quadrangles2} @var{nb-vector-quadrangles2} @var{nb-tensor-quadrangles2}
-@var{nb-scalar-tetrahedra2} @var{nb-vector-tetrahedra2} @var{nb-tensor-tetrahedra2}
-@var{nb-scalar-hexahedra2} @var{nb-vector-hexahedra2} @var{nb-tensor-hexahedra2}
-@var{nb-scalar-prisms2} @var{nb-vector-prisms2} @var{nb-tensor-prisms2}
-@var{nb-scalar-pyramids2} @var{nb-vector-pyramids2} @var{nb-tensor-pyramids2}
-@var{nb-text2d} @var{nb-text2d-chars} @var{nb-text3d} @var{nb-text3d-chars}
-@var{time-step-values}
-< @var{scalar-point-value} > @dots{} < @var{vector-point-value} > @dots{} 
-    < @var{tensor-point-value} > @dots{}
-< @var{scalar-line-value} > @dots{} < @var{vector-line-value} > @dots{} 
-    < @var{tensor-line-value} > @dots{}
-< @var{scalar-triangle-value} > @dots{} < @var{vector-triangle-value} > @dots{}
-    < @var{tensor-triangle-value} > @dots{}
-< @var{scalar-quadrangle-value} > @dots{} < @var{vector-quadrangle-value} > @dots{}
-    < @var{tensor-quadrangle-value} > @dots{}
-< @var{scalar-tetrahedron-value} > @dots{} < @var{vector-tetrahedron-value} > @dots{}
-    < @var{tensor-tetrahedron-value} > @dots{}
-< @var{scalar-hexahedron-value} > @dots{} < @var{vector-hexahedron-value} > @dots{}
-    < @var{tensor-hexahedron-value} > @dots{}
-< @var{scalar-prism-value} > @dots{} < @var{vector-prism-value} > @dots{}
-    < @var{tensor-prism-value} > @dots{}
-< @var{scalar-pyramid-value} > @dots{} < @var{vector-pyramid-value} > @dots{}
-    < @var{tensor-pyramid-value} > @dots{}
-< @var{scalar-line2-value} > @dots{} < @var{vector-line2-value} > @dots{}
-    < @var{tensor-line2-value} > @dots{}
-< @var{scalar-triangle2-value} > @dots{} < @var{vector-triangle2-value} > @dots{}
-    < @var{tensor-triangle2-value} > @dots{}
-< @var{scalar-quadrangle2-value} > @dots{} < @var{vector-quadrangle2-value} > @dots{}
-    < @var{tensor-quadrangle2-value} > @dots{}
-< @var{scalar-tetrahedron2-value} > @dots{} < @var{vector-tetrahedron2-value} > @dots{}
-    < @var{tensor-tetrahedron2-value} > @dots{}
-< @var{scalar-hexahedron2-value} > @dots{} < @var{vector-hexahedron2-value} > @dots{}
-    < @var{tensor-hexahedron2-value} > @dots{}
-< @var{scalar-prism2-value} > @dots{} < @var{vector-prism2-value} > @dots{}
-    < @var{tensor-prism2-value} > @dots{}
-< @var{scalar-pyramid2-value} > @dots{} < @var{vector-pyramid2-value} > @dots{}
-    < @var{tensor-pyramid2-value} > @dots{}
-< @var{text2d} > @dots{} < @var{text2d-chars} > @dots{}
-< @var{text3d} > @dots{} < @var{text3d-chars} > @dots{}
-$EndView
-@end example
-
-@noindent
-where
-@table @code
-@item @var{file-type}
-is an integer equal to 0 in the ASCII file format.
-
-@item @var{data-size}
-is an integer equal to the size of the floating point numbers used in the
-file (usually, @var{data-size} = sizeof(double)).
-
-@item @var{view-name}
-is a string containing the name of the view (max. 256 characters).
-
-@item @var{nb-time-steps}
-is an integer giving the number of time steps in the view.
-
-@item @var{nb-scalar-points}
-@item @var{nb-vector-points}
-@item @dots{}
-are integers giving the number of scalar points, vector points, @dots{}, in
-the view.
-
-@item @var{nb-text2d}
-@item @var{nb-text3d}
-are integers giving the number of 2D and 3D text strings in the
-view. 
-
-@item @var{nb-text2d-chars}
-@item @var{nb-text3d-chars}
-are integers giving the total number of characters in the 2D and 3D strings.
-
-@item @var{time-step-values}
-is a list of @var{nb-time-steps} double precision numbers giving the value
-of the time (or any other variable) for which an evolution was saved.
-
-@item @var{scalar-point-value}
-@item @var{vector-point-value}
-@item @dots{}
-are lists of double precision numbers giving the node coordinates and the
-values associated with the nodes of the @var{nb-scalar-points} scalar
-points, @var{nb-vector-points} vector points, @dots{}, for each of the
-@var{time-step-values}.
-
-For example, @var{vector-triangle-value} is defined as:
-@example
-@var{coord1-node1} @var{coord1-node2} @var{coord1-node3}
-@var{coord2-node1} @var{coord2-node2} @var{coord2-node3}
-@var{coord3-node1} @var{coord3-node2} @var{coord3-node3}
-@var{comp1-node1-time1} @var{comp2-node1-time1} @var{comp3-node1-time1}
-@var{comp1-node2-time1} @var{comp2-node2-time1} @var{comp3-node2-time1}
-@var{comp1-node3-time1} @var{comp2-node3-time1} @var{comp3-node3-time1}
-@var{comp1-node1-time2} @var{comp2-node1-time2} @var{comp3-node1-time2}
-@var{comp1-node2-time2} @var{comp2-node2-time2} @var{comp3-node2-time2}
-@var{comp1-node3-time2} @var{comp2-node3-time2} @var{comp3-node3-time2}
-@dots{}
-@end example
-
-The ordering of the nodes is given in @ref{Gmsh node ordering}. For second
-order elements, the first order nodes are given first, followed by the nodes
-associated with the edges, followed by the nodes associated with the
-quadrangular faces (if any), followed by the nodes associated with the
-volume (if any). The ordering of these additional nodes follows the ordering
-of the edges and quadrangular faces given in @ref{Gmsh node ordering}.
-
-@item @var{text2d}
-is a list of 4 double precision numbers:
-@example
-@var{coord1} @var{coord2} @var{style} @var{index}
-@end example
-where @var{coord1} and @var{coord2} give the X-Y position of the 2D string
-in screen coordinates (measured from the top-left corner of the window) and
-where @var{index} gives the starting index of the string in
-@var{text2d-chars}. If @var{coord1} (respectively @var{coord2}) is negative,
-the position is measured from the right (respectively bottom) edge of the
-window. If @var{coord1} (respectively @var{coord2}) is larger than 99999,
-the string is centered horizontally (respectively vertically).  If
-@var{style} is equal to zero, the text is aligned bottom-left and displayed
-using the default font and size. Otherwise, @var{style} is converted into an
-integer whose eight lower bits give the font size, whose eight next bits
-select the font (the index corresponds to the position in the font menu in
-the GUI), and whose eight next bits define the text alignment
-(0=bottom-left, 1=bottom-center, 2=bottom-right, 3=top-left, 4=top-center,
-5=top-right, 6=center-left, 7=center-center, 8=center-right).
-
-@item @var{text2d-chars}
-is a list of @var{nb-text2d-chars} characters. Substrings are separated with
-the null `@code{\0}' character.
-
-@item @var{text3d}
-is a list of 5 double precision numbers
-@example
-@var{coord1} @var{coord2} @var{coord3} @var{style} @var{index}
-@end example
-where @var{coord1}, @var{coord2} and @var{coord3} give the XYZ coordinates
-of the string in model (real world) coordinates, @var{index} gives the
-starting index of the string in @var{text3d-chars}, and @var{style} has the
-same meaning as in @var{text2d}.
-
-@item @var{text3d-chars}
-is a list of @var{nb-text3d-chars} chars. Substrings are separated with the
-null `@code{\0}' character.
-@end table
-
-@c .........................................................................
-@c Binary post-processing file format
-@c .........................................................................
-
-@node Binary post-processing file format,  , ASCII post-processing file format, Gmsh post-processing file formats
-@subsection Binary post-processing file format
-
-@cindex Post-processing, binary file format
-@cindex File format, post-processing, binary
-
-The binary post-processing file format is the same as the ASCII file format
-described in @ref{ASCII post-processing file format}, except that:
-
-@enumerate
-@item
-@var{file-type} equals 1.
-@item 
-all lists of floating point numbers and characters are written in binary
-format
-@item
-there is an additional integer, of value 1, written before
-@var{time-step-values}. This integer is used for detecting if the computer
-on which the binary file was written and the computer on which the file is
-read are of the same type (little or big endian).
-@end enumerate
-
-Here is a pseudo C code to write a post-processing file in binary format:
-
-@example
-int one = 1;
-
-fprintf(file, "$PostFormat\n");
-fprintf(file, "%g %d %d\n", 1.4, 1, sizeof(double));
-fprintf(file, "$EndPostFormat\n");
-fprintf(file, "$View\n");
-fprintf(file, "%s %d "
-  "%d %d %d %d %d %d %d %d %d "
-  "%d %d %d %d %d %d %d %d %d "
-  "%d %d %d %d %d %d %d %d %d "
-  "%d %d %d %d %d %d %d %d %d "
-  "%d %d %d %d %d %d %d %d %d "
-  "%d %d %d %d\n", 
-  view-name, nb-time-steps,
-  nb-scalar-points, nb-vector-points, nb-tensor-points,
-  nb-scalar-lines, nb-vector-lines, nb-tensor-lines,
-  nb-scalar-triangles, nb-vector-triangles, nb-tensor-triangles,
-  nb-scalar-quadrangles, nb-vector-quadrangles, nb-tensor-quadrangles,
-  nb-scalar-tetrahedra, nb-vector-tetrahedra, nb-tensor-tetrahedra,
-  nb-scalar-hexahedra, nb-vector-hexahedra, nb-tensor-hexahedra,
-  nb-scalar-prisms, nb-vector-prisms, nb-tensor-prisms,
-  nb-scalar-pyramids, nb-vector-pyramids, nb-tensor-pyramids,
-  nb-scalar-lines2, nb-vector-lines2, nb-tensor-lines2,
-  nb-scalar-triangles2, nb-vector-triangles2, nb-tensor-triangles2,
-  nb-scalar-quadrangles2, nb-vector-quadrangles2, nb-tensor-quadrangles2,
-  nb-scalar-tetrahedra2, nb-vector-tetrahedra2, nb-tensor-tetrahedra2,
-  nb-scalar-hexahedra2, nb-vector-hexahedra2, nb-tensor-hexahedra2,
-  nb-scalar-prisms2, nb-vector-prisms2, nb-tensor-prisms2,
-  nb-scalar-pyramids2, nb-vector-pyramids2, nb-tensor-pyramids2,
-  nb-text2d, nb-text2d-chars, nb-text3d, nb-text3d-chars);
-fwrite(&one, sizeof(int), 1, file);
-fwrite(time-step-values, sizeof(double), nb-time-steps, file);
-fwrite(all-scalar-point-values, sizeof(double), ..., file);
-...
-fprintf(file, "\n$EndView\n");
-@end example
-In this pseudo-code, @var{all-scalar-point-values} is the array of double
-precision numbers containing all the @var{scalar-point-value} lists, put one
-after each other in order to form a long array of doubles. The principle is
-the same for all other kinds of values.
-
-@c -------------------------------------------------------------------------
-@c Gmsh node ordering
-@c -------------------------------------------------------------------------
-
-@node Gmsh node ordering,  , Gmsh post-processing file formats, File formats
-@section Gmsh node ordering
+@node Node ordering, Legacy formats, MSH binary file format, File formats
+@section Node ordering
 
 @cindex Nodes, ordering
 @cindex Edges, ordering
 @cindex Faces, ordering
 
-For all mesh and post-processing file formats, the reference elements are
-defined as follows:
+For all mesh and post-processing file formats, the reference elements
+are defined as follows. For high-order elements, the ordering of the
+edges/quad faces defines the ordering of high-order vertices associated
+with edges/faces.
 
 @c FIXME: changer la doc des faces pour les definir de maniere sensee
 @c sans butterflies.
@@ -3831,6 +3435,392 @@ Pyramid:
 @end group
 @end example
 
+@c -------------------------------------------------------------------------
+@c Legacy formats
+@c -------------------------------------------------------------------------
+
+@node Legacy formats,  , Node ordering, File formats
+@section Legacy formats
+
+This section describes Gmsh's older native file formats. Future versions
+of Gmsh will continue to support these formats, but we recommend that
+you do not use them in new aplications.
+
+@c .........................................................................
+@c MSH file format version 1.0
+@c .........................................................................
+
+@menu
+* MSH file format version 1.0::  
+* POS ASCII file format::       
+* POS binary file format::      
+@end menu
+
+@node MSH file format version 1.0, POS ASCII file format, Legacy formats, Legacy formats
+@subsection MSH file format version 1.0
+
+The MSH file format version 1.0 is Gmsh's old native mesh file format,
+now superseded by the format described in @ref{MSH ASCII file
+format}. It is defined as follows:
+
+@example
+$NOD
+@var{number-of-nodes}
+@var{node-number} @var{x-coord} @var{y-coord} @var{z-coord}
+@dots{}
+$ENDNOD
+$ELM
+@var{number-of-elements}
+@var{elm-number} @var{elm-type} @var{reg-phys} @var{reg-elem} @var{number-of-nodes} @var{node-number-list}
+@dots{}
+$ENDELM
+@end example
+
+@noindent
+where
+@table @code
+@item @var{number-of-nodes}
+is the number of nodes in the mesh.
+
+@item @var{node-number}
+is the number (index) of the @var{n}-th node in the mesh;
+@var{node-number} must be a postive (non-zero) integer. Note that the
+@w{@var{node-number}s} do not necessarily have to form a dense nor an
+ordered sequence.
+
+@item @var{x-coord} @var{y-coord} @var{z-coord}
+are the floating point values giving the X, Y and Z coordinates of the
+@var{n}-th node.
+
+@item @var{number-of-elements}
+is the number of elements in the mesh.
+
+@item @var{elm-number}
+is the number (index) of the @var{n}-th element in the mesh;
+@var{elm-number} must be a postive (non-zero) integer. Note that the
+@w{@var{elm-number}s} do not necessarily have to form a dense nor an
+ordered sequence.
+
+@item @var{elm-type}
+defines the geometrical type of the @var{n}-th element:
+@table @code
+@item 1
+2-node line.
+@item 2
+3-node triangle.
+@item 3
+4-node quadrangle.
+@item 4
+4-node tetrahedron.
+@item 5
+8-node hexahedron.
+@item 6
+6-node prism.
+@item 7
+5-node pyramid.
+@item 8
+3-node second order line (2 nodes associated with the vertices and 1
+with the edge).
+@item 9
+6-node second order triangle (3 nodes associated with the vertices and 3
+with the edges).
+@item 10
+9-node second order quadrangle (4 nodes associated with the vertices, 4
+with the edges and 1 with the face).
+@item 11
+10-node second order tetrahedron (4 nodes associated with the vertices
+and 6 with the edges).
+@item 12
+27-node second order hexahedron (8 nodes associated with the vertices,
+12 with the edges, 6 with the faces and 1 with the volume).
+@item 13
+18-node second order prism (6 nodes associated with the vertices, 9 with
+the edges and 3 with the quadrangular faces).
+@item 14
+14-node second order pyramid (5 nodes associated with the vertices, 8
+with the edges and 1 with the quadrangular face).
+@item 15
+1-node point.
+@item 16
+8-node second order quadrangle (4 nodes associated with the vertices and
+4 with the edges).
+@item 17
+20-node second order hexahedron (8 nodes associated with the vertices
+and 12 with the edges).
+@item 18
+15-node second order prism (6 nodes associated with the vertices and 9
+with the edges).
+@item 19
+13-node second order pyramid (5 nodes associated with the vertices and 8
+with the edges).
+@end table
+See below for the ordering of the nodes.
+
+@item @var{reg-phys}
+is the number of the physical entity to which the element belongs;
+@var{reg-phys} must be a postive integer, or zero. If @var{reg-phys} is
+equal to zero, the element is considered not to belong to any physical
+entity.
+
+@item @var{reg-elem}
+is the number of the elementary entity to which the element belongs;
+@var{reg-elem} must be a postive (non-zero) integer.
+
+@item @var{number-of-nodes}
+is the number of nodes for the @var{n}-th element. This is redundant, but
+kept for backward compatibility.
+
+@item @var{node-number-list}
+is the list of the @var{number-of-nodes} node numbers of the @var{n}-th
+element. The ordering of the nodes is given in @ref{Node ordering}; for
+second order elements, the first order nodes are given first, followed
+by the nodes associated with the edges, followed by the nodes associated
+with the quadrangular faces (if any), followed by the nodes associated
+with the volume (if any). The ordering of these additional nodes follows
+the ordering of the edges and quadrangular faces given in @ref{Node
+ordering}.
+@end table
+
+@c .........................................................................
+@c POS ASCII file format
+@c .........................................................................
+
+@node POS ASCII file format, POS binary file format, MSH file format version 1.0, Legacy formats
+@subsection POS ASCII file format
+
+The POS ASCII file is Gmsh's old native pot-processing format, now
+superseded by the format described in @ref{MSH ASCII file format}. It is
+defined as follows:
+
+@example
+$PostFormat
+1.4 @var{file-type} @var{data-size}
+$EndPostFormat
+$View
+@var{view-name} @var{nb-time-steps}
+@var{nb-scalar-points} @var{nb-vector-points} @var{nb-tensor-points}
+@var{nb-scalar-lines} @var{nb-vector-lines} @var{nb-tensor-lines}
+@var{nb-scalar-triangles} @var{nb-vector-triangles} @var{nb-tensor-triangles}
+@var{nb-scalar-quadrangles} @var{nb-vector-quadrangles} @var{nb-tensor-quadrangles}
+@var{nb-scalar-tetrahedra} @var{nb-vector-tetrahedra} @var{nb-tensor-tetrahedra}
+@var{nb-scalar-hexahedra} @var{nb-vector-hexahedra} @var{nb-tensor-hexahedra}
+@var{nb-scalar-prisms} @var{nb-vector-prisms} @var{nb-tensor-prisms}
+@var{nb-scalar-pyramids} @var{nb-vector-pyramids} @var{nb-tensor-pyramids}
+@var{nb-scalar-lines2} @var{nb-vector-lines2} @var{nb-tensor-lines2}
+@var{nb-scalar-triangles2} @var{nb-vector-triangles2} @var{nb-tensor-triangles2}
+@var{nb-scalar-quadrangles2} @var{nb-vector-quadrangles2} @var{nb-tensor-quadrangles2}
+@var{nb-scalar-tetrahedra2} @var{nb-vector-tetrahedra2} @var{nb-tensor-tetrahedra2}
+@var{nb-scalar-hexahedra2} @var{nb-vector-hexahedra2} @var{nb-tensor-hexahedra2}
+@var{nb-scalar-prisms2} @var{nb-vector-prisms2} @var{nb-tensor-prisms2}
+@var{nb-scalar-pyramids2} @var{nb-vector-pyramids2} @var{nb-tensor-pyramids2}
+@var{nb-text2d} @var{nb-text2d-chars} @var{nb-text3d} @var{nb-text3d-chars}
+@var{time-step-values}
+< @var{scalar-point-value} > @dots{} < @var{vector-point-value} > @dots{} 
+    < @var{tensor-point-value} > @dots{}
+< @var{scalar-line-value} > @dots{} < @var{vector-line-value} > @dots{} 
+    < @var{tensor-line-value} > @dots{}
+< @var{scalar-triangle-value} > @dots{} < @var{vector-triangle-value} > @dots{}
+    < @var{tensor-triangle-value} > @dots{}
+< @var{scalar-quadrangle-value} > @dots{} < @var{vector-quadrangle-value} > @dots{}
+    < @var{tensor-quadrangle-value} > @dots{}
+< @var{scalar-tetrahedron-value} > @dots{} < @var{vector-tetrahedron-value} > @dots{}
+    < @var{tensor-tetrahedron-value} > @dots{}
+< @var{scalar-hexahedron-value} > @dots{} < @var{vector-hexahedron-value} > @dots{}
+    < @var{tensor-hexahedron-value} > @dots{}
+< @var{scalar-prism-value} > @dots{} < @var{vector-prism-value} > @dots{}
+    < @var{tensor-prism-value} > @dots{}
+< @var{scalar-pyramid-value} > @dots{} < @var{vector-pyramid-value} > @dots{}
+    < @var{tensor-pyramid-value} > @dots{}
+< @var{scalar-line2-value} > @dots{} < @var{vector-line2-value} > @dots{}
+    < @var{tensor-line2-value} > @dots{}
+< @var{scalar-triangle2-value} > @dots{} < @var{vector-triangle2-value} > @dots{}
+    < @var{tensor-triangle2-value} > @dots{}
+< @var{scalar-quadrangle2-value} > @dots{} < @var{vector-quadrangle2-value} > @dots{}
+    < @var{tensor-quadrangle2-value} > @dots{}
+< @var{scalar-tetrahedron2-value} > @dots{} < @var{vector-tetrahedron2-value} > @dots{}
+    < @var{tensor-tetrahedron2-value} > @dots{}
+< @var{scalar-hexahedron2-value} > @dots{} < @var{vector-hexahedron2-value} > @dots{}
+    < @var{tensor-hexahedron2-value} > @dots{}
+< @var{scalar-prism2-value} > @dots{} < @var{vector-prism2-value} > @dots{}
+    < @var{tensor-prism2-value} > @dots{}
+< @var{scalar-pyramid2-value} > @dots{} < @var{vector-pyramid2-value} > @dots{}
+    < @var{tensor-pyramid2-value} > @dots{}
+< @var{text2d} > @dots{} < @var{text2d-chars} > @dots{}
+< @var{text3d} > @dots{} < @var{text3d-chars} > @dots{}
+$EndView
+@end example
+
+@noindent
+where
+@table @code
+@item @var{file-type}
+is an integer equal to 0 in the ASCII file format.
+
+@item @var{data-size}
+is an integer equal to the size of the floating point numbers used in the
+file (usually, @var{data-size} = sizeof(double)).
+
+@item @var{view-name}
+is a string containing the name of the view (max. 256 characters).
+
+@item @var{nb-time-steps}
+is an integer giving the number of time steps in the view.
+
+@item @var{nb-scalar-points}
+@item @var{nb-vector-points}
+@item @dots{}
+are integers giving the number of scalar points, vector points, @dots{}, in
+the view.
+
+@item @var{nb-text2d}
+@item @var{nb-text3d}
+are integers giving the number of 2D and 3D text strings in the
+view. 
+
+@item @var{nb-text2d-chars}
+@item @var{nb-text3d-chars}
+are integers giving the total number of characters in the 2D and 3D strings.
+
+@item @var{time-step-values}
+is a list of @var{nb-time-steps} double precision numbers giving the value
+of the time (or any other variable) for which an evolution was saved.
+
+@item @var{scalar-point-value}
+@item @var{vector-point-value}
+@item @dots{}
+are lists of double precision numbers giving the node coordinates and the
+values associated with the nodes of the @var{nb-scalar-points} scalar
+points, @var{nb-vector-points} vector points, @dots{}, for each of the
+@var{time-step-values}.
+
+For example, @var{vector-triangle-value} is defined as:
+@example
+@var{coord1-node1} @var{coord1-node2} @var{coord1-node3}
+@var{coord2-node1} @var{coord2-node2} @var{coord2-node3}
+@var{coord3-node1} @var{coord3-node2} @var{coord3-node3}
+@var{comp1-node1-time1} @var{comp2-node1-time1} @var{comp3-node1-time1}
+@var{comp1-node2-time1} @var{comp2-node2-time1} @var{comp3-node2-time1}
+@var{comp1-node3-time1} @var{comp2-node3-time1} @var{comp3-node3-time1}
+@var{comp1-node1-time2} @var{comp2-node1-time2} @var{comp3-node1-time2}
+@var{comp1-node2-time2} @var{comp2-node2-time2} @var{comp3-node2-time2}
+@var{comp1-node3-time2} @var{comp2-node3-time2} @var{comp3-node3-time2}
+@dots{}
+@end example
+
+The ordering of the nodes is given in @ref{Node ordering}. For second
+order elements, the first order nodes are given first, followed by the
+nodes associated with the edges, followed by the nodes associated with
+the quadrangular faces (if any), followed by the nodes associated with
+the volume (if any). The ordering of these additional nodes follows the
+ordering of the edges and quadrangular faces given in @ref{Node
+ordering}.
+
+@item @var{text2d}
+is a list of 4 double precision numbers:
+@example
+@var{coord1} @var{coord2} @var{style} @var{index}
+@end example
+where @var{coord1} and @var{coord2} give the X-Y position of the 2D string
+in screen coordinates (measured from the top-left corner of the window) and
+where @var{index} gives the starting index of the string in
+@var{text2d-chars}. If @var{coord1} (respectively @var{coord2}) is negative,
+the position is measured from the right (respectively bottom) edge of the
+window. If @var{coord1} (respectively @var{coord2}) is larger than 99999,
+the string is centered horizontally (respectively vertically).  If
+@var{style} is equal to zero, the text is aligned bottom-left and displayed
+using the default font and size. Otherwise, @var{style} is converted into an
+integer whose eight lower bits give the font size, whose eight next bits
+select the font (the index corresponds to the position in the font menu in
+the GUI), and whose eight next bits define the text alignment
+(0=bottom-left, 1=bottom-center, 2=bottom-right, 3=top-left, 4=top-center,
+5=top-right, 6=center-left, 7=center-center, 8=center-right).
+
+@item @var{text2d-chars}
+is a list of @var{nb-text2d-chars} characters. Substrings are separated with
+the null `@code{\0}' character.
+
+@item @var{text3d}
+is a list of 5 double precision numbers
+@example
+@var{coord1} @var{coord2} @var{coord3} @var{style} @var{index}
+@end example
+where @var{coord1}, @var{coord2} and @var{coord3} give the XYZ coordinates
+of the string in model (real world) coordinates, @var{index} gives the
+starting index of the string in @var{text3d-chars}, and @var{style} has the
+same meaning as in @var{text2d}.
+
+@item @var{text3d-chars}
+is a list of @var{nb-text3d-chars} chars. Substrings are separated with the
+null `@code{\0}' character.
+@end table
+
+@c .........................................................................
+@c POS binary file format
+@c .........................................................................
+
+@node POS binary file format,  , POS ASCII file format, Legacy formats
+@subsection POS binary file format
+
+The POS binary file format is the same as the POS ASCII file format
+described in @ref{POS ASCII file format}, except that:
+
+@enumerate
+@item
+@var{file-type} equals 1.
+@item 
+all lists of floating point numbers and characters are written in binary
+format
+@item
+there is an additional integer, of value 1, written before
+@var{time-step-values}. This integer is used for detecting if the computer
+on which the binary file was written and the computer on which the file is
+read are of the same type (little or big endian).
+@end enumerate
+
+Here is a pseudo C code to write a post-processing file in binary format:
+
+@example
+int one = 1;
+
+fprintf(file, "$PostFormat\n");
+fprintf(file, "%g %d %d\n", 1.4, 1, sizeof(double));
+fprintf(file, "$EndPostFormat\n");
+fprintf(file, "$View\n");
+fprintf(file, "%s %d "
+  "%d %d %d %d %d %d %d %d %d "
+  "%d %d %d %d %d %d %d %d %d "
+  "%d %d %d %d %d %d %d %d %d "
+  "%d %d %d %d %d %d %d %d %d "
+  "%d %d %d %d %d %d %d %d %d "
+  "%d %d %d %d\n", 
+  view-name, nb-time-steps,
+  nb-scalar-points, nb-vector-points, nb-tensor-points,
+  nb-scalar-lines, nb-vector-lines, nb-tensor-lines,
+  nb-scalar-triangles, nb-vector-triangles, nb-tensor-triangles,
+  nb-scalar-quadrangles, nb-vector-quadrangles, nb-tensor-quadrangles,
+  nb-scalar-tetrahedra, nb-vector-tetrahedra, nb-tensor-tetrahedra,
+  nb-scalar-hexahedra, nb-vector-hexahedra, nb-tensor-hexahedra,
+  nb-scalar-prisms, nb-vector-prisms, nb-tensor-prisms,
+  nb-scalar-pyramids, nb-vector-pyramids, nb-tensor-pyramids,
+  nb-scalar-lines2, nb-vector-lines2, nb-tensor-lines2,
+  nb-scalar-triangles2, nb-vector-triangles2, nb-tensor-triangles2,
+  nb-scalar-quadrangles2, nb-vector-quadrangles2, nb-tensor-quadrangles2,
+  nb-scalar-tetrahedra2, nb-vector-tetrahedra2, nb-tensor-tetrahedra2,
+  nb-scalar-hexahedra2, nb-vector-hexahedra2, nb-tensor-hexahedra2,
+  nb-scalar-prisms2, nb-vector-prisms2, nb-tensor-prisms2,
+  nb-scalar-pyramids2, nb-vector-pyramids2, nb-tensor-pyramids2,
+  nb-text2d, nb-text2d-chars, nb-text3d, nb-text3d-chars);
+fwrite(&one, sizeof(int), 1, file);
+fwrite(time-step-values, sizeof(double), nb-time-steps, file);
+fwrite(all-scalar-point-values, sizeof(double), ..., file);
+...
+fprintf(file, "\n$EndView\n");
+@end example
+In this pseudo-code, @var{all-scalar-point-values} is the array of double
+precision numbers containing all the @var{scalar-point-value} lists, put one
+after each other in order to form a long array of doubles. The principle is
+the same for all other kinds of values.
+
 @c =========================================================================
 @c Programming notes
 @c =========================================================================
@@ -3922,7 +3912,7 @@ option panel (in @file{Fltk/Callbacks.cpp}).
 @c todo:
 @c Tools to check memory leaks
 @c * on mac: use GMALLOC
-     (gdb) set env DYLD_INSERT_LIBRARIES /usr/lib/libgmalloc.dylib
+@c   (gdb) set env DYLD_INSERT_LIBRARIES /usr/lib/libgmalloc.dylib
 @c * LIBNJAMD
 @c   export LD_PRELOAD=libnjamd.so
 @c   kill -USR1

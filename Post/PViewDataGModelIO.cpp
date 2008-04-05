@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.37 2008-04-03 07:48:54 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.38 2008-04-05 09:21:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -165,7 +165,6 @@ extern "C" {
 #include <med.h>
 }
 
-extern med_geometrie_element msh2medElementType(int msh);
 extern int med2mshElementType(med_geometrie_element med);
 extern int med2mshNodeIndex(med_geometrie_element med, int k);
 

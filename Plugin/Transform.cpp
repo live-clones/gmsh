@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.38 2008-03-20 11:44:14 geuzaine Exp $
+// $Id: Transform.cpp,v 1.39 2008-04-05 09:21:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -90,64 +90,6 @@ void GMSH_TransformPlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Transform failed...");
 }
 
-// Transformation
-
-static void transform(double mat[3][4], double v[3],
-                      double *x, double *y, double *z)
-{
-  *x = mat[0][0] * v[0] + mat[0][1] * v[1] + mat[0][2] * v[2] + mat[0][3];
-  *y = mat[1][0] * v[0] + mat[1][1] * v[1] + mat[1][2] * v[2] + mat[1][3];
-  *z = mat[2][0] * v[0] + mat[2][1] * v[1] + mat[2][2] * v[2] + mat[2][3];
-}
-
-static void transform_list(PViewDataList *data, List_T *list, int nbList, 
-                           int nbVert, int nbComp, double mat[3][4], int swap)
-{
-  if(!nbList) return;
-
-  int nb = List_Nbr(list) / nbList;
-  double *copy = NULL;
-  if(swap) copy = new double[nb];
-
-  for(int i = 0; i < List_Nbr(list); i += nb) {
-    double *x = (double *)List_Pointer_Fast(list, i);
-    double *y = (double *)List_Pointer_Fast(list, i + nbVert);
-    double *z = (double *)List_Pointer_Fast(list, i + 2 * nbVert);
-    for(int j = 0; j < nbVert; j++) {
-      double v[3] = { x[j], y[j], z[j] };
-#if 1
-      transform(mat, v, &x[j], &y[j], &z[j]);
-#else
-      // for saku
-      double alpha = mat[0][0];
-      double d = sqrt(v[0] * v[0] + v[1] * v[1]);
-      x[j] = cos(2 * M_PI / alpha * atan2(v[1], v[0])) * alpha / (2 * M_PI) * d;
-      y[j] = sin(2 * M_PI / alpha * atan2(v[1], v[0])) * alpha / (2 * M_PI) * d;
-      z[j] = cos(asin(alpha / (2 * M_PI))) * d;
-#endif
-    }
-    if(copy){
-      for(int j = 0; j < nb; j++)
-        copy[j] = x[j];
-      for(int j = 0; j < nbVert; j++){
-        x[j] = copy[nbVert - j - 1];
-        x[nbVert + j] = copy[2 * nbVert - j - 1];
-        x[2 * nbVert + j] = copy[3 * nbVert - j - 1];
-      }
-      for(int ts = 0; ts < data->getNumTimeSteps(); ts++){
-        for(int j = 0; j < nbVert; j++){
-          for(int k = 0; k < nbComp; k++){
-            x[3 * nbVert + nbComp * nbVert * ts + nbComp * j + k] = 
-              copy[3 * nbVert + nbComp * nbVert * ts + nbComp * (nbVert - j - 1) + k];
-          }
-        }
-      }
-    }
-  }
-
-  if(copy) delete [] copy;
-}
-
 PView *GMSH_TransformPlugin::execute(PView *v)
 {
   double mat[3][4];
@@ -172,35 +114,44 @@ PView *GMSH_TransformPlugin::execute(PView *v)
   PView *v1 = getView(iView, v);
   if(!v1) return v;
 
-  PViewDataList *data1 = getDataList(v1);
-  if(!data1) return v;
+  PViewData *data1 = v1->getData();
 
-  transform_list(data1, data1->SP, data1->NbSP, 1, 1, mat, swap);
-  transform_list(data1, data1->SL, data1->NbSL, 2, 1, mat, swap);
-  transform_list(data1, data1->ST, data1->NbST, 3, 1, mat, swap);
-  transform_list(data1, data1->SQ, data1->NbSQ, 4, 1, mat, swap);
-  transform_list(data1, data1->SS, data1->NbSS, 4, 1, mat, swap);
-  transform_list(data1, data1->SH, data1->NbSH, 8, 1, mat, swap);
-  transform_list(data1, data1->SI, data1->NbSI, 6, 1, mat, swap);
-  transform_list(data1, data1->SY, data1->NbSY, 5, 1, mat, swap);
+  // tag all the nodes with "0" (the default tag)
+  for(int step = 0; step < data1->getNumTimeSteps(); step++){
+    for(int ent = 0; ent < data1->getNumEntities(step); ent++){
+      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
+	if(data1->skipElement(step, ent, ele)) continue;
+	if(swap) data1->revertElement(step, ent, ele);
+	int numNodes = data1->getNumNodes(step, ent, ele);
+	for(int nod = 0; nod < numNodes; nod++){
+	  double x, y, z;
+	  data1->getNode(step, ent, ele, nod, x, y, z);
+	  data1->setNode(step, ent, ele, nod, x, y, z, 0);
+	}
+      }
+    }
+  }
 
-  transform_list(data1, data1->VP, data1->NbVP, 1, 3, mat, swap);
-  transform_list(data1, data1->VL, data1->NbVL, 2, 3, mat, swap);
-  transform_list(data1, data1->VT, data1->NbVT, 3, 3, mat, swap);
-  transform_list(data1, data1->VQ, data1->NbVQ, 4, 3, mat, swap);
-  transform_list(data1, data1->VS, data1->NbVS, 4, 3, mat, swap);
-  transform_list(data1, data1->VH, data1->NbVH, 8, 3, mat, swap);
-  transform_list(data1, data1->VI, data1->NbVI, 6, 3, mat, swap);
-  transform_list(data1, data1->VY, data1->NbVY, 5, 3, mat, swap);
-
-  transform_list(data1, data1->TP, data1->NbTP, 1, 9, mat, swap);
-  transform_list(data1, data1->TL, data1->NbTL, 2, 9, mat, swap);
-  transform_list(data1, data1->TT, data1->NbTT, 3, 9, mat, swap);
-  transform_list(data1, data1->TQ, data1->NbTQ, 4, 9, mat, swap);
-  transform_list(data1, data1->TS, data1->NbTS, 4, 9, mat, swap);
-  transform_list(data1, data1->TH, data1->NbTH, 8, 9, mat, swap);
-  transform_list(data1, data1->TI, data1->NbTI, 6, 9, mat, swap);
-  transform_list(data1, data1->TY, data1->NbTY, 5, 9, mat, swap);
+  // transform all "0" nodes
+  for(int step = 0; step < data1->getNumTimeSteps(); step++){
+    for(int ent = 0; ent < data1->getNumEntities(step); ent++){
+      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
+	if(data1->skipElement(step, ent, ele)) continue;
+	int numNodes = data1->getNumNodes(step, ent, ele);
+	for(int nod = 0; nod < numNodes; nod++){
+	  double x, y, z;
+	  int tag = data1->getNode(step, ent, ele, nod, x, y, z);
+	  if(!tag){
+	    double x2, y2, z2;
+	    x2 = mat[0][0] * x + mat[0][1] * y + mat[0][2] * z + mat[0][3];
+	    y2 = mat[1][0] * x + mat[1][1] * y + mat[1][2] * z + mat[1][3];
+	    z2 = mat[2][0] * x + mat[2][1] * y + mat[2][2] * z + mat[2][3];
+	    data1->setNode(step, ent, ele, nod, x2, y2, z2, 1);
+	  }
+	}
+      }
+    }
+  }
 
   data1->finalize();
 

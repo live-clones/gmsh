@@ -1,4 +1,4 @@
-// $Id: Divergence.cpp,v 1.7 2008-03-20 11:44:13 geuzaine Exp $
+// $Id: Divergence.cpp,v 1.8 2008-04-05 09:21:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -72,32 +72,18 @@ void GMSH_DivergencePlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Divergence failed...");
 }
 
-static void divergence(int inNb, List_T *inList, int *outNb, List_T *outList, 
-                     int dim, int nbNod, int nbTime)
+static List_T *incrementList(PViewDataList *data2, int numEdges)
 {
-  if(!inNb) return;
-  
-  int nb = List_Nbr(inList) / inNb;
-  for(int i = 0; i < List_Nbr(inList); i += nb) {
-    double *x = (double *)List_Pointer_Fast(inList, i);
-    double *y = (double *)List_Pointer_Fast(inList, i + nbNod);
-    double *z = (double *)List_Pointer_Fast(inList, i + 2 * nbNod);
-    elementFactory factory;
-    element *element = factory.create(nbNod, dim, x, y, z);
-    if(!element) return;
-    for(int j = 0; j < 3 * nbNod; j++)
-      List_Add(outList, &x[j]);
-    for(int j = 0; j < nbTime; j++){
-      double *val = (double *)List_Pointer(inList, i + 3 * nbNod + nbNod * 3 * j);
-      for(int k = 0; k < nbNod; k++){
-        double u, v, w;
-        element->getNode(k, u, v, w);
-        double f = element->interpolateDiv(val, u, v, w, 3);
-        List_Add(outList, &f);
-      }
-    }
-    delete element;
-    (*outNb)++;
+  switch(numEdges){
+  case 0: data2->NbSP++; return data2->SP;
+  case 1: data2->NbSL++; return data2->SL;
+  case 3: data2->NbST++; return data2->ST;
+  case 4: data2->NbSQ++; return data2->SQ;
+  case 6: data2->NbSS++; return data2->SS;
+  case 12: data2->NbSH++; return data2->SH;
+  case 9: data2->NbSI++; return data2->SI;
+  case 8: data2->NbSY++; return data2->SY;
+  default: return 0;
   }
 }
 
@@ -108,25 +94,53 @@ PView *GMSH_DivergencePlugin::execute(PView *v)
   PView *v1 = getView(iView, v);
   if(!v1) return v;
 
-  PViewDataList *data1 = getDataList(v1);
-  if(!data1) return v;
+  PViewData *data1 = v1->getData();
+  if(data1->hasMultipleMeshes()){
+    Msg(GERROR, "Divergence plugin cannot be run on multi-mesh views");
+    return v;
+  }
 
   PView *v2 = new PView(true);
-
   PViewDataList *data2 = getDataList(v2);
-  if(!data2) return v;
 
-  int nts = data1->getNumTimeSteps();
-  divergence(data1->NbVL, data1->VL, &data2->NbSL, data2->SL, 1, 2, nts);
-  divergence(data1->NbVT, data1->VT, &data2->NbST, data2->ST, 2, 3, nts);
-  divergence(data1->NbVQ, data1->VQ, &data2->NbSQ, data2->SQ, 2, 4, nts);
-  divergence(data1->NbVS, data1->VS, &data2->NbSS, data2->SS, 3, 4, nts);
-  divergence(data1->NbVH, data1->VH, &data2->NbSH, data2->SH, 3, 8, nts);
-  divergence(data1->NbVI, data1->VI, &data2->NbSI, data2->SI, 3, 6, nts);
-  divergence(data1->NbVY, data1->VY, &data2->NbSY, data2->SY, 3, 5, nts);
+  for(int ent = 0; ent < data1->getNumEntities(0); ent++){
+    for(int ele = 0; ele < data1->getNumElements(0, ent); ele++){
+      if(data1->skipElement(0, ent, ele)) continue;
+      int numComp = data1->getNumComponents(0, ent, ele);
+      if(numComp != 3) continue;
+      int numEdges = data1->getNumEdges(0, ent, ele);
+      List_T *out = incrementList(data2, numEdges);
+      if(!out) continue;
+      int numNodes = data1->getNumNodes(0, ent, ele);
+      double x[8], y[8], z[8], val[8 * 3];
+      for(int nod = 0; nod < numNodes; nod++)
+	data1->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
+      int dim = data1->getDimension(0, ent, ele);
+      elementFactory factory;
+      element *element = factory.create(numNodes, dim, x, y, z);
+      if(!element) continue;
+      for(int nod = 0; nod < numNodes; nod++) List_Add(out, &x[nod]);
+      for(int nod = 0; nod < numNodes; nod++) List_Add(out, &y[nod]);
+      for(int nod = 0; nod < numNodes; nod++) List_Add(out, &z[nod]);
+      for(int step = 0; step < data1->getNumTimeSteps(); step++){
+	for(int nod = 0; nod < numNodes; nod++)
+	  for(int comp = 0; comp < numComp; comp++)
+	    data1->getValue(step, ent, ele, nod, comp, val[numComp * nod + comp]);
+	for(int nod = 0; nod < numNodes; nod++){
+	  double u, v, w;
+	  element->getNode(nod, u, v, w);
+	  double f = element->interpolateDiv(val, u, v, w, 3);
+	  List_Add(out, &f);
+	}
+      }
+      delete element;
+    }
+  }
 
-  for(int i = 0; i < List_Nbr(data1->Time); i++)
-    List_Add(data2->Time, List_Pointer(data1->Time, i));
+  for(int i = 0; i < data1->getNumTimeSteps(); i++){
+    double time = data1->getTime(i);
+    List_Add(data2->Time, &time);
+  }
   data2->setName(data1->getName() + "_Divergence");
   data2->setFileName(data1->getName() + "_Divergence.pos");
   data2->finalize();

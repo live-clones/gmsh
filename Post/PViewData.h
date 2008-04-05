@@ -78,17 +78,20 @@ class PViewData {
   // Returns the number of nodes of the ele-th element in the ent-th
   // entity
   virtual int getNumNodes(int step, int ent, int ele) = 0;
-  // Returns the coordinates of the nod-th node from the ele-th element
-  // in the ent-th entity
-  virtual void getNode(int step, int ent, int ele, int nod, 
-                       double &x, double &y, double &z) = 0;
+  // Gets/Sets the coordinates of the nod-th node from the ele-th element
+  // in the ent-th entity (if the node has a tag, getNode returns it)
+  virtual int getNode(int step, int ent, int ele, int nod, 
+		      double &x, double &y, double &z) = 0;
+  virtual void setNode(int step, int ent, int ele, int nod,
+		       double x, double y, double z, int tag=0);
   // Returns the number of componts available for the ele-th element
   // in the ent-th entity
   virtual int getNumComponents(int step, int ent, int ele) = 0;
-  // Returns the comp-th component (at the step-th time step)
+  // Gets/sets the comp-th component (at the step-th time step)
   // associated with the node-th node from the ele-th element in the
   // ent-th entity
   virtual void getValue(int step, int ent, int ele, int nod, int comp, double &val) = 0;
+  virtual void setValue(int step, int ent, int ele, int nod, int comp, double val);
   // Returns a scalar value (same as value for scalars, norm for
   // vectors, etc.) associated with the node-th node from the ele-th
   // element in the ent-th entity
@@ -102,13 +105,15 @@ class PViewData {
                            double &x, double &y, double &style){}
   virtual void getString3D(int i, int step, std::string &str, 
                            double &x, double &y, double &z, double &style){}
+  virtual void revertElement(int step, int ent, int ele){}
   virtual bool empty();
   virtual void smooth(){}
   virtual bool combineTime(nameData &nd){ return false; }
   virtual bool combineSpace(nameData &nd){ return false; }
   virtual bool isAdaptive(){ return false; }
   virtual bool skipEntity(int step, int ent){ return false; }
-  virtual bool skipElement(int step, int ent, int ele){ return false; }
+  virtual bool skipElement(int step, int ent, int ele,
+			   bool checkVisibility=false){ return false; }
   virtual bool hasTimeStep(int step){ return step < getNumTimeSteps(); }
   virtual bool hasPartition(int part){ return false; }
   virtual bool hasMultipleMeshes(){ return false; }

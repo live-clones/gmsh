@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.43 2008-03-20 11:44:14 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.44 2008-04-05 09:21:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -454,6 +454,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
     PViewDataList *out = getDataList(new PView(true));
     for(int ent = 0; ent < vdata->getNumEntities(0); ent++){
       for(int ele = 0; ele < vdata->getNumElements(0, ent); ele++){
+	if(vdata->skipElement(0, ent, ele)) continue;
         for(int nod = 0; nod < vdata->getNumNodes(0, ent, ele); nod++){
           vdata->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
           levels[nod] = levelset(x[nod], y[nod], z[nod], 0.);
@@ -475,8 +476,9 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
       PViewDataList *out = getDataList(new PView(true));
       for(int ent = 0; ent < vdata->getNumEntities(step); ent++){
         for(int ele = 0; ele < vdata->getNumElements(step, ent); ele++){
+	  if(vdata->skipElement(step, ent, ele)) continue;
           for(int nod = 0; nod < vdata->getNumNodes(step, ent, ele); nod++){
-            vdata->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
+            vdata->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
             vdata->getScalarValue(step, ent, ele, nod, scalarValues[nod]);
             levels[nod] = levelset(x[nod], y[nod], z[nod], scalarValues[nod]);
           }

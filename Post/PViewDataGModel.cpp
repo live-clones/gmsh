@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.47 2008-04-03 07:48:54 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.48 2008-04-05 09:21:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -150,8 +150,8 @@ int PViewDataGModel::getNumNodes(int step, int ent, int ele)
   }
 }
 
-void PViewDataGModel::getNode(int step, int ent, int ele, int nod, 
-                              double &x, double &y, double &z)
+int PViewDataGModel::getNode(int step, int ent, int ele, int nod, 
+			     double &x, double &y, double &z)
 {
   // no sanity checks (assumed to be guarded by skipElement)
   MElement *e = _steps[step]->getEntity(ent)->getMeshElement(ele);
@@ -174,13 +174,26 @@ void PViewDataGModel::getNode(int step, int ent, int ele, int nod,
       y = e->interpolate(vy, p[3 * nod], p[3 * nod + 1], p[3 * nod + 2]);
       z = e->interpolate(vz, p[3 * nod], p[3 * nod + 1], p[3 * nod + 2]);
     }
+    return 0;
   }
   else{
     MVertex *v = e->getVertex(nod);
     x = v->x();
     y = v->y();
     z = v->z();
+    return v->getIndex();
   }
+}
+
+void PViewDataGModel::setNode(int step, int ent, int ele, int nod, 
+                              double x, double y, double z, int tag)
+{
+  // no sanity checks (assumed to be guarded by skipElement)
+  MVertex *v = _steps[step]->getEntity(ent)->getMeshElement(ele)->getVertex(nod);
+  v->x() = x;
+  v->y() = y;
+  v->z() = z;
+  v->setIndex(tag);
 }
 
 int PViewDataGModel::getNumComponents(int step, int ent, int ele)
@@ -209,10 +222,36 @@ void PViewDataGModel::getValue(int step, int ent, int ele, int nod, int comp, do
   }
 }
 
+void PViewDataGModel::setValue(int step, int ent, int ele, int nod, int comp, double val)
+{
+  // no sanity checks (assumed to be guarded by skipElement)
+  stepData<double> *sd = _steps[step];
+  MElement *e = sd->getEntity(ent)->getMeshElement(ele);
+  switch(_type){
+  case NodeData: 
+    sd->getData(e->getVertex(nod)->getNum())[comp] = val;
+    break;
+  case ElementNodeData:
+  case GaussPointData: 
+    sd->getData(e->getNum())[sd->getNumComponents() * nod + comp] = val;
+    break;
+  case ElementData: 
+  default: 
+    sd->getData(e->getNum())[comp] = val;
+    break;
+  }
+}
+
 int PViewDataGModel::getNumEdges(int step, int ent, int ele)
 { 
   // no sanity checks (assumed to be guarded by skipElement)
   return _steps[step]->getEntity(ent)->getMeshElement(ele)->getNumEdges();
+}
+
+void PViewDataGModel::revertElement(int step, int ent, int ele)
+{
+  // no sanity checks (assumed to be guarded by skipElement)
+  if(!step) _steps[step]->getEntity(ent)->getMeshElement(ele)->revert();
 }
 
 void PViewDataGModel::smooth()
@@ -264,13 +303,13 @@ bool PViewDataGModel::skipEntity(int step, int ent)
   return !_steps[step]->getEntity(ent)->getVisibility();
 }
 
-bool PViewDataGModel::skipElement(int step, int ent, int ele)
+bool PViewDataGModel::skipElement(int step, int ent, int ele, bool checkVisibility)
 {
   if(step >= getNumTimeSteps()) return true;
   stepData<double> *sd = _steps[step];
   if(!_steps[step]->getNumData()) return true;
   MElement *e = sd->getEntity(ent)->getMeshElement(ele);
-  if(!e->getVisibility()) return true;
+  if(checkVisibility && !e->getVisibility()) return true;
   if(_type == NodeData){
     for(int i = 0; i < e->getNumVertices(); i++)
       if(!sd->getData(e->getVertex(i)->getNum())) return true;

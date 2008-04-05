@@ -94,9 +94,12 @@ class PViewDataList : public PViewData {
   int getNumElements(int step=-1, int ent=-1);
   int getDimension(int step, int ent, int ele);
   int getNumNodes(int step, int ent, int ele);
-  void getNode(int step, int ent, int ele, int nod, double &x, double &y, double &z);
+  int getNode(int step, int ent, int ele, int nod, double &x, double &y, double &z);
+  void setNode(int step, int ent, int ele, int nod, double x, double y, double z,
+	       int tag=0);
   int getNumComponents(int step, int ent, int ele);
   void getValue(int step, int ent, int ele, int nod, int comp, double &val);
+  void setValue(int step, int ent, int ele, int nod, int comp, double val);
   int getNumEdges(int step, int ent, int ele);
   int getNumStrings2D(){ return NbT2; }
   int getNumStrings3D(){ return NbT3; }
@@ -104,6 +107,7 @@ class PViewDataList : public PViewData {
                    double &x, double &y, double &style);
   void getString3D(int i, int step, std::string &str, 
                    double &x, double &y, double &z, double &style);
+  void revertElement(int step, int ent, int ele);
   void smooth();
   bool combineTime(nameData &nd);
   bool combineSpace(nameData &nd);

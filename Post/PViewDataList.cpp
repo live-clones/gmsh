@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.19 2008-03-20 11:44:15 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.20 2008-04-05 09:21:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -333,13 +333,24 @@ int PViewDataList::getNumNodes(int step, int ent, int ele)
   return _lastNumNodes;
 }
 
-void PViewDataList::getNode(int step, int ent, int ele, int nod,
-                            double &x, double &y, double &z)
+int PViewDataList::getNode(int step, int ent, int ele, int nod,
+			   double &x, double &y, double &z)
 {
   if(ele != _lastElement) _setLast(ele);
   x = _lastXYZ[nod];
   y = _lastXYZ[_lastNumNodes + nod];
   z = _lastXYZ[2 * _lastNumNodes + nod];
+  return 0;
+}
+
+void PViewDataList::setNode(int step, int ent, int ele, int nod, 
+			    double x, double y, double z, int tag)
+{
+  if(step) return;
+  if(ele != _lastElement) _setLast(ele);
+  _lastXYZ[nod] = x;
+  _lastXYZ[_lastNumNodes + nod] = y;
+  _lastXYZ[2 * _lastNumNodes + nod] = z;
 }
 
 int PViewDataList::getNumComponents(int step, int ent, int ele)
@@ -354,6 +365,14 @@ void PViewDataList::getValue(int step, int ent, int ele, int nod, int comp, doub
   val = _lastVal[step * _lastNumNodes  * _lastNumComponents + 
                  nod * _lastNumComponents +
                  comp];
+}
+
+void PViewDataList::setValue(int step, int ent, int ele, int nod, int comp, double val)
+{
+  if(ele != _lastElement) _setLast(ele);
+  _lastVal[step * _lastNumNodes  * _lastNumComponents + 
+	   nod * _lastNumComponents +
+	   comp] = val;
 }
 
 int PViewDataList::getNumEdges(int step, int ent, int ele)
@@ -425,6 +444,36 @@ void PViewDataList::getString3D(int i, int step, std::string &str,
                                 double &x, double &y, double &z, double &style)
 {
   _getString(3, i, step, str, x, y, z, style);
+}
+
+void PViewDataList::revertElement(int step, int ent, int ele)
+{
+  if(step) return;
+  if(ele != _lastElement) _setLast(ele);
+
+  // copy data
+  std::vector<double> XYZ(3 * _lastNumNodes);
+  for(int i = 0; i < XYZ.size(); i++)
+    XYZ[i] = _lastXYZ[i];
+
+  std::vector<double> V(_lastNumNodes * _lastNumComponents * getNumTimeSteps());
+  for(int i = 0; i < V.size(); i++)
+    V[i] = _lastVal[i];
+
+  // reverse node order
+  for(int i = 0; i < _lastNumNodes; i++){
+    _lastXYZ[i] = XYZ[_lastNumNodes - i - 1];
+    _lastXYZ[_lastNumNodes + i] = XYZ[2 * _lastNumNodes - i - 1];
+    _lastXYZ[2 * _lastNumNodes + i] = XYZ[3 * _lastNumNodes - i - 1];
+  }
+  
+  for(int step = 0; step < getNumTimeSteps(); step++)
+    for(int i = 0; i < _lastNumNodes; i++)
+      for(int k = 0; k < _lastNumComponents; k++)
+	_lastVal[_lastNumComponents * _lastNumNodes * step + 
+		 _lastNumComponents * i + k] = 
+	  V[_lastNumComponents * _lastNumNodes * step +
+	    _lastNumComponents * (_lastNumNodes - i - 1) + k];
 }
 
 static void splitCurvedElement(List_T **in, int *nbin, List_T *out, int *nbout, 

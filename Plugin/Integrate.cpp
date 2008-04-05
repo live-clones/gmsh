@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.24 2008-03-20 11:44:14 geuzaine Exp $
+// $Id: Integrate.cpp,v 1.25 2008-04-05 09:21:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -74,36 +74,6 @@ void GMSH_IntegratePlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "Integrate failed...");
 }
 
-static double integrate(int nbList, List_T *list, int dim, 
-                        int nbNod, int nbComp, int step)
-{
-  if(!nbList) return 0.;
-
-  double res = 0.;
-  int nb = List_Nbr(list) / nbList;
-  for(int i = 0; i < List_Nbr(list); i += nb) {
-    double *x = (double *)List_Pointer_Fast(list, i);
-    double *y = (double *)List_Pointer_Fast(list, i + nbNod);
-    double *z = (double *)List_Pointer_Fast(list, i + 2 * nbNod);
-    double *v = (double *)List_Pointer_Fast(list, i + 3 * nbNod +
-                                            nbNod * nbComp * step);
-    elementFactory factory;
-    element *element = factory.create(nbNod, dim, x, y, z);
-    if(!element) return 0.;
-    if(nbComp == 1){
-      res += element->integrate(v);
-    }
-    else if(nbComp == 3){
-      if(dim == 1)
-        res += element->integrateCirculation(v);
-      else if(dim == 2)
-        res += element->integrateFlux(v);
-    }
-    delete element;
-  }
-  return res;
-}
-
 PView *GMSH_IntegratePlugin::execute(PView * v)
 {
   int iView = (int)IntegrateOptions_Number[1].def;
@@ -111,13 +81,10 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
   PView *v1 = getView(iView, v);
   if(!v1) return v;
 
-  PViewDataList *data1 = getDataList(v1);
-  if(!data1) return v;
+  PViewData *data1 = v1->getData();
 
   PView *v2 = new PView(true);
-
   PViewDataList *data2 = getDataList(v2);
-  if(!data2) return v;
   
   double x = data1->getBoundingBox().center().x();
   double y = data1->getBoundingBox().center().y();
@@ -125,30 +92,47 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
   List_Add(data2->SP, &x);
   List_Add(data2->SP, &y);
   List_Add(data2->SP, &z);
-  for(int ts = 0; ts < data1->getNumTimeSteps(); ts++){
-    double val = 0;
-    // scalar fields
-    val += integrate(data1->NbSP, data1->SP, 0, 1, 1, ts);
-    val += integrate(data1->NbSL, data1->SL, 1, 2, 1, ts);
-    val += integrate(data1->NbST, data1->ST, 2, 3, 1, ts);
-    val += integrate(data1->NbSQ, data1->SQ, 2, 4, 1, ts);
-    val += integrate(data1->NbSS, data1->SS, 3, 4, 1, ts);
-    val += integrate(data1->NbSH, data1->SH, 3, 8, 1, ts);
-    val += integrate(data1->NbSI, data1->SI, 3, 6, 1, ts);
-    val += integrate(data1->NbSY, data1->SY, 3, 5, 1, ts);
-    // circulations
-    val += integrate(data1->NbVL, data1->VL, 1, 2, 3, ts);
-    // fluxes
-    val += integrate(data1->NbVT, data1->VT, 2, 3, 3, ts);
-    val += integrate(data1->NbVQ, data1->VQ, 2, 4, 3, ts);
-    Msg(INFO, "Step %d: integral = %.16g", ts, val);
-    List_Add(data2->SP, &val);
+  for(int step = 0; step < data1->getNumTimeSteps(); step++){
+    double res = 0;
+    for(int ent = 0; ent < data1->getNumEntities(step); ent++){
+      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
+	if(data1->skipElement(step, ent, ele)) continue;
+	int numComp = data1->getNumComponents(step, ent, ele);
+	int numEdges = data1->getNumEdges(step, ent, ele);
+	bool scalar = (numComp == 1);
+	bool circulation = (numComp == 3 && numEdges == 1);
+	bool flux = (numComp == 3 && (numEdges == 3 || numEdges == 4));
+	if(!scalar && !circulation && !flux) continue;
+	int numNodes = data1->getNumNodes(step, ent, ele);
+	int dim = data1->getDimension(step, ent, ele);
+	double x[8], y[8], z[8], val[8 * 3];
+	for(int nod = 0; nod < numNodes; nod++){
+	  data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
+	  for(int comp = 0; comp < numComp; comp++)
+	    data1->getValue(step, ent, ele, nod, comp, val[numComp * nod + comp]);
+	}
+	elementFactory factory;
+	element *element = factory.create(numNodes, dim, x, y, z);
+	if(!element) continue;
+	if(scalar)
+	  res += element->integrate(val);
+	else if(circulation)
+	  res += element->integrateCirculation(val);
+	else if(flux)
+	  res += element->integrateFlux(val);
+	delete element;
+      }
+    }
+    Msg(INFO, "Step %d: integral = %.16g", step, res);
+    List_Add(data2->SP, &res);
   }
   data2->NbSP = 1;
   v2->getOptions()->IntervalsType = PViewOptions::Numeric;
   
-  for(int i = 0; i < List_Nbr(data1->Time); i++)
-    List_Add(data2->Time, List_Pointer(data1->Time, i));
+  for(int i = 0; i < data1->getNumTimeSteps(); i++){
+    double time = data1->getTime(i);
+    List_Add(data2->Time, &time);
+  }
   data2->setName(data1->getName() + "_Integrate");
   data2->setFileName(data1->getName() + "_Integrate.pos");
   data2->finalize();

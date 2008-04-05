@@ -158,13 +158,17 @@ class PViewDataGModel : public PViewData {
   int getNumElements(int step=-1, int ent=-1);
   int getDimension(int step, int ent, int ele);
   int getNumNodes(int step, int ent, int ele);
-  void getNode(int step, int ent, int ele, int nod, double &x, double &y, double &z);
+  int getNode(int step, int ent, int ele, int nod, double &x, double &y, double &z);
+  void setNode(int step, int ent, int ele, int nod, double x, double y, double z, 
+	       int tag=0);
   int getNumComponents(int step, int ent, int ele);
   void getValue(int step, int ent, int ele, int node, int comp, double &val);
+  void setValue(int step, int ent, int ele, int node, int comp, double val);
   int getNumEdges(int step, int ent, int ele);
+  void revertElement(int step, int ent, int ele);
   void smooth();
   bool skipEntity(int step, int ent);
-  bool skipElement(int step, int ent, int ele);
+  bool skipElement(int step, int ent, int ele, bool checkVisibility=false);
   bool hasTimeStep(int step);
   bool hasPartition(int part);
   bool hasMultipleMeshes();

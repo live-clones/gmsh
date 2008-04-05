@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.25 2008-04-02 20:00:38 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.26 2008-04-05 09:21:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -273,7 +273,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
   _associateEntityWithMeshVertices();
   for(unsigned int i = 0; i < verts.size(); i++){
     GEntity *ge = verts[i]->onWhat();
-    // store vertices (except for points, which ok already)
+    // store vertices (except for points, which are already ok)
     if(ge && ge->dim() > 0) ge->mesh_vertices.push_back(verts[i]);
     // delete unused vertices
     if(!ge) delete verts[i];
