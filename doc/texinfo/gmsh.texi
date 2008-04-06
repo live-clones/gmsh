@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.244 2008-04-06 09:47:31 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.245 2008-04-06 10:28:37 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 @c
@@ -2955,10 +2955,10 @@ below.)
 
 @cindex File formats
 
-This chapter describes Gmsh's native ``MSH'' file format, used to allows
-store meshes and associated post-processing datasets. The MSH format
-exists in two flavor: ASCII and binary. The format has a version number
-(currently 2.0) that is independent of Gmsh's main version number.
+This chapter describes Gmsh's native ``MSH'' file format, used to store
+meshes and associated post-processing datasets. The MSH format exists in
+two flavors: ASCII and binary. The format has a version number
+(currently: 2.0) that is independent of Gmsh's main version number.
 
 @menu
 * MSH ASCII file format::       
@@ -2981,7 +2981,7 @@ exists in two flavor: ASCII and binary. The format has a version number
 The MSH ASCII file format contains one mandatory section giving
 information about the file (@code{$MeshFormat}), followed by several
 optional sections defining the nodes (@code{$Nodes}), elements
-(@code{$Elements}), region names (@code{$PhysicalName}) or
+(@code{$Elements}), region names (@code{$PhysicalName}) and
 post-processing datasets (@code{$NodeData}, @code{$ElementData},
 @code{$ElememtNodeData}). Sections can be repeated in the same file, and
 post-processing sections can be put into separate files (e.g. one file
@@ -3010,39 +3010,39 @@ $PhysicalNames
 $EndPhysicalNames
 $NodeData
 @var{number-of-string-tags}
-"@var{string-tag}"
+< "@var{string-tag}" >
 @dots{}
 @var{number-of-real-tags}
-@var{real-tag}
+< @var{real-tag} >
 @dots{}
 @var{number-of-integer-tags}
-@var{integer-tag}
+< @var{integer-tag} >
 @dots{}
 @var{node-number} @var{value} @dots{}
 @dots{}
 $EndNodeData
 $ElementData
 @var{number-of-string-tags}
-"@var{string-tag}"
+< "@var{string-tag}" >
 @dots{}
 @var{number-of-real-tags}
-@var{real-tag}
+< @var{real-tag} >
 @dots{}
 @var{number-of-integer-tags}
-@var{integer-tag}
+< @var{integer-tag} >
 @dots{}
 @var{elm-number} @var{value} @dots{}
 @dots{}
 $EndElementData
 $ElementNodeData
 @var{number-of-string-tags}
-"@var{string-tag}"
+< "@var{string-tag}" >
 @dots{}
 @var{number-of-real-tags}
-@var{real-tag}
+< @var{real-tag} >
 @dots{}
 @var{number-of-integer-tags}
-@var{integer-tag}
+< @var{integer-tag} >
 @dots{}
 @var{elm-number} @var{number-of-nodes-per-element} @var{value} @dots{}
 @dots{}
@@ -3140,17 +3140,12 @@ with the edges).
 See below for the ordering of the nodes.
 
 @item @var{number-of-tags}
-gives the number of tags for the @var{n}-th element. By default, Gmsh
-generates meshes with three tags and reads files with an arbitrary
-number of tags: see below.
-
-@item @var{tag}
-is an integer tag associated with the @var{n}-th element. By default,
-the first tag is the number of the physical entity to which the element
-belongs; the second is the number of the elementary geometrical entity
-to which the element belongs; the third is the number of a mesh
-partition to which the element belongs. All tags must be postive
-integers, or zero. A zero tag is equivalent to no tag.
+gives the number of integer tags that follow for the @var{n}-th
+element. By default, the first @var{tag} is the number of the physical
+entity to which the element belongs; the second is the number of the
+elementary geometrical entity to which the element belongs; the third is
+the number of a mesh partition to which the element belongs. All tags
+must be postive integers, or zero. A zero tag is equivalent to no tag.
 
 @item @var{node-number-list}
 is the list of the node numbers of the @var{n}-th element. The ordering of
@@ -3163,8 +3158,8 @@ quadrangular faces given in @ref{Node ordering}.
 
 @item @var{number-of-string-tags}
 gives the number of string tags that follow. By default the first
-@var{string-tag} is interpreted as the name of the post-processing
-dataset, and the second as the name of the interpolation scheme.
+@var{string-tag} is interpreted as the name of the post-processing view,
+and the second as the name of the interpolation scheme.
 
 @item @var{number-of-real-tags}
 gives the number of real number tags that follow.
@@ -3216,7 +3211,8 @@ $Elements
 $EndElements
 
 [ all other sections are identical to ASCII, except that @var{node-number},
-  @var{elm-number}, @var{number-of-nodes} and @var{values} are written in binary ]
+  @var{elm-number}, @var{number-of-nodes-per-elemenr} and @var{values} are written in
+  binary format ]
 @end example
 
 @noindent
@@ -3394,11 +3390,11 @@ Tetrahedron:
 @example
 @group
 Hexahedron:
-                  edge 1: nodes 1 2   quad. face 1: nodes 1 2 3 4
-        v              2:       1 4              2:       1 2 5 6
-        |              3:       1 5              3:       1 4 5 8
-        |              4:       2 3              4:       2 3 6 7
-   4----|--3           5:       2 6              5:       3 4 7 8
+                  edge 1: nodes 1 2   quad. face 1: nodes 1 4 3 2
+        v              2:       1 4              2:       1 2 6 5
+        |              3:       1 5              3:       1 5 8 4
+        |              4:       2 3              4:       2 3 7 6
+   4----|--3           5:       2 6              5:       3 4 8 7
    |\   |  |\          6:       3 4              6:       5 6 7 8
    | 8-------7         7:       3 7
    | |   ----|---u     8:       4 8
@@ -3413,9 +3409,9 @@ Hexahedron:
 @example
 @group
 Prism:
-                  edge 1: nodes 1 2   quad. face 1: nodes 1 2 4 5
-      v                2:       1 3              2:       1 3 4 6
-    3 |                3:       1 4              3:       2 3 5 6
+                  edge 1: nodes 1 2   quad. face 1: nodes 1 2 5 4
+      v                2:       1 3              2:       1 4 6 3
+    3 |                3:       1 4              3:       2 3 6 5
     |\|                4:       2 3
     | |                5:       2 5
     1_|2               6:       3 6
@@ -3432,7 +3428,7 @@ Prism:
 @example
 @group
 Pyramid:
-                  edge 1: nodes 1 2   quad. face 1: nodes 1 2 3 4
+                  edge 1: nodes 1 2   quad. face 1: nodes 1 4 3 2
         v              2        1 4
         |              3        1 5
         |              4        2 3

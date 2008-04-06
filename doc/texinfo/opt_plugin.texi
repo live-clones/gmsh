@@ -444,6 +444,8 @@ Numeric options:
 @table @code
 @item iField
 Default value: @code{-1}
+@item UTMZone
+Default value: @code{0}
 @item UTMEquatorialRadius
 Default value: @code{6.37814e+06}
 @item UTMPolarRadius
@@ -454,8 +456,8 @@ Default value: @code{1}
 Default value: @code{0}
 @item UTMShiftY
 Default value: @code{0}
-@item UTMZone
-Default value: @code{0}
+@item WritePolarSphere
+Default value: @code{1}
 @end table
 
 @item Plugin(Gradient)
@@ -854,8 +856,6 @@ Default value: @code{1}
 Default value: @code{0}
 @item SmoothingAngle
 Default value: @code{180}
-@item Explode
-Default value: @code{1}
 @item dView
 Default value: @code{-1}
 @item iView
