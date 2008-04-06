@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.27 2008-04-06 02:33:53 remacle Exp $
+// $Id: Field.cpp,v 1.28 2008-04-06 07:53:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -790,7 +790,7 @@ public:int view_index;
          }
        */
     }
-    //if(l <= 0) return MAX_LC;
+    if(l <= 0) return MAX_LC;
     return l;
   }
   const char *get_name()
