@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.243 2008-04-06 07:51:38 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.244 2008-04-06 09:47:31 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 @c
@@ -3162,22 +3162,22 @@ ordering of these additional nodes follows the ordering of the edges and
 quadrangular faces given in @ref{Node ordering}.
 
 @item @var{number-of-string-tags}
-gives the number of string tags that follow. The first @var{string-tag}
-is always interpreted as the name of the post-processing dataset; the
-second as the name of the interpolation scheme.
+gives the number of string tags that follow. By default the first
+@var{string-tag} is interpreted as the name of the post-processing
+dataset, and the second as the name of the interpolation scheme.
 
 @item @var{number-of-real-tags}
 gives the number of real number tags that follow.
 
 @item @var{number-of-integer-tags}
-gives the number of integer tags that follow. The first
-@var{integer-tag} is always interpreted as a time step number; the
-second as the number of components of the data in the view; the third as
-the number of entities (nodes or elements) in the view; the fourth as
-the partition index for the view data. 
+gives the number of integer tags that follow. By default the first
+@var{integer-tag} is interpreted as a time step number, the second as
+the number of components of the data in the view, the third as the
+number of entities (nodes or elements) in the view, and the fourth as
+the partition index for the view data.
 
 @item @var{number-of-nodes-per-elements}
-gives the number of node values for an element in an element-based view
+gives the number of node values for an element in an element-based view.
 
 @item @var{value}
 is a real number giving the value associated with a node or an
