@@ -1,4 +1,4 @@
-// $Id: Transform.cpp,v 1.40 2008-04-05 17:49:23 geuzaine Exp $
+// $Id: Transform.cpp,v 1.41 2008-04-06 09:20:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -117,23 +117,18 @@ PView *GMSH_TransformPlugin::execute(PView *v)
       for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
 	if(data1->skipElement(step, ent, ele)) continue;
 	if(swap) data1->revertElement(step, ent, ele);
-	int numNodes = data1->getNumNodes(step, ent, ele);
-	for(int nod = 0; nod < numNodes; nod++){
-	  double x, y, z;
-	  data1->getNode(step, ent, ele, nod, x, y, z);
-	  data1->setNode(step, ent, ele, nod, x, y, z, 0);
-	}
+	for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
+	  data1->tagNode(step, ent, ele, nod, 0);
       }
     }
   }
-
+  
   // transform all "0" nodes
   for(int step = 0; step < data1->getNumTimeSteps(); step++){
     for(int ent = 0; ent < data1->getNumEntities(step); ent++){
       for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
 	if(data1->skipElement(step, ent, ele)) continue;
-	int numNodes = data1->getNumNodes(step, ent, ele);
-	for(int nod = 0; nod < numNodes; nod++){
+	for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++){
 	  double x, y, z;
 	  int tag = data1->getNode(step, ent, ele, nod, x, y, z);
 	  if(!tag){
@@ -141,7 +136,8 @@ PView *GMSH_TransformPlugin::execute(PView *v)
 	    x2 = mat[0][0] * x + mat[0][1] * y + mat[0][2] * z + mat[0][3];
 	    y2 = mat[1][0] * x + mat[1][1] * y + mat[1][2] * z + mat[1][3];
 	    z2 = mat[2][0] * x + mat[2][1] * y + mat[2][2] * z + mat[2][3];
-	    data1->setNode(step, ent, ele, nod, x2, y2, z2, 1);
+	    data1->setNode(step, ent, ele, nod, x2, y2, z2);
+	    data1->tagNode(step, ent, ele, nod, 1);
 	  }
 	}
       }

@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.20 2008-04-05 09:21:37 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.21 2008-04-06 09:20:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -344,7 +344,7 @@ int PViewDataList::getNode(int step, int ent, int ele, int nod,
 }
 
 void PViewDataList::setNode(int step, int ent, int ele, int nod, 
-			    double x, double y, double z, int tag)
+			    double x, double y, double z)
 {
   if(step) return;
   if(ele != _lastElement) _setLast(ele);

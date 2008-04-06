@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.33 2008-04-05 17:49:23 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.34 2008-04-06 09:20:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -110,12 +110,8 @@ PView *GMSH_SphericalRaisePlugin::execute(PView *v)
     for(int ent = 0; ent < data1->getNumEntities(step); ent++){
       for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
 	if(data1->skipElement(step, ent, ele)) continue;
-	int numNodes = data1->getNumNodes(step, ent, ele);
-	for(int nod = 0; nod < numNodes; nod++){
-	  double x, y, z;
-	  data1->getNode(step, ent, ele, nod, x, y, z);
-	  data1->setNode(step, ent, ele, nod, x, y, z, 0);
-	}
+	for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
+	  data1->tagNode(step, ent, ele, nod, 0);
       }
     }
   }
@@ -125,8 +121,7 @@ PView *GMSH_SphericalRaisePlugin::execute(PView *v)
     for(int ent = 0; ent < data1->getNumEntities(step); ent++){
       for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
 	if(data1->skipElement(step, ent, ele)) continue;
-	int numNodes = data1->getNumNodes(step, ent, ele);
-	for(int nod = 0; nod < numNodes; nod++){
+	for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++){
 	  double x, y, z;
 	  int tag = data1->getNode(step, ent, ele, nod, x, y, z);
 	  if(!tag){
@@ -140,7 +135,8 @@ PView *GMSH_SphericalRaisePlugin::execute(PView *v)
 	    x += coef * r[0];
 	    y += coef * r[1];
 	    z += coef * r[2];
-	    data1->setNode(step, ent, ele, nod, x, y, z, 1);
+	    data1->setNode(step, ent, ele, nod, x, y, z);
+	    data1->tagNode(step, ent, ele, nod, 1);
 	  }
 	}
       }

@@ -1,4 +1,4 @@
-// $Id: ModulusPhase.cpp,v 1.9 2008-03-20 11:44:14 geuzaine Exp $
+// $Id: ModulusPhase.cpp,v 1.10 2008-04-06 09:20:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -33,12 +33,6 @@ extern "C"
   {
     return new GMSH_ModulusPhasePlugin();
   }
-}
-
-
-GMSH_ModulusPhasePlugin::GMSH_ModulusPhasePlugin()
-{
-  ;
 }
 
 void GMSH_ModulusPhasePlugin::getName(char *name) const
@@ -77,33 +71,6 @@ void GMSH_ModulusPhasePlugin::catchErrorMessage(char *errorMessage) const
   strcpy(errorMessage, "ModulusPhase failed...");
 }
 
-
-static void mp(int nb1, List_T *list1, int nbNod, int nbComp)
-{
-  if(!nb1) return;
-
-  int rIndex = (int)ModulusPhaseOptions_Number[0].def;
-  int iIndex = (int)ModulusPhaseOptions_Number[1].def;
-
-  int nb = List_Nbr(list1) / nb1;
-  for(int i = 0; i < List_Nbr(list1); i += nb) {
-    double *valr = (double *)List_Pointer_Fast(list1, i + 3 * nbNod +
-                                               nbNod * nbComp * rIndex);
-    double *vali = (double *)List_Pointer_Fast(list1, i + 3 * nbNod +
-                                               nbNod * nbComp * iIndex);
-    for(int j = 0; j < nbNod; j++) {
-      for(int k = 0; k < nbComp; k++) {
-        double vr = valr[nbComp * j + k];
-        double vi = vali[nbComp * j + k];
-        double modulus = sqrt(vr*vr+vi*vi);
-        double phase = atan2(vi, vr);
-        valr[nbComp * j + k] = modulus;
-        vali[nbComp * j + k] = phase;
-      }
-    }
-  }
-}
-
 PView *GMSH_ModulusPhasePlugin::execute(PView *v)
 {
   int rIndex = (int)ModulusPhaseOptions_Number[0].def;
@@ -113,8 +80,11 @@ PView *GMSH_ModulusPhasePlugin::execute(PView *v)
   PView *v1 = getView(iView, v);
   if(!v1) return v;
 
-  PViewDataList *data1 = getDataList(v1);
-  if(!data1) return v;
+  PViewData *data1 = v1->getData();
+  if(data1->hasMultipleMeshes()){
+    Msg(GERROR, "Gradient plugin cannot be run on multi-mesh views");
+    return v;
+  }
 
   if(rIndex < 0 || rIndex >= data1->getNumTimeSteps() ||
      iIndex < 0 || iIndex >= data1->getNumTimeSteps()){
@@ -122,34 +92,44 @@ PView *GMSH_ModulusPhasePlugin::execute(PView *v)
     return v1;
   }
 
-  mp(data1->NbSP, data1->SP, 1, 1); 
-  mp(data1->NbVP, data1->VP, 1, 3); 
-  mp(data1->NbTP, data1->TP, 1, 9);
-  mp(data1->NbSL, data1->SL, 2, 1);
-  mp(data1->NbVL, data1->VL, 2, 3); 
-  mp(data1->NbTL, data1->TL, 2, 9);
-  mp(data1->NbST, data1->ST, 3, 1); 
-  mp(data1->NbVT, data1->VT, 3, 3); 
-  mp(data1->NbTT, data1->TT, 3, 9);
-  mp(data1->NbSQ, data1->SQ, 4, 1); 
-  mp(data1->NbVQ, data1->VQ, 4, 3);
-  mp(data1->NbTQ, data1->TQ, 4, 9);
-  mp(data1->NbSS, data1->SS, 4, 1); 
-  mp(data1->NbVS, data1->VS, 4, 3); 
-  mp(data1->NbTS, data1->TS, 4, 9);
-  mp(data1->NbSH, data1->SH, 8, 1); 
-  mp(data1->NbVH, data1->VH, 8, 3);
-  mp(data1->NbTH, data1->TH, 8, 9);
-  mp(data1->NbSI, data1->SI, 6, 1); 
-  mp(data1->NbVI, data1->VI, 6, 3);
-  mp(data1->NbTI, data1->TI, 6, 9);
-  mp(data1->NbSY, data1->SY, 5, 1);
-  mp(data1->NbVY, data1->VY, 5, 3); 
-  mp(data1->NbTY, data1->TY, 5, 9);
+  // tag all the nodes with "0" (the default tag)
+  for(int step = 0; step < data1->getNumTimeSteps(); step++){
+    for(int ent = 0; ent < data1->getNumEntities(step); ent++){
+      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
+	if(data1->skipElement(step, ent, ele)) continue;
+	for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
+	  data1->tagNode(step, ent, ele, nod, 0);
+      }
+    }
+  }
+
+  // transform all "0" nodes
+  for(int ent = 0; ent < data1->getNumEntities(rIndex); ent++){
+    for(int ele = 0; ele < data1->getNumElements(rIndex, ent); ele++){
+      if(data1->skipElement(rIndex, ent, ele)) continue;
+      for(int nod = 0; nod < data1->getNumNodes(rIndex, ent, ele); nod++){
+	double x, y, z;
+	int tag = data1->getNode(rIndex, ent, ele, nod, x, y, z);
+	if(tag) continue;
+	for(int comp = 0; comp < data1->getNumComponents(rIndex, ent, ele); comp++){
+	  double vr, vi;
+	  data1->getValue(rIndex, ent, ele, nod, comp, vr);
+	  data1->getValue(iIndex, ent, ele, nod, comp, vi);
+	  double modulus = sqrt(vr * vr + vi * vi);
+	  double phase = atan2(vi, vr);
+	  data1->setValue(rIndex, ent, ele, nod, comp, modulus);
+	  data1->setValue(iIndex, ent, ele, nod, comp, phase);
+	  data1->tagNode(rIndex, ent, ele, nod, 1);
+	  data1->tagNode(iIndex, ent, ele, nod, 1);
+	}
+      }
+    }
+  }
 
   data1->setName(data1->getName() + "_ModulusPhase");
   data1->setName(data1->getName() + ".pos");
   data1->finalize();
 
+  v1->setChanged(true);
   return v1;
 }

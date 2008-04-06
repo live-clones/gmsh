@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.48 2008-04-05 09:21:37 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.49 2008-04-06 09:20:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -41,9 +41,22 @@ bool PViewDataGModel::finalize()
 {
   _min = VAL_INF;
   _max = -VAL_INF;
-  for(unsigned int i = 0; i < _steps.size(); i++){
-    _min = std::min(_min, _steps[i]->getMin());
-    _max = std::max(_max, _steps[i]->getMax());
+  for(int step = 0; step < getNumTimeSteps(); step++){
+    _steps[step]->setMin(VAL_INF);
+    _steps[step]->setMax(-VAL_INF);
+    for(int ent = 0; ent < getNumEntities(step); ent++){
+      for(int ele = 0; ele < getNumElements(step, ent); ele++){
+	if(skipElement(step, ent, ele)) continue;
+	for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
+	  double val;
+	  getScalarValue(step, ent, ele, nod, val);
+	  _steps[step]->setMin(std::min(_steps[step]->getMin(), val));
+	  _steps[step]->setMax(std::max(_steps[step]->getMax(), val));
+	}
+      }
+    }
+    _min = std::min(_min, _steps[step]->getMin());
+    _max = std::max(_max, _steps[step]->getMax());
   }
   setDirty(false);
   return true;
@@ -186,13 +199,19 @@ int PViewDataGModel::getNode(int step, int ent, int ele, int nod,
 }
 
 void PViewDataGModel::setNode(int step, int ent, int ele, int nod, 
-                              double x, double y, double z, int tag)
+                              double x, double y, double z)
 {
   // no sanity checks (assumed to be guarded by skipElement)
   MVertex *v = _steps[step]->getEntity(ent)->getMeshElement(ele)->getVertex(nod);
   v->x() = x;
   v->y() = y;
   v->z() = z;
+}
+
+void PViewDataGModel::tagNode(int step, int ent, int ele, int nod, int tag)
+{
+  // no sanity checks (assumed to be guarded by skipElement)
+  MVertex *v = _steps[step]->getEntity(ent)->getMeshElement(ele)->getVertex(nod);
   v->setIndex(tag);
 }
 
@@ -286,9 +305,6 @@ void PViewDataGModel::smooth()
       if(d){
 	double f = nodeConnect[i];
 	if(f) for(int j = 0; j < numComp; j++) d[j] /= f;
-	double s = ComputeScalarRep(numComp, d);
-	_steps2[step]->setMin(std::min(_steps2[step]->getMin(), s));
-	_steps2[step]->setMax(std::max(_steps2[step]->getMax(), s));
       }
     }
   }

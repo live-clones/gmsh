@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.16 2008-04-05 09:21:37 geuzaine Exp $
+// $Id: PViewData.cpp,v 1.17 2008-04-06 09:20:17 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -39,14 +39,13 @@ bool PViewData::empty()
 void PViewData::getScalarValue(int step, int ent, int ele, int nod, double &val)
 {
   int numComp = getNumComponents(step, ent, ele);
-  double d[9];
+  std::vector<double> d(numComp);
   for(int comp = 0; comp < numComp; comp++)
     getValue(step, ent, ele, nod, comp, d[comp]);
-  val = ComputeScalarRep(numComp, d);
+  val = ComputeScalarRep(numComp, &d[0]);
 }
 
-void PViewData::setNode(int step, int ent, int ele, int nod, double x, double y, double z,
-			int tag)
+void PViewData::setNode(int step, int ent, int ele, int nod, double x, double y, double z)
 {
   Msg(GERROR, "Cannot change node coordinates in this view");
 }

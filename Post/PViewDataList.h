@@ -95,8 +95,7 @@ class PViewDataList : public PViewData {
   int getDimension(int step, int ent, int ele);
   int getNumNodes(int step, int ent, int ele);
   int getNode(int step, int ent, int ele, int nod, double &x, double &y, double &z);
-  void setNode(int step, int ent, int ele, int nod, double x, double y, double z,
-	       int tag=0);
+  void setNode(int step, int ent, int ele, int nod, double x, double y, double z);
   int getNumComponents(int step, int ent, int ele);
   void getValue(int step, int ent, int ele, int nod, int comp, double &val);
   void setValue(int step, int ent, int ele, int nod, int comp, double val);

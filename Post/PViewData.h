@@ -78,12 +78,14 @@ class PViewData {
   // Returns the number of nodes of the ele-th element in the ent-th
   // entity
   virtual int getNumNodes(int step, int ent, int ele) = 0;
-  // Gets/Sets the coordinates of the nod-th node from the ele-th element
-  // in the ent-th entity (if the node has a tag, getNode returns it)
+  // Gets/Sets the coordinates and tag of the nod-th node from the
+  // ele-th element in the ent-th entity (if the node has a tag,
+  // getNode returns it)
   virtual int getNode(int step, int ent, int ele, int nod, 
 		      double &x, double &y, double &z) = 0;
   virtual void setNode(int step, int ent, int ele, int nod,
-		       double x, double y, double z, int tag=0);
+		       double x, double y, double z);
+  virtual void tagNode(int step, int ent, int ele, int nod, int tag){}
   // Returns the number of componts available for the ele-th element
   // in the ent-th entity
   virtual int getNumComponents(int step, int ent, int ele) = 0;
