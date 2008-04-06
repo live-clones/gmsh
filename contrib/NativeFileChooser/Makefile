@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2008-03-19 16:38:16 geuzaine Exp $
+# $Id: Makefile,v 1.9 2008-04-06 02:33:54 remacle Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -52,5 +52,5 @@ depend:
 
 # DO NOT DELETE THIS LINE
 Fl_Native_File_Chooser.o: Fl_Native_File_Chooser.cxx \
-  Fl_Native_File_Chooser_MAC.cxx common.cxx FL/Fl_Native_File_Chooser.H \
-  FL/Fl_Native_File_Chooser_MAC.H
+  Fl_Native_File_Chooser_FLTK.cxx FL/Fl_Native_File_Chooser.H \
+  FL/Fl_Native_File_Chooser_FLTK.H common.cxx

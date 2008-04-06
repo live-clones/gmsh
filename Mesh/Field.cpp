@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.26 2008-03-23 21:42:57 geuzaine Exp $
+// $Id: Field.cpp,v 1.27 2008-04-06 02:33:53 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -44,26 +44,26 @@
 
 extern Context_T CTX;
 
-class FieldOptionDouble : public FieldOption {
- public:
+class FieldOptionDouble:public FieldOption
+{
+public:
   double &val;
   FieldOptionType get_type()
   {
     return FIELD_OPTION_DOUBLE;
-  }
-  FieldOptionDouble(double &_val, bool * _status = NULL)
-    : FieldOption(_status), val(_val) 
-  {
-  }
+  };
+FieldOptionDouble(double &_val, bool * _status = NULL):FieldOption(_status),
+    val(_val) {
+  };
   double numerical_value() const
   {
     return val;
-  }
+  };
   void numerical_value(double v)
   {
     modified();
     val = v;
-  }
+  };
   void get_text_representation(std::string & v_str)
   {
     std::ostringstream sstream;
@@ -73,26 +73,26 @@ class FieldOptionDouble : public FieldOption {
   }
 };
 
-class FieldOptionInt : public FieldOption {
- public:
+class FieldOptionInt:public FieldOption
+{
+public:
   int &val;
   FieldOptionType get_type()
   {
     return FIELD_OPTION_INT;
-  }
-  FieldOptionInt(int &_val, bool * _status = NULL)
-    : FieldOption(_status), val(_val) 
-  {
-  }
+  };
+FieldOptionInt(int &_val, bool * _status = NULL):FieldOption(_status),
+    val(_val) {
+  };
   double numerical_value() const
   {
     return val;
-  }
+  };
   void numerical_value(double v)
   {
     modified();
-    val = (int)v;
-  }
+    val = v;
+  };
   void get_text_representation(std::string & v_str)
   {
     std::ostringstream sstream;
@@ -100,24 +100,24 @@ class FieldOptionInt : public FieldOption {
     v_str = sstream.str();
   }
 };
-
-class FieldOptionList : public FieldOption {
- public:
-  std::list<int> &val;
+class FieldOptionList:public FieldOption
+{
+public:
+  std::list < int >&val;
   FieldOptionType get_type()
   {
     return FIELD_OPTION_LIST;
-  }
-  FieldOptionList(std::list < int >&_val, bool * _status = NULL)
-    : FieldOption(_status), val(_val)
+  };
+FieldOptionList(std::list < int >&_val, bool * _status = NULL):FieldOption(_status),
+    val(_val)
   {
-  }
-  std::list<int> &list()
+  };
+  std::list < int >&list()
   {
     modified();
     return val;
   }
-  const std::list<int> &list() const
+  const std::list < int >&list() const
   {
     return val;
   }
@@ -134,55 +134,52 @@ class FieldOptionList : public FieldOption {
     v_str = sstream.str();
   }
 };
-
-class FieldOptionString : public FieldOption {
- public:
-  std::string &val;
+class FieldOptionString:public FieldOption
+{
+public:
+  std::string & val;
   virtual FieldOptionType get_type()
   {
     return FIELD_OPTION_STRING;
-  }
-  FieldOptionString(std::string &_val, bool *_status = NULL) 
-    : FieldOption(_status), val(_val) 
-  {
-  }
-  std::string &string()
-  {
+  };
+FieldOptionString(std::string & _val, bool * _status = NULL):FieldOption(_status),
+    val(_val) {
+  };
+  std::string & string() {
     modified();
     return val;
   }
-  const std::string &string() const
+  const std::string & string() const
   {
     return val;
   }
-  void get_text_representation(std::string &v_str)
+  void get_text_representation(std::string & v_str)
   {
     std::ostringstream sstream;
     sstream << "\"" << val << "\"";
     v_str = sstream.str();
   }
 };
-
-class FieldOptionBool : public FieldOption {
- public:
-  bool &val;
+class FieldOptionBool:public FieldOption
+{
+public:
+  bool & val;
   FieldOptionType get_type()
   {
     return FIELD_OPTION_BOOL;
-  }
-  FieldOptionBool(bool &_val, bool *_status = NULL) 
-    : FieldOption(_status), val(_val)
-  {
-  }
+  };
+FieldOptionBool(bool & _val, bool * _status = NULL):FieldOption(_status),
+    val(_val) {
+  };
   double numerical_value() const
   {
     return val;
-  }
+  };
   void numerical_value(double v)
   {
     modified();
     val = v;
-  }
+  };
   void get_text_representation(std::string & v_str)
   {
     std::ostringstream sstream;
@@ -190,10 +187,18 @@ class FieldOptionBool : public FieldOption {
     v_str = sstream.str();
   }
 };
+class FieldOptionPath:public FieldOptionString
+{
+public:
+  FieldOptionType get_type()
+  {
+    return FIELD_OPTION_PATH;
+  };
+};
 
 void FieldManager::reset()
 {
-  for(std::map<int, Field*>::iterator it = begin(); it != end(); it++) {
+  for(std::map < int, Field * >::iterator it = begin(); it != end(); it++) {
     delete it->second;
   }
   clear();
@@ -247,7 +252,6 @@ int FieldManager::max_id()
   else
     return 0;
 }
-
 void FieldManager::delete_field(int id)
 {
   iterator it = find(id);
@@ -260,25 +264,28 @@ void FieldManager::delete_field(int id)
 }
 
 // StructuredField
-class StructuredField : public Field{
+class StructuredField:public Field
+{
   double o[3], d[3];
   int n[3];
   double *data;
   bool error_status;
+  bool text_format;
   std::string file_name;
- public:
-  StructuredField()
+public:StructuredField()
   {
     options["FileName"] = new FieldOptionString(file_name, &update_needed);
+    text_format = false;
+    options["TextFormat"] = new FieldOptionBool(text_format, &update_needed);
     data = NULL;
   }
   const char *get_name()
   {
     return "Structured";
   }
-  virtual ~StructuredField() 
-  {
-    if(data) delete[]data;
+  virtual ~ StructuredField() {
+    if(data)
+      delete[]data;
   }
   double operator() (double x, double y, double z)
   {
@@ -291,14 +298,26 @@ class StructuredField : public Field{
         input.
           exceptions(std::ifstream::eofbit | std::ifstream::failbit | std::
                      ifstream::badbit);
-        input.read((char *)o, 3 * sizeof(double));
-        input.read((char *)d, 3 * sizeof(double));
-        input.read((char *)n, 3 * sizeof(int));
-        int nt = n[0] * n[1] * n[2];
-        if(data)
-          delete[]data;
-        data = new double[nt];
-        input.read((char *)data, nt * sizeof(double));
+        if(!text_format) {
+          input.read((char *)o, 3 * sizeof(double));
+          input.read((char *)d, 3 * sizeof(double));
+          input.read((char *)n, 3 * sizeof(int));
+          int nt = n[0] * n[1] * n[2];
+          if(data)
+            delete[]data;
+          data = new double[nt];
+          input.read((char *)data, nt * sizeof(double));
+        }
+        else {
+          input >> o[0] >> o[1] >> o[2] >> d[0] >> d[1] >> d[2] >> n[0] >>
+            n[1] >> n[2];
+          int nt = n[0] * n[1] * n[2];
+          if(data)
+            delete[]data;
+          data = new double[nt];
+          for(int i = 0; i < nt; i++)
+            input >> data[i];
+        }
         input.close();
       }
       catch(...) {
@@ -340,9 +359,93 @@ class StructuredField : public Field{
   }
 };
 
-class LonLatField : public Field {
+class UTMField:public Field
+{
+  int field_id, zone;
+  double a, b, n, n2, n3, n4, n5, e, e2, e1, e12, e13, e14, J1, J2, J3, J4,
+    Ap, Bp, Cp, Dp, Ep, e4, e6, ep, ep2, ep4, k0, mu_fact;
+public:
+  UTMField()
+  {
+    field_id = 1;
+    zone = 0;
+    options["IField"] = new FieldOptionInt(field_id);
+    options["Zone"] = new FieldOptionInt(zone);
+    a = 6378137;                /* Equatorial Radius */
+    b = 6356752.3142;           /* Rayon Polar Radius */
+    /* see http://www.uwgb.edu/dutchs/UsefulData/UTMFormulas.HTM */
+    n = (a - b) / (a + b);
+    n2 = n * n;
+    n3 = n * n * n;
+    n4 = n * n * n * n;
+    n5 = n * n * n * n * n;
+    e = sqrt(1 - b * b / a / a);
+    e2 = e * e;
+    e1 = (1 - sqrt(1 - e2)) / (1 + sqrt(1 - e2));
+    e12 = e1 * e1;
+    e13 = e1 * e1 * e1;
+    e14 = e1 * e1 * e1 * e1;
+    J1 = (3 * e1 / 2 - 27 * e13 / 32);
+    J2 = (21 * e12 / 16 - 55 * e14 / 32);
+    J3 = 151 * e13 / 96;
+    J4 = 1097 * e14 / 512;
+    Ap = a * (1 - n + (5. / 4.) * (n2 - n3) + (81. / 64.) * (n4 - n5));
+    Bp = -3 * a * n / 2 * (1 - n + (7. / 8.) * (n2 - n3) +
+                           (55. / 64.) * (n4 - n5));
+    Cp = 14 * a * n2 / 16 * (1 - n + (3. / 4) * (n2 - n3));
+    Dp = -35 * a * n3 / 48 * (1 - n + 11. / 16. * (n2 - n3));
+    Ep = +315 * a * n4 / 51 * (1 - n);
+    e4 = e2 * e2;
+    e6 = e2 * e2 * e2;
+    ep = e * a / b;
+    ep2 = ep * ep;
+    ep4 = ep2 * ep2;
+    k0 = 0.9996;
+    mu_fact = 1 / (k0 * a * (1 - e2 / 4 - 3 * e4 / 64 - 5 * e6 / 256));
+  }
+  const char *get_name()
+  {
+    return "UTM";
+  }
+  double operator() (double x, double y, double z)
+  {
+    double r = sqrt(x * x + y * y + z * z);
+    double lon = atan2(y, x);
+    double lat = asin(z / r);
+    double meridionalarc = Ap * lat + Bp * sin(2 * lat)
+      + Cp * sin(4 * lat) + Dp * sin(6 * lat) + Ep;
+    double slat = sin(lat);
+    double clat = cos(lat);
+    double slat2 = slat * slat;
+    double clat2 = clat * clat;
+    double clat3 = clat2 * clat;
+    double clat4 = clat3 * clat;
+    double tlat2 = slat2 / clat2;
+    double nu = a / sqrt(1 - e * e * slat2);
+    double p = lon - ((zone - 0.5) / 30 - 1) * M_PI;
+    double p2 = p * p;
+    double p3 = p * p2;
+    double p4 = p2 * p2;
+    double utm_x =
+      k0 * nu * clat * p + (k0 * nu * clat3 / 6) * (1 - tlat2 +
+                                                    ep2 * clat2) * p3 + 5e5;
+    double utm_y =
+      meridionalarc * k0 + k0 * nu * slat * clat / 2 * p2 +
+      k0 * nu * slat * clat3 / 24 * (5 - tlat2 + 9 * ep2 * clat2 +
+                                     4 * ep4 * clat4) * p4;
+    return (*GModel::current()->getFields()->get(field_id)) (utm_x, utm_y, 0);
+  }
+  FieldDialogBox *&dialog_box()
+  {
+    static FieldDialogBox *dialogBox = NULL;
+    return dialogBox;
+  }
+};
+
+class LonLatField:public Field
+{
   int field_id;
- public:
+public:
   LonLatField()
   {
     field_id = 1;
@@ -354,7 +457,7 @@ class LonLatField : public Field {
   }
   double operator() (double x, double y, double z)
   {
-    return (*GModel::current()->getFields()->get(field_id)) 
+    return (*GModel::current()->getFields()->get(field_id))
       (atan2(x, y), asin(z / sqrt(x * x + y * y + z * z)), 0);
   }
   FieldDialogBox *&dialog_box()
@@ -364,9 +467,10 @@ class LonLatField : public Field {
   }
 };
 
-class BoxField : public Field {
+class BoxField:public Field
+{
   double v_in, v_out, x_min, x_max, y_min, y_max, z_min, z_max;
- public:
+public:
   BoxField()
   {
     v_in = v_out = x_min = x_max = y_min = y_max = z_min = z_max = 0;
@@ -395,10 +499,12 @@ class BoxField : public Field {
   }
 };
 
-class ThresholdField : public Field {
+
+class ThresholdField:public Field
+{
   int iField;
   double dmin, dmax, lcmin, lcmax;
- public:
+public:
   const char *get_name()
   {
     return "Threshold";
@@ -431,15 +537,17 @@ class ThresholdField : public Field {
   }
 };
 
-class GradientField : public Field {
+
+class GradientField:public Field
+{
   int iField, kind;
   double delta;
- public:
+public:
   const char *get_name()
   {
     return "Gradient";
   }
-  GradientField() : iField(0), kind(3), delta(CTX.lc / 1e4)
+  GradientField():iField(0), kind(3), delta(CTX.lc / 1e4)
   {
     options["IField"] = new FieldOptionInt(iField);
     options["Kind"] = new FieldOptionInt(kind);
@@ -484,8 +592,8 @@ class GradientField : public Field {
 };
 
 #if defined(HAVE_MATH_EVAL)
-
-class MathEvalExpression {
+class MathEvalExpression
+{
   bool error_status;
   std::list < Field * >*list;
   int nvalues;
@@ -495,7 +603,7 @@ class MathEvalExpression {
   int *evaluators_id;
   std::string function;
   char *c_str_function;
- public:
+public:
   double evaluate(double x, double y, double z)
   {
     if(error_status)
@@ -573,10 +681,11 @@ class MathEvalExpression {
   }
 };
 
-class MathEvalField : public Field {
+class MathEvalField:public Field
+{
   MathEvalExpression expr;
   std::string f;
- public:
+public:
   MathEvalField()
   {
     options["F"] = new FieldOptionString(f, &update_needed);
@@ -601,12 +710,12 @@ class MathEvalField : public Field {
     return "MathEval";
   }
 };
-
-class ParametricField : public Field {
+class ParametricField:public Field
+{
   MathEvalExpression expr[3];
   std::string f[3];
   int ifield;
- public:
+public:
   ParametricField()
   {
     options["IField"] = new FieldOptionInt(ifield);
@@ -624,7 +733,7 @@ class ParametricField : public Field {
       }
       update_needed = false;
     }
-    return (*GModel::current()->getFields()->get(ifield)) 
+    return (*GModel::current()->getFields()->get(ifield))
       (expr[0].evaluate(x, y, z), expr[1].evaluate(x, y, z),
        expr[2].evaluate(x, y, z));
   }
@@ -638,39 +747,61 @@ class ParametricField : public Field {
     return "Param";
   }
 };
-
 #endif
 
-class PostViewField : public Field {
+class PostViewField:public Field
+{
   OctreePost *octree;
- public:
-  int view_index;
+public:int view_index;
   double operator() (double x, double y, double z)
   {
+    // FIXME: should test unique view num instead, but that would be slower
     if(view_index < 0 || view_index >= (int)PView::list.size())
       return MAX_LC;
-    if(update_needed){
+    if(update_needed)
+    {
       if(octree)
         delete octree;
       octree = new OctreePost(PView::list[view_index]);
       update_needed = false;
     }
     double l = 0.;
-    octree->searchScalar(x, y, z, &l, 0);
-    if(l <= 0) return MAX_LC;
+    if(!octree->searchScalar(x, y, z, &l, 0)) {
+      // uncomment the following to try really hard to find an element
+      // around the point
+      /*
+         double fact[9] = {0.001, 0.0025, 0.005, 0.0075, 0.01, 0.025, 0.05, 0.075, 0.1};
+         for(int i = 0; i < 9; i++){
+         double eps = CTX.lc * fact[i];
+         if(octree->searchScalar(x + eps, y, z, &l, 0)) break;
+         if(octree->searchScalar(x - eps, y, z, &l, 0)) break;
+         if(octree->searchScalar(x, y + eps, z, &l, 0)) break;
+         if(octree->searchScalar(x, y - eps, z, &l, 0)) break;
+         if(octree->searchScalar(x, y, z + eps, &l, 0)) break;
+         if(octree->searchScalar(x, y, z - eps, &l, 0)) break;
+         if(octree->searchScalar(x + eps, y - eps, z - eps, &l, 0)) break;
+         if(octree->searchScalar(x + eps, y + eps, z - eps, &l, 0)) break;
+         if(octree->searchScalar(x - eps, y - eps, z - eps, &l, 0)) break;
+         if(octree->searchScalar(x - eps, y + eps, z - eps, &l, 0)) break;
+         if(octree->searchScalar(x + eps, y - eps, z + eps, &l, 0)) break;
+         if(octree->searchScalar(x + eps, y + eps, z + eps, &l, 0)) break;
+         if(octree->searchScalar(x - eps, y - eps, z + eps, &l, 0)) break;
+         if(octree->searchScalar(x - eps, y + eps, z + eps, &l, 0)) break;
+         }
+       */
+    }
+    //if(l <= 0) return MAX_LC;
     return l;
   }
   const char *get_name()
   {
     return "PostView";
   }
-  PostViewField() 
-  {
+  PostViewField() {
     octree = NULL;
     options["IView"] = new FieldOptionInt(view_index, &update_needed);
   }
-  ~PostViewField() 
-  {
+  ~PostViewField() {
     if(octree)
       delete octree;
   }
@@ -681,9 +812,10 @@ class PostViewField : public Field {
   }
 };
 
-class MinField : public Field {
+class MinField:public Field
+{
   std::list < int >idlist;
- public:
+public:
   MinField()
   {
     options["FieldsList"] = new FieldOptionList(idlist, &update_needed);
@@ -710,9 +842,10 @@ class MinField : public Field {
   }
 };
 
-class MaxField : public Field {
-  std::list<int> idlist;
- public:
+class MaxField:public Field
+{
+  std::list < int >idlist;
+public:
   MaxField()
   {
     options["FieldsList"] = new FieldOptionList(idlist, &update_needed);
@@ -740,8 +873,8 @@ class MaxField : public Field {
 };
 
 #ifdef HAVE_ANN
-
-class AttractorField : public Field {
+class AttractorField:public Field
+{
   ANNkd_tree *kdtree;
   ANNpointArray zeronodes;
   ANNidxArray index;
@@ -749,8 +882,7 @@ class AttractorField : public Field {
   std::list < int >nodes_id;
   std::list < int >edges_id;
   int n_nodes_by_edge;
- public:
-  AttractorField() : kdtree(0), zeronodes(0)
+public:AttractorField():kdtree(0), zeronodes(0)
   {
     index = new ANNidx[1];
     dist = new ANNdist[1];
@@ -841,39 +973,38 @@ class AttractorField : public Field {
     return dialogBox;
   }
 };
-
 #endif
 
-template<class F> class FieldFactoryT : public FieldFactory {
- public:
-  Field *operator()()
-  {
+template < class F > class FieldFactoryT:public FieldFactory {
+public:
+  Field * operator()() {
     return new F;
-  }
+  };
 };
 
-template<class F> Field *field_factory()
+template < class F > Field * field_factory()
 {
   return new F();
 };
 
 FieldManager::FieldManager()
 {
-  map_type_name["Structured"] = new FieldFactoryT<StructuredField> ();
-  map_type_name["Threshold"] = new FieldFactoryT<ThresholdField> ();
-  map_type_name["Box"] = new FieldFactoryT<BoxField> ();
-  map_type_name["LonLat"] = new FieldFactoryT<LonLatField> ();
+  map_type_name["Structured"] = new FieldFactoryT < StructuredField > ();
+  map_type_name["Threshold"] = new FieldFactoryT < ThresholdField > ();
+  map_type_name["Box"] = new FieldFactoryT < BoxField > ();
+  map_type_name["LonLat"] = new FieldFactoryT < LonLatField > ();
 #if defined(HAVE_MATH_EVAL)
-  map_type_name["Param"] = new FieldFactoryT<ParametricField> ();
-  map_type_name["MathEval"] = new FieldFactoryT<MathEvalField> ();
+  map_type_name["Param"] = new FieldFactoryT < ParametricField > ();
+  map_type_name["MathEval"] = new FieldFactoryT < MathEvalField > ();
 #endif
 #if defined(HAVE_ANN)
-  map_type_name["Attractor"] = new FieldFactoryT<AttractorField> ();
+  map_type_name["Attractor"] = new FieldFactoryT < AttractorField > ();
 #endif
-  map_type_name["PostView"] = new FieldFactoryT<PostViewField> ();
-  map_type_name["Gradient"] = new FieldFactoryT<GradientField> ();
-  map_type_name["Min"] = new FieldFactoryT< MinField> ();
-  map_type_name["Max"] = new FieldFactoryT< MaxField> ();
+  map_type_name["PostView"] = new FieldFactoryT < PostViewField > ();
+  map_type_name["Gradient"] = new FieldFactoryT < GradientField > ();
+  map_type_name["Min"] = new FieldFactoryT < MinField > ();
+  map_type_name["Max"] = new FieldFactoryT < MaxField > ();
+  map_type_name["UTM"] = new FieldFactoryT < UTMField > ();
   background_field = -1;
 }
 
