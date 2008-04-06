@@ -1,4 +1,4 @@
-// $Id: Eigenvalues.cpp,v 1.8 2008-04-05 17:49:23 geuzaine Exp $
+// $Id: Eigenvalues.cpp,v 1.9 2008-04-06 07:51:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -32,11 +32,6 @@ extern "C"
   {
     return new GMSH_EigenvaluesPlugin();
   }
-}
-
-GMSH_EigenvaluesPlugin::GMSH_EigenvaluesPlugin()
-{
-  ;
 }
 
 void GMSH_EigenvaluesPlugin::getName(char *name) const
@@ -118,32 +113,24 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
       List_T *outmax = incrementList(dmax, numEdges);
       if(!outmin || !outmid || !outmax) continue;
       int numNodes = data1->getNumNodes(0, ent, ele);
-      double x[8], y[8], z[8];
+      double xyz[3][8];
       for(int nod = 0; nod < numNodes; nod++)
-	data1->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
-      for(int nod = 0; nod < numNodes; nod++){
-	List_Add(outmin, &x[nod]);
-	List_Add(outmid, &x[nod]);
-	List_Add(outmax, &x[nod]);
-      }
-      for(int nod = 0; nod < numNodes; nod++){
-	List_Add(outmin, &y[nod]);
-	List_Add(outmid, &y[nod]);
-	List_Add(outmax, &y[nod]);
-      }
-      for(int nod = 0; nod < numNodes; nod++){
-	List_Add(outmin, &z[nod]);
-	List_Add(outmid, &z[nod]);
-	List_Add(outmax, &z[nod]);
+	data1->getNode(0, ent, ele, nod, xyz[0][nod], xyz[1][nod], xyz[2][nod]);
+      for(int i = 0; i < 3; i++){
+	for(int nod = 0; nod < numNodes; nod++){
+	  List_Add(outmin, &xyz[i][nod]);
+	  List_Add(outmid, &xyz[i][nod]);
+	  List_Add(outmax, &xyz[i][nod]);
+	}
       }
       for(int step = 0; step < data1->getNumTimeSteps(); step++){
 	for(int nod = 0; nod < numNodes; nod++){
-	  double val[9];
+	  double val[9], w[3];
 	  for(int comp = 0; comp < numComp; comp++)
 	    data1->getValue(step, ent, ele, nod, comp, val[comp]);
-	  double w[3], A[3][3] = { {val[0], val[1], val[2]},
-				   {val[3], val[4], val[5]},
-				   {val[6], val[7], val[8]} };
+	  double A[3][3] = {{val[0], val[1], val[2]},
+			    {val[3], val[4], val[5]},
+			    {val[6], val[7], val[8]}};
 	  eigenvalue(A, w);
 	  List_Add(outmin, &w[2]);
 	  List_Add(outmid, &w[1]);

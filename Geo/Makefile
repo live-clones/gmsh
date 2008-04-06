@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.199 2008-04-06 02:33:53 remacle Exp $
+# $Id: Makefile,v 1.200 2008-04-06 07:51:36 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -75,7 +75,7 @@ depend:
 # DO NOT DELETE THIS LINE
 GEntity.o: GEntity.cpp GEntity.h Range.h SPoint3.h SBoundingBox3d.h \
   ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Common/Context.h ../Common/Context.h
+  ../Common/Context.h
 GVertex.o: GVertex.cpp GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GFace.h GEdgeLoop.h GEdge.h \
   SVector3.h Pair.h MVertex.h ../Common/Message.h
@@ -92,8 +92,7 @@ GFace.o: GFace.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   GEdgeLoop.h Pair.h GRegion.h MElement.h ../Common/GmshDefines.h \
   MVertex.h MEdge.h MFace.h ../Common/Message.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Numeric/GaussLegendre1D.h \
-  ../Common/VertexArray.h ../Geo/SVector3.h ../Common/Context.h \
-  ../Common/Context.h
+  ../Common/VertexArray.h ../Geo/SVector3.h ../Common/Context.h
 GRegion.o: GRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h MElement.h ../Common/GmshDefines.h \
@@ -176,9 +175,8 @@ GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
   ../Common/SmoothData.h ../Parser/OpenFile.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Common/Message.h gmshVertex.h \
   MVertex.h gmshFace.h gmshEdge.h gmshRegion.h ../Parser/Parser.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../Mesh/Field.h ../Geo/Geo.h \
-  ../Post/PView.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
-  ../Post/PViewOptions.h ../Post/ColorTable.h
+  ../Mesh/Field.h ../Geo/Geo.h ../Post/PView.h ../Post/PViewData.h \
+  ../Geo/SBoundingBox3d.h ../Post/PViewOptions.h ../Post/ColorTable.h
 GModelIO_Mesh.o: GModelIO_Mesh.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/GmshDefines.h MElement.h \
@@ -214,22 +212,20 @@ Geo.o: Geo.cpp ../Common/Message.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../DataStr/Malloc.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h Geo.h \
   ../Common/GmshDefines.h gmshSurface.h Pair.h Range.h SPoint2.h \
-  SPoint3.h SVector3.h SBoundingBox3d.h ../DataStr/List.h \
-  ../DataStr/Tree.h ExtrudeParams.h ../Common/SmoothData.h GModel.h \
-  GVertex.h GEntity.h GPoint.h GEdge.h GFace.h GEdgeLoop.h GRegion.h \
-  GeoInterpolation.h ../Parser/Parser.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../Mesh/Field.h ../Geo/Geo.h ../Post/PView.h \
-  ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Common/Context.h
+  SPoint3.h SVector3.h SBoundingBox3d.h ExtrudeParams.h \
+  ../Common/SmoothData.h GModel.h GVertex.h GEntity.h GPoint.h GEdge.h \
+  GFace.h GEdgeLoop.h GRegion.h GeoInterpolation.h ../Parser/Parser.h \
+  ../Mesh/Field.h ../Geo/Geo.h ../Post/PView.h ../Post/PViewData.h \
+  ../Geo/SBoundingBox3d.h ../Post/PViewOptions.h ../Post/ColorTable.h \
+  ../Common/Context.h
 GeoStringInterface.o: GeoStringInterface.cpp ../Common/Message.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/Malloc.h \
   Geo.h ../Common/GmshDefines.h gmshSurface.h Pair.h Range.h SPoint2.h \
   SPoint3.h SVector3.h SBoundingBox3d.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ExtrudeParams.h \
   ../Common/SmoothData.h GeoStringInterface.h ../Parser/Parser.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../Parser/OpenFile.h \
-  ../Common/Context.h GModel.h GVertex.h GEntity.h GPoint.h GEdge.h \
-  GFace.h GEdgeLoop.h GRegion.h
+  ../Parser/OpenFile.h ../Common/Context.h GModel.h GVertex.h GEntity.h \
+  GPoint.h GEdge.h GFace.h GEdgeLoop.h GRegion.h
 GeoInterpolation.o: GeoInterpolation.cpp ../Common/Message.h Geo.h \
   ../Common/GmshDefines.h gmshSurface.h Pair.h Range.h SPoint2.h \
   SPoint3.h SVector3.h SBoundingBox3d.h ../Numeric/Numeric.h \

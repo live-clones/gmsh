@@ -1,4 +1,4 @@
-// $Id: PViewDataListIO.cpp,v 1.18 2008-03-29 10:19:43 geuzaine Exp $
+// $Id: PViewDataListIO.cpp,v 1.19 2008-04-06 07:51:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -590,8 +590,9 @@ bool PViewDataList::writeMSH(std::string fileName, bool binary)
     for(int ts = 0; ts < NbTimeStep; ts++){
       double time = getTime(ts);
       fprintf(fp, "$NodeData\n");
-      fprintf(fp, "\"%s\"\n", getName().c_str());
-      fprintf(fp, "%d %.16g 0 0 %d %d\n", ts, time, numComp, numNodes);
+      fprintf(fp, "1\n\"%s\"\n", getName().c_str());
+      fprintf(fp, "1\n%.16g\n", time);
+      fprintf(fp, "3\n%d\n%d\n%d\n", ts, numComp, numNodes);
       for(std::set<pVertex, pVertexLessThan>::iterator it = nodes.begin();
           it != nodes.end(); ++it){
         fprintf(fp, "%d", it->Num);

@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.38 2008-04-05 09:21:37 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.39 2008-04-06 07:51:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -127,9 +127,9 @@ bool PViewDataGModel::writeMSH(std::string fileName, bool binary)
       if(_steps[step]->getData(i)) numNodes++;
     if(numNodes){
       fprintf(fp, "$NodeData\n");
-      fprintf(fp, "\"%s\"\n", getName().c_str());
-      fprintf(fp, "%d %.16g 0 0 %d %d\n", step, _steps[step]->getTime(), 
-              numComp, numNodes);
+      fprintf(fp, "1\n\"%s\"\n", getName().c_str());
+      fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
+      fprintf(fp, "3\n%d\n%d\n%d\n", step, numComp, numNodes);
       for(int i = 0; i < _steps[step]->getNumData(); i++){
         if(_steps[step]->getData(i)){
 	  MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(i);

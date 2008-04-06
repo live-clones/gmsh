@@ -1,4 +1,4 @@
-// $Id: PViewIO.cpp,v 1.4 2008-04-03 07:48:54 geuzaine Exp $
+// $Id: PViewIO.cpp,v 1.5 2008-04-06 07:51:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -157,16 +157,49 @@ bool PView::readMSH(std::string fileName, int fileIndex)
 	  type = PViewDataGModel::ElementData;
 	else
 	  type = PViewDataGModel::ElementNodeData;
-        // read data info
+	int numTags;
+	// string tags
+	std::string viewName, interpolName;
         if(!fgets(str, sizeof(str), fp)) return false;
-        std::string name = extractDoubleQuotedString(str, sizeof(str));
-        int timeStep, partition, interpolationScheme, numComp, numEnt;
-        double time;
+	if(sscanf(str, "%d", &numTags) != 1) return false;
+	for(int i = 0; i < numTags; i++){
+	  if(!fgets(str, sizeof(str), fp)) return false;
+	  if(i == 0) 
+	    viewName = extractDoubleQuotedString(str, sizeof(str));
+	  else if(i == 1) 
+	    interpolName = extractDoubleQuotedString(str, sizeof(str));
+	}
+	// double tags
+        double time = 0.;
         if(!fgets(str, sizeof(str), fp)) return false;
-        if(sscanf(str, "%d %lf %d %d %d %d", &timeStep, &time, &partition,
-                  &interpolationScheme, &numComp, &numEnt) != 6) return false;
+	if(sscanf(str, "%d", &numTags) != 1) return false;
+	for(int i = 0; i < numTags; i++){
+	  if(!fgets(str, sizeof(str), fp)) return false;
+	  if(i == 0){
+	    if(sscanf(str, "%lf", &time) != 1) return false;
+	  }
+	}
+	// integer tags
+        int timeStep = 0, numComp = 0, numEnt = 0, partition = 0;
+        if(!fgets(str, sizeof(str), fp)) return false;
+	if(sscanf(str, "%d", &numTags) != 1) return false;
+	for(int i = 0; i < numTags; i++){
+	  if(!fgets(str, sizeof(str), fp)) return false;
+	  if(i == 0){
+	    if(sscanf(str, "%d", &timeStep) != 1) return false;
+	  }
+	  else if(i == 1){
+	    if(sscanf(str, "%d", &numComp) != 1) return false;
+	  }
+	  else if(i == 2){
+	    if(sscanf(str, "%d", &numEnt) != 1) return false;
+	  }
+	  else if(i == 3){
+	    if(sscanf(str, "%d", &partition) != 1) return false;
+	  }
+	}
         // either get existing viewData, or create new one
-        PView *p = getViewByName(name, timeStep, partition);
+        PView *p = getViewByName(viewName, timeStep, partition);
         PViewDataGModel *d = 0;
         if(p) d = dynamic_cast<PViewDataGModel*>(p->getData());
         bool create = d ? false : true;
@@ -178,7 +211,7 @@ bool PView::readMSH(std::string fileName, int fileIndex)
           return false;
         }
         else{
-          d->setName(name);
+          d->setName(viewName);
           d->setFileName(fileName);
           d->setFileIndex(index);
           if(create) new PView(d);

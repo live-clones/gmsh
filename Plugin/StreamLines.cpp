@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.34 2008-03-20 11:44:14 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.35 2008-04-06 07:51:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -56,11 +56,6 @@ extern "C"
   {
     return new GMSH_StreamLinesPlugin();
   }
-}
-
-GMSH_StreamLinesPlugin::GMSH_StreamLinesPlugin()
-{
-  ;
 }
 
 void GMSH_StreamLinesPlugin::draw()
@@ -225,46 +220,50 @@ void GMSH_StreamLinesPlugin::getPoint(int iU, int iV, double *X)
   double v = getNbV() > 1 ? (double)iV / (double)(getNbV() - 1.) : 0.;
   X[0] = StreamLinesOptions_Number[0].def + 
     u  * (StreamLinesOptions_Number[3].def-StreamLinesOptions_Number[0].def) +
-    v  * (StreamLinesOptions_Number[6].def-StreamLinesOptions_Number[0].def) ;
+    v  * (StreamLinesOptions_Number[6].def-StreamLinesOptions_Number[0].def);
   X[1] = StreamLinesOptions_Number[1].def + 
     u  * (StreamLinesOptions_Number[4].def-StreamLinesOptions_Number[1].def) +
-    v  * (StreamLinesOptions_Number[7].def-StreamLinesOptions_Number[1].def) ;
+    v  * (StreamLinesOptions_Number[7].def-StreamLinesOptions_Number[1].def);
   X[2] = StreamLinesOptions_Number[2].def + 
     u  * (StreamLinesOptions_Number[5].def-StreamLinesOptions_Number[2].def) +
-    v  * (StreamLinesOptions_Number[8].def-StreamLinesOptions_Number[2].def) ;
+    v  * (StreamLinesOptions_Number[8].def-StreamLinesOptions_Number[2].def);
 }
 
-PView *GMSH_StreamLinesPlugin::GenerateView(PView *v1, PView *v2)
+PView *GMSH_StreamLinesPlugin::execute(PView *v)
 {
-  const double b1=1./3., b2=2./3., b3=1./3., b4=1./6.;
-  const double a1=0.5, a2=0.5, a3=1.0, a4=1.0;
-  const double DT = StreamLinesOptions_Number[12].def;
-  double XINIT[3], X[3], DX[3], X1[3], X2[3], X3[3], X4[3];
-  double val[3], *val2 = 0;
+  int maxIter = (int)StreamLinesOptions_Number[11].def;
+  double DT = StreamLinesOptions_Number[12].def;
+  int timeStep = (int)StreamLinesOptions_Number[13].def;
+  int dView = (int)StreamLinesOptions_Number[14].def;
+  int iView = (int)StreamLinesOptions_Number[15].def;
 
-  PViewDataList *data1 = getDataList(v1);
-  if(!data1) return v1;
+  PView *v1 = getView(iView, v);
+  if(!v1) return v;
+  PViewData *data1 = v1->getData();
 
-  PViewDataList *data2 = v2 ? getDataList(v2) : 0;
+  PView *v2 = (dView < 0) ? 0 : getView(dView, v);
+  PViewData *data2 = v2 ? v2->getData() : 0;
 
-  PView *v = new PView(true);
-
-  PViewDataList *data = getDataList(v);
-  if(!data) return v1;
-
-  int timestep = (int)StreamLinesOptions_Number[13].def;
-  if(timestep > data1->getNumTimeSteps() - 1){
-    Msg(GERROR, "Invalid time step (%d) in view: using step 0 instead", timestep);
-    timestep = 0;
+  // sanity checks
+  if(timeStep > data1->getNumTimeSteps() - 1){
+    Msg(GERROR, "Invalid time step (%d) in view[%d]", v1->getIndex());
+    return v;
   }
 
-  OctreePost o(v1);
+  OctreePost o1(v1);
+  double *val2 = 0;
   OctreePost *o2 = 0;
-
   if(data2){
     val2 = new double[data2->getNumTimeSteps()];
     o2 = new OctreePost(v2);
   }
+
+  PView *v3 = new PView(true);
+  PViewDataList *data3 = getDataList(v3);
+
+  const double b1 = 1. / 3., b2 = 2. / 3., b3 = 1. / 3., b4 = 1. / 6.;
+  const double a1 = 0.5, a2 = 0.5, a3 = 1., a4 = 1.;
+  double XINIT[3], X[3], DX[3], X1[3], X2[3], X3[3], X4[3];
 
   for(int i = 0; i < getNbU(); ++i){
     for(int j = 0; j < getNbV(); ++j){
@@ -275,31 +274,30 @@ PView *GMSH_StreamLinesPlugin::GenerateView(PView *v1, PView *v2)
         o2->searchScalar(X[0], X[1], X[2], val2, -1);
       }
       else{
-        data->NbVP++;
-        List_Add(data->VP, &X[0]);
-        List_Add(data->VP, &X[1]);
-        List_Add(data->VP, &X[2]);            
+        data3->NbVP++;
+        List_Add(data3->VP, &X[0]);
+        List_Add(data3->VP, &X[1]);
+        List_Add(data3->VP, &X[2]);            
       }
 
       int currentTimeStep = 0;
 
-      for(int iter = 0; iter < (int)StreamLinesOptions_Number[11].def; iter++){
+      for(int iter = 0; iter < maxIter; iter++){
 
-        double XPREV[3] = { X[0], X[1], X[2] };
+        double XPREV[3] = {X[0], X[1], X[2]};
 
-        if(timestep < 0){
+        if(timeStep < 0){
           double T0 = data1->getTime(0);
           double currentT = T0 + DT * iter;
-          List_Add(data->Time, &currentT);
+          List_Add(data3->Time, &currentT);
           for(; currentTimeStep < data1->getNumTimeSteps() - 1 && 
                 currentT > 0.5 * (data1->getTime(currentTimeStep) + 
                                   data1->getTime(currentTimeStep + 1));
               currentTimeStep++);
         }
         else{
-          currentTimeStep = timestep;
+          currentTimeStep = timeStep;
         }
-        //Msg(DEBUG, "iter = %d, currentTimeStep = %d", iter, currentTimeStep);
 
         // dX/dt = V
         // X1 = X + a1 * DT * V(X)
@@ -307,43 +305,39 @@ PView *GMSH_StreamLinesPlugin::GenerateView(PView *v1, PView *v2)
         // X3 = X + a3 * DT * V(X2)
         // X4 = X + a4 * DT * V(X3)
         // X = X + b1 X1 + b2 X2 + b3 X3 + b4 x4
-
-        // o.searchVector(X[0], X[1], X[2], val, currentTimeStep, &sizeElem);
-        // double normV = sqrt(val[0]*val[0]+val[1]*val[1]+val[2]*val[2]);           
-        // if (normV==0.0) normV = 1.0;
-        // double DT = sizeElem / normV ; // CFL = 1 ==> secure 
-        o.searchVector(X[0], X[1], X[2], val, currentTimeStep);
+	double val[3];
+        o1.searchVector(X[0], X[1], X[2], val, currentTimeStep);
         for(int k = 0; k < 3; k++) X1[k] = X[k] + DT * val[k] * a1;
-        o.searchVector(X1[0], X1[1], X1[2], val, currentTimeStep);
+        o1.searchVector(X1[0], X1[1], X1[2], val, currentTimeStep);
         for(int k = 0; k < 3; k++) X2[k] = X[k] + DT * val[k] * a2;
-        o.searchVector(X2[0], X2[1], X2[2], val, currentTimeStep);
+        o1.searchVector(X2[0], X2[1], X2[2], val, currentTimeStep);
         for(int k = 0; k < 3; k++) X3[k] = X[k] + DT * val[k] * a3;
-        o.searchVector(X3[0], X3[1], X3[2], val, currentTimeStep);
+        o1.searchVector(X3[0], X3[1], X3[2], val, currentTimeStep);
         for(int k = 0; k < 3; k++) X4[k] = X[k] + DT * val[k] * a4;
 
         for(int k = 0; k < 3; k++) 
-          X[k] += (b1*(X1[k]-X[k]) + b2*(X2[k]-X[k]) + 
-                   b3*(X3[k]-X[k]) + b4*(X4[k]-X[k])) ;
+          X[k] += (b1 * (X1[k] - X[k]) + b2 * (X2[k] - X[k]) + 
+                   b3 * (X3[k] - X[k]) + b4 * (X4[k] - X[k]));
         for(int k = 0; k < 3; k++) DX[k] = X[k] - XINIT[k];
 
         if(data2){
-          data->NbSL++;
-          List_Add(data->SL, &XPREV[0]);
-          List_Add(data->SL, &X[0]);
-          List_Add(data->SL, &XPREV[1]);
-          List_Add(data->SL, &X[1]);
-          List_Add(data->SL, &XPREV[2]);
-          List_Add(data->SL, &X[2]);
+          data3->NbSL++;
+          List_Add(data3->SL, &XPREV[0]);
+          List_Add(data3->SL, &X[0]);
+          List_Add(data3->SL, &XPREV[1]);
+          List_Add(data3->SL, &X[1]);
+          List_Add(data3->SL, &XPREV[2]);
+          List_Add(data3->SL, &X[2]);
           for(int k = 0; k < data2->getNumTimeSteps(); k++)
-            List_Add(data->SL, &val2[k]);
+            List_Add(data3->SL, &val2[k]);
           o2->searchScalar(X[0], X[1], X[2], val2, -1);
           for(int k = 0; k < data2->getNumTimeSteps(); k++)
-            List_Add(data->SL, &val2[k]);
+            List_Add(data3->SL, &val2[k]);
         }
         else{
-          List_Add(data->VP, &DX[0]);
-          List_Add(data->VP, &DX[1]);
-          List_Add(data->VP, &DX[2]);         
+          List_Add(data3->VP, &DX[0]);
+          List_Add(data3->VP, &DX[1]);
+          List_Add(data3->VP, &DX[2]);         
         }
       }
     }
@@ -354,25 +348,12 @@ PView *GMSH_StreamLinesPlugin::GenerateView(PView *v1, PView *v2)
     delete o2;
   }
   else{
-    v->getOptions()->VectorType = PViewOptions::Displacement;
+    v3->getOptions()->VectorType = PViewOptions::Displacement;
   }
 
-  data->setName(data1->getName() + "_StreamLines");
-  data->setFileName(data1->getName() + "_StreamLines.pos");
-  data->finalize();
+  data3->setName(data1->getName() + "_StreamLines");
+  data3->setFileName(data1->getName() + "_StreamLines.pos");
+  data3->finalize();
 
-  return v;
-}
-
-PView *GMSH_StreamLinesPlugin::execute(PView *v)
-{
-  int dView = (int)StreamLinesOptions_Number[14].def;
-  int iView = (int)StreamLinesOptions_Number[15].def;
-
-  PView *v1 = getView(iView, v);
-  if(!v1) return v;
-
-  PView *v2 = (dView < 0) ? 0 : getView(dView, v);
-
-  return GenerateView(v1, v2);
+  return v3;
 }

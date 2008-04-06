@@ -32,16 +32,13 @@ class GMSH_StreamLinesPlugin : public GMSH_Post_Plugin
   static double callback(int num, int action, double value, double *opt,
                          double step, double min, double max);
 public:
-  GMSH_StreamLinesPlugin();
+  GMSH_StreamLinesPlugin(){}
   void getName(char *name) const;
-  void getInfos(char *author, 
-                char *copyright,
-                char *help_text) const;
-  void catchErrorMessage (char *errorMessage) const;
+  void getInfos(char *author, char *copyright, char *help_text) const;
+  void catchErrorMessage(char *errorMessage) const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);  
   PView *execute(PView *);
-  virtual PView *GenerateView(PView *v1, PView *v2);
 
   static int getNbU();
   static int getNbV();
