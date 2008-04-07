@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.245 2008-04-06 10:28:37 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.246 2008-04-07 07:54:03 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 @c
@@ -3167,7 +3167,7 @@ gives the number of real number tags that follow.
 @item @var{number-of-integer-tags}
 gives the number of integer tags that follow. By default the first
 @var{integer-tag} is interpreted as a time step number, the second as
-the number of components of the data in the view, the third as the
+the number of field components of the data in the view, the third as the
 number of entities (nodes or elements) in the view, and the fourth as
 the partition index for the view data.
 
@@ -3177,10 +3177,10 @@ gives the number of node values for an element in an element-based view.
 @item @var{value}
 is a real number giving the value associated with a node or an
 element. For @code{NodeData} (respectively @code{ElementData}) views,
-there are @var{number-of-components} values per node (resp. per
-element). For @code{ElementNodeData} views, there are
-@var{number-of-components} times @var{number-of-nodes-per-elements}
-values per element.
+there are @var{ncomp} values per node (resp. per element), where
+@var{ncomp} is the number of field components. For
+@code{ElementNodeData} views, there are @var{ncomp} times
+@var{number-of-nodes-per-elements} values per element.
 @end table
 
 @c -------------------------------------------------------------------------
