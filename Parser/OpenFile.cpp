@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.182 2008-03-30 17:45:12 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.183 2008-04-07 12:13:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -322,6 +322,13 @@ int MergeFile(const char *name, int warn_if_missing)
   CTX.geom.draw = 0; // don't try to draw the model while reading
 
   GModel *m = GModel::current();
+
+  // FIXME: We need to decide what do do for CAD entities, meshes,
+  // etc.  For meshes we should definitely create one new model per
+  // merge (and reset current() to the previous value after the
+  // merge). This will make multi-step multi-meshes post-pro views
+  // work out of the box.
+  // GModel *m = new GModel;
 
   int numViewsBefore = PView::list.size();
 
