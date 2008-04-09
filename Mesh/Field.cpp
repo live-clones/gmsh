@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.28 2008-04-06 07:53:13 geuzaine Exp $
+// $Id: Field.cpp,v 1.29 2008-04-09 09:17:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -186,14 +186,6 @@ FieldOptionBool(bool & _val, bool * _status = NULL):FieldOption(_status),
     sstream << val;
     v_str = sstream.str();
   }
-};
-class FieldOptionPath:public FieldOptionString
-{
-public:
-  FieldOptionType get_type()
-  {
-    return FIELD_OPTION_PATH;
-  };
 };
 
 void FieldManager::reset()
