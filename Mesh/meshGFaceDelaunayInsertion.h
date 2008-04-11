@@ -17,7 +17,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 // USA.
-// 
+//
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "MElement.h"
@@ -31,17 +31,17 @@ class BDS_Mesh;
 class BDS_Point;
 
 void buildMetric(GFace *gf, double *uv, double *metric);
-int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3, double *p4, 
+int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3, double *p4,
                         double *metric);
 int inCircumCircleAniso(GFace *gf, MTriangle *base, const double *uv, const double *metric,
-                        const std::vector<double> &Us, const std::vector<double> &Vs); 
+                        const std::vector<double> &Us, const std::vector<double> &Vs);
 void circumCenterXYZ(double *p1, double *p2, double *p3, double *res, double *uv=0);
-void circumCenterMetric(MTriangle *base, 
+void circumCenterMetric(MTriangle *base,
                         const double *metric,
                         const std::vector<double> &Us,
                         const std::vector<double> &Vs,
                         double *x, double &Radius2);
-bool circumCenterMetricInTriangle(MTriangle *base, 
+bool circumCenterMetricInTriangle(MTriangle *base,
                                   const double *metric,
                                   const std::vector<double> &Us,
                                   const std::vector<double> &Vs);
@@ -60,13 +60,13 @@ class MTri3
   bool isDeleted () const { return deleted; }
   void forceRadius (double r){ circum_radius = r; }
   double getRadius () const { return circum_radius; }
-  
+
   MTri3(MTriangle *t, double lc);
   inline MTriangle *tri() const { return base; }
   inline void  setNeigh(int iN , MTri3 *n) { neigh[iN] = n; }
   inline MTri3 *getNeigh(int iN ) const { return neigh[iN]; }
-  int inCircumCircle(const double *p) const; 
-  inline int inCircumCircle(double x, double y) const 
+  int inCircumCircle(const double *p) const;
+  inline int inCircumCircle(double x, double y) const
   {
     const double p[2] = {x, y};
     return inCircumCircle(p);
@@ -76,7 +76,7 @@ class MTri3
     return inCircumCircle(v->x(), v->y());
   }
   inline void setDeleted (bool d){ deleted = d; }
-  inline bool assertNeigh() const 
+  inline bool assertNeigh() const
   {
     if (deleted) return true;
     for (int i = 0; i < 3; i++)
@@ -94,8 +94,8 @@ class MTri3
 class compareTri3Ptr
 {
 public:
-  inline bool operator () (const MTri3 *a, const MTri3 *b) 
-  { 
+  inline bool operator () (const MTri3 *a, const MTri3 *b)  const
+  {
     if (a->getRadius() > b->getRadius()) return true;
     if (a->getRadius() < b->getRadius()) return false;
     return a<b;
