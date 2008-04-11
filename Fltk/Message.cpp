@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.89 2008-03-25 20:25:35 remacle Exp $
+// $Id: Message.cpp,v 1.90 2008-04-11 09:55:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <stdlib.h>
 #include <string.h>
 #include "Message.h"
 #include "GmshUI.h"
