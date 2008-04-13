@@ -1,4 +1,4 @@
-// $Id: Gmsh.cpp,v 1.3 2008-04-13 15:20:30 geuzaine Exp $
+// $Id: Gmsh.cpp,v 1.4 2008-04-13 20:52:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -53,17 +53,20 @@ int GmshNewModel()
 {
   // Create a new model and add it to the model list, and make it the
   // current model
+  return 0;
 }
 
 int GmshMerge(std::string fileName)
 {
   // Merge CAD or mesh data in the current model, or create
   // post-processing data associated with the current model
+  return 0;
 }
 
 int GmshClear()
 {
   // Destroys all models and post-processing views
+  return 0;
 }
 
 int GmshFinalize()
