@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.672 2008-04-01 12:47:10 geuzaine Exp $
+// $Id: GUI.cpp,v 1.673 2008-04-13 09:45:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1095,9 +1095,6 @@ void GUI::create_menu_window()
   m_window->size(width, MH);
   m_window->position(CTX.position[0], CTX.position[1]);
   
-  // force always on top
-  //m_window->set_non_modal();
-
   m_window->end();
 }
 
@@ -1417,6 +1414,15 @@ void gmsh_rotate(Fl_Color c)
   fl_begin_polygon(); vv(0.5,0.6); vv(-0.1,0.9); vv(-0.1,0.3); fl_end_polygon();
 }
 
+void gmsh_models(Fl_Color c)
+{
+  fl_color(c);
+  bl; vv(-0.8,-0.8); vv(-0.3,-0.8); vv(-0.3,-0.3); vv(-0.8,-0.3); el;
+  bl; vv(0.3,-0.8); vv(0.8,-0.8); vv(0.8,-0.3); vv(0.3,-0.3); el;
+  bl; vv(-0.8,0.3); vv(-0.3,0.3); vv(-0.3,0.8); vv(-0.8,0.8); el;
+  bl; vv(0.3,0.3); vv(0.8,0.3); vv(0.8,0.8); vv(0.3,0.8); el;
+}
+
 #undef vv
 #undef bl
 #undef el
@@ -1435,6 +1441,7 @@ void GUI::create_graphic_window()
   fl_add_symbol("gmsh_forward", gmsh_forward, 1);
   fl_add_symbol("gmsh_ortho", gmsh_ortho, 1);
   fl_add_symbol("gmsh_rotate", gmsh_rotate, 1);
+  fl_add_symbol("gmsh_models", gmsh_models, 1);
 
   int sh = 2 * fontsize - 4;    // status bar height
   int sw = fontsize + 3;        // status button width
@@ -1452,6 +1459,11 @@ void GUI::create_graphic_window()
 
   int x = 2;
   int sht = sh - 4; // leave a 2 pixel border at the bottom
+
+  g_status_butt[5] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_models");
+  x += sw;
+  g_status_butt[5]->callback(status_xyz1p_cb, (void *)"model");
+  g_status_butt[5]->tooltip("Switch current model");
 
   g_status_butt[0] = new Fl_Button(x, glheight + 2, sw, sht, "X");
   x += sw;
@@ -1487,11 +1499,6 @@ void GUI::create_graphic_window()
   x += sw;
   g_status_butt[9]->callback(status_xyz1p_cb, (void *)"S");
   g_status_butt[9]->tooltip("Toggle mouse selection ON/OFF (Escape)");
-
-  g_status_butt[5] = new Fl_Button(x, glheight + 2, sw, sht, "?");
-  x += sw;
-  g_status_butt[5]->callback(status_xyz1p_cb, (void *)"?");
-  g_status_butt[5]->tooltip("Show current options");
 
   g_status_butt[6] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_rewind");
   x += sw;

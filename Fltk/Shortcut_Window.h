@@ -21,10 +21,12 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GmshUI.h"
-
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Double_Window.H>
 #include <FL/fl_ask.H>
+#include "Context.h"
+
+extern Context_T CTX;
 
 // Derive special windows from Fl_Double_Window to correctly process
 // the OS-specific shorcuts (Cmd-w on Mac, Alt+F4 on Windows)
@@ -49,10 +51,16 @@ class Dialog_Window : public Fl_Double_Window {
     return Fl_Double_Window::handle(event);
   }
  public:
-  Dialog_Window(int x,int y,int w,int h,const char *l=0) :
-    Fl_Double_Window(x, y, w, h, l) {}
-  Dialog_Window(int w,int h,const char *l=0) :
-    Fl_Double_Window(w, h, l) {}
+  Dialog_Window(int w,int h,const char *l=0)
+    : Fl_Double_Window(w, h, l) 
+  {
+    if(CTX.non_modal_windows) set_non_modal();
+  }
+  void show()
+  {
+    if(non_modal() && !shown()) Fl_Double_Window::show(); // fix ordering
+    Fl_Double_Window::show();
+  }
 };
 
 // Do the same for the main windows, but ask if we really want to quit
@@ -82,10 +90,16 @@ class Main_Window : public Fl_Window {
     return Fl_Window::handle(event);
   }
  public:
-  Main_Window(int x,int y,int w,int h,const char *l=0) :
-    Fl_Window(x, y, w, h, l) {}
-  Main_Window(int w,int h,const char *l=0) :
-    Fl_Window(w, h, l) {}
+  Main_Window(int w,int h,const char *l=0) 
+    : Fl_Window(w, h, l) 
+  {
+    if(CTX.non_modal_windows) set_non_modal();
+  }
+  void show()
+  {
+    if(non_modal() && !shown()) Fl_Window::show(); // fix ordering
+    Fl_Window::show();
+  }
 };
 
 #endif

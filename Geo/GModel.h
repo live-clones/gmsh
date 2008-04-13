@@ -61,6 +61,9 @@ class GModel
   // loop over all vertices connected to elements and associate geo entity
   void _associateEntityWithMeshVertices();
 
+  // index of the current model
+  static int _current;
+
  protected:
   std::string modelName;
   std::set<GRegion*, GEntityLessThan> regions;
@@ -77,8 +80,9 @@ class GModel
   // the static list of all loaded models
   static std::vector<GModel*> list;
 
-  // returns the current model
-  static GModel *current();
+  // returns the current model, and sets the current model index if
+  // index >= 0
+  static GModel *current(int index=-1);
 
   // finds the model by name
   static GModel *findByName(std::string name);

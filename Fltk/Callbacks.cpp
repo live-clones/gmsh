@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.577 2008-04-01 12:47:10 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.578 2008-04-13 09:45:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -468,6 +468,9 @@ void status_xyz1p_cb(CALLBACK_ARGS)
       perspective_editor();
     }
     Draw();
+  }
+  else if(!strcmp(str, "model")){ // toggle projection mode
+    model_chooser();
   }
   else if(!strcmp(str, "?")){ // display options
     Print_Options(0, GMSH_FULLRC, 0, 1, NULL);

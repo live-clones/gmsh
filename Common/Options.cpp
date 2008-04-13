@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.390 2008-04-01 12:47:10 geuzaine Exp $
+// $Id: Options.cpp,v 1.391 2008-04-13 09:45:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -2804,6 +2804,13 @@ double opt_general_nopopup(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.nopopup = (int)val;
   return CTX.nopopup;
+}
+
+double opt_general_non_modal_windows(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.non_modal_windows = (int)val;
+  return CTX.non_modal_windows;
 }
 
 double opt_general_terminal(OPT_ARGS_NUM)

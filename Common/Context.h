@@ -78,6 +78,7 @@ class Context_T {
   int initial_context; // 0=automatic; 1=geom; 2=mesh; 3=solver; 4=post 
   int verbosity; // 0=silent -> 3=debug 
   int nopopup; // never popup dialogs in scripts (use default values instead)
+  int non_modal_windows; // make all windows "non modal"
   double rot[16]; // current rotation matrix 
   double r[3]; // current Euler angles (in degrees!) 
   double t[3], s[3]; // current translation and scale 

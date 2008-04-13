@@ -30,6 +30,7 @@ void file_chooser_get_position(int *x, int *y);
 
 int arrow_editor(const char *title, double &a, double &b, double &c);
 int perspective_editor();
+int model_chooser();
 
 int jpeg_dialog(const char *filename);
 int gif_dialog(const char *filename);

@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.45 2008-03-20 11:44:03 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.46 2008-04-13 09:45:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -27,9 +27,11 @@
 #include "Draw.h"
 #include "GUI.h"
 #include "Shortcut_Window.h"
+#include "GModel.h"
 
 #include <FL/Fl_Value_Slider.H>
 #include <FL/Fl_Menu_Window.H>
+#include <FL/Fl_Select_Browser.H>
 #include <errno.h>
 
 #if defined(HAVE_NATIVE_FILE_CHOOSER)
@@ -193,7 +195,8 @@ int arrow_editor(const char *title, double &a, double &b, double &c)
 
 // Perspective editor (aka z-clipping planes factor slider)
 
-static void persp_change_factor(Fl_Widget* w, void* data){
+static void persp_change_factor(Fl_Widget* w, void* data)
+{
   opt_general_clip_factor(0, GMSH_SET|GMSH_GUI, ((Fl_Slider*)w)->value());
   Draw();
 }
@@ -225,6 +228,7 @@ int perspective_editor()
   if(!editor){
     editor = new _editor;
     editor->window = new Fl_Menu_Window(20, 100);
+    if(CTX.non_modal_windows) editor->window->set_non_modal();
     editor->sa = new Release_Slider(0, 0, 20, 100);
     editor->sa->type(FL_VERT_NICE_SLIDER);
     editor->sa->minimum(12);
@@ -236,7 +240,54 @@ int perspective_editor()
 
   editor->window->hotspot(editor->window);
   editor->sa->value(CTX.clip_factor);
+
+  if(editor->window->non_modal() && !editor->window->shown())
+    editor->window->show(); // fix ordering
   editor->window->show();
+  return 0;
+}
+
+// Model chooser
+
+static void model_switch(Fl_Widget* w, void* data)
+{
+  Fl_Select_Browser *b = (Fl_Select_Browser *)w;
+  GModel::current(b->value() - 1);
+  if(w->window()) w->window()->hide();
+  CTX.mesh.changed = ENT_ALL;
+  Draw();
+}
+
+int model_chooser()
+{
+  struct _menu{
+    Fl_Menu_Window *window;
+    Fl_Select_Browser *browser;
+  };
+  static _menu *menu = NULL;
+
+  if(!menu){
+    menu = new _menu;
+    menu->window = new Fl_Menu_Window(200, 100);
+    if(CTX.non_modal_windows) menu->window->set_non_modal();
+    menu->window->border(0);
+    menu->browser = new Fl_Select_Browser(0, 0, 200, 100);
+    menu->browser->callback(model_switch);
+    menu->browser->when(FL_WHEN_RELEASE_ALWAYS);
+    menu->window->end();
+  }
+
+  menu->window->hotspot(menu->window);
+  menu->browser->clear();
+  for(unsigned int i = 0; i < GModel::list.size(); i++){
+    char tmp[256];
+    sprintf(tmp, "Model %d <<%s>>", i, GModel::list[i]->getName().c_str());
+    menu->browser->add(tmp);
+  }
+
+  if(menu->window->non_modal() && !menu->window->shown())
+    menu->window->show(); // fix ordering
+  menu->window->show();
   return 0;
 }
 

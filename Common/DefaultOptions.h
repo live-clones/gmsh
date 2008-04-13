@@ -674,6 +674,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "MouseSelection" , opt_general_mouse_selection , 1. ,
     "Enable mouse selection" },
 
+  { F|S, "NonModalWindows" , opt_general_non_modal_windows , 1. , 
+    "Force all Gmsh windows to be \"on top\" (\"non-modal\" in Microsoft Windows terminlogy)" },
   { F|O, "NoPopup" , opt_general_nopopup , 0. , 
     "Disable interactive dialog windows in scripts (and use default values instead)" },
 

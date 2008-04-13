@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.82 2008-03-30 21:35:07 geuzaine Exp $
+// $Id: GModel.cpp,v 1.83 2008-04-13 09:45:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -40,6 +40,7 @@
 extern Context_T CTX;
 
 std::vector<GModel*> GModel::list;
+int GModel::_current = -1;
 
 GModel::GModel(std::string name)
   : _geo_internals(0), _occ_internals(0), _fields(0),
@@ -66,12 +67,13 @@ GModel::~GModel()
 #endif
 }
 
-GModel *GModel::current()
+GModel *GModel::current(int index)
 {
+  if(index >= 0) _current = index;
   if(list.empty()) return 0; // not an error
 
-  // return last one for now
-  return list.back();
+  if(_current < 0 || _current >= list.size()) return list.back();
+  return list[_current];
 }
 
 GModel *GModel::findByName(std::string name)

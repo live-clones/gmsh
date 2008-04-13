@@ -37,7 +37,9 @@
         <key>CFBundleTypeRole</key><string>Viewer</string>
       </dict>
       <dict>
-        <key>CFBundleTypeExtensions</key><array><string>pos</string></array>
+        <key>CFBundleTypeExtensions</key><array>
+          <string>pos</string>
+          <string>med</string></array>
         <key>CFBundleTypeIconFile</key><string>GmshPos.icns</string>
         <key>CFBundleTypeName</key><string>Gmsh Post-Processing File</string>
         <key>CFBundleTypeOSTypes</key><array><string>GPOS</string></array>
