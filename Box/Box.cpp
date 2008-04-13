@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.50 2008-03-23 21:42:56 geuzaine Exp $
+// $Id: Box.cpp,v 1.51 2008-04-13 18:52:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -80,31 +80,25 @@ int GMSHBOX(int argc, char *argv[])
   new GModel;
 
   OpenProject(CTX.filename);
-  if(gmsh_yyerrorstate)
-    ParUtil::Instance()->Abort();
-  else {
-    for(unsigned int i = 1; i < CTX.files.size(); i++)
-      MergeFile(CTX.files[i].c_str());
-    if(CTX.bgm_filename) {
-      MergeFile(CTX.bgm_filename);
-      if(PView::list.size())
-        GModel::current()->getFields()->set_background_mesh(PView::list.size() - 1);
-      else
-        fprintf(stderr, ERROR_STR "Invalid background mesh (no view)\n");
-    }
-    if(CTX.batch > 0) {
-      GModel::current()->mesh(CTX.batch);
-      CreateOutputFile(CTX.output_filename, CTX.mesh.format);
-    }
-    else if(CTX.batch == -1)
-      CreateOutputFile(CTX.output_filename, FORMAT_GEO);
-    ParUtil::Instance()->Barrier(__LINE__, __FILE__);
-    return 1;
+  for(unsigned int i = 1; i < CTX.files.size(); i++)
+    MergeFile(CTX.files[i].c_str());
+  if(CTX.bgm_filename) {
+    MergeFile(CTX.bgm_filename);
+    if(PView::list.size())
+      GModel::current()->getFields()->set_background_mesh(PView::list.size() - 1);
+    else
+      fprintf(stderr, ERROR_STR "Invalid background mesh (no view)\n");
   }
+  if(CTX.batch > 0) {
+    GModel::current()->mesh(CTX.batch);
+    CreateOutputFile(CTX.output_filename, CTX.mesh.format);
+  }
+  else if(CTX.batch == -1)
+    CreateOutputFile(CTX.output_filename, FORMAT_GEO);
+
   ParUtil::Instance()->Barrier(__LINE__, __FILE__);
 
   GmshFinalize();
-  
   return 1;
 }
 
