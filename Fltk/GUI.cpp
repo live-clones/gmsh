@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.674 2008-04-13 11:07:58 geuzaine Exp $
+// $Id: GUI.cpp,v 1.675 2008-04-13 11:34:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -929,7 +929,7 @@ GUI::GUI(int argc, char **argv)
   create_graphic_window();
 
 #if defined(WIN32)
-  m_window->icon((char *)LoadImage(fl_display, MAKEINTRESOURCE(IDI_ICON),
+  g_window->icon((char *)LoadImage(fl_display, MAKEINTRESOURCE(IDI_ICON),
                                    IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));
 #elif defined(__APPLE__)
   // Nothing to do here
@@ -952,13 +952,10 @@ GUI::GUI(int argc, char **argv)
   g_window->icon((char*)XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
                                               gmsh32x32, 32, 32));
 #endif
-  
-  // we must show() m_window first (at least on Win32, since the icon
-  // is associated with m_window); and besides, it's probably better
-  // to have the initial focus on g_window so that we can directly
-  // process graphical shortcuts (e.g. for time step selection)
-  m_window->show(1, argv);
+
+  // open graphics window first for correct non-modal behaviour on windows
   g_window->show(1, argv);
+  m_window->show();
   g_opengl_window->take_focus();
   
   create_option_window();
@@ -1450,6 +1447,7 @@ void GUI::create_graphic_window()
   int height = glheight + sh;
 
   g_window = new Main_Window(width, height, false);
+  //g_window = new Main_Window(width, height, CTX.non_modal_windows);
   g_window->callback(file_quit_cb);
 
   // bottom button bar
