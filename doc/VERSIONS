@@ -1,10 +1,11 @@
-$Id: VERSIONS,v 1.403 2008-04-01 13:11:57 geuzaine Exp $
+$Id: VERSIONS,v 1.404 2008-04-13 20:54:42 geuzaine Exp $
 
-2.1.2 (xx): new Fields interface; new model-based post-processing
-backend; added MED I/O for mesh and post-processing; fixed BDF vertex
-ordering for 2nd order elements; replaced Mesh.ConstrainedBackgroundMesh
-with Mesh.CharacteristicLength{FromPoints,ExtendFromBoundary}; fixed 
-various bugs.
+2.1.2 (xx): new model-based post-processing backend; added MED I/O for
+mesh and post-processing; fixed BDF vertex ordering for 2nd order
+elements; replaced Mesh.ConstrainedBackgroundMesh with
+Mesh.CharacteristicLength{FromPoints,ExtendFromBoundary}; new Fields
+interface; control windows are now non-modal by default; fixed various
+bugs.
 
 2.1.1 (Mar 1, 2008): small bug fixes (second order meshes, combine
 views, divide and conquer crash, ...).
