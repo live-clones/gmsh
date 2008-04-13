@@ -148,6 +148,12 @@ class GUI{
 
 public:
 
+  // graphic window
+  Fl_Window        *g_window;
+  Opengl_Window    *g_opengl_window;
+  Fl_Button        *g_status_butt[12];
+  Fl_Box           *g_status_label[2];
+
   // menu window
   Fl_Window        *m_window;
 #if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
@@ -162,12 +168,6 @@ public:
   std::vector<Popup_Button*>    m_popup_butt;
   std::vector<Popup_Button*>    m_popup2_butt;
   std::vector<char*>            m_pop_label;
-
-  // graphic window
-  Fl_Window        *g_window;
-  Opengl_Window    *g_opengl_window;
-  Fl_Button        *g_status_butt[12];
-  Fl_Box           *g_status_label[2];
 
   // Option window
   Fl_Window        *opt_window;

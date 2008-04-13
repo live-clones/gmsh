@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.675 2008-04-13 11:34:38 geuzaine Exp $
+// $Id: GUI.cpp,v 1.676 2008-04-13 15:20:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -865,8 +865,8 @@ int GUI::arrow_shortcuts()
 GUI::GUI(int argc, char **argv)
 {
   // initialize static windows
-  m_window = NULL;
   g_window = NULL;
+  m_window = NULL;
   opt_window = NULL;
   plugin_window = NULL;
   field_window = NULL;
@@ -947,15 +947,18 @@ GUI::GUI(int argc, char **argv)
     0x08, 0x00, 0xff, 0x1f, 0x08, 0x00, 0xff, 0x1f, 0x04, 0x40, 0xfd, 0x3f,
     0x04, 0xa8, 0xea, 0x3f, 0x02, 0x55, 0x55, 0x7f, 0xa2, 0xaa, 0xaa, 0x7a,
     0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 };
-  m_window->icon((char*)XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
-                                              gmsh32x32, 32, 32));
   g_window->icon((char*)XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
+                                              gmsh32x32, 32, 32));
+  m_window->icon((char*)XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
                                               gmsh32x32, 32, 32));
 #endif
 
   // open graphics window first for correct non-modal behaviour on windows
   g_window->show(1, argv);
   m_window->show();
+
+  // graphic window should have the initial focus (so we can
+  // e.g. directly loop through time steps with the keyboard)
   g_opengl_window->take_focus();
   
   create_option_window();
@@ -1446,8 +1449,9 @@ void GUI::create_graphic_window()
   int glheight = CTX.viewport[3] - CTX.viewport[1];
   int height = glheight + sh;
 
+  // the graphic window is the main window: it should be a normal
+  // window (neither modal nor non-modal)
   g_window = new Main_Window(width, height, false);
-  //g_window = new Main_Window(width, height, CTX.non_modal_windows);
   g_window->callback(file_quit_cb);
 
   // bottom button bar
