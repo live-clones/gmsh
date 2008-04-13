@@ -24,9 +24,6 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Double_Window.H>
 #include <FL/fl_ask.H>
-#include "Context.h"
-
-extern Context_T CTX;
 
 // Derive special windows from Fl_Double_Window to correctly process
 // the OS-specific shorcuts (Cmd-w on Mac, Alt+F4 on Windows)
@@ -51,10 +48,10 @@ class Dialog_Window : public Fl_Double_Window {
     return Fl_Double_Window::handle(event);
   }
  public:
-  Dialog_Window(int w,int h,const char *l=0)
+  Dialog_Window(int w,int h,int nonmodal=false,const char *l=0)
     : Fl_Double_Window(w, h, l) 
   {
-    if(CTX.non_modal_windows) set_non_modal();
+    if(nonmodal) set_non_modal();
   }
   void show()
   {
@@ -90,10 +87,10 @@ class Main_Window : public Fl_Window {
     return Fl_Window::handle(event);
   }
  public:
-  Main_Window(int w,int h,const char *l=0) 
+  Main_Window(int w,int h,bool nonmodal=false, const char *l=0) 
     : Fl_Window(w, h, l) 
   {
-    if(CTX.non_modal_windows) set_non_modal();
+    if(nonmodal) set_non_modal();
   }
   void show()
   {

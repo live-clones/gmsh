@@ -231,7 +231,7 @@ projectionEditor::projectionEditor()
   const int width = (int)(3.75 * BB), height = 25 * BH;
   
   // create all widgets (we construct this once, we never deallocate!)
-  _window = new Dialog_Window(width, height, "Reparameterize");
+  _window = new Dialog_Window(width, height, CTX.non_modal_windows, "Reparameterize");
   
   new Fl_Box(WB, WB + BH / 2, BB / 2, BH, "Select:");
   

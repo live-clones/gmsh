@@ -1,4 +1,4 @@
-// $Id: GUI_Classifier.cpp,v 1.10 2008-03-20 11:44:03 geuzaine Exp $
+// $Id: GUI_Classifier.cpp,v 1.11 2008-04-13 11:07:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -373,7 +373,7 @@ classificationEditor::classificationEditor()
   const int BH = 2 * GetFontSize() + 1, BB = 12 * GetFontSize(), WB = 7;
   const int width = (int)(3.5 * BB), height = 10 * BH;
 
-  _window = new Dialog_Window(width, height, "Classify");
+  _window = new Dialog_Window(width, height, CTX.non_modal_windows, "Classify");
   
   new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
   {

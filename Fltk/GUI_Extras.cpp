@@ -1,4 +1,4 @@
-// $Id: GUI_Extras.cpp,v 1.46 2008-04-13 09:45:48 geuzaine Exp $
+// $Id: GUI_Extras.cpp,v 1.47 2008-04-13 11:07:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -151,7 +151,7 @@ int arrow_editor(const char *title, double &a, double &b, double &c)
 
   if(!editor){
     editor = new _editor;
-    editor->window = new Dialog_Window(2 * BB + 3 * WB, 4 * BH + 3 * WB);
+    editor->window = new Dialog_Window(2 * BB + 3 * WB, 4 * BH + 3 * WB, CTX.non_modal_windows);
     editor->sa = new Fl_Value_Slider(WB, WB, BB, BH, "Head radius");
     editor->sa->type(FL_HOR_SLIDER);
     editor->sa->align(FL_ALIGN_RIGHT);

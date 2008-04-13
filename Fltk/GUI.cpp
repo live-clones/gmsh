@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.673 2008-04-13 09:45:48 geuzaine Exp $
+// $Id: GUI.cpp,v 1.674 2008-04-13 11:07:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1033,7 +1033,7 @@ void GUI::create_menu_window()
   }
 #endif
 
-  m_window = new Main_Window(width, MH + NB_BUTT_SCROLL * BH, "Gmsh");
+  m_window = new Main_Window(width, MH + NB_BUTT_SCROLL * BH, CTX.non_modal_windows, "Gmsh");
   m_window->box(GMSH_WINDOW_BOX);
   m_window->callback(file_quit_cb);
 
@@ -1449,7 +1449,7 @@ void GUI::create_graphic_window()
   int glheight = CTX.viewport[3] - CTX.viewport[1];
   int height = glheight + sh;
 
-  g_window = new Main_Window(width, height);
+  g_window = new Main_Window(width, height, false);
   g_window->callback(file_quit_cb);
 
   // bottom button bar
@@ -1812,7 +1812,7 @@ void GUI::create_option_window()
     return;
   }
 
-  opt_window = new Dialog_Window(width, height);
+  opt_window = new Dialog_Window(width, height, CTX.non_modal_windows);
   opt_window->box(GMSH_WINDOW_BOX);
 
   // Buttons
@@ -3787,7 +3787,7 @@ void GUI::create_plugin_window(int numview)
     return;
   }
 
-  plugin_window = new Dialog_Window(width, height, "Plugins");
+  plugin_window = new Dialog_Window(width, height, CTX.non_modal_windows, "Plugins");
   plugin_window->box(GMSH_WINDOW_BOX);
 
   {
@@ -4051,7 +4051,7 @@ void GUI::create_field_window(int numfield)
   }
   
   selected_field_dialog_box=NULL;
-  field_window = new Dialog_Window(width, height, "Fields");
+  field_window = new Dialog_Window(width, height, CTX.non_modal_windows, "Fields");
   field_window->box(GMSH_WINDOW_BOX);
   Fl_Group *resize_box = new Fl_Group(2*WB+L1, 2*WB+BB,width-3*WB-L1, height - 3 * WB-BB);
   resize_box->end();
@@ -4096,7 +4096,7 @@ void GUI::create_statistics_window()
   int width = 26 * fontsize;
   int height = 5 * WB + 17 * BH;
 
-  stat_window = new Dialog_Window(width, height, "Statistics");
+  stat_window = new Dialog_Window(width, height, CTX.non_modal_windows, "Statistics");
   stat_window->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
@@ -4264,7 +4264,7 @@ void GUI::create_message_window(bool redraw_only)
   int width = CTX.msg_size[0];
   int height = CTX.msg_size[1];
 
-  msg_window = new Dialog_Window(width, height, "Message Console");
+  msg_window = new Dialog_Window(width, height, CTX.non_modal_windows, "Message Console");
   msg_window->box(GMSH_WINDOW_BOX);
 
   msg_browser = new Fl_Browser(WB, WB, width - 2 * WB, height - 3 * WB - BH);
@@ -4381,7 +4381,7 @@ void GUI::create_visibility_window(bool redraw_only)
   int height = 18 * BH;
   int brw = width - 4 * WB;
 
-  vis_window = new Dialog_Window(width, height, "Visibility");
+  vis_window = new Dialog_Window(width, height, CTX.non_modal_windows, "Visibility");
   vis_window->box(GMSH_WINDOW_BOX);
 
   vis_type = new Fl_Choice(WB, WB, (width - 3 * WB) / 2, BH);
@@ -4603,7 +4603,7 @@ void GUI::create_clip_window()
   int brw = 105;
   int BW = width - brw - 3 * WB - 3 * fontsize;
 
-  clip_window = new Dialog_Window(width, height, "Clipping Planes");
+  clip_window = new Dialog_Window(width, height, CTX.non_modal_windows, "Clipping Planes");
   clip_window->box(GMSH_WINDOW_BOX);
 
   clip_browser = new Fl_Multi_Browser(1 * WB, 1 * WB, brw, height - BH - 3 * WB);
@@ -4708,7 +4708,7 @@ void GUI::create_manip_window()
   int width = 4 * BB + 2 * WB;
   int height = 5 * BH + 3 * WB;
 
-  manip_window = new Dialog_Window(width, height, "Manipulator");
+  manip_window = new Dialog_Window(width, height, CTX.non_modal_windows, "Manipulator");
   manip_window->box(GMSH_WINDOW_BOX);
 
   Fl_Box *top[3], *left[3];
@@ -4775,7 +4775,7 @@ void GUI::create_about_window()
   int width = 28 * fontsize;
   int height = 15 * BH + BH/2;
 
-  about_window = new Dialog_Window(width, height, "About Gmsh");
+  about_window = new Dialog_Window(width, height, CTX.non_modal_windows, "About Gmsh");
   about_window->box(GMSH_WINDOW_BOX);
 
   {
@@ -4873,7 +4873,7 @@ void GUI::create_geometry_context_window(int num)
   int width = 31 * fontsize;
   int height = 5 * WB + 9 * BH;
 
-  context_geometry_window = new Dialog_Window(width, height, "Contextual Geometry Definitions");
+  context_geometry_window = new Dialog_Window(width, height, CTX.non_modal_windows, "Contextual Geometry Definitions");
   context_geometry_window->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
@@ -5033,7 +5033,7 @@ void GUI::create_mesh_context_window(int num)
   int width = 29 * fontsize;
   int height = 5 * WB + 5 * BH;
 
-  context_mesh_window = new Dialog_Window(width, height, "Contextual Mesh Definitions");
+  context_mesh_window = new Dialog_Window(width, height, CTX.non_modal_windows, "Contextual Mesh Definitions");
   context_mesh_window->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
@@ -5107,7 +5107,7 @@ void GUI::create_solver_window(int num)
   int height = (8 + SINFO[num].nboptions) * BH + 6 * WB;
   int BBS = (width - 8 * WB) / 5;
   
-  solver[num].window = new Dialog_Window(width, height);
+  solver[num].window = new Dialog_Window(width, height, CTX.non_modal_windows);
   solver[num].window->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - 1 * BH);
