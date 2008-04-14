@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.676 2008-04-13 15:20:30 geuzaine Exp $
+// $Id: GUI.cpp,v 1.677 2008-04-14 18:30:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1281,17 +1281,17 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
                   (Fl_Callback *) view_alias_cb, (void *)nb, 0);
         p[j]->add("Alias/View with Options", 0, 
                   (Fl_Callback *) view_alias_with_options_cb, (void *)nb, 0);
-        p[j]->add("Combine/Elements from Visible Views", 0, 
+        p[j]->add("Combine Elements/From Visible Views", 0, 
                   (Fl_Callback *) view_combine_space_visible_cb, (void *)nb, 0);
-        p[j]->add("Combine/Elements from All Views", 0, 
+        p[j]->add("Combine Elements/From All Views", 0, 
                   (Fl_Callback *) view_combine_space_all_cb, (void *)nb, 0);
-        p[j]->add("Combine/Elements by View Name", 0, 
+        p[j]->add("Combine Elements/By View Name", 0, 
                   (Fl_Callback *) view_combine_space_by_name_cb, (void *)nb, 0);
-        p[j]->add("Combine/Time Steps from Visible Views", 0, 
+        p[j]->add("Combine Time Steps/From Visible Views", 0, 
                   (Fl_Callback *) view_combine_time_visible_cb, (void *)nb, 0);
-        p[j]->add("Combine/Time Steps from All Views", 0, 
+        p[j]->add("Combine Time Steps/From All Views", 0, 
                   (Fl_Callback *) view_combine_time_all_cb, (void *)nb, 0);
-        p[j]->add("Combine/Time Steps by View Name", 0, 
+        p[j]->add("Combine Time Steps/By View Name", 0, 
                  (Fl_Callback *) view_combine_time_by_name_cb, (void *)nb, 0);
         p[j]->add("Set Visibility/All On", 0, 
                   (Fl_Callback *) view_all_visible_cb, (void *)1, 0);

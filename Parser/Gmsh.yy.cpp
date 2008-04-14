@@ -835,7 +835,7 @@ int gmsh_yy_flex_debug = 0;
 char *gmsh_yytext;
 #line 1 "Gmsh.l"
 #line 2 "Gmsh.l"
-// $Id: Gmsh.yy.cpp,v 1.357 2008-03-29 10:19:41 geuzaine Exp $
+// $Id: Gmsh.yy.cpp,v 1.358 2008-04-14 18:30:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -2851,7 +2851,7 @@ void skipcomments(void)
 
   while (1) {
     while ((c = yyinput()) != '*'){
-      if(c == EOF){
+      if(feof(gmsh_yyin)){
         Msg(GERROR, "End of file in commented region");
         return;
       }
@@ -2871,7 +2871,7 @@ void parsestring(char endchar)
   // etc.) "as is" in the output string: see yyinput() above
   int i = 0;
   while ((c = yyinput()) != endchar) {
-    if(c == EOF){
+    if(feof(gmsh_yyin)){
       Msg(GERROR, "End of file in string");
       break;
     }
@@ -2896,7 +2896,7 @@ void skipline()
 {
   int c;
   while ((c = yyinput()) != '\n'){
-    if(c == EOF) return;
+    if(feof(gmsh_yyin)) return;
   }
 }
 
@@ -2918,7 +2918,7 @@ void skip_until(const char *skip, const char *until)
   while(1){
     while (1){
       chars[0] = yyinput();
-      if(chars[0] == (char)EOF){
+      if(feof(gmsh_yyin)){
         Msg(GERROR, "Unexpected end of file");
 	return;
       }
@@ -2933,7 +2933,7 @@ void skip_until(const char *skip, const char *until)
     }
     for(i=1; i<l; i++){
       chars[i] = yyinput();
-      if(chars[i] == (char)EOF){
+      if(feof(gmsh_yyin)){
 	l = i;
 	break;
       }
