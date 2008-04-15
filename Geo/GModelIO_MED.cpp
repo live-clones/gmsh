@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.28 2008-04-13 20:52:07 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.29 2008-04-15 19:02:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -166,7 +166,7 @@ int GModel::readMED(const std::string &name)
     return 0;
   }
 
-  int ret;
+  int ret = 1;
   // FIXME change all this once we clarify Open/Merge/Clear
   MVertex::resetGlobalNumber();
   MElement::resetGlobalNumber();

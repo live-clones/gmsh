@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.21 2008-04-06 09:20:17 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.22 2008-04-15 19:02:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -453,11 +453,11 @@ void PViewDataList::revertElement(int step, int ent, int ele)
 
   // copy data
   std::vector<double> XYZ(3 * _lastNumNodes);
-  for(int i = 0; i < XYZ.size(); i++)
+  for(unsigned int i = 0; i < XYZ.size(); i++)
     XYZ[i] = _lastXYZ[i];
 
   std::vector<double> V(_lastNumNodes * _lastNumComponents * getNumTimeSteps());
-  for(int i = 0; i < V.size(); i++)
+  for(unsigned int i = 0; i < V.size(); i++)
     V[i] = _lastVal[i];
 
   // reverse node order

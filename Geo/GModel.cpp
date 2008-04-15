@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.83 2008-04-13 09:45:48 geuzaine Exp $
+// $Id: GModel.cpp,v 1.84 2008-04-15 19:02:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -72,7 +72,7 @@ GModel *GModel::current(int index)
   if(index >= 0) _current = index;
   if(list.empty()) return 0; // not an error
 
-  if(_current < 0 || _current >= list.size()) return list.back();
+  if(_current < 0 || _current >= (int)list.size()) return list.back();
   return list[_current];
 }
 

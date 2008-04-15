@@ -119,7 +119,7 @@ class stepData{
   }
   std::vector<double> &getGaussPoints(int msh)
   {
-    if(_gaussPoints.size() <= msh) _gaussPoints.resize(msh + 1);
+    if((int)_gaussPoints.size() <= msh) _gaussPoints.resize(msh + 1);
     return _gaussPoints[msh];
   }
 };

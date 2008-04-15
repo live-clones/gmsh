@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.23 2008-03-30 18:39:32 remacle Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.24 2008-04-15 19:02:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -631,7 +631,7 @@ void gmshBowyerWatson(GFace *gf)
       if(ITER++ % 5000 == 0)
 	Msg(DEBUG1,"%7d points created -- Worst tri radius is %8.3f",
 	    vSizes.size(), worst->getRadius());
-      double center[2],uv[2],metric[3],r2;
+      double center[2],metric[3],r2;
       if (worst->getRadius() < 0.5 * sqrt(2.0)) break;
       circUV(worst->tri(), Us, Vs, center, gf);
       MTriangle *base = worst->tri();
@@ -730,7 +730,7 @@ void gmshBowyerWatsonFrontal(GFace *gf){
 	  vSizes.size(), worst->getRadius());
 
     // compute circum center of that guy
-    double center[2],uv[2],metric[3],r2;
+    double center[2],metric[3],r2;
     MTriangle *base = worst->tri();
     circUV(base, Us, Vs, center, gf);
     double pa[2] = {(Us[base->getVertex(0)->getNum()] + 
@@ -773,7 +773,7 @@ void gmshBowyerWatsonFrontal(GFace *gf){
     const double rhoM  = Extend1dMeshIn2dSurfaces() ? std::min(rhoM1, rhoM2) : rhoM2;
     
 
-    double ps = dir[0]*(P[0]-Q[0]) + dir[1]*(P[1]-Q[1]) ;
+    //double ps = dir[0]*(P[0]-Q[0]) + dir[1]*(P[1]-Q[1]) ;
     //    printf("ratio = %12.5E dir %g %g m %g %g %g %g ps = %12.5E\n",RATIO,dir[0],dir[1],metric[0],metric[1],metric[2],rhoM*sqrt(3.),ps); 
 
     //    const double rhoM_hat = std::max(rhoM,2*p);
@@ -831,7 +831,7 @@ void gmshBowyerWatsonFrontal2(GFace *gf){
 	Msg(DEBUG1,"%7d points created -- Worst tri radius is %8.3f",
 	    vSizes.size(), worst->getRadius());
       // compute circum center of that guy
-      double center[2],uv[2],metric[3],r2;
+      double center[2],metric[3],r2;
       MTriangle *base = worst->tri();
       circUV(base, Us, Vs, center, gf);
       double pa[2] = {(Us[base->getVertex(0)->getNum()] + 

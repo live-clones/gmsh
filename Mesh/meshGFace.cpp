@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.129 2008-03-26 09:37:49 remacle Exp $
+// $Id: meshGFace.cpp,v 1.130 2008-04-15 19:02:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -467,7 +467,6 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
     for(int i = 0; i < doc.numPoints; i++){
       MVertex *here = (MVertex *)doc.points[i].data;
       int num = here->getNum();
-      GEntity *ge = here->onWhat();
       double U, V;
       if(num < 0){ // fake bbox points
         U = bb[-1 - num]->x();
@@ -477,18 +476,7 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
 	U = U_[num];
 	V = V_[num];
       }      
-       BDS_Point *pp = m->add_point(num, U, V, gf);
-//        if(ge->dim() == 0){
-//  	pp->lcBGM() = BGM_MeshSize(ge, 0, 0, here->x(), here->y(), here->z());
-//        }
-//        else if(ge->dim() == 1){
-//  	double u;
-//  	here->getParameter(0,u);
-//  	pp->lcBGM() = BGM_MeshSize(ge, u, 0, here->x(), here->y(), here->z());
-//        }
-//        else
-//  	pp->lcBGM() = 1.e22;      
-//        pp->lc() = pp->lcBGM();
+      m->add_point(num, U, V, gf);
     }
     
     

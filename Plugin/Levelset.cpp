@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.44 2008-04-05 09:21:37 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.45 2008-04-15 19:02:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -71,7 +71,7 @@ static void getSimplexDec(int numNodes, int numEdges, int i,
     n0 = pri[i][0]; n1 = pri[i][1]; n2 = pri[i][2]; n3 = pri[i][3]; nn = 4; ne = 6;
     break;
   case 8:
-    n0 = pri[i][0]; n1 = pri[i][1]; n2 = pri[i][2]; n3 = pri[i][3]; nn = 4; ne = 6;
+    n0 = pyr[i][0]; n1 = pyr[i][1]; n2 = pyr[i][2]; n3 = pyr[i][3]; nn = 4; ne = 6;
     break;
   default:
     n0 = 0; n1 = 1; n2 = 2; n3 = 3; nn = numNodes; ne = numEdges;

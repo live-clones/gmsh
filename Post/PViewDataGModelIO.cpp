@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.40 2008-04-06 09:20:17 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.41 2008-04-15 19:02:33 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -212,8 +212,8 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 
   med_int numSteps = 0;
   std::vector<std::pair<int, int> > pairs;
-  for(int i = 0; i < sizeof(entType) / sizeof(entType[0]); i++){
-    for(int j = 0; j < sizeof(eleType) / sizeof(eleType[0]); j++){
+  for(unsigned int i = 0; i < sizeof(entType) / sizeof(entType[0]); i++){
+    for(unsigned int j = 0; j < sizeof(eleType) / sizeof(eleType[0]); j++){
       med_int n = MEDnPasdetemps(fid, name, entType[i], eleType[j]);
       if(n > 0){
 	pairs.push_back(std::pair<int, int>(i, j));
@@ -307,7 +307,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	  }
 	  // we should check that refcoo corresponds to our internal
 	  // reference element
-	  for(unsigned int i = 0; i < gscoo.size(); i++){
+	  for(int i = 0; i < (int)gscoo.size(); i++){
 	    p.push_back(gscoo[i]);
 	    if(i % dim == dim - 1) for(int j = 0; j < 3 - dim; j++) p.push_back(0.); 
 	  }
@@ -362,7 +362,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	  num = startIndex + profile[i];
 	}
 	else{
-	  if(profile[i] == 0 || profile[i] > tags.size()){
+	  if(profile[i] == 0 || profile[i] > (int)tags.size()){
 	    Msg(GERROR, "Wrong index in profile");
 	    return false;
 	  }
