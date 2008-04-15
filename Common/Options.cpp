@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.391 2008-04-13 09:45:48 geuzaine Exp $
+// $Id: Options.cpp,v 1.392 2008-04-15 16:48:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1931,7 +1931,7 @@ const char *opt_view_name(OPT_ARGS_STR)
   if(action & GMSH_SET) {
     data->setName(val);
 #if defined(HAVE_FLTK)
-    if(WID && (num < (int)WID->m_toggle_butt.size())) {
+    if(WID && num >= 0 && num < (int)WID->m_toggle_butt.size()) {
       WID->m_toggle_butt[num]->label(data->getName().c_str());
       WID->m_toggle_butt[num]->redraw();
     }
@@ -5959,7 +5959,7 @@ double opt_view_visible(OPT_ARGS_NUM)
     opt->Visible = (int)val;
   }
 #if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI) && (num < (int)WID->m_toggle_butt.size()))
+  if(WID && (action & GMSH_GUI) && num >= 0 && num < (int)WID->m_toggle_butt.size())
     WID->m_toggle_butt[num]->value(opt->Visible);
 #endif
   return opt->Visible;
