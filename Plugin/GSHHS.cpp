@@ -57,7 +57,8 @@ class coordinate_lonlat:public coordinate_system{
 // ************** UTM ************** 
 class coordinate_utm :public coordinate_system{
   int zone;
-  coordinate_lonlat ll;
+  coordinate_lonlat ll_conv;
+  SPoint3 ll;
   double a, b, n, n2, n3, n4, n5, e, e2, e1, e12, e13, e14, J1, J2, J3, J4,
     Ap, Bp, Cp, Dp, Ep, e4, e6, ep, ep2, ep4, k0, mu_fact;
   public:
@@ -68,18 +69,18 @@ class coordinate_utm :public coordinate_system{
     return Ap * lat + Bp * sin(2 * lat) + Cp * sin(4 * lat) +
       Dp * sin(6 * lat) + Ep;
   }
-  void from_cartesian( SPoint3 xyz,SPoint3 &utm) {
-    ll.from_cartesian(xyz,xyz);
-    double S = meridionalarc(xyz.x(),xyz.y());
-    double slat = sin(xyz.y());
-    double clat = cos(xyz.y());
+  void from_cartesian(const SPoint3 xyz,SPoint3 &utm) {
+    ll_conv.from_cartesian(xyz,ll);
+    double S = meridionalarc(ll.x(),ll.y());
+    double slat = sin(ll.y());
+    double clat = cos(ll.y());
     double slat2 = slat * slat;
     double clat2 = clat * clat;
     double clat3 = clat2 * clat;
     double clat4 = clat3 * clat;
     double tlat2 = slat2 / clat2;
     double nu = a / sqrt(1 - e * e * slat2);
-    double p = xyz.x() - ((zone - 0.5) / 30 - 1) * M_PI;
+    double p = ll.x() - ((zone - 0.5) / 30 - 1) * M_PI;
     double p2 = p * p;
     double p3 = p * p2;
     double p4 = p2 * p2;
@@ -112,7 +113,7 @@ class coordinate_utm :public coordinate_system{
     double d4 = d2 * d2;
     double d5 = d4 * d;
     double d6 = d4 * d2;
-    xyz.setPosition(
+    ll.setPosition(
       ((zone - 0.5) / 30 - 1) * M_PI + (d - (1 + 2 * t1 + c1) * d3 / 6 +
                                             (5 - 2 * c1 + 28 * t1 - 3 * c12 +
                                              8 * ep2 +
@@ -121,7 +122,7 @@ class coordinate_utm :public coordinate_system{
         * (d2 / 2 - (5 + 3 * t1 + 10 * c1 - 4 * c12 - 9 * ep2) * d4 / 24 
            + (61 + 90 * t1 + 298 * c1 + 45 * t12 - 3 * c12 - 252 * ep2) * d6 / 720),
       0);
-    ll.to_cartesian(xyz,xyz);
+    ll_conv.to_cartesian(ll,xyz);
   }
   coordinate_utm(int _zone, double _a = 6378137, double _b = 6356752.3142) {
     /* see http://www.uwgb.edu/dutchs/UsefulData/UTMFormulas.HTM */
@@ -272,7 +273,7 @@ class GeoEarthImport
   }
 };
 
-/*      $Id: GSHHS.cpp,v 1.7 2008-04-06 02:33:54 remacle Exp $
+/*      $Id: GSHHS.cpp,v 1.8 2008-04-15 08:29:33 remacle Exp $
  *
  * PROGRAM:	gshhs.c
  * AUTHOR:	Paul Wessel (pwessel@hawaii.edu)
