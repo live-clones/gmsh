@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.91 2008-04-16 15:49:35 geuzaine Exp $
+// $Id: Message.cpp,v 1.92 2008-04-16 16:05:43 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -52,7 +52,7 @@ void Msg(int level, const char *fmt, ...)
   switch(level){
   case DIRECT   : color = 4; verb = 2; break ;
   case SOLVER   : color = 4; verb = 3; break ;
-  case SOLVERR  : color = 1; verb = 3; break ;
+  case SOLVERR  : verb = 0; break ;
 
   case PROGRESS : log = 0; window = 1; break ;
 
