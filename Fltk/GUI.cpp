@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.678 2008-04-16 05:46:48 geuzaine Exp $
+// $Id: GUI.cpp,v 1.679 2008-04-16 11:26:32 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -40,11 +40,7 @@
 #include "PView.h"
 #include "Field.h"
 #include "GModel.h"
-
 #include "GeoStringInterface.h"
-
-#include "FL/Fl_Int_Input.H"
-#include "FL/Fl_Float_Input.H"
 
 #define NB_BUTT_SCROLL 25
 #define NB_HISTORY_MAX 1000
