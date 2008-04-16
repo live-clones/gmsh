@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.392 2008-04-15 16:48:57 geuzaine Exp $
+// $Id: Options.cpp,v 1.393 2008-04-16 15:15:22 sabarieg Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -4383,7 +4383,7 @@ double opt_mesh_lc_from_points(OPT_ARGS_NUM)
 double opt_mesh_lc_extend_from_boundary(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.mesh.lc_extend_from_boundary = val;
+    CTX.mesh.lc_extend_from_boundary = (int)val;
   return CTX.mesh.lc_extend_from_boundary;
 }
 

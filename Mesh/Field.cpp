@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.29 2008-04-09 09:17:25 geuzaine Exp $
+// $Id: Field.cpp,v 1.30 2008-04-16 15:15:21 sabarieg Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -91,7 +91,7 @@ FieldOptionInt(int &_val, bool * _status = NULL):FieldOption(_status),
   void numerical_value(double v)
   {
     modified();
-    val = v;
+    val = (int)v;
   };
   void get_text_representation(std::string & v_str)
   {

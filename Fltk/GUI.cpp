@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.679 2008-04-16 11:26:32 geuzaine Exp $
+// $Id: GUI.cpp,v 1.680 2008-04-16 15:15:22 sabarieg Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -3896,7 +3896,7 @@ void FieldDialogBox::load_field(Field *f)
       ((Fl_Value_Input*)(*input))->value(option->numerical_value());
       break;
     case FIELD_OPTION_BOOL:
-      ((Fl_Check_Button*)(*input))->value(option->numerical_value());
+      ((Fl_Check_Button*)(*input))->value((int)option->numerical_value());
       break;
     case FIELD_OPTION_LIST:
       vstr.str("");
@@ -3940,7 +3940,7 @@ FieldDialogBox::FieldDialogBox(Field *f, int x, int y, int width, int height,int
       revert_btn = new Fl_Button(x+width - 2*BB-2*WB ,y+ height - 2*BH -2*WB, BB, BH, "Revert");
       revert_btn->callback(view_field_revert_cb,this);
       Fl_Scroll *s = new Fl_Scroll(x + WB, y + 2*WB + 2*BH, width - 2 * WB, height - 4*BH - 5 * WB);
-      double yy=y+3*WB+2*BH;
+      int yy=y+3*WB+2*BH;
       for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
 	Fl_Widget *input;
 	switch(it->second->get_type()){
