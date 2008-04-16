@@ -1284,7 +1284,8 @@ Optional Features:
   --enable-universal      enable support for universal binaries on Mac
                           (default=no)
   --enable-native-file-chooser
-                          enable native file chooser (default=yes)
+                          enable native file chooser (default=yes, except on
+                          Linux)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -3819,7 +3820,8 @@ else
 fi
 
   if test "x${NATIVE}" = "xyes"; then
-    if test "x$enable_native_file_chooser" != "xno"; then
+    if (test "x${UNAME}" = "xLinux" -a "x$enable_native_file_chooser" = "xyes" ||
+        test "x${UNAME}" != "xLinux" -a "x$enable_native_file_chooser" != "xno"); then
        GMSH_DIRS="${GMSH_DIRS} contrib/NativeFileChooser"
        GMSH_LIBS="${GMSH_LIBS} -lGmshNativeFileChooser"
        FLAGS="-DHAVE_NATIVE_FILE_CHOOSER ${FLAGS}"

@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.151 2008-04-01 21:20:35 geuzaine Exp $
+dnl $Id: configure.in,v 1.152 2008-04-16 15:39:25 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 dnl
@@ -142,7 +142,7 @@ AC_ARG_ENABLE(universal,
                              [enable support for universal binaries on Mac (default=no)]))
 AC_ARG_ENABLE(native-file-chooser,
               AC_HELP_STRING([--enable-native-file-chooser],
-                             [enable native file chooser (default=yes)]))
+                             [enable native file chooser (default=yes, except on Linux)]))
 
 dnl Get the operating system and machine names
 UNAME=`uname`
@@ -235,7 +235,8 @@ if test "x$enable_gui" != "xno"; then
   AC_CHECK_FILE(./contrib/NativeFileChooser/Fl_Native_File_Chooser.cxx, 
                 NATIVE="yes", NATIVE="no")
   if test "x${NATIVE}" = "xyes"; then
-    if test "x$enable_native_file_chooser" != "xno"; then
+    if (test "x${UNAME}" = "xLinux" -a "x$enable_native_file_chooser" = "xyes" ||
+        test "x${UNAME}" != "xLinux" -a "x$enable_native_file_chooser" != "xno"); then
        GMSH_DIRS="${GMSH_DIRS} contrib/NativeFileChooser"
        GMSH_LIBS="${GMSH_LIBS} -lGmshNativeFileChooser"
        FLAGS="-DHAVE_NATIVE_FILE_CHOOSER ${FLAGS}"
