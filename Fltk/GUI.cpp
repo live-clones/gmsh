@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.677 2008-04-14 18:30:45 geuzaine Exp $
+// $Id: GUI.cpp,v 1.678 2008-04-16 05:46:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -4271,6 +4271,7 @@ void GUI::create_message_window(bool redraw_only)
 
   msg_browser = new Fl_Browser(WB, WB, width - 2 * WB, height - 3 * WB - BH);
   msg_browser->textfont(FL_COURIER);
+  msg_browser->textsize(fontsize - 1);
   msg_browser->type(FL_MULTI_BROWSER);
   msg_browser->callback(message_copy_cb);
 
