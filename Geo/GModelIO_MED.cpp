@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.31 2008-04-16 12:31:37 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.32 2008-04-16 22:10:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -315,19 +315,20 @@ int GModel::readMED(const std::string &name, int meshIndex)
       Msg(GERROR, "Could not read MED groups or attributes");
       return 0;
     }
-    if(numGroups > 0){ // get physicals
-      std::vector<med_int> attribId(numAttrib + 1);
-      std::vector<med_int> attribVal(numAttrib + 1);
-      std::vector<char> attribDes(MED_TAILLE_DESC * numAttrib + 1);
-      std::vector<char> groupNames(MED_TAILLE_LNOM * numGroups + 1);
-      char familyName[MED_TAILLE_NOM + 1];
-      med_int familyNum;
-      if(MEDfamInfo(fid, meshName, i + 1, familyName, &familyNum, &attribId[0], 
-		    &attribVal[0], &attribDes[0], &numAttrib, &groupNames[0],
-		    &numGroups) < 0) {
-	Msg(GERROR, "Could not read info for MED family %d", i + 1);
-      }
-      else{
+    std::vector<med_int> attribId(numAttrib + 1);
+    std::vector<med_int> attribVal(numAttrib + 1);
+    std::vector<char> attribDes(MED_TAILLE_DESC * numAttrib + 1);
+    std::vector<char> groupNames(MED_TAILLE_LNOM * numGroups + 1);
+    char familyName[MED_TAILLE_NOM + 1];
+    med_int familyNum;
+    if(MEDfamInfo(fid, meshName, i + 1, familyName, &familyNum, &attribId[0], 
+		  &attribVal[0], &attribDes[0], &numAttrib, &groupNames[0],
+		  &numGroups) < 0) {
+      Msg(GERROR, "Could not read info for MED family %d", i + 1);
+    }
+    else{
+      elementaryNames[-familyNum] = familyName;
+      if(numGroups > 0){
 	GEntity *ge; // family tags are unique (for all dimensions)
 	if((ge = getRegionByTag(-familyNum))){}
 	else if((ge = getFaceByTag(-familyNum))){}

@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.32 2008-03-20 11:44:02 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.33 2008-04-16 22:10:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -48,7 +48,8 @@ class VisLessThan{
   }
 };
 
-static void setLabels(void *a, void *b){
+static void setLabels(void *a, void *b)
+{
   Symbol *s = (Symbol *)a;
   for(int j = 0; j < List_Nbr(s->val); j++) {
     double tag;
@@ -60,26 +61,18 @@ static void setLabels(void *a, void *b){
 void VisibilityManager::update(int type)
 {
   _labels.clear();
-
-  // get old labels from parser
-  if(Tree_Nbr(Symbol_T)) Tree_Action(Symbol_T, setLabels);
-
-  GModel *m = GModel::current();
-
-  // add new labels for physicals
-  if(type == 1){
-    GModel::piter it = m->firstPhysicalName();
-    while(it != m->lastPhysicalName()){
-      setLabel(it->first, it->second);
-      ++it;
-    }
-  }
-
   for(unsigned int i = 0; i < _entities.size(); i++)
     delete _entities[i];
   _entities.clear();
+
+  GModel *m = GModel::current();
+
+  // get old labels from parser
+  if(Tree_Nbr(Symbol_T)) Tree_Action(Symbol_T, setLabels);
   
   if(type == 0){ // elementary entities
+    for(GModel::piter it = m->firstElementaryName(); it != m->lastElementaryName(); ++it)
+      setLabel(it->first, it->second);
     for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
       _entities.push_back(new VisElementary(*it));
     for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++)
@@ -90,6 +83,8 @@ void VisibilityManager::update(int type)
       _entities.push_back(new VisElementary(*it));
   }
   else if(type == 1){ // physical entities
+    for(GModel::piter it = m->firstPhysicalName(); it != m->lastPhysicalName(); ++it)
+      setLabel(it->first, it->second);
     std::map<int, std::vector<GEntity*> > groups[4];
     m->getPhysicalGroups(groups);
     for(int i = 0; i < 4; i++){

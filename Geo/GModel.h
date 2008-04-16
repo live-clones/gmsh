@@ -71,7 +71,7 @@ class GModel
   std::set<GEdge*, GEntityLessThan> edges;
   std::set<GVertex*, GEntityLessThan> vertices;
   std::set<int> meshPartitions;
-  std::map<int, std::string> physicalNames;
+  std::map<int, std::string> physicalNames, elementaryNames;
 
  public:
   GModel(std::string name="");
@@ -154,9 +154,11 @@ class GModel
   // Returns the highest number associated with a physical entity
   int getMaxPhysicalNumber();
 
-  // Get an iterator on the physical name
+  // Get an iterator on the elementary/physical names
   piter firstPhysicalName() { return physicalNames.begin(); }
   piter lastPhysicalName() { return physicalNames.end(); }
+  piter firstElementaryName() { return elementaryNames.begin(); }
+  piter lastElementaryName() { return elementaryNames.end(); }
 
   // Get the number of physical names
   int numPhysicalNames(){ return physicalNames.size(); }

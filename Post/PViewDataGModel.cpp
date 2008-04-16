@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.49 2008-04-06 09:20:17 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.50 2008-04-16 22:10:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -99,6 +99,7 @@ SBoundingBox3d PViewDataGModel::getBoundingBox(int step)
 int PViewDataGModel::getNumScalars(int step)
 {
   if(_steps.empty()) return 0;
+  // to generalize
   if(_steps[0]->getNumComponents() == 1) return getNumElements(0);
   return 0;
 }
@@ -106,6 +107,7 @@ int PViewDataGModel::getNumScalars(int step)
 int PViewDataGModel::getNumVectors(int step)
 {
   if(_steps.empty()) return 0;
+  // to generalize
   if(_steps[0]->getNumComponents() == 3) return getNumElements(0);
   return 0;
 }
@@ -113,33 +115,95 @@ int PViewDataGModel::getNumVectors(int step)
 int PViewDataGModel::getNumTensors(int step)
 {
   if(_steps.empty()) return 0;
+  // to generalize
   if(_steps[0]->getNumComponents() == 9) return getNumElements(0);
   return 0;
 }
 
+int PViewDataGModel::getNumLines(int step)
+{
+  if(_steps.empty()) return 0;
+  GModel *m = _steps[0]->getModel(); // to generalize
+  int n = 0;
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
+    n += (*it)->lines.size();
+  return n;
+}
+
+int PViewDataGModel::getNumTriangles(int step)
+{
+  if(_steps.empty()) return 0;
+  GModel *m = _steps[0]->getModel(); // to generalize
+  int n = 0;
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+    n += (*it)->triangles.size();
+  return n;
+}
+
+int PViewDataGModel::getNumQuadrangles(int step)
+{
+  if(_steps.empty()) return 0;
+  GModel *m = _steps[0]->getModel(); // to generalize
+  int n = 0;
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+    n += (*it)->quadrangles.size();
+  return n;
+}
+
+int PViewDataGModel::getNumTetrahedra(int step)
+{
+  if(_steps.empty()) return 0;
+  GModel *m = _steps[0]->getModel(); // to generalize
+  int n = 0;
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+    n += (*it)->tetrahedra.size();
+  return n;
+}
+
+int PViewDataGModel::getNumHexahedra(int step)
+{
+  if(_steps.empty()) return 0;
+  GModel *m = _steps[0]->getModel(); // to generalize
+  int n = 0;
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+    n += (*it)->hexahedra.size();
+  return n;
+}
+
+int PViewDataGModel::getNumPrisms(int step)
+{
+  if(_steps.empty()) return 0;
+  GModel *m = _steps[0]->getModel(); // to generalize
+  int n = 0;
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+    n += (*it)->prisms.size();
+  return n;
+}
+
+int PViewDataGModel::getNumPyramids(int step)
+{
+  if(_steps.empty()) return 0;
+  GModel *m = _steps[0]->getModel(); // to generalize
+  int n = 0;
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+    n += (*it)->pyramids.size();
+  return n;
+}
+
 int PViewDataGModel::getNumEntities(int step)
 {
-  if(step < 0 || _steps.empty()){
-    int num = 0;
-    for(unsigned int i = 0; i < _steps.size(); i++)
-      num += _steps[i]->getNumEntities();
-    return num;
-  }
+  if(_steps.empty()) return 0;
+  // to generalize
+  if(step < 0) return _steps[0]->getNumEntities();
   return _steps[step]->getNumEntities();
 }
 
 int PViewDataGModel::getNumElements(int step, int ent)
 {
-  if(step < 0 || _steps.empty()){
-    int num = 0;
-    for(unsigned int i = 0; i < _steps.size(); i++){
-      if(ent < 0)
-        num += _steps[i]->getModel()->getNumMeshElements();
-      else
-        num += _steps[i]->getEntity(ent)->getNumMeshElements();
-    }
-    return num;
-  }
+  if(_steps.empty()) return 0;
+  // to generalize
+  if(step < 0 && ent < 0) return _steps[0]->getModel()->getNumMeshElements();
+  if(step < 0) return _steps[0]->getEntity(ent)->getNumMeshElements();
   if(ent < 0) return _steps[step]->getModel()->getNumMeshElements(); 
   return _steps[step]->getEntity(ent)->getNumMeshElements();
 }
