@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.90 2008-04-11 09:55:48 geuzaine Exp $
+// $Id: Message.cpp,v 1.91 2008-04-16 15:49:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -36,7 +36,7 @@ extern Context_T CTX;
 
 void Debug()
 {
-  printf("debug!\n");
+  printf("oops!\n");
 }
 
 void Msg(int level, const char *fmt, ...)
@@ -180,11 +180,10 @@ void Exit(int level)
   UnlinkFile(CTX.tmp_filename_fullpath);
 
   if(level){
-    // in case of an abnormal exit, force the abort directly
-    // (bypassing any post main stuff, e.g. destructors for static
-    // variables). This still guarantees that any open streams are
-    // flushed and closed, but can prevent nasty infinite loops.
-    abort();
+    // abnormal program termination: exit directly (we used to call
+    // abort() to flush open streams, but it behaves in weird ways
+    // e.g. on Mac... so just exit!
+    exit(level);
   }
 
   // if we exit cleanly (level==0) and we are in full GUI mode, save
