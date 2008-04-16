@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.179 2008-04-06 07:51:36 geuzaine Exp $
+# $Id: Makefile,v 1.180 2008-04-16 11:35:10 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -138,7 +138,13 @@ GUI_Extras.o: GUI_Extras.cpp ../Common/GmshUI.h ../Common/GmshDefines.h \
   ../DataStr/avl.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
   ../Common/SmoothData.h ../Post/PView.h ../Post/PViewData.h \
   ../Post/PViewOptions.h ../Post/ColorTable.h Shortcut_Window.h \
-  File_Picker.h
+  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
+  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
+  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h \
+  ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
+  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h \
+  ../Geo/GEntity.h ../Geo/SBoundingBox3d.h File_Picker.h
 GUI_Projection.o: GUI_Projection.cpp ../Geo/GModelIO_Fourier.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
