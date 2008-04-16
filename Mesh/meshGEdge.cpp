@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.58 2008-03-21 22:22:49 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.59 2008-04-16 11:26:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -297,10 +297,7 @@ void meshGEdge::operator() (GEdge *ge)
   double t_end = bounds.high();
   
   // first compute the length of the curve by integrating one
-  SPoint3 p1 = ge->model()->bounds().min();
-  SPoint3 p2 = ge->model()->bounds().max();
-  double length = Integration(ge, t_begin, t_end, F_One, Points, 
-			      1.e-8 * p1.distance(p2));
+  double length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-8 * CTX.lc);
   ge->setLength(length);
 
   if(length == 0.0)
