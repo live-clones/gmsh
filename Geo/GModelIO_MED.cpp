@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.30 2008-04-16 06:25:44 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.31 2008-04-16 12:31:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -437,10 +437,13 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
 	std::string groupName;
 	for(unsigned j = 0; j < entities[i]->physicals.size(); j++){
 	  std::string tmp = getPhysicalName(entities[i]->physicals[j]);
-	  std::ostringstream gs;
-	  gs << entities[i]->dim() << "D_" << tmp;
-	  if(tmp.empty()) gs << entities[i]->physicals[j];
-	  groupName += "G_" + gs.str();
+	  if(tmp.empty()){ // create unique name
+	    std::ostringstream gs;
+	    gs << entities[i]->dim() << "D_" << entities[i]->physicals[j];
+	    groupName += "G_" + gs.str();
+	  }
+	  else
+	    groupName += tmp;
 	  groupName.resize((j + 1) * 80, ' ');
 	}
 	if(MEDfamCr(fid, meshName, (char*)familyName.c_str(), 
