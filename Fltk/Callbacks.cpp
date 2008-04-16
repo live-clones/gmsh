@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.578 2008-04-13 09:45:48 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.579 2008-04-16 18:12:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -616,6 +616,9 @@ static const char *input_formats =
   "BRep model" TT "*.brep" NN
 #endif
   "I-deas universal mesh" TT "*.unv" NN
+#if defined(HAVE_MED)
+  "MED file" TT "*.med" NN
+#endif
   "Medit mesh" TT "*.mesh"
   "Nastran bulk data file" TT "*.bdf" NN
   "Plot3D structured mesh" TT "*.p3d" NN
@@ -744,7 +747,7 @@ void file_save_as_cb(CALLBACK_ARGS)
 #endif
     {"I-deas universal mesh" TT "*.unv", _save_unv},
 #if defined(HAVE_MED)
-    {"MED" TT "*.med", _save_med},
+    {"MED file" TT "*.med", _save_med},
 #endif
     {"Medit mesh" TT "*.mesh", _save_mesh},
     {"Nastran bulk data file" TT "*.bdf", _save_bdf},
