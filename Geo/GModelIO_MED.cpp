@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.29 2008-04-15 19:02:32 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.30 2008-04-16 06:25:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -159,7 +159,17 @@ int GModel::readMED(const std::string &name)
     return 0;
   }
   
-  med_int numMeshes = MEDnMaa(fid);
+  std::vector<std::string> meshNames;
+  for(int i = 0; i < MEDnMaa(fid); i++){
+    char meshName[MED_TAILLE_NOM + 1], meshDesc[MED_TAILLE_DESC + 1];
+    med_int meshDim;
+    med_maillage meshType;
+    if(MEDmaaInfo(fid, i + 1, meshName, &meshDim, &meshType, meshDesc) < 0){
+      Msg(GERROR, "Unable to read mesh information");
+      return 0;
+    }
+    meshNames.push_back(meshName);
+  }
 
   if(MEDfermer(fid) < 0){
     Msg(GERROR, "Unable to close file '%s'", (char*)name.c_str());
@@ -167,11 +177,12 @@ int GModel::readMED(const std::string &name)
   }
 
   int ret = 1;
-  // FIXME change all this once we clarify Open/Merge/Clear
+  // FIXME change this once we clarify Open/Merge/Clear behaviour
   MVertex::resetGlobalNumber();
   MElement::resetGlobalNumber();
-  for(int i = 0; i < numMeshes; i++){
-    GModel *m = (!i && GModel::list.size() == 1) ? GModel::current() : new GModel;
+  for(unsigned int i = 0; i < meshNames.size(); i++){
+    GModel *m = findByName(meshNames[i]);
+    if(!m) m = new GModel(meshNames[i]);
     ret = m->readMED(name, i);
     if(!ret) return 0;
   }
