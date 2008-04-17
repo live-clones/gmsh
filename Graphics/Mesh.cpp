@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.219 2008-03-20 11:44:07 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.220 2008-04-17 05:58:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -819,8 +819,19 @@ class drawMeshGRegion {
 
 // Main drawing routine
 
+#include "PView.h"
+
 void Draw_Mesh()
 {
+  GModel *m = GModel::current();
+
+  // make sure to flag any model-dependent post-processing view as
+  // changed if the underlying mesh has, before resetting the changed
+  // flag
+  for(unsigned int i = 0; i < PView::list.size(); i++)
+    if(PView::list[i]->getData()->hasModel(m) && CTX.mesh.changed)
+      PView::list[i]->setChanged(true);
+  
   if(!CTX.mesh.draw) return;
   
   glPointSize(CTX.mesh.point_size);
@@ -843,7 +854,6 @@ void Draw_Mesh()
   static bool busy = false;
   if(!busy){
     busy = true;
-    GModel *m = GModel::current();
     int status = m->getMeshStatus();
     if(CTX.mesh.changed) {
       Msg(DEBUG, "Mesh has changed: reinitializing drawing data", CTX.mesh.changed);

@@ -26,6 +26,7 @@
 
 #define VAL_INF 1.e200
 
+class GModel;
 class nameData;
 
 // abstract interface to post-processing view data
@@ -119,6 +120,7 @@ class PViewData {
   virtual bool hasTimeStep(int step){ return step < getNumTimeSteps(); }
   virtual bool hasPartition(int part){ return false; }
   virtual bool hasMultipleMeshes(){ return false; }
+  virtual bool hasModel(GModel *model, int step=-1){ return false; }
   virtual bool useGaussPoints(){ return false; }
 
   // I/O routines

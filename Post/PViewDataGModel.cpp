@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.50 2008-04-16 22:10:53 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.51 2008-04-17 05:58:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -418,6 +418,16 @@ bool PViewDataGModel::hasMultipleMeshes()
   for(unsigned int i = 1; i < _steps.size(); i++)
     if(m != _steps[i]->getModel()) return true;
   return false;
+}
+
+bool PViewDataGModel::hasModel(GModel *model, int step)
+{
+  if(step < 0){
+    for(unsigned int i = 0; i < _steps.size(); i++)
+      if(model == _steps[i]->getModel()) return true;
+    return false;
+  }
+  return (model == _steps[step]->getModel());
 }
 
 GEntity *PViewDataGModel::getEntity(int step, int ent)
