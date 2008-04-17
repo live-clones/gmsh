@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.30 2008-04-16 15:15:21 sabarieg Exp $
+// $Id: Field.cpp,v 1.31 2008-04-17 16:51:15 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -582,6 +582,72 @@ public:
     return dialogBox;
   }
 };
+class LaplacianField:public Field
+{
+  int iField;
+  double delta;
+public:
+  const char *get_name()
+  {
+    return "Laplacian";
+  }
+  LaplacianField():iField(0),  delta(CTX.lc / 1e4)
+  {
+    options["IField"] = new FieldOptionInt(iField);
+    options["Delta"] = new FieldOptionDouble(delta);
+  }
+  double operator() (double x, double y, double z)
+  {
+    Field *field = GModel::current()->getFields()->get(iField);
+      return (
+        (*field) (x + delta , y, z)+ (*field) (x - delta , y, z)
+        +(*field) (x, y + delta , z)+ (*field) (x, y - delta , z)
+        +(*field) (x, y, z + delta )+ (*field) (x, y, z - delta )
+        -8* (*field) (x , y, z)
+        ) / (delta*delta);
+  }
+  FieldDialogBox *&dialog_box()
+  {
+    static FieldDialogBox *dialogBox = NULL;
+    return dialogBox;
+  }
+};
+
+class MeanField:public Field
+{
+  int iField;
+  double delta;
+  int n;
+public:
+  const char *get_name()
+  {
+    return "Mean";
+  }
+  MeanField():iField(0),  delta(CTX.lc / 1e4)
+  {
+    options["IField"] = new FieldOptionInt(iField);
+    options["Delta"] = new FieldOptionDouble(delta);
+    //options["N"] = new FieldOptionInt(n);
+  }
+  double operator() (double x, double y, double z)
+  {
+    Field *field = GModel::current()->getFields()->get(iField);
+    double l=0;
+    int nn=0;
+    double ddelta=delta/n;
+    return (
+      (*field) (x + delta , y, z)+ (*field) (x - delta , y, z)
+      +(*field) (x, y + delta , z)+ (*field) (x, y - delta , z)
+      +(*field) (x, y, z + delta )+ (*field) (x, y, z - delta )
+      + (*field) (x , y, z)
+      ) / 5;
+  }
+  FieldDialogBox *&dialog_box()
+  {
+    static FieldDialogBox *dialogBox = NULL;
+    return dialogBox;
+  }
+};
 
 #if defined(HAVE_MATH_EVAL)
 class MathEvalExpression
@@ -997,6 +1063,8 @@ FieldManager::FieldManager()
   map_type_name["Min"] = new FieldFactoryT < MinField > ();
   map_type_name["Max"] = new FieldFactoryT < MaxField > ();
   map_type_name["UTM"] = new FieldFactoryT < UTMField > ();
+  map_type_name["Laplacian"] = new FieldFactoryT < LaplacianField > ();
+  map_type_name["Mean"] = new FieldFactoryT < MeanField > ();
   background_field = -1;
 }
 
