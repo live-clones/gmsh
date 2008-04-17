@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.41 2008-04-15 19:02:33 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.42 2008-04-17 10:45:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -200,7 +200,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
   // elements are saved without tags, this governs the order with
   // which we implicitly index them in GModel::readMED)
   const med_entite_maillage entType[] = 
-    {MED_NOEUD, MED_MAILLE, MED_NOEUD_ELEMENT};
+    {MED_NOEUD, MED_MAILLE, MED_NOEUD_MAILLE};
   // don't import points for now (points are not numbered in the same
   // sequence as MElements)
   const med_geometrie_element eleType[] = 
@@ -269,7 +269,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 			       MED_COMPACT);
       if(numVal <= 0) continue;
       int mult = 1;
-      if(ent == MED_NOEUD_ELEMENT){
+      if(ent == MED_NOEUD_MAILLE){
 	mult = nodesPerEle[pairs[pair].second];
       }
       else if(ngauss != MED_NOPG){
@@ -371,7 +371,7 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	double *d = _steps[step]->getData(num, true, mult);
 	for(int j = 0; j < mult; j++){
 	  // reorder nodes if we have ElementNode data
-	  int j2 = (ent == MED_NOEUD_ELEMENT) ? med2mshNodeIndex(ele, j) : j;
+	  int j2 = (ent == MED_NOEUD_MAILLE) ? med2mshNodeIndex(ele, j) : j;
 	  for(int k = 0; k < numComp; k++)
 	    d[numCompMsh * j + k] = val[numComp * mult * i + numComp * j2 + k];
 	}
