@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.59 2008-04-16 11:26:22 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.60 2008-04-17 09:07:01 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -286,6 +286,8 @@ void meshGEdge::operator() (GEdge *ge)
 
   if(MeshExtrudedCurve(ge)) return;
 
+  Msg(INFO, "Meshing curve %d (%s)", ge->tag(),ge->getTypeString().c_str());
+
   // Create a list of integration points
   List_T *Points = List_Create(10, 10, sizeof(IntPoint));
   // Create a list of points for interpolating the LC Field
@@ -299,6 +301,7 @@ void meshGEdge::operator() (GEdge *ge)
   // first compute the length of the curve by integrating one
   double length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-8 * CTX.lc);
   ge->setLength(length);
+
 
   if(length == 0.0)
     Msg(DEBUG2, "Curve %d has a zero length", ge->tag());
@@ -327,13 +330,11 @@ void meshGEdge::operator() (GEdge *ge)
       a = Integration(ge, t_begin, t_end, F_Lc_usingInterpLc, Points, 1.e-8);
     }
     else{
-      a = Integration(ge, t_begin, t_end, F_Lc, Points, 1.e-8);
+      a = Integration(ge, t_begin, t_end, F_Lc, Points, CTX.mesh.lc_integration_precision);
     }
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
   
-  Msg(INFO, "Meshing curve %d (%s)", ge->tag(),ge->getTypeString().c_str());
-
   // if the curve is periodic and if the begin vertex is identical to
   // the end vertex and if this vertex has only one model curve
   // adjacent to it, then the vertex is not connecting any other

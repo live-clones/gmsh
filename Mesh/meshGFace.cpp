@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.130 2008-04-15 19:02:32 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.131 2008-04-17 09:07:01 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,7 @@
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
+#include "GModel.h"
 #include "MVertex.h"
 #include "MElement.h"
 #include "Context.h"
@@ -490,7 +491,7 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
 
     // Recover the boundary edges and compute characteristic lenghts
     // using mesh edge spacing
-    if(debug){
+    if(debug && RECUR_ITER == 0){
       char name[245];
       sprintf(name, "surface%d-initial-real.pos", gf->tag());
       outputScalarField(m->triangles, name, 0);
@@ -532,6 +533,13 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
       Msg(WARNING, ":-( There exists %d intersections in the 1d mesh",
 	  edgesNotRecovered.size());
       Msg(WARNING, "8-| Gmsh splits those edges and tries again");
+
+      if (debug){
+	char name[245];
+	sprintf(name, "surface%d-not_yet_recovered-real-%d.msh", gf->tag(),RECUR_ITER);
+	gf->model()->writeMSH(name);
+      }
+      
       std::list<GFace *> facesToRemesh;
       remeshUnrecoveredEdges(edgesNotRecovered, facesToRemesh);
       std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
@@ -1337,10 +1345,10 @@ void meshGFace::operator() (GFace *gf)
 
   Msg(DEBUG1, "Generating the mesh");
   if(noseam(gf) || gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
-    gmsh2DMeshGenerator(gf, 0, debugSurface >= 0);
+    gmsh2DMeshGenerator(gf, 0, debugSurface >= 0 || debugSurface == -100);
   }
   else{
-    if(!gmsh2DMeshGeneratorPeriodic(gf, debugSurface >= 0))
+    if(!gmsh2DMeshGeneratorPeriodic(gf, debugSurface >= 0 || debugSurface == -100))
       Msg(GERROR, "Impossible to mesh face %d", gf->tag());
   }
 

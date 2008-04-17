@@ -57,6 +57,7 @@ class MTri3
   MTri3 *neigh[3];
 
  public :
+  //  char done;
   bool isDeleted () const { return deleted; }
   void forceRadius (double r){ circum_radius = r; }
   double getRadius () const { return circum_radius; }
