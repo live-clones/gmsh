@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.83 2008-03-20 11:44:07 geuzaine Exp $
+// $Id: Entity.cpp,v 1.84 2008-04-17 18:21:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -43,22 +43,20 @@ void Draw_Point(int type, double size, double *x, double *y, double *z,
 void Draw_Sphere(double size, double x, double y, double z, int light)
 {
   if(light) glEnable(GL_LIGHTING);
+
+  static int first = 1;
   static GLUquadricObj *qua;
-  static int first = 1, listnum;
-  double s = size * CTX.pixel_equiv_x / CTX.s[0]; // size is in pixels
-  if(first) {
+
+  if(first){
     first = 0;
     qua = gluNewQuadric();
-    listnum = glGenLists(1);
-    glNewList(listnum, GL_COMPILE);
-    gluSphere(qua, 1, CTX.quadric_subdivisions, CTX.quadric_subdivisions);
-    glEndList();
   }
 
   glPushMatrix();
   glTranslated(x, y, z);
+  double s = size * CTX.pixel_equiv_x / CTX.s[0]; // size is in pixels
   glScaled(s, s, s);
-  glCallList(listnum);
+  gluSphere(qua, 1, CTX.quadric_subdivisions, CTX.quadric_subdivisions);
   glPopMatrix();
   glDisable(GL_LIGHTING);
 }

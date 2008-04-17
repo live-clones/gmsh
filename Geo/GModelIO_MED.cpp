@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.32 2008-04-16 22:10:53 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.33 2008-04-17 18:21:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -150,11 +150,12 @@ int GModel::readMED(const std::string &name)
     return 0;
   }
 
-  med_int major, minor, release;
-  MEDversionDonner(&major, &minor, &release);
-  Msg(INFO, "Reading MED file using MED library V%d.%d.%d", major, minor, release);
-  MEDversionLire(fid, &major, &minor, &release);
-  if(major < 2 || (major == 2 && minor < 2)){
+  med_int v[3], vf[3];
+  MEDversionDonner(&v[0], &v[1], &v[2]);
+  MEDversionLire(fid, &vf[0], &vf[1], &vf[2]);
+  Msg(INFO, "Reading MED file V%d.%d.%d using MED library V%d.%d.%d", 
+      vf[0], vf[1], vf[2], v[0], v[1], v[2]);
+  if(vf[0] < 2 || (vf[0] == 2 && vf[1] < 2)){
     Msg(GERROR, "Cannot read MED file older than V2.2");
     return 0;
   }
