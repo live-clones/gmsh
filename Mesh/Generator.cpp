@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.139 2008-03-20 11:44:08 geuzaine Exp $
+// $Id: Generator.cpp,v 1.140 2008-04-17 21:05:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -232,12 +232,13 @@ static void Mesh2D(GModel *m)
 {
   if(TooManyElements(m, 2)) return;
 
-  if(CTX.mesh.algo2d == ALGO_2D_DELAUNAY && !CTX.expert_mode){
-    if(!GetBinaryAnswer("The 2D Delaunay algorithm is still highly experimental\n"
-                        "and produces triangles with random orientations. Do you\n"
-                        "really want to continue?\n\n"
-                        "(To disable this warning in the future, select `Enable\n"
-                        "expert mode' in the option dialog.)",
+  if(!CTX.expert_mode && (CTX.mesh.algo2d == ALGO_2D_DELAUNAY ||
+			  CTX.mesh.algo2d == ALGO_2D_FRONTAL)){
+    if(!GetBinaryAnswer("The 2D Delaunay and Frontal algorithms are still experimental\n"
+                        "and produce triangles with random orientations. Do you really\n"
+                        "want to continue?\n\n"
+                        "(To disable this warning in the future, select `Enable expert\n"
+                        "mode' in the option dialog.)",
                         "Continue", "Cancel")) return;
   }
 
