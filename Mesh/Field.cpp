@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.31 2008-04-17 16:51:15 remacle Exp $
+// $Id: Field.cpp,v 1.32 2008-04-18 08:39:49 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -603,7 +603,7 @@ public:
         (*field) (x + delta , y, z)+ (*field) (x - delta , y, z)
         +(*field) (x, y + delta , z)+ (*field) (x, y - delta , z)
         +(*field) (x, y, z + delta )+ (*field) (x, y, z - delta )
-        -8* (*field) (x , y, z)
+        -6* (*field) (x , y, z)
         ) / (delta*delta);
   }
   FieldDialogBox *&dialog_box()
