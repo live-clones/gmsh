@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.32 2008-04-18 08:39:49 remacle Exp $
+// $Id: Field.cpp,v 1.33 2008-04-18 12:07:46 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -582,6 +582,47 @@ public:
     return dialogBox;
   }
 };
+class CurvatureField:public Field
+{
+  int iField;
+  double delta;
+public:
+  const char *get_name()
+  {
+    return "Curvature";
+  }
+  CurvatureField():iField(0),  delta(CTX.lc / 1e4)
+  {
+    options["IField"] = new FieldOptionInt(iField);
+    options["Delta"] = new FieldOptionDouble(delta);
+  }
+  void grad_norm(Field &f,double x,double y,double z, double *g){
+    g[0]=f(x+delta/2,y,z)-f(x-delta/2,y,z);
+    g[1]=f(x,y+delta/2,z)-f(x,y-delta/2,z);
+    g[2]=f(x,y,z+delta/2)-f(x,y,z-delta/2);
+    double n=sqrt(g[0]*g[0]+g[1]*g[1]+g[2]*g[2]);
+    g[0]/=n;
+    g[1]/=n;
+    g[2]/=n;
+  }
+  double operator() (double x, double y, double z)
+  {
+    Field *field = GModel::current()->getFields()->get(iField);
+    double grad[6][3];
+    grad_norm(*field,x+delta/2,y,z,grad[0]);
+    grad_norm(*field,x-delta/2,y,z,grad[1]);
+    grad_norm(*field,x,y+delta/2,z,grad[2]);
+    grad_norm(*field,x,y-delta/2,z,grad[3]);
+    grad_norm(*field,x,y,z+delta/2,grad[4]);
+    grad_norm(*field,x,y,z-delta/2,grad[5]);
+    return (grad[0][0]-grad[1][0]+grad[2][1]-grad[3][1]+grad[4][2]-grad[5][2])/delta;
+  }
+  FieldDialogBox *&dialog_box()
+  {
+    static FieldDialogBox *dialogBox = NULL;
+    return dialogBox;
+  }
+};
 class LaplacianField:public Field
 {
   int iField;
@@ -1065,6 +1106,7 @@ FieldManager::FieldManager()
   map_type_name["UTM"] = new FieldFactoryT < UTMField > ();
   map_type_name["Laplacian"] = new FieldFactoryT < LaplacianField > ();
   map_type_name["Mean"] = new FieldFactoryT < MeanField > ();
+  map_type_name["Curvature"] = new FieldFactoryT < CurvatureField > ();
   background_field = -1;
 }
 
