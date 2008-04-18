@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.131 2008-04-17 09:07:01 remacle Exp $
+// $Id: meshGFace.cpp,v 1.132 2008-04-18 16:40:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1310,28 +1310,12 @@ void meshGFace::operator() (GFace *gf)
   if(MeshExtrudedSurface(gf)) return;
 
   const char *algo = "Unknown";
-  switch(CTX.mesh.algo2d){
-  case ALGO_2D_MESHADAPT:
+  if(AlgoDelaunay2D(gf))
+    algo = (CTX.mesh.algo2d == ALGO_2D_FRONTAL) ? "Frontal" : "Delaunay";
+  else if(CTX.mesh.algo2d == ALGO_2D_MESHADAPT)
     algo = "MeshAdapt";
-    break;
-  case ALGO_2D_DELAUNAY:
-    // FIXME: Delaunay not available in all cases at the moment
-    if(AlgoDelaunay2D(gf))
-      algo = "Delaunay";
-    else
-      algo = "MeshAdapt+Delaunay";
-    break;
-  case ALGO_2D_FRONTAL:
-    // FIXME: Delaunay not available in all cases at the moment
-    if(AlgoDelaunay2D(gf))
-      algo = "Frontal";
-    else
-      algo = "MeshAdapt+Delaunay";
-    break;
-  case ALGO_2D_MESHADAPT_DELAUNAY:
+  else 
     algo = "MeshAdapt+Delaunay";
-    break;
-  }
 
   Msg(STATUS2, "Meshing surface %d (%s, %s)", 
       gf->tag(), gf->getTypeString().c_str(), algo);

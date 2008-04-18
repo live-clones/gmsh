@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.184 2008-04-16 22:10:53 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.185 2008-04-18 16:40:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -436,6 +436,10 @@ void OpenProject(const char *name)
   }
   CTX.threads_lock = 1;
 
+  // FIXME: this will change once we clarify Open/Merge/Clear
+  for(int i = PView::list.size() - 1; i >= 0; i--)
+    if(PView::list[i]->getData()->hasModel(GModel::current()))
+      delete PView::list[i];
   GModel::current()->destroy();
   GModel::current()->getGEOInternals()->destroy();
 
@@ -449,7 +453,10 @@ void OpenProject(const char *name)
   CTX.threads_lock = 0;
 
 #if defined(HAVE_FLTK)
-  if(!CTX.batch) WID->reset_visibility();
+  if(!CTX.batch){
+    WID->reset_visibility();
+    WID->update_views();
+  }
   ZeroHighlight();
 #endif
 }

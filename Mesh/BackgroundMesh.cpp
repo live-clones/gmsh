@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.51 2008-04-01 16:08:06 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.52 2008-04-18 16:40:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -166,9 +166,9 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
 
   // lc from fields
   double l4 = MAX_LC;
-  FieldManager &fields = *GModel::current()->getFields();
-  if(fields.background_field > 0){
-    Field *f = fields.get(fields.background_field);
+  FieldManager *fields = GModel::current()->getFields();
+  if(fields->background_field > 0){
+    Field *f = fields->get(fields->background_field);
     if(f) l4 = (*f)(X, Y, Z);
   }
 

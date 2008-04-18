@@ -1,4 +1,4 @@
-$Id: TODO,v 1.69 2008-03-01 10:52:05 geuzaine Exp $
+$Id: TODO,v 1.70 2008-04-18 16:40:29 geuzaine Exp $
 
 ********************************************************************
 
@@ -31,18 +31,9 @@ GModel->checkMeshCoherence
 
 ********************************************************************
 
-add function to deform the MESH with a displacement post-pro view
-
-********************************************************************
-
 3D Delaunay: precompute non-connected volumes and apply algo to each
 non-connected aggregate. This will improve mesh quality and speed for
 close non-connected objects.
-
-********************************************************************
-
-right-clicking of the X/Y/Z fields in the bottom of the OpenGL could
-have the same effect as shift-clicking.
 
 ********************************************************************
 
@@ -139,6 +130,11 @@ Plugin(CutMap) with "ExtractVolume" set to 1 (or -1): this will
 generate a new view with an actual "cut" on the front (an
 "iso-volume"). Then one could use Plugin(Skin) to extract the outer
 surface.)
+
+********************************************************************
+
+add "sprite" option to draw fake 3D spheres in post-pro (so that we
+can draw millions of spheres)
 
 ********************************************************************
 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.579 2008-04-16 18:12:39 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.580 2008-04-18 16:40:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1986,7 +1986,7 @@ void visibility_ok_cb(CALLBACK_ARGS)
   // if the browser is not empty, get the selections made in the
   // browser and apply them into the model
   if(VisibilityManager::instance()->getNumEntities()){
-    CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+    CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     bool recursive = WID->vis_butt[0]->value() ? true : false;
     int type = WID->vis_type->value();
     VisibilityManager::instance()->setAllInvisible(type);
@@ -2093,7 +2093,7 @@ void visibility_sort_cb(CALLBACK_ARGS)
 
 void visibility_number_cb(CALLBACK_ARGS)
 {
-  CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
 
   // type = 0 for elementary, 1 for physical and 2 for partitions
   int type = WID->vis_type->value();
@@ -3897,7 +3897,7 @@ void mesh_degree_cb(CALLBACK_ARGS)
               CTX.mesh.second_order_incomplete);
   else
     SetOrder1(GModel::current());
-  CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   Draw();
   Msg(STATUS2N, " ");
 }
@@ -3911,7 +3911,7 @@ void mesh_optimize_cb(CALLBACK_ARGS)
   CTX.threads_lock = 1;
   OptimizeMesh(GModel::current());
   CTX.threads_lock = 0;
-  CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   Draw();
   Msg(STATUS2N, " ");
 }
@@ -3925,7 +3925,7 @@ void mesh_optimize_netgen_cb(CALLBACK_ARGS)
   CTX.threads_lock = 1;
   OptimizeMeshNetgen(GModel::current());
   CTX.threads_lock = 0;
-  CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   Draw();
   Msg(STATUS2N, " ");
 }

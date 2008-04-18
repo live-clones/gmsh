@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.51 2008-04-17 05:58:09 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.52 2008-04-18 16:40:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -380,6 +380,7 @@ void PViewDataGModel::smooth()
 
 bool PViewDataGModel::skipEntity(int step, int ent)
 {
+  if(step >= getNumTimeSteps()) return true;
   return !_steps[step]->getEntity(ent)->getVisibility();
 }
 

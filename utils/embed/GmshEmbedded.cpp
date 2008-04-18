@@ -3,9 +3,9 @@
 
 Context_T CTX;
 
-void GModel::createGEOInternals(){}
-void GModel::deleteGEOInternals(){}
-void GModel::deleteOCCInternals(){}
+void GModel::_createGEOInternals(){}
+void GModel::_deleteGEOInternals(){}
+void GModel::_deleteOCCInternals(){}
 
 void GmshInitialize(int argc, char **argv)
 {

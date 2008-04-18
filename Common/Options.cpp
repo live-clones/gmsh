@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.393 2008-04-16 15:15:22 sabarieg Exp $
+// $Id: Options.cpp,v 1.394 2008-04-18 16:40:28 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -4308,7 +4308,7 @@ double opt_mesh_explode(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.explode != val) 
-      CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX.mesh.explode = val;
   }
 #if defined(HAVE_FLTK)
@@ -4405,7 +4405,7 @@ double opt_mesh_quality_type(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.quality_type != val) 
-      CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX.mesh.quality_type = (int)val;
     if(CTX.mesh.quality_type < 0 || CTX.mesh.quality_type > 2)
       CTX.mesh.quality_type = 0;
@@ -4422,7 +4422,7 @@ double opt_mesh_quality_inf(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.quality_inf != val) 
-      CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX.mesh.quality_inf = val;
   }
 #if defined(HAVE_FLTK)
@@ -4436,7 +4436,7 @@ double opt_mesh_quality_sup(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.quality_sup != val) 
-      CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX.mesh.quality_sup = val;
   }
 #if defined(HAVE_FLTK)
@@ -4450,7 +4450,7 @@ double opt_mesh_radius_inf(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.radius_inf != val) 
-      CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX.mesh.radius_inf = val;
   }
 #if defined(HAVE_FLTK)
@@ -4464,7 +4464,7 @@ double opt_mesh_radius_sup(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.radius_sup != val) 
-      CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX.mesh.radius_sup = val;
   }
 #if defined(HAVE_FLTK)
@@ -4505,7 +4505,7 @@ double opt_mesh_lines(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.lines != val) 
-      CTX.mesh.changed = ENT_LINE;
+      CTX.mesh.changed |= ENT_LINE;
     CTX.mesh.lines = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -4519,7 +4519,7 @@ double opt_mesh_triangles(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.triangles != val) 
-      CTX.mesh.changed = ENT_SURFACE;
+      CTX.mesh.changed |= ENT_SURFACE;
     CTX.mesh.triangles = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -4537,7 +4537,7 @@ double opt_mesh_quadrangles(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.quadrangles != val) 
-      CTX.mesh.changed = ENT_SURFACE;
+      CTX.mesh.changed |= ENT_SURFACE;
     CTX.mesh.quadrangles = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -4555,7 +4555,7 @@ double opt_mesh_tetrahedra(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.tetrahedra != val) 
-      CTX.mesh.changed = ENT_VOLUME;
+      CTX.mesh.changed |= ENT_VOLUME;
     CTX.mesh.tetrahedra = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -4573,7 +4573,7 @@ double opt_mesh_hexahedra(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.hexahedra != val) 
-      CTX.mesh.changed = ENT_VOLUME;
+      CTX.mesh.changed |= ENT_VOLUME;
     CTX.mesh.hexahedra = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -4591,7 +4591,7 @@ double opt_mesh_prisms(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.prisms != val) 
-      CTX.mesh.changed = ENT_VOLUME;
+      CTX.mesh.changed |= ENT_VOLUME;
     CTX.mesh.prisms = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -4609,7 +4609,7 @@ double opt_mesh_pyramids(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.pyramids != val)
-      CTX.mesh.changed = ENT_VOLUME;
+      CTX.mesh.changed |= ENT_VOLUME;
     CTX.mesh.pyramids = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -4627,7 +4627,7 @@ double opt_mesh_surfaces_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.surfaces_edges != val) 
-      CTX.mesh.changed = ENT_SURFACE;
+      CTX.mesh.changed |= ENT_SURFACE;
     CTX.mesh.surfaces_edges = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -4641,7 +4641,7 @@ double opt_mesh_surfaces_faces(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.surfaces_faces != val)
-      CTX.mesh.changed = ENT_SURFACE;
+      CTX.mesh.changed |= ENT_SURFACE;
     CTX.mesh.surfaces_faces = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -4655,7 +4655,7 @@ double opt_mesh_volumes_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.volumes_edges != val)
-      CTX.mesh.changed = ENT_VOLUME;
+      CTX.mesh.changed |= ENT_VOLUME;
     CTX.mesh.volumes_edges = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -4669,7 +4669,7 @@ double opt_mesh_volumes_faces(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.volumes_faces != val)
-      CTX.mesh.changed = ENT_VOLUME;
+      CTX.mesh.changed |= ENT_VOLUME;
     CTX.mesh.volumes_faces = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -4780,7 +4780,7 @@ double opt_mesh_reverse_all_normals(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.reverse_all_normals != val)
-      CTX.mesh.changed = ENT_SURFACE | ENT_VOLUME;
+      CTX.mesh.changed |= (ENT_SURFACE | ENT_VOLUME);
     CTX.mesh.reverse_all_normals = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -4794,7 +4794,7 @@ double opt_mesh_smooth_normals(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.smooth_normals != val)
-      CTX.mesh.changed = ENT_SURFACE;
+      CTX.mesh.changed |= ENT_SURFACE;
     CTX.mesh.smooth_normals = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -4808,7 +4808,7 @@ double opt_mesh_angle_smooth_normals(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(CTX.mesh.angle_smooth_normals != val)
-      CTX.mesh.changed = ENT_SURFACE;
+      CTX.mesh.changed |= ENT_SURFACE;
     CTX.mesh.angle_smooth_normals = val;
   }
 #if defined(HAVE_FLTK)
@@ -5057,7 +5057,7 @@ double opt_mesh_use_cut_plane(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(CTX.mesh.use_cut_plane != (int)val) 
-      CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX.mesh.use_cut_plane = (int)val;
 #if defined(HAVE_FLTK)
     if(WID){
@@ -5084,7 +5084,7 @@ double opt_mesh_cut_plane_draw_intersect(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(CTX.mesh.cut_plane_draw_intersect != (int)val) 
-      CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX.mesh.cut_plane_draw_intersect = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5098,7 +5098,7 @@ double opt_mesh_cut_plane_only_volume(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(CTX.mesh.cut_plane_only_volume != (int)val)
-      CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX.mesh.cut_plane_only_volume = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5112,7 +5112,7 @@ double opt_mesh_cut_planea(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(CTX.mesh.cut_planea != val) 
-      CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX.mesh.cut_planea = val;
   }
 #if defined(HAVE_FLTK)
@@ -5126,7 +5126,7 @@ double opt_mesh_cut_planeb(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(CTX.mesh.cut_planeb != val) 
-      CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX.mesh.cut_planeb = val;
   }
 #if defined(HAVE_FLTK)
@@ -5140,7 +5140,7 @@ double opt_mesh_cut_planec(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(CTX.mesh.cut_planec != val) 
-      CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX.mesh.cut_planec = val;
   }
 #if defined(HAVE_FLTK)
@@ -5154,7 +5154,7 @@ double opt_mesh_cut_planed(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(CTX.mesh.cut_planed != val) 
-      CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX.mesh.cut_planed = val;
   }
 #if defined(HAVE_FLTK)
@@ -5185,7 +5185,7 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
     // element type or by partition
     if(CTX.mesh.color_carousel != (int)val && 
        ((val == 0. || val == 3.) || CTX.pick_elements))
-      CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX.mesh.color_carousel = (int)val;
     if(CTX.mesh.color_carousel < 0 || CTX.mesh.color_carousel > 3)
       CTX.mesh.color_carousel = 0;
@@ -7469,7 +7469,7 @@ unsigned int opt_mesh_color_lines(OPT_ARGS_COL)
     // vertex arrays need to be regenerated only when we color by
     // element type
     if(CTX.color.mesh.line != val && CTX.mesh.color_carousel == 0)
-      CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX.color.mesh.line = val;
   }
 #if defined(HAVE_FLTK)
@@ -7484,7 +7484,7 @@ unsigned int opt_mesh_color_triangles(OPT_ARGS_COL)
     // vertex arrays need to be regenerated only when we color by
     // element type
     if(CTX.color.mesh.triangle != val && CTX.mesh.color_carousel == 0)
-      CTX.mesh.changed = ENT_SURFACE;
+      CTX.mesh.changed |= ENT_SURFACE;
     CTX.color.mesh.triangle = val;
   }
 #if defined(HAVE_FLTK)
@@ -7499,7 +7499,7 @@ unsigned int opt_mesh_color_quadrangles(OPT_ARGS_COL)
     // vertex arrays need to be regenerated only when we color by
     // element type
     if(CTX.color.mesh.quadrangle != val && CTX.mesh.color_carousel == 0)
-      CTX.mesh.changed = ENT_SURFACE;
+      CTX.mesh.changed |= ENT_SURFACE;
     CTX.color.mesh.quadrangle = val;
   }
 #if defined(HAVE_FLTK)
@@ -7514,7 +7514,7 @@ unsigned int opt_mesh_color_tetrahedra(OPT_ARGS_COL)
     // vertex arrays need to be regenerated only when we color by
     // element type
     if(CTX.color.mesh.tetrahedron != val && CTX.mesh.color_carousel == 0)
-      CTX.mesh.changed = ENT_VOLUME;
+      CTX.mesh.changed |= ENT_VOLUME;
     CTX.color.mesh.tetrahedron = val;
   }
 #if defined(HAVE_FLTK)
@@ -7529,7 +7529,7 @@ unsigned int opt_mesh_color_hexahedra(OPT_ARGS_COL)
     // vertex arrays need to be regenerated only when we color by
     // element type
     if(CTX.color.mesh.hexahedron != val && CTX.mesh.color_carousel == 0)
-      CTX.mesh.changed = ENT_VOLUME;
+      CTX.mesh.changed |= ENT_VOLUME;
     CTX.color.mesh.hexahedron = val;
   }
 #if defined(HAVE_FLTK)
@@ -7544,7 +7544,7 @@ unsigned int opt_mesh_color_prisms(OPT_ARGS_COL)
     // vertex arrays need to be regenerated only when we color by
     // element type
     if(CTX.color.mesh.prism != val && CTX.mesh.color_carousel == 0)
-      CTX.mesh.changed = ENT_VOLUME;
+      CTX.mesh.changed |= ENT_VOLUME;
     CTX.color.mesh.prism = val;
   }
 #if defined(HAVE_FLTK)
@@ -7559,7 +7559,7 @@ unsigned int opt_mesh_color_pyramid(OPT_ARGS_COL)
     // vertex arrays need to be regenerated only when we color by
     // element type
     if(CTX.color.mesh.pyramid != val && CTX.mesh.color_carousel == 0)
-      CTX.mesh.changed = ENT_VOLUME;
+      CTX.mesh.changed |= ENT_VOLUME;
     CTX.color.mesh.pyramid = val;
   }
 #if defined(HAVE_FLTK)
@@ -7596,7 +7596,7 @@ unsigned int opt_mesh_color_(int i, OPT_ARGS_COL)
     // vertex arrays need to be regenerated only when we color by
     // partition
     if(CTX.color.mesh.carousel[i] != val && CTX.mesh.color_carousel == 3)
-      CTX.mesh.changed = ENT_LINE | ENT_SURFACE | ENT_VOLUME;
+      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX.color.mesh.carousel[i] = val;
   }
 #if defined(HAVE_FLTK)
