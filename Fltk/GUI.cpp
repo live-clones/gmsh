@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.682 2008-04-22 22:55:06 geuzaine Exp $
+// $Id: GUI.cpp,v 1.683 2008-04-22 22:58:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -4576,7 +4576,7 @@ void GUI::create_clip_window()
 
   int width = 3 * BB + 4 * WB;
   int height = 8 * BH + 5 * WB;
-  int brw = 105;
+  int brw = BB;
   int BW = width - brw - 3 * WB - 3 * fontsize;
 
   clip_window = new Dialog_Window(width, height, CTX.non_modal_windows, "Clipping Planes");
