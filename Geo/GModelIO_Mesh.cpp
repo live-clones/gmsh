@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.50 2008-04-02 17:21:33 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.51 2008-04-22 16:14:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1349,41 +1349,17 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
       for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
           it != groups[dim].end(); it++){
         std::set<MVertex*> nodes;
-        for(unsigned int i = 0; i < it->second.size(); i++){
-          if(dim == 1){
-            GEdge *ge = (GEdge*)it->second[i];
-            for(unsigned int j = 0; j < ge->lines.size(); j++)
-              for(int k = 0; k < ge->lines[j]->getNumVertices(); k++)
-                nodes.insert(ge->lines[j]->getVertex(k));
-          }
-          else if(dim == 2){
-            GFace *gf = (GFace*)it->second[i];
-            for(unsigned int j = 0; j < gf->triangles.size(); j++)
-              for(int k = 0; k < gf->triangles[j]->getNumVertices(); k++)
-                nodes.insert(gf->triangles[j]->getVertex(k));
-            for(unsigned int j = 0; j < gf->quadrangles.size(); j++)
-              for(int k = 0; k < gf->quadrangles[j]->getNumVertices(); k++)
-                nodes.insert(gf->quadrangles[j]->getVertex(k));
-          }
-          else if(dim == 3){
-            GRegion *gr = (GRegion*)it->second[i];
-            for(unsigned int j = 0; j < gr->tetrahedra.size(); j++)
-              for(int k = 0; k < gr->tetrahedra[j]->getNumVertices(); k++)
-                nodes.insert(gr->tetrahedra[j]->getVertex(k));
-            for(unsigned int j = 0; j < gr->hexahedra.size(); j++)
-              for(int k = 0; k < gr->hexahedra[j]->getNumVertices(); k++)
-                nodes.insert(gr->hexahedra[j]->getVertex(k));
-            for(unsigned int j = 0; j < gr->prisms.size(); j++)
-              for(int k = 0; k < gr->prisms[j]->getNumVertices(); k++)
-                nodes.insert(gr->prisms[j]->getVertex(k));
-            for(unsigned int j = 0; j < gr->pyramids.size(); j++)
-              for(int k = 0; k < gr->pyramids[j]->getNumVertices(); k++)
-                nodes.insert(gr->pyramids[j]->getVertex(k));
-          }
-        }
+	std::vector<GEntity *> &entities = it->second;
+        for(unsigned int i = 0; i < entities.size(); i++){
+	  for(int j = 0; j < entities[i]->getNumMeshElements(); j++){
+	    MElement *e = entities[i]->getMeshElement(j);
+	    for (int k = 0; k < e->getNumVertices(); k++)
+	      nodes.insert(e->getVertex(k));
+	  }
+	}
         fprintf(fp, "%10d%10d%10d%10d%10d%10d%10d%10d\n", 
                 gr, 0, 0, 0, 0, 0, 0, (int)nodes.size());
-        fprintf(fp, "PERMENENT GROUP%d\n", gr++);
+        fprintf(fp, "PERMANENT GROUP%d\n", gr++);
         int row = 0;
         for(std::set<MVertex*>::iterator it2 = nodes.begin(); it2 != nodes.end(); it2++){
           if(row == 2) {

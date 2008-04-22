@@ -166,12 +166,8 @@ class GModel
   // Associate a name with a physical number (returns new id if number==0)
   int setPhysicalName(std::string name, int number=0);
 
-  // create a new physical name and return the automatic associated number
+  // Get the name (if any) of a given physical group
   std::string getPhysicalName(int number);
-
-  // get all the mesh vertices associated to a given physical group
-  void getMeshVertices (int number, int dim, std::vector<MVertex*> &);
-  //  void getMeshVertices (std::string &name, std::vector<MVertex*> &);
 
   // The bounding box
   SBoundingBox3d bounds();
@@ -187,6 +183,10 @@ class GModel
 
   // Access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(int n);
+
+  // get all the mesh vertices associated with the physical group
+  // "number" of dimension "dim"
+  void getMeshVertices(int number, int dim, std::vector<MVertex*> &);
 
   // index all the (used) mesh vertices in a continuous sequence
   int indexMeshVertices(bool all);
