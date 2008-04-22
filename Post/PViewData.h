@@ -46,7 +46,8 @@ class PViewData {
   // adaptive visualization data
   adaptiveData *_adaptive;
  protected:
-  // interpolation matrices, indexed by element type
+  // interpolation matrices, indexed by the number of edges per
+  // element (1 for lines, 3 for triangles, etc.)
   std::map<int, std::vector<List_T*> > _interpolation;
  public:
   PViewData();

@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.680 2008-04-16 15:15:22 sabarieg Exp $
+// $Id: GUI.cpp,v 1.681 2008-04-22 19:53:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -4265,7 +4265,8 @@ void GUI::create_message_window(bool redraw_only)
   msg_window = new Dialog_Window(width, height, CTX.non_modal_windows, "Message Console");
   msg_window->box(GMSH_WINDOW_BOX);
 
-  msg_browser = new Fl_Browser(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+  msg_browser = new Fl_Browser(0, 0, width, height - 2 * WB - BH);
+  msg_browser->box(FL_FLAT_BOX);
   msg_browser->textfont(FL_COURIER);
   msg_browser->textsize(fontsize - 1);
   msg_browser->type(FL_MULTI_BROWSER);
@@ -4778,7 +4779,8 @@ void GUI::create_about_window()
   about_window->box(GMSH_WINDOW_BOX);
 
   {
-    Fl_Browser *o = new Fl_Browser(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+    Fl_Browser *o = new Fl_Browser(0, 0, width, height - 2 * WB - BH);
+    o->box(FL_FLAT_BOX);
     o->has_scrollbar(0); // no scrollbars
     o->add(" ");
     o->add("@c@b@.Gmsh");
