@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.84 2008-04-15 19:02:32 geuzaine Exp $
+// $Id: GModel.cpp,v 1.85 2008-04-22 12:41:18 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -324,6 +324,9 @@ int GModel::getMaxPhysicalNumber()
       num = std::max(num, std::abs((*it)->physicals[i]));
   return num;
 }
+
+
+
 
 int GModel::setPhysicalName(std::string name, int number)
 {
@@ -786,3 +789,57 @@ void GModel::_associateEntityWithMeshVertices()
     (*it)->mesh_vertices[0]->setEntity(*it);
   }
 }
+
+void get_mesh_vertices (GVertex *g, std::set<MVertex*> &sv)
+{
+  sv.insert(g->mesh_vertices[0]);
+}
+void get_mesh_vertices (GEdge *g, std::set<MVertex*> &sv)
+{
+  sv.insert(g->mesh_vertices.begin(),g->mesh_vertices.end());
+  sv.insert(g->getBeginVertex()->mesh_vertices[0]);
+  sv.insert(g->getEndVertex()->mesh_vertices[0]);
+}
+void get_mesh_vertices (GFace *g, std::set<MVertex*> &sv)
+{
+  sv.insert(g->mesh_vertices.begin(),g->mesh_vertices.end());
+  std::list<GEdge*> l = g->edges();
+  for (std::list<GEdge*>::iterator it = l.begin();it !=l.end();++it)
+    get_mesh_vertices (*it, sv);
+}
+void get_mesh_vertices (GRegion *g, std::set<MVertex*> &sv)
+{
+  sv.insert(g->mesh_vertices.begin(),g->mesh_vertices.end());
+  std::list<GFace*> l = g->faces();
+  for (std::list<GFace*>::iterator it = l.begin();it !=l.end();++it)
+    get_mesh_vertices (*it, sv);
+}
+
+void GModel::getMeshVertices (int number, int dim, std::vector<MVertex*> &v)
+{
+  v.clear();
+  std::map<int, std::vector<GEntity*> > groups[4];
+  getPhysicalGroups(groups);
+  std::map<int, std::vector<GEntity*> >::const_iterator it = groups[dim].find(number);
+  if(it == groups[dim].end())return;
+  const std::vector<GEntity *> &entities = it->second;
+
+  std::set<MVertex*> sv;
+  for (int i=0;i<entities.size();i++){
+    switch(dim){
+    case 0 :  get_mesh_vertices ((GVertex*)entities[i], sv);break;
+    case 1 :  get_mesh_vertices ((GEdge*)entities[i], sv);break;
+    case 2 :  get_mesh_vertices ((GFace*)entities[i], sv);break;
+    case 3 :  get_mesh_vertices ((GRegion*)entities[i], sv);break;
+    default: throw;
+    }
+  }  
+  v.insert(v.begin(),sv.begin(),sv.end());
+
+}
+
+
+
+
+
+
