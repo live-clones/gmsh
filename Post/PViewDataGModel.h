@@ -192,6 +192,14 @@ class PViewDataGModel : public PViewData {
   // direct access to value by index
   bool getValueByIndex(int step, int dataIndex, int node, int comp, double &val);
 
+  // Add some data "on the fly"
+  // data are stored by vertex, i.e., if field has let's say 3 components,
+  // nodalData contains 3 * N entries with N being the number of mesh vertices 
+  // of in the model.
+  // nodlaData [ iVer * N + jComp] is the jComp th component at vertex iVer
+  bool addNodalData(int step, double time, int partition, 
+		    int numComp, const std::vector<double> &nodalData);
+
   // I/O routines
   bool readMSH(std::string fileName, int fileIndex, FILE *fp, bool binary, 
                bool swap, int step, double time, int partition, 

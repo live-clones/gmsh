@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.42 2008-04-17 10:45:23 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.43 2008-04-22 10:02:44 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,38 @@
 #include "MElement.h"
 #include "Numeric.h"
 #include "StringUtils.h"
+
+bool PViewDataGModel::addNodalData(int step, 
+				   double time, 
+				   int partition, 
+				   int numComp, 
+				   const std::vector<double> &nodalData){
+  // add empty steps up to the actual step 
+  while(step >= (int)_steps.size())
+    _steps.push_back(new stepData<double>(GModel::current(), numComp));
+
+  const int mult = 1;
+  int numEnt = _steps[step]->getModel()->getNumMeshVertices();
+  if (nodalData.size() != numEnt * numComp){
+    Msg(GERROR, "adding nodal data with wrong number of entries (%d != %d)", 
+	nodalData.size(), numEnt);
+    return false;
+  }
+
+  _steps[step]->setTime(time);
+  _steps[step]->resizeData(numEnt);
+
+  for(int i = 0; i < numEnt; i++){
+    //    MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(i);
+    double *d  = _steps[step]->getData(i, true, 1);
+    for(int j = 0; j < numComp * mult; j++)
+      d[j] = nodalData[i * numComp + j];
+  }
+  _partitions.insert(partition);
+  finalize();
+  return true;
+}
+
 
 bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
                               bool binary, bool swap, int step, double time, 
