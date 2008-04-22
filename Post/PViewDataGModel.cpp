@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.52 2008-04-18 16:40:29 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.53 2008-04-22 07:37:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -28,7 +28,7 @@
 #include "Message.h"
 
 PViewDataGModel::PViewDataGModel(DataType type) 
-  : _min(VAL_INF), _max(-VAL_INF), _type(type)
+  : PViewData(), _min(VAL_INF), _max(-VAL_INF), _type(type)
 {
 }
 
@@ -58,8 +58,8 @@ bool PViewDataGModel::finalize()
     _min = std::min(_min, _steps[step]->getMin());
     _max = std::max(_max, _steps[step]->getMax());
   }
-  setDirty(false);
-  return true;
+
+  return PViewData::finalize();
 }
 
 int PViewDataGModel::getNumTimeSteps()
@@ -285,6 +285,29 @@ int PViewDataGModel::getNumComponents(int step, int ent, int ele)
   return _steps[step]->getNumComponents();
 }
 
+int PViewDataGModel::getNumValues(int step, int ent, int ele)
+{
+  if(_type == ElementNodeData){
+    return getNumNodes(step, ent, ele) * getNumComponents(step, ent, ele);
+  }
+  else{
+    Msg(GERROR, "getNumValues should not be used on this type of view");
+    return 0;
+  }
+}
+
+void PViewDataGModel::getValue(int step, int ent, int ele, int idx, double &val)
+{
+  if(_type == ElementNodeData){
+    stepData<double> *sd = _steps[step];
+    MElement *e = sd->getEntity(ent)->getMeshElement(ele);
+    val = sd->getData(e->getNum())[idx];
+  }
+  else{
+    Msg(GERROR, "getValue(index) should not be used on this type of view");
+  }
+}
+
 void PViewDataGModel::getValue(int step, int ent, int ele, int nod, int comp, double &val)
 {
   // no sanity checks (assumed to be guarded by skipElement)
@@ -351,7 +374,7 @@ void PViewDataGModel::smooth()
       for(int ele = 0; ele < getNumElements(step, ent); ele++){
 	MElement *e = _steps[step]->getEntity(ent)->getMeshElement(ele);
 	double val;
-	if(!getValue(step, e->getNum(), 0, 0, val)) continue;
+	if(!getValueByIndex(step, e->getNum(), 0, 0, val)) continue;
 	for(int nod = 0; nod < e->getNumVertices(); nod++){
 	  MVertex *v = e->getVertex(nod);
 	  if(nodeConnect.count(v->getNum()))
@@ -360,7 +383,7 @@ void PViewDataGModel::smooth()
 	    nodeConnect[v->getNum()] = 1;
 	  double *d = _steps2.back()->getData(v->getNum(), true);
 	  for(int j = 0; j < numComp; j++)
-	    if(getValue(step, e->getNum(), nod, j, val)) d[j] += val;
+	    if(getValueByIndex(step, e->getNum(), nod, j, val)) d[j] += val;
 	}
       }
     }
@@ -436,7 +459,7 @@ GEntity *PViewDataGModel::getEntity(int step, int ent)
   return _steps[step]->getEntity(ent);
 }
 
-bool PViewDataGModel::getValue(int step, int dataIndex, int nod, int comp, double &val)
+bool PViewDataGModel::getValueByIndex(int step, int dataIndex, int nod, int comp, double &val)
 {
   double *d = _steps[step]->getData(dataIndex);
   if(!d) return false;

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.163 2008-04-05 09:21:37 geuzaine Exp $
+// $Id: Post.cpp,v 1.164 2008-04-22 07:37:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -774,7 +774,8 @@ void addScalarElement(PView *p, int numEdges, double xyz[NMAX][3],
 void addVectorElement(PView *p, int ient, int iele, int numNodes, int numEdges, 
                       double xyz[NMAX][3], double val[NMAX][9], bool pre)
 {
-  PViewData *data = p->getData();
+  // use adaptive data if available
+  PViewData *data = p->getData(true);
   PViewOptions *opt = p->getOptions();
 
   int numComp2;
@@ -886,7 +887,8 @@ void addTensorElement(PView *p, int numNodes, int numEdges, double xyz[NMAX][3],
 
 void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
 {
-  PViewData *data = p->getData();
+  // use adaptive data if available
+  PViewData *data = p->getData(true);
   PViewOptions *opt = p->getOptions();
   
   opt->TmpBBox.reset();
@@ -1138,7 +1140,8 @@ void drawTangentVectorGlyphs(PView *p, int numNodes, double xyz[NMAX][3],
 
 void drawGlyphs(PView *p)
 {
-  PViewData *data = p->getData();
+  // use adaptive data if available
+  PViewData *data = p->getData(true);
   PViewOptions *opt = p->getOptions();
 
   if(!opt->Normals && !opt->Tangents && opt->IntervalsType != PViewOptions::Numeric)
@@ -1179,21 +1182,21 @@ class initPView {
   // on Windows/Cygwin
   int _estimateNumPoints(PView *p)
   {
-    PViewData *data = p->getData();
+    PViewData *data = p->getData(true);
     PViewOptions *opt = p->getOptions();
     int heuristic = data->getNumPoints(opt->TimeStep);
     return heuristic + 10000;
   }
   int _estimateNumLines(PView *p)
   {
-    PViewData *data = p->getData();
+    PViewData *data = p->getData(true);
     PViewOptions *opt = p->getOptions();
     int heuristic = data->getNumLines(opt->TimeStep);
     return heuristic + 10000;
   }
   int _estimateNumTriangles(PView *p)
   {
-    PViewData *data = p->getData();
+    PViewData *data = p->getData(true);
     PViewOptions *opt = p->getOptions();
     int tris = data->getNumTriangles(opt->TimeStep);
     int quads = data->getNumQuadrangles(opt->TimeStep);
@@ -1214,7 +1217,7 @@ class initPView {
   }
   int _estimateNumVectors(PView *p)
   {
-    PViewData *data = p->getData();
+    PViewData *data = p->getData(true);
     PViewOptions *opt = p->getOptions();
     int heuristic = data->getNumVectors(opt->TimeStep);
     return heuristic + 1000;
@@ -1222,7 +1225,8 @@ class initPView {
  public :
   void operator () (PView *p)
   {
-    PViewData *data = p->getData();
+    // use adaptive data if available
+    PViewData *data = p->getData(true);
     PViewOptions *opt = p->getOptions();
 
     if(data->getDirty() || !data->getNumTimeSteps() || !p->getChanged()) return;
@@ -1239,6 +1243,8 @@ class initPView {
       opt->TmpMax = data->getMax(opt->TimeStep);
     }
     else{
+      // FIXME: this is not perfect for multi-step adaptive views, as
+      // we don't have the correct min/max info for the other steps
       opt->TmpMin = data->getMin();
       opt->TmpMax = data->getMax();
     }
@@ -1283,7 +1289,8 @@ class drawPView {
  public:
   void operator () (PView *p)
   {
-    PViewData *data = p->getData();
+    // use adaptive data if available
+    PViewData *data = p->getData(true);
     PViewOptions *opt = p->getOptions();
 
     if(data->getDirty() || !data->getNumTimeSteps()) return;
@@ -1336,6 +1343,8 @@ class drawPView {
       opt->TmpMax = data->getMax(opt->TimeStep);
     }
     else{
+      // FIXME: this is not perfect for multi-step adaptive views, as
+      // we don't have the correct min/max info for the other steps
       opt->TmpMin = data->getMin();
       opt->TmpMax = data->getMax();
     }

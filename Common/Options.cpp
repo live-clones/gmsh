@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.394 2008-04-18 16:40:28 geuzaine Exp $
+// $Id: Options.cpp,v 1.395 2008-04-22 07:37:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,7 @@
 #include "Message.h"
 #include "Draw.h"
 #include "PView.h"
+#include "adaptiveData.h"
 #include "Generator.h"
 #include "Context.h"
 #include "Options.h"
@@ -5500,13 +5501,18 @@ double opt_view_nb_timestep(OPT_ARGS_NUM)
 double opt_view_timestep(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
-  if(!data) return 0.;
+  if(!data) return 0;
   if(action & GMSH_SET) {
     opt->TimeStep = (int)val;
     if(opt->TimeStep > data->getNumTimeSteps() - 1)
       opt->TimeStep = 0;
     else if(opt->TimeStep < 0)
       opt->TimeStep = data->getNumTimeSteps() - 1;
+    if(data->isAdaptive()){
+      data->getAdaptiveData()->initWithLowResolution(opt->TimeStep);
+      data->getAdaptiveData()->changeResolution(opt->MaxRecursionLevel, 
+						opt->TargetError);
+    }
     if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
@@ -5520,14 +5526,16 @@ double opt_view_min(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(!data) return 0.;
-  return data->getMin();
+  // use adaptive data if available
+  return view->getData(true)->getMin();
 }
 
 double opt_view_max(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
   if(!data) return 0.;
-  return data->getMax();
+  // use adaptive data if available
+  return view->getData(true)->getMax();
 }
 
 double opt_view_custom_min(OPT_ARGS_NUM)
@@ -6000,15 +6008,12 @@ double opt_view_saturate_values(OPT_ARGS_NUM)
 double opt_view_max_recursion_level(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
-
   if(action & GMSH_SET) {
     opt->MaxRecursionLevel = (int)val;
     if(data && data->isAdaptive()){
-      PViewDataList *l = dynamic_cast<PViewDataList*>(data);
-      if(l){
-        l->adaptive->setGlobalResolutionLevel(l, opt->MaxRecursionLevel);
-        view->setChanged(true);
-      }
+      data->getAdaptiveData()->changeResolution(opt->MaxRecursionLevel, 
+						opt->TargetError);
+      view->setChanged(true);
     }
   }
 #if defined(HAVE_FLTK)
@@ -6022,15 +6027,12 @@ double opt_view_max_recursion_level(OPT_ARGS_NUM)
 double opt_view_target_error(OPT_ARGS_NUM)
 {
   GET_VIEW(0.);
-
   if(action & GMSH_SET) {
     opt->TargetError = val;
     if(data && data->isAdaptive()){
-      PViewDataList *l = dynamic_cast<PViewDataList*>(data);
-      if(l){
-        l->adaptive->setTolerance(opt->TargetError);
-        view->setChanged(true);
-      }
+      data->getAdaptiveData()->changeResolution(opt->MaxRecursionLevel, 
+						opt->TargetError);
+      view->setChanged(true);
     }
   }
 #if defined(HAVE_FLTK)

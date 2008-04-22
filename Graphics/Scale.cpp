@@ -1,4 +1,4 @@
-// $Id: Scale.cpp,v 1.70 2008-03-20 11:44:08 geuzaine Exp $
+// $Id: Scale.cpp,v 1.71 2008-04-22 07:37:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -201,7 +201,8 @@ static void drawScaleLabel(PView *p, double xmin, double ymin, double width,
 static void drawScale(PView *p, double xmin, double ymin, double width, 
                       double height, double tic, int horizontal)
 {
-  PViewData *data = p->getData();
+  // use adaptive data if available
+  PViewData *data = p->getData(true);
   PViewOptions *opt = p->getOptions();
 
   if(opt->ExternalViewIndex >= 0){

@@ -23,7 +23,6 @@
 #include <vector>
 #include <string>
 #include "PViewData.h"
-#include "AdaptiveViews.h"
 #include "SBoundingBox3d.h"
 #include "List.h"
 
@@ -56,14 +55,13 @@ class PViewDataList : public PViewData {
   List_T *SY, *VY, *TY, *SY2, *VY2, *TY2; // pyramids
   int NbT2, NbT3;
   List_T *T2D, *T2C, *T3D, *T3C; // 2D and 3D text strings
-  Adaptive_Post_View *adaptive;
  private:
   int _index[24];
   int _lastElement, _lastDimension;
-  int _lastNumNodes, _lastNumComponents, _lastNumEdges;
+  int _lastNumNodes, _lastNumComponents, _lastNumValues, _lastNumEdges;
   double *_lastXYZ, *_lastVal;
   void _stat(List_T *D, List_T *C, int nb);
-  void _stat(List_T *list, int nbcomp, int nbelm, int nbnod);
+  void _stat(List_T *list, int nbcomp, int nbelm, int nbnod, int nbedg);
   void _setLast(int ele);
   void _setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
                 List_T *list, int nblist);
@@ -97,6 +95,8 @@ class PViewDataList : public PViewData {
   int getNode(int step, int ent, int ele, int nod, double &x, double &y, double &z);
   void setNode(int step, int ent, int ele, int nod, double x, double y, double z);
   int getNumComponents(int step, int ent, int ele);
+  int getNumValues(int step, int ent, int ele);
+  void getValue(int step, int ent, int ele, int idx, double &val);
   void getValue(int step, int ent, int ele, int nod, int comp, double &val);
   void setValue(int step, int ent, int ele, int nod, int comp, double val);
   int getNumEdges(int step, int ent, int ele);
@@ -110,7 +110,6 @@ class PViewDataList : public PViewData {
   void smooth();
   bool combineTime(nameData &nd);
   bool combineSpace(nameData &nd);
-  bool isAdaptive(){ return adaptive ? true : false; }
 
   // specific to list-based data sets
   void getRawData(int type, List_T **l, int **ne, int *nc, int *nn);

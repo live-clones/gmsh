@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.26 2008-03-29 10:19:43 geuzaine Exp $
+// $Id: PView.cpp,v 1.27 2008-04-22 07:37:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,7 @@
 #include "PViewDataList.h"
 #include "VertexArray.h"
 #include "SmoothData.h"
+#include "adaptiveData.h"
 #include "Message.h"
 
 int PView::_globalNum = 0;
@@ -143,6 +144,13 @@ void PView::setOptions(PViewOptions *val)
     _options = val;
   else if(_options) // deep copy options from reference view
     *_options = PViewOptions::reference;
+}
+
+PViewData *PView::getData(bool useAdaptiveIfAvailable)
+{ 
+  if(useAdaptiveIfAvailable && _data->isAdaptive()) 
+    return _data->getAdaptiveData()->getData();
+  return _data;
 }
 
 void PView::setChanged(bool val)

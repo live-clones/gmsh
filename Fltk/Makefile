@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.180 2008-04-16 11:35:10 geuzaine Exp $
+# $Id: Makefile,v 1.181 2008-04-22 07:37:09 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -83,8 +83,8 @@ Main.o: Main.cpp GUI.h Opengl_Window.h Colorbar_Window.h \
   ../Common/Options.h ../Parser/Parser.h ../Parser/OpenFile.h \
   ../Common/CommandLine.h Solvers.h ../Plugin/PluginManager.h \
   ../Plugin/Plugin.h ../Post/PViewDataList.h ../Post/PViewData.h \
-  ../Post/AdaptiveViews.h ../Common/GmshMatrix.h ../Geo/GModel.h \
-  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Common/GmshMatrix.h ../Geo/GModel.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
   ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
   ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h \
@@ -117,15 +117,14 @@ GUI.o: GUI.cpp ../Common/GmshUI.h ../Common/GmshDefines.h \
   ../Post/PViewOptions.h ../Post/ColorTable.h Callbacks.h Win32Icon.h \
   ../Parser/OpenFile.h ../Common/CommandLine.h ../Mesh/Generator.h \
   Solvers.h ../Plugin/PluginManager.h ../Plugin/Plugin.h \
-  ../Post/PViewDataList.h ../Post/PViewData.h ../Post/AdaptiveViews.h \
-  ../Common/GmshMatrix.h Shortcut_Window.h ../Geo/GModel.h \
-  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
-  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h \
-  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h \
-  ../Geo/GeoStringInterface.h
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Common/GmshMatrix.h \
+  Shortcut_Window.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
+  ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
+  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
+  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h \
+  ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
+  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h \
+  ../Geo/GEntity.h ../Geo/SBoundingBox3d.h ../Geo/GeoStringInterface.h
 GUI_Extras.o: GUI_Extras.cpp ../Common/GmshUI.h ../Common/GmshDefines.h \
   ../Parser/CreateFile.h ../Common/Options.h ../Post/ColorTable.h \
   ../Common/Context.h ../Graphics/Draw.h ../Geo/SBoundingBox3d.h \
@@ -222,9 +221,8 @@ Callbacks.o: Callbacks.cpp ../Common/GmshUI.h ../Common/Message.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Geo/SPoint2.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h GUI_Extras.h Callbacks.h \
   ../Plugin/Plugin.h ../Post/PViewDataList.h ../Post/PViewData.h \
-  ../Post/AdaptiveViews.h ../Common/GmshMatrix.h \
-  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Visibility.h \
-  ../Common/GmshDefines.h Solvers.h ../Common/OS.h \
+  ../Common/GmshMatrix.h ../Plugin/PluginManager.h ../Plugin/Plugin.h \
+  ../Common/Visibility.h ../Common/GmshDefines.h Solvers.h ../Common/OS.h \
   ../Mesh/BackgroundMesh.h
 Opengl.o: Opengl.cpp ../Common/GmshUI.h ../Common/GmshDefines.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Common/Context.h \

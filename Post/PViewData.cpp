@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.17 2008-04-06 09:20:17 geuzaine Exp $
+// $Id: PViewData.cpp,v 1.18 2008-04-22 07:37:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -23,12 +23,30 @@
 // 
 
 #include "PViewData.h"
+#include "adaptiveData.h"
 #include "Numeric.h"
 #include "Message.h"
 
 PViewData::PViewData()
-  : _dirty(true), _fileIndex(0)
+  : _dirty(true), _fileIndex(0), _adaptive(0)
 {
+}
+
+PViewData::~PViewData()
+{
+  if(_adaptive) delete _adaptive;
+}
+
+bool PViewData::finalize()
+{ 
+  if(!_adaptive && _interpolation.size()){
+    Msg(INFO, "Initializing adaptive data %p interp size= %d",
+	this, _interpolation.size());
+    _adaptive = new adaptiveData(this);
+    _adaptive->initWithLowResolution(0);
+  }
+  _dirty = false;
+  return true;
 }
 
 bool PViewData::empty()
@@ -53,4 +71,24 @@ void PViewData::setNode(int step, int ent, int ele, int nod, double x, double y,
 void PViewData::setValue(int step, int ent, int ele, int nod, int comp, double val)
 {
   Msg(GERROR, "Cannot change field value in this view");
+}
+
+void PViewData::setInterpolationScheme(int type, List_T *coef, List_T *pol, 
+				       List_T *coefGeo, List_T *polGeo)
+{
+  Msg(DEBUG, "Storing interpolation scheme %d in view %p", type, this);
+  if(!type || !_interpolation[type].empty()) return;
+  if(coef) _interpolation[type].push_back(coef);
+  if(pol) _interpolation[type].push_back(pol);
+  if(coefGeo) _interpolation[type].push_back(coefGeo);
+  if(polGeo) _interpolation[type].push_back(polGeo);
+}
+
+int PViewData::getInterpolationScheme(int type, std::vector<List_T*> &p)
+{
+  if(_interpolation.count(type)){
+    p = _interpolation[type];
+    return p.size();
+  }
+  return 0;
 }

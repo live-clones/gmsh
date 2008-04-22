@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.22 2008-04-15 19:02:33 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.23 2008-04-22 07:37:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -48,9 +48,10 @@ PViewDataList::PViewDataList(bool allocate)
     SI(0), VI(0), TI(0), SI2(0), VI2(0), TI2(0),
     NbSY(0), NbVY(0), NbTY(0), NbSY2(0), NbVY2(0), NbTY2(0),
     SY(0), VY(0), TY(0), SY2(0), VY2(0), TY2(0),
-    NbT2(0), NbT3(0), T2D(0), T2C(0), T3D(0), T3C(0), adaptive(0), 
+    NbT2(0), NbT3(0), T2D(0), T2C(0), T3D(0), T3C(0), 
     _lastElement(-1), _lastDimension(-1), _lastNumNodes(-1), 
-    _lastNumComponents(-1), _lastNumEdges(-1), _lastXYZ(0), _lastVal(0)
+    _lastNumComponents(-1), _lastNumValues(-1), _lastNumEdges(-1),
+    _lastXYZ(0), _lastVal(0)
 {
   for(int i = 0; i < 24; i++) _index[i] = 0;
 
@@ -86,21 +87,14 @@ PViewDataList::~PViewDataList()
   List_Delete(SY); List_Delete(VY); List_Delete(TY);
   List_Delete(T2D); List_Delete(T2C);
   List_Delete(T3D); List_Delete(T3C);
-  if(adaptive) delete adaptive;
 }
 
 bool PViewDataList::finalize()
 {
-  // sanity checks
-  if(!adaptive){ // if adaptive, just hope for the best ;-)
-    // check that number of values per element = 
-    // 3 * number of coordinates + (1,2,9) * integer * number of values
-  }
-
   BBox.reset();
   Min = VAL_INF;
   Max = -VAL_INF;
-
+ 
   // finalize text strings first, to get the max value of NbTimeStep
   // for strings-only views (strings are designed to degrade
   // gracefully when some have fewer time steps than others). If there
@@ -108,21 +102,21 @@ bool PViewDataList::finalize()
   // minimum number of time steps common to all elements.
   _stat(T2D, T2C, 4); _stat(T3D, T3C, 5);
 
-  // convert all "old-style" (non adaptive) 2nd order elements into
-  // linear elements *and* free all the data associated with the 2nd
-  // order elements (this is a temporary solution, until we use
+  // FIXME: convert all "old-style" 2nd order elements into linear
+  // elements *and* free all the data associated with the 2nd order
+  // elements (this is a temporary solution, until we use
   // Adaptive_Views on all curved elements)
   _splitCurvedElements();
 
   // compute min/max and other statistics for all element lists
-  _stat(SP, 1, NbSP, 1); _stat(VP, 3, NbVP, 1); _stat(TP, 9, NbTP, 1);
-  _stat(SL, 1, NbSL, 2); _stat(VL, 3, NbVL, 2); _stat(TL, 9, NbTL, 2);
-  _stat(ST, 1, NbST, 3); _stat(VT, 3, NbVT, 3); _stat(TT, 9, NbTT, 3);
-  _stat(SQ, 1, NbSQ, 4); _stat(VQ, 3, NbVQ, 4); _stat(TQ, 9, NbTQ, 4);
-  _stat(SS, 1, NbSS, 4); _stat(VS, 3, NbVS, 4); _stat(TS, 9, NbTS, 4);
-  _stat(SH, 1, NbSH, 8); _stat(VH, 3, NbVH, 8); _stat(TH, 9, NbTH, 8);
-  _stat(SI, 1, NbSI, 6); _stat(VI, 3, NbVI, 6); _stat(TI, 9, NbTI, 6);
-  _stat(SY, 1, NbSY, 5); _stat(VY, 3, NbVY, 5); _stat(TY, 9, NbTY, 5);
+  _stat(SP, 1, NbSP, 1, 0); _stat(VP, 3, NbVP, 1, 0); _stat(TP, 9, NbTP, 1, 0);
+  _stat(SL, 1, NbSL, 2, 1); _stat(VL, 3, NbVL, 2, 1); _stat(TL, 9, NbTL, 2, 1);
+  _stat(ST, 1, NbST, 3, 3); _stat(VT, 3, NbVT, 3, 3); _stat(TT, 9, NbTT, 3, 3);
+  _stat(SQ, 1, NbSQ, 4, 4); _stat(VQ, 3, NbVQ, 4, 4); _stat(TQ, 9, NbTQ, 4, 4);
+  _stat(SS, 1, NbSS, 4, 6); _stat(VS, 3, NbVS, 4, 6); _stat(TS, 9, NbTS, 4, 6);
+  _stat(SH, 1, NbSH, 8,12); _stat(VH, 3, NbVH, 8,12); _stat(TH, 9, NbTH, 8,12);
+  _stat(SI, 1, NbSI, 6, 9); _stat(VI, 3, NbVI, 6, 9); _stat(TI, 9, NbTI, 6, 9);
+  _stat(SY, 1, NbSY, 5, 8); _stat(VY, 3, NbVY, 5, 8); _stat(TY, 9, NbTY, 5, 8);
 
   // add dummy time values if none (or too few) time values are
   // provided (e.g. using the old parsed format)
@@ -144,10 +138,8 @@ bool PViewDataList::finalize()
   }
 
   if(CTX.post.smooth) smooth();
-  
-  setDirty(false);
 
-  return true;
+  return PViewData::finalize();
 }
 
 int PViewDataList::getNumScalars(int step)
@@ -218,11 +210,19 @@ void PViewDataList::_stat(List_T *D, List_T *C, int nb)
   }
 }
 
-void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod)
+void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod, int nbedg)
 {
   // compute statistics for element lists
   if(!nbelm) return;
 
+  int nbval = nbcomp * nbnod;
+
+  if(_interpolation.count(nbedg)){
+    nbval = List_Nbr(_interpolation[nbedg][0]);
+    if(nbval != nbcomp * nbnod)
+      Msg(INFO, "Adaptive view with %d values per element", nbval);
+  }
+  
   int nb = List_Nbr(list) / nbelm;
   for(int i = 0; i < List_Nbr(list); i += nb){
     int N = nb - 3 * nbnod;
@@ -237,7 +237,7 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod)
 
     // update num time steps
     if(Min == VAL_INF || Max == -VAL_INF){
-      NbTimeStep = N / (nbcomp * nbnod);
+      NbTimeStep = N / nbval;
       TimeStepMin.clear();
       TimeStepMax.clear();
       for(int j = 0; j < NbTimeStep; j++){
@@ -245,9 +245,9 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod)
         TimeStepMax.push_back(-VAL_INF);
       }
     }
-    else if(N / (nbcomp * nbnod) < NbTimeStep){
+    else if(N / nbval < NbTimeStep){
       // if some elts have less steps, reduce the total number!
-      NbTimeStep = N / (nbcomp * nbnod);
+      NbTimeStep = N / nbval;
     }
     
     // update min/max
@@ -255,7 +255,7 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod)
       double l0 = ComputeScalarRep(nbcomp, &V[j]);
       Min = std::min(l0, Min);
       Max = std::max(l0, Max);
-      int ts = j / (nbcomp * nbnod);
+      int ts = j / nbval;
       if(ts < NbTimeStep){ // security
         TimeStepMin[ts] = std::min(l0, TimeStepMin[ts]);
         TimeStepMax[ts] = std::max(l0, TimeStepMax[ts]);
@@ -274,6 +274,7 @@ void PViewDataList::_setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
   int nb = List_Nbr(list) / nblist;
   _lastXYZ = (double*)List_Pointer_Fast(list, ele * nb);
   _lastVal = (double*)List_Pointer_Fast(list, ele * nb + 3 * _lastNumNodes);
+  _lastNumValues = (nb - 3 * nbnod) / NbTimeStep;
 }
 
 void PViewDataList::_setLast(int ele)
@@ -359,9 +360,23 @@ int PViewDataList::getNumComponents(int step, int ent, int ele)
   return _lastNumComponents;
 }
 
+int PViewDataList::getNumValues(int step, int ent, int ele)
+{
+  if(ele != _lastElement) _setLast(ele);
+  return _lastNumValues;
+}
+
+void PViewDataList::getValue(int step, int ent, int ele, int idx, double &val)
+{
+  if(ele != _lastElement) _setLast(ele);
+  if(step >= NbTimeStep) step = 0;
+  val = _lastVal[step * _lastNumValues + idx];
+}
+
 void PViewDataList::getValue(int step, int ent, int ele, int nod, int comp, double &val)
 {
   if(ele != _lastElement) _setLast(ele);
+  if(step >= NbTimeStep) step = 0;
   val = _lastVal[step * _lastNumNodes  * _lastNumComponents + 
                  nod * _lastNumComponents +
                  comp];
@@ -370,6 +385,7 @@ void PViewDataList::getValue(int step, int ent, int ele, int nod, int comp, doub
 void PViewDataList::setValue(int step, int ent, int ele, int nod, int comp, double val)
 {
   if(ele != _lastElement) _setLast(ele);
+  if(step >= NbTimeStep) step = 0;
   _lastVal[step * _lastNumNodes  * _lastNumComponents + 
 	   nod * _lastNumComponents +
 	   comp] = val;

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.580 2008-04-18 16:40:28 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.581 2008-04-22 07:37:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -611,21 +611,21 @@ static const char *input_formats =
   "Gmsh mesh" TT "*.msh" NN
   "Gmsh post-processing view" TT "*.pos" NN
 #if defined(HAVE_OCC)
-  "STEP model" TT "*.step" NN
-  "IGES model" TT "*.iges" NN
+  "STEP model" TT "*.{stp,step}" NN
+  "IGES model" TT "*.{igs,iges}" NN
   "BRep model" TT "*.brep" NN
 #endif
   "I-deas universal mesh" TT "*.unv" NN
 #if defined(HAVE_MED)
-  "MED file" TT "*.med" NN
+  "MED file" TT "*.{med,mmed,rmed}" NN
 #endif
-  "Medit mesh" TT "*.mesh"
-  "Nastran bulk data file" TT "*.bdf" NN
+  "Medit mesh" TT "*.mesh" NN
+  "Nastran bulk data file" TT "*.{bdf,nas}" NN
   "Plot3D structured mesh" TT "*.p3d" NN
   "STL surface mesh" TT "*.stl" NN
-  "VRML surface mesh" TT "*.wrl" NN
+  "VRML surface mesh" TT "*.{wrl,vrml}" NN
 #if defined(HAVE_LIBJPEG)
-  "JPEG" TT "*.png" NN
+  "JPEG" TT "*.{jpg,jpeg}" NN
 #endif
 #if defined(HAVE_LIBPNG)
   "PNG" TT "*.png" NN

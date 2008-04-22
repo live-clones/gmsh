@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.308 2008-03-29 10:19:41 geuzaine Exp $
+// $Id: Gmsh.y,v 1.309 2008-04-22 07:37:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -250,11 +250,6 @@ View :
 	ViewData->setName($2);
 	ViewData->setFileName(gmsh_yyname);
 	ViewData->setFileIndex(gmsh_yyviewindex++);
-	if(ViewData->adaptive){
-	  ViewData->adaptive->setGlobalResolutionLevel
-	    (ViewData, PViewOptions::reference.MaxRecursionLevel);
-	  ViewData->adaptive->setTolerance(PViewOptions::reference.TargetError);
-	}
 	new PView(ViewData);
       }
       else
@@ -525,14 +520,28 @@ InterpolationMatrix :
     tInterpolationScheme '{' RecursiveListOfListOfDouble '}' 
                          '{' RecursiveListOfListOfDouble '}'  tEND
     {
-      ViewData->adaptive = new Adaptive_Post_View(ViewData, $3, $6);
+      int type = 
+	(ViewData->NbSL || ViewData->NbVL) ? 1 : 
+	(ViewData->NbST || ViewData->NbVT) ? 3 : 
+	(ViewData->NbSQ || ViewData->NbVQ) ? 4 : 
+	(ViewData->NbSS || ViewData->NbVS) ? 6 : 
+      	(ViewData->NbSH || ViewData->NbVH) ? 12 : 
+	0;
+      ViewData->setInterpolationScheme(type, $3, $6);
     }
  |  tInterpolationScheme '{' RecursiveListOfListOfDouble '}' 
                          '{' RecursiveListOfListOfDouble '}'  
                          '{' RecursiveListOfListOfDouble '}'  
                          '{' RecursiveListOfListOfDouble '}'  tEND
     {
-      ViewData->adaptive = new Adaptive_Post_View(ViewData, $3, $6, $9, $12);
+      int type = 
+	(ViewData->NbSL || ViewData->NbVL) ? 1 : 
+	(ViewData->NbST || ViewData->NbVT) ? 3 : 
+	(ViewData->NbSQ || ViewData->NbVQ) ? 4 : 
+	(ViewData->NbSS || ViewData->NbVS) ? 6 : 
+      	(ViewData->NbSH || ViewData->NbVH) ? 12 : 
+	0;
+      ViewData->setInterpolationScheme(type, $3, $6, $9, $12);
     }
 ;
 

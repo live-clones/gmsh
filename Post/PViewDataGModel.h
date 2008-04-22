@@ -170,6 +170,8 @@ class PViewDataGModel : public PViewData {
   void setNode(int step, int ent, int ele, int nod, double x, double y, double z);
   void tagNode(int step, int ent, int ele, int nod, int tag);
   int getNumComponents(int step, int ent, int ele);
+  int getNumValues(int step, int ent, int ele);
+  void getValue(int step, int ent, int ele, int idx, double &val);
   void getValue(int step, int ent, int ele, int node, int comp, double &val);
   void setValue(int step, int ent, int ele, int node, int comp, double val);
   int getNumEdges(int step, int ent, int ele);
@@ -188,7 +190,7 @@ class PViewDataGModel : public PViewData {
   // direct access to GModel entities
   GEntity *getEntity(int step, int ent);
   // direct access to value by index
-  bool getValue(int step, int dataIndex, int node, int comp, double &val);
+  bool getValueByIndex(int step, int dataIndex, int node, int comp, double &val);
 
   // I/O routines
   bool readMSH(std::string fileName, int fileIndex, FILE *fp, bool binary, 

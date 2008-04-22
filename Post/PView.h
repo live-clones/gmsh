@@ -27,6 +27,7 @@
 
 class VertexArray;
 class smooth_normals;
+class GMSH_Post_Plugin;
 
 // a post-processing view
 class PView{
@@ -63,7 +64,7 @@ class PView{
   void deleteVertexArrays();
   PViewOptions *getOptions(){ return _options; }  
   void setOptions(PViewOptions *val=0);  
-  PViewData *getData(){ return _data; }
+  PViewData *getData(bool useAdaptiveIfAvailable=false);
   void setData(PViewData *val){ _data = val; }
   int getNum(){ return _num; }
   int getIndex(){ return _index; }

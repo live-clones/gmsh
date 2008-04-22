@@ -22,10 +22,13 @@
 
 #include <string>
 #include <vector>
+#include <map>
+#include "List.h"
 #include "SBoundingBox3d.h"
 
 #define VAL_INF 1.e200
 
+class adaptiveData;
 class GModel;
 class nameData;
 
@@ -40,12 +43,17 @@ class PViewData {
   std::string _fileName;
   // index of the view in the file
   int _fileIndex;
+  // adaptive visualization data
+  adaptiveData *_adaptive;
+ protected:
+  // interpolation matrices, indexed by element type
+  std::map<int, std::vector<List_T*> > _interpolation;
  public:
   PViewData();
-  virtual ~PViewData(){}
+  virtual ~PViewData();
   virtual bool getDirty(){ return _dirty; }
   virtual void setDirty(bool val){ _dirty = val; }
-  virtual bool finalize(){ _dirty = false; return true; }
+  virtual bool finalize();
   virtual std::string getName(){ return _name; }
   virtual void setName(std::string val){ _name = val; }
   virtual std::string getFileName(){ return _fileName; }
@@ -90,9 +98,13 @@ class PViewData {
   // Returns the number of componts available for the ele-th element
   // in the ent-th entity
   virtual int getNumComponents(int step, int ent, int ele) = 0;
+  // Returns the number of values available for the ele-th element
+  // in the ent-th entity
+  virtual int getNumValues(int step, int ent, int ele) = 0;
   // Gets/sets the comp-th component (at the step-th time step)
   // associated with the node-th node from the ele-th element in the
   // ent-th entity
+  virtual void getValue(int step, int ent, int ele, int idx, double &val) = 0;
   virtual void getValue(int step, int ent, int ele, int nod, int comp, double &val) = 0;
   virtual void setValue(int step, int ent, int ele, int nod, int comp, double val);
   // Returns a scalar value (same as value for scalars, norm for
@@ -113,7 +125,6 @@ class PViewData {
   virtual void smooth(){}
   virtual bool combineTime(nameData &nd){ return false; }
   virtual bool combineSpace(nameData &nd){ return false; }
-  virtual bool isAdaptive(){ return false; }
   virtual bool skipEntity(int step, int ent){ return false; }
   virtual bool skipElement(int step, int ent, int ele,
 			   bool checkVisibility=false){ return false; }
@@ -122,6 +133,12 @@ class PViewData {
   virtual bool hasMultipleMeshes(){ return false; }
   virtual bool hasModel(GModel *model, int step=-1){ return false; }
   virtual bool useGaussPoints(){ return false; }
+
+  bool isAdaptive(){ return _adaptive ? true : false; }
+  adaptiveData *getAdaptiveData(){ return _adaptive; }
+  void setInterpolationScheme(int type, List_T *coef, List_T *pol, 
+			      List_T *coefGeo=0, List_T *polGeo=0);
+  int getInterpolationScheme(int type, std::vector<List_T*> &p);
 
   // I/O routines
   virtual bool writeSTL(std::string fileName);
