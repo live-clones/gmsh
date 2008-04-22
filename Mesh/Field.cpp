@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.33 2008-04-18 12:07:46 remacle Exp $
+// $Id: Field.cpp,v 1.34 2008-04-22 13:27:43 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -623,6 +623,74 @@ public:
     return dialogBox;
   }
 };
+#if defined(HAVE_GSL)
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_eigen.h>
+class MaxEigenHessianField:public Field
+{
+  int iField;
+  double delta;
+  gsl_eigen_symm_workspace *gslwork;
+  gsl_matrix *gslmat;
+  gsl_vector *eigenvalues;
+public:
+  const char *get_name()
+  {
+    return "MaxEigenHessian";
+  }
+  MaxEigenHessianField():iField(0),  delta(CTX.lc / 1e4)
+  {
+    options["IField"] = new FieldOptionInt(iField);
+    options["Delta"] = new FieldOptionDouble(delta);
+    gslwork=gsl_eigen_symm_alloc(3);
+    eigenvalues=gsl_vector_alloc(3);
+    gslmat=gsl_matrix_alloc(3,3);
+  }
+  ~MaxEigenHessianField(){
+    gsl_eigen_symm_free(gslwork);
+    gsl_vector_free(eigenvalues);
+    gsl_matrix_free(gslmat);
+  }
+  double operator() (double x, double y, double z)
+  {
+    Field *field = GModel::current()->getFields()->get(iField);
+    gsl_matrix_set(gslmat,1,0,
+          (*field) (x + delta/2 , y+delta/2, z)
+        + (*field) (x - delta/2 , y-delta/2, z)
+        - (*field) (x - delta/2 , y+delta/2, z)
+        - (*field) (x + delta/2 , y-delta/2, z));
+    gsl_matrix_set(gslmat,2,0,
+          (*field) (x + delta/2 , y, z+delta/2)
+        + (*field) (x - delta/2 , y, z-delta/2)
+        - (*field) (x - delta/2 , y, z+delta/2)
+        - (*field) (x + delta/2 , y, z-delta/2));
+    gsl_matrix_set(gslmat,2,1,
+          (*field) (x, y + delta/2 , z+delta/2)
+        + (*field) (x, y - delta/2 , z-delta/2)
+        - (*field) (x, y - delta/2 , z+delta/2)
+        - (*field) (x, y + delta/2 , z-delta/2));
+    double f=(*field)(x,y,z);
+    gsl_matrix_set(gslmat,0,0,
+        (*field) (x + delta , y, z)+ (*field) (x - delta , y, z) -2*f);
+    gsl_matrix_set(gslmat,1,1,
+        (*field) (x, y + delta, z)+ (*field) (x , y - delta, z) -2* f);
+    gsl_matrix_set(gslmat,2,2,
+        (*field) (x, y ,z + delta)+ (*field) (x , y, z - delta)-2*f);
+    gsl_eigen_symm(gslmat,eigenvalues,gslwork);
+    return std::max(
+      fabs(gsl_vector_get(eigenvalues,0)),
+      std::max(
+      fabs(gsl_vector_get(eigenvalues,0)),
+      fabs(gsl_vector_get(eigenvalues,1))))/(delta*delta);
+  }
+  FieldDialogBox *&dialog_box()
+  {
+    static FieldDialogBox *dialogBox = NULL;
+    return dialogBox;
+  }
+};
+#endif
+
 class LaplacianField:public Field
 {
   int iField;
@@ -1092,13 +1160,6 @@ FieldManager::FieldManager()
   map_type_name["Threshold"] = new FieldFactoryT < ThresholdField > ();
   map_type_name["Box"] = new FieldFactoryT < BoxField > ();
   map_type_name["LonLat"] = new FieldFactoryT < LonLatField > ();
-#if defined(HAVE_MATH_EVAL)
-  map_type_name["Param"] = new FieldFactoryT < ParametricField > ();
-  map_type_name["MathEval"] = new FieldFactoryT < MathEvalField > ();
-#endif
-#if defined(HAVE_ANN)
-  map_type_name["Attractor"] = new FieldFactoryT < AttractorField > ();
-#endif
   map_type_name["PostView"] = new FieldFactoryT < PostViewField > ();
   map_type_name["Gradient"] = new FieldFactoryT < GradientField > ();
   map_type_name["Min"] = new FieldFactoryT < MinField > ();
@@ -1107,6 +1168,16 @@ FieldManager::FieldManager()
   map_type_name["Laplacian"] = new FieldFactoryT < LaplacianField > ();
   map_type_name["Mean"] = new FieldFactoryT < MeanField > ();
   map_type_name["Curvature"] = new FieldFactoryT < CurvatureField > ();
+#if defined(HAVE_MATH_EVAL)
+  map_type_name["Param"] = new FieldFactoryT < ParametricField > ();
+  map_type_name["MathEval"] = new FieldFactoryT < MathEvalField > ();
+#endif
+#if defined(HAVE_ANN)
+  map_type_name["Attractor"] = new FieldFactoryT < AttractorField > ();
+#endif
+#if defined(HAVE_GSL)
+  map_type_name["MaxEigenHessian"] = new FieldFactoryT <MaxEigenHessianField > ();
+#endif
   background_field = -1;
 }
 
