@@ -897,9 +897,10 @@ void adaptiveElements<T>::initWithLowResolution(PViewData *data, int step)
 template <class T>
 void adaptiveElements<T>::changeResolution(int level, double tol, GMSH_Post_Plugin *plug)
 {
-  if(!_val) return; // error
-
-  //if(level == _resolutionLevel && tol == _tolerance && !plug) return;
+  if(!_val){
+    Msg(GERROR, "Trying to change resolution in wrong state");
+    return;
+  }
 
   _resolutionLevel = level;
   _tolerance = tol;
@@ -1026,11 +1027,10 @@ int adaptiveElements<T>::_zoomElement(int ielem, int level, GMSH_Post_Plugin *pl
       return 0;
   }
   
-  adaptivePoint **p;
   for(typename std::list<T*>::iterator it = T::all.begin(); 
       it != T::all.end(); it++){
     if((*it)->visible){
-      p = (*it)->p;
+      adaptivePoint **p = (*it)->p;
       for(int k = 0; k < T::numNodes; ++k) List_Add(_listEle, &p[k]->X);
       for(int k = 0; k < T::numNodes; ++k) List_Add(_listEle, &p[k]->Y);
       for(int k = 0; k < T::numNodes; ++k) List_Add(_listEle, &p[k]->Z);

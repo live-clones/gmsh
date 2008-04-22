@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.18 2008-04-22 07:37:16 geuzaine Exp $
+// $Id: PViewData.cpp,v 1.19 2008-04-22 09:29:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -40,7 +40,7 @@ PViewData::~PViewData()
 bool PViewData::finalize()
 { 
   if(!_adaptive && _interpolation.size()){
-    Msg(INFO, "Initializing adaptive data %p interp size= %d",
+    Msg(INFO, "Initializing adaptive data %p interp size=%d",
 	this, _interpolation.size());
     _adaptive = new adaptiveData(this);
     _adaptive->initWithLowResolution(0);

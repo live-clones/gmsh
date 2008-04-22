@@ -101,10 +101,11 @@ class PViewData {
   // Returns the number of values available for the ele-th element
   // in the ent-th entity
   virtual int getNumValues(int step, int ent, int ele) = 0;
+  // Gets the idx'th value for the ele-th element in the ent-th entity
+  virtual void getValue(int step, int ent, int ele, int idx, double &val) = 0;
   // Gets/sets the comp-th component (at the step-th time step)
   // associated with the node-th node from the ele-th element in the
   // ent-th entity
-  virtual void getValue(int step, int ent, int ele, int idx, double &val) = 0;
   virtual void getValue(int step, int ent, int ele, int nod, int comp, double &val) = 0;
   virtual void setValue(int step, int ent, int ele, int nod, int comp, double val);
   // Returns a scalar value (same as value for scalars, norm for
@@ -114,31 +115,46 @@ class PViewData {
   // Returns the number of edges of the ele-th element in the ent-th
   // entity
   virtual int getNumEdges(int step, int ent, int ele) = 0;
+  // Returns the number of 2D/3D strings in the view
   virtual int getNumStrings2D(){ return 0; }
   virtual int getNumStrings3D(){ return 0; }
+  // Returns the i-th 2D/3D string in the view
   virtual void getString2D(int i, int step, std::string &str, 
                            double &x, double &y, double &style){}
   virtual void getString3D(int i, int step, std::string &str, 
                            double &x, double &y, double &z, double &style){}
+  // Change the orientation of the ele-th element
   virtual void revertElement(int step, int ent, int ele){}
+  // Cheks if the view is empty
   virtual bool empty();
-  virtual void smooth(){}
-  virtual bool combineTime(nameData &nd){ return false; }
-  virtual bool combineSpace(nameData &nd){ return false; }
+  // Cheks if we should skip the ent-th entity
   virtual bool skipEntity(int step, int ent){ return false; }
+  // Cheks if we should skip the ele-th entity
   virtual bool skipElement(int step, int ent, int ele,
 			   bool checkVisibility=false){ return false; }
+
   virtual bool hasTimeStep(int step){ return step < getNumTimeSteps(); }
   virtual bool hasPartition(int part){ return false; }
   virtual bool hasMultipleMeshes(){ return false; }
   virtual bool hasModel(GModel *model, int step=-1){ return false; }
   virtual bool useGaussPoints(){ return false; }
 
+  // check if the view is adaptive
   bool isAdaptive(){ return _adaptive ? true : false; }
+  // return the adaptive data
   adaptiveData *getAdaptiveData(){ return _adaptive; }
+
+  // set/get the interpolation matrices for elements with "type"
+  // number of edges
   void setInterpolationScheme(int type, List_T *coef, List_T *pol, 
 			      List_T *coefGeo=0, List_T *polGeo=0);
   int getInterpolationScheme(int type, std::vector<List_T*> &p);
+
+  // Smoothes the data in the view (makes it C0)
+  virtual void smooth(){}
+
+  virtual bool combineTime(nameData &nd){ return false; }
+  virtual bool combineSpace(nameData &nd){ return false; }
 
   // I/O routines
   virtual bool writeSTL(std::string fileName);
