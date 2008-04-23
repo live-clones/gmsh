@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.46 2008-03-20 11:44:04 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.47 2008-04-23 09:02:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -88,9 +88,9 @@ void GEdge::delFace(GFace *e)
 
 SBoundingBox3d GEdge::bounds() const
 {
-  Range<double> tr = parBounds(0);
   SBoundingBox3d bbox;
   if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve){
+    Range<double> tr = parBounds(0);
     const int N = 10;
     for(int i = 0; i < N; i++){
       double t = tr.low() + (double)i / (double)(N - 1) * (tr.high() - tr.low());
