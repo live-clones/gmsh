@@ -97,6 +97,10 @@ public:
   {
     throw;
   }
+  inline void blas_dgemm(const Gmsh_Matrix<SCALAR>& x, const Gmsh_Matrix<SCALAR>& b, 
+			 const double c_a = 1.0, const double c_b = 1.0){
+    throw;
+  }
   inline void mult(const Gmsh_Vector<SCALAR> &x, Gmsh_Vector<SCALAR> &b)
   {
     throw;
@@ -224,6 +228,11 @@ public:
   inline void mult(const GSL_Matrix &x, const GSL_Matrix &b)
   {
     gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, data, x.data, 1.0, b.data);
+  }
+  inline void blas_dgemm(const GSL_Matrix & x, const GSL_Matrix& b, 
+			 const double c_a = 1.0, const double c_b = 1.0)
+  {      
+    gsl_blas_dgemm(CblasNoTrans,CblasNoTrans, c_a, x.data, b.data, c_b, data);
   }
   inline void set_all(const double &m) 
   {
