@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.52 2008-04-18 16:40:29 geuzaine Exp $
+// $Id: BackgroundMesh.cpp,v 1.53 2008-04-23 10:42:51 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -102,9 +102,9 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
   case 1:
     {
       GEdge *ged = (GEdge *)ge;
-      Crv = ged->curvature(U);
-      Crv = std::max(Crv, max_surf_curvature(ged, U));
-      //Crv = max_surf_curvature(ged, U);      
+      //Crv = ged->curvature(U);
+      //Crv = std::max(Crv, max_surf_curvature(ged, U));
+      Crv = max_surf_curvature(ged, U);      
     }
     break;
   case 2:
