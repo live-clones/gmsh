@@ -28,6 +28,11 @@
 #include "MEdge.h"
 #include "MFace.h"
 
+struct IntPt{
+  double pt[3];
+  double weight;
+};
+
 class GFace;
 
 // A mesh element.
@@ -180,7 +185,10 @@ class MElement
   void interpolateCurl(double val[], double u, double v, double w, double f[3],
                        int stride=3);
   double interpolateDiv(double val[], double u, double v, double w, int stride=3);
-
+  // integration routine 
+  virtual void getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const 
+  {throw;}  
+  
   // IO routines
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
                         int num=0, int elementary=1, int physical=1);
@@ -465,6 +473,7 @@ class MTriangle : public MElement {
       return false; 
     return true;
   }
+  virtual void getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const;
 };
 
 class MTriangle6 : public MTriangle {
@@ -702,6 +711,7 @@ class MQuadrangle : public MElement {
       return false;
     return true;
   }
+  virtual void getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const;
 };
 
 class MQuadrangle8 : public MQuadrangle {
@@ -939,6 +949,7 @@ class MTetrahedron : public MElement {
       return false;
     return true;
   }
+  virtual void getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const;
 };
 
 class MTetrahedron10 : public MTetrahedron {
@@ -1161,6 +1172,7 @@ class MHexahedron : public MElement {
       return false;
     return true;
   }
+  virtual void getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const;
 };
 
 class MHexahedron20 : public MHexahedron {

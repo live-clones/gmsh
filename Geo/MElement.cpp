@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.64 2008-03-30 20:45:27 geuzaine Exp $
+// $Id: MElement.cpp,v 1.65 2008-04-23 08:06:21 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -799,4 +799,29 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_PYR_14: return new MPyramid14(v, num, part);
   default:         return 0;
   }
+}
+
+extern int      getNGQTPts(int order);
+extern IntPt *getGQTPts (int order);
+extern int getNGQTetPts(int order);
+extern IntPt *getGQTetPts(int order);
+extern int getNGQQPts(int order);
+extern IntPt *getGQQPts(int order);
+extern int getNGQHPts(int order);
+extern IntPt *getGQHPts(int order);
+void MTriangle:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const{
+  *npts = getNGQTPts(pOrder);
+  *pts  = getGQTPts(pOrder);
+}
+void MTetrahedron:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const{
+  *npts = getNGQTetPts(pOrder);
+  *pts  = getGQTetPts(pOrder);
+}
+void MHexahedron:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const{
+  *npts = getNGQHPts(pOrder);
+  *pts  = getGQHPts(pOrder);
+}
+void MQuadrangle:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const{
+  *npts = getNGQQPts(pOrder);
+  *pts  = getGQQPts(pOrder);
 }
