@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.684 2008-04-23 08:20:40 geuzaine Exp $
+// $Id: GUI.cpp,v 1.685 2008-04-23 17:36:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -484,10 +484,10 @@ int GetFontSize()
   }
   else{
     int w = Fl::w();
-    if(w <= 860)       return 11;
-    else if(w <= 1024) return 12;
-    else if(w <= 1440) return 13;
-    else if(w <= 1600) return 14;
+    if(w <= 1024)      return 11;
+    else if(w <= 1280) return 12;
+    else if(w <= 1680) return 13;
+    else if(w <= 1920) return 14;
     else               return 15;
   }
 }
@@ -1883,7 +1883,7 @@ void GUI::create_option_window()
       gen_butt[12]->type(FL_TOGGLE_BUTTON);
       gen_butt[12]->callback(general_options_ok_cb);
 
-      gen_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Use trackball rotation mode instead of Euler angles");
+      gen_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Use trackball rotation instead of Euler angles");
       gen_butt[5]->type(FL_TOGGLE_BUTTON);
       gen_butt[5]->callback(general_options_ok_cb);
 
@@ -2051,7 +2051,7 @@ void GUI::create_option_window()
       gen_choice[2]->tooltip("(Alt+o)");
       gen_choice[2]->callback(general_options_ok_cb);
 
-      gen_value[14] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Z-clipping planes distance factor");
+      gen_value[14] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Z-clipping distance factor");
       gen_value[14]->minimum(0.1);
       gen_value[14]->maximum(10.);
       gen_value[14]->step(0.1);
@@ -2076,7 +2076,7 @@ void GUI::create_option_window()
       gen_butt[4]->type(FL_TOGGLE_BUTTON);
       gen_butt[4]->callback(general_options_ok_cb);
 
-      gen_value[11] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Number of quadric subdivisions");
+      gen_value[11] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Quadric subdivisions");
       gen_value[11]->minimum(3);
       gen_value[11]->maximum(30);
       gen_value[11]->step(1);
@@ -2156,7 +2156,7 @@ void GUI::create_option_window()
       gen_value[13]->align(FL_ALIGN_RIGHT);
       gen_value[13]->callback(general_options_ok_cb);
 
-      gen_sphere = new SpherePosition_Widget(L + 2 * WB + 2 * IW, 2 * WB + 1 * BH, 2 * BH);
+      gen_sphere = new SpherePosition_Widget(L + width - 2 * BH - 2 * WB, 2 * WB + 1 * BH, 2 * BH);
       gen_sphere->callback(general_options_ok_cb, (void*)"light_sphere");
 
       gen_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW/2, BH);
@@ -2432,25 +2432,25 @@ void GUI::create_option_window()
       // not reimplemented yet
       ((Fl_Menu_Item*)mesh_choice[5]->menu())[1].deactivate();
 
-      mesh_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Number of smoothing steps");
+      mesh_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Smoothing steps");
       mesh_value[0]->minimum(0);
       mesh_value[0]->maximum(100);
       mesh_value[0]->step(1);
       mesh_value[0]->align(FL_ALIGN_RIGHT);
       mesh_value[0]->callback(mesh_options_ok_cb);
 
-      mesh_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Characteristic length factor");
+      mesh_value[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Element size factor");
       mesh_value[2]->minimum(0.001);
       mesh_value[2]->maximum(1000);
       mesh_value[2]->step(0.01);
       mesh_value[2]->align(FL_ALIGN_RIGHT);
       mesh_value[2]->callback(mesh_options_ok_cb);
 
-      mesh_value[25] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Minimum characteristic length");
+      mesh_value[25] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Minimum element size");
       mesh_value[25]->align(FL_ALIGN_RIGHT);
       mesh_value[25]->callback(mesh_options_ok_cb);
 
-      mesh_value[26] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Maximum characteristic length");
+      mesh_value[26] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Maximum element size");
       mesh_value[26]->align(FL_ALIGN_RIGHT);
       mesh_value[26]->callback(mesh_options_ok_cb);
 
@@ -2474,11 +2474,11 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Advanced");
       o->hide();
 
-      mesh_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Compute characteristic lengths from curvature" );
+      mesh_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Compute element sizes from curvature" );
       mesh_butt[1]->type(FL_TOGGLE_BUTTON);
       mesh_butt[1]->callback(mesh_options_ok_cb);
 
-      mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Compute characteristic lengths from values at points");
+      mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Compute element sizes using point values");
       mesh_butt[5]->type(FL_TOGGLE_BUTTON);
       mesh_butt[5]->callback(mesh_options_ok_cb);
 
@@ -2493,11 +2493,11 @@ void GUI::create_option_window()
 #endif
       mesh_butt[24]->callback(mesh_options_ok_cb);
 
-      mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Optimize high order mesh (only for 2D-plane)");
+      mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Optimize high order mesh (2D-plane only)");
       mesh_butt[3]->type(FL_TOGGLE_BUTTON);
       mesh_butt[3]->callback(mesh_options_ok_cb);
 
-      mesh_butt[21] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Impose C1 continuity (only for 2D-plane, order 2-3)");
+      mesh_butt[21] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Impose C1 continuity (2D-plane only)");
       mesh_butt[21]->type(FL_TOGGLE_BUTTON);
       mesh_butt[21]->callback(mesh_options_ok_cb);
 
@@ -2561,12 +2561,12 @@ void GUI::create_option_window()
         {"Coordinates", 0, 0, 0},
         {0}
       };
-      mesh_choice[7] = new Fl_Choice(L + width / 2, 2 * WB + 5 * BH, width/4 - 2*WB, BH, "Label type");
+      mesh_choice[7] = new Fl_Choice(L + width / 2, 2 * WB + 5 * BH, width / 4 - 2 * WB, BH, "Label type");
       mesh_choice[7]->menu(menu_label_type);
       mesh_choice[7]->align(FL_ALIGN_RIGHT);
       mesh_choice[7]->callback(mesh_options_ok_cb);
 
-      mesh_value[12] = new Fl_Value_Input(L + width / 2, 2 * WB + 6 * BH, width/4 - 2*WB, BH, "Frequency");
+      mesh_value[12] = new Fl_Value_Input(L + width / 2, 2 * WB + 6 * BH, width / 4 - 2 * WB, BH, "Frequency");
       mesh_value[12]->minimum(0);
       mesh_value[12]->maximum(100);
       mesh_value[12]->step(1);
@@ -2914,7 +2914,7 @@ void GUI::create_option_window()
 
       view_range = new Fl_Group(L + 2 * WB, 2 * WB + 4 * BH, width - 4 * WB, 8 * BH);
 
-      view_value[30] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Number of intervals");
+      view_value[30] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Intervals");
       view_value[30]->align(FL_ALIGN_RIGHT);
       view_value[30]->minimum(1);
       view_value[30]->maximum(256);
@@ -3032,7 +3032,7 @@ void GUI::create_option_window()
       view_input[12]->align(FL_ALIGN_RIGHT);
       view_input[12]->callback(view_options_ok_cb);
       
-      view_butt[25] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Set position and size of 3D axes automatically");
+      view_butt[25] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Position 3D axes automatically");
       view_butt[25]->type(FL_TOGGLE_BUTTON);
       view_butt[25]->callback(view_options_ok_cb, (void*)"view_axes_auto_3d");
       
@@ -3052,7 +3052,7 @@ void GUI::create_option_window()
       view_value[18]->align(FL_ALIGN_RIGHT);
       view_value[18]->callback(view_options_ok_cb);
 
-      view_butt[7] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Set position and size of 2D axes/scale automatically");
+      view_butt[7] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Position 2D axes/value scale automatically");
       view_butt[7]->type(FL_TOGGLE_BUTTON);
       view_butt[7]->callback(view_options_ok_cb, (void*)"view_axes_auto_2d");
       
@@ -3061,7 +3061,7 @@ void GUI::create_option_window()
       view_value[20]->maximum(2000);
       view_value[20]->step(1);
       view_value[20]->callback(view_options_ok_cb);
-      view_value[21] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "2D axes or value scale position");
+      view_value[21] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "2D axes/value scale position");
       view_value[21]->align(FL_ALIGN_RIGHT);
       view_value[21]->minimum(-2000);
       view_value[21]->maximum(2000);
@@ -3073,7 +3073,7 @@ void GUI::create_option_window()
       view_value[22]->maximum(2000);
       view_value[22]->step(1);
       view_value[22]->callback(view_options_ok_cb);
-      view_value[23] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH, "2D axes or value scale size");
+      view_value[23] = new Fl_Value_Input(L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH, "2D axes/value scale size");
       view_value[23]->align(FL_ALIGN_RIGHT);
       view_value[23]->minimum(0);
       view_value[23]->maximum(2000);
@@ -3294,7 +3294,7 @@ void GUI::create_option_window()
       view_choice[6]->align(FL_ALIGN_RIGHT);
       view_choice[6]->callback(view_options_ok_cb);
 
-      view_butt[26] = new Fl_Check_Button(L + 2 * IW - 2 * WB, 2 * WB + 4 * BH, (int)(1.1*BB), BH, "Stipple in 2D");
+      view_butt[26] = new Fl_Check_Button(L + width - (int)(1.15*BB) - 2 * WB, 2 * WB + 4 * BH, (int)(1.15*BB), BH, "Stipple in 2D");
       view_butt[26]->type(FL_TOGGLE_BUTTON);
       view_butt[26]->callback(view_options_ok_cb);
 
@@ -3321,7 +3321,7 @@ void GUI::create_option_window()
         view_choice[2]->align(FL_ALIGN_RIGHT);
         view_choice[2]->callback(view_options_ok_cb);
 
-        view_push_butt[0] = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 6 * BH, BB, BH, "Edit arrow");
+        view_push_butt[0] = new Fl_Button(L + width - (int)(1.15*BB) - 2 * WB, 2 * WB + 6 * BH, (int)(1.15*BB), BH, "Edit arrow");
         view_push_butt[0]->callback(view_arrow_param_cb);
 
         view_value[60] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Arrow size");
@@ -3331,7 +3331,7 @@ void GUI::create_option_window()
         view_value[60]->align(FL_ALIGN_RIGHT);
         view_value[60]->callback(view_options_ok_cb);
 
-        view_butt[0] = new Fl_Check_Button(L + 2 * IW - 2 * WB, 2 * WB + 7 * BH, (int)(1.1*BB), BH, "Proportional");
+        view_butt[0] = new Fl_Check_Button(L + width - (int)(1.15*BB) - 2 * WB, 2 * WB + 7 * BH, (int)(1.15*BB), BH, "Proportional");
         view_butt[0]->type(FL_TOGGLE_BUTTON);
         view_butt[0]->callback(view_options_ok_cb);
 
@@ -3361,7 +3361,7 @@ void GUI::create_option_window()
       view_choice[3]->align(FL_ALIGN_RIGHT);
       view_choice[3]->callback(view_options_ok_cb);
 
-      view_butt[1] = new Fl_Check_Button(L + 2 * IW - 2 * WB, 2 * WB + 10 * BH, (int)(1.1*BB), BH, "Center glyph");
+      view_butt[1] = new Fl_Check_Button(L + width - (int)(1.15*BB) - 2 * WB, 2 * WB + 10 * BH, (int)(1.15*BB), BH, "Center glyph");
       view_butt[1]->type(FL_TOGGLE_BUTTON);
       view_butt[1]->callback(view_options_ok_cb);
       

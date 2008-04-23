@@ -1,4 +1,4 @@
-// $Id: Colorbar_Window.cpp,v 1.64 2008-04-22 22:55:06 geuzaine Exp $
+// $Id: Colorbar_Window.cpp,v 1.65 2008-04-23 17:36:34 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -44,7 +44,7 @@ Colorbar_Window::Colorbar_Window(int x, int y, int w, int h, const char *l)
   ct = NULL;
   label = NULL;
   help_flag = 1;
-  font_height = GetFontSize();
+  font_height = GetFontSize() - 1; // use slightly smaller font
   marker_height = font_height;
   wedge_height = marker_height;
   marker_pos = 0;
@@ -222,7 +222,7 @@ void Colorbar_Window::redraw_range(int a, int b)
   // print colortable mode and help
   fl_font(FL_HELVETICA, font_height);
   fl_color(fl_contrast(FL_BLACK, color_bg));
-  int xx0 = 6, xx1 = 10 * font_height, yy0 = 10;
+  int xx0 = 6, xx1 = 11 * font_height, yy0 = 10;
   if(help_flag) {
     i = 0;
     fl_draw("1, 2, ..., Ctrl+1, ...", xx0, yy0 + (i + 1) * font_height);
