@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.49 2008-02-21 09:49:22 geuzaine Exp $
+# $Id: Makefile,v 1.50 2008-04-23 22:38:51 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -31,7 +31,7 @@ SRC = Numeric.cpp\
         NumericEmbedded.cpp\
       EigSolve.cpp\
       FunctionSpace.cpp\
-      predicates.cpp\
+      gmsh_predicates.cpp\
       gsl_newt.cpp\
       gsl_min.cpp\
       gsl_brent.cpp
@@ -43,6 +43,9 @@ OBJ = ${SRC:.cpp=${OBJEXT}}
 ${LIB}: ${OBJ}
 	${AR} ${ARFLAGS}${LIB} ${OBJ}
 	${RANLIB} ${LIB}
+
+lib: ${OBJ} 
+	${AR} ${ARFLAGS}../lib/libGmsh${LIBEXT} ${OBJ}
 
 .cpp${OBJEXT}:
 	${CXX} ${CFLAGS} ${DASH}c $<
@@ -65,7 +68,6 @@ NumericEmbedded.o: NumericEmbedded.cpp NumericEmbedded.h \
 EigSolve.o: EigSolve.cpp
 FunctionSpace.o: FunctionSpace.cpp FunctionSpace.h ../Common/GmshMatrix.h \
   ../Common/GmshDefines.h
-predicates.o: predicates.cpp
 gsl_newt.o: gsl_newt.cpp ../Common/Message.h Numeric.h NumericEmbedded.h
 gsl_min.o: gsl_min.cpp ../Common/Message.h Numeric.h NumericEmbedded.h
 gsl_brent.o: gsl_brent.cpp ../Common/Message.h Numeric.h \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.21 2008-02-27 12:39:28 geuzaine Exp $
+# $Id: Makefile,v 1.22 2008-04-23 22:38:57 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -41,6 +41,9 @@ OBJ = ${SRC:.cpp=${OBJEXT}}
 ${LIB}: ${OBJ}
 	${AR} ${ARFLAGS}${LIB} ${OBJ}
 	${RANLIB} ${LIB}
+
+lib: ${OBJ} 
+	${AR} ${ARFLAGS}../../lib/libGmsh${LIBEXT} ${OBJ}
 
 .cpp${OBJEXT}:
 	${CXX} ${CFLAGS} ${DASH}c $<

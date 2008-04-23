@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.478 2008-04-18 08:24:39 remacle Exp $
+# $Id: Makefile,v 1.479 2008-04-23 22:38:36 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -60,11 +60,6 @@ link-mac-universal: compile
 	lipo -create bin/gmsh_i386 bin/gmsh_ppc -output bin/gmsh
 	rm -f bin/gmsh_i386 bin/gmsh_ppc
 
-.PHONY: lib
-lib: compile
-	${AR} ${ARFLAGS}bin/libGmsh${LIBEXT} lib/*${LIBEXT}
-	${RANLIB} bin/libGmsh${LIBEXT}
-
 compile: variables initialtag
 	@for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE}); done
 
@@ -86,12 +81,17 @@ install-mac: variables package-mac
 uninstall-mac:
 	rm -rf /Applications/Gmsh.app
 
+.PHONY: lib
+lib:
+	@for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE} lib); done
+	${RANLIB} lib/libGmsh${LIBEXT}
+
 install-lib: lib
 	mkdir -p ${includedir}/gmsh
 	rm -f ${includedir}/gmsh/*
 	cp -f ${GMSH_API} ${includedir}/gmsh
 	mkdir -p ${libdir}
-	cp -f bin/libGmsh${LIBEXT} ${libdir}/libGmsh${LIBSUFFIX}${LIBEXT}
+	cp -f lib/libGmsh${LIBEXT} ${libdir}/libGmsh${LIBSUFFIX}${LIBEXT}
 
 uninstall-lib:
 	rm -rf ${includedir}/gmsh
