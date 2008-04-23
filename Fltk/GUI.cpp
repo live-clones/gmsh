@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.683 2008-04-22 22:58:13 geuzaine Exp $
+// $Id: GUI.cpp,v 1.684 2008-04-23 08:20:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1802,7 +1802,7 @@ void GUI::reset_external_view_list()
 void GUI::create_option_window()
 {
   int width = 34 * fontsize + WB;
-  int height = 14 * BH + 5 * WB;
+  int height = 13 * BH + 5 * WB;
   int L = 7 * fontsize;
 
   if(opt_window) {
@@ -2065,7 +2065,7 @@ void GUI::create_option_window()
       gen_value[15]->align(FL_ALIGN_RIGHT);
       gen_value[15]->callback(general_options_ok_cb);
 
-      gen_value[16] = new Fl_Value_Input(L + 2 * WB + IW/2, 2 * WB + 3 * BH, IW/2, BH, "Polygon offset factor and units");
+      gen_value[16] = new Fl_Value_Input(L + 2 * WB + IW/2, 2 * WB + 3 * BH, IW/2, BH, "Polygon offset factor/units");
       gen_value[16]->minimum(0.);
       gen_value[16]->maximum(10.);
       gen_value[16]->step(0.01);
@@ -2159,14 +2159,12 @@ void GUI::create_option_window()
       gen_sphere = new SpherePosition_Widget(L + 2 * WB + 2 * IW, 2 * WB + 1 * BH, 2 * BH);
       gen_sphere->callback(general_options_ok_cb, (void*)"light_sphere");
 
-      gen_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Material shininess");
+      gen_value[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, IW/2, BH);
       gen_value[1]->minimum(0);
       gen_value[1]->maximum(10);
       gen_value[1]->step(0.1);
-      gen_value[1]->align(FL_ALIGN_RIGHT);
       gen_value[1]->callback(general_options_ok_cb);
-
-      gen_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Material shininess exponent");
+      gen_value[0] = new Fl_Value_Input(L + 2 * WB + IW/2, 2 * WB + 3 * BH, IW/2, BH, "Material shininess/exponent");
       gen_value[0]->minimum(0);
       gen_value[0]->maximum(128);
       gen_value[0]->step(1);
@@ -2180,7 +2178,7 @@ void GUI::create_option_window()
         {0}
       };
 
-      gen_choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Predefined color scheme");
+      gen_choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Predefined color scheme");
       gen_choice[3]->menu(menu_color_scheme);
       gen_choice[3]->align(FL_ALIGN_RIGHT);
       gen_choice[3]->tooltip("(Alt+c)");
@@ -2194,15 +2192,15 @@ void GUI::create_option_window()
         {0}
       };
 
-      gen_choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Background gradient");
+      gen_choice[5] = new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Background gradient");
       gen_choice[5]->menu(menu_bg_grad);
       gen_choice[5]->align(FL_ALIGN_RIGHT);
       gen_choice[5]->callback(general_options_ok_cb);
 
-      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 7 * BH, IW + 20, height - 5 * WB - 7 * BH);
+      Fl_Scroll *s = new Fl_Scroll(L + 2 * WB, 3 * WB + 6 * BH, IW + 20, height - 5 * WB - 6 * BH);
       int i = 0;
       while(GeneralOptions_Color[i].str) {
-        gen_col[i] = new Fl_Button(L + 2 * WB, 3 * WB + (7 + i) * BH, IW, BH, GeneralOptions_Color[i].str);
+        gen_col[i] = new Fl_Button(L + 2 * WB, 3 * WB + (6 + i) * BH, IW, BH, GeneralOptions_Color[i].str);
         gen_col[i]->callback(color_cb, (void *)GeneralOptions_Color[i].function);
         i++;
       }
@@ -3296,6 +3294,10 @@ void GUI::create_option_window()
       view_choice[6]->align(FL_ALIGN_RIGHT);
       view_choice[6]->callback(view_options_ok_cb);
 
+      view_butt[26] = new Fl_Check_Button(L + 2 * IW - 2 * WB, 2 * WB + 4 * BH, (int)(1.1*BB), BH, "Stipple in 2D");
+      view_butt[26]->type(FL_TOGGLE_BUTTON);
+      view_butt[26]->callback(view_options_ok_cb);
+
       view_value[62] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width");
       view_value[62]->minimum(0.1);
       view_value[62]->maximum(50);
@@ -3303,12 +3305,8 @@ void GUI::create_option_window()
       view_value[62]->align(FL_ALIGN_RIGHT);
       view_value[62]->callback(view_options_ok_cb);
 
-      view_butt[26] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Stipple lines in 2D plots");
-      view_butt[26]->type(FL_TOGGLE_BUTTON);
-      view_butt[26]->callback(view_options_ok_cb);
-
       {
-        view_vector = new Fl_Group(L + 2 * WB, 2 * WB + 7 * BH, width - 2 * WB, 4 * BH, 0);
+        view_vector = new Fl_Group(L + 2 * WB, 2 * WB + 6 * BH, width - 2 * WB, 4 * BH, 0);
 
         static Fl_Menu_Item menu_vectype[] = {
           {"Line", 0, 0, 0},
@@ -3318,26 +3316,26 @@ void GUI::create_option_window()
           {"Displacement", 0, 0, 0},
           {0}
         };
-        view_choice[2] = new Fl_Choice(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Vector display");
+        view_choice[2] = new Fl_Choice(L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Vector display");
         view_choice[2]->menu(menu_vectype);
         view_choice[2]->align(FL_ALIGN_RIGHT);
         view_choice[2]->callback(view_options_ok_cb);
 
-        view_push_butt[0] = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 7 * BH, BB, BH, "Edit arrow");
+        view_push_butt[0] = new Fl_Button(L + 2 * IW - 2 * WB, 2 * WB + 6 * BH, BB, BH, "Edit arrow");
         view_push_butt[0]->callback(view_arrow_param_cb);
 
-        view_value[60] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Arrow size");
+        view_value[60] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Arrow size");
         view_value[60]->minimum(0);
         view_value[60]->maximum(500);
         view_value[60]->step(1);
         view_value[60]->align(FL_ALIGN_RIGHT);
         view_value[60]->callback(view_options_ok_cb);
 
-        view_butt[0] = new Fl_Check_Button(L + 2 * IW - 2 * WB, 2 * WB + 8 * BH, (int)(1.5*BB), BH, "Proportional");
+        view_butt[0] = new Fl_Check_Button(L + 2 * IW - 2 * WB, 2 * WB + 7 * BH, (int)(1.1*BB), BH, "Proportional");
         view_butt[0]->type(FL_TOGGLE_BUTTON);
         view_butt[0]->callback(view_options_ok_cb);
 
-        view_value[63] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Displacement factor");
+        view_value[63] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Displacement factor");
         view_value[63]->minimum(0.);
         view_value[63]->maximum(1.);
         view_value[63]->step(0.01);
@@ -3345,7 +3343,7 @@ void GUI::create_option_window()
         view_value[63]->when(FL_WHEN_RELEASE);
         view_value[63]->callback(view_options_ok_cb);
 
-        view_choice[10] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Data source");
+        view_choice[10] = new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Data source");
         view_choice[10]->align(FL_ALIGN_RIGHT);
         view_choice[10]->add("Self");
         view_choice[10]->callback(view_options_ok_cb);
@@ -3358,12 +3356,12 @@ void GUI::create_option_window()
         {"Vertex", 0, 0, 0},
         {0}
       };
-      view_choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Glyph location");
+      view_choice[3] = new Fl_Choice(L + 2 * WB, 2 * WB + 10 * BH, IW, BH, "Glyph location");
       view_choice[3]->menu(menu_vecloc);
       view_choice[3]->align(FL_ALIGN_RIGHT);
       view_choice[3]->callback(view_options_ok_cb);
 
-      view_butt[1] = new Fl_Check_Button(L + 2 * IW - 2 * WB, 2 * WB + 11 * BH, (int)(1.5*BB), BH, "Center glyph");
+      view_butt[1] = new Fl_Check_Button(L + 2 * IW - 2 * WB, 2 * WB + 10 * BH, (int)(1.1*BB), BH, "Center glyph");
       view_butt[1]->type(FL_TOGGLE_BUTTON);
       view_butt[1]->callback(view_options_ok_cb);
       
@@ -3371,7 +3369,7 @@ void GUI::create_option_window()
         {"Von-Mises", 0, 0, 0},
         {0}
       };
-      view_choice[4] = new Fl_Choice(L + 2 * WB, 2 * WB + 12 * BH, IW, BH, "Tensor display");
+      view_choice[4] = new Fl_Choice(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tensor display");
       view_choice[4]->menu(menu_tensor);
       view_choice[4]->align(FL_ALIGN_RIGHT);
       view_choice[4]->callback(view_options_ok_cb);
