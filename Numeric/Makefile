@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.50 2008-04-23 22:38:51 geuzaine Exp $
+# $Id: Makefile,v 1.51 2008-04-23 23:00:39 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -44,8 +44,8 @@ ${LIB}: ${OBJ}
 	${AR} ${ARFLAGS}${LIB} ${OBJ}
 	${RANLIB} ${LIB}
 
-lib: ${OBJ} 
-	${AR} ${ARFLAGS}../lib/libGmsh${LIBEXT} ${OBJ}
+cpobj: ${OBJ} 
+	cp -f ${OBJ} ../lib/
 
 .cpp${OBJEXT}:
 	${CXX} ${CFLAGS} ${DASH}c $<
@@ -68,6 +68,7 @@ NumericEmbedded.o: NumericEmbedded.cpp NumericEmbedded.h \
 EigSolve.o: EigSolve.cpp
 FunctionSpace.o: FunctionSpace.cpp FunctionSpace.h ../Common/GmshMatrix.h \
   ../Common/GmshDefines.h
+gmsh_predicates.o: gmsh_predicates.cpp
 gsl_newt.o: gsl_newt.cpp ../Common/Message.h Numeric.h NumericEmbedded.h
 gsl_min.o: gsl_min.cpp ../Common/Message.h Numeric.h NumericEmbedded.h
 gsl_brent.o: gsl_brent.cpp ../Common/Message.h Numeric.h \

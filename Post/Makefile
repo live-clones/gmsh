@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.42 2008-04-23 22:38:55 geuzaine Exp $
+# $Id: Makefile,v 1.43 2008-04-23 23:00:40 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -47,8 +47,8 @@ ${LIB}: ${OBJ}
 	${AR} ${ARFLAGS}${LIB} ${OBJ}
 	${RANLIB} ${LIB}
 
-lib: ${OBJ} 
-	${AR} ${ARFLAGS}../lib/libGmsh${LIBEXT} ${OBJ}
+cpobj: ${OBJ} 
+	cp -f ${OBJ} ../lib/
 
 .cpp${OBJEXT}:
 	${CXX} ${CFLAGS} ${DASH}c $<

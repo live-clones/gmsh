@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.479 2008-04-23 22:38:36 geuzaine Exp $
+# $Id: Makefile,v 1.480 2008-04-23 23:00:39 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -82,9 +82,11 @@ uninstall-mac:
 	rm -rf /Applications/Gmsh.app
 
 .PHONY: lib
-lib:
-	@for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE} lib); done
+lib: variables initialtag
+	@for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE} cpobj); done
+	${AR} ${ARFLAGS}lib/libGmsh${LIBEXT} lib/*${OBJEXT}
 	${RANLIB} lib/libGmsh${LIBEXT}
+	rm -f lib/*${OBJEXT}
 
 install-lib: lib
 	mkdir -p ${includedir}/gmsh
