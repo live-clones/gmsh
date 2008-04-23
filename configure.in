@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.152 2008-04-16 15:39:25 geuzaine Exp $
+dnl $Id: configure.in,v 1.153 2008-04-23 20:49:41 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 dnl
@@ -336,7 +336,7 @@ else
 
   GMSH_DIRS="${GMSH_DIRS} Box"
   GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshPlugin"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshMesh -lGmshGeo -lGmshPost -lGmshCommon"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshGeo -lGmshMesh -lGmshPost -lGmshCommon"
   GMSH_LIBS="${GMSH_LIBS} -lGmshDataStr -lGmshNumeric -lGmshParallel"
 
   dnl Check for libz

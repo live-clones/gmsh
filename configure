@@ -4092,7 +4092,7 @@ else
 
   GMSH_DIRS="${GMSH_DIRS} Box"
   GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshPlugin"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshMesh -lGmshGeo -lGmshPost -lGmshCommon"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshGeo -lGmshMesh -lGmshPost -lGmshCommon"
   GMSH_LIBS="${GMSH_LIBS} -lGmshDataStr -lGmshNumeric -lGmshParallel"
 
     ZLIB=""
