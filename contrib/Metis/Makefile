@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2008-02-17 08:48:09 geuzaine Exp $
+# $Id: Makefile,v 1.17 2008-04-23 23:17:46 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -21,7 +21,7 @@
 
 include ../../variables
 
-LIB     = ../../lib/libGmshMetis.a
+LIB = ../../lib/libGmshMetis${LIBEXT}
 
 INC = ${DASH}I.
 
@@ -87,6 +87,9 @@ OBJ = ${SRC:.c=${OBJEXT}}
 ${LIB}: ${OBJ} 
 	${AR} ${ARFLAGS}${LIB} ${OBJ} 
 	${RANLIB} ${LIB}
+
+cpobj: ${OBJ} 
+	cp -f ${OBJ} ../../lib/
 
 .c${OBJEXT}:
 	${CC} ${CFLAGS} ${DASH}c $< ${DASH}o ${<:.c=${OBJEXT}}

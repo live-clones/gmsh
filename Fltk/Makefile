@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.181 2008-04-22 07:37:09 geuzaine Exp $
+# $Id: Makefile,v 1.182 2008-04-23 23:17:46 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -49,6 +49,9 @@ OBJ = ${SRC:.cpp=${OBJEXT}}
 ${LIB}: ${OBJ} 
 	${AR} ${ARFLAGS}${LIB} ${OBJ} 
 	${RANLIB} ${LIB}
+
+cpobj: ${OBJ} 
+	cp -f ${OBJ} ../lib/
 
 .cpp.o:
 	${CXX} ${CFLAGS} ${DASH}c $<
