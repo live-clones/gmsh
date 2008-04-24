@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.34 2008-03-20 11:44:05 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.35 2008-04-24 17:29:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -458,37 +458,52 @@ void TransfiniteSph(Vertex S, Vertex center, Vertex *T)
 Vertex InterpolateRuledSurface(Surface *s, double u, double v)
 {
   Curve *C[4] = {0, 0, 0, 0};
-  Vertex *O = 0;
-  bool isSphere = true;
-  for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++) {
-    List_Read(s->Generatrices, i, &C[i]);
-    if(C[i]->Typ != MSH_SEGM_CIRC && C[i]->Typ != MSH_SEGM_CIRC_INV){
-      isSphere = false;
-    }
-    else if(isSphere){
-      if(!i){
-        List_Read(C[i]->Control_Points, 1, &O);
-      }
-      else{
-        Vertex *tmp;
-        List_Read(C[i]->Control_Points, 1, &tmp);
-        if(compareVertex(&O, &tmp))
-          isSphere = false;
-      }
-    }
-  }
 
-  if(isSphere){
-    double n[3] = {C[0]->Circle.invmat[0][2],
-                   C[0]->Circle.invmat[1][2],
-                   C[0]->Circle.invmat[2][2]};
-    bool isPlane = true;
-    for(int i = 1; i < std::min(List_Nbr(s->Generatrices), 4); i++)
-      isPlane &= (n[0] == C[i]->Circle.invmat[0][2] &&
-                  n[1] == C[i]->Circle.invmat[1][2] &&
-                  n[2] == C[i]->Circle.invmat[2][2]);
-    if(isPlane)
-      isSphere = false;
+  for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++)
+    List_Read(s->Generatrices, i, &C[i]);
+  
+  Vertex *O = 0, OO;
+  bool isSphere = true;
+
+  // Ugly hack: "fix" transfinite interpolation if we have a sphere
+  // patch
+  if(List_Nbr(s->RuledSurfaceOptions) == 3) {
+    // it's on a sphere: get the center
+    List_Read(s->RuledSurfaceOptions, 0, &OO.Pos.X);
+    List_Read(s->RuledSurfaceOptions, 1, &OO.Pos.Y);
+    List_Read(s->RuledSurfaceOptions, 2, &OO.Pos.Z);
+    O = &OO;
+  }
+  else{
+    // try to be intelligent (hum)
+    for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++) {
+      if(C[i]->Typ != MSH_SEGM_CIRC && C[i]->Typ != MSH_SEGM_CIRC_INV){
+	isSphere = false;
+      }
+      else if(isSphere){
+	if(!i){
+	  List_Read(C[i]->Control_Points, 1, &O);
+	}
+	else{
+	  Vertex *tmp;
+	  List_Read(C[i]->Control_Points, 1, &tmp);
+	  if(compareVertex(&O, &tmp))
+	    isSphere = false;
+	}
+      }
+    }
+    if(isSphere){
+      double n[3] = {C[0]->Circle.invmat[0][2],
+		     C[0]->Circle.invmat[1][2],
+		     C[0]->Circle.invmat[2][2]};
+      bool isPlane = true;
+      for(int i = 1; i < std::min(List_Nbr(s->Generatrices), 4); i++)
+	isPlane &= (n[0] == C[i]->Circle.invmat[0][2] &&
+		    n[1] == C[i]->Circle.invmat[1][2] &&
+		    n[2] == C[i]->Circle.invmat[2][2]);
+      if(isPlane)
+	isSphere = false;
+    }
   }
   
   Vertex *S[4], V[4], T;

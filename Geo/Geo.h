@@ -161,6 +161,7 @@ typedef struct{
   List_T *EmbeddedPoints;
   List_T *Control_Points;
   List_T *TrsfPoints;
+  List_T *RuledSurfaceOptions;
   double plan[3][3];
   double a, b, c, d;
   ExtrudeParams *Extrude;

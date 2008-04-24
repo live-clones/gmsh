@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.109 2008-03-20 11:44:05 geuzaine Exp $
+// $Id: Geo.cpp,v 1.110 2008-04-24 17:29:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -608,6 +608,7 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Visible = 1;
   pS->Num = Num;
   pS->geometry = 0;
+  pS->RuledSurfaceOptions = 0;
 
   GModel::current()->getGEOInternals()->MaxSurfaceNum = 
     IMAX(GModel::current()->getGEOInternals()->MaxSurfaceNum, Num);

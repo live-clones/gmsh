@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.309 2008-04-22 07:37:14 geuzaine Exp $
+// $Id: Gmsh.y,v 1.310 2008-04-24 17:29:53 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -116,7 +116,7 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer);
 %type <l> FExpr_Multi ListOfDouble RecursiveListOfDouble
 %type <l> RecursiveListOfListOfDouble 
 %type <l> ListOfColor RecursiveListOfColor 
-%type <l> ListOfShapes Transform Extrude MultipleShape
+%type <l> ListOfShapes Transform Extrude MultipleShape RuledSurfaceOptions
 %type <s> Shape
 
 // Operators (with ascending priority): cf. C language
@@ -1074,6 +1074,24 @@ PhysicalId :
     }
 ;
 
+RuledSurfaceOptions :
+    // nothing
+    {
+      $$ = 0;
+    }
+  | tIn tSphere '{' FExpr '}'
+    {
+      $$ = List_Create(4, 4, sizeof(double));
+      Vertex *v = FindPoint((int)$4);
+      if(!v)
+	yymsg(GERROR, "Unknown point %d", (int)$4);
+      else{
+	List_Add($$, &v->Pos.X);
+	List_Add($$, &v->Pos.Y);
+	List_Add($$, &v->Pos.Z);
+      }
+    }
+;
 
 Shape :
 
@@ -1399,7 +1417,7 @@ Shape :
       $$.Type = MSH_SURF_PLAN;
       $$.Num = num;
     }
-  | tRuled tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tRuled tSurface '(' FExpr ')' tAFFECT ListOfDouble RuledSurfaceOptions tEND
     {
       int num = (int)$4, type = 0;
       if(FindSurface(num)){
@@ -1430,6 +1448,7 @@ Shape :
 	  setSurfaceGeneratrices(s, temp);
 	  List_Delete(temp);
 	  End_Surface(s);
+	  s->RuledSurfaceOptions = $8;
 	  Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
 	}
       }

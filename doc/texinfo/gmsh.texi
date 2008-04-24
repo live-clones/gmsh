@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.248 2008-04-22 07:37:17 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.249 2008-04-24 17:29:54 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 @c
@@ -1580,12 +1580,15 @@ should be defined separately). Likewise, a line loop defining a hole should
 not have any lines in common with another line loop defining a hole in the
 same surface (in which case the two line loops should be combined).
 
-@item Ruled Surface ( @var{expression} ) = @{ @var{expression-list} @};
+@item Ruled Surface ( @var{expression} ) = @{ @var{expression-list} @} < In Sphere @{ @var{expression} @} >;
 Creates a ruled surface, i.e., a surface that can be interpolated using
-transfinite interpolation. The @var{expression} inside the parentheses is
-the ruled surface's identification number; the @var{expression-list} on the
-right hand side should the identification number of a single line loop,
-composed of either three or four elementary lines.
+transfinite interpolation. The @var{expression} inside the parentheses
+is the ruled surface's identification number; the first
+@var{expression-list} on the right hand side should the identification
+number of a line loop composed of either three or four elementary
+lines. The optional @code{In Sphere} argument forces the surface to be a
+spherical patch (the extra parameter gives the identification number of
+the center of the sphere).
 
 @item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a surface loop (a shell). The @var{expression} inside the
