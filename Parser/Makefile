@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.151 2008-04-23 23:00:39 geuzaine Exp $
+# $Id: Makefile,v 1.152 2008-04-28 10:11:00 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -73,14 +73,10 @@ depend:
 # DO NOT DELETE THIS LINE
 Gmsh.tab.o: Gmsh.tab.cpp ../Common/Message.h ../DataStr/Malloc.h \
   ../DataStr/Tools.h ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
-  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
-  ../Post/ColorTable.h ../Post/PView.h ../Post/PViewData.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Post/PViewDataList.h ../Post/PViewData.h \
-  ../Common/GmshMatrix.h ../Parallel/ParUtil.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Common/Context.h ../Geo/GModel.h \
-  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
+  ../Parallel/ParUtil.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
+  ../Common/Context.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
+  ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
   ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
   ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
   ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
@@ -90,9 +86,13 @@ Gmsh.tab.o: Gmsh.tab.cpp ../Common/Message.h ../DataStr/Malloc.h \
   ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
   ../Geo/GeoInterpolation.h ../Geo/Geo.h ../Mesh/Generator.h \
-  ../Graphics/Draw.h ../Common/Colors.h ../Common/Options.h Parser.h \
-  OpenFile.h ../Common/CommandLine.h FunctionManager.h ../Common/OS.h \
-  CreateFile.h ../Mesh/Field.h ../Mesh/BackgroundMesh.h
+  ../Graphics/Draw.h ../Common/Options.h ../Post/ColorTable.h \
+  ../Common/Colors.h ../Common/Options.h Parser.h OpenFile.h \
+  ../Common/CommandLine.h FunctionManager.h ../Common/OS.h CreateFile.h \
+  ../Mesh/Field.h ../Post/PView.h ../Post/PViewData.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h ../Mesh/BackgroundMesh.h \
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Plugin/PluginManager.h \
+  ../Plugin/Plugin.h ../Common/GmshMatrix.h
 Gmsh.yy.o: Gmsh.yy.cpp ../Common/Message.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Geo/Geo.h ../Common/GmshDefines.h \
   ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
@@ -114,9 +114,9 @@ OpenFile.o: OpenFile.cpp ../Common/Message.h ../Geo/Geo.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h \
   ../Common/Context.h Parser.h OpenFile.h ../Common/CommandLine.h \
+  ../Graphics/ReadImg.h ../Common/OS.h ../Mesh/HighOrder.h \
   ../Post/PView.h ../Post/PViewData.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Graphics/ReadImg.h ../Common/OS.h \
-  ../Mesh/HighOrder.h ../Common/GmshUI.h ../Graphics/Draw.h \
+  ../Post/ColorTable.h ../Common/GmshUI.h ../Graphics/Draw.h \
   ../Graphics/SelectBuffer.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
   ../Fltk/Colorbar_Window.h ../Fltk/Popup_Button.h \
   ../Fltk/SpherePosition_Widget.h ../Mesh/Field.h

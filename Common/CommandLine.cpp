@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.127 2008-04-01 12:47:09 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.128 2008-04-28 10:10:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -29,9 +29,12 @@
 #include "Context.h"
 #include "Options.h"
 #include "GModel.h"
-#include "PView.h"
 #include "CreateFile.h"
 #include "OS.h"
+
+#if !defined(HAVE_NO_POST)
+#include "PView.h"
+#endif
 
 #if !defined(GMSH_EXTRA_VERSION)
 #error
@@ -296,11 +299,15 @@ void Get_Options(int argc, char *argv[])
         while(i < argc) {
           char filename[256];
           sprintf(filename, "%s_new", argv[i]);
+#if !defined(HAVE_NO_POST)
           unsigned int n = PView::list.size();
+#endif
           OpenProject(argv[i]);
+#if !defined(HAVE_NO_POST)
           // convert post-processing views to latest binary format
           for(unsigned int j = n; j < PView::list.size(); j++)
             PView::list[j]->write(filename, 1, (j == n) ? false : true);
+#endif
           // convert mesh to latest binary format
           if(GModel::current()->getMeshStatus() > 0){
             CTX.mesh.msh_file_version = 2.0;

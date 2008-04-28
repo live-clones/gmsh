@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.185 2008-04-18 16:40:29 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.186 2008-04-28 10:11:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -32,10 +32,13 @@
 #include "Parser.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
-#include "PView.h"
 #include "ReadImg.h"
 #include "OS.h"
 #include "HighOrder.h"
+
+#if !defined(HAVE_NO_POST)
+#include "PView.h"
+#endif
 
 #if defined(HAVE_FLTK)
 #include "GmshUI.h"
@@ -156,11 +159,13 @@ void SetBoundingBox(void)
 
   SBoundingBox3d bb = GModel::current()->bounds();
   
+#if !defined(HAVE_NO_POST)
   if(bb.empty()) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(!PView::list[i]->getData()->getBoundingBox().empty())
         bb += PView::list[i]->getData()->getBoundingBox();
   }
+#endif
   
   if(bb.empty()){
     bb += SPoint3(-1., -1., -1.);
@@ -207,7 +212,9 @@ int ParseFile(const char *f, int close, int warn_if_missing)
     return 0;
   }
 
+#if !defined(HAVE_NO_POST)
   int numViewsBefore = PView::list.size();
+#endif
 
   strncpy(yyname_old, gmsh_yyname, 255);
   yyin_old = gmsh_yyin;
@@ -243,7 +250,7 @@ int ParseFile(const char *f, int close, int warn_if_missing)
   gmsh_yylineno = yylineno_old;
   gmsh_yyviewindex = yyviewindex_old;
 
-#if defined(HAVE_FLTK)
+#if defined(HAVE_FLTK) && !defined(HAVE_NO_POST)
   if(!CTX.batch && numViewsBefore != (int)PView::list.size())
     WID->update_views();
 #endif
@@ -330,7 +337,9 @@ int MergeFile(const char *name, int warn_if_missing)
   // work out of the box.
   // GModel *m = new GModel;
 
+#if !defined(HAVE_NO_POST)
   int numViewsBefore = PView::list.size();
+#endif
 
   int status = 0;
   if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL")){
@@ -359,12 +368,14 @@ int MergeFile(const char *name, int warn_if_missing)
   else if(!strcmp(ext, ".mesh") || !strcmp(ext, ".MESH")){
     status = m->readMESH(name);
   }
+#if !defined(HAVE_NO_POST)
   else if(!strcmp(ext, ".med") || !strcmp(ext, ".MED") ||
 	  !strcmp(ext, ".mmed") || !strcmp(ext, ".MMED") ||
 	  !strcmp(ext, ".rmed") || !strcmp(ext, ".RMED")){
     status = GModel::readMED(name);
     if(status > 1) status = PView::readMED(name);
   }
+#endif
   else if(!strcmp(ext, ".bdf") || !strcmp(ext, ".BDF") ||
           !strcmp(ext, ".nas") || !strcmp(ext, ".NAS")){
     status = m->readBDF(name);
@@ -403,12 +414,16 @@ int MergeFile(const char *name, int warn_if_missing)
        !strncmp(header, "$PARA", 5) || !strncmp(header, "$ELM", 4) ||
        !strncmp(header, "$MeshFormat", 11)) {
       status = m->readMSH(name);
+#if !defined(HAVE_NO_POST)
       if(status > 1) status = PView::readMSH(name);
+#endif
     }
+#if !defined(HAVE_NO_POST)
     else if(!strncmp(header, "$PostFormat", 11) || 
             !strncmp(header, "$View", 5)) {
       status = PView::readPOS(name);
     }
+#endif
     else {
       status = m->readGEO(name);
     }
@@ -419,7 +434,7 @@ int MergeFile(const char *name, int warn_if_missing)
   CTX.geom.draw = 1;
   CTX.mesh.changed = ENT_ALL;
 
-#if defined(HAVE_FLTK)
+#if defined(HAVE_FLTK) && !defined(HAVE_NO_POST)
   if(!CTX.batch && numViewsBefore != (int)PView::list.size())
     WID->update_views();
 #endif
@@ -437,9 +452,11 @@ void OpenProject(const char *name)
   CTX.threads_lock = 1;
 
   // FIXME: this will change once we clarify Open/Merge/Clear
+#if !defined(HAVE_NO_POST)
   for(int i = PView::list.size() - 1; i >= 0; i--)
     if(PView::list[i]->getData()->hasModel(GModel::current()))
       delete PView::list[i];
+#endif
   GModel::current()->destroy();
   GModel::current()->getGEOInternals()->destroy();
 

@@ -152,10 +152,11 @@ class PViewData {
   int getInterpolationScheme(int type, std::vector<List_T*> &p);
 
   // Smoothes the data in the view (makes it C0)
-  virtual void smooth(){}
+  virtual void smooth();
 
-  virtual bool combineTime(nameData &nd){ return false; }
-  virtual bool combineSpace(nameData &nd){ return false; }
+  // Combine time steps or elements from multiple datasets
+  virtual bool combineTime(nameData &nd);
+  virtual bool combineSpace(nameData &nd);
 
   // I/O routines
   virtual bool writeSTL(std::string fileName);

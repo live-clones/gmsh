@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.140 2008-04-17 21:05:51 geuzaine Exp $
+// $Id: Generator.cpp,v 1.141 2008-04-28 10:10:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -22,7 +22,6 @@
 #include "Message.h"
 #include "Numeric.h"
 #include "Context.h"
-#include "PView.h"
 #include "OS.h"
 #include "GModel.h"
 #include "MElement.h"
@@ -33,6 +32,10 @@
 #include "BackgroundMesh.h"
 #include "BoundaryLayer.h"
 #include "HighOrder.h"
+
+#if !defined(HAVE_NO_POST)
+#include "PView.h"
+#endif
 
 extern Context_T CTX;
 
@@ -132,6 +135,7 @@ void GetStatistics(double stat[50], double quality[3][100])
     stat[25] = rhoMax;
   }
 
+#if !defined(HAVE_NO_POST)
   stat[26] = PView::list.size();
   for(unsigned int i = 0; i < PView::list.size(); i++) {
     PViewData *data = PView::list[i]->getData();
@@ -145,6 +149,7 @@ void GetStatistics(double stat[50], double quality[3][100])
     stat[34] += data->getNumPyramids();
     stat[35] += data->getNumStrings2D() + data->getNumStrings3D();
   }
+#endif
 }
 
 static bool TooManyElements(GModel *m, int dim)

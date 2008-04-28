@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.395 2008-04-22 07:37:08 geuzaine Exp $
+// $Id: Options.cpp,v 1.396 2008-04-28 10:10:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -24,15 +24,18 @@
 #include "GmshDefines.h"
 #include "Message.h"
 #include "Draw.h"
-#include "PView.h"
-#include "adaptiveData.h"
 #include "Generator.h"
 #include "Context.h"
 #include "Options.h"
 #include "BackgroundMesh.h"
-#include "PluginManager.h"
 
 extern Context_T CTX;
+
+#if !defined(HAVE_NO_POST)
+#include "PView.h"
+#include "adaptiveData.h"
+#include "PluginManager.h"
+#endif
 
 #if defined(HAVE_FLTK)
 #include "Solvers.h"
@@ -153,12 +156,14 @@ void Init_Options(int num)
 void ReInit_Options(int num)
 {
   // horrible trick so that opt_view_XXX will act on the reference view
+#if !defined(HAVE_NO_POST)
   std::vector<PView*> tmp = PView::list;
   PView::list.clear(); 
   Init_Options_Safe(num);
   PView::list = tmp; 
   for(unsigned int i = 0; i < PView::list.size(); i++)
     PView::list[i]->setOptions();
+#endif
 }
 
 void Init_Options_GUI(int num)
@@ -203,6 +208,7 @@ static void Print_OptionCategory(int level, int diff, int help, const char *cat,
 
 GmshColorTable *Get_ColorTable(int num)
 {
+#if !defined(HAVE_NO_POST)
   PViewOptions *opt;
   if(PView::list.empty() || num < 0 || num > (int)PView::list.size() - 1)
     opt = &PViewOptions::reference;
@@ -212,10 +218,14 @@ GmshColorTable *Get_ColorTable(int num)
     PView::list[num]->setChanged(true);
   }
   return &opt->CT;
+#else
+  return 0;
+#endif
 }
 
 static void Print_ColorTable(int num, int diff, const char *prefix, FILE *file)
 {
+#if !defined(HAVE_NO_POST)
   PViewOptions *opt;
   if(PView::list.empty() || num < 0 || num > (int)PView::list.size() - 1)
     opt = &PViewOptions::reference;
@@ -248,6 +258,7 @@ static void Print_ColorTable(int num, int diff, const char *prefix, FILE *file)
     fprintf(file, "%s\n", tmp);
   else
     Msg(DIRECT, tmp);
+#endif
 }
 
 void Print_Options(int num, int level, int diff, int help, const char *filename)
@@ -326,6 +337,7 @@ void Print_Options(int num, int level, int diff, int help, const char *filename)
                      "PostProcessing.", file);
 
   if(level & GMSH_FULLRC) {
+#if !defined(HAVE_NO_POST)
     for(unsigned int i = 0; i < PView::list.size(); i++) {
       char tmp[256];
       sprintf(tmp, "View[%d].", i);
@@ -338,6 +350,7 @@ void Print_Options(int num, int level, int diff, int help, const char *filename)
       strcat(tmp, "ColorTable");
       Print_ColorTable(i, diff, tmp, file);
     }
+#endif
   }
   else if(level & GMSH_OPTIONSRC) {
     Print_OptionCategory(level, diff, help, "View options (strings)", file);
@@ -452,6 +465,7 @@ void Print_OptionsDoc()
   fprintf(file, "@end ftable\n");
   fclose(file);
 
+#if !defined(HAVE_NO_POST)
   file = fopen("opt_view.texi", "w");
   if(!file) {
     Msg(GERROR, "Unable to open file 'opt_view.texi'");
@@ -467,7 +481,6 @@ void Print_OptionsDoc()
           Get_OptionSaveLevel(GMSH_FULLRC|GMSH_OPTIONSRC));
   fprintf(file, "@end ftable\n");
   fclose(file);
-
 
   file = fopen("opt_plugin.texi", "w");
   if(!file) {
@@ -513,6 +526,7 @@ void Print_OptionsDoc()
   }
   fprintf(file, "@end ftable\n");
   fclose(file);
+#endif
 }
 
 // General routines for string options
@@ -1927,6 +1941,7 @@ int _gui_action_valid(int action, int num)
 
 const char *opt_view_name(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(""); 
   if(!data) return "";
   if(action & GMSH_SET) {
@@ -1944,10 +1959,14 @@ const char *opt_view_name(OPT_ARGS_STR)
   }
 #endif
   return data->getName().c_str();
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_format(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strcpy(opt->Format, val);
@@ -1957,17 +1976,25 @@ const char *opt_view_format(OPT_ARGS_STR)
     WID->view_input[1]->value(opt->Format);
 #endif
   return opt->Format;
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_filename(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(!data) return "";
   return data->getFileName().c_str();
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_axes_label0(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strcpy(opt->AxesLabel[0], val);
@@ -1977,10 +2004,14 @@ const char *opt_view_axes_label0(OPT_ARGS_STR)
     WID->view_input[10]->value(opt->AxesLabel[0]);
 #endif
   return opt->AxesLabel[0];
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_axes_label1(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strcpy(opt->AxesLabel[1], val);
@@ -1990,10 +2021,14 @@ const char *opt_view_axes_label1(OPT_ARGS_STR)
     WID->view_input[11]->value(opt->AxesLabel[1]);
 #endif
   return opt->AxesLabel[1];
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_axes_label2(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strcpy(opt->AxesLabel[2], val);
@@ -2003,10 +2038,14 @@ const char *opt_view_axes_label2(OPT_ARGS_STR)
     WID->view_input[12]->value(opt->AxesLabel[2]);
 #endif
   return opt->AxesLabel[2];
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_axes_format0(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strcpy(opt->AxesFormat[0], val);
@@ -2016,10 +2055,14 @@ const char *opt_view_axes_format0(OPT_ARGS_STR)
     WID->view_input[7]->value(opt->AxesFormat[0]);
 #endif
   return opt->AxesFormat[0];
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_axes_format1(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strcpy(opt->AxesFormat[1], val);
@@ -2029,10 +2072,14 @@ const char *opt_view_axes_format1(OPT_ARGS_STR)
     WID->view_input[8]->value(opt->AxesFormat[1]);
 #endif
   return opt->AxesFormat[1];
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_axes_format2(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strcpy(opt->AxesFormat[2], val);
@@ -2042,10 +2089,14 @@ const char *opt_view_axes_format2(OPT_ARGS_STR)
     WID->view_input[9]->value(opt->AxesFormat[2]);
 #endif
   return opt->AxesFormat[2];
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_gen_raise0(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strcpy(opt->GenRaiseX, val);
@@ -2056,10 +2107,14 @@ const char *opt_view_gen_raise0(OPT_ARGS_STR)
     WID->view_input[4]->value(opt->GenRaiseX);
 #endif
   return opt->GenRaiseX;
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_gen_raise1(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strcpy(opt->GenRaiseY, val);
@@ -2070,10 +2125,14 @@ const char *opt_view_gen_raise1(OPT_ARGS_STR)
     WID->view_input[5]->value(opt->GenRaiseY);
 #endif
   return opt->GenRaiseY;
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_gen_raise2(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strcpy(opt->GenRaiseZ, val);
@@ -2084,6 +2143,9 @@ const char *opt_view_gen_raise2(OPT_ARGS_STR)
     WID->view_input[6]->value(opt->GenRaiseZ);
 #endif
   return opt->GenRaiseZ;
+#else
+  return "";
+#endif
 }
 
 int _h2d(char c)
@@ -2119,6 +2181,7 @@ void _string2stipple(char str[32], int &repeat, int &pattern)
 
 const char *opt_view_stipple0(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strncpy(opt->StippleString[0], val, 31);
@@ -2126,10 +2189,14 @@ const char *opt_view_stipple0(OPT_ARGS_STR)
     _string2stipple(opt->StippleString[0], opt->Stipple[0][0], opt->Stipple[0][1]);
   }
   return opt->StippleString[0];
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_stipple1(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strncpy(opt->StippleString[1], val, 31);
@@ -2137,10 +2204,14 @@ const char *opt_view_stipple1(OPT_ARGS_STR)
     _string2stipple(opt->StippleString[1], opt->Stipple[1][0], opt->Stipple[1][1]);
   }
   return opt->StippleString[1];
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_stipple2(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strncpy(opt->StippleString[2], val, 31);
@@ -2148,10 +2219,14 @@ const char *opt_view_stipple2(OPT_ARGS_STR)
     _string2stipple(opt->StippleString[2], opt->Stipple[2][0], opt->Stipple[2][1]);
   }
   return opt->StippleString[2];
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_stipple3(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strncpy(opt->StippleString[3], val, 31);
@@ -2159,10 +2234,14 @@ const char *opt_view_stipple3(OPT_ARGS_STR)
     _string2stipple(opt->StippleString[3], opt->Stipple[3][0], opt->Stipple[3][1]);
   }
   return opt->StippleString[3];
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_stipple4(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strncpy(opt->StippleString[4], val, 31);
@@ -2170,10 +2249,14 @@ const char *opt_view_stipple4(OPT_ARGS_STR)
     _string2stipple(opt->StippleString[4], opt->Stipple[4][0], opt->Stipple[4][1]);
   }
   return opt->StippleString[4];
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_stipple5(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strncpy(opt->StippleString[5], val, 31);
@@ -2181,10 +2264,14 @@ const char *opt_view_stipple5(OPT_ARGS_STR)
     _string2stipple(opt->StippleString[5], opt->Stipple[5][0], opt->Stipple[5][1]);
   }
   return opt->StippleString[5];
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_stipple6(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strncpy(opt->StippleString[6], val, 31);
@@ -2192,10 +2279,14 @@ const char *opt_view_stipple6(OPT_ARGS_STR)
     _string2stipple(opt->StippleString[6], opt->Stipple[6][0], opt->Stipple[6][1]);
   }
   return opt->StippleString[6];
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_stipple7(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strncpy(opt->StippleString[7], val, 31);
@@ -2203,10 +2294,14 @@ const char *opt_view_stipple7(OPT_ARGS_STR)
     _string2stipple(opt->StippleString[7], opt->Stipple[7][0], opt->Stipple[7][1]);
   }
   return opt->StippleString[7];
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_stipple8(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strncpy(opt->StippleString[8], val, 31);
@@ -2214,10 +2309,14 @@ const char *opt_view_stipple8(OPT_ARGS_STR)
     _string2stipple(opt->StippleString[8], opt->Stipple[8][0], opt->Stipple[8][1]);
   }
   return opt->StippleString[8];
+#else
+  return "";
+#endif
 }
 
 const char *opt_view_stipple9(OPT_ARGS_STR)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW("");
   if(action & GMSH_SET) {
     strncpy(opt->StippleString[9], val, 31);
@@ -2225,6 +2324,9 @@ const char *opt_view_stipple9(OPT_ARGS_STR)
     _string2stipple(opt->StippleString[9], opt->Stipple[9][0], opt->Stipple[9][1]);
   }
   return opt->StippleString[9];
+#else
+  return "";
+#endif
 }
 
 // Numeric option routines
@@ -3240,8 +3342,10 @@ double opt_general_color_scheme(OPT_ARGS_NUM)
     Set_DefaultColorOptions(0, MeshOptions_Color);
     Set_DefaultColorOptions(0, SolverOptions_Color);
     Set_DefaultColorOptions(0, PostProcessingOptions_Color);
+#if !defined(HAVE_NO_POST)
     for(unsigned int i = 0; i < PView::list.size(); i++)
       Set_DefaultColorOptions(i, ViewOptions_Color);
+#endif
     Set_DefaultColorOptions(0, PrintOptions_Color);
 
     Set_ColorOptions_GUI(0, GeneralOptions_Color);
@@ -3249,15 +3353,19 @@ double opt_general_color_scheme(OPT_ARGS_NUM)
     Set_ColorOptions_GUI(0, MeshOptions_Color);
     Set_ColorOptions_GUI(0, SolverOptions_Color);
     Set_ColorOptions_GUI(0, PostProcessingOptions_Color);
+#if !defined(HAVE_NO_POST)
     for(unsigned int i = 0; i < PView::list.size(); i++)
       Set_ColorOptions_GUI(i, ViewOptions_Color);
+#endif
     Set_ColorOptions_GUI(0, PrintOptions_Color);
 
+#if !defined(HAVE_NO_POST)
     // horrible trick so that opt_view_XXX will act on the reference view
     std::vector<PView*> tmp = PView::list;
     PView::list.clear();
     Set_DefaultColorOptions(0, ViewOptions_Color);
     PView::list = tmp;
+#endif
   }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
@@ -5475,7 +5583,11 @@ double opt_post_plugins(OPT_ARGS_NUM)
 
 double opt_post_nb_views(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   return PView::list.size();
+#else
+  return 0;
+#endif
 }
 
 double opt_post_file_format(OPT_ARGS_NUM)
@@ -5487,6 +5599,7 @@ double opt_post_file_format(OPT_ARGS_NUM)
 
 double opt_view_nb_timestep(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(!data) return 1;
 #if defined(HAVE_FLTK)
@@ -5496,10 +5609,14 @@ double opt_view_nb_timestep(OPT_ARGS_NUM)
     WID->check_anim_buttons();
 #endif
   return data->getNumTimeSteps();
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_timestep(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(!data) return 0;
   if(action & GMSH_SET) {
@@ -5520,26 +5637,38 @@ double opt_view_timestep(OPT_ARGS_NUM)
     WID->view_value[50]->value(opt->TimeStep);
 #endif
   return opt->TimeStep;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_min(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(!data) return 0.;
   // use adaptive data if available
   return view->getData(true)->getMin();
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_max(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(!data) return 0.;
   // use adaptive data if available
   return view->getData(true)->getMax();
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_custom_min(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->CustomMin = val;
@@ -5551,10 +5680,14 @@ double opt_view_custom_min(OPT_ARGS_NUM)
   }
 #endif
   return opt->CustomMin;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_custom_max(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->CustomMax = val;
@@ -5565,52 +5698,80 @@ double opt_view_custom_max(OPT_ARGS_NUM)
     WID->view_value[32]->value(opt->CustomMax);
 #endif
   return opt->CustomMax;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_xmin(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(!data) return 0.;
   return data->getBoundingBox().min().x();
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_xmax(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(!data) return 0.;
   return data->getBoundingBox().max().x();
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_ymin(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(!data) return 0.;
   return data->getBoundingBox().min().y();
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_ymax(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(!data) return 0.;
   return data->getBoundingBox().max().y();
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_zmin(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(!data) return 0.;
   return data->getBoundingBox().min().z();
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_zmax(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(!data) return 0.;
   return data->getBoundingBox().max().z();
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_offset0(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Offset[0] = val;
@@ -5621,10 +5782,14 @@ double opt_view_offset0(OPT_ARGS_NUM)
     WID->view_value[40]->value(opt->Offset[0]);
 #endif
   return opt->Offset[0];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_offset1(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Offset[1] = val;
@@ -5635,10 +5800,14 @@ double opt_view_offset1(OPT_ARGS_NUM)
     WID->view_value[41]->value(opt->Offset[1]);
 #endif
   return opt->Offset[1];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_offset2(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Offset[2] = val;
@@ -5649,10 +5818,14 @@ double opt_view_offset2(OPT_ARGS_NUM)
     WID->view_value[42]->value(opt->Offset[2]);
 #endif
   return opt->Offset[2];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_raise0(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Raise[0] = val;
@@ -5663,10 +5836,14 @@ double opt_view_raise0(OPT_ARGS_NUM)
     WID->view_value[43]->value(opt->Raise[0]);
 #endif
   return opt->Raise[0];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_raise1(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Raise[1] = val;
@@ -5677,10 +5854,14 @@ double opt_view_raise1(OPT_ARGS_NUM)
     WID->view_value[44]->value(opt->Raise[1]);
 #endif
   return opt->Raise[1];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_raise2(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Raise[2] = val;
@@ -5691,10 +5872,14 @@ double opt_view_raise2(OPT_ARGS_NUM)
     WID->view_value[45]->value(opt->Raise[2]);
 #endif
   return opt->Raise[2];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_normal_raise(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->NormalRaise = val;
@@ -5705,10 +5890,14 @@ double opt_view_normal_raise(OPT_ARGS_NUM)
     WID->view_value[46]->value(opt->NormalRaise);
 #endif
   return opt->NormalRaise;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_transform00(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Transform[0][0] = val;
@@ -5719,10 +5908,14 @@ double opt_view_transform00(OPT_ARGS_NUM)
     WID->view_value[51]->value(opt->Transform[0][0]);
 #endif
   return opt->Transform[0][0];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_transform01(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Transform[0][1] = val;
@@ -5733,10 +5926,14 @@ double opt_view_transform01(OPT_ARGS_NUM)
     WID->view_value[52]->value(opt->Transform[0][1]);
 #endif
   return opt->Transform[0][1];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_transform02(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Transform[0][2] = val;
@@ -5747,10 +5944,14 @@ double opt_view_transform02(OPT_ARGS_NUM)
     WID->view_value[53]->value(opt->Transform[0][2]);
 #endif
   return opt->Transform[0][2];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_transform10(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Transform[1][0] = val;
@@ -5761,10 +5962,14 @@ double opt_view_transform10(OPT_ARGS_NUM)
     WID->view_value[54]->value(opt->Transform[1][0]);
 #endif
   return opt->Transform[1][0];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_transform11(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Transform[1][1] = val;
@@ -5775,10 +5980,14 @@ double opt_view_transform11(OPT_ARGS_NUM)
     WID->view_value[55]->value(opt->Transform[1][1]);
 #endif
   return opt->Transform[1][1];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_transform12(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Transform[1][2] = val;
@@ -5789,10 +5998,14 @@ double opt_view_transform12(OPT_ARGS_NUM)
     WID->view_value[56]->value(opt->Transform[1][2]);
 #endif
   return opt->Transform[1][2];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_transform20(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Transform[2][0] = val;
@@ -5803,10 +6016,14 @@ double opt_view_transform20(OPT_ARGS_NUM)
     WID->view_value[57]->value(opt->Transform[2][0]);
 #endif
   return opt->Transform[2][0];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_transform21(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Transform[2][1] = val;
@@ -5817,10 +6034,14 @@ double opt_view_transform21(OPT_ARGS_NUM)
     WID->view_value[58]->value(opt->Transform[2][1]);
 #endif
   return opt->Transform[2][1];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_transform22(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Transform[2][2] = val;
@@ -5831,10 +6052,14 @@ double opt_view_transform22(OPT_ARGS_NUM)
     WID->view_value[59]->value(opt->Transform[2][2]);
 #endif
   return opt->Transform[2][2];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_arrow_size(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->ArrowSize = val;
@@ -5844,10 +6069,14 @@ double opt_view_arrow_size(OPT_ARGS_NUM)
     WID->view_value[60]->value(opt->ArrowSize);
 #endif
   return opt->ArrowSize;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_arrow_size_proportional(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->ArrowSizeProportional = (int)val;
@@ -5857,10 +6086,14 @@ double opt_view_arrow_size_proportional(OPT_ARGS_NUM)
     WID->view_butt[0]->value(opt->ArrowSizeProportional);
 #endif
   return opt->ArrowSizeProportional;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_arrow_head_radius(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET){
     if(val < 0.) val = 0.;
@@ -5868,10 +6101,14 @@ double opt_view_arrow_head_radius(OPT_ARGS_NUM)
     opt->ArrowRelHeadRadius = val;
   }
   return opt->ArrowRelHeadRadius;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_arrow_stem_length(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET){
     if(val < 0.) val = 0.;
@@ -5879,10 +6116,14 @@ double opt_view_arrow_stem_length(OPT_ARGS_NUM)
     opt->ArrowRelStemLength = val;
   }
   return opt->ArrowRelStemLength;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_arrow_stem_radius(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET){
     if(val < 0.) val = 0.;
@@ -5890,10 +6131,14 @@ double opt_view_arrow_stem_radius(OPT_ARGS_NUM)
     opt->ArrowRelStemRadius = val;
   }
   return opt->ArrowRelStemRadius;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_normals(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Normals = val;
@@ -5903,10 +6148,14 @@ double opt_view_normals(OPT_ARGS_NUM)
     WID->view_value[0]->value(opt->Normals);
 #endif
   return opt->Normals;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_tangents(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Tangents = val;
@@ -5916,10 +6165,14 @@ double opt_view_tangents(OPT_ARGS_NUM)
     WID->view_value[1]->value(opt->Tangents);
 #endif
   return opt->Tangents;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_displacement_factor(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->DisplacementFactor = val;
@@ -5930,10 +6183,14 @@ double opt_view_displacement_factor(OPT_ARGS_NUM)
     WID->view_value[63]->value(opt->DisplacementFactor);
 #endif
   return opt->DisplacementFactor;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_fake_transparency(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->FakeTransparency = (int)val;
@@ -5944,10 +6201,14 @@ double opt_view_fake_transparency(OPT_ARGS_NUM)
     WID->view_butt[24]->value(opt->FakeTransparency);
 #endif
   return opt->FakeTransparency;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_explode(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Explode = val;
@@ -5958,10 +6219,14 @@ double opt_view_explode(OPT_ARGS_NUM)
     WID->view_value[12]->value(opt->Explode);
 #endif
   return opt->Explode;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_visible(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Visible = (int)val;
@@ -5971,10 +6236,14 @@ double opt_view_visible(OPT_ARGS_NUM)
     WID->m_toggle_butt[num]->value(opt->Visible);
 #endif
   return opt->Visible;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_intervals_type(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->IntervalsType = (int)val;
@@ -5988,10 +6257,14 @@ double opt_view_intervals_type(OPT_ARGS_NUM)
   }
 #endif
   return opt->IntervalsType;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_saturate_values(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->SaturateValues = (int)val;
@@ -6003,10 +6276,14 @@ double opt_view_saturate_values(OPT_ARGS_NUM)
   }
 #endif
   return opt->SaturateValues;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_max_recursion_level(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->MaxRecursionLevel = (int)val;
@@ -6022,10 +6299,14 @@ double opt_view_max_recursion_level(OPT_ARGS_NUM)
   }
 #endif
   return opt->MaxRecursionLevel;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_target_error(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->TargetError = val;
@@ -6041,10 +6322,14 @@ double opt_view_target_error(OPT_ARGS_NUM)
   }
 #endif
   return opt->TargetError;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_type(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Type = (int)val;
@@ -6058,10 +6343,14 @@ double opt_view_type(OPT_ARGS_NUM)
   }
 #endif
   return opt->Type;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_auto_position(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->AutoPosition = (int)val;
@@ -6073,10 +6362,14 @@ double opt_view_auto_position(OPT_ARGS_NUM)
   }
 #endif
   return opt->AutoPosition;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_position0(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Position[0] = (int)val;
@@ -6086,10 +6379,14 @@ double opt_view_position0(OPT_ARGS_NUM)
     WID->view_value[20]->value(opt->Position[0]);
 #endif
   return opt->Position[0];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_position1(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Position[1] = (int)val;
@@ -6099,10 +6396,14 @@ double opt_view_position1(OPT_ARGS_NUM)
     WID->view_value[21]->value(opt->Position[1]);
 #endif
   return opt->Position[1];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_size0(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Size[0] = (int)val;
@@ -6112,10 +6413,14 @@ double opt_view_size0(OPT_ARGS_NUM)
     WID->view_value[22]->value(opt->Size[0]);
 #endif
   return opt->Size[0];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_size1(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Size[1] = (int)val;
@@ -6125,10 +6430,14 @@ double opt_view_size1(OPT_ARGS_NUM)
     WID->view_value[23]->value(opt->Size[1]);
 #endif
   return opt->Size[1];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_axes(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Axes = (int)val;
@@ -6142,9 +6451,13 @@ double opt_view_axes(OPT_ARGS_NUM)
   }
 #endif
   return opt->Axes;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_axes_mikado(OPT_ARGS_NUM){
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->AxesMikado = (int)val;
@@ -6155,10 +6468,14 @@ double opt_view_axes_mikado(OPT_ARGS_NUM){
   }
 #endif
   return opt->AxesMikado;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_axes_auto_position(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->AxesAutoPosition = (int)val;
@@ -6170,10 +6487,14 @@ double opt_view_axes_auto_position(OPT_ARGS_NUM)
   }
 #endif
   return opt->AxesAutoPosition;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_axes_xmin(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->AxesPosition[0] = val;
@@ -6184,10 +6505,14 @@ double opt_view_axes_xmin(OPT_ARGS_NUM)
   }
 #endif
   return opt->AxesPosition[0];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_axes_xmax(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->AxesPosition[1] = val;
@@ -6198,10 +6523,14 @@ double opt_view_axes_xmax(OPT_ARGS_NUM)
   }
 #endif
   return opt->AxesPosition[1];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_axes_ymin(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->AxesPosition[2] = val;
@@ -6212,10 +6541,14 @@ double opt_view_axes_ymin(OPT_ARGS_NUM)
   }
 #endif
   return opt->AxesPosition[2];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_axes_ymax(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->AxesPosition[3] = val;
@@ -6226,10 +6559,14 @@ double opt_view_axes_ymax(OPT_ARGS_NUM)
   }
 #endif
   return opt->AxesPosition[3];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_axes_zmin(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->AxesPosition[4] = val;
@@ -6240,10 +6577,14 @@ double opt_view_axes_zmin(OPT_ARGS_NUM)
   }
 #endif
   return opt->AxesPosition[4];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_axes_zmax(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->AxesPosition[5] = val;
@@ -6254,10 +6595,14 @@ double opt_view_axes_zmax(OPT_ARGS_NUM)
   }
 #endif
   return opt->AxesPosition[5];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_axes_tics0(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->AxesTics[0] = (int)val;
@@ -6268,10 +6613,14 @@ double opt_view_axes_tics0(OPT_ARGS_NUM)
   }
 #endif
   return opt->AxesTics[0];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_axes_tics1(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->AxesTics[1] = (int)val;
@@ -6282,10 +6631,14 @@ double opt_view_axes_tics1(OPT_ARGS_NUM)
   }
 #endif
   return opt->AxesTics[1];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_axes_tics2(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->AxesTics[2] = (int)val;
@@ -6296,10 +6649,14 @@ double opt_view_axes_tics2(OPT_ARGS_NUM)
   }
 #endif
   return opt->AxesTics[2];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_nb_iso(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->NbIso = (int)val;
@@ -6310,10 +6667,14 @@ double opt_view_nb_iso(OPT_ARGS_NUM)
     WID->view_value[30]->value(opt->NbIso);
 #endif
   return opt->NbIso;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_boundary(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Boundary = (int)val;
@@ -6327,10 +6688,14 @@ double opt_view_boundary(OPT_ARGS_NUM)
   }
 #endif
   return opt->Boundary;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_light(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->Light = (int)val;
@@ -6343,10 +6708,14 @@ double opt_view_light(OPT_ARGS_NUM)
   }
 #endif
   return opt->Light;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_light_two_side(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->LightTwoSide = (int)val;
@@ -6356,10 +6725,14 @@ double opt_view_light_two_side(OPT_ARGS_NUM)
     WID->view_butt[9]->value(opt->LightTwoSide);
 #endif
   return opt->LightTwoSide;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_light_lines(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->LightLines = (int)val;
@@ -6369,10 +6742,14 @@ double opt_view_light_lines(OPT_ARGS_NUM)
     WID->view_butt[8]->value(opt->LightLines);
 #endif
   return opt->LightLines;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_smooth_normals(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->SmoothNormals = (int)val;
@@ -6383,10 +6760,14 @@ double opt_view_smooth_normals(OPT_ARGS_NUM)
     WID->view_butt[12]->value(opt->SmoothNormals);
 #endif
   return opt->SmoothNormals;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_angle_smooth_normals(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->AngleSmoothNormals = val;
@@ -6397,10 +6778,14 @@ double opt_view_angle_smooth_normals(OPT_ARGS_NUM)
     WID->view_value[10]->value(opt->AngleSmoothNormals);
 #endif
   return opt->AngleSmoothNormals;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_show_element(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->ShowElement = (int)val;
@@ -6411,10 +6796,14 @@ double opt_view_show_element(OPT_ARGS_NUM)
     WID->view_butt[10]->value(opt->ShowElement);
 #endif
   return opt->ShowElement;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_show_time(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->ShowTime = (int)val;
@@ -6426,10 +6815,14 @@ double opt_view_show_time(OPT_ARGS_NUM)
     WID->view_choice[12]->value(opt->ShowTime);
 #endif
   return opt->ShowTime;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_show_scale(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->ShowScale = (int)val;
@@ -6439,10 +6832,14 @@ double opt_view_show_scale(OPT_ARGS_NUM)
     WID->view_butt[4]->value(opt->ShowScale);
 #endif
   return opt->ShowScale;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_draw_strings(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->DrawStrings = (int)val;
@@ -6452,10 +6849,14 @@ double opt_view_draw_strings(OPT_ARGS_NUM)
     WID->view_butt[5]->value(opt->DrawStrings);
 #endif
   return opt->DrawStrings;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_draw_points(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->DrawPoints = (int)val;
@@ -6470,10 +6871,14 @@ double opt_view_draw_points(OPT_ARGS_NUM)
   }
 #endif
   return opt->DrawPoints;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_draw_lines(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->DrawLines = (int)val;
@@ -6488,10 +6893,14 @@ double opt_view_draw_lines(OPT_ARGS_NUM)
   }
 #endif
   return opt->DrawLines;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_draw_triangles(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->DrawTriangles = (int)val;
@@ -6506,10 +6915,14 @@ double opt_view_draw_triangles(OPT_ARGS_NUM)
   }
 #endif
   return opt->DrawTriangles;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_draw_quadrangles(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->DrawQuadrangles = (int)val;
@@ -6524,10 +6937,14 @@ double opt_view_draw_quadrangles(OPT_ARGS_NUM)
   }
 #endif
   return opt->DrawQuadrangles;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_draw_tetrahedra(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->DrawTetrahedra = (int)val;
@@ -6542,10 +6959,14 @@ double opt_view_draw_tetrahedra(OPT_ARGS_NUM)
   }
 #endif
   return opt->DrawTetrahedra;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_draw_hexahedra(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->DrawHexahedra = (int)val;
@@ -6560,10 +6981,14 @@ double opt_view_draw_hexahedra(OPT_ARGS_NUM)
   }
 #endif
   return opt->DrawHexahedra;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_draw_prisms(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->DrawPrisms = (int)val;
@@ -6578,10 +7003,14 @@ double opt_view_draw_prisms(OPT_ARGS_NUM)
   }
 #endif
   return opt->DrawPrisms;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_draw_pyramids(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->DrawPyramids = (int)val;
@@ -6596,10 +7025,14 @@ double opt_view_draw_pyramids(OPT_ARGS_NUM)
   }
 #endif
   return opt->DrawPyramids;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_draw_scalars(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->DrawScalars = (int)val;
@@ -6614,10 +7047,14 @@ double opt_view_draw_scalars(OPT_ARGS_NUM)
   }
 #endif
   return opt->DrawScalars;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_draw_vectors(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->DrawVectors = (int)val;
@@ -6632,10 +7069,14 @@ double opt_view_draw_vectors(OPT_ARGS_NUM)
   }
 #endif
   return opt->DrawVectors;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_draw_tensors(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->DrawTensors = (int)val;
@@ -6650,10 +7091,14 @@ double opt_view_draw_tensors(OPT_ARGS_NUM)
   }
 #endif
   return opt->DrawTensors;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_draw_skin_only(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->DrawSkinOnly = (int)val;
@@ -6664,10 +7109,14 @@ double opt_view_draw_skin_only(OPT_ARGS_NUM)
     WID->view_butt[2]->value(opt->DrawSkinOnly);
 #endif
   return opt->DrawSkinOnly;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_scale_type(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->ScaleType = (int)val;
@@ -6681,10 +7130,14 @@ double opt_view_scale_type(OPT_ARGS_NUM)
   }
 #endif
   return opt->ScaleType;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_range_type(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->RangeType = (int)val;
@@ -6699,10 +7152,14 @@ double opt_view_range_type(OPT_ARGS_NUM)
   }
 #endif
   return opt->RangeType;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_tensor_type(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->TensorType = (int)val;
@@ -6716,10 +7173,14 @@ double opt_view_tensor_type(OPT_ARGS_NUM)
    }
  #endif
   return opt->TensorType;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_vector_type(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->VectorType = (int)val;
@@ -6733,10 +7194,14 @@ double opt_view_vector_type(OPT_ARGS_NUM)
   }
 #endif
   return opt->VectorType;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_glyph_location(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->GlyphLocation = (int)val;
@@ -6750,10 +7215,14 @@ double opt_view_glyph_location(OPT_ARGS_NUM)
   }
 #endif
   return opt->GlyphLocation;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_center_glyphs(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->CenterGlyphs = val ? 1 : 0;
@@ -6765,10 +7234,14 @@ double opt_view_center_glyphs(OPT_ARGS_NUM)
   }
 #endif
   return opt->CenterGlyphs;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_point_size(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->PointSize = val;
@@ -6778,10 +7251,14 @@ double opt_view_point_size(OPT_ARGS_NUM)
     WID->view_value[61]->value(opt->PointSize);
 #endif
   return opt->PointSize;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_line_width(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->LineWidth = val;
@@ -6791,10 +7268,14 @@ double opt_view_line_width(OPT_ARGS_NUM)
     WID->view_value[62]->value(opt->LineWidth);
 #endif
   return opt->LineWidth;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_point_type(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->PointType = (int)val;
@@ -6808,10 +7289,14 @@ double opt_view_point_type(OPT_ARGS_NUM)
   }
 #endif
   return opt->PointType;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_line_type(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->LineType = (int)val;
@@ -6825,10 +7310,14 @@ double opt_view_line_type(OPT_ARGS_NUM)
   }
 #endif
   return opt->LineType;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_colormap_alpha(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->CT.dpar[COLORTABLE_ALPHA] = val;
@@ -6841,10 +7330,14 @@ double opt_view_colormap_alpha(OPT_ARGS_NUM)
   }
 #endif
   return opt->CT.dpar[COLORTABLE_ALPHA];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_colormap_alpha_power(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->CT.dpar[COLORTABLE_ALPHAPOW] = val;
@@ -6857,10 +7350,14 @@ double opt_view_colormap_alpha_power(OPT_ARGS_NUM)
   }
 #endif
   return opt->CT.dpar[COLORTABLE_ALPHAPOW];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_colormap_beta(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->CT.dpar[COLORTABLE_BETA] = val;
@@ -6873,10 +7370,14 @@ double opt_view_colormap_beta(OPT_ARGS_NUM)
   }
 #endif
   return opt->CT.dpar[COLORTABLE_BETA];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_colormap_bias(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->CT.dpar[COLORTABLE_BIAS] = val;
@@ -6889,10 +7390,14 @@ double opt_view_colormap_bias(OPT_ARGS_NUM)
   }
 #endif
   return opt->CT.dpar[COLORTABLE_BIAS];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_colormap_curvature(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->CT.dpar[COLORTABLE_CURVATURE] = val;
@@ -6905,10 +7410,14 @@ double opt_view_colormap_curvature(OPT_ARGS_NUM)
   }
 #endif
   return opt->CT.dpar[COLORTABLE_CURVATURE];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_colormap_invert(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->CT.ipar[COLORTABLE_INVERT] = (int)val;
@@ -6921,10 +7430,14 @@ double opt_view_colormap_invert(OPT_ARGS_NUM)
   }
 #endif
   return opt->CT.ipar[COLORTABLE_INVERT];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_colormap_number(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->CT.ipar[COLORTABLE_NUMBER] = (int)val;
@@ -6937,10 +7450,14 @@ double opt_view_colormap_number(OPT_ARGS_NUM)
   }
 #endif
   return opt->CT.ipar[COLORTABLE_NUMBER];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_colormap_rotation(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->CT.ipar[COLORTABLE_ROTATION] = (int)val;
@@ -6953,10 +7470,14 @@ double opt_view_colormap_rotation(OPT_ARGS_NUM)
   }
 #endif
   return opt->CT.ipar[COLORTABLE_ROTATION];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_colormap_swap(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->CT.ipar[COLORTABLE_SWAP] = (int)val;
@@ -6969,10 +7490,14 @@ double opt_view_colormap_swap(OPT_ARGS_NUM)
   }
 #endif
   return opt->CT.ipar[COLORTABLE_SWAP];
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_external_view(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->ExternalViewIndex = (int)val;
@@ -6989,10 +7514,14 @@ double opt_view_external_view(OPT_ARGS_NUM)
   }
 #endif
   return opt->ExternalViewIndex;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_gen_raise_view(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->ViewIndexForGenRaise = (int)val;
@@ -7009,10 +7538,14 @@ double opt_view_gen_raise_view(OPT_ARGS_NUM)
   }
 #endif
   return opt->ViewIndexForGenRaise;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_gen_raise_factor(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->GenRaiseFactor = val;
@@ -7023,10 +7556,14 @@ double opt_view_gen_raise_factor(OPT_ARGS_NUM)
     WID->view_value[2]->value(opt->GenRaiseFactor);
 #endif
   return opt->GenRaiseFactor;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_use_gen_raise(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->UseGenRaise = (int)val;
@@ -7039,10 +7576,14 @@ double opt_view_use_gen_raise(OPT_ARGS_NUM)
   }
 #endif
   return opt->UseGenRaise;
+#else
+  return 0.;
+#endif
 }
 
 double opt_view_use_stipple(OPT_ARGS_NUM)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->UseStipple = (int)val;
@@ -7053,6 +7594,9 @@ double opt_view_use_stipple(OPT_ARGS_NUM)
   }
 #endif
   return opt->UseStipple;
+#else
+  return 0.;
+#endif
 }
 
 double opt_print_format(OPT_ARGS_NUM)
@@ -7630,6 +8174,7 @@ unsigned int opt_mesh_color_19(OPT_ARGS_COL){ return opt_mesh_color_(19, num, ac
 
 unsigned int opt_view_color_points(OPT_ARGS_COL)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0);
   if(action & GMSH_SET) {
     opt->color.point = val;
@@ -7641,10 +8186,14 @@ unsigned int opt_view_color_points(OPT_ARGS_COL)
   }
 #endif
   return opt->color.point;
+#else
+  return 0;
+#endif
 }
 
 unsigned int opt_view_color_lines(OPT_ARGS_COL)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0);
   if(action & GMSH_SET) {
     opt->color.line = val;
@@ -7656,10 +8205,14 @@ unsigned int opt_view_color_lines(OPT_ARGS_COL)
   }
 #endif
   return opt->color.line;
+#else
+  return 0;
+#endif
 }
 
 unsigned int opt_view_color_triangles(OPT_ARGS_COL)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0);
   if(action & GMSH_SET) {
     opt->color.triangle = val;
@@ -7671,10 +8224,14 @@ unsigned int opt_view_color_triangles(OPT_ARGS_COL)
   }
 #endif
   return opt->color.triangle;
+#else
+  return 0;
+#endif
 }
 
 unsigned int opt_view_color_quadrangles(OPT_ARGS_COL)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0);
   if(action & GMSH_SET) {
     opt->color.quadrangle = val;
@@ -7686,10 +8243,14 @@ unsigned int opt_view_color_quadrangles(OPT_ARGS_COL)
   }
 #endif
   return opt->color.quadrangle;
+#else
+  return 0;
+#endif
 }
 
 unsigned int opt_view_color_tetrahedra(OPT_ARGS_COL)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0);
   if(action & GMSH_SET) {
     opt->color.tetrahedron = val;
@@ -7701,10 +8262,14 @@ unsigned int opt_view_color_tetrahedra(OPT_ARGS_COL)
   }
 #endif
   return opt->color.tetrahedron;
+#else
+  return 0;
+#endif
 }
 
 unsigned int opt_view_color_hexahedra(OPT_ARGS_COL)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0);
   if(action & GMSH_SET) {
     opt->color.hexahedron = val;
@@ -7716,10 +8281,14 @@ unsigned int opt_view_color_hexahedra(OPT_ARGS_COL)
   }
 #endif
   return opt->color.hexahedron;
+#else
+  return 0;
+#endif
 }
 
 unsigned int opt_view_color_prisms(OPT_ARGS_COL)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0);
   if(action & GMSH_SET) {
     opt->color.prism = val;
@@ -7731,10 +8300,14 @@ unsigned int opt_view_color_prisms(OPT_ARGS_COL)
   }
 #endif
   return opt->color.prism;
+#else
+  return 0;
+#endif
 }
 
 unsigned int opt_view_color_pyramids(OPT_ARGS_COL)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0);
   if(action & GMSH_SET) {
     opt->color.pyramid = val;
@@ -7746,10 +8319,14 @@ unsigned int opt_view_color_pyramids(OPT_ARGS_COL)
   }
 #endif
   return opt->color.pyramid;
+#else
+  return 0;
+#endif
 }
 
 unsigned int opt_view_color_tangents(OPT_ARGS_COL)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0);
   if(action & GMSH_SET) {
     opt->color.tangents = val;
@@ -7761,10 +8338,14 @@ unsigned int opt_view_color_tangents(OPT_ARGS_COL)
   }
 #endif
   return opt->color.tangents;
+#else
+  return 0;
+#endif
 }
 
 unsigned int opt_view_color_normals(OPT_ARGS_COL)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0);
   if(action & GMSH_SET) {
     opt->color.normals = val;
@@ -7776,10 +8357,14 @@ unsigned int opt_view_color_normals(OPT_ARGS_COL)
   }
 #endif
   return opt->color.normals;
+#else
+  return 0;
+#endif
 }
 
 unsigned int opt_view_color_text2d(OPT_ARGS_COL)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0);
   if(action & GMSH_SET) {
     opt->color.text2d = val;
@@ -7790,10 +8375,14 @@ unsigned int opt_view_color_text2d(OPT_ARGS_COL)
   }
 #endif
   return opt->color.text2d;
+#else
+  return 0;
+#endif
 }
 
 unsigned int opt_view_color_text3d(OPT_ARGS_COL)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0);
   if(action & GMSH_SET) {
     opt->color.text3d = val;
@@ -7804,10 +8393,14 @@ unsigned int opt_view_color_text3d(OPT_ARGS_COL)
   }
 #endif
   return opt->color.text3d;
+#else
+  return 0;
+#endif
 }
 
 unsigned int opt_view_color_axes(OPT_ARGS_COL)
 {
+#if !defined(HAVE_NO_POST)
   GET_VIEW(0);
   if(action & GMSH_SET) {
     opt->color.axes = val;
@@ -7818,4 +8411,7 @@ unsigned int opt_view_color_axes(OPT_ARGS_COL)
   }
 #endif
   return opt->color.axes;
+#else
+  return 0;
+#endif
 }

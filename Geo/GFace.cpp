@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.60 2008-03-20 11:44:04 geuzaine Exp $
+// $Id: GFace.cpp,v 1.61 2008-04-28 10:10:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -110,6 +110,14 @@ SBoundingBox3d GFace::bounds() const
       res += mesh_vertices[i]->point();
   }
   return res;
+}
+
+surface_params GFace::getSurfaceParams() const
+{
+  surface_params p;
+  p.radius = p.radius2 = p.height = p.cx = p.cy = p.cz = 0.;
+  Msg(GERROR, "Empty surface parameters for this type of surface");
+  return p;
 }
 
 std::list<GVertex*> GFace::vertices() const
@@ -430,7 +438,7 @@ void GFace::getMeanPlaneData(double plan[3][3]) const
       plan[i][j] = meanPlane.plan[i][j];
 }
 
-double GFace::curvature (const SPoint2 &param) const
+double GFace::curvature(const SPoint2 &param) const
 {
   if (geomType() == Plane) return 0;
 
@@ -464,6 +472,12 @@ double GFace::curvature (const SPoint2 &param) const
   // Msg(INFO, "c = %g detJ %g", c, detJ);
 
   return c;
+}
+
+double GFace::getMetricEigenvalue(const SPoint2 &)
+{
+  Msg(GERROR, "Metric eigenvalue is not implemented for this type of surface");
+  return 0.;
 }
 
 void GFace::XYZtoUV(const double X, const double Y, const double Z,
@@ -559,6 +573,12 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p) const
   double U, V;
   XYZtoUV(p.x(), p.y(), p.z(), U, V, 1.0);
   return SPoint2(U, V);
+}
+
+GPoint GFace::closestPoint(const SPoint3 & queryPoint) const
+{
+  Msg(GERROR, "Closet point not implemented for this type of surface");
+  return GPoint(0, 0, 0);
 }
 
 int GFace::containsParam(const SPoint2 &pt) const

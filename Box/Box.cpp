@@ -1,4 +1,4 @@
-// $Id: Box.cpp,v 1.51 2008-04-13 18:52:51 geuzaine Exp $
+// $Id: Box.cpp,v 1.52 2008-04-28 10:10:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -82,6 +82,7 @@ int GMSHBOX(int argc, char *argv[])
   OpenProject(CTX.filename);
   for(unsigned int i = 1; i < CTX.files.size(); i++)
     MergeFile(CTX.files[i].c_str());
+#if !defined(HAVE_NO_POST)
   if(CTX.bgm_filename) {
     MergeFile(CTX.bgm_filename);
     if(PView::list.size())
@@ -89,6 +90,7 @@ int GMSHBOX(int argc, char *argv[])
     else
       fprintf(stderr, ERROR_STR "Invalid background mesh (no view)\n");
   }
+#endif
   if(CTX.batch > 0) {
     GModel::current()->mesh(CTX.batch);
     CreateOutputFile(CTX.output_filename, CTX.mesh.format);

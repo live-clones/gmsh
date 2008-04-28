@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.34 2008-04-22 13:27:43 remacle Exp $
+// $Id: Field.cpp,v 1.35 2008-04-28 10:10:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -37,8 +37,11 @@
 #include "GeoInterpolation.h"
 #include "GModel.h"
 #include "Message.h"
+
+#if !defined(HAVE_NO_POST)
 #include "OctreePost.h"
 #include "PViewDataList.h"
+#endif
 
 #define MAX_LC 1.e22
 
@@ -916,6 +919,7 @@ public:
 };
 #endif
 
+#if !defined(HAVE_NO_POST)
 class PostViewField:public Field
 {
   OctreePost *octree;
@@ -978,6 +982,7 @@ public:int view_index;
     return dialogBox;
   }
 };
+#endif
 
 class MinField:public Field
 {
@@ -1160,7 +1165,9 @@ FieldManager::FieldManager()
   map_type_name["Threshold"] = new FieldFactoryT < ThresholdField > ();
   map_type_name["Box"] = new FieldFactoryT < BoxField > ();
   map_type_name["LonLat"] = new FieldFactoryT < LonLatField > ();
+#if !defined(HAVE_NO_POST)
   map_type_name["PostView"] = new FieldFactoryT < PostViewField > ();
+#endif
   map_type_name["Gradient"] = new FieldFactoryT < GradientField > ();
   map_type_name["Min"] = new FieldFactoryT < MinField > ();
   map_type_name["Max"] = new FieldFactoryT < MaxField > ();
@@ -1206,6 +1213,7 @@ Field::Field()
 {
 }
 
+#if !defined(HAVE_NO_POST)
 void Field::put_on_view(PView * view, int comp)
 {
   PViewDataList *data = dynamic_cast < PViewDataList * >(view->getData());
@@ -1246,6 +1254,7 @@ void Field::put_on_view(PView * view, int comp)
   data->finalize();
   view->setChanged(true);
 }
+#endif
 
 void FieldManager::set_background_mesh(int iView)
 {

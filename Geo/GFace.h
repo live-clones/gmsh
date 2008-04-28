@@ -96,7 +96,7 @@ class GFace : public GEntity
   virtual SBoundingBox3d bounds() const;
 
   // retrieve surface params
-  virtual surface_params getSurfaceParams() const { throw; }
+  virtual surface_params getSurfaceParams() const;
 
   // Return the point on the face corresponding to the given parameter.
   virtual GPoint point(double par1, double par2) const = 0;
@@ -114,7 +114,7 @@ class GFace : public GEntity
   // metric at a given point this is a special feature for
   // stereographic mappings of the sphere that is used in 2D mesh
   // generation !
-  virtual double getMetricEigenvalue(const SPoint2 &){ throw; }
+  virtual double getMetricEigenvalue(const SPoint2 &);
 
   // Return the parmater location on the face given a point in space
   // that is on the face.
@@ -124,7 +124,7 @@ class GFace : public GEntity
   virtual int containsParam(const SPoint2 &pt) const;
 
   // Return the point on the face closest to the given point.
-  virtual GPoint closestPoint(const SPoint3 & queryPoint) const { throw; }
+  virtual GPoint closestPoint(const SPoint3 & queryPoint) const;
 
   // Return the normal to the face at the given parameter location.
   virtual SVector3 normal(const SPoint2 &param) const = 0;

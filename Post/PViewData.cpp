@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.19 2008-04-22 09:29:29 geuzaine Exp $
+// $Id: PViewData.cpp,v 1.20 2008-04-28 10:11:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -91,4 +91,21 @@ int PViewData::getInterpolationScheme(int type, std::vector<List_T*> &p)
     return p.size();
   }
   return 0;
+}
+
+void PViewData::smooth()
+{
+  Msg(GERROR, "Smoothing is not implemented for this type of data");
+}
+
+bool PViewData::combineTime(nameData &nd)
+{ 
+  Msg(GERROR, "Combine time is not implemented for this type of data");
+  return false; 
+}
+
+bool PViewData::combineSpace(nameData &nd)
+{ 
+  Msg(GERROR, "Combine space is not implemented for this type of data");
+  return false; 
 }

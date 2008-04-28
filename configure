@@ -1265,6 +1265,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-gsl            use GSL as numerical toolkit (default=yes)
   --enable-gui            build the graphical user interface (default=yes)
+  --enable-post           build the post-processing module (default=yes)
   --enable-cygwin         use the Cygwin library on Windows (default=no)
   --enable-parallel       enable parallel version (default=no)
   --enable-jpeg           enable JPEG support (default=yes)
@@ -1834,6 +1835,11 @@ fi
 # Check whether --enable-gui was given.
 if test "${enable_gui+set}" = set; then
   enableval=$enable_gui;
+fi
+
+# Check whether --enable-post was given.
+if test "${enable_post+set}" = set; then
+  enableval=$enable_post;
 fi
 
 # Check whether --enable-cygwin was given.
@@ -3625,11 +3631,9 @@ echo "$as_me: error: Could not find the library archiver, aborting." >&2;}
     ;;
 esac
 
-GMSH_DIRS="Common DataStr Geo Mesh Post Numeric Parallel Parser Plugin"
-
 if test "x$enable_gui" != "xno"; then
 
-  GMSH_DIRS="${GMSH_DIRS} Graphics Fltk"
+  GMSH_DIRS="Common DataStr Geo Mesh Post Numeric Parallel Parser Plugin Graphics Fltk"
   GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshPlugin"
   GMSH_LIBS="${GMSH_LIBS} -lGmshMesh -lGmshGeo -lGmshPost -lGmshCommon"
   GMSH_LIBS="${GMSH_LIBS} -lGmshDataStr -lGmshNumeric -lGmshParallel"
@@ -4090,10 +4094,18 @@ fi
 
 else
 
-  GMSH_DIRS="${GMSH_DIRS} Box"
-  GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshPlugin"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshGeo -lGmshMesh -lGmshPost -lGmshCommon"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshDataStr -lGmshNumeric -lGmshParallel"
+  if test "x$enable_post" != "xno"; then
+    GMSH_DIRS="Common DataStr Geo Mesh Post Numeric Parallel Parser Plugin Box"
+    GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshPlugin"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshGeo -lGmshMesh -lGmshPost -lGmshCommon"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshDataStr -lGmshNumeric -lGmshParallel"
+  else
+    GMSH_DIRS="Common DataStr Geo Mesh Numeric Parallel Parser Box"
+    GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshGeo -lGmshMesh -lGmshCommon"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshDataStr -lGmshNumeric -lGmshParallel"
+    FLAGS="-DHAVE_NO_POST ${FLAGS}"
+  fi
 
     ZLIB=""
   if test "x$enable_zlib" != "xno"; then
@@ -6868,7 +6880,7 @@ if test $ac_cv_sizeof_size_t != 4; then
     { echo "$as_me:$LINENO: WARNING: Unsupported size of size_t - this may affect FNV hashing." >&5
 echo "$as_me: WARNING: Unsupported size of size_t - this may affect FNV hashing." >&2;}
   else
-    FLAGS="$FLAGS -DHAVE_64BIT_SIZE_T"
+    FLAGS="${FLAGS} -DHAVE_64BIT_SIZE_T"
   fi
 fi
 

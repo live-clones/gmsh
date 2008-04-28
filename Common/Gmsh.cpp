@@ -1,4 +1,4 @@
-// $Id: Gmsh.cpp,v 1.4 2008-04-13 20:52:07 geuzaine Exp $
+// $Id: Gmsh.cpp,v 1.5 2008-04-28 10:10:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,12 +19,16 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <string>
 #include "Parser.h"
 #include "Options.h"
 #include "CommandLine.h"
 #include "OS.h"
-#include "PluginManager.h"
 #include "Numeric.h"
+
+#if !defined(HAVE_NO_POST)
+#include "PluginManager.h"
+#endif
 
 int GmshInitialize(int argc, char **argv)
 {
@@ -41,8 +45,10 @@ int GmshInitialize(int argc, char **argv)
   // Make sure we have enough resources (stack)
   CheckResources();
   
+#if !defined(HAVE_NO_POST)
   // Initialize the default plugins
   GMSH_PluginManager::instance()->registerDefaultPlugins();
+#endif
 
   // Check for buggy obsolete GSL versions
   check_gsl();

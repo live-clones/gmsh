@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.310 2008-04-24 17:29:53 geuzaine Exp $
+// $Id: Gmsh.y,v 1.311 2008-04-28 10:10:59 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,6 @@
 #include "Message.h"
 #include "Malloc.h"
 #include "Tools.h"
-#include "PluginManager.h"
 #include "ParUtil.h"
 #include "Numeric.h"
 #include "Context.h"
@@ -35,8 +34,6 @@
 #include "GeoInterpolation.h"
 #include "Generator.h"
 #include "Draw.h"
-#include "PView.h"
-#include "PViewDataList.h"
 #include "Options.h"
 #include "Colors.h"
 #include "Parser.h"
@@ -50,6 +47,13 @@
 #include "Field.h"
 #include "BackgroundMesh.h"
 
+#if !defined(HAVE_NO_POST)
+#include "PView.h"
+#include "PViewDataList.h"
+#include "PluginManager.h"
+static PViewDataList *ViewData;
+#endif
+
 Tree_T *Symbol_T = NULL;
 
 extern Context_T CTX;
@@ -58,7 +62,6 @@ static ExtrudeParams extr;
 
 static gmshSurface *myGmshSurface = 0;
 
-static PViewDataList *ViewData;
 static List_T *ViewValueList;
 static double ViewCoord[100];
 static int *ViewNumList, ViewCoordIdx;
@@ -246,6 +249,7 @@ Printf :
 View :
     tSTRING tBIGSTR '{' Views '}' tEND
     { 
+#if !defined(HAVE_NO_POST)
       if(!strcmp($1, "View") && ViewData->finalize()){
 	ViewData->setName($2);
 	ViewData->setFileName(gmsh_yyname);
@@ -254,24 +258,29 @@ View :
       }
       else
 	delete ViewData;
+#endif
       Free($1); Free($2);
     }
   | tAlias tSTRING '[' FExpr ']' tEND
     {
+#if !defined(HAVE_NO_POST)
       if(!strcmp($2, "View")){
 	int index = (int)$4;
 	if(index >= 0 && index < (int)PView::list.size())
 	  new PView(PView::list[index], false);
       }
+#endif
       Free($2);
     }
   | tAliasWithOptions tSTRING '[' FExpr ']' tEND
     {
+#if !defined(HAVE_NO_POST)
       if(!strcmp($2, "View")){
 	int index = (int)$4;
 	if(index >= 0 && index < (int)PView::list.size())
 	  new PView(PView::list[index], true);
       }
+#endif
       Free($2);
     }
 ;
@@ -279,7 +288,9 @@ View :
 Views :
     // nothing
     {
+#if !defined(HAVE_NO_POST)
       ViewData = new PViewDataList(true); 
+#endif
     }
   | Views Element
   | Views Text2D
@@ -305,6 +316,7 @@ ElementValues :
 Element : 
     tSTRING 
     {
+#if !defined(HAVE_NO_POST)
       if(!strcmp($1, "SP")){
 	ViewValueList = ViewData->SP; ViewNumList = &ViewData->NbSP;
       }
@@ -446,30 +458,39 @@ Element :
       }
       Free($1);
       ViewCoordIdx = 0;
+#endif
     }
     '(' ElementCoords ')'
     {
+#if !defined(HAVE_NO_POST)
       if(ViewValueList){
 	for(int i = 0; i < 3; i++)
 	  for(int j = 0; j < ViewCoordIdx / 3; j++)
 	    List_Add(ViewValueList, &ViewCoord[3 * j + i]);
       }
+#endif
     }
     '{' ElementValues '}' tEND
     {
+#if !defined(HAVE_NO_POST)
       if(ViewValueList) (*ViewNumList)++;
+#endif
     }
 ;
 
 Text2DValues :
     StringExprVar
     { 
+#if !defined(HAVE_NO_POST)
       for(int i = 0; i < (int)strlen($1)+1; i++) List_Add(ViewData->T2C, &$1[i]); 
+#endif
       Free($1);
     }
   | Text2DValues ',' StringExprVar
     { 
+#if !defined(HAVE_NO_POST)
       for(int i = 0; i < (int)strlen($3)+1; i++) List_Add(ViewData->T2C, &$3[i]); 
+#endif
       Free($3);
     }
 ;
@@ -477,27 +498,35 @@ Text2DValues :
 Text2D : 
     tText2D '(' FExpr ',' FExpr ',' FExpr ')'
     { 
+#if !defined(HAVE_NO_POST)
       List_Add(ViewData->T2D, &$3); 
       List_Add(ViewData->T2D, &$5);
       List_Add(ViewData->T2D, &$7); 
       double d = List_Nbr(ViewData->T2C);
       List_Add(ViewData->T2D, &d); 
+#endif
     }
     '{' Text2DValues '}' tEND
     {
+#if !defined(HAVE_NO_POST)
       ViewData->NbT2++;
+#endif
     }
 ;
 
 Text3DValues :
     StringExprVar
     { 
+#if !defined(HAVE_NO_POST)
       for(int i = 0; i < (int)strlen($1)+1; i++) List_Add(ViewData->T3C, &$1[i]); 
+#endif
       Free($1);
     }
   | Text3DValues ',' StringExprVar
     { 
+#if !defined(HAVE_NO_POST)
       for(int i = 0; i < (int)strlen($3)+1; i++) List_Add(ViewData->T3C, &$3[i]); 
+#endif
       Free($3);
     }
 ;
@@ -505,14 +534,18 @@ Text3DValues :
 Text3D : 
     tText3D '(' FExpr ',' FExpr ',' FExpr ',' FExpr ')'
     { 
+#if !defined(HAVE_NO_POST)
       List_Add(ViewData->T3D, &$3); List_Add(ViewData->T3D, &$5);
       List_Add(ViewData->T3D, &$7); List_Add(ViewData->T3D, &$9); 
       double d = List_Nbr(ViewData->T3C);
       List_Add(ViewData->T3D, &d); 
+#endif
     }
     '{' Text3DValues '}' tEND
     {
+#if !defined(HAVE_NO_POST)
       ViewData->NbT3++;
+#endif
     }
 ;
 
@@ -520,6 +553,7 @@ InterpolationMatrix :
     tInterpolationScheme '{' RecursiveListOfListOfDouble '}' 
                          '{' RecursiveListOfListOfDouble '}'  tEND
     {
+#if !defined(HAVE_NO_POST)
       int type = 
 	(ViewData->NbSL || ViewData->NbVL) ? 1 : 
 	(ViewData->NbST || ViewData->NbVT) ? 3 : 
@@ -528,12 +562,14 @@ InterpolationMatrix :
       	(ViewData->NbSH || ViewData->NbVH) ? 12 : 
 	0;
       ViewData->setInterpolationScheme(type, $3, $6);
+#endif
     }
  |  tInterpolationScheme '{' RecursiveListOfListOfDouble '}' 
                          '{' RecursiveListOfListOfDouble '}'  
                          '{' RecursiveListOfListOfDouble '}'  
                          '{' RecursiveListOfListOfDouble '}'  tEND
     {
+#if !defined(HAVE_NO_POST)
       int type = 
 	(ViewData->NbSL || ViewData->NbVL) ? 1 : 
 	(ViewData->NbST || ViewData->NbVT) ? 3 : 
@@ -542,13 +578,16 @@ InterpolationMatrix :
       	(ViewData->NbSH || ViewData->NbVH) ? 12 : 
 	0;
       ViewData->setInterpolationScheme(type, $3, $6, $9, $12);
+#endif
     }
 ;
 
 Time :
     tTime 
     {
+#if !defined(HAVE_NO_POST)
       ViewValueList = ViewData->Time;
+#endif
     }
    '{' ElementValues '}' tEND
     {
@@ -1039,22 +1078,26 @@ Affectation :
 
   | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT FExpr tEND 
     {
+#if !defined(HAVE_NO_POST)
       try {
 	GMSH_PluginManager::instance()->setPluginOption($3, $6, $8); 
       }
       catch (...) {
 	yymsg(GERROR, "Unknown option '%s' or plugin '%s'", $6, $3);
       }
+#endif
       Free($3); Free($6);
     }
   | tPlugin '(' tSTRING ')' '.' tSTRING tAFFECT StringExpr tEND 
     {
+#if !defined(HAVE_NO_POST)
       try {
 	GMSH_PluginManager::instance()->setPluginOption($3, $6, $8); 
       }
       catch (...) {
 	yymsg(GERROR, "Unknown option '%s' or plugin '%s'", $6, $3);
       }
+#endif
       Free($3); Free($6); // FIXME: sometimes leak $8
     }
 ;
@@ -1788,6 +1831,7 @@ Delete :
     }
   | tDelete tSTRING '[' FExpr ']' tEND
     {
+#if !defined(HAVE_NO_POST)
       if(!strcmp($2, "View")){
 	int index = (int)$4;
 	if(index >= 0 && index < (int)PView::list.size())
@@ -1797,6 +1841,7 @@ Delete :
       }
       else
 	yymsg(GERROR, "Unknown command 'Delete %s'", $2);
+#endif
       Free($2);
     }
   | tDelete tSTRING tEND
@@ -1817,12 +1862,14 @@ Delete :
     }
   | tDelete tSTRING tSTRING tEND
     {
+#if !defined(HAVE_NO_POST)
       if(!strcmp($2, "Empty") && !strcmp($3, "Views")){
 	for(int i = PView::list.size() - 1; i >= 0; i--)
 	  if(PView::list[i]->getData()->empty()) delete PView::list[i];
       }
       else
 	yymsg(GERROR, "Unknown command 'Delete %s %s'", $2, $3);
+#endif
       Free($2); Free($3);
     }
 ;
@@ -1929,6 +1976,7 @@ Command :
     } 
   | tSTRING tSTRING '[' FExpr ']' StringExprVar tEND
     {
+#if !defined(HAVE_NO_POST)
       if(!strcmp($1, "Save") && !strcmp($2, "View")){
 	int index = (int)$4;
 	if(index >= 0 && index < (int)PView::list.size()){
@@ -1941,10 +1989,12 @@ Command :
       }
       else
 	yymsg(GERROR, "Unknown command '%s'", $1);
+#endif
       Free($1); Free($2); Free($6);
     }
   | tSTRING tSTRING tSTRING '[' FExpr ']' tEND
     {
+#if !defined(HAVE_NO_POST)
       if(!strcmp($1, "Background") && !strcmp($2, "Mesh")  && !strcmp($3, "View")){
 	int index = (int)$5;
 	if(index >= 0 && index < (int)PView::list.size())
@@ -1954,6 +2004,7 @@ Command :
       }
       else
 	yymsg(GERROR, "Unknown command '%s'", $1);
+#endif
       Free($1); Free($2); Free($3);
     }
   | tSTRING FExpr tEND
@@ -1977,16 +2028,19 @@ Command :
     }
    | tPlugin '(' tSTRING ')' '.' tSTRING tEND
      {
+#if !defined(HAVE_NO_POST)
        try {
 	 GMSH_PluginManager::instance()->action($3, $6, 0);
        }
        catch(...) {
 	 yymsg(GERROR, "Unknown action '%s' or plugin '%s'", $6, $3);
        }
+#endif
        Free($3); Free($6);
      }
    | tCombine tSTRING tEND
     {
+#if !defined(HAVE_NO_POST)
       if(!strcmp($2, "ElementsFromAllViews"))
 	PView::combine(false, 1, CTX.post.combine_remove_orig);
       else if(!strcmp($2, "ElementsFromVisibleViews"))
@@ -2005,6 +2059,7 @@ Command :
 	PView::combine(true, 2, CTX.post.combine_remove_orig);
       else
 	yymsg(GERROR, "Unknown 'Combine' command");
+#endif
       Free($2);
     } 
    | tExit tEND

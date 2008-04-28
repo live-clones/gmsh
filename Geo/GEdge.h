@@ -66,7 +66,7 @@ class GEdge : public GEntity {
   virtual GPoint point(double p) const = 0;
 
   // Get the closest point on the edge to the given point.
-  virtual GPoint closestPoint(const SPoint3 & queryPoint) const { throw; }
+  virtual GPoint closestPoint(const SPoint3 & queryPoint) const;
 
   // True if the edge contains the given parameter.
   virtual int containsParam(double pt) const;

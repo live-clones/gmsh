@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.153 2008-04-23 20:49:41 geuzaine Exp $
+dnl $Id: configure.in,v 1.154 2008-04-28 10:10:51 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 dnl
@@ -89,6 +89,9 @@ AC_ARG_ENABLE(gsl,
 AC_ARG_ENABLE(gui,
               AC_HELP_STRING([--enable-gui],
                              [build the graphical user interface (default=yes)]))
+AC_ARG_ENABLE(post,
+              AC_HELP_STRING([--enable-post],
+                             [build the post-processing module (default=yes)]))
 AC_ARG_ENABLE(cygwin,
               AC_HELP_STRING([--enable-cygwin],
                              [use the Cygwin library on Windows (default=no)]))
@@ -199,13 +202,10 @@ case "$UNAME" in
     ;;
 esac
 
-dnl Set default subdirectories and libraries
-GMSH_DIRS="Common DataStr Geo Mesh Post Numeric Parallel Parser Plugin"
-
 dnl Choose blackbox or GUI version
 if test "x$enable_gui" != "xno"; then
 
-  GMSH_DIRS="${GMSH_DIRS} Graphics Fltk"
+  GMSH_DIRS="Common DataStr Geo Mesh Post Numeric Parallel Parser Plugin Graphics Fltk"
   GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshPlugin"
   GMSH_LIBS="${GMSH_LIBS} -lGmshMesh -lGmshGeo -lGmshPost -lGmshCommon"
   GMSH_LIBS="${GMSH_LIBS} -lGmshDataStr -lGmshNumeric -lGmshParallel"
@@ -334,10 +334,18 @@ if test "x$enable_gui" != "xno"; then
 
 else
 
-  GMSH_DIRS="${GMSH_DIRS} Box"
-  GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshPlugin"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshGeo -lGmshMesh -lGmshPost -lGmshCommon"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshDataStr -lGmshNumeric -lGmshParallel"
+  if test "x$enable_post" != "xno"; then
+    GMSH_DIRS="Common DataStr Geo Mesh Post Numeric Parallel Parser Plugin Box"
+    GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser -lGmshPlugin"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshGeo -lGmshMesh -lGmshPost -lGmshCommon"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshDataStr -lGmshNumeric -lGmshParallel"
+  else
+    GMSH_DIRS="Common DataStr Geo Mesh Numeric Parallel Parser Box"
+    GMSH_LIBS="-Llib Box/Main.o -lGmshBox -lGmshParser"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshGeo -lGmshMesh -lGmshCommon"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshDataStr -lGmshNumeric -lGmshParallel"
+    FLAGS="-DHAVE_NO_POST ${FLAGS}"
+  fi
 
   dnl Check for libz
   ZLIB=""
@@ -779,14 +787,13 @@ case "$UNAME" in
 
 esac
 
-dnl Compiler characteristics
 dnl Check sizeof size_t (flag as 64 if not 32)
 AC_CHECK_SIZEOF([size_t])
 if test $ac_cv_sizeof_size_t != 4; then
   if test $ac_cv_sizeof_size_t != 8; then
     AC_MSG_WARN([Unsupported size of size_t - this may affect FNV hashing.])
   else
-    FLAGS="$FLAGS -DHAVE_64BIT_SIZE_T"
+    FLAGS="${FLAGS} -DHAVE_64BIT_SIZE_T"
   fi
 fi
 

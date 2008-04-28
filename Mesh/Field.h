@@ -24,7 +24,10 @@
 #include <list>
 #include <string.h>
 #include "Geo.h"
+
+#if !defined(HAVE_NO_POST)
 #include "PView.h"
+#endif
 
 class Field;
 
@@ -75,7 +78,9 @@ class Field {
   Field();
   virtual const char *get_name() = 0;
   virtual FieldDialogBox *&dialog_box() = 0;
+#if !defined(HAVE_NO_POST)
   void put_on_view(PView * view, int comp = -1);
+#endif
 };
 
 class FieldFactory {
