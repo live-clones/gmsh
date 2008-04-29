@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.154 2008-04-28 10:10:51 geuzaine Exp $
+dnl $Id: configure.in,v 1.155 2008-04-29 19:12:38 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 dnl
@@ -146,6 +146,27 @@ AC_ARG_ENABLE(universal,
 AC_ARG_ENABLE(native-file-chooser,
               AC_HELP_STRING([--enable-native-file-chooser],
                              [enable native file chooser (default=yes, except on Linux)]))
+AC_ARG_ENABLE(minimal,
+              AC_HELP_STRING([--enable-minimal],
+                             [build minimal standalone version (default=no)]))
+
+dnl "minimal" build shortcut
+if test "x$enable_minimal" = "xyes"; then
+  enable_gui=no;
+  enable_post=no;
+  enable_gsl=no;
+#  enable_occ=no;
+  enable_fm=no;
+  enable_netgen=no;
+  enable_tetgen=no;
+  enable_matheval=no;
+  enable_ann=no;
+  enable_metis=no;
+  enable_med=no;
+  enable_cgns=no;
+  enable_zlib=no;
+  CXXFLAGS=-O2;
+fi
 
 dnl Get the operating system and machine names
 UNAME=`uname`

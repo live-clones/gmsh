@@ -21,7 +21,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "PViewData.h"
-#include "PViewDataList.h"
 #include "GModel.h"
 #include "SBoundingBox3d.h"
 

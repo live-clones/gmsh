@@ -1287,6 +1287,7 @@ Optional Features:
   --enable-native-file-chooser
                           enable native file chooser (default=yes, except on
                           Linux)
+  --enable-minimal        build minimal standalone version (default=no)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1932,6 +1933,28 @@ if test "${enable_native_file_chooser+set}" = set; then
   enableval=$enable_native_file_chooser;
 fi
 
+# Check whether --enable-minimal was given.
+if test "${enable_minimal+set}" = set; then
+  enableval=$enable_minimal;
+fi
+
+
+if test "x$enable_minimal" = "xyes"; then
+  enable_gui=no;
+  enable_post=no;
+  enable_gsl=no;
+#  enable_occ=no;
+  enable_fm=no;
+  enable_netgen=no;
+  enable_tetgen=no;
+  enable_matheval=no;
+  enable_ann=no;
+  enable_metis=no;
+  enable_med=no;
+  enable_cgns=no;
+  enable_zlib=no;
+  CXXFLAGS=-O2;
+fi
 
 UNAME=`uname`
 HOSTNAME=`hostname`
