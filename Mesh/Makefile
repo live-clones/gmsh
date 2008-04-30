@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.217 2008-04-28 10:10:52 geuzaine Exp $
+# $Id: Makefile,v 1.218 2008-04-30 05:50:21 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -53,7 +53,7 @@ SRC = Generator.cpp \
         DivideAndConquer.cpp \
         BackgroundMesh.cpp \
         qualityMeasures.cpp \
-        BoundaryLayer.cpp \
+        BoundaryLayers.cpp \
         BDS.cpp \
         HighOrder.cpp
 
@@ -100,7 +100,7 @@ Generator.o: Generator.cpp ../Common/Message.h ../Numeric/Numeric.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h meshGEdge.h \
   meshGFace.h meshGFaceBDS.h meshGRegion.h BackgroundMesh.h \
-  BoundaryLayer.h HighOrder.h ../Post/PView.h ../Post/PViewData.h \
+  BoundaryLayers.h HighOrder.h ../Post/PView.h ../Post/PViewData.h \
   ../DataStr/List.h ../Post/PViewOptions.h ../Post/ColorTable.h
 Field.o: Field.cpp ../Common/Context.h Field.h ../Geo/Geo.h \
   ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
@@ -345,7 +345,7 @@ qualityMeasures.o: qualityMeasures.cpp qualityMeasures.h BDS.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/MEdge.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h
-BoundaryLayer.o: BoundaryLayer.cpp ../Geo/GModel.h ../Geo/GVertex.h \
+BoundaryLayers.o: BoundaryLayers.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
   ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
@@ -355,7 +355,7 @@ BoundaryLayer.o: BoundaryLayer.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h \
   ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h BoundaryLayer.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h BoundaryLayers.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h meshGEdge.h meshGFace.h \
   ../Common/Message.h
 BDS.o: BDS.cpp ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h BDS.h \

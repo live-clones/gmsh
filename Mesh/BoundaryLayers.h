@@ -1,5 +1,5 @@
-#ifndef _BOUNDARY_LAYER_H_
-#define _BOUNDARY_LAYER_H_
+#ifndef _BOUNDARY_LAYERS_H_
+#define _BOUNDARY_LAYERS_H_
 
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //

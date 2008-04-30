@@ -1,4 +1,4 @@
-// $Id: BoundaryLayer.cpp,v 1.11 2008-03-20 11:44:08 geuzaine Exp $
+// $Id: BoundaryLayers.cpp,v 1.1 2008-04-30 05:50:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,7 @@
 
 #include "GModel.h"
 #include "MElement.h"
-#include "BoundaryLayer.h"
+#include "BoundaryLayers.h"
 #include "ExtrudeParams.h"
 #include "meshGEdge.h"
 #include "meshGFace.h"

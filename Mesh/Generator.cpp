@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.141 2008-04-28 10:10:52 geuzaine Exp $
+// $Id: Generator.cpp,v 1.142 2008-04-30 05:50:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,7 @@
 #include "meshGFaceBDS.h"
 #include "meshGRegion.h"
 #include "BackgroundMesh.h"
-#include "BoundaryLayer.h"
+#include "BoundaryLayers.h"
 #include "HighOrder.h"
 
 #if !defined(HAVE_NO_POST)
