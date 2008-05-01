@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.311 2008-04-28 10:10:59 geuzaine Exp $
+// $Id: Gmsh.y,v 1.312 2008-05-01 06:54:09 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -2014,10 +2014,13 @@ Command :
       }
       else if(!strcmp($1, "Remesh")){
 	Msg(GERROR, "Surface ReMeshing must be reinterfaced");
-	//	ReMesh();
       }
       else if(!strcmp($1, "Mesh")){
-	yymsg(GERROR, "Mesh directives are not (yet) allowed in scripts");
+	int lock = CTX.threads_lock;
+	CTX.threads_lock = 0;
+	GModel::current()->importGEOInternals();
+	GModel::current()->mesh((int)$2);
+	CTX.threads_lock = lock;
       }
       else if(!strcmp($1, "Status")){
 	yymsg(GERROR, "Mesh directives are not (yet) allowed in scripts");
