@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.249 2008-04-24 17:29:54 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.250 2008-05-01 06:56:23 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 @c
@@ -1302,6 +1302,9 @@ Deletes all geometrical entities and all currently loaded meshes.
 @item Delete Physicals;
 Deletes all physical groups.
 
+@item Mesh @var{expression};
+Generate @var{expression}-D mesh.
+
 @item Print @var{char-expression};
 Prints the graphic window in a file named @var{char-expression}, using the
 current @code{Print.Format} (@pxref{General options}). If the path in
@@ -1310,9 +1313,6 @@ the path of the current file.
 
 @item Sleep @var{expression};
 Suspends the execution of Gmsh during @var{expression} seconds.
-
-@item Status @var{expression};
-Forces mesh status to @var{expression}.
 
 @item System @var{char-expression};
 Executes a system call.
