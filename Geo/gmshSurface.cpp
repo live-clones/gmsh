@@ -1,4 +1,4 @@
-// $Id: gmshSurface.cpp,v 1.14 2008-03-21 18:27:38 geuzaine Exp $
+// $Id: gmshSurface.cpp,v 1.15 2008-05-04 08:31:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -32,7 +32,7 @@ gmshSurface *gmshSphere::NewSphere(int iSphere, double x, double y, double z, do
   gmshSphere *sph = new gmshSphere(x, y, z, r);
   
   if(allGmshSurfaces.find(iSphere) != allGmshSurfaces.end()){
-    Msg(GERROR,"gmshSurface %d already exists",iSphere);
+    Msg::Error("gmshSurface %d already exists",iSphere);
   }
   
   allGmshSurfaces[iSphere] = sph;
@@ -43,7 +43,7 @@ gmshSurface *gmshSurface::getSurface(int iSurface)
 {
   std::map<int, gmshSurface*>::iterator it = allGmshSurfaces.find(iSurface);
   if(it == allGmshSurfaces.end()){
-    Msg(GERROR,"gmshSurface %d does not exist",iSurface);
+    Msg::Error("gmshSurface %d does not exist",iSurface);
     return 0;
   }
   return it->second;
@@ -65,7 +65,7 @@ gmshSurface *gmshPolarSphere::NewPolarSphere(int iSphere, double x, double y, do
   gmshPolarSphere *sph = new gmshPolarSphere(x, y, z, r);
   
   if(allGmshSurfaces.find(iSphere) != allGmshSurfaces.end()){
-    Msg(GERROR, "gmshSurface %d already exists", iSphere);
+    Msg::Error("gmshSurface %d already exists", iSphere);
   }
 
   allGmshSurfaces[iSphere] = sph;
@@ -90,7 +90,7 @@ gmshSurface *gmshParametricSurface::NewParametricSurface(int iSurf, char *valX,
   gmshParametricSurface *sph = new gmshParametricSurface(valX, valY, valZ);
   
   if(allGmshSurfaces.find(iSurf) != allGmshSurfaces.end()){
-    Msg(GERROR,"gmshSurface %d already exists",iSurf);
+    Msg::Error("gmshSurface %d already exists",iSurf);
   }
   allGmshSurfaces[iSurf] = sph;
   return sph;
@@ -99,7 +99,7 @@ gmshSurface *gmshParametricSurface::NewParametricSurface(int iSurf, char *valX,
 gmshParametricSurface::gmshParametricSurface(char *valX, char *valY, char *valZ)
 {
 #if !defined(HAVE_MATH_EVAL)
-  Msg(GERROR, "MathEval is not compiled in this version of Gmsh");
+  Msg::Error("MathEval is not compiled in this version of Gmsh");
 #else
   evalX = evaluator_create(valX);
   evalY = evaluator_create(valY);
@@ -110,7 +110,7 @@ gmshParametricSurface::gmshParametricSurface(char *valX, char *valY, char *valZ)
 gmshParametricSurface::~gmshParametricSurface()
 {
 #if !defined(HAVE_MATH_EVAL)
-  Msg(GERROR, "MathEval is not compiled in this version of Gmsh");
+  Msg::Error("MathEval is not compiled in this version of Gmsh");
 #else
   evaluator_destroy(evalX);
   evaluator_destroy(evalY);
@@ -121,7 +121,7 @@ gmshParametricSurface::~gmshParametricSurface()
 SPoint3 gmshParametricSurface::point(double par1, double par2) const
 {
 #if !defined(HAVE_MATH_EVAL)
-  Msg(GERROR, "MathEval is not compiled in this version of Gmsh");
+  Msg::Error("MathEval is not compiled in this version of Gmsh");
   return SPoint3(0.,0.,0.);
 #else
   char *names[2] = {"u", "v"};

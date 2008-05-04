@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.20 2008-03-23 21:42:57 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.21 2008-05-04 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -140,11 +140,11 @@ int GModel::importGEOInternals()
     }
   }
 
-  Msg(DEBUG, "Gmsh model imported:");
-  Msg(DEBUG, "%d Vertices", vertices.size());
-  Msg(DEBUG, "%d Edges", edges.size());
-  Msg(DEBUG, "%d Faces", faces.size());
-  Msg(DEBUG, "%d Regions", regions.size());
+  Msg::Debug("Gmsh model imported:");
+  Msg::Debug("%d Vertices", vertices.size());
+  Msg::Debug("%d Edges", edges.size());
+  Msg::Debug("%d Faces", faces.size());
+  Msg::Debug("%d Regions", regions.size());
   
   return 1;
 }
@@ -256,7 +256,7 @@ class writeGEdgeGEO {
         fprintf(geo, "Bezier (%d) = ", c->Num);
         break;
       default:
-        Msg(GERROR, "Unknown curve type %d", c->Typ);
+        Msg::Error("Unknown curve type %d", c->Typ);
         return;
       }
       for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
@@ -331,7 +331,7 @@ class writeGFaceGEO {
         fprintf(geo, "Ruled Surface (%d) = {%d};\n", gf->tag(), gf->tag());
       }
       else{
-        Msg(GERROR, "Skipping surface %d in export", gf->tag());
+        Msg::Error("Skipping surface %d in export", gf->tag());
       }
     }
   }

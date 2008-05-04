@@ -41,7 +41,7 @@ static fourierProjectionFace *createProjectionFaceFromName(const char *name)
   else if(!strcmp(name, "translatedParabola"))
     f = new fourierProjectionFace(m, tag, new FM::TranslatedParabolaProjectionSurface(tag));
   else
-    Msg(GERROR, "Unknown projection face `%s'", name);
+    Msg::Error("Unknown projection face `%s'", name);
   if(f){
     f->setVisibility(false);
     m->add(f);
@@ -613,7 +613,7 @@ void update_cb(Fl_Widget *w, void *data)
       if(ent[i]->getSelection()){
         GVertex *gv = dynamic_cast<GVertex*>(ent[i]);
         if(!gv)
-          Msg(GERROR, "Problem in point selection processing");
+          Msg::Error("Problem in point selection processing");
         else
           project_point(ps, gv->x(), gv->y(), gv->z(), u, v, dist, f);
       }
@@ -660,11 +660,11 @@ void select_cb(Fl_Widget *w, void *data)
     Draw();
 
     if(ele.size() || ent.size())
-      Msg(ONSCREEN, "Select %s\n"
-          "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
+      Msg::Status(3, false, "Select %s\n[Press 'e' to end selection, 'u' to undo" 
+		  "last selection or 'q' to abort]", str);
     else
-      Msg(ONSCREEN, "Select %s\n"
-          "[Press 'e' to end selection or 'q' to abort]", str);
+      Msg::Status(3, false, "Select %s\n"
+		  "[Press 'e' to end selection or 'q' to abort]", str);
 
     char ib = SelectEntity(what, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
@@ -729,7 +729,7 @@ void select_cb(Fl_Widget *w, void *data)
   CTX.mesh.changed = ENT_ALL;
   CTX.pick_elements = 0;
   Draw();  
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 void filter_cb(Fl_Widget *w, void *data)
@@ -801,7 +801,7 @@ void save_selection_cb(Fl_Widget *w, void *data)
   if(file_chooser(0, 1, "Save Selection", "*.{geo,msh}")){
     FILE *fp = fopen(file_chooser_get_name(1).c_str(), "w");
     if(!fp){
-      Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1).c_str());
+      Msg::Error("Unable to open file `%s'", file_chooser_get_name(1).c_str());
       return;
     }
     std::vector<GEntity*> &ent(e->getEntities());
@@ -841,18 +841,18 @@ void load_projection_cb(Fl_Widget *w, void *data)
   if(file_chooser(0, 0, "Load Projection", "*.pro")){
     FILE *fp = fopen(file_chooser_get_name(1).c_str(), "r");
     if(!fp){
-      Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1).c_str());
+      Msg::Error("Unable to open file `%s'", file_chooser_get_name(1).c_str());
       return;
     }
     int num;
     if(!fscanf(fp, "%d", &num)){
-      Msg(GERROR, "Bad projection file format");
+      Msg::Error("Bad projection file format");
       return;
     }
     for(int proj = 0; proj < num; proj++){
       char name[256], tag[256];
       if(!fscanf(fp, "%s", tag) || !fscanf(fp, "%s", name)){
-        Msg(GERROR, "Bad projection file format");
+        Msg::Error("Bad projection file format");
         return;
       }
       fourierProjectionFace *face = createProjectionFaceFromName(name);
@@ -863,7 +863,7 @@ void load_projection_cb(Fl_Widget *w, void *data)
           for(unsigned int i = 0; i < p->parameters.size(); i++){
             double val;
             if(!fscanf(fp, "%lf", &val)){
-              Msg(GERROR, "Missing paramater for projection `%s'", name);
+              Msg::Error("Missing paramater for projection `%s'", name);
               break;
             }
             p->parameters[i]->value(val);
@@ -886,7 +886,7 @@ void save_projection_cb(Fl_Widget *w, void *data)
       std::string name = file_chooser_get_name(1);
       FILE *fp = fopen(name.c_str(), "w");
       if(!fp){
-        Msg(GERROR, "Unable to open file `%s'", name.c_str());
+        Msg::Error("Unable to open file `%s'", name.c_str());
         return;
       }
       char no_ext[256], ext[256], base[256];
@@ -915,7 +915,7 @@ void compute_cb(Fl_Widget *w, void *data)
     int vModes = e->getMode(1);
 
     if((int)f.size() < uModes * vModes){
-      Msg(GERROR, "Number of points < uModes * vModes");
+      Msg::Error("Number of points < uModes * vModes");
       return;
     }
 
@@ -1039,7 +1039,7 @@ void action_cb(Fl_Widget *w, void *data)
         faces.push_back(*it);
   }
   else if(what == "delete_select" || what == "save_select"){
-    Msg(ONSCREEN, "Select Surface\n[Press 'e' to end selection 'q' to abort]");
+    Msg::Status(3, false, "Select Surface\n[Press 'e' to end selection 'q' to abort]");
     std::vector<GVertex*> vertices;
     std::vector<GEdge*> edges;
     std::vector<GFace*> faces;
@@ -1047,7 +1047,7 @@ void action_cb(Fl_Widget *w, void *data)
     std::vector<MElement*> elements;
     char ib = SelectEntity(ENT_SURFACE, vertices, edges, faces, regions, elements);
     if(ib == 'l') faces.insert(faces.end(), faces.begin(), faces.end());
-    Msg(ONSCREEN, "");
+    Msg::Status(3, false, "");
   }
 
   if(what[0] == 'd'){
@@ -1058,7 +1058,7 @@ void action_cb(Fl_Widget *w, void *data)
     if(file_chooser(0, 1, "Save Fourier Model", "*.fm")){
       FILE *fp = fopen(file_chooser_get_name(1).c_str(), "w");
       if(!fp){
-        Msg(GERROR, "Unable to open file `%s'", file_chooser_get_name(1).c_str());
+        Msg::Error("Unable to open file `%s'", file_chooser_get_name(1).c_str());
         return;
       }
       fprintf(fp, "%d\n", (int)faces.size());
@@ -1096,7 +1096,7 @@ void mesh_parameterize_cb(Fl_Widget* w, void* data)
 
 void mesh_parameterize_cb(Fl_Widget* w, void* data)
 {
-  Msg(GERROR, "You must compile FourierModel to reparameterize meshes");
+  Msg::Error("You must compile FourierModel to reparameterize meshes");
 }
 
 #endif

@@ -854,11 +854,11 @@ void adaptiveElements<T>::initWithLowResolution(PViewData *data, int step)
       if(data->skipElement(step, ent, ele) ||
 	 data->getNumEdges(step, ent, ele) != T::numEdges) continue;
       if(numNodes != data->getNumNodes(step, ent, ele)){
-	Msg(GERROR, "Wrong number of nodes (%d) in element %d", numNodes, ele);
+	Msg::Error("Wrong number of nodes (%d) in element %d", numNodes, ele);
 	continue;
       }
       if(numVal != data->getNumValues(step, ent, ele)){
-	Msg(GERROR, "Wrong number of values (%d) in element %d", numVal, ele);
+	Msg::Error("Wrong number of values (%d) in element %d", numVal, ele);
 	continue;
       }
       for(int nod = 0; nod < numNodes; nod++){
@@ -898,7 +898,7 @@ template <class T>
 void adaptiveElements<T>::changeResolution(int level, double tol, GMSH_Post_Plugin *plug)
 {
   if(!_val){
-    Msg(GERROR, "Trying to change resolution in wrong state");
+    Msg::Error("Trying to change resolution in wrong state");
     return;
   }
 

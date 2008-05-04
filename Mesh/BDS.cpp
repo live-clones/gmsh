@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.105 2008-03-25 20:25:35 remacle Exp $
+// $Id: BDS.cpp,v 1.106 2008-05-04 08:31:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -240,7 +240,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
   
   if(!p1 || !p2) throw;
 
-  Msg(DEBUG2, "edge %d %d has to be recovered", num1, num2);
+  Msg::Debug("edge %d %d has to be recovered", num1, num2);
   
   int ix = 0;
   int ixMax = 300;
@@ -263,7 +263,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
 	      e2r->find(EdgeToRecover(e->p1->iD, e->p2->iD, 0));		    
 	    std::set<EdgeToRecover>::iterator itr2 = 
 	      e2r->find(EdgeToRecover(num1, num2, 0));
-	    Msg(DEBUG2, "edge %d %d on model edge %d cannot be recovered because"
+	    Msg::Debug("edge %d %d on model edge %d cannot be recovered because"
 		" it intersects %d %d on model edge %d", num1, num2, itr2->ge->tag(),
 		e->p1->iD, e->p2->iD, itr1->ge->tag());
 	    // now throw a class that contains the diagnostic
@@ -279,7 +279,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
     if (selfIntersection)return 0;
 
 //   if(ix > 300){
-//     Msg(WARNING, "edge %d %d cannot be recovered after %d iterations, trying again",
+//     Msg::Warning("edge %d %d cannot be recovered after %d iterations, trying again",
 //        num1, num2, ix);      
 //     ix = 0;
 //   }
@@ -290,7 +290,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
       if(!eee){
 	outputScalarField(triangles, "debugp.pos", 1);
 	outputScalarField(triangles, "debugr.pos", 0);
-	Msg(DEBUG2, "edge %d %d cannot be recovered at all, look at debugp.pos "
+	Msg::Debug("edge %d %d cannot be recovered at all, look at debugp.pos "
 	    "and debugr.pos", num1, num2);
 	return 0;
       }
@@ -1439,7 +1439,7 @@ recombine_T::recombine_T(const BDS_Edge *_e)
 
 void BDS_Mesh::recombineIntoQuads(const double angle_limit, GFace *gf)
 {
-  Msg(INFO, "Recombining triangles for surface %d", gf->tag());  
+  Msg::Info("Recombining triangles for surface %d", gf->tag());  
   for(int i = 0; i < 5; i++){
     std::set<recombine_T> pairs;
     for(std::list<BDS_Edge*>::const_iterator it = edges.begin();

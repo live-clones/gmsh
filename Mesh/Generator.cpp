@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.142 2008-04-30 05:50:21 geuzaine Exp $
+// $Id: Generator.cpp,v 1.143 2008-05-04 08:31:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -35,6 +35,7 @@
 
 #if !defined(HAVE_NO_POST)
 #include "PView.h"
+#include "PViewData.h"
 #endif
 
 extern Context_T CTX;
@@ -164,26 +165,27 @@ static bool TooManyElements(GModel *m, int dim)
     sumAllLc += (*it)->prescribedMeshSizeAtVertex();
   sumAllLc /= (double)m->getNumVertices();
   if(!sumAllLc || pow(CTX.lc / sumAllLc, dim) > 1.e10) 
-    return !GetBinaryAnswer("Your choice of characteristic lengths will likely produce\n"
-                            "a very large mesh. Do you really want to continue?\n\n"
-                            "(To disable this warning in the future, select `Enable\n"
-                            "expert mode' in the option dialog.)",
-                            "Continue", "Cancel");
+    return !Msg::GetBinaryAnswer
+      ("Your choice of characteristic lengths will likely produce\n"
+       "a very large mesh. Do you really want to continue?\n\n"
+       "(To disable this warning in the future, select `Enable\n"
+       "expert mode' in the option dialog.)",
+       "Continue", "Cancel");
   return false;
 }
 
 static void Mesh1D(GModel *m)
 {
   if(TooManyElements(m, 1)) return;
-  Msg(STATUS1, "Meshing 1D...");
+  Msg::Status(1, true, "Meshing 1D...");
   double t1 = Cpu();
 
   std::for_each(m->firstEdge(), m->lastEdge(), meshGEdge());
 
   double t2 = Cpu();
   CTX.mesh_timer[0] = t2 - t1;
-  Msg(INFO, "Mesh 1D complete (%g s)", CTX.mesh_timer[0]);
-  Msg(STATUS1, "Mesh");
+  Msg::Info("Mesh 1D complete (%g s)", CTX.mesh_timer[0]);
+  Msg::Status(1, true, "Mesh");
 }
 
 static void PrintMesh2dStatistics(GModel *m)
@@ -200,7 +202,7 @@ static void PrintMesh2dStatistics(GModel *m)
   int nTotT = 0, nTotE = 0, nTotGoodLength = 0, nTotGoodQuality = 0;
   int nUnmeshed = 0, numFaces = 0;
 
-  Msg(INFO,"2D Mesh Statistics :");
+  Msg::Info("2D Mesh Statistics :");
   for(GModel::fiter it = m->firstFace() ; it != m->lastFace(); ++it){
     worst = std::min((*it)->meshStatistics.worst_element_shape, worst);
     best = std::max((*it)->meshStatistics.best_element_shape, best);
@@ -239,15 +241,16 @@ static void Mesh2D(GModel *m)
 
   if(!CTX.expert_mode && (CTX.mesh.algo2d == ALGO_2D_DELAUNAY ||
 			  CTX.mesh.algo2d == ALGO_2D_FRONTAL)){
-    if(!GetBinaryAnswer("The 2D Delaunay and Frontal algorithms are still experimental\n"
-                        "and produce triangles with random orientations. Do you really\n"
-                        "want to continue?\n\n"
-                        "(To disable this warning in the future, select `Enable expert\n"
-                        "mode' in the option dialog.)",
-                        "Continue", "Cancel")) return;
+    if(!Msg::GetBinaryAnswer
+       ("The 2D Delaunay and Frontal algorithms are still experimental\n"
+	"and produce triangles with random orientations. Do you really\n"
+	"want to continue?\n\n"
+	"(To disable this warning in the future, select `Enable expert\n"
+	"mode' in the option dialog.)",
+	"Continue", "Cancel")) return;
   }
-
-  Msg(STATUS1, "Meshing 2D...");
+  
+  Msg::Status(1, true, "Meshing 2D...");
   double t1 = Cpu();
 
   // boundary layers are special: their generation (including vertices
@@ -274,8 +277,8 @@ static void Mesh2D(GModel *m)
 
   double t2 = Cpu();
   CTX.mesh_timer[1] = t2 - t1;
-  Msg(INFO, "Mesh 2D complete (%g s)", CTX.mesh_timer[1]);
-  Msg(STATUS1, "Mesh");
+  Msg::Info("Mesh 2D complete (%g s)", CTX.mesh_timer[1]);
+  Msg::Status(1, true, "Mesh");
 
   PrintMesh2dStatistics(m);
 }
@@ -290,7 +293,7 @@ static void FindConnectedRegions(std::vector<GRegion*> &delaunay,
 static void Mesh3D(GModel *m)
 {
   if(TooManyElements(m, 3)) return;
-  Msg(STATUS1, "Meshing 3D...");
+  Msg::Status(1, true, "Meshing 3D...");
   double t1 = Cpu();
 
   // mesh the extruded volumes first
@@ -314,41 +317,41 @@ static void Mesh3D(GModel *m)
 
   double t2 = Cpu();
   CTX.mesh_timer[2] = t2 - t1;
-  Msg(INFO, "Mesh 3D complete (%g s)", CTX.mesh_timer[2]);
-  Msg(STATUS1, "Mesh");
+  Msg::Info("Mesh 3D complete (%g s)", CTX.mesh_timer[2]);
+  Msg::Status(1, true, "Mesh");
 }
 
 void OptimizeMeshNetgen(GModel *m)
 {
-  Msg(STATUS1, "Optimizing 3D with Netgen...");
+  Msg::Status(1, true, "Optimizing 3D with Netgen...");
   double t1 = Cpu();
 
   std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionNetgen());
 
   double t2 = Cpu();
-  Msg(INFO, "Mesh 3D optimization with Netgen complete (%g s)", t2 - t1);
-  Msg(STATUS1, "Mesh");
+  Msg::Info("Mesh 3D optimization with Netgen complete (%g s)", t2 - t1);
+  Msg::Status(1, true, "Mesh");
 }
 
 void OptimizeMesh(GModel *m)
 {
-  Msg(STATUS1, "Optimizing 3D...");
+  Msg::Status(1, true, "Optimizing 3D...");
   double t1 = Cpu();
 
   std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionGmsh());
 
   double t2 = Cpu();
-  Msg(INFO, "Mesh 3D optimization complete (%g s)", t2 - t1);
-  Msg(STATUS1, "Mesh");
+  Msg::Info("Mesh 3D optimization complete (%g s)", t2 - t1);
+  Msg::Status(1, true, "Mesh");
 }
 
 void AdaptMesh(GModel *m)
 {
-  Msg(STATUS1, "Adapting the 3D Mesh...");
+  Msg::Status(1, true, "Adapting the 3D Mesh...");
   double t1 = Cpu();
 
   if(CTX.threads_lock) {
-    Msg(INFO, "I'm busy! Ask me that later...");
+    Msg::Info("I'm busy! Ask me that later...");
     return;
   }
 
@@ -366,17 +369,19 @@ void AdaptMesh(GModel *m)
   std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
 
   double t2 = Cpu();
-  Msg(INFO, "Mesh Adaptation complete (%g s)", t2 - t1);
-  Msg(STATUS1, "Mesh");
+  Msg::Info("Mesh Adaptation complete (%g s)", t2 - t1);
+  Msg::Status(1, true, "Mesh");
 }
 
 void GenerateMesh(GModel *m, int ask)
 {
   if(CTX.threads_lock) {
-    Msg(INFO, "I'm busy! Ask me that later...");
+    Msg::Info("I'm busy! Ask me that later...");
     return;
   }
   CTX.threads_lock = 1;
+
+  Msg::ResetErrorCounter();
 
   int old = m->getMeshStatus(false);
 
@@ -421,8 +426,10 @@ void GenerateMesh(GModel *m, int ask)
     SetOrderN(m, CTX.mesh.order, CTX.mesh.second_order_linear, 
               CTX.mesh.second_order_incomplete);
 
-  Msg(INFO, "%d vertices %d elements",
-      m->getNumMeshVertices(), m->getNumMeshElements());
+  Msg::Info("%d vertices %d elements",
+	    m->getNumMeshVertices(), m->getNumMeshElements());
+
+  Msg::PrintErrorCounter("Mesh generation error summary");
 
   CTX.threads_lock = 0;
   CTX.mesh.changed = ENT_ALL;

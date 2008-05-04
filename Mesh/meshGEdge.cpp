@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.60 2008-04-17 09:07:01 remacle Exp $
+// $Id: meshGEdge.cpp,v 1.61 2008-05-04 08:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -190,7 +190,7 @@ double F_Transfinite(GEdge *ge, double t)
       break;
       
     default:
-      Msg(WARNING, "Unknown case in Transfinite Line mesh");
+      Msg::Warning("Unknown case in Transfinite Line mesh");
       val = 1.;
       break;
     }
@@ -286,7 +286,7 @@ void meshGEdge::operator() (GEdge *ge)
 
   if(MeshExtrudedCurve(ge)) return;
 
-  Msg(INFO, "Meshing curve %d (%s)", ge->tag(),ge->getTypeString().c_str());
+  Msg::Info("Meshing curve %d (%s)", ge->tag(),ge->getTypeString().c_str());
 
   // Create a list of integration points
   List_T *Points = List_Create(10, 10, sizeof(IntPoint));
@@ -304,7 +304,7 @@ void meshGEdge::operator() (GEdge *ge)
 
 
   if(length == 0.0)
-    Msg(DEBUG2, "Curve %d has a zero length", ge->tag());
+    Msg::Debug("Curve %d has a zero length", ge->tag());
   
   List_Reset(Points);
 

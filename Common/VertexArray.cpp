@@ -1,4 +1,4 @@
-// $Id: VertexArray.cpp,v 1.30 2008-03-20 11:44:02 geuzaine Exp $
+// $Id: VertexArray.cpp,v 1.31 2008-05-04 08:31:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -94,7 +94,7 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n,
       return;
     _barycenters.insert(pc);
   }
-  
+
   for(int i = 0; i < npe; i++){
     addVertex(x[i], y[i], z[i]);
     if(n) addNormal(n[i].x(), n[i].y(), n[i].z());

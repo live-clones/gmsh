@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.28 2008-03-24 20:51:04 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.29 2008-05-04 08:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -136,7 +136,7 @@ void CreateOutputFile(const char *filename, int format)
 #endif
 
   bool printEndMessage = true;
-  if(format != FORMAT_AUTO) Msg(STATUS2, "Writing '%s'", name);
+  if(format != FORMAT_AUTO) Msg::Status(2, true, "Writing '%s'", name);
 
   switch (format) {
 
@@ -208,7 +208,7 @@ void CreateOutputFile(const char *filename, int format)
     {
       FILE *fp;
       if(!(fp = fopen(name, "wb"))) {
-        Msg(GERROR, "Unable to open file '%s'", name);
+        Msg::Error("Unable to open file '%s'", name);
         break;
       }
 
@@ -253,7 +253,7 @@ void CreateOutputFile(const char *filename, int format)
     {
       FILE *fp;
       if(!(fp = fopen(name, "wb"))) {
-        Msg(GERROR, "Unable to open file '%s'", name);
+        Msg::Error("Unable to open file '%s'", name);
         break;
       }
       
@@ -332,7 +332,7 @@ void CreateOutputFile(const char *filename, int format)
     {
       FILE *fp;
       if(!(fp = fopen(name, "w"))) {
-        Msg(GERROR, "Unable to open file '%s'", name);
+        Msg::Error("Unable to open file '%s'", name);
         break;
       }
       GLint buffsize = 0;
@@ -355,12 +355,12 @@ void CreateOutputFile(const char *filename, int format)
 #endif
 
   default:
-    Msg(GERROR, "Unknown output file format");
+    Msg::Error("Unknown output file format");
     printEndMessage = false;
     break;
   }
 
-  if(printEndMessage) Msg(STATUS2, "Wrote '%s'", name);
+  if(printEndMessage) Msg::Status(2, true, "Wrote '%s'", name);
 
   CTX.print.format = oldformat;
   CTX.printing = 0;

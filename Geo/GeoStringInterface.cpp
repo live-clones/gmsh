@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.20 2008-03-20 11:44:05 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.21 2008-05-04 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,8 @@ extern Context_T CTX;
 // Some old systems don't have snprintf... Just call sprintf instead.
 
 #if defined(HAVE_NO_SNPRINTF)
-int snprintf(char *str, size_t size, const char* fmt, ...){
+int snprintf(char *str, size_t size, const char* fmt, ...)
+{
   va_list args;
   va_start(args, fmt);
   int ret = vsprintf(str, fmt, args);
@@ -53,7 +54,7 @@ double evaluate_scalarfunction(const char *var, double val, const char *funct)
   tempf = gmsh_yyin;
 
   if(!(gmsh_yyin = fopen(CTX.tmp_filename_fullpath, "w"))) {
-    Msg(GERROR, "Unable to open temporary file '%s'", CTX.tmp_filename_fullpath);
+    Msg::Error("Unable to open temporary file '%s'", CTX.tmp_filename_fullpath);
     return 0.;
   }
 
@@ -83,12 +84,12 @@ double evaluate_scalarfunction(const char *var, double val, const char *funct)
 void add_infile(const char *text, const char *fich, bool deleted_something)
 {
   if(!(gmsh_yyin = fopen(CTX.tmp_filename_fullpath, "w"))) {
-    Msg(GERROR, "Unable to open temporary file '%s'", CTX.tmp_filename_fullpath);
+    Msg::Error("Unable to open temporary file '%s'", CTX.tmp_filename_fullpath);
     return;
   }
 
   fprintf(gmsh_yyin, "%s\n", text);
-  Msg(STATUS2, "%s", text);
+  Msg::Status(2, true, "%s", text);
   fclose(gmsh_yyin);
   gmsh_yyin = fopen(CTX.tmp_filename_fullpath, "r");
   while(!feof(gmsh_yyin)) {
@@ -106,7 +107,7 @@ void add_infile(const char *text, const char *fich, bool deleted_something)
 
   FILE *file;
   if(!(file = fopen(fich, "a"))) {
-    Msg(GERROR, "Unable to open file '%s'", fich);
+    Msg::Error("Unable to open file '%s'", fich);
     return;
   }
   
@@ -122,7 +123,7 @@ void add_infile(const char *text, const char *fich, bool deleted_something)
               "Merge \"%s\";\n\n"
               "and use that file instead. To disable this warning in the future, select\n"
               "`Enable expert mode' in the option dialog.)", fich);
-      if(!GetBinaryAnswer(question, "Proceed", "Cancel", false)){
+      if(!Msg::GetBinaryAnswer(question, "Proceed", "Cancel", false)){
         fclose(file);
         return;
       }

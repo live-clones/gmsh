@@ -1,4 +1,34 @@
-$Id: TODO,v 1.70 2008-04-18 16:40:29 geuzaine Exp $
+$Id: TODO,v 1.71 2008-05-04 08:31:24 geuzaine Exp $
+
+********************************************************************
+
+Streamline OpenFile to deal with multiple models: basically, we need 3
+functions: NewModel (create a new model and add it to the model list,
+and make it the current model), Merge(Merge CAD or mesh data in the
+current model, or create post-processing data associated with the
+current model) and Clear(Destroys all models and post-processing
+views).
+
+main() always creates an initial empty model. Thus
+
+"gmsh a b c" == NewModel() Merge(a) Merge(b) Merge(c)
+
+"gmsh a b -new c" == NewModel() Merge(a) Merge(b) NewModel() Merge(c)
+
+File->Open(a) == Clear() NewModel() Merge(a) ?
+
+File->Merge(a) == Merge(a)
+
+Or should we just bite the bullet and follow what all other software
+tools do, i.e., if no input file is given present a File->New or Open
+dialog and refuse to continue until a model is given...
+
+********************************************************************
+
+Decide what to do with global parser variables. Should we clear them
+when we open a new file? +: fixes annoying persistance when changing
+.geo files and reloading them; -: cannot use -string "aa=1;" to change
+global vars from command line.
 
 ********************************************************************
 
@@ -107,14 +137,6 @@ add Mesh>Edit>Change orientation>Lines & Surfaces
 
 ********************************************************************
 
-add option to fl_beep() when mesh is done
-
-********************************************************************
-
-add warning+error counter/buffer (display counter/buffer on Exit())
-
-********************************************************************
-
 implement better algo to determine which axes to draw
 (cf. mathematica)
 
@@ -135,11 +157,6 @@ surface.)
 
 add "sprite" option to draw fake 3D spheres in post-pro (so that we
 can draw millions of spheres)
-
-********************************************************************
-
-add a min_recursion option for adaptive views (to force at least a 
-certain number of subdivisions)
 
 ********************************************************************
 
@@ -171,10 +188,6 @@ disable all replacements)
 Add a "bitmap" object in the views, e.g. to add a logo. Maybe would
 be good enough to add another mode in the "background gradient" stuff
 to display an image in the background
-
-********************************************************************
-
-Add a way to draw arrows in annotations?
 
 ********************************************************************
 

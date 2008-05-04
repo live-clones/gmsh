@@ -1,4 +1,4 @@
-// $Id: MakeSimplex.cpp,v 1.8 2008-03-20 11:44:14 geuzaine Exp $
+// $Id: MakeSimplex.cpp,v 1.9 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -202,7 +202,7 @@ void MakeSimplex::decompose(int num,
   int pyraTet[2][4] = {{0,1,3,4}, {1,2,3,4}};
 
   if(num < 0 || num > numSimplices()-1) {
-    Msg(GERROR, "Invalid decomposition");
+    Msg::Error("Invalid decomposition");
     num = 0;
   }
     

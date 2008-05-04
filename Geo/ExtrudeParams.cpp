@@ -1,4 +1,4 @@
-// $Id: ExtrudeParams.cpp,v 1.27 2008-02-17 08:47:57 geuzaine Exp $
+// $Id: ExtrudeParams.cpp,v 1.28 2008-05-04 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -118,7 +118,7 @@ void ExtrudeParams::Extrude(double t, double &x, double &y, double &z)
     z += n[2] * t;
     break;
   default:
-    Msg(GERROR, "Unknown extrusion type");
+    Msg::Error("Unknown extrusion type");
     break;
   }
 }

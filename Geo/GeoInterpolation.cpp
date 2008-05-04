@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.35 2008-04-24 17:29:47 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.36 2008-05-04 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -227,7 +227,7 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
   if(c->Num < 0) {
     Curve *C0 = FindCurve(-c->Num);
     if(!C0){
-      Msg(GERROR, "Unknown curve %d", -c->Num);
+      Msg::Error("Unknown curve %d", -c->Num);
       return Vertex(0., 0., 0.);
     }
     return InterpolateCurve(C0, C0->ubeg + (C0->uend - C0->ubeg) * (1. - u), derivee);
@@ -377,15 +377,15 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
       return InterpolateCubicSpline(v, t, c->mat, 0, t1, t2);
 
   case MSH_SEGM_BND_LAYER:
-    Msg(GERROR, "Cannot interpolate boundary layer curve");
+    Msg::Error("Cannot interpolate boundary layer curve");
     return V;
 
   case MSH_SEGM_DISCRETE:
-    Msg(GERROR, "Cannot interpolate discrete curve");
+    Msg::Error("Cannot interpolate discrete curve");
     return V;
 
   default:
-    Msg(GERROR, "Unknown curve type in interpolation");
+    Msg::Error("Unknown curve type in interpolation");
     return V;
   }
 
@@ -547,7 +547,7 @@ Vertex InterpolateExtrudedSurface(Surface *s, double u, double v)
   }
 
   if(num < 0)
-    Msg(GERROR, "Unknown curve in extruded surface");
+    Msg::Error("Unknown curve in extruded surface");
   
   Vertex T;
 
@@ -633,19 +633,19 @@ Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
     }
   case MSH_SURF_BND_LAYER:
     {
-      Msg(GERROR, "Cannot interpolate boundary layer surface");
+      Msg::Error("Cannot interpolate boundary layer surface");
       Vertex T(0., 0., 0.);
       return T;
     }    
   case MSH_SURF_DISCRETE:
     {
-      Msg(GERROR, "Cannot interpolate discrete surface");
+      Msg::Error("Cannot interpolate discrete surface");
       Vertex T(0., 0., 0.);
       return T;
     }    
   default:
     {
-      Msg(GERROR, "Unknown surface type in interpolation");
+      Msg::Error("Unknown surface type in interpolation");
       Vertex T(0., 0., 0.);
       return T;
     }

@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.186 2008-04-28 10:11:00 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.187 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -38,6 +38,7 @@
 
 #if !defined(HAVE_NO_POST)
 #include "PView.h"
+#include "PViewData.h"
 #endif
 
 #if defined(HAVE_FLTK)
@@ -208,7 +209,7 @@ int ParseFile(const char *f, int close, int warn_if_missing)
   // add 'b' for pure Windows programs: opening in text mode messes up
   // fsetpos/fgetpos (used e.g. for user-defined functions)
   if(!(fp = fopen(f, "rb"))){
-    if(warn_if_missing) Msg(WARNING, "Unable to open file '%s'", f);
+    if(warn_if_missing) Msg::Warning("Unable to open file '%s'", f);
     return 0;
   }
 
@@ -236,7 +237,7 @@ int ParseFile(const char *f, int close, int warn_if_missing)
   while(!feof(gmsh_yyin)){
     gmsh_yyparse();
     if(gmsh_yyerrorstate > 20){
-      Msg(GERROR, "Too many errors: aborting...");
+      Msg::Error("Too many errors: aborting...");
       force_yyflush();
       break;
     }
@@ -294,7 +295,7 @@ int MergeFile(const char *name, int warn_if_missing)
   // contain binary data
   FILE *fp = fopen(name, "rb");
   if(!fp){
-    if(warn_if_missing) Msg(WARNING, "Unable to open file '%s'", name);
+    if(warn_if_missing) Msg::Warning("Unable to open file '%s'", name);
     return 0;
   }
 
@@ -302,7 +303,7 @@ int MergeFile(const char *name, int warn_if_missing)
   fgets(header, sizeof(header), fp);
   fclose(fp);
 
-  Msg(STATUS2, "Reading '%s'", name);
+  Msg::Status(2, true, "Reading '%s'", name);
 
   char no_ext[256], ext[256], base[256];
   SplitFileName(name, no_ext, ext, base);
@@ -317,7 +318,7 @@ int MergeFile(const char *name, int warn_if_missing)
         char tmp[256];
         sprintf(tmp, "gunzip -c %s > %s", name, no_ext);
         if(SystemCall(tmp))
-          Msg(GERROR, "Failed to uncompress `%s': check directory permissions", name);
+          Msg::Error("Failed to uncompress `%s': check directory permissions", name);
         if(!strcmp(CTX.filename, name)) // this is the project file
           SetProjectName(no_ext);
         return MergeFile(no_ext);
@@ -439,14 +440,14 @@ int MergeFile(const char *name, int warn_if_missing)
     WID->update_views();
 #endif
 
-  Msg(STATUS2, "Read '%s'", name);
+  Msg::Status(2, true, "Read '%s'", name);
   return status;
 }
 
 void OpenProject(const char *name)
 {
   if(CTX.threads_lock) {
-    Msg(INFO, "I'm busy! Ask me that later...");
+    Msg::Info("I'm busy! Ask me that later...");
     return;
   }
   CTX.threads_lock = 1;
@@ -494,4 +495,3 @@ void OpenProjectMacFinder(const char *filename)
 #endif
   }
 }
-

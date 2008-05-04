@@ -1,4 +1,4 @@
-// $Id: PViewOptions.cpp,v 1.20 2008-03-20 11:44:15 geuzaine Exp $
+// $Id: PViewOptions.cpp,v 1.21 2008-05-04 08:31:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -124,7 +124,7 @@ void PViewOptions::createGeneralRaise()
   for(int i = 0; i < 3; i++) {
     if(strlen(expr[i])) {
       if(!(GenRaise_f[i] = evaluator_create(expr[i])))
-        Msg(GERROR, "Invalid expression '%s'", expr[i]);
+        Msg::Error("Invalid expression '%s'", expr[i]);
     }
   }
 #else
@@ -139,7 +139,7 @@ void PViewOptions::createGeneralRaise()
     else if(!strcmp(expr[i], "v7")) GenRaise_f[i] = (void*)7;
     else if(!strcmp(expr[i], "v8")) GenRaise_f[i] = (void*)8;
     else if(strlen(expr[i])) {
-      Msg(GERROR, "Invalid expression '%s'", expr[i]);
+      Msg::Error("Invalid expression '%s'", expr[i]);
       return;
     }
   }

@@ -1,4 +1,4 @@
-// $Id: ExtractElements.cpp,v 1.13 2008-04-05 17:49:23 geuzaine Exp $
+// $Id: ExtractElements.cpp,v 1.14 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -128,7 +128,7 @@ PView *GMSH_ExtractElementsPlugin::execute(PView *v)
   if(!data2) return v;
 
   if(step < 0 || step > data1->getNumTimeSteps() - 1){
-    Msg(GERROR, "Invalid time step (%d) in View[%d]: using first step instead",
+    Msg::Error("Invalid time step (%d) in View[%d]: using first step instead",
         step, v1->getIndex());
     step = 0;
   }

@@ -1,4 +1,4 @@
-// $Id: Plugin.cpp,v 1.94 2008-05-04 08:31:23 geuzaine Exp $
+// $Id: Main.cpp,v 1.1 2008-05-04 08:31:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,33 +19,28 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "Plugin.h"
+#include "Gmsh.h"
+#include "GModel.h"
+#include "CommandLine.h"
+#include "Message.h"
+#include "Context.h"
 
-PView *GMSH_Post_Plugin::getView(int index, PView *view)
+extern Context_T CTX;
+
+int main(int argc, char *argv[])
 {
-  if(index < 0)
-    index = view ? view->getIndex() : 0;
+  CTX.terminal = 1;
 
-  if(index >= 0 && index < (int)PView::list.size()){
-    return PView::list[index];
+  if(argc < 2){
+    Print_Usage(argv[0]);
+    exit(0);
   }
-  else{
-    Msg::Error("View[%d] does not exist", index);
-    return 0;
-  }
-}
 
-PViewDataList *GMSH_Post_Plugin::getDataList(PView *view)
-{
-  if(!view) return 0;
+  GmshInitialize(argc, argv);
+  new GModel;
+  GmshBatch();
+  GmshFinalize();
 
-  PViewDataList *data = dynamic_cast<PViewDataList*>(view->getData());
-  if(data){
-    return data;
-  }
-  else{
-    // FIXME: do automatic data conversion here
-    Msg::Error("This plugin can only be run on list-based datasets");
-    return 0;
-  }
+  Msg::Exit(0);
+  return 1;
 }

@@ -1,4 +1,4 @@
-// $Id: gmshRegion.cpp,v 1.21 2008-03-20 11:44:07 geuzaine Exp $
+// $Id: gmshRegion.cpp,v 1.22 2008-05-04 08:31:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,7 @@ gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
       l_dirs.push_back(ori);
     }
     else
-      Msg(GERROR, "Unknown surface %d", s->Num);
+      Msg::Error("Unknown surface %d", s->Num);
   }
   for(int i = 0; i < List_Nbr(v->SurfacesByTag); i++){
     int is;
@@ -49,7 +49,7 @@ gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
       l_dirs.push_back(sign(is));
     }
     else
-      Msg(GERROR, "Unknown surface %d", is);
+      Msg::Error("Unknown surface %d", is);
   }
 
   resetMeshAttributes();
@@ -68,7 +68,7 @@ void gmshRegion::resetMeshAttributes()
       if(gv)
         meshAttributes.corners.push_back(gv);
       else
-        Msg(GERROR, "Unknown vertex %d in transfinite attributes", corn->Num);
+        Msg::Error("Unknown vertex %d in transfinite attributes", corn->Num);
     }
   }
 }

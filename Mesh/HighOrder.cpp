@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.27 2008-03-20 11:44:08 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.28 2008-05-04 08:31:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1223,8 +1223,8 @@ void checkHighOrderTriangles(GModel *m)
     minJGlob = std::min(minJGlob,minJ);
     maxJGlob = std::max(maxJGlob,maxJ);
   }
-  if (minJGlob >= 0) Msg(INFO, "Jacobian Range (%12.5E,%12.5E)", minJGlob, maxJGlob);
-  else Msg(WARNING, "Jacobian Range (%12.5E,%12.5E)", minJGlob, maxJGlob);
+  if (minJGlob >= 0) Msg::Info("Jacobian Range (%12.5E,%12.5E)", minJGlob, maxJGlob);
+  else Msg::Warning("Jacobian Range (%12.5E,%12.5E)", minJGlob, maxJGlob);
 }  
 
 void printJacobians(GModel *m, const char *nm)
@@ -1298,7 +1298,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
 
   int nPts = order - 1;
 
-  Msg(STATUS1, "Meshing second order...");
+  Msg::Status(1, true, "Meshing second order...");
   double t1 = Cpu();
 
   // first, make sure to remove any existsing second order vertices/elements
@@ -1319,7 +1319,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   if(CTX.mesh.smooth_internal_edges){
     checkHighOrderTriangles(m);
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){      
-      Msg(INFO, "Smoothing internal Edges in Surface %d",(*it)->tag());
+      Msg::Info("Smoothing internal Edges in Surface %d",(*it)->tag());
       for (int i = 0; i < 10; i++) {
         if (!smoothInternalEdges(*it, edgeVertices))break;
         checkHighOrderTriangles(m);
@@ -1339,6 +1339,6 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   checkHighOrderTriangles(m);
 
   double t2 = Cpu();
-  Msg(INFO, "Mesh second order complete (%g s)", t2 - t1);
-  Msg(STATUS1, "Mesh");
+  Msg::Info("Mesh second order complete (%g s)", t2 - t1);
+  Msg::Status(1, true, "Mesh");
 }

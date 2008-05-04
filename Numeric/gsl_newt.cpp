@@ -1,4 +1,4 @@
-// $Id: gsl_newt.cpp,v 1.18 2008-02-17 08:48:02 geuzaine Exp $
+// $Id: gsl_newt.cpp,v 1.19 2008-05-04 08:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -66,7 +66,7 @@ int gslfunc(const gsl_vector * xx, void *params, gsl_vector * f)
 {
   convert_vector_from_gsl(xx, nru);
   (*nrfunc) (nrdim, nru, nrv);
-  // Msg(INFO, "f(%lf,%lf) = %lf %lf\n",nru[1],nru[2],nrv[1],nrv[2]);
+  // Msg::Info("f(%lf,%lf) = %lf %lf\n",nru[1],nru[2],nrv[1],nrv[2]);
   convert_vector_to_gsl(nrv, nrdim, f);
   return GSL_SUCCESS;
 }
@@ -86,7 +86,7 @@ void newt(double x[], int n, int *check,
   gsl_vector *xx = gsl_vector_alloc(n);
 
   if(n > MAX_DIM_NEWT - 1)
-    Msg(FATAL, "Maximum Newton dimension exceeded\n");
+    Msg::Fatal("Maximum Newton dimension exceeded\n");
   nrdim = n;
 
   nrfunc = func;
@@ -99,7 +99,7 @@ void newt(double x[], int n, int *check,
   do {
     iter++;
     status = gsl_multiroot_fsolver_iterate(s);
-    // Msg(INFO, "status %d %d %d %lf %lf\n",
+    // Msg::Info("status %d %d %d %lf %lf\n",
     //     status,n,iter,gsl_vector_get(s->x,0),gsl_vector_get(s->x,1));
     if(status)
       break;    // solver problem
@@ -111,7 +111,7 @@ void newt(double x[], int n, int *check,
     *check = 1; // problem !!!
   }
   else {
-    // Msg(INFO, "status %d %d %d %lf %lf\n",
+    // Msg::Info("status %d %d %d %lf %lf\n",
     //     status,n,iter,gsl_vector_get(s->x,0),gsl_vector_get(s->x,1));
     convert_vector_from_gsl(s->x, x);
     *check = 0; // converged

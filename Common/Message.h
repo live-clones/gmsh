@@ -20,59 +20,59 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <map>
+#include <vector>
+#include <string>
 #include <stdarg.h>
 
-#define FATAL          1  // Fatal error (causes Gmsh to exit)
-#define FATAL1         2  // First part of a multiline FATAL message 
-#define FATAL2         3  // Middle part of a multiline FATAL message
-#define FATAL3         4  // Last part of a multiline FATAL message  
+// a class to manage messages
+class Message {
+ private:
+  // current cpu number and total number of cpus
+  static int _commRank, _commSize;
+  // verbosity level
+  static int _verbosity;
+  // step (in %) of the progress meter and current progress %
+  static int _progressMeterStep, _progressMeterCurrent;
+  // timers
+  static std::map<std::string, double> _timers;
+  // counters
+  static int _warningCount, _errorCount;
+ public:
+  Message() {}
+  static void Init(int argc, char **argv);
+  static void Exit(int level);
+  static int GetCommRank(){ return _commRank; }
+  static int GetCommSize(){ return _commSize; }
+  static void SetCommRank(int val){ _commRank = val; }
+  static void SetCommSize(int val){ _commSize = val; }
+  static void Barrier();
+  static int GetNumThreads();
+  static int GetMaxThreads();
+  static int GetThreadNum();
+  static void SetVerbosity(int val){ _verbosity = val; }
+  static int GetVerbosity(){ return _verbosity; }
+  static void Fatal(const char *fmt, ...);
+  static void Error(const char *fmt, ...);
+  static void Warning(const char *fmt, ...);
+  static void Info(const char *fmt, ...);
+  static void Direct(const char *fmt, ...);
+  static void Direct(int level, const char *fmt, ...);
+  static void Status(int num, bool log, const char *fmt, ...);
+  static void Debug(const char *fmt, ...);
+  static void ProgressMeter(int n, int N, const char *fmt, ...);
+  static void ProgressMeter(int n, int N){ ProgressMeter(n, N, ""); }
+  static void SetProgressMeterStep(int step){ _progressMeterStep = step; }
+  static void ResetProgressMeter(){ if(!_commRank) _progressMeterCurrent = 0; }
+  static double &Timer(std::string str){ return _timers[str]; }
+  static void PrintTimers();
+  static void ResetErrorCounter(){ _warningCount = 0; _errorCount = 0; }
+  static void PrintErrorCounter(const char *title);
+  static double GetValue(const char *text, double defaultval);
+  static bool GetBinaryAnswer(const char *question, const char *yes, 
+			      const char *no,  bool defaultval=true);
+};
 
-#define GERROR         5  // Error (but Gmsh can live with it)
-#define GERROR1        6  // First part of a multiline ERROR message 
-#define GERROR2        7  // Middle part of a multiline ERROR message
-#define GERROR3        8  // Last part of a multiline ERROR message  
-
-#define WARNING        9  // Warning
-#define WARNING1      10  // First part of a multiline WARNING message 
-#define WARNING2      11  // Middle part of a multiline WARNING message
-#define WARNING3      12  // Last part of a multiline WARNING message  
-
-#define INFO          13  // Long informations
-#define INFO1         14  // First part of a multiline INFO message 
-#define INFO2         15  // Middle part of a multiline INFO message
-#define INFO3         16  // Last part of a multiline INFO message  
-
-#define DEBUG         17  // Long debug information
-#define DEBUG1        18  // First part of a multiline DEBUG message 
-#define DEBUG2        19  // Middle part of a multiline DEBUG message
-#define DEBUG3        20  // Last part of a multiline DEBUG message  
-
-#define STATUS1       21  // left status bar
-#define STATUS2       22  // right status bar
-
-#define STATUS1N      24  // Same as STATUS1, but not going into the log file
-#define STATUS2N      25  // Same as STATUS2, but not going into the log file
-
-#define ONSCREEN      27  // Persistent on-screen message
-
-#define DIRECT        30  // Direct message (no special formatting)
-#define SOLVER        31  // Solver message
-#define SOLVERR       32  // Solver errors and warnings
-
-#define PROGRESS      40  // Progress indicator
-
-#define WHITE_STR          "        : "
-#define FATAL_STR          "Fatal   : "
-#define ERROR_STR          "Error   : "
-#define WARNING_STR        "Warning : "
-#define INFO_STR           "Info    : "
-#define DEBUG_STR          "Debug   : "
-#define STATUS_STR         "Info    : "
-
-void   Msg(int level, const char *fmt, ...);
-void   Exit(int);
-double GetValue(const char *text, double defaultval);
-bool   GetBinaryAnswer(const char *question, const char *yes, const char *no, 
-                       bool defaultval=true);
+typedef Message Msg;
 
 #endif

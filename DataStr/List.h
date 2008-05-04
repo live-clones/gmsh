@@ -29,14 +29,15 @@
 #define LIST_FORMAT_ASCII       0
 #define LIST_FORMAT_BINARY      1
 
-typedef struct {
+class List_T {
+public:
   int nmax;
   int size;
   int incr;
   int n;
   int isorder;
   char *array;
-} List_T;
+};
 
 List_T *List_Create(int n, int incr, int size);
 void    List_Delete(List_T *liste);

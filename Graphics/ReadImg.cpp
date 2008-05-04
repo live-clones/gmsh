@@ -1,4 +1,4 @@
-// $Id: ReadImg.cpp,v 1.24 2008-03-20 11:44:07 geuzaine Exp $
+// $Id: ReadImg.cpp,v 1.25 2008-05-04 08:31:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -51,7 +51,7 @@ static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads=1,
   int dim = img->d();
 
   if(dim != 1) {
-    Msg(GERROR, "Unable to obtain one-channel image");
+    Msg::Error("Unable to obtain one-channel image");
     return 0;
   }
 

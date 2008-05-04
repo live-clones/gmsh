@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.25 2008-04-17 09:07:01 remacle Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.26 2008-05-04 08:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -61,7 +61,7 @@ void circumCenterXY(double *p1, double *p2, double *p3, double *res)
 
   d = 2. * (double)(y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
   if(d == 0.0) {
-    Msg(WARNING, "Colinear points in circum circle computation");
+    Msg::Warning("Colinear points in circum circle computation");
     res[0] = res[1] = -99999.;
     return ;
   }
@@ -578,9 +578,9 @@ static void insertAPoint(GFace *gf,
   if (inside) {
     // we use here local coordinates as real coordinates
     // x,y and z will be computed hereafter
-    //	      Msg(INFO,"Point is inside");
+    // Msg::Info("Point is inside");
     GPoint p = gf->point(center[0], center[1]);
-    //    printf("the new point is %g %g\n",p.x(),p.y());
+    // printf("the new point is %g %g\n",p.x(),p.y());
     MVertex *v = new MFaceVertex(p.x(), p.y(), p.z(), gf, center[0], center[1]);
     v->setNum(Us.size());
     double lc1 = ((1. - uv[0] - uv[1]) * vSizes[ptin->tri()->getVertex(0)->getNum()] + 
@@ -595,7 +595,7 @@ static void insertAPoint(GFace *gf,
     
     if (!insertVertex(gf, v, center, worst, AllTris,ActiveTris, vSizes, vSizesBGM, 
 		      Us, Vs, metric)) {
-      Msg(DEBUG2,"2D Delaunay : a cavity is not star shaped");
+      Msg::Debug("2D Delaunay : a cavity is not star shaped");
       AllTris.erase(it);
       worst->forceRadius(-1);
       AllTris.insert(worst);		        
@@ -605,7 +605,7 @@ static void insertAPoint(GFace *gf,
       gf->mesh_vertices.push_back(v);
   }
   else {
-    Msg(DEBUG2,"Point %g %g is outside (%g %g , %g %g , %g %g) (metric %g %g %g)",
+    Msg::Debug("Point %g %g is outside (%g %g , %g %g , %g %g) (metric %g %g %g)",
 	center[0], center[1],
 	Us[base->getVertex(0)->getNum()], 
 	Vs[base->getVertex(0)->getNum()], 
@@ -634,7 +634,7 @@ void gmshBowyerWatson(GFace *gf)
   // _printTris ("before.pos", AllTris, Us,Vs);
   int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, Us, Vs, vSizes, vSizesBGM);
   // _printTris ("after2.pos", AllTris, Us,Vs);
-  Msg(DEBUG2,"Delaunization of the initial mesh done (%d swaps)", nbSwaps);
+  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
 
   int ITER = 0;
   while (1){
@@ -646,7 +646,7 @@ void gmshBowyerWatson(GFace *gf)
     }
     else{
       if(ITER++ % 5000 == 0)
-	Msg(DEBUG1,"%7d points created -- Worst tri radius is %8.3f",
+	Msg::Debug("%7d points created -- Worst tri radius is %8.3f",
 	    vSizes.size(), worst->getRadius());
       double center[2],metric[3],r2;
       if (worst->getRadius() < 0.5 * sqrt(2.0)) break;
@@ -715,7 +715,7 @@ void gmshBowyerWatsonFrontal(GFace *gf){
 
   // delaunise the initial mesh
   int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, Us, Vs, vSizes, vSizesBGM);
-  Msg(DEBUG2,"Delaunization of the initial mesh done (%d swaps)", nbSwaps);
+  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
   
   int ITER = 0, active_edge;
   // compute active triangle
@@ -735,7 +735,7 @@ void gmshBowyerWatsonFrontal(GFace *gf){
 
     if (!worst->isDeleted() && isActive(worst,LIMIT_,active_edge) && worst->getRadius() > LIMIT_){      
       if(ITER++ % 5000 == 0)
-	Msg(DEBUG1,"%7d points created -- Worst tri radius is %8.3f",
+	Msg::Debug("%7d points created -- Worst tri radius is %8.3f",
 	    vSizes.size(), worst->getRadius());
       // compute circum center of that guy
       double center[2],metric[3],r2;
@@ -808,7 +808,7 @@ void gmshBowyerWatsonFrontal(GFace *gf){
 
   // delaunise the initial mesh
   int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, Us, Vs, vSizes, vSizesBGM);
-  Msg(DEBUG2,"Delaunization of the initial mesh done (%d swaps)", nbSwaps);
+  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
   
 
   int ITER = 0, active_edge;
@@ -833,7 +833,7 @@ void gmshBowyerWatsonFrontal(GFace *gf){
       
       if (!worst->isDeleted() && isActive(worst,LIMIT_,active_edge) && worst->getRadius() > LIMIT_){      
 	if(ITER++ % 5000 == 0)
-	  Msg(DEBUG1,"%7d points created -- Worst tri radius is %8.3f",
+	  Msg::Debug("%7d points created -- Worst tri radius is %8.3f",
 	      vSizes.size(), worst->getRadius());
 	// compute circum center of that guy
 	double center[2],uv[2],metric[3],r2;

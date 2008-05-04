@@ -333,7 +333,7 @@ public:
   void set_anim_buttons(int mode);
   void check_anim_buttons();
   void set_status(const char *msg, int num);
-  void add_message(char *msg);
+  void add_message(const char *msg);
   void save_message(const char *filename);
   void fatal_error(const char *filename);
   void set_statistics(bool compute_quality);

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.581 2008-04-22 07:37:09 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.582 2008-05-04 08:31:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -39,6 +39,8 @@
 #include "Draw.h"
 #include "SelectBuffer.h"
 #include "PView.h"
+#include "PViewOptions.h"
+#include "PViewData.h"
 #include "CreateFile.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
@@ -585,7 +587,7 @@ void file_new_cb(CALLBACK_ARGS)
     }
     FILE *fp = fopen(name.c_str(), "w");
     if(!fp){
-      Msg(GERROR, "Unable to open file '%s'", name.c_str());
+      Msg::Error("Unable to open file '%s'", name.c_str());
       return;
     }
     time_t now;
@@ -822,7 +824,7 @@ void file_rename_cb(CALLBACK_ARGS)
 
 void file_quit_cb(CALLBACK_ARGS)
 {
-  Exit(0);
+  Msg::Exit(0);
 }
 
 // Option Menu
@@ -860,9 +862,9 @@ void options_browser_cb(CALLBACK_ARGS)
 
 void options_save_cb(CALLBACK_ARGS)
 {
-  Msg(STATUS2, "Writing '%s'", CTX.options_filename_fullpath);
+  Msg::Status(2, true, "Writing '%s'", CTX.options_filename_fullpath);
   Print_Options(0, GMSH_OPTIONSRC, 1, 1, CTX.options_filename_fullpath);
-  Msg(STATUS2, "Wrote '%s'", CTX.options_filename_fullpath);
+  Msg::Status(2, true, "Wrote '%s'", CTX.options_filename_fullpath);
 }
 
 void options_restore_defaults_cb(CALLBACK_ARGS)
@@ -898,7 +900,7 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
   std::vector<GRegion*> regions;
   std::vector<MElement*> elements;
 
-  Msg(ONSCREEN, "Select entity\n[Press 'q' to abort]");
+  Msg::Status(3, false, "Select entity\n[Press 'q' to abort]");
   char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, elements);
   if(ib == 'l') {
     SPoint3 pc(0., 0., 0.);
@@ -919,7 +921,7 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
   }
   ZeroHighlight();
   Draw();
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 void general_options_ok_cb(CALLBACK_ARGS)
@@ -1906,7 +1908,7 @@ void message_copy_cb(CALLBACK_ARGS)
     if(WID->msg_browser->selected(i)) {
       const char *c = WID->msg_browser->text(i);
       if(strlen(buff) + strlen(c) > BUFFL - 2) {
-        Msg(GERROR, "Text selection too large to copy");
+        Msg::Error("Text selection too large to copy");
         break;
       }
       if(c[0] == '@')
@@ -2290,7 +2292,7 @@ void visibility_interactive_cb(CALLBACK_ARGS)
     if(what == ENT_ALL) 
       CTX.mesh.changed = ENT_ALL;
     Draw();
-    Msg(ONSCREEN, "Select %s\n[Press %s'q' to abort]", 
+    Msg::Status(3, false, "Select %s\n[Press %s'q' to abort]", 
         help, mode ? "" : "'u' to undo or ");
 
     char ib = SelectEntity(what, vertices, edges, faces, regions, elements);
@@ -2315,7 +2317,7 @@ void visibility_interactive_cb(CALLBACK_ARGS)
   CTX.mesh.changed = ENT_ALL;
   CTX.pick_elements = 0;
   Draw();  
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 // Clipping planes menu
@@ -2435,123 +2437,123 @@ void manip_update_cb(CALLBACK_ARGS)
 
 void help_short_cb(CALLBACK_ARGS)
 {
-  Msg(DIRECT, " ");
-  Msg(DIRECT, "Keyboard shortcuts:");
-  Msg(DIRECT, " ");
-  Msg(DIRECT, "  Left arrow    Go to previous time step"); 
-  Msg(DIRECT, "  Right arrow   Go to next time step"); 
-  Msg(DIRECT, "  Up arrow      Make previous view visible"); 
-  Msg(DIRECT, "  Down arrow    Make next view visible"); 
-  Msg(DIRECT, " ");
-  Msg(DIRECT, "  <             Go back to previous context");
-  Msg(DIRECT, "  >             Go forward to next context");
-  Msg(DIRECT, "  0             Reload project file");
-  Msg(DIRECT, "  1 or F1       Mesh lines");
-  Msg(DIRECT, "  2 or F2       Mesh surfaces");
-  Msg(DIRECT, "  3 or F3       Mesh volumes");
-  Msg(DIRECT, "  Escape        Cancel lasso zoom/selection, toggle mouse selection ON/OFF");
-  Msg(DIRECT, " ");
-  Msg(DIRECT, "  g             Go to geometry module");
-  Msg(DIRECT, "  m             Go to mesh module");
-  Msg(DIRECT, "  p             Go to post-processing module");
-  Msg(DIRECT, "  s             Go to solver module");
-  Msg(DIRECT, " ");
-  Msg(DIRECT, "  Shift+a       Bring all windows to front");
-  Msg(DIRECT, "  Shift+g       Show geometry options");
-  Msg(DIRECT, "  Shift+m       Show mesh options");
-  Msg(DIRECT, "  Shift+o       Show general options"); 
-  Msg(DIRECT, "  Shift+p       Show post-processing options");
-  Msg(DIRECT, "  Shift+s       Show solver options"); 
-  Msg(DIRECT, "  Shift+u       Show post-processing view plugins");
-  Msg(DIRECT, "  Shift+w       Show post-processing view options");
-  Msg(DIRECT, "  Shift+Escape  Enable full mouse selection");
-  Msg(DIRECT, " ");
-  Msg(DIRECT, "  " CC("i") "        Show statistics window"); 
-  Msg(DIRECT, "  " CC("l") "        Show message console");
+  Msg::Direct(" ");
+  Msg::Direct("Keyboard shortcuts:");
+  Msg::Direct(" ");
+  Msg::Direct("  Left arrow    Go to previous time step"); 
+  Msg::Direct("  Right arrow   Go to next time step"); 
+  Msg::Direct("  Up arrow      Make previous view visible"); 
+  Msg::Direct("  Down arrow    Make next view visible"); 
+  Msg::Direct(" ");
+  Msg::Direct("  <             Go back to previous context");
+  Msg::Direct("  >             Go forward to next context");
+  Msg::Direct("  0             Reload project file");
+  Msg::Direct("  1 or F1       Mesh lines");
+  Msg::Direct("  2 or F2       Mesh surfaces");
+  Msg::Direct("  3 or F3       Mesh volumes");
+  Msg::Direct("  Escape        Cancel lasso zoom/selection, toggle mouse selection ON/OFF");
+  Msg::Direct(" ");
+  Msg::Direct("  g             Go to geometry module");
+  Msg::Direct("  m             Go to mesh module");
+  Msg::Direct("  p             Go to post-processing module");
+  Msg::Direct("  s             Go to solver module");
+  Msg::Direct(" ");
+  Msg::Direct("  Shift+a       Bring all windows to front");
+  Msg::Direct("  Shift+g       Show geometry options");
+  Msg::Direct("  Shift+m       Show mesh options");
+  Msg::Direct("  Shift+o       Show general options"); 
+  Msg::Direct("  Shift+p       Show post-processing options");
+  Msg::Direct("  Shift+s       Show solver options"); 
+  Msg::Direct("  Shift+u       Show post-processing view plugins");
+  Msg::Direct("  Shift+w       Show post-processing view options");
+  Msg::Direct("  Shift+Escape  Enable full mouse selection");
+  Msg::Direct(" ");
+  Msg::Direct("  " CC("i") "        Show statistics window"); 
+  Msg::Direct("  " CC("l") "        Show message console");
 #if defined(__APPLE__)
-  Msg(DIRECT, "  " CC("m") "        Minimize window"); 
+  Msg::Direct("  " CC("m") "        Minimize window"); 
 #endif
-  Msg(DIRECT, "  " CC("n") "        Create new project file"); 
-  Msg(DIRECT, "  " CC("o") "        Open project file"); 
-  Msg(DIRECT, "  " CC("q") "        Quit");
-  Msg(DIRECT, "  " CC("r") "        Rename project file");
-  Msg(DIRECT, "  " CC("s") "        Save file as");
-  Msg(DIRECT, " ");
-  Msg(DIRECT, "  Shift+" CC("c") "  Show clipping plane window");
-  Msg(DIRECT, "  Shift+" CC("m") "  Show manipulator window"); 
-  Msg(DIRECT, "  Shift+" CC("n") "  Show option window"); 
-  Msg(DIRECT, "  Shift+" CC("o") "  Merge file(s)"); 
-  Msg(DIRECT, "  Shift+" CC("s") "  Save mesh in default format");
-  Msg(DIRECT, "  Shift+" CC("u") "  Show plugin window");
-  Msg(DIRECT, "  Shift+" CC("v") "  Show visibility window");
-  Msg(DIRECT, " ");
-  Msg(DIRECT, "  Alt+a         Loop through axes modes"); 
-  Msg(DIRECT, "  Alt+b         Hide/show bounding boxes");
-  Msg(DIRECT, "  Alt+c         Loop through predefined color schemes");
-  Msg(DIRECT, "  Alt+e         Hide/Show element outlines for visible post-processing views");
-  Msg(DIRECT, "  Alt+f         Change redraw mode (fast/full)"); 
-  Msg(DIRECT, "  Alt+h         Hide/show all post-processing views"); 
-  Msg(DIRECT, "  Alt+i         Hide/show all post-processing view scales");
-  Msg(DIRECT, "  Alt+l         Hide/show geometry lines");
-  Msg(DIRECT, "  Alt+m         Toggle visibility of all mesh entities");
-  Msg(DIRECT, "  Alt+n         Hide/show all post-processing view annotations");
-  Msg(DIRECT, "  Alt+o         Change projection mode (orthographic/perspective)");
-  Msg(DIRECT, "  Alt+p         Hide/show geometry points");
-  Msg(DIRECT, "  Alt+r         Loop through range modes for visible post-processing views"); 
-  Msg(DIRECT, "  Alt+s         Hide/show geometry surfaces");
-  Msg(DIRECT, "  Alt+t         Loop through interval modes for visible post-processing views"); 
-  Msg(DIRECT, "  Alt+v         Hide/show geometry volumes");
-  Msg(DIRECT, "  Alt+w         Enable/disable all lighting");
-  Msg(DIRECT, "  Alt+x         Set X view"); 
-  Msg(DIRECT, "  Alt+y         Set Y view"); 
-  Msg(DIRECT, "  Alt+z         Set Z view"); 
-  Msg(DIRECT, " ");
-  Msg(DIRECT, "  Alt+Shift+a   Hide/show small axes"); 
-  Msg(DIRECT, "  Alt+Shift+b   Hide/show mesh volume faces");
-  Msg(DIRECT, "  Alt+Shift+d   Hide/show mesh surface faces");
-  Msg(DIRECT, "  Alt+Shift+l   Hide/show mesh lines");
-  Msg(DIRECT, "  Alt+Shift+o   Adjust projection parameters");
-  Msg(DIRECT, "  Alt+Shift+p   Hide/show mesh points");
-  Msg(DIRECT, "  Alt+Shift+s   Hide/show mesh surface edges");
-  Msg(DIRECT, "  Alt+Shift+v   Hide/show mesh volume edges");
-  Msg(DIRECT, "  Alt+Shift+w   Reverse all mesh normals");
-  Msg(DIRECT, "  Alt+Shift+x   Set -X view"); 
-  Msg(DIRECT, "  Alt+Shift+y   Set -Y view"); 
-  Msg(DIRECT, "  Alt+Shift+z   Set -Z view"); 
-  Msg(DIRECT, " ");
+  Msg::Direct("  " CC("n") "        Create new project file"); 
+  Msg::Direct("  " CC("o") "        Open project file"); 
+  Msg::Direct("  " CC("q") "        Quit");
+  Msg::Direct("  " CC("r") "        Rename project file");
+  Msg::Direct("  " CC("s") "        Save file as");
+  Msg::Direct(" ");
+  Msg::Direct("  Shift+" CC("c") "  Show clipping plane window");
+  Msg::Direct("  Shift+" CC("m") "  Show manipulator window"); 
+  Msg::Direct("  Shift+" CC("n") "  Show option window"); 
+  Msg::Direct("  Shift+" CC("o") "  Merge file(s)"); 
+  Msg::Direct("  Shift+" CC("s") "  Save mesh in default format");
+  Msg::Direct("  Shift+" CC("u") "  Show plugin window");
+  Msg::Direct("  Shift+" CC("v") "  Show visibility window");
+  Msg::Direct(" ");
+  Msg::Direct("  Alt+a         Loop through axes modes"); 
+  Msg::Direct("  Alt+b         Hide/show bounding boxes");
+  Msg::Direct("  Alt+c         Loop through predefined color schemes");
+  Msg::Direct("  Alt+e         Hide/Show element outlines for visible post-processing views");
+  Msg::Direct("  Alt+f         Change redraw mode (fast/full)"); 
+  Msg::Direct("  Alt+h         Hide/show all post-processing views"); 
+  Msg::Direct("  Alt+i         Hide/show all post-processing view scales");
+  Msg::Direct("  Alt+l         Hide/show geometry lines");
+  Msg::Direct("  Alt+m         Toggle visibility of all mesh entities");
+  Msg::Direct("  Alt+n         Hide/show all post-processing view annotations");
+  Msg::Direct("  Alt+o         Change projection mode (orthographic/perspective)");
+  Msg::Direct("  Alt+p         Hide/show geometry points");
+  Msg::Direct("  Alt+r         Loop through range modes for visible post-processing views"); 
+  Msg::Direct("  Alt+s         Hide/show geometry surfaces");
+  Msg::Direct("  Alt+t         Loop through interval modes for visible post-processing views"); 
+  Msg::Direct("  Alt+v         Hide/show geometry volumes");
+  Msg::Direct("  Alt+w         Enable/disable all lighting");
+  Msg::Direct("  Alt+x         Set X view"); 
+  Msg::Direct("  Alt+y         Set Y view"); 
+  Msg::Direct("  Alt+z         Set Z view"); 
+  Msg::Direct(" ");
+  Msg::Direct("  Alt+Shift+a   Hide/show small axes"); 
+  Msg::Direct("  Alt+Shift+b   Hide/show mesh volume faces");
+  Msg::Direct("  Alt+Shift+d   Hide/show mesh surface faces");
+  Msg::Direct("  Alt+Shift+l   Hide/show mesh lines");
+  Msg::Direct("  Alt+Shift+o   Adjust projection parameters");
+  Msg::Direct("  Alt+Shift+p   Hide/show mesh points");
+  Msg::Direct("  Alt+Shift+s   Hide/show mesh surface edges");
+  Msg::Direct("  Alt+Shift+v   Hide/show mesh volume edges");
+  Msg::Direct("  Alt+Shift+w   Reverse all mesh normals");
+  Msg::Direct("  Alt+Shift+x   Set -X view"); 
+  Msg::Direct("  Alt+Shift+y   Set -Y view"); 
+  Msg::Direct("  Alt+Shift+z   Set -Z view"); 
+  Msg::Direct(" ");
   WID->create_message_window();
 }
 
 void help_mouse_cb(CALLBACK_ARGS)
 {
-  Msg(DIRECT, " ");
-  Msg(DIRECT, "Mouse actions:");
-  Msg(DIRECT, " ");
-  Msg(DIRECT, "  Move                - Highlight the entity under the mouse pointer");
-  Msg(DIRECT, "                        and display its properties in the status bar");
-  Msg(DIRECT, "                      - Resize a lasso zoom or a lasso (un)selection");
-  Msg(DIRECT, "  Left button         - Rotate");
-  Msg(DIRECT, "                      - Select an entity");
-  Msg(DIRECT, "                      - Accept a lasso zoom or a lasso selection"); 
-  Msg(DIRECT, "  Ctrl+Left button    Start a lasso zoom or a lasso (un)selection"); 
-  Msg(DIRECT, "  Middle button       - Zoom");
-  Msg(DIRECT, "                      - Unselect an entity");
-  Msg(DIRECT, "                      - Accept a lasso zoom or a lasso unselection");
-  Msg(DIRECT, "  Ctrl+Middle button  Orthogonalize display"); 
-  Msg(DIRECT, "  Right button        - Pan");
-  Msg(DIRECT, "                      - Cancel a lasso zoom or a lasso (un)selection");
-  Msg(DIRECT, "                      - Pop-up menu on post-processing view button");
-  Msg(DIRECT, "  Ctrl+Right button   Reset to default viewpoint");   
-  Msg(DIRECT, " ");   
-  Msg(DIRECT, "  For a 2 button mouse, Middle button = Shift+Left button");
-  Msg(DIRECT, "  For a 1 button mouse, Middle button = Shift+Left button, Right button = Alt+Left button");
-  Msg(DIRECT, " ");
+  Msg::Direct(" ");
+  Msg::Direct("Mouse actions:");
+  Msg::Direct(" ");
+  Msg::Direct("  Move                - Highlight the entity under the mouse pointer");
+  Msg::Direct("                        and display its properties in the status bar");
+  Msg::Direct("                      - Resize a lasso zoom or a lasso (un)selection");
+  Msg::Direct("  Left button         - Rotate");
+  Msg::Direct("                      - Select an entity");
+  Msg::Direct("                      - Accept a lasso zoom or a lasso selection"); 
+  Msg::Direct("  Ctrl+Left button    Start a lasso zoom or a lasso (un)selection"); 
+  Msg::Direct("  Middle button       - Zoom");
+  Msg::Direct("                      - Unselect an entity");
+  Msg::Direct("                      - Accept a lasso zoom or a lasso unselection");
+  Msg::Direct("  Ctrl+Middle button  Orthogonalize display"); 
+  Msg::Direct("  Right button        - Pan");
+  Msg::Direct("                      - Cancel a lasso zoom or a lasso (un)selection");
+  Msg::Direct("                      - Pop-up menu on post-processing view button");
+  Msg::Direct("  Ctrl+Right button   Reset to default viewpoint");   
+  Msg::Direct(" ");   
+  Msg::Direct("  For a 2 button mouse, Middle button = Shift+Left button");
+  Msg::Direct("  For a 1 button mouse, Middle button = Shift+Left button, Right button = Alt+Left button");
+  Msg::Direct(" ");
   WID->create_message_window();
 }
 
 void help_command_line_cb(CALLBACK_ARGS)
 {
-  Msg(DIRECT, " ");
+  Msg::Direct(" ");
   Print_Usage("gmsh");
   WID->create_message_window();
 }
@@ -2559,7 +2561,7 @@ void help_command_line_cb(CALLBACK_ARGS)
 void help_license_cb(CALLBACK_ARGS)
 {
   extern void print_license();
-  Msg(DIRECT, " ");
+  Msg::Direct(" ");
   print_license();
   WID->create_message_window();
 }
@@ -2582,7 +2584,7 @@ void _replace_multi_format(const char *in, const char *val, char *out)
         j += strlen(val);
       }
       else{
-        Msg(WARNING, "Skipping unknown format '%%%c' in '%s'", in[i + 1], in);
+        Msg::Warning("Skipping unknown format '%%%c' in '%s'", in[i + 1], in);
         i += 2;
       }
     }
@@ -2695,7 +2697,7 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
 
   while(1) {
     WID->g_opengl_window->AddPointMode = true;
-    Msg(ONSCREEN, "Move mouse and/or enter coordinates\n"
+    Msg::Status(3, false, "Move mouse and/or enter coordinates\n"
         "[Press 'Shift' to hold position, 'e' to add point or 'q' to abort]");
     std::vector<GVertex*> vertices;
     std::vector<GEdge*> edges;
@@ -2718,7 +2720,7 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
     }
   }
 
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 static void _new_multiline(int type)
@@ -2737,10 +2739,10 @@ static void _new_multiline(int type)
   int n = 0;
   while(1) {
     if(n == 0)
-      Msg(ONSCREEN, "Select control points\n"
+      Msg::Status(3, false, "Select control points\n"
           "[Press 'e' to end selection or 'q' to abort]");
     else
-      Msg(ONSCREEN, "Select control points\n"
+      Msg::Status(3, false, "Select control points\n"
           "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
@@ -2751,7 +2753,7 @@ static void _new_multiline(int type)
       Draw();
     }
     if(ib == 'r') {
-      Msg(WARNING, "Entity de-selection not supported yet during multi-line creation");
+      Msg::Warning("Entity de-selection not supported yet during multi-line creation");
     }
     if(ib == 'e') {
       if(n >= 2) {
@@ -2789,7 +2791,7 @@ static void _new_multiline(int type)
     }
   }
 
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
@@ -2813,10 +2815,10 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
   int n = 0;
   while(1) {
     if(n == 0)
-      Msg(ONSCREEN, "Select start point\n"
+      Msg::Status(3, false, "Select start point\n"
           "[Press 'q' to abort]");
     if(n == 1)
-      Msg(ONSCREEN, "Select end point\n"
+      Msg::Status(3, false, "Select end point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
@@ -2825,7 +2827,7 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
       p[n++] = vertices[0]->tag();
     }
     if(ib == 'r') {
-      Msg(WARNING, "Entity de-selection not supported yet during line creation");
+      Msg::Warning("Entity de-selection not supported yet during line creation");
     }
     if(ib == 'u') {
       if(n > 0){
@@ -2848,7 +2850,7 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
     }
   }
 
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 void geometry_elementary_add_new_spline_cb(CALLBACK_ARGS)
@@ -2877,13 +2879,13 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
   int n = 0;
   while(1) {
     if(n == 0)
-      Msg(ONSCREEN, "Select start point\n"
+      Msg::Status(3, false, "Select start point\n"
           "[Press 'q' to abort]");
     if(n == 1)
-      Msg(ONSCREEN, "Select center point\n"
+      Msg::Status(3, false, "Select center point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
     if(n == 2)
-      Msg(ONSCREEN, "Select end point\n"
+      Msg::Status(3, false, "Select end point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
@@ -2892,7 +2894,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
       p[n++] = vertices[0]->tag();
     }
     if(ib == 'r') {
-      Msg(WARNING, "Entity de-selection not supported yet during circle creation");
+      Msg::Warning("Entity de-selection not supported yet during circle creation");
     }
     if(ib == 'u') {
       if(n > 0){
@@ -2915,7 +2917,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
     }
   }
 
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
@@ -2934,16 +2936,16 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
   int n = 0;
   while(1) {
     if(n == 0)
-      Msg(ONSCREEN, "Select start point\n"
+      Msg::Status(3, false, "Select start point\n"
           "[Press 'q' to abort]");
     if(n == 1)
-      Msg(ONSCREEN, "Select center point\n"
+      Msg::Status(3, false, "Select center point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
     if(n == 2)
-      Msg(ONSCREEN, "Select major axis point\n"
+      Msg::Status(3, false, "Select major axis point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
     if(n == 3)
-      Msg(ONSCREEN, "Select end point\n"
+      Msg::Status(3, false, "Select end point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
@@ -2952,7 +2954,7 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
       p[n++] = vertices[0]->tag();
     }
     if(ib == 'r') {
-      Msg(WARNING, "Entity de-selection not supported yet during ellipse creation");
+      Msg::Warning("Entity de-selection not supported yet during ellipse creation");
     }
     if(ib == 'u') {
       if(n > 0){
@@ -2975,7 +2977,7 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
     }
   }
 
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 static void _new_surface_volume(int mode)
@@ -3009,18 +3011,18 @@ static void _new_surface_volume(int mode)
     while(1) {
       if(type == ENT_LINE){
         if(!List_Nbr(List1))
-          Msg(ONSCREEN, "Select surface boundary\n"
+          Msg::Status(3, false, "Select surface boundary\n"
               "[Press 'q' to abort]");
         else
-          Msg(ONSCREEN, "Select surface boundary\n"
+          Msg::Status(3, false, "Select surface boundary\n"
               "[Press 'u' to undo last selection or 'q' to abort]");
       }
       else{
         if(!List_Nbr(List1))
-          Msg(ONSCREEN, "Select volume boundary\n"
+          Msg::Status(3, false, "Select volume boundary\n"
               "[Press 'q' to abort]");
         else
-          Msg(ONSCREEN, "Select volume boundary\n"
+          Msg::Status(3, false, "Select volume boundary\n"
               "[Press 'u' to undo last selection or 'q' to abort]");
       }
 
@@ -3042,7 +3044,7 @@ static void _new_surface_volume(int mode)
         }
       }
       if(ib == 'r') {
-        Msg(WARNING, "Entity de-selection not supported yet during surface/volume creation");
+        Msg::Warning("Entity de-selection not supported yet during surface/volume creation");
       }
       if(ib == 'l') {
         int num = (type == ENT_LINE) ? edges[0]->tag() : faces[0]->tag();
@@ -3055,10 +3057,10 @@ static void _new_surface_volume(int mode)
           List_Add(List2, &num);
           while(1) {
             if(!List_Nbr(List1))
-              Msg(ONSCREEN, "Select hole boundaries (if none, press 'e')\n"
+              Msg::Status(3, false, "Select hole boundaries (if none, press 'e')\n"
                   "[Press 'e' to end selection or 'q' to abort]");
             else
-              Msg(ONSCREEN, "Select hole boundaries\n"
+              Msg::Status(3, false, "Select hole boundaries\n"
                   "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
             ib = SelectEntity(type, vertices, edges, faces, regions, elements);
             if(ib == 'q') {
@@ -3095,7 +3097,7 @@ static void _new_surface_volume(int mode)
               }
             }
             if(ib == 'r') {
-              Msg(WARNING, "Entity de-selection not supported yet during surface/volume creation");
+              Msg::Warning("Entity de-selection not supported yet during surface/volume creation");
             }
           }
           if(List_Nbr(List2)) {
@@ -3118,7 +3120,7 @@ stopall:;
   List_Delete(List1);
   List_Delete(List2);
 
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 void geometry_elementary_add_new_planesurface_cb(CALLBACK_ARGS)
@@ -3167,7 +3169,7 @@ static void _action_point_line_surface_volume(int action, int mode, const char *
     opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
   }
   else{
-    Msg(GERROR, "Unknown entity to select");
+    Msg::Error("Unknown entity to select");
     return;
   }
 
@@ -3180,10 +3182,10 @@ static void _action_point_line_surface_volume(int action, int mode, const char *
   List_T *List1 = List_Create(5, 5, sizeof(int));
   while(1) {
     if(!List_Nbr(List1))
-      Msg(ONSCREEN, "Select %s\n"
+      Msg::Status(3, false, "Select %s\n"
           "[Press 'e' to end selection or 'q' to abort]", str);
     else
-      Msg(ONSCREEN, "Select %s\n"
+      Msg::Status(3, false, "Select %s\n"
           "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
 
     char ib = SelectEntity(type, vertices, edges, faces, regions, elements);
@@ -3282,7 +3284,7 @@ static void _action_point_line_surface_volume(int action, int mode, const char *
       }
     }
     if(ib == 'i') {
-      Msg(GERROR, "Inverting selection!");
+      Msg::Error("Inverting selection!");
     }
     if(ib == 'e') {
       if(List_Nbr(List1)){
@@ -3346,7 +3348,7 @@ static void _action_point_line_surface_volume(int action, int mode, const char *
           add_recosurf(List1, CTX.filename);
           break;
         default:
-          Msg(GERROR, "Unknown action on selected entities");
+          Msg::Error("Unknown action on selected entities");
           break;
         }
         List_Reset(List1);
@@ -3364,7 +3366,7 @@ static void _action_point_line_surface_volume(int action, int mode, const char *
   }
   List_Delete(List1);
 
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
   
 void geometry_elementary_add_translate_cb(CALLBACK_ARGS)
@@ -3681,21 +3683,21 @@ void mesh_1d_cb(CALLBACK_ARGS)
 {
   GModel::current()->mesh(1);
   Draw();
-  Msg(STATUS2N, " ");
+  Msg::Status(2, false, " ");
 }
 
 void mesh_2d_cb(CALLBACK_ARGS)
 {
   GModel::current()->mesh(2);
   Draw();
-  Msg(STATUS2N, " ");
+  Msg::Status(2, false, " ");
 }
 
 void mesh_3d_cb(CALLBACK_ARGS)
 {
   GModel::current()->mesh(3);
   Draw();
-  Msg(STATUS2N, " ");
+  Msg::Status(2, false, " ");
 }
 
 void mesh_delete_cb(CALLBACK_ARGS)
@@ -3741,10 +3743,10 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
     Draw();
 
     if(ele.size() || ent.size())
-      Msg(ONSCREEN, "Select %s\n"
+      Msg::Status(3, false, "Select %s\n"
           "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
     else
-      Msg(ONSCREEN, "Select %s\n"
+      Msg::Status(3, false, "Select %s\n"
           "[Press 'e' to end selection or 'q' to abort]", str);
 
     char ib = SelectEntity(what, vertices, edges, faces, regions, elements);
@@ -3824,17 +3826,17 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
   CTX.mesh.changed = ENT_ALL;
   CTX.pick_elements = 0;
   Draw();  
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 void mesh_update_edges_cb(CALLBACK_ARGS)
 {
-  Msg(GERROR, "Update edges not implemented yet");
+  Msg::Error("Update edges not implemented yet");
 }
 
 void mesh_remesh_cb(CALLBACK_ARGS)
 {
-  Msg(GERROR, "Remesh not implemented yet");
+  Msg::Error("Remesh not implemented yet");
 }
 
 void mesh_inspect_cb(CALLBACK_ARGS)
@@ -3850,29 +3852,29 @@ void mesh_inspect_cb(CALLBACK_ARGS)
   Draw();
 
   while(1) {
-    Msg(ONSCREEN, "Select element\n[Press 'q' to abort]");
+    Msg::Status(3, false, "Select element\n[Press 'q' to abort]");
     char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
       if(elements.size()){
         ZeroHighlight();
         elements[0]->setVisibility(2);
-        Msg(DIRECT, "Element %d:", elements[0]->getNum());
-        Msg(DIRECT, "  Type: %d", elements[0]->getTypeForMSH()); 
-        Msg(DIRECT, "  Dimension: %d", elements[0]->getDim());
-        Msg(DIRECT, "  Order: %d", elements[0]->getPolynomialOrder()); 
-        Msg(DIRECT, "  Partition: %d", elements[0]->getPartition()); 
+        Msg::Direct("Element %d:", elements[0]->getNum());
+        Msg::Direct("  Type: %d", elements[0]->getTypeForMSH()); 
+        Msg::Direct("  Dimension: %d", elements[0]->getDim());
+        Msg::Direct("  Order: %d", elements[0]->getPolynomialOrder()); 
+        Msg::Direct("  Partition: %d", elements[0]->getPartition()); 
         char tmp1[32], tmp2[512];
         sprintf(tmp2, "  Vertices:");
         for(int i = 0; i < elements[0]->getNumVertices(); i++){
           sprintf(tmp1, " %d", elements[0]->getVertex(i)->getNum());
           strcat(tmp2, tmp1);
         }
-        Msg(DIRECT, tmp2);
+        Msg::Direct(tmp2);
         SPoint3 pt = elements[0]->barycenter();
-        Msg(DIRECT, "  Barycenter: (%g,%g,%g)", pt[0], pt[1], pt[2]);
-        Msg(DIRECT, "  Rho: %g", elements[0]->rhoShapeMeasure());
-        Msg(DIRECT, "  Gamma: %g", elements[0]->gammaShapeMeasure());
-        Msg(DIRECT, "  Eta: %g", elements[0]->etaShapeMeasure());
+        Msg::Direct("  Barycenter: (%g,%g,%g)", pt[0], pt[1], pt[2]);
+        Msg::Direct("  Rho: %g", elements[0]->rhoShapeMeasure());
+        Msg::Direct("  Gamma: %g", elements[0]->gammaShapeMeasure());
+        Msg::Direct("  Eta: %g", elements[0]->etaShapeMeasure());
         CTX.mesh.changed = ENT_ALL;
         Draw();
         WID->create_message_window();
@@ -3887,7 +3889,7 @@ void mesh_inspect_cb(CALLBACK_ARGS)
   CTX.pick_elements = 0;
   CTX.mesh.changed = ENT_ALL;
   Draw();
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 void mesh_degree_cb(CALLBACK_ARGS)
@@ -3899,13 +3901,13 @@ void mesh_degree_cb(CALLBACK_ARGS)
     SetOrder1(GModel::current());
   CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   Draw();
-  Msg(STATUS2N, " ");
+  Msg::Status(2, false, " ");
 }
 
 void mesh_optimize_cb(CALLBACK_ARGS)
 {
   if(CTX.threads_lock) {
-    Msg(INFO, "I'm busy! Ask me that later...");
+    Msg::Info("I'm busy! Ask me that later...");
     return;
   }
   CTX.threads_lock = 1;
@@ -3913,13 +3915,13 @@ void mesh_optimize_cb(CALLBACK_ARGS)
   CTX.threads_lock = 0;
   CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   Draw();
-  Msg(STATUS2N, " ");
+  Msg::Status(2, false, " ");
 }
 
 void mesh_optimize_netgen_cb(CALLBACK_ARGS)
 {
   if(CTX.threads_lock) {
-    Msg(INFO, "I'm busy! Ask me that later...");
+    Msg::Info("I'm busy! Ask me that later...");
     return;
   }
   CTX.threads_lock = 1;
@@ -3927,7 +3929,7 @@ void mesh_optimize_netgen_cb(CALLBACK_ARGS)
   CTX.threads_lock = 0;
   CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   Draw();
-  Msg(STATUS2N, " ");
+  Msg::Status(2, false, " ");
 }
 
 
@@ -3969,19 +3971,19 @@ static void _add_transfinite(int dim)
     switch (dim) {
     case 1:
       if(n == 0)
-        Msg(ONSCREEN, "Select lines\n"
+        Msg::Status(3, false, "Select lines\n"
             "[Press 'e' to end selection or 'q' to abort]");
       else
-        Msg(ONSCREEN, "Select lines\n"
+        Msg::Status(3, false, "Select lines\n"
             "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
       ib = SelectEntity(ENT_LINE, vertices, edges, faces, regions, elements);
       break;
     case 2:
-      Msg(ONSCREEN, "Select surface\n[Press 'q' to abort]");
+      Msg::Status(3, false, "Select surface\n[Press 'q' to abort]");
       ib = SelectEntity(ENT_SURFACE, vertices, edges, faces, regions, elements);
       break;
     case 3:
-      Msg(ONSCREEN, "Select volume\n[Press 'q' to abort]");
+      Msg::Status(3, false, "Select volume\n[Press 'q' to abort]");
       ib = SelectEntity(ENT_VOLUME, vertices, edges, faces, regions, elements);
       break;
     default:
@@ -4016,7 +4018,7 @@ static void _add_transfinite(int dim)
       break;
     }
     if(ib == 'r') {
-      Msg(WARNING, "Entity de-selection not supported yet during transfinite definition");
+      Msg::Warning("Entity de-selection not supported yet during transfinite definition");
     }
     if(ib == 'l') {
       switch (dim) {
@@ -4041,10 +4043,10 @@ static void _add_transfinite(int dim)
         }
         while(1) {
           if(n == 1)
-            Msg(ONSCREEN, "Select (ordered) boundary points\n"
+            Msg::Status(3, false, "Select (ordered) boundary points\n"
                 "[Press 'e' to end selection or 'q' to abort]");
           else
-            Msg(ONSCREEN, "Select (ordered) boundary points\n"
+            Msg::Status(3, false, "Select (ordered) boundary points\n"
                 "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
           ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
           if(ib == 'l') {
@@ -4060,7 +4062,7 @@ static void _add_transfinite(int dim)
             }
           }
           if(ib == 'r') {
-            Msg(WARNING, "Entity de-selection not supported yet during transfinite definition");
+            Msg::Warning("Entity de-selection not supported yet during transfinite definition");
           }
           if(ib == 'e') {
             switch (dim) {
@@ -4069,13 +4071,13 @@ static void _add_transfinite(int dim)
                 add_trsfsurf(n, p, CTX.filename,
                              WID->context_mesh_choice[1]->text());
               else
-                Msg(GERROR, "Wrong number of points for transfinite surface");
+                Msg::Error("Wrong number of points for transfinite surface");
               break;
             case 3:
               if(n == 6 + 1 || n == 8 + 1)
                 add_trsfvol(n, p, CTX.filename);
               else
-                Msg(GERROR, "Wrong number of points for transfinite volume");
+                Msg::Error("Wrong number of points for transfinite volume");
               break;
             }
             ZeroHighlight();
@@ -4095,7 +4097,7 @@ static void _add_transfinite(int dim)
   }
 
 stopall:
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 void mesh_define_transfinite_line_cb(CALLBACK_ARGS)
@@ -4219,7 +4221,7 @@ void solver_command_cb(CALLBACK_ARGS)
     for(i = 0; i < idx; i++)
       usedopts += nbs(SINFO[num].button_command[i]);
     if(usedopts > SINFO[num].nboptions) {
-      Msg(GERROR, "Missing options to execute command");
+      Msg::Error("Missing options to execute command");
       return;
     }
     sprintf(command, SINFO[num].button_command[idx],
@@ -4241,7 +4243,7 @@ void solver_kill_cb(CALLBACK_ARGS)
   int num = (int)(long)data;
   if(SINFO[num].pid > 0) {
     if(KillProcess(SINFO[num].pid))
-      Msg(INFO, "Killed %s pid %d", SINFO[num].name, SINFO[num].pid);
+      Msg::Info("Killed %s pid %d", SINFO[num].name, SINFO[num].pid);
   }
   SINFO[num].pid = -1;
 }
@@ -4290,7 +4292,7 @@ static void _view_reload(int index)
     PView *p = PView::list[index];
 
     if(StatFile(p->getData()->getFileName().c_str())){
-      Msg(GERROR, "File '%s' does not exist", p->getData()->getFileName().c_str());
+      Msg::Error("File '%s' does not exist", p->getData()->getFileName().c_str());
       return;
     }
 
@@ -4608,7 +4610,7 @@ void view_field_select_node_cb(CALLBACK_ARGS)
   std::vector<MElement*> elements, elements_old;
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   while(1) {
-    Msg(ONSCREEN, "Select %s\n[Press %s'q' to abort]", 
+    Msg::Status(3, false, "Select %s\n[Press %s'q' to abort]", 
         help, mode ? "" : "'u' to undo or ");
     
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
@@ -4622,7 +4624,7 @@ void view_field_select_node_cb(CALLBACK_ARGS)
   }
   CTX.mesh.changed = ENT_ALL;
   CTX.pick_elements = 0;
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
   Draw();  
 }
 
@@ -4738,7 +4740,7 @@ void view_plugin_run_cb(CALLBACK_ARGS)
       catch(GMSH_Plugin * err) {
         char tmp[256];
         p->catchErrorMessage(tmp);
-        Msg(WARNING, "%s", tmp);
+        Msg::Warning("%s", tmp);
       }
     }
   }

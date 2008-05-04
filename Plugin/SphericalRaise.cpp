@@ -1,4 +1,4 @@
-// $Id: SphericalRaise.cpp,v 1.34 2008-04-06 09:20:17 geuzaine Exp $
+// $Id: SphericalRaise.cpp,v 1.35 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -101,7 +101,7 @@ PView *GMSH_SphericalRaisePlugin::execute(PView *v)
 
   // sanity checks
   if(timeStep < 0 || timeStep > data1->getNumTimeSteps() - 1){
-    Msg(GERROR, "Invalid TimeStep (%d) in view", timeStep);
+    Msg::Error("Invalid TimeStep (%d) in view", timeStep);
     return v;
   }
 

@@ -1,4 +1,4 @@
-// $Id: BoundaryLayers.cpp,v 1.1 2008-04-30 05:50:21 geuzaine Exp $
+// $Id: BoundaryLayers.cpp,v 1.2 2008-05-04 08:31:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -58,7 +58,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
       if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY){
         GFace *from = m->getFaceByTag(std::abs(ep->geo.Source));
         if(!from){
-          Msg(GERROR, "Unknown source face %d for boundary layer", ep->geo.Source);
+          Msg::Error("Unknown source face %d for boundary layer", ep->geo.Source);
           return 0;
         }
         sourceFaces.insert(from);
@@ -129,7 +129,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
     GEdge *ge = *it;
     if(ge->geomType() == GEntity::BoundaryLayerCurve){
-      Msg(INFO, "Meshing curve %d", ge->tag());
+      Msg::Info("Meshing curve %d", ge->tag());
       deMeshGEdge dem;
       dem(ge);
       MeshExtrudedCurve(ge);
@@ -144,7 +144,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
     GFace *gf = *it;
     if(gf->geomType() == GEntity::BoundaryLayerSurface){
-      Msg(STATUS2, "Meshing surface %d (%s)", gf->tag(), gf->getTypeString().c_str());
+      Msg::Status(2, true, "Meshing surface %d (%s)", gf->tag(), gf->getTypeString().c_str());
       deMeshGFace dem;
       dem(gf);
       MeshExtrudedSurface(gf);

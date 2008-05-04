@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.164 2008-04-22 07:37:09 geuzaine Exp $
+// $Id: Post.cpp,v 1.165 2008-05-04 08:31:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,8 @@
 #include "Draw.h"
 #include "Iso.h"
 #include "PView.h"
+#include "PViewOptions.h"
+#include "PViewData.h"
 #include "VertexArray.h"
 #include "SmoothData.h"
 #include "Context.h"
@@ -1147,7 +1149,7 @@ void drawGlyphs(PView *p)
   if(!opt->Normals && !opt->Tangents && opt->IntervalsType != PViewOptions::Numeric)
     return;
 
-  Msg(DEBUG, "drawing extra glyphs (this is slow...)");
+  Msg::Debug("drawing extra glyphs (this is slow...)");
 
   double xyz[NMAX][3], val[NMAX][9];
   for(int ent = 0; ent < data->getNumEntities(opt->TimeStep); ent++){
@@ -1266,7 +1268,7 @@ class initPView {
     p->va_triangles->finalize();
     p->va_vectors->finalize();
 
-    Msg(INFO, "Rendering %d vertices", p->va_points->getNumVertices() + 
+    Msg::Info("Rendering %d vertices", p->va_points->getNumVertices() + 
         p->va_lines->getNumVertices() + p->va_triangles->getNumVertices() + 
         p->va_vectors->getNumVertices());
 
@@ -1328,7 +1330,7 @@ class drawPView {
         // glBlendEquation(GL_FUNC_ADD);
         glEnable(GL_BLEND);
         if(eyeChanged(p)){
-          Msg(DEBUG, "Sorting View[%d] for transparency", p->getIndex());
+          Msg::Debug("Sorting View[%d] for transparency", p->getIndex());
           p->va_triangles->sort(p->getEye().x(), p->getEye().y(), p->getEye().z());
         }
       }

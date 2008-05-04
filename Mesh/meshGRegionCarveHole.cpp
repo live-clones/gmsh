@@ -1,4 +1,4 @@
-// $Id: meshGRegionCarveHole.cpp,v 1.7 2008-03-20 11:44:09 geuzaine Exp $
+// $Id: meshGRegionCarveHole.cpp,v 1.8 2008-05-04 08:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -28,7 +28,7 @@
 
 void carveHole(GRegion *gr, int num, double distance, std::vector<int> &surfaces)
 {
-  Msg(GERROR, "Gmsh must be compiled with ANN support to carve holes in meshes");
+  Msg::Error("Gmsh must be compiled with ANN support to carve holes in meshes");
 }
 
 #else
@@ -80,7 +80,7 @@ void addFaces(std::vector<T*> &elements, std::set<MFace, Less_Face> &faces)
 
 void carveHole(GRegion *gr, int num, double distance, std::vector<int> &surfaces)
 {
-  Msg(INFO, "Carving hole %d from surface %d at distance %g", num, surfaces[0], distance);
+  Msg::Info("Carving hole %d from surface %d at distance %g", num, surfaces[0], distance);
   GModel *m = gr->model();
 
   // add all points from carving surfaces into kdtree
@@ -88,7 +88,7 @@ void carveHole(GRegion *gr, int num, double distance, std::vector<int> &surfaces
   for(unsigned int i = 0; i < surfaces.size(); i++){
     GFace *gf = m->getFaceByTag(surfaces[i]);
     if(!gf){
-      Msg(GERROR, "Unknown carving surface %d", surfaces[i]);
+      Msg::Error("Unknown carving surface %d", surfaces[i]);
       return;
     }
     numnodes += gf->mesh_vertices.size();

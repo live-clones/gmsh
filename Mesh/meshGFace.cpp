@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.132 2008-04-18 16:40:29 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.133 2008-05-04 08:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -260,7 +260,7 @@ bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
       BDS_Edge * e = m->recover_edge(vstart->getNum(), vend->getNum(), e2r, not_recovered);
       if (e) e->g = g;
       else {
-        // Msg(GERROR, "The unrecoverable edge is on model edge %d",ge->tag());
+        // Msg::Error("The unrecoverable edge is on model edge %d", ge->tag());
         return false;
       }
       return true;
@@ -282,7 +282,7 @@ bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
     e = m->recover_edge(vstart->getNum(), vend->getNum(), e2r, not_recovered);
     if (e) e->g = g;
     else {
-      // Msg(GERROR, "The unrecoverable edge is on model edge %d",ge->tag());
+      // Msg::Error("The unrecoverable edge is on model edge %d", ge->tag());
       // return false;
     }
   }
@@ -295,9 +295,9 @@ bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
       e = m->recover_edge(vstart->getNum(), vend->getNum(), e2r, not_recovered);
       if (e) e->g = g;
       else {
-        // Msg(GERROR, "Unable to recover an edge %g %g && %g %g (%d/%d)",
-        //     vstart->x(), vstart->y(), vend->x(), vend->y(), i, 
-        //     ge->mesh_vertices.size());
+        // Msg::Error("Unable to recover an edge %g %g && %g %g (%d/%d)",
+        //            vstart->x(), vstart->y(), vend->x(), vend->y(), i, 
+        //            ge->mesh_vertices.size());
         // return false;
       }
     }
@@ -309,9 +309,9 @@ bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
     e = m->recover_edge(vstart->getNum(), vend->getNum(), e2r, not_recovered);
     if (e)e->g = g;
     else {
-      // Msg(GERROR, "Unable to recover an edge %g %g && %g %g (%d/%d)",
-      //     vstart->x(), vstart->y(), vend->x(), vend->y(), 
-      //     ge->mesh_vertices.size(), ge->mesh_vertices.size());
+      // Msg::Error("Unable to recover an edge %g %g && %g %g (%d/%d)",
+      //            vstart->x(), vstart->y(), vend->x(), vend->y(), 
+      //            ge->mesh_vertices.size(), ge->mesh_vertices.size());
       // return false;
     }
     BDS_Point *pend = m->find_point(vend->getNum());
@@ -364,7 +364,7 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
   }
   
   if (all_vertices.size() < 3){
-    Msg(WARNING, "Cannot triangulate less than 3 vertices");
+    Msg::Warning("Cannot triangulate less than 3 vertices");
     return false;
   }
 
@@ -461,9 +461,9 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
     //   -) It does not necessary recover the boundaries
     //   -) It contains triangles outside the domain (the first edge
     //      loop is the outer one)
-    Msg(DEBUG1, "Meshing of the convex hull (%d points)", all_vertices.size());
+    Msg::Debug("Meshing of the convex hull (%d points)", all_vertices.size());
     doc.MakeMeshWithPoints();
-    Msg(DEBUG1, "Meshing of the convex hull (%d points) done", all_vertices.size());
+    Msg::Debug("Meshing of the convex hull (%d points) done", all_vertices.size());
     
     for(int i = 0; i < doc.numPoints; i++){
       MVertex *here = (MVertex *)doc.points[i].data;
@@ -499,7 +499,7 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
       outputScalarField(m->triangles, name, 1);
     }
     
-    Msg(DEBUG1, "Recovering %d model Edges", edges.size());
+    Msg::Debug("Recovering %d model Edges", edges.size());
     
     // build a structure with all mesh edges that have to be
     // recovered. If two of these edges intersect, then the 1D mesh have
@@ -518,7 +518,7 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
       ++it;
     }
     
-    Msg(DEBUG1, "Recovering %d mesh Edges", edgesToRecover.size());
+    Msg::Debug("Recovering %d mesh Edges", edgesToRecover.size());
     
     // effectively recover the medge
     it = edges.begin();
@@ -530,9 +530,9 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
     }
     
     if (edgesNotRecovered.size()){
-      Msg(WARNING, ":-( There exists %d intersections in the 1d mesh",
+      Msg::Warning(":-( There are %d intersections in the 1d mesh",
 	  edgesNotRecovered.size());
-      Msg(WARNING, "8-| Gmsh splits those edges and tries again");
+      Msg::Warning("8-| Gmsh splits those edges and tries again");
 
       if (debug){
 	char name[245];
@@ -547,7 +547,7 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
 	int p1 = itr->p1;
 	int p2 = itr->p2;
 	int tag = itr->ge->tag();
-	Msg(WARNING, "MEdge %d %d in GEdge %d",p1,p2,tag);
+	Msg::Warning("MEdge %d %d in GEdge %d",p1,p2,tag);
       }
       // delete the mesh
       delete m;
@@ -558,10 +558,10 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
       return false;
     }
     if(RECUR_ITER > 0)
-      Msg(WARNING, ":-) Gmsh was able to recover all edges after %d ITERATIONS",
-	  RECUR_ITER);
+      Msg::Warning(":-) Gmsh was able to recover all edges after %d ITERATIONS",
+		   RECUR_ITER);
     
-    //  Msg(INFO, "Boundary Edges recovered for surface %d",gf->tag());
+    //  Msg::Info("Boundary Edges recovered for surface %d", gf->tag());
     // Look for an edge that is on the boundary for which one of the two
     // neighbors has a negative number node. The other triangle is
     // inside the domain and, because all edges were recovered,
@@ -593,7 +593,7 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
       ++it;
     }
     // compute characteristic lengths at vertices    
-    Msg(DEBUG1, "Computing mesh size field at mesh vertices", edgesToRecover.size());
+    Msg::Debug("Computing mesh size field at mesh vertices", edgesToRecover.size());
     for(int i = 0; i < doc.numPoints; i++){
       MVertex *here = (MVertex *)doc.points[i].data;
       int num = here->getNum();
@@ -655,10 +655,10 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
 
   int nb_swap;
   // outputScalarField(m->triangles, "beforeswop.pos",1);
-  Msg(DEBUG1, "Delaunizing the initial mesh");
+  Msg::Debug("Delaunizing the initial mesh");
   gmshDelaunayizeBDS(gf, *m, nb_swap);
   // outputScalarField(m->triangles, "afterswop.pos",0)
-  Msg(DEBUG1, "Starting to add internal points");
+  Msg::Debug("Starting to add internal points");
 
   // start mesh generation
   if(!AlgoDelaunay2D(gf)){
@@ -847,7 +847,7 @@ bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop  &gel,
          if (seam && seam_the_first){
            coords = ((*it)._sign == 1) ? mesh1d_seam : mesh1d_seam_reversed;
            found = (*it);
-           Msg(INFO, "This test case would have failed in Previous Gmsh Version ;-)");
+           Msg::Info("This test case would have failed in Previous Gmsh Version ;-)");
          }
          else{
            coords = ((*it)._sign == 1) ? mesh1d : mesh1d_reversed;
@@ -1025,7 +1025,7 @@ bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
                                                  recover_map , nbPointsLocal, nbPointsTotal,
                                                  1.e-3 * LC2D)){
                 gf->meshStatistics.status = GFace::FAILED;
-                Msg(GERROR, "The 1D Mesh seems not to be forming a closed loop");
+                Msg::Error("The 1D Mesh seems not to be forming a closed loop");
                 m->scalingU = m->scalingV = 1.0;
                 return false;
               }
@@ -1082,7 +1082,7 @@ bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
     //   -) It does not necessary recover the boundaries
     //   -) It contains triangles outside the domain (the first edge
     //      loop is the outer one)
-    Msg(DEBUG1, "Meshing of the convex hull (%d points)", nbPointsTotal);
+    Msg::Debug("Meshing of the convex hull (%d points)", nbPointsTotal);
     doc.MakeMeshWithPoints();
     
     for(int i = 0; i < doc.numTriangles; i++){
@@ -1112,7 +1112,7 @@ bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
       BDS_Edge * e = m->recover_edge(edgeLoop_BDS[j]->iD, 
                                      edgeLoop_BDS[(j + 1) % edgeLoop_BDS.size()]->iD);
       if (!e){
-        Msg(GERROR, "impossible to recover the edge %d %d",
+        Msg::Error("Impossible to recover the edge %d %d",
             edgeLoop_BDS[j]->iD, edgeLoop_BDS[(j + 1) % edgeLoop_BDS.size()]->iD);
         gf->meshStatistics.status = GFace::FAILED;
         return false;
@@ -1121,7 +1121,7 @@ bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
     }
   }
 
-  // Msg(INFO, "Boundary Edges recovered for surface %d",gf->tag());
+  // Msg::Info("Boundary Edges recovered for surface %d",gf->tag());
   // Look for an edge that is on the boundary for which one of the two
   // neighbors has a negative number node. The other triangle is
   // inside the domain and, because all edges were recovered,
@@ -1317,26 +1317,26 @@ void meshGFace::operator() (GFace *gf)
   else 
     algo = "MeshAdapt+Delaunay";
 
-  Msg(STATUS2, "Meshing surface %d (%s, %s)", 
+  Msg::Status(2, true, "Meshing surface %d (%s, %s)", 
       gf->tag(), gf->getTypeString().c_str(), algo);
 
   // compute loops on the fly (indices indicate start and end points
   // of a loop; loops are not yet oriented)
-  Msg(DEBUG1, "Computing edge loops");
+  Msg::Debug("Computing edge loops");
   std::vector<MVertex*> points;
   std::vector<int> indices;
   computeEdgeLoops(gf, points, indices);
 
-  Msg(DEBUG1, "Generating the mesh");
+  Msg::Debug("Generating the mesh");
   if(noseam(gf) || gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){
     gmsh2DMeshGenerator(gf, 0, debugSurface >= 0 || debugSurface == -100);
   }
   else{
     if(!gmsh2DMeshGeneratorPeriodic(gf, debugSurface >= 0 || debugSurface == -100))
-      Msg(GERROR, "Impossible to mesh face %d", gf->tag());
+      Msg::Error("Impossible to mesh face %d", gf->tag());
   }
 
-  Msg(DEBUG1, "type %d %d triangles generated, %d internal vertices",
+  Msg::Debug("Type %d %d triangles generated, %d internal vertices",
       gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 }
 
@@ -1384,7 +1384,7 @@ void orientMeshGFace::operator()(GFace *gf)
   int sign = *ori.begin();
   MEdge ref(sign > 0 ? v1 : v2, sign > 0 ? v2 : v1);
   if(shouldRevert(ref, gf->triangles) || shouldRevert(ref, gf->quadrangles)){
-    Msg(DEBUG1, "Reverting orientation of mesh in face %d", gf->tag());
+    Msg::Debug("Reverting orientation of mesh in face %d", gf->tag());
     for(unsigned int i = 0; i < gf->triangles.size(); i++)
       gf->triangles[i]->revert();
     for(unsigned int i = 0; i < gf->quadrangles.size(); i++)

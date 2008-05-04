@@ -1,4 +1,4 @@
-// $Id: Malloc.cpp,v 1.22 2008-02-17 08:47:56 geuzaine Exp $
+// $Id: Malloc.cpp,v 1.23 2008-05-04 08:31:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -33,7 +33,7 @@ void *Malloc(size_t size)
     return (NULL);
   ptr = malloc(size);
   if(ptr == NULL)
-    Msg(FATAL, "Out of memory (buy some more RAM!)");
+    Msg::Fatal("Out of memory (buy some more RAM!)");
   return (ptr);
 }
 
@@ -45,7 +45,7 @@ void *Calloc(size_t num, size_t size)
     return (NULL);
   ptr = calloc(num, size);
   if(ptr == NULL)
-    Msg(FATAL, "Out of memory (buy some more RAM!)");
+    Msg::Fatal("Out of memory (buy some more RAM!)");
   return (ptr);
 }
 
@@ -55,7 +55,7 @@ void *Realloc(void *ptr, size_t size)
     return (NULL);
   ptr = realloc(ptr, size);
   if(ptr == NULL)
-    Msg(FATAL, "Out of memory (buy some more RAM!)");
+    Msg::Fatal("Out of memory (buy some more RAM!)");
   return (ptr);
 }
 

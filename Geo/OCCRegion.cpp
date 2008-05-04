@@ -1,4 +1,4 @@
-// $Id: OCCRegion.cpp,v 1.11 2008-03-20 11:44:06 geuzaine Exp $
+// $Id: OCCRegion.cpp,v 1.12 2008-05-04 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -34,7 +34,7 @@ OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num, TopTools_IndexedMapOfS
   TopExp_Explorer exp0, exp01, exp1, exp2, exp3;
   for(exp2.Init(s, TopAbs_SHELL); exp2.More(); exp2.Next()){
     TopoDS_Shape shell = exp2.Current();
-    Msg(INFO,"OCC Region %d - New Shell",num);
+    Msg::Info("OCC Region %d - New Shell",num);
     for(exp3.Init(shell, TopAbs_FACE); exp3.More(); exp3.Next()){         
       TopoDS_Face face = TopoDS::Face(exp3.Current());
       int index = fmap.FindIndex(face);
@@ -44,7 +44,7 @@ OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num, TopTools_IndexedMapOfS
       f->addRegion(this);
     }      
   }
-  Msg(INFO, "OCC Region %d with %d edges", num, l_faces.size());
+  Msg::Info("OCC Region %d with %d edges", num, l_faces.size());
 }
 
 GEntity::GeomType OCCRegion::geomType() const

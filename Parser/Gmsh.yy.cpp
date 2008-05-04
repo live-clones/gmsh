@@ -835,7 +835,7 @@ int gmsh_yy_flex_debug = 0;
 char *gmsh_yytext;
 #line 1 "Gmsh.l"
 #line 2 "Gmsh.l"
-// $Id: Gmsh.yy.cpp,v 1.362 2008-05-01 06:54:09 geuzaine Exp $
+// $Id: Gmsh.yy.cpp,v 1.363 2008-05-04 08:31:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -886,7 +886,7 @@ void   skipline(void);
 	 gmsh_yylineno++;							\
        }								\
        if ( c == EOF && ferror( gmsh_yyin ) )				\
-	 Msg(FATAL, "Input in flex scanner failed");			\
+	 Msg::Fatal("Input in flex scanner failed");			\
        result = n;							\
      }									\
 
@@ -2852,7 +2852,7 @@ void skipcomments(void)
   while (1) {
     while ((c = yyinput()) != '*'){
       if(feof(gmsh_yyin)){
-        Msg(GERROR, "End of file in commented region");
+	Msg::Error("End of file in commented region");
         return;
       }
     }
@@ -2872,11 +2872,11 @@ void parsestring(char endchar)
   int i = 0;
   while ((c = yyinput()) != endchar) {
     if(feof(gmsh_yyin)){
-      Msg(GERROR, "End of file in string");
+      Msg::Error("End of file in string");
       break;
     }
     else if(i >= (int)sizeof(tmp)-1){
-      Msg(GERROR, "String too long");
+      Msg::Error("String too long");
       break;
     }
     else{
@@ -2919,7 +2919,7 @@ void skip_until(const char *skip, const char *until)
     while (1){
       chars[0] = yyinput();
       if(feof(gmsh_yyin)){
-        Msg(GERROR, "Unexpected end of file");
+	Msg::Error("Unexpected end of file");
 	return;
       }
       if(chars[0] == until[0]) break;
@@ -2928,7 +2928,7 @@ void skip_until(const char *skip, const char *until)
 
     l = MAX(l_skip,l_until);
     if(l >= (int)sizeof(chars)){
-      Msg(GERROR, "Search pattern too long in skip_until");
+      Msg::Error("Search pattern too long in skip_until");
       return;
     }
     for(i=1; i<l; i++){

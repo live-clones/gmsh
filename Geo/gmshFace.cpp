@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.55 2008-03-20 11:44:07 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.56 2008-05-04 08:31:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -46,7 +46,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
       }
     }
     else
-      Msg(GERROR, "Unknown curve %d", c->Num);
+      Msg::Error("Unknown curve %d", c->Num);
   }
 
   // always compute and store the mean plane for plane surfaces
@@ -70,7 +70,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
       if(e)
         embedded_edges.push_back(e);
       else
-        Msg(GERROR, "Unknown curve %d", c->Num);
+        Msg::Error("Unknown curve %d", c->Num);
     }
   }
   if(s->EmbeddedPoints){
@@ -81,7 +81,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
       if(gv)
         embedded_vertices.push_back(gv);
       else
-        Msg(GERROR, "Unknown point %d", v->Num);
+        Msg::Error("Unknown point %d", v->Num);
     }
   }
 }
@@ -118,7 +118,7 @@ void gmshFace::resetMeshAttributes()
       if(gv)
         meshAttributes.corners.push_back(gv);
       else
-        Msg(GERROR, "Unknown vertex %d in transfinite attributes", corn->Num);
+        Msg::Error("Unknown vertex %d in transfinite attributes", corn->Num);
     }
   }
 }

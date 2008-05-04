@@ -1,4 +1,4 @@
-// $Id: gl2png.cpp,v 1.9 2008-03-20 11:44:08 geuzaine Exp $
+// $Id: gl2png.cpp,v 1.10 2008-05-04 08:31:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -25,7 +25,7 @@
 
 void create_png(FILE *file, PixelBuffer *buffer, int quality)
 {
-  Msg(GERROR, "This version of Gmsh was compiled without PNG support");
+  Msg::Error("This version of Gmsh was compiled without PNG support");
 }
 
 #else
@@ -40,14 +40,14 @@ void create_png(FILE *file, PixelBuffer *buffer, int quality)
 {
   if((buffer->GetFormat() != GL_RGB && buffer->GetFormat() != GL_RGBA) ||
      buffer->GetType() != GL_UNSIGNED_BYTE){
-    Msg(GERROR, "PNG only implemented for GL_RGB/GL_RGBA and GL_UNSIGNED_BYTE");
+    Msg::Error("PNG only implemented for GL_RGB/GL_RGBA and GL_UNSIGNED_BYTE");
     return;
   }
 
   png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
   
   if(png_ptr == NULL) {
-    Msg(GERROR, "Could not create PNG write struct");
+    Msg::Error("Could not create PNG write struct");
     return;
   }
   
@@ -55,13 +55,13 @@ void create_png(FILE *file, PixelBuffer *buffer, int quality)
 
   if(info_ptr == NULL) {
     png_destroy_write_struct(&png_ptr, NULL);
-    Msg(GERROR, "Could not create PNG info struct");
+    Msg::Error("Could not create PNG info struct");
     return;
   }
   
   if(setjmp(png_jmpbuf(png_ptr))) {
     png_destroy_write_struct(&png_ptr, &info_ptr);
-    Msg(GERROR, "Could not setjmp in PNG");
+    Msg::Error("Could not setjmp in PNG");
     return;
   }
   

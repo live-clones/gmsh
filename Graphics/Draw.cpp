@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.118 2008-03-20 11:44:07 geuzaine Exp $
+// $Id: Draw.cpp,v 1.119 2008-05-04 08:31:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -27,6 +27,7 @@
 #include "Numeric.h"
 #include "GModel.h"
 #include "PView.h"
+#include "PViewOptions.h"
 
 extern Context_T CTX;
 
@@ -366,9 +367,9 @@ void Unproject(double x, double y, double p[3], double d[3])
   // the matrices since unproject can be called in or after Draw2D
   
   if(!gluUnProject(x, y, 0.0, CTX.model, CTX.proj, viewport, &x0, &y0, &z0))
-    Msg(WARNING, "unproject1 failed");
+    Msg::Warning("unproject1 failed");
   if(!gluUnProject(x, y, 1.0, CTX.model, CTX.proj, viewport, &x1, &y1, &z1))
-    Msg(WARNING, "unproject2 failed");
+    Msg::Warning("unproject2 failed");
   
   p[0] = x0;
   p[1] = y0;

@@ -1,4 +1,4 @@
-// $Id: PView.cpp,v 1.27 2008-04-22 07:37:16 geuzaine Exp $
+// $Id: PView.cpp,v 1.28 2008-05-04 08:31:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -25,6 +25,8 @@
 #include <string.h>
 #include <algorithm>
 #include "PView.h"
+#include "PViewOptions.h"
+#include "PViewData.h"
 #include "PViewDataList.h"
 #include "VertexArray.h"
 #include "SmoothData.h"
@@ -126,7 +128,7 @@ PView::~PView()
       if(list[i]->getNum() == _aliasOf || list[i]->getAliasOf() == _aliasOf)
         return;
   
-  Msg(DEBUG, "Deleting data in View[%d] (unique num = %d)", _index, _num);
+  Msg::Debug("Deleting data in View[%d] (unique num = %d)", _index, _num);
   delete _data;
 }
 

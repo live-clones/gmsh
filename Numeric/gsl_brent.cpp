@@ -1,4 +1,4 @@
-// $Id: gsl_brent.cpp,v 1.19 2008-03-20 11:44:09 geuzaine Exp $
+// $Id: gsl_brent.cpp,v 1.20 2008-05-04 08:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -92,7 +92,7 @@ double brent(double ax, double bx, double cx,
   while(status == GSL_CONTINUE && iter < MAXITER);
 
   if(status != GSL_SUCCESS)
-    Msg(GERROR, "MIN1D not converged: f(%g) = %g", b, fn1(b, NULL));
+    Msg::Error("MIN1D not converged: f(%g) = %g", b, fn1(b, NULL));
 
   *xmin = b;
   gsl_min_fminimizer_free(s);

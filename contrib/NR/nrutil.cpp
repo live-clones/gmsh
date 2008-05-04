@@ -12,7 +12,7 @@
 void nrerror(char error_text[])
 /* Numerical Recipes standard error handler */
 {
-  Msg(GERROR, "%s", error_text);
+  Msg::Error("%s", error_text);
   /*
 	fprintf(stderr,"Numerical Recipes run-time error...\n");
 	fprintf(stderr,"%s\n",error_text);

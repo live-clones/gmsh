@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.45 2008-03-20 11:44:09 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.46 2008-05-04 08:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -125,8 +125,8 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     numberedV.push_back(v);
   }
  
-  Msg(INFO,"%d points %d edges and %d faces in the final mesh",
-      out.numberofpoints, out.numberofedges, out.numberoftrifaces);
+  Msg::Info("%d points %d edges and %d faces in the final mesh",
+	    out.numberofpoints, out.numberofedges, out.numberoftrifaces);
 
   // Tetgen modifies both surface & edge mesh, so we need to re-create
   // everything
@@ -190,11 +190,11 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   if(regions.empty()) return;
 
 #if !defined(HAVE_TETGEN)
-  Msg(GERROR, "Tetgen is not compiled in this version of Gmsh");
+  Msg::Error("Tetgen is not compiled in this version of Gmsh");
 #else
 
   for(unsigned int i = 0; i < regions.size(); i++)
-    Msg(STATUS2, "Meshing volume %d (Tetgen+Delaunay)", regions[i]->tag());
+    Msg::Status(2, true, "Meshing volume %d (Tetgen+Delaunay)", regions[i]->tag());
 
   // put all the faces in the same model
   GRegion *gr = regions[0];
@@ -217,19 +217,20 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
     std::vector<MVertex*> numberedV;
     char opts[128];
     buildTetgenStructure(gr, in, numberedV);
-    sprintf(opts, "pe%c", (CTX.verbosity < 3) ? 'Q': (CTX.verbosity > 6)? 'V': '\0');
+    sprintf(opts, "pe%c", 
+	    (Msg::GetVerbosity() < 3) ? 'Q': (Msg::GetVerbosity() > 6)? 'V': '\0');
     try{
       tetrahedralize(opts, &in, &out);
     }
     catch (int error){
-      Msg (WARNING, "Self intersecting Surface Mesh, computing intersections "
-           "(this could take a while)");
+      Msg::Error("Self intersecting surface mesh, computing intersections "
+		 "(this could take a while)");
       sprintf(opts, "dV");
       try{
         tetrahedralize(opts, &in, &out);
-        Msg(INFO,"%d faces self-intersect",out.numberoftrifaces);
+        Msg::Info("%d faces self-intersect", out.numberoftrifaces);
         for (int i = 0; i < out.numberoftrifaces; i++){
-          Msg(INFO,"face (%d %d %d) on model face %d",
+          Msg::Info("face (%d %d %d) on model face %d",
               numberedV[out.trifacelist[i * 3 + 0] - 1]->getNum(),
               numberedV[out.trifacelist[i * 3 + 1] - 1]->getNum(),
               numberedV[out.trifacelist[i * 3 + 2] - 1]->getNum(),
@@ -237,7 +238,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
         }
       }
       catch (int error2){
-        Msg(GERROR, "Surface Mesh is wrong, cannot do the 3D mesh");      
+        Msg::Error("Surface mesh is wrong, cannot do the 3D mesh");
       }
       gr->set(faces);
       return;
@@ -258,7 +259,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 
   // now do insertion of points
   insertVerticesInRegion(gr);
-  Msg(INFO, "Gmsh 3D Delaunay has generated %d tets", gr->tetrahedra.size());
+  Msg::Info("Gmsh 3D Delaunay has generated %d tets", gr->tetrahedra.size());
 #endif
 }
 
@@ -419,8 +420,6 @@ int intersect_line_triangle(double X[3], double Y[3], double Z[3] ,
   if(!sys3x3_with_tol(mat, b, res, &det))
     return 0;
 
-  // Msg(INFO, "going there %g %g %g", res[0], res[1], res[2]);
-
   if(res[0] >= eps_prec && res[0] <= 1.0 - eps_prec && 
      res[1] >= eps_prec && res[1] <= 1.0 - eps_prec && 
      1 - res[0] - res[1] >= eps_prec && 1 - res[0] - res[1] <= 1.0 - eps_prec){
@@ -491,7 +490,7 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
         }
         ++it_b;
       }
-      Msg(INFO,"Region %d Face %d, %d intersect", gr->tag(), gf->tag(), nb_intersect);
+      Msg::Info("Region %d Face %d, %d intersect", gr->tag(), gf->tag(), nb_intersect);
       if(nb_intersect >= 0) break; // negative value means intersection is not "robust"
     }
     
@@ -540,7 +539,7 @@ void meshGRegion::operator() (GRegion *gr)
   // sanity check
   for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
     if((*it)->quadrangles.size()){
-      Msg(GERROR, "Cannot tetrahedralize volume with quadrangles on boundary");
+      Msg::Error("Cannot tetrahedralize volume with quadrangles on boundary");
       return;
     }
   }
@@ -550,9 +549,9 @@ void meshGRegion::operator() (GRegion *gr)
   }
   else if(CTX.mesh.algo3d == ALGO_3D_NETGEN ){
 #if !defined(HAVE_NETGEN)
-    Msg(GERROR, "Netgen is not compiled in this version of Gmsh");
+    Msg::Error("Netgen is not compiled in this version of Gmsh");
 #else
-    Msg(STATUS2, "Meshing volume %d (Netgen)", gr->tag());
+    Msg::Status(2, true, "Meshing volume %d (Netgen)", gr->tag());
     // orient the triangles of with respect to this region
     meshNormalsPointOutOfTheRegion(gr);
     std::vector<MVertex*> numberedV;
@@ -578,9 +577,9 @@ void optimizeMeshGRegionNetgen::operator() (GRegion *gr)
   if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
   
 #if !defined(HAVE_NETGEN)
-  Msg(GERROR, "Netgen is not compiled in this version of Gmsh");
+  Msg::Error("Netgen is not compiled in this version of Gmsh");
 #else
-  Msg(STATUS2, "Optimizing volume %d", gr->tag());
+  Msg::Status(2, true, "Optimizing volume %d", gr->tag());
   // import mesh into netgen, including volume tets
   std::vector<MVertex*> numberedV;
   Ng_Mesh *ngmesh = buildNetgenStructure(gr, true, numberedV);
@@ -607,10 +606,8 @@ void optimizeMeshGRegionGmsh::operator() (GRegion *gr)
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
   
-  Msg(STATUS2, "Optimizing volume %d", gr->tag());
-  // import mesh into netgen, including volume tets
-  
-  gmshOptimizeMesh (gr, QMTET_2);  
+  Msg::Status(2, true, "Optimizing volume %d", gr->tag());
+  gmshOptimizeMesh(gr, QMTET_2);  
 }
 
 bool buildFaceSearchStructure(GModel *model, fs_cont &search)

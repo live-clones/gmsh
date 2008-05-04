@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.128 2008-04-28 10:10:51 geuzaine Exp $
+// $Id: CommandLine.cpp,v 1.129 2008-05-04 08:31:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -74,63 +74,63 @@ void Print_Usage(const char *name)
   // If you make changes in this routine, please also change the
   // texinfo documentation (doc/texinfo/command_line.texi) as well as
   // the man page (doc/gmsh.1)
-  Msg(DIRECT, "Usage: %s [options] [files]", name);
-  Msg(DIRECT, "Geometry options:");
-  Msg(DIRECT, "  -0                    Output unrolled geometry, then exit");
-  Msg(DIRECT, "  -tol float            Set geometrical tolerance");
-  Msg(DIRECT, "Mesh options:");
-  Msg(DIRECT, "  -1, -2, -3            Perform 1D, 2D or 3D mesh generation, then exit");
-  Msg(DIRECT, "  -saveall              Save all elements (discard physical group definitions)");
-  Msg(DIRECT, "  -o file               Specify mesh output file name");
-  Msg(DIRECT, "  -format string        Set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh,");
-  Msg(DIRECT, "                          bdf, p3d, cgns, med)");
-  Msg(DIRECT, "  -bin                  Use binary format when available");  
-  Msg(DIRECT, "  -algo string          Select mesh algorithm (de, del2d, frontal, iso, netgen, tetgen)");
-  Msg(DIRECT, "  -smooth int           Set number of mesh smoothing steps");
-  Msg(DIRECT, "  -optimize[_netgen]    Optimize quality of tetrahedral elements");
-  Msg(DIRECT, "  -order int            Set mesh order (1, ..., 5)");
-  Msg(DIRECT, "  -optimize_hom         Optimize higher order meshes (in 2D)");
-  Msg(DIRECT, "  -clscale float        Set characteristic length scaling factor");
-  Msg(DIRECT, "  -clmin float          Set minimum characteristic length");
-  Msg(DIRECT, "  -clmax float          Set maximum characteristic length");
-  Msg(DIRECT, "  -clcurv               Compute characteristic lengths from curvatures");
-  Msg(DIRECT, "  -epslc1d              Set the accuracy of the evaluation of the LCFIELD for 1D mesh");
-  Msg(DIRECT, "  -swapangle            Set the treshold angle (in degree) between two adjacent faces");
-  Msg(DIRECT, "                          below which a swap is allowed");
-  Msg(DIRECT, "  -rand float           Set random perturbation factor");
-  Msg(DIRECT, "  -bgm file             Load background mesh from file");
+  Msg::Direct("Usage: %s [options] [files]", name);
+  Msg::Direct("Geometry options:");
+  Msg::Direct("  -0                    Output unrolled geometry, then exit");
+  Msg::Direct("  -tol float            Set geometrical tolerance");
+  Msg::Direct("Mesh options:");
+  Msg::Direct("  -1, -2, -3            Perform 1D, 2D or 3D mesh generation, then exit");
+  Msg::Direct("  -saveall              Save all elements (discard physical group definitions)");
+  Msg::Direct("  -o file               Specify mesh output file name");
+  Msg::Direct("  -format string        Set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh,");
+  Msg::Direct("                          bdf, p3d, cgns, med)");
+  Msg::Direct("  -bin                  Use binary format when available");  
+  Msg::Direct("  -algo string          Select mesh algorithm (de, del2d, frontal, iso, netgen, tetgen)");
+  Msg::Direct("  -smooth int           Set number of mesh smoothing steps");
+  Msg::Direct("  -optimize[_netgen]    Optimize quality of tetrahedral elements");
+  Msg::Direct("  -order int            Set mesh order (1, ..., 5)");
+  Msg::Direct("  -optimize_hom         Optimize higher order meshes (in 2D)");
+  Msg::Direct("  -clscale float        Set characteristic length scaling factor");
+  Msg::Direct("  -clmin float          Set minimum characteristic length");
+  Msg::Direct("  -clmax float          Set maximum characteristic length");
+  Msg::Direct("  -clcurv               Compute characteristic lengths from curvatures");
+  Msg::Direct("  -epslc1d              Set the accuracy of the evaluation of the LCFIELD for 1D mesh");
+  Msg::Direct("  -swapangle            Set the treshold angle (in degree) between two adjacent faces");
+  Msg::Direct("                          below which a swap is allowed");
+  Msg::Direct("  -rand float           Set random perturbation factor");
+  Msg::Direct("  -bgm file             Load background mesh from file");
 #if defined(HAVE_FLTK)
-  Msg(DIRECT, "Post-processing options:");
-  Msg(DIRECT, "  -noview               Hide all views on startup");
-  Msg(DIRECT, "  -link int             Select link mode between views (0, 1, 2, 3, 4)");
-  Msg(DIRECT, "  -combine              Combine views having identical names into multi-time-step views");
-  Msg(DIRECT, "Display options:");    
-  Msg(DIRECT, "  -nodb                 Disable double buffering");
-  Msg(DIRECT, "  -fontsize int         Specify the font size for the GUI");
-  Msg(DIRECT, "  -theme string         Specify FLTK GUI theme");
-  Msg(DIRECT, "  -display string       Specify display");
+  Msg::Direct("Post-processing options:");
+  Msg::Direct("  -noview               Hide all views on startup");
+  Msg::Direct("  -link int             Select link mode between views (0, 1, 2, 3, 4)");
+  Msg::Direct("  -combine              Combine views having identical names into multi-time-step views");
+  Msg::Direct("Display options:");    
+  Msg::Direct("  -nodb                 Disable double buffering");
+  Msg::Direct("  -fontsize int         Specify the font size for the GUI");
+  Msg::Direct("  -theme string         Specify FLTK GUI theme");
+  Msg::Direct("  -display string       Specify display");
 #endif
-  Msg(DIRECT, "Other options:");      
-  Msg(DIRECT, "  -                     Parse input files, then exit");
+  Msg::Direct("Other options:");      
+  Msg::Direct("  -                     Parse input files, then exit");
 #if defined(HAVE_FLTK)
-  Msg(DIRECT, "  -a, -g, -m, -s, -p    Start in automatic, geometry, mesh, solver or post-processing mode");
+  Msg::Direct("  -a, -g, -m, -s, -p    Start in automatic, geometry, mesh, solver or post-processing mode");
 #endif
-  Msg(DIRECT, "  -pid                  Print process id on stdout");
-  Msg(DIRECT, "  -listen               Always listen to incoming connection requests");
-  Msg(DIRECT, "  -v int                Set verbosity level");
-  Msg(DIRECT, "  -nopopup              Don't popup dialog windows in scripts");
-  Msg(DIRECT, "  -string \"string\"      Parse option string at startup");
-  Msg(DIRECT, "  -option file          Parse option file at startup");
-  Msg(DIRECT, "  -convert files        Convert files into latest binary formats, then exit");
-  Msg(DIRECT, "  -version              Show version number");
-  Msg(DIRECT, "  -info                 Show detailed version information");
-  Msg(DIRECT, "  -help                 Show this message");
+  Msg::Direct("  -pid                  Print process id on stdout");
+  Msg::Direct("  -listen               Always listen to incoming connection requests");
+  Msg::Direct("  -v int                Set verbosity level");
+  Msg::Direct("  -nopopup              Don't popup dialog windows in scripts");
+  Msg::Direct("  -string \"string\"      Parse option string at startup");
+  Msg::Direct("  -option file          Parse option file at startup");
+  Msg::Direct("  -convert files        Convert files into latest binary formats, then exit");
+  Msg::Direct("  -version              Show version number");
+  Msg::Direct("  -info                 Show detailed version information");
+  Msg::Direct("  -help                 Show this message");
 }
 
 char *Get_BuildOptions(void)
 {
-  static int first=1;
-  static char opt[128] = "";
+  static int first = 1;
+  static char opt[256] = "";
   
   if(first){
 #if defined(HAVE_GSL)
@@ -176,6 +176,10 @@ char *Get_BuildOptions(void)
 
 void Get_Options(int argc, char *argv[])
 {
+  // print messages on terminal
+  int terminal = CTX.terminal;
+  CTX.terminal = 1;
+
   // Create a dummy model during option processing so we cannot crash
   // the parser, and so we can load files for -convert
   GModel *dummy = new GModel();
@@ -259,42 +263,32 @@ void Get_Options(int argc, char *argv[])
         i++;
         if(argv[i] != NULL)
           ParseString(argv[i++]);
-        else {
-          fprintf(stderr, ERROR_STR "Missing string\n");
-          exit(1);
-        }
+        else
+	  Msg::Fatal("Missing string");
       }
       else if(!strcmp(argv[i] + 1, "option")) {
         i++;
         if(argv[i] != NULL)
           ParseFile(argv[i++], 1);
-        else {
-          fprintf(stderr, ERROR_STR "Missing file name\n");
-          exit(1);
-        }
+        else
+	  Msg::Fatal("Missing file name");
       }
       else if(!strcmp(argv[i] + 1, "o")) {
         i++;
         if(argv[i] != NULL)
           CTX.output_filename = argv[i++];
-        else {
-          fprintf(stderr, ERROR_STR "Missing file name\n");
-          exit(1);
-        }
+        else
+	  Msg::Fatal("Missing file name");
       }
       else if(!strcmp(argv[i] + 1, "bgm")) {
         i++;
-        if(argv[i] != NULL){
+        if(argv[i] != NULL)
 	  CTX.bgm_filename = argv[i++];
-	}
-	else{
-	  fprintf(stderr, ERROR_STR "Missing file name\n");
-          exit(1);
-        }
+	else
+	  Msg::Fatal("Missing file name");
       }
       else if(!strcmp(argv[i] + 1, "convert")) {
         i++;
-        CTX.terminal = 1;
         CTX.batch = 1;
         while(i < argc) {
           char filename[256];
@@ -316,113 +310,85 @@ void Get_Options(int argc, char *argv[])
           }
           i++;
         }
-        exit(1);
+	Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "tol")) {
         i++;
         if(argv[i] != NULL)
           CTX.geom.tolerance = atof(argv[i++]);
-        else {
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
+        else
+	  Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "scale")) {
         i++;
         if(argv[i] != NULL)
           CTX.geom.scaling_factor = atof(argv[i++]);
-        else {
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
+        else
+	  Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "meshscale")) {
         i++;
         if(argv[i] != NULL)
           CTX.mesh.scaling_factor = atof(argv[i++]);
-        else {
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
+        else
+	  Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "rand")) {
         i++;
         if(argv[i] != NULL)
           CTX.mesh.rand_factor = atof(argv[i++]);
-        else {
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
+        else
+	  Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "clscale")) {
         i++;
         if(argv[i] != NULL) {
           CTX.mesh.lc_factor = atof(argv[i++]);
-          if(CTX.mesh.lc_factor <= 0.0) {
-            fprintf(stderr, ERROR_STR
-                    "Characteristic length factor must be > 0\n");
-            exit(1);
-          }
+          if(CTX.mesh.lc_factor <= 0.0)
+	    Msg::Fatal("Characteristic length factor must be > 0");
         }
+        else
+	  Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "clmin")) {
         i++;
         if(argv[i] != NULL) {
           CTX.mesh.lc_min = atof(argv[i++]);
-          if(CTX.mesh.lc_min <= 0.0) {
-            fprintf(stderr, ERROR_STR
-                    "Minimum length size must be > 0\n");
-            exit(1);
-          }
+          if(CTX.mesh.lc_min <= 0.0)
+	    Msg::Fatal("Minimum length size must be > 0");
         }
-        else {
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
+        else
+	  Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "clmax")) {
         i++;
         if(argv[i] != NULL) {
           CTX.mesh.lc_max = atof(argv[i++]);
-          if(CTX.mesh.lc_max <= 0.0) {
-            fprintf(stderr, ERROR_STR
-                    "Maximum length size must be > 0\n");
-            exit(1);
-          }
+          if(CTX.mesh.lc_max <= 0.0)
+	    Msg::Fatal("Maximum length size must be > 0");
         }
-        else {
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
+        else
+          Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "epslc1d")) {
         i++;
         if(argv[i] != NULL) {
           CTX.mesh.lc_integration_precision = atof(argv[i++]);
-          if(CTX.mesh.lc_integration_precision <= 0.0) {
-            fprintf(stderr, ERROR_STR 
-                    "Integration Accuraci for evaluation of 1D LC FIELD must be > 0\n");
-            exit(1);
-          }
+          if(CTX.mesh.lc_integration_precision <= 0.0)
+	    Msg::Fatal("Integration accuracy must be > 0");
         }
-        else {
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
+        else
+	  Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "swapangle")) {
         i++;
         if(argv[i] != NULL) {
           CTX.mesh.allow_swap_edge_angle = atof(argv[i++]);
-          if(CTX.mesh.allow_swap_edge_angle <= 0.0) {
-            fprintf(stderr, ERROR_STR "Treshold angle for edge swap  must be > 0\n");
-            exit(1);
-          }
+          if(CTX.mesh.allow_swap_edge_angle <= 0.0)
+	    Msg::Fatal("Treshold angle for edge swap must be > 0");
         }
-        else {
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
+        else
+	  Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "clcurv")) {
         CTX.mesh.lc_from_curvature = 1;
@@ -432,19 +398,15 @@ void Get_Options(int argc, char *argv[])
         i++;
         if(argv[i] != NULL)
           CTX.mesh.nb_smoothing = atoi(argv[i++]);
-        else {
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
+        else
+	  Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "order") || !strcmp(argv[i] + 1, "degree")) {
         i++;
         if(argv[i] != NULL)
           opt_mesh_order(0, GMSH_SET, atof(argv[i++]));
-        else {
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
+        else
+	  Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "c1")) {
         i++;
@@ -453,26 +415,18 @@ void Get_Options(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "statreport")) {
         i++;
         CTX.create_append_statreport = 1;
-        if(argv[i] != NULL) {
-          strcpy(CTX.statreport,argv[i]);
-          i++;
-        }
-        else {
-          fprintf(stderr, ERROR_STR "Missing argument\n");
-          exit(1);
-        }
+        if(argv[i] != NULL)
+          strcpy(CTX.statreport, argv[i++]);
+        else
+	  Msg::Fatal("Missing argument");
       }
       else if(!strcmp(argv[i] + 1, "append_statreport")) {
         i++;
         CTX.create_append_statreport = 2;
-        if(argv[i] != NULL) {
-          strcpy(CTX.statreport,argv[i]);
-          i++;
-        }
-        else {
-          fprintf(stderr, ERROR_STR "Missing argument\n");
-          exit(1);
-        }
+        if(argv[i] != NULL)
+          strcpy(CTX.statreport, argv[i++]);
+        else
+	  Msg::Fatal("Missing argument");
       }
       else if(!strcmp(argv[i] + 1, "optimize_hom")) {
         i++;
@@ -507,16 +461,12 @@ void Get_Options(int argc, char *argv[])
             CTX.mesh.format = FORMAT_CGNS;
           else if(!strcmp(argv[i], "med"))
             CTX.mesh.format = FORMAT_MED;
-          else {
-            fprintf(stderr, ERROR_STR "Unknown mesh format\n");
-            exit(1);
-          }
+          else
+	    Msg::Fatal("Unknown mesh format");
           i++;
         }
-        else {
-          fprintf(stderr, ERROR_STR "Missing format\n");
-          exit(1);
-        }
+        else
+	  Msg::Fatal("Missing format");
       }
       else if(!strcmp(argv[i] + 1, "bin")) {
         i++;
@@ -537,16 +487,12 @@ void Get_Options(int argc, char *argv[])
             CTX.mesh.algo2d = ALGO_2D_MESHADAPT;
           else if(!strncmp(argv[i], "del", 3) || !strncmp(argv[i], "iso", 3))
             CTX.mesh.algo2d = ALGO_2D_MESHADAPT_DELAUNAY;
-          else {
-            fprintf(stderr, ERROR_STR "Unknown mesh algorithm\n");
-            exit(1);
-          }
+          else
+	    Msg::Fatal("Unknown mesh algorithm");
           i++;
         }
-        else {
-          fprintf(stderr, ERROR_STR "Missing algorithm\n");
-          exit(1);
-        }
+        else
+	  Msg::Fatal("Missing algorithm");
       }
       else if(!strcmp(argv[i] + 1, "listen")) {
         CTX.solver.listen = 1;
@@ -554,7 +500,7 @@ void Get_Options(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "version") || !strcmp(argv[i] + 1, "-version")) {
         fprintf(stderr, "%s\n", GMSH_VERSION);
-        exit(1);
+	Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "info") || !strcmp(argv[i] + 1, "-info")) {
         fprintf(stderr, "%s%s\n", gmsh_version, GMSH_VERSION);
@@ -572,27 +518,24 @@ void Get_Options(int argc, char *argv[])
         fprintf(stderr, "%s\n", gmsh_packager);
         fprintf(stderr, "%s\n", gmsh_url);
         fprintf(stderr, "%s\n", gmsh_email);
-        exit(1);
+	Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "help") || !strcmp(argv[i] + 1, "-help")) {
         fprintf(stderr, "%s\n", gmsh_progname);
         fprintf(stderr, "%s\n", gmsh_copyright);
-        CTX.terminal = 1;
         Print_Usage(argv[0]);
-        exit(1);
+	Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "v")) {
         i++;
         if(argv[i] != NULL)
-          CTX.verbosity = atoi(argv[i++]);
-        else {
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
+	  Msg::SetVerbosity(atoi(argv[i++]));
+        else
+	  Msg::Fatal("Missing number");
       }
 #if defined(HAVE_FLTK)
       else if(!strcmp(argv[i] + 1, "term")) {
-        CTX.terminal = 1;
+        terminal = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "dual")) {
@@ -607,10 +550,8 @@ void Get_Options(int argc, char *argv[])
         i++;
         if(argv[i] != NULL)
           CTX.post.link = atoi(argv[i++]);
-        else {
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
+        else
+	  Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "smoothview")) {
         CTX.post.smooth = 1;
@@ -626,36 +567,24 @@ void Get_Options(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "fontsize")) {
         i++;
-        if(argv[i] != NULL) {
-          CTX.fontsize = atoi(argv[i]);
-          i++;
-        }
-        else {
-          fprintf(stderr, ERROR_STR "Missing number\n");
-          exit(1);
-        }
+        if(argv[i] != NULL)
+          CTX.fontsize = atoi(argv[i++]);
+        else
+	  Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "theme") || !strcmp(argv[i] + 1, "scheme")) {
         i++;
-        if(argv[i] != NULL) {
-          CTX.gui_theme = argv[i];
-          i++;
-        }
-        else {
-          fprintf(stderr, ERROR_STR "Missing argument\n");
-          exit(1);
-        }
+        if(argv[i] != NULL)
+          CTX.gui_theme = argv[i++];
+        else
+	  Msg::Fatal("Missing argument");
       }
       else if(!strcmp(argv[i] + 1, "display")) {
         i++;
-        if(argv[i] != NULL) {
-          CTX.display = argv[i];
-          i++;
-        }
-        else {
-          fprintf(stderr, ERROR_STR "Missing argument\n");
-          exit(1);
-        }
+        if(argv[i] != NULL)
+          CTX.display = argv[i++];
+        else
+	  Msg::Fatal("Missing argument");
       }
 #endif
 #if defined(__APPLE__)
@@ -667,10 +596,9 @@ void Get_Options(int argc, char *argv[])
       }
 #endif
       else {
-        fprintf(stderr, "Unknown option '%s'\n", argv[i]);
-        CTX.terminal = 1;
+	Msg::Error("Unknown option '%s'", argv[i]);
         Print_Usage(argv[0]);
-        exit(1);
+	Msg::Exit(1);
       }
 
     }
@@ -686,4 +614,6 @@ void Get_Options(int argc, char *argv[])
     strncpy(CTX.filename, CTX.files[0].c_str(), 255);
 
   delete dummy;
+
+  CTX.terminal = terminal;
 }

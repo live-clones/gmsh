@@ -1,4 +1,4 @@
-// $Id: CutParametric.cpp,v 1.28 2008-04-05 17:49:23 geuzaine Exp $
+// $Id: CutParametric.cpp,v 1.29 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -77,7 +77,7 @@ std::vector<double> GMSH_CutParametricPlugin::z;
 int GMSH_CutParametricPlugin::fillXYZ()
 {
 #if !defined(HAVE_MATH_EVAL)
-  Msg(GERROR, "MathEval is not compiled in this version of Gmsh");
+  Msg::Error("MathEval is not compiled in this version of Gmsh");
   return 0;
 #else
   const char *exprx = CutParametricOptions_String[0].def;
@@ -90,18 +90,18 @@ int GMSH_CutParametricPlugin::fillXYZ()
   z.resize(nbU);
   void *fx = evaluator_create((char*)exprx);
   if(!fx){
-    Msg(GERROR, "Invalid expression '%s'", exprx);
+    Msg::Error("Invalid expression '%s'", exprx);
     return 0;
   }
   void *fy = evaluator_create((char*)expry);
   if(!fy){
     evaluator_destroy(fx);
-    Msg(GERROR, "Invalid expression '%s'", expry);
+    Msg::Error("Invalid expression '%s'", expry);
     return 0;
   }
   void *fz = evaluator_create((char*)exprz);
   if(!fz){
-    Msg(GERROR, "Invalid expression '%s'", exprz);
+    Msg::Error("Invalid expression '%s'", exprz);
     evaluator_destroy(fx);
     evaluator_destroy(fy);
     return 0;

@@ -1,4 +1,4 @@
-// $Id: Graph2D.cpp,v 1.78 2008-03-20 11:44:07 geuzaine Exp $
+// $Id: Graph2D.cpp,v 1.79 2008-05-04 08:31:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -22,6 +22,8 @@
 #include "GmshUI.h"
 #include "Draw.h"
 #include "PView.h"
+#include "PViewOptions.h"
+#include "PViewData.h"
 #include "gl2ps.h"
 #include "Context.h"
 #include "Numeric.h"

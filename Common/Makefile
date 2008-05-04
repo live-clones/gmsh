@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.171 2008-04-28 10:10:51 geuzaine Exp $
+# $Id: Makefile,v 1.172 2008-05-04 08:31:11 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -36,6 +36,7 @@ SRC = Context.cpp\
       CommandLine.cpp\
       Gmsh.cpp\
       OS.cpp\
+      Message.cpp\
       Visibility.cpp\
       Trackball.cpp\
       VertexArray.cpp\
@@ -47,7 +48,7 @@ OBJ = ${SRC:.cpp=${OBJEXT}}
 
 .SUFFIXES: ${OBJEXT} .cpp
 
-${LIB}: ${OBJ} 
+${LIB}: ${OBJ} Main${OBJEXT}
 	${AR} ${ARFLAGS}${LIB} ${OBJ}
 	${RANLIB} ${LIB}
 
@@ -77,9 +78,9 @@ OctreeInternals.o: OctreeInternals.cpp Message.h OctreeInternals.h
 Options.o: Options.cpp GmshUI.h GmshDefines.h Message.h \
   ../Graphics/Draw.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Mesh/Generator.h Context.h Options.h ../Post/ColorTable.h \
-  ../Mesh/BackgroundMesh.h ../Post/PView.h ../Post/PViewData.h \
-  ../DataStr/List.h ../Post/PViewOptions.h ../Post/ColorTable.h \
-  ../Post/adaptiveData.h ../Common/GmshMatrix.h ../Plugin/PluginManager.h \
+  ../Mesh/BackgroundMesh.h ../Post/PView.h ../Post/PViewOptions.h \
+  ../Post/ColorTable.h ../Post/PViewData.h ../Post/adaptiveData.h \
+  ../DataStr/List.h ../Common/GmshMatrix.h ../Plugin/PluginManager.h \
   ../Plugin/Plugin.h ../Common/Options.h ../Common/Message.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Fltk/Solvers.h \
   ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
@@ -99,18 +100,38 @@ CommandLine.o: CommandLine.cpp GmshUI.h GmshDefines.h GmshVersion.h \
   ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
   ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/SBoundingBox3d.h ../Parser/CreateFile.h OS.h ../Post/PView.h \
-  ../Post/PViewData.h ../DataStr/List.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h
-Gmsh.o: Gmsh.cpp ../Parser/Parser.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h Options.h ../Post/ColorTable.h CommandLine.h OS.h \
-  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
+  ../Geo/SBoundingBox3d.h ../Parser/CreateFile.h OS.h ../Post/PView.h
+Gmsh.o: Gmsh.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
+  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
+  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
+  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
+  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h Message.h \
+  ../Parser/Parser.h ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../Parser/OpenFile.h ../Parser/CreateFile.h Options.h \
+  ../Post/ColorTable.h CommandLine.h OS.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h ../Mesh/Generator.h ../Mesh/Field.h \
+  ../Geo/Geo.h ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
+  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
+  ../Common/SmoothData.h ../Post/PView.h Context.h \
   ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
-  ../Common/Message.h ../Post/PView.h ../Post/PViewData.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Post/PViewDataList.h ../Post/PViewData.h \
+  ../Common/Message.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Common/GmshMatrix.h
 OS.o: OS.cpp Message.h
+Message.o: Message.cpp Message.h Options.h ../Post/ColorTable.h Context.h \
+  OS.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
+  ../Common/GmshUI.h ../Fltk/Popup_Button.h \
+  ../Fltk/SpherePosition_Widget.h ../Mesh/Field.h ../Geo/Geo.h \
+  ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
+  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
+  ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
+  ../Fltk/GUI_Extras.h
 Visibility.o: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \

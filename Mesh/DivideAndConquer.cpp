@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.17 2008-03-20 11:44:08 geuzaine Exp $
+// $Id: DivideAndConquer.cpp,v 1.18 2008-05-04 08:31:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -177,7 +177,7 @@ Segment UpperCommonTangent(DT vl, DT vr)
 int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
 {
   if((h == i) && (h == j) && (h == k)) {
-    Msg(GERROR, "3 identical points in Qtest");
+    Msg::Error("3 identical points in Qtest");
     return 0;
   }
   

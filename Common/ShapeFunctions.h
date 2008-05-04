@@ -21,6 +21,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Numeric.h"
+#include "Message.h"
 
 #define ONE  (1. + 1.e-6)
 #define ZERO (-1.e-6)
@@ -184,12 +185,12 @@ public:
   }
   virtual double integrateCirculation(double val[])
   {
-    Msg(GERROR, "integrateCirculation not available for this element");
+    Msg::Error("integrateCirculation not available for this element");
     return 0.;
   }
   virtual double integrateFlux(double val[])
   {
-    Msg(GERROR, "integrateFlux not available for this element");
+    Msg::Error("integrateFlux not available for this element");
     return 0.;
   }
   virtual void xyz2uvw(double xyz[3], double uvw[3])
@@ -230,7 +231,7 @@ public:
       uvw[2] = wn;
       iter++ ;
     }
-    //if(error > tol) Msg(WARNING, "Newton did not converge in xyz2uvw") ;
+    //if(error > tol) Msg::Warning("Newton did not converge in xyz2uvw") ;
   }
   virtual int isInside(double u, double v, double w) = 0;
   double maxEdgeLength()
@@ -930,7 +931,7 @@ class elementFactory{
       else if(numNodes == 5) return new pyramid(x, y, z);
       else return new tetrahedron(x, y, z);
     default: 
-      Msg(GERROR, "Unknown type of element in factory");
+      Msg::Error("Unknown type of element in factory");
       return NULL;
     }
   }

@@ -1,4 +1,4 @@
-// $Id: OctreeInternals.cpp,v 1.5 2008-03-20 11:44:02 geuzaine Exp $
+// $Id: OctreeInternals.cpp,v 1.6 2008-05-04 08:31:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -67,13 +67,13 @@ int initializeOctantBuckets(double *_orig, double *_size, int _maxElem,
   (*globalPara)->numBuckets = initial_buckets_num;
   *buckets_head = new octantBucket;
   if (!(*buckets_head)) {
-    Msg(GERROR, "initializeOctantBuckets could not allocate enough space");
+    Msg::Error("initializeOctantBuckets could not allocate enough space");
     return (0);
   } // if could not allocate buckets 
 
   buckets = new octantBucket[8];
   if (!buckets) { 
-    Msg(GERROR, "initializeOctantBuckets could not allocate enough space");
+    Msg::Error("initializeOctantBuckets could not allocate enough space");
     return (0);
   }
 
@@ -189,7 +189,7 @@ int addElement2Bucket(octantBucket *_bucket, void * _element,
         ptr2 = ptr1;
         ptr1 = ptr1->next;
         if (ptrBucket == NULL)
-          Msg(GERROR, "Wrong , ptrBucket = NULL. A bug here!");
+          Msg::Error("Wrong , ptrBucket = NULL. A bug here!");
         ptr2->next = ptrBucket->lhead;
         ptrBucket->lhead = ptr2;
         (ptrBucket->numElements)++;
@@ -410,7 +410,7 @@ void * searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_
 
   ptrBucket = findElementBucket(_buckets_head, _pt);
   if (ptrBucket == NULL) {
-    Msg(GERROR, "The point is not in the domain");
+    Msg::Error("The point is not in the domain");
     return NULL;
   }
 
@@ -440,6 +440,6 @@ void * searchAllElements(octantBucket *_buckets_head, double *_pt, globalInfo *_
   if (flag1)
     return (void *)(_elements);
   
-  Msg(WARNING, "This point is not found in any element! It is not in the domain");
+  Msg::Warning("This point is not found in any element! It is not in the domain");
   return NULL;
 }

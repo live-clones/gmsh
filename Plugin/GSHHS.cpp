@@ -273,7 +273,7 @@ class GeoEarthImport
   }
 };
 
-/*      $Id: GSHHS.cpp,v 1.8 2008-04-15 08:29:33 remacle Exp $
+/*      $Id: GSHHS.cpp,v 1.9 2008-05-04 08:31:23 geuzaine Exp $
  *
  * PROGRAM:	gshhs.c
  * AUTHOR:	Paul Wessel (pwessel@hawaii.edu)
@@ -369,7 +369,7 @@ void import_gshhs(FILE * fp, GeoEarthImport & geo_import)
     for(k = 0; k < h.n; k++) {
       if(fread((void *)&p, (size_t) sizeof(struct POINT), (size_t) 1, fp) !=
          1) {
-        Msg(GERROR,
+        Msg::Error(
             "gshhs:  Error reading gshhs file for polygon %d, point %d.\n",
             h.id, k);
         return;
@@ -478,7 +478,7 @@ PView *GMSH_GSHHSPlugin::execute(PView * v)
   else if(coordinate_name == "utm")
     geo_import.set_coordinate_system(&utm);
   else if(coordinate_name != "cartesian"){
-    Msg(GERROR, "gshhs: Unknown coordinate system %s.\n",
+    Msg::Error("gshhs: Unknown coordinate system %s.\n",
       coordinate_name.c_str());
     return NULL;
   }
@@ -486,7 +486,7 @@ PView *GMSH_GSHHSPlugin::execute(PView * v)
   if (iField != -1) {
     field = GModel::current()->getFields()->get(iField);
     if(!field){
-      Msg(GERROR, "Field[%d] does not exist", iField);
+      Msg::Error("Field[%d] does not exist", iField);
       return NULL;
     }else{
       geo_import.set_size_field(field);
@@ -494,7 +494,7 @@ PView *GMSH_GSHHSPlugin::execute(PView * v)
   }
   FILE *fp;
   if ((fp = fopen (filename, "rb")) == NULL ) {
-    Msg(GERROR, "gshhs: Could not find file %s.\n", filename);
+    Msg::Error("gshhs: Could not find file %s.\n", filename);
     return NULL;
   }
   double x,y,z;
@@ -508,7 +508,7 @@ PView *GMSH_GSHHSPlugin::execute(PView * v)
     while(fscanf(fp, "%d %d", &npoints_in_loop,&closed) == 2) {
       for(int i = 0; i < npoints_in_loop; i++) {
         if(fscanf(fp, "%le %le", &x, &y) != 2) {
-          Msg(GERROR, "gshhs:  Error reading loops2 file \'%s\'.\n", filename);
+          Msg::Error("gshhs:  Error reading loops2 file \'%s\'.\n", filename);
           return NULL;
         }
         geo_import.add_point(SPoint3(x,y,0));

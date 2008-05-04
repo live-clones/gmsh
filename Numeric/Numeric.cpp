@@ -1,4 +1,4 @@
-// $Id: Numeric.cpp,v 1.40 2008-02-17 08:48:02 geuzaine Exp $
+// $Id: Numeric.cpp,v 1.41 2008-05-04 08:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,7 @@
 void new_handler(const char *reason, const char *file, int line,
                  int gsl_errno)
 {
-  Msg(GERROR, "GSL: %s (%s, line %d)", reason, file, line);
+  Msg::Error("GSL: %s (%s, line %d)", reason, file, line);
 }
 
 int check_gsl()
@@ -45,14 +45,14 @@ int check_gsl()
   // check version
   int major, minor;
   if(!sscanf(gsl_version, "%d.%d", &major, &minor)){
-    Msg(FATAL, "Cannot retreive GSL version");
+    Msg::Fatal("Cannot retreive GSL version");
     return 0;
   }
   if(major < 1 || (major == 1 && minor < 2)) {
-    Msg(FATAL1, "Your GSL version (%d.%d.X) has a bug in the singular value",
+    Msg::Error("Your GSL version (%d.%d.X) has a bug in the singular value",
         major, minor);
-    Msg(FATAL2, "decomposition code. Please upgrade to version 1.2 or above.");
-    Msg(FATAL3, "You can download the GSL from http://sources.redhat.com/gsl/");
+    Msg::Error("decomposition code. Please upgrade to version 1.2 or above.");
+    Msg::Fatal("You can download the GSL from http://sources.redhat.com/gsl/");
     return 0;
   }
   // set new error handler

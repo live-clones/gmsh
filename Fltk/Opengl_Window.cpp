@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.83 2008-03-20 11:44:03 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.84 2008-05-04 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -89,7 +89,7 @@ void Opengl_Window::draw()
   else
     locked = 1;
 
-  Msg(DEBUG, "Opengl_Window->draw()");
+  Msg::Debug("Opengl_Window->draw()");
 
   if(!valid()) {
     valid(1);
@@ -408,9 +408,9 @@ int Opengl_Window::handle(int event)
         else if(faces.size()) ge = faces[0];
         else if(regions.size()) ge = regions[0];
         MElement *me = elements.size() ? elements[0] : 0;
-        Msg(STATUS2N, "%s %s",
-            ge ? ge->getInfoString().c_str() : "", 
-            me ? me->getInfoString().c_str() : "");
+        Msg::Status(2, false, "%s %s",
+		    ge ? ge->getInfoString().c_str() : "", 
+		    me ? me->getInfoString().c_str() : "");
       }
     }
     prev.set();

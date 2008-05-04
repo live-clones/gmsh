@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.28 2008-03-20 11:44:08 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.29 2008-05-04 08:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,7 @@ void createQuaTri(std::vector<MVertex*> &v, GFace *to,
   else if(v[0] == v[2] || v[2] == v[3])
     to->triangles.push_back(new MTriangle(v[0], v[1], v[3]));
   else if(v[0] == v[3] || v[1] == v[2])
-    Msg(GERROR, "Uncoherent extruded quadrangle in surface %d", to->tag());
+    Msg::Error("Uncoherent extruded quadrangle in surface %d", to->tag());
   else{
     if(ep->mesh.Recombine){
       to->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[3], v[2]));
@@ -106,11 +106,11 @@ void extrudeMesh(GEdge *from, GFace *to,
           MVertex tmp(x[p], y[p], z[p], 0, -1);
           itp = pos.find(&tmp);
           if(itp == pos.end()){ // FIXME: workaround
-            Msg(INFO, "Linear search for (%.16g, %.16g, %.16g)", tmp.x(), tmp.y(), tmp.z());
+            Msg::Info("Linear search for (%.16g, %.16g, %.16g)", tmp.x(), tmp.y(), tmp.z());
             itp = tmp.linearSearch(pos);
           }
           if(itp == pos.end()){
-            Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
+            Msg::Error("Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
                 tmp.x(), tmp.y(), tmp.z(), to->tag());
             return;
           }
@@ -149,11 +149,11 @@ void copyMesh(GFace *from, GFace *to,
                   tmp.x(), tmp.y(), tmp.z());
       itp = pos.find(&tmp);
       if(itp == pos.end()){ // FIXME: workaround
-        Msg(INFO, "Linear search for (%.16g, %.16g, %.16g)", tmp.x(), tmp.y(), tmp.z());
+        Msg::Info("Linear search for (%.16g, %.16g, %.16g)", tmp.x(), tmp.y(), tmp.z());
         itp = tmp.linearSearch(pos);
       }
       if(itp == pos.end()) {
-        Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
+        Msg::Error("Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
             tmp.x(), tmp.y(), tmp.z(), to->tag());
         return;
       }
@@ -170,11 +170,11 @@ void copyMesh(GFace *from, GFace *to,
                   tmp.x(), tmp.y(), tmp.z());
       itp = pos.find(&tmp);
       if(itp == pos.end()){ // FIXME: workaround
-        Msg(INFO, "Linear search for (%.16g, %.16g, %.16g)", tmp.x(), tmp.y(), tmp.z());
+        Msg::Info("Linear search for (%.16g, %.16g, %.16g)", tmp.x(), tmp.y(), tmp.z());
         itp = tmp.linearSearch(pos);
       }
       if(itp == pos.end()) {
-        Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d", 
+        Msg::Error("Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d", 
             tmp.x(), tmp.y(), tmp.z(), to->tag());
         return;
       }
@@ -192,7 +192,7 @@ int MeshExtrudedSurface(GFace *gf,
   if(!ep || !ep->mesh.ExtrudeMesh)
     return 0;
 
-  Msg(STATUS2, "Meshing surface %d (extruded)", gf->tag());
+  Msg::Status(2, true, "Meshing surface %d (extruded)", gf->tag());
 
   // build a set with all the vertices on the boundary of the face gf
   double old_tol = MVertexLessThanLexicographic::tolerance; 
@@ -219,7 +219,7 @@ int MeshExtrudedSurface(GFace *gf,
     // surface is extruded from a curve
     GEdge *from = gf->model()->getEdgeByTag(std::abs(ep->geo.Source));
     if(!from){
-      Msg(GERROR, "Unknown source curve %d for extrusion", ep->geo.Source);
+      Msg::Error("Unknown source curve %d for extrusion", ep->geo.Source);
       return 0;
     }
     extrudeMesh(from, gf, pos, constrainedEdges);
@@ -228,7 +228,7 @@ int MeshExtrudedSurface(GFace *gf,
     // surface is a copy of another surface (the "top" of the extrusion)
     GFace *from = gf->model()->getFaceByTag(std::abs(ep->geo.Source));
     if(!from){ 
-      Msg(GERROR, "Unknown source surface %d for extrusion", ep->geo.Source);
+      Msg::Error("Unknown source surface %d for extrusion", ep->geo.Source);
       return 0;
     }
     copyMesh(from, gf, pos);

@@ -1,4 +1,4 @@
-// $Id: Eigenvalues.cpp,v 1.9 2008-04-06 07:51:37 geuzaine Exp $
+// $Id: Eigenvalues.cpp,v 1.10 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -90,7 +90,7 @@ PView *GMSH_EigenvaluesPlugin::execute(PView *v)
 
   PViewData *data1 = v1->getData();
   if(data1->hasMultipleMeshes()){
-    Msg(GERROR, "Eigenvalues plugin cannot be run on multi-mesh views");
+    Msg::Error("Eigenvalues plugin cannot be run on multi-mesh views");
     return v;
   }
 

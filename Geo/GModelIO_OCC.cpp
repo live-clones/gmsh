@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.31 2008-03-23 21:42:57 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.32 2008-05-04 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -206,10 +206,10 @@ void OCC_Internals::HealGeometry(double tolerance, bool fixsmalledges,
     surfacecont += system.Mass();
   }
 
-  Msg(INFO, "Healing geometry (tolerance=%g)", tolerance);
+  Msg::Info("Healing geometry (tolerance=%g)", tolerance);
 
   if(fixsmalledges){
-    Msg(INFO, "- fixing small edges");
+    Msg::Info("- fixing small edges");
 
     Handle(ShapeFix_Wire) sfw;
     Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
@@ -223,14 +223,14 @@ void OCC_Internals::HealGeometry(double tolerance, bool fixsmalledges,
         sfw->ModifyTopologyMode() = Standard_True;
         
         if(sfw->FixSmall(false, tolerance)){
-          Msg(INFO, "Fixed small edge in wire %d", wmap.FindIndex(oldwire));
+          Msg::Info("Fixed small edge in wire %d", wmap.FindIndex(oldwire));
           TopoDS_Wire newwire = sfw->Wire();
           rebuild->Replace(oldwire, newwire, Standard_False);
         }
         if((sfw->StatusSmall(ShapeExtend_FAIL1)) ||
            (sfw->StatusSmall(ShapeExtend_FAIL2)) ||
            (sfw->StatusSmall(ShapeExtend_FAIL3)))
-          Msg(INFO, "Failed to fix small edge in wire %d",  wmap.FindIndex(oldwire));
+          Msg::Info("Failed to fix small edge in wire %d",  wmap.FindIndex(oldwire));
       }
     }
     shape = rebuild->Apply(shape);
@@ -246,7 +246,7 @@ void OCC_Internals::HealGeometry(double tolerance, bool fixsmalledges,
           GProp_GProps system;
           BRepGProp::LinearProperties(edge, system);
           if(system.Mass() < tolerance){
-            Msg(INFO, "removing degenerated edge %d", emap.FindIndex(edge));
+            Msg::Info("removing degenerated edge %d", emap.FindIndex(edge));
             rebuild->Remove(edge, false);
           }
         }
@@ -259,26 +259,26 @@ void OCC_Internals::HealGeometry(double tolerance, bool fixsmalledges,
     sfwf->Load(shape);
     
     if(sfwf->FixSmallEdges()){
-      Msg(INFO, "- fixing wire frames");
-      if(sfwf->StatusSmallEdges(ShapeExtend_OK)) Msg(INFO, "no small edges found");
-      if(sfwf->StatusSmallEdges(ShapeExtend_DONE1)) Msg(INFO, "some small edges fixed");
-      if(sfwf->StatusSmallEdges(ShapeExtend_FAIL1)) Msg(INFO, "failed to fix some small edges");
+      Msg::Info("- fixing wire frames");
+      if(sfwf->StatusSmallEdges(ShapeExtend_OK)) Msg::Info("no small edges found");
+      if(sfwf->StatusSmallEdges(ShapeExtend_DONE1)) Msg::Info("some small edges fixed");
+      if(sfwf->StatusSmallEdges(ShapeExtend_FAIL1)) Msg::Info("failed to fix some small edges");
     }
   
     if(sfwf->FixWireGaps()){
-      Msg(INFO, "- fixing wire gaps");
-      if(sfwf->StatusWireGaps(ShapeExtend_OK)) Msg(INFO, "no gaps found");
-      if(sfwf->StatusWireGaps(ShapeExtend_DONE1)) Msg(INFO, "some 2D gaps fixed");
-      if(sfwf->StatusWireGaps(ShapeExtend_DONE2)) Msg(INFO, "some 3D gaps fixed");
-      if(sfwf->StatusWireGaps(ShapeExtend_FAIL1)) Msg(INFO, "failed to fix some 2D gaps");
-      if(sfwf->StatusWireGaps(ShapeExtend_FAIL2)) Msg(INFO, "failed to fix some 3D gaps");
+      Msg::Info("- fixing wire gaps");
+      if(sfwf->StatusWireGaps(ShapeExtend_OK)) Msg::Info("no gaps found");
+      if(sfwf->StatusWireGaps(ShapeExtend_DONE1)) Msg::Info("some 2D gaps fixed");
+      if(sfwf->StatusWireGaps(ShapeExtend_DONE2)) Msg::Info("some 3D gaps fixed");
+      if(sfwf->StatusWireGaps(ShapeExtend_FAIL1)) Msg::Info("failed to fix some 2D gaps");
+      if(sfwf->StatusWireGaps(ShapeExtend_FAIL2)) Msg::Info("failed to fix some 3D gaps");
     }
     
     shape = sfwf->Shape();
   }
   
   if(fixspotstripfaces){
-    Msg(INFO, "- fixing spot and strip faces");
+    Msg::Info("- fixing spot and strip faces");
     Handle(ShapeFix_FixSmallFace) sffsm = new ShapeFix_FixSmallFace();
     sffsm->Init(shape);
     sffsm->SetPrecision(tolerance);
@@ -288,7 +288,7 @@ void OCC_Internals::HealGeometry(double tolerance, bool fixsmalledges,
   }
   
   if(sewfaces){
-    Msg(INFO, "- sewing faces");
+    Msg::Info("- sewing faces");
 
     TopExp_Explorer exp0;
     
@@ -304,11 +304,11 @@ void OCC_Internals::HealGeometry(double tolerance, bool fixsmalledges,
     if(!sewedObj.SewedShape().IsNull())
       shape = sewedObj.SewedShape();
     else
-      Msg(INFO, " not possible");
+      Msg::Info(" not possible");
   }
   
   if(makesolids){  
-    Msg(INFO, "- making solids");
+    Msg::Info("- making solids");
     
     TopExp_Explorer exp0;
     
@@ -320,7 +320,7 @@ void OCC_Internals::HealGeometry(double tolerance, bool fixsmalledges,
     }
     
     if(!count){
-      Msg(INFO, " not possible (no shells)");
+      Msg::Info(" not possible (no shells)");
     }
     else{
       BRepCheck_Analyzer ba(ms);
@@ -345,7 +345,7 @@ void OCC_Internals::HealGeometry(double tolerance, bool fixsmalledges,
         }
       }
       else
-        Msg(INFO, " not possible");
+        Msg::Info(" not possible");
     }
   }
   buildLists();
@@ -527,7 +527,7 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool,  const BooleanOperat
             TopoDS_Shape aValue2 = itSub2.Value();
             BRepAlgoAPI_Common BO (aValue1, aValue2);
             if (!BO.IsDone()) {
-              Msg(GERROR,"Boolean Add Operator can not be performed");
+              Msg::Error("Boolean Add Operator can not be performed");
             }
             if (isCompound) {
               TopoDS_Shape aStepResult = BO.Shape();
@@ -590,21 +590,21 @@ void GModel::_deleteOCCInternals()
 
 int GModel::readOCCSTEP(const std::string &fn)
 {
-  Msg(GERROR, "Gmsh has to be compiled with OpenCascade support to load '%s'",
+  Msg::Error("Gmsh has to be compiled with OpenCascade support to load '%s'",
       fn.c_str());
   return 0;
 }
 
 int GModel::readOCCIGES(const std::string &fn)
 {
-  Msg(GERROR, "Gmsh has to be compiled with OpenCascade support to load '%s'",
+  Msg::Error("Gmsh has to be compiled with OpenCascade support to load '%s'",
       fn.c_str());
   return 0;
 }
 
 int GModel::readOCCBREP(const std::string &fn)
 {
-  Msg(GERROR, "Gmsh has to be compiled with OpenCascade support to load '%s'",
+  Msg::Error("Gmsh has to be compiled with OpenCascade support to load '%s'",
       fn.c_str());
   return 0;
 }

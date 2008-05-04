@@ -1,4 +1,4 @@
-// $Id: PViewDataIO.cpp,v 1.8 2008-04-02 20:00:38 geuzaine Exp $
+// $Id: PViewDataIO.cpp,v 1.9 2008-05-04 08:31:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -31,12 +31,12 @@ bool PViewData::writeSTL(std::string fileName)
 {
   FILE *fp = fopen(fileName.c_str(), "w");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", fileName.c_str());
+    Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
   }
 
   if(!getNumTriangles() && !getNumQuadrangles()){
-    Msg(GERROR, "No surface elements to save");
+    Msg::Error("No surface elements to save");
     return false;
   }
 
@@ -89,7 +89,7 @@ bool PViewData::writeTXT(std::string fileName)
 {
   FILE *fp = fopen(fileName.c_str(), "w");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", fileName.c_str());
+    Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
   }
 
@@ -119,18 +119,18 @@ bool PViewData::writeTXT(std::string fileName)
 
 bool PViewData::writePOS(std::string fileName, bool binary, bool parsed, bool append)
 { 
-  Msg(GERROR, "POS export not implemented for this view type");
+  Msg::Error("POS export not implemented for this view type");
   return false; 
 }
 
 bool PViewData::writeMSH(std::string fileName, bool binary)
 { 
-  Msg(GERROR, "MSH export not implemented for this view type");
+  Msg::Error("MSH export not implemented for this view type");
   return false; 
 }
 
 bool PViewData::writeMED(std::string fileName)
 {
-  Msg(GERROR, "MED export not implemented for this view type");
+  Msg::Error("MED export not implemented for this view type");
   return false; 
 }

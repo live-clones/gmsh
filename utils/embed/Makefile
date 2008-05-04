@@ -2,7 +2,7 @@ include ../../variables
 
 LIB = ../../lib/libGmshEmbedded${LIBEXT}
 
-INC = ${DASH}I.
+INC = ${DASH}I. ${DASH}I../../Common
 
 CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE} ${DASH}DHAVE_GMSH_EMBEDDED
 

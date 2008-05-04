@@ -1,4 +1,4 @@
-// $Id: Extract.cpp,v 1.28 2008-04-05 17:49:23 geuzaine Exp $
+// $Id: Extract.cpp,v 1.29 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -153,7 +153,7 @@ static void extract(const char *expr[9], List_T *inList, int inNb,
   for(int i = 0; i < outNbComp; i++){
     f[i] = evaluator_create((char*)expr[i]);
     if(!f[i]){
-      Msg(GERROR, "Invalid expression '%s'", expr[i]);
+      Msg::Error("Invalid expression '%s'", expr[i]);
       for(int j = 0; j < i; j++)
         if(f[j]) evaluator_destroy(f[j]);
       return;
@@ -172,7 +172,7 @@ static void extract(const char *expr[9], List_T *inList, int inNb,
     else if(!strcmp(expr[i], "v7")) comp[i] = 7;
     else if(!strcmp(expr[i], "v8")) comp[i] = 8;
     else{
-      Msg(GERROR, "Invalid expression '%s'", expr[i]);
+      Msg::Error("Invalid expression '%s'", expr[i]);
       return;
     }
   }
@@ -246,7 +246,7 @@ PView *GMSH_ExtractPlugin::execute(PView *v)
     step = - data1->getNumTimeSteps();
   }
   else if(step > data1->getNumTimeSteps() - 1){
-    Msg(GERROR, "Invalid time step (%d) in View[%d]: using all steps instead",
+    Msg::Error("Invalid time step (%d) in View[%d]: using all steps instead",
         step, v1->getIndex());
     step = - data1->getNumTimeSteps();
   }

@@ -1,4 +1,4 @@
-// $Id: HarmonicToTime.cpp,v 1.16 2008-03-20 11:44:14 geuzaine Exp $
+// $Id: HarmonicToTime.cpp,v 1.17 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -122,12 +122,12 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView * v)
 
   if(rIndex < 0 || rIndex >= data1->getNumTimeSteps() ||
      iIndex < 0 || iIndex >= data1->getNumTimeSteps()){
-    Msg(GERROR, "Wrong real or imaginary part index");
+    Msg::Error("Wrong real or imaginary part index");
     return v1;
   }
 
   if(nSteps <= 0){
-    Msg(GERROR, "nSteps should be > 0");
+    Msg::Error("nSteps should be > 0");
     return v1;
   }
 

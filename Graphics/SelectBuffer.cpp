@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.21 2008-03-20 11:44:08 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.22 2008-05-04 08:31:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -108,7 +108,7 @@ bool ProcessSelectionBuffer(int entityType,
   }
   else if(numhits < 0){ // overflow
     delete [] selectionBuffer;
-    Msg(WARNING, "Too many entities selected");
+    Msg::Warning("Too many entities selected");
     return false;
   }
 
@@ -173,7 +173,7 @@ bool ProcessSelectionBuffer(int entityType,
         {
           GVertex *v = m->getVertexByTag(hits[i].ient);
           if(!v){
-            Msg(GERROR, "Problem in point selection processing");
+            Msg::Error("Problem in point selection processing");
             return false;
           }
           vertices.push_back(v);
@@ -184,7 +184,7 @@ bool ProcessSelectionBuffer(int entityType,
         {
           GEdge *e = m->getEdgeByTag(hits[i].ient);
           if(!e){
-            Msg(GERROR, "Problem in line selection processing");
+            Msg::Error("Problem in line selection processing");
             return false;
           }
           if(hits[i].type2){
@@ -199,7 +199,7 @@ bool ProcessSelectionBuffer(int entityType,
         {
           GFace *f = m->getFaceByTag(hits[i].ient);
           if(!f){
-            Msg(GERROR, "Problem in surface selection processing");
+            Msg::Error("Problem in surface selection processing");
             return false;
           }
           if(hits[i].type2){
@@ -214,7 +214,7 @@ bool ProcessSelectionBuffer(int entityType,
         {
           GRegion *r = m->getRegionByTag(hits[i].ient);
           if(!r){
-            Msg(GERROR, "Problem in volume selection processing");
+            Msg::Error("Problem in volume selection processing");
             return false;
           }
           if(hits[i].type2){

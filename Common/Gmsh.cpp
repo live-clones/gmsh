@@ -1,4 +1,4 @@
-// $Id: Gmsh.cpp,v 1.5 2008-04-28 10:10:51 geuzaine Exp $
+// $Id: Gmsh.cpp,v 1.6 2008-05-04 08:31:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -20,18 +20,31 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <string>
+#include "GmshDefines.h"
+#include "GModel.h"
+#include "Message.h"
 #include "Parser.h"
+#include "OpenFile.h"
+#include "CreateFile.h"
 #include "Options.h"
 #include "CommandLine.h"
 #include "OS.h"
 #include "Numeric.h"
+#include "Generator.h"
+#include "Field.h"
+#include "Context.h"
 
 #if !defined(HAVE_NO_POST)
 #include "PluginManager.h"
 #endif
 
+Context_T CTX;
+
 int GmshInitialize(int argc, char **argv)
 {
+  // Initialize messages (parallel stuff, etc.)
+  Msg::Init(argc, argv);
+
   // Initialize the symbol tree that will hold variable names in the
   // parser
   InitSymbols();
@@ -55,27 +68,39 @@ int GmshInitialize(int argc, char **argv)
   return 1;
 }
 
-int GmshNewModel()
-{
-  // Create a new model and add it to the model list, and make it the
-  // current model
-  return 0;
-}
-
-int GmshMerge(std::string fileName)
-{
-  // Merge CAD or mesh data in the current model, or create
-  // post-processing data associated with the current model
-  return 0;
-}
-
-int GmshClear()
-{
-  // Destroys all models and post-processing views
-  return 0;
-}
-
 int GmshFinalize()
 {
+  return 1;
+}
+
+int GmshBatch()
+{
+  if(!GModel::current()) return 0;
+
+  OpenProject(CTX.filename);
+  for(unsigned int i = 1; i < CTX.files.size(); i++)
+    MergeFile(CTX.files[i].c_str());
+#if !defined(HAVE_NO_POST)
+  if(CTX.bgm_filename) {
+    MergeFile(CTX.bgm_filename);
+    if(PView::list.size())
+      GModel::current()->getFields()->set_background_mesh(PView::list.size() - 1);
+    else
+      Msg::Error("Invalid background mesh (no view)");
+  }
+#endif
+  if(CTX.batch == 4) {
+    AdaptMesh(GModel::current());
+    CreateOutputFile(CTX.output_filename, CTX.mesh.format);
+  }
+  else if(CTX.batch > 0) {
+    GModel::current()->mesh(CTX.batch);
+    CreateOutputFile(CTX.output_filename, CTX.mesh.format);
+  }
+  else if(CTX.batch == -1)
+    CreateOutputFile(CTX.output_filename, FORMAT_GEO);
+  else if(CTX.batch == -2)
+    GModel::current()->checkMeshCoherence();
+
   return 1;
 }

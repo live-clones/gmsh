@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.182 2008-04-23 23:17:46 geuzaine Exp $
+# $Id: Makefile,v 1.183 2008-05-04 08:31:12 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -31,7 +31,6 @@ INC = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Graphics\
 CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
 SRC = Main.cpp \
-      Message.cpp \
       GUI.cpp\
         GUI_Extras.cpp\
         GUI_Projection.cpp\
@@ -80,32 +79,18 @@ Main.o: Main.cpp GUI.h Opengl_Window.h Colorbar_Window.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
-  ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
-  ../Common/Gmsh.h ../Common/Message.h ../Mesh/Generator.h \
-  ../Parser/CreateFile.h ../Graphics/Draw.h ../Common/Context.h \
-  ../Common/Options.h ../Parser/Parser.h ../Parser/OpenFile.h \
-  ../Common/CommandLine.h Solvers.h ../Plugin/PluginManager.h \
-  ../Plugin/Plugin.h ../Post/PViewDataList.h ../Post/PViewData.h \
-  ../Common/GmshMatrix.h ../Geo/GModel.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Common/Gmsh.h ../Common/Message.h ../Graphics/Draw.h \
+  ../Common/Context.h ../Common/Options.h ../Parser/Parser.h \
+  ../Parser/OpenFile.h ../Common/CommandLine.h Solvers.h \
+  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Post/PViewDataList.h \
+  ../Post/PViewData.h ../Common/GmshMatrix.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
   ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
   ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h \
   ../Mesh/BackgroundMesh.h
-Message.o: Message.cpp ../Common/Message.h ../Common/GmshUI.h \
-  ../Common/Context.h ../Common/Options.h ../Post/ColorTable.h GUI.h \
-  Opengl_Window.h Colorbar_Window.h Popup_Button.h \
-  SpherePosition_Widget.h ../Mesh/Field.h ../Geo/Geo.h \
-  ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
-  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
-  ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
-  ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
-  GUI_Extras.h ../Common/OS.h
 GUI.o: GUI.cpp ../Common/GmshUI.h ../Common/GmshDefines.h \
   ../Common/Message.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
   ../Common/Context.h ../Common/Options.h ../Post/ColorTable.h \
@@ -116,13 +101,13 @@ GUI.o: GUI.cpp ../Common/GmshUI.h ../Common/GmshDefines.h \
   ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
-  ../Common/SmoothData.h ../Post/PView.h ../Post/PViewData.h \
-  ../Post/PViewOptions.h ../Post/ColorTable.h Callbacks.h Win32Icon.h \
+  ../Common/SmoothData.h ../Post/PView.h Callbacks.h Win32Icon.h \
   ../Parser/OpenFile.h ../Common/CommandLine.h ../Mesh/Generator.h \
   Solvers.h ../Plugin/PluginManager.h ../Plugin/Plugin.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Common/GmshMatrix.h \
-  Shortcut_Window.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
-  ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
+  Shortcut_Window.h ../Post/PViewOptions.h ../Post/ColorTable.h \
+  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
   ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h \
   ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
@@ -138,8 +123,7 @@ GUI_Extras.o: GUI_Extras.cpp ../Common/GmshUI.h ../Common/GmshDefines.h \
   ../Geo/SBoundingBox3d.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
-  ../Common/SmoothData.h ../Post/PView.h ../Post/PViewData.h \
-  ../Post/PViewOptions.h ../Post/ColorTable.h Shortcut_Window.h \
+  ../Common/SmoothData.h ../Post/PView.h Shortcut_Window.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
   ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
@@ -168,7 +152,6 @@ GUI_Projection.o: GUI_Projection.cpp ../Geo/GModelIO_Fourier.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
-  ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   Shortcut_Window.h GUI_Extras.h ../Geo/fourierFace.h ../Geo/GFace.h \
   ../Geo/GModel.h ../Geo/Range.h ../Geo/fourierEdge.h ../Geo/GEdge.h \
   ../Geo/GModel.h ../Geo/fourierVertex.h ../Geo/GModel.h ../Geo/GVertex.h \
@@ -191,7 +174,6 @@ GUI_Classifier.o: GUI_Classifier.cpp GUI_Classifier.h ../Common/GmshUI.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
-  ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   Shortcut_Window.h ../Graphics/Draw.h ../Common/Options.h \
   ../Common/Context.h ../Graphics/SelectBuffer.h GUI_Projection.h \
   ../Geo/fourierProjectionFace.h ../Geo/GModel.h ../Geo/Range.h \
@@ -214,8 +196,8 @@ Callbacks.o: Callbacks.cpp ../Common/GmshUI.h ../Common/Message.h \
   ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Geo/GeoStringInterface.h ../Geo/findLinks.h ../Mesh/Generator.h \
   ../Mesh/HighOrder.h ../Graphics/Draw.h ../Graphics/SelectBuffer.h \
-  ../Post/PView.h ../Post/PViewData.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Parser/CreateFile.h ../Parser/OpenFile.h \
+  ../Post/PView.h ../Post/PViewOptions.h ../Post/ColorTable.h \
+  ../Post/PViewData.h ../Parser/CreateFile.h ../Parser/OpenFile.h \
   ../Common/CommandLine.h ../Common/Context.h ../Common/Options.h GUI.h \
   Opengl_Window.h Colorbar_Window.h Popup_Button.h \
   SpherePosition_Widget.h ../Mesh/Field.h ../Geo/Geo.h \
@@ -243,7 +225,6 @@ Opengl.o: Opengl.cpp ../Common/GmshUI.h ../Common/GmshDefines.h \
   ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SBoundingBox3d.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
-  ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Graphics/gl2ps.h
 Opengl_Window.o: Opengl_Window.cpp ../Common/GmshUI.h \
   ../Common/GmshDefines.h ../Common/Message.h ../Numeric/Numeric.h \
@@ -261,7 +242,6 @@ Opengl_Window.o: Opengl_Window.cpp ../Common/GmshUI.h \
   ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SBoundingBox3d.h \
   ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
-  ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Geo/MElement.h ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/MEdge.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
   ../Geo/SVector3.h
@@ -274,7 +254,6 @@ Colorbar_Window.o: Colorbar_Window.cpp ../Common/GmshUI.h GUI.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
-  ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Common/Context.h
 Solvers.o: Solvers.cpp ../Common/Message.h Solvers.h GmshServer.h \
   ../Parser/OpenFile.h ../Common/GmshUI.h GUI.h Opengl_Window.h \
@@ -286,5 +265,4 @@ Solvers.o: Solvers.cpp ../Common/Message.h Solvers.h GmshServer.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
-  ../Post/PViewData.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Graphics/Draw.h ../Common/Context.h

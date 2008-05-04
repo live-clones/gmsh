@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.20 2008-04-28 10:11:00 geuzaine Exp $
+// $Id: PViewData.cpp,v 1.21 2008-05-04 08:31:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 // 
 
 #include "PViewData.h"
+#include "List.h"
 #include "adaptiveData.h"
 #include "Numeric.h"
 #include "Message.h"
@@ -40,7 +41,7 @@ PViewData::~PViewData()
 bool PViewData::finalize()
 { 
   if(!_adaptive && _interpolation.size()){
-    Msg(INFO, "Initializing adaptive data %p interp size=%d",
+    Msg::Info("Initializing adaptive data %p interp size=%d",
 	this, _interpolation.size());
     _adaptive = new adaptiveData(this);
     _adaptive->initWithLowResolution(0);
@@ -57,26 +58,31 @@ bool PViewData::empty()
 void PViewData::getScalarValue(int step, int ent, int ele, int nod, double &val)
 {
   int numComp = getNumComponents(step, ent, ele);
-  std::vector<double> d(numComp);
-  for(int comp = 0; comp < numComp; comp++)
-    getValue(step, ent, ele, nod, comp, d[comp]);
-  val = ComputeScalarRep(numComp, &d[0]);
+  if(numComp == 1){
+    getValue(step, ent, ele, nod, 0, val);
+  }
+  else{
+    std::vector<double> d(numComp);
+    for(int comp = 0; comp < numComp; comp++)
+      getValue(step, ent, ele, nod, comp, d[comp]);
+    val = ComputeScalarRep(numComp, &d[0]);
+  }
 }
 
 void PViewData::setNode(int step, int ent, int ele, int nod, double x, double y, double z)
 {
-  Msg(GERROR, "Cannot change node coordinates in this view");
+  Msg::Error("Cannot change node coordinates in this view");
 }
 
 void PViewData::setValue(int step, int ent, int ele, int nod, int comp, double val)
 {
-  Msg(GERROR, "Cannot change field value in this view");
+  Msg::Error("Cannot change field value in this view");
 }
 
 void PViewData::setInterpolationScheme(int type, List_T *coef, List_T *pol, 
 				       List_T *coefGeo, List_T *polGeo)
 {
-  Msg(DEBUG, "Storing interpolation scheme %d in view %p", type, this);
+  Msg::Debug("Storing interpolation scheme %d in view %p", type, this);
   if(!type || !_interpolation[type].empty()) return;
   if(coef) _interpolation[type].push_back(coef);
   if(pol) _interpolation[type].push_back(pol);
@@ -95,17 +101,17 @@ int PViewData::getInterpolationScheme(int type, std::vector<List_T*> &p)
 
 void PViewData::smooth()
 {
-  Msg(GERROR, "Smoothing is not implemented for this type of data");
+  Msg::Error("Smoothing is not implemented for this type of data");
 }
 
 bool PViewData::combineTime(nameData &nd)
 { 
-  Msg(GERROR, "Combine time is not implemented for this type of data");
+  Msg::Error("Combine time is not implemented for this type of data");
   return false; 
 }
 
 bool PViewData::combineSpace(nameData &nd)
 { 
-  Msg(GERROR, "Combine space is not implemented for this type of data");
+  Msg::Error("Combine space is not implemented for this type of data");
   return false; 
 }

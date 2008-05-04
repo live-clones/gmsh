@@ -1,4 +1,4 @@
-// $Id: Eigenvectors.cpp,v 1.12 2008-04-06 07:51:37 geuzaine Exp $
+// $Id: Eigenvectors.cpp,v 1.13 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -106,7 +106,7 @@ PView *GMSH_EigenvectorsPlugin::execute(PView *v)
 
   PViewData *data1 = v1->getData();
   if(data1->hasMultipleMeshes()){
-    Msg(GERROR, "Eigenvectors plugin cannot be run on multi-mesh views");
+    Msg::Error("Eigenvectors plugin cannot be run on multi-mesh views");
     return v;
   }
 
@@ -148,7 +148,7 @@ PView *GMSH_EigenvectorsPlugin::execute(PView *v)
 	    data1->getValue(step, ent, ele, nod, comp, val[comp]);
 	  double wr[3], wi[3], B[9];
 	  if(!EigSolve3x3(val, wr, wi, B))
-	    Msg(GERROR, "Eigensolver failed to converge");
+	    Msg::Error("Eigensolver failed to converge");
 	  nbcomplex += nonzero(wi); 
 	  if(!scale) wr[0] = wr[1] = wr[2] = 1.;
 	  for(int i = 0; i < 3; i++){
@@ -165,7 +165,7 @@ PView *GMSH_EigenvectorsPlugin::execute(PView *v)
   }
 
   if(nbcomplex)
-    Msg(GERROR, "%d tensors have complex eigenvalues/eigenvectors", 
+    Msg::Error("%d tensors have complex eigenvalues/eigenvectors", 
 	nbcomplex);
   
   for(int i = 0; i < data1->getNumTimeSteps(); i++){

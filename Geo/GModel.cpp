@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.86 2008-04-22 16:14:34 geuzaine Exp $
+// $Id: GModel.cpp,v 1.87 2008-05-04 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -47,10 +47,10 @@ GModel::GModel(std::string name)
     modelName(name), normals(0)
 {
   list.push_back(this);
-  // at the moment we always create (at least an empty) GEO model
-  _createGEOInternals();
 
 #if !defined(HAVE_GMSH_EMBEDDED)
+  // at the moment we always create (at least an empty) GEO model
+  _createGEOInternals();
   _fields = new FieldManager();
 #endif
 }
@@ -59,12 +59,14 @@ GModel::~GModel()
 {
   std::vector<GModel*>::iterator it = std::find(list.begin(), list.end(), this);
   if(it != list.end()) list.erase(it);
+
+#if !defined(HAVE_GMSH_EMBEDDED)
   _deleteGEOInternals();
   _deleteOCCInternals();
-  destroy();
-#if !defined(HAVE_GMSH_EMBEDDED)
   delete _fields;
 #endif
+
+  destroy();
 }
 
 GModel *GModel::current(int index)
@@ -213,7 +215,7 @@ void GModel::snapVertices()
                       (gp.z() - (*vit)->z()) * (gp.z() - (*vit)->z()));
       if (d > tol){
         (*vit)->setPosition(gp);
-        Msg(WARNING, "Geom Vertex %d Corrupted (%12.5E)... Snap performed",
+        Msg::Warning("Geom Vertex %d Corrupted (%12.5E)... Snap performed",
             (*vit)->tag(), d);
       }
     }
@@ -373,7 +375,7 @@ int GModel::mesh(int dimension)
   GenerateMesh(this, dimension);
   return true;
 #else
-  Msg(GERROR, "Embedded Gmsh cannot do mesh generation");
+  Msg::Error("Embedded Gmsh cannot do mesh generation");
   return false;
 #endif
 }
@@ -431,7 +433,7 @@ static void insertMeshVertices(std::vector<MVertex*> &vertices, T &container)
 MVertex *GModel::getMeshVertexByTag(int n)
 {
   if(_vertexVectorCache.empty() && _vertexMapCache.empty()){
-    Msg(DEBUG, "Rebuilding mesh vertex cache");
+    Msg::Debug("Rebuilding mesh vertex cache");
     _vertexVectorCache.clear();
     _vertexMapCache.clear();
     bool dense = (getNumMeshVertices() == MVertex::getGlobalNumber());
@@ -637,7 +639,7 @@ static int checkVertices(std::vector<MVertex*> &vertices,
       pos.insert(v);
     }
     else{
-      Msg(INFO, "Vertices %d and %d have identical position (%g, %g, %g)",
+      Msg::Info("Vertices %d and %d have identical position (%g, %g, %g)",
           (*it)->getNum(), v->getNum(), v->x(), v->y(), v->z());
       num++;
     }
@@ -673,7 +675,7 @@ static int checkElements(int tag,
       }
       sprintf(temp2, ")");
       strcat(temp, temp2);
-      Msg(INFO, "%s", temp);
+      Msg::Info("%s", temp);
       num++;
     }
   }
@@ -685,7 +687,7 @@ void GModel::checkMeshCoherence()
   int numEle = getNumMeshElements();
   if(!numEle) return;
 
-  Msg(INFO, "Checking mesh coherence (%d elements)", numEle);
+  Msg::Info("Checking mesh coherence (%d elements)", numEle);
 
   SBoundingBox3d bb = bounds();
   double lc = bb.empty() ? 1. : norm(SVector3(bb.max(), bb.min()));
@@ -705,7 +707,7 @@ void GModel::checkMeshCoherence()
       num += checkVertices((*it)->mesh_vertices, pos);
     for(riter it = firstRegion(); it != lastRegion(); ++it)
       num += checkVertices((*it)->mesh_vertices, pos);
-    if(num) Msg(WARNING, "%d duplicate vertices", num);
+    if(num) Msg::Warning("%d duplicate vertices", num);
     MVertexLessThanLexicographic::tolerance = old_tol;
   }
 
@@ -727,7 +729,7 @@ void GModel::checkMeshCoherence()
       num += checkElements((*it)->tag(), (*it)->prisms, pos);
       num += checkElements((*it)->tag(), (*it)->pyramids, pos);
     }
-    if(num) Msg(WARNING, "%d duplicate elements", num);
+    if(num) Msg::Warning("%d duplicate elements", num);
     MElementLessThanLexicographic::tolerance = old_tol;
   }
 }

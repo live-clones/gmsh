@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.204 2008-04-23 23:00:39 geuzaine Exp $
+# $Id: Makefile,v 1.205 2008-05-04 08:31:13 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -173,8 +173,7 @@ GModel.o: GModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   ../DataStr/Tree.h ../DataStr/avl.h ExtrudeParams.h \
   ../Common/SmoothData.h discreteFace.h discreteEdge.h discreteVertex.h \
   ../Common/Message.h ../Mesh/Field.h ../Geo/Geo.h ../Post/PView.h \
-  ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Mesh/Generator.h ../Common/Context.h
+  ../Geo/SPoint3.h ../Mesh/Generator.h ../Common/Context.h
 GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h Geo.h ../Common/GmshDefines.h \
@@ -183,8 +182,7 @@ GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
   ../Common/SmoothData.h ../Parser/OpenFile.h ../DataStr/Tools.h \
   ../DataStr/List.h ../DataStr/Tree.h ../Common/Message.h gmshVertex.h \
   MVertex.h gmshFace.h gmshEdge.h gmshRegion.h ../Parser/Parser.h \
-  ../Mesh/Field.h ../Geo/Geo.h ../Post/PView.h ../Post/PViewData.h \
-  ../Geo/SBoundingBox3d.h ../Post/PViewOptions.h ../Post/ColorTable.h
+  ../Mesh/Field.h ../Geo/Geo.h ../Post/PView.h ../Geo/SPoint3.h
 GModelIO_Mesh.o: GModelIO_Mesh.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/GmshDefines.h MElement.h \
@@ -223,8 +221,7 @@ Geo.o: Geo.cpp ../Common/Message.h ../Numeric/Numeric.h \
   SPoint3.h SVector3.h SBoundingBox3d.h ExtrudeParams.h \
   ../Common/SmoothData.h GModel.h GVertex.h GEntity.h GPoint.h GEdge.h \
   GFace.h GEdgeLoop.h GRegion.h GeoInterpolation.h ../Parser/Parser.h \
-  ../Mesh/Field.h ../Geo/Geo.h ../Post/PView.h ../Post/PViewData.h \
-  ../Geo/SBoundingBox3d.h ../Post/PViewOptions.h ../Post/ColorTable.h \
+  ../Mesh/Field.h ../Geo/Geo.h ../Post/PView.h ../Geo/SPoint3.h \
   ../Common/Context.h
 GeoStringInterface.o: GeoStringInterface.cpp ../Common/Message.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/Malloc.h \

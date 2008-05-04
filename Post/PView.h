@@ -22,9 +22,10 @@
 
 #include <vector>
 #include <string>
-#include "PViewData.h"
-#include "PViewOptions.h"
+#include "SPoint3.h"
 
+class PViewData;
+class PViewOptions;
 class VertexArray;
 class smooth_normals;
 class GMSH_Post_Plugin;

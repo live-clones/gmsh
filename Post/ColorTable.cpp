@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.5 2008-03-20 11:44:15 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.6 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -398,7 +398,7 @@ void ColorTable_Print(GmshColorTable * ct, FILE * fp)
       if(fp)
         fprintf(fp, "%s\n", tmp1);
       else
-        Msg(DIRECT, tmp1);
+        Msg::Direct(tmp1);
       strcpy(tmp1, "");
     }
     sprintf(tmp2, "{%d, %d, %d, %d}", r, g, b, a);
@@ -409,7 +409,7 @@ void ColorTable_Print(GmshColorTable * ct, FILE * fp)
   if(fp)
     fprintf(fp, "%s\n", tmp1);
   else
-    Msg(DIRECT, tmp1);
+    Msg::Direct(tmp1);
 }
 
 int ColorTable_IsAlpha(GmshColorTable * ct)

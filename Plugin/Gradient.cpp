@@ -1,4 +1,4 @@
-// $Id: Gradient.cpp,v 1.14 2008-04-05 17:49:23 geuzaine Exp $
+// $Id: Gradient.cpp,v 1.15 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -91,7 +91,7 @@ PView *GMSH_GradientPlugin::execute(PView *v)
 
   PViewData *data1 = v1->getData();
   if(data1->hasMultipleMeshes()){
-    Msg(GERROR, "Gradient plugin cannot be run on multi-mesh views");
+    Msg::Error("Gradient plugin cannot be run on multi-mesh views");
     return v;
   }
 

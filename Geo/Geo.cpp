@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.110 2008-04-24 17:29:47 geuzaine Exp $
+// $Id: Geo.cpp,v 1.111 2008-05-04 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -375,11 +375,11 @@ void End_Curve(Curve *c)
 
     if(!R || !R2){
       // check radius
-      Msg(GERROR, "Zero radius in Circle/Ellipse %d", c->Num);
+      Msg::Error("Zero radius in Circle/Ellipse %d", c->Num);
     }
     else if(!v[3] && fabs((R - R2) / (R + R2)) > 0.1){
       // check cocircular pts (allow 10% error)
-      Msg(GERROR, "Control points of Circle %d are not cocircular %g %g",
+      Msg::Error("Control points of Circle %d are not cocircular %g %g",
           c->Num, R, R2);
     }
 
@@ -404,7 +404,7 @@ void End_Curve(Curve *c)
       rhs[1] = 1;
       sys2x2(sys, rhs, sol);
       if(sol[0] <= 0 || sol[1] <= 0) {
-        Msg(GERROR, "Ellipse %d is wrong", c->Num);
+        Msg::Error("Ellipse %d is wrong", c->Num);
         A1 = A3 = 0.;
         f1 = f2 = R;
       }
@@ -446,10 +446,10 @@ void End_Curve(Curve *c)
       c->Circle.v[i] = v[i];
 
     if(!CTX.expert_mode && c->Num > 0 && A3 - A1 > 1.01 * Pi){
-      Msg(GERROR1, "Circle or ellipse arc %d greater than Pi (angle=%g)", c->Num, A3-A1);
-      Msg(GERROR2, "(If you understand what this implies, you can disable this error");
-      Msg(GERROR2, "message by selecting `Enable expert mode' in the option dialog.");
-      Msg(GERROR3, "Otherwise, please subdivide the arc in smaller pieces.)");
+      Msg::Error("Circle or ellipse arc %d greater than Pi (angle=%g)", c->Num, A3-A1);
+      Msg::Error("(If you understand what this implies, you can disable this error");
+      Msg::Error("message by selecting `Enable expert mode' in the option dialog.");
+      Msg::Error("Otherwise, please subdivide the arc in smaller pieces.)");
     }
 
   }
@@ -552,7 +552,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
       if((v = FindPoint(iPnt)))
         List_Add(pC->Control_Points, &v);
       else{
-        Msg(GERROR, "Unknown control point %d in Curve %d", iPnt, pC->Num);
+        Msg::Error("Unknown control point %d in Curve %d", iPnt, pC->Num);
       }
     }
   }
@@ -570,18 +570,18 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
   else {
     Vertex *v;
     if((v = FindPoint(p1))) {
-      Msg(INFO, "Curve %d first control point %d ", pC->Num, v->Num);
+      Msg::Info("Curve %d first control point %d ", pC->Num, v->Num);
       pC->beg = v;
     }
     else {
-      Msg(GERROR, "Unknown control point %d in Curve %d", p1, pC->Num);
+      Msg::Error("Unknown control point %d in Curve %d", p1, pC->Num);
     }
     if((v = FindPoint(p2))) {
-      Msg(INFO, "Curve %d first control point %d ", pC->Num, v->Num);
+      Msg::Info("Curve %d first control point %d ", pC->Num, v->Num);
       pC->end = v;
     }
     else {
-      Msg(GERROR, "Unknown control point %d in Curve %d", p2, pC->Num);
+      Msg::Error("Unknown control point %d in Curve %d", p2, pC->Num);
     }
   }
 
@@ -988,7 +988,7 @@ void CopyShape(int Type, int Num, int *New)
   switch (Type) {
   case MSH_POINT:
     if(!(v = FindPoint(Num))) {
-      Msg(GERROR, "Unknown vertex %d", Num);
+      Msg::Error("Unknown vertex %d", Num);
       return;
     }
     newv = DuplicateVertex(v);
@@ -1005,7 +1005,7 @@ void CopyShape(int Type, int Num, int *New)
   case MSH_SEGM_NURBS:
   case MSH_SEGM_PARAMETRIC:
     if(!(c = FindCurve(Num))) {
-      Msg(GERROR, "Unknown curve %d", Num);
+      Msg::Error("Unknown curve %d", Num);
       return;
     }
     newc = DuplicateCurve(c);
@@ -1015,14 +1015,14 @@ void CopyShape(int Type, int Num, int *New)
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
     if(!(s = FindSurface(Num))) {
-      Msg(GERROR, "Unknown surface %d", Num);
+      Msg::Error("Unknown surface %d", Num);
       return;
     }
     news = DuplicateSurface(s);
     *New = news->Num;
     break;
   default:
-    Msg(GERROR, "Impossible to copy entity %d (of type %d)", Num, Type);
+    Msg::Error("Impossible to copy entity %d (of type %d)", Num, Type);
     break;
   }
 }
@@ -1138,10 +1138,10 @@ void DeleteShape(int Type, int Num)
   case MSH_SEGM_FROM_GMODEL:
   case MSH_SURF_FROM_GMODEL:
   case MSH_VOLUME_FROM_GMODEL:
-    Msg(GERROR, "Deletion of external CAD entities not implemented yet");
+    Msg::Error("Deletion of external CAD entities not implemented yet");
     break;
   default:
-    Msg(GERROR, "Impossible to delete entity %d (of type %d)", Num, Type);
+    Msg::Error("Impossible to delete entity %d (of type %d)", Num, Type);
     break;
   }
 }
@@ -1218,7 +1218,7 @@ void VisibilityShape(int Type, int Num, int Mode)
     if((v = FindPoint(Num)))
       v->Visible = Mode;
     else
-      Msg(WARNING, "Unknown point %d (use '*' to hide/show all points)", Num);
+      Msg::Warning("Unknown point %d (use '*' to hide/show all points)", Num);
     break;
   case MSH_SEGM_LINE:
   case MSH_SEGM_SPLN:
@@ -1234,7 +1234,7 @@ void VisibilityShape(int Type, int Num, int Mode)
     if((c = FindCurve(Num)))
       c->Visible = Mode;
     else
-      Msg(WARNING, "Unknown line %d (use '*' to hide/show all lines)", Num);
+      Msg::Warning("Unknown line %d (use '*' to hide/show all lines)", Num);
     break;
   case MSH_SURF_TRIC:
   case MSH_SURF_REGL:
@@ -1243,14 +1243,14 @@ void VisibilityShape(int Type, int Num, int Mode)
     if((s = FindSurface(Num)))
       s->Visible = Mode;
     else
-      Msg(WARNING, "Unknown surface %d (use '*' to hide/show all surfaces)", Num);
+      Msg::Warning("Unknown surface %d (use '*' to hide/show all surfaces)", Num);
     break;
   case MSH_VOLUME:
   case MSH_VOLUME_DISCRETE:
     if((V = FindVolume(Num)))
       V->Visible = Mode;
     else
-      Msg(WARNING, "Unknown volume %d (use '*' to hide/show all volumes)", Num);
+      Msg::Warning("Unknown volume %d (use '*' to hide/show all volumes)", Num);
     break;
   default:
     break;
@@ -1553,10 +1553,10 @@ void printCurve(Curve *c)
 {
   Vertex *v;
   int N = List_Nbr(c->Control_Points);
-  Msg(DEBUG, "Curve %d %d cp (%d->%d)", c->Num, N, c->beg->Num, c->end->Num);
+  Msg::Debug("Curve %d %d cp (%d->%d)", c->Num, N, c->beg->Num, c->end->Num);
   for(int i = 0; i < N; i++) {
     List_Read(c->Control_Points, i, &v);
-    Msg(DEBUG, "Vertex %d (%g,%g,%g,%g)", v->Num, v->Pos.X, v->Pos.Y,
+    Msg::Debug("Vertex %d (%g,%g,%g,%g)", v->Num, v->Pos.X, v->Pos.Y,
         v->Pos.Z, v->lc);
   }
 }
@@ -1566,7 +1566,7 @@ void printSurface(Surface *s)
   Curve *c;
   int N = List_Nbr(s->Generatrices);
 
-  Msg(DEBUG, "Surface %d, %d generatrices", s->Num, N);
+  Msg::Debug("Surface %d, %d generatrices", s->Num, N);
   for(int i = 0; i < N; i++) {
     List_Read(s->Generatrices, i, &c);
     printCurve(c);
@@ -1638,7 +1638,7 @@ void ApplyTransformationToCurve(double matrix[4][4], Curve *c)
   Vertex *v;
 
   if(!c->beg || !c->end){
-    Msg(GERROR, "Cannot transform curve with no begin/end points");
+    Msg::Error("Cannot transform curve with no begin/end points");
     return;
   }
 
@@ -1690,7 +1690,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
       if(v)
         ApplyTransformationToPoint(matrix, v, true);
       else
-        Msg(GERROR, "Unknown point %d", O.Num);
+        Msg::Error("Unknown point %d", O.Num);
       break;
     case MSH_SEGM_LINE:
     case MSH_SEGM_SPLN:
@@ -1706,7 +1706,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
       if(c)
         ApplyTransformationToCurve(matrix, c);
       else
-        Msg(GERROR, "Unknown curve %d", O.Num);
+        Msg::Error("Unknown curve %d", O.Num);
       break;
     case MSH_SURF_REGL:
     case MSH_SURF_TRIC:
@@ -1715,10 +1715,10 @@ void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
       if(s)
         ApplyTransformationToSurface(matrix, s);
       else
-        Msg(GERROR, "Unknown surface %d", O.Num);
+        Msg::Error("Unknown surface %d", O.Num);
       break;
     default:
-      Msg(GERROR, "Impossible to transform entity %d (of type %d)", O.Num,
+      Msg::Error("Impossible to transform entity %d (of type %d)", O.Num,
           O.Type);
       break;
     }
@@ -1832,7 +1832,7 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary)
           }
         }
         else
-          Msg(GERROR, "Unknown curve %d", O.Num);
+          Msg::Error("Unknown curve %d", O.Num);
       }
       break;
     case MSH_SURF_PLAN:
@@ -1852,7 +1852,7 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary)
           }
         }
         else
-          Msg(GERROR, "Unknown surface %d", O.Num);
+          Msg::Error("Unknown surface %d", O.Num);
       }
       break;
     case MSH_VOLUME:
@@ -1869,11 +1869,11 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary)
           }
         }
         else
-          Msg(GERROR, "Unknown volume %d", O.Num);
+          Msg::Error("Unknown volume %d", O.Num);
       }
       break;
     default:
-      Msg(GERROR, "Impossible to take boundary of entity %d (of type %d)", O.Num,
+      Msg::Error("Impossible to take boundary of entity %d (of type %d)", O.Num,
           O.Type);
       break;
     }
@@ -1931,7 +1931,7 @@ int Extrude_ProtudePoint(int type, int ip,
   if(!Tree_Query(GModel::current()->getGEOInternals()->Points, &pv))
     return 0;
 
-  Msg(DEBUG, "Extrude Point %d", ip);
+  Msg::Debug("Extrude Point %d", ip);
 
   chapeau = DuplicateVertex(pv);
 
@@ -2059,7 +2059,7 @@ int Extrude_ProtudePoint(int type, int ip,
     c->end = chapeau;
     break;
   default:
-    Msg(GERROR, "Unknown extrusion type");
+    Msg::Error("Unknown extrusion type");
     return pv->Num;
   }
 
@@ -2099,11 +2099,11 @@ int Extrude_ProtudeCurve(int type, int ic,
   }
 
   if(!pc->beg || !pc->end){
-    Msg(GERROR, "Cannot extrude curve with no begin/end points");
+    Msg::Error("Cannot extrude curve with no begin/end points");
     return 0;
   }
 
-  Msg(DEBUG, "Extrude Curve %d", ic);
+  Msg::Debug("Extrude Curve %d", ic);
 
   chapeau = DuplicateCurve(pc);
 
@@ -2176,7 +2176,7 @@ int Extrude_ProtudeCurve(int type, int ic,
     ApplyTransformationToCurve(matrix, chapeau);
     break;
   default:
-    Msg(GERROR, "Unknown extrusion type");
+    Msg::Error("Unknown extrusion type");
     return pc->Num;
   }
 
@@ -2253,7 +2253,7 @@ int Extrude_ProtudeSurface(int type, int is,
   if(!(ps = FindSurface(is)))
     return 0;
 
-  Msg(DEBUG, "Extrude Surface %d", is);
+  Msg::Debug("Extrude Surface %d", is);
 
   chapeau = DuplicateSurface(ps);
 
@@ -2268,7 +2268,7 @@ int Extrude_ProtudeSurface(int type, int is,
     List_Read(chapeau->Generatrices, i, &c);
     if(c->Num < 0)
       if(!(c = FindCurve(-c->Num))) {
-        Msg(GERROR, "Unknown curve %d", -c->Num);
+        Msg::Error("Unknown curve %d", -c->Num);
         return ps->Num;
       }
     c->Extrude = new ExtrudeParams(COPIED_ENTITY);
@@ -2386,7 +2386,7 @@ int Extrude_ProtudeSurface(int type, int is,
     ApplyTransformationToSurface(matrix, chapeau);
     break;
   default:
-    Msg(GERROR, "Unknown extrusion type");
+    Msg::Error("Unknown extrusion type");
     return ps->Num;
   }
 
@@ -2531,7 +2531,7 @@ void ExtrudeShapes(int type, List_T *list_in,
       }
       break;
     default:
-      Msg(GERROR, "Impossible to extrude entity %d (of type %d)",
+      Msg::Error("Impossible to extrude entity %d (of type %d)",
           shape.Num, shape.Type);
       break;
     }
@@ -2675,7 +2675,7 @@ void ReplaceDuplicatePoints()
     return;
   }
 
-  Msg(DEBUG, "Removed %d duplicate points", start - end);
+  Msg::Debug("Removed %d duplicate points", start - end);
 
   if(CTX.geom.old_newreg) {
     GModel::current()->getGEOInternals()->MaxPointNum = 0;
@@ -2688,13 +2688,13 @@ void ReplaceDuplicatePoints()
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &c);
     if(!Tree_Query(allNonDuplicatedPoints, &c->beg))
-      Msg(GERROR, "Weird point %d in Coherence", c->beg->Num);
+      Msg::Error("Weird point %d in Coherence", c->beg->Num);
     if(!Tree_Query(allNonDuplicatedPoints, &c->end))
-      Msg(GERROR, "Weird point %d in Coherence", c->end->Num);
+      Msg::Error("Weird point %d in Coherence", c->end->Num);
     for(j = 0; j < List_Nbr(c->Control_Points); j++) {
       pv = (Vertex **)List_Pointer(c->Control_Points, j);
       if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
-        Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
+        Msg::Error("Weird point %d in Coherence", (*pv)->Num);
       else
         List_Write(c->Control_Points, j, pv2);
     }
@@ -2709,14 +2709,14 @@ void ReplaceDuplicatePoints()
     for(j = 0; j < List_Nbr(s->Control_Points); j++) {
       pv = (Vertex **)List_Pointer(s->Control_Points, j);
       if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
-        Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
+        Msg::Error("Weird point %d in Coherence", (*pv)->Num);
       else
         List_Write(s->Control_Points, j, pv2);
     }
     for(j = 0; j < List_Nbr(s->TrsfPoints); j++){
       pv = (Vertex **)List_Pointer(s->TrsfPoints, j);
       if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
-        Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
+        Msg::Error("Weird point %d in Coherence", (*pv)->Num);
       else
         List_Write(s->TrsfPoints, j, pv2);
     }
@@ -2731,7 +2731,7 @@ void ReplaceDuplicatePoints()
     for(j = 0; j < List_Nbr(vol->TrsfPoints); j++){
       pv = (Vertex **)List_Pointer(vol->TrsfPoints, j);
       if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
-        Msg(GERROR, "Weird point %d in Coherence", (*pv)->Num);
+        Msg::Error("Weird point %d in Coherence", (*pv)->Num);
       else
         List_Write(vol->TrsfPoints, j, pv2);
     }
@@ -2767,7 +2767,7 @@ void ReplaceDuplicateCurves()
       if(!Tree_Search(allNonDuplicatedCurves, &c)) {
         Tree_Insert(allNonDuplicatedCurves, &c);
         if(!(c2 = FindCurve(-c->Num))) {
-          Msg(GERROR, "Unknown curve %d", -c->Num);
+          Msg::Error("Unknown curve %d", -c->Num);
           List_Delete(All);
           return;
         }
@@ -2776,7 +2776,7 @@ void ReplaceDuplicateCurves()
       else {
         Tree_Suppress(GModel::current()->getGEOInternals()->Curves, &c);
         if(!(c2 = FindCurve(-c->Num))) {
-          Msg(GERROR, "Unknown curve %d", -c->Num);
+          Msg::Error("Unknown curve %d", -c->Num);
           List_Delete(All);
           return;
         }
@@ -2793,7 +2793,7 @@ void ReplaceDuplicateCurves()
     return;
   }
 
-  Msg(DEBUG, "Removed %d duplicate curves", start - end);
+  Msg::Debug("Removed %d duplicate curves", start - end);
 
   if(CTX.geom.old_newreg) {
     GModel::current()->getGEOInternals()->MaxLineNum = 0;
@@ -2808,7 +2808,7 @@ void ReplaceDuplicateCurves()
     for(j = 0; j < List_Nbr(s->Generatrices); j++) {
       pc = (Curve **)List_Pointer(s->Generatrices, j);
       if(!(pc2 = (Curve **)Tree_PQuery(allNonDuplicatedCurves, pc)))
-        Msg(GERROR, "Weird curve %d in Coherence", (*pc)->Num);
+        Msg::Error("Weird curve %d in Coherence", (*pc)->Num);
       else {
         List_Write(s->Generatrices, j, pc2);
         // Arghhh. Revoir compareTwoCurves !
@@ -2855,7 +2855,7 @@ void ReplaceDuplicateSurfaces()
     return;
   }
 
-  Msg(DEBUG, "Removed %d duplicate surfaces", start - end);
+  Msg::Debug("Removed %d duplicate surfaces", start - end);
 
   if(CTX.geom.old_newreg) {
     GModel::current()->getGEOInternals()->MaxSurfaceNum = 0;
@@ -2870,7 +2870,7 @@ void ReplaceDuplicateSurfaces()
     for(j = 0; j < List_Nbr(vol->Surfaces); j++) {
       ps = (Surface **)List_Pointer(vol->Surfaces, j);
       if(!(ps2 = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, ps)))
-        Msg(GERROR, "Weird surface %d in Coherence", (*ps)->Num);
+        Msg::Error("Weird surface %d in Coherence", (*ps)->Num);
       else
         List_Write(vol->Surfaces, j, ps2);
     }
@@ -2899,7 +2899,7 @@ double min1d(double (*funct) (double), double *xmin)
   // we should think about the tolerance more carefully...
   double ax = 1.e-15, bx = 1.e-12, cx = 1.e-11, fa, fb, fx, tol = 1.e-4;
   mnbrak(&ax, &bx, &cx, &fa, &fx, &fb, funct);
-  //Msg(INFO, "--MIN1D : ax %12.5E bx %12.5E cx %12.5E",ax,bx,cx);  
+  //Msg::Info("--MIN1D : ax %12.5E bx %12.5E cx %12.5E",ax,bx,cx);  
   return (brent(ax, bx, cx, funct, tol, xmin));
 }
 
@@ -3021,7 +3021,7 @@ bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shape
 {
   Surface *s = FindSurface(surface_id);
   if(!s){
-    Msg(GERROR, "Unknown surface %d", surface_id);
+    Msg::Error("Unknown surface %d", surface_id);
     return false;
   }
   for(int i = 0; i < List_Nbr(curve_ids); i++){
@@ -3041,7 +3041,7 @@ bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shape
       }
     }
     else{
-      Msg(GERROR, "Uknown curve %d", (int)curve_id);
+      Msg::Error("Uknown curve %d", (int)curve_id);
       return false;
     }
   }
@@ -3066,7 +3066,7 @@ void sortEdgesInLoop(int num, List_T *edges)
     if((c = FindCurve(j)))
       List_Add(temp, &c);
     else
-      Msg(GERROR, "Unknown curve %d in line loop %d", j, num);
+      Msg::Error("Unknown curve %d in line loop %d", j, num);
   }
   List_Reset(edges);
 
@@ -3083,7 +3083,7 @@ void sortEdgesInLoop(int num, List_T *edges)
         c1 = c2;
         if(c2->end == c0->beg) {
           if(List_Nbr(temp)) {
-            Msg(INFO, "Starting subloop %d in Line Loop %d (are you sure about this?)",
+            Msg::Info("Starting subloop %d in Line Loop %d (are you sure about this?)",
                 ++k, num);
             c0 = c1 = *(Curve **)List_Pointer(temp, 0);
             List_Add(edges, &c1->Num);
@@ -3094,7 +3094,7 @@ void sortEdgesInLoop(int num, List_T *edges)
       }
     }
     if(j++ > nbEdges) {
-      Msg(GERROR, "Line Loop %d is wrong", num);
+      Msg::Error("Line Loop %d is wrong", num);
       break;
     }
   }
@@ -3113,7 +3113,7 @@ void setSurfaceEmbeddedPoints(Surface *s, List_T *points)
     if(v)
       List_Add(s->EmbeddedPoints, &v);
     else
-      Msg(GERROR, "Unknown point %d", iPoint);
+      Msg::Error("Unknown point %d", iPoint);
   }
 }
 
@@ -3129,7 +3129,7 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
     if(c)
       List_Add(s->EmbeddedCurves, &c);
     else
-      Msg(GERROR, "Unknown curve %d", iCurve);
+      Msg::Error("Unknown curve %d", iCurve);
   }
 }
 
@@ -3142,7 +3142,7 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
     List_Read(loops, i, &iLoop);
     EdgeLoop *el;
     if(!(el = FindEdgeLoop(abs(iLoop)))) {
-      Msg(GERROR, "Unknown line loop %d", iLoop);
+      Msg::Error("Unknown line loop %d", iLoop);
       List_Delete(s->Generatrices);
       s->Generatrices = NULL;
       return;
@@ -3157,7 +3157,7 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
           ic *= sign(iLoop);
           if(i != 0) ic *= -1; // hole
           if(!(c = FindCurve(ic))) {
-            Msg(GERROR, "Unknown curve %d", ic);
+            Msg::Error("Unknown curve %d", ic);
             List_Delete(s->Generatrices);
             s->Generatrices = NULL;
             return;
@@ -3172,7 +3172,7 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
           ic *= sign(iLoop);
           if(i != 0) ic *= -1; // hole
           if(!(c = FindCurve(ic))) {
-            Msg(GERROR, "Unknown curve %d", ic);
+            Msg::Error("Unknown curve %d", ic);
             List_Delete(s->Generatrices);
             s->Generatrices = NULL;
             return;
@@ -3195,7 +3195,7 @@ void setVolumeSurfaces(Volume *v, List_T *loops)
     List_Read(loops, i, &il);
     SurfaceLoop *sl;
     if(!(sl = FindSurfaceLoop(abs(il)))) {
-      Msg(GERROR, "Unknown surface loop %d", il);
+      Msg::Error("Unknown surface loop %d", il);
       return;
     }
     else {
@@ -3218,7 +3218,7 @@ void setVolumeSurfaces(Volume *v, List_T *loops)
             List_Add(v->SurfacesByTag, &is);
           }
           else{
-            Msg(GERROR, "Unknown surface %d", is);
+            Msg::Error("Unknown surface %d", is);
             return;
           }
         }

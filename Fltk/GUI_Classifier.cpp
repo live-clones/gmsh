@@ -1,4 +1,4 @@
-// $Id: GUI_Classifier.cpp,v 1.11 2008-04-13 11:07:58 geuzaine Exp $
+// $Id: GUI_Classifier.cpp,v 1.12 2008-05-04 08:31:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -264,7 +264,7 @@ void class_color_cb(Fl_Widget* w, void* data)
 
   CTX.mesh.changed = ENT_ALL;
   Draw();  
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 
 }
 
@@ -485,7 +485,7 @@ void class_select_cb(Fl_Widget *w, void *data)
     CTX.mesh.changed = ENT_ALL;
     Draw();
 
-    Msg(ONSCREEN, "Select Elements\n"
+    Msg::Status(3, false, "Select Elements\n"
         "[Press 'e' to end selection or 'q' to abort]");
     
     char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, elements);
@@ -524,7 +524,7 @@ void class_select_cb(Fl_Widget *w, void *data)
   CTX.mesh.changed = ENT_ALL;
   CTX.pick_elements = 0;
   Draw();  
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 
@@ -544,7 +544,7 @@ void class_selectgface_cb(Fl_Widget *w, void *data)
     CTX.mesh.changed = ENT_ALL;
     Draw();
 
-    Msg(ONSCREEN, "Select Model Face\n"
+    Msg::Status(3, false, "Select Model Face\n"
         "[Press 'e' to end selection or 'q' to abort]");
     
     char ib = SelectEntity(ENT_SURFACE, vertices, edges, faces, regions, elements);
@@ -570,7 +570,7 @@ void class_selectgface_cb(Fl_Widget *w, void *data)
   } 
   CTX.mesh.changed = ENT_ALL;
   Draw();  
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 
@@ -590,7 +590,7 @@ void class_deleteedge_cb(Fl_Widget *w, void *data)
     CTX.mesh.changed = ENT_ALL;
     Draw();
 
-    Msg(ONSCREEN, "Select Elements\n"
+    Msg::Status(3, false, "Select Elements\n"
         "[Press 'e' to end selection or 'q' to abort]");
     
     char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, elements);
@@ -639,7 +639,7 @@ void class_deleteedge_cb(Fl_Widget *w, void *data)
   CTX.mesh.changed = ENT_ALL;
   CTX.pick_elements = 0;
   Draw();  
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 
@@ -656,7 +656,7 @@ void class_save_cb(Fl_Widget *w, void *data)
   CTX.pick_elements = 0;
   NoElementsSelectedMode (e);
   Draw();  
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 void class_clear_cb(Fl_Widget *w, void *data)
@@ -673,7 +673,7 @@ void class_clear_cb(Fl_Widget *w, void *data)
   CTX.pick_elements = 0;
   NoElementsSelectedMode (e);
   Draw();  
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 void class_ok_cb(Fl_Widget *w, void *data)
@@ -689,7 +689,7 @@ void class_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_surfaces_faces(0, GMSH_SET | GMSH_GUI, e->op[2]);
   opt_mesh_line_width(0, GMSH_SET | GMSH_GUI, e->op[3]);
 
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 void class_okcolor_cb(Fl_Widget *w, void *data)
@@ -700,7 +700,7 @@ void class_okcolor_cb(Fl_Widget *w, void *data)
   e->face_color->deactivate();
   e->face_color->hide();
   //  class_save_cb(w,data);
-  Msg(ONSCREEN, "");
+  Msg::Status(3, false, "");
 }
 
 

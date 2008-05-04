@@ -1,4 +1,4 @@
-// $Id: meshGRegionDelaunayInsertion.cpp,v 1.43 2008-03-20 11:44:09 geuzaine Exp $
+// $Id: meshGRegionDelaunayInsertion.cpp,v 1.44 2008-05-04 08:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -104,7 +104,7 @@ void recurFindCavity(std::list<faceXtet> & shell,
                      MVertex *v , 
                      MTet4 *t)
 {
-  // Msg(INFO,"tet %d %d %d %d",t->tet()->getVertex(0)->getNum(),
+  // Msg::Info("tet %d %d %d %d",t->tet()->getVertex(0)->getNum(),
   //     t->tet()->getVertex(1)->getNum(),
   //     t->tet()->getVertex(2)->getNum(),
   //     t->tet()->getVertex(3)->getNum());
@@ -144,7 +144,7 @@ bool insertVertex(MVertex *v,
 
   recurFindCavity(shell, cavity, v, t);  
 
-  // Msg(INFO,"%d %d",cavity.size(),NC);
+  // Msg::Info("%d %d",cavity.size(),NC);
   // if (NC != cavity.size())throw;
 
   // check that volume is conserved
@@ -177,7 +177,7 @@ bool insertVertex(MVertex *v,
     }
 //   fprintf(ff2,"};\n");
 //   fclose(ff2);
-//  Msg(INFO,"cavity of size %d volume %g",cavity.size(),oldVolume);
+//  Msg::Info("cavity of size %d volume %g",cavity.size(),oldVolume);
   // create new tetrahedron using faces that are
   // on the border of the cavity
   // add those to a list
@@ -197,7 +197,7 @@ bool insertVertex(MVertex *v,
 
   while (it != shell.end()){
     MTetrahedron *tr = new MTetrahedron(it->v[0], it->v[1], it->v[2], v);
-    //      Msg(INFO,"shell %d %d %d",it->v[0]->getNum(),it->v[1]->getNum(),it->v[2]->getNum());
+    //      Msg::Info("shell %d %d %d",it->v[0]->getNum(),it->v[1]->getNum(),it->v[2]->getNum());
 //            fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {0,0,0};\n",
 //                 it->v[0]->x(),
 //                 it->v[0]->y(),
@@ -227,7 +227,7 @@ bool insertVertex(MVertex *v,
     }
 //   fprintf(ff,"};\n");
 //   fclose (ff);
-//  Msg(INFO,"new cavity of vol %g (%d boundaries)",newVolume,shell.size());
+//  Msg::Info("new cavity of vol %g (%d boundaries)",newVolume,shell.size());
   // OK, the cavity is star shaped
   if (fabs(oldVolume - newVolume) < 1.e-10 * oldVolume){      
     connectTets(new_cavity.begin(), new_cavity.end());      
@@ -324,7 +324,7 @@ void recur_classify(MTet4 *t, std::list<MTet4*> &theRegion,
                     std::set<GFace*> &faces_bound, GRegion *bidon,
                     GModel *model, const fs_cont &search)
 {
-  if (!t) Msg (GERROR,"a tet is not connected by a boundary face");
+  if (!t) Msg::Error("a tet is not connected by a boundary face");
   if (t->onWhat()) return; // should never return here...
   theRegion.push_back(t);
   t->setOnWhat(bidon);
@@ -398,12 +398,12 @@ void adaptMeshGRegion::operator () (GRegion *gr)
         }                     
       }
     }
-    Msg(INFO,"Adaptation : START with %12.5E QBAD %12.5E QAVG %12.5E",
+    Msg::Info("Adaptation : START with %12.5E QBAD %12.5E QAVG %12.5E",
         totalVolumeb, worst, avg / count);
     for (int i = 0; i < nbRanges; i++){
       double low  = (double)i / nbRanges;
       double high = (double)(i + 1) / nbRanges;
-      Msg(INFO,"Opti : %3.2f < QUAL < %3.2f : %9d elements ",
+      Msg::Info("Opti : %3.2f < QUAL < %3.2f : %9d elements ",
           low, high, quality_ranges[i]);
     }                 
   }    
@@ -506,7 +506,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
       }
     }
     double t2 = Cpu();
-    Msg(INFO,"Opti : (%d,%d,%d) = %12.5E QBAD %12.5E QAVG %12.5E (%8.3f sec)",
+    Msg::Info("Opti : (%d,%d,%d) = %12.5E QBAD %12.5E QAVG %12.5E (%8.3f sec)",
         nbESwap, nbFSwap, nbReloc, totalVolumeb, worst, avg / count, t2 - t1);
     break;
   }
@@ -516,17 +516,17 @@ void adaptMeshGRegion::operator () (GRegion *gr)
     if(!(illegals[i]->isDeleted())) nbSlivers++;
   
   if (nbSlivers){
-    Msg(INFO,"Opti : %d illegal tets are still in the mesh, trying to remove them",
+    Msg::Info("Opti : %d illegal tets are still in the mesh, trying to remove them",
         nbSlivers);
   }
   else{
-    Msg(INFO,"Opti : no illegal tets in the mesh ;-)", nbSlivers);
+    Msg::Info("Opti : no illegal tets in the mesh ;-)", nbSlivers);
   }
 
   for (int i = 0; i < nbRanges ;i++){
     double low  = (double)i / nbRanges;
     double high = (double)(i + 1) / nbRanges;
-    Msg(INFO,"Opti : %3.2f < QUAL < %3.2f : %9d elements",
+    Msg::Info("Opti : %3.2f < QUAL < %3.2f : %9d elements",
         low, high, quality_ranges[i]);
   }                   
   
@@ -581,12 +581,12 @@ void gmshOptimizeMesh(GRegion *gr, const gmshQualityMeasure4Tet &qm)
         }                     
       }
     }
-    Msg(INFO,"Opti : START with %12.5E QBAD %12.5E QAVG %12.5E",
+    Msg::Info("Opti : START with %12.5E QBAD %12.5E QAVG %12.5E",
         totalVolumeb, worst, avg / count);
     for (int i = 0; i < nbRanges; i++){
       double low  = (double)i / nbRanges;
       double high = (double)(i + 1) / nbRanges;
-      Msg(INFO,"Opti : %3.2f < QUAL < %3.2f : %9d elements",
+      Msg::Info("Opti : %3.2f < QUAL < %3.2f : %9d elements",
           low, high, quality_ranges[i]);
     }                 
   }    
@@ -645,7 +645,7 @@ void gmshOptimizeMesh(GRegion *gr, const gmshQualityMeasure4Tet &qm)
             nbSliversWeCanDoSomething++;
           nbSlivers++;
         }
-      Msg(INFO, "Opti : %d Sliver Removals", nbSliversWeCanDoSomething);
+      Msg::Info("Opti : %d Sliver Removals", nbSliversWeCanDoSomething);
     }
     
     if (!newTets.size()){
@@ -689,21 +689,21 @@ void gmshOptimizeMesh(GRegion *gr, const gmshQualityMeasure4Tet &qm)
       }
     }
     double t2 = Cpu();
-    Msg(INFO, "Opti : (%d,%d,%d) = %12.5E QBAD %12.5E QAVG %12.5E (%8.3f sec)",
+    Msg::Info("Opti : (%d,%d,%d) = %12.5E QBAD %12.5E QAVG %12.5E (%8.3f sec)",
         nbESwap, nbFSwap, nbReloc, totalVolumeb, worst, avg / count, t2 - t1);
   }
   
   if (illegals.size()){
-    Msg(INFO, "Opti : %d illegal tets are still in the mesh", illegals.size());
+    Msg::Info("Opti : %d illegal tets are still in the mesh", illegals.size());
   }
   else{
-    Msg(INFO, "Opti : no illegal tets in the mesh ;-)");
+    Msg::Info("Opti : no illegal tets in the mesh ;-)");
   }
 
   for (int i = 0; i < nbRanges; i++){
     double low  = (double)i / nbRanges;
     double high = (double)(i + 1) / nbRanges;
-    Msg(INFO,"Opti : %3.2f < QUAL < %3.2f : %9d elements",
+    Msg::Info("Opti : %3.2f < QUAL < %3.2f : %9d elements",
         low, high, quality_ranges[i]);
   }                   
 
@@ -749,7 +749,7 @@ void insertVerticesInRegion (GRegion *gr)
   connectTets(allTets.begin(), allTets.end());
 
   // classify the tets on the right region
-  // Msg (INFO,"reclassifying %d tets", allTets.size());
+  // Msg::Info("reclassifying %d tets", allTets.size());
 
   fs_cont search;
   buildFaceSearchStructure(gr->model(), search);
@@ -760,13 +760,13 @@ void insertVerticesInRegion (GRegion *gr)
       std::set<GFace *> faces_bound;
       GRegion *bidon = (GRegion*)123;
       double _t1 = Cpu();
-      Msg(DEBUG2,"start with a non classified tet");      
+      Msg::Debug("start with a non classified tet");      
       recur_classify(*it, theRegion, faces_bound, bidon, gr->model(), search);
       double _t2 = Cpu();
-      Msg(DEBUG2, "found %d tets with %d faces (%g sec for the classification)",
+      Msg::Debug("found %d tets with %d faces (%g sec for the classification)",
           theRegion.size(), faces_bound.size(), _t2 - _t1);
       GRegion *myGRegion = getRegionFromBoundingFaces(gr->model(), faces_bound);
-      // Msg (INFO,"a region is found %p",myGRegion);
+      // Msg::Info("a region is found %p",myGRegion);
       if(myGRegion) // a geometrical region associated to the list of faces has been found
         for(std::list<MTet4*>::iterator it2 = theRegion.begin(); 
             it2 != theRegion.end(); ++it2) (*it2)->setOnWhat(myGRegion);
@@ -784,7 +784,7 @@ void insertVerticesInRegion (GRegion *gr)
     (*it)->setNeigh(3, 0);
   }
   connectTets(allTets.begin(), allTets.end());
-  Msg(DEBUG,"All %d tets were connected", allTets.size());
+  Msg::Debug("All %d tets were connected", allTets.size());
 
   // here the classification should be done
 
@@ -792,7 +792,7 @@ void insertVerticesInRegion (GRegion *gr)
 
   while(1){
     if(allTets.empty()){
-      Msg(GERROR, "No tetrahedra in region %d", gr->tag());
+      Msg::Error("No tetrahedra in region %d", gr->tag());
       break;
     }
       
@@ -801,11 +801,11 @@ void insertVerticesInRegion (GRegion *gr)
     if(worst->isDeleted()){
       myFactory.Free(worst);
       allTets.erase(allTets.begin());
-      // Msg(INFO,"Worst tet is deleted");
+      // Msg::Info("Worst tet is deleted");
     }
     else{
       if(ITER++ %5000 == 0)
-        Msg(INFO, "%d points created -- Worst tet radius is %g",
+        Msg::Info("%d points created -- Worst tet radius is %g",
             vSizes.size(), worst->getRadius());
       if(worst->getRadius() < 1) break;
       double center[3];
@@ -851,7 +851,7 @@ void insertVerticesInRegion (GRegion *gr)
         else
           itd++;
       }
-      Msg(INFO,"cleaning up the memory %d -> %d", n1, allTets.size());
+      Msg::Info("cleaning up the memory %d -> %d", n1, allTets.size());
     }
   }
   

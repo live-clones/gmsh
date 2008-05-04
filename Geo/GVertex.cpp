@@ -1,4 +1,4 @@
-// $Id: GVertex.cpp,v 1.21 2008-03-03 22:04:22 geuzaine Exp $
+// $Id: GVertex.cpp,v 1.22 2008-05-04 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -43,7 +43,7 @@ GVertex::~GVertex()
 
 void GVertex::setPosition(GPoint &p)
 {
-  Msg(GERROR, "Cannot set position of this kind of vertex");
+  Msg::Error("Cannot set position of this kind of vertex");
 }
 
 void GVertex::addEdge(GEdge *e)

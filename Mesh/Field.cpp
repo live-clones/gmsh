@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.35 2008-04-28 10:10:52 geuzaine Exp $
+// $Id: Field.cpp,v 1.36 2008-05-04 08:31:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -211,11 +211,11 @@ Field *FieldManager::get(int id)
 Field *FieldManager::new_field(int id, const char *type_name)
 {
   if(find(id) != end()) {
-    Msg(GERROR, "Field id %i is already defined.", id);
+    Msg::Error("Field id %i is already defined.", id);
     return NULL;
   }
   if(map_type_name.find(type_name) == map_type_name.end()) {
-    Msg(GERROR, "Unknown field type \"%s\".", type_name);
+    Msg::Error("Unknown field type \"%s\".", type_name);
     return NULL;
   }
   Field *f = (*map_type_name[type_name]) ();
@@ -251,7 +251,7 @@ void FieldManager::delete_field(int id)
 {
   iterator it = find(id);
   if(it == end()) {
-    Msg(GERROR, "Cannot delete field id %i, it does not exist.", id);
+    Msg::Error("Cannot delete field id %i, it does not exist.", id);
     return;
   }
   delete it->second;
@@ -317,7 +317,7 @@ public:StructuredField()
       }
       catch(...) {
         error_status = true;
-        Msg(GERROR, "Field %i : error reading file %s", this->id,
+        Msg::Error("Field %i : error reading file %s", this->id,
             file_name.c_str());
       }
       update_needed = false;
@@ -574,7 +574,7 @@ public:
          (*field) (x, y, z - delta / 2)) / delta;
       return sqrt(gx * gx + gy * gy + gz * gz);
     default:
-      Msg(GERROR, "Field %i : Unknown kind (%i) of gradient.", this->id,
+      Msg::Error("Field %i : Unknown kind (%i) of gradient.", this->id,
           kind);
       return MAX_LC;
     }
@@ -828,7 +828,7 @@ public:
       else if(sscanf(names[i], "F%i", &id) == 1)
         evaluators_id[i] = id;
       else {
-        Msg(GERROR, "Unknown matheval argument \"%s\"\n", names[i]);
+        Msg::Error("Unknown matheval argument \"%s\"\n", names[i]);
         error_status = true;
         return false;
       }
@@ -864,7 +864,7 @@ public:
   {
     if(update_needed) {
       if(!expr.set_function(f))
-        Msg(GERROR, "Field %i : Invalid matheval expression \"%s\"\n",
+        Msg::Error("Field %i : Invalid matheval expression \"%s\"\n",
             this->id, f.c_str());
       update_needed = false;
     }
@@ -898,7 +898,7 @@ public:
     if(update_needed) {
       for(int i = 0; i < 3; i++) {
         if(!expr[i].set_function(f[i]))
-          Msg(GERROR, "Field %i : Invalid matheval expression \"%s\"\n",
+          Msg::Error("Field %i : Invalid matheval expression \"%s\"\n",
               this->id, f[i].c_str());
       }
       update_needed = false;

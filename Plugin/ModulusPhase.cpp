@@ -1,4 +1,4 @@
-// $Id: ModulusPhase.cpp,v 1.10 2008-04-06 09:20:17 geuzaine Exp $
+// $Id: ModulusPhase.cpp,v 1.11 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -82,13 +82,13 @@ PView *GMSH_ModulusPhasePlugin::execute(PView *v)
 
   PViewData *data1 = v1->getData();
   if(data1->hasMultipleMeshes()){
-    Msg(GERROR, "Gradient plugin cannot be run on multi-mesh views");
+    Msg::Error("Gradient plugin cannot be run on multi-mesh views");
     return v;
   }
 
   if(rIndex < 0 || rIndex >= data1->getNumTimeSteps() ||
      iIndex < 0 || iIndex >= data1->getNumTimeSteps()){
-    Msg(GERROR, "Wrong real or imaginary part index");
+    Msg::Error("Wrong real or imaginary part index");
     return v1;
   }
 

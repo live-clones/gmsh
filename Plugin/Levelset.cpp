@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.46 2008-04-22 07:37:16 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.47 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -419,7 +419,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
     wdata = vdata;
   }
   else if(_valueView > (int)PView::list.size() - 1){
-    Msg(GERROR, "View[%d] does not exist: reverting to View[%d]", 
+    Msg::Error("View[%d] does not exist: reverting to View[%d]", 
         _valueView, v->getIndex());
     wdata = vdata;
   }
@@ -430,11 +430,11 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
   // sanity checks
   if(vdata->getNumEntities() != wdata->getNumEntities() ||
      vdata->getNumElements() != wdata->getNumElements()){
-    Msg(GERROR, "Incompatible views");
+    Msg::Error("Incompatible views");
     return v;
   }
   if(_valueTimeStep >= wdata->getNumTimeSteps()) {
-    Msg(GERROR, "Wrong time step %d in view", _valueTimeStep);
+    Msg::Error("Wrong time step %d in view", _valueTimeStep);
     return v;
   }
 

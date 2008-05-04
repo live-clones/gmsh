@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.685 2008-04-23 17:36:34 geuzaine Exp $
+// $Id: GUI.cpp,v 1.686 2008-05-04 08:31:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -38,6 +38,8 @@
 #include "PluginManager.h"
 #include "Shortcut_Window.h"
 #include "PView.h"
+#include "PViewOptions.h"
+#include "PViewData.h"
 #include "Field.h"
 #include "GModel.h"
 #include "GeoStringInterface.h"
@@ -417,10 +419,10 @@ int GetFontIndex(const char *fontname)
       if(!strcmp(menu_font_names[i].label(), fontname))
         return i;
   }
-  Msg(GERROR, "Unknown font \"%s\" (using \"Helvetica\" instead)", fontname);
-  Msg(INFO, "Available fonts:");
+  Msg::Error("Unknown font \"%s\" (using \"Helvetica\" instead)", fontname);
+  Msg::Info("Available fonts:");
   for(int i = 0; i < NUM_FONTS; i++)
-    Msg(INFO, "  \"%s\"", menu_font_names[i].label());
+    Msg::Info("  \"%s\"", menu_font_names[i].label());
   return 4;
 }
 
@@ -463,17 +465,17 @@ int GetFontAlign(const char *alignstr)
     else if(!strcmp(alignstr, "CenterRight"))
       return 8;
   }
-  Msg(GERROR, "Unknown font alignment \"%s\" (using \"Left\" instead)", alignstr);
-  Msg(INFO, "Available font alignments:");
-  Msg(INFO, "  \"Left\" (or \"BottomLeft\")");
-  Msg(INFO, "  \"Center\" (or \"BottomCenter\")");
-  Msg(INFO, "  \"Right\" (or \"BottomRight\")");
-  Msg(INFO, "  \"TopLeft\"");
-  Msg(INFO, "  \"TopCenter\"");
-  Msg(INFO, "  \"TopRight\"");
-  Msg(INFO, "  \"CenterLeft\"");
-  Msg(INFO, "  \"CenterCenter\"");
-  Msg(INFO, "  \"CenterRight\"");
+  Msg::Error("Unknown font alignment \"%s\" (using \"Left\" instead)", alignstr);
+  Msg::Info("Available font alignments:");
+  Msg::Info("  \"Left\" (or \"BottomLeft\")");
+  Msg::Info("  \"Center\" (or \"BottomCenter\")");
+  Msg::Info("  \"Right\" (or \"BottomRight\")");
+  Msg::Info("  \"TopLeft\"");
+  Msg::Info("  \"TopCenter\"");
+  Msg::Info("  \"TopRight\"");
+  Msg::Info("  \"CenterLeft\"");
+  Msg::Info("  \"CenterCenter\"");
+  Msg::Info("  \"CenterRight\"");
   return 0;
 }
 
@@ -786,9 +788,11 @@ int GUI::global_shortcuts(int event)
   }
   else if(Fl::test_shortcut(FL_ALT + 't')) {
     for(unsigned int i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI,
-                                opt_view_intervals_type(i, GMSH_GET, 0) + 1);
+      if(opt_view_visible(i, GMSH_GET, 0)){
+	double t = opt_view_intervals_type(i, GMSH_GET, 0) + 1;
+	if(t == 4) t++; // skip numeric
+        opt_view_intervals_type(i, GMSH_SET | GMSH_GUI, t);
+      }
     redraw_opengl();
     return 1;
   }
@@ -1160,11 +1164,11 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
     m_module_butt->value(3);
   }
   else {
-    Msg(WARNING, "Something is wrong in your dynamic context definition");
+    Msg::Warning("Something is wrong in your dynamic context definition");
     return;
   }
 
-  Msg(STATUS1N, menu[0].label + 1);
+  Msg::Status(1, false, menu[0].label + 1);
 
   // Remove all the children (m_push*, m_toggle*, m_pop*). FLTK <=
   // 1.1.4 should be OK with this. FLTK 1.1.5 may crash as it may
@@ -1628,18 +1632,19 @@ void GUI::check_anim_buttons()
 void GUI::set_status(const char *msg, int num)
 {
   if(num == 0 || num == 1){
-    g_status_label[num]->label(msg);
+    static char buff[2][1024];
+    strncpy(buff[num], msg, sizeof(buff[num]) - 1);
+    buff[num][sizeof(buff[num]) - 1] = '\0';
+    g_status_label[num]->label(buff[num]);
     g_status_label[num]->redraw();
   }
-  else if(num == 3){
+  else if(num == 2){
     int n = strlen(msg);
     int i = 0;
-    while(i < n)
-      if(msg[i++] == '\n') break;
-
-    strncpy(onscreen_buffer[0], msg, 255);
+    while(i < n) if(msg[i++] == '\n') break;
+    strncpy(onscreen_buffer[0], msg, sizeof(onscreen_buffer[0]) - 1);
     if(i < n) 
-      strncpy(onscreen_buffer[1], &msg[i], 255);
+      strncpy(onscreen_buffer[1], &msg[i], sizeof(onscreen_buffer[1]) - 1);
     else
       onscreen_buffer[1][0] = '\0';
     onscreen_buffer[0][i-1] = '\0';
@@ -3837,7 +3842,7 @@ void FieldDialogBox::save_values()
 	sstream<<i;
 	if(istream>>a){
 	  if(a!=',')
-	    Msg(GERROR, "Unexpected character \'%c\' while parsing option '%s' of field \'%s\'",a,it->first,f->id);
+	    Msg::Error("Unexpected character \'%c\' while parsing option '%s' of field \'%s\'",a,it->first,f->id);
 	  sstream<<", ";
 	}
       }
@@ -4266,11 +4271,8 @@ void GUI::create_message_window(bool redraw_only)
   msg_window->end();
 }
 
-void GUI::add_message(char *msg)
+void GUI::add_message(const char *msg)
 {
-  for(int i = 0; i < (int)strlen(msg); i++)
-    if(msg[i] == '\n')
-      msg[i] = ' ';
   msg_browser->add(msg, 0);
   msg_browser->bottomline(msg_browser->size());
 }
@@ -4280,11 +4282,11 @@ void GUI::save_message(const char *filename)
   FILE *fp;
 
   if(!(fp = fopen(filename, "w"))) {
-    Msg(GERROR, "Unable to open file '%s'", filename);
+    Msg::Error("Unable to open file '%s'", filename);
     return;
   }
 
-  Msg(STATUS2, "Writing '%s'", filename);
+  Msg::Status(2, true, "Writing '%s'", filename);
   for(int i = 1; i <= msg_browser->size(); i++) {
     const char *c = msg_browser->text(i);
     if(c[0] == '@')
@@ -4292,7 +4294,7 @@ void GUI::save_message(const char *filename)
     else
       fprintf(fp, "%s\n", c);
   }
-  Msg(STATUS2, "Wrote '%s'", filename);
+  Msg::Status(2, true, "Wrote '%s'", filename);
   fclose(fp);
 }
 

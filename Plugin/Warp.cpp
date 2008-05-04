@@ -1,4 +1,4 @@
-// $Id: Warp.cpp,v 1.15 2008-04-06 09:20:17 geuzaine Exp $
+// $Id: Warp.cpp,v 1.16 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -99,11 +99,11 @@ PView *GMSH_WarpPlugin::execute(PView *v)
   // sanity checks
   if(data1->getNumEntities() != data2->getNumEntities() ||
      data1->getNumElements() != data2->getNumElements()){
-    Msg(GERROR, "Incompatible views");
+    Msg::Error("Incompatible views");
     return v;
   }
   if(TimeStep < 0 || TimeStep > data2->getNumTimeSteps() - 1){
-    Msg(GERROR, "Invalid TimeStep (%d) in View[%d]", TimeStep, v2->getIndex());
+    Msg::Error("Invalid TimeStep (%d) in View[%d]", TimeStep, v2->getIndex());
     return v;
   }
   

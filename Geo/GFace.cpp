@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.61 2008-04-28 10:10:52 geuzaine Exp $
+// $Id: GFace.cpp,v 1.62 2008-05-04 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -116,7 +116,7 @@ surface_params GFace::getSurfaceParams() const
 {
   surface_params p;
   p.radius = p.radius2 = p.height = p.cx = p.cy = p.cz = 0.;
-  Msg(GERROR, "Empty surface parameters for this type of surface");
+  Msg::Error("Empty surface parameters for this type of surface");
   return p;
 }
 
@@ -201,7 +201,7 @@ void GFace::computeMeanPlane()
   }
 
   if(pts.size() < 3){
-    Msg(INFO, "Adding edge points to compute mean plane of face %d", tag());
+    Msg::Info("Adding edge points to compute mean plane of face %d", tag());
     std::list<GEdge*> edg = edges();
     std::list<GEdge*>::const_iterator ite = edg.begin();
     for(; ite != edg.end(); ite++){
@@ -335,7 +335,7 @@ void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
     angplan = myatan2(sinc, cosc);
     angplan = angle_02pi(angplan) * 180. / Pi;
     if((angplan > 70 && angplan < 110) || (angplan > 260 && angplan < 280)) {
-      Msg(INFO, "SVD failed (angle=%g): using rough algo...", angplan);
+      Msg::Info("SVD failed (angle=%g): using rough algo...", angplan);
       res[0] = res2[0];
       res[1] = res2[1];
       res[2] = res2[2];
@@ -384,15 +384,15 @@ end:
     meanPlane.z = meanPlane.d / meanPlane.c;
   }
 
-  Msg(DEBUG1, "Surface: %d", tag());
-  Msg(DEBUG2, "SVD    : %g,%g,%g (min=%d)", svd[0], svd[1], svd[2], min);
-  Msg(DEBUG2, "Plane  : (%g x + %g y + %g z = %g)",
+  Msg::Debug("Surface: %d", tag());
+  Msg::Debug("SVD    : %g,%g,%g (min=%d)", svd[0], svd[1], svd[2], min);
+  Msg::Debug("Plane  : (%g x + %g y + %g z = %g)",
       meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
-  Msg(DEBUG2, "Normal : (%g , %g , %g )",
+  Msg::Debug("Normal : (%g , %g , %g )",
       meanPlane.a, meanPlane.b, meanPlane.c);
-  Msg(DEBUG3, "t1     : (%g , %g , %g )", t1[0], t1[1], t1[2]);
-  Msg(DEBUG3, "t2     : (%g , %g , %g )", t2[0], t2[1], t2[2]);
-  Msg(DEBUG3, "pt     : (%g , %g , %g )",
+  Msg::Debug("t1     : (%g , %g , %g )", t1[0], t1[1], t1[2]);
+  Msg::Debug("t2     : (%g , %g , %g )", t2[0], t2[1], t2[2]);
+  Msg::Debug("pt     : (%g , %g , %g )",
       meanPlane.x, meanPlane.y, meanPlane.z);
 
   //check coherence for plane surfaces
@@ -406,9 +406,9 @@ end:
       double d = meanPlane.a * v->x() + meanPlane.b * v->y() +
         meanPlane.c * v->z() - meanPlane.d;
       if(fabs(d) > lc * 1.e-3) {
-        Msg(GERROR1, "Plane surface %d (%gx+%gy+%gz+%g=0) is not plane!",
+        Msg::Error("Plane surface %d (%gx+%gy+%gz+%g=0) is not plane!",
             tag(), meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
-        Msg(GERROR3, "Control point %d = (%g,%g,%g), val=%g",
+        Msg::Error("Control point %d = (%g,%g,%g), val=%g",
             v->tag(), v->x(), v->y(), v->z(), d);
         return;
       }
@@ -469,14 +469,14 @@ double GFace::curvature(const SPoint2 &param) const
 
   double c = fabs(dot(dndu, du) +  dot(dndv, dv)) / detJ;
 
-  // Msg(INFO, "c = %g detJ %g", c, detJ);
+  // Msg::Info("c = %g detJ %g", c, detJ);
 
   return c;
 }
 
 double GFace::getMetricEigenvalue(const SPoint2 &)
 {
-  Msg(GERROR, "Metric eigenvalue is not implemented for this type of surface");
+  Msg::Error("Metric eigenvalue is not implemented for this type of surface");
   return 0.;
 }
 
@@ -552,7 +552,7 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
          Unew <= umax && Vnew <= vmax &&
          Unew >= umin && Vnew >= vmin){
         if (onSurface && err2 > 1.e-4 * CTX.lc)
-          Msg(WARNING, "Converged for i=%d j=%d (err=%g iter=%d) BUT xyz error = %g",
+          Msg::Warning("Converged for i=%d j=%d (err=%g iter=%d) BUT xyz error = %g",
               i, j, err, iter, err2);
         return;
       }
@@ -560,9 +560,9 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
   }
 
   if(relax < 1.e-6)
-    Msg(GERROR, "Could not converge: surface mesh will be wrong");
+    Msg::Error("Could not converge: surface mesh will be wrong");
   else {
-    Msg(INFO, "point %g %g %g : Relaxation factor = %g", X, Y, Z, 0.75 * relax);
+    Msg::Info("point %g %g %g : Relaxation factor = %g", X, Y, Z, 0.75 * relax);
     XYZtoUV(X, Y, Z, U, V, 0.75 * relax);
   }
 #endif
@@ -577,7 +577,7 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p) const
 
 GPoint GFace::closestPoint(const SPoint3 & queryPoint) const
 {
-  Msg(GERROR, "Closet point not implemented for this type of surface");
+  Msg::Error("Closet point not implemented for this type of surface");
   return GPoint(0, 0, 0);
 }
 

@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.39 2008-03-20 11:44:06 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.40 2008-05-04 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -46,7 +46,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
   TopExp_Explorer exp0, exp01, exp1, exp2, exp3;
   for(exp2.Init(s, TopAbs_WIRE); exp2.More(); exp2.Next()){
     TopoDS_Shape wire = exp2.Current();
-    Msg(DEBUG2,"OCC Face %d - New Wire",num);
+    Msg::Debug("OCC Face %d - New Wire",num);
     std::list<GEdge*> l_wire;
     std::list<int> l_oris;
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){          
@@ -56,7 +56,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
       if(!e) throw;
       l_wire.push_back(e);
       l_oris.push_back(edge.Orientation());
-      Msg(DEBUG2, "Edge %d ori %d", e->tag(), edge.Orientation());
+      Msg::Debug("Edge %d ori %d", e->tag(), edge.Orientation());
       e->addFace(this);
       if(!e->is3D()){
         OCCEdge *occe = (OCCEdge*)e;
@@ -87,7 +87,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
   _periodic[1] = surface.IsVPeriodic();
 
   ShapeAnalysis::GetFaceUVBounds(_s, umin, umax, vmin, vmax);
-  Msg(DEBUG2, "OCC Face %d with %d edges bounds (%g,%g)(%g,%g)", 
+  Msg::Debug("OCC Face %d with %d edges bounds (%g,%g)(%g,%g)", 
       num, l_edges.size(), umin, umax, vmin, vmax);
   // we do that for the projections to converge on the borders of the
   // surface
@@ -149,17 +149,17 @@ GPoint OCCFace::closestPoint(const SPoint3 & qp) const
   GeomAPI_ProjectPointOnSurf proj(pnt, occface, umin, umax, vmin, vmax);
 
    if(!proj.NbPoints()){
-     Msg(GERROR,"OCC Project Point on Surface FAIL");
+     Msg::Error("OCC Project Point on Surface FAIL");
      return GPoint(0, 0);
    }
    
   double pp[2];
   proj.LowerDistanceParameters(pp[0], pp[1]);
 
-  Msg(INFO,"projection lower distance parameters %g %g",pp[0],pp[1]);
+  Msg::Info("projection lower distance parameters %g %g",pp[0],pp[1]);
 
   if((pp[0] < umin || umax < pp[0]) || (pp[1]<vmin || vmax<pp[1])){
-    Msg(GERROR,"Point projection is out of face bounds");
+    Msg::Error("Point projection is out of face bounds");
     return GPoint(0, 0);
   }
 
@@ -172,7 +172,7 @@ SPoint2 OCCFace::parFromPoint(const SPoint3 &qp) const
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
   GeomAPI_ProjectPointOnSurf proj(pnt, occface, umin, umax, vmin, vmax);
   if(!proj.NbPoints()){
-    Msg(GERROR,"OCC Project Point on Surface FAIL");
+    Msg::Error("OCC Project Point on Surface FAIL");
     return GFace::parFromPoint(qp);
   }   
   double U, V;
@@ -254,7 +254,7 @@ int OCCFace::containsPoint(const SPoint3 &pt) const
     return false;
   }
   else
-    Msg(GERROR,"Not Done Yet ...");
+    Msg::Error("Not Done Yet ...");
   return false;
 }
 
@@ -305,7 +305,7 @@ bool OCCFace::buildSTLTriangulation()
   aMesher.Add(s);
   Handle(Poly_Triangulation) triangulation = BRep_Tool::Triangulation(s, loc);
   if (triangulation.IsNull()){
-    Msg(WARNING,"OCC STL triangulation failed");
+    Msg::Warning("OCC STL triangulation failed");
     return false;
   }
   

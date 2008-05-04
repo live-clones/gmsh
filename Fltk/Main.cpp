@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.127 2008-04-13 18:52:51 geuzaine Exp $
+// $Id: Main.cpp,v 1.128 2008-05-04 08:31:12 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -25,8 +25,6 @@
 #include "Gmsh.h"
 #include "GmshUI.h"
 #include "Message.h"
-#include "Generator.h"
-#include "CreateFile.h"
 #include "Draw.h"
 #include "Context.h"
 #include "Options.h"
@@ -40,7 +38,8 @@
 #include "BackgroundMesh.h"
 #include "PView.h"
 
-Context_T CTX;
+extern Context_T CTX;
+
 GUI *WID = 0;
 
 int main(int argc, char *argv[])
@@ -76,32 +75,10 @@ int main(int argc, char *argv[])
 
   // Non-interactive Gmsh
   if(CTX.batch) {
-    Msg(INFO, "'%s' started on %s", cmdline.c_str(), currtime.c_str());
-    OpenProject(CTX.filename);
-    for(unsigned int i = 1; i < CTX.files.size(); i++)
-      MergeFile(CTX.files[i].c_str());
-    if(CTX.post.combine_time)
-      PView::combine(true, 2, CTX.post.combine_remove_orig);
-    if(CTX.bgm_filename) {
-      MergeFile(CTX.bgm_filename);
-      if(PView::list.size())
-	GModel::current()->getFields()->set_background_mesh(PView::list.size() - 1);
-      else
-	Msg(GERROR, "Invalid background mesh (no view)");
-    }
-    if(CTX.batch == 4) {
-      AdaptMesh(GModel::current());
-      CreateOutputFile(CTX.output_filename, CTX.mesh.format);
-    }
-    else if(CTX.batch > 0) {
-      GModel::current()->mesh(CTX.batch);
-      CreateOutputFile(CTX.output_filename, CTX.mesh.format);
-    }
-    else if(CTX.batch == -1)
-      CreateOutputFile(CTX.output_filename, FORMAT_GEO);
-    else if(CTX.batch == -2)
-      GModel::current()->checkMeshCoherence();
-    exit(0);
+    Msg::Info("'%s' started on %s", cmdline.c_str(), currtime.c_str());
+    GmshBatch();
+    GmshFinalize();
+    Msg::Exit(0);
   }
 
   // Interactive Gmsh
@@ -117,21 +94,21 @@ int main(int argc, char *argv[])
   CTX.batch = 0;
 
   // Say welcome!
-  Msg(STATUS1N, "Geometry");
-  Msg(STATUS2N, "Gmsh %s", Get_GmshVersion());
+  Msg::Status(1, false, "Geometry");
+  Msg::Status(2, false, "Gmsh %s", Get_GmshVersion());
 
   // Log the following for bug reports
-  Msg(INFO, "-------------------------------------------------------");
-  Msg(INFO, "Gmsh version   : %s", Get_GmshVersion());
-  Msg(INFO, gmsh_os);
-  Msg(INFO, "%s%s", gmsh_options, Get_BuildOptions());
-  Msg(INFO, gmsh_date);
-  Msg(INFO, gmsh_host);
-  Msg(INFO, gmsh_packager);
-  Msg(INFO, "Home directory : %s", CTX.home_dir);
-  Msg(INFO, "Launch date    : %s", currtime.c_str());
-  Msg(INFO, "Command line   : %s", cmdline.c_str());
-  Msg(INFO, "-------------------------------------------------------");
+  Msg::Info("-------------------------------------------------------");
+  Msg::Info("Gmsh version   : %s", Get_GmshVersion());
+  Msg::Info(gmsh_os);
+  Msg::Info("%s%s", gmsh_options, Get_BuildOptions());
+  Msg::Info(gmsh_date);
+  Msg::Info(gmsh_host);
+  Msg::Info(gmsh_packager);
+  Msg::Info("Home directory : %s", CTX.home_dir);
+  Msg::Info("Launch date    : %s", currtime.c_str());
+  Msg::Info("Command line   : %s", cmdline.c_str());
+  Msg::Info("-------------------------------------------------------");
 
   // Display the GUI immediately to have a quick "a la Windows" launch time
   WID->check();
@@ -165,10 +142,10 @@ int main(int argc, char *argv[])
     if(PView::list.size())
       GModel::current()->getFields()->set_background_mesh(PView::list.size() - 1);
     else
-      Msg(GERROR, "Invalid background mesh (no view)");
+      Msg::Error("Invalid background mesh (no view)");
   }
 
-  // Draw the actual scene
+  // Draw the scene
   Draw();
 
   // Listen to external solvers

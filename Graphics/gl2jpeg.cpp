@@ -1,4 +1,4 @@
-// $Id: gl2jpeg.cpp,v 1.29 2008-02-17 08:48:00 geuzaine Exp $
+// $Id: gl2jpeg.cpp,v 1.30 2008-05-04 08:31:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,7 @@
 
 void create_jpeg(FILE *outfile, PixelBuffer *buffer, int quality, int smoothing)
 {
-  Msg(GERROR, "This version of Gmsh was compiled without JPEG support");
+  Msg::Error("This version of Gmsh was compiled without JPEG support");
 }
 
 #else
@@ -53,13 +53,13 @@ void my_output_message(j_common_ptr cinfo)
 
   (*cinfo->err->format_message) (cinfo, buffer);
 
-  Msg(DEBUG, "%s", buffer);
+  Msg::Debug("%s", buffer);
 }
 
 void create_jpeg(FILE *outfile, PixelBuffer *buffer, int quality, int smoothing)
 {
   if(buffer->GetFormat() != GL_RGB || buffer->GetType() != GL_UNSIGNED_BYTE){
-    Msg(GERROR, "JPEG only implemented for GL_RGB and GL_UNSIGNED_BYTE");
+    Msg::Error("JPEG only implemented for GL_RGB and GL_UNSIGNED_BYTE");
     return;
   }
 

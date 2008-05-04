@@ -45,7 +45,7 @@ class PixelBuffer{
       _numComp = 4;
     }
     else{
-      Msg(GERROR, "Unknown pixel format: assuming RGB");
+      Msg::Error("Unknown pixel format: assuming RGB");
       _format = GL_RGB;
       _numComp = 3;
     }
@@ -57,7 +57,7 @@ class PixelBuffer{
       _dataSize = sizeof(float);
     }
     else{
-      Msg(GERROR, "Unknown pixel storage type: assuming unsigned byte");
+      Msg::Error("Unknown pixel storage type: assuming unsigned byte");
       _type = GL_UNSIGNED_BYTE;
       _dataSize = sizeof(unsigned char);
     }
@@ -89,16 +89,16 @@ class PixelBuffer{
     else{
 #if defined(HAVE_OSMESA)
       if(_format != GL_RGB && _type != GL_UNSIGNED_BYTE){
-        Msg(GERROR, "Offscreen rendering only implemented for GL_RGB/GL_UNSIGNED_BYTE");
+	Msg::Error("Offscreen rendering only implemented for GL_RGB/GL_UNSIGNED_BYTE");
         return;
       }
       OSMesaContext ctx = OSMesaCreateContextExt(OSMESA_RGB, 16, 0, 0, NULL);
       if(!ctx){
-        Msg(GERROR, "OSMesaCreateContext failed");
+	Msg::Error("OSMesaCreateContext failed");
         return;
       }
       if(!OSMesaMakeCurrent(ctx, _pixels, GL_UNSIGNED_BYTE, _width, _height)){
-        Msg(GERROR, "OSMesaMakeCurrent failed");
+	Msg::Error("OSMesaMakeCurrent failed");
       }
       ClearOpengl();
       Draw3d();
@@ -106,7 +106,7 @@ class PixelBuffer{
       glFinish();
       OSMesaDestroyContext(ctx);
 #else
-      Msg(WARNING, "Offscreen rendering not available in this version");
+      Msg::Warning("Offscreen rendering not available in this version");
 #endif
     }
   }

@@ -1,4 +1,4 @@
-// $Id: meshGRegionTransfinite.cpp,v 1.9 2008-03-20 11:44:09 geuzaine Exp $
+// $Id: meshGRegionTransfinite.cpp,v 1.10 2008-05-04 08:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -178,7 +178,7 @@ public:
     if(_LL <= 0) return;
     _HH = gf->transfinite_vertices[0].size() - 1;
     if(_HH <= 0) return;
-    Msg(DEBUG, "Face %d: L = %d  H = %d", gf->tag(), _LL, _HH);
+    Msg::Debug("Face %d: L = %d  H = %d", gf->tag(), _LL, _HH);
 
     // get the corners of the transfinite volume interpolation
     std::vector<MVertex*> s(8);
@@ -233,7 +233,7 @@ public:
         }
       }
     }
-    Msg(DEBUG, "Found face index %d  (permutation = %d)", _index, _permutation);
+    Msg::Debug("Found face index %d  (permutation = %d)", _index, _permutation);
     for(int i = 0; i <= _LL; i++)
       for(int j = 0; j <= _HH; j++)
         _list.push_back(_gf->transfinite_vertices[i][j]);
@@ -268,7 +268,7 @@ public:
     MVertex *v = 0;
     if(index >= 0 && index < (int)_list.size()) v = _list[index];
     if(index < 0 || index >= (int)_list.size() || !v){
-      Msg(GERROR, "Wrong index in transfinite mesh of surface %d: "
+      Msg::Error("Wrong index in transfinite mesh of surface %d: "
           "m=%d n=%d M=%d N=%d perm=%d", _gf->tag(), m, n, M, N, _permutation);
       return _list[0];
     }
@@ -280,11 +280,11 @@ int MeshTransfiniteVolume(GRegion *gr)
 {
   if(gr->meshAttributes.Method != TRANSFINI) return 0;
 
-  Msg(STATUS2, "Meshing volume %d (transfinite)", gr->tag());
+  Msg::Status(2, true, "Meshing volume %d (transfinite)", gr->tag());
 
   std::list<GFace*> faces = gr->faces();
   if(faces.size() != 5 && faces.size() != 6){
-    Msg(GERROR, "Transfinite algorithm only available for 5- and 6-face volumes");
+    Msg::Error("Transfinite algorithm only available for 5- and 6-face volumes");
     return 0;
   }
 
@@ -292,7 +292,7 @@ int MeshTransfiniteVolume(GRegion *gr)
   for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it){
     GOrientedTransfiniteFace f(*it, gr->meshAttributes.corners);
     if(f.index() < 0){
-      Msg(GERROR, "Incompatible surface %d in transfinite volume %d", 
+      Msg::Error("Incompatible surface %d in transfinite volume %d", 
           (*it)->tag(), gr->tag());
       return 0;
     }
@@ -474,7 +474,7 @@ int MeshTransfiniteVolume(GRegion *gr)
             gr->tetrahedra.push_back(CREATE_SIM_6);
           }
           else {
-            Msg(GERROR, "Wrong surface recombination in transfinite volume %d", gr->tag());
+            Msg::Error("Wrong surface recombination in transfinite volume %d", gr->tag());
             return 0;
           }
         }
@@ -514,7 +514,7 @@ int MeshTransfiniteVolume(GRegion *gr)
                                                     tab[1    ][j + 1][k    ]));
         }
         else {
-          Msg(GERROR, "Wrong surface recombination in transfinite volume %d", gr->tag());
+          Msg::Error("Wrong surface recombination in transfinite volume %d", gr->tag());
           return 0;
         }
       }
@@ -544,7 +544,7 @@ int MeshTransfiniteVolume(GRegion *gr)
             gr->tetrahedra.push_back(CREATE_SIM_6);
           }
           else {
-            Msg(GERROR, "Wrong surface recombination in transfinite volume %d", gr->tag());
+            Msg::Error("Wrong surface recombination in transfinite volume %d", gr->tag());
             return 0;
           }
         }

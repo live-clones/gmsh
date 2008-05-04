@@ -1,4 +1,4 @@
-// $Id: gl2gif.cpp,v 1.24 2008-02-17 08:48:00 geuzaine Exp $
+// $Id: gl2gif.cpp,v 1.25 2008-05-04 08:31:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -191,7 +191,7 @@ colorhash_table ppm_colorhisttocolorhash(const colorhist_vector chv,
     hash = ppm_hashpixel(color);
     for(chl = cht[hash]; chl != (colorhist_list) 0; chl = chl->next)
       if(PPM_EQUAL(chl->ch.color, color))
-        Msg(GERROR, "GIF: same color found twice - %d %d %d", PPM_GETR(color),
+        Msg::Error("GIF: same color found twice - %d %d %d", PPM_GETR(color),
             PPM_GETG(color), PPM_GETB(color));
     chl = (colorhist_list) Malloc(sizeof(struct colorhist_list_item));
     chl->ch.color = color;
@@ -258,7 +258,7 @@ static int colorstobpp(int colors)
   else if(colors <= 256)
     bpp = 8;
   else {
-    Msg(GERROR, "GIF: can't happen: too many colors");
+    Msg::Error("GIF: can't happen: too many colors");
     bpp = 8;
   }
 
@@ -365,7 +365,7 @@ static colorhist_vector mediancut(colorhist_vector chv, int colors,
   colormap =
     (colorhist_vector) malloc(sizeof(struct colorhist_item) * newcolors);
   if(bv == (box_vector) 0 || colormap == (colorhist_vector) 0)
-    Msg(GERROR, "GIF: out of memory");
+    Msg::Error("GIF: out of memory");
   for(i = 0; i < newcolors; ++i)
     PPM_ASSIGN(colormap[i].color, 0, 0, 0);
 
@@ -828,7 +828,7 @@ static void output(code_int code)
     fflush(g_outfile);
 
     if(ferror(g_outfile))
-      Msg(GERROR, "GIF: Error writing output file");
+      Msg::Error("GIF: Error writing output file");
   }
 }
 
@@ -1184,7 +1184,7 @@ void create_gif(FILE * outfile, PixelBuffer *buffer,
   int numcomp = buffer->GetNumComp();
 
   if(numcomp != 3){
-    Msg(GERROR, "GIF only implemented for GL_RGB");
+    Msg::Error("GIF only implemented for GL_RGB");
     return;
   }
 
@@ -1210,20 +1210,20 @@ void create_gif(FILE * outfile, PixelBuffer *buffer,
 
   if(chv == (colorhist_vector) 0) {
 
-    Msg(DEBUG, "GIF: too many colors in image");
+    Msg::Debug("GIF: too many colors in image");
 
     rows = height;
     cols = width;
 
     while(1) {
-      Msg(DEBUG, "GIF: making histogram...");
+      Msg::Debug("GIF: making histogram...");
       chv = ppm_computecolorhist(static_pixels, width, height, MAXCOL2,
                                  &static_nbcolors);
       if(chv != (colorhist_vector) 0)
         break;
-      Msg(DEBUG, "GIF: still too many colors!");
+      Msg::Debug("GIF: still too many colors!");
       newmaxval = maxval / 2;
-      Msg(DEBUG,
+      Msg::Debug(
           "GIF: scaling colors from maxval=%d to maxval=%d to improve clustering...",
           maxval, newmaxval);
       for(row = 0; row < rows; ++row)
@@ -1231,8 +1231,8 @@ void create_gif(FILE * outfile, PixelBuffer *buffer,
           PPM_DEPTH(*pP, *pP, maxval, newmaxval);
       maxval = newmaxval;
     }
-    Msg(DEBUG, "GIF: %d colors found", static_nbcolors);
-    Msg(DEBUG, "GIF: choosing %d colors...", newcolors);
+    Msg::Debug("GIF: %d colors found", static_nbcolors);
+    Msg::Debug("GIF: choosing %d colors...", newcolors);
     colormap =
       mediancut(chv, static_nbcolors, rows * cols, maxval, newcolors);
 
@@ -1241,11 +1241,11 @@ void create_gif(FILE * outfile, PixelBuffer *buffer,
     ppm_freecolorhist(chv);
 
     /* map the colors in the image to their closest match in the new colormap */
-    Msg(DEBUG, "GIF: mapping image to new colors...");
+    Msg::Debug("GIF: mapping image to new colors...");
     usehash = 1;
 
     if(dither) {
-      Msg(DEBUG, "GIF: Floyd-Steinberg dithering is selected...");
+      Msg::Debug("GIF: Floyd-Steinberg dithering is selected...");
       /* Initialize Floyd-Steinberg error vectors. */
       thisrerr = (long *)Malloc((cols + 2) * sizeof(long));
       nextrerr = (long *)Malloc((cols + 2) * sizeof(long));
@@ -1324,8 +1324,7 @@ void create_gif(FILE * outfile, PixelBuffer *buffer,
           }
           if(usehash) {
             if(ppm_addtocolorhash(cht, pP, ind) < 0) {
-              Msg(WARNING,
-                  "GIF: Out of memory adding to hash table, proceeding without it");
+	      Msg::Warning("GIF: Out of memory adding to hash table");
               usehash = 0;
             }
           }
@@ -1424,7 +1423,7 @@ void create_gif(FILE * outfile, PixelBuffer *buffer,
   for(i = 0; i < static_nbcolors; i++)
     static_permi[i] = i;
   if(sort) {
-    Msg(DEBUG, "GIF: sorting colormap");
+    Msg::Debug("GIF: sorting colormap");
     for(i = 0; i < static_nbcolors; i++)
       for(j = i + 1; j < static_nbcolors; j++)
         if(((static_red[i] * MAX_GIFCOLORS) +

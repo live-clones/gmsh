@@ -1,4 +1,4 @@
-// $Id: Lambda2.cpp,v 1.14 2008-03-20 11:44:14 geuzaine Exp $
+// $Id: Lambda2.cpp,v 1.15 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -189,7 +189,7 @@ static void eigen(List_T *inList, int inNb,
           GradPhi_ksi[3][0]=  0;  GradPhi_ksi[3][1]=  0; GradPhi_ksi[3][2]=  1; 
         }
         else{
-          Msg(GERROR, "Lambda2 not ready for this type of element");
+          Msg::Error("Lambda2 not ready for this type of element");
           return;
         }
         for(int k = 0; k < nbNod ; k++){

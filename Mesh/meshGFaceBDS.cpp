@@ -1,4 +1,4 @@
-// $Id: meshGFaceBDS.cpp,v 1.12 2008-04-01 12:47:10 geuzaine Exp $
+// $Id: meshGFaceBDS.cpp,v 1.13 2008-05-04 08:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -611,7 +611,7 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     t_sm  += t6 - t5;
     m.cleanup();        
     IT++;
-    Msg(DEBUG1, " iter %3d minL %8.3f/%8.3f maxL %8.3f/%8.3f : "
+    Msg::Debug(" iter %3d minL %8.3f/%8.3f maxL %8.3f/%8.3f : "
         "%6d splits, %6d swaps, %6d collapses, %6d moves",
         IT, minL, minE, maxL, maxE, nb_split, nb_swap, nb_collaps, nb_smooth);
     if (nb_split == 0 && nb_collaps == 0) break;
@@ -619,16 +619,16 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   
   double t_total = t_spl + t_sw + t_col + t_sm;
   if(!t_total) t_total = 1.e-6;
-  Msg(DEBUG1, " ---------------------------------------");
-  Msg(DEBUG1, " CPU Report ");
-  Msg(DEBUG1, " ---------------------------------------");
-  Msg(DEBUG1, " CPU SWAP    %12.5E sec (%3.0f %%)", t_sw,100 * t_sw / t_total);
-  Msg(DEBUG1, " CPU SPLIT   %12.5E sec (%3.0f %%) ", t_spl,100 * t_spl / t_total);
-  Msg(DEBUG1, " CPU COLLAPS %12.5E sec (%3.0f %%) ", t_col,100 * t_col / t_total);
-  Msg(DEBUG1, " CPU SMOOTH  %12.5E sec (%3.0f %%) ", t_sm,100 * t_sm / t_total);
-  Msg(DEBUG1, " ---------------------------------------");
-  Msg(DEBUG1, " CPU TOTAL   %12.5E sec ",t_total);
-  Msg(DEBUG1, " ---------------------------------------");
+  Msg::Debug(" ---------------------------------------");
+  Msg::Debug(" CPU Report ");
+  Msg::Debug(" ---------------------------------------");
+  Msg::Debug(" CPU SWAP    %12.5E sec (%3.0f %%)", t_sw,100 * t_sw / t_total);
+  Msg::Debug(" CPU SPLIT   %12.5E sec (%3.0f %%) ", t_spl,100 * t_spl / t_total);
+  Msg::Debug(" CPU COLLAPS %12.5E sec (%3.0f %%) ", t_col,100 * t_col / t_total);
+  Msg::Debug(" CPU SMOOTH  %12.5E sec (%3.0f %%) ", t_sm,100 * t_sm / t_total);
+  Msg::Debug(" ---------------------------------------");
+  Msg::Debug(" CPU TOTAL   %12.5E sec ",t_total);
+  Msg::Debug(" ---------------------------------------");
 }
 
 void allowAppearanceofEdge (BDS_Point *p1, BDS_Point *p2)

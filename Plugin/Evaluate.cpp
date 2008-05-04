@@ -1,4 +1,4 @@
-// $Id: Evaluate.cpp,v 1.37 2008-04-05 17:49:23 geuzaine Exp $
+// $Id: Evaluate.cpp,v 1.38 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -136,7 +136,7 @@ void GMSH_EvaluatePlugin::evaluate(PView *v1, List_T *list1, int nbElm1,
 {
 #if !defined(HAVE_MATH_EVAL)
 
-  Msg(GERROR, "MathEval is not compiled in this version of Gmsh");
+  Msg::Error("MathEval is not compiled in this version of Gmsh");
 
 #else
 
@@ -146,12 +146,12 @@ void GMSH_EvaluatePlugin::evaluate(PView *v1, List_T *list1, int nbElm1,
   void *f = evaluator_create((char*)expression);
 
   if(!f){
-    Msg(GERROR, "Invalid expression '%s'", expression);
+    Msg::Error("Invalid expression '%s'", expression);
     return;
   }
 
   if((nbElm1 != nbElm2) && !_octree){
-    Msg(INFO, "External view based on different grid: interpolating...");
+    Msg::Info("External view based on different grid: interpolating...");
     _octree = new OctreePost(v2);
   }
 
@@ -226,7 +226,7 @@ PView *GMSH_EvaluatePlugin::execute(PView *v)
   if(!data1) return v;
 
   if(timeStep > data1->getNumTimeSteps() - 1){
-    Msg(GERROR, "Invalid time step (%d) in View[%d]: using step 0 instead",
+    Msg::Error("Invalid time step (%d) in View[%d]: using step 0 instead",
         timeStep, v1->getIndex());
     timeStep = 0;
   }
@@ -237,18 +237,18 @@ PView *GMSH_EvaluatePlugin::execute(PView *v)
     if(externalView < (int)PView::list.size())
       v2 = PView::list[externalView];
     else
-      Msg(GERROR, "View[%d] does not exist: using self", externalView);
+      Msg::Error("View[%d] does not exist: using self", externalView);
   }
 
   PViewDataList *data2 = getDataList(v2);
   if(!data2) return v;
 
   if(externalTimeStep < 0 && data2->getNumTimeSteps() != data1->getNumTimeSteps()){
-    Msg(GERROR, "Number of time steps don't match: using step 0");
+    Msg::Error("Number of time steps don't match: using step 0");
     externalTimeStep = 0;
   }
   else if(externalTimeStep > data2->getNumTimeSteps() - 1){
-    Msg(GERROR, "Invalid time step (%d) in View[%d]: using step 0 instead",
+    Msg::Error("Invalid time step (%d) in View[%d]: using step 0 instead",
         externalTimeStep, v2->getIndex());
     externalTimeStep = 0;
   }

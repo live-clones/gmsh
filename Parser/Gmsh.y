@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.312 2008-05-01 06:54:09 geuzaine Exp $
+// $Id: Gmsh.y,v 1.313 2008-05-04 08:31:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,6 @@
 #include "Message.h"
 #include "Malloc.h"
 #include "Tools.h"
-#include "ParUtil.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "GModel.h"
@@ -74,7 +73,7 @@ static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
 static char *LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
 
 void yyerror(char *s);
-void yymsg(int type, const char *fmt, ...);
+void yymsg(int level, const char *fmt, ...);
 void skip_until(const char *skip, const char *until);
 int PrintListOfDouble(char *format, List_T *list, char *buffer);
 %}
@@ -187,7 +186,7 @@ SendToFile :
 Printf :
     tPrintf '(' tBIGSTR ')' tEND
     {
-      Msg(DIRECT, $3);
+      Msg::Direct($3);
       Free($3);
     }
   | tPrintf '(' tBIGSTR ')' SendToFile StringExprVar tEND
@@ -196,7 +195,7 @@ Printf :
       FixRelativePath($6, tmpstring);
       FILE *fp = fopen(tmpstring, $5);
       if(!fp){
-	yymsg(GERROR, "Unable to open file '%s'", tmpstring);
+	yymsg(0, "Unable to open file '%s'", tmpstring);
       }
       else{
 	fprintf(fp, "%s\n", $3);
@@ -210,11 +209,11 @@ Printf :
       char tmpstring[1024];
       int i = PrintListOfDouble($3, $5, tmpstring);
       if(i < 0) 
-	yymsg(GERROR, "Too few arguments in Printf");
+	yymsg(0, "Too few arguments in Printf");
       else if(i > 0)
-	yymsg(GERROR, "%d extra argument%s in Printf", i, (i>1)?"s":"");
+	yymsg(0, "%d extra argument%s in Printf", i, (i>1)?"s":"");
       else
-	Msg(DIRECT, tmpstring);
+	Msg::Direct(tmpstring);
       Free($3);
       List_Delete($5);
     }
@@ -223,15 +222,15 @@ Printf :
       char tmpstring[1024];
       int i = PrintListOfDouble($3, $5, tmpstring);
       if(i < 0) 
-	yymsg(GERROR, "Too few arguments in Printf");
+	yymsg(0, "Too few arguments in Printf");
       else if(i > 0)
-	yymsg(GERROR, "%d extra argument%s in Printf", i, (i>1)?"s":"");
+	yymsg(0, "%d extra argument%s in Printf", i, (i>1)?"s":"");
       else{
 	char tmpstring2[1024];
 	FixRelativePath($8, tmpstring2);
 	FILE *fp = fopen(tmpstring2, $7);
 	if(!fp){
-	  yymsg(GERROR, "Unable to open file '%s'", tmpstring2);
+	  yymsg(0, "Unable to open file '%s'", tmpstring2);
 	}
 	else{
 	  fprintf(fp, "%s\n", tmpstring);
@@ -453,7 +452,7 @@ Element :
 	ViewValueList = ViewData->TY2; ViewNumList = &ViewData->NbTY2;
       }
       else{
-	yymsg(GERROR, "Unknown element type '%s'", $1);	
+	yymsg(0, "Unknown element type '%s'", $1);	
 	ViewValueList = 0; ViewNumList = 0;
       }
       Free($1);
@@ -625,7 +624,7 @@ Affectation :
 	  Tree_Add(Symbol_T, &TheSymbol);
 	}
 	else{
-	  yymsg(GERROR, "Unknown variable '%s'", $1);
+	  yymsg(0, "Unknown variable '%s'", $1);
 	  Free($1);
 	}
       }
@@ -638,7 +637,7 @@ Affectation :
 	case 3 : *pd *= $3; break;
 	case 4 : 
 	  if($3) *pd /= $3; 
-	  else yymsg(GERROR, "Division by zero in '%s /= %g'", $1, $3);
+	  else yymsg(0, "Division by zero in '%s /= %g'", $1, $3);
 	  break;
 	}
 	Free($1);
@@ -656,7 +655,7 @@ Affectation :
 	  Tree_Add(Symbol_T, &TheSymbol);
 	}
 	else{
-	  yymsg(GERROR, "Unknown variable '%s'", $1);
+	  yymsg(0, "Unknown variable '%s'", $1);
 	  Free($1);
 	}
       }
@@ -670,7 +669,7 @@ Affectation :
 	  case 3 : *pd *= $6; break;
 	  case 4 : 
 	    if($6) *pd /= $6; 
-	    else yymsg(GERROR, "Division by zero in '%s[%d] /= %g'", $1, (int)$3, $6);
+	    else yymsg(0, "Division by zero in '%s[%d] /= %g'", $1, (int)$3, $6);
 	    break;
 	  }
 	}
@@ -678,7 +677,7 @@ Affectation :
 	  if(!$5)
 	    List_Put(pSymbol->val, (int)$3, &$6);
 	  else
-	    yymsg(GERROR, "Uninitialized variable '%s[%d]'", $1, (int)$3);
+	    yymsg(0, "Uninitialized variable '%s[%d]'", $1, (int)$3);
 	}
 	Free($1);
       }
@@ -686,7 +685,7 @@ Affectation :
   | tSTRING '[' '{' RecursiveListOfDouble '}' ']' NumericAffectation ListOfDouble tEND
     {
       if(List_Nbr($4) != List_Nbr($8)){
-	yymsg(GERROR, "Incompatible array dimensions in affectation");
+	yymsg(0, "Incompatible array dimensions in affectation");
 	Free($1);
       }
       else{
@@ -703,7 +702,7 @@ Affectation :
 	    Tree_Add(Symbol_T, &TheSymbol);
 	  }
 	  else{
-	    yymsg(GERROR, "Unknown variable '%s'", $1);
+	    yymsg(0, "Unknown variable '%s'", $1);
 	    Free($1);
 	  }
 	}
@@ -720,7 +719,7 @@ Affectation :
 	      case 3 : *pd *= d; break;
 	      case 4 : 
 		if($8) *pd /= d; 
-		else yymsg(GERROR, "Division by zero in '%s[%d] /= %g'", $1, j, d);
+		else yymsg(0, "Division by zero in '%s[%d] /= %g'", $1, j, d);
 		break;
 	      }
 	    }
@@ -728,7 +727,7 @@ Affectation :
 	      if(!$7)
 		List_Put(pSymbol->val, j, &d);
 	      else
-		yymsg(GERROR, "Uninitialized variable '%s[%d]'", $1, j);	  
+		yymsg(0, "Uninitialized variable '%s[%d]'", $1, j);	  
 	    }
 	  }
 	  Free($1);
@@ -778,7 +777,7 @@ Affectation :
       TheSymbol.Name = $1;
       Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol)))
-	yymsg(GERROR, "Unknown variable '%s'", $1); 
+	yymsg(0, "Unknown variable '%s'", $1); 
       else
 	*(double*)List_Pointer_Fast(pSymbol->val, 0) += $2;
       Free($1);
@@ -789,20 +788,20 @@ Affectation :
       TheSymbol.Name = $1;
       Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol)))
-	yymsg(GERROR, "Unknown variable '%s'", $1); 
+	yymsg(0, "Unknown variable '%s'", $1); 
       else{
 	double *pd;
 	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
 	  *pd += $5;
 	else
-	  yymsg(GERROR, "Uninitialized variable '%s[%d]'", $1, (int)$3);
+	  yymsg(0, "Uninitialized variable '%s[%d]'", $1, (int)$3);
       }
       Free($1);
     }
 
   | tSTRING tAFFECT StringExpr tEND 
     { 
-      Msg(WARNING, "Named string expressions not implemented yet");
+      Msg::Warning("Named string expressions not implemented yet");
     }
 
   // Option Strings
@@ -812,11 +811,11 @@ Affectation :
       const char* (*pStrOpt)(int num, int action, const char *value);
       StringXString *pStrCat;
       if(!(pStrCat = Get_StringOptionCategory($1)))
-	yymsg(GERROR, "Unknown string option class '%s'", $1);
+	yymsg(0, "Unknown string option class '%s'", $1);
       else{
 	if(!(pStrOpt = (const char *(*) (int, int, const char *))
 	     Get_StringOption($3, pStrCat)))
-	  yymsg(GERROR, "Unknown string option '%s.%s'", $1, $3);
+	  yymsg(0, "Unknown string option '%s.%s'", $1, $3);
 	else
 	  pStrOpt(0, GMSH_SET|GMSH_GUI, $5);
       }
@@ -827,11 +826,11 @@ Affectation :
       const char* (*pStrOpt)(int num, int action, const char *value);
       StringXString *pStrCat;
       if(!(pStrCat = Get_StringOptionCategory($1)))
-	yymsg(GERROR, "Unknown string option class '%s'", $1);
+	yymsg(0, "Unknown string option class '%s'", $1);
       else{
 	if(!(pStrOpt = (const char *(*) (int, int, const char *))
 	     Get_StringOption($6, pStrCat)))
-	  yymsg(GERROR, "Unknown string option '%s[%d].%s'", $1, (int)$3, $6);
+	  yymsg(0, "Unknown string option '%s[%d].%s'", $1, (int)$3, $6);
 	else
 	  pStrOpt((int)$3, GMSH_SET|GMSH_GUI, $8);
       }
@@ -845,10 +844,10 @@ Affectation :
       double (*pNumOpt)(int num, int action, double value);
       StringXNumber *pNumCat;
       if(!(pNumCat = Get_NumberOptionCategory($1)))
-	yymsg(GERROR, "Unknown numeric option class '%s'", $1);
+	yymsg(0, "Unknown numeric option class '%s'", $1);
       else{
 	if(!(pNumOpt = (double (*) (int, int, double))Get_NumberOption($3, pNumCat)))
-	  yymsg(GERROR, "Unknown numeric option '%s.%s'", $1, $3);
+	  yymsg(0, "Unknown numeric option '%s.%s'", $1, $3);
 	else{
 	  double d = 0;
 	  switch($4){
@@ -858,7 +857,7 @@ Affectation :
 	  case 3 : d = pNumOpt(0, GMSH_GET, 0) * $5; break;
 	  case 4 : 
 	    if($5) d = pNumOpt(0, GMSH_GET, 0) / $5; 
-	    else yymsg(GERROR, "Division by zero in '%s.%s /= %g'", $1, $3, $5);
+	    else yymsg(0, "Division by zero in '%s.%s /= %g'", $1, $3, $5);
 	    break;
 	  }
 	  pNumOpt(0, GMSH_SET|GMSH_GUI, d);
@@ -871,10 +870,10 @@ Affectation :
       double (*pNumOpt)(int num, int action, double value);
       StringXNumber *pNumCat;
       if(!(pNumCat = Get_NumberOptionCategory($1)))
-	yymsg(GERROR, "Unknown numeric option class '%s'", $1);
+	yymsg(0, "Unknown numeric option class '%s'", $1);
       else{
 	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($6, pNumCat)))
-	  yymsg(GERROR, "Unknown numeric option '%s[%d].%s'", $1, (int)$3, $6);
+	  yymsg(0, "Unknown numeric option '%s[%d].%s'", $1, (int)$3, $6);
 	else{
 	  double d = 0;
 	  switch($7){
@@ -884,7 +883,7 @@ Affectation :
 	  case 3 : d = pNumOpt((int)$3, GMSH_GET, 0) * $8; break;
 	  case 4 : 
 	    if($8) d = pNumOpt((int)$3, GMSH_GET, 0) / $8;
-	    else yymsg(GERROR, "Division by zero in '%s[%d].%s /= %g'", 
+	    else yymsg(0, "Division by zero in '%s[%d].%s /= %g'", 
 		       $1, (int)$3, $6, $8);
 	    break;
 	  }
@@ -898,10 +897,10 @@ Affectation :
       double (*pNumOpt)(int num, int action, double value);
       StringXNumber *pNumCat;
       if(!(pNumCat = Get_NumberOptionCategory($1)))
-	yymsg(GERROR, "Unknown numeric option class '%s'", $1);
+	yymsg(0, "Unknown numeric option class '%s'", $1);
       else{
 	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($3, pNumCat)))
-	  yymsg(GERROR, "Unknown numeric option '%s.%s'", $1, $3);
+	  yymsg(0, "Unknown numeric option '%s.%s'", $1, $3);
 	else
 	  pNumOpt(0, GMSH_SET|GMSH_GUI, pNumOpt(0, GMSH_GET, 0)+$4);
       }
@@ -912,10 +911,10 @@ Affectation :
       double (*pNumOpt)(int num, int action, double value);
       StringXNumber *pNumCat;
       if(!(pNumCat = Get_NumberOptionCategory($1)))
-	yymsg(GERROR, "Unknown numeric option class '%s'", $1);
+	yymsg(0, "Unknown numeric option class '%s'", $1);
       else{
 	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($6, pNumCat)))
-	  yymsg(GERROR, "Unknown numeric option '%s[%d].%s'", $1, (int)$3, $6);
+	  yymsg(0, "Unknown numeric option '%s[%d].%s'", $1, (int)$3, $6);
 	else
 	  pNumOpt((int)$3, GMSH_SET|GMSH_GUI, pNumOpt((int)$3, GMSH_GET, 0)+$7);
       }
@@ -929,11 +928,11 @@ Affectation :
       unsigned int (*pColOpt)(int num, int action, unsigned int value);
       StringXColor *pColCat;
       if(!(pColCat = Get_ColorOptionCategory($1)))
-	yymsg(GERROR, "Unknown color option class '%s'", $1);
+	yymsg(0, "Unknown color option class '%s'", $1);
       else{
 	if(!(pColOpt = (unsigned int (*) (int, int, unsigned int))
 	     Get_ColorOption($5, pColCat)))
-	  yymsg(GERROR, "Unknown color option '%s.Color.%s'", $1, $5);
+	  yymsg(0, "Unknown color option '%s.Color.%s'", $1, $5);
 	else
 	  pColOpt(0, GMSH_SET|GMSH_GUI, $7);
       }
@@ -944,11 +943,11 @@ Affectation :
       unsigned int (*pColOpt)(int num, int action, unsigned int value);
       StringXColor *pColCat;
       if(!(pColCat = Get_ColorOptionCategory($1)))
-	yymsg(GERROR, "Unknown color option class '%s'", $1);
+	yymsg(0, "Unknown color option class '%s'", $1);
       else{
 	if(!(pColOpt =  (unsigned int (*) (int, int, unsigned int))
 	     Get_ColorOption($8, pColCat)))
-	  yymsg(GERROR, "Unknown color option '%s[%d].Color.%s'", $1, (int)$3, $8);
+	  yymsg(0, "Unknown color option '%s[%d].Color.%s'", $1, (int)$3, $8);
 	else
 	  pColOpt((int)$3, GMSH_SET|GMSH_GUI, $10);
       }
@@ -961,11 +960,11 @@ Affectation :
     {
       GmshColorTable *ct = Get_ColorTable(0);
       if(!ct)
-	yymsg(GERROR, "View[%d] does not exist", 0);
+	yymsg(0, "View[%d] does not exist", 0);
       else{
 	ct->size = List_Nbr($5);
 	if(ct->size > COLORTABLE_NBMAX_COLOR)
-	  yymsg(GERROR, "Too many (%d>%d) colors in View[%d].ColorTable", 
+	  yymsg(0, "Too many (%d>%d) colors in View[%d].ColorTable", 
 		ct->size, COLORTABLE_NBMAX_COLOR, 0);
 	else
 	  for(int i = 0; i < ct->size; i++) List_Read($5, i, &ct->table[i]);
@@ -981,11 +980,11 @@ Affectation :
     {
       GmshColorTable *ct = Get_ColorTable((int)$3);
       if(!ct)
-	yymsg(GERROR, "View[%d] does not exist", (int)$3);
+	yymsg(0, "View[%d] does not exist", (int)$3);
       else{
 	ct->size = List_Nbr($8);
 	if(ct->size > COLORTABLE_NBMAX_COLOR)
-	  yymsg(GERROR, "Too many (%d>%d) colors in View[%d].ColorTable", 
+	  yymsg(0, "Too many (%d>%d) colors in View[%d].ColorTable", 
 		   ct->size, COLORTABLE_NBMAX_COLOR, (int)$3);
 	else
 	  for(int i = 0; i < ct->size; i++) List_Read($8, i, &ct->table[i]);
@@ -1006,13 +1005,13 @@ Affectation :
 	GModel::current()->getFields()->background_field = (int)$4;
       }
       else{
-	yymsg(GERROR, "Unknown command %s Field", $1);
+	yymsg(0, "Unknown command %s Field", $1);
       }
     }
   | tField '[' FExpr ']' tAFFECT tSTRING tEND
     {
       if(!GModel::current()->getFields()->new_field((int)$3, $6))
-	yymsg(GERROR, "Cannot create field %i of type '%s'", (int)$3, $6);
+	yymsg(0, "Cannot create field %i of type '%s'", (int)$3, $6);
     }
   | tField '[' FExpr ']' '.' tSTRING  tAFFECT FExpr tEND
     {
@@ -1022,16 +1021,16 @@ Affectation :
 	if(option){
 	  try { option->numerical_value($8); }
 	  catch(...){
-	    yymsg(GERROR, "Cannot assign a numerical value to option '%s' "
+	    yymsg(0, "Cannot assign a numerical value to option '%s' "
 		  "in field %i of type '%s'", $6, (int)$3, field->get_name());
 	  }
 	}
 	else
-	  yymsg(GERROR, "Unknown option '%s' in field %i of type '%s'",
+	  yymsg(0, "Unknown option '%s' in field %i of type '%s'",
 		$6, (int)$3, field->get_name());
       }
       else
-	yymsg(GERROR, "No field with id %i", (int)$3);
+	yymsg(0, "No field with id %i", (int)$3);
     }
   | tField '[' FExpr ']' '.' tSTRING  tAFFECT StringExpr tEND
     {
@@ -1041,16 +1040,16 @@ Affectation :
 	if(option){
 	  try { option->string() = $8; }
 	  catch (...){
-	    yymsg(GERROR, "Cannot assign a string value to  option '%s' "
+	    yymsg(0, "Cannot assign a string value to  option '%s' "
 		  "in field %i of type '%s'", $6, (int)$3, field->get_name());
 	  }
 	}
 	else 
-	  yymsg(GERROR, "Unknown option '%s' in field %i of type '%s'", 
+	  yymsg(0, "Unknown option '%s' in field %i of type '%s'", 
 		$6, (int)$3, field->get_name());
       }
       else 
-	yymsg(GERROR, "No field with id %i", (int)$3);
+	yymsg(0, "No field with id %i", (int)$3);
     }
   | tField '[' FExpr ']' '.' tSTRING  tAFFECT '{' RecursiveListOfDouble '}' tEND
     {
@@ -1067,11 +1066,11 @@ Affectation :
 	  }
 	}
 	else
-	  yymsg(GERROR, "Unknown option '%s' in field %i of type '%s'",
+	  yymsg(0, "Unknown option '%s' in field %i of type '%s'",
 		$6, (int)$3, field->get_name());
       }
       else 
-	yymsg(GERROR, "No field with id %i", (int)$3);
+	yymsg(0, "No field with id %i", (int)$3);
     }
 
   // Plugins
@@ -1083,7 +1082,7 @@ Affectation :
 	GMSH_PluginManager::instance()->setPluginOption($3, $6, $8); 
       }
       catch (...) {
-	yymsg(GERROR, "Unknown option '%s' or plugin '%s'", $6, $3);
+	yymsg(0, "Unknown option '%s' or plugin '%s'", $6, $3);
       }
 #endif
       Free($3); Free($6);
@@ -1095,7 +1094,7 @@ Affectation :
 	GMSH_PluginManager::instance()->setPluginOption($3, $6, $8); 
       }
       catch (...) {
-	yymsg(GERROR, "Unknown option '%s' or plugin '%s'", $6, $3);
+	yymsg(0, "Unknown option '%s' or plugin '%s'", $6, $3);
       }
 #endif
       Free($3); Free($6); // FIXME: sometimes leak $8
@@ -1127,7 +1126,7 @@ RuledSurfaceOptions :
       $$ = List_Create(4, 4, sizeof(double));
       Vertex *v = FindPoint((int)$4);
       if(!v)
-	yymsg(GERROR, "Unknown point %d", (int)$4);
+	yymsg(0, "Unknown point %d", (int)$4);
       else{
 	List_Add($$, &v->Pos.X);
 	List_Add($$, &v->Pos.Y);
@@ -1144,7 +1143,7 @@ Shape :
     {
       int num = (int)$3;
       if(FindPoint(num)){
-	yymsg(GERROR, "Point %d already exists", num);
+	yymsg(0, "Point %d already exists", num);
       }
       else{
 	double x = CTX.geom.scaling_factor * $6[0];
@@ -1166,7 +1165,7 @@ Shape :
     {
       int num = (int)$4;
       if(FindPhysicalGroup(num, MSH_PHYSICAL_POINT)){
-	yymsg(GERROR, "Physical point %d already exists", num);
+	yymsg(0, "Physical point %d already exists", num);
       }
       else{
 	List_T *temp = ListOfDouble2ListOfInt($7);
@@ -1204,7 +1203,7 @@ Shape :
     {
       int num = (int)$3;
       if(FindCurve(num)){
-	yymsg(GERROR, "Curve %d already exists", num);
+	yymsg(0, "Curve %d already exists", num);
       }
       else{
 	List_T *temp = ListOfDouble2ListOfInt($6);
@@ -1222,7 +1221,7 @@ Shape :
     {
       int num = (int)$3;
       if(FindCurve(num)){
-	yymsg(GERROR, "Curve %d already exists", num);
+	yymsg(0, "Curve %d already exists", num);
       }
       else{
 	List_T *temp = ListOfDouble2ListOfInt($6);
@@ -1240,7 +1239,7 @@ Shape :
     {
       int num = (int)$3;
       if(FindCurve(num)){
-	yymsg(GERROR, "Curve %d already exists", num);
+	yymsg(0, "Curve %d already exists", num);
       }
       else{
 	List_T *temp = ListOfDouble2ListOfInt($6);
@@ -1258,7 +1257,7 @@ Shape :
     {
       int num = (int)$3;
       if(FindCurve(num)){
-	yymsg(GERROR, "Curve %d already exists", num);
+	yymsg(0, "Curve %d already exists", num);
       }
       else{
 	List_T *temp = ListOfDouble2ListOfInt($6);
@@ -1284,7 +1283,7 @@ Shape :
     {
       int num = (int)$3;
       if(FindCurve(num)){
-	yymsg(GERROR, "Curve %d already exists", num);
+	yymsg(0, "Curve %d already exists", num);
       }
       else{
 	List_T *temp = ListOfDouble2ListOfInt($6);
@@ -1302,7 +1301,7 @@ Shape :
     {
       int num = (int)$3;
       if(FindCurve(num)){
-	yymsg(GERROR, "Curve %d already exists", num);
+	yymsg(0, "Curve %d already exists", num);
       }
       else{
 	List_T *temp = ListOfDouble2ListOfInt($6);
@@ -1329,7 +1328,7 @@ Shape :
     {
       int num = (int)$3;
       if(FindCurve(num)){
-	yymsg(GERROR, "Curve %d already exists", num);
+	yymsg(0, "Curve %d already exists", num);
       }
       else{
 	Curve *c = Create_Curve(num, MSH_SEGM_PARAMETRIC, 2, NULL, NULL,
@@ -1348,7 +1347,7 @@ Shape :
     {
       int num = (int)$3;
       if(FindCurve(num)){
-	yymsg(GERROR, "Curve %d already exists", num);
+	yymsg(0, "Curve %d already exists", num);
       }
       else{
 	List_T *temp = ListOfDouble2ListOfInt($6);
@@ -1366,7 +1365,7 @@ Shape :
     {
       int num = (int)$3;
       if(FindCurve(num)){
-	yymsg(GERROR, "Curve %d already exists", num);
+	yymsg(0, "Curve %d already exists", num);
       }
       else{
 	List_T *temp = ListOfDouble2ListOfInt($6);
@@ -1384,13 +1383,13 @@ Shape :
     {
       int num = (int)$3;
       if(List_Nbr($6) + (int)$10 + 1 != List_Nbr($8)){
-	yymsg(GERROR, "Wrong definition of Nurbs Curve %d: "
+	yymsg(0, "Wrong definition of Nurbs Curve %d: "
 	      "got %d knots, need N + D + 1 = %d + %d + 1 = %d",
 	      (int)$3, List_Nbr($8), List_Nbr($6), (int)$10, List_Nbr($6) + (int)$10 + 1);
       }
       else{
 	if(FindCurve(num)){
-	  yymsg(GERROR, "Curve %d already exists", num);
+	  yymsg(0, "Curve %d already exists", num);
 	}
 	else{
 	  List_T *temp = ListOfDouble2ListOfInt($6);
@@ -1410,7 +1409,7 @@ Shape :
     {
       int num = (int)$4;
       if(FindEdgeLoop(num)){
-	yymsg(GERROR, "Line loop %d already exists", num);
+	yymsg(0, "Line loop %d already exists", num);
       }
       else{
 	List_T *temp = ListOfDouble2ListOfInt($7);
@@ -1427,7 +1426,7 @@ Shape :
     {
       int num = (int)$4;
       if(FindPhysicalGroup(num, MSH_PHYSICAL_LINE)){
-	yymsg(GERROR, "Physical line %d already exists", num);
+	yymsg(0, "Physical line %d already exists", num);
       }
       else{
 	List_T *temp = ListOfDouble2ListOfInt($7);
@@ -1446,7 +1445,7 @@ Shape :
     {
       int num = (int)$4;
       if(FindSurface(num)){
-	yymsg(GERROR, "Surface %d already exists", num);
+	yymsg(0, "Surface %d already exists", num);
       }
       else{
 	Surface *s = Create_Surface(num, MSH_SURF_PLAN);
@@ -1464,14 +1463,14 @@ Shape :
     {
       int num = (int)$4, type = 0;
       if(FindSurface(num)){
-	yymsg(GERROR, "Surface %d already exists", num);
+	yymsg(0, "Surface %d already exists", num);
       }
       else{
 	double d;
 	List_Read($7, 0, &d);
 	EdgeLoop *el = FindEdgeLoop((int)fabs(d));
 	if(!el){
-	  yymsg(GERROR, "Unknown line loop %d", (int)d);
+	  yymsg(0, "Unknown line loop %d", (int)d);
 	}
 	else{
 	  int j = List_Nbr(el->Curves);
@@ -1482,7 +1481,7 @@ Shape :
 	    type = MSH_SURF_TRIC;
 	  }
 	  else{
-	    yymsg(GERROR, "Wrong definition of Ruled Surface %d: "
+	    yymsg(0, "Wrong definition of Ruled Surface %d: "
 		  "%d borders instead of 3 or 4", num, j);
 	    type = MSH_SURF_PLAN;
 	  }
@@ -1522,7 +1521,7 @@ Shape :
     {
       int num = (int)$3;
       if (List_Nbr($6) != 2){
-	yymsg(GERROR, "Sphere %d has to be defined using 2 points (center + "
+	yymsg(0, "Sphere %d has to be defined using 2 points (center + "
 	      "any point) and not %d", num, List_Nbr($6));
       }
       else{
@@ -1531,8 +1530,8 @@ Shape :
 	List_Read($6, 1, &p2);
 	Vertex *v1 = FindPoint((int)p1);
 	Vertex *v2 = FindPoint((int)p2);
-	if(!v1) yymsg(GERROR, "Sphere %d : unknown point %d", num, (int)p1);
-	if(!v2) yymsg(GERROR, "Sphere %d : unknown point %d", num, (int)p2);
+	if(!v1) yymsg(0, "Sphere %d : unknown point %d", num, (int)p1);
+	if(!v2) yymsg(0, "Sphere %d : unknown point %d", num, (int)p2);
 	if(v1 && v2)
 	  myGmshSurface = gmshSphere::NewSphere
 	    (num, v1->Pos.X, v1->Pos.Y, v1->Pos.Z,
@@ -1547,7 +1546,7 @@ Shape :
     {
       int num = (int)$3;
       if (List_Nbr($6) != 2){
-	yymsg(GERROR, "PolarSphere %d has to be defined using 2 points (center + "
+	yymsg(0, "PolarSphere %d has to be defined using 2 points (center + "
 	      "any point) and not %d", num, List_Nbr($6));
       }
       else{
@@ -1556,8 +1555,8 @@ Shape :
 	List_Read($6, 1, &p2);
 	Vertex *v1 = FindPoint((int)p1);
 	Vertex *v2 = FindPoint((int)p2);
-	if(!v1) yymsg(GERROR, "PolarSphere %d : unknown point %d", num, (int)p1);
-	if(!v2) yymsg(GERROR, "PolarSphere %d : unknown point %d", num, (int)p2);
+	if(!v1) yymsg(0, "PolarSphere %d : unknown point %d", num, (int)p1);
+	if(!v2) yymsg(0, "PolarSphere %d : unknown point %d", num, (int)p2);
 	if(v1 && v2)
 	  myGmshSurface = gmshPolarSphere::NewPolarSphere
 	    (num, v1->Pos.X, v1->Pos.Y, v1->Pos.Z,
@@ -1572,7 +1571,7 @@ Shape :
     {
       int num = (int)$4;
       if(FindSurfaceLoop(num)){
-	yymsg(GERROR, "Surface loop %d already exists", num);
+	yymsg(0, "Surface loop %d already exists", num);
       }
       else{
 	List_T *temp = ListOfDouble2ListOfInt($7);
@@ -1588,7 +1587,7 @@ Shape :
     {
       int num = (int)$4;
       if(FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE)){
-	yymsg(GERROR, "Physical surface %d already exists", num);
+	yymsg(0, "Physical surface %d already exists", num);
       }
       else{
 	List_T *temp = ListOfDouble2ListOfInt($7);
@@ -1606,10 +1605,10 @@ Shape :
   // for backward compatibility:
   | tComplex tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      yymsg(GERROR, "'Complex Volume' command is deprecated: use 'Volume' instead");
+      yymsg(0, "'Complex Volume' command is deprecated: use 'Volume' instead");
       int num = (int)$4;
       if(FindVolume(num)){
-	yymsg(GERROR, "Volume %d already exists", num);
+	yymsg(0, "Volume %d already exists", num);
       }
       else{
 	Volume *v = Create_Volume(num, MSH_VOLUME);
@@ -1626,7 +1625,7 @@ Shape :
     {
       int num = (int)$3;
       if(FindVolume(num)){
-	yymsg(GERROR, "Volume %d already exists", num);
+	yymsg(0, "Volume %d already exists", num);
       }
       else{
 	Volume *v = Create_Volume(num, MSH_VOLUME);
@@ -1643,7 +1642,7 @@ Shape :
     {
       int num = (int)$4;
       if(FindPhysicalGroup(num, MSH_PHYSICAL_VOLUME)){
-	yymsg(GERROR, "Physical volume %d already exists", num);
+	yymsg(0, "Physical volume %d already exists", num);
       }
       else{
 	List_T *temp = ListOfDouble2ListOfInt($7);
@@ -1738,7 +1737,7 @@ ListOfShapes :
 	    List_Add($$, &TheShape);
 	  }
 	  else
-	    yymsg(WARNING, "Unknown point %d", TheShape.Num);
+	    yymsg(1, "Unknown point %d", TheShape.Num);
 	}
       }
     }
@@ -1761,7 +1760,7 @@ ListOfShapes :
 	    List_Add($$, &TheShape);
 	  }
 	  else
-	    yymsg(WARNING, "Unknown curve %d", TheShape.Num);
+	    yymsg(1, "Unknown curve %d", TheShape.Num);
 	}
       }
     }
@@ -1784,7 +1783,7 @@ ListOfShapes :
 	    List_Add($$, &TheShape);
 	  }
 	  else
-	    yymsg(WARNING, "Unknown surface %d", TheShape.Num);
+	    yymsg(1, "Unknown surface %d", TheShape.Num);
 	}
       }
     }
@@ -1807,7 +1806,7 @@ ListOfShapes :
 	    List_Add($$, &TheShape);
 	  }
 	  else
-	    yymsg(WARNING, "Unknown volume %d", TheShape.Num);
+	    yymsg(1, "Unknown volume %d", TheShape.Num);
 	}
       }
     }
@@ -1837,10 +1836,10 @@ Delete :
 	if(index >= 0 && index < (int)PView::list.size())
 	  delete PView::list[index];
 	else
-	  yymsg(GERROR, "Unknown view %d", index);
+	  yymsg(0, "Unknown view %d", index);
       }
       else
-	yymsg(GERROR, "Unknown command 'Delete %s'", $2);
+	yymsg(0, "Unknown command 'Delete %s'", $2);
 #endif
       Free($2);
     }
@@ -1857,7 +1856,7 @@ Delete :
 	GModel::current()->deletePhysicalGroups();
       }
       else
-	yymsg(GERROR, "Unknown command 'Delete %s'", $2);
+	yymsg(0, "Unknown command 'Delete %s'", $2);
       Free($2);
     }
   | tDelete tSTRING tSTRING tEND
@@ -1868,7 +1867,7 @@ Delete :
 	  if(PView::list[i]->getData()->empty()) delete PView::list[i];
       }
       else
-	yymsg(GERROR, "Unknown command 'Delete %s %s'", $2, $3);
+	yymsg(0, "Unknown command 'Delete %s %s'", $2, $3);
 #endif
       Free($2); Free($3);
     }
@@ -1938,10 +1937,10 @@ Command :
 	// open simultaneously. The right solution would be of course
 	// to modify FunctionManager to reopen the files instead of
 	// using the FILE pointer, but hey, I'm lazy...
-	Msg(STATUS2, "Reading '%s'", tmpstring);
+	Msg::Status(2, true, "Reading '%s'", tmpstring);
 	ParseFile(tmpstring, 0, 1);
 	SetBoundingBox();
-	Msg(STATUS2, "Read '%s'", tmpstring);
+	Msg::Status(2, true, "Read '%s'", tmpstring);
       }
       else if(!strcmp($1, "Print")){
 #if defined(HAVE_FLTK)
@@ -1971,7 +1970,7 @@ Command :
       else if(!strcmp($1, "System"))
 	SystemCall($2);
       else
-	yymsg(GERROR, "Unknown command '%s'", $1);
+	yymsg(0, "Unknown command '%s'", $1);
       Free($1); Free($2);
     } 
   | tSTRING tSTRING '[' FExpr ']' StringExprVar tEND
@@ -1985,10 +1984,10 @@ Command :
 	  PView::list[index]->write(tmpstring, CTX.post.file_format);
 	}
 	else
-	  yymsg(GERROR, "Unknown view %d", index);
+	  yymsg(0, "Unknown view %d", index);
       }
       else
-	yymsg(GERROR, "Unknown command '%s'", $1);
+	yymsg(0, "Unknown command '%s'", $1);
 #endif
       Free($1); Free($2); Free($6);
     }
@@ -2000,10 +1999,10 @@ Command :
 	if(index >= 0 && index < (int)PView::list.size())
 	  GModel::current()->getFields()->set_background_mesh(index);
 	else
-	  yymsg(GERROR, "Unknown view %d", index);
+	  yymsg(0, "Unknown view %d", index);
       }
       else
-	yymsg(GERROR, "Unknown command '%s'", $1);
+	yymsg(0, "Unknown command '%s'", $1);
 #endif
       Free($1); Free($2); Free($3);
     }
@@ -2013,7 +2012,7 @@ Command :
 	SleepInSeconds($2);
       }
       else if(!strcmp($1, "Remesh")){
-	Msg(GERROR, "Surface ReMeshing must be reinterfaced");
+	Msg::Error("Surface ReMeshing must be reinterfaced");
       }
       else if(!strcmp($1, "Mesh")){
 	int lock = CTX.threads_lock;
@@ -2023,10 +2022,10 @@ Command :
 	CTX.threads_lock = lock;
       }
       else if(!strcmp($1, "Status")){
-	yymsg(GERROR, "Mesh directives are not (yet) allowed in scripts");
+	yymsg(0, "Mesh directives are not (yet) allowed in scripts");
       }
       else
-	yymsg(GERROR, "Unknown command '%s'", $1);
+	yymsg(0, "Unknown command '%s'", $1);
       Free($1);
     }
    | tPlugin '(' tSTRING ')' '.' tSTRING tEND
@@ -2036,7 +2035,7 @@ Command :
 	 GMSH_PluginManager::instance()->action($3, $6, 0);
        }
        catch(...) {
-	 yymsg(GERROR, "Unknown action '%s' or plugin '%s'", $6, $3);
+	 yymsg(0, "Unknown action '%s' or plugin '%s'", $6, $3);
        }
 #endif
        Free($3); Free($6);
@@ -2061,7 +2060,7 @@ Command :
       else if(!strcmp($2, "TimeSteps"))
 	PView::combine(true, 2, CTX.post.combine_remove_orig);
       else
-	yymsg(GERROR, "Unknown 'Combine' command");
+	yymsg(0, "Unknown 'Combine' command");
 #endif
       Free($2);
     } 
@@ -2104,7 +2103,7 @@ Loop :
       else
 	ImbricatedLoop++;
       if(ImbricatedLoop > MAX_RECUR_LOOPS-1){
-	yymsg(GERROR, "Reached maximum number of imbricated loops");
+	yymsg(0, "Reached maximum number of imbricated loops");
 	ImbricatedLoop = MAX_RECUR_LOOPS-1;
       }
     }
@@ -2121,7 +2120,7 @@ Loop :
       else
 	ImbricatedLoop++;
       if(ImbricatedLoop > MAX_RECUR_LOOPS-1){
-	yymsg(GERROR, "Reached maximum number of imbricated loops");
+	yymsg(0, "Reached maximum number of imbricated loops");
 	ImbricatedLoop = MAX_RECUR_LOOPS-1;
       }
     }
@@ -2148,7 +2147,7 @@ Loop :
       else
 	ImbricatedLoop++;
       if(ImbricatedLoop > MAX_RECUR_LOOPS-1){
-	yymsg(GERROR, "Reached maximum number of imbricated loops");
+	yymsg(0, "Reached maximum number of imbricated loops");
 	ImbricatedLoop = MAX_RECUR_LOOPS-1;
       }
     }
@@ -2175,14 +2174,14 @@ Loop :
       else
 	ImbricatedLoop++;
       if(ImbricatedLoop > MAX_RECUR_LOOPS-1){
-	yymsg(GERROR, "Reached maximum number of imbricated loops");
+	yymsg(0, "Reached maximum number of imbricated loops");
 	ImbricatedLoop = MAX_RECUR_LOOPS-1;
       }
     }
   | tEndFor 
     {
       if(ImbricatedLoop <= 0){
-	yymsg(GERROR, "Invalid For/EndFor loop");
+	yymsg(0, "Invalid For/EndFor loop");
 	ImbricatedLoop = 0;
       }
       else{
@@ -2198,7 +2197,7 @@ Loop :
 	    TheSymbol.Name = LoopControlVariablesNameTab[ImbricatedLoop-1];
 	    Symbol *pSymbol;
 	    if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol)))
-	      yymsg(GERROR, "Unknown loop variable");
+	      yymsg(0, "Unknown loop variable");
 	    else
 	      *(double*)List_Pointer_Fast(pSymbol->val, 0) += 
 		LoopControlVariablesTab[ImbricatedLoop-1][2];
@@ -2214,7 +2213,7 @@ Loop :
     {
       if(!FunctionManager::Instance()->createFunction($2, gmsh_yyin, gmsh_yyname,
 						      gmsh_yylineno))
-	yymsg(GERROR, "Redefinition of function %s", $2);
+	yymsg(0, "Redefinition of function %s", $2);
       skip_until(NULL, "Return");
       //FIXME: wee leak $2
     }
@@ -2222,13 +2221,13 @@ Loop :
     {
       if(!FunctionManager::Instance()->leaveFunction(&gmsh_yyin, gmsh_yyname,
 						     gmsh_yylineno))
-	yymsg(GERROR, "Error while exiting function");
+	yymsg(0, "Error while exiting function");
     } 
   | tCall tSTRING tEND
     {
       if(!FunctionManager::Instance()->enterFunction($2, &gmsh_yyin, gmsh_yyname,
 						     gmsh_yylineno))
-	yymsg(GERROR, "Unknown function %s", $2);
+	yymsg(0, "Unknown function %s", $2);
       //FIXME: wee leak $2
     } 
   | tIf '(' FExpr ')'
@@ -2531,13 +2530,13 @@ ExtrudeParameter :
 	}
       }
       else
-	yymsg(GERROR, "Wrong layer definition {%d, %d}", List_Nbr($3), List_Nbr($5));
+	yymsg(0, "Wrong layer definition {%d, %d}", List_Nbr($3), List_Nbr($5));
       List_Delete($3);
       List_Delete($5);
     }
   | tLayers '{' ListOfDouble ',' ListOfDouble ',' ListOfDouble '}' tEND
     {
-      yymsg(GERROR, "Explicit region numbers in layers are deprecated");
+      yymsg(0, "Explicit region numbers in layers are deprecated");
       double d;
       extr.mesh.ExtrudeMesh = true;
       extr.mesh.NbLayer = List_Nbr($3);
@@ -2552,7 +2551,7 @@ ExtrudeParameter :
 	}
       }
       else
-	yymsg(GERROR, "Wrong layer definition {%d, %d, %d}", List_Nbr($3), 
+	yymsg(0, "Wrong layer definition {%d, %d, %d}", List_Nbr($3), 
 	      List_Nbr($5), List_Nbr($7));
       List_Delete($3);
       List_Delete($5);
@@ -2566,7 +2565,7 @@ ExtrudeParameter :
     {
       int num = (int)$3;
       if(FindSurface(num)){
-	yymsg(GERROR, "Surface %d already exists", num);
+	yymsg(0, "Surface %d already exists", num);
       }
       else{
 	Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
@@ -2594,7 +2593,7 @@ Transfinite :
 	int j = (int)fabs(d);
         Curve *c = FindCurve(j);
 	if(!c)
-	  yymsg(WARNING, "Unknown curve %d", j);
+	  yymsg(1, "Unknown curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
 	  c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
@@ -2612,7 +2611,7 @@ Transfinite :
 	int j = (int)fabs(d);
         Curve *c = FindCurve(j);
 	if(!c)
-	  yymsg(WARNING, "Unknown curve %d", j);
+	  yymsg(1, "Unknown curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
 	  c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
@@ -2630,7 +2629,7 @@ Transfinite :
 	int j = (int)fabs(d);
         Curve *c = FindCurve(j);
 	if(!c)
-	  yymsg(WARNING, "Unknown curve %d", j);
+	  yymsg(1, "Unknown curve %d", j);
 	else{
 	  c->Method = TRANSFINI;
 	  c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
@@ -2644,13 +2643,13 @@ Transfinite :
     {
       Surface *s = FindSurface((int)$4);
       if(!s)
-	yymsg(WARNING, "Unknown surface %d", (int)$4);
+	yymsg(1, "Unknown surface %d", (int)$4);
       else{
 	s->Method = TRANSFINI;
 	s->Recombine_Dir = -1;
 	int k = List_Nbr($7);
 	if(k != 3 && k != 4){
-	  yymsg(GERROR, "Wrong definition of Transfinite Surface %d: "
+	  yymsg(0, "Wrong definition of Transfinite Surface %d: "
 		"%d points instead of 3 or 4" , (int)$4, k);
 	}
 	else{
@@ -2661,7 +2660,7 @@ Transfinite :
 	    int j = (int)fabs(d);
 	    Vertex *v = FindPoint(j);
 	    if(!v)
-	      yymsg(WARNING, "Unknown point %d", j);
+	      yymsg(1, "Unknown point %d", j);
 	    else
 	      List_Add(s->TrsfPoints, &v);
 	  }
@@ -2673,12 +2672,12 @@ Transfinite :
     {
       Surface *s = FindSurface((int)$4);
       if(!s)
-	yymsg(WARNING, "Unknown surface %d", (int)$4);
+	yymsg(1, "Unknown surface %d", (int)$4);
       else{
 	s->Method = TRANSFINI;
 	int k = List_Nbr($7);
 	if(k != 3 && k != 4){
-	  yymsg(GERROR, "Wrong definition of Transfinite Surface %d: "
+	  yymsg(0, "Wrong definition of Transfinite Surface %d: "
 		"%d points instead of 3 or 4" , (int)$4, k);
 	}
 	else{
@@ -2695,7 +2694,7 @@ Transfinite :
 	    int j = (int)fabs(d);
 	    Vertex *v = FindPoint(j);
 	    if(!v)
-	      yymsg(WARNING, "Unknown point %d", j);
+	      yymsg(1, "Unknown point %d", j);
 	    else
 	      List_Add(s->TrsfPoints, &v);
 	  }
@@ -2706,19 +2705,19 @@ Transfinite :
     }
   | tElliptic tSurface '{' FExpr '}' tAFFECT ListOfDouble tEND
     {
-      yymsg(WARNING, "Elliptic Surface is deprecated: use Transfinite instead (with smoothing)");
+      yymsg(1, "Elliptic Surface is deprecated: use Transfinite instead (with smoothing)");
       List_Delete($7);
     }
   | tTransfinite tVolume '{' FExpr '}' tAFFECT ListOfDouble tEND
     {
       Volume *v = FindVolume((int)$4);
       if(!v)
-	yymsg(WARNING, "Unknown volume %d", (int)$4);
+	yymsg(1, "Unknown volume %d", (int)$4);
       else{
 	v->Method = TRANSFINI;
 	int k = List_Nbr($7);
 	if(k != 6 && k != 8)
-	  yymsg(GERROR, "Wrong definition of Transfinite Volume %d: "
+	  yymsg(0, "Wrong definition of Transfinite Volume %d: "
 		"%d points instead of 6 or 8" , (int)$4, k);
 	else{
 	  List_Reset(v->TrsfPoints);
@@ -2728,7 +2727,7 @@ Transfinite :
 	    int j = (int)fabs(d);
 	    Vertex *vert = FindPoint(j);
 	    if(!vert)
-	      yymsg(WARNING, "Unknown point %d", j);
+	      yymsg(1, "Unknown point %d", j);
 	    else
 	      List_Add(v->TrsfPoints, &vert);
 	  }
@@ -2825,7 +2824,7 @@ FExpr :
   | FExpr '/' FExpr
     { 
       if(!$3)
-	yymsg(GERROR, "Division by zero in '%g / %g'", $1, $3);
+	yymsg(0, "Division by zero in '%g / %g'", $1, $3);
       else
 	$$ = $1 / $3;     
     }
@@ -2893,8 +2892,8 @@ FExpr_Single :
 
     tDOUBLE   { $$ = $1; }
   | tPi       { $$ = 3.141592653589793; }
-  | tMPI_Rank { $$ = ParUtil::Instance()->rank(); }
-  | tMPI_Size { $$ = ParUtil::Instance()->size(); }
+  | tMPI_Rank { $$ = Msg::GetCommRank(); }
+  | tMPI_Size { $$ = Msg::GetCommSize(); }
   | tGMSH_MAJOR_VERSION { $$ = Get_GmshMajorVersion(); }
   | tGMSH_MINOR_VERSION { $$ = Get_GmshMinorVersion(); }
   | tGMSH_PATCH_VERSION { $$ = Get_GmshPatchVersion(); }
@@ -2907,7 +2906,7 @@ FExpr_Single :
       TheSymbol.Name = $1;
       Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
-	yymsg(GERROR, "Unknown variable '%s'", $1);
+	yymsg(0, "Unknown variable '%s'", $1);
 	$$ = 0.;
       }
       else
@@ -2925,7 +2924,7 @@ FExpr_Single :
       TheSymbol.Name = tmpstring;
       Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
-	yymsg(GERROR, "Unknown variable '%s'", tmpstring);
+	yymsg(0, "Unknown variable '%s'", tmpstring);
 	$$ = 0.;
       }
       else
@@ -2938,7 +2937,7 @@ FExpr_Single :
       TheSymbol.Name = $1;
       Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
-	yymsg(GERROR, "Unknown variable '%s'", $1);
+	yymsg(0, "Unknown variable '%s'", $1);
 	$$ = 0.;
       }
       else{
@@ -2946,7 +2945,7 @@ FExpr_Single :
 	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
 	  $$ = *pd;
 	else{
-	  yymsg(GERROR, "Uninitialized variable '%s[%d]'", $1, (int)$3);
+	  yymsg(0, "Uninitialized variable '%s[%d]'", $1, (int)$3);
 	  $$ = 0.;
 	}
       }
@@ -2958,7 +2957,7 @@ FExpr_Single :
       TheSymbol.Name = $2;
       Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
-	yymsg(GERROR, "Unknown variable '%s'", $2);
+	yymsg(0, "Unknown variable '%s'", $2);
 	$$ = 0.;
       }
       else
@@ -2971,7 +2970,7 @@ FExpr_Single :
       TheSymbol.Name = $1;
       Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
-	yymsg(GERROR, "Unknown variable '%s'", $1);
+	yymsg(0, "Unknown variable '%s'", $1);
 	$$ = 0.;
       }
       else
@@ -2984,7 +2983,7 @@ FExpr_Single :
       TheSymbol.Name = $1;
       Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
-	yymsg(GERROR, "Unknown variable '%s'", $1);
+	yymsg(0, "Unknown variable '%s'", $1);
 	$$ = 0.;
       }
       else{
@@ -2992,7 +2991,7 @@ FExpr_Single :
 	if((pd = (double*)List_Pointer_Test(pSymbol->val, (int)$3)))
 	  $$ = (*pd += $5);
 	else{
-	  yymsg(GERROR, "Uninitialized variable '%s[%d]'", $1, (int)$3);
+	  yymsg(0, "Uninitialized variable '%s[%d]'", $1, (int)$3);
 	  $$ = 0.;
 	}
       }
@@ -3006,12 +3005,12 @@ FExpr_Single :
       double (*pNumOpt)(int num, int action, double value);
       StringXNumber *pNumCat;
       if(!(pNumCat = Get_NumberOptionCategory($1))){
-	yymsg(GERROR, "Unknown numeric option class '%s'", $1);
+	yymsg(0, "Unknown numeric option class '%s'", $1);
 	$$ = 0.;
       }
       else{
 	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($3, pNumCat))){
-	  yymsg(GERROR, "Unknown numeric option '%s.%s'", $1, $3);
+	  yymsg(0, "Unknown numeric option '%s.%s'", $1, $3);
 	  $$ = 0.;
 	}
 	else
@@ -3024,12 +3023,12 @@ FExpr_Single :
       double (*pNumOpt)(int num, int action, double value);
       StringXNumber *pNumCat;
       if(!(pNumCat = Get_NumberOptionCategory($1))){
-	yymsg(GERROR, "Unknown numeric option class '%s'", $1);
+	yymsg(0, "Unknown numeric option class '%s'", $1);
 	$$ = 0.;
       }
       else{
 	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($6, pNumCat))){
-	  yymsg(GERROR, "Unknown numeric option '%s[%d].%s'", $1, (int)$3, $6);
+	  yymsg(0, "Unknown numeric option '%s[%d].%s'", $1, (int)$3, $6);
 	  $$ = 0.;
 	}
 	else
@@ -3042,12 +3041,12 @@ FExpr_Single :
       double (*pNumOpt)(int num, int action, double value);
       StringXNumber *pNumCat;
       if(!(pNumCat = Get_NumberOptionCategory($1))){
-	yymsg(GERROR, "Unknown numeric option class '%s'", $1);
+	yymsg(0, "Unknown numeric option class '%s'", $1);
 	$$ = 0.;
       }
       else{
 	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($3, pNumCat))){
-	  yymsg(GERROR, "Unknown numeric option '%s.%s'", $1, $3);
+	  yymsg(0, "Unknown numeric option '%s.%s'", $1, $3);
 	  $$ = 0.;
 	}
 	else
@@ -3060,12 +3059,12 @@ FExpr_Single :
       double (*pNumOpt)(int num, int action, double value);
       StringXNumber *pNumCat;
       if(!(pNumCat = Get_NumberOptionCategory($1))){
-	yymsg(GERROR, "Unknown numeric option class '%s'", $1);
+	yymsg(0, "Unknown numeric option class '%s'", $1);
 	$$ = 0.;
       }
       else{
 	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($6, pNumCat))){
-	  yymsg(GERROR, "Unknown numeric option '%s[%d].%s'", $1, (int)$3, $6);
+	  yymsg(0, "Unknown numeric option '%s[%d].%s'", $1, (int)$3, $6);
 	  $$ = 0.;
 	}
 	else
@@ -3075,7 +3074,7 @@ FExpr_Single :
     }
   | tGetValue '(' tBIGSTR ',' FExpr ')'
     { 
-      $$ = GetValue($3, $5);
+      $$ = Msg::GetValue($3, $5);
       Free($3);
     }
 ;
@@ -3199,7 +3198,7 @@ FExpr_Multi :
     {
       $$ = List_Create(2, 1, sizeof(double)); 
       if(!$5 || ($1 < $3 && $5 < 0) || ($1 > $3 && $5 > 0)){
-        yymsg(GERROR, "Wrong increment in '%g:%g:%g'", $1, $3, $5);
+        yymsg(0, "Wrong increment in '%g:%g:%g'", $1, $3, $5);
 	List_Add($$, &($1));
       }
       else
@@ -3214,7 +3213,7 @@ FExpr_Multi :
       Vertex *v = FindPoint((int)$3);
       $$ = List_Create(3, 1, sizeof(double));      
       if(!v) {
-	yymsg(GERROR, "Unknown point '%d'", (int)$3);
+	yymsg(0, "Unknown point '%d'", (int)$3);
 	double d = 0.0;
 	List_Add($$, &d);
 	List_Add($$, &d);
@@ -3253,7 +3252,7 @@ FExpr_Multi :
       TheSymbol.Name = $1;
       Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
-	yymsg(GERROR, "Unknown variable '%s'", $1);
+	yymsg(0, "Unknown variable '%s'", $1);
 	double d = 0.0;
 	List_Add($$, &d);
       }
@@ -3270,7 +3269,7 @@ FExpr_Multi :
       TheSymbol.Name = $1;
       Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
-	yymsg(GERROR, "Unknown variable '%s'", $1);
+	yymsg(0, "Unknown variable '%s'", $1);
 	double d = 0.0;
 	List_Add($$, &d);
       }
@@ -3281,7 +3280,7 @@ FExpr_Multi :
 	  if((pd = (double*)List_Pointer_Test(pSymbol->val, j)))
 	    List_Add($$, pd);
 	  else
-	    yymsg(GERROR, "Uninitialized variable '%s[%d]'", $1, j);	  
+	    yymsg(0, "Uninitialized variable '%s[%d]'", $1, j);	  
 	}
       }
       Free($1);
@@ -3329,14 +3328,14 @@ ColorExpr :
     {
       int flag;
       $$ = Get_ColorForString(ColorString, (int)$4, $2, &flag);
-      if(flag) yymsg(GERROR, "Unknown color '%s'", $2);
+      if(flag) yymsg(0, "Unknown color '%s'", $2);
     }
 */
   | tSTRING
     {
       int flag;
       $$ = Get_ColorForString(ColorString, -1, $1, &flag);
-      if(flag) yymsg(GERROR, "Unknown color '%s'", $1);
+      if(flag) yymsg(0, "Unknown color '%s'", $1);
       Free($1);
     }
   | tSTRING '.' tColor '.' tSTRING 
@@ -3344,12 +3343,12 @@ ColorExpr :
       unsigned int (*pColOpt)(int num, int action, unsigned int value);
       StringXColor *pColCat;
       if(!(pColCat = Get_ColorOptionCategory($1))){
-	yymsg(GERROR, "Unknown color option class '%s'", $1);
+	yymsg(0, "Unknown color option class '%s'", $1);
 	$$ = 0;
       }
       else{
 	if(!(pColOpt =  (unsigned int (*) (int, int, unsigned int))Get_ColorOption($5, pColCat))){
-	  yymsg(GERROR, "Unknown color option '%s.Color.%s'", $1, $5);
+	  yymsg(0, "Unknown color option '%s.Color.%s'", $1, $5);
 	  $$ = 0;
 	}
 	else
@@ -3369,7 +3368,7 @@ ListOfColor :
       $$ = List_Create(256, 10, sizeof(unsigned int));
       GmshColorTable *ct = Get_ColorTable((int)$3);
       if(!ct)
-	yymsg(GERROR, "View[%d] does not exist", (int)$3);
+	yymsg(0, "View[%d] does not exist", (int)$3);
       else{
 	for(int i = 0; i < ct->size; i++) 
 	  List_Add($$, &ct->table[i]);
@@ -3397,7 +3396,7 @@ StringExprVar :
     }
   | tSTRING
     {
-      Msg(WARNING, "Named string expressions not implemented yet");
+      Msg::Warning("Named string expressions not implemented yet");
     }
 ;
 
@@ -3459,11 +3458,11 @@ StringExpr :
       char tmpstring[1024];
       int i = PrintListOfDouble($3, $5, tmpstring);
       if(i < 0){
-	yymsg(GERROR, "Too few arguments in Sprintf");
+	yymsg(0, "Too few arguments in Sprintf");
 	$$ = $3;
       }
       else if(i > 0){
-	yymsg(GERROR, "%d extra argument%s in Sprintf", i, (i>1)?"s":"");
+	yymsg(0, "%d extra argument%s in Sprintf", i, (i>1)?"s":"");
 	$$ = $3;
       }
       else{
@@ -3478,14 +3477,14 @@ StringExpr :
       const char* (*pStrOpt)(int num, int action, const char *value);
       StringXString *pStrCat;
       if(!(pStrCat = Get_StringOptionCategory($3))){
-	yymsg(GERROR, "Unknown string option class '%s'", $3);
+	yymsg(0, "Unknown string option class '%s'", $3);
 	$$ = (char*)Malloc(sizeof(char));
 	$$[0] = '\0';
       }
       else{
 	if(!(pStrOpt = (const char *(*) (int, int, const char *))
 	     Get_StringOption($5, pStrCat))){
-	  yymsg(GERROR, "Unknown string option '%s.%s'", $3, $5);
+	  yymsg(0, "Unknown string option '%s.%s'", $3, $5);
 	  $$ = (char*)Malloc(sizeof(char));
 	  $$[0] = '\0';
 	}
@@ -3501,14 +3500,14 @@ StringExpr :
       const char* (*pStrOpt)(int num, int action, const char *value);
       StringXString *pStrCat;
       if(!(pStrCat = Get_StringOptionCategory($3))){
-	yymsg(GERROR, "Unknown string option class '%s'", $3);
+	yymsg(0, "Unknown string option class '%s'", $3);
 	$$ = (char*)Malloc(sizeof(char));
 	$$[0] = '\0';
       }
       else{
 	if(!(pStrOpt = (const char *(*) (int, int, const char *))
 	     Get_StringOption($8, pStrCat))){
-	  yymsg(GERROR, "Unknown string option '%s[%d].%s'", $3, (int)$5, $8);
+	  yymsg(0, "Unknown string option '%s[%d].%s'", $3, (int)$5, $8);
 	  $$ = (char*)Malloc(sizeof(char));
 	  $$[0] = '\0';
 	}
@@ -3581,20 +3580,23 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer)
 
 void yyerror(char *s)
 {
-  Msg(GERROR, "'%s', line %d : %s (%s)", gmsh_yyname, gmsh_yylineno - 1, s, gmsh_yytext);
+  Msg::Error("'%s', line %d : %s (%s)", gmsh_yyname, gmsh_yylineno - 1, s, gmsh_yytext);
   gmsh_yyerrorstate++;
 }
 
-void yymsg(int type, const char *fmt, ...)
+void yymsg(int level, const char *fmt, ...)
 {
   va_list args;
   char tmp[1024];
 
-  va_start (args, fmt);
-  vsprintf (tmp, fmt, args);
-  va_end (args);
+  va_start(args, fmt);
+  vsprintf(tmp, fmt, args);
+  va_end(args);
 
-  Msg(type, "'%s', line %d : %s", gmsh_yyname, gmsh_yylineno - 1, tmp);
-
-  if(type == GERROR) gmsh_yyerrorstate++;
+  if(level == 0){
+    Msg::Error("'%s', line %d : %s", gmsh_yyname, gmsh_yylineno - 1, tmp);
+    gmsh_yyerrorstate++;
+  }
+  else
+    Msg::Warning("'%s', line %d : %s", gmsh_yyname, gmsh_yylineno - 1, tmp);
 }

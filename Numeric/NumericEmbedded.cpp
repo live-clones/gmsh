@@ -1,4 +1,4 @@
-// $Id: NumericEmbedded.cpp,v 1.4 2008-03-20 11:44:09 geuzaine Exp $
+// $Id: NumericEmbedded.cpp,v 1.5 2008-05-04 08:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -87,7 +87,7 @@ int sys2x2(double mat[2][2], double b[2], double res[2])
   // TOLERANCE ! WARNING WARNING
   if(norm == 0.0 || fabs(det) / norm < 1.e-12) {
     if(norm)
-      Msg(DEBUG, "Assuming 2x2 matrix is singular (det/norm == %.16g)",
+      Msg::Debug("Assuming 2x2 matrix is singular (det/norm == %.16g)",
           fabs(det) / norm);
     res[0] = res[1] = 0.0;
     return 0;
@@ -169,7 +169,7 @@ int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det)
   // TOLERANCE ! WARNING WARNING
   if(norm == 0.0 || fabs(*det) / norm < 1.e-12) {
     if(norm)
-      Msg(DEBUG, "Assuming 3x3 matrix is singular (det/norm == %.16g)",
+      Msg::Debug("Assuming 3x3 matrix is singular (det/norm == %.16g)",
           fabs(*det) / norm);
     res[0] = res[1] = res[2] = 0.0;
     return 0;
@@ -204,7 +204,7 @@ double inv2x2(double mat[2][2], double inv[2][2])
     inv[1][1] =  mat[0][0] * ud;
   }
   else{
-    Msg(GERROR, "Singular matrix");
+    Msg::Error("Singular matrix");
     for(int i = 0; i < 2; i++)
       for(int j = 0; j < 2; j++)
         inv[i][j] = 0.;
@@ -228,7 +228,7 @@ double inv3x3(double mat[3][3], double inv[3][3])
     inv[2][2] =  (mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0]) * ud;
   }
   else{
-    Msg(GERROR, "Singular matrix");
+    Msg::Error("Singular matrix");
     for(int i = 0; i < 3; i++)
       for(int j = 0; j < 3; j++)
         inv[i][j] = 0.;
@@ -401,7 +401,7 @@ void FindCubicRoots(const double coef[4], double real[3], double imag[3])
   double d = coef[0];
 
   if(!a || !d){
-    Msg(GERROR, "Degenerate cubic: use a second degree solver!");
+    Msg::Error("Degenerate cubic: use a second degree solver!");
     return;
   }
 

@@ -1,4 +1,4 @@
-// $Id: StreamLines.cpp,v 1.35 2008-04-06 07:51:37 geuzaine Exp $
+// $Id: StreamLines.cpp,v 1.36 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 #include "StreamLines.h"
 #include "OctreePost.h"
 #include "Context.h"
+#include "PViewOptions.h"
 
 #if defined(HAVE_FLTK)
 #include "GmshUI.h"
@@ -246,7 +247,7 @@ PView *GMSH_StreamLinesPlugin::execute(PView *v)
 
   // sanity checks
   if(timeStep > data1->getNumTimeSteps() - 1){
-    Msg(GERROR, "Invalid time step (%d) in view[%d]", v1->getIndex());
+    Msg::Error("Invalid time step (%d) in view[%d]", v1->getIndex());
     return v;
   }
 

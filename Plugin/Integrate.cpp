@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.25 2008-04-05 09:21:37 geuzaine Exp $
+// $Id: Integrate.cpp,v 1.26 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -21,6 +21,7 @@
 
 #include "Integrate.h"
 #include "ShapeFunctions.h"
+#include "PViewOptions.h"
 
 StringXNumber IntegrateOptions_Number[] = {
   {GMSH_FULLRC, "iView", NULL, -1.}
@@ -123,7 +124,7 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
 	delete element;
       }
     }
-    Msg(INFO, "Step %d: integral = %.16g", step, res);
+    Msg::Info("Step %d: integral = %.16g", step, res);
     List_Add(data2->SP, &res);
   }
   data2->NbSP = 1;

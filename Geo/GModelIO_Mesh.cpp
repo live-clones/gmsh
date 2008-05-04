@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.51 2008-04-22 16:14:34 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.52 2008-05-04 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -93,7 +93,7 @@ static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
 {
   for(int i = 0; i < num; i++){
     if(!map.count(indices[i])){
-      Msg(GERROR, "Wrong vertex index %d", indices[i]);
+      Msg::Error("Wrong vertex index %d", indices[i]);
       return false;
     }
     else
@@ -107,7 +107,7 @@ static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
 {
   for(int i = 0; i < num; i++){
     if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)){
-      Msg(GERROR, "Wrong vertex index %d", indices[i]);
+      Msg::Error("Wrong vertex index %d", indices[i]);
       return false;
     }
     else
@@ -148,7 +148,7 @@ static int getNumVerticesForElementTypeMSH(int type)
   case MSH_PYR_13 : return 5 + 8;
   case MSH_PYR_14 : return 5 + 8 + 1;
   default: 
-    Msg(GERROR, "Unknown type of element %d", type);
+    Msg::Error("Unknown type of element %d", type);
     return 0;
   }
 }
@@ -168,7 +168,7 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
     MElementFactory factory;
     MElement *e = factory.create(type, v, num, part);
     if(!e){
-      Msg(GERROR, "Unknown type of element %d", type);
+      Msg::Error("Unknown type of element %d", type);
       return;
     }
     dim = e->getDim();
@@ -181,7 +181,7 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
     case 12 : idx = 4; break;
     case 9 : idx = 5; break;
     case 8 : idx = 6; break;
-    default : Msg(GERROR, "Wrong number of edges in element"); return;
+    default : Msg::Error("Wrong number of edges in element"); return;
     }
     elem[idx][reg].push_back(e);
   }
@@ -196,7 +196,7 @@ int GModel::readMSH(const std::string &name)
 {
   FILE *fp = fopen(name.c_str(), "rb");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
@@ -229,12 +229,12 @@ int GModel::readMSH(const std::string &name)
       if(sscanf(str, "%lf %d %d", &version, &format, &size) != 3) return 0;
       if(format){
         binary = true;
-        Msg(INFO, "Mesh is in binary format");
+        Msg::Info("Mesh is in binary format");
         int one;
         if(fread(&one, sizeof(int), 1, fp) != 1) return 0;
         if(one != 1){
           swap = true;
-          Msg(INFO, "Swapping bytes from binary file");
+          Msg::Info("Swapping bytes from binary file");
         }
       }
 
@@ -258,11 +258,11 @@ int GModel::readMSH(const std::string &name)
       if(!fgets(str, sizeof(str), fp)) return 0;
       int numVertices;
       if(sscanf(str, "%d", &numVertices) != 1) return 0;
-      Msg(INFO, "%d vertices", numVertices);
+      Msg::Info("%d vertices", numVertices);
+      Msg::ResetProgressMeter();
       vertexVector.clear();
       vertexMap.clear();
-      int progress = (numVertices > 100000) ? numVertices / 25 : 0;
-      int minVertex = numVertices + 1, maxVertex = -1;
+          int minVertex = numVertices + 1, maxVertex = -1;
       for(int i = 0; i < numVertices; i++) {
         int num;
         double xyz[3];
@@ -278,19 +278,18 @@ int GModel::readMSH(const std::string &name)
         minVertex = std::min(minVertex, num);
         maxVertex = std::max(maxVertex, num);
         if(vertexMap.count(num))
-          Msg(WARNING, "Skipping duplicate vertex %d", num);
+          Msg::Warning("Skipping duplicate vertex %d", num);
         else
           vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
-        if(progress && (i % progress == progress - 1))
-          Msg(PROGRESS, "Read %d vertices", i + 1);
+	if(numVertices > 100000) 
+	  Msg::ProgressMeter(i + 1, numVertices, "Reading nodes");
       }
-      if(progress) Msg(PROGRESS, "");
       // If the vertex numbering is dense, tranfer the map into a
       // vector to speed up element creation
       if((int)vertexMap.size() == numVertices && 
          ((minVertex == 1 && maxVertex == numVertices) ||
           (minVertex == 0 && maxVertex == numVertices - 1))){
-        Msg(INFO, "Vertex numbering is dense");
+        Msg::Info("Vertex numbering is dense");
         vertexVector.resize(vertexMap.size() + 1);
         if(minVertex == 1) 
           vertexVector[0] = 0;
@@ -308,8 +307,8 @@ int GModel::readMSH(const std::string &name)
       if(!fgets(str, sizeof(str), fp)) return 0;
       int numElements;
       sscanf(str, "%d", &numElements);
-      Msg(INFO, "%d elements", numElements);
-      int progress = (numElements > 100000) ? numElements / 25 : 0;
+      Msg::Info("%d elements", numElements);
+      Msg::ResetProgressMeter();
       if(!binary){
         for(int i = 0; i < numElements; i++) {
           int num, type, physical = 0, elementary = 0, partition = 0, numVertices;
@@ -341,8 +340,8 @@ int GModel::readMSH(const std::string &name)
           }
           createElementMSH(this, num, type, physical, elementary, partition, 
                            vertices, points, elements, physicals);
-          if(progress && (i % progress == progress - 1))
-            Msg(PROGRESS, "Read %d elements", i + 1);
+	  if(numElements > 100000) 
+	    Msg::ProgressMeter(i + 1, numElements, "Reading elements");
         }
       }
       else{
@@ -374,14 +373,14 @@ int GModel::readMSH(const std::string &name)
             }
             createElementMSH(this, num, type, physical, elementary, partition, 
                              vertices, points, elements, physicals);
-            if(progress && ((numElementsPartial + i) % progress == progress - 1))
-              Msg(PROGRESS, "Read %d elements", i + 1);
+	    if(numElements > 100000) 
+	      Msg::ProgressMeter(numElementsPartial + i + 1, numElements, 
+				 "Reading elements");
           }
           delete [] data;
           numElementsPartial += numElms;
         }
       }
-      if(progress) Msg(PROGRESS, "");
 
     }
     else if(!strncmp(&str[1], "NodeData", 8)) {
@@ -511,7 +510,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
 {
   FILE *fp = fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
@@ -667,7 +666,7 @@ int GModel::writePOS(const std::string &name, bool printElementary,
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
@@ -749,7 +748,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
 {
   FILE *fp = fopen(name.c_str(), "rb");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
@@ -788,7 +787,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
   }
   else{
     // Binary STL
-    Msg(INFO, "Mesh is in binary format");
+    Msg::Info("Mesh is in binary format");
     rewind(fp);
     char header[80];
     if(fread(header, sizeof(char), 80, fp)){
@@ -796,7 +795,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
       size_t ret = fread(&nfacets, sizeof(unsigned int), 1, fp);
       bool swap = false;
       if(nfacets > 10000000){
-        Msg(INFO, "Swapping bytes from binary file");
+        Msg::Info("Swapping bytes from binary file");
         swap = true;
         swapBytes((char*)&nfacets, sizeof(unsigned int), 1);
       }
@@ -820,16 +819,16 @@ int GModel::readSTL(const std::string &name, double tolerance)
   }
 
   if(!points.size()){
-    Msg(GERROR, "No facets found in STL file");
+    Msg::Error("No facets found in STL file");
     return 0;
   }
   
   if(points.size() % 3){
-    Msg(GERROR, "Wrong number of points in STL file");
+    Msg::Error("Wrong number of points in STL file");
     return 0;
   }
 
-  Msg(INFO, "%d facets", points.size() / 3);
+  Msg::Info("%d facets", points.size() / 3);
 
   // create face
   GFace *face = new discreteFace(this, getNumFaces() + 1);
@@ -866,7 +865,7 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
 {
   FILE *fp = fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
@@ -931,7 +930,7 @@ static int readVerticesVRML(FILE *fp, std::vector<MVertex*> &vertexVector,
     vertexVector.push_back(new MVertex(x, y, z));
   for(unsigned int i = 0; i < vertexVector.size(); i++)
     allVertexVector.push_back(vertexVector[i]);
-  Msg(INFO, "%d vertices", vertexVector.size());
+  Msg::Info("%d vertices", vertexVector.size());
   return 1;
 }
 
@@ -965,7 +964,7 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
       if(!getVertices(idx.size(), &idx[0], vertexVector, vertices)) return 0;
       idx.clear();
       if(vertices.size() < 2){
-        Msg(INFO, "Skipping %d-vertex element", (int)vertices.size());
+        Msg::Info("Skipping %d-vertex element", (int)vertices.size());
       }
       else if(vertices.size() == 2){
         elements[0][region].push_back(new MLine(vertices));
@@ -995,10 +994,10 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
     }
   }
   if(idx.size()){
-    Msg(GERROR, "Prematured end of VRML file");
+    Msg::Error("Prematured end of VRML file");
     return 0;
   }
-  Msg(INFO, "%d elements", elements[0][region].size() + 
+  Msg::Info("%d elements", elements[0][region].size() + 
       elements[1][region].size() + elements[2][region].size());
   return 1;
 }
@@ -1007,7 +1006,7 @@ int GModel::readVRML(const std::string &name)
 {
   FILE *fp = fopen(name.c_str(), "r");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
@@ -1077,7 +1076,7 @@ int GModel::writeVRML(const std::string &name, bool saveAll, double scalingFacto
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
@@ -1135,7 +1134,7 @@ int GModel::readUNV(const std::string &name)
 {
   FILE *fp = fopen(name.c_str(), "r");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
@@ -1295,7 +1294,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
@@ -1383,7 +1382,7 @@ int GModel::readMESH(const std::string &name)
 {
   FILE *fp = fopen(name.c_str(), "r");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
@@ -1395,7 +1394,7 @@ int GModel::readMESH(const std::string &name)
   sscanf(buffer, "%s %d", str, &format);
 
   if(format != 1){
-    Msg(GERROR, "Medit mesh import only available for ASCII files");
+    Msg::Error("Medit mesh import only available for ASCII files");
     return 0;
   }
 
@@ -1413,7 +1412,7 @@ int GModel::readMESH(const std::string &name)
         if(!fgets(buffer, sizeof(buffer), fp)) break;
         int nbv;
         sscanf(buffer, "%d", &nbv);
-        Msg(INFO, "%d vertices", nbv);
+        Msg::Info("%d vertices", nbv);
         vertexVector.resize(nbv);
         for(int i = 0; i < nbv; i++) {
           if(!fgets(buffer, sizeof(buffer), fp)) break;
@@ -1427,7 +1426,7 @@ int GModel::readMESH(const std::string &name)
         if(!fgets(buffer, sizeof(buffer), fp)) break;
         int nbe;
         sscanf(buffer, "%d", &nbe);
-        Msg(INFO, "%d triangles", nbe);
+        Msg::Info("%d triangles", nbe);
         for(int i = 0; i < nbe; i++) {
           if(!fgets(buffer, sizeof(buffer), fp)) break;
           int n[3], cl;
@@ -1442,7 +1441,7 @@ int GModel::readMESH(const std::string &name)
         if(!fgets(buffer, sizeof(buffer), fp)) break;
         int nbe;
         sscanf(buffer, "%d", &nbe);
-        Msg(INFO, "%d quadrangles", nbe);
+        Msg::Info("%d quadrangles", nbe);
         for(int i = 0; i < nbe; i++) {
           if(!fgets(buffer, sizeof(buffer), fp)) break;
           int n[4], cl;
@@ -1457,7 +1456,7 @@ int GModel::readMESH(const std::string &name)
         if(!fgets(buffer, sizeof(buffer), fp)) break;
         int nbe;
         sscanf(buffer, "%d", &nbe);
-        Msg(INFO, "%d tetrahedra", nbe);
+        Msg::Info("%d tetrahedra", nbe);
         for(int i = 0; i < nbe; i++) {
           if(!fgets(buffer, sizeof(buffer), fp)) break;
           int n[4], cl;
@@ -1484,7 +1483,7 @@ int GModel::writeMESH(const std::string &name, bool saveAll, double scalingFacto
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
@@ -1692,7 +1691,7 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
 
   // negative 'numVertices' gives the minimum required number of vertices
   if((int)fields.size() - 2 < abs(numVertices)){
-    Msg(GERROR, "Wrong number of vertices %d for element", fields.size() - 2);
+    Msg::Error("Wrong number of vertices %d for element", fields.size() - 2);
     return 0;
   }
 
@@ -1715,7 +1714,7 @@ int GModel::readBDF(const std::string &name)
 {
   FILE *fp = fopen(name.c_str(), "r");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
@@ -1737,7 +1736,7 @@ int GModel::readBDF(const std::string &name)
       }
     }
   }
-  Msg(INFO, "%d vertices", vertexMap.size());
+  Msg::Info("%d vertices", vertexMap.size());
 
   rewind(fp);
   while(!feof(fp)) {
@@ -1842,7 +1841,7 @@ int GModel::writeBDF(const std::string &name, int format, bool saveAll,
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
@@ -1902,7 +1901,7 @@ int GModel::readP3D(const std::string &name)
 {
   FILE *fp = fopen(name.c_str(), "r");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
@@ -2001,7 +2000,7 @@ int GModel::writeP3D(const std::string &name, bool saveAll, double scalingFactor
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", name.c_str());
+    Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
@@ -2021,7 +2020,7 @@ int GModel::writeP3D(const std::string &name, bool saveAll, double scalingFactor
        ((*it)->physicals.size() || saveAll)) regions.push_back(*it);
   
   if(faces.empty() && regions.empty()){
-    Msg(WARNING, "No structured grids to save");
+    Msg::Warning("No structured grids to save");
     fclose(fp);
     return 0;
   }

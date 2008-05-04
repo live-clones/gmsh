@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.220 2008-04-17 05:58:09 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.221 2008-05-04 08:31:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,8 @@
 #include "gl2ps.h"
 #include "VertexArray.h"
 #include "SmoothData.h"
+#include "PView.h"
+#include "PViewData.h"
 
 extern Context_T CTX;
 
@@ -819,8 +821,6 @@ class drawMeshGRegion {
 
 // Main drawing routine
 
-#include "PView.h"
-
 void Draw_Mesh()
 {
   GModel *m = GModel::current();
@@ -856,7 +856,7 @@ void Draw_Mesh()
     busy = true;
     int status = m->getMeshStatus();
     if(CTX.mesh.changed) {
-      Msg(DEBUG, "Mesh has changed: reinitializing drawing data", CTX.mesh.changed);
+      Msg::Debug("Mesh has changed: reinitializing drawing data", CTX.mesh.changed);
       if(status >= 1 && CTX.mesh.changed & ENT_LINE)
         std::for_each(m->firstEdge(), m->lastEdge(), initMeshGEdge());
       if(status >= 2 && CTX.mesh.changed & ENT_SURFACE){

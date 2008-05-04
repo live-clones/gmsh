@@ -1,4 +1,4 @@
-// $Id: BackgroundMesh.cpp,v 1.53 2008-04-23 10:42:51 remacle Exp $
+// $Id: BackgroundMesh.cpp,v 1.54 2008-05-04 08:31:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -178,7 +178,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
   lc = std::min(lc, CTX.mesh.lc_max);
 
   if(lc <= 0.){
-    Msg(GERROR, "Wrong characteristic length lc = %g", lc);
+    Msg::Error("Wrong characteristic length lc = %g", lc);
     lc = l1;
   }
 

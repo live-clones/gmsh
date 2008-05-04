@@ -1,4 +1,4 @@
-// $Id: GEdgeLoop.cpp,v 1.13 2008-03-20 11:44:04 geuzaine Exp $
+// $Id: GEdgeLoop.cpp,v 1.14 2008-05-04 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,7 @@
 
 void GEdgeSigned::print() const
 {
-  Msg(INFO,"GEdgeSigned : Edge %d sign %d Ordered Vertices %d,%d",
+  Msg::Info("GEdgeSigned : Edge %d sign %d Ordered Vertices %d,%d",
       ge->tag(), _sign, getBeginVertex()->tag(), getEndVertex()->tag());
 }
 
@@ -123,12 +123,12 @@ GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
 
   GEdgeSigned *prevOne = 0;
 
-  //  Msg(INFO,"Building a wire");
+  //  Msg::Info("Building a wire");
   GEdgeSigned ges(0,0);
   while(wire.size()){
     ges = nextOne(prevOne, wire);
     if(ges.getSign() == 0){ // oops
-      Msg(WARNING, "Something wrong in edge loop?");
+      Msg::Warning("Something wrong in edge loop?");
       break;
     }
     prevOne = &ges;

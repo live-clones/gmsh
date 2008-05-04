@@ -37,9 +37,9 @@
 
 int cgnsErr(const int cgIndexFile = -1)
 {
-  Msg(GERROR, cg_get_error());
+  Msg::Error(cg_get_error());
   if(cgIndexFile != -1)
-    if(cg_close(cgIndexFile)) Msg(GERROR, "Even unable to close CGNS file");
+    if(cg_close(cgIndexFile)) Msg::Error("Even unable to close CGNS file");
   return 0;
 }
 
@@ -182,7 +182,7 @@ int GModel::writeCGNS(const std::string &name, double scalingFactor)
         if((*it)->triangles.size() + (*it)->quadrangles.size() > 0)
           groups[face][1].push_back(*it);
       if(!groups[face].size()) {
-        Msg(GERROR, "No mesh elements were found");
+        Msg::Error("No mesh elements were found");
         return 0;
       }
     }
@@ -562,13 +562,13 @@ int GModel::writeCGNS(const std::string &name, double scalingFactor)
 
 int GModel::readCGNS(const std::string &name)
 {
-  Msg(GERROR, "This version of Gmsh was compiled without CGNS support");
+  Msg::Error("This version of Gmsh was compiled without CGNS support");
   return 0;
 }
 
 int GModel::writeCGNS(const std::string &name, double scalingFactor)
 {
-  Msg(GERROR, "This version of Gmsh was compiled without CGNS support");
+  Msg::Error("This version of Gmsh was compiled without CGNS support");
   return 0;
 }
 

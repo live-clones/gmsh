@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.396 2008-04-28 10:10:51 geuzaine Exp $
+// $Id: Options.cpp,v 1.397 2008-05-04 08:31:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -33,6 +33,8 @@ extern Context_T CTX;
 
 #if !defined(HAVE_NO_POST)
 #include "PView.h"
+#include "PViewOptions.h"
+#include "PViewData.h"
 #include "adaptiveData.h"
 #include "PluginManager.h"
 #endif
@@ -200,9 +202,9 @@ static void Print_OptionCategory(int level, int diff, int help, const char *cat,
     fprintf(file, "//\n");
   }
   else {
-    Msg(DIRECT, "//");
-    Msg(DIRECT, "// %s", cat);
-    Msg(DIRECT, "//");
+    Msg::Direct("//");
+    Msg::Direct("// %s", cat);
+    Msg::Direct("//");
   }
 }
 
@@ -251,13 +253,13 @@ static void Print_ColorTable(int num, int diff, const char *prefix, FILE *file)
   if(file)
     fprintf(file, "%s\n", tmp);
   else
-    Msg(DIRECT, tmp);
+    Msg::Direct(tmp);
   ColorTable_Print(&opt->CT, file);
   sprintf(tmp, "};");
   if(file)
     fprintf(file, "%s\n", tmp);
   else
-    Msg(DIRECT, tmp);
+    Msg::Direct(tmp);
 #endif
 }
 
@@ -268,7 +270,7 @@ void Print_Options(int num, int level, int diff, int help, const char *filename)
   if(filename) {
     file = fopen(filename, "w");
     if(!file) {
-      Msg(GERROR, "Unable to open file '%s'", filename);
+      Msg::Error("Unable to open file '%s'", filename);
       return;
     }
   }
@@ -395,7 +397,7 @@ void Print_OptionsDoc()
   
   file = fopen("opt_general.texi", "w");
   if(!file) {
-    Msg(GERROR, "Unable to open file 'opt_general.texi'");
+    Msg::Error("Unable to open file 'opt_general.texi'");
     return;
   }
   fprintf(file, "%s@ftable @code\n", warn);
@@ -407,7 +409,7 @@ void Print_OptionsDoc()
 
   file = fopen("opt_print.texi", "w");
   if(!file) {
-    Msg(GERROR, "Unable to open file 'opt_print.texi'");
+    Msg::Error("Unable to open file 'opt_print.texi'");
     return;
   }
   fprintf(file, "%s@ftable @code\n", warn);
@@ -419,7 +421,7 @@ void Print_OptionsDoc()
 
   file = fopen("opt_geometry.texi", "w");
   if(!file) {
-    Msg(GERROR, "Unable to open file 'opt_geometry.texi'");
+    Msg::Error("Unable to open file 'opt_geometry.texi'");
     return;
   }
   fprintf(file, "%s@ftable @code\n", warn);
@@ -431,7 +433,7 @@ void Print_OptionsDoc()
 
   file = fopen("opt_mesh.texi", "w");
   if(!file) {
-    Msg(GERROR, "Unable to open file 'opt_mesh.texi'");
+    Msg::Error("Unable to open file 'opt_mesh.texi'");
     return;
   }
   fprintf(file, "%s@ftable @code\n", warn);
@@ -443,7 +445,7 @@ void Print_OptionsDoc()
 
   file = fopen("opt_solver.texi", "w");
   if(!file) {
-    Msg(GERROR, "Unable to open file 'opt_solver.texi'");
+    Msg::Error("Unable to open file 'opt_solver.texi'");
     return;
   }
   fprintf(file, "%s@ftable @code\n", warn);
@@ -455,7 +457,7 @@ void Print_OptionsDoc()
 
   file = fopen("opt_post.texi", "w");
   if(!file) {
-    Msg(GERROR, "Unable to open file 'opt_post.texi'");
+    Msg::Error("Unable to open file 'opt_post.texi'");
     return;
   }
   fprintf(file, "%s@ftable @code\n", warn);
@@ -468,7 +470,7 @@ void Print_OptionsDoc()
 #if !defined(HAVE_NO_POST)
   file = fopen("opt_view.texi", "w");
   if(!file) {
-    Msg(GERROR, "Unable to open file 'opt_view.texi'");
+    Msg::Error("Unable to open file 'opt_view.texi'");
     return;
   }
   fprintf(file, "%s@ftable @code\n", warn);
@@ -484,7 +486,7 @@ void Print_OptionsDoc()
 
   file = fopen("opt_plugin.texi", "w");
   if(!file) {
-    Msg(GERROR, "Unable to open file 'opt_plugin.texi'");
+    Msg::Error("Unable to open file 'opt_plugin.texi'");
     return;
   }
   fprintf(file, "%s@ftable @code\n", warn);
@@ -594,7 +596,7 @@ void Print_StringOptions(int num, int level, int diff, int help,
         if(file)
           fprintf(file, "%s\n", tmp);
         else
-          Msg(DIRECT, "%s", tmp);
+          Msg::Direct("%s", tmp);
       }
     }
     i++;
@@ -696,7 +698,7 @@ void Print_NumberOptions(int num, int level, int diff, int help,
         if(file)
           fprintf(file, "%s\n", tmp);
         else
-          Msg(DIRECT, tmp);
+          Msg::Direct(tmp);
       }
     }
     i++;
@@ -818,7 +820,7 @@ void Print_ColorOptions(int num, int level, int diff, int help,
         if(file)
           fprintf(file, "%s\n", tmp);
         else
-          Msg(DIRECT, tmp);
+          Msg::Direct(tmp);
       }
     }
     i++;
@@ -861,7 +863,7 @@ int Get_ColorForString(StringX4Int SX4I[], int alpha,
     opt = &PViewOptions::reference;                             \
   else{                                                         \
     if(num < 0 || num >= (int)PView::list.size()){              \
-      Msg(WARNING, "View[%d] does not exist", num);             \
+      Msg::Warning("View[%d] does not exist", num);             \
       return (error_val);                                       \
     }                                                           \
     view = PView::list[num];                                    \
@@ -2893,13 +2895,14 @@ double opt_general_shine_exponent(OPT_ARGS_NUM)
 
 double opt_general_verbosity(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
-    CTX.verbosity = (int)val;
+  if(action & GMSH_SET){
+    Msg::SetVerbosity((int)val);
+  }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->gen_value[5]->value(CTX.verbosity);
+    WID->gen_value[5]->value(Msg::GetVerbosity());
 #endif
-  return CTX.verbosity;
+  return Msg::GetVerbosity();
 }
 
 double opt_general_nopopup(OPT_ARGS_NUM)
@@ -2953,11 +2956,11 @@ double opt_general_orthographic(OPT_ARGS_NUM)
   if(WID && (action & GMSH_GUI)) {
     if(CTX.ortho){
       WID->gen_choice[2]->value(0);
-      if(!CTX.batch) Msg(STATUS2N, "Orthographic projection");
+      if(!CTX.batch) Msg::Status(2, false, "Orthographic projection");
     }
     else{
       WID->gen_choice[2]->value(1);
-      if(!CTX.batch) Msg(STATUS2N, "Perspective projection");
+      if(!CTX.batch) Msg::Status(2, false, "Perspective projection");
     }
   }
 #endif
@@ -2971,11 +2974,11 @@ double opt_general_mouse_selection(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
     if(CTX.mouse_selection){
-      if(!CTX.batch) Msg(STATUS2N, "Mouse selection ON");
+      if(!CTX.batch) Msg::Status(2, false, "Mouse selection ON");
       WID->g_status_butt[9]->color(FL_BACKGROUND_COLOR);
     }
     else{
-      if(!CTX.batch) Msg(STATUS2N, "Mouse selection OFF");
+      if(!CTX.batch) Msg::Status(2, false, "Mouse selection OFF");
       WID->g_status_butt[9]->color(FL_RED);
     }
     WID->g_status_butt[9]->redraw();

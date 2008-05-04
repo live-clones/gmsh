@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.44 2008-03-20 11:44:02 geuzaine Exp $
+// $Id: List.cpp,v 1.45 2008-05-04 08:31:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -126,14 +126,14 @@ int List_Replace(List_T * liste, void *data,
 void List_Read(List_T * liste, int index, void *data)
 {
   if((index < 0) || (index >= liste->n))
-    Msg(FATAL, "Wrong list index (read)");
+    Msg::Fatal("Wrong list index (read)");
   memcpy(data, &liste->array[index * liste->size], liste->size);
 }
 
 void List_Write(List_T * liste, int index, void *data)
 {
   if((index < 0) || (index >= liste->n))
-    Msg(GERROR, "Wrong list index (write)");
+    Msg::Error("Wrong list index (write)");
   else {
     liste->isorder = 0;
     memcpy(&liste->array[index * liste->size], data, liste->size);
@@ -143,7 +143,7 @@ void List_Write(List_T * liste, int index, void *data)
 void List_Put(List_T * liste, int index, void *data)
 {
   if(index < 0)
-    Msg(GERROR, "Wrong list index (put)");
+    Msg::Error("Wrong list index (put)");
   else {
     if(index >= liste->n) {
       liste->n = index + 1;
@@ -165,7 +165,7 @@ void List_Pop(List_T * liste)
 void *List_Pointer(List_T * liste, int index)
 {
   if((index < 0) || (index >= liste->n))
-    Msg(FATAL, "Wrong list index (pointer)");
+    Msg::Fatal("Wrong list index (pointer)");
 
   liste->isorder = 0;
   return (&liste->array[index * liste->size]);
@@ -174,7 +174,7 @@ void *List_Pointer(List_T * liste, int index)
 void *List_Pointer_NoChange(List_T * liste, int index)
 {
   if((index < 0) || (index >= liste->n))
-    Msg(FATAL, "Wrong list index (pointer)");
+    Msg::Fatal("Wrong list index (pointer)");
 
   return (&liste->array[index * liste->size]);
 }
@@ -486,7 +486,7 @@ List_T *List_CreateFromFile(int n, int incr, int size, FILE * file, int format,
       }
     }
     else{
-      Msg(GERROR, "Bad type of data to create list from (size = %d)", size);
+      Msg::Error("Bad type of data to create list from (size = %d)", size);
       error = 1;
     }
     break;
@@ -499,13 +499,13 @@ List_T *List_CreateFromFile(int n, int incr, int size, FILE * file, int format,
       swap_bytes(liste->array, size, n);
     break;
   default:
-    Msg(GERROR, "Unknown list format");
+    Msg::Error("Unknown list format");
     error = 1;
     break;
   }
 
   if(error){
-    Msg(GERROR, "Read error");
+    Msg::Error("Read error");
     liste->n = 0;
   }
 
@@ -534,14 +534,14 @@ void List_WriteToFile(List_T * liste, FILE * file, int format)
       for(i = 0; i < n; i++)
         fputc(*((char *)&liste->array[i * liste->size]), file);
     else
-      Msg(GERROR, "Bad type of data to write list to file (size = %d)",
+      Msg::Error("Bad type of data to write list to file (size = %d)",
           liste->size);
     break;
   case LIST_FORMAT_BINARY:
     safe_fwrite(liste->array, liste->size, n, file);
     break;
   default:
-    Msg(GERROR, "Unknown list format");
+    Msg::Error("Unknown list format");
     break;
   }
 }
@@ -598,7 +598,7 @@ List_T *List_CreateFromFileOld(int n, int incr, int size, FILE * file, int forma
       }
     }
     else {
-      Msg(GERROR, "Bad type of data to create list from (size = %d)", size);
+      Msg::Error("Bad type of data to create list from (size = %d)", size);
       error = 1;
     }
     return liste;
@@ -611,13 +611,13 @@ List_T *List_CreateFromFileOld(int n, int incr, int size, FILE * file, int forma
       swap_bytes(liste->array, size, n);
     return liste;
   default:
-    Msg(GERROR, "Unknown list format");
+    Msg::Error("Unknown list format");
     error = 1;
     break;
   }
 
   if(error){
-    Msg(GERROR, "Read error");
+    Msg::Error("Read error");
     liste->n = 0;
   }
 

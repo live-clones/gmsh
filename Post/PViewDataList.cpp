@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.23 2008-04-22 07:37:16 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.24 2008-05-04 08:31:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -220,7 +220,7 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod, int nb
   if(_interpolation.count(nbedg)){
     nbval = List_Nbr(_interpolation[nbedg][0]);
     if(nbval != nbcomp * nbnod)
-      Msg(INFO, "Adaptive view with %d values per element", nbval);
+      Msg::Info("Adaptive view with %d values per element", nbval);
   }
   
   int nb = List_Nbr(list) / nbelm;
@@ -664,7 +664,7 @@ bool PViewDataList::combineSpace(nameData &nd)
   int ts = nd.data[0]->getNumTimeSteps();
   for(unsigned int i = 1; i < nd.data.size(); i++) {
     if(!nd.data[i]->empty() && nd.data[i]->getNumTimeSteps() != ts){
-      Msg(GERROR, "Cannot combine views having different number of time steps");
+      Msg::Error("Cannot combine views having different number of time steps");
       return false;
     }
   }
@@ -672,7 +672,7 @@ bool PViewDataList::combineSpace(nameData &nd)
   for(unsigned int i = 0; i < nd.data.size(); i++) {
     PViewDataList *l = dynamic_cast<PViewDataList*>(nd.data[i]);
     if(!l){
-      Msg(GERROR, "Cannot combine hybrid data");
+      Msg::Error("Cannot combine hybrid data");
       return false;
     }
     // merge elememts
@@ -769,7 +769,7 @@ void PViewDataList::getRawData(int type, List_T **l, int **ne, int *nc, int *nn)
   case 21: *l = SY; *ne = &NbSY; *nc = 1; *nn = 5; break;
   case 22: *l = VY; *ne = &NbVY; *nc = 3; *nn = 5; break;
   case 23: *l = TY; *ne = &NbTY; *nc = 9; *nn = 5; break;
-  default: Msg(GERROR, "Wrong type in PViewDataList"); break;
+  default: Msg::Error("Wrong type in PViewDataList"); break;
   }
 }
 
@@ -781,7 +781,7 @@ bool PViewDataList::combineTime(nameData &nd)
   for(unsigned int i = 0; i < nd.data.size(); i++){
     data[i] = dynamic_cast<PViewDataList*>(nd.data[i]);
     if(!data[i]){
-      Msg(GERROR, "Cannot combine hybrid data");
+      Msg::Error("Cannot combine hybrid data");
       return false;
     }
   }

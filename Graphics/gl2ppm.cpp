@@ -1,4 +1,4 @@
-// $Id: gl2ppm.cpp,v 1.16 2008-02-17 08:48:00 geuzaine Exp $
+// $Id: gl2ppm.cpp,v 1.17 2008-05-04 08:31:15 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -24,7 +24,7 @@
 void create_ppm(FILE *outfile, PixelBuffer *buffer)
 {
   if(buffer->GetFormat() != GL_RGB || buffer->GetType() != GL_UNSIGNED_BYTE){
-    Msg(GERROR, "PPM only implemented for GL_RGB and GL_UNSIGNED_BYTE");
+    Msg::Error("PPM only implemented for GL_RGB and GL_UNSIGNED_BYTE");
     return;
   }
 

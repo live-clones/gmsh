@@ -31,9 +31,9 @@ class mystreambuf: public streambuf
     }
     else{
       if(!strncmp(txt, "ERROR", 5))
-	Msg(FATAL, txt);
+	Msg::Fatal(txt);
       else
-	Msg(INFO, txt);
+	Msg::Info(txt);
     }
     index = 0; 
     return 0; 

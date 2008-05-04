@@ -1,4 +1,4 @@
-// $Id: gmshVertex.cpp,v 1.10 2008-03-20 11:44:07 geuzaine Exp $
+// $Id: gmshVertex.cpp,v 1.11 2008-05-04 08:31:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -75,7 +75,7 @@ SPoint2 gmshVertex::reparamOnFace(GFace *face, int dir) const
       V = 1;
     }
     else{
-      Msg(INFO, "Reparameterizing point %d on face %d", v->Num, s->Num);
+      Msg::Info("Reparameterizing point %d on face %d", v->Num, s->Num);
       return GVertex::reparamOnFace(face, dir);
     }
     return SPoint2(U, V);

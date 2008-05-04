@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.62 2008-03-20 11:44:04 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.63 2008-05-04 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -98,7 +98,7 @@ int Solver(int num, const char *args)
   }
   else{
     if(!CTX.solver.listen){
-      Msg(INFO, "Stopped listening for solver connections");
+      Msg::Info("Stopped listening for solver connections");
       return 0;
     }
     // we don't know who will (maybe) contact us
@@ -133,31 +133,31 @@ int Solver(int num, const char *args)
   if(sock < 0) {
     switch (sock) {
     case -1:
-      Msg(GERROR, "Couldn't create socket '%s'", sockname);
+      Msg::Error("Couldn't create socket '%s'", sockname);
       break;
     case -2:
-      Msg(GERROR, "Couldn't bind socket to name '%s'", sockname);
+      Msg::Error("Couldn't bind socket to name '%s'", sockname);
       break;
     case -3:
-      Msg(GERROR, "Socket listen failed on '%s'", sockname);
+      Msg::Error("Socket listen failed on '%s'", sockname);
       break;
     case -4:
-      Msg(GERROR, "Socket listen timeout on '%s'", sockname);
-      Msg(GERROR, "Is '%s' correctly installed?", prog);
+      Msg::Error("Socket listen timeout on '%s'", sockname);
+      Msg::Error("Is '%s' correctly installed?", prog);
       break;
     case -5:
-      Msg(GERROR, "Socket accept failed on '%s'", sockname);
+      Msg::Error("Socket accept failed on '%s'", sockname);
       break;
     case -6:
-      Msg(INFO, "Stopped listening for solver connections");
+      Msg::Info("Stopped listening for solver connections");
       server.StopClient();
       break;
     case -7:
-      Msg(GERROR, "Unix sockets not available on Windows without Cygwin");
-      Msg(GERROR, "Use TCP/IP sockets instead");
+      Msg::Error("Unix sockets not available on Windows without Cygwin");
+      Msg::Error("Use TCP/IP sockets instead");
       break;
     case -8:
-      Msg(GERROR, "Could not initialize Windows sockets");
+      Msg::Error("Could not initialize Windows sockets");
       break;
     }
     if(num >= 0){
@@ -173,7 +173,7 @@ int Solver(int num, const char *args)
     SINFO[num].pid = 0;
   }
 
-  Msg(STATUS2N, "Running '%s'", prog);
+  Msg::Status(2, false, "Running '%s'", prog);
 
   while(1) {
 
@@ -203,9 +203,9 @@ int Solver(int num, const char *args)
           break;
         case GmshServer::CLIENT_PROGRESS:
           if(num >= 0)
-            Msg(STATUS2N, "%s %s", SINFO[num].name, message);
+            Msg::Status(2, false, "%s %s", SINFO[num].name, message);
           else
-            Msg(STATUS2N, "%s", message);
+            Msg::Status(2, false, "%s", message);
           break;
         case GmshServer::CLIENT_OPTION_1:
           if(num >= 0)
@@ -241,22 +241,24 @@ int Solver(int num, const char *args)
           Draw();
           break;
         case GmshServer::CLIENT_INFO:
-          Msg(SOLVER, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
+          Msg::Direct("%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
           break;
         case GmshServer::CLIENT_WARNING:
+          Msg::Direct(2, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
+          break;
         case GmshServer::CLIENT_ERROR:
-          Msg(SOLVERR, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
+          Msg::Direct(1, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
           break;
         default:
-          Msg(WARNING, "Unknown type of message received from %s",
+          Msg::Warning("Unknown type of message received from %s",
               num >= 0 ? SINFO[num].name : "client");
-          Msg(SOLVER, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
+	  Msg::Direct("%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
           break;
         }
         WID->check();
       }
       else{
-        Msg(WARNING, "Failed to receive message body on socket: aborting");
+        Msg::Warning("Failed to receive message body on socket: aborting");
         break;
       }
       delete [] message;
@@ -279,13 +281,13 @@ int Solver(int num, const char *args)
   }
 
   if(server.StopClient() < 0)
-    Msg(WARNING, "Impossible to unlink the socket '%s'", sockname);
+    Msg::Warning("Impossible to unlink the socket '%s'", sockname);
 
   if(num >= 0){
-    Msg(STATUS2N, "");
+    Msg::Status(2, false, "");
   }
   else{
-    Msg(INFO, "Client disconnected: starting new connection");
+    Msg::Info("Client disconnected: starting new connection");
     goto new_connection;
   }
 

@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.65 2008-04-23 08:06:21 remacle Exp $
+// $Id: MElement.cpp,v 1.66 2008-05-04 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -809,19 +809,31 @@ extern int getNGQQPts(int order);
 extern IntPt *getGQQPts(int order);
 extern int getNGQHPts(int order);
 extern IntPt *getGQHPts(int order);
-void MTriangle:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const{
+void MTriangle:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const
+{
+#if !defined(HAVE_GMSH_EMBEDDED)
   *npts = getNGQTPts(pOrder);
   *pts  = getGQTPts(pOrder);
+#endif
 }
-void MTetrahedron:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const{
+void MTetrahedron:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const
+{
+#if !defined(HAVE_GMSH_EMBEDDED)
   *npts = getNGQTetPts(pOrder);
   *pts  = getGQTetPts(pOrder);
+#endif
 }
-void MHexahedron:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const{
+void MHexahedron:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const
+{
+#if !defined(HAVE_GMSH_EMBEDDED)
   *npts = getNGQHPts(pOrder);
   *pts  = getGQHPts(pOrder);
+#endif
 }
-void MQuadrangle:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const{
+void MQuadrangle:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const
+{
+#if !defined(HAVE_GMSH_EMBEDDED)
   *npts = getNGQQPts(pOrder);
   *pts  = getGQQPts(pOrder);
+#endif
 }

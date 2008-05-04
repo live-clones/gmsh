@@ -1,4 +1,4 @@
-// $Id: OS.cpp,v 1.12 2008-02-17 08:47:56 geuzaine Exp $
+// $Id: OS.cpp,v 1.13 2008-05-04 08:31:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -101,7 +101,7 @@ void CheckResources(){
   // can cause crashes in the recursive calls (e.g. for tet
   // classification in 3D Delaunay)
   if(r.rlim_cur < 16 * 1024 * 1024){
-    Msg(INFO, "Increasing process stack size (%d kB < 16 MB)", r.rlim_cur / 1024);
+    Msg::Info("Increasing process stack size (%d kB < 16 MB)", r.rlim_cur / 1024);
     r.rlim_cur = r.rlim_max;
     setrlimit(RLIMIT_STACK, &r);
   }
@@ -167,16 +167,16 @@ int SystemCall(const char *command)
   PROCESS_INFORMATION prInfo;
   memset(&suInfo, 0, sizeof(suInfo));
   suInfo.cb = sizeof(suInfo);
-  Msg(INFO, "Calling '%s'", command);
+  Msg::Info("Calling '%s'", command);
   CreateProcess(NULL, (char*)command, NULL, NULL, FALSE,
                 NORMAL_PRIORITY_CLASS, NULL, NULL, &suInfo, &prInfo);
   return 0;
 #else
   if(!system(NULL)) {
-    Msg(GERROR, "Could not find /bin/sh: aborting system call");
+    Msg::Error("Could not find /bin/sh: aborting system call");
     return 1;
   }
-  Msg(INFO, "Calling '%s'", command);
+  Msg::Info("Calling '%s'", command);
   return system(command);
 #endif
 }

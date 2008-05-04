@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.48 2008-03-20 11:44:07 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.49 2008-05-04 08:31:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -255,7 +255,7 @@ SPoint2 gmshEdge::reparamOnFace(GFace *face, double epar,int dir) const
       U = 0;
     }
     else{
-      Msg(INFO, "Reparameterizing edge %d on face %d", c->Num, s->Num);
+      Msg::Info("Reparameterizing edge %d on face %d", c->Num, s->Num);
       return GEdge::reparamOnFace(face, epar, dir);
     }
     return SPoint2(U, V);
@@ -291,7 +291,7 @@ SPoint2 gmshEdge::reparamOnFace(GFace *face, double epar,int dir) const
       V = 1;
     }
     else{
-      Msg(INFO, "Reparameterizing edge %d on face %d", c->Num, s->Num);
+      Msg::Info("Reparameterizing edge %d on face %d", c->Num, s->Num);
       return GEdge::reparamOnFace(face, epar, dir);
     }
     return SPoint2(U, V);

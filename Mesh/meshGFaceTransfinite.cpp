@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.26 2008-03-20 11:44:09 geuzaine Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.27 2008-05-04 08:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -55,7 +55,7 @@ int MeshTransfiniteSurface(GFace *gf)
 {
   if(gf->meshAttributes.Method != TRANSFINI) return 0;
 
-  Msg(STATUS2, "Meshing surface %d (transfinite)", gf->tag());
+  Msg::Status(2, true, "Meshing surface %d (transfinite)", gf->tag());
 
   std::vector <MVertex *> corners, d_vertices;
   std::vector <int> indices;
@@ -66,12 +66,12 @@ int MeshTransfiniteSurface(GFace *gf)
   computeEdgeLoops(gf, d_vertices, indices);
 
   if(corners.size () != 3 && corners.size () != 4){
-    Msg(GERROR,"Surface %d is transfinite but has %d corners",
+    Msg::Error("Surface %d is transfinite but has %d corners",
         gf->tag(), corners.size());
     return 0;
   }
   if(indices.size () != 2){
-    Msg(GERROR,"Surface %d is transfinite but has %d holes",
+    Msg::Error("Surface %d is transfinite but has %d holes",
         gf->tag(), indices.size() - 2);
     return 0;
   }
@@ -117,7 +117,7 @@ int MeshTransfiniteSurface(GFace *gf)
        (corners.size() == 4 && v == corners[3])){
       N[iCorner++] = i;   
       if(iCorner > 4){
-        Msg(GERROR,"Surface %d transfinite parameters are incoherent", gf->tag());
+        Msg::Error("Surface %d transfinite parameters are incoherent", gf->tag());
         return 0;
       }
     }
@@ -155,7 +155,7 @@ int MeshTransfiniteSurface(GFace *gf)
     int Lb = N4 - N3;
     int Hb = m_vertices.size() - N4;
     if(Lb != L || Hb != H){
-      Msg(GERROR,"Surface %d cannot be meshed using the transfinite algo", 
+      Msg::Error("Surface %d cannot be meshed using the transfinite algo", 
           gf->tag());
       return 0;
     }
@@ -163,7 +163,7 @@ int MeshTransfiniteSurface(GFace *gf)
   else{
     int Lb = m_vertices.size() - N3;      
     if(Lb != L){
-      Msg(GERROR,"Surface %d cannot be meshed using the transfinite algo %d != %d", 
+      Msg::Error("Surface %d cannot be meshed using the transfinite algo %d != %d", 
           gf->tag(), L, Lb);
       return 0;
     }      

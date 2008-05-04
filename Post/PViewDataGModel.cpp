@@ -1,4 +1,4 @@
-// $Id: PViewDataGModel.cpp,v 1.53 2008-04-22 07:37:16 geuzaine Exp $
+// $Id: PViewDataGModel.cpp,v 1.54 2008-05-04 08:31:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -44,14 +44,29 @@ bool PViewDataGModel::finalize()
   for(int step = 0; step < getNumTimeSteps(); step++){
     _steps[step]->setMin(VAL_INF);
     _steps[step]->setMax(-VAL_INF);
-    for(int ent = 0; ent < getNumEntities(step); ent++){
-      for(int ele = 0; ele < getNumElements(step, ent); ele++){
-	if(skipElement(step, ent, ele)) continue;
-	for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
-	  double val;
-	  getScalarValue(step, ent, ele, nod, val);
+    if(_type == NodeData || _type == ElementData){
+      // treat these 2 special cases separately for maximum efficiency
+      int numComp = _steps[step]->getNumComponents();
+      for(int i = 0; i < _steps[step]->getNumData(); i++){
+	double *d = _steps[step]->getData(i);
+	if(d){
+	  double val = ComputeScalarRep(numComp, d);
 	  _steps[step]->setMin(std::min(_steps[step]->getMin(), val));
 	  _steps[step]->setMax(std::max(_steps[step]->getMax(), val));
+	}
+      }
+    }
+    else{
+      // general case (slower)
+      for(int ent = 0; ent < getNumEntities(step); ent++){
+	for(int ele = 0; ele < getNumElements(step, ent); ele++){
+	  if(skipElement(step, ent, ele)) continue;
+	  for(int nod = 0; nod < getNumNodes(step, ent, ele); nod++){
+	    double val;
+	    getScalarValue(step, ent, ele, nod, val);
+	    _steps[step]->setMin(std::min(_steps[step]->getMin(), val));
+	    _steps[step]->setMax(std::max(_steps[step]->getMax(), val));
+	  }
 	}
       }
     }
@@ -291,7 +306,7 @@ int PViewDataGModel::getNumValues(int step, int ent, int ele)
     return getNumNodes(step, ent, ele) * getNumComponents(step, ent, ele);
   }
   else{
-    Msg(GERROR, "getNumValues should not be used on this type of view");
+    Msg::Error("getNumValues should not be used on this type of view");
     return 0;
   }
 }
@@ -304,7 +319,7 @@ void PViewDataGModel::getValue(int step, int ent, int ele, int idx, double &val)
     val = sd->getData(e->getNum())[idx];
   }
   else{
-    Msg(GERROR, "getValue(index) should not be used on this type of view");
+    Msg::Error("getValue(index) should not be used on this type of view");
   }
 }
 

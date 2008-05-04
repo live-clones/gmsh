@@ -1,4 +1,4 @@
-// $Id: PluginManager.cpp,v 1.7 2008-03-20 11:44:14 geuzaine Exp $
+// $Id: PluginManager.cpp,v 1.8 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -269,7 +269,7 @@ void GMSH_PluginManager::registerDefaultPlugins()
 void GMSH_PluginManager::addPlugin(char *dirName, char *pluginName)
 {
 #if defined(HAVE_NO_DLL) || !defined(HAVE_FLTK)
-  Msg(WARNING, "No dynamic plugin loading on this platform");
+  Msg::Warning("No dynamic plugin loading on this platform");
 #else
   char dynamic_lib[1024];
   char plugin_name[256];
@@ -278,17 +278,17 @@ void GMSH_PluginManager::addPlugin(char *dirName, char *pluginName)
   char plugin_help[1024];
   class GMSH_Plugin *(*registerPlugin) (void);
   sprintf(dynamic_lib, "%s/%s", dirName, pluginName);
-  Msg(INFO, "Opening Plugin '%s'", dynamic_lib);
+  Msg::Info("Opening Plugin '%s'", dynamic_lib);
   void *hlib = dlopen(dynamic_lib, RTLD_NOW);
   const char *err = dlerror();
   if(!hlib){
-    Msg(WARNING, "Error in opening %s (dlerror = %s)", dynamic_lib, err);
+    Msg::Warning("Error in opening %s (dlerror = %s)", dynamic_lib, err);
     return;
   }
   registerPlugin = (class GMSH_Plugin * (*)(void))dlsym(hlib, GMSH_PluginEntry);
   err = dlerror();
   if(err){
-    Msg(WARNING, "Symbol '%s' missing in plugin '%s' (dlerror = %s)",
+    Msg::Warning("Symbol '%s' missing in plugin '%s' (dlerror = %s)",
         GMSH_PluginEntry, pluginName, err);
     return;
   }
@@ -298,10 +298,10 @@ void GMSH_PluginManager::addPlugin(char *dirName, char *pluginName)
   p->getName(plugin_name);
   p->getInfos(plugin_author, plugin_copyright, plugin_help);
   if(allPlugins.find(plugin_name) != allPlugins.end()) {
-    Msg(WARNING, "Plugin '%s' multiply defined", pluginName);
+    Msg::Warning("Plugin '%s' multiply defined", pluginName);
     return;
   }
   allPlugins.insert(std::pair<const char*, GMSH_Plugin*>(plugin_name, p));
-  Msg(INFO, "Loaded Plugin '%s' (%s)", plugin_name, plugin_author);
+  Msg::Info("Loaded Plugin '%s' (%s)", plugin_name, plugin_author);
 #endif
 }

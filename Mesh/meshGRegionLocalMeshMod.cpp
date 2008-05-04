@@ -1,4 +1,4 @@
-// $Id: meshGRegionLocalMeshMod.cpp,v 1.12 2008-03-20 11:44:09 geuzaine Exp $
+// $Id: meshGRegionLocalMeshMod.cpp,v 1.13 2008-05-04 08:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -99,7 +99,7 @@ bool gmshBuildEdgeCavity(MTet4 *t,
     else if (faces[iFace2][0] == edges[5-iLocalEdge][K] ||
              faces[iFace2][1] == edges[5-iLocalEdge][K] ||
              faces[iFace2][2] == edges[5-iLocalEdge][K] ) iFace = iFace2;
-    else { Msg(GERROR, "Error of connexion"); throw; }
+    else { Msg::Error("Error of connexion"); throw; }
     t=t->getNeigh(iFace);
     if (!t) return false;
     if (t->isDeleted()) throw;
@@ -116,7 +116,7 @@ bool gmshBuildEdgeCavity(MTet4 *t,
       }
     }  
     if (iLocalEdge == -1){
-      Msg(GERROR, "loc = %d", iLocalEdge);
+      Msg::Error("loc = %d", iLocalEdge);
       throw;
     }
   }
@@ -456,7 +456,7 @@ void gmshBuildVertexCavity_recur(MTet4 *t,
 {
   // if (recur > 20)printf("oufti %d\n",recur);
   if(t->isDeleted()){
-    Msg(FATAL,"a deleted triangle is a neighbor of a non deleted triangle");
+    Msg::Fatal("a deleted triangle is a neighbor of a non deleted triangle");
   }
   int iV = -1;
   for (int i = 0; i < 4; i++){
@@ -466,7 +466,7 @@ void gmshBuildVertexCavity_recur(MTet4 *t,
     }
   }
   if (iV == -1){
-    Msg(FATAL, "trying to build a cavity of tets for a vertex that does not "
+    Msg::Fatal("trying to build a cavity of tets for a vertex that does not "
         "belong to this tet");
   }
   for (int i = 0; i < 3; i++){

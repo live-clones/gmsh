@@ -23,11 +23,11 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "List.h"
 #include "SBoundingBox3d.h"
 
 #define VAL_INF 1.e200
 
+class List_T;
 class adaptiveData;
 class GModel;
 class nameData;
@@ -112,7 +112,7 @@ class PViewData {
   // Returns a scalar value (same as value for scalars, norm for
   // vectors, etc.) associated with the node-th node from the ele-th
   // element in the ent-th entity
-  virtual void getScalarValue(int step, int ent, int ele, int nod, double &val);
+  void getScalarValue(int step, int ent, int ele, int nod, double &val);
   // Returns the number of edges of the ele-th element in the ent-th
   // entity
   virtual int getNumEdges(int step, int ent, int ele) = 0;

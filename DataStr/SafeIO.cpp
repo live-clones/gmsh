@@ -1,4 +1,4 @@
-// $Id: SafeIO.cpp,v 1.11 2008-02-17 08:47:56 geuzaine Exp $
+// $Id: SafeIO.cpp,v 1.12 2008-05-04 08:31:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -49,7 +49,7 @@ int safe_fprintf(FILE * stream, char *fmt, ...)
   va_end(args);
 
   if(ferror(stream)) {
-    Msg(GERROR, strerror(errno));
+    Msg::Error(strerror(errno));
     clearerr(stream);
     return 1;
   }
@@ -65,13 +65,13 @@ int safe_fwrite(const void *ptr, size_t size, size_t nmemb, FILE * stream)
 
   if(result < nmemb) {
     if(result >= 0)     /* Partial write */
-      Msg(GERROR, "Disk full");
+      Msg::Error("Disk full");
     else
-      Msg(GERROR, strerror(errno));
+      Msg::Error(strerror(errno));
     if(fflush(stream) < 0)
-      Msg(GERROR, "EOF reached");
+      Msg::Error("EOF reached");
     if(fclose(stream) < 0)
-      Msg(GERROR, strerror(errno));
+      Msg::Error(strerror(errno));
     return 1;
   }
   return 0;

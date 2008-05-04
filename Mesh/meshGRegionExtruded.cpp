@@ -1,4 +1,4 @@
-// $Id: meshGRegionExtruded.cpp,v 1.24 2008-03-20 11:44:09 geuzaine Exp $
+// $Id: meshGRegionExtruded.cpp,v 1.25 2008-05-04 08:31:16 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -56,7 +56,7 @@ void createPriPyrTet(std::vector<MVertex*> &v, GRegion *to)
   }
   else {
     to->prisms.push_back(new MPrism(v));
-    if(j) Msg(GERROR, "Degenerated prism in extrusion of volume %d", to->tag());
+    if(j) Msg::Error("Degenerated prism in extrusion of volume %d", to->tag());
   }
 }
 
@@ -78,11 +78,11 @@ void createHexPri(std::vector<MVertex*> &v, GRegion *to)
     else if(dup[0] == 0 && dup[1] == 3)
       to->prisms.push_back(new MPrism(v[0], v[1], v[5], v[3], v[2], v[6]));
     else
-      Msg(GERROR, "Uncoherent hexahedron in extrusion of volume %d", to->tag());
+      Msg::Error("Uncoherent hexahedron in extrusion of volume %d", to->tag());
   }
   else {
     to->hexahedra.push_back(new MHexahedron(v));
-    if(j) Msg(GERROR, "Degenerated hexahedron in extrusion of volume %d", to->tag());
+    if(j) Msg::Error("Degenerated hexahedron in extrusion of volume %d", to->tag());
   }
 }
 
@@ -113,11 +113,11 @@ int getExtrudedVertices(MElement *ele, ExtrudeParams *ep, int j, int k,
     MVertex tmp(x[p], y[p], z[p], 0, -1);
     itp = pos.find(&tmp);
     if(itp == pos.end()){ // FIXME: workaround
-      Msg(INFO, "Linear search for (%.16g, %.16g, %.16g)", tmp.x(), tmp.y(), tmp.z());
+      Msg::Info("Linear search for (%.16g, %.16g, %.16g)", tmp.x(), tmp.y(), tmp.z());
       itp = tmp.linearSearch(pos);
     }
     if(itp == pos.end())
-      Msg(GERROR, "Could not find extruded vertex (%.16g, %.16g, %.16g)",
+      Msg::Error("Could not find extruded vertex (%.16g, %.16g, %.16g)",
           tmp.x(), tmp.y(), tmp.z());
     else
       verts.push_back(*itp);
@@ -199,7 +199,7 @@ void meshGRegionExtruded::operator() (GRegion *gr)
 
   if(!ep || !ep->mesh.ExtrudeMesh || ep->geo.Mode != EXTRUDED_ENTITY) return;
 
-  Msg(STATUS2, "Meshing volume %d (extruded)", gr->tag());
+  Msg::Status(2, true, "Meshing volume %d (extruded)", gr->tag());
 
   // destroy the mesh if it exists
   deMeshGRegion dem;
@@ -214,7 +214,7 @@ void meshGRegionExtruded::operator() (GRegion *gr)
   // volume is extruded from a surface
   GFace *from = gr->model()->getFaceByTag(std::abs(ep->geo.Source));
   if(!from){
-    Msg(GERROR, "Unknown source surface %d for extrusion", ep->geo.Source);
+    Msg::Error("Unknown source surface %d for extrusion", ep->geo.Source);
     return;
   }
 
@@ -435,7 +435,7 @@ int SubdivideExtrudedMesh(GModel *m)
 
   if(regions.empty()) return 0;
 
-  Msg(INFO, "Subdividing extruded mesh");
+  Msg::Info("Subdividing extruded mesh");
 
   // create edges on lateral sides of "prisms"
   std::set<std::pair<MVertex*, MVertex*> > edges;
@@ -449,10 +449,10 @@ int SubdivideExtrudedMesh(GModel *m)
     swap = 0;
     for(unsigned int i = 0; i < regions.size(); i++)
       phase2(regions[i], pos, edges, edges_swap, swap);
-    Msg(INFO, "Swapping %d", swap);
+    Msg::Info("Swapping %d", swap);
     if(j && j == swap) {
-      Msg(GERROR, "Unable to subdivide extruded mesh: change surface mesh or");
-      Msg(GERROR, "recombine extrusion instead");
+      Msg::Error("Unable to subdivide extruded mesh: change surface mesh or");
+      Msg::Error("recombine extrusion instead");
       return -1;
     }
     j = swap;
@@ -484,7 +484,7 @@ int SubdivideExtrudedMesh(GModel *m)
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY && 
        !ep->mesh.Recombine){
       GFace *gf = *it;
-      Msg(INFO, "Remeshing surface %d", gf->tag());
+      Msg::Info("Remeshing surface %d", gf->tag());
       for(unsigned int i = 0; i < gf->triangles.size(); i++) 
         delete gf->triangles[i];
       gf->triangles.clear();

@@ -1,4 +1,4 @@
-// $Id: PViewIO.cpp,v 1.5 2008-04-06 07:51:37 geuzaine Exp $
+// $Id: PViewIO.cpp,v 1.6 2008-05-04 08:31:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -32,7 +32,7 @@ bool PView::readPOS(std::string fileName, int fileIndex)
 {
   FILE *fp = fopen(fileName.c_str(), "rb");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", fileName.c_str());
+    Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
   }
 
@@ -53,17 +53,17 @@ bool PView::readPOS(std::string fileName, int fileIndex)
     if(!strncmp(&str[1], "PostFormat", 10)) {
 
       if(!fscanf(fp, "%lf %d %d\n", &version, &format, &size)){
-        Msg(GERROR, "Read error");
+        Msg::Error("Read error");
         return false;
       }
       if(version < 1.0) {
-        Msg(GERROR, "Post-processing file too old (ver. %g < 1.0)", version);
+        Msg::Error("Post-processing file too old (ver. %g < 1.0)", version);
         return false;
       }
       if(size == sizeof(double))
-        Msg(DEBUG, "Data is in double precision format (size==%d)", size);
+        Msg::Debug("Data is in double precision format (size==%d)", size);
       else {
-        Msg(GERROR, "Unknown data size (%d) in post-processing file", size);
+        Msg::Error("Unknown data size (%d) in post-processing file", size);
         return false;
       }
       if(format == 0)
@@ -71,7 +71,7 @@ bool PView::readPOS(std::string fileName, int fileIndex)
       else if(format == 1)
         format = LIST_FORMAT_BINARY;
       else {
-        Msg(GERROR, "Unknown format for view");
+        Msg::Error("Unknown format for view");
         return false;
       }
 
@@ -82,7 +82,7 @@ bool PView::readPOS(std::string fileName, int fileIndex)
       if(fileIndex < 0 || fileIndex == index){
         PViewDataList *d = new PViewDataList(false);
         if(!d->readPOS(fp, version, format, size)){
-          Msg(GERROR, "Could not read data in list format");
+          Msg::Error("Could not read data in list format");
           delete d;
           return false;
         }
@@ -111,7 +111,7 @@ bool PView::readMSH(std::string fileName, int fileIndex)
 {
   FILE *fp = fopen(fileName.c_str(), "rb");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", fileName.c_str());
+    Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
   }
 
@@ -136,12 +136,12 @@ bool PView::readMSH(std::string fileName, int fileIndex)
       if(sscanf(str, "%lf %d %d", &version, &format, &size) != 3) return false;
       if(format){
         binary = true;
-        Msg(INFO, "Mesh is in binary format");
+        Msg::Info("Mesh is in binary format");
         int one;
         if(fread(&one, sizeof(int), 1, fp) != 1) return 0;
         if(one != 1){
           swap = true;
-          Msg(INFO, "Swapping bytes from binary file");
+          Msg::Info("Swapping bytes from binary file");
         }
       }
     }
@@ -206,7 +206,7 @@ bool PView::readMSH(std::string fileName, int fileIndex)
 	if(create) d = new PViewDataGModel(type);
         if(!d->readMSH(fileName, fileIndex, fp, binary, swap, timeStep, 
                        time, partition, numComp, numEnt)){
-          Msg(GERROR, "Could not read data in msh file");
+          Msg::Error("Could not read data in msh file");
           if(create) delete d;
           return false;
         }
@@ -239,14 +239,14 @@ bool PView::readMED(std::string fileName, int fileIndex)
 {
   med_idt fid = MEDouvrir((char*)fileName.c_str(), MED_LECTURE);
   if(fid < 0) {
-    Msg(GERROR, "Unable to open file '%s'", fileName.c_str());
+    Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
   }
   
   med_int numFields = MEDnChamp(fid, 0);
 
   if(MEDfermer(fid) < 0){
-    Msg(GERROR, "Unable to close file '%s'", (char*)fileName.c_str());
+    Msg::Error("Unable to close file '%s'", (char*)fileName.c_str());
     return false;
   }
 
@@ -254,7 +254,7 @@ bool PView::readMED(std::string fileName, int fileIndex)
     if(fileIndex < 0 || index == fileIndex){
       PViewDataGModel *d = new PViewDataGModel();
       if(!d->readMED(fileName, index)){
-	Msg(GERROR, "Could not read data in MED file");
+	Msg::Error("Could not read data in MED file");
 	delete d;
 	return false;
       }
@@ -273,7 +273,7 @@ bool PView::readMED(std::string fileName, int fileIndex)
 
 bool PView::readMED(std::string fileName, int fileIndex)
 {
-  Msg(GERROR, "Gmsh must be compiled with MED support to read '%s'", 
+  Msg::Error("Gmsh must be compiled with MED support to read '%s'", 
       fileName.c_str());
   return false;
 }
@@ -282,7 +282,7 @@ bool PView::readMED(std::string fileName, int fileIndex)
 
 bool PView::write(std::string fileName, int format, bool append)
 {
-  Msg(STATUS2, "Writing '%s'", fileName.c_str());
+  Msg::Status(2, true, "Writing '%s'", fileName.c_str());
   
   bool ret;
   switch(format){
@@ -293,9 +293,9 @@ bool PView::write(std::string fileName, int format, bool append)
   case 4: ret = _data->writeTXT(fileName); break;
   case 5: ret = _data->writeMSH(fileName); break;
   case 6: ret = _data->writeMED(fileName); break;
-  default: ret = false; Msg(GERROR, "Unknown view format %d", format); break;
+  default: ret = false; Msg::Error("Unknown view format %d", format); break;
   }
   
-  if(ret) Msg(STATUS2, "Wrote '%s'", fileName.c_str());
+  if(ret) Msg::Status(2, true, "Wrote '%s'", fileName.c_str());
   return ret;
 }

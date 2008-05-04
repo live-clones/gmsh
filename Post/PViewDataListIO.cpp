@@ -1,4 +1,4 @@
-// $Id: PViewDataListIO.cpp,v 1.19 2008-04-06 07:51:37 geuzaine Exp $
+// $Id: PViewDataListIO.cpp,v 1.20 2008-05-04 08:31:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -37,39 +37,39 @@ bool PViewDataList::readPOS(FILE *fp, double version, int format, int size)
   int t2l, t3l;
 
   if(version <= 1.0) {
-    Msg(DEBUG, "Detected post-processing view format <= 1.0");
+    Msg::Debug("Detected post-processing view format <= 1.0");
     if(!fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
                name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
                &NbST, &NbVT, &NbTT, &NbSS, &NbVS, &NbTS)){
-      Msg(GERROR, "Read error");
+      Msg::Error("Read error");
       return false;
     }
     NbT2 = t2l = NbT3 = t3l = 0;
   }
   else if(version == 1.1) {
-    Msg(DEBUG, "Detected post-processing view format 1.1");
+    Msg::Debug("Detected post-processing view format 1.1");
     if(!fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
                name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL, 
                &NbST, &NbVT, &NbTT, &NbSS, &NbVS, &NbTS, &NbT2, &t2l, &NbT3,
                &t3l)){
-      Msg(GERROR, "Read error");
+      Msg::Error("Read error");
       return false;
     }
   }
   else if(version == 1.2 || version == 1.3) {
-    Msg(DEBUG, "Detected post-processing view format %g", version);
+    Msg::Debug("Detected post-processing view format %g", version);
     if(!fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
                "%d %d %d %d %d %d %d %d %d %d %d %d %d\n",
                name, &NbTimeStep, &NbSP, &NbVP, &NbTP, &NbSL, &NbVL, &NbTL,
                &NbST, &NbVT, &NbTT, &NbSQ, &NbVQ, &NbTQ, &NbSS, &NbVS, &NbTS, 
                &NbSH, &NbVH, &NbTH, &NbSI, &NbVI, &NbTI, &NbSY, &NbVY, &NbTY,
                &NbT2, &t2l, &NbT3, &t3l)){
-      Msg(GERROR, "Read error");
+      Msg::Error("Read error");
       return false;
     }
   }
   else if(version == 1.4) {
-    Msg(DEBUG, "Detected post-processing view format 1.4");
+    Msg::Debug("Detected post-processing view format 1.4");
     if(!fscanf(fp, "%s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
                "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
                "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
@@ -79,12 +79,12 @@ bool PViewDataList::readPOS(FILE *fp, double version, int format, int size)
                &NbSL2, &NbVL2, &NbTL2, &NbST2, &NbVT2, &NbTT2, &NbSQ2, &NbVQ2, 
                &NbTQ2, &NbSS2, &NbVS2, &NbTS2, &NbSH2, &NbVH2, &NbTH2, &NbSI2, 
                &NbVI2, &NbTI2, &NbSY2, &NbVY2, &NbTY2, &NbT2, &t2l, &NbT3, &t3l)){
-      Msg(GERROR, "Read error");
+      Msg::Error("Read error");
       return false;
     }
   }
   else {
-    Msg(GERROR, "Unknown post-processing file format (version %g)", version);
+    Msg::Error("Unknown post-processing file format (version %g)", version);
     return false;
   }
   
@@ -96,11 +96,11 @@ bool PViewDataList::readPOS(FILE *fp, double version, int format, int size)
   if(format == LIST_FORMAT_BINARY) {
     int testone;
     if(!fread(&testone, sizeof(int), 1, fp)){
-      Msg(GERROR, "Read error");
+      Msg::Error("Read error");
       return false;
     }
     if(testone != 1) {
-      Msg(INFO, "Swapping bytes from binary file");
+      Msg::Info("Swapping bytes from binary file");
       swap = 1;
     }
   }
@@ -207,7 +207,7 @@ bool PViewDataList::readPOS(FILE *fp, double version, int format, int size)
   else
     T3C = List_CreateFromFile(t3l, 100, sizeof(char), fp, format, swap);
   
-  Msg(DEBUG,
+  Msg::Debug(
       "Read View '%s' (%d TimeSteps): "
       "SP(%d/%d) VP(%d/%d) TP(%d/%d) "
       "SL(%d/%d) VL(%d/%d) TL(%d/%d) "
@@ -321,7 +321,7 @@ bool PViewDataList::writePOS(std::string fileName, bool binary, bool parsed, boo
   FILE *fp = fopen(fileName.c_str(), 
                    append ? (binary ? "ab" : "a") : (binary ? "wb" : "w"));
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", fileName.c_str());
+    Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
   }
 
@@ -351,7 +351,7 @@ bool PViewDataList::writePOS(std::string fileName, bool binary, bool parsed, boo
     if(binary) {
       int one = 1;
       if(!fwrite(&one, sizeof(int), 1, fp)){
-        Msg(GERROR, "Write error");
+        Msg::Error("Write error");
         return false;
       }
     }
@@ -497,7 +497,7 @@ static void writeElementsMSH(FILE *fp, int nbelm, List_T *list,
       pVertex n(x[j], y[j], z[j]);
       std::set<pVertex, pVertexLessThan>::iterator it = nodes->find(n);
       if(it == nodes->end()){
-        Msg(GERROR, "Unknown node in element");
+        Msg::Error("Unknown node in element");
         return;
       }
       else{
@@ -513,11 +513,11 @@ bool PViewDataList::writeMSH(std::string fileName, bool binary)
 {
   FILE *fp = fopen(fileName.c_str(), "w");
   if(!fp){
-    Msg(GERROR, "Unable to open file '%s'", fileName.c_str());
+    Msg::Error("Unable to open file '%s'", fileName.c_str());
     return false;
   }
 
-  if(binary) Msg(WARNING, "Binary write not implemented yet");
+  if(binary) Msg::Warning("Binary write not implemented yet");
 
   std::set<pVertex, pVertexLessThan> nodes;
   int numelm = 0;

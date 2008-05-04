@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.48 2008-04-28 10:10:52 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.49 2008-05-04 08:31:13 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -138,7 +138,7 @@ std::string GEdge::getAdditionalInfoString()
 
 GPoint GEdge::closestPoint(const SPoint3 & queryPoint) const
 {
-  Msg(GERROR, "Closet point not implemented for this type of edge");
+  Msg::Error("Closet point not implemented for this type of edge");
   return GPoint(0, 0, 0);
 }
 

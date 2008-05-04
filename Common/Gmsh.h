@@ -21,5 +21,6 @@
 
 int GmshInitialize(int argc, char **argv);
 int GmshFinalize();
+int GmshBatch();
 
 #endif

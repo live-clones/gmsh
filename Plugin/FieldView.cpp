@@ -1,4 +1,4 @@
-// $Id: FieldView.cpp,v 1.8 2008-03-20 11:44:13 geuzaine Exp $
+// $Id: FieldView.cpp,v 1.9 2008-05-04 08:31:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -73,7 +73,7 @@ PView *GMSH_FieldViewPlugin::execute(PView *v)
   int iField = (int)FieldViewOptions_Number[2].def;
   Field *field = GModel::current()->getFields()->get(iField);
   if(!field){
-    Msg(GERROR, "Field[%d] does not exist", iField);
+    Msg::Error("Field[%d] does not exist", iField);
     return v;
   }
   PView *v1 = getView(iView, v);

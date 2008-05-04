@@ -28,7 +28,7 @@ endif
 LINKER=cl /F16777216
 
 # All compiler flags except optimization flags
-FLAGS=/DWIN32 /D_USE_MATH_DEFINES /DHAVE_NO_DLL /DHAVE_NO_VSNPRINTF /DHAVE_NO_SNPRINTF /DHAVE_NO_SOCKLEN_T /DHAVE_ANN /DHAVE_MATH_EVAL /DHAVE_NETGEN /DHAVE_TETGEN
+FLAGS=/DWIN32 /D_USE_MATH_DEFINES /DHAVE_NO_DLL /DHAVE_NO_VSNPRINTF /DHAVE_NO_SNPRINTF /DHAVE_NO_SOCKLEN_T /DHAVE_ANN /DHAVE_MATH_EVAL /DHAVE_TETGEN
 
 # Additional system includes ($INCLUDE is automatically defined by MSVC when
 # you launch the MSVC command prompt)
@@ -38,10 +38,10 @@ SYSINCLUDE=/I"${INCLUDE}"
 OPTIM=/O2
 
 # Gmsh subdirectories
-GMSH_DIRS=Box Common DataStr Geo Mesh Post Numeric Parallel Parser Plugin contrib/ANN contrib/MathEval contrib/Netgen contrib/NR contrib/Tetgen
+GMSH_DIRS=Common DataStr Geo Mesh Post Numeric Parallel Parser Plugin contrib/ANN contrib/MathEval contrib/NR contrib/Tetgen
 
 # Gmsh libraries
-GMSH_LIBS=Box/Main.obj lib/*.lib
+GMSH_LIBS=Common/Main.obj lib/*.lib
 
 # How you create a static library on this machine
 AR=LIB
