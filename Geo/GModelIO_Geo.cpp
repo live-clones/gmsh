@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.21 2008-05-04 08:31:13 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.22 2008-05-04 15:43:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,7 @@ void GModel::_deleteGEOInternals()
 
 int GModel::readGEO(const std::string &name)
 {
-  ParseFile((char*)name.c_str(), 1);
+  ParseFile(name.c_str(), 1);
   return importGEOInternals();
 }
 

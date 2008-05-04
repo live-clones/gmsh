@@ -1,4 +1,4 @@
-// $Id: PViewIO.cpp,v 1.6 2008-05-04 08:31:24 geuzaine Exp $
+// $Id: PViewIO.cpp,v 1.7 2008-05-04 15:43:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -246,7 +246,7 @@ bool PView::readMED(std::string fileName, int fileIndex)
   med_int numFields = MEDnChamp(fid, 0);
 
   if(MEDfermer(fid) < 0){
-    Msg::Error("Unable to close file '%s'", (char*)fileName.c_str());
+    Msg::Error("Unable to close file '%s'", fileName.c_str());
     return false;
   }
 
