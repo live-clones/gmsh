@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.87 2008-05-04 08:31:13 geuzaine Exp $
+// $Id: GModel.cpp,v 1.88 2008-05-04 09:01:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -60,13 +60,13 @@ GModel::~GModel()
   std::vector<GModel*>::iterator it = std::find(list.begin(), list.end(), this);
   if(it != list.end()) list.erase(it);
 
+  destroy();
+
 #if !defined(HAVE_GMSH_EMBEDDED)
   _deleteGEOInternals();
   _deleteOCCInternals();
   delete _fields;
 #endif
-
-  destroy();
 }
 
 GModel *GModel::current(int index)
