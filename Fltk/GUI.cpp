@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.686 2008-05-04 08:31:12 geuzaine Exp $
+// $Id: GUI.cpp,v 1.687 2008-05-06 21:11:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1168,7 +1168,7 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
     return;
   }
 
-  Msg::Status(1, false, menu[0].label + 1);
+  Msg::StatusBar(1, false, menu[0].label + 1);
 
   // Remove all the children (m_push*, m_toggle*, m_pop*). FLTK <=
   // 1.1.4 should be OK with this. FLTK 1.1.5 may crash as it may
@@ -4286,7 +4286,7 @@ void GUI::save_message(const char *filename)
     return;
   }
 
-  Msg::Status(2, true, "Writing '%s'", filename);
+  Msg::StatusBar(2, true, "Writing '%s'", filename);
   for(int i = 1; i <= msg_browser->size(); i++) {
     const char *c = msg_browser->text(i);
     if(c[0] == '@')
@@ -4294,7 +4294,7 @@ void GUI::save_message(const char *filename)
     else
       fprintf(fp, "%s\n", c);
   }
-  Msg::Status(2, true, "Wrote '%s'", filename);
+  Msg::StatusBar(2, true, "Wrote '%s'", filename);
   fclose(fp);
 }
 

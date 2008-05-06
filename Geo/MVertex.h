@@ -44,7 +44,8 @@ class MVertex{
   int _num;
   // a vertex index, used for example when saving a mesh (this index
   // is not necessarily unique, can change after mesh renumbering,
-  // etc.)
+  // ...). By convention, vertices with negative indices are not
+  // saved
   int _index;
   // a visibility and polynomial order flags
   char _visible, _order;
@@ -124,6 +125,7 @@ class MVertex{
                 int elementary, int physical);
   void writeVRML(FILE *fp, double scalingFactor=1.0);
   void writeUNV(FILE *fp, double scalingFactor=1.0);
+  void writeVTK(FILE *fp, bool binary=false, double scalingFactor=1.0);
   void writeMESH(FILE *fp, double scalingFactor=1.0);
   void writeBDF(FILE *fp, int format=0, double scalingFactor=1.0);
 };

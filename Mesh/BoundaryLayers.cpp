@@ -1,4 +1,4 @@
-// $Id: BoundaryLayers.cpp,v 1.2 2008-05-04 08:31:15 geuzaine Exp $
+// $Id: BoundaryLayers.cpp,v 1.3 2008-05-06 21:11:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -144,7 +144,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
     GFace *gf = *it;
     if(gf->geomType() == GEntity::BoundaryLayerSurface){
-      Msg::Status(2, true, "Meshing surface %d (%s)", gf->tag(), gf->getTypeString().c_str());
+      Msg::StatusBar(2, true, "Meshing surface %d (%s)", gf->tag(), gf->getTypeString().c_str());
       deMeshGFace dem;
       dem(gf);
       MeshExtrudedSurface(gf);

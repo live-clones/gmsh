@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.21 2008-05-04 08:31:13 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.22 2008-05-06 21:11:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -89,7 +89,7 @@ void add_infile(const char *text, const char *fich, bool deleted_something)
   }
 
   fprintf(gmsh_yyin, "%s\n", text);
-  Msg::Status(2, true, "%s", text);
+  Msg::StatusBar(2, true, "%s", text);
   fclose(gmsh_yyin);
   gmsh_yyin = fopen(CTX.tmp_filename_fullpath, "r");
   while(!feof(gmsh_yyin)) {

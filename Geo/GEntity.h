@@ -234,10 +234,10 @@ class GEntity {
   virtual void resetMeshAttributes() { return; }
 
   // Gets the number of mesh elements in the entity
-  virtual unsigned int getNumMeshElements() { throw; }
+  virtual unsigned int getNumMeshElements() { return 0; }
 
   // Gets the element at the given index
-  virtual MElement *getMeshElement(unsigned int index) { throw; }
+  virtual MElement *getMeshElement(unsigned int index) { return 0; }
 
   // Get/set all mesh element visibility flag
   bool getAllElementsVisible(){ return _allElementsVisible ? true : false; }

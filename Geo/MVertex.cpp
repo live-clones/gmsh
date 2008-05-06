@@ -1,4 +1,4 @@
-// $Id: MVertex.cpp,v 1.23 2008-03-29 21:36:29 geuzaine Exp $
+// $Id: MVertex.cpp,v 1.24 2008-05-06 21:11:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -102,6 +102,20 @@ void MVertex::writeUNV(FILE *fp, double scalingFactor)
           y() * scalingFactor, z() * scalingFactor);
   for(unsigned int i = 0; i < strlen(tmp); i++) if(tmp[i] == 'E') tmp[i] = 'D';
   fprintf(fp, tmp);
+}
+
+void MVertex::writeVTK(FILE *fp, bool binary, double scalingFactor)
+{
+  if(_index < 0) return; // negative index vertices are never saved
+
+  if(binary){
+    double data[3] = {x() * scalingFactor, y() * scalingFactor, z() * scalingFactor};
+    fwrite(data, sizeof(double), 3, fp);
+  }
+  else{
+    fprintf(fp, "%.16g %.16g %.16g\n",
+	    x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
+  }
 }
 
 void MVertex::writeMESH(FILE *fp, double scalingFactor)

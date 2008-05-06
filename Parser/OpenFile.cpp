@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.187 2008-05-04 08:31:23 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.188 2008-05-06 21:11:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -303,7 +303,7 @@ int MergeFile(const char *name, int warn_if_missing)
   fgets(header, sizeof(header), fp);
   fclose(fp);
 
-  Msg::Status(2, true, "Reading '%s'", name);
+  Msg::StatusBar(2, true, "Reading '%s'", name);
 
   char no_ext[256], ext[256], base[256];
   SplitFileName(name, no_ext, ext, base);
@@ -440,7 +440,7 @@ int MergeFile(const char *name, int warn_if_missing)
     WID->update_views();
 #endif
 
-  Msg::Status(2, true, "Read '%s'", name);
+  Msg::StatusBar(2, true, "Read '%s'", name);
   return status;
 }
 

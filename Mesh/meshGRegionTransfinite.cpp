@@ -1,4 +1,4 @@
-// $Id: meshGRegionTransfinite.cpp,v 1.10 2008-05-04 08:31:16 geuzaine Exp $
+// $Id: meshGRegionTransfinite.cpp,v 1.11 2008-05-06 21:11:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -280,7 +280,7 @@ int MeshTransfiniteVolume(GRegion *gr)
 {
   if(gr->meshAttributes.Method != TRANSFINI) return 0;
 
-  Msg::Status(2, true, "Meshing volume %d (transfinite)", gr->tag());
+  Msg::StatusBar(2, true, "Meshing volume %d (transfinite)", gr->tag());
 
   std::list<GFace*> faces = gr->faces();
   if(faces.size() != 5 && faces.size() != 6){

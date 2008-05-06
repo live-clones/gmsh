@@ -660,10 +660,10 @@ void select_cb(Fl_Widget *w, void *data)
     Draw();
 
     if(ele.size() || ent.size())
-      Msg::Status(3, false, "Select %s\n[Press 'e' to end selection, 'u' to undo" 
+      Msg::StatusBar(3, false, "Select %s\n[Press 'e' to end selection, 'u' to undo" 
 		  "last selection or 'q' to abort]", str);
     else
-      Msg::Status(3, false, "Select %s\n"
+      Msg::StatusBar(3, false, "Select %s\n"
 		  "[Press 'e' to end selection or 'q' to abort]", str);
 
     char ib = SelectEntity(what, vertices, edges, faces, regions, elements);
@@ -729,7 +729,7 @@ void select_cb(Fl_Widget *w, void *data)
   CTX.mesh.changed = ENT_ALL;
   CTX.pick_elements = 0;
   Draw();  
-  Msg::Status(3, false, "");
+  Msg::StatusBar(3, false, "");
 }
 
 void filter_cb(Fl_Widget *w, void *data)
@@ -1039,7 +1039,7 @@ void action_cb(Fl_Widget *w, void *data)
         faces.push_back(*it);
   }
   else if(what == "delete_select" || what == "save_select"){
-    Msg::Status(3, false, "Select Surface\n[Press 'e' to end selection 'q' to abort]");
+    Msg::StatusBar(3, false, "Select Surface\n[Press 'e' to end selection 'q' to abort]");
     std::vector<GVertex*> vertices;
     std::vector<GEdge*> edges;
     std::vector<GFace*> faces;
@@ -1047,7 +1047,7 @@ void action_cb(Fl_Widget *w, void *data)
     std::vector<MElement*> elements;
     char ib = SelectEntity(ENT_SURFACE, vertices, edges, faces, regions, elements);
     if(ib == 'l') faces.insert(faces.end(), faces.begin(), faces.end());
-    Msg::Status(3, false, "");
+    Msg::StatusBar(3, false, "");
   }
 
   if(what[0] == 'd'){

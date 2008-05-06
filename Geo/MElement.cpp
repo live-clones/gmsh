@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.66 2008-05-04 08:31:13 geuzaine Exp $
+// $Id: MElement.cpp,v 1.67 2008-05-06 21:11:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -533,6 +533,29 @@ void MElement::writeVRML(FILE *fp)
   for(int i = 0; i < getNumVertices(); i++)
     fprintf(fp, "%d,", getVertex(i)->getIndex() - 1);
   fprintf(fp, "-1,\n");
+}
+
+void MElement::writeVTK(FILE *fp, bool binary)
+{
+  int type = getTypeForUNV();
+  if(!type) return;
+
+  setVolumePositive();
+
+  int n = getNumVertices();
+  if(binary){
+    int verts[30];
+    verts[0] = n;
+    for(int i = 0; i < n; i++)
+      verts[i + 1] = getVertexVTK(i)->getIndex() - 1;
+    fwrite(verts, sizeof(int), n + 1, fp);
+  }
+  else{
+    fprintf(fp, "%d", n);
+    for(int i = 0; i < n; i++)
+      fprintf(fp, " %d", getVertexVTK(i)->getIndex() - 1);
+    fprintf(fp, "\n");
+  }
 }
 
 void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)

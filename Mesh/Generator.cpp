@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.143 2008-05-04 08:31:15 geuzaine Exp $
+// $Id: Generator.cpp,v 1.144 2008-05-06 21:11:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -177,7 +177,7 @@ static bool TooManyElements(GModel *m, int dim)
 static void Mesh1D(GModel *m)
 {
   if(TooManyElements(m, 1)) return;
-  Msg::Status(1, true, "Meshing 1D...");
+  Msg::StatusBar(1, true, "Meshing 1D...");
   double t1 = Cpu();
 
   std::for_each(m->firstEdge(), m->lastEdge(), meshGEdge());
@@ -185,7 +185,7 @@ static void Mesh1D(GModel *m)
   double t2 = Cpu();
   CTX.mesh_timer[0] = t2 - t1;
   Msg::Info("Mesh 1D complete (%g s)", CTX.mesh_timer[0]);
-  Msg::Status(1, true, "Mesh");
+  Msg::StatusBar(1, true, "Mesh");
 }
 
 static void PrintMesh2dStatistics(GModel *m)
@@ -250,7 +250,7 @@ static void Mesh2D(GModel *m)
 	"Continue", "Cancel")) return;
   }
   
-  Msg::Status(1, true, "Meshing 2D...");
+  Msg::StatusBar(1, true, "Meshing 2D...");
   double t1 = Cpu();
 
   // boundary layers are special: their generation (including vertices
@@ -278,7 +278,7 @@ static void Mesh2D(GModel *m)
   double t2 = Cpu();
   CTX.mesh_timer[1] = t2 - t1;
   Msg::Info("Mesh 2D complete (%g s)", CTX.mesh_timer[1]);
-  Msg::Status(1, true, "Mesh");
+  Msg::StatusBar(1, true, "Mesh");
 
   PrintMesh2dStatistics(m);
 }
@@ -293,7 +293,7 @@ static void FindConnectedRegions(std::vector<GRegion*> &delaunay,
 static void Mesh3D(GModel *m)
 {
   if(TooManyElements(m, 3)) return;
-  Msg::Status(1, true, "Meshing 3D...");
+  Msg::StatusBar(1, true, "Meshing 3D...");
   double t1 = Cpu();
 
   // mesh the extruded volumes first
@@ -318,36 +318,36 @@ static void Mesh3D(GModel *m)
   double t2 = Cpu();
   CTX.mesh_timer[2] = t2 - t1;
   Msg::Info("Mesh 3D complete (%g s)", CTX.mesh_timer[2]);
-  Msg::Status(1, true, "Mesh");
+  Msg::StatusBar(1, true, "Mesh");
 }
 
 void OptimizeMeshNetgen(GModel *m)
 {
-  Msg::Status(1, true, "Optimizing 3D with Netgen...");
+  Msg::StatusBar(1, true, "Optimizing 3D with Netgen...");
   double t1 = Cpu();
 
   std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionNetgen());
 
   double t2 = Cpu();
   Msg::Info("Mesh 3D optimization with Netgen complete (%g s)", t2 - t1);
-  Msg::Status(1, true, "Mesh");
+  Msg::StatusBar(1, true, "Mesh");
 }
 
 void OptimizeMesh(GModel *m)
 {
-  Msg::Status(1, true, "Optimizing 3D...");
+  Msg::StatusBar(1, true, "Optimizing 3D...");
   double t1 = Cpu();
 
   std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionGmsh());
 
   double t2 = Cpu();
   Msg::Info("Mesh 3D optimization complete (%g s)", t2 - t1);
-  Msg::Status(1, true, "Mesh");
+  Msg::StatusBar(1, true, "Mesh");
 }
 
 void AdaptMesh(GModel *m)
 {
-  Msg::Status(1, true, "Adapting the 3D Mesh...");
+  Msg::StatusBar(1, true, "Adapting the 3D Mesh...");
   double t1 = Cpu();
 
   if(CTX.threads_lock) {
@@ -370,7 +370,7 @@ void AdaptMesh(GModel *m)
 
   double t2 = Cpu();
   Msg::Info("Mesh Adaptation complete (%g s)", t2 - t1);
-  Msg::Status(1, true, "Mesh");
+  Msg::StatusBar(1, true, "Mesh");
 }
 
 void GenerateMesh(GModel *m, int ask)

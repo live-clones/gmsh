@@ -58,7 +58,7 @@ class Message {
   static void Info(const char *fmt, ...);
   static void Direct(const char *fmt, ...);
   static void Direct(int level, const char *fmt, ...);
-  static void Status(int num, bool log, const char *fmt, ...);
+  static void StatusBar(int num, bool log, const char *fmt, ...);
   static void Debug(const char *fmt, ...);
   static void ProgressMeter(int n, int N, const char *fmt, ...);
   static void ProgressMeter(int n, int N){ ProgressMeter(n, N, ""); }

@@ -145,6 +145,9 @@ class GModel
 
   void snapVertices();
 
+  // Get a vector containing all the entities in the model
+  std::vector<GEntity*> getEntities();
+
   // Checks if there are no physical entities in the model
   bool noPhysicalGroups();
 
@@ -192,7 +195,8 @@ class GModel
   // "number" of dimension "dim"
   void getMeshVertices(int number, int dim, std::vector<MVertex*> &);
 
-  // index all the (used) mesh vertices in a continuous sequence
+  // index all the (used) mesh vertices in a continuous sequence,
+  // starting at 1
   int indexMeshVertices(bool all);
 
   // Deletes all invisble mesh elements
@@ -277,6 +281,11 @@ class GModel
   int readMED(const std::string &name, int meshIndex);
   int writeMED(const std::string &name, 
 	       bool saveAll=false, double scalingFactor=1.0);
+
+  // VTK format
+  int readVTK(const std::string &name);
+  int writeVTK(const std::string &name, bool binary=false,
+               bool saveAll=false, double scalingFactor=1.0);
 };
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.88 2008-05-04 09:01:19 geuzaine Exp $
+// $Id: GModel.cpp,v 1.89 2008-05-06 21:11:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -221,6 +221,20 @@ void GModel::snapVertices()
     }
     vit++;
   }
+}
+
+std::vector<GEntity*> GModel::getEntities()
+{
+  std::vector<GEntity*> entities;
+  for(GModel::viter it = firstVertex(); it != lastVertex(); ++it)
+    entities.push_back(*it);
+  for(GModel::eiter it = firstEdge(); it != lastEdge(); ++it)
+    entities.push_back(*it);
+  for(GModel::fiter it = firstFace(); it != lastFace(); ++it)
+    entities.push_back(*it);
+  for(GModel::riter it = firstRegion(); it != lastRegion(); ++it)
+    entities.push_back(*it);
+  return entities;
 }
 
 bool GModel::noPhysicalGroups()

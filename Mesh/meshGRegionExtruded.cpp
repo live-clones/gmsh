@@ -1,4 +1,4 @@
-// $Id: meshGRegionExtruded.cpp,v 1.25 2008-05-04 08:31:16 geuzaine Exp $
+// $Id: meshGRegionExtruded.cpp,v 1.26 2008-05-06 21:11:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -199,7 +199,7 @@ void meshGRegionExtruded::operator() (GRegion *gr)
 
   if(!ep || !ep->mesh.ExtrudeMesh || ep->geo.Mode != EXTRUDED_ENTITY) return;
 
-  Msg::Status(2, true, "Meshing volume %d (extruded)", gr->tag());
+  Msg::StatusBar(2, true, "Meshing volume %d (extruded)", gr->tag());
 
   // destroy the mesh if it exists
   deMeshGRegion dem;

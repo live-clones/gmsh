@@ -58,13 +58,7 @@ class stepData{
     : _model(model), _fileName(fileName), _fileIndex(fileIndex), _time(time), 
       _min(min), _max(max), _numComp(numComp), _data(0)
   {
-    // store vector of GEntities so we can index them efficiently
-    for(GModel::eiter it = _model->firstEdge(); it != _model->lastEdge(); ++it)
-      _entities.push_back(*it);
-    for(GModel::fiter it = _model->firstFace(); it != _model->lastFace(); ++it)
-      _entities.push_back(*it);
-    for(GModel::riter it = _model->firstRegion(); it != _model->lastRegion(); ++it)
-      _entities.push_back(*it);
+    _entities = _model->getEntities();
     _bbox = _model->bounds();
   }
   ~stepData(){ destroyData(); }

@@ -1,4 +1,4 @@
-// $Id: PViewIO.cpp,v 1.7 2008-05-04 15:43:03 geuzaine Exp $
+// $Id: PViewIO.cpp,v 1.8 2008-05-06 21:11:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -282,7 +282,7 @@ bool PView::readMED(std::string fileName, int fileIndex)
 
 bool PView::write(std::string fileName, int format, bool append)
 {
-  Msg::Status(2, true, "Writing '%s'", fileName.c_str());
+  Msg::StatusBar(2, true, "Writing '%s'", fileName.c_str());
   
   bool ret;
   switch(format){
@@ -296,6 +296,6 @@ bool PView::write(std::string fileName, int format, bool append)
   default: ret = false; Msg::Error("Unknown view format %d", format); break;
   }
   
-  if(ret) Msg::Status(2, true, "Wrote '%s'", fileName.c_str());
+  if(ret) Msg::StatusBar(2, true, "Wrote '%s'", fileName.c_str());
   return ret;
 }

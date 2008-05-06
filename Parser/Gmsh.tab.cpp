@@ -324,7 +324,7 @@
 /* Copy the first part of user declarations.  */
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.363 2008-05-04 08:31:16 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.364 2008-05-06 21:11:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -5721,10 +5721,10 @@ yyreduce:
 	// open simultaneously. The right solution would be of course
 	// to modify FunctionManager to reopen the files instead of
 	// using the FILE pointer, but hey, I'm lazy...
-	Msg::Status(2, true, "Reading '%s'", tmpstring);
+	Msg::StatusBar(2, true, "Reading '%s'", tmpstring);
 	ParseFile(tmpstring, 0, 1);
 	SetBoundingBox();
-	Msg::Status(2, true, "Read '%s'", tmpstring);
+	Msg::StatusBar(2, true, "Read '%s'", tmpstring);
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "Print")){
 #if defined(HAVE_FLTK)

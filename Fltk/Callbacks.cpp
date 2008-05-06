@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.582 2008-05-04 08:31:11 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.583 2008-05-06 21:11:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -618,6 +618,7 @@ static const char *input_formats =
   "BRep model" TT "*.brep" NN
 #endif
   "I-deas universal mesh" TT "*.unv" NN
+  "VTK mesh" TT "*.vtk" NN
 #if defined(HAVE_MED)
   "MED file" TT "*.{med,mmed,rmed}" NN
 #endif
@@ -672,6 +673,7 @@ int _save_options(const char *name){ return options_dialog(name); }
 int _save_geo(const char *name){ return geo_dialog(name); }
 int _save_cgns(const char *name){ CreateOutputFile(name, FORMAT_CGNS); return 1; }
 int _save_unv(const char *name){ return unv_dialog(name); }
+int _save_vtk(const char *name){ return generic_mesh_dialog(name, "VTK Options", FORMAT_VTK); }
 int _save_med(const char *name){ return generic_mesh_dialog(name, "MED Options", FORMAT_MED); }
 int _save_mesh(const char *name){ return generic_mesh_dialog(name, "MESH Options", FORMAT_MESH); }
 int _save_bdf(const char *name){ return bdf_dialog(name); }
@@ -698,6 +700,7 @@ int _save_auto(const char *name)
   case FORMAT_GEO  : return _save_geo(name);
   case FORMAT_CGNS : return _save_cgns(name);
   case FORMAT_UNV  : return _save_unv(name);
+  case FORMAT_VTK  : return _save_vtk(name);
   case FORMAT_MED  : return _save_med(name);
   case FORMAT_MESH : return _save_mesh(name);
   case FORMAT_BDF  : return _save_bdf(name);
@@ -748,6 +751,7 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"CGNS" TT "*.cgns", _save_cgns},
 #endif
     {"I-deas universal mesh" TT "*.unv", _save_unv},
+    {"VTK mesh" TT "*.vtk", _save_vtk},
 #if defined(HAVE_MED)
     {"MED file" TT "*.med", _save_med},
 #endif
@@ -862,9 +866,9 @@ void options_browser_cb(CALLBACK_ARGS)
 
 void options_save_cb(CALLBACK_ARGS)
 {
-  Msg::Status(2, true, "Writing '%s'", CTX.options_filename_fullpath);
+  Msg::StatusBar(2, true, "Writing '%s'", CTX.options_filename_fullpath);
   Print_Options(0, GMSH_OPTIONSRC, 1, 1, CTX.options_filename_fullpath);
-  Msg::Status(2, true, "Wrote '%s'", CTX.options_filename_fullpath);
+  Msg::StatusBar(2, true, "Wrote '%s'", CTX.options_filename_fullpath);
 }
 
 void options_restore_defaults_cb(CALLBACK_ARGS)
@@ -900,7 +904,7 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
   std::vector<GRegion*> regions;
   std::vector<MElement*> elements;
 
-  Msg::Status(3, false, "Select entity\n[Press 'q' to abort]");
+  Msg::StatusBar(3, false, "Select entity\n[Press 'q' to abort]");
   char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, elements);
   if(ib == 'l') {
     SPoint3 pc(0., 0., 0.);
@@ -921,7 +925,7 @@ void general_options_rotation_center_select_cb(CALLBACK_ARGS)
   }
   ZeroHighlight();
   Draw();
-  Msg::Status(3, false, "");
+  Msg::StatusBar(3, false, "");
 }
 
 void general_options_ok_cb(CALLBACK_ARGS)
@@ -2292,7 +2296,7 @@ void visibility_interactive_cb(CALLBACK_ARGS)
     if(what == ENT_ALL) 
       CTX.mesh.changed = ENT_ALL;
     Draw();
-    Msg::Status(3, false, "Select %s\n[Press %s'q' to abort]", 
+    Msg::StatusBar(3, false, "Select %s\n[Press %s'q' to abort]", 
         help, mode ? "" : "'u' to undo or ");
 
     char ib = SelectEntity(what, vertices, edges, faces, regions, elements);
@@ -2317,7 +2321,7 @@ void visibility_interactive_cb(CALLBACK_ARGS)
   CTX.mesh.changed = ENT_ALL;
   CTX.pick_elements = 0;
   Draw();  
-  Msg::Status(3, false, "");
+  Msg::StatusBar(3, false, "");
 }
 
 // Clipping planes menu
@@ -2697,7 +2701,7 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
 
   while(1) {
     WID->g_opengl_window->AddPointMode = true;
-    Msg::Status(3, false, "Move mouse and/or enter coordinates\n"
+    Msg::StatusBar(3, false, "Move mouse and/or enter coordinates\n"
         "[Press 'Shift' to hold position, 'e' to add point or 'q' to abort]");
     std::vector<GVertex*> vertices;
     std::vector<GEdge*> edges;
@@ -2720,7 +2724,7 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
     }
   }
 
-  Msg::Status(3, false, "");
+  Msg::StatusBar(3, false, "");
 }
 
 static void _new_multiline(int type)
@@ -2739,10 +2743,10 @@ static void _new_multiline(int type)
   int n = 0;
   while(1) {
     if(n == 0)
-      Msg::Status(3, false, "Select control points\n"
+      Msg::StatusBar(3, false, "Select control points\n"
           "[Press 'e' to end selection or 'q' to abort]");
     else
-      Msg::Status(3, false, "Select control points\n"
+      Msg::StatusBar(3, false, "Select control points\n"
           "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
@@ -2791,7 +2795,7 @@ static void _new_multiline(int type)
     }
   }
 
-  Msg::Status(3, false, "");
+  Msg::StatusBar(3, false, "");
 }
 
 void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
@@ -2815,10 +2819,10 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
   int n = 0;
   while(1) {
     if(n == 0)
-      Msg::Status(3, false, "Select start point\n"
+      Msg::StatusBar(3, false, "Select start point\n"
           "[Press 'q' to abort]");
     if(n == 1)
-      Msg::Status(3, false, "Select end point\n"
+      Msg::StatusBar(3, false, "Select end point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
@@ -2850,7 +2854,7 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
     }
   }
 
-  Msg::Status(3, false, "");
+  Msg::StatusBar(3, false, "");
 }
 
 void geometry_elementary_add_new_spline_cb(CALLBACK_ARGS)
@@ -2879,13 +2883,13 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
   int n = 0;
   while(1) {
     if(n == 0)
-      Msg::Status(3, false, "Select start point\n"
+      Msg::StatusBar(3, false, "Select start point\n"
           "[Press 'q' to abort]");
     if(n == 1)
-      Msg::Status(3, false, "Select center point\n"
+      Msg::StatusBar(3, false, "Select center point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
     if(n == 2)
-      Msg::Status(3, false, "Select end point\n"
+      Msg::StatusBar(3, false, "Select end point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
@@ -2917,7 +2921,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
     }
   }
 
-  Msg::Status(3, false, "");
+  Msg::StatusBar(3, false, "");
 }
 
 void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
@@ -2936,16 +2940,16 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
   int n = 0;
   while(1) {
     if(n == 0)
-      Msg::Status(3, false, "Select start point\n"
+      Msg::StatusBar(3, false, "Select start point\n"
           "[Press 'q' to abort]");
     if(n == 1)
-      Msg::Status(3, false, "Select center point\n"
+      Msg::StatusBar(3, false, "Select center point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
     if(n == 2)
-      Msg::Status(3, false, "Select major axis point\n"
+      Msg::StatusBar(3, false, "Select major axis point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
     if(n == 3)
-      Msg::Status(3, false, "Select end point\n"
+      Msg::StatusBar(3, false, "Select end point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
@@ -2977,7 +2981,7 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
     }
   }
 
-  Msg::Status(3, false, "");
+  Msg::StatusBar(3, false, "");
 }
 
 static void _new_surface_volume(int mode)
@@ -3011,18 +3015,18 @@ static void _new_surface_volume(int mode)
     while(1) {
       if(type == ENT_LINE){
         if(!List_Nbr(List1))
-          Msg::Status(3, false, "Select surface boundary\n"
+          Msg::StatusBar(3, false, "Select surface boundary\n"
               "[Press 'q' to abort]");
         else
-          Msg::Status(3, false, "Select surface boundary\n"
+          Msg::StatusBar(3, false, "Select surface boundary\n"
               "[Press 'u' to undo last selection or 'q' to abort]");
       }
       else{
         if(!List_Nbr(List1))
-          Msg::Status(3, false, "Select volume boundary\n"
+          Msg::StatusBar(3, false, "Select volume boundary\n"
               "[Press 'q' to abort]");
         else
-          Msg::Status(3, false, "Select volume boundary\n"
+          Msg::StatusBar(3, false, "Select volume boundary\n"
               "[Press 'u' to undo last selection or 'q' to abort]");
       }
 
@@ -3057,10 +3061,10 @@ static void _new_surface_volume(int mode)
           List_Add(List2, &num);
           while(1) {
             if(!List_Nbr(List1))
-              Msg::Status(3, false, "Select hole boundaries (if none, press 'e')\n"
+              Msg::StatusBar(3, false, "Select hole boundaries (if none, press 'e')\n"
                   "[Press 'e' to end selection or 'q' to abort]");
             else
-              Msg::Status(3, false, "Select hole boundaries\n"
+              Msg::StatusBar(3, false, "Select hole boundaries\n"
                   "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
             ib = SelectEntity(type, vertices, edges, faces, regions, elements);
             if(ib == 'q') {
@@ -3120,7 +3124,7 @@ stopall:;
   List_Delete(List1);
   List_Delete(List2);
 
-  Msg::Status(3, false, "");
+  Msg::StatusBar(3, false, "");
 }
 
 void geometry_elementary_add_new_planesurface_cb(CALLBACK_ARGS)
@@ -3182,10 +3186,10 @@ static void _action_point_line_surface_volume(int action, int mode, const char *
   List_T *List1 = List_Create(5, 5, sizeof(int));
   while(1) {
     if(!List_Nbr(List1))
-      Msg::Status(3, false, "Select %s\n"
+      Msg::StatusBar(3, false, "Select %s\n"
           "[Press 'e' to end selection or 'q' to abort]", str);
     else
-      Msg::Status(3, false, "Select %s\n"
+      Msg::StatusBar(3, false, "Select %s\n"
           "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
 
     char ib = SelectEntity(type, vertices, edges, faces, regions, elements);
@@ -3366,7 +3370,7 @@ static void _action_point_line_surface_volume(int action, int mode, const char *
   }
   List_Delete(List1);
 
-  Msg::Status(3, false, "");
+  Msg::StatusBar(3, false, "");
 }
   
 void geometry_elementary_add_translate_cb(CALLBACK_ARGS)
@@ -3683,21 +3687,21 @@ void mesh_1d_cb(CALLBACK_ARGS)
 {
   GModel::current()->mesh(1);
   Draw();
-  Msg::Status(2, false, " ");
+  Msg::StatusBar(2, false, " ");
 }
 
 void mesh_2d_cb(CALLBACK_ARGS)
 {
   GModel::current()->mesh(2);
   Draw();
-  Msg::Status(2, false, " ");
+  Msg::StatusBar(2, false, " ");
 }
 
 void mesh_3d_cb(CALLBACK_ARGS)
 {
   GModel::current()->mesh(3);
   Draw();
-  Msg::Status(2, false, " ");
+  Msg::StatusBar(2, false, " ");
 }
 
 void mesh_delete_cb(CALLBACK_ARGS)
@@ -3743,10 +3747,10 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
     Draw();
 
     if(ele.size() || ent.size())
-      Msg::Status(3, false, "Select %s\n"
+      Msg::StatusBar(3, false, "Select %s\n"
           "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]", str);
     else
-      Msg::Status(3, false, "Select %s\n"
+      Msg::StatusBar(3, false, "Select %s\n"
           "[Press 'e' to end selection or 'q' to abort]", str);
 
     char ib = SelectEntity(what, vertices, edges, faces, regions, elements);
@@ -3826,7 +3830,7 @@ void mesh_delete_parts_cb(CALLBACK_ARGS)
   CTX.mesh.changed = ENT_ALL;
   CTX.pick_elements = 0;
   Draw();  
-  Msg::Status(3, false, "");
+  Msg::StatusBar(3, false, "");
 }
 
 void mesh_update_edges_cb(CALLBACK_ARGS)
@@ -3852,7 +3856,7 @@ void mesh_inspect_cb(CALLBACK_ARGS)
   Draw();
 
   while(1) {
-    Msg::Status(3, false, "Select element\n[Press 'q' to abort]");
+    Msg::StatusBar(3, false, "Select element\n[Press 'q' to abort]");
     char ib = SelectEntity(ENT_ALL, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
       if(elements.size()){
@@ -3889,7 +3893,7 @@ void mesh_inspect_cb(CALLBACK_ARGS)
   CTX.pick_elements = 0;
   CTX.mesh.changed = ENT_ALL;
   Draw();
-  Msg::Status(3, false, "");
+  Msg::StatusBar(3, false, "");
 }
 
 void mesh_degree_cb(CALLBACK_ARGS)
@@ -3901,7 +3905,7 @@ void mesh_degree_cb(CALLBACK_ARGS)
     SetOrder1(GModel::current());
   CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   Draw();
-  Msg::Status(2, false, " ");
+  Msg::StatusBar(2, false, " ");
 }
 
 void mesh_optimize_cb(CALLBACK_ARGS)
@@ -3915,7 +3919,7 @@ void mesh_optimize_cb(CALLBACK_ARGS)
   CTX.threads_lock = 0;
   CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   Draw();
-  Msg::Status(2, false, " ");
+  Msg::StatusBar(2, false, " ");
 }
 
 void mesh_optimize_netgen_cb(CALLBACK_ARGS)
@@ -3929,7 +3933,7 @@ void mesh_optimize_netgen_cb(CALLBACK_ARGS)
   CTX.threads_lock = 0;
   CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   Draw();
-  Msg::Status(2, false, " ");
+  Msg::StatusBar(2, false, " ");
 }
 
 
@@ -3971,19 +3975,19 @@ static void _add_transfinite(int dim)
     switch (dim) {
     case 1:
       if(n == 0)
-        Msg::Status(3, false, "Select lines\n"
+        Msg::StatusBar(3, false, "Select lines\n"
             "[Press 'e' to end selection or 'q' to abort]");
       else
-        Msg::Status(3, false, "Select lines\n"
+        Msg::StatusBar(3, false, "Select lines\n"
             "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
       ib = SelectEntity(ENT_LINE, vertices, edges, faces, regions, elements);
       break;
     case 2:
-      Msg::Status(3, false, "Select surface\n[Press 'q' to abort]");
+      Msg::StatusBar(3, false, "Select surface\n[Press 'q' to abort]");
       ib = SelectEntity(ENT_SURFACE, vertices, edges, faces, regions, elements);
       break;
     case 3:
-      Msg::Status(3, false, "Select volume\n[Press 'q' to abort]");
+      Msg::StatusBar(3, false, "Select volume\n[Press 'q' to abort]");
       ib = SelectEntity(ENT_VOLUME, vertices, edges, faces, regions, elements);
       break;
     default:
@@ -4043,10 +4047,10 @@ static void _add_transfinite(int dim)
         }
         while(1) {
           if(n == 1)
-            Msg::Status(3, false, "Select (ordered) boundary points\n"
+            Msg::StatusBar(3, false, "Select (ordered) boundary points\n"
                 "[Press 'e' to end selection or 'q' to abort]");
           else
-            Msg::Status(3, false, "Select (ordered) boundary points\n"
+            Msg::StatusBar(3, false, "Select (ordered) boundary points\n"
                 "[Press 'e' to end selection, 'u' to undo last selection or 'q' to abort]");
           ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
           if(ib == 'l') {
@@ -4097,7 +4101,7 @@ static void _add_transfinite(int dim)
   }
 
 stopall:
-  Msg::Status(3, false, "");
+  Msg::StatusBar(3, false, "");
 }
 
 void mesh_define_transfinite_line_cb(CALLBACK_ARGS)
@@ -4610,7 +4614,7 @@ void view_field_select_node_cb(CALLBACK_ARGS)
   std::vector<MElement*> elements, elements_old;
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   while(1) {
-    Msg::Status(3, false, "Select %s\n[Press %s'q' to abort]", 
+    Msg::StatusBar(3, false, "Select %s\n[Press %s'q' to abort]", 
         help, mode ? "" : "'u' to undo or ");
     
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
@@ -4624,7 +4628,7 @@ void view_field_select_node_cb(CALLBACK_ARGS)
   }
   CTX.mesh.changed = ENT_ALL;
   CTX.pick_elements = 0;
-  Msg::Status(3, false, "");
+  Msg::StatusBar(3, false, "");
   Draw();  
 }
 

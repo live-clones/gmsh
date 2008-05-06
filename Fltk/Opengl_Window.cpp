@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.84 2008-05-04 08:31:13 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.85 2008-05-06 21:11:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -408,7 +408,7 @@ int Opengl_Window::handle(int event)
         else if(faces.size()) ge = faces[0];
         else if(regions.size()) ge = regions[0];
         MElement *me = elements.size() ? elements[0] : 0;
-        Msg::Status(2, false, "%s %s",
+        Msg::StatusBar(2, false, "%s %s",
 		    ge ? ge->getInfoString().c_str() : "", 
 		    me ? me->getInfoString().c_str() : "");
       }

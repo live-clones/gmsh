@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.397 2008-05-04 08:31:11 geuzaine Exp $
+// $Id: Options.cpp,v 1.398 2008-05-06 21:11:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -29,8 +29,6 @@
 #include "Options.h"
 #include "BackgroundMesh.h"
 
-extern Context_T CTX;
-
 #if !defined(HAVE_NO_POST)
 #include "PView.h"
 #include "PViewOptions.h"
@@ -45,6 +43,8 @@ extern Context_T CTX;
 extern GUI *WID;
 extern void activate_cb(Fl_Widget* w, void* data);
 #endif
+
+extern Context_T CTX;
 
 // General routines
 
@@ -2956,11 +2956,11 @@ double opt_general_orthographic(OPT_ARGS_NUM)
   if(WID && (action & GMSH_GUI)) {
     if(CTX.ortho){
       WID->gen_choice[2]->value(0);
-      if(!CTX.batch) Msg::Status(2, false, "Orthographic projection");
+      if(!CTX.batch) Msg::StatusBar(2, false, "Orthographic projection");
     }
     else{
       WID->gen_choice[2]->value(1);
-      if(!CTX.batch) Msg::Status(2, false, "Perspective projection");
+      if(!CTX.batch) Msg::StatusBar(2, false, "Perspective projection");
     }
   }
 #endif
@@ -2974,11 +2974,11 @@ double opt_general_mouse_selection(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
     if(CTX.mouse_selection){
-      if(!CTX.batch) Msg::Status(2, false, "Mouse selection ON");
+      if(!CTX.batch) Msg::StatusBar(2, false, "Mouse selection ON");
       WID->g_status_butt[9]->color(FL_BACKGROUND_COLOR);
     }
     else{
-      if(!CTX.batch) Msg::Status(2, false, "Mouse selection OFF");
+      if(!CTX.batch) Msg::StatusBar(2, false, "Mouse selection OFF");
       WID->g_status_butt[9]->color(FL_RED);
     }
     WID->g_status_butt[9]->redraw();

@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.133 2008-05-04 08:31:16 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.134 2008-05-06 21:11:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1317,7 +1317,7 @@ void meshGFace::operator() (GFace *gf)
   else 
     algo = "MeshAdapt+Delaunay";
 
-  Msg::Status(2, true, "Meshing surface %d (%s, %s)", 
+  Msg::StatusBar(2, true, "Meshing surface %d (%s, %s)", 
       gf->tag(), gf->getTypeString().c_str(), algo);
 
   // compute loops on the fly (indices indicate start and end points

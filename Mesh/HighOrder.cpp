@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.28 2008-05-04 08:31:15 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.29 2008-05-06 21:11:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1298,7 +1298,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
 
   int nPts = order - 1;
 
-  Msg::Status(1, true, "Meshing second order...");
+  Msg::StatusBar(1, true, "Meshing second order...");
   double t1 = Cpu();
 
   // first, make sure to remove any existsing second order vertices/elements
@@ -1340,5 +1340,5 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
 
   double t2 = Cpu();
   Msg::Info("Mesh second order complete (%g s)", t2 - t1);
-  Msg::Status(1, true, "Mesh");
+  Msg::StatusBar(1, true, "Mesh");
 }

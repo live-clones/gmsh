@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.128 2008-05-04 08:31:12 geuzaine Exp $
+// $Id: Main.cpp,v 1.129 2008-05-06 21:11:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -94,8 +94,8 @@ int main(int argc, char *argv[])
   CTX.batch = 0;
 
   // Say welcome!
-  Msg::Status(1, false, "Geometry");
-  Msg::Status(2, false, "Gmsh %s", Get_GmshVersion());
+  Msg::StatusBar(1, false, "Geometry");
+  Msg::StatusBar(2, false, "Gmsh %s", Get_GmshVersion());
 
   // Log the following for bug reports
   Msg::Info("-------------------------------------------------------");

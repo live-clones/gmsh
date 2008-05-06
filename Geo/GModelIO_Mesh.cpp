@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.52 2008-05-04 08:31:13 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.53 2008-05-06 21:11:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1350,7 +1350,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
         std::set<MVertex*> nodes;
 	std::vector<GEntity *> &entities = it->second;
         for(unsigned int i = 0; i < entities.size(); i++){
-	  for(int j = 0; j < entities[i]->getNumMeshElements(); j++){
+	  for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
 	    MElement *e = entities[i]->getMeshElement(j);
 	    for (int k = 0; k < e->getNumVertices(); k++)
 	      nodes.insert(e->getVertex(k));
@@ -2070,4 +2070,93 @@ int GModel::writeP3D(const std::string &name, bool saveAll, double scalingFactor
   
   fclose(fp);
   return 1;
+}
+
+int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
+                     double scalingFactor)
+{
+  Msg::Error("VTK export is experimental:");
+  Msg::Error(" * vertex ordering for second order elements is wrong");
+  Msg::Error(" * binary export crashes paraview on Mac: can somebody test");
+  Msg::Error("   on another platform? I *think* I followed the spec, but");
+  Msg::Error("   I probably missed something...");
+
+  FILE *fp = fopen(name.c_str(), binary ? "wb" : "w");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  if(noPhysicalGroups()) saveAll = true;
+
+  // get the number of vertices and index the vertices in a continuous
+  // sequence
+  int numVertices = indexMeshVertices(saveAll);
+
+  fprintf(fp, "# vtk DataFile Version 2.0\n");
+  fprintf(fp, "%s, Created by Gmsh\n", getName().c_str());
+  if(binary)
+    fprintf(fp, "BINARY\n");
+  else
+    fprintf(fp, "ASCII\n");
+  fprintf(fp, "DATASET UNSTRUCTURED_GRID\n");
+
+  // get all the entities in the model
+  std::vector<GEntity*> entities = getEntities();
+
+  // write mesh vertices
+  fprintf(fp, "POINTS %d double\n", numVertices);
+  for(unsigned int i = 0; i < entities.size(); i++)
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) 
+      entities[i]->mesh_vertices[j]->writeVTK(fp, binary, scalingFactor);
+  fprintf(fp, "\n");
+  
+  // loop over all elements we need to save and count vertices
+  int numElements = 0, totalNumInt = 0;
+  for(unsigned int i = 0; i < entities.size(); i++){
+    if(entities[i]->physicals.size() || saveAll){
+      numElements += entities[i]->getNumMeshElements();
+      for(int j = 0; j < entities[i]->getNumMeshElements(); j++){
+	if(entities[i]->getMeshElement(j)->getTypeForVTK())
+	  totalNumInt += entities[i]->getMeshElement(j)->getNumVertices() + 1;
+      }
+    }
+  }
+
+  // print vertex indices in ascii or binary
+  fprintf(fp, "CELLS %d %d\n", numElements, totalNumInt);
+  for(unsigned int i = 0; i < entities.size(); i++){
+    if(entities[i]->physicals.size() || saveAll){
+      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+	if(entities[i]->getMeshElement(j)->getTypeForVTK())
+	  entities[i]->getMeshElement(j)->writeVTK(fp, binary);
+      }
+    }
+  }
+  fprintf(fp, "\n");
+  
+  // print element types in ascii or binary  
+  fprintf(fp, "CELL_TYPES %d\n", numElements);
+  for(unsigned int i = 0; i < entities.size(); i++){
+    if(entities[i]->physicals.size() || saveAll){
+      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+	int type = entities[i]->getMeshElement(j)->getTypeForVTK();
+	if(type){
+	  if(binary) 
+	    fwrite(&type, sizeof(int), 1, fp);
+	  else
+	    fprintf(fp, "%d\n", type);
+	}
+      }
+    }
+  }
+  
+  fclose(fp);
+  return 1;
+}
+
+int GModel::readVTK(const std::string &name)
+{
+  Msg::Error("VTK reader is not implemented yet");
+  return 0;
 }

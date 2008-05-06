@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.1 2008-05-04 08:31:11 geuzaine Exp $
+// $Id: Message.cpp,v 1.2 2008-05-06 21:11:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -300,7 +300,7 @@ void Message::Direct(int level, const char *fmt, ...)
   va_end(args);
 }
 
-void Message::Status(int num, bool log, const char *fmt, ...)
+void Message::StatusBar(int num, bool log, const char *fmt, ...)
 {
   if(_commRank || _verbosity < 3) return;
   if(num < 1 || num > 3) return;

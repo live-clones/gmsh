@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.29 2008-05-04 08:31:16 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.30 2008-05-06 21:11:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -58,6 +58,7 @@ int GuessFileFormatFromFileName(const char *name)
   else if(!strcmp(ext, ".pos"))  return FORMAT_POS;
   else if(!strcmp(ext, ".opt"))  return FORMAT_OPT;
   else if(!strcmp(ext, ".unv"))  return FORMAT_UNV;
+  else if(!strcmp(ext, ".vtk"))  return FORMAT_VTK;
   else if(!strcmp(ext, ".stl"))  return FORMAT_STL;
   else if(!strcmp(ext, ".cgns")) return FORMAT_CGNS;
   else if(!strcmp(ext, ".med"))  return FORMAT_MED;
@@ -91,6 +92,7 @@ void GetDefaultFileName(int format, char *name)
   case FORMAT_POS:  strcpy(ext, ".pos"); break;
   case FORMAT_OPT:  strcpy(ext, ".opt"); break;
   case FORMAT_UNV:  strcpy(ext, ".unv"); break;
+  case FORMAT_VTK:  strcpy(ext, ".vtk"); break;
   case FORMAT_STL:  strcpy(ext, ".stl"); break;
   case FORMAT_CGNS: strcpy(ext, ".cgns"); break;
   case FORMAT_MED:  strcpy(ext, ".med"); break;
@@ -136,7 +138,7 @@ void CreateOutputFile(const char *filename, int format)
 #endif
 
   bool printEndMessage = true;
-  if(format != FORMAT_AUTO) Msg::Status(2, true, "Writing '%s'", name);
+  if(format != FORMAT_AUTO) Msg::StatusBar(2, true, "Writing '%s'", name);
 
   switch (format) {
 
@@ -165,6 +167,11 @@ void CreateOutputFile(const char *filename, int format)
 
   case FORMAT_UNV:
     GModel::current()->writeUNV(name, CTX.mesh.save_all, CTX.mesh.save_groups_of_nodes,
+                                CTX.mesh.scaling_factor);
+    break;
+
+  case FORMAT_VTK:
+    GModel::current()->writeVTK(name, CTX.mesh.msh_binary, CTX.mesh.save_all,
                                 CTX.mesh.scaling_factor);
     break;
 
@@ -360,7 +367,7 @@ void CreateOutputFile(const char *filename, int format)
     break;
   }
 
-  if(printEndMessage) Msg::Status(2, true, "Wrote '%s'", name);
+  if(printEndMessage) Msg::StatusBar(2, true, "Wrote '%s'", name);
 
   CTX.print.format = oldformat;
   CTX.printing = 0;
