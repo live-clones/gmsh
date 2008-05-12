@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.26 2008-05-04 08:31:23 geuzaine Exp $
+// $Id: Integrate.cpp,v 1.27 2008-05-12 20:24:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -20,7 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Integrate.h"
-#include "ShapeFunctions.h"
+#include "shapeFunctions.h"
 #include "PViewOptions.h"
 
 StringXNumber IntegrateOptions_Number[] = {

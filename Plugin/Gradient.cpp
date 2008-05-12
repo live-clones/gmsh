@@ -1,4 +1,4 @@
-// $Id: Gradient.cpp,v 1.15 2008-05-04 08:31:23 geuzaine Exp $
+// $Id: Gradient.cpp,v 1.16 2008-05-12 20:24:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -20,7 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Gradient.h"
-#include "ShapeFunctions.h"
+#include "shapeFunctions.h"
 
 StringXNumber GradientOptions_Number[] = {
   {GMSH_FULLRC, "iView", NULL, -1.}

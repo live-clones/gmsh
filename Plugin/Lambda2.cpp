@@ -1,4 +1,4 @@
-// $Id: Lambda2.cpp,v 1.15 2008-05-04 08:31:23 geuzaine Exp $
+// $Id: Lambda2.cpp,v 1.16 2008-05-12 20:24:05 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -20,7 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Lambda2.h"
-#include "ShapeFunctions.h"
+#include "Numeric.h"
 
 StringXNumber Lambda2Options_Number[] = {
   {GMSH_FULLRC, "Eigenvalue", NULL, 2.},
@@ -146,7 +146,7 @@ static void eigen(List_T *inList, int inNb,
       }
       else if(nbComp == 3){ 
         // FIXME: the following could be greatly simplified and
-        // generalized by using the classes in ShapeFunctions.h
+        // generalized by using the classes in shapeFunctions.h
 
         // val contains the velocities: compute the gradient tensor
         // from them

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.165 2008-05-04 08:31:23 geuzaine Exp $
+# $Id: Makefile,v 1.166 2008-05-12 20:24:05 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -132,8 +132,8 @@ Lambda2.o: Lambda2.cpp Lambda2.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../DataStr/List.h \
-  ../Common/GmshMatrix.h ../Common/ShapeFunctions.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Common/Message.h
+  ../Common/GmshMatrix.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 Eigenvectors.o: Eigenvectors.cpp Eigenvectors.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/Message.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
@@ -278,27 +278,27 @@ Integrate.o: Integrate.cpp Integrate.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../DataStr/List.h \
-  ../Common/GmshMatrix.h ../Common/ShapeFunctions.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Common/Message.h ../Post/PViewOptions.h \
+  ../Common/GmshMatrix.h ../Post/shapeFunctions.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h ../Post/PViewOptions.h \
   ../Post/ColorTable.h
 Gradient.o: Gradient.cpp Gradient.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../DataStr/List.h \
-  ../Common/GmshMatrix.h ../Common/ShapeFunctions.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Common/Message.h
+  ../Common/GmshMatrix.h ../Post/shapeFunctions.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 Curl.o: Curl.cpp Curl.h Plugin.h ../Common/Options.h ../Post/ColorTable.h \
   ../Common/Message.h ../Post/PView.h ../Geo/SPoint3.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../DataStr/List.h ../Common/GmshMatrix.h \
-  ../Common/ShapeFunctions.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Common/Message.h
+  ../Post/shapeFunctions.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 Divergence.o: Divergence.cpp Divergence.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../DataStr/List.h \
-  ../Common/GmshMatrix.h ../Common/ShapeFunctions.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Common/Message.h
+  ../Common/GmshMatrix.h ../Post/shapeFunctions.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 Annotate.o: Annotate.cpp Annotate.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.45 2008-05-04 08:31:23 geuzaine Exp $
+# $Id: Makefile,v 1.46 2008-05-12 20:24:06 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -139,10 +139,9 @@ OctreePost.o: OctreePost.cpp ../Common/Octree.h \
   ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
   ../Geo/SBoundingBox3d.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Common/Message.h \
-  ../Common/ShapeFunctions.h ../Common/Message.h ../Geo/MElement.h \
-  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint3.h \
-  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h
+  ../Numeric/NumericEmbedded.h ../Common/Message.h shapeFunctions.h \
+  ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
+  ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h
 ColorTable.o: ColorTable.cpp ../Common/Message.h ColorTable.h \
   ../Common/Context.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h

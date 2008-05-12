@@ -135,6 +135,8 @@ class PViewDataGModel : public PViewData {
   std::set<int> _partitions;
   // the type of the dataset
   DataType _type;
+  // cache last element to speed up loops
+  MElement *_getElement(int step, int ent, int ele);
  public:
   PViewDataGModel(DataType type=NodeData);
   ~PViewDataGModel();

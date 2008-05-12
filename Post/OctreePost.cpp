@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.12 2008-04-22 07:37:16 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.13 2008-05-12 20:24:06 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -27,7 +27,7 @@
 #include "PViewDataGModel.h"
 #include "Numeric.h"
 #include "Message.h"
-#include "ShapeFunctions.h"
+#include "shapeFunctions.h"
 #include "GModel.h"
 #include "MElement.h"
 
