@@ -17,6 +17,7 @@ extern Context_T CTX;
 #include "FM_BlendedPatch.h"
 #include "FM_BlendOperator.h"
 #include "FM_PlaneProjectionSurface.h"
+#include "FM_TrapezoidProjectionSurface.h"
 #include "FM_SphericalProjectionSurface.h"
 #include "FM_ParaboloidProjectionSurface.h"
 #include "FM_CylindricalProjectionSurface.h"
@@ -30,6 +31,8 @@ static fourierProjectionFace *createProjectionFaceFromName(const char *name)
   fourierProjectionFace *f = 0;
   if(!strcmp(name, "plane"))
     f = new fourierProjectionFace(m, tag, new FM::PlaneProjectionSurface(tag));
+  else if(!strcmp(name, "trapezoid"))
+    f = new fourierProjectionFace(m, tag, new FM::TrapezoidProjectionSurface(tag));
   else if(!strcmp(name, "sphere"))
     f = new fourierProjectionFace(m, tag, new FM::SphericalProjectionSurface(tag));
   else if(!strcmp(name, "paraboloid"))
@@ -226,6 +229,13 @@ projection::projection(fourierProjectionFace *f, int x, int y, int w, int h,
 
 projectionEditor::projectionEditor() 
 {
+  GModel *m = GModel::current();
+
+  // construct FM_Internals 
+  m->readFourier();
+  printf("readerSize = %d\n",m->getFMInternals()->getSize());
+  printf("currentSize = %d\n",m->getFMInternals()->current()->GetNumGroups());
+
   // construct GUI in terms of standard sizes
   const int BH = 2 * GetFontSize() + 1, BB = 7 * GetFontSize(), WB = 7;
   const int width = (int)(3.75 * BB), height = 25 * BH;
@@ -238,7 +248,7 @@ projectionEditor::projectionEditor()
   Fl_Group *o = new Fl_Group(WB, WB, 2 * BB, 3 * BH);
   _select[0] = new Fl_Round_Button(2 * WB + BB / 2, WB, BB, BH, "Points");
   _select[1] = new Fl_Round_Button(2 * WB + BB / 2, WB + BH, BB, BH, "Elements");
-  if(GModel::current()->getNumMeshElements())
+  if(m->getNumMeshElements())
     _select[1]->value(1);
   else
     _select[0]->value(1);
@@ -389,6 +399,8 @@ projectionEditor::projectionEditor()
   _window->hotspot(_window);
   _window->resizable(_uvPlot);
   _window->size_range(width, (int)(0.85 * height));
+
+  // create
 }
 
 void projectionEditor::load(fourierProjectionFace *face, std::string tag)
@@ -901,6 +913,10 @@ void save_projection_cb(Fl_Widget *w, void *data)
 
 void compute_cb(Fl_Widget *w, void *data)
 {
+  GModel* m = GModel::current();
+
+  printf("ngroups = %d\n",m->getFMInternals()->current()->GetNumGroups());
+
   projectionEditor *e = (projectionEditor*)data;
 
   projection *p = e->getCurrentProjection();
@@ -930,48 +946,67 @@ void compute_cb(Fl_Widget *w, void *data)
     if (e->getPatchType()) {
       // create the US-FFT/Windowing faces (with boundaries)
       FM::Patch* patch =
-        new FM::WFPatch(0, ps->clone(), u, v, f, 3, uModes, vModes);
-      makeGFace(GModel::current(), patch);
+	new FM::WFPatch(0, ps->clone(), u, v, f, 3, uModes, vModes);
+      m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
+	AddPatch(patch);
+      m->getFMInternals()->makeGFace(patch,m);
+      //makeGFace(patch);
     }
     else {
       // create the Fourier faces (with boundaries)
       if(ps->IsUPeriodic()) {
-        FM::Patch* patchL = 
-          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
-                         uM, vM, h0, h1, h2, h3);
-        patchL->SetMinU(-0.35);
-        patchL->SetMaxU(0.35);
-        makeGFace(GModel::current(), patchL);
-        FM::Patch* patchR = 
-          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
-                         uM, vM, h0, h1, h2, h3);
-        patchR->SetMinU(0.15);
-        patchR->SetMaxU(0.85);
-        makeGFace(GModel::current(), patchR);
+	FM::Patch* patchL = 
+	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+			 uM, vM, h0, h1, h2, h3);
+	patchL->SetMinU(-0.35);
+	patchL->SetMaxU(0.35);
+	m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
+	  AddPatch(patchL);
+	m->getFMInternals()->makeGFace(patchL,m);
+	//makeGFace(patchL);
+	FM::Patch* patchR = 
+	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
+			 uM, vM, h0, h1, h2, h3);
+	patchR->SetMinU(0.15);
+	patchR->SetMaxU(0.85);
+	m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
+	  AddPatch(patchR);
+	m->getFMInternals()->makeGFace(patchR,m);
+	//makeGFace(patchR);
       }
       else if (ps->IsVPeriodic()) {
-        FM::Patch* patchL = 
-          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
-                         uM, vM, h0, h1, h2, h3);
-        patchL->SetMinV(-0.35);
-        patchL->SetMaxV(0.35);
-        makeGFace(GModel::current(), patchL);
-        FM::Patch* patchR = 
-          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
-                         uM, vM, h0, h1, h2, h3);
-        patchR->SetMinV(0.15);
-        patchR->SetMaxV(0.85);
-        makeGFace(GModel::current(), patchR);
+	FM::Patch* patchL = 
+	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+			 uM, vM, h0, h1, h2, h3);
+	patchL->SetMinV(-0.35);
+	patchL->SetMaxV(0.35);
+	m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
+	  AddPatch(patchL);
+	m->getFMInternals()->makeGFace(patchL,m);
+	//makeGFace(patchL);
+	FM::Patch* patchR = 
+	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes,
+			 uM, vM, h0, h1, h2, h3);
+	patchR->SetMinV(0.15);
+	patchR->SetMaxV(0.85);
+	m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
+	  AddPatch(patchR);
+	m->getFMInternals()->makeGFace(patchR,m);
+	//makeGFace(patchR);
       }
       else {
-        FM::Patch* patch = 
-          new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
-                         uM, vM, h0, h1, h2, h3);
-        makeGFace(GModel::current(), patch);
+	FM::Patch* patch = 
+	  new FM::FPatch(0, ps->clone(), u, v, f, 3, uModes, vModes, 
+			 uM, vM, h0, h1, h2, h3);
+	m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->
+	  AddPatch(patch);
+	m->getFMInternals()->makeGFace(patch,m);
+	//makeGFace(patch);
       }
     }
   }
-
+  printf("nPatches = %d\n",m->getFMInternals()->current()->GetGroup(0)->
+	 GetBlendGroup()->GetNumPatches());
   Draw();
 }
 
@@ -995,27 +1030,22 @@ void delete_fourier(GFace *gf)
 
 void blend_cb(Fl_Widget *w, void *data)
 {
-  std::vector<GFace*> faces;
-  std::vector<FM::Patch*> patches;
-
   GModel *m = GModel::current();
 
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
-    if((*it)->getNativeType() == GEntity::FourierModel)
+  std::vector<GFace*> faces;
+  for (GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
+    if ((*it)->getNativeType() == GEntity::FourierModel)
       faces.push_back(*it);
-  for(unsigned int i = 0; i < faces.size(); i++){
-    fourierFace* ff = (fourierFace*)faces[i];
-    FM::TopoFace* tf = (FM::TopoFace*)ff->getNativePtr();
-    patches.push_back(tf->GetPatch());
-  }
-  FM::BlendOperator* blendOp = new FM::BlendOperator(patches);
-  for (unsigned int i = 0; i < patches.size(); i++) {
-    FM::BlendedPatch* patch = new FM::BlendedPatch(i, blendOp);
-    makeGFace(GModel::current(), patch);
-  }
-  for(unsigned int i = 0; i < faces.size(); i++) {
-    delete_fourier(faces[i]);
-    //faces[i]->setVisibility(0, true);
+
+  m->getFMInternals()->current()->GetGroup(0)->GetBlendGroup()->Blend();
+  for (int i = 0; i < m->getFMInternals()->current()->GetGroup(0)->
+	 GetBlendGroup()->GetNumPatches(); i++)
+    m->getFMInternals()->makeGFace(m->getFMInternals()->current()->
+				   GetGroup(0)->GetBlendGroup()->
+				   GetPatch(i),m);
+  for (int i = 0; i < faces.size(); i++) {
+    //delete_fourier(faces[i]);
+    faces[i]->setVisibility(0, true);
   }
 }
 
@@ -1083,6 +1113,7 @@ void mesh_parameterize_cb(Fl_Widget* w, void* data)
   if(!editor){
     editor = new projectionEditor();
     editor->load(createProjectionFaceFromName("plane"));
+    editor->load(createProjectionFaceFromName("trapezoid"));
     editor->load(createProjectionFaceFromName("sphere"));
     editor->load(createProjectionFaceFromName("paraboloid"));
     editor->load(createProjectionFaceFromName("cylinder"));

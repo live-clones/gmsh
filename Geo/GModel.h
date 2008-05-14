@@ -29,6 +29,7 @@
 #include "GRegion.h"
 #include "SBoundingBox3d.h"
 
+class FM_Internals;
 class GEO_Internals;
 class OCC_Internals;
 class smooth_normals;
@@ -68,6 +69,10 @@ class GModel
   // index of the current model
   static int _current;
 
+  FM_Internals *_fm_internals;
+  void createFMInternals();
+  void deleteFMInternals();
+ 
  protected:
   std::string modelName;
   std::set<GRegion*, GEntityLessThan> regions;
@@ -95,6 +100,7 @@ class GModel
   void destroy();
 
   // Access internal CAD representations
+  FM_Internals *getFMInternals() { return _fm_internals; }
   GEO_Internals *getGEOInternals(){ return _geo_internals; }
   OCC_Internals *getOCCInternals(){ return _occ_internals; }
 
@@ -224,7 +230,9 @@ class GModel
   int writeGEO(const std::string &name, bool printLabels=true);
 
   // Fourier model
+  int readFourier();
   int readFourier(const std::string &name);
+  int writeFourier(const std::string &name);
 
   // OCC model
   int readOCCBREP(const std::string &name);

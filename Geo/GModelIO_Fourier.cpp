@@ -9,13 +9,12 @@
 #if defined(HAVE_FOURIER_MODEL)
 
 #include "FM_FPatch.h"
-#include "FM_FCurve.h"
+#include "FM_PCurve.h"
 #include "FM_TopoVertex.h"
 #include "FM_TopoEdge.h"
 #include "FM_TopoFace.h"
-#include "FM_Reader.h"
 
-void makeGFace(GModel *m, FM::Patch* patch)
+void FM_Internals::makeGFace(FM::Patch* patch, GModel* model)
 {
   double LL[2], LR[2], UL[2], UR[2];
   LL[0] = 0.0; LL[1] = 0.0;
@@ -26,64 +25,104 @@ void makeGFace(GModel *m, FM::Patch* patch)
   int i1, i2;
   double xx,yy,zz;
 
-  int tagVertex = m->getNumVertices();
+  int tagVertex = model->getNumVertices();
   patch->F(LL[0], LL[1], xx, yy, zz);
   FM::TopoVertex* vLL = new FM::TopoVertex(++tagVertex, xx, yy, zz);
-  m->add(new fourierVertex(m, vLL->GetTag(), vLL));
+  model->add(new fourierVertex(model, vLL->GetTag(), vLL));
   patch->F(LR[0], LR[1], xx, yy, zz);
   FM::TopoVertex* vLR = new FM::TopoVertex(++tagVertex, xx, yy, zz);
-  m->add(new fourierVertex(m, vLR->GetTag(), vLR));
+  model->add(new fourierVertex(model, vLR->GetTag(), vLR));
   patch->F(UL[0], UL[1], xx, yy, zz);
   FM::TopoVertex* vUL = new FM::TopoVertex(++tagVertex, xx, yy, zz);
-  m->add(new fourierVertex(m, vUL->GetTag(), vUL));
+  model->add(new fourierVertex(model, vUL->GetTag(), vUL));
   patch->F(UR[0], UR[1], xx, yy, zz);
   FM::TopoVertex* vUR = new FM::TopoVertex(++tagVertex, xx, yy, zz);
-  m->add(new fourierVertex(m, vUR->GetTag(), vUR));
+  model->add(new fourierVertex(model, vUR->GetTag(), vUR));
   
-  FM::Curve* curveB = new FM::FCurve(0, patch, LL, LR);
-  FM::Curve* curveR = new FM::FCurve(0, patch, LR, UR);
-  FM::Curve* curveT = new FM::FCurve(0, patch, UR, UL);
-  FM::Curve* curveL = new FM::FCurve(0, patch, UL, LL);
+  FM::Curve* curveB = new FM::PCurve(LL, LR, patch);
+  FM::Curve* curveR = new FM::PCurve(LR, UR, patch);
+  FM::Curve* curveT = new FM::PCurve(UR, UL, patch);
+  FM::Curve* curveL = new FM::PCurve(UL, LL, patch);
   
-  int tagEdge = m->getNumEdges();
+  int tagEdge = model->getNumEdges();
   FM::TopoEdge* eB = new FM::TopoEdge(++tagEdge, curveB, vLL, vLR);
   i1 = eB->GetStartPoint()->GetTag();
   i2 = eB->GetEndPoint()->GetTag();
-  m->add(new fourierEdge(m, eB, eB->GetTag(), m->getVertexByTag(i1),
-                         m->getVertexByTag(i2)));
+  model->add(new fourierEdge(model, eB, eB->GetTag(), model->getVertexByTag(i1),
+			 model->getVertexByTag(i2)));
   FM::TopoEdge* eR = new FM::TopoEdge(++tagEdge, curveR, vLR, vUR); 
   i1 = eR->GetStartPoint()->GetTag();
   i2 = eR->GetEndPoint()->GetTag();
-  m->add(new fourierEdge(m, eR, eR->GetTag(), m->getVertexByTag(i1),
-                         m->getVertexByTag(i2))); 
+  model->add(new fourierEdge(model, eR, eR->GetTag(), model->getVertexByTag(i1),
+			 model->getVertexByTag(i2))); 
   FM::TopoEdge* eT = new FM::TopoEdge(++tagEdge, curveT, vUR, vUL);
   i1 = eT->GetStartPoint()->GetTag();
   i2 = eT->GetEndPoint()->GetTag();
-  m->add(new fourierEdge(m, eT, eT->GetTag(), m->getVertexByTag(i1),
-                         m->getVertexByTag(i2)));
+  model->add(new fourierEdge(model, eT, eT->GetTag(), model->getVertexByTag(i1),
+			 model->getVertexByTag(i2)));
   FM::TopoEdge* eL = new FM::TopoEdge(++tagEdge, curveL, vUL, vLL); 
   i1 = eL->GetStartPoint()->GetTag();
   i2 = eL->GetEndPoint()->GetTag();
-  m->add(new fourierEdge(m, eL, eL->GetTag(), m->getVertexByTag(i1),
-                         m->getVertexByTag(i2)));
+  model->add(new fourierEdge(model, eL, eL->GetTag(), model->getVertexByTag(i1),
+			 model->getVertexByTag(i2)));
   
-  FM::TopoFace* face = new FM::TopoFace(m->getNumFaces() + 1, patch);
+  FM::TopoFace* face = new FM::TopoFace(model->getNumFaces() + 1, patch);
   face->AddEdge(eB); face->AddEdge(eR); 
   face->AddEdge(eT); face->AddEdge(eL);
   std::list<GEdge*> l_edges;
   for (int j = 0; j < face->GetNumEdges(); j++) {
     int tag = face->GetEdge(j)->GetTag(); 
-    l_edges.push_back(m->getEdgeByTag(tag));
+    l_edges.push_back(model->getEdgeByTag(tag));
   }
-  m->add(new fourierFace(m, face, face->GetTag(), l_edges));
+  model->add(new fourierFace(model, face, face->GetTag(), l_edges));
+}
+
+void FM_Internals::loadFM()
+{
+  reader.push_back(new FM::Reader());
+}
+
+void FM_Internals::loadFM(const char* filename)
+{
+  reader.push_back(new FM::Reader(filename));
+}
+
+void FM_Internals::buildGModel(FM::Reader* reader, GModel* model)
+{
+  for (int i = 0; i < reader->GetNumPatches(); i++)
+    makeGFace(reader->GetPatch(i), model);
+}
+
+void GModel::createFMInternals()
+{
+  if (!_fm_internals)
+    _fm_internals = new FM_Internals;  
+}
+
+void GModel::deleteFMInternals()
+{
+  delete _fm_internals;
+  _fm_internals = 0;
+}
+
+int GModel::readFourier()
+{
+  createFMInternals();
+  getFMInternals()->loadFM();
 }
 
 int GModel::readFourier(const std::string &filename)
 {
-  FM::Reader *reader = new FM::Reader(filename.c_str());
-  for (int i = 0; i < reader->GetNumPatches(); i++)
-    makeGFace(this, reader->GetPatch(i));
+  createFMInternals();
+  getFMInternals()->loadFM(filename.c_str());
+  getFMInternals()->buildGModel(getFMInternals()->current(),this);
+
   return 1;
+}
+
+int GModel::writeFourier(const std::string &filename)
+{
+  FILE *fp = fopen(filename.c_str(), "w");
 }
 
 #else
@@ -91,6 +130,13 @@ int GModel::readFourier(const std::string &filename)
 int GModel::readFourier(const std::string &fn)
 {
   Msg::Error("Gmsh has to be compiled with Fourier Model support to load '%s'",
+      fn.c_str());
+  return 0;
+}
+
+int GModel::writeFourier(const std::string &fn)
+{
+  Msg(GERROR, "Gmsh has to be compiled with Fourier Model support to load '%s'",
       fn.c_str());
   return 0;
 }
