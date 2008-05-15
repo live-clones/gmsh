@@ -93,13 +93,13 @@ void FM_Internals::buildGModel(FM::Reader* reader, GModel* model)
     makeGFace(reader->GetPatch(i), model);
 }
 
-void GModel::createFMInternals()
+void GModel::_createFMInternals()
 {
   if (!_fm_internals)
     _fm_internals = new FM_Internals;  
 }
 
-void GModel::deleteFMInternals()
+void GModel::_deleteFMInternals()
 {
   delete _fm_internals;
   _fm_internals = 0;
@@ -107,13 +107,13 @@ void GModel::deleteFMInternals()
 
 int GModel::readFourier()
 {
-  createFMInternals();
+  _createFMInternals();
   getFMInternals()->loadFM();
 }
 
 int GModel::readFourier(const std::string &filename)
 {
-  createFMInternals();
+  _createFMInternals();
   getFMInternals()->loadFM(filename.c_str());
   getFMInternals()->buildGModel(getFMInternals()->current(),this);
 
@@ -126,6 +126,14 @@ int GModel::writeFourier(const std::string &filename)
 }
 
 #else
+
+void GModel::_createFMInternals()
+{
+}
+
+void GModel::_deleteFMInternals()
+{
+}
 
 int GModel::readFourier(const std::string &fn)
 {

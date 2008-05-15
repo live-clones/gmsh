@@ -55,6 +55,12 @@ class GModel
   void _deleteOCCInternals();
 #endif
 
+  FM_Internals *_fm_internals;
+#if !defined(HAVE_GMSH_EMBEDDED)
+  void _createFMInternals();
+  void _deleteFMInternals();
+#endif
+ 
   // Characteristic Lengths fields
   FieldManager *_fields;
 
@@ -69,10 +75,6 @@ class GModel
   // index of the current model
   static int _current;
 
-  FM_Internals *_fm_internals;
-  void createFMInternals();
-  void deleteFMInternals();
- 
  protected:
   std::string modelName;
   std::set<GRegion*, GEntityLessThan> regions;
@@ -100,9 +102,9 @@ class GModel
   void destroy();
 
   // Access internal CAD representations
-  FM_Internals *getFMInternals() { return _fm_internals; }
   GEO_Internals *getGEOInternals(){ return _geo_internals; }
   OCC_Internals *getOCCInternals(){ return _occ_internals; }
+  FM_Internals *getFMInternals() { return _fm_internals; }
 
   // Access characteristic length fields
   FieldManager *getFields(){ return _fields; }
