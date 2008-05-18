@@ -144,8 +144,8 @@ int GModel::readFourier(const std::string &fn)
 
 int GModel::writeFourier(const std::string &fn)
 {
-  Msg(GERROR, "Gmsh has to be compiled with Fourier Model support to load '%s'",
-      fn.c_str());
+  Msg::Error("Gmsh has to be compiled with Fourier Model support to load '%s'",
+	     fn.c_str());
   return 0;
 }
 
