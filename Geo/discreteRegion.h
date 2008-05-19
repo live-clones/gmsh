@@ -21,20 +21,9 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "GRegion.h"
-
-#if !defined(HAVE_GMSH_EMBEDDED)
-#include "Geo.h"
-#endif
-
 class discreteRegion : public GRegion {
  public:
-  discreteRegion(GModel *model, int num) : GRegion(model, num)
-  {
-#if !defined(HAVE_GMSH_EMBEDDED)
-    ::Volume *v = Create_Volume(num, MSH_VOLUME_DISCRETE);
-    Tree_Add(model->getGEOInternals()->Volumes, &v);
-#endif
-  }
+  discreteRegion(GModel *model, int num) ;
   virtual ~discreteRegion() {}
   virtual GeomType geomType() const { return DiscreteVolume; }
 };

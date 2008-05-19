@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.206 2008-05-19 18:50:32 remacle Exp $
+# $Id: Makefile,v 1.207 2008-05-19 19:09:55 remacle Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -34,6 +34,7 @@ SRC = GEntity.cpp\
       GVertex.cpp GEdge.cpp GEdgeLoop.cpp GFace.cpp GRegion.cpp\
       gmshVertex.cpp gmshEdge.cpp gmshFace.cpp gmshRegion.cpp gmshSurface.cpp\
       OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp\
+      discreteFace.cpp discreteRegion.cpp\
       fourierEdge.cpp fourierFace.cpp fourierProjectionFace.cpp\
       GModel.cpp\
         GModelIO_Geo.cpp\
