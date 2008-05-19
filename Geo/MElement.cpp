@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.67 2008-05-06 21:11:47 geuzaine Exp $
+// $Id: MElement.cpp,v 1.68 2008-05-19 18:50:32 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 #include "MElement.h"
 #include "GEntity.h"
 #include "GFace.h"
+#include "GaussLegendre1D.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #  include "GmshEmbedded.h"
@@ -832,6 +833,24 @@ extern int getNGQQPts(int order);
 extern IntPt *getGQQPts(int order);
 extern int getNGQHPts(int order);
 extern IntPt *getGQHPts(int order);
+
+IntPt GQL[100]; 
+
+void MLine:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const{
+#if !defined(HAVE_GMSH_EMBEDDED)
+  double *t, *w;
+  int nbP = pOrder/2 + 1;
+  gmshGaussLegendre1D(nbP, &t, &w);
+  for (int i=0;i<nbP;i++){
+    GQL[i].pt[0] = t[i];
+    GQL[i].pt[1] = 0;
+    GQL[i].pt[2] = 0;
+    GQL[i].weight = w[i];
+  }
+  *npts = nbP;
+  *pts  = GQL;
+#endif
+}
 void MTriangle:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const
 {
 #if !defined(HAVE_GMSH_EMBEDDED)

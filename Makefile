@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.482 2008-05-04 08:31:10 geuzaine Exp $
+# $Id: Makefile,v 1.483 2008-05-19 18:50:31 remacle Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -37,6 +37,7 @@ GMSH_API = Geo/GModel.h\
            Geo/GEntity.h Geo/GPoint.h\
            Geo/GVertex.h Geo/GEdge.h Geo/GEdgeLoop.h Geo/GFace.h Geo/GRegion.h\
            Geo/MVertex.h Geo/MEdge.h Geo/MFace.h Geo/MElement.h\
+           Geo/discreteVertex.h Geo/discreteEdge.h Geo/discreteFace.h Geo/discreteRegion.h\
            Geo/SPoint2.h Geo/SPoint3.h Geo/SVector3.h Geo/SBoundingBox3d.h\
            Geo/Pair.h Geo/Range.h\
            Post/PView.h Post/PViewData.h Post/PViewDataGModel.h\

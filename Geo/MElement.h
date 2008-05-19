@@ -297,6 +297,7 @@ class MLine : public MElement {
       return false;
     return true;
   }
+  virtual void getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const;
 };
 
 class MLine3 : public MLine {

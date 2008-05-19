@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.46 2008-05-12 20:24:06 geuzaine Exp $
+# $Id: Makefile,v 1.47 2008-05-19 18:50:35 remacle Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -69,7 +69,44 @@ PView.o: PView.cpp PView.h ../Geo/SPoint3.h PViewOptions.h ColorTable.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h PViewData.h PViewDataList.h \
   ../DataStr/List.h ../Common/VertexArray.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Common/Context.h ../Common/SmoothData.h \
-  adaptiveData.h ../Common/GmshMatrix.h ../Common/Message.h
+  adaptiveData.h ../Common/GmshMatrix.h /sw//include/gsl/gsl_linalg.h \
+  /sw//include/gsl/gsl_mode.h /sw//include/gsl/gsl_permutation.h \
+  /sw//include/gsl/gsl_types.h /sw//include/gsl/gsl_errno.h \
+  /sw//include/gsl/gsl_check_range.h /sw//include/gsl/gsl_vector.h \
+  /sw//include/gsl/gsl_vector_complex_long_double.h \
+  /sw//include/gsl/gsl_complex.h \
+  /sw//include/gsl/gsl_vector_long_double.h \
+  /sw//include/gsl/gsl_block_long_double.h \
+  /sw//include/gsl/gsl_vector_complex.h \
+  /sw//include/gsl/gsl_block_complex_long_double.h \
+  /sw//include/gsl/gsl_vector_complex_double.h \
+  /sw//include/gsl/gsl_vector_double.h \
+  /sw//include/gsl/gsl_block_double.h \
+  /sw//include/gsl/gsl_block_complex_double.h \
+  /sw//include/gsl/gsl_vector_complex_float.h \
+  /sw//include/gsl/gsl_vector_float.h /sw//include/gsl/gsl_block_float.h \
+  /sw//include/gsl/gsl_block_complex_float.h \
+  /sw//include/gsl/gsl_vector_ulong.h /sw//include/gsl/gsl_block_ulong.h \
+  /sw//include/gsl/gsl_vector_long.h /sw//include/gsl/gsl_block_long.h \
+  /sw//include/gsl/gsl_vector_uint.h /sw//include/gsl/gsl_block_uint.h \
+  /sw//include/gsl/gsl_vector_int.h /sw//include/gsl/gsl_block_int.h \
+  /sw//include/gsl/gsl_vector_ushort.h \
+  /sw//include/gsl/gsl_block_ushort.h /sw//include/gsl/gsl_vector_short.h \
+  /sw//include/gsl/gsl_block_short.h /sw//include/gsl/gsl_vector_uchar.h \
+  /sw//include/gsl/gsl_block_uchar.h /sw//include/gsl/gsl_vector_char.h \
+  /sw//include/gsl/gsl_block_char.h /sw//include/gsl/gsl_matrix.h \
+  /sw//include/gsl/gsl_matrix_complex_long_double.h \
+  /sw//include/gsl/gsl_matrix_complex_double.h \
+  /sw//include/gsl/gsl_matrix_complex_float.h \
+  /sw//include/gsl/gsl_matrix_long_double.h \
+  /sw//include/gsl/gsl_matrix_double.h \
+  /sw//include/gsl/gsl_matrix_float.h /sw//include/gsl/gsl_matrix_ulong.h \
+  /sw//include/gsl/gsl_matrix_long.h /sw//include/gsl/gsl_matrix_uint.h \
+  /sw//include/gsl/gsl_matrix_int.h /sw//include/gsl/gsl_matrix_ushort.h \
+  /sw//include/gsl/gsl_matrix_short.h /sw//include/gsl/gsl_matrix_uchar.h \
+  /sw//include/gsl/gsl_matrix_char.h /sw//include/gsl/gsl_blas.h \
+  /sw//include/gsl/gsl_blas_types.h /sw//include/gsl/gsl_cblas.h \
+  ../Common/Message.h
 PViewIO.o: PViewIO.cpp PView.h ../Geo/SPoint3.h PViewDataList.h \
   PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../DataStr/List.h \
   PViewDataGModel.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
@@ -82,8 +119,44 @@ PViewIO.o: PViewIO.cpp PView.h ../Geo/SPoint3.h PViewDataList.h \
   ../Common/StringUtils.h ../Common/Message.h
 PViewData.o: PViewData.cpp PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../DataStr/List.h adaptiveData.h \
-  ../Common/GmshMatrix.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Common/Message.h
+  ../Common/GmshMatrix.h /sw//include/gsl/gsl_linalg.h \
+  /sw//include/gsl/gsl_mode.h /sw//include/gsl/gsl_permutation.h \
+  /sw//include/gsl/gsl_types.h /sw//include/gsl/gsl_errno.h \
+  /sw//include/gsl/gsl_check_range.h /sw//include/gsl/gsl_vector.h \
+  /sw//include/gsl/gsl_vector_complex_long_double.h \
+  /sw//include/gsl/gsl_complex.h \
+  /sw//include/gsl/gsl_vector_long_double.h \
+  /sw//include/gsl/gsl_block_long_double.h \
+  /sw//include/gsl/gsl_vector_complex.h \
+  /sw//include/gsl/gsl_block_complex_long_double.h \
+  /sw//include/gsl/gsl_vector_complex_double.h \
+  /sw//include/gsl/gsl_vector_double.h \
+  /sw//include/gsl/gsl_block_double.h \
+  /sw//include/gsl/gsl_block_complex_double.h \
+  /sw//include/gsl/gsl_vector_complex_float.h \
+  /sw//include/gsl/gsl_vector_float.h /sw//include/gsl/gsl_block_float.h \
+  /sw//include/gsl/gsl_block_complex_float.h \
+  /sw//include/gsl/gsl_vector_ulong.h /sw//include/gsl/gsl_block_ulong.h \
+  /sw//include/gsl/gsl_vector_long.h /sw//include/gsl/gsl_block_long.h \
+  /sw//include/gsl/gsl_vector_uint.h /sw//include/gsl/gsl_block_uint.h \
+  /sw//include/gsl/gsl_vector_int.h /sw//include/gsl/gsl_block_int.h \
+  /sw//include/gsl/gsl_vector_ushort.h \
+  /sw//include/gsl/gsl_block_ushort.h /sw//include/gsl/gsl_vector_short.h \
+  /sw//include/gsl/gsl_block_short.h /sw//include/gsl/gsl_vector_uchar.h \
+  /sw//include/gsl/gsl_block_uchar.h /sw//include/gsl/gsl_vector_char.h \
+  /sw//include/gsl/gsl_block_char.h /sw//include/gsl/gsl_matrix.h \
+  /sw//include/gsl/gsl_matrix_complex_long_double.h \
+  /sw//include/gsl/gsl_matrix_complex_double.h \
+  /sw//include/gsl/gsl_matrix_complex_float.h \
+  /sw//include/gsl/gsl_matrix_long_double.h \
+  /sw//include/gsl/gsl_matrix_double.h \
+  /sw//include/gsl/gsl_matrix_float.h /sw//include/gsl/gsl_matrix_ulong.h \
+  /sw//include/gsl/gsl_matrix_long.h /sw//include/gsl/gsl_matrix_uint.h \
+  /sw//include/gsl/gsl_matrix_int.h /sw//include/gsl/gsl_matrix_ushort.h \
+  /sw//include/gsl/gsl_matrix_short.h /sw//include/gsl/gsl_matrix_uchar.h \
+  /sw//include/gsl/gsl_matrix_char.h /sw//include/gsl/gsl_blas.h \
+  /sw//include/gsl/gsl_blas_types.h /sw//include/gsl/gsl_cblas.h \
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Common/Message.h
 PViewDataIO.o: PViewDataIO.cpp ../Common/Message.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h
@@ -122,12 +195,50 @@ PViewDataGModelIO.o: PViewDataGModelIO.cpp ../Common/Message.h \
   ../Geo/SVector3.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
   ../Common/StringUtils.h
 PViewOptions.o: PViewOptions.cpp PViewOptions.h ColorTable.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/Message.h
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/Message.h \
+  ../contrib/MathEval/matheval.h
 adaptiveData.o: adaptiveData.cpp ../Plugin/Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../DataStr/List.h \
-  ../Common/GmshMatrix.h adaptiveData.h
+  ../Common/GmshMatrix.h /sw//include/gsl/gsl_linalg.h \
+  /sw//include/gsl/gsl_mode.h /sw//include/gsl/gsl_permutation.h \
+  /sw//include/gsl/gsl_types.h /sw//include/gsl/gsl_errno.h \
+  /sw//include/gsl/gsl_check_range.h /sw//include/gsl/gsl_vector.h \
+  /sw//include/gsl/gsl_vector_complex_long_double.h \
+  /sw//include/gsl/gsl_complex.h \
+  /sw//include/gsl/gsl_vector_long_double.h \
+  /sw//include/gsl/gsl_block_long_double.h \
+  /sw//include/gsl/gsl_vector_complex.h \
+  /sw//include/gsl/gsl_block_complex_long_double.h \
+  /sw//include/gsl/gsl_vector_complex_double.h \
+  /sw//include/gsl/gsl_vector_double.h \
+  /sw//include/gsl/gsl_block_double.h \
+  /sw//include/gsl/gsl_block_complex_double.h \
+  /sw//include/gsl/gsl_vector_complex_float.h \
+  /sw//include/gsl/gsl_vector_float.h /sw//include/gsl/gsl_block_float.h \
+  /sw//include/gsl/gsl_block_complex_float.h \
+  /sw//include/gsl/gsl_vector_ulong.h /sw//include/gsl/gsl_block_ulong.h \
+  /sw//include/gsl/gsl_vector_long.h /sw//include/gsl/gsl_block_long.h \
+  /sw//include/gsl/gsl_vector_uint.h /sw//include/gsl/gsl_block_uint.h \
+  /sw//include/gsl/gsl_vector_int.h /sw//include/gsl/gsl_block_int.h \
+  /sw//include/gsl/gsl_vector_ushort.h \
+  /sw//include/gsl/gsl_block_ushort.h /sw//include/gsl/gsl_vector_short.h \
+  /sw//include/gsl/gsl_block_short.h /sw//include/gsl/gsl_vector_uchar.h \
+  /sw//include/gsl/gsl_block_uchar.h /sw//include/gsl/gsl_vector_char.h \
+  /sw//include/gsl/gsl_block_char.h /sw//include/gsl/gsl_matrix.h \
+  /sw//include/gsl/gsl_matrix_complex_long_double.h \
+  /sw//include/gsl/gsl_matrix_complex_double.h \
+  /sw//include/gsl/gsl_matrix_complex_float.h \
+  /sw//include/gsl/gsl_matrix_long_double.h \
+  /sw//include/gsl/gsl_matrix_double.h \
+  /sw//include/gsl/gsl_matrix_float.h /sw//include/gsl/gsl_matrix_ulong.h \
+  /sw//include/gsl/gsl_matrix_long.h /sw//include/gsl/gsl_matrix_uint.h \
+  /sw//include/gsl/gsl_matrix_int.h /sw//include/gsl/gsl_matrix_ushort.h \
+  /sw//include/gsl/gsl_matrix_short.h /sw//include/gsl/gsl_matrix_uchar.h \
+  /sw//include/gsl/gsl_matrix_char.h /sw//include/gsl/gsl_blas.h \
+  /sw//include/gsl/gsl_blas_types.h /sw//include/gsl/gsl_cblas.h \
+  adaptiveData.h
 OctreePost.o: OctreePost.cpp ../Common/Octree.h \
   ../Common/OctreeInternals.h OctreePost.h ../DataStr/List.h PView.h \
   ../Geo/SPoint3.h PViewDataList.h PViewData.h ../Geo/SBoundingBox3d.h \
