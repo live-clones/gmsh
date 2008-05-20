@@ -20,10 +20,12 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include "GModel.h"
 #include "GRegion.h"
+
 class discreteRegion : public GRegion {
  public:
-  discreteRegion(GModel *model, int num) ;
+  discreteRegion(GModel *model, int num);
   virtual ~discreteRegion() {}
   virtual GeomType geomType() const { return DiscreteVolume; }
 };

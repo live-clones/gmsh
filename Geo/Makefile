@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.208 2008-05-20 19:03:27 geuzaine Exp $
+# $Id: Makefile,v 1.209 2008-05-20 19:25:33 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -34,7 +34,7 @@ SRC = GEntity.cpp\
       GVertex.cpp GEdge.cpp GEdgeLoop.cpp GFace.cpp GRegion.cpp\
       gmshVertex.cpp gmshEdge.cpp gmshFace.cpp gmshRegion.cpp gmshSurface.cpp\
       OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp\
-      discreteFace.cpp discreteRegion.cpp\
+      discreteEdge.cpp discreteFace.cpp discreteRegion.cpp\
       fourierEdge.cpp fourierFace.cpp fourierProjectionFace.cpp\
       GModel.cpp\
         GModelIO_Geo.cpp\
@@ -153,15 +153,21 @@ OCCRegion.o: OCCRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h OCCVertex.h OCCIncludes.h MVertex.h \
   OCCEdge.h OCCFace.h OCCRegion.h ../Common/Message.h
+discreteEdge.o: discreteEdge.cpp discreteEdge.h GModel.h GVertex.h \
+  GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
+  SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h Geo.h \
+  ../Common/GmshDefines.h gmshSurface.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ExtrudeParams.h ../Common/SmoothData.h
 discreteFace.o: discreteFace.cpp discreteFace.h GModel.h GVertex.h \
   GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
   SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h Geo.h \
   ../Common/GmshDefines.h gmshSurface.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ExtrudeParams.h ../Common/SmoothData.h
-discreteRegion.o: discreteRegion.cpp discreteRegion.h GRegion.h GEntity.h \
-  Range.h SPoint3.h SBoundingBox3d.h GModel.h GVertex.h GPoint.h \
-  SPoint2.h GEdge.h SVector3.h GFace.h GEdgeLoop.h Pair.h Geo.h \
+discreteRegion.o: discreteRegion.cpp discreteRegion.h GModel.h GVertex.h \
+  GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
+  SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h Geo.h \
   ../Common/GmshDefines.h gmshSurface.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../DataStr/List.h ../DataStr/Tree.h \
   ../DataStr/avl.h ExtrudeParams.h ../Common/SmoothData.h
@@ -182,12 +188,12 @@ GModel.o: GModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h MElement.h ../Common/GmshDefines.h \
   MVertex.h MEdge.h MFace.h discreteRegion.h discreteFace.h \
-  discreteEdge.h Geo.h gmshSurface.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ExtrudeParams.h ../Common/SmoothData.h \
-  discreteVertex.h ../Common/Message.h ../Mesh/Field.h ../Geo/Geo.h \
-  ../Post/PView.h ../Geo/SPoint3.h ../Mesh/Generator.h \
-  ../Common/Context.h
+  discreteEdge.h discreteVertex.h ../Common/Message.h gmshSurface.h \
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Mesh/Field.h \
+  ../Geo/Geo.h ../Geo/gmshSurface.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
+  ../Common/SmoothData.h ../Post/PView.h ../Geo/SPoint3.h \
+  ../Mesh/Generator.h ../Common/Context.h
 GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h Geo.h ../Common/GmshDefines.h \
@@ -201,10 +207,8 @@ GModelIO_Mesh.o: GModelIO_Mesh.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/GmshDefines.h MElement.h \
   MVertex.h MEdge.h MFace.h discreteRegion.h discreteFace.h \
-  discreteEdge.h Geo.h gmshSurface.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../DataStr/List.h ../DataStr/Tree.h \
-  ../DataStr/avl.h ExtrudeParams.h ../Common/SmoothData.h \
-  discreteVertex.h ../Common/StringUtils.h ../Common/Message.h
+  discreteEdge.h discreteVertex.h ../Common/StringUtils.h \
+  ../Common/Message.h
 GModelIO_OCC.o: GModelIO_OCC.cpp GModelIO_OCC.h GModel.h GVertex.h \
   GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
   SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h OCCIncludes.h \

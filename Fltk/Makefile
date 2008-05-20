@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.185 2008-05-20 19:03:26 geuzaine Exp $
+# $Id: Makefile,v 1.186 2008-05-20 19:25:33 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -179,7 +179,7 @@ GUI_Classifier.o: GUI_Classifier.cpp GUI_Classifier.h ../Common/GmshUI.h \
   ../Geo/fourierProjectionFace.h ../Geo/GModel.h ../Geo/Range.h \
   GUI_Extras.h ../Common/Message.h ../Mesh/meshGFaceDelaunayInsertion.h \
   ../Mesh/meshGFaceOptimize.h ../Mesh/meshGFaceDelaunayInsertion.h \
-  ../Geo/discreteEdge.h ../Geo/GModel.h ../Geo/GEdge.h ../Geo/Geo.h \
+  ../Geo/discreteEdge.h ../Geo/GModel.h ../Geo/GEdge.h \
   ../Geo/discreteFace.h ../Geo/GModel.h ../Geo/GFace.h
 Callbacks.o: Callbacks.cpp ../Common/GmshUI.h ../Common/Message.h \
   ../DataStr/Malloc.h ../DataStr/Tools.h ../DataStr/List.h \
