@@ -1,4 +1,4 @@
-// $Id: PViewOptions.cpp,v 1.21 2008-05-04 08:31:24 geuzaine Exp $
+// $Id: PViewOptions.cpp,v 1.22 2008-05-20 19:03:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -53,11 +53,11 @@ double PViewOptions::getScaleValue(int iso, int numIso, double min, double max)
   }
   else if(ScaleType == Logarithmic){
     // should translate scale instead, with smallest val an option!
-    if(min < 0.) return 0;
+    if(min <= 0.) return 0;
     return pow(10., log10(min) + iso * (log10(max) - log10(min)) / (numIso - 1.));
   }
   else if(ScaleType == DoubleLogarithmic){
-    if(min < 0.) return 0;
+    if(min <= 0.) return 0;
     double iso2 = iso / 2.;
     double numIso2 = numIso / 2.;
     return pow(10., log10(min) + iso2 * (log10(max) - log10(min)) / (numIso2 - 1.));

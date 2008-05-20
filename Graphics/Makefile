@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.152 2008-05-19 18:50:33 remacle Exp $
+# $Id: Makefile,v 1.153 2008-05-20 19:03:27 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -112,8 +112,7 @@ Post.o: Post.cpp ../Common/Message.h ../Common/GmshUI.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h Iso.h ../Post/PView.h \
   ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewData.h \
   ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Common/Context.h ../Common/SmoothData.h gl2ps.h \
-  ../contrib/MathEval/matheval.h
+  ../Common/Context.h ../Common/SmoothData.h gl2ps.h
 SelectBuffer.o: SelectBuffer.cpp ../Common/Message.h ../Common/GmshUI.h \
   ../Common/GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \

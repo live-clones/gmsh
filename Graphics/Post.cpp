@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.165 2008-05-04 08:31:14 geuzaine Exp $
+// $Id: Post.cpp,v 1.166 2008-05-20 19:03:27 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1014,13 +1014,17 @@ void drawVectorArray(PView *p, VertexArray *va)
     float *s = va->getVertexArray(3 * i);
     float *v = va->getVertexArray(3 * (i + 1));
     glColor4ubv((GLubyte *)va->getColorArray(4 * i));
-    double max;
-    if(opt->ArrowSizeProportional)
-      max = opt->TmpMax;
-    else
-      max = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-    if(max){
-      double scale = opt->ArrowSize / max;
+    double l = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    double lmax = opt->ArrowSizeProportional ? opt->TmpMax : l;
+    if(l && lmax){
+      double scale = scale = opt->ArrowSize / lmax;
+      // log scaling
+      if(opt->ScaleType == PViewOptions::Logarithmic && 
+	 opt->ArrowSizeProportional && opt->TmpMin > 0 &&
+	 opt->TmpMax > opt->TmpMin && l != opt->TmpMin){
+	scale = opt->ArrowSize / l * 
+	  log10(l / opt->TmpMin) / log10(opt->TmpMin / opt->TmpMax);
+      }
       double px = v[0] * scale, py = v[1] * scale, pz = v[2] * scale;
       // only draw vectors larger than 1 pixel on screen
       if(fabs(px) > 1. || fabs(py) > 1. || fabs(pz) > 1.){

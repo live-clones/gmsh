@@ -5,16 +5,36 @@ How to build OpenCascade 6.2 (OCC) for Gmsh:
   following <OpenCascade dir> refers to the directory where OCC is
   installed (e.g ~/OpenCascade)
 
-- If you're using Cygwin/Mingw32 (Windows) define
+- OS/compiler specific stuff:
 
-  export CC="gcc -mno-cygwin -DWNT=1 -DWIN32 -DHAVE_NO_DLL"
-  export CXX="g++ -mno-cygwin -DWNT=1 -DWIN32 -DHAVE_NO_DLL"
+   * On Cygwin/Mingw32 (Windows) define
 
-- With new versions of gcc, add "-ffriend-injection -fpermissive" to
-  the compiler options (this prevents the "Standard_Transient_Type_
-  not declared" error), i.e., define
+     export CC="gcc -mno-cygwin -DWNT=1 -DWIN32 -DHAVE_NO_DLL"
+     export CXX="g++ -mno-cygwin -DWNT=1 -DWIN32 -DHAVE_NO_DLL"
 
-  export CXXFLAGS="${CXXFLAGS} -ffriend-injection -fpermissive"
+   * With new versions of gcc, add "-ffriend-injection -fpermissive"
+     to the compiler options (this prevents the
+     "Standard_Transient_Type_ not declared" error), i.e., define
+
+     export CXXFLAGS="${CXXFLAGS} -ffriend-injection -fpermissive"
+
+   * on Mac OS X unfortunately you cannot build universal libs simply
+     by using "-arch i386 -arch ppc" (the code depends on
+     configure-time endinanness checks). So, first configure and build
+     with 
+
+     export CFLAGS="-arch i386"
+     export CXXFLAGS="-arch i386" 
+
+     and then do "make distclean" and configure and build again
+     with 
+     
+     export CFLAGS="-arch ppc"
+     export CXXFLAGS="-arch ppc"
+
+     after the install step, use "lipo" to merge both archs, e.g.
+
+     lipo -create libi386.a libppc.a -output libuniversal.a
 
 - Go to the <OpenCascade dir>/Linux/ros directory and type
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.207 2008-05-19 19:09:55 remacle Exp $
+# $Id: Makefile,v 1.208 2008-05-20 19:03:27 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -101,43 +101,7 @@ GFace.o: GFace.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   GEdgeLoop.h Pair.h GRegion.h MElement.h ../Common/GmshDefines.h \
   MVertex.h MEdge.h MFace.h ../Common/Message.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Numeric/GaussLegendre1D.h \
-  ../Common/VertexArray.h ../Geo/SVector3.h ../Common/Context.h \
-  /sw//include/gsl/gsl_vector.h \
-  /sw//include/gsl/gsl_vector_complex_long_double.h \
-  /sw//include/gsl/gsl_types.h /sw//include/gsl/gsl_errno.h \
-  /sw//include/gsl/gsl_complex.h /sw//include/gsl/gsl_check_range.h \
-  /sw//include/gsl/gsl_vector_long_double.h \
-  /sw//include/gsl/gsl_block_long_double.h \
-  /sw//include/gsl/gsl_vector_complex.h \
-  /sw//include/gsl/gsl_block_complex_long_double.h \
-  /sw//include/gsl/gsl_vector_complex_double.h \
-  /sw//include/gsl/gsl_vector_double.h \
-  /sw//include/gsl/gsl_block_double.h \
-  /sw//include/gsl/gsl_block_complex_double.h \
-  /sw//include/gsl/gsl_vector_complex_float.h \
-  /sw//include/gsl/gsl_vector_float.h /sw//include/gsl/gsl_block_float.h \
-  /sw//include/gsl/gsl_block_complex_float.h \
-  /sw//include/gsl/gsl_vector_ulong.h /sw//include/gsl/gsl_block_ulong.h \
-  /sw//include/gsl/gsl_vector_long.h /sw//include/gsl/gsl_block_long.h \
-  /sw//include/gsl/gsl_vector_uint.h /sw//include/gsl/gsl_block_uint.h \
-  /sw//include/gsl/gsl_vector_int.h /sw//include/gsl/gsl_block_int.h \
-  /sw//include/gsl/gsl_vector_ushort.h \
-  /sw//include/gsl/gsl_block_ushort.h /sw//include/gsl/gsl_vector_short.h \
-  /sw//include/gsl/gsl_block_short.h /sw//include/gsl/gsl_vector_uchar.h \
-  /sw//include/gsl/gsl_block_uchar.h /sw//include/gsl/gsl_vector_char.h \
-  /sw//include/gsl/gsl_block_char.h /sw//include/gsl/gsl_linalg.h \
-  /sw//include/gsl/gsl_mode.h /sw//include/gsl/gsl_permutation.h \
-  /sw//include/gsl/gsl_matrix.h \
-  /sw//include/gsl/gsl_matrix_complex_long_double.h \
-  /sw//include/gsl/gsl_matrix_complex_double.h \
-  /sw//include/gsl/gsl_matrix_complex_float.h \
-  /sw//include/gsl/gsl_matrix_long_double.h \
-  /sw//include/gsl/gsl_matrix_double.h \
-  /sw//include/gsl/gsl_matrix_float.h /sw//include/gsl/gsl_matrix_ulong.h \
-  /sw//include/gsl/gsl_matrix_long.h /sw//include/gsl/gsl_matrix_uint.h \
-  /sw//include/gsl/gsl_matrix_int.h /sw//include/gsl/gsl_matrix_ushort.h \
-  /sw//include/gsl/gsl_matrix_short.h /sw//include/gsl/gsl_matrix_uchar.h \
-  /sw//include/gsl/gsl_matrix_char.h
+  ../Common/VertexArray.h ../Geo/SVector3.h ../Common/Context.h
 GRegion.o: GRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h MElement.h ../Common/GmshDefines.h \
@@ -170,8 +134,7 @@ gmshRegion.o: gmshRegion.cpp GModel.h GVertex.h GEntity.h Range.h \
   ../Common/Message.h
 gmshSurface.o: gmshSurface.cpp gmshSurface.h Pair.h Range.h SPoint2.h \
   SPoint3.h SVector3.h SBoundingBox3d.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Common/Message.h \
-  ../contrib/MathEval/matheval.h
+  ../Numeric/NumericEmbedded.h ../Common/Message.h
 OCCVertex.o: OCCVertex.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h OCCVertex.h OCCIncludes.h MVertex.h \
@@ -190,6 +153,18 @@ OCCRegion.o: OCCRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h OCCVertex.h OCCIncludes.h MVertex.h \
   OCCEdge.h OCCFace.h OCCRegion.h ../Common/Message.h
+discreteFace.o: discreteFace.cpp discreteFace.h GModel.h GVertex.h \
+  GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
+  SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h Geo.h \
+  ../Common/GmshDefines.h gmshSurface.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ExtrudeParams.h ../Common/SmoothData.h
+discreteRegion.o: discreteRegion.cpp discreteRegion.h GRegion.h GEntity.h \
+  Range.h SPoint3.h SBoundingBox3d.h GModel.h GVertex.h GPoint.h \
+  SPoint2.h GEdge.h SVector3.h GFace.h GEdgeLoop.h Pair.h Geo.h \
+  ../Common/GmshDefines.h gmshSurface.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ExtrudeParams.h ../Common/SmoothData.h
 fourierEdge.o: fourierEdge.cpp fourierEdge.h GEdge.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GVertex.h GPoint.h SPoint2.h SVector3.h \
   GModel.h GFace.h GEdgeLoop.h Pair.h GRegion.h fourierVertex.h MVertex.h \
@@ -206,12 +181,13 @@ fourierProjectionFace.o: fourierProjectionFace.cpp \
 GModel.o: GModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h MElement.h ../Common/GmshDefines.h \
-  MVertex.h MEdge.h MFace.h discreteRegion.h Geo.h gmshSurface.h \
-  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ExtrudeParams.h \
-  ../Common/SmoothData.h discreteFace.h discreteEdge.h discreteVertex.h \
-  ../Common/Message.h ../Mesh/Field.h ../Geo/Geo.h ../Post/PView.h \
-  ../Geo/SPoint3.h ../Mesh/Generator.h ../Common/Context.h
+  MVertex.h MEdge.h MFace.h discreteRegion.h discreteFace.h \
+  discreteEdge.h Geo.h gmshSurface.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ExtrudeParams.h ../Common/SmoothData.h \
+  discreteVertex.h ../Common/Message.h ../Mesh/Field.h ../Geo/Geo.h \
+  ../Post/PView.h ../Geo/SPoint3.h ../Mesh/Generator.h \
+  ../Common/Context.h
 GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h Geo.h ../Common/GmshDefines.h \
@@ -224,11 +200,11 @@ GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
 GModelIO_Mesh.o: GModelIO_Mesh.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/GmshDefines.h MElement.h \
-  MVertex.h MEdge.h MFace.h discreteRegion.h Geo.h gmshSurface.h \
-  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
-  ../DataStr/Tree.h ../DataStr/avl.h ExtrudeParams.h \
-  ../Common/SmoothData.h discreteFace.h discreteEdge.h discreteVertex.h \
-  ../Common/StringUtils.h ../Common/Message.h
+  MVertex.h MEdge.h MFace.h discreteRegion.h discreteFace.h \
+  discreteEdge.h Geo.h gmshSurface.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ExtrudeParams.h ../Common/SmoothData.h \
+  discreteVertex.h ../Common/StringUtils.h ../Common/Message.h
 GModelIO_OCC.o: GModelIO_OCC.cpp GModelIO_OCC.h GModel.h GVertex.h \
   GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
   SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h OCCIncludes.h \
@@ -305,41 +281,5 @@ MElement.o: MElement.cpp MElement.h ../Common/GmshDefines.h MVertex.h \
   GFace.h GPoint.h GEdgeLoop.h GEdge.h GVertex.h SPoint2.h Pair.h \
   ../Numeric/GaussLegendre1D.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Numeric/FunctionSpace.h \
-  ../Common/GmshMatrix.h /sw//include/gsl/gsl_linalg.h \
-  /sw//include/gsl/gsl_mode.h /sw//include/gsl/gsl_permutation.h \
-  /sw//include/gsl/gsl_types.h /sw//include/gsl/gsl_errno.h \
-  /sw//include/gsl/gsl_check_range.h /sw//include/gsl/gsl_vector.h \
-  /sw//include/gsl/gsl_vector_complex_long_double.h \
-  /sw//include/gsl/gsl_complex.h \
-  /sw//include/gsl/gsl_vector_long_double.h \
-  /sw//include/gsl/gsl_block_long_double.h \
-  /sw//include/gsl/gsl_vector_complex.h \
-  /sw//include/gsl/gsl_block_complex_long_double.h \
-  /sw//include/gsl/gsl_vector_complex_double.h \
-  /sw//include/gsl/gsl_vector_double.h \
-  /sw//include/gsl/gsl_block_double.h \
-  /sw//include/gsl/gsl_block_complex_double.h \
-  /sw//include/gsl/gsl_vector_complex_float.h \
-  /sw//include/gsl/gsl_vector_float.h /sw//include/gsl/gsl_block_float.h \
-  /sw//include/gsl/gsl_block_complex_float.h \
-  /sw//include/gsl/gsl_vector_ulong.h /sw//include/gsl/gsl_block_ulong.h \
-  /sw//include/gsl/gsl_vector_long.h /sw//include/gsl/gsl_block_long.h \
-  /sw//include/gsl/gsl_vector_uint.h /sw//include/gsl/gsl_block_uint.h \
-  /sw//include/gsl/gsl_vector_int.h /sw//include/gsl/gsl_block_int.h \
-  /sw//include/gsl/gsl_vector_ushort.h \
-  /sw//include/gsl/gsl_block_ushort.h /sw//include/gsl/gsl_vector_short.h \
-  /sw//include/gsl/gsl_block_short.h /sw//include/gsl/gsl_vector_uchar.h \
-  /sw//include/gsl/gsl_block_uchar.h /sw//include/gsl/gsl_vector_char.h \
-  /sw//include/gsl/gsl_block_char.h /sw//include/gsl/gsl_matrix.h \
-  /sw//include/gsl/gsl_matrix_complex_long_double.h \
-  /sw//include/gsl/gsl_matrix_complex_double.h \
-  /sw//include/gsl/gsl_matrix_complex_float.h \
-  /sw//include/gsl/gsl_matrix_long_double.h \
-  /sw//include/gsl/gsl_matrix_double.h \
-  /sw//include/gsl/gsl_matrix_float.h /sw//include/gsl/gsl_matrix_ulong.h \
-  /sw//include/gsl/gsl_matrix_long.h /sw//include/gsl/gsl_matrix_uint.h \
-  /sw//include/gsl/gsl_matrix_int.h /sw//include/gsl/gsl_matrix_ushort.h \
-  /sw//include/gsl/gsl_matrix_short.h /sw//include/gsl/gsl_matrix_uchar.h \
-  /sw//include/gsl/gsl_matrix_char.h /sw//include/gsl/gsl_blas.h \
-  /sw//include/gsl/gsl_blas_types.h /sw//include/gsl/gsl_cblas.h \
-  ../Common/Message.h ../Common/Context.h ../Mesh/qualityMeasures.h
+  ../Common/GmshMatrix.h ../Common/Message.h ../Common/Context.h \
+  ../Mesh/qualityMeasures.h
