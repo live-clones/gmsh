@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.166 2008-05-20 19:03:27 geuzaine Exp $
+// $Id: Post.cpp,v 1.167 2008-05-21 10:59:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1023,7 +1023,7 @@ void drawVectorArray(PView *p, VertexArray *va)
 	 opt->ArrowSizeProportional && opt->TmpMin > 0 &&
 	 opt->TmpMax > opt->TmpMin && l != opt->TmpMin){
 	scale = opt->ArrowSize / l * 
-	  log10(l / opt->TmpMin) / log10(opt->TmpMin / opt->TmpMax);
+	  log10(l / opt->TmpMin) / log10(opt->TmpMax / opt->TmpMin);
       }
       double px = v[0] * scale, py = v[1] * scale, pz = v[2] * scale;
       // only draw vectors larger than 1 pixel on screen
