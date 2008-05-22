@@ -1,4 +1,4 @@
-// you need gshhs data file, available on ftp://ftp.soest.hawaii.edu/pwessel/gshhs/gshhs_1.6.zip
+// you need gshhs data file, available on ftp://ftp.soest.hawaii.edu/
 Field[1] = Box;
 Field[1].VIn = 2000;
 Field[1].VOut = 100000;

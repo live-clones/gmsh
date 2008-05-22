@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.36 2008-05-04 08:31:15 geuzaine Exp $
+// $Id: Field.cpp,v 1.37 2008-05-22 12:26:59 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -453,7 +453,7 @@ public:
   double operator() (double x, double y, double z)
   {
     return (*GModel::current()->getFields()->get(field_id))
-      (atan2(x, y), asin(z / sqrt(x * x + y * y + z * z)), 0);
+      (atan2(y, x), asin(z / sqrt(x * x + y * y + z * z)), 0);
   }
   FieldDialogBox *&dialog_box()
   {

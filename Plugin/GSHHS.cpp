@@ -203,7 +203,7 @@ class GeoEarthImport
     buff << "IFI = newf;\n";
     if(write_polar_sphere){
       buff << "Point ( IP + " << ip++ << " ) = {0, 0, 0 , lc};\n";
-      buff << "Point ( IP + " << ip++ << " ) = {0, 0, 6.371e6 , lc};\n";
+      buff << "Point ( IP + " << ip++ <<" ) = {0, 0, 6.371e6 , lc};\n";
       buff << "PolarSphere ( IS + " << is++ << " ) = {IP , IP+1};\n";
     }
     *file << buff.str();
@@ -273,7 +273,7 @@ class GeoEarthImport
   }
 };
 
-/*      $Id: GSHHS.cpp,v 1.9 2008-05-04 08:31:23 geuzaine Exp $
+/*      $Id: GSHHS.cpp,v 1.10 2008-05-22 12:26:59 remacle Exp $
  *
  * PROGRAM:	gshhs.c
  * AUTHOR:	Paul Wessel (pwessel@hawaii.edu)
@@ -378,6 +378,8 @@ void import_gshhs(FILE * fp, GeoEarthImport & geo_import)
         p.x = swabi4((unsigned int)p.x);
         p.y = swabi4((unsigned int)p.y);
       }
+      double lat=M_PI / 180*((h.greenwich && p.x > max_east) ? p.x * 1.0e-6 - 360.0 : p.x * 1.0e-6);
+      double lon= (p.y * 1.0e-6) * M_PI / 180;
       geo_import.add_point(SPoint3(
         M_PI / 180*((h.greenwich && p.x > max_east) ? p.x * 1.0e-6 - 360.0
                                                     : p.x * 1.0e-6),
