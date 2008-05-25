@@ -1,7 +1,7 @@
 #ifndef _GMODELIO_OCC_H_
 #define _GMODELIO_OCC_H_
 
-// $Id: GModelIO_OCC.h,v 1.5 2008-03-20 11:44:05 geuzaine Exp $
+// $Id: GModelIO_OCC.h,v 1.6 2008-05-25 07:10:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -27,14 +27,19 @@
 
 #if defined(HAVE_OCC)
 
+class OCC_Options {
+ private:
+  int _dummy;
+ public:
+  OCC_Options(int dummy) : _dummy(dummy){}
+};
+
 class OCC_Internals {
  protected :
   TopoDS_Shape shape;
   TopTools_IndexedMapOfShape fmap, emap, vmap, somap, shmap, wmap;
  public:
-  
-  enum BooleanOperator { Add , Cut }; 
-
+  enum BooleanOperator { Add, Cut }; 
   OCC_Internals()
   {
     somap.Clear();
@@ -44,19 +49,20 @@ class OCC_Internals {
     emap.Clear();
     vmap.Clear();
   }
-  void HealGeometry(double tolerance, bool fixsmalledges, 
+  void healGeometry(double tolerance, bool fixsmalledges, 
                     bool fixspotstripfaces, bool sewfaces, 
                     bool makesolids=false);
+  void loadBREP(const char *);  
   void loadSTEP(const char *);
   void loadIGES(const char *);
-  void loadBREP(const char *);  
+  void loadShape(const TopoDS_Shape *);
   void buildGModel(GModel *gm);
   void buildLists();
-  void removeAllDuplicates (const double &tolerance);
+  void removeAllDuplicates(const double &tolerance);
 
-  void Sphere  ( const SPoint3 & center, const double & radius, const BooleanOperator & op );
-  void Cylinder( const SPoint3 & bottom_center, const SVector3 & dir, const BooleanOperator & op );
-  void applyBooleanOperator ( TopoDS_Shape tool, const BooleanOperator & op);
+  void Sphere(const SPoint3 &center, const double &radius, const BooleanOperator &op);
+  void Cylinder(const SPoint3 &bottom_center, const SVector3 &dir, const BooleanOperator &op);
+  void applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op);
 };
 
 #endif

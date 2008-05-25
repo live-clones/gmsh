@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.40 2008-05-04 08:31:13 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.41 2008-05-25 07:10:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -98,7 +98,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
   umax += fabs(du) / 100.0;
   vmax += fabs(dv) / 100.0;
   occface = BRep_Tool::Surface(s);
-  buildSTLTriangulation();
+  if(!CTX.batch) buildSTLTriangulation();
 }
 
 Range<double> OCCFace::parBounds(int i) const

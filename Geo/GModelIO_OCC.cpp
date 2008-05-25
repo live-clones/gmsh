@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.32 2008-05-04 08:31:13 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.33 2008-05-25 07:10:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -189,7 +189,7 @@ void OCC_Internals::buildLists()
   
 }
 
-void OCC_Internals::HealGeometry(double tolerance, bool fixsmalledges, 
+void OCC_Internals::healGeometry(double tolerance, bool fixsmalledges, 
                                  bool fixspotstripfaces, bool sewfaces, 
                                  bool makesolids)
 {
@@ -348,7 +348,6 @@ void OCC_Internals::HealGeometry(double tolerance, bool fixsmalledges,
         Msg::Info(" not possible");
     }
   }
-  buildLists();
 }
 
 void OCC_Internals::loadBREP(const char *fn)
@@ -356,12 +355,12 @@ void OCC_Internals::loadBREP(const char *fn)
   BRep_Builder aBuilder;
   BRepTools::Read(shape, (char*)fn, aBuilder);
   BRepTools::Clean(shape);
-  buildLists();
-  HealGeometry(CTX.geom.tolerance, 
+  healGeometry(CTX.geom.tolerance, 
                CTX.geom.occ_fix_small_edges,
                CTX.geom.occ_fix_small_faces,
                CTX.geom.occ_sew_faces);
   BRepTools::Clean(shape);
+  buildLists();
 }
 
 void OCC_Internals::loadSTEP(const char *fn)
@@ -372,12 +371,12 @@ void OCC_Internals::loadSTEP(const char *fn)
   reader.TransferRoots(); 
   shape = reader.OneShape();  
   BRepTools::Clean(shape);
-  buildLists();
-  HealGeometry(CTX.geom.tolerance, 
+  healGeometry(CTX.geom.tolerance, 
                CTX.geom.occ_fix_small_edges,
                CTX.geom.occ_fix_small_faces,
                CTX.geom.occ_sew_faces);
   BRepTools::Clean(shape);
+  buildLists();
 }
 
 void OCC_Internals::loadIGES(const char *fn)
@@ -388,12 +387,24 @@ void OCC_Internals::loadIGES(const char *fn)
   reader.TransferRoots(); 
   shape = reader.OneShape();  
   BRepTools::Clean(shape);
-  buildLists();
-  HealGeometry(CTX.geom.tolerance, 
+  healGeometry(CTX.geom.tolerance, 
                CTX.geom.occ_fix_small_edges,
                CTX.geom.occ_fix_small_faces,
                CTX.geom.occ_sew_faces);
   BRepTools::Clean(shape);
+  buildLists();
+}
+
+void OCC_Internals::loadShape(const TopoDS_Shape *s)
+{
+  shape = *s;
+  BRepTools::Clean(shape);
+  healGeometry(CTX.geom.tolerance, 
+               CTX.geom.occ_fix_small_edges,
+               CTX.geom.occ_fix_small_faces,
+               CTX.geom.occ_sew_faces);
+  BRepTools::Clean(shape);
+  buildLists();
 }
 
 void OCC_Internals::buildGModel(GModel *model)
@@ -437,12 +448,12 @@ void GModel::_deleteOCCInternals()
   _occ_internals = 0;
 }
 
-int GModel::readOCCSTEP(const std::string &fn)
+int GModel::readOCCBREP(const std::string &fn)
 {
   _occ_internals = new OCC_Internals;
-  _occ_internals->loadSTEP(fn.c_str());
-  _occ_internals->buildLists();
+  _occ_internals->loadBREP(fn.c_str());
   _occ_internals->buildGModel(this);
+  snapVertices();
   return 1;
 }
 
@@ -450,34 +461,35 @@ int GModel::readOCCIGES(const std::string &fn)
 {
   _occ_internals = new OCC_Internals;
   _occ_internals->loadIGES(fn.c_str());
-  _occ_internals->buildLists();
   _occ_internals->buildGModel(this);
   return 1;
 }
 
-int GModel::readOCCBREP(const std::string &fn)
+int GModel::readOCCSTEP(const std::string &fn)
 {
   _occ_internals = new OCC_Internals;
-  _occ_internals->loadBREP(fn.c_str());
-  _occ_internals->buildLists();
+  _occ_internals->loadSTEP(fn.c_str());
   _occ_internals->buildGModel(this);
-  snapVertices();
   return 1;
 }
 
-/*
-  OCC Creation routines
-*/
-
-// This function has been inspired from SALOME
-// It removes all duplicates from the geometry, starting
-// from vertices, edges, faces, shells and solids
-// This 
-void OCC_Internals::removeAllDuplicates (const double &tolerance){
+int GModel::importOCCShape(const void *shape, const void *options)
+{
+  _occ_internals = new OCC_Internals;
+  _occ_internals->loadShape((TopoDS_Shape*)shape);
+  _occ_internals->buildGModel(this);
+  return 1;
 }
 
+// This function has been inspired from SALOME It removes all
+// duplicates from the geometry, starting from vertices, edges, faces,
+// shells and solids This
 
-void AddSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape& theList)
+void OCC_Internals::removeAllDuplicates(const double &tolerance)
+{
+}
+
+void AddSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape &theList)
 {
   if (theShape.ShapeType() != TopAbs_COMPOUND &&
       theShape.ShapeType() != TopAbs_COMPSOLID) {
@@ -494,7 +506,8 @@ void AddSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape& theList)
       if (aShape_i.ShapeType() == TopAbs_COMPOUND ||
           aShape_i.ShapeType() == TopAbs_COMPSOLID) {
         AddSimpleShapes(aShape_i, theList);
-      } else {
+      } 
+      else {
         theList.Append(aShape_i);
       }
     }
@@ -591,21 +604,28 @@ void GModel::_deleteOCCInternals()
 int GModel::readOCCSTEP(const std::string &fn)
 {
   Msg::Error("Gmsh has to be compiled with OpenCascade support to load '%s'",
-      fn.c_str());
+	     fn.c_str());
   return 0;
 }
 
 int GModel::readOCCIGES(const std::string &fn)
 {
   Msg::Error("Gmsh has to be compiled with OpenCascade support to load '%s'",
-      fn.c_str());
+	     fn.c_str());
   return 0;
 }
 
 int GModel::readOCCBREP(const std::string &fn)
 {
   Msg::Error("Gmsh has to be compiled with OpenCascade support to load '%s'",
-      fn.c_str());
+	     fn.c_str());
+  return 0;
+}
+
+int GModel::importOCCShape(const void *shape, const void *options)
+{
+  Msg::Error("Gmsh has to be compiled with OpenCascade support to import "
+	     "a TopoDS_Shape");
   return 0;
 }
 
