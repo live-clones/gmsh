@@ -53,6 +53,20 @@ class coordinate_lonlat:public coordinate_system{
     ll.setPosition( atan2(xyz.y(),xyz.x()), asin(xyz.z()/r), 0);
   }
 };
+// ************** Longitude Latitude_degrees ***************
+class coordinate_lonlat_degrees:public coordinate_system{
+  coordinate_lonlat cll;
+  SPoint3 llradian;
+  public:
+  void to_cartesian(const SPoint3 ll, SPoint3 &xyz){
+    llradian.setPosition(ll.x()*M_PI/180,ll.y()*M_PI/180,0);
+    cll.to_cartesian(llradian,xyz);
+  }
+  void from_cartesian(const SPoint3 xyz, SPoint3 &ll){
+    cll.from_cartesian(xyz,llradian);
+    ll.setPosition(llradian.x()*180/M_PI,llradian.y()*180/M_PI,0);
+  }
+};
 
 // ************** UTM ************** 
 class coordinate_utm :public coordinate_system{
@@ -167,7 +181,7 @@ class GeoEarthImport
   std::ofstream *file;
   int il, ip, is, ill, ifi;
   int first_point_in_loop, first_point_in_surface,first_point_in_attractor;
-  bool empty_surface;
+  bool empty_surface,closed_loop;
   SPoint3 lastpoint;
   coordinate_system *c_syst;
   void new_attractor(){
@@ -177,11 +191,12 @@ class GeoEarthImport
     surface_buff.str("");
     surface_buff << "Plane Surface( IS + " << is++ << " ) = { ";
     first_point_in_surface = ip;
-    bool empty_surface = true;
+    empty_surface = true;
   }
   void new_loop(){
     loop_buff.str("");
     first_point_in_loop = ip;
+    closed_loop=true;
   }
 
   public:
@@ -219,15 +234,23 @@ class GeoEarthImport
     size_field = _size_field;
   }
   void add_point(SPoint3 point){
-    double d=0;
     if(c_syst)
       c_syst->to_cartesian(point,point);
-    if(size_field)
-      d=(*size_field)(point[0]* 6361e3,point[1]* 6361e3,point[2]* 6361e3);
-    if(d<0)return;
-    if(ip == first_point_in_loop || !size_field
-      || point.distance(lastpoint) * 6361e3 
-        > std::min(d, (*size_field) (lastpoint[0],lastpoint[1],lastpoint[2]))) {
+    double lc=0;
+    if(size_field){
+      double d=(*size_field)(point[0]* 6361e3,point[1]* 6361e3,point[2]* 6361e3);
+      if(d<0){
+        if(first_point_in_loop!=ip){
+          closed_loop=false;
+          end_loop();
+          closed_loop=false;
+        }
+       return; 
+      }
+      lc=std::min(d, (*size_field) (lastpoint[0],lastpoint[1],lastpoint[2]));
+    }
+    lc/=6361e3;
+    if(ip == first_point_in_loop || point.distance(lastpoint) >lc){
       SPoint2 stereo(-point.x() / (1 + point.z()), -point.y() / (1 + point.z()));
       loop_buff << "Point ( IP + " << ip++ << " ) = {" << stereo.
       x() << ", " << stereo.y() << ", " << 0 << ", lc};\n";
@@ -235,6 +258,7 @@ class GeoEarthImport
     }
   }
   void end_loop(bool closed=true) {
+    closed&=closed_loop;
     if(ip - first_point_in_loop > 3) {
       loop_buff << "BSpline ( IL + " << il++ << " ) = { IP + " <<
         first_point_in_loop << " : IP + " << ip - 1 ;
@@ -273,7 +297,7 @@ class GeoEarthImport
   }
 };
 
-/*      $Id: GSHHS.cpp,v 1.10 2008-05-22 12:26:59 remacle Exp $
+/*      $Id: GSHHS.cpp,v 1.11 2008-05-26 15:41:31 remacle Exp $
  *
  * PROGRAM:	gshhs.c
  * AUTHOR:	Paul Wessel (pwessel@hawaii.edu)
@@ -336,7 +360,7 @@ void import_gshhs(FILE * fp, GeoEarthImport & geo_import)
 {
   double w, e, s, n;
   char source;
-  int k, max_east = 270000000, info, n_read, flip;
+  int k, max_east = 270000000, n_read, flip;
   struct POINT p;
   struct GSHHS h;
   while(1) {
@@ -378,8 +402,8 @@ void import_gshhs(FILE * fp, GeoEarthImport & geo_import)
         p.x = swabi4((unsigned int)p.x);
         p.y = swabi4((unsigned int)p.y);
       }
-      double lat=M_PI / 180*((h.greenwich && p.x > max_east) ? p.x * 1.0e-6 - 360.0 : p.x * 1.0e-6);
-      double lon= (p.y * 1.0e-6) * M_PI / 180;
+      //double lat=M_PI / 180*((h.greenwich && p.x > max_east) ? p.x * 1.0e-6 - 360.0 : p.x * 1.0e-6);
+      //double lon= (p.y * 1.0e-6) * M_PI / 180;
       geo_import.add_point(SPoint3(
         M_PI / 180*((h.greenwich && p.x > max_east) ? p.x * 1.0e-6 - 360.0
                                                     : p.x * 1.0e-6),
@@ -473,10 +497,13 @@ PView *GMSH_GSHHSPlugin::execute(PView * v)
   double utm_equatorial_radius=(double)GSHHSOptions_Number[2].def;
   double utm_polar_radius=(double)GSHHSOptions_Number[3].def;
   coordinate_lonlat lonlat;
+  coordinate_lonlat_degrees lonlat_degrees;
   coordinate_utm utm(utm_zone, utm_equatorial_radius, utm_polar_radius);
   GeoEarthImport geo_import(outfilename,write_polar_sphere);
   if(coordinate_name == "lonlat")
     geo_import.set_coordinate_system(&lonlat);
+  else if(coordinate_name == "lonlat_degrees")
+    geo_import.set_coordinate_system(&lonlat_degrees);
   else if(coordinate_name == "utm")
     geo_import.set_coordinate_system(&utm);
   else if(coordinate_name != "cartesian"){

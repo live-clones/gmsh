@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.37 2008-05-22 12:26:59 remacle Exp $
+// $Id: Field.cpp,v 1.38 2008-05-26 15:41:31 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -744,9 +744,6 @@ public:
   double operator() (double x, double y, double z)
   {
     Field *field = GModel::current()->getFields()->get(iField);
-    double l=0;
-    int nn=0;
-    double ddelta=delta/n;
     return (
       (*field) (x + delta , y, z)+ (*field) (x - delta , y, z)
       +(*field) (x, y + delta , z)+ (*field) (x, y - delta , z)
