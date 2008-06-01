@@ -45,21 +45,15 @@ class GModel
   std::map<int, MVertex*> _vertexMapCache;
 
   GEO_Internals *_geo_internals;
-#if !defined(HAVE_GMSH_EMBEDDED)
   void _createGEOInternals();
   void _deleteGEOInternals();
-#endif
 
   OCC_Internals *_occ_internals;
-#if !defined(HAVE_GMSH_EMBEDDED)
   void _deleteOCCInternals();
-#endif
 
   FM_Internals *_fm_internals;
-#if !defined(HAVE_GMSH_EMBEDDED)
   void _createFMInternals();
   void _deleteFMInternals();
-#endif
  
   // Characteristic Lengths fields
   FieldManager *_fields;

@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.68 2008-05-19 18:50:32 remacle Exp $
+// $Id: MElement.cpp,v 1.69 2008-06-01 09:14:21 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -23,13 +23,13 @@
 #include "MElement.h"
 #include "GEntity.h"
 #include "GFace.h"
-#include "GaussLegendre1D.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #  include "GmshEmbedded.h"
 #else
 #  include "Numeric.h"
 #  include "FunctionSpace.h"
+#  include "GaussLegendre1D.h"
 #  include "Message.h"
 #  include "Context.h"
 #  include "qualityMeasures.h"
@@ -825,7 +825,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   }
 }
 
-extern int      getNGQTPts(int order);
+extern int getNGQTPts(int order);
 extern IntPt *getGQTPts (int order);
 extern int getNGQTetPts(int order);
 extern IntPt *getGQTetPts(int order);
@@ -836,46 +836,51 @@ extern IntPt *getGQHPts(int order);
 
 IntPt GQL[100]; 
 
-void MLine:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const{
+void MLine::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
+{
 #if !defined(HAVE_GMSH_EMBEDDED)
   double *t, *w;
-  int nbP = pOrder/2 + 1;
+  int nbP = pOrder / 2 + 1;
   gmshGaussLegendre1D(nbP, &t, &w);
-  for (int i=0;i<nbP;i++){
+  for (int i = 0; i < nbP; i++){
     GQL[i].pt[0] = t[i];
     GQL[i].pt[1] = 0;
     GQL[i].pt[2] = 0;
     GQL[i].weight = w[i];
   }
   *npts = nbP;
-  *pts  = GQL;
+  *pts = GQL;
 #endif
 }
-void MTriangle:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const
+
+void MTriangle:: getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 {
 #if !defined(HAVE_GMSH_EMBEDDED)
   *npts = getNGQTPts(pOrder);
-  *pts  = getGQTPts(pOrder);
+  *pts = getGQTPts(pOrder);
 #endif
 }
-void MTetrahedron:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const
+
+void MTetrahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 {
 #if !defined(HAVE_GMSH_EMBEDDED)
   *npts = getNGQTetPts(pOrder);
-  *pts  = getGQTetPts(pOrder);
+  *pts = getGQTetPts(pOrder);
 #endif
 }
-void MHexahedron:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const
+
+void MHexahedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 {
 #if !defined(HAVE_GMSH_EMBEDDED)
   *npts = getNGQHPts(pOrder);
-  *pts  = getGQHPts(pOrder);
+  *pts = getGQHPts(pOrder);
 #endif
 }
-void MQuadrangle:: getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const
+
+void MQuadrangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 {
 #if !defined(HAVE_GMSH_EMBEDDED)
   *npts = getNGQQPts(pOrder);
-  *pts  = getGQQPts(pOrder);
+  *pts = getGQQPts(pOrder);
 #endif
 }

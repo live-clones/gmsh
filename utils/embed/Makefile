@@ -10,6 +10,7 @@ SRC = GModel.cpp\
         GModelIO_Mesh.cpp\
       GEntity.cpp\
         GVertex.cpp GEdge.cpp GEdgeLoop.cpp GFace.cpp GRegion.cpp\
+        discreteEdge.cpp discreteFace.cpp discreteRegion.cpp\
       MElement.cpp\
         MFace.cpp MVertex.cpp\
       NumericEmbedded.cpp\

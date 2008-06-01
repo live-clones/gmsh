@@ -840,11 +840,11 @@ void adaptiveElements<T>::initWithLowResolution(PViewData *data, int step)
   _posX = new Double_Matrix(numEle, numNodes);
   _posY = new Double_Matrix(numEle, numNodes);
   _posZ = new Double_Matrix(numEle, numNodes);
-  _val = new Double_Matrix(numEle, numVal / numComp);
+  _val = new Double_Matrix(numEle, numVal);
   if(numComp == 3){
-    _valX = new Double_Matrix(numEle, numVal / numComp);
-    _valY = new Double_Matrix(numEle, numVal / numComp);
-    _valZ = new Double_Matrix(numEle, numVal / numComp);
+    _valX = new Double_Matrix(numEle, numVal);
+    _valY = new Double_Matrix(numEle, numVal);
+    _valZ = new Double_Matrix(numEle, numVal);
   }
 
   // store non-interpolated data
@@ -1065,6 +1065,7 @@ adaptiveData::adaptiveData(PViewData *data)
   _outData = new PViewDataList(true);
 
   int numComp = _inData->getNumComponents(0, 0, 0);
+
   std::vector<List_T*> p;
   if(_inData->getNumLines() && _inData->getInterpolationScheme(1, p) >= 2)
     _lines = new adaptiveElements<adaptiveLine>
