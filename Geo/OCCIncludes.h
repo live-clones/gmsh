@@ -24,7 +24,11 @@
 
 #include <iostream>
 using std::iostream;
+
+#if !defined(WIN32) || defined(__CYGWIN__)
 #include "config.h"
+#endif
+
 #include "BRep_Tool.hxx"
 #include "Geom_Curve.hxx"
 #include "Geom2d_Curve.hxx"
