@@ -21,7 +21,7 @@ CXX=cl /EHsc /nologo /GR /MT
 LINKER=cl /F16777216
 
 # All compiler flags except optimization flags
-FLAGS=/DWIN32 /D_USE_MATH_DEFINES /DHAVE_NO_DLL /DHAVE_NO_VSNPRINTF /DHAVE_NO_SNPRINTF /DHAVE_NO_SOCKLEN_T /DHAVE_NO_POST
+FLAGS=/DWIN32 /D_USE_MATH_DEFINES /DHAVE_NO_DLL /DHAVE_NO_VSNPRINTF /DHAVE_NO_SNPRINTF /DHAVE_NO_SOCKLEN_T /DHAVE_NO_POST /DHAVE_OCC /DWNT /IC:/OpenCascade6.2.0/ros/inc
 
 # Additional system includes ($INCLUDE is automatically defined by MSVC when
 # you launch the MSVC command prompt)
@@ -34,6 +34,10 @@ OPTIM=/O2
 GMSH_DIRS=Common DataStr Geo Mesh Numeric Parser contrib/NR
 
 # Gmsh libraries
+
+
+OCC_LIBS="-lTKSTEP -lTKSTEP209 -lTKSTEPAttr -lTKSTEPBase -lTKIGES -lTKXSBase -lTKOffset -lTKFeat -lTKFillet -lTKBool -lTKShHealing -lTKMesh -lTKHLR -lTKBO -lTKPrim -lTKTopAlgo -lTKGeomAlgo -lTKBRep -lTKGeomBase -lTKG3d -lTKG2d -lTKAdvTools -lTKMath -lTKernel"
+
 GMSH_LIBS=Common/Main.obj lib/*.lib
 
 # How you create a static library on this machine
