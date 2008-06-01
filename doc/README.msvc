@@ -6,7 +6,7 @@ To compile Gmsh with Microsoft Visual C++
 
 3) set PATH=%PATH%;C:\cygwin\bin  (or wherever the make tools are installed)
 
-4) go to the gmsh directory and rename "variables.msvc" to "variables"
+4) go to the gmsh directory and rename "utils/misc/variables.msvc" to "variables"
 
 5) edit "variables" to match your local installation of Visual C++
 

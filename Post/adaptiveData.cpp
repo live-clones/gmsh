@@ -1096,6 +1096,7 @@ adaptiveData::adaptiveData(PViewData *data)
 
 void adaptiveData::initWithLowResolution(int step)
 {
+  _outData->setDirty(true);
   if(_lines) _lines->initWithLowResolution(_inData, step);
   if(_triangles) _triangles->initWithLowResolution(_inData, step);
   if(_quadrangles) _quadrangles->initWithLowResolution(_inData, step);
@@ -1106,6 +1107,7 @@ void adaptiveData::initWithLowResolution(int step)
 
 void adaptiveData::changeResolution(int level, double tol, GMSH_Post_Plugin *plug)
 {
+  _outData->setDirty(true);
   if(_lines) _lines->changeResolution(level, tol, plug);
   if(_triangles) _triangles->changeResolution(level, tol, plug);
   if(_quadrangles) _quadrangles->changeResolution(level, tol, plug);
