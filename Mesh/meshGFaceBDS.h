@@ -21,11 +21,13 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <map>
+#include <list>
 class GFace;
 class GModel;
 class BDS_Mesh;
 class BDS_Point;
 class MVertex;
+class BDS_Mesh;
 
 void computeMeshSizeFieldAccuracy(GFace *gf, BDS_Mesh &m, double &avg, 
                                   double &max_e, double &min_e, int &nE, int &GS);
@@ -37,5 +39,6 @@ void gmshOptimizeMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
                          std::map<BDS_Point*,MVertex*> *recover_map=0);
 void gmshDelaunayizeBDS(GFace *gf, BDS_Mesh &m, int &nb_swap);
 void gmshCollapseSmallEdges(GModel &gm);
-
+BDS_Mesh *gmsh2BDS(std::list<GFace*> &l);
+double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2);
 #endif

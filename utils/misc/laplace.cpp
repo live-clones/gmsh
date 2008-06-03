@@ -18,8 +18,53 @@ class gLevelset;
 // either in reference coordinate system, or in the real one
 
 typedef Double_Matrix gmshSmallMatrix ;
+#ifdef HAVE_SPARSKIT
+#include "CSR_Matrix.h"
+#include "CSR_Vector.h"
+typedef CSR_Matrix gmshMatrix ;
+typedef CSR_Vector gmshVector ; 
+inline double getMatrix ( int i, int j, gmshMatrix &m){
+  return m.GetMatrix(i+1,j+1);
+}
+inline void addMatrix ( int i, int j, double val, gmshMatrix &m){
+  if (val != 0.0)m.AddMatrix(i+1,j+1,val);
+}
+inline void addVector ( int i, double val, gmshVector &v){
+  if (val != 0.0)v.AddVal(i+1,val);
+}
+inline void zeroVector ( gmshVector &v){
+  v.ZeroArray();
+}
+inline double getVector ( int i, gmshVector &v){
+  return v.GetVal(i+1);
+}
+inline void SystemSolve ( gmshMatrix &a, gmshVector &x, gmshVector &b){
+  a.EndOfAssembly();
+  SPARSKIT_LINEAR_SOLVER_ ( "rcmk","ilut","gmres",a,b,x);
+}
+#else
 typedef Double_Matrix gmshMatrix ;
 typedef Double_Vector gmshVector ; 
+inline double getMatrix ( int i, int j, gmshMatrix &m){
+  return m(i,j);
+}
+inline void addMatrix ( int i, int j, double val, gmshMatrix &m){
+  m(i,j) += val;
+}
+inline void addVector ( int i, double val, gmshVector &v){
+  v(i) += val;
+}
+inline double getVector ( int i, gmshVector &v){
+  return v(i);
+}
+inline void SystemSolve ( gmshMatrix &a, gmshVector &x, gmshVector &b){
+  a.lu_solve (b,x);
+}
+inline void zeroVector ( gmshVector &v){
+  v.set_all(0.0);
+}
+
+#endif
 
 extern double inv3x3 (double a[3][3], double a[3][3]);
 
@@ -55,7 +100,7 @@ public:
   double Z() const {return z;}; 
 };
 
-double gmshTopoVertex::tol = 1.e-6;
+double gmshTopoVertex::tol = 1.e-9;
 
 // try to add a "poisson" term INSIDE the elements
 #ifdef HAVE_GLEVELSETS
@@ -206,16 +251,17 @@ protected:
   virtual int localToGlobalR (MElement *e, int iVertex, int icomp) const = 0;
   virtual int localToGlobalR (MElement *e, int i) const = 0;
   virtual int localToGlobalC (MElement *e, int j) const = 0;
+  std::map<std::pair<int,int>, double> dirichlet;
+  gLevelset *_ls;
+public:
   virtual void elementMatrix ( MElement *e, gmshSmallMatrix & m) const = 0;
   virtual void elementVector ( MElement *e, gmshVector & m)      const = 0;
   void addToJacobian (gmshMatrix &J, GEntity *ge) const;
   void addToRightHandSide (gmshVector &J, GEntity *ge) const;
-  std::map<std::pair<int,int>, double> dirichlet;
-  gLevelset *_ls;
-public:
   gmshNodalFemTerm (GModel *gm) : gmshTermOfFormulation(gm),_ls(0){}
   void addToRightHandSide (gmshVector &r) const;
   void addToJacobian (gmshMatrix &J) const;
+  void addToJacobian (gmshMatrix &Jac, gmshSmallMatrix &localMatrix, MElement *e) const;
   void uglyDirichlet (gmshMatrix &J,gmshVector &r) const;
   void addDirichlet (int physical, int dim, int comp, const gmshVertexEvaluator & e);
   void addNeumann (int physical, int dim, int icomp, const gmshVertexEvaluator & e, gmshVector &r);
@@ -269,7 +315,7 @@ void gmshNodalFemTerm::addNeumann(int physical, int dim, int comp, const gmshVer
 	  double sf;
 	  e->getShapeFunction (k,u,v,w,sf);	  
 	  //	  printf("l2g (%d,%d) = %d (%d)\n", k,comp,localToGlobalR(e,k,comp),r.size());
-	  r(localToGlobalR(e,k,comp)) += detJ * weight * sf * FCT;
+	  addVector(localToGlobalR(e,k,comp),detJ * weight * sf * FCT,r);
 	}
       }
     }
@@ -284,9 +330,9 @@ void gmshNodalFemTerm::uglyDirichlet (gmshMatrix &J,gmshVector &r) const{
     double val  = it->second;
     int row  = C[it->first.second];
     //    printf("vertex %d comp %d iRow = %d\n",it->first.first,it->first.second,row);
-    const double BIG = J(row,row) * 1.e8;
-    J(row,row) = BIG;
-    r(row) += BIG * val;
+    const double BIG = getMatrix(row,row,J) * 1.e8;
+    addMatrix(row,row,BIG,J);
+    addVector(row,BIG * val,r);
   }
 }
 
@@ -326,7 +372,19 @@ void gmshNodalFemTerm::addToRightHandSide (gmshVector &RHS, GEntity *ge) const {
     elementVector (e, V);
     // assembly
     for (int j=0;j<nbR;j++){
-      RHS ( localToGlobalR (e,j) ) += V ( j );
+      addVector(localToGlobalR (e,j),getVector(j,V),RHS);
+    }
+  }
+}
+
+void gmshNodalFemTerm::addToJacobian (gmshMatrix &Jac, gmshSmallMatrix &localMatrix, MElement *e) const {
+  const int nbR = sizeOfR(e);
+  const int nbC = sizeOfC(e);
+  for (int j=0;j<nbR;j++){
+    int J = localToGlobalR (e,j);
+    for (int k=0;k<nbC;k++){
+      int K = localToGlobalC (e,k);
+      addMatrix(J,K,localMatrix (j,k),Jac);
     }
   }
 }
@@ -343,23 +401,24 @@ void gmshNodalFemTerm::addToJacobian (gmshMatrix &Jac, GEntity *ge) const {
       int J = localToGlobalR (e,j);
       for (int k=0;k<nbC;k++){
 	int K = localToGlobalC (e,k);
-	Jac(J,K) += localMatrix (j,k);
+	addMatrix(J,K,localMatrix (j,k),Jac);
       }
     }
   }
 }
 // LAPLACE 
 class gmshLaplaceTerm : public gmshNodalFemTerm {
+  const double _diffusivity;
 protected:
   virtual int sizeOfR (MElement *e) const {return e->getNumVertices();}
   virtual int sizeOfC (MElement *e) const {return e->getNumVertices();}
   virtual int localToGlobalR (MElement *e, int i) const {return e->getVertex(i)->getNum()-1;}
   virtual int localToGlobalC (MElement *e, int j) const {return e->getVertex(j)->getNum()-1;}
   virtual int localToGlobalR (MElement *e, int iVertex, int icomp) const {return localToGlobalR (e, iVertex);}
+public:
+  gmshLaplaceTerm (GModel *gm, double diffusivity = 1.0) : gmshNodalFemTerm(gm),_diffusivity (diffusivity){}
   void elementMatrix ( MElement *e, gmshSmallMatrix & m) const;
   void elementVector ( MElement *e, gmshVector & v) const;
-public:
-  gmshLaplaceTerm (GModel *gm) : gmshNodalFemTerm(gm){}
   virtual int sizeOfR () const {return _gm->getNumMeshVertices();}
   virtual int sizeOfC () const {return _gm->getNumMeshVertices();}
   virtual void getComponents (int iVertex, int *components) const {components[0] = iVertex - 1;};
@@ -395,7 +454,7 @@ void gmshLaplaceTerm:: elementMatrix ( MElement *e, gmshSmallMatrix & m) const{
       for (int k=0;k<=j;k++){
 	m(j,k) += (Grads[j][0]*Grads[k][0]+
 		   Grads[j][1]*Grads[k][1]+
-		   Grads[j][2]*Grads[k][2]) * weight * detJ;
+		   Grads[j][2]*Grads[k][2]) * weight * detJ * _diffusivity;
       }
     }
   }
@@ -410,7 +469,7 @@ void gmshLaplaceTerm:: elementVector ( MElement *e, gmshVector & m) const{
   int nbNodes = e->getNumVertices();
   int integrationOrder = 2*(e->getPolynomialOrder()-1);
   double jac    [3][3];  
-  m.scale(0.0);
+  zeroVector(m);
 #ifdef HAVE_GLEVELSETS
   std::vector<IntegrationPoint> ipV,ipS;
   IntegrationPoints (e,_ls,integrationOrder,ipV,ipS);
@@ -422,7 +481,7 @@ void gmshLaplaceTerm:: elementVector ( MElement *e, gmshVector & m) const{
     //    const double detJ = e->getJacobian (u,v,w,jac);   
     for (int j=0;j<nbNodes;j++){
       double sf ; e->getShapeFunction (j,u,v,w,sf);
-      m(j) += weight * sf;
+      addVector(j,weight*sf,m);
     }
   }  
 #else
@@ -436,8 +495,8 @@ void gmshLaplaceTerm:: elementVector ( MElement *e, gmshVector & m) const{
     const double weight = GP[i].weight;
     const double detJ = e->getJacobian (u,v,w,jac);   
     for (int j=0;j<nbNodes;j++){
-      double sf ; e->getShapeFunction (j,u,v,w,sf);
-      m(j) += weight * detJ * sf;
+      double sf ; e->getShapeFunction (j,u,v,w,sf);      
+      addVector(j,weight*detJ*sf,m);
     }
   }
 #endif
@@ -459,10 +518,10 @@ protected:
     return localToGlobalR (e, icomp*e->getNumVertices()+iVertex);
   }
   virtual int localToGlobalC (MElement *e, int j) const {return localToGlobalR (e,j);}
-  void elementMatrix ( MElement *e, gmshSmallMatrix & m) const;
-  void elementVector ( MElement *e, gmshVector & v) const;
 public:
   gmshLaplaceVectorTerm (GModel *gm, double E, double nu) : gmshNodalFemTerm(gm),_E(E),_nu(nu){}
+  void elementMatrix ( MElement *e, gmshSmallMatrix & m) const;
+  void elementVector ( MElement *e, gmshVector & v) const;
   virtual int sizeOfR () const {return 3*_gm->getNumMeshVertices();}
   virtual int sizeOfC () const {return 3*_gm->getNumMeshVertices();}
   virtual void getComponents (int iVertex, int *components) const {
@@ -547,6 +606,80 @@ void gmshLaplaceVectorTerm:: elementMatrix ( MElement *e, gmshSmallMatrix & m) c
 void gmshLaplaceVectorTerm:: elementVector ( MElement *e, gmshVector & m) const{
 }
 
+/*
+Tentative to smooth the mesh according to the levelset
+*/
+
+#ifdef HAVE_GLEVELSETS
+void buildLagrangeMulipliersTerms (std::multimap<MElement*,MElement*> &cut, 
+				   gmshSmallMatrix &C, 
+				   gmshSmallMatrix &K){
+
+  std::multimap<MElement*,MElement*>::iterator it2 =  cut.begin();
+  double jac[3][3];
+
+  for ( ; it2 != cut.end() ; ++it2){
+    MElement *e     = it2->second;
+    MElement *e_vol = it2->first;
+    
+    const double h = e->minEdge();
+
+    int integrationOrder = 2*e->getPolynomialOrder();
+    // Stabilization
+    gmshSmallMatrix kloc(e->getNumVertices(),e->getNumVertices());
+    gmshLaplaceTerm Laplace(0,.02*h*h);   
+    Laplace.elementMatrix (e,kloc);
+
+    // Lagrange multipliers
+    int nbNodes     = e->getNumVertices();
+    int nbNodes_vol = e_vol->getNumVertices();
+    gmshSmallMatrix cloc(nbNodes,nbNodes_vol);
+    int npts;
+    IntPt *GP;
+    e->getIntegrationPoints(integrationOrder, &npts, &GP);  
+    for (int i=0;i<npts;i++){
+      const double u      = GP[i].pt[0];
+      const double v      = GP[i].pt[1];
+      const double w      = GP[i].pt[2];
+      const double weight = GP[i].weight;
+      const double detJ = e->getJacobian (u,v,w,jac);   
+      double xyz[3] = {0,0,0};
+      double uvw[3];
+      for (int k=0;k<nbNodes;k++){
+	double sf;
+	e->getShapeFunction (k,u,v,w,sf);	  
+	xyz[0] += e->getVertex(k)->x() * sf;
+	xyz[1] += e->getVertex(k)->y() * sf;
+	xyz[2] += e->getVertex(k)->z() * sf;
+      }
+      e_vol->xyz2uvw(xyz,uvw);
+      for (int j=0;j<nbNodes;j++){
+	double sf    ;e->getShapeFunction(j,u,v,w,sf);
+	for (int k=0;k<nbNodes_vol;k++){
+	  double sf_vol;e_vol->getShapeFunction(k,uvw[0],uvw[1],uvw[2],sf_vol);
+// 	  printf("k = %d : uvw (%g %g %g) %g %g %g %g\n",k,
+// 		 uvw[0],uvw[1],uvw[2],
+// 		 detJ,sf_vol,sf,weight);
+	  cloc(j,k) += detJ * weight * sf * sf_vol;
+	}
+      }
+    }
+
+    for (int j=0;j<nbNodes;j++){
+      for (int k=0;k<nbNodes_vol;k++){
+	C(e->getVertex(j)->getNum()-1,e_vol->getVertex(k)->getNum()-1)+=cloc(j,k);
+      }
+      for (int k=0;k<nbNodes;k++){
+	K(e->getVertex(j)->getNum()-1,e->getVertex(k)->getNum()-1)+=kloc(j,k);
+      }
+    }
+  }
+}
+#endif
+
+
+// solve a pb with lagrange multipliers
+
 int main(int argc, char **argv)
 {
   // globals are still present in Gmsh
@@ -559,12 +692,14 @@ int main(int argc, char **argv)
   int nbNodes = m->getNumMeshVertices();
   int dim = m->getNumRegions() ? 3 : 2;
 
-  gmshLaplaceVectorTerm Laplace(m,1.e10,.3);   
+  gmshLaplaceTerm Laplace(m);   
   int sP = Laplace.sizeOfR();
   
 #ifdef HAVE_GLEVELSETS
-  gLevelset *ls1 = new gLevelsetSphere (-.35,.5,.5,.2);
-  gLevelset *ls2 = new gLevelsetSphere (-.5,.5,.5,.2);
+  //gLevelset *ls  = new gLevelsetPlane  (1,0,0,.5);
+  gLevelset *ls1 = new gLevelsetSphere (-.7,.5,.5,.12);
+  gLevelset *ls2 = new gLevelsetSphere (-.3,.5,.5,.12);
+  //  gLevelset *ls = new gLevelsetSphere (-.35,.5,.5,.2);
   std::vector<const gLevelset*> vls;
   vls.push_back(ls1);
   vls.push_back(ls2);
@@ -582,7 +717,8 @@ int main(int argc, char **argv)
     std::set<gmshTopoVertex>::iterator it =  tVerts.begin();
     int K=1;
     for ( ; it != tVerts.end() ; ++it){
-      it->getMVertex()->setIndex(K++);
+      it->getMVertex()->setNum(K);
+      it->getMVertex()->setIndex (K++);
       it->getMVertex()->writeMSH(fp);
     }
     fprintf(fp, "$EndNodes\n");
@@ -595,14 +731,116 @@ int main(int argc, char **argv)
     fprintf(fp, "$EndElements\n");
     fclose(fp); 
   }
-  //  return 1;
+  gmshSmallMatrix kstab (tVerts.size(),tVerts.size());
+  gmshSmallMatrix C     (tVerts.size(),m->getNumMeshVertices());
+  printf("assembling lagrange terms\n");
+  buildLagrangeMulipliersTerms (cut,C,kstab); 
+  printf("lagrange terms assembled\n");
+
+  int sP1 = sP;
+  sP += tVerts.size();
 #endif
+  Laplace.addDirichlet (300,dim-1,0,gmshVertexEvaluator(1.0));
+  Laplace.addDirichlet (200,dim-1,0,gmshVertexEvaluator(1.0));
+  Laplace.addDirichlet (100,dim-1,0,gmshVertexEvaluator(1.0));
+  
+#ifdef HAVE_SPARSKIT
+  gmshMatrix k (sP);
+#else
+  gmshMatrix k (sP,sP);
+#endif
+
+  gmshVector x (sP);
+  gmshVector b (sP);
+
+  clock_t t1 = clock();
+  Laplace.addToJacobian(k);  
+  Laplace.uglyDirichlet (k,b);  
+
+  printf("classical part assembled\n");
+
+#ifdef HAVE_GLEVELSETS
+  for (int i=0;i<tVerts.size();i++)
+    for (int j=0;j<tVerts.size();j++)
+      addMatrix(sP1 + i,sP1 + j,kstab(i,j),k);
+  
+  for (int i=0;i<tVerts.size();i++){// tverts
+    for (int j=0;j<sP1;j++){//totalnumv
+      addMatrix(i+sP1,j,C(i,j),k);
+      addMatrix(j,i+sP1,C(i,j),k);
+    }
+  }
+#endif
+
+
+  clock_t t2 = clock();
+  printf("%lf seconds for assembling the operator\n",(double)(t2-t1)/CLOCKS_PER_SEC);  
+  SystemSolve(k,x,b);
+  clock_t t3 = clock();
+  printf("%lf seconds for solving the system (%d unknowns)\n",
+	 (double)(t3-t2)/CLOCKS_PER_SEC,sP);  
+  {
+    FILE *fp = fopen("res.msh","w");
+    fprintf(fp, "$MeshFormat\n2 0 8\n$EndMeshFormat\n");
+    fprintf(fp, "$NodeData\n");
+    fprintf(fp, "1\n\"%s\"\n", "toto");
+    fprintf(fp, "1\n%.16g\n", 0.0);
+    fprintf(fp, "3\n%d\n%d\n%d\n", 0, 1, m->getNumMeshVertices());  
+    int c[100];
+    for (int i=0;i<nbNodes;i++){
+      Laplace.getComponents(i+1,c);
+      fprintf(fp, "%d %22.15E\n",i+1, getVector(c[0],x));
+    }
+    fprintf(fp, "$EndNodeData\n");
+    fclose (fp);
+  }
+#ifdef HAVE_GLEVELSETS
+  {  
+    FILE *fp = fopen("lagrnage.msh","w");
+    fprintf(fp, "$MeshFormat\n2 0 8\n$EndMeshFormat\n");
+    fprintf(fp, "$NodeData\n");
+    fprintf(fp, "1\n\"%s\"\n", "toto");
+    fprintf(fp, "1\n%.16g\n", 0.0);
+    fprintf(fp, "3\n%d\n%d\n%d\n", 0, 1, tVerts.size());  
+    for (int i=0;i<tVerts.size();i++){
+      fprintf(fp, "%d %22.15E\n",i+1, getVector(sP1+i,x));
+    }
+    fprintf(fp, "$EndNodeData\n");
+    fclose (fp);
+  }
+#endif
+  clock_t t4 = clock();
+  printf("%lf seconds for saving the solution\n",(double)(t4-t3)/CLOCKS_PER_SEC);  
+  GmshFinalize();
+}
+
+// solve an elasticity pb
+int main2(int argc, char **argv)
+{
+  // globals are still present in Gmsh
+  GmshInitialize(argc, argv);
+  
+  // Creation of a geometric model
+  GModel *m = new GModel();
+  // a Mesh is read
+  m->readMSH(argv[1]);
+  int nbNodes = m->getNumMeshVertices();
+  int dim = m->getNumRegions() ? 3 : 2;
+
+  gmshLaplaceVectorTerm Laplace(m,1.e10,.3);   
+  int sP = Laplace.sizeOfR();
+  
   //  Laplace.addDirichlet (200,dim-1,0,gmshVertexEvaluator(0.01));
   Laplace.addDirichlet (100,dim-1,0,gmshVertexEvaluator(0.0));
   Laplace.addDirichlet (100,dim-1,1,gmshVertexEvaluator(0.0));
   Laplace.addDirichlet (100,dim-1,2,gmshVertexEvaluator(0.0));
   
+
+#ifdef HAVE_SPARSKIT
+  gmshMatrix k (sP);
+#else
   gmshMatrix k (sP,sP);
+#endif
   gmshVector x (sP);
   gmshVector b (sP);
 
@@ -610,15 +848,15 @@ int main(int argc, char **argv)
 
   clock_t t1 = clock();
   Laplace.addToJacobian(k);  
-  Laplace.addToRightHandSide(b);  
+  //  Laplace.addToRightHandSide(b);  
   Laplace.uglyDirichlet (k,b);  
   clock_t t2 = clock();
   printf("%lf seconds for assembling the operator\n",(double)(t2-t1)/CLOCKS_PER_SEC);  
-  k.lu_solve (b,x);
+  SystemSolve(k,x,b);
   clock_t t3 = clock();
-  printf("%lf seconds for solving the system (%d unknowns)\n",(double)(t3-t2)/CLOCKS_PER_SEC,k.size1());  
+  //  printf("%lf seconds for solving the system (%d unknowns)\n",(double)(t3-t2)/CLOCKS_PER_SEC,k.size1());  
 
-  FILE *fp = fopen("res.msh","w");
+  FILE *fp = fopen("displacements.msh","w");
   fprintf(fp, "$MeshFormat\n2 0 8\n$EndMeshFormat\n");
   fprintf(fp, "$NodeData\n");
   fprintf(fp, "1\n\"%s\"\n", "toto");
@@ -627,7 +865,8 @@ int main(int argc, char **argv)
   int c[100];
   for (int i=0;i<nbNodes;i++){
     Laplace.getComponents(i+1,c);
-    fprintf(fp, "%d %22.15E %22.15E %22.15E\n",i+1, x(c[0]),x(c[1]),x(c[2]));
+    fprintf(fp, "%d %22.15E %22.15E %22.15E\n",i+1, 
+	    getVector(c[0],x),getVector(c[1],x),getVector(c[2],x));
   }
   fprintf(fp, "$EndNodeData\n");
   fclose (fp);

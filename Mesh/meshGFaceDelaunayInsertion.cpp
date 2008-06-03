@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.26 2008-05-04 08:31:16 geuzaine Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.27 2008-06-03 12:43:42 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -508,7 +508,7 @@ void _printTris(char *name, std::set<MTri3*, compareTri3Ptr> &AllTris,
     MTri3 *worst = *it;
     if (!worst->isDeleted()){
       if (param)
-	fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {0,0,0};\n",
+	fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
 		Us [(worst)->tri()->getVertex(0)->getNum()],
 		Vs [(worst)->tri()->getVertex(0)->getNum()],
 		0.0,
@@ -517,7 +517,10 @@ void _printTris(char *name, std::set<MTri3*, compareTri3Ptr> &AllTris,
 		0.0,
 		Us [(worst)->tri()->getVertex(2)->getNum()],
 		Vs [(worst)->tri()->getVertex(2)->getNum()],
-		0.0);
+		0.0,
+		(worst)->getRadius(),
+		(worst)->getRadius(),
+		(worst)->getRadius());
       else
 	fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
 		(worst)->tri()->getVertex(0)->x(),
@@ -662,6 +665,11 @@ void gmshBowyerWatson(GFace *gf)
       circumCenterMetric(worst->tri(), metric, Us, Vs, center, r2);       
       insertAPoint(gf,AllTris.begin(),center,metric,Us,Vs,vSizes,vSizesBGM,AllTris);
     }
+//     if(ITER % 1000== 0){
+//       char name[245];
+//       sprintf(name,"del2d%d-ITER%d.pos",gf->tag(),ITER);
+//       _printTris (name, AllTris, Us,Vs,false);
+//     }
   }    
   transferDataStructure(gf, AllTris); 
 }
@@ -790,11 +798,16 @@ void gmshBowyerWatsonFrontal(GFace *gf){
 	};
       insertAPoint(gf,AllTris.end(),newPoint,metric,Us,Vs,vSizes,vSizesBGM,AllTris,&ActiveTris,worst);
     } 
+//     if(ITER % 1000== 0){
+//       char name[245];
+//       sprintf(name,"frontal%d-ITER%d.pos",gf->tag(),ITER);
+//       _printTris (name, AllTris, Us,Vs,false);
+//     }
   }
 
   char name[245];
   sprintf(name,"frontal%d.pos",gf->tag());
-  //  _printTris (name, AllTris, Us,Vs);
+  //_printTris (name, AllTris, Us,Vs);
   transferDataStructure(gf, AllTris); 
 } 
 

@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.24 2008-05-04 08:31:24 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.25 2008-06-03 12:43:42 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -218,7 +218,7 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod, int nb
   int nbval = nbcomp * nbnod;
 
   if(_interpolation.count(nbedg)){
-    nbval = List_Nbr(_interpolation[nbedg][0]);
+    nbval = nbcomp * List_Nbr(_interpolation[nbedg][0]);
     if(nbval != nbcomp * nbnod)
       Msg::Info("Adaptive view with %d values per element", nbval);
   }
@@ -249,6 +249,8 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod, int nb
       // if some elts have less steps, reduce the total number!
       NbTimeStep = N / nbval;
     }
+
+    //    printf("nbT = %d %d %d %d %d\n",NbTimeStep,N,nbval,nbcomp,nbnod);
     
     // update min/max
     for(int j = 0; j < N; j += nbcomp) {
@@ -275,6 +277,7 @@ void PViewDataList::_setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
   _lastXYZ = (double*)List_Pointer_Fast(list, ele * nb);
   _lastVal = (double*)List_Pointer_Fast(list, ele * nb + 3 * _lastNumNodes);
   _lastNumValues = (nb - 3 * nbnod) / NbTimeStep;
+  //  printf("%d %d %d %d %d %d %d %d\n",ele,dim,nbnod,nbcomp,nbedg,nb, _lastNumValues,NbTimeStep);
 }
 
 void PViewDataList::_setLast(int ele)

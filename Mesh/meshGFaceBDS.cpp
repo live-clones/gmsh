@@ -1,4 +1,4 @@
-// $Id: meshGFaceBDS.cpp,v 1.13 2008-05-04 08:31:16 geuzaine Exp $
+// $Id: meshGFaceBDS.cpp,v 1.14 2008-06-03 12:43:42 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -39,7 +39,7 @@
 
 extern Context_T CTX;
 
-inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2)
+double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2)
 {
   const double dx = p1->X - p2->X;
   const double dy = p1->Y - p2->Y;
@@ -424,7 +424,7 @@ void splitEdgePassUnsorted(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 }
 
 void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
-{
+{ 
   std::list<BDS_Edge*>::iterator it = m.edges.begin();
   std::vector<std::pair<double, BDS_Edge*> > edges;
 

@@ -825,7 +825,7 @@ void adaptiveElements<T>::initWithLowResolution(PViewData *data, int step)
   else
     numNodes = T::numNodes;
 
-  int numVal = _coefs->size1();
+  int numVal = _coefs->size1() * numComp;
 
   _minVal = VAL_INF;
   _maxVal = -VAL_INF;
@@ -880,8 +880,11 @@ void adaptiveElements<T>::initWithLowResolution(PViewData *data, int step)
 	  double val[3];
 	  // adaptation of the visualization mesh bases on the norm
 	  // squared of the vector
-	  for(int j = 0; j < 3; j++)
-	    data->getValue(step, ent, ele, 3 * i + j, val[j]);
+ 	  data->getValue(step, ent, ele, i  , val[0]); 
+ 	  data->getValue(step, ent, ele, i + numVal / 3, val[1]); 
+ 	  data->getValue(step, ent, ele, i + 2*numVal / 3, val[2]); 
+	  //	  printf("%g %g %g %d %d\n",val[0],val[1],val[2],numVal,_coefs->size2());
+
 	  (*_val)(k, i) = (val[0] * val[0] + val[1] * val[1] + val[2] * val[2]);
 	  (*_valX)(k, i) = val[0];
 	  (*_valY)(k, i) = val[1];
@@ -961,7 +964,7 @@ int adaptiveElements<T>::_zoomElement(int ielem, int level, GMSH_Post_Plugin *pl
 {
   const int N = _coefs->size1();
   
-  Double_Vector val(N), res(adaptivePoint::all.size());
+  Double_Vector val(N),  res(adaptivePoint::all.size());
   Double_Vector valx(N), resx(adaptivePoint::all.size());
   Double_Vector valy(N), resy(adaptivePoint::all.size());
   Double_Vector valz(N), resz(adaptivePoint::all.size());
