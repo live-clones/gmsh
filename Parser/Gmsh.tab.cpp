@@ -324,7 +324,7 @@
 /* Copy the first part of user declarations.  */
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.364 2008-05-06 21:11:48 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.365 2008-06-03 12:42:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -386,9 +386,9 @@ static ExtrudeParams extr;
 
 static gmshSurface *myGmshSurface = 0;
 
-static List_T *ViewValueList;
+static List_T *ViewValueList = 0;
 static double ViewCoord[100];
-static int *ViewNumList, ViewCoordIdx;
+static int *ViewNumList = 0, ViewCoordIdx = 0;
 
 #define MAX_RECUR_LOOPS 100
 static int ImbricatedLoop = 0;
@@ -4032,9 +4032,9 @@ yyreduce:
 	yymsg(0, "Unknown element type '%s'", (yyvsp[(1) - (1)].c));	
 	ViewValueList = 0; ViewNumList = 0;
       }
-      Free((yyvsp[(1) - (1)].c));
-      ViewCoordIdx = 0;
 #endif
+      ViewCoordIdx = 0;
+      Free((yyvsp[(1) - (1)].c));
     ;}
     break;
 

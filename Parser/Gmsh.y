@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.313 2008-05-04 08:31:21 geuzaine Exp $
+// $Id: Gmsh.y,v 1.314 2008-06-03 12:42:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -61,9 +61,9 @@ static ExtrudeParams extr;
 
 static gmshSurface *myGmshSurface = 0;
 
-static List_T *ViewValueList;
+static List_T *ViewValueList = 0;
 static double ViewCoord[100];
-static int *ViewNumList, ViewCoordIdx;
+static int *ViewNumList = 0, ViewCoordIdx = 0;
 
 #define MAX_RECUR_LOOPS 100
 static int ImbricatedLoop = 0;
@@ -455,9 +455,9 @@ Element :
 	yymsg(0, "Unknown element type '%s'", $1);	
 	ViewValueList = 0; ViewNumList = 0;
       }
-      Free($1);
-      ViewCoordIdx = 0;
 #endif
+      ViewCoordIdx = 0;
+      Free($1);
     }
     '(' ElementCoords ')'
     {
@@ -1937,10 +1937,10 @@ Command :
 	// open simultaneously. The right solution would be of course
 	// to modify FunctionManager to reopen the files instead of
 	// using the FILE pointer, but hey, I'm lazy...
-	Msg::Status(2, true, "Reading '%s'", tmpstring);
+	Msg::StatusBar(2, true, "Reading '%s'", tmpstring);
 	ParseFile(tmpstring, 0, 1);
 	SetBoundingBox();
-	Msg::Status(2, true, "Read '%s'", tmpstring);
+	Msg::StatusBar(2, true, "Read '%s'", tmpstring);
       }
       else if(!strcmp($1, "Print")){
 #if defined(HAVE_FLTK)
