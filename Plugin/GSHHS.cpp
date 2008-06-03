@@ -260,6 +260,8 @@ class GeoEarthImport
   void end_loop(bool closed=true) {
     closed&=closed_loop;
     if(ip - first_point_in_loop > 3) {
+      loop_buff<<"LoopStart"<<il<<" = IP + "<< first_point_in_loop<<";\n";
+      loop_buff<<"LoopEnd"<<il<<" = IP + "<< ip - 1<<";\n";
       loop_buff << "BSpline ( IL + " << il++ << " ) = { IP + " <<
         first_point_in_loop << " : IP + " << ip - 1 ;
       if(closed) loop_buff<< ", IP + " << first_point_in_loop;
@@ -297,7 +299,7 @@ class GeoEarthImport
   }
 };
 
-/*      $Id: GSHHS.cpp,v 1.11 2008-05-26 15:41:31 remacle Exp $
+/*      $Id: GSHHS.cpp,v 1.12 2008-06-03 08:55:33 remacle Exp $
  *
  * PROGRAM:	gshhs.c
  * AUTHOR:	Paul Wessel (pwessel@hawaii.edu)

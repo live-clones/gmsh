@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.62 2008-05-04 08:31:13 geuzaine Exp $
+// $Id: GFace.cpp,v 1.63 2008-06-03 08:55:33 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -396,7 +396,8 @@ end:
       meanPlane.x, meanPlane.y, meanPlane.z);
 
   //check coherence for plane surfaces
-  if(geomType() == Plane) {
+  //check commented out because parametric surfaces are not plane in this sense
+  /*if(geomType() == Plane) {
     SBoundingBox3d bb = bounds();
     double lc = norm(SVector3(bb.max(), bb.min()));
     std::list<GVertex*> verts = vertices();
@@ -413,7 +414,7 @@ end:
         return;
       }
     }
-  }
+  }*/
 #endif
 }
 
