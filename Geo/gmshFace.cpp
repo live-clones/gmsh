@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.56 2008-05-04 08:31:14 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.57 2008-06-03 21:39:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -224,12 +224,20 @@ SPoint2 gmshFace::parFromPoint(const SPoint3 &qp) const
 GEntity::GeomType gmshFace::geomType() const
 {
   switch(s->Typ){
-  case MSH_SURF_PLAN: return Plane;
+  case MSH_SURF_PLAN: 
+    if(s->geometry) 
+      return ParametricSurface;
+    else
+      return Plane;
   case MSH_SURF_REGL:
-  case MSH_SURF_TRIC: return RuledSurface;
-  case MSH_SURF_DISCRETE: return DiscreteSurface;
-  case MSH_SURF_BND_LAYER: return BoundaryLayerSurface;
-  default: return Unknown;
+  case MSH_SURF_TRIC: 
+    return RuledSurface;
+  case MSH_SURF_DISCRETE: 
+    return DiscreteSurface;
+  case MSH_SURF_BND_LAYER:
+    return BoundaryLayerSurface;
+  default: 
+    return Unknown;
   }
 }
 

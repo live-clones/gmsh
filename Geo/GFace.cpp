@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.63 2008-06-03 08:55:33 remacle Exp $
+// $Id: GFace.cpp,v 1.64 2008-06-03 21:39:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -387,17 +387,16 @@ end:
   Msg::Debug("Surface: %d", tag());
   Msg::Debug("SVD    : %g,%g,%g (min=%d)", svd[0], svd[1], svd[2], min);
   Msg::Debug("Plane  : (%g x + %g y + %g z = %g)",
-      meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
+	     meanPlane.a, meanPlane.b, meanPlane.c, meanPlane.d);
   Msg::Debug("Normal : (%g , %g , %g )",
-      meanPlane.a, meanPlane.b, meanPlane.c);
+	     meanPlane.a, meanPlane.b, meanPlane.c);
   Msg::Debug("t1     : (%g , %g , %g )", t1[0], t1[1], t1[2]);
   Msg::Debug("t2     : (%g , %g , %g )", t2[0], t2[1], t2[2]);
   Msg::Debug("pt     : (%g , %g , %g )",
-      meanPlane.x, meanPlane.y, meanPlane.z);
+	     meanPlane.x, meanPlane.y, meanPlane.z);
 
   //check coherence for plane surfaces
-  //check commented out because parametric surfaces are not plane in this sense
-  /*if(geomType() == Plane) {
+  if(geomType() == Plane) {
     SBoundingBox3d bb = bounds();
     double lc = norm(SVector3(bb.max(), bb.min()));
     std::list<GVertex*> verts = vertices();
@@ -414,7 +413,7 @@ end:
         return;
       }
     }
-  }*/
+  }
 #endif
 }
 
