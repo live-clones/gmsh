@@ -25,5 +25,6 @@ int main(int argc, char **argv)
   }
   m->writeMSH("test.msh");
   m->writeUNV("test.unv");
+  delete m;
   GmshFinalize();
 }

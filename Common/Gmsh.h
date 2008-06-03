@@ -19,7 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-int GmshInitialize(int argc, char **argv);
+int GmshInitialize(int argc=0, char **argv=0);
 int GmshFinalize();
 int GmshBatch();
 

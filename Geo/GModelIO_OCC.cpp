@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.33 2008-05-25 07:10:57 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.34 2008-06-03 07:25:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -279,7 +279,7 @@ void OCC_Internals::healGeometry(double tolerance, bool fixsmalledges,
   
   if(fixspotstripfaces){
     Msg::Info("- fixing spot and strip faces");
-    Handle(ShapeFix_FixSmallFace) sffsm = new ShapeFix_FixSmallFace();
+    Handle(ShapeFix_FixSmallFace) sffsm = new ShapeFix_FixSmallFace;
     sffsm->Init(shape);
     sffsm->SetPrecision(tolerance);
     sffsm->Perform();
@@ -399,11 +399,12 @@ void OCC_Internals::loadShape(const TopoDS_Shape *s)
 {
   shape = *s;
   BRepTools::Clean(shape);
-  healGeometry(CTX.geom.tolerance, 
-               CTX.geom.occ_fix_small_edges,
-               CTX.geom.occ_fix_small_faces,
-               CTX.geom.occ_sew_faces);
-  BRepTools::Clean(shape);
+  // FIXME should we apply the healing stuff when we import a shape?
+  // healGeometry(CTX.geom.tolerance, 
+  //              CTX.geom.occ_fix_small_edges,
+  //              CTX.geom.occ_fix_small_faces,
+  //              CTX.geom.occ_sew_faces);
+  // BRepTools::Clean(shape);
   buildLists();
 }
 
@@ -478,6 +479,10 @@ int GModel::importOCCShape(const void *shape, const void *options)
   _occ_internals = new OCC_Internals;
   _occ_internals->loadShape((TopoDS_Shape*)shape);
   _occ_internals->buildGModel(this);
+  snapVertices();
+  // FIXME remove this when CL API is done
+  extern void SetBoundingBox();
+  SetBoundingBox();
   return 1;
 }
 
