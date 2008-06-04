@@ -880,11 +880,9 @@ void adaptiveElements<T>::initWithLowResolution(PViewData *data, int step)
 	  double val[3];
 	  // adaptation of the visualization mesh bases on the norm
 	  // squared of the vector
- 	  data->getValue(step, ent, ele, i  , val[0]); 
- 	  data->getValue(step, ent, ele, i + numVal / 3, val[1]); 
- 	  data->getValue(step, ent, ele, i + 2*numVal / 3, val[2]); 
-	  //	  printf("%g %g %g %d %d\n",val[0],val[1],val[2],numVal,_coefs->size2());
-
+ 	  data->getValue(step, ent, ele, 3 * i, val[0]); 
+ 	  data->getValue(step, ent, ele, 3 * i + 1, val[1]); 
+ 	  data->getValue(step, ent, ele, 3 * i + 2, val[2]); 
 	  (*_val)(k, i) = (val[0] * val[0] + val[1] * val[1] + val[2] * val[2]);
 	  (*_valX)(k, i) = val[0];
 	  (*_valY)(k, i) = val[1];
