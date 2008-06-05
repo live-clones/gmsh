@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.57 2008-06-03 21:39:01 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.58 2008-06-05 11:52:49 samtech Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <stdlib.h>
 #include "GModel.h"
 #include "gmshFace.h"
 #include "Geo.h"

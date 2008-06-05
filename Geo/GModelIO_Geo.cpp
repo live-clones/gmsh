@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.22 2008-05-04 15:43:03 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.23 2008-06-05 11:52:49 samtech Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <stdlib.h>
 #include "GModel.h"
 #include "Geo.h"
 #include "OpenFile.h"
@@ -155,7 +156,7 @@ class writeFieldOptionGEO{
   Field *field;
  public :
   writeFieldOptionGEO(FILE *fp,Field *_field) { geo = fp ? fp : stdout; field=_field;}
-  void operator() (std::pair<const char *,FieldOption *> it)
+  void operator() (std::pair<const char *, FieldOption *> it)
   {
     std::string v;
     it.second->get_text_representation(v);
@@ -168,7 +169,7 @@ class writeFieldGEO{
   FILE *geo;
  public :
   writeFieldGEO(FILE *fp) { geo = fp ? fp : stdout; }
-  void operator() (std::pair<int, Field *> it)
+  void operator() (std::pair<const int, Field *> it)
   {
     fprintf(geo, "Field[%i] = %s;\n", it.first, it.second->get_name());
     std::for_each(it.second->options.begin(), it.second->options.end(),

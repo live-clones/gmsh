@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.61 2008-05-04 08:31:16 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.62 2008-06-05 11:52:49 samtech Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <stdlib.h>
 #include "meshGEdge.h"
 #include "GEdge.h"
 #include "MElement.h"

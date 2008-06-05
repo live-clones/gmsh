@@ -1,4 +1,4 @@
-// $Id: meshGFaceBDS.cpp,v 1.14 2008-06-03 12:43:42 remacle Exp $
+// $Id: meshGFaceBDS.cpp,v 1.15 2008-06-05 11:52:50 samtech Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <stdlib.h>
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "BackgroundMesh.h"

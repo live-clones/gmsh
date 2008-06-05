@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.134 2008-05-06 21:11:47 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.135 2008-06-05 11:52:50 samtech Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 //
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <stdlib.h>
 #include "meshGFace.h"
 #include "meshGFaceBDS.h"
 #include "meshGFaceDelaunayInsertion.h"

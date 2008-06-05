@@ -1,4 +1,4 @@
-// $Id: GEdgeLoop.cpp,v 1.14 2008-05-04 08:31:13 geuzaine Exp $
+// $Id: GEdgeLoop.cpp,v 1.15 2008-06-05 11:52:49 samtech Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <algorithm>
+#include <functional>
 #include "GEdgeLoop.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)

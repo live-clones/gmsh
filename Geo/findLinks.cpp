@@ -1,4 +1,4 @@
-// $Id: findLinks.cpp,v 1.8 2008-05-04 08:31:14 geuzaine Exp $
+// $Id: findLinks.cpp,v 1.9 2008-06-05 11:52:49 samtech Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <stdlib.h>
 #include "Message.h"
 #include "GModel.h"
 #include "Tree.h"

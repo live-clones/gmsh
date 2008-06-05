@@ -1,4 +1,4 @@
-// $Id: GEntity.cpp,v 1.20 2008-02-22 20:28:07 geuzaine Exp $
+// $Id: GEntity.cpp,v 1.21 2008-06-05 11:52:49 samtech Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 //
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <stdio.h>
 #include "GEntity.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)

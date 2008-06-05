@@ -91,7 +91,7 @@ class FieldFactory {
 
 class FieldManager : public std::map<int, Field*> {
  public:
-  std::map<const std::string, FieldFactory*> map_type_name;
+  std::map<std::string, FieldFactory*> map_type_name;
   void reset();
   Field *get(int id);
   Field *new_field(int id, const char *type_name);

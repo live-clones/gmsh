@@ -20,6 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <math.h>
 #include <map>
 #include "GmshMatrix.h"
 
