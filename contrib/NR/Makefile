@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2008-04-23 23:00:40 geuzaine Exp $
+# $Id: Makefile,v 1.14 2008-06-05 14:26:09 samtech Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,7 @@ include ../../variables
 
 LIB = ../../lib/libGmshNR${LIBEXT}
 
-INC = ${DASH}I../../Common ${DASH}I../../DataStr ${DASH}I../../Numeric
+INC = ${DASH}I../NR ${DASH}I../../Common ${DASH}I../../DataStr ${DASH}I../../Numeric
 
 # don't optimize this library: there are some problems with gcc...
 CFLAGS  = ${FLAGS} ${INC} ${SYSINCLUDE}

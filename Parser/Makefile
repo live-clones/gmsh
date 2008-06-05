@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.156 2008-06-05 13:58:44 geuzaine Exp $
+# $Id: Makefile,v 1.157 2008-06-05 14:26:09 samtech Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,7 @@ include ../variables
 
 LIB = ../lib/libGmshParser${LIBEXT}
 
-INC = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo ${DASH}I../Mesh\
+INC = ${DASH}I../Parser ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo ${DASH}I../Mesh\
       ${DASH}I../Post ${DASH}I../Graphics ${DASH}I../Numeric ${DASH}I../Fltk\
       ${DASH}I../Plugin ${DASH}I../contrib/ANN/include 
 
