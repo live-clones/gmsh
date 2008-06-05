@@ -24,7 +24,7 @@
 #include <math.h>
 #include "GmshDefines.h"
 #include "gmshSurface.h"
-#include "List.h"
+#include "gmshList.h"
 #include "Tree.h"
 #include "SPoint2.h"
 #include "ExtrudeParams.h"

@@ -1,4 +1,4 @@
-// $Id: List.cpp,v 1.45 2008-05-04 08:31:11 geuzaine Exp $
+// $Id: gmshList.cpp,v 1.1 2008-06-05 13:57:47 samtech Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@
 #include <sys/types.h>
 
 #include "Malloc.h"
-#include "List.h"
+#include "gmshList.h"
 #include "Message.h"
 #include "SafeIO.h"
 

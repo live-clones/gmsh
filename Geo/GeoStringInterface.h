@@ -20,7 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "List.h"
+#include "gmshList.h"
 
 double evaluate_scalarfunction(const char *var, double val, const char *funct);
 

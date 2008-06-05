@@ -1,4 +1,4 @@
-// $Id: Levelset.cpp,v 1.47 2008-05-04 08:31:23 geuzaine Exp $
+// $Id: Levelset.cpp,v 1.48 2008-06-05 13:57:47 samtech Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,7 @@
 
 #include "Levelset.h"
 #include "MakeSimplex.h"
-#include "List.h"
+#include "gmshList.h"
 #include "Numeric.h"
 #include "adaptiveData.h"
 

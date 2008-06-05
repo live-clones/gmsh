@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.47 2008-04-23 23:00:39 geuzaine Exp $
+# $Id: Makefile,v 1.48 2008-06-05 13:57:47 samtech Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -27,7 +27,7 @@ INC = ${DASH}I../Common
 
 CFLAGS  = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
-SRC = List.cpp \
+SRC = gmshList.cpp \
       Malloc.cpp \
       SafeIO.cpp \
       Tree.cpp \

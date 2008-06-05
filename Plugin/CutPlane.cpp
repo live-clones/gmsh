@@ -1,4 +1,4 @@
-// $Id: CutPlane.cpp,v 1.57 2008-04-05 17:49:23 geuzaine Exp $
+// $Id: CutPlane.cpp,v 1.58 2008-06-05 13:57:47 samtech Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -20,7 +20,6 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "CutPlane.h"
-#include "List.h"
 #include "Context.h"
 
 #if defined(HAVE_FLTK)

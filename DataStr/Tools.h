@@ -20,7 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "List.h"
+#include "gmshList.h"
 #include "Tree.h"
 
 int fcmp_int(const void *a, const void *b);

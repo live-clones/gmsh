@@ -20,7 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "List.h"
+#include "gmshList.h"
 
 int allEdgesLinked(int ed, List_T *edges);
 int allFacesLinked(int fac, List_T *faces);
