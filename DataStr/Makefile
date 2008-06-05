@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.48 2008-06-05 13:57:47 samtech Exp $
+# $Id: Makefile,v 1.49 2008-06-05 13:58:43 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -60,9 +60,3 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-List.o: List.cpp Malloc.h List.h ../Common/Message.h SafeIO.h
-Malloc.o: Malloc.cpp Malloc.h ../Common/Message.h
-SafeIO.o: SafeIO.cpp SafeIO.h ../Common/Message.h
-Tree.o: Tree.cpp Malloc.h Tree.h avl.h ../Common/Message.h
-avl.o: avl.cpp avl.h Malloc.h
-Tools.o: Tools.cpp Tools.h List.h Tree.h avl.h
