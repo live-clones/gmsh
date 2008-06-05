@@ -20,7 +20,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <cmath>
+#include <math.h>
 #include <map>
 #include "Pair.h"
 #include "Range.h"

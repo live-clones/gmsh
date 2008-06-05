@@ -1,4 +1,4 @@
-// $Id: FunctionSpace.cpp,v 1.4 2008-03-20 11:44:09 geuzaine Exp $
+// $Id: FunctionSpace.cpp,v 1.5 2008-06-05 18:25:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,7 +19,6 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <cmath>
 #include "FunctionSpace.h"
 #include "GmshDefines.h"
 

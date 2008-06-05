@@ -1,4 +1,4 @@
-#include <cmath>
+#include <math.h>
 #include "MElement.h"
 #include "GaussLegendreSimplex.h"
 #include "GaussLegendre1D.h"

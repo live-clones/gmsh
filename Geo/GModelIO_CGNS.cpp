@@ -17,8 +17,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <string.h>
 #include <iostream>  // DBG
-#include <cstring>
 #include <list>
 #include <map>
 #include <set>
@@ -33,7 +33,7 @@
 
 #if defined(HAVE_LIBCGNS)
 
-#include "cgnslib.h"
+#include <cgnslib.h>
 
 int cgnsErr(const int cgIndexFile = -1)
 {

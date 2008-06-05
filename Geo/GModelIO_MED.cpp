@@ -1,4 +1,4 @@
-// $Id: GModelIO_MED.cpp,v 1.34 2008-05-04 08:31:13 geuzaine Exp $
+// $Id: GModelIO_MED.cpp,v 1.35 2008-06-05 18:25:18 geuzaine Exp $
 //
 // Copyright (C) 1997-2006 C. Geuzaine, J.-F. Remacle
 //
@@ -25,10 +25,10 @@
 
 #if defined(HAVE_MED)
 
+#include <string.h>
 #include <map>
 #include <sstream>
 #include <vector>
-#include <cstring>
 #include "MElement.h"
 #include "MVertex.h"
 #include "discreteVertex.h"
@@ -562,21 +562,21 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
 int GModel::readMED(const std::string &name)
 {
   Msg::Error("Gmsh has to be compiled with MED support to read '%s'",
-      name.c_str());
+	     name.c_str());
   return 0;
 }
 
 int GModel::readMED(const std::string &name, int meshIndex)
 {
   Msg::Error("Gmsh has to be compiled with MED support to read '%s'",
-      name.c_str());
+	     name.c_str());
   return 0;
 }
 
 int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor)
 {
   Msg::Error("Gmsh has to be compiled with MED support to write '%s'",
-      name.c_str());
+	     name.c_str());
   return 0;
 }
 
