@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.153 2008-05-20 19:03:27 geuzaine Exp $
+# $Id: Makefile,v 1.154 2008-06-05 16:52:14 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -133,7 +133,7 @@ Entity.o: Entity.cpp ../Common/GmshUI.h ../Numeric/Numeric.h \
 ReadImg.o: ReadImg.cpp ReadImg.h ../Common/Message.h ../Common/GmshUI.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../DataStr/List.h
+  ../DataStr/gmshList.h
 Scale.o: Scale.cpp ../Common/GmshUI.h Draw.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Post/PView.h ../Post/PViewOptions.h \
   ../Post/ColorTable.h ../Post/PViewData.h ../Common/Context.h gl2ps.h

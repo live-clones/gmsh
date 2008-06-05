@@ -23,17 +23,27 @@ int main(int argc, char **argv)
 
   // import the shape in gmsh and mesh it
   GmshInitialize(argc, argv);
-  GModel *m = new GModel();
-  m->importOCCShape((void*)&shape, 0);
-  m->mesh(2);
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
-    GRegion *r = *it;
-    printf("volume %d contains %d elements:\n", r->tag(), r->getNumMeshElements());
-    for(unsigned int i = 0; i < r->getNumMeshElements(); i++)
-      printf(" %d", r->getMeshElement(i)->getNum());
+
+  GModel m;
+  m.importOCCShape((void*)&shape, 0);
+  m.mesh(2);
+
+  for(GModel::fiter it = m.firstFace(); it != m.lastFace(); ++it){
+    GFace *f = *it;
+    printf("Surface %d contains %d elements:\n", f->tag(), f->getNumMeshElements());
+    for(unsigned int i = 0; i < f->getNumMeshElements(); i++){
+      MElement *e = f->getMeshElement(i);
+      printf("  element %d:", e->getNum());
+      for(unsigned int j = 0; j < e->getNumVertices(); j++){
+	MVertex *v = e->getVertex(j);
+	printf(" %d (%g,%g,%g)", v->getNum(), v->x(), v->y(), v->z());
+      }
+      printf("\n");
+    }
     printf("\n");
   }
-  m->writeMSH("test.msh");
-  delete m;
+
+  m.writeMSH("test.msh");
+
   GmshFinalize();
 }

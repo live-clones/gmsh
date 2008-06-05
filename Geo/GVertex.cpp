@@ -1,4 +1,4 @@
-// $Id: GVertex.cpp,v 1.22 2008-05-04 08:31:13 geuzaine Exp $
+// $Id: GVertex.cpp,v 1.23 2008-06-05 16:52:14 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -31,7 +31,7 @@
 #  include "Message.h"
 #endif
 
-GVertex::GVertex(GModel *m, int tag, double ms) : GEntity (m, tag), meshSize (ms) 
+GVertex::GVertex(GModel *m, int tag, double ms) : GEntity(m, tag), meshSize(ms) 
 {
 }
 

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.54 2008-06-05 13:58:44 geuzaine Exp $
+# $Id: Makefile,v 1.55 2008-06-05 16:52:14 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -62,3 +62,14 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
+Numeric.o: Numeric.cpp ../Common/Message.h Numeric.h NumericEmbedded.h
+NumericEmbedded.o: NumericEmbedded.cpp NumericEmbedded.h \
+  ../Common/Message.h
+EigSolve.o: EigSolve.cpp
+FunctionSpace.o: FunctionSpace.cpp FunctionSpace.h ../Common/GmshMatrix.h \
+  ../Common/GmshDefines.h
+gmsh_predicates.o: gmsh_predicates.cpp
+gsl_newt.o: gsl_newt.cpp ../Common/Message.h Numeric.h NumericEmbedded.h
+gsl_min.o: gsl_min.cpp ../Common/Message.h Numeric.h NumericEmbedded.h
+gsl_brent.o: gsl_brent.cpp ../Common/Message.h Numeric.h \
+  NumericEmbedded.h

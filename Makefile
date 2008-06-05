@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.484 2008-05-20 19:25:33 geuzaine Exp $
+# $Id: Makefile,v 1.485 2008-06-05 16:52:13 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -202,22 +202,8 @@ source-tree: purge
 source: source-tree
 	cd gmsh-${GMSH_VERSION} && rm -rf ${GMSH_VERSION_FILE}\
           contrib/NR contrib/Triangle/triangle.* contrib/Tetgen/tetgen.*\
-          contrib/Tetgen/predicates.* utils/commercial utils/nightly
+          contrib/Tetgen/predicates.* utils/nightly
 	tar zcf gmsh-${GMSH_VERSION}-source.tgz gmsh-${GMSH_VERSION}
-
-source-commercial: source-tree
-	cd gmsh-${GMSH_VERSION} && rm -rf ${GMSH_VERSION_FILE}\
-          contrib/MathEval contrib/Triangle/triangle.* contrib/Tetgen/tetgen.*\
-          contrib/Tetgen/predicates.* contrib/Netgen/libsrc contrib/Metis\
-          doc/TODO doc/gmsh.html doc/README.cvs\
-          utils/commercial
-	cp -f utils/commercial/README gmsh-${GMSH_VERSION}/README
-	cp -f utils/commercial/LICENSE gmsh-${GMSH_VERSION}/doc/LICENSE
-	cp -f utils/commercial/License.cpp gmsh-${GMSH_VERSION}/Common/License.cpp
-	cp -f utils/commercial/license.texi gmsh-${GMSH_VERSION}/doc/texinfo/license.texi
-	cp -f utils/commercial/copying.texi gmsh-${GMSH_VERSION}/doc/texinfo/copying.texi
-	utils/commercial/sanitize.sh gmsh-${GMSH_VERSION}
-	tar zcf gmsh-${GMSH_VERSION}-source-commercial.tgz gmsh-${GMSH_VERSION}
 
 # Rules to package the binaries
 
@@ -356,9 +342,4 @@ distrib-source:
 distrib-source-nightly:
 	make distrib-pre-cvs
 	make source
-	make distrib-post
-
-distrib-source-commercial:
-	make distrib-pre
-	make source-commercial
 	make distrib-post

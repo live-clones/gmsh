@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.157 2008-06-05 14:26:09 samtech Exp $
+# $Id: Makefile,v 1.158 2008-06-05 16:52:14 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -71,3 +71,67 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
+Gmsh.tab.o: Gmsh.tab.cpp ../Common/Message.h ../DataStr/Malloc.h \
+  ../DataStr/Tools.h ../DataStr/gmshList.h ../DataStr/Tree.h \
+  ../DataStr/avl.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
+  ../Common/Context.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
+  ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint3.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
+  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/SBoundingBox3d.h ../Geo/Geo.h ../Common/GmshDefines.h \
+  ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SBoundingBox3d.h \
+  ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
+  ../Geo/GeoInterpolation.h ../Geo/Geo.h ../Mesh/Generator.h \
+  ../Graphics/Draw.h ../Common/Options.h ../Post/ColorTable.h \
+  ../Common/Colors.h ../Common/Options.h Parser.h OpenFile.h \
+  ../Common/CommandLine.h FunctionManager.h ../Common/OS.h CreateFile.h \
+  ../Mesh/Field.h ../Post/PView.h ../Mesh/BackgroundMesh.h \
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Plugin/PluginManager.h \
+  ../Plugin/Plugin.h ../Common/GmshMatrix.h
+Gmsh.yy.o: Gmsh.yy.cpp ../Common/Message.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h ../Geo/Geo.h ../Common/GmshDefines.h \
+  ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../DataStr/gmshList.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
+  ../Geo/ExtrudeParams.h ../Common/SmoothData.h Gmsh.tab.hpp
+OpenFile.o: OpenFile.cpp ../Common/Message.h ../Geo/Geo.h \
+  ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
+  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/gmshList.h \
+  ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
+  ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h \
+  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h \
+  ../Common/Context.h Parser.h OpenFile.h ../Common/CommandLine.h \
+  ../Graphics/ReadImg.h ../Common/OS.h ../Mesh/HighOrder.h \
+  ../Post/PView.h ../Post/PViewData.h ../Common/GmshUI.h \
+  ../Graphics/Draw.h ../Graphics/SelectBuffer.h ../Fltk/GUI.h \
+  ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h ../Post/ColorTable.h \
+  ../Fltk/Popup_Button.h ../Fltk/SpherePosition_Widget.h ../Mesh/Field.h
+CreateFile.o: CreateFile.cpp ../Common/Message.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
+  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
+  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
+  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
+  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h \
+  ../Common/GmshDefines.h OpenFile.h ../Common/Context.h \
+  ../Common/Options.h ../Post/ColorTable.h ../Common/GmshUI.h \
+  ../Graphics/gl2ps.h ../Graphics/gl2gif.h ../Graphics/PixelBuffer.h \
+  ../DataStr/Malloc.h ../Graphics/Draw.h ../Graphics/gl2jpeg.h \
+  ../Graphics/PixelBuffer.h ../Graphics/gl2png.h \
+  ../Graphics/PixelBuffer.h ../Graphics/gl2ppm.h \
+  ../Graphics/PixelBuffer.h ../Graphics/gl2yuv.h \
+  ../Graphics/PixelBuffer.h
+FunctionManager.o: FunctionManager.cpp FunctionManager.h

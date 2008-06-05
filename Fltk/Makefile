@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.186 2008-05-20 19:25:33 geuzaine Exp $
+# $Id: Makefile,v 1.187 2008-06-05 16:52:13 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -76,7 +76,7 @@ Main.o: Main.cpp GUI.h Opengl_Window.h Colorbar_Window.h \
   ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
   ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/gmshList.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
   ../Common/Gmsh.h ../Common/Message.h ../Graphics/Draw.h \
@@ -99,7 +99,7 @@ GUI.o: GUI.cpp ../Common/GmshUI.h ../Common/GmshDefines.h \
   SpherePosition_Widget.h ../Mesh/Field.h ../Geo/Geo.h \
   ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../Geo/SBoundingBox3d.h ../DataStr/gmshList.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
   ../Common/SmoothData.h ../Post/PView.h Callbacks.h Win32Icon.h \
   ../Parser/OpenFile.h ../Common/CommandLine.h ../Mesh/Generator.h \
@@ -121,7 +121,7 @@ GUI_Extras.o: GUI_Extras.cpp ../Common/GmshUI.h ../Common/GmshDefines.h \
   ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../DataStr/List.h ../DataStr/Tree.h \
+  ../Numeric/NumericEmbedded.h ../DataStr/gmshList.h ../DataStr/Tree.h \
   ../DataStr/avl.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
   ../Common/SmoothData.h ../Post/PView.h Shortcut_Window.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
@@ -149,7 +149,7 @@ GUI_Projection.o: GUI_Projection.cpp ../Geo/GModelIO_Fourier.h \
   SpherePosition_Widget.h ../Mesh/Field.h ../Geo/Geo.h \
   ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SBoundingBox3d.h \
-  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/gmshList.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
   Shortcut_Window.h GUI_Extras.h ../Geo/fourierFace.h ../Geo/GFace.h \
@@ -171,7 +171,7 @@ GUI_Classifier.o: GUI_Classifier.cpp GUI_Classifier.h ../Common/GmshUI.h \
   SpherePosition_Widget.h ../Mesh/Field.h ../Geo/Geo.h \
   ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SBoundingBox3d.h \
-  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/gmshList.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
   Shortcut_Window.h ../Graphics/Draw.h ../Common/Options.h \
@@ -182,7 +182,7 @@ GUI_Classifier.o: GUI_Classifier.cpp GUI_Classifier.h ../Common/GmshUI.h \
   ../Geo/discreteEdge.h ../Geo/GModel.h ../Geo/GEdge.h \
   ../Geo/discreteFace.h ../Geo/GModel.h ../Geo/GFace.h
 Callbacks.o: Callbacks.cpp ../Common/GmshUI.h ../Common/Message.h \
-  ../DataStr/Malloc.h ../DataStr/Tools.h ../DataStr/List.h \
+  ../DataStr/Malloc.h ../DataStr/Tools.h ../DataStr/gmshList.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
@@ -223,9 +223,9 @@ Opengl.o: Opengl.cpp ../Common/GmshUI.h ../Common/GmshDefines.h \
   SpherePosition_Widget.h ../Mesh/Field.h ../Geo/Geo.h \
   ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SBoundingBox3d.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
-  ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
-  ../Graphics/gl2ps.h
+  ../DataStr/gmshList.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
+  ../Post/PView.h ../Graphics/gl2ps.h
 Opengl_Window.o: Opengl_Window.cpp ../Common/GmshUI.h \
   ../Common/GmshDefines.h ../Common/Message.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Common/Context.h ../Graphics/Draw.h \
@@ -240,18 +240,18 @@ Opengl_Window.o: Opengl_Window.cpp ../Common/GmshUI.h \
   SpherePosition_Widget.h ../Mesh/Field.h ../Geo/Geo.h \
   ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SBoundingBox3d.h \
-  ../DataStr/List.h ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
-  ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
-  ../Geo/MElement.h ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h
+  ../DataStr/gmshList.h ../DataStr/Tree.h ../DataStr/avl.h \
+  ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
+  ../Post/PView.h ../Geo/MElement.h ../Geo/MVertex.h ../Geo/SPoint3.h \
+  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h
 Colorbar_Window.o: Colorbar_Window.cpp ../Common/GmshUI.h GUI.h \
   Opengl_Window.h Colorbar_Window.h ../Post/ColorTable.h Popup_Button.h \
   SpherePosition_Widget.h ../Mesh/Field.h ../Geo/Geo.h \
   ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
   ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/gmshList.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
   ../Common/Context.h
@@ -262,7 +262,7 @@ Solvers.o: Solvers.cpp ../Common/Message.h Solvers.h GmshServer.h \
   ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
   ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/List.h \
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../DataStr/gmshList.h \
   ../DataStr/Tree.h ../DataStr/avl.h ../Geo/SPoint2.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
   ../Graphics/Draw.h ../Common/Context.h

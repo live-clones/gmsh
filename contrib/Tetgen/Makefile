@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2008-06-05 13:58:45 geuzaine Exp $
+# $Id: Makefile,v 1.15 2008-06-05 16:52:17 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -53,3 +53,5 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
+predicates.o: predicates.cxx tetgen.h
+tetgen.o: tetgen.cxx tetgen.h
