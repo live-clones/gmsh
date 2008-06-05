@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.398 2008-05-06 21:11:46 geuzaine Exp $
+// $Id: Options.cpp,v 1.399 2008-06-05 12:37:03 samtech Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -20,6 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
+#include <stdlib.h>
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "Message.h"
