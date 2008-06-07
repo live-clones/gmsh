@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.177 2008-06-07 17:20:44 geuzaine Exp $
+# $Id: Makefile,v 1.178 2008-06-07 17:21:03 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -43,7 +43,7 @@ SRC = Context.cpp\
       SmoothData.cpp\
       StringUtils.cpp\
       ListUtils.cpp\
-      TreeUtils.cpp\
+      TreeUtils.cpp avl.cpp\
       MallocUtils.cpp\
       License.cpp
 
