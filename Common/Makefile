@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.178 2008-06-07 17:21:03 geuzaine Exp $
+# $Id: Makefile,v 1.179 2008-06-07 17:22:37 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -162,5 +162,6 @@ ListUtils.o: ListUtils.cpp MallocUtils.h ListUtils.h TreeUtils.h avl.h \
   Message.h
 TreeUtils.o: TreeUtils.cpp MallocUtils.h TreeUtils.h avl.h ListUtils.h \
   Message.h
+avl.o: avl.cpp avl.h MallocUtils.h
 MallocUtils.o: MallocUtils.cpp MallocUtils.h Message.h
 License.o: License.cpp Message.h
