@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.111 2008-05-04 08:31:13 geuzaine Exp $
+// $Id: Geo.cpp,v 1.112 2008-06-07 17:20:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -22,8 +22,7 @@
 #include <string.h>
 #include "Message.h"
 #include "Numeric.h"
-#include "Malloc.h"
-#include "Tools.h"
+#include "MallocUtils.h"
 #include "Geo.h"
 #include "GModel.h"
 #include "GeoInterpolation.h"

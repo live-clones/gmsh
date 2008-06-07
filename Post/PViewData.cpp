@@ -1,4 +1,4 @@
-// $Id: PViewData.cpp,v 1.22 2008-06-05 16:52:15 geuzaine Exp $
+// $Id: PViewData.cpp,v 1.23 2008-06-07 17:20:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,7 @@
 // 
 
 #include "PViewData.h"
-#include "gmshList.h"
+#include "ListUtils.h"
 #include "adaptiveData.h"
 #include "Numeric.h"
 #include "Message.h"

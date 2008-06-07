@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.14 2008-06-05 13:57:47 samtech Exp $
+// $Id: OctreePost.cpp,v 1.15 2008-06-07 17:20:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,7 @@
 
 #include "Octree.h"
 #include "OctreePost.h"
-#include "gmshList.h"
+#include "ListUtils.h"
 #include "PView.h"
 #include "PViewDataList.h"
 #include "PViewDataGModel.h"

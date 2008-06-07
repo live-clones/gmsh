@@ -1,4 +1,4 @@
-// $Id: dxf2geo.c,v 1.3 2005-01-01 19:35:40 geuzaine Exp $
+// $Id: dxf2geo.cpp,v 1.1 2008-06-07 17:20:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "Tree.h"
+#include <set>
 
 #define DEG2RAD    3.14159265359/180.
 #define BUFSIZE    2048
@@ -54,112 +54,82 @@ int cpt_vert_node = 1, num_vert_node[1024];
 float curthick, xcoords[10], ycoords[10], zcoords[10], floats[10], angles[10];
 float max_x, max_y, max_z, min_x, min_y, min_z;
 float THETOL, THEROT = 0., THETRANSX = 0., THETRANSY = 0.;
-Tree_T *Point_T, *Curve_T;
 
-struct Point
+class Point
 {
+ public:
   int num;
   float x, y, z;
-};
-
-int fcmpPoint(const void *a, const void *b)
-{
-  struct Point *q, *w;
-
-  q = (struct Point *)a;
-  w = (struct Point *)b;
-
-  if(fabs(q->x - w->x) < THETOL &&
-     fabs(q->y - w->y) < THETOL &&
-     fabs(q->z - w->z) < THETOL)
-    return 0;
-
-  if(q->x > w->x)
-    return (1);
-  if(q->x < w->x)
-    return (-1);
-  if(q->y > w->y)
-    return (1);
-  if(q->y < w->y)
-    return (-1);
-  if(q->z > w->z)
-    return (1);
-  if(q->z < w->z)
-    return (-1);
-
-  return 0;
-}
-
-int addpoint(struct Point *p)
-{
-  struct Point *pp;
-
-  if((pp = (struct Point *)Tree_PQuery(Point_T, p)))
-    return pp->num;
-
-  p->num = nump++;
-  Tree_Add(Point_T, p);
-  return p->num;
-}
-
-void writepoint(void *a, void *b)
-{
-  struct Point *p;
-  float x, y;
-
-  p = (struct Point *)a;
-
-  x = p->x;
-  y = p->y;
-
-  p->x = cos(-THEROT * DEG2RAD) * x + sin(-THEROT * DEG2RAD) * y;
-  p->y = -sin(-THEROT * DEG2RAD) * x + cos(-THEROT * DEG2RAD) * y;
-
-  p->x += THETRANSX;
-  p->y += THETRANSY;
-
-  fprintf(outfile, "Point (%d) = {%g *u, %g *u, %g *u, lc} ;\n",
-          p->num, p->x, p->y, p->z);
-}
-
-struct Curve
-{
-  int num, type, a, b, c;
-};
-
-int fcmpCurve(const void *a, const void *b)
-{
-  struct Curve *q, *w;
-
-  q = (struct Curve *)a;
-  w = (struct Curve *)b;
-
-  if(q->num < w->num)
-    return (-1);
-  return (1);
-}
-
-void addcurve(struct Curve *c)
-{
-  c->num = numc++;
-  Tree_Add(Curve_T, c);
-}
-
-void writecurve(void *a, void *b)
-{
-  struct Curve *c;
-
-  c = (struct Curve *)a;
-
-  switch (c->type) {
-  case GEOLINE:
-    fprintf(outfile, "Line (%d) = {%d, %d} ;\n", c->num, c->a, c->b);
-    break;
-  case GEOCIRCLE:
-    fprintf(outfile, "Circle (%d) = {%d, %d, %d} ;\n",
-            c->num, c->a, c->b, c->c);
-    break;
+  void write() const
+  {
+    float xx = x;
+    float yy = y;
+    xx = cos(-THEROT * DEG2RAD) * x + sin(-THEROT * DEG2RAD) * y;
+    yy = -sin(-THEROT * DEG2RAD) * x + cos(-THEROT * DEG2RAD) * y;
+    xx += THETRANSX;
+    yy += THETRANSY;
+    fprintf(outfile, "Point (%d) = {%g *u, %g *u, %g *u, lc} ;\n",
+	    num, xx, yy, z);
   }
+};
+
+class PointLessThanLexicographic{
+ public:
+  bool operator()(const Point &v1, const Point &v2) const
+  {
+    if(v1.x - v2.x >  THETOL) return true;
+    if(v1.x - v2.x < -THETOL) return false;
+    if(v1.y - v2.y >  THETOL) return true;
+    if(v1.y - v2.y < -THETOL) return false;
+    if(v1.z - v2.z >  THETOL) return true;
+    return false;
+  }
+};
+
+class Curve
+{
+ public:
+  int num, type, a, b, c;
+  void write() const
+  {
+    switch (type) {
+    case GEOLINE:
+      fprintf(outfile, "Line (%d) = {%d, %d} ;\n", num, a, b);
+      break;
+    case GEOCIRCLE:
+      fprintf(outfile, "Circle (%d) = {%d, %d, %d} ;\n",
+	      num, a, b, c);
+      break;
+    }
+  }
+};
+
+class CurveLessThan{
+ public:
+  bool operator()(const Curve &c1, const Curve &c2) const
+  {
+    if(c1.num < c2.num) return true;
+    return false;
+  }
+};
+
+std::set<Point, PointLessThanLexicographic> Point_T;
+std::set<Curve, CurveLessThan> Curve_T;
+
+int addpoint(Point &p)
+{
+  std::set<Point>::iterator it = Point_T.find(p);
+  if(it != Point_T.end())
+    return it->num;
+  p.num = nump++;
+  Point_T.insert(p);
+  return p.num;
+}
+
+void addcurve(Curve &c)
+{
+  c.num = numc++;
+  Curve_T.insert(c);
 }
 
 int checkdegen(int a, int b, int c)
@@ -171,22 +141,23 @@ int checkdegen(int a, int b, int c)
       ycoords[b] == ycoords[c] &&
       zcoords[b] == zcoords[c]) ||
      (xcoords[a] == xcoords[c] &&
-      ycoords[a] == ycoords[c] && zcoords[a] == zcoords[c]))
+      ycoords[a] == ycoords[c] && 
+      zcoords[a] == zcoords[c]))
     return (1);
   return (0);
 }
 
 void addobj(void)
 {       /* dump out current object we should have all info on */
-  struct Point p;
-  struct Curve c;
+  Point p;
+  Curve c;
   int num[10];
 
   if(strstr(curobj, "POINT")) {
     p.x = xcoords[0];
     p.y = ycoords[0];
     p.z = zcoords[0];
-    addpoint(&p);
+    addpoint(p);
   }
   else if(strstr(curobj, "LINE") || strstr(curobj, "3DLINE")) {
     if(xcoords[0] == xcoords[1] && ycoords[0] == ycoords[1]
@@ -197,73 +168,73 @@ void addobj(void)
     p.x = xcoords[0];
     p.y = ycoords[0];
     p.z = zcoords[0];
-    num[0] = addpoint(&p);
+    num[0] = addpoint(p);
     p.x = xcoords[1];
     p.y = ycoords[1];
     p.z = zcoords[1];
-    num[1] = addpoint(&p);
+    num[1] = addpoint(p);
     c.type = GEOLINE;
     c.a = num[0];
     c.b = num[1];
-    addcurve(&c);
+    addcurve(c);
   }
   else if(strstr(curobj, "CIRCLE")) {
     p.x = xcoords[0];
     p.y = ycoords[0];
     p.z = zcoords[0];
-    num[0] = addpoint(&p);
+    num[0] = addpoint(p);
     p.x = xcoords[0] - floats[0];
     p.y = ycoords[0];
     p.z = zcoords[0];
-    num[1] = addpoint(&p);
+    num[1] = addpoint(p);
     p.x = xcoords[0] + floats[0];
     p.y = ycoords[0];
     p.z = zcoords[0];
-    num[2] = addpoint(&p);
+    num[2] = addpoint(p);
     p.x = xcoords[0];
     p.y = ycoords[0] - floats[0];
     p.z = zcoords[0];
-    num[3] = addpoint(&p);
+    num[3] = addpoint(p);
     p.x = xcoords[0];
     p.y = ycoords[0] + floats[0];
     p.z = zcoords[0];
-    num[4] = addpoint(&p);
+    num[4] = addpoint(p);
     c.type = GEOCIRCLE;
     c.a = num[2];
     c.b = num[0];
     c.c = num[4];
-    addcurve(&c);
+    addcurve(c);
     c.type = GEOCIRCLE;
     c.a = num[4];
     c.b = num[0];
     c.c = num[1];
-    addcurve(&c);
+    addcurve(c);
     c.type = GEOCIRCLE;
     c.a = num[1];
     c.b = num[0];
     c.c = num[3];
-    addcurve(&c);
+    addcurve(c);
     c.type = GEOCIRCLE;
     c.a = num[3];
     c.b = num[0];
     c.c = num[2];
-    addcurve(&c);
+    addcurve(c);
   }
   else if(strstr(curobj, "ARC")) {
     p.x = xcoords[0];
     p.y = ycoords[0];
     p.z = zcoords[0];
-    num[0] = addpoint(&p);
+    num[0] = addpoint(p);
 
     p.x = xcoords[0] + floats[0] * cos(angles[0] * DEG2RAD);
     p.y = ycoords[0] + floats[0] * sin(angles[0] * DEG2RAD);
     p.z = zcoords[0];
-    num[1] = addpoint(&p);
+    num[1] = addpoint(p);
 
     p.x = xcoords[0] + floats[0] * cos(angles[1] * DEG2RAD);
     p.y = ycoords[0] + floats[0] * sin(angles[1] * DEG2RAD);
     p.z = zcoords[0];
-    num[2] = addpoint(&p);
+    num[2] = addpoint(p);
 
     if((angles[1] - angles[0] > 0 && angles[1] - angles[0] < 180) ||
        (angles[1] - angles[0] < 0 && angles[1] - angles[0] < -180)) {
@@ -271,7 +242,7 @@ void addobj(void)
       c.a = num[1];
       c.b = num[0];
       c.c = num[2];
-      addcurve(&c);
+      addcurve(c);
     }
     else {
       if(angles[1] - angles[0] > 0) {
@@ -291,17 +262,17 @@ void addobj(void)
           floats[0] * sin((angles[0] - angles[1]) * 0.5 * DEG2RAD);
       }
       p.z = zcoords[0];
-      num[3] = addpoint(&p);
+      num[3] = addpoint(p);
       c.type = GEOCIRCLE;
       c.a = num[1];
       c.b = num[0];
       c.c = num[3];
-      addcurve(&c);
+      addcurve(c);
       c.type = GEOCIRCLE;
       c.a = num[3];
       c.b = num[0];
       c.c = num[2];
-      addcurve(&c);
+      addcurve(c);
     }
   }
   else if(strstr(curobj, "TRACE")) {    /* 2 back-to-back triangles */
@@ -355,34 +326,33 @@ void addobj(void)
       p.x = xcoords[0];
       p.y = ycoords[0];
       p.z = zcoords[0];
-      num_vert_node[cpt_vert_node] = addpoint(&p);
-      // printf("cpt_vert-node = %d : new number = %d\n",cpt_vert_node,num_vert_node[cpt_vert_node]);
+      num_vert_node[cpt_vert_node] = addpoint(p);
       cpt_vert_node++;
     }
     else if(ints[0] == 128) {
       c.type = GEOLINE;
       c.a = num_vert_node[ints[1]];
       c.b = num_vert_node[ints[2]];
-      addcurve(&c);
+      addcurve(c);
       c.type = GEOLINE;
       c.a = num_vert_node[ints[2]];
       c.b = num_vert_node[ints[3]];
-      addcurve(&c);
+      addcurve(c);
       if(ints[4] == 0) {
         c.type = GEOLINE;
         c.a = num_vert_node[ints[3]];
         c.b = num_vert_node[ints[1]];
-        addcurve(&c);
+        addcurve(c);
       }
       else {
         c.type = GEOLINE;
         c.a = num_vert_node[ints[3]];
         c.b = num_vert_node[ints[4]];
-        addcurve(&c);
+        addcurve(c);
         c.type = GEOLINE;
         c.a = num_vert_node[ints[4]];
         c.b = num_vert_node[ints[1]];
-        addcurve(&c);
+        addcurve(c);
       }
     }
     ints[0] = ints[1] = ints[2] = ints[3] = ints[4] = ints[5] = 0;
@@ -410,43 +380,44 @@ void addobj(void)
     p.x = xcoords[0];
     p.y = ycoords[0];
     p.z = zcoords[0];
-    num[0] = addpoint(&p);
+    num[0] = addpoint(p);
     p.x = xcoords[1];
     p.y = ycoords[1];
     p.z = zcoords[1];
-    num[1] = addpoint(&p);
+    num[1] = addpoint(p);
     p.x = xcoords[2];
     p.y = ycoords[2];
     p.z = zcoords[2];
-    num[2] = addpoint(&p);
+    num[2] = addpoint(p);
     c.type = GEOLINE;
     c.a = num[0];
     c.b = num[1];
-    addcurve(&c);
+    addcurve(c);
     c.type = GEOLINE;
     c.a = num[1];
     c.b = num[2];
-    addcurve(&c);
-    if(xcoords[3] == xcoords[2] && ycoords[3] == ycoords[2]
-       && zcoords[3] == zcoords[2]) {
+    addcurve(c);
+    if(xcoords[3] == xcoords[2] &&
+       ycoords[3] == ycoords[2] &&
+       zcoords[3] == zcoords[2]) {
       c.type = GEOLINE;
       c.a = num[2];
       c.b = num[0];
-      addcurve(&c);
+      addcurve(c);
     }
     else {
       p.x = xcoords[3];
       p.y = ycoords[3];
       p.z = zcoords[3];
-      num[3] = addpoint(&p);
+      num[3] = addpoint(p);
       c.type = GEOLINE;
       c.a = num[2];
       c.b = num[3];
-      addcurve(&c);
+      addcurve(c);
       c.type = GEOLINE;
       c.a = num[3];
       c.b = num[0];
-      addcurve(&c);
+      addcurve(c);
     }
 #endif
   }
@@ -466,8 +437,6 @@ int getline(void)
     return (1);
   return (0);
 }
-
-
 
 int main(int argc, char *argv[])
 {
@@ -510,9 +479,6 @@ int main(int argc, char *argv[])
   curcolor = 7; /* and it also doesn't have a color yet... */
   max_x = max_y = max_z = -10000000.0;  /* init bounding limits */
   min_x = min_y = min_z = 10000000.0;
-
-  Point_T = Tree_Create(sizeof(struct Point), fcmpPoint);
-  Curve_T = Tree_Create(sizeof(struct Curve), fcmpCurve);
 
 find:
   while(!feof(infile)) {        /* run file up to the "ENTITIES" section */
@@ -619,21 +585,22 @@ stopit:
   fclose(infile);
   fprintf(outfile, "/* Converted from AutoCad DXF file: %s */\n", inname);
   fprintf(outfile, "/* Tolerance %g: %d points / %d curves */\n\n",
-          THETOL, Tree_Nbr(Point_T), Tree_Nbr(Curve_T));
+          THETOL, Point_T.size(), Curve_T.size());
   fprintf(outfile, "u = 1; \nlc = 1 ;\n\n");
-  Tree_Action(Point_T, writepoint);
+
+  for(std::set<Point>::iterator it = Point_T.begin(); it != Point_T.end(); ++it)
+    it->write();
   fprintf(outfile, "\n");
-  Tree_Action(Curve_T, writecurve);
+
+  for(std::set<Curve>::iterator it = Curve_T.begin(); it != Curve_T.end(); ++it)
+    it->write();
   fprintf(outfile, "\n");
+
   fflush(outfile);
   fclose(outfile);
   printf("bounding box [%g,%g] [%g,%g] [%g,%g]\n",
          min_x, max_x, min_y, max_y, min_z, max_z);
-  printf
-    ("tolerance %g: %d points / %d curves / %ld degenerate entities removed\n",
-     THETOL, Tree_Nbr(Point_T), Tree_Nbr(Curve_T), degenerates);
-  Tree_Delete(Point_T);
-  Tree_Delete(Curve_T);
+  printf("tolerance %g: %d points / %d curves / %ld degenerate entities removed\n",
+	 THETOL, Point_T.size(), Curve_T.size(), degenerates);
   exit(0);
-
 }

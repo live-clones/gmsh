@@ -38,7 +38,7 @@ SYSINCLUDE=/I"${INCLUDE}"
 OPTIM=/O2
 
 # Gmsh subdirectories
-GMSH_DIRS=Common DataStr Geo Mesh Post Numeric Parser Plugin contrib/ANN contrib/MathEval contrib/NR contrib/Tetgen
+GMSH_DIRS=Common Geo Mesh Post Numeric Parser Plugin contrib/ANN contrib/MathEval contrib/NR contrib/Tetgen
 
 # Gmsh libraries
 GMSH_LIBS=Common/Main.obj lib/*.lib

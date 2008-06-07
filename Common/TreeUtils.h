@@ -1,5 +1,5 @@
-#ifndef _TOOLS_H_
-#define _TOOLS_H_
+#ifndef _TREE_UTILS_H_
+#define _TREE_UTILS_H_
 
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,25 +19,38 @@
 // USA.
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
+//
+// Contributor(s):
+//   Marc Ume
+//
 
-#include "gmshList.h"
-#include "Tree.h"
+#include "avl.h"
+#include "ListUtils.h"
 
-int fcmp_int(const void *a, const void *b);
-int fcmp_absint(const void *a, const void *b);
-int fcmp_double(const void *a, const void *b);
+typedef struct {
+  int size;
+  avl_tree *root;
+} Tree_T;
 
-List_T *ListOfDouble2ListOfInt(List_T *dList);
+Tree_T *Tree_Create(int size, int (*fcmp)(const void *a, const void *b));
+void    Tree_Delete(Tree_T *Tree);
+void    Tree_Add(Tree_T *tree, void *data);
+int     Tree_Nbr(Tree_T *Tree);
+int     Tree_Insert(Tree_T *Tree, void *data);
+int     Tree_Search(Tree_T *Tree, void *data);
+int     Tree_Query(Tree_T *Tree, void *data);
+void   *Tree_PQuery(Tree_T *Tree, void *data);
+int     Tree_Suppress(Tree_T *Tree, void *data);
+int     Tree_Size(Tree_T *tree) ;
+
+inline void Tree_Action(Tree_T *tree, void (*action) (void *data, void *dummy))
+{
+  if(!tree) return;
+
+  avl_foreach(tree->root, action, AVL_FORWARD);
+}
+
 List_T *Tree2List(Tree_T *pTree);
-Tree_T *List2Tree(List_T * pList, int (*fcmp) (const void *a, const void *b));
-
-Tree_T *Tree_Duplique(Tree_T *pTree);
-Tree_T *Tree_Union(Tree_T *pTreeA, Tree_T *pTreeB);
-Tree_T *Tree_Soustraction(Tree_T *pTreeA, Tree_T *pTreeB);
-Tree_T *Tree_Intersection(Tree_T *pTreeA, Tree_T *pTreeB);
-
-void Tree_Unit(Tree_T *pTreeA, Tree_T *pTreeB);
-void Tree_Soustrait(Tree_T *pTreeA, Tree_T *pTreeB);
-void Tree_Intersecte(Tree_T *pTreeA, Tree_T *pTreeB);
 
 #endif
+

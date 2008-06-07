@@ -1,4 +1,4 @@
-// $Id: findLinks.cpp,v 1.10 2008-06-05 13:57:47 samtech Exp $
+// $Id: findLinks.cpp,v 1.11 2008-06-07 17:20:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -22,9 +22,8 @@
 #include <stdlib.h>
 #include "Message.h"
 #include "GModel.h"
-#include "Tree.h"
-#include "gmshList.h"
-#include "Tools.h"
+#include "TreeUtils.h"
+#include "ListUtils.h"
 
 typedef struct{
   int n, a;

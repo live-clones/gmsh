@@ -1,4 +1,4 @@
-// $Id: Malloc.cpp,v 1.23 2008-05-04 08:31:11 geuzaine Exp $
+// $Id: MallocUtils.cpp,v 1.1 2008-06-07 17:20:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "Malloc.h"
+#include "MallocUtils.h"
 #include "Message.h"
 
 void *Malloc(size_t size)

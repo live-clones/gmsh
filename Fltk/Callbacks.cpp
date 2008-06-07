@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.583 2008-05-06 21:11:46 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.584 2008-06-07 17:20:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -28,8 +28,8 @@
 
 #include "GmshUI.h"
 #include "Message.h"
-#include "Malloc.h"
-#include "Tools.h"
+#include "MallocUtils.h"
+#include "ListUtils.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "GeoStringInterface.h"

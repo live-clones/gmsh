@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.54 2008-06-05 11:52:49 samtech Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.55 2008-06-07 17:20:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -2117,7 +2117,7 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
   for(unsigned int i = 0; i < entities.size(); i++){
     if(entities[i]->physicals.size() || saveAll){
       numElements += entities[i]->getNumMeshElements();
-      for(int j = 0; j < entities[i]->getNumMeshElements(); j++){
+      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
 	if(entities[i]->getMeshElement(j)->getTypeForVTK())
 	  totalNumInt += entities[i]->getMeshElement(j)->getNumVertices() + 1;
       }

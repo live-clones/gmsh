@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.51 2008-03-21 09:39:43 geuzaine Exp $
+$Id: CREDITS,v 1.52 2008-06-07 17:20:57 geuzaine Exp $
 
              Gmsh is copyright (C) 1997-2008
 
@@ -24,7 +24,7 @@ Gundry for the Plot3d mesh format; Jozef Vesely for help with the
 Tetgen integration; Koen Hillewaert for high order element mappings
 and other improvements.
 
-The AVL tree code (DataStr/avl.*) and the YUV image code
+The AVL tree code (Common/avl.*) and the YUV image code
 (Graphics/gl2yuv.*) are copyright (C) 1988-1993, 1995 The Regents of
 the University of California. Permission to use, copy, modify, and
 distribute this software and its documentation for any purpose and

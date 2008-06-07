@@ -21,8 +21,8 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Plugin.h"
-#include "gmshList.h"
-#include "Tree.h"
+#include "ListUtils.h"
+#include "TreeUtils.h"
 
 extern "C"
 {

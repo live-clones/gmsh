@@ -1,4 +1,4 @@
-// $Id: gmshList.cpp,v 1.1 2008-06-05 13:57:47 samtech Exp $
+// $Id: ListUtils.cpp,v 1.1 2008-06-07 17:20:44 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -26,14 +26,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/types.h>
 
-#include "Malloc.h"
-#include "gmshList.h"
+#include "MallocUtils.h"
+#include "ListUtils.h"
+#include "TreeUtils.h"
 #include "Message.h"
-#include "SafeIO.h"
-
-static char *startptr;
 
 List_T *List_Create(int n, int incr, int size)
 {
@@ -95,32 +94,6 @@ void List_Add(List_T * liste, void *data)
 int List_Nbr(List_T * liste)
 {
   return (liste) ? liste->n : 0;
-}
-
-void List_Insert(List_T * liste, void *data,
-                 int (*fcmp) (const void *a, const void *b))
-{
-  if(List_Search(liste, data, fcmp) == 0)
-    List_Add(liste, data);
-}
-
-int List_Replace(List_T * liste, void *data,
-                 int (*fcmp) (const void *a, const void *b))
-{
-  void *ptr;
-
-  if(liste->isorder != 1)
-    List_Sort(liste, fcmp);
-  liste->isorder = 1;
-  ptr = (void *)bsearch(data, liste->array, liste->n, liste->size, fcmp);
-  if(ptr == NULL) {
-    List_Add(liste, data);
-    return (0);
-  }
-  else {
-    memcpy(ptr, data, liste->size);
-    return (1);
-  }
 }
 
 void List_Read(List_T * liste, int index, void *data)
@@ -242,80 +215,6 @@ int List_ISearchSeq(List_T * liste, void *data,
   return i;
 }
 
-int List_ISearchSeqPartial(List_T * liste, void *data, int i_Start,
-                           int (*fcmp) (const void *a, const void *b))
-{
-  int i;
-
-  if(!liste)
-    return -1;
-  i = i_Start;
-  while((i < List_Nbr(liste)) && fcmp(data, (void *)List_Pointer(liste, i)))
-    i++;
-  if(i == List_Nbr(liste))
-    i = -1;
-  return i;
-}
-
-int List_Query(List_T * liste, void *data,
-               int (*fcmp) (const void *a, const void *b))
-{
-  void *ptr;
-
-  if(liste->isorder != 1)
-    List_Sort(liste, fcmp);
-  liste->isorder = 1;
-  ptr = (void *)bsearch(data, liste->array, liste->n, liste->size, fcmp);
-  if(ptr == NULL)
-    return (0);
-
-  memcpy(data, ptr, liste->size);
-  return (1);
-}
-
-static void *lolofind(void *data, void *array, int n, int size,
-                      int (*fcmp) (const void *a, const void *b))
-{
-  char *ptr;
-  int i;
-
-  ptr = (char *)array;
-  for(i = 0; i < n; i++) {
-    if(fcmp(ptr, data) == 0)
-      break;
-    ptr += size;
-  }
-  if(i < n)
-    return (ptr);
-  return (NULL);
-}
-
-int List_LQuery(List_T *liste, void *data,
-                 int (*fcmp)(const void *a, const void *b), int first)
-{
-  char *ptr;
-  
-  if (first == 1) { 
-    ptr = (char *) lolofind(data,liste->array,liste->n,liste->size,fcmp);
-  }
-  else {
-    if (startptr != NULL)
-      ptr = (char *) lolofind(data,startptr,
-                              liste->n - (startptr-liste->array)/liste->size,
-                              liste->size,fcmp);
-    else
-      return(0);
-  }
-
-  if (ptr == NULL) return(0);
-
-  startptr =  ptr + liste->size;
-  if ( startptr >= ( liste->array + liste->n * liste->size))
-    startptr = NULL;
-  memcpy(data,ptr,liste->size);
-  return (1);
-}
-
 void *List_PQuery(List_T * liste, void *data,
                   int (*fcmp) (const void *a, const void *b))
 {
@@ -326,23 +225,6 @@ void *List_PQuery(List_T * liste, void *data,
   liste->isorder = 1;
   ptr = (void *)bsearch(data, liste->array, liste->n, liste->size, fcmp);
   return (ptr);
-}
-
-int List_Suppress(List_T * liste, void *data,
-                  int (*fcmp) (const void *a, const void *b))
-{
-  char *ptr;
-  int len;
-
-  ptr = (char *)List_PQuery(liste, data, fcmp);
-  if(ptr == NULL)
-    return (0);
-
-  liste->n--;
-  len = liste->n - (((long)ptr - (long)liste->array) / liste->size);
-  if(len > 0)
-    memmove(ptr, ptr + liste->size, len * liste->size);
-  return (1);
 }
 
 int List_PSuppress(List_T * liste, int index)
@@ -381,21 +263,8 @@ void List_Action(List_T * liste, void (*action) (void *data, void *dummy))
 {
   int i, dummy;
 
-  for(i = 0; i < List_Nbr(liste); i++) {
+  for(i = 0; i < List_Nbr(liste); i++)
     (*action) (List_Pointer_NoChange(liste, i), &dummy);
-  }
-
-}
-
-void List_Action_Inverse(List_T * liste,
-                         void (*action) (void *data, void *dummy))
-{
-  int i, dummy;
-
-  for(i = List_Nbr(liste); i > 0; i--) {
-    (*action) (List_Pointer_NoChange(liste, i - 1), &dummy);
-  }
-
 }
 
 void List_Copy(List_T * a, List_T * b)
@@ -512,6 +381,24 @@ List_T *List_CreateFromFile(int n, int incr, int size, FILE * file, int format,
   return liste;
 }
 
+static int safe_fwrite(const void *ptr, size_t size, size_t nmemb, FILE * stream)
+{
+  size_t result = fwrite(ptr, size, nmemb, stream);
+
+  if(result < nmemb) {
+    if(result >= 0)     /* Partial write */
+      Msg::Error("Disk full");
+    else
+      Msg::Error(strerror(errno));
+    if(fflush(stream) < 0)
+      Msg::Error("EOF reached");
+    if(fclose(stream) < 0)
+      Msg::Error(strerror(errno));
+    return 1;
+  }
+  return 0;
+}
+
 void List_WriteToFile(List_T * liste, FILE * file, int format)
 {
   int i, n;
@@ -546,7 +433,7 @@ void List_WriteToFile(List_T * liste, FILE * file, int format)
   }
 }
 
-// For backward compatibility purposes:
+// For backward compatibility
 
 List_T *List_CreateFromFileOld(int n, int incr, int size, FILE * file, int format,
                                int swap)
@@ -623,3 +510,42 @@ List_T *List_CreateFromFileOld(int n, int incr, int size, FILE * file, int forma
 
   return liste;
 }
+
+// Comparison functions
+
+int fcmp_int(const void *a, const void *b)
+{
+  return (*(int *)a - *(int *)b);
+}
+
+int fcmp_absint(const void *a, const void *b)
+{
+  return (abs(*(int *)a) - abs(*(int *)b));
+}
+
+int fcmp_double(const void *a, const void *b)
+{
+  double cmp;
+
+  cmp = *(double *)a - *(double *)b;
+  if(cmp > 1.e-16)
+    return 1;
+  else if(cmp < -1.e-16)
+    return -1;
+  else
+    return 0;
+}
+
+List_T *ListOfDouble2ListOfInt(List_T *dList)
+{
+  int n = List_Nbr(dList); 
+  List_T *iList = List_Create(n, n, sizeof(int));
+  for(int i = 0; i < n; i++){
+    double d;
+    List_Read(dList, i, &d);
+    int j = (int)d;
+    List_Add(iList, &j);
+  }
+  return iList;
+}
+

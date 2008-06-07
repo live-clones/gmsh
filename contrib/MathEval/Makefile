@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.25 2008-06-05 16:52:16 geuzaine Exp $
+# $Id: Makefile,v 1.26 2008-06-07 17:20:57 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,7 @@ include ../../variables
 
 LIB = ../../lib/libGmshMathEval${LIBEXT}
 
-INC = ${DASH}I../../Common ${DASH}I../../DataStr
+INC = ${DASH}I../../Common
 
 CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 
@@ -65,13 +65,14 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-matheval.o: matheval.cpp common.h ../../DataStr/Malloc.h matheval.h \
+matheval.o: matheval.cpp common.h ../../Common/MallocUtils.h matheval.h \
   node.h symbol_table.h
-node.o: node.cpp common.h ../../DataStr/Malloc.h node.h symbol_table.h
-scanner.yy.o: scanner.yy.cpp common.h ../../DataStr/Malloc.h node.h \
-  symbol_table.h parser.tab.hpp
-parser.tab.o: parser.tab.cpp common.h ../../DataStr/Malloc.h node.h \
+node.o: node.cpp common.h ../../Common/MallocUtils.h node.h \
   symbol_table.h
-symbol_table.o: symbol_table.cpp common.h ../../DataStr/Malloc.h \
+scanner.yy.o: scanner.yy.cpp common.h ../../Common/MallocUtils.h node.h \
+  symbol_table.h parser.tab.hpp
+parser.tab.o: parser.tab.cpp common.h ../../Common/MallocUtils.h node.h \
+  symbol_table.h
+symbol_table.o: symbol_table.cpp common.h ../../Common/MallocUtils.h \
   symbol_table.h xmath.h
 xmath.o: xmath.cpp xmath.h

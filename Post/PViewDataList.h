@@ -24,7 +24,7 @@
 #include <string>
 #include "PViewData.h"
 #include "SBoundingBox3d.h"
-#include "gmshList.h"
+#include "ListUtils.h"
 
 // list-based datasets (all elements are discontinuous)
 class PViewDataList : public PViewData {

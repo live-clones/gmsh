@@ -1,4 +1,4 @@
-// $Id: gl2gif.cpp,v 1.25 2008-05-04 08:31:15 geuzaine Exp $
+// $Id: gl2gif.cpp,v 1.26 2008-06-07 17:20:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -61,6 +61,7 @@
  *
  */
 
+#include "MallocUtils.h"
 #include "gl2gif.h"
 
 /* PPM colormap routines */

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.154 2008-06-05 16:52:14 geuzaine Exp $
+# $Id: Makefile,v 1.155 2008-06-07 17:20:47 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,7 @@ include ../variables
 
 LIB = ../lib/libGmshGraphics${LIBEXT}
 
-INC = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Geo ${DASH}I../Mesh\
+INC = ${DASH}I../Common ${DASH}I../Geo ${DASH}I../Mesh\
       ${DASH}I../Post ${DASH}I../Graphics ${DASH}I../Fltk ${DASH}I../Numeric\
       ${DASH}I../Parser ${DASH}I../Plugin ${DASH}I../contrib/MathEval\
       ${DASH}I../contrib/ANN/include
@@ -133,7 +133,7 @@ Entity.o: Entity.cpp ../Common/GmshUI.h ../Numeric/Numeric.h \
 ReadImg.o: ReadImg.cpp ReadImg.h ../Common/Message.h ../Common/GmshUI.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../DataStr/gmshList.h
+  ../Common/ListUtils.h
 Scale.o: Scale.cpp ../Common/GmshUI.h Draw.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Post/PView.h ../Post/PViewOptions.h \
   ../Post/ColorTable.h ../Post/PViewData.h ../Common/Context.h gl2ps.h
@@ -142,18 +142,18 @@ Graph2D.o: Graph2D.cpp ../Common/GmshUI.h Draw.h ../Geo/SBoundingBox3d.h \
   ../Post/ColorTable.h ../Post/PViewData.h gl2ps.h ../Common/Context.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h
 gl2ps.o: gl2ps.cpp gl2ps.h
-gl2gif.o: gl2gif.cpp gl2gif.h PixelBuffer.h ../Common/GmshUI.h \
-  ../Common/Message.h ../DataStr/Malloc.h Draw.h ../Geo/SBoundingBox3d.h \
+gl2gif.o: gl2gif.cpp ../Common/MallocUtils.h gl2gif.h PixelBuffer.h \
+  ../Common/GmshUI.h ../Common/Message.h Draw.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h
 gl2jpeg.o: gl2jpeg.cpp gl2jpeg.h PixelBuffer.h ../Common/GmshUI.h \
-  ../Common/Message.h ../DataStr/Malloc.h Draw.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h
+  ../Common/Message.h ../Common/MallocUtils.h Draw.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h
 gl2png.o: gl2png.cpp gl2png.h PixelBuffer.h ../Common/GmshUI.h \
-  ../Common/Message.h ../DataStr/Malloc.h Draw.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h
+  ../Common/Message.h ../Common/MallocUtils.h Draw.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h
 gl2ppm.o: gl2ppm.cpp gl2ppm.h PixelBuffer.h ../Common/GmshUI.h \
-  ../Common/Message.h ../DataStr/Malloc.h Draw.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h
-gl2yuv.o: gl2yuv.cpp gl2yuv.h PixelBuffer.h ../Common/GmshUI.h \
-  ../Common/Message.h ../DataStr/Malloc.h Draw.h ../Geo/SBoundingBox3d.h \
+  ../Common/Message.h ../Common/MallocUtils.h Draw.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h
+gl2yuv.o: gl2yuv.cpp ../Common/MallocUtils.h gl2yuv.h PixelBuffer.h \
+  ../Common/GmshUI.h ../Common/Message.h Draw.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h

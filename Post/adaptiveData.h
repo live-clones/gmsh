@@ -22,7 +22,7 @@
 
 #include <list>
 #include <set>
-#include "gmshList.h"
+#include "ListUtils.h"
 #include "GmshMatrix.h"
 
 class PViewData;

@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.18 2008-05-04 08:31:15 geuzaine Exp $
+// $Id: DivideAndConquer.cpp,v 1.19 2008-06-07 17:20:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -34,7 +34,7 @@
 #include "Message.h"
 #include "Numeric.h"
 #include "DivideAndConquer.h"
-#include "Malloc.h"
+#include "MallocUtils.h"
 
 #define Pred(x) ((x)->prev)
 #define Succ(x) ((x)->next)

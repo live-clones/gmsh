@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.167 2008-05-21 10:59:04 geuzaine Exp $
+// $Id: Post.cpp,v 1.168 2008-06-07 17:20:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1017,7 +1017,7 @@ void drawVectorArray(PView *p, VertexArray *va)
     double l = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
     double lmax = opt->ArrowSizeProportional ? opt->TmpMax : l;
     if(l && lmax){
-      double scale = scale = opt->ArrowSize / lmax;
+      double scale = opt->ArrowSize / lmax;
       // log scaling
       if(opt->ScaleType == PViewOptions::Logarithmic && 
 	 opt->ArrowSizeProportional && opt->TmpMin > 0 &&

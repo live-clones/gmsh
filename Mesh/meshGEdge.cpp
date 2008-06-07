@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.63 2008-06-05 13:57:47 samtech Exp $
+// $Id: meshGEdge.cpp,v 1.64 2008-06-07 17:20:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,7 @@
 #include "BackgroundMesh.h"
 #include "Numeric.h"
 #include "Message.h"
-#include "gmshList.h"
+#include "ListUtils.h"
 #include "Context.h"
 #include "GModel.h"
 

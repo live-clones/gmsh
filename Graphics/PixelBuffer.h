@@ -22,7 +22,7 @@
 
 #include "GmshUI.h"
 #include "Message.h"
-#include "Malloc.h"
+#include "MallocUtils.h"
 #include "Draw.h"
 
 #if defined(HAVE_OSMESA)

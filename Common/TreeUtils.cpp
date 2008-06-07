@@ -1,4 +1,4 @@
-// $Id: Tree.cpp,v 1.24 2008-05-04 08:31:11 geuzaine Exp $
+// $Id: TreeUtils.cpp,v 1.1 2008-06-07 17:20:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -26,8 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "Malloc.h"
-#include "Tree.h"
+#include "MallocUtils.h"
+#include "TreeUtils.h"
 #include "Message.h"
 
 Tree_T *Tree_Create(int size, int (*fcmp) (const void *a, const void *b))
@@ -63,18 +63,6 @@ void Tree_Add(Tree_T * tree, void *data)
   }
 }
 
-void *Tree_AddP(Tree_T * tree, void *data)
-{
-  void *ptr;
-
-  if(!tree)
-    Msg::Fatal("Impossible to add in unallocated tree");
-  ptr = Malloc(tree->size);
-  memcpy(ptr, data, tree->size);
-  avl_insert(tree->root, ptr, ptr);
-  return ptr;
-}
-
 int Tree_Nbr(Tree_T * tree)
 {
   if(!tree)
@@ -90,26 +78,6 @@ int Tree_Insert(Tree_T * tree, void *data)
   }
   else{
     return 0;
-  }
-}
-
-int Tree_Replace(Tree_T * tree, void *data)
-{
-  void *ptr;
-  int state;
-
-  if(!tree) {
-    Msg::Error("Impossible to replace in unallocated tree");
-    return (0);
-  }
-  state = avl_lookup(tree->root, data, &ptr);
-  if(state == 0) {
-    Tree_Add(tree, data);
-    return (0);
-  }
-  else {
-    memcpy(ptr, data, tree->size);
-    return (1);
   }
 }
 
@@ -172,46 +140,28 @@ int Tree_Suppress(Tree_T * tree, void *data)
   return (1);
 }
 
-int Tree_Left(Tree_T * tree, void *data)
-{
-  void *ptr;
-  int state;
-
-  if(!tree)
-    return 0;
-
-  state = avl_extremum(tree->root, AVL_MOST_LEFT, &ptr);
-
-  if(state == 0)
-    return (0);
-
-  memcpy(data, ptr, tree->size);
-
-  return (1);
-}
-
-int Tree_Right(Tree_T * tree, void *data)
-{
-  void *ptr;
-  int state;
-
-  if(!tree)
-    return 0;
-
-  state = avl_extremum(tree->root, AVL_MOST_RIGHT, &ptr);
-
-  if(state == 0)
-    return (0);
-
-  memcpy(data, ptr, tree->size);
-
-  return (1);
-}
-
 int Tree_Size(Tree_T * tree)
 {
   if(!tree)
     return 0;
 
   return (tree->size);
+}
+
+static List_T *pListTransfer;
+
+void TransferList(void *a, void *b)
+{
+  List_Add(pListTransfer, a);
+}
+
+List_T *Tree2List(Tree_T * pTree)
+{
+  int Nb;
+  Nb = Tree_Nbr(pTree);
+  if(Nb == 0)
+    Nb = 1;
+  pListTransfer = List_Create(Nb, Nb, Tree_Size(pTree));
+  Tree_Action(pTree, TransferList);
+  return (pListTransfer);
 }

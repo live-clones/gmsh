@@ -1,5 +1,5 @@
-#ifndef _MALLOC_H_
-#define _MALLOC_H_
+#ifndef _MALLOC_UTILS_H_
+#define _MALLOC_UTILS_H_
 
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //

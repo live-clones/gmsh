@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.55 2008-06-05 16:52:14 geuzaine Exp $
+# $Id: Makefile,v 1.56 2008-06-07 17:20:48 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,7 @@ include ../variables
 
 LIB = ../lib/libGmshNumeric${LIBEXT}
 
-INC = ${DASH}I../Common ${DASH}I../DataStr ${DASH}I../Numeric ${DASH}I../contrib/NR
+INC = ${DASH}I../Common ${DASH}I../Numeric ${DASH}I../contrib/NR
 
 CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 

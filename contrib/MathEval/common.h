@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "Malloc.h"
+#include "MallocUtils.h"
 
 /* Macro definitions to simplify corresponding function calls.  */
 #define XMALLOC(type, num) ((type *) Malloc ((num) * sizeof(type)))

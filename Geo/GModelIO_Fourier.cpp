@@ -109,6 +109,7 @@ int GModel::readFourier()
 {
   _createFMInternals();
   getFMInternals()->loadFM();
+  return 1;
 }
 
 int GModel::readFourier(const std::string &filename)
@@ -122,7 +123,7 @@ int GModel::readFourier(const std::string &filename)
 
 int GModel::writeFourier(const std::string &filename)
 {
-  FILE *fp = fopen(filename.c_str(), "w");
+  return 0;
 }
 
 #else

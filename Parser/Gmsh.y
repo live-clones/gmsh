@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.315 2008-06-07 07:35:45 geuzaine Exp $
+// $Id: Gmsh.y,v 1.316 2008-06-07 17:20:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -24,8 +24,9 @@
 #include <stdarg.h>
 #include <time.h>
 #include "Message.h"
-#include "Malloc.h"
-#include "Tools.h"
+#include "MallocUtils.h"
+#include "ListUtils.h"
+#include "TreeUtils.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "GModel.h"

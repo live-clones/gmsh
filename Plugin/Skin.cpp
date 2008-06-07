@@ -1,4 +1,4 @@
-// $Id: Skin.cpp,v 1.38 2008-04-05 17:49:23 geuzaine Exp $
+// $Id: Skin.cpp,v 1.39 2008-06-07 17:20:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -20,7 +20,7 @@
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
 #include "Skin.h"
-#include "Malloc.h"
+#include "MallocUtils.h"
 #include "Context.h"
 
 extern Context_T CTX;

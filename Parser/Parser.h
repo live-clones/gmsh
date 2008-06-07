@@ -20,8 +20,8 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include "gmshList.h"
-#include "Tree.h"
+#include "ListUtils.h"
+#include "TreeUtils.h"
 
 typedef struct {
   char *Name;

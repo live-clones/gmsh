@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.23 2008-06-05 11:52:49 samtech Exp $
+// $Id: GModelIO_Geo.cpp,v 1.24 2008-06-07 17:20:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -23,8 +23,8 @@
 #include "GModel.h"
 #include "Geo.h"
 #include "OpenFile.h"
-#include "Tools.h"
 #include "Numeric.h"
+#include "ListUtils.h"
 #include "Message.h"
 #include "gmshVertex.h"
 #include "gmshFace.h"

@@ -1,4 +1,4 @@
-// $Id: gl2yuv.cpp,v 1.15 2008-05-04 08:31:15 geuzaine Exp $
+// $Id: gl2yuv.cpp,v 1.16 2008-06-07 17:20:47 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -45,7 +45,7 @@
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  */
 
-
+#include "MallocUtils.h"
 #include "gl2yuv.h"
 
 void create_yuv(FILE * outfile, PixelBuffer *buffer)
