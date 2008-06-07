@@ -25,7 +25,7 @@
 #include <iostream>
 using std::iostream;
 
-#if !defined(WIN32) || defined(__CYGWIN__)
+#if !defined(HAVE_NO_OCC_CONFIG_H)
 #include "config.h"
 #endif
 

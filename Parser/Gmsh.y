@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.314 2008-06-03 12:42:35 geuzaine Exp $
+// $Id: Gmsh.y,v 1.315 2008-06-07 07:35:45 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1062,7 +1062,7 @@ Affectation :
 	  for(int i = 0; i < List_Nbr($9); i++){
 	    double id;
 	    List_Read($9, i, &id);
-	    vl.push_back(id);
+	    vl.push_back((int)id);
 	  }
 	}
 	else

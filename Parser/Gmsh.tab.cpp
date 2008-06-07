@@ -324,7 +324,7 @@
 /* Copy the first part of user declarations.  */
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.365 2008-06-03 12:42:29 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.366 2008-06-07 07:35:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -4726,7 +4726,7 @@ yyreduce:
 	  for(int i = 0; i < List_Nbr((yyvsp[(9) - (11)].l)); i++){
 	    double id;
 	    List_Read((yyvsp[(9) - (11)].l), i, &id);
-	    vl.push_back(id);
+	    vl.push_back((int)id);
 	  }
 	}
 	else
