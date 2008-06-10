@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.59 2008-06-10 08:37:34 remacle Exp $
+// $Id: gmshFace.cpp,v 1.60 2008-06-10 12:59:12 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -85,6 +85,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
         Msg::Error("Unknown point %d", v->Num);
     }
   }
+  isSphere = iSRuledSurfaceASphere (s,center,radius);
 }
 
 double gmshFace::getMetricEigenvalue(const SPoint2 &pt)
@@ -241,6 +242,24 @@ GEntity::GeomType gmshFace::geomType() const
     return Unknown;
   }
 }
+
+// by default we assume that straight lines are geodesics
+SPoint2 gmshFace::geodesic(const SPoint2 &pt1 , const SPoint2 &pt2 , double t)
+{
+  if (isSphere){
+    GPoint gp1 = point (pt1.x(),pt1.y());
+    GPoint gp2 = point (pt2.x(),pt2.y());    
+    SPoint2 guess = pt1 + (pt2 - pt1) * t;
+    GPoint gp = closestPoint(SPoint3(gp1.x()+t*(gp2.x()-gp1.x()),
+				     gp1.y()+t*(gp2.y()-gp1.y()),
+				     gp1.z()+t*(gp2.z()-gp1.z())),(double*)guess);
+    return SPoint2(gp.u(),gp.v());
+  }
+  else{
+    return pt1 + (pt2 - pt1) * t;
+  }
+}
+
 
 int gmshFace::containsPoint(const SPoint3 &pt) const
 { 

@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.36 2008-05-04 08:31:13 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.37 2008-06-10 12:59:12 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -454,6 +454,55 @@ void TransfiniteSph(Vertex S, Vertex center, Vertex *T)
   T->Pos.Y = center.Pos.Y + r * diry;
   T->Pos.Z = center.Pos.Z + r * dirz;
 }
+
+bool iSRuledSurfaceASphere(Surface *s, SPoint3 &center, double &radius){
+  if(s->Typ != MSH_SURF_REGL && s->Typ != MSH_SURF_TRIC)return false;
+
+  bool isSphere = true;
+  Vertex *O = 0, OO;
+  Curve *C[4] = {0, 0, 0, 0};
+  for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++)
+    List_Read(s->Generatrices, i, &C[i]);
+
+  if(List_Nbr(s->RuledSurfaceOptions) == 3) {
+    // it's on a sphere: get the center
+    List_Read(s->RuledSurfaceOptions, 0, & ((double *)center)[0]);
+    List_Read(s->RuledSurfaceOptions, 1, & ((double *)center)[1]);
+    List_Read(s->RuledSurfaceOptions, 2, & ((double *)center)[2]);
+    O = &OO;
+  }
+  else{
+    // try to be intelligent (hum)
+    for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++) {
+      if(C[i]->Typ != MSH_SEGM_CIRC && C[i]->Typ != MSH_SEGM_CIRC_INV){
+	isSphere = false;
+      }
+      else if(isSphere){
+	if(!i){
+	  List_Read(C[i]->Control_Points, 1, &O);
+	  ((double *)center)[0]= O->Pos.X;
+	  ((double *)center)[1]= O->Pos.Y;
+	  ((double *)center)[2]= O->Pos.Z;
+	}
+	else{
+	  Vertex *tmp;
+	  List_Read(C[i]->Control_Points, 1, &tmp);
+	  if(compareVertex(&O, &tmp))
+	    isSphere = false;
+	}
+      }
+    }
+  }
+  if (isSphere){
+    Vertex *p = C[0]->beg;
+    radius = sqrt ((p->Pos.X - center.x())+
+		   (p->Pos.Y - center.y())+
+		   (p->Pos.Z - center.z()));
+  }
+
+  return isSphere;
+}
+
 
 Vertex InterpolateRuledSurface(Surface *s, double u, double v)
 {

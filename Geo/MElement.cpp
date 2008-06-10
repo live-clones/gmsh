@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.71 2008-06-10 08:37:33 remacle Exp $
+// $Id: MElement.cpp,v 1.72 2008-06-10 12:59:12 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -891,11 +891,7 @@ void MTriangleN::getFaceRep(int num, double *x, double *y, double *z, SVector3 *
   y[0] = pnt1.y(); y[1] = pnt2.y(); y[2] = pnt3.y();
   z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
   
-
-
-
 }
-
 
 int MTriangleN::getNumEdgesRep(){ return 3 * numSubEdges; }
 

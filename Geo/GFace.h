@@ -102,7 +102,7 @@ class GFace : public GEntity
   virtual GPoint point(double par1, double par2) const = 0;
   virtual GPoint point(const SPoint2 &pt) const { return point(pt.x(), pt.y()); }
 
-  // computes, in parametric space, the interpolation from pt1 to pt2 alon the geodesic
+  // computes, in parametric space, the interpolation from pt1 to pt2 along a geodesic
   // of the surface
   virtual SPoint2 geodesic(const SPoint2 &pt1, const SPoint2 &pt2, double t);
 

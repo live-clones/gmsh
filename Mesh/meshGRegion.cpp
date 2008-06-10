@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.49 2008-06-10 08:37:34 remacle Exp $
+// $Id: meshGRegion.cpp,v 1.50 2008-06-10 12:59:12 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -188,12 +188,11 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 	  // This is not 100 % safe yet, so we reserve that operation for high order
 	  // meshes.
 	  GPoint gp = gf->closestPoint (SPoint3(v[j]->x(), v[j]->y(), v[j]->z()),guess);
-	  //	printf("ah que coucou\n");
-	  //	const double U(0),V(0);
-	  //        MVertex *v1b = new MFaceVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf,U,V);
+
 	  Msg::Debug("A new point has been inserted in mesh face %d by the 3D mesher",gf->tag());
 	  Msg::Debug("The point has been projected back to the surface (%g %g %g) -> (%g %g %g)",
 		     v[j]->x(), v[j]->y(), v[j]->z(),gp.x(),gp.y(),gp.z());
+
 	  // To be safe, we should ensure that this mesh motion does not lead to an invalid mesh !!!!
 	  v[j]->x() = gp.x();
 	  v[j]->y() = gp.y();
@@ -201,7 +200,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 	  v1b = new MFaceVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf,gp.u(),gp.v());
 	}
 	else{
-	  v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z());
+	  v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf);
 	}
 
         gf->mesh_vertices.push_back(v1b);

@@ -26,12 +26,15 @@
 class gmshFace : public GFace {
  protected:
   Surface *s;
-
+  bool isSphere;
+  SPoint3 center;
+  double radius;
  public:
   gmshFace(GModel *m, Surface *face);
   virtual ~gmshFace(){}
   Range<double> parBounds(int i) const; 
   void setModelEdges(std::list<GEdge*>&);
+  virtual SPoint2 geodesic(const SPoint2 &pt1, const SPoint2 &pt2, double t);
   virtual GPoint point(double par1, double par2) const; 
   virtual GPoint closestPoint(const SPoint3 & queryPoint, const double initialGuess[2]) const; 
   virtual int containsPoint(const SPoint3 &pt) const;  
