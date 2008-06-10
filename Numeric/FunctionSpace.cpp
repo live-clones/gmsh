@@ -1,4 +1,4 @@
-// $Id: FunctionSpace.cpp,v 1.5 2008-06-05 18:25:18 geuzaine Exp $
+// $Id: FunctionSpace.cpp,v 1.6 2008-06-10 08:37:34 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -584,6 +584,26 @@ const gmshFunctionSpace &gmshFunctionSpaces::find(int tag)
   case MSH_TRI_21 :
     F.monomials = generatePascalTriangle(5);
     F.points =    gmshGeneratePointsTriangle(5, false);
+    break;
+  case MSH_TET_4 :
+    F.monomials = generatePascalTetrahedron(1);
+    F.points =    gmshGeneratePointsTetrahedron(5, false);
+    break;
+  case MSH_TET_10 :
+    F.monomials = generatePascalTetrahedron(2);
+    F.points =    gmshGeneratePointsTetrahedron(2, false);
+    break;
+  case MSH_TET_20 :
+    F.monomials = generatePascalTetrahedron(3);
+    F.points =    gmshGeneratePointsTetrahedron(3, false);
+    break;
+  case MSH_TET_35 :
+    F.monomials = generatePascalTetrahedron(4);
+    F.points =    gmshGeneratePointsTetrahedron(4, false);
+    break;
+  case MSH_TET_56 :
+    F.monomials = generatePascalTetrahedron(5);
+    F.points =    gmshGeneratePointsTetrahedron(5, false);
     break;
   default :
     throw;

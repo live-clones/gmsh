@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.64 2008-06-03 21:39:01 geuzaine Exp $
+// $Id: GFace.cpp,v 1.65 2008-06-10 08:37:33 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -575,7 +575,7 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p) const
   return SPoint2(U, V);
 }
 
-GPoint GFace::closestPoint(const SPoint3 & queryPoint) const
+GPoint GFace::closestPoint(const SPoint3 & queryPoint, const double initialGuess[2]) const
 {
   Msg::Error("Closet point not implemented for this type of surface");
   return GPoint(0, 0, 0);

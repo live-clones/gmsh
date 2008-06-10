@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.48 2008-06-05 11:52:50 samtech Exp $
+// $Id: meshGRegion.cpp,v 1.49 2008-06-10 08:37:34 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -118,6 +118,12 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
 void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out, 
                         std::vector<MVertex*> &numberedV)
 {
+  // Improvement has to be done here :
+  // netgen splits some of the existing edges of the 
+  // mesh. If those edges are classified on some
+  // model faces, new points SHOULD be classified
+  // on the model face and get the right set of parametric coordinates.
+
   for(int i = numberedV.size(); i < out.numberofpoints; i++){
     MVertex *v = new MVertex(out.pointlist[i * 3 + 0],
                              out.pointlist[i * 3 + 1],
@@ -158,13 +164,46 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     v[1] = numberedV[out.trifacelist[i * 3 + 1] - 1];
     v[2] = numberedV[out.trifacelist[i * 3 + 2] - 1];
     GFace *gf = gr->model()->getFaceByTag(out.trifacemarkerlist[i]);
+
+    double guess[2] = {0,0};
+    int Count = 0;
+    for(int j = 0; j < 3; j++){   
+      if(v[j]->onWhat()->dim() == 2){
+	v[j]->getParameter(0,guess[0]);
+	v[j]->getParameter(1,guess[1]);
+	Count++;
+      }
+    }
+    guess[0]/=Count;
+    guess[1]/=Count;
     for(int j = 0; j < 3; j++){   
       if(v[j]->onWhat()->dim() == 3){
         v[j]->onWhat()->mesh_vertices.erase
           (std::find(v[j]->onWhat()->mesh_vertices.begin(),
                      v[j]->onWhat()->mesh_vertices.end(),
                      v[j]));
-        MVertex *v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
+        MVertex *v1b;
+	if (CTX.mesh.order > 1){
+	  // PARAMETRIC COORDINATES SHOULD BE SET for the vertex !!!!!!!!!!!!!
+	  // This is not 100 % safe yet, so we reserve that operation for high order
+	  // meshes.
+	  GPoint gp = gf->closestPoint (SPoint3(v[j]->x(), v[j]->y(), v[j]->z()),guess);
+	  //	printf("ah que coucou\n");
+	  //	const double U(0),V(0);
+	  //        MVertex *v1b = new MFaceVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf,U,V);
+	  Msg::Debug("A new point has been inserted in mesh face %d by the 3D mesher",gf->tag());
+	  Msg::Debug("The point has been projected back to the surface (%g %g %g) -> (%g %g %g)",
+		     v[j]->x(), v[j]->y(), v[j]->z(),gp.x(),gp.y(),gp.z());
+	  // To be safe, we should ensure that this mesh motion does not lead to an invalid mesh !!!!
+	  v[j]->x() = gp.x();
+	  v[j]->y() = gp.y();
+	  v[j]->z() = gp.z();
+	  v1b = new MFaceVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf,gp.u(),gp.v());
+	}
+	else{
+	  v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z());
+	}
+
         gf->mesh_vertices.push_back(v1b);
         numberedV[out.trifacelist[i * 3 + j] - 1] = v1b;
         delete v[j];

@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.41 2008-05-25 07:10:57 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.42 2008-06-10 08:37:34 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -143,17 +143,17 @@ GPoint OCCFace::point(double par1, double par2) const
   return GPoint(val.X(), val.Y(), val.Z(), this, pp);
 }
 
-GPoint OCCFace::closestPoint(const SPoint3 & qp) const
+GPoint OCCFace::closestPoint(const SPoint3 & qp, const double initialGuess[2]) const
 {
   gp_Pnt pnt(qp.x(), qp.y(), qp.z());
   GeomAPI_ProjectPointOnSurf proj(pnt, occface, umin, umax, vmin, vmax);
-
-   if(!proj.NbPoints()){
-     Msg::Error("OCC Project Point on Surface FAIL");
-     return GPoint(0, 0);
-   }
-   
-  double pp[2];
+  
+  if(!proj.NbPoints()){
+    Msg::Error("OCC Project Point on Surface FAIL");
+    return GPoint(0, 0);
+  }
+  
+  double pp[2] = {initialGuess[0],initialGuess[1]};
   proj.LowerDistanceParameters(pp[0], pp[1]);
 
   Msg::Info("projection lower distance parameters %g %g",pp[0],pp[1]);

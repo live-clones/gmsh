@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.112 2008-06-07 17:20:46 geuzaine Exp $
+// $Id: Geo.cpp,v 1.113 2008-06-10 08:37:33 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -2954,7 +2954,7 @@ bool ProjectPointOnCurve(Curve *c, Vertex *v, Vertex *RES, Vertex *DER)
 
 bool ProjectPointOnSurface(Surface *s, Vertex &p, double u[2])
 {
-  double x[3] = { 0.5, 0.5, 0.5 };
+  double x[3] = { 0.5, u[0], u[1] };
   Vertex vv;
   int check;
   SURFACE = s;

@@ -254,9 +254,13 @@ public:
   }
   inline BDS_Face * otherFace(const BDS_Face *f) const
   {
-    if(numfaces()!=2) throw;
+    if(numfaces()!=2) {
+      printf("otherFace wrong, ony %d faces attached to edge %d %d\n",numfaces(),p1->iD,p2->iD);
+      throw;
+    }
     if(f == _faces[0]) return _faces[1];
     if(f == _faces[1]) return _faces[0];
+    printf("otherFace wrong : the edge does not belong to the face \n",numfaces(),p1->iD,p2->iD);
     throw;
   }
   inline void del(BDS_Face *t)
@@ -299,6 +303,29 @@ public:
   BDS_Edge *e1, *e2, *e3, *e4;
   BDS_GeomEntity *g;
   inline int numEdges () const { return e4 ? 4 : 3; }
+  inline BDS_Edge *oppositeEdge (BDS_Point *p){
+    if (e4){
+      printf("oppositeEdge to point %d cannot be applied to a quad\n",p->iD);
+      throw;
+    }
+    if (e1->p1 != p && e1->p2 != p)return e1;
+    if (e2->p1 != p && e2->p2 != p)return e2;
+    if (e3->p1 != p && e3->p2 != p)return e3;
+    printf("point %d does not belong to this triangle\n",p->iD);
+    throw;
+  }
+  inline BDS_Point *oppositeVertex (BDS_Edge *e){
+    if (e4){
+      printf("oppositeVertex to edge %d %d cannot be applied to a quad\n",e->p1->iD,e->p2->iD);
+      throw;
+    }
+
+    if (e == e1)return e2->commonvertex(e3);
+    if (e == e2)return e1->commonvertex(e3);
+    if (e == e3)return e1->commonvertex(e2);
+    printf("edge  %d %d does not belong to this triangle\n",e->p1->iD,e->p2->iD);
+    throw;
+  }
   inline void getNodes(BDS_Point *n[4]) const
   {
     if (!e4){
@@ -459,6 +486,7 @@ public:
   // 2D operators
   BDS_Edge *recover_edge(int p1, int p2, std::set<EdgeToRecover> *e2r=0,
                          std::set<EdgeToRecover> *not_recovered=0);
+  BDS_Edge *recover_edge_fast(BDS_Point *p1, BDS_Point *p2);
   bool swap_edge(BDS_Edge*, const BDS_SwapEdgeTest &theTest);
   bool collapse_edge_parametric(BDS_Edge*, BDS_Point*);
   void snap_point(BDS_Point*, BDS_Mesh *geom = 0);
@@ -477,5 +505,9 @@ public:
 
 void outputScalarField(std::list<BDS_Face*> t, const char *fn, int param, GFace *gf=0);
 void recur_tag(BDS_Face *t, BDS_GeomEntity *g);
+
+int Intersect_Edges_2d(double x1, double y1, double x2, double y2,
+                       double x3, double y3, double x4, double y4,
+		       double x[2]);
 
 #endif

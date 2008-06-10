@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.106 2008-05-04 08:31:15 geuzaine Exp $
+// $Id: BDS.cpp,v 1.107 2008-06-10 08:37:34 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,7 @@
 #include "qualityMeasures.h"
 
 bool test_move_point_parametric_triangle(BDS_Point *p, double u, double v, BDS_Face *t);
+bool test_move_point_parametric_quad(BDS_Point *p, double u, double v, BDS_Face *t);
 
 void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace *gf)
 {
@@ -39,28 +40,55 @@ void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace
   std::list<BDS_Face*>::iterator tite = t.end();
   while(tit != tite) {
     BDS_Point *pts[4];
-    (*tit)->getNodes(pts);
-    if(param)
-      fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
-              pts[0]->u, pts[0]->v, 0.0,
-              pts[1]->u, pts[1]->v, 0.0,
-              pts[2]->u, pts[2]->v, 0.0,
-              pts[0]->iD, pts[1]->iD, pts[2]->iD);
-    else{
-      if(!gf)
-        fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
-                pts[0]->X, pts[0]->Y, pts[0]->Z,
-                pts[1]->X, pts[1]->Y, pts[1]->Z,
-                pts[2]->X, pts[2]->Y, pts[2]->Z, 
-                pts[0]->iD, pts[1]->iD, pts[2]->iD);
-      else
-        fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-                pts[0]->X, pts[0]->Y, pts[0]->Z,
-                pts[1]->X, pts[1]->Y, pts[1]->Z,
-                pts[2]->X, pts[2]->Y, pts[2]->Z,
-                gf->curvature(SPoint2(pts[0]->u, pts[0]->v)),
-                gf->curvature(SPoint2(pts[1]->u, pts[1]->v)),
-                gf->curvature(SPoint2(pts[2]->u, pts[2]->v)));
+    if (!(*tit)->deleted){
+      (*tit)->getNodes(pts);
+      if(param)
+	fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+		pts[0]->u, pts[0]->v, 0.0,
+		pts[1]->u, pts[1]->v, 0.0,
+		pts[2]->u, pts[2]->v, 0.0,
+		pts[0]->iD, pts[1]->iD, pts[2]->iD);
+      else{
+	if(!gf){
+	  if (pts[3]){
+	    fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
+		    pts[0]->X, pts[0]->Y, pts[0]->Z,
+		    pts[1]->X, pts[1]->Y, pts[1]->Z,
+		    pts[2]->X, pts[2]->Y, pts[2]->Z, 
+		    pts[3]->X, pts[3]->Y, pts[3]->Z, 
+		    pts[0]->iD, pts[1]->iD, pts[2]->iD, pts[3]->iD);
+	  }
+	  else{
+	    fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+		    pts[0]->X, pts[0]->Y, pts[0]->Z,
+		    pts[1]->X, pts[1]->Y, pts[1]->Z,
+		    pts[2]->X, pts[2]->Y, pts[2]->Z, 
+		    pts[0]->iD, pts[1]->iD, pts[2]->iD);
+	  }
+	}
+	else{
+	  if (pts[3]){
+	    fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
+		    pts[0]->X, pts[0]->Y, pts[0]->Z,
+		    pts[1]->X, pts[1]->Y, pts[1]->Z,
+		    pts[2]->X, pts[2]->Y, pts[2]->Z,
+		    pts[3]->X, pts[3]->Y, pts[3]->Z,
+		    gf->curvature(SPoint2(pts[0]->u, pts[0]->v)),
+		    gf->curvature(SPoint2(pts[1]->u, pts[1]->v)),	
+		    gf->curvature(SPoint2(pts[2]->u, pts[2]->v)),
+		    gf->curvature(SPoint2(pts[3]->u, pts[3]->v)));
+	  }
+	  else{
+	    fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+		    pts[0]->X, pts[0]->Y, pts[0]->Z,
+		    pts[1]->X, pts[1]->Y, pts[1]->Z,
+		    pts[2]->X, pts[2]->Y, pts[2]->Z,
+		    gf->curvature(SPoint2(pts[0]->u, pts[0]->v)),
+		    gf->curvature(SPoint2(pts[1]->u, pts[1]->v)),
+		    gf->curvature(SPoint2(pts[2]->u, pts[2]->v)));
+	  }
+	}
+      }
     }
     ++tit;
   }
@@ -192,7 +220,7 @@ BDS_Edge *BDS_Mesh::find_edge(int num1, int num2)
 }
 
 int Intersect_Edges_2d(double x1, double y1, double x2, double y2,
-                       double x3, double y3, double x4, double y4)
+                       double x3, double y3, double x4, double y4,double x[2])
 {
 
 //   double p1[2] = {x1,y1};
@@ -214,7 +242,7 @@ int Intersect_Edges_2d(double x1, double y1, double x2, double y2,
 //   return 0;
 
   double mat[2][2];
-  double rhs[2], x[2];
+  double rhs[2];
   mat[0][0] = (x2 - x1);
   mat[0][1] = -(x4 - x3);
   mat[1][0] = (y2 - y1);
@@ -225,6 +253,32 @@ int Intersect_Edges_2d(double x1, double y1, double x2, double y2,
     return 0;
   if(x[0] >= 0.0 && x[0] <= 1.0 && x[1] >= 0.0 && x[1] <= 1.0)
     return 1;
+  return 0;
+}
+
+BDS_Edge *BDS_Mesh::recover_edge_fast(BDS_Point *p1, BDS_Point *p2){
+  
+  std::list<BDS_Face*> ts;
+  p1->getTriangles(ts);
+  std::list<BDS_Face*>::iterator it = ts.begin();
+  std::list<BDS_Face*>::iterator ite = ts.end();
+  while(it != ite) {
+    BDS_Face *t = *it;
+    if (!t->e4){
+      BDS_Edge *e= t->oppositeEdge (p1);
+      BDS_Face *f= e->otherFace (t);
+      if (!f->e4){
+	BDS_Point *p2b = f->oppositeVertex(e);
+	if (p2 == p2b){
+	  if (swap_edge(e, BDS_SwapEdgeTestQuality(false,false))){
+	    printf("coucou\n");
+	    return find_edge (p1,p2->iD);
+	  }
+	}
+      }
+    }
+    ++it;
+  }
   return 0;
 }
 
@@ -244,6 +298,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
   
   int ix = 0;
   int ixMax = 300;
+  double x[2];
   while(1){
     std::vector<BDS_Edge*> intersected;
     std::list<BDS_Edge*>::iterator it = edges.begin();
@@ -256,7 +311,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
 	if(Intersect_Edges_2d(e->p1->u, e->p1->v,
 			      e->p2->u, e->p2->v,
 			      p1->u, p1->v,
-			      p2->u, p2->v)){
+			      p2->u, p2->v,x)){
 	  // intersect
 	  if(e2r && e2r->find(EdgeToRecover(e->p1->iD, e->p2->iD, 0)) != e2r->end()){
 	    std::set<EdgeToRecover>::iterator itr1 = 
@@ -271,6 +326,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
 	    not_recovered->insert(EdgeToRecover(e->p1->iD, e->p2->iD, itr1->ge));
 	    selfIntersection = true;
 	  }
+	  if (e->numfaces() != e->numTriangles())return 0;
 	  intersected.push_back(e);	  
 	}
       ++it;
@@ -1102,8 +1158,11 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p)
 
 // use robust predicates for not allowing to revert a triangle by
 // moving one of its vertices
+
 bool test_move_point_parametric_triangle(BDS_Point *p, double u, double v, BDS_Face *t)
 {       
+  if (t->e4)
+    return test_move_point_parametric_quad(p,u,v,t);
   BDS_Point *pts[4];
   t->getNodes(pts);
 
@@ -1141,6 +1200,46 @@ bool test_move_point_parametric_triangle(BDS_Point *p, double u, double v, BDS_F
   // allow to move a point when a triangle was flat
   return ori_init*ori_final > 0;
 }
+
+bool test_move_point_parametric_quad(BDS_Point *p, double u, double v, BDS_Face *t)
+{       
+  BDS_Point *pts[4];
+  t->getNodes(pts);
+
+  double pa[2] = {pts[0]->u, pts[0]->v};
+  double pb[2] = {pts[1]->u, pts[1]->v};
+  double pc[2] = {pts[2]->u, pts[2]->v};
+  double pd[2] = {pts[3]->u, pts[3]->v};
+
+  double ori_init1 = gmsh::orient2d(pa, pb, pc);
+  double ori_init2 = gmsh::orient2d(pc, pd, pa);
+
+  if(p == pts[0]){ 
+    pa[0] = u; 
+    pa[1] = v; 
+  }
+  else if(p == pts[1]){
+    pb[0] = u;
+    pb[1] = v;
+  }
+  else if(p == pts[2]){
+    pc[0] = u;
+    pc[1] = v;
+  }
+  else if(p == pts[3]){
+    pd[0] = u;
+    pd[1] = v;
+  }
+  else
+    throw;
+  
+  double ori_final1 = gmsh::orient2d(pa, pb, pc);
+  double ori_final2 = gmsh::orient2d(pc, pd, pa);
+  // allow to move a point when a triangle was flat
+  return ori_init1*ori_final1 > 0 && ori_init2*ori_final2 > 0 ;
+}
+
+
 
 // d^2_i = (x^2_i - x)^T M (x_i - x)  
 //       = M11 (x_i - x)^2 + 2 M21 (x_i-x)(y_i-y) + M22 (y_i-y)^2        
@@ -1265,18 +1364,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
   while(ited != itede) {
     BDS_Edge  *e = *ited;
     BDS_Point *n = e->othervertex(p);
-//      double uv[2] = {(n->u + p->u)/2.0,(n->v + p->v)/2.0};
-//      double metric[3];
-//      buildMetric ( gf ,uv,metric);
-//      double du[2] = {n->u - p->u,n->v - p->v};
-//      double ldu = sqrt(DSQR(du[0])+DSQR(du[1]));
-//      du[0]/=ldu;
-//      du[1]/=ldu;
-//      double fact = 1./sqrt (metric[0] * du[0] * du[0] +
-//                    2 * metric[1] * du[0] * du[1] + 
-//                    metric[2] * du[1] * du[1]);
-    double fact = 1.0;
-    
+    double fact = 1.0;    
     sTot += fact;
     U  += n->u * fact;
     V  += n->v * fact;
@@ -1366,30 +1454,35 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point *p, GFace *gf)
   double tot_length = 0; 
   double LC = 0;
 
-  std::list<BDS_Edge*>::iterator eit = p->edges.begin();
-  while(eit != p->edges.end()) {
-    if((*eit)->numfaces() == 1) return false;
-    BDS_Point *op = ((*eit)->p1 == p) ? (*eit)->p2 : (*eit)->p1;
-    const double l_e = (*eit)->length();     
-    U += op->u * l_e; 
-    V += op->v * l_e;
-    tot_length += l_e;
-    LC += op->lc();
-    ++eit;
-  }
-  
-  U /= tot_length;
-  V /= tot_length;
-  LC /= p->edges.size();
 
   std::list<BDS_Face*> ts;
   p->getTriangles(ts);
   std::list<BDS_Face*>::iterator it = ts.begin();
   std::list<BDS_Face*>::iterator ite = ts.end();
+
   while(it != ite) {
     BDS_Face *t = *it;
-    if(!test_move_point_parametric_triangle(p, U, V, t))
+    BDS_Point *n[4];
+    t->getNodes(n);
+    for (int i = 0; i<t->numEdges();i++){
+      U += n[i]->u;
+      V += n[i]->v;
+      LC += n[i]->lc();
+      tot_length += 1;      
+    }
+    ++it;
+  }  
+  U /= tot_length;
+  V /= tot_length;
+  LC /= p->edges.size();
+
+  it = ts.begin();
+  while(it != ite) {
+    BDS_Face *t = *it;
+    if(!test_move_point_parametric_triangle(p, U, V, t)){
+      printf("coucou %g %g -> %g %g\n", p->u, p->v,U,V);
       return false;
+    }
     ++it;
   }
 
@@ -1400,7 +1493,7 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point *p, GFace *gf)
   p->X = gp.x();
   p->Y = gp.y();
   p->Z = gp.z();
-  eit = p->edges.begin();
+  std::list<BDS_Edge*>::iterator eit = p->edges.begin();
   while(eit != p->edges.end()) {
     (*eit)->update();
     ++eit;

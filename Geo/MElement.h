@@ -595,12 +595,9 @@ class MTriangleN : public MTriangle {
   }
   virtual int getNumEdgeVertices(){ return _order - 1; }
   virtual int getNumEdgesRep();
+  virtual int getNumFacesRep();
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
-  virtual int getNumFacesRep(){ return 0; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
-    throw;
-  }
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual int getTypeForMSH()
   {
     if(_order == 3 && _vs.size() == 6) return MSH_TRI_9; 
@@ -936,6 +933,8 @@ class MTetrahedron : public MElement {
     default : s = 0.; break;
     }
   }
+  virtual void jac(int order, MVertex *verts[], double u, double v, double jac[3][3]);
+  virtual void pnt(int order, MVertex *verts[], double u, double v, SPoint3 &);
   virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
   {
     switch(num) {
@@ -1032,6 +1031,66 @@ class MTetrahedron10 : public MTetrahedron {
     tmp = _vs[5]; _vs[5] = _vs[3]; _vs[3] = tmp;
   }
 };
+
+
+class MTetrahedronN : public MTetrahedron {
+ protected:
+  std::vector<MVertex *> _vs;
+  const short _order;
+ public:
+ MTetrahedronN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, 
+	       std::vector<MVertex*> &v, int order, int num=0, int part=0) 
+   : MTetrahedron(v0, v1, v2, v3, num, part) , _vs (v), _order(order)
+  {
+    for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
+  }
+ MTetrahedronN(std::vector<MVertex*> &v, int order, int num=0, int part=0) 
+   : MTetrahedron(v[0], v[1], v[2], v[3], num, part) , _order(order)
+  {
+    for(unsigned int i = 4; i < v.size(); i++) _vs.push_back(v[i]);
+    for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
+  }
+  ~MTetrahedronN(){}
+  virtual int getPolynomialOrder(){ return _order; }
+  virtual int getNumVertices(){ return 4 + _vs.size(); }
+  virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
+  virtual int getNumFaceVertices()
+  {
+    switch(getTypeForMSH()){
+    case MSH_TET_20 : return 1;
+    case MSH_TET_35 : return 3;
+    case MSH_TET_56 : return 6;
+    default : 
+      throw;
+    }    
+  }
+  virtual int getNumEdgeVertices(){ return _order - 1; }
+  virtual int getTypeForMSH()
+  {
+    // (p+1)*(p+2)*(p+3)/6
+    if(_order == 3 && _vs.size() + 4 == 20) return MSH_TET_20; 
+    if(_order == 4 && _vs.size() + 4 == 35) return MSH_TET_35; 
+    if(_order == 5 && _vs.size() + 4 == 56) return MSH_TET_56; 
+    throw;
+  }
+  virtual void revert() 
+  {
+    MVertex *tmp;
+    tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
+    std::vector<MVertex*> inv;
+    inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
+    _vs = inv;
+  }
+  virtual void jac(double u, double v, double j[3][3])
+  {
+    MTetrahedron::jac(_order, &(*(_vs.begin())), u, v, j);
+  }
+  virtual void pnt(double u, double v, SPoint3 &p)
+  {
+    MTetrahedron::pnt(_order, &(*(_vs.begin())), u, v, p);
+  }
+};
+
 
 class MHexahedron : public MElement {
  protected:

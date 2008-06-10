@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.135 2008-06-05 11:52:50 samtech Exp $
+// $Id: meshGFace.cpp,v 1.136 2008-06-10 08:37:34 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 #include "meshGFace.h"
 #include "meshGFaceBDS.h"
 #include "meshGFaceDelaunayInsertion.h"
+#include "meshGFaceQuadrilateralize.h"
 #include "meshGFaceOptimize.h"
 #include "DivideAndConquer.h"
 #include "BackgroundMesh.h"
@@ -102,8 +103,8 @@ void remeshUnrecoveredEdges(std::set<EdgeToRecover> &edgesNotRecovered,
     for (int i = 0; i < N; i++){
       MVertex *v1 = itr->ge->lines[i]->getVertex(0);
       MVertex *v2 = itr->ge->lines[i]->getVertex(1);
-      if ((v1->getNum() == p1 && v2->getNum() == p2) ||
-          (v1->getNum() == p2 && v2->getNum() == p1)){
+      if ((v1->getIndex() == p1 && v2->getIndex() == p2) ||
+          (v1->getIndex() == p2 && v2->getIndex() == p1)){
         double t1;
         double lc1 = -1;
         if (v1->onWhat() == g1) t1 = bb.low();
@@ -242,23 +243,23 @@ bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
     MVertex *vstart = *(ge->getBeginVertex()->mesh_vertices.begin());
     MVertex *vend = *(ge->getEndVertex()->mesh_vertices.begin());
     if(pass_ == 1){
-      e2r->insert(EdgeToRecover(vstart->getNum(), vend->getNum(), ge));
+      e2r->insert(EdgeToRecover(vstart->getIndex(), vend->getIndex(), ge));
       return true;
     }
     else{
-      BDS_Point *pstart = m->find_point(vstart->getNum());
-      BDS_Point *pend = m->find_point(vend->getNum());
+      BDS_Point *pstart = m->find_point(vstart->getIndex());
+      BDS_Point *pend = m->find_point(vend->getIndex());
       if(!pstart->g){
-        m->add_geom (vstart->getNum(), 0);
-        BDS_GeomEntity *g0 = m->get_geom(vstart->getNum(), 0);
+        m->add_geom (vstart->getIndex(), 0);
+        BDS_GeomEntity *g0 = m->get_geom(vstart->getIndex(), 0);
         pstart->g = g0;
       }
       if(!pend->g){
-        m->add_geom(vend->getNum(), 0);
-        BDS_GeomEntity *g0 = m->get_geom(vend->getNum(), 0);
+        m->add_geom(vend->getIndex(), 0);
+        BDS_GeomEntity *g0 = m->get_geom(vend->getIndex(), 0);
         pend->g = g0;
       }
-      BDS_Edge * e = m->recover_edge(vstart->getNum(), vend->getNum(), e2r, not_recovered);
+      BDS_Edge * e = m->recover_edge(vstart->getIndex(), vend->getIndex(), e2r, not_recovered);
       if (e) e->g = g;
       else {
         // Msg::Error("The unrecoverable edge is on model edge %d", ge->tag());
@@ -272,15 +273,15 @@ bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
   MVertex *vstart = *(ge->getBeginVertex()->mesh_vertices.begin());
   MVertex *vend = *(ge->mesh_vertices.begin());
   
-  if (pass_ == 1) e2r->insert(EdgeToRecover(vstart->getNum(), vend->getNum(), ge));
+  if (pass_ == 1) e2r->insert(EdgeToRecover(vstart->getIndex(), vend->getIndex(), ge));
   else{
-    BDS_Point *pstart = m->find_point(vstart->getNum());
+    BDS_Point *pstart = m->find_point(vstart->getIndex());
     if(!pstart->g){
-      m->add_geom (vstart->getNum(), 0);
-      BDS_GeomEntity *g0 = m->get_geom(vstart->getNum(), 0);
+      m->add_geom (vstart->getIndex(), 0);
+      BDS_GeomEntity *g0 = m->get_geom(vstart->getIndex(), 0);
       pstart->g = g0;
     }
-    e = m->recover_edge(vstart->getNum(), vend->getNum(), e2r, not_recovered);
+    e = m->recover_edge(vstart->getIndex(), vend->getIndex(), e2r, not_recovered);
     if (e) e->g = g;
     else {
       // Msg::Error("The unrecoverable edge is on model edge %d", ge->tag());
@@ -291,9 +292,9 @@ bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
   for (unsigned int i = 1; i < ge->mesh_vertices.size(); i++){
     vstart = ge->mesh_vertices[i - 1];
     vend = ge->mesh_vertices[i];
-    if (pass_ == 1) e2r->insert(EdgeToRecover(vstart->getNum(), vend->getNum(), ge));
+    if (pass_ == 1) e2r->insert(EdgeToRecover(vstart->getIndex(), vend->getIndex(), ge));
     else{
-      e = m->recover_edge(vstart->getNum(), vend->getNum(), e2r, not_recovered);
+      e = m->recover_edge(vstart->getIndex(), vend->getIndex(), e2r, not_recovered);
       if (e) e->g = g;
       else {
         // Msg::Error("Unable to recover an edge %g %g && %g %g (%d/%d)",
@@ -305,9 +306,9 @@ bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
   }
   vstart = vend;
   vend = *(ge->getEndVertex()->mesh_vertices.begin());
-  if (pass_ == 1) e2r->insert(EdgeToRecover(vstart->getNum(), vend->getNum(), ge));
+  if (pass_ == 1) e2r->insert(EdgeToRecover(vstart->getIndex(), vend->getIndex(), ge));
   else{
-    e = m->recover_edge(vstart->getNum(), vend->getNum(), e2r, not_recovered);
+    e = m->recover_edge(vstart->getIndex(), vend->getIndex(), e2r, not_recovered);
     if (e)e->g = g;
     else {
       // Msg::Error("Unable to recover an edge %g %g && %g %g (%d/%d)",
@@ -315,10 +316,10 @@ bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
       //            ge->mesh_vertices.size(), ge->mesh_vertices.size());
       // return false;
     }
-    BDS_Point *pend = m->find_point(vend->getNum());
+    BDS_Point *pend = m->find_point(vend->getIndex());
     if(!pend->g){
-      m->add_geom (vend->getNum(), 0);
-      BDS_GeomEntity *g0 = m->get_geom(vend->getNum(), 0);
+      m->add_geom (vend->getIndex(), 0);
+      BDS_GeomEntity *g0 = m->get_geom(vend->getIndex(), 0);
       pend->g = g0;
     }
   }
@@ -402,8 +403,8 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
     }
     U_[count] = param.x();
     V_[count] = param.y();
-    (*itv)->setNum(count);
-    numbered_vertices[(*itv)->getNum()] = *itv;
+    (*itv)->setIndex(count);
+    numbered_vertices[(*itv)->getIndex()] = *itv;
     bbox += SPoint3(param.x(), param.y(), 0);
     count++;
     ++itv;
@@ -468,7 +469,7 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
     
     for(int i = 0; i < doc.numPoints; i++){
       MVertex *here = (MVertex *)doc.points[i].data;
-      int num = here->getNum();
+      int num = here->getIndex();
       double U, V;
       if(num < 0){ // fake bbox points
         U = bb[-1 - num]->x();
@@ -486,7 +487,7 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
       MVertex *V1 = (MVertex*)doc.points[doc.triangles[i].a].data;
       MVertex *V2 = (MVertex*)doc.points[doc.triangles[i].b].data;
       MVertex *V3 = (MVertex*)doc.points[doc.triangles[i].c].data;
-      m->add_triangle(V1->getNum(), V2->getNum(), V3->getNum());
+      m->add_triangle(V1->getIndex(), V2->getIndex(), V3->getIndex());
     }
 
 
@@ -597,7 +598,7 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
     Msg::Debug("Computing mesh size field at mesh vertices", edgesToRecover.size());
     for(int i = 0; i < doc.numPoints; i++){
       MVertex *here = (MVertex *)doc.points[i].data;
-      int num = here->getNum();
+      int num = here->getIndex();
       GEntity *ge = here->onWhat();
       BDS_Point *pp = m->find_point(num);
       if(ge->dim() == 0){
@@ -1337,6 +1338,8 @@ void meshGFace::operator() (GFace *gf)
       Msg::Error("Impossible to mesh face %d", gf->tag());
   }
 
+  //  gmshQMorph(gf);
+  
   Msg::Debug("Type %d %d triangles generated, %d internal vertices",
       gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 }

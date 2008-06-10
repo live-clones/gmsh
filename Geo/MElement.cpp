@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.70 2008-06-05 11:52:49 samtech Exp $
+// $Id: MElement.cpp,v 1.71 2008-06-10 08:37:33 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -718,6 +718,78 @@ void MTriangle::pnt(int ord, MVertex *vs[], double uu, double vv, SPoint3 &p)
 #endif
 }
 
+void MTetrahedron::pnt(int ord, MVertex *vs[], double uu, double vv, SPoint3 &p)
+{
+#if !defined(HAVE_GMSH_EMBEDDED)
+  double sf[256];
+  switch(ord){
+  case 1: gmshFunctionSpaces::find(MSH_TET_4).f(uu, vv, sf); break;
+  case 2: gmshFunctionSpaces::find(MSH_TET_10).f(uu, vv, sf); break;
+  case 3: gmshFunctionSpaces::find(MSH_TET_20).f(uu, vv, sf); break;
+  case 4: gmshFunctionSpaces::find(MSH_TET_35).f(uu, vv, sf); break;
+  case 5: gmshFunctionSpaces::find(MSH_TET_56).f(uu, vv, sf); break;
+  default : throw;
+  }
+    
+  double x = 0 ; for(int i = 0; i < 4; i++) x += sf[i] * _v[i]->x();
+  double y = 0 ; for(int i = 0; i < 4; i++) y += sf[i] * _v[i]->y();
+  double z = 0 ; for(int i = 0; i < 4; i++) z += sf[i] * _v[i]->z();
+
+  const int N = (ord+1)*(ord+2)*(ord+3)/6;
+
+  for(int i = 4; i < N+4; i++) x += sf[i] * vs[i - 4]->x();
+  for(int i = 4; i < N+4; i++) y += sf[i] * vs[i - 4]->y();
+  for(int i = 4; i < N+4; i++) z += sf[i] * vs[i - 4]->z();
+
+  p = SPoint3(x,y,z);
+#endif
+}
+
+void MTetrahedron::jac(int ord, MVertex *vs[], double uu, double vv, double j[3][3])
+{
+#if defined(HAVE_GMSH_EMBEDDED)
+  return;
+#else
+  double grads[256][2];
+  switch(ord){
+  case 1: gmshFunctionSpaces::find(MSH_TET_4).df(uu, vv, grads); break;
+  case 2: gmshFunctionSpaces::find(MSH_TET_10).df(uu, vv, grads); break;
+  case 3: gmshFunctionSpaces::find(MSH_TET_20).df(uu, vv, grads); break;
+  case 4: gmshFunctionSpaces::find(MSH_TET_35).df(uu, vv, grads); break;
+  case 5: gmshFunctionSpaces::find(MSH_TET_56).df(uu, vv, grads); break;
+  default: throw;
+  }
+ 
+  j[0][0] = 0 ; for(int i = 0; i < 3; i++) j[0][0] += grads [i][0] * _v[i]->x();
+  j[1][0] = 0 ; for(int i = 0; i < 3; i++) j[1][0] += grads [i][1] * _v[i]->x();
+  j[2][0] = 0 ; for(int i = 0; i < 3; i++) j[2][0] += grads [i][2] * _v[i]->x();
+  j[0][1] = 0 ; for(int i = 0; i < 3; i++) j[0][1] += grads [i][0] * _v[i]->y();
+  j[1][1] = 0 ; for(int i = 0; i < 3; i++) j[1][1] += grads [i][1] * _v[i]->y();
+  j[2][1] = 0 ; for(int i = 0; i < 3; i++) j[2][1] += grads [i][2] * _v[i]->y();
+  j[0][2] = 0 ; for(int i = 0; i < 3; i++) j[0][2] += grads [i][0] * _v[i]->z();
+  j[1][2] = 0 ; for(int i = 0; i < 3; i++) j[1][2] += grads [i][1] * _v[i]->z();
+  j[2][2] = 0 ; for(int i = 0; i < 3; i++) j[2][2] += grads [i][2] * _v[i]->z();
+  
+  if (ord == 1) return;
+
+  const int N = (ord+1)*(ord+2)*(ord+3)/6;
+
+  for(int i = 3; i < N+4; i++) j[0][0] += grads[i][0] * vs[i - 4]->x();
+  for(int i = 3; i < N+4; i++) j[1][0] += grads[i][1] * vs[i - 4]->x();
+  for(int i = 3; i < N+4; i++) j[2][0] += grads[i][2] * vs[i - 4]->x();
+
+  for(int i = 3; i < N+4; i++) j[0][1] += grads[i][0] * vs[i - 4]->y();
+  for(int i = 3; i < N+4; i++) j[1][1] += grads[i][1] * vs[i - 4]->y();
+  for(int i = 3; i < N+4; i++) j[2][1] += grads[i][2] * vs[i - 4]->y();
+
+  for(int i = 3; i < N+4; i++) j[0][2] += grads[i][0] * vs[i - 4]->z();
+  for(int i = 3; i < N+4; i++) j[1][2] += grads[i][1] * vs[i - 4]->z();
+  for(int i = 3; i < N+4; i++) j[2][2] += grads[i][2] * vs[i - 4]->z();
+#endif
+}
+
+
+
 int MTriangle6::getNumEdgesRep(){ return 3 * 6; }
 
 void MTriangle6::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
@@ -754,7 +826,78 @@ void MTriangle6::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *
   }
 }
 
-int MTriangleN::getNumEdgesRep(){ return 3 * 12; }
+const int numSubEdges = 6;
+
+int MTriangleN::getNumFacesRep(){ return numSubEdges * numSubEdges; }
+
+void MTriangleN::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n){
+
+  //  on the first layer, we have (numSubEdges-1) * 2 + 1 triangles
+  //  on the second layer, we have (numSubEdges-2) * 2 + 1 triangles
+  //  on the ith layer, we have (numSubEdges-1-i) * 2 + 1 triangles
+
+  int ix, iy;
+  int nbt = 0;
+  for (int i=0;i<numSubEdges;i++){
+    int nbl = (numSubEdges-i-1)*2 + 1;
+    nbt += nbl;
+    if (nbt > num){
+      iy = i;
+      ix = nbl-(nbt-num);
+      break;
+    }
+  }
+
+  const double d = 1./numSubEdges;
+
+  SPoint3 pnt1, pnt2, pnt3;
+  double J1[2][3],J2[2][3],J3[2][3];
+  if (ix %2 == 0){
+    pnt(ix/2*d, iy*d, pnt1);
+    pnt((ix/2+1)*d, iy*d, pnt2);
+    pnt(ix/2*d, (iy+1)*d, pnt3);
+    jac(ix/2*d, iy*d, J1);
+    jac((ix/2+1)*d, iy*d, J2);
+    jac(ix/2*d, (iy+1)*d, J3);
+  }
+  else{
+    pnt((ix/2+1)*d, iy*d, pnt1);
+    pnt((ix/2+1)*d, (iy+1)*d, pnt2);
+    pnt(ix/2*d, (iy+1)*d, pnt3);
+    jac((ix/2+1)*d, iy*d, J1);
+    jac((ix/2+1)*d, (iy+1)*d, J2);
+    jac(ix/2*d, (iy+1)*d, J3);
+  }
+  {
+    SVector3 d1 (J1[0][0],J1[0][1],J1[0][2]);
+    SVector3 d2 (J1[1][0],J1[1][1],J1[1][2]);
+    n[0] = crossprod(d1,d2);
+    n[0].normalize();
+  }
+  {
+    SVector3 d1 (J2[0][0],J2[0][1],J2[0][2]);
+    SVector3 d2 (J2[1][0],J2[1][1],J2[1][2]);
+    n[1] = crossprod(d1,d2);
+    n[1].normalize();
+  }
+  {
+    SVector3 d1 (J3[0][0],J3[0][1],J3[0][2]);
+    SVector3 d2 (J3[1][0],J3[1][1],J3[1][2]);
+    n[2] = crossprod(d1,d2);
+    n[2].normalize();
+  }
+
+  x[0] = pnt1.x(); x[1] = pnt2.x(); x[2] = pnt3.x();
+  y[0] = pnt1.y(); y[1] = pnt2.y(); y[2] = pnt3.y();
+  z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
+  
+
+
+
+}
+
+
+int MTriangleN::getNumEdgesRep(){ return 3 * numSubEdges; }
 
 void MTriangleN::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
@@ -822,6 +965,9 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_PYR_5:  return new MPyramid(v, num, part);
   case MSH_PYR_13: return new MPyramid13(v, num, part);
   case MSH_PYR_14: return new MPyramid14(v, num, part);
+  case MSH_TET_20: return new MTetrahedronN(v, 3, num, part);
+  case MSH_TET_35: return new MTetrahedronN(v, 4, num, part);
+  case MSH_TET_56: return new MTetrahedronN(v, 5, num, part);
   default:         return 0;
   }
 }

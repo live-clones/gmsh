@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.55 2008-06-07 17:20:46 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.56 2008-06-10 08:37:33 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -139,6 +139,9 @@ static int getNumVerticesForElementTypeMSH(int type)
   case MSH_QUA_9  : return 4 + 4 + 1;
   case MSH_TET_4  : return 4;
   case MSH_TET_10 : return 4 + 6;
+  case MSH_TET_20 : return 4 + 12 + 4;
+  case MSH_TET_35 : return 4 + 16 + 12 + 3;
+  case MSH_TET_56 : return 4 + 20 + 24 + 8;
   case MSH_HEX_8  : return 8;
   case MSH_HEX_20 : return 8 + 12;
   case MSH_HEX_27 : return 8 + 12 + 6 + 1;

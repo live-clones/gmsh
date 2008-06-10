@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.29 2008-05-06 21:11:47 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.30 2008-06-10 08:37:34 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -622,11 +622,20 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
   std::vector<MTetrahedron*> tetrahedra2;
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
     MTetrahedron *t = gr->tetrahedra[i];
-    std::vector<MVertex*> ve;
+    std::vector<MVertex*> ve,vf;
     getEdgeVertices(gr, t, ve, edgeVertices, linear, nPts);
-    tetrahedra2.push_back
-      (new MTetrahedron10(t->getVertex(0), t->getVertex(1), t->getVertex(2), 
-                          t->getVertex(3), ve[0], ve[1], ve[2], ve[3], ve[4], ve[5]));
+    if (nPts == 1){
+      tetrahedra2.push_back
+	(new MTetrahedron10(t->getVertex(0), t->getVertex(1), t->getVertex(2), 
+			    t->getVertex(3), ve[0], ve[1], ve[2], ve[3], ve[4], ve[5]));
+    }
+    else{
+      getFaceVertices(gr, t, vf, faceVertices, linear, nPts);
+      ve.insert(ve.end(), vf.begin(), vf.end());      
+      tetrahedra2.push_back
+	(new MTetrahedronN(t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3),
+			   ve, nPts + 1));
+    }
     delete t;
   }
   gr->tetrahedra = tetrahedra2;

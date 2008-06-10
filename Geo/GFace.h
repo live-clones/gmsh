@@ -124,7 +124,7 @@ class GFace : public GEntity
   virtual int containsParam(const SPoint2 &pt) const;
 
   // Return the point on the face closest to the given point.
-  virtual GPoint closestPoint(const SPoint3 & queryPoint) const;
+  virtual GPoint closestPoint(const SPoint3 & queryPoint, const double initialGuess[2]) const;
 
   // Return the normal to the face at the given parameter location.
   virtual SVector3 normal(const SPoint2 &param) const = 0;
