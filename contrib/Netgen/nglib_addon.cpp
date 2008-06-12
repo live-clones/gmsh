@@ -54,7 +54,7 @@ class mystreambuf: public streambuf
 };
 
 // replaces the standard Ng_Init
-void NgAddOn_Init ()
+void NgAddOn_Init()
 {
   //mycout = &cout;
   //myerr = &cerr;
@@ -62,43 +62,32 @@ void NgAddOn_Init ()
 
   mycout = new ostream(new mystreambuf());
   myerr = new ostream(new mystreambuf());
-  testout = new ofstream ("/dev/null");
+  testout = new ofstream("/dev/null");
 }
 
 // generates volume mesh from surface mesh, without optimization
-Ng_Result NgAddOn_GenerateVolumeMesh (Ng_Mesh * mesh, Ng_Meshing_Parameters * mp)
+Ng_Result NgAddOn_GenerateVolumeMesh(Ng_Mesh *mesh, double maxh)
 {
-  Mesh * m = (Mesh*)mesh;
-  
-  
+  Mesh *m = (Mesh*)mesh;
   MeshingParameters mparam;
-  mparam.maxh = mp->maxh;
-  mparam.meshsizefilename = mp->meshsize_filename;
-
+  mparam.maxh = maxh;
   m->CalcLocalH();
-
-  MeshVolume (mparam, *m);
-  //RemoveIllegalElements (*m);
+  MeshVolume(mparam, *m);
+  //RemoveIllegalElements(*m);
   //OptimizeVolume (mparam, *m);
-
   return NG_OK;
 }
 
 // optimizes an existing 3D mesh
-Ng_Result NgAddOn_OptimizeVolumeMesh (Ng_Mesh * mesh, Ng_Meshing_Parameters * mp)
+Ng_Result NgAddOn_OptimizeVolumeMesh(Ng_Mesh *mesh, double maxh)
 {
-  Mesh * m = (Mesh*)mesh;
-
+  Mesh *m = (Mesh*)mesh;
   MeshingParameters mparam;
-  mparam.maxh = mp->maxh;
-  mparam.meshsizefilename = mp->meshsize_filename;
-
+  mparam.maxh = maxh;
   m->CalcLocalH();
-
   //MeshVolume (mparam, *m);
-  RemoveIllegalElements (*m);
-  OptimizeVolume (mparam, *m);
-
+  RemoveIllegalElements(*m);
+  OptimizeVolume(mparam, *m);
   return NG_OK;
 }
 

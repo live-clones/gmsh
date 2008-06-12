@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.50 2008-06-10 12:59:12 remacle Exp $
+// $Id: meshGRegion.cpp,v 1.51 2008-06-12 10:04:23 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -119,7 +119,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
                         std::vector<MVertex*> &numberedV)
 {
   // Improvement has to be done here :
-  // netgen splits some of the existing edges of the 
+  // tetgen splits some of the existing edges of the 
   // mesh. If those edges are classified on some
   // model faces, new points SHOULD be classified
   // on the model face and get the right set of parametric coordinates.
@@ -595,11 +595,7 @@ void meshGRegion::operator() (GRegion *gr)
     meshNormalsPointOutOfTheRegion(gr);
     std::vector<MVertex*> numberedV;
     Ng_Mesh *ngmesh = buildNetgenStructure(gr, false, numberedV);
-    Ng_Meshing_Parameters mp;
-    mp.maxh = 1;
-    mp.fineness = 1;
-    mp.secondorder = 0;
-    NgAddOn_GenerateVolumeMesh(ngmesh, &mp); // does not optimize
+    NgAddOn_GenerateVolumeMesh(ngmesh, CTX.lc); // does not optimize
     TransferVolumeMesh(gr, ngmesh, numberedV);
     Ng_DeleteMesh(ngmesh);
     Ng_Exit();
@@ -626,11 +622,7 @@ void optimizeMeshGRegionNetgen::operator() (GRegion *gr)
   deMeshGRegion dem;
   dem(gr);
   // optimize mesh
-  Ng_Meshing_Parameters mp;
-  mp.maxh = 1;
-  mp.fineness = 1;
-  mp.secondorder = 0;
-  NgAddOn_OptimizeVolumeMesh(ngmesh, &mp);
+  NgAddOn_OptimizeVolumeMesh(ngmesh, CTX.lc);
   TransferVolumeMesh(gr, ngmesh, numberedV);
   Ng_DeleteMesh(ngmesh);
   Ng_Exit();
