@@ -55,8 +55,17 @@ class GEntity {
   // The color of the entity (ignored if set to transparent blue)
   unsigned int _color;
 
- public:
+ public: // these will become protected at some point
+  // The mesh vertices uniquely owned by the entity
+  std::vector<MVertex*> mesh_vertices;
 
+  // The physical entitites (if any) that contain this entity
+  std::vector<int> physicals;
+
+  // Vertex arrays to draw the mesh efficiently
+  VertexArray *va_lines, *va_triangles;
+
+ public:
   // All known native model types
   enum ModelType {
     UnknownModel,
@@ -243,14 +252,11 @@ class GEntity {
   bool getAllElementsVisible(){ return _allElementsVisible ? true : false; }
   void setAllElementsVisible(bool val){ _allElementsVisible = val ? 1 : 0; }
 
-  // The mesh vertices uniquely owned by the entity
-  std::vector<MVertex*> mesh_vertices;
+  // Gets the number of mesh vertices in the entity
+  unsigned int getNumMeshVertices() { return mesh_vertices.size(); }
 
-  // The physical entitites (if any) that contain this entity
-  std::vector<int> physicals;
-
-  // Vertex arrays to draw the mesh efficiently
-  VertexArray *va_lines, *va_triangles;
+  // Gets the mesh vertex at the given index
+  MVertex *getMeshVertex(unsigned int index) { return mesh_vertices[index]; }
 };
 
 class GEntityLessThan {

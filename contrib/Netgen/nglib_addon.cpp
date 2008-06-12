@@ -69,12 +69,15 @@ void NgAddOn_Init()
 Ng_Result NgAddOn_GenerateVolumeMesh(Ng_Mesh *mesh, double maxh)
 {
   Mesh *m = (Mesh*)mesh;
+
   MeshingParameters mparam;
+  mparam.uselocalh = 1;
   mparam.maxh = maxh;
+
   m->CalcLocalH();
   MeshVolume(mparam, *m);
   //RemoveIllegalElements(*m);
-  //OptimizeVolume (mparam, *m);
+  //OptimizeVolume(mparam, *m);
   return NG_OK;
 }
 
@@ -82,10 +85,13 @@ Ng_Result NgAddOn_GenerateVolumeMesh(Ng_Mesh *mesh, double maxh)
 Ng_Result NgAddOn_OptimizeVolumeMesh(Ng_Mesh *mesh, double maxh)
 {
   Mesh *m = (Mesh*)mesh;
+
   MeshingParameters mparam;
+  mparam.uselocalh = 1;
   mparam.maxh = maxh;
+
   m->CalcLocalH();
-  //MeshVolume (mparam, *m);
+  //MeshVolume(mparam, *m);
   RemoveIllegalElements(*m);
   OptimizeVolume(mparam, *m);
   return NG_OK;
