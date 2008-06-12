@@ -1,4 +1,8 @@
-$Id: TODO,v 1.72 2008-05-20 19:03:30 geuzaine Exp $
+$Id: TODO,v 1.73 2008-06-12 09:31:43 geuzaine Exp $
+
+********************************************************************
+
+merge clipping & cutting plane GUI + extend cutting plane to post-pro
 
 ********************************************************************
 

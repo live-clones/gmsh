@@ -201,6 +201,9 @@ class GModel
   // starting at 1
   int indexMeshVertices(bool all);
 
+  // scale the mesh by the given factor
+  void scaleMesh(double factor);
+
   // Deletes all invisble mesh elements
   void removeInvisibleElements();
 

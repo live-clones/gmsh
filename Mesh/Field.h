@@ -63,15 +63,9 @@ class FieldOption {
 class FieldDialogBox;
 
 class Field {
-  struct lstr {
-    bool operator() (const char *s1, const char *s2) const
-    {
-      return strcmp(s1, s2) < 0;
-    }
-  };
  public:
   int id;
-  std::map<const char *, FieldOption *, lstr> options;
+  std::map<std::string, FieldOption *> options;
   virtual double operator() (double x, double y, double z) = 0;
   virtual ~Field() {}
   bool update_needed;
@@ -94,7 +88,7 @@ class FieldManager : public std::map<int, Field*> {
   std::map<std::string, FieldFactory*> map_type_name;
   void reset();
   Field *get(int id);
-  Field *new_field(int id, const char *type_name);
+  Field *new_field(int id, std::string type_name);
   void delete_field(int id);
   int new_id();
   int max_id();

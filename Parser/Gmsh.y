@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.316 2008-06-07 17:20:54 geuzaine Exp $
+// $Id: Gmsh.y,v 1.317 2008-06-12 09:31:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1013,6 +1013,7 @@ Affectation :
     {
       if(!GModel::current()->getFields()->new_field((int)$3, $6))
 	yymsg(0, "Cannot create field %i of type '%s'", (int)$3, $6);
+      Free($6);
     }
   | tField '[' FExpr ']' '.' tSTRING  tAFFECT FExpr tEND
     {
@@ -1032,6 +1033,7 @@ Affectation :
       }
       else
 	yymsg(0, "No field with id %i", (int)$3);
+      Free($6);
     }
   | tField '[' FExpr ']' '.' tSTRING  tAFFECT StringExpr tEND
     {
@@ -1051,6 +1053,8 @@ Affectation :
       }
       else 
 	yymsg(0, "No field with id %i", (int)$3);
+      Free($6);
+      Free($8);
     }
   | tField '[' FExpr ']' '.' tSTRING  tAFFECT '{' RecursiveListOfDouble '}' tEND
     {
@@ -1072,6 +1076,8 @@ Affectation :
       }
       else 
 	yymsg(0, "No field with id %i", (int)$3);
+      Free($6);
+      List_Delete($9);
     }
 
   // Plugins

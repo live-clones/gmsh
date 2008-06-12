@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.24 2008-06-07 17:20:46 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.25 2008-06-12 09:31:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -156,11 +156,11 @@ class writeFieldOptionGEO{
   Field *field;
  public :
   writeFieldOptionGEO(FILE *fp,Field *_field) { geo = fp ? fp : stdout; field=_field;}
-  void operator() (std::pair<const char *, FieldOption *> it)
+  void operator() (std::pair<std::string, FieldOption *> it)
   {
     std::string v;
     it.second->get_text_representation(v);
-    fprintf(geo, "Field[%i].%s = %s;\n", field->id, it.first, v.c_str());
+    fprintf(geo, "Field[%i].%s = %s;\n", field->id, it.first.c_str(), v.c_str());
   }
 };
 

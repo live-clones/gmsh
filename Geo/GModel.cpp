@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.89 2008-05-06 21:11:47 geuzaine Exp $
+// $Id: GModel.cpp,v 1.90 2008-06-12 09:31:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -618,6 +618,18 @@ int GModel::indexMeshVertices(bool all)
         (*it)->mesh_vertices[i]->setIndex(++numVertices);
 
   return numVertices;
+}
+
+void GModel::scaleMesh(double factor)
+{
+  std::vector<GEntity*> entities = getEntities();
+  for(unsigned int i = 0; i < entities.size(); i++)
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+      MVertex *v = entities[i]->mesh_vertices[j];
+      v->x() *= factor;
+      v->y() *= factor;
+      v->z() *= factor;
+    }
 }
 
 std::set<int> &GModel::recomputeMeshPartitions()

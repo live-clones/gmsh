@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.688 2008-06-03 12:43:42 remacle Exp $
+// $Id: GUI.cpp,v 1.689 2008-06-12 09:31:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -3818,7 +3818,7 @@ void FieldDialogBox::save_values()
   int i;
   char a;
   sstream.precision(16);
-  for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
+  for(std::map<std::string,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
     FieldOption *option=it->second;
     sstream.str("");
     switch(option->get_type()){
@@ -3842,7 +3842,7 @@ void FieldDialogBox::save_values()
 	sstream<<i;
 	if(istream>>a){
 	  if(a!=',')
-	    Msg::Error("Unexpected character \'%c\' while parsing option '%s' of field \'%s\'",a,it->first,f->id);
+	    Msg::Error("Unexpected character \'%c\' while parsing option '%s' of field \'%s\'",a,it->first.c_str(),f->id);
 	  sstream<<", ";
 	}
       }
@@ -3850,7 +3850,7 @@ void FieldDialogBox::save_values()
       break;
     }
     if((*input)->changed()){
-      add_field_option(f->id,it->first,sstream.str().c_str(),CTX.filename);
+      add_field_option(f->id,it->first.c_str(),sstream.str().c_str(),CTX.filename);
       (*input)->clear_changed();
     }
     input++;
@@ -3861,7 +3861,7 @@ void FieldDialogBox::load_field(Field *f)
 {
   current_field=f;
   std::list<Fl_Widget*>::iterator input=inputs.begin();
-  for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
+  for(std::map<std::string,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
     FieldOption *option=it->second;
     std::ostringstream vstr;
     std::list<int>::iterator list_it;;
@@ -3920,19 +3920,19 @@ FieldDialogBox::FieldDialogBox(Field *f, int x, int y, int width, int height,int
       revert_btn->callback(view_field_revert_cb,this);
       Fl_Scroll *s = new Fl_Scroll(x + WB, y + 2*WB + 2*BH, width - 2 * WB, height - 4*BH - 5 * WB);
       int yy=y+3*WB+2*BH;
-      for(std::map<const char*,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
+      for(std::map<std::string,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
 	Fl_Widget *input;
 	switch(it->second->get_type()){
 	case FIELD_OPTION_INT:
 	case FIELD_OPTION_DOUBLE:
-	  input=new Fl_Value_Input(x+WB,yy,IW,BH,it->first);
+	  input=new Fl_Value_Input(x+WB,yy,IW,BH,it->first.c_str());
 	  break;
 	case FIELD_OPTION_BOOL:
-	  input=new Fl_Check_Button(x+WB,yy,BH,BH,it->first);
+	  input=new Fl_Check_Button(x+WB,yy,BH,BH,it->first.c_str());
 	  break;
 	case FIELD_OPTION_PATH:
 	case FIELD_OPTION_STRING:
-	  input=new Fl_Input(x+WB,yy,IW,BH,it->first);
+	  input=new Fl_Input(x+WB,yy,IW,BH,it->first.c_str());
 	  break;
 	case FIELD_OPTION_LIST:
 	default:
@@ -3941,8 +3941,8 @@ FieldDialogBox::FieldDialogBox(Field *f, int x, int y, int width, int height,int
 	    b->label("@+");
 	    b->callback(view_field_select_node_cb);
 	    }
-	    input=new Fl_Input(x+WB+2*BH,yy,IW-2*BH,BH,it->first);*/
-	  input=new Fl_Input(x+WB,yy,IW,BH,it->first);
+	    input=new Fl_Input(x+WB+2*BH,yy,IW-2*BH,BH,it->first.c_str());*/
+	  input=new Fl_Input(x+WB,yy,IW,BH,it->first.c_str());
 	  break;
 	}
 	input->align(FL_ALIGN_RIGHT);
@@ -4035,7 +4035,7 @@ void GUI::create_field_window(int numfield)
   {
     Fl_Menu_Button *b= new Fl_Menu_Button(WB,WB,L1,BH,"New");
     FieldManager &fields=*GModel::current()->getFields();
-    std::map<const std::string, FieldFactory*>::iterator it;
+    std::map<std::string, FieldFactory*>::iterator it;
     for(it=fields.map_type_name.begin();it!=fields.map_type_name.end();it++)
       b->add(it->first.c_str());
     b->callback(view_field_new_cb);

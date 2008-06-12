@@ -1,4 +1,4 @@
-// $Id: Field.cpp,v 1.38 2008-05-26 15:41:31 remacle Exp $
+// $Id: Field.cpp,v 1.39 2008-06-12 09:31:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -208,14 +208,14 @@ Field *FieldManager::get(int id)
   return it->second;
 }
 
-Field *FieldManager::new_field(int id, const char *type_name)
+Field *FieldManager::new_field(int id, std::string type_name)
 {
   if(find(id) != end()) {
     Msg::Error("Field id %i is already defined.", id);
     return NULL;
   }
   if(map_type_name.find(type_name) == map_type_name.end()) {
-    Msg::Error("Unknown field type \"%s\".", type_name);
+    Msg::Error("Unknown field type \"%s\".", type_name.c_str());
     return NULL;
   }
   Field *f = (*map_type_name[type_name]) ();
