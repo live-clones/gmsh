@@ -97,7 +97,7 @@ class GmshServer {
     int sofar = 0;
     int remaining = bytes;
     do {
-      ssize_t len = recv(_sock, buf + sofar, remaining, 0);
+      int len = recv(_sock, buf + sofar, remaining, 0);
       if(len <= 0)
         return 0;
       sofar += len;

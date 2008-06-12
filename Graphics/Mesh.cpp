@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.221 2008-05-04 08:31:14 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.222 2008-06-12 11:52:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <math.h>
 #include "Message.h"
 #include "GmshUI.h"
 #include "GModel.h"
@@ -713,7 +714,7 @@ class initMeshGRegion {
       num += (12 * r->tetrahedra.size() + 24 * r->hexahedra.size() +
               18 * r->prisms.size() + 16 * r->pyramids.size()) / 4;
       if(CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_draw_intersect)
-        num = (int)sqrt(num);
+        num = (int)sqrt((double)num);
       if(CTX.mesh.explode != 1.) num *= 4;
       if(_curved) num *= 2;
     }
@@ -726,7 +727,7 @@ class initMeshGRegion {
       num += (4 * r->tetrahedra.size() + 12 * r->hexahedra.size() +
               8 * r->prisms.size() + 6 * r->pyramids.size()) / 2;
       if(CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_draw_intersect)
-        num = (int)sqrt(num);
+        num = (int)sqrt((double)num);
       if(CTX.mesh.explode != 1.) num *= 2;
       if(_curved) num *= 4;
     }

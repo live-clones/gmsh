@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.188 2008-06-07 17:20:45 geuzaine Exp $
+# $Id: Makefile,v 1.189 2008-06-12 11:52:00 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -52,7 +52,7 @@ ${LIB}: ${OBJ}
 cpobj: ${OBJ} 
 	cp -f ${OBJ} ../lib/
 
-.cpp.o:
+.cpp${OBJEXT}:
 	${CXX} ${CFLAGS} ${DASH}c $<
 
 res:

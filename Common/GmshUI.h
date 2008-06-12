@@ -41,8 +41,8 @@
 # define GMSH_WINDOW_BOX FL_FLAT_BOX
 #endif
 
-// recent Cygwin releases define min/max macros! 
-#if defined(__CYGWIN__)
+// some Windows versions define min/max macros! 
+#if defined(WIN32)
 #undef min
 #undef max
 #endif
