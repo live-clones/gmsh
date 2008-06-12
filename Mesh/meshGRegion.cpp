@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.51 2008-06-12 10:04:23 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.52 2008-06-12 12:23:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -607,10 +607,11 @@ void optimizeMeshGRegionNetgen::operator() (GRegion *gr)
 {  
   if(gr->geomType() == GEntity::DiscreteVolume) return;
   
-  // don't optimize extruded meshes
+  // don't optimize transfinite or extruded meshes
+  if(gr->meshAttributes.Method == TRANSFINI) return;
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
-  
+
 #if !defined(HAVE_NETGEN)
   Msg::Error("Netgen is not compiled in this version of Gmsh");
 #else
@@ -634,6 +635,7 @@ void optimizeMeshGRegionGmsh::operator() (GRegion *gr)
   if(gr->geomType() == GEntity::DiscreteVolume) return;
   
   // don't optimize extruded meshes
+  if(gr->meshAttributes.Method == TRANSFINI) return;
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
   

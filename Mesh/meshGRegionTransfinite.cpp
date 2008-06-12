@@ -1,4 +1,4 @@
-// $Id: meshGRegionTransfinite.cpp,v 1.11 2008-05-06 21:11:48 geuzaine Exp $
+// $Id: meshGRegionTransfinite.cpp,v 1.12 2008-06-12 12:23:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -129,7 +129,8 @@ double transfiniteHex(double f1, double f2, double f3, double f4,
     (1-u)*(1-v)*w*s5 + u*(1-v)*w*s6 + u*v*w*s7 + (1-u)*v*w*s8;
 }
 
-MVertex *transfiniteHex(MVertex *f1, MVertex *f2, MVertex *f3, MVertex *f4, 
+MVertex *transfiniteHex(GRegion *gr, 
+			MVertex *f1, MVertex *f2, MVertex *f3, MVertex *f4, 
                         MVertex *f5, MVertex *f6,
                         MVertex *c1, MVertex *c2, MVertex *c3, MVertex *c4, 
                         MVertex *c5, MVertex *c6, MVertex *c7, MVertex *c8, 
@@ -156,7 +157,7 @@ MVertex *transfiniteHex(MVertex *f1, MVertex *f2, MVertex *f3, MVertex *f4,
                             s1->z(), s2->z(), s3->z(), s4->z(), 
                             s5->z(), s6->z(), s7->z(), s8->z(),
                             u, v, w);
-  return new MVertex(x, y, z);
+  return new MVertex(x, y, z, gr);
 }
 
 class GOrientedTransfiniteFace {
@@ -385,7 +386,7 @@ int MeshTransfiniteVolume(GRegion *gr)
           f3 = c8;
 
         if(i && j && k && i != N_i - 1 && j != N_j - 1 && k != N_k - 1) {
-          MVertex *newv = transfiniteHex(f0, f1, f2, f3, f4, f5,
+          MVertex *newv = transfiniteHex(gr, f0, f1, f2, f3, f4, f5,
                                          c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11,
                                          s0, s1, s2, s3, s4, s5, s6, s7,
                                          u, v, w);
