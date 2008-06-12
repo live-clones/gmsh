@@ -12,9 +12,13 @@ HOSTNAME=localhost
 CC=cl
 CXX=cl /EHsc /nologo /GR /MT
 
-# Use /MLd for single-thread debug mode
-#     /MTd for multi-thread debug mode
-#     /MT for multi-thread release mode
+# Debug/Release Single/Multi-threaded Lib/Dll flags:
+# Rel-Sin-Lib: /ML
+# Deb-Sin-Lib: /MLd
+# Rel-Mul-Lib: /MT
+# Deb-Mul-Lib: /MTd
+# Rel-Mul-Dll: /MD
+# Deb-Mul-Dll: /MDd
 
 # append different suffix for release or debug version of library
 ifneq (,${findstring MTd,${CXX}})
