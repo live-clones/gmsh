@@ -31,7 +31,7 @@ class mystreambuf: public streambuf
     }
     else{
       if(!strncmp(txt, "ERROR", 5))
-	Msg::Fatal(txt);
+	Msg::Error(txt);
       else
 	Msg::Info(txt);
     }
@@ -76,11 +76,16 @@ Ng_Result NgAddOn_GenerateVolumeMesh(Ng_Mesh *mesh, double maxh)
   MeshingParameters mparam;
   mparam.uselocalh = 1;
   mparam.maxh = maxh;
-
-  m->CalcLocalH();
-  MeshVolume(mparam, *m);
-  //RemoveIllegalElements(*m);
-  //OptimizeVolume(mparam, *m);
+  
+  try{
+    m->CalcLocalH();
+    MeshVolume(mparam, *m);
+    //RemoveIllegalElements(*m);
+    //OptimizeVolume(mparam, *m);
+  }
+  catch(netgen::NgException error){
+    return NG_VOLUME_FAILURE;
+  }
   return NG_OK;
 }
 
@@ -93,10 +98,15 @@ Ng_Result NgAddOn_OptimizeVolumeMesh(Ng_Mesh *mesh, double maxh)
   mparam.uselocalh = 1;
   mparam.maxh = maxh;
 
-  m->CalcLocalH();
-  //MeshVolume(mparam, *m);
-  RemoveIllegalElements(*m);
-  OptimizeVolume(mparam, *m);
+  try{
+    m->CalcLocalH();
+    //MeshVolume(mparam, *m);
+    RemoveIllegalElements(*m);
+    OptimizeVolume(mparam, *m);
+  }
+  catch(netgen::NgException error){
+    return NG_VOLUME_FAILURE;
+  }
   return NG_OK;
 }
 
