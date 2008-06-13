@@ -41,7 +41,7 @@ class mystreambuf: public streambuf
   int overflow(int ch){ 
     if(index < 1023){
       txt[index] = ch;
-      if(txt[index] == '\n') txt[index] = ' ';
+      if(txt[index] == '\n' || txt[index] == '\r') txt[index] = ' ';
       if(!index && txt[0] == ' '){
 	// skip initial spaces
       }
@@ -59,10 +59,13 @@ void NgAddOn_Init()
   //mycout = &cout;
   //myerr = &cerr;
   //testout = new ofstream ("test.out");
-
-  mycout = new ostream(new mystreambuf());
-  myerr = new ostream(new mystreambuf());
-  testout = new ofstream("/dev/null");
+  static bool first = true;
+  if(first){
+    first = false;
+    mycout = new ostream(new mystreambuf());
+    myerr = new ostream(new mystreambuf());
+    testout = new ofstream("/dev/null");
+  }
 }
 
 // generates volume mesh from surface mesh, without optimization
