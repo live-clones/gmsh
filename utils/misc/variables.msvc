@@ -1,8 +1,19 @@
 # This is a pre-filled variables file for building a blackbox version
 # of Gmsh with Microsoft Visual C++ (MSVC).
 #
-# This has been tested with MSVC 2003 and MSVC 2008.  See
+# This has been tested with MSVC 2003, 2005 and 2008. See
 # doc/README.msvc for building instructions.
+
+##################################################################
+
+# Change the following to select which version to build:
+ENABLE_GUI=0
+ENABLE_POSTPRO=1
+ENABLE_TETGEN=1
+ENABLE_NETGEN=0
+ENABLE_OCC=0
+
+##################################################################
 
 # OS and host
 UNAME=WIN32MSVC
@@ -32,7 +43,7 @@ endif
 LINKER=cl /F16777216
 
 # All compiler flags except optimization flags
-FLAGS=/DWIN32 /D_USE_MATH_DEFINES /DHAVE_NO_DLL /DHAVE_NO_VSNPRINTF /DHAVE_NO_SNPRINTF /DHAVE_NO_SOCKLEN_T /DHAVE_ANN /DHAVE_MATH_EVAL /DHAVE_TETGEN
+FLAGS=/DWIN32 /D_USE_MATH_DEFINES /DHAVE_NO_DLL /DHAVE_NO_VSNPRINTF /DHAVE_NO_SNPRINTF /DHAVE_NO_SOCKLEN_T /DHAVE_ANN /DHAVE_MATH_EVAL
 
 # Additional system includes ($INCLUDE is automatically defined by MSVC when
 # you launch the MSVC command prompt)
@@ -42,10 +53,32 @@ SYSINCLUDE=/I"${INCLUDE}"
 OPTIM=/O2
 
 # Gmsh subdirectories
-GMSH_DIRS=Common Geo Mesh Post Numeric Parser Plugin contrib/ANN contrib/MathEval contrib/NR contrib/Tetgen
+GMSH_DIRS=Common Geo Mesh Numeric Parser contrib/ANN contrib/MathEval contrib/NR
 
 # Gmsh libraries
 GMSH_LIBS=Common/Main.obj lib/*.lib
+
+# Optional stuff
+ifeq (${ENABLE_POSTPRO},1)
+  GMSH_DIRS+=Post Plugin
+else
+  FLAGS+=/DHAVE_NO_POST
+endif
+ifeq (${ENABLE_GUI},1)
+  GMSH_DIRS+=Graphics Fltk
+  FLAGS+=/DHAVE_FLTK
+endif
+ifeq (${ENABLE_NETGEN},1)
+  FLAGS+=/DHAVE_NETGEN
+  GMSH_DIRS+=contrib/Netgen
+endif
+ifeq (${ENABLE_TETGEN},1)
+  FLAGS+=/DHAVE_TETGEN
+  GMSH_DIRS+=contrib/Tetgen
+endif
+ifeq (${ENABLE_OCC},1)
+  FLAGS+=/DHAVE_OCC /DHAVE_NO_OCC_CONFIG_H /DWNT /IC:/OpenCASCADE6.2.0/ros/inc
+endif
 
 # How you create a static library on this machine
 AR=LIB
