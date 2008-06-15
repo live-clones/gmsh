@@ -1,0 +1,68 @@
+# This is a pre-filled variables file for building a blackbox version
+# of Gmsh with Microsoft Visual C++ (MSVC).
+#
+# This has been tested with MSVC 2003 and MSVC 2008.  See
+# doc/README.msvc for building instructions.
+
+# OS and host
+UNAME=WIN32MSVC
+HOSTNAME=localhost
+
+# The names of the C and C++ compilers
+CC=cl
+CXX=cl /EHsc /nologo /GR /MT
+
+# Use /MLd for single-thread debug mode
+#     /MTd for multi-thread debug mode
+#     /MT for multi-thread release mode
+
+# append different suffix for release or debug version of library
+ifneq (,${findstring MTd,${CXX}})
+  LIBSUFFIX=_d
+else
+  LIBSUFFIX=_r
+endif
+
+# increase stack size to 16Mb to avoid stack overflows in recursive 
+# tet classification for large 3D Delaunay grids
+LINKER=cl /F16777216
+
+# All compiler flags except optimization flags
+FLAGS=/DWIN32 /D_USE_MATH_DEFINES /DHAVE_NO_DLL /DHAVE_NO_VSNPRINTF /DHAVE_NO_SNPRINTF /DHAVE_NO_SOCKLEN_T /DHAVE_ANN /DHAVE_MATH_EVAL /DHAVE_TETGEN
+
+# Additional system includes ($INCLUDE is automatically defined by MSVC when
+# you launch the MSVC command prompt)
+SYSINCLUDE=/I"${INCLUDE}"
+
+# Compiler optimization flags
+OPTIM=/O2
+
+# Gmsh subdirectories
+GMSH_DIRS=Common DataStr Geo Mesh Post Numeric Parallel Parser Plugin contrib/ANN contrib/MathEval contrib/NR contrib/Tetgen
+
+# Gmsh libraries
+GMSH_LIBS=Common/Main.obj lib/*.lib
+
+# How you create a static library on this machine
+AR=LIB
+ARFLAGS=/OUT:
+RANLIB=true
+
+# The symbol used in front of compiler flags
+DASH=/
+
+# The extension to use for object files, libraries and executables
+OBJEXT=.obj
+LIBEXT=.lib
+EXEEXT=.exe
+
+# Installation directories
+prefix="S:\Lib\gmsh"
+exec_prefix=${prefix}
+bindir=${exec_prefix}/bin
+datadir=${datarootdir}
+datarootdir=${prefix}/share
+includedir=${prefix}/include
+libdir=${exec_prefix}/lib
+mandir=${datarootdir}/man
+infodir=${datarootdir}/info
