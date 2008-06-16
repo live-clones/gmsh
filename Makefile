@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.485 2008-06-05 16:52:13 geuzaine Exp $
+# $Id: Makefile,v 1.486 2008-06-16 18:36:14 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -191,7 +191,7 @@ source-tree: purge
 	rm -rf gmsh-${GMSH_VERSION}
 	tar zcf gmsh.tgz --exclude "*.o" --exclude "*.a" --exclude "gmsh"\
           --exclude "variables" --exclude "config.log" --exclude "config.status"\
-          --exclude "autom4*" --exclude "Makefile.distrib" --exclude "Makefile.back"\
+          --exclude "autom4*" --exclude "Makefile.distrib" --exclude "Makefile.bak"\
           --exclude "benchmarks" --exclude "zzz_*" --exclude "HTML"\
           --exclude "*TAGS*" --exclude "GSYMS" --exclude "GPATH" --exclude "CVS"\
           *
