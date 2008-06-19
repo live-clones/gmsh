@@ -159,7 +159,6 @@ typedef struct{
   List_T *Generatrices;
   List_T *EmbeddedCurves;
   List_T *EmbeddedPoints;
-  List_T *Control_Points;
   List_T *TrsfPoints;
   List_T *RuledSurfaceOptions;
   double plan[3][3];

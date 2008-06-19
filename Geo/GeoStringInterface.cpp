@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.23 2008-06-07 17:20:46 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.24 2008-06-19 15:58:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -328,7 +328,6 @@ void add_bezier(int N, int *p, const char *fich)
   add_infile(text, fich);
 }
 
-
 void add_bspline(int N, int *p, const char *fich)
 {
   char text[BUFFSIZE], text2[BUFFSIZE];
@@ -382,7 +381,6 @@ void add_lineloop(List_T *list, const char *fich, int *numloop)
   strncat(text, "};", BUFFSIZE-strlen(text));
   add_infile(text, fich);
 }
-
 
 void add_surf(List_T *list, const char *fich, int support, int typ)
 {

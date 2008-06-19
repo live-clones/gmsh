@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.113 2008-06-10 08:37:33 remacle Exp $
+// $Id: Geo.cpp,v 1.114 2008-06-19 15:58:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -379,7 +379,7 @@ void End_Curve(Curve *c)
     else if(!v[3] && fabs((R - R2) / (R + R2)) > 0.1){
       // check cocircular pts (allow 10% error)
       Msg::Error("Control points of Circle %d are not cocircular %g %g",
-          c->Num, R, R2);
+		 c->Num, R, R2);
     }
 
     // A1 = angle first pt
@@ -618,7 +618,6 @@ Surface *Create_Surface(int Num, int Typ)
   pS->RecombineAngle = 45;
   pS->TransfiniteSmoothing = -1;
   pS->TrsfPoints = List_Create(4, 4, sizeof(Vertex *));
-  pS->Control_Points = List_Create(1, 10, sizeof(Vertex *));
   pS->Generatrices = NULL;
   pS->EmbeddedPoints = NULL;
   pS->EmbeddedCurves = NULL;
@@ -632,7 +631,6 @@ void Free_Surface(void *a, void *b)
   Surface *pS = *(Surface **)a;
   if(pS) {
     List_Delete(pS->TrsfPoints);
-    List_Delete(pS->Control_Points);
     List_Delete(pS->Generatrices);
     List_Delete(pS->EmbeddedCurves);
     List_Delete(pS->EmbeddedPoints);
@@ -897,8 +895,7 @@ void CopyCurve(Curve *c, Curve *cc)
   cc->end = c->end;
   cc->ubeg = c->ubeg;
   cc->uend = c->uend;
-  cc->Control_Points =
-    List_Create(List_Nbr(c->Control_Points), 1, sizeof(Vertex *));
+  cc->Control_Points = List_Create(List_Nbr(c->Control_Points), 1, sizeof(Vertex *));
   List_Copy(c->Control_Points, cc->Control_Points);
   if(c->Typ == MSH_SEGM_PARAMETRIC){
     strcpy(cc->functu, c->functu);
@@ -946,10 +943,6 @@ void CopySurface(Surface *s, Surface *ss)
       ss->plan[i][j] = s->plan[i][j];
   ss->Generatrices = List_Create(List_Nbr(s->Generatrices), 1, sizeof(Curve *));
   List_Copy(s->Generatrices, ss->Generatrices);
-  if(s->Control_Points) {
-    ss->Control_Points = List_Create(List_Nbr(s->Control_Points), 1, sizeof(Vertex *));
-    List_Copy(s->Control_Points, ss->Control_Points);
-  }
   End_Surface(ss);
   Tree_Insert(GModel::current()->getGEOInternals()->Surfaces, &ss);
 }
@@ -958,24 +951,44 @@ Surface *DuplicateSurface(Surface *s)
 {
   Surface *ps;
   Curve *c, *newc;
-  Vertex *v, *newv;
   int i;
 
   ps = Create_Surface(NEWSURFACE(), 0);
   CopySurface(s, ps);
-  for(i = 0; i < List_Nbr(ps->Generatrices); i++) {
+  for(int i = 0; i < List_Nbr(ps->Generatrices); i++) {
     List_Read(ps->Generatrices, i, &c);
     newc = DuplicateCurve(c);
     List_Write(ps->Generatrices, i, &newc);
   }
-
-  for(i = 0; i < List_Nbr(ps->Control_Points); i++) {
-    List_Read(ps->Control_Points, i, &v);
-    newv = DuplicateVertex(v);
-    List_Write(ps->Control_Points, i, &newv);
-  }
-
   return ps;
+}
+
+void CopyVolume(Volume *v, Volume *vv)
+{
+  int i, j;
+  vv->Typ = v->Typ;
+  // We should not copy the meshing method (or the recombination
+  // status): if the meshes are to be copied, the meshing algorithm
+  // will take care of it (e.g. ExtrudeMesh()).
+  List_Copy(v->Surfaces, vv->Surfaces);
+  List_Copy(v->SurfacesOrientations, vv->SurfacesOrientations);
+  List_Copy(v->SurfacesByTag, vv->SurfacesByTag);
+  Tree_Insert(GModel::current()->getGEOInternals()->Volumes, &vv);
+}
+
+Volume *DuplicateVolume(Volume *v)
+{
+  Volume *pv;
+  Surface *s, *news;
+
+  pv = Create_Volume(NEWVOLUME(), 0);
+  CopyVolume(v, pv);
+  for(int i = 0; i < List_Nbr(pv->Surfaces); i++) {
+    List_Read(pv->Surfaces, i, &s);
+    news = DuplicateSurface(s);
+    List_Write(pv->Surfaces, i, &news);
+  }
+  return pv;
 }
 
 void CopyShape(int Type, int Num, int *New)
@@ -983,6 +996,7 @@ void CopyShape(int Type, int Num, int *New)
   Surface *s, *news;
   Curve *c, *newc;
   Vertex *v, *newv;
+  Volume *vol, *newvol;
 
   switch (Type) {
   case MSH_POINT:
@@ -1019,6 +1033,14 @@ void CopyShape(int Type, int Num, int *New)
     }
     news = DuplicateSurface(s);
     *New = news->Num;
+    break;
+  case MSH_VOLUME:
+    if(!(vol = FindVolume(Num))) {
+      Msg::Error("Unknown volume %d", Num);
+      return;
+    }
+    newvol = DuplicateVolume(vol);
+    *New = newvol->Num;
     break;
   default:
     Msg::Error("Impossible to copy entity %d (of type %d)", Num, Type);
@@ -1137,7 +1159,7 @@ void DeleteShape(int Type, int Num)
   case MSH_SEGM_FROM_GMODEL:
   case MSH_SURF_FROM_GMODEL:
   case MSH_VOLUME_FROM_GMODEL:
-    Msg::Error("Deletion of external CAD entities not implemented yet");
+    Msg::Error("Deletion of external CAD entities is not implemented yet");
     break;
   default:
     Msg::Error("Impossible to delete entity %d (of type %d)", Num, Type);
@@ -1556,7 +1578,7 @@ void printCurve(Curve *c)
   for(int i = 0; i < N; i++) {
     List_Read(c->Control_Points, i, &v);
     Msg::Debug("Vertex %d (%g,%g,%g,%g)", v->Num, v->Pos.X, v->Pos.Y,
-        v->Pos.Z, v->lc);
+	       v->Pos.Z, v->lc);
   }
 }
 
@@ -1616,26 +1638,11 @@ void ApplyTransformationToPoint(double matrix[4][4], Vertex *v,
       }
     }
     List_Delete(All);
-    All = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
-    for(int i = 0; i < List_Nbr(All); i++) {
-      Surface *s;
-      List_Read(All, i, &s);
-      for(int j = 0; j < List_Nbr(s->Control_Points); j++) {
-        Vertex *pv = *(Vertex **)List_Pointer(s->Control_Points, j);
-        if(pv->Num == v->Num){
-          End_Surface(s);
-          break;
-        }
-      }
-    }
-    List_Delete(All);
   }
 }
 
 void ApplyTransformationToCurve(double matrix[4][4], Curve *c)
 {
-  Vertex *v;
-
   if(!c->beg || !c->end){
     Msg::Error("Cannot transform curve with no begin/end points");
     return;
@@ -1645,6 +1652,7 @@ void ApplyTransformationToCurve(double matrix[4][4], Curve *c)
   ApplyTransformationToPoint(matrix, c->end);
 
   for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
+    Vertex *v;
     List_Read(c->Control_Points, i, &v);
     ApplyTransformationToPoint(matrix, v);
   }
@@ -1653,23 +1661,22 @@ void ApplyTransformationToCurve(double matrix[4][4], Curve *c)
 
 void ApplyTransformationToSurface(double matrix[4][4], Surface *s)
 {
-  Curve *c;
-  Vertex *v;
-  int i;
-
-  for(i = 0; i < List_Nbr(s->Generatrices); i++) {
+  for(int i = 0; i < List_Nbr(s->Generatrices); i++) {
+    Curve *c;
     List_Read(s->Generatrices, i, &c);
-    // FIXME: this fixes benchmarks/2d/transfo_neg_curves.geo, but is
-    // it the correct fix?
-    //ApplyTransformationToCurve(matrix, c);
     Curve *cc = FindCurve(abs(c->Num));
     ApplyTransformationToCurve(matrix, cc);
   }
-  for(i = 0; i < List_Nbr(s->Control_Points); i++) {
-    List_Read(s->Control_Points, i, &v);
-    ApplyTransformationToPoint(matrix, v);
-  }
   End_Surface(s);
+}
+
+void ApplyTransformationToVolume(double matrix[4][4], Volume *v)
+{
+  for(int i = 0; i < List_Nbr(v->Surfaces); i++) {
+    Surface *s;
+    List_Read(v->Surfaces, i, &s);
+    ApplyTransformationToSurface(matrix, s);
+  }
 }
 
 void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
@@ -1677,6 +1684,7 @@ void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
   Vertex *v;
   Curve *c;
   Surface *s;
+  Volume *vol;
 
   List_Reset(ListOfTransformedPoints);
 
@@ -1716,9 +1724,16 @@ void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
       else
         Msg::Error("Unknown surface %d", O.Num);
       break;
+    case MSH_VOLUME:
+      vol = FindVolume(O.Num);
+      if(vol)
+        ApplyTransformationToVolume(matrix, vol);
+      else
+        Msg::Error("Unknown volume %d", O.Num);
+      break;
     default:
       Msg::Error("Impossible to transform entity %d (of type %d)", O.Num,
-          O.Type);
+		 O.Type);
       break;
     }
   }
@@ -1873,7 +1888,7 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary)
       break;
     default:
       Msg::Error("Impossible to take boundary of entity %d (of type %d)", O.Num,
-          O.Type);
+		 O.Type);
       break;
     }
   }
@@ -2531,7 +2546,7 @@ void ExtrudeShapes(int type, List_T *list_in,
       break;
     default:
       Msg::Error("Impossible to extrude entity %d (of type %d)",
-          shape.Num, shape.Type);
+		 shape.Num, shape.Type);
       break;
     }
   }
@@ -2705,13 +2720,6 @@ void ReplaceDuplicatePoints()
   All = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
   for(i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &s);
-    for(j = 0; j < List_Nbr(s->Control_Points); j++) {
-      pv = (Vertex **)List_Pointer(s->Control_Points, j);
-      if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
-        Msg::Error("Weird point %d in Coherence", (*pv)->Num);
-      else
-        List_Write(s->Control_Points, j, pv2);
-    }
     for(j = 0; j < List_Nbr(s->TrsfPoints); j++){
       pv = (Vertex **)List_Pointer(s->TrsfPoints, j);
       if(!(pv2 = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, pv)))
@@ -3083,7 +3091,7 @@ void sortEdgesInLoop(int num, List_T *edges)
         if(c2->end == c0->beg) {
           if(List_Nbr(temp)) {
             Msg::Info("Starting subloop %d in Line Loop %d (are you sure about this?)",
-                ++k, num);
+		      ++k, num);
             c0 = c1 = *(Curve **)List_Pointer(temp, 0);
             List_Add(edges, &c1->Num);
             List_PSuppress(temp, 0);

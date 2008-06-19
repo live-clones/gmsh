@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.584 2008-06-07 17:20:45 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.585 2008-06-19 15:58:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -2682,17 +2682,7 @@ void geometry_elementary_add_cb(CALLBACK_ARGS)
   WID->set_context(menu_geometry_elementary_add, 0);
 }
 
-void geometry_elementary_add_new_cb(CALLBACK_ARGS)
-{
-  WID->set_context(menu_geometry_elementary_add_new, 0);
-}
-
-void geometry_elementary_add_new_parameter_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(0);
-}
-
-void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
+static void _add_new_point()
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
@@ -2727,7 +2717,7 @@ void geometry_elementary_add_new_point_cb(CALLBACK_ARGS)
   Msg::StatusBar(3, false, "");
 }
 
-static void _new_multiline(int type)
+static void _add_new_multiline(int type)
 {
   std::vector<GVertex*> vertices;
   std::vector<GEdge*> edges;
@@ -2798,13 +2788,8 @@ static void _new_multiline(int type)
   Msg::StatusBar(3, false, "");
 }
 
-void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
+static void _add_new_line()
 {
-  // Disallow multiline selection at the moment, since multilines
-  // dont't work so well...
-  //
-  //_new_multiline(0);
-  //
   std::vector<GVertex*> vertices;
   std::vector<GEdge*> edges;
   std::vector<GFace*> faces;
@@ -2857,17 +2842,7 @@ void geometry_elementary_add_new_line_cb(CALLBACK_ARGS)
   Msg::StatusBar(3, false, "");
 }
 
-void geometry_elementary_add_new_spline_cb(CALLBACK_ARGS)
-{
-  _new_multiline(1);
-}
-
-void geometry_elementary_add_new_bspline_cb(CALLBACK_ARGS)
-{
-  _new_multiline(2);
-}
-
-void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
+static void _add_new_circle()
 {
   std::vector<GVertex*> vertices;
   std::vector<GEdge*> edges;
@@ -2924,7 +2899,7 @@ void geometry_elementary_add_new_circle_cb(CALLBACK_ARGS)
   Msg::StatusBar(3, false, "");
 }
 
-void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
+static void _add_new_ellipse()
 {
   std::vector<GVertex*> vertices;
   std::vector<GEdge*> edges;
@@ -2984,7 +2959,7 @@ void geometry_elementary_add_new_ellipse_cb(CALLBACK_ARGS)
   Msg::StatusBar(3, false, "");
 }
 
-static void _new_surface_volume(int mode)
+static void _add_new_surface_volume(int mode)
 {
   std::vector<GVertex*> vertices;
   std::vector<GEdge*> edges;
@@ -3127,19 +3102,36 @@ stopall:;
   Msg::StatusBar(3, false, "");
 }
 
-void geometry_elementary_add_new_planesurface_cb(CALLBACK_ARGS)
+void geometry_elementary_add_new_cb(CALLBACK_ARGS)
 {
-  _new_surface_volume(0);
-}
+  if(!data){
+    WID->set_context(menu_geometry_elementary_add_new, 0);
+    return;
+  }
 
-void geometry_elementary_add_new_ruledsurface_cb(CALLBACK_ARGS)
-{
-  _new_surface_volume(1);
-}
-
-void geometry_elementary_add_new_volume_cb(CALLBACK_ARGS)
-{
-  _new_surface_volume(2);
+  std::string str((const char*)data);
+  if(str == "Parameter")
+    WID->create_geometry_context_window(0);
+  else if(str == "Point")
+    _add_new_point();
+  else if(str == "Line")
+    _add_new_line();
+  else if(str == "Spline")
+    _add_new_multiline(1);
+  else if(str == "BSpline")
+    _add_new_multiline(2);
+  else if(str == "Circle")
+    _add_new_circle();
+  else if(str == "Ellipse")
+    _add_new_ellipse();
+  else if(str == "Plane Surface")
+    _add_new_surface_volume(0);
+  else if(str == "Ruled Surface")
+    _add_new_surface_volume(1);
+  else if(str == "Volume")
+    _add_new_surface_volume(2);
+  else
+    Msg::Error("Unknown entity to create: %s", str.c_str());
 }
 
 static void _action_point_line_surface_volume(int action, int mode, const char *what)
@@ -3375,186 +3367,82 @@ static void _action_point_line_surface_volume(int action, int mode, const char *
   
 void geometry_elementary_add_translate_cb(CALLBACK_ARGS)
 {
-  WID->set_context(menu_geometry_elementary_add_translate, 0);
-}
-
-void geometry_elementary_add_translate_point_cb(CALLBACK_ARGS)
-{
+  if(!data){
+    WID->set_context(menu_geometry_elementary_add_translate, 0);
+    return;
+  }
   WID->create_geometry_context_window(2);
-  _action_point_line_surface_volume(0, 1, "Point");
-}
-
-void geometry_elementary_add_translate_line_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(2);
-  _action_point_line_surface_volume(0, 1, "Line");
-}
-
-void geometry_elementary_add_translate_surface_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(2);
-  _action_point_line_surface_volume(0, 1, "Surface");
-}
-
-void geometry_elementary_translate_cb(CALLBACK_ARGS)
-{
-  WID->set_context(menu_geometry_elementary_translate, 0);
-}
-
-void geometry_elementary_translate_point_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(2);
-  _action_point_line_surface_volume(0, 0, "Point");
-}
-
-void geometry_elementary_translate_line_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(2);
-  _action_point_line_surface_volume(0, 0, "Line");
-}
-
-void geometry_elementary_translate_surface_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(2);
-  _action_point_line_surface_volume(0, 0, "Surface");
+  _action_point_line_surface_volume(0, 1, (const char*)data);
 }
 
 void geometry_elementary_add_rotate_cb(CALLBACK_ARGS)
 {
-  WID->set_context(menu_geometry_elementary_add_rotate, 0);
-}
-
-void geometry_elementary_add_rotate_point_cb(CALLBACK_ARGS)
-{
+  if(!data){
+    WID->set_context(menu_geometry_elementary_add_rotate, 0);
+    return;
+  }
   WID->create_geometry_context_window(3);
-  _action_point_line_surface_volume(1, 1, "Point");
-}
-
-void geometry_elementary_add_rotate_line_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(3);
-  _action_point_line_surface_volume(1, 1, "Line");
-}
-
-void geometry_elementary_add_rotate_surface_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(3);
-  _action_point_line_surface_volume(1, 1, "Surface");
-}
-
-void geometry_elementary_rotate_cb(CALLBACK_ARGS)
-{
-  WID->set_context(menu_geometry_elementary_rotate, 0);
-}
-
-void geometry_elementary_rotate_point_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(3);
-  _action_point_line_surface_volume(1, 0, "Point");
-}
-
-void geometry_elementary_rotate_line_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(3);
-  _action_point_line_surface_volume(1, 0, "Line");
-}
-
-void geometry_elementary_rotate_surface_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(3);
-  _action_point_line_surface_volume(1, 0, "Surface");
+  _action_point_line_surface_volume(1, 1, (const char*)data);
 }
 
 void geometry_elementary_add_scale_cb(CALLBACK_ARGS)
 {
-  WID->set_context(menu_geometry_elementary_add_scale, 0);
-}
-
-void geometry_elementary_add_scale_point_cb(CALLBACK_ARGS)
-{
+  if(!data){
+    WID->set_context(menu_geometry_elementary_add_scale, 0);
+    return;
+  }
   WID->create_geometry_context_window(4);
-  _action_point_line_surface_volume(2, 1, "Point");
-}
-
-void geometry_elementary_add_scale_line_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(4);
-  _action_point_line_surface_volume(2, 1, "Line");
-}
-
-void geometry_elementary_add_scale_surface_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(4);
-  _action_point_line_surface_volume(2, 1, "Surface");
-}
-
-void geometry_elementary_scale_cb(CALLBACK_ARGS)
-{
-  WID->set_context(menu_geometry_elementary_scale, 0);
-}
-
-void geometry_elementary_scale_point_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(4);
-  _action_point_line_surface_volume(2, 0, "Point");
-}
-
-void geometry_elementary_scale_line_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(4);
-  _action_point_line_surface_volume(2, 0, "Line");
-}
-
-void geometry_elementary_scale_surface_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(4);
-  _action_point_line_surface_volume(2, 0, "Surface");
+  _action_point_line_surface_volume(2, 1, (const char*)data);
 }
 
 void geometry_elementary_add_symmetry_cb(CALLBACK_ARGS)
 {
-  WID->set_context(menu_geometry_elementary_add_symmetry, 0);
+  if(!data){
+    WID->set_context(menu_geometry_elementary_add_symmetry, 0);
+    return;
+  }
+  WID->create_geometry_context_window(5);
+  _action_point_line_surface_volume(3, 1, (const char*)data);
 }
 
-void geometry_elementary_add_symmetry_point_cb(CALLBACK_ARGS)
+void geometry_elementary_translate_cb(CALLBACK_ARGS)
 {
-  WID->create_geometry_context_window(5);
-  _action_point_line_surface_volume(3, 1, "Point");
+  if(!data){
+    WID->set_context(menu_geometry_elementary_translate, 0);
+    return;
+  }
+  WID->create_geometry_context_window(2);
+  _action_point_line_surface_volume(0, 0, (const char*)data);
 }
 
-void geometry_elementary_add_symmetry_line_cb(CALLBACK_ARGS)
+void geometry_elementary_rotate_cb(CALLBACK_ARGS)
 {
-  WID->create_geometry_context_window(5);
-  _action_point_line_surface_volume(3, 1, "Line");
+  if(!data){
+    WID->set_context(menu_geometry_elementary_rotate, 0);
+    return;
+  }
+  WID->create_geometry_context_window(3);
+  _action_point_line_surface_volume(1, 0, (const char*)data);
 }
 
-void geometry_elementary_add_symmetry_surface_cb(CALLBACK_ARGS)
+void geometry_elementary_scale_cb(CALLBACK_ARGS)
 {
-  WID->create_geometry_context_window(5);
-  _action_point_line_surface_volume(3, 1, "Surface");
+  if(!data){
+    WID->set_context(menu_geometry_elementary_scale, 0);
+    return;
+  }
+  WID->create_geometry_context_window(4);
+  _action_point_line_surface_volume(2, 0, (const char*)data);
 }
 
 void geometry_elementary_symmetry_cb(CALLBACK_ARGS)
 {
-  WID->set_context(menu_geometry_elementary_symmetry, 0);
-}
-
-void geometry_elementary_symmetry_point_cb(CALLBACK_ARGS)
-{
+  if(!data){
+    WID->set_context(menu_geometry_elementary_symmetry, 0);
+    return;
+  }
   WID->create_geometry_context_window(5);
-  _action_point_line_surface_volume(3, 0, "Point");
-}
-
-void geometry_elementary_symmetry_line_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(5);
-  _action_point_line_surface_volume(3, 0, "Line");
-}
-
-void geometry_elementary_symmetry_surface_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(5);
-  _action_point_line_surface_volume(3, 0, "Surface");
+  _action_point_line_surface_volume(3, 0, (const char*)data);
 }
 
 void geometry_elementary_extrude_cb(CALLBACK_ARGS)
@@ -3564,48 +3452,31 @@ void geometry_elementary_extrude_cb(CALLBACK_ARGS)
 
 void geometry_elementary_extrude_translate_cb(CALLBACK_ARGS)
 {
-  WID->set_context(menu_geometry_elementary_extrude_translate, 0);
-}
-
-void geometry_elementary_extrude_translate_point_cb(CALLBACK_ARGS)
-{
+  if(!data){
+    WID->set_context(menu_geometry_elementary_extrude_translate, 0);
+    return;
+  }
   WID->create_geometry_context_window(2);
-  _action_point_line_surface_volume(4, 0, "Point");
-}
-
-void geometry_elementary_extrude_translate_line_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(2);
-  _action_point_line_surface_volume(4, 0, "Line");
-}
-
-void geometry_elementary_extrude_translate_surface_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(2);
-  _action_point_line_surface_volume(4, 0, "Surface");
+  _action_point_line_surface_volume(4, 0, (const char*)data);
 }
 
 void geometry_elementary_extrude_rotate_cb(CALLBACK_ARGS)
 {
-  WID->set_context(menu_geometry_elementary_extrude_rotate, 0);
+  if(!data){
+    WID->set_context(menu_geometry_elementary_extrude_rotate, 0);
+    return;
+  }
+  WID->create_geometry_context_window(3);
+  _action_point_line_surface_volume(5, 0, (const char*)data);
 }
 
-void geometry_elementary_extrude_rotate_point_cb(CALLBACK_ARGS)
+void geometry_elementary_delete_cb(CALLBACK_ARGS)
 {
-  WID->create_geometry_context_window(3);
-  _action_point_line_surface_volume(5, 0, "Point");
-}
-
-void geometry_elementary_extrude_rotate_line_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(3);
-  _action_point_line_surface_volume(5, 0, "Line");
-}
-
-void geometry_elementary_extrude_rotate_surface_cb(CALLBACK_ARGS)
-{
-  WID->create_geometry_context_window(3);
-  _action_point_line_surface_volume(5, 0, "Surface");
+  if(!data){
+    WID->set_context(menu_geometry_elementary_delete, 0);
+    return;
+  }
+  _action_point_line_surface_volume(6, 0, (const char*)data);
 }
 
 void geometry_elementary_coherence_cb(CALLBACK_ARGS)
@@ -3613,51 +3484,19 @@ void geometry_elementary_coherence_cb(CALLBACK_ARGS)
   coherence(CTX.filename);
 }
 
-void geometry_elementary_delete_cb(CALLBACK_ARGS)
-{
-  WID->set_context(menu_geometry_elementary_delete, 0);
-}
-
-void geometry_elementary_delete_point_cb(CALLBACK_ARGS)
-{
-  _action_point_line_surface_volume(6, 0, "Point");
-}
-
-void geometry_elementary_delete_line_cb(CALLBACK_ARGS)
-{
-  _action_point_line_surface_volume(6, 0, "Line");
-}
-
-void geometry_elementary_delete_surface_cb(CALLBACK_ARGS)
-{
-  _action_point_line_surface_volume(6, 0, "Surface");
-}
-
 void geometry_physical_add_cb(CALLBACK_ARGS)
 {
-  WID->set_context(menu_geometry_physical_add, 0);
-}
+  if(!data){
+    WID->set_context(menu_geometry_physical_add, 0);
+    return;
+  }
+  std::string str((const char*)data);
+  if(str == "Point")
+    WID->call_for_solver_plugin(0);
+  else if(str == "Line")
+    WID->call_for_solver_plugin(1);
 
-void geometry_physical_add_point_cb(CALLBACK_ARGS)
-{
-  WID->call_for_solver_plugin(0);
-  _action_point_line_surface_volume(7, 0, "Point");
-}
-
-void geometry_physical_add_line_cb(CALLBACK_ARGS)
-{
-  WID->call_for_solver_plugin(1);
-  _action_point_line_surface_volume(7, 0, "Line");
-}
-
-void geometry_physical_add_surface_cb(CALLBACK_ARGS)
-{
-  _action_point_line_surface_volume(7, 0, "Surface");
-}
-
-void geometry_physical_add_volume_cb(CALLBACK_ARGS)
-{
-  _action_point_line_surface_volume(7, 0, "Volume");
+  _action_point_line_surface_volume(7, 0, str.c_str());
 }
 
 // Dynamic Mesh Menus

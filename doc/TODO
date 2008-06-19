@@ -1,4 +1,4 @@
-$Id: TODO,v 1.73 2008-06-12 09:31:43 geuzaine Exp $
+$Id: TODO,v 1.74 2008-06-19 15:58:42 geuzaine Exp $
 
 ********************************************************************
 
@@ -107,10 +107,6 @@ add linear lc progression in 1D transfinite generator
 
 add parameter to geo transforms to copy the meshes--this would allow
 us to do symmetries and periodic meshes
-
-********************************************************************
-
-add transformations on volumes
 
 ********************************************************************
 

@@ -1,4 +1,4 @@
-LC   = h;
+LC   = t/2;
 LC2  = r/4;
 
 Point(1) = {-c,-h/2,0,LC};

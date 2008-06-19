@@ -1,8 +1,10 @@
-# This is a pre-filled variables file for building a blackbox version
-# of Gmsh with Microsoft Visual C++ (MSVC).
+# This is a pre-filled variables file for building Gmsh with Microsoft
+# Visual C++ (MSVC).
+# 
+# The non-graphical (ENABLE_GUI=0) versions have been succesfully tested 
+# with MSVC 2003, 2005 and 2008.
 #
-# This has been tested with MSVC 2003, 2005 and 2008. See
-# doc/README.msvc for building instructions.
+# See doc/README.msvc for building instructions.
 
 ##################################################################
 

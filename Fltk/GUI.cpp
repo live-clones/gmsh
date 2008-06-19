@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.690 2008-06-15 08:47:15 geuzaine Exp $
+// $Id: GUI.cpp,v 1.691 2008-06-19 15:58:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -149,139 +149,148 @@ Context_Item menu_geometry[] = {
   {"0Geometry", NULL} ,
   {"Elementary entities", (Fl_Callback *)geometry_elementary_cb} ,
   {"Physical groups",     (Fl_Callback *)geometry_physical_cb} ,
-  {"Edit",       (Fl_Callback *)geometry_edit_cb} , 
-  {"Reload",     (Fl_Callback *)geometry_reload_cb} , 
+  {"Edit",                (Fl_Callback *)geometry_edit_cb} , 
+  {"Reload",              (Fl_Callback *)geometry_reload_cb} , 
   {0}
 };  
     Context_Item menu_geometry_elementary[] = {
       {"0Geometry>Elementary", NULL} ,
       {"Add",       (Fl_Callback *)geometry_elementary_add_cb} ,
-      {"Delete",    (Fl_Callback *)geometry_elementary_delete_cb} ,
-      {"Translate", (Fl_Callback *)geometry_elementary_translate_cb} ,
-      {"Rotate",    (Fl_Callback *)geometry_elementary_rotate_cb} ,
-      {"Scale",     (Fl_Callback *)geometry_elementary_scale_cb} ,
-      {"Symmetry",  (Fl_Callback *)geometry_elementary_symmetry_cb} ,
-      {"Extrude",   (Fl_Callback *)geometry_elementary_extrude_cb} ,
+      {"Delete",    (Fl_Callback *)geometry_elementary_delete_cb, (void*)0} ,
+      {"Translate", (Fl_Callback *)geometry_elementary_translate_cb, (void*)0} ,
+      {"Rotate",    (Fl_Callback *)geometry_elementary_rotate_cb, (void*)0} ,
+      {"Scale",     (Fl_Callback *)geometry_elementary_scale_cb, (void*)0} ,
+      {"Symmetry",  (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)0} ,
+      {"Extrude",   (Fl_Callback *)geometry_elementary_extrude_cb, (void*)0} ,
       {"Coherence", (Fl_Callback *)geometry_elementary_coherence_cb} ,
       {0} 
     };  
         Context_Item menu_geometry_elementary_add[] = {
           {"0Geometry>Elementary>Add", NULL} ,
-          {"New",       (Fl_Callback *)geometry_elementary_add_new_cb} ,
-          {"Translate", (Fl_Callback *)geometry_elementary_add_translate_cb} ,
-          {"Rotate",    (Fl_Callback *)geometry_elementary_add_rotate_cb} ,
-          {"Scale",     (Fl_Callback *)geometry_elementary_add_scale_cb} ,
-          {"Symmetry",  (Fl_Callback *)geometry_elementary_add_symmetry_cb} ,
+          {"New",       (Fl_Callback *)geometry_elementary_add_new_cb, (void*)0} ,
+          {"Translate", (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)0} ,
+          {"Rotate",    (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)0} ,
+          {"Scale",     (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)0} ,
+          {"Symmetry",  (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)0} ,
           {0} 
         };  
             Context_Item menu_geometry_elementary_add_new[] = {
               {"0Geometry>Elementary>Add>New", NULL} ,
-              {"Parameter",     (Fl_Callback *)geometry_elementary_add_new_parameter_cb} ,
-              {"Point",         (Fl_Callback *)geometry_elementary_add_new_point_cb} ,
-              {"Straight line", (Fl_Callback *)geometry_elementary_add_new_line_cb} ,
-              {"Spline",        (Fl_Callback *)geometry_elementary_add_new_spline_cb} ,
-              {"B-Spline",      (Fl_Callback *)geometry_elementary_add_new_bspline_cb} ,
-              {"Circle arc",    (Fl_Callback *)geometry_elementary_add_new_circle_cb} ,
-              {"Ellipse arc",   (Fl_Callback *)geometry_elementary_add_new_ellipse_cb} ,
-              {"Plane surface", (Fl_Callback *)geometry_elementary_add_new_planesurface_cb} ,
-              {"Ruled surface", (Fl_Callback *)geometry_elementary_add_new_ruledsurface_cb} ,
-              {"Volume",        (Fl_Callback *)geometry_elementary_add_new_volume_cb} ,
+              {"Parameter",     (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Parameter"} ,
+              {"Point",         (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Point"} ,
+              {"Straight line", (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Line"} ,
+              {"Spline",        (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Spline"} ,
+              {"B-Spline",      (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"BSpline"} ,
+              {"Circle arc",    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Circle"} ,
+              {"Ellipse arc",   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Ellipse"} ,
+              {"Plane surface", (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Plane Surface"} ,
+              {"Ruled surface", (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Ruled Surface"} ,
+              {"Volume",        (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Volume"} ,
               {0} 
             };  
             Context_Item menu_geometry_elementary_add_translate[] = {
               {"0Geometry>Elementary>Add>Translate", NULL} ,
-              {"Point",   (Fl_Callback *)geometry_elementary_add_translate_point_cb} ,
-              {"Line",    (Fl_Callback *)geometry_elementary_add_translate_line_cb} ,
-              {"Surface", (Fl_Callback *)geometry_elementary_add_translate_surface_cb} ,
+              {"Point",   (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Point"} ,  
+              {"Line",    (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Line"} ,	  
+              {"Surface", (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Surface"} ,
+              {"Volume",  (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Volume"} , 
               {0} 
             };  
             Context_Item menu_geometry_elementary_add_rotate[] = {
               {"0Geometry>Elementary>Add>Rotate", NULL} ,
-              {"Point",   (Fl_Callback *)geometry_elementary_add_rotate_point_cb} ,
-              {"Line",    (Fl_Callback *)geometry_elementary_add_rotate_line_cb} ,
-              {"Surface", (Fl_Callback *)geometry_elementary_add_rotate_surface_cb} ,
+              {"Point",   (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Point"} ,  
+              {"Line",    (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Line"} ,	  
+              {"Surface", (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Surface"} ,
+              {"Volume",  (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Volume"} , 
               {0} 
             };  
             Context_Item menu_geometry_elementary_add_scale[] = {
               {"0Geometry>Elementary>Add>Scale", NULL} ,
-              {"Point",   (Fl_Callback *)geometry_elementary_add_scale_point_cb} ,
-              {"Line",    (Fl_Callback *)geometry_elementary_add_scale_line_cb} ,
-              {"Surface", (Fl_Callback *)geometry_elementary_add_scale_surface_cb} ,
+              {"Point",   (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Point"} ,  
+              {"Line",    (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Line"} ,	  
+              {"Surface", (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Surface"} ,
+              {"Volume",  (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Volume"} , 
               {0} 
             };  
             Context_Item menu_geometry_elementary_add_symmetry[] = {
               {"0Geometry>Elementary>Add>Symmetry", NULL} ,
-              {"Point",   (Fl_Callback *)geometry_elementary_add_symmetry_point_cb} ,
-              {"Line",    (Fl_Callback *)geometry_elementary_add_symmetry_line_cb} ,
-              {"Surface", (Fl_Callback *)geometry_elementary_add_symmetry_surface_cb} ,
-              {0} 
-            };  
-        Context_Item menu_geometry_elementary_translate[] = {
-          {"0Geometry>Elementary>Translate", NULL} ,
-          {"Point",   (Fl_Callback *)geometry_elementary_translate_point_cb} ,
-          {"Line",    (Fl_Callback *)geometry_elementary_translate_line_cb} ,
-          {"Surface", (Fl_Callback *)geometry_elementary_translate_surface_cb} ,
-          {0} 
-        };  
-        Context_Item menu_geometry_elementary_rotate[] = {
-          {"0Geometry>Elementary>Rotate", NULL} ,
-          {"Point",   (Fl_Callback *)geometry_elementary_rotate_point_cb} ,
-          {"Line",    (Fl_Callback *)geometry_elementary_rotate_line_cb} ,
-          {"Surface", (Fl_Callback *)geometry_elementary_rotate_surface_cb} ,
-          {0} 
-        };  
-        Context_Item menu_geometry_elementary_scale[] = {
-          {"0Geometry>Elementary>Scale", NULL} ,
-          {"Point",   (Fl_Callback *)geometry_elementary_scale_point_cb} ,
-          {"Line",    (Fl_Callback *)geometry_elementary_scale_line_cb} ,
-          {"Surface", (Fl_Callback *)geometry_elementary_scale_surface_cb} ,
-          {0} 
-        };  
-        Context_Item menu_geometry_elementary_symmetry[] = {
-          {"0Geometry>Elementary>Symmetry", NULL} ,
-          {"Point",   (Fl_Callback *)geometry_elementary_symmetry_point_cb} ,
-          {"Line",    (Fl_Callback *)geometry_elementary_symmetry_line_cb} ,
-          {"Surface", (Fl_Callback *)geometry_elementary_symmetry_surface_cb} ,
-          {0} 
-        };  
-        Context_Item menu_geometry_elementary_extrude[] = {
-          {"0Geometry>Elementary>Extrude", NULL} ,
-          {"Translate", (Fl_Callback *)geometry_elementary_extrude_translate_cb} ,
-          {"Rotate",    (Fl_Callback *)geometry_elementary_extrude_rotate_cb} ,
-          {0} 
-        };  
-            Context_Item menu_geometry_elementary_extrude_translate[] = {
-              {"0Geometry>Elementary>Extrude>Translate", NULL} ,
-              {"Point",   (Fl_Callback *)geometry_elementary_extrude_translate_point_cb} ,
-              {"Line",    (Fl_Callback *)geometry_elementary_extrude_translate_line_cb} ,
-              {"Surface", (Fl_Callback *)geometry_elementary_extrude_translate_surface_cb} ,
-              {0} 
-            };  
-            Context_Item menu_geometry_elementary_extrude_rotate[] = {
-              {"0Geometry>Elementary>Extrude>Rotate", NULL} ,
-              {"Point",   (Fl_Callback *)geometry_elementary_extrude_rotate_point_cb} ,
-              {"Line",    (Fl_Callback *)geometry_elementary_extrude_rotate_line_cb} ,
-              {"Surface", (Fl_Callback *)geometry_elementary_extrude_rotate_surface_cb} ,
+              {"Point",   (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Point"} ,  
+              {"Line",    (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Line"} ,	  
+              {"Surface", (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Surface"} ,
+              {"Volume",  (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Volume"} , 
               {0} 
             };  
         Context_Item menu_geometry_elementary_delete[] = {
           {"0Geometry>Elementary>Delete", NULL} ,
-          {"Point",   (Fl_Callback *)geometry_elementary_delete_point_cb} ,
-          {"Line",    (Fl_Callback *)geometry_elementary_delete_line_cb} ,
-          {"Surface", (Fl_Callback *)geometry_elementary_delete_surface_cb} ,
+          {"Point",   (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Point"} ,
+          {"Line",    (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Line"} ,
+          {"Surface", (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Surface"} ,
+          {"Volume",  (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Volume"} ,
           {0} 
         };  
+        Context_Item menu_geometry_elementary_translate[] = {
+          {"0Geometry>Elementary>Translate", NULL} ,
+          {"Point",   (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Point"} ,  
+          {"Line",    (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Line"} ,	  
+          {"Surface", (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Surface"} ,
+          {"Volume",  (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Volume"} , 
+          {0} 
+        };  
+        Context_Item menu_geometry_elementary_rotate[] = {
+          {"0Geometry>Elementary>Rotate", NULL} ,
+          {"Point",   (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Point"} ,  
+          {"Line",    (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Line"} ,	  
+          {"Surface", (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Surface"} ,
+          {"Volume",  (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Volume"} , 
+          {0} 
+        };  
+        Context_Item menu_geometry_elementary_scale[] = {
+          {"0Geometry>Elementary>Scale", NULL} ,
+          {"Point",   (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Point"} ,  
+          {"Line",    (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Line"} ,	  
+          {"Surface", (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Surface"} ,
+          {"Volume",  (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Volume"} , 
+          {0} 
+        };  
+        Context_Item menu_geometry_elementary_symmetry[] = {
+          {"0Geometry>Elementary>Symmetry", NULL} ,
+          {"Point",   (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Point"} ,  
+          {"Line",    (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Line"} ,	  
+          {"Surface", (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Surface"} ,
+          {"Volume",  (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Volume"} , 
+          {0} 
+        };  
+        Context_Item menu_geometry_elementary_extrude[] = {
+          {"0Geometry>Elementary>Extrude", NULL} ,
+          {"Translate", (Fl_Callback *)geometry_elementary_extrude_translate_cb, (void*)0} ,
+          {"Rotate",    (Fl_Callback *)geometry_elementary_extrude_rotate_cb, (void*)0} ,
+          {0} 
+        };  
+            Context_Item menu_geometry_elementary_extrude_translate[] = {
+              {"0Geometry>Elementary>Extrude>Translate", NULL} ,
+              {"Point",   (Fl_Callback *)geometry_elementary_extrude_translate_cb, (void*)"Point"} ,
+              {"Line",    (Fl_Callback *)geometry_elementary_extrude_translate_cb, (void*)"Line"} ,
+              {"Surface", (Fl_Callback *)geometry_elementary_extrude_translate_cb, (void*)"Surface"} ,
+              {0} 
+            };  
+            Context_Item menu_geometry_elementary_extrude_rotate[] = {
+              {"0Geometry>Elementary>Extrude>Rotate", NULL} ,
+              {"Point",   (Fl_Callback *)geometry_elementary_extrude_rotate_cb, (void*)"Point"} ,
+              {"Line",    (Fl_Callback *)geometry_elementary_extrude_rotate_cb, (void*)"Line"} ,
+              {"Surface", (Fl_Callback *)geometry_elementary_extrude_rotate_cb, (void*)"Surface"} ,
+              {0} 
+            };  
     Context_Item menu_geometry_physical[] = {
       {"0Geometry>Physical", NULL} ,
-      {"Add",    (Fl_Callback *)geometry_physical_add_cb} ,
+      {"Add",    (Fl_Callback *)geometry_physical_add_cb, (void*)0} ,
       {0} 
     };  
         Context_Item menu_geometry_physical_add[] = {
           {"0Geometry>Physical>Add", NULL} ,
-          {"Point",   (Fl_Callback *)geometry_physical_add_point_cb  } ,
-          {"Line",    (Fl_Callback *)geometry_physical_add_line_cb  } ,
-          {"Surface", (Fl_Callback *)geometry_physical_add_surface_cb  } ,
-          {"Volume",  (Fl_Callback *)geometry_physical_add_volume_cb  } ,
+          {"Point",   (Fl_Callback *)geometry_physical_add_cb, (void*)"Point" } ,
+          {"Line",    (Fl_Callback *)geometry_physical_add_cb, (void*)"Line" } ,
+          {"Surface", (Fl_Callback *)geometry_physical_add_cb, (void*)"Surface" } ,
+          {"Volume",  (Fl_Callback *)geometry_physical_add_cb, (void*)"Volume" } ,
           {0} 
         };  
 
@@ -295,7 +304,7 @@ Context_Item menu_mesh[] = {
   {"3D",           (Fl_Callback *)mesh_3d_cb} , 
   {"First order",  (Fl_Callback *)mesh_degree_cb, (void*)1 } , 
   {"Second order", (Fl_Callback *)mesh_degree_cb, (void*)2 } , 
-  {"Optimize", (Fl_Callback *)mesh_optimize_cb} , 
+  {"Optimize",     (Fl_Callback *)mesh_optimize_cb} , 
 #if defined(HAVE_NETGEN)
   {"Optimize (Netgen)", (Fl_Callback *)mesh_optimize_netgen_cb} , 
 #endif
