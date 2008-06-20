@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.73 2008-06-20 12:15:44 remacle Exp $
+// $Id: MElement.cpp,v 1.74 2008-06-20 16:25:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -786,44 +786,6 @@ void MTetrahedron::jac(int ord, MVertex *vs[], double uu, double vv, double ww, 
   for(int i = 3; i < N+4; i++) j[1][2] += grads[i][1] * vs[i - 4]->z();
   for(int i = 3; i < N+4; i++) j[2][2] += grads[i][2] * vs[i - 4]->z();
 #endif
-}
-
-
-
-int MTriangle6::getNumEdgesRep(){ return 3 * 6; }
-
-void MTriangle6::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-{
-  n[0] = n[1] = getFace(0).normal();
-  int N = getNumEdgesRep() / 3;
-  if (num < N){
-    SPoint3 pnt1, pnt2;
-    pnt((double)num / N, 0., 0,pnt1);
-    pnt((double)(num + 1) / N, 0., 0,pnt2);
-    x[0] = pnt1.x(); x[1] = pnt2.x();
-    y[0] = pnt1.y(); y[1] = pnt2.y();
-    z[0] = pnt1.z(); z[1] = pnt2.z();
-    return;
-  }  
-  if (num < 2 * N){
-    SPoint3 pnt1, pnt2;
-    num -= N;
-    pnt(1. - (double)num / N, (double)num / N, 0,pnt1);
-    pnt(1. - (double)(num + 1) / N, (double)(num + 1) / N, 0,pnt2);
-    x[0] = pnt1.x(); x[1] = pnt2.x();
-    y[0] = pnt1.y(); y[1] = pnt2.y();
-    z[0] = pnt1.z(); z[1] = pnt2.z();
-    return ;
-  }  
-  {
-    SPoint3 pnt1, pnt2;
-    num -= 2 * N;
-    pnt(0, (double)num / N, 0,pnt1);
-    pnt(0, (double)(num + 1) / N, 0,pnt2);
-    x[0] = pnt1.x(); x[1] = pnt2.x();
-    y[0] = pnt1.y(); y[1] = pnt2.y();
-    z[0] = pnt1.z(); z[1] = pnt2.z();
-  }
 }
 
 const int numSubEdges = 12;
