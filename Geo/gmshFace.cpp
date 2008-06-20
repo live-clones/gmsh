@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.61 2008-06-20 05:51:37 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.62 2008-06-20 11:50:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -249,7 +249,7 @@ GEntity::GeomType gmshFace::geomType() const
 // by default we assume that straight lines are geodesics
 SPoint2 gmshFace::geodesic(const SPoint2 &pt1 , const SPoint2 &pt2 , double t)
 {
-  if(isSphere && CTX.geom.sphere_geodesic){
+  if(isSphere && CTX.mesh.second_order_experimental){
     // FIXME: this is buggy -- remove the CTX option once we do it in
     // a robust manner
     GPoint gp1 = point(pt1.x(), pt1.y());

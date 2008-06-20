@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.52 2008-06-12 12:23:29 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.53 2008-06-20 11:50:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -183,7 +183,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
                      v[j]->onWhat()->mesh_vertices.end(),
                      v[j]));
         MVertex *v1b;
-	if (CTX.mesh.order > 1){
+	if (CTX.mesh.order > 1 && CTX.mesh.second_order_experimental){
 	  // PARAMETRIC COORDINATES SHOULD BE SET for the vertex !!!!!!!!!!!!!
 	  // This is not 100 % safe yet, so we reserve that operation for high order
 	  // meshes.

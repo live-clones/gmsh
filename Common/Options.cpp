@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.400 2008-06-20 05:51:36 geuzaine Exp $
+// $Id: Options.cpp,v 1.401 2008-06-20 11:50:00 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -4035,13 +4035,6 @@ double opt_geometry_tolerance(OPT_ARGS_NUM)
   return CTX.geom.tolerance;
 }
 
-double opt_geometry_sphere_geodesic(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.geom.sphere_geodesic = val;
-  return CTX.geom.sphere_geodesic;
-}
-
 double opt_geometry_normals(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -5137,6 +5130,13 @@ double opt_mesh_smooth_internal_edges(OPT_ARGS_NUM)
     WID->mesh_butt[3]->value(CTX.mesh.smooth_internal_edges);
 #endif
   return CTX.mesh.smooth_internal_edges;
+}
+
+double opt_mesh_second_order_experimental(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.second_order_experimental = (int)val;
+  return CTX.mesh.second_order_experimental;
 }
 
 double opt_mesh_second_order_linear(OPT_ARGS_NUM)
