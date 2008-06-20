@@ -25,6 +25,7 @@
 // points may know the normals to the surface they are classified on
 // default values are 0,0,1
 
+#include <stdio.h>
 #include <string>
 #include <set>
 #include <map>

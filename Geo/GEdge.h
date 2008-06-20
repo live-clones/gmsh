@@ -54,7 +54,7 @@ class GEdge : public GEntity {
   virtual int isSeam(GFace *face) const { return 0; }
 
   // The bounding box
-  SBoundingBox3d bounds() const;
+  virtual SBoundingBox3d bounds() const;
 
   // Faces that bound this entity or that this entity bounds.
   virtual std::list<GFace*> faces() const { return l_faces; }

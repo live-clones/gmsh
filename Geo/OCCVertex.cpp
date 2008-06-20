@@ -1,4 +1,4 @@
-// $Id: OCCVertex.cpp,v 1.15 2008-03-20 11:44:06 geuzaine Exp $
+// $Id: OCCVertex.cpp,v 1.16 2008-06-20 18:54:25 samtech Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -59,8 +59,8 @@ SPoint2 OCCVertex::reparamOnFace(GFace *gf, int dir) const
 {
   std::list<GEdge*>::const_iterator it = l_edges.begin();
   while(it != l_edges.end()){
-    std::list<GEdge*> l_edges = gf->edges();
-    if(std::find(l_edges.begin(),l_edges.end(),*it) != l_edges.end()){
+    std::list<GEdge*> l = gf->edges();
+    if(std::find(l.begin(), l.end(), *it) != l.end()){
       if((*it)->isSeam(gf)){
         const TopoDS_Face *s = (TopoDS_Face*)gf->getNativePtr();
         const TopoDS_Edge *c = (TopoDS_Edge*)(*it)->getNativePtr();
@@ -76,8 +76,8 @@ SPoint2 OCCVertex::reparamOnFace(GFace *gf, int dir) const
   }  
   it = l_edges.begin();
   while(it != l_edges.end()){
-    std::list<GEdge*> l_edges = gf->edges();
-    if(std::find(l_edges.begin(),l_edges.end(),*it) != l_edges.end()){
+    std::list<GEdge*> l = gf->edges();
+    if(std::find(l.begin(), l.end(), *it) != l.end()){
       const TopoDS_Face *s = (TopoDS_Face*)gf->getNativePtr();
       const TopoDS_Edge *c = (TopoDS_Edge*)(*it)->getNativePtr();
       double s1,s0;
