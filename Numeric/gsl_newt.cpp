@@ -1,4 +1,4 @@
-// $Id: gsl_newt.cpp,v 1.19 2008-05-04 08:31:16 geuzaine Exp $
+// $Id: gsl_newt.cpp,v 1.20 2008-06-20 12:15:44 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -37,7 +37,7 @@
 #include <gsl/gsl_linalg.h>
 
 #define MAX_DIM_NEWT 10
-#define MAXITER 10000
+#define MAXITER 100
 #define PREC 1.e-8
 
 int nrdim;
@@ -101,8 +101,8 @@ void newt(double x[], int n, int *check,
     status = gsl_multiroot_fsolver_iterate(s);
     // Msg::Info("status %d %d %d %lf %lf\n",
     //     status,n,iter,gsl_vector_get(s->x,0),gsl_vector_get(s->x,1));
-    if(status)
-      break;    // solver problem
+     if(status)
+       break;    // solver problem
     status = gsl_multiroot_test_residual(s->f, n * PREC);
   }
   while(status == GSL_CONTINUE && iter < MAXITER);

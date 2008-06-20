@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.62 2008-06-20 11:50:00 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.63 2008-06-20 12:15:44 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -207,7 +207,9 @@ GPoint gmshFace::closestPoint(const SPoint3 & qp, const double initialGuess[2]) 
   v.Pos.X = qp.x();
   v.Pos.Y = qp.y();
   v.Pos.Z = qp.z();
-  ProjectPointOnSurface(s, v, u);
+  bool result = ProjectPointOnSurface(s, v, u);
+  if (!result)
+    printf("Project Point on surface %d \n",result);
   return GPoint(v.Pos.X, v.Pos.Y, v.Pos.Z, this, u);
 }
 

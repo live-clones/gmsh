@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.30 2008-06-10 08:37:34 remacle Exp $
+// $Id: HighOrder.cpp,v 1.31 2008-06-20 12:15:44 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -292,7 +292,7 @@ void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
           relax /= 2.0;
           if (relax < 1.e-2)break;
         } 
-        if (relax < 1.e-2)printf("failure in computing equidistant parameters %g\n",relax);
+        if (relax < 1.e-2)Msg::Warning("failure in computing equidistant parameters %g",relax);
       }
       std::vector<MVertex*> temp;      
       for(int j = 0; j < nPts; j++){
@@ -400,6 +400,114 @@ void getEdgeVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &ve,
     }
   }
 }
+
+void getFaceVertices(GFace *gf, 
+		     MElement *incomplete, 
+		     MElement *ele, 
+		     std::vector<MVertex*> &vf,
+                     faceContainer &faceVertices, 
+		     bool linear, int nPts = 1){
+  Double_Matrix points;
+  int start = 0;
+  
+  switch (nPts){
+  case 2 :
+    points = gmshFunctionSpaces::find(MSH_TRI_10).points;
+    start = 9;
+    break;
+  case 3 :
+    points = gmshFunctionSpaces::find(MSH_TRI_15).points;
+    start = 12;
+    break;
+  case 4 :
+    points = gmshFunctionSpaces::find(MSH_TRI_21).points;
+    start = 15;
+    break;
+  default :  
+    // do nothing (e.g. for quad faces)
+    break;
+  }
+
+  for(int i = 0; i < ele->getNumFaces(); i++){
+    MFace face = ele->getFace(i);
+    std::vector<MVertex*> p;
+    face.getOrderedVertices(p);
+    if(faceVertices.count(p)){
+      vf.insert(vf.end(), faceVertices[p].begin(), faceVertices[p].end());
+    }
+    else{
+      SPoint2 pts[20];
+      bool reparamOK = true;
+      if(!linear && 
+         gf->geomType() != GEntity::DiscreteSurface &&
+         gf->geomType() != GEntity::BoundaryLayerSurface){
+	for (int k=0;k<incomplete->getNumVertices(); k++){
+	  reparamOK &= reparamOnFace(incomplete->getVertex(k), gf, pts[k]);
+	}
+      }
+      if(face.getNumVertices() == 3){ // triangles
+        for(int k = start ; k < points.size1() ; k++){
+          MVertex *v;
+          const double t1 = points(k, 0);
+          const double t2 = points(k, 1);
+          if(!reparamOK || linear || gf->geomType() == GEntity::DiscreteSurface){
+            SPoint3 pc = face.interpolate(t1, t2);
+            v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
+          }
+          else{
+	    double X(0),Y(0),Z(0),GUESS[2]={0,0};
+	    for (int j=0; j<incomplete->getNumVertices(); j++){
+	      double sf ; incomplete->getShapeFunction(j,t1,t2,0,sf);
+	      MVertex *vt = incomplete->getVertex(j);
+	      X += sf * vt->x();
+	      Y += sf * vt->y();
+	      Z += sf * vt->z();
+	      GUESS[0] += sf * pts[j][0];
+	      GUESS[1] += sf * pts[j][1];
+	    }
+	    GPoint gp = gf->closestPoint(SPoint3(X,Y,Z),GUESS);
+	    //	    printf("%g %g %g -- %g %g %g\n",X,Y,Z,gp.x(),gp.y(),gp.z());
+            v = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
+          }
+          faceVertices[p].push_back(v);
+          gf->mesh_vertices.push_back(v);
+          vf.push_back(v);
+        }
+      }
+      else if(face.getNumVertices() == 4){ // quadrangles
+        for(int j = 0; j < nPts; j++){
+          for(int k = 0; k < nPts; k++){
+            MVertex *v;
+            // parameters are between -1 and 1
+            double t1 = 2. * (double)(j + 1) / (nPts + 1) - 1.;
+            double t2 = 2. * (double)(k + 1) / (nPts + 1) - 1.;
+            if(!reparamOK || linear || gf->geomType() == GEntity::DiscreteSurface){
+              SPoint3 pc = face.interpolate(t1, t2);
+              v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
+            }
+            else{
+              double uc = 0.25 * ((1 - t1) * (1 - t2) * pts[0][0] + 
+                                  (1 + t1) * (1 - t2) * pts[1][0] + 
+                                  (1 + t1) * (1 + t2) * pts[2][0] + 
+                                  (1 - t1) * (1 + t2) * pts[3][0]); 
+              double vc = 0.25 * ((1 - t1) * (1 - t2) * pts[0][1] + 
+                                  (1 + t1) * (1 - t2) * pts[1][1] + 
+                                  (1 + t1) * (1 + t2) * pts[2][1] + 
+                                  (1 - t1) * (1 + t2) * pts[3][1]); 
+              GPoint pc = gf->point(uc, vc);
+              v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
+            }
+            faceVertices[p].push_back(v);
+            gf->mesh_vertices.push_back(v);
+            vf.push_back(v);
+          }
+        }
+      }
+      else throw; // not tri or quad
+    }
+  }  
+}
+
 
 void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
                      faceContainer &faceVertices, bool linear, int nPts = 1)
@@ -582,7 +690,14 @@ void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
                           ve, nPts + 1));
       }
       else{
-        getFaceVertices(gf, t, vf, faceVertices, linear, nPts);
+	if (gf->geomType() == GEntity::Plane){
+	  getFaceVertices(gf, t, vf, faceVertices, linear, nPts);
+	}
+	else{
+	MTriangleN incpl (t->getVertex(0), t->getVertex(1), t->getVertex(2),
+                          ve, nPts + 1);
+        getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts);
+	}
         ve.insert(ve.end(), vf.begin(), vf.end());
         triangles2.push_back
           (new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
@@ -798,7 +913,7 @@ static double mesh_functional_distorsion(MTriangle *t, double u, double v)
 {
   // compute uncurved element jacobian d_u x and d_v x
   double mat[2][3];  
-  t->jac(1, 0, 0, 0, mat);
+  t->jac(1, 0, 0, 0, 0,mat);
   double v1[3] = {mat[0][0], mat[0][1], mat[0][2]};
   double v2[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double normal1[3];
@@ -806,7 +921,7 @@ static double mesh_functional_distorsion(MTriangle *t, double u, double v)
   double nn = sqrt(DSQR(normal1[0]) + DSQR(normal1[1]) + DSQR(normal1[2]));
   
   // compute uncurved element jacobian d_u x and d_v x
-  t->jac(u, v, mat);
+  t->jac(u, v, 0,mat);
   double v1b[3] = {mat[0][0], mat[0][1], mat[0][2]};
   double v2b[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double normal[3];
@@ -825,7 +940,7 @@ void getMinMaxJac (MTriangle *t, double &minJ, double &maxJ)
 {
   double mat[2][3];  
   int n = 3;
-  t->jac(1, 0, 0, 0, mat);
+  t->jac(1, 0, 0, 0, 0,mat);
   double v1[3] = {mat[0][0], mat[0][1], mat[0][2]};
   double v2[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double normal1[3], normal[3];
@@ -833,7 +948,7 @@ void getMinMaxJac (MTriangle *t, double &minJ, double &maxJ)
   double nn = sqrt(DSQR(normal1[0]) + DSQR(normal1[1]) + DSQR(normal1[2]));
   for(int i = 0; i < n; i++){
     for(int k = 0; k < n - i; k++){
-      t->jac((double)i / (n - 1), (double)k / (n - 1), mat);
+      t->jac((double)i / (n - 1), (double)k / (n - 1), 0,mat);
       double v1b[3] = {mat[0][0], mat[0][1], mat[0][2]};
       double v2b[3] = {mat[1][0], mat[1][1], mat[1][2]};
       prodve(v1b, v2b, normal);
@@ -1256,7 +1371,7 @@ void printJacobians(GModel *m, const char *nm)
           SPoint3 pt;
           double u = (double)i / (n - 1);
           double v = (double)k / (n - 1);         
-          t->pnt(u,v, pt);        
+          t->pnt(u,v,0, pt);        
           D[i][k] = mesh_functional_distorsion (t,u,v);
           X[i][k] = pt.x();
           Y[i][k] = pt.y();

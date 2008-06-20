@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.53 2008-06-20 11:50:00 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.54 2008-06-20 12:15:44 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -194,10 +194,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 		     v[j]->x(), v[j]->y(), v[j]->z(),gp.x(),gp.y(),gp.z());
 
 	  // To be safe, we should ensure that this mesh motion does not lead to an invalid mesh !!!!
-	  v[j]->x() = gp.x();
-	  v[j]->y() = gp.y();
-	  v[j]->z() = gp.z();
-	  v1b = new MFaceVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf,gp.u(),gp.v());
+	  v1b = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
 	}
 	else{
 	  v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf);

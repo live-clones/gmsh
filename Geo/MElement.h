@@ -444,15 +444,15 @@ class MTriangle : public MElement {
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
-  virtual void jac(int order, MVertex *verts[], double u, double v, double jac[2][3]);
-  virtual void jac(double u, double v, double j[2][3])
+  virtual void jac(int order, MVertex *verts[], double u, double v, double w, double jac[2][3]);
+  virtual void jac(double u, double v, double w, double j[2][3])
   {
-    jac(1, 0, u, v, j);
+    jac(1, 0, u, v, w, j);
   }
-  virtual void pnt(int order, MVertex *verts[], double u, double v, SPoint3 &);
-  virtual void pnt(double u, double v, SPoint3 &p)
+  virtual void pnt(int order, MVertex *verts[], double u, double v, double w, SPoint3 &);
+  virtual void pnt(double u, double v, double w, SPoint3 &p)
   {
-    pnt(1, 0, u, v, p);
+    pnt(1, 0, u, v, w, p);
   }
   virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
   {
@@ -543,13 +543,13 @@ class MTriangle6 : public MTriangle {
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
     tmp = _vs[0]; _vs[0] = _vs[2]; _vs[2] = tmp;
   }
-  virtual void jac(double u, double v, double j[2][3])
+  virtual void jac(double u, double v, double w, double j[2][3])
   {
-    MTriangle::jac(2, _vs, u, v, j);
+    MTriangle::jac(2, _vs, u, v, w, j);
   }
-  virtual void pnt(double u, double v, SPoint3 &p)
+  virtual void pnt(double u, double v, double w, SPoint3 &p)
   {
-    MTriangle::pnt(2, _vs, u, v, p);
+    MTriangle::pnt(2, _vs, u, v, w, p);
   }
 };
 
@@ -616,13 +616,13 @@ class MTriangleN : public MTriangle {
     inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
     _vs = inv;
   }
-  virtual void jac(double u, double v, double j[2][3])
+  virtual void jac(double u, double v, double w, double j[2][3])
   {
-    MTriangle::jac(_order, &(*(_vs.begin())), u, v, j);
+    MTriangle::jac(_order, &(*(_vs.begin())), u, v, w, j);
   }
-  virtual void pnt(double u, double v, SPoint3 &p)
+  virtual void pnt(double u, double v, double w, SPoint3 &p)
   {
-    MTriangle::pnt(_order, &(*(_vs.begin())), u, v, p);
+    MTriangle::pnt(_order, &(*(_vs.begin())), u, v, w, p);
   }
 };
 
@@ -933,8 +933,8 @@ class MTetrahedron : public MElement {
     default : s = 0.; break;
     }
   }
-  virtual void jac(int order, MVertex *verts[], double u, double v, double jac[3][3]);
-  virtual void pnt(int order, MVertex *verts[], double u, double v, SPoint3 &);
+  virtual void jac(int order, MVertex *verts[], double u, double v, double w, double jac[3][3]);
+  virtual void pnt(int order, MVertex *verts[], double u, double v, double w, SPoint3 &);
   virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
   {
     switch(num) {
@@ -1081,13 +1081,13 @@ class MTetrahedronN : public MTetrahedron {
     inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
     _vs = inv;
   }
-  virtual void jac(double u, double v, double j[3][3])
+  virtual void jac(double u, double v, double w, double j[3][3])
   {
-    MTetrahedron::jac(_order, &(*(_vs.begin())), u, v, j);
+    MTetrahedron::jac(_order, &(*(_vs.begin())), u, v, w, j);
   }
-  virtual void pnt(double u, double v, SPoint3 &p)
+  virtual void pnt(double u, double v, double w, SPoint3 &p)
   {
-    MTetrahedron::pnt(_order, &(*(_vs.begin())), u, v, p);
+    MTetrahedron::pnt(_order, &(*(_vs.begin())), u, v, w, p);
   }
 };
 

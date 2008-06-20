@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.115 2008-06-20 05:51:36 geuzaine Exp $
+// $Id: Geo.cpp,v 1.116 2008-06-20 12:15:44 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -2963,6 +2963,7 @@ bool ProjectPointOnCurve(Curve *c, Vertex *v, Vertex *RES, Vertex *DER)
 bool ProjectPointOnSurface(Surface *s, Vertex &p, double u[2])
 {
   double x[3] = { 0.5, u[0], u[1] };
+  double res[3];
   Vertex vv;
   int check;
   SURFACE = s;
@@ -2971,6 +2972,14 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double u[2])
   double UMAX = 1.;
   double VMIN = 0.;
   double VMAX = 1.;
+
+  newt(x, 2, &check, projectPS);
+  vv = InterpolateSurface(s, x[1], x[2], 0, 0);
+  projectPS(2,  x, res);
+
+  double resid = sqrt (res[1]*res[1]+res[2]*res[2]);
+  /*
+
   double eps = 1.e-6;
   int nn = 0;
   while(++nn < 20) {
@@ -2981,13 +2990,15 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double u[2])
     x[1] = UMIN + (UMAX - UMIN) * ((rand() % 10000) / 10000.);
     x[2] = VMIN + (VMAX - VMIN) * ((rand() % 10000) / 10000.);
   }
+  */
   p.Pos.X = vv.Pos.X;
   p.Pos.Y = vv.Pos.Y;
   p.Pos.Z = vv.Pos.Z;
   u[0] = x[1];
   u[1] = x[2];
-  if(!check) {
-    return false;
+  if (resid > 1.e-6){
+    //    printf("error %12.5E\n",resid);
+    return false;  
   }
   return true;
 }

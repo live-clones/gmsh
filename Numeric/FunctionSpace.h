@@ -80,7 +80,7 @@ struct gmshFunctionSpace
       }
     }
   }
-  inline void df(double u, double v, double grads[][2]) const
+  inline void df(double u, double v, double w,double grads[][2]) const
   {
     double p[256][2];
     computePows(u, v, p);
