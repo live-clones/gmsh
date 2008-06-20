@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.114 2008-06-19 15:58:41 geuzaine Exp $
+// $Id: Geo.cpp,v 1.115 2008-06-20 05:51:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -2971,10 +2971,12 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double u[2])
   double UMAX = 1.;
   double VMIN = 0.;
   double VMAX = 1.;
-  while(1) {
+  double eps = 1.e-6;
+  int nn = 0;
+  while(++nn < 20) {
     newt(x, 2, &check, projectPS);
     vv = InterpolateSurface(s, x[1], x[2], 0, 0);
-    if(x[1] >= UMIN && x[1] <= UMAX && x[2] >= VMIN && x[2] <= VMAX)
+    if(x[1] > UMIN-eps && x[1] < UMAX+eps && x[2] > VMIN-eps && x[2] < VMAX+eps)
       break;
     x[1] = UMIN + (UMAX - UMIN) * ((rand() % 10000) / 10000.);
     x[2] = VMIN + (VMAX - VMIN) * ((rand() % 10000) / 10000.);
@@ -2992,11 +2994,9 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double u[2])
 
 void Projette(Vertex *v, double mat[3][3])
 {
-  double X, Y, Z;
-
-  X = v->Pos.X * mat[0][0] + v->Pos.Y * mat[0][1] + v->Pos.Z * mat[0][2];
-  Y = v->Pos.X * mat[1][0] + v->Pos.Y * mat[1][1] + v->Pos.Z * mat[1][2];
-  Z = v->Pos.X * mat[2][0] + v->Pos.Y * mat[2][1] + v->Pos.Z * mat[2][2];
+  double X = v->Pos.X * mat[0][0] + v->Pos.Y * mat[0][1] + v->Pos.Z * mat[0][2];
+  double Y = v->Pos.X * mat[1][0] + v->Pos.Y * mat[1][1] + v->Pos.Z * mat[1][2];
+  double Z = v->Pos.X * mat[2][0] + v->Pos.Y * mat[2][1] + v->Pos.Z * mat[2][2];
   v->Pos.X = X;
   v->Pos.Y = Y;
   v->Pos.Z = Z;

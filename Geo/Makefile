@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.213 2008-06-07 17:20:46 geuzaine Exp $
+# $Id: Makefile,v 1.214 2008-06-20 05:51:36 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -126,7 +126,7 @@ gmshFace.o: gmshFace.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   gmshSurface.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
   ../Common/ListUtils.h ../Common/TreeUtils.h ../Common/avl.h \
   ../Common/ListUtils.h ExtrudeParams.h ../Common/SmoothData.h \
-  GeoInterpolation.h ../Common/Message.h
+  GeoInterpolation.h ../Common/Message.h ../Common/Context.h
 gmshRegion.o: gmshRegion.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h gmshRegion.h Geo.h \

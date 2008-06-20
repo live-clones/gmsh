@@ -399,6 +399,7 @@ double opt_general_light53(OPT_ARGS_NUM);
 double opt_geometry_auto_coherence(OPT_ARGS_NUM);
 double opt_geometry_highlight_orphans(OPT_ARGS_NUM);
 double opt_geometry_tolerance(OPT_ARGS_NUM);
+double opt_geometry_sphere_geodesic(OPT_ARGS_NUM);
 double opt_geometry_normals(OPT_ARGS_NUM);
 double opt_geometry_tangents(OPT_ARGS_NUM);
 double opt_geometry_points(OPT_ARGS_NUM);

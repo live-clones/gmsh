@@ -871,6 +871,8 @@ StringXNumber GeometryOptions_Number[] = {
     "Snapping grid spacing along the Y-axis" },
   { F|O, "SnapZ" , opt_geometry_snap2 , 0.1 ,
     "Snapping grid spacing along the Z-axis" },
+  { F|O, "SphereGeodesic" , opt_geometry_sphere_geodesic , 0. ,
+    "Use projection to compute sphere geodesic" },
   { F|O, "Surfaces" , opt_geometry_surfaces , 0. , 
     "Display geometry surfaces?" },
   { F|O, "SurfaceNumbers" , opt_geometry_surfaces_num , 0. , 

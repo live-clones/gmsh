@@ -152,6 +152,7 @@ class Context_T {
     double tolerance;
     double snap[3];
     int occ_fix_small_edges, occ_fix_small_faces, occ_sew_faces;
+    int sphere_geodesic;
   } geom;
 
   // mesh options 

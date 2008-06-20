@@ -139,6 +139,11 @@ Snapping grid spacing along the Z-axis@*
 Default value: @code{0.1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.SphereGeodesic
+Use projection to compute sphere geodesic@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.Surfaces
 Display geometry surfaces?@*
 Default value: @code{0}@*

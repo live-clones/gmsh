@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.399 2008-06-05 12:37:03 samtech Exp $
+// $Id: Options.cpp,v 1.400 2008-06-20 05:51:36 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -4033,6 +4033,13 @@ double opt_geometry_tolerance(OPT_ARGS_NUM)
     WID->geo_value[2]->value(CTX.geom.tolerance);
 #endif
   return CTX.geom.tolerance;
+}
+
+double opt_geometry_sphere_geodesic(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.geom.sphere_geodesic = val;
+  return CTX.geom.sphere_geodesic;
 }
 
 double opt_geometry_normals(OPT_ARGS_NUM)

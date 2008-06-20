@@ -1,6 +1,7 @@
-$Id: VERSIONS,v 1.410 2008-06-19 15:58:42 geuzaine Exp $
+$Id: VERSIONS,v 1.411 2008-06-20 05:51:37 geuzaine Exp $
 
-2.2.2 (): added geometrical transformations on volumes.
+2.2.2 (Jun 20, 2008): added geometrical transformations on volumes;
+fixed bug in high order mesh generation.
 
 2.2.1 (Jun 15, 2008): various small improvements (adaptive views, gui,
 code cleanup) and bug fixes (high order meshes, Netgen interface).
