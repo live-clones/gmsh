@@ -344,6 +344,11 @@ Global scaling factor applied to the saved mesh@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.SecondOrderExperimental
+Use experimental code to generate second order mesh@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.SecondOrderIncomplete
 Create incomplete second order elements? (8-node quads, 20-node hexas, etc.)@*
 Default value: @code{1}@*
