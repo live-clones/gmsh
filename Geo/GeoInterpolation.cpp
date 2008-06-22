@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.37 2008-06-10 12:59:12 remacle Exp $
+// $Id: GeoInterpolation.cpp,v 1.38 2008-06-22 06:13:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -660,11 +660,14 @@ Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
     return T;
   }
 
-  // use the exact extrusion formula if the surface is extruded
+  // FIXME: WARNING -- this is a major hack: we use the exact
+  // extrusion formula if the surface is extruded, so that we create
+  // exact surfaces of revolution. But this WILL fail if the extruded
+  // surface is transformed after the extrusion!
   if(s->Extrude && s->Extrude->geo.Mode == EXTRUDED_ENTITY && 
      s->Typ != MSH_SURF_PLAN)
     return InterpolateExtrudedSurface(s, u, v);
-  
+
   switch (s->Typ) {
   case MSH_SURF_REGL:
   case MSH_SURF_TRIC: 

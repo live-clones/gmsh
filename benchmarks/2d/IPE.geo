@@ -1,48 +1,66 @@
-LC   = t/2;
-LC2  = r/4;
+Function IPE
 
-Point(1) = {-c,-h/2,0,LC};
-Point(2) = {-c,-h/2+t,0,LC};
-Point(3) = {-t/2-r,-h/2+t,0,LC2};
-Point(4) = {-t/2,-h/2+t+r,0,LC2};
-Point(5) = {-t/2-r,-h/2+t+r,0,LC2};
+// create vertices
+p1 = newp; Point(p1) = {0, h, 0, lc};
+p2 = newp; Point(p2) = {b, h, 0, lc};
+p3 = newp; Point(p3) = {b, h-e, 0, lc};
+p4 = newp; Point(p4) = {(0.5*b)+(0.5*a)+r, h-e, 0, lc};
+p5 = newp; Point(p5) = {(0.5*b)+(0.5*a)+r, h-e-r, 0, lc};
+p6 = newp; Point(p6) = {(0.5*b)+(0.5*a), h-e-r, 0, lc};
+p7 = newp; Point(p7) = {(0.5*b)+(0.5*a), e+r, 0, lc};
+p8 = newp; Point(p8) = {(0.5*b)+(0.5*a)+r, e+r, 0, lc};
+p9 = newp; Point(p9) = {(0.5*b)+(0.5*a)+r, e, 0, lc};
+p10 = newp; Point(p10) = {b, e, 0, lc};
+p11 = newp; Point(p11) = {b, 0, 0, lc};
+p12 = newp; Point(p12) = {0, 0, 0, lc};
+p13 = newp; Point(p13) = {0, e, 0, lc};
+p14 = newp; Point(p14) = {(0.5*b)-(0.5*a)-r, e, 0, lc};
+p15 = newp; Point(p15) = {(0.5*b)-(0.5*a)-r, e+r, 0, lc};
+p16 = newp; Point(p16) = {(0.5*b)-(0.5*a), e+r, 0, lc};
+p17 = newp; Point(p17) = {(0.5*b)-(0.5*a), h-e-r, 0, lc};
+p18 = newp; Point(p18) = {(0.5*b)-(0.5*a)-r, h-e-r, 0, lc};
+p19 = newp; Point(p19) = {(0.5*b)-(0.5*a)-r, h-e, 0, lc};
+p20 = newp; Point(p20) = {0, h-e, 0, lc};
 
-Point(11) = {-c,h/2,0,LC};
-Point(12) = {-c,h/2-t,0,LC};
-Point(13) = {-t/2-r,h/2-t,0,LC2};
-Point(14) = {-t/2,h/2-t-r,0,LC2};
-Point(15) = {-t/2-r,h/2-t-r,0,LC2};
+// create a line from two points;
+ligne1 = newl; Line(ligne1) = {p1, p2};
+ligne2 = newl; Line(ligne2) = {p2, p3};
+ligne3 = newl; Line(ligne3) = {p3, p4};
+ligne4 = newl; Line(ligne4) = {p6, p7};
+ligne5 = newl; Line(ligne5) = {p9, p10};
+ligne6 = newl; Line(ligne6) = {p10, p11};
+ligne7 = newl; Line(ligne7) = {p11, p12};
+ligne8 = newl; Line(ligne8) = {p12, p13};
+ligne9 = newl; Line(ligne9) = {p13, p14};
+ligne10 = newl; Line(ligne10) = {p16, p17};
+ligne11 = newl; Line(ligne11) = {p19, p20};
+ligne12 = newl; Line(ligne12) = {p20, p1};
 
-Point(21) = {c,-h/2,0,LC};
-Point(22) = {c,-h/2+t,0,LC};
-Point(23) = {t/2+r,-h/2+t,0,LC2};
-Point(24) = {t/2,-h/2+t+r,0,LC2};
-Point(25) = {t/2+r,-h/2+t+r,0,LC2};
+// create a curve 
+Arc1 = newl; Circle(Arc1) = {p4, p5 , p6};
+Arc2 = newl; Circle(Arc2) = {p7, p8 , p9};
+Arc3 = newl; Circle(Arc3) = {p14, p15 , p16};
+Arc4 = newl; Circle(Arc4) = {p17, p18 , p19};
 
-Point(31) = {c,h/2,0,LC};
-Point(32) = {c,h/2-t,0,LC};
-Point(33) = {t/2+r,h/2-t,0,LC2};
-Point(34) = {t/2,h/2-t-r,0,LC2};
-Point(35) = {t/2+r,h/2-t-r,0,LC2};
+// create a wire
+wire = newll; Line Loop(wire) = {ligne1, ligne2, ligne3, Arc1, ligne4, Arc2, ligne5, ligne6, ligne7, ligne8, ligne9, Arc3, ligne10, Arc4, ligne11, ligne12};
+
+// create a face
+face = news; Plane Surface(face) = {wire};
+Return
 
 
-Line(1) = {1,21};
-Line(2) = {21,22};
-Line(3) = {22,23};
-Line(4) = {1,2};
-Line(5) = {2,3};
-Line(6) = {4,14};
-Line(7) = {34,24};
-Line(8) = {11,31};
-Line(9) = {31,32};
-Line(10) = {32,33};
-Line(11) = {11,12};
-Line(12) = {12,13};
-Circle(13) = {13,15,14};
-Circle(14) = {33,35,34};
-Circle(15) = {3,5,4};
-Circle(16) = {23,25,24};
-Line Loop(17) = {-7,-14,-10,-9,-8,11,12,13,-6,-15,-5,-4,1,2,3,16};
-Plane Surface(18) = {17};
-Physical Line(19) = {8,9,10,14,7,16,3,2,1,4,5,15,6,13,12,11};
-Physical Surface(20) = {18};
+lc = 10;
+
+b = 200.;
+e = 16.;
+h = 500.;
+a = 10.2;
+r = 21.;
+Call IPE;
+
+e = 40;
+r = 61.;
+a = 40.2;
+Call IPE;
+Translate{300,0,0}{Surface{face};}
