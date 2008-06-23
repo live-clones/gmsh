@@ -149,6 +149,49 @@ class adaptiveQuadrangle {
   static void recurError(adaptiveQuadrangle *q, double AVG, double tol);
 };
 
+class adaptivePrism {
+ public:
+  bool visible;
+  adaptivePoint *p[6];
+  adaptivePrism *e[12];
+  static std::list<adaptivePrism*> all;
+  static int numNodes, numEdges;
+ public:
+  adaptivePrism(adaptivePoint *p1, adaptivePoint *p2, 
+		      adaptivePoint *p3, adaptivePoint *p4, 
+          adaptivePoint *p5, adaptivePoint *p6)
+    : visible(false)
+  {
+    p[0] = p1;
+    p[1] = p2;
+    p[2] = p3;
+    p[3] = p4;
+    p[4] = p5;
+    p[5] = p6;
+    e[0] = e[1] = e[2]  = e[3]  = NULL;
+    e[4] = e[5] = e[6]  = e[7]  = NULL;
+    e[8] = e[9] = e[10] = e[11] = NULL;
+  }
+  inline double V() const
+  {
+    return (p[0]->val + p[1]->val + p[2]->val + p[3]->val + p[4]->val + p[5]->val) / 6.;
+  }
+  inline static void GSF(double u, double v, double w, double sf[])
+  {
+    sf[0] = (1. - u - v) * (1 - w) / 2;
+    sf[1] = u * (1-w)/2;
+    sf[2] = v*(1-w)/2;
+    sf[3] = (1. - u - v)*(1+w)/2;
+    sf[4] = u*(1+w)/2;
+    sf[5] = v*(1+w)/2;
+  }
+  static void create(int maxlevel, Double_Matrix *coeffs, Double_Matrix *eexps);
+  static void recurCreate(adaptivePrism *p, int maxlevel, int level, 
+			  Double_Matrix *coeffs, Double_Matrix *eexps);
+  static void error(double AVG, double tol);
+  static void recurError(adaptivePrism *p, double AVG, double tol);
+};
+
 class adaptiveTetrahedron {
  public:
   bool visible;
@@ -265,6 +308,7 @@ class adaptiveData {
   adaptiveElements<adaptiveQuadrangle> *_quadrangles;
   adaptiveElements<adaptiveTetrahedron> *_tetrahedra;
   adaptiveElements<adaptiveHexahedron> *_hexahedra;
+  adaptiveElements<adaptivePrism> *_prisms;
  public:
   adaptiveData(PViewData *data);
   ~adaptiveData();

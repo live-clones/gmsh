@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.317 2008-06-12 09:31:41 geuzaine Exp $
+// $Id: Gmsh.y,v 1.318 2008-06-23 11:32:10 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -559,6 +559,7 @@ InterpolationMatrix :
 	(ViewData->NbST || ViewData->NbVT) ? 3 : 
 	(ViewData->NbSQ || ViewData->NbVQ) ? 4 : 
 	(ViewData->NbSS || ViewData->NbVS) ? 6 : 
+	(ViewData->NbSI || ViewData->NbVI) ? 9 : 
       	(ViewData->NbSH || ViewData->NbVH) ? 12 : 
 	0;
       ViewData->setInterpolationScheme(type, $3, $6);
