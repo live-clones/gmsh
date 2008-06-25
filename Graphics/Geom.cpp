@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.156 2008-03-20 11:44:07 geuzaine Exp $
+// $Id: Geom.cpp,v 1.157 2008-06-25 07:58:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -29,7 +29,7 @@
 
 extern Context_T CTX;
 
-void drawBBox(GEntity *e)
+static void drawBBox(GEntity *e)
 {
   return;
   glColor4ubv((GLubyte *) & CTX.color.fg);

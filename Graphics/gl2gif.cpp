@@ -1,4 +1,4 @@
-// $Id: gl2gif.cpp,v 1.26 2008-06-07 17:20:47 geuzaine Exp $
+// $Id: gl2gif.cpp,v 1.27 2008-06-25 07:58:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -77,7 +77,7 @@ static int static_nbcolors;
 static pixel **static_pixels;
 static colorhash_table static_cht;
 
-colorhash_table ppm_alloccolorhash()
+static colorhash_table ppm_alloccolorhash()
 {
   colorhash_table cht;
   int i;
@@ -90,7 +90,7 @@ colorhash_table ppm_alloccolorhash()
   return cht;
 }
 
-void ppm_freecolorhash(colorhash_table cht)
+static void ppm_freecolorhash(colorhash_table cht)
 {
   int i;
   colorhist_list chl, chlnext;
@@ -103,9 +103,9 @@ void ppm_freecolorhash(colorhash_table cht)
   Free((char *)cht);
 }
 
-colorhash_table ppm_computecolorhash(pixel ** const pixels,
-                                     const int cols, const int rows,
-                                     const int maxcolors, int *const colorsP)
+static colorhash_table ppm_computecolorhash(pixel ** const pixels,
+					    const int cols, const int rows,
+					    const int maxcolors, int *const colorsP)
 {
   colorhash_table cht;
   const pixel *pP;
@@ -140,8 +140,8 @@ colorhash_table ppm_computecolorhash(pixel ** const pixels,
   return cht;
 }
 
-int ppm_addtocolorhash(colorhash_table cht, const pixel * const colorP,
-                       const int value)
+static int ppm_addtocolorhash(colorhash_table cht, const pixel * const colorP,
+			      const int value)
 {
   register int hash;
   register colorhist_list chl;
@@ -155,8 +155,8 @@ int ppm_addtocolorhash(colorhash_table cht, const pixel * const colorP,
   return 0;
 }
 
-colorhist_vector ppm_colorhashtocolorhist(const colorhash_table cht,
-                                          const int maxcolors)
+static colorhist_vector ppm_colorhashtocolorhist(const colorhash_table cht,
+						 const int maxcolors)
 {
   colorhist_vector chv;
   colorhist_list chl;
@@ -177,8 +177,8 @@ colorhist_vector ppm_colorhashtocolorhist(const colorhash_table cht,
   return chv;
 }
 
-colorhash_table ppm_colorhisttocolorhash(const colorhist_vector chv,
-                                         const int colors)
+static colorhash_table ppm_colorhisttocolorhash(const colorhist_vector chv,
+						const int colors)
 {
   colorhash_table cht;
   int i, hash;
@@ -204,9 +204,9 @@ colorhash_table ppm_colorhisttocolorhash(const colorhist_vector chv,
   return cht;
 }
 
-colorhist_vector ppm_computecolorhist(pixel ** const pixels,
-                                      const int cols, const int rows,
-                                      const int maxcolors, int *const colorsP)
+static colorhist_vector ppm_computecolorhist(pixel ** const pixels,
+					     const int cols, const int rows,
+					     const int maxcolors, int *const colorsP)
 {
   colorhash_table cht;
   colorhist_vector chv;
@@ -220,7 +220,7 @@ colorhist_vector ppm_computecolorhist(pixel ** const pixels,
 }
 
 
-int ppm_lookupcolor(const colorhash_table cht, const pixel * const colorP)
+static int ppm_lookupcolor(const colorhash_table cht, const pixel * const colorP)
 {
   int hash;
   colorhist_list chl;
@@ -233,7 +233,7 @@ int ppm_lookupcolor(const colorhash_table cht, const pixel * const colorP)
   return -1;
 }
 
-void ppm_freecolorhist(colorhist_vector chv)
+static void ppm_freecolorhist(colorhist_vector chv)
 {
   Free((char *)chv);
 }

@@ -1,4 +1,4 @@
-// $Id: SelectBuffer.cpp,v 1.22 2008-05-04 08:31:14 geuzaine Exp $
+// $Id: SelectBuffer.cpp,v 1.23 2008-06-25 07:58:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -48,7 +48,7 @@ class hitDepthLessThan{
 
 // returns the element at a given position in a vertex array (element
 // pointers are not always stored: returning 0 is not an error)
-MElement *getElement(GEntity *e, int va_type, int index)
+static MElement *getElement(GEntity *e, int va_type, int index)
 {
   switch(va_type){
   case 2: 

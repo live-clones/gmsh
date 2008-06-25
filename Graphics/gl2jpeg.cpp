@@ -1,4 +1,4 @@
-// $Id: gl2jpeg.cpp,v 1.30 2008-05-04 08:31:15 geuzaine Exp $
+// $Id: gl2jpeg.cpp,v 1.31 2008-06-25 07:58:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -47,7 +47,7 @@ extern "C"
 #include <jerror.h>
 }
 
-void my_output_message(j_common_ptr cinfo)
+static void my_output_message(j_common_ptr cinfo)
 {
   char buffer[JMSG_LENGTH_MAX];
 
