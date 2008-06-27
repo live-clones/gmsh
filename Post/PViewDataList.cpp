@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.26 2008-06-04 05:32:42 geuzaine Exp $
+// $Id: PViewDataList.cpp,v 1.27 2008-06-27 08:41:50 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -213,7 +213,13 @@ void PViewDataList::_stat(List_T *D, List_T *C, int nb)
 void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod, int nbedg)
 {
   // compute statistics for element lists
-  if(!nbelm) return;
+  if(!nbelm) return;  
+
+  std::vector<List_T *> is;
+  if (getInterpolationScheme (nbedg,is) == 4) {
+    nbnod = List_Nbr(is[2]);
+    //    printf("nbnod = %d\n",nbnod);
+  }
 
   int nbval = nbcomp * nbnod;
 
@@ -267,6 +273,12 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod, int nb
 void PViewDataList::_setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
                              List_T *list, int nblist)
 {
+  std::vector<List_T *> is;
+  if (getInterpolationScheme (nbedg,is) == 4) {
+    nbnod = List_Nbr(is[2]);
+    //    printf("hey hey : nbnod = %d\n",nbnod);
+  }
+
   _lastDimension = dim;
   _lastNumNodes = nbnod;
   _lastNumComponents = nbcomp;

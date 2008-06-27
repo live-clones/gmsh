@@ -984,12 +984,7 @@ void adaptiveElements<T>::initWithLowResolution(PViewData *data, int step)
   }
   if(!numEle) return;
 
-  int numNodes;
-  if(_coefsGeom)
-    numNodes = _coefsGeom->size1();
-  else
-    numNodes = T::numNodes;
-
+  int numNodes = getNumNodes();
   int numVal = _coefs->size1() * numComp;
 
   _minVal = VAL_INF;
@@ -1018,12 +1013,12 @@ void adaptiveElements<T>::initWithLowResolution(PViewData *data, int step)
     for(int ele = 0; ele < data->getNumElements(step, ent); ele++){    
       if(data->skipElement(step, ent, ele) ||
 	 data->getNumEdges(step, ent, ele) != T::numEdges) continue;
-      if(numNodes != data->getNumNodes(step, ent, ele)){
-	Msg::Error("Wrong number of nodes (%d) in element %d", numNodes, ele);
+      if(numVal != data->getNumValues(step, ent, ele)){
+	Msg::Error("Wrong number of values (%d) in element %d (expecting %d)", numVal, ele,data->getNumValues(step, ent, ele));
 	continue;
       }
-      if(numVal != data->getNumValues(step, ent, ele)){
-	Msg::Error("Wrong number of values (%d) in element %d", numVal, ele);
+      if(numNodes != data->getNumNodes(step, ent, ele)){
+	Msg::Error("Wrong number of nodes (%d) in element %d (expecting %d)", numNodes, ele, data->getNumNodes(step, ent, ele));
 	continue;
       }
       for(int nod = 0; nod < numNodes; nod++){
@@ -1041,13 +1036,14 @@ void adaptiveElements<T>::initWithLowResolution(PViewData *data, int step)
 	}
       }
       else if(numComp == 3){
-	for(int i = 0; i < numVal / 3; i++){
+	const int offset = numVal/3;
+	for(int i = 0; i < offset ; i++){
 	  double val[3];
 	  // adaptation of the visualization mesh bases on the norm
 	  // squared of the vector
- 	  data->getValue(step, ent, ele, 3 * i, val[0]); 
- 	  data->getValue(step, ent, ele, 3 * i + 1, val[1]); 
- 	  data->getValue(step, ent, ele, 3 * i + 2, val[2]); 
+ 	  data->getValue(step, ent, ele, i, val[0]); 
+ 	  data->getValue(step, ent, ele, i + offset, val[1]); 
+ 	  data->getValue(step, ent, ele, i + 2*offset, val[2]); 
 	  (*_val)(k, i) = (val[0] * val[0] + val[1] * val[1] + val[2] * val[2]);
 	  (*_valX)(k, i) = val[0];
 	  (*_valY)(k, i) = val[1];
@@ -1230,39 +1226,47 @@ adaptiveData::adaptiveData(PViewData *data)
   */
   _outData = new PViewDataList(true);
 
-  int numComp = _inData->getNumComponents(0, 0, 0);
+  // The number of nodes is supposed to be fixed in an adaptive view
+  // This number depends on the 
 
+  int numComp = _inData->getNumComponents(0, 0, 0);
   std::vector<List_T*> p;
-  if(_inData->getNumLines() && _inData->getInterpolationScheme(1, p) >= 2)
+  if(_inData->getNumLines() && _inData->getInterpolationScheme(1, p) >= 2){
     _lines = new adaptiveElements<adaptiveLine>
       ((numComp == 1) ? _outData->SL : _outData->VL,
        (numComp == 1) ? &_outData->NbSL : &_outData->NbVL,
        p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
-  if(_inData->getNumTriangles() && _inData->getInterpolationScheme(3, p) >= 2)
+  }
+  if(_inData->getNumTriangles() && _inData->getInterpolationScheme(3, p) >= 2){
     _triangles = new adaptiveElements<adaptiveTriangle>
       ((numComp == 1) ? _outData->ST : _outData->VT,
        (numComp == 1) ? &_outData->NbST : &_outData->NbVT,
        p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
-  if(_inData->getNumQuadrangles() && _inData->getInterpolationScheme(4, p) >= 2)
+  }
+  if(_inData->getNumQuadrangles() && _inData->getInterpolationScheme(4, p) >= 2){
     _quadrangles = new adaptiveElements<adaptiveQuadrangle>
       ((numComp == 1) ? _outData->SQ : _outData->VQ,
        (numComp == 1) ? &_outData->NbSQ : &_outData->NbVQ,
        p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
-  if(_inData->getNumTetrahedra() && _inData->getInterpolationScheme(6, p) >= 2)
+  }
+  if(_inData->getNumTetrahedra() && _inData->getInterpolationScheme(6, p) >= 2){
     _tetrahedra = new adaptiveElements<adaptiveTetrahedron>
       ((numComp == 1) ? _outData->SS : _outData->VS,
        (numComp == 1) ? &_outData->NbSS : &_outData->NbVS,
        p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
-  if(_inData->getNumPrisms() && _inData->getInterpolationScheme(9, p) >= 2)
+  }
+  if(_inData->getNumPrisms() && _inData->getInterpolationScheme(9, p) >= 2){
     _prisms = new adaptiveElements<adaptivePrism>
       ((numComp == 1) ? _outData->SI : _outData->VI,
        (numComp == 1) ? &_outData->NbSI : &_outData->NbVI, 
        p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
-  if(_inData->getNumHexahedra() && _inData->getInterpolationScheme(12, p) >= 2)
+  }
+  if(_inData->getNumHexahedra() && _inData->getInterpolationScheme(12, p) >= 2){
     _hexahedra = new adaptiveElements<adaptiveHexahedron>
       ((numComp == 1) ? _outData->SH : _outData->VH,
        (numComp == 1) ? &_outData->NbSH : &_outData->NbVH, 
        p[0], p[1], (p.size() == 4) ? p[2] : 0, (p.size() == 4) ? p[3] : 0);
+  }
 }
 
 void adaptiveData::initWithLowResolution(int step)

@@ -297,6 +297,7 @@ class adaptiveElements {
   ~adaptiveElements();
   void initWithLowResolution(PViewData *data, int step);
   void changeResolution(int level, double tol, GMSH_Post_Plugin *plug=0);
+  inline int getNumNodes () const {return _coefsGeom ? _coefsGeom->size1() : T::numNodes;}
 };
 
 class adaptiveData {
