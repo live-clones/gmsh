@@ -1,4 +1,4 @@
-// $Id: FunctionSpace.cpp,v 1.6 2008-06-10 08:37:34 remacle Exp $
+// $Id: FunctionSpace.cpp,v 1.7 2008-06-27 08:10:07 koen Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -324,7 +324,7 @@ Double_Matrix gmshGeneratePointsTetrahedron(int order, bool serendip)
   
   Double_Matrix point(nbPoints, 3);
 
-  double overOrder = 1. / order;
+  double overOrder = (order == 0 ? 1. : 1. / order);
 
   point(0, 0) = 0.;
   point(0, 1) = 0.;
@@ -342,25 +342,31 @@ Double_Matrix gmshGeneratePointsTetrahedron(int order, bool serendip)
     point(3, 0) = 0.;
     point(3, 1) = 0.;
     point(3, 2) = order;
+
+    // edges e5 and e6 switched in original version
     
     if (order > 1) {
       for (int k = 0; k < (order - 1); k++) {
         point(4 + k, 0) = k + 1;
-        point(4 + order - 1 + k, 0) = order - 1 - k;
+        point(4 +      order - 1  + k, 0) = order - 1 - k;
         point(4 + 2 * (order - 1) + k, 0) = 0.; 
         point(4 + 3 * (order - 1) + k, 0) = 0.;
-        point(4 + 4 * (order - 1) + k, 0) = order - 1 - k;
-        point(4 + 5 * (order - 1) + k, 0) = 0.;
+        // point(4 + 4 * (order - 1) + k, 0) = order - 1 - k;
+        // point(4 + 5 * (order - 1) + k, 0) = 0.;
+        point(4 + 4 * (order - 1) + k, 0) = 0.;
+        point(4 + 5 * (order - 1) + k, 0) = order - 1 - k;
         
         point(4 + k, 1) = 0.;
-        point(4 + order - 1 + k, 1) = k + 1;
+        point(4 +      order - 1  + k, 1) = k + 1;
         point(4 + 2 * (order - 1) + k, 1) = order - 1 - k; 
         point(4 + 3 * (order - 1) + k, 1) = 0.;
-        point(4 + 4 * (order - 1) + k, 1) = 0.;
-        point(4 + 5 * (order - 1) + k, 1) = order - 1 - k;
+        //         point(4 + 4 * (order - 1) + k, 1) = 0.;
+        //         point(4 + 5 * (order - 1) + k, 1) = order - 1 - k;
+        point(4 + 4 * (order - 1) + k, 1) = order - 1 - k;
+        point(4 + 5 * (order - 1) + k, 1) = 0.;
         
         point(4 + k, 2) = 0.;
-        point(4 + order - 1 + k, 2) = 0.;
+        point(4 +      order - 1  + k, 2) = 0.;
         point(4 + 2 * (order - 1) + k, 2) = 0.; 
         point(4 + 3 * (order - 1) + k, 2) = k + 1;
         point(4 + 4 * (order - 1) + k, 2) = k + 1;
@@ -587,7 +593,7 @@ const gmshFunctionSpace &gmshFunctionSpaces::find(int tag)
     break;
   case MSH_TET_4 :
     F.monomials = generatePascalTetrahedron(1);
-    F.points =    gmshGeneratePointsTetrahedron(5, false);
+    F.points =    gmshGeneratePointsTetrahedron(1, false);
     break;
   case MSH_TET_10 :
     F.monomials = generatePascalTetrahedron(2);
