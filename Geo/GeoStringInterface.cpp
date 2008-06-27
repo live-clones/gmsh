@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.24 2008-06-19 15:58:41 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.25 2008-06-27 18:00:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,7 @@ extern Context_T CTX;
 // Some old systems don't have snprintf... Just call sprintf instead.
 
 #if defined(HAVE_NO_SNPRINTF)
-int snprintf(char *str, size_t size, const char* fmt, ...)
+static int snprintf(char *str, size_t size, const char* fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
@@ -139,7 +139,7 @@ void coherence(const char *fich)
   add_infile("Coherence;", fich, true);
 }
 
-void strncat_list(char *text, List_T *list)
+static void strncat_list(char *text, List_T *list)
 {
   char text2[BUFFSIZE];
   for(int i = 0; i < List_Nbr(list); i++){
@@ -243,25 +243,34 @@ void add_point(const char *fich, const char *x, const char *y, const char *z,
   add_infile(text, fich);
 }
 
-void add_field_option(int field_id, const char *option_name, const char *option_value, const char *fich){
-        std::ostringstream sstream;
-        sstream<<"Field["<<field_id<<"]."<<std::string(option_name)<<" = "<<std::string(option_value)<<";";
-        add_infile(sstream.str().c_str(),fich);
+void add_field_option(int field_id, const char *option_name, const char *option_value, 
+		      const char *fich)
+{
+  std::ostringstream sstream;
+  sstream<<"Field["<<field_id<<"]."<<std::string(option_name)<<" = "
+	 <<std::string(option_value)<<";";
+  add_infile(sstream.str().c_str(),fich);
 }
-void add_field(int field_id, const char *type_name, const char *fich){
-        std::ostringstream sstream;
-        sstream<<"Field["<<field_id<<"] = "<<std::string(type_name)<<";";
-        add_infile(sstream.str().c_str(),fich);
+
+void add_field(int field_id, const char *type_name, const char *fich)
+{
+  std::ostringstream sstream;
+  sstream<<"Field["<<field_id<<"] = "<<std::string(type_name)<<";";
+  add_infile(sstream.str().c_str(),fich);
 }
-void delete_field(int field_id, const char *fich){
-        std::ostringstream sstream;
-        sstream<<"Delete Field ["<<field_id<<"];";
-        add_infile(sstream.str().c_str(),fich);
+
+void delete_field(int field_id, const char *fich)
+{
+  std::ostringstream sstream;
+  sstream<<"Delete Field ["<<field_id<<"];";
+  add_infile(sstream.str().c_str(),fich);
 }
-void set_background_field(int field_id,const char *fich){
-        std::ostringstream sstream;
-        sstream<<"Background Field = "<<field_id<<";";
-        add_infile(sstream.str().c_str(),fich);
+
+void set_background_field(int field_id,const char *fich)
+{
+  std::ostringstream sstream;
+  sstream<<"Background Field = "<<field_id<<";";
+  add_infile(sstream.str().c_str(),fich);
 }
 
 void add_line(int p1, int p2, const char *fich)

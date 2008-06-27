@@ -1,4 +1,4 @@
-// $Id: meshGRegionTransfinite.cpp,v 1.12 2008-06-12 12:23:29 geuzaine Exp $
+// $Id: meshGRegionTransfinite.cpp,v 1.13 2008-06-27 18:00:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -112,14 +112,14 @@
                                       tab[i + 1][j + 1][k + 1], \
                                       tab[i + 1][j + 1][k    ])
 
-double transfiniteHex(double f1, double f2, double f3, double f4, 
-                      double f5, double f6,
-                      double c1, double c2, double c3, double c4, 
-                      double c5, double c6, double c7, double c8, 
-                      double c9, double c10, double c11, double c12,
-                      double s1, double s2, double s3, double s4, 
-                      double s5, double s6, double s7, double s8,
-                      double u, double v, double w)
+static double transfiniteHex(double f1, double f2, double f3, double f4, 
+			     double f5, double f6,
+			     double c1, double c2, double c3, double c4, 
+			     double c5, double c6, double c7, double c8, 
+			     double c9, double c10, double c11, double c12,
+			     double s1, double s2, double s3, double s4, 
+			     double s5, double s6, double s7, double s8,
+			     double u, double v, double w)
 {
   return (1-u)*f4 + u*f2 + (1-v)*f1 + v*f3 + (1-w)*f5 + w*f6 -
     ((1-u)*(1-v)*c9 + (1-u)*v*c12 + u*(1-v)*c10 + u*v*c11) -
@@ -129,15 +129,15 @@ double transfiniteHex(double f1, double f2, double f3, double f4,
     (1-u)*(1-v)*w*s5 + u*(1-v)*w*s6 + u*v*w*s7 + (1-u)*v*w*s8;
 }
 
-MVertex *transfiniteHex(GRegion *gr, 
-			MVertex *f1, MVertex *f2, MVertex *f3, MVertex *f4, 
-                        MVertex *f5, MVertex *f6,
-                        MVertex *c1, MVertex *c2, MVertex *c3, MVertex *c4, 
-                        MVertex *c5, MVertex *c6, MVertex *c7, MVertex *c8, 
-                        MVertex *c9, MVertex *c10, MVertex *c11, MVertex *c12,
-                        MVertex *s1, MVertex *s2, MVertex *s3, MVertex *s4, 
-                        MVertex *s5, MVertex *s6, MVertex *s7, MVertex *s8,
-                        double u, double v, double w)
+static MVertex *transfiniteHex(GRegion *gr, 
+			       MVertex *f1, MVertex *f2, MVertex *f3, MVertex *f4, 
+			       MVertex *f5, MVertex *f6,
+			       MVertex *c1, MVertex *c2, MVertex *c3, MVertex *c4, 
+			       MVertex *c5, MVertex *c6, MVertex *c7, MVertex *c8, 
+			       MVertex *c9, MVertex *c10, MVertex *c11, MVertex *c12,
+			       MVertex *s1, MVertex *s2, MVertex *s3, MVertex *s4, 
+			       MVertex *s5, MVertex *s6, MVertex *s7, MVertex *s8,
+			       double u, double v, double w)
 {
   double x = transfiniteHex(f1->x(), f2->x(), f3->x(), f4->x(), f5->x(), f6->x(),
                             c1->x(), c2->x(), c3->x(), c4->x(), c5->x(), c6->x(),

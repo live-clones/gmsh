@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.136 2008-06-10 08:37:34 remacle Exp $
+// $Id: meshGFace.cpp,v 1.137 2008-06-27 18:00:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -60,7 +60,7 @@ void fourthPoint(double *p1, double *p2, double *p3, double *p4)
   p4[2] = c[2] + R * vz[2];
 }
 
-bool noseam(GFace *gf)
+static bool noseam(GFace *gf)
 {
   std::list<GEdge*> edges = gf->edges();
   std::list<GEdge*>::iterator it = edges.begin();
@@ -73,8 +73,8 @@ bool noseam(GFace *gf)
   return true;
 }
 
-void remeshUnrecoveredEdges(std::set<EdgeToRecover> &edgesNotRecovered, 
-                            std::list<GFace*> &facesToRemesh)
+static void remeshUnrecoveredEdges(std::set<EdgeToRecover> &edgesNotRecovered, 
+				   std::list<GFace*> &facesToRemesh)
 {
   facesToRemesh.clear();
   deMeshGFace dem;
@@ -156,17 +156,17 @@ void remeshUnrecoveredEdges(std::set<EdgeToRecover> &edgesNotRecovered,
   }
 }
 
-bool AlgoDelaunay2D(GFace *gf)
+static bool AlgoDelaunay2D(GFace *gf)
 {
-  if(noseam(gf) && /*gf->getNativeType() == GEntity::GmshModel &&*/ 
-     (CTX.mesh.algo2d == ALGO_2D_DELAUNAY || CTX.mesh.algo2d == ALGO_2D_FRONTAL) /*&& gf->geomType() == GEntity::Plane*/)
+  if(noseam(gf) && (CTX.mesh.algo2d == ALGO_2D_DELAUNAY || 
+		    CTX.mesh.algo2d == ALGO_2D_FRONTAL))
     return true;
   return false;
 }
 
 void computeEdgeLoops(const GFace *gf,
-                      std::vector<MVertex*> &all_mvertices,
-                      std::vector<int> &indices)
+		      std::vector<MVertex*> &all_mvertices,
+		      std::vector<int> &indices)
 {
   std::list<GEdge*> edges = gf->edges();
   std::list<int> ori = gf->orientations();
@@ -230,8 +230,8 @@ void computeElementShapes(GFace *gf, double &worst, double &avg, double &best,
   avg /= nT;
 }
 
-bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, 
-                   std::set<EdgeToRecover> *not_recovered, int pass_)
+static bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r, 
+			  std::set<EdgeToRecover> *not_recovered, int pass_)
 {
   BDS_GeomEntity *g = 0;
   if (pass_ == 2){
@@ -329,7 +329,7 @@ bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
 
-bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
+static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
 {
   BDS_GeomEntity CLASS_F (1, 2);
   typedef std::set<MVertex*> v_container;
@@ -747,14 +747,14 @@ bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
 // case of periodicty, some curves are present 2 times in the wire
 // (seams). Those must be meshed separately
 
-inline double dist2 (const SPoint2 &p1,const SPoint2 &p2)
+static inline double dist2(const SPoint2 &p1, const SPoint2 &p2)
 {
   const double dx = p1.x() - p2.x();
   const double dy = p1.y() - p2.y();
   return dx*dx+dy*dy;
 }
 
-void printMesh1d (int iEdge, int seam, std::vector<SPoint2> &m)
+static void printMesh1d(int iEdge, int seam, std::vector<SPoint2> &m)
 {
   printf("Mesh1D for edge %d seam %d\n", iEdge, seam);
   for (unsigned int i = 0; i < m.size(); i++){
@@ -762,12 +762,12 @@ void printMesh1d (int iEdge, int seam, std::vector<SPoint2> &m)
   }
 }
 
-bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop  &gel,
-                                    std::vector<BDS_Point*> &result,
-                                    SBoundingBox3d &bbox, BDS_Mesh *m,
-                                    std::map<BDS_Point*, MVertex*> &recover_map_global,
-                                    int &count, int countTot, double tol,
-                                    bool seam_the_first = false)
+static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop  &gel,
+					   std::vector<BDS_Point*> &result,
+					   SBoundingBox3d &bbox, BDS_Mesh *m,
+					   std::map<BDS_Point*, MVertex*> &recover_map_global,
+					   int &count, int countTot, double tol,
+					   bool seam_the_first = false)
 {
   // for each edge, we build a list of points that are the mapping of
   // the edge points on the face for seams, we build the list for
@@ -986,7 +986,7 @@ bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop  &gel,
   return true;
 }
 
-bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
+static bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
 {
   std::map<BDS_Point*,MVertex*> recover_map;
 
@@ -1345,7 +1345,7 @@ void meshGFace::operator() (GFace *gf)
 }
 
 template<class T>
-bool shouldRevert(MEdge &reference, std::vector<T*> &elements)
+static bool shouldRevert(MEdge &reference, std::vector<T*> &elements)
 {
   for(unsigned int i = 0; i < elements.size(); i++){
     for(int j = 0; j < elements[i]->getNumEdges(); j++){

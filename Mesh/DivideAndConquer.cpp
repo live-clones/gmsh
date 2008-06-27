@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.19 2008-06-07 17:20:48 geuzaine Exp $
+// $Id: DivideAndConquer.cpp,v 1.20 2008-06-27 18:00:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -41,10 +41,10 @@
 
 static PointRecord *pPointArray;
 
-int Insert(PointNumero a, PointNumero b);
-int Delete(PointNumero a, PointNumero b);
+static int Insert(PointNumero a, PointNumero b);
+static int Delete(PointNumero a, PointNumero b);
 
-PointNumero Predecessor(PointNumero a, PointNumero b)
+static PointNumero Predecessor(PointNumero a, PointNumero b)
 {
   DListPeek p = pPointArray[a].adjacent;
   if(p == NULL)
@@ -59,7 +59,7 @@ PointNumero Predecessor(PointNumero a, PointNumero b)
   return -1;
 }
 
-PointNumero Successor(PointNumero a, PointNumero b)
+static PointNumero Successor(PointNumero a, PointNumero b)
 {
   DListPeek p = pPointArray[a].adjacent;
   if(p == NULL)
@@ -74,7 +74,7 @@ PointNumero Successor(PointNumero a, PointNumero b)
   return -1;
 }
 
-int FixFirst(PointNumero x, PointNumero f)
+static int FixFirst(PointNumero x, PointNumero f)
 {
   DListPeek p = pPointArray[x].adjacent;
   if(p == NULL)
@@ -93,12 +93,12 @@ int FixFirst(PointNumero x, PointNumero f)
   return out;
 }
 
-PointNumero First(PointNumero x)
+static PointNumero First(PointNumero x)
 {
   return (pPointArray[x].adjacent)->point_num;
 }
 
-int IsLeftOf(PointNumero x, PointNumero y, PointNumero check)
+static int IsLeftOf(PointNumero x, PointNumero y, PointNumero check)
 {
   double pa[2] = {(double)pPointArray[x].where.h, (double)pPointArray[x].where.v};
   double pb[2] = {(double)pPointArray[y].where.h, (double)pPointArray[y].where.v};
@@ -110,12 +110,12 @@ int IsLeftOf(PointNumero x, PointNumero y, PointNumero check)
   return result > 0;
 }
 
-int IsRightOf(PointNumero x, PointNumero y, PointNumero check)
+static int IsRightOf(PointNumero x, PointNumero y, PointNumero check)
 {
   return IsLeftOf(y, x, check);
 }
 
-Segment LowerCommonTangent(DT vl, DT vr)
+static Segment LowerCommonTangent(DT vl, DT vr)
 {
   PointNumero x, y, z, z1, z2, temp;
   Segment s;
@@ -144,7 +144,7 @@ Segment LowerCommonTangent(DT vl, DT vr)
   }
 }
 
-Segment UpperCommonTangent(DT vl, DT vr)
+static Segment UpperCommonTangent(DT vl, DT vr)
 {
   PointNumero x, y, z, z1, z2, temp;
   Segment s;
@@ -174,7 +174,7 @@ Segment UpperCommonTangent(DT vl, DT vr)
 }
 
 // return 1 if the point k is NOT in the circumcircle of triangle  hij
-int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
+static int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
 {
   if((h == i) && (h == j) && (h == k)) {
     Msg::Error("3 identical points in Qtest");
@@ -192,7 +192,7 @@ int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
   return (result < 0) ? 1 : 0;
 }
 
-int merge(DT vl, DT vr)
+static int merge(DT vl, DT vr)
 {
   Segment bt, ut;
   int a, b, out;
@@ -279,7 +279,7 @@ int merge(DT vl, DT vr)
   return 1;
 }
 
-DT recur_trig(PointNumero left, PointNumero right)
+static DT recur_trig(PointNumero left, PointNumero right)
 {
   int n, m;
   DT dt;
@@ -323,7 +323,7 @@ DT recur_trig(PointNumero left, PointNumero right)
   return dt;
 }
 
-int comparePoints(const void *i, const void *j)
+static int comparePoints(const void *i, const void *j)
 {
   double x, y;
 
@@ -337,7 +337,7 @@ int comparePoints(const void *i, const void *j)
 }
 
 // this fonction builds the delaunay triangulation for a window
-int BuildDelaunay(DocRecord *doc)
+static int BuildDelaunay(DocRecord *doc)
 {
   pPointArray = doc->points;
   qsort(doc->points, doc->numPoints, sizeof(PointRecord), comparePoints);
@@ -347,7 +347,7 @@ int BuildDelaunay(DocRecord *doc)
 
 // This routine insert the point 'newPoint' in the list dlist,
 // respecting the clock-wise orientation
-int DListInsert(DListRecord **dlist, MPoint center, PointNumero newPoint)
+static int DListInsert(DListRecord **dlist, MPoint center, PointNumero newPoint)
 {
   DListRecord *p, *newp;
   double alpha1, alpha, beta, xx, yy;
@@ -410,14 +410,14 @@ int DListInsert(DListRecord **dlist, MPoint center, PointNumero newPoint)
 
 // This routine inserts the point 'a' in the adjency list of 'b' and
 // the point 'b' in the adjency list of 'a'
-int Insert(PointNumero a, PointNumero b)
+static int Insert(PointNumero a, PointNumero b)
 {
   int rslt = DListInsert(&pPointArray[a].adjacent, pPointArray[a].where, b);
   rslt &= DListInsert(&pPointArray[b].adjacent, pPointArray[b].where, a);
   return rslt;
 }
 
-int DListDelete(DListPeek *dlist, PointNumero oldPoint)
+static int DListDelete(DListPeek *dlist, PointNumero oldPoint)
 {
   DListPeek p;
 
@@ -451,7 +451,7 @@ int DListDelete(DListPeek *dlist, PointNumero oldPoint)
 
 // This routine removes the point 'a' in the adjency list of 'b' and
 // the point 'b' in the adjency list of 'a'
-int Delete(PointNumero a, PointNumero b)
+static int Delete(PointNumero a, PointNumero b)
 {
   int rslt = DListDelete(&pPointArray[a].adjacent, b);
   rslt &= DListDelete(&pPointArray[b].adjacent, a);
@@ -459,7 +459,7 @@ int Delete(PointNumero a, PointNumero b)
 }
 
 // compte les points sur le polygone convexe
-int CountPointsOnHull(int n, PointRecord *pPointArray)
+static int CountPointsOnHull(int n, PointRecord *pPointArray)
 {
   PointNumero p, p2, temp;
   int i;
@@ -478,7 +478,7 @@ int CountPointsOnHull(int n, PointRecord *pPointArray)
   return (i <= n) ? i : -1;
 }
 
-PointNumero *ConvertDlistToArray(DListPeek *dlist, int *n)
+static PointNumero *ConvertDlistToArray(DListPeek *dlist, int *n)
 {
   DListPeek p, temp;
   int i, max = 0;
@@ -506,7 +506,7 @@ PointNumero *ConvertDlistToArray(DListPeek *dlist, int *n)
 }
 
 // Convertir les listes d'adjacence en triangles
-int ConvertDListToTriangles(DocRecord *doc)
+static int ConvertDListToTriangles(DocRecord *doc)
 {
   // on suppose que n >= 3. gPointArray est suppose OK.
 
@@ -559,7 +559,7 @@ int ConvertDListToTriangles(DocRecord *doc)
 }
 
 //  Cette routine efface toutes les listes d'adjacence du pPointArray
-void RemoveAllDList(int n, PointRecord *pPointArray)
+static void RemoveAllDList(int n, PointRecord *pPointArray)
 {
   int i;
   DListPeek p, temp;

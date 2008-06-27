@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.157 2008-06-07 17:20:44 geuzaine Exp $
+dnl $Id: configure.in,v 1.158 2008-06-27 18:00:51 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 dnl
@@ -804,6 +804,9 @@ if test $ac_cv_sizeof_size_t != 4; then
     AC_MSG_WARN([Unsupported size of size_t - this may affect FNV hashing.])
   else
     FLAGS="${FLAGS} -DHAVE_64BIT_SIZE_T"
+    if test "x${OCC}" = "xyes"; then
+      FLAGS="${FLAGS} -D_OCC64"
+    fi
   fi
 fi
 

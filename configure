@@ -6891,6 +6891,9 @@ if test $ac_cv_sizeof_size_t != 4; then
 echo "$as_me: WARNING: Unsupported size of size_t - this may affect FNV hashing." >&2;}
   else
     FLAGS="${FLAGS} -DHAVE_64BIT_SIZE_T"
+    if test "x${OCC}" = "xyes"; then
+      FLAGS="${FLAGS} -D_OCC64"
+    fi
   fi
 fi
 

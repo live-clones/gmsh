@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.64 2008-06-07 17:20:48 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.65 2008-06-27 18:00:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -51,7 +51,7 @@ struct xi2lc {
 
 static std::vector<xi2lc> interpLc;
 
-void smoothInterpLc(int nbSmooth)
+static void smoothInterpLc(int nbSmooth)
 {
   for(int j = 0; j < nbSmooth; j++){
     for(int i = 0 ; i < (int)interpLc.size(); i++){               
@@ -65,7 +65,7 @@ void smoothInterpLc(int nbSmooth)
   } 
 }
 
-void printInterpLc(const char *name)
+static void printInterpLc(const char *name)
 {
   FILE *f = fopen(name,"w");
   for(unsigned int i = 0; i < interpLc.size(); i++){              
@@ -75,7 +75,7 @@ void printInterpLc(const char *name)
   fclose(f);
 }
 
-void buildInterpLc(List_T *lcPoints)
+static void buildInterpLc(List_T *lcPoints)
 {
   IntPoint p;
   interpLc.clear();
@@ -85,7 +85,7 @@ void buildInterpLc(List_T *lcPoints)
   }
 }
 
-double F_Lc_usingInterpLc(GEdge *ge, double t)
+static double F_Lc_usingInterpLc(GEdge *ge, double t)
 {
   std::vector<xi2lc>::iterator it = std::lower_bound(interpLc.begin(),
                                                      interpLc.end(), xi2lc(t, 0));
@@ -101,7 +101,7 @@ double F_Lc_usingInterpLc(GEdge *ge, double t)
   return d * l;
 }
 
-double F_Lc_usingInterpLcBis(GEdge *ge, double t)
+static double F_Lc_usingInterpLcBis(GEdge *ge, double t)
 {
   GPoint p = ge->point(t);
   double lc_here;
@@ -120,7 +120,7 @@ double F_Lc_usingInterpLcBis(GEdge *ge, double t)
   return 1 / lc_here;
 }
 
-double F_Lc(GEdge *ge, double t)
+static double F_Lc(GEdge *ge, double t)
 {
   GPoint p = ge->point(t);
   double lc_here;
@@ -141,7 +141,7 @@ double F_Lc(GEdge *ge, double t)
   return d / lc_here;
 }
 
-double F_Transfinite(GEdge *ge, double t)
+static double F_Transfinite(GEdge *ge, double t)
 {
   double val, r;
 
@@ -199,20 +199,20 @@ double F_Transfinite(GEdge *ge, double t)
   return val;
 }
 
-double F_One(GEdge *ge, double t)
+static double F_One(GEdge *ge, double t)
 {
   SVector3 der = ge->firstDer(t) ;
   return norm(der);
 }
 
-double trapezoidal(IntPoint * P1, IntPoint * P2)
+static double trapezoidal(IntPoint * P1, IntPoint * P2)
 {
   return (0.5 * (P1->lc + P2->lc) * (P2->t - P1->t));
 }
 
-void RecursiveIntegration(GEdge *ge, IntPoint * from, IntPoint * to,
-                          double (*f) (GEdge *e, double X), List_T * pPoints,
-                          double Prec, int *depth)
+static void RecursiveIntegration(GEdge *ge, IntPoint * from, IntPoint * to,
+				 double (*f) (GEdge *e, double X), List_T * pPoints,
+				 double Prec, int *depth)
 {
   IntPoint P, p1;
 
@@ -243,9 +243,9 @@ void RecursiveIntegration(GEdge *ge, IntPoint * from, IntPoint * to,
   (*depth)--;
 }
 
-double Integration(GEdge *ge, double t1, double t2, 
-                   double (*f) (GEdge *e, double X),
-                   List_T * pPoints, double Prec)
+static double Integration(GEdge *ge, double t1, double t2, 
+			  double (*f) (GEdge *e, double X),
+			  List_T * pPoints, double Prec)
 {
   IntPoint from, to;
 

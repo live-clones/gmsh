@@ -1,4 +1,4 @@
-// $Id: meshGFaceExtruded.cpp,v 1.30 2008-05-06 21:11:48 geuzaine Exp $
+// $Id: meshGFaceExtruded.cpp,v 1.31 2008-06-27 18:00:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -28,8 +28,8 @@
 
 extern Context_T CTX;
 
-void createQuaTri(std::vector<MVertex*> &v, GFace *to,
-                  std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
+static void createQuaTri(std::vector<MVertex*> &v, GFace *to,
+			 std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
@@ -61,9 +61,9 @@ void createQuaTri(std::vector<MVertex*> &v, GFace *to,
   }
 }
 
-void extrudeMesh(GEdge *from, GFace *to,
-                 std::set<MVertex*, MVertexLessThanLexicographic> &pos,
-                 std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
+static void extrudeMesh(GEdge *from, GFace *to,
+			std::set<MVertex*, MVertexLessThanLexicographic> &pos,
+			std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
@@ -122,8 +122,8 @@ void extrudeMesh(GEdge *from, GFace *to,
   }
 }
 
-void copyMesh(GFace *from, GFace *to,
-              std::set<MVertex*, MVertexLessThanLexicographic> &pos)
+static void copyMesh(GFace *from, GFace *to,
+		     std::set<MVertex*, MVertexLessThanLexicographic> &pos)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 

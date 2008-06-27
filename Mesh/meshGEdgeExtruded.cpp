@@ -1,4 +1,4 @@
-// $Id: meshGEdgeExtruded.cpp,v 1.13 2008-05-04 08:31:16 geuzaine Exp $
+// $Id: meshGEdgeExtruded.cpp,v 1.14 2008-06-27 18:00:52 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -25,7 +25,7 @@
 #include "ExtrudeParams.h"
 #include "Message.h"
 
-void extrudeMesh(GVertex *from, GEdge *to)
+static void extrudeMesh(GVertex *from, GEdge *to)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
@@ -40,7 +40,7 @@ void extrudeMesh(GVertex *from, GEdge *to)
   }
 }
 
-void copyMesh(GEdge *from, GEdge *to)
+static void copyMesh(GEdge *from, GEdge *to)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 

@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.2 2008-05-06 21:11:46 geuzaine Exp $
+// $Id: Message.cpp,v 1.3 2008-06-27 18:00:51 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -49,7 +49,7 @@ int Message::_warningCount = 0;
 int Message::_errorCount = 0;
 
 #if defined(HAVE_NO_VSNPRINTF)
-int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
+static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 {
   if(strlen(fmt) > size - 1){ // just copy the format
     strncpy(str, fmt, size - 1);
