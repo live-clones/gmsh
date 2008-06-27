@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.318 2008-06-23 11:32:10 remacle Exp $
+// $Id: Gmsh.y,v 1.319 2008-06-27 17:34:22 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1858,9 +1858,7 @@ Delete :
 	GModel::current()->getGEOInternals()->destroy();
       }
       else if(!strcmp($2, "Physicals")){
-	List_Action(GModel::current()->getGEOInternals()->PhysicalGroups, 
-		    Free_PhysicalGroup);
-	List_Reset(GModel::current()->getGEOInternals()->PhysicalGroups);
+	GModel::current()->getGEOInternals()->reset_physicals();
 	GModel::current()->deletePhysicalGroups();
       }
       else

@@ -1,4 +1,4 @@
-// $Id: ExtrudeParams.cpp,v 1.28 2008-05-04 08:31:13 geuzaine Exp $
+// $Id: ExtrudeParams.cpp,v 1.29 2008-06-27 17:34:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -25,7 +25,7 @@
 
 smooth_data* ExtrudeParams::normals = 0;
 
-void Projette(double p[3], double mat[3][3])
+static void Projette(double p[3], double mat[3][3])
 {
   double X, Y, Z;
 

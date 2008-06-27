@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.38 2008-06-22 06:13:48 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.39 2008-06-27 17:34:19 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -27,8 +27,8 @@
 
 // Curves
 
-Vertex InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
-                              int derivee, double t1, double t2)
+static Vertex InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
+				     int derivee, double t1, double t2)
 {
   Vertex V;
   int i, j;
@@ -129,7 +129,7 @@ SPoint2 InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
 }
 
 // Uniform BSplines
-Vertex InterpolateUBS(Curve *Curve, double u, int derivee) 
+static Vertex InterpolateUBS(Curve *Curve, double u, int derivee) 
 {
   bool periodic = (Curve->end == Curve->beg);
   int NbControlPoints = List_Nbr(Curve->Control_Points);
@@ -182,7 +182,7 @@ int findSpan(double u, int deg, int n, float *U)
   return mid;
 }
 
-void basisFuns(double u, int i, int deg, float *U, double *N)
+static void basisFuns(double u, int i, int deg, float *U, double *N)
 {
   double left[1000];
   double *right = &left[deg + 1];
@@ -203,7 +203,7 @@ void basisFuns(double u, int i, int deg, float *U, double *N)
   }
 }
 
-Vertex InterpolateNurbs(Curve *Curve, double u, int derivee)
+static Vertex InterpolateNurbs(Curve *Curve, double u, int derivee)
 {
   static double Nb[1000];
   int span = findSpan(u, Curve->degre, List_Nbr(Curve->Control_Points), Curve->k);
@@ -400,9 +400,9 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
 #define TRAN_QUA(c1,c2,c3,c4,s1,s2,s3,s4,u,v) \
    (1.-u)*c4+u*c2+(1.-v)*c1+v*c3-((1.-u)*(1.-v)*s1+u*(1.-v)*s2+u*v*s3+(1.-u)*v*s4)
 
-Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
-                      Vertex s1, Vertex s2, Vertex s3, Vertex s4,
-                      double u, double v)
+static Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
+			     Vertex s1, Vertex s2, Vertex s3, Vertex s4,
+			     double u, double v)
 {
   Vertex V;
 
@@ -423,8 +423,8 @@ Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
 
 #define TRAN_TRI(c1,c2,c3,s1,s2,s3,u,v) u*c2+(1.-v)*c1+v*c3-(u*(1.-v)*s2+u*v*s3);
 
-Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
-                      Vertex s1, Vertex s2, Vertex s3, double u, double v)
+static Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
+			     Vertex s1, Vertex s2, Vertex s3, double u, double v)
 {
   Vertex V;
   V.lc = TRAN_TRI(c1.lc, c2.lc, c3.lc, s1.lc, s2.lc, s3.lc, u, v);
@@ -438,7 +438,7 @@ Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
   return V;
 }
 
-void TransfiniteSph(Vertex S, Vertex center, Vertex *T)
+static void TransfiniteSph(Vertex S, Vertex center, Vertex *T)
 {
   double r = sqrt(DSQR(S.Pos.X - center.Pos.X) + DSQR(S.Pos.Y - center.Pos.Y)
                   + DSQR(S.Pos.Z - center.Pos.Z));
@@ -455,7 +455,8 @@ void TransfiniteSph(Vertex S, Vertex center, Vertex *T)
   T->Pos.Z = center.Pos.Z + r * dirz;
 }
 
-bool iSRuledSurfaceASphere(Surface *s, SPoint3 &center, double &radius){
+bool iSRuledSurfaceASphere(Surface *s, SPoint3 &center, double &radius)
+{
   if(s->Typ != MSH_SURF_REGL && s->Typ != MSH_SURF_TRIC)return false;
 
   bool isSphere = true;
@@ -503,8 +504,7 @@ bool iSRuledSurfaceASphere(Surface *s, SPoint3 &center, double &radius){
   return isSphere;
 }
 
-
-Vertex InterpolateRuledSurface(Surface *s, double u, double v)
+static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
 {
   Curve *C[4] = {0, 0, 0, 0};
 
@@ -582,7 +582,7 @@ Vertex InterpolateRuledSurface(Surface *s, double u, double v)
   return T;
 }
 
-Vertex InterpolateExtrudedSurface(Surface *s, double u, double v)
+static Vertex InterpolateExtrudedSurface(Surface *s, double u, double v)
 {
   Curve *c = FindCurve(s->Extrude->geo.Source);
 

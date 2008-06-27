@@ -215,6 +215,7 @@ class GEO_Internals{
   GEO_Internals(){ alloc_all(); }
   ~GEO_Internals(){ free_all(); }
   void destroy(){ free_all(); alloc_all(); }
+  void reset_physicals();
 };
 
 typedef struct {
@@ -222,14 +223,9 @@ typedef struct {
   int Num;
 } Shape;
 
-int comparePosition(const void *a, const void *b);
 int compareVertex(const void *a, const void *b);
-int compareCurve(const void *a, const void *b);
-int compareEdgeLoop(const void *a, const void *b);
-int compareSurface(const void *a, const void *b);
-int compareSurfaceLoop(const void *a, const void *b);
-int compareVolume(const void *a, const void *b);
-int comparePhysicalGroup(const void *a, const void *b);
+
+void Projette(Vertex * v, double mat[3][3]);
 
 Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc, double u);
 Vertex *Create_Vertex(int Num, double u, double v, gmshSurface *s, double lc);
@@ -244,14 +240,6 @@ PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T * intlist);
 
 void End_Curve(Curve * c);
 void End_Surface(Surface * s);
-
-void Free_Vertex (void *a, void *b);
-void Free_Curve(void *a, void *b);
-void Free_EdgeLoop(void *a, void *b);
-void Free_Surface(void *a, void *b);
-void Free_SurfaceLoop(void *a, void *b);
-void Free_Volume(void *a, void *b);
-void Free_PhysicalGroup(void *a, void *b);
 
 int NEWPOINT(void);
 int NEWLINE(void);
@@ -307,8 +295,6 @@ bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shape
 int recognize_seg(int typ, List_T *liste, int *seg);
 int recognize_loop(List_T *liste, int *loop);
 int recognize_surfloop(List_T *liste, int *loop);
-
-void Projette(Vertex * v, double mat[3][3]);
 
 void sortEdgesInLoop(int num, List_T *edges);
 void setSurfaceGeneratrices(Surface *s, List_T *loops);
