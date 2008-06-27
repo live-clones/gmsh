@@ -934,7 +934,13 @@ class MTetrahedron : public MElement {
     }
   }
   virtual void jac(int order, MVertex *verts[], double u, double v, double w, double jac[3][3]);
+  virtual void jac(int order,std::vector<MVertex*>& verts,double u, double v, double w , double jac[3][3]);
+  virtual void jac(double u,double v,double w,double [3][3]);
+  
   virtual void pnt(int order, MVertex *verts[], double u, double v, double w, SPoint3 &);
+  virtual void pnt(int order, std::vector<MVertex *>& verts, double u, double v, double w, SPoint3 &);
+  virtual void pnt(double u, double v, double w, SPoint3 &);
+  
   virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
   {
     switch(num) {
@@ -1026,10 +1032,19 @@ class MTetrahedron10 : public MTetrahedron {
   virtual void revert()
   {
     MVertex *tmp;
-    tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
+    tmp = _v[0] ; _v[0]  = _v[1]; _v[1] = tmp;
     tmp = _vs[1]; _vs[1] = _vs[2]; _vs[2] = tmp;
     tmp = _vs[5]; _vs[5] = _vs[3]; _vs[3] = tmp;
   }
+
+  virtual void jac(double u,double v,double w, double jac[3][3]) {
+    MTetrahedron::jac(2,_vs,u,v,w,jac);
+  }
+  
+  virtual void pnt(double u,double v,double w, SPoint3& p) {
+    MTetrahedron::pnt(2, _vs, u, v, w, p);
+  }
+  
 };
 
 
@@ -1083,11 +1098,11 @@ class MTetrahedronN : public MTetrahedron {
   }
   virtual void jac(double u, double v, double w, double j[3][3])
   {
-    MTetrahedron::jac(_order, &(*(_vs.begin())), u, v, w, j);
+    MTetrahedron::jac(_order, _vs , u, v, w, j);
   }
   virtual void pnt(double u, double v, double w, SPoint3 &p)
   {
-    MTetrahedron::pnt(_order, &(*(_vs.begin())), u, v, w, p);
+    MTetrahedron::pnt(_order, _vs, u, v, w, p);
   }
 };
 

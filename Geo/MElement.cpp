@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.74 2008-06-20 16:25:38 geuzaine Exp $
+// $Id: MElement.cpp,v 1.75 2008-06-27 08:23:43 koen Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -736,21 +736,102 @@ void MTetrahedron::pnt(int ord, MVertex *vs[], double uu, double vv, double ww,S
   double z = 0 ; for(int i = 0; i < 4; i++) z += sf[i] * _v[i]->z();
 
   const int N = (ord+1)*(ord+2)*(ord+3)/6;
-
-  for(int i = 4; i < N+4; i++) x += sf[i] * vs[i - 4]->x();
-  for(int i = 4; i < N+4; i++) y += sf[i] * vs[i - 4]->y();
-  for(int i = 4; i < N+4; i++) z += sf[i] * vs[i - 4]->z();
+  
+  
+  for(int i = 4; i < N; i++) x += sf[i] * vs[i - 4]->x();
+  for(int i = 4; i < N; i++) y += sf[i] * vs[i - 4]->y();
+  for(int i = 4; i < N; i++) z += sf[i] * vs[i - 4]->z();
 
   p = SPoint3(x,y,z);
 #endif
 }
+void MTetrahedron::pnt(int ord, std::vector<MVertex *> & vs, double uu, double vv, double ww,SPoint3 &p)
+{
+#if !defined(HAVE_GMSH_EMBEDDED)
+  double sf[256];
+  switch(ord){
+  case 1: gmshFunctionSpaces::find(MSH_TET_4) .f(uu, vv, ww,sf); break;
+  case 2: gmshFunctionSpaces::find(MSH_TET_10).f(uu, vv, ww,sf); break;
+  case 3: gmshFunctionSpaces::find(MSH_TET_20).f(uu, vv, ww,sf); break;
+  case 4: gmshFunctionSpaces::find(MSH_TET_35).f(uu, vv, ww,sf); break;
+  case 5: gmshFunctionSpaces::find(MSH_TET_56).f(uu, vv, ww,sf); break;
+  default : throw;
+  }
+    
+  double x = 0 ; for(int i = 0; i < 4; i++) x += sf[i] * _v[i]->x();
+  double y = 0 ; for(int i = 0; i < 4; i++) y += sf[i] * _v[i]->y();
+  double z = 0 ; for(int i = 0; i < 4; i++) z += sf[i] * _v[i]->z();
+
+  const int N = (ord+1)*(ord+2)*(ord+3)/6;
+  
+  
+  for(int i = 4; i < N; i++) x += sf[i] * vs[i - 4]->x();
+  for(int i = 4; i < N; i++) y += sf[i] * vs[i - 4]->y();
+  for(int i = 4; i < N; i++) z += sf[i] * vs[i - 4]->z();
+
+  p = SPoint3(x,y,z);
+#endif
+}
+
+void MTetrahedron::pnt(double uu, double vv ,double ww, SPoint3& p) {
+  return pnt(1,0,uu,vv,ww,p);
+}
+
 
 void MTetrahedron::jac(int ord, MVertex *vs[], double uu, double vv, double ww, double j[3][3])
 {
 #if defined(HAVE_GMSH_EMBEDDED)
   return;
 #else
-  double grads[256][2];
+  
+  double grads[256][3];
+  switch(ord){
+  case 1: gmshFunctionSpaces::find(MSH_TET_4) .df(uu, vv, ww, grads); break;
+  case 2: gmshFunctionSpaces::find(MSH_TET_10).df(uu, vv, ww, grads); break;
+  case 3: gmshFunctionSpaces::find(MSH_TET_20).df(uu, vv, ww, grads); break;
+  case 4: gmshFunctionSpaces::find(MSH_TET_35).df(uu, vv, ww, grads); break;
+  case 5: gmshFunctionSpaces::find(MSH_TET_56).df(uu, vv, ww, grads); break;
+  default: throw;
+  }
+ 
+  j[0][0] = 0 ; for(int i = 0; i < 4; i++) j[0][0] += grads [i][0] * _v[i]->x();
+  j[1][0] = 0 ; for(int i = 0; i < 4; i++) j[1][0] += grads [i][1] * _v[i]->x();
+  j[2][0] = 0 ; for(int i = 0; i < 4; i++) j[2][0] += grads [i][2] * _v[i]->x();
+  
+  j[0][1] = 0 ; for(int i = 0; i < 4; i++) j[0][1] += grads [i][0] * _v[i]->y();
+  j[1][1] = 0 ; for(int i = 0; i < 4; i++) j[1][1] += grads [i][1] * _v[i]->y();
+  j[2][1] = 0 ; for(int i = 0; i < 4; i++) j[2][1] += grads [i][2] * _v[i]->y();
+  
+  j[0][2] = 0 ; for(int i = 0; i < 4; i++) j[0][2] += grads [i][0] * _v[i]->z();
+  j[1][2] = 0 ; for(int i = 0; i < 4; i++) j[1][2] += grads [i][1] * _v[i]->z();
+  j[2][2] = 0 ; for(int i = 0; i < 4; i++) j[2][2] += grads [i][2] * _v[i]->z();
+  
+  if (ord == 1) return;
+
+  const int N = (ord+1)*(ord+2)*(ord+3)/6;
+
+  for(int i = 4; i < N; i++) j[0][0] += grads[i][0] * vs[i - 4]->x();
+  for(int i = 4; i < N; i++) j[1][0] += grads[i][1] * vs[i - 4]->x();
+  for(int i = 4; i < N; i++) j[2][0] += grads[i][2] * vs[i - 4]->x();
+
+  for(int i = 4; i < N; i++) j[0][1] += grads[i][0] * vs[i - 4]->y();
+  for(int i = 4; i < N; i++) j[1][1] += grads[i][1] * vs[i - 4]->y();
+  for(int i = 4; i < N; i++) j[2][1] += grads[i][2] * vs[i - 4]->y();
+
+  for(int i = 4; i < N; i++) j[0][2] += grads[i][0] * vs[i - 4]->z();
+  for(int i = 4; i < N; i++) j[1][2] += grads[i][1] * vs[i - 4]->z();
+  for(int i = 4; i < N; i++) j[2][2] += grads[i][2] * vs[i - 4]->z();
+  
+#endif
+}
+
+void MTetrahedron::jac(int ord, std::vector<MVertex *>& vs, double uu, double vv, double ww, double j[3][3])
+{
+#if defined(HAVE_GMSH_EMBEDDED)
+  return;
+#else
+  
+  double grads[256][3];
   switch(ord){
   case 1: gmshFunctionSpaces::find(MSH_TET_4).df(uu, vv, ww,grads); break;
   case 2: gmshFunctionSpaces::find(MSH_TET_10).df(uu, vv, ww, grads); break;
@@ -760,32 +841,73 @@ void MTetrahedron::jac(int ord, MVertex *vs[], double uu, double vv, double ww, 
   default: throw;
   }
  
-  j[0][0] = 0 ; for(int i = 0; i < 3; i++) j[0][0] += grads [i][0] * _v[i]->x();
-  j[1][0] = 0 ; for(int i = 0; i < 3; i++) j[1][0] += grads [i][1] * _v[i]->x();
-  j[2][0] = 0 ; for(int i = 0; i < 3; i++) j[2][0] += grads [i][2] * _v[i]->x();
-  j[0][1] = 0 ; for(int i = 0; i < 3; i++) j[0][1] += grads [i][0] * _v[i]->y();
-  j[1][1] = 0 ; for(int i = 0; i < 3; i++) j[1][1] += grads [i][1] * _v[i]->y();
-  j[2][1] = 0 ; for(int i = 0; i < 3; i++) j[2][1] += grads [i][2] * _v[i]->y();
-  j[0][2] = 0 ; for(int i = 0; i < 3; i++) j[0][2] += grads [i][0] * _v[i]->z();
-  j[1][2] = 0 ; for(int i = 0; i < 3; i++) j[1][2] += grads [i][1] * _v[i]->z();
-  j[2][2] = 0 ; for(int i = 0; i < 3; i++) j[2][2] += grads [i][2] * _v[i]->z();
+  j[0][0] = 0 ; for(int i = 0; i < 4; i++) j[0][0] += grads [i][0] * _v[i]->x();
+  j[1][0] = 0 ; for(int i = 0; i < 4; i++) j[1][0] += grads [i][1] * _v[i]->x();
+  j[2][0] = 0 ; for(int i = 0; i < 4; i++) j[2][0] += grads [i][2] * _v[i]->x();
+  j[0][1] = 0 ; for(int i = 0; i < 4; i++) j[0][1] += grads [i][0] * _v[i]->y();
+  j[1][1] = 0 ; for(int i = 0; i < 4; i++) j[1][1] += grads [i][1] * _v[i]->y();
+  j[2][1] = 0 ; for(int i = 0; i < 4; i++) j[2][1] += grads [i][2] * _v[i]->y();
+  j[0][2] = 0 ; for(int i = 0; i < 4; i++) j[0][2] += grads [i][0] * _v[i]->z();
+  j[1][2] = 0 ; for(int i = 0; i < 4; i++) j[1][2] += grads [i][1] * _v[i]->z();
+  j[2][2] = 0 ; for(int i = 0; i < 4; i++) j[2][2] += grads [i][2] * _v[i]->z();
   
   if (ord == 1) return;
 
   const int N = (ord+1)*(ord+2)*(ord+3)/6;
 
-  for(int i = 3; i < N+4; i++) j[0][0] += grads[i][0] * vs[i - 4]->x();
-  for(int i = 3; i < N+4; i++) j[1][0] += grads[i][1] * vs[i - 4]->x();
-  for(int i = 3; i < N+4; i++) j[2][0] += grads[i][2] * vs[i - 4]->x();
+  for(int i = 4; i < N; i++) j[0][0] += grads[i][0] * vs[i - 4]->x();
+  for(int i = 4; i < N; i++) j[1][0] += grads[i][1] * vs[i - 4]->x();
+  for(int i = 4; i < N; i++) j[2][0] += grads[i][2] * vs[i - 4]->x();
 
-  for(int i = 3; i < N+4; i++) j[0][1] += grads[i][0] * vs[i - 4]->y();
-  for(int i = 3; i < N+4; i++) j[1][1] += grads[i][1] * vs[i - 4]->y();
-  for(int i = 3; i < N+4; i++) j[2][1] += grads[i][2] * vs[i - 4]->y();
+  for(int i = 4; i < N; i++) j[0][1] += grads[i][0] * vs[i - 4]->y();
+  for(int i = 4; i < N; i++) j[1][1] += grads[i][1] * vs[i - 4]->y();
+  for(int i = 4; i < N; i++) j[2][1] += grads[i][2] * vs[i - 4]->y();
 
-  for(int i = 3; i < N+4; i++) j[0][2] += grads[i][0] * vs[i - 4]->z();
-  for(int i = 3; i < N+4; i++) j[1][2] += grads[i][1] * vs[i - 4]->z();
-  for(int i = 3; i < N+4; i++) j[2][2] += grads[i][2] * vs[i - 4]->z();
+  for(int i = 4; i < N; i++) j[0][2] += grads[i][0] * vs[i - 4]->z();
+  for(int i = 4; i < N; i++) j[1][2] += grads[i][1] * vs[i - 4]->z();
+  for(int i = 4; i < N; i++) j[2][2] += grads[i][2] * vs[i - 4]->z();
+  
 #endif
+}
+
+void MTetrahedron::jac( double uu, double vv, double ww, double j[3][3]) {
+  return jac(1,0,uu,vv,ww,j);
+}
+
+int MTriangle6::getNumEdgesRep(){ return 3 * 6; }
+
+void MTriangle6::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+{
+  n[0] = n[1] = getFace(0).normal();
+  int N = getNumEdgesRep() / 3;
+  if (num < N){
+    SPoint3 pnt1, pnt2;
+    pnt((double)num / N, 0., 0,pnt1);
+    pnt((double)(num + 1) / N, 0., 0,pnt2);
+    x[0] = pnt1.x(); x[1] = pnt2.x();
+    y[0] = pnt1.y(); y[1] = pnt2.y();
+    z[0] = pnt1.z(); z[1] = pnt2.z();
+    return;
+  }  
+  if (num < 2 * N){
+    SPoint3 pnt1, pnt2;
+    num -= N;
+    pnt(1. - (double)num / N, (double)num / N, 0,pnt1);
+    pnt(1. - (double)(num + 1) / N, (double)(num + 1) / N, 0,pnt2);
+    x[0] = pnt1.x(); x[1] = pnt2.x();
+    y[0] = pnt1.y(); y[1] = pnt2.y();
+    z[0] = pnt1.z(); z[1] = pnt2.z();
+    return ;
+  }  
+  {
+    SPoint3 pnt1, pnt2;
+    num -= 2 * N;
+    pnt(0, (double)num / N, 0,pnt1);
+    pnt(0, (double)(num + 1) / N, 0,pnt2);
+    x[0] = pnt1.x(); x[1] = pnt2.x();
+    y[0] = pnt1.y(); y[1] = pnt2.y();
+    z[0] = pnt1.z(); z[1] = pnt2.z();
+  }
 }
 
 const int numSubEdges = 12;
