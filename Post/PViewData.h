@@ -149,6 +149,7 @@ class PViewData {
   // number of edges
   void setInterpolationScheme(int type, List_T *coef, List_T *pol, 
 			      List_T *coefGeo=0, List_T *polGeo=0);
+  inline bool haveInterpolationScheme(){ return !_interpolation.empty(); }
   int getInterpolationScheme(int type, std::vector<List_T*> &p);
 
   // Smoothes the data in the view (makes it C0)

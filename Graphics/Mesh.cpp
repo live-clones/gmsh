@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.222 2008-06-12 11:52:00 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.223 2008-06-27 13:50:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -92,13 +92,19 @@ static unsigned int getColorByElement(MElement *ele)
   return CTX.color.fg;
 }
 
+static double evalCutPlane(double x, double y, double z)
+{
+  return CTX.mesh.cut_planea * x + CTX.mesh.cut_planeb * y + 
+    CTX.mesh.cut_planec * z + CTX.mesh.cut_planed; 
+}
+
 static double intersectCutPlane(MElement *ele)
 {
   MVertex *v = ele->getVertex(0);
-  double val = CTX.mesh.evalCutPlane(v->x(), v->y(), v->z());
+  double val = evalCutPlane(v->x(), v->y(), v->z());
   for(int i = 1; i < ele->getNumVertices(); i++){
     v = ele->getVertex(i);
-    if(val * CTX.mesh.evalCutPlane(v->x(), v->y(), v->z()) <= 0)
+    if(val * evalCutPlane(v->x(), v->y(), v->z()) <= 0)
       return 0.; // the element intersects the cut plane
   }
   return val;

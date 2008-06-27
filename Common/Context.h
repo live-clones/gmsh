@@ -180,10 +180,6 @@ class Context_T {
     int color_carousel;
     int use_cut_plane, cut_plane_draw_intersect, cut_plane_only_volume;
     double cut_planea, cut_planeb, cut_planec, cut_planed;
-    double evalCutPlane (double x, double y, double z)
-    {
-      return cut_planea * x + cut_planeb * y + cut_planec * z + cut_planed; 
-    }
     int save_all, save_groups_of_nodes, stl_binary, msh_binary, bdf_field_format;
     int smooth_normals, reverse_all_normals;
     double angle_smooth_normals;

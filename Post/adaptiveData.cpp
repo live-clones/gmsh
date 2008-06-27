@@ -1014,7 +1014,7 @@ void adaptiveElements<T>::initWithLowResolution(PViewData *data, int step)
       if(data->skipElement(step, ent, ele) ||
 	 data->getNumEdges(step, ent, ele) != T::numEdges) continue;
       if(numVal != data->getNumValues(step, ent, ele)){
-	Msg::Error("Wrong number of values (%d) in element %d (expecting %d)", numVal, ele,data->getNumValues(step, ent, ele));
+	Msg::Error("Wrong number of values (%d) in element %d (expecting %d)", numVal, ele, data->getNumValues(step, ent, ele));
 	continue;
       }
       if(numNodes != data->getNumNodes(step, ent, ele)){
@@ -1036,14 +1036,13 @@ void adaptiveElements<T>::initWithLowResolution(PViewData *data, int step)
 	}
       }
       else if(numComp == 3){
-	const int offset = numVal/3;
-	for(int i = 0; i < offset ; i++){
+	for(int i = 0; i < numVal / 3; i++){
 	  double val[3];
 	  // adaptation of the visualization mesh bases on the norm
 	  // squared of the vector
- 	  data->getValue(step, ent, ele, i, val[0]); 
- 	  data->getValue(step, ent, ele, i + offset, val[1]); 
- 	  data->getValue(step, ent, ele, i + 2*offset, val[2]); 
+ 	  data->getValue(step, ent, ele, 3 * i, val[0]); 
+ 	  data->getValue(step, ent, ele, 3 * i + 1, val[1]); 
+ 	  data->getValue(step, ent, ele, 3 * i + 2, val[2]); 
 	  (*_val)(k, i) = (val[0] * val[0] + val[1] * val[1] + val[2] * val[2]);
 	  (*_valX)(k, i) = val[0];
 	  (*_valY)(k, i) = val[1];
@@ -1225,9 +1224,6 @@ adaptiveData::adaptiveData(PViewData *data)
   else
   */
   _outData = new PViewDataList(true);
-
-  // The number of nodes is supposed to be fixed in an adaptive view
-  // This number depends on the 
 
   int numComp = _inData->getNumComponents(0, 0, 0);
   std::vector<List_T*> p;

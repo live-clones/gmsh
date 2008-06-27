@@ -1,4 +1,4 @@
-// $Id: PViewDataList.cpp,v 1.27 2008-06-27 08:41:50 remacle Exp $
+// $Id: PViewDataList.cpp,v 1.28 2008-06-27 13:50:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -215,10 +215,10 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod, int nb
   // compute statistics for element lists
   if(!nbelm) return;  
 
-  std::vector<List_T *> is;
-  if (getInterpolationScheme (nbedg,is) == 4) {
-    nbnod = List_Nbr(is[2]);
-    //    printf("nbnod = %d\n",nbnod);
+  if(haveInterpolationScheme()){
+    std::vector<List_T *> is;
+    if(getInterpolationScheme(nbedg, is) == 4)
+      nbnod = List_Nbr(is[2]);
   }
 
   int nbval = nbcomp * nbnod;
@@ -273,10 +273,10 @@ void PViewDataList::_stat(List_T *list, int nbcomp, int nbelm, int nbnod, int nb
 void PViewDataList::_setLast(int ele, int dim, int nbnod, int nbcomp, int nbedg,
                              List_T *list, int nblist)
 {
-  std::vector<List_T *> is;
-  if (getInterpolationScheme (nbedg,is) == 4) {
-    nbnod = List_Nbr(is[2]);
-    //    printf("hey hey : nbnod = %d\n",nbnod);
+  if(haveInterpolationScheme()){
+    std::vector<List_T *> is;
+    if(getInterpolationScheme(nbedg, is) == 4)
+      nbnod = List_Nbr(is[2]);
   }
 
   _lastDimension = dim;

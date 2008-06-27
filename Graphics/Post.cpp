@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.169 2008-06-25 07:58:54 geuzaine Exp $
+// $Id: Post.cpp,v 1.170 2008-06-27 13:50:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -279,15 +279,24 @@ static void changeCoordinates(PView *p, int ient, int iele, int numNodes,
   }
 }
 
+
+/*
+static double evalCutPlane(double x, double y, double z)
+{
+  return CTX.mesh.cut_planea * x + CTX.mesh.cut_planeb * y + 
+    CTX.mesh.cut_planec * z + CTX.mesh.cut_planed; 
+}
+
 static double intersectCutPlane(int numNodes, double xyz[NMAX][3])
 {
-  double val = CTX.mesh.evalCutPlane(xyz[0][0], xyz[0][1], xyz[0][2]);
+  double val = evalCutPlane(xyz[0][0], xyz[0][1], xyz[0][2]);
   for(int i = 1; i < numNodes; i++){
-    if(val * CTX.mesh.evalCutPlane(xyz[i][0], xyz[i][1], xyz[i][2]) <= 0)
+    if(val * evalCutPlane(xyz[i][0], xyz[i][1], xyz[i][2]) <= 0)
       return 0.; // the element intersects the cut plane
   }
   return val;
 }
+*/
 
 static void addOutlinePoint(PView *p, double xyz[NMAX][3], unsigned int color, 
 			    bool pre, int i0=0)
