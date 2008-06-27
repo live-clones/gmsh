@@ -43,9 +43,9 @@ class PViewData {
   std::string _fileName;
   // index of the view in the file
   int _fileIndex;
+ protected:
   // adaptive visualization data
   adaptiveData *_adaptive;
- protected:
   // interpolation matrices, indexed by the number of edges per
   // element (1 for lines, 3 for triangles, etc.)
   std::map<int, std::vector<List_T*> > _interpolation;

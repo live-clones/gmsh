@@ -1,4 +1,4 @@
-// $Id: PViewDataListIO.cpp,v 1.20 2008-05-04 08:31:24 geuzaine Exp $
+// $Id: PViewDataListIO.cpp,v 1.21 2008-06-27 10:09:19 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,7 @@
 #include "Numeric.h"
 #include "Message.h"
 #include "Context.h"
+#include "adaptiveData.h"
 
 extern Context_T CTX;
 
@@ -318,6 +319,11 @@ static void writeTextPOS(FILE *fp, int nbc, int nb, List_T *TD, List_T *TC)
 
 bool PViewDataList::writePOS(std::string fileName, bool binary, bool parsed, bool append)
 {
+
+  if ( _adaptive ){
+    return _adaptive->getData()->writePOS (fileName,binary,parsed,append);
+  }
+
   FILE *fp = fopen(fileName.c_str(), 
                    append ? (binary ? "ab" : "a") : (binary ? "wb" : "w"));
   if(!fp){
@@ -338,7 +344,10 @@ bool PViewDataList::writePOS(std::string fileName, bool binary, bool parsed, boo
 
   if(!parsed){
     fprintf(fp, "$View /* %s */\n", getName().c_str());
-    fprintf(fp, "%s ", str);
+    if (strlen(str) == 0)
+      fprintf(fp, "noname ");
+    else
+      fprintf(fp, "%s ", str);
     fprintf(fp, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d "
             "%d %d %d %d %d %d %d %d %d %d %d %d\n",
             List_Nbr(Time),
