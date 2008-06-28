@@ -116,7 +116,8 @@ class Context_T {
   double shine, shine_exponent; // material specular reflection parameters
   int render_mode; // GMSH_RENDER, GMSH_SELECT, GMSH_FEEDBACK 
   int clip[6]; // status of clip planes (bit arrays)
-  double clip_plane[6][4]; // clip planes 
+  double clip_plane[6][4]; // clipping planes 
+  int clip_whole_elements, clip_only_draw_intersecting_volume, clip_only_volume; // clip options
   int polygon_offset, polygon_offset_always; // polygon offset control
   double polygon_offset_factor, polygon_offset_units; // params for glPolygonOffset
   double pixel_equiv_x, pixel_equiv_y; // approx equiv model length of a pixel 
@@ -178,8 +179,6 @@ class Context_T {
     int min_circ_points, min_curv_points;
     double normals, tangents, explode;
     int color_carousel;
-    int use_cut_plane, cut_plane_draw_intersect, cut_plane_only_volume;
-    double cut_planea, cut_planeb, cut_planec, cut_planed;
     int save_all, save_groups_of_nodes, stl_binary, msh_binary, bdf_field_format;
     int smooth_normals, reverse_all_normals;
     double angle_smooth_normals;

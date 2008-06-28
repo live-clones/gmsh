@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.691 2008-06-19 15:58:41 geuzaine Exp $
+// $Id: GUI.cpp,v 1.692 2008-06-28 17:06:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -71,7 +71,7 @@ Fl_Menu_Item m_menubar_table[] = {
     {"&Options...",      FL_CTRL+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
     {"Pl&ugins...",      FL_CTRL+FL_SHIFT+'u', (Fl_Callback *)view_plugin_cb, (void*)(-1)},
     {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"&Clipping Planes", FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
+    {"&Clipping",        FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"&Manipulator",     FL_CTRL+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
     {"S&tatistics",      FL_CTRL+'i', (Fl_Callback *)statistics_cb, 0},
     {"M&essage Console", FL_CTRL+'l', (Fl_Callback *)message_cb, 0},
@@ -112,7 +112,7 @@ Fl_Menu_Item m_sys_menubar_table[] = {
     {"Options...",      FL_META+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
     {"Plugins...",      FL_META+FL_SHIFT+'u', (Fl_Callback *)view_plugin_cb, (void*)(-1)},
     {"Visibility",      FL_META+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
-    {"Clipping Planes", FL_META+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
+    {"Clipping",        FL_META+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},
     {"Manipulator",     FL_META+FL_SHIFT+'m', (Fl_Callback *)manip_cb, 0, FL_MENU_DIVIDER},
     {"Statistics",      FL_META+'i', (Fl_Callback *)statistics_cb, 0},
     {"Message Console", FL_META+'l', (Fl_Callback *)message_cb, 0},
@@ -2658,61 +2658,6 @@ void GUI::create_option_window()
       o->end();
     }
     {
-      Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Cutting");
-      o->hide();
-
-      mesh_butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable element-by-element cutting plane");
-      mesh_butt[16]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[16]->callback(mesh_options_ok_cb, (void*)"mesh_cut_plane");
-
-      mesh_cut_plane = new Fl_Group(L + 2 * WB, 2 * WB + 2 * BH, width - 2 * WB, 4 * BH, 0);
-
-      int ii = fontsize;
-      Fl_Button *invert = new Fl_Button(L + 2 * WB, 2 * WB + 2 * BH, ii, 4*BH, "-");
-      invert->tooltip("Invert orientation");
-      invert->callback(mesh_options_ok_cb, (void*)"cut_plane_invert");
-
-      mesh_value[14] = new Fl_Value_Input(L + 2 * WB + ii, 2 * WB + 2 * BH, IW - ii, BH, "A");
-      mesh_value[14]->align(FL_ALIGN_RIGHT);
-      mesh_value[14]->step(0.01);
-      mesh_value[14]->minimum(-1.0);
-      mesh_value[14]->maximum(1.0);
-      mesh_value[14]->callback(mesh_options_ok_cb);
-
-      mesh_value[15] = new Fl_Value_Input(L + 2 * WB + ii, 2 * WB + 3 * BH, IW - ii, BH, "B");
-      mesh_value[15]->align(FL_ALIGN_RIGHT);
-      mesh_value[15]->step(0.01);
-      mesh_value[15]->minimum(-1.0);
-      mesh_value[15]->maximum(1.0);
-      mesh_value[15]->callback(mesh_options_ok_cb);
-
-      mesh_value[16] = new Fl_Value_Input(L + 2 * WB + ii, 2 * WB + 4 * BH, IW - ii, BH, "C");
-      mesh_value[16]->align(FL_ALIGN_RIGHT);
-      mesh_value[16]->step(0.01);
-      mesh_value[16]->minimum(-1.0);
-      mesh_value[16]->maximum(1.0);
-      mesh_value[16]->callback(mesh_options_ok_cb);
-
-      mesh_value[17] = new Fl_Value_Input(L + 2 * WB + ii, 2 * WB + 5 * BH, IW - ii, BH, "D");
-      mesh_value[17]->align(FL_ALIGN_RIGHT);
-      mesh_value[17]->step(0.01);
-      mesh_value[17]->minimum(-1.0);
-      mesh_value[17]->maximum(1.0);
-      mesh_value[17]->callback(mesh_options_ok_cb);
-
-      mesh_cut_plane->end();
-
-      mesh_butt[22] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Draw only intersecting volume layer");
-      mesh_butt[22]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[22]->callback(mesh_options_ok_cb);
-
-      mesh_butt[23] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Cut only volume elements");
-      mesh_butt[23]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[23]->callback(mesh_options_ok_cb);
-
-      o->end();
-    }
-    {
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Aspect");
       o->hide();
 
@@ -4583,34 +4528,34 @@ void GUI::create_clip_window()
     {0}
   };
 
-  int width = 3 * BB + 4 * WB;
-  int height = 8 * BH + 5 * WB;
-  int brw = BB;
-  int BW = width - brw - 3 * WB - 3 * fontsize;
+  int width = 26 * fontsize;
+  int height = 10 * BH + 5 * WB;
+  int L = 7 * fontsize;
 
-  clip_window = new Dialog_Window(width, height, CTX.non_modal_windows, "Clipping Planes");
+  clip_window = new Dialog_Window(width, height, CTX.non_modal_windows, "Clipping");
   clip_window->box(GMSH_WINDOW_BOX);
 
-  clip_browser = new Fl_Multi_Browser(1 * WB, 1 * WB, brw, height - BH - 3 * WB);
+  clip_browser = new Fl_Multi_Browser(WB, WB, L - WB, height - BH - 3 * WB);
   clip_browser->callback(clip_update_cb);
 
-  Fl_Tabs *o = new Fl_Tabs(2 * WB + brw, WB, width - 3 * WB - brw, height - 3 * WB - BH);
+  Fl_Tabs *o = new Fl_Tabs(L + WB, WB, width - L - 2 * WB, height - 3 * WB - 4 * BH);
   {
-    clip_group[0] = new Fl_Group(2 * WB + brw, WB + BH, width - 3 * WB - brw, height - 3 * WB - 2 * BH, "Planes");
+    clip_group[0] = new Fl_Group(L + WB, WB + BH, width - L - 2 * WB, height - 3 * WB - 5 * BH, "Planes");
 
-    int ii = fontsize;
-    Fl_Button *invert = new Fl_Button(3 * WB + brw, 2 * WB + 2 * BH, ii, 4*BH, "-");
-    invert->callback(clip_invert_cb);
-    invert->tooltip("Invert orientation");
+    int BW = width - L - 4 * WB - 4 * fontsize;
 
-    clip_choice = new Fl_Choice(3 * WB + brw, 2 * WB + 1 * BH, BW, BH);
+    clip_choice = new Fl_Choice(L + 2 * WB, 2 * WB + 1 * BH, BW, BH);
     clip_choice->menu(plane_number);
     clip_choice->callback(clip_num_cb);
+
+    Fl_Button *invert = new Fl_Button(L + 2 * WB, 2 * WB + 2 * BH, fontsize, 4 * BH, "-");
+    invert->callback(clip_invert_cb);
+    invert->tooltip("Invert orientation");
     
-    clip_value[0] = new Fl_Value_Input(3 * WB + brw + ii, 2 * WB + 2 * BH, BW - ii, BH, "A");
-    clip_value[1] = new Fl_Value_Input(3 * WB + brw + ii, 2 * WB + 3 * BH, BW - ii, BH, "B");
-    clip_value[2] = new Fl_Value_Input(3 * WB + brw + ii, 2 * WB + 4 * BH, BW - ii, BH, "C");
-    clip_value[3] = new Fl_Value_Input(3 * WB + brw + ii, 2 * WB + 5 * BH, BW - ii, BH, "D");
+    clip_value[0] = new Fl_Value_Input(L + 2 * WB + fontsize, 2 * WB + 2 * BH, BW - fontsize, BH, "A");
+    clip_value[1] = new Fl_Value_Input(L + 2 * WB + fontsize, 2 * WB + 3 * BH, BW - fontsize, BH, "B");
+    clip_value[2] = new Fl_Value_Input(L + 2 * WB + fontsize, 2 * WB + 4 * BH, BW - fontsize, BH, "C");
+    clip_value[3] = new Fl_Value_Input(L + 2 * WB + fontsize, 2 * WB + 5 * BH, BW - fontsize, BH, "D");
     for(int i = 0; i < 4; i++){
       clip_value[i]->align(FL_ALIGN_RIGHT);
       clip_value[i]->callback(clip_update_cb);
@@ -4619,15 +4564,17 @@ void GUI::create_clip_window()
     clip_group[0]->end();
   }
   {
-    clip_group[1] = new Fl_Group(2 * WB + brw, WB + BH, width - 3 * WB - brw, height - 3 * WB - 2 * BH, "Box");
+    clip_group[1] = new Fl_Group(L + WB, WB + BH, width - L - 2 * WB, height - 3 * WB - 5 * BH, "Box");
     clip_group[1]->hide();
 
-    clip_value[4] = new Fl_Value_Input(3 * WB + brw, 2 * WB + 1 * BH, BW, BH, "Cx");
-    clip_value[5] = new Fl_Value_Input(3 * WB + brw, 2 * WB + 2 * BH, BW, BH, "Cy");
-    clip_value[6] = new Fl_Value_Input(3 * WB + brw, 2 * WB + 3 * BH, BW, BH, "Cz");
-    clip_value[7] = new Fl_Value_Input(3 * WB + brw, 2 * WB + 4 * BH, BW, BH, "Wx");
-    clip_value[8] = new Fl_Value_Input(3 * WB + brw, 2 * WB + 5 * BH, BW, BH, "Wy");
-    clip_value[9] = new Fl_Value_Input(3 * WB + brw, 2 * WB + 6 * BH, BW, BH, "Wz");
+    int w2 = (width - L - 4 * WB) / 2;
+    int BW = w2 - 2 * fontsize;
+    clip_value[4] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Cx");
+    clip_value[5] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Cy");
+    clip_value[6] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Cz");
+    clip_value[7] = new Fl_Value_Input(L + 2 * WB + w2, 2 * WB + 1 * BH, BW, BH, "Wx");
+    clip_value[8] = new Fl_Value_Input(L + 2 * WB + w2, 2 * WB + 2 * BH, BW, BH, "Wy");
+    clip_value[9] = new Fl_Value_Input(L + 2 * WB + w2, 2 * WB + 3 * BH, BW, BH, "Wz");
     for(int i = 4; i < 10; i++){
       clip_value[i]->align(FL_ALIGN_RIGHT);
       clip_value[i]->callback(clip_update_cb);
@@ -4637,6 +4584,14 @@ void GUI::create_clip_window()
   }
   o->callback(clip_reset_cb);
   o->end();
+
+  clip_butt[0] = new Fl_Check_Button(L + WB, 3 * WB + 6 * BH, width - L - 2 * WB, BH, "Keep whole elements");
+  clip_butt[1] = new Fl_Check_Button(L + WB, 3 * WB + 7 * BH, width - L - 2 * WB, BH, "Only draw intersecting volume layer");
+  clip_butt[2] = new Fl_Check_Button(L + WB, 3 * WB + 8 * BH, width - L - 2 * WB, BH, "Cut only volume elements");
+  for(int i = 0; i < 3; i++){
+    clip_butt[i]->type(FL_TOGGLE_BUTTON);
+    clip_butt[i]->callback(clip_update_cb);
+  }
 
   reset_clip_browser();
 

@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.585 2008-06-19 15:58:40 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.586 2008-06-28 17:06:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -293,14 +293,6 @@ void activate_cb(CALLBACK_ARGS)
       WID->view_input[4]->deactivate();
       WID->view_input[5]->deactivate();
       WID->view_input[6]->deactivate();
-    }
-  }
-  else if(!strcmp(str, "mesh_cut_plane")){
-    if(WID->mesh_butt[16]->value()){
-      WID->mesh_cut_plane->activate();
-    }
-    else{
-      WID->mesh_cut_plane->deactivate();
     }
   }
   else if(!strcmp(str, "mesh_light")){
@@ -1105,16 +1097,6 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
 {
   activate_cb(NULL, data);
 
-  if(data){
-    char *name = (char*)data;
-    if(!strcmp(name, "cut_plane_invert")){
-      WID->mesh_value[14]->value(-WID->mesh_value[14]->value());
-      WID->mesh_value[15]->value(-WID->mesh_value[15]->value());
-      WID->mesh_value[16]->value(-WID->mesh_value[16]->value());
-      WID->mesh_value[17]->value(-WID->mesh_value[17]->value());
-    }
-  }
-
   opt_mesh_reverse_all_normals(0, GMSH_SET, WID->mesh_butt[0]->value());
   opt_mesh_lc_from_curvature(0, GMSH_SET, WID->mesh_butt[1]->value());
   opt_mesh_lc_from_points(0, GMSH_SET, WID->mesh_butt[5]->value());
@@ -1140,9 +1122,6 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_lines_num(0, GMSH_SET, WID->mesh_butt[13]->value());
   opt_mesh_surfaces_num(0, GMSH_SET, WID->mesh_butt[14]->value());
   opt_mesh_volumes_num(0, GMSH_SET, WID->mesh_butt[15]->value());
-  opt_mesh_use_cut_plane(0, GMSH_SET, WID->mesh_butt[16]->value());
-  opt_mesh_cut_plane_draw_intersect(0, GMSH_SET, WID->mesh_butt[22]->value());
-  opt_mesh_cut_plane_only_volume(0, GMSH_SET, WID->mesh_butt[23]->value());
   opt_mesh_light(0, GMSH_SET, WID->mesh_butt[17]->value());
   opt_mesh_light_two_side(0, GMSH_SET, WID->mesh_butt[18]->value());
   opt_mesh_smooth_normals(0, GMSH_SET, WID->mesh_butt[19]->value());
@@ -1162,10 +1141,6 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_point_size(0, GMSH_SET, WID->mesh_value[10]->value());
   opt_mesh_line_width(0, GMSH_SET, WID->mesh_value[11]->value());
   opt_mesh_label_frequency(0, GMSH_SET, WID->mesh_value[12]->value());
-  opt_mesh_cut_planea(0, GMSH_SET, WID->mesh_value[14]->value());
-  opt_mesh_cut_planeb(0, GMSH_SET, WID->mesh_value[15]->value());
-  opt_mesh_cut_planec(0, GMSH_SET, WID->mesh_value[16]->value());
-  opt_mesh_cut_planed(0, GMSH_SET, WID->mesh_value[17]->value());
   opt_mesh_angle_smooth_normals(0, GMSH_SET, WID->mesh_value[18]->value());
 
   opt_mesh_point_type(0, GMSH_SET, WID->mesh_choice[0]->value());
@@ -2380,6 +2355,20 @@ void clip_update_cb(CALLBACK_ARGS)
     CTX.clip_plane[5][3] = (c[2] + d[2] / 2.);
   }
 
+  if(CTX.clip_whole_elements || CTX.clip_whole_elements != WID->clip_butt[0]->value()){
+    for(int clip = 0; clip < 6; clip++){
+      if(CTX.clip[clip] & 2)
+	CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+      for(unsigned int index = 0; index < PView::list.size(); index++)
+	if(CTX.clip[clip] & (1 << (2 + index)))
+	  PView::list[index]->setChanged(true);
+    }
+  }
+  
+  CTX.clip_whole_elements = WID->clip_butt[0]->value();
+  CTX.clip_only_draw_intersecting_volume = WID->clip_butt[1]->value();
+  CTX.clip_only_volume = WID->clip_butt[2]->value();
+  
   int old = CTX.draw_bbox;
   CTX.draw_bbox = 1;
   if(CTX.fast_redraw)
@@ -2404,6 +2393,13 @@ void clip_reset_cb(CALLBACK_ARGS)
     for(int j = 1; j < 4; j++)
       CTX.clip_plane[i][j] = 0.;
   }
+
+  if(CTX.clip_whole_elements){
+    CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+    for(unsigned int index = 0; index < PView::list.size(); index++)
+      PView::list[index]->setChanged(true);
+  }
+
   WID->reset_clip_browser();
   Draw();
 }

@@ -1,4 +1,4 @@
-// $Id: Mesh.cpp,v 1.223 2008-06-27 13:50:35 geuzaine Exp $
+// $Id: Mesh.cpp,v 1.224 2008-06-28 17:06:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -92,19 +92,19 @@ static unsigned int getColorByElement(MElement *ele)
   return CTX.color.fg;
 }
 
-static double evalCutPlane(double x, double y, double z)
+static double evalClipPlane(int clip, double x, double y, double z)
 {
-  return CTX.mesh.cut_planea * x + CTX.mesh.cut_planeb * y + 
-    CTX.mesh.cut_planec * z + CTX.mesh.cut_planed; 
+  return CTX.clip_plane[clip][0] * x + CTX.clip_plane[clip][1] * y + 
+    CTX.clip_plane[clip][2] * z + CTX.clip_plane[clip][3];
 }
 
-static double intersectCutPlane(MElement *ele)
+static double intersectClipPlane(int clip, MElement *ele)
 {
   MVertex *v = ele->getVertex(0);
-  double val = evalCutPlane(v->x(), v->y(), v->z());
+  double val = evalClipPlane(clip, v->x(), v->y(), v->z());
   for(int i = 1; i < ele->getNumVertices(); i++){
     v = ele->getVertex(i);
-    if(val * evalCutPlane(v->x(), v->y(), v->z()) <= 0)
+    if(val * evalClipPlane(clip, v->x(), v->y(), v->z()) <= 0)
       return 0.; // the element intersects the cut plane
   }
   return val;
@@ -127,10 +127,26 @@ static bool isElementVisible(MElement *ele)
     double r = ele->maxEdge();
     if(r < CTX.mesh.radius_inf || r > CTX.mesh.radius_sup) return false;
   }
-  if(CTX.mesh.use_cut_plane){
-    if(ele->getDim() < 3 && CTX.mesh.cut_plane_only_volume){
+  if(CTX.clip_whole_elements){
+    bool hidden = false;
+    for(int clip = 0; clip < 6; clip++){
+      if(CTX.clip[clip] & 2){
+	if(ele->getDim() < 3 && CTX.clip_only_volume){
+	}
+	else{
+	  double d = intersectClipPlane(clip, ele);
+	  if(ele->getDim() == 3 && CTX.clip_only_draw_intersecting_volume && d){
+	    hidden = true;
+	    break;
+	  }
+	  else if(d < 0){
+	    hidden = true;
+	    break;
+	  }
+	}
+      }
     }
-    else if(intersectCutPlane(ele) < 0) return false;
+    if(hidden) return false;
   }
   return true;
 }
@@ -398,9 +414,6 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
     MElement *ele = elements[i];
 
     if(!isElementVisible(ele) || ele->getDim() < 1) continue;
-    
-    if(CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_draw_intersect)
-      if(e->dim() == 3 && intersectCutPlane(ele)) continue;
     
     unsigned int c = getColorByElement(ele);
     unsigned int col[4] = {c, c, c, c};
@@ -712,6 +725,16 @@ class drawMeshGFace {
 class initMeshGRegion {
  private:
   bool _curved;
+  int _estimateIfClipped(int num)
+  {
+    if(CTX.clip_whole_elements && CTX.clip_only_draw_intersecting_volume){
+      for(int clip = 0; clip < 6; clip++){
+	if(CTX.clip[clip] & 2)
+	  return (int)sqrt((double)num);
+      }
+    }
+    return num;
+  }
   int _estimateNumLines(GRegion *r)
   {
     int num = 0;
@@ -719,8 +742,7 @@ class initMeshGRegion {
       // suppose edge shared by 4 elements on averge (pessmistic)
       num += (12 * r->tetrahedra.size() + 24 * r->hexahedra.size() +
               18 * r->prisms.size() + 16 * r->pyramids.size()) / 4;
-      if(CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_draw_intersect)
-        num = (int)sqrt((double)num);
+      num = _estimateIfClipped(num);
       if(CTX.mesh.explode != 1.) num *= 4;
       if(_curved) num *= 2;
     }
@@ -732,8 +754,7 @@ class initMeshGRegion {
     if(CTX.mesh.volumes_faces){
       num += (4 * r->tetrahedra.size() + 12 * r->hexahedra.size() +
               8 * r->prisms.size() + 6 * r->pyramids.size()) / 2;
-      if(CTX.mesh.use_cut_plane && CTX.mesh.cut_plane_draw_intersect)
-        num = (int)sqrt((double)num);
+      num = _estimateIfClipped(num);
       if(CTX.mesh.explode != 1.) num *= 2;
       if(_curved) num *= 4;
     }
@@ -852,11 +873,13 @@ void Draw_Mesh()
   else
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
   
-  for(int i = 0; i < 6; i++)
-    if(CTX.clip[i] & 2) 
-      glEnable((GLenum)(GL_CLIP_PLANE0 + i));
-    else
-      glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+  if(!CTX.clip_whole_elements){
+    for(int i = 0; i < 6; i++)
+      if(CTX.clip[i] & 2) 
+	glEnable((GLenum)(GL_CLIP_PLANE0 + i));
+      else
+	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+  }
   
   static bool busy = false;
   if(!busy){

@@ -1,4 +1,4 @@
-// $Id: Post.cpp,v 1.170 2008-06-27 13:50:35 geuzaine Exp $
+// $Id: Post.cpp,v 1.171 2008-06-28 17:06:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -19,6 +19,7 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <math.h>
 #include <algorithm>
 #include "Message.h"
 #include "GmshUI.h"
@@ -279,24 +280,45 @@ static void changeCoordinates(PView *p, int ient, int iele, int numNodes,
   }
 }
 
-
-/*
-static double evalCutPlane(double x, double y, double z)
+static double evalClipPlane(int clip, double x, double y, double z)
 {
-  return CTX.mesh.cut_planea * x + CTX.mesh.cut_planeb * y + 
-    CTX.mesh.cut_planec * z + CTX.mesh.cut_planed; 
+  return CTX.clip_plane[clip][0] * x + CTX.clip_plane[clip][1] * y + 
+    CTX.clip_plane[clip][2] * z + CTX.clip_plane[clip][3];
 }
 
-static double intersectCutPlane(int numNodes, double xyz[NMAX][3])
+static double intersectClipPlane(int clip, int numNodes, double xyz[NMAX][3])
 {
-  double val = evalCutPlane(xyz[0][0], xyz[0][1], xyz[0][2]);
+  double val = evalClipPlane(clip, xyz[0][0], xyz[0][1], xyz[0][2]);
   for(int i = 1; i < numNodes; i++){
-    if(val * evalCutPlane(xyz[i][0], xyz[i][1], xyz[i][2]) <= 0)
+    if(val * evalClipPlane(clip, xyz[i][0], xyz[i][1], xyz[i][2]) <= 0)
       return 0.; // the element intersects the cut plane
   }
   return val;
 }
-*/
+
+static bool isElementVisible(int index, int dim, int numNodes, double xyz[NMAX][3])
+{
+  if(!CTX.clip_whole_elements) return true;
+  bool hidden = false;
+  for(int clip = 0; clip < 6; clip++){
+    if(CTX.clip[clip] & (1 << (2 + index))){
+      if(dim < 3 && CTX.clip_only_volume){
+      }
+      else{
+	double d = intersectClipPlane(clip, numNodes, xyz);
+	if(dim == 3 && CTX.clip_only_draw_intersecting_volume && d){
+	  hidden = true;
+	  break;
+	}
+	else if(d < 0){
+	  hidden = true;
+	  break;
+	}
+      }
+    }
+  }
+  return !hidden;
+}
 
 static void addOutlinePoint(PView *p, double xyz[NMAX][3], unsigned int color, 
 			    bool pre, int i0=0)
@@ -940,25 +962,9 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
           data->getValue(opt->TimeStep, ent, i, j, k, val[j][k]);
       }
       changeCoordinates(p, ent, i, numNodes, numEdges, numComp, xyz, val);
+      int dim = data->getDimension(opt->TimeStep, ent, i);
+      if(!isElementVisible(p->getIndex(), dim, numNodes, xyz)) continue;
 
-      /* FIXME: This works--just need to add an option to enable it by 
-	 view (and put the UI in the clipping plane dialog, along with
-	 the UI for mesh cuts) */
-      /*
-      if(CTX.mesh.use_cut_plane){
-	int dim = data->getDimension(opt->TimeStep, ent, i);
-	if(dim < 3 && CTX.mesh.cut_plane_only_volume){
-	}
-	else{
-	  double d = intersectCutPlane(numNodes, xyz);
-	  if(dim == 3 && CTX.mesh.cut_plane_draw_intersect && d) 
-	    continue;
-	  else if(d < 0)
-	    continue;
-	}
-      }
-      */
-            
       for(int j = 0; j < numNodes; j++)
         opt->TmpBBox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
       
@@ -1234,6 +1240,16 @@ class initPView {
   // we try to estimate how many primitives will end up in the vertex
   // arrays, since reallocating the arrays takes a huge amount of time
   // on Windows/Cygwin
+  int _estimateIfClipped(PView *p, int num)
+  {
+    if(CTX.clip_whole_elements && CTX.clip_only_draw_intersecting_volume){
+      for(int clip = 0; clip < 6; clip++){
+	if(CTX.clip[clip] & (1 << (2 + p->getIndex())))
+	  return (int)sqrt((double)num);
+      }
+    }
+    return num;
+  }
   int _estimateNumPoints(PView *p)
   {
     PViewData *data = p->getData(true);
@@ -1267,6 +1283,7 @@ class initPView {
     else if(opt->IntervalsType == PViewOptions::Discrete)
       heuristic = (tris + 2 * quads + 6 * tets + 
                    8 * prisms + 6 * pyrs + 12 * hexas) * 2;
+    heuristic = _estimateIfClipped(p, heuristic);
     return heuristic + 10000;
   }
   int _estimateNumVectors(PView *p)
@@ -1274,6 +1291,7 @@ class initPView {
     PViewData *data = p->getData(true);
     PViewOptions *opt = p->getOptions();
     int heuristic = data->getNumVectors(opt->TimeStep);
+    heuristic = _estimateIfClipped(p, heuristic);
     return heuristic + 1000;
   }
  public :
@@ -1361,12 +1379,14 @@ class drawPView {
     else
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
     
-    for(int i = 0; i < 6; i++)
-      if(CTX.clip[i] & (1 << (2 + p->getIndex()))) 
-        glEnable((GLenum)(GL_CLIP_PLANE0 + i));
-      else
-        glDisable((GLenum)(GL_CLIP_PLANE0 + i));
-    
+    if(!CTX.clip_whole_elements){
+      for(int i = 0; i < 6; i++)
+	if(CTX.clip[i] & (1 << (2 + p->getIndex())))
+	  glEnable((GLenum)(GL_CLIP_PLANE0 + i));
+	else
+	  glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+    }
+
     if(CTX.alpha && ColorTable_IsAlpha(&opt->CT)){
       if(opt->FakeTransparency){
         // simple additive blending "a la xpost":

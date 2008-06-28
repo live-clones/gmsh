@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.401 2008-06-20 11:50:00 geuzaine Exp $
+// $Id: Options.cpp,v 1.402 2008-06-28 17:06:54 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -3764,6 +3764,41 @@ double opt_general_clip5d(OPT_ARGS_NUM)
   return CTX.clip_plane[5][3];
 }
 
+double opt_general_clip_whole_elements(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.clip_whole_elements = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI)){
+    WID->clip_butt[0]->value(CTX.clip_whole_elements);
+    activate_cb(NULL, (void*)"clip_whole_elements");
+  }
+#endif
+  return CTX.clip_whole_elements;
+}
+
+double opt_general_clip_only_draw_intersecting_volume(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.clip_only_draw_intersecting_volume = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->clip_butt[1]->value(CTX.clip_only_draw_intersecting_volume);
+#endif
+  return CTX.clip_only_draw_intersecting_volume;
+}
+
+double opt_general_clip_only_volume(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.clip_only_volume = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->clip_butt[2]->value(CTX.clip_only_volume);
+#endif
+  return CTX.clip_only_volume;
+}
+
 double opt_general_light0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -5171,117 +5206,6 @@ double opt_mesh_draw_skin_only(OPT_ARGS_NUM)
     CTX.mesh.draw_skin_only = (int)val;
   }
   return CTX.mesh.draw_skin_only;
-}
-
-double opt_mesh_use_cut_plane(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    if(CTX.mesh.use_cut_plane != (int)val) 
-      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
-    CTX.mesh.use_cut_plane = (int)val;
-#if defined(HAVE_FLTK)
-    if(WID){
-      double val1 = 0;
-      for(int i = 0; i < 3; i++)
-        val1 = std::max(val1, std::max(fabs(CTX.min[i]), fabs(CTX.max[i])));
-      val1 *= 1.5;
-      WID->mesh_value[17]->step(val1/200.);
-      WID->mesh_value[17]->minimum(-val1);
-      WID->mesh_value[17]->maximum(val1);
-    }
-#endif
-  }
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI)){
-    WID->mesh_butt[16]->value(CTX.mesh.use_cut_plane);
-    activate_cb(NULL, (void*)"mesh_cut_plane");
-  }
-#endif
-  return CTX.mesh.use_cut_plane;
-}
-
-double opt_mesh_cut_plane_draw_intersect(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    if(CTX.mesh.cut_plane_draw_intersect != (int)val) 
-      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
-    CTX.mesh.cut_plane_draw_intersect = (int)val;
-  }
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[22]->value(CTX.mesh.cut_plane_draw_intersect);
-#endif
-  return CTX.mesh.cut_plane_draw_intersect;
-}
-
-double opt_mesh_cut_plane_only_volume(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    if(CTX.mesh.cut_plane_only_volume != (int)val)
-      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
-    CTX.mesh.cut_plane_only_volume = (int)val;
-  }
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[23]->value(CTX.mesh.cut_plane_only_volume);
-#endif
-  return CTX.mesh.cut_plane_only_volume;
-}
-
-double opt_mesh_cut_planea(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    if(CTX.mesh.cut_planea != val) 
-      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
-    CTX.mesh.cut_planea = val;
-  }
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_value[14]->value(CTX.mesh.cut_planea);
-#endif
-  return CTX.mesh.cut_planea;
-}
-
-double opt_mesh_cut_planeb(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    if(CTX.mesh.cut_planeb != val) 
-      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
-    CTX.mesh.cut_planeb = val;
-  }
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_value[15]->value(CTX.mesh.cut_planeb);
-#endif
-  return CTX.mesh.cut_planeb;
-}
-
-double opt_mesh_cut_planec(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    if(CTX.mesh.cut_planec != val) 
-      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
-    CTX.mesh.cut_planec = val;
-  }
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_value[16]->value(CTX.mesh.cut_planec);
-#endif
-  return CTX.mesh.cut_planec;
-}
-
-double opt_mesh_cut_planed(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    if(CTX.mesh.cut_planed != val) 
-      CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
-    CTX.mesh.cut_planed = val;
-  }
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->mesh_value[17]->value(CTX.mesh.cut_planed);
-#endif
-  return CTX.mesh.cut_planed;
 }
 
 double opt_mesh_save_all(OPT_ARGS_NUM)

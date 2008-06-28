@@ -1,4 +1,4 @@
-// $Id: Geom.cpp,v 1.157 2008-06-25 07:58:54 geuzaine Exp $
+// $Id: Geom.cpp,v 1.158 2008-06-28 17:06:55 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -486,11 +486,6 @@ void Draw_Geom()
                                 CTX.max[0], CTX.max[1], CTX.max[2],
                                 CTX.clip_plane[i][0], CTX.clip_plane[i][1], 
                                 CTX.clip_plane[i][2], CTX.clip_plane[i][3]);
-    if(CTX.mesh.use_cut_plane)
-      Draw_PlaneInBoundingBox(CTX.min[0], CTX.min[1], CTX.min[2],
-                              CTX.max[0], CTX.max[1], CTX.max[2],
-                              CTX.mesh.cut_planea, CTX.mesh.cut_planeb, 
-                              CTX.mesh.cut_planec, CTX.mesh.cut_planed);
   }
   
   if(CTX.axes){

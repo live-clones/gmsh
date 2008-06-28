@@ -334,6 +334,16 @@ Near and far clipping plane distance factor (decrease value for better z-buffer 
 Default value: @code{5}@*
 Saved in: @code{-}
 
+@item General.ClipOnlyDrawIntersectingVolume
+Only draw layer of elements that intersect the clipping plane@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.ClipOnlyVolume
+Only clip volume elements@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.ClipPositionX
 Horizontal position (in pixels) of the upper left corner of the clipping planes window@*
 Default value: @code{650}@*
@@ -343,6 +353,11 @@ Saved in: @code{General.SessionFileName}
 Vertical position (in pixels) of the upper left corner of the clipping planes window@*
 Default value: @code{150}@*
 Saved in: @code{General.SessionFileName}
+
+@item General.ClipWholeElements
+Clip whole elements@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
 
 @item General.ColorScheme
 Default color scheme (0=dark, 1=light or 2=grayscale)@*

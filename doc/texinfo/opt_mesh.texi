@@ -74,41 +74,6 @@ CPU time (in seconds) for the generation of the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item Mesh.CutPlane
-Enable mesh cut plane@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
-@item Mesh.CutPlaneDrawIntersect
-Draw only the volume elements that intersect with the cut plane@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
-@item Mesh.CutPlaneOnlyVolume
-Cut only the volume elements@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
-@item Mesh.CutPlaneA
-First cut plane equation coefficient (`A' in `AX+BY+CZ+D=0')@*
-Default value: @code{1}@*
-Saved in: @code{-}
-
-@item Mesh.CutPlaneB
-Second cut plane equation coefficient (`B' in `AX+BY+CZ+D=0')@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
-@item Mesh.CutPlaneC
-Third cut plane equation coefficient (`C' in `AX+BY+CZ+D=0')@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
-@item Mesh.CutPlaneD
-Fourth cut plane equation coefficient (`D' in `AX+BY+CZ+D=0')@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
 @item Mesh.DrawSkinOnly
 Draw only the skin of 3D meshes?@*
 Default value: @code{0}@*
