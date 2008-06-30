@@ -28,6 +28,7 @@
         <key>CFBundleTypeExtensions</key><array>
           <string>msh</string>
           <string>unv</string>
+          <string>stl</string>
           <string>vrml</string><string>wrl</string><string>iv</string>
           <string>bdf</string><string>nas</string>
           <string>mesh</string>

@@ -1303,6 +1303,9 @@ Optional Packages:
                           prefix where OSMesa is installed
   --with-cgns-prefix=PFX  prefix where CGNS is installed
   --with-occ-prefix=PFX   prefix where OpenCascade is installed
+  --occ-mesh-constraints-prefix=PFX
+                          prefix where OCC mesh contraints source code is
+                          located
   --with-hdf5-prefix=PFX  prefix where OpenCascade is installed
   --with-med-prefix=PFX   prefix where OpenCascade is installed
   --with-fftw3-prefix=PFX prefix where FFTW3 is installed
@@ -1794,6 +1797,12 @@ fi
 # Check whether --with-occ-prefix was given.
 if test "${with_occ_prefix+set}" = set; then
   withval=$with_occ_prefix; OCC_PREFIX=$withval
+fi
+
+
+# Check whether --with-occ-mesh-constraints-prefix was given.
+if test "${with_occ_mesh_constraints_prefix+set}" = set; then
+  withval=$with_occ_mesh_constraints_prefix; OCC_MESH_CONTRAINTS_PREFIX=$withval
 fi
 
 
@@ -5070,6 +5079,39 @@ fi
     else
       GMSH_LIBS="${GMSH_LIBS} -L${OCC_PREFIX}/lib ${OCC_LIBS}"
       FLAGS="${FLAGS} -DHAVE_OCC -I${OCC_PREFIX}/inc"
+    fi
+  fi
+fi
+
+if test "x${OCC}" = "xyes"; then
+  if test "x${OCC_MESH_CONTRAINTS_PREFIX}" != "x"; then
+    as_ac_File=`echo "ac_cv_file_${OCC_MESH_CONTRAINTS_PREFIX}/MeshGmsh_Constrain.hxx" | $as_tr_sh`
+{ echo "$as_me:$LINENO: checking for ${OCC_MESH_CONTRAINTS_PREFIX}/MeshGmsh_Constrain.hxx" >&5
+echo $ECHO_N "checking for ${OCC_MESH_CONTRAINTS_PREFIX}/MeshGmsh_Constrain.hxx... $ECHO_C" >&6; }
+if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "${OCC_MESH_CONTRAINTS_PREFIX}/MeshGmsh_Constrain.hxx"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+ac_res=`eval echo '${'$as_ac_File'}'`
+	       { echo "$as_me:$LINENO: result: $ac_res" >&5
+echo "${ECHO_T}$ac_res" >&6; }
+if test `eval echo '${'$as_ac_File'}'` = yes; then
+  OMC="yes"
+else
+  OMC="no"
+fi
+
+    if test "x${OMC}" = "xyes"; then
+      FLAGS="${FLAGS} -DHAVE_OCC_MESH_CONSTRAINTS -I${OCC_MESH_CONTRAINTS_PREFIX}"
     fi
   fi
 fi

@@ -56,7 +56,7 @@ int WaitForData(int socket, int num, double waitint);
 
 #endif
 
-int myselect(int socket, int seconds)
+static int myselect(int socket, int seconds)
 {
   struct timeval tv;
   tv.tv_sec = seconds;

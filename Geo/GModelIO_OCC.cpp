@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.34 2008-06-03 07:25:07 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.35 2008-06-30 17:42:49 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,11 @@
 #include "OCCEdge.h"
 #include "OCCFace.h"
 #include "OCCRegion.h"
+
+#if defined(HAVE_OCC_MESH_CONSTRAINTS)
+#include "MeshGmsh_Constrain.hxx"
+#include "MeshGmsh_EdgeConstrain.hxx"
+#endif
 
 extern Context_T CTX;
 
@@ -476,13 +481,33 @@ int GModel::readOCCSTEP(const std::string &fn)
 
 int GModel::importOCCShape(const void *shape, const void *options)
 {
+  extern void SetBoundingBox();
+
   _occ_internals = new OCC_Internals;
   _occ_internals->loadShape((TopoDS_Shape*)shape);
   _occ_internals->buildGModel(this);
   snapVertices();
-  // FIXME remove this when CL API is done
-  extern void SetBoundingBox();
   SetBoundingBox();
+  if(!options) return 1;
+
+#if defined(HAVE_OCC_MESH_CONSTRAINTS)
+  MeshGmsh_Constrain *c = (MeshGmsh_Constrain*)options;
+  MeshGmsh_DataMapOfShapeOfEdgeConstrain ecmap;
+  c->GetEdgeConstrain(ecmap);
+
+  // iterate on all the edges of the model and set constraints (if
+  // any)
+  for(eiter it = firstEdge(); it != lastEdge(); ++it){
+    TopoDS_Edge *edge = (*it)->getNativePtr();
+    try { 
+      MeshGmsh_EdgeConstrain &ec = ecmap.Find(*edge);
+      printf("got edge constraints\n");
+    }
+    catch(...){
+    }
+  }
+#endif
+
   return 1;
 }
 
