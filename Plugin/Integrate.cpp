@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.28 2008-07-01 11:50:01 geuzaine Exp $
+// $Id: Integrate.cpp,v 1.29 2008-07-01 12:46:58 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -112,7 +112,6 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
 	    data1->getValue(step, ent, ele, nod, comp, val[numComp * nod + comp]);
 	}
 	elementFactory factory;
-	printf("dim=%d numEdges=%d\n", dim, numEdges);
 	element *element = factory.create(numNodes, dim, x, y, z);
 	if(!element) continue;
 	if(scalar)
