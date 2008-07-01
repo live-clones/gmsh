@@ -1,4 +1,4 @@
-// $Id: Integrate.cpp,v 1.27 2008-05-12 20:24:05 geuzaine Exp $
+// $Id: Integrate.cpp,v 1.28 2008-07-01 11:50:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -77,13 +77,12 @@ void GMSH_IntegratePlugin::catchErrorMessage(char *errorMessage) const
 
 PView *GMSH_IntegratePlugin::execute(PView * v)
 {
-  int iView = (int)IntegrateOptions_Number[1].def;
+  int iView = (int)IntegrateOptions_Number[0].def;
   
   PView *v1 = getView(iView, v);
   if(!v1) return v;
 
   PViewData *data1 = v1->getData();
-
   PView *v2 = new PView(true);
   PViewDataList *data2 = getDataList(v2);
   
@@ -113,6 +112,7 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
 	    data1->getValue(step, ent, ele, nod, comp, val[numComp * nod + comp]);
 	}
 	elementFactory factory;
+	printf("dim=%d numEdges=%d\n", dim, numEdges);
 	element *element = factory.create(numNodes, dim, x, y, z);
 	if(!element) continue;
 	if(scalar)

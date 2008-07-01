@@ -1,6 +1,7 @@
-$Id: VERSIONS,v 1.412 2008-06-28 17:06:55 geuzaine Exp $
+$Id: VERSIONS,v 1.413 2008-07-01 11:50:01 geuzaine Exp $
 
-2.2.3 (): enhanced clipping interface.
+2.2.3 (): enhanced clipping interface; fixed small bugs (Integrate
+plugin).
 
 2.2.2 (Jun 20, 2008): added geometrical transformations on volumes;
 fixed bug in high order mesh generation.
