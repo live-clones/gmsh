@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.54 2008-06-20 12:15:44 remacle Exp $
+// $Id: meshGRegion.cpp,v 1.55 2008-07-01 14:24:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -556,6 +556,7 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
 void meshGRegion::operator() (GRegion *gr) 
 {  
   if(gr->geomType() == GEntity::DiscreteVolume) return;
+  if(gr->meshAttributes.Method == MESH_NONE) return;
 
   ExtrudeParams *ep = gr->meshAttributes.extrude;
 
@@ -565,10 +566,7 @@ void meshGRegion::operator() (GRegion *gr)
   deMeshGRegion dem;
   dem(gr);
 
-  if(gr->meshAttributes.Method == TRANSFINI){
-    MeshTransfiniteVolume(gr);
-    return;
-  }
+  if(MeshTransfiniteVolume(gr)) return;
   
   std::list<GFace*> faces = gr->faces();
 
@@ -605,7 +603,7 @@ void optimizeMeshGRegionNetgen::operator() (GRegion *gr)
   if(gr->geomType() == GEntity::DiscreteVolume) return;
   
   // don't optimize transfinite or extruded meshes
-  if(gr->meshAttributes.Method == TRANSFINI) return;
+  if(gr->meshAttributes.Method == MESH_TRANSFINITE) return;
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
 
@@ -632,7 +630,7 @@ void optimizeMeshGRegionGmsh::operator() (GRegion *gr)
   if(gr->geomType() == GEntity::DiscreteVolume) return;
   
   // don't optimize extruded meshes
-  if(gr->meshAttributes.Method == TRANSFINI) return;
+  if(gr->meshAttributes.Method == MESH_TRANSFINITE) return;
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
   

@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.28 2008-05-06 21:11:48 geuzaine Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.29 2008-07-01 14:24:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -53,7 +53,7 @@ extern Context_T CTX;
 
 int MeshTransfiniteSurface(GFace *gf)
 {
-  if(gf->meshAttributes.Method != TRANSFINI) return 0;
+  if(gf->meshAttributes.Method != MESH_TRANSFINITE) return 0;
 
   Msg::StatusBar(2, true, "Meshing surface %d (transfinite)", gf->tag());
 

@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.65 2008-06-10 08:37:33 remacle Exp $
+// $Id: GFace.cpp,v 1.66 2008-07-01 14:24:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -91,7 +91,7 @@ void GFace::resetMeshAttributes()
 {
   meshAttributes.recombine = 0;
   meshAttributes.recombineAngle = 0.;
-  meshAttributes.Method = LIBRE;
+  meshAttributes.Method = MESH_UNSTRUCTURED;
   meshAttributes.transfiniteArrangement = 0;
   meshAttributes.transfiniteSmoothing = -1;
   meshAttributes.extrude = 0;

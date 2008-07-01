@@ -1,4 +1,4 @@
-// $Id: gmshRegion.cpp,v 1.23 2008-06-05 11:52:49 samtech Exp $
+// $Id: gmshRegion.cpp,v 1.24 2008-07-01 14:24:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -60,7 +60,7 @@ void gmshRegion::resetMeshAttributes()
 {
   meshAttributes.Method = v->Method;
   meshAttributes.extrude = v->Extrude;
-  if(meshAttributes.Method == TRANSFINI){
+  if(meshAttributes.Method == MESH_TRANSFINITE){
     meshAttributes.corners.clear();
     for(int i = 0; i < List_Nbr(v->TrsfPoints); i++){
       Vertex *corn;

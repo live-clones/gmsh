@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.49 2008-05-04 08:31:13 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.50 2008-07-01 14:24:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -67,7 +67,7 @@ MElement *GEdge::getMeshElement(unsigned int index)
 
 void GEdge::resetMeshAttributes()
 {
-  meshAttributes.Method = LIBRE;
+  meshAttributes.Method = MESH_UNSTRUCTURED;
   meshAttributes.coeffTransfinite = 0.;
   meshAttributes.nbPointsTransfinite = 0;
   meshAttributes.typeTransfinite = 0;

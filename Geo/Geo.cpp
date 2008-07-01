@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.118 2008-06-27 17:34:19 geuzaine Exp $
+// $Id: Geo.cpp,v 1.119 2008-07-01 14:24:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -481,7 +481,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
   pC->Num = Num;
   GModel::current()->getGEOInternals()->MaxLineNum = 
     IMAX(GModel::current()->getGEOInternals()->MaxLineNum, Num);
-  pC->Method = LIBRE;
+  pC->Method = MESH_UNSTRUCTURED;
   pC->degre = Order;
   pC->Circle.n[0] = 0.0;
   pC->Circle.n[1] = 0.0;
@@ -596,7 +596,7 @@ Surface *Create_Surface(int Num, int Typ)
   GModel::current()->getGEOInternals()->MaxSurfaceNum = 
     IMAX(GModel::current()->getGEOInternals()->MaxSurfaceNum, Num);
   pS->Typ = Typ;
-  pS->Method = LIBRE;
+  pS->Method = MESH_UNSTRUCTURED;
   pS->Recombine = 0;
   pS->Recombine_Dir = -1;
   pS->RecombineAngle = 45;
@@ -632,7 +632,7 @@ Volume *Create_Volume(int Num, int Typ)
   GModel::current()->getGEOInternals()->MaxVolumeNum = 
     IMAX(GModel::current()->getGEOInternals()->MaxVolumeNum, Num);
   pV->Typ = Typ;
-  pV->Method = LIBRE;
+  pV->Method = MESH_UNSTRUCTURED;
   pV->TrsfPoints = List_Create(6, 6, sizeof(Vertex *));
   pV->Surfaces = List_Create(1, 2, sizeof(Surface *));
   pV->SurfacesOrientations = List_Create(1, 2, sizeof(int));

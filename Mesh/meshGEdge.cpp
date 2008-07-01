@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.65 2008-06-27 18:00:52 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.66 2008-07-01 14:24:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -281,6 +281,7 @@ void meshGEdge::operator() (GEdge *ge)
 {  
   if(ge->geomType() == GEntity::DiscreteCurve) return;
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
+  if(ge->meshAttributes.Method == MESH_NONE) return;
 
   deMeshGEdge dem;
   dem(ge);
@@ -303,7 +304,6 @@ void meshGEdge::operator() (GEdge *ge)
   double length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-8 * CTX.lc);
   ge->setLength(length);
 
-
   if(length == 0.0)
     Msg::Debug("Curve %d has a zero length", ge->tag());
   
@@ -316,7 +316,7 @@ void meshGEdge::operator() (GEdge *ge)
     a = 0.;
     N = 1;
   }
-  else if(ge->meshAttributes.Method == TRANSFINI){
+  else if(ge->meshAttributes.Method == MESH_TRANSFINITE){
     a = Integration(ge, t_begin, t_end, F_Transfinite, Points, 1.e-8);
     N = ge->meshAttributes.nbPointsTransfinite;
   }

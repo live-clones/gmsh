@@ -176,7 +176,7 @@ class GFace : public GEntity
     // what is the treshold angle for recombination
     double recombineAngle;
     // is this surface meshed using a transfinite interpolation
-    int Method;
+    char Method;
     // corners of the transfinite interpolation
     std::vector<GVertex*> corners;
     // all diagonals of the triangulation are left (1), right (2) or

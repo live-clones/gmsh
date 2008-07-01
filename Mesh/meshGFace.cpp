@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.137 2008-06-27 18:00:52 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.138 2008-07-01 14:24:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1303,6 +1303,7 @@ void meshGFace::operator() (GFace *gf)
   if(gf->geomType() == GEntity::DiscreteSurface) return;
   if(gf->geomType() == GEntity::BoundaryLayerSurface) return;
   if(gf->geomType() == GEntity::ProjectionFace) return;
+  if(gf->meshAttributes.Method == MESH_NONE) return;
 
   // destroy the mesh if it exists
   deMeshGFace dem;
@@ -1373,7 +1374,7 @@ void orientMeshGFace::operator()(GFace *gf)
 
   // in old versions we did not reorient transfinite surface meshes;
   // we could add the following to provide backward compatibility:
-  // if(gf->meshAttributes.Method == TRANSFINI) return;
+  // if(gf->meshAttributes.Method == MESH_TRANSFINITE) return;
 
   // orients the mesh to match the orientation of the first edge
   std::list<GEdge*> edges = gf->edges();

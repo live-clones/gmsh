@@ -9,9 +9,6 @@ fourierEdge::fourierEdge(GModel *model, FM::TopoEdge* edge_, int tag,
                          GVertex *v0, GVertex *v1) 
   : GEdge(model, tag, v0, v1), edge(edge_) 
 {
-  //meshAttributes.Method = TRANSFINI; 
-  //meshAttributes.coeffTransfinite = 1.;
-  //meshAttributes.nbPointsTransfinite = 10;
 }
 
 Range<double> fourierEdge::parBounds(int i) const

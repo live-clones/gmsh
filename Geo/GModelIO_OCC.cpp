@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.36 2008-07-01 12:46:08 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.37 2008-07-01 14:24:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -404,12 +404,6 @@ void OCC_Internals::loadShape(const TopoDS_Shape *s)
 {
   shape = *s;
   BRepTools::Clean(shape);
-  // FIXME should we apply the healing stuff when we import a shape?
-  // healGeometry(CTX.geom.tolerance, 
-  //              CTX.geom.occ_fix_small_edges,
-  //              CTX.geom.occ_fix_small_faces,
-  //              CTX.geom.occ_sew_faces);
-  // BRepTools::Clean(shape);
   buildLists();
 }
 
@@ -499,11 +493,12 @@ int GModel::importOCCShape(const void *shape, const void *options)
   // iterate on all the edges of the model and set constraints (if
   // any)
   for(eiter it = firstEdge(); it != lastEdge(); ++it){
-    TopoDS_Shape *shape = (TopoDS_Shape*)(*it)->getNativePtr();
+    GEdge *ge = *it;
+    TopoDS_Shape *shape = (TopoDS_Shape*)ge->getNativePtr();
     if(ecmap.IsBound(*shape)) {
-      Msg::Debug("Got meshing contraints for edge %d", (*it)->tag());
+      Msg::Debug("Got meshing contraints for edge %d", ge->tag());
       const MeshGmsh_EdgeConstrain &ec(ecmap.Find(*shape));
-      if(ec.IsMeshImposed()){
+      if(ec.IsMeshImposed() == Standard_True){
 	TColStd_SequenceOfInteger num;
 	ec.GetNodesNumber(num);
 	TColStd_SequenceOfReal par;
@@ -514,9 +509,12 @@ int GModel::importOCCShape(const void *shape, const void *options)
 		     num.Length(), par.Length());
 	}
 	else{
+	  // set the mesh on this edge...
 	  for(int i = 0; i < n; i++){
 	    printf("node %d param %g\n", num.Value(i), par.Value(i));
 	  }
+	  // ...and never change it
+	  ge->meshAttributes.Method == MESH_NONE;
 	}
       }
     }

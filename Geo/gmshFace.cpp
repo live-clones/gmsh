@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.63 2008-06-20 12:15:44 remacle Exp $
+// $Id: gmshFace.cpp,v 1.64 2008-07-01 14:24:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -112,7 +112,7 @@ void gmshFace::resetMeshAttributes()
   meshAttributes.recombineAngle = s->RecombineAngle;
   meshAttributes.Method = s->Method;
   meshAttributes.extrude = s->Extrude;
-  if(meshAttributes.Method == TRANSFINI){
+  if(meshAttributes.Method == MESH_TRANSFINITE){
     meshAttributes.transfiniteArrangement = s->Recombine_Dir;
     meshAttributes.transfiniteSmoothing = s->TransfiniteSmoothing;
     meshAttributes.corners.clear();

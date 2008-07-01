@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.319 2008-06-27 17:34:22 geuzaine Exp $
+// $Id: Gmsh.y,v 1.320 2008-07-01 14:24:11 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -2601,7 +2601,7 @@ Transfinite :
 	if(!c)
 	  yymsg(1, "Unknown curve %d", j);
 	else{
-	  c->Method = TRANSFINI;
+	  c->Method = MESH_TRANSFINITE;
 	  c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
 	  c->typeTransfinite = sign(d);
 	  c->coeffTransfinite = 1.0;
@@ -2619,7 +2619,7 @@ Transfinite :
 	if(!c)
 	  yymsg(1, "Unknown curve %d", j);
 	else{
-	  c->Method = TRANSFINI;
+	  c->Method = MESH_TRANSFINITE;
 	  c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
 	  c->typeTransfinite = sign(d); // Progresion : code 1 ou -1
 	  c->coeffTransfinite = fabs($8);
@@ -2637,7 +2637,7 @@ Transfinite :
 	if(!c)
 	  yymsg(1, "Unknown curve %d", j);
 	else{
-	  c->Method = TRANSFINI;
+	  c->Method = MESH_TRANSFINITE;
 	  c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
 	  c->typeTransfinite = 2 * sign(d); // Bump : code 2 ou -2
 	  c->coeffTransfinite = fabs($8);
@@ -2651,7 +2651,7 @@ Transfinite :
       if(!s)
 	yymsg(1, "Unknown surface %d", (int)$4);
       else{
-	s->Method = TRANSFINI;
+	s->Method = MESH_TRANSFINITE;
 	s->Recombine_Dir = -1;
 	int k = List_Nbr($7);
 	if(k != 3 && k != 4){
@@ -2680,7 +2680,7 @@ Transfinite :
       if(!s)
 	yymsg(1, "Unknown surface %d", (int)$4);
       else{
-	s->Method = TRANSFINI;
+	s->Method = MESH_TRANSFINITE;
 	int k = List_Nbr($7);
 	if(k != 3 && k != 4){
 	  yymsg(0, "Wrong definition of Transfinite Surface %d: "
@@ -2720,7 +2720,7 @@ Transfinite :
       if(!v)
 	yymsg(1, "Unknown volume %d", (int)$4);
       else{
-	v->Method = TRANSFINI;
+	v->Method = MESH_TRANSFINITE;
 	int k = List_Nbr($7);
 	if(k != 6 && k != 8)
 	  yymsg(0, "Wrong definition of Transfinite Volume %d: "

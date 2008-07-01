@@ -324,7 +324,7 @@
 /* Copy the first part of user declarations.  */
 #line 1 "Gmsh.y"
 
-// $Id: Gmsh.tab.cpp,v 1.370 2008-06-27 17:34:19 geuzaine Exp $
+// $Id: Gmsh.tab.cpp,v 1.371 2008-07-01 14:24:07 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -6560,7 +6560,7 @@ yyreduce:
 	if(!c)
 	  yymsg(1, "Unknown curve %d", j);
 	else{
-	  c->Method = TRANSFINI;
+	  c->Method = MESH_TRANSFINITE;
 	  c->nbPointsTransfinite = ((yyvsp[(5) - (6)].d) > 2) ? (int)(yyvsp[(5) - (6)].d) : 2;
 	  c->typeTransfinite = sign(d);
 	  c->coeffTransfinite = 1.0;
@@ -6581,7 +6581,7 @@ yyreduce:
 	if(!c)
 	  yymsg(1, "Unknown curve %d", j);
 	else{
-	  c->Method = TRANSFINI;
+	  c->Method = MESH_TRANSFINITE;
 	  c->nbPointsTransfinite = ((yyvsp[(5) - (9)].d) > 2) ? (int)(yyvsp[(5) - (9)].d) : 2;
 	  c->typeTransfinite = sign(d); // Progresion : code 1 ou -1
 	  c->coeffTransfinite = fabs((yyvsp[(8) - (9)].d));
@@ -6602,7 +6602,7 @@ yyreduce:
 	if(!c)
 	  yymsg(1, "Unknown curve %d", j);
 	else{
-	  c->Method = TRANSFINI;
+	  c->Method = MESH_TRANSFINITE;
 	  c->nbPointsTransfinite = ((yyvsp[(5) - (9)].d) > 2) ? (int)(yyvsp[(5) - (9)].d) : 2;
 	  c->typeTransfinite = 2 * sign(d); // Bump : code 2 ou -2
 	  c->coeffTransfinite = fabs((yyvsp[(8) - (9)].d));
@@ -6619,7 +6619,7 @@ yyreduce:
       if(!s)
 	yymsg(1, "Unknown surface %d", (int)(yyvsp[(4) - (8)].d));
       else{
-	s->Method = TRANSFINI;
+	s->Method = MESH_TRANSFINITE;
 	s->Recombine_Dir = -1;
 	int k = List_Nbr((yyvsp[(7) - (8)].l));
 	if(k != 3 && k != 4){
@@ -6651,7 +6651,7 @@ yyreduce:
       if(!s)
 	yymsg(1, "Unknown surface %d", (int)(yyvsp[(4) - (9)].d));
       else{
-	s->Method = TRANSFINI;
+	s->Method = MESH_TRANSFINITE;
 	int k = List_Nbr((yyvsp[(7) - (9)].l));
 	if(k != 3 && k != 4){
 	  yymsg(0, "Wrong definition of Transfinite Surface %d: "
@@ -6697,7 +6697,7 @@ yyreduce:
       if(!v)
 	yymsg(1, "Unknown volume %d", (int)(yyvsp[(4) - (8)].d));
       else{
-	v->Method = TRANSFINI;
+	v->Method = MESH_TRANSFINITE;
 	int k = List_Nbr((yyvsp[(7) - (8)].l));
 	if(k != 6 && k != 8)
 	  yymsg(0, "Wrong definition of Transfinite Volume %d: "
