@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.214 2008-06-20 05:51:36 geuzaine Exp $
+# $Id: Makefile,v 1.215 2008-07-01 15:11:38 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -219,7 +219,8 @@ GModelIO_OCC.o: GModelIO_OCC.cpp GModelIO_OCC.h GModel.h GVertex.h \
   GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
   SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h OCCIncludes.h \
   ../Common/Message.h ../Common/Context.h OCCVertex.h MVertex.h OCCEdge.h \
-  OCCFace.h OCCRegion.h
+  OCCFace.h OCCRegion.h MElement.h ../Common/GmshDefines.h MEdge.h \
+  MFace.h
 GModelIO_Fourier.o: GModelIO_Fourier.cpp GModel.h GVertex.h GEntity.h \
   Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
   SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/Message.h \

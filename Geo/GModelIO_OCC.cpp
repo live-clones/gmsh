@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.37 2008-07-01 14:24:07 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.38 2008-07-01 15:11:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,7 @@
 #include "OCCEdge.h"
 #include "OCCFace.h"
 #include "OCCRegion.h"
+#include "MElement.h"
 
 #if defined(HAVE_OCC_MESH_CONSTRAINTS)
 #include "MeshGmsh_Constrain.hxx"
@@ -442,97 +443,11 @@ void OCC_Internals::buildGModel(GModel *model)
   }
 }
 
-void GModel::_deleteOCCInternals()
-{
-  if(_occ_internals) delete _occ_internals;
-  _occ_internals = 0;
-}
-
-int GModel::readOCCBREP(const std::string &fn)
-{
-  _occ_internals = new OCC_Internals;
-  _occ_internals->loadBREP(fn.c_str());
-  _occ_internals->buildGModel(this);
-  snapVertices();
-  return 1;
-}
-
-int GModel::readOCCIGES(const std::string &fn)
-{
-  _occ_internals = new OCC_Internals;
-  _occ_internals->loadIGES(fn.c_str());
-  _occ_internals->buildGModel(this);
-  return 1;
-}
-
-int GModel::readOCCSTEP(const std::string &fn)
-{
-  _occ_internals = new OCC_Internals;
-  _occ_internals->loadSTEP(fn.c_str());
-  _occ_internals->buildGModel(this);
-  return 1;
-}
-
-int GModel::importOCCShape(const void *shape, const void *options)
-{
-  extern void SetBoundingBox();
-
-  _occ_internals = new OCC_Internals;
-  _occ_internals->loadShape((TopoDS_Shape*)shape);
-  _occ_internals->buildGModel(this);
-  snapVertices();
-  SetBoundingBox();
-
-  if(!options) return 1;
-
-#if defined(HAVE_OCC_MESH_CONSTRAINTS)
-  MeshGmsh_Constrain *c = (MeshGmsh_Constrain*)options;
-  MeshGmsh_DataMapOfShapeOfEdgeConstrain ecmap;
-  c->GetEdgeConstrain(ecmap);
-
-  // iterate on all the edges of the model and set constraints (if
-  // any)
-  for(eiter it = firstEdge(); it != lastEdge(); ++it){
-    GEdge *ge = *it;
-    TopoDS_Shape *shape = (TopoDS_Shape*)ge->getNativePtr();
-    if(ecmap.IsBound(*shape)) {
-      Msg::Debug("Got meshing contraints for edge %d", ge->tag());
-      const MeshGmsh_EdgeConstrain &ec(ecmap.Find(*shape));
-      if(ec.IsMeshImposed() == Standard_True){
-	TColStd_SequenceOfInteger num;
-	ec.GetNodesNumber(num);
-	TColStd_SequenceOfReal par;
-	ec.GetParameters(par);
-	int n = num.Length();
-	if(par.Length() != n){
-	  Msg::Error("Wrong number of parameters in edge constraint: %d != %d",
-		     num.Length(), par.Length());
-	}
-	else{
-	  // set the mesh on this edge...
-	  for(int i = 0; i < n; i++){
-	    printf("node %d param %g\n", num.Value(i), par.Value(i));
-	  }
-	  // ...and never change it
-	  ge->meshAttributes.Method == MESH_NONE;
-	}
-      }
-    }
-  }
-#endif
-
-  return 1;
-}
-
-// This function has been inspired from SALOME It removes all
-// duplicates from the geometry, starting from vertices, edges, faces,
-// shells and solids This
-
 void OCC_Internals::removeAllDuplicates(const double &tolerance)
 {
 }
 
-void AddSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape &theList)
+static void addSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape &theList)
 {
   if (theShape.ShapeType() != TopAbs_COMPOUND &&
       theShape.ShapeType() != TopAbs_COMPSOLID) {
@@ -548,7 +463,7 @@ void AddSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape &theList)
     if (mapShape.Add(aShape_i)) {
       if (aShape_i.ShapeType() == TopAbs_COMPOUND ||
           aShape_i.ShapeType() == TopAbs_COMPSOLID) {
-        AddSimpleShapes(aShape_i, theList);
+        addSimpleShapes(aShape_i, theList);
       } 
       else {
         theList.Append(aShape_i);
@@ -557,7 +472,7 @@ void AddSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape &theList)
   }
 }
 
-void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool,  const BooleanOperator & op)
+void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op)
 {
   if (tool.IsNull()) return;
   if (shape.IsNull()) shape = tool;
@@ -570,8 +485,8 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool,  const BooleanOperat
         TopoDS_Compound C;
         B.MakeCompound(C);
         TopTools_ListOfShape listShape1, listShape2;
-        AddSimpleShapes(shape, listShape1);
-        AddSimpleShapes(tool, listShape2);
+        addSimpleShapes(shape, listShape1);
+        addSimpleShapes(tool, listShape2);
         Standard_Boolean isCompound =
           (listShape1.Extent() > 1 || listShape2.Extent() > 1);
         
@@ -603,7 +518,7 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool,  const BooleanOperat
         }
         if (isCompound) {
           TopTools_ListOfShape listShapeC;
-          AddSimpleShapes(C, listShapeC);
+          addSimpleShapes(C, listShapeC);
           TopTools_ListIteratorOfListOfShape itSubC (listShapeC);
           bool isOnlySolids = true;
           for (; itSubC.More(); itSubC.Next()) {
@@ -627,15 +542,114 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool,  const BooleanOperat
   }
 }
   
-void OCC_Internals::Sphere(const SPoint3 & center, const double & radius,
-                           const BooleanOperator & op)
+void OCC_Internals::Sphere(const SPoint3 &center, const double &radius,
+                           const BooleanOperator &op)
 {
   // build a sphere
   gp_Pnt aP(center.x(), center.y(), center.z());  
   TopoDS_Shape aShape = BRepPrimAPI_MakeSphere(aP, radius).Shape(); 
   // either add it to the current shape, or use it as a tool and remove the
   // sphere from the current shape
-  applyBooleanOperator(aShape,  op);
+  applyBooleanOperator(aShape, op);
+}
+
+void GModel::_deleteOCCInternals()
+{
+  if(_occ_internals) delete _occ_internals;
+  _occ_internals = 0;
+}
+
+int GModel::readOCCBREP(const std::string &fn)
+{
+  _occ_internals = new OCC_Internals;
+  _occ_internals->loadBREP(fn.c_str());
+  _occ_internals->buildGModel(this);
+  snapVertices();
+  return 1;
+}
+
+int GModel::readOCCIGES(const std::string &fn)
+{
+  _occ_internals = new OCC_Internals;
+  _occ_internals->loadIGES(fn.c_str());
+  _occ_internals->buildGModel(this);
+  return 1;
+}
+
+int GModel::readOCCSTEP(const std::string &fn)
+{
+  _occ_internals = new OCC_Internals;
+  _occ_internals->loadSTEP(fn.c_str());
+  _occ_internals->buildGModel(this);
+  return 1;
+}
+
+static void applyOCCMeshConstraints(GModel *m, const void *constraints)
+{
+#if defined(HAVE_OCC_MESH_CONSTRAINTS)
+  MeshGmsh_Constrain *meshConstraints = (MeshGmsh_Constrain*)constraints;
+
+  // treat mesh constraints (if any) on model edges
+  MeshGmsh_DataMapOfShapeOfEdgeConstrain edgeConstraints;
+  meshConstraints->GetEdgeConstrain(edgeConstraints);
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
+    GEdge *ge = *it;
+    TopoDS_Shape *shape = (TopoDS_Shape*)ge->getNativePtr();
+    if(edgeConstraints.IsBound(*shape)) {
+      Msg::Debug("Applying mesh contraints on edge %d", ge->tag());
+      const MeshGmsh_EdgeConstrain &c(edgeConstraints.Find(*shape));
+      if(c.IsMeshImposed() == Standard_True){
+	TColStd_SequenceOfInteger nodeNum;
+	c.GetNodesNumber(nodeNum);
+	TColStd_SequenceOfReal nodePar;
+	c.GetParameters(nodePar);
+	int n = nodeNum.Length();
+	if(n < 2){
+	  Msg::Error("We need at least two points in the edge constraint");
+	}
+	else if(nodePar.Length() != n){
+	  Msg::Error("Wrong number of parameters in edge constraint: %d != %d",
+		     nodeNum.Length(), nodePar.Length());
+	}
+	else{
+	  // set the mesh as immutable
+	  ge->meshAttributes.Method == MESH_NONE;
+	  // set the correct tags on the boundary vertices
+	  ge->getBeginVertex()->mesh_vertices[0]->setNum(nodeNum(0));
+	  ge->getEndVertex()->mesh_vertices[0]->setNum(nodeNum(n - 1));
+	  // set the mesh on the edge
+	  for(int i = 1; i < n - 1; i++){
+	    double u = nodePar.Value(i);
+	    GPoint p = ge->point(u);
+	    MEdgeVertex *v = new MEdgeVertex(p.x(), p.y(), p.z(), ge, u);
+	    v->setNum(nodeNum.Value(i));
+	    ge->mesh_vertices.push_back(v);
+	  }
+	  for(unsigned int i = 0; i < ge->mesh_vertices.size() + 1; i++){
+	    MVertex *v0 = (i == 0) ? 
+	      ge->getBeginVertex()->mesh_vertices[0] : ge->mesh_vertices[i - 1];
+	    MVertex *v1 = (i == ge->mesh_vertices.size()) ? 
+	      ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
+	    ge->lines.push_back(new MLine(v0, v1));
+	  }
+	}
+      }
+    }
+  }
+#endif
+  
+}
+
+int GModel::importOCCShape(const void *shape, const void *meshConstraints)
+{
+  _occ_internals = new OCC_Internals;
+  _occ_internals->loadShape((TopoDS_Shape*)shape);
+  _occ_internals->buildGModel(this);
+  snapVertices();
+  extern void SetBoundingBox();
+  SetBoundingBox();
+  if(meshConstraints) applyOCCMeshConstraints(this, meshConstraints);
+  return 1;
 }
 
 #else

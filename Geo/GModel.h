@@ -237,7 +237,7 @@ class GModel
   int readOCCBREP(const std::string &name);
   int readOCCIGES(const std::string &name);
   int readOCCSTEP(const std::string &name);
-  int importOCCShape(const void *shape, const void *options=0);
+  int importOCCShape(const void *shape, const void *meshConstraints=0);
 
   // Gmsh mesh file format
   int readMSH(const std::string &name);

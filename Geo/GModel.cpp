@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.90 2008-06-12 09:31:36 geuzaine Exp $
+// $Id: GModel.cpp,v 1.91 2008-07-01 15:11:38 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -397,14 +397,17 @@ int GModel::mesh(int dimension)
 int GModel::getMeshStatus(bool countDiscrete)
 {
   for(riter it = firstRegion(); it != lastRegion(); ++it)
-    if((countDiscrete || (*it)->geomType() != GEntity::DiscreteVolume) &&
+    if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteVolume &&
+			  (*it)->meshAttributes.Method != MESH_NONE)) &&
        ((*it)->tetrahedra.size() ||(*it)->hexahedra.size() ||
         (*it)->prisms.size() || (*it)->pyramids.size())) return 3;
   for(fiter it = firstFace(); it != lastFace(); ++it)
-    if((countDiscrete || (*it)->geomType() != GEntity::DiscreteSurface) &&
+    if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteSurface &&
+			  (*it)->meshAttributes.Method != MESH_NONE)) &&
        ((*it)->triangles.size() || (*it)->quadrangles.size())) return 2;
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
-    if((countDiscrete || (*it)->geomType() != GEntity::DiscreteCurve) &&
+    if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteCurve &&
+			  (*it)->meshAttributes.Method != MESH_NONE)) &&
        (*it)->lines.size()) return 1;
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     if((*it)->mesh_vertices.size()) return 0;
