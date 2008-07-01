@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.35 2008-06-30 17:42:49 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.36 2008-07-01 12:46:08 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -488,6 +488,7 @@ int GModel::importOCCShape(const void *shape, const void *options)
   _occ_internals->buildGModel(this);
   snapVertices();
   SetBoundingBox();
+
   if(!options) return 1;
 
 #if defined(HAVE_OCC_MESH_CONSTRAINTS)
@@ -498,12 +499,26 @@ int GModel::importOCCShape(const void *shape, const void *options)
   // iterate on all the edges of the model and set constraints (if
   // any)
   for(eiter it = firstEdge(); it != lastEdge(); ++it){
-    TopoDS_Edge *edge = (*it)->getNativePtr();
-    try { 
-      MeshGmsh_EdgeConstrain &ec = ecmap.Find(*edge);
-      printf("got edge constraints\n");
-    }
-    catch(...){
+    TopoDS_Shape *shape = (TopoDS_Shape*)(*it)->getNativePtr();
+    if(ecmap.IsBound(*shape)) {
+      Msg::Debug("Got meshing contraints for edge %d", (*it)->tag());
+      const MeshGmsh_EdgeConstrain &ec(ecmap.Find(*shape));
+      if(ec.IsMeshImposed()){
+	TColStd_SequenceOfInteger num;
+	ec.GetNodesNumber(num);
+	TColStd_SequenceOfReal par;
+	ec.GetParameters(par);
+	int n = num.Length();
+	if(par.Length() != n){
+	  Msg::Error("Wrong number of parameters in edge constraint: %d != %d",
+		     num.Length(), par.Length());
+	}
+	else{
+	  for(int i = 0; i < n; i++){
+	    printf("node %d param %g\n", num.Value(i), par.Value(i));
+	  }
+	}
+      }
     }
   }
 #endif
