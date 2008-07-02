@@ -261,7 +261,7 @@ public:
     }
     if(f == _faces[0]) return _faces[1];
     if(f == _faces[1]) return _faces[0];
-    printf("otherFace wrong : the edge does not belong to the face \n",numfaces(),p1->iD,p2->iD);
+    printf("otherFace wrong : the edge does not belong to the face \n");
     throw;
   }
   inline void del(BDS_Face *t)

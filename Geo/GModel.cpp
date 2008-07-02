@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.91 2008-07-01 15:11:38 geuzaine Exp $
+// $Id: GModel.cpp,v 1.92 2008-07-02 17:40:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -499,7 +499,7 @@ void GModel::getMeshVertices(int number, int dim, std::vector<MVertex*> &v)
       sv.insert(g->mesh_vertices[0]);
     }
     else{
-      for(int j = 0; j < entities[i]->getNumMeshElements(); j++){
+      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
 	MElement *e = entities[i]->getMeshElement(j);
 	for(int k = 0; k < e->getNumVertices(); k++)
 	  sv.insert(e->getVertex(k));

@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.2 2008-06-05 11:52:49 samtech Exp $
+// $Id: Main.cpp,v 1.3 2008-07-02 17:40:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,7 +30,10 @@ extern Context_T CTX;
 
 int main(int argc, char *argv[])
 {
-  CTX.terminal = 1;
+  // print messages on stdout/stderr
+  CTX.terminal = 1; 
+  // don't stop for questions (always return the default value)
+  CTX.nopopup = 1;
 
   if(argc < 2){
     Print_Usage(argv[0]);

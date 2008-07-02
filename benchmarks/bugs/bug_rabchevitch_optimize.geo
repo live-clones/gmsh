@@ -1,4 +1,6 @@
-// Gmsh project created on Thu Nov 01 10:31:41 2007
+// This is a case where Tetgen produces tests with ZERO volume, which
+// the optimizer fails to remove
+
 
 //indenter which has a little blunt radius
 

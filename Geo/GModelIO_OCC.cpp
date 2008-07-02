@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.38 2008-07-01 15:11:38 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.39 2008-07-02 17:40:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -619,10 +619,10 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
 	  ge->getEndVertex()->mesh_vertices[0]->setNum(nodeNum(n - 1));
 	  // set the mesh on the edge
 	  for(int i = 1; i < n - 1; i++){
-	    double u = nodePar.Value(i);
+	    double u = nodePar(i);
 	    GPoint p = ge->point(u);
 	    MEdgeVertex *v = new MEdgeVertex(p.x(), p.y(), p.z(), ge, u);
-	    v->setNum(nodeNum.Value(i));
+	    v->setNum(nodeNum(i));
 	    ge->mesh_vertices.push_back(v);
 	  }
 	  for(unsigned int i = 0; i < ge->mesh_vertices.size() + 1; i++){

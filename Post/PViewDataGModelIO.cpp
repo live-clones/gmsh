@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.45 2008-05-04 08:31:24 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.46 2008-07-02 17:40:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -38,7 +38,7 @@ bool PViewDataGModel::addNodalData(int step, double time, int partition,
     _steps.push_back(new stepData<double>(GModel::current(), numComp));
   
   int numEnt = _steps[step]->getModel()->getNumMeshVertices();
-  if(nodalData.size() != numEnt * numComp){
+  if((int)nodalData.size() != numEnt * numComp){
     Msg::Error("adding nodal data with wrong number of entries (%d != %d)", 
 	nodalData.size(), numEnt);
     return false;

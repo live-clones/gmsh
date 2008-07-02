@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.3 2008-06-27 18:00:51 geuzaine Exp $
+// $Id: Message.cpp,v 1.4 2008-07-02 17:40:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -463,7 +463,7 @@ double Message::GetValue(const char *text, double defaultval)
   if(CTX.nopopup) return defaultval;
 
 #if defined(HAVE_FLTK)
-  if(WID && !CTX.batch){
+  if(!CTX.batch){
     char defaultstr[256];
     sprintf(defaultstr, "%.16g", defaultval);
     const char *ret = fl_input(text, defaultstr);
@@ -474,7 +474,7 @@ double Message::GetValue(const char *text, double defaultval)
   }
 #endif
 
-  printf("%s (default=%.16g): ", text, defaultval);
+  printf("%s (default=%.16g) ", text, defaultval);
   char str[256];
   char *ret = fgets(str, sizeof(str), stdin);
   if(!ret || !strlen(str) || !strcmp(str, "\n"))
@@ -486,21 +486,28 @@ double Message::GetValue(const char *text, double defaultval)
 bool Message::GetBinaryAnswer(const char *question, const char *yes, 
 			      const char *no,  bool defaultval)
 {
-  if(CTX.nopopup || CTX.batch) return defaultval;
+  if(CTX.nopopup) return defaultval;
 
 #if defined(HAVE_FLTK)
-  if(fl_choice(question, no, yes, NULL))
-    return true;
-  else
-    return false;
+  if(!CTX.batch){
+    if(fl_choice(question, no, yes, NULL))
+      return true;
+    else
+      return false;
+  }
 #endif
 
-  char answ[256];
   while(1){
-    printf("%s (%s/%s)", question, yes, no);
-    scanf("%s ", answ);
-    if(!strcmp(answ, yes)) return true;
-    if(!strcmp(answ, no)) return false;
+    printf("%s\n\n[%s] or [%s]? (default=%s) ", question, yes, no, 
+	   defaultval ? yes : no);
+    char str[256];
+    char *ret = fgets(str, sizeof(str), stdin);
+    if(!ret || !strlen(str) || !strcmp(str, "\n"))
+      return defaultval;
+    else if(!strcmp(str, yes))
+      return true;
+    else if(!strcmp(str, no))
+      return false;
   }
 }
 

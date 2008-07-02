@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.119 2008-07-01 14:24:07 geuzaine Exp $
+// $Id: Geo.cpp,v 1.120 2008-07-02 17:40:56 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -935,7 +935,6 @@ static Surface *DuplicateSurface(Surface *s)
 {
   Surface *ps;
   Curve *c, *newc;
-  int i;
 
   ps = Create_Surface(NEWSURFACE(), 0);
   CopySurface(s, ps);
@@ -949,7 +948,6 @@ static Surface *DuplicateSurface(Surface *s)
 
 static void CopyVolume(Volume *v, Volume *vv)
 {
-  int i, j;
   vv->Typ = v->Typ;
   // We should not copy the meshing method (or the recombination
   // status): if the meshes are to be copied, the meshing algorithm
