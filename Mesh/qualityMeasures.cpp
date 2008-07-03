@@ -1,4 +1,4 @@
-// $Id: qualityMeasures.cpp,v 1.13 2008-03-20 11:44:09 geuzaine Exp $
+// $Id: qualityMeasures.cpp,v 1.14 2008-07-03 17:06:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,7 @@
 #include "MVertex.h"
 #include "MElement.h"
 #include "Numeric.h"
+#include "Message.h"
 
 double qmTriangle(const BDS_Point *p1, const BDS_Point *p2, const BDS_Point *p3, 
                   const gmshQualityMeasure4Triangle &cr)
@@ -90,7 +91,8 @@ double qmTriangle(const double &xa, const double &ya, const double &za,
     }
     break;
   default:
-    throw;
+    Msg::Error("Unknown quality measure");
+    return 0.;
   }  
 
   return quality;
@@ -181,6 +183,7 @@ double qmTet(const double &x1, const double &y1, const double &z1,
     }
     break;
   default:
-    throw;
+    Msg::Error("Unknown quality measure");
+    return 0.;
   }
 }

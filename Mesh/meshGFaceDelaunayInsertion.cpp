@@ -1,4 +1,4 @@
-// $Id: meshGFaceDelaunayInsertion.cpp,v 1.27 2008-06-03 12:43:42 remacle Exp $
+// $Id: meshGFaceDelaunayInsertion.cpp,v 1.28 2008-07-03 17:06:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -557,7 +557,10 @@ static void insertAPoint(GFace *gf,
 			 MTri3 *worst = 0){
   if (worst){
     it = AllTris.find(worst);
-    if (worst != *it)throw;
+    if (worst != *it){
+      Msg::Error("Could not insert point");
+      return;
+    }
   }
   else worst = *it;
 

@@ -59,4 +59,10 @@ GEntity::GeomType fourierFace::geomType() const
   return  GEntity::ParametricSurface;
 }
 
+Pair<SVector3, SVector3> fourierFace::firstDer(const SPoint2 &param) const
+{
+  Msg::Error("First derivative not implemented for fourier face");
+  return Pair<SVector3, SVector3>();
+}
+
 #endif

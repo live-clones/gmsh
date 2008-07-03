@@ -13,6 +13,15 @@
 #include <gmsh/GModel.h>
 #include <gmsh/MElement.h>
 
+class mymsg : public GmshMessage{
+public:
+  void operator()(std::string level, std::string msg)
+  {
+    printf("level=%s msg=%s\n", level.c_str(), msg.c_str());
+    if(level == "Fatal") throw "Fatal error in Gmsh";
+  }
+};
+
 int main(int argc, char **argv)
 {
   // create an OCC shape (by loading it from a brep file)
@@ -21,12 +30,20 @@ int main(int argc, char **argv)
   BRepTools::Read(shape, argv[1], builder);
   BRepTools::Clean(shape);
 
-  // import the shape in gmsh and mesh it
+  // initialize gmsh and set a message callback
   GmshInitialize(argc, argv);
+  mymsg c;
+  GmshSetMessageHandler(&c);
 
+  // create a model, import the shape, and mesh it
   GModel m;
   m.importOCCShape((void*)&shape, 0);
-  m.mesh(2);
+  try{
+    m.mesh(2);
+  }
+  catch(...){
+    printf("Unrecoverable error in gmsh--aborting mesh!\n");
+  }
 
   for(GModel::fiter it = m.firstFace(); it != m.lastFace(); ++it){
     GFace *f = *it;

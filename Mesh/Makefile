@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.226 2008-06-20 05:51:37 geuzaine Exp $
+# $Id: Makefile,v 1.227 2008-07-03 17:06:03 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -215,12 +215,12 @@ meshGFaceDelaunayInsertion.o: meshGFaceDelaunayInsertion.cpp BDS.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h \
-  ../Geo/SVector3.h ../Geo/Pair.h ../Post/PView.h BackgroundMesh.h \
-  meshGFaceDelaunayInsertion.h ../Geo/MElement.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  meshGFaceOptimize.h meshGFace.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Common/Message.h ../Common/Context.h
+  ../Geo/SVector3.h ../Geo/Pair.h ../Post/PView.h ../Common/Message.h \
+  BackgroundMesh.h meshGFaceDelaunayInsertion.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint3.h \
+  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h meshGFaceOptimize.h meshGFace.h \
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Common/Context.h
 meshGFaceOptimize.o: meshGFaceOptimize.cpp meshGFaceOptimize.h \
   ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
@@ -231,7 +231,7 @@ meshGFaceOptimize.o: meshGFaceOptimize.cpp meshGFaceOptimize.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h BackgroundMesh.h
+  ../Geo/Pair.h BackgroundMesh.h ../Common/Message.h
 meshGFaceQuadrilateralize.o: meshGFaceQuadrilateralize.cpp \
   meshGFaceQuadrilateralize.h ../Common/Message.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h meshGFaceDelaunayInsertion.h \
@@ -346,11 +346,11 @@ qualityMeasures.o: qualityMeasures.cpp qualityMeasures.h BDS.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h \
-  ../Geo/SVector3.h ../Geo/Pair.h ../Post/PView.h ../Geo/MVertex.h \
-  ../Geo/SPoint3.h ../Geo/MElement.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h
+  ../Geo/SVector3.h ../Geo/Pair.h ../Post/PView.h ../Common/Message.h \
+  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/MEdge.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
+  ../Geo/SVector3.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h
 BoundaryLayers.o: BoundaryLayers.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \

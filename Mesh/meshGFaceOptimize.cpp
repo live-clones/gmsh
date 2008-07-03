@@ -1,4 +1,4 @@
-// $Id: meshGFaceOptimize.cpp,v 1.15 2008-03-26 20:32:40 remacle Exp $
+// $Id: meshGFaceOptimize.cpp,v 1.16 2008-07-03 17:06:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -27,6 +27,7 @@
 #include "MVertex.h"
 #include "MElement.h"
 #include "BackgroundMesh.h"
+#include "Message.h"
 
 static void setLcsInit(MTriangle *t, std::map<MVertex*, double> &vSizes)
 {
@@ -325,7 +326,8 @@ bool gmshEdgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalE
     }
     break;
   default :
-    throw;
+    Msg::Error("Unknown swapping criterion");
+    return false;
   }
 
   std::list<MTri3*> cavity;
@@ -453,7 +455,8 @@ bool gmshEdgeSplit(const double lMax, MTri3 *t1, GFace *gf, int iLocalEdge,
   case SPCR_ALLWAYS:
     break;
   default :
-    throw;
+    Msg::Error("Unknown swapping criterion");
+    return false;
   }
 
   gf->mesh_vertices.push_back(vnew);
@@ -584,7 +587,10 @@ bool gmshBuildVertexCavity(MTri3 *t, int iLocalVertex, MVertex **v1,
           return true;
         }
         if (!t) return false;
-        if (t->isDeleted()){ printf("weird\n"); throw; }  
+        if (t->isDeleted()){ 
+	  Msg::Error("Impossible to build vertex cavity");
+	  return false;
+	}  
         cavity.push_back(t);
         for (int j = 0; j < 3; j++){
           if (t->tri()->getVertex(j) !=lastinring && t->tri()->getVertex(j) != *v1){
@@ -596,7 +602,10 @@ bool gmshBuildVertexCavity(MTri3 *t, int iLocalVertex, MVertex **v1,
         break;
       }
     }
-    if (iEdge == -1) { printf("not found\n"); throw; }
+    if (iEdge == -1) {
+      Msg::Error("Impossible to build vertex cavity");
+      return false;
+    }
   }
 }
 

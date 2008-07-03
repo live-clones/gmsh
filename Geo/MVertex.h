@@ -141,13 +141,11 @@ class MEdgeVertex : public MVertex{
   virtual ~MEdgeVertex(){}
   virtual bool getParameter(int i, double &par) const 
   { 
-    if(i) throw; 
     par = _u; 
     return true; 
   }
   virtual bool setParameter(int i, double par)
   { 
-    if(i) throw; 
     _u = par; 
     return true; 
   }

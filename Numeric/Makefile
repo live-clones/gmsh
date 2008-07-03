@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.56 2008-06-07 17:20:48 geuzaine Exp $
+# $Id: Makefile,v 1.57 2008-07-03 17:06:04 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -67,7 +67,7 @@ NumericEmbedded.o: NumericEmbedded.cpp NumericEmbedded.h \
   ../Common/Message.h
 EigSolve.o: EigSolve.cpp
 FunctionSpace.o: FunctionSpace.cpp FunctionSpace.h ../Common/GmshMatrix.h \
-  ../Common/GmshDefines.h
+  ../Common/GmshDefines.h ../Common/Message.h
 gmsh_predicates.o: gmsh_predicates.cpp
 gsl_newt.o: gsl_newt.cpp ../Common/Message.h Numeric.h NumericEmbedded.h
 gsl_min.o: gsl_min.cpp ../Common/Message.h Numeric.h NumericEmbedded.h

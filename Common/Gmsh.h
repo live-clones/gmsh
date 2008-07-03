@@ -19,7 +19,17 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
+#include <string>
+
+class GmshMessage{
+ public:
+  GmshMessage(){}
+  virtual ~GmshMessage(){}
+  virtual void operator()(std::string level, std::string message){}
+};
+
 int GmshInitialize(int argc=0, char **argv=0);
+int GmshSetMessageHandler(GmshMessage *callback);
 int GmshFinalize();
 int GmshBatch();
 

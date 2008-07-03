@@ -1,4 +1,4 @@
-// $Id: FunctionSpace.cpp,v 1.7 2008-06-27 08:10:07 koen Exp $
+// $Id: FunctionSpace.cpp,v 1.8 2008-07-03 17:06:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -21,6 +21,7 @@
 
 #include "FunctionSpace.h"
 #include "GmshDefines.h"
+#include "Message.h"
 
 Double_Matrix generatePascalTriangle(int order)
 {
@@ -503,8 +504,10 @@ Double_Matrix gmshGeneratePointsTriangle(int order, bool serendip)
 Double_Matrix generateLagrangeMonomialCoefficients(const Double_Matrix& monomial,
                                                    const Double_Matrix& point) 
 {
-  if (monomial.size1() != point.size1()) throw;
-  if (monomial.size2() != point.size2()) throw;
+  if(monomial.size1() != point.size1() || monomial.size2() != point.size2()){
+    Msg::Fatal("Wrong sizes for Lagrange coefficients generation");
+    return Double_Matrix(1, 1);
+  }
   
   int ndofs = monomial.size1();
   int dim   = monomial.size2();
@@ -523,7 +526,10 @@ Double_Matrix generateLagrangeMonomialCoefficients(const Double_Matrix& monomial
   
   double det = Vandermonde.determinant();
 
-  if (det == 0.0) throw;
+  if (det == 0.0){
+    Msg::Fatal("Vandermonde matrix has zero determinant!?");
+    return Double_Matrix(1, 1);
+  }
 
   Double_Matrix coefficient(ndofs, ndofs);
   
@@ -612,7 +618,10 @@ const gmshFunctionSpace &gmshFunctionSpaces::find(int tag)
     F.points =    gmshGeneratePointsTetrahedron(5, false);
     break;
   default :
-    throw;
+    Msg::Error("Unknown function space %d: reverting to TET_4", tag);
+    F.monomials = generatePascalTetrahedron(1);
+    F.points =    gmshGeneratePointsTetrahedron(1, false);
+    break;
   }  
   F.coefficients = generateLagrangeMonomialCoefficients(F.monomials, F.points);
   fs.insert(std::make_pair(tag, F));

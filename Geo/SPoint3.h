@@ -27,7 +27,7 @@ class SPoint3 {
  protected:
   double P[3];
  public:
-  SPoint3() {}
+  SPoint3() { P[0] = P[1] = P[2] = 0.; }
   SPoint3(double x, double y, double z) { P[0] = x; P[1] = y; P[2] = z; }
   SPoint3(const double *p) { P[0] = p[0]; P[1] = p[1]; P[2] = p[2]; }
   SPoint3(const SPoint3 &pt) { P[0] = pt.P[0]; P[1] = pt.P[1]; P[2] = pt.P[2]; }

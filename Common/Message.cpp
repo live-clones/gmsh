@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.4 2008-07-02 17:40:56 geuzaine Exp $
+// $Id: Message.cpp,v 1.5 2008-07-03 17:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "Message.h"
+#include "Gmsh.h"
 #include "Options.h"
 #include "Context.h"
 #include "OS.h"
@@ -47,6 +48,7 @@ int Message::_progressMeterCurrent = 0;
 std::map<std::string, double> Message::_timers;
 int Message::_warningCount = 0;
 int Message::_errorCount = 0;
+GmshMessage *Message::_callback = 0;
 
 #if defined(HAVE_NO_VSNPRINTF)
 static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
@@ -140,15 +142,17 @@ void Message::Fatal(const char *fmt, ...)
 {
   _errorCount++;
 
-  if(_verbosity < 1) return;
+  char str[1024];
   va_list args;
   va_start(args, fmt);
+  vsnprintf(str, sizeof(str), fmt, args);
+  va_end(args);
+
+  if(_callback) (*_callback)("Fatal", str);
 
 #if defined(HAVE_FLTK)
   if(WID){
     WID->check();
-    char str[1024];
-    vsnprintf(str, sizeof(str), fmt, args);
     std::string tmp = std::string("@C1@.") + "Fatal   : " + str;
     WID->add_message(tmp.c_str());
     WID->create_message_window();
@@ -159,16 +163,14 @@ void Message::Fatal(const char *fmt, ...)
 
   if(CTX.terminal){
     if(_commSize > 1)
-      fprintf(stderr, "Fatal   : [On processor %d] ", _commRank);
+      fprintf(stderr, "Fatal   : [On processor %d] %s\n", _commRank, str);
     else
-      fprintf(stderr, "Fatal   : ");
-    vfprintf(stderr, fmt, args);
-    fprintf(stderr, "\n");
+      fprintf(stderr, "Fatal   : %s\n", str);
     fflush(stderr);
   }
 
-  va_end(args);
-  Exit(1);
+  // only exit if a callback is not provided
+  if(!_callback) Exit(1);
 }
 
 void Message::Error(const char *fmt, ...)
@@ -176,15 +178,18 @@ void Message::Error(const char *fmt, ...)
   _errorCount++;
 
   if(_verbosity < 1) return;
+
+  char str[1024];
   va_list args;
   va_start(args, fmt);
+  vsnprintf(str, sizeof(str), fmt, args);
+  va_end(args);
+
+  if(_callback) (*_callback)("Error", str);
 
 #if defined(HAVE_FLTK)
   if(WID){
     WID->check();
-    char str[1024];
-    vsnprintf(str, sizeof(str), fmt, args);
-    va_end(args);
     std::string tmp = std::string("@C1@.") + "Error   : " + str;
     WID->add_message(tmp.c_str());
     WID->create_message_window();
@@ -193,15 +198,11 @@ void Message::Error(const char *fmt, ...)
 
   if(CTX.terminal){
     if(_commSize > 1) 
-      fprintf(stderr, "Error   : [On processor %d]", _commRank);
+      fprintf(stderr, "Error   : [On processor %d] %s\n", _commRank, str);
     else
-      fprintf(stderr, "Error   : ");
-    vfprintf(stderr, fmt, args);
-    fprintf(stderr, "\n");
+      fprintf(stderr, "Error   : %s\n", str);
     fflush(stderr);
   }
-
-  va_end(args);
 }
 
 void Message::Warning(const char *fmt, ...)
@@ -209,61 +210,62 @@ void Message::Warning(const char *fmt, ...)
   _warningCount++;
 
   if(_commRank || _verbosity < 2) return;
+
+  char str[1024];
   va_list args;
   va_start(args, fmt);
+  vsnprintf(str, sizeof(str), fmt, args);
+  va_end(args);
+
+  if(_callback) (*_callback)("Warning", str);
 
 #if defined(HAVE_FLTK)
   if(WID){
     WID->check();
-    char str[1024];
-    vsnprintf(str, sizeof(str), fmt, args);
     std::string tmp = std::string("@C1@.") + "Warning : " + str;
     WID->add_message(tmp.c_str());
   }
 #endif
 
   if(CTX.terminal){
-    fprintf(stderr, "Warning : ");
-    vfprintf(stderr, fmt, args);
-    fprintf(stderr, "\n");
+    fprintf(stderr, "Warning : %s\n", str);
     fflush(stderr);
   }
-
-  va_end(args);
 }
 
 void Message::Info(const char *fmt, ...)
 {
   if(_commRank || _verbosity < 3) return;
+
+  char str[1024];
   va_list args;
   va_start(args, fmt);
+  vsnprintf(str, sizeof(str), fmt, args);
+  va_end(args);
+
+  if(_callback) (*_callback)("Info", str);
 
 #if defined(HAVE_FLTK)
   if(WID){
     WID->check();
-    char str[1024];
-    vsnprintf(str, sizeof(str), fmt, args);
     std::string tmp = std::string("Info    : ") + str;
     WID->add_message(tmp.c_str());
   }
 #endif
 
   if(CTX.terminal){
-    fprintf(stdout, "Info    : ");
-    vfprintf(stdout, fmt, args);
-    fprintf(stdout, "\n");
+    fprintf(stdout, "Info    : %s\n", str);
     fflush(stdout);
   }
-
-  va_end(args);
 }
 
 void Message::Direct(const char *fmt, ...)
 {
   if(_commRank || _verbosity < 3) return;
+
+  char str[1024];
   va_list args;
   va_start(args, fmt);
-  char str[1024];
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
   Direct(3, str);
@@ -272,14 +274,18 @@ void Message::Direct(const char *fmt, ...)
 void Message::Direct(int level, const char *fmt, ...)
 {
   if(_commRank || _verbosity < level) return;
+
+  char str[1024];
   va_list args;
   va_start(args, fmt);
+  vsnprintf(str, sizeof(str), fmt, args);
+  va_end(args);
+
+  if(_callback) (*_callback)("Direct", str);
 
 #if defined(HAVE_FLTK)
   if(WID){
     WID->check();
-    char str[1024];
-    vsnprintf(str, sizeof(str), fmt, args);
     std::string tmp;
     if(level < 3)
       tmp = std::string("@C1@.") + str;
@@ -292,26 +298,27 @@ void Message::Direct(int level, const char *fmt, ...)
 #endif
   
   if(CTX.terminal){
-    vfprintf(stdout, fmt, args);
-    fprintf(stdout, "\n");
+    fprintf(stdout, "%s\n", str);
     fflush(stdout);
   }
-
-  va_end(args);
 }
 
 void Message::StatusBar(int num, bool log, const char *fmt, ...)
 {
   if(_commRank || _verbosity < 3) return;
   if(num < 1 || num > 3) return;
+
+  char str[1024];
   va_list args;
   va_start(args, fmt);
+  vsnprintf(str, sizeof(str), fmt, args);
+  va_end(args);
+
+  if(_callback && log) (*_callback)("Info", str);
 
 #if defined(HAVE_FLTK)
   if(WID){
     if(log) WID->check();
-    char str[1024];
-    vsnprintf(str, sizeof(str), fmt, args);
     WID->set_status(str, num - 1);
     if(log){
       std::string tmp = std::string("Info    : ") + str;
@@ -321,25 +328,25 @@ void Message::StatusBar(int num, bool log, const char *fmt, ...)
 #endif
 
   if(log && CTX.terminal){
-    fprintf(stdout, "Info    : ");
-    vfprintf(stdout, fmt, args);
-    fprintf(stdout, "\n");
+    fprintf(stdout, "Info    : %s\n", str);
     fflush(stdout);
   }
-
-  va_end(args);
 }
 
 void Message::Debug(const char *fmt, ...)
 {
   if(_verbosity < 99) return;
+
+  char str[1024];
   va_list args;
   va_start(args, fmt);
+  vsnprintf(str, sizeof(str), fmt, args);
+  va_end(args);
+
+  if(_callback) (*_callback)("Debug", str);
 
 #if defined(HAVE_FLTK)
   if(WID){
-    char str[1024];
-    vsnprintf(str, sizeof(str), fmt, args);
     std::string tmp = std::string("Debug   : ") + str;
     WID->add_message(tmp.c_str());
   }
@@ -347,15 +354,11 @@ void Message::Debug(const char *fmt, ...)
 
   if(CTX.terminal){
     if(_commSize > 1) 
-      fprintf(stdout, "Debug   : [On processor %d] ", _commRank);
+      fprintf(stdout, "Debug   : [On processor %d] %s\n", _commRank, str);
     else
-      fprintf(stdout, "Debug   : ");
-    vfprintf(stdout, fmt, args);
-    fprintf(stdout, "\n");
+      fprintf(stdout, "Debug   : %s\n", str);
     fflush(stdout);
   }
-
-  va_end(args);
 }
 
 void Message::ProgressMeter(int n, int N, const char *fmt, ...)
@@ -363,27 +366,29 @@ void Message::ProgressMeter(int n, int N, const char *fmt, ...)
   if(_commRank || _verbosity < 3) return;
 
   double percent = 100. * (double)n/(double)N;
+
   if(percent >= _progressMeterCurrent){
+    char str[1024], str2[1024];
     va_list args;
     va_start(args, fmt);
+    vsnprintf(str, sizeof(str), fmt, args);
+    va_end(args);
+
+    if(strlen(fmt)) strcat(str, " ");
+    sprintf(str2, "(%d %%)", _progressMeterCurrent);
+    strcat(str, str2);
+
 #if defined(HAVE_FLTK)
     if(WID){
-      char str[1024], str2[1024];
-      vsnprintf(str, sizeof(str), fmt, args);
-      if(strlen(fmt)) strcat(str, " ");
-      sprintf(str2, "(%d %%)", _progressMeterCurrent);
-      strcat(str, str2);
       WID->set_status(str, 1);
       WID->check();
     }
 #endif
     if(CTX.terminal){
-      vfprintf(stdout, fmt, args);
-      if(strlen(fmt)) fprintf(stdout, " ");
-      fprintf(stdout, "(%d %%)                     \r", _progressMeterCurrent);
+      fprintf(stdout, "%s                     \r", str);
       fflush(stdout);
     }
-    va_end(args);
+
     while(_progressMeterCurrent < percent)
       _progressMeterCurrent += _progressMeterStep;
   }

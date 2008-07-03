@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.39 2008-07-02 17:40:56 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.40 2008-07-03 17:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -526,18 +526,17 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperato
             if (aValueC.ShapeType() != TopAbs_SOLID) isOnlySolids = false;
           }
           if (isOnlySolids)
-            throw;
-            //      theNewShape = GEOMImpl_GlueDriver::GlueFaces(C, Precision::Confusion());
-          else
-            theNewShape = C;
+	    Msg::Error("Face gluing not implemented");
+	  //  theNewShape = GEOMImpl_GlueDriver::GlueFaces(C, Precision::Confusion());
+          //else
+	      theNewShape = C;
         }       
       }
       break;
     case OCC_Internals::Cut :
-      {
-      }
     default :
-      throw;
+      Msg::Error("Requested boolean operation not implemented");
+      break;
     }
   }
 }

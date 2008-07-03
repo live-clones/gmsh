@@ -28,6 +28,14 @@
 
 extern Context_T CTX;
 
+MFace::MFace() 
+{ 
+  for(int i = 0; i < 4; i++){
+    _v[i] = 0; 
+    _si[i] = 0;
+  }
+}
+
 MFace::MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3) 
 {
   if(CTX.mesh.reverse_all_normals){

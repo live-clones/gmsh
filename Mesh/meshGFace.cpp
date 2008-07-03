@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.138 2008-07-01 14:24:07 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.139 2008-07-03 17:06:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -196,9 +196,15 @@ void computeEdgeLoops(const GFace *gf,
       v_start = start;
     }
     else{
-      if(it == edges.end ()) throw;
+      if(it == edges.end ()){
+	Msg::Error("Something wrong in edge loop computation");
+	return;
+      }
       v_start = ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
-      if(v_start != v_end) throw;
+      if(v_start != v_end){
+	Msg::Error("Something wrong in edge loop computation");
+	return;
+      }
       v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
     }
     all_mvertices.push_back(v_start->mesh_vertices[0]);

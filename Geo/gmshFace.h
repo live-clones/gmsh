@@ -37,7 +37,7 @@ class gmshFace : public GFace {
   virtual SPoint2 geodesic(const SPoint2 &pt1, const SPoint2 &pt2, double t);
   virtual GPoint point(double par1, double par2) const; 
   virtual GPoint closestPoint(const SPoint3 & queryPoint, const double initialGuess[2]) const; 
-  virtual int containsPoint(const SPoint3 &pt) const;  
+  virtual bool containsPoint(const SPoint3 &pt) const;  
   virtual double getMetricEigenvalue(const SPoint2 &);  
   virtual SVector3 normal(const SPoint2 &param) const; 
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const; 

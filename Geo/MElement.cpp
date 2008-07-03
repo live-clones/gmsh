@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.76 2008-06-27 08:33:36 koen Exp $
+// $Id: MElement.cpp,v 1.77 2008-07-03 17:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -103,6 +103,11 @@ double MElement::rhoShapeMeasure()
     return min / max;
   else
     return 0.;
+}
+
+void MElement::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
+{
+  Msg::Error("No integration points defined for this type of element");
 }
 
 double MTriangle::gammaShapeMeasure()
@@ -647,8 +652,8 @@ void MTriangle::jac(int ord, MVertex *vs[], double uu, double vv, double ww, dou
     case 2: gmshFunctionSpaces::find(MSH_TRI_6).df(uu, vv, ww, grads); break;
     case 3: gmshFunctionSpaces::find(MSH_TRI_9).df(uu, vv, ww, grads); break;
     case 4: gmshFunctionSpaces::find(MSH_TRI_12).df(uu, vv, ww, grads); break;
-    case 5: gmshFunctionSpaces::find(MSH_TRI_15I).df(uu, vv,ww, grads); break;
-    default: throw;
+    case 5: gmshFunctionSpaces::find(MSH_TRI_15I).df(uu, vv, ww, grads); break;
+    default: Msg::Error("Order %d triangle jac not implemented", ord); break;
     }
   }
   else{
@@ -658,7 +663,7 @@ void MTriangle::jac(int ord, MVertex *vs[], double uu, double vv, double ww, dou
     case 3: gmshFunctionSpaces::find(MSH_TRI_10).df(uu, vv, ww,grads); break;
     case 4: gmshFunctionSpaces::find(MSH_TRI_15).df(uu, vv, ww,grads); break;
     case 5: gmshFunctionSpaces::find(MSH_TRI_21).df(uu, vv, ww,grads); break;
-    default: throw;
+    default: Msg::Error("Order %d triangle jac not implemented", ord); break;
     }
   }
   j[0][0] = 0 ; for(int i = 0; i < 3; i++) j[0][0] += grads [i][0] * _v[i]->x();
@@ -692,7 +697,7 @@ void MTriangle::pnt(int ord, MVertex *vs[], double uu, double vv, double ww, SPo
     case 3: gmshFunctionSpaces::find(MSH_TRI_9).f(uu, vv, ww,sf); break;
     case 4: gmshFunctionSpaces::find(MSH_TRI_12).f(uu, vv, ww,sf); break;
     case 5: gmshFunctionSpaces::find(MSH_TRI_15I).f(uu, vv, ww,sf); break;
-    default: throw;
+    default: Msg::Error("Order %d triangle pnt not implemented", ord); break;
     }
   }
   else{
@@ -702,7 +707,7 @@ void MTriangle::pnt(int ord, MVertex *vs[], double uu, double vv, double ww, SPo
     case 3: gmshFunctionSpaces::find(MSH_TRI_10).f(uu, vv, ww,sf); break;
     case 4: gmshFunctionSpaces::find(MSH_TRI_15).f(uu, vv, ww,sf); break;
     case 5: gmshFunctionSpaces::find(MSH_TRI_21).f(uu, vv, ww,sf); break;
-    default: throw;
+    default: Msg::Error("Order %d triangle pnt not implemented", ord); break;
     }
   }
   
@@ -728,7 +733,7 @@ void MTetrahedron::pnt(int ord, MVertex *vs[], double uu, double vv, double ww,S
   case 3: gmshFunctionSpaces::find(MSH_TET_20).f(uu, vv, ww,sf); break;
   case 4: gmshFunctionSpaces::find(MSH_TET_35).f(uu, vv, ww,sf); break;
   case 5: gmshFunctionSpaces::find(MSH_TET_56).f(uu, vv, ww,sf); break;
-  default : throw;
+  default: Msg::Error("Order %d tetrahedron pnt not implemented", ord); break;
   }
     
   double x = 0 ; for(int i = 0; i < 4; i++) x += sf[i] * _v[i]->x();
@@ -745,6 +750,7 @@ void MTetrahedron::pnt(int ord, MVertex *vs[], double uu, double vv, double ww,S
   p = SPoint3(x,y,z);
 #endif
 }
+
 void MTetrahedron::pnt(int ord, std::vector<MVertex *> & vs, double uu, double vv, double ww,SPoint3 &p)
 {
 #if !defined(HAVE_GMSH_EMBEDDED)
@@ -755,7 +761,7 @@ void MTetrahedron::pnt(int ord, std::vector<MVertex *> & vs, double uu, double v
   case 3: gmshFunctionSpaces::find(MSH_TET_20).f(uu, vv, ww,sf); break;
   case 4: gmshFunctionSpaces::find(MSH_TET_35).f(uu, vv, ww,sf); break;
   case 5: gmshFunctionSpaces::find(MSH_TET_56).f(uu, vv, ww,sf); break;
-  default : throw;
+  default: Msg::Error("Order %d tetrahedron pnt not implemented", ord); break;
   }
     
   double x = 0 ; for(int i = 0; i < 4; i++) x += sf[i] * _v[i]->x();
@@ -791,7 +797,7 @@ void MTetrahedron::jac(int ord, MVertex *vs[], double uu, double vv, double ww, 
   case 3: gmshFunctionSpaces::find(MSH_TET_20).df(uu, vv, ww, grads); break;
   case 4: gmshFunctionSpaces::find(MSH_TET_35).df(uu, vv, ww, grads); break;
   case 5: gmshFunctionSpaces::find(MSH_TET_56).df(uu, vv, ww, grads); break;
-  default: throw;
+  default: Msg::Error("Order %d tetrahedron jac not implemented", ord); break;
   }
  
   j[0][0] = 0 ; for(int i = 0; i < 4; i++) j[0][0] += grads [i][0] * _v[i]->x();
@@ -838,7 +844,7 @@ void MTetrahedron::jac(int ord, std::vector<MVertex *>& vs, double uu, double vv
   case 3: gmshFunctionSpaces::find(MSH_TET_20).df(uu, vv, ww, grads); break;
   case 4: gmshFunctionSpaces::find(MSH_TET_35).df(uu, vv, ww, grads); break;
   case 5: gmshFunctionSpaces::find(MSH_TET_56).df(uu, vv, ww, grads); break;
-  default: throw;
+  default: Msg::Error("Order %d tetrahedron jac not implemented", ord); break;
   }
  
   j[0][0] = 0 ; for(int i = 0; i < 4; i++) j[0][0] += grads [i][0] * _v[i]->x();

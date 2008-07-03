@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.31 2008-06-20 12:15:44 remacle Exp $
+// $Id: HighOrder.cpp,v 1.32 2008-07-03 17:06:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -503,7 +503,6 @@ void getFaceVertices(GFace *gf,
           }
         }
       }
-      else throw; // not tri or quad
     }
   }  
 }
@@ -603,7 +602,6 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
           }
         }
       }
-      else throw; // not tri or quad
     }
   }
 }
@@ -646,7 +644,6 @@ void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
           }
         }
       }
-      else throw; // not tri or quad
     }
   }
 }
@@ -1063,8 +1060,14 @@ void optimizeNodeLocations(GFace *gf, smoothVertexDataHON &vdN, double eps = .2)
   if(!vdN.v.size()) return;
   double uv[20];
   for (unsigned int i = 0; i < vdN.v.size(); i++){
-    if (!vdN.v[i]->getParameter(0, uv[2 * i])) throw;
-    if (!vdN.v[i]->getParameter(1, uv[2 * i + 1])) throw;
+    if (!vdN.v[i]->getParameter(0, uv[2 * i])){
+      Msg::Error("Node location optimization failed");
+      return;
+    }
+    if (!vdN.v[i]->getParameter(1, uv[2 * i + 1])){
+      Msg::Error("Node location optimization failed");
+      return;
+    }
   }
 
   double F = -smooth_obj_HighOrderN(uv, &vdN);
@@ -1419,6 +1422,11 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   // - if incomplete is set to true, we only create new vertices on 
   //   edges (creating 8-node quads, 20-node hexas, etc., instead of
   //   9-node quads, 27-node hexas, etc.)
+
+#if !defined(HAVE_GSL)
+  Msg::Error("High order mesh generation requires the GSL");
+  return;
+#endif
 
   int nPts = order - 1;
 

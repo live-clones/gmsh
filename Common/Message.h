@@ -25,6 +25,8 @@
 #include <string>
 #include <stdarg.h>
 
+class GmshMessage;
+
 // a class to manage messages
 class Message {
  private:
@@ -38,6 +40,8 @@ class Message {
   static std::map<std::string, double> _timers;
   // counters
   static int _warningCount, _errorCount;
+  // callback
+  static GmshMessage *_callback;
  public:
   Message() {}
   static void Init(int argc, char **argv);
@@ -46,6 +50,7 @@ class Message {
   static int GetCommSize(){ return _commSize; }
   static void SetCommRank(int val){ _commRank = val; }
   static void SetCommSize(int val){ _commSize = val; }
+  static void SetCallback(GmshMessage *callback){ _callback = callback; }
   static void Barrier();
   static int GetNumThreads();
   static int GetMaxThreads();

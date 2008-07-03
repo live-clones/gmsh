@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.215 2008-07-01 15:11:38 geuzaine Exp $
+# $Id: Makefile,v 1.216 2008-07-03 17:06:02 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -161,14 +161,14 @@ discreteEdge.o: discreteEdge.cpp discreteEdge.h GModel.h GVertex.h \
   ../Common/GmshDefines.h gmshSurface.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Common/ListUtils.h \
   ../Common/TreeUtils.h ../Common/avl.h ../Common/ListUtils.h \
-  ExtrudeParams.h ../Common/SmoothData.h
+  ExtrudeParams.h ../Common/SmoothData.h ../Common/Message.h
 discreteFace.o: discreteFace.cpp discreteFace.h GModel.h GVertex.h \
   GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
   SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h Geo.h \
   ../Common/GmshDefines.h gmshSurface.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Common/ListUtils.h \
   ../Common/TreeUtils.h ../Common/avl.h ../Common/ListUtils.h \
-  ExtrudeParams.h ../Common/SmoothData.h
+  ExtrudeParams.h ../Common/SmoothData.h ../Common/Message.h
 discreteRegion.o: discreteRegion.cpp discreteRegion.h GModel.h GVertex.h \
   GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
   SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h Geo.h \

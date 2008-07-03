@@ -1,4 +1,4 @@
-// $Id: OCCRegion.cpp,v 1.12 2008-05-04 08:31:13 geuzaine Exp $
+// $Id: OCCRegion.cpp,v 1.13 2008-07-03 17:06:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -39,9 +39,12 @@ OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num, TopTools_IndexedMapOfS
       TopoDS_Face face = TopoDS::Face(exp3.Current());
       int index = fmap.FindIndex(face);
       GFace *f = m->getFaceByTag(index);
-      if(!f) throw;
-      l_faces.push_back(f);
-      f->addRegion(this);
+      if(f){
+	l_faces.push_back(f);
+	f->addRegion(this);
+      }
+      else
+	Msg::Error("Unknown face %d in region %d", index, num);
     }      
   }
   Msg::Info("OCC Region %d with %d edges", num, l_faces.size());

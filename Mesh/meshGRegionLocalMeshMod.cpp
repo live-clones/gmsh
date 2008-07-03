@@ -1,4 +1,4 @@
-// $Id: meshGRegionLocalMeshMod.cpp,v 1.13 2008-05-04 08:31:16 geuzaine Exp $
+// $Id: meshGRegionLocalMeshMod.cpp,v 1.14 2008-07-03 17:06:04 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -99,10 +99,10 @@ bool gmshBuildEdgeCavity(MTet4 *t,
     else if (faces[iFace2][0] == edges[5-iLocalEdge][K] ||
              faces[iFace2][1] == edges[5-iLocalEdge][K] ||
              faces[iFace2][2] == edges[5-iLocalEdge][K] ) iFace = iFace2;
-    else { Msg::Error("Error of connexion"); throw; }
+    else { Msg::Error("Error of connexion"); return false; }
     t=t->getNeigh(iFace);
     if (!t) return false;
-    if (t->isDeleted()) throw;
+    if (t->isDeleted()){ Msg::Error("Weird!!"); return false; }
     if (t == cavity[0]) break;
     ring.push_back(lastinring);    
     cavity.push_back(t);
@@ -117,7 +117,7 @@ bool gmshBuildEdgeCavity(MTet4 *t,
     }  
     if (iLocalEdge == -1){
       Msg::Error("loc = %d", iLocalEdge);
-      throw;
+      return false;
     }
   }
   computeNeighboringTetsOfACavity (cavity,outside);
@@ -384,7 +384,10 @@ bool gmshFaceSwap(std::vector<MTet4 *> &newTets,
       break;
     }
   }
-  if (!v2) throw;
+  if (!v2){
+    Msg::Error("Impossible to swap face");
+    return false;
+  }
 
   // printf("%p %p -- %p %p %p\n",v1,v2,f1,f2,f3);
 
@@ -573,7 +576,10 @@ bool gmshCollapseVertex(std::vector<MTet4 *> &newTets,
                         const gmshLocalMeshModAction action,
                         double *minQual)
 {
-  if(t->isDeleted()) throw;
+  if(t->isDeleted()){
+    Msg::Error("Impossible to collapse vertex");
+    return false;
+  }
 
   MVertex *v = t->tet()->getVertex(iVertex);
   MVertex *tg = t->tet()->getVertex(iTarget);
@@ -613,7 +619,10 @@ bool gmshCollapseVertex(std::vector<MTet4 *> &newTets,
   
   double worstAfter = 1.0;
   double newQuals[2000];
-  if (toUpdate.size() >= 2000) throw;
+  if (toUpdate.size() >= 2000){
+    Msg::Error("Impossible to collapse vertex");
+    return false;
+  }
   for (unsigned int i = 0; i < toUpdate.size(); i++){
     double vv;
     newQuals[i] = qmTet(toUpdate[i]->tet(),cr,&vv);
@@ -659,7 +668,10 @@ bool gmshSmoothVertex(MTet4 *t,
                       int iVertex,
                       const gmshQualityMeasure4Tet &cr)
 {
-  if(t->isDeleted()) throw;
+  if(t->isDeleted()){
+    Msg::Error("Impossible to collapse vertex");
+    return false;
+  }
   if(t->tet()->getVertex(iVertex)->onWhat()->dim() < 3) return false;
 
   std::vector<MTet4*> cavity;
@@ -702,7 +714,10 @@ bool gmshSmoothVertex(MTet4 *t,
   t->tet()->getVertex(iVertex)->z() = zcg;
   double worstAfter = 1.0;
   double newQuals[2000];
-  if (cavity.size() >= 2000) throw;
+  if (cavity.size() >= 2000){
+    Msg::Error("Impossible to smooth vertex");
+    return false;
+  }
   for (unsigned int i = 0; i < cavity.size(); i++){
     double volume;
     newQuals[i] = qmTet(cavity[i]->tet(),cr,&volume);
@@ -816,7 +831,10 @@ bool gmshSmoothVertexOptimize(MTet4 *t,
   t->tet()->getVertex(iVertex)->z() = zopti;
 
   double newQuals[2000];
-  if(vd.ts.size() >= 2000) throw;
+  if(vd.ts.size() >= 2000){
+    Msg::Error("Impossible to smooth vertex");
+    return false;
+  }
   for(unsigned int i = 0; i < vd.ts.size(); i++){
     double volume;
     newQuals[i] = qmTet(vd.ts[i]->tet(), cr, &volume);

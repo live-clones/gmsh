@@ -1,4 +1,4 @@
-// $Id: discreteEdge.cpp,v 1.1 2008-05-21 10:50:37 geuzaine Exp $
+// $Id: discreteEdge.cpp,v 1.2 2008-07-03 17:06:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -21,8 +21,11 @@
 
 #include "discreteEdge.h"
 
-#if !defined(HAVE_GMSH_EMBEDDED)
-#include "Geo.h"
+#if defined(HAVE_GMSH_EMBEDDED)
+#  include "GmshEmbedded.h"
+#else
+#  include "Geo.h"
+#  include "Message.h"
 #endif
 
 discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num, 0, 0) 
@@ -32,4 +35,22 @@ discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num, 0, 0)
   Tree_Add(model->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
 #endif
+}
+
+GPoint discreteEdge::point(double p) const 
+{
+  Msg::Error("Cannot evaluate point on discrete edge");
+  return GPoint();
+}
+
+SVector3 discreteEdge::firstDer(double par) const 
+{
+  Msg::Error("Cannot evaluate derivative on discrete edge");
+  return SVector3();
+}
+
+double discreteEdge::parFromPoint(const SPoint3 &pt) const 
+{
+  Msg::Error("Cannot compute parametric coordinate on discrete edge");
+  return 0.;
 }

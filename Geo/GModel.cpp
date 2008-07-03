@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.92 2008-07-02 17:40:56 geuzaine Exp $
+// $Id: GModel.cpp,v 1.93 2008-07-03 17:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -208,7 +208,10 @@ void GModel::snapVertices()
       else if ((*it)->getEndVertex() == *vit){
         t = parb.high();
       }
-      else throw;
+      else{
+	Msg::Error("Weird vertex: impossible to snap");
+	break;
+      }
       GPoint gp = (*it)->point(t);
       double d = sqrt((gp.x() - (*vit)->x()) * (gp.x() - (*vit)->x()) +
                       (gp.y() - (*vit)->y()) * (gp.y() - (*vit)->y()) +
@@ -216,7 +219,7 @@ void GModel::snapVertices()
       if (d > tol){
         (*vit)->setPosition(gp);
         Msg::Warning("Geom Vertex %d Corrupted (%12.5E)... Snap performed",
-            (*vit)->tag(), d);
+		     (*vit)->tag(), d);
       }
     }
     vit++;

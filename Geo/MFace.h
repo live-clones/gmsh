@@ -32,6 +32,7 @@ class MFace {
   char _si[4]; // sorted indices
 
  public:
+  MFace();
   MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3=0);
   inline int getNumVertices() const { return _v[3] ? 4 : 3; }
   inline MVertex *getVertex(const int i) const { return _v[i]; }
@@ -100,7 +101,6 @@ class MFace {
         p[2] += v->z() * ff[i] * .25;
       } 
     }
-    else throw;
     return p;
   }
 };

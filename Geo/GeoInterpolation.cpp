@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.39 2008-06-27 17:34:19 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.40 2008-07-03 17:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -101,13 +101,11 @@ static Vertex InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
 
 // interpolation in the parametric space !
 SPoint2 InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
-                              int derivee, double t1, double t2, gmshSurface *s)
+			       double t1, double t2, gmshSurface *s)
 {
   Vertex V;
   int i, j;
   double T[4];
-
-  if(derivee) throw;
 
   T[3] = 1.;
   T[2] = t;
@@ -148,7 +146,7 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
   }
 
   if(Curve->geometry){
-    SPoint2 pp = InterpolateCubicSpline(v, t, Curve->mat, 0, t1, t2, Curve->geometry);
+    SPoint2 pp = InterpolateCubicSpline(v, t, Curve->mat, t1, t2, Curve->geometry);
     SPoint3 pt = Curve->geometry->point(pp);
     Vertex V;
     V.Pos.X = pt.x();
@@ -366,7 +364,7 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
       List_Read(c->Control_Points, i + 2, &v[3]);
     }
     if(c->geometry){
-      SPoint2 pp = InterpolateCubicSpline(v, t, c->mat, 0, t1, t2,c->geometry);
+      SPoint2 pp = InterpolateCubicSpline(v, t, c->mat, t1, t2,c->geometry);
       SPoint3 pt = c->geometry->point(pp);
       V.Pos.X = pt.x();
       V.Pos.Y = pt.y();

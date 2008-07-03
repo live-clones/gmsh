@@ -28,7 +28,7 @@ class Range {
   T High;
  public:
   Range() {}
-  Range( const T& low, const T& high) : Low(low), High(high) {}
+  Range(const T& low, const T& high) : Low(low), High(high) {}
   T low() const { return Low; }
   void low(const T& low) { Low = low; }
   T high() const { return High; }

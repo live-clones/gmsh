@@ -189,7 +189,7 @@ class MElement
                        int stride=3);
   double interpolateDiv(double val[], double u, double v, double w, int stride=3);
   // integration routine 
-  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const { throw; }
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
   
   // IO routines
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
@@ -260,12 +260,9 @@ class MLine : public MElement {
     _getEdgeRep(_v[0], _v[1], x, y, z, n);
   }
   virtual int getNumFaces(){ return 0; }
-  virtual MFace getFace(int num){ throw; }
+  virtual MFace getFace(int num){ return MFace(); }
   virtual int getNumFacesRep(){ return 0; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
-    throw; 
-  }
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n){}
   virtual int getTypeForMSH(){ return MSH_LIN_2; }
   virtual int getTypeForUNV(){ return 21; } // linear beam
   virtual int getTypeForVTK(){ return 3; }
@@ -297,7 +294,7 @@ class MLine : public MElement {
       return false;
     return true;
   }
-  virtual void getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const;
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
 };
 
 class MLine3 : public MLine {
@@ -407,7 +404,7 @@ class MTriangle : public MElement {
     if(_v[0] != v1 && _v[0] != v2) return _v[0];
     if(_v[1] != v1 && _v[1] != v2) return _v[1];
     if(_v[2] != v1 && _v[2] != v2) return _v[2];
-    throw;
+    return 0;
   }
   virtual int getNumEdges(){ return 3; }
   virtual MEdge getEdge(int num)
@@ -478,7 +475,7 @@ class MTriangle : public MElement {
       return false; 
     return true;
   }
-  virtual void getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const;
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
 };
 
 class MTriangle6 : public MTriangle {
@@ -591,7 +588,7 @@ class MTriangleN : public MTriangle {
     if(_order == 4 && _vs.size() == 12) return 3;
     if(_order == 5 && _vs.size() == 12) return 0;
     if(_order == 5 && _vs.size() == 18) return 6;
-    throw;
+    return 0;
   }
   virtual int getNumEdgeVertices(){ return _order - 1; }
   virtual int getNumEdgesRep();
@@ -712,7 +709,7 @@ class MQuadrangle : public MElement {
       return false;
     return true;
   }
-  virtual void getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const;
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
 };
 
 class MQuadrangle8 : public MQuadrangle {
@@ -957,7 +954,7 @@ class MTetrahedron : public MElement {
       return false;
     return true;
   }
-  virtual void getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const;
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
 };
 
 class MTetrahedron10 : public MTetrahedron {
@@ -1075,8 +1072,7 @@ class MTetrahedronN : public MTetrahedron {
     case MSH_TET_20 : return 1;
     case MSH_TET_35 : return 3;
     case MSH_TET_56 : return 6;
-    default : 
-      throw;
+    default : return 0;
     }    
   }
   virtual int getNumEdgeVertices(){ return _order - 1; }
@@ -1086,7 +1082,7 @@ class MTetrahedronN : public MTetrahedron {
     if(_order == 3 && _vs.size() + 4 == 20) return MSH_TET_20; 
     if(_order == 4 && _vs.size() + 4 == 35) return MSH_TET_35; 
     if(_order == 5 && _vs.size() + 4 == 56) return MSH_TET_56; 
-    throw;
+    return 0;
   }
   virtual void revert() 
   {
@@ -1251,7 +1247,7 @@ class MHexahedron : public MElement {
       return false;
     return true;
   }
-  virtual void getIntegrationPoints ( int pOrder , int *npts, IntPt **pts) const;
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
 };
 
 class MHexahedron20 : public MHexahedron {

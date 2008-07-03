@@ -27,9 +27,9 @@ class SPoint2 {
  protected:
   double P[2];
  public:
-  SPoint2(double x=0.0, double y=0.0) {P[0] = x; P[1] = y;}
-  SPoint2(double *p) {P[0] = p[0]; P[1] = p[1];}
-  SPoint2(const SPoint2 &pt) {P[0] = pt.P[0]; P[1] = pt.P[1]; }
+  SPoint2(double x=0.0, double y=0.0) { P[0] = x; P[1] = y; }
+  SPoint2(double *p) { P[0] = p[0]; P[1] = p[1]; }
+  SPoint2(const SPoint2 &pt) { P[0] = pt.P[0]; P[1] = pt.P[1]; }
   virtual ~SPoint2() {}
   void setPosition(double xx, double yy);
   void getPosition(double *xx, double *yy) const;

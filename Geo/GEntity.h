@@ -161,22 +161,22 @@ class GEntity {
   void deleteVertexArrays();
 
   // Spatial dimension of the entity
-  virtual int dim() const { throw; }
+  virtual int dim() const { return -1; }
 
   // Regions that bound this entity or that this entity bounds.
-  virtual std::list<GRegion*> regions() const { throw; }
+  virtual std::list<GRegion*> regions() const { return std::list<GRegion*>(); }
 
   // Faces that bound this entity or that this entity bounds.
-  virtual std::list<GFace*> faces() const { throw; }
+  virtual std::list<GFace*> faces() const { return std::list<GFace*>(); }
 
   // Edges that bound this entity or that this entity bounds.
-  virtual std::list<GEdge*> edges() const { throw; }
+  virtual std::list<GEdge*> edges() const { return std::list<GEdge*>(); }
 
   // Vertices that bound this entity.
-  virtual std::list<GVertex*> vertices() const { throw; }
+  virtual std::list<GVertex*> vertices() const { return std::list<GVertex*>(); }
 
   /// Underlying geometric representation of this entity.
-  virtual GeomType geomType() const { throw; }
+  virtual GeomType geomType() const { return Unknown; }
 
   // True if parametric space is continuous in the "dim" direction.
   virtual bool continuous(int dim) const { return true; }
@@ -188,19 +188,19 @@ class GEntity {
   virtual bool degenerate(int dim) const { return false; }
 
   // Parametric bounds of the entity in the "i" direction.
-  virtual Range<double> parBounds(int i) const { throw; }
+  virtual Range<double> parBounds(int i) const { return Range<double>(0., 0.); }
 
   // Modeler tolerance for the entity.
   virtual double tolerance() const { return 1.e-14; }
 
   // True if the entity contains the given point to within tolerance.
-  virtual int containsPoint(const SPoint3 &pt) const { throw; }
+  virtual bool containsPoint(const SPoint3 &pt) const { return false; }
 
   // Get the native type of the particular representation
   virtual ModelType getNativeType() const { return UnknownModel; }
 
   // Get the native pointer of the particular representation
-  virtual void * getNativePtr() const { throw; }
+  virtual void * getNativePtr() const { return 0; }
 
   // The model owning this entity.
   GModel *model() const { return _model; }
@@ -210,7 +210,7 @@ class GEntity {
   void setTag(int tag) { _tag = tag; }
 
   // The bounding box
-  virtual SBoundingBox3d bounds() const { throw; }
+  virtual SBoundingBox3d bounds() const { return SBoundingBox3d(); }
 
   // Get the visibility flag
   virtual char getVisibility();

@@ -19,14 +19,12 @@
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
 
-#include <assert.h>
-
 template <class SCALAR>
 class Gmsh_Vector
 {
-private:
+ private:
   int r;
-public:
+ public:
   inline int size() const { return r; }
   SCALAR *data;
   ~Gmsh_Vector() { delete [] data; }
@@ -63,9 +61,9 @@ public:
 template <class SCALAR>
 class Gmsh_Matrix
 {
-private:
+ private:
   int r, c;
-public:
+ public:
   inline int size1() const { return r; }
   inline int size2() const { return c; }
   SCALAR *data;
@@ -95,39 +93,46 @@ public:
   }
   inline void mult(const Gmsh_Matrix<SCALAR> &x, const Gmsh_Matrix<SCALAR> &b)
   {
-    throw;
-  }
-  inline void blas_dgemm(const Gmsh_Matrix<SCALAR>& x, const Gmsh_Matrix<SCALAR>& b, 
-			 const double c_a = 1.0, const double c_b = 1.0){
-    throw;
+    for(int i = 0; i < b.size1(); i++)
+      for(int j = 0; j < b.size2(); j++)
+	for(int k = 0; k < size2(); k++)
+	  b(i, j) += (*this)(i, k) * x(k, j);
   }
   inline void mult(const Gmsh_Vector<SCALAR> &x, Gmsh_Vector<SCALAR> &b)
   {
-    throw;
+    for(int i = 0; i < b.size(); i++)
+      for(int j = 0; j < b.size(); j++)
+	b(i) += (*this)(i, j) * x(j);
   }
   inline void set_all(const double &m) 
   {
-    throw;
+    for(int i = 0; i < r * c; i++) data[i] = m;
   }
   inline void lu_solve(const Gmsh_Vector<SCALAR> &rhs, Gmsh_Vector<SCALAR> &result)
   {
-    throw;
+    // FIXME: not implemented
+    result.scale(0);
   }
   Gmsh_Matrix cofactor(int i, int j) const 
   {
-    throw;
+    // FIXME: not implemented
+    Gmsh_Matrix cof(size1() - 1, size2() - 1);
+    return cof;
   }
   inline void invert()
   {
-    throw;
+    // FIXME: not implemented
   }
   double determinant() const 
   {
-    throw;
+    // FIXME: not implemented
+    return 0.;
   }
   inline Gmsh_Matrix touchSubmatrix(int i0, int ni, int j0, int nj) 
   {
-    throw;
+    // FIXME: not implemented
+    Gmsh_Matrix subm(ni, nj);
+    return subm;
   }  
   inline void scale(const SCALAR s)
   {
@@ -135,15 +140,17 @@ public:
   }
   inline void add(const double &a) 
   {
-    throw;
+    for (int i = 0; i < r * c; ++i) data[i] += a;
   }
   inline void add(const Gmsh_Matrix &m) 
   {
-    throw;
+    for(int i = 0; i < size1(); i++)
+      for(int j = 0; j < size2(); j++)
+	(*this)(i, j) += m(i, j);
   }
 };
 
-#ifdef HAVE_GSL
+#if defined(HAVE_GSL)
 
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_matrix.h>
@@ -152,9 +159,9 @@ public:
 
 class GSL_Vector
 {
-private:
+ private:
   int r;
-public:
+ public:
   inline int size() const { return r; }
   gsl_vector *data;
   ~GSL_Vector() { gsl_vector_free(data); }
@@ -176,7 +183,7 @@ public:
     return *gsl_vector_ptr(data, i);
   }
   inline double norm()
-{
+  {
     return gsl_blas_dnrm2(data);
   }
   inline void scale(const double &y)
@@ -188,9 +195,9 @@ public:
 
 class GSL_Matrix
 {
-private:
+ private:
   gsl_matrix_view view;
-public:
+ public:
   inline int size1() const { return data->size1; }
   inline int size2() const { return data->size2; }
   gsl_matrix *data;
@@ -228,11 +235,6 @@ public:
   inline void mult(const GSL_Matrix &x, const GSL_Matrix &b)
   {
     gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, data, x.data, 1.0, b.data);
-  }
-  inline void blas_dgemm(const GSL_Matrix & x, const GSL_Matrix& b, 
-			 const double c_a = 1.0, const double c_b = 1.0)
-  {      
-    gsl_blas_dgemm(CblasNoTrans,CblasNoTrans, c_a, x.data, b.data, c_b, data);
   }
   inline void set_all(const double &m) 
   {
@@ -323,7 +325,7 @@ public:
   }
   inline void add(const GSL_Matrix &m) 
   {
-    gsl_matrix_add (data, m.data);
+    gsl_matrix_add(data, m.data);
   }
 };
 

@@ -1,4 +1,4 @@
-// $Id: Gmsh.cpp,v 1.6 2008-05-04 08:31:11 geuzaine Exp $
+// $Id: Gmsh.cpp,v 1.7 2008-07-03 17:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -65,6 +65,12 @@ int GmshInitialize(int argc, char **argv)
 
   // Check for buggy obsolete GSL versions
   check_gsl();
+  return 1;
+}
+
+int GmshSetMessageHandler(GmshMessage *callback)
+{
+  Msg::SetCallback(callback);
   return 1;
 }
 

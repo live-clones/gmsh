@@ -774,12 +774,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "SystemMenuBar" , opt_general_system_menu_bar , 1. , 
     "Use the system menu bar on Mac OS X?" }, 
 
-  { F|O, "Terminal" , opt_general_terminal , 
-#if defined(HAVE_FLTK)
-    0. ,
-#else                 
-    1. ,
-#endif
+  { F|O, "Terminal" , opt_general_terminal , 0. ,
     "Should information be printed on the terminal (if available)?" },
   { F|O, "Tooltips" , opt_general_tooltips , 1. ,
     "Show tooltips in the user interface" },

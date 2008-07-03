@@ -27,12 +27,11 @@ class discreteFace : public GFace {
  public:
   discreteFace(GModel *model, int num);
   virtual ~discreteFace() {}
-  virtual GPoint point(double par1, double par2) const { throw; }
-  virtual SPoint2 parFromPoint(const SPoint3 &p) const { throw; }
-  virtual SVector3 normal(const SPoint2 &param) const { throw; }
+  virtual GPoint point(double par1, double par2) const;
+  virtual SPoint2 parFromPoint(const SPoint3 &p) const;
+  virtual SVector3 normal(const SPoint2 &param) const;
   virtual GEntity::GeomType geomType() const { return DiscreteSurface; }
-  virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const { throw; }
+  virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const;
 };
 
 #endif
-

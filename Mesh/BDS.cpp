@@ -1,4 +1,4 @@
-// $Id: BDS.cpp,v 1.107 2008-06-10 08:37:34 remacle Exp $
+// $Id: BDS.cpp,v 1.108 2008-07-03 17:06:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -292,7 +292,10 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, std::set<EdgeToRecover> *e2
   BDS_Point *p1 = find_point(num1);
   BDS_Point *p2 = find_point(num2);
   
-  if(!p1 || !p2) throw;
+  if(!p1 || !p2) {
+    Msg::Fatal("Could not find points %d or %d in BDS mesh", num1, num2);
+    return 0;
+  }
 
   Msg::Debug("edge %d %d has to be recovered", num1, num2);
   
@@ -428,8 +431,10 @@ BDS_Edge *BDS_Mesh::add_edge(int p1, int p2)
 
   BDS_Point *pp1 = find_point(p1);
   BDS_Point *pp2 = find_point(p2);
-  if(!pp1 || !pp2)
-    throw;
+  if(!pp1 || !pp2){
+    Msg::Fatal("Could not find points %d or %d in BDS mesh", p1, p2);
+    return 0;
+  }
   BDS_Edge *e = new BDS_Edge(pp1, pp2);
   edges.push_back(e);
   return e;
@@ -1230,16 +1235,16 @@ bool test_move_point_parametric_quad(BDS_Point *p, double u, double v, BDS_Face 
     pd[0] = u;
     pd[1] = v;
   }
-  else
-    throw;
+  else{
+    Msg::Error("Something wrong in move_point_parametric_quad");
+    return false;
+  }
   
   double ori_final1 = gmsh::orient2d(pa, pb, pc);
   double ori_final2 = gmsh::orient2d(pc, pd, pa);
   // allow to move a point when a triangle was flat
   return ori_init1*ori_final1 > 0 && ori_init2*ori_final2 > 0 ;
 }
-
-
 
 // d^2_i = (x^2_i - x)^T M (x_i - x)  
 //       = M11 (x_i - x)^2 + 2 M21 (x_i-x)(y_i-y) + M22 (y_i-y)^2        

@@ -24,6 +24,8 @@
 
 // concrete class for vector of size 3
 class SVector3 {
+ protected:
+  SPoint3 P;
  public:
   SVector3() {}
   // Construct from 2 SPoints, vector from p1 to p2
@@ -71,8 +73,6 @@ class SVector3 {
     return *this;
   }
   operator double *() { return P; }
- protected:
-  SPoint3 P;
 };
 
 inline double dot(const SVector3 &a, const SVector3 &b)

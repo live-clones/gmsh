@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.179 2008-06-07 17:22:37 geuzaine Exp $
+# $Id: Makefile,v 1.180 2008-07-03 17:06:01 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -126,9 +126,9 @@ Gmsh.o: Gmsh.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Common/Message.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Common/GmshMatrix.h
 OS.o: OS.cpp Message.h
-Message.o: Message.cpp Message.h Options.h ../Post/ColorTable.h Context.h \
-  OS.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
-  ../Common/GmshUI.h ../Fltk/Popup_Button.h \
+Message.o: Message.cpp Message.h Gmsh.h Options.h ../Post/ColorTable.h \
+  Context.h OS.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
+  ../Fltk/Colorbar_Window.h ../Common/GmshUI.h ../Fltk/Popup_Button.h \
   ../Fltk/SpherePosition_Widget.h ../Mesh/Field.h ../Geo/Geo.h \
   ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
   ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \

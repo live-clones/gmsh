@@ -1,4 +1,4 @@
-// $Id: Generator.cpp,v 1.145 2008-06-05 11:52:49 samtech Exp $
+// $Id: Generator.cpp,v 1.146 2008-07-03 17:06:03 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -413,7 +413,7 @@ void GenerateMesh(GModel *m, int ask)
   // Orient the surface mesh so that it matches the geometry
   if(m->getMeshStatus() >= 2)
     std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
-  
+
   // Optimize quality of 3D tet mesh
   if(m->getMeshStatus() == 3){
     for(int i = 0; i < std::max(CTX.mesh.optimize, CTX.mesh.optimize_netgen); i++){

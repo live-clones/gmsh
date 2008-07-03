@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.64 2008-07-01 14:24:07 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.65 2008-07-03 17:06:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -268,7 +268,7 @@ SPoint2 gmshFace::geodesic(const SPoint2 &pt1 , const SPoint2 &pt2 , double t)
   }
 }
 
-int gmshFace::containsPoint(const SPoint3 &pt) const
+bool gmshFace::containsPoint(const SPoint3 &pt) const
 { 
   if(geomType() == Plane){
     // OK to use the normal from the mean plane here: we compensate

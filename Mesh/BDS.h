@@ -25,16 +25,14 @@
 // points may know the normals to the surface they are classified on
 // default values are 0,0,1
 
-#include <stdio.h>
-#include <string>
 #include <set>
-#include <map>
 #include <vector>
 #include <algorithm>
 #include <list>
 #include <math.h>
 #include "GFace.h"
 #include "PView.h"
+#include "Message.h"
 
 class BDS_Edge;
 class BDS_Face;
@@ -56,11 +54,9 @@ void swap_config(BDS_Edge *e,
                  BDS_Point **p31, BDS_Point **p32, BDS_Point **p33,
                  BDS_Point **p41, BDS_Point **p42, BDS_Point **p43);
 
-
 class BDS_GeomEntity
 {
 public:
-
   int classif_tag;
   int classif_degree;
   inline bool operator < (const BDS_GeomEntity & other) const
@@ -70,21 +66,14 @@ public:
     if(classif_tag < other.classif_tag)return true;
     return false;
   }
-  BDS_GeomEntity(int a, int b)  
-    : classif_tag(a),classif_degree(b)
-  {
-  }
-  ~BDS_GeomEntity()  
-  {
-  }
+  BDS_GeomEntity(int a, int b) : classif_tag(a),classif_degree(b) {}
+  ~BDS_GeomEntity(){}
 };
-
-void print_face(BDS_Face *t);
 
 class BDS_Vector
 {
 public:
-  double x,y,z;
+  double x, y, z;
   bool operator < (const BDS_Vector &o) const
   {
     if(x - o.x  > t ) return true;
@@ -169,9 +158,9 @@ public:
 
 class BDS_Point 
 {
-  // the first size is the one dictated by the Background Mesh
-  // the second one is dictated by charecteristic lengths at points
-  // and is propagated
+  // the first size is the one dictated by the Background Mesh the
+  // second one is dictated by charecteristic lengths at points and is
+  // propagated
   double _lcBGM, _lcPTS;
 public:
   double X, Y, Z;
@@ -180,11 +169,9 @@ public:
   int iD;
   BDS_GeomEntity *g;
   std::list<BDS_Edge*> edges;
-
   // just a transition
   double &lcBGM() { return _lcBGM; }
   double &lc() { return _lcPTS; }
-  
   inline bool operator < (const BDS_Point & other) const
   {
     return iD < other.iD;
@@ -256,13 +243,14 @@ public:
   inline BDS_Face * otherFace(const BDS_Face *f) const
   {
     if(numfaces()!=2) {
-      printf("otherFace wrong, ony %d faces attached to edge %d %d\n",numfaces(),p1->iD,p2->iD);
-      throw;
+      Msg::Fatal("otherFace wrong, ony %d faces attached to edge %d %d",
+		 numfaces(), p1->iD, p2->iD);
+      return 0;
     }
     if(f == _faces[0]) return _faces[1];
     if(f == _faces[1]) return _faces[0];
-    printf("otherFace wrong : the edge does not belong to the face \n");
-    throw;
+    Msg::Fatal("otherFace wrong: the edge does not belong to the face");
+    return 0;
   }
   inline void del(BDS_Face *t)
   {
@@ -270,18 +258,14 @@ public:
                                 std::bind2nd(std::equal_to<BDS_Face*>(), t)), 
                  _faces.end());
   }
-  
   void oppositeof(BDS_Point * oface[2]) const; 
-  
   void update()
   {
     _length = sqrt((p1->X - p2->X) * (p1->X - p2->X) + 
                    (p1->Y - p2->Y) * (p1->Y - p2->Y) + 
                    (p1->Z - p2->Z) * (p1->Z - p2->Z));
   }
-
-  BDS_Edge(BDS_Point *A, BDS_Point *B)
-    : deleted(false), g(0)
+  BDS_Edge(BDS_Point *A, BDS_Point *B) : deleted(false), g(0)
   {         
     if(*A < *B){
       p1 = A;
@@ -304,28 +288,31 @@ public:
   BDS_Edge *e1, *e2, *e3, *e4;
   BDS_GeomEntity *g;
   inline int numEdges () const { return e4 ? 4 : 3; }
-  inline BDS_Edge *oppositeEdge (BDS_Point *p){
+  inline BDS_Edge *oppositeEdge (BDS_Point *p)
+  {
     if (e4){
-      printf("oppositeEdge to point %d cannot be applied to a quad\n",p->iD);
-      throw;
+      Msg::Fatal("oppositeEdge to point %d cannot be applied to a quad", p->iD);
+      return 0;
     }
-    if (e1->p1 != p && e1->p2 != p)return e1;
-    if (e2->p1 != p && e2->p2 != p)return e2;
-    if (e3->p1 != p && e3->p2 != p)return e3;
-    printf("point %d does not belong to this triangle\n",p->iD);
-    throw;
+    if (e1->p1 != p && e1->p2 != p) return e1;
+    if (e2->p1 != p && e2->p2 != p) return e2;
+    if (e3->p1 != p && e3->p2 != p) return e3;
+    Msg::Fatal("point %d does not belong to this triangle", p->iD);
+    return 0;
   }
-  inline BDS_Point *oppositeVertex (BDS_Edge *e){
+  inline BDS_Point *oppositeVertex (BDS_Edge *e)
+  {
     if (e4){
-      printf("oppositeVertex to edge %d %d cannot be applied to a quad\n",e->p1->iD,e->p2->iD);
-      throw;
+      Msg::Fatal("oppositeVertex to edge %d %d cannot be applied to a quad", 
+		 e->p1->iD, e->p2->iD);
+      return 0;
     }
-
-    if (e == e1)return e2->commonvertex(e3);
-    if (e == e2)return e1->commonvertex(e3);
-    if (e == e3)return e1->commonvertex(e2);
-    printf("edge  %d %d does not belong to this triangle\n",e->p1->iD,e->p2->iD);
-    throw;
+    if (e == e1) return e2->commonvertex(e3);
+    if (e == e2) return e1->commonvertex(e3);
+    if (e == e3) return e1->commonvertex(e2);
+    Msg::Fatal("edge  %d %d does not belong to this triangle",
+	       e->p1->iD, e->p2->iD);
+    return 0;
   }
   inline void getNodes(BDS_Point *n[4]) const
   {
@@ -342,7 +329,6 @@ public:
       n[3] = e3->commonvertex(e4);
     }
   }
-  
   BDS_Face(BDS_Edge *A, BDS_Edge *B, BDS_Edge *C,BDS_Edge *D = 0)
     : deleted(false), e1(A), e2(B), e3(C), e4(D), g(0)
   {     
@@ -506,7 +492,6 @@ public:
 
 void outputScalarField(std::list<BDS_Face*> t, const char *fn, int param, GFace *gf=0);
 void recur_tag(BDS_Face *t, BDS_GeomEntity *g);
-
 int Intersect_Edges_2d(double x1, double y1, double x2, double y2,
                        double x3, double y3, double x4, double y4,
 		       double x[2]);

@@ -214,7 +214,9 @@ inline void gmshGaussLegendre1D(int nbQuadPoints, double **t, double **w)
     *w = _GL_wt16;
     break;
   default :
-    throw;
+    *t = 0;
+    *w = 0;
+    break;
   }
 }
 

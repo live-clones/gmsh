@@ -1,4 +1,4 @@
-// $Id: gmshSurface.cpp,v 1.15 2008-05-04 08:31:14 geuzaine Exp $
+// $Id: gmshSurface.cpp,v 1.16 2008-07-03 17:06:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -26,6 +26,30 @@
 #endif
 
 std::map<int,gmshSurface*> gmshSurface::allGmshSurfaces;
+
+SPoint2 gmshSurface::parFromPoint(double x, double y, double z)
+{
+  Msg::Error("Parametric coordinate computation not implemented for this type of surface");
+  return SPoint2();
+}
+
+SVector3 gmshSurface::normal(const SPoint2 &param) const
+{
+  Msg::Error("Normal computation not implemented for this type of surface");
+  return SVector3();
+}
+
+Pair<SVector3, SVector3> gmshSurface::firstDer(const SPoint2 &param)
+{
+  Msg::Error("First derivative not implemented for this type of surface");
+  return Pair<SVector3, SVector3>();
+}
+
+double gmshSurface::getMetricEigenvalue(const SPoint2 &)
+{
+  Msg::Error("Metric eigenvalue not implemented for this type of surface");
+  return 0;
+}
 
 gmshSurface *gmshSphere::NewSphere(int iSphere, double x, double y, double z, double r)
 {
@@ -55,7 +79,6 @@ SPoint3 gmshSphere::point(double par1, double par2) const
   const double x = xc + r * sin(par2) * cos(par1);
   const double y = yc + r * sin(par2) * sin(par1);
   const double z = zc - r * cos(par2); 
-  // printf("%g %g - %g %g %g\n",par1,par2,x,y,z);
   return SPoint3(x, y, z);
 }
 
@@ -78,10 +101,10 @@ SPoint3 gmshPolarSphere::point(double parA, double parB) const
   //at the center of the sphere 
   //parA=2rx/(r+z) parB=2ry/(r+z)
   double rp2 = parA * parA + parB * parB;
-        SPoint3 p(2*parA/(1+rp2),2*parB/(1+rp2),(rp2-1)/(rp2+1));
-        p*=-r;
-        p+=o;
-        return p;
+  SPoint3 p(2*parA/(1+rp2),2*parB/(1+rp2),(rp2-1)/(rp2+1));
+  p *= -r;
+  p += o;
+  return p;
 }
 
 gmshSurface *gmshParametricSurface::NewParametricSurface(int iSurf, char *valX,
@@ -131,4 +154,10 @@ SPoint3 gmshParametricSurface::point(double par1, double par2) const
   const double z = evaluator_evaluate(evalZ, 2, names, values);
   return SPoint3(x, y, z);
 #endif
+}
+
+Range<double> gmshParametricSurface::parBounds(int i) const
+{
+  Msg::Error("Parameter bounds not available for parametric surface");
+  return Range<double>(0., 0.);
 }

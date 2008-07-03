@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.3 2008-07-02 17:40:56 geuzaine Exp $
+// $Id: Main.cpp,v 1.4 2008-07-03 17:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -41,6 +41,9 @@ int main(int argc, char *argv[])
   }
 
   GmshInitialize(argc, argv);
+  // force this even if the options say it ain't so
+  CTX.terminal = 1; 
+
   new GModel;
   GmshBatch();
   GmshFinalize();

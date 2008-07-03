@@ -1,4 +1,4 @@
-// $Id: SmoothData.cpp,v 1.7 2008-06-05 11:52:49 samtech Exp $
+// $Id: SmoothData.cpp,v 1.8 2008-07-03 17:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -67,9 +67,8 @@ void xyzv::update(int n, double *v)
     nbvals = n;
     nboccurences = 0;
   }
-  else if(nbvals != n) {
-    throw n;
-  }
+  else if(nbvals != n)
+    return; // error
   double x1 = (double)(nboccurences) / (double)(nboccurences + 1);
   double x2 = 1. / (double)(nboccurences + 1);
   for(int i = 0; i < nbvals; i++)

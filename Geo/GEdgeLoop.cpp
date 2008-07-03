@@ -1,4 +1,4 @@
-// $Id: GEdgeLoop.cpp,v 1.15 2008-06-05 11:52:49 samtech Exp $
+// $Id: GEdgeLoop.cpp,v 1.16 2008-07-03 17:06:01 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -32,7 +32,7 @@
 void GEdgeSigned::print() const
 {
   Msg::Info("GEdgeSigned : Edge %d sign %d Ordered Vertices %d,%d",
-      ge->tag(), _sign, getBeginVertex()->tag(), getEndVertex()->tag());
+	    ge->tag(), _sign, getBeginVertex()->tag(), getEndVertex()->tag());
 }
 
 int countInList(std::list<GEdge*> &wire, GEdge *ge)
@@ -81,7 +81,7 @@ GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge*> &wire)
       GVertex *v2 = ge->getEndVertex();
       if(v1 == gv) return GEdgeSigned(1, ge);   
       if(v2 == gv) return GEdgeSigned(-1, ge);   
-      throw;
+      Msg::Error("Something wrong in edge loop");
     }
     ++it;
   }
@@ -97,7 +97,7 @@ GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge*> &wire)
       GVertex *v2 = ge->getEndVertex();
       if(v1 == gv) return GEdgeSigned(1, ge);   
       if(v2 == gv) return GEdgeSigned(-1, ge);
-      throw;
+      Msg::Error("Something wrong in edge loop");
     }   
     ++it;
   }
@@ -124,16 +124,15 @@ GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
 
   GEdgeSigned *prevOne = 0;
 
-  //  Msg::Info("Building a wire");
   GEdgeSigned ges(0,0);
   while(wire.size()){
     ges = nextOne(prevOne, wire);
     if(ges.getSign() == 0){ // oops
-      Msg::Warning("Something wrong in edge loop?");
+      Msg::Error("Something wrong in edge loop");
       break;
     }
     prevOne = &ges;
-    //    ges.print();
+    // ges.print();
     loop.push_back(ges);
   }
 }

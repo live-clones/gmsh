@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.49 2008-05-04 08:31:14 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.50 2008-07-03 17:06:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -168,7 +168,7 @@ SPoint2 gmshEdge::reparamOnFace(GFace *face, double epar,int dir) const
             k = periodic ? k - NbControlPoints + 1: NbControlPoints - 1;
           List_Read(c->Control_Points, k, &v[j]);
         }
-        return InterpolateCubicSpline(v, t, c->mat, 0, t1, t2, c->geometry);
+        return InterpolateCubicSpline(v, t, c->mat, t1, t2, c->geometry);
       }
     case MSH_SEGM_SPLN :
       {
@@ -209,10 +209,11 @@ SPoint2 gmshEdge::reparamOnFace(GFace *face, double epar,int dir) const
         else{
           List_Read(c->Control_Points, i + 2, &v[3]);
         }
-        return InterpolateCubicSpline(v, t, c->mat, 0, t1, t2, c->geometry);
+        return InterpolateCubicSpline(v, t, c->mat, t1, t2, c->geometry);
       }
     default:
-      throw;
+      Msg::Error("Unknown edge type in reparamOnFace");
+      return SPoint2();
     }
   }
   

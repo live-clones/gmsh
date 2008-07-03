@@ -28,9 +28,9 @@ class discreteEdge : public GEdge {
   discreteEdge(GModel *model, int num);
   virtual ~discreteEdge() {}
   virtual GeomType geomType() const { return DiscreteCurve; }
-  virtual GPoint point(double p) const { throw; }
-  virtual SVector3 firstDer(double par) const { throw; }
-  virtual double parFromPoint(const SPoint3 &pt) const { throw; }
+  virtual GPoint point(double p) const;
+  virtual SVector3 firstDer(double par) const;
+  virtual double parFromPoint(const SPoint3 &pt) const;
 };
 
 #endif

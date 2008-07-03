@@ -22,7 +22,7 @@ class fourierFace : public GFace {
   virtual int containsParam(const SPoint2 &pt) const; 
   virtual SVector3 normal(const SPoint2 &param) const; 
   virtual GEntity::GeomType geomType() const;
-  virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const { throw; }
+  virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const;
   ModelType getNativeType() const { return FourierModel; }
   void * getNativePtr() const { return face; } 
 };

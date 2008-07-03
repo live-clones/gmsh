@@ -28,7 +28,7 @@ class Pair{
   R Right;
  public:
   Pair() {}
-  Pair( const L& left, const R& right) : Left(left), Right(right) {}
+  Pair(const L& left, const R& right) : Left(left), Right(right) {}
   L left() const { return Left; }
   void left(const L& left) { Left = left; }
   R right() const { return Right; }

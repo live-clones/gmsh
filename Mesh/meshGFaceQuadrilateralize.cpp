@@ -96,7 +96,7 @@ void gmshEdgeFront::updateStatus (BDS_Edge *e){
       return;
     }
   }
-  throw;
+  Msg::Error("Something wrong in updateStatus");
 }
 
 SVector3 norm_edge (BDS_Point *p1, BDS_Point *p2){
@@ -172,8 +172,10 @@ SVector3 gmshEdgeFront::normal (BDS_Edge*e) const{
     p3 = t->e1->commonvertex(t->e3);
   else if (e == t->e3)
     p3 = t->e2->commonvertex(t->e1);
-  else 
-    throw;
+  else {
+    Msg::Error("Could not compute fron normal");
+    return SVector3();
+  }
   
   SVector3 t1 (p2->X-p1->X,p2->Y-p1->Y,p2->Z-p1->Z);
   SVector3 t2 (p3->X-p1->X,p3->Y-p1->Y,p3->Z-p1->Z);
@@ -209,9 +211,7 @@ void gmshEdgeFront::getFrontEdges (BDS_Point *p, eiter & it1, eiter & it2) const
       if ( it2 != edges.end()) return;
     }
   }  
-  printf("point %d is in the front but has only %d edges\n",p->iD,count);
-
-  throw;
+  Msg::Error("point %d is in the front but has only %d edges\n",p->iD,count);
 }
 
 void gmshEdgeFront::initiate () {
@@ -513,7 +513,8 @@ bool gmshEdgeFront::emptyFront (int tag){
     //    printf("strange\n");
     break;
   default:
-    throw;
+    Msg::Error("Unknown case in emptyFront");
+    return false;
   }
 
   if ( fe1.size() || fe2.size() || !left || !right || !formQuad (e, left, right)){
