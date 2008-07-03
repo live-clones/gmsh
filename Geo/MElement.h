@@ -72,13 +72,13 @@ class MElement
   // reset the global node number
   static void resetGlobalNumber(){ _globalNum = 0; }
 
-  // returns the tag of the element
+  // return the tag of the element
   virtual int getNum(){ return _num; }
 
-  // returns the geometrical dimension of the element
+  // return the geometrical dimension of the element
   virtual int getDim() = 0;
 
-  // returns the polynomial order the element
+  // return the polynomial order the element
   virtual int getPolynomialOrder(){ return 1; }
 
   // get/set the partition to which the element belongs
@@ -143,7 +143,7 @@ class MElement
   virtual double gammaShapeMeasure(){ return 0.; }
   virtual double etaShapeMeasure(){ return 0.; }
 
-  // computes the barycenter
+  // compute the barycenter
   virtual SPoint3 barycenter();
 
   // revert the orientation of the element
@@ -155,32 +155,32 @@ class MElement
   virtual int getVolumeSign(){ return 1; }
   virtual void setVolumePositive(){ if(getVolumeSign() < 0) revert(); }
 
-  // Returns an information string for the element
+  // return an information string for the element
   virtual std::string getInfoString();
 
-  // Returns the interpolating nodal shape function associated with
+  // return the interpolating nodal shape function associated with
   // node num, evaluated at point (u,v,w) in parametric coordinates
   virtual void getShapeFunction(int num, double u, double v, double w,
                                 double &s) = 0;
 
-  // Returns the gradient of of the nodal shape function associated
+  // return the gradient of of the nodal shape function associated
   // with node num, evaluated at point (u,v,w) in parametric
   // coordinates
   virtual void getGradShapeFunction(int num, double u, double v, double w,
                                     double s[3]) = 0;
 
-  // Returns the Jacobian of the element evaluated at point (u,v,w) in
+  // return the Jacobian of the element evaluated at point (u,v,w) in
   // parametric coordinates
   double getJacobian(double u, double v, double w, double jac[3][3]);
 
-  // Inverts the parametrisation
+  // invert the parametrisation
   virtual void xyz2uvw(double xyz[3], double uvw[3]);
 
-  // Tests if a point, given in parametric coordinates, belongs to the
+  // test if a point, given in parametric coordinates, belongs to the
   // element
   virtual bool isInside(double u, double v, double w, double tol=1.e-8) = 0;
 
-  // Interpolate the given nodal data (resp. its gradient, curl and
+  // interpolate the given nodal data (resp. its gradient, curl and
   // divergence) at point (u,v,w) in parametric coordinates
   double interpolate(double val[], double u, double v, double w, int stride=1);
   void interpolateGrad(double val[], double u, double v, double w, double f[3],
@@ -188,6 +188,7 @@ class MElement
   void interpolateCurl(double val[], double u, double v, double w, double f[3],
                        int stride=3);
   double interpolateDiv(double val[], double u, double v, double w, int stride=3);
+
   // integration routine 
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
   

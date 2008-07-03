@@ -40,33 +40,33 @@ class VertexArray;
 // A geometric model entity.
 class GEntity {
  private:
-  // All entities are owned by a GModel
+  // all entities are owned by a GModel
   GModel *_model;
 
-  // The tag (the number) of this entity
+  // the tag (the number) of this entity
   int _tag;
 
-  // The visibility and the selection flag
+  // the visibility and the selection flag
   char _visible, _selection;
 
-  // Flag storing if all mesh elements are visible
+  // flag storing if all mesh elements are visible
   char _allElementsVisible;
 
-  // The color of the entity (ignored if set to transparent blue)
+  // the color of the entity (ignored if set to transparent blue)
   unsigned int _color;
 
  public: // these will become protected at some point
-  // The mesh vertices uniquely owned by the entity
+  // the mesh vertices uniquely owned by the entity
   std::vector<MVertex*> mesh_vertices;
 
-  // The physical entitites (if any) that contain this entity
+  // the physical entitites (if any) that contain this entity
   std::vector<int> physicals;
 
-  // Vertex arrays to draw the mesh efficiently
+  // vertex arrays to draw the mesh efficiently
   VertexArray *va_lines, *va_triangles;
 
  public:
-  // All known native model types
+  // all known native model types
   enum ModelType {
     UnknownModel,
     GmshModel,
@@ -74,7 +74,7 @@ class GEntity {
     OpenCascadeModel
   };
 
-  // All known entity types
+  // all known entity types
   enum GeomType {
     Unknown,
     Point,
@@ -110,7 +110,7 @@ class GEntity {
     DiscreteVolume
   };
 
-  // Returns a string describing the entity type
+  // return a string describing the entity type
   virtual std::string getTypeString()
   {
     const char *name[] = {
@@ -158,104 +158,99 @@ class GEntity {
 
   virtual ~GEntity();
 
+  // delete the vertex arrays, used to to draw the mesh efficiently
   void deleteVertexArrays();
 
-  // Spatial dimension of the entity
+  // spatial dimension of the entity
   virtual int dim() const { return -1; }
 
-  // Regions that bound this entity or that this entity bounds.
+  // regions that bound this entity or that this entity bounds.
   virtual std::list<GRegion*> regions() const { return std::list<GRegion*>(); }
 
-  // Faces that bound this entity or that this entity bounds.
+  // faces that bound this entity or that this entity bounds.
   virtual std::list<GFace*> faces() const { return std::list<GFace*>(); }
 
-  // Edges that bound this entity or that this entity bounds.
+  // edges that bound this entity or that this entity bounds.
   virtual std::list<GEdge*> edges() const { return std::list<GEdge*>(); }
 
-  // Vertices that bound this entity.
+  // vertices that bound this entity.
   virtual std::list<GVertex*> vertices() const { return std::list<GVertex*>(); }
 
-  /// Underlying geometric representation of this entity.
+  // underlying geometric representation of this entity.
   virtual GeomType geomType() const { return Unknown; }
 
-  // True if parametric space is continuous in the "dim" direction.
+  // true if parametric space is continuous in the "dim" direction.
   virtual bool continuous(int dim) const { return true; }
 
-  // True if entity is periodic in the "dim" direction.
+  // true if entity is periodic in the "dim" direction.
   virtual bool periodic(int dim) const { return false; }
 
-  // True if there are parametric degeneracies in the "dim" direction.
+  // true if there are parametric degeneracies in the "dim" direction.
   virtual bool degenerate(int dim) const { return false; }
 
-  // Parametric bounds of the entity in the "i" direction.
+  // parametric bounds of the entity in the "i" direction.
   virtual Range<double> parBounds(int i) const { return Range<double>(0., 0.); }
 
-  // Modeler tolerance for the entity.
+  // modeler tolerance for the entity.
   virtual double tolerance() const { return 1.e-14; }
 
-  // True if the entity contains the given point to within tolerance.
+  // true if the entity contains the given point to within tolerance.
   virtual bool containsPoint(const SPoint3 &pt) const { return false; }
 
-  // Get the native type of the particular representation
+  // get the native type of the particular representation
   virtual ModelType getNativeType() const { return UnknownModel; }
 
-  // Get the native pointer of the particular representation
+  // get the native pointer of the particular representation
   virtual void * getNativePtr() const { return 0; }
 
-  // The model owning this entity.
+  // the model owning this entity
   GModel *model() const { return _model; }
 
-  // The tag of the entity
+  // get/set the tag of the entity
   int tag() const { return _tag; }
   void setTag(int tag) { _tag = tag; }
 
-  // The bounding box
+  // get the bounding box
   virtual SBoundingBox3d bounds() const { return SBoundingBox3d(); }
 
-  // Get the visibility flag
+  // get/set the visibility flag
   virtual char getVisibility();
-
-  // Set the visibility flag
   virtual void setVisibility(char val, bool recursive=false){ _visible = val; }
 
-  // Get the selection flag
+  // get/set the selection flag
   virtual char getSelection(){ return _selection; }
-
-  // Set the selection flag
   virtual void setSelection(char val){ _selection = val; }
 
-  // Get the color
+  // get/set the color
   virtual unsigned int getColor(){ return _color; }
-
-  // Set the color
   virtual void setColor(unsigned color){ _color = color; }
 
-  // Returns true if we should use this color to represent the entity
+  // return true if we should use this color to represent the entity
   virtual bool useColor();
 
-  // Returns an information string for the entity
+  // return an information string for the entity
   virtual std::string getInfoString();
 
-  // Returns a type-specific additional information string
+  // return a type-specific additional information string
   virtual std::string getAdditionalInfoString() { return std::string(""); }
 
-  // Resets the mesh attributes to default values
+  // reset the mesh attributes to default values
   virtual void resetMeshAttributes() { return; }
 
-  // Gets the number of mesh elements in the entity
+  // get the number of mesh elements in the entity
   virtual unsigned int getNumMeshElements() { return 0; }
 
-  // Gets the element at the given index
+  // get the element at the given index
   virtual MElement *getMeshElement(unsigned int index) { return 0; }
 
-  // Get/set all mesh element visibility flag
+  // get/set all mesh element visibility flag
   bool getAllElementsVisible(){ return _allElementsVisible ? true : false; }
   void setAllElementsVisible(bool val){ _allElementsVisible = val ? 1 : 0; }
 
-  // Gets the number of mesh vertices in the entity
+  // get the number of mesh vertices in the entity
   unsigned int getNumMeshVertices() { return mesh_vertices.size(); }
 
-  // Gets the mesh vertex at the given index
+  // get the mesh vertex at the given index
   MVertex *getMeshVertex(unsigned int index) { return mesh_vertices[index]; }
 };
 

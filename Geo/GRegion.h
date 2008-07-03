@@ -39,32 +39,39 @@ class GRegion : public GEntity {
   GRegion(GModel *model, int tag);
   virtual ~GRegion();
 
+  // get the dimension of the region (3)
   virtual int dim() const { return 3; }
+
+  // set the visibility flag
   virtual void setVisibility(char val, bool recursive=false);
+
+  // get/set faces that bound the region
   virtual std::list<GFace*> faces() const{ return l_faces; }
-  virtual std::list<GEdge*> edges() const;
   void set(std::list<GFace*> &f) { l_faces= f; }
 
-  // The bounding box
+  // edges that bound the region
+  virtual std::list<GEdge*> edges() const;
+
+  // get the bounding box
   virtual SBoundingBox3d bounds() const;
 
-  // Checks if the region is connected to another region by an edge
+  // check if the region is connected to another region by an edge
   bool edgeConnected(GRegion *r) const;
 
-  // Recompute the mesh partitions defined on this region.
+  // recompute the mesh partitions defined on this region
   void recomputeMeshPartitions();
 
-  // Delete the mesh partitions defined on this region.
+  // delete the mesh partitions defined on this region
   void deleteMeshPartitions();
 
-  // Returns a type-specific additional information string
+  // return a type-specific additional information string
   virtual std::string getAdditionalInfoString();
 
-  // Get number of elements in the mesh and get element by index
+  // get number of elements in the mesh and get element by index
   unsigned int getNumMeshElements();
   MElement *getMeshElement(unsigned int index);
 
-  // Resets the mesh attributes to default values
+  // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
 
   struct {

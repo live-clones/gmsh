@@ -50,8 +50,8 @@ class GRegion;
 class GFace : public GEntity
 {
  protected:
-  // edge loops, will replace what follows list of al the edges of the
-  // face
+  // edge loops will replace what follows (list of al the edges of the
+  // face + directions)
   std::list<GEdge *> l_edges;
   std::list<int> l_dirs;
   GRegion *r1, *r2;
@@ -69,22 +69,26 @@ class GFace : public GEntity
 
   std::list<GEdgeLoop> edgeLoops;
 
+  // add/delete regions that are bounded by the face
   void addRegion(GRegion *r){ r1 ? r2 = r : r1 = r; }
   void delRegion(GRegion *r){ if(r1 == r) r1 = r2; r2 = 0; }
 
-  // edge orientations.
+  // edge orientations
   virtual std::list<int> orientations() const { return l_dirs; }
 
-  // Edges that bound this entity or that this entity bounds.
+  // edges that bound the face
   virtual std::list<GEdge*> edges() const { return l_edges; }
 
-  // Edges that are embedded in this face.
+  // edges that are embedded in the face
   virtual std::list<GEdge*> embeddedEdges() const { return embedded_edges; }
 
-  // Vertices that bound this entity or that this entity bounds.
+  // vertices that bound the face
   virtual std::list<GVertex*> vertices() const;
 
+  // dimension of the face (2)
   virtual int dim() const { return 2; }
+
+  // set visibility flag
   virtual void setVisibility(char val, bool recursive=false);
 
   // compute the parameters UV from a point XYZ
@@ -92,82 +96,83 @@ class GFace : public GEntity
                double &U, double &V, const double relax,
                const bool onSurface=true) const;
 
-  // The bounding box
+  // get the bounding box
   virtual SBoundingBox3d bounds() const;
 
   // retrieve surface params
   virtual surface_params getSurfaceParams() const;
 
-  // Return the point on the face corresponding to the given parameter.
+  // return the point on the face corresponding to the given parameter
   virtual GPoint point(double par1, double par2) const = 0;
   virtual GPoint point(const SPoint2 &pt) const { return point(pt.x(), pt.y()); }
 
-  // computes, in parametric space, the interpolation from pt1 to pt2 along a geodesic
-  // of the surface
+  // compute, in parametric space, the interpolation from pt1 to pt2
+  // along a geodesic of the surface
   virtual SPoint2 geodesic(const SPoint2 &pt1, const SPoint2 &pt2, double t);
 
-  // computes the length of a geodesic between two points in parametric space
+  // compute the length of a geodesic between two points in parametric
+  // space
   virtual double length(const SPoint2 &pt1, const SPoint2 &pt2, int n=4);
 
-  // If the mapping is a conforming mapping, i.e. a mapping that
+  // if the mapping is a conforming mapping, i.e. a mapping that
   // conserves angles, this function returns the eigenvalue of the
   // metric at a given point this is a special feature for
   // stereographic mappings of the sphere that is used in 2D mesh
   // generation !
   virtual double getMetricEigenvalue(const SPoint2 &);
 
-  // Return the parmater location on the face given a point in space
-  // that is on the face.
+  // return the parmater location on the face given a point in space
+  // that is on the face
   virtual SPoint2 parFromPoint(const SPoint3 &) const;
 
-  // True if the parameter value is interior to the face.
+  // true if the parameter value is interior to the face
   virtual int containsParam(const SPoint2 &pt) const;
 
-  // Return the point on the face closest to the given point.
+  // return the point on the face closest to the given point
   virtual GPoint closestPoint(const SPoint3 & queryPoint, const double initialGuess[2]) const;
 
-  // Return the normal to the face at the given parameter location.
+  // return the normal to the face at the given parameter location
   virtual SVector3 normal(const SPoint2 &param) const = 0;
 
-  // Return the first derivate of the face at the parameter location.
+  // return the first derivate of the face at the parameter location
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const = 0;
 
-  // Return the curvature i.e. the divergence of the normal
+  // return the curvature i.e. the divergence of the normal
   virtual double curvature(const SPoint2 &param) const;
 
-  // Recompute the mesh partitions defined on this face.
+  // recompute the mesh partitions defined on this face
   void recomputeMeshPartitions();
 
-  // Delete the mesh partitions defined on this face.
+  // delete the mesh partitions defined on this face
   void deleteMeshPartitions();
 
-  // Returns a type-specific additional information string
+  // return a type-specific additional information string
   virtual std::string getAdditionalInfoString();
 
-  // Fills the crude representation cross
+  // fill the crude representation cross
   bool buildRepresentationCross();
 
-  // Builds a STL triangulation and fills the vertex array
+  // build a STL triangulation and fills the vertex array
   // va_geom_triangles
   virtual bool buildSTLTriangulation();
 
-  // Recompute the mean plane of the surface from a list of points
+  // recompute the mean plane of the surface from a list of points
   void computeMeanPlane(const std::vector<MVertex*> &points);
   void computeMeanPlane(const std::vector<SPoint3> &points);
 
-  // Recompute the mean plane of the surface from its bounding vertices
+  // recompute the mean plane of the surface from its bounding vertices
   void computeMeanPlane();
 
-  // Get the mean plane info
+  // get the mean plane info
   void getMeanPlaneData(double VX[3], double VY[3],
                         double &x, double &y, double &z) const;
   void getMeanPlaneData(double plan[3][3]) const;
 
-  // Get number of elements in the mesh and get element by index
+  // get number of elements in the mesh and get element by index
   unsigned int getNumMeshElements();
   MElement *getMeshElement(unsigned int index);
 
-  // Resets the mesh attributes to default values
+  // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
 
   struct {

@@ -134,8 +134,8 @@ class MEdgeVertex : public MVertex{
  protected:
   double _u, _lc;
  public :
- MEdgeVertex(double x, double y, double z, GEntity *ge, double u, double lc = -1.0) 
-   : MVertex(x, y, z, ge), _u(u), _lc(lc)
+  MEdgeVertex(double x, double y, double z, GEntity *ge, double u, double lc = -1.0) 
+    : MVertex(x, y, z, ge), _u(u), _lc(lc)
   {
   }
   virtual ~MEdgeVertex(){}

@@ -24,7 +24,7 @@
 #include "GPoint.h"
 #include "SPoint2.h"
 
-// A model vertex
+// A model vertex.
 class GVertex : public GEntity 
 {
  protected:

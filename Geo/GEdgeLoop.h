@@ -41,7 +41,9 @@ struct GEdgeSigned
 
 class GEdgeLoop 
 {
-public:
+ private:
+  std::list<GEdgeSigned> loop;
+ public:
   typedef std::list<GEdgeSigned>::iterator iter;
   typedef std::list<GEdgeSigned>::const_iterator citer;
   GEdgeLoop(const std::list<GEdge*> &);
@@ -52,8 +54,6 @@ public:
   inline citer end() const { return loop.end(); }
   int count(GEdge*) const;
   int count() const { return loop.size(); }
-private:
-  std::list<GEdgeSigned> loop;
 };
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: Message.cpp,v 1.5 2008-07-03 17:06:01 geuzaine Exp $
+// $Id: Message.cpp,v 1.6 2008-07-03 23:20:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -465,7 +465,9 @@ void Message::PrintErrorCounter(const char *title)
 
 double Message::GetValue(const char *text, double defaultval)
 {
-  if(CTX.nopopup) return defaultval;
+  // if a callback is given let's assume we don't want to be bothered
+  // with interactive stuff
+  if(CTX.nopopup || _callback) return defaultval;
 
 #if defined(HAVE_FLTK)
   if(!CTX.batch){
@@ -489,9 +491,11 @@ double Message::GetValue(const char *text, double defaultval)
 }
 
 bool Message::GetBinaryAnswer(const char *question, const char *yes, 
-			      const char *no,  bool defaultval)
+			      const char *no, bool defaultval)
 {
-  if(CTX.nopopup) return defaultval;
+  // if a callback is given let's assume we don't want to be bothered
+  // with interactive stuff
+  if(CTX.nopopup || _callback) return defaultval;
 
 #if defined(HAVE_FLTK)
   if(!CTX.batch){

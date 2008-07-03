@@ -1,4 +1,4 @@
-// $Id: Main.cpp,v 1.4 2008-07-03 17:06:01 geuzaine Exp $
+// $Id: Main.cpp,v 1.5 2008-07-03 23:20:46 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,18 +30,16 @@ extern Context_T CTX;
 
 int main(int argc, char *argv[])
 {
-  // print messages on stdout/stderr
-  CTX.terminal = 1; 
-  // don't stop for questions (always return the default value)
-  CTX.nopopup = 1;
-
   if(argc < 2){
+    CTX.terminal = 1; 
     Print_Usage(argv[0]);
     exit(0);
   }
 
   GmshInitialize(argc, argv);
-  // force this even if the options say it ain't so
+
+  // force these even if the options say it ain't so
+  CTX.nopopup = 1;
   CTX.terminal = 1; 
 
   new GModel;

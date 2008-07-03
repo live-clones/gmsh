@@ -41,84 +41,91 @@ class GEdge : public GEntity {
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
   virtual ~GEdge();
 
+  // get the start/end vertices of the edge
   GVertex *getBeginVertex() const { return v0; }
   GVertex *getEndVertex() const { return v1; }
 
+  // add/delete a face bounded by this edge
   void addFace(GFace *f);
   void delFace(GFace *f);
 
+  // get the dimension of the edge (1)
   virtual int dim() const {return 1;}
+
+  // set the visibility flag
   virtual void setVisibility(char val, bool recursive=false);
 
-  // True if the edge is a seam for the given face.
+  // true if the edge is a seam for the given face.
   virtual int isSeam(GFace *face) const { return 0; }
 
-  // The bounding box
+  // get the bounding box
   virtual SBoundingBox3d bounds() const;
 
-  // Faces that bound this entity or that this entity bounds.
+  // faces that bound this entity bounds
   virtual std::list<GFace*> faces() const { return l_faces; }
 
-  // Get the parameter location for a point in space on the edge.
+  // get the parameter location for a point in space on the edge
   virtual double parFromPoint(const SPoint3 &) const = 0;
 
-  // Get the point for the given parameter location.
+  // get the point for the given parameter location
   virtual GPoint point(double p) const = 0;
 
-  // Get the closest point on the edge to the given point.
+  // get the closest point on the edge to the given point
   virtual GPoint closestPoint(const SPoint3 & queryPoint) const;
 
-  // True if the edge contains the given parameter.
+  // true if the edge contains the given parameter
   virtual int containsParam(double pt) const;
 
-  // Get first derivative of edge at the given parameter.
+  // get first derivative of edge at the given parameter
   virtual SVector3 firstDer(double par) const = 0;
 
-  // Get second derivative of edge at the given parameter.
-  // Default implentation using central differences
+  // get second derivative of edge at the given parameter (default
+  // implentation using central differences)
   virtual SVector3 secondDer(double par) const;
+
+  // get the curvature
   virtual double curvature(double par) const;
 
-  // Reparmaterize the point onto the given face.
+  // reparmaterize the point onto the given face
   virtual SPoint2 reparamOnFace(GFace *face, double epar,int dir) const;
 
-  // Recompute the mesh partitions defined on this edge.
+  // recompute the mesh partitions defined on this edge
   void recomputeMeshPartitions();
 
-  // Delete the mesh partitions defined on this edge.
+  // delete the mesh partitions defined on this edge
   void deleteMeshPartitions();
 
-  // Returns the minimum number of segments used for meshing the edge
+  // return the minimum number of segments used for meshing the edge
   virtual int minimumMeshSegments() const { return 1; }
 
-  // Returns the minimum number of segments used for drawing the edge
+  // return the minimum number of segments used for drawing the edge
   virtual int minimumDrawSegments() const { return 1; }
 
-  // Returns a type-specific additional information string
+  // return a type-specific additional information string
   virtual std::string getAdditionalInfoString();
 
-  // tells if the edge is a 3D edge (in opposition with a trimmed curve on a surface)
+  // tell if the edge is a 3D edge (in opposition with a trimmed curve on a surface)
   virtual bool is3D() const { return true; }
 
-  // the length of the model edge
+  // get/set/compute the length of the model edge
   inline double length() const { return _length; }
   inline void setLength(const double l) { _length = l; }
   double length(const double &u0, const double &u1, const int nbQuadPoints = 4);
 
-  // one can impose the mesh size at an edge
+  // get the prescribed mesh size on the edge
   virtual double prescribedMeshSizeAtVertex() const { return meshAttributes.meshSize; }
 
-  // True if start == end and no more than 2 segments
+  // true if start == end and no more than 2 segments
   bool isMeshDegenerated() const{ return (v0 == v1 && mesh_vertices.size() < 2); }
 
-  // Get number of elements in the mesh and get element by index
+  // get number of elements in the mesh and get element by index
   unsigned int getNumMeshElements();
   MElement *getMeshElement(unsigned int index);
 
-  // Resets the mesh attributes to default values
+  // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
 
-  // True if entity is periodic in the "dim" direction.
+  // true if entity is periodic in the "dim" direction.
   virtual bool periodic(int dim) const { return v0 == v1 ; }
 
   struct {

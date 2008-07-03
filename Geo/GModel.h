@@ -39,26 +39,29 @@ class FieldManager;
 class GModel
 {
  private:
-  // Vertex cache to speed-up direct access by vertex number (used for
+  // vertex cache to speed-up direct access by vertex number (used for
   // post-processing I/O)
   std::vector<MVertex*> _vertexVectorCache;
   std::map<int, MVertex*> _vertexMapCache;
 
+  // geo model internal data
   GEO_Internals *_geo_internals;
   void _createGEOInternals();
   void _deleteGEOInternals();
 
+  // OpenCascade model internal data
   OCC_Internals *_occ_internals;
   void _deleteOCCInternals();
 
+  // Fourier model internal data
   FM_Internals *_fm_internals;
   void _createFMInternals();
   void _deleteFMInternals();
  
-  // Characteristic Lengths fields
+  // characteristic Lengths fields
   FieldManager *_fields;
 
-  // Store the elements in the map (indexed by elementary region
+  // store the elements given in the map (indexed by elementary region
   // number) into the model, creating discrete geometrical entities on
   // the fly if needed
   void _storeElementsInEntities(std::map<int, std::vector<MElement*> > &map);
@@ -66,7 +69,7 @@ class GModel
   // loop over all vertices connected to elements and associate geo entity
   void _associateEntityWithMeshVertices();
 
-  // entity that is currently being meshed
+  // entity that is currently being meshed (used for error reporting)
   GEntity *_currentMeshEntity;
 
   // index of the current model
@@ -92,25 +95,25 @@ class GModel
   // index >= 0
   static GModel *current(int index=-1);
 
-  // finds the model by name
+  // find the model by name
   static GModel *findByName(std::string name);
 
-  // Deletes everything in a GModel
+  // delete everything in a GModel
   void destroy();
 
-  // Access internal CAD representations
+  // access internal CAD representations
   GEO_Internals *getGEOInternals(){ return _geo_internals; }
   OCC_Internals *getOCCInternals(){ return _occ_internals; }
   FM_Internals *getFMInternals() { return _fm_internals; }
 
-  // Access characteristic length fields
+  // access characteristic length fields
   FieldManager *getFields(){ return _fields; }
 
-  // Get/set the model name
+  // get/set the model name
   void setName(std::string name){ modelName = name; }
   std::string getName(){ return modelName; }
 
-  // Get the number of regions in this model.
+  // get the number of regions in this model.
   int getNumRegions() const { return regions.size(); }
   int getNumFaces() const { return faces.size(); }
   int getNumEdges() const { return edges.size(); }
@@ -122,7 +125,7 @@ class GModel
   typedef std::set<GVertex*, GEntityLessThan>::iterator viter;
   typedef std::map<int, std::string>::iterator piter;
 
-  // Get an iterator initialized to the first/last entity in this model.
+  // get an iterator initialized to the first/last entity in this model.
   riter firstRegion() { return regions.begin(); }
   fiter firstFace() { return faces.begin(); }
   eiter firstEdge() { return edges.begin(); }
@@ -132,13 +135,13 @@ class GModel
   eiter lastEdge() { return edges.end(); }
   viter lastVertex() { return vertices.end(); }
 
-  // Find the entity with the given tag.
+  // find the entity with the given tag.
   GRegion *getRegionByTag(int n) const;
   GFace *getFaceByTag(int n) const;
   GEdge *getEdgeByTag(int n) const;
   GVertex *getVertexByTag(int n) const;
 
-  // Add/remove an entity in the model
+  // add/remove an entity in the model
   void add(GRegion *r) { regions.insert(r); }
   void add(GFace *f) { faces.insert(f); }
   void add(GEdge *e) { edges.insert(e); }
