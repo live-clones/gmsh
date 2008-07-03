@@ -32,10 +32,12 @@ class ExtrudeParams;
 
 // A model edge.
 class GEdge : public GEntity {
+ private:
+  double _length;
+
  protected:
   GVertex *v0, *v1;
   std::list<GFace *> l_faces;
-  double _length;
 
  public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
