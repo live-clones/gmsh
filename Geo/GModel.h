@@ -66,6 +66,9 @@ class GModel
   // loop over all vertices connected to elements and associate geo entity
   void _associateEntityWithMeshVertices();
 
+  // entity that is currently being meshed
+  GEntity *_currentMeshEntity;
+
   // index of the current model
   static int _current;
 
@@ -145,6 +148,7 @@ class GModel
   void remove(GEdge *e);
   void remove(GVertex *v);
 
+  // Snap vertices on model edges by using geometry tolerance
   void snapVertices();
 
   // Get a vector containing all the entities in the model
@@ -203,6 +207,10 @@ class GModel
 
   // scale the mesh by the given factor
   void scaleMesh(double factor);
+
+  // set/get entity that is currently being meshed (for error reporting)
+  int setCurrentMeshEntity(GEntity *e){ _currentMeshEntity = e; }
+  GEntity *getCurrentMeshEntity(){ return _currentMeshEntity; }
 
   // Deletes all invisble mesh elements
   void removeInvisibleElements();

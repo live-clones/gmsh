@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.93 2008-07-03 17:06:01 geuzaine Exp $
+// $Id: GModel.cpp,v 1.94 2008-07-03 18:15:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -43,8 +43,8 @@ std::vector<GModel*> GModel::list;
 int GModel::_current = -1;
 
 GModel::GModel(std::string name)
-  : _geo_internals(0), _occ_internals(0), _fields(0),
-    modelName(name), normals(0)
+  : _geo_internals(0), _occ_internals(0), _fm_internals(0), _fields(0),
+    _currentMeshEntity(0), modelName(name), normals(0)
 {
   list.push_back(this);
 

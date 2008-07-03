@@ -30,6 +30,7 @@ class GEdge;
 class MVertex;
 class MLine;
 class MTriangle;
+
 // Create the mesh of the region
 class meshGRegion {
  public :

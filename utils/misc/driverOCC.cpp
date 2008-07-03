@@ -14,10 +14,23 @@
 #include <gmsh/MElement.h>
 
 class mymsg : public GmshMessage{
+private:
+  GModel *_model;
 public:
+  mymsg(GModel *model) : _model(model), GmshMessage() {}
   void operator()(std::string level, std::string msg)
   {
     printf("level=%s msg=%s\n", level.c_str(), msg.c_str());
+
+    if(level == "Fatal" || level == "Error"){
+      GEntity *e = _model->getCurrentMeshEntity();
+      if(e){
+	printf("error occurred while meshing entity:\n");
+	printf("  tag=%d\n", e->tag());
+	printf("  dimension=%d\n", e->dim());
+	printf("  native pointer=%p\n", e->getNativePtr());
+      }
+    }
     if(level == "Fatal") throw "Fatal error in Gmsh";
   }
 };
@@ -30,13 +43,15 @@ int main(int argc, char **argv)
   BRepTools::Read(shape, argv[1], builder);
   BRepTools::Clean(shape);
 
-  // initialize gmsh and set a message callback
+  // initialize gmsh
   GmshInitialize(argc, argv);
-  mymsg c;
+
+  // create a model and set error handler 
+  GModel m;
+  mymsg c(&m);
   GmshSetMessageHandler(&c);
 
-  // create a model, import the shape, and mesh it
-  GModel m;
+  // import the shape, and mesh it
   m.importOCCShape((void*)&shape, 0);
   try{
     m.mesh(2);

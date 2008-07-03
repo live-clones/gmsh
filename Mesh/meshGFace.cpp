@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.139 2008-07-03 17:06:04 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.140 2008-07-03 18:15:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1301,6 +1301,8 @@ const int debugSurface = -1;
 
 void meshGFace::operator() (GFace *gf)
 {
+  gf->model()->setCurrentMeshEntity(gf);
+
   if (debugSurface >= 0 && gf->tag() != debugSurface){
     gf->meshStatistics.status = GFace::DONE;
     return;
@@ -1372,6 +1374,8 @@ static bool shouldRevert(MEdge &reference, std::vector<T*> &elements)
 
 void orientMeshGFace::operator()(GFace *gf)
 {
+  gf->model()->setCurrentMeshEntity(gf);
+
   if(gf->geomType() == GEntity::ProjectionFace) return;
 
   // surface orientions in OCC are not consistent with the orientation

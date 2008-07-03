@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.55 2008-07-01 14:24:07 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.56 2008-07-03 18:15:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -555,6 +555,8 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
 
 void meshGRegion::operator() (GRegion *gr) 
 {  
+  gr->model()->setCurrentMeshEntity(gr);
+
   if(gr->geomType() == GEntity::DiscreteVolume) return;
   if(gr->meshAttributes.Method == MESH_NONE) return;
 
@@ -600,6 +602,8 @@ void meshGRegion::operator() (GRegion *gr)
 
 void optimizeMeshGRegionNetgen::operator() (GRegion *gr) 
 {  
+  gr->model()->setCurrentMeshEntity(gr);
+
   if(gr->geomType() == GEntity::DiscreteVolume) return;
   
   // don't optimize transfinite or extruded meshes
@@ -627,6 +631,8 @@ void optimizeMeshGRegionNetgen::operator() (GRegion *gr)
 
 void optimizeMeshGRegionGmsh::operator() (GRegion *gr) 
 {  
+  gr->model()->setCurrentMeshEntity(gr);
+
   if(gr->geomType() == GEntity::DiscreteVolume) return;
   
   // don't optimize extruded meshes

@@ -1,4 +1,4 @@
-// $Id: meshGRegionExtruded.cpp,v 1.27 2008-06-27 18:00:52 geuzaine Exp $
+// $Id: meshGRegionExtruded.cpp,v 1.28 2008-07-03 18:15:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -193,6 +193,8 @@ static void insertAllVertices(GRegion *gr,
 
 void meshGRegionExtruded::operator() (GRegion *gr) 
 {  
+  gr->model()->setCurrentMeshEntity(gr);
+
   if(gr->geomType() == GEntity::DiscreteVolume) return;
 
   ExtrudeParams *ep = gr->meshAttributes.extrude;

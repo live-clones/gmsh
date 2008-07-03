@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.66 2008-07-01 14:24:07 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.67 2008-07-03 18:15:29 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -279,6 +279,8 @@ void deMeshGEdge::operator() (GEdge *ge)
 
 void meshGEdge::operator() (GEdge *ge) 
 {  
+  ge->model()->setCurrentMeshEntity(ge);
+
   if(ge->geomType() == GEntity::DiscreteCurve) return;
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
   if(ge->meshAttributes.Method == MESH_NONE) return;
@@ -288,7 +290,7 @@ void meshGEdge::operator() (GEdge *ge)
 
   if(MeshExtrudedCurve(ge)) return;
 
-  Msg::Info("Meshing curve %d (%s)", ge->tag(),ge->getTypeString().c_str());
+  Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
 
   // Create a list of integration points
   List_T *Points = List_Create(10, 10, sizeof(IntPoint));
