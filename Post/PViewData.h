@@ -32,7 +32,7 @@ class adaptiveData;
 class GModel;
 class nameData;
 
-// abstract interface to post-processing view data
+// The abstract interface to post-processing view data.
 class PViewData {
  private:
   // flag to mark that the data is 'dirty' and should not be displayed
@@ -43,29 +43,51 @@ class PViewData {
   std::string _fileName;
   // index of the view in the file
   int _fileIndex;
+
  protected:
   // adaptive visualization data
   adaptiveData *_adaptive;
   // interpolation matrices, indexed by the number of edges per
   // element (1 for lines, 3 for triangles, etc.)
   std::map<int, std::vector<List_T*> > _interpolation;
+
  public:
   PViewData();
   virtual ~PViewData();
+
+  // get/set the dirty ("not ready for display") flag
   virtual bool getDirty(){ return _dirty; }
   virtual void setDirty(bool val){ _dirty = val; }
+
+  // finalize the view data (compute min/max, etc.)
   virtual bool finalize();
+
+  // get/set name
   virtual std::string getName(){ return _name; }
   virtual void setName(std::string val){ _name = val; }
+
+  // get/set filename
   virtual std::string getFileName(){ return _fileName; }
   virtual void setFileName(std::string val){ _fileName = val; }
+
+  // get/set index of view data in file
   virtual int getFileIndex(){ return _fileIndex; }
   virtual void setFileIndex(int val){ _fileIndex = val; }
+
+  // get number of time steps in the data
   virtual int getNumTimeSteps() = 0;
+
+  // get the time value associated with the step-th time step
   virtual double getTime(int step){ return 0.; }
+
+  // get min/max for given step (global over all steps if step=-1)
   virtual double getMin(int step=-1) = 0;
   virtual double getMax(int step=-1) = 0;
+
+  // get the bounding box
   virtual SBoundingBox3d getBoundingBox(int step=-1) = 0;
+
+  // get the number of elements of a giveb type, for a given step
   virtual int getNumScalars(int step=-1){ return 0; }
   virtual int getNumVectors(int step=-1){ return 0; }
   virtual int getNumTensors(int step=-1){ return 0; }
@@ -77,18 +99,23 @@ class PViewData {
   virtual int getNumHexahedra(int step=-1){ return 0; }
   virtual int getNumPrisms(int step=-1){ return 0; }
   virtual int getNumPyramids(int step=-1){ return 0; }
-  // Returns the number of geometrical entities in the view
+
+  // return the number of geometrical entities in the view
   virtual int getNumEntities(int step=-1) = 0;
-  // Returns the number of elements in the ent-th entity, or the total
+
+  // return the number of elements in the ent-th entity, or the total
   // number of elements if ent < 0
   virtual int getNumElements(int step=-1, int ent=-1) = 0;
-  // Returns the geometrical dimension of the ele-th element in the
+
+  // return the geometrical dimension of the ele-th element in the
   // ent-th entity
   virtual int getDimension(int step, int ent, int ele) = 0;
-  // Returns the number of nodes of the ele-th element in the ent-th
+
+  // return the number of nodes of the ele-th element in the ent-th
   // entity
   virtual int getNumNodes(int step, int ent, int ele) = 0;
-  // Gets/Sets the coordinates and tag of the nod-th node from the
+
+  // get/set the coordinates and tag of the nod-th node from the
   // ele-th element in the ent-th entity (if the node has a tag,
   // getNode returns it)
   virtual int getNode(int step, int ent, int ele, int nod, 
@@ -96,52 +123,66 @@ class PViewData {
   virtual void setNode(int step, int ent, int ele, int nod,
 		       double x, double y, double z);
   virtual void tagNode(int step, int ent, int ele, int nod, int tag){}
-  // Returns the number of componts available for the ele-th element
-  // in the ent-th entity
+
+  // return the number of componts available for the ele-th element in
+  // the ent-th entity
   virtual int getNumComponents(int step, int ent, int ele) = 0;
-  // Returns the number of values available for the ele-th element
-  // in the ent-th entity
+
+  // return the number of values available for the ele-th element in
+  // the ent-th entity
   virtual int getNumValues(int step, int ent, int ele) = 0;
-  // Gets the idx'th value for the ele-th element in the ent-th entity
+
+  // get the idx'th value for the ele-th element in the ent-th entity
   virtual void getValue(int step, int ent, int ele, int idx, double &val) = 0;
-  // Gets/sets the comp-th component (at the step-th time step)
+
+  // gets/set the comp-th component (at the step-th time step)
   // associated with the node-th node from the ele-th element in the
   // ent-th entity
   virtual void getValue(int step, int ent, int ele, int nod, int comp, double &val) = 0;
   virtual void setValue(int step, int ent, int ele, int nod, int comp, double val);
-  // Returns a scalar value (same as value for scalars, norm for
+
+  // return a scalar value (same as value for scalars, norm for
   // vectors, etc.) associated with the node-th node from the ele-th
   // element in the ent-th entity
   void getScalarValue(int step, int ent, int ele, int nod, double &val);
-  // Returns the number of edges of the ele-th element in the ent-th
+
+  // return the number of edges of the ele-th element in the ent-th
   // entity
   virtual int getNumEdges(int step, int ent, int ele) = 0;
-  // Returns the number of 2D/3D strings in the view
+
+  // return the number of 2D/3D strings in the view
   virtual int getNumStrings2D(){ return 0; }
   virtual int getNumStrings3D(){ return 0; }
-  // Returns the i-th 2D/3D string in the view
+
+  // return the i-th 2D/3D string in the view
   virtual void getString2D(int i, int step, std::string &str, 
                            double &x, double &y, double &style){}
   virtual void getString3D(int i, int step, std::string &str, 
                            double &x, double &y, double &z, double &style){}
-  // Change the orientation of the ele-th element
+
+  // change the orientation of the ele-th element
   virtual void revertElement(int step, int ent, int ele){}
-  // Cheks if the view is empty
+
+  // check if the view is empty
   virtual bool empty();
-  // Cheks if we should skip the ent-th entity
+
+  // check if we should skip the given entity/element
   virtual bool skipEntity(int step, int ent){ return false; }
-  // Cheks if we should skip the ele-th entity
   virtual bool skipElement(int step, int ent, int ele,
 			   bool checkVisibility=false){ return false; }
 
+  // check if the data has the given step/partition/etc.
   virtual bool hasTimeStep(int step){ return step < getNumTimeSteps(); }
   virtual bool hasPartition(int part){ return false; }
   virtual bool hasMultipleMeshes(){ return false; }
   virtual bool hasModel(GModel *model, int step=-1){ return false; }
+
+  // true if data is given at Gauss points (instead of vertices)
   virtual bool useGaussPoints(){ return false; }
 
   // check if the view is adaptive
   bool isAdaptive(){ return _adaptive ? true : false; }
+
   // return the adaptive data
   adaptiveData *getAdaptiveData(){ return _adaptive; }
 
@@ -149,13 +190,13 @@ class PViewData {
   // number of edges
   void setInterpolationScheme(int type, List_T *coef, List_T *pol, 
 			      List_T *coefGeo=0, List_T *polGeo=0);
-  inline bool haveInterpolationScheme(){ return !_interpolation.empty(); }
   int getInterpolationScheme(int type, std::vector<List_T*> &p);
+  inline bool haveInterpolationScheme(){ return !_interpolation.empty(); }
 
-  // Smoothes the data in the view (makes it C0)
+  // smooth the data in the view (makes it C0)
   virtual void smooth();
 
-  // Combine time steps or elements from multiple datasets
+  // combine time steps or elements from multiple datasets
   virtual bool combineTime(nameData &nd);
   virtual bool combineSpace(nameData &nd);
 

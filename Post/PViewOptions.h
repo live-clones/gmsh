@@ -24,6 +24,7 @@
 #include "ColorTable.h"
 #include "SBoundingBox3d.h"
 
+// The display options of a post-processing view.
 class PViewOptions {
  public:
   enum PlotType {

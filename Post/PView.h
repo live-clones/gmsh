@@ -30,7 +30,7 @@ class VertexArray;
 class smooth_normals;
 class GMSH_Post_Plugin;
 
-// a post-processing view
+// A post-processing view.
 class PView{
  private:
   static int _globalNum;
@@ -50,29 +50,46 @@ class PView{
   PViewData *_data;
   // initialize private stuff
   void _init();
+
  public:
-  // creates a new view with list-based data, allocated or not
+  // create a new view with list-based data, allocated or not
   PView(bool allocate=true);
-  // constructs a new view using the given data
+  // construct a new view using the given data
   PView(PViewData *data);
-  // constructs a new view, alias of the view "ref"
+  // construct a new view, alias of the view "ref"
   PView(PView *ref, bool copyOptions=true);
-  // constructs a new list-based view from a simple 2D dataset
+  // construct a new list-based view from a simple 2D dataset
   PView(std::string xname, std::string yname,
         std::vector<double> &x, std::vector<double> &y);
   // default destructor
   ~PView();
+
+  // delete the vertex arrays, used to draw the view efficiently
   void deleteVertexArrays();
+
+  // get/set the display options
   PViewOptions *getOptions(){ return _options; }  
   void setOptions(PViewOptions *val=0);  
+
+  // get/set the view data
   PViewData *getData(bool useAdaptiveIfAvailable=false);
   void setData(PViewData *val){ _data = val; }
+
+  // get the view number (unique and immutable)
   int getNum(){ return _num; }
+
+  // get/set the view index (in the view list)
   int getIndex(){ return _index; }
   void setIndex(int val){ _index = val; }
+
+  // get/set the changed flag
   bool &getChanged(){ return _changed; }
   void setChanged(bool val);
+
+  // check if the view is an alias ("light copy") of another view
   int getAliasOf(){ return _aliasOf; }
+
+  // get/set the eye position (for transparency calculations)
   SPoint3 &getEye(){ return _eye; }
   void setEye(SPoint3 &p){ _eye = p; }
 
@@ -88,14 +105,13 @@ class PView{
   static PView *getViewByName(std::string name, int timeStep=-1, 
                               int partition=-1);
 
-  // read view(s) from POS file
+  // IO read routines (these are global: they can create multiple
+  // views)
   static bool readPOS(std::string fileName, int fileIndex=-1);
-  // read view(s) from MSH file
   static bool readMSH(std::string fileName, int fileIndex=-1);
-  // read view(s) from MED file
   static bool readMED(std::string fileName, int fileIndex=-1);
 
-  // write view in given format
+  // IO write routine
   bool write(std::string fileName, int format, bool append=false);
 
   // vertex arrays to draw the elements efficiently

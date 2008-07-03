@@ -26,7 +26,8 @@
 #include "SBoundingBox3d.h"
 #include "ListUtils.h"
 
-// list-based datasets (all elements are discontinuous)
+// The container for list-based datasets (for which all elements are
+// discontinuous).
 class PViewDataList : public PViewData {
  public: 
   // FIXME: all these members will be made private once the plugins
