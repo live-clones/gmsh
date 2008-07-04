@@ -1,4 +1,4 @@
-// $Id: StringUtils.cpp,v 1.3 2008-03-21 18:08:52 geuzaine Exp $
+// $Id: StringUtils.cpp,v 1.4 2008-07-04 14:58:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -18,6 +18,10 @@
 // USA.
 // 
 // Please report all bugs and problems to <gmsh@geuz.org>.
+
+#if defined(__CYGWIN__)
+#include <sys/cygwin.h>
+#endif
 
 #include "StringUtils.h"
 
@@ -70,4 +74,33 @@ std::string sanitizeTeXString(const char *in, int equation)
 
   if(equation) out.push_back('$');
   return out;
+}
+
+void fixWindowsPath(const char *in, char *out)
+{
+#if defined(__CYGWIN__)
+  cygwin_conv_to_win32_path(in, out);
+#else
+  strcpy(out, in);
+#endif
+}
+
+void splitFileName(const char *name, char *no_ext, char *ext, char *base)
+{
+  strcpy(no_ext, name);
+  strcpy(ext, "");
+  for(int i = strlen(name) - 1; i >= 0; i--){
+    if(name[i] == '.'){
+      strcpy(ext, &name[i]);
+      no_ext[i] = '\0';
+      break;
+    }
+  }
+  strcpy(base, no_ext);
+  for(int i = strlen(no_ext) - 1; i >= 0; i--){
+    if(no_ext[i] == '/' || no_ext[i] == '\\'){
+      strcpy(base, &no_ext[i + 1]);
+      break;
+    }
+  }
 }

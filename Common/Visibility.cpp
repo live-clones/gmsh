@@ -1,4 +1,4 @@
-// $Id: Visibility.cpp,v 1.33 2008-04-16 22:10:52 geuzaine Exp $
+// $Id: Visibility.cpp,v 1.34 2008-07-04 14:58:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,10 @@
 #include "Visibility.h"
 #include "GModel.h"
 #include "MElement.h"
-#include "Parser.h" // for Symbol_T
+
+#if !defined(HAVE_NO_PARSER)
+#include "Parser.h"
+#endif
 
 VisibilityManager *VisibilityManager::manager = 0;
 
@@ -48,6 +51,7 @@ class VisLessThan{
   }
 };
 
+#if !defined(HAVE_NO_POST)
 static void setLabels(void *a, void *b)
 {
   Symbol *s = (Symbol *)a;
@@ -57,6 +61,7 @@ static void setLabels(void *a, void *b)
     VisibilityManager::instance()->setLabel((int)tag, std::string(s->Name), 0);
   }
 }
+#endif
 
 void VisibilityManager::update(int type)
 {
@@ -67,8 +72,10 @@ void VisibilityManager::update(int type)
 
   GModel *m = GModel::current();
 
+#if !defined(HAVE_NO_POST)
   // get old labels from parser
   if(Tree_Nbr(Symbol_T)) Tree_Action(Symbol_T, setLabels);
+#endif
   
   if(type == 0){ // elementary entities
     for(GModel::piter it = m->firstElementaryName(); it != m->lastElementaryName(); ++it)

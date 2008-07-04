@@ -1,4 +1,4 @@
-// $Id: GModelIO_OCC.cpp,v 1.40 2008-07-03 17:06:01 geuzaine Exp $
+// $Id: GModelIO_OCC.cpp,v 1.41 2008-07-04 14:58:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -27,6 +27,7 @@
 #include "OCCFace.h"
 #include "OCCRegion.h"
 #include "MElement.h"
+#include "OpenFile.h"
 
 #if defined(HAVE_OCC_MESH_CONSTRAINTS)
 #include "MeshGmsh_Constrain.hxx"
@@ -645,7 +646,6 @@ int GModel::importOCCShape(const void *shape, const void *meshConstraints)
   _occ_internals->loadShape((TopoDS_Shape*)shape);
   _occ_internals->buildGModel(this);
   snapVertices();
-  extern void SetBoundingBox();
   SetBoundingBox();
   if(meshConstraints) applyOCCMeshConstraints(this, meshConstraints);
   return 1;

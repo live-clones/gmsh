@@ -26,5 +26,7 @@
 void swapBytes(char *array, int size, int n);
 std::string extractDoubleQuotedString(const char *str, int len);
 std::string sanitizeTeXString(const char *in, int equation);
+void fixWindowsPath(const char *in, char *out);
+void splitFileName(const char *name, char *no_ext, char *ext, char *base);
 
 #endif

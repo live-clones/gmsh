@@ -1,4 +1,4 @@
-// $Id: Solvers.cpp,v 1.64 2008-05-06 21:11:47 geuzaine Exp $
+// $Id: Solvers.cpp,v 1.65 2008-07-04 14:58:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -21,6 +21,7 @@
 
 #include <string.h>
 #include "Message.h"
+#include "StringUtils.h"
 #include "Solvers.h"
 #include "GmshServer.h"
 #include "OpenFile.h"
@@ -86,7 +87,7 @@ int Solver(int num, const char *args)
   GmshServer server(CTX.solver.max_delay);
 
   if(num >= 0){
-    FixWindowsPath(SINFO[num].executable_name, prog);
+    fixWindowsPath(SINFO[num].executable_name, prog);
     if(!SINFO[num].client_server) {
       sprintf(command, "%s %s", prog, args);
 #if !defined(WIN32)
@@ -112,7 +113,7 @@ int Solver(int num, const char *args)
       sprintf(tmp, "%s%s-%d", CTX.home_dir, CTX.solver.socket_name, num);
     else
       sprintf(tmp, "%s%s", CTX.home_dir, CTX.solver.socket_name);
-    FixWindowsPath(tmp, sockname);
+    fixWindowsPath(tmp, sockname);
   }
   else{
     // TCP/IP socket

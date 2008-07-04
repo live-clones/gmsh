@@ -1,4 +1,4 @@
-// $Id: GModelIO_Geo.cpp,v 1.25 2008-06-12 09:31:36 geuzaine Exp $
+// $Id: GModelIO_Geo.cpp,v 1.26 2008-07-04 14:58:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,8 +30,11 @@
 #include "gmshFace.h"
 #include "gmshEdge.h"
 #include "gmshRegion.h"
-#include "Parser.h" // for Symbol_T
 #include "Field.h"
+
+#if !defined(HAVE_NO_PARSER)
+#include "Parser.h"
+#endif
 
 void GModel::_createGEOInternals()
 {
@@ -419,8 +422,9 @@ int GModel::writeGEO(const std::string &name, bool printLabels)
   std::for_each(firstFace(), lastFace(), writeGFaceGEO(fp));
   std::for_each(firstRegion(), lastRegion(), writeGRegionGEO(fp));
 
-  // get "old-style" labels from parser
   std::map<int, std::string> labels;
+#if !defined(HAVE_NO_PARSER)
+  // get "old-style" labels from parser
   List_T *old = Tree2List(Symbol_T);
   for(int i = 0; i < List_Nbr(old); i++) {
     Symbol *s = (Symbol *)List_Pointer(old, i);
@@ -431,6 +435,7 @@ int GModel::writeGEO(const std::string &name, bool printLabels)
     }
   }
   List_Delete(old);
+#endif
 
   std::map<int, std::vector<GEntity*> > groups[4];
   getPhysicalGroups(groups);

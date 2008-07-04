@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.227 2008-07-03 17:06:03 geuzaine Exp $
+# $Id: Makefile,v 1.228 2008-07-04 14:58:31 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -24,7 +24,7 @@ include ../variables
 LIB = ../lib/libGmshMesh${LIBEXT}
 
 INC = ${DASH}I../Numeric ${DASH}I../Common ${DASH}I../Geo\
-      ${DASH}I../Mesh ${DASH}I../Post ${DASH}I../Graphics ${DASH}I../Parser\
+      ${DASH}I../Mesh ${DASH}I../Post ${DASH}I../Graphics\
       ${DASH}I../Fltk ${DASH}I../contrib/NR ${DASH}I../contrib/Triangle\
       ${DASH}I../contrib/Tetgen ${DASH}I../contrib/Netgen\
       ${DASH}I../contrib/Netgen/libsrc/include\

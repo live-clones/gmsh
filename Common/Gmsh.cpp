@@ -1,4 +1,4 @@
-// $Id: Gmsh.cpp,v 1.7 2008-07-03 17:06:01 geuzaine Exp $
+// $Id: Gmsh.cpp,v 1.8 2008-07-04 14:58:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -23,7 +23,6 @@
 #include "GmshDefines.h"
 #include "GModel.h"
 #include "Message.h"
-#include "Parser.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "Options.h"
@@ -33,6 +32,10 @@
 #include "Generator.h"
 #include "Field.h"
 #include "Context.h"
+
+#if !defined(HAVE_NO_PARSER)
+#include "Parser.h"
+#endif
 
 #if !defined(HAVE_NO_POST)
 #include "PluginManager.h"
@@ -45,9 +48,11 @@ int GmshInitialize(int argc, char **argv)
   // Initialize messages (parallel stuff, etc.)
   Msg::Init(argc, argv);
 
+#if !defined(HAVE_NO_POST)
   // Initialize the symbol tree that will hold variable names in the
   // parser
   InitSymbols();
+#endif
   
   // Load default options
   Init_Options(0);

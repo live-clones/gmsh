@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.120 2008-07-02 17:40:56 geuzaine Exp $
+// $Id: Geo.cpp,v 1.121 2008-07-04 14:58:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,6 @@
 #include "Geo.h"
 #include "GModel.h"
 #include "GeoInterpolation.h"
-#include "Parser.h"
 #include "Field.h"
 #include "Context.h"
 

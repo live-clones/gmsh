@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.159 2008-06-30 17:42:49 geuzaine Exp $
+dnl $Id: configure.in,v 1.160 2008-07-04 14:58:30 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 dnl
@@ -93,6 +93,9 @@ AC_ARG_ENABLE(gsl,
 AC_ARG_ENABLE(gui,
               AC_HELP_STRING([--enable-gui],
                              [build the graphical user interface (default=yes)]))
+AC_ARG_ENABLE(parser,
+              AC_HELP_STRING([--enable-parser],
+                             [build the parser (default=yes)]))
 AC_ARG_ENABLE(post,
               AC_HELP_STRING([--enable-post],
                              [build the post-processing module (default=yes)]))
@@ -154,6 +157,7 @@ AC_ARG_ENABLE(minimal,
 dnl "minimal" build shortcut
 if test "x$enable_minimal" = "xyes"; then
   enable_gui=no;
+  enable_parser=no;
   enable_post=no;
   enable_gsl=no;
 #  enable_occ=no;
@@ -355,14 +359,22 @@ if test "x$enable_gui" != "xno"; then
 
 else
 
-  if test "x$enable_post" != "xno"; then
-    GMSH_DIRS="Common Geo Mesh Post Numeric Parser Plugin"
-    GMSH_LIBS="-Llib Common/Main.o -lGmshParser -lGmshPlugin -lGmshGeo"
-    GMSH_LIBS="${GMSH_LIBS} -lGmshMesh -lGmshPost -lGmshCommon -lGmshNumeric"
+  GMSH_DIRS="Common Geo Mesh Numeric"
+  GMSH_LIBS="-Llib Common/Main.o"
+
+  if test "x$enable_parser" != "xno"; then
+    GMSH_DIRS="${GMSH_DIRS} Parser"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshParser"
   else
-    GMSH_DIRS="Common Geo Mesh Numeric Parser"
-    GMSH_LIBS="-Llib Common/Main.o -lGmshParser -lGmshGeo -lGmshMesh -lGmshCommon"
-    GMSH_LIBS="${GMSH_LIBS} -lGmshNumeric"
+    FLAGS="-DHAVE_NO_PARSER ${FLAGS}"
+  fi
+
+  if test "x$enable_post" != "xno"; then
+    GMSH_DIRS="${GMSH_DIRS} Post Plugin"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshPlugin -lGmshGeo -lGmshMesh -lGmshPost"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshNumeric"
+  else
+    GMSH_LIBS="${GMSH_LIBS} -lGmshGeo -lGmshMesh -lGmshCommon -lGmshNumeric"
     FLAGS="-DHAVE_NO_POST ${FLAGS}"
   fi
 

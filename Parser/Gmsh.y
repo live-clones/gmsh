@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.320 2008-07-01 14:24:11 geuzaine Exp $
+// $Id: Gmsh.y,v 1.321 2008-07-04 14:58:35 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -77,6 +77,7 @@ void yyerror(char *s);
 void yymsg(int level, const char *fmt, ...);
 void skip_until(const char *skip, const char *until);
 int PrintListOfDouble(char *format, List_T *list, char *buffer);
+void FixRelativePath(const char *in, char *out);
 %}
 
 %union {
@@ -3582,6 +3583,22 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer)
   if(j != (int)strlen(format))
     return -1;
   return 0;
+}
+
+void FixRelativePath(const char *in, char *out)
+{
+  if(in[0] == '/' || in[0] == '\\' || (strlen(in)>2 && in[1] == ':')){
+    // do nothing: 'in' is an absolute path
+    strcpy(out, in);
+  }
+  else{
+    // append 'in' to the path of the parent file
+    strcpy(out, gmsh_yyname);
+    int i = strlen(out)-1 ;
+    while(i >= 0 && gmsh_yyname[i] != '/' && gmsh_yyname[i] != '\\') i-- ;
+    out[i+1] = '\0';
+    strcat(out, in);
+  }
 }
 
 void yyerror(char *s)

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.216 2008-07-03 17:06:02 geuzaine Exp $
+# $Id: Makefile,v 1.217 2008-07-04 14:58:31 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -206,9 +206,9 @@ GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
   gmshSurface.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
   ../Common/ListUtils.h ../Common/TreeUtils.h ../Common/avl.h \
   ../Common/ListUtils.h ExtrudeParams.h ../Common/SmoothData.h \
-  ../Parser/OpenFile.h ../Common/Message.h gmshVertex.h MVertex.h \
-  gmshFace.h gmshEdge.h gmshRegion.h ../Parser/Parser.h ../Mesh/Field.h \
-  ../Geo/Geo.h ../Post/PView.h ../Geo/SPoint3.h
+  ../Common/OpenFile.h ../Common/Message.h gmshVertex.h MVertex.h \
+  gmshFace.h gmshEdge.h gmshRegion.h ../Mesh/Field.h ../Geo/Geo.h \
+  ../Post/PView.h ../Geo/SPoint3.h ../Parser/Parser.h
 GModelIO_Mesh.o: GModelIO_Mesh.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/GmshDefines.h MElement.h \
@@ -220,7 +220,7 @@ GModelIO_OCC.o: GModelIO_OCC.cpp GModelIO_OCC.h GModel.h GVertex.h \
   SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h OCCIncludes.h \
   ../Common/Message.h ../Common/Context.h OCCVertex.h MVertex.h OCCEdge.h \
   OCCFace.h OCCRegion.h MElement.h ../Common/GmshDefines.h MEdge.h \
-  MFace.h
+  MFace.h ../Common/OpenFile.h
 GModelIO_Fourier.o: GModelIO_Fourier.cpp GModel.h GVertex.h GEntity.h \
   Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
   SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/Message.h \
@@ -247,17 +247,17 @@ Geo.o: Geo.cpp ../Common/Message.h ../Numeric/Numeric.h \
   ../Common/TreeUtils.h ../Common/avl.h ../Common/ListUtils.h \
   ExtrudeParams.h ../Common/SmoothData.h GModel.h GVertex.h GEntity.h \
   GPoint.h GEdge.h GFace.h GEdgeLoop.h GRegion.h GeoInterpolation.h \
-  ../Parser/Parser.h ../Mesh/Field.h ../Geo/Geo.h ../Post/PView.h \
-  ../Geo/SPoint3.h ../Common/Context.h
+  ../Mesh/Field.h ../Geo/Geo.h ../Post/PView.h ../Geo/SPoint3.h \
+  ../Common/Context.h
 GeoStringInterface.o: GeoStringInterface.cpp ../Common/Message.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
-  ../Common/MallocUtils.h Geo.h ../Common/GmshDefines.h gmshSurface.h \
-  Pair.h Range.h SPoint2.h SPoint3.h SVector3.h SBoundingBox3d.h \
-  ../Common/ListUtils.h ../Common/TreeUtils.h ../Common/avl.h \
-  ../Common/ListUtils.h ExtrudeParams.h ../Common/SmoothData.h \
-  GeoStringInterface.h ../Parser/Parser.h ../Parser/OpenFile.h \
-  ../Common/Context.h GModel.h GVertex.h GEntity.h GPoint.h GEdge.h \
-  GFace.h GEdgeLoop.h GRegion.h
+  ../Common/MallocUtils.h ../Common/StringUtils.h Geo.h \
+  ../Common/GmshDefines.h gmshSurface.h Pair.h Range.h SPoint2.h \
+  SPoint3.h SVector3.h SBoundingBox3d.h ../Common/ListUtils.h \
+  ../Common/TreeUtils.h ../Common/avl.h ../Common/ListUtils.h \
+  ExtrudeParams.h ../Common/SmoothData.h GeoStringInterface.h \
+  ../Common/OpenFile.h ../Common/Context.h GModel.h GVertex.h GEntity.h \
+  GPoint.h GEdge.h GFace.h GEdgeLoop.h GRegion.h ../Parser/Parser.h
 GeoInterpolation.o: GeoInterpolation.cpp ../Common/Message.h Geo.h \
   ../Common/GmshDefines.h gmshSurface.h Pair.h Range.h SPoint2.h \
   SPoint3.h SVector3.h SBoundingBox3d.h ../Numeric/Numeric.h \

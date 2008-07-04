@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.156 2008-06-12 11:52:00 geuzaine Exp $
+# $Id: Makefile,v 1.157 2008-07-04 14:58:31 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -25,8 +25,8 @@ LIB = ../lib/libGmshGraphics${LIBEXT}
 
 INC = ${DASH}I../Common ${DASH}I../Geo ${DASH}I../Mesh\
       ${DASH}I../Post ${DASH}I../Graphics ${DASH}I../Fltk ${DASH}I../Numeric\
-      ${DASH}I../Parser ${DASH}I../Plugin ${DASH}I../contrib/MathEval\
-      ${DASH}I../contrib/ANN/include
+      ${DASH}I../Plugin\
+      ${DASH}I../contrib/MathEval ${DASH}I../contrib/ANN/include
 
 CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 

@@ -1,4 +1,4 @@
-// $Id: GeoStringInterface.cpp,v 1.25 2008-06-27 18:00:52 geuzaine Exp $
+// $Id: GeoStringInterface.cpp,v 1.26 2008-07-04 14:58:31 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -24,12 +24,16 @@
 #include "Message.h"
 #include "Numeric.h"
 #include "MallocUtils.h"
+#include "StringUtils.h"
 #include "Geo.h"
 #include "GeoStringInterface.h"
-#include "Parser.h"
 #include "OpenFile.h"
 #include "Context.h"
 #include "GModel.h"
+
+#if !defined(HAVE_NO_PARSER)
+#include "Parser.h"
+#endif
 
 extern Context_T CTX;
 
@@ -50,6 +54,10 @@ static int snprintf(char *str, size_t size, const char* fmt, ...)
 
 double evaluate_scalarfunction(const char *var, double val, const char *funct)
 {
+#if defined(HAVE_NO_PARSER)
+  Msg::Error("Scalar function evaluation not available without Gmsh parser");
+  return 0.;
+#else
   FILE *tempf;
   tempf = gmsh_yyin;
 
@@ -79,10 +87,14 @@ double evaluate_scalarfunction(const char *var, double val, const char *funct)
   }
   Free(TheSymbol.Name);
   return *(double *)List_Pointer(TheSymbol_P->val, 0);
+#endif
 }
 
 void add_infile(const char *text, const char *fich, bool deleted_something)
 {
+#if defined(HAVE_NO_PARSER)
+  Msg::Error("GEO file creation not available without Gmsh parser");
+#else
   if(!(gmsh_yyin = fopen(CTX.tmp_filename_fullpath, "w"))) {
     Msg::Error("Unable to open temporary file '%s'", CTX.tmp_filename_fullpath);
     return;
@@ -113,7 +125,7 @@ void add_infile(const char *text, const char *fich, bool deleted_something)
   
   if(!CTX.expert_mode) {
     char no_ext[256], ext[256], base[256];
-    SplitFileName(fich, no_ext, ext, base);
+    splitFileName(fich, no_ext, ext, base);
     if(strlen(ext) && strcmp(ext, ".geo") && strcmp(ext, ".GEO")){
       char question[1024];
       sprintf(question, 
@@ -132,6 +144,7 @@ void add_infile(const char *text, const char *fich, bool deleted_something)
 
   fprintf(file, "%s\n", text);
   fclose(file);
+#endif
 }
 
 void coherence(const char *fich)

@@ -1,4 +1,4 @@
-// $Id: CommandLine.cpp,v 1.130 2008-06-05 11:52:49 samtech Exp $
+// $Id: CommandLine.cpp,v 1.131 2008-07-04 14:58:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -185,9 +185,11 @@ void Get_Options(int argc, char *argv[])
   // the parser, and so we can load files for -convert
   GModel *dummy = new GModel();
 
+#if !defined(HAVE_NO_PARSER)
   // Parse session and option files
   ParseFile(CTX.session_filename_fullpath, 1);
   ParseFile(CTX.options_filename_fullpath, 1);
+#endif
 
   // Get command line options
   int i = 1;
