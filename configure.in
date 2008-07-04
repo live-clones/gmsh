@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.161 2008-07-04 15:17:45 geuzaine Exp $
+dnl $Id: configure.in,v 1.162 2008-07-04 22:43:37 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 dnl
@@ -231,9 +231,9 @@ esac
 dnl Choose to build the GUI or the batch version
 if test "x$enable_gui" != "xno"; then
 
-  GMSH_DIRS="Common Geo Mesh Post Numeric Parser Plugin Graphics Fltk"
-  GMSH_LIBS="-Llib -lGmshFltk -lGmshParser -lGmshGraphics -lGmshPlugin -lGmshMesh"
-  GMSH_LIBS="${GMSH_LIBS} -lGmshGeo -lGmshPost -lGmshCommon -lGmshNumeric"
+  GMSH_DIRS="Common Geo Mesh Post Plugin Numeric Parser Graphics Fltk"
+  GMSH_LIBS="-Llib -lGmshFltk -lGmshCommon -lGmshGeo -lGmshMesh -lGmshPost -lGmshPlugin"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshGraphics -lGmshParser -lGmshNumeric"
   FLAGS="-DHAVE_FLTK ${FLAGS}"
 
   if test "x${FLTK_PREFIX}" != "x" ; then
