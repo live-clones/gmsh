@@ -214,7 +214,7 @@ class GModel
   void scaleMesh(double factor);
 
   // set/get entity that is currently being meshed (for error reporting)
-  int setCurrentMeshEntity(GEntity *e){ _currentMeshEntity = e; }
+  void setCurrentMeshEntity(GEntity *e){ _currentMeshEntity = e; }
   GEntity *getCurrentMeshEntity(){ return _currentMeshEntity; }
 
   // Deletes all invisble mesh elements
