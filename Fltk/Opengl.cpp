@@ -1,4 +1,4 @@
-// $Id: Opengl.cpp,v 1.80 2008-03-20 11:44:03 geuzaine Exp $
+// $Id: Opengl.cpp,v 1.81 2008-07-04 16:58:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -83,7 +83,7 @@ void Draw_String(const char *s, const char *font_name, int font_enum, int font_s
   }
   else{
     if(CTX.print.format == FORMAT_TEX){
-      std::string tmp = sanitizeTeXString(s, CTX.print.tex_as_equation);
+      std::string tmp = SanitizeTeXString(s, CTX.print.tex_as_equation);
       int opt;
       switch(align){
       case 1: opt = GL2PS_TEXT_B;   break; // bottom center

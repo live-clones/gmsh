@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.56 2008-06-10 08:37:33 remacle Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.57 2008-07-04 16:58:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -252,7 +252,7 @@ int GModel::readMSH(const std::string &name)
         int num;
         if(fscanf(fp, "%d", &num) != 1) return 0;
         if(!fgets(str, sizeof(str), fp)) return 0;
-        std::string name = extractDoubleQuotedString(str, 256);
+        std::string name = ExtractDoubleQuotedString(str, 256);
         if(name.size()) setPhysicalName(name, num);
       }
 
@@ -275,9 +275,9 @@ int GModel::readMSH(const std::string &name)
         }
         else{
           if(fread(&num, sizeof(int), 1, fp) != 1) return 0;
-          if(swap) swapBytes((char*)&num, sizeof(int), 1);
+          if(swap) SwapBytes((char*)&num, sizeof(int), 1);
           if(fread(xyz, sizeof(double), 3, fp) != 3) return 0;
-          if(swap) swapBytes((char*)xyz, sizeof(double), 3);
+          if(swap) SwapBytes((char*)xyz, sizeof(double), 3);
         }
         minVertex = std::min(minVertex, num);
         maxVertex = std::max(maxVertex, num);
@@ -353,7 +353,7 @@ int GModel::readMSH(const std::string &name)
         while(numElementsPartial < numElements){
           int header[3];
           if(fread(header, sizeof(int), 3, fp) != 3) return 0;
-          if(swap) swapBytes((char*)header, sizeof(int), 3);
+          if(swap) SwapBytes((char*)header, sizeof(int), 3);
           int type = header[0];
           int numElms = header[1];
           int numTags = header[2];
@@ -362,7 +362,7 @@ int GModel::readMSH(const std::string &name)
           int *data = new int[n];
           for(int i = 0; i < numElms; i++) {
             if(fread(data, sizeof(int), n, fp) != n) return 0;
-            if(swap) swapBytes((char*)data, sizeof(int), n);
+            if(swap) SwapBytes((char*)data, sizeof(int), n);
             int num = data[0];
             int physical = (numTags > 0) ? data[4 - numTags] : 0;
             int elementary = (numTags > 1) ? data[4 - numTags + 1] : 0;
@@ -801,7 +801,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
       if(nfacets > 10000000){
         Msg::Info("Swapping bytes from binary file");
         swap = true;
-        swapBytes((char*)&nfacets, sizeof(unsigned int), 1);
+        SwapBytes((char*)&nfacets, sizeof(unsigned int), 1);
       }
       if(ret && nfacets){
         char *data = new char[nfacets * 50 * sizeof(char)];
@@ -809,7 +809,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
         if(ret == nfacets * 50){
           for(unsigned int i = 0; i < nfacets; i++) {
             float *xyz = (float *)&data[i * 50 * sizeof(char)];
-            if(swap) swapBytes((char*)xyz, sizeof(float), 12);
+            if(swap) SwapBytes((char*)xyz, sizeof(float), 12);
             for(int j = 0; j < 3; j++){
               SPoint3 p(xyz[3 + 3 * j], xyz[3 + 3 * j + 1], xyz[3 + 3 * j + 2]);
               points.push_back(p);

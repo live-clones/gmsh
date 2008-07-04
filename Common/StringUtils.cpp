@@ -1,4 +1,4 @@
-// $Id: StringUtils.cpp,v 1.4 2008-07-04 14:58:30 geuzaine Exp $
+// $Id: StringUtils.cpp,v 1.5 2008-07-04 16:58:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -25,7 +25,7 @@
 
 #include "StringUtils.h"
 
-void swapBytes(char *array, int size, int n)
+void SwapBytes(char *array, int size, int n)
 {
   char *x = new char[size];
   for(int i = 0; i < n; i++) {
@@ -37,7 +37,7 @@ void swapBytes(char *array, int size, int n)
   delete [] x;
 }
 
-std::string extractDoubleQuotedString(const char *str, int len)
+std::string ExtractDoubleQuotedString(const char *str, int len)
 {
   char *c = strstr((char*)str, "\"");
   if(!c) return "";
@@ -49,7 +49,7 @@ std::string extractDoubleQuotedString(const char *str, int len)
   return ret;
 }
 
-std::string sanitizeTeXString(const char *in, int equation)
+std::string SanitizeTeXString(const char *in, int equation)
 {
   // if there is a '$' or a '\' in the string, assume the author knows
   // what he's doing:
@@ -76,7 +76,7 @@ std::string sanitizeTeXString(const char *in, int equation)
   return out;
 }
 
-void fixWindowsPath(const char *in, char *out)
+void FixWindowsPath(const char *in, char *out)
 {
 #if defined(__CYGWIN__)
   cygwin_conv_to_win32_path(in, out);
@@ -85,7 +85,7 @@ void fixWindowsPath(const char *in, char *out)
 #endif
 }
 
-void splitFileName(const char *name, char *no_ext, char *ext, char *base)
+void SplitFileName(const char *name, char *no_ext, char *ext, char *base)
 {
   strcpy(no_ext, name);
   strcpy(ext, "");

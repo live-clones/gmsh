@@ -902,7 +902,7 @@ void save_projection_cb(Fl_Widget *w, void *data)
         return;
       }
       char no_ext[256], ext[256], base[256];
-      splitFileName(name.c_str(), no_ext, ext, base);
+      SplitFileName(name.c_str(), no_ext, ext, base);
       fprintf(fp, "1\n%s\n%s\n", base, ps->GetName().c_str());
       for(unsigned int i = 0; i < p->parameters.size(); i++)
         fprintf(fp, "%.16g\n", p->parameters[i]->value());

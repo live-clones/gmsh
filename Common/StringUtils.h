@@ -23,10 +23,10 @@
 #include <string.h>
 #include <string>
 
-void swapBytes(char *array, int size, int n);
-std::string extractDoubleQuotedString(const char *str, int len);
-std::string sanitizeTeXString(const char *in, int equation);
-void fixWindowsPath(const char *in, char *out);
-void splitFileName(const char *name, char *no_ext, char *ext, char *base);
+void SwapBytes(char *array, int size, int n);
+std::string ExtractDoubleQuotedString(const char *str, int len);
+std::string SanitizeTeXString(const char *in, int equation);
+void FixWindowsPath(const char *in, char *out);
+void SplitFileName(const char *name, char *no_ext, char *ext, char *base);
 
 #endif

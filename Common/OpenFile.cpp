@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.1 2008-07-04 15:02:47 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.2 2008-07-04 16:58:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -234,7 +234,7 @@ void ParseString(const char *str)
 void SetProjectName(const char *name)
 {
   char no_ext[256], ext[256], base[256];
-  splitFileName(name, no_ext, ext, base);
+  SplitFileName(name, no_ext, ext, base);
 
   if(CTX.filename != name) // yes, we mean to compare the pointers
     strncpy(CTX.filename, name, 255);
@@ -265,7 +265,7 @@ int MergeFile(const char *name, int warn_if_missing)
   Msg::StatusBar(2, true, "Reading '%s'", name);
 
   char no_ext[256], ext[256], base[256];
-  splitFileName(name, no_ext, ext, base);
+  SplitFileName(name, no_ext, ext, base);
 
 #if defined(HAVE_FLTK)
   if(!CTX.batch) {

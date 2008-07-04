@@ -1,4 +1,4 @@
-// $Id: CreateFile.cpp,v 1.1 2008-07-04 15:02:47 geuzaine Exp $
+// $Id: CreateFile.cpp,v 1.2 2008-07-04 16:58:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -124,7 +124,7 @@ void CreateOutputFile(const char *filename, int format)
   else
     strcpy(name, filename);
 
-  splitFileName(name, no_ext, ext, base);
+  SplitFileName(name, no_ext, ext, base);
 
   int oldformat = CTX.print.format;
   CTX.print.format = format;

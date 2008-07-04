@@ -1,4 +1,4 @@
-// $Id: PViewDataGModelIO.cpp,v 1.46 2008-07-02 17:40:56 geuzaine Exp $
+// $Id: PViewDataGModelIO.cpp,v 1.47 2008-07-04 16:58:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -84,7 +84,7 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
     int num;
     if(binary){
       if(fread(&num, sizeof(int), 1, fp) != 1) return false;
-      if(swap) swapBytes((char*)&num, sizeof(int), 1);
+      if(swap) SwapBytes((char*)&num, sizeof(int), 1);
     }
     else{
       if(fscanf(fp, "%d", &num) != 1) return false;
@@ -93,7 +93,7 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
     if(_type == ElementNodeData || _type == GaussPointData){
       if(binary){
 	if(fread(&mult, sizeof(int), 1, fp) != 1) return false;
-	if(swap) swapBytes((char*)&mult, sizeof(int), 1);
+	if(swap) SwapBytes((char*)&mult, sizeof(int), 1);
       }
       else{
 	if(fscanf(fp, "%d", &mult) != 1) return false;
@@ -103,7 +103,7 @@ bool PViewDataGModel::readMSH(std::string fileName, int fileIndex, FILE *fp,
     if(binary){
       if((int)fread(d, sizeof(double), numComp * mult, fp) != numComp * mult) 
 	return false;
-      if(swap) swapBytes((char*)d, sizeof(double), numComp * mult);
+      if(swap) SwapBytes((char*)d, sizeof(double), numComp * mult);
     }
     else{
       for(int j = 0; j < numComp * mult; j++)

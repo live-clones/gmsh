@@ -1,4 +1,4 @@
-// $Id: PViewIO.cpp,v 1.8 2008-05-06 21:11:54 geuzaine Exp $
+// $Id: PViewIO.cpp,v 1.9 2008-07-04 16:58:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -165,9 +165,9 @@ bool PView::readMSH(std::string fileName, int fileIndex)
 	for(int i = 0; i < numTags; i++){
 	  if(!fgets(str, sizeof(str), fp)) return false;
 	  if(i == 0) 
-	    viewName = extractDoubleQuotedString(str, sizeof(str));
+	    viewName = ExtractDoubleQuotedString(str, sizeof(str));
 	  else if(i == 1) 
-	    interpolName = extractDoubleQuotedString(str, sizeof(str));
+	    interpolName = ExtractDoubleQuotedString(str, sizeof(str));
 	}
 	// double tags
         double time = 0.;

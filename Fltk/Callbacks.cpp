@@ -1,4 +1,4 @@
-// $Id: Callbacks.cpp,v 1.587 2008-07-04 14:58:30 geuzaine Exp $
+// $Id: Callbacks.cpp,v 1.588 2008-07-04 16:58:48 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -2602,7 +2602,7 @@ void _replace_multi_format(const char *in, const char *val, char *out)
 void help_online_cb(CALLBACK_ARGS)
 {
   char prog[1024], cmd[1024];
-  fixWindowsPath(CTX.web_browser, prog);
+  FixWindowsPath(CTX.web_browser, prog);
   _replace_multi_format(prog, "http://www.geuz.org/gmsh/doc/texinfo/", cmd);
   SystemCall(cmd);
 }
@@ -2610,7 +2610,7 @@ void help_online_cb(CALLBACK_ARGS)
 void help_credits_cb(CALLBACK_ARGS)
 {
   char prog[1024], cmd[1024];
-  fixWindowsPath(CTX.web_browser, prog);
+  FixWindowsPath(CTX.web_browser, prog);
   _replace_multi_format(prog, "http://www.geuz.org/gmsh/doc/CREDITS", cmd);
   SystemCall(cmd);
 }
@@ -2662,8 +2662,8 @@ void geometry_physical_cb(CALLBACK_ARGS)
 void geometry_edit_cb(CALLBACK_ARGS)
 {
   char prog[1024], file[1024], cmd[1024];
-  fixWindowsPath(CTX.editor, prog);
-  fixWindowsPath(CTX.filename, file);
+  FixWindowsPath(CTX.editor, prog);
+  FixWindowsPath(CTX.filename, file);
   _replace_multi_format(prog, file, cmd);
   SystemCall(cmd);
 }
@@ -3979,7 +3979,7 @@ void solver_cb(CALLBACK_ARGS)
   }
   if(SINFO[num].nboptions) {
     char file[256], tmp[256];
-    fixWindowsPath(WID->solver[num].input[0]->value(), file);
+    FixWindowsPath(WID->solver[num].input[0]->value(), file);
     sprintf(tmp, "\"%s\"", file);
     sprintf(file, SINFO[num].name_command, tmp);
     sprintf(tmp, "%s %s", SINFO[num].option_command, file);           
@@ -4000,7 +4000,7 @@ void solver_file_open_cb(CALLBACK_ARGS)
     WID->solver[num].input[0]->value(file_chooser_get_name(1).c_str());
     if(SINFO[num].nboptions) {
       char file[1024];
-      fixWindowsPath(file_chooser_get_name(1).c_str(), file);
+      FixWindowsPath(file_chooser_get_name(1).c_str(), file);
       sprintf(tmp, "\"%s\"", file);
       sprintf(file, SINFO[num].name_command, tmp);
       sprintf(tmp, "%s %s", SINFO[num].option_command, file);
@@ -4013,8 +4013,8 @@ void solver_file_edit_cb(CALLBACK_ARGS)
 {
   char prog[1024], file[1024], cmd[1024];
   int num = (int)(long)data;
-  fixWindowsPath(CTX.editor, prog);
-  fixWindowsPath(WID->solver[num].input[0]->value(), file);
+  FixWindowsPath(CTX.editor, prog);
+  FixWindowsPath(WID->solver[num].input[0]->value(), file);
   _replace_multi_format(prog, file, cmd);
   SystemCall(cmd);
 }
@@ -4049,7 +4049,7 @@ void solver_command_cb(CALLBACK_ARGS)
     WID->create_message_window(true);
 
   if(strlen(WID->solver[num].input[1]->value())) {
-    fixWindowsPath(WID->solver[num].input[1]->value(), mesh);
+    FixWindowsPath(WID->solver[num].input[1]->value(), mesh);
     sprintf(tmp, "\"%s\"", mesh);
     sprintf(mesh, SINFO[num].mesh_command, tmp);
   }
@@ -4071,7 +4071,7 @@ void solver_command_cb(CALLBACK_ARGS)
     strcpy(command, SINFO[num].button_command[idx]);
   }
 
-  fixWindowsPath(WID->solver[num].input[0]->value(), tmp);
+  FixWindowsPath(WID->solver[num].input[0]->value(), tmp);
   sprintf(arg, "\"%s\"", tmp);
   sprintf(tmp, SINFO[num].name_command, arg);
   sprintf(arg, "%s %s %s", tmp, mesh, command);
