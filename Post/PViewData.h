@@ -87,7 +87,7 @@ class PViewData {
   // get the bounding box
   virtual SBoundingBox3d getBoundingBox(int step=-1) = 0;
 
-  // get the number of elements of a giveb type, for a given step
+  // get the number of elements of a given type, for a given step
   virtual int getNumScalars(int step=-1){ return 0; }
   virtual int getNumVectors(int step=-1){ return 0; }
   virtual int getNumTensors(int step=-1){ return 0; }

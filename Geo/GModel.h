@@ -66,13 +66,15 @@ class GModel
   // the fly if needed
   void _storeElementsInEntities(std::map<int, std::vector<MElement*> > &map);
 
-  // loop over all vertices connected to elements and associate geo entity
+  // loop over all vertices connected to elements and associate geo
+  // entity
   void _associateEntityWithMeshVertices();
 
   // entity that is currently being meshed (used for error reporting)
   GEntity *_currentMeshEntity;
 
-  // index of the current model
+  // index of the current model (in the static list of all loaded
+  // models)
   static int _current;
 
  protected:

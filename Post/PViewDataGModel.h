@@ -117,7 +117,7 @@ class stepData{
   }
 };
 
-// The data container using elements from a GModel.
+// The data container using elements from one or more GModel(s).
 class PViewDataGModel : public PViewData {
  public:
   enum DataType {

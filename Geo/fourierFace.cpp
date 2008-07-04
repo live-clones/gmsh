@@ -39,12 +39,12 @@ SPoint2 fourierFace::parFromPoint(const SPoint3 &p) const
   return SPoint2(u, v);
 }
 
-int fourierFace::containsParam(const SPoint2 &pt) const
+bool fourierFace::containsParam(const SPoint2 &pt) const
 {
   const double tol = 1.e-6;
-  if(pt[0] < 0. - tol || pt[0] > 1. + tol) return 0;
-  if(pt[1] < 0. - tol || pt[1] > 1. + tol) return 0;
-  return 1;
+  if(pt[0] < 0. - tol || pt[0] > 1. + tol) return false;
+  if(pt[1] < 0. - tol || pt[1] > 1. + tol) return false;
+  return true;
 }
 
 SVector3 fourierFace::normal(const SPoint2 &param) const

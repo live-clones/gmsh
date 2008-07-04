@@ -201,7 +201,7 @@ class GEntity {
   virtual ModelType getNativeType() const { return UnknownModel; }
 
   // get the native pointer of the particular representation
-  virtual void * getNativePtr() const { return 0; }
+  virtual void *getNativePtr() const { return 0; }
 
   // the model owning this entity
   GModel *model() const { return _model; }

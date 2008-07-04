@@ -54,7 +54,7 @@ class OCCEdge : public GEdge {
   virtual int minimumDrawSegments () const;
   bool is3D() const { return !curve.IsNull(); }
   void setTrimmed(OCCFace *);
-  int isSeam(GFace *) const;
+  bool isSeam(GFace *) const;
 };
 
 #endif

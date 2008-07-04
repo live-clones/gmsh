@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.66 2008-07-01 14:24:07 geuzaine Exp $
+// $Id: GFace.cpp,v 1.67 2008-07-04 12:03:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -581,15 +581,15 @@ GPoint GFace::closestPoint(const SPoint3 & queryPoint, const double initialGuess
   return GPoint(0, 0, 0);
 }
 
-int GFace::containsParam(const SPoint2 &pt) const
+bool GFace::containsParam(const SPoint2 &pt) const
 {
   Range<double> uu = parBounds(0);
   Range<double> vv = parBounds(1);
   if((pt.x() >= uu.low() && pt.x() <= uu.high()) &&
      (pt.y() >= vv.low() && pt.y() <= vv.high()))
-    return 1;
+    return true;
   else
-    return 0;
+    return false;
 }
 
 bool GFace::buildRepresentationCross()

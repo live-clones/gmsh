@@ -1,4 +1,4 @@
-// $Id: GEdge.cpp,v 1.50 2008-07-01 14:24:07 geuzaine Exp $
+// $Id: GEdge.cpp,v 1.51 2008-07-04 12:03:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -142,7 +142,7 @@ GPoint GEdge::closestPoint(const SPoint3 & queryPoint) const
   return GPoint(0, 0, 0);
 }
 
-int GEdge::containsParam(double pt) const
+bool GEdge::containsParam(double pt) const
 {
   Range<double> rg = parBounds(0);
   return (pt >= rg.low() && pt <= rg.high());

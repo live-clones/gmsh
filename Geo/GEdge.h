@@ -52,13 +52,13 @@ class GEdge : public GEntity {
   void delFace(GFace *f);
 
   // get the dimension of the edge (1)
-  virtual int dim() const {return 1;}
+  virtual int dim() const { return 1; }
 
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive=false);
 
   // true if the edge is a seam for the given face.
-  virtual int isSeam(GFace *face) const { return 0; }
+  virtual bool isSeam(GFace *face) const { return false; }
 
   // get the bounding box
   virtual SBoundingBox3d bounds() const;
@@ -76,7 +76,7 @@ class GEdge : public GEntity {
   virtual GPoint closestPoint(const SPoint3 & queryPoint) const;
 
   // true if the edge contains the given parameter
-  virtual int containsParam(double pt) const;
+  virtual bool containsParam(double pt) const;
 
   // get first derivative of edge at the given parameter
   virtual SVector3 firstDer(double par) const = 0;
@@ -128,7 +128,7 @@ class GEdge : public GEntity {
   virtual void resetMeshAttributes();
 
   // true if entity is periodic in the "dim" direction.
-  virtual bool periodic(int dim) const { return v0 == v1 ; }
+  virtual bool periodic(int dim) const { return v0 == v1; }
 
   struct {
     char Method;

@@ -1,4 +1,4 @@
-// $Id: OCCEdge.cpp,v 1.39 2008-07-03 17:06:02 geuzaine Exp $
+// $Id: OCCEdge.cpp,v 1.40 2008-07-04 12:03:50 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -105,7 +105,7 @@ SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar, int dir) const
 }
 
 // True if the edge is a seam for the given face
-int OCCEdge::isSeam(GFace *face) const
+bool OCCEdge::isSeam(GFace *face) const
 {
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
   BRepAdaptor_Surface surface(*s);
@@ -114,7 +114,7 @@ int OCCEdge::isSeam(GFace *face) const
   //  if(surface.IsUPeriodic() || surface.IsVPeriodic()){
   return BRep_Tool::IsClosed(c, *s);
   //  }
-  return 0;
+  // return false;
 }
 
 GPoint OCCEdge::point(double par) const
