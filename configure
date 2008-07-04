@@ -4126,8 +4126,15 @@ fi
 
 else
 
-  GMSH_DIRS="Common Geo Mesh Numeric"
-  GMSH_LIBS="-Llib Common/Main.o"
+  GMSH_DIRS="Common Geo Mesh"
+  GMSH_LIBS="-Llib Common/Main.o -lGmshCommon -lGmshGeo -lGmshMesh"
+
+  if test "x$enable_post" != "xno"; then
+    GMSH_DIRS="${GMSH_DIRS} Post Plugin"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshPost -lGmshPlugin"
+  else
+    FLAGS="-DHAVE_NO_POST ${FLAGS}"
+  fi
 
   if test "x$enable_parser" != "xno"; then
     GMSH_DIRS="${GMSH_DIRS} Parser"
@@ -4136,14 +4143,8 @@ else
     FLAGS="-DHAVE_NO_PARSER ${FLAGS}"
   fi
 
-  if test "x$enable_post" != "xno"; then
-    GMSH_DIRS="${GMSH_DIRS} Post Plugin"
-    GMSH_LIBS="${GMSH_LIBS} -lGmshPlugin -lGmshGeo -lGmshMesh -lGmshPost"
-    GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshNumeric"
-  else
-    GMSH_LIBS="${GMSH_LIBS} -lGmshGeo -lGmshMesh -lGmshCommon -lGmshNumeric"
-    FLAGS="-DHAVE_NO_POST ${FLAGS}"
-  fi
+    GMSH_DIRS="${GMSH_DIRS} Numeric"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshNumeric"
 
     ZLIB=""
   if test "x$enable_zlib" != "xno"; then

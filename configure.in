@@ -1,4 +1,4 @@
-dnl $Id: configure.in,v 1.160 2008-07-04 14:58:30 geuzaine Exp $
+dnl $Id: configure.in,v 1.161 2008-07-04 15:17:45 geuzaine Exp $
 dnl
 dnl Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 dnl
@@ -359,8 +359,15 @@ if test "x$enable_gui" != "xno"; then
 
 else
 
-  GMSH_DIRS="Common Geo Mesh Numeric"
-  GMSH_LIBS="-Llib Common/Main.o"
+  GMSH_DIRS="Common Geo Mesh"
+  GMSH_LIBS="-Llib Common/Main.o -lGmshCommon -lGmshGeo -lGmshMesh"
+
+  if test "x$enable_post" != "xno"; then
+    GMSH_DIRS="${GMSH_DIRS} Post Plugin"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshPost -lGmshPlugin"
+  else
+    FLAGS="-DHAVE_NO_POST ${FLAGS}"
+  fi
 
   if test "x$enable_parser" != "xno"; then
     GMSH_DIRS="${GMSH_DIRS} Parser"
@@ -369,14 +376,9 @@ else
     FLAGS="-DHAVE_NO_PARSER ${FLAGS}"
   fi
 
-  if test "x$enable_post" != "xno"; then
-    GMSH_DIRS="${GMSH_DIRS} Post Plugin"
-    GMSH_LIBS="${GMSH_LIBS} -lGmshPlugin -lGmshGeo -lGmshMesh -lGmshPost"
-    GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshNumeric"
-  else
-    GMSH_LIBS="${GMSH_LIBS} -lGmshGeo -lGmshMesh -lGmshCommon -lGmshNumeric"
-    FLAGS="-DHAVE_NO_POST ${FLAGS}"
-  fi
+  dnl re-add Common to work around linker shortcomings on some archs
+  GMSH_DIRS="${GMSH_DIRS} Numeric"
+  GMSH_LIBS="${GMSH_LIBS} -lGmshCommon -lGmshNumeric"
 
   dnl Check for libz
   ZLIB=""
