@@ -28,6 +28,7 @@
 #include <set>
 #include <vector>
 #include <algorithm>
+#include <functional>
 #include <list>
 #include <math.h>
 #include "GFace.h"
