@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.402 2008-06-28 17:06:54 geuzaine Exp $
+// $Id: Options.cpp,v 1.403 2008-07-04 18:32:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -7119,7 +7119,7 @@ double opt_view_vector_type(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->VectorType = (int)val;
-    if(opt->VectorType < 1 || opt->VectorType > 5)
+    if(opt->VectorType < 1 || opt->VectorType > 6)
       opt->VectorType = 1;
     if(view) view->setChanged(true);
   }

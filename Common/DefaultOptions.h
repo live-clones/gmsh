@@ -1384,7 +1384,7 @@ StringXNumber ViewOptions_Number[] = {
     "Use generalized raise?" },
 
   { F|O, "VectorType" , opt_view_vector_type , 4 ,
-    "Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement)" },
+    "Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement, 6=comet)" },
   { F,   "Visible" , opt_view_visible , 1. ,
     "Is the view visible?" },
 

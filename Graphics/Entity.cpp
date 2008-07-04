@@ -1,4 +1,4 @@
-// $Id: Entity.cpp,v 1.84 2008-04-17 18:21:11 geuzaine Exp $
+// $Id: Entity.cpp,v 1.85 2008-07-04 18:32:40 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -390,6 +390,18 @@ void Draw_Vector(int Type, int Fill,
     glBegin(GL_LINES);
     glVertex3d(x, y, z);
     glVertex3d(x + dx, y + dy, z + dz);
+    glEnd();
+    break;
+  case 6:
+    if(relHeadRadius){
+      glBegin(GL_POINTS);
+      glVertex3d(x + dx, y + dy, z + dz);
+      glEnd();
+    }
+    glBegin(GL_LINES);
+    glVertex3d(x + dx, y + dy, z + dz);
+    //glColor4ubv((GLubyte *) & CTX.color.bg);
+    glVertex3d(x, y, z);
     glEnd();
     break;
   case 2:
