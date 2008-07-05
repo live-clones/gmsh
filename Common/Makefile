@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.181 2008-07-04 14:58:30 geuzaine Exp $
+# $Id: Makefile,v 1.182 2008-07-05 23:00:57 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -76,20 +76,19 @@ depend:
 
 # DO NOT DELETE THIS LINE
 Context.o: Context.cpp ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
-  Context.h DefaultOptions.h GmshDefines.h Options.h ../Post/ColorTable.h \
-  Trackball.h
+  Context.h Trackball.h
 Octree.o: Octree.cpp Octree.h OctreeInternals.h
 OctreeInternals.o: OctreeInternals.cpp Message.h OctreeInternals.h
 Options.o: Options.cpp GmshUI.h GmshDefines.h Message.h \
   ../Graphics/Draw.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Mesh/Generator.h Context.h Options.h ../Post/ColorTable.h \
-  ../Mesh/BackgroundMesh.h ../Post/PView.h ../Post/PViewOptions.h \
-  ../Post/ColorTable.h ../Post/PViewData.h ../Post/adaptiveData.h \
-  ../Common/ListUtils.h ../Common/GmshMatrix.h ../Plugin/PluginManager.h \
-  ../Plugin/Plugin.h ../Common/Options.h ../Common/Message.h \
-  ../Post/PViewDataList.h ../Post/PViewData.h ../Fltk/Solvers.h \
-  ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
-  ../Common/GmshUI.h ../Fltk/Popup_Button.h \
+  DefaultOptions.h ../Mesh/BackgroundMesh.h ../Post/PView.h \
+  ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewData.h \
+  ../Post/adaptiveData.h ../Common/ListUtils.h ../Common/GmshMatrix.h \
+  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
+  ../Common/Message.h ../Post/PViewDataList.h ../Post/PViewData.h \
+  ../Fltk/Solvers.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
+  ../Fltk/Colorbar_Window.h ../Common/GmshUI.h ../Fltk/Popup_Button.h \
   ../Fltk/SpherePosition_Widget.h ../Mesh/Field.h ../Geo/Geo.h \
   ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
   ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \

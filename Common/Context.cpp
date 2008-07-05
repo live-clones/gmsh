@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.62 2008-03-20 11:44:02 geuzaine Exp $
+// $Id: Context.cpp,v 1.63 2008-07-05 23:00:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -21,7 +21,6 @@
 
 #include "Numeric.h"
 #include "Context.h"
-#include "DefaultOptions.h"
 #include "Trackball.h"
 
 void Context_T::buildRotationMatrix(void)

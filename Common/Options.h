@@ -749,30 +749,30 @@ typedef struct {
 
 typedef struct {
   int level;
-  const char *str ;
-  const char * (*function)(int num, int action, const char *val) ;
-  const char *def ;
-  const char *help ;
-} StringXString ;
+  const char *str;
+  const char * (*function)(int num, int action, const char *val);
+  const char *def;
+  const char *help;
+} StringXString;
 
 typedef struct {
   int level;
   const char *str;
-  double (*function)(int num, int action, double val) ;
+  double (*function)(int num, int action, double val);
   double def ;
-  const char *help ;
-} StringXNumber ;
+  const char *help;
+} StringXNumber;
 
 typedef struct {
   int level;
-  const char *str ; 
-  unsigned int (*function)(int num, int action, unsigned int val) ;
+  const char *str;
+  unsigned int (*function)(int num, int action, unsigned int val);
   // the defaults are stored in individual bytes so that we can initialize
   // them statically independently of the machine endianness. They will be
   // packed into unsigned ints at runtime
-  unsigned char def1[4], def2[4], def3[4] ;
-  const char *help ;
-} StringXColor ;
+  unsigned char def1[4], def2[4], def3[4];
+  const char *help;
+} StringXColor;
 
 void Init_Options(int num);
 void Init_Options_GUI(int num);
@@ -780,57 +780,13 @@ void ReInit_Options(int num);
 void Print_Options(int num, int level, int diff, int help, const char *filename);
 void Print_OptionsDoc();
 
-StringXString *Get_StringOptionCategory(const char *cat);
-StringXNumber *Get_NumberOptionCategory(const char *cat);
-StringXColor *Get_ColorOptionCategory(const char *cat);
-
-void Set_DefaultStringOptions(int num, StringXString s[]);
-void Set_DefaultNumberOptions(int num, StringXNumber s[]);
-void Set_DefaultColorOptions(int num, StringXColor s[]);
-
-void Set_StringOptions_GUI(int num, StringXString s[]);
-void Set_NumberOptions_GUI(int num, StringXNumber s[]);
-void Set_ColorOptions_GUI(int num, StringXColor s[]);
-
-void * Get_StringOption(const char *str, StringXString s[]);
-void * Get_NumberOption(const char *str, StringXNumber s[]);
-void * Get_ColorOption(const char *str, StringXColor s[]);
-
-void Print_StringOptions(int num, int level, int diff, int help,
-                         StringXString s[], const char *prefix, FILE *file);
-void Print_NumberOptions(int num, int level, int diff, int help,
-                         StringXNumber s[], const char *prefix, FILE *file);
-void Print_ColorOptions(int num, int level, int diff, int help,
-                        StringXColor s[], const char *prefix, FILE *file);
-
-void Print_StringOptionsDoc(StringXString s[], const char *prefix, FILE * file);
-void Print_NumberOptionsDoc(StringXNumber s[], const char *prefix, FILE * file);
-void Print_ColorOptionsDoc(StringXColor s[], const char *prefix, FILE * file);
+bool StringOption(int action, const char *category, int num, 
+		  const char *name, const char *val);
+bool NumberOption(int action, const char *category, int num, 
+		  const char *name, double &val);
+bool ColorOption(int action, const char *category, int num, 
+		 const char *name, unsigned int &val);
 
 GmshColorTable *Get_ColorTable(int num);
-
-extern StringXString GeneralOptions_String[] ;
-extern StringXString GeometryOptions_String[] ;
-extern StringXString MeshOptions_String[] ;
-extern StringXString SolverOptions_String[] ;
-extern StringXString PostProcessingOptions_String[] ;
-extern StringXString ViewOptions_String[] ;
-extern StringXString PrintOptions_String[] ;
-
-extern StringXNumber GeneralOptions_Number[] ;
-extern StringXNumber GeometryOptions_Number[] ;
-extern StringXNumber MeshOptions_Number[] ;
-extern StringXNumber SolverOptions_Number[] ;
-extern StringXNumber PostProcessingOptions_Number[] ;
-extern StringXNumber ViewOptions_Number[] ;
-extern StringXNumber PrintOptions_Number[] ;
-
-extern StringXColor GeneralOptions_Color[] ;
-extern StringXColor GeometryOptions_Color[] ;
-extern StringXColor MeshOptions_Color[] ;
-extern StringXColor SolverOptions_Color[] ;
-extern StringXColor PostProcessingOptions_Color[] ;
-extern StringXColor ViewOptions_Color[] ;
-extern StringXColor PrintOptions_Color[] ;
 
 #endif

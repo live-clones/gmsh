@@ -30,6 +30,8 @@ class GmshMessage{
 
 int GmshInitialize(int argc=0, char **argv=0);
 int GmshSetMessageHandler(GmshMessage *callback);
+int GmshSetOption(std::string category, std::string name, std::string value, int index=0);
+int GmshSetOption(std::string category, std::string name, double value, int index=0);
 int GmshFinalize();
 int GmshBatch();
 

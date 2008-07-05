@@ -1,4 +1,4 @@
-// $Id: Options.cpp,v 1.403 2008-07-04 18:32:39 geuzaine Exp $
+// $Id: Options.cpp,v 1.404 2008-07-05 23:00:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,7 @@
 #include "Generator.h"
 #include "Context.h"
 #include "Options.h"
+#include "DefaultOptions.h"
 #include "BackgroundMesh.h"
 
 #if !defined(HAVE_NO_POST)
@@ -46,6 +47,347 @@ extern void activate_cb(Fl_Widget* w, void* data);
 #endif
 
 extern Context_T CTX;
+
+// General routines for string options
+
+bool StringOption(int action, const char *category, int num, 
+		  const char *name, const char *val)
+{
+  StringXString *s = 0;
+  if(!strcmp(category, "General"))
+    s = GeneralOptions_String;
+  else if(!strcmp(category, "Geometry"))
+    s = GeometryOptions_String;
+  else if(!strcmp(category, "Mesh"))
+    s = MeshOptions_String;
+  else if(!strcmp(category, "Solver"))
+    s = SolverOptions_String;
+  else if(!strcmp(category, "PostProcessing"))
+    s = PostProcessingOptions_String;
+  else if(!strcmp(category, "View"))
+    s = ViewOptions_String;
+  else if(!strcmp(category, "Print"))
+    s = PrintOptions_String;
+  else{
+    Msg::Error("Unknown string option category '%s'", category);
+    return false;
+  }
+
+  int i = 0;
+  while(s[i].str && strcmp(s[i].str, name)) i++;
+  if(!s[i].str){
+    Msg::Error("Unknown string option '%s.%s'", category, name);
+    return false;
+  }
+
+  s[i].function(num, action, val);
+  return true;
+}
+
+static void Set_DefaultStringOptions(int num, StringXString s[])
+{
+  int i = 0;
+  while(s[i].str) {
+    s[i].function(num, GMSH_SET, s[i].def);
+    i++;
+  }
+}
+
+static void Set_StringOptions_GUI(int num, StringXString s[])
+{
+  int i = 0;
+  while(s[i].str) {
+    s[i].function(num, GMSH_GUI, 0);
+    i++;
+  }
+}
+
+static void Print_StringOptions(int num, int level, int diff, int help, 
+				StringXString s[], const char *prefix, FILE *file)
+{
+  int i = 0;
+  char tmp[1024];
+  while(s[i].str) {
+    if(s[i].level & level) {
+      if(!diff || strcmp(s[i].function(num, GMSH_GET, NULL), s[i].def)){
+        sprintf(tmp, "%s%s = \"%s\";%s%s", prefix,
+                s[i].str, s[i].function(num, GMSH_GET, NULL), 
+                help ? " // " : "", help ? s[i].help : "");
+        if(file)
+          fprintf(file, "%s\n", tmp);
+        else
+          Msg::Direct("%s", tmp);
+      }
+    }
+    i++;
+  }
+}
+
+static const char *Get_OptionSaveLevel(int level){
+  if(level & GMSH_SESSIONRC){
+    return "General.SessionFileName";
+  }
+  else if(level & GMSH_OPTIONSRC){
+    return "General.OptionsFileName";
+  }
+  else{
+    return "-";
+  }
+}
+
+static void Print_StringOptionsDoc(StringXString s[], const char *prefix, FILE *file)
+{
+  int i = 0, j;
+  char tmp[1024];
+
+  while(s[i].str) {
+    fprintf(file, "@item %s%s\n", prefix, s[i].str);
+    fprintf(file, "%s@*\n", s[i].help);
+
+    // sanitize the string for texinfo
+    const char *ptr = s[i].function(0, GMSH_GET, NULL);
+    int len = strlen(ptr);
+    j = 0;
+    while(j < len){
+      tmp[j] = *(ptr++);
+      if(j && tmp[j] == '\n' && tmp[j-1] == '\n')
+        tmp[j-1] = '.';
+      j++;
+      if(j == 1023) break;
+    }
+    tmp[j] = '\0';
+
+    fprintf(file, "Default value: @code{\"%s\"}@*\n", tmp);
+    fprintf(file, "Saved in: @code{%s}\n\n", Get_OptionSaveLevel(s[i].level));
+    i++;
+  }
+}
+
+// General routines for numeric options
+
+bool NumberOption(int action, const char *category, int num, 
+		  const char *name, double &val)
+{
+  StringXNumber *s = 0;
+  if(!strcmp(category, "General"))
+    s = GeneralOptions_Number;
+  else if(!strcmp(category, "Geometry"))
+    s = GeometryOptions_Number;
+  else if(!strcmp(category, "Mesh"))
+    s = MeshOptions_Number;
+  else if(!strcmp(category, "Solver"))
+    s = SolverOptions_Number;
+  else if(!strcmp(category, "PostProcessing"))
+    s = PostProcessingOptions_Number;
+  else if(!strcmp(category, "View"))
+    s = ViewOptions_Number;
+  else if(!strcmp(category, "Print"))
+    s = PrintOptions_Number;
+  else{
+    Msg::Error("Unknown number option category '%s'", category);
+    return false;
+  }
+
+  int i = 0;
+  while((s[i].str != NULL) && (strcmp(s[i].str, name))) i++;
+  if(!s[i].str){
+    Msg::Error("Unknown number option '%s.%s'", category, name);
+    return false;
+  }
+  val = s[i].function(num, action, val);
+  return true;
+}
+
+static void Set_DefaultNumberOptions(int num, StringXNumber s[])
+{
+  int i = 0;
+  while(s[i].str) {
+    s[i].function(num, GMSH_SET, s[i].def);
+    i++;
+  }
+}
+
+static void Set_NumberOptions_GUI(int num, StringXNumber s[])
+{
+  int i = 0;
+  while(s[i].str) {
+    s[i].function(num, GMSH_GUI, 0);
+    i++;
+  }
+}
+
+static void Print_NumberOptions(int num, int level, int diff, int help,
+				StringXNumber s[], const char *prefix, FILE * file)
+{
+  int i = 0;
+  char tmp[1024];
+  while(s[i].str) {
+    if(s[i].level & level) {
+      if(!diff || (s[i].function(num, GMSH_GET, 0) != s[i].def)){
+        sprintf(tmp, "%s%s = %.16g;%s%s", prefix,
+                s[i].str, s[i].function(num, GMSH_GET, 0), 
+                help ? " // " : "", help ? s[i].help : "");
+        if(file)
+          fprintf(file, "%s\n", tmp);
+        else
+          Msg::Direct(tmp);
+      }
+    }
+    i++;
+  }
+}
+
+static void Print_NumberOptionsDoc(StringXNumber s[], const char *prefix, FILE * file)
+{
+  int i = 0;
+  while(s[i].str) {
+    fprintf(file, "@item %s%s\n", prefix, s[i].str);
+    fprintf(file, "%s@*\n", s[i].help);
+    fprintf(file, "Default value: @code{%g}@*\n", s[i].function(0, GMSH_GET, 0));
+    fprintf(file, "Saved in: @code{%s}\n\n", Get_OptionSaveLevel(s[i].level));
+    i++;
+  }
+}
+
+// General routines for color options
+
+bool ColorOption(int action, const char *category, int num, 
+		 const char *name, unsigned int &val)
+{
+  StringXColor *s = 0;
+  if(!strcmp(category, "General"))
+    s = GeneralOptions_Color;
+  else if(!strcmp(category, "Geometry"))
+    s = GeometryOptions_Color;
+  else if(!strcmp(category, "Mesh"))
+    s = MeshOptions_Color;
+  else if(!strcmp(category, "Solver"))
+    s = SolverOptions_Color;
+  else if(!strcmp(category, "PostProcessing"))
+    s = PostProcessingOptions_Color;
+  else if(!strcmp(category, "View"))
+    s = ViewOptions_Color;
+  else if(!strcmp(category, "Print"))
+    s = PrintOptions_Color;
+  else{
+    Msg::Error("Unknown color option category '%s'", category);
+    return false;
+  }
+
+  int i = 0;
+  while((s[i].str != NULL) && (strcmp(s[i].str, name))) i++;
+  if(!s[i].str){
+    Msg::Error("Unknown color option '%s.%s'", category, name);
+    return false;
+  }
+  val = s[i].function(num, action, val);
+  return true;
+}
+
+int Get_ColorForString(StringX4Int SX4I[], int alpha,
+                       const char *str, int *FlagError)
+{
+  int i = 0;
+  while((SX4I[i].str != NULL) && (strcmp(SX4I[i].str, str)))
+    i++;
+  *FlagError = (SX4I[i].str == NULL) ? 1 : 0;
+  if(alpha > 0)
+    return CTX.PACK_COLOR(SX4I[i].int1, SX4I[i].int2, SX4I[i].int3, alpha);
+  else
+    return CTX.PACK_COLOR(SX4I[i].int1, SX4I[i].int2, SX4I[i].int3, SX4I[i].int4);
+}
+
+static void Set_DefaultColorOptions(int num, StringXColor s[])
+{
+  int i = 0;
+  // Warning: this assumes that CTX.color_scheme is set...
+  switch (CTX.color_scheme) {
+  case 1:
+    while(s[i].str) {
+      s[i].function(num, GMSH_SET, CTX.PACK_COLOR(s[i].def2[0], s[i].def2[1],
+                                                  s[i].def2[2], s[i].def2[3]));
+      i++;
+    }
+    break;
+  case 2:
+    while(s[i].str) {
+      s[i].function(num, GMSH_SET, CTX.PACK_COLOR(s[i].def3[0], s[i].def3[1],
+                                                  s[i].def3[2], s[i].def3[3]));
+      i++;
+    }
+    break;
+  default:
+    while(s[i].str) {
+      s[i].function(num, GMSH_SET, CTX.PACK_COLOR(s[i].def1[0], s[i].def1[1],
+                                                  s[i].def1[2], s[i].def1[3]));
+      i++;
+    }
+    break;
+  }
+}
+
+static void Set_ColorOptions_GUI(int num, StringXColor s[])
+{
+  int i = 0;
+  while(s[i].str) {
+    s[i].function(num, GMSH_GUI, 0);
+    i++;
+  }
+}
+
+static void Print_ColorOptions(int num, int level, int diff, int help,
+			       StringXColor s[], const char *prefix, FILE * file)
+{
+  int i = 0;
+  char tmp[1024];
+  while(s[i].str) {
+    if(s[i].level & level) {
+      unsigned int def;
+      switch (CTX.color_scheme) {
+      case 1: 
+        def = CTX.PACK_COLOR(s[i].def2[0], s[i].def2[1],
+                             s[i].def2[2], s[i].def2[3]);
+        break;
+      case 2: 
+        def = CTX.PACK_COLOR(s[i].def3[0], s[i].def3[1], 
+                             s[i].def3[2], s[i].def3[3]);
+        break;
+      default: 
+        def = CTX.PACK_COLOR(s[i].def1[0], s[i].def1[1], 
+                             s[i].def1[2], s[i].def1[3]);
+        break;
+      }
+      if(!diff || (s[i].function(num, GMSH_GET, 0) != def)){
+        sprintf(tmp, "%sColor.%s = {%d,%d,%d};%s%s",
+                prefix, s[i].str,
+                CTX.UNPACK_RED(s[i].function(num, GMSH_GET, 0)),
+                CTX.UNPACK_GREEN(s[i].function(num, GMSH_GET, 0)),
+                CTX.UNPACK_BLUE(s[i].function(num, GMSH_GET, 0)), 
+                help ? " // " : "", help ? s[i].help : "");
+        if(file)
+          fprintf(file, "%s\n", tmp);
+        else
+          Msg::Direct(tmp);
+      }
+    }
+    i++;
+  }
+}
+
+static void Print_ColorOptionsDoc(StringXColor s[], const char *prefix, FILE * file)
+{
+  int i = 0;
+  while(s[i].str) {
+    fprintf(file, "@item %sColor.%s\n", prefix, s[i].str);
+    fprintf(file, "%s@*\n", s[i].help);
+    fprintf(file, "Default value: @code{@{%d,%d,%d@}}@*\n",
+            CTX.UNPACK_RED(s[i].function(0, GMSH_GET, 0)),
+            CTX.UNPACK_GREEN(s[i].function(0, GMSH_GET, 0)),
+            CTX.UNPACK_BLUE(s[i].function(0, GMSH_GET, 0)));
+    fprintf(file, "Saved in: @code{%s}\n\n", Get_OptionSaveLevel(s[i].level));
+    i++;
+  }
+}
 
 // General routines
 
@@ -375,18 +717,6 @@ void Print_Options(int num, int level, int diff, int help, const char *filename)
   if(filename) fclose(file);
 }
 
-static const char *Get_OptionSaveLevel(int level){
-  if(level & GMSH_SESSIONRC){
-    return "General.SessionFileName";
-  }
-  else if(level & GMSH_OPTIONSRC){
-    return "General.OptionsFileName";
-  }
-  else{
-    return "-";
-  }
-}
-
 void Print_OptionsDoc()
 {
   FILE *file;
@@ -530,330 +860,6 @@ void Print_OptionsDoc()
   fprintf(file, "@end ftable\n");
   fclose(file);
 #endif
-}
-
-// General routines for string options
-
-StringXString *Get_StringOptionCategory(const char *cat)
-{
-  if(!strcmp(cat, "General"))
-    return GeneralOptions_String;
-  else if(!strcmp(cat, "Geometry"))
-    return GeometryOptions_String;
-  else if(!strcmp(cat, "Mesh"))
-    return MeshOptions_String;
-  else if(!strcmp(cat, "Solver"))
-    return SolverOptions_String;
-  else if(!strcmp(cat, "PostProcessing"))
-    return PostProcessingOptions_String;
-  else if(!strcmp(cat, "View"))
-    return ViewOptions_String;
-  else if(!strcmp(cat, "Print"))
-    return PrintOptions_String;
-  else
-    return NULL;
-}
-
-void Set_DefaultStringOptions(int num, StringXString s[])
-{
-  int i = 0;
-  while(s[i].str) {
-    s[i].function(num, GMSH_SET, s[i].def);
-    i++;
-  }
-}
-
-void Set_StringOptions_GUI(int num, StringXString s[])
-{
-  int i = 0;
-  while(s[i].str) {
-    s[i].function(num, GMSH_GUI, 0);
-    i++;
-  }
-}
-
-void *Get_StringOption(const char *str, StringXString s[])
-{
-  int i = 0;
-  while((s[i].str != NULL) && (strcmp(s[i].str, str)))
-    i++;
-  if(!s[i].str)
-    return NULL;
-  else
-    return (void *)s[i].function;
-}
-
-void Print_StringOptions(int num, int level, int diff, int help, 
-                         StringXString s[], const char *prefix, FILE *file)
-{
-  int i = 0;
-  char tmp[1024];
-  while(s[i].str) {
-    if(s[i].level & level) {
-      if(!diff || strcmp(s[i].function(num, GMSH_GET, NULL), s[i].def)){
-        sprintf(tmp, "%s%s = \"%s\";%s%s", prefix,
-                s[i].str, s[i].function(num, GMSH_GET, NULL), 
-                help ? " // " : "", help ? s[i].help : "");
-        if(file)
-          fprintf(file, "%s\n", tmp);
-        else
-          Msg::Direct("%s", tmp);
-      }
-    }
-    i++;
-  }
-}
-
-void Print_StringOptionsDoc(StringXString s[], const char *prefix, FILE *file)
-{
-  int i = 0, j;
-  char tmp[1024];
-
-  while(s[i].str) {
-    fprintf(file, "@item %s%s\n", prefix, s[i].str);
-    fprintf(file, "%s@*\n", s[i].help);
-
-    // sanitize the string for texinfo
-    const char *ptr = s[i].function(0, GMSH_GET, NULL);
-    int len = strlen(ptr);
-    j = 0;
-    while(j < len){
-      tmp[j] = *(ptr++);
-      if(j && tmp[j] == '\n' && tmp[j-1] == '\n')
-        tmp[j-1] = '.';
-      j++;
-      if(j == 1023) break;
-    }
-    tmp[j] = '\0';
-
-    fprintf(file, "Default value: @code{\"%s\"}@*\n", tmp);
-    fprintf(file, "Saved in: @code{%s}\n\n", Get_OptionSaveLevel(s[i].level));
-    i++;
-  }
-}
-
-// General routines for numeric options
-
-StringXNumber *Get_NumberOptionCategory(const char *cat)
-{
-  if(!strcmp(cat, "General"))
-    return GeneralOptions_Number;
-  else if(!strcmp(cat, "Geometry"))
-    return GeometryOptions_Number;
-  else if(!strcmp(cat, "Mesh"))
-    return MeshOptions_Number;
-  else if(!strcmp(cat, "Solver"))
-    return SolverOptions_Number;
-  else if(!strcmp(cat, "PostProcessing"))
-    return PostProcessingOptions_Number;
-  else if(!strcmp(cat, "View"))
-    return ViewOptions_Number;
-  else if(!strcmp(cat, "Print"))
-    return PrintOptions_Number;
-  else
-    return NULL;
-}
-
-void Set_DefaultNumberOptions(int num, StringXNumber s[])
-{
-  int i = 0;
-  while(s[i].str) {
-    s[i].function(num, GMSH_SET, s[i].def);
-    i++;
-  }
-}
-
-void Set_NumberOptions_GUI(int num, StringXNumber s[])
-{
-  int i = 0;
-  while(s[i].str) {
-    s[i].function(num, GMSH_GUI, 0);
-    i++;
-  }
-}
-
-void *Get_NumberOption(const char *str, StringXNumber s[])
-{
-  int i = 0;
-
-  while((s[i].str != NULL) && (strcmp(s[i].str, str)))
-    i++;
-  if(!s[i].str)
-    return NULL;
-  else {
-    return (void *)s[i].function;
-  }
-}
-
-void Print_NumberOptions(int num, int level, int diff, int help,
-                         StringXNumber s[], const char *prefix, FILE * file)
-{
-  int i = 0;
-  char tmp[1024];
-  while(s[i].str) {
-    if(s[i].level & level) {
-      if(!diff || (s[i].function(num, GMSH_GET, 0) != s[i].def)){
-        sprintf(tmp, "%s%s = %.16g;%s%s", prefix,
-                s[i].str, s[i].function(num, GMSH_GET, 0), 
-                help ? " // " : "", help ? s[i].help : "");
-        if(file)
-          fprintf(file, "%s\n", tmp);
-        else
-          Msg::Direct(tmp);
-      }
-    }
-    i++;
-  }
-}
-
-void Print_NumberOptionsDoc(StringXNumber s[], const char *prefix, FILE * file)
-{
-  int i = 0;
-  while(s[i].str) {
-    fprintf(file, "@item %s%s\n", prefix, s[i].str);
-    fprintf(file, "%s@*\n", s[i].help);
-    fprintf(file, "Default value: @code{%g}@*\n", s[i].function(0, GMSH_GET, 0));
-    fprintf(file, "Saved in: @code{%s}\n\n", Get_OptionSaveLevel(s[i].level));
-    i++;
-  }
-}
-
-// General routines for color options
-
-StringXColor *Get_ColorOptionCategory(const char *cat)
-{
-  if(!strcmp(cat, "General"))
-    return GeneralOptions_Color;
-  else if(!strcmp(cat, "Geometry"))
-    return GeometryOptions_Color;
-  else if(!strcmp(cat, "Mesh"))
-    return MeshOptions_Color;
-  else if(!strcmp(cat, "Solver"))
-    return SolverOptions_Color;
-  else if(!strcmp(cat, "PostProcessing"))
-    return PostProcessingOptions_Color;
-  else if(!strcmp(cat, "View"))
-    return ViewOptions_Color;
-  else if(!strcmp(cat, "Print"))
-    return PrintOptions_Color;
-  else
-    return NULL;
-}
-
-void Set_DefaultColorOptions(int num, StringXColor s[])
-{
-  int i = 0;
-  // Warning: this assumes that CTX.color_scheme is set...
-  switch (CTX.color_scheme) {
-  case 1:
-    while(s[i].str) {
-      s[i].function(num, GMSH_SET, CTX.PACK_COLOR(s[i].def2[0], s[i].def2[1],
-                                                  s[i].def2[2], s[i].def2[3]));
-      i++;
-    }
-    break;
-  case 2:
-    while(s[i].str) {
-      s[i].function(num, GMSH_SET, CTX.PACK_COLOR(s[i].def3[0], s[i].def3[1],
-                                                  s[i].def3[2], s[i].def3[3]));
-      i++;
-    }
-    break;
-  default:
-    while(s[i].str) {
-      s[i].function(num, GMSH_SET, CTX.PACK_COLOR(s[i].def1[0], s[i].def1[1],
-                                                  s[i].def1[2], s[i].def1[3]));
-      i++;
-    }
-    break;
-  }
-}
-
-void Set_ColorOptions_GUI(int num, StringXColor s[])
-{
-  int i = 0;
-  while(s[i].str) {
-    s[i].function(num, GMSH_GUI, 0);
-    i++;
-  }
-}
-
-void *Get_ColorOption(const char *str, StringXColor s[])
-{
-  int i = 0;
-  while((s[i].str != NULL) && (strcmp(s[i].str, str)))
-    i++;
-  if(!s[i].str)
-    return NULL;
-  else
-    return (void *)s[i].function;
-}
-
-void Print_ColorOptions(int num, int level, int diff, int help,
-                        StringXColor s[], const char *prefix, FILE * file)
-{
-  int i = 0;
-  char tmp[1024];
-  while(s[i].str) {
-    if(s[i].level & level) {
-      unsigned int def;
-      switch (CTX.color_scheme) {
-      case 1: 
-        def = CTX.PACK_COLOR(s[i].def2[0], s[i].def2[1],
-                             s[i].def2[2], s[i].def2[3]);
-        break;
-      case 2: 
-        def = CTX.PACK_COLOR(s[i].def3[0], s[i].def3[1], 
-                             s[i].def3[2], s[i].def3[3]);
-        break;
-      default: 
-        def = CTX.PACK_COLOR(s[i].def1[0], s[i].def1[1], 
-                             s[i].def1[2], s[i].def1[3]);
-        break;
-      }
-      if(!diff || (s[i].function(num, GMSH_GET, 0) != def)){
-        sprintf(tmp, "%sColor.%s = {%d,%d,%d};%s%s",
-                prefix, s[i].str,
-                CTX.UNPACK_RED(s[i].function(num, GMSH_GET, 0)),
-                CTX.UNPACK_GREEN(s[i].function(num, GMSH_GET, 0)),
-                CTX.UNPACK_BLUE(s[i].function(num, GMSH_GET, 0)), 
-                help ? " // " : "", help ? s[i].help : "");
-        if(file)
-          fprintf(file, "%s\n", tmp);
-        else
-          Msg::Direct(tmp);
-      }
-    }
-    i++;
-  }
-}
-
-void Print_ColorOptionsDoc(StringXColor s[], const char *prefix, FILE * file)
-{
-  int i = 0;
-  while(s[i].str) {
-    fprintf(file, "@item %sColor.%s\n", prefix, s[i].str);
-    fprintf(file, "%s@*\n", s[i].help);
-    fprintf(file, "Default value: @code{@{%d,%d,%d@}}@*\n",
-            CTX.UNPACK_RED(s[i].function(0, GMSH_GET, 0)),
-            CTX.UNPACK_GREEN(s[i].function(0, GMSH_GET, 0)),
-            CTX.UNPACK_BLUE(s[i].function(0, GMSH_GET, 0)));
-    fprintf(file, "Saved in: @code{%s}\n\n", Get_OptionSaveLevel(s[i].level));
-    i++;
-  }
-}
-
-int Get_ColorForString(StringX4Int SX4I[], int alpha,
-                       const char *str, int *FlagError)
-{
-  int i = 0;
-  while((SX4I[i].str != NULL) && (strcmp(SX4I[i].str, str)))
-    i++;
-  *FlagError = (SX4I[i].str == NULL) ? 1 : 0;
-  if(alpha > 0)
-    return CTX.PACK_COLOR(SX4I[i].int1, SX4I[i].int2, SX4I[i].int3, alpha);
-  else
-    return CTX.PACK_COLOR(SX4I[i].int1, SX4I[i].int2, SX4I[i].int3, SX4I[i].int4);
 }
 
 #define GET_VIEW(error_val)                                     \

@@ -1,4 +1,4 @@
-// $Id: Gmsh.cpp,v 1.8 2008-07-04 14:58:30 geuzaine Exp $
+// $Id: Gmsh.cpp,v 1.9 2008-07-05 23:00:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -77,6 +77,20 @@ int GmshSetMessageHandler(GmshMessage *callback)
 {
   Msg::SetCallback(callback);
   return 1;
+}
+
+int GmshSetOption(std::string category, std::string name, std::string value, int index)
+{
+  if(StringOption(GMSH_SET, category.c_str(), index, name.c_str(), value.c_str()))
+    return 1;
+  return 0;
+}
+
+int GmshSetOption(std::string category, std::string name, double value, int index)
+{
+  if(NumberOption(GMSH_SET, category.c_str(), index, name.c_str(), value))
+    return 1;
+  return 0;
 }
 
 int GmshFinalize()

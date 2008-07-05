@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.321 2008-07-04 14:58:35 geuzaine Exp $
+// $Id: Gmsh.y,v 1.322 2008-07-05 23:01:02 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -811,115 +811,68 @@ Affectation :
 
   | tSTRING '.' tSTRING tAFFECT StringExpr tEND 
     { 
-      const char* (*pStrOpt)(int num, int action, const char *value);
-      StringXString *pStrCat;
-      if(!(pStrCat = Get_StringOptionCategory($1)))
-	yymsg(0, "Unknown string option class '%s'", $1);
-      else{
-	if(!(pStrOpt = (const char *(*) (int, int, const char *))
-	     Get_StringOption($3, pStrCat)))
-	  yymsg(0, "Unknown string option '%s.%s'", $1, $3);
-	else
-	  pStrOpt(0, GMSH_SET|GMSH_GUI, $5);
-      }
-      Free($1); Free($3); //FIXME: somtimes leak $5
+      StringOption(GMSH_SET|GMSH_GUI, $1, 0, $3, $5);
+      Free($1); Free($3);
     }
   | tSTRING '[' FExpr ']' '.' tSTRING tAFFECT StringExpr tEND 
     { 
-      const char* (*pStrOpt)(int num, int action, const char *value);
-      StringXString *pStrCat;
-      if(!(pStrCat = Get_StringOptionCategory($1)))
-	yymsg(0, "Unknown string option class '%s'", $1);
-      else{
-	if(!(pStrOpt = (const char *(*) (int, int, const char *))
-	     Get_StringOption($6, pStrCat)))
-	  yymsg(0, "Unknown string option '%s[%d].%s'", $1, (int)$3, $6);
-	else
-	  pStrOpt((int)$3, GMSH_SET|GMSH_GUI, $8);
-      }
-      Free($1); Free($6); //FIXME: somtimes leak $8
+      StringOption(GMSH_SET|GMSH_GUI, $1, (int)$3, $6, $8);
+      Free($1); Free($6);
     }
 
   // Option Numbers
 
   | tSTRING '.' tSTRING NumericAffectation FExpr tEND 
     {
-      double (*pNumOpt)(int num, int action, double value);
-      StringXNumber *pNumCat;
-      if(!(pNumCat = Get_NumberOptionCategory($1)))
-	yymsg(0, "Unknown numeric option class '%s'", $1);
-      else{
-	if(!(pNumOpt = (double (*) (int, int, double))Get_NumberOption($3, pNumCat)))
-	  yymsg(0, "Unknown numeric option '%s.%s'", $1, $3);
-	else{
-	  double d = 0;
-	  switch($4){
-	  case 0 : d = $5; break;
-	  case 1 : d = pNumOpt(0, GMSH_GET, 0) + $5; break;
-	  case 2 : d = pNumOpt(0, GMSH_GET, 0) - $5; break;
-	  case 3 : d = pNumOpt(0, GMSH_GET, 0) * $5; break;
-	  case 4 : 
-	    if($5) d = pNumOpt(0, GMSH_GET, 0) / $5; 
-	    else yymsg(0, "Division by zero in '%s.%s /= %g'", $1, $3, $5);
-	    break;
-	  }
-	  pNumOpt(0, GMSH_SET|GMSH_GUI, d);
+      double d = 0.;
+      if(NumberOption(GMSH_GET, $1, 0, $3, d)){
+	switch($4){
+	case 0 : d = $5; break;
+	case 1 : d += $5; break;
+	case 2 : d -= $5; break;
+	case 3 : d *= $5; break;
+	case 4 : 
+	  if($5) d /= $5; 
+	  else yymsg(0, "Division by zero in '%s.%s /= %g'", $1, $3, $5);
+	  break;
 	}
+	NumberOption(GMSH_SET|GMSH_GUI, $1, 0, $3, d);
       }
       Free($1); Free($3);
     }
   | tSTRING '[' FExpr ']' '.' tSTRING NumericAffectation FExpr tEND 
     {
-      double (*pNumOpt)(int num, int action, double value);
-      StringXNumber *pNumCat;
-      if(!(pNumCat = Get_NumberOptionCategory($1)))
-	yymsg(0, "Unknown numeric option class '%s'", $1);
-      else{
-	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($6, pNumCat)))
-	  yymsg(0, "Unknown numeric option '%s[%d].%s'", $1, (int)$3, $6);
-	else{
-	  double d = 0;
-	  switch($7){
-	  case 0 : d = $8; break;
-	  case 1 : d = pNumOpt((int)$3, GMSH_GET, 0) + $8; break;
-	  case 2 : d = pNumOpt((int)$3, GMSH_GET, 0) - $8; break;
-	  case 3 : d = pNumOpt((int)$3, GMSH_GET, 0) * $8; break;
-	  case 4 : 
-	    if($8) d = pNumOpt((int)$3, GMSH_GET, 0) / $8;
-	    else yymsg(0, "Division by zero in '%s[%d].%s /= %g'", 
-		       $1, (int)$3, $6, $8);
-	    break;
-	  }
-	  pNumOpt((int)$3, GMSH_SET|GMSH_GUI, d);
+      double d = 0.;
+      if(NumberOption(GMSH_GET, $1, (int)$3, $6, d)){
+	switch($7){
+	case 0 : d = $8; break;
+	case 1 : d += $8; break;
+	case 2 : d -= $8; break;
+	case 3 : d *= $8; break;
+	case 4 : 
+	  if($8) d /= $8; 
+	  else yymsg(0, "Division by zero in '%s[%d].%s /= %g'", $1, (int)$3, $6, $8);
+	  break;
 	}
+	NumberOption(GMSH_SET|GMSH_GUI, $1, (int)$3, $6, d);
       }
       Free($1); Free($6);
     }
   | tSTRING '.' tSTRING NumericIncrement tEND 
     {
-      double (*pNumOpt)(int num, int action, double value);
-      StringXNumber *pNumCat;
-      if(!(pNumCat = Get_NumberOptionCategory($1)))
-	yymsg(0, "Unknown numeric option class '%s'", $1);
-      else{
-	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($3, pNumCat)))
-	  yymsg(0, "Unknown numeric option '%s.%s'", $1, $3);
-	else
-	  pNumOpt(0, GMSH_SET|GMSH_GUI, pNumOpt(0, GMSH_GET, 0)+$4);
+      double d = 0.;
+      if(NumberOption(GMSH_GET, $1, 0, $3, d)){
+	d += $4;
+	NumberOption(GMSH_SET|GMSH_GUI, $1, 0, $3, d);
       }
       Free($1); Free($3);
     }
   | tSTRING '[' FExpr ']' '.' tSTRING NumericIncrement tEND 
     {
-      double (*pNumOpt)(int num, int action, double value);
-      StringXNumber *pNumCat;
-      if(!(pNumCat = Get_NumberOptionCategory($1)))
-	yymsg(0, "Unknown numeric option class '%s'", $1);
-      else{
-	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($6, pNumCat)))
-	  yymsg(0, "Unknown numeric option '%s[%d].%s'", $1, (int)$3, $6);
-	else
-	  pNumOpt((int)$3, GMSH_SET|GMSH_GUI, pNumOpt((int)$3, GMSH_GET, 0)+$7);
+      double d = 0.;
+      if(NumberOption(GMSH_GET, $1, (int)$3, $6, d)){
+	d += $7;
+	NumberOption(GMSH_SET|GMSH_GUI, $1, (int)$3, $6, d);
       }
       Free($1); Free($6);
     }
@@ -928,32 +881,12 @@ Affectation :
 
   | tSTRING '.' tColor '.' tSTRING tAFFECT ColorExpr tEND 
     {
-      unsigned int (*pColOpt)(int num, int action, unsigned int value);
-      StringXColor *pColCat;
-      if(!(pColCat = Get_ColorOptionCategory($1)))
-	yymsg(0, "Unknown color option class '%s'", $1);
-      else{
-	if(!(pColOpt = (unsigned int (*) (int, int, unsigned int))
-	     Get_ColorOption($5, pColCat)))
-	  yymsg(0, "Unknown color option '%s.Color.%s'", $1, $5);
-	else
-	  pColOpt(0, GMSH_SET|GMSH_GUI, $7);
-      }
+      ColorOption(GMSH_SET|GMSH_GUI, $1, 0, $5, $7);
       Free($1); Free($5);
     }
   | tSTRING '[' FExpr ']' '.' tColor '.' tSTRING tAFFECT ColorExpr tEND 
     {
-      unsigned int (*pColOpt)(int num, int action, unsigned int value);
-      StringXColor *pColCat;
-      if(!(pColCat = Get_ColorOptionCategory($1)))
-	yymsg(0, "Unknown color option class '%s'", $1);
-      else{
-	if(!(pColOpt =  (unsigned int (*) (int, int, unsigned int))
-	     Get_ColorOption($8, pColCat)))
-	  yymsg(0, "Unknown color option '%s[%d].Color.%s'", $1, (int)$3, $8);
-	else
-	  pColOpt((int)$3, GMSH_SET|GMSH_GUI, $10);
-      }
+      ColorOption(GMSH_SET|GMSH_GUI, $1, (int)$3, $8, $10);
       Free($1); Free($8);
     }
 
@@ -3009,73 +2942,31 @@ FExpr_Single :
 
   | tSTRING '.' tSTRING 
     {
-      double (*pNumOpt)(int num, int action, double value);
-      StringXNumber *pNumCat;
-      if(!(pNumCat = Get_NumberOptionCategory($1))){
-	yymsg(0, "Unknown numeric option class '%s'", $1);
-	$$ = 0.;
-      }
-      else{
-	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($3, pNumCat))){
-	  yymsg(0, "Unknown numeric option '%s.%s'", $1, $3);
-	  $$ = 0.;
-	}
-	else
-	  $$ = pNumOpt(0, GMSH_GET, 0);
-      }
+      NumberOption(GMSH_GET, $1, 0, $3, $$);
       Free($1); Free($3);
     }
   | tSTRING '[' FExpr ']' '.' tSTRING 
     {
-      double (*pNumOpt)(int num, int action, double value);
-      StringXNumber *pNumCat;
-      if(!(pNumCat = Get_NumberOptionCategory($1))){
-	yymsg(0, "Unknown numeric option class '%s'", $1);
-	$$ = 0.;
-      }
-      else{
-	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($6, pNumCat))){
-	  yymsg(0, "Unknown numeric option '%s[%d].%s'", $1, (int)$3, $6);
-	  $$ = 0.;
-	}
-	else
-	  $$ = pNumOpt((int)$3, GMSH_GET, 0);
-      }
+      NumberOption(GMSH_GET, $1, (int)$3, $6, $$);
       Free($1); Free($6);
     }
   | tSTRING '.' tSTRING NumericIncrement
     {
-      double (*pNumOpt)(int num, int action, double value);
-      StringXNumber *pNumCat;
-      if(!(pNumCat = Get_NumberOptionCategory($1))){
-	yymsg(0, "Unknown numeric option class '%s'", $1);
-	$$ = 0.;
-      }
-      else{
-	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($3, pNumCat))){
-	  yymsg(0, "Unknown numeric option '%s.%s'", $1, $3);
-	  $$ = 0.;
-	}
-	else
-	  $$ = pNumOpt(0, GMSH_SET|GMSH_GUI, pNumOpt(0, GMSH_GET, 0)+$4);
+      double d = 0.;
+      if(NumberOption(GMSH_GET, $1, 0, $3, d)){
+	d += $4;
+	NumberOption(GMSH_SET|GMSH_GUI, $1, 0, $3, d);
+	$$ = d;
       }
       Free($1); Free($3);
     }
   | tSTRING '[' FExpr ']' '.' tSTRING NumericIncrement
     {
-      double (*pNumOpt)(int num, int action, double value);
-      StringXNumber *pNumCat;
-      if(!(pNumCat = Get_NumberOptionCategory($1))){
-	yymsg(0, "Unknown numeric option class '%s'", $1);
-	$$ = 0.;
-      }
-      else{
-	if(!(pNumOpt =  (double (*) (int, int, double))Get_NumberOption($6, pNumCat))){
-	  yymsg(0, "Unknown numeric option '%s[%d].%s'", $1, (int)$3, $6);
-	  $$ = 0.;
-	}
-	else
-	  $$ = pNumOpt((int)$3, GMSH_SET|GMSH_GUI, pNumOpt((int)$3, GMSH_GET, 0)+$7);
+      double d = 0.;
+      if(NumberOption(GMSH_GET, $1, (int)$3, $6, d)){
+	d += $7;
+	NumberOption(GMSH_SET|GMSH_GUI, $1, (int)$3, $6, d);
+	$$ = d;
       }
       Free($1); Free($6);
     }
@@ -3347,20 +3238,9 @@ ColorExpr :
     }
   | tSTRING '.' tColor '.' tSTRING 
     {
-      unsigned int (*pColOpt)(int num, int action, unsigned int value);
-      StringXColor *pColCat;
-      if(!(pColCat = Get_ColorOptionCategory($1))){
-	yymsg(0, "Unknown color option class '%s'", $1);
-	$$ = 0;
-      }
-      else{
-	if(!(pColOpt =  (unsigned int (*) (int, int, unsigned int))Get_ColorOption($5, pColCat))){
-	  yymsg(0, "Unknown color option '%s.Color.%s'", $1, $5);
-	  $$ = 0;
-	}
-	else
-	  $$ = pColOpt(0, GMSH_GET, 0);
-      }
+      unsigned int val = 0;
+      ColorOption(GMSH_GET, $1, 0, $5, val);
+      $$ = val;
       Free($1); Free($5);
     }
 ;
@@ -3481,49 +3361,19 @@ StringExpr :
     }
   | tSprintf '(' tSTRING '.' tSTRING ')'
     { 
-      const char* (*pStrOpt)(int num, int action, const char *value);
-      StringXString *pStrCat;
-      if(!(pStrCat = Get_StringOptionCategory($3))){
-	yymsg(0, "Unknown string option class '%s'", $3);
-	$$ = (char*)Malloc(sizeof(char));
-	$$[0] = '\0';
-      }
-      else{
-	if(!(pStrOpt = (const char *(*) (int, int, const char *))
-	     Get_StringOption($5, pStrCat))){
-	  yymsg(0, "Unknown string option '%s.%s'", $3, $5);
-	  $$ = (char*)Malloc(sizeof(char));
-	  $$[0] = '\0';
-	}
-	else{
-	  const char *str = pStrOpt(0, GMSH_GET, NULL);
-	  $$ = (char*)Malloc((strlen(str)+1)*sizeof(char));
-	  strcpy($$, str);
-	}
-      }
+      const char *val = "";
+      StringOption(GMSH_GET, $3, 0, $5, val);
+      $$ = (char*)Malloc((strlen(val) + 1) * sizeof(char));
+      strcpy($$, val);
+      Free($3); Free($5);
     }
   | tSprintf '(' tSTRING '[' FExpr ']' '.' tSTRING ')'
     { 
-      const char* (*pStrOpt)(int num, int action, const char *value);
-      StringXString *pStrCat;
-      if(!(pStrCat = Get_StringOptionCategory($3))){
-	yymsg(0, "Unknown string option class '%s'", $3);
-	$$ = (char*)Malloc(sizeof(char));
-	$$[0] = '\0';
-      }
-      else{
-	if(!(pStrOpt = (const char *(*) (int, int, const char *))
-	     Get_StringOption($8, pStrCat))){
-	  yymsg(0, "Unknown string option '%s[%d].%s'", $3, (int)$5, $8);
-	  $$ = (char*)Malloc(sizeof(char));
-	  $$[0] = '\0';
-	}
-	else{
-	  const char *str = pStrOpt((int)$5, GMSH_GET, NULL);
-	  $$ = (char*)Malloc((strlen(str)+1)*sizeof(char));
-	  strcpy($$, str);
-	}
-      }
+      const char *val = "";
+      StringOption(GMSH_GET, $3, (int)$5, $8, val);
+      $$ = (char*)Malloc((strlen(val) + 1) * sizeof(char));
+      strcpy($$, val);
+      Free($3); Free($8);
     }
 ;
 

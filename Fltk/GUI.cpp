@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.693 2008-07-04 18:32:39 geuzaine Exp $
+// $Id: GUI.cpp,v 1.694 2008-07-05 23:00:57 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -53,6 +53,14 @@
 #define WB (7)            // window border
 
 extern Context_T CTX;
+
+extern StringXColor GeneralOptions_Color[] ;
+extern StringXColor GeometryOptions_Color[] ;
+extern StringXColor MeshOptions_Color[] ;
+extern StringXColor SolverOptions_Color[] ;
+extern StringXColor PostProcessingOptions_Color[] ;
+extern StringXColor ViewOptions_Color[] ;
+extern StringXColor PrintOptions_Color[] ;
 
 // Definition of the static menus (we cannot use the 'g', 'm' 's' and
 // 'p' mnemonics since they are already defined as global shortcuts)
