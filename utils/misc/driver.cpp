@@ -13,6 +13,7 @@
 int main(int argc, char **argv)
 {
   GmshInitialize(argc, argv);
+  GmshSetOption("Mesh", "Algorithm", 5);
   GModel *m = new GModel();
   m->readGEO("../../tutorial/t5.geo");
   m->mesh(3);

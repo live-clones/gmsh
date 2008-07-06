@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.y,v 1.322 2008-07-05 23:01:02 geuzaine Exp $
+// $Id: Gmsh.y,v 1.323 2008-07-06 11:25:37 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -213,7 +213,7 @@ Printf :
       if(i < 0) 
 	yymsg(0, "Too few arguments in Printf");
       else if(i > 0)
-	yymsg(0, "%d extra argument%s in Printf", i, (i>1)?"s":"");
+	yymsg(0, "%d extra argument%s in Printf", i, (i > 1) ? "s" : "");
       else
 	Msg::Direct(tmpstring);
       Free($3);
@@ -226,7 +226,7 @@ Printf :
       if(i < 0) 
 	yymsg(0, "Too few arguments in Printf");
       else if(i > 0)
-	yymsg(0, "%d extra argument%s in Printf", i, (i>1)?"s":"");
+	yymsg(0, "%d extra argument%s in Printf", i, (i > 1) ? "s" : "");
       else{
 	char tmpstring2[1024];
 	FixRelativePath($8, tmpstring2);
@@ -617,9 +617,8 @@ Affectation :
 
     tSTRING NumericAffectation FExpr tEND
     {
-      Symbol TheSymbol;
+      Symbol TheSymbol, *pSymbol;
       TheSymbol.Name = $1;
-      Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	if(!$2){
 	  TheSymbol.val = List_Create(1, 1, sizeof(double));
@@ -648,9 +647,8 @@ Affectation :
     }
   | tSTRING '[' FExpr ']' NumericAffectation FExpr tEND
     {
-      Symbol TheSymbol;
+      Symbol TheSymbol, *pSymbol;
       TheSymbol.Name = $1;
-      Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	if(!$5){
 	  TheSymbol.val = List_Create(5, 5, sizeof(double));
@@ -692,9 +690,8 @@ Affectation :
 	Free($1);
       }
       else{
-	Symbol TheSymbol;
+	Symbol TheSymbol, *pSymbol;
 	TheSymbol.Name = $1;
-	Symbol *pSymbol;
 	if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	  if(!$7){
 	    TheSymbol.val = List_Create(5, 5, sizeof(double));
@@ -741,9 +738,8 @@ Affectation :
     }
   | tSTRING '[' ']' tAFFECT ListOfDouble tEND
     {
-      Symbol TheSymbol;
+      Symbol TheSymbol, *pSymbol;
       TheSymbol.Name = $1;
-      Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	TheSymbol.val = List_Create(5, 5, sizeof(double));
 	List_Copy($5, TheSymbol.val);
@@ -759,9 +755,8 @@ Affectation :
   | tSTRING '[' ']' tAFFECTPLUS ListOfDouble tEND
     {
       // appends to the list
-      Symbol TheSymbol;
+      Symbol TheSymbol, *pSymbol;
       TheSymbol.Name = $1;
-      Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	TheSymbol.val = List_Create(5, 5, sizeof(double));
 	List_Copy($5, TheSymbol.val);
@@ -776,9 +771,8 @@ Affectation :
     }
   | tSTRING NumericIncrement tEND
     {
-      Symbol TheSymbol;
+      Symbol TheSymbol, *pSymbol;
       TheSymbol.Name = $1;
-      Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol)))
 	yymsg(0, "Unknown variable '%s'", $1); 
       else
@@ -787,9 +781,8 @@ Affectation :
     }
   | tSTRING '[' FExpr ']' NumericIncrement tEND
     {
-      Symbol TheSymbol;
+      Symbol TheSymbol, *pSymbol;
       TheSymbol.Name = $1;
-      Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol)))
 	yymsg(0, "Unknown variable '%s'", $1); 
       else{
@@ -1039,7 +1032,7 @@ Affectation :
 	yymsg(0, "Unknown option '%s' or plugin '%s'", $6, $3);
       }
 #endif
-      Free($3); Free($6); // FIXME: sometimes leak $8
+      Free($3); Free($6);
     }
 ;
 
@@ -1952,7 +1945,7 @@ Command :
 	SleepInSeconds($2);
       }
       else if(!strcmp($1, "Remesh")){
-	Msg::Error("Surface ReMeshing must be reinterfaced");
+	Msg::Error("Surface remeshing must be reinterfaced");
       }
       else if(!strcmp($1, "Mesh")){
 	int lock = CTX.threads_lock;
@@ -1960,9 +1953,6 @@ Command :
 	GModel::current()->importGEOInternals();
 	GModel::current()->mesh((int)$2);
 	CTX.threads_lock = lock;
-      }
-      else if(!strcmp($1, "Status")){
-	yymsg(0, "Mesh directives are not (yet) allowed in scripts");
       }
       else
 	yymsg(0, "Unknown command '%s'", $1);
@@ -2042,9 +2032,9 @@ Loop :
 	skip_until("For", "EndFor");
       else
 	ImbricatedLoop++;
-      if(ImbricatedLoop > MAX_RECUR_LOOPS-1){
+      if(ImbricatedLoop > MAX_RECUR_LOOPS - 1){
 	yymsg(0, "Reached maximum number of imbricated loops");
-	ImbricatedLoop = MAX_RECUR_LOOPS-1;
+	ImbricatedLoop = MAX_RECUR_LOOPS - 1;
       }
     }
   | tFor '(' FExpr tDOTS FExpr tDOTS FExpr ')'
@@ -2059,9 +2049,9 @@ Loop :
 	skip_until("For", "EndFor");
       else
 	ImbricatedLoop++;
-      if(ImbricatedLoop > MAX_RECUR_LOOPS-1){
+      if(ImbricatedLoop > MAX_RECUR_LOOPS - 1){
 	yymsg(0, "Reached maximum number of imbricated loops");
-	ImbricatedLoop = MAX_RECUR_LOOPS-1;
+	ImbricatedLoop = MAX_RECUR_LOOPS - 1;
       }
     }
   | tFor tSTRING tIn '{' FExpr tDOTS FExpr '}' 
@@ -2070,9 +2060,8 @@ Loop :
       LoopControlVariablesTab[ImbricatedLoop][1] = $7;
       LoopControlVariablesTab[ImbricatedLoop][2] = 1.0;
       LoopControlVariablesNameTab[ImbricatedLoop] = $2;
-      Symbol TheSymbol;      
+      Symbol TheSymbol, *pSymbol;
       TheSymbol.Name = $2;
-      Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	TheSymbol.val = List_Create(1, 1, sizeof(double));
 	List_Put(TheSymbol.val, 0, &$5);
@@ -2086,9 +2075,9 @@ Loop :
 	skip_until("For", "EndFor");
       else
 	ImbricatedLoop++;
-      if(ImbricatedLoop > MAX_RECUR_LOOPS-1){
+      if(ImbricatedLoop > MAX_RECUR_LOOPS - 1){
 	yymsg(0, "Reached maximum number of imbricated loops");
-	ImbricatedLoop = MAX_RECUR_LOOPS-1;
+	ImbricatedLoop = MAX_RECUR_LOOPS - 1;
       }
     }
   | tFor tSTRING tIn '{' FExpr tDOTS FExpr tDOTS FExpr '}' 
@@ -2097,9 +2086,8 @@ Loop :
       LoopControlVariablesTab[ImbricatedLoop][1] = $7;
       LoopControlVariablesTab[ImbricatedLoop][2] = $9;
       LoopControlVariablesNameTab[ImbricatedLoop] = $2;
-      Symbol TheSymbol;
+      Symbol TheSymbol, *pSymbol;
       TheSymbol.Name = $2;
-      Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
 	TheSymbol.val = List_Create(1, 1, sizeof(double));
 	List_Put(TheSymbol.val, 0, &$5);
@@ -2113,9 +2101,9 @@ Loop :
 	skip_until("For", "EndFor");
       else
 	ImbricatedLoop++;
-      if(ImbricatedLoop > MAX_RECUR_LOOPS-1){
+      if(ImbricatedLoop > MAX_RECUR_LOOPS - 1){
 	yymsg(0, "Reached maximum number of imbricated loops");
-	ImbricatedLoop = MAX_RECUR_LOOPS-1;
+	ImbricatedLoop = MAX_RECUR_LOOPS - 1;
       }
     }
   | tEndFor 
@@ -2125,25 +2113,24 @@ Loop :
 	ImbricatedLoop = 0;
       }
       else{
-	double x0 = LoopControlVariablesTab[ImbricatedLoop-1][0];
-	double x1 = LoopControlVariablesTab[ImbricatedLoop-1][1];
-	double step = LoopControlVariablesTab[ImbricatedLoop-1][2];
-	int do_next = (step > 0.) ? (x0+step <= x1) : (x0+step >= x1);
+	double x0 = LoopControlVariablesTab[ImbricatedLoop - 1][0];
+	double x1 = LoopControlVariablesTab[ImbricatedLoop - 1][1];
+	double step = LoopControlVariablesTab[ImbricatedLoop - 1][2];
+	int do_next = (step > 0.) ? (x0 + step <= x1) : (x0 + step >= x1);
 	if(do_next){
-	  LoopControlVariablesTab[ImbricatedLoop-1][0] +=
-	    LoopControlVariablesTab[ImbricatedLoop-1][2];
-	  if(LoopControlVariablesNameTab[ImbricatedLoop-1]){
-	    Symbol TheSymbol;
-	    TheSymbol.Name = LoopControlVariablesNameTab[ImbricatedLoop-1];
-	    Symbol *pSymbol;
+	  LoopControlVariablesTab[ImbricatedLoop - 1][0] +=
+	    LoopControlVariablesTab[ImbricatedLoop - 1][2];
+	  if(LoopControlVariablesNameTab[ImbricatedLoop - 1]){
+	    Symbol TheSymbol, *pSymbol;
+	    TheSymbol.Name = LoopControlVariablesNameTab[ImbricatedLoop - 1];
 	    if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol)))
 	      yymsg(0, "Unknown loop variable");
 	    else
 	      *(double*)List_Pointer_Fast(pSymbol->val, 0) += 
-		LoopControlVariablesTab[ImbricatedLoop-1][2];
+		LoopControlVariablesTab[ImbricatedLoop - 1][2];
 	  }
-	  fsetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop-1]);
-	  gmsh_yylineno = yylinenoImbricatedLoopsTab[ImbricatedLoop-1];
+	  fsetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop - 1]);
+	  gmsh_yylineno = yylinenoImbricatedLoopsTab[ImbricatedLoop - 1];
 	}
 	else
 	  ImbricatedLoop--;
@@ -2456,13 +2443,13 @@ ExtrudeParameter :
     }
   | tLayers '{' ListOfDouble ',' ListOfDouble '}' tEND
     {
-      double d;
       extr.mesh.ExtrudeMesh = true;
       extr.mesh.NbLayer = List_Nbr($3);
       if(List_Nbr($3) == List_Nbr($5)){
 	extr.mesh.NbElmLayer.clear();
 	extr.mesh.hLayer.clear();
 	for(int i = 0; i < List_Nbr($3); i++){
+	  double d;
 	  List_Read($3, i, &d);
 	  extr.mesh.NbElmLayer.push_back((d > 0) ? (int)d : 1);
 	  List_Read($5, i, &d);
@@ -2477,13 +2464,13 @@ ExtrudeParameter :
   | tLayers '{' ListOfDouble ',' ListOfDouble ',' ListOfDouble '}' tEND
     {
       yymsg(0, "Explicit region numbers in layers are deprecated");
-      double d;
       extr.mesh.ExtrudeMesh = true;
       extr.mesh.NbLayer = List_Nbr($3);
       if(List_Nbr($3) == List_Nbr($5) && List_Nbr($3) == List_Nbr($7)){
 	extr.mesh.NbElmLayer.clear();
 	extr.mesh.hLayer.clear();
 	for(int i = 0; i < List_Nbr($3); i++){
+	  double d;
 	  List_Read($3, i, &d);
 	  extr.mesh.NbElmLayer.push_back((d > 0) ? (int)d : 1);
 	  List_Read($7, i, &d);
@@ -2778,7 +2765,7 @@ FExpr :
   | FExpr tNOTEQUAL FExpr            { $$ = $1 != $3;     }
   | FExpr tAND FExpr                 { $$ = $1 && $3;     }
   | FExpr tOR FExpr                  { $$ = $1 || $3;     }
-  | FExpr '?' FExpr tDOTS FExpr      { $$ = $1? $3 : $5;  }
+  | FExpr '?' FExpr tDOTS FExpr      { $$ = $1 ? $3 : $5; }
   | tExp    '(' FExpr ')'            { $$ = exp($3);      }
   | tLog    '(' FExpr ')'            { $$ = log($3);      }
   | tLog10  '(' FExpr ')'            { $$ = log10($3);    }
@@ -2798,8 +2785,8 @@ FExpr :
   | tCeil   '(' FExpr ')'            { $$ = ceil($3);     }
   | tFmod   '(' FExpr ',' FExpr ')'  { $$ = fmod($3, $5); }
   | tModulo '(' FExpr ',' FExpr ')'  { $$ = fmod($3, $5); }
-  | tHypot  '(' FExpr ',' FExpr ')'  { $$ = sqrt($3*$3+$5*$5); }
-  | tRand   '(' FExpr ')'            { $$ = $3*(double)rand()/(double)RAND_MAX; }
+  | tHypot  '(' FExpr ',' FExpr ')'  { $$ = sqrt($3 * $3 + $5 * $5); }
+  | tRand   '(' FExpr ')'            { $$ = $3 * (double)rand() / (double)RAND_MAX; }
   // The following is for GetDP compatibility
   | tExp    '[' FExpr ']'            { $$ = exp($3);      }
   | tLog    '[' FExpr ']'            { $$ = log($3);      }
@@ -2820,8 +2807,8 @@ FExpr :
   | tCeil   '[' FExpr ']'            { $$ = ceil($3);     }
   | tFmod   '[' FExpr ',' FExpr ']'  { $$ = fmod($3, $5); }
   | tModulo '[' FExpr ',' FExpr ']'  { $$ = fmod($3, $5); }
-  | tHypot  '[' FExpr ',' FExpr ']'  { $$ = sqrt($3*$3+$5*$5); }
-  | tRand   '[' FExpr ']'            { $$ = $3*(double)rand()/(double)RAND_MAX; }
+  | tHypot  '[' FExpr ',' FExpr ']'  { $$ = sqrt($3 * $3 + $5 * $5); }
+  | tRand   '[' FExpr ']'            { $$ = $3 * (double)rand() / (double)RAND_MAX; }
 ;
 
 // FIXME: add +=, -=, *= et /=
@@ -2842,9 +2829,8 @@ FExpr_Single :
 
   | tSTRING
     {
-      Symbol TheSymbol;
+      Symbol TheSymbol, *pSymbol;
       TheSymbol.Name = $1;
-      Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(0, "Unknown variable '%s'", $1);
 	$$ = 0.;
@@ -2860,9 +2846,8 @@ FExpr_Single :
     {
       char tmpstring[1024];
       sprintf(tmpstring, "%s_%d", $1, (int)$4) ;
-      Symbol TheSymbol;
+      Symbol TheSymbol, *pSymbol;
       TheSymbol.Name = tmpstring;
-      Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(0, "Unknown variable '%s'", tmpstring);
 	$$ = 0.;
@@ -2873,9 +2858,8 @@ FExpr_Single :
     }
   | tSTRING '[' FExpr ']'
     {
-      Symbol TheSymbol;
+      Symbol TheSymbol, *pSymbol;
       TheSymbol.Name = $1;
-      Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(0, "Unknown variable '%s'", $1);
 	$$ = 0.;
@@ -2893,9 +2877,8 @@ FExpr_Single :
     }
   | '#' tSTRING '[' ']'
     {
-      Symbol TheSymbol;
+      Symbol TheSymbol, *pSymbol;
       TheSymbol.Name = $2;
-      Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(0, "Unknown variable '%s'", $2);
 	$$ = 0.;
@@ -2906,9 +2889,8 @@ FExpr_Single :
     }
   | tSTRING NumericIncrement
     {
-      Symbol TheSymbol;
+      Symbol TheSymbol, *pSymbol;
       TheSymbol.Name = $1;
-      Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(0, "Unknown variable '%s'", $1);
 	$$ = 0.;
@@ -2919,9 +2901,8 @@ FExpr_Single :
     }
   | tSTRING '[' FExpr ']' NumericIncrement
     {
-      Symbol TheSymbol;
+      Symbol TheSymbol, *pSymbol;
       TheSymbol.Name = $1;
-      Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(0, "Unknown variable '%s'", $1);
 	$$ = 0.;
@@ -3030,7 +3011,6 @@ RecursiveListOfListOfDouble :
       List_Add($$, &($3));
     }
 ;
-
 
 ListOfDouble :
     FExpr
@@ -3146,9 +3126,8 @@ FExpr_Multi :
   | tSTRING '[' ']'
     {
       $$ = List_Create(2, 1, sizeof(double));
-      Symbol TheSymbol;
+      Symbol TheSymbol, *pSymbol;
       TheSymbol.Name = $1;
-      Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(0, "Unknown variable '%s'", $1);
 	double d = 0.0;
@@ -3163,9 +3142,8 @@ FExpr_Multi :
   | tSTRING '[' '{' RecursiveListOfDouble '}' ']'
     {
       $$ = List_Create(2, 1, sizeof(double));
-      Symbol TheSymbol;
+      Symbol TheSymbol, *pSymbol;
       TheSymbol.Name = $1;
-      Symbol *pSymbol;
       if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
 	yymsg(0, "Unknown variable '%s'", $1);
 	double d = 0.0;
@@ -3210,7 +3188,6 @@ RecursiveListOfDouble :
       List_Delete($3);
     }
 ;
-
 
 ColorExpr :
     '{' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
@@ -3312,7 +3289,7 @@ StringExpr :
     {
       $$ = (char *)Malloc((strlen($3)+1)*sizeof(char));
       int i;
-      for(i = strlen($3)-1; i >= 0; i--){
+      for(i = strlen($3) - 1; i >= 0; i--){
 	if($3[i] == '.'){
 	  strncpy($$, $3, i);
 	  $$[i]='\0';
@@ -3326,7 +3303,7 @@ StringExpr :
     {
       $$ = (char *)Malloc((strlen($3)+1)*sizeof(char));
       int i;
-      for(i = strlen($3)-1; i >= 0; i--){
+      for(i = strlen($3) - 1; i >= 0; i--){
 	if($3[i] == '/' || $3[i] == '\\')
 	  break;
       }
@@ -3349,7 +3326,7 @@ StringExpr :
 	$$ = $3;
       }
       else if(i > 0){
-	yymsg(0, "%d extra argument%s in Sprintf", i, (i>1)?"s":"");
+	yymsg(0, "%d extra argument%s in Sprintf", i, (i > 1) ? "s" : "");
 	$$ = $3;
       }
       else{
@@ -3444,7 +3421,7 @@ void FixRelativePath(const char *in, char *out)
   else{
     // append 'in' to the path of the parent file
     strcpy(out, gmsh_yyname);
-    int i = strlen(out)-1 ;
+    int i = strlen(out) - 1 ;
     while(i >= 0 && gmsh_yyname[i] != '/' && gmsh_yyname[i] != '\\') i-- ;
     out[i+1] = '\0';
     strcat(out, in);
