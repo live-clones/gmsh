@@ -1,4 +1,4 @@
-// $Id: meshGRegion.cpp,v 1.56 2008-07-03 18:15:29 geuzaine Exp $
+// $Id: meshGRegion.cpp,v 1.57 2008-07-08 12:43:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -428,6 +428,7 @@ void deMeshGRegion::operator() (GRegion *gr)
     delete gr->pyramids[i];
   gr->pyramids.clear();
   gr->deleteVertexArrays();
+  gr->model()->destroyMeshCaches();
 }
 
 int intersect_line_triangle(double X[3], double Y[3], double Z[3] , 

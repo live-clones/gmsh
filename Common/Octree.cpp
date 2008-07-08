@@ -1,4 +1,4 @@
-// $Id: Octree.cpp,v 1.5 2008-03-20 11:44:02 geuzaine Exp $
+// $Id: Octree.cpp,v 1.6 2008-07-08 12:43:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -24,10 +24,6 @@
 #include <list>
 #include "Octree.h"
 
-using std::list;
-
-void free_buckets(octantBucket *);
-
 Octree* Octree_Create(int maxElements, double origin[3], double size[3],   
                       void  (*BB)(void *, double*, double*),
                       void  (*Centroid)(void *, double *),
@@ -42,11 +38,34 @@ Octree* Octree_Create(int maxElements, double origin[3], double size[3],
   return myOctree;
 }
 
+void free_buckets(octantBucket * bucket)
+{
+  int i, numBuck = 8;
+  ELink ptr1, ptr2;
+
+  if(bucket->next == NULL) {
+    ptr1 = bucket->lhead;
+    while(ptr1 != NULL) {
+      ptr2 = ptr1;
+      ptr1 = ptr1->next;
+      delete ptr2;
+    }
+    bucket->listBB.clear(); 
+    return;
+  }
+
+  for(i = numBuck-1; i >= 0; i--) 
+    free_buckets((bucket->next)+i);         
+  delete []bucket->next;
+  return;
+}
+
 void Octree_Delete(Octree *myOctree)
 {
   delete myOctree->info;
   free_buckets(myOctree->root);
   delete myOctree->root;
+  delete myOctree;
 }
 
 void Octree_Insert(void * element, Octree *myOctree)
@@ -78,29 +97,7 @@ void * Octree_Search(double *pt, Octree *myOctree)
                        myOctree->function_BB, myOctree->function_inElement);
 }
 
-void free_buckets(octantBucket * bucket)
-{
-  int i, numBuck = 8;
-  ELink ptr1, ptr2;
-
-  if(bucket->next == NULL) {
-    ptr1 = bucket->lhead;
-    while(ptr1 != NULL) {
-      ptr2 = ptr1;
-      ptr1 = ptr1->next;
-      delete ptr2;
-    }
-    bucket->listBB.clear(); 
-    return;
-  }
-
-  for(i = numBuck-1; i >= 0; i--) 
-    free_buckets((bucket->next)+i);         
-  delete []bucket->next;
-  return;
-}
-
-void Octree_SearchAll(double * pt, Octree * myOctree, list<void *> * output)
+void Octree_SearchAll(double * pt, Octree * myOctree, std::list<void *> * output)
 {
   searchAllElements(myOctree->root, pt, myOctree->info, myOctree->function_BB,
                     myOctree->function_inElement, output);      

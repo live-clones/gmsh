@@ -36,7 +36,6 @@ class OctreePost
   Octree *_SH, *_VH, *_TH;
   Octree *_SI, *_VI, *_TI;
   Octree *_SY, *_VY, *_TY;
-  Octree *_GModel;
   PView *_theView;
   PViewDataList *_theViewDataList;
   PViewDataGModel *_theViewDataGModel;

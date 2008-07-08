@@ -186,6 +186,8 @@ class PViewDataGModel : public PViewData {
   GEntity *getEntity(int step, int ent);
   // direct access to value by index
   bool getValueByIndex(int step, int dataIndex, int node, int comp, double &val);
+  // get underlying model
+  GModel* getModel(int step){ return _steps[step]->getModel(); }
 
   // Add some data "on the fly" (data is stored by vertex: if a field
   // has e.g. 3 components, nodalData contains 3 * N entries with N

@@ -62,14 +62,15 @@ struct global {
 };
 typedef struct global globalInfo;
 
-typedef struct
+class Octree
 {
+ public:
   globalInfo *info;
   octantBucket *root;
   BBFunction function_BB;
   InEleFunction function_inElement; 
   CentroidFunction function_centroid; 
-}Octree;
+};
 
 void refineOctants(octantBucket *buckets,
                    globalInfo *globalPara);

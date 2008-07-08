@@ -1,4 +1,4 @@
-// $Id: OctreePost.cpp,v 1.15 2008-06-07 17:20:57 geuzaine Exp $
+// $Id: OctreePost.cpp,v 1.16 2008-07-08 12:43:26 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -219,47 +219,6 @@ static void addListOfStuff(Octree *o, List_T *l, int nbelm)
   }
 }
 
-// helper routines for GModel-based views
-
-void MElementBB(void *a, double *min, double *max)
-{
-  MElement *e = (MElement*)a;
-  MVertex *v = e->getVertex(0);
-  min[0] = max[0] = v->x(); 
-  min[1] = max[1] = v->y(); 
-  min[2] = max[2] = v->z();
-  for(int i = 1; i < e->getNumVertices(); i++){
-    v = e->getVertex(i);
-    min[0] = std::min(min[0], v->x()); max[0] = std::max(max[0], v->x());
-    min[1] = std::min(min[1], v->y()); max[1] = std::max(max[1], v->y());
-    min[2] = std::min(min[2], v->z()); max[2] = std::max(max[2], v->z());
-  }
-}
-
-void MElementCentroid(void *a, double *x)
-{
-  MElement *e = (MElement*)a;
-  MVertex *v = e->getVertex(0);
-  int n = e->getNumVertices();
-  x[0] = v->x(); x[1] = v->y(); x[2] = v->z();
-  for(int i = 1; i < n; i++) {
-    v = e->getVertex(i);
-    x[0] += v->x(); x[1] += v->y(); x[2] += v->z();
-  }
-  double oc = 1. / (double)n;
-  x[0] *= oc;
-  x[1] *= oc;
-  x[2] *= oc;
-}
-
-int MElementInEle(void *a, double *x)
-{
-  MElement *e = (MElement*)a;
-  double uvw[3];
-  e->xyz2uvw(x, uvw);
-  return e->isInside(uvw[0], uvw[1], uvw[2]) ? 1 : 0;
-}
-
 // OctreePost implementation
 
 OctreePost::~OctreePost() 
@@ -270,26 +229,27 @@ OctreePost::~OctreePost()
   if(_SH) Octree_Delete(_SH); if(_VH) Octree_Delete(_VH); if(_TH) Octree_Delete(_TH);
   if(_SI) Octree_Delete(_SI); if(_VI) Octree_Delete(_VI); if(_TI) Octree_Delete(_TI);
   if(_SY) Octree_Delete(_SY); if(_VY) Octree_Delete(_VY); if(_TY) Octree_Delete(_TY);
-  if(_GModel) Octree_Delete(_GModel);
 }
 
 OctreePost::OctreePost(PView *v) 
   : _ST(0), _VT(0), _TT(0), _SQ(0), _VQ(0), _TQ(0), _SS(0), _VS(0), _TS(0),
     _SH(0), _VH(0), _TH(0), _SI(0), _VI(0), _TI(0), _SY(0), _VY(0), _TY(0),
-    _GModel(0), _theView(v), _theViewDataList(0), _theViewDataGModel(0)
+    _theView(v), _theViewDataList(0), _theViewDataGModel(0)
 {
-  SBoundingBox3d bb = v->getData()->getBoundingBox();
+  _theViewDataGModel = dynamic_cast<PViewDataGModel*>(_theView->getData());
 
-  double min[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
-
-  double size[3] = {bb.max().x() - bb.min().x(),
-                    bb.max().y() - bb.min().y(),
-                    bb.max().z() - bb.min().z()};                   
-
-  const int maxElePerBucket = 100; // memory vs. speed trade-off
+  if(_theViewDataGModel) return; // the octree is available in the model
 
   _theViewDataList = dynamic_cast<PViewDataList*>(_theView->getData());
+
   if(_theViewDataList){
+    SBoundingBox3d bb = v->getData()->getBoundingBox();
+    double min[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
+    double size[3] = {bb.max().x() - bb.min().x(),
+		      bb.max().y() - bb.min().y(),
+		      bb.max().z() - bb.min().z()};                   
+    const int maxElePerBucket = 100; // memory vs. speed trade-off
+    
     PViewDataList *l = _theViewDataList;
     _SL = Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
     addListOfStuff(_SL, l->SL, 6 + 2 * l->getNumTimeSteps());
@@ -300,7 +260,7 @@ OctreePost::OctreePost(PView *v)
     _TL = Octree_Create(maxElePerBucket, min, size, linBB, linCentroid, linInEle);
     addListOfStuff(_TL, l->TL, 6 + 18 * l->getNumTimeSteps());
     Octree_Arrange(_TL);
-
+    
     _ST = Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
     addListOfStuff(_ST, l->ST, 9 + 3 * l->getNumTimeSteps());
     Octree_Arrange(_ST);
@@ -310,7 +270,7 @@ OctreePost::OctreePost(PView *v)
     _TT = Octree_Create(maxElePerBucket, min, size, triBB, triCentroid, triInEle);
     addListOfStuff(_TT, l->TT, 9 + 27 * l->getNumTimeSteps());
     Octree_Arrange(_TT);
-
+    
     _SQ = Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
     addListOfStuff(_SQ, l->SQ, 12 + 4 * l->getNumTimeSteps());
     Octree_Arrange(_SQ);
@@ -320,7 +280,7 @@ OctreePost::OctreePost(PView *v)
     _TQ = Octree_Create(maxElePerBucket, min, size, quaBB, quaCentroid, quaInEle);
     addListOfStuff(_TQ, l->TQ, 12 + 36 * l->getNumTimeSteps());
     Octree_Arrange(_TQ);
-
+    
     _SS = Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
     addListOfStuff(_SS, l->SS, 12 + 4 * l->getNumTimeSteps());
     Octree_Arrange(_SS);
@@ -330,7 +290,7 @@ OctreePost::OctreePost(PView *v)
     _TS = Octree_Create(maxElePerBucket, min, size, tetBB, tetCentroid, tetInEle);
     addListOfStuff(_TS, l->TS, 12 + 36 * l->getNumTimeSteps());
     Octree_Arrange(_TS);
-
+    
     _SH = Octree_Create(maxElePerBucket, min, size, hexBB, hexCentroid, hexInEle);
     addListOfStuff(_SH, l->SH, 24 + 8 * l->getNumTimeSteps());
     Octree_Arrange(_SH);
@@ -350,7 +310,7 @@ OctreePost::OctreePost(PView *v)
     _TI = Octree_Create(maxElePerBucket, min, size, priBB, priCentroid, priInEle);
     addListOfStuff(_TI, l->TI, 18 + 54 * l->getNumTimeSteps());
     Octree_Arrange(_TI);
-
+    
     _SY = Octree_Create(maxElePerBucket, min, size, pyrBB, pyrCentroid, pyrInEle);
     addListOfStuff(_SY, l->SY, 15 + 5 * l->getNumTimeSteps());
     Octree_Arrange(_SY);
@@ -361,22 +321,6 @@ OctreePost::OctreePost(PView *v)
     addListOfStuff(_TY, l->TY, 15 + 45 * l->getNumTimeSteps());
     Octree_Arrange(_TY);
   }
-  else{
-    _theViewDataGModel = dynamic_cast<PViewDataGModel*>(_theView->getData());
-    if(_theViewDataGModel){
-      // we should think about storing the octree in the model, so
-      // that we can reuse it multiple times
-      _GModel = Octree_Create(maxElePerBucket, min, size, 
-                              MElementBB, MElementCentroid, MElementInEle);
-      for(int i = 0; i < _theViewDataGModel->getNumEntities(0); i++){
-	GEntity *ge = _theViewDataGModel->getEntity(0, i);
-        for(unsigned int j = 0; j < ge->getNumMeshElements(); j++)
-          Octree_Insert(ge->getMeshElement(j), _GModel);
-      }
-      Octree_Arrange(_GModel);
-    }
-  }
-
 }
 
 bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp, 
@@ -410,8 +354,8 @@ bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp,
   return true;
 } 
 
-bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep, double *values,
-                           double *elementSize)
+bool OctreePost::_getValue(void *in, int nbComp, double P[3], int timestep,
+			   double *values, double *elementSize)
 {
   if(!in) return false;
 
@@ -475,7 +419,11 @@ bool OctreePost::searchScalar(double x, double y, double z, double *values,
     if(_getValue(Octree_Search(P, _SL), 1, 2, 1, P, step, values, size)) return true;
   }
   else if(_theViewDataGModel){
-    if(_getValue(Octree_Search(P, _GModel), 1, P, step, values, size)) return true;
+    GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);
+    if(m){
+      SPoint3 pt(P);
+      if(_getValue(m->getMeshElementByCoord(pt), 1, P, step, values, size)) return true;
+    }
   }
   
   return false;
@@ -503,9 +451,13 @@ bool OctreePost::searchVector(double x, double y, double z, double *values,
     if(_getValue(Octree_Search(P, _VL), 1, 2, 3, P, step, values, size)) return true;
   }
   else if(_theViewDataGModel){
-    if(_getValue(Octree_Search(P, _GModel), 3, P, step, values, size)) return true;
+    GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);
+    if(m){
+      SPoint3 pt(P);
+      if(_getValue(m->getMeshElementByCoord(pt), 3, P, step, values, size)) return true;
+    }
   }
-
+  
   return false;
 }
 
@@ -531,7 +483,11 @@ bool OctreePost::searchTensor(double x, double y, double z, double *values,
     if(_getValue(Octree_Search(P, _TL), 1, 2, 9, P, step, values, size)) return true;
   }
   else if(_theViewDataGModel){
-    if(_getValue(Octree_Search(P, _GModel), 9, P, step, values, size)) return true;
+    GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);
+    if(m){
+      SPoint3 pt(P);
+      if(_getValue(m->getMeshElementByCoord(pt), 9, P, step, values, size)) return true;
+    }
   }
   
   return false;

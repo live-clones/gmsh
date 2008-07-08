@@ -27,8 +27,10 @@
 #include "GEdge.h"
 #include "GFace.h"
 #include "GRegion.h"
+#include "SPoint3.h"
 #include "SBoundingBox3d.h"
 
+class Octree;
 class FM_Internals;
 class GEO_Internals;
 class OCC_Internals;
@@ -43,6 +45,9 @@ class GModel
   // post-processing I/O)
   std::vector<MVertex*> _vertexVectorCache;
   std::map<int, MVertex*> _vertexMapCache;
+
+  // an octree for fast mesh element lookup
+  Octree *_octree;
 
   // geo model internal data
   GEO_Internals *_geo_internals;
@@ -102,6 +107,10 @@ class GModel
 
   // delete everything in a GModel
   void destroy();
+
+  // delete all the mesh-related caches (this must be called when the
+  // mesh is changed)
+  void destroyMeshCaches();
 
   // access internal CAD representations
   GEO_Internals *getGEOInternals(){ return _geo_internals; }
@@ -195,6 +204,9 @@ class GModel
 
   // Returns the total number of elements in the mesh
   int getNumMeshElements();
+
+  // Access a mesh element by coordinates
+  MElement *getMeshElementByCoord(SPoint3 &p);
 
   // Returns the total number of vertices in the mesh
   int getNumMeshVertices();

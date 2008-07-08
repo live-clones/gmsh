@@ -1,4 +1,4 @@
-// $Id: meshGFace.cpp,v 1.140 2008-07-03 18:15:29 geuzaine Exp $
+// $Id: meshGFace.cpp,v 1.141 2008-07-08 12:43:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1292,6 +1292,7 @@ void deMeshGFace::operator() (GFace *gf)
   for (unsigned int i=0;i<gf->quadrangles.size();i++) delete gf->quadrangles[i];
   gf->quadrangles.clear();
   gf->deleteVertexArrays();
+  gf->model()->destroyMeshCaches();
 
   gf->meshStatistics.status = GFace::PENDING;
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;

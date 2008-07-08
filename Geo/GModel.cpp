@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.94 2008-07-03 18:15:29 geuzaine Exp $
+// $Id: GModel.cpp,v 1.95 2008-07-08 12:43:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -32,6 +32,7 @@
 #else
 #  include "Message.h"
 #  include "gmshSurface.h"
+#  include "Octree.h"
 #  include "Field.h"
 #  include "Generator.h"
 #  include "Context.h"
@@ -43,8 +44,8 @@ std::vector<GModel*> GModel::list;
 int GModel::_current = -1;
 
 GModel::GModel(std::string name)
-  : _geo_internals(0), _occ_internals(0), _fm_internals(0), _fields(0),
-    _currentMeshEntity(0), modelName(name), normals(0)
+  : _octree(0), _geo_internals(0), _occ_internals(0), _fm_internals(0), 
+    _fields(0), _currentMeshEntity(0), modelName(name), normals(0)
 {
   list.push_back(this);
 
@@ -115,8 +116,7 @@ void GModel::destroy()
   if(normals) delete normals;
   normals = 0;
 
-  _vertexVectorCache.clear();
-  _vertexMapCache.clear();
+  destroyMeshCaches();
 
   MVertex::resetGlobalNumber();
   MElement::resetGlobalNumber();
@@ -125,6 +125,14 @@ void GModel::destroy()
   _fields->reset();
   gmshSurface::reset();
 #endif
+}
+
+void GModel::destroyMeshCaches()
+{
+  _vertexVectorCache.clear();
+  _vertexMapCache.clear();
+  if(_octree) Octree_Delete(_octree);
+  _octree = 0;
 }
 
 GRegion *GModel::getRegionByTag(int n) const
@@ -441,6 +449,72 @@ int GModel::getNumMeshElements()
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     n += (*it)->getNumMeshElements();
   return n;
+}
+
+static void MElementBB(void *a, double *min, double *max)
+{
+  MElement *e = (MElement*)a;
+  MVertex *v = e->getVertex(0);
+  min[0] = max[0] = v->x(); 
+  min[1] = max[1] = v->y(); 
+  min[2] = max[2] = v->z();
+  for(int i = 1; i < e->getNumVertices(); i++){
+    v = e->getVertex(i);
+    min[0] = std::min(min[0], v->x()); max[0] = std::max(max[0], v->x());
+    min[1] = std::min(min[1], v->y()); max[1] = std::max(max[1], v->y());
+    min[2] = std::min(min[2], v->z()); max[2] = std::max(max[2], v->z());
+  }
+}
+
+static void MElementCentroid(void *a, double *x)
+{
+  MElement *e = (MElement*)a;
+  MVertex *v = e->getVertex(0);
+  int n = e->getNumVertices();
+  x[0] = v->x(); x[1] = v->y(); x[2] = v->z();
+  for(int i = 1; i < n; i++) {
+    v = e->getVertex(i);
+    x[0] += v->x(); x[1] += v->y(); x[2] += v->z();
+  }
+  double oc = 1. / (double)n;
+  x[0] *= oc;
+  x[1] *= oc;
+  x[2] *= oc;
+}
+
+static int MElementInEle(void *a, double *x)
+{
+  MElement *e = (MElement*)a;
+  double uvw[3];
+  e->xyz2uvw(x, uvw);
+  return e->isInside(uvw[0], uvw[1], uvw[2]) ? 1 : 0;
+}
+
+MElement *GModel::getMeshElementByCoord(SPoint3 &p)
+{
+#if !defined(HAVE_GMSH_EMBEDDED)
+  if(!_octree){
+    Msg::Debug("Rebuilding mesh element octree");
+    SBoundingBox3d bb = bounds();
+    double min[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
+    double size[3] = {bb.max().x() - bb.min().x(),
+		      bb.max().y() - bb.min().y(),
+		      bb.max().z() - bb.min().z()};                   
+    const int maxElePerBucket = 100; // memory vs. speed trade-off
+    _octree = Octree_Create(maxElePerBucket, min, size, 
+			    MElementBB, MElementCentroid, MElementInEle);
+    std::vector<GEntity*> ent = getEntities();
+    for(unsigned int i = 0; i < ent.size(); i++)
+      for(unsigned int j = 0; j < ent[i]->getNumMeshElements(); j++)
+	Octree_Insert(ent[i]->getMeshElement(j), _octree);
+    Octree_Arrange(_octree);
+  }
+  double P[3] = {p.x(), p.y(), p.z()};
+  return (MElement*)Octree_Search(P, _octree);
+#else
+  Msg::Error("Embedded Gmsh cannot perform octree-based element searches");
+  return 0;
+#endif
 }
 
 template <class T>

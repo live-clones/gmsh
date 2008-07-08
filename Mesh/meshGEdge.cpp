@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.67 2008-07-03 18:15:29 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.68 2008-07-08 12:43:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -275,6 +275,7 @@ void deMeshGEdge::operator() (GEdge *ge)
     delete ge->lines[i];
   ge->lines.clear();
   ge->deleteVertexArrays();
+  ge->model()->destroyMeshCaches();
 }
 
 void meshGEdge::operator() (GEdge *ge) 
