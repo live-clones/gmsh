@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.57 2008-07-04 16:58:48 geuzaine Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.58 2008-07-08 12:44:33 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1396,18 +1396,19 @@ int GModel::readMESH(const std::string &name)
   char str[256];
   int format;
   sscanf(buffer, "%s %d", str, &format);
-
   if(format != 1){
     Msg::Error("Medit mesh import only available for ASCII files");
     return 0;
   }
 
   std::vector<MVertex*> vertexVector;
-  std::map<int, std::vector<MElement*> > elements[3];
+  std::map<int, std::vector<MElement*> > elements[4];
+  std::vector<MVertex*> corners,ridges;
 
   while(!feof(fp)) {
-    if(!fgets(buffer, sizeof(buffer), fp)) break;
-    if(buffer[0] != '#'){ // skip comments
+    if(!fgets(buffer, 256, fp)) break;
+    if(buffer[0] != '#'){ // skip comments and empty lines
+      str[0]='\0';
       sscanf(buffer, "%s", str);
       if(!strcmp(str, "Dimension")){
         if(!fgets(buffer, sizeof(buffer), fp)) break;
@@ -1426,6 +1427,21 @@ int GModel::readMESH(const std::string &name)
           vertexVector[i] = new MVertex(x, y, z);
         }
       }
+      else if(!strcmp(str, "Edges")){
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int nbe;
+        sscanf(buffer, "%d", &nbe);
+        Msg::Info("%d edges", nbe);
+        for(int i = 0; i < nbe; i++) {
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          int n[2], cl;
+          sscanf(buffer, "%d %d %d", &n[0], &n[1], &cl);
+          for(int j = 0; j < 2; j++) n[j]--;
+          std::vector<MVertex*> vertices;
+          if(!getVertices(2, n, vertexVector, vertices)) return 0;
+          elements[3][cl].push_back(new MLine(vertices));
+        }
+      }
       else if(!strcmp(str, "Triangles")){
         if(!fgets(buffer, sizeof(buffer), fp)) break;
         int nbe;
@@ -1439,6 +1455,36 @@ int GModel::readMESH(const std::string &name)
           std::vector<MVertex*> vertices;
           if(!getVertices(3, n, vertexVector, vertices)) return 0;
           elements[0][cl].push_back(new MTriangle(vertices));
+        }
+      }
+      else if(!strcmp(str, "Corners")){
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int nbe;
+        sscanf(buffer, "%d", &nbe);
+        Msg::Info("%d corners", nbe);
+        for(int i = 0; i < nbe; i++) {
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          int  n[1];
+          sscanf(buffer, "%d",&n[0]);
+          for(int j = 0; j < 1; j++) n[j]--;
+	  //          std::vector<MVertex*> vertices;
+	  //          if(!getVertices(1, n, vertexVector, vertices)) return 0;
+	  //          corners.push_back(vertices[0]);
+        }
+      }
+      else if(!strcmp(str, "Ridges")){
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int nbe;
+        sscanf(buffer, "%d", &nbe);
+        Msg::Info("%d ridges", nbe);
+        for(int i = 0; i < nbe; i++) {
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          int  n[1];
+          sscanf(buffer, "%d",&n[0]);
+          for(int j = 0; j < 1; j++) n[j]--;
+	  //          std::vector<MVertex*> vertices;
+	  //          if(!getVertices(1, n, vertexVector, vertices)) return 0;
+	  //          ridges.push_back(vertices[0]);
         }
       }
       else if(!strcmp(str, "Quadrilaterals")) {

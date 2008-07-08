@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.32 2008-07-03 17:06:03 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.33 2008-07-08 12:44:34 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -1358,7 +1358,7 @@ void printJacobians(GModel *m, const char *nm)
 {
   return;
 
-  const int n = 5;
+  const int n = 15;
   double D[n][n];
   double X[n][n];
   double Y[n][n];

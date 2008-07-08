@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.67 2008-07-04 12:03:50 geuzaine Exp $
+// $Id: GFace.cpp,v 1.68 2008-07-08 12:44:33 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -730,7 +730,21 @@ bool GFace::buildSTLTriangulation()
 // by default we assume that straight lines are geodesics
 SPoint2 GFace::geodesic(const SPoint2 &pt1 , const SPoint2 &pt2 , double t)
 {
-  return pt1 + (pt2 - pt1) * t;
+  if(CTX.mesh.second_order_experimental){
+    // FIXME: this is buggy -- remove the CTX option once we do it in
+    // a robust manner
+    GPoint gp1 = point(pt1.x(), pt1.y());
+    GPoint gp2 = point(pt2.x(), pt2.y());
+    SPoint2 guess = pt1 + (pt2 - pt1) * t;
+    GPoint gp = closestPoint(SPoint3(gp1.x() + t * (gp2.x() - gp1.x()),
+				     gp1.y() + t * (gp2.y() - gp1.y()),
+				     gp1.z() + t * (gp2.z() - gp1.z())),
+			     (double*)guess);
+    return SPoint2(gp.u(), gp.v());
+  }
+  else{
+    return pt1 + (pt2 - pt1) * t;
+  }
 }
 
 // length of a curve drawn on a surface

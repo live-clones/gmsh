@@ -1,4 +1,4 @@
-// $Id: OCCFace.cpp,v 1.43 2008-07-03 17:06:02 geuzaine Exp $
+// $Id: OCCFace.cpp,v 1.44 2008-07-08 12:44:33 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -157,7 +157,7 @@ GPoint OCCFace::closestPoint(const SPoint3 & qp, const double initialGuess[2]) c
   double pp[2] = {initialGuess[0],initialGuess[1]};
   proj.LowerDistanceParameters(pp[0], pp[1]);
 
-  Msg::Info("projection lower distance parameters %g %g",pp[0],pp[1]);
+  //  Msg::Info("projection lower distance parameters %g %g",pp[0],pp[1]);
 
   if((pp[0] < umin || umax < pp[0]) || (pp[1]<vmin || vmax<pp[1])){
     Msg::Error("Point projection is out of face bounds");

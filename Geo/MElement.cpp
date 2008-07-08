@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.77 2008-07-03 17:06:01 geuzaine Exp $
+// $Id: MElement.cpp,v 1.78 2008-07-08 12:44:33 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -690,27 +690,29 @@ void MTriangle::pnt(int ord, MVertex *vs[], double uu, double vv, double ww, SPo
   double sf[256];
   int nf = getNumFaceVertices();
 
+  //  printf("%d %d\n",nf,ord);
   if (!nf){
     switch(ord){
-    case 1: gmshFunctionSpaces::find(MSH_TRI_3).f(uu, vv, ww,sf); break;
-    case 2: gmshFunctionSpaces::find(MSH_TRI_6).f(uu, vv, ww,sf); break;
-    case 3: gmshFunctionSpaces::find(MSH_TRI_9).f(uu, vv, ww,sf); break;
-    case 4: gmshFunctionSpaces::find(MSH_TRI_12).f(uu, vv, ww,sf); break;
-    case 5: gmshFunctionSpaces::find(MSH_TRI_15I).f(uu, vv, ww,sf); break;
+    case 1: gmshFunctionSpaces::find(MSH_TRI_3).f(uu, vv,sf); break;
+    case 2: gmshFunctionSpaces::find(MSH_TRI_6).f(uu, vv,sf); break;
+    case 3: gmshFunctionSpaces::find(MSH_TRI_9).f(uu, vv,sf); break;
+    case 4: gmshFunctionSpaces::find(MSH_TRI_12).f(uu, vv,sf); break;
+    case 5: gmshFunctionSpaces::find(MSH_TRI_15I).f(uu, vv,sf); break;
     default: Msg::Error("Order %d triangle pnt not implemented", ord); break;
     }
   }
   else{
     switch(ord){
-    case 1: gmshFunctionSpaces::find(MSH_TRI_3).f(uu, vv, ww,sf); break;
-    case 2: gmshFunctionSpaces::find(MSH_TRI_6).f(uu, vv, ww,sf); break;
-    case 3: gmshFunctionSpaces::find(MSH_TRI_10).f(uu, vv, ww,sf); break;
-    case 4: gmshFunctionSpaces::find(MSH_TRI_15).f(uu, vv, ww,sf); break;
-    case 5: gmshFunctionSpaces::find(MSH_TRI_21).f(uu, vv, ww,sf); break;
+    case 1: gmshFunctionSpaces::find(MSH_TRI_3).f(uu, vv,sf); break;
+    case 2: gmshFunctionSpaces::find(MSH_TRI_6).f(uu, vv,sf); break;
+    case 3: gmshFunctionSpaces::find(MSH_TRI_10).f(uu, vv,sf); break;
+    case 4: gmshFunctionSpaces::find(MSH_TRI_15).f(uu, vv,sf); break;
+    case 5: gmshFunctionSpaces::find(MSH_TRI_21).f(uu, vv,sf); break;
     default: Msg::Error("Order %d triangle pnt not implemented", ord); break;
     }
   }
-  
+  //  printf("coucou\n");
+
   double x = 0 ; for(int i = 0; i < 3; i++) x += sf[i] * _v[i]->x();
   double y = 0 ; for(int i = 0; i < 3; i++) y += sf[i] * _v[i]->y();
   double z = 0 ; for(int i = 0; i < 3; i++) z += sf[i] * _v[i]->z();

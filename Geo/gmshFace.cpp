@@ -1,4 +1,4 @@
-// $Id: gmshFace.cpp,v 1.65 2008-07-03 17:06:02 geuzaine Exp $
+// $Id: gmshFace.cpp,v 1.66 2008-07-08 12:44:33 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -248,25 +248,6 @@ GEntity::GeomType gmshFace::geomType() const
   }
 }
 
-// by default we assume that straight lines are geodesics
-SPoint2 gmshFace::geodesic(const SPoint2 &pt1 , const SPoint2 &pt2 , double t)
-{
-  if(isSphere && CTX.mesh.second_order_experimental){
-    // FIXME: this is buggy -- remove the CTX option once we do it in
-    // a robust manner
-    GPoint gp1 = point(pt1.x(), pt1.y());
-    GPoint gp2 = point(pt2.x(), pt2.y());
-    SPoint2 guess = pt1 + (pt2 - pt1) * t;
-    GPoint gp = closestPoint(SPoint3(gp1.x() + t * (gp2.x() - gp1.x()),
-				     gp1.y() + t * (gp2.y() - gp1.y()),
-				     gp1.z() + t * (gp2.z() - gp1.z())),
-			     (double*)guess);
-    return SPoint2(gp.u(), gp.v());
-  }
-  else{
-    return pt1 + (pt2 - pt1) * t;
-  }
-}
 
 bool gmshFace::containsPoint(const SPoint3 &pt) const
 { 

@@ -36,7 +36,6 @@ struct gmshFunctionSpace
       p[j][1] = pow(vv,monomials(j, 1));
     }
   }
-
   inline void f(double u, double v, double w, double *sf) const
   {
     for(int i = 0; i < coefficients.size1(); i++){
