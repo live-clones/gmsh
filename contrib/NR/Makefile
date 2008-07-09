@@ -1,32 +1,16 @@
-# $Id: Makefile,v 1.15 2008-06-07 17:20:57 geuzaine Exp $
+# GetDP - Copyright (C) 1997-2008 P. Dular, C. Geuzaine
 #
-# Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-# USA.
-# 
-# Please report all bugs and problems to <gmsh@geuz.org>.
+# See the LICENSE.txt file for license information. Please report all
+# bugs and problems to <getdp@geuz.org>.
 
 include ../../variables
 
-LIB = ../../lib/libGmshNR${LIBEXT}
+LIB = ../../lib/libGetDPNR${LIBEXT}
 
-INC = ${DASH}I../NR ${DASH}I../../Common ${DASH}I../../Numeric
+INC = ${DASH}I../../Common ${DASH}I../../DataStr ${DASH}I../../Numeric
 
 # don't optimize this library: there are some problems with gcc...
-CFLAGS  = ${FLAGS} ${INC} ${SYSINCLUDE}
+CFLAGS  = ${FLAGS} ${INC}
 
 SRC = brent.cpp\
       dpythag.cpp\
@@ -48,14 +32,11 @@ ${LIB}: ${OBJ}
 	${AR} ${ARFLAGS}${LIB} ${OBJ}
 	${RANLIB} ${LIB}
 
-cpobj: ${OBJ} 
-	cp -f ${OBJ} ../../lib/
-
 .cpp${OBJEXT}:
 	${CXX} ${CFLAGS} ${DASH}c $<
 
 clean:
-	rm -f *.o *.obj 
+	rm -f *.o *.obj
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
@@ -66,23 +47,3 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-brent.o: brent.cpp nrutil.h ../../Numeric/Numeric.h \
-  ../../Numeric/NumericEmbedded.h
-dpythag.o: dpythag.cpp nrutil.h ../../Numeric/Numeric.h \
-  ../../Numeric/NumericEmbedded.h
-dsvdcmp.o: dsvdcmp.cpp nrutil.h ../../Numeric/Numeric.h \
-  ../../Numeric/NumericEmbedded.h
-fdjac.o: fdjac.cpp nrutil.h ../../Numeric/Numeric.h \
-  ../../Numeric/NumericEmbedded.h
-fmin.o: fmin.cpp nrutil.h ../../Numeric/Numeric.h \
-  ../../Numeric/NumericEmbedded.h
-lnsrch.o: lnsrch.cpp nrutil.h ../../Numeric/Numeric.h \
-  ../../Numeric/NumericEmbedded.h
-lubksb.o: lubksb.cpp
-ludcmp.o: ludcmp.cpp nrutil.h ../../Numeric/Numeric.h \
-  ../../Numeric/NumericEmbedded.h
-mnbrak.o: mnbrak.cpp nrutil.h ../../Numeric/Numeric.h \
-  ../../Numeric/NumericEmbedded.h
-newt.o: newt.cpp nrutil.h ../../Numeric/Numeric.h \
-  ../../Numeric/NumericEmbedded.h
-nrutil.o: nrutil.cpp ../../Common/Message.h
