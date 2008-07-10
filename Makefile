@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.493 2008-07-10 13:29:23 geuzaine Exp $
+# $Id: Makefile,v 1.494 2008-07-10 14:35:39 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -102,8 +102,8 @@ uninstall-lib:
 	rm -rf ${libdir}/libGmsh${LIBSUFFIX}${LIBEXT}
 
 embed:
-	@if [ -r ../getdp2/contrib/gmsh/Makefile ]; then \
-          rsync -av ${GMSH_EMBEDDED} ../getdp2/contrib/gmsh;\
+	@if [ -r ../getdp/contrib/gmsh/Makefile ]; then \
+          rsync -av ${GMSH_EMBEDDED} ../getdp/contrib/gmsh;\
         fi
 
 variables: configure

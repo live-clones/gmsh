@@ -1,4 +1,4 @@
-// $Id: GModel.cpp,v 1.95 2008-07-08 12:43:25 geuzaine Exp $
+// $Id: GModel.cpp,v 1.96 2008-07-10 14:35:39 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -131,8 +131,10 @@ void GModel::destroyMeshCaches()
 {
   _vertexVectorCache.clear();
   _vertexMapCache.clear();
+#if !defined(HAVE_GMSH_EMBEDDED)
   if(_octree) Octree_Delete(_octree);
   _octree = 0;
+#endif
 }
 
 GRegion *GModel::getRegionByTag(int n) const

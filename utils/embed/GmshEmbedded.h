@@ -12,6 +12,7 @@ public:
     hide_unselected = 0;
     geom.tolerance = 1.e-6;
     mesh.reverse_all_normals = 1;
+    mesh.second_order_experimental = 0;
     pick_elements = 0;
   }
   double lc;
@@ -22,6 +23,7 @@ public:
   } geom;
   struct{
     int reverse_all_normals;
+    int second_order_experimental;
   } mesh;
   unsigned int PACK_COLOR(int,int,int,int){ return 0; }
   int UNPACK_RED(unsigned int){ return 0; }
