@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2008-07-10 11:54:05 geuzaine Exp $
+# $Id: Makefile,v 1.19 2008-07-10 11:56:18 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -23,7 +23,7 @@ include ../../variables
 
 LIB = ../../lib/libGmshNR${LIBEXT}
 
-INC = ${DASH}I../../Common ${DASH}I../../DataStr ${DASH}I../../Numeric
+INC = ${DASH}I../../Common
 
 # don't optimize this library: there are some problems with gcc...
 CFLAGS  = ${FLAGS} ${INC}
@@ -63,3 +63,14 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
+brent.o: brent.cpp nrutil.h
+dpythag.o: dpythag.cpp nrutil.h
+dsvdcmp.o: dsvdcmp.cpp nrutil.h
+fdjac.o: fdjac.cpp nrutil.h
+fmin.o: fmin.cpp nrutil.h
+lnsrch.o: lnsrch.cpp nrutil.h
+lubksb.o: lubksb.cpp
+ludcmp.o: ludcmp.cpp nrutil.h
+mnbrak.o: mnbrak.cpp nrutil.h
+newt.o: newt.cpp nrutil.h
+nrutil.o: nrutil.cpp ../../Common/Message.h
