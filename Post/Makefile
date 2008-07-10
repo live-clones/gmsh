@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.52 2008-07-01 15:11:38 geuzaine Exp $
+# $Id: Makefile,v 1.53 2008-07-10 13:34:42 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -79,7 +79,8 @@ PViewIO.o: PViewIO.cpp PView.h ../Geo/SPoint3.h PViewDataList.h \
   ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
   ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/SBoundingBox3d.h ../Common/StringUtils.h ../Common/Message.h
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Common/StringUtils.h \
+  ../Common/Message.h
 PViewData.o: PViewData.cpp PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Common/ListUtils.h adaptiveData.h \
   ../Common/GmshMatrix.h ../Numeric/Numeric.h \
@@ -103,10 +104,11 @@ PViewDataGModel.o: PViewDataGModel.cpp PViewDataGModel.h PViewData.h \
   ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
   ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
-  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Common/Message.h
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint3.h \
+  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h ../Common/Message.h
 PViewDataGModelIO.o: PViewDataGModelIO.cpp ../Common/Message.h \
   PViewDataGModel.h PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
@@ -115,12 +117,12 @@ PViewDataGModelIO.o: PViewDataGModelIO.cpp ../Common/Message.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
   ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h \
-  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/MElement.h \
-  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/MEdge.h \
-  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
-  ../Common/StringUtils.h
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/MVertex.h ../Geo/SPoint3.h \
+  ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
+  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h ../Common/StringUtils.h
 PViewOptions.o: PViewOptions.cpp PViewOptions.h ColorTable.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/Message.h
 adaptiveData.o: adaptiveData.cpp ../Plugin/Plugin.h ../Common/Options.h \
@@ -138,7 +140,7 @@ OctreePost.o: OctreePost.cpp ../Common/Octree.h \
   ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
   ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/SBoundingBox3d.h ../Numeric/Numeric.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Common/Message.h shapeFunctions.h \
   ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \

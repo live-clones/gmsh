@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.182 2008-07-05 23:00:57 geuzaine Exp $
+# $Id: Makefile,v 1.183 2008-07-10 13:34:38 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -105,7 +105,8 @@ CommandLine.o: CommandLine.cpp GmshUI.h GmshDefines.h GmshVersion.h \
   ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
   ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
   ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
-  ../Geo/SBoundingBox3d.h CreateFile.h OS.h ../Post/PView.h
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h CreateFile.h OS.h \
+  ../Post/PView.h
 Gmsh.o: Gmsh.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
@@ -113,11 +114,11 @@ Gmsh.o: Gmsh.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
   ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h Message.h \
-  OpenFile.h CreateFile.h Options.h ../Post/ColorTable.h CommandLine.h \
-  OS.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
-  ../Mesh/Generator.h ../Mesh/Field.h ../Geo/Geo.h \
-  ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h Message.h OpenFile.h CreateFile.h Options.h \
+  ../Post/ColorTable.h CommandLine.h OS.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h ../Mesh/Generator.h ../Mesh/Field.h \
+  ../Geo/Geo.h ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
   ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
   ../Geo/SBoundingBox3d.h ../Common/ListUtils.h ../Common/TreeUtils.h \
   ../Common/avl.h ../Common/ListUtils.h ../Geo/SPoint2.h \
@@ -139,8 +140,8 @@ OpenFile.o: OpenFile.cpp Message.h ../Geo/Geo.h ../Common/GmshDefines.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h \
   ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
   ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h \
-  ../Geo/GEntity.h ../Geo/SBoundingBox3d.h Context.h OpenFile.h \
-  CommandLine.h ../Graphics/ReadImg.h OS.h StringUtils.h \
+  ../Geo/GEntity.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h Context.h \
+  OpenFile.h CommandLine.h ../Graphics/ReadImg.h OS.h StringUtils.h \
   ../Parser/Parser.h ../Post/PView.h ../Post/PViewData.h GmshUI.h \
   ../Graphics/Draw.h ../Graphics/SelectBuffer.h ../Fltk/GUI.h \
   ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h ../Common/GmshUI.h \
@@ -153,12 +154,13 @@ CreateFile.o: CreateFile.cpp Message.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
   ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h GmshDefines.h \
-  StringUtils.h Context.h Options.h ../Post/ColorTable.h GmshUI.h \
-  ../Graphics/gl2ps.h ../Graphics/gl2gif.h ../Graphics/PixelBuffer.h \
-  ../Common/GmshUI.h ../Common/Message.h ../Common/MallocUtils.h \
-  ../Graphics/Draw.h ../Graphics/gl2jpeg.h ../Graphics/PixelBuffer.h \
-  ../Graphics/gl2png.h ../Graphics/PixelBuffer.h ../Graphics/gl2ppm.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h GmshDefines.h StringUtils.h Context.h Options.h \
+  ../Post/ColorTable.h GmshUI.h ../Graphics/gl2ps.h ../Graphics/gl2gif.h \
+  ../Graphics/PixelBuffer.h ../Common/GmshUI.h ../Common/Message.h \
+  ../Common/MallocUtils.h ../Graphics/Draw.h ../Graphics/gl2jpeg.h \
+  ../Graphics/PixelBuffer.h ../Graphics/gl2png.h \
+  ../Graphics/PixelBuffer.h ../Graphics/gl2ppm.h \
   ../Graphics/PixelBuffer.h ../Graphics/gl2yuv.h \
   ../Graphics/PixelBuffer.h
 Message.o: Message.cpp Message.h Gmsh.h Options.h ../Post/ColorTable.h \
@@ -180,12 +182,12 @@ Visibility.o: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \
   ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/GModel.h ../Geo/GVertex.h \
-  ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h ../Geo/SBoundingBox3d.h \
-  ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
-  ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h ../Parser/Parser.h \
-  ../Common/ListUtils.h ../Common/TreeUtils.h ../Common/avl.h \
-  ../Common/ListUtils.h
+  ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
+  ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
+  ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Parser/Parser.h ../Common/ListUtils.h ../Common/TreeUtils.h \
+  ../Common/avl.h ../Common/ListUtils.h
 Trackball.o: Trackball.cpp Trackball.h
 VertexArray.o: VertexArray.cpp VertexArray.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h Context.h ../Numeric/Numeric.h \

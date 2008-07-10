@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.217 2008-07-04 14:58:31 geuzaine Exp $
+# $Id: Makefile,v 1.218 2008-07-10 13:34:38 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -194,12 +194,12 @@ GModel.o: GModel.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   GEdgeLoop.h Pair.h GRegion.h MElement.h ../Common/GmshDefines.h \
   MVertex.h MEdge.h MFace.h discreteRegion.h discreteFace.h \
   discreteEdge.h discreteVertex.h ../Common/Message.h gmshSurface.h \
-  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Mesh/Field.h \
-  ../Geo/Geo.h ../Geo/gmshSurface.h ../Common/ListUtils.h \
-  ../Common/TreeUtils.h ../Common/avl.h ../Common/ListUtils.h \
-  ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
-  ../Post/PView.h ../Geo/SPoint3.h ../Mesh/Generator.h \
-  ../Common/Context.h
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Common/Octree.h \
+  ../Common/OctreeInternals.h ../Mesh/Field.h ../Geo/Geo.h \
+  ../Geo/gmshSurface.h ../Common/ListUtils.h ../Common/TreeUtils.h \
+  ../Common/avl.h ../Common/ListUtils.h ../Geo/SPoint2.h \
+  ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h \
+  ../Geo/SPoint3.h ../Mesh/Generator.h ../Common/Context.h
 GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h Geo.h ../Common/GmshDefines.h \

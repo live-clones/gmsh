@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.171 2008-06-07 17:20:56 geuzaine Exp $
+# $Id: Makefile,v 1.172 2008-07-10 13:34:41 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -178,13 +178,13 @@ Triangulate.o: Triangulate.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
   ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
   ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h \
-  ../Geo/discreteFace.h ../Geo/GModel.h ../Geo/GFace.h \
-  ../Mesh/DivideAndConquer.h ../Common/Message.h ../Geo/MVertex.h \
-  ../Geo/SPoint3.h Triangulate.h Plugin.h ../Common/Options.h \
-  ../Post/ColorTable.h ../Post/PView.h ../Post/PViewDataList.h \
-  ../Post/PViewData.h ../Common/ListUtils.h ../Common/GmshMatrix.h \
-  ../Common/Context.h
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/discreteFace.h ../Geo/GModel.h \
+  ../Geo/GFace.h ../Mesh/DivideAndConquer.h ../Common/Message.h \
+  ../Geo/MVertex.h ../Geo/SPoint3.h Triangulate.h Plugin.h \
+  ../Common/Options.h ../Post/ColorTable.h ../Post/PView.h \
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Common/ListUtils.h \
+  ../Common/GmshMatrix.h ../Common/Context.h
 Warp.o: Warp.cpp Warp.h Plugin.h ../Common/Options.h ../Post/ColorTable.h \
   ../Common/Message.h ../Post/PView.h ../Geo/SPoint3.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
@@ -219,7 +219,8 @@ GSHHS.o: GSHHS.cpp GSHHS.h Plugin.h ../Common/Options.h \
   ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
   ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h
+  ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h
 Extract.o: Extract.cpp Extract.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
@@ -269,7 +270,8 @@ FieldView.o: FieldView.cpp FieldView.h Plugin.h ../Common/Options.h \
   ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
   ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SBoundingBox3d.h
+  ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h
 Integrate.o: Integrate.cpp Integrate.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
