@@ -1,4 +1,4 @@
-// $Id: GeoInterpolation.cpp,v 1.40 2008-07-03 17:06:01 geuzaine Exp $
+// $Id: GeoInterpolation.cpp,v 1.41 2008-07-10 13:29:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -24,6 +24,8 @@
 #include "GeoInterpolation.h"
 #include "GeoStringInterface.h"
 #include "Numeric.h"
+
+#define SQU(a)      ((a)*(a))
 
 // Curves
 
@@ -438,11 +440,11 @@ static Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
 
 static void TransfiniteSph(Vertex S, Vertex center, Vertex *T)
 {
-  double r = sqrt(DSQR(S.Pos.X - center.Pos.X) + DSQR(S.Pos.Y - center.Pos.Y)
-                  + DSQR(S.Pos.Z - center.Pos.Z));
+  double r = sqrt(SQU(S.Pos.X - center.Pos.X) + SQU(S.Pos.Y - center.Pos.Y)
+                  + SQU(S.Pos.Z - center.Pos.Z));
 
-  double s = sqrt(DSQR(T->Pos.X - center.Pos.X) + DSQR(T->Pos.Y - center.Pos.Y)
-                  + DSQR(T->Pos.Z - center.Pos.Z));
+  double s = sqrt(SQU(T->Pos.X - center.Pos.X) + SQU(T->Pos.Y - center.Pos.Y)
+                  + SQU(T->Pos.Z - center.Pos.Z));
 
   double dirx = (T->Pos.X - center.Pos.X) / s;
   double diry = (T->Pos.Y - center.Pos.Y) / s;

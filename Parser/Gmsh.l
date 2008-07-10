@@ -1,5 +1,5 @@
 %{
-// $Id: Gmsh.l,v 1.103 2008-05-04 08:31:16 geuzaine Exp $
+// $Id: Gmsh.l,v 1.104 2008-07-10 13:29:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -26,7 +26,6 @@
 #include <math.h>
 
 #include "Message.h"
-#include "Numeric.h"
 #include "Geo.h"
 #include "Gmsh.tab.hpp"
 
@@ -326,7 +325,7 @@ void skip_until(const char *skip, const char *until)
       if(skip && chars[0] == skip[0]) break;
     }
 
-    l = MAX(l_skip,l_until);
+    l = std::max(l_skip,l_until);
     if(l >= (int)sizeof(chars)){
       Msg::Error("Search pattern too long in skip_until");
       return;

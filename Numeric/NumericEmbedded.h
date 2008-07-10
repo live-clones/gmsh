@@ -22,30 +22,6 @@
 
 #include <math.h>
 
-#define Pi      3.1415926535897932
-#define Deux_Pi 6.2831853071795865
-
-#if !defined(M_PI)
-#define M_PI Pi
-#endif
-
-#define MIN(a,b) (((a)<(b))?(a):(b))
-#define MAX(a,b) (((a)<(b))?(b):(a))
-#define SQR(a)   ((a)*(a))
-
-#define IMIN MIN
-#define LMIN MIN
-#define FMIN MIN
-#define DMIN MIN
-
-#define IMAX MAX
-#define LMAX MAX
-#define FMAX MAX
-#define DMAX MAX
-
-#define DSQR SQR
-#define FSQR SQR
-
 #define myhypot(a,b) (sqrt((a)*(a)+(b)*(b)))
 #define sign(x)      (((x)>=0)?1:-1)
 

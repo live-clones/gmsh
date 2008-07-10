@@ -1,4 +1,4 @@
-// $Id: OpenFile.cpp,v 1.2 2008-07-04 16:58:48 geuzaine Exp $
+// $Id: OpenFile.cpp,v 1.3 2008-07-10 13:29:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -50,6 +50,8 @@ extern GUI *WID;
 
 extern Context_T CTX;
 
+#define SQU(a)      ((a)*(a))
+
 static void FinishUpBoundingBox()
 {
   double range[3];
@@ -83,18 +85,18 @@ static void FinishUpBoundingBox()
     CTX.min[1] -= CTX.lc; CTX.max[1] += CTX.lc;
   }
   else if(range[0] < CTX.geom.tolerance) {
-    CTX.lc = sqrt(DSQR(range[1]) + DSQR(range[2]));
+    CTX.lc = sqrt(SQU(range[1]) + SQU(range[2]));
     CTX.min[0] -= CTX.lc; CTX.max[0] += CTX.lc;
   }
   else if(range[1] < CTX.geom.tolerance) {
-    CTX.lc = sqrt(DSQR(range[0]) + DSQR(range[2]));
+    CTX.lc = sqrt(SQU(range[0]) + SQU(range[2]));
     CTX.min[1] -= CTX.lc; CTX.max[1] += CTX.lc;
   }
   else if(range[2] < CTX.geom.tolerance) {
-    CTX.lc = sqrt(DSQR(range[0]) + DSQR(range[1]));
+    CTX.lc = sqrt(SQU(range[0]) + SQU(range[1]));
   }
   else {
-    CTX.lc = sqrt(DSQR(range[0]) + DSQR(range[1]) + DSQR(range[2]));
+    CTX.lc = sqrt(SQU(range[0]) + SQU(range[1]) + SQU(range[2]));
   }
 }
 

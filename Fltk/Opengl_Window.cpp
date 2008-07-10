@@ -1,4 +1,4 @@
-// $Id: Opengl_Window.cpp,v 1.85 2008-05-06 21:11:47 geuzaine Exp $
+// $Id: Opengl_Window.cpp,v 1.86 2008-07-10 13:29:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -68,7 +68,7 @@ void lasso_zoom(MousePosition &click1, MousePosition &click2)
 
   CTX.s[0] *= (double)CTX.viewport[2] / (click2.win[0] - click1.win[0]);
   CTX.s[1] *= (double)CTX.viewport[3] / (click2.win[1] - click1.win[1]);
-  CTX.s[2] = MIN(CTX.s[0], CTX.s[1]); // bof...
+  CTX.s[2] = std::min(CTX.s[0], CTX.s[1]); // bof...
   
   // recenter around the center of the lasso rectangle
   MousePosition tmp(click1);

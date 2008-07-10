@@ -1,4 +1,4 @@
-// $Id: GFace.cpp,v 1.68 2008-07-08 12:44:33 remacle Exp $
+// $Id: GFace.cpp,v 1.69 2008-07-10 13:29:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -43,6 +43,8 @@ void dsvdcmp(double **a, int m, int n, double w[], double **v);
 #endif
 
 extern Context_T CTX;
+
+#define SQU(a)      ((a)*(a))
 
 GFace::GFace(GModel *model, int tag)
   : GEntity(model, tag), r1(0), r2(0), va_geom_triangles(0)
@@ -333,7 +335,7 @@ void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
     prosca(res, res2, &cosc);
     sinc = sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
     angplan = myatan2(sinc, cosc);
-    angplan = angle_02pi(angplan) * 180. / Pi;
+    angplan = angle_02pi(angplan) * 180. / M_PI;
     if((angplan > 70 && angplan < 110) || (angplan > 260 && angplan < 280)) {
       Msg::Info("SVD failed (angle=%g): using rough algo...", angplan);
       res[0] = res2[0];
@@ -512,7 +514,7 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
       iter = 1;
 
       GPoint P = point(U, V);
-      err2 = sqrt(DSQR(X - P.x()) + DSQR(Y - P.y()) + DSQR(Z - P.z()));
+      err2 = sqrt(SQU(X - P.x()) + SQU(Y - P.y()) + SQU(Z - P.z()));
       if (err2 < 1.e-8 * CTX.lc) return;
 
       while(err > Precision && iter < MaxIter) {
@@ -538,8 +540,8 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
 
         //if(Unew > umax || Vnew > vmax || Unew < umin || Vnew < vmin) break;
 
-        err = DSQR(Unew - U) + DSQR(Vnew - V);
-        err2 = sqrt(DSQR(X - P.x()) + DSQR(Y - P.y()) + DSQR(Z - P.z()));
+        err = SQU(Unew - U) + SQU(Vnew - V);
+        err2 = sqrt(SQU(X - P.x()) + SQU(Y - P.y()) + SQU(Z - P.z()));
         iter++;
         U = Unew;
         V = Vnew;

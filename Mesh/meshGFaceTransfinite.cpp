@@ -1,4 +1,4 @@
-// $Id: meshGFaceTransfinite.cpp,v 1.29 2008-07-01 14:24:07 geuzaine Exp $
+// $Id: meshGFaceTransfinite.cpp,v 1.30 2008-07-10 13:29:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,8 @@
 #include "Context.h"
 #include "Message.h"
 #include "Numeric.h"
+
+#define SQU(a)      ((a)*(a))
 
 extern Context_T CTX;
 
@@ -318,12 +320,12 @@ int MeshTransfiniteSurface(GFace *gf)
           MVertex *v31 = tab[i + 1][j - 1];
           MVertex *v32 = tab[i + 1][j    ];
           MVertex *v33 = tab[i + 1][j + 1];
-          double alpha = 0.25 * (DSQR(v23->x() - v21->x()) +
-                                 DSQR(v23->y() - v21->y()) +
-                                 DSQR(v23->z() - v21->z()));
-          double gamma = 0.25 * (DSQR(v32->x() - v12->x()) +
-                                 DSQR(v32->y() - v12->y()) +
-                                 DSQR(v32->z() - v12->z()));
+          double alpha = 0.25 * (SQU(v23->x() - v21->x()) +
+                                 SQU(v23->y() - v21->y()) +
+                                 SQU(v23->z() - v21->z()));
+          double gamma = 0.25 * (SQU(v32->x() - v12->x()) +
+                                 SQU(v32->y() - v12->y()) +
+                                 SQU(v32->z() - v12->z()));
           double beta = 0.0625 * ((v32->x() - v12->x()) * (v23->x() - v21->x()) +
                                   (v32->y() - v12->y()) * (v23->y() - v21->y()) +
                                   (v32->z() - v12->z()) * (v23->z() - v21->z()));

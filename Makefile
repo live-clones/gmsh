@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.492 2008-07-04 22:45:54 geuzaine Exp $
+# $Id: Makefile,v 1.493 2008-07-10 13:29:23 geuzaine Exp $
 #
 # Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
@@ -136,7 +136,8 @@ doc-info:
 purge:
 	rm -f `find . -name "*~" -o -name "*~~" -o -name ".gmsh-errors"\
                -o -name "\#*" -o -name ".\#*" -o -name ".DS_Store"\
-               -o -name "gmon.out" -o -name ".gdb_history" -o -name "debug?.pos"`
+               -o -name "gmon.out" -o -name ".gdb_history" -o -name "debug?.pos"\
+               -o -name "*.bak"`
 
 clean:
 	for i in doc lib ${GMSH_DIRS}; do (cd $$i && ${MAKE} clean); done

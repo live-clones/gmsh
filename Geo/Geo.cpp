@@ -1,4 +1,4 @@
-// $Id: Geo.cpp,v 1.121 2008-07-04 14:58:31 geuzaine Exp $
+// $Id: Geo.cpp,v 1.122 2008-07-10 13:29:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,8 @@
 #include "GeoInterpolation.h"
 #include "Field.h"
 #include "Context.h"
+
+#define SQU(a)      ((a)*(a))
 
 extern Context_T CTX;
 
@@ -123,7 +125,7 @@ Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc, double u
   pV->w = 1.0;
   pV->Num = Num;
   GModel::current()->getGEOInternals()->MaxPointNum = 
-    IMAX(GModel::current()->getGEOInternals()->MaxPointNum, Num);
+    std::max(GModel::current()->getGEOInternals()->MaxPointNum, Num);
   pV->u = u;
   pV->geometry = 0;
   return pV;
@@ -136,7 +138,7 @@ Vertex *Create_Vertex(int Num, double u, double v, gmshSurface *surf, double lc)
   pV->w = 1.0;
   pV->Num = Num;
   GModel::current()->getGEOInternals()->MaxPointNum = 
-    IMAX(GModel::current()->getGEOInternals()->MaxPointNum, Num);
+    std::max(GModel::current()->getGEOInternals()->MaxPointNum, Num);
   pV->u = u;
   pV->geometry = surf;
   pV->pntOnGeometry = SPoint2(u,v);
@@ -158,7 +160,7 @@ PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T *intlist)
   p->Entities = List_Create(List_Nbr(intlist), 1, sizeof(int));
   p->Num = Num;
   GModel::current()->getGEOInternals()->MaxPhysicalNum = 
-    IMAX(GModel::current()->getGEOInternals()->MaxPhysicalNum, Num);
+    std::max(GModel::current()->getGEOInternals()->MaxPhysicalNum, Num);
   p->Typ = typ;
   p->Visible = 1;
   for(int i = 0; i < List_Nbr(intlist); i++) {
@@ -185,7 +187,7 @@ EdgeLoop *Create_EdgeLoop(int Num, List_T *intlist)
   l->Curves = List_Create(List_Nbr(intlist), 1, sizeof(int));
   l->Num = Num;
   GModel::current()->getGEOInternals()->MaxLineLoopNum = 
-    IMAX(GModel::current()->getGEOInternals()->MaxLineLoopNum, Num);
+    std::max(GModel::current()->getGEOInternals()->MaxLineLoopNum, Num);
   for(int i = 0; i < List_Nbr(intlist); i++) {
     int j;
     List_Read(intlist, i, &j);
@@ -210,7 +212,7 @@ SurfaceLoop *Create_SurfaceLoop(int Num, List_T *intlist)
   l->Surfaces = List_Create(List_Nbr(intlist), 1, sizeof(int));
   l->Num = Num;
   GModel::current()->getGEOInternals()->MaxSurfaceLoopNum = 
-    IMAX(GModel::current()->getGEOInternals()->MaxSurfaceLoopNum, Num);
+    std::max(GModel::current()->getGEOInternals()->MaxSurfaceLoopNum, Num);
   for(int i = 0; i < List_Nbr(intlist); i++) {
     int j;
     List_Read(intlist, i, &j);
@@ -397,11 +399,11 @@ void End_Curve(Curve *c)
         // sur y1/f2 ou y3/f2, qui peuvent legerement etre hors de
         // [-1,1]
         if(x1 < 0)
-          A1 = -myasin(y1 / f2) + A4 + Pi;
+          A1 = -myasin(y1 / f2) + A4 + M_PI;
         else
           A1 = myasin(y1 / f2) + A4;
         if(x3 < 0)
-          A3 = -myasin(y3 / f2) + A4 + Pi;
+          A3 = -myasin(y3 / f2) + A4 + M_PI;
         else
           A3 = myasin(y3 / f2) + A4;
       }
@@ -416,7 +418,7 @@ void End_Curve(Curve *c)
     A1 = angle_02pi(A1);
     A3 = angle_02pi(A3);
     if(A1 >= A3)
-      A3 += 2 * Pi;
+      A3 += 2 * M_PI;
 
     c->Circle.t1 = A1;
     c->Circle.t2 = A3;
@@ -427,7 +429,7 @@ void End_Curve(Curve *c)
     for(int i = 0; i < 4; i++)
       c->Circle.v[i] = v[i];
 
-    if(!CTX.expert_mode && c->Num > 0 && A3 - A1 > 1.01 * Pi){
+    if(!CTX.expert_mode && c->Num > 0 && A3 - A1 > 1.01 * M_PI){
       Msg::Error("Circle or ellipse arc %d greater than Pi (angle=%g)", c->Num, A3-A1);
       Msg::Error("(If you understand what this implies, you can disable this error");
       Msg::Error("message by selecting `Enable expert mode' in the option dialog.");
@@ -479,7 +481,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
   pC->Typ = Typ;
   pC->Num = Num;
   GModel::current()->getGEOInternals()->MaxLineNum = 
-    IMAX(GModel::current()->getGEOInternals()->MaxLineNum, Num);
+    std::max(GModel::current()->getGEOInternals()->MaxLineNum, Num);
   pC->Method = MESH_UNSTRUCTURED;
   pC->degre = Order;
   pC->Circle.n[0] = 0.0;
@@ -593,7 +595,7 @@ Surface *Create_Surface(int Num, int Typ)
   pS->RuledSurfaceOptions = 0;
 
   GModel::current()->getGEOInternals()->MaxSurfaceNum = 
-    IMAX(GModel::current()->getGEOInternals()->MaxSurfaceNum, Num);
+    std::max(GModel::current()->getGEOInternals()->MaxSurfaceNum, Num);
   pS->Typ = Typ;
   pS->Method = MESH_UNSTRUCTURED;
   pS->Recombine = 0;
@@ -629,7 +631,7 @@ Volume *Create_Volume(int Num, int Typ)
   pV->Visible = 1;
   pV->Num = Num;
   GModel::current()->getGEOInternals()->MaxVolumeNum = 
-    IMAX(GModel::current()->getGEOInternals()->MaxVolumeNum, Num);
+    std::max(GModel::current()->getGEOInternals()->MaxVolumeNum, Num);
   pV->Typ = Typ;
   pV->Method = MESH_UNSTRUCTURED;
   pV->TrsfPoints = List_Create(6, 6, sizeof(Vertex *));
@@ -713,12 +715,12 @@ int NEWPHYSICAL(void)
 
 int NEWREG(void)
 {
-  return (IMAX(GModel::current()->getGEOInternals()->MaxLineNum,
-               IMAX(GModel::current()->getGEOInternals()->MaxLineLoopNum,
-                    IMAX(GModel::current()->getGEOInternals()->MaxSurfaceNum,
-                         IMAX(GModel::current()->getGEOInternals()->MaxSurfaceLoopNum,
-                              IMAX(GModel::current()->getGEOInternals()->MaxVolumeNum,
-                                   GModel::current()->getGEOInternals()->MaxPhysicalNum)))))
+  return (std::max(GModel::current()->getGEOInternals()->MaxLineNum,
+            std::max(GModel::current()->getGEOInternals()->MaxLineLoopNum,
+              std::max(GModel::current()->getGEOInternals()->MaxSurfaceNum,
+                std::max(GModel::current()->getGEOInternals()->MaxSurfaceLoopNum,
+                  std::max(GModel::current()->getGEOInternals()->MaxVolumeNum,
+                           GModel::current()->getGEOInternals()->MaxPhysicalNum)))))
           + 1);
 }
 
@@ -2615,21 +2617,21 @@ static void MaxNumPoint(void *a, void *b)
 {
   Vertex *v = *(Vertex **)a;
   GModel::current()->getGEOInternals()->MaxPointNum = 
-    MAX(GModel::current()->getGEOInternals()->MaxPointNum, v->Num);
+    std::max(GModel::current()->getGEOInternals()->MaxPointNum, v->Num);
 }
 
 static void MaxNumCurve(void *a, void *b)
 {
   Curve *c = *(Curve **)a;
   GModel::current()->getGEOInternals()->MaxLineNum = 
-    MAX(GModel::current()->getGEOInternals()->MaxLineNum, c->Num);
+    std::max(GModel::current()->getGEOInternals()->MaxLineNum, c->Num);
 }
 
 static void MaxNumSurface(void *a, void *b)
 {
   Surface *s = *(Surface **)a;
   GModel::current()->getGEOInternals()->MaxSurfaceNum =
-    MAX(GModel::current()->getGEOInternals()->MaxSurfaceNum, s->Num);
+    std::max(GModel::current()->getGEOInternals()->MaxSurfaceNum, s->Num);
 }
 
 static void ReplaceDuplicatePoints()
@@ -2915,9 +2917,9 @@ static double projectPC(double u)
   if(u < CURVE->ubeg)
     u = CURVE->ubeg;
   Vertex c = InterpolateCurve(CURVE, u, 0);
-  return sqrt(DSQR(c.Pos.X - VERTEX->Pos.X) +
-              DSQR(c.Pos.Y - VERTEX->Pos.Y) + 
-              DSQR(c.Pos.Z - VERTEX->Pos.Z));
+  return sqrt(SQU(c.Pos.X - VERTEX->Pos.X) +
+              SQU(c.Pos.Y - VERTEX->Pos.Y) + 
+              SQU(c.Pos.Z - VERTEX->Pos.Z));
 }
 
 bool ProjectPointOnCurve(Curve *c, Vertex *v, Vertex *RES, Vertex *DER)

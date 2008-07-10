@@ -1,4 +1,4 @@
-// $Id: ExtractElements.cpp,v 1.14 2008-05-04 08:31:23 geuzaine Exp $
+// $Id: ExtractElements.cpp,v 1.15 2008-07-10 13:29:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -21,6 +21,8 @@
 
 #include "ExtractElements.h"
 #include "Numeric.h"
+
+#define SQU(a)      ((a)*(a))
 
 StringXNumber ExtractElementsOptions_Number[] = {
   {GMSH_FULLRC, "MinVal", NULL, 0.},
@@ -93,7 +95,7 @@ static void extract(List_T *inList, int inNb,
         d += v[0];
         break;
       case 3 : // vector
-        d += sqrt(DSQR(v[0]) + DSQR(v[1]) + DSQR(v[2]));
+        d += sqrt(SQU(v[0]) + SQU(v[1]) + SQU(v[2]));
         break;
       case 9 : // tensor
         d += ComputeVonMises(v);

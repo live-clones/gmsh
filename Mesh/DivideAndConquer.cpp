@@ -1,4 +1,4 @@
-// $Id: DivideAndConquer.cpp,v 1.20 2008-06-27 18:00:52 geuzaine Exp $
+// $Id: DivideAndConquer.cpp,v 1.21 2008-07-10 13:29:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -386,14 +386,14 @@ static int DListInsert(DListRecord **dlist, MPoint center, PointNumero newPoint)
   xx = (double)(pPointArray[newPoint].where.h - center.h);
   beta = atan2(yy, xx) - alpha1;
   if(beta <= 0)
-    beta += Deux_Pi;
+    beta += 2. * M_PI;
 
   do {
     yy = (double)(pPointArray[Succ(p)->point_num].where.v - center.v);
     xx = (double)(pPointArray[Succ(p)->point_num].where.h - center.h);
     alpha = atan2(yy, xx) - alpha1;
     if(alpha <= 1.e-15)
-      alpha += Deux_Pi;
+      alpha += 2. * M_PI;
     if(alpha >= beta) {
       Succ(newp) = Succ(p);
       Succ(p) = newp;

@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.78 2008-07-08 12:44:33 remacle Exp $
+// $Id: MElement.cpp,v 1.79 2008-07-10 13:29:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -35,6 +35,8 @@
 #  include "Context.h"
 #  include "qualityMeasures.h"
 #endif
+
+#define SQU(a)      ((a)*(a))
 
 extern Context_T CTX;
 
@@ -260,9 +262,9 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3])
       prodve(a, b, c);
       jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2]; 
     }
-    return sqrt(SQR(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0]) +
-                SQR(jac[0][2] * jac[1][0] - jac[0][0] * jac[1][2]) +
-                SQR(jac[0][1] * jac[1][2] - jac[0][2] * jac[1][1]));
+    return sqrt(SQU(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0]) +
+                SQU(jac[0][2] * jac[1][0] - jac[0][0] * jac[1][2]) +
+                SQU(jac[0][1] * jac[1][2] - jac[0][2] * jac[1][1]));
   case 1:
     for(int i = 0; i < getNumVertices(); i++) {
       getGradShapeFunction(i, u, v, w, s);
@@ -285,7 +287,7 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3])
       jac[1][0] = b[0]; jac[1][1] = b[1]; jac[1][2] = b[2]; 
       jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2]; 
     }
-    return sqrt(SQR(jac[0][0]) + SQR(jac[0][1]) + SQR(jac[0][2]));
+    return sqrt(SQU(jac[0][0]) + SQU(jac[0][1]) + SQU(jac[0][2]));
   default:
     return 1.;
   }
@@ -320,7 +322,7 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3])
       inv[0][1] * (xyz[0] - xn) + inv[1][1] * (xyz[1] - yn) + inv[2][1] * (xyz[2] - zn) ;
     double wn = uvw[2] +
       inv[0][2] * (xyz[0] - xn) + inv[1][2] * (xyz[1] - yn) + inv[2][2] * (xyz[2] - zn) ;
-    error = sqrt(SQR(un - uvw[0]) + SQR(vn - uvw[1]) + SQR(wn - uvw[2]));
+    error = sqrt(SQU(un - uvw[0]) + SQU(vn - uvw[1]) + SQU(wn - uvw[2]));
     uvw[0] = un;
     uvw[1] = vn;
     uvw[2] = wn;

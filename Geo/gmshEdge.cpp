@@ -1,4 +1,4 @@
-// $Id: gmshEdge.cpp,v 1.50 2008-07-03 17:06:02 geuzaine Exp $
+// $Id: gmshEdge.cpp,v 1.51 2008-07-10 13:29:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -111,7 +111,7 @@ int gmshEdge::minimumMeshSegments () const
     np = GEdge::minimumMeshSegments();
   else if(geomType() == Circle || geomType() == Ellipse)
     np = (int)(fabs(c->Circle.t1 - c->Circle.t2) *
-                 (double)CTX.mesh.min_circ_points / Pi) - 1;
+                 (double)CTX.mesh.min_circ_points / M_PI) - 1;
   else
     np = CTX.mesh.min_curv_points - 1;
   return std::max(np, meshAttributes.minimumMeshSegments);

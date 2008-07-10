@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.33 2008-07-08 12:44:34 remacle Exp $
+// $Id: HighOrder.cpp,v 1.34 2008-07-10 13:29:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -28,6 +28,8 @@
 #include "Context.h"
 #include "GmshMatrix.h"
 #include "FunctionSpace.h"
+
+#define SQU(a)      ((a)*(a))
 
 extern Context_T CTX;
 
@@ -915,7 +917,7 @@ static double mesh_functional_distorsion(MTriangle *t, double u, double v)
   double v2[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double normal1[3];
   prodve(v1, v2, normal1);
-  double nn = sqrt(DSQR(normal1[0]) + DSQR(normal1[1]) + DSQR(normal1[2]));
+  double nn = sqrt(SQU(normal1[0]) + SQU(normal1[1]) + SQU(normal1[2]));
   
   // compute uncurved element jacobian d_u x and d_v x
   t->jac(u, v, 0,mat);
@@ -942,7 +944,7 @@ void getMinMaxJac (MTriangle *t, double &minJ, double &maxJ)
   double v2[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double normal1[3], normal[3];
   prodve(v1, v2, normal1);
-  double nn = sqrt(DSQR(normal1[0]) + DSQR(normal1[1]) + DSQR(normal1[2]));
+  double nn = sqrt(SQU(normal1[0]) + SQU(normal1[1]) + SQU(normal1[2]));
   for(int i = 0; i < n; i++){
     for(int k = 0; k < n - i; k++){
       t->jac((double)i / (n - 1), (double)k / (n - 1), 0,mat);

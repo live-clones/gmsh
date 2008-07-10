@@ -1,4 +1,4 @@
-// $Id: Context.cpp,v 1.63 2008-07-05 23:00:57 geuzaine Exp $
+// $Id: Context.cpp,v 1.64 2008-07-10 13:29:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -30,9 +30,9 @@ void Context_T::buildRotationMatrix(void)
     setEulerAnglesFromRotationMatrix();
   }
   else {
-    double x = r[0] * Pi / 180.;
-    double y = r[1] * Pi / 180.;
-    double z = r[2] * Pi / 180.;
+    double x = r[0] * M_PI / 180.;
+    double y = r[1] * M_PI / 180.;
+    double z = r[2] * M_PI / 180.;
     double A = cos(x);
     double B = sin(x);
     double C = cos(y);
@@ -58,7 +58,7 @@ void Context_T::addQuaternion(double p1x, double p1y, double p2x, double p2y)
 
 void Context_T::addQuaternionFromAxisAndAngle(double axis[3], double angle)
 {
-  double a = angle * Pi / 180.;
+  double a = angle * M_PI / 180.;
   double quat[4];
   axis_to_quat(axis, a, quat);
   add_quats(quat, quaternion, quaternion);  
@@ -74,9 +74,9 @@ void Context_T::setQuaternion(double q0, double q1, double q2, double q3)
 
 void Context_T::setQuaternionFromEulerAngles()
 {
-  double x = r[0] * Pi / 180.;
-  double y = r[1] * Pi / 180.;
-  double z = r[2] * Pi / 180.;
+  double x = r[0] * M_PI / 180.;
+  double y = r[1] * M_PI / 180.;
+  double z = r[2] * M_PI / 180.;
   double xx[3] = {1.,0.,0.};
   double yy[3] = {0.,1.,0.};
   double zz[3] = {0.,0.,1.};
@@ -92,20 +92,20 @@ void Context_T::setEulerAnglesFromRotationMatrix()
 {
   r[1] = asin(rot[8]); // Calculate Y-axis angle
   double C =  cos(r[1]);
-  r[1] *=  180. / Pi;
+  r[1] *=  180. / M_PI;
   if(fabs(C) > 0.005){ // Gimball lock?
     double tmpx =  rot[10] / C; // No, so get X-axis angle
     double tmpy = -rot[9] / C;
-    r[0] = atan2(tmpy, tmpx) * 180. / Pi;
+    r[0] = atan2(tmpy, tmpx) * 180. / M_PI;
     tmpx =  rot[0] / C; // Get Z-axis angle
     tmpy = -rot[4] / C;
-    r[2] = atan2(tmpy, tmpx) * 180. / Pi;
+    r[2] = atan2(tmpy, tmpx) * 180. / M_PI;
   }
   else{ // Gimball lock has occurred
     r[0] = 0.; // Set X-axis angle to zero
     double tmpx = rot[5]; // And calculate Z-axis angle
     double tmpy = rot[1];
-    r[2] = atan2(tmpy, tmpx) * 180. / Pi;
+    r[2] = atan2(tmpy, tmpx) * 180. / M_PI;
   }
   // return only positive angles in [0,360]
   if(r[0] < 0.) r[0] += 360.;

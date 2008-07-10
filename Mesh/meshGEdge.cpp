@@ -1,4 +1,4 @@
-// $Id: meshGEdge.cpp,v 1.68 2008-07-08 12:43:25 geuzaine Exp $
+// $Id: meshGEdge.cpp,v 1.69 2008-07-10 13:29:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -29,6 +29,8 @@
 #include "ListUtils.h"
 #include "Context.h"
 #include "GModel.h"
+
+#define SQU(a)      ((a)*(a))
 
 extern Context_T CTX;
 
@@ -186,7 +188,7 @@ static double F_Transfinite(GEdge *ge, double t)
             / ((double)nbpt * ge->length());
         }
         double b = -a * ge->length() * ge->length() / (4. * (coef - 1.));
-        val = d / (-a * DSQR(t * ge->length() - (ge->length()) * 0.5) + b);
+        val = d / (-a * SQU(t * ge->length() - (ge->length()) * 0.5) + b);
       }
       break;
       

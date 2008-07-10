@@ -1,4 +1,4 @@
-// $Id: Draw.cpp,v 1.119 2008-05-04 08:31:14 geuzaine Exp $
+// $Id: Draw.cpp,v 1.120 2008-07-10 13:29:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -168,7 +168,7 @@ void InitProjection(int xpick, int ypick, int wpick, int hpick)
                   (GLdouble)wpick, (GLdouble)hpick, (GLint *)CTX.viewport);
 
   double grad_z, grad_xy;
-  double zmax = MAX(fabs(CTX.min[2]), fabs(CTX.max[2]));
+  double zmax = std::max(fabs(CTX.min[2]), fabs(CTX.max[2]));
   if(zmax < CTX.lc) zmax = CTX.lc;
 
   if(CTX.ortho) {
@@ -233,7 +233,7 @@ void InitProjection(int xpick, int ypick, int wpick, int hpick)
     else{ // radial
       double cx = grad_xy * (CTX.vxmin + CTX.vxmax) / 2.;
       double cy = grad_xy * (CTX.vymin + CTX.vymax) / 2.;
-      double r = grad_xy * MAX(CTX.vxmax - CTX.vxmin, CTX.vymax - CTX.vymin) / 2.;
+      double r = grad_xy * std::max(CTX.vxmax - CTX.vxmin, CTX.vymax - CTX.vymin) / 2.;
       glBegin(GL_TRIANGLE_FAN);
       glColor4ubv((GLubyte *) & CTX.color.bg_grad);
       glVertex3d(cx, cy, 0.);

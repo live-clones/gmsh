@@ -1,4 +1,4 @@
-// $Id: ColorTable.cpp,v 1.6 2008-05-04 08:31:23 geuzaine Exp $
+// $Id: ColorTable.cpp,v 1.7 2008-07-10 13:29:30 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -316,9 +316,9 @@ void ColorTable_Recompute(GmshColorTable * ct)
       b = (int)(255. * 1.);
       break;
     case 19: // matlab "copper"
-      r = (int)(255. * DMIN(1., gray(s - bias) * 1.25));
-      g = (int)(255. * DMIN(1., gray(s - bias) * 0.7812));
-      b = (int)(255. * DMIN(1., gray(s - bias) * 0.4975));
+      r = (int)(255. * std::min(1., gray(s - bias) * 1.25));
+      g = (int)(255. * std::min(1., gray(s - bias) * 0.7812));
+      b = (int)(255. * std::min(1., gray(s - bias) * 0.4975));
       break;
     default:
       r = g = b = 0;

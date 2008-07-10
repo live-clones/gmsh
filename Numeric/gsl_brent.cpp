@@ -1,4 +1,4 @@
-// $Id: gsl_brent.cpp,v 1.20 2008-05-04 08:31:16 geuzaine Exp $
+// $Id: gsl_brent.cpp,v 1.21 2008-07-10 13:29:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -137,7 +137,7 @@ void mnbrak(double *ax, double *bx, double *cx,
     r = (*bx - *ax) * (f_b - f_c);
     q = (*bx - *cx) * (f_b - f_a);
     u = (*bx) - ((*bx - *cx) * q - (*bx - *ax) * r) / 
-      (2.0 * SIGN(MAX(fabs(q - r), MYTINY_), q - r));
+      (2.0 * SIGN(std::max(fabs(q - r), MYTINY_), q - r));
     ulim = *bx + MYLIMIT_ * (*cx - *bx);
 
     if((*bx - u) * (u - *cx) > 0.0) {

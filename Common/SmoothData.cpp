@@ -1,4 +1,4 @@
-// $Id: SmoothData.cpp,v 1.8 2008-07-03 17:06:01 geuzaine Exp $
+// $Id: SmoothData.cpp,v 1.9 2008-07-10 13:29:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -157,7 +157,7 @@ float xyzn::angle(int i, char nx, char ny, char nz)
   prosca(a, b, &cosc);
   double sinc = sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
   double angplan = myatan2(sinc, cosc);
-  return (float)(angplan * 180. / Pi);
+  return (float)(angplan * 180. / M_PI);
 }
 
 void xyzn::update(char nx, char ny, char nz, float tol)

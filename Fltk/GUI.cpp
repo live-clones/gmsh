@@ -1,4 +1,4 @@
-// $Id: GUI.cpp,v 1.694 2008-07-05 23:00:57 geuzaine Exp $
+// $Id: GUI.cpp,v 1.695 2008-07-10 13:29:24 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -3416,7 +3416,7 @@ void GUI::update_view_window(int num)
   PViewData *data = view->getData();
   PViewOptions *opt = view->getOptions();
 
-  double maxval = MAX(fabs(data->getMin()), fabs(data->getMax()));
+  double maxval = std::max(fabs(data->getMin()), fabs(data->getMax()));
   if(!maxval) maxval = 1.;
   double val1 = 10. * CTX.lc;
   double val2 = 2. * CTX.lc / maxval;

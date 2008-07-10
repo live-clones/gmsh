@@ -1,4 +1,4 @@
-// $Id: NumericEmbedded.cpp,v 1.5 2008-05-04 08:31:16 geuzaine Exp $
+// $Id: NumericEmbedded.cpp,v 1.6 2008-07-10 13:29:25 geuzaine Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -31,6 +31,8 @@
 #include "Message.h"
 #endif
 
+#define SQU(a)      ((a)*(a))
+
 double myatan2(double a, double b)
 {
   if(a == 0.0 && b == 0)
@@ -41,9 +43,9 @@ double myatan2(double a, double b)
 double myasin(double a)
 {
   if(a <= -1.)
-    return -Pi / 2.;
+    return -M_PI / 2.;
   else if(a >= 1.)
-    return Pi / 2.;
+    return M_PI / 2.;
   else
     return asin(a);
 }
@@ -51,7 +53,7 @@ double myasin(double a)
 double myacos(double a)
 {
   if(a <= -1.)
-    return Pi;
+    return M_PI;
   else if(a >= 1.)
     return 0.;
   else
@@ -81,7 +83,7 @@ int sys2x2(double mat[2][2], double b[2], double res[2])
   double det, ud, norm;
   int i;
 
-  norm = DSQR(mat[0][0]) + DSQR(mat[1][1]) + DSQR(mat[0][1]) + DSQR(mat[1][0]);
+  norm = SQU(mat[0][0]) + SQU(mat[1][1]) + SQU(mat[0][1]) + SQU(mat[1][0]);
   det = mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1];
 
   // TOLERANCE ! WARNING WARNING
@@ -162,9 +164,9 @@ int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det)
 
   out = sys3x3(mat, b, res, det);
   norm =
-    DSQR(mat[0][0]) + DSQR(mat[0][1]) + DSQR(mat[0][2]) +
-    DSQR(mat[1][0]) + DSQR(mat[1][1]) + DSQR(mat[1][2]) +
-    DSQR(mat[2][0]) + DSQR(mat[2][1]) + DSQR(mat[2][2]);
+    SQU(mat[0][0]) + SQU(mat[0][1]) + SQU(mat[0][2]) +
+    SQU(mat[1][0]) + SQU(mat[1][1]) + SQU(mat[1][2]) +
+    SQU(mat[2][0]) + SQU(mat[2][1]) + SQU(mat[2][2]);
 
   // TOLERANCE ! WARNING WARNING
   if(norm == 0.0 || fabs(*det) / norm < 1.e-12) {
@@ -238,7 +240,7 @@ double inv3x3(double mat[3][3], double inv[3][3])
 
 double angle_02pi(double A3)
 {
-  double DP = 2 * Pi;
+  double DP = 2 * M_PI;
   while(A3 > DP || A3 < 0.) {
     if(A3 > 0)
       A3 -= DP;
