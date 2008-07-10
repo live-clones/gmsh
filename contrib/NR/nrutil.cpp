@@ -1,4 +1,4 @@
-// This file has been modified for inclusion in GetDP
+// This file has been modified for inclusion in Gmsh
 
 #include <stdio.h>
 #include <stddef.h>

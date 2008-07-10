@@ -96,13 +96,13 @@ class Gmsh_Matrix
     for(int i = 0; i < b.size1(); i++)
       for(int j = 0; j < b.size2(); j++)
 	for(int k = 0; k < size2(); k++)
-	  b(i, j) += (*this)(i, k) * x(k, j);
+	  b.data[i + r *j] += (*this)(i, k) * x(k, j);
   }
   inline void mult(const Gmsh_Vector<SCALAR> &x, Gmsh_Vector<SCALAR> &b)
   {
     for(int i = 0; i < b.size(); i++)
       for(int j = 0; j < b.size(); j++)
-	b(i) += (*this)(i, j) * x(j);
+	b.data[i] += (*this)(i, j) * x(j);
   }
   inline void set_all(const double &m) 
   {
