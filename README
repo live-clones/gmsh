@@ -27,7 +27,8 @@ For a description of all other configuration options, type
 
 Gmsh is distributed under the terms of the GNU General Public License,
 with an exception to allow for easier linking with external mesh
-generators. See doc/LICENSE and doc/CREDITS for more information.
+generators. See doc/LICENSE.txt and doc/CREDITS.txt for more
+information.
 
 See the doc/ and tutorial/ directories for documentation. The
 reference manual is located in doc/texinfo/.

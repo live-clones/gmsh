@@ -1,4 +1,4 @@
-$Id: FAQ,v 1.83 2008-02-17 10:17:02 geuzaine Exp $
+$Id: FAQ.txt,v 1.1 2008-07-11 15:55:52 geuzaine Exp $
 
 This is the Gmsh FAQ
 

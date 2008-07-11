@@ -1,4 +1,4 @@
-$Id: CREDITS,v 1.52 2008-06-07 17:20:57 geuzaine Exp $
+$Id: CREDITS.txt,v 1.1 2008-07-11 15:55:52 geuzaine Exp $
 
              Gmsh is copyright (C) 1997-2008
 

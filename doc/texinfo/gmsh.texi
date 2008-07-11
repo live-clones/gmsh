@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c $Id: gmsh.texi,v 1.251 2008-06-19 15:58:42 geuzaine Exp $
+@c $Id: gmsh.texi,v 1.252 2008-07-11 15:55:53 geuzaine Exp $
 @c
 @c Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 @c
@@ -3964,8 +3964,8 @@ files that produce the bug. Don't forget to mention both the version of Gmsh
 and the version of your operation system (@pxref{Command-line options} to
 see how to get this information).
 
-See @ref{Frequently asked questions}, and the @file{TODO} file in the
-distribution to see which problems we already know about.
+See @ref{Frequently asked questions}, and the @file{TODO.txt} file in
+the distribution to see which problems we already know about.
 
 @c -------------------------------------------------------------------------
 @c Versions
@@ -3978,7 +3978,7 @@ distribution to see which problems we already know about.
 @cindex History, versions
 @cindex Changelog
 
-@verbatiminclude ../VERSIONS
+@verbatiminclude ../VERSIONS.txt
 
 @c -------------------------------------------------------------------------
 @c Credits
@@ -3991,7 +3991,7 @@ distribution to see which problems we already know about.
 @cindex Contributors, list
 @cindex Credits 
 
-@verbatiminclude ../CREDITS
+@verbatiminclude ../CREDITS.txt
 
 @c =========================================================================
 @c Tips ans Tricks
@@ -4063,7 +4063,7 @@ Read @ref{Frequently asked questions}...
 @cindex Questions, frequently asked
 @cindex FAQ
 
-@verbatiminclude ../FAQ
+@verbatiminclude ../FAQ.txt
 
 @c =========================================================================
 @c License
