@@ -25,7 +25,7 @@
 #include "PluginManager.h"
 #endif
 
-Context_T CTX;
+extern Context_T CTX;
 
 int GmshInitialize(int argc, char **argv)
 {

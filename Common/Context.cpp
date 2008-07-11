@@ -7,6 +7,9 @@
 #include "Context.h"
 #include "Trackball.h"
 
+// the single static option context
+Context_T CTX;
+
 void Context_T::buildRotationMatrix(void)
 {
   if(useTrackball) {
