@@ -558,7 +558,7 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
 
 SPoint2 GFace::parFromPoint(const SPoint3 &p) const
 {
-  double U, V;
+  double U = 0., V = 0.;
   XYZtoUV(p.x(), p.y(), p.z(), U, V, 1.0);
   return SPoint2(U, V);
 }
