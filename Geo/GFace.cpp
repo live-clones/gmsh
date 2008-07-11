@@ -164,6 +164,7 @@ std::string GFace::getAdditionalInfoString()
     std::list<GEdge*>::const_iterator ite = l_edges.end();
     char tmp[256];
     sprintf(tmp, "%d, ..., %d", (*it)->tag(), (*ite)->tag());
+    str += tmp;
   }
   else{
     for(; it != l_edges.end(); it++){
