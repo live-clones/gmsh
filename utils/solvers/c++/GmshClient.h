@@ -68,9 +68,9 @@ class GmshClient {
 		CLIENT_OPTION_4     = 103,
 		CLIENT_OPTION_5     = 104 } MessageType;
   int _sock;
-  void _SendData(void *buffer, int bytes)
+  void _SendData(const void *buffer, int bytes)
   {
-    char *buf = (char *)buffer;
+    const char *buf = (const char *)buffer;
     int sofar = 0;
     int remaining = bytes;
     do {
@@ -79,7 +79,7 @@ class GmshClient {
       remaining -= len;
     } while(remaining > 0);
   }
-  void _SendString(int type, char str[])
+  void _SendString(int type, const char *str)
   {
     int len = strlen(str);
     _SendData(&type, sizeof(int));
@@ -97,7 +97,7 @@ class GmshClient {
  public:
   GmshClient() : _sock(0) {}
   ~GmshClient(){}
-  int Connect(char *sockname)
+  int Connect(const char *sockname)
   {
 #if defined(WIN32) && !defined(__CYGWIN__)
     WSADATA wsaData;
@@ -119,7 +119,7 @@ class GmshClient {
     else{
       // INET socket
       char *port = strstr(sockname, ":");
-      portno = atoi(port+1);
+      portno = atoi(port + 1);
       int remotelen = strlen(sockname) - strlen(port);
       if(remotelen > 0)
 	strncpy(remote, sockname, remotelen);
@@ -183,36 +183,36 @@ class GmshClient {
   {
     _SendString(CLIENT_STOP, "Goodbye!");
   }
-  void Info(char *str)
+  void Info(const char *str)
   {
     _SendString(CLIENT_INFO, str);
   }
-  void Warning(char *str)
+  void Warning(const char *str)
   {
     _SendString(CLIENT_WARNING, str);
   }
-  void Error(char *str)
+  void Error(const char *str)
   {
     _SendString(CLIENT_ERROR, str);
   }
-  void Progress(char *str)
+  void Progress(const char *str)
   {
     _SendString(CLIENT_PROGRESS, str);
   }
-  void View(char *str) 
+  void View(const char *str) 
   {
     // deprecated: use MergeFile(str) instead
     _SendString(CLIENT_MERGE_FILE, str);
   }
-  void MergeFile(char *str)
+  void MergeFile(const char *str)
   {
     _SendString(CLIENT_MERGE_FILE, str);
   }
-  void ParseString(char *str)
+  void ParseString(const char *str)
   {
     _SendString(CLIENT_PARSE_STRING, str);
   }
-  void Option(int num, char *str)
+  void Option(int num, const char *str)
   {
     if(num < 1) num = 1;
     if(num > 5) num = 5;
