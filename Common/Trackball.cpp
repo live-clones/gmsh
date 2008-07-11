@@ -1,4 +1,8 @@
-/* $Id: Trackball.cpp,v 1.5 2008-02-17 08:47:56 geuzaine Exp $ */
+// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+/* $Id: Trackball.cpp,v 1.6 2008-07-11 16:55:57 geuzaine Exp $ */
 /*
  * (c) Copyright 1993, 1994, Silicon Graphics, Inc.
  * ALL RIGHTS RESERVED

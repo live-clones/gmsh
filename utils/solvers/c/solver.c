@@ -1,4 +1,3 @@
-/* $Id: solver.c,v 1.6 2006-02-25 19:07:50 geuzaine Exp $ */
 /*
  * Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
  *

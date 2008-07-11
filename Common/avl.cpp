@@ -1,4 +1,8 @@
-// $Id: avl.cpp,v 1.1 2008-06-07 17:24:55 geuzaine Exp $
+// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+// $Id: avl.cpp,v 1.2 2008-07-11 16:55:57 geuzaine Exp $
 
 /*
  * avl package

@@ -1,4 +1,8 @@
-/* $Id: gl2ps.cpp,v 1.114 2008-02-23 15:30:07 geuzaine Exp $ */
+// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+/* $Id: gl2ps.cpp,v 1.115 2008-07-11 16:56:01 geuzaine Exp $ */
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
  * Copyright (C) 1999-2007 Christophe Geuzaine <geuz@geuz.org>

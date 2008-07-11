@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
 #ifndef _GUI_CLASSIFIER_H_
 #define _GUI_CLASSIFIER_H_
 

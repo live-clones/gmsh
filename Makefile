@@ -1,23 +1,7 @@
-# $Id: Makefile,v 1.494 2008-07-10 14:35:39 geuzaine Exp $
+# Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 #
-# Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-# USA.
-# 
-# Please report all bugs and problems to <gmsh@geuz.org>.
+# See the LICENSE.txt file for license information. Please report all
+# bugs and problems to <gmsh@geuz.org>.
 
 include variables
 
@@ -126,7 +110,7 @@ utils:
 doc:
 	cd doc/texinfo && ${MAKE} all
 	cd doc && tar zcf ../gmsh-${GMSH_VERSION}-doc.tgz\
-          FAQ CREDITS VERSIONS README.win32 gmsh.1\
+          FAQ.txt CREDITS.txt VERSIONS.txt README.win32 gmsh.1\
           texinfo/gmsh.pdf texinfo/gmsh.txt\
           texinfo/*.html texinfo/gmsh-info.tgz
 
@@ -213,7 +197,8 @@ package-unix:
 	mkdir gmsh-${GMSH_VERSION}
 	cp bin/gmsh gmsh-${GMSH_VERSION}
 	strip gmsh-${GMSH_VERSION}/gmsh
-	cp doc/gmsh.1 doc/LICENSE doc/VERSIONS doc/FAQ doc/CREDITS gmsh-${GMSH_VERSION}
+	cp doc/gmsh.1 doc/LICENSE.txt doc/VERSIONS.txt doc/FAQ.txt doc/CREDITS.txt\
+          gmsh-${GMSH_VERSION}
 	cp -R tutorial gmsh-${GMSH_VERSION}
 	cp -R demos gmsh-${GMSH_VERSION}
 	rm -rf gmsh-${GMSH_VERSION}/*/CVS
@@ -229,10 +214,8 @@ package-win:
 	cp bin/gmsh.exe gmsh-${GMSH_VERSION}
 	strip gmsh-${GMSH_VERSION}/gmsh.exe
 	cp doc/README.win32 gmsh-${GMSH_VERSION}/README.txt
-	cp doc/VERSIONS gmsh-${GMSH_VERSION}/VERSIONS.txt
-	cp doc/FAQ gmsh-${GMSH_VERSION}/FAQ.txt
-	cp doc/CREDITS gmsh-${GMSH_VERSION}/CREDITS.txt
-	cp doc/LICENSE gmsh-${GMSH_VERSION}/LICENSE.txt
+	cp doc/LICENSE.txt doc/VERSIONS.txt doc/FAQ.txt doc/CREDITS.txt\
+          gmsh-${GMSH_VERSION}
 	cd utils/misc && ./unix2dos.bash ../../gmsh-${GMSH_VERSION}/*.txt
 	cp -R tutorial gmsh-${GMSH_VERSION}
 	cp -R demos gmsh-${GMSH_VERSION}
@@ -261,10 +244,8 @@ package-mac:
 	cp Fltk/MacIconsMsh.icns gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Resources/GmshMsh.icns
 	cp Fltk/MacIconsPos.icns gmsh-${GMSH_VERSION}/Gmsh.app/Contents/Resources/GmshPos.icns
 	cp -R tutorial demos gmsh-${GMSH_VERSION}
-	cp doc/VERSIONS gmsh-${GMSH_VERSION}/VERSIONS.txt
-	cp doc/FAQ gmsh-${GMSH_VERSION}/FAQ.txt
-	cp doc/CREDITS gmsh-${GMSH_VERSION}/CREDITS.txt
-	cp doc/LICENSE gmsh-${GMSH_VERSION}/LICENSE.txt
+	cp doc/LICENSE.txt doc/VERSIONS.txt doc/FAQ.txt doc/CREDITS.txt\
+          gmsh-${GMSH_VERSION}
 	rm -rf gmsh-${GMSH_VERSION}/*/CVS\
                gmsh-${GMSH_VERSION}/tutorial/*.msh\
                gmsh-${GMSH_VERSION}/*/*~

@@ -1,3 +1,7 @@
+// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
 // This program is free software; you can redistribute it and/or modify
