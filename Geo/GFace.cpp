@@ -158,19 +158,20 @@ std::string GFace::getAdditionalInfoString()
 {
   if(l_edges.empty()) return std::string("");
 
-  char tmp[256];
-  if(l_edges.size() > 10){
-    sprintf(tmp, "{%d, ..., %d}", (*l_edges.begin())->tag(), (*l_edges.end())->tag());
-    return std::string(tmp);
-  }
-
-  std::string str("");
+  std::string str("{");
   std::list<GEdge*>::const_iterator it = l_edges.begin();
-  str += "{";
-  for(; it != l_edges.end(); it++){
-    if(it != l_edges.begin()) str += ",";
-    sprintf(tmp, "%d", (*it)->tag());
-    str += tmp;
+  if(l_edges.size() > 10){
+    std::list<GEdge*>::const_iterator ite = l_edges.end();
+    char tmp[256];
+    sprintf(tmp, "%d, ..., %d", (*it)->tag(), (*ite)->tag());
+  }
+  else{
+    for(; it != l_edges.end(); it++){
+      if(it != l_edges.begin()) str += ",";
+      char tmp[256];
+      sprintf(tmp, "%d", (*it)->tag());
+      str += tmp;
+    }
   }
   str += "}";
   return str;
