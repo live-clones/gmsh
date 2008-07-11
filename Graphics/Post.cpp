@@ -997,11 +997,22 @@ static void drawArrays(PView *p, VertexArray *va, GLint type, bool useNormalArra
       float *p = va->getVertexArray(3 * i);
       glColor4ubv((GLubyte *)va->getColorArray(4 * i));
       double f = 1.;
-      if(opt->PointType == 2){
+      if(opt->PointType > 1){
         char *n = va->getNormalArray(3 * i);
         f = char2float(*n);
       }
-      Draw_Sphere(opt->PointSize * f, p[0], p[1], p[2], opt->Light);
+      if(opt->PointType == 2){
+	int s = (int)(opt->PointSize * f);
+	if(s){
+	  glPointSize(s);
+	  gl2psPointSize(s * CTX.print.eps_point_size_factor);
+	  glBegin(GL_POINTS);
+	  glVertex3d(p[0], p[1], p[2]);
+	  glEnd();
+	}
+      }
+      else
+	Draw_Sphere(opt->PointSize * f, p[0], p[1], p[2], opt->Light);
     }
   }
   else if(type == GL_LINES && opt->LineType > 0){

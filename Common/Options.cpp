@@ -7204,7 +7204,7 @@ double opt_view_point_type(OPT_ARGS_NUM)
   GET_VIEW(0.);
   if(action & GMSH_SET) {
     opt->PointType = (int)val;
-    if(opt->PointType < 0 || opt->PointType > 2) 
+    if(opt->PointType < 0 || opt->PointType > 3) 
       opt->PointType = 0;
     if(view) view->setChanged(true);
   }

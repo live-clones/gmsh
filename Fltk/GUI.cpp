@@ -358,7 +358,8 @@ static Fl_Menu_Item menu_point_display[] = {
 static Fl_Menu_Item menu_point_display_post[] = {
   {"Color dot",      0, 0, 0},
   {"3D sphere",      0, 0, 0},
-  {"Scaled sphere", 0, 0, 0},
+  {"Scaled dot",     0, 0, 0},
+  {"Scaled sphere",  0, 0, 0},
   {0}
 };
 

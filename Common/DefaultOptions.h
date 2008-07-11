@@ -850,7 +850,7 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "PointSize" , opt_geometry_point_size , 4. , 
     "Display size of points (in pixels)" },
   { F|O, "PointType" , opt_geometry_point_type , 0. , 
-    "Display points as solid color dots (0), 3D spheres (1) or scaled spheres (2)" },
+    "Display points as solid color dots (0) or 3D spheres (1)" },
 
   { F|O, "ScalingFactor" , opt_geometry_scaling_factor , 1.0 , 
     "Global geometry scaling factor" },
@@ -1308,7 +1308,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "PointSize" , opt_view_point_size , 3. , 
     "Display size of points (in pixels)" },
   { F|O, "PointType" , opt_view_point_type , 0. , 
-    "Display points as solid color dots (0) or 3D spheres (1)" },
+    "Display points as solid color dots (0), 3D spheres (1), scaled dots (2) or scaled spheres (3)" },
   { F|O, "PositionX" , opt_view_position0 , 100. , 
     "Horizontal position (in pixels) of the upper left corner of the scale or 2D plot" }, 
   { F|O, "PositionY" , opt_view_position1 , 50. , 
