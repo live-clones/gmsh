@@ -1,4 +1,4 @@
-// $Id: HighOrder.cpp,v 1.34 2008-07-10 13:29:24 geuzaine Exp $
+// $Id: HighOrder.cpp,v 1.35 2008-07-11 10:54:24 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -650,6 +650,51 @@ void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
   }
 }
 
+
+void getRegionVertices(GRegion *gr, 
+		       MElement *incomplete, 
+		       MElement *ele, 
+		       std::vector<MVertex*> &vr,
+		       bool linear, int nPts = 1)
+{
+
+  Double_Matrix points;
+  int start = 0;
+
+  switch (nPts){
+  case 3 :
+    points = gmshFunctionSpaces::find(MSH_TET_35).points;
+    start = 34;
+    break;
+  case 4 :
+    points = gmshFunctionSpaces::find(MSH_TET_56).points;
+    start = 52;
+    break;
+  default :  
+    return;
+    break;
+  }
+
+  for(int k = start ; k < points.size1() ; k++){
+    MVertex *v;
+    const double t1 = points(k, 0);
+    const double t2 = points(k, 1);
+    const double t3 = points(k, 2);
+    double X(0),Y(0),Z(0);
+    for (int j=0; j<incomplete->getNumVertices(); j++){
+      double sf ; incomplete->getShapeFunction(j,t1,t2,t3,sf);
+      MVertex *vt = incomplete->getVertex(j);
+      X += sf * vt->x();
+      Y += sf * vt->y();
+      Z += sf * vt->z();
+    }
+    v = new MVertex(X,Y,Z, gr);
+    gr->mesh_vertices.push_back(v);
+    vr.push_back(v);
+  }
+}
+
+
 void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear, 
                   int nbPts = 1)
 {
@@ -736,7 +781,7 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
   std::vector<MTetrahedron*> tetrahedra2;
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
     MTetrahedron *t = gr->tetrahedra[i];
-    std::vector<MVertex*> ve,vf;
+    std::vector<MVertex*> ve,vf,vr;
     getEdgeVertices(gr, t, ve, edgeVertices, linear, nPts);
     if (nPts == 1){
       tetrahedra2.push_back
@@ -745,7 +790,11 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
     }
     else{
       getFaceVertices(gr, t, vf, faceVertices, linear, nPts);
-      ve.insert(ve.end(), vf.begin(), vf.end());      
+      ve.insert(ve.end(), vf.begin(), vf.end());     
+      MTetrahedronN incpl (t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3),
+			   ve, nPts + 1);
+      getRegionVertices(gr, &incpl, t, vr, linear, nPts); 
+      ve.insert(ve.end(), vr.begin(), vr.end());     
       tetrahedra2.push_back
 	(new MTetrahedronN(t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3),
 			   ve, nPts + 1));
@@ -1432,7 +1481,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
 
   int nPts = order - 1;
 
-  Msg::StatusBar(1, true, "Meshing second order...");
+  Msg::StatusBar(1, true, "Generating High Order Nodes (q = %d) ...",order);
   double t1 = Cpu();
 
   // first, make sure to remove any existsing second order vertices/elements

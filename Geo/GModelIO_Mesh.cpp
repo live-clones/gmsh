@@ -1,4 +1,4 @@
-// $Id: GModelIO_Mesh.cpp,v 1.58 2008-07-08 12:44:33 remacle Exp $
+// $Id: GModelIO_Mesh.cpp,v 1.59 2008-07-11 10:54:24 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -140,8 +140,9 @@ static int getNumVerticesForElementTypeMSH(int type)
   case MSH_TET_4  : return 4;
   case MSH_TET_10 : return 4 + 6;
   case MSH_TET_20 : return 4 + 12 + 4;
-  case MSH_TET_35 : return 4 + 16 + 12 + 3;
-  case MSH_TET_56 : return 4 + 20 + 24 + 8;
+  case MSH_TET_35 : return 4 + 18 + 12 + 1;
+  case MSH_TET_52 : return 4 + 24 + 24 + 0;
+  case MSH_TET_56 : return 4 + 24 + 24 + 4;
   case MSH_HEX_8  : return 8;
   case MSH_HEX_20 : return 8 + 12;
   case MSH_HEX_27 : return 8 + 12 + 6 + 1;
@@ -171,6 +172,7 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
   else{
     MElementFactory factory;
     MElement *e = factory.create(type, v, num, part);
+
     if(!e){
       Msg::Error("Unknown type of element %d", type);
       return;
@@ -333,7 +335,7 @@ int GModel::readMSH(const std::string &name)
             }
             if(!(numVertices = getNumVerticesForElementTypeMSH(type))) return 0;
           }
-          int indices[30];
+          int indices[60];
           for(int j = 0; j < numVertices; j++) fscanf(fp, "%d", &indices[j]);
           std::vector<MVertex*> vertices;
           if(vertexVector.size()){
@@ -447,7 +449,7 @@ int GModel::readMSH(const std::string &name)
     storeVerticesInEntities(vertexMap);
 
   // store the physical tags
-  for(int i = 0; i < 4; i++)  
+  for(int i = 0; i < 4; i++)
     storePhysicalTagsInEntities(this, i, physicals[i]);
 
   fclose(fp);
@@ -634,7 +636,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->quadrangles, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
-  writeElementHeaderMSH(binary, fp, elements, MSH_TET_4, MSH_TET_10);
+  writeElementHeaderMSH(binary, fp, elements, MSH_TET_4, MSH_TET_10, MSH_TET_20, MSH_TET_35, MSH_TET_56, MSH_TET_52);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->tetrahedra, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);

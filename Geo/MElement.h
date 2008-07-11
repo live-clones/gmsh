@@ -1479,12 +1479,24 @@ class MTetrahedronN : public MTetrahedron {
     const int ie = (num+1)*getNumFaceVertices();
     for(int i = num*getNumFaceVertices(); i != ie; ++i) v[j++] = _vs[i];
   }
+  virtual int getNumVolumeVertices()
+  {
+    switch(getTypeForMSH()){
+    case MSH_TET_35 : return 1;
+    case MSH_TET_56 : return 4;
+    default : return 0;
+    }    
+  }
+  virtual int getNumEdgeVertices(){ return _order - 1; }
+
   virtual int getTypeForMSH()
   {
     // (p+1)*(p+2)*(p+3)/6
     if(_order == 3 && _vs.size() + 4 == 20) return MSH_TET_20; 
+    if(_order == 4 && _vs.size() + 4 == 34) return MSH_TET_34; 
     if(_order == 4 && _vs.size() + 4 == 35) return MSH_TET_35; 
     if(_order == 5 && _vs.size() + 4 == 56) return MSH_TET_56; 
+    if(_order == 5 && _vs.size() + 4 == 52) return MSH_TET_52; 
     return 0;
   }
   virtual void revert() 

@@ -1,4 +1,4 @@
-// $Id: MElement.cpp,v 1.79 2008-07-10 13:29:24 geuzaine Exp $
+// $Id: MElement.cpp,v 1.80 2008-07-11 10:54:24 remacle Exp $
 //
 // Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
@@ -418,7 +418,7 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
 
   if(physical < 0) revert();
 
-  int verts[30];
+  int verts[60];
   for(int i = 0; i < n; i++)
     verts[i] = getVertex(i)->getIndex();
 
@@ -553,7 +553,7 @@ void MElement::writeVTK(FILE *fp, bool binary)
 
   int n = getNumVertices();
   if(binary){
-    int verts[30];
+    int verts[60];
     verts[0] = n;
     for(int i = 0; i < n; i++)
       verts[i + 1] = getVertexVTK(i)->getIndex() - 1;
@@ -731,13 +731,25 @@ void MTetrahedron::pnt(int ord, MVertex *vs[], double uu, double vv, double ww,S
 {
 #if !defined(HAVE_GMSH_EMBEDDED)
   double sf[256];
-  switch(ord){
-  case 1: gmshFunctionSpaces::find(MSH_TET_4).f(uu, vv, ww,sf); break;
-  case 2: gmshFunctionSpaces::find(MSH_TET_10).f(uu, vv, ww,sf); break;
-  case 3: gmshFunctionSpaces::find(MSH_TET_20).f(uu, vv, ww,sf); break;
-  case 4: gmshFunctionSpaces::find(MSH_TET_35).f(uu, vv, ww,sf); break;
-  case 5: gmshFunctionSpaces::find(MSH_TET_56).f(uu, vv, ww,sf); break;
-  default: Msg::Error("Order %d tetrahedron pnt not implemented", ord); break;
+
+  int nv = getNumVolumeVertices();
+
+  if (!nv){
+    switch(ord){
+    case 1: gmshFunctionSpaces::find(MSH_TET_4).f(uu, vv, ww,sf); break;
+    case 2: gmshFunctionSpaces::find(MSH_TET_10).f(uu, vv, ww,sf); break;
+    case 3: gmshFunctionSpaces::find(MSH_TET_20).f(uu, vv, ww,sf); break;
+    case 4: gmshFunctionSpaces::find(MSH_TET_34).f(uu, vv, ww,sf); break;
+    case 5: gmshFunctionSpaces::find(MSH_TET_52).f(uu, vv, ww,sf); break;
+    default: Msg::Error("Order %d tetrahedron pnt not implemented", ord); break;
+    }
+  }
+  else{
+    switch(ord){
+    case 4: gmshFunctionSpaces::find(MSH_TET_35).f(uu, vv, ww,sf); break;
+    case 5: gmshFunctionSpaces::find(MSH_TET_56).f(uu, vv, ww,sf); break;
+    default: Msg::Error("Order %d tetrahedron pnt not implemented", ord); break;
+    }
   }
     
   double x = 0 ; for(int i = 0; i < 4; i++) x += sf[i] * _v[i]->x();
@@ -884,7 +896,7 @@ void MTetrahedron::jac( double uu, double vv, double ww, double j[3][3]) {
   return jac(1,0,uu,vv,ww,j);
 }
 
-const int numSubEdges = 12;
+const int numSubEdges = 6;
 
 int MTriangleN::getNumFacesRep(){ return numSubEdges * numSubEdges; }
 
@@ -1020,7 +1032,9 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_PYR_13: return new MPyramid13(v, num, part);
   case MSH_PYR_14: return new MPyramid14(v, num, part);
   case MSH_TET_20: return new MTetrahedronN(v, 3, num, part);
+  case MSH_TET_34: return new MTetrahedronN(v, 3, num, part);
   case MSH_TET_35: return new MTetrahedronN(v, 4, num, part);
+  case MSH_TET_52: return new MTetrahedronN(v, 5, num, part);
   case MSH_TET_56: return new MTetrahedronN(v, 5, num, part);
   default:         return 0;
   }
