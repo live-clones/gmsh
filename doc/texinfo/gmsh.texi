@@ -2603,21 +2603,8 @@ This tutorial does not explain the mesh and post-processing file formats:
 see @ref{File formats}, for this.
 
 To learn how to run Gmsh on your computer, see @ref{Running Gmsh}. In
-addition, interactive tutorials that explain how to use the graphical
-user interface are available on Gmsh's webpage:
-
-@itemize @bullet
-@item 
-@uref{http://geuz.org/gmsh/doc/gui_tutorial/,The first interactive
-tutorial} shows how to create a simple 2D geometry and how to generate a
-mesh;
-@item
-@uref{http://geuz.org/gmsh/doc/gui_tutorial_2/,The second} shows several
-methods to visualize data sets on deformed grids;
-@item
-@uref{http://geuz.org/gmsh/doc/gui_tutorial_3/,The third} shows how to
-use post-processing plugins.
-@end itemize
+addition, screencasts that show how to use the graphical user interface
+are available on Gmsh's webpage.
 
 @menu
 * t1.geo::                      
