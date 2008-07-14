@@ -945,7 +945,7 @@ static double mesh_functional_distorsion(MTriangle *t, double u, double v)
 {
   // compute uncurved element jacobian d_u x and d_v x
   double mat[2][3];  
-  t->jac(1, 0, 0, 0, 0,mat);
+  t->jac(1, 0, 0, 0, 0, mat);
   double v1[3] = {mat[0][0], mat[0][1], mat[0][2]};
   double v2[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double normal1[3];
@@ -953,7 +953,7 @@ static double mesh_functional_distorsion(MTriangle *t, double u, double v)
   double nn = sqrt(SQU(normal1[0]) + SQU(normal1[1]) + SQU(normal1[2]));
   
   // compute uncurved element jacobian d_u x and d_v x
-  t->jac(u, v, 0,mat);
+  t->jac(u, v, 0, mat);
   double v1b[3] = {mat[0][0], mat[0][1], mat[0][2]};
   double v2b[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double normal[3];
@@ -972,7 +972,7 @@ void getMinMaxJac (MTriangle *t, double &minJ, double &maxJ)
 {
   double mat[2][3];  
   int n = 3;
-  t->jac(1, 0, 0, 0, 0,mat);
+  t->jac(1, 0, 0, 0, 0, mat);
   double v1[3] = {mat[0][0], mat[0][1], mat[0][2]};
   double v2[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double normal1[3], normal[3];
@@ -980,7 +980,7 @@ void getMinMaxJac (MTriangle *t, double &minJ, double &maxJ)
   double nn = sqrt(SQU(normal1[0]) + SQU(normal1[1]) + SQU(normal1[2]));
   for(int i = 0; i < n; i++){
     for(int k = 0; k < n - i; k++){
-      t->jac((double)i / (n - 1), (double)k / (n - 1), 0,mat);
+      t->jac((double)i / (n - 1), (double)k / (n - 1), 0, mat);
       double v1b[3] = {mat[0][0], mat[0][1], mat[0][2]};
       double v2b[3] = {mat[1][0], mat[1][1], mat[1][2]};
       prodve(v1b, v2b, normal);
@@ -1409,8 +1409,8 @@ void printJacobians(GModel *m, const char *nm)
           SPoint3 pt;
           double u = (double)i / (n - 1);
           double v = (double)k / (n - 1);         
-          t->pnt(u,v,0, pt);        
-          D[i][k] = mesh_functional_distorsion (t,u,v);
+          t->pnt(u, v, 0, pt);
+          D[i][k] = mesh_functional_distorsion(t, u, v);
           X[i][k] = pt.x();
           Y[i][k] = pt.y();
           Z[i][k] = pt.z();

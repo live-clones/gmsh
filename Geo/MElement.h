@@ -234,10 +234,6 @@ class MElementFactory{
 /*
  * MLine
  *
- *   v
- *
- *   ^
- *   |
  *   0----------1 --> u
  *
  */
@@ -317,11 +313,7 @@ class MLine : public MElement {
 /*
  * MLine3
  *
- *   v
- *
- *   ^
- *   |
- *   0-----2----1 --> u
+ *   0-----2----1
  *
  */
 class MLine3 : public MLine {
@@ -373,11 +365,7 @@ class MLine3 : public MLine {
 /*
  * MLineN
  *
- *   v
- *
- *   ^
- *   |
- *   0---2---...-(N-1)-1 --> u
+ *   0---2---...-(N-1)-1
  *
  */
 class MLineN : public MLine {
@@ -424,10 +412,10 @@ class MLineN : public MLine {
   }
 };
 
-/* MTriangle
+/* 
+ * MTriangle
  *
  *   v
- *
  *   ^
  *   |
  *   2
@@ -521,16 +509,6 @@ class MTriangle : public MElement {
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
-  virtual void jac(int order, MVertex *verts[], double u, double v, double w, double jac[2][3]);
-  virtual void jac(double u, double v, double w, double j[2][3])
-  {
-    jac(1, 0, u, v, w, j);
-  }
-  virtual void pnt(int order, MVertex *verts[], double u, double v, double w, SPoint3 &);
-  virtual void pnt(double u, double v, double w, SPoint3 &p)
-  {
-    pnt(1, 0, u, v, w, p);
-  }
   virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
   {
     switch(num){
@@ -555,6 +533,18 @@ class MTriangle : public MElement {
       return false; 
     return true;
   }
+  virtual void jac(int order, MVertex *verts[], double u, double v, double w, 
+		   double j[2][3]);
+  virtual void jac(double u, double v, double w, double j[2][3])
+  {
+    jac(1, 0, u, v, w, j);
+  }
+  virtual void pnt(int order, MVertex *verts[], double u, double v, double w, 
+		   SPoint3 &p);
+  virtual void pnt(double u, double v, double w, SPoint3 &p)
+  {
+    pnt(1, 0, u, v, w, p);
+  }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
  private:
   int edges_tri(const int edge, const int vert) const
@@ -571,17 +561,13 @@ class MTriangle : public MElement {
 /*
  * MTriangle6
  *
- *   v
- *
- *   ^
- *   |
  *   2
  *   |`\
  *   |  `\
  *   5    `4
  *   |      `\
  *   |        `\
- *   0-----3----1 --> u
+ *   0-----3----1
  *
  */
 class MTriangle6 : public MTriangle {
@@ -671,12 +657,8 @@ class MTriangle6 : public MTriangle {
 };
 
 /*
- * MTriangleN
+ * MTriangleN  FIXME: check the plot
  *
- *   v
- *
- *   ^
- *   |
  *   2
  *   |`\                E = order - 1;
  *   |  `\              N = total number of vertices
@@ -687,7 +669,7 @@ class MTriangle6 : public MTriangle {
  * 2+3E           3+E
  *   |  3+3E to N-1 `\
  *   |                `\
- *   0---3--...---2+E---1 --> u
+ *   0---3--...---2+E---1
  *
  */
 class MTriangleN : public MTriangle {
@@ -769,28 +751,27 @@ class MTriangleN : public MTriangle {
   }
   virtual void jac(double u, double v, double w, double j[2][3])
   {
-    MTriangle::jac(_order, &(*(_vs.begin())), u, v, w, j);
+    MTriangle::jac(_order, &_vs[0], u, v, w, j);
   }
   virtual void pnt(double u, double v, double w, SPoint3 &p)
   {
-    MTriangle::pnt(_order, &(*(_vs.begin())), u, v, w, p);
+    MTriangle::pnt(_order, &_vs[0], u, v, w, p);
   }
 };
 
 /*
  * MQuadrangle
  *
- *   v
- *
- *   ^
- *   |
- *   3----------2
- *   |          |
- *   |          |
- *   |          |
- *   |          |
- *   |          |
- *   0----------1 --> u
+ *         v
+ *         ^
+ *         |
+ *   3-----------2
+ *   |     |     |
+ *   |     |     |
+ *   |     +---- | --> u
+ *   |           |
+ *   |           |
+ *   0-----------1 
  *
  */
 class MQuadrangle : public MElement {
@@ -912,17 +893,13 @@ class MQuadrangle : public MElement {
 /*
  * MQuadrangle8
  *
- *   v
- *
- *   ^
- *   |
- *   3-----6----2
- *   |          |
- *   |          |
- *   7          5
- *   |          |
- *   |          |
- *   0-----4----1 --> u
+ *   3-----6-----2
+ *   |           |
+ *   |           |
+ *   7           5
+ *   |           |
+ *   |           |
+ *   0-----4-----1 
  *
  */
 class MQuadrangle8 : public MQuadrangle {
@@ -1008,17 +985,13 @@ class MQuadrangle8 : public MQuadrangle {
 /*
  * MQuadrangle9
  *
- *   v
- *
- *   ^
- *   |
- *   3-----6----2
- *   |          |
- *   |          |
- *   7     8    5
- *   |          |
- *   |          |
- *   0-----4----1 --> u
+ *   3-----6-----2
+ *   |           |
+ *   |           |
+ *   7     8     5
+ *   |           |
+ *   |           |
+ *   0-----4-----1 
  *
  */
 class MQuadrangle9 : public MQuadrangle {
@@ -1105,7 +1078,7 @@ class MQuadrangle9 : public MQuadrangle {
  *        ,/    '.   `\
  *      ,/       |     `\
  *    ,/         |       `\
- *   0-----------'+--------1 --> u
+ *   0-----------'.--------1 --> u
  *    `\.         |      ,/
  *       `\.      |    ,/
  *          `\.   '. ,/
@@ -1220,14 +1193,6 @@ class MTetrahedron : public MElement {
     default : s = 0.; break;
     }
   }
-  virtual void jac(int order, MVertex *verts[], double u, double v, double w, double jac[3][3]);
-  virtual void jac(int order,std::vector<MVertex*>& verts,double u, double v, double w , double jac[3][3]);
-  virtual void jac(double u,double v,double w,double [3][3]);
-  
-  virtual void pnt(int order, MVertex *verts[], double u, double v, double w, SPoint3 &);
-  virtual void pnt(int order, std::vector<MVertex *>& verts, double u, double v, double w, SPoint3 &);
-  virtual void pnt(double u, double v, double w, SPoint3 &);
-  
   virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
   {
     switch(num) {
@@ -1243,6 +1208,28 @@ class MTetrahedron : public MElement {
     if(u < (-tol) || v < (-tol) || w < (-tol) || u > ((1. + tol) - v - w))
       return false;
     return true;
+  }
+  virtual void jac(int order, MVertex *verts[], double u, double v, double w,
+		   double j[3][3]);
+  virtual void jac(int order, std::vector<MVertex*>& verts, double u, double v, double w,
+		   double j[3][3])
+  {
+    jac(order, &verts[0], u, v, w, j);
+  }
+  virtual void jac(double u, double v, double w, double j[3][3])
+  {
+    jac(1, 0, u, v, w, j);
+  }
+  virtual void pnt(int order, MVertex *verts[], double u, double v, double w,
+		   SPoint3 &p);
+  virtual void pnt(int order, std::vector<MVertex*> &verts, double u, double v, double w,
+		   SPoint3 &p)
+  {
+    pnt(order, &verts[0], u, v, w, p);
+  }
+  virtual void pnt(double u, double v, double w, SPoint3 &p)
+  {
+    pnt(1, 0, u, v, w, p);
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
  private:
@@ -1273,24 +1260,18 @@ class MTetrahedron : public MElement {
 /*
  * MTetrahedron10
  *
- *                      v
- *                    .
- *                  ,/
- *                 /
  *              2 
  *            ,/|`\
  *          ,/  |  `\
  *        ,6    '.   `5
  *      ,/       8     `\
  *    ,/         |       `\
- *   0--------4--'+--------1 --> u
+ *   0--------4--'.--------1
  *    `\.         |      ,/
  *       `\.      |    ,9
  *          `7.   '. ,/
  *             `\. |/
  *                `3
- *                   `\.
- *                      ` w
  *
  */
 class MTetrahedron10 : public MTetrahedron {
@@ -1389,38 +1370,31 @@ class MTetrahedron10 : public MTetrahedron {
     tmp = _vs[1]; _vs[1] = _vs[2]; _vs[2] = tmp;
     tmp = _vs[5]; _vs[5] = _vs[3]; _vs[3] = tmp;
   }
-
-  virtual void jac(double u,double v,double w, double jac[3][3]) {
+  virtual void jac(double u,double v,double w, double jac[3][3])
+  {
     MTetrahedron::jac(2,_vs,u,v,w,jac);
   }
-  
-  virtual void pnt(double u,double v,double w, SPoint3& p) {
+  virtual void pnt(double u,double v,double w, SPoint3& p)
+  {
     MTetrahedron::pnt(2, _vs, u, v, w, p);
   }
-  
 };
 
 /*
- * MTetrahedronN
+ * MTetrahedronN  FIXME: check the plot
  *
- *                      v           E = order - 1
- *                    .             C = 4 + 6*E
- *                  ,/              F = ((order - 1)*(order - 2))/2
- *                 /                N = total number of vertices
  *              2
- *            ,/|`\                 Interior vertex numbers
- *          ,/  |  `\                 for edge 0 <= i <= 5: 4+i*E to 3+(i+1)*E
- *        ,/    '.   `\               for face 0 <= j <= 3: C+j*F to C-1+(j+1)*F
- *      ,/       |     `\             in volume           : C+4*F to N-1
- *    ,/         |       `\
- *   0-----------'+--------1 --> u
- *    `\.         |      ,/
- *       `\.      |    ,/
- *          `\.   '. ,/
- *             `\. |/
+ *            ,/|`\ 
+ *          ,/  |  `\              E = order - 1
+ *        ,/    '.   `\            C = 4 + 6*E 
+ *      ,/       |     `\          F = ((order - 1)*(order - 2))/2
+ *    ,/         |       `\	   N = total number of vertices
+ *   0-----------'.--------1
+ *    `\.         |      ,/        Interior vertex numbers  
+ *       `\.      |    ,/            for edge 0 <= i <= 5: 4+i*E to 3+(i+1)*E
+ *          `\.   '. ,/		     for face 0 <= j <= 3: C+j*F to C-1+(j+1)*F
+ *             `\. |/		     in volume           : C+4*F to N-1
  *                `3
- *                   `\.
- *                      ` w
  *
  */
 class MTetrahedronN : public MTetrahedron {
@@ -1506,24 +1480,18 @@ class MTetrahedronN : public MTetrahedron {
 /*
  * MHexahedron
  *
- *   v
- *
- *   ^
- *   |
+ *          v
  *   3----------2
- *   |\         |\
- *   | \        | \
- *   |  \       |  \
+ *   |\     ^   |\
+ *   | \    |   | \
+ *   |  \   |   |  \
  *   |   7------+---6
- *   |   |      |   |
- *   0---+------1   | --> u
- *    \  |       \  |
- *     \ |        \ |
- *      \|         \|
+ *   |   |  +-- |-- | -> u
+ *   0---+---\--1   | 
+ *    \  |    \  \  |
+ *     \ |     \  \ |
+ *      \|      w  \|
  *       4----------5
- *        \
- *         \
- *          w
  *
  */
 class MHexahedron : public MElement {
@@ -1707,24 +1675,17 @@ class MHexahedron : public MElement {
 /*
  * MHexahedron20
  *
- *   v
- *
- *   ^
- *   |
  *   3----13----2
  *   |\         |\
- *   |15        | 14
+ *   | 15       | 14
  *   9  \       11 \
  *   |   7----19+---6
  *   |   |      |   |
- *   0---+-8----1   | --> u
- *    \ 17       \  18
+ *   0---+-8----1   | 
+ *    \  17      \  18
  *    10 |        12|
  *      \|         \|
  *       4----16----5
- *        \
- *         \
- *          w
  *
  */
 class MHexahedron20 : public MHexahedron {
@@ -1851,24 +1812,17 @@ class MHexahedron20 : public MHexahedron {
 /*
  * MHexahedron27
  *
- *   v
- *
- *   ^
- *   |
  *   3----13----2
  *   |\         |\
  *   |15    24  | 14
  *   9  \ 20    11 \
  *   |   7----19+---6
  *   |22 |  26  | 23|
- *   0---+-8----1   | --> u
+ *   0---+-8----1   |
  *    \ 17    25 \  18
  *    10 |  21    12|
  *      \|         \|
  *       4----16----5
- *        \
- *         \
- *          w
  *
  */
 class MHexahedron27 : public MHexahedron {
@@ -1991,7 +1945,6 @@ class MHexahedron27 : public MHexahedron {
  * MPrism
  *
  *               w
- *
  *               ^
  *               |
  *               3
@@ -2000,14 +1953,15 @@ class MHexahedron27 : public MHexahedron {
  *         ,/    |    `\
  *        4------+------5
  *        |      |      |
- *        |      0      |
- *        |    ,/ `\    |
+ *        |    ,/|`\    |
+ *        |  ,/  |  `\  |
+ *        |,/    |    `\|
+ *       ,|      |      `\
+ *     ,/ |      0      | `\
+ *    u   |    ,/ `\    |    v
  *        |  ,/     `\  |
  *        |,/         `\|
  *        1-------------2
- *     ,/                 `\
- *   ,/                     `\
- *  u                          v
  *
  */
 class MPrism : public MElement {
@@ -2182,24 +2136,21 @@ class MPrism : public MElement {
 /*
  * MPrism15
  *
- *               w
- *
- *               ^
- *               |
  *               3
  *             ,/|`\
  *           12  |  13
- *         ,/    8    `\
+ *         ,/    |    `\
  *        4------14-----5
+ *        |      8      |
  *        |      |      |
+ *        |      |      |
+ *        |      |      |
+ *        10     |      11
  *        |      0      |
- *       10    ,/ `\    11
+ *        |    ,/ `\    |
  *        |  ,6     `7  |
  *        |,/         `\|
  *        1------9------2
- *     ,/                 `\
- *   ,/                     `\
- *  u                          v
  *
  */
 class MPrism15 : public MPrism {
@@ -2312,24 +2263,21 @@ class MPrism15 : public MPrism {
 /*
  * MPrism18
  *
- *               w
- *
- *               ^
- *               |
  *               3
  *             ,/|`\
  *           12  |  13
- *         ,/    8    `\
+ *         ,/    |    `\
  *        4------14-----5
+ *        |      8      |
+ *        |    ,/|`\    |
  *        |  15  |  16  |
- *        |,/    0    `\|
- *       10------17-----11
+ *        |,/    |    `\|
+ *        10-----17-----11
+ *        |      0      |
+ *        |    ,/ `\    |
  *        |  ,6     `7  |
  *        |,/         `\|
  *        1------9------2
- *     ,/                 `\
- *   ,/                     `\
- *  u                          v
  *
  */
 class MPrism18 : public MPrism {
@@ -2441,19 +2389,18 @@ class MPrism18 : public MPrism {
  *               ,/|\
  *             ,/ .'|\
  *           ,/   | | \
- *  w      ,/    .' | `.
- *       ,/      |  '. \
- *  ^  ,/       .'   |  \
- *  |,/         |    |   \
- *  0----------.'----3    \ --> v
- *   `\        |      `\  `.
- *     `\     .'        `\ \
- *       `\   |           `\\
- *         `\.'             `\
- *           1----------------2
- *             `\
- *               `\
- *                  u
+ *         ,/    .' | `.
+ *       ,/      |  '.  \
+ *     ,/       .' w |   \
+ *   ,/         |  ^ |    \
+ *  0----------.'--|-3    `. 
+ *   `\        |   |  `\    \
+ *     `\     .'   +----`\ - \ -> v
+ *       `\   |    `\     `\  \
+ *         `\.'      `\     `\`
+ *            1----------------2
+ *                      `\
+ *                         u
  *
  */
 class MPyramid : public MElement {
@@ -2636,20 +2583,17 @@ class MPyramid : public MElement {
  *               ,/|\
  *             ,/ .'|\
  *           ,/   | | \
- *  w      ,7    .' | `.
- *       ,/      |  12 \
- *  ^  ,/       .'   |  \
- *  |,/         9    |   11
- *  0--------6-.'----3    \ --> v
- *   `\        |      `\  `.
- *     `5     .'        10 \
- *       `\   |           `\\
- *         `\.'             `\
- *           1--------8-------2
- *             `\
- *               `\
- *                  u
- *
+ *         ,/    .' | `.
+ *       ,7      |  12  \
+ *     ,/       .'   |   \
+ *   ,/         9    |    11
+ *  0--------6-.'----3    `. 
+ *   `\        |      `\    \
+ *     `5     .'        10   \ 
+ *       `\   |           `\  \
+ *         `\.'             `\`
+ *            1--------8-------2
+ *                        
  */
 class MPyramid13 : public MPyramid {
  protected:
@@ -2755,19 +2699,16 @@ class MPyramid13 : public MPyramid {
  *               ,/|\
  *             ,/ .'|\
  *           ,/   | | \
- *  w      ,7    .' | `.
- *       ,/      |  12 \
- *  ^  ,/       .'   |  \
- *  |,/         9    |   11
- *  0--------6-.'----3    \ --> v
- *   `\       `|      `\  `.
- *     `5-----.'13------10 \
- *       `\   |   `\      `\\
- *         `\.'     `\      `\
- *           1--------8-------2
- *             `\
- *               `\
- *                  u
+ *         ,/    .' | `.
+ *       ,7      |  12  \
+ *     ,/       .'   |   \
+ *   ,/         9    |    11
+ *  0--------6-.'----3    `. 
+ *   `\        |      `\    \
+ *     `5     .' 13     10   \ 
+ *       `\   |           `\  \
+ *         `\.'             `\`
+ *            1--------8-------2
  *
  */
 class MPyramid14 : public MPyramid {

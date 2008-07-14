@@ -2481,12 +2481,7 @@ The coordinates are given `by node', i.e.,
 etc.
 @end itemize
 
-The ordering of the nodes is given in @ref{Node ordering}. For second
-order elements, the first order nodes are given first, followed by the nodes
-associated with the edges, followed by the nodes associated with the
-quadrangular faces (if any), followed by the nodes associated with the
-volume (if any). The ordering of these additional nodes follows the ordering
-of the edges and quadrangular faces given in @ref{Node ordering}.
+The ordering of the nodes is given in @ref{Node ordering}.
 
 The values are given by time step, by node and by component, i.e.:
 @example
@@ -3122,12 +3117,7 @@ must be postive integers, or zero. A zero tag is equivalent to no tag.
 
 @item @var{node-number-list}
 is the list of the node numbers of the @var{n}-th element. The ordering of
-the nodes is given in @ref{Node ordering}; for second order elements,
-the first order nodes are given first, followed by the nodes associated with
-the edges, followed by the nodes associated with the quadrangular faces (if
-any), followed by the nodes associated with the volume (if any). The
-ordering of these additional nodes follows the ordering of the edges and
-quadrangular faces given in @ref{Node ordering}.
+the nodes is given in @ref{Node ordering}.
 
 @item @var{number-of-string-tags}
 gives the number of string tags that follow. By default the first
@@ -3275,146 +3265,148 @@ for(i = 0; i < number_of_triangles; i++)@{
 @section Node ordering
 
 @cindex Nodes, ordering
-@cindex Edges, ordering
-@cindex Faces, ordering
 
 For all mesh and post-processing file formats, the reference elements
-are defined as follows. For high-order elements, the ordering of the
-edges/quad faces defines the ordering of high-order vertices associated
-with edges/faces.
+are defined as follows.
 
-@c FIXME: changer la doc des faces pour les definir de maniere sensee
-@c sans butterflies.
-
-@example
+@smallexample
 @group
-Point:
-        v
-        |
-        |
-   -----1-----u
-        |
-        |
+Line:                   Line3:
+                                                
+0----------1 --> u      0-----2----1
+
 @end group
-@end example
+@end smallexample
 
-@example
+@smallexample
 @group
-Line:
-                  edge 1: nodes 1 2
-        v
-        |
-        |
-   --1-----2--u
-        |
-        |
+Triangle:               Triangle6:
+
+v
+^
+|
+2                       2           
+|`\                     |`\         
+|  `\                   |  `\       
+|    `\                 5    `4     
+|      `\               |      `\   
+|        `\             |        `\ 
+0----------1 --> u      0-----3----1
+
 @end group
-@end example
+@end smallexample
 
-@example
+@smallexample
 @group
-Triangle:
-                  edge 1: nodes 1 2
-   v                   2:       2 3
-   |                   3:       3 1
-   |
-   3
-   |\
-   | \
-   |__\___u
-   1   2
+Quadrangle:            Quadrangle8:            Quadrangle9:
+
+      v
+      ^
+      |
+3-----------2          3-----6-----2           3-----6-----2 
+|     |     |          |           |           |           | 
+|     |     |          |           |           |           | 
+|     +---- | --> u    7           5           7     8     5 
+|           |          |           |           |           | 
+|           |          |           |           |           | 
+0-----------1          0-----4-----1           0-----4-----1 
+
 @end group
-@end example
+@end smallexample
 
-@example
+@smallexample
 @group
-Quadrangle:
-                  edge 1: nodes 1 2   quad. face 1: nodes 1 2 3 4
-        v              2:       2 3
-        |              3:       3 4
-     4--|--3           4:       4 1
-     |  |  |
-   -----------u
-     |  |  |
-     1--|--2
-        |
+Tetrahedron:                          Tetrahedron10:
+
+                   v
+                 .
+               ,/
+              /
+           2                                     2           
+         ,/|`\                                 ,/|`\         
+       ,/  |  `\                             ,/  |  `\       
+     ,/    '.   `\                         ,6    '.   `5     
+   ,/       |     `\                     ,/       8     `\   
+ ,/         |       `\                 ,/         |       `\ 
+0-----------'.--------1 --> u         0--------4--'.--------1
+ `\.         |      ,/                 `\.         |      ,/ 
+    `\.      |    ,/                      `\.      |    ,9   
+       `\.   '. ,/                           `7.   '. ,/     
+          `\. |/                                `\. |/       
+             `3                                    `3        
+                `\.
+                   ` w
 @end group
-@end example
+@end smallexample
 
-@example
+@smallexample
 @group
-Tetrahedron:
-                  edge 1: nodes 1 2
-   v                   2:       2 3
-   |                   3:       3 1
-   |                   4:       4 1
-   |                   5:       4 3
-   3                   6:       4 2
-   |\                
-   | \
-   |__\2_____u
-   1\ /
-     \4
-      \
-       w
+Hexahedron:             Hexahedron20:          Hexahedron27:
+
+       v
+3----------2            3----13----2           3----13----2     
+|\     ^   |\           |\         |\          |\         |\    
+| \    |   | \          | 15       | 14        |15    24  | 14  
+|  \   |   |  \         9  \       11 \        9  \ 20    11 \  
+|   7------+---6        |   7----19+---6       |   7----19+---6 
+|   |  +-- |-- | -> u   |   |      |   |       |22 |  26  | 23| 
+0---+---\--1   |        0---+-8----1   |       0---+-8----1   | 
+ \  |    \  \  |         \  17      \  18       \ 17    25 \  18
+  \ |     \  \ |         10 |        12|        10 |  21    12| 
+   \|      w  \|           \|         \|          \|         \| 
+    4----------5            4----16----5           4----16----5 
+
 @end group
-@end example
+@end smallexample
 
-@example
+@smallexample
 @group
-Hexahedron:
-                  edge 1: nodes 1 2   quad. face 1: nodes 1 4 3 2
-        v              2:       1 4              2:       1 2 6 5
-        |              3:       1 5              3:       1 5 8 4
-        |              4:       2 3              4:       2 3 7 6
-   4----|--3           5:       2 6              5:       3 4 8 7
-   |\   |  |\          6:       3 4              6:       5 6 7 8
-   | 8-------7         7:       3 7
-   | |   ----|---u     8:       4 8
-   1-|---\-2 |         9:       5 6
-    \|    \ \|        10:       5 8
-     5-----\-6        11:       6 7
-            \         12:       7 8
-             w
-@end group
-@end example
+Prism:                      Prism15:               Prism18:
 
-@example
-@group
-Prism:
-                  edge 1: nodes 1 2   quad. face 1: nodes 1 2 5 4
-      v                2:       1 3              2:       1 4 6 3
-    3 |                3:       1 4              3:       2 3 6 5
-    |\|                4:       2 3
-    | |                5:       2 5
-    1_|2               6:       3 6
-     \| 6              7:       4 5
-      |_|_\___u        8:       4 6
-       \|  \           9:       5 6
-        4 __5
-         \
-          \
            w
-@end group
-@end example
+           ^
+           |
+           3                       3                      3        
+         ,/|`\                   ,/|`\                  ,/|`\      
+       ,/  |  `\               12  |  13              12  |  13    
+     ,/    |    `\           ,/    |    `\          ,/    |    `\  
+    4------+------5         4------14-----5        4------14-----5 
+    |      |      |         |      8      |        |      8      | 
+    |    ,/|`\    |         |      |      |        |    ,/|`\    | 
+    |  ,/  |  `\  |         |      |      |        |  15  |  16  | 
+    |,/    |    `\|         |      |      |        |,/    |    `\| 
+   ,|      |      `\        10     |      11       10-----17-----11
+ ,/ |      0      | `\      |      0      |        |      0      | 
+u   |    ,/ `\    |    v    |    ,/ `\    |        |    ,/ `\    | 
+    |  ,/     `\  |         |  ,6     `7  |        |  ,6     `7  | 
+    |,/         `\|         |,/         `\|        |,/         `\| 
+    1-------------2         1------9------2        1------9------2 
 
-@example
-@group
-Pyramid:
-                  edge 1: nodes 1 2   quad. face 1: nodes 1 4 3 2
-        v              2        1 4
-        |              3        1 5
-        |              4        2 3
-    4---|---3          5        2 5
-    | \ |  /|          6        3 4
-    |  \ -/-|---u      7        3 5
-    |  / 5\ |          8        4 5
-    1/----\-2
-           \
-            \
-             w
 @end group
-@end example
+@end smallexample
+
+@smallexample
+@group
+Pyramid:                     Pyramid13:                   Pyramid14:
+
+               4                            4                            4
+             ,/|\                         ,/|\                         ,/|\
+           ,/ .'|\                      ,/ .'|\                      ,/ .'|\
+         ,/   | | \                   ,/   | | \                   ,/   | | \
+       ,/    .' | `.                ,/    .' | `.                ,/    .' | `.
+     ,/      |  '.  \             ,7      |  12  \             ,7      |  12  \
+   ,/       .' w |   \          ,/       .'   |   \          ,/       .'   |   \
+ ,/         |  ^ |    \       ,/         9    |    11      ,/         9    |    11
+0----------.'--|-3    `.     0--------6-.'----3    `.     0--------6-.'----3    `.
+ `\        |   |  `\    \      `\        |      `\    \     `\        |      `\    \
+   `\     .'   +----`\ - \ -> v  `5     .'        10   \      `5     .' 13     10   \
+     `\   |    `\     `\  \        `\   |           `\  \       `\   |           `\  \ 
+       `\.'      `\     `\`          `\.'             `\`         `\.'             `\` 
+          1----------------2            1--------8-------2           1--------8-------2
+                    `\
+                       u
+@end group
+@end smallexample
 
 @c -------------------------------------------------------------------------
 @c Legacy formats
@@ -3553,13 +3545,7 @@ kept for backward compatibility.
 
 @item @var{node-number-list}
 is the list of the @var{number-of-nodes} node numbers of the @var{n}-th
-element. The ordering of the nodes is given in @ref{Node ordering}; for
-second order elements, the first order nodes are given first, followed
-by the nodes associated with the edges, followed by the nodes associated
-with the quadrangular faces (if any), followed by the nodes associated
-with the volume (if any). The ordering of these additional nodes follows
-the ordering of the edges and quadrangular faces given in @ref{Node
-ordering}.
+element. The ordering of the nodes is given in @ref{Node ordering}.
 @end table
 
 @c .........................................................................
@@ -3688,13 +3674,7 @@ For example, @var{vector-triangle-value} is defined as:
 @dots{}
 @end example
 
-The ordering of the nodes is given in @ref{Node ordering}. For second
-order elements, the first order nodes are given first, followed by the
-nodes associated with the edges, followed by the nodes associated with
-the quadrangular faces (if any), followed by the nodes associated with
-the volume (if any). The ordering of these additional nodes follows the
-ordering of the edges and quadrangular faces given in @ref{Node
-ordering}.
+The ordering of the nodes is given in @ref{Node ordering}.
 
 @item @var{text2d}
 is a list of 4 double precision numbers:
