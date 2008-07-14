@@ -1,0 +1,234 @@
+$Id: TODO,v 1.75 2008-06-28 17:06:55 geuzaine Exp $
+
+********************************************************************
+
+replace Symbol_T with something like
+
+class ParserSymbol{
+ public:
+  std::vector<double> num;
+  std::vector<std::string> str;
+};
+
+and Tree_T Symbols with std::map<std::string, ParserSymbol>.
+
+********************************************************************
+
+Streamline OpenFile to deal with multiple models: basically, we need 3
+functions: NewModel (create a new model and add it to the model list,
+and make it the current model), Merge(Merge CAD or mesh data in the
+current model, or create post-processing data associated with the
+current model) and Clear(Destroys all models and post-processing
+views).
+
+main() always creates an initial empty model. Thus
+
+"gmsh a b c" == NewModel() Merge(a) Merge(b) Merge(c)
+
+"gmsh a b -new c" == NewModel() Merge(a) Merge(b) NewModel() Merge(c)
+
+File->Open(a) == Clear() NewModel() Merge(a) ?
+
+File->Merge(a) == Merge(a)
+
+Or should we just bite the bullet and follow what all other software
+tools do, i.e., if no input file is given present a File->New or Open
+dialog and refuse to continue until a model is given...
+
+********************************************************************
+
+Decide what to do with global parser variables. Should we clear them
+when we open a new file? +: fixes annoying persistance when changing
+.geo files and reloading them; -: cannot use -string "aa=1;" to change
+global vars from command line.
+
+********************************************************************
+
+Add a global "transparency slider" for the mesh; if value != 1, fill a
+global triangle vertex array in GModel instead of in each separate
+entity, and sort like in post-processing.
+
+********************************************************************
+
+fix tetgen for non manifold geometries: with a single surface
+connected to a volume and tetgen modifies the volume boundary mesh, we
+get hanging nodes
+Plus we need to fix the 1D mesh in all cases
+
+********************************************************************
+
+Add list of recently loaded files in the GUI
+
+********************************************************************
+
+if 2 physical lines are defined for a given elementary line, with
+different orientations, when we read the file back displaying the
+phsyical shows the elements in both directions (since all the elements
+have been loaded in the same elementary entity)
+
+********************************************************************
+
+add cleanup fct to remove duplicate elements in
+GModel->checkMeshCoherence
+
+********************************************************************
+
+3D Delaunay: precompute non-connected volumes and apply algo to each
+non-connected aggregate. This will improve mesh quality and speed for
+close non-connected objects.
+
+********************************************************************
+
+interface duplicate entity removal from opencascade
+
+********************************************************************
+
+add support for Patran mesh files
+
+********************************************************************
+
+Bug: need to better understand how Netgen deals with characteristic
+lengths: a larger geometry (with appropriately scaled lcs) leads to a
+larger mesh
+
+********************************************************************
+
+interface GModel in surface creation in the parser
+
+********************************************************************
+
+add linear lc progression in 1D transfinite generator
+
+********************************************************************
+
+add parameter to geo transforms to copy the meshes--this would allow
+us to do symmetries and periodic meshes
+
+********************************************************************
+
+introduce Right/Left/Alternate for extruded meshes
+
+********************************************************************
+
+recode full-quad recombine algo + add full-hexa recombine by simply
+doing barycentric subdivision on tets
+
+********************************************************************
+
+re-implement STL remeshing
+
+********************************************************************
+
+create pyramids on quad surfaces inside unstructured volume before
+tetrahedralizing (to enable hex/tet hybrid grids)
+
+********************************************************************
+
+physical groups->add->line/surface: pressing '-' after/while selecting 
+a surface should add it with reverse orientation?
+
+********************************************************************
+
+fill transfinite_vertices in meshGFaceExtrude/meshGRegionExtrude when
+it makes sense (so that we can use extruded+recombined surfaces to
+create Transfinite Volumes, or use the P3D output format)
+
+********************************************************************
+
+parse CORDxx entries in Nastran files to get coordinate system
+definitions and use them when reading GRID + parse GRIDxx for axisym
+points
+
+********************************************************************
+
+add Mesh>Edit>Change orientation>Lines & Surfaces
+
+********************************************************************
+
+implement better algo to determine which axes to draw
+(cf. mathematica)
+
+********************************************************************
+
+extrude along a given function or along a parametric curve
+
+********************************************************************
+
+Custom range on "filled iso" 3D views produces ugly plots, where one
+sees inside the cut elements. (In the meantime, one can use
+Plugin(CutMap) with "ExtractVolume" set to 1 (or -1): this will
+generate a new view with an actual "cut" on the front (an
+"iso-volume"). Then one could use Plugin(Skin) to extract the outer
+surface.)
+
+********************************************************************
+
+add "sprite" option to draw fake 3D spheres in post-pro (so that we
+can draw millions of spheres)
+
+********************************************************************
+
+add option to cutmesh to cap the mesh instead of displaying "whole"
+elements
+
+********************************************************************
+
+add option to draw "filled isos" using 1D textures?
+
+********************************************************************
+
+add GUI for translate+rotate extrusions and for mesh extrusion (layer
+stuff)
+
+********************************************************************
+
+Labels:
+- add dynamic variables? E.g., if a string contains %string.string,
+replace it dynamically in Draw_Text2D/3D by calling
+Get_OptionsCategory/Get_OptionValue. (provide a global option to
+disable all replacements)
+- position with the mouse
+- select/move once positioned?
+- add ability to add arrows
+
+********************************************************************
+
+Add a "bitmap" object in the views, e.g. to add a logo. Maybe would
+be good enough to add another mode in the "background gradient" stuff
+to display an image in the background
+
+********************************************************************
+
+keep a table (stack) with the N last file positions when add_infile()
+is called; we could then easily implement a simple (but real) UNDO
+strategy
+
+********************************************************************
+
+add/restore Parametric curve type using MathEval
+
+********************************************************************
+
+add ternary operator and <,>,<=,>=,== tests in MathEval
+
+********************************************************************
+
+on Macs, datasets with a bounding box < 1.e-06 don't display properly
+(probably because all the OpenGL stuff is done internally in single
+precision...). Rescale?
+
+********************************************************************
+
+find a better way to display the time/timestep in the scale... (would
+be solved if we had dynamic labels?)
+
+********************************************************************
+
+rewrite ColorTable as a C++ class
+
+********************************************************************
+
+create "Volume visualization" range type? (interpolate on regular grid
++ create cut planes // to viewpoint with transparency; can be done in
+a straightforward way or using 3D textures)
+
