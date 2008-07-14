@@ -130,19 +130,20 @@ std::string GRegion::getAdditionalInfoString()
 {
   if(l_faces.empty()) return std::string("");
 
-  char tmp[256];
+  std::string str("{");
   if(l_faces.size() > 10){
-    sprintf(tmp, "{%d, ..., %d}", (*l_faces.begin())->tag(), (*l_faces.end())->tag());
-    return std::string(tmp);
-  }
-
-  std::string str("");
-  std::list<GFace*>::const_iterator it = l_faces.begin();
-  str += "{";
-  for(; it != l_faces.end(); it++){
-    if(it != l_faces.begin()) str += ",";
-    sprintf(tmp, "%d", (*it)->tag());
+    char tmp[256];
+    sprintf(tmp, "%d, ..., %d", l_faces.front()->tag(), l_faces.back()->tag());
     str += tmp;
+  }
+  else{
+    std::list<GFace*>::const_iterator it = l_faces.begin();
+    for(; it != l_faces.end(); it++){
+      if(it != l_faces.begin()) str += ",";
+      char tmp[256];
+      sprintf(tmp, "%d", (*it)->tag());
+      str += tmp;
+    }
   }
   str += "}";
   return str;

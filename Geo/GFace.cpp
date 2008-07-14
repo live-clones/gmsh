@@ -159,14 +159,13 @@ std::string GFace::getAdditionalInfoString()
   if(l_edges.empty()) return std::string("");
 
   std::string str("{");
-  std::list<GEdge*>::const_iterator it = l_edges.begin();
   if(l_edges.size() > 10){
-    std::list<GEdge*>::const_iterator ite = l_edges.end();
     char tmp[256];
-    sprintf(tmp, "%d, ..., %d", (*it)->tag(), (*ite)->tag());
+    sprintf(tmp, "%d, ..., %d", l_edges.front()->tag(), l_edges.back()->tag());
     str += tmp;
   }
   else{
+    std::list<GEdge*>::const_iterator it = l_edges.begin();
     for(; it != l_edges.end(); it++){
       if(it != l_edges.begin()) str += ",";
       char tmp[256];
