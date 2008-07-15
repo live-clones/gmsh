@@ -1743,8 +1743,8 @@ entities in @var{transform-list}.
 
 @example
 @var{transform-list}: 
-  Point | Line | Surface @{ @var{expression-list} @}; @dots{} |
-  Duplicata @{ Point | Line | Surface @{ @var{expression-list} @}; @dots{} @} |
+  Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} |
+  Duplicata @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @} |
   @var{transform}
 @end example
 
