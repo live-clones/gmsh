@@ -208,6 +208,9 @@ class MElement
   virtual int getTypeForVTK(){ return 0; }
   virtual const char *getStringForPOS(){ return 0; }
   virtual const char *getStringForBDF(){ return 0; }
+
+  // Information about a MSH type
+  static int getInfoMSH(const int typeMSH, const char **const name = 0);
 };
 
 class MElementLessThanLexicographic{

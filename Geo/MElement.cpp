@@ -624,6 +624,89 @@ void MElement::writeBDF(FILE *fp, int format, int elementary)
   }
 }
 
+// Returns number of vertices and name if 'name' != 0.  'name' has a default
+// argument of 0.
+int MElement::getInfoMSH(const int typeMSH, const char **const name)
+{
+  static const int numVert[MSH_NUM_TYPE] = {
+    2,  // MSH_LIN_2
+    3,  // MSH_TRI_3
+    4,  // MSH_QUA_4
+    4,  // MSH_TET_4
+    8,  // MSH_HEX_8
+    6,  // MSH_PRI_6
+    5,  // MSH_PYR_5
+    3,  // MSH_LIN_3
+    6,  // MSH_TRI_6
+    9,  // MSH_QUA_9
+    10, // MSH_TET_10
+    27, // MSH_HEX_27
+    18, // MSH_PRI_18
+    14, // MSH_PYR_14
+    1,  // MSH_PNT
+    8,  // MSH_QUA_8
+    20, // MSH_HEX_20
+    15, // MSH_PRI_15
+    13, // MSH_PYR_13
+    9,  // MSH_TRI_9
+    10, // MSH_TRI_10
+    12, // MSH_TRI_12
+    15, // MSH_TRI_15
+    15, // MSH_TRI_15I
+    21, // MSH_TRI_21
+    4,  // MSH_LIN_4
+    5,  // MSH_LIN_5
+    6,  // MSH_LIN_6
+    20, // MSH_TET_20
+    35, // MSH_TET_35
+    56, // MSH_TET_56
+    34, // MSH_TET_34
+    52  // MSH_TET_52
+  };
+  static const char *const elemName[MSH_NUM_TYPE] = {
+    "Line 2",
+    "Triangle 3",
+    "Quadrilateral 4",
+    "Tetrahedron 4",
+    "Hexahedron 8",
+    "Prism 6",
+    "Pyramid 5",
+    "Line 3",
+    "Triangle 6",
+    "Quadrilateral 9",
+    "Tetrahedron 10",
+    "Hexahedron 27",
+    "Prism 18",
+    "Pyramid 14",
+    "Point",
+    "Quadrilateral 8",
+    "Hexahedron 20",
+    "Prism 15",
+    "Pyramid 13",
+    "Triangle 9",
+    "Triangle 10",
+    "Triangle 12",
+    "Triangle 15",
+    "Triangle 15I",
+    "Triangle 21",
+    "Line 4",
+    "Line 5",
+    "Line 6",
+    "Tetrahedron 20",
+    "Tetrahedron 35",
+    "Tetrahedron 56",
+    "Tetrahedron 34",
+    "Tetrahedron 52"
+  };
+  if(typeMSH >= MSH_NUM_TYPE) {
+    Message::Error("Unknown type of element %d", typeMSH);
+    *name = 0;
+    return 0;
+  } 
+  if(name) *name = elemName[typeMSH];
+  return numVert[typeMSH];
+}
+
 void MTriangle::jac(int ord, MVertex *vs[], double uu, double vv, double ww,
 		    double j[2][3])
 {
