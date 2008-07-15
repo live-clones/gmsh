@@ -2599,7 +2599,7 @@ see @ref{File formats}, for this.
 
 To learn how to run Gmsh on your computer, see @ref{Running Gmsh}. In
 addition, screencasts that show how to use the graphical user interface
-are available on Gmsh's webpage.
+are available on @uref{http://www.geuz.org/gmsh/screencasts/}.
 
 @menu
 * t1.geo::                      
