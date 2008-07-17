@@ -72,8 +72,6 @@
 #define MSH_TET_34 32
 #define MSH_TET_52 33
 
-#define MSH_NUM_TYPE 33
-
 // Geometric entities
 #define ENT_NONE     0
 #define ENT_POINT    (1<<0)

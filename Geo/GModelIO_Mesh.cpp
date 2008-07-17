@@ -101,47 +101,6 @@ static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
   return true;
 }
 
-static int getNumVerticesForElementTypeMSH(int type)
-{
-  switch (type) {
-  case MSH_PNT    : return 1;
-  case MSH_LIN_2  : return 2;
-  case MSH_LIN_3  : return 2 + 1;
-  case MSH_LIN_4  : return 2 + 2;
-  case MSH_LIN_5  : return 2 + 3;
-  case MSH_LIN_6  : return 2 + 4;
-  case MSH_TRI_3  : return 3;
-  case MSH_TRI_6  : return 3 + 3;
-  case MSH_TRI_9  : return 3 + 6;
-  case MSH_TRI_10 : return 3 + 6 + 1;
-  case MSH_TRI_12 : return 3 + 9;
-  case MSH_TRI_15 : return 3 + 9 + 3;
-  case MSH_TRI_15I: return 3 + 12;
-  case MSH_TRI_21 : return 3 + 12 + 6;
-  case MSH_QUA_4  : return 4;
-  case MSH_QUA_8  : return 4 + 4;
-  case MSH_QUA_9  : return 4 + 4 + 1;
-  case MSH_TET_4  : return 4;
-  case MSH_TET_10 : return 4 + 6;
-  case MSH_TET_20 : return 4 + 12 + 4;
-  case MSH_TET_35 : return 4 + 18 + 12 + 1;
-  case MSH_TET_52 : return 4 + 24 + 24 + 0;
-  case MSH_TET_56 : return 4 + 24 + 24 + 4;
-  case MSH_HEX_8  : return 8;
-  case MSH_HEX_20 : return 8 + 12;
-  case MSH_HEX_27 : return 8 + 12 + 6 + 1;
-  case MSH_PRI_6  : return 6;
-  case MSH_PRI_15 : return 6 + 9;
-  case MSH_PRI_18 : return 6 + 9 + 3;
-  case MSH_PYR_5  : return 5;
-  case MSH_PYR_13 : return 5 + 8;
-  case MSH_PYR_14 : return 5 + 8 + 1;
-  default: 
-    Msg::Error("Unknown type of element %d", type);
-    return 0;
-  }
-}
-
 static void createElementMSH(GModel *m, int num, int type, int physical, 
                              int reg, int part, std::vector<MVertex*> &v, 
                              std::map<int, std::vector<MVertex*> > &points,
@@ -304,7 +263,7 @@ int GModel::readMSH(const std::string &name)
           int num, type, physical = 0, elementary = 0, partition = 0, numVertices;
           if(version <= 1.0){
             fscanf(fp, "%d %d %d %d %d", &num, &type, &physical, &elementary, &numVertices);
-            if(numVertices != getNumVerticesForElementTypeMSH(type)) return 0;
+            if(numVertices != MElement::getInfoMSH(type)) return 0;
           }
           else{
             int numTags;
@@ -317,7 +276,7 @@ int GModel::readMSH(const std::string &name)
               else if(j == 2) partition = tag;
               // ignore any other tags for now
             }
-            if(!(numVertices = getNumVerticesForElementTypeMSH(type))) return 0;
+            if(!(numVertices = MElement::getInfoMSH(type))) return 0;
           }
           int indices[60];
           for(int j = 0; j < numVertices; j++) fscanf(fp, "%d", &indices[j]);
@@ -343,7 +302,7 @@ int GModel::readMSH(const std::string &name)
           int type = header[0];
           int numElms = header[1];
           int numTags = header[2];
-          int numVertices = getNumVerticesForElementTypeMSH(type);
+          int numVertices = MElement::getInfoMSH(type);
           unsigned int n = 1 + numTags + numVertices;
           int *data = new int[n];
           for(int i = 0; i < numElms; i++) {

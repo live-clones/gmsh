@@ -1,6 +1,6 @@
 // g++ -I/usr/local/opencascade/inc driverOCC.cpp -lGmsh -L/usr/local/opencascade/lib -lTKSTEP -lTKSTEP209 -lTKSTEPAttr -lTKSTEPBase -lTKIGES -lTKXSBase -lTKOffset -lTKFeat -lTKFillet -lTKBool -lTKShHealing -lTKMesh -lTKHLR -lTKBO -lTKPrim -lTKTopAlgo -lTKGeomAlgo -lTKBRep -lTKGeomBase -lTKG3d -lTKG2d -lTKAdvTools -lTKMath -lTKernel -lm
 
-#if !defined(WIN32) || defined(__CYGWIN__)
+#if !defined(HAVE_NO_OCC_CONFIG_H)
 #include "config.h"
 #endif
 #include "TopoDS_Shape.hxx"

@@ -624,88 +624,48 @@ void MElement::writeBDF(FILE *fp, int format, int elementary)
   }
 }
 
-// Returns number of vertices and name if 'name' != 0.  'name' has a default
-// argument of 0.
 int MElement::getInfoMSH(const int typeMSH, const char **const name)
 {
-  static const int numVert[MSH_NUM_TYPE] = {
-    2,  // MSH_LIN_2
-    3,  // MSH_TRI_3
-    4,  // MSH_QUA_4
-    4,  // MSH_TET_4
-    8,  // MSH_HEX_8
-    6,  // MSH_PRI_6
-    5,  // MSH_PYR_5
-    3,  // MSH_LIN_3
-    6,  // MSH_TRI_6
-    9,  // MSH_QUA_9
-    10, // MSH_TET_10
-    27, // MSH_HEX_27
-    18, // MSH_PRI_18
-    14, // MSH_PYR_14
-    1,  // MSH_PNT
-    8,  // MSH_QUA_8
-    20, // MSH_HEX_20
-    15, // MSH_PRI_15
-    13, // MSH_PYR_13
-    9,  // MSH_TRI_9
-    10, // MSH_TRI_10
-    12, // MSH_TRI_12
-    15, // MSH_TRI_15
-    15, // MSH_TRI_15I
-    21, // MSH_TRI_21
-    4,  // MSH_LIN_4
-    5,  // MSH_LIN_5
-    6,  // MSH_LIN_6
-    20, // MSH_TET_20
-    35, // MSH_TET_35
-    56, // MSH_TET_56
-    34, // MSH_TET_34
-    52  // MSH_TET_52
-  };
-  static const char *const elemName[MSH_NUM_TYPE] = {
-    "Line 2",
-    "Triangle 3",
-    "Quadrilateral 4",
-    "Tetrahedron 4",
-    "Hexahedron 8",
-    "Prism 6",
-    "Pyramid 5",
-    "Line 3",
-    "Triangle 6",
-    "Quadrilateral 9",
-    "Tetrahedron 10",
-    "Hexahedron 27",
-    "Prism 18",
-    "Pyramid 14",
-    "Point",
-    "Quadrilateral 8",
-    "Hexahedron 20",
-    "Prism 15",
-    "Pyramid 13",
-    "Triangle 9",
-    "Triangle 10",
-    "Triangle 12",
-    "Triangle 15",
-    "Triangle 15I",
-    "Triangle 21",
-    "Line 4",
-    "Line 5",
-    "Line 6",
-    "Tetrahedron 20",
-    "Tetrahedron 35",
-    "Tetrahedron 56",
-    "Tetrahedron 34",
-    "Tetrahedron 52"
-  };
-  if(typeMSH >= MSH_NUM_TYPE) {
-    Message::Error("Unknown type of element %d", typeMSH);
-    *name = 0;
+  switch(typeMSH){
+  case MSH_PNT    : if(name) *name = "Point";           return 1;
+  case MSH_LIN_2  : if(name) *name = "Line 2";          return 2;
+  case MSH_LIN_3  : if(name) *name = "Line 3";          return 2 + 1;
+  case MSH_LIN_4  : if(name) *name = "Line 4";          return 2 + 2;
+  case MSH_LIN_5  : if(name) *name = "Line 5";          return 2 + 3;
+  case MSH_LIN_6  : if(name) *name = "Line 6";          return 2 + 4;
+  case MSH_TRI_3  : if(name) *name = "Triangle 3";      return 3;
+  case MSH_TRI_6  : if(name) *name = "Triangle 6";      return 3 + 3;
+  case MSH_TRI_9  : if(name) *name = "Triangle 9";      return 3 + 6;
+  case MSH_TRI_10 : if(name) *name = "Triangle 10";     return 3 + 6 + 1;
+  case MSH_TRI_12 : if(name) *name = "Triangle 12";     return 3 + 9;
+  case MSH_TRI_15 : if(name) *name = "Triangle 15";     return 3 + 9 + 3;
+  case MSH_TRI_15I: if(name) *name = "Triangle 15I";    return 3 + 12;
+  case MSH_TRI_21 : if(name) *name = "Triangle 21";     return 3 + 12 + 6;
+  case MSH_QUA_4  : if(name) *name = "Quadrilateral 4"; return 4;
+  case MSH_QUA_8  : if(name) *name = "Quadrilateral 8"; return 4 + 4;
+  case MSH_QUA_9  : if(name) *name = "Quadrilateral 9"; return 4 + 4 + 1;
+  case MSH_TET_4  : if(name) *name = "Tetrahedron 4";   return 4;
+  case MSH_TET_10 : if(name) *name = "Tetrahedron 10";  return 4 + 6;
+  case MSH_TET_20 : if(name) *name = "Tetrahedron 20";  return 4 + 12 + 4;
+  case MSH_TET_34 : if(name) *name = "Tetrahedron 34";  return 4 + 18 + 12 + 0;
+  case MSH_TET_35 : if(name) *name = "Tetrahedron 35";  return 4 + 18 + 12 + 1;
+  case MSH_TET_52 : if(name) *name = "Tetrahedron 52";  return 4 + 24 + 24 + 0;
+  case MSH_TET_56 : if(name) *name = "Tetrahedron 56";  return 4 + 24 + 24 + 4;
+  case MSH_HEX_8  : if(name) *name = "Hexahedron 8";    return 8;
+  case MSH_HEX_20 : if(name) *name = "Hexahedron 20";   return 8 + 12;
+  case MSH_HEX_27 : if(name) *name = "Hexahedron 27";   return 8 + 12 + 6 + 1;
+  case MSH_PRI_6  : if(name) *name = "Prism 6";         return 6;
+  case MSH_PRI_15 : if(name) *name = "Prism 15";        return 6 + 9;
+  case MSH_PRI_18 : if(name) *name = "Prism 18";        return 6 + 9 + 3;
+  case MSH_PYR_5  : if(name) *name = "Pyramid 5";       return 5;
+  case MSH_PYR_13 : if(name) *name = "Pyramid 13";      return 5 + 8;
+  case MSH_PYR_14 : if(name) *name = "Pyramid 14";      return 5 + 8 + 1;
+  default: 
+    Msg::Error("Unknown type of element %d", typeMSH); 
+    if(name) *name = 0; 
     return 0;
-  } 
-  if(name) *name = elemName[typeMSH];
-  return numVert[typeMSH];
-}
+  }               
+}                 
 
 void MTriangle::jac(int ord, MVertex *vs[], double uu, double vv, double ww,
 		    double j[2][3])

@@ -2,9 +2,9 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
+
 #ifndef _MELEMENT_H_
 #define _MELEMENT_H_
-
 
 #include <stdio.h>
 #include <algorithm>
@@ -209,7 +209,8 @@ class MElement
   virtual const char *getStringForPOS(){ return 0; }
   virtual const char *getStringForBDF(){ return 0; }
 
-  // Information about a MSH type
+  // return the number of vertices, as well as the element name if
+  // 'name' != 0
   static int getInfoMSH(const int typeMSH, const char **const name = 0);
 };
 
