@@ -17,7 +17,12 @@ Line(7) = {6,1};
 Line Loop(5) = {4,1,-2,3} ;
 Plane Surface(6) = {5} ;
 
-Line Loop(7) = - {5,6,7,1};
+// this is ok, but not always possible (e.g. if the surface had been
+// created automatically by extrusion)
+//Line Loop(7) = - {5,6,7,1};
+Line Loop(7) = {5,6,7,1};
+
 Plane Surface(8) = {7};
 
-Extrude { Surface{6,8}; Layers{5, 0.01}; Recombine; }
+// the minus sign inverts the orientation of surface 8
+Extrude { Surface{6, -8}; Layers{5, 0.01}; Recombine; }

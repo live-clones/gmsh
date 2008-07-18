@@ -1644,13 +1644,13 @@ ListOfShapes :
 	List_Read($4, i, &d);
 	Shape TheShape;
 	TheShape.Num = (int)d;
-	Vertex *v = FindPoint(TheShape.Num);
+	Vertex *v = FindPoint(std::abs(TheShape.Num));
 	if(v){
 	  TheShape.Type = MSH_POINT;
 	  List_Add($$, &TheShape);
 	}
 	else{
-	  GVertex *gv = GModel::current()->getVertexByTag(TheShape.Num);
+	  GVertex *gv = GModel::current()->getVertexByTag(std::abs(TheShape.Num));
 	  if(gv){
 	    TheShape.Type = MSH_POINT_FROM_GMODEL;
 	    List_Add($$, &TheShape);
@@ -1667,13 +1667,13 @@ ListOfShapes :
 	List_Read($4, i, &d);
 	Shape TheShape;
 	TheShape.Num = (int)d;
-	Curve *c = FindCurve(TheShape.Num);
+	Curve *c = FindCurve(std::abs(TheShape.Num));
 	if(c){
 	  TheShape.Type = c->Typ;
 	  List_Add($$, &TheShape);
 	}
 	else{
-	  GEdge *ge = GModel::current()->getEdgeByTag(TheShape.Num);
+	  GEdge *ge = GModel::current()->getEdgeByTag(std::abs(TheShape.Num));
 	  if(ge){
 	    TheShape.Type = MSH_SEGM_FROM_GMODEL;
 	    List_Add($$, &TheShape);
@@ -1690,13 +1690,13 @@ ListOfShapes :
 	List_Read($4, i, &d);
 	Shape TheShape;
 	TheShape.Num = (int)d;
-	Surface *s = FindSurface(TheShape.Num);
+	Surface *s = FindSurface(std::abs(TheShape.Num));
 	if(s){
 	  TheShape.Type = s->Typ;
 	  List_Add($$, &TheShape);
 	}
 	else{
-	  GFace *gf = GModel::current()->getFaceByTag(TheShape.Num);
+	  GFace *gf = GModel::current()->getFaceByTag(std::abs(TheShape.Num));
 	  if(gf){
 	    TheShape.Type = MSH_SURF_FROM_GMODEL;
 	    List_Add($$, &TheShape);
@@ -1713,13 +1713,13 @@ ListOfShapes :
 	List_Read($4, i, &d);
 	Shape TheShape;
 	TheShape.Num = (int)d;
-	Volume *v = FindVolume(TheShape.Num);
+	Volume *v = FindVolume(std::abs(TheShape.Num));
 	if(v){
 	  TheShape.Type = v->Typ;
 	  List_Add($$, &TheShape);
 	}
 	else{
-	  GRegion *gr = GModel::current()->getRegionByTag(TheShape.Num);
+	  GRegion *gr = GModel::current()->getRegionByTag(std::abs(TheShape.Num));
 	  if(gr){
 	    TheShape.Type = MSH_VOLUME_FROM_GMODEL;
 	    List_Add($$, &TheShape);
@@ -2224,20 +2224,6 @@ Extrude :
       ExtrudeShapes(BOUNDARY_LAYER, $3, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
 		    &extr, $$);
       List_Delete($3);
-    }
-  | tExtrude tSTRING '[' FExpr ']' '{' ListOfShapes 
-    {
-      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
-    }
-                       ExtrudeParameters '}'
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      extr.mesh.ViewIndex = (int)$4;
-      ExtrudeShapes(BOUNDARY_LAYER, $7, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-		    &extr, $$);
-      extr.mesh.ViewIndex = -1;
-      Free($2);
-      List_Delete($7);
     }
 
   // Deprecated extrude commands (for backward compatibility)

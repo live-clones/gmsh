@@ -41,7 +41,6 @@ public :
     std::vector<int> NbElmLayer;
     std::vector<double> hLayer;
     std::map<int, std::pair<double, std::vector<int> > > Holes;
-    int ViewIndex;
   }mesh;
   struct{
     int Mode;

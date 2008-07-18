@@ -579,7 +579,8 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, (*it)->quadrangles, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
-  writeElementHeaderMSH(binary, fp, elements, MSH_TET_4, MSH_TET_10, MSH_TET_20, MSH_TET_35, MSH_TET_56, MSH_TET_52);
+  writeElementHeaderMSH(binary, fp, elements, MSH_TET_4, MSH_TET_10, MSH_TET_20, 
+			MSH_TET_35, MSH_TET_56, MSH_TET_52);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->tetrahedra, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
@@ -1410,11 +1411,11 @@ int GModel::readMESH(const std::string &name)
         for(int i = 0; i < nbe; i++) {
           if(!fgets(buffer, sizeof(buffer), fp)) break;
           int  n[1];
-          sscanf(buffer, "%d",&n[0]);
+          sscanf(buffer, "%d", &n[0]);
           for(int j = 0; j < 1; j++) n[j]--;
-	  //          std::vector<MVertex*> vertices;
-	  //          if(!getVertices(1, n, vertexVector, vertices)) return 0;
-	  //          corners.push_back(vertices[0]);
+	  // std::vector<MVertex*> vertices;
+	  // if(!getVertices(1, n, vertexVector, vertices)) return 0;
+	  // corners.push_back(vertices[0]);
         }
       }
       else if(!strcmp(str, "Ridges")){
@@ -1425,11 +1426,11 @@ int GModel::readMESH(const std::string &name)
         for(int i = 0; i < nbe; i++) {
           if(!fgets(buffer, sizeof(buffer), fp)) break;
           int  n[1];
-          sscanf(buffer, "%d",&n[0]);
+          sscanf(buffer, "%d", &n[0]);
           for(int j = 0; j < 1; j++) n[j]--;
-	  //          std::vector<MVertex*> vertices;
-	  //          if(!getVertices(1, n, vertexVector, vertices)) return 0;
-	  //          ridges.push_back(vertices[0]);
+	  // std::vector<MVertex*> vertices;
+	  // if(!getVertices(1, n, vertexVector, vertices)) return 0;
+	  // ridges.push_back(vertices[0]);
         }
       }
       else if(!strcmp(str, "Quadrilaterals")) {

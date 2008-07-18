@@ -184,4 +184,3 @@ TreeUtils.o: TreeUtils.cpp MallocUtils.h TreeUtils.h avl.h ListUtils.h \
   Message.h
 avl.o: avl.cpp avl.h MallocUtils.h
 MallocUtils.o: MallocUtils.cpp MallocUtils.h Message.h
-License.o: License.cpp Message.h

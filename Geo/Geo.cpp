@@ -2231,7 +2231,10 @@ static int Extrude_ProtudeSurface(int type, int is,
 
   *pv = NULL;
 
-  if(!(ps = FindSurface(is)))
+  // 'is' can be negative, to signify that the surface orientation
+  // should be reverted. This orientation information is only used at
+  // the moment when creating boundary layers
+  if(!(ps = FindSurface(std::abs(is))))
     return 0;
 
   Msg::Debug("Extrude Surface %d", is);
@@ -2240,7 +2243,7 @@ static int Extrude_ProtudeSurface(int type, int is,
 
   chapeau->Extrude = new ExtrudeParams(COPIED_ENTITY);
   chapeau->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
-  chapeau->Extrude->geo.Source = ps->Num;
+  chapeau->Extrude->geo.Source = is; // not ps->Num: we need the sign info
   if(e)
     chapeau->Extrude->mesh = e->mesh;
 
@@ -2254,7 +2257,8 @@ static int Extrude_ProtudeSurface(int type, int is,
       }
     c->Extrude = new ExtrudeParams(COPIED_ENTITY);
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
-    //pas de abs()! il faut le signe pour copy_mesh dans ExtrudeMesh
+    // don't take the abs(): the sign of c2->Num is important (used
+    // when copying the mesh in the extrusion routine)
     c->Extrude->geo.Source = c2->Num;
     if(e)
       c->Extrude->mesh = e->mesh;

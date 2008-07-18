@@ -27,7 +27,6 @@ ExtrudeParams::ExtrudeParams(int ModeEx)
   geo.Source = -1;
   mesh.ExtrudeMesh = false;
   mesh.Recombine = false;
-  mesh.ViewIndex = -1;
 }
 
 void ExtrudeParams::fill(int type,
