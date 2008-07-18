@@ -2543,19 +2543,6 @@ void help_command_line_cb(CALLBACK_ARGS)
   WID->create_message_window();
 }
 
-void help_license_cb(CALLBACK_ARGS)
-{
-  extern void print_license();
-  Msg::Direct(" ");
-  print_license();
-  WID->create_message_window();
-}
-
-void help_about_cb(CALLBACK_ARGS)
-{
-  WID->create_about_window();
-}
-
 void _replace_multi_format(const char *in, const char *val, char *out)
 {
   unsigned int i = 0, j = 0;
@@ -2591,12 +2578,25 @@ void help_online_cb(CALLBACK_ARGS)
   SystemCall(cmd);
 }
 
+void help_license_cb(CALLBACK_ARGS)
+{
+  char prog[1024], cmd[1024];
+  FixWindowsPath(CTX.web_browser, prog);
+  _replace_multi_format(prog, "http://www.geuz.org/gmsh/doc/LICENSE.txt", cmd);
+  SystemCall(cmd);
+}
+
 void help_credits_cb(CALLBACK_ARGS)
 {
   char prog[1024], cmd[1024];
   FixWindowsPath(CTX.web_browser, prog);
-  _replace_multi_format(prog, "http://www.geuz.org/gmsh/doc/CREDITS", cmd);
+  _replace_multi_format(prog, "http://www.geuz.org/gmsh/doc/CREDITS.txt", cmd);
   SystemCall(cmd);
+}
+
+void help_about_cb(CALLBACK_ARGS)
+{
+  WID->create_about_window();
 }
 
 // Module Menu
@@ -3683,7 +3683,10 @@ void mesh_inspect_cb(CALLBACK_ARGS)
         ZeroHighlight();
         elements[0]->setVisibility(2);
         Msg::Direct("Element %d:", elements[0]->getNum());
-        Msg::Direct("  Type: %d", elements[0]->getTypeForMSH()); 
+	int type = elements[0]->getTypeForMSH();
+	const char *name;
+	MElement::getInfoMSH(type, &name);
+        Msg::Direct("  Type: %d ('%s')", type, name); 
         Msg::Direct("  Dimension: %d", elements[0]->getDim());
         Msg::Direct("  Order: %d", elements[0]->getPolynomialOrder()); 
         Msg::Direct("  Partition: %d", elements[0]->getPartition()); 

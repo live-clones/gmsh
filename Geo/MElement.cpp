@@ -662,7 +662,7 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_PYR_14 : if(name) *name = "Pyramid 14";      return 5 + 8 + 1;
   default: 
     Msg::Error("Unknown type of element %d", typeMSH); 
-    if(name) *name = 0; 
+    if(name) *name = "Unknown"; 
     return 0;
   }               
 }                 

@@ -30,8 +30,7 @@ SRC = Context.cpp\
       StringUtils.cpp\
       ListUtils.cpp\
       TreeUtils.cpp avl.cpp\
-      MallocUtils.cpp\
-      License.cpp
+      MallocUtils.cpp
 
 OBJ = ${SRC:.cpp=${OBJEXT}}
 
