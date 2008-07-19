@@ -183,9 +183,7 @@ case "$UNAME" in
       UNAME="${UNAME}-no-cygwin"
       CC="${CC} -mno-cygwin"
       CXX="${CXX} -mno-cygwin"
-      dnl increase stack size to 16Mb to avoid stack overflows in
-      dnl recursive tet classification for large 3D Delaunay grids
-      LINKER="${LINKER} -mno-cygwin -Wl,--stack,16777216"
+      LINKER="${LINKER} -mno-cygwin"
     fi
     ;;
 esac
@@ -749,7 +747,9 @@ dnl Modify defaults according to OS
 case "$UNAME" in
 
   CYGWIN* | MINGW*)
-    LINKER="${LINKER} -mwindows"
+    dnl increase stack size to 16Mb to avoid stack overflows in
+    dnl recursive tet classification for large 3D Delaunay grids
+    LINKER="${LINKER} -mwindows -Wl,--stack,16777216"
     if test "x$enable_cygwin" != "xyes"; then
       FLAGS="${FLAGS} -DHAVE_NO_DLL"
     fi

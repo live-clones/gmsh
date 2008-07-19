@@ -3499,7 +3499,7 @@ case "$UNAME" in
       UNAME="${UNAME}-no-cygwin"
       CC="${CC} -mno-cygwin"
       CXX="${CXX} -mno-cygwin"
-                  LINKER="${LINKER} -mno-cygwin -Wl,--stack,16777216"
+      LINKER="${LINKER} -mno-cygwin"
     fi
     ;;
 esac
@@ -5850,7 +5850,7 @@ GMSH_LIBS="${GMSH_LIBS} -lm"
 case "$UNAME" in
 
   CYGWIN* | MINGW*)
-    LINKER="${LINKER} -mwindows"
+            LINKER="${LINKER} -mwindows -Wl,--stack,16777216"
     if test "x$enable_cygwin" != "xyes"; then
       FLAGS="${FLAGS} -DHAVE_NO_DLL"
     fi

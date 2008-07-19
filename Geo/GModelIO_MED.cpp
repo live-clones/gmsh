@@ -138,7 +138,7 @@ int GModel::readMED(const std::string &name)
   MEDversionDonner(&v[0], &v[1], &v[2]);
   MEDversionLire(fid, &vf[0], &vf[1], &vf[2]);
   Msg::Info("Reading MED file V%d.%d.%d using MED library V%d.%d.%d", 
-      vf[0], vf[1], vf[2], v[0], v[1], v[2]);
+	    vf[0], vf[1], vf[2], v[0], v[1], v[2]);
   if(vf[0] < 2 || (vf[0] == 2 && vf[1] < 2)){
     Msg::Error("Cannot read MED file older than V2.2");
     return 0;
@@ -394,14 +394,10 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
   // connectivity is given in terms of vertex indices)
   indexMeshVertices(saveAll);
 
-  // fill a vector containing all the geometrical entities in the
+  // get a vector containing all the geometrical entities in the
   // model (the ordering of the entities must be the same as the one
   // used during the indexing of the vertices)
-  std::vector<GEntity*> entities;
-  entities.insert(entities.end(), vertices.begin(), vertices.end());
-  entities.insert(entities.end(), edges.begin(), edges.end());
-  entities.insert(entities.end(), faces.begin(), faces.end());
-  entities.insert(entities.end(), regions.begin(), regions.end());
+  std::vector<GEntity*> entities = getEntities();
 
   std::map<GEntity*, int> families;
 

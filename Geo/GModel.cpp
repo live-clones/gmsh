@@ -223,14 +223,10 @@ void GModel::snapVertices()
 std::vector<GEntity*> GModel::getEntities()
 {
   std::vector<GEntity*> entities;
-  for(GModel::viter it = firstVertex(); it != lastVertex(); ++it)
-    entities.push_back(*it);
-  for(GModel::eiter it = firstEdge(); it != lastEdge(); ++it)
-    entities.push_back(*it);
-  for(GModel::fiter it = firstFace(); it != lastFace(); ++it)
-    entities.push_back(*it);
-  for(GModel::riter it = firstRegion(); it != lastRegion(); ++it)
-    entities.push_back(*it);
+  entities.insert(entities.end(), vertices.begin(), vertices.end());
+  entities.insert(entities.end(), edges.begin(), edges.end());
+  entities.insert(entities.end(), faces.begin(), faces.end());
+  entities.insert(entities.end(), regions.begin(), regions.end());
   return entities;
 }
 
