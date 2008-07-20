@@ -26,7 +26,7 @@ extern Context_T CTX;
 
 int Message::_commRank = 0;
 int Message::_commSize = 1;
-int Message::_verbosity = 3;
+int Message::_verbosity = 4;
 int Message::_progressMeterStep = 10;
 int Message::_progressMeterCurrent = 0;
 std::map<std::string, double> Message::_timers;
@@ -289,7 +289,7 @@ void Message::Direct(int level, const char *fmt, ...)
 
 void Message::StatusBar(int num, bool log, const char *fmt, ...)
 {
-  if(_commRank || _verbosity < 3) return;
+  if(_commRank || _verbosity < 4) return;
   if(num < 1 || num > 3) return;
 
   char str[1024];

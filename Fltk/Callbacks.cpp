@@ -3782,8 +3782,8 @@ static void _add_transfinite(int dim)
   std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
   std::vector<MElement*> elements;
+  std::vector<int> p;
   char ib;
-  int p[100];
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   switch (dim) {
@@ -3793,11 +3793,10 @@ static void _add_transfinite(int dim)
   }
   Draw();
 
-  int n = 0;
   while(1) {
     switch (dim) {
     case 1:
-      if(n == 0)
+      if(p.empty())
         Msg::StatusBar(3, false, "Select lines\n"
             "[Press 'e' to end selection or 'q' to abort]");
       else
@@ -3820,22 +3819,22 @@ static void _add_transfinite(int dim)
 
     if(ib == 'e') {
       if(dim == 1) {
-        if(n > 0)
-          add_trsfline(n, p, CTX.filename,
+        if(p.size())
+          add_trsfline(p.size(), &p[0], CTX.filename,
                        WID->context_mesh_choice[0]->text(),
                        WID->context_mesh_input[2]->value(),
                        WID->context_mesh_input[1]->value());
       }
       ZeroHighlight();
       Draw();
-      n = 0;
+      p.clear();
     }
     if(ib == 'u') {
       if(dim == 1) {
-        if(n > 0){
-          ZeroHighlightEntityNum(0, p[n-1], 0, 0);
+        if(p.size()){
+          ZeroHighlightEntityNum(0, p.back(), 0, 0);
           Draw();
-          n--;
+          p.pop_back();
         }
       }
     }
@@ -3852,7 +3851,7 @@ static void _add_transfinite(int dim)
       case 1:
         for(unsigned int i = 0; i < edges.size(); i++){
           HighlightEntity(edges[i]);
-          p[n++] = edges[i]->tag();
+          p.push_back(edges[i]->tag());
         }
         Draw();
         break;
@@ -3861,15 +3860,15 @@ static void _add_transfinite(int dim)
         if(dim == 2){
           HighlightEntity(faces[0]);
           Draw();
-          p[n++] = faces[0]->tag(); 
+          p.push_back(faces[0]->tag());
         }
         else{
           HighlightEntity(regions[0]);
           Draw();
-          p[n++] = regions[0]->tag(); 
+          p.push_back(regions[0]->tag());
         }
         while(1) {
-          if(n == 1)
+          if(p.size() == 1)
             Msg::StatusBar(3, false, "Select (ordered) boundary points\n"
                 "[Press 'e' to end selection or 'q' to abort]");
           else
@@ -3879,13 +3878,13 @@ static void _add_transfinite(int dim)
           if(ib == 'l') {
             HighlightEntity(vertices[0]);
             Draw();
-            p[n++] = vertices[0]->tag();
+            p.push_back(vertices[0]->tag());
           }
           if(ib == 'u') {
-            if(n > 1){
-              ZeroHighlightEntityNum(p[n-1], 0, 0, 0);
+            if(p.size() > 1){
+              ZeroHighlightEntityNum(p.back(), 0, 0, 0);
               Draw();
-              n--;
+              p.pop_back();
             }
           }
           if(ib == 'r') {
@@ -3894,22 +3893,22 @@ static void _add_transfinite(int dim)
           if(ib == 'e') {
             switch (dim) {
             case 2:
-              if(n == 3 + 1 || n == 4 + 1)
-                add_trsfsurf(n, p, CTX.filename,
+              if(p.size() == 3 + 1 || p.size() == 4 + 1)
+                add_trsfsurf(p.size(), &p[0], CTX.filename,
                              WID->context_mesh_choice[1]->text());
               else
                 Msg::Error("Wrong number of points for transfinite surface");
               break;
             case 3:
-              if(n == 6 + 1 || n == 8 + 1)
-                add_trsfvol(n, p, CTX.filename);
+              if(p.size() == 6 + 1 || p.size() == 8 + 1)
+                add_trsfvol(p.size(), &p[0], CTX.filename);
               else
                 Msg::Error("Wrong number of points for transfinite volume");
               break;
             }
             ZeroHighlight();
             Draw();
-            n = 0;
+            p.clear();
             break;
           }
           if(ib == 'q') {

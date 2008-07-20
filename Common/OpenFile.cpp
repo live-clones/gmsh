@@ -314,14 +314,14 @@ int MergeFile(const char *name, int warn_if_missing)
   else if(!strcmp(ext, ".mesh") || !strcmp(ext, ".MESH")){
     status = m->readMESH(name);
   }
-#if !defined(HAVE_NO_POST)
   else if(!strcmp(ext, ".med") || !strcmp(ext, ".MED") ||
 	  !strcmp(ext, ".mmed") || !strcmp(ext, ".MMED") ||
 	  !strcmp(ext, ".rmed") || !strcmp(ext, ".RMED")){
     status = GModel::readMED(name);
+#if !defined(HAVE_NO_POST)
     if(status > 1) status = PView::readMED(name);
-  }
 #endif
+  }
   else if(!strcmp(ext, ".bdf") || !strcmp(ext, ".BDF") ||
           !strcmp(ext, ".nas") || !strcmp(ext, ".NAS")){
     status = m->readBDF(name);
