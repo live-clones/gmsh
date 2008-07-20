@@ -2705,15 +2705,14 @@ static void _add_new_multiline(int type)
   std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
   std::vector<MElement*> elements;
-  int p[100];
+  std::vector<int> p;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
 
-  int n = 0;
   while(1) {
-    if(n == 0)
+    if(p.empty())
       Msg::StatusBar(3, false, "Select control points\n"
           "[Press 'e' to end selection or 'q' to abort]");
     else
@@ -2723,7 +2722,7 @@ static void _add_new_multiline(int type)
     if(ib == 'l') {
       for(unsigned int i = 0; i < vertices.size(); i++){
         HighlightEntity(vertices[i]);
-        p[n++] = vertices[i]->tag();
+        p.push_back(vertices[i]->tag());
       }
       Draw();
     }
@@ -2731,32 +2730,32 @@ static void _add_new_multiline(int type)
       Msg::Warning("Entity de-selection not supported yet during multi-line creation");
     }
     if(ib == 'e') {
-      if(n >= 2) {
+      if(p.size() >= 2) {
         switch (type) {
         case 0:
-          add_multline(n, p, CTX.filename);
+          add_multline(p.size(), &p[0], CTX.filename);
           break;
         case 1:
-          add_spline(n, p, CTX.filename);
+          add_spline(p.size(), &p[0], CTX.filename);
           break;
         case 2:
-          add_bspline(n, p, CTX.filename);
+          add_bspline(p.size(), &p[0], CTX.filename);
           break;
         case 3:
-          add_bezier(n, p, CTX.filename);
+          add_bezier(p.size(), &p[0], CTX.filename);
           break;
         }
       }
       WID->reset_visibility();
       ZeroHighlight();
       Draw();
-      n = 0;
+      p.clear();
     }
     if(ib == 'u') {
-      if(n > 0){
-        ZeroHighlightEntityNum(p[n-1], 0, 0, 0);
+      if(p.size()){
+        ZeroHighlightEntityNum(p.back(), 0, 0, 0);
         Draw();
-        n--;
+        p.pop_back();
       }
     }
     if(ib == 'q') {
@@ -2776,34 +2775,33 @@ static void _add_new_line()
   std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
   std::vector<MElement*> elements;
-  int p[100];
+  std::vector<int> p;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
 
-  int n = 0;
   while(1) {
-    if(n == 0)
+    if(p.empty())
       Msg::StatusBar(3, false, "Select start point\n"
           "[Press 'q' to abort]");
-    if(n == 1)
+    if(p.size() == 1)
       Msg::StatusBar(3, false, "Select end point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
       HighlightEntity(vertices[0]);
       Draw();
-      p[n++] = vertices[0]->tag();
+      p.push_back(vertices[0]->tag());
     }
     if(ib == 'r') {
       Msg::Warning("Entity de-selection not supported yet during line creation");
     }
     if(ib == 'u') {
-      if(n > 0){
-        ZeroHighlightEntityNum(p[n-1], 0, 0, 0);
+      if(p.size()){
+        ZeroHighlightEntityNum(p.back(), 0, 0, 0);
         Draw();
-        n--;
+        p.pop_back();
       }
     }
     if(ib == 'q') {
@@ -2811,12 +2809,12 @@ static void _add_new_line()
       Draw();
       break;
     }
-    if(n == 2) {
-      add_multline(2, p, CTX.filename);
+    if(p.size() == 2) {
+      add_multline(2, &p[0], CTX.filename);
       WID->reset_visibility();
       ZeroHighlight();
       Draw();
-      n = 0;
+      p.clear();
     }
   }
 
@@ -2830,37 +2828,36 @@ static void _add_new_circle()
   std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
   std::vector<MElement*> elements;
-  int p[100];
+  std::vector<int> p;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
 
-  int n = 0;
   while(1) {
-    if(n == 0)
+    if(p.empty())
       Msg::StatusBar(3, false, "Select start point\n"
           "[Press 'q' to abort]");
-    if(n == 1)
+    if(p.size() == 1)
       Msg::StatusBar(3, false, "Select center point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
-    if(n == 2)
+    if(p.size() == 2)
       Msg::StatusBar(3, false, "Select end point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
       HighlightEntity(vertices[0]);
       Draw();
-      p[n++] = vertices[0]->tag();
+      p.push_back(vertices[0]->tag());
     }
     if(ib == 'r') {
       Msg::Warning("Entity de-selection not supported yet during circle creation");
     }
     if(ib == 'u') {
-      if(n > 0){
-        ZeroHighlightEntityNum(p[n-1], 0, 0, 0);
+      if(p.size()){
+        ZeroHighlightEntityNum(p.back(), 0, 0, 0);
         Draw();
-        n--;
+        p.pop_back();
       }
     }
     if(ib == 'q') {
@@ -2868,12 +2865,12 @@ static void _add_new_circle()
       Draw();
       break;
     }
-    if(n == 3) {
+    if(p.size() == 3) {
       add_circ(p[0], p[1], p[2], CTX.filename); // begin, center, end
       WID->reset_visibility();
       ZeroHighlight();
       Draw();
-      n = 0;
+      p.clear();
     }
   }
 
@@ -2887,40 +2884,39 @@ static void _add_new_ellipse()
   std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
   std::vector<MElement*> elements;
-  int p[100];
+  std::vector<int> p;
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
 
-  int n = 0;
   while(1) {
-    if(n == 0)
+    if(p.empty())
       Msg::StatusBar(3, false, "Select start point\n"
           "[Press 'q' to abort]");
-    if(n == 1)
+    if(p.size() == 1)
       Msg::StatusBar(3, false, "Select center point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
-    if(n == 2)
+    if(p.size() == 2)
       Msg::StatusBar(3, false, "Select major axis point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
-    if(n == 3)
+    if(p.size() == 3)
       Msg::StatusBar(3, false, "Select end point\n"
           "[Press 'u' to undo last selection or 'q' to abort]");
     char ib = SelectEntity(ENT_POINT, vertices, edges, faces, regions, elements);
     if(ib == 'l') {
       HighlightEntity(vertices[0]);
       Draw();
-      p[n++] = vertices[0]->tag();
+      p.push_back(vertices[0]->tag());
     }
     if(ib == 'r') {
       Msg::Warning("Entity de-selection not supported yet during ellipse creation");
     }
     if(ib == 'u') {
-      if(n > 0){
-        ZeroHighlightEntityNum(p[n-1], 0, 0, 0);
+      if(p.size()){
+        ZeroHighlightEntityNum(p.back(), 0, 0, 0);
         Draw();
-        n--;
+        p.pop_back();
       }
     }
     if(ib == 'q') {
@@ -2928,12 +2924,12 @@ static void _add_new_ellipse()
       Draw();
       break;
     }
-    if(n == 4) {
+    if(p.size() == 4) {
       add_ell(p[0], p[1], p[2], p[3], CTX.filename);
       WID->reset_visibility();
       ZeroHighlight();
       Draw();
-      n = 0;
+      p.clear();
     }
   }
 
@@ -3758,7 +3754,6 @@ void mesh_optimize_netgen_cb(CALLBACK_ARGS)
   Draw();
   Msg::StatusBar(2, false, " ");
 }
-
 
 void mesh_define_length_cb(CALLBACK_ARGS)
 {
