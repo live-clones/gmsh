@@ -18,12 +18,21 @@ Field[1].NodesList = {1,55};
 Field[1].EdgesList = {1};
 
 // Threshold field defined on the attractors
+//
+// LcMax -                         /------------------
+//                               /
+//                             /
+//                           /
+// LcMin -o----------------/
+//        |                |       |
+//     Attractor       DistMin   DistMax
 Field[2] = Threshold;
 Field[2].IField = 1;
 Field[2].LcMin = lc/20;
 Field[2].LcMax = lc;
 Field[2].DistMin = 0.15;
 Field[2].DistMax = 0.5;
+//Field[2].Sigmoid = 1;
 
 // Function field
 Field[3] = MathEval;
