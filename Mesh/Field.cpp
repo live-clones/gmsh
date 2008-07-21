@@ -473,7 +473,7 @@ class ThresholdField : public Field
   }
 };
 
-class GradientField:public Field
+class GradientField : public Field
 {
   int iField, kind;
   double delta;
@@ -526,7 +526,7 @@ class GradientField:public Field
   }
 };
 
-class CurvatureField:public Field
+class CurvatureField : public Field
 {
   int iField;
   double delta;
@@ -540,7 +540,8 @@ class CurvatureField:public Field
     options["IField"] = new FieldOptionInt(iField);
     options["Delta"] = new FieldOptionDouble(delta);
   }
-  void grad_norm(Field &f,double x,double y,double z, double *g){
+  void grad_norm(Field &f,double x,double y,double z, double *g)
+  {
     g[0]=f(x+delta/2,y,z)-f(x-delta/2,y,z);
     g[1]=f(x,y+delta/2,z)-f(x,y-delta/2,z);
     g[2]=f(x,y,z+delta/2)-f(x,y,z-delta/2);
@@ -591,7 +592,8 @@ class MaxEigenHessianField : public Field
     eigenvalues=gsl_vector_alloc(3);
     gslmat=gsl_matrix_alloc(3,3);
   }
-  ~MaxEigenHessianField(){
+  ~MaxEigenHessianField()
+  {
     gsl_eigen_symm_free(gslwork);
     gsl_vector_free(eigenvalues);
     gsl_matrix_free(gslmat);
@@ -885,21 +887,21 @@ class PostViewField : public Field
       /*
          double fact[9] = {0.001, 0.0025, 0.005, 0.0075, 0.01, 0.025, 0.05, 0.075, 0.1};
          for(int i = 0; i < 9; i++){
-         double eps = CTX.lc * fact[i];
-         if(octree->searchScalar(x + eps, y, z, &l, 0)) break;
-         if(octree->searchScalar(x - eps, y, z, &l, 0)) break;
-         if(octree->searchScalar(x, y + eps, z, &l, 0)) break;
-         if(octree->searchScalar(x, y - eps, z, &l, 0)) break;
-         if(octree->searchScalar(x, y, z + eps, &l, 0)) break;
-         if(octree->searchScalar(x, y, z - eps, &l, 0)) break;
-         if(octree->searchScalar(x + eps, y - eps, z - eps, &l, 0)) break;
-         if(octree->searchScalar(x + eps, y + eps, z - eps, &l, 0)) break;
-         if(octree->searchScalar(x - eps, y - eps, z - eps, &l, 0)) break;
-         if(octree->searchScalar(x - eps, y + eps, z - eps, &l, 0)) break;
-         if(octree->searchScalar(x + eps, y - eps, z + eps, &l, 0)) break;
-         if(octree->searchScalar(x + eps, y + eps, z + eps, &l, 0)) break;
-         if(octree->searchScalar(x - eps, y - eps, z + eps, &l, 0)) break;
-         if(octree->searchScalar(x - eps, y + eps, z + eps, &l, 0)) break;
+           double eps = CTX.lc * fact[i];
+           if(octree->searchScalar(x + eps, y, z, &l, 0)) break;
+           if(octree->searchScalar(x - eps, y, z, &l, 0)) break;
+           if(octree->searchScalar(x, y + eps, z, &l, 0)) break;
+           if(octree->searchScalar(x, y - eps, z, &l, 0)) break;
+           if(octree->searchScalar(x, y, z + eps, &l, 0)) break;
+           if(octree->searchScalar(x, y, z - eps, &l, 0)) break;
+           if(octree->searchScalar(x + eps, y - eps, z - eps, &l, 0)) break;
+           if(octree->searchScalar(x + eps, y + eps, z - eps, &l, 0)) break;
+           if(octree->searchScalar(x - eps, y - eps, z - eps, &l, 0)) break;
+           if(octree->searchScalar(x - eps, y + eps, z - eps, &l, 0)) break;
+           if(octree->searchScalar(x + eps, y - eps, z + eps, &l, 0)) break;
+           if(octree->searchScalar(x + eps, y + eps, z + eps, &l, 0)) break;
+           if(octree->searchScalar(x - eps, y - eps, z + eps, &l, 0)) break;
+           if(octree->searchScalar(x - eps, y + eps, z + eps, &l, 0)) break;
          }
        */
     }
