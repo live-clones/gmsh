@@ -1,8 +1,9 @@
 l = 1;
 r1 = 3;
 r2 = 0.5;
-n = 3;
+n = 10;
 n2 = n;
+progr = 1.4;
 
 // exterior cube
 Point(1) = {0,0,0,l};
@@ -68,7 +69,7 @@ Line(56) = {109,15};
 Line(57) = {104,4};
 Line(58) = {103,3};
 Line(59) = {106,11};
-Transfinite Line{52:59} = n2;
+Transfinite Line{52:59} = n2 Using Progression progr;
 
 Line Loop(60) = {58,-1,-52,-29};Plane Surface(61) = {60};
 Line Loop(62) = {58,18,-59,-39};Plane Surface(63) = {62};

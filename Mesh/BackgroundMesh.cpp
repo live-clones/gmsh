@@ -171,13 +171,10 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
 
 bool Extend1dMeshIn2dSurfaces()
 {
-  // don't extend 1d mesh in surfaces if there is a background field
-  if(GModel::current()->getFields()->background_field != -1) return false;
-
   return CTX.mesh.lc_extend_from_boundary ? true : false;
 }
 
 bool Extend2dMeshIn3dVolumes()
 {
-  return Extend1dMeshIn2dSurfaces();
+  return CTX.mesh.lc_extend_from_boundary ? true : false;
 }

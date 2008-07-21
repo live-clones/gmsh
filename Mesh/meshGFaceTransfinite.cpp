@@ -142,7 +142,7 @@ int MeshTransfiniteSurface(GFace *gf)
     int Hb = m_vertices.size() - N4;
     if(Lb != L || Hb != H){
       Msg::Error("Surface %d cannot be meshed using the transfinite algo", 
-          gf->tag());
+		 gf->tag());
       return 0;
     }
   }
@@ -150,7 +150,7 @@ int MeshTransfiniteSurface(GFace *gf)
     int Lb = m_vertices.size() - N3;      
     if(Lb != L){
       Msg::Error("Surface %d cannot be meshed using the transfinite algo %d != %d", 
-          gf->tag(), L, Lb);
+		 gf->tag(), L, Lb);
       return 0;
     }      
   }

@@ -29,10 +29,7 @@ typedef enum {
 class FieldOption {
  protected:
   bool *status;
-  inline void modified()
-  {
-    if(status)  *status = true;
-  }
+  inline void modified(){ if(status) *status = true; }
  public:
   FieldOption(bool *_status) : status(_status) {}
   virtual ~FieldOption() {}
