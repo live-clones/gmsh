@@ -237,7 +237,7 @@ class GEntity {
   unsigned int getNumMeshVertices() { return mesh_vertices.size(); }
 
   // get the mesh vertex at the given index
-//  MVertex *getMeshVertex(unsigned int index) { return mesh_vertices[index]; }
+  MVertex *getMeshVertex(unsigned int index) { return mesh_vertices[index]; }
 };
 
 class GEntityLessThan {

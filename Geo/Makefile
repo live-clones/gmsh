@@ -124,8 +124,7 @@ gmshRegion.o: gmshRegion.cpp GModel.h GVertex.h GEntity.h Range.h \
   ExtrudeParams.h ../Common/SmoothData.h ../Common/Message.h
 gmshSurface.o: gmshSurface.cpp gmshSurface.h Pair.h Range.h SPoint2.h \
   SPoint3.h SVector3.h SBoundingBox3d.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Common/Message.h \
-  ../contrib/MathEval/matheval.h
+  ../Numeric/NumericEmbedded.h ../Common/Message.h
 OCCVertex.o: OCCVertex.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h OCCVertex.h OCCIncludes.h MVertex.h \
@@ -261,7 +260,7 @@ GeoInterpolation.o: GeoInterpolation.cpp ../Common/Message.h Geo.h \
 findLinks.o: findLinks.cpp ../Common/Message.h GModel.h GVertex.h \
   GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
   SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/TreeUtils.h \
-  ../Common/avl.h ../Common/ListUtils.h ../Common/ListUtils.h
+  ../Common/avl.h ../Common/ListUtils.h
 MVertex.o: MVertex.cpp MVertex.h SPoint3.h GEdge.h GEntity.h Range.h \
   SBoundingBox3d.h GVertex.h GPoint.h SPoint2.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h ../Common/Message.h

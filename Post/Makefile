@@ -52,8 +52,9 @@ depend:
 PView.o: PView.cpp PView.h ../Geo/SPoint3.h PViewOptions.h ColorTable.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h PViewData.h PViewDataList.h \
   ../Common/ListUtils.h ../Common/VertexArray.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Common/Context.h ../Common/SmoothData.h \
-  adaptiveData.h ../Common/GmshMatrix.h ../Common/Message.h
+  ../Geo/SPoint3.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Common/SmoothData.h adaptiveData.h ../Common/GmshMatrix.h \
+  ../Common/Message.h
 PViewIO.o: PViewIO.cpp PView.h ../Geo/SPoint3.h PViewDataList.h \
   PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Common/ListUtils.h PViewDataGModel.h ../Geo/GModel.h \
@@ -75,11 +76,13 @@ PViewDataIO.o: PViewDataIO.cpp ../Common/Message.h ../Numeric/Numeric.h \
 PViewDataList.o: PViewDataList.cpp PViewDataList.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/ListUtils.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
-  ../Common/SmoothData.h ../Common/Message.h ../Common/Context.h
+  ../Common/SmoothData.h ../Common/Message.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h
 PViewDataListIO.o: PViewDataListIO.cpp PViewDataList.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/ListUtils.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Common/Message.h \
-  ../Common/Context.h adaptiveData.h ../Common/GmshMatrix.h
+  ../Common/Context.h ../Geo/CGNSOptions.h adaptiveData.h \
+  ../Common/GmshMatrix.h
 PViewDataGModel.o: PViewDataGModel.cpp PViewDataGModel.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
@@ -130,4 +133,5 @@ OctreePost.o: OctreePost.cpp ../Common/Octree.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h
 ColorTable.o: ColorTable.cpp ../Common/Message.h ColorTable.h \
-  ../Common/Context.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h
+  ../Common/Context.h ../Geo/CGNSOptions.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h

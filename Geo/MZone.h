@@ -322,7 +322,7 @@ class MZone
  * Internal types
  *============================================================================*/
 
- private:
+ public:
   typedef typename DimTr<DIM>::FaceT FaceT;
   typedef typename FaceTr<FaceT>::BoFaceMap BoFaceMap;
   typedef typename std::map<const MVertex*,
