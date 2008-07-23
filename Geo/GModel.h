@@ -22,6 +22,7 @@ class GEO_Internals;
 class OCC_Internals;
 class smooth_normals;
 class FieldManager;
+class CGNSOptions;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel
@@ -222,6 +223,9 @@ class GModel
   std::set<int> &getMeshPartitions() { return meshPartitions; }
   std::set<int> &recomputeMeshPartitions();
 
+  // Number of partitions
+  int getNumMeshPartitions() const { return meshPartitions.size(); }
+
   // Deletes all the partitions
   void deleteMeshPartitions();
 
@@ -292,7 +296,8 @@ class GModel
 
   // CFD General Notation System files
   int readCGNS(const std::string &name);
-  int writeCGNS(const std::string &name, double scalingFactor=1.0);
+  int writeCGNS(const std::string &name, const int zoneDefinition,
+                const CGNSOptions &options, double scalingFactor=1.0);
 
   // Med "Modele d'Echange de Donnees" file format (the static routine
   // is allowed to load multiple models/meshes)

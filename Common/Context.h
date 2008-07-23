@@ -9,6 +9,8 @@
 #include <vector>
 #include <string>
 
+#include "CGNSOptions.h"
+
 // Interface-independent context 
 
 class Context_T {
@@ -169,6 +171,8 @@ class Context_T {
     int smooth_normals, reverse_all_normals;
     double angle_smooth_normals;
     double allow_swap_edge_angle;
+    int zone_definition;
+    CGNSOptions cgns_options;
   } mesh;
 
   // post processing options 

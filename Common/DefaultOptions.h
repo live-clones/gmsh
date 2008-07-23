@@ -1058,6 +1058,8 @@ StringXNumber MeshOptions_Number[] = {
     "Display faces of volume mesh?" },
   { F|O, "VolumeNumbers" , opt_mesh_volumes_num , 0. , 
     "Display volume mesh element numbers?" },
+  { F|O, "ZoneDefinition" , opt_mesh_zone_definition , 2. , 
+    "Method for defining a zone (0=single zone, 1=by partition, 2=by physical)" },
 
   { 0, NULL , NULL , 0. , NULL }
 } ;

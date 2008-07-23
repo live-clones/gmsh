@@ -30,6 +30,7 @@ class SVector3 {
     double n = norm(); if(n){ P[0] /= n; P[1] /= n; P[2] /= n; }
     return n;
   }
+  void negate() { P[0] = -P[0]; P[1] = -P[1]; P[2] = -P[2]; }  
   // why both [] and (), why not
   double &operator[](int i){ return P[i]; }
   double operator[](int i) const { return P[i]; }
@@ -37,20 +38,22 @@ class SVector3 {
   double operator()(int i) const { return P[i]; }
   SVector3 & operator += (const SVector3 &a)
   {
-    for(int i = 0; i < 3; i++)
-      P[i] += a[i];
+    P[0] += a[0];  P[1] += a[1];  P[2] += a[2];
     return *this;
   }
   SVector3 & operator -= (const SVector3 &a)
   { 
-    for(int i = 0; i < 3; i++)
-      P[i] -= a[i];
+    P[0] -= a[0];  P[1] -= a[1];  P[2] -= a[2];
     return *this;
   }
   SVector3 & operator *= (const SVector3 &a)
-  { 
-    for(int i = 0; i < 3; i++)
-      P[i] *= a[i];
+  {
+    P[0] *= a[0]; P[1] *= a[1]; P[2] *= a[2];
+    return *this;
+  }
+  SVector3 & operator *= (const double v)
+  {
+    P[0] *= v; P[1] *= v; P[2] *= v;
     return *this;
   }
   SVector3 & operator = (double v)

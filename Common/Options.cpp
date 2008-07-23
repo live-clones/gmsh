@@ -5232,6 +5232,16 @@ double opt_mesh_color_carousel(OPT_ARGS_NUM)
   return CTX.mesh.color_carousel;
 }
 
+double opt_mesh_zone_definition(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX.mesh.zone_definition = (int)val;
+    if(CTX.mesh.zone_definition < 0 || CTX.mesh.zone_definition > 2)
+      CTX.mesh.zone_definition = 0;
+  }
+  return CTX.mesh.zone_definition;
+}
+
 double opt_mesh_nb_nodes(OPT_ARGS_NUM)
 {
   double s[50];

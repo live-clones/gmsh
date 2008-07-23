@@ -91,13 +91,26 @@ class MFace {
   }
 };
 
+inline bool operator==(const MFace &f1, const MFace &f2)
+{
+  return (f1.getSortedVertex(0) == f2.getSortedVertex(0) &&
+          f1.getSortedVertex(1) == f2.getSortedVertex(1) &&
+          f1.getSortedVertex(2) == f2.getSortedVertex(2) &&
+          f1.getSortedVertex(3) == f2.getSortedVertex(3));
+}
+
+inline bool operator!=(const MFace &f1, const MFace &f2)
+{
+  return (f1.getSortedVertex(0) != f2.getSortedVertex(0) ||
+          f1.getSortedVertex(1) != f2.getSortedVertex(1) ||
+          f1.getSortedVertex(2) != f2.getSortedVertex(2) ||
+          f1.getSortedVertex(3) != f2.getSortedVertex(3));
+}
+
 struct Equal_Face : public std::binary_function<MFace, MFace, bool> {
   bool operator()(const MFace &f1, const MFace &f2) const
   {
-    return (f1.getSortedVertex(0) == f2.getSortedVertex(0) &&
-            f1.getSortedVertex(1) == f2.getSortedVertex(1) &&
-            f1.getSortedVertex(2) == f2.getSortedVertex(2) &&
-            f1.getSortedVertex(3) == f2.getSortedVertex(3));
+    return (f1 == f2);
   }
 };
 

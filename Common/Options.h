@@ -489,6 +489,7 @@ double opt_mesh_draw_skin_only(OPT_ARGS_NUM);
 double opt_mesh_save_all(OPT_ARGS_NUM);
 double opt_mesh_save_groups_of_nodes(OPT_ARGS_NUM);
 double opt_mesh_color_carousel(OPT_ARGS_NUM);
+double opt_mesh_zone_definition(OPT_ARGS_NUM);
 double opt_mesh_nb_nodes(OPT_ARGS_NUM);
 double opt_mesh_nb_triangles(OPT_ARGS_NUM);
 double opt_mesh_nb_quadrangles(OPT_ARGS_NUM);
