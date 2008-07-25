@@ -403,6 +403,13 @@ void OpenProject(const char *name)
     if(PView::list[i]->getData()->hasModel(GModel::current()))
       delete PView::list[i];
 #endif
+#if !defined(HAVE_NO_PARSER)
+  // reinitialize the parser symbol tree (only if the current model is
+  // not empty: if it's empty it probably mean we just launched gmsh,
+  // and we don't want to delete variables set e.g. using the -string
+  // command line option)
+  if(GModel::current()->getNumVertices()) InitSymbols();
+#endif
   GModel::current()->destroy();
   GModel::current()->getGEOInternals()->destroy();
 

@@ -32,7 +32,7 @@ int GmshInitialize(int argc, char **argv)
   // Initialize messages (parallel stuff, etc.)
   Msg::Init(argc, argv);
 
-#if !defined(HAVE_NO_POST)
+#if !defined(HAVE_NO_PARSER)
   // Initialize the symbol tree that will hold variable names in the
   // parser
   InitSymbols();
