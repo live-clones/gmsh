@@ -1764,13 +1764,16 @@ Delete :
     }
   | tDelete tSTRING tEND
     {
-      if(!strcmp($2, "Meshes") || !strcmp($2, "All")){
+      if(!strcmp($2, "Model") || !strcmp($2, "Meshes") || !strcmp($2, "All")){
 	GModel::current()->destroy();
 	GModel::current()->getGEOInternals()->destroy();
       }
       else if(!strcmp($2, "Physicals")){
 	GModel::current()->getGEOInternals()->reset_physicals();
 	GModel::current()->deletePhysicalGroups();
+      }
+      else if(!strcmp($2, "Variables")){
+	InitSymbols();
       }
       else{
 	Symbol TheSymbol, *pSymbol;

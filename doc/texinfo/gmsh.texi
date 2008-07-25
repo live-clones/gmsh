@@ -1280,11 +1280,15 @@ the views.
 Forces the bounding box of the scene to the given @w{@var{expression}s} (X
 min, X max, Y min, Y max, Z min, Z max).
 
-@item Delete All;
-Deletes all geometrical entities and all currently loaded meshes.
+@item Delete Model;
+Deletes the current model (all geometrical entities and their associated
+meshes).
 
 @item Delete Physicals;
 Deletes all physical groups.
+
+@item Delete Variables;
+Deletes all the expressions.
 
 @item Delete @var{string};
 Deletes the expression @var{string}.
