@@ -11,7 +11,6 @@
 #include <string.h>
 #include "MallocUtils.h"
 #include "TreeUtils.h"
-#include "Message.h"
 
 Tree_T *Tree_Create(int size, int (*fcmp) (const void *a, const void *b))
 {
@@ -28,15 +27,13 @@ void Tree_Delete(Tree_T * tree)
   Free(tree);
 }
 
-void Tree_Add(Tree_T * tree, void *data)
+void *Tree_Add(Tree_T * tree, void *data)
 {
-  if(!tree)
-    Msg::Error("Impossible to add in unallocated tree");
-  else {
-    void *ptr = Malloc(tree->size);
-    memcpy(ptr, data, tree->size);
-    avl_insert(tree->root, ptr, ptr);
-  }
+  if(!tree) return 0;
+  void *ptr = Malloc(tree->size);
+  memcpy(ptr, data, tree->size);
+  avl_insert(tree->root, ptr, ptr);
+  return ptr;
 }
 
 int Tree_Nbr(Tree_T * tree)
