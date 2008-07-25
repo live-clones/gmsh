@@ -12,7 +12,6 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/types.h>
-
 #include "MallocUtils.h"
 #include "ListUtils.h"
 #include "TreeUtils.h"

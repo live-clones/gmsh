@@ -1286,6 +1286,9 @@ Deletes all geometrical entities and all currently loaded meshes.
 @item Delete Physicals;
 Deletes all physical groups.
 
+@item Delete @var{string};
+Deletes the expression @var{string}.
+
 @item Mesh @var{expression};
 Generate @var{expression}-D mesh.
 

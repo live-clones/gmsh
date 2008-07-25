@@ -1772,8 +1772,17 @@ Delete :
 	GModel::current()->getGEOInternals()->reset_physicals();
 	GModel::current()->deletePhysicalGroups();
       }
-      else
-	yymsg(0, "Unknown command 'Delete %s'", $2);
+      else{
+	Symbol TheSymbol, *pSymbol;
+	TheSymbol.Name = $2;
+	if(!(pSymbol = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))){
+	  yymsg(0, "Unknown object or expression to delete '%s'", $2);
+	}
+	else{
+	  Tree_Suppress(Symbol_T, pSymbol);
+	  DeleteSymbol(pSymbol, 0);
+	}
+      }
       Free($2);
     }
   | tDelete tSTRING tSTRING tEND
@@ -3333,7 +3342,7 @@ void DeleteSymbol(void *a, void *b)
   List_Delete(s->val);
 }
 
-int CompareSymbols (const void *a, const void *b)
+int CompareSymbols(const void *a, const void *b)
 {
   return(strcmp(((Symbol*)a)->Name, ((Symbol*)b)->Name));
 }

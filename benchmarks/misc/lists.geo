@@ -1,13 +1,14 @@
 
 a = 1;
-
 Printf("a = %g", a);
+
+Printf("Deleting a");
+Delete a;
+Printf("a = %g  <--- should produce an error", a);
 
 b[] = {1,2,3};
 
-Printf("b = %g %g %g", b[{0:1}]);
-
-Printf("b[a] = %g", b[a]);
+Printf("b = %g %g %g", b[{0:2}]);
 
 Printf("b[b[0]] = %g", b[b[0]]);
 

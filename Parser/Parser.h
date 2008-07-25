@@ -14,6 +14,7 @@ typedef struct {
   List_T *val;
 } Symbol;
 
+void DeleteSymbol(void *a, void *b);
 void InitSymbols();
 
 extern Tree_T *Symbol_T;
