@@ -1065,7 +1065,7 @@ static void drawVectorArray(PView *p, VertexArray *va)
     glColor4ubv((GLubyte *)va->getColorArray(4 * i));
     double l = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
     double lmax = opt->ArrowSizeProportional ? opt->TmpMax : l;
-    if(l && lmax){
+    if((l || opt->VectorType == 6) && lmax){
       double scale = opt->ArrowSize / lmax;
       // log scaling
       if(opt->ScaleType == PViewOptions::Logarithmic && 
@@ -1075,8 +1075,9 @@ static void drawVectorArray(PView *p, VertexArray *va)
 	  log10(l / opt->TmpMin) / log10(opt->TmpMax / opt->TmpMin);
       }
       double px = v[0] * scale, py = v[1] * scale, pz = v[2] * scale;
-      // only draw vectors larger than 1 pixel on screen
-      if(fabs(px) > 1. || fabs(py) > 1. || fabs(pz) > 1.){
+      // only draw vectors larger than 1 pixel on screen, except when
+      // drawing "comet" glyphs
+      if(opt->VectorType == 6 || fabs(px) > 1. || fabs(py) > 1. || fabs(pz) > 1.){
         double d = CTX.pixel_equiv_x / CTX.s[0];
         double dx = px * d, dy = py * d, dz = pz * d;
         double x = s[0], y = s[1], z = s[2];

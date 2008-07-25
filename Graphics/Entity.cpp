@@ -384,7 +384,8 @@ void Draw_Vector(int Type, int Fill,
     }
     glBegin(GL_LINES);
     glVertex3d(x + dx, y + dy, z + dz);
-    //glColor4ubv((GLubyte *) & CTX.color.bg);
+    // color gradient
+    glColor4ubv((GLubyte *) & CTX.color.bg);
     glVertex3d(x, y, z);
     glEnd();
     break;
