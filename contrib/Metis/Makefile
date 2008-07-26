@@ -77,9 +77,6 @@ cpobj: ${OBJ}
 
 .c${OBJEXT}:
 	${CC} ${CFLAGS} ${DASH}c $< ${DASH}o ${<:.c=${OBJEXT}}
-	if [ -r ${notdir ${<:.c=${OBJEXT}}} ]; then\
-           mv -f ${notdir ${<:.c=${OBJEXT}}} ${<:.c=${OBJEXT}};\
-        fi
 
 clean:
 	rm -f *.o *.obj
