@@ -206,7 +206,8 @@ class MZoneBoundary
         parentFace(bFMapIt->second.parentFace),
         faceIndex(bFMapIt->second.faceIndex), zoneIndex(_zoneIndex)
       { }
-     private:
+//     private:  // Default constructor should be private ... but currently
+                 // fails on some compilers (earlier versions of g++?)
       // The default constructor is required by 'set_offsets()' in
       // class 'FaceAllocator'.  This is invoked by preInit() below.
       FaceDataB();
@@ -219,7 +220,8 @@ class MZoneBoundary
       ZoneData(const int _vertexIndex, const int _zoneIndex)
         : vertexIndex(_vertexIndex), zoneIndex(_zoneIndex)
       { }
-     private:
+//     private:  // Default constructor should be private ... but currently
+                 // fails on some compilers (earlier versions of g++?)
       // The default constructor is required by 'set_offsets()' in
       // class 'FaceAllocator'.  This is invoked by preInit() below.
       ZoneData() { };
