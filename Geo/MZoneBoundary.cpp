@@ -894,6 +894,29 @@ int MZoneBoundary<DIM>::exteriorBoundaryVertices
 
 /*******************************************************************************
  *
+ * Specialization of constructor
+ * MZoneBoundary<DIM>::GlobalVertexData<FaceT>::FaceDataB::FaceDataB()
+ * - Note that these dummy constructors are only required by
+ *   FaceAllocator<T>::set_offsets()
+ *   [with T = MZoneBoundary<DIM>::GlobalVertexData<FaceT>::FaceDataB]
+ *
+ ******************************************************************************/
+
+template<>
+template<>
+MZoneBoundary<2>::GlobalVertexData<MEdge>::FaceDataB::FaceDataB()
+  : face(0, 0) 
+{ }
+
+template<>
+template<>
+MZoneBoundary<3>::GlobalVertexData<MFace>::FaceDataB::FaceDataB()
+   : face(0, 0, 0) 
+{ }
+
+
+/*******************************************************************************
+ *
  * Explicit instantiations of class MZoneBoundary
  *
  ******************************************************************************/

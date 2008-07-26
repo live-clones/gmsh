@@ -167,6 +167,9 @@ struct ZoneBoVecSort
  * =====
  *
  *   - explicitly instantiated in 'MZoneBoundary.cpp'
+ *   - this class uses some explicit memory management.  Call preInit() before
+ *     constructing any class MZoneBoundary and postDestroy() after all
+ *     MZoneBoundary classes have been destroyed.
  *
  ******************************************************************************/
 
@@ -203,6 +206,11 @@ class MZoneBoundary
         parentFace(bFMapIt->second.parentFace),
         faceIndex(bFMapIt->second.faceIndex), zoneIndex(_zoneIndex)
       { }
+     private:
+      // The default constructor is required by 'set_offsets()' in
+      // class 'FaceAllocator'.  This is invoked by preInit() below.
+      FaceDataB();
+      friend class CCon::FaceAllocator<FaceDataB>;
     };
     struct ZoneData
     {
@@ -211,6 +219,11 @@ class MZoneBoundary
       ZoneData(const int _vertexIndex, const int _zoneIndex)
         : vertexIndex(_vertexIndex), zoneIndex(_zoneIndex)
       { }
+     private:
+      // The default constructor is required by 'set_offsets()' in
+      // class 'FaceAllocator'.  This is invoked by preInit() below.
+      ZoneData() { };
+      friend class CCon::FaceAllocator<ZoneData>;
     };
     CCon::FaceVector<FaceDataB> faces;
     CCon::FaceVector<ZoneData> zoneData;
@@ -249,6 +262,22 @@ class MZoneBoundary
 
   int exteriorBoundaryVertices(ZoneBoVec &zoneBoVec);
 
+//--Memory management
+
+  static void preInit()
+  {
+    CCon::FaceVector<typename GlobalVertexData<FaceT>::FaceDataB>
+      ::init_memory();
+    CCon::FaceVector<typename GlobalVertexData<FaceT>::ZoneData>::init_memory();
+  }
+  static void postDestroy()
+  {
+    CCon::FaceVector<typename GlobalVertexData<FaceT>::FaceDataB>
+      ::release_memory();
+    CCon::FaceVector<typename GlobalVertexData<FaceT>::ZoneData>
+      ::release_memory();
+  }
+
 
 /*==============================================================================
  * Member data
@@ -262,5 +291,6 @@ private:
                                         // for the entire domain
 
 };
+
 
 #endif

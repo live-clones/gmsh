@@ -73,16 +73,13 @@ class Pool
 
   // Constructor
   Pool(const unsigned _blockSize = 128)
-    : tailBlock(0), tailElement(0), blockSize(_blockSize)
+    : tailBlock(0), tailElement(0), blockSize(_blockSize), numUsedElement(0)
   { }
 
   // Destructor
-  ~Pool(){
-    while(tailBlock) {
-      Block<T> *const block = tailBlock;
-      tailBlock = block->prev;
-      delete block;
-    }
+  ~Pool()
+  {
+    delete_all_blocks();
   }
 
   // Get an element
@@ -91,6 +88,7 @@ class Pool
     if(!tailElement) create_block();
     void *const rval = tailElement;
     tailElement =  static_cast<T*>(tailElement->get_pool_prev());
+    ++numUsedElement;
     return rval;
   }
 
@@ -99,6 +97,13 @@ class Pool
   {
     elem->set_pool_prev(tailElement);
     tailElement = elem;
+    --numUsedElement;
+  }
+
+  // Free memory used by the pool
+  void free_memory()
+  {
+    if(numUsedElement == 0) delete_all_blocks();
   }
 
  private:
@@ -107,6 +112,7 @@ class Pool
   Block<T> *tailBlock;
   T *tailElement;
   unsigned blockSize;
+  unsigned numUsedElement;
 
   // Create a new block
   void create_block()
@@ -118,6 +124,16 @@ class Pool
     for(int n = back; n--; ) {
       T *const prev = tailElement--;
       tailElement->set_pool_prev(prev);
+    }
+  }
+
+  // Delete all blocks
+  void delete_all_blocks()
+  {
+    while(tailBlock) {
+      Block<T> *const block = tailBlock;
+      tailBlock = block->prev;
+      delete block;
     }
   }
 
@@ -200,6 +216,7 @@ class Block
  *   - No per-object data is stored as per normal requirements for allocators.
  *     Critical OpenMP sections are defined since multiple threads can access
  *     the allocator.
+ *   - If set_offsets is to be used, T must have a default constructor.
  *
  *============================================================================*/
 
@@ -290,6 +307,15 @@ class FaceAllocator
     offset8 = f8.get_offset();
     Face16 f16;
     offset16 = f16.get_offset();
+  }
+
+  // Release memory used by the pools
+  static void free_pool_memory()
+  {
+    face2Pool.free_memory();
+    face6Pool.free_memory();
+    face8Pool.free_memory();
+    face16Pool.free_memory();
   }
 
   // Allocate the array
@@ -503,6 +529,10 @@ ptrdiff_t FaceAllocator<T>::offset16 = 0;
  *   - The only way to add elements is by 'push_back'
  *   - Erasing may reorder the elements.
  *   - T must only contain primitive types
+ *   - init_memory() should be called before constructing any class
+ *     FaceVector<T> and release_memory() should be called after all classes
+ *     FaceVector<T> have been destroyed.  These routines explictly manage
+ *     memory used by pools in the allocator.
  *
  *============================================================================*/
 
@@ -551,8 +581,16 @@ class FaceVector : public FaceAllocator<T>
 
   // Vector size and capacity
   unsigned size() const { return _size; }
-
   unsigned capacity() const { return _capacity; }
+
+  // Memory managment
+  // Init sets offsets to ensure pointers can be recovered.  It should be called
+  // once before using FaceVector<T>
+  static void init_memory() { FaceAllocator<T>::set_offsets(); }
+  // This releases memory used by the pools if no pool elements are in use.  It
+  // should be called after use of FaceVector<T> is finished and all
+  // FaceVector<T> classes have been destroyed.
+  static void release_memory() { FaceAllocator<T>::free_pool_memory(); }
 
  private:
 

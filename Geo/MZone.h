@@ -310,6 +310,9 @@ template <> struct FaceTr<MFace> {
  * =====
  *
  *   - explicitly instantiated in 'MZone.cpp'
+ *   - this class uses some explicit memory management.  Call preInit() before
+ *     constructing any class MZone and postDestroy() after all MZone classes
+ *     have been destroyed.
  *
  ******************************************************************************/
 
@@ -410,7 +413,17 @@ class MZone
       if(zoneElemConn[iElemType].numElem > 0) ++numElemType;
     return numElemType;
   }
+  
+//--Memory management
 
+  static void preInit()
+  {
+    CCon::FaceVector<typename BoFaceMap::const_iterator>::init_memory();
+  }
+  static void postDestroy()
+  {
+    CCon::FaceVector<typename BoFaceMap::const_iterator>::release_memory();
+  }
 
 /*==============================================================================
  * Member data

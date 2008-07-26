@@ -278,12 +278,16 @@ int GModel::writeCGNS(const std::string &name, const int zoneDefinition,
 
   switch(meshDim) {
   case 2:
+    MZone<2>::preInit();
     write_CGNS_zones<2>(*this, zoneDefinition, options, scalingFactor,
                         vectorDim, groups[face], cgIndexFile, cgIndexBase);
+    MZone<2>::postDestroy();
     break;
   case 3:
+    MZone<3>::preInit();
     write_CGNS_zones<3>(*this, zoneDefinition, options, scalingFactor,
                         vectorDim, groups[region], cgIndexFile, cgIndexBase);
+    MZone<3>::postDestroy();
     break;
   }
 
