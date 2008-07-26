@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <limits>
 #include "GModel.h"
 #include "Message.h"
 #include "OCCEdge.h"
@@ -130,7 +131,7 @@ SVector3 OCCEdge::firstDer(double par) const
 double OCCEdge::parFromPoint(const SPoint3 &pt) const
 {
   Msg::Error("parFromPoint not implemented for OCCEdge");
-  return 0.;
+  return std::numeric_limits<double>::max();
 }
 
 GEntity::GeomType OCCEdge::geomType() const

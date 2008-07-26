@@ -53,6 +53,7 @@ class GEdge : public GEntity {
   virtual std::list<GFace*> faces() const { return l_faces; }
 
   // get the parameter location for a point in space on the edge
+  // (returns std::numeric_limits<double>::max() if failed)
   virtual double parFromPoint(const SPoint3 &) const = 0;
 
   // get the point for the given parameter location
