@@ -7,6 +7,7 @@
 #define _GEO_STRING_INTERFACE_H_
 
 #include <string>
+#include <vector>
 #include "ListUtils.h"
 
 double evaluate_scalarfunction(std::string var, double val, std::string funct);
@@ -14,16 +15,16 @@ double evaluate_scalarfunction(std::string var, double val, std::string funct);
 void coherence(std::string filename);
 void delet(List_T *list, std::string filename, std::string what);
 void add_infile(std::string text, std::string filename, bool deleted_something=false);
-void add_trsfline(int N, int *l, std::string filename, std::string type, 
-                  std::string typearg, std::string pts);
-void add_trsfsurf(int N, int *l, std::string filename, std::string dir);
-void add_trsfvol(int N, int *l, std::string filename);
 void add_charlength(List_T *list, std::string filename, std::string lc);
 void add_recosurf(List_T *list, std::string filename);
+void add_trsfline(std::vector<int> &l, std::string filename, std::string type, 
+                  std::string typearg, std::string pts);
+void add_trsfsurf(std::vector<int> &l, std::string filename, std::string dir);
+void add_trsfvol(std::vector<int> &l, std::string filename);
 void add_param(std::string par, std::string value, std::string filename);
 void add_point(std::string filename, std::string x, std::string y, std::string z, 
                std::string lc);
-void add_multline(std::string type, int N, int *p, std::string filename);
+void add_multline(std::string type, std::vector<int> &p, std::string filename);
 void add_circ(int p1, int p2, int p3, std::string filename);
 void add_ell(int p1, int p2, int p3, int p4, std::string filename);
 void add_field_option(int field_id, std::string option_name, std::string option_value,

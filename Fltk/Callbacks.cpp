@@ -2731,7 +2731,7 @@ static void _add_new_multiline(std::string type)
     }
     if(ib == 'e') {
       if(p.size() >= 2)
-	add_multline(type, p.size(), &p[0], CTX.filename);
+	add_multline(type, p, CTX.filename);
       WID->reset_visibility();
       ZeroHighlight();
       Draw();
@@ -2796,7 +2796,7 @@ static void _add_new_line()
       break;
     }
     if(p.size() == 2) {
-      add_multline("Line", p.size(), &p[0], CTX.filename);
+      add_multline("Line", p, CTX.filename);
       WID->reset_visibility();
       ZeroHighlight();
       Draw();
@@ -3801,7 +3801,7 @@ static void _add_transfinite(int dim)
     if(ib == 'e') {
       if(dim == 1) {
         if(p.size())
-          add_trsfline(p.size(), &p[0], CTX.filename,
+          add_trsfline(p, CTX.filename,
                        WID->context_mesh_choice[0]->text(),
                        WID->context_mesh_input[2]->value(),
                        WID->context_mesh_input[1]->value());
@@ -3875,14 +3875,14 @@ static void _add_transfinite(int dim)
             switch (dim) {
             case 2:
               if(p.size() == 3 + 1 || p.size() == 4 + 1)
-                add_trsfsurf(p.size(), &p[0], CTX.filename,
+                add_trsfsurf(p, CTX.filename,
                              WID->context_mesh_choice[1]->text());
               else
                 Msg::Error("Wrong number of points for transfinite surface");
               break;
             case 3:
               if(p.size() == 6 + 1 || p.size() == 8 + 1)
-                add_trsfvol(p.size(), &p[0], CTX.filename);
+                add_trsfvol(p, CTX.filename);
               else
                 Msg::Error("Wrong number of points for transfinite volume");
               break;

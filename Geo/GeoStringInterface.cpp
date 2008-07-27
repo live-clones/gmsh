@@ -130,21 +130,6 @@ void delet(List_T *list, std::string filename, std::string what)
   add_infile(sstream.str(), filename, true);
 }
 
-void add_trsfsurf(int N, int *l, std::string filename, std::string dir)
-{
-  std::ostringstream sstream;
-  sstream << "Transfinite Surface {" << l[0] << "} = {";
-  for(int i = 1; i < N; i++) {
-    if(i > 1) sstream << ", ";
-    sstream << l[i];
-  }
-  if(dir == "Left")
-    sstream << "};";
-  else
-    sstream << "} " << dir << ";";
-  add_infile(sstream.str(), filename);
-}
-
 void add_charlength(List_T *list, std::string filename, std::string lc)
 {
   std::ostringstream sstream;
@@ -159,19 +144,45 @@ void add_recosurf(List_T *list, std::string filename)
   add_infile(sstream.str(), filename);
 }
 
-void add_trsfline(int N, int *l, std::string filename, std::string type, 
+void add_trsfline(std::vector<int> &l, std::string filename, std::string type, 
                   std::string typearg, std::string pts)
 {
   std::ostringstream sstream;
   sstream << "Transfinite Line {";
-  for(int i = 0; i < N; i++) {
+  for(unsigned int i = 0; i < l.size(); i++){
     if(i) sstream << ", ";
     sstream << l[i];
   }
-  if(typearg.empty())
-    sstream << "} = " << pts << ";";
+  sstream << "} = " << pts;
+  if(typearg.size()) sstream << " Using " << type << " " << typearg;
+  sstream << ";";
+  add_infile(sstream.str(), filename);
+}
+
+void add_trsfsurf(std::vector<int> &l, std::string filename, std::string dir)
+{
+  std::ostringstream sstream;
+  sstream << "Transfinite Surface {" << l[0] << "} = {";
+  for(unsigned int i = 1; i < l.size(); i++) {
+    if(i > 1) sstream << ", ";
+    sstream << l[i];
+  }
+  if(dir == "Left")
+    sstream << "};";
   else
-    sstream << "} = " << pts << "Using " << type << " " << typearg << ";";
+    sstream << "} " << dir << ";";
+  add_infile(sstream.str(), filename);
+}
+
+void add_trsfvol(std::vector<int> &l, std::string filename)
+{
+  std::ostringstream sstream;
+  sstream << "Transfinite Volume{" << l[0] << "} = {";
+  for(unsigned int i = 1; i < l.size(); i++) {
+    if(i > 1) sstream << ", ";
+    sstream << l[i];
+  }
+  sstream << "};";
   add_infile(sstream.str(), filename);
 }
 
@@ -214,18 +225,18 @@ void delete_field(int field_id, std::string filename)
   add_infile(sstream.str(), filename);
 }
 
-void set_background_field(int field_id,std::string filename)
+void set_background_field(int field_id, std::string filename)
 {
   std::ostringstream sstream;
   sstream << "Background Field = " << field_id << ";";
   add_infile(sstream.str(), filename);
 }
 
-void add_multline(std::string type, int N, int *p, std::string filename)
+void add_multline(std::string type, std::vector<int> &p, std::string filename)
 {
   std::ostringstream sstream;
   sstream << type << "(" << NEWLINE() << ") = {";
-  for(int i = 0; i < N; i++) {
+  for(unsigned int i = 0; i < p.size(); i++) {
     if(i) sstream << ", ";
     sstream << p[i];
   }
@@ -278,18 +289,6 @@ void add_vol(List_T *list, std::string filename)
 {
   std::ostringstream sstream;
   sstream << "Volume(" << NEWVOLUME() << ") = {" << list2string(list) << "};";
-  add_infile(sstream.str(), filename);
-}
-
-void add_trsfvol(int N, int *l, std::string filename)
-{
-  std::ostringstream sstream;
-  sstream << "Transfinite Volume{" << l[0] << "} = {";
-  for(int i = 1; i < N; i++) {
-    if(i > 1) sstream << ", ";
-    sstream << l[i];
-  }
-  sstream << "};";
   add_infile(sstream.str(), filename);
 }
 
