@@ -35,18 +35,6 @@ class VisLessThan{
   }
 };
 
-#if !defined(HAVE_NO_POST)
-static void setLabels(void *a, void *b)
-{
-  Symbol *s = (Symbol *)a;
-  for(int j = 0; j < List_Nbr(s->val); j++) {
-    double tag;
-    List_Read(s->val, j, &tag);
-    VisibilityManager::instance()->setLabel((int)tag, std::string(s->Name), 0);
-  }
-}
-#endif
-
 void VisibilityManager::update(int type)
 {
   _labels.clear();
@@ -57,8 +45,10 @@ void VisibilityManager::update(int type)
   GModel *m = GModel::current();
 
 #if !defined(HAVE_NO_POST)
-  // get old labels from parser
-  if(Tree_Nbr(Symbol_T)) Tree_Action(Symbol_T, setLabels);
+  for(std::map<std::string, std::vector<double> >::iterator it = gmsh_yysymbols.begin();
+      it != gmsh_yysymbols.end(); ++it)
+    for(unsigned int i = 0; i < it->second.size(); i++)
+      VisibilityManager::instance()->setLabel((int)it->second[i], it->first, 0);
 #endif
   
   if(type == 0){ // elementary entities

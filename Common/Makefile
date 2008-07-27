@@ -106,9 +106,9 @@ Gmsh.o: Gmsh.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/SBoundingBox3d.h ../Common/ListUtils.h ../Common/TreeUtils.h \
   ../Common/avl.h ../Common/ListUtils.h ../Geo/SPoint2.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h Context.h \
-  ../Geo/CGNSOptions.h ../Parser/Parser.h ../Plugin/PluginManager.h \
-  ../Plugin/Plugin.h ../Common/Options.h ../Common/Message.h \
-  ../Post/PViewDataList.h ../Post/PViewData.h ../Common/GmshMatrix.h
+  ../Geo/CGNSOptions.h ../Plugin/PluginManager.h ../Plugin/Plugin.h \
+  ../Common/Options.h ../Common/Message.h ../Post/PViewDataList.h \
+  ../Post/PViewData.h ../Common/GmshMatrix.h
 OS.o: OS.cpp Message.h
 OpenFile.o: OpenFile.cpp Message.h ../Geo/Geo.h ../Common/GmshDefines.h \
   ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
@@ -169,8 +169,7 @@ Visibility.o: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \
   ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
   ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Parser/Parser.h ../Common/ListUtils.h ../Common/TreeUtils.h \
-  ../Common/avl.h ../Common/ListUtils.h
+  ../Parser/Parser.h
 Trackball.o: Trackball.cpp Trackball.h
 VertexArray.o: VertexArray.cpp VertexArray.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h Context.h ../Geo/CGNSOptions.h ../Numeric/Numeric.h \

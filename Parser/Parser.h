@@ -6,30 +6,21 @@
 #ifndef _PARSER_H_
 #define _PARSER_H_
 
-#include "ListUtils.h"
-#include "TreeUtils.h"
-
-typedef struct {
-  char *Name;
-  List_T *val;
-} Symbol;
-
-void DeleteSymbol(void *a, void *b);
-void InitSymbols();
-
-extern Tree_T *Symbol_T;
+#include <map>
+#include <string>
+#include <vector>
 
 int gmsh_yyparse();
 int gmsh_yylex();
+void gmsh_yyflush();
 
-void force_yyflush();
-
+// global parser variables that need to be exported
 extern FILE *gmsh_yyin;
 extern int gmsh_yylineno;
 extern char *gmsh_yytext;
-
 extern int gmsh_yyviewindex;
 extern char gmsh_yyname[256];
 extern int gmsh_yyerrorstate;
+extern std::map<std::string, std::vector<double> > gmsh_yysymbols;
 
 #endif

@@ -1,16 +1,4 @@
-$Id: TODO.txt,v 1.1 2008-07-11 15:55:52 geuzaine Exp $
-
-********************************************************************
-
-replace Symbol_T with something like
-
-class ParserSymbol{
- public:
-  std::vector<double> num;
-  std::vector<std::string> str;
-};
-
-and Tree_T Symbols with std::map<std::string, ParserSymbol>.
+$Id: TODO.txt,v 1.2 2008-07-27 02:54:09 geuzaine Exp $
 
 ********************************************************************
 

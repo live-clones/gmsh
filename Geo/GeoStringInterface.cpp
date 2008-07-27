@@ -62,15 +62,9 @@ double evaluate_scalarfunction(const char *var, double val, const char *funct)
   gmsh_yyin = tempf;
 
   // retreive value
-  Symbol TheSymbol, *TheSymbol_P;
-  TheSymbol.Name = (char *)Malloc(100*sizeof(char));
-  strcpy(TheSymbol.Name, "ValeurTemporaire__");
-  if(!(TheSymbol_P = (Symbol*)Tree_PQuery(Symbol_T, &TheSymbol))) {
-    Free(TheSymbol.Name);
-    return 0.0;
-  }
-  Free(TheSymbol.Name);
-  return *(double *)List_Pointer(TheSymbol_P->val, 0);
+  if(gmsh_yysymbols.count("ValeurTemporaire__")) 
+    return gmsh_yysymbols["ValeurTemporaire__"][0];
+  return 0.;
 #endif
 }
 

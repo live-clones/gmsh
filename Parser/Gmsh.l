@@ -8,14 +8,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-
 #include "Message.h"
 #include "Geo.h"
 #include "Gmsh.tab.hpp"
-
-char gmsh_yyname[256] = "";
-int  gmsh_yyerrorstate = 0;
-int  gmsh_yyviewindex = 0;
 
 void   parsestring(char endchar);
 char  *strsave(char *ptr);
@@ -342,4 +337,4 @@ void skip_until(const char *skip, const char *until)
   }
 }
 
-void force_yyflush() { YY_FLUSH_BUFFER; }
+void gmsh_yyflush() { YY_FLUSH_BUFFER; }

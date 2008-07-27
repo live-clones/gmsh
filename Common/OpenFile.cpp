@@ -182,7 +182,7 @@ int ParseFile(const char *f, int close, int warn_if_missing)
     gmsh_yyparse();
     if(gmsh_yyerrorstate > 20){
       Msg::Error("Too many errors: aborting...");
-      force_yyflush();
+      gmsh_yyflush();
       break;
     }
   }
@@ -408,7 +408,7 @@ void OpenProject(const char *name)
   // not empty: if it's empty it probably mean we just launched gmsh,
   // and we don't want to delete variables set e.g. using the -string
   // command line option)
-  if(GModel::current()->getNumVertices()) InitSymbols();
+  if(GModel::current()->getNumVertices()) gmsh_yysymbols.clear();
 #endif
   GModel::current()->destroy();
   GModel::current()->getGEOInternals()->destroy();

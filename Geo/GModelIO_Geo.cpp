@@ -409,18 +409,12 @@ int GModel::writeGEO(const std::string &name, bool printLabels)
   std::map<int, std::string> labels;
 #if !defined(HAVE_NO_PARSER)
   // get "old-style" labels from parser
-  List_T *old = Tree2List(Symbol_T);
-  for(int i = 0; i < List_Nbr(old); i++) {
-    Symbol *s = (Symbol *)List_Pointer(old, i);
-    for(int j = 0; j < List_Nbr(s->val); j++) {
-      double tag;
-      List_Read(s->val, j, &tag);
-      labels[(int)tag] = std::string(s->Name);
-    }
-  }
-  List_Delete(old);
+  for(std::map<std::string, std::vector<double> >::iterator it = gmsh_yysymbols.begin();
+      it != gmsh_yysymbols.end(); ++it)
+    for(unsigned int i = 0; i < it->second.size(); i++)
+      labels[(int)it->second[i]] = it->first;
 #endif
-
+  
   std::map<int, std::vector<GEntity*> > groups[4];
   getPhysicalGroups(groups);
   for(int i = 0; i < 4; i++)

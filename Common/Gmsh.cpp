@@ -17,10 +17,6 @@
 #include "Field.h"
 #include "Context.h"
 
-#if !defined(HAVE_NO_PARSER)
-#include "Parser.h"
-#endif
-
 #if !defined(HAVE_NO_POST)
 #include "PluginManager.h"
 #endif
@@ -32,12 +28,6 @@ int GmshInitialize(int argc, char **argv)
   // Initialize messages (parallel stuff, etc.)
   Msg::Init(argc, argv);
 
-#if !defined(HAVE_NO_PARSER)
-  // Initialize the symbol tree that will hold variable names in the
-  // parser
-  InitSymbols();
-#endif
-  
   // Load default options
   Init_Options(0);
 

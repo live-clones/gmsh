@@ -80,7 +80,11 @@ void *Tree_PQuery(Tree_T * tree, void *data)
 int Tree_Suppress(Tree_T * tree, void *data)
 {
   if(!tree) return 0;
-  return avl_delete(tree->root, &data, &data);
+  void *ptr = data;
+  if(!avl_delete(tree->root, &ptr, &ptr))
+    return 0;
+  Free(ptr);
+  return 1;
 }
 
 int Tree_Size(Tree_T * tree)
