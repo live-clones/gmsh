@@ -44,7 +44,7 @@ void VisibilityManager::update(int type)
 
   GModel *m = GModel::current();
 
-#if !defined(HAVE_NO_POST)
+#if !defined(HAVE_NO_PARSER)
   for(std::map<std::string, std::vector<double> >::iterator it = gmsh_yysymbols.begin();
       it != gmsh_yysymbols.end(); ++it)
     for(unsigned int i = 0; i < it->second.size(); i++)
