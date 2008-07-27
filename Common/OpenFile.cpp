@@ -404,10 +404,10 @@ void OpenProject(const char *name)
       delete PView::list[i];
 #endif
 #if !defined(HAVE_NO_PARSER)
-  // reinitialize the parser symbol tree (only if the current model is
-  // not empty: if it's empty it probably mean we just launched gmsh,
-  // and we don't want to delete variables set e.g. using the -string
-  // command line option)
+  // reinitialize the variables defined in the parser (only if the
+  // current model is not empty: if it's empty it probably mean we
+  // just launched gmsh, and we don't want to delete variables set
+  // e.g. using the -string command line option)
   if(GModel::current()->getNumVertices()) gmsh_yysymbols.clear();
 #endif
   GModel::current()->destroy();

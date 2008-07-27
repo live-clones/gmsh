@@ -2698,7 +2698,7 @@ static void _add_new_point()
   Msg::StatusBar(3, false, "");
 }
 
-static void _add_new_multiline(int type)
+static void _add_new_multiline(std::string type)
 {
   std::vector<GVertex*> vertices;
   std::vector<GEdge*> edges;
@@ -2730,22 +2730,8 @@ static void _add_new_multiline(int type)
       Msg::Warning("Entity de-selection not supported yet during multi-line creation");
     }
     if(ib == 'e') {
-      if(p.size() >= 2) {
-        switch (type) {
-        case 0:
-          add_multline(p.size(), &p[0], CTX.filename);
-          break;
-        case 1:
-          add_spline(p.size(), &p[0], CTX.filename);
-          break;
-        case 2:
-          add_bspline(p.size(), &p[0], CTX.filename);
-          break;
-        case 3:
-          add_bezier(p.size(), &p[0], CTX.filename);
-          break;
-        }
-      }
+      if(p.size() >= 2)
+	add_multline(type, p.size(), &p[0], CTX.filename);
       WID->reset_visibility();
       ZeroHighlight();
       Draw();
@@ -2810,7 +2796,7 @@ static void _add_new_line()
       break;
     }
     if(p.size() == 2) {
-      add_multline(2, &p[0], CTX.filename);
+      add_multline("Line", p.size(), &p[0], CTX.filename);
       WID->reset_visibility();
       ZeroHighlight();
       Draw();
@@ -3058,8 +3044,8 @@ static void _add_new_surface_volume(int mode)
           }
           if(List_Nbr(List2)) {
             switch (mode) {
-            case 0: add_surf(List2, CTX.filename, 0, 2); break;
-            case 1: add_surf(List2, CTX.filename, 0, 1); break;
+            case 0: add_surf("Plane Surface", List2, CTX.filename); break;
+            case 1: add_surf("Ruled Surface", List2, CTX.filename); break;
             case 2: add_vol(List2, CTX.filename); break;
             }
             WID->reset_visibility();
@@ -3094,9 +3080,9 @@ void geometry_elementary_add_new_cb(CALLBACK_ARGS)
   else if(str == "Line")
     _add_new_line();
   else if(str == "Spline")
-    _add_new_multiline(1);
+    _add_new_multiline(str);
   else if(str == "BSpline")
-    _add_new_multiline(2);
+    _add_new_multiline(str);
   else if(str == "Circle")
     _add_new_circle();
   else if(str == "Ellipse")
@@ -3312,7 +3298,7 @@ static void _action_point_line_surface_volume(int action, int mode, const char *
           delet(List1, CTX.filename, what);
           break;
         case 7:
-          add_physical(List1, CTX.filename, type);
+          add_physical(what, List1, CTX.filename);
           break;
         case 8:
           add_charlength(List1, CTX.filename, WID->context_mesh_input[0]->value());

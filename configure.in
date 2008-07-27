@@ -378,7 +378,6 @@ AC_CHECK_LIB(m,main)
 
 dnl Check for various functions
 AC_CHECK_FUNC(vsnprintf,,FLAGS="-DHAVE_NO_VSNPRINTF ${FLAGS}")
-AC_CHECK_FUNC(snprintf,,FLAGS="-DHAVE_NO_SNPRINTF ${FLAGS}")
 
 dnl Check if Unix98 socklen_t type is available
 AC_TRY_COMPILE(
