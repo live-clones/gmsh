@@ -3741,6 +3741,14 @@ void mesh_optimize_netgen_cb(CALLBACK_ARGS)
   Msg::StatusBar(2, false, " ");
 }
 
+void mesh_partition_cb(CALLBACK_ARGS)
+{
+  partition_dialog();
+  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  Draw();
+  Msg::StatusBar(2, false, " ");
+}
+
 void mesh_define_length_cb(CALLBACK_ARGS)
 {
   _action_point_line_surface_volume(8, 0, "Point");

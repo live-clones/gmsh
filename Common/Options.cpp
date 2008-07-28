@@ -5298,6 +5298,219 @@ double opt_mesh_cpu_time(OPT_ARGS_NUM)
   return s[13] + s[14] + s[15];
 }
 
+double opt_mesh_partition_partitioner(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    const int ival = (int)val;
+    CTX.mesh.partition_options.partitioner = (ival < 1 || ival > 2) ? 1 : ival;
+  }
+  return CTX.mesh.partition_options.partitioner;
+}
+
+double opt_mesh_partition_num(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    const int ival = std::max(1, (int)val);
+    CTX.mesh.partition_options.num_partitions = ival;
+    unsigned hcdim = 0;  // log2 to get hypercube dimensions
+    unsigned jval = ival;
+    while(jval >>= 1) ++hcdim;
+    CTX.mesh.partition_options.ndims_tot = hcdim;
+    CTX.mesh.partition_options.mesh_dims[0] = ival;
+    CTX.mesh.partition_options.mesh_dims[1] = 1;
+    CTX.mesh.partition_options.mesh_dims[2] = 1;
+    if(CTX.mesh.partition_options.partitioner == 2)  // METIS
+       CTX.mesh.partition_options.algorithm = (ival <= 8) ? 1 : 2;
+  }
+  return CTX.mesh.partition_options.num_partitions;
+}
+
+double opt_mesh_partition_algorithm(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    int ival = (int)val;
+    switch(CTX.mesh.partition_options.partitioner) {
+    case 1:
+      if(ival < 1 || ival > 6 || ival == 3) ival = 1;
+      break;
+    case 2:
+      if(ival < 1 || ival > 2)
+        ival = (CTX.mesh.partition_options.num_partitions <= 8) ? 1 : 2;
+      break;
+    }
+    CTX.mesh.partition_options.algorithm = ival;
+  }
+  return  CTX.mesh.partition_options.algorithm;
+}
+
+double opt_mesh_partition_chaco_architecture(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    const int ival = (int)val;
+    CTX.mesh.partition_options.architecture =
+      (ival < 0 || ival > 3) ? 1 : ival;
+  }
+  return CTX.mesh.partition_options.architecture;
+}
+
+double opt_mesh_partition_chaco_ndims_tot(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    const int ival = std::max(1, (int)val);
+    CTX.mesh.partition_options.ndims_tot = ival;
+    CTX.mesh.partition_options.num_partitions = 1 << ival;
+  }
+  return CTX.mesh.partition_options.ndims_tot;
+}
+
+double opt_mesh_partition_chaco_mesh_dims1(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    const int ival = std::max(1, (int)val);
+    CTX.mesh.partition_options.mesh_dims[0] = ival;
+    CTX.mesh.partition_options.num_partitions = ival;
+    if(CTX.mesh.partition_options.architecture >= 2)
+      CTX.mesh.partition_options.num_partitions *=
+        CTX.mesh.partition_options.mesh_dims[1];
+    if(CTX.mesh.partition_options.architecture == 3)
+      CTX.mesh.partition_options.num_partitions *=
+        CTX.mesh.partition_options.mesh_dims[2];
+  }
+  return CTX.mesh.partition_options.mesh_dims[0];
+}
+
+double opt_mesh_partition_chaco_mesh_dims2(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    const int ival = std::max(1, (int)val);
+    CTX.mesh.partition_options.mesh_dims[1] = ival;
+    CTX.mesh.partition_options.num_partitions =
+      CTX.mesh.partition_options.mesh_dims[0]*ival;
+    if(CTX.mesh.partition_options.architecture == 3)
+      CTX.mesh.partition_options.num_partitions *=
+        CTX.mesh.partition_options.mesh_dims[2];
+  }
+  return CTX.mesh.partition_options.mesh_dims[1];
+}
+
+double opt_mesh_partition_chaco_mesh_dims3(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    const int ival = std::max(1, (int)val);
+    CTX.mesh.partition_options.mesh_dims[2] = ival;
+    CTX.mesh.partition_options.num_partitions =
+      CTX.mesh.partition_options.mesh_dims[0]*
+      CTX.mesh.partition_options.mesh_dims[1]*ival;
+  }
+  return CTX.mesh.partition_options.mesh_dims[2];
+}
+
+double opt_mesh_partition_chaco_local_method(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    int ival = (int)val;
+    if(CTX.mesh.partition_options.algorithm == 1) ival = 1;
+    CTX.mesh.partition_options.local_method = (ival < 0 || ival > 1) ? 1 : ival;
+  }
+  return CTX.mesh.partition_options.local_method;
+}
+
+double opt_mesh_partition_chaco_eigensolver(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    int ival = val ? 1 : 0;
+    CTX.mesh.partition_options.rqi_flag = ival;
+  }
+  return CTX.mesh.partition_options.rqi_flag;
+}
+
+double opt_mesh_partition_chaco_vmax(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    const int ival = (int)val;
+    CTX.mesh.partition_options.vmax = (ival < 1) ? 1 : ival;
+  }
+  return CTX.mesh.partition_options.vmax;
+}
+
+double opt_mesh_partition_chaco_nsection(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    const int ival = (int)val;
+    CTX.mesh.partition_options.ndims = (ival < 1 || ival > 3) ? 1 : ival;
+    if(CTX.mesh.partition_options.ndims > 1 &&
+       CTX.mesh.partition_options.algorithm == 2)
+      CTX.mesh.partition_options.terminal_propogation = false;
+  }
+  return CTX.mesh.partition_options.ndims;
+}
+
+double opt_mesh_partition_chaco_eigtol(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.partition_options.eigtol = (val <= 0.) ? 1.E-3 : val;
+  return CTX.mesh.partition_options.eigtol;
+}
+
+double opt_mesh_partition_chaco_seed(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.partition_options.seed = (long)val;
+  return CTX.mesh.partition_options.seed;
+}
+
+double opt_mesh_partition_chaco_refine_partition(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.partition_options.refine_partition = val ? 1 : 0;
+  return CTX.mesh.partition_options.refine_partition;
+}
+
+double opt_mesh_partition_chaco_internal_vertices(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.partition_options.internal_vertices = val ? 1 : 0;
+  return CTX.mesh.partition_options.internal_vertices;
+}
+
+double opt_mesh_partition_chaco_refine_map(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.partition_options.refine_map = val ? 1 : 0;
+  return CTX.mesh.partition_options.refine_map;
+}
+
+double opt_mesh_partition_chaco_terminal_propogation(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX.mesh.partition_options.terminal_propogation = val ? 1 : 0;
+    if(CTX.mesh.partition_options.terminal_propogation &&
+       CTX.mesh.partition_options.algorithm == 2)
+      CTX.mesh.partition_options.ndims = 1;
+  }
+  return CTX.mesh.partition_options.terminal_propogation;
+}
+
+double opt_mesh_partition_metis_edge_matching(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    const int ival = (int)val;
+    CTX.mesh.partition_options.edge_matching =
+      (ival < 1 || ival > 3) ? 3 : ival;
+  }
+  return CTX.mesh.partition_options.edge_matching;
+}
+
+double opt_mesh_partition_metis_refine_algorithm(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    const int ival = (int)val;
+    CTX.mesh.partition_options.refine_algorithm =
+      (ival < 1 || ival > 3) ? 3 : ival;
+  }
+  return CTX.mesh.partition_options.refine_algorithm;
+}
+
 double opt_solver_max_delay(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

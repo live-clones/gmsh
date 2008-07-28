@@ -10,6 +10,7 @@
 #include <string>
 
 #include "CGNSOptions.h"
+#include "PartitionOptions.h"
 
 // Interface-independent context 
 
@@ -172,6 +173,7 @@ class Context_T {
     double angle_smooth_normals;
     double allow_swap_edge_angle;
     int zone_definition;
+    PartitionOptions partition_options;
     CGNSOptions cgns_options;
   } mesh;
 
