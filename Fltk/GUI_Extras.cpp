@@ -1137,7 +1137,7 @@ int stl_dialog(const char *name)
   return 0;
 }
 
-// Partition dialog
+// Partition dialog - callbacks and dialog routine
 
 struct PartitionDialog 
 {
@@ -1157,6 +1157,7 @@ struct PartitionDialog
   Fl_Check_Button *checkButtonTermProp;
 };
 
+// Chaco option considerations based on the global algorithm
 inline void partition_opt_chaco_globalalg_cb(Fl_Widget *widget, void *data)
 {
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
@@ -1179,6 +1180,7 @@ inline void partition_opt_chaco_globalalg_cb(Fl_Widget *widget, void *data)
   }
 }
 
+// Chaco option considerations based on the architecture
 inline void partition_opt_architecture_cb(Fl_Widget *widget, void *data)
 {
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
@@ -1206,12 +1208,13 @@ inline void partition_opt_architecture_cb(Fl_Widget *widget, void *data)
   }
 }
 
+// Match several locations that provide a partition number
 inline void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data)
 {
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
   unsigned val;
   if(widget == dlg->inputNumPartition) {
-    val = dlg->inputNumPartition->value();
+    val = static_cast<unsigned>(dlg->inputNumPartition->value());
     switch(static_cast<int>(dlg->choiceArchitecture->value())) {
     case 0:
       {
@@ -1234,19 +1237,21 @@ inline void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data)
     switch(static_cast<int>(dlg->choiceArchitecture->value())) {
     case 0:
       {
-        unsigned x = dlg->inputNumPartition1->value();
+        unsigned x = static_cast<unsigned>(dlg->inputNumPartition1->value());
         val = 1 << x;
       }
       break;
     case 1:
-      val = dlg->inputNumPartition1->value();
+      val = static_cast<unsigned>(dlg->inputNumPartition1->value());
       break;
     case 2:
-      val = dlg->inputNumPartition1->value()*dlg->inputNumPartition2->value();
+      val = static_cast<unsigned>
+        (dlg->inputNumPartition1->value()*dlg->inputNumPartition2->value());
       break;
     case 3:
-      val = dlg->inputNumPartition1->value()*dlg->inputNumPartition2->value()*
-        dlg->inputNumPartition3->value();
+      val = static_cast<unsigned>
+        (dlg->inputNumPartition1->value()*dlg->inputNumPartition2->value()*
+         dlg->inputNumPartition3->value());
       break;
     }
     dlg->inputNumPartition->value(val);
@@ -1256,6 +1261,7 @@ inline void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data)
   }
 }
 
+// Option considerations for the Chaco spectral algorithm
 inline void partition_opt_spectralcheck_cb(Fl_Widget *widget, void *data)
 {
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
@@ -1275,9 +1281,20 @@ inline void partition_cancel_cb(Fl_Widget *widget, void *data)
 {
   Fl::delete_widget(widget->window());
 }
+
+// Select groups to display
 inline void partition_select_groups_cb(Fl_Widget *widget, void *data)
 {
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
+  // If this callback was made by the "Advanced" toggle buttons, set the label
+  if(dlg->toggleButtonAdvChaco == widget) {
+    dlg->toggleButtonAdvChaco->label((dlg->toggleButtonAdvChaco->value()) ?
+                                     "Advanced @-28->" : "Advanced @-22->");
+  }
+  else if(dlg->toggleButtonAdvMetis == widget) {
+    dlg->toggleButtonAdvMetis->label((dlg->toggleButtonAdvMetis->value()) ?
+                                     "Advanced @-28->" : "Advanced @-22->");
+  }
   const int WB = 7;                     // Window border
   Fl_Window *const w = widget->window();
   // Get the groups
@@ -1399,8 +1416,9 @@ int partition_dialog()
                                         // label
   const int WB = 7;                     // Window border
 
-  const int h = 3 * WB + 3 * BH;
-  const int w = 3 * BB + IW + 3 * WB;
+  const int h = 6 * WB + 3 * BH + 4;    // This will be resized based on groups
+                                        // that are displayed
+  const int w = 3 * BB + IW + 3 * WB;   // Window width
   int y = 0;
 
   Fl_Double_Window *const window =
