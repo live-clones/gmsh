@@ -182,13 +182,15 @@ class MZoneBoundary
  * Internal types
  *============================================================================*/
 
- private:
-
 //--Type of face (MEdge or MFace)
+
+ private:
 
   typedef typename DimTr<DIM>::FaceT FaceT;
 
 //--Data stored for connectivity of vertices
+
+ public:
 
   template<typename FaceT>
   struct GlobalVertexData
@@ -235,6 +237,8 @@ class MZoneBoundary
     // Constructor
     GlobalVertexData() { }
   };
+
+ private:
 
   typedef std::map<const MVertex*, GlobalVertexData<FaceT>,
     std::less<const MVertex*> > GlobalBoVertexMap;
