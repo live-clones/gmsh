@@ -490,8 +490,6 @@ void updateBoVec<3, MFace>
                 gEIt != gEdgeList.end(); ++gEIt) {
               std::list<GFace*> alist = (*gEIt)->faces();
               gFaceList.splice(gFaceList.end(), alist);
-              // gcc-4.3 won't accept the following
-//               gFaceList.splice(gFaceList.end(), (*gEIt)->faces());
             }
             // Remove duplicates
             gFaceList.sort();
