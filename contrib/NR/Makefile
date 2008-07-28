@@ -32,6 +32,9 @@ ${LIB}: ${OBJ}
 	${AR} ${ARFLAGS}${LIB} ${OBJ}
 	${RANLIB} ${LIB}
 
+cpobj: ${OBJ} 
+	cp -f ${OBJ} ../../lib/
+
 .cpp${OBJEXT}:
 	${CXX} ${CFLAGS} ${DASH}c $<
 
