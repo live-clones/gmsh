@@ -4,6 +4,7 @@
 
 
 #include <stdio.h>
+#include "Gmsh_printf.h"
 #include "defs.h"
 
 /* STATUS:

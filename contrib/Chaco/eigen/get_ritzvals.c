@@ -4,6 +4,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include "Gmsh_printf.h"
 #include "defs.h"
 
 /* Finds needed eigenvalues of tridiagonal T using either the QL algorithm 

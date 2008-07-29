@@ -3,6 +3,7 @@
  * contract DE-AC04-76DP00789 and is copyrighted by Sandia Corporation. */
 
 #include <stdio.h>
+#include "Gmsh_printf.h"
 #include "defs.h"
 #include "structs.h"
 
@@ -13,7 +14,12 @@ int       interface(nvtxs, start, adjacency, vwgts, ewgts, x, y, z,
 		              assignment,
 		              architecture, ndims_tot, mesh_dims, goal,
 		              global_method, local_method, rqi_flag, vmax, ndims,
-		              eigtol, seed)
+		              eigtol, seed
+/* Gmsh - extra parameters in the interface */
+                    , refine_partition, internal_vertices, refine_map,
+                    terminal_propogation
+/* Gmsh - end */
+                                          )
 int       nvtxs;		/* number of vertices in full graph */
 int      *start;		/* start of edge list for each vertex */
 int      *adjacency;		/* edge list data */
@@ -34,6 +40,13 @@ int       vmax;			/* how many vertices to coarsen down to? */
 int       ndims;		/* number of eigenvectors (2^d sets) */
 double    eigtol;		/* tolerance on eigenvectors */
 long      seed;			/* for random graph mutations */
+/* Gmsh - get some extra parameters through the interface.  These are identical
+ * to those in the parameters file */
+int       refine_partition;
+int       internal_vertices;
+int       refine_map;
+int       terminal_propogation;
+/* Gmsh - end */
 {
     extern char *PARAMS_FILENAME;	/* name of file with parameter updates */
     extern int MAKE_VWGTS;	/* make vertex weights equal to degrees? */
@@ -41,6 +54,10 @@ long      seed;			/* for random graph mutations */
     extern int FREE_GRAPH;	/* free graph data structure after reformat? */
     extern int DEBUG_PARAMS;	/* debug flag for reading parameters */
     extern int DEBUG_TRACE;	/* trace main execution path */
+    extern int REFINE_PARTITION;  /* # passes post-processing KL */
+    extern int INTERNAL_VERTICES; /* post-process to increase internal nodes */
+    extern int REFINE_MAP;	  /* greedy post-processing to reduce hops? */
+    extern int TERM_PROP;	  /* perform terminal propagation */
     extern double start_time;	/* time routine is entered */
     extern double reformat_time;/* time spent reformatting graph */
     FILE     *params_file;	/* file for reading new parameters */
@@ -70,15 +87,25 @@ long      seed;			/* for random graph mutations */
     graph = NULL;
     coords = NULL;
 
-    if (!Using_Main) {		/* If not using main, need to read parameters file. */
-	start_time = seconds();
-	params_file = fopen(PARAMS_FILENAME, "r");
-	if (params_file == NULL && DEBUG_PARAMS > 1) {
-	    printf("Parameter file `%s' not found; using default parameters.\n",
-		   PARAMS_FILENAME);
-	}
-	read_params(params_file);
-    }
+/* Gmsh - disable this for now.  It would be interesting to let someone include
+ * it though */
+/*     if (!Using_Main) {		/\* If not using main, need to read parameters file. *\/ */
+/* 	start_time = seconds(); */
+/* 	params_file = fopen(PARAMS_FILENAME, "r"); */
+/* 	if (params_file == NULL && DEBUG_PARAMS > 1) { */
+/* 	    printf("Parameter file `%s' not found; using default parameters.\n", */
+/* 		   PARAMS_FILENAME); */
+/* 	} */
+/* 	read_params(params_file); */
+/*     } */
+/* Gmsh - end */
+/* Gmsh - override some parameters */
+    FREE_GRAPH = 0;
+    REFINE_PARTITION = refine_partition;
+    INTERNAL_VERTICES = internal_vertices;
+    REFINE_MAP = refine_map;
+    TERM_PROP = terminal_propogation;
+/* Gmsh - end */
 
     if (goal == NULL) {	/* If not passed in, default goals have equal set sizes. */
 	default_goal = TRUE;

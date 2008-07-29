@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include "Gmsh_printf.h"
 #include "defs.h"
 #include "params.h"
 

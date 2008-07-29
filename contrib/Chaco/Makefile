@@ -1,11 +1,14 @@
-DEST_DIR = 	../exec
-DEST=		${DEST_DIR}/chaco
-CC = 		gcc
-IFLAG =		-Imain
-CFLAGS =	-O2
-OFLAGS =	-O2
 
-FILES.c=	main/user_params.c main/interface.c main/main.c \
+include ../../variables
+
+LIB = ../../lib/libGmshChaco${LIBEXT}
+
+INC = ${DASH}Imain
+
+CFLAGS  = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
+
+SRCX	 =	main/Gmsh_printf.cpp main/Gmsh_exit.cpp
+SRC =		main/user_params.c main/interface.c \
 		submain/balance.c submain/divide.c submain/submain.c \
 		input/input_assign.c \
 		input/check_input.c input/input.c input/input_geom.c \
@@ -87,20 +90,30 @@ FILES.c=	main/user_params.c main/interface.c main/main.c \
 		util/update.c  util/vecout.c util/vecran.c \
                 util/vecscale.c 
 
-FILES.o=	$(FILES.c:.c=.o) 
+OBJ = ${SRC:.c=${OBJEXT}}
+OBJX = ${SRCX:.cpp=${OBJEXT}}
 
+.SUFFIXES: ${OBJEXT} .c .cpp
 
-${DEST}:	${FILES.o} Makefile
-		${CC} ${OFLAGS} ${FILES.o} -lm -o ${DEST}
+${LIB}: ${OBJ} ${OBJX}
+	${AR} ${ARFLAGS}${LIB} ${OBJ} ${OBJX} 
+	${RANLIB} ${LIB}
 
-lint:
-		lint ${IFLAG} ${FILES.c} -lm
+.c${OBJEXT}:
+	${CC} ${CFLAGS} ${DASH}c $< ${DASH}o ${<:.c=${OBJEXT}}
 
-alint:
-		alint ${IFLAG} ${FILES.c} -lm
+.cpp${OBJEXT}:
+	${CXX} ${CFLAGS} ${DASH}c $< ${DASH}o ${<:.cpp=${OBJEXT}}
 
 clean:
-		rm -f */*.o ${DEST_DIR}/core
+	rm -f */*.o */*.obj
 
-.c.o:
-		${CC} -c ${IFLAG} ${CFLAGS} -o $*.o $*.c
+depend:
+	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
+	${CXX} -MM ${CFLAGS} ${SRC} \
+	) >Makefile.new
+	cp Makefile Makefile.bak
+	cp Makefile.new Makefile
+	rm -f Makefile.new
+
+# DO NOT DELETE THIS LINE

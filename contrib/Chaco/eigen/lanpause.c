@@ -3,6 +3,7 @@
  * contract DE-AC04-76DP00789 and is copyrighted by Sandia Corporation. */
 
 #include <stdio.h>
+#include "Gmsh_printf.h"
 #include "defs.h"
 #include "structs.h"
 

@@ -4,6 +4,8 @@
 
 #include	<stdio.h>
 #include	<string.h>
+#include        "Gmsh_printf.h"
+#include        "Gmsh_exit.h"
 
 /* Wrapper for exit() - print message and exit with status code. Exit code
    of 0 indicates normal termination. Exit code of 1 indicates early 
@@ -22,5 +24,6 @@ int       status;
             fprintf(Output_File, "%s\n", msg);
 	}
     }
-    exit(status);
+/*     exit(status); */
+    Gmsh_exit();
 }

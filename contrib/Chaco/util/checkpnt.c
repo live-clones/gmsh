@@ -4,6 +4,7 @@
 
 #include	<stdio.h>
 #include	<string.h>
+#include        "Gmsh_printf.h"
 
 /* Debug break point. */
 void      checkpnt(tag)

@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include "Gmsh_printf.h"
 #include "structs.h"
 #include "defs.h"
 #include "params.h"

@@ -3,6 +3,7 @@
  * contract DE-AC04-76DP00789 and is copyrighted by Sandia Corporation. */
 
 #include  <stdio.h>
+#include  "Gmsh_printf.h"
 
 /* Print a double precision number with filtering format to screen. */
 void      doubleout(number, mode)

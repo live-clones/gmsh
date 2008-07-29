@@ -6,6 +6,7 @@
    code provided by Ed Rothberg at SGI. */
 
 #include <stdio.h>
+#include "Gmsh_printf.h"
 
 #define  TRUE  1
 #define  FALSE 0

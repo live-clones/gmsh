@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include "Gmsh_printf.h"
 #include "defs.h"
 
 /* Solve the shifted, symmetric tridiagonal linear system (T - lambda*I)v = b

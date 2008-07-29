@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <malloc.h>
+#include "Gmsh_printf.h"
 
 static int nmalloc = 0;		/* number of calls to malloc */
 static int nfree = 0;		/* number of calls to free */

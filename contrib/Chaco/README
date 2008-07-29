@@ -1,15 +1,22 @@
-This directory contains all the necessary source code files
-for Chaco.  Simply type "make", and the code will be compiled
-and the executable image placed in "../exec/chaco".  
+Chaco version 2.2
 
-The default values for the user accessible parameters discussed 
-in the user's guide "doc/User_guide.ps" can be modified by 
-editing the file "main/user_params.c".  You must recompile for 
-these changes to take affect. 
+This software was developed by Bruce Hendrickson and Robert Leland
+at Sandia National Laboratories under US Department of Energy
+contract DE-AC04-76DP00789 and is copyrighted by Sandia Corporation.
 
-You can also change the code parameters at run time (i.e. without 
-recompiling) by including a file "User_Params" in whichever 
-directory you are running the code from (so in the file 
-"exec/User_Params" in our orignal set-up). Parameter changes 
-can be specified in a natural way in this file using the rules 
-described in the user's guide.
+--------------------------------------------------------------------------------
+
+Chaco has been slightly modified for integration into the Gmsh program.  Most
+changes are to 'main/interface.c'.  Elsewhere, the 'printf' routine has been
+defined as Gmsh_printf to write through a Gmsh Msg::Info.  All other
+modifications are tagged by 'Gmsh' and 'Gmsh - end'
+
+Parameters explicitly set to false
+FREE_GRAPH
+
+Parameters that are read through Gmsh and overwrite the parameters file
+REFINE_PARTITION
+INTERNAL_VERTICES
+REFINE_MAP
+TERMINAL_PROPOGATION
+

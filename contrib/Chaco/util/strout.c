@@ -4,6 +4,7 @@
 
 #include	<stdio.h>
 #include	<string.h>
+#include        "Gmsh_printf.h"
 
 /* Wrapper for a printf statement with a string as only arg.
    Prints to screen and to output file if there is one. */

@@ -4,6 +4,7 @@
 
 #include	<stdio.h>
 #include        <string.h>
+#include        "Gmsh_printf.h"
 #include        "defs.h"
 
 static int input_assign_normal(), input_assign_inv();

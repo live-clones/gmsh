@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include "Gmsh_printf.h"
 #include "defs.h"
 
 /* Record a return TRUE if answer is yes, FALSE if no. */

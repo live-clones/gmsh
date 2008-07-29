@@ -4,6 +4,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include "Gmsh_printf.h"
 
 /* Finds first extended eigenpair of system corresponding to
    tridiagonal T using using Rafael's bisection technique. */
