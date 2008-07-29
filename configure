@@ -1950,10 +1950,7 @@ fi
 
 if test "x$enable_minimal" = "xyes"; then
   enable_gui=no;
-  enable_parser=no;
-  enable_post=no;
   enable_gsl=no;
-#  enable_occ=no;
   enable_fm=no;
   enable_netgen=no;
   enable_tetgen=no;
@@ -1963,6 +1960,15 @@ if test "x$enable_minimal" = "xyes"; then
   enable_med=no;
   enable_cgns=no;
   enable_zlib=no;
+  if test "x$enable_post" != "xyes"; then
+    enable_post=no;
+  fi
+  if test "x$enable_parser" != "xyes"; then
+    enable_parser=no;
+  fi
+  if test "x$enable_occ" != "xyes"; then
+    enable_occ=no;
+  fi
   CXXFLAGS=-O2;
 fi
 

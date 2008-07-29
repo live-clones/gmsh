@@ -5,8 +5,8 @@
     <key>CFBundleName</key><string>Gmsh</string>
     <key>CFBundleExecutable</key><string>Gmsh</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleVersion</key><string>2.1.0-cvs-20071228</string>
-    <key>CFBundleShortVersionString</key><string>2.1.0-cvs-20071228</string>
+    <key>CFBundleVersion</key><string>GMSH_VERSION</string>
+    <key>CFBundleShortVersionString</key><string>GMSH_VERSION</string>
     <key>CFBundleIconFile</key><string>Gmsh.icns</string>
     <key>CFBundleSignature</key><string>GMSH</string>
     <key>CFBundleGetInfoString</key><string>GMSH_VERSION, Copyright 1997-2008 C. Geuzaine and J.-F. Remacle</string>
