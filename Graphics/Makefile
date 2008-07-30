@@ -59,9 +59,9 @@ depend:
 # DO NOT DELETE THIS LINE
 Draw.o: Draw.cpp ../Common/GmshUI.h ../Common/GmshDefines.h \
   ../Common/Message.h Draw.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Geo/GModel.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h \
+  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
   ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
   ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
@@ -80,25 +80,28 @@ Mesh.o: Mesh.cpp ../Common/Message.h ../Common/GmshUI.h ../Geo/GModel.h \
   ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
   ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  Draw.h ../Common/Context.h ../Geo/CGNSOptions.h ../Common/OS.h gl2ps.h \
-  ../Common/VertexArray.h ../Common/Context.h ../Common/SmoothData.h \
-  ../Post/PView.h ../Post/PViewData.h
+  Draw.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/PartitionOptions.h ../Common/OS.h gl2ps.h \
+  ../Common/VertexArray.h ../Common/SmoothData.h ../Post/PView.h \
+  ../Post/PViewData.h
 Geom.o: Geom.cpp ../Common/GmshUI.h Draw.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h ../Common/Context.h ../Geo/CGNSOptions.h gl2ps.h \
-  ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Common/Context.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
-  ../Geo/Range.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h \
-  ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h \
-  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h \
-  ../Geo/GEntity.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h
+  ../Geo/SPoint3.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/PartitionOptions.h gl2ps.h ../Common/VertexArray.h \
+  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/GModel.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h \
+  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h
 Post.o: Post.cpp ../Common/Message.h ../Common/GmshUI.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h Draw.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h Iso.h ../Post/PView.h \
   ../Post/PViewOptions.h ../Post/ColorTable.h ../Post/PViewData.h \
   ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Common/SmoothData.h gl2ps.h
+  ../Common/SmoothData.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/PartitionOptions.h gl2ps.h
 SelectBuffer.o: SelectBuffer.cpp ../Common/Message.h ../Common/GmshUI.h \
   ../Common/GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
@@ -111,12 +114,13 @@ SelectBuffer.o: SelectBuffer.cpp ../Common/Message.h ../Common/GmshUI.h \
   ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Geo/MVertex.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h Draw.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h SelectBuffer.h \
-  ../Common/VertexArray.h ../Common/Context.h
+  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h \
+  SelectBuffer.h ../Common/VertexArray.h
 Iso.o: Iso.cpp ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h
 Entity.o: Entity.cpp ../Common/GmshUI.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h Draw.h ../Geo/SBoundingBox3d.h \
-  ../Geo/SPoint3.h ../Common/Context.h ../Geo/CGNSOptions.h gl2ps.h
+  ../Geo/SPoint3.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/PartitionOptions.h gl2ps.h
 ReadImg.o: ReadImg.cpp ReadImg.h ../Common/Message.h ../Common/GmshUI.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
@@ -124,11 +128,12 @@ ReadImg.o: ReadImg.cpp ReadImg.h ../Common/Message.h ../Common/GmshUI.h \
 Scale.o: Scale.cpp ../Common/GmshUI.h Draw.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Post/PView.h ../Post/PViewOptions.h \
   ../Post/ColorTable.h ../Post/PViewData.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h gl2ps.h
+  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h gl2ps.h
 Graph2D.o: Graph2D.cpp ../Common/GmshUI.h Draw.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Post/PView.h ../Post/PViewOptions.h \
   ../Post/ColorTable.h ../Post/PViewData.h gl2ps.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h
+  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 gl2ps.o: gl2ps.cpp gl2ps.h
 gl2gif.o: gl2gif.cpp ../Common/MallocUtils.h gl2gif.h PixelBuffer.h \
   ../Common/GmshUI.h ../Common/Message.h Draw.h ../Geo/SBoundingBox3d.h \

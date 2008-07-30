@@ -25,6 +25,7 @@ GMSH_API = Geo/GModel.h\
            Geo/SPoint2.h Geo/SPoint3.h Geo/SVector3.h Geo/SBoundingBox3d.h\
            Geo/Pair.h Geo/Range.h\
            Post/PView.h Post/PViewData.h Post/PViewDataGModel.h\
+           Common/VertexArray.h\
            Common/Gmsh.h Common/GmshDefines.h Common/GmshVersion.h Common/GmshMatrix.h
 
 GMSH_EMBEDDED = ${GMSH_API} Geo/discrete*.cpp\

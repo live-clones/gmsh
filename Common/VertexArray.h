@@ -9,9 +9,6 @@
 #include <vector>
 #include <set>
 #include "SVector3.h"
-#include "Context.h"
-
-extern Context_T CTX;
 
 class MElement;
 
@@ -69,11 +66,11 @@ class ElementData {
 template<int N>
 class ElementDataLessThan{
  public:
+  static float tolerance;
   bool operator()(const ElementData<N> &e1, const ElementData<N> &e2) const
   {
     SPoint3 p1 = e1.barycenter();
     SPoint3 p2 = e2.barycenter();
-    float tolerance = CTX.lc * 1.e-12;
     if(p1.x() - p2.x() >  tolerance) return true;
     if(p1.x() - p2.x() < -tolerance) return false;
     if(p1.y() - p2.y() >  tolerance) return true;
@@ -96,9 +93,9 @@ class Barycenter {
 
 class BarycenterLessThan{
  public:
+  static float tolerance;
   bool operator()(const Barycenter &p1, const Barycenter &p2) const
   {
-    float tolerance = CTX.lc * 1.e-12;
     if(p1.x() - p2.x() >  tolerance) return true;
     if(p1.x() - p2.x() < -tolerance) return false;
     if(p1.y() - p2.y() >  tolerance) return true;

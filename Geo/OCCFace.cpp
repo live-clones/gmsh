@@ -11,6 +11,9 @@
 #include "Message.h"
 #include "Numeric.h"
 #include "VertexArray.h"
+#include "Context.h"
+
+extern Context_T CTX;
 
 #if defined(HAVE_OCC)
 #include "Geom_CylindricalSurface.hxx"

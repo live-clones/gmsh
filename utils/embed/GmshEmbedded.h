@@ -42,9 +42,4 @@ class smooth_normals{
   int dummy;
 };
 
-class VertexArray{
- public:
-  int dummy;
-};
-
 #endif
