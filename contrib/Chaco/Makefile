@@ -108,12 +108,13 @@ ${LIB}: ${OBJ} ${OBJX}
 clean:
 	rm -f */*.o */*.obj
 
-depend:
-	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	${CXX} -MM ${CFLAGS} ${SRC} \
-	) >Makefile.new
-	cp Makefile Makefile.bak
-	cp Makefile.new Makefile
-	rm -f Makefile.new
+# Doesn't quite work
+# depend:
+# 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
+# 	${CXX} -MM ${CFLAGS} ${SRC} \
+# 	) >Makefile.new
+# 	cp Makefile Makefile.bak
+# 	cp Makefile.new Makefile
+# 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE

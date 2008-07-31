@@ -49,6 +49,9 @@ int       terminal_propogation;
 /* Gmsh - end */
 {
     extern char *PARAMS_FILENAME;	/* name of file with parameter updates */
+    extern int ECHO;		/* copy input to screen? results to file? */
+    extern int OUTPUT_METRICS;	/* controls displaying of results (-2..2) */
+    extern int OUTPUT_TIME;	/* at what level to display timings (0..2) */
     extern int MAKE_VWGTS;	/* make vertex weights equal to degrees? */
     extern int MATCH_TYPE;      /* matching routine to use */
     extern int FREE_GRAPH;	/* free graph data structure after reformat? */
@@ -87,6 +90,12 @@ int       terminal_propogation;
     graph = NULL;
     coords = NULL;
 
+/* Gmsh - change to default parameters (these can be overridden by a parameters
+ * file */
+    ECHO = 0;
+    OUTPUT_METRICS = 1;
+    OUTPUT_TIME = 0;
+/* Gmsh - end */
 /* Gmsh - disable this for now.  It would be interesting to let someone include
  * it though */
 /*     if (!Using_Main) {		/\* If not using main, need to read parameters file. *\/ */
