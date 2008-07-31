@@ -5,6 +5,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include "Defs.h"
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "Message.h"
@@ -451,6 +452,7 @@ void Init_Options(int num)
 
   // The following defaults cannot be set by the user 
   CTX.batch = 0;
+  CTX.batchAfterMesh = 0;
   CTX.output_filename = NULL;
   CTX.bgm_filename = NULL;
   CTX.lc = 1.0;
@@ -5302,7 +5304,11 @@ double opt_mesh_partition_partitioner(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     const int ival = (int)val;
-    CTX.mesh.partition_options.partitioner = (ival < 1 || ival > 2) ? 1 : ival;
+    if(HAVE_PARTITION == 3)
+       CTX.mesh.partition_options.partitioner =
+          (ival < 1 || ival > 2) ? 1 : ival;
+    else
+       CTX.mesh.partition_options.partitioner = HAVE_PARTITION;
   }
   return CTX.mesh.partition_options.partitioner;
 }
@@ -5325,22 +5331,14 @@ double opt_mesh_partition_num(OPT_ARGS_NUM)
   return CTX.mesh.partition_options.num_partitions;
 }
 
-double opt_mesh_partition_algorithm(OPT_ARGS_NUM)
+double opt_mesh_partition_chaco_global_method(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     int ival = (int)val;
-    switch(CTX.mesh.partition_options.partitioner) {
-    case 1:
-      if(ival < 1 || ival > 6 || ival == 3) ival = 1;
-      break;
-    case 2:
-      if(ival < 1 || ival > 2)
-        ival = (CTX.mesh.partition_options.num_partitions <= 8) ? 1 : 2;
-      break;
-    }
-    CTX.mesh.partition_options.algorithm = ival;
+    CTX.mesh.partition_options.global_method =
+       (ival < 1 || ival > 6 || ival == 3) ? 1 : ival;
   }
-  return  CTX.mesh.partition_options.algorithm;
+  return  CTX.mesh.partition_options.global_method;
 }
 
 double opt_mesh_partition_chaco_architecture(OPT_ARGS_NUM)
@@ -5489,6 +5487,17 @@ double opt_mesh_partition_chaco_terminal_propogation(OPT_ARGS_NUM)
       CTX.mesh.partition_options.ndims = 1;
   }
   return CTX.mesh.partition_options.terminal_propogation;
+}
+
+double opt_mesh_partition_metis_algorithm(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    int ival = (int)val;
+    if(ival < 1 || ival > 2)
+       ival = (CTX.mesh.partition_options.num_partitions <= 8) ? 1 : 2;
+    CTX.mesh.partition_options.algorithm = ival;
+  }
+  return  CTX.mesh.partition_options.algorithm;
 }
 
 double opt_mesh_partition_metis_edge_matching(OPT_ARGS_NUM)

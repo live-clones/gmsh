@@ -23,6 +23,7 @@
 #include "MEdgeHash.h"
 #include "MFaceHash.h"
 #include "CustomContainer.h"
+#include "ElementTraits.h"
 
 // #define HAVE_HASH_MAP
 
@@ -124,173 +125,17 @@ typedef std::vector<MVertex*> VertexVec;
 
 
 /*==============================================================================
- * Traits classes - that just perform compile-time checks for valid argument
- * types
- *============================================================================*/
-
-//--This traits class checks for valid types of entities and iterators.
-
-// NOTE:  If the compiler sent you here, you're using an invalid entity and/or
-// invalid iterator.  Valid pairs are shown below.
-template <typename Ent, typename Iter> struct ValidEntityIterator;
-template <> struct ValidEntityIterator<GFace, GFace*>
-{ typedef void Type; };
-template <> struct ValidEntityIterator<GFace, GEntity*>
-{ typedef void Type; };
-template <> struct ValidEntityIterator<GRegion, GRegion*>
-{ typedef void Type; };
-template <> struct ValidEntityIterator<GRegion, GEntity*>
-{ typedef void Type; };
-
-
-/*==============================================================================
  * Traits classes - that return information about a type
  *============================================================================*/
 
-//--Traits based on the dimension
-
-template <unsigned DIM> struct DimTr;
-template <> struct DimTr<2>
+template <typename FaceT> struct LFaceTr;
+template <> struct LFaceTr<MEdge> 
 {
-  typedef MEdge FaceT;
-  typedef GFace EntityT;
-};
-template <> struct DimTr<3>
-{
-  typedef MFace FaceT;
-  typedef GRegion EntityT;
-};
-
-//--This traits class describes the number of dimension-based 'FaceT' in an
-//--primary element type
-
-template <typename Elem> struct ElemFaceTr;
-template <> struct ElemFaceTr<MTriangle>    { enum { numFaceT =  3 }; };
-template <> struct ElemFaceTr<MQuadrangle>  { enum { numFaceT =  4 }; };
-template <> struct ElemFaceTr<MTetrahedron> { enum { numFaceT =  4 }; };
-template <> struct ElemFaceTr<MHexahedron>  { enum { numFaceT =  6 }; };
-template <> struct ElemFaceTr<MPrism>       { enum { numFaceT =  5 }; };
-template <> struct ElemFaceTr<MPyramid>     { enum { numFaceT =  5 }; };
-
-//--This traits class gives the number of element types in entity Ent
-
-template <typename Ent> struct EntTr;
-template <> struct EntTr<GFace>
-{
-  typedef MEdge FaceT;
-  enum { numElemTypes = 2 };
-};
-template <> struct EntTr<GRegion>
-{
-  typedef MFace FaceT;
-  enum { numElemTypes = 4 };
-};
-
-//--This traits class gives iterator types and begin and end iterators for
-//--element type number N in entity Ent.
-
-template <typename Ent, int N> struct EntElemTr;
-template <> struct EntElemTr<GFace, 1> {
-  typedef MQuadrangle Elem;
-  typedef std::vector<MQuadrangle*>::const_iterator ConstElementIterator;
-  static ConstElementIterator begin(const GFace *const gFace)
-  {
-    return gFace->quadrangles.begin();
-  }
-  static ConstElementIterator end(const GFace *const gFace)
-  {
-    return gFace->quadrangles.end();
-  }
-};
-template <> struct EntElemTr<GFace, 2> {
-  typedef MTriangle Elem;
-  typedef std::vector<MTriangle*>::const_iterator ConstElementIterator;
-  static ConstElementIterator begin(const GFace *const gFace)
-  {
-    return gFace->triangles.begin();
-  }
-  static ConstElementIterator end(const GFace *const gFace)
-  {
-    return gFace->triangles.end();
-  }
-};
-template <> struct EntElemTr<GRegion, 1> {
-  typedef MPyramid Elem;
-  typedef std::vector<MPyramid*>::const_iterator ConstElementIterator;
-  static ConstElementIterator begin(const GRegion *const gRegion)
-  {
-    return gRegion->pyramids.begin();
-  }
-  static ConstElementIterator end(const GRegion *const gRegion)
-  {
-    return gRegion->pyramids.end();
-  }
-};
-template <> struct EntElemTr<GRegion, 2> {
-  typedef MPrism Elem;
-  typedef std::vector<MPrism*>::const_iterator ConstElementIterator;
-  static ConstElementIterator begin(const GRegion *const gRegion)
-  {
-    return gRegion->prisms.begin();
-  }
-  static ConstElementIterator end(const GRegion *const gRegion)
-  {
-    return gRegion->prisms.end();
-  }
-};
-template <> struct EntElemTr<GRegion, 3> {
-  typedef MHexahedron Elem;
-  typedef std::vector<MHexahedron*>::const_iterator ConstElementIterator;
-  static ConstElementIterator begin(const GRegion *const gRegion)
-  {
-    return gRegion->hexahedra.begin();
-  }
-  static ConstElementIterator end(const GRegion *const gRegion)
-  {
-    return gRegion->hexahedra.end();
-  }
-};
-template <> struct EntElemTr<GRegion, 4> {
-  typedef MTetrahedron Elem;
-  typedef std::vector<MTetrahedron*>::const_iterator ConstElementIterator;
-  static ConstElementIterator begin(const GRegion *const gRegion)
-  {
-    return gRegion->tetrahedra.begin();
-  }
-  static ConstElementIterator end(const GRegion *const gRegion)
-  {
-    return gRegion->tetrahedra.end();
-  }
-};
-
-//--Traits/policy class based on dimension of a face.
-
-template <typename FaceT> struct FaceTr;
-template <> struct FaceTr<MEdge> {
   typedef std::map<MEdge, FaceData, Less_Edge> BoFaceMap;
-  template <typename Elem>
-  static MEdge getFace(Elem *const element, const int iFace)
-  {
-    return element->getEdge(iFace);  // Primary element
-  }
-  static void getAllFaceVertices(MElement *const element, const int iFace,
-                                 std::vector<MVertex*> &v)
-  {
-    element->getEdgeVertices(iFace, v);  // Any element
-  }
 };
-template <> struct FaceTr<MFace> {
+template <> struct LFaceTr<MFace> 
+{
   typedef std::map<MFace, FaceData, Less_Face> BoFaceMap;
-  template <typename Elem>
-  static MFace getFace(Elem *const element, const int iFace)
-  {
-    return element->getFace(iFace);  // Primary element
-  }
-  static void getAllFaceVertices(MElement *const element, const int iFace,
-                                 std::vector<MVertex*> &v)
-  {
-    element->getFaceVertices(iFace, v);  // Any element
-  }
 };
 
 
@@ -327,7 +172,7 @@ class MZone
 
  public:
   typedef typename DimTr<DIM>::FaceT FaceT;
-  typedef typename FaceTr<FaceT>::BoFaceMap BoFaceMap;
+  typedef typename LFaceTr<FaceT>::BoFaceMap BoFaceMap;
   typedef typename std::map<const MVertex*,
     ZoneVertexData<typename BoFaceMap::const_iterator>,
     std::less<const MVertex*> > BoVertexMap;
@@ -359,13 +204,13 @@ class MZone
 //--Add all elements in a container of entities.  The specific type of entity
 //--is not known and must be specified as parameter 'Ent'.
 
-  template <typename Ent, typename EntIter>
+  template <typename EntIter>
   void add_elements_in_entities(EntIter begin, EntIter end,
                                 const int partition = -1);
 
 //--Add elements in a single entity.
 
-  template <typename Ent, typename EntPtr>
+  template <typename EntPtr>
   void add_elements_in_entity(EntPtr entity, const int partition = -1);
   
 

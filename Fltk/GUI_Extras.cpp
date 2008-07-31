@@ -5,6 +5,7 @@
 
 #include <limits>
 
+#include "Defs.h"
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "CreateFile.h"
@@ -14,6 +15,7 @@
 #include "GUI.h"
 #include "Shortcut_Window.h"
 #include "GModel.h"
+#include "Partition.h"
 
 #include <FL/Fl_Value_Slider.H>
 #include <FL/Fl_Menu_Window.H>
@@ -1137,28 +1139,141 @@ int stl_dialog(const char *name)
   return 0;
 }
 
-// Partition dialog - callbacks and dialog routine
+// Partition dialog - widget pointers, callbacks and dialog routine
 
-struct PartitionDialog 
+// Forward declarations of some callbacks
+void partition_opt_chaco_globalalg_cb(Fl_Widget *widget, void *data);
+void partition_opt_architecture_cb(Fl_Widget *widget, void *data);
+void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data);
+void partition_opt_spectralcheck_cb(Fl_Widget *widget, void *data);
+void partition_select_groups_cb(Fl_Widget *widget, void *data);
+
+// Pointers to required widgets
+struct PartitionDialog
 {
+  // Group 0
   Fl_Choice *choicePartitioner;
-  Fl_Choice *choiceChacoAlg;
-  Fl_Choice *choiceMetisAlg;
-  Fl_Toggle_Button *toggleButtonAdvChaco;
-  Fl_Toggle_Button *toggleButtonAdvMetis;
-  Fl_Choice *choiceArchitecture;
   Fl_Value_Input *inputNumPartition;
+  // Group 1
+  Fl_Choice *choiceChacoAlg;
+  Fl_Toggle_Button *toggleButtonAdvChaco;
+  // Group 2
+  Fl_Choice *choiceArchitecture;
   Fl_Value_Input *inputNumPartition1;
   Fl_Value_Input *inputNumPartition2;
   Fl_Value_Input *inputNumPartition3;
   Fl_Choice *choiceDivisions;
+  Fl_Value_Input *inputVMax;
   Fl_Choice *choiceEigensolver;
+  Fl_Value_Input *inputEigtol;
   Fl_Choice *choiceLocalAlgorithm;
+  Fl_Value_Input *inputSeed;
+  Fl_Check_Button *checkButtonRefPart;
+  Fl_Check_Button *checkButtonIntVert;
+  Fl_Check_Button *checkButtonRefMap;
   Fl_Check_Button *checkButtonTermProp;
+  // Group 3
+  Fl_Choice *choiceMetisAlg;
+  Fl_Toggle_Button *toggleButtonAdvMetis;
+  // Group 4
+  Fl_Choice *choiceEdgeMatch;
+  Fl_Choice *choiceRefineAlg;
+  void write_all_options()
+  {
+    // Group 0
+    CTX.mesh.partition_options.partitioner = choicePartitioner->value() + 1;
+    CTX.mesh.partition_options.num_partitions =
+      static_cast<int>(inputNumPartition->value());
+
+    // Group 1
+    CTX.mesh.partition_options.global_method = choiceChacoAlg->value() + 1;
+
+    // Group 2
+    CTX.mesh.partition_options.architecture = choiceArchitecture->value();
+    switch(CTX.mesh.partition_options.architecture) {
+    case 0:
+      CTX.mesh.partition_options.ndims_tot =
+        static_cast<int>(inputNumPartition1->value());
+      break;
+    case 3:
+      CTX.mesh.partition_options.mesh_dims[2] =
+        static_cast<int>(inputNumPartition3->value());
+    case 2:
+      CTX.mesh.partition_options.mesh_dims[1] =
+        static_cast<int>(inputNumPartition2->value());
+    case 1:
+      CTX.mesh.partition_options.mesh_dims[0] =
+        static_cast<int>(inputNumPartition1->value());
+      break;
+    }
+    CTX.mesh.partition_options.ndims = choiceDivisions->value() + 1;
+    CTX.mesh.partition_options.vmax = static_cast<int>(inputVMax->value());
+    CTX.mesh.partition_options.rqi_flag = choiceEigensolver->value();
+    CTX.mesh.partition_options.eigtol = inputEigtol->value();
+    CTX.mesh.partition_options.local_method = choiceLocalAlgorithm->value() + 1;
+    CTX.mesh.partition_options.seed = static_cast<long>(inputSeed->value());
+    CTX.mesh.partition_options.refine_partition = checkButtonRefPart->value();
+    CTX.mesh.partition_options.internal_vertices = checkButtonIntVert->value();
+    CTX.mesh.partition_options.refine_map = checkButtonRefMap->value();
+    CTX.mesh.partition_options.terminal_propogation =
+      checkButtonTermProp->value();
+  
+    // Group 3
+    CTX.mesh.partition_options.algorithm = choiceMetisAlg->value() + 1;
+
+    // Group 4
+    CTX.mesh.partition_options.edge_matching = choiceEdgeMatch->value() + 1;
+    CTX.mesh.partition_options.refine_algorithm = choiceRefineAlg->value() + 1;
+  }
+  void read_all_options()
+  {
+    // Group 0
+    choicePartitioner->value(CTX.mesh.partition_options.partitioner - 1);
+    inputNumPartition->value(CTX.mesh.partition_options.num_partitions);
+
+    // Group 1
+    choiceChacoAlg->value(CTX.mesh.partition_options.global_method - 1);
+
+    // Group 2
+    choiceArchitecture->value(CTX.mesh.partition_options.architecture);
+    switch(CTX.mesh.partition_options.architecture) {
+    case 0:
+      inputNumPartition1->value(CTX.mesh.partition_options.ndims_tot);
+      break;
+    case 1:
+      inputNumPartition1->value(CTX.mesh.partition_options.mesh_dims[0]);
+      break;
+    }
+    inputNumPartition2->value(CTX.mesh.partition_options.mesh_dims[1]);
+    inputNumPartition3->value(CTX.mesh.partition_options.mesh_dims[2]);
+    choiceDivisions->value(CTX.mesh.partition_options.ndims - 1);
+    inputVMax->value(CTX.mesh.partition_options.vmax);
+    choiceEigensolver->value(CTX.mesh.partition_options.rqi_flag);
+    inputEigtol->value(CTX.mesh.partition_options.eigtol);
+    choiceLocalAlgorithm->value(CTX.mesh.partition_options.local_method - 1);
+    inputSeed->value(CTX.mesh.partition_options.seed);
+    checkButtonRefPart->value(CTX.mesh.partition_options.refine_partition);
+    checkButtonIntVert->value(CTX.mesh.partition_options.internal_vertices);
+    checkButtonRefMap->value(CTX.mesh.partition_options.refine_map);
+    checkButtonTermProp->value(CTX.mesh.partition_options.terminal_propogation);
+  
+    // Group 3
+    choiceMetisAlg->value(CTX.mesh.partition_options.algorithm - 1);
+
+    // Group 4
+    choiceEdgeMatch->value(CTX.mesh.partition_options.edge_matching - 1);
+    choiceRefineAlg->value(CTX.mesh.partition_options.refine_algorithm - 1);
+
+    // Call all callbacks to ensure consistent options
+    partition_opt_chaco_globalalg_cb(choiceChacoAlg, this);
+    partition_opt_architecture_cb(choiceArchitecture, this);
+    partition_opt_num_partitions_cb(inputNumPartition, this);
+    partition_opt_spectralcheck_cb(choiceDivisions, this);
+  }
 };
 
 // Chaco option considerations based on the global algorithm
-inline void partition_opt_chaco_globalalg_cb(Fl_Widget *widget, void *data)
+void partition_opt_chaco_globalalg_cb(Fl_Widget *widget, void *data)
 {
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
   unsigned opt = dlg->choiceChacoAlg->value();
@@ -1170,6 +1285,7 @@ inline void partition_opt_chaco_globalalg_cb(Fl_Widget *widget, void *data)
     dlg->choiceLocalAlgorithm->activate();
   }
   if(opt == 1) {
+    dlg->choiceEigensolver->value(1);
     dlg->choiceEigensolver->activate();
     if(dlg->choiceDivisions->value() != 0 &&
        dlg->checkButtonTermProp->value())
@@ -1181,7 +1297,7 @@ inline void partition_opt_chaco_globalalg_cb(Fl_Widget *widget, void *data)
 }
 
 // Chaco option considerations based on the architecture
-inline void partition_opt_architecture_cb(Fl_Widget *widget, void *data)
+void partition_opt_architecture_cb(Fl_Widget *widget, void *data)
 {
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
   switch(static_cast<int>(dlg->choiceArchitecture->value())) {
@@ -1206,10 +1322,12 @@ inline void partition_opt_architecture_cb(Fl_Widget *widget, void *data)
     dlg->inputNumPartition3->activate();
     break;
   }
+  // Set topology dimensions from main number of partitions
+  partition_opt_num_partitions_cb(dlg->inputNumPartition, data);
 }
 
 // Match several locations that provide a partition number
-inline void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data)
+void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data)
 {
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
   unsigned val;
@@ -1256,13 +1374,31 @@ inline void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data)
     }
     dlg->inputNumPartition->value(val);
   }
-  if(dlg->choicePartitioner->value() == 1) {
+  switch(dlg->choicePartitioner->value()) {
+  case 0:
+    if(val <= 3) {
+      dlg->choiceDivisions->value(0);
+      dlg->choiceDivisions->mode(1, FL_MENU_INACTIVE);
+      dlg->choiceDivisions->mode(2, FL_MENU_INACTIVE);
+    }
+    else if(val <= 7) {
+      if(dlg->choiceDivisions->value() > 1) dlg->choiceDivisions->value(1);
+      dlg->choiceDivisions->mode(1, 0);
+      dlg->choiceDivisions->mode(2, FL_MENU_INACTIVE);
+    }
+    else {
+      dlg->choiceDivisions->mode(1, 0);
+      dlg->choiceDivisions->mode(2, 0);
+    }
+    break;
+  case 1:
     dlg->choiceMetisAlg->value((val <= 8) ? 0: 1);
+    break;
   }
 }
 
 // Option considerations for the Chaco spectral algorithm
-inline void partition_opt_spectralcheck_cb(Fl_Widget *widget, void *data)
+void partition_opt_spectralcheck_cb(Fl_Widget *widget, void *data)
 {
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
   if(dlg->choiceChacoAlg->value() == 1) {
@@ -1273,17 +1409,39 @@ inline void partition_opt_spectralcheck_cb(Fl_Widget *widget, void *data)
   }
 }
 
-inline void partition_partition_cb(Fl_Widget *widget, void *data)
+void partition_defaults_cb(Fl_Widget *widget, void *data)
 {
+  PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
+  CTX.mesh.partition_options.setDefaults();
+  dlg->read_all_options();
+  partition_select_groups_cb(dlg->choicePartitioner, data);
+}
+void partition_partition_cb(Fl_Widget *widget, void *data)
+{
+  PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
+  Fl_Window *const w = widget->window();
+  w->hide();
+
+  // Write all options
+  dlg->write_all_options();
+
+  // Partition the mesh
+  PartitionMesh(GModel::current(), CTX.mesh.partition_options);
+
+  // Update the screen
+  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  Draw();
+  Msg::StatusBar(2, false, " ");
+
   Fl::delete_widget(widget->window());
 }
-inline void partition_cancel_cb(Fl_Widget *widget, void *data)
+void partition_cancel_cb(Fl_Widget *widget, void *data)
 {
   Fl::delete_widget(widget->window());
 }
 
 // Select groups to display
-inline void partition_select_groups_cb(Fl_Widget *widget, void *data)
+void partition_select_groups_cb(Fl_Widget *widget, void *data)
 {
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
   // If this callback was made by the "Advanced" toggle buttons, set the label
@@ -1334,6 +1492,8 @@ inline void partition_select_groups_cb(Fl_Widget *widget, void *data)
     o = static_cast<Fl_Group*>(g[5])->child(1);
     o->position(o->x(), yG);
     o = static_cast<Fl_Group*>(g[5])->child(2);
+    o->position(o->x(), yG);
+    o = static_cast<Fl_Group*>(g[5])->child(3);
     o->position(o->x(), yG);
     yG += WB + o->h();
   }
@@ -1435,8 +1595,9 @@ int partition_dialog()
       Fl_Choice *const o = new Fl_Choice(WB, y, BB, BH, "Partitioner");
       dlg.choicePartitioner = o;
       o->menu(partitionTypeMenu);
-      o->value(CTX.mesh.partition_options.partitioner - 1);
       o->callback((Fl_Callback *)partition_select_groups_cb, &dlg);
+      if(!(HAVE_PARTITION & 1)) o->mode(0, FL_MENU_INACTIVE);
+      if(!(HAVE_PARTITION & 2)) o->mode(1, FL_MENU_INACTIVE);
       o->align(FL_ALIGN_RIGHT);
     }
     // Number of partitions
@@ -1446,7 +1607,6 @@ int partition_dialog()
       dlg.inputNumPartition = o;
       o->minimum(1);
       o->maximum(std::numeric_limits<int>::max());
-      o->value(CTX.mesh.partition_options.num_partitions);
       o->callback((Fl_Callback *)partition_opt_num_partitions_cb, &dlg);
       o->step(1);
       o->align(FL_ALIGN_RIGHT);
@@ -1472,7 +1632,6 @@ int partition_dialog()
       Fl_Choice *const o = new Fl_Choice(WB, y, IW, BH, "Global Algorithm");
       dlg.choiceChacoAlg = o;
       o->menu(chacoAlgMenu);
-      o->value(CTX.mesh.partition_options.algorithm - 1);
       o->callback((Fl_Callback *)partition_opt_chaco_globalalg_cb, &dlg);
       o->align(FL_ALIGN_RIGHT);
     }
@@ -1499,137 +1658,130 @@ int partition_dialog()
       o->labeltype(FL_NO_LABEL);
     }
     y += 2 + WB + 1;  // +1 for multiline label
+    // Architecture
     {
       Fl_Choice *const o = new Fl_Choice(WB, y, BB, BH, "Architecture");
       dlg.choiceArchitecture = o;
       o->menu(chachoArchitectureMenu);
-      o->value(CTX.mesh.partition_options.architecture);
       o->callback((Fl_Callback *)partition_opt_architecture_cb, &dlg);
       o->align(FL_ALIGN_RIGHT);
     }
+    // Mesh_dim1
     {
       Fl_Value_Input *const o = new Fl_Value_Input
         (2*WB + 2*BB, y, IW/3, BH);
       dlg.inputNumPartition1 = o;
       o->minimum(1);
       o->maximum(std::numeric_limits<int>::max());
-      switch(CTX.mesh.partition_options.architecture) {
-      case 0:
-         o->value(CTX.mesh.partition_options.ndims_tot);
-         break;
-      case 1:
-         o->value(CTX.mesh.partition_options.mesh_dims[0]);
-         break;
-      }
       o->callback((Fl_Callback *)partition_opt_num_partitions_cb, &dlg);
       o->step(1);
     }
+    // Mesh_dim2
     {
       Fl_Value_Input *const o = new Fl_Value_Input
         (2*WB + 2*BB + IW/3, y, IW/3, BH);
       dlg.inputNumPartition2 = o;
       o->minimum(1);
       o->maximum(std::numeric_limits<int>::max());
-      o->value(CTX.mesh.partition_options.mesh_dims[1]);
       o->callback((Fl_Callback *)partition_opt_num_partitions_cb, &dlg);
       o->step(1);
-      if(CTX.mesh.partition_options.architecture < 2) o->deactivate();
     }
+    // Mesh_dim3
     {
       Fl_Value_Input *const o = new Fl_Value_Input
         (2*WB + 2*BB + 2*IW/3, y, IW/3, BH);
       dlg.inputNumPartition3 = o;
       o->minimum(1);
       o->maximum(std::numeric_limits<int>::max());
-      o->value(CTX.mesh.partition_options.mesh_dims[2]);
       o->callback((Fl_Callback *)partition_opt_num_partitions_cb, &dlg);
       o->step(1);
-      if(CTX.mesh.partition_options.architecture < 3) o->deactivate();
     }
+    // Label
     {
       Fl_Box *const o = new Fl_Box(2*WB + 2*BB + IW, y, 0, BH,
                                    "Topology\ndimensions");
       o->align(FL_ALIGN_RIGHT);
     }
     y += BH + WB + 2;  // +2 for multiline labels
+    // Divisions
     {
       Fl_Choice *const o = new Fl_Choice(WB, y, BB, BH, "Divisions");
       dlg.choiceDivisions = o;
-      o->menu(chachoDivisionsMenu);
-      o->value(CTX.mesh.partition_options.ndims - 1);
+      o->copy(chachoDivisionsMenu);
       o->callback((Fl_Callback *)partition_opt_spectralcheck_cb, &dlg);
       o->align(FL_ALIGN_RIGHT);
     }
+    // Vmax
     {
       Fl_Value_Input *const o = new Fl_Value_Input
         (2*WB + 2*BB, y, IW, BH, "Max. vertices in\ncoarse graph");
+      dlg.inputVMax = o;
       o->minimum(2);
       o->maximum(std::numeric_limits<double>::max());
-      o->value(CTX.mesh.partition_options.vmax);
       o->step(1);
       o->align(FL_ALIGN_RIGHT);
     }
     y += BH + WB + 2;  // +2 for multiline labels
+    // Eigensolver
     {
       Fl_Choice *const o = new Fl_Choice(WB, y, BB, BH, "Eigensolver");
       dlg.choiceEigensolver = o;
       o->menu(chachoEigSolMenu);
-      o->value(CTX.mesh.partition_options.rqi_flag);
-      if(CTX.mesh.partition_options.algorithm != 2) o->deactivate();
       o->align(FL_ALIGN_RIGHT);
     }
+    // Eigtol
     {
       Fl_Value_Input *const o = new Fl_Value_Input
         (2*WB + 2*BB, y, IW, BH, "Eigensolver\ntolerance");
+      dlg.inputEigtol = o;
       o->minimum(std::numeric_limits<double>::min());
       o->maximum(std::numeric_limits<double>::max());
-      o->value(CTX.mesh.partition_options.eigtol);
       o->step(5.E-3);
       o->align(FL_ALIGN_RIGHT);
     }
     y += BH + WB + 1;  // +1 for multiline label
+    // Local method
     {
       Fl_Choice *const o = new Fl_Choice(WB, y, BB, BH, "Local algorithm");
       dlg.choiceLocalAlgorithm = o;
       o->menu(chachoLocalMethodMenu);
-      o->value(CTX.mesh.partition_options.local_method + 1);
-      if(CTX.mesh.partition_options.algorithm == 1) o->deactivate();
       o->align(FL_ALIGN_RIGHT);
     }
+    // Seed
     {
       Fl_Value_Input *const o = new Fl_Value_Input
         (2*WB + 2*BB, y, IW, BH, "Seed");
+      dlg.inputSeed = o;
       o->minimum(1);
       o->maximum(std::numeric_limits<int>::max());
-      o->value(CTX.mesh.partition_options.seed);
       o->step(1);
       o->align(FL_ALIGN_RIGHT);
     }
     y += BH + WB;
+    // Parameters
     {
       Fl_Check_Button *const o = new Fl_Check_Button(WB, y, 2*WB, BH,
                                                      "Refine partition");
-      o->value(CTX.mesh.partition_options.refine_partition);
+      dlg.checkButtonRefPart = o;
       o->align(FL_ALIGN_RIGHT);
     }
     {
       Fl_Check_Button *const o = new Fl_Check_Button(2*WB + 2*BB, y, 2*WB, BH,
                                                      "Internal vertices");
-      o->value(CTX.mesh.partition_options.internal_vertices);
+      dlg.checkButtonIntVert = o;
       o->align(FL_ALIGN_RIGHT);
     }
     y += BH;
     {
       Fl_Check_Button *const o = new Fl_Check_Button(WB, y, 2*WB, BH,
                                                      "Refine map");
-      o->value(CTX.mesh.partition_options.refine_map);
+      dlg.checkButtonRefMap = o;
       o->align(FL_ALIGN_RIGHT);
     }
     {
       Fl_Check_Button *const o = new Fl_Check_Button(2*WB + 2*BB, y, 2*WB, BH,
                                                      "Terminal propogation");
       dlg.checkButtonTermProp = o;
-      o->value(CTX.mesh.partition_options.terminal_propogation);
       o->callback((Fl_Callback *)partition_opt_spectralcheck_cb, &dlg);
       o->align(FL_ALIGN_RIGHT);
     }
@@ -1648,7 +1800,6 @@ int partition_dialog()
       Fl_Choice *const o = new Fl_Choice(WB, y, BB, BH, "Algorithm");
       dlg.choiceMetisAlg = o;
       o->menu(metisAlgMenu);
-      o->value(CTX.mesh.partition_options.algorithm - 1);
       o->align(FL_ALIGN_RIGHT);
     }
     // Advanced Button
@@ -1674,17 +1825,19 @@ int partition_dialog()
       o->labeltype(FL_NO_LABEL);
     }
     y += 2 + WB + 1;  // +1 for multiline label
+    // Edge matching algorithm
     {
       Fl_Choice *const o = new Fl_Choice(WB, y, BB, BH, "Edge matching");
+      dlg.choiceEdgeMatch = o;
       o->menu(metisEdgeMatchingMenu);
-      o->value(CTX.mesh.partition_options.edge_matching - 1);
       o->align(FL_ALIGN_RIGHT);
     }
+    // Refinement algorithm
     {
       Fl_Choice *const o = new Fl_Choice(2*WB + 2*BB, y, BB, BH,
                                          "Refinement\nalgorithm");
+      dlg.choiceRefineAlg = o;
       o->menu(metisRefineAlgMenu);
-      o->value(CTX.mesh.partition_options.refine_algorithm - 1);
       o->align(FL_ALIGN_RIGHT);
     }
     y += BH + WB + 1;  // +1 for multiline label
@@ -1703,13 +1856,19 @@ int partition_dialog()
       o->labeltype(FL_NO_LABEL);
     }
     y += 2 + WB;
-    // Partition Button [1]
+    // Defaults Button [1]
+    {
+      Fl_Button *const o = new Fl_Button
+         (WB, y, BB, BH, "Defaults");
+      o->callback((Fl_Callback *)partition_defaults_cb, &dlg);
+    }
+    // Partition Button [2]
     {
       Fl_Return_Button *const o = new Fl_Return_Button
         (w - 2*(WB + BB), y, BB, BH, "Partition");
-      o->callback((Fl_Callback *)partition_partition_cb);
+      o->callback((Fl_Callback *)partition_partition_cb, &dlg);
     }
-    // Cancel Button [2]
+    // Cancel Button [3]
     {
       Fl_Button *const o = new Fl_Button(w - (WB + BB), y, BB, BH, "Cancel");
       o->callback((Fl_Callback *)partition_cancel_cb);
@@ -1723,6 +1882,8 @@ int partition_dialog()
   window->end();
   window->hotspot(window);
 
+  dlg.read_all_options();
+  // Set the groups to be initally displayed
   partition_select_groups_cb(window->child(0), &dlg);
   window->show();
 }

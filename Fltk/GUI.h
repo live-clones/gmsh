@@ -43,6 +43,7 @@
 #include <string>
 #include <list>
 
+#include "Defs.h"
 #include "Opengl_Window.h"
 #include "Colorbar_Window.h"
 #include "Popup_Button.h"

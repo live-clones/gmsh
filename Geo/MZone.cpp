@@ -12,7 +12,7 @@
  * Forward declarations
  *============================================================================*/
 
-template <typename Ent, int N = EntTr<Ent>::numElemTypes>
+template <unsigned DIM, int N = DimTr<DIM>::numElemTypes>
 struct ParseEntity;
 
 
@@ -48,7 +48,7 @@ struct ParseEntity;
  *============================================================================*/
 
 template <unsigned DIM>
-template <typename Ent, typename EntIter>
+template <typename EntIter>
 void MZone<DIM>::add_elements_in_entities
 (EntIter begin, EntIter end, const int partition)
 {
@@ -57,12 +57,13 @@ void MZone<DIM>::add_elements_in_entities
   // NOTE:  If the compiler sent you here, you're using an invalid entity as a
   // template parameter and/or and invalid iterator.  See struct
   // 'ValidEntityIterator' in 'MZone.h' for valid types
-  typedef typename ValidEntityIterator<Ent, typename EntIter::value_type>
-    ::Type Check;
+//   typedef typename ValidEntityIterator<Ent, typename EntIter::value_type>
+//     ::Type Check;
+  typedef typename DimTr<DIM>::EntityT Ent;
 
   // Find the neighbours of each vertex, edge, and face
   for(EntIter itEnt = begin; itEnt != end; ++itEnt) {
-    ParseEntity<Ent>::eval(static_cast<Ent*>(*itEnt), boFaceMap, elemVec,
+    ParseEntity<DIM>::eval(static_cast<Ent*>(*itEnt), boFaceMap, elemVec,
                            vertMap, zoneElemConn, partition);
   }
 
@@ -96,18 +97,19 @@ void MZone<DIM>::add_elements_in_entities
  *============================================================================*/
 
 template <unsigned DIM>
-template <typename Ent, typename EntPtr>
+template <typename EntPtr>
 void MZone<DIM>::add_elements_in_entity
 (EntPtr entity, const int partition)
 {
 
-  // Check the type of EntPtr (it must not be GEntity*)
-  // NOTE:  If the compiler sent you here, you're using an invalid entity as a
-  // pointer.  See struct ValidEntityIterator in 'MZone.h' for valid types.
-  typedef typename ValidEntityIterator<Ent, EntPtr>::Type Check;
+//   // Check the type of EntPtr (it must not be GEntity*)
+//   // NOTE:  If the compiler sent you here, you're using an invalid entity as a
+//   // pointer.  See struct ValidEntityIterator in 'MZone.h' for valid types.
+//   typedef typename ValidEntityIterator<Ent, EntPtr>::Type Check;
+  typedef typename DimTr<DIM>::EntityT Ent;
 
   // Find the neighbours of each vertex, edge, and face
-  ParseEntity<Ent>::eval(static_cast<Ent*>(entity), boFaceMap, elemVec,
+  ParseEntity<DIM>::eval(static_cast<Ent*>(entity), boFaceMap, elemVec,
                          vertMap, zoneElemConn, partition);
 
 }
@@ -262,17 +264,21 @@ int MZone<DIM>::zoneData()
 /*--------------------------------------------------------------------*
  * This class uses traits to determine the element types in an entity
  * and iterate over them.  A template meta-programming loop is used to
- * iterate over the types of elements.
+ * iterate over the types of elements.  So within the class, we are
+ * simply examining one type of element of a specific dimension in one
+ * specific entity.
  *--------------------------------------------------------------------*/
 
 //--Entry point
 
-template <typename Ent, int N>
+template <unsigned DIM, int N>
 struct ParseEntity
 {
-  typedef typename EntTr<Ent>::FaceT FaceT;  // The type/dimension of face
-  typedef typename FaceTr<FaceT>::BoFaceMap BoFaceMap;  // The corresponding map
-  typedef typename EntElemTr<Ent, N>::Elem Elem;  // The type of primary element
+  typedef typename DimTr<DIM>::EntityT Ent;  // The type of entity
+  typedef typename DimTr<DIM>::FaceT FaceT;  // The type/dimension of face
+  typedef typename LFaceTr<FaceT>::BoFaceMap BoFaceMap; // The corresponding map
+  typedef typename DimElemTr<DIM, N>::Elem Elem;  // The type of primary element
+  typedef typename DimElemTr<DIM, N>::ConstElementIterator ConstElementIterator;
   static void eval(const Ent *const entity,
                    BoFaceMap &boFaceMap,
                    ElementVec &elemVec,
@@ -280,9 +286,9 @@ struct ParseEntity
                    ElementConnectivity *zoneElemConn,
                    const int partition)
   {
-    for(typename EntElemTr<Ent, N>::ConstElementIterator itElem =
-          EntElemTr<Ent, N>::begin(entity);
-        itElem != EntElemTr<Ent, N>::end(entity); ++itElem) {
+    ConstElementIterator elemEnd = DimElemTr<DIM, N>::end(entity);
+    for(ConstElementIterator itElem = DimElemTr<DIM, N>::begin(entity);
+        itElem != elemEnd; ++itElem) {
       if(partition < 0 || (*itElem)->getPartition() == partition) {
         // Unique list of elements
         const unsigned eVecIndex = elemVec.size();
@@ -293,7 +299,7 @@ struct ParseEntity
         for(int iVert = 0; iVert != nVert; ++iVert)
           vertMap[(*itElem)->getVertex(iVert)] = 0;  // Unlabelled
         // Maintain list of (base element) faces with only one bounding element.
-        for(int iFace = 0; iFace != ElemFaceTr<Elem>::numFaceT;
+        for(int iFace = 0; iFace != ElemFaceTr<DIM, Elem>::numFaceT;
             ++iFace) {
           FaceT face = FaceTr<FaceT>::template getFace<Elem>(*itElem, iFace);
           std::pair<typename BoFaceMap::iterator, bool> insBoFaceMap =
@@ -308,19 +314,21 @@ struct ParseEntity
       }
     }
     // Next element type in the entity
-    ParseEntity<Ent, N-1>::eval(entity, boFaceMap, elemVec, vertMap,
+    ParseEntity<DIM, N-1>::eval(entity, boFaceMap, elemVec, vertMap,
                                 zoneElemConn, partition);
   }
 };
 
 //--Terminate loop when N = 1
 
-template <typename Ent>
-struct ParseEntity<Ent, 1>
+template <unsigned DIM>
+struct ParseEntity<DIM, 1>
 {
-  typedef typename EntTr<Ent>::FaceT FaceT;  // The type/dimension of face
-  typedef typename FaceTr<FaceT>::BoFaceMap BoFaceMap;  // The corresponding map
-  typedef typename EntElemTr<Ent, 1>::Elem Elem;  // The type of primary element
+  typedef typename DimTr<DIM>::EntityT Ent;  // The type of entity
+  typedef typename DimTr<DIM>::FaceT FaceT;  // The type/dimension of face
+  typedef typename LFaceTr<FaceT>::BoFaceMap BoFaceMap; // The corresponding map
+  typedef typename DimElemTr<DIM, 1>::Elem Elem;  // The type of primary element
+  typedef typename DimElemTr<DIM, 1>::ConstElementIterator ConstElementIterator;
   static void eval(const Ent *const entity,
                    BoFaceMap &boFaceMap,
                    ElementVec &elemVec,
@@ -328,9 +336,9 @@ struct ParseEntity<Ent, 1>
                    ElementConnectivity *zoneElemConn,
                    const int partition)
   {
-    for(typename EntElemTr<Ent, 1>::ConstElementIterator itElem =
-          EntElemTr<Ent, 1>::begin(entity);
-        itElem != EntElemTr<Ent, 1>::end(entity); ++itElem) {
+    ConstElementIterator elemEnd = DimElemTr<DIM, 1>::end(entity);
+    for(ConstElementIterator itElem = DimElemTr<DIM, 1>::begin(entity);
+        itElem != elemEnd; ++itElem) {
       if(partition < 0 || (*itElem)->getPartition() == partition) {
         // Unique list of elements
         const unsigned eVecIndex = elemVec.size();
@@ -341,7 +349,7 @@ struct ParseEntity<Ent, 1>
         for(int iVert = 0; iVert != nVert; ++iVert)
           vertMap[(*itElem)->getVertex(iVert)] = 0;  // Unlabelled
         // Maintain list of (base element) faces with only one bounding element.
-        for(int iFace = 0; iFace != ElemFaceTr<Elem>::numFaceT;
+        for(int iFace = 0; iFace != ElemFaceTr<DIM, Elem>::numFaceT;
             ++iFace) {
           FaceT face = FaceTr<FaceT>::template getFace<Elem>(*itElem, iFace);
           std::pair<typename BoFaceMap::iterator, bool> insBoFaceMap =
@@ -375,12 +383,12 @@ template class MZone<3>;
 
 // Vector container
 template void MZone<2>::add_elements_in_entities
-<GFace, std::vector<GEntity*>::const_iterator>
+<std::vector<GEntity*>::const_iterator>
 (std::vector<GEntity*>::const_iterator begin,
  std::vector<GEntity*>::const_iterator end, const int partition);
 
 template void MZone<3>::add_elements_in_entities
-<GRegion, std::vector<GEntity*>::const_iterator>
+<std::vector<GEntity*>::const_iterator>
 (std::vector<GEntity*>::const_iterator begin,
  std::vector<GEntity*>::const_iterator end, const int partition);
 
@@ -388,9 +396,9 @@ template void MZone<3>::add_elements_in_entities
 //--entity
 
 template void MZone<2>::add_elements_in_entity
-<GFace, GFace*>
+<GFace*>
 (GFace* entity, const int partition);
 
 template void MZone<3>::add_elements_in_entity
-<GRegion, GRegion*>
+<GRegion*>
 (GRegion* entity, const int partition);

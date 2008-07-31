@@ -2,9 +2,10 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
-
 #ifndef _PARTITIONOPTIONS_H_
 #define _PARTITIONOPTIONS_H_
+
+#include "Defs.h"
 
 struct PartitionOptions
 {
@@ -13,19 +14,15 @@ struct PartitionOptions
   int partitioner;                      // 1 - Chaco
                                         // 2 - METIS
   int num_partitions;
-  int algorithm;                        // Chaco
-                                        //   1 - Multilevel-KL
-                                        //   2 - Spectral
-                                        //   3 - Inertial (Disabled)
-                                        //   4 - Linear
-                                        //   5 - Random
-                                        //   6 - Scattered
-                                        // METIS
-                                        //   1 - Recursive
-                                        //   2 = K-way
 
 //--Chaco
 
+  int global_method;                    // 1 - Multilevel-KL
+                                        // 2 - Spectral
+                                        // 3 - Inertial (Disabled)
+                                        // 4 - Linear
+                                        // 5 - Random
+                                        // 6 - Scattered
   int architecture;                     // 0   - hypercube
                                         // 1-3 - dimensional mesh parallel
   int ndims_tot;                        // Number of hypercube dimensions */
@@ -56,6 +53,9 @@ struct PartitionOptions
 
 //--METIS
 
+  int algorithm;
+                                        // 1 - Recursive
+                                        // 2 - K-way
   int edge_matching;                    // 1 - Random matching
                                         // 2 - Heavy-edge matching
                                         // 3 - Sorted heavy-edge matching
@@ -65,33 +65,42 @@ struct PartitionOptions
                                         //     minimization of connectivity
                                         //     along sub-domains)
 
-//--Default values (overridden by Common/DefaultOptions.h)
+//--Constructor
 
-  PartitionOptions()
-    :
-    partitioner(1),
-    num_partitions(4),
-    algorithm(1),
-    architecture(1),
-    ndims_tot(2),
-    goal(0),
-    local_method(1),
-    rqi_flag(1),
-    vmax(250),
-    ndims(1),
-    eigtol(1.E-3),
-    seed(7654321L),
-    refine_partition(false),
-    internal_vertices(true),
-    refine_map(true),
-    terminal_propogation(true),
-    edge_matching(3),
-    refine_algorithm(3)
+   PartitionOptions()
+     :
+     goal(0)
+  { }
+
+//--Default values
+
+  void setDefaults()
   {
+    if(HAVE_PARTITION & 1) partitioner = 1;
+    else partitioner = 2;
+    num_partitions = 4;
+    global_method = 1;
+    architecture = 1;
+    ndims_tot = 2;
     mesh_dims[0] = 4;
     mesh_dims[1] = 1;
     mesh_dims[2] = 1;
+    goal = 0;
+    local_method = 1;
+    rqi_flag = 1;
+    vmax = 250;
+    ndims = 1;
+    eigtol = 1.E-3;
+    seed = 7654321L;
+    refine_partition = false;
+    internal_vertices = false;
+    refine_map = true;
+    terminal_propogation = false;
+    algorithm = 1;
+    edge_matching = 3;
+    refine_algorithm = 3;
   }
+
 };
 
 #endif

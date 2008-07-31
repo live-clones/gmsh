@@ -6,6 +6,7 @@
 #ifndef _DEFAULT_OPTIONS_H_
 #define _DEFAULT_OPTIONS_H_
 
+#include "Defs.h"
 #include "GmshDefines.h"
 #include "Options.h"
 
@@ -906,6 +907,8 @@ StringXNumber MeshOptions_Number[] = {
     "(Adv. Chaco): Type of eigensolver for a spectral algorithm (0=Lanczos, 1=Multilevel RQI/Symmlq)" },
   { F|O, "ChacoEigTol" , opt_mesh_partition_chaco_eigtol, 1.E-3 ,
     "(Adv. Chaco): Tolerance of the eigensolver for spectral or multilevel-KL algorithms" },
+  { F|O, "ChacoGlobalMethod" , opt_mesh_partition_chaco_global_method, 1. ,
+    "Chaco partitioning algorithm (1=Multilevel-KL, 2=Spectral, 4=Linear, 5=Random, 6=Scattered)" },
   { F|O, "ChacoHypercubeDim" , opt_mesh_partition_chaco_ndims_tot, 2. ,
     "(Adv. Chaco): Dimensional partitioning for a hypercube topology" },
   { F|O, "ChacoLocalMethod" , opt_mesh_partition_chaco_local_method, 1. ,
@@ -922,13 +925,13 @@ StringXNumber MeshOptions_Number[] = {
     "(Adv. Chaco): Seed for random number generator" },
   { F|O, "ChacoVMax" , opt_mesh_partition_chaco_vmax, 250. ,
     "(Adv. Chaco): Maximum vertices in a coarse graph (for multilevel-KL algorithm and Multilevel RQI/Symmlq eigensolver)" },
-  { F|O, "ChacoParamINTERNAL_VERTICES" , opt_mesh_partition_chaco_internal_vertices, 1. ,
+  { F|O, "ChacoParamINTERNAL_VERTICES" , opt_mesh_partition_chaco_internal_vertices, 0. ,
     "(Adv. Chaco): Parameter INTERNAL_VERTICES" },
   { F|O, "ChacoParamREFINE_MAP" , opt_mesh_partition_chaco_refine_map, 1. ,
     "(Adv. Chaco): Parameter REFINE_MAP" },
   { F|O, "ChacoParamREFINE_PARTITION" , opt_mesh_partition_chaco_refine_partition, 0. ,
     "(Adv. Chaco): Parameter REFINE_PARTITION" },
-  { F|O, "ChacoParamTERMINAL_PROPOGATION" , opt_mesh_partition_chaco_terminal_propogation, 1. ,
+  { F|O, "ChacoParamTERMINAL_PROPOGATION" , opt_mesh_partition_chaco_terminal_propogation, 0. ,
     "(Adv. Chaco): Parameter TERMINAL_PROPOGATION" },
   { F|O, "CharacteristicLengthExtendFromBoundary" , opt_mesh_lc_extend_from_boundary, 1. ,
     "Extend characteristic lengths from the boundaries inside the surface/volume" },
@@ -980,6 +983,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "LineWidth" , opt_mesh_line_width , 1.0 , 
     "Display width of mesh lines (in pixels)" },
 
+  { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
+    "METIS partitioning algorithm (1=Recursive, 2=K-way)" },
   { F|O, "MetisEdgeMatching" , opt_mesh_partition_metis_edge_matching, 3. ,
     "(Adv. METIS): Determines the matching type (1=Random, 2=Heavy-Edge, 3=Sorted Heavy-Edge)" },
   { F|O, "MetisRefinementAlgorithm" , opt_mesh_partition_metis_refine_algorithm, 3. ,
@@ -1017,10 +1022,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "OptimizeNetgen" , opt_mesh_optimize_netgen , 0. , 
     "Optimize the mesh using Netgen to improve the quality of tetrahedral elements" },
 
-  { F|O, "Partitioner" , opt_mesh_partition_partitioner, 1. ,
+  { F|O, "Partitioner" , opt_mesh_partition_partitioner,
+    (HAVE_PARTITION & 1) ? 1. : 2. ,
     "Partitioner software (1=Chacho, 2=METIS)" },
-  { F|O, "PartitionerAlgorithm" , opt_mesh_partition_algorithm, 1. ,
-    "Partitioning algorithm (Chaco: 1=Multilevel-KL, 2=Spectral, 4=Linear, 5=Random, 6=Scattered; METIS: 1=Recursive, 2=K-way)" },
   { F|O, "Points" , opt_mesh_points , 0. , 
     "Display mesh vertices (nodes)?" },
   { F|O, "PointNumbers" , opt_mesh_points_num , 0. , 

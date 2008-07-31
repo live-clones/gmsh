@@ -16,6 +16,7 @@
 #include "Generator.h"
 #include "Field.h"
 #include "Context.h"
+#include "Partition.h"
 
 #if !defined(HAVE_NO_POST)
 #include "PluginManager.h"
@@ -94,6 +95,8 @@ int GmshBatch()
   }
   else if(CTX.batch > 0) {
     GModel::current()->mesh(CTX.batch);
+    if(CTX.batchAfterMesh == 1)
+       PartitionMesh(GModel::current(), CTX.mesh.partition_options);
     CreateOutputFile(CTX.output_filename, CTX.mesh.format);
   }
   else if(CTX.batch == -1)

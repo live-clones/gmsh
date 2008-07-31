@@ -180,7 +180,7 @@ void updateBoVec
  * Purpose
  * =======
  *
- *   Gives the edge normal.  Use only by routine updateBoVec<2, MEdge>.
+ *   Gives the edge normal.  Used only by routine updateBoVec<2, MEdge>.
  *
  * I/O
  * ===

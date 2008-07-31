@@ -40,7 +40,8 @@ SRC = Generator.cpp \
         qualityMeasures.cpp \
         BoundaryLayers.cpp \
         BDS.cpp \
-        HighOrder.cpp
+        HighOrder.cpp \
+	Partition.cpp
 
 OBJ = ${SRC:.cpp=${OBJEXT}}
 
@@ -390,3 +391,11 @@ HighOrder.o: HighOrder.cpp HighOrder.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Numeric/NumericEmbedded.h ../Common/Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h ../Common/GmshMatrix.h \
   ../Numeric/FunctionSpace.h
+Partition.o: Partition.cpp ../Geo/ElementTraits.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint3.h \
+  ../Geo/MEdge.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SBoundingBox3d.h \
+  ../Geo/GVertex.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GFace.h \
+  ../Geo/GEdgeLoop.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GModel.h \
+  Partition.h ../Geo/MElement.h ../Common/Message.h PartitionOptions.h \
+  ../Common/Defs.h

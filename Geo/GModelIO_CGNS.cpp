@@ -819,8 +819,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition,
               // Add elements from all entities in the physical with defined
               // partition number
               zoneTask.zone.template add_elements_in_entities
-                <typename DimTr<DIM>::EntityT,
-                typename std::vector<GEntity*>::const_iterator>
+                <typename std::vector<GEntity*>::const_iterator>
                 (itPhysical->second.begin(), itPhysical->second.end(),
                  partition);
             }
