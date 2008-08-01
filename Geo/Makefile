@@ -221,7 +221,7 @@ GModelIO_CGNS.o: GModelIO_CGNS.cpp GModel.h GVertex.h GEntity.h Range.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/Message.h MZone.h \
   MElement.h ../Common/GmshDefines.h MVertex.h MEdge.h MFace.h \
   MEdgeHash.h ../Common/Hash.h MFaceHash.h CustomContainer.h \
-  MZoneBoundary.h CGNSOptions.h
+  ElementTraits.h MZoneBoundary.h CGNSOptions.h
 GModelIO_MED.o: GModelIO_MED.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/Message.h
@@ -294,9 +294,9 @@ MZone.o: MZone.cpp MZone.h MElement.h ../Common/GmshDefines.h MVertex.h \
   SPoint3.h MEdge.h SVector3.h MFace.h GFace.h GEntity.h Range.h \
   SBoundingBox3d.h GPoint.h GEdgeLoop.h GEdge.h GVertex.h SPoint2.h \
   Pair.h GRegion.h MEdgeHash.h ../Common/Hash.h MFaceHash.h \
-  CustomContainer.h
+  CustomContainer.h ElementTraits.h
 MZoneBoundary.o: MZoneBoundary.cpp MZoneBoundary.h MZone.h MElement.h \
   ../Common/GmshDefines.h MVertex.h SPoint3.h MEdge.h SVector3.h MFace.h \
   GFace.h GEntity.h Range.h SBoundingBox3d.h GPoint.h GEdgeLoop.h GEdge.h \
   GVertex.h SPoint2.h Pair.h GRegion.h MEdgeHash.h ../Common/Hash.h \
-  MFaceHash.h CustomContainer.h ../Common/Message.h
+  MFaceHash.h CustomContainer.h ElementTraits.h ../Common/Message.h

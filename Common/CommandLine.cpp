@@ -5,7 +5,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "Defs.h"
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "GmshVersion.h"
@@ -141,8 +140,11 @@ char *Get_BuildOptions(void)
 #if defined(HAVE_MATH_EVAL)
     strcat(opt, "MATHEVAL ");
 #endif
-#if defined(HAVE_PARTITION)
-    strcat(opt, "PARTITION ");
+#if defined(HAVE_METIS)
+    strcat(opt, "METIS ");
+#endif
+#if defined(HAVE_CHACO)
+    strcat(opt, "CHACO ");
 #endif
 #if defined(HAVE_ANN)
     strcat(opt, "ANN ");

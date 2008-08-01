@@ -9,9 +9,9 @@
           <jean-francois.remacle at uclouvain.be>
 
 Major code contributions to Gmsh have been provided by Nicolas Tardieu
-(help with the GSL and Netgen integration), Stephen Guzik (CGNS
-integration), Pascale Noyret (MED integration) and Jonathan Lambrechts
-(Fields).
+(help with the GSL and Netgen integration), Stephen Guzik (CGNS and
+partitioner integration), Pascale Noyret (MED integration) and
+Jonathan Lambrechts (Fields).
 
 Other code contributors include: David Colignon for new colormaps and
 lots of testing and bug reports; Patrick Dular for transfinite mesh

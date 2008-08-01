@@ -423,34 +423,25 @@ if test "x$enable_contrib" != "xno"; then
   fi
 
   dnl Check for partitioning software
-  USE_PARTITION=NO_PARTITION
-  USE_PARTITION_PROG=0
   if test "x$enable_partition" != "xno"; then
     dnl Chaco
     AC_CHECK_FILE(./contrib/Chaco/main/interface.c, CHACO="yes", CHACO="no")
     if test "x${CHACO}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/Chaco"
       GMSH_LIBS="${GMSH_LIBS} -lGmshChaco"
-      USE_PARTITION=HAVE_PARTITION
+      FLAGS="${FLAGS} -DHAVE_CHACO"
     fi
     dnl Metis
     AC_CHECK_FILE(./contrib/Metis/metis.h, METIS="yes", METIS="no")
     if test "x${METIS}" = "xyes"; then
       GMSH_DIRS="${GMSH_DIRS} contrib/Metis"
       GMSH_LIBS="${GMSH_LIBS} -lGmshMetis"
-      USE_PARTITION=HAVE_PARTITION
+      FLAGS="${FLAGS} -DHAVE_METIS"
     fi
-    if test "x${CHACO}" = "xyes" && test "x${METIS}" = "xyes"; then
-      USE_PARTITION_PROG=3
-    elif test "x${CHACO}" = "xyes"; then
-      USE_PARTITION_PROG=1
-    else
-      USE_PARTITION_PROG=2
-    fi
-        echo "********************************************************************"
+    echo "********************************************************************"
     if test "x${CHACO}" = "xyes" || test "x${METIS}" = "xyes"; then
-        echo "You are building a version of Gmsh can perform serial mesh"
-        echo "partitioning.  Graphs partitioning is performed using:"
+      echo "You are building a version of Gmsh can perform serial mesh"
+      echo "partitioning.  Graphs partitioning is performed using:"
       if test "x${CHACO}" = "xyes"; then
         echo "Chaco 2.2 - Sandia National Laboratories"
         echo "  Chaco is available under version 2.1 of the GNU Lesser GPL."
@@ -460,13 +451,13 @@ if test "x$enable_contrib" != "xno"; then
         echo "  Please note that by including METIS, you agree with the METIS"
         echo "  licensing requirements stated in ./contrib/Metis/README."
       fi
-        echo "To disable the paritioning, run configure again with the"
-        echo "--disable-partition option."
+      echo "To disable the paritioning, run configure again with the"
+      echo "--disable-partition option."
     else
-        echo "The partitioning software was not found but should have been"
-        echo "distributed with Gmsh.  Mesh partitioning is disabled."
+      echo "The partitioning software was not found but should have been"
+      echo "distributed with Gmsh.  Mesh partitioning is disabled."
     fi
-        echo "********************************************************************"
+    echo "********************************************************************"
   fi
 
   dnl Check for Netgen
@@ -855,9 +846,7 @@ AC_SUBST(LINKER)
 AC_SUBST(GMSH_DIRS)
 AC_SUBST(GMSH_LIBS)
 AC_SUBST(AR)
-AC_SUBST(USE_PARTITION)
-AC_SUBST(USE_PARTITION_PROG)
-AC_CONFIG_FILES([variables Common/Defs.h])
+AC_CONFIG_FILES([variables])
 AC_OUTPUT
 
 dnl Print some information

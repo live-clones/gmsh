@@ -107,10 +107,12 @@ Gmsh.o: Gmsh.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/SBoundingBox3d.h ../Common/ListUtils.h ../Common/TreeUtils.h \
   ../Common/avl.h ../Common/ListUtils.h ../Geo/SPoint2.h \
   ../Geo/ExtrudeParams.h ../Common/SmoothData.h ../Post/PView.h Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h \
+  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h ../Mesh/Partition.h \
+  ../Geo/MElement.h ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/MEdge.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
+  ../Geo/SVector3.h ../Common/Message.h ../Mesh/PartitionOptions.h \
   ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
-  ../Common/Message.h ../Post/PViewDataList.h ../Post/PViewData.h \
-  ../Common/GmshMatrix.h
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Common/GmshMatrix.h
 OS.o: OS.cpp Message.h
 OpenFile.o: OpenFile.cpp Message.h ../Geo/Geo.h ../Common/GmshDefines.h \
   ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \

@@ -300,7 +300,7 @@ Context_Item menu_mesh[] = {
 #if defined(HAVE_NETGEN)
   {"Optimize (Netgen)", (Fl_Callback *)mesh_optimize_netgen_cb} , 
 #endif
-#if defined(HAVE_PARTITION)
+#if defined(HAVE_METIS) || defined(HAVE_CHACO)
   {"Partition", (Fl_Callback *)mesh_partition_cb} ,
 #endif
 #if defined(HAVE_FOURIER_MODEL)

@@ -6,7 +6,6 @@
 #ifndef _DEFAULT_OPTIONS_H_
 #define _DEFAULT_OPTIONS_H_
 
-#include "Defs.h"
 #include "GmshDefines.h"
 #include "Options.h"
 
@@ -1023,7 +1022,11 @@ StringXNumber MeshOptions_Number[] = {
     "Optimize the mesh using Netgen to improve the quality of tetrahedral elements" },
 
   { F|O, "Partitioner" , opt_mesh_partition_partitioner,
-    (HAVE_PARTITION & 1) ? 1. : 2. ,
+#if defined(HAVE_CHACO)
+    1.,
+#else
+    2.,
+#endif
     "Partitioner software (1=Chacho, 2=METIS)" },
   { F|O, "Points" , opt_mesh_points , 0. , 
     "Display mesh vertices (nodes)?" },

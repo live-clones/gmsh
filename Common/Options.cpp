@@ -5,7 +5,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "Defs.h"
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "Message.h"
@@ -5304,11 +5303,8 @@ double opt_mesh_partition_partitioner(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     const int ival = (int)val;
-    if(HAVE_PARTITION == 3)
-       CTX.mesh.partition_options.partitioner =
-          (ival < 1 || ival > 2) ? 1 : ival;
-    else
-       CTX.mesh.partition_options.partitioner = HAVE_PARTITION;
+    CTX.mesh.partition_options.partitioner =
+      (ival < 1 || ival > 2) ? 1 : ival;
   }
   return CTX.mesh.partition_options.partitioner;
 }

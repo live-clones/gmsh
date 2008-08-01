@@ -4,8 +4,6 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <limits>
-
-#include "Defs.h"
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "CreateFile.h"
@@ -1596,8 +1594,12 @@ int partition_dialog()
       dlg.choicePartitioner = o;
       o->menu(partitionTypeMenu);
       o->callback((Fl_Callback *)partition_select_groups_cb, &dlg);
-      if(!(HAVE_PARTITION & 1)) o->mode(0, FL_MENU_INACTIVE);
-      if(!(HAVE_PARTITION & 2)) o->mode(1, FL_MENU_INACTIVE);
+#if !defined(HAVE_CHACO)
+      o->mode(0, FL_MENU_INACTIVE);
+#endif
+#if !defined(HAVE_METIS)
+      o->mode(1, FL_MENU_INACTIVE);
+#endif
       o->align(FL_ALIGN_RIGHT);
     }
     // Number of partitions

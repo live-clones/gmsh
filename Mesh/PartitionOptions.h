@@ -5,8 +5,6 @@
 #ifndef _PARTITIONOPTIONS_H_
 #define _PARTITIONOPTIONS_H_
 
-#include "Defs.h"
-
 struct PartitionOptions
 {
 
@@ -76,8 +74,11 @@ struct PartitionOptions
 
   void setDefaults()
   {
-    if(HAVE_PARTITION & 1) partitioner = 1;
-    else partitioner = 2;
+#if defined(HAVE_CHACO)
+    partitioner = 1;
+#else
+    partitioner = 2;
+#endif
     num_partitions = 4;
     global_method = 1;
     architecture = 1;

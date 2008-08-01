@@ -124,15 +124,6 @@ int PartitionGraph(Graph &graph, PartitionOptions &options)
 
   int ier = 0;
 
-#if HAVE_PARTITION==1
-#define HAVE_CHACO
-#elif HAVE_PARTITION==2
-#define HAVE_METIS
-#elif HAVE_PARTITION==3
-#define HAVE_CHACO
-#define HAVE_METIS
-#endif
-
   switch(options.partitioner){
   case 1:  // Chacho
 #ifdef HAVE_CHACO

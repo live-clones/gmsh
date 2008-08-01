@@ -3,7 +3,7 @@
  * contract DE-AC04-76DP00789 and is copyrighted by Sandia Corporation. */
 
 #include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include "Gmsh_printf.h"
 
 static int nmalloc = 0;		/* number of calls to malloc */

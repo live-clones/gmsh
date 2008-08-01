@@ -393,9 +393,14 @@ HighOrder.o: HighOrder.cpp HighOrder.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Numeric/FunctionSpace.h
 Partition.o: Partition.cpp ../Geo/ElementTraits.h ../Geo/MElement.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint3.h \
-  ../Geo/MEdge.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/GEdge.h \
-  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SBoundingBox3d.h \
-  ../Geo/GVertex.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GFace.h \
-  ../Geo/GEdgeLoop.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GModel.h \
-  Partition.h ../Geo/MElement.h ../Common/Message.h PartitionOptions.h \
-  ../Common/Defs.h
+  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
+  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEdge.h ../Geo/GFace.h \
+  ../Geo/GRegion.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h Partition.h \
+  ../Common/Message.h PartitionOptions.h
