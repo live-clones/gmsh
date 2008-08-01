@@ -694,15 +694,15 @@ void GModel::scaleMesh(double factor)
     }
 }
 
-std::set<int> &GModel::recomputeMeshPartitions()
+void GModel::recomputeMeshPartitions()
 {
+  meshPartitions.clear();
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     (*it)->recomputeMeshPartitions();
   for(fiter it = firstFace(); it != lastFace(); ++it)
     (*it)->recomputeMeshPartitions();
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     (*it)->recomputeMeshPartitions();
-  return meshPartitions;
 }
 
 void GModel::deleteMeshPartitions()

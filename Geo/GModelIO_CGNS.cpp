@@ -610,7 +610,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition,
 
 //--Shared data
 
-  const int numPartitions = model.getNumMeshPartitions();
+  const int numPartitions = model.getMeshPartitions().size();
   int threadsWorking = omp_get_num_threads();
                                         // Semaphore for working threads
   omp_lock_t threadWLock;

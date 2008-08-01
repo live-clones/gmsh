@@ -221,10 +221,7 @@ class GModel
 
   // The list of partitions
   std::set<int> &getMeshPartitions() { return meshPartitions; }
-  std::set<int> &recomputeMeshPartitions();
-
-  // Number of partitions
-  int getNumMeshPartitions() const { return meshPartitions.size(); }
+  void recomputeMeshPartitions();
 
   // Deletes all the partitions
   void deleteMeshPartitions();
