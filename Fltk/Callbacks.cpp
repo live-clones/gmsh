@@ -3743,7 +3743,9 @@ void mesh_optimize_netgen_cb(CALLBACK_ARGS)
 
 void mesh_partition_cb(CALLBACK_ARGS)
 {
+#if defined(HAVE_METIS) || defined(HAVE_CHACO)
   partition_dialog();
+#endif
 }
 
 void mesh_define_length_cb(CALLBACK_ARGS)

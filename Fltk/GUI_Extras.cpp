@@ -1138,6 +1138,7 @@ int stl_dialog(const char *name)
 }
 
 // Partition dialog - widget pointers, callbacks and dialog routine
+#if defined(HAVE_CHACO) || defined(HAVE_METIS)
 
 // Forward declarations of some callbacks
 void partition_opt_chaco_globalalg_cb(Fl_Widget *widget, void *data);
@@ -1424,12 +1425,13 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
   dlg->write_all_options();
 
   // Partition the mesh
-  PartitionMesh(GModel::current(), CTX.mesh.partition_options);
+  int ier = PartitionMesh(GModel::current(), CTX.mesh.partition_options);
 
   // Update the screen
-  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
-  Draw();
-  Msg::StatusBar(2, false, " ");
+  if(!ier) {
+    opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
+    Draw();
+  }
 
   Fl::delete_widget(widget->window());
 }
@@ -1889,3 +1891,5 @@ int partition_dialog()
   partition_select_groups_cb(window->child(0), &dlg);
   window->show();
 }
+
+#endif  // compiling partition dialog

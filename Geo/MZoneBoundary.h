@@ -79,15 +79,12 @@ struct ZoneConnectivity
       : vertex(0), vertexIndex1(0), vertexIndex2(0)
     { }
     VertexPair(MVertex *const _vertex,
-               const unsigned zone1, const unsigned zone2,
-               const unsigned _vertexIndex1, const unsigned _vertexIndex2)
-      : vertex(_vertex)
+               const int zone1, const int zone2,
+               const int _vertexIndex1, const int _vertexIndex2)
+      : vertex(_vertex),
+        vertexIndex1(_vertexIndex1), vertexIndex2(_vertexIndex2)
     {
-      if(zone1 < zone2) {
-        vertexIndex1 = _vertexIndex1;
-        vertexIndex2 = _vertexIndex2;
-      }
-      else {
+      if(zone2 < zone1) {
         vertexIndex1 = _vertexIndex2;
         vertexIndex2 = _vertexIndex1;
       }
@@ -98,7 +95,38 @@ struct ZoneConnectivity
   // Constructor
   ZoneConnectivity()
   {
-    vertexPairVec.reserve(32);  // Avoid small reallocations
+    vertexPairVec.reserve(32);  // Avoid small reallocations by push_back()
+  }
+};
+
+struct ZoneConnectivityByElem
+{
+  // Internal structures
+  struct ElementPair                    // Pairs of elements.  Ordered based on
+                                        // zone indices
+  {
+    int elemIndex1;
+    int elemIndex2;
+    // Constructors
+    ElementPair()
+      : elemIndex1(0), elemIndex2(0)
+    { }
+    ElementPair(const int zone1, const int zone2,
+                const int _elemIndex1, const int _elemIndex2)
+      : elemIndex1(_elemIndex1), elemIndex2(_elemIndex2)
+    {
+      if(zone2 < zone1) {
+        elemIndex1 = _elemIndex2;
+        elemIndex2 = _elemIndex1;
+      }
+    }
+  };
+  // Data
+  std::vector<ElementPair> elemPairVec;
+  // Constructor
+  ZoneConnectivityByElem()
+  {
+    elemPairVec.reserve(32);  // Avoid small reallocations by push_back()
   }
 };
 
@@ -125,7 +153,7 @@ struct VertexBoundary
                  const SVector3 &_normal, MVertex *const _vertex,
                  const int _vertexIndex)
     : zoneIndex(_zoneIndex), bcPatchIndex(_bcPatchIndex), normal(_normal),
-    vertex(_vertex), vertexIndex(_vertexIndex)
+      vertex(_vertex), vertexIndex(_vertexIndex)
   { }
 };
 
@@ -147,6 +175,23 @@ struct ZoneBoVecSort
   { }
  private:
   const ZoneBoVec &zoneBoVec;
+};
+
+struct ElementBoundary
+{
+  int zoneIndex;
+  int bcPatchIndex;
+  SVector3 normal;
+  int elemIndex;
+  // Constructors
+  ElementBoundary()
+    : elemIndex(0)
+  { }
+  ElementBoundary(const int _zoneIndex, const int _bcPatchIndex,
+                  const SVector3 &_normal, const int _elemIndex)
+    : zoneIndex(_zoneIndex), bcPatchIndex(_bcPatchIndex), normal(_normal),
+      elemIndex(_elemIndex)
+  { }
 };
 
 
@@ -297,6 +342,5 @@ private:
                                         // for the entire domain
 
 };
-
 
 #endif

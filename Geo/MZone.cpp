@@ -53,12 +53,6 @@ void MZone<DIM>::add_elements_in_entities
 (EntIter begin, EntIter end, const int partition)
 {
 
-  // Check the Ent and EntIter types
-  // NOTE:  If the compiler sent you here, you're using an invalid entity as a
-  // template parameter and/or and invalid iterator.  See struct
-  // 'ValidEntityIterator' in 'MZone.h' for valid types
-//   typedef typename ValidEntityIterator<Ent, typename EntIter::value_type>
-//     ::Type Check;
   typedef typename DimTr<DIM>::EntityT Ent;
 
   // Find the neighbours of each vertex, edge, and face
@@ -102,10 +96,6 @@ void MZone<DIM>::add_elements_in_entity
 (EntPtr entity, const int partition)
 {
 
-//   // Check the type of EntPtr (it must not be GEntity*)
-//   // NOTE:  If the compiler sent you here, you're using an invalid entity as a
-//   // pointer.  See struct ValidEntityIterator in 'MZone.h' for valid types.
-//   typedef typename ValidEntityIterator<Ent, EntPtr>::Type Check;
   typedef typename DimTr<DIM>::EntityT Ent;
 
   // Find the neighbours of each vertex, edge, and face

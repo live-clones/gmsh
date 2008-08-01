@@ -5,6 +5,8 @@
 //
 // Partition.cpp - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
 
+#if defined(HAVE_CHACO) || defined(HAVE_METIS)
+
 #include "ElementTraits.h"
 #include "GModel.h"
 #include "Partition.h"
@@ -87,8 +89,15 @@ int PartitionMesh(GModel *const model, PartitionOptions &options)
 
   Graph graph;
   BoElemGrVec boElemGrVec;
-  if(MakeGraph(model, graph, &boElemGrVec)) return 1;
-  if(PartitionGraph(graph, options)) return 1;
+  int ier;
+  Msg::StatusBar(1, true, "Building graph...");
+  ier = MakeGraph(model, graph, &boElemGrVec);
+  Msg::StatusBar(1, true, "Partitioning graph...");
+  if(!ier) ier = PartitionGraph(graph, options);
+  if(ier) {
+    Msg::StatusBar(1, true, "Mesh");
+    return 1;
+  }
 
   // Assign partitions to internal elements
   const int n = graph.getNumVertex();
@@ -103,6 +112,8 @@ int PartitionMesh(GModel *const model, PartitionOptions &options)
   }
 
   model->recomputeMeshPartitions();
+  Msg::Info("Partitioning complete");
+  Msg::StatusBar(1, true, "Mesh");
   return 0;
 
 }
@@ -128,7 +139,7 @@ int PartitionGraph(Graph &graph, PartitionOptions &options)
   case 1:  // Chacho
 #ifdef HAVE_CHACO
     {
-      Msg::Info("Running Chaco graph partitioner");
+      Msg::Info("Launching Chaco graph partitioner");
       // Some setup (similar to that of Chaco/input/input.c)
       if(options.global_method != 2) options.rqi_flag = 0;
       if(options.global_method == 1 || options.rqi_flag) {
@@ -162,7 +173,7 @@ int PartitionGraph(Graph &graph, PartitionOptions &options)
   case 2:  // Metis
 #ifdef HAVE_METIS
     {
-      Msg::Info("Running METIS graph partitioner");
+      Msg::Info("Launching METIS graph partitioner");
       // "C" numbering for Metis
       {
         int *p = &graph.adjncy[0];  //**Sections
@@ -741,3 +752,5 @@ template void MakeGraphDIM<3, GModel::riter, GModel::fiter>
 (const GModel::riter begin, const GModel::riter end,
  const GModel::fiter beginBE, const GModel::fiter endBE,
  Graph &graph, BoElemGrVec *const boElemGrVec);
+
+#endif

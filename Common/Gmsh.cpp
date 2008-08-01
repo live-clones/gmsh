@@ -95,8 +95,10 @@ int GmshBatch()
   }
   else if(CTX.batch > 0) {
     GModel::current()->mesh(CTX.batch);
+#if defined(HAVE_CHACO) || defined(HAVE_METIS)
     if(CTX.batchAfterMesh == 1)
        PartitionMesh(GModel::current(), CTX.mesh.partition_options);
+#endif
     CreateOutputFile(CTX.output_filename, CTX.mesh.format);
   }
   else if(CTX.batch == -1)
