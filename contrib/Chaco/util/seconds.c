@@ -2,6 +2,16 @@
  * at Sandia National Laboratories under US Department of Energy        *
  * contract DE-AC04-76DP00789 and is copyrighted by Sandia Corporation. */
 
+/* Added for Gmsh */
+#if defined(WIN32) && !defined(__CYGWIN__)
+
+double    seconds()
+{
+  return 0.;
+}
+
+#else
+
 #include   <sys/time.h>
 #include   <sys/resource.h>
 
@@ -29,3 +39,5 @@ double    seconds()
 
     return (curtime);
 }
+
+#endif
