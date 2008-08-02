@@ -3,7 +3,7 @@ include ../../variables
 
 LIB = ../../lib/libGmshChaco${LIBEXT}
 
-INC = ${DASH}Imain
+INC = ${DASH}Imain ${DASH}I../../Common
 
 CFLAGS  = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}
 

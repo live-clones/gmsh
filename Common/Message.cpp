@@ -270,36 +270,12 @@ void Message::Direct(int level, const char *fmt, ...)
 #if defined(HAVE_FLTK)
   if(WID){
     WID->check();
-    const char *const last = str + std::max(0u, std::strlen(str) - 1);
-    char _buf[1029];
+    std::string tmp;
     if(level < 3)
-      std::strcpy(_buf, "@C1@.");
+      tmp = std::string("@C1@.") + str;
     else
-      std::strcpy(_buf, "@C4@.");
-    char *const buf = _buf + 5;
-    char *p = std::strtok(str, "\n");
-    if(p) {
-      // If more than 1 leading '\n', print a blank line
-      if(p - str > 1) {
-        buf[0] = ' ';
-        buf[1] = '\0';
-        WID->add_message(_buf);
-      }
-      std::strcpy(buf, p);
-      WID->add_message(_buf);
-      // New line for each interior '\n'
-      while(p = std::strtok(NULL, "\n")) {
-        std::strcpy(buf, p);
-        WID->add_message(_buf);
-      }
-    }
-    // If more than 1 trailing '\n', or only "\n" in the string, print a blank
-    // line.
-    if(*last == '\n') {
-      buf[0] = ' ';
-      buf[1] = '\0';
-      WID->add_message(_buf);
-    }
+      tmp = std::string("@C4@.") + str;
+    WID->add_message(tmp.c_str());
     if(level == 1)
       WID->create_message_window();
   }

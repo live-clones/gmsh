@@ -1415,11 +1415,10 @@ void partition_defaults_cb(Fl_Widget *widget, void *data)
   dlg->read_all_options();
   partition_select_groups_cb(dlg->choicePartitioner, data);
 }
+
 void partition_partition_cb(Fl_Widget *widget, void *data)
 {
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
-  Fl_Window *const w = widget->window();
-  w->hide();
 
   // Write all options
   dlg->write_all_options();
@@ -1430,13 +1429,14 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
   // Update the screen
   if(!ier) {
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
+    CTX.mesh.changed = ENT_ALL;
     Draw();
   }
-
-  Fl::delete_widget(widget->window());
 }
+
 void partition_cancel_cb(Fl_Widget *widget, void *data)
 {
+  widget->window()->hide();
   Fl::delete_widget(widget->window());
 }
 
@@ -1581,8 +1581,8 @@ int partition_dialog()
   const int w = 3 * BB + IW + 3 * WB;   // Window width
   int y = 0;
 
-  Fl_Double_Window *const window =
-    new Fl_Double_Window(w, h, "Partitioner Options");
+  Dialog_Window *const window = new Dialog_Window(w, h, CTX.non_modal_windows, 
+						  "Partitioner Options");
   window->box(GMSH_WINDOW_BOX);
 
   // Main options group [0]
@@ -1882,7 +1882,6 @@ int partition_dialog()
     g->show();
   }
 
-  window->set_modal();
   window->end();
   window->hotspot(window);
 
