@@ -10,6 +10,7 @@
 #include "ElementTraits.h"
 #include "GModel.h"
 #include "Partition.h"
+#include "PartitionObjects.h"
 #include "PartitionOptions.h"
 
 //--Prototype for Chaco interface
