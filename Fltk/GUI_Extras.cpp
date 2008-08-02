@@ -1150,6 +1150,7 @@ void partition_select_groups_cb(Fl_Widget *widget, void *data);
 // Pointers to required widgets
 struct PartitionDialog
 {
+  Fl_Window *window;
   // Group 0
   Fl_Choice *choicePartitioner;
   Fl_Value_Input *inputNumPartition;
@@ -1428,6 +1429,7 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
 
   // Update the screen
   if(!ier) {
+    opt_mesh_zone_definition(0, GMSH_SET, 1.);  // Define zone by partition
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
     CTX.mesh.changed = ENT_ALL;
     Draw();
@@ -1436,8 +1438,9 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
 
 void partition_cancel_cb(Fl_Widget *widget, void *data)
 {
-  widget->window()->hide();
-  Fl::delete_widget(widget->window());
+  PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
+  dlg->window->hide();
+  Fl::delete_widget(dlg->window);
 }
 
 // Select groups to display
@@ -1454,9 +1457,8 @@ void partition_select_groups_cb(Fl_Widget *widget, void *data)
                                      "Advanced @-28->" : "Advanced @-22->");
   }
   const int WB = 7;                     // Window border
-  Fl_Window *const w = widget->window();
   // Get the groups
-  Fl_Widget *const *g = w->array();
+  Fl_Widget *const *g = dlg->window->array();
   int y = g[0]->h();
   switch(dlg->choicePartitioner->value()) {
   case 0:
@@ -1499,8 +1501,8 @@ void partition_select_groups_cb(Fl_Widget *widget, void *data)
   }
   y += g[5]->h();
   // Resize and redraw the window
-  w->size(w->w(), y);
-  w->redraw();
+  dlg->window->size(dlg->window->w(), y);
+  dlg->window->redraw();
 }
 
 int partition_dialog()
@@ -1581,9 +1583,10 @@ int partition_dialog()
   const int w = 3 * BB + IW + 3 * WB;   // Window width
   int y = 0;
 
-  Dialog_Window *const window = new Dialog_Window(w, h, CTX.non_modal_windows, 
-						  "Partitioner Options");
-  window->box(GMSH_WINDOW_BOX);
+  dlg.window = new Dialog_Window(w, h, CTX.non_modal_windows,
+                                 "Partitioner Options");
+  dlg.window->box(GMSH_WINDOW_BOX);
+  dlg.window->callback((Fl_Callback *)partition_cancel_cb, &dlg);
 
   // Main options group [0]
   {
@@ -1875,20 +1878,20 @@ int partition_dialog()
     // Cancel Button [3]
     {
       Fl_Button *const o = new Fl_Button(w - (WB + BB), y, BB, BH, "Cancel");
-      o->callback((Fl_Callback *)partition_cancel_cb);
+      o->callback((Fl_Callback *)partition_cancel_cb, &dlg);
     }
     y += BH + WB;
     g->end();
     g->show();
   }
 
-  window->end();
-  window->hotspot(window);
+  dlg.window->end();
+  dlg.window->hotspot(dlg.window);
 
   dlg.read_all_options();
   // Set the groups to be initally displayed
-  partition_select_groups_cb(window->child(0), &dlg);
-  window->show();
+  partition_select_groups_cb(dlg.window, &dlg);
+  dlg.window->show();
 }
 
 #endif  // compiling partition dialog
