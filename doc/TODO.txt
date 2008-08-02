@@ -1,4 +1,4 @@
-$Id: TODO.txt,v 1.2 2008-07-27 02:54:09 geuzaine Exp $
+$Id: TODO.txt,v 1.3 2008-08-02 13:53:28 geuzaine Exp $
 
 ********************************************************************
 
@@ -22,13 +22,6 @@ File->Merge(a) == Merge(a)
 Or should we just bite the bullet and follow what all other software
 tools do, i.e., if no input file is given present a File->New or Open
 dialog and refuse to continue until a model is given...
-
-********************************************************************
-
-Decide what to do with global parser variables. Should we clear them
-when we open a new file? +: fixes annoying persistance when changing
-.geo files and reloading them; -: cannot use -string "aa=1;" to change
-global vars from command line.
 
 ********************************************************************
 
@@ -72,12 +65,6 @@ interface duplicate entity removal from opencascade
 ********************************************************************
 
 add support for Patran mesh files
-
-********************************************************************
-
-Bug: need to better understand how Netgen deals with characteristic
-lengths: a larger geometry (with appropriately scaled lcs) leads to a
-larger mesh
 
 ********************************************************************
 
@@ -219,4 +206,3 @@ rewrite ColorTable as a C++ class
 create "Volume visualization" range type? (interpolate on regular grid
 + create cut planes // to viewpoint with transparency; can be done in
 a straightforward way or using 3D textures)
-
