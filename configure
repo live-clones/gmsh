@@ -1274,7 +1274,8 @@ Optional Features:
   --enable-contrib        enable contrib packages (default=yes)
   --enable-netgen         compile Netgen if available (default=yes)
   --enable-ann            compile ANN if available (default=yes)
-  --enable-partition      build with partitioners (default=yes)
+  --enable-metis          compile METIS partitioner (default=yes)
+  --enable-chaco          compile Chaco partitioner (default=yes)
   --enable-tetgen         compile Tetgen if available (default=yes)
   --enable-matheval       compile MathEval if available (default=yes)
   --enable-osmesa         use OSMesa for offscreen rendering (default=no)
@@ -1892,9 +1893,14 @@ if test "${enable_ann+set}" = set; then
   enableval=$enable_ann;
 fi
 
-# Check whether --enable-partition was given.
-if test "${enable_partition+set}" = set; then
-  enableval=$enable_partition;
+# Check whether --enable-metis was given.
+if test "${enable_metis+set}" = set; then
+  enableval=$enable_metis;
+fi
+
+# Check whether --enable-chaco was given.
+if test "${enable_chaco+set}" = set; then
+  enableval=$enable_chaco;
 fi
 
 # Check whether --enable-tetgen was given.
@@ -1956,7 +1962,8 @@ if test "x$enable_minimal" = "xyes"; then
   enable_tetgen=no;
   enable_matheval=no;
   enable_ann=no;
-  enable_partition=no;
+  enable_metis=no;
+  enable_chaco=no;
   enable_med=no;
   enable_cgns=no;
   enable_zlib=no;
@@ -4421,6 +4428,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 if test "x$enable_contrib" != "xno"; then
 
+    if test "x$enable_ann" != "xno"; then
     { echo "$as_me:$LINENO: checking for ./contrib/ANN/include/ANN/ANN.h" >&5
 echo $ECHO_N "checking for ./contrib/ANN/include/ANN/ANN.h... $ECHO_C" >&6; }
 if test "${ac_cv_file___contrib_ANN_include_ANN_ANN_h+set}" = set; then
@@ -4444,34 +4452,23 @@ else
   ANN="no"
 fi
 
-  if test "x${ANN}" != "xno"; then
-    if test "x$enable_ann" != "xno"; then
-       GMSH_DIRS="${GMSH_DIRS} contrib/ANN"
-       GMSH_LIBS="${GMSH_LIBS} -lGmshANN"
-       FLAGS="-DHAVE_ANN ${FLAGS}"
-       echo "********************************************************************"
-       echo "You are building a version of Gmsh that contains ANN, the"
-       echo "Approximate Nearest Neighbor library."
-       echo "Please note that by doing so, you agree with ANN's licensing"
-       echo "requirements stated in ./contrib/ANN/Copyright.txt."
-       echo "To disable ANN, run configure again with the --disable-ann"
-       echo "option."
-       echo "********************************************************************"
-    fi
-  else
-    if test "x$enable_ann" != "xno"; then
-       echo "********************************************************************"
-       echo "If you want to use ANN for doing fast geometrical searchs in the"
-       echo "STL mesher, please download ANN from the author's web site at"
-       echo "http://www.cs.umd.edu/~mount/ANN/, unpack the archive and copy both"
-       echo "src and include directories in the /contrib/ANN subdirectory. Then"
-       echo "run ./configure again."
-       echo "********************************************************************"
+    if test "x${ANN}" = "xyes"; then
+      GMSH_DIRS="${GMSH_DIRS} contrib/ANN"
+      GMSH_LIBS="${GMSH_LIBS} -lGmshANN"
+      FLAGS="-DHAVE_ANN ${FLAGS}"
+      echo "********************************************************************"
+      echo "  You are building a version of Gmsh that contains ANN, the"
+      echo "  Approximate Nearest Neighbor library."
+      echo "  Please note that by doing so, you agree with ANN's licensing"
+      echo "  requirements stated in contrib/ANN/Copyright.txt."
+      echo "  To disable ANN, run configure again with the --disable-ann"
+      echo "  option."
+      echo "********************************************************************"
     fi
   fi
 
-    if test "x$enable_partition" != "xno"; then
-        { echo "$as_me:$LINENO: checking for ./contrib/Chaco/main/interface.c" >&5
+    if test "x$enable_chaco" != "xno"; then
+    { echo "$as_me:$LINENO: checking for ./contrib/Chaco/main/interface.c" >&5
 echo $ECHO_N "checking for ./contrib/Chaco/main/interface.c... $ECHO_C" >&6; }
 if test "${ac_cv_file___contrib_Chaco_main_interface_c+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -4498,8 +4495,17 @@ fi
       GMSH_DIRS="${GMSH_DIRS} contrib/Chaco"
       GMSH_LIBS="${GMSH_LIBS} -lGmshChaco"
       FLAGS="${FLAGS} -DHAVE_CHACO"
+      echo "********************************************************************"
+      echo "  You are building a version of Gmsh that contains the Chaco mesh"
+      echo "  partitioner. Chaco is available under the GNU LGPL."
+      echo "  To disable Chaco, run configure again with the --disable-chaco"
+      echo "  option."
+      echo "********************************************************************"
     fi
-        { echo "$as_me:$LINENO: checking for ./contrib/Metis/metis.h" >&5
+  fi
+
+    if test "x$enable_metis" != "xno"; then
+    { echo "$as_me:$LINENO: checking for ./contrib/Metis/metis.h" >&5
 echo $ECHO_N "checking for ./contrib/Metis/metis.h... $ECHO_C" >&6; }
 if test "${ac_cv_file___contrib_Metis_metis_h+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -4526,29 +4532,18 @@ fi
       GMSH_DIRS="${GMSH_DIRS} contrib/Metis"
       GMSH_LIBS="${GMSH_LIBS} -lGmshMetis"
       FLAGS="${FLAGS} -DHAVE_METIS"
+      echo "********************************************************************"
+      echo "  You are building a version of Gmsh that contains the METIS mesh"
+      echo "  partitioner."
+      echo "  Please note that by including METIS, you agree with the METIS"
+      echo "  licensing requirements stated in contrib/Metis/README."
+      echo "  To disable METIS, run configure again with the --disable-metis"
+      echo "  option."
+      echo "********************************************************************"
     fi
-    echo "********************************************************************"
-    if test "x${CHACO}" = "xyes" || test "x${METIS}" = "xyes"; then
-      echo "You are building a version of Gmsh can perform serial mesh"
-      echo "partitioning.  Graphs partitioning is performed using:"
-      if test "x${CHACO}" = "xyes"; then
-        echo "Chaco 2.2 - Sandia National Laboratories"
-        echo "  Chaco is available under version 2.1 of the GNU Lesser GPL."
-      fi
-      if test "x${METIS}" = "xyes"; then
-        echo "METIS 4.0 - Regents of the University of Minnesota"
-        echo "  Please note that by including METIS, you agree with the METIS"
-        echo "  licensing requirements stated in ./contrib/Metis/README."
-      fi
-      echo "To disable the paritioning, run configure again with the"
-      echo "--disable-partition option."
-    else
-      echo "The partitioning software was not found but should have been"
-      echo "distributed with Gmsh.  Mesh partitioning is disabled."
-    fi
-    echo "********************************************************************"
   fi
 
+    if test "x$enable_netgen" != "xno"; then
     { echo "$as_me:$LINENO: checking for ./contrib/Netgen/libsrc/meshing/meshclass.cpp" >&5
 echo $ECHO_N "checking for ./contrib/Netgen/libsrc/meshing/meshclass.cpp... $ECHO_C" >&6; }
 if test "${ac_cv_file___contrib_Netgen_libsrc_meshing_meshclass_cpp+set}" = set; then
@@ -4572,33 +4567,20 @@ else
   NETGEN="no"
 fi
 
-  if test "x${NETGEN}" = "xyes"; then
-    if test "x$enable_netgen" != "xno"; then
-       GMSH_DIRS="${GMSH_DIRS} contrib/Netgen"
-       GMSH_LIBS="${GMSH_LIBS} -lGmshNetgen"
-       FLAGS="-DHAVE_NETGEN ${FLAGS}"
-       echo "********************************************************************"
-       echo "You are building a version of Gmsh that contains Joachim Schoberl's"
-       echo "Netgen as an alternative 3D mesh generator. Netgen is distributed"
-       echo "under the GNU LGPL: see ./contrib/Netgen/COPYING.LIB for more info."
-       echo "To disable Netgen, run configure again with the --disable-netgen"
-       echo "option."
-       echo "********************************************************************"
-    fi
-  else
-    if test "x$enable_netgen" != "xno"; then
-       echo "********************************************************************"
-       echo "If you want to use Joachim Schoberl's Netgen as an alternative"
-       echo "3D mesh generator, please download Netgen from the project's"
-       echo "web site at http://www.hpfem.jku.at/netgen/, unpack the archive"
-       echo "and move the libsrc subdirectory in the ./contrib/Netgen"
-       echo "subdirectory. Then run ./configure again."
-       echo "Please note that by doing so, you agree with Netgen's licensing"
-       echo "requirements stated in ./contrib/Netgen/COPYING.LIB."
-       echo "********************************************************************"
+    if test "x${NETGEN}" = "xyes"; then
+      GMSH_DIRS="${GMSH_DIRS} contrib/Netgen"
+      GMSH_LIBS="${GMSH_LIBS} -lGmshNetgen"
+      FLAGS="-DHAVE_NETGEN ${FLAGS}"
+      echo "********************************************************************"
+      echo "  You are building a version of Gmsh that contains the Netgen 3D"
+      echo "  mesh generator. Netgen is distributed under the GNU LGPL."
+      echo "  To disable Netgen, run configure again with the --disable-netgen"
+      echo "  option."
+      echo "********************************************************************"
     fi
   fi
 
+    if test "x$enable_tetgen" != "xno"; then
     { echo "$as_me:$LINENO: checking for ./contrib/Tetgen/tetgen.h" >&5
 echo $ECHO_N "checking for ./contrib/Tetgen/tetgen.h... $ECHO_C" >&6; }
 if test "${ac_cv_file___contrib_Tetgen_tetgen_h+set}" = set; then
@@ -4622,33 +4604,19 @@ else
   TETGEN="no"
 fi
 
-  if test "x${TETGEN}" = "xyes"; then
-    if test "x$enable_tetgen" != "xno"; then
-       GMSH_DIRS="${GMSH_DIRS} contrib/Tetgen"
-       GMSH_LIBS="${GMSH_LIBS} -lGmshTetgen"
-       FLAGS="-DHAVE_TETGEN ${FLAGS}"
-       echo "********************************************************************"
-       echo "You are building a version of Gmsh that contains Hang Si's"
-       echo "Tetgen as an alternative 3D mesh generator."
-       echo "Please note that by doing so, you agree with Tetgen's licensing"
-       echo "requirements stated in ./contrib/Tetgen/LICENSE. (Most notably, you"
-       echo "may then only redistribute Gmsh for non-commercial purposes.)"
-       echo "To disable Tetgen, run configure again with the --disable-tetgen"
-       echo "option."
-       echo "********************************************************************"
-    fi
-  else
-    if test "x$enable_tetgen" != "xno"; then
-       echo "********************************************************************"
-       echo "If you want to use Hang Si's Tetgen as an alternative"
-       echo "3D mesh generator, please download Tetgen from the project's"
-       echo "web site at http://www.tetgen.berlios.de, unpack the archive"
-       echo "and move the files predicates.cxx, tetgen.cxx and tetgen.h in"
-       echo "the ./contrib/Tetgen subdirectory. Then run ./configure again."
-       echo "Please note that by doing so, you agree with Tetgen's licensing"
-       echo "requirements stated in ./contrib/Tetgen/LICENSE. (Most notably, you"
-       echo "may then only redistribute Gmsh if no compensation is received.)"
-       echo "********************************************************************"
+    if test "x${TETGEN}" = "xyes"; then
+      GMSH_DIRS="${GMSH_DIRS} contrib/Tetgen"
+      GMSH_LIBS="${GMSH_LIBS} -lGmshTetgen"
+      FLAGS="-DHAVE_TETGEN ${FLAGS}"
+      echo "********************************************************************"
+      echo "  You are building a version of Gmsh that contains the Tetgen 3D"
+      echo "  mesh generator."
+      echo "  Please note that by doing so, you agree with Tetgen's licensing"
+      echo "  requirements stated in contrib/Tetgen/LICENSE. (Most notably,"
+      echo "  you may then only redistribute Gmsh for non-commercial purposes.)"
+      echo "  To disable Tetgen, run configure again with the --disable-tetgen"
+      echo "  option."
+      echo "********************************************************************"
     fi
   fi
 
@@ -4851,26 +4819,14 @@ fi
 
   if test "x${NR}" = "xyes"; then
     echo "********************************************************************"
-    echo "You are building a non-free version of Gmsh, using code copyright"
-    echo "(C) 1986-92 Numerical Recipes Software J!0."
-    echo "To use the GSL instead, run configure again with the --enable-gsl"
-    echo "option."
+    echo "  You are building a non-free version of Gmsh, using code copyright"
+    echo "  (C) 1986-92 Numerical Recipes Software J!0."
+    echo "  To use the GSL instead, run configure again with the --enable-gsl"
+    echo "  option."
     echo "********************************************************************"
     GMSH_DIRS="${GMSH_DIRS} contrib/NR"
     GMSH_LIBS="${GMSH_LIBS} -lGmshNR"
   else
-    echo "********************************************************************"
-    echo "This is the free version of Gmsh and configure could not find"
-    echo "the GNU Scientific Library (GSL) on your system:"
-    echo "- if it is installed in a non-standard location, please run"
-    echo "  configure again with the --with-gsl-prefix option"
-    echo "- if it is not installed on your system, you can download it from"
-    echo "  http://sources.redhat.com/gsl/"
-    echo ""
-    echo "IMPORTANT NOTE: You need to install GSL version 1.2 or above. All"
-    echo "versions <= 1.1.1 have a bug in the singular value decomposition"
-    echo "algorithm that will cause Gmsh to hang during mesh generation."
-    echo "********************************************************************"
     { { echo "$as_me:$LINENO: error: Could not find GSL, aborting." >&5
 echo "$as_me: error: Could not find GSL, aborting." >&2;}
    { (exit 1); exit 1; }; }
@@ -7940,12 +7896,12 @@ fi
 
 echo "********************************************************************"
 echo "Gmsh is configured for"
-echo "- OS           : $UNAME on $HOSTNAME"
-echo "- C compiler   : $CC"
-echo "- C++ compiler : $CXX"
-echo "- Linker       : $LINKER"
-echo "- Optimization : $OPTIM"
-echo "- Options      : $FLAGS"
+echo "  - OS           : $UNAME on $HOSTNAME"
+echo "  - C compiler   : $CC"
+echo "  - C++ compiler : $CXX"
+echo "  - Linker       : $LINKER"
+echo "  - Optimization : $OPTIM"
+echo "  - Options      : $FLAGS"
 echo "********************************************************************"
 echo "To fine-tune the configuration, edit the 'variables' file"
 echo "********************************************************************"
