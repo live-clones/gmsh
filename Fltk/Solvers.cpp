@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
+#include <string>
 #include "Message.h"
 #include "StringUtils.h"
 #include "Solvers.h"
@@ -64,20 +65,20 @@ int WaitForData(int socket, int num, double waitint)
 
 int Solver(int num, const char *args)
 {
-  char command[1024], sockname[1024], prog[1024], tmp[1024], tmp2[1024];
+  std::string command, sockname, prog;
 
  new_connection:
 
   GmshServer server(CTX.solver.max_delay);
 
   if(num >= 0){
-    FixWindowsPath(SINFO[num].executable_name, prog);
+    prog = FixWindowsPath(SINFO[num].executable_name);
     if(!SINFO[num].client_server) {
-      sprintf(command, "%s %s", prog, args);
+      command = prog + " " + args;
 #if !defined(WIN32)
-      strcat(command, " &");
+      command += " &";
 #endif
-      server.StartClient(command);
+      server.StartClient(command.c_str());
       return 1;
     }
   }
@@ -87,51 +88,52 @@ int Solver(int num, const char *args)
       return 0;
     }
     // we don't know who will (maybe) contact us
-    strcpy(prog, "");
-    strcpy(command, "");
+    prog = command = "";
   }
 
   if(!strstr(CTX.solver.socket_name, ":")){
     // Unix socket
+    char tmp[1024];
     if(num >= 0)
       sprintf(tmp, "%s%s-%d", CTX.home_dir, CTX.solver.socket_name, num);
     else
       sprintf(tmp, "%s%s", CTX.home_dir, CTX.solver.socket_name);
-    FixWindowsPath(tmp, sockname);
+    sockname = FixWindowsPath(tmp);
   }
   else{
     // TCP/IP socket
-    strcpy(sockname, CTX.solver.socket_name);
+    sockname = CTX.solver.socket_name;
   }
 
   if(num >= 0){
-    sprintf(tmp, "\"%s\"", sockname);
-    sprintf(tmp2, SINFO[num].socket_command, tmp);
-    sprintf(command, "%s %s %s", prog, args, tmp2);
+    std::string tmp2 = "\"" + sockname + "\"";
+    char tmp[1024];
+    sprintf(tmp, SINFO[num].socket_command, tmp2.c_str());
+    command = prog + " " + args + " " + tmp;
 #if !defined(WIN32)
-    strcat(command, " &");
+    command += " &";
 #endif
   }
 
-  int sock = server.StartClient(command, sockname);
+  int sock = server.StartClient(command.c_str(), sockname.c_str());
 
   if(sock < 0) {
     switch (sock) {
     case -1:
-      Msg::Error("Couldn't create socket '%s'", sockname);
+      Msg::Error("Couldn't create socket '%s'", sockname.c_str());
       break;
     case -2:
-      Msg::Error("Couldn't bind socket to name '%s'", sockname);
+      Msg::Error("Couldn't bind socket to name '%s'", sockname.c_str());
       break;
     case -3:
-      Msg::Error("Socket listen failed on '%s'", sockname);
+      Msg::Error("Socket listen failed on '%s'", sockname.c_str());
       break;
     case -4:
-      Msg::Error("Socket listen timeout on '%s'", sockname);
-      Msg::Error("Is '%s' correctly installed?", prog);
+      Msg::Error("Socket listen timeout on '%s'", sockname.c_str());
+      Msg::Error("Is '%s' correctly installed?", prog.c_str());
       break;
     case -5:
-      Msg::Error("Socket accept failed on '%s'", sockname);
+      Msg::Error("Socket accept failed on '%s'", sockname.c_str());
       break;
     case -6:
       Msg::Info("Stopped listening for solver connections");
@@ -158,7 +160,7 @@ int Solver(int num, const char *args)
     SINFO[num].pid = 0;
   }
 
-  Msg::StatusBar(2, false, "Running '%s'", prog);
+  Msg::StatusBar(2, false, "Running '%s'", prog.c_str());
 
   while(1) {
 
@@ -266,7 +268,7 @@ int Solver(int num, const char *args)
   }
 
   if(server.StopClient() < 0)
-    Msg::Warning("Impossible to unlink the socket '%s'", sockname);
+    Msg::Warning("Impossible to unlink the socket '%s'", sockname.c_str());
 
   if(num >= 0){
     Msg::StatusBar(2, false, "");

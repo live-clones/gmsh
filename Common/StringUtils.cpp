@@ -60,12 +60,14 @@ std::string SanitizeTeXString(const char *in, int equation)
   return out;
 }
 
-void FixWindowsPath(const char *in, char *out)
+std::string FixWindowsPath(const char *in)
 {
 #if defined(__CYGWIN__)
-  cygwin_conv_to_win32_path(in, out);
+  char tmp[1024];
+  cygwin_conv_to_win32_path(in, tmp);
+  return std::string(tmp);
 #else
-  strcpy(out, in);
+  return std::string(in);
 #endif
 }
 

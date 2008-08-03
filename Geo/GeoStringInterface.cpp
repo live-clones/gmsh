@@ -7,7 +7,6 @@
 #include <sstream>
 #include "Message.h"
 #include "Numeric.h"
-#include "MallocUtils.h"
 #include "StringUtils.h"
 #include "Geo.h"
 #include "GeoStringInterface.h"

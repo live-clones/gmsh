@@ -66,7 +66,7 @@ class GmshServer {
 
  private:
   int _maxdelay, _portno, _sock;
-  char *_sockname;
+  const char *_sockname;
   int _ReceiveData(void *buffer, int bytes)
   {
     char *buf = (char *)buffer;
@@ -119,7 +119,7 @@ class GmshServer {
   GmshServer(int maxdelay = 4)
     : _maxdelay(maxdelay), _portno(-1), _sock(0), _sockname(NULL) {}
   ~GmshServer(){}
-  int StartClient(char *command, char *sockname = NULL)
+  int StartClient(const char *command, const char *sockname = NULL)
   {
     int justwait = 0;
 

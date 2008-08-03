@@ -12,7 +12,7 @@
 void SwapBytes(char *array, int size, int n);
 std::string ExtractDoubleQuotedString(const char *str, int len);
 std::string SanitizeTeXString(const char *in, int equation);
-void FixWindowsPath(const char *in, char *out);
+std::string FixWindowsPath(const char *in);
 void SplitFileName(const char *name, char *no_ext, char *ext, char *base);
 
 #endif

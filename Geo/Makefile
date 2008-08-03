@@ -242,14 +242,14 @@ Geo.o: Geo.cpp ../Common/Message.h ../Numeric/Numeric.h \
   ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h
 GeoStringInterface.o: GeoStringInterface.cpp ../Common/Message.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
-  ../Common/MallocUtils.h ../Common/StringUtils.h Geo.h \
-  ../Common/GmshDefines.h gmshSurface.h Pair.h Range.h SPoint2.h \
-  SPoint3.h SVector3.h SBoundingBox3d.h ../Common/ListUtils.h \
-  ../Common/TreeUtils.h ../Common/avl.h ../Common/ListUtils.h \
-  ExtrudeParams.h ../Common/SmoothData.h GeoStringInterface.h \
-  ../Common/OpenFile.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h GModel.h GVertex.h GEntity.h GPoint.h \
-  GEdge.h GFace.h GEdgeLoop.h GRegion.h ../Parser/Parser.h
+  ../Common/StringUtils.h Geo.h ../Common/GmshDefines.h gmshSurface.h \
+  Pair.h Range.h SPoint2.h SPoint3.h SVector3.h SBoundingBox3d.h \
+  ../Common/ListUtils.h ../Common/TreeUtils.h ../Common/avl.h \
+  ../Common/ListUtils.h ExtrudeParams.h ../Common/SmoothData.h \
+  GeoStringInterface.h ../Common/OpenFile.h ../Common/Context.h \
+  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h GModel.h GVertex.h \
+  GEntity.h GPoint.h GEdge.h GFace.h GEdgeLoop.h GRegion.h \
+  ../Parser/Parser.h
 GeoInterpolation.o: GeoInterpolation.cpp ../Common/Message.h Geo.h \
   ../Common/GmshDefines.h gmshSurface.h Pair.h Range.h SPoint2.h \
   SPoint3.h SVector3.h SBoundingBox3d.h ../Numeric/Numeric.h \
