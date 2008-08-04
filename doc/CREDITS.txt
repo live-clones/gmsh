@@ -79,6 +79,12 @@ subdirectory) written by George Karypis (karypis at cs.umn.edu),
 copyright (C) 1998, Regents of the University of Minnesota: check the
 configuration options.
 
+This version of Gmsh may contain code (in the contrib/Chaco
+subdirectory) written by Bruce Hendrickson and Robert Leland at Sandia
+National Laboratories under US Department of Energy contract
+DE-AC04-76DP00789 and is copyrighted by Sandia Corporation: check the
+configuration options.
+
 This version of Gmsh may contain code (in the
 contrib/NativeFileChooser subdirectory), copyright (C) 2004 by Greg
 Ercolano: check the configuration options.
@@ -88,7 +94,8 @@ others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
 http://www.fltk.org for more info on this excellent object-oriented,
 cross-platform toolkit.
 
-Special thanks also to EDF for funding the OpenCascade integration.
+Special thanks also to EDF for funding the OpenCascade and MED
+integration.
 
 Thanks to the following folks who have contributed by providing fresh
 ideas on theoretical or programming topics, who have sent patches,
