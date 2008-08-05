@@ -216,7 +216,7 @@ int GModel::readCGNS(const std::string &name)
  *
  ******************************************************************************/
 
-int GModel::writeCGNS(const std::string &name, const int zoneDefinition,
+int GModel::writeCGNS(const std::string &name, int zoneDefinition,
                       const CGNSOptions &options, double scalingFactor)
 {
 
@@ -230,13 +230,44 @@ int GModel::writeCGNS(const std::string &name, const int zoneDefinition,
   PhysGroupMap groups[4];               // vector of entities that belong to
                                         // each physical group (in each
                                         // dimension)
+  int numZone;
+  std::vector<std::vector<MElement*> > zoneElements;
+  switch(zoneDefinition) {
+  case 1:  // By partition
+    {
+      numZone = meshPartitions.size();
+      zoneElements.resize(numZone);
+      for(int i = 0; i != numZone; ++i)
+        zoneElements[i].reserve(getMaxPartitionSize());
+//       typedef GRegion Ent;
+//       Ent *ent;
+//       unsigned numElem[4];
+//       numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+//       ent->getNumMeshElements(numElem);
+//       int nType = ent->getNumTypeElements();
+//       for(int iType = 0; iType != nType; ++iType) {
+//         MElement *const start = ent->getMeshElement
+//           ((iType == 0) ? 0 : numElem[iType-1]);
+//         // Then can loop
+//         const int nElem = numElem[iType];
+//         for(int iElem = 0; iElem != nElem; ++iElem) {
+//         }
+//       }
+
+    }
+    break;
+  case 2:  // By physical
+     break;
+  }
 
 //--Get a list of groups in each dimension and each of the entities in that
 //--group.  The groups will define the zones.  If no 2D or 3D groups exist, just
 //--store all mesh elements in one zone.
 
   getPhysicalGroups(groups);
-  if(groups[face].size() + groups[region].size() == 0) {
+  if(groups[face].size() + groups[region].size() == 0) zoneDefinition = 0;
+  {
+
     // If there are no 2D or 3D physical groups, save all elements in one zone.
     // Pretend that there is one physical group ecompassing all the elements.
     for(riter it = firstRegion(); it != lastRegion(); ++it)

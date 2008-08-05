@@ -223,8 +223,15 @@ class GEntity {
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes() { return; }
 
-  // get the number of mesh elements in the entity
+  // number of types of elements
+  virtual int getNumElementTypes() const { return 0; }
+
+  // get the number of mesh elements (total and by type) in the entity
   virtual unsigned int getNumMeshElements() { return 0; }
+  virtual void getNumMeshElements(unsigned *const c) const { };
+
+  // get the start of the array of a type of element
+  virtual MElement *const *getStartElementType(int type) const { return 0; }
 
   // get the element at the given index
   virtual MElement *getMeshElement(unsigned int index) { return 0; }

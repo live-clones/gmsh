@@ -64,6 +64,22 @@ unsigned int GFace::getNumMeshElements()
   return triangles.size() + quadrangles.size(); 
 }
 
+void GFace::getNumMeshElements(unsigned *const c) const
+{
+  c[0] += triangles.size();
+  c[1] += quadrangles.size();
+}
+
+MElement *const *GFace::getStartElementType(int type) const
+{
+  switch(type) {
+  case 0:
+    return reinterpret_cast<MElement *const *>(&triangles[0]);
+  case 1:
+    return reinterpret_cast<MElement *const *>(&quadrangles[0]);
+  }
+}
+
 MElement *GFace::getMeshElement(unsigned int index)
 { 
   if(index < triangles.size())

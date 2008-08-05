@@ -154,8 +154,17 @@ class GFace : public GEntity
                         double &x, double &y, double &z) const;
   void getMeanPlaneData(double plan[3][3]) const;
 
-  // get number of elements in the mesh and get element by index
+  // number of types of elements
+  int getNumElementTypes() const { return 2; }
+
+  // get total/by-type number of elements in the mesh
   unsigned int getNumMeshElements();
+  void getNumMeshElements(unsigned *const c) const;
+
+  // get the start of the array of a type of element
+  MElement *const *getStartElementType(int type) const;
+
+  // get the element at the given index
   MElement *getMeshElement(unsigned int index);
 
   // reset the mesh attributes to default values

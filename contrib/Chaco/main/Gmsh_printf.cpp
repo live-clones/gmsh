@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <cstring>
 #include "Message.h"
 
 // Overload the printf statements in Chaco to write using Msg::Direct in gmsh

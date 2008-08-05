@@ -433,6 +433,21 @@ int GModel::getNumMeshElements()
   return n;
 }
 
+int GModel::getNumMeshElements(unsigned c[4])
+{
+  c[0] = 0; c[1] = 0; c[2] = 0; c[3] = 0;
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    (*it)->getNumMeshElements(c);
+  if(c[0] + c[1] + c[2] + c[3]) return 3;
+  for(fiter it = firstFace(); it != lastFace(); ++it)
+    (*it)->getNumMeshElements(c);
+  if(c[0] + c[1]) return 2;
+  for(eiter it = firstEdge(); it != lastEdge(); ++it)
+    (*it)->getNumMeshElements(c);
+  if(c[0]) return 1;
+  return 0;
+}
+
 static void MElementBB(void *a, double *min, double *max)
 {
   MElement *e = (MElement*)a;

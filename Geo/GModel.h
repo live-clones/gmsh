@@ -77,6 +77,7 @@ class GModel
   std::set<GVertex*, GEntityLessThan> vertices;
   std::set<int> meshPartitions;
   std::map<int, std::string> physicalNames, elementaryNames;
+  int partitionSize[2];
 
  public:
   GModel(std::string name="");
@@ -192,6 +193,10 @@ class GModel
   // Returns the total number of elements in the mesh
   int getNumMeshElements();
 
+  // Get the number of each type of element in the mesh at the largest
+  // dimension and return the dimension
+  int getNumMeshElements(unsigned c[4]);
+
   // Access a mesh element by coordinates
   MElement *getMeshElementByCoord(SPoint3 &p);
 
@@ -225,6 +230,12 @@ class GModel
 
   // Deletes all the partitions
   void deleteMeshPartitions();
+
+  // Store/recall min and max partitions size
+  void setMinPartitionSize(const int pSize) { partitionSize[0] = pSize; }
+  void setMaxPartitionSize(const int pSize) { partitionSize[1] = pSize; }
+  int getMinPartitionSize() const { return partitionSize[0]; }
+  int getMaxPartitionSize() const { return partitionSize[1]; }
 
   // Performs various coherence tests on the mesh
   void checkMeshCoherence();

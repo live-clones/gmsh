@@ -48,6 +48,28 @@ unsigned int GRegion::getNumMeshElements()
   return tetrahedra.size() + hexahedra.size() + prisms.size() + pyramids.size();
 }
 
+void GRegion::getNumMeshElements(unsigned *const c) const
+{
+  c[0] += tetrahedra.size();
+  c[1] += hexahedra.size();
+  c[3] += prisms.size();
+  c[4] += pyramids.size();
+}
+
+MElement *const *GRegion::getStartElementType(int type) const
+{
+  switch(type) {
+  case 0:
+    return reinterpret_cast<MElement *const *>(&tetrahedra[0]);
+  case 1:
+    return reinterpret_cast<MElement *const *>(&hexahedra[0]);
+  case 2:
+    return reinterpret_cast<MElement *const *>(&prisms[0]);
+  case 3:
+    return reinterpret_cast<MElement *const *>(&pyramids[0]);
+  }
+}
+
 MElement *GRegion::getMeshElement(unsigned int index)
 { 
   if(index < tetrahedra.size())

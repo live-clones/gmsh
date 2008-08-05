@@ -23,7 +23,6 @@
 #include "MEdgeHash.h"
 #include "MFaceHash.h"
 #include "CustomContainer.h"
-#include "ElementTraits.h"
 
 // #define HAVE_HASH_MAP
 

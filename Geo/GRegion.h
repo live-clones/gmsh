@@ -53,8 +53,17 @@ class GRegion : public GEntity {
   // return a type-specific additional information string
   virtual std::string getAdditionalInfoString();
 
-  // get number of elements in the mesh and get element by index
+  // number of types of elements
+  int getNumElementTypes() const { return 4; }
+
+  // get total/by-type number of elements in the mesh
   unsigned int getNumMeshElements();
+  void getNumMeshElements(unsigned *const c) const;
+
+  // get the start of the array of a type of element
+  MElement *const *getStartElementType(int type) const;
+
+  // get the element at the given index
   MElement *getMeshElement(unsigned int index);
 
   // reset the mesh attributes to default values

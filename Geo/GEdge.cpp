@@ -42,6 +42,16 @@ unsigned int GEdge::getNumMeshElements()
   return lines.size();
 }
 
+void GEdge::getNumMeshElements(unsigned *const c) const
+{
+  c[0] += lines.size();
+}
+
+MElement *const *GEdge::getStartElementType(int type) const
+{
+  return reinterpret_cast<MElement *const *>(&lines[0]);
+}
+
 MElement *GEdge::getMeshElement(unsigned int index)
 { 
   if(index < lines.size())

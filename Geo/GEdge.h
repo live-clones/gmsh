@@ -107,8 +107,17 @@ class GEdge : public GEntity {
   // true if start == end and no more than 2 segments
   bool isMeshDegenerated() const{ return (v0 == v1 && mesh_vertices.size() < 2); }
 
-  // get number of elements in the mesh and get element by index
+  // number of types of elements
+  int getNumElementTypes() const { return 1; }
+
+  // get total/by-type number of elements in the mesh
   unsigned int getNumMeshElements();
+  void getNumMeshElements(unsigned *const c) const;
+
+  // get the start of the array of a type of element
+  MElement *const *getStartElementType(int type) const;
+
+  // get the element at the given index
   MElement *getMeshElement(unsigned int index);
 
   // reset the mesh attributes to default values

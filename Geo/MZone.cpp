@@ -12,7 +12,7 @@
  * Forward declarations
  *============================================================================*/
 
-template <unsigned DIM, int N = DimTr<DIM>::numElemTypes>
+template <unsigned DIM>
 struct ParseEntity;
 
 
@@ -53,12 +53,10 @@ void MZone<DIM>::add_elements_in_entities
 (EntIter begin, EntIter end, const int partition)
 {
 
-  typedef typename DimTr<DIM>::EntityT Ent;
-
   // Find the neighbours of each vertex, edge, and face
   for(EntIter itEnt = begin; itEnt != end; ++itEnt) {
-    ParseEntity<DIM>::eval(static_cast<Ent*>(*itEnt), boFaceMap, elemVec,
-                           vertMap, zoneElemConn, partition);
+    ParseEntity<DIM>::eval(*itEnt, boFaceMap, elemVec, vertMap, zoneElemConn,
+                           partition);
   }
 
 }
@@ -96,11 +94,9 @@ void MZone<DIM>::add_elements_in_entity
 (EntPtr entity, const int partition)
 {
 
-  typedef typename DimTr<DIM>::EntityT Ent;
-
   // Find the neighbours of each vertex, edge, and face
-  ParseEntity<DIM>::eval(static_cast<Ent*>(entity), boFaceMap, elemVec,
-                         vertMap, zoneElemConn, partition);
+  ParseEntity<DIM>::eval(entity, boFaceMap, elemVec, vertMap, zoneElemConn,
+                         partition);
 
 }
 
@@ -136,7 +132,7 @@ int MZone<DIM>::zoneData()
   for(typename BoFaceMap::iterator fMapIt = boFaceMap.begin();
       fMapIt != boFaceMap.end(); ++fMapIt) {
     // Get all the vertices on the face
-    FaceTr<FaceT>::getAllFaceVertices
+    DimTr<DIM>::getAllFaceVertices
       (elemVec[fMapIt->second.parentElementIndex].element,
        fMapIt->second.parentFace, faceVertices);
     const int nVert = faceVertices.size();
@@ -247,108 +243,61 @@ int MZone<DIM>::zoneData()
 
 /*******************************************************************************
  *
- * Template meta-programming classes
+ * Struct ParseEntity
+ *
+ * Purpose
+ * =======
+ *
+ *   Iterates over the elements in an entity and adds them to the MZone.
  *
  ******************************************************************************/
 
-/*--------------------------------------------------------------------*
- * This class uses traits to determine the element types in an entity
- * and iterate over them.  A template meta-programming loop is used to
- * iterate over the types of elements.  So within the class, we are
- * simply examining one type of element of a specific dimension in one
- * specific entity.
- *--------------------------------------------------------------------*/
-
-//--Entry point
-
-template <unsigned DIM, int N>
+template <unsigned DIM>
 struct ParseEntity
 {
-  typedef typename DimTr<DIM>::EntityT Ent;  // The type of entity
   typedef typename DimTr<DIM>::FaceT FaceT;  // The type/dimension of face
   typedef typename LFaceTr<FaceT>::BoFaceMap BoFaceMap; // The corresponding map
-  typedef typename DimElemTr<DIM, N>::Elem Elem;  // The type of primary element
-  typedef typename DimElemTr<DIM, N>::ConstElementIterator ConstElementIterator;
-  static void eval(const Ent *const entity,
+
+  static void eval(const GEntity *const entity,
                    BoFaceMap &boFaceMap,
                    ElementVec &elemVec,
                    VertexMap &vertMap,
                    ElementConnectivity *zoneElemConn,
                    const int partition)
   {
-    ConstElementIterator elemEnd = DimElemTr<DIM, N>::end(entity);
-    for(ConstElementIterator itElem = DimElemTr<DIM, N>::begin(entity);
-        itElem != elemEnd; ++itElem) {
-      if(partition < 0 || (*itElem)->getPartition() == partition) {
-        // Unique list of elements
-        const unsigned eVecIndex = elemVec.size();
-        elemVec.push_back(ElemData(*itElem));
-        ++zoneElemConn[(*itElem)->getTypeForMSH() - 1].numElem;
-        // Unique list of vertices
-        const int nVert = (*itElem)->getNumVertices();
-        for(int iVert = 0; iVert != nVert; ++iVert)
-          vertMap[(*itElem)->getVertex(iVert)] = 0;  // Unlabelled
-        // Maintain list of (base element) faces with only one bounding element.
-        for(int iFace = 0; iFace != ElemFaceTr<DIM, Elem>::numFaceT;
-            ++iFace) {
-          FaceT face = FaceTr<FaceT>::template getFace<Elem>(*itElem, iFace);
-          std::pair<typename BoFaceMap::iterator, bool> insBoFaceMap =
-            boFaceMap.insert(std::pair<FaceT, FaceData>
-                             (face, FaceData(*itElem, iFace, eVecIndex)));
-          if(!insBoFaceMap.second) {
-            // The face already exists and is therefore bounded on both sides
-            // by elements.  Not a boundary face so delete.
-            boFaceMap.erase(insBoFaceMap.first);
-          }
-        }
-      }
-    }
-    // Next element type in the entity
-    ParseEntity<DIM, N-1>::eval(entity, boFaceMap, elemVec, vertMap,
-                                zoneElemConn, partition);
-  }
-};
-
-//--Terminate loop when N = 1
-
-template <unsigned DIM>
-struct ParseEntity<DIM, 1>
-{
-  typedef typename DimTr<DIM>::EntityT Ent;  // The type of entity
-  typedef typename DimTr<DIM>::FaceT FaceT;  // The type/dimension of face
-  typedef typename LFaceTr<FaceT>::BoFaceMap BoFaceMap; // The corresponding map
-  typedef typename DimElemTr<DIM, 1>::Elem Elem;  // The type of primary element
-  typedef typename DimElemTr<DIM, 1>::ConstElementIterator ConstElementIterator;
-  static void eval(const Ent *const entity,
-                   BoFaceMap &boFaceMap,
-                   ElementVec &elemVec,
-                   VertexMap &vertMap,
-                   ElementConnectivity *zoneElemConn,
-                   const int partition)
-  {
-    ConstElementIterator elemEnd = DimElemTr<DIM, 1>::end(entity);
-    for(ConstElementIterator itElem = DimElemTr<DIM, 1>::begin(entity);
-        itElem != elemEnd; ++itElem) {
-      if(partition < 0 || (*itElem)->getPartition() == partition) {
-        // Unique list of elements
-        const unsigned eVecIndex = elemVec.size();
-        elemVec.push_back(ElemData(*itElem));
-        ++zoneElemConn[(*itElem)->getTypeForMSH() - 1].numElem;
-        // Unique list of vertices
-        const int nVert = (*itElem)->getNumVertices();
-        for(int iVert = 0; iVert != nVert; ++iVert)
-          vertMap[(*itElem)->getVertex(iVert)] = 0;  // Unlabelled
-        // Maintain list of (base element) faces with only one bounding element.
-        for(int iFace = 0; iFace != ElemFaceTr<DIM, Elem>::numFaceT;
-            ++iFace) {
-          FaceT face = FaceTr<FaceT>::template getFace<Elem>(*itElem, iFace);
-          std::pair<typename BoFaceMap::iterator, bool> insBoFaceMap =
-            boFaceMap.insert(std::pair<FaceT, FaceData>
-                             (face, FaceData(*itElem, iFace, eVecIndex)));
-          if(!insBoFaceMap.second) {
-            // The face already exists and is therefore bounded on both sides
-            // by elements.  Not a boundary face so delete.
-            boFaceMap.erase(insBoFaceMap.first);
+    unsigned numElem[4];
+    numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+    entity->getNumMeshElements(numElem);
+    // Loop over all types of elements
+    int nType = entity->getNumElementTypes();
+    for(int iType = 0; iType != nType; ++iType) {
+      // Loop over all elements in a type
+      MElement *const *element = entity->getStartElementType(iType);
+      const int nElem = numElem[iType];
+      for(int iElem = 0; iElem != nElem; ++iElem) {
+        if(partition < 0 || element[iElem]->getPartition() == partition) {
+          // Unique list of elements
+          const unsigned eVecIndex = elemVec.size();
+          elemVec.push_back(ElemData(element[iElem]));
+          ++zoneElemConn[(element[iElem])->getTypeForMSH() - 1].numElem;
+          // Unique list of vertices
+          const int nVert = element[iElem]->getNumVertices();
+          for(int iVert = 0; iVert != nVert; ++iVert)
+            vertMap[element[iElem]->getVertex(iVert)] = 0;  // Unlabelled
+          // Maintain list of (base element) faces with only one bounding
+          // element.
+          const int nFace = DimTr<DIM>::getNumFace(element[iElem]);
+          for(int iFace = 0; iFace != nFace; ++iFace) {
+            FaceT face = DimTr<DIM>::getFace(element[iElem], iFace);
+            std::pair<typename BoFaceMap::iterator, bool> insBoFaceMap =
+              boFaceMap.insert(std::pair<FaceT, FaceData>
+                               (face, FaceData(element[iElem], iFace,
+                                               eVecIndex)));
+            if(!insBoFaceMap.second) {
+              // The face already exists and is therefore bounded on both sides
+              // by elements.  Not a boundary face so delete.
+              boFaceMap.erase(insBoFaceMap.first);
+            }
           }
         }
       }

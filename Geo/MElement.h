@@ -2850,4 +2850,42 @@ struct compareMTriangleLexicographic
   }
 };
 
+// Traits of various elements based on the dimension.  These generally define
+// the faces of 2-D elements as MEdge and 3-D elements as MFace.
+
+template <unsigned DIM> struct DimTr;
+template <> struct DimTr<2>
+{
+  typedef MEdge FaceT;
+  static int getNumFace(MElement *const element)
+  {
+    return element->getNumEdges();
+  }
+  static MEdge getFace(MElement *const element, const int iFace)
+  {
+    return element->getEdge(iFace);
+  }
+  static void getAllFaceVertices(MElement *const element, const int iFace,
+                                 std::vector<MVertex*> &v)
+  {
+    element->getEdgeVertices(iFace, v);
+  }
+};
+template <> struct DimTr<3>
+{
+  typedef MFace FaceT;
+  static int getNumFace(MElement *const element)
+  {
+    return element->getNumFaces();
+  }
+  static MFace getFace(MElement *const element, const int iFace)
+  {
+    return element->getFace(iFace);
+  }
+  static void getAllFaceVertices(MElement *const element, const int iFace,
+                                 std::vector<MVertex*> &v)
+  {
+    element->getFaceVertices(iFace, v);
+  }
+};
 #endif

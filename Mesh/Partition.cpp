@@ -7,7 +7,6 @@
 
 #if defined(HAVE_CHACO) || defined(HAVE_METIS)
 
-#include "ElementTraits.h"
 #include "GModel.h"
 #include "Partition.h"
 #include "PartitionObjects.h"
@@ -56,9 +55,9 @@ template <> struct LFaceTr<MFace>
  * Forward declarations
  *============================================================================*/
 
-template <unsigned DIM, unsigned N = DimTr<DIM>::numElemTypes>
+template <unsigned DIM>
 struct MakeGraphFromEntity;
-template <unsigned DIM, unsigned N = DimTr<DIM-1>::numElemTypes>
+template <unsigned DIM>
 struct MatchBoElemToGrVertex;
 template <unsigned DIM, typename EntIter, typename EntIterBE>
 void MakeGraphDIM(const EntIter begin, const EntIter end,
@@ -100,11 +99,21 @@ int PartitionMesh(GModel *const model, PartitionOptions &options)
     return 1;
   }
 
-  // Assign partitions to internal elements
+  // Count partition sizes and assign partitions to internal elements
+  std::vector<int> ssize(options.num_partitions, 0);
   const int n = graph.getNumVertex();
   for(int i = 0; i != n; ++i) {
+    ++ssize[graph.partition[i] - 1];
     graph.element[i]->setPartition(graph.partition[i]);
   }
+  int sMin = graph.getNumVertex();
+  int sMax = 0;
+  for(int i = 0; i != options.num_partitions; ++i) {
+    sMin = std::min(sMin, ssize[i]);
+    sMax = std::max(sMax, ssize[i]);
+  }
+  model->setMinPartitionSize(sMin);
+  model->setMaxPartitionSize(sMax);
 
   // Assign partitions to boundary elements
   const int nb = boElemGrVec.size();
@@ -148,6 +157,22 @@ int PartitionGraph(Graph &graph, PartitionOptions &options)
           options.vmax = 2*(1 << options.ndims);
 	}
       }
+      // Ensure num_partitions reflects values used by Chaco
+      switch(options.architecture) {
+      case 0:
+        options.num_partitions = 1 << options.ndims_tot;
+        break;
+      case 1:
+        options.num_partitions = options.mesh_dims[0];
+        break;
+      case 2:
+        options.num_partitions = options.mesh_dims[0]*options.mesh_dims[1];
+        break;
+      case 3:
+        options.num_partitions =
+          options.mesh_dims[0]*options.mesh_dims[1]*options.mesh_dims[2];
+        break;
+      }
       try {
         const int iSec = 0;
         ier = interface
@@ -168,8 +193,8 @@ int PartitionGraph(Graph &graph, PartitionOptions &options)
         ier = 2;
       }
       if(!ier) graph.short2int();
-      return ier;
     }
+    break;
 #endif
   case 2:  // Metis
 #ifdef HAVE_METIS
@@ -219,15 +244,14 @@ int PartitionGraph(Graph &graph, PartitionOptions &options)
         ier = 2;
       }
       // Number partitions from 1
-      {
+      if(!ier) {
         int *p = &graph.partition[0];  //**Sections
         for(int n = graph.getNumVertex(); n--;) ++(*p++);
       }
-      return ier;
     }
+    break;
 #endif
   }
-
   return ier;
 
 }
@@ -279,28 +303,11 @@ int MakeGraph(GModel *const model, Graph &graph, BoElemGrVec *const boElemGrVec)
 
 //--Get the dimension of the mesh and count the numbers of elements
 
-      int numElem[4];
-      int meshDim = 3;
-      for(int i = 0; i != 4; ++i) numElem[i] = 0;
-      for(GModel::riter it = model->firstRegion(); it != model->lastRegion();
-          ++it) {
-        numElem[ElemTypeTetra] += (*it)->tetrahedra.size();
-        numElem[ElemTypeHexa] += (*it)->hexahedra.size();
-        numElem[ElemTypePrism] += (*it)->prisms.size();
-        numElem[ElemTypePyramid] += (*it)->pyramids.size();
-      }
-      if(numElem[ElemTypeTetra] + numElem[ElemTypeHexa] +
-         numElem[ElemTypePrism] + numElem[ElemTypePyramid] == 0) {
-        for(GModel::fiter it = model->firstFace(); it != model->lastFace();
-            ++it) {
-          numElem[ElemTypeTri] += (*it)->triangles.size();
-          numElem[ElemTypeQuad] += (*it)->quadrangles.size();
-        }
-        if(numElem[ElemTypeTri] + numElem[ElemTypeQuad] == 0) {
-          Msg::Error("No mesh elements were found");
-          return 1;
-        }
-        meshDim = 2;
+      unsigned numElem[4];
+      const int meshDim = model->getNumMeshElements(numElem);
+      if(meshDim < 2) {
+        Msg::Error("No mesh elements were found");
+        return 1;
       }
 
 //--Make the graph
@@ -479,8 +486,6 @@ void MakeGraphDIM(const EntIter begin, const EntIter end,
 {
 
   typedef typename DimTr<DIM>::FaceT FaceT;
-  typedef typename DimTr<DIM>::EntityT Ent;
-  typedef typename DimTr<DIM-1>::EntityT EntBE;
   typedef typename LFaceTr<FaceT>::FaceMap FaceMap;
 
   graph.markSection();
@@ -489,8 +494,7 @@ void MakeGraphDIM(const EntIter begin, const EntIter end,
   GrVertexMap grVertMap;
 
   for(EntIter entIt = begin; entIt != end; ++entIt) {
-    MakeGraphFromEntity<DIM>::eval
-       (static_cast<Ent*>(*entIt), faceMap, grVertMap, graph);
+    MakeGraphFromEntity<DIM>::eval(*entIt, faceMap, grVertMap, graph);
   }
 
   // Write any graph vertices remaining in 'grVertMap'.  These are boundary
@@ -507,7 +511,7 @@ void MakeGraphDIM(const EntIter begin, const EntIter end,
     boElemGrVec->reserve(faceMap.size());
     for(EntIterBE entIt = beginBE; entIt != endBE; ++entIt) {
       MatchBoElemToGrVertex<DIM>::eval
-        (static_cast<EntBE*>(*entIt), faceMap, grVertMap, graph, *boElemGrVec);
+        (*entIt, faceMap, grVertMap, graph, *boElemGrVec);
     }
   }
 
@@ -523,132 +527,66 @@ void MakeGraphDIM(const EntIter begin, const EntIter end,
  *
  *   Helps generate a graph - operates on a single entity
  *
- * Notes
- * =====
- *
- *   - template meta-programming is used to iterate over the various types of
- *     elements in an entity
- *
  ******************************************************************************/
 
-//--Entry point
-
-template <unsigned DIM, unsigned N>
+template <unsigned DIM>
 struct MakeGraphFromEntity
 {
-
-  typedef typename DimTr<DIM>::EntityT Ent;  // The type of entity
   typedef typename DimTr<DIM>::FaceT FaceT;  // The type/dimension of face
   typedef typename LFaceTr<FaceT>::FaceMap FaceMap;  // The corresponding map
-  typedef typename DimElemTr<DIM, N>::Elem Elem; // The type of primary element
-  typedef typename DimElemTr<DIM, N>::ConstElementIterator ConstElementIterator;
-      
-  static void eval(const Ent *const entity, FaceMap &faceMap,
+
+  static void eval(const GEntity *const entity, FaceMap &faceMap,
                    GrVertexMap &grVertMap, Graph &graph)
   {
-    // Loop over all elements in the entity
-    ConstElementIterator elemEnd = DimElemTr<DIM, N>::end(entity);
-    for(ConstElementIterator elemIt = DimElemTr<DIM, N>::begin(entity);
-        elemIt != elemEnd; ++elemIt) {
-      // Insert this element into the map of graph vertices
-      std::pair<typename GrVertexMap::iterator, bool> insGrVertMap =
-        grVertMap.insert
-        (std::pair<MElement*, GrVertex>
-         (*elemIt, GrVertex(graph.getNextIndex(),
-                            ElemFaceTr<DIM, Elem>::numFaceT)));
-      // Loop over all faces in the element
-      for(int iFace = 0; iFace != ElemFaceTr<DIM, Elem>::numFaceT; ++iFace) {
-        FaceT face = FaceTr<FaceT>::template getFace<Elem>(*elemIt, iFace);
-        std::pair<typename FaceMap::iterator, bool> insFaceMap =
-          faceMap.insert(std::pair<FaceT, MElement*>(face, *elemIt));
-        if(!insFaceMap.second) {
-          // The face already exists
-          typename GrVertexMap::iterator grVertIt2 =
-            grVertMap.find(insFaceMap.first->second);
+    unsigned numElem[4];
+    numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+    entity->getNumMeshElements(numElem);
+    // Loop over all types of elements
+    int nType = entity->getNumElementTypes();
+    for(int iType = 0; iType != nType; ++iType) {
+      // Loop over all elements in a type
+      MElement *const *element = entity->getStartElementType(iType);
+      const int nElem = numElem[iType];
+      for(int iElem = 0; iElem != nElem; ++iElem) {
+        const int nFace = DimTr<DIM>::getNumFace(element[iElem]);
+        // Insert this element into the map of graph vertices
+        std::pair<typename GrVertexMap::iterator, bool> insGrVertMap =
+          grVertMap.insert
+          (std::pair<MElement*, GrVertex>
+           (element[iElem], GrVertex(graph.getNextIndex(), nFace)));
+        // Loop over all faces in the element
+        for(int iFace = 0; iFace != nFace; ++iFace) {
+          FaceT face = DimTr<DIM>::getFace(element[iElem], iFace);
+          std::pair<typename FaceMap::iterator, bool> insFaceMap =
+             faceMap.insert(std::pair<FaceT, MElement*>(face, element[iElem]));
+          if(!insFaceMap.second) {
+             // The face already exists
+             typename GrVertexMap::iterator grVertIt2 =
+                grVertMap.find(insFaceMap.first->second);
                                         // Iterator to the second graph vertex
                                         // that connects to this face
-          // Update edges in both graph vertices
-          grVertIt2->second.add(insGrVertMap.first->second.index);
-          insGrVertMap.first->second.add(grVertIt2->second.index);
-          if(grVertIt2->second.complete()) {
-            // This graph vertex has complete connectivity.  Write and delete.
-            graph.add(grVertIt2);
-            grVertMap.erase(grVertIt2);
+             // Update edges in both graph vertices
+             grVertIt2->second.add(insGrVertMap.first->second.index);
+             insGrVertMap.first->second.add(grVertIt2->second.index);
+             if(grVertIt2->second.complete()) {
+                // This graph vertex has complete connectivity.  Write and
+                // delete.
+                graph.add(grVertIt2);
+                grVertMap.erase(grVertIt2);
+             }
+             // The face is no longer required
+             faceMap.erase(insFaceMap.first);
           }
-          // The face is no longer required
-          faceMap.erase(insFaceMap.first);
         }
-      }
-      if(insGrVertMap.first->second.complete()) {
-        // This graph vertex already has complete connectivity.  Write and
-        // delete.
-        graph.add(insGrVertMap.first);
-        grVertMap.erase(insGrVertMap.first);
-      }
-    }
-    // Next element type in the entity
-    MakeGraphFromEntity<DIM, N-1>::eval(entity, faceMap, grVertMap, graph);
-  }
-
-};
-
-//--Terminate loop when N = 1
-
-template <unsigned DIM>
-struct MakeGraphFromEntity<DIM, 1>
-{
-
-  typedef typename DimTr<DIM>::EntityT Ent;  // The type of entity
-  typedef typename DimTr<DIM>::FaceT FaceT;  // The type/dimension of face
-  typedef typename LFaceTr<FaceT>::FaceMap FaceMap;  // The corresponding map
-  typedef typename DimElemTr<DIM, 1>::Elem Elem; // The type of primary element
-  typedef typename DimElemTr<DIM, 1>::ConstElementIterator ConstElementIterator;
-      
-  static void eval(const Ent *const entity, FaceMap &faceMap,
-                   GrVertexMap &grVertMap, Graph &graph)
-  {
-    // Loop over all elements in the entity
-    ConstElementIterator elemEnd = DimElemTr<DIM, 1>::end(entity);
-    for(ConstElementIterator elemIt = DimElemTr<DIM, 1>::begin(entity);
-        elemIt != elemEnd; ++elemIt) {
-      // Insert this element into the map of graph vertices
-      std::pair<typename GrVertexMap::iterator, bool> insGrVertMap =
-        grVertMap.insert
-        (std::pair<MElement*, GrVertex>
-         (*elemIt, GrVertex(graph.getNextIndex(),
-                            ElemFaceTr<DIM, Elem>::numFaceT)));
-      // Loop over all faces in the element
-      for(int iFace = 0; iFace != ElemFaceTr<DIM, Elem>::numFaceT; ++iFace) {
-        FaceT face = FaceTr<FaceT>::template getFace<Elem>(*elemIt, iFace);
-        std::pair<typename FaceMap::iterator, bool> insFaceMap =
-          faceMap.insert(std::pair<FaceT, MElement*>(face, *elemIt));
-        if(!insFaceMap.second) {
-          // The face already exists
-          typename GrVertexMap::iterator grVertIt2 =
-            grVertMap.find(insFaceMap.first->second);
-                                        // Iterator to the second graph vertex
-                                        // that connects to this face
-          // Update edges in both graph vertices
-          grVertIt2->second.add(insGrVertMap.first->second.index);
-          insGrVertMap.first->second.add(grVertIt2->second.index);
-          if(grVertIt2->second.complete()) {
-            // This graph vertex has complete connectivity.  Write and delete.
-            graph.add(grVertIt2);
-            grVertMap.erase(grVertIt2);
-          }
-          // The face is no longer required
-          faceMap.erase(insFaceMap.first);
+        if(insGrVertMap.first->second.complete()) {
+           // This graph vertex already has complete connectivity.  Write and
+           // delete.
+           graph.add(insGrVertMap.first);
+           grVertMap.erase(insGrVertMap.first);
         }
-      }
-      if(insGrVertMap.first->second.complete()) {
-        // This graph vertex already has complete connectivity.  Write and
-        // delete.
-        graph.add(insGrVertMap.first);
-        grVertMap.erase(insGrVertMap.first);
       }
     }
   }
-
 };
 
 
@@ -664,75 +602,38 @@ struct MakeGraphFromEntity<DIM, 1>
  *
  ******************************************************************************/
 
-//--Entry point
-
-template <unsigned DIM, unsigned N>
+template <unsigned DIM>
 struct MatchBoElemToGrVertex
 {
-
-  typedef typename DimTr<DIM-1>::EntityT Ent;  // The type of entity
   typedef typename DimTr<DIM>::FaceT FaceT;  // The type/dimension of face
   typedef typename LFaceTr<FaceT>::FaceMap FaceMap;  // The corresponding map
-  typedef typename DimElemTr<DIM-1, N>::Elem Elem; // The type of primary Elem.
-  typedef typename DimElemTr<DIM-1, N>::ConstElementIterator
-    ConstElementIterator;
       
-  static void eval(const Ent *const entity, const FaceMap &faceMap,
+  static void eval(const GEntity *const entity, const FaceMap &faceMap,
                    const GrVertexMap &grVertMap, const Graph &graph,
                    std::vector<BoElemGr> &boElemGrVec)
   {
-    // Loop over all elements in the entity
-    const ConstElementIterator elemEnd = DimElemTr<DIM-1, N>::end(entity);
-    for(ConstElementIterator elemIt = DimElemTr<DIM-1, N>::begin(entity);
-        elemIt != elemEnd; ++elemIt) {
-      FaceT face = FaceTr<FaceT>::template getFace<Elem>(*elemIt, 0);
-      const typename FaceMap::const_iterator faceMapIt = faceMap.find(face);
-      if(faceMapIt != faceMap.end()) {
-        const typename GrVertexMap::const_iterator grVertMapIt =
-          grVertMap.find(faceMapIt->second);
-        boElemGrVec.push_back
-          (BoElemGr(*elemIt, graph.convertC2W(grVertMapIt->second.index) - 1));
-      }
-    }
-    // Next element type in the entity
-    MatchBoElemToGrVertex<DIM, N-1>::eval(entity, faceMap, grVertMap, graph,
-                                          boElemGrVec);
-  }
-
-};
-
-//--Terminate loop when N = 1
-
-template <unsigned DIM>
-struct MatchBoElemToGrVertex<DIM, 1>
-{
-
-  typedef typename DimTr<DIM-1>::EntityT Ent;  // The type of entity
-  typedef typename DimTr<DIM>::FaceT FaceT;  // The type/dimension of face
-  typedef typename LFaceTr<FaceT>::FaceMap FaceMap;  // The corresponding map
-  typedef typename DimElemTr<DIM-1, 1>::Elem Elem; // The type of primary Elem.
-  typedef typename DimElemTr<DIM-1, 1>::ConstElementIterator
-    ConstElementIterator;
-      
-  static void eval(const Ent *const entity, const FaceMap &faceMap,
-                   const GrVertexMap &grVertMap, const Graph &graph,
-                   std::vector<BoElemGr> &boElemGrVec)
-  {
-    // Loop over all elements in the entity
-    const ConstElementIterator elemEnd = DimElemTr<DIM-1, 1>::end(entity);
-    for(ConstElementIterator elemIt = DimElemTr<DIM-1, 1>::begin(entity);
-        elemIt != elemEnd; ++elemIt) {
-      FaceT face = FaceTr<FaceT>::template getFace<Elem>(*elemIt, 0);
-      const typename FaceMap::const_iterator faceMapIt = faceMap.find(face);
-      if(faceMapIt != faceMap.end()) {
-        const typename GrVertexMap::const_iterator grVertMapIt =
-          grVertMap.find(faceMapIt->second);
-        boElemGrVec.push_back
-          (BoElemGr(*elemIt, graph.convertC2W(grVertMapIt->second.index) - 1));
+    unsigned numElem[4];
+    numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+    entity->getNumMeshElements(numElem);
+    // Loop over all types of elements
+    int nType = entity->getNumElementTypes();
+    for(int iType = 0; iType != nType; ++iType) {
+      // Loop over all elements in a type
+      MElement *const *element = entity->getStartElementType(iType);
+      const int nElem = numElem[iType];
+      for(int iElem = 0; iElem != nElem; ++iElem) {
+        FaceT face = DimTr<DIM>::getFace(element[iElem], 0);
+        const typename FaceMap::const_iterator faceMapIt = faceMap.find(face);
+        if(faceMapIt != faceMap.end()) {
+          const typename GrVertexMap::const_iterator grVertMapIt =
+            grVertMap.find(faceMapIt->second);
+          boElemGrVec.push_back
+            (BoElemGr(element[iElem],
+                      graph.convertC2W(grVertMapIt->second.index) - 1));
+        }
       }
     }
   }
-
 };
 
 
