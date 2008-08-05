@@ -31,6 +31,7 @@ GModel::GModel(std::string name)
   : _octree(0), _geo_internals(0), _occ_internals(0), _fm_internals(0), 
     _fields(0), _currentMeshEntity(0), modelName(name), normals(0)
 {
+  partitionSize[0] = 0; partitionSize[1] = 0;
   list.push_back(this);
 
 #if !defined(HAVE_GMSH_EMBEDDED)
