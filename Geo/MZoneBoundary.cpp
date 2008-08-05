@@ -13,7 +13,6 @@
 #include "MZoneBoundary.h"
 #include "Message.h"
 
-
 /*******************************************************************************
  *
  * class BCPatchIndex

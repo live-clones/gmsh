@@ -4,12 +4,12 @@
 // bugs and problems to <gmsh@geuz.org>.
 //
 // CustomContainer.h - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
+
 #ifndef _CUSTOMCONTAINER_H_
 #define _CUSTOMCONTAINER_H_
 
 #include <cstdlib>
 #include <cstring>
-
 
 /*******************************************************************************
  *

@@ -119,7 +119,7 @@ void redraw_cb(CALLBACK_ARGS)
 void window_cb(CALLBACK_ARGS)
 {
   static int oldx = 0, oldy = 0, oldw = 0, oldh = 0, zoom = 1;
-  char *str = (char*)data;
+  const char *str = (const char*)data;
 
   if(!strcmp(str, "minimize")){
     WID->g_window->iconize();
@@ -176,7 +176,7 @@ void activate_cb(CALLBACK_ARGS)
 
   if(!data) return;
 
-  char *str = (char*)data;
+  const char *str = (const char*)data;
 
   if(!strcmp(str, "fast_redraw")){
     if(WID->gen_butt[2]->value())
@@ -372,7 +372,7 @@ void activate_cb(CALLBACK_ARGS)
 
 void status_xyz1p_cb(CALLBACK_ARGS)
 {
-  char *str = (char*)data;
+  const char *str = (const char*)data;
 
   if(!strcmp(str, "r")){ // rotate 90 degress around axis perp to the screen
     double axis[3] = {0., 0., 1.};
@@ -707,9 +707,6 @@ typedef struct{
 
 void file_save_as_cb(CALLBACK_ARGS)
 {
-  int i, nbformats;
-  static char *pat = NULL;
-
 #if defined(HAVE_NATIVE_FILE_CHOOSER)
 #  define TT "\t"
 #  define NN "\n"
@@ -753,12 +750,12 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"YUV" TT "*.yuv", _save_yuv},
   };
 
-  nbformats = sizeof(formats) / sizeof(formats[0]);
-
+  int nbformats = sizeof(formats) / sizeof(formats[0]);
+  static char *pat = NULL;
   if(!pat) {
     pat = (char *)Malloc(nbformats * 256 * sizeof(char));
     strcpy(pat, formats[0].pat);
-    for(i = 1; i < nbformats; i++) {
+    for(int i = 1; i < nbformats; i++) {
       strcat(pat, NN);
       strcat(pat, formats[i].pat);
     }
@@ -776,13 +773,13 @@ void file_save_as_cb(CALLBACK_ARGS)
                       "Cancel", "Replace", NULL, name.c_str()))
           goto test;
     }
-    i = file_chooser_get_filter();
+    int i = file_chooser_get_filter();
     if(i >= 0 && i < nbformats){
-      if(!formats[i].func(name.c_str()))
-        goto test;
+      if(!formats[i].func(name.c_str())) goto test;
     }
-    else // handle any additional automatic fltk filter
-      _save_auto(name.c_str());
+    else{ // handle any additional automatic fltk filter
+      if(!_save_auto(name.c_str())) goto test;
+    }
   }
 }
 
@@ -918,7 +915,7 @@ void general_options_ok_cb(CALLBACK_ARGS)
     }
   }
   if(data){
-    char *name = (char*)data;
+    const char *name = (const char*)data;
     if(!strcmp(name, "rotation_center_coord")){
       CTX.draw_rotation_center = 1;
     }
@@ -1270,7 +1267,7 @@ void view_options_ok_cb(CALLBACK_ARGS)
   activate_cb(NULL, data);
 
   if(data){
-    char *str = (char*)data;
+    const char *str = (const char*)data;
     if(!strcmp(str, "range_min")){
       WID->view_value[31]->value(opt_view_min(WID->view_number, GMSH_GET, 0));
     }
@@ -1841,7 +1838,7 @@ void statistics_update_cb(CALLBACK_ARGS)
 
 void statistics_histogram_cb(CALLBACK_ARGS)
 {
-  char *name = (char*)data;
+  const char *name = (const char*)data;
   int type;
   if(!strcmp(name, "Gamma"))
     type = 0;
@@ -1913,7 +1910,7 @@ void visibility_cb(CALLBACK_ARGS)
 {
   // get the visibility info from the model, and update the browser accordingly
 
-  char *str = (char*)data;
+  const char *str = (const char*)data;
   if(str && !strcmp(str, "redraw_only"))
     WID->create_visibility_window(true);
   else
@@ -2002,7 +1999,7 @@ void visibility_delete_cb(CALLBACK_ARGS)
 
 void visibility_sort_cb(CALLBACK_ARGS)
 {
-  char *str = (char*)data;
+  const char *str = (const char*)data;
   int val;
   if(!strcmp(str, "type"))
     val = 1;
@@ -2159,7 +2156,7 @@ static void _apply_visibility(char mode,
 
 void visibility_interactive_cb(CALLBACK_ARGS)
 {
-  char *str = (char*)data;
+  const char *str = (const char*)data;
   const char *help;
   int what;
   char mode;
@@ -3513,7 +3510,7 @@ void mesh_delete_cb(CALLBACK_ARGS)
 
 void mesh_delete_parts_cb(CALLBACK_ARGS)
 {
-  char *str = (char*)data;
+  const char *str = (const char*)data;
   int what;
 
   if(!strcmp(str, "elements")){

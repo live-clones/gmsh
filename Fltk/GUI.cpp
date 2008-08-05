@@ -934,8 +934,8 @@ GUI::GUI(int argc, char **argv)
   create_graphic_window();
 
 #if defined(WIN32)
-  g_window->icon((char *)LoadImage(fl_display, MAKEINTRESOURCE(IDI_ICON),
-                                   IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));
+  g_window->icon((const char*)LoadImage(fl_display, MAKEINTRESOURCE(IDI_ICON),
+					IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));
 #elif defined(__APPLE__)
   // Nothing to do here
 #else
@@ -952,10 +952,10 @@ GUI::GUI(int argc, char **argv)
     0x08, 0x00, 0xff, 0x1f, 0x08, 0x00, 0xff, 0x1f, 0x04, 0x40, 0xfd, 0x3f,
     0x04, 0xa8, 0xea, 0x3f, 0x02, 0x55, 0x55, 0x7f, 0xa2, 0xaa, 0xaa, 0x7a,
     0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00 };
-  g_window->icon((char*)XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
-                                              gmsh32x32, 32, 32));
-  m_window->icon((char*)XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
-                                              gmsh32x32, 32, 32));
+  g_window->icon((const char*)XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
+						    gmsh32x32, 32, 32));
+  m_window->icon((const char*)XCreateBitmapFromData(fl_display, DefaultRootWindow(fl_display),
+						    gmsh32x32, 32, 32));
 #endif
 
   // open graphics window first for correct non-modal behaviour on windows
@@ -1660,7 +1660,6 @@ void GUI::set_status(const char *msg, int num)
 void GUI::add_multiline_in_browser(Fl_Browser * o, const char *prefix, const char *str)
 {
   int start = 0, len;
-  char *buff;
   if(!str || !strlen(str) || !strcmp(str, "\n")) {
     o->add(" ");
     return;
@@ -1668,7 +1667,7 @@ void GUI::add_multiline_in_browser(Fl_Browser * o, const char *prefix, const cha
   for(unsigned int i = 0; i < strlen(str); i++) {
     if(i == strlen(str) - 1 || str[i] == '\n') {
       len = i - start + (str[i] == '\n' ? 0 : 1);
-      buff = new char[len + strlen(prefix) + 2];
+      char *buff = new char[len + strlen(prefix) + 2];
       strcpy(buff, prefix);
       strncat(buff, &str[start], len);
       buff[len + strlen(prefix)] = '\0';
@@ -3908,20 +3907,7 @@ FieldDialogBox::FieldDialogBox(Field *f, int x, int y, int width, int height,int
     {
       Fl_Group *g = new Fl_Group(x, y + 2*BH + WB, width, height - 2*BH-3*WB, "Help");
       Fl_Browser *o = new Fl_Browser(x + WB, y + 2*WB + 2*BH, width - 2 * WB, height - 4 * WB - 3 * BH);
-      
-      //    char name[1024], copyright[256], author[256], help[4096];
-      //    p->getName(name);
-      //    p->getInfos(author, copyright, help);
-      
       o->add(" ");
-      //   add_multiline_in_browser(o, "@c@b@.", name);
-      o->add(" ");
-      //  add_multiline_in_browser(o, "", help);
-      o->add(" ");
-      //add_multiline_in_browser(o, "Author: ", author);
-      //add_multiline_in_browser(o, "Copyright (C) ", copyright);
-      o->add(" ");
-      
       g->end();
     }
     o->end();

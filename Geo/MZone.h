@@ -4,9 +4,9 @@
 // bugs and problems to <gmsh@geuz.org>.
 //
 // MZone.h - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
+
 #ifndef _MZONE_H_
 #define _MZONE_H_
-
 
 /*******************************************************************************
  *

@@ -4,9 +4,9 @@
 // bugs and problems to <gmsh@geuz.org>.
 //
 // MZoneBoundary.h - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
+
 #ifndef _MZONEBOUNDARY_H_
 #define _MZONEBOUNDARY_H_
-
 
 /*******************************************************************************
  *

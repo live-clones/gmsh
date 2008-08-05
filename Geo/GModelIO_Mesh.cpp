@@ -442,7 +442,7 @@ static void writeElementHeaderMSH(bool binary, FILE *fp, std::map<int,int> &elem
 }
 
 template<class T>
-static void writeElementsMSH(FILE *fp, const std::vector<T*> &ele, int saveAll, 
+static void writeElementsMSH(FILE *fp, const std::vector<T*> &ele, bool saveAll, 
                              double version, bool binary, int &num, int elementary, 
                              std::vector<int> &physicals)
 {

@@ -698,6 +698,15 @@ int GModel::indexMeshVertices(bool all)
   return numVertices;
 }
 
+/*
+int GModel::unIndexMeshVerticesNotInPartition(int partition)
+{
+  // tag all the vertices not belonging to the partition with index -1
+  // (so they won't be saved)
+  Msg::Error("unIndexMeshVerticesNotInPartition not implemented");
+}
+*/
+
 void GModel::scaleMesh(double factor)
 {
   std::vector<GEntity*> entities = getEntities();
