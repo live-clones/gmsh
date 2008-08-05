@@ -5,6 +5,8 @@
 //
 // MZone.cpp - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
 
+#if defined(HAVE_LIBCGNS)
+
 #include <iostream> // DBG
 #include "MZone.h"
 
@@ -341,3 +343,5 @@ template void MZone<2>::add_elements_in_entity
 template void MZone<3>::add_elements_in_entity
 <GRegion*>
 (GRegion* entity, const int partition);
+
+#endif

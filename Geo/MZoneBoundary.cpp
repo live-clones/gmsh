@@ -5,6 +5,8 @@
 //
 // MZoneBoundary.cpp - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
 
+#if defined(HAVE_LIBCGNS)
+
 #include <iostream> // DBG
 #include <limits> // ?
 
@@ -921,3 +923,5 @@ MZoneBoundary<3>::GlobalVertexData<MFace>::FaceDataB::FaceDataB()
 
 template class MZoneBoundary<2>;
 template class MZoneBoundary<3>;
+
+#endif

@@ -173,7 +173,7 @@ class Block
   // Destructor
   ~Block()
   {
-    free(array);
+    std::free(array);
   }
 
   friend class Pool<T>;

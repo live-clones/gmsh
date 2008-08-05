@@ -5,6 +5,11 @@
 //
 // GModelIO_CGNS.cpp - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
 
+#include "GModel.h"
+#include "Message.h"
+
+#if defined(HAVE_LIBCGNS)
+
 #ifdef _OPENMP
 #include <omp.h>
 #else
@@ -24,13 +29,9 @@
 #include <vector>
 #include <queue>
 
-#include "GModel.h"
-#include "Message.h"
 #include "MZone.h"
 #include "MZoneBoundary.h"
 #include "CGNSOptions.h"
-
-#if defined(HAVE_LIBCGNS)
 
 #include <cgnslib.h>
 
