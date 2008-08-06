@@ -271,6 +271,7 @@ void meshGEdge::operator() (GEdge *ge)
   if(ge->geomType() == GEntity::DiscreteCurve) return;
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
   if(ge->meshAttributes.Method == MESH_NONE) return;
+  if(CTX.mesh.mesh_only_visible && !ge->getVisibility()) return;
 
   deMeshGEdge dem;
   dem(ge);

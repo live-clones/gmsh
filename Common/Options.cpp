@@ -5104,6 +5104,13 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
   return CTX.mesh.algo3d;
 }
 
+double opt_mesh_mesh_only_visible(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.mesh_only_visible = (int)val;
+  return CTX.mesh.mesh_only_visible;
+}
+
 double opt_mesh_min_circ_points(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

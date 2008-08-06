@@ -475,6 +475,7 @@ double opt_mesh_nb_smoothing(OPT_ARGS_NUM);
 double opt_mesh_algo2d(OPT_ARGS_NUM);
 double opt_mesh_algo3d(OPT_ARGS_NUM);
 double opt_mesh_recombine_algo(OPT_ARGS_NUM);
+double opt_mesh_mesh_only_visible(OPT_ARGS_NUM);
 double opt_mesh_min_circ_points(OPT_ARGS_NUM);
 double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM);
 double opt_mesh_min_curv_points(OPT_ARGS_NUM);

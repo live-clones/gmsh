@@ -544,6 +544,7 @@ void meshGRegion::operator() (GRegion *gr)
 
   if(gr->geomType() == GEntity::DiscreteVolume) return;
   if(gr->meshAttributes.Method == MESH_NONE) return;
+  if(CTX.mesh.mesh_only_visible && !gr->getVisibility()) return;
 
   ExtrudeParams *ep = gr->meshAttributes.extrude;
 

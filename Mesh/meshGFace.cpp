@@ -1297,6 +1297,7 @@ void meshGFace::operator() (GFace *gf)
   if(gf->geomType() == GEntity::BoundaryLayerSurface) return;
   if(gf->geomType() == GEntity::ProjectionFace) return;
   if(gf->meshAttributes.Method == MESH_NONE) return;
+  if(CTX.mesh.mesh_only_visible && !gf->getVisibility()) return;
 
   // destroy the mesh if it exists
   deMeshGFace dem;
