@@ -17,8 +17,7 @@ GMSH_SHORT_LICENSE = "GNU General Public License"
 GMSH_VERSION_FILE = Common/GmshVersion.h
 GMSH_DATE = `date "+%Y%m%d"`
 
-GMSH_API = Geo/GModel.h\
-           Geo/GEntity.h Geo/GPoint.h\
+GMSH_API = Geo/GModel.h Geo/GEntity.h Geo/GPoint.h\
            Geo/GVertex.h Geo/GEdge.h Geo/GEdgeLoop.h Geo/GFace.h Geo/GRegion.h\
            Geo/MVertex.h Geo/MEdge.h Geo/MFace.h Geo/MElement.h\
            Geo/discreteVertex.h Geo/discreteEdge.h Geo/discreteFace.h Geo/discreteRegion.h\

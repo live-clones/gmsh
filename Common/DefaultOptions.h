@@ -1021,12 +1021,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "OptimizeNetgen" , opt_mesh_optimize_netgen , 0. , 
     "Optimize the mesh using Netgen to improve the quality of tetrahedral elements" },
 
-  { F|O, "Partitioner" , opt_mesh_partition_partitioner,
-#if defined(HAVE_CHACO)
-    1.,
-#else
-    2.,
-#endif
+  { F|O, "Partitioner" , opt_mesh_partition_partitioner, 2. ,
     "Partitioner software (1=Chacho, 2=METIS)" },
   { F|O, "Points" , opt_mesh_points , 0. , 
     "Display mesh vertices (nodes)?" },
