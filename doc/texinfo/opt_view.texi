@@ -495,7 +495,7 @@ Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.PointType
-Display points as solid color dots (0) or 3D spheres (1)@*
+Display points as solid color dots (0), 3D spheres (1), scaled dots (2) or scaled spheres (3)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -640,7 +640,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.VectorType
-Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement)@*
+Vector display type (1=segment, 2=arrow, 3=pyramid, 4=3D arrow, 5=displacement, 6=comet)@*
 Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 

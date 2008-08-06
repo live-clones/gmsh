@@ -115,7 +115,7 @@ Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.PointType
-Display points as solid color dots (0), 3D spheres (1) or scaled spheres (2)@*
+Display points as solid color dots (0) or 3D spheres (1)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

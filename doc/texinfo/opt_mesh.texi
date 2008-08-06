@@ -5,7 +5,7 @@
 
 @ftable @code
 @item Mesh.Algorithm
-2D mesh algorithm (1=MeshAdapt+Delaunay, 4=MeshAdapt, 5=Delaunay)@*
+2D mesh algorithm (1=MeshAdapt+Delaunay, 4=MeshAdapt, 5=Delaunay, 6=Frontal)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -31,6 +31,86 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.C1Continuity
 Impose C1 continuity to high order meshes (only valid in 2D plane and ElemenOrder = 2)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ChacoArchitecture
+(Adv. Chaco): Parallel architecture topology (0=hypercube, 1-3=mesh dimensions)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ChacoEigensolver
+(Adv. Chaco): Type of eigensolver for a spectral algorithm (0=Lanczos, 1=Multilevel RQI/Symmlq)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ChacoEigTol
+(Adv. Chaco): Tolerance of the eigensolver for spectral or multilevel-KL algorithms@*
+Default value: @code{0.001}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ChacoGlobalMethod
+Chaco partitioning algorithm (1=Multilevel-KL, 2=Spectral, 4=Linear, 5=Random, 6=Scattered)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ChacoHypercubeDim
+(Adv. Chaco): Dimensional partitioning for a hypercube topology@*
+Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ChacoLocalMethod
+(Adv. Chaco): Local partitioning algorithm@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ChacoMeshDim1
+(Adv. Chaco): Number of partitions in the first dimension of a mesh topology@*
+Default value: @code{4}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ChacoMeshDim2
+(Adv. Chaco): Number of partitions in the second dimension of a mesh topology@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ChacoMeshDim3
+(Adv. Chaco): Number of partitions in the third dimension of a mesh topology@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ChacoPartitionSection
+(Adv. Chaco): Partition by (1=bisection, 2=quadrisection, 3=octasection@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ChacoSeed
+(Adv. Chaco): Seed for random number generator@*
+Default value: @code{7.65432e+06}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ChacoVMax
+(Adv. Chaco): Maximum vertices in a coarse graph (for multilevel-KL algorithm and Multilevel RQI/Symmlq eigensolver)@*
+Default value: @code{250}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ChacoParamINTERNAL_VERTICES
+(Adv. Chaco): Parameter INTERNAL_VERTICES@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ChacoParamREFINE_MAP
+(Adv. Chaco): Parameter REFINE_MAP@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ChacoParamREFINE_PARTITION
+(Adv. Chaco): Parameter REFINE_PARTITION@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ChacoParamTERMINAL_PROPOGATION
+(Adv. Chaco): Parameter TERMINAL_PROPOGATION@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -144,6 +224,26 @@ Display width of mesh lines (in pixels)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.MeshOnlyVisible
+Mesh only visible entities (experimental: use with caution!)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MetisAlgorithm
+METIS partitioning algorithm (1=Recursive, 2=K-way)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MetisEdgeMatching
+(Adv. METIS): Determines the matching type (1=Random, 2=Heavy-Edge, 3=Sorted Heavy-Edge)@*
+Default value: @code{3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MetisRefinementAlgorithm
+(Adv. METIS): Algorithm for k-way refinement (1=Random, 2=Greedy, 3=Random with minimized connectivity)@*
+Default value: @code{3}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.MinimumCirclePoints
 Minimum number of points used to mesh a circle@*
 Default value: @code{7}@*
@@ -173,6 +273,11 @@ Saved in: @code{-}
 Number of nodes in the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
+
+@item Mesh.NbPartitions
+Number of partitions@*
+Default value: @code{4}@*
+Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NbPrisms
 Number of prisms in the current mesh (read-only)@*
@@ -212,6 +317,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.OptimizeNetgen
 Optimize the mesh using Netgen to improve the quality of tetrahedral elements@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Partitioner
+Partitioner software (1=Chacho, 2=METIS)@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Points
@@ -392,6 +502,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.VolumeNumbers
 Display volume mesh element numbers?@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ZoneDefinition
+Method for defining a zone (0=single zone, 1=by partition, 2=by physical)@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Points
