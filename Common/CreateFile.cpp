@@ -165,7 +165,7 @@ void CreateOutputFile(const char *filename, int format)
 
   case FORMAT_BDF:
     GModel::current()->writeBDF(name, CTX.mesh.bdf_field_format, 
-                     CTX.mesh.save_all, CTX.mesh.scaling_factor);
+				CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_P3D:

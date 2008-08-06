@@ -7,6 +7,7 @@
 
 #include "GModel.h"
 #include "Message.h"
+#include "CGNSOptions.h"
 
 #if defined(HAVE_LIBCGNS)
 
@@ -31,7 +32,6 @@
 
 #include "MZone.h"
 #include "MZoneBoundary.h"
-#include "CGNSOptions.h"
 
 #include <cgnslib.h>
 
@@ -217,7 +217,7 @@ int GModel::readCGNS(const std::string &name)
  *
  ******************************************************************************/
 
-int GModel::writeCGNS(const std::string &name, int zoneDefinition,
+int GModel::writeCGNS(const std::string &name, const int zoneDefinition,
                       const CGNSOptions &options, double scalingFactor)
 {
 
