@@ -1,0 +1,71 @@
+# 1) Build the framework for the iPhone simulator with:
+#       ./configure --enable-minimal --enable-universal
+#       make clean
+#       make framework
+#
+# 2) Build the lib for the real iPhone (arm cpu) and add it to the framework
+#       cp utils/misc/variables.iphone variables
+#       make clean
+#       make lib
+#       cp Gmsh.framework/Versions/A/Gmsh lib/libGmshUniversal.a
+#       lipo -create lib/libGmsh.a lib/libGmshUniversal.a 
+#            -output Gmsh.framework/Versions/A/Gmsh
+# 3) You can now use the framework to develop on any mac platform,
+#    including the iPhone
+
+# OS and host
+UNAME=Darwin
+HOSTNAME=mbp.local
+
+IPHONE=/Developer/Platforms/iPhoneOS.platform/Developer
+SDK=${IPHONE}/SDKs/iPhoneOS2.0.sdk
+
+# The names of the C and C++ compilers
+CC=${IPHONE}/usr/bin/arm-apple-darwin9-gcc-4.0.1
+CXX=${IPHONE}/usr/bin/arm-apple-darwin9-g++-4.0.1
+
+# If you need to link to dynamic libraries installed in non-standard
+# locations and are using the GNU linker, you may want to add
+# '-Wl,--rpath,/path/to/dynamic/library' to the 'LINKER' variable
+# below. Alternatively, you could edit the 'LD_LIBARY_PATH'
+# environement variable or use the 'ldconfig' program.
+LINKER=${CXX}
+
+# All compiler flags except optimization flags
+FLAGS=-DHAVE_NO_DLL -DHAVE_NO_PARSER -DHAVE_NO_POST -I${IPHONE}/usr/include -I${IPHONE}/usr/lib/gcc/arm-apple-darwin9/4.0.1/include -I${SDK}/usr/include -I${SDK}/usr/include/c++/4.0.0 -I${SDK}/usr/include/c++/4.0.0/arm-apple-darwin9
+
+# Additional system includes
+SYSINCLUDE=
+
+# Compiler optimization flags
+OPTIM=-Os
+
+# Gmsh subdirectories
+GMSH_DIRS=Common Geo Mesh Numeric contrib/NR
+
+# Gmsh libraries
+GMSH_LIBS=-Llib Common/Main.o -lGmshCommon -lGmshGeo -lGmshMesh -lGmshCommon -lGmshNumeric -lGmshNR -lm -framework ApplicationServices
+
+# How you create a static library on this machine
+AR=${IPHONE}/usr/bin/libtool -o
+ARFLAGS=
+RANLIB=true
+
+# The symbol used in front of compiler flags
+DASH=-
+
+# The extension to use for object files, libraries and executables
+OBJEXT=.o
+LIBEXT=.a
+EXEEXT=
+
+# Installation directories
+prefix=/usr/local
+exec_prefix=${prefix}
+bindir=${exec_prefix}/bin
+datadir=${datarootdir}
+datarootdir=${prefix}/share
+includedir=${prefix}/include
+libdir=${exec_prefix}/lib
+mandir=${datarootdir}/man
+infodir=${datarootdir}/info

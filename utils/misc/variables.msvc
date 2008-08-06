@@ -10,6 +10,7 @@
 
 # Change the following to select which version to build:
 ENABLE_GUI=0
+ENABLE_PARSER=1
 ENABLE_POSTPRO=1
 ENABLE_TETGEN=1
 ENABLE_NETGEN=0
@@ -55,12 +56,17 @@ SYSINCLUDE=/I"${INCLUDE}"
 OPTIM=/O2
 
 # Gmsh subdirectories
-GMSH_DIRS=Common Geo Mesh Numeric Parser contrib/ANN contrib/MathEval contrib/NR
+GMSH_DIRS=Common Geo Mesh Numeric contrib/ANN contrib/MathEval contrib/NR
 
 # Gmsh libraries
 GMSH_LIBS=Common/Main.obj lib/*.lib
 
 # Optional stuff
+ifeq (${ENABLE_PARSER},1)
+  GMSH_DIRS+=Parser
+else
+  FLAGS+=/DHAVE_NO_PARSER
+endif
 ifeq (${ENABLE_POSTPRO},1)
   GMSH_DIRS+=Post Plugin
 else
