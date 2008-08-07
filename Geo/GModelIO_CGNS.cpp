@@ -243,7 +243,7 @@ int GModel::readCGNS(const std::string &name)
  *
  ******************************************************************************/
 
-int GModel::writeCGNS(const std::string &name, const int zoneDefinition,
+int GModel::writeCGNS(const std::string &name, int zoneDefinition,
                       const CGNSOptions &options, double scalingFactor)
 {
 
@@ -264,6 +264,7 @@ int GModel::writeCGNS(const std::string &name, const int zoneDefinition,
   int meshDim;
 
   Msg::Warning("CGNS I/O is at an \"alpha\" software stage");
+  zoneDefinition = 1;
 
   switch(zoneDefinition) {
   case 1:  // By partition

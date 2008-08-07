@@ -304,7 +304,7 @@ class GModel
 
   // CFD General Notation System files
   int readCGNS(const std::string &name);
-  int writeCGNS(const std::string &name, const int zoneDefinition,
+  int writeCGNS(const std::string &name, int zoneDefinition,
                 const CGNSOptions &options, double scalingFactor=1.0);
 
   // Med "Modele d'Echange de Donnees" file format (the static routine
