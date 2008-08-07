@@ -39,6 +39,7 @@
 
 int cgnsErr(const int cgIndexFile = -1)
 {
+  Message::Error("This is a CGNS error\n");
   Message::Error(cg_get_error());
   if(cgIndexFile != -1)
     if(cg_close(cgIndexFile)) Message::Error("Unable to close CGNS file");
@@ -53,6 +54,32 @@ int cgnsErr(const int cgIndexFile = -1)
 typedef std::map<int, std::vector<GEntity*> > PhysGroupMap;
                                         // Type providing a vector of entities
                                         // for a physical group index
+
+//--Class to gather elements that belong to a partition.  This class mimics a
+//--GEntity class.
+
+class DummyPartitionEntity : public GEntity
+{
+ public:
+  DummyPartitionEntity()
+    : GEntity(0, 0)
+  { }
+
+  // number of types of elements
+  int getNumElementTypes() const { return 1; }
+  void getNumMeshElements(unsigned *const c) const
+  {
+    c[0] += elements.size();
+  }
+
+  // get the start of the array of a type of element
+  MElement *const *getStartElementType(int type) const
+  {
+    return &elements[0];
+  }
+
+  std::vector<MElement*> elements;
+};
 
 //--Class to make C style CGNS name strings act like C++ types
 
@@ -169,10 +196,9 @@ struct ElemSortCGNSType
  *============================================================================*/
 
 template <unsigned DIM>
-int write_CGNS_zones(GModel &model, const int zoneDefinition,
-                     const CGNSOptions &options,
-                     const double scalingFactor, const int vectorDim,
-                     const PhysGroupMap &group,
+int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
+                     const CGNSOptions &options, const double scalingFactor,
+                     const int vectorDim, const PhysGroupMap &group,
                      const int cgIndexFile, const int cgIndexBase);
 
 
@@ -231,69 +257,142 @@ int GModel::writeCGNS(const std::string &name, const int zoneDefinition,
   PhysGroupMap groups[4];               // vector of entities that belong to
                                         // each physical group (in each
                                         // dimension)
+  std::vector<DummyPartitionEntity> partitions;
+                                        // Dummy entities that store the
+                                        // elements in each partition
   int numZone;
-  std::vector<std::vector<MElement*> > zoneElements;
+  int meshDim;
+
+  Msg::Warning("CGNS I/O is at an \"alpha\" software stage");
+
   switch(zoneDefinition) {
   case 1:  // By partition
+
+//--Group the elements of each partition into a dummy entity.  Pointers to the
+//--entities are then made available in groups[DIM][0].
+
     {
       numZone = meshPartitions.size();
-      zoneElements.resize(numZone);
-      for(int i = 0; i != numZone; ++i)
-        zoneElements[i].reserve(getMaxPartitionSize());
-//       typedef GRegion Ent;
-//       Ent *ent;
-//       unsigned numElem[4];
-//       numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
-//       ent->getNumMeshElements(numElem);
-//       int nType = ent->getNumTypeElements();
-//       for(int iType = 0; iType != nType; ++iType) {
-//         MElement *const start = ent->getMeshElement
-//           ((iType == 0) ? 0 : numElem[iType-1]);
-//         // Then can loop
-//         const int nElem = numElem[iType];
-//         for(int iElem = 0; iElem != nElem; ++iElem) {
-//         }
-//       }
-
+      if(numZone == 0) zoneDefinition = 0;
+      else {
+        partitions.resize(numZone);
+        for(int i = 0; i != numZone; ++i)
+          partitions[i].elements.reserve(getMaxPartitionSize());
+        unsigned numElem[4];
+        meshDim = getNumMeshElements(numElem);
+        // Load the dummy entities with the elements in each partition
+        switch(meshDim) {
+        case 3:
+          for(riter it = firstRegion(); it != lastRegion(); ++it) {
+            numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+            (*it)->getNumMeshElements(numElem);
+            const int nType = (*it)->getNumElementTypes();
+            for(int iType = 0; iType != nType; ++iType) {
+              MElement *const *element = (*it)->getStartElementType(iType);
+              const int nElem = numElem[iType];
+              for(int iElem = 0; iElem != nElem; ++iElem) {
+                partitions[element[iElem]->getPartition() - 1].elements
+                  .push_back(element[iElem]);
+              }
+            }
+          }
+          break;
+        case 2:
+          for(fiter it = firstFace(); it != lastFace(); ++it) {
+            numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+            (*it)->getNumMeshElements(numElem);
+            const int nType = (*it)->getNumElementTypes();
+            for(int iType = 0; iType != nType; ++iType) {
+              MElement *const *element = (*it)->getStartElementType(iType);
+              const int nElem = numElem[iType];
+              for(int iElem = 0; iElem != nElem; ++iElem) {
+                partitions[element[iElem]->getPartition() - 1].elements
+                  .push_back(element[iElem]);
+              }
+            }
+          }
+          break;
+        default:
+          Message::Error("No mesh elements were found");
+          return 0;
+        }
+        // Place pointers to the entities in the 'groups' object
+        std::vector<GEntity*> &ents = groups[meshDim][0];
+        ents.resize(numZone);
+        for(int iPart = 0; iPart != numZone; ++iPart)
+          ents[iPart] = &partitions[iPart];
+      }
     }
     break;
   case 2:  // By physical
-     break;
-  }
 
 //--Get a list of groups in each dimension and each of the entities in that
-//--group.  The groups will define the zones.  If no 2D or 3D groups exist, just
-//--store all mesh elements in one zone.
+//--group.
 
-  getPhysicalGroups(groups);
-  if(groups[face].size() + groups[region].size() == 0) zoneDefinition = 0;
-  {
+    getPhysicalGroups(groups);
+    if(groups[region].size()) {
+      numZone = groups[region].size();
+      meshDim = 3;
+    }
+    else if(groups[face].size()) {
+      numZone = groups[face].size();
+      meshDim = 2;
+    }
+    else {
+      zoneDefinition = 0;  // Use single zone
+    }
+    break;
+  }
 
-    // If there are no 2D or 3D physical groups, save all elements in one zone.
-    // Pretend that there is one physical group ecompassing all the elements.
-    for(riter it = firstRegion(); it != lastRegion(); ++it)
-      if((*it)->tetrahedra.size() + (*it)->hexahedra.size() +
-         (*it)->prisms.size() + (*it)->pyramids.size() > 0)
-        groups[region][1].push_back(*it);
-    if(!groups[region].size()) {
-      // No 3D elements were found.  Look for 2D elements.
-      for(fiter it = firstFace(); it != lastFace(); ++it)
-        if((*it)->triangles.size() + (*it)->quadrangles.size() > 0)
-          groups[face][1].push_back(*it);
-      if(!groups[face].size()) {
-        Message::Error("No mesh elements were found");
-        return 0;
+//--For a single zone, put all the entities for a dimension into groups[DIM][0]
+
+  if(zoneDefinition == 0) {
+    numZone = 1;
+    unsigned numElem[4];
+    numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+    meshDim = getNumMeshElements(numElem);
+    switch(meshDim) {
+    case 3:
+      {
+        groups[region].clear();
+        std::vector<GEntity*> &ents = groups[region][0];
+        ents.resize(getNumRegions());
+        int iEnt = 0;
+        for(riter it = firstRegion(); it != lastRegion(); ++it)
+          ents[iEnt++] = *it;
       }
+      break;
+    case 2:
+      {
+        groups[face].clear();
+        std::vector<GEntity*> &ents = groups[face][0];
+        ents.resize(getNumFaces());
+        int iEnt = 0;
+        for(fiter it = firstFace(); it != lastFace(); ++it)
+          ents[iEnt++] = *it;
+      }
+      break;
+    default:
+      Message::Error("No mesh elements were found");
+      return 0;
     }
   }
 
+/*--------------------------------------------------------------------*
+ * Summary of three possibilities for the 'zoneDefinition':
+ * 0) single zone: all the entities are placed in physical 0.  All the
+ *    entities form the zone.
+ * 1) defined by partitions:  all the entities are place in physical
+ *    0.  Each entity is a zone.
+ * 2) defined by physicals:  all the entities in a physical form a
+ *    zone.
+ *--------------------------------------------------------------------*/
+
 //--Open the file and get ready to write the zones
 
-  // Will this be a 2D or 3D mesh?
-  int meshDim = 2;
+  // Get the dimension of a vector in the mesh
   int vectorDim = 3;
-  if(groups[region].size()) meshDim = 3;
-  else vectorDim = options.vectorDim;
+  if(meshDim == 2) vectorDim = options.vectorDim;
 
   // open the file
   int cgIndexFile;
@@ -301,7 +400,8 @@ int GModel::writeCGNS(const std::string &name, const int zoneDefinition,
 
   // write the base node
   int cgIndexBase;
-  if(cg_base_write(cgIndexFile, "Base_0000", meshDim, meshDim, &cgIndexBase))
+  if(cg_base_write(cgIndexFile, options.baseName.c_str(), meshDim, meshDim,
+                   &cgIndexBase))
     return cgnsErr();
 
   // write information about who generated the mesh
@@ -311,13 +411,13 @@ int GModel::writeCGNS(const std::string &name, const int zoneDefinition,
   switch(meshDim) {
   case 2:
     MZone<2>::preInit();
-    write_CGNS_zones<2>(*this, zoneDefinition, options, scalingFactor,
+    write_CGNS_zones<2>(*this, zoneDefinition, numZone, options, scalingFactor,
                         vectorDim, groups[face], cgIndexFile, cgIndexBase);
     MZone<2>::postDestroy();
     break;
   case 3:
     MZone<3>::preInit();
-    write_CGNS_zones<3>(*this, zoneDefinition, options, scalingFactor,
+    write_CGNS_zones<3>(*this, zoneDefinition, numZone, options, scalingFactor,
                         vectorDim, groups[region], cgIndexFile, cgIndexBase);
     MZone<3>::postDestroy();
     break;
@@ -438,6 +538,64 @@ void translateElementMSH2CGNS(ElementConnectivity *const zoneElemConn)
   }
 }
 
+/*******************************************************************************
+ *
+ * Routine expand_name
+ *
+ * Purpose
+ * =======
+ *
+ *   Expands variables in a string 's' that are supported by the CGNS I/O.  's'
+ *   is overwritten with the expanded string.
+ *
+ *   - &I[0][%width]% expands into 'index'.  Normally 'index' is assumed to have
+ *     C numbering and therefore 1 is added to it.  Option [0] prevents the
+ *     addition of the one.  Option [%width] sets the width of the index to
+ *     'width' and pads with leading zeros.
+ *   - &N& expands to 'name'.
+ *
+ ******************************************************************************/
+
+void expand_name(std::string &s, const int index, const char *const name)
+{  
+  std::string::size_type r1 = s.find('&');
+  // Look for and replace "&-&" sub-strings
+  while(r1 != std::string::npos) {
+    const std::string::size_type r2 = s.find('&', r1+1);
+    if(r2 == std::string::npos) {
+      s.replace(r1, s.length()-r1, "");
+    }
+    else {
+      const int rn = r2 - r1 + 1;
+      switch(s[r1+1]) {
+      case 'I':
+        // &I[0][%width]&
+        {
+          int iplus = 1;
+          if(s[r1+2] == '0') iplus = 0;
+          char fmt[6] = "%d";
+          const std::string::size_type f = s.find('%', r1+1);
+          if(f != std::string::npos && f < r2) {
+            int w = std::atoi(s.substr(f+1, r2-f-1).c_str());
+            if(w > 0 && w < 33) std::sprintf(fmt, "%%0%dd", w);
+          }
+          s.replace(r1, rn, CGNSNameStr(index+iplus, fmt).c_str());
+          break;
+        }
+      case 'N':
+        // &N&
+        s.replace(r1, rn, name);
+        break;
+      default:
+        s.replace(r1, rn, "");
+      }
+    }
+    if(s.length() > 1024) s = "";  // idiot/recursive check
+    r1 = s.find('&');
+  }
+
+}
+
 
 /*******************************************************************************
  *
@@ -454,71 +612,58 @@ void translateElementMSH2CGNS(ElementConnectivity *const zoneElemConn)
  *
  *   model              - (I) gmsh model
  *   zoneDefinition     - (I) how to define the zone (see enum in code)
+ *   numZone            - (I) Number of zones in the domain
  *   options            - (I) options for CGNS I/O
- *   numPartitions      - (I)
  *   group              - (I) the group of physicals used to define the mesh
  *   globalZoneIndex    - (I/O)
- *   globalParittion    - (I/O)
- *   globalItPhysical   - (I/O) a global scope iterator to the physicals
+ *   globalPhysicalIt   - (I/O) a global scope iterator to the physicals
  *   zoneIndex          - (O) index of the zone
  *   partition          - (O) partition of the zone
- *   itPhysicalBegin    - (O) begin physical for defining the zone
- *   itPhysicalEnd      - (O) end physical for defining the zone
+ *   physicalItBegin    - (O) begin physical for defining the zone
+ *   physicalItEnd      - (O) end physical for defining the zone
  *   zoneName           - (O) name of the zone
  *
  ******************************************************************************/
 
 int get_zone_definition(GModel &model, const int zoneDefinition,
-                        const CGNSOptions &options,
-                        const int numPartitions, const PhysGroupMap &group,
-                        int &globalZoneIndex, int &globalPartition,
-                        PhysGroupMap::const_iterator &globalItPhysical,
+                        const int numZone, const CGNSOptions &options,
+                        const PhysGroupMap &group, int &globalZoneIndex,
+                        PhysGroupMap::const_iterator &globalPhysicalIt,
                         int &zoneIndex, int &partition,
-                        PhysGroupMap::const_iterator &itPhysicalBegin,
-                        PhysGroupMap::const_iterator &itPhysicalEnd,
+                        PhysGroupMap::const_iterator &physicalItBegin,
+                        PhysGroupMap::const_iterator &physicalItEnd,
                         CGNSNameStr &zoneName)
 {
-  enum {
-    DefineZoneSingle = 0,
-    DefineZoneByPartition = 1,
-    DefineZoneByPhysical = 2
-  };
 
   int status = 0;
   const char *_zoneName = "Partition";
 
-//--Get indices for the zone
+//--Get indices for the zonex
 
 #pragma omp critical (get_zone_definition)
   {
-    switch(zoneDefinition) {
-    case DefineZoneSingle:
-      if(globalZoneIndex > 0) status = 1;  // No more zones
-      else {
+    if(globalZoneIndex >= numZone) status = 1;
+    else {
+      switch(zoneDefinition) {
+      case 0:  // Single zone
         partition = -1;
-        itPhysicalBegin = group.begin();
-        itPhysicalEnd = group.end();
-      }
-      break;
-    case DefineZoneByPartition:
-      if(globalPartition > numPartitions) status = 1;   // No more zones
-      else {
-        partition = globalPartition++;
-        itPhysicalBegin = group.begin();
-        itPhysicalEnd = group.end();
-      }
-      break;
-    case DefineZoneByPhysical:
-      if(globalItPhysical == group.end()) status = 1;  // No more zones
-      else {
+        physicalItBegin = group.begin();
+        physicalItEnd = group.end();
+        break;
+      case 1:  // Zone defined by partition
+        partition = globalZoneIndex;
+        physicalItBegin = group.begin();
+        physicalItEnd = group.end();
+        break;
+      case 2:  // Zone defined by physical
         partition = -1;
-        _zoneName = model.getPhysicalName(globalItPhysical->first).c_str();
-        itPhysicalBegin = globalItPhysical++;
-        itPhysicalEnd = globalItPhysical;
+        _zoneName = model.getPhysicalName(globalPhysicalIt->first).c_str();
+        physicalItBegin = globalPhysicalIt++;
+        physicalItEnd = globalPhysicalIt;
+        break;
       }
-      break;
+      zoneIndex = globalZoneIndex++;
     }
-    zoneIndex = globalZoneIndex++;
   }
 //omp: end critical
 
@@ -526,41 +671,7 @@ int get_zone_definition(GModel &model, const int zoneDefinition,
 
   if(status == 0) {
     std::string s = options.zoneName;
-    std::string::size_type r1 = s.find('&');
-    // Look for and replace "&&" sub-strings
-    while(r1 != std::string::npos) {
-      const std::string::size_type r2 = s.find('&', r1+1);
-      if(r2 == std::string::npos) {
-        s.replace(r1, s.length()-r1, "");
-      }
-      else {
-        const int rn = r2 - r1 + 1;
-        switch(s[r1+1]) {
-        case 'I':
-          // &I[0][%width]&
-          {
-            int iplus = 1;
-            if(s[r1+2] == '0') iplus = 0;
-            char fmt[6] = "%d";
-            const std::string::size_type f = s.find('%', r1+1);
-            if(f != std::string::npos && f < r2) {
-              int w = std::atoi(s.substr(f+1, r2-f-1).c_str());
-              if(w > 0 && w < 33) std::sprintf(fmt, "%%0%dd", w);
-            }
-            s.replace(r1, rn, CGNSNameStr(zoneIndex+iplus, fmt).c_str());
-            break;
-          }
-        case 'N':
-          // &N&
-          s.replace(r1, rn, _zoneName);
-          break;
-        default:
-          s.replace(r1, rn, "");
-        }
-      }
-      if(s.length() > 1024) s = "";  // idiot/recursive check
-      r1 = s.find('&');
-    }
+    expand_name(s, zoneIndex, _zoneName);
     if(s.length() == 0) {  // If empty
       s = "Zone_";
       s += CGNSNameStr(zoneIndex+1).c_str();
@@ -569,6 +680,7 @@ int get_zone_definition(GModel &model, const int zoneDefinition,
   }
 
   return status;
+
 }
 
 
@@ -633,26 +745,23 @@ struct ZoneInfo
 };
 
 template <unsigned DIM>
-int write_CGNS_zones(GModel &model, const int zoneDefinition,
-                     const CGNSOptions &options,
-                     const double scalingFactor, const int vectorDim,
-                     const PhysGroupMap &group,
+int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
+                     const CGNSOptions &options, const double scalingFactor,
+                     const int vectorDim, const PhysGroupMap &group,
                      const int cgIndexFile, const int cgIndexBase)
 {
 
 //--Shared data
 
-  const int numPartitions = model.getMeshPartitions().size();
   int threadsWorking = omp_get_num_threads();
                                         // Semaphore for working threads
   omp_lock_t threadWLock;
   std::queue<ZoneTask<DIM>*> zoneQueue; // Queue for zones that have been
                                         // defined and are ready to be written
   omp_lock_t queueLock;
-  // Next 3 are locked by omp critical
+  // Next two are locked by an omp critical
   int globalZoneIndex = 0;
-  int globalPartition = 1;
-  PhysGroupMap::const_iterator globalItPhysical = group.begin();
+  PhysGroupMap::const_iterator globalPhysicalIt = group.begin();
 
 //--Initialize omp locks
 
@@ -676,7 +785,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition,
       std::vector<double> dBuffer;      // Buffer for double-precision data
       std::vector<int> iBuffer1, iBuffer2;
                                         // Buffers for integer data
-      int indexInterface = 0;           // Index for interfaces
+      int interfaceIndex = 0;           // Index for interfaces
 
       while (threadsWorking || zoneQueue.size()) {
         if (zoneQueue.size()) {
@@ -700,8 +809,6 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition,
                            writeTask->zoneName.c_str(), cgZoneSize,
                            Unstructured, &cgIndexZone))
             return cgnsErr();
-//           std::cout << "Zone size: " << cgZoneSize[0] << ' '  // DBG
-//                     << cgZoneSize[1] << ' ' << cgZoneSize[2] << std::endl;
           // Manually maintain the size of the 'zoneInfo vector'.  'push_back'
           // is not used because the elements are in order of 'zoneIndex'
           if(writeTask->zoneIndex >= zoneInfo.size())
@@ -794,22 +901,26 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition,
               iBuffer2[iVert] = vp.vertexIndex2;
             }
             int cgIndexInterface;
+            std::string interfaceName = options.interfaceName;
+            expand_name(interfaceName, interfaceIndex++, "Interface");
+            if(interfaceName.length() == 0) {
+              interfaceName = "Interface_";
+              interfaceName += CGNSNameStr(interfaceIndex).c_str();
+            }
             // In the first zone
             if(cg_conn_write
                (cgIndexFile, cgIndexBase, zoneInfo[gCIt->first.zone1].cgIndex,
-                CGNSNameStr(++indexInterface, "Interface_%d").c_str(), Vertex,
-                Abutting1to1, PointList, nVert, &iBuffer1[0],
-                zoneInfo[gCIt->first.zone2].name.c_str(), Unstructured,
-                PointListDonor, Integer, nVert, &iBuffer2[0],
+                interfaceName.c_str(), Vertex, Abutting1to1, PointList, nVert,
+                &iBuffer1[0], zoneInfo[gCIt->first.zone2].name.c_str(),
+                Unstructured, PointListDonor, Integer, nVert, &iBuffer2[0],
                 &cgIndexInterface))
               return cgnsErr();
             // In the second zone
             if(cg_conn_write
                (cgIndexFile, cgIndexBase, zoneInfo[gCIt->first.zone2].cgIndex,
-                CGNSNameStr(++indexInterface, "Interface_%d").c_str(), Vertex,
-                Abutting1to1, PointList, nVert, &iBuffer2[0],
-                zoneInfo[gCIt->first.zone1].name.c_str(), Unstructured,
-                PointListDonor, Integer, nVert, &iBuffer1[0],
+                interfaceName.c_str(), Vertex, Abutting1to1, PointList, nVert,
+                &iBuffer2[0], zoneInfo[gCIt->first.zone1].name.c_str(),
+                Unstructured, PointListDonor, Integer, nVert, &iBuffer1[0],
                 &cgIndexInterface))
               return cgnsErr();
           }
@@ -830,15 +941,14 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition,
  *--------------------------------------------------------------------*/
 
         else {
-          PhysGroupMap::const_iterator itPhysicalBegin;
-          PhysGroupMap::const_iterator itPhysicalEnd;
+          PhysGroupMap::const_iterator physicalItBegin;
+          PhysGroupMap::const_iterator physicalItEnd;
           int zoneIndex;
           int partition;
           if(get_zone_definition
-             (model, zoneDefinition, options, numPartitions, group,
-              globalZoneIndex, globalPartition, globalItPhysical,
-              zoneTask.zoneIndex, partition, itPhysicalBegin, itPhysicalEnd,
-              zoneTask.zoneName)) {
+             (model, zoneDefinition, numZone, options, group, globalZoneIndex,
+              globalPhysicalIt, zoneTask.zoneIndex, partition, physicalItBegin,
+              physicalItEnd, zoneTask.zoneName)) {
             omp_set_lock(&threadWLock);
             --threadsWorking;
             omp_unset_lock(&threadWLock);
@@ -846,14 +956,21 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition,
           else {
             zoneTask.zone.clear();
             // Loop through all physical in the zone definition
-            for(PhysGroupMap::const_iterator itPhysical = itPhysicalBegin;
-                itPhysical != itPhysicalEnd; ++itPhysical) {
+            for(PhysGroupMap::const_iterator physicalIt = physicalItBegin;
+                physicalIt != physicalItEnd; ++physicalIt) {
               // Add elements from all entities in the physical with defined
               // partition number
-              zoneTask.zone.template add_elements_in_entities
-                <typename std::vector<GEntity*>::const_iterator>
-                (itPhysical->second.begin(), itPhysical->second.end(),
-                 partition);
+              if(partition == -1) {
+                zoneTask.zone.template add_elements_in_entities
+                  <typename std::vector<GEntity*>::const_iterator>
+                  (physicalIt->second.begin(), physicalIt->second.end());
+              }
+              else {
+                zoneTask.zone.template add_elements_in_entities
+                  <typename std::vector<GEntity*>::const_iterator>
+                  (physicalIt->second.begin() + partition,
+                   physicalIt->second.begin() + (partition+1));
+              }
             }
             // Process the zone
             zoneTask.zone.zoneData();
@@ -904,9 +1021,14 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition,
           const int numBCVert = iVert - iVertStart;
 
           int cgIndexBoco;
+          std::string patchName = options.patchName;
+          expand_name(patchName, patchIndex-1, "Patch");
+          if(patchName.length() == 0) {
+            patchName = "Patch_";
+            patchName += CGNSNameStr(patchIndex).c_str();
+          }
           if(cg_boco_write(cgIndexFile, cgIndexBase,
-                           zoneInfo[zoneIndex].cgIndex,
-                           CGNSNameStr(patchIndex, "Patch %d").c_str(),
+                           zoneInfo[zoneIndex].cgIndex, patchName.c_str(),
                            BCTypeNull, PointList, numBCVert, &iBuffer1[0],
                            &cgIndexBoco))
             return cgnsErr();

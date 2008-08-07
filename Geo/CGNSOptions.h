@@ -26,6 +26,8 @@ struct CGNSOptions
                                         // Type of CGNS connectivity description
   std::string baseName;
   std::string zoneName;
+  std::string interfaceName;
+  std::string patchName;
 
   // Default values
   CGNSOptions() :
@@ -33,7 +35,9 @@ struct CGNSOptions
     gridConnectivityLocation(2),  // Assumes Vertex = 2 in cgnslib.h
     connectivityNodeType(Generalized),
     baseName("Base_0"),
-    zoneName("Zone_&I0&")
+    zoneName("Zone_&I0&"),
+    interfaceName("Interface_&I0&"),
+    patchName("Patch_&I&")
   { }
 };
 

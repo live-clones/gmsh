@@ -187,6 +187,7 @@ void updateBoVec
  * ===
  *
  *   vertex             - (I) The vertex to find the normal at
+ *   zoneIndex          - (I) Zone being worked on
  *   edge               - (I) The geometry edge upon which the vertex resides
  *                            and from which the normal will be determined
  *   faces              - (I) All faces on the boundary connected to 'vertex'
@@ -197,10 +198,11 @@ void updateBoVec
  *============================================================================*/
 
 int edge_normal
-(const MVertex *const vertex, const GEdge *const gEdge,
+(const MVertex *const vertex, const int zoneIndex, const GEdge *const gEdge,
  const CCon::FaceVector<MZoneBoundary<2>::GlobalVertexData<MEdge>::FaceDataB>
  &faces, SVector3 &boNormal)
 {
+
   const double par = gEdge->parFromPoint(vertex->point());
   if(par == std::numeric_limits<double>::max()) return 1;
 
@@ -210,17 +212,22 @@ int edge_normal
   SVector3 meshPlaneNormal(0.);         // This normal is perpendicular to the
                                         // plane of the mesh
 
-  // The interior point and mesh plane normal are computed from all elements.
+  // The interior point and mesh plane normal are computed from all elements in
+  // the zone.
+  int cFace = 0;
   const int nFace = faces.size();
   for(int iFace = 0; iFace != nFace; ++iFace) {
-    interior += faces[iFace].parentElement->barycenter();
-    // Make sure all the planes go in the same direction
-    //**Required?
-    SVector3 mpnt = faces[iFace].parentElement->getFace(0).normal();
-    if(dot(mpnt, meshPlaneNormal) < 0.) mpnt.negate();
-    meshPlaneNormal += mpnt;
+    if(faces[iFace].zoneIndex == zoneIndex) {
+      ++cFace;
+      interior += faces[iFace].parentElement->barycenter();
+      // Make sure all the planes go in the same direction
+      //**Required?
+      SVector3 mpnt = faces[iFace].parentElement->getFace(0).normal();
+      if(dot(mpnt, meshPlaneNormal) < 0.) mpnt.negate();
+      meshPlaneNormal += mpnt;
+    }
   }
-  interior /= nFace;
+  interior /= cFace;
   // Normal to the boundary edge (but unknown direction)
   boNormal = crossprod(tangent, meshPlaneNormal);
   boNormal.normalize();
@@ -229,6 +236,7 @@ int edge_normal
   if(dot(boNormal, SVector3(vertex->point(), interior)) < 0.)
     boNormal.negate();
   return 0;
+
 }
 
 
@@ -244,8 +252,6 @@ void updateBoVec<2, MEdge>
  const CCon::FaceVector<MZoneBoundary<2>::GlobalVertexData<MEdge>::FaceDataB>
  &faces, ZoneBoVec &zoneBoVec, BCPatchIndex &patch, bool &warnNormFromElem)
 {
-  SVector3 boNormal;                    // Normal to the boundary face (edge in
-                                        // 2D)
 
   GEntity *const ent = vertex->onWhat();
   if(ent == 0) {
@@ -274,7 +280,7 @@ void updateBoVec<2, MEdge>
         for(int iFace = 0; iFace != nFace; ++iFace) {
           if(zoneIndex == faces[iFace].zoneIndex) {
             MEdge mEdge = faces[iFace].parentElement->getEdge
-              (faces[iFace].parentFace);
+                (faces[iFace].parentFace);
             // Get the other vertex on the mesh edge.
             MVertex *vertex2 = mEdge.getMinVertex();
             if(vertex2 == vertex) vertex2 = mEdge.getMaxVertex();
@@ -282,7 +288,9 @@ void updateBoVec<2, MEdge>
             // is also connected to vertex.  If so, add it to the container of
             // edge entities that will be used to determine the normal
             GEntity *const ent2 = vertex2->onWhat();
-            if(ent2->dim() == 1) useGEdge.push_back(static_cast<GEdge*>(ent2));
+            if(ent2->dim() == 1) {
+              useGEdge.push_back(static_cast<GEdge*>(ent2));
+            }
           }
         }
 
@@ -292,14 +300,17 @@ void updateBoVec<2, MEdge>
         switch(useGEdge.size()) {
 
         case 0:
-          goto getNormalFromElements;
+//           goto getNormalFromElements;
+          // We probably don't want BC data if none of the faces attatched to
+          // this vertex and in this zone are on the boundary.
+          break;
 
         case 1:
           {
             const GEdge *const gEdge =
               static_cast<const GEdge*>(useGEdge[0]);
             SVector3 boNormal;
-            if(edge_normal(vertex, gEdge, faces, boNormal))
+            if(edge_normal(vertex, zoneIndex, gEdge, faces, boNormal))
                goto getNormalFromElements;
             zoneBoVec.push_back(VertexBoundary(zoneIndex, gEdge->tag(),
                                                boNormal,
@@ -315,14 +326,14 @@ void updateBoVec<2, MEdge>
             const GEdge *const gEdge1 =
               static_cast<const GEdge*>(useGEdge[0]);
             SVector3 boNormal1;
-            if(edge_normal(vertex, gEdge1, faces, boNormal1))
+            if(edge_normal(vertex, zoneIndex, gEdge1, faces, boNormal1))
               goto getNormalFromElements;
 
             // Get the second normal
             const GEdge *const gEdge2 =
               static_cast<const GEdge*>(useGEdge[1]);
             SVector3 boNormal2;
-            if(edge_normal(vertex, gEdge2, faces, boNormal2))
+            if(edge_normal(vertex, zoneIndex, gEdge2, faces, boNormal2))
               goto getNormalFromElements;
 
             if(dot(boNormal1, boNormal2) < 0.98) {
@@ -371,7 +382,8 @@ void updateBoVec<2, MEdge>
 
       {
         SVector3 boNormal;
-        if(edge_normal(vertex, static_cast<const GEdge*>(ent), faces, boNormal))
+        if(edge_normal(vertex, zoneIndex, static_cast<const GEdge*>(ent), faces,
+                       boNormal))
           goto getNormalFromElements;
         zoneBoVec.push_back(VertexBoundary(zoneIndex, ent->tag(), boNormal,
                                            const_cast<MVertex*>(vertex),
@@ -405,11 +417,13 @@ void updateBoVec<2, MEdge>
                                         // plane of the mesh
     const int nFace = faces.size();
     for(int iFace = 0; iFace != nFace; ++iFace) {
+      if(faces[iFace].zoneIndex == zoneIndex) {
       // Make sure all the planes go in the same direction
       //**Required?
-      SVector3 mpnt = faces[iFace].parentElement->getFace(0).normal();
-      if(dot(mpnt, meshPlaneNormal) < 0.) mpnt.negate();
-      meshPlaneNormal += mpnt;
+        SVector3 mpnt = faces[iFace].parentElement->getFace(0).normal();
+        if(dot(mpnt, meshPlaneNormal) < 0.) mpnt.negate();
+        meshPlaneNormal += mpnt;
+      }
     }
     // Sum the normals from each element.  The tangent is computed from all
     // faces in the zone attached to the vertex and is weighted by the length of
@@ -417,7 +431,7 @@ void updateBoVec<2, MEdge>
     // inwards-pointing normal.
     SVector3 boNormal(0.);
     for(int iFace = 0; iFace != nFace; ++iFace) {
-      if(zoneIndex == faces[iFace].zoneIndex) {
+      if(faces[iFace].zoneIndex == zoneIndex) {
         const SVector3 tangent = faces[iFace].parentElement->getEdge
           (faces[iFace].parentFace).tangent();
         // Normal to the boundary (unknown direction)
@@ -599,15 +613,20 @@ void updateBoVec<3, MFace>
         for(std::list<const GFace*>::const_iterator gFIt = useGFace.begin();
             gFIt != useGFace.end(); ++gFIt) {
           const SPoint2 par = (*gFIt)->parFromPoint(vertex->point());
-          if(par.x() == std::numeric_limits<double>::max())
+          if(par.x() == std::numeric_limits<double>::max())  //**?
             goto getNormalFromElements;  // :P  After all that!
 
           SVector3 boNormal = (*gFIt)->normal(par);
           SPoint3 interior(0., 0., 0.);
+          int cFace = 0;
           const int nFace = faces.size();
-          for(int iFace = 0; iFace != nFace; ++iFace)
-            interior += faces[iFace].parentElement->barycenter();
-          interior /= nFace;
+          for(int iFace = 0; iFace != nFace; ++iFace) {
+            if(faces[iFace].zoneIndex == zoneIndex) {
+              ++cFace;
+              interior += faces[iFace].parentElement->barycenter();
+            }
+          }
+          interior /= cFace;
           if(dot(boNormal, SVector3(vertex->point(), interior)) < 0.)
             boNormal.negate();
 
@@ -633,10 +652,15 @@ void updateBoVec<3, MFace>
 
         SVector3 boNormal = static_cast<const GFace*>(ent)->normal(par);
         SPoint3 interior(0., 0., 0.);
+          int cFace = 0;
         const int nFace = faces.size();
-        for(int iFace = 0; iFace != nFace; ++iFace)
-          interior += faces[iFace].parentElement->barycenter();
-        interior /= nFace;
+        for(int iFace = 0; iFace != nFace; ++iFace) {
+          if(faces[iFace].zoneIndex == zoneIndex) {
+            ++cFace;
+            interior += faces[iFace].parentElement->barycenter();
+          }
+        }
+        interior /= cFace;
         if(dot(boNormal, SVector3(vertex->point(), interior)) < 0.)
           boNormal.negate();
 
@@ -672,14 +696,16 @@ void updateBoVec<3, MFace>
     SVector3 boNormal(0.);
     const int nFace = faces.size();
     for(int iFace = 0; iFace != nFace; ++iFace) {
-      // Normal to the boundary (unknown direction)
-      SVector3 bnt = faces[iFace].parentElement->getFace
-        (faces[iFace].parentFace).normal();
-      // Inwards normal
-      const SVector3 inwards(vertex->point(),
-                             faces[iFace].parentElement->barycenter());
-      if(dot(bnt, inwards) < 0.) bnt.negate();
-      boNormal += bnt;
+      if(faces[iFace].zoneIndex == zoneIndex) {
+        // Normal to the boundary (unknown direction)
+        SVector3 bnt = faces[iFace].parentElement->getFace
+          (faces[iFace].parentFace).normal();
+        // Inwards normal
+        const SVector3 inwards(vertex->point(),
+                               faces[iFace].parentElement->barycenter());
+        if(dot(bnt, inwards) < 0.) bnt.negate();
+        boNormal += bnt;
+      }
     }
     boNormal.normalize();
     zoneBoVec.push_back(VertexBoundary(zoneIndex, 0, boNormal,
@@ -735,6 +761,12 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices
 
 //--Find or insert this vertex into the global map
 
+//     bool debug = false;
+//     if(vMapIt->first->x() == 1. && vMapIt->first->y() == 0.) {
+//       std::cout << "Working with vertex(1, 0): " << vMapIt->first
+//                 << " for zone " << newZoneIndex << std::endl;
+//       debug = true;
+//     }
     std::pair<typename GlobalBoVertexMap::iterator, bool> insGblBoVertMap =
       globalBoVertMap.insert(std::pair<const MVertex*, GlobalVertexData<FaceT> >
                              (vMapIt->first, GlobalVertexData<FaceT>()));
@@ -748,9 +780,21 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices
 
 //--A new vertex was inserted
 
+//       if(debug) {
+//         std::cout << "This vertex is new and has bo faces:\n";
+//       }
       // Copy faces
       const int nFace = zoneVertData.faces.size();
       for(int iFace = 0; iFace != nFace; ++iFace) {
+//         if(debug) {
+//           std::cout << "  ("
+//                     << zoneVertData.faces[iFace]->first.getVertex(0)->x() << ","
+//                     << zoneVertData.faces[iFace]->first.getVertex(0)->y()
+//                     << "), ("
+//                     << zoneVertData.faces[iFace]->first.getVertex(1)->x() << ","
+//                     << zoneVertData.faces[iFace]->first.getVertex(1)->y()
+//                     << ")\n";
+//         }
         globalVertData.faces.push_back
           (typename GlobalVertexData<FaceT>::FaceDataB
            (newZoneIndex, zoneVertData.faces[iFace]));
@@ -781,26 +825,33 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices
       }
 
       // Update the list of faces attached to this vertex
-      const int nGFace = globalVertData.faces.size();
-                                        // This is the maximum number of faces
-                                        // searched from 'globalVertData'.  This
-                                        // size may increase as faces are added
-                                        // and the order may also change as
-                                        // faces are deleted.  However, only the
-                                        // faces before nGFace are important.
+      unsigned nGFace = globalVertData.faces.size();
+                                        // This is the number of faces searched
+                                        // from 'globalVertData'.  It will only
+                                        // decrease if the size() is less.
+                                        // Since a FaceVector swaps the last
+                                        // element into the erased index, this
+                                        // implies that if new faces are added,
+                                        // then old ones deleted, some of the
+                                        // faces from zoneVertData may also be
+                                        // searched.  This is okay since they
+                                        // are all unique.
       const typename MZone<DIM>::BoFaceMap::const_iterator *zFace =
         &zoneVertData.faces[0];
       for(int nZFace = zoneVertData.faces.size(); nZFace--;) {
-        int iGFace = 0;
-        while(iGFace != nGFace) {
+        bool foundMatch = false;
+        for(int iGFace = 0; iGFace != nGFace; ++iGFace) {
           if((*zFace)->first == globalVertData.faces[iGFace].face) {
-            // Faces match - delete from 'globalVertData'
+            foundMatch = true;
+            // Faces match - delete from 'globalVertData'.
             globalVertData.faces.erase(iGFace);
+            // Erasing from the FaceVector swaps the last element into this
+            // index.  We only decrease nGFace if the size is less.
+            nGFace = std::min(globalVertData.faces.size(), nGFace);
             break;
           }
-          ++iGFace;
         }
-        if(iGFace == nGFace) {
+        if(!foundMatch) {
           // New face - add to 'globalVertData'
           globalVertData.faces.push_back
             (typename GlobalVertexData<FaceT>::FaceDataB(newZoneIndex, *zFace));
@@ -812,6 +863,12 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices
       // and it may be deleted.
       if(globalVertData.faces.size() == 0)
         globalBoVertMap.erase(insGblBoVertMap.first);
+      else {
+        // Update the list of zones attached to this vertex
+        globalVertData.zoneData.push_back
+          (typename GlobalVertexData<FaceT>::ZoneData
+           (zoneVertData.index, newZoneIndex));
+      }
     }
   }  // End loop over boundary vertices
 
