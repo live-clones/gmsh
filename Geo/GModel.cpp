@@ -926,7 +926,7 @@ void GModel::_associateEntityWithMeshVertices()
     _associateEntityWithElementVertices(*it, (*it)->lines);
   }
   for(viter it = firstVertex(); it != lastVertex(); ++it){
-    (*it)->mesh_vertices[0]->setEntity(*it);
+    for(unsigned int i = 0; i < (*it)->mesh_vertices.size(); i++)
+      (*it)->mesh_vertices[i]->setEntity(*it);
   }
 }
-

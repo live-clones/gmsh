@@ -211,12 +211,13 @@ int GModel::readMSH(const std::string &name)
       Msg::ResetProgressMeter();
       vertexVector.clear();
       vertexMap.clear();
-          int minVertex = numVertices + 1, maxVertex = -1;
+      int minVertex = numVertices + 1, maxVertex = -1;
       for(int i = 0; i < numVertices; i++) {
         int num;
         double xyz[3];
         if(!binary){
-          if(fscanf(fp, "%d %lf %lf %lf", &num, &xyz[0], &xyz[1], &xyz[2]) != 4) return 0;
+          if(fscanf(fp, "%d %lf %lf %lf", &num, &xyz[0], &xyz[1], &xyz[2]) != 4)
+	    return 0;
         }
         else{
           if(fread(&num, sizeof(int), 1, fp) != 1) return 0;
