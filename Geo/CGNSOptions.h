@@ -11,34 +11,55 @@
 struct CGNSOptions
 {
   // Types
-  enum CGNSConnectivityNodeType {
-    OneToOne,
-    Generalized
+  enum CGNSLocationType {
+    LocVertex = 0,
+    LocFace = 1
   };
 
   // Data
-  int vectorDim;                        // Number of dimensions in a vector
-                                        // (only relevant for a 2D mesh)
-  int gridConnectivityLocation;         // Location of connectivity
-                                        // Same as type GridLocation_t in
-                                        // 'cgnslib.h'
-  CGNSConnectivityNodeType connectivityNodeType;
-                                        // Type of CGNS connectivity description
   std::string baseName;
   std::string zoneName;
   std::string interfaceName;
   std::string patchName;
 
-  // Default values
-  CGNSOptions() :
-    vectorDim(2),
-    gridConnectivityLocation(2),  // Assumes Vertex = 2 in cgnslib.h
-    connectivityNodeType(Generalized),
-    baseName("Base_0"),
-    zoneName("Zone_&I0&"),
-    interfaceName("Interface_&I0&"),
-    patchName("Patch_&I&")
-  { }
+  int gridConnectivityLocation;         // Location of connectivity(values
+                                        // CGNSLocationType)
+  int bocoLocation;                     // Location of BC (values
+                                        // CGNSLocationType)
+  int normalSource;                     // Source for BC normal data
+                                        // 0 - geometry
+                                        // 1 - elements
+  int vectorDim;                        // Number of dimensions in a vector
+                                        // (only relevant for a 2D mesh)
+  bool writeBC;
+  bool writeNormals;
+  bool writeUserDef;                    // T - write user-defined elements for
+                                        //     element types unsupported by CGNS
+
+
+//--Constructor
+
+  CGNSOptions()
+  {
+    setDefaults();
+  }
+
+//--Default values
+
+  void setDefaults()
+  {
+    baseName = "Base_1";
+    zoneName = "Zone_&I&";
+    interfaceName = "Interface_&I&";
+    patchName = "Patch_&I&";
+    gridConnectivityLocation = 0;
+    bocoLocation = 0;
+    normalSource = 0;
+    vectorDim = 2;
+    writeBC = true;
+    writeNormals = true;
+    writeUserDef = false;
+  }
 };
 
 #endif

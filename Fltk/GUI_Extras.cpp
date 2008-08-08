@@ -19,6 +19,7 @@
 #include <FL/Fl_Menu_Window.H>
 #include <FL/Fl_Select_Browser.H>
 #include <FL/Fl_Toggle_Button.H>
+#include <FL/Fl_Round_Button.H>
 #include <errno.h>
 
 #if defined(HAVE_NATIVE_FILE_CHOOSER)
@@ -1137,6 +1138,437 @@ int stl_dialog(const char *name)
   return 0;
 }
 
+
+// CGNS write dialog - widget pointers, callbacks, and dialog routine
+#if defined(HAVE_LIBCGNS)
+
+// Forward declarations of some callbacks
+void cgnsw_gc_location_cb(Fl_Widget *widget, void *data);
+void cgnsw_write_dummy_bc_cb(Fl_Widget *widget, void *data);
+void cgnsw_bc_location_cb(Fl_Widget *widget, void *data);
+void cgnsw_write_normals_cb(Fl_Widget *widget, void *data);
+void cgnsw_normal_source_cb(Fl_Widget *widget, void *data);
+
+// Pointers to required widgets
+struct CGNSWriteDialog
+{
+  Fl_Window *window;
+  Fl_Choice *choiceZoneDef;
+  Fl_Input *inputBaseName;
+  Fl_Input *inputZoneName;
+  Fl_Input *inputInterfaceName;
+  Fl_Input *inputPatchName;
+  Fl_Round_Button *roundButton0GCatVertex;
+  Fl_Round_Button *roundButton1GCatFace;
+  Fl_Check_Button *checkButtonWriteBC;
+  Fl_Round_Button *roundButton0BCatVertex;
+  Fl_Round_Button *roundButton1BCatFace;
+  Fl_Check_Button *checkButtonWriteNormals;
+  Fl_Round_Button *roundButton0NormalGeo;
+  Fl_Round_Button *roundButton1NormalElem;
+  Fl_Choice *choiceVecDim;
+  Fl_Check_Button *checkButtonUnknownUserDef;
+  const char *filename;
+  int status;
+  void write_all_options()
+  {
+    CTX.mesh.zone_definition = choiceZoneDef->value();
+    CTX.mesh.cgns_options.baseName = inputBaseName->value();
+    CTX.mesh.cgns_options.zoneName = inputZoneName->value();
+    CTX.mesh.cgns_options.interfaceName = inputInterfaceName->value();
+    CTX.mesh.cgns_options.patchName = inputPatchName->value();
+    CTX.mesh.cgns_options.gridConnectivityLocation =
+      roundButton1GCatFace->value();
+    CTX.mesh.cgns_options.writeBC = checkButtonWriteBC->value();
+    CTX.mesh.cgns_options.bocoLocation = roundButton1BCatFace->value();
+    CTX.mesh.cgns_options.writeNormals = checkButtonWriteNormals->value();
+    CTX.mesh.cgns_options.normalSource = roundButton1NormalElem->value();
+    CTX.mesh.cgns_options.vectorDim = choiceVecDim->value() + 2;
+    CTX.mesh.cgns_options.writeUserDef = checkButtonUnknownUserDef->value();
+  }
+  void read_all_options()
+  {
+    choiceZoneDef->value(CTX.mesh.zone_definition);
+    inputBaseName->value(CTX.mesh.cgns_options.baseName.c_str());
+    inputZoneName->value(CTX.mesh.cgns_options.zoneName.c_str());
+    inputInterfaceName->value(CTX.mesh.cgns_options.interfaceName.c_str());
+    inputPatchName->value(CTX.mesh.cgns_options.patchName.c_str());
+    checkButtonWriteBC->value(CTX.mesh.cgns_options.writeBC);
+    checkButtonWriteNormals->value(CTX.mesh.cgns_options.writeNormals);
+    choiceVecDim->value(CTX.mesh.cgns_options.vectorDim - 2);
+    checkButtonUnknownUserDef->value(CTX.mesh.cgns_options.writeUserDef);
+
+    // Call all callbacks to ensure consistent options
+    cgnsw_gc_location_cb
+      ((CTX.mesh.cgns_options.gridConnectivityLocation) ?
+       roundButton1GCatFace : roundButton0GCatVertex, this);
+    cgnsw_write_dummy_bc_cb(checkButtonWriteBC, this);
+    cgnsw_bc_location_cb
+      ((CTX.mesh.cgns_options.bocoLocation) ?
+       roundButton1BCatFace : roundButton0BCatVertex, this);
+    cgnsw_write_normals_cb(checkButtonWriteNormals, this);
+    cgnsw_normal_source_cb
+      ((CTX.mesh.cgns_options.normalSource) ?
+       roundButton1NormalElem : roundButton0NormalGeo, this);
+  }
+};
+
+void cgnsw_gc_location_cb(Fl_Widget *widget, void *data)
+{
+  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
+  if(widget == dlg->roundButton0GCatVertex) {
+    dlg->roundButton0GCatVertex->set();
+    dlg->roundButton1GCatFace->clear();
+  }
+  else {
+    dlg->roundButton0GCatVertex->clear();
+    dlg->roundButton1GCatFace->set();
+  }
+}
+
+void cgnsw_write_dummy_bc_cb(Fl_Widget *widget, void *data)
+{
+  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
+  if(dlg->checkButtonWriteBC->value()) {
+    dlg->roundButton0BCatVertex->activate();
+//     dlg->roundButton1BCatFace->activate();  //**Tmp
+    dlg->checkButtonWriteNormals->activate();
+    if(dlg->checkButtonWriteNormals->value()) {
+      if(dlg->roundButton0BCatVertex->value())
+        dlg->roundButton0NormalGeo->activate();
+      dlg->roundButton1NormalElem->activate();
+    }
+  }
+  else {
+    dlg->roundButton0BCatVertex->deactivate();
+    dlg->roundButton1BCatFace->deactivate();
+    dlg->checkButtonWriteNormals->deactivate();
+    dlg->roundButton0NormalGeo->deactivate();
+    dlg->roundButton1NormalElem->deactivate();
+  } 
+}
+
+void cgnsw_bc_location_cb(Fl_Widget *widget, void *data)
+{
+  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
+  if(widget == dlg->roundButton0BCatVertex) {
+    dlg->roundButton0BCatVertex->set();
+    dlg->roundButton1BCatFace->clear();
+    if(dlg->checkButtonWriteNormals->value())
+      dlg->roundButton0NormalGeo->activate();
+  }
+  else {
+    dlg->roundButton0BCatVertex->clear();
+    dlg->roundButton1BCatFace->set();
+    dlg->roundButton0NormalGeo->clear();
+    dlg->roundButton0NormalGeo->deactivate();
+    dlg->roundButton1NormalElem->set();
+  }
+}
+
+void cgnsw_write_normals_cb(Fl_Widget *widget, void *data)
+{
+  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
+  if(dlg->checkButtonWriteNormals->value()) {
+    if(dlg->roundButton0BCatVertex->value())
+      dlg->roundButton0NormalGeo->activate();
+    dlg->roundButton1NormalElem->activate();
+  }
+  else {
+    dlg->roundButton0NormalGeo->deactivate();
+    dlg->roundButton1NormalElem->deactivate();
+  } 
+}
+
+void cgnsw_normal_source_cb(Fl_Widget *widget, void *data)
+{
+  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
+  if(widget == dlg->roundButton0NormalGeo) {
+    dlg->roundButton0NormalGeo->set();
+    dlg->roundButton1NormalElem->clear();
+  }
+  else {
+    dlg->roundButton0NormalGeo->clear();
+    dlg->roundButton1NormalElem->set();
+  }
+}
+
+void cgnsw_defaults_cb(Fl_Widget *widget, void *data)
+{
+  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
+  CTX.mesh.cgns_options.setDefaults();
+  dlg->read_all_options();
+}
+
+void cgnsw_write_cb(Fl_Widget *widget, void *data)
+{
+  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
+
+  // Write all options
+  dlg->write_all_options();
+  dlg->window->hide();
+
+  // Write the data
+  CreateOutputFile(dlg->filename, FORMAT_CGNS);
+  dlg->status = 1;
+}
+
+void cgnsw_cancel_cb(Fl_Widget *widget, void *data)
+{
+  CGNSWriteDialog *dlg = static_cast<CGNSWriteDialog*>(data);
+  dlg->window->hide();
+  dlg->status = 0;
+}
+
+int cgns_write_dialog(const char *const filename)
+{
+  static CGNSWriteDialog dlg;
+  dlg.filename = filename;
+
+  static Fl_Menu_Item zoneDefMenu[] = {
+    {"Single zone", 0, 0, 0},
+    {"Partition", 0, 0, 0},
+    {"Physical", 0, 0, 0},
+    {0}
+  };
+      
+  static Fl_Menu_Item vectorDimMenu[] = {
+    {"2", 0, 0, 0},
+    {"3", 0, 0, 0},
+    {0}
+  };
+
+  const int BH = 2*GetFontSize() + 1;   // button height
+  const int RBH = 3*GetFontSize()/2;    // radio button height
+  const int IW = 10*GetFontSize();      // Input field width
+  const int BB = 7*GetFontSize() + 9;   // Width of a button with an internal
+                                        // label
+  const int WB = 7;                     // Window border
+
+  const int col1 = WB;                  // Start of left column
+  const int col2 = 2*WB + 2*BB;         // Start of right column
+  const int hcol1 = 5*WB + 2*RBH + 3*BH;
+                                        // Height of left column
+  const int hcol2 = 4*WB + 4*RBH + 2*BH;
+                                        // Height of right column
+
+  const int h = 4 + 8*WB + 5*BH + std::max(hcol1, hcol2);
+                                        // Window height
+  const int w = 3*WB + 4*BB;            // Window width
+  int y = WB;
+
+  dlg.window = new Dialog_Window(w, h, true, "CGNS Options");
+  dlg.window->box(GMSH_WINDOW_BOX);
+  dlg.window->callback((Fl_Callback *)cgnsw_cancel_cb, &dlg);
+
+  // Zone definition
+  dlg.choiceZoneDef = new Fl_Choice(col1, y, IW, BH, "Zone definition");
+  dlg.choiceZoneDef->menu(zoneDefMenu);
+  dlg.choiceZoneDef->align(FL_ALIGN_RIGHT);
+  y += BH + WB;
+
+  // Box (line) [0]
+  {
+    Fl_Box *const o = new Fl_Box(WB, y, w - 2*WB, 2);
+    o->box(FL_ENGRAVED_FRAME);
+    o->labeltype(FL_NO_LABEL);
+  }
+  y += 2 + WB;
+
+  // Base name
+  dlg.inputBaseName = new Fl_Input(col1, y, BB, BH, "Base name");
+  dlg.inputBaseName->align(FL_ALIGN_RIGHT);
+  // Zone name
+  dlg.inputZoneName = new Fl_Input(col2, y, BB, BH, "Zone name");
+  dlg.inputZoneName->align(FL_ALIGN_RIGHT);
+  y += BH + WB;
+  // Interface name
+  dlg.inputInterfaceName = new Fl_Input(col1, y, BB, BH, "Interface name");
+  dlg.inputInterfaceName->align(FL_ALIGN_RIGHT);
+  // BC Patch name
+  dlg.inputPatchName = new Fl_Input(col2, y, BB, BH, "BC patch name");
+  dlg.inputPatchName->align(FL_ALIGN_RIGHT);
+  y += BH + WB;
+
+//--Left column
+
+  int yl = y;
+  {
+    Fl_Box *const o = new Fl_Box(col1, yl, 0, BH, "Grid connectivity location");
+    o->align(FL_ALIGN_RIGHT);
+    yl += BH;
+  }
+  {
+    Fl_Box *const o = new Fl_Box(col1, yl, 2*BB, 2*WB + 2*RBH);
+    o->box(FL_ENGRAVED_FRAME);
+    o->labeltype(FL_NO_LABEL);
+    yl += WB;
+  }
+  // Grid connectivity location
+  {
+    const int GH = 2*RBH + 2*WB;
+    Fl_Group *g = new Fl_Group(col1, yl, 2*BB, GH);
+    dlg.roundButton0GCatVertex = new Fl_Round_Button(col1 + WB, yl, RBH, RBH,
+                                                     "Vertex");
+    dlg.roundButton0GCatVertex->callback((Fl_Callback *)cgnsw_gc_location_cb,
+                                         &dlg);
+    dlg.roundButton0GCatVertex->align(FL_ALIGN_RIGHT);
+    yl += RBH;
+    dlg.roundButton1GCatFace = new Fl_Round_Button(col1 + WB, yl, RBH, RBH,
+                                                   "Face");
+    dlg.roundButton1GCatFace->callback((Fl_Callback *)cgnsw_gc_location_cb,
+                                       &dlg);
+    dlg.roundButton1GCatFace->align(FL_ALIGN_RIGHT);
+    dlg.roundButton1GCatFace->deactivate();  //**Tmp
+    yl += RBH + 2*WB;
+    g->end();
+    g->show();
+  }
+
+  // 2D Vector Dim
+  yl += WB;
+  dlg.choiceVecDim = new Fl_Choice(WB, yl, BB/2, BH, "Vector Dimension");
+  dlg.choiceVecDim->menu(vectorDimMenu);
+  dlg.choiceVecDim->align(FL_ALIGN_RIGHT);
+  yl += BH;
+  {
+    Fl_Box *const o = new Fl_Box(col1, yl, 0, BH,
+                                 "(only affects 2-D mesh output)");
+    o->align(FL_ALIGN_RIGHT);
+    yl += BH + WB;
+  }
+
+//--Right column
+
+  int yr = y;
+
+  // Write exterior BC
+  dlg.checkButtonWriteBC = new Fl_Check_Button(col2, yr, RBH, BH,
+                                               "Write dummy BC");
+  dlg.checkButtonWriteBC->callback((Fl_Callback *)cgnsw_write_dummy_bc_cb,
+                                   &dlg);
+  dlg.checkButtonWriteBC->align(FL_ALIGN_RIGHT);
+  yr += BH;
+  {
+    Fl_Box *const o = new Fl_Box(col2, yr, 2*BB, BH + 4*RBH + 3*WB);
+    o->box(FL_ENGRAVED_FRAME);
+    o->labeltype(FL_NO_LABEL);
+    yr += WB;
+  }
+
+  // BC location
+  {
+    const int GH = 2*RBH + WB;
+    Fl_Group *g = new Fl_Group(col2, yr, 2*BB, GH);
+    dlg.roundButton0BCatVertex = new Fl_Round_Button(col2 + WB, yr, RBH, RBH,
+                                                     "Vertex");
+    dlg.roundButton0BCatVertex->callback((Fl_Callback *)cgnsw_bc_location_cb,
+                                         &dlg);
+    dlg.roundButton0BCatVertex->align(FL_ALIGN_RIGHT);
+    yr += RBH;
+    dlg.roundButton1BCatFace = new Fl_Round_Button(col2 + WB, yr, RBH, RBH,
+                                                   "Face");
+    dlg.roundButton1BCatFace->callback((Fl_Callback *)cgnsw_bc_location_cb,
+                                       &dlg);
+    dlg.roundButton1BCatFace->align(FL_ALIGN_RIGHT);
+    dlg.roundButton1BCatFace->deactivate();  //**Tmp
+    yr += RBH + WB;
+    g->end();
+    g->show();
+  }
+
+  // Write normals
+  dlg.checkButtonWriteNormals = new Fl_Check_Button(col2 + WB, yr, RBH, BH,
+                                                    "Write normals");
+  dlg.checkButtonWriteNormals->callback((Fl_Callback *)cgnsw_write_normals_cb,
+                                        &dlg);
+  dlg.checkButtonWriteNormals->align(FL_ALIGN_RIGHT);
+  yr += BH;
+  
+  // Normal source
+  {
+    const int GH = 2*RBH + WB;
+    Fl_Group *g = new Fl_Group(col2, yr, 2*BB, GH);
+    dlg.roundButton0NormalGeo = new Fl_Round_Button(col2 + 2*WB, yr, RBH, RBH,
+                                                    "From geometry");
+    dlg.roundButton0NormalGeo->callback((Fl_Callback *)cgnsw_normal_source_cb,
+                                         &dlg);
+    dlg.roundButton0NormalGeo->align(FL_ALIGN_RIGHT);
+    yr += RBH;
+    dlg.roundButton1NormalElem = new Fl_Round_Button(col2 + 2*WB, yr, RBH, RBH,
+                                                     "From elements");
+    dlg.roundButton1NormalElem->callback((Fl_Callback *)cgnsw_normal_source_cb,
+                                         &dlg);
+    dlg.roundButton1NormalElem->align(FL_ALIGN_RIGHT);
+    yr += RBH + 2*WB;
+    g->end();
+    g->show();
+  }
+
+  y = std::max(yl, yr);
+  // User defined
+  dlg.checkButtonUnknownUserDef = new Fl_Check_Button
+    (col1, y, RBH, BH, "Write user-defined elements for unsupported types");
+  dlg.checkButtonUnknownUserDef->align(FL_ALIGN_RIGHT);
+  dlg.checkButtonUnknownUserDef->deactivate();  //**Tmp
+  y += BH + WB;
+
+  // Dialog termination group
+  {
+    const int GH = 2 + BH + 2*WB;
+    Fl_Group *g = new Fl_Group(0, y, w, GH);
+    // Box (line) [0]
+    {
+      Fl_Box *const o = new Fl_Box(WB, y, w - 2*WB, 2);
+      o->box(FL_ENGRAVED_FRAME);
+      o->labeltype(FL_NO_LABEL);
+    }
+    y += 2 + WB;
+    // Defaults Button [1]
+    {
+      Fl_Button *const o = new Fl_Button
+         (WB, y, BB, BH, "Defaults");
+      o->callback((Fl_Callback *)cgnsw_defaults_cb, &dlg);
+    }
+    // Write Button [2]
+    {
+      Fl_Return_Button *const o = new Fl_Return_Button(w - 2*(WB + BB), y, BB,
+                                                       BH, "Write");
+      o->callback((Fl_Callback *)cgnsw_write_cb, &dlg);
+    }
+    // Cancel Button [3]
+    {
+      Fl_Button *const o = new Fl_Button(w - (WB + BB), y, BB, BH, "Cancel");
+      o->callback((Fl_Callback *)cgnsw_cancel_cb, &dlg);
+    }
+    y += BH + WB;
+    g->end();
+    g->show();
+  }
+
+  dlg.window->end();
+  dlg.window->hotspot(dlg.window);
+
+  dlg.read_all_options();
+  dlg.window->show();
+
+  // Wait here for status
+  while(dlg.window->shown()) Fl::wait();
+  delete dlg.window;
+  return dlg.status;
+}
+
+#else
+
+int cgns_write_dialog(const char *const name)
+{
+  CreateOutputFile(name, FORMAT_CGNS);
+  return 1;
+}
+
+#endif  // compiling CGNS write dialog
+
+
 // Partition dialog - widget pointers, callbacks and dialog routine
 #if defined(HAVE_CHACO) || defined(HAVE_METIS)
 
@@ -1505,7 +1937,7 @@ void partition_select_groups_cb(Fl_Widget *widget, void *data)
   dlg->window->redraw();
 }
 
-int partition_dialog()
+void partition_dialog()
 {
   static PartitionDialog dlg;
 

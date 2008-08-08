@@ -31,7 +31,8 @@ int unv_dialog(const char *filename);
 int bdf_dialog(const char *filename);
 int stl_dialog(const char *filename);
 int latex_dialog(const char *filename);
-int partition_dialog();
+int cgns_write_dialog(const char *filename);
+void partition_dialog();
 
 #endif
 

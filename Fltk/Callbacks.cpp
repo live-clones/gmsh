@@ -648,7 +648,7 @@ int _save_msh(const char *name){ return msh_dialog(name); }
 int _save_pos(const char *name){ return pos_dialog(name); }
 int _save_options(const char *name){ return options_dialog(name); }
 int _save_geo(const char *name){ return geo_dialog(name); }
-int _save_cgns(const char *name){ CreateOutputFile(name, FORMAT_CGNS); return 1; }
+int _save_cgns(const char *name){ return cgns_write_dialog(name); }
 int _save_unv(const char *name){ return unv_dialog(name); }
 int _save_vtk(const char *name){ return generic_mesh_dialog(name, "VTK Options", FORMAT_VTK); }
 int _save_med(const char *name){ return generic_mesh_dialog(name, "MED Options", FORMAT_MED); }
