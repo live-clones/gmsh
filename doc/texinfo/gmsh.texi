@@ -1927,26 +1927,31 @@ either in the GUI or on the command line (see @ref{Running Gmsh}, and
 @cindex Mesh, background
 @cindex Background mesh
 
-There are two ways to specify the size of the mesh elements for a given
-geometry:
+There are three ways to specify the size of the mesh elements for a
+given geometry:
 
 @enumerate
 @item
-You can specify characteristic lengths at the points of the geometrical
-model (with the @code{Point} command: see @ref{Points}). The size of the
-mesh elements will then be computed by linearly interpolating these
-characteristic lengths on the initial mesh (see @ref{Mesh}). This might
-sometimes lead to over-refinement in some areas, so that you may have to
-add ``dummy'' geometrical entities in the model in order to get the
-desired element sizes.
+First, if @code{Mesh.CharacteristicLengthFromPoints} is set (it is by
+default), you can simply specify characteristic lengths at the
+geometrical points of the model (with the @code{Point} command: see
+@ref{Points}). The size of the mesh elements will then be computed by
+linearly interpolating these characteristic lengths on the initial mesh
+(see @ref{Mesh}). This might sometimes lead to over-refinement in some
+areas, so that you may have to add ``dummy'' geometrical entities in the
+model in order to get the desired element sizes.
 
 This method works with all the algorithms implemented in the mesh
 module. The final element sizes are of course constrained by the structured
 algorithms for which the element sizes are explicitly specified (e.g.,
 transfinite and extruded grids: see @ref{Structured grids}).
 @item
-You can specify characteristic lengths using mesh size
-``fields''. Various fields exist: 
+Second, if @code{Mesh.CharacteristicLengthFromCurvature} is set (it is
+not by default), the mesh will be adapted with respect to the curvature
+of the geometrical entities.
+@item
+Finally, you can specify general characteristic lengths using mesh size
+``fields''. Various fields exist:
 @itemize @bullet
 @item 
 A @code{PostView} field specifies an explicit background mesh in the
@@ -1977,12 +1982,17 @@ computed using other fields
 @item 
 @dots{}
 @end itemize
-All target element sizes specified by fields can also be constrained by
-the characteristic lengths defined in the geometrical model if the
-@code{Mesh.ConstrainedBackgroundMesh} option is set. 
 
 Fields are supported by all the algorithms except those based on Netgen.
 @end enumerate
+
+The three aforementioned methods can be used simultaneously, in which
+case the smallest element size is selected at any given point. 
+
+All element sizes are further constrained by the
+@code{Mesh.CharacteristicLengthMin}, @code{Mesh.CharacteristicLengthMax}
+and @code{Mesh.CharacteristicLengthFactor} options (@pxref{Mesh
+options})
 
 Here are the mesh commands that are related to the specification of
 characteristic lengths:
