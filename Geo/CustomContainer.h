@@ -11,6 +11,8 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "Message.h"
+
 /*******************************************************************************
  *
  * This lightweight pool class attempts to reduce memory usage by having the
@@ -104,6 +106,8 @@ class Pool
   void free_memory()
   {
     if(numUsedElement == 0) delete_all_blocks();
+    else Msg::Debug("Request to delete pool with used elements in "
+                    "CustomContainer.h");
   }
 
  private:
@@ -135,6 +139,7 @@ class Pool
       tailBlock = block->prev;
       delete block;
     }
+    tailElement = 0;
   }
 
   // Copy and assignment are not permitted

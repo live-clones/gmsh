@@ -1181,8 +1181,8 @@ struct CGNSWriteDialog
       roundButton1GCatFace->value();
     CTX.mesh.cgns_options.writeBC = checkButtonWriteBC->value();
     CTX.mesh.cgns_options.bocoLocation = roundButton1BCatFace->value();
-    CTX.mesh.cgns_options.writeNormals = checkButtonWriteNormals->value();
-    CTX.mesh.cgns_options.normalSource = roundButton1NormalElem->value();
+    CTX.mesh.cgns_options.normalSource = (checkButtonWriteNormals->value()) ?
+       roundButton1NormalElem->value() + 1 : 0;
     CTX.mesh.cgns_options.vectorDim = choiceVecDim->value() + 2;
     CTX.mesh.cgns_options.writeUserDef = checkButtonUnknownUserDef->value();
   }
@@ -1194,7 +1194,7 @@ struct CGNSWriteDialog
     inputInterfaceName->value(CTX.mesh.cgns_options.interfaceName.c_str());
     inputPatchName->value(CTX.mesh.cgns_options.patchName.c_str());
     checkButtonWriteBC->value(CTX.mesh.cgns_options.writeBC);
-    checkButtonWriteNormals->value(CTX.mesh.cgns_options.writeNormals);
+    checkButtonWriteNormals->value(CTX.mesh.cgns_options.normalSource);
     choiceVecDim->value(CTX.mesh.cgns_options.vectorDim - 2);
     checkButtonUnknownUserDef->value(CTX.mesh.cgns_options.writeUserDef);
 
@@ -1202,14 +1202,15 @@ struct CGNSWriteDialog
     cgnsw_gc_location_cb
       ((CTX.mesh.cgns_options.gridConnectivityLocation) ?
        roundButton1GCatFace : roundButton0GCatVertex, this);
-    cgnsw_write_dummy_bc_cb(checkButtonWriteBC, this);
+    // The order of the next 4 is important
+    cgnsw_normal_source_cb
+      ((CTX.mesh.cgns_options.normalSource == 2) ?
+       roundButton1NormalElem : roundButton0NormalGeo, this);
+    cgnsw_write_normals_cb(checkButtonWriteNormals, this);
     cgnsw_bc_location_cb
       ((CTX.mesh.cgns_options.bocoLocation) ?
        roundButton1BCatFace : roundButton0BCatVertex, this);
-    cgnsw_write_normals_cb(checkButtonWriteNormals, this);
-    cgnsw_normal_source_cb
-      ((CTX.mesh.cgns_options.normalSource) ?
-       roundButton1NormalElem : roundButton0NormalGeo, this);
+    cgnsw_write_dummy_bc_cb(checkButtonWriteBC, this);
   }
 };
 

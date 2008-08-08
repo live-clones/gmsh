@@ -13,6 +13,14 @@
 #include "MZoneBoundary.h"
 #include "Message.h"
 
+//--Types at local scope
+
+enum {
+  NormalSourceGeometry = 1,
+  NormalSourceElement = 2
+};
+
+
 /*******************************************************************************
  *
  * class BCPatchIndex
@@ -94,12 +102,12 @@ class BCPatchIndex
   // Once all entity tags have been added, generate patch indices
   void generatePatchIndices()
   {
-    if(sharedPatch) {  // Don't renumber if not shared to preserve entity
-                       // numbers
-      int c = 1;
+//     if(sharedPatch) {  // Don't renumber if not shared to preserve entity
+//                        // numbers.  Mostly useful for debugging.
+      int c = 0;
       for(PatchDataListIt pDIt = patchData.begin(); pDIt != patchData.end();
           ++pDIt) pDIt->index = c++;
-    }
+//     }
   }
 
   // Get the patch index for an entity (generate patch indices first)
@@ -135,6 +143,7 @@ class BCPatchIndex
  * I/O
  * ===
  *
+ *   normalSource       - (I) source for normals
  *   vertex             - (I) vertex to add to zoneBoVec and to find the normal
  *                            at
  *   zoneIndex          - (I)
@@ -159,7 +168,8 @@ class BCPatchIndex
 
 template <unsigned DIM, typename FaceT>
 void updateBoVec
-(const MVertex *const vertex, const int zoneIndex, const int vertIndex,
+(const int normalSource, const MVertex *const vertex, const int zoneIndex,
+ const int vertIndex,
  const CCon::FaceVector<typename MZoneBoundary<DIM>::template
  GlobalVertexData<FaceT>::FaceDataB> &faces, ZoneBoVec &zoneBoVec,
  BCPatchIndex &patch, bool &warnNormFromElem);
@@ -248,12 +258,15 @@ int edge_normal
 
 template <>
 void updateBoVec<2, MEdge>
-(const MVertex *const vertex, const int zoneIndex, const int vertIndex,
+(const int normalSource, const MVertex *const vertex, const int zoneIndex,
+ const int vertIndex,
  const CCon::FaceVector<MZoneBoundary<2>::GlobalVertexData<MEdge>::FaceDataB>
  &faces, ZoneBoVec &zoneBoVec, BCPatchIndex &patch, bool &warnNormFromElem)
 {
 
-  GEntity *const ent = vertex->onWhat();
+  GEntity *ent;
+  if(normalSource == NormalSourceElement) goto getNormalFromElements;
+  ent = vertex->onWhat();
   if(ent == 0) {
     goto getNormalFromElements;
     // No entity: try to find a normal from the faces
@@ -406,7 +419,7 @@ void updateBoVec<2, MEdge>
  *--------------------------------------------------------------------*/
 
   {
-    if(warnNormFromElem) {
+    if(warnNormFromElem && normalSource == 1) {
       Msg::Warning("Some or all boundary normals were determined from mesh "
                    "elements instead of from the geometry");
       warnNormFromElem = false;
@@ -465,18 +478,22 @@ void updateBoVec<2, MEdge>
  *     splitting of the patch.  Merging of entities into a single patch has not
  *     yet been implemented, but the best way to accomplish this is probably to
  *     split all entities into separate patches and then record which pairs of
- *     entities cannot be merged.  Later, all others and be merged and
+ *     entities cannot be merged.  Later, all others can be merged and
  *     'zoneBoVec' updated accordingly.
  *
  ******************************************************************************/
 
 template <>
 void updateBoVec<3, MFace>
-(const MVertex *const vertex, const int zoneIndex, const int vertIndex,
+(const int normalSource, const MVertex *const vertex, const int zoneIndex,
+ const int vertIndex,
  const CCon::FaceVector<MZoneBoundary<3>::GlobalVertexData<MFace>::FaceDataB>
  &faces, ZoneBoVec &zoneBoVec, BCPatchIndex &patch, bool &warnNormFromElem)
 {
-  GEntity *const ent = vertex->onWhat();
+
+  GEntity *ent;
+  if(normalSource == NormalSourceElement) goto getNormalFromElements;
+  ent = vertex->onWhat();
   if(ent == 0) {
     goto getNormalFromElements;
     // No entity: try to find a normal from the faces
@@ -684,7 +701,7 @@ void updateBoVec<3, MFace>
  *--------------------------------------------------------------------*/
 
   {
-    if(warnNormFromElem) {
+    if(warnNormFromElem && normalSource == 1) {
       Msg::Warning("Some or all boundary normals were determined from mesh "
                    "elements instead of from the geometry");
       warnNormFromElem = false;
@@ -890,19 +907,27 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices
  * I/O
  * ===
  *
- *   zoneBoMap          - (O) Boundary vertices for all zones.
+ *   normalSource       - (I) Source for normals if the are requested.
+ *                            0 - do not obtain normals
+ *                            1 - geometry
+ *                            2 - elements
+ *                            Note that if normals cannot be found from the
+ *                            geometry, the elements will be used.
+ *   zoneBoMap          - (O) boundary vertices for all zones.
  *
  * Notes
  * =====
  *
  *   - Should only be called after all zones have been added via
  *     'interior_boundary_vertices'
+ *   - Unless normals are obtained from the geometry, all boundary vertices will
+ *     be written to one patch
  *
  ******************************************************************************/
 
 template <unsigned DIM>
 int MZoneBoundary<DIM>::exteriorBoundaryVertices
-(ZoneBoVec &zoneBoVec)
+(const int normalSource, ZoneBoVec &zoneBoVec)
 {
 
   if(globalBoVertMap.size() == 0) return 1;
@@ -928,19 +953,31 @@ int MZoneBoundary<DIM>::exteriorBoundaryVertices
 
 //--Try to find an outwards normal for this vertex
 
-      updateBoVec<DIM, FaceT>(vMapIt->first, zoneData.zoneIndex,
-                              zoneData.vertexIndex, vMapIt->second.faces,
-                              zoneBoVec, patch, warnNormFromElem);
+      if(normalSource) {
+        updateBoVec<DIM, FaceT>(normalSource, vMapIt->first, zoneData.zoneIndex,
+                                zoneData.vertexIndex, vMapIt->second.faces,
+                                zoneBoVec, patch, warnNormFromElem);
+      }
+      else {
+        // Keys to 'globalBoVertMap' will not change so const_cast is okay.
+        zoneBoVec.push_back(VertexBoundary(zoneData.zoneIndex, 0, SVector3(0.),
+                                           const_cast<MVertex*>(vMapIt->first),
+                                           zoneData.vertexIndex));
+      }
     }
   }
 
-  // zoneBoVec has entities as a patch index.  Update with the actual patch
-  // index in 'patch'.
-  patch.generatePatchIndices();
-  const int nBoVert = zoneBoVec.size();
-  for(int iBoVert = 0; iBoVert != nBoVert; ++iBoVert) {
-    zoneBoVec[iBoVert].bcPatchIndex =
-      patch.getIndex(zoneBoVec[iBoVert].bcPatchIndex);
+  // If normals were written from the geometry, zoneBoVec currently stores
+  // entities in bcPatchIndex.  Update with the actual patch index.  Why? -
+  // because two entities may have been merged if the interface between them is
+  // continuous.
+  if(normalSource == NormalSourceGeometry) {
+    patch.generatePatchIndices();
+    const int nBoVert = zoneBoVec.size();
+    for(int iBoVert = 0; iBoVert != nBoVert; ++iBoVert) {
+      zoneBoVec[iBoVert].bcPatchIndex =
+        patch.getIndex(zoneBoVec[iBoVert].bcPatchIndex);
+    }
   }
 
   return 0;

@@ -39,7 +39,7 @@
 
 int cgnsErr(const int cgIndexFile = -1)
 {
-  Message::Error("This is a CGNS error\n");
+  Message::Error("Error detected by CGNS library\n");
   Message::Error(cg_get_error());
   if(cgIndexFile != -1)
     if(cg_close(cgIndexFile)) Message::Error("Unable to close CGNS file");
@@ -989,56 +989,61 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
  * Write the remaining unconnected vertices as boundary conditions
  *--------------------------------------------------------------------*/
 
-      ZoneBoVec zoneBoVec;              // from 'MZoneBoundary.h'
-      if(mZoneBoundary.exteriorBoundaryVertices(zoneBoVec) == 0) {  // Have BC
+      if(options.writeBC) {
+        ZoneBoVec zoneBoVec;            // from 'MZoneBoundary.h'
+        if(mZoneBoundary.exteriorBoundaryVertices
+           (options.normalSource, zoneBoVec) == 0) {
 
-        // Sort by zone index and then entity index
-        const int numBoVert = zoneBoVec.size();
-        std::vector<int> iZBV(numBoVert);
-        for(int i = 0; i != numBoVert; ++i) iZBV[i] = i;
-        std::sort<int*, ZoneBoVecSort>(&iZBV[0], &iZBV[numBoVert],
-                                       ZoneBoVecSort(zoneBoVec));
+          // Sort by zone index and then entity index
+          const int numBoVert = zoneBoVec.size();
+          std::vector<int> iZBV(numBoVert);
+          for(int i = 0; i != numBoVert; ++i) iZBV[i] = i;
+          std::sort<int*, ZoneBoVecSort>(&iZBV[0], &iZBV[numBoVert],
+                                         ZoneBoVecSort(zoneBoVec));
 
-        dBuffer.reserve(1024);
-        iBuffer1.reserve(1024);
+          dBuffer.reserve(1024);
+          iBuffer1.reserve(1024);
 
-        int iVert = 0;
-        while(iVert != numBoVert) {
-          dBuffer.clear();
-          iBuffer1.clear();
-          const int zoneIndex = zoneBoVec[iZBV[iVert]].zoneIndex;
-          const int patchIndex = zoneBoVec[iZBV[iVert]].bcPatchIndex;
-          const int iVertStart = iVert;
-          while(iVert != numBoVert &&
-                zoneBoVec[iZBV[iVert]].zoneIndex == zoneIndex &&
-                zoneBoVec[iZBV[iVert]].bcPatchIndex == patchIndex) {
-            VertexBoundary &vertBo = zoneBoVec[iZBV[iVert]];
-            dBuffer.push_back(vertBo.normal[0]);
-            dBuffer.push_back(vertBo.normal[1]);
-            if(vectorDim == 3) dBuffer.push_back(vertBo.normal[2]);
-            iBuffer1.push_back(vertBo.vertexIndex);
-            ++iVert;
+          int iVert = 0;
+          while(iVert != numBoVert) {
+            dBuffer.clear();
+            iBuffer1.clear();
+            const int zoneIndex = zoneBoVec[iZBV[iVert]].zoneIndex;
+            const int patchIndex = zoneBoVec[iZBV[iVert]].bcPatchIndex;
+            const int iVertStart = iVert;
+            while(iVert != numBoVert &&
+                  zoneBoVec[iZBV[iVert]].zoneIndex == zoneIndex &&
+                  zoneBoVec[iZBV[iVert]].bcPatchIndex == patchIndex) {
+              VertexBoundary &vertBo = zoneBoVec[iZBV[iVert]];
+              dBuffer.push_back(vertBo.normal[0]);
+              dBuffer.push_back(vertBo.normal[1]);
+              if(vectorDim == 3) dBuffer.push_back(vertBo.normal[2]);
+              iBuffer1.push_back(vertBo.vertexIndex);
+              ++iVert;
+            }
+            const int numBCVert = iVert - iVertStart;
+
+            int cgIndexBoco;
+            std::string patchName = options.patchName;
+            expand_name(patchName, patchIndex, "Patch");
+            if(patchName.length() == 0) {
+              patchName = "Patch_";
+              patchName += CGNSNameStr(patchIndex+1).c_str();
+            }
+            if(cg_boco_write(cgIndexFile, cgIndexBase,
+                             zoneInfo[zoneIndex].cgIndex, patchName.c_str(),
+                             BCTypeNull, PointList, numBCVert, &iBuffer1[0],
+                             &cgIndexBoco))
+              return cgnsErr();
+
+            if(options.normalSource) {
+              int normalIndex;
+              if(cg_boco_normal_write(cgIndexFile, cgIndexBase,
+                                      zoneInfo[zoneIndex].cgIndex, cgIndexBoco,
+                                      &normalIndex, 1, RealDouble, &dBuffer[0]))
+                return cgnsErr();
+            }
           }
-          const int numBCVert = iVert - iVertStart;
-
-          int cgIndexBoco;
-          std::string patchName = options.patchName;
-          expand_name(patchName, patchIndex-1, "Patch");
-          if(patchName.length() == 0) {
-            patchName = "Patch_";
-            patchName += CGNSNameStr(patchIndex).c_str();
-          }
-          if(cg_boco_write(cgIndexFile, cgIndexBase,
-                           zoneInfo[zoneIndex].cgIndex, patchName.c_str(),
-                           BCTypeNull, PointList, numBCVert, &iBuffer1[0],
-                           &cgIndexBoco))
-            return cgnsErr();
-
-          int normalIndex;
-          if(cg_boco_normal_write(cgIndexFile, cgIndexBase,
-                                  zoneInfo[zoneIndex].cgIndex, cgIndexBoco,
-                                  &normalIndex, 1, RealDouble, &dBuffer[0]))
-            return cgnsErr();
         }
       }
 

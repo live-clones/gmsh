@@ -27,15 +27,14 @@ struct CGNSOptions
   int bocoLocation;                     // Location of BC (values
                                         // CGNSLocationType)
   int normalSource;                     // Source for BC normal data
-                                        // 0 - geometry
-                                        // 1 - elements
+                                        // 0 - do not write normals
+                                        // 1 - geometry
+                                        // 2 - elements
   int vectorDim;                        // Number of dimensions in a vector
                                         // (only relevant for a 2D mesh)
   bool writeBC;
-  bool writeNormals;
   bool writeUserDef;                    // T - write user-defined elements for
                                         //     element types unsupported by CGNS
-
 
 //--Constructor
 
@@ -49,15 +48,14 @@ struct CGNSOptions
   void setDefaults()
   {
     baseName = "Base_1";
-    zoneName = "Zone_&I&";
-    interfaceName = "Interface_&I&";
-    patchName = "Patch_&I&";
+    zoneName = "Zone_&I%4&";
+    interfaceName = "Interface_&I%4&";
+    patchName = "Patch_&I%4&";
     gridConnectivityLocation = 0;
     bocoLocation = 0;
-    normalSource = 0;
+    normalSource = 1;
     vectorDim = 2;
     writeBC = true;
-    writeNormals = true;
     writeUserDef = false;
   }
 };

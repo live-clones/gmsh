@@ -311,7 +311,7 @@ class MZoneBoundary
 //--Return exterior boundary vertices (unconnected vertices at the extent of the
 //--domain
 
-  int exteriorBoundaryVertices(ZoneBoVec &zoneBoVec);
+  int exteriorBoundaryVertices(const int normalSource, ZoneBoVec &zoneBoVec);
 
 //--Memory management
 
