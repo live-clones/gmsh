@@ -599,20 +599,21 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
 	  // set the mesh as immutable
 	  ge->meshAttributes.Method == MESH_NONE;
 	  // set the correct tags on the boundary vertices
-	  Msg::Debug("Applying mesh contraints on edge %d first node %d", 
-		     ge->tag(), nodeNum.Value(1));
-	  ge->getBeginVertex()->mesh_vertices[0]->setNum(nodeNum.Value(1));
-	  Msg::Debug("Applying mesh contraints on edge %d last node %d",
-		     ge->tag(), nodeNum.Value(n));
-	  ge->getEndVertex()->mesh_vertices[0]->setNum(nodeNum.Value(n));
+	  int numbeg = nodeNum.Value(1);
+	  int numend = nodeNum.Value(n);
+	  Msg::Debug("Applying mesh contraints on edge %d: beg=%d end=%d", 
+		     ge->tag(), numbeg, numend);
+	  ge->getBeginVertex()->mesh_vertices[0]->setNum(numbeg);
+	  ge->getEndVertex()->mesh_vertices[0]->setNum(numend);
 	  // set the mesh on the edge
 	  for(int i = 2; i < n; i++){
-	    Msg::Debug("Applying mesh contraints on edge %d node %d",
-		       ge->tag(), nodeNum.Value(i));
+	    int num = nodeNum.Value(i);
 	    double u = nodePar.Value(i);
 	    GPoint p = ge->point(u);
+	    Msg::Debug("... adding vertex on edge %d: num=%d u=%g xyz=(%g,%g,%g)",
+		       ge->tag(), num, u, p.x(), p.y(), p.z());
 	    MEdgeVertex *v = new MEdgeVertex(p.x(), p.y(), p.z(), ge, u);
-	    v->setNum(nodeNum.Value(i));
+	    v->setNum(num);
 	    ge->mesh_vertices.push_back(v);
 	  }
 	  for(unsigned int i = 0; i < ge->mesh_vertices.size() + 1; i++){
