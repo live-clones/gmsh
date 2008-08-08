@@ -157,7 +157,7 @@ int MZone<DIM>::zoneData()
 
 //--Label interior vertices and complete output vector of vertices
 
-  const VertexMap::const_iterator vMapEnd = vertMap.end();
+  const VertexMap::iterator vMapEnd = vertMap.end();
   for(VertexMap::iterator vMapIt = vertMap.begin();
       vMapIt != vMapEnd; ++vMapIt) {
     if(vMapIt->second == 0) {  // Vertex in zone interior
