@@ -2617,6 +2617,7 @@ void GUI::create_option_window()
         {"Gamma", 0, 0, 0},
         {"Eta", 0, 0, 0},
         {"Rho", 0, 0, 0},
+        {"Disto", 0, 0, 0},
         {0}
       };
       mesh_choice[6] = new Fl_Choice(L + 2 * WB + IW / 2, 2 * WB + 8 * BH, IW/2, BH, "Quality range");
@@ -4008,7 +4009,7 @@ void GUI::create_statistics_window()
   }
 
   int width = 26 * fontsize;
-  int height = 5 * WB + 17 * BH;
+  int height = 5 * WB + 18 * BH;
 
   stat_window = new Dialog_Window(width, height, CTX.non_modal_windows, "Statistics");
   stat_window->box(GMSH_WINDOW_BOX);
@@ -4045,6 +4046,8 @@ void GUI::create_statistics_window()
       stat_value[num]->tooltip("~ volume^(2/3) / sum_edge_length^2"); num++;
       stat_value[num] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "Rho");
       stat_value[num]->tooltip("~ min_edge_length / max_edge_length"); num++;
+      stat_value[num] = new Fl_Output(2 * WB, 2 * WB + 16 * BH, IW, BH, "Disto");
+      stat_value[num]->tooltip("~ min (J0/J, J/J0)"); num++;
 
       stat_butt[0] = new Fl_Button(width - BB - 5 * WB, 2 * WB + 13 * BH, BB, BH, "Graph");
       stat_butt[0]->callback(statistics_histogram_cb, (void *)"Gamma");
@@ -4052,6 +4055,8 @@ void GUI::create_statistics_window()
       stat_butt[1]->callback(statistics_histogram_cb, (void *)"Eta");
       stat_butt[2] = new Fl_Button(width - BB - 5 * WB, 2 * WB + 15 * BH, BB, BH, "Graph");
       stat_butt[2]->callback(statistics_histogram_cb, (void *)"Rho");
+      stat_butt[3] = new Fl_Button(width - BB - 5 * WB, 2 * WB + 16 * BH, BB, BH, "Graph");
+      stat_butt[3]->callback(statistics_histogram_cb, (void *)"Disto");
 
       g[1]->end();
     }
@@ -4124,7 +4129,10 @@ void GUI::set_statistics(bool compute_quality)
   sprintf(label[num], "%g", s[15]); stat_value[num]->value(label[num]); num++;
 
   if(!compute_quality){
-    for(int i = 0; i < 3; i++) stat_butt[i]->deactivate();
+    for(int i = 0; i < 4; i++) stat_butt[i]->deactivate();
+    sprintf(label[num], "Press Update");
+    stat_value[num]->deactivate();
+    stat_value[num]->value(label[num]); num++;
     sprintf(label[num], "Press Update");
     stat_value[num]->deactivate();
     stat_value[num]->value(label[num]); num++;
@@ -4136,7 +4144,7 @@ void GUI::set_statistics(bool compute_quality)
     stat_value[num]->value(label[num]); num++;
   }
   else{
-    for(int i = 0; i < 3; i++) stat_butt[i]->activate();
+    for(int i = 0; i < 4; i++) stat_butt[i]->activate();
     sprintf(label[num], "%.4g (%.4g->%.4g)", s[17], s[18], s[19]);
     stat_value[num]->activate();
     stat_value[num]->value(label[num]); num++;
@@ -4144,6 +4152,9 @@ void GUI::set_statistics(bool compute_quality)
     stat_value[num]->activate();
     stat_value[num]->value(label[num]); num++;
     sprintf(label[num], "%.4g (%.4g->%.4g)", s[23], s[24], s[25]);
+    stat_value[num]->activate();
+    stat_value[num]->value(label[num]); num++;
+    sprintf(label[num], "%.4g (%.4g->%.4g)", s[46], s[47], s[48]);
     stat_value[num]->activate();
     stat_value[num]->value(label[num]); num++;
   }

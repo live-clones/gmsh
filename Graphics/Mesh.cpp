@@ -99,7 +99,9 @@ static bool isElementVisible(MElement *ele)
   if(!ele->getVisibility()) return false;
   if(CTX.mesh.quality_sup) {
     double q;
-    if(CTX.mesh.quality_type == 2)
+    if(CTX.mesh.quality_type == 3)
+      q = ele->distoShapeMeasure();
+    else if(CTX.mesh.quality_type == 2)
       q = ele->rhoShapeMeasure();
     else if(CTX.mesh.quality_type == 1)
       q = ele->etaShapeMeasure();
@@ -362,6 +364,59 @@ static void drawBarycentricDual(std::vector<T*> &elements)
   glDisable(GL_LINE_STIPPLE);
   gl2psDisable(GL2PS_LINE_STIPPLE);
 }
+
+template<class T>
+static void drawVoronoiDual(std::vector<T*> &elements)
+{
+  glColor4ubv((GLubyte *) & CTX.color.fg);
+  glEnable(GL_LINE_STIPPLE);
+  glLineStipple(1, 0x0F0F);
+  gl2psEnable(GL2PS_LINE_STIPPLE);
+  glBegin(GL_LINES);
+  for(unsigned int i = 0; i < elements.size(); i++){
+    T *ele = elements[i];
+    if(!isElementVisible(ele)) continue;
+    SPoint3 pc = ele->circumcenter();
+    if(ele->getDim() == 2){
+      for(int j = 0; j < ele->getNumEdges(); j++){
+        MEdge e = ele->getEdge(j);
+	SVector3 p2p1 ( e.getVertex(1)->x() - e.getVertex(0)->x(),
+			e.getVertex(1)->y() - e.getVertex(0)->y(),
+			e.getVertex(1)->z() - e.getVertex(0)->z());
+	SVector3 pcp1 ( pc.x() - e.getVertex(0)->x(),
+			pc.y() - e.getVertex(0)->y(),
+			pc.z() - e.getVertex(0)->z());
+			
+	double alpha = dot(pcp1,p2p1) / dot(p2p1,p2p1);
+	
+        SPoint3 p ((1.-alpha)*e.getVertex(0)->x() + alpha*e.getVertex(1)->x(), 
+		   (1.-alpha)*e.getVertex(0)->y() + alpha*e.getVertex(1)->y(),
+		   (1.-alpha)*e.getVertex(0)->z() + alpha*e.getVertex(1)->z());
+	glVertex3d(pc.x(), pc.y(), pc.z());
+        glVertex3d(p.x(), p.y(), p.z());
+      }
+    }
+    else if(ele->getDim() == 3){
+      for(int j = 0; j < ele->getNumFaces(); j++){
+        MFace f = ele->getFace(j);
+        SPoint3 p = f.barycenter();
+        glVertex3d(pc.x(), pc.y(), pc.z());
+        glVertex3d(p.x(), p.y(), p.z());
+        for(int k = 0; k < f.getNumVertices(); k++){
+          MEdge e(f.getVertex(k), (k == f.getNumVertices() - 1) ? 
+                  f.getVertex(0) : f.getVertex(k + 1));
+          SPoint3 pe = e.barycenter();
+          glVertex3d(p.x(), p.y(), p.z());
+          glVertex3d(pe.x(), pe.y(), pe.z());
+        }
+      }
+    }
+  }
+  glEnd();
+  glDisable(GL_LINE_STIPPLE);
+  gl2psDisable(GL2PS_LINE_STIPPLE);
+}
+
 
 // Routine to fill the smooth normal container
 
@@ -696,6 +751,10 @@ class drawMeshGFace {
       if(CTX.mesh.triangles) drawBarycentricDual(f->triangles);
       if(CTX.mesh.quadrangles) drawBarycentricDual(f->quadrangles);
     }
+    else if(CTX.mesh.voronoi) {
+      if(CTX.mesh.triangles) drawVoronoiDual(f->triangles);
+    }
+
 
     if(CTX.render_mode == GMSH_SELECT) {
       glPopName();

@@ -138,6 +138,7 @@ class MElement
   virtual double rhoShapeMeasure();
   virtual double gammaShapeMeasure(){ return 0.; }
   virtual double etaShapeMeasure(){ return 0.; }
+  virtual double distoShapeMeasure() {return 1.0;}
 
   // compute the barycenter
   virtual SPoint3 barycenter();
@@ -193,7 +194,7 @@ class MElement
                         int num=0, int elementary=1, int physical=1);
   virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber, 
                         bool printGamma, bool printEta, bool printRho, 
-                        double scalingFactor=1.0, int elementary=1);
+                        bool printDisto,double scalingFactor=1.0, int elementary=1);
   virtual void writeSTL(FILE *fp, bool binary=false, double scalingFactor=1.0);
   virtual void writeVRML(FILE *fp);
   virtual void writeUNV(FILE *fp, int num=0, int elementary=1, int physical=1);
@@ -459,6 +460,7 @@ class MTriangle : public MElement {
   ~MTriangle(){}
   virtual int getDim(){ return 2; }
   virtual double gammaShapeMeasure();
+  virtual double distoShapeMeasure();
   virtual int getNumVertices(){ return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual MVertex *getVertexMED(int num)
@@ -550,6 +552,7 @@ class MTriangle : public MElement {
     pnt(1, 0, u, v, w, p);
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
+  virtual SPoint3 circumcenter();
  private:
   int edges_tri(const int edge, const int vert) const
   {
@@ -1185,6 +1188,7 @@ class MTetrahedron : public MElement {
   virtual double getVolume();
   virtual int getVolumeSign(){ return (getVolume() >= 0) ? 1 : -1; }
   virtual double gammaShapeMeasure();
+  virtual double distoShapeMeasure();
   virtual double etaShapeMeasure();
   void xyz2uvw(double xyz[3], double uvw[3]);
   virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
@@ -1236,6 +1240,7 @@ class MTetrahedron : public MElement {
     pnt(1, 0, u, v, w, p);
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
+  virtual SPoint3 circumcenter();
  private:
   int edges_tetra(const int edge, const int vert) const
   {

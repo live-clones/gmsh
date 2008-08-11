@@ -160,7 +160,7 @@ class Context_T {
     double quality_inf, quality_sup, radius_inf, radius_sup;
     double scaling_factor, lc_factor, rand_factor, lc_integration_precision, lc_min, lc_max;
     int lc_from_points, lc_from_curvature, lc_extend_from_boundary;
-    int dual, draw_skin_only;
+    int dual, voronoi, draw_skin_only;
     int light, light_two_side, light_lines;
     int format, nb_smoothing, algo2d, algo3d, algo_recombine;
     int order, second_order_linear, second_order_incomplete;
@@ -202,7 +202,7 @@ class Context_T {
     int jpeg_quality, jpeg_smoothing;
     int gif_dither, gif_sort, gif_interlace, gif_transparent;
     int geo_labels;
-    int pos_elementary, pos_element, pos_gamma, pos_eta, pos_rho;
+    int pos_elementary, pos_element, pos_gamma, pos_eta, pos_rho,pos_disto;
     int text, tex_as_equation;
   } print;
 

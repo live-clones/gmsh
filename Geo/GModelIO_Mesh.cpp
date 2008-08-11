@@ -613,7 +613,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
 
 int GModel::writePOS(const std::string &name, bool printElementary, 
                      bool printElementNumber, bool printGamma, bool printEta, 
-                     bool printRho, bool saveAll, double scalingFactor)
+                     bool printRho, bool printDisto, bool saveAll, double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), "w");
   if(!fp){
@@ -621,7 +621,7 @@ int GModel::writePOS(const std::string &name, bool printElementary,
     return 0;
   }
 
-  bool f[5] = {printElementary, printElementNumber, printGamma, printEta, printRho};
+  bool f[6] = {printElementary, printElementNumber, printGamma, printEta, printRho,printDisto};
 
   bool first = true;  
   std::string names;
@@ -645,6 +645,10 @@ int GModel::writePOS(const std::string &name, bool printElementary,
     if(first) first = false; else names += ",";
     names += "\"Rho\"";
   }
+  if(f[5]){
+    if(first) first = false; else names += ",";
+    names += "\"Disto\"";
+  }
 
   if(names.empty()) return 0;
 
@@ -656,7 +660,7 @@ int GModel::writePOS(const std::string &name, bool printElementary,
   for(eiter it = firstEdge(); it != lastEdge(); ++it) {
     if(saveAll || (*it)->physicals.size()){
       for(unsigned int i = 0; i < (*it)->lines.size(); i++)
-        (*it)->lines[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+        (*it)->lines[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], f[5], 
                                   scalingFactor, (*it)->tag());
     }
   }
@@ -664,10 +668,10 @@ int GModel::writePOS(const std::string &name, bool printElementary,
   for(fiter it = firstFace(); it != lastFace(); ++it) {
     if(saveAll || (*it)->physicals.size()){
       for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-        (*it)->triangles[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+        (*it)->triangles[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], f[5], 
                                       scalingFactor, (*it)->tag());
       for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-        (*it)->quadrangles[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+        (*it)->quadrangles[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], f[5], 
                                         scalingFactor, (*it)->tag());
     }
   }
@@ -675,16 +679,16 @@ int GModel::writePOS(const std::string &name, bool printElementary,
   for(riter it = firstRegion(); it != lastRegion(); ++it) {
     if(saveAll || (*it)->physicals.size()){
       for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
-        (*it)->tetrahedra[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4],
+        (*it)->tetrahedra[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], f[5],
                                        scalingFactor, (*it)->tag());
       for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
-        (*it)->hexahedra[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+        (*it)->hexahedra[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], f[5], 
                                       scalingFactor, (*it)->tag());
       for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
-        (*it)->prisms[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+        (*it)->prisms[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], f[5], 
                                    scalingFactor, (*it)->tag());
       for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
-        (*it)->pyramids[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], 
+        (*it)->pyramids[i]->writePOS(fp, f[0], f[1], f[2], f[3], f[4], f[5], 
                                      scalingFactor, (*it)->tag());
     }
   }

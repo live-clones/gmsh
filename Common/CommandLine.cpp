@@ -537,6 +537,10 @@ void Get_Options(int argc, char *argv[])
         CTX.mesh.dual = 1;
         i++;
       }
+      else if(!strcmp(argv[i] + 1, "voronoi")) {
+        CTX.mesh.voronoi = 1;
+        i++;
+      }
       else if(!strcmp(argv[i] + 1, "noview")) {
         opt_view_visible(0, GMSH_SET, 0);
         i++;

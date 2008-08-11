@@ -229,8 +229,8 @@ public:
   // statistics window
   Fl_Window        *stat_window;
   Fl_Output        *stat_value[50];
-  Fl_Button        *stat_butt[3];
-  double            quality[3][100];
+  Fl_Button        *stat_butt[4];
+  double            quality[4][100];
 
   // message window
   Fl_Window        *msg_window;

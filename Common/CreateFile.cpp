@@ -185,7 +185,7 @@ void CreateOutputFile(const char *filename, int format)
   case FORMAT_POS:
     GModel::current()->writePOS(name, CTX.print.pos_elementary, CTX.print.pos_element, 
                                 CTX.print.pos_gamma, CTX.print.pos_eta, CTX.print.pos_rho, 
-                                CTX.mesh.save_all, CTX.mesh.scaling_factor);
+				CTX.print.pos_disto,CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_GEO:

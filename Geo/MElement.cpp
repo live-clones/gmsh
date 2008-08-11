@@ -18,6 +18,8 @@
 #  include "Message.h"
 #  include "Context.h"
 #  include "qualityMeasures.h"
+#  include "meshGFaceDelaunayInsertion.h"
+#  include "meshGRegionDelaunayInsertion.h"
 #endif
 
 #define SQU(a)      ((a)*(a))
@@ -94,6 +96,51 @@ double MElement::rhoShapeMeasure()
 void MElement::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 {
   Msg::Error("No integration points defined for this type of element");
+}
+
+SPoint3 MTriangle::circumcenter()
+{
+#if defined(HAVE_GMSH_EMBEDDED)
+  return 0.;
+#else
+  double p1[3] = {_v[0]->x(),_v[0]->y(),_v[0]->z()};
+  double p2[3] = {_v[1]->x(),_v[1]->y(),_v[1]->z()};
+  double p3[3] = {_v[2]->x(),_v[2]->y(),_v[2]->z()};
+  double res[3];
+  circumCenterXYZ(p1,p2,p3,res);
+  return SPoint3(res[0],res[1],res[2]);
+#endif
+}
+
+SPoint3 MTetrahedron::circumcenter()
+{
+#if defined(HAVE_GMSH_EMBEDDED)
+  return 0.;
+#else
+  MTet4 t(this,0);
+  double res[3];
+  t.circumcenter(res);
+  return SPoint3(res[0],res[1],res[2]);
+#endif
+}
+
+
+double MTriangle::distoShapeMeasure()
+{
+#if defined(HAVE_GMSH_EMBEDDED)
+  return 1.;
+#else
+  return qmDistorsionOfMapping(this);
+#endif
+}
+
+double MTetrahedron::distoShapeMeasure()
+{
+#if defined(HAVE_GMSH_EMBEDDED)
+  return 1.;
+#else
+  return qmDistorsionOfMapping(this);
+#endif
 }
 
 double MTriangle::gammaShapeMeasure()
@@ -420,7 +467,7 @@ void MElement::writeMSH(FILE *fp, double version, bool binary, int num,
 
 void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber, 
                         bool printGamma, bool printEta, bool printRho, 
-                        double scalingFactor, int elementary)
+                        bool printDisto, double scalingFactor, int elementary)
 {
   const char *str = getStringForPOS();
   if(!str) return;
@@ -465,6 +512,13 @@ void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
     for(int i = 0; i < n; i++){
       if(first) first = false; else fprintf(fp, ",");
       fprintf(fp, "%g", rho);
+    }
+  }
+  if(printDisto){
+    double disto = distoShapeMeasure();
+    for(int i = 0; i < n; i++){
+      if(first) first = false; else fprintf(fp, ",");
+      fprintf(fp, "%g", disto);
     }
   }
   fprintf(fp, "};\n");

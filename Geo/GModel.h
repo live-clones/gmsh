@@ -270,7 +270,7 @@ class GModel
   // Mesh statistics (as Gmsh post-processing views)
   int writePOS(const std::string &name, bool printElementary,
                bool printElementNumber, bool printGamma, bool printEta, bool printRho,
-               bool saveAll=false, double scalingFactor=1.0);
+               bool printDisto,bool saveAll=false, double scalingFactor=1.0);
 
   // Stereo lithography format
   int readSTL(const std::string &name, double tolerance=1.e-3);

@@ -4546,7 +4546,7 @@ double opt_mesh_quality_type(OPT_ARGS_NUM)
     if(CTX.mesh.quality_type != val) 
       CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX.mesh.quality_type = (int)val;
-    if(CTX.mesh.quality_type < 0 || CTX.mesh.quality_type > 2)
+    if(CTX.mesh.quality_type < 0 || CTX.mesh.quality_type > 3)
       CTX.mesh.quality_type = 0;
   }
 #if defined(HAVE_FLTK)
@@ -5196,6 +5196,14 @@ double opt_mesh_dual(OPT_ARGS_NUM)
     CTX.mesh.dual = (int)val;
   }
   return CTX.mesh.dual;
+}
+
+double opt_mesh_voronoi(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX.mesh.voronoi= (int)val;
+  }
+  return CTX.mesh.voronoi;
 }
 
 double opt_mesh_draw_skin_only(OPT_ARGS_NUM)
@@ -7876,6 +7884,13 @@ double opt_print_pos_rho(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX.print.pos_rho = (int)val;
   return CTX.print.pos_rho;
+}
+
+double opt_print_pos_disto(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.print.pos_disto = (int)val;
+  return CTX.print.pos_disto;
 }
 
 double opt_print_gif_dither(OPT_ARGS_NUM)

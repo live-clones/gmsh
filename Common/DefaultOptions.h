@@ -1102,6 +1102,9 @@ StringXNumber MeshOptions_Number[] = {
     "Display faces of volume mesh?" },
   { F|O, "VolumeNumbers" , opt_mesh_volumes_num , 0. , 
     "Display volume mesh element numbers?" },
+  { F|O, "Voronoi" , opt_mesh_voronoi , 0. ,
+    "Display the voronoi diagram" },
+
   { F|O, "ZoneDefinition" , opt_mesh_zone_definition , 2. , 
     "Method for defining a zone (0=single zone, 1=by partition, 2=by physical)" },
 
@@ -1474,6 +1477,8 @@ StringXNumber PrintOptions_Number[] = {
     "Save Eta quality measure in mesh statistics exported as post-processing views" },
   { F|O, "PostRho" , opt_print_pos_rho , 0. ,
     "Save Rho quality measure in mesh statistics exported as post-processing views" },
+  { F|O, "PostDisto" , opt_print_pos_disto , 0. ,
+    "Save Disto quality measure in mesh statistics exported as post-processing views" },
 
   { F|O, "TexAsEquation" , opt_print_tex_as_equation , 0. ,
     "Print all TeX strings as equations" },

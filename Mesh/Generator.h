@@ -8,7 +8,7 @@
 
 class GModel;
 
-void GetStatistics(double stat[50], double quality[3][100]=0);
+void GetStatistics(double stat[50], double quality[4][100]=0);
 void AdaptMesh(GModel *m);
 void GenerateMesh(GModel *m, int dimension);
 void OptimizeMesh(GModel *m);

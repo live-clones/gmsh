@@ -171,3 +171,56 @@ double qmTet(const double &x1, const double &y1, const double &z1,
     return 0.;
   }
 }
+
+
+static double mesh_functional_distorsion(MTriangle *t, double u, double v)
+{
+  // compute uncurved element jacobian d_u x and d_v x
+  double mat[2][3];  
+  t->jac(1, 0, 0, 0, 0, mat);
+  double v1[3] = {mat[0][0], mat[0][1], mat[0][2]};
+  double v2[3] = {mat[1][0], mat[1][1], mat[1][2]};
+  double normal1[3];
+  prodve(v1, v2, normal1);
+  double nn = sqrt(normal1[0]*normal1[0] + 
+		   normal1[1]*normal1[1] + 
+		   normal1[2]*normal1[2]);
+  
+  // compute uncurved element jacobian d_u x and d_v x
+  t->jac(u, v, 0, mat);
+  double v1b[3] = {mat[0][0], mat[0][1], mat[0][2]};
+  double v2b[3] = {mat[1][0], mat[1][1], mat[1][2]};
+  double normal[3];
+  prodve(v1b, v2b, normal);
+  
+  double sign;
+  prosca(normal1, normal, &sign);
+  double det = norm3(normal) * (sign > 0 ? 1. : -1.) / nn;  
+
+  // compute distorsion
+  double dist = std::min(1. / det, det); 
+  return dist;
+}
+
+
+double qmDistorsionOfMapping (MTriangle *e)
+{
+  if (e->getPolynomialOrder() == 1)return 1.0;
+  IntPt *pts;
+  int npts;
+  e->getIntegrationPoints(e->getPolynomialOrder(),&npts, &pts);
+  double dmin;
+  for (int i=0;i<npts;i++){
+    const double u = pts[i].pt[0];
+    const double v = pts[i].pt[1];
+    const double w = pts[i].pt[2];
+    const double di  = mesh_functional_distorsion (e,u,v);
+    dmin = (i==0)? di : std::min(dmin,di);
+  }
+  return dmin;
+}
+
+double qmDistorsionOfMapping (MTetrahedron *e)
+{
+  return 1.0;
+}

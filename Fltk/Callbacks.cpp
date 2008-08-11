@@ -1844,8 +1844,10 @@ void statistics_histogram_cb(CALLBACK_ARGS)
     type = 0;
   else if(!strcmp(name, "Eta"))
     type = 1;
-  else
+  else if(!strcmp(name, "Rho"))
     type = 2;
+  else
+    type = 3;
   std::vector<double> x, y;
   for(int i = 0; i < 100; i++) y.push_back(WID->quality[type][i]);
   new PView(name, "# Elements", x, y);
@@ -3681,6 +3683,7 @@ void mesh_inspect_cb(CALLBACK_ARGS)
         Msg::Direct("  Rho: %g", elements[0]->rhoShapeMeasure());
         Msg::Direct("  Gamma: %g", elements[0]->gammaShapeMeasure());
         Msg::Direct("  Eta: %g", elements[0]->etaShapeMeasure());
+        Msg::Direct("  Disto: %g", elements[0]->distoShapeMeasure());
         CTX.mesh.changed = ENT_ALL;
         Draw();
         WID->create_message_window();
