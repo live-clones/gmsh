@@ -217,8 +217,7 @@ static void RecursiveIntegration(GEdge *ge, IntPoint * from, IntPoint * to,
     P.p = p1.p + val2;
     Points.push_back(P);
 
-    //List_Read(pPoints, List_Nbr(pPoints) - 1, &p1);
-    to->p=P.p+val3;
+    p1=Points.back();
     to->p = p1.p + val3;
     Points.push_back(*to);
   }
