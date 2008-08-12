@@ -114,7 +114,9 @@ class MElement
 
   // get all the vertices on an edge
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
-    = 0;
+  {
+    v.resize(0);
+  }
 
   // get the faces
   virtual int getNumFaces() = 0;
@@ -144,7 +146,7 @@ class MElement
   virtual SPoint3 barycenter();
 
   // revert the orientation of the element
-  virtual void revert() = 0;
+  virtual void revert(){}
 
   // compute and change the orientation of 3D elements to get
   // positive volume
@@ -234,6 +236,52 @@ class MElementLessThanLexicographic{
 class MElementFactory{
  public:
   MElement *create(int type, std::vector<MVertex*> &v, int num=0, int part=0);
+};
+
+/*
+ * MPoint
+ *
+ */
+class MPoint : public MElement {
+ protected:
+  MVertex *_v[1];
+ public :
+  MPoint(MVertex *v0, int num=0, int part=0) 
+    : MElement(num, part)
+  {
+    _v[0] = v0;
+  }
+  MPoint(std::vector<MVertex*> &v, int num=0, int part=0) 
+    : MElement(num, part)
+  {
+    _v[0] = v[0];
+  }
+  ~MPoint(){}
+  virtual int getDim(){ return 0; }
+  virtual int getNumVertices(){ return 1; }
+  virtual MVertex *getVertex(int num){ return _v[0]; }
+  virtual int getNumEdges(){ return 0; }
+  virtual MEdge getEdge(int num){ return MEdge(); }
+  virtual int getNumEdgesRep(){ return 0; }
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n){}
+  virtual int getNumFaces(){ return 0; }
+  virtual MFace getFace(int num){ return MFace(); }
+  virtual int getNumFacesRep(){ return 0; }
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n){}
+  virtual int getTypeForMSH(){ return MSH_PNT; }
+  virtual const char *getStringForPOS(){ return "SP"; }
+  virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
+  {
+    s = 1.;
+  }
+  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  {
+    s[0] = s[1] = s[2] = 0.;
+  }
+  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
+  {
+    return true;
+  }
 };
 
 /*
@@ -2876,6 +2924,7 @@ template <> struct DimTr<2>
     element->getEdgeVertices(iFace, v);
   }
 };
+
 template <> struct DimTr<3>
 {
   typedef MFace FaceT;
@@ -2893,4 +2942,5 @@ template <> struct DimTr<3>
     element->getFaceVertices(iFace, v);
   }
 };
+
 #endif

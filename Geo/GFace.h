@@ -126,12 +126,6 @@ class GFace : public GEntity
   // return the curvature i.e. the divergence of the normal
   virtual double curvature(const SPoint2 &param) const;
 
-  // recompute the mesh partitions defined on this face
-  void recomputeMeshPartitions();
-
-  // delete the mesh partitions defined on this face
-  void deleteMeshPartitions();
-
   // return a type-specific additional information string
   virtual std::string getAdditionalInfoString();
 

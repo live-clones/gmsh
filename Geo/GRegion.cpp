@@ -116,38 +116,6 @@ void GRegion::setVisibility(char val, bool recursive)
   }
 }
 
-void GRegion::recomputeMeshPartitions()
-{
-  for(unsigned int i = 0; i < tetrahedra.size(); i++) {
-    int part = tetrahedra[i]->getPartition();
-    if(part) model()->getMeshPartitions().insert(part);
-  }
-  for(unsigned int i = 0; i < hexahedra.size(); i++) {
-    int part = hexahedra[i]->getPartition();
-    if(part) model()->getMeshPartitions().insert(part);
-  }
-  for(unsigned int i = 0; i < prisms.size(); i++) {
-    int part = prisms[i]->getPartition();
-    if(part) model()->getMeshPartitions().insert(part);
-  }
-  for(unsigned int i = 0; i < pyramids.size(); i++) {
-    int part = pyramids[i]->getPartition();
-    if(part) model()->getMeshPartitions().insert(part);
-  }
-}
-
-void GRegion::deleteMeshPartitions()
-{
-  for(unsigned int i = 0; i < tetrahedra.size(); i++)
-    tetrahedra[i]->setPartition(0);
-  for(unsigned int i = 0; i < hexahedra.size(); i++)
-    hexahedra[i]->setPartition(0);
-  for(unsigned int i = 0; i < prisms.size(); i++)
-    prisms[i]->setPartition(0);
-  for(unsigned int i = 0; i < pyramids.size(); i++)
-    pyramids[i]->setPartition(0);
-}
-
 std::string GRegion::getAdditionalInfoString()
 {
   if(l_faces.empty()) return std::string("");

@@ -12,10 +12,10 @@ typedef int PointNumero;
 typedef struct{
   double v;
   double h;
-}MPoint;
+}DPoint;
 
 typedef struct{
-  MPoint where;
+  DPoint where;
   DListPeek adjacent;
   void *data;
 }PointRecord;

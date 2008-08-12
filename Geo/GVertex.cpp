@@ -7,7 +7,7 @@
 #include <algorithm>
 #include "GVertex.h"
 #include "GFace.h"
-#include "MVertex.h"
+#include "MElement.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #  include "GmshEmbedded.h"
@@ -23,6 +23,9 @@ GVertex::~GVertex()
 {
   for(unsigned int i = 0; i < mesh_vertices.size(); i++)
     delete mesh_vertices[i];
+
+  for(unsigned int i = 0; i < points.size(); i++)
+    delete points[i];
 }
 
 void GVertex::setPosition(GPoint &p)
@@ -56,4 +59,16 @@ std::string GVertex::getAdditionalInfoString()
     strcat(str, str2);
   }
   return std::string(str);
+}
+
+unsigned int GVertex::getNumMeshElements()
+{
+  return points.size(); 
+}
+
+MElement *GVertex::getMeshElement(unsigned int index)
+{ 
+  if(index < points.size())
+    return points[index]; 
+  return 0;
 }

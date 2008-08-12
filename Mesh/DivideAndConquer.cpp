@@ -331,7 +331,7 @@ static int BuildDelaunay(DocRecord *doc)
 
 // This routine insert the point 'newPoint' in the list dlist,
 // respecting the clock-wise orientation
-static int DListInsert(DListRecord **dlist, MPoint center, PointNumero newPoint)
+static int DListInsert(DListRecord **dlist, DPoint center, PointNumero newPoint)
 {
   DListRecord *p, *newp;
   double alpha1, alpha, beta, xx, yy;

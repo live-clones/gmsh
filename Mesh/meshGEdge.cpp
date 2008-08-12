@@ -66,8 +66,8 @@ static void buildInterpLc(const std::vector<IntPoint> &lcPoints)
   IntPoint p;
   interpLc.clear();
   for(int i = 0; i < lcPoints.size(); i++){
-    p=lcPoints[i];
-    interpLc.push_back(xi2lc( p.t, p.lc));
+    p = lcPoints[i];
+    interpLc.push_back(xi2lc(p.t, p.lc));
   }
 }
 
@@ -196,8 +196,9 @@ static double trapezoidal(IntPoint * P1, IntPoint * P2)
   return (0.5 * (P1->lc + P2->lc) * (P2->t - P1->t));
 }
 
-static void RecursiveIntegration(GEdge *ge, IntPoint * from, IntPoint * to,
-				 double (*f) (GEdge *e, double X), std::vector<IntPoint> &Points,
+static void RecursiveIntegration(GEdge *ge, IntPoint *from, IntPoint *to,
+				 double (*f) (GEdge *e, double X), 
+				 std::vector<IntPoint> &Points,
 				 double Prec, int *depth)
 {
   IntPoint P, p1;
@@ -231,7 +232,7 @@ static void RecursiveIntegration(GEdge *ge, IntPoint * from, IntPoint * to,
 
 static double Integration(GEdge *ge, double t1, double t2, 
 			  double (*f) (GEdge *e, double X),
-			  std::vector<IntPoint>&Points, double Prec)
+			  std::vector<IntPoint> &Points, double Prec)
 {
   IntPoint from, to;
 
@@ -279,21 +280,19 @@ void meshGEdge::operator() (GEdge *ge)
 
   Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
 
-  // Create a list of integration points
-  std::vector<IntPoint> Points,lcPoints;
-
   // compute bounds
   Range<double> bounds = ge->parBounds(0);
   double t_begin = bounds.low();
   double t_end = bounds.high();
   
   // first compute the length of the curve by integrating one
+  std::vector<IntPoint> Points;
   double length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-8 * CTX.lc);
   ge->setLength(length);
+  Points.clear();
 
   if(length == 0.0)
     Msg::Debug("Curve %d has a zero length", ge->tag());
-  Points.resize(0); 
 
   // Integrate detJ/lc du 
   double a;
@@ -308,6 +307,7 @@ void meshGEdge::operator() (GEdge *ge)
   }
   else{
     if(CTX.mesh.lc_integration_precision > 1.e-8){
+      std::vector<IntPoint> lcPoints;
       Integration(ge, t_begin, t_end, F_Lc_usingInterpLcBis, lcPoints, 
                   CTX.mesh.lc_integration_precision);
       buildInterpLc(lcPoints);
@@ -317,7 +317,8 @@ void meshGEdge::operator() (GEdge *ge)
       a = Integration(ge, t_begin, t_end, F_Lc_usingInterpLc, Points, 1.e-8);
     }
     else{
-      a = Integration(ge, t_begin, t_end, F_Lc, Points, CTX.mesh.lc_integration_precision);
+      a = Integration(ge, t_begin, t_end, F_Lc, Points,
+		      CTX.mesh.lc_integration_precision);
     }
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.));
   }
@@ -347,8 +348,8 @@ void meshGEdge::operator() (GEdge *ge)
     IntPoint P1, P2;
     ge->mesh_vertices.resize(N - 2);
     while(NUMP < N - 1) {
-      P1=Points[count-1];
-      P2=Points[count];
+      P1 = Points[count-1];
+      P2 = Points[count];
       const double d = (double)NUMP * b;
       if((fabs(P2.p) >= fabs(d)) && (fabs(P1.p) < fabs(d))) {
         double dt = P2.t - P1.t;

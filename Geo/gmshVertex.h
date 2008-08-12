@@ -8,17 +8,13 @@
 
 #include "Geo.h"
 #include "GVertex.h"
-#include "MVertex.h"
 
 class gmshVertex : public GVertex {
  protected:
   Vertex *v;
 
  public:
-  gmshVertex(GModel *m, Vertex *_v) : GVertex(m, _v->Num, _v->lc), v(_v)
-  {
-    mesh_vertices.push_back(new MVertex(x(), y(), z(), this));
-  }
+  gmshVertex(GModel *m, Vertex *_v);
   virtual ~gmshVertex() {}
   virtual GPoint point() const 
   {
@@ -27,17 +23,7 @@ class gmshVertex : public GVertex {
   virtual double x() const { return v->Pos.X; }
   virtual double y() const { return v->Pos.Y; }
   virtual double z() const { return v->Pos.Z; }
-  virtual void setPosition(GPoint &p)
-  {
-    v->Pos.X = p.x();
-    v->Pos.Y = p.y();
-    v->Pos.Z = p.z();
-    if(mesh_vertices.size()){
-      mesh_vertices[0]->x() = p.x();
-      mesh_vertices[0]->y() = p.y();
-      mesh_vertices[0]->z() = p.z();
-    }
-  }
+  virtual void setPosition(GPoint &p);
   virtual GeomType geomType() const;
   ModelType getNativeType() const { return GmshModel; }
   void *getNativePtr() const { return v; }

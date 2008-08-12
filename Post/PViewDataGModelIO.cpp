@@ -209,20 +209,18 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 
   if(numCompMsh > 9) Msg::Warning("More than 9 components in field");
 
-  // the ordering of the elements in the following lists is important:
-  // it should match the ordering of the MSH element types (when
-  // elements are saved without tags, this governs the order with
-  // which we implicitly index them in GModel::readMED)
+  // Warning! The ordering of the elements in the last two lists is
+  // important: it should match the ordering of the MSH element types
+  // (when elements are saved without tags, this governs the order
+  // with which we implicitly index them in GModel::readMED)
   const med_entite_maillage entType[] = 
     {MED_NOEUD, MED_MAILLE, MED_NOEUD_MAILLE};
-  // don't import points for now (points are not numbered in the same
-  // sequence as MElements)
   const med_geometrie_element eleType[] = 
     {MED_NONE, MED_SEG2, MED_TRIA3, MED_QUAD4, MED_TETRA4, MED_HEXA8, 
      MED_PENTA6, MED_PYRA5, MED_SEG3, MED_TRIA6, MED_TETRA10, 
-     /* MED_POINT1, */ MED_QUAD8, MED_HEXA20, MED_PENTA15, MED_PYRA13};
+     MED_POINT1, MED_QUAD8, MED_HEXA20, MED_PENTA15, MED_PYRA13};
   const int nodesPerEle[] = 
-    {0, 2, 3, 4, 4, 8, 6, 5, 3, 6, 10, /* 1, */ 8, 20, 15, 13};
+    {0, 2, 3, 4, 4, 8, 6, 5, 3, 6, 10, 1, 8, 20, 15, 13};
 
   med_int numSteps = 0;
   std::vector<std::pair<int, int> > pairs;
@@ -319,8 +317,8 @@ bool PViewDataGModel::readMED(std::string fileName, int fileIndex)
 	    Msg::Error("Could not read Gauss points");
 	    return false;
 	  }
-	  // we should check that refcoo corresponds to our internal
-	  // reference element
+	  // FIXME: we should check that refcoo corresponds to our
+	  // internal reference element
 	  for(int i = 0; i < (int)gscoo.size(); i++){
 	    p.push_back(gscoo[i]);
 	    if(i % dim == dim - 1) for(int j = 0; j < 3 - dim; j++) p.push_back(0.); 

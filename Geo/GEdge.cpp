@@ -108,20 +108,6 @@ void GEdge::setVisibility(char val, bool recursive)
   }
 }
 
-void GEdge::recomputeMeshPartitions()
-{
-  for(unsigned int i = 0; i < lines.size(); i++) {
-    int part = lines[i]->getPartition();
-    if(part) model()->getMeshPartitions().insert(part);
-  }
-}
-
-void GEdge::deleteMeshPartitions()
-{
-  for(unsigned int i = 0; i < lines.size(); i++)
-    lines[i]->setPartition(0);
-}
-
 std::string GEdge::getAdditionalInfoString()
 {
   if(!v0 || !v1) return std::string("");

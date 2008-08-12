@@ -62,6 +62,11 @@ class GModel
   // entity
   void _associateEntityWithMeshVertices();
 
+  // store the vertices in the entity they are associated with, and
+  // delete those that are not associated with any geo entity
+  void _storeVerticesInEntities(std::map<int, MVertex*> &vertices);
+  void _storeVerticesInEntities(std::vector<MVertex*> &vertices);
+
   // entity that is currently being meshed (used for error reporting)
   GEntity *_currentMeshEntity;
 
@@ -153,8 +158,8 @@ class GModel
   // Snap vertices on model edges by using geometry tolerance
   void snapVertices();
 
-  // Get a vector containing all the entities in the model
-  std::vector<GEntity*> getEntities();
+  // Fill a vector containing all the entities in the model
+  void getEntities(std::vector<GEntity*> &entities);
 
   // Checks if there are no physical entities in the model
   bool noPhysicalGroups();

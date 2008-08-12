@@ -150,26 +150,6 @@ void GFace::setVisibility(char val, bool recursive)
   }
 }
 
-void GFace::recomputeMeshPartitions()
-{
-  for(unsigned int i = 0; i < triangles.size(); i++) {
-    int part = triangles[i]->getPartition();
-    if(part) model()->getMeshPartitions().insert(part);
-  }
-  for(unsigned int i = 0; i < quadrangles.size(); i++) {
-    int part = quadrangles[i]->getPartition();
-    if(part) model()->getMeshPartitions().insert(part);
-  }
-}
-
-void GFace::deleteMeshPartitions()
-{
-  for(unsigned int i = 0; i < triangles.size(); i++)
-    triangles[i]->setPartition(0);
-  for(unsigned int i = 0; i < quadrangles.size(); i++)
-    quadrangles[i]->setPartition(0);
-}
-
 std::string GFace::getAdditionalInfoString()
 {
   if(l_edges.empty()) return std::string("");

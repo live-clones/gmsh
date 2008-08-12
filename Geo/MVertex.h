@@ -107,8 +107,6 @@ class MVertex{
 
   // IO routines
   void writeMSH(FILE *fp, bool binary=false, double scalingFactor=1.0);
-  void writeMSH(FILE *fp, double version, bool binary, int num, 
-                int elementary, int physical);
   void writeVRML(FILE *fp, double scalingFactor=1.0);
   void writeUNV(FILE *fp, double scalingFactor=1.0);
   void writeVTK(FILE *fp, bool binary=false, double scalingFactor=1.0);

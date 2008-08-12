@@ -49,7 +49,7 @@ class GEdge : public GEntity {
   // get the bounding box
   virtual SBoundingBox3d bounds() const;
 
-  // faces that bound this entity bounds
+  // faces that this entity bounds
   virtual std::list<GFace*> faces() const { return l_faces; }
 
   // get the parameter location for a point in space on the edge
@@ -76,13 +76,7 @@ class GEdge : public GEntity {
   virtual double curvature(double par) const;
 
   // reparmaterize the point onto the given face
-  virtual SPoint2 reparamOnFace(GFace *face, double epar,int dir) const;
-
-  // recompute the mesh partitions defined on this edge
-  void recomputeMeshPartitions();
-
-  // delete the mesh partitions defined on this edge
-  void deleteMeshPartitions();
+  virtual SPoint2 reparamOnFace(GFace *face, double epar, int dir) const;
 
   // return the minimum number of segments used for meshing the edge
   virtual int minimumMeshSegments() const { return 1; }

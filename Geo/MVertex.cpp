@@ -45,25 +45,6 @@ void MVertex::writeMSH(FILE *fp, bool binary, double scalingFactor)
   }
 }
 
-void MVertex::writeMSH(FILE *fp, double version, bool binary, int num, 
-                       int elementary, int physical)
-{
-  if(!binary){
-    fprintf(fp, "%d 15", num);
-    if(version < 2.0)
-      fprintf(fp, " %d %d 1", physical, elementary);
-    else
-      fprintf(fp, " 2 %d %d", physical, elementary);
-    fprintf(fp, " %d\n", _index);
-  }
-  else{
-    int tags[4] = {num, physical, elementary, 0};
-    fwrite(tags, sizeof(int), 4, fp);
-    int verts[1] = {_index};
-    fwrite(verts, sizeof(int), 1, fp);
-  }
-}
-
 void MVertex::writeVRML(FILE *fp, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved

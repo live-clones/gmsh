@@ -128,6 +128,16 @@ int PViewDataGModel::getNumTensors(int step)
   return 0;
 }
 
+int PViewDataGModel::getNumPoints(int step)
+{
+  if(_steps.empty()) return 0;
+  GModel *m = _steps[0]->getModel(); // to generalize
+  int n = 0;
+  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it)
+    n += (*it)->points.size();
+  return n;
+}
+
 int PViewDataGModel::getNumLines(int step)
 {
   if(_steps.empty()) return 0;

@@ -996,7 +996,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
 				  int num, int part)
 {
   switch (type) {
-  case MSH_PNT:    return 0;
+  case MSH_PNT:    return new MPoint(v, num, part);
   case MSH_LIN_2:  return new MLine(v, num, part);
   case MSH_LIN_3:  return new MLine3(v, num, part);
   case MSH_LIN_4:  return new MLineN(v, num, part);

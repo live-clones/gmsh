@@ -9,6 +9,35 @@
 #include "Geo.h"
 #include "GeoInterpolation.h"
 #include "Message.h"
+#include "MVertex.h"
+#include "MElement.h"
+
+gmshVertex::gmshVertex(GModel *m, Vertex *_v)
+  : GVertex(m, _v->Num, _v->lc), v(_v)
+{
+  mesh_vertices.push_back(new MVertex(x(), y(), z(), this));
+  points.push_back(new MPoint(mesh_vertices.back()));
+}
+
+void gmshVertex::setPosition(GPoint &p)
+{
+  v->Pos.X = p.x();
+  v->Pos.Y = p.y();
+  v->Pos.Z = p.z();
+  if(mesh_vertices.size()){
+    mesh_vertices[0]->x() = p.x();
+    mesh_vertices[0]->y() = p.y();
+    mesh_vertices[0]->z() = p.z();
+  }
+}
+
+GEntity::GeomType gmshVertex::geomType() const
+{
+  if(v->Typ == MSH_POINT_BND_LAYER)
+    return BoundaryLayerPoint;
+  else
+    return Point;
+}
 
 SPoint2 gmshVertex::reparamOnFace(GFace *face, int dir) const
 {
@@ -67,12 +96,4 @@ SPoint2 gmshVertex::reparamOnFace(GFace *face, int dir) const
   else{
     return GVertex::reparamOnFace(face, dir);
   }
-}
-
-GEntity::GeomType gmshVertex::geomType() const
-{
-  if(v->Typ == MSH_POINT_BND_LAYER)
-    return BoundaryLayerPoint;
-  else
-    return Point;
 }

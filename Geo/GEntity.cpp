@@ -4,7 +4,9 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <stdio.h>
+#include "GModel.h"
 #include "GEntity.h"
+#include "MElement.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #  include "GmshEmbedded.h"
@@ -75,3 +77,18 @@ std::string GEntity::getInfoString()
 
   return out;
 }
+
+void GEntity::recomputeMeshPartitions()
+{
+  for(unsigned int i = 0; i < getNumMeshElements(); i++) {
+    int part = getMeshElement(i)->getPartition();
+    if(part) model()->getMeshPartitions().insert(part);
+  }
+}
+
+void GEntity::deleteMeshPartitions()
+{
+  for(unsigned int i = 0; i < getNumMeshElements(); i++)
+    getMeshElement(i)->setPartition(0);
+}
+

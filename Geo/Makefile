@@ -67,12 +67,15 @@ depend:
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-GEntity.o: GEntity.cpp GEntity.h Range.h SPoint3.h SBoundingBox3d.h \
-  ../Common/VertexArray.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+GEntity.o: GEntity.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
+  SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
+  GEdgeLoop.h Pair.h GRegion.h MElement.h ../Common/GmshDefines.h \
+  MVertex.h MEdge.h MFace.h ../Common/VertexArray.h ../Geo/SVector3.h \
   ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h
 GVertex.o: GVertex.cpp GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GFace.h GEdgeLoop.h GEdge.h \
-  SVector3.h Pair.h MVertex.h ../Common/Message.h
+  SVector3.h Pair.h MElement.h ../Common/GmshDefines.h MVertex.h MEdge.h \
+  MFace.h ../Common/Message.h
 GEdge.o: GEdge.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h MElement.h ../Common/GmshDefines.h \
@@ -97,8 +100,9 @@ gmshVertex.o: gmshVertex.cpp GFace.h GEntity.h Range.h SPoint3.h \
   SVector3.h Pair.h gmshVertex.h Geo.h ../Common/GmshDefines.h \
   gmshSurface.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
   ../Common/ListUtils.h ../Common/TreeUtils.h ../Common/avl.h \
-  ../Common/ListUtils.h ExtrudeParams.h ../Common/SmoothData.h MVertex.h \
-  GeoInterpolation.h ../Common/Message.h
+  ../Common/ListUtils.h ExtrudeParams.h ../Common/SmoothData.h \
+  GeoInterpolation.h ../Common/Message.h MVertex.h MElement.h MEdge.h \
+  MFace.h
 gmshEdge.o: gmshEdge.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h gmshEdge.h Geo.h ../Common/GmshDefines.h \
@@ -127,23 +131,23 @@ gmshSurface.o: gmshSurface.cpp gmshSurface.h Pair.h Range.h SPoint2.h \
   ../Numeric/NumericEmbedded.h ../Common/Message.h
 OCCVertex.o: OCCVertex.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
-  GEdgeLoop.h Pair.h GRegion.h OCCVertex.h OCCIncludes.h MVertex.h \
-  OCCEdge.h OCCFace.h
+  GEdgeLoop.h Pair.h GRegion.h OCCVertex.h OCCIncludes.h OCCEdge.h \
+  OCCFace.h MVertex.h MElement.h ../Common/GmshDefines.h MEdge.h MFace.h
 OCCEdge.o: OCCEdge.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h ../Common/Message.h OCCEdge.h OCCVertex.h \
-  OCCIncludes.h MVertex.h OCCFace.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h
+  OCCIncludes.h OCCFace.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/PartitionOptions.h
 OCCFace.o: OCCFace.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
-  GEdgeLoop.h Pair.h GRegion.h OCCVertex.h OCCIncludes.h MVertex.h \
-  OCCEdge.h OCCFace.h ../Common/Message.h ../Numeric/Numeric.h \
+  GEdgeLoop.h Pair.h GRegion.h OCCVertex.h OCCIncludes.h OCCEdge.h \
+  OCCFace.h ../Common/Message.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Common/VertexArray.h ../Geo/SVector3.h \
   ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h
 OCCRegion.o: OCCRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
-  GEdgeLoop.h Pair.h GRegion.h OCCVertex.h OCCIncludes.h MVertex.h \
-  OCCEdge.h OCCFace.h OCCRegion.h ../Common/Message.h
+  GEdgeLoop.h Pair.h GRegion.h OCCVertex.h OCCIncludes.h OCCEdge.h \
+  OCCFace.h OCCRegion.h ../Common/Message.h
 discreteEdge.o: discreteEdge.cpp discreteEdge.h GModel.h GVertex.h \
   GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
   SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h Geo.h \
@@ -195,9 +199,9 @@ GModelIO_Geo.o: GModelIO_Geo.cpp GModel.h GVertex.h GEntity.h Range.h \
   gmshSurface.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
   ../Common/ListUtils.h ../Common/TreeUtils.h ../Common/avl.h \
   ../Common/ListUtils.h ExtrudeParams.h ../Common/SmoothData.h \
-  ../Common/OpenFile.h ../Common/Message.h gmshVertex.h MVertex.h \
-  gmshFace.h gmshEdge.h gmshRegion.h ../Mesh/Field.h ../Geo/Geo.h \
-  ../Post/PView.h ../Geo/SPoint3.h ../Parser/Parser.h
+  ../Common/OpenFile.h ../Common/Message.h gmshVertex.h gmshFace.h \
+  gmshEdge.h gmshRegion.h ../Mesh/Field.h ../Geo/Geo.h ../Post/PView.h \
+  ../Geo/SPoint3.h ../Parser/Parser.h
 GModelIO_Mesh.o: GModelIO_Mesh.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/GmshDefines.h MElement.h \
@@ -208,8 +212,8 @@ GModelIO_OCC.o: GModelIO_OCC.cpp GModelIO_OCC.h GModel.h GVertex.h \
   GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
   SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h OCCIncludes.h \
   ../Common/Message.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h OCCVertex.h MVertex.h OCCEdge.h OCCFace.h \
-  OCCRegion.h MElement.h ../Common/GmshDefines.h MEdge.h MFace.h \
+  ../Mesh/PartitionOptions.h OCCVertex.h OCCEdge.h OCCFace.h OCCRegion.h \
+  MElement.h ../Common/GmshDefines.h MVertex.h MEdge.h MFace.h \
   ../Common/OpenFile.h
 GModelIO_Fourier.o: GModelIO_Fourier.cpp GModel.h GVertex.h GEntity.h \
   Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
@@ -218,10 +222,7 @@ GModelIO_Fourier.o: GModelIO_Fourier.cpp GModel.h GVertex.h GEntity.h \
   GModelIO_Fourier.h
 GModelIO_CGNS.o: GModelIO_CGNS.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
-  GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/Message.h MZone.h \
-  MElement.h ../Common/GmshDefines.h MVertex.h MEdge.h MFace.h \
-  MEdgeHash.h ../Common/Hash.h MFaceHash.h CustomContainer.h \
-  MZoneBoundary.h CGNSOptions.h
+  GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/Message.h CGNSOptions.h
 GModelIO_MED.o: GModelIO_MED.cpp GModel.h GVertex.h GEntity.h Range.h \
   SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h \
   GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/Message.h
@@ -289,14 +290,8 @@ MElement.o: MElement.cpp MElement.h ../Common/GmshDefines.h MVertex.h \
   ../Numeric/FunctionSpace.h ../Common/GmshMatrix.h \
   ../Numeric/GaussLegendre1D.h ../Common/Message.h ../Common/Context.h \
   ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h \
-  ../Mesh/qualityMeasures.h
-MZone.o: MZone.cpp MZone.h MElement.h ../Common/GmshDefines.h MVertex.h \
-  SPoint3.h MEdge.h SVector3.h MFace.h GFace.h GEntity.h Range.h \
-  SBoundingBox3d.h GPoint.h GEdgeLoop.h GEdge.h GVertex.h SPoint2.h \
-  Pair.h GRegion.h MEdgeHash.h ../Common/Hash.h MFaceHash.h \
-  CustomContainer.h
-MZoneBoundary.o: MZoneBoundary.cpp MZoneBoundary.h MZone.h MElement.h \
-  ../Common/GmshDefines.h MVertex.h SPoint3.h MEdge.h SVector3.h MFace.h \
-  GFace.h GEntity.h Range.h SBoundingBox3d.h GPoint.h GEdgeLoop.h GEdge.h \
-  GVertex.h SPoint2.h Pair.h GRegion.h MEdgeHash.h ../Common/Hash.h \
-  MFaceHash.h CustomContainer.h ../Common/Message.h
+  ../Mesh/qualityMeasures.h ../Mesh/meshGFaceDelaunayInsertion.h \
+  ../Geo/MElement.h ../Mesh/meshGRegionDelaunayInsertion.h \
+  ../Mesh/BackgroundMesh.h ../Mesh/qualityMeasures.h
+MZone.o: MZone.cpp
+MZoneBoundary.o: MZoneBoundary.cpp

@@ -17,6 +17,11 @@ class MEdge {
   char _si[2]; // sorted indices
 
  public:
+  MEdge()
+  {
+    _v[0] = _v[1] = 0;
+    _si[0] = _si[1] = 0;
+  }
   MEdge(MVertex *v0, MVertex *v1)
   {
     _v[0] = v0; _v[1] = v1;

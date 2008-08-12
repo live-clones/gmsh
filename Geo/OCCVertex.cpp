@@ -7,8 +7,34 @@
 #include "OCCVertex.h"
 #include "OCCEdge.h"
 #include "OCCFace.h"
+#include "MVertex.h"
+#include "MElement.h"
 
 #if defined(HAVE_OCC)
+
+OCCVertex::OCCVertex(GModel *m, int num, TopoDS_Vertex _v) 
+  : GVertex(m, num), v(_v)
+{
+  max_curvature = -1;
+  gp_Pnt pnt = BRep_Tool::Pnt(v);
+  _x = pnt.X();
+  _y = pnt.Y();
+  _z = pnt.Z();
+  mesh_vertices.push_back(new MVertex(x(), y(), z(), this));
+  points.push_back(new MPoint(mesh_vertices.back()));
+}
+
+void OCCVertex::setPosition(GPoint &p)
+{
+  _x = p.x();
+  _y = p.y();
+  _z = p.z();
+  if(mesh_vertices.size()){
+    mesh_vertices[0]->x() = p.x();
+    mesh_vertices[0]->y() = p.y();
+    mesh_vertices[0]->z() = p.z();
+  }
+}
 
 double max_surf_curvature(const GVertex *gv, double x, double y, double z, 
                           const GEdge *_myGEdge)

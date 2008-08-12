@@ -44,7 +44,7 @@ class stepData{
     : _model(model), _fileName(fileName), _fileIndex(fileIndex), _time(time), 
       _min(min), _max(max), _numComp(numComp), _data(0)
   {
-    _entities = _model->getEntities();
+    _model->getEntities(_entities);
     _bbox = _model->bounds();
   }
   ~stepData(){ destroyData(); }
@@ -135,7 +135,7 @@ class PViewDataGModel : public PViewData {
   int getNumScalars(int step=-1);
   int getNumVectors(int step=-1);
   int getNumTensors(int step=-1);
-  int getNumPoints(int step=-1){ return 0; }
+  int getNumPoints(int step=-1);
   int getNumLines(int step=-1);
   int getNumTriangles(int step=-1);
   int getNumQuadrangles(int step=-1);

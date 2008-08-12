@@ -44,12 +44,6 @@ class GRegion : public GEntity {
   // check if the region is connected to another region by an edge
   bool edgeConnected(GRegion *r) const;
 
-  // recompute the mesh partitions defined on this region
-  void recomputeMeshPartitions();
-
-  // delete the mesh partitions defined on this region
-  void deleteMeshPartitions();
-
   // return a type-specific additional information string
   virtual std::string getAdditionalInfoString();
 

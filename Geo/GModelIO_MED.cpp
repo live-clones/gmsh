@@ -234,6 +234,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
 			   (meshDim > 1) ? coord[meshDim * i + 1] : 0., 
 			   (meshDim > 2) ? coord[meshDim * i + 2] : 0.,
 			   0, nodeTags.empty() ? 0 : nodeTags[i]);
+
   // read elements
   for(int mshType = 0; mshType < 50; mshType++){ // loop over all possible MSH types
     med_geometrie_element type = msh2medElementType(mshType);
@@ -255,37 +256,19 @@ int GModel::readMED(const std::string &name, int meshIndex)
     std::vector<med_int> eleTags(numEle);
     if(MEDnumLire(fid, meshName, &eleTags[0], numEle, MED_MAILLE, type) < 0)
       eleTags.clear();
-    if(numNodPerEle == 1){ // special case for points
-      for(int j = 0; j < numEle; j++){    
-	GVertex *v = getVertexByTag(-fam[j]);
-	if(!v){
-	  v = new discreteVertex(this, -fam[j]);
-	  add(v);
-	}
-	v->mesh_vertices.push_back(verts[conn[j] - 1]);
-      }
+    std::map<int, std::vector<MElement*> > elements;
+    MElementFactory factory;
+    for(int j = 0; j < numEle; j++){    
+      std::vector<MVertex*> v(numNodPerEle);
+      for(int k = 0; k < numNodPerEle; k++)
+	v[k] = verts[conn[numNodPerEle * j + med2mshNodeIndex(type, k)] - 1];
+      MElement *e = factory.create(mshType, v, eleTags.empty() ? 0 : eleTags[j]);
+      if(e) elements[-fam[j]].push_back(e);
     }
-    else{
-      std::map<int, std::vector<MElement*> > elements;
-      MElementFactory factory;
-      for(int j = 0; j < numEle; j++){    
-	std::vector<MVertex*> v(numNodPerEle);
-	for(int k = 0; k < numNodPerEle; k++)
-	  v[k] = verts[conn[numNodPerEle * j + med2mshNodeIndex(type, k)] - 1];
-	MElement *e = factory.create(mshType, v, eleTags.empty() ? 0 : eleTags[j]);
-	if(e) elements[-fam[j]].push_back(e);
-      }
-      _storeElementsInEntities(elements);
-    }
+    _storeElementsInEntities(elements);
   }
   _associateEntityWithMeshVertices();
-  for(unsigned int i = 0; i < verts.size(); i++){
-    GEntity *ge = verts[i]->onWhat();
-    // store vertices (except for points, which are already ok)
-    if(ge && ge->dim() > 0) ge->mesh_vertices.push_back(verts[i]);
-    // delete unused vertices
-    if(!ge) delete verts[i];
-  }
+  _storeVerticesInEntities(verts);
 
   // read family info
   med_int numFamilies = MEDnFam(fid, meshName);
@@ -397,7 +380,8 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
   // get a vector containing all the geometrical entities in the
   // model (the ordering of the entities must be the same as the one
   // used during the indexing of the vertices)
-  std::vector<GEntity*> entities = getEntities();
+  std::vector<GEntity*> entities;
+  getEntities(entities);
 
   std::map<GEntity*, int> families;
 
@@ -470,13 +454,10 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
     med_geometrie_element typ;
     { // points
       std::vector<med_int> conn, fam;
-      for(viter it = firstVertex(); it != lastVertex(); it++){
-	if(saveAll || (*it)->physicals.size()){
-	  conn.push_back((*it)->mesh_vertices[0]->getIndex());
-	  fam.push_back(families[*it]);
-	}
-      }
-      writeElementsMED(fid, meshName, conn, fam, MED_POINT1);
+      for(viter it = firstVertex(); it != lastVertex(); it++)
+	if(saveAll || (*it)->physicals.size())
+	  fillElementsMED(families[*it], (*it)->points, conn, fam, typ);
+      writeElementsMED(fid, meshName, conn, fam, typ);
     }
     { // lines
       std::vector<med_int> conn, fam;
