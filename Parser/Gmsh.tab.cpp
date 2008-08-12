@@ -6592,7 +6592,7 @@ yyreduce:
 	List_Read((yyvsp[(3) - (6)].l), i, &d);
 	int j = (int)d;
 	Surface *s = FindSurface(j);
-	if(s) s->TransfiniteSmoothing = (yyvsp[(5) - (6)].d);
+	if(s) s->TransfiniteSmoothing = (int)(yyvsp[(5) - (6)].d);
       }
       List_Delete((yyvsp[(3) - (6)].l));
     ;}

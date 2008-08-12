@@ -2604,7 +2604,7 @@ Transfinite :
 	List_Read($3, i, &d);
 	int j = (int)d;
 	Surface *s = FindSurface(j);
-	if(s) s->TransfiniteSmoothing = $5;
+	if(s) s->TransfiniteSmoothing = (int)$5;
       }
       List_Delete($3);
     }
