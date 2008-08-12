@@ -219,7 +219,11 @@ class StructuredField : public Field
     if(update_needed) {
       error_status = false;
       try {
-        std::ifstream input(file_name.c_str());
+        std::ifstream input;
+        if(text_format)
+          input.open(file_name.c_str());
+        else
+          input.open(file_name.c_str(),std::ios::binary);
         if(!input.is_open())
           throw(1);
         input.
