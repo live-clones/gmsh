@@ -785,8 +785,9 @@ void GModel::_storeVerticesInEntities(std::map<int, MVertex*> &vertices)
     MVertex *v = it->second;
     GEntity *ge = v->onWhat();
     if(ge){
-      if(ge->dim() || ge->mesh_vertices.empty()) // special case for points
+      if(ge->dim() || ge->mesh_vertices.empty()){ // special case for points
 	ge->mesh_vertices.push_back(v);
+      }
     }
     else
       delete v; // we delete all unused vertices
@@ -800,8 +801,9 @@ void GModel::_storeVerticesInEntities(std::vector<MVertex*> &vertices)
     if(v){ // the vector is allowed to have null entries
       GEntity *ge = v->onWhat();
       if(ge) {
-	if(ge->dim() || ge->mesh_vertices.empty()) // special case for points
+	if(ge->dim() || ge->mesh_vertices.empty()){ // special case for points
 	  ge->mesh_vertices.push_back(v);
+	}
       }
       else
         delete v; // we delete all unused vertices
