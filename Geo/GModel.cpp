@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include <string.h>
+#include <sstream>
 #include "GModel.h"
 #include "MElement.h"
 #include "discreteRegion.h"
@@ -463,6 +463,7 @@ MVertex *GModel::getMeshVertexByTag(int n)
     std::vector<GEntity*> entities;
     getEntities(entities);
     if(dense){
+      Msg::Debug("Good: we have a dense vertex numbering in the cache");
       // numbering starts at 1
       _vertexVectorCache.resize(MVertex::getGlobalNumber() + 1);
       for(unsigned int i = 0; i < entities.size(); i++)
@@ -593,8 +594,12 @@ void GModel::recomputeMeshPartitions()
   meshPartitions.clear();
   std::vector<GEntity*> entities;
   getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++)
-    entities[i]->recomputeMeshPartitions();
+  for(unsigned int i = 0; i < entities.size(); i++){
+    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+      int part = entities[i]->getMeshElement(j)->getPartition();
+      if(part) meshPartitions.insert(part);
+    }
+  }
 }
 
 void GModel::deleteMeshPartitions()
@@ -602,7 +607,8 @@ void GModel::deleteMeshPartitions()
   std::vector<GEntity*> entities;
   getEntities(entities);
   for(unsigned int i = 0; i < entities.size(); i++)
-    entities[i]->deleteMeshPartitions();
+    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
+      entities[i]->getMeshElement(j)->setPartition(0);
   meshPartitions.clear();
 }
 
@@ -658,22 +664,17 @@ void GModel::checkMeshCoherence()
 	  pos.insert(e);
 	}
 	else{
-	  char temp[256], temp2[256];
-	  sprintf(temp, "Element %d ( ", (*it)->getNum());
-	  for (int k = 0; k < (*it)->getNumVertices(); k++){
-	    sprintf(temp2, "%d ", (*it)->getVertex(k)->getNum());
-	    strcat(temp, temp2);
-	  }
-	  sprintf(temp2, ") on entity %d has same barycenter as element %d ( ",
-		  entities[i]->tag(), e->getNum());
-	  strcat(temp, temp2);
-	  for (int k = 0; k < e->getNumVertices(); k++){
-	    sprintf(temp2, "%d ", e->getVertex(k)->getNum());
-	    strcat(temp, temp2);
-	  }
-	  sprintf(temp2, ")");
-	  strcat(temp, temp2);
-	  Msg::Info("%s", temp);
+	  std::ostringstream sstream;
+	  sstream << "Element " << e->getNum() << " [ ";
+	  for (int k = 0; k < e->getNumVertices(); k++)
+	    sstream << e->getVertex(k)->getNum() << " ";
+	  sstream << "] on entity " << entities[i]->tag() 
+		  << " has same barycenter as element " << (*it)->getNum() 
+		  << " [ ";
+	  for (int k = 0; k < (*it)->getNumVertices(); k++)
+	    sstream << (*it)->getVertex(k)->getNum() << " ";
+	  sstream << "]";
+	  Msg::Info("%s", sstream.str().c_str());
 	  num++;
 	}
       }

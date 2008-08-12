@@ -245,12 +245,6 @@ class GEntity {
 
   // get the mesh vertex at the given index
   MVertex *getMeshVertex(unsigned int index) { return mesh_vertices[index]; }
-
-  // recompute the mesh partitions defined on this entity
-  void recomputeMeshPartitions();
-
-  // delete the mesh partitions defined on this entity
-  void deleteMeshPartitions();
 };
 
 class GEntityLessThan {

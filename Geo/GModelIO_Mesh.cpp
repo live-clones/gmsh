@@ -76,7 +76,7 @@ static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
 
 static void createElementMSH(GModel *m, int num, int type, int physical, 
                              int reg, int part, std::vector<MVertex*> &v, 
-                             std::map<int, std::vector<MElement*> > elements[7],
+                             std::map<int, std::vector<MElement*> > elements[8],
                              std::map<int, std::map<int, std::string> > physicals[4])
 {
   MElementFactory factory;

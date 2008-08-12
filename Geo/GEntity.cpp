@@ -77,18 +77,3 @@ std::string GEntity::getInfoString()
 
   return out;
 }
-
-void GEntity::recomputeMeshPartitions()
-{
-  for(unsigned int i = 0; i < getNumMeshElements(); i++) {
-    int part = getMeshElement(i)->getPartition();
-    if(part) model()->getMeshPartitions().insert(part);
-  }
-}
-
-void GEntity::deleteMeshPartitions()
-{
-  for(unsigned int i = 0; i < getNumMeshElements(); i++)
-    getMeshElement(i)->setPartition(0);
-}
-
