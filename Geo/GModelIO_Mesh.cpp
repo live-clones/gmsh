@@ -1082,7 +1082,7 @@ int GModel::readUNV(const std::string &name)
             break;
           case 45: case 55: case 65: case 75: case 85: case 95:
             elements[2][elementary].push_back
-              (new MQuadrangle8(vertices[0], vertices[2], vertices[4], vertices[6], 
+              (new MQuadrangle8(vertices[0], vertices[2], vertices[4], vertices[6],
                                 vertices[1], vertices[3], vertices[5], vertices[7],
                                 num));
             dim = 2;
@@ -1093,7 +1093,7 @@ int GModel::readUNV(const std::string &name)
             break;
           case 118: 
             elements[3][elementary].push_back
-              (new MTetrahedron10(vertices[0], vertices[2], vertices[4], vertices[9], 
+              (new MTetrahedron10(vertices[0], vertices[2], vertices[4], vertices[9],
                                   vertices[1], vertices[3], vertices[5], vertices[8],
                                   vertices[6], vertices[7], num));
             dim = 3;
@@ -1106,8 +1106,8 @@ int GModel::readUNV(const std::string &name)
             elements[4][elementary].push_back
               (new MHexahedron20(vertices[0], vertices[2], vertices[4], vertices[6], 
                                  vertices[12], vertices[14], vertices[16], vertices[18],
-                                 vertices[1], vertices[7], vertices[8], vertices[3],  
-                                 vertices[9], vertices[5], vertices[10], vertices[11], 
+                                 vertices[1], vertices[7], vertices[8], vertices[3],
+                                 vertices[9], vertices[5], vertices[10], vertices[11],
                                  vertices[13], vertices[19], vertices[15], vertices[17], 
                                  num));
             dim = 3; 
