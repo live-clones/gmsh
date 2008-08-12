@@ -1,7 +1,8 @@
-$Id: VERSIONS.txt,v 1.4 2008-08-02 13:54:45 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.5 2008-08-12 22:58:20 geuzaine Exp $
 
 2.2.4 (): integrated Metis and Chaco mesh partitioners; variables can
-now be deleted in geo files; small bug fixes.
+now be deleted in geo files; added support for point datasets in
+model-based postprocessing views; small bug fixes.
 
 2.2.3 (Jul 14, 2008): enhanced clipping interface; API cleanup; fixed
 various bugs (Plugin(Integrate), high order meshes, surface info
