@@ -278,7 +278,7 @@ int MeshTransfiniteVolume(GRegion *gr)
     GOrientedTransfiniteFace f(*it, gr->meshAttributes.corners);
     if(f.index() < 0){
       Msg::Error("Incompatible surface %d in transfinite volume %d", 
-          (*it)->tag(), gr->tag());
+		 (*it)->tag(), gr->tag());
       return 0;
     }
     orientedFaces[f.index()] = f;
