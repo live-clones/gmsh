@@ -486,7 +486,7 @@ class GradientField : public Field
   {
     return "Gradient";
   }
-  GradientField():iField(0), kind(3), delta(CTX.lc / 1e4)
+  GradientField() : iField(0), kind(3), delta(CTX.lc / 1e4)
   {
     options["IField"] = new FieldOptionInt(iField);
     options["Kind"] = new FieldOptionInt(kind);
@@ -539,7 +539,7 @@ class CurvatureField : public Field
   {
     return "Curvature";
   }
-  CurvatureField():iField(0),  delta(CTX.lc / 1e4)
+  CurvatureField() : iField(0), delta(CTX.lc / 1e4)
   {
     options["IField"] = new FieldOptionInt(iField);
     options["Delta"] = new FieldOptionDouble(delta);
@@ -588,7 +588,7 @@ class MaxEigenHessianField : public Field
   {
     return "MaxEigenHessian";
   }
-  MaxEigenHessianField():iField(0),  delta(CTX.lc / 1e4)
+  MaxEigenHessianField() : iField(0), delta(CTX.lc / 1e4)
   {
     options["IField"] = new FieldOptionInt(iField);
     options["Delta"] = new FieldOptionDouble(delta);
@@ -651,7 +651,7 @@ class LaplacianField : public Field
   {
     return "Laplacian";
   }
-  LaplacianField():iField(0),  delta(CTX.lc / 1e4)
+  LaplacianField() : iField(0), delta(CTX.lc / 1e4)
   {
     options["IField"] = new FieldOptionInt(iField);
     options["Delta"] = new FieldOptionDouble(delta);
@@ -683,7 +683,7 @@ class MeanField : public Field
   {
     return "Mean";
   }
-  MeanField():iField(0),  delta(CTX.lc / 1e4)
+  MeanField() : iField(0), delta(CTX.lc / 1e4)
   {
     options["IField"] = new FieldOptionInt(iField);
     options["Delta"] = new FieldOptionDouble(delta);
@@ -877,37 +877,35 @@ class PostViewField : public Field
     // FIXME: should test unique view num instead, but that would be slower
     if(view_index < 0 || view_index >= (int)PView::list.size())
       return MAX_LC;
-    if(update_needed)
-    {
-      if(octree)
-        delete octree;
+    if(update_needed){
+      if(octree) delete octree;
       octree = new OctreePost(PView::list[view_index]);
       update_needed = false;
     }
     double l = 0.;
     if(!octree->searchScalar(x, y, z, &l, 0)) {
-      // uncomment the following to try really hard to find an element
-      // around the point
+      // try really hard to find an element around the point
       /*
-         double fact[9] = {0.001, 0.0025, 0.005, 0.0075, 0.01, 0.025, 0.05, 0.075, 0.1};
-         for(int i = 0; i < 9; i++){
-           double eps = CTX.lc * fact[i];
-           if(octree->searchScalar(x + eps, y, z, &l, 0)) break;
-           if(octree->searchScalar(x - eps, y, z, &l, 0)) break;
-           if(octree->searchScalar(x, y + eps, z, &l, 0)) break;
-           if(octree->searchScalar(x, y - eps, z, &l, 0)) break;
-           if(octree->searchScalar(x, y, z + eps, &l, 0)) break;
-           if(octree->searchScalar(x, y, z - eps, &l, 0)) break;
-           if(octree->searchScalar(x + eps, y - eps, z - eps, &l, 0)) break;
-           if(octree->searchScalar(x + eps, y + eps, z - eps, &l, 0)) break;
-           if(octree->searchScalar(x - eps, y - eps, z - eps, &l, 0)) break;
-           if(octree->searchScalar(x - eps, y + eps, z - eps, &l, 0)) break;
-           if(octree->searchScalar(x + eps, y - eps, z + eps, &l, 0)) break;
-           if(octree->searchScalar(x + eps, y + eps, z + eps, &l, 0)) break;
-           if(octree->searchScalar(x - eps, y - eps, z + eps, &l, 0)) break;
-           if(octree->searchScalar(x - eps, y + eps, z + eps, &l, 0)) break;
-         }
-       */
+	double fact[4] = {1.e-6, 1.e-5, 1.e-4, 1.e-3};
+	for(int i = 0; i < 4; i++){
+	  double eps = CTX.lc * fact[i];
+	  printf("approx search witg eps=%g\n", eps);
+	  if(octree->searchScalar(x + eps, y, z, &l, 0)) break;
+	  if(octree->searchScalar(x - eps, y, z, &l, 0)) break;
+	  if(octree->searchScalar(x, y + eps, z, &l, 0)) break;
+	  if(octree->searchScalar(x, y - eps, z, &l, 0)) break;
+	  if(octree->searchScalar(x, y, z + eps, &l, 0)) break;
+	  if(octree->searchScalar(x, y, z - eps, &l, 0)) break;
+	  if(octree->searchScalar(x + eps, y - eps, z - eps, &l, 0)) break;
+	  if(octree->searchScalar(x + eps, y + eps, z - eps, &l, 0)) break;
+	  if(octree->searchScalar(x - eps, y - eps, z - eps, &l, 0)) break;
+	  if(octree->searchScalar(x - eps, y + eps, z - eps, &l, 0)) break;
+	  if(octree->searchScalar(x + eps, y - eps, z + eps, &l, 0)) break;
+	  if(octree->searchScalar(x + eps, y + eps, z + eps, &l, 0)) break;
+	  if(octree->searchScalar(x - eps, y - eps, z + eps, &l, 0)) break;
+	  if(octree->searchScalar(x - eps, y + eps, z + eps, &l, 0)) break;
+	}
+      */
     }
     if(l <= 0) return MAX_LC;
     return l;
