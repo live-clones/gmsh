@@ -900,7 +900,7 @@ void MTriangleN::getFaceRep(int num, double *x, double *y, double *z, SVector3 *
   //  on the first layer, we have (numSubEdges-1) * 2 + 1 triangles
   //  on the second layer, we have (numSubEdges-2) * 2 + 1 triangles
   //  on the ith layer, we have (numSubEdges-1-i) * 2 + 1 triangles
-  int ix, iy;
+  int ix = 0, iy = 0;
   int nbt = 0;
   for (int i = 0; i < numSubEdges; i++){
     int nbl = (numSubEdges - i - 1) * 2 + 1;
