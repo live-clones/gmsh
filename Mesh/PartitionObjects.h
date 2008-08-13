@@ -35,7 +35,7 @@ class GrVertex
   GrVertex(const int _index, const unsigned short _size)
     : index(_index), size(0), sizeC(_size)
   { }
-  int add(const int v) { grEdge[size++] = v; }
+  void add(const int v) { grEdge[size++] = v; }
   unsigned write(std::vector<int> &vec) const
   {
     switch(size) {

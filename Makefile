@@ -152,7 +152,7 @@ clean-fm:
 
 depend: initialtag
 	for i in ${GMSH_DIRS};\
-        do (cd $$i && ${MAKE} depend "FLAGS=-DHAVE_GSL -DHAVE_FLTK"); done
+        do (cd $$i && ${MAKE} depend "FLAGS=-DHAVE_GSL -DHAVE_FLTK -DHAVE_METIS"); done
 
 nodepend:
 	for i in ${GMSH_DIRS} ; do \
