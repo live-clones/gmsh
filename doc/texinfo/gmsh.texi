@@ -301,7 +301,7 @@ oriented surfaces (plane surfaces, ruled surfaces, triangulated
 surfaces, @dots{}) and volumes. Compound groups of geometrical entities
 (called ``physical groups'') can also be defined, based on these
 elementary geometric entities. Gmsh's scripting language allows all
-geometrical entities to be fully parameterized.
+geometrical entities to be fully parametrized.
 
 @c -------------------------------------------------------------------------
 @c Mesh: finite element mesh generation
@@ -416,17 +416,16 @@ user-defined functions, loops, conditionals and includes (see
 @ref{User-defined functions}, @ref{Loops and conditionals}, and @ref{General
 commands});
 @item
-parameterize these geometries. Gmsh's scripting language enables all
+parametrize these geometries. Gmsh's scripting language enables all
 commands and command arguments to depend on previous calculations (see
 @ref{Expressions}, and @ref{Geometry commands});
 @item
 import complex models in industry-standard formats like STEP or IGES
 (when Gmsh is built with OpenCascade support);
 @item
-generate 1D, 2D and 3D simplicial (i.e., using line segments, triangles and
-tetrahedra) finite element meshes. The performance of the 1D and 2D
-algorithms is pretty good; the 3D algorithm is still experimental and slow
-(see @ref{Mesh module}, and @ref{Tutorial});
+generate 1D, 2D and 3D simplicial (i.e., using line segments, triangles
+and tetrahedra) finite element meshes (see @ref{Mesh module}, and
+@ref{Tutorial});
 @item
 specify target element sizes accurately. Gmsh provides several
 mechanisms to control the size of the elements in the final mesh:
@@ -2945,6 +2944,11 @@ meshes and associated post-processing datasets. The MSH format exists in
 two flavors: ASCII and binary. The format has a version number
 (currently: 2.0) that is independent of Gmsh's main version number.
 
+(Remember that for small post-processing datasets you can also use the
+human-readable ``parsed'' format described in @ref{Post-processing
+commands}: this format does not require an underlying mesh, and is
+therefore easier to use in some cases.)
+
 @menu
 * MSH ASCII file format::       
 * MSH binary file format::      
@@ -3614,7 +3618,7 @@ element. The ordering of the nodes is given in @ref{Node ordering}.
 @node POS ASCII file format, POS binary file format, MSH file format version 1.0, Legacy formats
 @subsection POS ASCII file format
 
-The POS ASCII file is Gmsh's old native pot-processing format, now
+The POS ASCII file is Gmsh's old native post-processing format, now
 superseded by the format described in @ref{MSH ASCII file format}. It is
 defined as follows:
 
@@ -3873,11 +3877,13 @@ compile Gmsh's source code are included in the distribution. See
 Gmsh's code is structured in several libraries, roughly separated
 between the three main core modules (Geo, Mesh, Post) and associated
 utility libraries (Common, Numeric) on one hand, and graphics (Graphics)
-and interface (Fltk, Box) libraries on the other.
+and interface (Fltk, Parser) libraries on the other.
 
 The geometry and mesh modules are based on an object-oriented model
 class (Geo/GModel.h), built upon abstract geometrical entity classes
-(Geo/GVertex.h, Geo/Gedge.h, Geo/GFace.h and Geo/GRegion.h).
+(Geo/GVertex.h, Geo/Gedge.h, Geo/GFace.h and Geo/GRegion.h). The
+post-processing module is based on the concept of views (Post/PView.h)
+and abstract data containers (derived from Post/PViewData.h).
 
 @c -------------------------------------------------------------------------
 @c Coding style
@@ -3894,9 +3900,11 @@ to make the code easy to read/debug/maintain:
 please enable full warnings for your compiler (e.g., add @code{-Wall} to
 @code{FLAGS} in the @file{variables} file);
 @item
-always use the @code{Msg()} function to print information, errors, @dots{};
+always use the @code{Msg::} class to print information, errors, @dots{};
 @item 
 indent your files using @file{utils/misc/indent.sh};
+@item 
+convert all tabs to spaces.
 @end enumerate
 
 @c -------------------------------------------------------------------------
