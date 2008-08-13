@@ -68,6 +68,7 @@ MElement *const *GRegion::getStartElementType(int type) const
   case 3:
     return reinterpret_cast<MElement *const *>(&pyramids[0]);
   }
+  return 0;
 }
 
 MElement *GRegion::getMeshElement(unsigned int index)

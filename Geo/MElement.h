@@ -455,9 +455,10 @@ class MLineN : public MLine {
   {
     v.resize(2 + _vs.size());
     MLine::_getEdgeVertices(v);
-    for(int i = 0; i != _vs.size(); ++i) v[i+2] = _vs[i];
+    for(unsigned int i = 0; i != _vs.size(); ++i) v[i+2] = _vs[i];
   }
-  virtual int getTypeForMSH(){ 
+  virtual int getTypeForMSH()
+  { 
     if(_vs.size() == 2) return MSH_LIN_4; 
     if(_vs.size() == 3) return MSH_LIN_5; 
     if(_vs.size() == 4) return MSH_LIN_6; 
@@ -776,7 +777,7 @@ class MTriangleN : public MTriangle {
     v.resize(2 + getNumEdgeVertices());
     MTriangle::_getEdgeVertices(num, v);
     int j = 2;
-    const int ie = (num+1)*getNumEdgeVertices();
+    const int ie = (num + 1) * getNumEdgeVertices();
     for(int i = num*getNumEdgeVertices(); i != ie; ++i) v[j++] = _vs[i];
   }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
@@ -784,7 +785,7 @@ class MTriangleN : public MTriangle {
   {
     v.resize(3 + _vs.size());
     MTriangle::_getFaceVertices(v);
-    for(int i = 0; i != _vs.size(); ++i) v[i+3] = _vs[i];
+    for(unsigned int i = 0; i != _vs.size(); ++i) v[i + 3] = _vs[i];
   }
   virtual int getTypeForMSH()
   {

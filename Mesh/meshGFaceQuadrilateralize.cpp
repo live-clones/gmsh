@@ -350,13 +350,13 @@ bool gmshEdgeFront::formQuad (BDS_Edge *e,
   toUpdate.push_back(pleft);
   toUpdate.push_back(pright);
 
-  for (int i=0;i<toUpdate.size();i++){
+  for (unsigned int i=0;i<toUpdate.size();i++){
     toUpdate[i]->config_modified = true;
     bool done = m->smooth_point_parametric(toUpdate[i], gf);
     //    printf("smooth done %d (g %d)\n",done,toUpdate[i]->g->classif_degree);
   }
 
-  for (int i=0;i<toUpdate.size();i++){
+  for (unsigned int i=0;i<toUpdate.size();i++){
     BDS_Point *p = toUpdate[i];
     for (std::list<BDS_Edge*>::iterator itp = p->edges.begin(); itp != p->edges.end() ; ++ itp){
       if (inFront(*itp)){
@@ -538,8 +538,8 @@ static int numQuads ( BDS_Mesh *m)
   return N;
 }
 
-int gmshQMorph (GFace *gf) {
-
+int gmshQMorph (GFace *gf)
+{
   // assert first that there exist a triangulation of
   // the face  
   if (!gf->triangles.size()){
@@ -586,6 +586,6 @@ int gmshQMorph (GFace *gf) {
   }
   // delete the BDS
   delete pm;
-
+  return 1;
 }
 

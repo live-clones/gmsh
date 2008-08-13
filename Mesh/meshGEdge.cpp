@@ -65,7 +65,7 @@ static void buildInterpLc(const std::vector<IntPoint> &lcPoints)
 {
   IntPoint p;
   interpLc.clear();
-  for(int i = 0; i < lcPoints.size(); i++){
+  for(unsigned int i = 0; i < lcPoints.size(); i++){
     p = lcPoints[i];
     interpLc.push_back(xi2lc(p.t, p.lc));
   }

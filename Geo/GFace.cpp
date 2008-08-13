@@ -78,6 +78,7 @@ MElement *const *GFace::getStartElementType(int type) const
   case 1:
     return reinterpret_cast<MElement *const *>(&quadrangles[0]);
   }
+  return 0;
 }
 
 MElement *GFace::getMeshElement(unsigned int index)
