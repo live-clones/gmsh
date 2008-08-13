@@ -3,16 +3,14 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include <stdlib.h>
+#include "GModel.h"
 #include "meshGEdge.h"
 #include "GEdge.h"
 #include "MElement.h"
 #include "BackgroundMesh.h"
 #include "Numeric.h"
 #include "Message.h"
-#include "ListUtils.h"
 #include "Context.h"
-#include "GModel.h"
 
 #define SQU(a)      ((a)*(a))
 
@@ -143,7 +141,7 @@ static double F_Transfinite(GEdge *ge, double t)
     val = d * coef / ge->length();
   }
   else {
-    switch (abs(type)) {
+    switch (std::abs(type)) {
 
     case 1: // Geometric progression ar^i; Sum of n terms = length = a (r^n-1)/(r-1)
       {
