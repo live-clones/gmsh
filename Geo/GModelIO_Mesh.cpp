@@ -1745,7 +1745,7 @@ int GModel::writeBDF(const std::string &name, int format, bool saveAll,
   // nodes
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) 
-      entities[i]->mesh_vertices[j]->writeBDF(fp, scalingFactor);
+      entities[i]->mesh_vertices[j]->writeBDF(fp, format, scalingFactor);
 
   // elements
   for(unsigned int i = 0; i < entities.size(); i++)
