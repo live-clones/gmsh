@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <sstream>
 #include "GModel.h"
 #include "GFace.h"
 #include "GEdge.h"
@@ -153,25 +154,19 @@ void GFace::setVisibility(char val, bool recursive)
 
 std::string GFace::getAdditionalInfoString()
 {
-  if(l_edges.empty()) return std::string("");
-
-  std::string str("{");
-  if(l_edges.size() > 10){
-    char tmp[256];
-    sprintf(tmp, "%d, ..., %d", l_edges.front()->tag(), l_edges.back()->tag());
-    str += tmp;
+  std::ostringstream sstream;
+  if(l_edges.size() > 20){
+    sstream << "{" << l_edges.front()->tag() << ",...," << l_edges.back()->tag() << "}";
   }
-  else{
-    std::list<GEdge*>::const_iterator it = l_edges.begin();
-    for(; it != l_edges.end(); it++){
-      if(it != l_edges.begin()) str += ",";
-      char tmp[256];
-      sprintf(tmp, "%d", (*it)->tag());
-      str += tmp;
+  else if(l_edges.size()){
+    sstream << "{";
+    for(std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it){
+      if(it != l_edges.begin()) sstream << ",";
+      sstream << (*it)->tag();
     }
+    sstream << "}";
   }
-  str += "}";
-  return str;
+  return sstream.str();
 }
 
 void GFace::computeMeanPlane()

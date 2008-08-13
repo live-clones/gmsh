@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <sstream>
 #include "GModel.h"
 #include "GRegion.h"
 #include "GFace.h"
@@ -119,25 +120,19 @@ void GRegion::setVisibility(char val, bool recursive)
 
 std::string GRegion::getAdditionalInfoString()
 {
-  if(l_faces.empty()) return std::string("");
-
-  std::string str("{");
-  if(l_faces.size() > 10){
-    char tmp[256];
-    sprintf(tmp, "%d, ..., %d", l_faces.front()->tag(), l_faces.back()->tag());
-    str += tmp;
+  std::ostringstream sstream;
+  if(l_faces.size() > 20){
+    sstream << "{" << l_faces.front()->tag() << ",...," << l_faces.back()->tag() << "}";
   }
-  else{
-    std::list<GFace*>::const_iterator it = l_faces.begin();
-    for(; it != l_faces.end(); it++){
-      if(it != l_faces.begin()) str += ",";
-      char tmp[256];
-      sprintf(tmp, "%d", (*it)->tag());
-      str += tmp;
+  else if(l_faces.size()){
+    sstream << "{";
+    for(std::list<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); ++it){
+      if(it != l_faces.begin()) sstream << ",";
+      sstream << (*it)->tag();
     }
+    sstream << "}";
   }
-  str += "}";
-  return str;
+  return sstream.str();
 }
 
 std::list<GEdge*> GRegion::edges() const
@@ -149,7 +144,7 @@ std::list<GEdge*> GRegion::edges() const
     e2 = (*it)->edges();
     std::list<GEdge*>::const_iterator it2 = e2.begin();
     while (it2 != e2.end()){
-      if (std::find(e.begin(), e.end(), *it2) == e.end())
+      if(std::find(e.begin(), e.end(), *it2) == e.end())
         e.push_back(*it2);
       ++it2;
     }

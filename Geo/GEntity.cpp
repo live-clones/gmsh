@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include <stdio.h>
+#include <sstream>
 #include "GModel.h"
 #include "GEntity.h"
 #include "MElement.h"
@@ -56,24 +56,18 @@ bool GEntity::useColor()
 
 std::string GEntity::getInfoString()
 {
-  char tmp[256];
-  sprintf(tmp, " %d", tag());
-
-  std::string out = getTypeString() + tmp;
+  std::ostringstream sstream;
+  sstream << getTypeString() << " " << tag();
 
   std::string info = getAdditionalInfoString();
-  if(info.size())
-    out += " " + info;
+  if(info.size()) sstream << " " << info;
 
   if(physicals.size()){
-    out += " (Physical: ";
-    for(unsigned int i = 0; i < physicals.size(); i++){
-      if(i) out += " ";
-      sprintf(tmp, "%d", physicals[i]);
-      out += tmp;
-    }
-    out += ")";
+    sstream << " (Physical:";
+    for(unsigned int i = 0; i < physicals.size(); i++)
+      sstream << " " << physicals[i];
+    sstream << ")";
   }
 
-  return out;
+  return sstream.str();
 }

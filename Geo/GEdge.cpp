@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
+#include <sstream>
 #include <algorithm>
 #include "GModel.h"
 #include "GEdge.h"
@@ -110,10 +111,9 @@ void GEdge::setVisibility(char val, bool recursive)
 
 std::string GEdge::getAdditionalInfoString()
 {
-  if(!v0 || !v1) return std::string("");
-  char tmp[256];
-  sprintf(tmp, "{%d,%d}", v0->tag(), v1->tag());
-  return std::string(tmp);
+  std::ostringstream sstream;
+  if(v0 && v1) sstream << "{" << v0->tag() << "," << v1->tag() << "}";
+  return sstream.str();
 }
 
 GPoint GEdge::closestPoint(const SPoint3 & queryPoint) const
