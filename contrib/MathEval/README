@@ -1,6 +1,10 @@
-
 This directory contains a (heavily) modified version of GNU
 libmatheval.
+
+GNU libmatheval is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 2, or (at
+your option) any later version.
 
 The original libmatheval is Copyright (C) 1999, 2002, 2003 Aleksandar
 B. Samardzic

@@ -1,5 +1,5 @@
 
-This directory may contain a slightly modified version of Joachim
+This directory contains a slightly modified version of Joachim
 Sch\"oberl's NETGEN mesh generator:
 
 - only the libsrc directory was kept from the original distribution
@@ -10,12 +10,7 @@ Sch\"oberl's NETGEN mesh generator:
 - the file meshing/meshtype.hpp was slightly modified so that it
   compiles with ISO-C++ complient compilers
 
-**IMPORTANT NOTICE** 
-
-NETGEN requires the boundary mesh to be oriented with exterior
-pointing normals. You HAVE TO define your geometry so that this
-criterion is fulfilled (i.e., correctly orient the geometry surfaces
-and the surface loops).
+See COPYING.LIB for license information
 
 **************************************************************
 
