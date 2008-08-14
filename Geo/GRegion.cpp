@@ -53,8 +53,8 @@ void GRegion::getNumMeshElements(unsigned *const c) const
 {
   c[0] += tetrahedra.size();
   c[1] += hexahedra.size();
-  c[3] += prisms.size();
-  c[4] += pyramids.size();
+  c[2] += prisms.size();
+  c[3] += pyramids.size();
 }
 
 MElement *const *GRegion::getStartElementType(int type) const
