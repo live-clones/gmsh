@@ -3178,31 +3178,31 @@ $MeshFormat
 2.0 0 8
 $EndMeshFormat
 $Nodes
-6                      @var{six mesh nodes:}
-1 0.0 0.0 0.0          @var{  node #1: coordinates (0.0, 0.0, 0.0)}
-2 1.0 0.0 0.0          @var{  node #2: coordinates (1.0, 0.0, 0.0)}
-3 1.0 1.0 0.0          @var{  etc.}
+6                      @emph{six mesh nodes:}
+1 0.0 0.0 0.0          @emph{  node #1: coordinates (0.0, 0.0, 0.0)}
+2 1.0 0.0 0.0          @emph{  node #2: coordinates (1.0, 0.0, 0.0)}
+3 1.0 1.0 0.0          @emph{  etc.}
 4 0.0 1.0 0.0
 5 2.0 0.0 0.0
 6 2.0 1.0 0.0
 $EndNodes
 $Elements
-2                      @var{two elements:}
-1 3 2 99 2 1 2 3 4     @var{  quad #1: type 3, physical 99, elementary 2, nodes 1 2 3 4}
-2 3 2 99 2 2 5 6 3     @var{  quad #2: type 3, physical 99, elementary 2, nodes 2 5 6 3}
+2                      @emph{two elements:}
+1 3 2 99 2 1 2 3 4     @emph{  quad #1: type 3, physical 99, elementary 2, nodes 1 2 3 4}
+2 3 2 99 2 2 5 6 3     @emph{  quad #2: type 3, physical 99, elementary 2, nodes 2 5 6 3}
 $EndElements 
 $NodeData
-1                      @var{one string tag:}
-"A scalar view"        @var{  the name of the view ("A scalar view")}
-1                      @var{one real tag:}
-0.0                    @var{  the time value (0.0)}
-3                      @var{three integer tags:}
-0                      @var{  the time step (0; time steps always start at 0)}
-1                      @var{  1-component (scalar) field}
-6                      @var{  six associated nodal values}
-1 0.0                  @var{value associated with node #1 (0.0)}
-2 0.1                  @var{value associated with node #2 (0.1)}
-3 0.2                  @var{etc.}
+1                      @emph{one string tag:}
+"A scalar view"        @emph{  the name of the view ("A scalar view")}
+1                      @emph{one real tag:}
+0.0                    @emph{  the time value (0.0)}
+3                      @emph{three integer tags:}
+0                      @emph{  the time step (0; time steps always start at 0)}
+1                      @emph{  1-component (scalar) field}
+6                      @emph{  six associated nodal values}
+1 0.0                  @emph{value associated with node #1 (0.0)}
+2 0.1                  @emph{value associated with node #2 (0.1)}
+3 0.2                  @emph{etc.}
 4 0.0
 5 0.2
 6 0.4
