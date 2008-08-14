@@ -218,7 +218,7 @@ package-unix:
 	cp -R tutorial gmsh-${GMSH_VERSION}
 	cp -R demos gmsh-${GMSH_VERSION}
 	rm -rf gmsh-${GMSH_VERSION}/*/CVS
-	rm -f gmsh-${GMSH_VERSION}/tutorial/*.msh
+	rm -f gmsh-${GMSH_VERSION}/tutorial/t*.msh
 	rm -f gmsh-${GMSH_VERSION}/*/*~
 	tar cf gmsh-${GMSH_VERSION}-${UNAME}.tar gmsh-${GMSH_VERSION}
 	gzip gmsh-${GMSH_VERSION}-${UNAME}.tar
@@ -236,7 +236,7 @@ package-win:
 	cp -R tutorial gmsh-${GMSH_VERSION}
 	cp -R demos gmsh-${GMSH_VERSION}
 	rm -rf gmsh-${GMSH_VERSION}/*/CVS
-	rm -f gmsh-${GMSH_VERSION}/tutorial/*.msh
+	rm -f gmsh-${GMSH_VERSION}/tutorial/t*.msh
 	rm -f gmsh-${GMSH_VERSION}/*/*~
 	cd utils/misc && ./unix2dos.bash ../../gmsh-${GMSH_VERSION}/tutorial/*\
                                          ../../gmsh-${GMSH_VERSION}/demos/*
@@ -263,7 +263,7 @@ package-mac:
 	cp doc/LICENSE.txt doc/VERSIONS.txt doc/FAQ.txt doc/CREDITS.txt\
           gmsh-${GMSH_VERSION}
 	rm -rf gmsh-${GMSH_VERSION}/*/CVS\
-               gmsh-${GMSH_VERSION}/tutorial/*.msh\
+               gmsh-${GMSH_VERSION}/tutorial/t*.msh\
                gmsh-${GMSH_VERSION}/*/*~
 	tar zcf gmsh-${GMSH_VERSION}-MacOSX.tgz gmsh-${GMSH_VERSION}
 
