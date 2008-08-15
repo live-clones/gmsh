@@ -173,14 +173,32 @@ static bool TooManyElements(GModel *m, int dim)
   // list)
   double sumAllLc = 0.;
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it)
-    sumAllLc += (*it)->prescribedMeshSizeAtVertex();
+    sumAllLc += (*it)->prescribedMeshSizeAtVertex() * CTX.mesh.lc_factor;
   sumAllLc /= (double)m->getNumVertices();
   if(!sumAllLc || pow(CTX.lc / sumAllLc, dim) > 1.e10) 
     return !Msg::GetBinaryAnswer
-      ("Your choice of characteristic lengths will likely produce\n"
-       "a very large mesh. Do you really want to continue?\n\n"
-       "(To disable this warning in the future, select `Enable\n"
-       "expert mode' in the option dialog.)",
+      ("Your choice of characteristic lengths will likely produce a very\n"
+       "large mesh. Do you really want to continue?\n\n"
+       "(To disable this warning in the future, select `Enable expert mode'\n"
+       "in the option dialog.)",
+       "Continue", "Cancel");
+  return false;
+}
+
+static bool CancelDelaunayHybrid(GModel *m)
+{
+  if(CTX.expert_mode) return false;
+  int n = 0;
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+    n += (*it)->getNumMeshElements();
+  if(n)
+    return !Msg::GetBinaryAnswer
+      ("You are trying to generate a mixed structured/unstructured grid using\n"
+       "the 3D Delaunay algorithm. This algorithm cannot garantee that the\n"
+       "final mesh will be conforming. You should probably use the Frontal\n"
+       "Netgen algorithm instead. Do you really want to continue?\n\n"
+       "(To disable this warning in the future, select `Enable expert mode'\n"
+       "in the option dialog.)",
        "Continue", "Cancel");
   return false;
 }
@@ -295,7 +313,7 @@ static void Mesh2D(GModel *m)
 }
 
 static void FindConnectedRegions(std::vector<GRegion*> &delaunay, 
-                          std::vector<std::vector<GRegion*> > &connected)
+				 std::vector<std::vector<GRegion*> > &connected)
 {
   // FIXME: need to split region vector into connected components here!
   connected.push_back(delaunay);
@@ -317,6 +335,9 @@ static void Mesh3D(GModel *m)
   // then mesh all the non-delaunay regions
   std::vector<GRegion*> delaunay;
   std::for_each(m->firstRegion(), m->lastRegion(), meshGRegion(delaunay));
+
+  // warn if attempting to use Delaunay for mixed meshes
+  if(delaunay.size() && CancelDelaunayHybrid(m)) return;
 
   // and finally mesh the delaunay regions (again, this is global; but
   // we mesh each connected part separately for performance and mesh

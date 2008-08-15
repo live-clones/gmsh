@@ -2483,30 +2483,34 @@ void GUI::create_option_window()
       Fl_Group *o = new Fl_Group(L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Advanced");
       o->hide();
 
-      mesh_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Compute element sizes from curvature" );
-      mesh_butt[1]->type(FL_TOGGLE_BUTTON);
-      mesh_butt[1]->callback(mesh_options_ok_cb);
-
-      mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Compute element sizes using point values");
+      mesh_butt[5] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Compute element sizes using point values");
       mesh_butt[5]->type(FL_TOGGLE_BUTTON);
       mesh_butt[5]->callback(mesh_options_ok_cb);
 
-      mesh_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Optimize quality of tetrahedra");
+      mesh_butt[1] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Compute element sizes from curvature" );
+      mesh_butt[1]->type(FL_TOGGLE_BUTTON);
+      mesh_butt[1]->callback(mesh_options_ok_cb);
+
+      mesh_butt[16] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Extend element sizes from boundary");
+      mesh_butt[16]->type(FL_TOGGLE_BUTTON);
+      mesh_butt[16]->callback(mesh_options_ok_cb);
+
+      mesh_butt[2] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Optimize quality of tetrahedra");
       mesh_butt[2]->type(FL_TOGGLE_BUTTON);
       mesh_butt[2]->callback(mesh_options_ok_cb);
 
-      mesh_butt[24] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Optimize quality of tetrahedra with Netgen");
+      mesh_butt[24] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Optimize quality of tetrahedra with Netgen");
       mesh_butt[24]->type(FL_TOGGLE_BUTTON);
 #if !defined(HAVE_NETGEN)
       mesh_butt[24]->deactivate();
 #endif
       mesh_butt[24]->callback(mesh_options_ok_cb);
 
-      mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Optimize high order mesh (2D-plane only)");
+      mesh_butt[3] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Optimize high order mesh (2D-plane only)");
       mesh_butt[3]->type(FL_TOGGLE_BUTTON);
       mesh_butt[3]->callback(mesh_options_ok_cb);
 
-      mesh_butt[21] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Impose C1 continuity (2D-plane only)");
+      mesh_butt[21] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Impose C1 continuity (2D-plane only)");
       mesh_butt[21]->type(FL_TOGGLE_BUTTON);
       mesh_butt[21]->callback(mesh_options_ok_cb);
 

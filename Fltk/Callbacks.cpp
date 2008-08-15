@@ -1082,6 +1082,7 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_reverse_all_normals(0, GMSH_SET, WID->mesh_butt[0]->value());
   opt_mesh_lc_from_curvature(0, GMSH_SET, WID->mesh_butt[1]->value());
   opt_mesh_lc_from_points(0, GMSH_SET, WID->mesh_butt[5]->value());
+  opt_mesh_lc_extend_from_boundary(0, GMSH_SET, WID->mesh_butt[16]->value());
   opt_mesh_optimize(0, GMSH_SET, WID->mesh_butt[2]->value());
   opt_mesh_optimize_netgen(0, GMSH_SET, WID->mesh_butt[24]->value());
   opt_mesh_order(0, GMSH_SET, WID->mesh_value[3]->value());

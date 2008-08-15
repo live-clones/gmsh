@@ -4514,7 +4514,7 @@ double opt_mesh_lc_from_points(OPT_ARGS_NUM)
     CTX.mesh.lc_from_points = (int)val;
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
-    WID->mesh_butt[5]->value(CTX.mesh.lc_from_points);
+    WID->mesh_butt[5]->value(CTX.mesh.lc_from_points ? 1 : 0);
 #endif
   return CTX.mesh.lc_from_points;
 }
@@ -4523,6 +4523,10 @@ double opt_mesh_lc_extend_from_boundary(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX.mesh.lc_extend_from_boundary = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->mesh_butt[16]->value(CTX.mesh.lc_extend_from_boundary ? 1 : 0);
+#endif
   return CTX.mesh.lc_extend_from_boundary;
 }
 
