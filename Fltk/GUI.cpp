@@ -3769,7 +3769,6 @@ void FieldDialogBox::save_values()
   std::list<Fl_Widget*>::iterator input=inputs.begin();
   Field *f=current_field;
   std::ostringstream sstream;
-  std::istringstream istream;
   int i;
   char a;
   sstream.precision(16);
@@ -3791,8 +3790,9 @@ void FieldDialogBox::save_values()
       sstream<<(bool)((Fl_Check_Button*)*input)->value();
       break;
     case FIELD_OPTION_LIST:
+    {
       sstream<<"{";
-      istream.str(((Fl_Input*)*input)->value());
+      std::istringstream istream(((Fl_Input*)*input)->value());
       while(istream>>i){
 	sstream<<i;
 	if(istream>>a){
@@ -3802,6 +3802,7 @@ void FieldDialogBox::save_values()
 	}
       }
       sstream<<"}";
+      }
       break;
     }
     if((*input)->changed()){
@@ -3811,7 +3812,6 @@ void FieldDialogBox::save_values()
     input++;
   }
 }
-
 void FieldDialogBox::load_field(Field *f)
 {
   current_field=f;
@@ -3886,6 +3886,12 @@ FieldDialogBox::FieldDialogBox(Field *f, int x, int y, int width, int height,int
 	  input=new Fl_Check_Button(x+WB,yy,BH,BH,it->first.c_str());
 	  break;
 	case FIELD_OPTION_PATH:
+    {
+    Fl_Button *b=new Fl_Button(x+WB,yy,BH,BH,"S");
+	  input=new Fl_Input(x+2*WB+BH,yy,IW-WB-BH,BH,it->first.c_str());
+    b->callback(view_field_select_file_cb, input);
+    }
+    break;
 	case FIELD_OPTION_STRING:
 	  input=new Fl_Input(x+WB,yy,IW,BH,it->first.c_str());
 	  break;

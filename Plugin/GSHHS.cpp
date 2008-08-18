@@ -284,7 +284,7 @@ class GeoEarthImport
   }
 };
 
-/*      $Id: GSHHS.cpp,v 1.13 2008-07-11 16:56:10 geuzaine Exp $
+/*      $Id: GSHHS.cpp,v 1.14 2008-08-18 14:24:42 remacle Exp $
  *
  * PROGRAM:	gshhs.c
  * AUTHOR:	Paul Wessel (pwessel@hawaii.edu)
@@ -440,7 +440,18 @@ void GMSH_GSHHSPlugin::getInfos(char *author, char *copyright,
 {
   strcpy(author, "J. Lambrechts (jonathanlambrechts@gmail.com)");
   strcpy(copyright, "GPL");
-  strcpy(help_text, "Plugin(GSHHS) import GSHHS data.\n");
+  strcpy(help_text, "Plugin(GSHHS) read differenct kind of contour lines data and write a .geo file.\n"
+  "Valid values for \"Format\" are :\n"
+  " -\"gshhs\" : open GSHHS file\n"
+  " -\"loops2\" : import 2D contour lines in simple text format :\n"
+  "   NB_POINTS_IN_FIRST_LOOP\n"
+  "   COORD1 COORD2\n"
+  "   COORD1 COORD2\n"
+  "   ...    ...\n"
+  "   NB_POINTS_IN_SECOND_LOOP\n"
+  "   ...\n"
+  );
+
 }
 
 int GMSH_GSHHSPlugin::getNbOptions() const

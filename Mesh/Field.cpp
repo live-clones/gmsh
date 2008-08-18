@@ -103,6 +103,13 @@ class FieldOptionString:public FieldOption
     v_str = sstream.str();
   }
 };
+class FieldOptionPath:public FieldOptionString
+{
+ public:
+  virtual FieldOptionType get_type(){ return FIELD_OPTION_PATH; }
+  FieldOptionPath(std::string &_val, bool *_status=0)
+    : FieldOptionString(_val,_status) {}
+};
 
 class FieldOptionBool : public FieldOption
 {
@@ -201,7 +208,7 @@ class StructuredField : public Field
  public:
   StructuredField()
   {
-    options["FileName"] = new FieldOptionString(file_name, &update_needed);
+    options["FileName"] = new FieldOptionPath(file_name, &update_needed);
     text_format = false;
     options["TextFormat"] = new FieldOptionBool(text_format, &update_needed);
     data = 0;

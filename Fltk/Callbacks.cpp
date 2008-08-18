@@ -4411,6 +4411,13 @@ void view_field_put_on_view_cb(CALLBACK_ARGS)
   Draw();
 }
 
+void view_field_select_file_cb(CALLBACK_ARGS){
+  Fl_Input *input=(Fl_Input*)data;
+  int ret=file_chooser(0,0,"File selection","",input->value());
+  if(ret)
+    input->value(file_chooser_get_name(0).c_str());
+}
+
 void view_field_select_node_cb(CALLBACK_ARGS)
 {
   const char *mode = "select";
