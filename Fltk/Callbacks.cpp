@@ -1109,7 +1109,6 @@ void mesh_options_ok_cb(CALLBACK_ARGS)
   opt_mesh_light_two_side(0, GMSH_SET, WID->mesh_butt[18]->value());
   opt_mesh_smooth_normals(0, GMSH_SET, WID->mesh_butt[19]->value());
   opt_mesh_light_lines(0, GMSH_SET, WID->mesh_butt[20]->value());
-
   opt_mesh_nb_smoothing(0, GMSH_SET, WID->mesh_value[0]->value());
   opt_mesh_lc_factor(0, GMSH_SET, WID->mesh_value[2]->value());
   opt_mesh_lc_min(0, GMSH_SET, WID->mesh_value[25]->value());

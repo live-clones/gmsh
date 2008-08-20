@@ -25,6 +25,107 @@
 
 extern Context_T CTX;
 
+
+static MVertex* isEquivalentTo ( std::multimap<MVertex *, MVertex *> & m, MVertex *v )
+{
+  std::multimap<MVertex *, MVertex *>::iterator it  = m.lower_bound(v);
+  std::multimap<MVertex *, MVertex *>::iterator ite = m.upper_bound(v);
+  if (it == ite) return v;
+  MVertex *res = it->second; ++it;
+  while (it !=ite){
+    res = std::min(res,it->second);++it;    
+  }
+  if (res < v) return  isEquivalentTo ( m, res) ;
+  return res;
+}
+
+static void buildASetOfEquivalentMeshVertices ( GFace *gf , std::multimap<MVertex *, MVertex *> & equivalent , std::map<GVertex*,MVertex*> &bm)
+{
+  // an edge is degenerated when is length is considered to be
+  // zero. In some cases, a model edge can be considered as too
+  // small an is ignored.
+
+  // for taking that into account, we loop over the edges
+  // and create pairs of MVertices that are considered as
+  // equal.
+
+  std::list<GEdge*> edges = gf->edges();
+  std::list<GEdge*> emb_edges = gf->embeddedEdges();
+  std::list<GEdge*>::iterator it = edges.begin();
+
+  while(it != edges.end()){
+    if((*it)->isMeshDegenerated()){
+      MVertex *va = *((*it)->getBeginVertex()->mesh_vertices.begin());
+      MVertex *vb = *((*it)->getEndVertex()->mesh_vertices.begin());
+      if (va != vb){
+	equivalent.insert(std::make_pair (va,vb));
+	equivalent.insert(std::make_pair (vb,va));
+	bm[(*it)->getBeginVertex()] = va;
+	bm[(*it)->getEndVertex()] = vb;
+	printf("%d equivalent to %d\n",va->getNum(),vb->getNum());
+
+      }
+    }
+    ++it;
+  }
+
+  it = emb_edges.begin();
+  while(it != emb_edges.end()){
+    if((*it)->isMeshDegenerated()){
+      MVertex *va = *((*it)->getBeginVertex()->mesh_vertices.begin());
+      MVertex *vb = *((*it)->getEndVertex()->mesh_vertices.begin());
+      if (va != vb){
+	equivalent.insert(std::make_pair (va,vb));
+	equivalent.insert(std::make_pair (vb,va));
+	bm[(*it)->getBeginVertex()] = va;
+	bm[(*it)->getEndVertex()] = vb;
+      }
+    }
+    ++it;
+  }
+}
+
+struct geomTresholdVertexEquivalence 
+{
+  // Initial MVertex associated to one given MVertex
+  std::map<GVertex *, MVertex *> backward_map;
+  // initiate the forward and backward maps
+  geomTresholdVertexEquivalence (GModel *g);  
+  // restores the initial state
+  ~geomTresholdVertexEquivalence ();
+};
+
+
+geomTresholdVertexEquivalence :: geomTresholdVertexEquivalence (GModel *g)
+{
+  std::multimap<MVertex *, MVertex *> equivalenceMap;
+  for (GModel::fiter it = g->firstFace(); it != g->lastFace(); ++it)
+    buildASetOfEquivalentMeshVertices ( *it, equivalenceMap, backward_map );
+  // build the structure that identifiate geometrically equivalent 
+  // mesh vertices.
+  for (std::map<GVertex*,MVertex *>::iterator it = backward_map.begin() ; it != backward_map.end() ; ++it){
+    GVertex *g = it->first;
+    MVertex *v = it->second;
+    MVertex *other = isEquivalentTo (equivalenceMap,v);
+    if (v != other){
+      printf("Finally : %d equivalent to %d\n",v->getNum(),other->getNum());
+      g->mesh_vertices.clear();
+      g->mesh_vertices.push_back(other);
+    }
+  }
+}
+
+geomTresholdVertexEquivalence :: ~geomTresholdVertexEquivalence ()
+{
+  // restore the initial data
+  for (std::map<GVertex*,MVertex *>::iterator it = backward_map.begin() ; it != backward_map.end() ; ++it){
+    GVertex *g = it->first;
+    MVertex *v = it->second;
+    g->mesh_vertices.clear();
+    g->mesh_vertices.push_back(v);
+  }
+}
+
 template<class T>
 static void GetQualityMeasure(std::vector<T*> &ele, 
                               double &gamma, double &gammaMin, double &gammaMax, 
@@ -281,6 +382,9 @@ static void Mesh2D(GModel *m)
   
   Msg::StatusBar(1, true, "Meshing 2D...");
   double t1 = Cpu();
+
+  // skip short mesh edges
+  geomTresholdVertexEquivalence inst (m);
 
   // boundary layers are special: their generation (including vertices
   // and curve meshes) is global as it depends on a smooth normal

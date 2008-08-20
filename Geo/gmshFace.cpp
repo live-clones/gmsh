@@ -186,6 +186,53 @@ GPoint gmshFace::point(double par1, double par2) const
 
 GPoint gmshFace::closestPoint(const SPoint3 & qp, const double initialGuess[2]) const
 {
+
+  if (s->Typ ==  MSH_SURF_PLAN && !s->geometry){
+    double XP = qp.x();
+    double YP = qp.y();
+    double ZP = qp.z();
+    double a = meanPlane.a;
+    double b = meanPlane.b;
+    double c = meanPlane.c;
+    double d = meanPlane.d;
+    // X = P +   H N, find y such that
+    // a X_1 + b X_2 + c X_3 + d = 0
+    // a ( XP + y XN) + b ( YP + y YN) + c ( ZP + y ZN) + d = 0
+    // H ( a XN + b YN + c ZN ) = - (a XP + b YP + c ZP + d)    
+    const double H = -(a*XP + b*YP + c *ZP + d)/(a*a + b*b + c*c);
+    const double X = XP + H * a;
+    const double Y = YP + H * b;
+    const double Z = ZP + H * c;
+    // now compute parametric coordinates
+    double x,y,z,VX[3], VY[3];
+    getMeanPlaneData(VX, VY, x, y, z);
+    // XP = X + u VX + v VY
+    // We are sure to be on the plane
+    double M[3][2] = {{VX[0],VY[0]},{VX[1],VY[1]},{VX[2],VY[2]}};
+    double MN[2][2];
+    double B[3] = {XP-x,YP-y,ZP-z};
+    double BN[2],UV[2];
+    for (int i=0;i<2;i++){
+      BN[i] = 0;
+      for (int k=0;k<3;k++){
+	BN[i] += B[k] * M[k][i];
+      }
+    }
+    for (int i=0;i<2;i++){
+      for (int j=0;j<2;j++){
+	MN[i][j] = 0;
+	for (int k=0;k<3;k++){
+	  MN[i][j] += M[k][i] * M[k][j];
+	}
+      }
+    }
+    sys2x2(MN,BN,UV);    
+
+    //    GPoint test = point (UV[0],UV[1]);
+    //    printf("%g %g %g vs %g %g %g\n",XP,YP,ZP,test.x(),test.y(),test.z());
+    return GPoint(XP, YP, ZP, this, UV);    
+  }
+
   Vertex v;
   double u[2] = {initialGuess[0],initialGuess[1]};
   v.Pos.X = qp.x();
@@ -193,7 +240,7 @@ GPoint gmshFace::closestPoint(const SPoint3 & qp, const double initialGuess[2]) 
   v.Pos.Z = qp.z();
   bool result = ProjectPointOnSurface(s, v, u);
   if (!result)
-    printf("Project Point on surface %d \n",result);
+    printf("Project Point on surface %d\n",result);
   return GPoint(v.Pos.X, v.Pos.Y, v.Pos.Z, this, u);
 }
 

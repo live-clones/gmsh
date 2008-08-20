@@ -158,7 +158,7 @@ class Context_T {
     int optimize, optimize_netgen, refine_steps;
     int quality_type, label_type;
     double quality_inf, quality_sup, radius_inf, radius_sup;
-    double scaling_factor, lc_factor, rand_factor, lc_integration_precision, lc_min, lc_max;
+    double scaling_factor, lc_factor, rand_factor, lc_integration_precision, lc_min, lc_max, tolerance_edge_length;
     int lc_from_points, lc_from_curvature, lc_extend_from_boundary;
     int dual, voronoi, draw_skin_only;
     int light, light_two_side, light_lines;

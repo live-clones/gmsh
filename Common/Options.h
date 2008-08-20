@@ -429,6 +429,7 @@ double opt_mesh_explode(OPT_ARGS_NUM);
 double opt_mesh_scaling_factor(OPT_ARGS_NUM);
 double opt_mesh_lc_min(OPT_ARGS_NUM);
 double opt_mesh_lc_max(OPT_ARGS_NUM);
+double opt_mesh_tolerance_edge_length(OPT_ARGS_NUM);
 double opt_mesh_lc_factor(OPT_ARGS_NUM);
 double opt_mesh_lc_from_curvature(OPT_ARGS_NUM);
 double opt_mesh_lc_from_points(OPT_ARGS_NUM);

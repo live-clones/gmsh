@@ -316,6 +316,7 @@ static bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
   return true;
 }
 
+
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
 
@@ -346,18 +347,21 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
 
   it = emb_edges.begin();
   while(it != emb_edges.end()){
-    all_vertices.insert((*it)->mesh_vertices.begin(),
-                        (*it)->mesh_vertices.end() );
-    all_vertices.insert((*it)->getBeginVertex()->mesh_vertices.begin(),
-                        (*it)->getBeginVertex()->mesh_vertices.end());
-    all_vertices.insert((*it)->getEndVertex()->mesh_vertices.begin(),
-                        (*it)->getEndVertex()->mesh_vertices.end());
+    if(!(*it)->isMeshDegenerated()){
+      all_vertices.insert((*it)->mesh_vertices.begin(),
+			  (*it)->mesh_vertices.end() );
+      all_vertices.insert((*it)->getBeginVertex()->mesh_vertices.begin(),
+			  (*it)->getBeginVertex()->mesh_vertices.end());
+      all_vertices.insert((*it)->getEndVertex()->mesh_vertices.begin(),
+			  (*it)->getEndVertex()->mesh_vertices.end());
+    }
     ++it;
   }
   
   if (all_vertices.size() < 3){
-    Msg::Warning("Cannot triangulate less than 3 vertices");
-    return false;
+    Msg::Warning("Mesh Generation of Model Face %d Skipped : Only %d Mesh Vertices on The Contours",gf->tag(),all_vertices.size());
+    gf->meshStatistics.status = GFace::DONE;
+    return true;
   }
 
   double *U_ = new double[all_vertices.size()];
@@ -506,7 +510,8 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
     }
     it = emb_edges.begin();
     while(it != emb_edges.end()){
-      recover_medge(m, *it, &edgesToRecover, &edgesNotRecovered, 1);
+      if(!(*it)->isMeshDegenerated())
+	recover_medge(m, *it, &edgesToRecover, &edgesNotRecovered, 1);
       ++it;
     }
     
@@ -581,7 +586,8 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
     
     it = emb_edges.begin();
     while(it != emb_edges.end()){
-      recover_medge(m, *it, &edgesToRecover, &edgesNotRecovered, 2);
+      if(!(*it)->isMeshDegenerated())
+	recover_medge(m, *it, &edgesToRecover, &edgesNotRecovered, 2);
       ++it;
     }
     // compute characteristic lengths at vertices    
@@ -1286,6 +1292,7 @@ const int debugSurface = -1;
 
 void meshGFace::operator() (GFace *gf)
 {
+
   gf->model()->setCurrentMeshEntity(gf);
 
   if (debugSurface >= 0 && gf->tag() != debugSurface){

@@ -153,8 +153,29 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
     int Count = 0;
     for(int j = 0; j < 3; j++){   
       if(v[j]->onWhat()->dim() == 2){
-	v[j]->getParameter(0,guess[0]);
-	v[j]->getParameter(1,guess[1]);
+	double uu,vv;
+	v[j]->getParameter(0,uu);
+	v[j]->getParameter(1,vv);
+	guess[0] += uu;
+	guess[1] += vv;
+	Count++;
+      }
+      else if (v[j]->onWhat()->dim() == 1){
+	GEdge *ge = (GEdge*)v[j]->onWhat();
+	double UU;
+	v[j]->getParameter(0, UU);
+	SPoint2 param;
+	param = ge->reparamOnFace(gf, UU, 1);
+	guess[0]+=param.x();
+	guess[1]+=param.y();
+	Count++;
+      }
+      else if (v[j]->onWhat()->dim() == 0){
+	SPoint2 param;
+	GVertex *gv = (GVertex*)v[j]->onWhat();
+	param = gv->reparamOnFace(gf,1);
+	guess[0]+=param.x();
+	guess[1]+=param.y();
 	Count++;
       }
     }
@@ -171,14 +192,16 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 	  // PARAMETRIC COORDINATES SHOULD BE SET for the vertex !!!!!!!!!!!!!
 	  // This is not 100 % safe yet, so we reserve that operation for high order
 	  // meshes.
+	  Msg::Debug("A new point has been inserted in mesh face %d by the 3D mesher, guess %g %g",gf->tag(),guess[0],guess[1]);
 	  GPoint gp = gf->closestPoint (SPoint3(v[j]->x(), v[j]->y(), v[j]->z()),guess);
-
-	  Msg::Debug("A new point has been inserted in mesh face %d by the 3D mesher",gf->tag());
-	  Msg::Debug("The point has been projected back to the surface (%g %g %g) -> (%g %g %g)",
-		     v[j]->x(), v[j]->y(), v[j]->z(),gp.x(),gp.y(),gp.z());
+	  Msg::Debug("The point has been projected back to the surface (%g %g %g) -> (%g %g %g), (%g,%g)",
+		     v[j]->x(), v[j]->y(), v[j]->z(),gp.x(),gp.y(),gp.z(),gp.u(),gp.v());
 
 	  // To be safe, we should ensure that this mesh motion does not lead to an invalid mesh !!!!
+	  //v1b = new MVertex(gp.x(),gp.y(),gp.z(),gf);
 	  v1b = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
+	  //v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf);
+
 	}
 	else{
 	  v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf);

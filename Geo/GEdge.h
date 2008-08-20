@@ -20,6 +20,7 @@ class ExtrudeParams;
 class GEdge : public GEntity {
  private:
   double _length;
+  bool _tooSmall;
 
  protected:
   GVertex *v0, *v1;
@@ -99,7 +100,8 @@ class GEdge : public GEntity {
   virtual double prescribedMeshSizeAtVertex() const { return meshAttributes.meshSize; }
 
   // true if start == end and no more than 2 segments
-  bool isMeshDegenerated() const{ return (v0 == v1 && mesh_vertices.size() < 2); }
+  void setTooSmall ( bool b) {_tooSmall = b;}
+  bool isMeshDegenerated() const{ return _tooSmall || (v0 == v1 && mesh_vertices.size() < 2); }
 
   // number of types of elements
   int getNumElementTypes() const { return 1; }

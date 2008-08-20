@@ -4497,6 +4497,14 @@ double opt_mesh_lc_max(OPT_ARGS_NUM)
   return CTX.mesh.lc_max;
 }
 
+double opt_mesh_tolerance_edge_length(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.tolerance_edge_length = val;
+  return CTX.mesh.tolerance_edge_length;
+}
+
+
 double opt_mesh_lc_from_curvature(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

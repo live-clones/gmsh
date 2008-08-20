@@ -201,6 +201,7 @@ SPoint2 gmshEdge::reparamOnFace(GFace *face, double epar,int dir) const
     }
   }
   
+
   if(s->Typ ==  MSH_SURF_REGL){
     Curve *C[4];
     for(int i = 0; i < 4; i++)

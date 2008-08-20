@@ -436,24 +436,31 @@ void getFaceVertices(GFace *gf,
           MVertex *v;
           const double t1 = points(k, 0);
           const double t2 = points(k, 1);
-          if(!reparamOK || linear || gf->geomType() == GEntity::DiscreteSurface){
+          if(linear || gf->geomType() == GEntity::DiscreteSurface){
             SPoint3 pc = face.interpolate(t1, t2);
             v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
           }
           else{
 	    double X(0),Y(0),Z(0),GUESS[2]={0,0};
+
 	    for (int j=0; j<incomplete->getNumVertices(); j++){
 	      double sf ; incomplete->getShapeFunction(j,t1,t2,0,sf);
 	      MVertex *vt = incomplete->getVertex(j);
 	      X += sf * vt->x();
 	      Y += sf * vt->y();
 	      Z += sf * vt->z();
-	      GUESS[0] += sf * pts[j][0];
-	      GUESS[1] += sf * pts[j][1];
+	      if (reparamOK){
+		GUESS[0] += sf * pts[j][0];
+		GUESS[1] += sf * pts[j][1];
+	      }
 	    }
-	    GPoint gp = gf->closestPoint(SPoint3(X,Y,Z),GUESS);
-	    //	    printf("%g %g %g -- %g %g %g\n",X,Y,Z,gp.x(),gp.y(),gp.z());
-            v = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
+	    if (reparamOK){
+	      GPoint gp = gf->closestPoint(SPoint3(X,Y,Z),GUESS);
+	      v = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
+	    }
+	    else{
+	      v = new MVertex(X,Y,Z, gf);
+	    }
           }
           faceVertices[p].push_back(v);
           gf->mesh_vertices.push_back(v);
@@ -718,13 +725,13 @@ void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
                           ve, nPts + 1));
       }
       else{
-	if (gf->geomType() == GEntity::Plane){
+	if (0 && gf->geomType() == GEntity::Plane){
 	  getFaceVertices(gf, t, vf, faceVertices, linear, nPts);
 	}
 	else{
-	MTriangleN incpl (t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                          ve, nPts + 1);
-        getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts);
+	  MTriangleN incpl (t->getVertex(0), t->getVertex(1), t->getVertex(2),
+			    ve, nPts + 1);
+	  getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts);
 	}
         ve.insert(ve.end(), vf.begin(), vf.end());
         triangles2.push_back

@@ -365,6 +365,16 @@ void Get_Options(int argc, char *argv[])
         else
           Msg::Fatal("Missing number");
       }
+      else if(!strcmp(argv[i] + 1, "edgelmin")) {
+        i++;
+        if(argv[i] != NULL) {
+          CTX.mesh.tolerance_edge_length = atof(argv[i++]);
+          if( CTX.mesh.tolerance_edge_length <= 0.0)
+	    Msg::Fatal("Tolerance for model edge length must be > 0 (here %g)", CTX.mesh.tolerance_edge_length);
+        }
+        else
+          Msg::Fatal("Missing number");
+      }
       else if(!strcmp(argv[i] + 1, "epslc1d")) {
         i++;
         if(argv[i] != NULL) {

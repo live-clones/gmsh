@@ -938,7 +938,7 @@ StringXNumber MeshOptions_Number[] = {
     "Factor applied to all characteristic lengths" },
   { F|O, "CharacteristicLengthMin" , opt_mesh_lc_min, 0.0 ,
     "Minimum characteristic length" },
-  { F|O, "CharacteristicLengthMax" , opt_mesh_lc_max, 1.e22 ,
+  { F|O, "CharacteristicLengthMax" , opt_mesh_lc_max, 1.e22,
     "Maximum characteristic length" },
   { F|O, "CharacteristicLengthFromCurvature" , opt_mesh_lc_from_curvature , 0. ,
     "Compute characteristic lengths from curvature" },
@@ -1093,6 +1093,8 @@ StringXNumber MeshOptions_Number[] = {
     "Display size of tangent vectors (in pixels)" }, 
   { F|O, "Tetrahedra" , opt_mesh_tetrahedra , 1. , 
     "Display mesh tetrahedra?" },
+  { F|O, "ToleranceEdgeLength" , opt_mesh_tolerance_edge_length, 0.0,
+    "Skip a model edge in mesh generation if its length is less than user's defined tolerance" },
   { F|O, "Triangles" , opt_mesh_triangles , 1. , 
     "Display mesh triangles?" },
 
