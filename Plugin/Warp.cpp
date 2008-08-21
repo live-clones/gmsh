@@ -31,8 +31,8 @@ void GMSH_WarpPlugin::getName(char *name) const
 void GMSH_WarpPlugin::getInfos(char *author, char *copyright,
 			       char *help_text) const
 {
-  strcpy(author, "C. Geuzaine");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "C. Geuzaine, J.-F. Remacle");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(Warp) transforms the elements in the\n"
          "view `iView' by adding to their node coordinates\n"

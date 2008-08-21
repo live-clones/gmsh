@@ -120,8 +120,8 @@ void GMSH_CutPlanePlugin::getName(char *name) const
 void GMSH_CutPlanePlugin::getInfos(char *author, char *copyright,
                                    char *help_text) const
 {
-  strcpy(author, "J.-F. Remacle");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "C. Geuzaine, J.-F. Remacle");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(CutPlane) cuts the view `iView' with\n"
          "the plane `A'*X + `B'*Y + `C'*Z + `D' = 0. If\n"

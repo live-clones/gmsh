@@ -35,8 +35,8 @@ void GMSH_SkinPlugin::getName(char *name) const
 
 void GMSH_SkinPlugin::getInfos(char *author, char *copyright, char *help_text) const
 {
-  strcpy(author, "C. Geuzaine");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "C. Geuzaine, J.-F. Remacle");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(Skin) extracts the skin (the boundary) of\n"
          "the view `iView'. If `iView' < 0, the plugin is run\n"

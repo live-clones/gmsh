@@ -106,8 +106,8 @@ void GMSH_ProbePlugin::getName(char *name) const
 void GMSH_ProbePlugin::getInfos(char *author, char *copyright,
                                    char *help_text) const
 {
-  strcpy(author, "C. Geuzaine");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "C. Geuzaine, J.-F. Remacle");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(Probe) gets the value of the view `iView' at\n"
          "the point (`X',`Y',`Z'). If `iView' < 0, the plugin is\n"

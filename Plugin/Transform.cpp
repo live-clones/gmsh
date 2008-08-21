@@ -38,8 +38,8 @@ void GMSH_TransformPlugin::getName(char *name) const
 void GMSH_TransformPlugin::getInfos(char *author, char *copyright,
                                     char *help_text) const
 {
-  strcpy(author, "C. Geuzaine");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "C. Geuzaine, J.-F. Remacle");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(Transform) transforms the homogeneous\n"
          "node coordinates (x,y,z,1) of the elements in\n"

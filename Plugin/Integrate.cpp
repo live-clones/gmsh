@@ -32,8 +32,8 @@ void GMSH_IntegratePlugin::getName(char *name) const
 void GMSH_IntegratePlugin::getInfos(char *author, char *copyright,
                                     char *help_text) const
 {
-  strcpy(author, "C. Geuzaine");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "C. Geuzaine, J.-F. Remacle");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(Integrate) integrates scalar fields over\n"
          "all the elements in the view `iView', as well\n"

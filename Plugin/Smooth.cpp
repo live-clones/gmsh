@@ -25,8 +25,8 @@ void GMSH_SmoothPlugin::getName(char *name) const
 void GMSH_SmoothPlugin::getInfos(char *author, char *copyright,
                                  char *help_text) const
 {
-  strcpy(author, "C. Geuzaine");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "C. Geuzaine, J.-F. Remacle");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(Smooth) averages the values at the nodes\n"
          "of the scalar view `iView'. If `iView' < 0, the\n"

@@ -25,8 +25,8 @@ void GMSH_EigenvaluesPlugin::getName(char *name) const
 
 void GMSH_EigenvaluesPlugin::getInfos(char *author, char *copyright, char *help_text) const
 {
-  strcpy(author, "C. Geuzaine");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "C. Geuzaine, J.-F. Remacle");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(Eigenvalues) computes the three real\n"
          "eigenvalues of each tensor in the view `iView'.\n"

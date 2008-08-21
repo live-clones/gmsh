@@ -26,8 +26,8 @@ void GMSH_GradientPlugin::getName(char *name) const
 void GMSH_GradientPlugin::getInfos(char *author, char *copyright,
 				   char *help_text) const
 {
-  strcpy(author, "C. Geuzaine");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "C. Geuzaine, J.-F. Remacle");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(Gradient) computes the gradient of the\n"
          "field in the view `iView'. If `iView' < 0, the\n"

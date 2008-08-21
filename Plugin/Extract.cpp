@@ -45,8 +45,8 @@ void GMSH_ExtractPlugin::getName(char *name) const
 
 void GMSH_ExtractPlugin::getInfos(char *author, char *copyright, char *help_text) const
 {
-  strcpy(author, "C. Geuzaine");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "C. Geuzaine, J.-F. Remacle");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(Extract) extracts a combination of\n"
          "components from the `TimeStep'th time step\n"

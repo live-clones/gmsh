@@ -187,8 +187,8 @@ void GMSH_AnnotatePlugin::getName(char *name) const
 void GMSH_AnnotatePlugin::getInfos(char *author, char *copyright,
                                    char *help_text) const
 {
-  strcpy(author, "C. Geuzaine");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "C. Geuzaine, J.-F. Remacle");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(Annotate) adds the text string `Text',\n"
          "in font `Font' and size `FontSize', in the view\n"

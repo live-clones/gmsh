@@ -31,8 +31,8 @@ void GMSH_ExtractEdgesPlugin::getName(char *name) const
 
 void GMSH_ExtractEdgesPlugin::getInfos(char *author, char *copyright, char *help_text) const
 {
-  strcpy(author, "C. Geuzaine (geuz@geuz.org)");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "C. Geuzaine, J.-F. Remacle");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(ExtractEdges) extracts the geometry edges\n"
          "from the surface view `iView', using `Angle' as\n"

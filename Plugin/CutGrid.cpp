@@ -167,8 +167,8 @@ void GMSH_CutGridPlugin::getName(char *name) const
 void GMSH_CutGridPlugin::getInfos(char *author, char *copyright,
                                    char *help_text) const
 {
-  strcpy(author, "J.-F. Remacle");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "C. Geuzaine, J.-F. Remacle");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(CutGrid) cuts the view `iView' with a\n"
          "rectangular grid defined by the 3 points\n"

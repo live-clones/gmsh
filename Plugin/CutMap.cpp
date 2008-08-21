@@ -87,8 +87,8 @@ void GMSH_CutMapPlugin::getName(char *name) const
 void GMSH_CutMapPlugin::getInfos(char *author, char *copyright,
                                  char *help_text) const
 {
-  strcpy(author, "J.-F. Remacle");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "C. Geuzaine, J.-F. Remacle");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(CutMap) extracts the isosurface of value\n"
          "`A' from the view `iView' and draws the\n"

@@ -34,8 +34,8 @@ void GMSH_TriangulatePlugin::getName(char *name) const
 void GMSH_TriangulatePlugin::getInfos(char *author, char *copyright,
                                       char *help_text) const
 {
-  strcpy(author, "C. Geuzaine");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "C. Geuzaine, J.-F. Remacle");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(Triangulate) triangulates the points in the\n"
          "view `iView', assuming that all the points belong\n"

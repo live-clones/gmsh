@@ -27,8 +27,8 @@ void GMSH_ModulusPhasePlugin::getName(char *name) const
 void GMSH_ModulusPhasePlugin::getInfos(char *author, char *copyright,
                                         char *help_text) const
 {
-  strcpy(author, "C. Geuzaine");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "C. Geuzaine, J.-F. Remacle");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(ModulusPhase) interprets the time steps\n"
          "`realPart' and `imaginaryPart' in the view `iView'\n"

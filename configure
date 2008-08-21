@@ -4458,9 +4458,8 @@ fi
       FLAGS="-DHAVE_ANN ${FLAGS}"
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains ANN, the"
-      echo "  Approximate Nearest Neighbor library."
-      echo "  Please note that by doing so, you agree with ANN's licensing"
-      echo "  requirements stated in contrib/ANN/Copyright.txt."
+      echo "  Approximate Nearest Neighbor library. ANN is available under"
+      echo "  the GNU LGPL."
       echo "  To disable ANN, run configure again with the --disable-ann"
       echo "  option."
       echo "********************************************************************"
@@ -4535,8 +4534,8 @@ fi
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the METIS mesh"
       echo "  partitioner."
-      echo "  Please note that by including METIS, you agree with the METIS"
-      echo "  licensing requirements stated in contrib/Metis/README."
+      echo "  Please note that by including METIS, you agree with METIS'"
+      echo "  special licensing requirements stated in contrib/Metis/README."
       echo "  To disable METIS, run configure again with the --disable-metis"
       echo "  option."
       echo "********************************************************************"
@@ -4573,7 +4572,7 @@ fi
       FLAGS="-DHAVE_NETGEN ${FLAGS}"
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the Netgen 3D"
-      echo "  mesh generator. Netgen is distributed under the GNU LGPL."
+      echo "  mesh generator. Netgen is available under the GNU LGPL."
       echo "  To disable Netgen, run configure again with the --disable-netgen"
       echo "  option."
       echo "********************************************************************"
@@ -4611,9 +4610,8 @@ fi
       echo "********************************************************************"
       echo "  You are building a version of Gmsh that contains the Tetgen 3D"
       echo "  mesh generator."
-      echo "  Please note that by doing so, you agree with Tetgen's licensing"
-      echo "  requirements stated in contrib/Tetgen/LICENSE. (Most notably,"
-      echo "  you may then only redistribute Gmsh for non-commercial purposes.)"
+      echo "  Please note that by doing so, you agree with Tetgen's special"
+      echo "  licensing requirements stated in contrib/Tetgen/LICENSE."
       echo "  To disable Tetgen, run configure again with the --disable-tetgen"
       echo "  option."
       echo "********************************************************************"
@@ -4648,6 +4646,12 @@ fi
       GMSH_DIRS="${GMSH_DIRS} contrib/MathEval"
       GMSH_LIBS="${GMSH_LIBS} -lGmshMathEval"
       FLAGS="-DHAVE_MATH_EVAL ${FLAGS}"
+      echo "********************************************************************"
+      echo "  You are building a version of Gmsh that contains GNU MathEval."
+      echo "  MathEval is available under the GNU GPL."
+      echo "  To disable MathEval, run configure again with the"
+      echo "  --disable-matheval option."
+      echo "********************************************************************"
     fi
   fi
 
@@ -4818,14 +4822,14 @@ else
 fi
 
   if test "x${NR}" = "xyes"; then
+    GMSH_DIRS="${GMSH_DIRS} contrib/NR"
+    GMSH_LIBS="${GMSH_LIBS} -lGmshNR"
     echo "********************************************************************"
     echo "  You are building a non-free version of Gmsh, using code copyright"
-    echo "  (C) 1986-92 Numerical Recipes Software J!0."
+    echo "  (C) 1986-92 Numerical Recipes Software."
     echo "  To use the GSL instead, run configure again with the --enable-gsl"
     echo "  option."
     echo "********************************************************************"
-    GMSH_DIRS="${GMSH_DIRS} contrib/NR"
-    GMSH_LIBS="${GMSH_LIBS} -lGmshNR"
   else
     { { echo "$as_me:$LINENO: error: Could not find GSL, aborting." >&5
 echo "$as_me: error: Could not find GSL, aborting." >&2;}

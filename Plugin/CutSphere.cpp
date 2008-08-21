@@ -116,8 +116,8 @@ void GMSH_CutSpherePlugin::getName(char *name) const
 void GMSH_CutSpherePlugin::getInfos(char *author, char *copyright,
                                     char *help_text) const
 {
-  strcpy(author, "J.-F. Remacle");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "C. Geuzaine, J.-F. Remacle");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(CutSphere) cuts the view `iView' with the\n"
          "sphere (X-`Xc')^2 + (Y-`Yc')^2 + (Z-`Zc')^2 = `R'^2.\n"

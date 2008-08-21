@@ -33,7 +33,7 @@ void GMSH_Lambda2Plugin::getInfos(char *author, char *copyright,
                                    char *help_text) const
 {
   strcpy(author, "E. Marchandise");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(Lambda2) computes the eigenvalues\n"
          "Lambda(1,2,3) of the tensor (S_ik S_kj +\n"

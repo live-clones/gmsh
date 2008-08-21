@@ -31,8 +31,8 @@ void GMSH_TransformLatLonPlugin::getName(char *name) const
 void GMSH_TransformLatLonPlugin::getInfos(char *author, char *copyright,
                                           char *help_text) const
 {
-  strcpy(author, "C. Geuzaine");
-  strcpy(copyright, "DGR (www.multiphysics.com)");
+  strcpy(author, "J. Lambrechts");
+  strcpy(copyright, "C. Geuzaine, J.-F. Remacle");
   strcpy(help_text,
          "Plugin(TransformLatLon) transforms the homogeneous\n"
          "node coordinates (x,y,z,1) of the elements in\n"
