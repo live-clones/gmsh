@@ -107,6 +107,8 @@ int       terminal_propogation;
 /* 	} */
 /* 	read_params(params_file); */
 /*     } */
+/* Gmsh - required if above commented out */
+    params_file = NULL;
 /* Gmsh - end */
 /* Gmsh - override some parameters */
     FREE_GRAPH = 0;
