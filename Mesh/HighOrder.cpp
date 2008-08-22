@@ -25,7 +25,8 @@ typedef std::map<std::pair<MVertex*,MVertex*>, std::vector<MVertex*> > edgeConta
 
 // for each face (a list of vertices) we build a list of vertices that
 // are the high order representation of the face
-typedef std::map<std::vector<MVertex*>, std::vector<MVertex*> > faceContainer;
+// typedef std::map<std::vector<MVertex*>, std::vector<MVertex*>> faceContainer;
+typedef std::map<MFace, std::vector<MVertex*>,Less_Face>       faceContainer;
 
 bool reparamOnFace(MVertex *v, GFace *gf, SPoint2 &param)
 {
@@ -416,10 +417,16 @@ void getFaceVertices(GFace *gf,
 
   for(int i = 0; i < ele->getNumFaces(); i++){
     MFace face = ele->getFace(i);
-    std::vector<MVertex*> p;
-    face.getOrderedVertices(p);
-    if(faceVertices.count(p)){
-      vf.insert(vf.end(), faceVertices[p].begin(), faceVertices[p].end());
+    //std::vector<MVertex*> p;
+    // face.getOrderedVertices(p);
+    //if(faceVertices.count(p)){
+    //       vf.insert(vf.end(), faceVertices[p].begin(), faceVertices[p].end());
+    //     }
+
+    faceContainer::iterator fIter = faceVertices.find(face);
+    
+    if(fIter!=faceVertices.end()){
+      vf.insert(vf.end(), fIter->second.begin(), fIter->second.end());
     }
     else{
       SPoint2 pts[20];
@@ -432,6 +439,9 @@ void getFaceVertices(GFace *gf,
 	}
       }
       if(face.getNumVertices() == 3){ // triangles
+
+        std::vector<MVertex*>& vtcs = faceVertices[face];
+          
         for(int k = start ; k < points.size1() ; k++){
           MVertex *v;
           const double t1 = points(k, 0);
@@ -462,12 +472,17 @@ void getFaceVertices(GFace *gf,
 	      v = new MVertex(X,Y,Z, gf);
 	    }
           }
-          faceVertices[p].push_back(v);
+          // should be expensive -> induces a new search each time
+          // faceVertices[p].push_back(v);
+          vtcs.push_back(v);
           gf->mesh_vertices.push_back(v);
           vf.push_back(v);
         }
       }
       else if(face.getNumVertices() == 4){ // quadrangles
+
+        std::vector<MVertex*>& vtcs = faceVertices[face];
+        
         for(int j = 0; j < nPts; j++){
           for(int k = 0; k < nPts; k++){
             MVertex *v;
@@ -490,7 +505,8 @@ void getFaceVertices(GFace *gf,
               GPoint pc = gf->point(uc, vc);
               v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
             }
-            faceVertices[p].push_back(v);
+            // faceVertices[p].push_back(v);
+            vtcs.push_back(v);
             gf->mesh_vertices.push_back(v);
             vf.push_back(v);
           }
@@ -527,12 +543,21 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
 
   for(int i = 0; i < ele->getNumFaces(); i++){
     MFace face = ele->getFace(i);
-    std::vector<MVertex*> p;
-    face.getOrderedVertices(p);
-    if(faceVertices.count(p)){
-      vf.insert(vf.end(), faceVertices[p].begin(), faceVertices[p].end());
+    // std::vector<MVertex*> p;
+//     face.getOrderedVertices(p);
+//     if(faceVertices.count(p)){
+//       vf.insert(vf.end(), faceVertices[p].begin(), faceVertices[p].end());
+//     }
+
+    faceContainer::iterator fIter = faceVertices.find(face);
+
+    if (fIter!=faceVertices.end()) {
+      vf.insert(vf.end(), fIter->second.begin(), fIter->second.end());
     }
     else{
+
+      std::vector<MVertex*>& vtcs = faceVertices[face];
+      
       SPoint2 p0, p1, p2, p3;
       bool reparamOK = true;
       if(!linear && 
@@ -561,7 +586,8 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
             v->setParameter (0,uc);
             v->setParameter (1,vc);
           }
-          faceVertices[p].push_back(v);
+          // faceVertices[p].push_back(v);
+          vtcs.push_back(v);
           gf->mesh_vertices.push_back(v);
           vf.push_back(v);
         }
@@ -589,7 +615,8 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
               GPoint pc = gf->point(uc, vc);
               v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
             }
-            faceVertices[p].push_back(v);
+            // faceVertices[p].push_back(v);
+            vtcs.push_back(v);
             gf->mesh_vertices.push_back(v);
             vf.push_back(v);
           }
@@ -599,25 +626,99 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
   }
 }
 
+void reorientTrianglePoints(std::vector<MVertex*>& vtcs,int orientation,bool swap) {
+
+
+  size_t nbPts = vtcs.size();
+
+  if (nbPts > 3) Msg::Error("Interior face nodes reorientation not supported for order > 4");
+  std::vector<MVertex*> tmp(nbPts);
+
+  // rotation
+  // --------
+
+  // --- interior "principal vertices"
+  
+  // for (int i=0;i<3;i++) tmp[(i+orientation)%3] = vtcs[i];
+  
+  for (int i=0;i<3;i++) tmp[i] = vtcs[(i+orientation)%3];
+
+  
+  // normal swap
+  // -----------
+  
+  if (swap) {
+    // --- interior "principal vertices"
+    for (int i=0;i<2;i++) for (int j=0;j<2-i;j++) vtcs[i*2+j] = tmp[i+j*2];
+  }
+  
+  // no swap
+  // -------
+  
+  else vtcs = tmp;
+} 
+
+
+// KH: check face orientation wrt element ... 
+
 void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
                      faceContainer &faceVertices, bool linear, int nPts = 1)
 {
+  
   for(int i = 0; i < ele->getNumFaces(); i++){
     MFace face = ele->getFace(i);
-    std::vector<MVertex*> p;
-    face.getOrderedVertices(p);
-    if(faceVertices.count(p)){
-      vf.insert(vf.end(), faceVertices[p].begin(), faceVertices[p].end());
+    // std::vector<MVertex*> p;
+//     face.getOrderedVertices(p);
+//     if(faceVertices.count(p)){
+//       // checking orientation not possible ??? 
+//       vf.insert(vf.end(), faceVertices[p].begin(), faceVertices[p].end());
+//     }
+
+    faceContainer::iterator fIter = faceVertices.find(face);
+
+    if (fIter!=faceVertices.end()) {
+
+      int orientation;
+      bool swap;
+      
+      std::vector<MVertex*> vtcs = fIter->second;
+      if (fIter->first.computeCorrespondence(face,orientation,swap)) {
+        printf("element %d , face %d (%d,%d,%d) wrt (%d,%d,%d): orientation %d, swap %d\n",
+               ele->getNum(),i,
+               face.getVertex(0)->getNum(),
+               face.getVertex(1)->getNum(),
+               face.getVertex(2)->getNum(),
+               fIter->first.getVertex(0)->getNum(),
+               fIter->first.getVertex(1)->getNum(),
+               fIter->first.getVertex(2)->getNum(),
+               orientation, swap ? 1:0);
+        reorientTrianglePoints(vtcs,orientation,swap);
+      }
+      else Msg::Error("Error in face lookup for recuperation of high order face nodes");
+      vf.insert(vf.end(), vtcs.begin(), vtcs.end());
     }
-    else{      
+    else{
+      std::vector<MVertex*>& vtcs = faceVertices[face];
+      
       if(face.getNumVertices() == 3){ // triangles
         for(int j = 0; j < nPts; j++){
           for(int k = 0 ; k < nPts - j - 1; k++){
-            double t1 = (double)(j + 1) / (nPts + 1);
-            double t2 = (double)(k + 1) / (nPts + 1);
+            
+            // KH: inverted direction to stick with triangle vertex numbering
+            // 
+            // 2
+            // | \
+            // 0 - 1
+            // 
+            // double t1 = (double)(j + 1) / (nPts + 1);
+            // double t2 = (double)(k + 1) / (nPts + 1);
+            double t1 = (double)(k + 1) / (nPts + 1);
+            double t2 = (double)(j + 1) / (nPts + 1);
+
             SPoint3 pc = face.interpolate(t1, t2);
             MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
-            faceVertices[p].push_back(v);
+            // faceVertices[p].push_back(v);
+            vtcs.push_back(v);
             gr->mesh_vertices.push_back(v);
             vf.push_back(v);
           }
@@ -631,7 +732,8 @@ void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
             double t2 = 2. * (double)(k + 1) / (nPts + 1) - 1.;
             SPoint3 pc = face.interpolate(t1, t2);
             MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
-            faceVertices[p].push_back(v);
+            // faceVertices[p].push_back(v);
+            vtcs.push_back(v);
             gr->mesh_vertices.push_back(v);
             vf.push_back(v);
           }

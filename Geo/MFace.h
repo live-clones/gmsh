@@ -23,6 +23,9 @@ class MFace {
   inline int getNumVertices() const { return _v[3] ? 4 : 3; }
   inline MVertex *getVertex(const int i) const { return _v[i]; }
   inline MVertex *getSortedVertex(const int i) const { return _v[int(_si[i])]; }
+  
+  bool computeCorrespondence(const MFace&,int&,bool&) const;
+
   void getOrderedVertices(std::vector<MVertex*> &verts) const
   {
     for(int i = 0; i < getNumVertices(); i++)
@@ -127,5 +130,8 @@ struct Less_Face : public std::binary_function<MFace, MFace, bool> {
     return false;
   }
 };
+
+
+
 
 #endif

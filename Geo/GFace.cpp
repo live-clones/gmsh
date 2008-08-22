@@ -531,8 +531,8 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
          Unew <= umax && Vnew <= vmax &&
          Unew >= umin && Vnew >= vmin){
         if (onSurface && err2 > 1.e-4 * CTX.lc)
-          Msg::Warning("Converged for i=%d j=%d (err=%g iter=%d) BUT xyz error = %g",
-              i, j, err, iter, err2);
+          Msg::Warning("Converged for i=%d j=%d (err=%g iter=%d) BUT xyz error = %g in point (%e,%e,%e) on surface %d",
+                       i, j, err, iter, err2,X,Y,Z,tag());
         return;
       }
     }
@@ -556,7 +556,7 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p) const
 
 GPoint GFace::closestPoint(const SPoint3 & queryPoint, const double initialGuess[2]) const
 {
-  Msg::Error("Closet point not implemented for this type of surface");
+  Msg::Error("Closest point not implemented for this type of surface");
   return GPoint(0, 0, 0);
 }
 

@@ -13,6 +13,8 @@
 #include "MVertex.h"
 #include "MEdge.h"
 #include "MFace.h"
+#include "Message.h"
+
 
 struct IntPt{
   double pt[3];
@@ -1455,6 +1457,67 @@ class MTetrahedron10 : public MTetrahedron {
  *                `3
  *
  */
+
+
+
+/* tet order 3
+   
+ *              2
+ *            ,/|`\ 
+ *          ,5  |  `6              E = order - 1
+ *        ,/    12   `\            C = 4 + 6*E 
+ *      ,4       |     `7          F = ((order - 1)*(order - 2))/2
+ *    ,/         |       `\	   N = total number of vertices
+ *   0-----9-----'.--8-----1
+ *    `\.         |      ,/        Interior vertex numbers
+ *       10.     13    ,14           for edge 0 <= i <= 5: 4+i*E to 3+(i+1)*E
+ *          `\.   '. 15		     for face 0 <= j <= 3: C+j*F to C-1+(j+1)*F
+ *             11\.|/ 	     in volume           : C+4*F to N-1
+ *                `3
+ *
+ */
+
+   
+
+
+static int reverseTet20[20] = {0,2,1,3,  // principal vertices
+                               9,8,      // E0 switches with E2
+                               7,6,      // E1 inverts direction
+                               5,4,      // E2 switches with E0
+                               10,11,    // E3 pure w edge > remains the same
+                               14,15,    // E4 uw edge swithes with v/w edge E5
+                               12,13,    // E5 switches with E4
+                               16,       // F0 is uv plane, reverts normal
+                               18,       // F1 is uw plane, switches with F2
+                               17,       // F2 is vw plane, switches with F1
+                               19};      // F3 is uvw plane, reverts normal
+
+static int reverseTet35[35] = {0,2,1,3,  // principal vertices
+                               
+                               12,11,10, // E0 switches with E2
+                               9,8,7,    // E1 inverts direction
+                               6,5,4,    // E2 switches with E0
+                               13,14,15, // E3 pure w edge > remains the same
+                               19,20,21, // E4 uw edge swithes with v/w edge E5
+                               16,17,18, // E5 switches with E4
+                               22,24,23, // F0 is uv plane, reverts normal
+                               28,30,29, // F1 is uw plane, switches with F2, orientation is different
+                               25,27,26, // F2 is vw plane, switches with F1
+                               31,33,32, // F3 is uvw plane, reverts normal
+                               34};      // central node remains 
+  
+static int reverseTet34[34] = {0,2,1,3,  // principal vertices
+                               12,11,10, // E0 switches with E2
+                               9,8,7,    // E1 inverts direction
+                               6,5,4,    // E2 switches with E0
+                               13,14,15, // E3 pure w edge > remains the same
+                               19,20,21, // E4 uw edge swithes with v/w edge E5
+                               16,17,18, // E5 switches with E4
+                               22,24,23, // F0 is uv plane, reverts normal
+                               28,29,30, // F1 is uw plane, switches with F2
+                               25,26,27, // F2 is vw plane, switches with F1
+                               31,33,32};// F3 is uvw plane, reverts normal
+
 class MTetrahedronN : public MTetrahedron {
  protected:
   std::vector<MVertex *> _vs;
@@ -1518,12 +1581,38 @@ class MTetrahedronN : public MTetrahedron {
     return 0;
   }
   virtual void revert() 
-  {
+  {    
     MVertex *tmp;
-    tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
-    std::vector<MVertex*> inv;
-    inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
-    _vs = inv;
+    tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;    
+    switch (getTypeForMSH()) {
+    case MSH_TET_20:
+      {
+        std::vector<MVertex*> inv(16);
+        for (int i=0;i<16;i++) inv[i] = _vs[reverseTet20[i+4]-4];
+        _vs = inv;
+        break;
+      }
+    case MSH_TET_35:
+      {
+        std::vector<MVertex*> inv(31);
+        for (int i=0;i<31;i++) inv[i] = _vs[reverseTet35[i+4]-4];
+        _vs = inv;
+        break;
+      }
+    case MSH_TET_34:
+      {
+        std::vector<MVertex*> inv(30);
+        for (int i=0;i<31;i++) inv[i] = _vs[reverseTet34[i+4]-4];
+        _vs = inv;
+        break;
+      }
+    default:
+      {
+        Msg::Error("Reversion of %d order tetrahedron (type %d) not implemented\n",
+                   _order,getTypeForMSH());
+        break;
+      }
+    }
   }
   virtual void jac(double u, double v, double w, double j[3][3])
   {
