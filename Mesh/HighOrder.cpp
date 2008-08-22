@@ -628,7 +628,8 @@ void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
 
 void reorientTrianglePoints(std::vector<MVertex*>& vtcs,int orientation,bool swap) {
 
-
+  if (vtcs.size() == 1) return;
+  
   size_t nbPts = vtcs.size();
 
   if (nbPts > 3) Msg::Error("Interior face nodes reorientation not supported for order > 4");
