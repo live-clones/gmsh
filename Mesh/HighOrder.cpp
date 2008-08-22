@@ -683,15 +683,6 @@ void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
       
       std::vector<MVertex*> vtcs = fIter->second;
       if (fIter->first.computeCorrespondence(face,orientation,swap)) {
-        printf("element %d , face %d (%d,%d,%d) wrt (%d,%d,%d): orientation %d, swap %d\n",
-               ele->getNum(),i,
-               face.getVertex(0)->getNum(),
-               face.getVertex(1)->getNum(),
-               face.getVertex(2)->getNum(),
-               fIter->first.getVertex(0)->getNum(),
-               fIter->first.getVertex(1)->getNum(),
-               fIter->first.getVertex(2)->getNum(),
-               orientation, swap ? 1:0);
         reorientTrianglePoints(vtcs,orientation,swap);
       }
       else Msg::Error("Error in face lookup for recuperation of high order face nodes");
@@ -1615,6 +1606,6 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   checkHighOrderTriangles(m);
 
   double t2 = Cpu();
-  Msg::Info("Mesh second order complete (%g s)", t2 - t1);
+  Msg::Info("Meshing order %d complete (%g s)", order, t2 - t1);
   Msg::StatusBar(1, true, "Mesh");
 }
