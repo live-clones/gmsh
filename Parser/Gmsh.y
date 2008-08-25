@@ -51,7 +51,7 @@ static PViewDataList *ViewData;
 static ExtrudeParams extr;
 static gmshSurface *myGmshSurface = 0;
 static List_T *ViewValueList = 0;
-static double ViewCoord[100];
+static double ViewCoord[105]; // KH: support up to order 4 mappings 
 static int *ViewNumList = 0, ViewCoordIdx = 0;
 #define MAX_RECUR_LOOPS 100
 static int ImbricatedLoop = 0;
@@ -453,7 +453,7 @@ Element :
 #if !defined(HAVE_NO_POST)
       if(ViewValueList){
 	for(int i = 0; i < 3; i++)
-	  for(int j = 0; j < ViewCoordIdx / 3; j++)
+	  for(int j = 0; j < ViewCoordIdx / 3; j++) 
 	    List_Add(ViewValueList, &ViewCoord[3 * j + i]);
       }
 #endif

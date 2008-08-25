@@ -376,7 +376,7 @@ static PViewDataList *ViewData;
 static ExtrudeParams extr;
 static gmshSurface *myGmshSurface = 0;
 static List_T *ViewValueList = 0;
-static double ViewCoord[100];
+static double ViewCoord[105];
 static int *ViewNumList = 0, ViewCoordIdx = 0;
 #define MAX_RECUR_LOOPS 100
 static int ImbricatedLoop = 0;

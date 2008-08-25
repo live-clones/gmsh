@@ -566,24 +566,28 @@ class MTriangle : public MElement {
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
-  virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
-  {
-    switch(num){
-    case 0  : s = 1. - u - v; break;
-    case 1  : s =      u    ; break;
-    case 2  : s =          v; break;
-    default : s = 0.; break;
-    }
-  }
-  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
-  {
-    switch(num) {
-    case 0  : s[0] = -1.; s[1] = -1.; s[2] =  0.; break;
-    case 1  : s[0] =  1.; s[1] =  0.; s[2] =  0.; break;
-    case 2  : s[0] =  0.; s[1] =  1.; s[2] =  0.; break;
-    default : s[0] = s[1] = s[2] = 0.; break;
-    }
-  }
+
+  virtual void getShapeFunction(int num, double u, double v, double w, double &s);
+  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]);
+  
+/*   virtual void getShapeFunction(int num, double u, double v, double w, double &s)  */
+/*   { */
+/*     switch(num){ */
+/*     case 0  : s = 1. - u - v; break; */
+/*     case 1  : s =      u    ; break; */
+/*     case 2  : s =          v; break; */
+/*     default : s = 0.; break; */
+/*     } */
+/*   } */
+/*   virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3])  */
+/*   { */
+/*     switch(num) { */
+/*     case 0  : s[0] = -1.; s[1] = -1.; s[2] =  0.; break; */
+/*     case 1  : s[0] =  1.; s[1] =  0.; s[2] =  0.; break; */
+/*     case 2  : s[0] =  0.; s[1] =  1.; s[2] =  0.; break; */
+/*     default : s[0] = s[1] = s[2] = 0.; break; */
+/*     } */
+/*   } */
   virtual bool isInside(double u, double v, double w, double tol=1.e-8)
   {
     if(u < (-tol) || v < (-tol) || u > ((1. + tol) - v))
@@ -704,6 +708,7 @@ class MTriangle6 : public MTriangle {
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
     tmp = _vs[0]; _vs[0] = _vs[2]; _vs[2] = tmp;
   }
+  
   virtual void jac(double u, double v, double w, double j[2][3])
   {
     MTriangle::jac(2, _vs, u, v, w, j);

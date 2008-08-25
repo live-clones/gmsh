@@ -719,7 +719,72 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
     if(name) *name = "Unknown"; 
     return 0;
   }               
-}                 
+}
+
+void MTriangle::getShapeFunction(int num,double uu, double vv,double ww,double& s) {
+
+#if !defined(HAVE_GMSH_EMBEDDED)
+  
+  int nf = getNumFaceVertices();
+  double fv[256];
+  
+  if (!nf){
+    switch(getPolynomialOrder()){
+    case 1: gmshFunctionSpaces::find(MSH_TRI_3).f(uu, vv, fv); break;
+    case 2: gmshFunctionSpaces::find(MSH_TRI_6).f(uu, vv, fv); break;
+    case 3: gmshFunctionSpaces::find(MSH_TRI_9).f(uu, vv, fv); break;
+    case 4: gmshFunctionSpaces::find(MSH_TRI_12).f(uu, vv, fv); break;
+    case 5: gmshFunctionSpaces::find(MSH_TRI_15I).f(uu, vv, fv); break;
+    default: Msg::Error("Order %d triangle shape function not implemented", getPolynomialOrder()); break;
+    }
+  }
+  else{
+    switch(getPolynomialOrder()){
+    case 1: gmshFunctionSpaces::find(MSH_TRI_3).f(uu, vv, fv); break;
+    case 2: gmshFunctionSpaces::find(MSH_TRI_6).f(uu, vv, fv); break;
+    case 3: gmshFunctionSpaces::find(MSH_TRI_10).f(uu, vv, fv); break;
+    case 4: gmshFunctionSpaces::find(MSH_TRI_15).f(uu, vv, fv); break;
+    case 5: gmshFunctionSpaces::find(MSH_TRI_21).f(uu, vv, fv); break;
+    default: Msg::Error("Order %d triangle jac not implemented", getPolynomialOrder()); break;
+    }
+  }
+  s = fv[num];
+#endif
+  
+}
+
+void MTriangle::getGradShapeFunction(int num,double uu,double vv,double ww,double s[3]) {
+
+  
+#if !defined(HAVE_GMSH_EMBEDDED)
+  double grads[256][2];
+  int nf = getNumFaceVertices();
+
+  if (!nf){
+    switch(getPolynomialOrder()){
+    case 1: gmshFunctionSpaces::find(MSH_TRI_3).df(uu, vv, ww, grads); break;
+    case 2: gmshFunctionSpaces::find(MSH_TRI_6).df(uu, vv, ww, grads); break;
+    case 3: gmshFunctionSpaces::find(MSH_TRI_9).df(uu, vv, ww, grads); break;
+    case 4: gmshFunctionSpaces::find(MSH_TRI_12).df(uu, vv, ww, grads); break;
+    case 5: gmshFunctionSpaces::find(MSH_TRI_15I).df(uu, vv, ww, grads); break;
+    default: Msg::Error("Order %d triangle jac not implemented", getPolynomialOrder()); break;
+    }
+  }
+  else{
+    switch(getPolynomialOrder()){
+    case 1: gmshFunctionSpaces::find(MSH_TRI_3).df(uu, vv, ww, grads); break;
+    case 2: gmshFunctionSpaces::find(MSH_TRI_6).df(uu, vv, ww, grads); break;
+    case 3: gmshFunctionSpaces::find(MSH_TRI_10).df(uu, vv, ww, grads); break;
+    case 4: gmshFunctionSpaces::find(MSH_TRI_15).df(uu, vv, ww, grads); break;
+    case 5: gmshFunctionSpaces::find(MSH_TRI_21).df(uu, vv, ww, grads); break;
+    default: Msg::Error("Order %d triangle jac not implemented", getPolynomialOrder()); break;
+    }
+  }
+  
+  for (int i=0;i<3;i++) s[i] = grads[num][i];
+  
+#endif
+}
 
 void MTriangle::jac(int ord, MVertex *vs[], double uu, double vv, double ww,
 		    double j[2][3])
