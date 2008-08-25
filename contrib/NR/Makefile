@@ -7,7 +7,7 @@ include ../../variables
 
 LIB = ../../lib/libGmshNR${LIBEXT}
 
-INC = ${DASH}I../../Common
+INC = ${DASH}I../../Common ${DASH}I.
 
 # don't optimize this library: there are some problems with gcc...
 CFLAGS  = ${FLAGS} ${INC}
