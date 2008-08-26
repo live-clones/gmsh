@@ -71,7 +71,7 @@ class FieldOptionInt : public FieldOption
 class FieldOptionList : public FieldOption
 {
  public:
-  std::list < int >&val;
+  std::list<int> &val;
   FieldOptionType get_type(){ return FIELD_OPTION_LIST; }
   FieldOptionList(std::list<int> &_val, bool *_status=0) 
     : FieldOption(_status), val(_val) {}
@@ -81,7 +81,7 @@ class FieldOptionList : public FieldOption
   {
     std::ostringstream sstream;
     sstream << "{";
-    for(std::list < int >::iterator it = val.begin(); it != val.end(); it++) {
+    for(std::list<int>::iterator it = val.begin(); it != val.end(); it++) {
       if(it != val.begin())
         sstream << ", ";
       sstream << *it;
@@ -134,7 +134,7 @@ class FieldOptionBool : public FieldOption
 
 void FieldManager::reset()
 {
-  for(std::map < int, Field * >::iterator it = begin(); it != end(); it++) {
+  for(std::map<int, Field *>::iterator it = begin(); it != end(); it++) {
     delete it->second;
   }
   clear();
@@ -265,7 +265,7 @@ class StructuredField : public Field
       catch(...) {
         error_status = true;
         Msg::Error("Field %i : error reading file %s", this->id,
-            file_name.c_str());
+		   file_name.c_str());
       }
       update_needed = false;
     }
@@ -530,7 +530,7 @@ class GradientField : public Field
       return sqrt(gx * gx + gy * gy + gz * gz);
     default:
       Msg::Error("Field %i : Unknown kind (%i) of gradient.", this->id,
-          kind);
+		 kind);
       return MAX_LC;
     }
   }
@@ -721,7 +721,7 @@ class MeanField : public Field
 class MathEvalExpression
 {
   bool error_status;
-  std::list < Field * >*list;
+  std::list<Field*> *list;
   int nvalues;
   char **names;
   double *values;
@@ -821,8 +821,8 @@ class MathEvalField : public Field
   {
     if(update_needed) {
       if(!expr.set_function(f))
-        Msg::Error("Field %i : Invalid matheval expression \"%s\"\n",
-            this->id, f.c_str());
+        Msg::Error("Field %i : Invalid matheval expression \"%s\"",
+		   this->id, f.c_str());
       update_needed = false;
     }
     return expr.evaluate(x, y, z);
@@ -856,8 +856,8 @@ class ParametricField:public Field
     if(update_needed) {
       for(int i = 0; i < 3; i++) {
         if(!expr[i].set_function(f[i]))
-          Msg::Error("Field %i : Invalid matheval expression \"%s\"\n",
-              this->id, f[i].c_str());
+          Msg::Error("Field %i : Invalid matheval expression \"%s\"",
+		     this->id, f[i].c_str());
       }
       update_needed = false;
     }
@@ -954,7 +954,7 @@ class MinField : public Field
   double operator() (double x, double y, double z)
   {
     double v = MAX_LC;
-    for(std::list < int >::iterator it = idlist.begin(); it != idlist.end();
+    for(std::list<int>::iterator it = idlist.begin(); it != idlist.end();
         it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
       if(f)
@@ -984,7 +984,7 @@ class MaxField : public Field
   double operator() (double x, double y, double z)
   {
     double v = -MAX_LC;
-    for(std::list < int >::iterator it = idlist.begin(); it != idlist.end();
+    for(std::list<int>::iterator it = idlist.begin(); it != idlist.end();
         it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
       if(f)
@@ -1010,8 +1010,8 @@ class AttractorField : public Field
   ANNpointArray zeronodes;
   ANNidxArray index;
   ANNdistArray dist;
-  std::list < int >nodes_id;
-  std::list < int >edges_id;
+  std::list<int> nodes_id;
+  std::list<int> edges_id;
   int n_nodes_by_edge;
  public:
   AttractorField() : kdtree(0), zeronodes(0)
@@ -1020,8 +1020,7 @@ class AttractorField : public Field
     dist = new ANNdist[1];
     options["NodesList"] = new FieldOptionList(nodes_id, &update_needed);
     options["EdgesList"] = new FieldOptionList(edges_id, &update_needed);
-    options["NNodesByEdge"] =
-      new FieldOptionInt(n_nodes_by_edge, &update_needed);
+    options["NNodesByEdge"] = new FieldOptionInt(n_nodes_by_edge, &update_needed);
     n_nodes_by_edge = 20;
   }
   ~AttractorField()
@@ -1048,7 +1047,7 @@ class AttractorField : public Field
       if(totpoints)
         zeronodes = annAllocPts(totpoints, 4);
       int k = 0;
-      for(std::list < int >::iterator it = nodes_id.begin();
+      for(std::list<int>::iterator it = nodes_id.begin();
           it != nodes_id.end(); ++it) {
         Vertex *v = FindPoint(*it);
         if(v) {
@@ -1065,7 +1064,7 @@ class AttractorField : public Field
           }
         }
       }
-      for(std::list < int >::iterator it = edges_id.begin();
+      for(std::list<int>::iterator it = edges_id.begin();
           it != edges_id.end(); ++it) {
         Curve *c = FindCurve(*it);
         if(c) {
@@ -1082,7 +1081,7 @@ class AttractorField : public Field
           if(ge) {
             for(int i = 0; i < n_nodes_by_edge; i++) {
               double u = (double)i / (n_nodes_by_edge - 1);
-              Range < double >b = ge->parBounds(0);
+              Range<double> b = ge->parBounds(0);
               double t = b.low() + u * (b.high() - b.low());
               GPoint gp = ge->point(t);
               zeronodes[k][0] = gp.x();
@@ -1176,7 +1175,7 @@ Field::Field()
 #if !defined(HAVE_NO_POST)
 void Field::put_on_view(PView * view, int comp)
 {
-  PViewDataList *data = dynamic_cast < PViewDataList * >(view->getData());
+  PViewDataList *data = dynamic_cast<PViewDataList*>(view->getData());
   if(!data)
     return;
   evaluate(this, data->SP, data->NbSP, 1, 1, 0);

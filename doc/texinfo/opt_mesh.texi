@@ -484,6 +484,11 @@ Display mesh tetrahedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.ToleranceEdgeLength
+Skip a model edge in mesh generation if its length is less than user's defined tolerance@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Triangles
 Display mesh triangles?@*
 Default value: @code{1}@*

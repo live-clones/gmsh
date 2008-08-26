@@ -414,7 +414,7 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(FieldView)
-Plugin(FieldView) evaluate a field on the choosen view.
+Plugin(FieldView) evaluates a field on the choosen view.
 
 Numeric options:
 @table @code
@@ -427,7 +427,16 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(GSHHS)
-Plugin(GSHHS) import GSHHS data.
+Plugin(GSHHS) read differenct kind of contour lines data and write a .geo file.
+Valid values for "Format" are :
+ -"gshhs" : open GSHHS file
+ -"loops2" : import 2D contour lines in simple text format :
+   NB_POINTS_IN_FIRST_LOOP
+   COORD1 COORD2
+   COORD1 COORD2
+   ...    ...
+   NB_POINTS_IN_SECOND_LOOP
+   ...
 
 String options:
 @table @code
