@@ -1619,6 +1619,12 @@ class MTetrahedronN : public MTetrahedron {
       }
     }
   }
+
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumEdgesRep();
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumFacesRep();
+
   virtual void jac(double u, double v, double w, double j[3][3])
   {
     MTetrahedron::jac(_order, _vs , u, v, w, j);

@@ -179,8 +179,11 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 	Count++;
       }
     }
-    guess[0]/=Count;
-    guess[1]/=Count;
+    if (Count != 0){
+      guess[0]/=Count;
+      guess[1]/=Count;
+    }
+
     for(int j = 0; j < 3; j++){   
       if(v[j]->onWhat()->dim() == 3){
         v[j]->onWhat()->mesh_vertices.erase
@@ -192,16 +195,20 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 	  // PARAMETRIC COORDINATES SHOULD BE SET for the vertex !!!!!!!!!!!!!
 	  // This is not 100 % safe yet, so we reserve that operation for high order
 	  // meshes.
-	  Msg::Debug("A new point has been inserted in mesh face %d by the 3D mesher, guess %g %g",gf->tag(),guess[0],guess[1]);
+	  //	  Msg::Debug("A new point has been inserted in mesh face %d by the 3D mesher, guess %g %g",gf->tag(),guess[0],guess[1]);
 	  GPoint gp = gf->closestPoint (SPoint3(v[j]->x(), v[j]->y(), v[j]->z()),guess);
-	  Msg::Debug("The point has been projected back to the surface (%g %g %g) -> (%g %g %g), (%g,%g)",
-		     v[j]->x(), v[j]->y(), v[j]->z(),gp.x(),gp.y(),gp.z(),gp.u(),gp.v());
 
 	  // To be safe, we should ensure that this mesh motion does not lead to an invalid mesh !!!!
 	  //v1b = new MVertex(gp.x(),gp.y(),gp.z(),gf);
-	  v1b = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
-	  //v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf);
-
+	  if (gp.g()){
+	    v1b = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
+	    Msg::Info("The point has been projected back to the surface (%g %g %g) -> (%g %g %g)",
+		       v[j]->x(), v[j]->y(), v[j]->z(),gp.x(),gp.y(),gp.z());
+	  }
+	  else{
+	    v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf);	  
+	    Msg::Warning("The point was not projected back to the surface (%g %g %g)", v[j]->x(), v[j]->y(), v[j]->z());
+	  }
 	}
 	else{
 	  v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(),gf);

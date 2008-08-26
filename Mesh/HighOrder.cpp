@@ -54,8 +54,9 @@ bool reparamOnFace(MVertex *v, GFace *gf, SPoint2 &param)
     double UU, VV;
     if(v->onWhat() == gf && v->getParameter(0, UU) && v->getParameter(1, VV))
       param = SPoint2(UU, VV);
-    else
-      param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+    else 
+      return false;
+    //      param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
   }
   return true;
 }
@@ -174,6 +175,8 @@ bool computeEquidistantParameters(GFace *gf, double u0, double uN, double v0, do
   u[N] = uN;
   v[N] = vN;
   t[N] = 1.0;
+
+  return true;
 
   // create the tangent matrix
   const int M = N - 2;
@@ -466,7 +469,10 @@ void getFaceVertices(GFace *gf,
 	    }
 	    if (reparamOK){
 	      GPoint gp = gf->closestPoint(SPoint3(X,Y,Z),GUESS);
-	      v = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
+	      if (gp.g())
+		v = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
+	      else
+		v = new MVertex(X,Y,Z, gf);
 	    }
 	    else{
 	      v = new MVertex(X,Y,Z, gf);

@@ -25,6 +25,7 @@ class GPoint
   inline double &z() { return Z; }
   inline double u() const { return par[0]; }
   inline double v() const { return par[1]; }
+  inline const GEntity* g() const { return e; }
   GPoint (double _x=0, double _y=0, double _z=0, const GEntity *onwhat=0)
     : X(_x), Y(_y), Z(_z), e(onwhat) 
   {

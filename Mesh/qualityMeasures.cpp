@@ -220,7 +220,38 @@ double qmDistorsionOfMapping (MTriangle *e)
   return dmin;
 }
 
+static double mesh_functional_distorsion(MTetrahedron *t, double u, double v, double w)
+{
+  // compute uncurved element jacobian d_u x and d_v x
+  double mat[3][3];  
+  t->jac(1, 0, 0, 0, 0, mat);
+  const double det1 = det3x3(mat);
+  t->jac(u, v, w, mat);
+  const double detN = det3x3(mat);
+
+  //  printf("%g %g %g = %g %g\n",u,v,w,det1,detN);
+
+  if (det1 == 0 || detN == 0) return 0;
+  double dist = std::min(detN/det1, det1/detN); 
+  return dist;
+}
+
+
 double qmDistorsionOfMapping (MTetrahedron *e)
 {
-  return 1.0;
+  if (e->getPolynomialOrder() == 1)return 1.0;
+  IntPt *pts;
+  int npts;
+  e->getIntegrationPoints(e->getPolynomialOrder(),&npts, &pts);
+  double dmin;
+  for (int i=0;i<npts;i++){
+    const double u = pts[i].pt[0];
+    const double v = pts[i].pt[1];
+    const double w = pts[i].pt[2];
+    const double di  = mesh_functional_distorsion (e,u,v,w);
+    dmin = (i==0)? di : std::min(dmin,di);
+  }
+  //  printf("DMIN = %g\n\n",dmin);
+
+  return dmin< 0 ? 0 :dmin;
 }

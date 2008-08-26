@@ -709,7 +709,7 @@ bool GFace::buildSTLTriangulation()
 // by default we assume that straight lines are geodesics
 SPoint2 GFace::geodesic(const SPoint2 &pt1 , const SPoint2 &pt2 , double t)
 {
-  if(CTX.mesh.second_order_experimental && geomType() != GEntity::Plane){
+  if(CTX.mesh.second_order_experimental && geomType() != GEntity::Plane ){
     // FIXME: this is buggy -- remove the CTX option once we do it in
     // a robust manner
     GPoint gp1 = point(pt1.x(), pt1.y());
@@ -719,7 +719,10 @@ SPoint2 GFace::geodesic(const SPoint2 &pt1 , const SPoint2 &pt2 , double t)
 				     gp1.y() + t * (gp2.y() - gp1.y()),
 				     gp1.z() + t * (gp2.z() - gp1.z())),
 			     (double*)guess);
-    return SPoint2(gp.u(), gp.v());
+    if (gp.g())
+      return SPoint2(gp.u(), gp.v());
+    else
+      return pt1 + (pt2 - pt1) * t;
   }
   else{
     return pt1 + (pt2 - pt1) * t;

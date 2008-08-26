@@ -240,7 +240,7 @@ GPoint gmshFace::closestPoint(const SPoint3 & qp, const double initialGuess[2]) 
   v.Pos.Z = qp.z();
   bool result = ProjectPointOnSurface(s, v, u);
   if (!result)
-    printf("Project Point on surface %d\n",result);
+    return GPoint(-1.e22, -1.e22, -1.e22, 0, u);
   return GPoint(v.Pos.X, v.Pos.Y, v.Pos.Z, this, u);
 }
 
