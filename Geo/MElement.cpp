@@ -284,13 +284,14 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3])
     }
     {
       double a[3], b[3], c[3];
-      a[0] = getVertex(1)->x() - getVertex(0)->x(); 
-      a[1] = getVertex(1)->y() - getVertex(0)->y();
-      a[2] = getVertex(1)->z() - getVertex(0)->z();     
-      b[0] = getVertex(2)->x() - getVertex(0)->x(); 
-      b[1] = getVertex(2)->y() - getVertex(0)->y();
-      b[2] = getVertex(2)->z() - getVertex(0)->z();     
+      a[0] = jac[0][0];
+      a[1] = jac[0][1];
+      a[2] = jac[0][2];
+      b[0] = jac[1][0];
+      b[1] = jac[1][1];
+      b[2] = jac[1][2];
       prodve(a, b, c);
+      norme(c);
       jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2]; 
     }
     return sqrt(SQU(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0]) +
@@ -781,8 +782,8 @@ void MTriangle::getGradShapeFunction(int num,double uu,double vv,double ww,doubl
     }
   }
   
-  for (int i=0;i<3;i++) s[i] = grads[num][i];
-  
+  for (int i=0;i<2;i++) s[i] = grads[num][i];
+  s[2] = 0;
 #endif
 }
 
