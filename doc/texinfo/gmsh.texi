@@ -1982,7 +1982,8 @@ computed using other fields
 @dots{}
 @end itemize
 
-Fields are supported by all the algorithms except those based on Netgen.
+Fields are supported by all the algorithms except those based on
+Netgen. The list of available fields with their options is given below.
 @end enumerate
 
 The three aforementioned methods can be used simultaneously, in which
@@ -2005,6 +2006,10 @@ numbers are listed in @var{expression-list}. The new value is given by
 @item Field[@var{expression}].@var{string} = @var{char-expression} | @var{expression} | @var{expression-list};
 @item Background Field = @var{expression};
 @end ftable
+
+Here is the list of all available fields with their associated options:
+
+@include opt_fields.texi
 
 @c .........................................................................
 @c Structured grids

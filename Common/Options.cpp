@@ -7,12 +7,14 @@
 #include <stdlib.h>
 #include "GmshUI.h"
 #include "GmshDefines.h"
+#include "GModel.h"
 #include "Message.h"
 #include "Draw.h"
 #include "Generator.h"
 #include "Context.h"
 #include "Options.h"
 #include "DefaultOptions.h"
+#include "Field.h"
 #include "BackgroundMesh.h"
 
 #if !defined(HAVE_NO_POST)
@@ -844,6 +846,30 @@ void Print_OptionsDoc()
   }
   fprintf(file, "@end ftable\n");
   fclose(file);
+
+  file = fopen("opt_fields.texi", "w");
+  if(!file) {
+    Msg::Error("Unable to open file 'opt_fields.texi'");
+    return;
+  }
+  fprintf(file, "%s@ftable @code\n", warn);
+  FieldManager &fields = *GModel::current()->getFields();
+  for(std::map<std::string, FieldFactory*>::iterator it = fields.map_type_name.begin();
+      it != fields.map_type_name.end(); it++){
+    fprintf(file, "@item %s\n\n", it->first.c_str());
+    fprintf(file, "Options:\n");
+    fprintf(file, "@table @code\n");
+    Field *f = (*it->second)();
+    for(std::map<std::string, FieldOption*>::iterator it2 = f->options.begin();
+	it2 != f->options.end(); it2++){
+      fprintf(file, "@item %s\n", it2->first.c_str());
+      fprintf(file, "%s\n", it2->second->get_help().c_str());
+    }
+    fprintf(file, "@end table\n");
+  }
+  fprintf(file, "@end ftable\n");
+  fclose(file);
+  
 #endif
 }
 

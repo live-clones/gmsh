@@ -27,14 +27,30 @@ typedef enum {
 } FieldOptionType;
 
 class FieldOption {
+ private:
+  std::string _help;
  protected:
   bool *status;
   inline void modified(){ if(status) *status = true; }
  public:
-  FieldOption(bool *_status) : status(_status) {}
+  FieldOption(std::string help, bool *_status) : _help(help), status(_status) {}
   virtual ~FieldOption() {}
   virtual FieldOptionType get_type() = 0;
   virtual void get_text_representation(std::string & v_str) = 0;
+  virtual std::string get_help()
+  {
+    std::string val, typ;
+    get_text_representation(val);
+    switch(get_type()){
+    case FIELD_OPTION_INT: typ = "integer"; break;
+    case FIELD_OPTION_DOUBLE: typ = "float"; break;
+    case FIELD_OPTION_BOOL: typ = "boolean"; break;
+    case FIELD_OPTION_PATH: typ = "path"; break;
+    case FIELD_OPTION_STRING: typ = "string"; break;
+    case FIELD_OPTION_LIST: typ = "list"; break;
+    }
+    return std::string(_help + " (type: " + typ + "; default value: " + val + ")");
+  }
   virtual void numerical_value(double val) { throw(1); }
   virtual double numerical_value() const { throw(1); }
   virtual const std::list<int> &list() const { throw(1); }

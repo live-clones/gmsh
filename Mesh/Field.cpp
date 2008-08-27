@@ -40,7 +40,8 @@ class FieldOptionDouble : public FieldOption
  public:
   double &val;
   FieldOptionType get_type(){ return FIELD_OPTION_DOUBLE; }
-  FieldOptionDouble(double &_val, bool *_status=0) : FieldOption(_status), val(_val){}
+  FieldOptionDouble(double &_val, std::string _help, bool *_status=0)
+    : FieldOption(_help, _status), val(_val){}
   double numerical_value() const { return val; }
   void numerical_value(double v){ modified(); val = v; }
   void get_text_representation(std::string &v_str)
@@ -57,7 +58,8 @@ class FieldOptionInt : public FieldOption
  public:
   int &val;
   FieldOptionType get_type(){ return FIELD_OPTION_INT; }
-  FieldOptionInt(int &_val, bool *_status=0) : FieldOption(_status), val(_val){}
+  FieldOptionInt(int &_val, std::string _help, bool *_status=0) 
+    : FieldOption(_help, _status), val(_val){}
   double numerical_value() const { return val; }
   void numerical_value(double v){ modified(); val = (int)v; }
   void get_text_representation(std::string & v_str)
@@ -73,8 +75,8 @@ class FieldOptionList : public FieldOption
  public:
   std::list<int> &val;
   FieldOptionType get_type(){ return FIELD_OPTION_LIST; }
-  FieldOptionList(std::list<int> &_val, bool *_status=0) 
-    : FieldOption(_status), val(_val) {}
+  FieldOptionList(std::list<int> &_val, std::string _help, bool *_status=0) 
+    : FieldOption(_help, _status), val(_val) {}
   std::list<int> &list(){ modified(); return val; }
   const std::list<int>& list() const { return val; }
   void get_text_representation(std::string & v_str)
@@ -91,13 +93,13 @@ class FieldOptionList : public FieldOption
   }
 };
 
-class FieldOptionString:public FieldOption
+class FieldOptionString : public FieldOption
 {
  public:
   std::string & val;
   virtual FieldOptionType get_type(){ return FIELD_OPTION_STRING; }
-  FieldOptionString(std::string &_val, bool *_status=0)
-    : FieldOption(_status), val(_val) {}
+  FieldOptionString(std::string &_val, std::string _help, bool *_status=0)
+    : FieldOption(_help, _status), val(_val) {}
   std::string &string() { modified(); return val; }
   const std::string &string() const { return val; }
   void get_text_representation(std::string &v_str)
@@ -107,12 +109,13 @@ class FieldOptionString:public FieldOption
     v_str = sstream.str();
   }
 };
-class FieldOptionPath:public FieldOptionString
+
+class FieldOptionPath : public FieldOptionString
 {
  public:
   virtual FieldOptionType get_type(){ return FIELD_OPTION_PATH; }
-  FieldOptionPath(std::string &_val, bool *_status=0)
-    : FieldOptionString(_val,_status) {}
+  FieldOptionPath(std::string &_val, std::string _help, bool *_status=0)
+    : FieldOptionString(_val, _help, _status) {}
 };
 
 class FieldOptionBool : public FieldOption
@@ -120,8 +123,8 @@ class FieldOptionBool : public FieldOption
  public:
   bool & val;
   FieldOptionType get_type(){ return FIELD_OPTION_BOOL; }
-  FieldOptionBool(bool & _val, bool *_status=0)
-    : FieldOption(_status), val(_val) {}
+  FieldOptionBool(bool & _val, std::string _help, bool *_status=0)
+    : FieldOption(_help, _status), val(_val) {}
   double numerical_value() const { return val; }
   void numerical_value(double v){ modified(); val = v; }
   void get_text_representation(std::string & v_str)
@@ -212,9 +215,12 @@ class StructuredField : public Field
  public:
   StructuredField()
   {
-    options["FileName"] = new FieldOptionPath(file_name, &update_needed);
+    options["FileName"] = new FieldOptionPath(file_name, "Name of the input file", 
+					      &update_needed);
     text_format = false;
-    options["TextFormat"] = new FieldOptionBool(text_format, &update_needed);
+    options["TextFormat"] = new FieldOptionBool(text_format, "True for ASCII input "
+						"files, false for binary files",
+						&update_needed);
     data = 0;
   }
   const char *get_name()
@@ -311,8 +317,8 @@ class UTMField : public Field
   {
     field_id = 1;
     zone = 0;
-    options["IField"] = new FieldOptionInt(field_id);
-    options["Zone"] = new FieldOptionInt(zone);
+    options["IField"] = new FieldOptionInt(field_id, "Field index");
+    options["Zone"] = new FieldOptionInt(zone, "");
     a = 6378137;                /* Equatorial Radius */
     b = 6356752.3142;           /* Rayon Polar Radius */
     /* see http://www.uwgb.edu/dutchs/UsefulData/UTMFormulas.HTM */
@@ -391,7 +397,7 @@ class LonLatField : public Field
   LonLatField()
   {
     field_id = 1;
-    options["IField"] = new FieldOptionInt(field_id);
+    options["IField"] = new FieldOptionInt(field_id, "Field index");
   }
   const char *get_name()
   {
@@ -416,14 +422,14 @@ class BoxField : public Field
   BoxField()
   {
     v_in = v_out = x_min = x_max = y_min = y_max = z_min = z_max = 0;
-    options["VIn"] = new FieldOptionDouble(v_in);
-    options["VOut"] = new FieldOptionDouble(v_out);
-    options["XMin"] = new FieldOptionDouble(x_min);
-    options["XMax"] = new FieldOptionDouble(x_max);
-    options["YMin"] = new FieldOptionDouble(y_min);
-    options["YMax"] = new FieldOptionDouble(y_max);
-    options["ZMin"] = new FieldOptionDouble(z_min);
-    options["ZMax"] = new FieldOptionDouble(z_max);
+    options["VIn"] = new FieldOptionDouble(v_in, "Element size inside the box");
+    options["VOut"] = new FieldOptionDouble(v_out, "Element size outside the box");
+    options["XMin"] = new FieldOptionDouble(x_min, "Minimum X coordinate of the box");
+    options["XMax"] = new FieldOptionDouble(x_max, "Maximum X coordinate of the box");
+    options["YMin"] = new FieldOptionDouble(y_min, "Minimum Y coordinate of the box");
+    options["YMax"] = new FieldOptionDouble(y_max, "Maximum Y coordinate of the box");
+    options["ZMin"] = new FieldOptionDouble(z_min, "Minimum Z coordinate of the box");
+    options["ZMax"] = new FieldOptionDouble(z_max, "Maximum Z coordinate of the box");
   }
   const char *get_name()
   {
@@ -459,12 +465,16 @@ class ThresholdField : public Field
     lcmin = 0.1;
     lcmax = 1;
     sigmoid = false;
-    options["IField"] = new FieldOptionInt(iField);
-    options["DistMin"] = new FieldOptionDouble(dmin);
-    options["DistMax"] = new FieldOptionDouble(dmax);
-    options["LcMin"] = new FieldOptionDouble(lcmin);
-    options["LcMax"] = new FieldOptionDouble(lcmax);
-    options["Sigmoid"] = new FieldOptionBool(sigmoid);
+    options["IField"] = new FieldOptionInt(iField, "Field index");
+    options["DistMin"] = new FieldOptionDouble(dmin, "Distance from entity up to which "
+					       "element size will be LcMin");
+    options["DistMax"] = new FieldOptionDouble(dmax, "Distance from entity after which"
+					       "element size will be LcMax");
+    options["LcMin"] = new FieldOptionDouble(lcmin, "Element size inside DistMin");
+    options["LcMax"] = new FieldOptionDouble(lcmax, "Element size outside DistMax");
+    options["Sigmoid"] = new FieldOptionBool(sigmoid, "True to interpolate between LcMin "
+					     "and LcMax using a sigmoid, false to "
+					     "interpolate linearly");
   }
   double operator() (double x, double y, double z)
   {
@@ -499,9 +509,12 @@ class GradientField : public Field
   }
   GradientField() : iField(0), kind(3), delta(CTX.lc / 1e4)
   {
-    options["IField"] = new FieldOptionInt(iField);
-    options["Kind"] = new FieldOptionInt(kind);
-    options["Delta"] = new FieldOptionDouble(delta);
+    iField = 1;
+    kind = 0;
+    delta = 0.;
+    options["IField"] = new FieldOptionInt(iField, "Field index");
+    options["Kind"] = new FieldOptionInt(kind, "0 for X, 1 for Y, 2 for Z, 3 for norm");
+    options["Delta"] = new FieldOptionDouble(delta, "");
   }
   double operator() (double x, double y, double z)
   {
@@ -552,30 +565,33 @@ class CurvatureField : public Field
   }
   CurvatureField() : iField(0), delta(CTX.lc / 1e4)
   {
-    options["IField"] = new FieldOptionInt(iField);
-    options["Delta"] = new FieldOptionDouble(delta);
+    iField = 1;
+    delta = 0.;
+    options["IField"] = new FieldOptionInt(iField, "Field index");
+    options["Delta"] = new FieldOptionDouble(delta, "");
   }
   void grad_norm(Field &f,double x,double y,double z, double *g)
   {
-    g[0]=f(x+delta/2,y,z)-f(x-delta/2,y,z);
-    g[1]=f(x,y+delta/2,z)-f(x,y-delta/2,z);
-    g[2]=f(x,y,z+delta/2)-f(x,y,z-delta/2);
-    double n=sqrt(g[0]*g[0]+g[1]*g[1]+g[2]*g[2]);
-    g[0]/=n;
-    g[1]/=n;
-    g[2]/=n;
+    g[0] = f(x + delta / 2, y, z) - f(x - delta / 2, y, z);
+    g[1] = f(x, y + delta / 2, z) - f(x, y - delta / 2, z);
+    g[2] = f(x, y, z + delta / 2) - f(x, y, z - delta / 2);
+    double n=sqrt(g[0] * g[0] + g[1] * g[1] + g[2] * g[2]);
+    g[0] /= n;
+    g[1] /= n;
+    g[2] /= n;
   }
   double operator() (double x, double y, double z)
   {
     Field *field = GModel::current()->getFields()->get(iField);
     double grad[6][3];
-    grad_norm(*field,x+delta/2,y,z,grad[0]);
-    grad_norm(*field,x-delta/2,y,z,grad[1]);
-    grad_norm(*field,x,y+delta/2,z,grad[2]);
-    grad_norm(*field,x,y-delta/2,z,grad[3]);
-    grad_norm(*field,x,y,z+delta/2,grad[4]);
-    grad_norm(*field,x,y,z-delta/2,grad[5]);
-    return (grad[0][0]-grad[1][0]+grad[2][1]-grad[3][1]+grad[4][2]-grad[5][2])/delta;
+    grad_norm(*field, x + delta / 2, y, z, grad[0]);
+    grad_norm(*field, x - delta / 2, y, z, grad[1]);
+    grad_norm(*field, x, y + delta / 2, z, grad[2]);
+    grad_norm(*field, x, y - delta / 2, z, grad[3]);
+    grad_norm(*field, x, y, z + delta / 2, grad[4]);
+    grad_norm(*field, x, y, z - delta / 2, grad[5]);
+    return (grad[0][0] - grad[1][0] + grad[2][1] - 
+	    grad[3][1] + grad[4][2] - grad[5][2]) / delta;
   }
   FieldDialogBox *&dialog_box()
   {
@@ -601,11 +617,13 @@ class MaxEigenHessianField : public Field
   }
   MaxEigenHessianField() : iField(0), delta(CTX.lc / 1e4)
   {
-    options["IField"] = new FieldOptionInt(iField);
-    options["Delta"] = new FieldOptionDouble(delta);
-    gslwork=gsl_eigen_symm_alloc(3);
-    eigenvalues=gsl_vector_alloc(3);
-    gslmat=gsl_matrix_alloc(3,3);
+    iField = 1;
+    delta = 0.;
+    options["IField"] = new FieldOptionInt(iField, "Field index");
+    options["Delta"] = new FieldOptionDouble(delta, "");
+    gslwork = gsl_eigen_symm_alloc(3);
+    eigenvalues = gsl_vector_alloc(3);
+    gslmat = gsl_matrix_alloc(3, 3);
   }
   ~MaxEigenHessianField()
   {
@@ -639,11 +657,10 @@ class MaxEigenHessianField : public Field
     gsl_matrix_set(gslmat,2,2,
         (*field) (x, y ,z + delta)+ (*field) (x , y, z - delta)-2*f);
     gsl_eigen_symm(gslmat,eigenvalues,gslwork);
-    return std::max(
-      fabs(gsl_vector_get(eigenvalues,0)),
-      std::max(
-      fabs(gsl_vector_get(eigenvalues,0)),
-      fabs(gsl_vector_get(eigenvalues,1))))/(delta*delta);
+    return std::max(fabs(gsl_vector_get(eigenvalues, 0)),
+		    std::max(fabs(gsl_vector_get(eigenvalues, 0)),
+			     fabs(gsl_vector_get(eigenvalues, 1)))
+		    ) / (delta * delta);
   }
   FieldDialogBox *&dialog_box()
   {
@@ -664,8 +681,10 @@ class LaplacianField : public Field
   }
   LaplacianField() : iField(0), delta(CTX.lc / 1e4)
   {
-    options["IField"] = new FieldOptionInt(iField);
-    options["Delta"] = new FieldOptionDouble(delta);
+    iField = 1;
+    delta = 0.;
+    options["IField"] = new FieldOptionInt(iField, "Field index");
+    options["Delta"] = new FieldOptionDouble(delta, "");
   }
   double operator() (double x, double y, double z)
   {
@@ -688,7 +707,6 @@ class MeanField : public Field
 {
   int iField;
   double delta;
-  int n;
  public:
   const char *get_name()
   {
@@ -696,19 +714,18 @@ class MeanField : public Field
   }
   MeanField() : iField(0), delta(CTX.lc / 1e4)
   {
-    options["IField"] = new FieldOptionInt(iField);
-    options["Delta"] = new FieldOptionDouble(delta);
-    //options["N"] = new FieldOptionInt(n);
+    iField = 1;
+    delta = 0.;
+    options["IField"] = new FieldOptionInt(iField, "Field index");
+    options["Delta"] = new FieldOptionDouble(delta, "");
   }
   double operator() (double x, double y, double z)
   {
     Field *field = GModel::current()->getFields()->get(iField);
-    return (
-      (*field) (x + delta , y, z)+ (*field) (x - delta , y, z)
-      +(*field) (x, y + delta , z)+ (*field) (x, y - delta , z)
-      +(*field) (x, y, z + delta )+ (*field) (x, y, z - delta )
-      + (*field) (x , y, z)
-      ) / 5;
+    return ((*field) (x + delta , y, z) + (*field) (x - delta, y, z)
+	    + (*field) (x, y + delta, z) + (*field) (x, y - delta, z)
+	    + (*field) (x, y, z + delta) + (*field) (x, y, z - delta)
+	    + (*field) (x, y, z)) / 5;
   }
   FieldDialogBox *&dialog_box()
   {
@@ -734,20 +751,20 @@ class MathEvalExpression
   {
     if(error_status)
       return MAX_LC;
-    for(int i = 0; i < nvalues; i++)
-    {
-      Field *f;
+    for(int i = 0; i < nvalues; i++){
       switch (evaluators_id[i]) {
       case -1:
         values[i] = x;
         break;
-        case -2:values[i] = y;
+      case -2: 
+	values[i] = y;
         break;
-        case -3:values[i] = z;
+      case -3: 
+	values[i] = z;
         break;
-        default:
+      default:
         {
-          f = GModel::current()->getFields()->get(evaluators_id[i]);
+          Field *f = GModel::current()->getFields()->get(evaluators_id[i]);
           values[i] = f ? (*f) (x, y, z) : MAX_LC;
         }
       }
@@ -815,7 +832,7 @@ class MathEvalField : public Field
  public:
   MathEvalField()
   {
-    options["F"] = new FieldOptionString(f, &update_needed);
+    options["F"] = new FieldOptionString(f, "Function", &update_needed);
   }
   double operator() (double x, double y, double z)
   {
@@ -838,7 +855,7 @@ class MathEvalField : public Field
   }
 };
 
-class ParametricField:public Field
+class ParametricField : public Field
 {
   MathEvalExpression expr[3];
   std::string f[3];
@@ -846,10 +863,14 @@ class ParametricField:public Field
  public:
   ParametricField()
   {
-    options["IField"] = new FieldOptionInt(ifield);
-    options["FX"] = new FieldOptionString(f[0], &update_needed);
-    options["FY"] = new FieldOptionString(f[1], &update_needed);
-    options["FZ"] = new FieldOptionString(f[2], &update_needed);
+    ifield = 1;
+    options["IField"] = new FieldOptionInt(ifield, "Field index");
+    options["FX"] = new FieldOptionString(f[0], "X component of parametric function",
+					  &update_needed);
+    options["FY"] = new FieldOptionString(f[1], "Y component of parametric function",
+					  &update_needed);
+    options["FZ"] = new FieldOptionString(f[2], "Z component of parametric function",
+					  &update_needed);
   }
   double operator() (double x, double y, double z)
   {
@@ -928,7 +949,9 @@ class PostViewField : public Field
   PostViewField()
   {
     octree = 0;
-    options["IView"] = new FieldOptionInt(view_index, &update_needed);
+    view_index = 0;
+    options["IView"] = new FieldOptionInt(view_index, "Post-processing view index",
+					  &update_needed);
   }
   ~PostViewField()
   {
@@ -949,7 +972,8 @@ class MinField : public Field
  public:
   MinField()
   {
-    options["FieldsList"] = new FieldOptionList(idlist, &update_needed);
+    options["FieldsList"] = new FieldOptionList(idlist, "Field indices",
+						&update_needed);
   }
   double operator() (double x, double y, double z)
   {
@@ -979,7 +1003,8 @@ class MaxField : public Field
  public:
   MaxField()
   {
-    options["FieldsList"] = new FieldOptionList(idlist, &update_needed);
+    options["FieldsList"] = new FieldOptionList(idlist, "Field indices", 
+						&update_needed);
   }
   double operator() (double x, double y, double z)
   {
@@ -1018,10 +1043,16 @@ class AttractorField : public Field
   {
     index = new ANNidx[1];
     dist = new ANNdist[1];
-    options["NodesList"] = new FieldOptionList(nodes_id, &update_needed);
-    options["EdgesList"] = new FieldOptionList(edges_id, &update_needed);
-    options["NNodesByEdge"] = new FieldOptionInt(n_nodes_by_edge, &update_needed);
     n_nodes_by_edge = 20;
+    options["NodesList"] = new FieldOptionList(nodes_id, "Identification numbers of "
+					       "points in the model",
+					       &update_needed);
+    options["EdgesList"] = new FieldOptionList(edges_id, "Identification numbers of "
+					       "curves in the model",
+					       &update_needed);
+    options["NNodesByEdge"] = new FieldOptionInt(n_nodes_by_edge, "Number of attractor "
+						 "nodes per curve", 
+						 &update_needed);
   }
   ~AttractorField()
   {
@@ -1142,7 +1173,7 @@ FieldManager::FieldManager()
   map_type_name["Attractor"] = new FieldFactoryT<AttractorField>();
 #endif
 #if defined(HAVE_GSL)
-  map_type_name["MaxEigenHessian"] = new FieldFactoryT <MaxEigenHessianField>();
+  map_type_name["MaxEigenHessian"] = new FieldFactoryT<MaxEigenHessianField>();
 #endif
   background_field = -1;
 }
