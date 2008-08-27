@@ -451,7 +451,7 @@ class ThresholdField : public Field
 {
   int iField;
   double dmin, dmax, lcmin, lcmax;
-  bool sigmoid;
+  bool sigmoid, stopAtDistMax;
  public:
   const char *get_name()
   {
@@ -465,6 +465,7 @@ class ThresholdField : public Field
     lcmin = 0.1;
     lcmax = 1;
     sigmoid = false;
+    stopAtDistMax = false;
     options["IField"] = new FieldOptionInt(iField, "Field index");
     options["DistMin"] = new FieldOptionDouble(dmin, "Distance from entity up to which "
 					       "element size will be LcMin");
@@ -475,6 +476,8 @@ class ThresholdField : public Field
     options["Sigmoid"] = new FieldOptionBool(sigmoid, "True to interpolate between LcMin "
 					     "and LcMax using a sigmoid, false to "
 					     "interpolate linearly");
+    options["StopAtDistMax"] = new FieldOptionBool(stopAtDistMax, "True to not impose element "
+						   "size outside DistMax");
   }
   double operator() (double x, double y, double z)
   {
@@ -482,7 +485,10 @@ class ThresholdField : public Field
     double r = ((*field) (x, y, z) - dmin) / (dmax - dmin);
     r = std::max(std::min(r, 1.), 0.);
     double lc;
-    if(sigmoid){
+    if(stopAtDistMax && r >= 1.){
+      lc = MAX_LC;
+    }
+    else if(sigmoid){
       double s = exp(12. * r - 6.) / (1. + exp(12. * r - 6.));
       lc = lcmin * (1. - s) + lcmax * s;
     }

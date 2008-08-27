@@ -861,21 +861,23 @@ void getRegionVertices(GRegion *gr,
     const double t2 = points(k, 1);
     const double t3 = points(k, 2);
     
-    SPoint3 pos;
-    incomplete->pnt(t1,t2,t3,pos);
+    // FIXME: KOEN - I had to comment this out (MElement does not have
+    // pnt() member) -- CG
 
-    v = new MVertex(pos.x(),pos.y(),pos.z(),gr);
+    // SPoint3 pos;
+    // incomplete->pnt(t1,t2,t3,pos);
+    // v = new MVertex(pos.x(),pos.y(),pos.z(),gr);
     
-//     double X(0),Y(0),Z(0);
-//     for (int j=0; j<incomplete->getNumVertices(); j++){
-//       double sf ; incomplete->getShapeFunction(j,t1,t2,t3,sf);
-//       MVertex *vt = incomplete->getVertex(j);
-//       X += sf * vt->x();
-//       Y += sf * vt->y();
-//       Z += sf * vt->z();
-//     }
-//     
-    // v = new MVertex(X,Y,Z, gr);
+    double X(0),Y(0),Z(0);
+    for (int j=0; j<incomplete->getNumVertices(); j++){
+      double sf ; incomplete->getShapeFunction(j,t1,t2,t3,sf);
+      MVertex *vt = incomplete->getVertex(j);
+      X += sf * vt->x();
+      Y += sf * vt->y();
+      Z += sf * vt->z();
+    }
+    v = new MVertex(X,Y,Z, gr);
+
     gr->mesh_vertices.push_back(v);
     vr.push_back(v);
   }
