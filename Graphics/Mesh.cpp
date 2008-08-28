@@ -380,18 +380,16 @@ static void drawVoronoiDual(std::vector<T*> &elements)
     if(ele->getDim() == 2){
       for(int j = 0; j < ele->getNumEdges(); j++){
         MEdge e = ele->getEdge(j);
-	SVector3 p2p1 ( e.getVertex(1)->x() - e.getVertex(0)->x(),
-			e.getVertex(1)->y() - e.getVertex(0)->y(),
-			e.getVertex(1)->z() - e.getVertex(0)->z());
-	SVector3 pcp1 ( pc.x() - e.getVertex(0)->x(),
-			pc.y() - e.getVertex(0)->y(),
-			pc.z() - e.getVertex(0)->z());
-			
+	SVector3 p2p1(e.getVertex(1)->x() - e.getVertex(0)->x(),
+		      e.getVertex(1)->y() - e.getVertex(0)->y(),
+		      e.getVertex(1)->z() - e.getVertex(0)->z());
+	SVector3 pcp1(pc.x() - e.getVertex(0)->x(),
+		      pc.y() - e.getVertex(0)->y(),
+		      pc.z() - e.getVertex(0)->z());
 	double alpha = dot(pcp1,p2p1) / dot(p2p1,p2p1);
-	
-        SPoint3 p ((1.-alpha)*e.getVertex(0)->x() + alpha*e.getVertex(1)->x(), 
-		   (1.-alpha)*e.getVertex(0)->y() + alpha*e.getVertex(1)->y(),
-		   (1.-alpha)*e.getVertex(0)->z() + alpha*e.getVertex(1)->z());
+        SPoint3 p((1 - alpha)*e.getVertex(0)->x() + alpha * e.getVertex(1)->x(), 
+		  (1 - alpha)*e.getVertex(0)->y() + alpha * e.getVertex(1)->y(),
+		  (1 - alpha)*e.getVertex(0)->z() + alpha * e.getVertex(1)->z());
 	glVertex3d(pc.x(), pc.y(), pc.z());
         glVertex3d(p.x(), p.y(), p.z());
       }
@@ -416,7 +414,6 @@ static void drawVoronoiDual(std::vector<T*> &elements)
   glDisable(GL_LINE_STIPPLE);
   gl2psDisable(GL2PS_LINE_STIPPLE);
 }
-
 
 // Routine to fill the smooth normal container
 
