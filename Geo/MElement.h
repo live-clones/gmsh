@@ -169,11 +169,13 @@ class MElement
   // coordinates
   virtual void getGradShapeFunction(int num, double u, double v, double w,
                                     double s[3]) = 0;
-
+  
   // return the Jacobian of the element evaluated at point (u,v,w) in
   // parametric coordinates
   double getJacobian(double u, double v, double w, double jac[3][3]);
 
+  virtual void pnt(double u, double v, double w, SPoint3 &p);
+  
   // invert the parametrisation
   virtual void xyz2uvw(double xyz[3], double uvw[3]);
 
@@ -340,6 +342,10 @@ class MLine : public MElement {
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
   }
+
+  
+  virtual void pnt(double u, double v, double w, SPoint3 &p);
+  
   virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
   {
     switch(num) {
@@ -405,12 +411,19 @@ class MLine3 : public MLine {
     };
     _getEdgeRep(getVertex(e[num][0]), getVertex(e[num][1]), x, y, z, n);
   }
+   
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
     MLine::_getEdgeVertices(v);
     v[2] = _vs[0];
   }
+  
+  virtual void pnt(double u, double v, double w, SPoint3 &p);
+  
+  virtual void getShapeFunction(int num, double u, double v, double w, double &s);
+  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]);
+  
   virtual int getTypeForMSH(){ return MSH_LIN_3; }
   virtual int getTypeForUNV(){ return 24; } // parabolic beam
   virtual int getTypeForVTK(){ return 21; }
@@ -459,6 +472,12 @@ class MLineN : public MLine {
     MLine::_getEdgeVertices(v);
     for(unsigned int i = 0; i != _vs.size(); ++i) v[i+2] = _vs[i];
   }
+  
+  virtual void pnt(double u, double v, double w, SPoint3 &p) ;
+  
+  virtual void getShapeFunction(int num, double u, double v, double w, double &s);
+  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]);
+  
   virtual int getTypeForMSH()
   { 
     if(_vs.size() == 2) return MSH_LIN_4; 
@@ -1435,6 +1454,11 @@ class MTetrahedron10 : public MTetrahedron {
     tmp = _vs[1]; _vs[1] = _vs[2]; _vs[2] = tmp;
     tmp = _vs[5]; _vs[5] = _vs[3]; _vs[3] = tmp;
   }
+
+
+  virtual void getShapeFunction(int num, double u, double v, double w, double &s);
+  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]);
+  
   virtual void jac(double u,double v,double w, double jac[3][3])
   {
     MTetrahedron::jac(2,_vs,u,v,w,jac);
@@ -1607,7 +1631,7 @@ class MTetrahedronN : public MTetrahedron {
     case MSH_TET_34:
       {
         std::vector<MVertex*> inv(30);
-        for (int i=0;i<31;i++) inv[i] = _vs[reverseTet34[i+4]-4];
+        for (int i=0;i<30;i++) inv[i] = _vs[reverseTet34[i+4]-4];
         _vs = inv;
         break;
       }
@@ -1620,6 +1644,9 @@ class MTetrahedronN : public MTetrahedron {
     }
   }
 
+  virtual void getShapeFunction(int num, double u, double v, double w, double &s);
+  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]);
+  
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual int getNumEdgesRep();
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);

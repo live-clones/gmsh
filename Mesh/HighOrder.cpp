@@ -668,7 +668,13 @@ void reorientTrianglePoints(std::vector<MVertex*>& vtcs,int orientation,bool swa
   
   if (swap) {
     // --- interior "principal vertices"
-    for (int i=0;i<2;i++) for (int j=0;j<2-i;j++) vtcs[i*2+j] = tmp[i+j*2];
+
+
+    vtcs[orientation]           = tmp[orientation];
+    vtcs[(orientation + 1) % 3] = tmp[(orientation+2)%3];
+    vtcs[(orientation + 2) % 3] = tmp[(orientation+1)%3];
+    
+    // for (int i=0;i<2;i++) for (int j=0;j<2-i;j++) vtcs[i*2+j] = tmp[i+j*2];
   }
   
   // no swap
@@ -711,12 +717,6 @@ void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
   
   for(int i = 0; i < ele->getNumFaces(); i++){
     MFace face = ele->getFace(i);
-    // std::vector<MVertex*> p;
-//     face.getOrderedVertices(p);
-//     if(faceVertices.count(p)){
-//       // checking orientation not possible ??? 
-//       vf.insert(vf.end(), faceVertices[p].begin(), faceVertices[p].end());
-//     }
 
     faceContainer::iterator fIter = faceVertices.find(face);
 
@@ -756,7 +756,10 @@ void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
           else                          hoEdgeNodes.insert(hoEdgeNodes.end(),eIter->second.rbegin(),eIter->second.rend());
         }
 
-        MTriangleN incomplete(face.getVertex(0),face.getVertex(1),face.getVertex(2),hoEdgeNodes,nPts+1);
+        MTriangleN incomplete(face.getVertex(0),
+                              face.getVertex(1),
+                              face.getVertex(2),
+                              hoEdgeNodes,nPts+1);
 
         double X(0),Y(0),Z(0);
         
@@ -765,18 +768,22 @@ void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
           double t1 = points(k,0);
           double t2 = points(k,1);
 
-
-          for (int j=0; j<incomplete.getNumVertices(); j++){
+          SPoint3 pos;
+          incomplete.pnt(t1,t2,0,pos);
+          MVertex* v = new MVertex(pos.x(),pos.y(),pos.z(),gr);
+          
+          
+          // for (int j=0; j<incomplete.getNumVertices(); j++){
             
-            double sf ; incomplete.getShapeFunction(j,t1,t2,0,sf);
-            MVertex *vt = incomplete.getVertex(j);
+//             double sf ; incomplete.getShapeFunction(j,t1,t2,0,sf);
+//             MVertex *vt = incomplete.getVertex(j);
             
-            X += sf * vt->x();
-            Y += sf * vt->y();
-            Z += sf * vt->z();
-          }
+//             X += sf * vt->x();
+//             Y += sf * vt->y();
+//             Z += sf * vt->z();
+//           }
 
-          MVertex* v = new MVertex(X,Y,Z,gr);
+//           MVertex* v = new MVertex(X,Y,Z,gr);
   
           
 //           SPoint3 pc = face.interpolate(t1, t2);
@@ -861,6 +868,10 @@ void getRegionVertices(GRegion *gr,
     const double t2 = points(k, 1);
     const double t3 = points(k, 2);
     
+    SPoint3 pos;
+    incomplete->pnt(t1,t2,t3,pos);
+    v = new MVertex(pos.x(),pos.y(),pos.z(),gr);
+    
     // FIXME: KOEN - I had to comment this out (MElement does not have
     // pnt() member) -- CG
 
@@ -868,16 +879,16 @@ void getRegionVertices(GRegion *gr,
     // incomplete->pnt(t1,t2,t3,pos);
     // v = new MVertex(pos.x(),pos.y(),pos.z(),gr);
     
-    double X(0),Y(0),Z(0);
-    for (int j=0; j<incomplete->getNumVertices(); j++){
-      double sf ; incomplete->getShapeFunction(j,t1,t2,t3,sf);
-      MVertex *vt = incomplete->getVertex(j);
-      X += sf * vt->x();
-      Y += sf * vt->y();
-      Z += sf * vt->z();
-    }
-    v = new MVertex(X,Y,Z, gr);
-
+    //     double X(0),Y(0),Z(0);
+    //     for (int j=0; j<incomplete->getNumVertices(); j++){
+    //       double sf ; incomplete->getShapeFunction(j,t1,t2,t3,sf);
+    //       MVertex *vt = incomplete->getVertex(j);
+    //       X += sf * vt->x();
+    //       Y += sf * vt->y();
+    //       Z += sf * vt->z();
+    //     }
+    //    v = new MVertex(X,Y,Z, gr);
+    
     gr->mesh_vertices.push_back(v);
     vr.push_back(v);
   }
@@ -982,8 +993,8 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
       ve.insert(ve.end(), vf.begin(), vf.end());     
       MTetrahedronN incpl (t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3),
 			   ve, nPts + 1);
-      // getRegionVertices(gr, &incpl, t, vr, linear, nPts); 
-      //       ve.insert(ve.end(), vr.begin(), vr.end());     
+      getRegionVertices(gr, &incpl, t, vr, linear, nPts); 
+      ve.insert(ve.end(), vr.begin(), vr.end());     
       tetrahedra2.push_back
 	(new MTetrahedronN(t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3),
 			   ve, nPts + 1));

@@ -7,6 +7,25 @@
 #include "GmshDefines.h"
 #include "Message.h"
 
+Double_Matrix generate1DMonomials(int order) {
+  
+  Double_Matrix monomials(order+1,1);
+  for (int i=0;i<order+1;i++) monomials(i,0) = i;
+  
+}
+
+Double_Matrix generate1DPoints(int order) {
+
+  Double_Matrix line(order+1,1);
+
+  line(0,0) = -1.;
+  line(1,0) =  1.;
+
+  double dd = 2./order;
+  
+  for (int i=2;i<order;i++) line(i,0) = -1. + dd * (i-1);
+}  
+
 Double_Matrix generatePascalTriangle(int order)
 {
   Double_Matrix monomials((order + 1) * (order + 2) / 2, 2);
@@ -567,6 +586,26 @@ const gmshFunctionSpace &gmshFunctionSpaces::find(int tag)
   gmshFunctionSpace F;
   
   switch (tag){
+  case MSH_LIN_2 :
+    F.monomials = generate1DMonomials(1);
+    F.points    = generate1DPoints(1);
+    break;
+  case MSH_LIN_3 :
+    F.monomials = generate1DMonomials(2);
+    F.points    = generate1DPoints(2);
+    break;
+  case MSH_LIN_4:
+    F.monomials = generate1DMonomials(3);
+    F.points    = generate1DPoints(3);
+    break;
+  case MSH_LIN_5:
+    F.monomials = generate1DMonomials(4);
+    F.points    = generate1DPoints(4);
+    break;
+  case MSH_LIN_6:
+    F.monomials = generate1DMonomials(5);
+    F.points    = generate1DPoints(5);
+    break;  
   case MSH_TRI_3 :
     F.monomials = generatePascalTriangle(1);
     F.points =    gmshGeneratePointsTriangle(1, false);
