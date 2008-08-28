@@ -999,11 +999,13 @@ void adaptiveElements<T>::initWithLowResolution(PViewData *data, int step)
       if(data->skipElement(step, ent, ele) ||
 	 data->getNumEdges(step, ent, ele) != T::numEdges) continue;
       if(numVal != data->getNumValues(step, ent, ele)){
-	Msg::Error("Wrong number of values (%d) in element %d (expecting %d)", numVal, ele, data->getNumValues(step, ent, ele));
+	Msg::Error("Wrong number of values (%d) in element %d (expecting %d)",
+		   numVal, ele, data->getNumValues(step, ent, ele));
 	continue;
       }
       if(numNodes != data->getNumNodes(step, ent, ele)){
-	Msg::Error("Wrong number of nodes (%d) in element %d (expecting %d)", numNodes, ele, data->getNumNodes(step, ent, ele));
+	Msg::Error("Wrong number of nodes (%d) in element %d (expecting %d)",
+		   numNodes, ele, data->getNumNodes(step, ent, ele));
 	continue;
       }
       for(int nod = 0; nod < numNodes; nod++){
