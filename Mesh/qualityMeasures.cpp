@@ -217,6 +217,13 @@ double qmDistorsionOfMapping (MTriangle *e)
     const double di  = mesh_functional_distorsion (e,u,v);
     dmin = (i==0)? di : std::min(dmin,di);
   }
+  double p[3][2] = {{0,0},{0,1},{1,0}};
+  for (int i=0;i<3;i++){
+    const double u = p[i][0];
+    const double v = p[i][1];
+    const double di  = mesh_functional_distorsion (e,u,v);
+    dmin = std::min(dmin,di);
+  }
   return dmin;
 }
 
@@ -250,6 +257,14 @@ double qmDistorsionOfMapping (MTetrahedron *e)
     const double w = pts[i].pt[2];
     const double di  = mesh_functional_distorsion (e,u,v,w);
     dmin = (i==0)? di : std::min(dmin,di);
+  }
+  double p[4][3] = {{0,0,0},{0,1,0},{1,0,0},{0,0,1}};
+  for (int i=0;i<4;i++){
+    const double u = p[i][0];
+    const double v = p[i][1];
+    const double w = p[i][2];
+    const double di  = mesh_functional_distorsion (e,u,v,w);
+    dmin = std::min(dmin,di);
   }
   //  printf("DMIN = %g\n\n",dmin);
 

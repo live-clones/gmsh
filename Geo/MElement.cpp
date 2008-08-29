@@ -891,7 +891,7 @@ void MTriangle::getGradShapeFunction(int num,double uu,double vv,double ww,doubl
   
 #if !defined(HAVE_GMSH_EMBEDDED)
   double grads[256][2];
-  int nf = getNumFaceVertices();
+  int nf = getNumFaceVertices();  
 
   if (!nf){
     switch(getPolynomialOrder()){

@@ -34,17 +34,20 @@ bool reparamOnFace(MVertex *v, GFace *gf, SPoint2 &param)
     GVertex *gv = (GVertex*)v->onWhat();
 
     // abort if we could be on a seam
+    /*
     std::list<GEdge*> ed = gv->edges();
     for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++)
       if((*it)->isSeam(gf)) return false;
-
+    */
     param = gv->reparamOnFace(gf, 1);
   }
   else if(v->onWhat()->dim() == 1){
     GEdge *ge = (GEdge*)v->onWhat();
 
     // abort if we are on a seam (todo: try dir=-1 and compare)
-    if(ge->isSeam(gf)) return false;
+    //    if(ge->isSeam(gf)){
+    //      printf("oops : %d %d\n",ge->tag(),gf->tag());
+      //    }
 
     double UU;
     v->getParameter(0, UU);
@@ -1442,6 +1445,16 @@ bool optimizeHighOrderMesh(GFace *gf, edgeContainer &edgeVertices)
   return success;
 }
 
+double angle3Points ( MVertex *p1, MVertex *p2, MVertex *p3 ){
+  SVector3 a(p1->x()-p2->x(),p1->y()-p2->y(),p1->z()-p2->z());
+  SVector3 b(p3->x()-p2->x(),p3->y()-p2->y(),p3->z()-p2->z());
+  SVector3 c = crossprod(a,b);
+  double sinA = c.norm();
+  double cosA = dot(a,b);
+  //  printf("%d %d %d -> %g %g\n",p1->iD,p2->iD,p3->iD,cosA,sinA);
+  return atan2 (sinA,cosA);  
+}
+
 bool smoothInternalEdges(GFace *gf, edgeContainer &edgeVertices)
 {
   typedef std::map<std::pair<MVertex*, MVertex*>, std::vector<MElement*> > edge2tris;
@@ -1470,111 +1483,122 @@ bool smoothInternalEdges(GFace *gf, edgeContainer &edgeVertices)
       MTriangle *t2 = (MTriangle*)triangles[1];
       MVertex *n1 = t1->getOtherVertex(n2, n4);
       MVertex *n3 = t2->getOtherVertex(n2, n4);
-      if(n1 < n2)
-        e1 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n1, n2)];
-      else
-        e1 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n2, n1)];
-      if(n2 < n3)
-        e2 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n2, n3)];
-      else
-        e2 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n3, n2)];
-      if(n3 < n4)
-        e3 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n3, n4)];
-      else
-        e3 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n4, n3)];
-      if(n4 < n1)
-        e4 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n4, n1)];
-      else
-        e4 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n1, n4)];
-      if(n2 < n4)
-        e = edgeVertices[std::make_pair<MVertex*, MVertex*>(n2, n4)];
-      else
-        e = edgeVertices[std::make_pair<MVertex*, MVertex*>(n4, n2)];
       
-      if((!straightLine(e1, n1, n2) || !straightLine(e2, n2, n3) ||
-          !straightLine(e3, n3, n4) || !straightLine(e4, n4, n1))){
+      double ang1 = angle3Points(n1,n2,n3);
+      double ang2 = angle3Points(n2,n3,n4);
+      double ang3 = angle3Points(n3,n4,n1);
+      double ang4 = angle3Points(n4,n1,n2);
+      const double angleLimit = 3*M_PI/4.;
 
-        double Unew[NBST][10],Vnew[NBST][10];
-        double Xold[10],Yold[10],Zold[10];
-        
-        for(unsigned int i = 0; i < e.size(); i++){
-          Xold[i] = e[i]->x();
-          Yold[i] = e[i]->y();
-          Zold[i] = e[i]->z();
-        }
-
-        double minJ = 1.e22;
-        double maxJ = -1.e22;       
-        getMinMaxJac (t1, minJ, maxJ);
-        getMinMaxJac (t2, minJ, maxJ);
-        int kopt = -1; 
-        for (int k=0;k<NBST;k++){
-          double relax = (k+1)/(double)NBST;
-          for(unsigned int i = 0; i < e.size(); i++){
-            double v = (double)(i + 1) / (e.size() + 1);
-            double u = 1. - v;
-            MVertex *vert  = (n2 < n4) ? e[i] : e[e.size() - i - 1];
-            MVertex *vert1 = (n1 < n2) ? e1[e1.size() - i - 1] : e1[i];
-            MVertex *vert3 = (n3 < n4) ? e3[i] : e3[e3.size() - i - 1];
-            MVertex *vert4 = (n4 < n1) ? e4[e4.size() - i - 1] : e4[i];
-            MVertex *vert2 = (n2 < n3) ? e2[i] : e2[e2.size() - i - 1];
-            double U1,V1,U2,V2,U3,V3,U4,V4,U,V,nU1,nV1,nU2,nV2,nU3,nV3,nU4,nV4;
-            parametricCoordinates(vert , gf, U, V);
-            parametricCoordinates(vert1, gf, U1, V1);
-            parametricCoordinates(vert2, gf, U2, V2);
-            parametricCoordinates(vert3, gf, U3, V3);
-            parametricCoordinates(vert4, gf, U4, V4);
-            parametricCoordinates(n1, gf, nU1, nV1);
-            parametricCoordinates(n2, gf, nU2, nV2);
-            parametricCoordinates(n3, gf, nU3, nV3);
-            parametricCoordinates(n4, gf, nU4, nV4);
-            
-            Unew[k][i] = U + relax * ((1.-u) * U4 + u * U2 +
-                                      (1.-v) * U1 + v * U3 -
-                                      ((1.-u)*(1.-v) * nU1 
-                                       + u * (1.-v) * nU2 
-                                       + u * v * nU3 
-                                       + (1.-u) * v * nU4) - U);
-            Vnew[k][i] = V + relax * ((1.-u) * V4 + u * V2 +
-                                      (1.-v) * V1 + v * V3 -
-                                      ((1.-u)*(1.-v) * nV1 
-                                       + u * (1.-v) * nV2 
-                                       + u * v * nV3 
-                                       + (1.-u) * v * nV4) - V);
-            GPoint gp = gf->point(Unew[k][i],Vnew[k][i]);
-            vert->x() = gp.x();
-            vert->y() = gp.y();
-            vert->z() = gp.z();
-          }
-          double minJloc = 1.e22;
-          double maxJloc = -1.e22;          
-          getMinMaxJac(t1, minJloc, maxJloc);
-          getMinMaxJac(t2, minJloc, maxJloc);
-
-          if (minJloc > minJ){
-            kopt = k;
-            minJ = minJloc;
-          }
-        }
-        if (kopt == -1){
-          for(unsigned int i = 0; i < e.size(); i++){
-            e[i]->x() = Xold[i];
-            e[i]->y() = Yold[i];
-            e[i]->z() = Zold[i];
-          }      
-        }
-        else{
-          success = true;
-          for(unsigned int i = 0; i < e.size(); i++){
-            MVertex *vert  = (n2 < n4) ? e[i] : e[e.size() - i - 1];
-            vert->setParameter(0,Unew[kopt][i]);
-            vert->setParameter(1,Vnew[kopt][i]);
-            GPoint gp = gf->point(Unew[kopt][i],Vnew[kopt][i]);
-            vert->x() = gp.x();
-            vert->y() = gp.y();
-            vert->z() = gp.z();
-          }      
-        }
+      if (ang1 < angleLimit && ang2 < angleLimit && ang3 < angleLimit && ang4 < angleLimit){
+	if(n1 < n2)
+	  e1 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n1, n2)];
+	else
+	  e1 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n2, n1)];
+	if(n2 < n3)
+	  e2 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n2, n3)];
+	else
+	  e2 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n3, n2)];
+	if(n3 < n4)
+	  e3 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n3, n4)];
+	else
+	  e3 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n4, n3)];
+	if(n4 < n1)
+	  e4 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n4, n1)];
+	else
+	  e4 = edgeVertices[std::make_pair<MVertex*, MVertex*>(n1, n4)];
+	if(n2 < n4)
+	  e = edgeVertices[std::make_pair<MVertex*, MVertex*>(n2, n4)];
+	else
+	  e = edgeVertices[std::make_pair<MVertex*, MVertex*>(n4, n2)];
+	
+	if((!straightLine(e1, n1, n2) || !straightLine(e2, n2, n3) ||
+	    !straightLine(e3, n3, n4) || !straightLine(e4, n4, n1))){
+	  
+	  double Unew[NBST][10],Vnew[NBST][10];
+	  double Xold[10],Yold[10],Zold[10];
+	  
+	  for(unsigned int i = 0; i < e.size(); i++){
+	    Xold[i] = e[i]->x();
+	    Yold[i] = e[i]->y();
+	    Zold[i] = e[i]->z();
+	  }
+	  
+	  double minJ = 1.e22;
+	  double maxJ = -1.e22;       
+	  getMinMaxJac (t1, minJ, maxJ);
+	  getMinMaxJac (t2, minJ, maxJ);
+	  int kopt = -1; 
+	  for (int k=0;k<NBST;k++){
+	    double relax = (k+1)/(double)NBST;
+	    for(unsigned int i = 0; i < e.size(); i++){
+	      double v = (double)(i + 1) / (e.size() + 1);
+	      double u = 1. - v;
+	      MVertex *vert  = (n2 < n4) ? e[i] : e[e.size() - i - 1];
+	      MVertex *vert1 = (n1 < n2) ? e1[e1.size() - i - 1] : e1[i];
+	      MVertex *vert3 = (n3 < n4) ? e3[i] : e3[e3.size() - i - 1];
+	      MVertex *vert4 = (n4 < n1) ? e4[e4.size() - i - 1] : e4[i];
+	      MVertex *vert2 = (n2 < n3) ? e2[i] : e2[e2.size() - i - 1];	    
+	      double U1,V1,U2,V2,U3,V3,U4,V4,U,V,nU1,nV1,nU2,nV2,nU3,nV3,nU4,nV4;
+	      parametricCoordinates(vert , gf, U, V);
+	      parametricCoordinates(vert1, gf, U1, V1);
+	      parametricCoordinates(vert2, gf, U2, V2);
+	      parametricCoordinates(vert3, gf, U3, V3);
+	      parametricCoordinates(vert4, gf, U4, V4);
+	      parametricCoordinates(n1, gf, nU1, nV1);
+	      parametricCoordinates(n2, gf, nU2, nV2);
+	      parametricCoordinates(n3, gf, nU3, nV3);
+	      parametricCoordinates(n4, gf, nU4, nV4);
+	      
+	      Unew[k][i] = U + relax * ((1.-u) * U4 + u * U2 +
+					(1.-v) * U1 + v * U3 -
+					((1.-u)*(1.-v) * nU1 
+					 + u * (1.-v) * nU2 
+					 + u * v * nU3 
+					 + (1.-u) * v * nU4) - U);
+	      Vnew[k][i] = V + relax * ((1.-u) * V4 + u * V2 +
+					(1.-v) * V1 + v * V3 -
+					((1.-u)*(1.-v) * nV1 
+					 + u * (1.-v) * nV2 
+					 + u * v * nV3 
+					 + (1.-u) * v * nV4) - V);
+	      GPoint gp = gf->point(Unew[k][i],Vnew[k][i]);
+	      vert->x() = gp.x();
+	      vert->y() = gp.y();
+	      vert->z() = gp.z();
+	    }
+	    double minJloc = 1.e22;
+	    double maxJloc = -1.e22;          
+	    getMinMaxJac(t1, minJloc, maxJloc);
+	    getMinMaxJac(t2, minJloc, maxJloc);
+	    //	  printf("relax = %g min %g max %g\n",relax,minJloc,maxJloc);
+	    
+	    if (minJloc > minJ){
+	      kopt = k;
+	      minJ = minJloc;
+	    }
+	  }
+	  //	kopt = 1;
+	  if (kopt == -1){
+	    for(unsigned int i = 0; i < e.size(); i++){
+	      e[i]->x() = Xold[i];
+	      e[i]->y() = Yold[i];
+	      e[i]->z() = Zold[i];
+	    }      
+	  }
+	  else{
+	    success = true;
+	    for(unsigned int i = 0; i < e.size(); i++){
+	      MVertex *vert  = (n2 < n4) ? e[i] : e[e.size() - i - 1];
+	      vert->setParameter(0,Unew[kopt][i]);
+	      vert->setParameter(1,Vnew[kopt][i]);
+	      GPoint gp = gf->point(Unew[kopt][i],Vnew[kopt][i]);
+	      vert->x() = gp.x();
+	      vert->y() = gp.y();
+	      vert->z() = gp.z();
+	    }      
+	  }
+	}
       }
     }
   }    
@@ -1707,17 +1731,17 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
         if (!smoothInternalEdges(*it, edgeVertices))break;
         checkHighOrderTriangles(m);
       }
-      optimizeHighOrderMeshInternalNodes(*it);
+      //      optimizeHighOrderMeshInternalNodes(*it);
     }
-    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){      
-      for (int i=0;i<CTX.mesh.nb_smoothing;i++){
-        if(!optimizeHighOrderMesh(*it, edgeVertices))break;
-        checkHighOrderTriangles(m);
-      }
-    }
+    //    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){      
+    //      for (int i=0;i<CTX.mesh.nb_smoothing;i++){
+    //        if(!optimizeHighOrderMesh(*it, edgeVertices))break;
+    //        checkHighOrderTriangles(m);
+    //      }
+    //    }
+    printJacobians(m, "detjOpt.pos");  
   }
 
-  printJacobians(m, "detjOpt.pos");  
 
   checkHighOrderTriangles(m);
 
