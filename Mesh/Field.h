@@ -49,7 +49,7 @@ class FieldOption {
     case FIELD_OPTION_STRING: typ = "string"; break;
     case FIELD_OPTION_LIST: typ = "list"; break;
     }
-    return std::string(_help + " (type: " + typ + "; default value: " + val + ")");
+    return _help + " (type: " + typ + "; default value: " + val + ")";
   }
   virtual void numerical_value(double val) { throw(1); }
   virtual double numerical_value() const { throw(1); }

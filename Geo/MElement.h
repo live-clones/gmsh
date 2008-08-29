@@ -15,7 +15,6 @@
 #include "MFace.h"
 #include "Message.h"
 
-
 struct IntPt{
   double pt[3];
   double weight;
@@ -342,10 +341,6 @@ class MLine : public MElement {
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
   }
-
-  
-  virtual void pnt(double u, double v, double w, SPoint3 &p);
-  
   virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
   {
     switch(num) {
@@ -362,6 +357,7 @@ class MLine : public MElement {
     default : s[0] = s[1] = s[2] = 0.; break;
     }
   }
+  virtual void pnt(double u, double v, double w, SPoint3 &p);
   virtual bool isInside(double u, double v, double w, double tol=1.e-8)
   {
     if(u < -(1. + tol) || u > (1. + tol))
@@ -418,12 +414,9 @@ class MLine3 : public MLine {
     MLine::_getEdgeVertices(v);
     v[2] = _vs[0];
   }
-  
-  virtual void pnt(double u, double v, double w, SPoint3 &p);
-  
   virtual void getShapeFunction(int num, double u, double v, double w, double &s);
   virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]);
-  
+  virtual void pnt(double u, double v, double w, SPoint3 &p);
   virtual int getTypeForMSH(){ return MSH_LIN_3; }
   virtual int getTypeForUNV(){ return 24; } // parabolic beam
   virtual int getTypeForVTK(){ return 21; }
@@ -472,12 +465,9 @@ class MLineN : public MLine {
     MLine::_getEdgeVertices(v);
     for(unsigned int i = 0; i != _vs.size(); ++i) v[i+2] = _vs[i];
   }
-  
-  virtual void pnt(double u, double v, double w, SPoint3 &p) ;
-  
   virtual void getShapeFunction(int num, double u, double v, double w, double &s);
   virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]);
-  
+  virtual void pnt(double u, double v, double w, SPoint3 &p);
   virtual int getTypeForMSH()
   { 
     if(_vs.size() == 2) return MSH_LIN_4; 
@@ -585,34 +575,8 @@ class MTriangle : public MElement {
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
-
   virtual void getShapeFunction(int num, double u, double v, double w, double &s);
   virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]);
-  
-/*   virtual void getShapeFunction(int num, double u, double v, double w, double &s)  */
-/*   { */
-/*     switch(num){ */
-/*     case 0  : s = 1. - u - v; break; */
-/*     case 1  : s =      u    ; break; */
-/*     case 2  : s =          v; break; */
-/*     default : s = 0.; break; */
-/*     } */
-/*   } */
-/*   virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3])  */
-/*   { */
-/*     switch(num) { */
-/*     case 0  : s[0] = -1.; s[1] = -1.; s[2] =  0.; break; */
-/*     case 1  : s[0] =  1.; s[1] =  0.; s[2] =  0.; break; */
-/*     case 2  : s[0] =  0.; s[1] =  1.; s[2] =  0.; break; */
-/*     default : s[0] = s[1] = s[2] = 0.; break; */
-/*     } */
-/*   } */
-  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
-  {
-    if(u < (-tol) || v < (-tol) || u > ((1. + tol) - v))
-      return false; 
-    return true;
-  }
   virtual void jac(int order, MVertex *verts[], double u, double v, double w, 
 		   double j[2][3]);
   virtual void jac(double u, double v, double w, double j[2][3])
@@ -624,6 +588,12 @@ class MTriangle : public MElement {
   virtual void pnt(double u, double v, double w, SPoint3 &p)
   {
     pnt(1, 0, u, v, w, p);
+  }
+  virtual bool isInside(double u, double v, double w, double tol=1.e-8)
+  {
+    if(u < (-tol) || v < (-tol) || u > ((1. + tol) - v))
+      return false; 
+    return true;
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
   virtual SPoint3 circumcenter();
@@ -727,7 +697,6 @@ class MTriangle6 : public MTriangle {
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
     tmp = _vs[0]; _vs[0] = _vs[2]; _vs[2] = tmp;
   }
-  
   virtual void jac(double u, double v, double w, double j[2][3])
   {
     MTriangle::jac(2, _vs, u, v, w, j);
@@ -1506,9 +1475,6 @@ class MTetrahedron10 : public MTetrahedron {
  *
  */
 
-   
-
-
 static int reverseTet20[20] = {0,2,1,3,  // principal vertices
                                9,8,      // E0 switches with E2
                                7,6,      // E1 inverts direction
@@ -1552,14 +1518,14 @@ class MTetrahedronN : public MTetrahedron {
   std::vector<MVertex *> _vs;
   const short _order;
  public:
- MTetrahedronN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, 
-	       std::vector<MVertex*> &v, int order, int num=0, int part=0) 
-   : MTetrahedron(v0, v1, v2, v3, num, part) , _vs (v), _order(order)
+  MTetrahedronN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, 
+		std::vector<MVertex*> &v, int order, int num=0, int part=0) 
+    : MTetrahedron(v0, v1, v2, v3, num, part) , _vs (v), _order(order)
   {
     for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
   }
- MTetrahedronN(std::vector<MVertex*> &v, int order, int num=0, int part=0) 
-   : MTetrahedron(v[0], v[1], v[2], v[3], num, part) , _order(order)
+  MTetrahedronN(std::vector<MVertex*> &v, int order, int num=0, int part=0) 
+    : MTetrahedron(v[0], v[1], v[2], v[3], num, part) , _order(order)
   {
     for(unsigned int i = 4; i < v.size(); i++) _vs.push_back(v[i]);
     for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
@@ -1571,15 +1537,15 @@ class MTetrahedronN : public MTetrahedron {
   virtual int getNumEdgeVertices() const { return _order - 1; }
   virtual int getNumFaceVertices() const
   {
-    return ((_order - 1)*(_order - 2))/2;
+    return ((_order - 1) * (_order - 2)) / 2;
   }
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(2 + getNumEdgeVertices());
     MTetrahedron::_getEdgeVertices(num, v);
     int j = 2;
-    const int ie = (num+1)*getNumEdgeVertices();
-    for(int i = num*getNumEdgeVertices(); i != ie; ++i) v[j++] = _vs[i];
+    const int ie = (num + 1) * getNumEdgeVertices();
+    for(int i = num * getNumEdgeVertices(); i != ie; ++i) v[j++] = _vs[i];
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
@@ -1598,7 +1564,6 @@ class MTetrahedronN : public MTetrahedron {
     }    
   }
   virtual int getNumEdgeVertices(){ return _order - 1; }
-
   virtual int getTypeForMSH()
   {
     // (p+1)*(p+2)*(p+3)/6
@@ -1643,15 +1608,12 @@ class MTetrahedronN : public MTetrahedron {
       }
     }
   }
-
   virtual void getShapeFunction(int num, double u, double v, double w, double &s);
   virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]);
-  
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual int getNumEdgesRep();
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual int getNumFacesRep();
-
   virtual void jac(double u, double v, double w, double j[3][3])
   {
     MTetrahedron::jac(_order, _vs , u, v, w, j);

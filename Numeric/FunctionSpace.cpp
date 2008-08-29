@@ -7,24 +7,22 @@
 #include "GmshDefines.h"
 #include "Message.h"
 
-Double_Matrix generate1DMonomials(int order) {
-  
-  Double_Matrix monomials(order+1,1);
-  for (int i=0;i<order+1;i++) monomials(i,0) = i;
-  
+Double_Matrix generate1DMonomials(int order)
+{
+  Double_Matrix monomials(order + 1, 1);
+  for (int i = 0; i < order + 1; i++) monomials(i, 0) = i;
+  return monomials;
 }
 
-Double_Matrix generate1DPoints(int order) {
-
-  Double_Matrix line(order+1,1);
-
-  line(0,0) = -1.;
-  line(1,0) =  1.;
-
-  double dd = 2./order;
-  
-  for (int i=2;i<order;i++) line(i,0) = -1. + dd * (i-1);
-}  
+Double_Matrix generate1DPoints(int order)
+{
+  Double_Matrix line(order + 1, 1);
+  line(0, 0) = -1.;
+  line(1, 0) =  1.;
+  double dd = 2. / order;
+  for (int i = 2; i < order; i++) line(i, 0) = -1. + dd * (i - 1);
+  return line;
+}
 
 Double_Matrix generatePascalTriangle(int order)
 {
@@ -166,7 +164,7 @@ int nbdoftriangleserendip(int order) { return 3 * order; }
 //              to numbering of principal vertices of face !!!!
 
 // uv surface - orientation v0-v2-v1
-void nodepositionface0(int order, double *u,  double *v,  double *w)
+void nodepositionface0(int order, double *u, double *v, double *w)
 {
   int ndofT = nbdoftriangle(order);
   if (order == 0) { u[0] = 0.; v[0] = 0.; w[0] = 0.; return; }
@@ -206,8 +204,9 @@ void nodepositionface0(int order, double *u,  double *v,  double *w)
     w[k] = w[k] / order;
   }
 }
+
 // uw surface - orientation v0-v1-v3
-void nodepositionface1(int order,  double *u,  double *v,  double *w)
+void nodepositionface1(int order, double *u, double *v, double *w)
 {
    int ndofT = nbdoftriangle(order);
    if (order == 0) { u[0] = 0.; v[0] = 0.; w[0] = 0.; return; }
@@ -247,7 +246,7 @@ void nodepositionface1(int order,  double *u,  double *v,  double *w)
 }
 
 // vw surface - orientation v0-v3-v2
-void nodepositionface2(int order, double *u, double *v,  double *w)
+void nodepositionface2(int order, double *u, double *v, double *w)
 {
    int ndofT = nbdoftriangle(order);
    if (order == 0) { u[0] = 0.; v[0] = 0.; return; }
@@ -580,7 +579,7 @@ std::map<int, gmshFunctionSpace> gmshFunctionSpaces::fs;
 
 const gmshFunctionSpace &gmshFunctionSpaces::find(int tag) 
 {
-  std::map<int,gmshFunctionSpace>::const_iterator it = fs.find(tag);
+  std::map<int, gmshFunctionSpace>::const_iterator it = fs.find(tag);
   if (it != fs.end()) return it->second;
   
   gmshFunctionSpace F;

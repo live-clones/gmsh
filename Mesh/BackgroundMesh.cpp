@@ -162,10 +162,9 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
   lc = std::min(lc, CTX.mesh.lc_max);
 
   if(lc <= 0.){
-    Msg::Error("Wrong characteristic length lc = %g", lc);
-    printf("%g %g \n", CTX.mesh.lc_min, CTX.mesh.lc_max);
-
-   lc = l1;
+    Msg::Error("Wrong characteristic length lc = %g (lcmin = %g, lcmax = %g)",
+	       lc, CTX.mesh.lc_min, CTX.mesh.lc_max);
+    lc = l1;
   }
 
   return lc * CTX.mesh.lc_factor;
