@@ -1067,7 +1067,7 @@ int GModel::readCGNS(const std::string &name)
   return 0;
 }
 
-int GModel::writeCGNS(const std::string &name, const int zoneDefinition,
+int GModel::writeCGNS(const std::string &name, int zoneDefinition,
                       const CGNSOptions &options, double scalingFactor)
 {
   Message::Error("This version of Gmsh was compiled without CGNS support");
