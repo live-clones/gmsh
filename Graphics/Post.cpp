@@ -1335,8 +1335,8 @@ class initPView {
     p->va_vectors->finalize();
 
     Msg::Info("Rendering %d vertices", p->va_points->getNumVertices() + 
-        p->va_lines->getNumVertices() + p->va_triangles->getNumVertices() + 
-        p->va_vectors->getNumVertices());
+	      p->va_lines->getNumVertices() + p->va_triangles->getNumVertices() + 
+	      p->va_vectors->getNumVertices());
 
     p->setChanged(false);
   }
@@ -1405,7 +1405,7 @@ class drawPView {
     }
 
     if(opt->RangeType == PViewOptions::Custom){
-      opt->TmpMin = opt->CustomMin;
+       opt->TmpMin = opt->CustomMin;
       opt->TmpMax = opt->CustomMax;
     }
     else if(opt->RangeType == PViewOptions::PerTimeStep){

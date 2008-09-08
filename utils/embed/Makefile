@@ -19,6 +19,7 @@ SRC = GModel.cpp\
       MElement.cpp\
         MFace.cpp MVertex.cpp\
       NumericEmbedded.cpp\
+        FunctionSpace.cpp\
       StringUtils.cpp\
       GmshEmbedded.cpp
 

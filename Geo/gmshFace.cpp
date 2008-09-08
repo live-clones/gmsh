@@ -186,7 +186,6 @@ GPoint gmshFace::point(double par1, double par2) const
 
 GPoint gmshFace::closestPoint(const SPoint3 & qp, const double initialGuess[2]) const
 {
-
   if (s->Typ ==  MSH_SURF_PLAN && !s->geometry){
     double XP = qp.x();
     double YP = qp.y();
@@ -278,7 +277,6 @@ GEntity::GeomType gmshFace::geomType() const
     return Unknown;
   }
 }
-
 
 bool gmshFace::containsPoint(const SPoint3 &pt) const
 { 

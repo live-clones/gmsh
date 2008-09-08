@@ -10,12 +10,10 @@
 #include "GFace.h"
 #include "MElement.h"
 #include "GmshDefines.h"
+#include "Message.h"
 
-#if defined(HAVE_GMSH_EMBEDDED)
-#  include "GmshEmbedded.h"
-#else
-#  include "Message.h"
-#  include "GaussLegendre1D.h"
+#if !defined(HAVE_GMSH_EMBEDDED)
+#include "GaussLegendre1D.h"
 #endif
 
 GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)

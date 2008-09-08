@@ -4,12 +4,10 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "discreteFace.h"
+#include "Message.h"
 
-#if defined(HAVE_GMSH_EMBEDDED)
-#  include "GmshEmbedded.h"
-#else
-#  include "Geo.h"
-#  include "Message.h"
+#if !defined(HAVE_GMSH_EMBEDDED)
+#include "Geo.h"
 #endif
 
 discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)

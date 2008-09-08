@@ -476,8 +476,8 @@ class ThresholdField : public Field
     options["Sigmoid"] = new FieldOptionBool(sigmoid, "True to interpolate between LcMin "
 					     "and LcMax using a sigmoid, false to "
 					     "interpolate linearly");
-    options["StopAtDistMax"] = new FieldOptionBool(stopAtDistMax, "True to not impose element "
-						   "size outside DistMax");
+    options["StopAtDistMax"] = new FieldOptionBool(stopAtDistMax, "True to not impose "
+						   "element size outside DistMax");
   }
   double operator() (double x, double y, double z)
   {
@@ -826,7 +826,8 @@ class MathEvalExpression
     if(evaluators_id)
       delete evaluators_id;
   }
-  ~MathEvalExpression() {
+  ~MathEvalExpression()
+  {
     free_members();
   }
 };
@@ -838,7 +839,9 @@ class MathEvalField : public Field
  public:
   MathEvalField()
   {
-    options["F"] = new FieldOptionString(f, "Function", &update_needed);
+    options["F"] = new FieldOptionString(f, "Mathematical function (possible arguments: "
+					 "x, y, z for spatial coordinates or F0, F1, "
+					 "..., for field values)", &update_needed);
   }
   double operator() (double x, double y, double z)
   {

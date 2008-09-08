@@ -137,12 +137,12 @@ int GModel::importGEOInternals()
   return 1;
 }
 
-class writeFieldOptionGEO{
+class writeFieldOptionGEO {
  private :
   FILE *geo;
   Field *field;
  public :
-  writeFieldOptionGEO(FILE *fp,Field *_field) { geo = fp ? fp : stdout; field=_field;}
+  writeFieldOptionGEO(FILE *fp,Field *_field) { geo = fp ? fp : stdout; field=_field; }
   void operator() (std::pair<std::string, FieldOption *> it)
   {
     std::string v;
@@ -151,7 +151,7 @@ class writeFieldOptionGEO{
   }
 };
 
-class writeFieldGEO{
+class writeFieldGEO {
  private :
   FILE *geo;
  public :

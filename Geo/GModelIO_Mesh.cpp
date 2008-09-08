@@ -16,12 +16,7 @@
 #include "discreteEdge.h"
 #include "discreteVertex.h"
 #include "StringUtils.h"
-
-#if defined(HAVE_GMSH_EMBEDDED)
-#  include "GmshEmbedded.h"
-#else
-#  include "Message.h"
-#endif
+#include "Message.h"
 
 static void storePhysicalTagsInEntities(GModel *m, int dim,
                                         std::map<int, std::map<int, std::string> > &map)
@@ -115,14 +110,11 @@ int GModel::readMSH(const std::string &name)
     return 0;
   }
 
-  double version = 1.0;
-  bool binary = false, swap = false;
   char str[256] = "XXX";
+  double version = 1.0;
+  bool binary = false, swap = false, postpro = false;
   std::map<int, std::vector<MElement*> > elements[8];
   std::map<int, std::map<int, std::string> > physicals[4];
-  bool postpro = false;
-
-  // we might want to cache those for post-processing lookups
   std::map<int, MVertex*> vertexMap;
   std::vector<MVertex*> vertexVector;
  
@@ -424,7 +416,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   // get the number of elements (we assume that all the elements in a
   // list have the same type, i.e., they are all of the same
   // polynomial order)
-  std::map<int,int> elements;
+  std::map<int, int> elements;
   for(viter it = firstVertex(); it != lastVertex(); ++it){
     int p = (saveAll ? 1 : (*it)->physicals.size());
     int n = p * (*it)->points.size();
@@ -455,7 +447,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   }
 
   int numElements = 0;
-  std::map<int,int>::const_iterator it = elements.begin();
+  std::map<int, int>::const_iterator it = elements.begin();
   for(; it != elements.end(); ++it)
     numElements += it->second;
 

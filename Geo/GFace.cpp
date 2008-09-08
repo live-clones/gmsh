@@ -8,23 +8,23 @@
 #include "GFace.h"
 #include "GEdge.h"
 #include "MElement.h"
+#include "Message.h"
+#include "VertexArray.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
-#  include "GmshEmbedded.h"
+#include "GmshEmbedded.h"
 #else
-#  include "Message.h"
-#  include "Numeric.h"
-#  include "GaussLegendre1D.h"
-#  include "VertexArray.h"
-#  include "Context.h"
-#  if defined(HAVE_GSL)
-#    include <gsl/gsl_vector.h>
-#    include <gsl/gsl_linalg.h>
-#  else
-#    define NRANSI
-#    include "nrutil.h"
+#include "Numeric.h"
+#include "GaussLegendre1D.h"
+#include "Context.h"
+#if defined(HAVE_GSL)
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_linalg.h>
+#else
+#define NRANSI
+#include "nrutil.h"
 void dsvdcmp(double **a, int m, int n, double w[], double **v);
-#  endif
+#endif
 #endif
 
 extern Context_T CTX;

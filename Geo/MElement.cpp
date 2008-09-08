@@ -9,17 +9,17 @@
 #include "GEntity.h"
 #include "GFace.h"
 #include "FunctionSpace.h"
+#include "Message.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
-#  include "GmshEmbedded.h"
+#include "GmshEmbedded.h"
 #else
-#  include "Numeric.h"
-#  include "GaussLegendre1D.h"
-#  include "Message.h"
-#  include "Context.h"
-#  include "qualityMeasures.h"
-#  include "meshGFaceDelaunayInsertion.h"
-#  include "meshGRegionDelaunayInsertion.h"
+#include "Numeric.h"
+#include "GaussLegendre1D.h"
+#include "Context.h"
+#include "qualityMeasures.h"
+#include "meshGFaceDelaunayInsertion.h"
+#include "meshGRegionDelaunayInsertion.h"
 #endif
 
 #define SQU(a)      ((a)*(a))
@@ -101,7 +101,7 @@ void MElement::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
 SPoint3 MTriangle::circumcenter()
 {
 #if defined(HAVE_GMSH_EMBEDDED)
-  return 0.;
+  return SPoint3();
 #else
   double p1[3] = {_v[0]->x(),_v[0]->y(),_v[0]->z()};
   double p2[3] = {_v[1]->x(),_v[1]->y(),_v[1]->z()};
@@ -115,7 +115,7 @@ SPoint3 MTriangle::circumcenter()
 SPoint3 MTetrahedron::circumcenter()
 {
 #if defined(HAVE_GMSH_EMBEDDED)
-  return 0.;
+  return SPoint3();
 #else
   MTet4 t(this,0);
   double res[3];

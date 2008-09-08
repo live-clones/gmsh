@@ -7,7 +7,6 @@
 #define _MESSAGE_H_
 
 #include <map>
-#include <vector>
 #include <string>
 #include <stdarg.h>
 

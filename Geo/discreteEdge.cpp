@@ -4,12 +4,10 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "discreteEdge.h"
+#include "Message.h"
 
-#if defined(HAVE_GMSH_EMBEDDED)
-#  include "GmshEmbedded.h"
-#else
-#  include "Geo.h"
-#  include "Message.h"
+#if !defined(HAVE_GMSH_EMBEDDED)
+#include "Geo.h"
 #endif
 
 discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num, 0, 0) 

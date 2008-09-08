@@ -8,12 +8,7 @@
 #include "MVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
-
-#if defined(HAVE_GMSH_EMBEDDED)
-#  include "GmshEmbedded.h"
-#else
-#  include "Message.h"
-#endif
+#include "Message.h"
 
 int MVertex::_globalNum = 0;
 double MVertexLessThanLexicographic::tolerance = 1.e-6;

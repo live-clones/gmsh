@@ -7,12 +7,12 @@
 #include "GModel.h"
 #include "GEntity.h"
 #include "MElement.h"
+#include "VertexArray.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
-#  include "GmshEmbedded.h"
+#include "GmshEmbedded.h"
 #else
-#  include "VertexArray.h"
-#  include "Context.h"
+#include "Context.h"
 #endif
 
 extern Context_T CTX;

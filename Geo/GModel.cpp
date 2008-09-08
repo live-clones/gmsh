@@ -10,16 +10,16 @@
 #include "discreteFace.h"
 #include "discreteEdge.h"
 #include "discreteVertex.h"
+#include "Message.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
-#  include "GmshEmbedded.h"
+#include "GmshEmbedded.h"
 #else
-#  include "Message.h"
-#  include "gmshSurface.h"
-#  include "Octree.h"
-#  include "Field.h"
-#  include "Generator.h"
-#  include "Context.h"
+#include "gmshSurface.h"
+#include "Octree.h"
+#include "Field.h"
+#include "Generator.h"
+#include "Context.h"
 #endif
 
 extern Context_T CTX;

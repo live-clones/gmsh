@@ -327,7 +327,7 @@ int MakeGraph(GModel *const model, Graph &graph, BoElemGrVec *const boElemGrVec)
                             boElemGrVec);
           }
           catch(...) {
-            Message::Error("Exception thrown during graph generation");
+            Msg::Error("Exception thrown during graph generation");
             ier = 2;
           }
         }
@@ -349,7 +349,7 @@ int MakeGraph(GModel *const model, Graph &graph, BoElemGrVec *const boElemGrVec)
                             boElemGrVec);
           }
           catch(...) {
-            Message::Error("Exception thrown during graph generation");
+            Msg::Error("Exception thrown during graph generation");
             ier = 2;
           }
         }
@@ -386,7 +386,7 @@ int MakeGraph(GModel *const model, Graph &graph, BoElemGrVec *const boElemGrVec)
 //             if((*it)->triangles.size() + (*it)->quadrangles.size() > 0)
 //               groups[face][1].push_back(*it);
 //           if(groups[face].size() == 0) {
-//             Message::Error("No mesh elements were found");
+//             Msg::Error("No mesh elements were found");
 //             return;
 //           }
 //         }
@@ -409,7 +409,7 @@ int MakeGraph(GModel *const model, Graph &graph, BoElemGrVec *const boElemGrVec)
 //           }
 //           const int numGrVert = numElem[ElemTypeTri] + numElem[ElemTypeQuad];
 //           if(numGrVert == 0) {
-//             Message::Error("No mesh elements were found");
+//             Msg::Error("No mesh elements were found");
 //             return;
 //           }
 //           const int maxGrEdge =
@@ -441,7 +441,7 @@ int MakeGraph(GModel *const model, Graph &graph, BoElemGrVec *const boElemGrVec)
 //           const int numGrVert = numElem[ElemTypeTetra] + numElem[ElemTypeHexa] +
 //             numElem[ElemTypePrism] + numElem[ElemTypePyramid];
 //           if(numGrVert == 0) {
-//             Message::Error("No mesh elements were found");
+//             Msg::Error("No mesh elements were found");
 //             return;
 //           }
 //           const int maxGrEdge =

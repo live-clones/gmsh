@@ -7,7 +7,6 @@
 #define _GMSH_EMBEDDED_H_
 
 #include "NumericEmbedded.h"
-#include "Message.h"
 
 class Context_T{
 public:

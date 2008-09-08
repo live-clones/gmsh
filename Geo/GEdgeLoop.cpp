@@ -6,12 +6,7 @@
 #include <algorithm>
 #include <functional>
 #include "GEdgeLoop.h"
-
-#if defined(HAVE_GMSH_EMBEDDED)
-#  include "GmshEmbedded.h"
-#else
-#  include "Message.h"
-#endif
+#include "Message.h"
 
 void GEdgeSigned::print() const
 {

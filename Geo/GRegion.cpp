@@ -8,12 +8,7 @@
 #include "GRegion.h"
 #include "GFace.h"
 #include "MElement.h"
-
-#if defined(HAVE_GMSH_EMBEDDED)
-#  include "GmshEmbedded.h"
-#else
-#  include "Message.h"
-#endif
+#include "Message.h"
 
 GRegion::GRegion(GModel *model, int tag) : GEntity (model, tag)
 {

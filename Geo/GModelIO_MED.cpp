@@ -235,8 +235,8 @@ int GModel::readMED(const std::string &name, int meshIndex)
 			   (meshDim > 2) ? coord[meshDim * i + 2] : 0.,
 			   0, nodeTags.empty() ? 0 : nodeTags[i]);
 
-  // read elements
-  for(int mshType = 0; mshType < 50; mshType++){ // loop over all possible MSH types
+  // read elements (loop over all possible MSH element types)
+  for(int mshType = 0; mshType < MSH_NUM_TYPE; mshType++){
     med_geometrie_element type = msh2medElementType(mshType);
     if(type == MED_NONE) continue;
     med_int numEle = MEDnEntMaa(fid, meshName, MED_CONN, MED_MAILLE, type, MED_NOD);

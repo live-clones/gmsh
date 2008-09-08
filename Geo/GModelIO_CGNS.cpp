@@ -39,10 +39,10 @@
 
 int cgnsErr(const int cgIndexFile = -1)
 {
-  Message::Error("Error detected by CGNS library\n");
-  Message::Error(cg_get_error());
+  Msg::Error("Error detected by CGNS library\n");
+  Msg::Error(cg_get_error());
   if(cgIndexFile != -1)
-    if(cg_close(cgIndexFile)) Message::Error("Unable to close CGNS file");
+    if(cg_close(cgIndexFile)) Msg::Error("Unable to close CGNS file");
   return 0;
 }
 
@@ -314,7 +314,7 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
           }
           break;
         default:
-          Message::Error("No mesh elements were found");
+          Msg::Error("No mesh elements were found");
           return 0;
         }
         // Place pointers to the entities in the 'groups' object
@@ -374,7 +374,7 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
       }
       break;
     default:
-      Message::Error("No mesh elements were found");
+      Msg::Error("No mesh elements were found");
       return 0;
     }
   }
@@ -866,7 +866,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
             MElement::getInfoMSH(typeMSHm1+1, &elemName);
             if(typeCGNS == -1) {
               // This type is not supported in CGNS
-              Message::Warning("Element type %s is not supported in CGNS and "
+              Msg::Warning("Element type %s is not supported in CGNS and "
                                "has not been written to the file", elemName);
             }
             else {
@@ -1063,14 +1063,14 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
 
 int GModel::readCGNS(const std::string &name)
 {
-  Message::Error("This version of Gmsh was compiled without CGNS support");
+  Msg::Error("This version of Gmsh was compiled without CGNS support");
   return 0;
 }
 
 int GModel::writeCGNS(const std::string &name, int zoneDefinition,
                       const CGNSOptions &options, double scalingFactor)
 {
-  Message::Error("This version of Gmsh was compiled without CGNS support");
+  Msg::Error("This version of Gmsh was compiled without CGNS support");
   return 0;
 }
 
