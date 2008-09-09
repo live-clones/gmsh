@@ -359,7 +359,9 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
   }
   
   if (all_vertices.size() < 3){
-    Msg::Warning("Mesh Generation of Model Face %d Skipped : Only %d Mesh Vertices on The Contours",gf->tag(),all_vertices.size());
+    Msg::Warning("Mesh Generation of Model Face %d Skipped: "
+		 "Only %d Mesh Vertices on The Contours",
+		 gf->tag(), all_vertices.size());
     gf->meshStatistics.status = GFace::DONE;
     return true;
   }
@@ -1322,7 +1324,7 @@ void meshGFace::operator() (GFace *gf)
     algo = "MeshAdapt+Delaunay";
 
   Msg::StatusBar(2, true, "Meshing surface %d (%s, %s)", 
-      gf->tag(), gf->getTypeString().c_str(), algo);
+		 gf->tag(), gf->getTypeString().c_str(), algo);
 
   // compute loops on the fly (indices indicate start and end points
   // of a loop; loops are not yet oriented)
@@ -1343,7 +1345,7 @@ void meshGFace::operator() (GFace *gf)
   //  gmshQMorph(gf);
   
   Msg::Debug("Type %d %d triangles generated, %d internal vertices",
-      gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
+	     gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 }
 
 template<class T>
