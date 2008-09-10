@@ -446,8 +446,15 @@ double GFace::curvature(const SPoint2 &param) const
   SVector3 dndu = 500 * (n2 - n1);
   SVector3 dndv = 500 * (n4 - n3);
 
-  double c = fabs(dot(dndu, du) +  dot(dndv, dv)) / detJ;
+  // double c = fabs(dot(dndu, du) +  dot(dndv, dv)) / detJ;
 
+
+  double ddu = dot(dndu,du);
+  double ddv = dot(dndv,dv);
+  
+  double c = std::max(fabs(ddu),fabs(ddv))/detJ;
+  
+  
   // Msg::Info("c = %g detJ %g", c, detJ);
 
   return c;
@@ -728,6 +735,7 @@ SPoint2 GFace::geodesic(const SPoint2 &pt1 , const SPoint2 &pt2 , double t)
     return pt1 + (pt2 - pt1) * t;
   }
 }
+
 
 // length of a curve drawn on a surface
 // S = (X(u,v), Y(u,v), Z(u,v) );

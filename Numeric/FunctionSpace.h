@@ -10,85 +10,173 @@
 #include <map>
 #include "GmshMatrix.h"
 
+#define MAX_FUNCTIONSPACESIZE 56
+
 struct gmshFunctionSpace 
 {
   Double_Matrix points;
   Double_Matrix monomials;
   Double_Matrix coefficients;
-  inline void computePows(double uu, double vv, double p[][2]) const
-  {
-    for(int j = 0; j < coefficients.size2(); j++){
-      p[j][0] = pow(uu,monomials(j, 0));
-      p[j][1] = pow(vv,monomials(j, 1));
+  
+  inline void evaluateMonomials(double u,double v,double w,double p[]) const {    
+    for (int j=0;j<monomials.size1();j++) {
+      p[j] = pow(u,(int) monomials(j,0));
+      if (monomials.size2() > 1) p[j] *= pow(v,(int) monomials(j,1));
+      if (monomials.size2() > 2) p[j] *= pow(w,(int) monomials(j,2));
     }
   }
+
+/*   inline void evaluateMonomialDerivatives(double u,double v,double w,double p[][3]) const  */
+/*   { */
+
+      
+    
+/*     for (int j=0;j<monomials.size1();j++) { */
+      
+/*       int expU = (int) monomials(j,0); */
+/*       double uu    = pow(u,expU); */
+      
+/*       p[j][0] = pow(u,expU - 1) * expU; */
+/*       p[j][1] = 0.; */
+/*       p[j][2] = 0.; */
+      
+
+/*       if (monomials.size2() > 1) { */
+        
+/*         int expV = (int) monomials(j,1); */
+/*         double vv = pow(v,expV); */
+        
+/*         p[j][0] *= vv; */
+/*         p[j][1] = uu * pow(v,expV-1) * expV; */
+        
+/*         if (monomials.size2() > 2) { */
+        
+/*           int expW = (int) monomials(j,2); */
+/*           double ww = pow(w,expW); */
+
+/*           p[j][0] *= ww; */
+/*           p[j][1] *= ww; */
+/*           p[j][2] = uu * vv * pow(w,expW-1) * expW; */
+/*         } */
+/*       }   */
+/*     } */
+/*   } */
+  
   inline void f(double u, double v, double w, double *sf) const
   {
-    for(int i = 0; i < coefficients.size1(); i++){
+    
+    double p[256];
+    evaluateMonomials(u,v,w,p);
+
+    for (int i=0;i<coefficients.size1();i++) {
       sf[i] = 0;
-      for(int j = 0; j < coefficients.size2(); j++){
-        sf[i] += coefficients(i, j) * pow(u, monomials(j, 0)) * 
-          pow(v, monomials(j, 1)) * pow(w, monomials(j, 2));
+      for (int j=0;j<coefficients.size2();j++) {
+        sf[i] += coefficients(i,j) * p[j];
       }
     }
   }
-  inline void f(double u, double v, double *sf) const
-  {
-    double p[256][2];
-    computePows(u, v, p);
-    for (int i = 0; i < coefficients.size1(); i++){
-      sf[i] = 0;
-      for(int j = 0; j < coefficients.size2(); j++){
-        sf[i] += coefficients(i, j) * p[j][0] * p[j][1];
-      }
-    }
-  }
+
   inline void df(double u, double v, double w, double grads[][3]) const
   {
-    for (int i = 0; i < coefficients.size1(); i++){
-      grads[i][0] = 0;
-      grads[i][1] = 0;
-      grads[i][2] = 0;
-      for(int j = 0; j < coefficients.size2(); j++){
-        if ((monomials)(j, 0) > 0)
-          grads[i][0] += (coefficients)(i, j) * pow(u, (monomials)(j, 0) - 1) *
-            (monomials)(j, 0) * pow(v, (monomials)(j, 1)) * 
-            pow(w, (monomials)(j, 2));
-        if ((monomials)(j, 1) > 0)
-          grads[i][1] += (coefficients)(i, j) * pow(u,(monomials)(j, 0)) * 
-            pow(v, (monomials)(j, 1) - 1) * (monomials)(j, 1) * 
-            pow(w, (monomials)(j, 2));
-        if ((monomials)(j, 2) > 0)
-          grads[i][2] += (coefficients)(i, j) * pow(u, (monomials)(j, 0)) *
-            pow(v, (monomials)(j, 1)) * pow(w, (monomials)(j, 2) - 1) * 
-            (monomials)(j, 2);
+
+    switch (monomials.size2()) {
+
+    case 1:
+      {
+        for (int i = 0; i < coefficients.size1(); i++){
+          grads[i][0] = 0;
+          grads[i][1] = 0;
+          grads[i][2] = 0;
+          for(int j = 0; j < coefficients.size2(); j++){
+            if ((monomials)(j, 0) > 0)
+              grads[i][0] += (coefficients)(i, j) * pow(u, (monomials)(j, 0) - 1) * (monomials)(j, 0);
+          }
+        }
+        break;
+      }
+    case 2:
+      {
+        
+        for (int i = 0; i < coefficients.size1(); i++){
+          grads[i][0] = 0;
+          grads[i][1] = 0;
+          grads[i][2] = 0;
+          for(int j = 0; j < coefficients.size2(); j++){
+            if ((monomials)(j, 0) > 0)
+              grads[i][0] += (coefficients)(i, j) *
+                pow(u, (monomials)(j, 0) - 1) * (monomials)(j, 0) *
+                pow(v, (monomials)(j, 1));
+            if ((monomials)(j, 1) > 0)
+              grads[i][1] += (coefficients)(i, j) *
+                pow(u, (monomials)(j, 0)) *
+                pow(v, (monomials)(j, 1) - 1) * (monomials)(j, 1);
+          }
+        }
+        
+        break;
+      }
+      
+    case 3:
+      {
+        
+        for (int i = 0; i < coefficients.size1(); i++){
+          grads[i][0] = 0;
+          grads[i][1] = 0;
+          grads[i][2] = 0;
+          for(int j = 0; j < coefficients.size2(); j++){
+            if ((monomials)(j, 0) > 0)
+              grads[i][0] += (coefficients)(i, j) *
+                pow(u, (monomials)(j, 0) - 1) * (monomials)(j, 0) *
+                pow(v, (monomials)(j, 1)) *
+                pow(w, (monomials)(j, 2));
+            if ((monomials)(j, 1) > 0)
+              grads[i][1] += (coefficients)(i, j) *
+                pow(u, (monomials)(j, 0)) *
+                pow(v, (monomials)(j, 1) - 1) * (monomials)(j, 1) *
+                pow(w, (monomials)(j, 2));
+            if ((monomials)(j, 2) > 0)
+              grads[i][2] += (coefficients)(i, j) *
+                pow(u, (monomials)(j, 0)) *
+                pow(v, (monomials)(j, 1)) *
+                pow(w, (monomials)(j, 2) - 1) * (monomials)(j, 2);
+          }
+        }
+        break;
       }
     }
   }
-  inline void df(double u, double v, double w,double grads[][2]) const
-  {
-    double p[256][2];
-    computePows(u, v, p);
-    for (int i = 0; i < coefficients.size1(); i++){
-      grads[i][0] = 0;
-      grads[i][1] = 0;
-      for(int j = 0; j < coefficients.size2(); j++){
-        if ((monomials)(j, 0)  > 0)
-          grads[i][0] += (coefficients)(i, j) * 
-            pow(u, (monomials)(j, 0) - 1) * (monomials)(j, 0) * p[j][1];
-        if ((monomials)(j, 1)  > 0)
-          grads[i][1] += (coefficients)(i, j) * p[j][0] *
-            pow(v, (monomials)(j, 1) - 1) * (monomials)(j, 1);
-      }
-    }
-  }
+  
+
+/*   inline void df(double u, double v, double w, double grads[][3]) const */
+/*   { */
+    
+/*     double p[256][3]; */
+    
+/*     evaluateMonomialDerivatives(u,v,w,p); */
+
+/*     for (int i=0;i<coefficients.size1();i++) { */
+
+/*       grads[i][0] = 0.; */
+/*       grads[i][1] = 0.; */
+/*       grads[i][2] = 0.; */
+      
+/*       for (int j=0;j<coefficients.size2();j++) { */
+/*         grads[i][0] += coefficients(i,j) * p[j][0]; */
+/*         grads[i][1] += coefficients(i,j) * p[j][1]; */
+/*         // grads[i][2] += coefficients(i,j) * p[j][2]; */
+/*       } */
+/*     } */
+/*   } */
 };
 
 class gmshFunctionSpaces 
 {
   static std::map<int, gmshFunctionSpace> fs;
+  static std::map<std::pair<int,int>,Double_Matrix> injector;
+  
  public :
-  static const gmshFunctionSpace &find(int); 
+  static const gmshFunctionSpace &find(int);
+  static const Double_Matrix &findInjector(int,int);
 };
 
 #endif

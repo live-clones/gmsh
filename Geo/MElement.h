@@ -14,6 +14,7 @@
 #include "MEdge.h"
 #include "MFace.h"
 #include "Message.h"
+#include "FunctionSpace.h"
 
 struct IntPt{
   double pt[3];
@@ -66,7 +67,7 @@ class MElement
   virtual int getDim() = 0;
 
   // return the polynomial order the element
-  virtual int getPolynomialOrder(){ return 1; }
+  virtual int getPolynomialOrder() const { return 1; }
 
   // get/set the partition to which the element belongs
   virtual int getPartition(){ return _partition; }
@@ -77,7 +78,7 @@ class MElement
   virtual void setVisibility(char val){ _visible = val; }
 
   // get the vertices
-  virtual int getNumVertices() = 0;
+  virtual int getNumVertices() const = 0;
   virtual MVertex *getVertex(int num) = 0;
 
   // get the vertex using the I-deas UNV ordering
@@ -94,15 +95,17 @@ class MElement
 
   // get the number of vertices associated with edges, faces and
   // volumes (nonzero only for higher order elements)
-  virtual int getNumEdgeVertices(){ return 0; }
-  virtual int getNumFaceVertices(){ return 0; }
-  virtual int getNumVolumeVertices(){ return 0; }
+  virtual int getNumEdgeVertices() const { return 0; }
+  virtual int getNumFaceVertices() const { return 0; }
+  virtual int getNumVolumeVertices() const { return 0; }
 
   // get the number of primary vertices (first-order element)
   int getNumPrimaryVertices()
   {
-    return getNumVertices() - getNumEdgeVertices() - 
-      getNumFaceVertices() - getNumVolumeVertices();
+    return getNumVertices() -
+      getNumEdgeVertices() - 
+      getNumFaceVertices() -
+      getNumVolumeVertices();
   }
 
   // get the edges
@@ -138,6 +141,7 @@ class MElement
   virtual double minEdge();
 
   // get the quality measures
+  
   virtual double rhoShapeMeasure();
   virtual double gammaShapeMeasure(){ return 0.; }
   virtual double etaShapeMeasure(){ return 0.; }
@@ -154,26 +158,32 @@ class MElement
   virtual double getVolume(){ return 0.; }
   virtual int getVolumeSign(){ return 1; }
   virtual void setVolumePositive(){ if(getVolumeSign() < 0) revert(); }
-
+  
   // return an information string for the element
   virtual std::string getInfoString();
 
+  virtual const gmshFunctionSpace* getFunctionSpace(int ord = -1) const {
+    Msg::Fatal("Function space not implemented for element %s",getStringForPOS());
+    return NULL;
+  }
+  
   // return the interpolating nodal shape function associated with
   // node num, evaluated at point (u,v,w) in parametric coordinates
-  virtual void getShapeFunction(int num, double u, double v, double w,
-                                double &s) = 0;
+  virtual void getShapeFunction(int num, double u, double v, double w,double &s);
 
   // return the gradient of of the nodal shape function associated
   // with node num, evaluated at point (u,v,w) in parametric
   // coordinates
-  virtual void getGradShapeFunction(int num, double u, double v, double w,
-                                    double s[3]) = 0;
+  virtual void getGradShapeFunction(int num, double u, double v, double w,double s[3]);
   
   // return the Jacobian of the element evaluated at point (u,v,w) in
   // parametric coordinates
+  
   double getJacobian(double u, double v, double w, double jac[3][3]);
-
-  virtual void pnt(double u, double v, double w, SPoint3 &p);
+  double getPrimaryJacobian(double u, double v, double w, double jac[3][3]);
+  
+  virtual void pnt       (double u,double v,double w,SPoint3 &p);
+  virtual void primaryPnt(double u,double v,double w,SPoint3 &p);
   
   // invert the parametrisation
   virtual void xyz2uvw(double xyz[3], double uvw[3]);
@@ -209,11 +219,11 @@ class MElement
 
   // info for specific IO formats (returning 0 means that the element
   // is not implemented in that format)
-  virtual int getTypeForMSH(){ return 0; }
-  virtual int getTypeForUNV(){ return 0; }
-  virtual int getTypeForVTK(){ return 0; }
-  virtual const char *getStringForPOS(){ return 0; }
-  virtual const char *getStringForBDF(){ return 0; }
+  virtual int getTypeForMSH() const { return 0; }
+  virtual int getTypeForUNV() const { return 0; }
+  virtual int getTypeForVTK() const { return 0; }
+  virtual const char *getStringForPOS() const { return 0; }
+  virtual const char *getStringForBDF() const { return 0; }
 
   // return the number of vertices, as well as the element name if
   // 'name' != 0
@@ -261,7 +271,7 @@ class MPoint : public MElement {
   }
   ~MPoint(){}
   virtual int getDim(){ return 0; }
-  virtual int getNumVertices(){ return 1; }
+  virtual int getNumVertices() const { return 1; }
   virtual MVertex *getVertex(int num){ return _v[0]; }
   virtual int getNumEdges(){ return 0; }
   virtual MEdge getEdge(int num){ return MEdge(); }
@@ -271,8 +281,8 @@ class MPoint : public MElement {
   virtual MFace getFace(int num){ return MFace(); }
   virtual int getNumFacesRep(){ return 0; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n){}
-  virtual int getTypeForMSH(){ return MSH_PNT; }
-  virtual const char *getStringForPOS(){ return "SP"; }
+  virtual int getTypeForMSH() const { return MSH_PNT; }
+  virtual const char *getStringForPOS() const { return "SP"; }
   virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
   {
     s = 1.;
@@ -314,7 +324,7 @@ class MLine : public MElement {
   }
   ~MLine(){}
   virtual int getDim(){ return 1; }
-  virtual int getNumVertices(){ return 2; }
+  virtual int getNumVertices() const { return 2; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual int getNumEdges(){ return 1; }
   virtual MEdge getEdge(int num){ return MEdge(_v[0], _v[1]); }
@@ -332,38 +342,26 @@ class MLine : public MElement {
   virtual MFace getFace(int num){ return MFace(); }
   virtual int getNumFacesRep(){ return 0; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n){}
-  virtual int getTypeForMSH(){ return MSH_LIN_2; }
-  virtual int getTypeForUNV(){ return 21; } // linear beam
-  virtual int getTypeForVTK(){ return 3; }
-  virtual const char *getStringForPOS(){ return "SL"; }
-  virtual const char *getStringForBDF(){ return "CBAR"; }
+  virtual int getTypeForMSH() const { return MSH_LIN_2; }
+  virtual int getTypeForUNV() const { return 21; } // linear beam
+  virtual int getTypeForVTK() const { return 3; }
+  virtual const char *getStringForPOS() const { return "SL"; }
+  virtual const char *getStringForBDF() const { return "CBAR"; }
   virtual void revert() 
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
   }
-  virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
-  {
-    switch(num) {
-    case 0  : s = 0.5 * (1. - u); break;
-    case 1  : s = 0.5 * (1. + u); break;
-    default : s = 0.; break;
-    }
-  }
-  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
-  {
-    switch(num) {
-    case 0  : s[0] = -0.5; s[1] = 0.; s[2] = 0.; break;
-    case 1  : s[0] =  0.5; s[1] = 0.; s[2] = 0.; break;
-    default : s[0] = s[1] = s[2] = 0.; break;
-    }
-  }
-  virtual void pnt(double u, double v, double w, SPoint3 &p);
+
+
+  virtual const gmshFunctionSpace* getFunctionSpace(int=-1) const;
+  
   virtual bool isInside(double u, double v, double w, double tol=1.e-8)
   {
     if(u < -(1. + tol) || u > (1. + tol))
       return false;
     return true;
   }
+  
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
 };
 
@@ -390,15 +388,15 @@ class MLine3 : public MLine {
     _vs[0]->setPolynomialOrder(2);
   }
   ~MLine3(){}
-  virtual int getPolynomialOrder(){ return 2; }
-  virtual int getNumVertices(){ return 3; }
+  virtual int getPolynomialOrder() const { return 2; }
+  virtual int getNumVertices() const { return 3; }
   virtual MVertex *getVertex(int num){ return num < 2 ? _v[num] : _vs[num - 2]; }
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[3] = {0, 2, 1};
     return getVertex(map[num]); 
   }
-  virtual int getNumEdgeVertices(){ return 1; }
+  virtual int getNumEdgeVertices() const { return 1; }
   virtual int getNumEdgesRep(){ return 2; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
@@ -414,13 +412,11 @@ class MLine3 : public MLine {
     MLine::_getEdgeVertices(v);
     v[2] = _vs[0];
   }
-  virtual void getShapeFunction(int num, double u, double v, double w, double &s);
-  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]);
-  virtual void pnt(double u, double v, double w, SPoint3 &p);
-  virtual int getTypeForMSH(){ return MSH_LIN_3; }
-  virtual int getTypeForUNV(){ return 24; } // parabolic beam
-  virtual int getTypeForVTK(){ return 21; }
-  virtual const char *getStringForPOS(){ return "SL2"; }
+  
+  virtual int getTypeForMSH() const { return MSH_LIN_3; }
+  virtual int getTypeForUNV() const { return 24; } // parabolic beam
+  virtual int getTypeForVTK() const { return 21; }
+  virtual const char *getStringForPOS() const { return "SL2"; }
 };
 
 /*
@@ -448,10 +444,10 @@ class MLineN : public MLine {
       _vs[i]->setPolynomialOrder(_vs.size() + 1);
   }
   ~MLineN(){}
-  virtual int getPolynomialOrder(){ return _vs.size() + 1; }
-  virtual int getNumVertices(){ return _vs.size() + 2; }
+  virtual int getPolynomialOrder() const { return _vs.size() + 1; }
+  virtual int getNumVertices() const { return _vs.size() + 2; }
   virtual MVertex *getVertex(int num){ return num < 2 ? _v[num] : _vs[num - 2]; }
-  virtual int getNumEdgeVertices(){ return _vs.size(); }
+  virtual int getNumEdgeVertices() const { return _vs.size(); }
   virtual int getNumEdgesRep(){ return _vs.size() + 1; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
@@ -465,10 +461,7 @@ class MLineN : public MLine {
     MLine::_getEdgeVertices(v);
     for(unsigned int i = 0; i != _vs.size(); ++i) v[i+2] = _vs[i];
   }
-  virtual void getShapeFunction(int num, double u, double v, double w, double &s);
-  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]);
-  virtual void pnt(double u, double v, double w, SPoint3 &p);
-  virtual int getTypeForMSH()
+  virtual int getTypeForMSH() const 
   { 
     if(_vs.size() == 2) return MSH_LIN_4; 
     if(_vs.size() == 3) return MSH_LIN_5; 
@@ -521,7 +514,7 @@ class MTriangle : public MElement {
   virtual int getDim(){ return 2; }
   virtual double gammaShapeMeasure();
   virtual double distoShapeMeasure();
-  virtual int getNumVertices(){ return 3; }
+  virtual int getNumVertices() const { return 3; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual MVertex *getVertexMED(int num)
   {
@@ -566,35 +559,26 @@ class MTriangle : public MElement {
     v.resize(3);
     _getFaceVertices(v);
   }
-  virtual int getTypeForMSH(){ return MSH_TRI_3; }
-  virtual int getTypeForUNV(){ return 91; } // thin shell linear triangle
-  virtual int getTypeForVTK(){ return 5; }
-  virtual const char *getStringForPOS(){ return "ST"; }
-  virtual const char *getStringForBDF(){ return "CTRIA3"; }
+  virtual int getTypeForMSH() const { return MSH_TRI_3; }
+  virtual int getTypeForUNV() const { return 91; } // thin shell linear triangle
+  virtual int getTypeForVTK() const { return 5; }
+  virtual const char *getStringForPOS() const { return "ST"; }
+  virtual const char *getStringForBDF() const { return "CTRIA3"; }
   virtual void revert() 
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
-  virtual void getShapeFunction(int num, double u, double v, double w, double &s);
-  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]);
-  virtual void jac(int order, MVertex *verts[], double u, double v, double w, 
-		   double j[2][3]);
-  virtual void jac(double u, double v, double w, double j[2][3])
-  {
-    jac(1, 0, u, v, w, j);
-  }
-  virtual void pnt(int order, MVertex *verts[], double u, double v, double w, 
-		   SPoint3 &p);
-  virtual void pnt(double u, double v, double w, SPoint3 &p)
-  {
-    pnt(1, 0, u, v, w, p);
-  }
+
+  
+  virtual const gmshFunctionSpace* getFunctionSpace(int=-1) const;
+  
   virtual bool isInside(double u, double v, double w, double tol=1.e-8)
   {
     if(u < (-tol) || v < (-tol) || u > ((1. + tol) - v))
       return false; 
     return true;
   }
+  
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
   virtual SPoint3 circumcenter();
  private:
@@ -639,8 +623,8 @@ class MTriangle6 : public MTriangle {
     for(int i = 0; i < 3; i++) _vs[i]->setPolynomialOrder(2);
   }
   ~MTriangle6(){}
-  virtual int getPolynomialOrder(){ return 2; }
-  virtual int getNumVertices(){ return 6; }
+  virtual int getPolynomialOrder() const { return 2; }
+  virtual int getNumVertices() const { return 6; }
   virtual MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
   virtual MVertex *getVertexUNV(int num)
   {
@@ -652,7 +636,7 @@ class MTriangle6 : public MTriangle {
     static const int map[6] = {0, 2, 1, 5, 4, 3};
     return getVertex(map[num]); 
   }
-  virtual int getNumEdgeVertices(){ return 3; }
+  virtual int getNumEdgeVertices() const { return 3; }
   virtual int getNumEdgesRep(){ return 6; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   {
@@ -686,24 +670,16 @@ class MTriangle6 : public MTriangle {
     v[4] = _vs[1];
     v[5] = _vs[2];
   }
-  virtual int getTypeForMSH(){ return MSH_TRI_6; }
-  virtual int getTypeForUNV(){ return 92; } // thin shell parabolic triangle
-  virtual int getTypeForVTK(){ return 22; }
-  virtual const char *getStringForPOS(){ return "ST2"; }
-  virtual const char *getStringForBDF(){ return "CTRIA6"; }
+  virtual int getTypeForMSH() const { return MSH_TRI_6; }
+  virtual int getTypeForUNV() const { return 92; } // thin shell parabolic triangle
+  virtual int getTypeForVTK() const { return 22; }
+  virtual const char *getStringForPOS() const { return "ST2"; }
+  virtual const char *getStringForBDF() const { return "CTRIA6"; }
   virtual void revert() 
   {
     MVertex *tmp;
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
     tmp = _vs[0]; _vs[0] = _vs[2]; _vs[2] = tmp;
-  }
-  virtual void jac(double u, double v, double w, double j[2][3])
-  {
-    MTriangle::jac(2, _vs, u, v, w, j);
-  }
-  virtual void pnt(double u, double v, double w, SPoint3 &p)
-  {
-    MTriangle::pnt(2, _vs, u, v, w, p);
   }
 };
 
@@ -750,10 +726,10 @@ class MTriangleN : public MTriangle {
     for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
   }
   ~MTriangleN(){}
-  virtual int getPolynomialOrder(){ return _order; }
-  virtual int getNumVertices(){ return 3 + _vs.size(); }
+  virtual int getPolynomialOrder() const { return _order; }
+  virtual int getNumVertices() const { return 3 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
-  virtual int getNumFaceVertices()
+  virtual int getNumFaceVertices() const 
   {
     if(_order == 3 && _vs.size() == 6) return 0;
     if(_order == 3 && _vs.size() == 7) return 1;
@@ -763,17 +739,17 @@ class MTriangleN : public MTriangle {
     if(_order == 5 && _vs.size() == 18) return 6;
     return 0;
   }
-  virtual int getNumEdgeVertices() const { return _order - 1; }
+  virtual int getNumEdgeVertices() const { return 3 * (_order - 1); }
   virtual int getNumEdgesRep();
   virtual int getNumFacesRep();
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
-    v.resize(2 + getNumEdgeVertices());
+    v.resize(_order + 1);
     MTriangle::_getEdgeVertices(num, v);
     int j = 2;
-    const int ie = (num + 1) * getNumEdgeVertices();
-    for(int i = num*getNumEdgeVertices(); i != ie; ++i) v[j++] = _vs[i];
+    const int ie = (num + 1) * (_order - 1);
+    for(int i = num * (_order-1); i != ie; ++i) v[j++] = _vs[i];
   }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
@@ -782,7 +758,7 @@ class MTriangleN : public MTriangle {
     MTriangle::_getFaceVertices(v);
     for(unsigned int i = 0; i != _vs.size(); ++i) v[i + 3] = _vs[i];
   }
-  virtual int getTypeForMSH()
+  virtual int getTypeForMSH() const
   {
     if(_order == 3 && _vs.size() == 6) return MSH_TRI_9; 
     if(_order == 3 && _vs.size() == 7) return MSH_TRI_10; 
@@ -799,14 +775,6 @@ class MTriangleN : public MTriangle {
     std::vector<MVertex*> inv;
     inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
     _vs = inv;
-  }
-  virtual void jac(double u, double v, double w, double j[2][3])
-  {
-    MTriangle::jac(_order, &_vs[0], u, v, w, j);
-  }
-  virtual void pnt(double u, double v, double w, SPoint3 &p)
-  {
-    MTriangle::pnt(_order, &_vs[0], u, v, w, p);
   }
 };
 
@@ -853,7 +821,7 @@ class MQuadrangle : public MElement {
   }
   ~MQuadrangle(){}
   virtual int getDim(){ return 2; }
-  virtual int getNumVertices(){ return 4; }
+  virtual int getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual MVertex *getVertexMED(int num)
   {
@@ -892,34 +860,14 @@ class MQuadrangle : public MElement {
     v.resize(4);
     _getFaceVertices(v);
   }
-  virtual int getTypeForMSH(){ return MSH_QUA_4; }
-  virtual int getTypeForUNV(){ return 94; } // thin shell linear quadrilateral
-  virtual int getTypeForVTK(){ return 8; }
-  virtual const char *getStringForPOS(){ return "SQ"; }
-  virtual const char *getStringForBDF(){ return "CQUAD4"; }
+  virtual int getTypeForMSH() const { return MSH_QUA_4; }
+  virtual int getTypeForUNV() const { return 94; } // thin shell linear quadrilateral
+  virtual int getTypeForVTK() const { return 8; }
+  virtual const char *getStringForPOS() const { return "SQ"; }
+  virtual const char *getStringForBDF() const { return "CQUAD4"; }
   virtual void revert() 
   {
     MVertex *tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
-  }
-  virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
-  {
-    switch(num) {
-    case 0  : s = 0.25 * (1. - u) * (1. - v); break;
-    case 1  : s = 0.25 * (1. + u) * (1. - v); break;
-    case 2  : s = 0.25 * (1. + u) * (1. + v); break;
-    case 3  : s = 0.25 * (1. - u) * (1. + v); break;
-    default : s = 0.; break;
-    }
-  }
-  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
-  {
-    switch(num) {
-    case 0  : s[0] = -0.25 * (1. - v); s[1] = -0.25 * (1. - u); s[2] = 0.; break;
-    case 1  : s[0] =  0.25 * (1. - v); s[1] = -0.25 * (1. + u); s[2] = 0.; break;
-    case 2  : s[0] =  0.25 * (1. + v); s[1] =  0.25 * (1. + u); s[2] = 0.; break;
-    case 3  : s[0] = -0.25 * (1. + v); s[1] =  0.25 * (1. - u); s[2] = 0.; break;
-    default : s[0] = s[1] = s[2] = 0.; break;
-    }
   }
   virtual bool isInside(double u, double v, double w, double tol=1.e-8)
   {
@@ -971,8 +919,8 @@ class MQuadrangle8 : public MQuadrangle {
     for(int i = 0; i < 4; i++) _vs[i]->setPolynomialOrder(2);
   }
   ~MQuadrangle8(){}
-  virtual int getPolynomialOrder(){ return 2; }
-  virtual int getNumVertices(){ return 8; }
+  virtual int getPolynomialOrder() const { return 2; }
+  virtual int getNumVertices() const { return 8; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual MVertex *getVertexUNV(int num)
   {
@@ -984,7 +932,7 @@ class MQuadrangle8 : public MQuadrangle {
     static const int map[8] = {0, 3, 2, 1, 7, 6, 5, 4};
     return getVertex(map[num]); 
   }
-  virtual int getNumEdgeVertices(){ return 4; }
+  virtual int getNumEdgeVertices() const { return 4; }
   virtual int getNumEdgesRep(){ return 8; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
@@ -1020,10 +968,10 @@ class MQuadrangle8 : public MQuadrangle {
     v[6] = _vs[2];
     v[7] = _vs[3];
   }
-  virtual int getTypeForMSH(){ return MSH_QUA_8; }
-  virtual int getTypeForUNV(){ return 95; } // shell parabolic quadrilateral
-  virtual int getTypeForVTK(){ return 23; }
-  virtual const char *getStringForBDF(){ return "CQUAD8"; }
+  virtual int getTypeForMSH() const { return MSH_QUA_8; }
+  virtual int getTypeForUNV() const { return 95; } // shell parabolic quadrilateral
+  virtual int getTypeForVTK() const { return 23; }
+  virtual const char *getStringForBDF() const { return "CQUAD8"; }
   virtual void revert() 
   {
     MVertex *tmp;
@@ -1063,11 +1011,11 @@ class MQuadrangle9 : public MQuadrangle {
     for(int i = 0; i < 5; i++) _vs[i]->setPolynomialOrder(2);
   }
   ~MQuadrangle9(){}
-  virtual int getPolynomialOrder(){ return 2; }
-  virtual int getNumVertices(){ return 9; }
+  virtual int getPolynomialOrder() const { return 2; }
+  virtual int getNumVertices() const { return 9; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
-  virtual int getNumEdgeVertices(){ return 4; }
-  virtual int getNumFaceVertices(){ return 1; }
+  virtual int getNumEdgeVertices() const { return 4; }
+  virtual int getNumFaceVertices() const { return 6; }
   virtual int getNumEdgesRep(){ return 8; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
@@ -1105,8 +1053,8 @@ class MQuadrangle9 : public MQuadrangle {
     v[7] = _vs[3];
     v[8] = _vs[4];
   }
-  virtual int getTypeForMSH(){ return MSH_QUA_9; }
-  virtual const char *getStringForPOS(){ return "SQ2"; }
+  virtual int getTypeForMSH() const { return MSH_QUA_9; }
+  virtual const char *getStringForPOS() const { return "SQ2"; }
   virtual void revert() 
   {
     MVertex *tmp;
@@ -1166,7 +1114,7 @@ class MTetrahedron : public MElement {
   }
   ~MTetrahedron(){}
   virtual int getDim(){ return 3; }
-  virtual int getNumVertices(){ return 4; }
+  virtual int getNumVertices() const { return 4; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual MVertex *getVertexMED(int num)
   {
@@ -1208,11 +1156,11 @@ class MTetrahedron : public MElement {
     v.resize(3);
     _getFaceVertices(num, v);
   }
-  virtual int getTypeForMSH(){ return MSH_TET_4; }
-  virtual int getTypeForUNV(){ return 111; } // solid linear tetrahedron
-  virtual int getTypeForVTK(){ return 10; }
-  virtual const char *getStringForPOS(){ return "SS"; }
-  virtual const char *getStringForBDF(){ return "CTETRA"; }
+  virtual int getTypeForMSH() const { return MSH_TET_4; }
+  virtual int getTypeForUNV() const { return 111; } // solid linear tetrahedron
+  virtual int getTypeForVTK() const { return 10; }
+  virtual const char *getStringForPOS() const { return "SS"; }
+  virtual const char *getStringForBDF() const { return "CTETRA"; }
   virtual void revert()
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
@@ -1235,54 +1183,16 @@ class MTetrahedron : public MElement {
   virtual double distoShapeMeasure();
   virtual double etaShapeMeasure();
   void xyz2uvw(double xyz[3], double uvw[3]);
-  virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
-  {
-    switch(num) {
-    case 0  : s = 1. - u - v - w; break;
-    case 1  : s =      u        ; break;
-    case 2  : s =          v    ; break;
-    case 3  : s =              w; break;
-    default : s = 0.; break;
-    }
-  }
-  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
-  {
-    switch(num) {
-    case 0  : s[0] = -1.; s[1] = -1.; s[2] = -1.; break;
-    case 1  : s[0] =  1.; s[1] =  0.; s[2] =  0.; break;
-    case 2  : s[0] =  0.; s[1] =  1.; s[2] =  0.; break;
-    case 3  : s[0] =  0.; s[1] =  0.; s[2] =  1.; break;
-    default : s[0] = s[1] = s[2] = 0.; break;
-    }
-  }
+  
+  virtual const gmshFunctionSpace* getFunctionSpace(int=-1) const;
+  
   virtual bool isInside(double u, double v, double w, double tol=1.e-8)
   {
     if(u < (-tol) || v < (-tol) || w < (-tol) || u > ((1. + tol) - v - w))
       return false;
     return true;
   }
-  virtual void jac(int order, MVertex *verts[], double u, double v, double w,
-		   double j[3][3]);
-  virtual void jac(int order, std::vector<MVertex*>& verts, double u, double v, double w,
-		   double j[3][3])
-  {
-    jac(order, &verts[0], u, v, w, j);
-  }
-  virtual void jac(double u, double v, double w, double j[3][3])
-  {
-    jac(1, 0, u, v, w, j);
-  }
-  virtual void pnt(int order, MVertex *verts[], double u, double v, double w,
-		   SPoint3 &p);
-  virtual void pnt(int order, std::vector<MVertex*> &verts, double u, double v, double w,
-		   SPoint3 &p)
-  {
-    pnt(order, &verts[0], u, v, w, p);
-  }
-  virtual void pnt(double u, double v, double w, SPoint3 &p)
-  {
-    pnt(1, 0, u, v, w, p);
-  }
+  
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
   virtual SPoint3 circumcenter();
  private:
@@ -1346,8 +1256,8 @@ class MTetrahedron10 : public MTetrahedron {
     for(int i = 0; i < 6; i++) _vs[i]->setPolynomialOrder(2);
   }
   ~MTetrahedron10(){}
-  virtual int getPolynomialOrder(){ return 2; }
-  virtual int getNumVertices(){ return 10; }
+  virtual int getPolynomialOrder() const { return 2; }
+  virtual int getNumVertices() const { return 10; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual MVertex *getVertexUNV(int num)
   {
@@ -1364,7 +1274,7 @@ class MTetrahedron10 : public MTetrahedron {
     static const int map[10] = {0, 2, 1, 3, 6, 5, 4, 7, 8, 9};
     return getVertex(map[num]); 
   }
-  virtual int getNumEdgeVertices(){ return 6; }
+  virtual int getNumEdgeVertices() const { return 6; }
   virtual int getNumEdgesRep(){ return 12; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
@@ -1411,30 +1321,17 @@ class MTetrahedron10 : public MTetrahedron {
     v[4] = _vs[f[num][1]];
     v[5] = _vs[f[num][2]];
   }
-  virtual int getTypeForMSH(){ return MSH_TET_10; }
-  virtual int getTypeForUNV(){ return 118; } // solid parabolic tetrahedron
-  virtual int getTypeForVTK(){ return 24; }
-  virtual const char *getStringForPOS(){ return "SS2"; }
-  virtual const char *getStringForBDF(){ return "CTETRA"; }
+  virtual int getTypeForMSH() const { return MSH_TET_10; }
+  virtual int getTypeForUNV() const { return 118; } // solid parabolic tetrahedron
+  virtual int getTypeForVTK() const { return 24; }
+  virtual const char *getStringForPOS() const { return "SS2"; }
+  virtual const char *getStringForBDF() const { return "CTETRA"; }
   virtual void revert()
   {
     MVertex *tmp;
     tmp = _v[0] ; _v[0]  = _v[1]; _v[1] = tmp;
     tmp = _vs[1]; _vs[1] = _vs[2]; _vs[2] = tmp;
     tmp = _vs[5]; _vs[5] = _vs[3]; _vs[3] = tmp;
-  }
-
-
-  virtual void getShapeFunction(int num, double u, double v, double w, double &s);
-  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]);
-  
-  virtual void jac(double u,double v,double w, double jac[3][3])
-  {
-    MTetrahedron::jac(2,_vs,u,v,w,jac);
-  }
-  virtual void pnt(double u,double v,double w, SPoint3& p)
-  {
-    MTetrahedron::pnt(2, _vs, u, v, w, p);
   }
 };
 
@@ -1531,31 +1428,32 @@ class MTetrahedronN : public MTetrahedron {
     for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
   }
   ~MTetrahedronN(){}
-  virtual int getPolynomialOrder(){ return _order; }
-  virtual int getNumVertices(){ return 4 + _vs.size(); }
+  virtual int getPolynomialOrder() const { return _order; }
+  virtual int getNumVertices() const { return 4 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
-  virtual int getNumEdgeVertices() const { return _order - 1; }
+  virtual int getNumEdgeVertices() const { return 6*(_order - 1); }
   virtual int getNumFaceVertices() const
   {
-    return ((_order - 1) * (_order - 2)) / 2;
+    return 4 * ((_order - 1) * (_order - 2)) / 2;
   }
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
-    v.resize(2 + getNumEdgeVertices());
+    v.resize(_order + 1);
     MTetrahedron::_getEdgeVertices(num, v);
     int j = 2;
-    const int ie = (num + 1) * getNumEdgeVertices();
-    for(int i = num * getNumEdgeVertices(); i != ie; ++i) v[j++] = _vs[i];
+    const int ie = (num + 1) * (_order -1);
+    for(int i = num * (_order -1); i != ie; ++i) v[j++] = _vs[i];
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
-    v.resize(3 + getNumFaceVertices());
+    v.resize(3 + 3 * (_order - 1) + (_order-1) * (_order - 2) /2);
     MTetrahedron::_getFaceVertices(num, v);
     int j = 3;
-    const int ie = (num+1)*getNumFaceVertices();
-    for(int i = num*getNumFaceVertices(); i != ie; ++i) v[j++] = _vs[i];
+    int nbV = (_order - 1) * (_order - 2) / 2;
+    const int ie = (num+1)*nbV;
+    for(int i = num*nbV; i != ie; ++i) v[j++] = _vs[i];
   }
-  virtual int getNumVolumeVertices()
+  virtual int getNumVolumeVertices() const 
   {
     switch(getTypeForMSH()){
     case MSH_TET_35 : return 1;
@@ -1563,8 +1461,7 @@ class MTetrahedronN : public MTetrahedron {
     default : return 0;
     }    
   }
-  virtual int getNumEdgeVertices(){ return _order - 1; }
-  virtual int getTypeForMSH()
+  virtual int getTypeForMSH() const 
   {
     // (p+1)*(p+2)*(p+3)/6
     if(_order == 3 && _vs.size() + 4 == 20) return MSH_TET_20; 
@@ -1608,20 +1505,10 @@ class MTetrahedronN : public MTetrahedron {
       }
     }
   }
-  virtual void getShapeFunction(int num, double u, double v, double w, double &s);
-  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]);
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual int getNumEdgesRep();
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual int getNumFacesRep();
-  virtual void jac(double u, double v, double w, double j[3][3])
-  {
-    MTetrahedron::jac(_order, _vs , u, v, w, j);
-  }
-  virtual void pnt(double u, double v, double w, SPoint3 &p)
-  {
-    MTetrahedron::pnt(_order, _vs, u, v, w, p);
-  }
 };
 
 /*
@@ -1671,7 +1558,7 @@ class MHexahedron : public MElement {
   }
   ~MHexahedron(){}
   virtual int getDim(){ return 3; }
-  virtual int getNumVertices(){ return 8; }
+  virtual int getNumVertices() const { return 8; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual MVertex *getVertexMED(int num)
   {
@@ -1722,11 +1609,11 @@ class MHexahedron : public MElement {
     v.resize(4);
     _getFaceVertices(num, v);
   }
-  virtual int getTypeForMSH(){ return MSH_HEX_8; }
-  virtual int getTypeForUNV(){ return 115; } // solid linear brick
-  virtual int getTypeForVTK(){ return 12; }
-  virtual const char *getStringForPOS(){ return "SH"; }
-  virtual const char *getStringForBDF(){ return "CHEXA"; }
+  virtual int getTypeForMSH() const { return MSH_HEX_8; }
+  virtual int getTypeForUNV() const { return 115; } // solid linear brick
+  virtual int getTypeForVTK() const { return 12; }
+  virtual const char *getStringForPOS() const { return "SH"; }
+  virtual const char *getStringForBDF() const { return "CHEXA"; }
   virtual void revert()
   {
     MVertex *tmp;
@@ -1858,8 +1745,8 @@ class MHexahedron20 : public MHexahedron {
     for(int i = 0; i < 12; i++) _vs[i]->setPolynomialOrder(2);
   }
   ~MHexahedron20(){}
-  virtual int getPolynomialOrder(){ return 2; }
-  virtual int getNumVertices(){ return 20; }
+  virtual int getPolynomialOrder() const { return 2; }
+  virtual int getNumVertices() const { return 20; }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual MVertex *getVertexUNV(int num)
   {
@@ -1879,7 +1766,7 @@ class MHexahedron20 : public MHexahedron {
 				8, 17, 19, 18, 16, 10, 15, 14, 12};
     return getVertex(map[num]); 
   }
-  virtual int getNumEdgeVertices(){ return 12; }
+  virtual int getNumEdgeVertices() const { return 12; }
   virtual int getNumEdgesRep(){ return 24; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
@@ -1937,10 +1824,10 @@ class MHexahedron20 : public MHexahedron {
     v[6] = _vs[f[num][2]];
     v[7] = _vs[f[num][3]];
   }
-  virtual int getTypeForMSH(){ return MSH_HEX_20; }
-  virtual int getTypeForUNV(){ return 116; } // solid parabolic brick
-  virtual int getTypeForVTK(){ return 25; }
-  virtual const char *getStringForBDF(){ return "CHEXA"; }
+  virtual int getTypeForMSH() const { return MSH_HEX_20; }
+  virtual int getTypeForUNV() const { return 116; } // solid parabolic brick
+  virtual int getTypeForVTK() const { return 25; }
+  virtual const char *getStringForBDF() const { return "CHEXA"; }
   virtual void revert()
   {
     MVertex *tmp;
@@ -1997,12 +1884,12 @@ class MHexahedron27 : public MHexahedron {
     for(int i = 0; i < 19; i++) _vs[i]->setPolynomialOrder(2);
   }
   ~MHexahedron27(){}
-  virtual int getPolynomialOrder(){ return 2; }
-  virtual int getNumVertices(){ return 27; }
+  virtual int getPolynomialOrder() const { return 2; }
+  virtual int getNumVertices() const { return 27; }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
-  virtual int getNumEdgeVertices(){ return 12; }
-  virtual int getNumFaceVertices(){ return 6; }
-  virtual int getNumVolumeVertices(){ return 1; }
+  virtual int getNumEdgeVertices() const { return 12; }
+  virtual int getNumFaceVertices() const { return 6; }
+  virtual int getNumVolumeVertices() const { return 1; }
   virtual int getNumEdgesRep(){ return 24; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
@@ -2067,8 +1954,8 @@ class MHexahedron27 : public MHexahedron {
     v[7] = _vs[f[num][3]];
     v[8] = _vs[12+num];
   }
-  virtual int getTypeForMSH(){ return MSH_HEX_27; }
-  virtual const char *getStringForPOS(){ return "SH2"; }
+  virtual int getTypeForMSH() const { return MSH_HEX_27; }
+  virtual const char *getStringForPOS() const { return "SH2"; }
   virtual void revert()
   {
     MVertex *tmp;
@@ -2141,7 +2028,7 @@ class MPrism : public MElement {
   }
   ~MPrism(){}
   virtual int getDim(){ return 3; }
-  virtual int getNumVertices(){ return 6; }
+  virtual int getNumVertices() const { return 6; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual MVertex *getVertexMED(int num)
   {
@@ -2196,11 +2083,11 @@ class MPrism : public MElement {
     v.resize((num < 2) ? 3 : 4);
     _getFaceVertices(num, v);
   }
-  virtual int getTypeForMSH(){ return MSH_PRI_6; }
-  virtual int getTypeForUNV(){ return 112; } // solid linear wedge
-  virtual int getTypeForVTK(){ return 13; }
-  virtual const char *getStringForPOS(){ return "SI"; }
-  virtual const char *getStringForBDF(){ return "CPENTA"; }
+  virtual int getTypeForMSH() const { return MSH_PRI_6; }
+  virtual int getTypeForUNV() const { return 112; } // solid linear wedge
+  virtual int getTypeForVTK() const { return 13; }
+  virtual const char *getStringForPOS() const { return "SI"; }
+  virtual const char *getStringForBDF() const { return "CPENTA"; }
   virtual void revert()
   {
     MVertex *tmp;
@@ -2321,8 +2208,8 @@ class MPrism15 : public MPrism {
     for(int i = 0; i < 9; i++) _vs[i]->setPolynomialOrder(2);
   }
   ~MPrism15(){}
-  virtual int getPolynomialOrder(){ return 2; }
-  virtual int getNumVertices(){ return 15; }
+  virtual int getPolynomialOrder() const { return 2; }
+  virtual int getNumVertices() const { return 15; }
   virtual MVertex *getVertex(int num){ return num < 6 ? _v[num] : _vs[num - 6]; }
   virtual MVertex *getVertexUNV(int num)
   {
@@ -2339,7 +2226,7 @@ class MPrism15 : public MPrism {
     static const int map[15] = {0, 2, 1, 3, 5, 4, 7, 9, 6, 13, 14, 12, 8, 11, 10};
     return getVertex(map[num]); 
   }
-  virtual int getNumEdgeVertices(){ return 9; }
+  virtual int getNumEdgeVertices() const { return 9; }
   virtual int getNumEdgesRep(){ return 18; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
@@ -2393,9 +2280,9 @@ class MPrism15 : public MPrism {
     v[i+2] = _vs[f[num][2]];
     if (num >= 2) v[7] = _vs[f[num][3]];
   }
-  virtual int getTypeForMSH(){ return MSH_PRI_15; }
-  virtual int getTypeForUNV(){ return 113; } // solid parabolic wedge
-  virtual const char *getStringForBDF(){ return "CPENTA"; }
+  virtual int getTypeForMSH() const { return MSH_PRI_15; }
+  virtual int getTypeForUNV() const { return 113; } // solid parabolic wedge
+  virtual const char *getStringForBDF() const { return "CPENTA"; }
   virtual void revert()
   {
     MVertex *tmp;
@@ -2449,11 +2336,11 @@ class MPrism18 : public MPrism {
     for(int i = 0; i < 12; i++) _vs[i]->setPolynomialOrder(2);
   }
   ~MPrism18(){}
-  virtual int getPolynomialOrder(){ return 2; }
-  virtual int getNumVertices(){ return 18; }
+  virtual int getPolynomialOrder() const { return 2; }
+  virtual int getNumVertices() const { return 18; }
   virtual MVertex *getVertex(int num){ return num < 6 ? _v[num] : _vs[num - 6]; }
-  virtual int getNumEdgeVertices(){ return 9; }
-  virtual int getNumFaceVertices(){ return 3; }
+  virtual int getNumEdgeVertices() const { return 9; }
+  virtual int getNumFaceVertices() const { return 3; }
   virtual int getNumEdgesRep(){ return 18; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
@@ -2513,8 +2400,8 @@ class MPrism18 : public MPrism {
       v[8] = _vs[7+num];
     }
   }
-  virtual int getTypeForMSH(){ return MSH_PRI_18; }
-  virtual const char *getStringForPOS(){ return "SI2"; }
+  virtual int getTypeForMSH() const { return MSH_PRI_18; }
+  virtual const char *getStringForPOS() const { return "SI2"; }
   virtual void revert()
   {
     MVertex *tmp;
@@ -2586,7 +2473,7 @@ class MPyramid : public MElement {
   }
   ~MPyramid(){}
   virtual int getDim(){ return 3; }
-  virtual int getNumVertices(){ return 5; }
+  virtual int getNumVertices() const { return 5; }
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual MVertex *getVertexMED(int num)
   {
@@ -2638,10 +2525,10 @@ class MPyramid : public MElement {
     v.resize((num < 4) ? 3 : 4);
     _getFaceVertices(num, v);
   }
-  virtual int getTypeForMSH(){ return MSH_PYR_5; }
-  virtual int getTypeForVTK(){ return 14; }
-  virtual const char *getStringForPOS(){ return "SY"; }
-  virtual const char *getStringForBDF(){ return "CPYRAM"; }
+  virtual int getTypeForMSH() const { return MSH_PYR_5; }
+  virtual int getTypeForVTK() const { return 14; }
+  virtual const char *getStringForPOS() const { return "SY"; }
+  virtual const char *getStringForBDF() const { return "CPYRAM"; }
   virtual void revert()
   {
     MVertex *tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
@@ -2762,15 +2649,15 @@ class MPyramid13 : public MPyramid {
     for(int i = 0; i < 8; i++) _vs[i]->setPolynomialOrder(2);
   }
   ~MPyramid13(){}
-  virtual int getPolynomialOrder(){ return 2; }
-  virtual int getNumVertices(){ return 13; }
+  virtual int getPolynomialOrder() const { return 2; }
+  virtual int getNumVertices() const { return 13; }
   virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }
   virtual MVertex *getVertexMED(int num)
   {
     static const int map[13] = {0, 3, 2, 1, 4, 6, 10, 8, 5, 7, 12, 11, 9};
     return getVertex(map[num]); 
   }
-  virtual int getNumEdgeVertices(){ return 8; }
+  virtual int getNumEdgeVertices() const { return 8; }
   virtual int getNumEdgesRep(){ return 16; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
@@ -2828,7 +2715,7 @@ class MPyramid13 : public MPyramid {
       v[7] = _vs[0];
     }
   }
-  virtual int getTypeForMSH(){ return MSH_PYR_13; }
+  virtual int getTypeForMSH() const { return MSH_PYR_13; }
   virtual void revert()
   {
     MVertex *tmp;
@@ -2879,11 +2766,11 @@ class MPyramid14 : public MPyramid {
     for(int i = 0; i < 9; i++) _vs[i]->setPolynomialOrder(2);   
   }
   ~MPyramid14(){}
-  virtual int getPolynomialOrder(){ return 2; }
-  virtual int getNumVertices(){ return 14; }
+  virtual int getPolynomialOrder() const { return 2; }
+  virtual int getNumVertices() const { return 14; }
   virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }
-  virtual int getNumEdgeVertices(){ return 8; }
-  virtual int getNumFaceVertices(){ return 1; }
+  virtual int getNumEdgeVertices() const { return 8; }
+  virtual int getNumFaceVertices() const { return 1; }
   virtual int getNumEdgesRep(){ return 16; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
@@ -2943,8 +2830,8 @@ class MPyramid14 : public MPyramid {
       v[8] = _vs[8];
     }
   }
-  virtual int getTypeForMSH(){ return MSH_PYR_14; }
-  virtual const char *getStringForPOS(){ return "SY2"; }
+  virtual int getTypeForMSH() const { return MSH_PYR_14; }
+  virtual const char *getStringForPOS() const { return "SY2"; }
   virtual void revert()
   {
     MVertex *tmp;

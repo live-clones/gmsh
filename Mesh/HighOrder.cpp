@@ -28,6 +28,294 @@ typedef std::map<std::pair<MVertex*,MVertex*>, std::vector<MVertex*> > edgeConta
 // typedef std::map<std::vector<MVertex*>, std::vector<MVertex*>> faceContainer;
 typedef std::map<MFace, std::vector<MVertex*>,Less_Face>       faceContainer;
 
+bool mappingIsInvertible (MTetrahedron *e)
+{
+  if (e->getPolynomialOrder() == 1)return 1.0;
+  
+  double mat[3][3];
+  e->getPrimaryJacobian(0.,0.,0., mat);  
+  double det0 = det3x3(mat);
+
+  IntPt *pts;
+  int npts;
+
+  e->getIntegrationPoints(e->getPolynomialOrder(),&npts, &pts);
+  
+  for (int i=0;i<npts;i++){
+    
+    const double u = pts[i].pt[0];
+    const double v = pts[i].pt[1];
+    const double w = pts[i].pt[2];
+    
+    e->getJacobian(u, v, w, mat);
+
+    double detN = det3x3(mat);
+    
+    if (det0 * detN <= 0.) return false;
+  }
+
+  const Double_Matrix& points = e->getFunctionSpace()->points;
+
+  for (int i=0;i<e->getNumPrimaryVertices();i++) {
+
+    const double u = points(i,0);
+    const double v = points(i,1);
+    const double w = points(i,2);
+
+    e->getJacobian(u,v,w,mat);
+
+    double detN = det3x3(mat);
+
+    if (det0 * detN <= 0.) return false;
+  }
+  
+  return true;
+}
+
+bool deformElement(MElement *ele,GEntity* ge,const std::set<MVertex*>& blocked) {
+  
+  int nbNodes = ele->getNumVertices();  
+
+  double _E = 1.;
+  double _nu = 0.1;
+  
+  double FACT = _E / (1. + _nu) / (1. - 2. * _nu);  
+  double C11 = FACT * (1. - _nu);
+  double C12 = FACT * _nu;
+  double C44 = (C11 - C12) / 2; 
+  
+  Double_Matrix stiffness(3*nbNodes,3*nbNodes);
+  Double_Vector rhs(3*nbNodes);
+
+  int npts;
+  IntPt *pts;
+  ele->getIntegrationPoints(2*ele->getPolynomialOrder(),&npts, &pts);
+  double d0;
+
+  const gmshFunctionSpace* fs = ele->getFunctionSpace();
+
+  const Double_Matrix& points = fs->points;
+  
+
+  double jac[3][3];
+  ele->getPrimaryJacobian(0,0,0,jac);
+  double invjac[3][3];
+  inv3x3(jac,invjac);
+
+  double gsf[256][3];
+
+
+  // cheaper version : quadrature only used for parametric stiffness
+  // paramGrads should be stored in functionspace.
+  
+//   for (int j=0;j<nbNodes;j++) {
+//     for (int k=0;k<nbNodes;k++) {
+
+//       double xx = 0;
+//       double xy = 0;
+//       double xz = 0;
+//       double yx = 0;
+//       double yy = 0;
+//       double yz = 0;
+//       double zx = 0;
+//       double zy = 0;
+//       double zz = 0;
+      
+
+//       for (int m=0;m<3;m++) {
+//         for (int n=0;n<3;n++) {
+
+//           double dd = paramGrads[m][n](j,k);
+          
+//           xx += dd * invJac[0][m] * invJac[0][n];
+//           xy += dd * invJac[0][m] * invJac[1][n];
+//           xz += dd * invJac[0][m] * invJac[2][n];
+//           yx += dd * invJac[1][m] * invJac[0][n];
+//           yy += dd * invJac[1][m] * invJac[1][n];
+//           yz += dd * invJac[1][m] * invJac[2][n];
+//           zx += dd * invJac[2][m] * invJac[0][n];
+//           zy += dd * invJac[2][m] * invJac[1][n];
+//           zz += dd * invJac[2][m] * invJac[2][n];
+//         }
+//       }
+
+//       stiffness(3*j,3*k)     += (C11 * xx +  // dphidx . tauxx
+//                                  C44 * yy +  // dphidy . tauxy
+//                                  C44 * zz);  // dphidz . tauxz
+      
+//       stiffness(3*j,3*k+1)   += (C12 * xy +  // dphidx . tauxx 
+//                                  C44 * yx);  // dphidy . tauxy
+      
+//       stiffness(3*j,3*k+2)   += (C12 * xz +  // dphidx . tauxx
+//                                  C44 * zx);  // dphidz . tauxz
+      
+//       stiffness(3*j+1,3*k)   += (C44 * xy +  // dphidx . tauxy
+//                                  C12 * yx);  // dphidy . tauyy
+      
+//       stiffness(3*j+1,3*k+1) += (C44 * xx +  // dphidx . tauxy 
+//                                  C11 * yy +  // dphidy . tauyy
+//                                  C44 * zz ); // dphidz . tauzy
+      
+//       stiffness(3*j+1,3*k+2) += (C12 * yz +  // dphidy . tauyy
+//                                  C44 * zy);  // dphidz . tauzy
+      
+//       stiffness(3*j+2,3*k)   += (C44 * xz +  // dphidx . tauxz
+//                                  C12 * zx);  // dphidz . tauzz
+      
+//       stiffness(3*j+2,3*k+1) += (C44 * yz +  // dphidy . tauyz
+//                                  C12 * zy);  // dphidz . tauzz
+      
+//       stiffness(3*j+2,3*k+2) += (C44 * xx +  // dphidx . tauxz
+//                                  C44 * yy +  // dphidy . tauyz
+//                                  C11 * zz);  // dphidz . tauzz
+//     }
+//   }
+  
+      
+  // more expensive version
+
+  double Grads[256][3];
+
+  stiffness.scale(0.);
+  
+  for (int i=0;i<npts;i++){
+    
+    const double u = pts[i].pt[0];
+    const double v = pts[i].pt[1];
+    const double w = pts[i].pt[2];
+
+    const double weight = pts[i].weight;
+    
+    fs->df(u,v,w,gsf);
+
+    for (int j=0;j<nbNodes;j++) {
+      Grads[j][0] = invjac[0][0] * gsf[j][0] + invjac[0][1] * gsf[j][1] + invjac[0][2] * gsf[j][2];
+      Grads[j][1] = invjac[1][0] * gsf[j][0] + invjac[1][1] * gsf[j][1] + invjac[1][2] * gsf[j][2];
+      Grads[j][2] = invjac[2][0] * gsf[j][0] + invjac[2][1] * gsf[j][1] + invjac[2][2] * gsf[j][2];
+    }
+    
+    for (int j=0;j<nbNodes;j++) {
+      for (int k=0;k<nbNodes;k++) {
+
+        // R_x = dphidx . tauxx + dphidy . tauxy + dphidz . tauxz
+        // tau_xx = C11 . e_xx + C12 . (e_yy + e_zz)
+        // tau_xy = C44 . e_xy 
+        // e_xy = 0.5 * (dX/dx + dY/dy)
+
+        double xx = Grads[j][0] * Grads[k][0];
+        double xy = Grads[j][0] * Grads[k][1];
+        double xz = Grads[j][0] * Grads[k][2];
+        
+        double yx = Grads[j][1] * Grads[k][0];
+        double yy = Grads[j][1] * Grads[k][1];
+        double yz = Grads[j][1] * Grads[k][2];
+        
+        double zx = Grads[j][2] * Grads[k][0];
+        double zy = Grads[j][2] * Grads[k][1];
+        double zz = Grads[j][2] * Grads[k][2];
+
+
+        // Poisson
+        
+        stiffness(3*j,3*k)     += weight * (xx + yy + zz);
+        stiffness(3*j+1,3*k+1) += weight * (xx + yy + zz);
+        stiffness(3*j+2,3*k+2) += weight * (xx + yy + zz);
+        
+
+        // Elasticity
+
+        // stiffness(3*j  ,3*k  ) += weight * (C11 * xx + C44 * yy + C44 * zz);
+//         stiffness(3*j  ,3*k+1) += weight * (C12 * xy + C44 * yx);
+//         stiffness(3*j  ,3*k+2) += weight * (C12 * xz + C44 * zx);
+
+//         stiffness(3*j+1,3*k  ) += weight * (C12 * yx + C44 * xy);
+//         stiffness(3*j+1,3*k+1) += weight * (C44 * xx + C11 * yy + C44 * zz);
+//         stiffness(3*j+1,3*k+2) += weight * (C12 * yz + C44 * zy);
+        
+//         stiffness(3*j+2,3*k  ) += weight * (C12 * zx + C44 * xz);
+//         stiffness(3*j+2,3*k+1) += weight * (C12 * zy + C44 * yz);
+//         stiffness(3*j+2,3*k+2) += weight * (C44 * xx + C44 * yy + C11 * zz);
+        
+      }
+    }
+  }
+
+  int nbDirichlet = 0;
+  
+  Double_Vector original(nbNodes*3);
+  
+  for (int i=0;i<nbNodes;i++) {
+
+    MVertex* v = ele->getVertex(i);
+      
+    SPoint3 primary;
+    ele->primaryPnt(points(i,0),points(i,1),points(i,2),primary);
+    original(3*i  ) = primary.x();
+    original(3*i+1) = primary.y();
+    original(3*i+2) = primary.z();
+    
+    MFaceVertex* vf = dynamic_cast<MFaceVertex*> (v);
+    MFaceVertex* ve = dynamic_cast<MFaceVertex*> (v);
+
+    if (v->onWhat() != ge || blocked.find(v) != blocked.end()) {
+
+      nbDirichlet++;
+        
+      double dx = v->x() - original(3*i  );
+      double dy = v->y() - original(3*i+1);
+      double dz = v->z() - original(3*i+2);
+
+      for (int j=0;j<3*nbNodes;j++) {
+        stiffness(3*i  ,j) = 0;
+        stiffness(3*i+1,j) = 0;
+        stiffness(3*i+2,j) = 0;
+      }
+      
+      for (int k=0;k<3;k++) stiffness(i*3+k,i*3+k) = 1.;
+      
+      rhs(i*3  ) = dx;
+      rhs(i*3+1) = dy;
+      rhs(i*3+2) = dz;
+    }
+    else {
+      rhs(i*3  ) = 0.;
+      rhs(i*3+1) = 0.;
+      rhs(i*3+2) = 0.;
+    }
+  }
+
+  if (nbDirichlet < 3) {
+    Msg::Warning("Could not deform element due to lack of constraints\n");
+    return false;
+  }
+
+  if (nbDirichlet == nbNodes) {
+    Msg::Warning("Could not deform element because fully constrained\n");
+    return false;
+  }
+
+  
+  Msg::Warning("Deforming element - have %d constrained points of which %d from previous positioning",nbDirichlet,(int) blocked.size());
+  
+
+  Double_Vector displacement(nbNodes*3);
+
+  
+  stiffness.lu_solve(rhs,displacement);
+
+  for (int i=0;i<nbNodes;i++) {
+    MVertex* v = ele->getVertex(i);
+    
+    v->x() = original(3*i)   + displacement(3*i  );
+    v->y() = original(3*i+1) + displacement(3*i+1);
+    v->z() = original(3*i+2) + displacement(3*i+2);
+    
+  }
+  
+  return true;
+}
+
+
 bool reparamOnFace(MVertex *v, GFace *gf, SPoint2 &param)
 {
   if(v->onWhat()->dim() == 0){
@@ -364,8 +652,11 @@ void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
   }
 }
 
-void getEdgeVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &ve,
-                     edgeContainer &edgeVertices, bool linear, int nPts = 1)
+void getEdgeVertices(GRegion *gr, MElement *ele,
+                     std::vector<MVertex*> &ve,
+                     std::set<MVertex*>& blocked,
+                     edgeContainer &edgeVertices, bool linear,
+                     int nPts = 1)
 {
   for(int i = 0; i < ele->getNumEdges(); i++){
     MEdge edge = ele->getEdge(i);
@@ -375,6 +666,9 @@ void getEdgeVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &ve,
         ve.insert(ve.end(), edgeVertices[p].begin(), edgeVertices[p].end());
       else
         ve.insert(ve.end(), edgeVertices[p].rbegin(), edgeVertices[p].rend());
+      blocked.insert(edgeVertices[p].begin(),edgeVertices[p].end());
+      blocked.insert(edge.getMinVertex());
+      blocked.insert(edge.getMaxVertex());
     }
     else{
       std::vector<MVertex*> temp;
@@ -689,7 +983,9 @@ void reorientTrianglePoints(std::vector<MVertex*>& vtcs,int orientation,bool swa
 
 // KH: check face orientation wrt element ... 
 
-void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
+void getFaceVertices(GRegion *gr, MElement *ele,
+                     std::vector<MVertex*> &vf,
+                     std::set<MVertex*>& blocked,
                      faceContainer &faceVertices,
                      edgeContainer& edgeVertices,
                      bool linear, int nPts = 1)
@@ -734,6 +1030,11 @@ void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
       }
       else Msg::Error("Error in face lookup for recuperation of high order face nodes");
       vf.insert(vf.end(), vtcs.begin(), vtcs.end());
+
+      blocked.insert(vtcs.begin(),vtcs.end());
+      blocked.insert(face.getVertex(0));
+      blocked.insert(face.getVertex(1));
+      blocked.insert(face.getVertex(2));
     }
     else{
       std::vector<MVertex*>& vtcs = faceVertices[face];        
@@ -981,36 +1282,68 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
                   faceContainer &faceVertices, bool linear, bool incomplete,
                   int nPts = 1)
 {
+  int nbCorr = 0;
+  
   std::vector<MTetrahedron*> tetrahedra2;
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
     MTetrahedron *t = gr->tetrahedra[i];
+
+    std::set<MVertex*> blocked;
+    
     std::vector<MVertex*> ve,vf,vr;
-    getEdgeVertices(gr, t, ve, edgeVertices, linear, nPts);
+    getEdgeVertices(gr, t, ve, blocked, edgeVertices, linear, nPts);
     if (nPts == 1){
       tetrahedra2.push_back
 	(new MTetrahedron10(t->getVertex(0), t->getVertex(1), t->getVertex(2), 
 			    t->getVertex(3), ve[0], ve[1], ve[2], ve[3], ve[4], ve[5]));
     }
     else{
-      getFaceVertices(gr, t, vf, faceVertices, edgeVertices, linear, nPts);
+      getFaceVertices(gr, t, vf, blocked, faceVertices, edgeVertices, linear, nPts);
       ve.insert(ve.end(), vf.begin(), vf.end());     
       MTetrahedronN incpl (t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3),
 			   ve, nPts + 1);
       getRegionVertices(gr, &incpl, t, vr, linear, nPts); 
-      ve.insert(ve.end(), vr.begin(), vr.end());     
-      tetrahedra2.push_back
-	(new MTetrahedronN(t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3),
-			   ve, nPts + 1));
+      ve.insert(ve.end(), vr.begin(), vr.end());
+
+      MTetrahedron* n = new MTetrahedronN(t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3),ve, nPts + 1);
+
+      if (!mappingIsInvertible(n)) {
+        Msg::Warning("Found invalid curved volume element (# %d in list) ",i);
+        
+        // if (deformElement(n,gr,blocked)) {
+//           if (mappingIsInvertible(n)) printf(" - corrected using Poisson smoothing\n");
+//           else                        printf(" - could not correct the mapping\n");
+//           nbCorr++;
+//         }
+      }
+      tetrahedra2.push_back (n);
     }
     delete t;
   }
   gr->tetrahedra = tetrahedra2;
 
+  std::vector<int> invalid;
+  
+  if (nbCorr != 0) {
+    for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
+      if (!mappingIsInvertible(gr->tetrahedra[i])) invalid.push_back(i);
+    }
+
+    if (invalid.size()!=0) {
+      Msg::Warning("We have %d invalid elements remaining\n",(int) invalid.size());
+      std::vector<int>::iterator iIter = invalid.begin();
+      for (;iIter!=invalid.end();++iIter) printf("%d ",*iIter);
+      printf("\n");
+    }
+  }
+  
+
   std::vector<MHexahedron*> hexahedra2;
   for(unsigned int i = 0; i < gr->hexahedra.size(); i++){
     MHexahedron *h = gr->hexahedra[i];
     std::vector<MVertex*> ve, vf;
-    getEdgeVertices(gr, h, ve, edgeVertices, linear, nPts);
+    std::set<MVertex*> blocked;
+    getEdgeVertices(gr, h, ve, blocked, edgeVertices, linear, nPts);
     if(incomplete){
       hexahedra2.push_back
         (new MHexahedron20(h->getVertex(0), h->getVertex(1), h->getVertex(2), 
@@ -1020,7 +1353,7 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
                            ve[11]));
     }
     else{
-      getFaceVertices(gr, h, vf, faceVertices, edgeVertices, linear, nPts);
+      getFaceVertices(gr, h, vf, blocked, faceVertices, edgeVertices, linear, nPts);
       SPoint3 pc = h->barycenter();
       MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
       gr->mesh_vertices.push_back(v);
@@ -1039,7 +1372,8 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
   for(unsigned int i = 0; i < gr->prisms.size(); i++){
     MPrism *p = gr->prisms[i];
     std::vector<MVertex*> ve, vf;
-    getEdgeVertices(gr, p, ve, edgeVertices, linear, nPts);
+    std::set<MVertex*> blocked;
+    getEdgeVertices(gr, p, ve, blocked,edgeVertices, linear, nPts);
     if(incomplete){
       prisms2.push_back
         (new MPrism15(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
@@ -1047,7 +1381,7 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
                       ve[0], ve[1], ve[2], ve[3], ve[4], ve[5], ve[6], ve[7], ve[8]));
     }
     else{
-      getFaceVertices(gr, p, vf, faceVertices, edgeVertices, linear, nPts);
+      getFaceVertices(gr, p, vf, blocked, faceVertices, edgeVertices, linear, nPts);
       prisms2.push_back
         (new MPrism18(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
                       p->getVertex(3), p->getVertex(4), p->getVertex(5), 
@@ -1062,7 +1396,8 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
   for(unsigned int i = 0; i < gr->pyramids.size(); i++){
     MPyramid *p = gr->pyramids[i];
     std::vector<MVertex*> ve, vf;
-    getEdgeVertices(gr, p, ve, edgeVertices, linear, nPts);
+    std::set<MVertex*> blocked;
+    getEdgeVertices(gr, p, ve, blocked, edgeVertices, linear, nPts);
     if(incomplete){
       pyramids2.push_back
         (new MPyramid13(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
@@ -1070,7 +1405,7 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
                         ve[3], ve[4], ve[5], ve[6], ve[7]));
     }
     else{
-      getFaceVertices(gr, p, vf, faceVertices, edgeVertices, linear, nPts);
+      getFaceVertices(gr, p, vf, blocked, faceVertices, edgeVertices, linear, nPts);
       pyramids2.push_back
         (new MPyramid14(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
                         p->getVertex(3), p->getVertex(4), ve[0], ve[1], ve[2], 
@@ -1164,7 +1499,9 @@ static double mesh_functional_distorsion(MTriangle *t, double u, double v)
 {
   // compute uncurved element jacobian d_u x and d_v x
   double mat[2][3];  
-  t->jac(1, 0, 0, 0, 0, mat);
+  // t->getPrimaryJacobian(0, 0, 0, mat);
+  t->getJacobian(0, 0, 0, mat);
+  
   double v1[3] = {mat[0][0], mat[0][1], mat[0][2]};
   double v2[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double normal1[3];
@@ -1172,7 +1509,7 @@ static double mesh_functional_distorsion(MTriangle *t, double u, double v)
   double nn = sqrt(SQU(normal1[0]) + SQU(normal1[1]) + SQU(normal1[2]));
   
   // compute uncurved element jacobian d_u x and d_v x
-  t->jac(u, v, 0, mat);
+  t->getJacobian(u, v, 0, mat);
   double v1b[3] = {mat[0][0], mat[0][1], mat[0][2]};
   double v2b[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double normal[3];
@@ -1191,7 +1528,8 @@ void getMinMaxJac (MTriangle *t, double &minJ, double &maxJ)
 {
   double mat[2][3];  
   int n = 3;
-  t->jac(1, 0, 0, 0, 0, mat);
+  // t->getPrimaryJacobian(0, 0, 0, mat);
+  t->getJacobian(0, 0, 0, mat);
   double v1[3] = {mat[0][0], mat[0][1], mat[0][2]};
   double v2[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double normal1[3], normal[3];
@@ -1199,7 +1537,7 @@ void getMinMaxJac (MTriangle *t, double &minJ, double &maxJ)
   double nn = sqrt(SQU(normal1[0]) + SQU(normal1[1]) + SQU(normal1[2]));
   for(int i = 0; i < n; i++){
     for(int k = 0; k < n - i; k++){
-      t->jac((double)i / (n - 1), (double)k / (n - 1), 0, mat);
+      t->getJacobian((double)i / (n - 1), (double)k / (n - 1), 0, mat);
       double v1b[3] = {mat[0][0], mat[0][1], mat[0][2]};
       double v2b[3] = {mat[1][0], mat[1][1], mat[1][2]};
       prodve(v1b, v2b, normal);

@@ -7,6 +7,7 @@
 #include "GmshDefines.h"
 #include "Message.h"
 
+
 Double_Matrix generate1DMonomials(int order)
 {
   Double_Matrix monomials(order + 1, 1);
@@ -20,7 +21,7 @@ Double_Matrix generate1DPoints(int order)
   line(0, 0) = -1.;
   line(1, 0) =  1.;
   double dd = 2. / order;
-  for (int i = 2; i < order; i++) line(i, 0) = -1. + dd * (i - 1);
+  for (int i = 2; i < order+1; i++) line(i, 0) = -1. + dd * (i - 1);
   return line;
 }
 
@@ -585,6 +586,10 @@ const gmshFunctionSpace &gmshFunctionSpaces::find(int tag)
   gmshFunctionSpace F;
   
   switch (tag){
+  case MSH_PNT:
+    F.monomials = generate1DMonomials(0);
+    F.points    = generate1DPoints(0);
+    break;
   case MSH_LIN_2 :
     F.monomials = generate1DMonomials(1);
     F.points    = generate1DPoints(1);
@@ -675,3 +680,31 @@ const gmshFunctionSpace &gmshFunctionSpaces::find(int tag)
   fs.insert(std::make_pair(tag, F));
   return fs[tag];
 }
+
+std::map<std::pair<int,int>, Double_Matrix> gmshFunctionSpaces::injector;
+
+
+const Double_Matrix &gmshFunctionSpaces::findInjector(int tag1,int tag2) {
+
+  std::pair<int,int> key(tag1,tag2);
+  std::map<std::pair<int,int>,Double_Matrix>::const_iterator it = injector.find(key);
+  if (it != injector.end()) return it->second;
+  
+
+  const gmshFunctionSpace& fs1 = find(tag1);
+  const gmshFunctionSpace& fs2 = find(tag2);
+
+  Double_Matrix inj(fs1.points.size1(),fs2.points.size1());
+  
+  double sf[256];
+  
+  for (int i=0;i<fs1.points.size1();i++) {
+    fs2.f(fs1.points(i,0),fs1.points(i,1),fs1.points(i,2),sf);
+    for (int j=0;j<fs2.points.size1();j++) inj(i,j) = sf[j];
+  }
+
+  injector.insert(std::make_pair(key,inj));
+  return injector[key];
+}
+
+          

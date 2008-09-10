@@ -98,6 +98,23 @@ void MElement::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
   Msg::Error("No integration points defined for this type of element");
 }
 
+void MElement::getShapeFunction(int num,double u,double v,double w,double &s) {
+#if !defined(HAVE_GMSH_EMBEDDED)
+  double sf[256];
+  getFunctionSpace()->f(u,v,w,sf);
+  s = sf[num];
+#endif
+}
+
+void MElement::getGradShapeFunction(int num,double uu,double vv,double ww,double s[3]) {
+#if !defined(HAVE_GMSH_EMBEDDED)
+  double sf[256][3];
+  getFunctionSpace()->df(uu, vv, ww, sf);
+  for (int i=0;i<3;i++) s[i] = sf[num][i];
+#endif
+}
+
+
 SPoint3 MTriangle::circumcenter()
 {
 #if defined(HAVE_GMSH_EMBEDDED)
@@ -152,6 +169,35 @@ double MTriangle::gammaShapeMeasure()
 #endif
 }
 
+const gmshFunctionSpace* MTriangle::getFunctionSpace(int o) const {
+
+  int order = (o == -1) ? getPolynomialOrder() : o;
+
+  int nf = getNumFaceVertices();  
+
+  if ((nf ==0) && (o == -1)) {
+    switch (order) {
+    case 1: return &gmshFunctionSpaces::find(MSH_TRI_3); break;
+    case 2: return &gmshFunctionSpaces::find(MSH_TRI_6); break;
+    case 3: return &gmshFunctionSpaces::find(MSH_TRI_9); break;
+    case 4: return &gmshFunctionSpaces::find(MSH_TRI_12); break;
+    case 5: return &gmshFunctionSpaces::find(MSH_TRI_15I); break;
+    default: Msg::Error("Order %d triangle function space not implemented", order); break;
+    }
+  }
+  else { 
+    switch (order) {
+    case 1: return &gmshFunctionSpaces::find(MSH_TRI_3); break;
+    case 2: return &gmshFunctionSpaces::find(MSH_TRI_6); break;
+    case 3: return &gmshFunctionSpaces::find(MSH_TRI_10); break;
+    case 4: return &gmshFunctionSpaces::find(MSH_TRI_15); break;
+    case 5: return &gmshFunctionSpaces::find(MSH_TRI_21); break;
+    default: Msg::Error("Order %d triangle function space implemented", order); break;
+    }
+  }
+  return NULL;
+}
+
 double MTetrahedron::gammaShapeMeasure()
 {
 #if defined(HAVE_GMSH_EMBEDDED)
@@ -161,6 +207,7 @@ double MTetrahedron::gammaShapeMeasure()
   return qmTet(this, QMTET_2, &vol);
 #endif
 }
+
 
 double MTetrahedron::etaShapeMeasure()
 {
@@ -188,6 +235,39 @@ void MTetrahedron::xyz2uvw(double xyz[3], double uvw[3])
   b[2] = xyz[2] - getVertex(0)->z();
   sys3x3(mat, b, uvw, &det);
 }
+
+
+const gmshFunctionSpace* MTetrahedron::getFunctionSpace(int o) const {
+
+  int order = (o == -1) ? getPolynomialOrder() : o;
+
+  int nv = getNumVolumeVertices();
+  
+  
+  if ((nv == 0) && (o == -1)) {
+    switch (order) {
+    case 1: return &gmshFunctionSpaces::find(MSH_TET_4); break;
+    case 2: return &gmshFunctionSpaces::find(MSH_TET_10); break;
+    case 3: return &gmshFunctionSpaces::find(MSH_TET_20); break;
+    case 4: return &gmshFunctionSpaces::find(MSH_TET_34); break;
+    case 5: return &gmshFunctionSpaces::find(MSH_TET_52); break;
+    default: Msg::Error("Order %d tetrahedron function space not implemented", order); break;
+    }
+  }
+  else { 
+    switch (order) {
+    case 1: return &gmshFunctionSpaces::find(MSH_TET_4); break;
+    case 2: return &gmshFunctionSpaces::find(MSH_TET_10); break;
+    case 3: return &gmshFunctionSpaces::find(MSH_TET_20); break;
+    case 4: return &gmshFunctionSpaces::find(MSH_TET_35); break;
+    case 5: return &gmshFunctionSpaces::find(MSH_TET_56); break;
+    default: Msg::Error("Order %d tetrahedron function space implemented", order); break;
+    }
+  }
+  return NULL;
+}
+
+
 
 int MHexahedron::getVolumeSign()
 { 
@@ -259,70 +339,160 @@ std::string MElement::getInfoString()
 
 double MElement::getJacobian(double u, double v, double w, double jac[3][3])
 {
+
+  const gmshFunctionSpace* fs = getFunctionSpace();
+  
   jac[0][0] = jac[0][1] = jac[0][2] = 0.;
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
-  double s[3];
-  switch(getDim()){
-  case 3 :
-    for(int i = 0; i < getNumVertices(); i++) {
-      getGradShapeFunction(i, u, v, w, s);
-      MVertex *p = getVertex(i);
-      jac[0][0] += p->x() * s[0]; jac[0][1] += p->y() * s[0]; jac[0][2] += p->z() * s[0];
-      jac[1][0] += p->x() * s[1]; jac[1][1] += p->y() * s[1]; jac[1][2] += p->z() * s[1];
-      jac[2][0] += p->x() * s[2]; jac[2][1] += p->y() * s[2]; jac[2][2] += p->z() * s[2];
+
+  double gsf[256][3];
+  fs->df(u,v,w,gsf);
+  for (int i=0;i<getNumVertices();i++) {
+    
+    const MVertex* v = getVertex(i);
+    double* gg = gsf[i];
+    
+    for (int j=0;j<3;j++) {
+      jac[j][0] += v->x() * gg[j];
+      jac[j][1] += v->y() * gg[j];
+      jac[j][2] += v->z() * gg[j];
     }
-    return fabs(jac[0][0] * jac[1][1] * jac[2][2] + jac[0][2] * jac[1][0] * jac[2][1] +
-                jac[0][1] * jac[1][2] * jac[2][0] - jac[0][2] * jac[1][1] * jac[2][0] -
-                jac[0][0] * jac[1][2] * jac[2][1] - jac[0][1] * jac[1][0] * jac[2][2]);
-  case 2 :
-    for(int i = 0; i < getNumVertices(); i++) {
-      getGradShapeFunction(i, u, v, w, s);
-      MVertex *p = getVertex(i);
-      jac[0][0] += p->x() * s[0]; jac[0][1] += p->y() * s[0]; jac[0][2] += p->z() * s[0];
-      jac[1][0] += p->x() * s[1]; jac[1][1] += p->y() * s[1]; jac[1][2] += p->z() * s[1];
-    }
+  }
+
+  double dJ = 0;
+  
+  switch (fs->monomials.size2()) {
+
+  case 1: 
     {
-      double a[3], b[3], c[3];
-      a[0] = jac[0][0];
-      a[1] = jac[0][1];
-      a[2] = jac[0][2];
-      b[0] = jac[1][0];
-      b[1] = jac[1][1];
-      b[2] = jac[1][2];
-      prodve(a, b, c);
-      norme(c);
-      jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2]; 
+      dJ = sqrt(jac[0][0] * jac[0][0] + jac[1][1] * jac[0][0] + jac[2][2] * jac[2][2]);
+      break;
     }
-    return sqrt(SQU(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0]) +
+  case 2:
+    {
+      dJ = sqrt(SQU(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0]) +
                 SQU(jac[0][2] * jac[1][0] - jac[0][0] * jac[1][2]) +
                 SQU(jac[0][1] * jac[1][2] - jac[0][2] * jac[1][1]));
-  case 1:
-    for(int i = 0; i < getNumVertices(); i++) {
-      getGradShapeFunction(i, u, v, w, s);
-      MVertex *p = getVertex(i);
-      jac[0][0] += p->x() * s[0]; jac[0][1] += p->y() * s[0]; jac[0][2] += p->z() * s[0];
+      break;
     }
+  case 3:
     {
-      double a[3], b[3], c[3];
-      a[0] = getVertex(1)->x() - getVertex(0)->x(); 
-      a[1] = getVertex(1)->y() - getVertex(0)->y();
-      a[2] = getVertex(1)->z() - getVertex(0)->z();     
-      if((fabs(a[0]) >= fabs(a[1]) && fabs(a[0]) >= fabs(a[2])) ||
-         (fabs(a[1]) >= fabs(a[0]) && fabs(a[1]) >= fabs(a[2]))) {
-        b[0] = a[1]; b[1] = -a[0]; b[2] = 0.;
-      }
-      else {
-        b[0] = 0.; b[1] = a[2]; b[2] = -a[1];
-      }
-      prodve(a, b, c);
-      jac[1][0] = b[0]; jac[1][1] = b[1]; jac[1][2] = b[2]; 
-      jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2]; 
+      dJ = fabs(jac[0][0] * jac[1][1] * jac[2][2] + jac[0][2] * jac[1][0] * jac[2][1] +
+                jac[0][1] * jac[1][2] * jac[2][0] - jac[0][2] * jac[1][1] * jac[2][0] -
+                jac[0][0] * jac[1][2] * jac[2][1] - jac[0][1] * jac[1][0] * jac[2][2]);
+      break;
     }
-    return sqrt(SQU(jac[0][0]) + SQU(jac[0][1]) + SQU(jac[0][2]));
-  default:
-    return 1.;
   }
+  return dJ; 
+}
+
+
+
+double MElement::getPrimaryJacobian(double u, double v, double w, double jac[3][3])
+{
+
+  const gmshFunctionSpace* fs = getFunctionSpace(1);
+  
+  jac[0][0] = jac[0][1] = jac[0][2] = 0.;
+  jac[1][0] = jac[1][1] = jac[1][2] = 0.;
+  jac[2][0] = jac[2][1] = jac[2][2] = 0.;
+
+  double gsf[256][3];
+  fs->df(u,v,w,gsf);
+  
+  for (int i=0;i<getNumPrimaryVertices();i++) {
+    
+    const MVertex* v = getVertex(i);
+    double* gg = gsf[i];
+    
+    for (int j=0;j<3;j++) {
+      jac[j][0] += v->x() * gg[j];
+      jac[j][1] += v->y() * gg[j];
+      jac[j][2] += v->z() * gg[j];
+    }
+  }
+
+  double dJ = 0;
+  
+  switch (fs->monomials.size2()) {
+
+  case 1: 
+    {
+      dJ = sqrt(jac[0][0] * jac[0][0] + jac[0][0] * jac[0][0] + jac[0][0] * jac[0][0]);
+      break;
+    }
+  case 2:
+    {
+      dJ = sqrt(SQU(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0]) +
+                SQU(jac[0][2] * jac[1][0] - jac[0][0] * jac[1][2]) +
+                SQU(jac[0][1] * jac[1][2] - jac[0][2] * jac[1][1]));
+      break;
+    }
+  case 3:
+    {
+      dJ = fabs(jac[0][0] * jac[1][1] * jac[2][2] + jac[0][2] * jac[1][0] * jac[2][1] +
+                jac[0][1] * jac[1][2] * jac[2][0] - jac[0][2] * jac[1][1] * jac[2][0] -
+                jac[0][0] * jac[1][2] * jac[2][1] - jac[0][1] * jac[1][0] * jac[2][2]);
+      break;
+    }
+  }
+  return dJ; 
+}
+
+void MElement::pnt(double uu, double vv, double ww, SPoint3 &p) {
+
+
+  double x=0.;
+  double y=0.;
+  double z=0.;
+  
+  const gmshFunctionSpace* fs = getFunctionSpace();
+
+  if (fs) {
+
+    double sf[256];
+    fs->f(uu,vv,ww,sf);
+    
+    for (int j=0;j<getNumVertices();j++) {
+      const MVertex* v = getVertex(j);
+      x += sf[j] * v->x();
+      y += sf[j] * v->y();
+      z += sf[j] * v->z();
+    } 
+  }
+  else Msg::Fatal("Could not find function space\n");
+  
+  p = SPoint3(x,y,z);
+  
+}
+
+void MElement::primaryPnt(double uu, double vv, double ww, SPoint3 &p) {
+  
+  double x=0.;
+  double y=0.;
+  double z=0.;
+  
+  const gmshFunctionSpace* fs = getFunctionSpace(1);
+
+  if (fs) {
+
+    double sf[256];
+    fs->f(uu,vv,ww,sf);
+    if (getNumPrimaryVertices() != 4) printf("Incorrect number of vertices %d\n",getNumPrimaryVertices()
+                                             );
+    
+    
+    for (int j=0;j<getNumPrimaryVertices();j++) {
+      const MVertex* v = getVertex(j);
+      x += sf[j] * v->x();
+      y += sf[j] * v->y();
+      z += sf[j] * v->z();
+    } 
+  }
+  
+  p = SPoint3(x,y,z);
+  
 }
 
 void MElement::xyz2uvw(double xyz[3], double uvw[3])
@@ -422,21 +592,6 @@ double MElement::interpolateDiv(double val[], double u, double v, double w, int 
   interpolateGrad(&val[1], u, v, w, fy, stride, inv);
   interpolateGrad(&val[2], u, v, w, fz, stride, inv);
   return fx[0] + fy[1] + fz[2];
-}
-
-// Expensive, generic version   
-void MElement::pnt(double u, double v, double w, SPoint3 &p)
-{
-  double x(0), y(0), z(0);
-  for (int i = 0; i < getNumVertices(); i++) {
-    double s;
-    getShapeFunction(i, u, v, w, s);
-    MVertex* v = getVertex(i);
-    x += v->x() * s;
-    y += v->y() * s;
-    z += v->z() * s;
-  }
-  p = SPoint3(x, y, z);
 }
 
 void MElement::writeMSH(FILE *fp, double version, bool binary, int num, 
@@ -737,339 +892,19 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   }               
 }
 
-void MLine::pnt(double u,double v,double w,SPoint3& p)
-{
-  double f1, f2;
-  getShapeFunction(0, u, v, w, f1);
-  getShapeFunction(1, u, v, w, f2);
+const gmshFunctionSpace* MLine::getFunctionSpace(int o) const {
+
+  int order = o == -1 ? getPolynomialOrder() : o;
   
-  double x = f1 * _v[0]->x() + f2 * _v[1]->x();
-  double y = f1 * _v[0]->y() + f2 * _v[1]->y();
-  double z = f1 * _v[0]->z() + f2 * _v[1]->z();
-
-  p = SPoint3(x, y, z);
-}
-
-void MLine3::pnt(double u, double v, double w, SPoint3 &p)
-{
-  double sf[3];
-  gmshFunctionSpaces::find(MSH_LIN_3).f(u, v, w, sf);
-  double x = sf[0] * _v[0]->x() + sf[1] * _v[1]->x() + sf[2] * _vs[0]->x();
-  double y = sf[0] * _v[0]->y() + sf[1] * _v[1]->y() + sf[2] * _vs[0]->y();
-  double z = sf[0] * _v[0]->z() + sf[1] * _v[1]->z() + sf[2] * _vs[0]->z();
-
-  p = SPoint3(x,y,z);
-}
-
-void MLine3::getShapeFunction(int num,double uu, double vv,double ww,double& s)
-{
-  if (num > 2) s = 0.;
-  double sf[3];
-  gmshFunctionSpaces::find(MSH_LIN_3).f(uu, vv, ww, sf);
-  s = sf[num];
-}
-
-void MLine3::getGradShapeFunction(int num,double uu,double vv,double ww,double s[3])
-{
-  if (num > 2) for (int i = 0; i < 3; i++) s[i] = 0.;
-  double sf[3][3];
-  gmshFunctionSpaces::find(MSH_LIN_3).df(uu, vv, ww, sf);
-  for (int i = 0; i < 3; i++) s[i] = sf[num][i];
-}
-
-void MLineN::pnt(double uu, double vv, double ww, SPoint3 &p)
-{
-  double sf[6];
-  
-  switch (getPolynomialOrder()) {
-  case 1: gmshFunctionSpaces::find(MSH_LIN_2).f(uu, vv, ww, sf); break;
-  case 2: gmshFunctionSpaces::find(MSH_LIN_3).f(uu, vv, ww, sf); break;
-  case 3: gmshFunctionSpaces::find(MSH_LIN_4).f(uu, vv, ww, sf); break;
-  case 4: gmshFunctionSpaces::find(MSH_LIN_5).f(uu, vv, ww, sf); break;
-  case 5: gmshFunctionSpaces::find(MSH_LIN_6).f(uu, vv, ww, sf); break;
-  default: 
-    Msg::Error("Order %d line point interpolation not implemented", 
-	       getPolynomialOrder()); 
-    break;
+  switch (order) {
+  case 1: return &gmshFunctionSpaces::find(MSH_LIN_2); break;
+  case 2: return &gmshFunctionSpaces::find(MSH_LIN_3); break;
+  case 3: return &gmshFunctionSpaces::find(MSH_LIN_4); break;
+  case 4: return &gmshFunctionSpaces::find(MSH_LIN_5); break;
+  case 5: return &gmshFunctionSpaces::find(MSH_LIN_6); break;
+  default: Msg::Error("Order %d line point interpolation not implemented", getPolynomialOrder()); break;
   }
-
-  double x = 0; for (int i = 0; i < 2; i++) x += sf[i] * _v[i]->x();
-  double y = 0; for (int i = 0; i < 2; i++) y += sf[i] * _v[i]->y();
-  double z = 0; for (int i = 0; i < 2; i++) z += sf[i] * _v[i]->z();
-
-  for (int i = 0; i < _vs.size(); i++) x += sf[i+2] * _vs[i]->x();
-  for (int i = 0; i < _vs.size(); i++) y += sf[i+2] * _vs[i]->y();
-  for (int i = 0; i < _vs.size(); i++) z += sf[i+2] * _vs[i]->z();
-
-  p = SPoint3(x, y, z);
-}
-
-void MLineN::getShapeFunction(int num, double uu, double vv, double ww, double &s)
-{
-  double sf[6];
-  switch (getPolynomialOrder()) {
-  case 1: gmshFunctionSpaces::find(MSH_LIN_2).f(uu, vv, ww, sf); break;
-  case 2: gmshFunctionSpaces::find(MSH_LIN_3).f(uu, vv, ww, sf); break;
-  case 3: gmshFunctionSpaces::find(MSH_LIN_4).f(uu, vv, ww, sf); break;
-  case 4: gmshFunctionSpaces::find(MSH_LIN_5).f(uu, vv, ww, sf); break;
-  case 5: gmshFunctionSpaces::find(MSH_LIN_6).f(uu, vv, ww, sf); break;
-  default: 
-    Msg::Error("Order %d line shape function not provided", 
-	       getPolynomialOrder()); 
-    break;
-  }
-  s = sf[num];
-}
-
-void MLineN::getGradShapeFunction(int num, double uu, double vv, double ww, double s[3])
-{
-  double sf[6][3];
-  switch (getPolynomialOrder()) {
-  case 1: gmshFunctionSpaces::find(MSH_LIN_2).df(uu, vv, ww, sf); break;
-  case 2: gmshFunctionSpaces::find(MSH_LIN_3).df(uu, vv, ww, sf); break;
-  case 3: gmshFunctionSpaces::find(MSH_LIN_4).df(uu, vv, ww, sf); break;
-  case 4: gmshFunctionSpaces::find(MSH_LIN_5).df(uu, vv, ww, sf); break;
-  case 5: gmshFunctionSpaces::find(MSH_LIN_6).df(uu, vv, ww, sf); break;
-  default: 
-    Msg::Error("Order %d line shape function gradient not implemented",
-	       getPolynomialOrder());
-    break;
-  }
-  for (int i = 0; i < 3; i++) s[i] = sf[num][i];
-}
-
-void MTriangle::getShapeFunction(int num, double uu, double vv, double ww, double &s)
-{
-  int nf = getNumFaceVertices();
-  double fv[256];
-  
-  if (!nf){
-    switch(getPolynomialOrder()){
-    case 1: gmshFunctionSpaces::find(MSH_TRI_3).f(uu, vv, fv); break;
-    case 2: gmshFunctionSpaces::find(MSH_TRI_6).f(uu, vv, fv); break;
-    case 3: gmshFunctionSpaces::find(MSH_TRI_9).f(uu, vv, fv); break;
-    case 4: gmshFunctionSpaces::find(MSH_TRI_12).f(uu, vv, fv); break;
-    case 5: gmshFunctionSpaces::find(MSH_TRI_15I).f(uu, vv, fv); break;
-    default: 
-      Msg::Error("Order %d triangle shape function not implemented", 
-		 getPolynomialOrder());
-      break;
-    }
-  }
-  else{
-    switch(getPolynomialOrder()){
-    case 1: gmshFunctionSpaces::find(MSH_TRI_3).f(uu, vv, fv); break;
-    case 2: gmshFunctionSpaces::find(MSH_TRI_6).f(uu, vv, fv); break;
-    case 3: gmshFunctionSpaces::find(MSH_TRI_10).f(uu, vv, fv); break;
-    case 4: gmshFunctionSpaces::find(MSH_TRI_15).f(uu, vv, fv); break;
-    case 5: gmshFunctionSpaces::find(MSH_TRI_21).f(uu, vv, fv); break;
-    default: 
-      Msg::Error("Order %d triangle shape function not implemented", 
-		 getPolynomialOrder());
-      break;
-    }
-  }
-  s = fv[num];
-}
-
-void MTriangle::getGradShapeFunction(int num, double uu, double vv, double ww, double s[3])
-{
-  double grads[256][2];
-  int nf = getNumFaceVertices();  
-
-  if (!nf){
-    switch(getPolynomialOrder()){
-    case 1: gmshFunctionSpaces::find(MSH_TRI_3).df(uu, vv, ww, grads); break;
-    case 2: gmshFunctionSpaces::find(MSH_TRI_6).df(uu, vv, ww, grads); break;
-    case 3: gmshFunctionSpaces::find(MSH_TRI_9).df(uu, vv, ww, grads); break;
-    case 4: gmshFunctionSpaces::find(MSH_TRI_12).df(uu, vv, ww, grads); break;
-    case 5: gmshFunctionSpaces::find(MSH_TRI_15I).df(uu, vv, ww, grads); break;
-    default: 
-      Msg::Error("Order %d triangle shape function gradient not implemented",
-		 getPolynomialOrder());
-      break;
-    }
-  }
-  else{
-    switch(getPolynomialOrder()){
-    case 1: gmshFunctionSpaces::find(MSH_TRI_3).df(uu, vv, ww, grads); break;
-    case 2: gmshFunctionSpaces::find(MSH_TRI_6).df(uu, vv, ww, grads); break;
-    case 3: gmshFunctionSpaces::find(MSH_TRI_10).df(uu, vv, ww, grads); break;
-    case 4: gmshFunctionSpaces::find(MSH_TRI_15).df(uu, vv, ww, grads); break;
-    case 5: gmshFunctionSpaces::find(MSH_TRI_21).df(uu, vv, ww, grads); break;
-    default: 
-      Msg::Error("Order %d triangle shape function gradient not implemented",
-		 getPolynomialOrder()); 
-      break;
-    }
-  }
-  
-  for (int i = 0; i < 2; i++) s[i] = grads[num][i];
-  s[2] = 0;
-}
-
-void MTriangle::jac(int ord, MVertex *vs[], double uu, double vv, double ww,
-		    double j[2][3])
-{
-  double grads[256][2];
-  int nf = getNumFaceVertices();
-
-  if (!nf){
-    switch(ord){
-    case 1: gmshFunctionSpaces::find(MSH_TRI_3).df(uu, vv, ww, grads); break;
-    case 2: gmshFunctionSpaces::find(MSH_TRI_6).df(uu, vv, ww, grads); break;
-    case 3: gmshFunctionSpaces::find(MSH_TRI_9).df(uu, vv, ww, grads); break;
-    case 4: gmshFunctionSpaces::find(MSH_TRI_12).df(uu, vv, ww, grads); break;
-    case 5: gmshFunctionSpaces::find(MSH_TRI_15I).df(uu, vv, ww, grads); break;
-    default: Msg::Error("Order %d triangle jac not implemented", ord); break;
-    }
-  }
-  else{
-    switch(ord){
-    case 1: gmshFunctionSpaces::find(MSH_TRI_3).df(uu, vv, ww, grads); break;
-    case 2: gmshFunctionSpaces::find(MSH_TRI_6).df(uu, vv, ww, grads); break;
-    case 3: gmshFunctionSpaces::find(MSH_TRI_10).df(uu, vv, ww, grads); break;
-    case 4: gmshFunctionSpaces::find(MSH_TRI_15).df(uu, vv, ww, grads); break;
-    case 5: gmshFunctionSpaces::find(MSH_TRI_21).df(uu, vv, ww, grads); break;
-    default: Msg::Error("Order %d triangle jac not implemented", ord); break;
-    }
-  }
-  j[0][0] = 0 ; for(int i = 0; i < 3; i++) j[0][0] += grads [i][0] * _v[i]->x();
-  j[1][0] = 0 ; for(int i = 0; i < 3; i++) j[1][0] += grads [i][1] * _v[i]->x();
-  j[0][1] = 0 ; for(int i = 0; i < 3; i++) j[0][1] += grads [i][0] * _v[i]->y();
-  j[1][1] = 0 ; for(int i = 0; i < 3; i++) j[1][1] += grads [i][1] * _v[i]->y();
-  j[0][2] = 0 ; for(int i = 0; i < 3; i++) j[0][2] += grads [i][0] * _v[i]->z();
-  j[1][2] = 0 ; for(int i = 0; i < 3; i++) j[1][2] += grads [i][1] * _v[i]->z();
-
-  if (ord == 1) return;
-
-  for(int i = 3; i < 3 * ord + nf; i++) j[0][0] += grads[i][0] * vs[i - 3]->x();
-  for(int i = 3; i < 3 * ord + nf; i++) j[1][0] += grads[i][1] * vs[i - 3]->x();
-  for(int i = 3; i < 3 * ord + nf; i++) j[0][1] += grads[i][0] * vs[i - 3]->y();
-  for(int i = 3; i < 3 * ord + nf; i++) j[1][1] += grads[i][1] * vs[i - 3]->y();
-  for(int i = 3; i < 3 * ord + nf; i++) j[0][2] += grads[i][0] * vs[i - 3]->z();
-  for(int i = 3; i < 3 * ord + nf; i++) j[1][2] += grads[i][1] * vs[i - 3]->z();
-}
-
-void MTriangle::pnt(int ord, MVertex *vs[], double uu, double vv, double ww,
-		    SPoint3 &p)
-{
-  double sf[256];
-  int nf = getNumFaceVertices();
-
-  if (!nf){
-    switch(ord){
-    case 1: gmshFunctionSpaces::find(MSH_TRI_3).f(uu, vv, sf); break;
-    case 2: gmshFunctionSpaces::find(MSH_TRI_6).f(uu, vv, sf); break;
-    case 3: gmshFunctionSpaces::find(MSH_TRI_9).f(uu, vv, sf); break;
-    case 4: gmshFunctionSpaces::find(MSH_TRI_12).f(uu, vv, sf); break;
-    case 5: gmshFunctionSpaces::find(MSH_TRI_15I).f(uu, vv, sf); break;
-    default: Msg::Error("Order %d triangle pnt not implemented", ord); break;
-    }
-  }
-  else{
-    switch(ord){
-    case 1: gmshFunctionSpaces::find(MSH_TRI_3).f(uu, vv, sf); break;
-    case 2: gmshFunctionSpaces::find(MSH_TRI_6).f(uu, vv, sf); break;
-    case 3: gmshFunctionSpaces::find(MSH_TRI_10).f(uu, vv, sf); break;
-    case 4: gmshFunctionSpaces::find(MSH_TRI_15).f(uu, vv, sf); break;
-    case 5: gmshFunctionSpaces::find(MSH_TRI_21).f(uu, vv, sf); break;
-    default: Msg::Error("Order %d triangle pnt not implemented", ord); break;
-    }
-  }
-
-  double x = 0 ; for(int i = 0; i < 3; i++) x += sf[i] * _v[i]->x();
-  double y = 0 ; for(int i = 0; i < 3; i++) y += sf[i] * _v[i]->y();
-  double z = 0 ; for(int i = 0; i < 3; i++) z += sf[i] * _v[i]->z();
-
-  for(int i = 3; i < 3 * ord + nf; i++) x += sf[i] * vs[i - 3]->x();
-  for(int i = 3; i < 3 * ord + nf; i++) y += sf[i] * vs[i - 3]->y();
-  for(int i = 3; i < 3 * ord + nf; i++) z += sf[i] * vs[i - 3]->z();
-
-  p = SPoint3(x, y, z);
-}
-
-void MTetrahedron::jac(int ord, MVertex *vs[], double uu, double vv, double ww,
-		       double j[3][3])
-{
-  double grads[256][3];
-  switch(ord){
-  case 1: gmshFunctionSpaces::find(MSH_TET_4) .df(uu, vv, ww, grads); break;
-  case 2: gmshFunctionSpaces::find(MSH_TET_10).df(uu, vv, ww, grads); break;
-  case 3: gmshFunctionSpaces::find(MSH_TET_20).df(uu, vv, ww, grads); break;
-  case 4: gmshFunctionSpaces::find(MSH_TET_35).df(uu, vv, ww, grads); break;
-  case 5: gmshFunctionSpaces::find(MSH_TET_56).df(uu, vv, ww, grads); break;
-  default: Msg::Error("Order %d tetrahedron jac not implemented", ord); break;
-  }
- 
-  j[0][0] = 0 ; for(int i = 0; i < 4; i++) j[0][0] += grads [i][0] * _v[i]->x();
-  j[1][0] = 0 ; for(int i = 0; i < 4; i++) j[1][0] += grads [i][1] * _v[i]->x();
-  j[2][0] = 0 ; for(int i = 0; i < 4; i++) j[2][0] += grads [i][2] * _v[i]->x();
-  
-  j[0][1] = 0 ; for(int i = 0; i < 4; i++) j[0][1] += grads [i][0] * _v[i]->y();
-  j[1][1] = 0 ; for(int i = 0; i < 4; i++) j[1][1] += grads [i][1] * _v[i]->y();
-  j[2][1] = 0 ; for(int i = 0; i < 4; i++) j[2][1] += grads [i][2] * _v[i]->y();
-  
-  j[0][2] = 0 ; for(int i = 0; i < 4; i++) j[0][2] += grads [i][0] * _v[i]->z();
-  j[1][2] = 0 ; for(int i = 0; i < 4; i++) j[1][2] += grads [i][1] * _v[i]->z();
-  j[2][2] = 0 ; for(int i = 0; i < 4; i++) j[2][2] += grads [i][2] * _v[i]->z();
-  
-  if (ord == 1) return;
-
-  const int N = (ord+1)*(ord+2)*(ord+3)/6;
-
-  for(int i = 4; i < N; i++) j[0][0] += grads[i][0] * vs[i - 4]->x();
-  for(int i = 4; i < N; i++) j[1][0] += grads[i][1] * vs[i - 4]->x();
-  for(int i = 4; i < N; i++) j[2][0] += grads[i][2] * vs[i - 4]->x();
-
-  for(int i = 4; i < N; i++) j[0][1] += grads[i][0] * vs[i - 4]->y();
-  for(int i = 4; i < N; i++) j[1][1] += grads[i][1] * vs[i - 4]->y();
-  for(int i = 4; i < N; i++) j[2][1] += grads[i][2] * vs[i - 4]->y();
-
-  for(int i = 4; i < N; i++) j[0][2] += grads[i][0] * vs[i - 4]->z();
-  for(int i = 4; i < N; i++) j[1][2] += grads[i][1] * vs[i - 4]->z();
-  for(int i = 4; i < N; i++) j[2][2] += grads[i][2] * vs[i - 4]->z();
-}
-
-void MTetrahedron::pnt(int ord, MVertex *vs[], double uu, double vv, double ww,
-		       SPoint3 &p)
-{
-  double sf[256];
-
-  int nv = getNumVolumeVertices();
-
-  if (!nv){
-    switch(ord){
-    case 1: gmshFunctionSpaces::find(MSH_TET_4).f(uu, vv, ww, sf); break;
-    case 2: gmshFunctionSpaces::find(MSH_TET_10).f(uu, vv, ww, sf); break;
-    case 3: gmshFunctionSpaces::find(MSH_TET_20).f(uu, vv, ww, sf); break;
-    case 4: gmshFunctionSpaces::find(MSH_TET_34).f(uu, vv, ww, sf); break;
-    case 5: gmshFunctionSpaces::find(MSH_TET_52).f(uu, vv, ww, sf); break;
-    default: Msg::Error("Order %d tetrahedron pnt not implemented", ord); break;
-    }
-  }
-  else{
-    switch(ord){
-    case 4: gmshFunctionSpaces::find(MSH_TET_35).f(uu, vv, ww, sf); break;
-    case 5: gmshFunctionSpaces::find(MSH_TET_56).f(uu, vv, ww, sf); break;
-    default: Msg::Error("Order %d tetrahedron pnt not implemented", ord); break;
-    }
-  }
-    
-  double x = 0 ; for(int i = 0; i < 4; i++) x += sf[i] * _v[i]->x();
-  double y = 0 ; for(int i = 0; i < 4; i++) y += sf[i] * _v[i]->y();
-  double z = 0 ; for(int i = 0; i < 4; i++) z += sf[i] * _v[i]->z();
-
-  int nbComplete = (ord + 1) * (ord + 2) * (ord + 3) / 6;
-  int nbInterior = (ord - 3) * (ord - 2) * (ord - 1) / 6;
-  
-  const int N = nv ? nbComplete : nbComplete - nbInterior;
-  
-  for(int i = 4; i < N; i++) x += sf[i] * vs[i - 4]->x();
-  for(int i = 4; i < N; i++) y += sf[i] * vs[i - 4]->y();
-  for(int i = 4; i < N; i++) z += sf[i] * vs[i - 4]->z();
-
-  p = SPoint3(x, y, z);
+  return NULL;
 }
 
 const int numSubEdges = 6;
@@ -1096,22 +931,22 @@ void MTriangleN::getFaceRep(int num, double *x, double *y, double *z, SVector3 *
   const double d = 1. / numSubEdges;
 
   SPoint3 pnt1, pnt2, pnt3;
-  double J1[2][3], J2[2][3], J3[2][3];
+  double J1[3][3], J2[3][3], J3[3][3];
   if (ix % 2 == 0){
     pnt(ix / 2 * d, iy * d, 0, pnt1);
     pnt((ix / 2 + 1) * d, iy * d, 0, pnt2);
     pnt(ix / 2 * d, (iy + 1) * d, 0, pnt3);
-    jac(ix / 2 * d, iy * d, 0, J1);
-    jac((ix / 2 + 1) * d, iy * d, 0, J2);
-    jac(ix / 2 * d, (iy + 1) * d, 0, J3);
+    getJacobian(ix / 2 * d, iy * d, 0, J1);
+    getJacobian((ix / 2 + 1) * d, iy * d, 0, J2);
+    getJacobian(ix / 2 * d, (iy + 1) * d, 0, J3);
   }
   else{
     pnt((ix / 2 + 1) * d, iy * d, 0, pnt1);
     pnt((ix / 2 + 1) * d, (iy + 1) * d, 0, pnt2);
     pnt(ix / 2 * d, (iy + 1) * d, 0, pnt3);
-    jac((ix / 2 + 1) * d, iy * d, 0, J1);
-    jac((ix / 2 + 1) * d, (iy + 1) * d, 0, J2);
-    jac(ix / 2 * d, (iy + 1) * d, 0, J3);
+    getJacobian((ix / 2 + 1) * d, iy * d, 0, J1);
+    getJacobian((ix / 2 + 1) * d, (iy + 1) * d, 0, J2);
+    getJacobian(ix / 2 * d, (iy + 1) * d, 0, J3);
   }
   {
     SVector3 d1(J1[0][0], J1[0][1], J1[0][2]);
@@ -1141,11 +976,11 @@ int MTriangleN::getNumEdgesRep(){ return 3 * numSubEdges; }
 
 void MTriangleN::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
-  n[0] = n[1] = getFace(0).normal();
+  n[0] = n[1] = n[2] = getFace(0).normal();
   int N = getNumEdgesRep() / 3;
   if (num < N){
     SPoint3 pnt1, pnt2;
-    pnt((double)num / N, 0., 0,pnt1);
+    pnt((double)num / N, 0., 0.,pnt1);
     pnt((double)(num + 1) / N, 0., 0, pnt2);
     x[0] = pnt1.x(); x[1] = pnt2.x();
     y[0] = pnt1.y(); y[1] = pnt2.y();
@@ -1171,83 +1006,6 @@ void MTriangleN::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *
     y[0] = pnt1.y(); y[1] = pnt2.y();
     z[0] = pnt1.z(); z[1] = pnt2.z();
   }
-}
-
-void MTetrahedron10::getShapeFunction(int num, double uu, double vv, double ww, double &s)
-{
-  double sf[256];
-  gmshFunctionSpaces::find(MSH_TET_10).f(uu, vv, ww, sf);
-  s = sf[num];
-}
-
-void MTetrahedron10::getGradShapeFunction(int num, double uu, double vv, double ww,
-					  double gs[3])
-{
-  double gsf[256][3];
-  gmshFunctionSpaces::find(MSH_TET_10).df(uu, vv, ww, gsf);
-  for (int i = 0; i < 3; i++) gs[i] = gsf[num][i];
-}
-
-void MTetrahedronN::getShapeFunction(int num, double uu, double vv, double ww, double &s)
-{
-  double sf[256];
-
-  int nv = getNumVolumeVertices();
-
-  if (!nv){
-    switch(getPolynomialOrder()){
-    case 1: gmshFunctionSpaces::find(MSH_TET_4).f(uu, vv, ww, sf); break;
-    case 2: gmshFunctionSpaces::find(MSH_TET_10).f(uu, vv, ww, sf); break;
-    case 3: gmshFunctionSpaces::find(MSH_TET_20).f(uu, vv, ww, sf); break;
-    case 4: gmshFunctionSpaces::find(MSH_TET_34).f(uu, vv, ww, sf); break;
-    case 5: gmshFunctionSpaces::find(MSH_TET_52).f(uu, vv, ww, sf); break;
-    default:
-      Msg::Error("Order %d tetrahedron pnt not implemented", getPolynomialOrder()); 
-      break;
-    }
-  }
-  else{
-    switch(getPolynomialOrder()){
-    case 4: gmshFunctionSpaces::find(MSH_TET_35).f(uu, vv, ww, sf); break;
-    case 5: gmshFunctionSpaces::find(MSH_TET_56).f(uu, vv, ww, sf); break;
-    default:
-      Msg::Error("Order %d tetrahedron pnt not implemented", getPolynomialOrder());
-      break;
-    }
-  }
-
-  s = sf[num];
-}
-
-void MTetrahedronN::getGradShapeFunction(int num, double uu, double vv, double ww, 
-					 double gs[3])
-{
-  double gsf[256][3];
-
-  int nv = getNumVolumeVertices();
-
-  if (!nv){
-    switch(getPolynomialOrder()){
-    case 1: gmshFunctionSpaces::find(MSH_TET_4) .df(uu, vv, ww, gsf); break;
-    case 2: gmshFunctionSpaces::find(MSH_TET_10).df(uu, vv, ww, gsf); break;
-    case 3: gmshFunctionSpaces::find(MSH_TET_20).df(uu, vv, ww, gsf); break;
-    case 4: gmshFunctionSpaces::find(MSH_TET_34).df(uu, vv, ww, gsf); break;
-    case 5: gmshFunctionSpaces::find(MSH_TET_52).df(uu, vv, ww, gsf); break;
-    default: 
-      Msg::Error("Order %d tetrahedron pnt not implemented", getPolynomialOrder());
-      break;
-    }
-  }
-  else{
-    switch(getPolynomialOrder()){
-    case 4: gmshFunctionSpaces::find(MSH_TET_35).df(uu, vv, ww, gsf); break;
-    case 5: gmshFunctionSpaces::find(MSH_TET_56).df(uu, vv, ww, gsf); break;
-    default: 
-      Msg::Error("Order %d tetrahedron pnt not implemented", getPolynomialOrder());
-      break;
-    }
-  }
-  for (int i = 0; i < 3; i++) gs[i] = gsf[num][i];
 }
 
 int MTetrahedronN::getNumEdgesRep(){ return 6 * numSubEdges; }
@@ -1300,7 +1058,7 @@ void MTetrahedronN::getFaceRep(int num, double *x, double *y, double *z, SVector
     0 1 2 3
     0 1 2 3 4
     0 1 2 3 4 5
-   */
+  */
 
   //  on the first layer, we have (numSubEdges-1) * 2 + 1 triangles
   //  on the second layer, we have (numSubEdges-2) * 2 + 1 triangles
