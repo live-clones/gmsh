@@ -11,9 +11,10 @@ class BDS_Face;
 class MVertex;
 class MTriangle;
 class MTetrahedron;
+class MElement;
+
 enum gmshQualityMeasure4Triangle {QMTRI_RHO, QMTRI_COND};
 enum gmshQualityMeasure4Tet{QMTET_1, QMTET_2, QMTET_3, QMTET_ONE, QMTET_COND};
-
 
 double qmDistorsionOfMapping (MTriangle *e);
 double qmDistorsionOfMapping (MTetrahedron *e);
