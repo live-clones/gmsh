@@ -102,9 +102,7 @@ class MElement
   // get the number of primary vertices (first-order element)
   int getNumPrimaryVertices()
   {
-    return getNumVertices() -
-      getNumEdgeVertices() - 
-      getNumFaceVertices() -
+    return getNumVertices() - getNumEdgeVertices() - getNumFaceVertices() -
       getNumVolumeVertices();
   }
 
@@ -141,11 +139,10 @@ class MElement
   virtual double minEdge();
 
   // get the quality measures
-  
   virtual double rhoShapeMeasure();
   virtual double gammaShapeMeasure(){ return 0.; }
   virtual double etaShapeMeasure(){ return 0.; }
-  virtual double distoShapeMeasure() {return 1.0;}
+  virtual double distoShapeMeasure(){ return 1.0; }
 
   // compute the barycenter
   virtual SPoint3 barycenter();
@@ -162,28 +159,31 @@ class MElement
   // return an information string for the element
   virtual std::string getInfoString();
 
-  virtual const gmshFunctionSpace* getFunctionSpace(int ord = -1) const {
-    Msg::Fatal("Function space not implemented for element %s",getStringForPOS());
-    return NULL;
+  // get the function space for the element
+  virtual const gmshFunctionSpace* getFunctionSpace(int ord = -1) const 
+  {
+    Msg::Fatal("Function space not implemented for element %s", getStringForPOS());
+    return 0;
   }
   
   // return the interpolating nodal shape function associated with
   // node num, evaluated at point (u,v,w) in parametric coordinates
-  virtual void getShapeFunction(int num, double u, double v, double w,double &s);
+  virtual void getShapeFunction(int num, double u, double v, double w, double &s);
 
   // return the gradient of of the nodal shape function associated
   // with node num, evaluated at point (u,v,w) in parametric
   // coordinates
-  virtual void getGradShapeFunction(int num, double u, double v, double w,double s[3]);
+  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]);
   
   // return the Jacobian of the element evaluated at point (u,v,w) in
   // parametric coordinates
-  
   double getJacobian(double u, double v, double w, double jac[3][3]);
   double getPrimaryJacobian(double u, double v, double w, double jac[3][3]);
   
-  virtual void pnt       (double u,double v,double w,SPoint3 &p);
-  virtual void primaryPnt(double u,double v,double w,SPoint3 &p);
+  // get the point in cartesian coordinates corresponding to the point
+  // (u,v,w) in parametric coordinates
+  virtual void pnt(double u, double v, double w, SPoint3 &p);
+  virtual void primaryPnt(double u, double v, double w, SPoint3 &p);
   
   // invert the parametrisation
   virtual void xyz2uvw(double xyz[3], double uvw[3]);
@@ -351,17 +351,13 @@ class MLine : public MElement {
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
   }
-
-
   virtual const gmshFunctionSpace* getFunctionSpace(int=-1) const;
-  
   virtual bool isInside(double u, double v, double w, double tol=1.e-8)
   {
     if(u < -(1. + tol) || u > (1. + tol))
       return false;
     return true;
   }
-  
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
 };
 
@@ -405,14 +401,12 @@ class MLine3 : public MLine {
     };
     _getEdgeRep(getVertex(e[num][0]), getVertex(e[num][1]), x, y, z, n);
   }
-   
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
     MLine::_getEdgeVertices(v);
     v[2] = _vs[0];
   }
-  
   virtual int getTypeForMSH() const { return MSH_LIN_3; }
   virtual int getTypeForUNV() const { return 24; } // parabolic beam
   virtual int getTypeForVTK() const { return 21; }
@@ -568,17 +562,13 @@ class MTriangle : public MElement {
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
-
-  
   virtual const gmshFunctionSpace* getFunctionSpace(int=-1) const;
-  
   virtual bool isInside(double u, double v, double w, double tol=1.e-8)
   {
     if(u < (-tol) || v < (-tol) || u > ((1. + tol) - v))
       return false; 
     return true;
   }
-  
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
   virtual SPoint3 circumcenter();
  private:
@@ -1192,7 +1182,6 @@ class MTetrahedron : public MElement {
       return false;
     return true;
   }
-  
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
   virtual SPoint3 circumcenter();
  private:

@@ -337,36 +337,31 @@ std::string MElement::getInfoString()
   return std::string(tmp);
 }
 
-double MElement::getJacobian(double u, double v, double w, double jac[3][3])
+static double _computeDeterminantAndRegularize(MElement *ele, double jac[3][3])
 {
-
-  const gmshFunctionSpace* fs = getFunctionSpace();
-  
-  jac[0][0] = jac[0][1] = jac[0][2] = 0.;
-  jac[1][0] = jac[1][1] = jac[1][2] = 0.;
-  jac[2][0] = jac[2][1] = jac[2][2] = 0.;
-
-  double gsf[256][3];
-  fs->df(u,v,w,gsf);
-  for (int i=0;i<getNumVertices();i++) {
-    
-    const MVertex* v = getVertex(i);
-    double* gg = gsf[i];
-    
-    for (int j=0;j<3;j++) {
-      jac[j][0] += v->x() * gg[j];
-      jac[j][1] += v->y() * gg[j];
-      jac[j][2] += v->z() * gg[j];
-    }
-  }
-
   double dJ = 0;
   
-  switch (fs->monomials.size2()) {
+  switch (ele->getDim()) {
 
   case 1: 
     {
-      dJ = sqrt(jac[0][0] * jac[0][0] + jac[1][1] * jac[0][0] + jac[2][2] * jac[2][2]);
+      dJ = sqrt(SQU(jac[0][0]) + SQU(jac[0][1]) + SQU(jac[0][2]));
+
+      // regularize matrix
+      double a[3], b[3], c[3];
+      a[0] = ele->getVertex(1)->x() - ele->getVertex(0)->x(); 
+      a[1] = ele->getVertex(1)->y() - ele->getVertex(0)->y();
+      a[2] = ele->getVertex(1)->z() - ele->getVertex(0)->z();     
+      if((fabs(a[0]) >= fabs(a[1]) && fabs(a[0]) >= fabs(a[2])) ||
+         (fabs(a[1]) >= fabs(a[0]) && fabs(a[1]) >= fabs(a[2]))) {
+        b[0] = a[1]; b[1] = -a[0]; b[2] = 0.;
+      }
+      else {
+        b[0] = 0.; b[1] = a[2]; b[2] = -a[1];
+      }
+      prodve(a, b, c);
+      jac[1][0] = b[0]; jac[1][1] = b[1]; jac[1][2] = b[2]; 
+      jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2]; 
       break;
     }
   case 2:
@@ -374,6 +369,18 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3])
       dJ = sqrt(SQU(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0]) +
                 SQU(jac[0][2] * jac[1][0] - jac[0][0] * jac[1][2]) +
                 SQU(jac[0][1] * jac[1][2] - jac[0][2] * jac[1][1]));
+
+      // regularize matrix
+      double a[3], b[3], c[3];
+      a[0] = jac[0][0];
+      a[1] = jac[0][1];
+      a[2] = jac[0][2];
+      b[0] = jac[1][0];
+      b[1] = jac[1][1];
+      b[2] = jac[1][2];
+      prodve(a, b, c);
+      norme(c);
+      jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2];
       break;
     }
   case 3:
@@ -387,11 +394,31 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3])
   return dJ; 
 }
 
+double MElement::getJacobian(double u, double v, double w, double jac[3][3])
+{
+  const gmshFunctionSpace* fs = getFunctionSpace();
+  
+  jac[0][0] = jac[0][1] = jac[0][2] = 0.;
+  jac[1][0] = jac[1][1] = jac[1][2] = 0.;
+  jac[2][0] = jac[2][1] = jac[2][2] = 0.;
 
+  double gsf[256][3];
+  fs->df(u, v, w, gsf);
+  for (int i = 0; i < getNumVertices(); i++) {
+    const MVertex* v = getVertex(i);
+    double* gg = gsf[i];
+    for (int j = 0; j < 3; j++) {
+      jac[j][0] += v->x() * gg[j];
+      jac[j][1] += v->y() * gg[j];
+      jac[j][2] += v->z() * gg[j];
+    }
+  }
+
+  return _computeDeterminantAndRegularize(this, jac);
+}
 
 double MElement::getPrimaryJacobian(double u, double v, double w, double jac[3][3])
 {
-
   const gmshFunctionSpace* fs = getFunctionSpace(1);
   
   jac[0][0] = jac[0][1] = jac[0][2] = 0.;
@@ -399,100 +426,56 @@ double MElement::getPrimaryJacobian(double u, double v, double w, double jac[3][
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
 
   double gsf[256][3];
-  fs->df(u,v,w,gsf);
-  
-  for (int i=0;i<getNumPrimaryVertices();i++) {
-    
+  fs->df(u, v, w, gsf);
+  for(int i = 0; i < getNumPrimaryVertices(); i++) {
     const MVertex* v = getVertex(i);
     double* gg = gsf[i];
-    
-    for (int j=0;j<3;j++) {
+    for (int j = 0; j < 3; j++) {
       jac[j][0] += v->x() * gg[j];
       jac[j][1] += v->y() * gg[j];
       jac[j][2] += v->z() * gg[j];
     }
   }
 
-  double dJ = 0;
-  
-  switch (fs->monomials.size2()) {
-
-  case 1: 
-    {
-      dJ = sqrt(jac[0][0] * jac[0][0] + jac[0][0] * jac[0][0] + jac[0][0] * jac[0][0]);
-      break;
-    }
-  case 2:
-    {
-      dJ = sqrt(SQU(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0]) +
-                SQU(jac[0][2] * jac[1][0] - jac[0][0] * jac[1][2]) +
-                SQU(jac[0][1] * jac[1][2] - jac[0][2] * jac[1][1]));
-      break;
-    }
-  case 3:
-    {
-      dJ = fabs(jac[0][0] * jac[1][1] * jac[2][2] + jac[0][2] * jac[1][0] * jac[2][1] +
-                jac[0][1] * jac[1][2] * jac[2][0] - jac[0][2] * jac[1][1] * jac[2][0] -
-                jac[0][0] * jac[1][2] * jac[2][1] - jac[0][1] * jac[1][0] * jac[2][2]);
-      break;
-    }
-  }
-  return dJ; 
+  return _computeDeterminantAndRegularize(this, jac);
 }
 
-void MElement::pnt(double uu, double vv, double ww, SPoint3 &p) {
-
-
-  double x=0.;
-  double y=0.;
-  double z=0.;
-  
+void MElement::pnt(double uu, double vv, double ww, SPoint3 &p)
+{
+  double x = 0., y = 0., z = 0.;
   const gmshFunctionSpace* fs = getFunctionSpace();
-
-  if (fs) {
-
+  if(fs){
     double sf[256];
-    fs->f(uu,vv,ww,sf);
-    
-    for (int j=0;j<getNumVertices();j++) {
+    fs->f(uu, vv, ww, sf);
+    for (int j = 0; j < getNumVertices(); j++) {
       const MVertex* v = getVertex(j);
       x += sf[j] * v->x();
       y += sf[j] * v->y();
       z += sf[j] * v->z();
     } 
   }
-  else Msg::Fatal("Could not find function space\n");
-  
-  p = SPoint3(x,y,z);
-  
+  else 
+    Msg::Error("Could not find function space");
+  p = SPoint3(x, y, z);
 }
 
-void MElement::primaryPnt(double uu, double vv, double ww, SPoint3 &p) {
-  
-  double x=0.;
-  double y=0.;
-  double z=0.;
-  
+void MElement::primaryPnt(double uu, double vv, double ww, SPoint3 &p)
+{
+  double x = 0., y = 0., z = 0.;
   const gmshFunctionSpace* fs = getFunctionSpace(1);
-
-  if (fs) {
-
+  if(fs){
     double sf[256];
-    fs->f(uu,vv,ww,sf);
-    if (getNumPrimaryVertices() != 4) printf("Incorrect number of vertices %d\n",getNumPrimaryVertices()
-                                             );
-    
-    
-    for (int j=0;j<getNumPrimaryVertices();j++) {
+    fs->f(uu, vv, ww, sf);
+    if (getNumPrimaryVertices() != 4) 
+      Msg::Error("Incorrect number of vertices %d", getNumPrimaryVertices());
+    for (int j = 0; j < getNumPrimaryVertices(); j++) {
       const MVertex* v = getVertex(j);
       x += sf[j] * v->x();
       y += sf[j] * v->y();
       z += sf[j] * v->z();
     } 
   }
-  
   p = SPoint3(x,y,z);
-  
 }
 
 void MElement::xyz2uvw(double xyz[3], double uvw[3])
@@ -902,7 +885,10 @@ const gmshFunctionSpace* MLine::getFunctionSpace(int o) const {
   case 3: return &gmshFunctionSpaces::find(MSH_LIN_4); break;
   case 4: return &gmshFunctionSpaces::find(MSH_LIN_5); break;
   case 5: return &gmshFunctionSpaces::find(MSH_LIN_6); break;
-  default: Msg::Error("Order %d line point interpolation not implemented", getPolynomialOrder()); break;
+  default: 
+    Msg::Error("Order %d line point interpolation not implemented",
+	       getPolynomialOrder()); 
+    break;
   }
   return NULL;
 }
