@@ -146,9 +146,7 @@ void FieldManager::reset()
 Field *FieldManager::get(int id)
 {
   iterator it = find(id);
-  if(it == end()) {
-    return 0;
-  }
+  if(it == end()) return 0;
   return it->second;
 }
 
@@ -381,7 +379,9 @@ class UTMField : public Field
       meridionalarc * k0 + k0 * nu * slat * clat / 2 * p2 +
       k0 * nu * slat * clat3 / 24 * (5 - tlat2 + 9 * ep2 * clat2 +
                                      4 * ep4 * clat4) * p4;
-    return (*GModel::current()->getFields()->get(field_id)) (utm_x, utm_y, 0);
+    Field *field = GModel::current()->getFields()->get(field_id);
+    if(!field) return MAX_LC;
+    return (*field)(utm_x, utm_y, 0);
   }
   FieldDialogBox *&dialog_box()
   {
@@ -405,8 +405,9 @@ class LonLatField : public Field
   }
   double operator() (double x, double y, double z)
   {
-    return (*GModel::current()->getFields()->get(field_id))
-      (atan2(y, x), asin(z / sqrt(x * x + y * y + z * z)), 0);
+    Field *field = GModel::current()->getFields()->get(field_id);
+    if(!field) return MAX_LC;
+    return (*field)(atan2(y, x), asin(z / sqrt(x * x + y * y + z * z)), 0);
   }
   FieldDialogBox *&dialog_box()
   {
@@ -482,6 +483,7 @@ class ThresholdField : public Field
   double operator() (double x, double y, double z)
   {
     Field *field = GModel::current()->getFields()->get(iField);
+    if(!field) return MAX_LC;
     double r = ((*field) (x, y, z) - dmin) / (dmax - dmin);
     r = std::max(std::min(r, 1.), 0.);
     double lc;
@@ -525,6 +527,7 @@ class GradientField : public Field
   double operator() (double x, double y, double z)
   {
     Field *field = GModel::current()->getFields()->get(iField);
+    if(!field) return MAX_LC;
     double gx, gy, gz;
     switch (kind) {
     case 0:    /* x */
@@ -589,6 +592,7 @@ class CurvatureField : public Field
   double operator() (double x, double y, double z)
   {
     Field *field = GModel::current()->getFields()->get(iField);
+    if(!field) return MAX_LC;
     double grad[6][3];
     grad_norm(*field, x + delta / 2, y, z, grad[0]);
     grad_norm(*field, x - delta / 2, y, z, grad[1]);
@@ -640,6 +644,7 @@ class MaxEigenHessianField : public Field
   double operator() (double x, double y, double z)
   {
     Field *field = GModel::current()->getFields()->get(iField);
+    if(!field) return MAX_LC;
     gsl_matrix_set(gslmat,1,0,
           (*field) (x + delta/2 , y+delta/2, z)
         + (*field) (x - delta/2 , y-delta/2, z)
@@ -695,12 +700,11 @@ class LaplacianField : public Field
   double operator() (double x, double y, double z)
   {
     Field *field = GModel::current()->getFields()->get(iField);
-      return (
-        (*field) (x + delta , y, z)+ (*field) (x - delta , y, z)
-        +(*field) (x, y + delta , z)+ (*field) (x, y - delta , z)
-        +(*field) (x, y, z + delta )+ (*field) (x, y, z - delta )
-        -6* (*field) (x , y, z)
-        ) / (delta*delta);
+    if(!field) return MAX_LC;
+    return ((*field) (x + delta , y, z)+ (*field) (x - delta , y, z)
+	    +(*field) (x, y + delta , z)+ (*field) (x, y - delta , z)
+	    +(*field) (x, y, z + delta )+ (*field) (x, y, z - delta )
+	    -6* (*field) (x , y, z)) / (delta*delta);
   }
   FieldDialogBox *&dialog_box()
   {
@@ -728,6 +732,7 @@ class MeanField : public Field
   double operator() (double x, double y, double z)
   {
     Field *field = GModel::current()->getFields()->get(iField);
+    if(!field) return MAX_LC;
     return ((*field) (x + delta , y, z) + (*field) (x - delta, y, z)
 	    + (*field) (x, y + delta, z) + (*field) (x, y - delta, z)
 	    + (*field) (x, y, z + delta) + (*field) (x, y, z - delta)
@@ -891,9 +896,11 @@ class ParametricField : public Field
       }
       update_needed = false;
     }
-    return (*GModel::current()->getFields()->get(ifield))
-      (expr[0].evaluate(x, y, z), expr[1].evaluate(x, y, z),
-       expr[2].evaluate(x, y, z));
+    Field *field = GModel::current()->getFields()->get(ifield);
+    if(!field) return MAX_LC;
+    return (*field)(expr[0].evaluate(x, y, z),
+		    expr[1].evaluate(x, y, z),
+		    expr[2].evaluate(x, y, z));
   }
   FieldDialogBox *&dialog_box()
   {
@@ -987,11 +994,9 @@ class MinField : public Field
   double operator() (double x, double y, double z)
   {
     double v = MAX_LC;
-    for(std::list<int>::iterator it = idlist.begin(); it != idlist.end();
-        it++) {
+    for(std::list<int>::iterator it = idlist.begin(); it != idlist.end(); it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
-      if(f)
-        v = std::min(v, (*f) (x, y, z));
+      if(f) v = std::min(v, (*f) (x, y, z));
     }
     return v;
   }
@@ -1018,11 +1023,9 @@ class MaxField : public Field
   double operator() (double x, double y, double z)
   {
     double v = -MAX_LC;
-    for(std::list<int>::iterator it = idlist.begin(); it != idlist.end();
-        it++) {
+    for(std::list<int>::iterator it = idlist.begin(); it != idlist.end(); it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
-      if(f)
-        v = std::max(v, (*f) (x, y, z));
+      if(f) v = std::max(v, (*f) (x, y, z));
     }
     return v;
   }
