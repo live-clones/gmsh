@@ -105,6 +105,7 @@ framework: lib
 embed:
 	@if [ -r ../getdp/contrib/gmsh/Makefile ]; then \
           rsync -av ${GMSH_EMBEDDED} ../getdp/contrib/gmsh;\
+          rm -f ../getdp/contrib/gmsh/Message.h;\
         fi
 
 variables: configure
@@ -203,7 +204,7 @@ source-tree: purge
 
 source: source-tree
 	cd gmsh-${GMSH_VERSION} && rm -rf ${GMSH_VERSION_FILE}\
-          contrib/NR contrib/Tetgen/*.{cxx,h} contrib/misc/variables.i*\
+          contrib/NR contrib/Tetgen/*.{cxx,h} contrib/misc/variables.i*
 	tar zcf gmsh-${GMSH_VERSION}-source.tgz gmsh-${GMSH_VERSION}
 
 # Rules to package the binaries
