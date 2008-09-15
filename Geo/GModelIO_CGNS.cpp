@@ -264,7 +264,6 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
   int meshDim;
 
   Msg::Warning("CGNS I/O is at an \"alpha\" software stage");
-  zoneDefinition = 1;
 
   switch(zoneDefinition) {
   case 1:  // By partition
@@ -804,7 +803,22 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
           int cgIndexZone;
           int cgZoneSize[3];
           cgZoneSize[0] = writeZone->zoneVertVec.size();  // Number of vertices
+#ifdef CGNS_TEST1
+          // Count all the sub-elements in a Triangle 10
+          cgZoneSize[1] = 0;
+          for(int iElemType = 0; iElemType != MSH_NUM_TYPE; ++iElemType) {
+            switch(iElemType) {
+            case MSH_TRI_10-1:
+              cgZoneSize[1] += writeZone->zoneElemConn[MSH_TRI_10-1].numElem*9;
+              break;
+            default:
+              cgZoneSize[1] += writeZone->zoneElemConn[iElemType].numElem;
+              break;
+            }
+          }
+#else
           cgZoneSize[1] = writeZone->totalElements();  // Number of elements
+#endif
           cgZoneSize[2] = writeZone->numBoVert;  // Number of boundary vertices
           if(cg_zone_write(cgIndexFile, cgIndexBase,
                            writeTask->zoneName.c_str(), cgZoneSize,
@@ -864,6 +878,56 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
             const int typeCGNS = msh2cgns[typeMSHm1][0];
             const char *elemName;
             MElement::getInfoMSH(typeMSHm1+1, &elemName);
+#ifdef CGNS_TEST1
+            if(typeMSHm1 == MSH_TRI_10-1) {
+              const int nElem3o = writeZone->zoneElemConn[20].numElem;
+              const int nElem1o = nElem3o*9;
+              std::vector<int> subConn(nElem1o*3);
+              int iV = 0;
+              for(int iElem3o = 0; iElem3o != nElem3o; ++iElem3o) {
+                int *elem3o =
+                  &writeZone->zoneElemConn[20].connectivity[iElem3o*10];
+                subConn[iV++] = elem3o[9];
+                subConn[iV++] = elem3o[8];
+                subConn[iV++] = elem3o[3];
+                subConn[iV++] = elem3o[5];
+                subConn[iV++] = elem3o[9];
+                subConn[iV++] = elem3o[4];
+                subConn[iV++] = elem3o[6];
+                subConn[iV++] = elem3o[7];
+                subConn[iV++] = elem3o[9];
+                subConn[iV++] = elem3o[3];
+                subConn[iV++] = elem3o[4];
+                subConn[iV++] = elem3o[9];
+                subConn[iV++] = elem3o[9];
+                subConn[iV++] = elem3o[5];
+                subConn[iV++] = elem3o[6];
+                subConn[iV++] = elem3o[8];
+                subConn[iV++] = elem3o[9];
+                subConn[iV++] = elem3o[7];
+                subConn[iV++] = elem3o[0];
+                subConn[iV++] = elem3o[3];
+                subConn[iV++] = elem3o[8];
+                subConn[iV++] = elem3o[4];
+                subConn[iV++] = elem3o[1];
+                subConn[iV++] = elem3o[5];
+                subConn[iV++] = elem3o[7];
+                subConn[iV++] = elem3o[6];
+                subConn[iV++] = elem3o[2];
+              }
+              elemName = "Sub-Triangle 10";
+              int cgIndexSection;
+              if(cg_section_write
+                 (cgIndexFile, cgIndexBase, cgIndexZone, elemName,
+                  TRI_3, iElemSection + 1,
+                  nElem1o + iElemSection,
+                  writeZone->zoneElemConn[20].numBoElem*9 + iElemSection,
+                  &subConn[0], &cgIndexSection))
+                return cgnsErr();
+              ++iElemSection;
+            }
+            else
+#endif
             if(typeCGNS == -1) {
               // This type is not supported in CGNS
               Msg::Warning("Element type %s is not supported in CGNS and "
@@ -871,7 +935,6 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
             }
             else {
               int cgIndexSection;
-              //**Replace blanks in 'elemName' with underscore?
               if(cg_section_write
                  (cgIndexFile, cgIndexBase, cgIndexZone, elemName,
                   static_cast<ElementType_t>(typeCGNS), iElemSection + 1,
