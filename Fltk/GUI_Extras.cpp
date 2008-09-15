@@ -1178,7 +1178,7 @@ struct CGNSWriteDialog
   int status;
   void write_all_options()
   {
-    CTX.mesh.zone_definition = choiceZoneDef->value();
+    opt_mesh_zone_definition(0, GMSH_SET | GMSH_GUI, choiceZoneDef->value());
     CTX.mesh.cgns_options.baseName = inputBaseName->value();
     CTX.mesh.cgns_options.zoneName = inputZoneName->value();
     CTX.mesh.cgns_options.interfaceName = inputInterfaceName->value();

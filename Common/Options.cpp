@@ -5290,7 +5290,10 @@ double opt_mesh_zone_definition(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     CTX.mesh.zone_definition = (int)val;
-    if(CTX.mesh.zone_definition < 0 || CTX.mesh.zone_definition > 2)
+    if( (CTX.mesh.zone_definition < 0 || CTX.mesh.zone_definition > 2) ||
+        (CTX.mesh.zone_definition == 1 &&
+         GModel::current()->getMinPartitionSize() +
+         GModel::current()->getMaxPartitionSize() == 0) )
       CTX.mesh.zone_definition = 0;
   }
   return CTX.mesh.zone_definition;

@@ -1107,7 +1107,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Voronoi" , opt_mesh_voronoi , 0. ,
     "Display the voronoi diagram" },
 
-  { F|O, "ZoneDefinition" , opt_mesh_zone_definition , 2. , 
+  { F|O, "ZoneDefinition" , opt_mesh_zone_definition , 0. , 
     "Method for defining a zone (0=single zone, 1=by partition, 2=by physical)" },
 
   { 0, NULL , NULL , 0. , NULL }
