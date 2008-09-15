@@ -2874,11 +2874,9 @@ static Vertex *VERTEX;
 
 static double min1d(double (*funct) (double), double *xmin)
 {
-  // we should think about the tolerance more carefully...
-  double ax = 1.e-15, bx = 1.e-12, cx = 1.e-11, fa, fb, fx, tol = 1.e-4;
-  mnbrak(&ax, &bx, &cx, &fa, &fx, &fb, funct);
-  //Msg::Info("--MIN1D : ax %12.5E bx %12.5E cx %12.5E",ax,bx,cx);  
-  return (brent(ax, bx, cx, funct, tol, xmin));
+  // 0. for tolerance allows for maximum as code in gsl_brent
+  return (brent(CURVE->ubeg, 0.5*(CURVE->ubeg + CURVE->uend), CURVE->uend,
+                funct, 0., xmin));
 }
 
 static void projectPS(int N, double x[], double res[])
@@ -2900,10 +2898,6 @@ static void projectPS(int N, double x[], double res[])
 
 static double projectPC(double u)
 {
-  if(u < CURVE->ubeg)
-    u = CURVE->ubeg;
-  if(u < CURVE->ubeg)
-    u = CURVE->ubeg;
   Vertex c = InterpolateCurve(CURVE, u, 0);
   return sqrt(SQU(c.Pos.X - VERTEX->Pos.X) +
               SQU(c.Pos.Y - VERTEX->Pos.Y) + 
