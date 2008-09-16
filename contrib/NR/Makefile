@@ -20,7 +20,6 @@ SRC = brent.cpp\
       lnsrch.cpp\
       lubksb.cpp\
       ludcmp.cpp\
-      mnbrak.cpp\
       newt.cpp\
       nrutil.cpp
 
@@ -58,6 +57,5 @@ fmin.o: fmin.cpp nrutil.h
 lnsrch.o: lnsrch.cpp nrutil.h
 lubksb.o: lubksb.cpp
 ludcmp.o: ludcmp.cpp nrutil.h
-mnbrak.o: mnbrak.cpp nrutil.h
 newt.o: newt.cpp nrutil.h
 nrutil.o: nrutil.cpp ../../Common/Message.h

@@ -43,6 +43,7 @@ char gmsh_yyname[256] = "";
 int  gmsh_yyerrorstate = 0;
 int  gmsh_yyviewindex = 0;
 std::map<std::string, std::vector<double> > gmsh_yysymbols;
+std::map<std::string, std::string > gmsh_yystringsymbols;
 
 // Static parser variables (accessible only in this file)
 #if !defined(HAVE_NO_POST)
@@ -730,7 +731,9 @@ Affectation :
     }
   | tSTRING tAFFECT StringExpr tEND 
     { 
-      Msg::Warning("Named string expressions not implemented yet");
+      gmsh_yystringsymbols[$1] = std::string($3);
+      Free($1);
+      Free($3);
     }
 
   // Option Strings
@@ -3140,7 +3143,32 @@ StringExprVar :
     }
   | tSTRING
     {
-      Msg::Warning("Named string expressions not implemented yet");
+      if(!gmsh_yystringsymbols.count($1)){
+	yymsg(0, "Unknown string variable '%s'", $1);
+	$$ = $1;
+      }
+      else{
+	std::string val = gmsh_yystringsymbols[$1];
+	$$ = (char *)Malloc((val.size() + 1) * sizeof(char));
+	strcpy($$, val.c_str());
+	Free($1);
+      }
+    }
+  | tSTRING '.' tSTRING
+    { 
+      const char *val = "";
+      StringOption(GMSH_GET, $1, 0, $3, val);
+      $$ = (char*)Malloc((strlen(val) + 1) * sizeof(char));
+      strcpy($$, val);
+      Free($1); Free($3);
+    }
+  | tSTRING '[' FExpr ']' '.' tSTRING
+    { 
+      const char *val = "";
+      StringOption(GMSH_GET, $1, (int)$3, $6, val);
+      $$ = (char*)Malloc((strlen(val) + 1) * sizeof(char));
+      strcpy($$, val);
+      Free($1); Free($6);
     }
 ;
 
@@ -3151,7 +3179,7 @@ StringExpr :
     }
   | tToday
     {
-      $$ = (char *)Malloc(32*sizeof(char));
+      $$ = (char *)Malloc(32 * sizeof(char));
       time_t now;
       time(&now);
       strcpy($$, ctime(&now));
@@ -3159,7 +3187,7 @@ StringExpr :
     }
   | tStrCat '(' StringExprVar ',' StringExprVar ')'
     {
-      $$ = (char *)Malloc((strlen($3)+strlen($5)+1)*sizeof(char));
+      $$ = (char *)Malloc((strlen($3) + strlen($5) + 1) * sizeof(char));
       strcpy($$, $3);
       strcat($$, $5);
       Free($3);
@@ -3167,7 +3195,7 @@ StringExpr :
     }
   | tStrPrefix '(' StringExprVar ')'
     {
-      $$ = (char *)Malloc((strlen($3)+1)*sizeof(char));
+      $$ = (char *)Malloc((strlen($3) + 1) * sizeof(char));
       int i;
       for(i = strlen($3) - 1; i >= 0; i--){
 	if($3[i] == '.'){
@@ -3181,7 +3209,7 @@ StringExpr :
     }
   | tStrRelative '(' StringExprVar ')'
     {
-      $$ = (char *)Malloc((strlen($3)+1)*sizeof(char));
+      $$ = (char *)Malloc((strlen($3) + 1) * sizeof(char));
       int i;
       for(i = strlen($3) - 1; i >= 0; i--){
 	if($3[i] == '/' || $3[i] == '\\')
@@ -3210,27 +3238,11 @@ StringExpr :
 	$$ = $3;
       }
       else{
-	$$ = (char*)Malloc((strlen(tmpstring)+1)*sizeof(char));
+	$$ = (char*)Malloc((strlen(tmpstring) + 1) * sizeof(char));
 	strcpy($$, tmpstring);
 	Free($3);
       }
       List_Delete($5);
-    }
-  | tSprintf '(' tSTRING '.' tSTRING ')'
-    { 
-      const char *val = "";
-      StringOption(GMSH_GET, $3, 0, $5, val);
-      $$ = (char*)Malloc((strlen(val) + 1) * sizeof(char));
-      strcpy($$, val);
-      Free($3); Free($5);
-    }
-  | tSprintf '(' tSTRING '[' FExpr ']' '.' tSTRING ')'
-    { 
-      const char *val = "";
-      StringOption(GMSH_GET, $3, (int)$5, $8, val);
-      $$ = (char*)Malloc((strlen(val) + 1) * sizeof(char));
-      strcpy($$, val);
-      Free($3); Free($8);
     }
 ;
 

@@ -15,8 +15,6 @@ void invert_singular_matrix3x3(double MM[3][3], double II[3][3]);
 // the GSL
 double brent(double ax, double bx, double cx,
              double (*f)(double), double tol, double *xmin);
-void mnbrak(double *ax, double *bx, double *cx, double *fa, double *fb,
-            double *fc, double (*func)(double));
 void newt(double x[], int n, int *check,
           void (*vecfunc)(int, double [], double []));
 void minimize_2 (double (*f) (double, double, void *data), 
