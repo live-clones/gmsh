@@ -36,16 +36,12 @@ GMSH_EMBEDDED = ${GMSH_API} Geo/discrete*.cpp\
                 Numeric/NumericEmbedded.{cpp,h} Numeric/FunctionSpace.{cpp,h}\
                 utils/embed/GmshEmbedded.{cpp,h} utils/embed/Makefile
 
+# Main building rules
+
 all: link
 
 link: compile
 	${LINKER} ${OPTIM} ${DASH}o bin/gmsh${EXEEXT} ${GMSH_LIBS}
-
-link-mac-universal: compile
-	${LINKER} -arch i386 ${OPTIM} -o bin/gmsh_i386 ${GMSH_LIBS}
-	${LINKER} -arch ppc ${OPTIM} -o bin/gmsh_ppc ${GMSH_LIBS}
-	lipo -create bin/gmsh_i386 bin/gmsh_ppc -output bin/gmsh
-	rm -f bin/gmsh_i386 bin/gmsh_ppc
 
 compile: variables initialtag
 	@for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE}); done
@@ -61,12 +57,7 @@ uninstall:
 	rm -f ${bindir}/gmsh${EXEEXT}
 	rm -f ${mandir}/man1/gmsh.1
 
-install-mac: variables package-mac
-	cp -rf gmsh-${GMSH_VERSION}/Gmsh.app /Applications
-	rm -rf gmsh-${GMSH_VERSION} gmsh-${GMSH_VERSION}-MacOSX.tgz
-
-uninstall-mac:
-	rm -rf /Applications/Gmsh.app
+# Rules to build the Gmsh library
 
 .PHONY: lib
 lib: variables initialtag
@@ -86,6 +77,27 @@ uninstall-lib:
 	rm -rf ${includedir}/gmsh
 	rm -rf ${libdir}/libGmsh${LIBSUFFIX}${LIBEXT}
 
+embed:
+	@if [ -r ../getdp/contrib/gmsh/Makefile ]; then \
+          rsync -av ${GMSH_EMBEDDED} ../getdp/contrib/gmsh;\
+          rm -f ../getdp/contrib/gmsh/Message.h;\
+        fi
+
+# Macintosh-specific rules
+
+link-mac-universal: compile
+	${LINKER} -arch i386 ${OPTIM} -o bin/gmsh_i386 ${GMSH_LIBS}
+	${LINKER} -arch ppc ${OPTIM} -o bin/gmsh_ppc ${GMSH_LIBS}
+	lipo -create bin/gmsh_i386 bin/gmsh_ppc -output bin/gmsh
+	rm -f bin/gmsh_i386 bin/gmsh_ppc
+
+install-mac: variables package-mac
+	cp -rf gmsh-${GMSH_VERSION}/Gmsh.app /Applications
+	rm -rf gmsh-${GMSH_VERSION} gmsh-${GMSH_VERSION}-MacOSX.tgz
+
+uninstall-mac:
+	rm -rf /Applications/Gmsh.app
+
 framework: lib
 	rm -rf Gmsh.framework
 	mkdir -p Gmsh.framework
@@ -102,11 +114,23 @@ framework: lib
 	cd Gmsh.framework && ln -s Versions/Current/Headers
 	cd Gmsh.framework && ln -s Versions/Current/Resources
 
-embed:
-	@if [ -r ../getdp/contrib/gmsh/Makefile ]; then \
-          rsync -av ${GMSH_EMBEDDED} ../getdp/contrib/gmsh;\
-          rm -f ../getdp/contrib/gmsh/Message.h;\
-        fi
+# Windows specific rules that will work in a DOS command window
+# without any unix-type shell (only gmake.exe needs to be present)
+
+dos: tag
+	for %%i in (${GMSH_DIRS}) do gmake -C %%i
+	${LINKER} ${OPTIM} ${DASH}o bin/gmsh${EXEEXT} ${GMSH_LIBS}
+
+dos-lib: tag
+	for %%i in (${GMSH_DIRS}); do gmake -C %%i cpobj
+	${AR} ${ARFLAGS}lib/libGmsh${LIBEXT} lib/*${OBJEXT}
+	erase lib\*${OBJEXT}
+
+dos-clean:
+	for %%i in (doc lib ${GMSH_DIRS}) do gmake -C clean
+	erase Common\GmshVersion.h
+
+# Utilities
 
 variables: configure
 	@echo "********************************************************************"
@@ -165,7 +189,6 @@ nodepend:
         done 
 
 tag:
-	rm -f ${GMSH_VERSION_FILE}
 	echo "#define GMSH_MAJOR_VERSION ${GMSH_MAJOR_VERSION}" > ${GMSH_VERSION_FILE}
 	echo "#define GMSH_MINOR_VERSION ${GMSH_MINOR_VERSION}" >> ${GMSH_VERSION_FILE}
 	echo "#define GMSH_PATCH_VERSION ${GMSH_PATCH_VERSION}" >> ${GMSH_VERSION_FILE}
