@@ -59,6 +59,9 @@ OBJEXT=.o
 LIBEXT=.a
 EXEEXT=
 
+# File handling commands
+RM=rm -f
+
 # Installation directories
 prefix=/usr/local
 exec_prefix=${prefix}

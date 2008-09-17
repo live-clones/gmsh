@@ -62,7 +62,7 @@ BDS.o:
 	${CXX} ${FLAGS} ${INC} ${SYSINCLUDE} ${DASH}c BDS.cpp
 
 clean:
-	rm -f *.o *.obj
+	${RM} *.o *.obj
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

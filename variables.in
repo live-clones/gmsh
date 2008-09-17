@@ -46,6 +46,9 @@ OBJEXT=.o
 LIBEXT=.a
 EXEEXT=@EXEEXT@
 
+# File handling commands
+RM=rm -f
+
 # Installation directories
 prefix=@prefix@
 exec_prefix=@exec_prefix@

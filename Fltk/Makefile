@@ -43,7 +43,7 @@ res:
 	windres Win32Icon.rc -O coff Win32Icon.res
 
 clean:
-	rm -f *.o *.obj
+	${RM} *.o *.obj
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

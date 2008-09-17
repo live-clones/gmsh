@@ -49,7 +49,7 @@ cpobj: ${OBJ}
 	${CXX} ${CFLAGS} ${DASH}c $<
 
 clean:
-	rm -f *.o *.obj 
+	${RM} *.o *.obj 
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

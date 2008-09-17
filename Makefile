@@ -57,6 +57,18 @@ uninstall:
 	rm -f ${bindir}/gmsh${EXEEXT}
 	rm -f ${mandir}/man1/gmsh.1
 
+tag:
+	echo "#define GMSH_MAJOR_VERSION ${GMSH_MAJOR_VERSION}" > ${GMSH_VERSION_FILE}
+	echo "#define GMSH_MINOR_VERSION ${GMSH_MINOR_VERSION}" >> ${GMSH_VERSION_FILE}
+	echo "#define GMSH_PATCH_VERSION ${GMSH_PATCH_VERSION}" >> ${GMSH_VERSION_FILE}
+	echo "#define GMSH_EXTRA_VERSION \"${GMSH_EXTRA_VERSION}\"" >> ${GMSH_VERSION_FILE}
+	echo "#define GMSH_VERSION       \"${GMSH_VERSION}\"" >> ${GMSH_VERSION_FILE}
+	echo "#define GMSH_DATE          \"`date`\"" >> ${GMSH_VERSION_FILE}
+	echo "#define GMSH_HOST          \"${HOSTNAME}\"" >> ${GMSH_VERSION_FILE}
+	echo "#define GMSH_PACKAGER      \"`whoami`\"" >> ${GMSH_VERSION_FILE}
+	echo "#define GMSH_OS            \"${UNAME}\"" >> ${GMSH_VERSION_FILE}
+	echo "#define GMSH_SHORT_LICENSE \"${GMSH_SHORT_LICENSE}\"" >> ${GMSH_VERSION_FILE}
+
 # Rules to build the Gmsh library
 
 .PHONY: lib
@@ -117,18 +129,30 @@ framework: lib
 # Windows specific rules that will work in a DOS command window
 # without any unix-type shell (only gmake.exe needs to be present)
 
-dos: tag
+dos: dos-tag
 	for %%i in (${GMSH_DIRS}) do gmake -C %%i
 	${LINKER} ${OPTIM} ${DASH}o bin/gmsh${EXEEXT} ${GMSH_LIBS}
 
-dos-lib: tag
+dos-lib: dos-tag
 	for %%i in (${GMSH_DIRS}); do gmake -C %%i cpobj
 	${AR} ${ARFLAGS}lib/libGmsh${LIBEXT} lib/*${OBJEXT}
 	erase lib\*${OBJEXT}
 
 dos-clean:
-	for %%i in (doc lib ${GMSH_DIRS}) do gmake -C clean
+	for %%i in (doc lib ${GMSH_DIRS}) do gmake -C %%i clean
 	erase Common\GmshVersion.h
+
+dos-tag:
+	echo #define GMSH_MAJOR_VERSION ${GMSH_MAJOR_VERSION} > ${GMSH_VERSION_FILE}
+	echo #define GMSH_MINOR_VERSION ${GMSH_MINOR_VERSION} >> ${GMSH_VERSION_FILE}
+	echo #define GMSH_PATCH_VERSION ${GMSH_PATCH_VERSION} >> ${GMSH_VERSION_FILE}
+	echo #define GMSH_EXTRA_VERSION "${GMSH_EXTRA_VERSION}" >> ${GMSH_VERSION_FILE}
+	echo #define GMSH_VERSION       "${GMSH_VERSION}" >> ${GMSH_VERSION_FILE}
+	echo #define GMSH_DATE          "" >> ${GMSH_VERSION_FILE}
+	echo #define GMSH_HOST          "${HOSTNAME}" >> ${GMSH_VERSION_FILE}
+	echo #define GMSH_PACKAGER      "" >> ${GMSH_VERSION_FILE}
+	echo #define GMSH_OS            "${UNAME}" >> ${GMSH_VERSION_FILE}
+	echo #define GMSH_SHORT_LICENSE ${GMSH_SHORT_LICENSE} >> ${GMSH_VERSION_FILE}
 
 # Utilities
 
@@ -187,18 +211,6 @@ nodepend:
           && cp Makefile.new Makefile \
           && rm -f Makefile.new); \
         done 
-
-tag:
-	echo "#define GMSH_MAJOR_VERSION ${GMSH_MAJOR_VERSION}" > ${GMSH_VERSION_FILE}
-	echo "#define GMSH_MINOR_VERSION ${GMSH_MINOR_VERSION}" >> ${GMSH_VERSION_FILE}
-	echo "#define GMSH_PATCH_VERSION ${GMSH_PATCH_VERSION}" >> ${GMSH_VERSION_FILE}
-	echo "#define GMSH_EXTRA_VERSION \"${GMSH_EXTRA_VERSION}\"" >> ${GMSH_VERSION_FILE}
-	echo "#define GMSH_VERSION       \"${GMSH_VERSION}\"" >> ${GMSH_VERSION_FILE}
-	echo "#define GMSH_DATE          \"`date`\"" >> ${GMSH_VERSION_FILE}
-	echo "#define GMSH_HOST          \"${HOSTNAME}\"" >> ${GMSH_VERSION_FILE}
-	echo "#define GMSH_PACKAGER      \"`whoami`\"" >> ${GMSH_VERSION_FILE}
-	echo "#define GMSH_OS            \"${UNAME}\"" >> ${GMSH_VERSION_FILE}
-	echo "#define GMSH_SHORT_LICENSE \"${GMSH_SHORT_LICENSE}\"" >> ${GMSH_VERSION_FILE}
 
 initialtag:
 	@if [ ! -r ${GMSH_VERSION_FILE} ]; then ${MAKE} tag ; fi

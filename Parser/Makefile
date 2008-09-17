@@ -42,7 +42,7 @@ parser:
 	flex -P gmsh_yy -oGmsh.yy.cpp Gmsh.l
 
 clean:
-	rm -f *.o *.obj
+	${RM} *.o *.obj
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

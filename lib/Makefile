@@ -4,6 +4,5 @@
 # bugs and problems to <gmsh@geuz.org>.
 
 clean:
-	rm -f *.a *.lib
-
+	${RM} *.a *.lib
 

@@ -91,7 +91,7 @@ endif
 # How you create a static library on this machine
 AR=LIB
 ARFLAGS=/OUT:
-RANLIB=true
+RANLIB=echo
 
 # The symbol used in front of compiler flags
 DASH=/
@@ -100,6 +100,9 @@ DASH=/
 OBJEXT=.obj
 LIBEXT=.lib
 EXEEXT=.exe
+
+# File handling commands
+RM=erase
 
 # Installation directories
 prefix="S:\Lib\gmsh"
