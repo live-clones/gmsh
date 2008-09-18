@@ -140,7 +140,7 @@ class GmshServer {
     }
     else{
       // TCP/IP socket
-      char *port = strstr(_sockname, ":");
+      const char *port = strstr(_sockname, ":");
       _portno = atoi(port + 1);
     }
     
