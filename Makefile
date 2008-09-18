@@ -134,9 +134,10 @@ dos: dos-tag
 	${LINKER} ${OPTIM} ${DASH}o bin/gmsh${EXEEXT} ${GMSH_LIBS}
 
 dos-lib: dos-tag
-	for %%i in (${GMSH_DIRS}); do gmake -C %%i cpobj
-	${AR} ${ARFLAGS}lib/libGmsh${LIBEXT} lib/*${OBJEXT}
-	erase lib\*${OBJEXT}
+	for %%i in (${GMSH_DIRS}); do gmake -C %%i
+	${AR} ${ARFLAGS}bin\libGmsh${LIBEXT} lib\*${LIBEXT}
+	erase lib\*${LIBEXT}
+	move bin\libGmsh${LIBEXT} lib
 
 dos-clean:
 	for %%i in (doc lib ${GMSH_DIRS}) do gmake -C %%i clean
