@@ -44,7 +44,11 @@ link: compile
 	${LINKER} ${OPTIM} ${DASH}o bin/gmsh${EXEEXT} ${GMSH_LIBS}
 
 compile: variables initialtag
+ifneq (${UNAME},WIN32MSVC)
 	@for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE}); done
+else
+	for %%i in (${GMSH_DIRS}) do gmake -C %%i
+endif
 
 install: variables
 	mkdir -p ${bindir}
@@ -58,6 +62,7 @@ uninstall:
 	rm -f ${mandir}/man1/gmsh.1
 
 tag:
+ifneq (${UNAME},WIN32MSVC)
 	echo "#define GMSH_MAJOR_VERSION ${GMSH_MAJOR_VERSION}" > ${GMSH_VERSION_FILE}
 	echo "#define GMSH_MINOR_VERSION ${GMSH_MINOR_VERSION}" >> ${GMSH_VERSION_FILE}
 	echo "#define GMSH_PATCH_VERSION ${GMSH_PATCH_VERSION}" >> ${GMSH_VERSION_FILE}
@@ -68,15 +73,34 @@ tag:
 	echo "#define GMSH_PACKAGER      \"`whoami`\"" >> ${GMSH_VERSION_FILE}
 	echo "#define GMSH_OS            \"${UNAME}\"" >> ${GMSH_VERSION_FILE}
 	echo "#define GMSH_SHORT_LICENSE \"${GMSH_SHORT_LICENSE}\"" >> ${GMSH_VERSION_FILE}
+else
+	echo #define GMSH_MAJOR_VERSION ${GMSH_MAJOR_VERSION} > ${GMSH_VERSION_FILE}
+	echo #define GMSH_MINOR_VERSION ${GMSH_MINOR_VERSION} >> ${GMSH_VERSION_FILE}
+	echo #define GMSH_PATCH_VERSION ${GMSH_PATCH_VERSION} >> ${GMSH_VERSION_FILE}
+	echo #define GMSH_EXTRA_VERSION "${GMSH_EXTRA_VERSION}" >> ${GMSH_VERSION_FILE}
+	echo #define GMSH_VERSION       "${GMSH_VERSION}" >> ${GMSH_VERSION_FILE}
+	echo #define GMSH_DATE          "" >> ${GMSH_VERSION_FILE}
+	echo #define GMSH_HOST          "${HOSTNAME}" >> ${GMSH_VERSION_FILE}
+	echo #define GMSH_PACKAGER      "" >> ${GMSH_VERSION_FILE}
+	echo #define GMSH_OS            "${UNAME}" >> ${GMSH_VERSION_FILE}
+	echo #define GMSH_SHORT_LICENSE ${GMSH_SHORT_LICENSE} >> ${GMSH_VERSION_FILE}
+endif
 
 # Rules to build the Gmsh library
 
 .PHONY: lib
 lib: variables initialtag
+ifneq (${UNAME},WIN32MSVC)
 	@for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE} cpobj); done
 	${AR} ${ARFLAGS}lib/libGmsh${LIBEXT} lib/*${OBJEXT}
 	${RANLIB} lib/libGmsh${LIBEXT}
 	rm -f lib/*${OBJEXT}
+else
+	for %%i in (${GMSH_DIRS}); do gmake -C %%i
+	${AR} ${ARFLAGS}bin\libGmsh${LIBEXT} lib\*${LIBEXT}
+	erase lib\*${LIBEXT}
+	move bin\libGmsh${LIBEXT} lib
+endif
 
 install-lib: lib
 	mkdir -p ${includedir}/gmsh
@@ -126,35 +150,6 @@ framework: lib
 	cd Gmsh.framework && ln -s Versions/Current/Headers
 	cd Gmsh.framework && ln -s Versions/Current/Resources
 
-# Windows specific rules that will work in a DOS command window
-# without any unix-type shell (only gmake.exe needs to be present)
-
-dos: dos-tag
-	for %%i in (${GMSH_DIRS}) do gmake -C %%i
-	${LINKER} ${OPTIM} ${DASH}o bin/gmsh${EXEEXT} ${GMSH_LIBS}
-
-dos-lib: dos-tag
-	for %%i in (${GMSH_DIRS}); do gmake -C %%i
-	${AR} ${ARFLAGS}bin\libGmsh${LIBEXT} lib\*${LIBEXT}
-	erase lib\*${LIBEXT}
-	move bin\libGmsh${LIBEXT} lib
-
-dos-clean:
-	for %%i in (doc lib ${GMSH_DIRS}) do gmake -C %%i clean
-	erase Common\GmshVersion.h
-
-dos-tag:
-	echo #define GMSH_MAJOR_VERSION ${GMSH_MAJOR_VERSION} > ${GMSH_VERSION_FILE}
-	echo #define GMSH_MINOR_VERSION ${GMSH_MINOR_VERSION} >> ${GMSH_VERSION_FILE}
-	echo #define GMSH_PATCH_VERSION ${GMSH_PATCH_VERSION} >> ${GMSH_VERSION_FILE}
-	echo #define GMSH_EXTRA_VERSION "${GMSH_EXTRA_VERSION}" >> ${GMSH_VERSION_FILE}
-	echo #define GMSH_VERSION       "${GMSH_VERSION}" >> ${GMSH_VERSION_FILE}
-	echo #define GMSH_DATE          "" >> ${GMSH_VERSION_FILE}
-	echo #define GMSH_HOST          "${HOSTNAME}" >> ${GMSH_VERSION_FILE}
-	echo #define GMSH_PACKAGER      "" >> ${GMSH_VERSION_FILE}
-	echo #define GMSH_OS            "${UNAME}" >> ${GMSH_VERSION_FILE}
-	echo #define GMSH_SHORT_LICENSE ${GMSH_SHORT_LICENSE} >> ${GMSH_VERSION_FILE}
-
 # Utilities
 
 variables: configure
@@ -191,8 +186,13 @@ purge:
                -o -name "*.bak"`
 
 clean:
+ifneq (${UNAME},WIN32MSVC)
 	for i in doc lib ${GMSH_DIRS}; do (cd $$i && ${MAKE} clean); done
 	rm -f ${GMSH_VERSION_FILE}
+else
+	for %%i in (doc lib ${GMSH_DIRS}) do gmake -C %%i clean
+	erase Common\GmshVersion.h
+endif
 
 clean-most:
 	for i in doc lib ${GMSH_DIRS:contrib/Netgen=}; do (cd $$i && ${MAKE} clean); done
@@ -214,7 +214,11 @@ nodepend:
         done 
 
 initialtag:
+ifneq (${UNAME},WIN32MSVC)
 	@if [ ! -r ${GMSH_VERSION_FILE} ]; then ${MAKE} tag ; fi
+else
+	${MAKE} tag
+endif
 
 tags:
 	gtags
