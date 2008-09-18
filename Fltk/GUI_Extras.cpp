@@ -1327,7 +1327,7 @@ void cgnsw_cancel_cb(Fl_Widget *widget, void *data)
   dlg->status = 0;
 }
 
-int cgns_write_dialog(const char *const filename)
+int cgns_write_dialog(const char *filename)
 {
   static CGNSWriteDialog dlg;
   dlg.filename = filename;
