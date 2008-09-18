@@ -6,7 +6,7 @@
 #ifndef _GMSH_SERVER_H_
 #define _GMSH_SERVER_H_
 
-void SystemCall(const char *str);
+int SystemCall(const char *str);
 int WaitForData(int socket, int num, double waitint);
 
 #include <stdio.h>

@@ -1567,7 +1567,7 @@ int cgns_write_dialog(const char *filename)
 
 #else
 
-int cgns_write_dialog(const char *const name)
+int cgns_write_dialog(const char *filename)
 {
   CreateOutputFile(name, FORMAT_CGNS);
   return 1;
