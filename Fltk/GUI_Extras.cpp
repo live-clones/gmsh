@@ -1569,7 +1569,7 @@ int cgns_write_dialog(const char *filename)
 
 int cgns_write_dialog(const char *filename)
 {
-  CreateOutputFile(name, FORMAT_CGNS);
+  CreateOutputFile(filename, FORMAT_CGNS);
   return 1;
 }
 
