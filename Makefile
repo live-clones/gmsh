@@ -47,7 +47,7 @@ compile: variables initialtag
 ifneq (${UNAME},WIN32MSVC)
 	@for i in ${GMSH_DIRS}; do (cd $$i && ${MAKE}); done
 else
-	for %%i in (${GMSH_DIRS}) do gmake -C %%i
+	for %%i in (${GMSH_DIRS}) do ${MAKE} -C %%i
 endif
 
 install: variables
@@ -96,7 +96,7 @@ ifneq (${UNAME},WIN32MSVC)
 	${RANLIB} lib/libGmsh${LIBEXT}
 	rm -f lib/*${OBJEXT}
 else
-	for %%i in (${GMSH_DIRS}); do gmake -C %%i
+	for %%i in (${GMSH_DIRS}); do ${MAKE} -C %%i
 	${AR} ${ARFLAGS}bin\libGmsh${LIBEXT} lib\*${LIBEXT}
 	erase lib\*${LIBEXT}
 	move bin\libGmsh${LIBEXT} lib
@@ -190,7 +190,7 @@ ifneq (${UNAME},WIN32MSVC)
 	for i in doc lib ${GMSH_DIRS}; do (cd $$i && ${MAKE} clean); done
 	rm -f ${GMSH_VERSION_FILE}
 else
-	for %%i in (doc lib ${GMSH_DIRS}) do gmake -C %%i clean
+	for %%i in (doc lib ${GMSH_DIRS}) do ${MAKE} -C %%i clean
 	erase Common\GmshVersion.h
 endif
 

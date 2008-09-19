@@ -3,6 +3,8 @@
 # See the LICENSE.txt file for license information. Please report all
 # bugs and problems to <gmsh@geuz.org>.
 
+include ../../variables
+
 dvi:
 	texi2dvi gmsh.texi 
 
@@ -39,7 +41,7 @@ txt:
 all: pdf html html1 infoz txt
 
 clean:
-	rm -f *.cp* *.fn* *.ky* *.pg* *.tp* *.vr* *.mv*\
+	${RM} *.cp* *.fn* *.ky* *.pg* *.tp* *.vr* *.mv*\
           *.log *.toc *.aux *.dvi *.html *.txt\
           gmsh.ps gmsh.pdf gmsh.info* gmsh-info.tgz
 

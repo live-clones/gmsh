@@ -3,6 +3,8 @@
 # See the LICENSE.txt file for license information. Please report all
 # bugs and problems to <gmsh@geuz.org>.
 
+include ../variables
+
 clean:
-	rm -f *~ .*~
+	${RM} *~ .*~
 	cd texinfo && ${MAKE} clean
