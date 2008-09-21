@@ -503,7 +503,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
 static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalArray, 
                        int forceColor=0, unsigned int color=0)
 {
-  if(!va) return;
+  if(!va || !va->getNumVertices()) return;
 
   // If we want to be enable picking of individual elements we need to
   // draw each one separately
@@ -524,13 +524,11 @@ static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalAr
   }
 
   glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
-  glNormalPointer(GL_BYTE, 0, va->getNormalArray());
-  glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
-  
   glEnableClientState(GL_VERTEX_ARRAY);
 
   if(useNormalArray){
     glEnable(GL_LIGHTING);
+    glNormalPointer(GL_BYTE, 0, va->getNormalArray());
     glEnableClientState(GL_NORMAL_ARRAY);
   }
   else
@@ -543,6 +541,7 @@ static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalAr
   else if(CTX.pick_elements || 
           (!e->getSelection() && (CTX.mesh.color_carousel == 0 || 
                                   CTX.mesh.color_carousel == 3))){
+    glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
     glEnableClientState(GL_COLOR_ARRAY);
   }
   else{
