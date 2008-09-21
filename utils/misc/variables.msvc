@@ -12,7 +12,7 @@
 MAKE=C:\src\gmsh\utils\misc\gmake.exe
 
 # Change the following to select which version to build:
-ENABLE_GUI=1
+ENABLE_GUI=0
 ENABLE_PARSER=1
 ENABLE_POSTPRO=1
 ENABLE_TETGEN=1
