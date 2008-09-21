@@ -985,7 +985,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
 
 static void drawArrays(PView *p, VertexArray *va, GLint type, bool useNormalArray)
 {
-  if(!va) return;
+  if(!va || !va->getNumVertices()) return;
 
   PViewOptions *opt = p->getOptions();
 
@@ -1033,15 +1033,15 @@ static void drawArrays(PView *p, VertexArray *va, GLint type, bool useNormalArra
   }
   else{
     glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
-    glNormalPointer(GL_BYTE, 0, va->getNormalArray());
-    glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
     glEnableClientState(GL_VERTEX_ARRAY);
     if(useNormalArray){
       glEnable(GL_LIGHTING);
+      glNormalPointer(GL_BYTE, 0, va->getNormalArray());
       glEnableClientState(GL_NORMAL_ARRAY);
     }
     else
       glDisableClientState(GL_NORMAL_ARRAY);
+    glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
     glEnableClientState(GL_COLOR_ARRAY);
     glDrawArrays(type, 0, va->getNumVertices());
     glDisableClientState(GL_VERTEX_ARRAY);

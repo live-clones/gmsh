@@ -190,13 +190,12 @@ class drawGFace {
   void _drawVertexArray(VertexArray *va, bool useNormalArray, int forceColor=0, 
                         unsigned int color=0)
   {
-    if(!va) return;
+    if(!va || !va->getNumVertices()) return;
     glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
-    glNormalPointer(GL_BYTE, 0, va->getNormalArray());
-    glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
     glEnableClientState(GL_VERTEX_ARRAY);
     if(useNormalArray){
       glEnable(GL_LIGHTING);
+      glNormalPointer(GL_BYTE, 0, va->getNormalArray());
       glEnableClientState(GL_NORMAL_ARRAY);
     }
     else
@@ -206,6 +205,7 @@ class drawGFace {
       glColor4ubv((GLubyte *) & color);
     }
     else{
+      glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
       glEnableClientState(GL_COLOR_ARRAY);
     }
     if(CTX.polygon_offset) glEnable(GL_POLYGON_OFFSET_FILL);
