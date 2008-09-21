@@ -4,11 +4,11 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "GModel.h"
+#include "MVertex.h"
+#include "MElement.h"
 #include "OCCVertex.h"
 #include "OCCEdge.h"
 #include "OCCFace.h"
-#include "MVertex.h"
-#include "MElement.h"
 
 #if defined(HAVE_OCC)
 

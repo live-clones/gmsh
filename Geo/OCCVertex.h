@@ -7,8 +7,8 @@
 #define _OCC_VERTEX_H_
 
 #include "GModel.h"
-#include "OCCIncludes.h"
 #include "GVertex.h"
+#include "OCCIncludes.h"
 
 #if defined(HAVE_OCC)
 
