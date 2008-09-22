@@ -56,12 +56,16 @@ MElement *const *GRegion::getStartElementType(int type) const
 {
   switch(type) {
   case 0:
+    if(tetrahedra.empty()) return 0; // msvc would throw an exception
     return reinterpret_cast<MElement *const *>(&tetrahedra[0]);
   case 1:
+    if(hexahedra.empty()) return 0; // msvc would throw an exception
     return reinterpret_cast<MElement *const *>(&hexahedra[0]);
   case 2:
+    if(prisms.empty()) return 0; // msvc would throw an exception
     return reinterpret_cast<MElement *const *>(&prisms[0]);
   case 3:
+    if(pyramids.empty()) return 0; // msvc would throw an exception
     return reinterpret_cast<MElement *const *>(&pyramids[0]);
   }
   return 0;

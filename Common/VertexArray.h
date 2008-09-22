@@ -136,7 +136,9 @@ class VertexArray{
   int getNumVerticesPerElement() { return _numVerticesPerElement; }
   // return the number of element pointers
   int getNumElementPointers() { return _elements.size(); }
-  // return a pointer to the raw vertex array
+  // return a pointer to the raw vertex array (warning: 1) we don't 
+  // range check 2) calling this if _vertices.size() == 0 will cause
+  // some compilers to throw an exception)
   float *getVertexArray(int i=0){ return &_vertices[i]; }
   // return a pointer to the raw normal array
   char *getNormalArray(int i=0){ return &_normals[i]; }

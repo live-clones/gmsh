@@ -76,10 +76,10 @@ cpobj: ${OBJ}
 	cp -f ${OBJ} ../../lib/
 
 .c${OBJEXT}:
-	${CC} ${CFLAGS} ${DASH}c $< ${DASH}o ${<:.c=${OBJEXT}}
+	${CC} ${CFLAGS} ${DASH}c $<
 
 clean:
-	rm -f *.o *.obj
+	${RM} *.o *.obj
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \

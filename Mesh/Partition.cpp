@@ -545,8 +545,9 @@ struct MakeGraphFromEntity
     int nType = entity->getNumElementTypes();
     for(int iType = 0; iType != nType; ++iType) {
       // Loop over all elements in a type
-      MElement *const *element = entity->getStartElementType(iType);
       const int nElem = numElem[iType];
+      if(!nElem) continue;
+      MElement *const *element = entity->getStartElementType(iType);
       for(int iElem = 0; iElem != nElem; ++iElem) {
         const int nFace = DimTr<DIM>::getNumFace(element[iElem]);
         // Insert this element into the map of graph vertices
@@ -619,8 +620,9 @@ struct MatchBoElemToGrVertex
     int nType = entity->getNumElementTypes();
     for(int iType = 0; iType != nType; ++iType) {
       // Loop over all elements in a type
-      MElement *const *element = entity->getStartElementType(iType);
       const int nElem = numElem[iType];
+      if(!nElem) continue;
+      MElement *const *element = entity->getStartElementType(iType);
       for(int iElem = 0; iElem != nElem; ++iElem) {
         FaceT face = DimTr<DIM>::getFace(element[iElem], 0);
         const typename FaceMap::const_iterator faceMapIt = faceMap.find(face);

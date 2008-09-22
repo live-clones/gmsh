@@ -13,34 +13,20 @@
 
 #if defined(HAVE_GSL)
 
-#include <gsl/gsl_version.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_linalg.h>
 
-void new_handler(const char *reason, const char *file, int line,
-                 int gsl_errno)
+void my_gsl_msg(const char *reason, const char *file, int line,
+		int gsl_errno)
 {
   Msg::Error("GSL: %s (%s, line %d)", reason, file, line);
 }
 
 int check_gsl()
 {
-  // check version
-  int major, minor;
-  if(!sscanf(gsl_version, "%d.%d", &major, &minor)){
-    Msg::Fatal("Cannot retreive GSL version");
-    return 0;
-  }
-  if(major < 1 || (major == 1 && minor < 2)) {
-    Msg::Error("Your GSL version (%d.%d.X) has a bug in the singular value",
-        major, minor);
-    Msg::Error("decomposition code. Please upgrade to version 1.2 or above.");
-    Msg::Fatal("You can download the GSL from http://sources.redhat.com/gsl/");
-    return 0;
-  }
   // set new error handler
-  gsl_set_error_handler(&new_handler);
+  gsl_set_error_handler(&my_gsl_msg);
 
   // initilize robust geometric predicates
   gmsh::exactinit() ;
@@ -52,6 +38,7 @@ int check_gsl()
 #define NRANSI
 #include "nrutil.h"
 void dsvdcmp(double **a, int m, int n, double w[], double **v);
+
 int check_gsl()
 {
   // initilize robust geometric predicates

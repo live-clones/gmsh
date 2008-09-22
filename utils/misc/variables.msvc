@@ -12,12 +12,17 @@
 MAKE=C:\src\gmsh\utils\misc\gmake.exe
 
 # Change the following to select which version to build:
+ENABLE_GSL=1
 ENABLE_GUI=0
 ENABLE_PARSER=1
 ENABLE_POSTPRO=1
 ENABLE_TETGEN=1
 ENABLE_NETGEN=0
+ENABLE_METIS=1
 ENABLE_OCC=0
+
+# If you selected ENABLE_GSL, specify where the GSL is installed
+GSL_PREFIX=C:\src\gsl-1.8
 
 # If you selected ENABLE_GUI, specify where FLTK is installed
 FLTK_PREFIX=C:\src\fltk-1.1.9
@@ -32,8 +37,8 @@ UNAME=WIN32MSVC
 HOSTNAME=localhost
 
 # The names of the C and C++ compilers
-CC=cl
-CXX=cl /EHsc /nologo /GR /MT
+CC=cl /nologo /MTd
+CXX=cl /EHsc /nologo /GR /MTd
 
 # Debug/Release Single/Multi-threaded Lib/Dll flags:
 # Rel-Sin-Lib: /ML
@@ -57,7 +62,6 @@ LINKER=cl /F16777216
 # All compiler flags except optimization flags
 FLAGS=/DWIN32 /D_USE_MATH_DEFINES /DHAVE_NO_DLL /DHAVE_NO_SOCKLEN_T
 FLAGS+=/DHAVE_ANN /DHAVE_MATH_EVAL
-
 FLAGS+=/D_CRT_SECURE_NO_DEPRECATE
 
 # Additional system includes ($INCLUDE is automatically defined by MSVC when
@@ -71,6 +75,10 @@ OPTIM=/O2
 GMSH_DIRS=Common Geo Mesh Numeric contrib/ANN contrib/MathEval contrib/NR
 
 # Optional stuff
+ifeq (${ENABLE_GSL},1)
+  FLAGS+=/DHAVE_GSL /I${GSL_PREFIX}
+  GMSH_LIBS+=${GSL_PREFIX}/lib/gsl.lib ${GSL_PREFIX}/lib/gslcblas.lib
+endif
 ifeq (${ENABLE_PARSER},1)
   GMSH_DIRS+=Parser
 else
@@ -89,22 +97,26 @@ ifeq (${ENABLE_TETGEN},1)
   FLAGS+=/DHAVE_TETGEN
   GMSH_DIRS+=contrib/Tetgen
 endif
+ifeq (${ENABLE_METIS},1)
+  FLAGS+=/DHAVE_METIS
+  GMSH_DIRS+=contrib/Metis
+endif
 ifeq (${ENABLE_OCC},1)
   FLAGS+=/DHAVE_OCC /DHAVE_NO_OCC_CONFIG_H /DWNT /I"${OCC_PREFIX}/inc"
-  GMSH_LIBS+=${OCC_PREFIX}/lib/*.lib
+  GMSH_LIBS+=${OCC_PREFIX}/win32/bin/*.lib
 endif
 
 ifeq (${ENABLE_GUI},1)
-  LINKER+=/SUBSYSTEM:WINDOWS
-  GMSH_DIRS+=Graphics Fltk
-  FLAGS+=/DHAVE_FLTK /I"${FLTK_PREFIX}"
-  GMSH_LIBS+=Fltk/Main.obj lib/*.lib lib/*.lib ${FLTK_PREFIX}\lib\fltk*.lib
+  GMSH_DIRS+=Graphics Fltk contrib/NativeFileChooser
+  FLAGS+=/DHAVE_FLTK /DHAVE_NATIVE_FILE_CHOOSER /I"${FLTK_PREFIX}"
+  GMSH_LIBS+=Fltk/Main.obj lib/*.lib ${FLTK_PREFIX}\lib\fltk*.lib
   GMSH_LIBS+=glu32.lib opengl32.lib advapi32.lib gdi32.lib user32.lib
-  GMSH_LIBS+=shell32.lib ole32.lib uuid.lib comctl32.lib
+  GMSH_LIBS+=shell32.lib ole32.lib uuid.lib comctl32.lib comdlg32.lib
   GMSH_LIBS+=wsock32.lib winspool.lib ws2_32.lib Fltk/Win32Icon.res
-  GMSH_LIBS+=/link /NODEFAULTLIB:libcmt.lib
+  GMSH_LIBS+=/link /NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:msvcrt.lib
+#  GMSH_LIBS+=/SUBSYSTEM:WINDOWS
 else
-  GMSH_LIBS=Common/Main.obj lib/*.lib
+  GMSH_LIBS+=Common/Main.obj lib/*.lib
 endif
 
 # How you create a static library on this machine

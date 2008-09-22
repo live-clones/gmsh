@@ -75,8 +75,10 @@ MElement *const *GFace::getStartElementType(int type) const
 {
   switch(type) {
   case 0:
+    if(triangles.empty()) return 0; // msvc would throw an exception
     return reinterpret_cast<MElement *const *>(&triangles[0]);
   case 1:
+    if(quadrangles.empty()) return 0; // msvc would throw an exception
     return reinterpret_cast<MElement *const *>(&quadrangles[0]);
   }
   return 0;

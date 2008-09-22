@@ -48,6 +48,7 @@ void GEdge::getNumMeshElements(unsigned *const c) const
 
 MElement *const *GEdge::getStartElementType(int type) const
 {
+  if(lines.empty()) return 0; // msvc would throw an exception
   return reinterpret_cast<MElement *const *>(&lines[0]);
 }
 
