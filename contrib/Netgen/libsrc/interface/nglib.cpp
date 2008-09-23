@@ -16,7 +16,7 @@
 
 #include <linalg.hpp>
 #include <csg.hpp>
-#include <stlgeom.hpp>
+//#include <stlgeom.hpp>
 #include <geometry2d.hpp>
 #include <meshing.hpp>
 
@@ -188,10 +188,9 @@ Ng_Result Ng_GenerateVolumeMesh (Ng_Mesh * mesh, Ng_Meshing_Parameters * mp)
 }
 
 
+#if 0 // GMSH
 
 // 2D Meshing Functions:
-
-
 
 void Ng_AddPoint_2D (Ng_Mesh * mesh, double * x)
 {
@@ -296,7 +295,6 @@ void Ng_HP_Refinement (Ng_Geometry_2D * geom,
   Refinement2d ref(*(SplineGeometry2d*)geom);
   HPRefinement (*(Mesh*)mesh, &ref, levels);
 }
-
 
 
 
@@ -522,7 +520,7 @@ void Ng_STL_AddEdge (Ng_STL_Geometry * geom,
   readedges.Append(Point3d(p2[0],p2[1],p2[2]));
 }
 
-
+#endif
 
 Ng_Meshing_Parameters :: Ng_Meshing_Parameters()
 {

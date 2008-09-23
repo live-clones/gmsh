@@ -1,4 +1,5 @@
-src = nginterface.cpp writeuser.cpp writediffpack.cpp writeabaqus.cpp writefluent.cpp writepermas.cpp writetochnog.cpp writetecplot.cpp wuchemnitz.cpp writetochnog.cpp writefeap.cpp writeelmer.cpp  writegmsh.cpp readuser.cpp importsolution.cpp 
+#src = nginterface.cpp writeuser.cpp writediffpack.cpp writeabaqus.cpp writefluent.cpp writepermas.cpp writetochnog.cpp writetecplot.cpp wuchemnitz.cpp writetochnog.cpp writefeap.cpp writeelmer.cpp  writegmsh.cpp readuser.cpp importsolution.cpp 
+src = nglib.cpp
 #
 lib = nginterface
 libpath = libsrc/interface
