@@ -83,7 +83,7 @@ Fl_Menu_Item m_menubar_table[] = {
 // shortcuts: they would cause spurious menu items to appear on the
 // menu window; removed File->Quit)
 
-#if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
+#if defined(__APPLE__)
 
 // random changes in fltk are driving me nuts sometimes
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 1) && (FL_PATCH_VERSION <= 6)
@@ -922,7 +922,7 @@ GUI::GUI(int argc, char **argv)
   
   // add callback to respond to the Mac Finder (when you click on a
   // document)
-#if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
+#if defined(__APPLE__)
   fl_open_callback(OpenProjectMacFinder);
 #endif
 
@@ -1027,14 +1027,14 @@ void GUI::create_menu_window()
   int width = 14 * fontsize;
 
   // this is the initial height: no dynamic button is shown!
-#if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
+#if defined(__APPLE__)
   if(CTX.system_menu_bar){
     MH = BH + 6;  // the menu bar is not in the application!
   }
   else{
 #endif
     MH = BH + BH + 6;
-#if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
+#if defined(__APPLE__)
   }
 #endif
 
@@ -1042,7 +1042,7 @@ void GUI::create_menu_window()
   m_window->box(GMSH_WINDOW_BOX);
   m_window->callback(file_quit_cb);
 
-#if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
+#if defined(__APPLE__)
   if(CTX.system_menu_bar){
     // the system menubar is kind of a hack in fltk < 1.1.7: it still
     // creates a real (invisible) menubar. To avoid spurious mouse
@@ -1064,7 +1064,7 @@ void GUI::create_menu_window()
     Fl_Box *o = new Fl_Box(0, BH, width, BH + 6);
     o->box(FL_UP_BOX);
     y = BH + 3;
-#if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
+#if defined(__APPLE__)
   }
 #endif
 
@@ -1175,52 +1175,26 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
 
   Msg::StatusBar(1, false, menu[0].label + 1);
 
-  // Remove all the children (m_push*, m_toggle*, m_pop*). FLTK <=
-  // 1.1.4 should be OK with this. FLTK 1.1.5 may crash as it may
-  // access a widget's data after its callback is executed (we call
-  // set_context in the button callbacks!). FLTK 1.1.6 introduced a
-  // fix (Fl::delete_widget) to delay the deletion until the next
-  // Fl::wait call. In any case, we cannot use m_scroll->clear()
-  // (broken in < 1.1.5, potential crasher in >= 1.1.5).
+  // cannot use m_scroll->clear() in fltk 1.1 (should be fixed in 1.3)
   for(unsigned int i = 0; i < m_push_butt.size(); i++){
     m_scroll->remove(m_push_butt[i]);
-#if defined(HAVE_FLTK_1_1_6_OR_ABOVE)
     Fl::delete_widget(m_push_butt[i]);
-#else
-    delete m_push_butt[i];
-#endif
   }
   for(unsigned int i = 0; i < m_toggle_butt.size(); i++){
     m_scroll->remove(m_toggle_butt[i]);
-#if defined(HAVE_FLTK_1_1_6_OR_ABOVE)
     Fl::delete_widget(m_toggle_butt[i]);
-#else
-    delete m_toggle_butt[i];
-#endif
   }
   for(unsigned int i = 0; i < m_toggle2_butt.size(); i++){
     m_scroll->remove(m_toggle2_butt[i]);
-#if defined(HAVE_FLTK_1_1_6_OR_ABOVE)
     Fl::delete_widget(m_toggle2_butt[i]);
-#else
-    delete m_toggle2_butt[i];
-#endif
   }
   for(unsigned int i = 0; i < m_popup_butt.size(); i++){
     m_scroll->remove(m_popup_butt[i]);
-#if defined(HAVE_FLTK_1_1_6_OR_ABOVE)
     Fl::delete_widget(m_popup_butt[i]);
-#else
-    delete m_popup_butt[i];
-#endif
   }
   for(unsigned int i = 0; i < m_popup2_butt.size(); i++){
     m_scroll->remove(m_popup2_butt[i]);
-#if defined(HAVE_FLTK_1_1_6_OR_ABOVE)
     Fl::delete_widget(m_popup2_butt[i]);
-#else
-    delete m_popup2_butt[i];
-#endif
   }
 
   // reset the vectors
@@ -1247,7 +1221,7 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
       b1->callback(view_toggle_cb, (void *)nb);
       b1->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
       b1->value(opt->Visible);
-      b1->label(data->getName().c_str());
+      b1->copy_label(data->getName().c_str());
       b1->tooltip(data->getFileName().c_str());
       
       char *tmp = new char[32];
@@ -1341,7 +1315,7 @@ void GUI::set_context(Context_Item * menu_asked, int flag)
   else{ // geometry, mesh and solver contexts
     while(menu[nb + 1].label) {
       Fl_Button *b = new Fl_Button(0, MH + nb * BH, width, BH);
-      b->label(menu[nb + 1].label);
+      b->copy_label(menu[nb + 1].label);
       b->callback(menu[nb + 1].callback, menu[nb + 1].arg);
       m_push_butt.push_back(b);
       m_scroll->add(b);
@@ -1574,6 +1548,7 @@ void GUI::set_size(int new_w, int new_h)
 
 void GUI::set_title(const char *str)
 {
+  // FIXME shoud use copy_label, but broken for Fl_Windows in fltk 1.1.7
   g_window->label(str);
 }
 

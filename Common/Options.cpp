@@ -1968,7 +1968,7 @@ const char *opt_view_name(OPT_ARGS_STR)
     data->setName(val);
 #if defined(HAVE_FLTK)
     if(WID && num >= 0 && num < (int)WID->m_toggle_butt.size()) {
-      WID->m_toggle_butt[num]->label(data->getName().c_str());
+      WID->m_toggle_butt[num]->copy_label(data->getName().c_str());
       WID->m_toggle_butt[num]->redraw();
     }
 #endif

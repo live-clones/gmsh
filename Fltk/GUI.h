@@ -35,7 +35,7 @@
 #include <FL/Fl_Tooltip.H>
 #include <FL/Fl_Shared_Image.H>
 #include <FL/Fl_File_Icon.H>
-#if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
+#if defined(__APPLE__)
 #include <FL/Fl_Sys_Menu_Bar.H>
 #endif
 
@@ -142,7 +142,7 @@ public:
 
   // menu window
   Fl_Window        *m_window;
-#if defined(__APPLE__) && defined(HAVE_FLTK_1_1_5_OR_ABOVE)
+#if defined(__APPLE__)
   Fl_Sys_Menu_Bar  *m_sys_menu_bar;
 #endif
   Fl_Menu_Bar      *m_menu_bar;

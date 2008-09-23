@@ -26,6 +26,9 @@
 #include <FL/Fl_Round_Button.H>
 #include <errno.h>
 
+// FIXME we shoud use copy_label everywhere, but it's broken for
+// Fl_Windows in fltk 1.1.7
+
 #if defined(HAVE_NATIVE_FILE_CHOOSER)
 #include <FL/Fl_Native_File_Chooser.H>
 static Fl_Native_File_Chooser *fc = 0;
