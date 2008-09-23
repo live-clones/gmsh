@@ -11,8 +11,10 @@ OBJ = ${src:.cpp=${OBJEXT}}
 
 .SUFFIXES: ${OBJEXT} .cpp
 
-default: ${OBJ} 
+default: ${OBJ}
 
 .cpp${OBJEXT}:
 	${CXX} ${CFLAGS} ${DASH}c $<
 
+clean:
+	${RM} *.o *.obj

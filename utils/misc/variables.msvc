@@ -18,7 +18,7 @@ ENABLE_PARSER=1
 ENABLE_POSTPRO=1
 ENABLE_TETGEN=1
 ENABLE_NETGEN=0
-ENABLE_METIS=1
+ENABLE_METIS=0
 ENABLE_OCC=0
 ENABLE_MED=0
 
@@ -147,6 +147,7 @@ EXEEXT=.exe
 
 # File handling commands
 RM=erase
+MV=move
 
 # Installation directories
 prefix="S:\Lib\gmsh"

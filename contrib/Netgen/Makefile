@@ -13,11 +13,21 @@ CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}\
          ${DASH}DNO_PARALLEL_THREADS ${DASH}UWIN32
 
 ${LIB}: recur nglib_addon${OBJEXT}
+ifneq (${UNAME},WIN32MSVC)
 	${AR} ${ARFLAGS}${LIB} *${OBJEXT} libsrc/*/*${OBJEXT}
+else
+	copy libsrc\linalg\*.obj
+	copy libsrc\general\*.obj
+	copy libsrc\gprim\*.obj
+	copy libsrc\meshing\*.obj
+	copy libsrc\opti\*.obj
+	copy libsrc\interface\*.obj
+	${AR} ${ARFLAGS}${LIB} *${OBJEXT}
+endif
 	${RANLIB} ${LIB}
 
 cpobj: recur nglib_addon${OBJEXT}
-	${CP} *${OBJEXT} libsrc/*/*${OBJEXT} ../../lib/
+	cp -f *${OBJEXT} libsrc/*/*${OBJEXT} ../../lib/
 
 recur:
 	@cd libsrc/linalg && ${MAKE}
@@ -31,7 +41,13 @@ nglib_addon${OBJEXT}:
 	${CXX} ${CFLAGS} ${DASH}c nglib_addon.cpp
 
 clean:
-	rm -f *.o *.obj libsrc/*/*.o libsrc/*/*.obj
+	@cd libsrc/linalg && ${MAKE} clean
+	@cd libsrc/general && ${MAKE} clean
+	@cd libsrc/gprim && ${MAKE} clean
+	@cd libsrc/meshing && ${MAKE} clean
+	@cd libsrc/opti && ${MAKE} clean
+	@cd libsrc/interface && ${MAKE} clean
+	${RM} *.o *.obj
 
 depend:
 	true
