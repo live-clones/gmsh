@@ -15,7 +15,7 @@ MAKE=C:\src\gmsh\utils\misc\gmake.exe
 ENABLE_GSL=0
 ENABLE_GUI=0
 ENABLE_PARSER=1
-ENABLE_POSTPRO=1
+ENABLE_POSTPRO=0
 ENABLE_TETGEN=1
 ENABLE_NETGEN=0
 ENABLE_METIS=0
@@ -118,7 +118,8 @@ endif
 
 ifeq (${ENABLE_GUI},1)
   GMSH_DIRS+=Graphics Fltk contrib/NativeFileChooser
-  FLAGS+=/DHAVE_FLTK /DHAVE_NATIVE_FILE_CHOOSER /I"${FLTK_PREFIX}"
+  FLAGS+=/DHAVE_FLTK /I"${FLTK_PREFIX}" /I"${FLTK_PREFIX}/FL/images"
+  FLAGS+=/DHAVE_LIBZ /DHAVE_LIBPNG /DHAVE_LIBJPEG /DHAVE_NATIVE_FILE_CHOOSER
   GMSH_LIBS+=Fltk/Main.obj lib/*.lib ${FLTK_PREFIX}\lib\fltk*.lib
   GMSH_LIBS+=glu32.lib opengl32.lib advapi32.lib gdi32.lib user32.lib
   GMSH_LIBS+=shell32.lib ole32.lib comctl32.lib comdlg32.lib ws2_32.lib
