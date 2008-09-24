@@ -25,6 +25,9 @@ For a description of all other configuration options, type
 
 ./configure --help
 
+To build Gmsh with Microsoft Visual Studio, follow the intructions in
+doc/README.msvc.
+
 Gmsh is distributed under the terms of the GNU General Public License,
 with an exception to allow for easier linking with external mesh
 generators. See doc/LICENSE.txt and doc/CREDITS.txt for more
