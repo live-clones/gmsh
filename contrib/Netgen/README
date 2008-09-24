@@ -1,14 +1,17 @@
 
-This directory contains a slightly modified version of Joachim
+This directory contains a (very) slightly modified version of Joachim
 Sch\"oberl's NETGEN mesh generator:
 
 - only the libsrc directory was kept from the original distribution
 
-- the file meshing/improve2.cpp was slightly modified to fix build
-  problems on machines without TCL/TK
+- libsrc/makefile.inc was replaced
 
-- the file meshing/meshtype.hpp was slightly modified so that it
-  compiles with ISO-C++ complient compilers
+- libsrc/meshing/makefile was changed (removed some files from src)
+
+- parts of interface/nglib.cpp were #ifdef'd to remove the dependency
+  towards netgen's CAD engine
+
+All changed are marked with "MODIFIED FOR GMSH" in the source code
 
 See COPYING.LIB for license information
 

@@ -9,8 +9,7 @@ LIB = ../../lib/libGmshNetgen${LIBEXT}
 
 INC = ${DASH}I../../Common ${DASH}Ilibsrc/include ${DASH}Ilibsrc/interface
 
-CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE}\
-         ${DASH}DNO_PARALLEL_THREADS ${DASH}UWIN32
+CFLAGS = ${OPTIM} ${FLAGS} ${INC} ${SYSINCLUDE} ${DASH}DNO_PARALLEL_THREADS
 
 ${LIB}: recur nglib_addon${OBJEXT}
 ifneq (${UNAME},WIN32MSVC)
