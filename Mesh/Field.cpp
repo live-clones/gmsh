@@ -217,9 +217,26 @@ class StructuredField : public Field
 					      &update_needed);
     text_format = false;
     options["TextFormat"] = new FieldOptionBool(text_format, "True for ASCII input "
-						"files, false for binary files",
+						"files, false for binary files\n"
+            "(4 bite signed integers for n, double precision floating points for v, D and O)",
 						&update_needed);
     data = 0;
+  }
+  std::string get_description(){
+    return "Linearly interpolate between data provided on a 3D rectangular unstructured grid.\n"
+      "The format of the input file is :\n"
+      "Ox Oy Oz\n"
+      "Dx Dy Dz\n"
+      "nx ny nz\n"
+      "v(0,0,0) v(0,0,1) v(0,0,2) ...\n"
+      "v(0,1,0) v(0,1,1) v(0,1,2) ...\n"
+      "v(0,2,0) v(0,2,1) v(0,2,2) ...\n"
+      "...      ...      ...\n"
+      "v(1,0,0) ...      ...\n"
+      "where O are the coordinates of the first node,\n"
+      "D are the distances between nodes in each direction,\n"
+      "n are the numbers of nodes in each directions,\n"
+      "and v are the values on each nodes\n";
   }
   const char *get_name()
   {
@@ -306,12 +323,17 @@ class UTMField : public Field
   double a, b, n, n2, n3, n4, n5, e, e2, e1, e12, e13, e14, J1, J2, J3, J4,
     Ap, Bp, Cp, Dp, Ep, e4, e6, ep, ep2, ep4, k0, mu_fact;
  public:
+  std::string get_description(){
+      return "Evaluate Field[IField] in Universal Transverse Mercator coordinates.\n"
+        "The formulas for the coordinates transformation are taken from\n"
+        "http://www.uwgb.edu/dutchs/UsefulData/UTMFormulas.HTM\n";
+  }
   UTMField()
   {
     field_id = 1;
     zone = 0;
-    options["IField"] = new FieldOptionInt(field_id, "Field index");
-    options["Zone"] = new FieldOptionInt(zone, "");
+    options["IField"] = new FieldOptionInt(field_id, "Index of the field to evaluate");
+    options["Zone"] = new FieldOptionInt(zone, "Zone of the UTM projection");
     a = 6378137;                /* Equatorial Radius */
     b = 6356752.3142;           /* Rayon Polar Radius */
     /* see http://www.uwgb.edu/dutchs/UsefulData/UTMFormulas.HTM */
@@ -384,10 +406,14 @@ class LonLatField : public Field
 {
   int field_id;
  public:
+  std::string get_description(){
+    return "Evaluate Field[IField] in geographic coordinates (longitude,latitude).\n"
+           "F = Field[IField](arctan(y/x),arcsin(z/sqrt(x^2+y^2+z^2))\n";
+  }
   LonLatField()
   {
     field_id = 1;
-    options["IField"] = new FieldOptionInt(field_id, "Field index");
+    options["IField"] = new FieldOptionInt(field_id, "Index of the field to evaluate.");
   }
   const char *get_name()
   {
@@ -405,11 +431,15 @@ class BoxField : public Field
 {
   double v_in, v_out, x_min, x_max, y_min, y_max, z_min, z_max;
  public:
+  std::string get_description(){
+      return "The value of this field is VIn inside the box, VOut outside the box.\n"
+             "The box is given by Xmin<=x<=XMax && YMin<=y<=YMax && ZMin<=z<=ZMax\n";
+  }
   BoxField()
   {
     v_in = v_out = x_min = x_max = y_min = y_max = z_min = z_max = 0;
-    options["VIn"] = new FieldOptionDouble(v_in, "Element size inside the box");
-    options["VOut"] = new FieldOptionDouble(v_out, "Element size outside the box");
+    options["VIn"] = new FieldOptionDouble(v_in, "Value inside the box");
+    options["VOut"] = new FieldOptionDouble(v_out, "Value outside the box");
     options["XMin"] = new FieldOptionDouble(x_min, "Minimum X coordinate of the box");
     options["XMax"] = new FieldOptionDouble(x_max, "Maximum X coordinate of the box");
     options["YMin"] = new FieldOptionDouble(y_min, "Minimum Y coordinate of the box");
@@ -438,6 +468,11 @@ class ThresholdField : public Field
   {
     return "Threshold";
   }
+  std::string get_description(){
+      return "F = LCMin if Field[IField] <= DistMin\n"
+        "F = LCMax if Field[IField] >= DistMax\n"
+        "F = Interpolation between LcMin and LcMax if DistMin<Field[IField]<DistMax\n";
+  }
   ThresholdField()
   {
     iField = 0;
@@ -447,7 +482,7 @@ class ThresholdField : public Field
     lcmax = 1;
     sigmoid = false;
     stopAtDistMax = false;
-    options["IField"] = new FieldOptionInt(iField, "Field index");
+    options["IField"] = new FieldOptionInt(iField, "Index of the field to evaluate");
     options["DistMin"] = new FieldOptionDouble(dmin, "Distance from entity up to which "
 					       "element size will be LcMin");
     options["DistMax"] = new FieldOptionDouble(dmax, "Distance from entity after which"
@@ -458,7 +493,7 @@ class ThresholdField : public Field
 					     "and LcMax using a sigmoid, false to "
 					     "interpolate linearly");
     options["StopAtDistMax"] = new FieldOptionBool(stopAtDistMax, "True to not impose "
-						   "element size outside DistMax");
+						   "element size outside DistMax (i.e. F = a very big value if Field[IField]>DistMax)");
   }
   double operator() (double x, double y, double z)
   {
@@ -490,14 +525,18 @@ class GradientField : public Field
   {
     return "Gradient";
   }
+  std::string get_description(){
+    return "Compute the finite difference gradient of Field[IField].\n"
+      "F = (Field[IField](X + Delta/2) - Field[IField](X - Delta/2))/Delta\n";
+  }
   GradientField() : iField(0), kind(3), delta(CTX.lc / 1e4)
   {
     iField = 1;
     kind = 0;
     delta = 0.;
     options["IField"] = new FieldOptionInt(iField, "Field index");
-    options["Kind"] = new FieldOptionInt(kind, "0 for X, 1 for Y, 2 for Z, 3 for norm");
-    options["Delta"] = new FieldOptionDouble(delta, "");
+    options["Kind"] = new FieldOptionInt(kind, "Component of the gradient to evaluate : 0 for X, 1 for Y, 2 for Z, 3 for the norm");
+    options["Delta"] = new FieldOptionDouble(delta, "Finite difference step");
   }
   double operator() (double x, double y, double z)
   {
@@ -542,12 +581,16 @@ class CurvatureField : public Field
   {
     return "Curvature";
   }
+  std::string get_description(){
+    return "Compute the curvature of Field[IField].\n"
+      "F = divergence( || grad( Field[IField] ) || )";
+  }
   CurvatureField() : iField(0), delta(CTX.lc / 1e4)
   {
     iField = 1;
     delta = 0.;
     options["IField"] = new FieldOptionInt(iField, "Field index");
-    options["Delta"] = new FieldOptionDouble(delta, "");
+    options["Delta"] = new FieldOptionDouble(delta, "Step of the finite differences");
   }
   void grad_norm(Field &f,double x,double y,double z, double *g)
   {
@@ -590,12 +633,18 @@ class MaxEigenHessianField : public Field
   {
     return "MaxEigenHessian";
   }
+  std::string get_description(){
+      return "Compute the maximum eigen value of the Hessian matrix of Field[IField].\n"
+        "F = max ( eigenvalues ( grad ( grad ( Field[IField] ) ) ) )\n"
+        "Gradients are evaluated by finite differences,\n"
+        "eigenvalues are computed using the GSL library.\n";
+  }
   MaxEigenHessianField() : iField(0), delta(CTX.lc / 1e4)
   {
     iField = 1;
     delta = 0.;
     options["IField"] = new FieldOptionInt(iField, "Field index");
-    options["Delta"] = new FieldOptionDouble(delta, "");
+    options["Delta"] = new FieldOptionDouble(delta, "Step used for the finite differences");
     gslwork = gsl_eigen_symm_alloc(3);
     eigenvalues = gsl_vector_alloc(3);
     gslmat = gsl_matrix_alloc(3, 3);
@@ -650,12 +699,19 @@ class LaplacianField : public Field
   {
     return "Laplacian";
   }
+  std::string get_description(){
+      return "Compute finite difference the Laplacian of Field[IField].\n"
+        "F = divergence(gradient(Field[IField]))\n"
+        "F = G(x+d,y,z)+G(x-d,y,z)+G(x,y+d,z)+G(x,y-d,z)+\n"
+         "\t+G(x,y,z+d)+G(x,y,z-d)-6*G(x,y,z)\n"
+         "where G=Field[IField] and d=delta\n";
+  }
   LaplacianField() : iField(0), delta(CTX.lc / 1e4)
   {
     iField = 1;
-    delta = 0.;
+    delta = 0.1;
     options["IField"] = new FieldOptionInt(iField, "Field index");
-    options["Delta"] = new FieldOptionDouble(delta, "");
+    options["Delta"] = new FieldOptionDouble(delta, "Finite difference step");
   }
   double operator() (double x, double y, double z)
   {
@@ -677,12 +733,18 @@ class MeanField : public Field
   {
     return "Mean";
   }
+  std::string get_description(){
+      return "Very simple smoother.\n"
+        "F = (G(x+delta,y,z)+G(x-delta,y,z)\n"
+        "\t+G(x,y+delta,z)+G(x,y-delta,z)\n"
+        "\t+G(x,y,z+delta)+G(x,y,z-delta)\n"
+        "\t+G(x,y,z))/7\n"
+        "where G=Field[IField]\n";
+  }
   MeanField() : iField(0), delta(CTX.lc / 1e4)
   {
-    iField = 1;
-    delta = 0.;
     options["IField"] = new FieldOptionInt(iField, "Field index");
-    options["Delta"] = new FieldOptionDouble(delta, "");
+    options["Delta"] = new FieldOptionDouble(delta, "Distance used to compute the mean value");
   }
   double operator() (double x, double y, double z)
   {
@@ -691,7 +753,7 @@ class MeanField : public Field
     return ((*field) (x + delta , y, z) + (*field) (x - delta, y, z)
 	    + (*field) (x, y + delta, z) + (*field) (x, y - delta, z)
 	    + (*field) (x, y, z + delta) + (*field) (x, y, z - delta)
-	    + (*field) (x, y, z)) / 5;
+	    + (*field) (x, y, z)) / 7;
   }
 };
 
@@ -794,9 +856,8 @@ class MathEvalField : public Field
  public:
   MathEvalField()
   {
-    options["F"] = new FieldOptionString(f, "Mathematical function (possible arguments: "
-					 "x, y, z for spatial coordinates or F0, F1, "
-					 "..., for field values)", &update_needed);
+    options["F"] = new FieldOptionString(f, "Mathematical function to evaluate.", &update_needed);
+    f="F2 + Sin(z)\n";
   }
   double operator() (double x, double y, double z)
   {
@@ -811,6 +872,13 @@ class MathEvalField : public Field
   const char *get_name()
   {
     return "MathEval";
+  }
+  std::string get_description(){
+    return "Evaluate a mathematical expression.\n"
+      "The expression can contains x, y, z for spatial coordinates, F0, F1, ... for field values,\n"
+      "and the mathematical functions supported by the gmsh parser.\n"
+      "Example : F2 + Sin(z)\n"
+      "This evaluator is based on a modified version of the GNU libmatheval library.";
   }
 };
 
@@ -830,6 +898,11 @@ class ParametricField : public Field
 					  &update_needed);
     options["FZ"] = new FieldOptionString(f[2], "Z component of parametric function",
 					  &update_needed);
+  }
+  std::string get_description(){
+    return "Evaluate Field IField in parametric coordinate\n"
+      "F = Field[IField](FX,FY,FZ)\n"
+      "See MathEval Field help to get a description of valid FX, FY and FZ expression\n";
   }
   double operator() (double x, double y, double z)
   {
@@ -902,6 +975,9 @@ class PostViewField : public Field
   {
     return "PostView";
   }
+  std::string get_description(){
+      return "Evaluate the post processing view IView\n";
+  }
   PostViewField()
   {
     octree = 0;
@@ -926,6 +1002,9 @@ class MinField : public Field
     options["FieldsList"] = new FieldOptionList(idlist, "Field indices",
 						&update_needed);
   }
+  std::string get_description(){
+    return "Take the minimum value of a list of fields.\n";
+  }
   double operator() (double x, double y, double z)
   {
     double v = MAX_LC;
@@ -949,6 +1028,9 @@ class MaxField : public Field
   {
     options["FieldsList"] = new FieldOptionList(idlist, "Field indices", 
 						&update_needed);
+  }
+  std::string get_description(){
+    return "Take the maximum value of a list of fields.\n";
   }
   double operator() (double x, double y, double z)
   {
@@ -981,14 +1063,14 @@ class AttractorField : public Field
     index = new ANNidx[1];
     dist = new ANNdist[1];
     n_nodes_by_edge = 20;
-    options["NodesList"] = new FieldOptionList(nodes_id, "Identification numbers of "
-					       "points in the model",
+    options["NodesList"] = new FieldOptionList(nodes_id, "Indices of "
+					       "nodes in the geomtric model",
 					       &update_needed);
-    options["EdgesList"] = new FieldOptionList(edges_id, "Identification numbers of "
-					       "curves in the model",
+    options["EdgesList"] = new FieldOptionList(edges_id, "Indices of "
+					       "curves in the geometric model",
 					       &update_needed);
-    options["NNodesByEdge"] = new FieldOptionInt(n_nodes_by_edge, "Number of attractor "
-						 "nodes per curve", 
+    options["NNodesByEdge"] = new FieldOptionInt(n_nodes_by_edge, "Number of nodes "
+						 "used to discetized each curve", 
 						 &update_needed);
   }
   ~AttractorField()
@@ -1003,6 +1085,12 @@ class AttractorField : public Field
   const char *get_name()
   {
     return "Attractor";
+  }
+  std::string get_description(){
+      return "Compute the distance from the nearest node in a list.\n"
+        "It can also be used to compute distance from curves, in this case each curve is replaced"
+        "by NNodesByEdge equidistant nodes and the distance from those nodes is computed.\n"
+        "The ANN library is used to find the nearest node : http://www.cs.umd.edu/~mount/ANN/\n";
   }
   virtual double operator() (double X, double Y, double Z)
   {

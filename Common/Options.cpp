@@ -863,7 +863,11 @@ void Print_OptionsDoc()
     for(std::map<std::string, FieldOption*>::iterator it2 = f->options.begin();
 	it2 != f->options.end(); it2++){
       fprintf(file, "@item %s\n", it2->first.c_str());
-      fprintf(file, "%s\n", it2->second->get_help().c_str());
+      std::string val;
+      it2->second->get_text_representation(val);
+      fprintf(file, "%s (type: %s; default value: %s)\n",
+          it2->second->get_description().c_str(),
+          it2->second->get_type_name().c_str(),val.c_str());
     }
     fprintf(file, "@end table\n");
   }

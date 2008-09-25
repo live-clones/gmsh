@@ -4378,10 +4378,6 @@ void view_field_put_on_view_cb(CALLBACK_ARGS)
 {
   Fl_Menu_Button* mb = ((Fl_Menu_Button*)w);
   Field *field = (Field*)WID->field_editor_group->user_data();
-  if(mb->value()==0){
-    WID->load_field_view_list();
-    return;
-  }
   int iView;
   sscanf(mb->text(), "View [%i]", &iView);
   if(iView<PView::list.size()){

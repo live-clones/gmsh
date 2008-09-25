@@ -37,19 +37,18 @@ class FieldOption {
   virtual ~FieldOption() {}
   virtual FieldOptionType get_type() = 0;
   virtual void get_text_representation(std::string & v_str) = 0;
-  virtual std::string get_help()
-  {
-    std::string val, typ;
-    get_text_representation(val);
+  virtual  std::string get_description(){
+    return _help;
+  }
+  std::string get_type_name(){
     switch(get_type()){
-    case FIELD_OPTION_INT: typ = "integer"; break;
-    case FIELD_OPTION_DOUBLE: typ = "float"; break;
-    case FIELD_OPTION_BOOL: typ = "boolean"; break;
-    case FIELD_OPTION_PATH: typ = "path"; break;
-    case FIELD_OPTION_STRING: typ = "string"; break;
-    case FIELD_OPTION_LIST: typ = "list"; break;
+    case FIELD_OPTION_INT: return "integer"; break;
+    case FIELD_OPTION_DOUBLE: return "float"; break;
+    case FIELD_OPTION_BOOL: return "boolean"; break;
+    case FIELD_OPTION_PATH: return "path"; break;
+    case FIELD_OPTION_STRING: return "string"; break;
+    case FIELD_OPTION_LIST: return "list"; break;
     }
-    return _help + " (type: " + typ + "; default value: " + val + ")";
   }
   virtual void numerical_value(double val) { throw(1); }
   virtual double numerical_value() const { throw(1); }
@@ -71,6 +70,9 @@ class Field {
 #if !defined(HAVE_NO_POST)
   void put_on_view(PView * view, int comp = -1);
 #endif
+  virtual std::string get_description(){
+    return "";
+  }
 };
 
 class FieldFactory {

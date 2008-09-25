@@ -1563,6 +1563,7 @@ void GUI::update_views()
   reset_plugin_view_browser();
   reset_clip_browser();
   reset_external_view_list();
+  load_field_view_list();
 }
 
 // Set animation button
@@ -3740,6 +3741,7 @@ void GUI::create_plugin_window(int numview)
 }
 
 // field window
+
 void GUI::update_fields(){
   edit_field(GModel::current()->getFields()->get(field_selected_id));
 }
@@ -3754,7 +3756,7 @@ void GUI::load_field_list(){
     Field *field=it->second;
     std::ostringstream sstream;
     if(it->first==fields.background_field)
-      sstream<<"*";
+      sstream<<"@b";
     sstream<<it->first<<" "<<field->get_name();
     field_browser->add(sstream.str().c_str(),field);
     if(it->second==selected_field)
@@ -3857,13 +3859,15 @@ void GUI::load_field_options(){
 
 void GUI::load_field_view_list(){
   field_put_on_view_btn->clear();
-  field_put_on_view_btn->add("refresh view list");
-  if(PView::list.size()){
+  if(PView::list.size()>0){
+    field_put_on_view_btn->activate();
     for(unsigned int i = 0; i < PView::list.size(); i++) {
       std::ostringstream s;
       s<<"View ["<<i<<"]";
       field_put_on_view_btn->add(s.str().c_str());
     }
+  }else{
+     field_put_on_view_btn->deactivate();
   }
 }
 
@@ -3886,8 +3890,15 @@ void GUI::edit_field(Field *f){
   field_options_scroll->begin();
   int x=field_options_scroll->x();
   int yy=field_options_scroll->y()+WB;
+  field_help_display->clear();
+  add_multiline_in_browser(field_help_display,"",f->get_description().c_str());
+  field_help_display->add("\n");
+  field_help_display->add("@b@cOptions");
   for(std::map<std::string,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
-	Fl_Widget *input;
+    Fl_Widget *input;
+    field_help_display->add(("@b"+it->first).c_str());
+    field_help_display->add(("@i"+it->second->get_type_name()).c_str());
+  add_multiline_in_browser(field_help_display,"",it->second->get_description().c_str());
 	switch(it->second->get_type()){
 	case FIELD_OPTION_INT:
 	case FIELD_OPTION_DOUBLE:
@@ -3921,12 +3932,12 @@ void GUI::edit_field(Field *f){
 	input->align(FL_ALIGN_RIGHT);
 	field_options_widget.push_back(input);
 	yy+=WB+BH;
-      }
+  }
   field_options_scroll->end();
   load_field_options();
   field_options_scroll->damage(1);
-  load_field_view_list();
-  field_put_on_view_btn->activate();
+  if(PView::list.size()>0)
+    field_put_on_view_btn->activate();
   field_delete_btn->activate();
   load_field_list();
 }
@@ -3967,6 +3978,7 @@ void GUI::create_field_window()
   y+=BH+WB;
   h-=BH+WB;
   field_title->labelfont(FL_BOLD);
+  field_title->labelsize(18);
   Fl_Tabs *tabs = new Fl_Tabs(x, y , w, h);
   y+=BH;
   h-=BH;
@@ -3975,23 +3987,28 @@ void GUI::create_field_window()
   Fl_Group *options_tab= new Fl_Group(x, y, w, h, "Options");
   Fl_Scroll *options_scroll = new Fl_Scroll(x, y,w,h-BH-2*WB);
   field_options_scroll=options_scroll;
-  options_tab->resizable(options_scroll);
   options_scroll->end();
   Fl_Button* apply_btn = new Fl_Return_Button(x+w - BB ,y+h-BH-WB, BB, BH, "Apply");
   Fl_Button *revert_btn = new Fl_Button(x+w-2*BB-WB ,y+h-BH-WB, BB, BH, "Revert");
-  field_background_btn = new Fl_Check_Button(x,y+h-BH-WB,(int)(1.5*BB),BH,"Background size");
+  field_background_btn = new Fl_Check_Button(x,y+h-BH-WB,(int)(1.5*BB),BH,"Background mesh size");
   apply_btn->callback(view_field_apply_cb,this);
   revert_btn->callback(view_field_revert_cb,this);
   options_tab->end();
   Fl_Group *help_tab= new Fl_Group(x, y, w, h, "Help");
-  Fl_Browser *help_browser = new Fl_Browser(x, y+WB, w, h);
+  field_help_display = new Fl_Browser(x, y+WB, w, h-2*WB);
   help_tab->end();
   tabs->end();
   field_editor_group->end();
-  field_window->resizable(options_tab);
+  field_window->resizable(new Dummy_Box(1.5*BB+2*WB,BH+2*WB,width-3*WB-1.5*BB,height-3*BH-5*WB));
+  field_editor_group->resizable(tabs);
+  tabs->resizable(options_tab);
+  options_tab->resizable(new Dummy_Box(3*BB+4*WB,BH+2*WB,width-9*WB-5*BB,height-3*BH-5*WB));
+  /*options_tab->resizable(options_scroll);
+  field_window->resizable(field_editor_group);*/
   field_window->size_range(width0, height0);
   field_window->position(CTX.field_position[0], CTX.field_position[1]);
   field_window->end();
+  load_field_view_list();
   edit_field(NULL);
 }
 

@@ -209,6 +209,7 @@ public:
   Fl_Box           *field_title;
   Fl_Check_Button  *field_background_btn;
   Fl_Menu_Button   *field_put_on_view_btn;
+  Fl_Browser       *field_help_display;
   Fl_Button        *field_delete_btn;
   int              field_selected_id;
 
