@@ -146,7 +146,7 @@ void FieldManager::reset()
 Field *FieldManager::get(int id)
 {
   iterator it = find(id);
-  if(it == end()) return 0;
+  if(it == end()) return NULL;
   return it->second;
 }
 
@@ -298,11 +298,6 @@ class StructuredField : public Field
         }
     return v;
   }
-  FieldDialogBox *&dialog_box()
-  {
-    static FieldDialogBox *dialogBox = 0;
-    return dialogBox;
-  }
 };
 
 class UTMField : public Field
@@ -383,11 +378,6 @@ class UTMField : public Field
     if(!field) return MAX_LC;
     return (*field)(utm_x, utm_y, 0);
   }
-  FieldDialogBox *&dialog_box()
-  {
-    static FieldDialogBox *dialogBox = 0;
-    return dialogBox;
-  }
 };
 
 class LonLatField : public Field
@@ -408,11 +398,6 @@ class LonLatField : public Field
     Field *field = GModel::current()->getFields()->get(field_id);
     if(!field) return MAX_LC;
     return (*field)(atan2(y, x), asin(z / sqrt(x * x + y * y + z * z)), 0);
-  }
-  FieldDialogBox *&dialog_box()
-  {
-    static FieldDialogBox *dialogBox = 0;
-    return dialogBox;
   }
 };
 
@@ -435,11 +420,6 @@ class BoxField : public Field
   const char *get_name()
   {
     return "Box";
-  }
-  FieldDialogBox *&dialog_box()
-  {
-    static FieldDialogBox *dialogBox = 0;
-    return dialogBox;
   }
   double operator() (double x, double y, double z)
   {
@@ -499,11 +479,6 @@ class ThresholdField : public Field
     }
     return lc;
   }
-  FieldDialogBox *&dialog_box()
-  {
-    static FieldDialogBox *dialogBox = 0;
-    return dialogBox;
-  }
 };
 
 class GradientField : public Field
@@ -556,11 +531,6 @@ class GradientField : public Field
       return MAX_LC;
     }
   }
-  FieldDialogBox *&dialog_box()
-  {
-    static FieldDialogBox *dialogBox = 0;
-    return dialogBox;
-  }
 };
 
 class CurvatureField : public Field
@@ -602,11 +572,6 @@ class CurvatureField : public Field
     grad_norm(*field, x, y, z - delta / 2, grad[5]);
     return (grad[0][0] - grad[1][0] + grad[2][1] - 
 	    grad[3][1] + grad[4][2] - grad[5][2]) / delta;
-  }
-  FieldDialogBox *&dialog_box()
-  {
-    static FieldDialogBox *dialogBox = 0;
-    return dialogBox;
   }
 };
 
@@ -673,11 +638,6 @@ class MaxEigenHessianField : public Field
 			     fabs(gsl_vector_get(eigenvalues, 1)))
 		    ) / (delta * delta);
   }
-  FieldDialogBox *&dialog_box()
-  {
-    static FieldDialogBox *dialogBox = 0;
-    return dialogBox;
-  }
 };
 #endif
 
@@ -706,11 +666,6 @@ class LaplacianField : public Field
 	    +(*field) (x, y, z + delta )+ (*field) (x, y, z - delta )
 	    -6* (*field) (x , y, z)) / (delta*delta);
   }
-  FieldDialogBox *&dialog_box()
-  {
-    static FieldDialogBox *dialogBox = 0;
-    return dialogBox;
-  }
 };
 
 class MeanField : public Field
@@ -737,11 +692,6 @@ class MeanField : public Field
 	    + (*field) (x, y + delta, z) + (*field) (x, y - delta, z)
 	    + (*field) (x, y, z + delta) + (*field) (x, y, z - delta)
 	    + (*field) (x, y, z)) / 5;
-  }
-  FieldDialogBox *&dialog_box()
-  {
-    static FieldDialogBox *dialogBox = 0;
-    return dialogBox;
   }
 };
 
@@ -858,11 +808,6 @@ class MathEvalField : public Field
     }
     return expr.evaluate(x, y, z);
   }
-  FieldDialogBox *&dialog_box()
-  {
-    static FieldDialogBox *dialogBox = 0;
-    return dialogBox;
-  }
   const char *get_name()
   {
     return "MathEval";
@@ -901,11 +846,6 @@ class ParametricField : public Field
     return (*field)(expr[0].evaluate(x, y, z),
 		    expr[1].evaluate(x, y, z),
 		    expr[2].evaluate(x, y, z));
-  }
-  FieldDialogBox *&dialog_box()
-  {
-    static FieldDialogBox *dialogBox = 0;
-    return dialogBox;
   }
   const char *get_name()
   {
@@ -974,11 +914,6 @@ class PostViewField : public Field
     if(octree)
       delete octree;
   }
-  FieldDialogBox *&dialog_box()
-  {
-    static FieldDialogBox *dialogBox = 0;
-    return dialogBox;
-  }
 };
 #endif
 
@@ -999,11 +934,6 @@ class MinField : public Field
       if(f) v = std::min(v, (*f) (x, y, z));
     }
     return v;
-  }
-  FieldDialogBox *&dialog_box()
-  {
-    static FieldDialogBox *dialogBox = 0;
-    return dialogBox;
   }
   const char *get_name()
   {
@@ -1028,11 +958,6 @@ class MaxField : public Field
       if(f) v = std::max(v, (*f) (x, y, z));
     }
     return v;
-  }
-  FieldDialogBox *&dialog_box()
-  {
-    static FieldDialogBox *dialogBox = 0;
-    return dialogBox;
   }
   const char *get_name()
   {
@@ -1140,11 +1065,6 @@ class AttractorField : public Field
     double xyz[3] = { X, Y, Z };
     kdtree->annkSearch(xyz, 1, index, dist);
     return sqrt(dist[0]);
-  }
-  FieldDialogBox *&dialog_box()
-  {
-    static FieldDialogBox *dialogBox = 0;
-    return dialogBox;
   }
 };
 #endif

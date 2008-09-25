@@ -4334,80 +4334,60 @@ void view_plugin_cb(CALLBACK_ARGS)
 
 void view_field_cb(CALLBACK_ARGS)
 {
-  WID->create_field_window((int)(long)data);
-}
-
-void view_field_cancel_cb(CALLBACK_ARGS)
-{
-  WID->field_window->hide();
+  WID->field_window->show();
+  WID->edit_field(NULL);
 }
 
 void view_field_delete_cb(CALLBACK_ARGS)
 {
-  FieldDialogBox *fdb = (FieldDialogBox*)data;
-  fdb->group->hide();
-  delete_field(fdb->current_field->id, CTX.filename);
-  WID->create_field_window(0);
-}
-
-void view_field_set_size_btn_cb(CALLBACK_ARGS)
-{
-  FieldDialogBox *fdb = (FieldDialogBox*)data;
-  fdb->group->hide();
-  int v = ((Fl_Check_Button*)w)->value();
-  if(v)
-    set_background_field(fdb->current_field->id, CTX.filename);
-  else
-    set_background_field(-1, CTX.filename);
-  WID->create_field_window(fdb->current_field->id);
+  Field *f=(Field*)WID->field_editor_group->user_data();
+  delete_field(f->id, CTX.filename);
+  WID->edit_field(NULL);
 }
 
 void view_field_new_cb(CALLBACK_ARGS)
 {
   Fl_Menu_Button* mb = ((Fl_Menu_Button*)w);
-  int id = GModel::current()->getFields()->new_id();
+  FieldManager *fields=GModel::current()->getFields();
+  int id = fields->new_id();
   add_field(id, mb->text(), CTX.filename);
-  WID->create_field_window(id);
+  WID->edit_field((*fields)[id]);
 }
 
 void view_field_apply_cb(CALLBACK_ARGS)
 {
-  FieldDialogBox *fdb = (FieldDialogBox*)data;
-  fdb->save_values();
-  int selected = WID->field_browser->value();
-  std::ostringstream sstream("");
-  sstream << fdb->current_field->id;
-  sstream << " " << fdb->current_field->get_name();
-  WID->field_browser->text(selected, sstream.str().c_str());
+  WID->save_field_options();
 }
 
 void view_field_revert_cb(CALLBACK_ARGS)
 {
-  FieldDialogBox *fdb = (FieldDialogBox*)data;
-  fdb->load_field(fdb->current_field);
+  WID->load_field_options();
 }
 
 void view_field_browser_cb(CALLBACK_ARGS)
 {
   int selected = WID->field_browser->value();
-  if(WID->selected_field_dialog_box){
-    WID->selected_field_dialog_box->group->hide();
+  if(!selected){
+    WID->edit_field(NULL);
   }
-  if(!selected) return;
   Field *f = (Field*)WID->field_browser->data(selected);
-  f->dialog_box()->load_field(f);
-  WID->selected_field_dialog_box = f->dialog_box();
-  f->dialog_box()->group->show();
+  WID->edit_field(f);
 }
 
 void view_field_put_on_view_cb(CALLBACK_ARGS)
 {
   Fl_Menu_Button* mb = ((Fl_Menu_Button*)w);
-  Field *field = ((FieldDialogBox*)data)->current_field;
+  Field *field = (Field*)WID->field_editor_group->user_data();
+  if(mb->value()==0){
+    WID->load_field_view_list();
+    return;
+  }
   int iView;
   sscanf(mb->text(), "View [%i]", &iView);
-  field->put_on_view(PView::list[iView]);
-  Draw();
+  if(iView<PView::list.size()){
+    field->put_on_view(PView::list[iView]);
+    Draw();
+  }
 }
 
 void view_field_select_file_cb(CALLBACK_ARGS){

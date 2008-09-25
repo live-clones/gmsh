@@ -312,7 +312,7 @@ Context_Item menu_mesh[] = {
 };  
     Context_Item menu_mesh_define[] = {
       {"1Mesh>Define", NULL} ,
-      {"Fields",      (Fl_Callback *)view_field_cb, (void*)(-1) },
+      {"Fields",      (Fl_Callback *)view_field_cb},
       {"Characteristic length", (Fl_Callback *)mesh_define_length_cb  } ,
       {"Recombine",   (Fl_Callback *)mesh_define_recombine_cb  } ,
       {"Transfinite", (Fl_Callback *)mesh_define_transfinite_cb  } , 
@@ -968,7 +968,7 @@ GUI::GUI(int argc, char **argv)
   
   create_option_window();
   create_plugin_window(0);
-  create_field_window(0);
+  create_field_window();
   create_message_window();
   create_statistics_window();
   create_visibility_window();
@@ -3739,10 +3739,32 @@ void GUI::create_plugin_window(int numview)
   plugin_window->end();
 }
 
-void FieldDialogBox::save_values()
-{
-  std::list<Fl_Widget*>::iterator input=inputs.begin();
-  Field *f=current_field;
+// field window
+void GUI::update_fields(){
+  edit_field(GModel::current()->getFields()->get(field_selected_id));
+}
+
+void GUI::load_field_list(){
+  FieldManager &fields=*GModel::current()->getFields();
+  Field *selected_field=(Field*)field_editor_group->user_data();
+  field_browser->clear();
+  int i_entry=0;
+  for(FieldManager::iterator it=fields.begin();it!=fields.end();it++){
+    i_entry++;
+    Field *field=it->second;
+    std::ostringstream sstream;
+    if(it->first==fields.background_field)
+      sstream<<"*";
+    sstream<<it->first<<" "<<field->get_name();
+    field_browser->add(sstream.str().c_str(),field);
+    if(it->second==selected_field)
+      field_browser->select(i_entry);
+  }
+}
+
+void GUI::save_field_options(){
+  std::list<Fl_Widget*>::iterator input=field_options_widget.begin();
+  Field *f=(Field*)field_editor_group->user_data();
   std::ostringstream sstream;
   int i;
   char a;
@@ -3786,11 +3808,21 @@ void FieldDialogBox::save_values()
     }
     input++;
   }
+  int is_bg_field=field_background_btn->value();
+  FieldManager &fields=*GModel::current()->getFields();
+  if(is_bg_field && fields.background_field!=f->id){
+    set_background_field(f->id, CTX.filename);
+    load_field_list();
+  }
+  if(!is_bg_field && fields.background_field==f->id){
+    set_background_field(-1, CTX.filename);
+    load_field_list();
+  }
 }
-void FieldDialogBox::load_field(Field *f)
-{
-  current_field=f;
-  std::list<Fl_Widget*>::iterator input=inputs.begin();
+
+void GUI::load_field_options(){
+  Field *f=(Field*)field_editor_group->user_data();
+  std::list<Fl_Widget*>::iterator input=field_options_widget.begin();
   for(std::map<std::string,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
     FieldOption *option=it->second;
     std::ostringstream vstr;
@@ -3817,158 +3849,150 @@ void FieldDialogBox::load_field(Field *f)
       ((Fl_Input*)(*input))->value(vstr.str().c_str());
       break;
     }
+    (*input)->clear_changed();
     input++;
   }
+  field_background_btn->value(GModel::current()->getFields()->background_field==f->id);
+}
+
+void GUI::load_field_view_list(){
+  field_put_on_view_btn->clear();
+  field_put_on_view_btn->add("refresh view list");
   if(PView::list.size()){
-    put_on_view_btn->activate();
     for(unsigned int i = 0; i < PView::list.size(); i++) {
       std::ostringstream s;
       s<<"View ["<<i<<"]";
-      put_on_view_btn->add(s.str().c_str());
+      field_put_on_view_btn->add(s.str().c_str());
     }
   }
-  else{
-    put_on_view_btn->deactivate();
-  }
-  set_size_btn->value(GModel::current()->getFields()->background_field==f->id);
 }
 
-FieldDialogBox::FieldDialogBox(Field *f, int x, int y, int width, int height,int fontsize)
-{
-  current_field=NULL;
-  group=new Fl_Group(x, y, width, height);
-  {
-    Fl_Box *b = new Fl_Box(x, y, width, BH,f->get_name());
-    b->labelfont(FL_BOLD);
-    Fl_Tabs *o = new Fl_Tabs(x, y + BH + WB, width, height-2*BH-2*WB);
-    group->resizable(o);
-    {
-      Fl_Group *g = new Fl_Group(x, y + 2*BH + WB, width, height - 2*BH-3*WB, "Options");
-      apply_btn = new Fl_Return_Button(x+width - BB-WB ,y+ height - 2*BH -2*WB, BB, BH, "Apply");
-      apply_btn->callback(view_field_apply_cb,this);
-      revert_btn = new Fl_Button(x+width - 2*BB-2*WB ,y+ height - 2*BH -2*WB, BB, BH, "Revert");
-      revert_btn->callback(view_field_revert_cb,this);
-      Fl_Scroll *s = new Fl_Scroll(x + WB, y + 2*WB + 2*BH, width - 2 * WB, height - 4*BH - 5 * WB);
-      int yy=y+3*WB+2*BH;
-      for(std::map<std::string,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
+void GUI::edit_field(Field *f){
+  field_editor_group->user_data(f);
+  field_put_on_view_btn->deactivate();
+  field_delete_btn->deactivate();
+  if(f==NULL){
+    field_selected_id=-1;
+    field_editor_group->hide();
+    load_field_list();
+    return;
+  }
+  field_selected_id=f->id;
+  field_editor_group->show();
+  field_editor_group->user_data(f);
+  field_title->label(f->get_name());
+  field_options_scroll->clear();
+  field_options_widget.clear();
+  field_options_scroll->begin();
+  int x=field_options_scroll->x();
+  int yy=field_options_scroll->y()+WB;
+  for(std::map<std::string,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
 	Fl_Widget *input;
 	switch(it->second->get_type()){
 	case FIELD_OPTION_INT:
 	case FIELD_OPTION_DOUBLE:
-	  input=new Fl_Value_Input(x+WB,yy,IW,BH,it->first.c_str());
+      input=new Fl_Value_Input(x,yy,IW,BH,it->first.c_str());
 	  break;
 	case FIELD_OPTION_BOOL:
-	  input=new Fl_Check_Button(x+WB,yy,BH,BH,it->first.c_str());
-	  break;
+    input=new Fl_Check_Button(x,yy,BH,BH,it->first.c_str());
+    break;
 	case FIELD_OPTION_PATH:
     {
-    Fl_Button *b=new Fl_Button(x+WB,yy,BH,BH,"S");
-	  input=new Fl_Input(x+2*WB+BH,yy,IW-WB-BH,BH,it->first.c_str());
+    Fl_Button *b=new Fl_Button(x,yy,BH,BH,"S");
+    input=new Fl_Input(x+WB+BH,yy,IW-WB-BH,BH,it->first.c_str());
     b->callback(view_field_select_file_cb, input);
     }
     break;
-	case FIELD_OPTION_STRING:
-	  input=new Fl_Input(x+WB,yy,IW,BH,it->first.c_str());
+	case FIELD_OPTION_STRING:{
+	  input=new Fl_Input(x,yy,IW,BH,it->first.c_str());
 	  break;
+  }
 	case FIELD_OPTION_LIST:
 	default:
-	  /*{
-	    Fl_Button *b=new Fl_Button(x+WB,yy,BH,BH);
-	    b->label("@+");
-	    b->callback(view_field_select_node_cb);
-	    }
-	    input=new Fl_Input(x+WB+2*BH,yy,IW-2*BH,BH,it->first.c_str());*/
-	  input=new Fl_Input(x+WB,yy,IW,BH,it->first.c_str());
+	  //{
+	  //  Fl_Button *b=new Fl_Button(x+WB,yy,BH,BH);
+	  //  b->label("@+");
+	  //  b->callback(view_field_select_node_cb);
+	  //  }
+	  //  input=new Fl_Input(x+WB+2*BH,yy,IW-2*BH,BH,it->first.c_str());
+	  input=new Fl_Input(x,yy,IW,BH,it->first.c_str());
 	  break;
 	}
 	input->align(FL_ALIGN_RIGHT);
-	inputs.push_back(input);
+	field_options_widget.push_back(input);
 	yy+=WB+BH;
       }
-      o->resizable(g); // to avoid ugly resizing of tab labels
-      g->resizable(s);
-      s->end();
-      g->end();
-    }
-    {
-      Fl_Group *g = new Fl_Group(x, y + 2*BH + WB, width, height - 2*BH-3*WB, "Help");
-      Fl_Browser *o = new Fl_Browser(x + WB, y + 2*WB + 2*BH, width - 2 * WB, height - 4 * WB - 3 * BH);
-      o->add(" ");
-      g->end();
-    }
-    o->end();
-  }
-  {
-    Fl_Button *b = new Fl_Button(x+width - BB,y+ height - BH , BB, BH, "Delete");
-    b->callback(view_field_delete_cb,this);
-  }
-  put_on_view_btn = new Fl_Menu_Button(x+width - BB-(int)(1.25*BB)-WB,y+ height - BH ,(int)(1.25*BB),BH,"Put on view");
-  put_on_view_btn->callback(view_field_put_on_view_cb,this);
-  
-  set_size_btn = new Fl_Check_Button(x,y+ height - BH, (int)(1.3*BB),BH,"Background size");
-  set_size_btn->callback(view_field_set_size_btn_cb,this);
-  
-  group->end();
-  group->hide();
+  field_options_scroll->end();
+  load_field_options();
+  field_options_scroll->damage(1);
+  load_field_view_list();
+  field_put_on_view_btn->activate();
+  field_delete_btn->activate();
+  load_field_list();
 }
 
-void GUI::create_field_window(int numfield)
+void GUI::create_field_window()
 {
   int width0 = 34 * fontsize + WB;
   int height0 = 13 * BH + 5 * WB;
-  
   int width = (CTX.field_size[0] < width0) ? width0 : CTX.field_size[0];
   int height = (CTX.field_size[1] < height0) ? height0 : CTX.field_size[1];
-  
-  int L1 = BB;
-  int i_entry=1;
-  if(field_window) {
-    width=field_window->w();
-    height=field_window->h();
-    FieldManager &fields=*GModel::current()->getFields();
-    field_browser->clear();
-    for(FieldManager::iterator it=fields.begin();it!=fields.end();it++){
-      Field *field=it->second;
-      std::ostringstream sstream;
-      if(it->first==fields.background_field)
-	sstream<<"*";
-      sstream<<it->first;
-      sstream<<" "<<field->get_name();
-      field_browser->add(sstream.str().c_str(),field);
-      if(!field->dialog_box()){
-	field_window->begin();
-	field->dialog_box()=new FieldDialogBox(field, 2 * WB + L1 , WB, width - L1 - 3 * WB, height - 2*WB  ,fontsize);
-	field_window->end();
-      }
-      if(it->second->id==numfield){
-	field_browser->select(i_entry);
-	field_browser->do_callback();
-      }
-      i_entry++;
-    }
-    field_window->show();
-    return;
-  }
-  
-  selected_field_dialog_box=NULL;
   field_window = new Dialog_Window(width, height, CTX.non_modal_windows, "Fields");
   field_window->box(GMSH_WINDOW_BOX);
-  Fl_Group *resize_box = new Fl_Group(2*WB+L1, 2*WB+BB,width-3*WB-L1, height - 3 * WB-BB);
-  resize_box->end();
-  {
-    Fl_Menu_Button *b= new Fl_Menu_Button(WB,WB,L1,BH,"New");
-    FieldManager &fields=*GModel::current()->getFields();
-    std::map<std::string, FieldFactory*>::iterator it;
-    for(it=fields.map_type_name.begin();it!=fields.map_type_name.end();it++)
-      b->add(it->first.c_str());
-    b->callback(view_field_new_cb);
-  }
-  field_browser = new Fl_Hold_Browser(WB, 2*WB+BH, L1, height - 3 * WB - BH);
+  int x=WB;
+  int y=WB;
+  int w=1.5*BB;
+  Fl_Menu_Button *new_field_btn= new Fl_Menu_Button(x,y,w,BH,"New");
+  FieldManager &fields=*GModel::current()->getFields();
+  std::map<std::string, FieldFactory*>::iterator it;
+  for(it=fields.map_type_name.begin();it!=fields.map_type_name.end();it++)
+    new_field_btn->add(it->first.c_str());
+  new_field_btn->callback(view_field_new_cb);
+  y+=BH;
+  int h=height - 2*WB - 3*BH;
+  field_browser = new Fl_Hold_Browser(x, y+WB, w, h-2*WB);
+  y+=h; 
+  field_delete_btn = new Fl_Button(x,y,w, BH, "Delete");
+  field_delete_btn->callback(view_field_delete_cb,this);
+  y+=BH;
   field_browser->callback(view_field_browser_cb);
-  field_window->resizable(resize_box);
+  field_put_on_view_btn = new Fl_Menu_Button(x,y,w,BH,"Put on view");
+  field_put_on_view_btn->callback(view_field_put_on_view_cb,this);
+  x+=w+WB;
+  y=WB;
+  w=width-x-WB;
+  h=height-y-WB;
+  field_editor_group=new Fl_Group(x,y,w,h);
+  field_title=new Fl_Box(x,y,w,BH,"field_name");
+  y+=BH+WB;
+  h-=BH+WB;
+  field_title->labelfont(FL_BOLD);
+  Fl_Tabs *tabs = new Fl_Tabs(x, y , w, h);
+  y+=BH;
+  h-=BH;
+  x+=WB;
+  w-=2*WB;
+  Fl_Group *options_tab= new Fl_Group(x, y, w, h, "Options");
+  Fl_Scroll *options_scroll = new Fl_Scroll(x, y,w,h-BH-2*WB);
+  field_options_scroll=options_scroll;
+  options_tab->resizable(options_scroll);
+  options_scroll->end();
+  Fl_Button* apply_btn = new Fl_Return_Button(x+w - BB ,y+h-BH-WB, BB, BH, "Apply");
+  Fl_Button *revert_btn = new Fl_Button(x+w-2*BB-WB ,y+h-BH-WB, BB, BH, "Revert");
+  field_background_btn = new Fl_Check_Button(x,y+h-BH-WB,(int)(1.5*BB),BH,"Background size");
+  apply_btn->callback(view_field_apply_cb,this);
+  revert_btn->callback(view_field_revert_cb,this);
+  options_tab->end();
+  Fl_Group *help_tab= new Fl_Group(x, y, w, h, "Help");
+  Fl_Browser *help_browser = new Fl_Browser(x, y+WB, w, h);
+  help_tab->end();
+  tabs->end();
+  field_editor_group->end();
+  field_window->resizable(options_tab);
   field_window->size_range(width0, height0);
   field_window->position(CTX.field_position[0], CTX.field_position[1]);
   field_window->end();
+  edit_field(NULL);
 }
 
 // Create the window for the statistics

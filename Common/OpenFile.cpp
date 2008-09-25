@@ -426,6 +426,7 @@ void OpenProject(const char *name)
   if(!CTX.batch){
     WID->reset_visibility();
     WID->update_views();
+    WID->update_fields();
   }
   ZeroHighlight();
 #endif

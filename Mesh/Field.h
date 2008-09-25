@@ -59,8 +59,6 @@ class FieldOption {
   virtual std::string &string() { throw(1); }
 };
 
-class FieldDialogBox;
-
 class Field {
  public:
   int id;
@@ -70,7 +68,6 @@ class Field {
   bool update_needed;
   Field();
   virtual const char *get_name() = 0;
-  virtual FieldDialogBox *&dialog_box() = 0;
 #if !defined(HAVE_NO_POST)
   void put_on_view(PView * view, int comp = -1);
 #endif
