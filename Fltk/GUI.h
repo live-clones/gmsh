@@ -115,7 +115,7 @@ class GUI{
   int MH, fontsize;
   Fl_Scroll *m_scroll;
 
-  void add_multiline_in_browser(Fl_Browser *o, const char *prefix, const char *str);
+  void add_multiline_in_browser(Fl_Browser *o, const char *prefix, const char *str, int wrap=0);
 
 public:
 

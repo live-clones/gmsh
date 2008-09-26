@@ -5,167 +5,291 @@
 
 @ftable @code
 @item Attractor
-
-Options:
+Compute the distance from the nearest node in a list. It can also be used to compute distance from curves, in this case each curve is replaced by NNodesByEdge equidistant nodes and the distance from those nodes is computed. @*
+The ANN library is used to find the nearest node : http://www.cs.umd.edu/~mount/ANN/ @*
+Options:@*
 @table @code
 @item EdgesList
-Identification numbers of curves in the model (type: list; default value: {})
+Indices of curves in the geometric model@*
+type: list@*
+default value: @code{@{@}}
 @item NNodesByEdge
-Number of attractor nodes per curve (type: integer; default value: 20)
+Number of nodes used to discetized each curve@*
+type: integer@*
+default value: @code{20}
 @item NodesList
-Identification numbers of points in the model (type: list; default value: {})
+Indices of nodes in the geomtric model@*
+type: list@*
+default value: @code{@{@}}
 @end table
-@item Box
 
-Options:
+@item Box
+The value of this field is VIn inside the box, VOut outside the box. @*
+The box is given by Xmin<=x<=XMax && YMin<=y<=YMax && ZMin<=z<=ZMax@*
+Options:@*
 @table @code
 @item VIn
-Element size inside the box (type: float; default value: 0)
+Value inside the box@*
+type: float@*
+default value: @code{0}
 @item VOut
-Element size outside the box (type: float; default value: 0)
+Value outside the box@*
+type: float@*
+default value: @code{0}
 @item XMax
-Maximum X coordinate of the box (type: float; default value: 0)
+Maximum X coordinate of the box@*
+type: float@*
+default value: @code{0}
 @item XMin
-Minimum X coordinate of the box (type: float; default value: 0)
+Minimum X coordinate of the box@*
+type: float@*
+default value: @code{0}
 @item YMax
-Maximum Y coordinate of the box (type: float; default value: 0)
+Maximum Y coordinate of the box@*
+type: float@*
+default value: @code{0}
 @item YMin
-Minimum Y coordinate of the box (type: float; default value: 0)
+Minimum Y coordinate of the box@*
+type: float@*
+default value: @code{0}
 @item ZMax
-Maximum Z coordinate of the box (type: float; default value: 0)
+Maximum Z coordinate of the box@*
+type: float@*
+default value: @code{0}
 @item ZMin
-Minimum Z coordinate of the box (type: float; default value: 0)
+Minimum Z coordinate of the box@*
+type: float@*
+default value: @code{0}
 @end table
+
 @item Curvature
-
-Options:
+Compute the curvature of Field[IField]. @*
+F = divergence( || grad( Field[IField] ) || )@*
+Options:@*
 @table @code
 @item Delta
- (type: float; default value: 0)
+Step of the finite differences@*
+type: float@*
+default value: @code{0}
 @item IField
-Field index (type: integer; default value: 1)
+Field index@*
+type: integer@*
+default value: @code{1}
 @end table
+
 @item Gradient
-
-Options:
+Compute the finite difference gradient of Field[IField].@*
+ F = (Field[IField](X + Delta/2) - Field[IField](X - Delta/2))/Delta@*
+Options:@*
 @table @code
 @item Delta
- (type: float; default value: 0)
+Finite difference step@*
+type: float@*
+default value: @code{0}
 @item IField
-Field index (type: integer; default value: 1)
+Field index@*
+type: integer@*
+default value: @code{1}
 @item Kind
-0 for X, 1 for Y, 2 for Z, 3 for norm (type: integer; default value: 0)
+Component of the gradient to evaluate : 0 for X, 1 for Y, 2 for Z, 3 for the norm@*
+type: integer@*
+default value: @code{0}
 @end table
-@item Laplacian
 
-Options:
+@item Laplacian
+Compute finite difference the Laplacian of Field[IField].@*
+F = divergence(gradient(Field[IField])) @*
+F = G(x+d,y,z)+G(x-d,y,z)+G(x,y+d,z)+G(x,y-d,z)+ +G(x,y,z+d)+G(x,y,z-d)-6*G(x,y,z) where G=Field[IField] and d=delta@*
+@*
+Options:@*
 @table @code
 @item Delta
- (type: float; default value: 0)
+Finite difference step@*
+type: float@*
+default value: @code{0.1}
 @item IField
-Field index (type: integer; default value: 1)
+Field index@*
+type: integer@*
+default value: @code{1}
 @end table
-@item LonLat
 
-Options:
+@item LonLat
+Evaluate Field[IField] in geographic coordinates (longitude,latitude). @*
+F = Field[IField](arctan(y/x),arcsin(z/sqrt(x^2+y^2+z^2))@*
+Options:@*
 @table @code
 @item IField
-Field index (type: integer; default value: 1)
+Index of the field to evaluate.@*
+type: integer@*
+default value: @code{1}
 @end table
-@item MathEval
 
-Options:
+@item MathEval
+Evaluate a mathematical expression. The expression can contains x, y, z for spatial coordinates, F0, F1, ... for field values, and mathematical functions. This evaluator is based on a modified version of the GNU libmatheval library. @*
+Example : F2 + Sin(z)@*
+Options:@*
 @table @code
 @item F
-Mathematical function (possible arguments: x, y, z for spatial coordinates or F0, F1, ..., for field values) (type: string; default value: "")
+Mathematical function to evaluate.@*
+type: string@*
+default value: @code{"F2 + Sin(z)"}
 @end table
+
 @item Max
-
-Options:
+Take the maximum value of a list of fields.@*
+Options:@*
 @table @code
 @item FieldsList
-Field indices (type: list; default value: {})
+Field indices@*
+type: list@*
+default value: @code{@{@}}
 @end table
+
 @item MaxEigenHessian
-
-Options:
+Compute the maximum eigen value of the Hessian matrix of Field[IField]. Gradients are evaluated by finite differences, eigenvalues are computed using the GSL library.@*
+Options:@*
 @table @code
 @item Delta
- (type: float; default value: 0)
+Step used for the finite differences@*
+type: float@*
+default value: @code{0}
 @item IField
-Field index (type: integer; default value: 1)
+Field index@*
+type: integer@*
+default value: @code{1}
 @end table
+
 @item Mean
-
-Options:
+Very simple smoother.@*
+F = (G(x+delta,y,z)+G(x-delta,y,z) +G(x,y+delta,z)+G(x,y-delta,z) +G(x,y,z+delta)+G(x,y,z-delta) +G(x,y,z))/7 where G=Field[IField]@*
+Options:@*
 @table @code
 @item Delta
- (type: float; default value: 0)
+Distance used to compute the mean value@*
+type: float@*
+default value: @code{0.0001}
 @item IField
-Field index (type: integer; default value: 1)
+Field index@*
+type: integer@*
+default value: @code{0}
 @end table
-@item Min
 
-Options:
+@item Min
+Take the minimum value of a list of fields. @*
+Options:@*
 @table @code
 @item FieldsList
-Field indices (type: list; default value: {})
+Field indices@*
+type: list@*
+default value: @code{@{@}}
 @end table
-@item Param
 
-Options:
+@item Param
+Evaluate Field IField in parametric coordinate. See MathEval Field help to get a description of valid FX, FY and FZ expressions.@*
+F = Field[IField](FX,FY,FZ) @*
+Options:@*
 @table @code
 @item FX
-X component of parametric function (type: string; default value: "")
+X component of parametric function@*
+type: string@*
+default value: @code{""}
 @item FY
-Y component of parametric function (type: string; default value: "")
+Y component of parametric function@*
+type: string@*
+default value: @code{""}
 @item FZ
-Z component of parametric function (type: string; default value: "")
+Z component of parametric function@*
+type: string@*
+default value: @code{""}
 @item IField
-Field index (type: integer; default value: 1)
+Field index@*
+type: integer@*
+default value: @code{1}
 @end table
-@item PostView
 
-Options:
+@item PostView
+Evaluate the post processing view IView.@*
+Options:@*
 @table @code
 @item IView
-Post-processing view index (type: integer; default value: 0)
+Post-processing view index@*
+type: integer@*
+default value: @code{0}
 @end table
-@item Structured
 
-Options:
+@item Structured
+Linearly interpolate between data provided on a 3D rectangular structured grid. The format of the input file is : @*
+Ox Oy Oz @*
+Dx Dy Dz @*
+nx ny nz @*
+v(0,0,0) v(0,0,1) v(0,0,2) ... @*
+v(0,1,0) v(0,1,1) v(0,1,2) ... @*
+v(0,2,0) v(0,2,1) v(0,2,2) ... @*
+...      ...      ... @*
+v(1,0,0) ...      ... @*
+where O are the coordinates of the first node, D are the distances between nodes in each direction, n are the numbers of nodes in each directions, and v are the values on each nodes.@*
+Options:@*
 @table @code
 @item FileName
-Name of the input file (type: path; default value: "")
+Name of the input file@*
+type: path@*
+default value: @code{""}
 @item TextFormat
-True for ASCII input files, false for binary files (type: boolean; default value: 0)
+True for ASCII input files, false for binary files
+(4 bite signed integers for n, double precision floating points for v, D and O)@*
+type: boolean@*
+default value: @code{0}
 @end table
-@item Threshold
 
-Options:
+@item Threshold
+F = LCMin if Field[IField] <= DistMin@*
+F = LCMax if Field[IField] >= DistMax@*
+F = Interpolation between LcMin and LcMax if DistMin<Field[IField]<DistMax@*
+Options:@*
 @table @code
 @item DistMax
-Distance from entity after whichelement size will be LcMax (type: float; default value: 10)
+Distance from entity after whichelement size will be LcMax@*
+type: float@*
+default value: @code{10}
 @item DistMin
-Distance from entity up to which element size will be LcMin (type: float; default value: 1)
+Distance from entity up to which element size will be LcMin@*
+type: float@*
+default value: @code{1}
 @item IField
-Field index (type: integer; default value: 0)
+Index of the field to evaluate@*
+type: integer@*
+default value: @code{0}
 @item LcMax
-Element size outside DistMax (type: float; default value: 1)
+Element size outside DistMax@*
+type: float@*
+default value: @code{1}
 @item LcMin
-Element size inside DistMin (type: float; default value: 0.1)
+Element size inside DistMin@*
+type: float@*
+default value: @code{0.1}
 @item Sigmoid
-True to interpolate between LcMin and LcMax using a sigmoid, false to interpolate linearly (type: boolean; default value: 0)
+True to interpolate between LcMin and LcMax using a sigmoid, false to interpolate linearly@*
+type: boolean@*
+default value: @code{0}
 @item StopAtDistMax
-True to not impose element size outside DistMax (type: boolean; default value: 0)
+True to not impose element size outside DistMax (i.e. F = a very big value if Field[IField]>DistMax)@*
+type: boolean@*
+default value: @code{0}
 @end table
-@item UTM
 
-Options:
+@item UTM
+Evaluate Field[IField] in Universal Transverse Mercator coordinates. The formulas for the coordinates transformation are taken from http://www.uwgb.edu/dutchs/UsefulData/UTMFormulas.HTM@*
+@*
+Options:@*
 @table @code
 @item IField
-Field index (type: integer; default value: 1)
+Index of the field to evaluate@*
+type: integer@*
+default value: @code{1}
 @item Zone
- (type: integer; default value: 0)
+Zone of the UTM projection@*
+type: integer@*
+default value: @code{0}
 @end table
+
 @end ftable

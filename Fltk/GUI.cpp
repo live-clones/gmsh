@@ -1633,7 +1633,7 @@ void GUI::set_status(const char *msg, int num)
   }
 }
 
-void GUI::add_multiline_in_browser(Fl_Browser * o, const char *prefix, const char *str)
+void GUI::add_multiline_in_browser(Fl_Browser * o, const char *prefix, const char *str, int wrap)
 {
   int start = 0, len;
   if(!str || !strlen(str) || !strcmp(str, "\n")) {
@@ -1641,7 +1641,13 @@ void GUI::add_multiline_in_browser(Fl_Browser * o, const char *prefix, const cha
     return;
   }
   for(unsigned int i = 0; i < strlen(str); i++) {
-    if(i == strlen(str) - 1 || str[i] == '\n') {
+    if(i == strlen(str) - 1 || str[i] == '\n' || (wrap > 0 && i-start==wrap)) {
+      if(wrap>0 && i-start == wrap){ //line is longer than wrap
+        while(str[i]!=' ' &&i>start) //go back to the previous space
+          i--;
+        if(i==start) //no space in this line, cut the word
+          i+=wrap;
+      }
       len = i - start + (str[i] == '\n' ? 0 : 1);
       char *buff = new char[len + strlen(prefix) + 2];
       strcpy(buff, prefix);
@@ -1649,6 +1655,7 @@ void GUI::add_multiline_in_browser(Fl_Browser * o, const char *prefix, const cha
       buff[len + strlen(prefix)] = '\0';
       o->add(buff);
       start = i + 1;
+      delete []buff;
     }
   }
 }
@@ -3891,14 +3898,14 @@ void GUI::edit_field(Field *f){
   int x=field_options_scroll->x();
   int yy=field_options_scroll->y()+WB;
   field_help_display->clear();
-  add_multiline_in_browser(field_help_display,"",f->get_description().c_str());
+  add_multiline_in_browser(field_help_display,"",f->get_description().c_str(),100);
   field_help_display->add("\n");
   field_help_display->add("@b@cOptions");
   for(std::map<std::string,FieldOption*>::iterator it=f->options.begin();it!=f->options.end();it++){
     Fl_Widget *input;
     field_help_display->add(("@b"+it->first).c_str());
     field_help_display->add(("@i"+it->second->get_type_name()).c_str());
-  add_multiline_in_browser(field_help_display,"",it->second->get_description().c_str());
+  add_multiline_in_browser(field_help_display,"",it->second->get_description().c_str(),100);
 	switch(it->second->get_type()){
 	case FIELD_OPTION_INT:
 	case FIELD_OPTION_DOUBLE:

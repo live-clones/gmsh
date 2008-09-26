@@ -516,7 +516,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ZoneDefinition
 Method for defining a zone (0=single zone, 1=by partition, 2=by physical)@*
-Default value: @code{2}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Points

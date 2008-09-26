@@ -593,6 +593,18 @@ static void Print_ColorTable(int num, int diff, const char *prefix, FILE *file)
 #endif
 }
 
+//used in field options, sorry if it's already implemented somewhere else...
+static void Sanitize_String_Texi(std::string &s){
+  int i=-1;
+  while ((i=s.find('\n',i+1))>=0){
+    s.insert(i,"@*");
+    i+=2;
+  }
+  i=-1;
+  while ((i=s.find_first_of("{}",i+1))>=0)
+    s.insert(i++,"@");
+}
+
 void Print_Options(int num, int level, int diff, int help, const char *filename)
 {
   FILE *file;
@@ -856,20 +868,24 @@ void Print_OptionsDoc()
   FieldManager &fields = *GModel::current()->getFields();
   for(std::map<std::string, FieldFactory*>::iterator it = fields.map_type_name.begin();
       it != fields.map_type_name.end(); it++){
-    fprintf(file, "@item %s\n\n", it->first.c_str());
-    fprintf(file, "Options:\n");
-    fprintf(file, "@table @code\n");
+    fprintf(file, "@item %s\n", it->first.c_str());
     Field *f = (*it->second)();
+    std::string field_description=f->get_description();
+    Sanitize_String_Texi(field_description);
+    fprintf(file,"%s@*\n",field_description.c_str());
+    fprintf(file, "Options:@*\n");
+    fprintf(file, "@table @code\n");
     for(std::map<std::string, FieldOption*>::iterator it2 = f->options.begin();
 	it2 != f->options.end(); it2++){
       fprintf(file, "@item %s\n", it2->first.c_str());
       std::string val;
       it2->second->get_text_representation(val);
-      fprintf(file, "%s (type: %s; default value: %s)\n",
+      Sanitize_String_Texi(val);
+      fprintf(file, "%s@*\ntype: %s@*\ndefault value: @code{%s}\n",
           it2->second->get_description().c_str(),
           it2->second->get_type_name().c_str(),val.c_str());
     }
-    fprintf(file, "@end table\n");
+    fprintf(file, "@end table\n\n");
   }
   fprintf(file, "@end ftable\n");
   fclose(file);
