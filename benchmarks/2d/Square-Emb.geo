@@ -22,3 +22,8 @@ Spline(5) = {11,22,33,44};
 Line Loop(5) = {1,2,3,4};       
 Plane Surface(6) = {5};       
 Line {5} In  Surface {6};
+
+Point(111) = {0.5,0.5,0,lc2/10};       
+Point(112) = {0.53,0.5,0,lc2/10};       
+Point(113) = {0.5,0.51,0,lc2/10};       
+Point {111,112,113} In  Surface {6};

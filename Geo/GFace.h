@@ -68,6 +68,9 @@ class GFace : public GEntity
   // edges that are embedded in the face
   virtual std::list<GEdge*> embeddedEdges() const { return embedded_edges; }
 
+  // edges that are embedded in the face
+  virtual std::list<GVertex*> embeddedVertices() const { return embedded_vertices; }
+
   // vertices that bound the face
   virtual std::list<GVertex*> vertices() const;
 

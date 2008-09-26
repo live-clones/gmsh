@@ -209,6 +209,7 @@ static double mesh_functional_distorsion(MTriangle *t, double u, double v)
 
 double qmDistorsionOfMapping (MTriangle *e)
 {
+  return 1.0;
   if (e->getPolynomialOrder() == 1)return 1.0;
   IntPt *pts;
   int npts;
@@ -264,11 +265,13 @@ double qmDistorsionOfMapping (MTetrahedron *e)
     const double di  = mesh_functional_distorsion (e,u,v,w);
     dmin = (i==0)? di : std::min(dmin,di);
   }
-  double p[4][3] = {{0,0,0},{0,1,0},{1,0,0},{0,0,1}};
-  for (int i=0;i<4;i++){
-    const double u = p[i][0];
-    const double v = p[i][1];
-    const double w = p[i][2];
+  
+  const Double_Matrix& points = e->getFunctionSpace()->points;
+
+  for (int i=0;i<e->getNumPrimaryVertices();i++) {
+    const double u = points(i,0);
+    const double v = points(i,1);
+    const double w = points(i,2);
     const double di  = mesh_functional_distorsion (e,u,v,w);
     dmin = std::min(dmin,di);
   }

@@ -160,6 +160,17 @@ double MTetrahedron::distoShapeMeasure()
 #endif
 }
 
+double MTetrahedronN::distoShapeMeasure()
+{
+#if defined(HAVE_GMSH_EMBEDDED)
+  return 1.;
+#else
+  if (_disto < -1.e21)_disto = qmDistorsionOfMapping(this);
+  return _disto;
+#endif
+}
+
+
 double MTriangle::gammaShapeMeasure()
 {
 #if defined(HAVE_GMSH_EMBEDDED)
@@ -893,7 +904,7 @@ const gmshFunctionSpace* MLine::getFunctionSpace(int o) const {
   return NULL;
 }
 
-const int numSubEdges = 6;
+const int numSubEdges = 12;
 
 int MTriangleN::getNumFacesRep(){ return numSubEdges * numSubEdges; }
 

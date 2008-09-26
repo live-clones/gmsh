@@ -322,13 +322,16 @@ static bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
 
 static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
 {
+  debug = true;
   BDS_GeomEntity CLASS_F (1, 2);
   typedef std::set<MVertex*> v_container;
   v_container all_vertices;
   std::map<int, MVertex*>numbered_vertices;
   std::list<GEdge*> edges = gf->edges();
   std::list<GEdge*> emb_edges = gf->embeddedEdges();
+  std::list<GVertex*> emb_vertx = gf->embeddedVertices();
   std::list<GEdge*>::iterator it = edges.begin();
+  std::list<GVertex*>::iterator itvx = emb_vertx.begin();
 
   // build a set with all points of the boundaries
   it = edges.begin();
@@ -357,7 +360,14 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
     }
     ++it;
   }
-  
+ 
+  // add embedded vertices
+  while(itvx != emb_vertx.end()){
+    all_vertices.insert((*itvx)->mesh_vertices.begin(),
+			(*itvx)->mesh_vertices.end() );
+    ++itvx;
+  }
+ 
   if (all_vertices.size() < 3){
     Msg::Warning("Mesh Generation of Model Face %d Skipped: "
 		 "Only %d Mesh Vertices on The Contours",

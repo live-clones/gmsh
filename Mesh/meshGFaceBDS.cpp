@@ -519,8 +519,25 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   
   int MAXNP = m.MAXPOINTNUMBER;
 
+
+  // classify correctly the embedded vertices
+  // use a negative model face number to avoid
+  // mesh motion
+  std::list<GVertex*> emb_vertx = gf->embeddedVertices();
+  std::list<GVertex*>::iterator itvx = emb_vertx.begin();
+  while(itvx != emb_vertx.end()){
+    MVertex *v = *((*itvx)->mesh_vertices.begin());
+    BDS_Point *p = m.find_point(v->getIndex());
+    m.add_geom (-1, 2);
+    p->g = m.get_geom(-1,2);
+    p->lc() = (*itvx)->prescribedMeshSizeAtVertex();
+    p->lcBGM() = (*itvx)->prescribedMeshSizeAtVertex();
+    ++itvx;
+  }
+
   // IF ASKED , compute nodal size field using 1D Mesh
   if (computeNodalSizeField){
+
     std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
     while (itp != m.points.end()){
       std::list<BDS_Edge*>::iterator it  = (*itp)->edges.begin();
@@ -535,10 +552,12 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
         }
         ++it;
       }
-      if (!ne) L = 1.e22;
-      if(CTX.mesh.lc_from_points)
-        (*itp)->lc() = L;
-      (*itp)->lcBGM() = L;
+      if ((*itp)->g && (*itp)->g->classif_tag > 0){
+	if (!ne) L = 1.e22;
+	if(CTX.mesh.lc_from_points)
+	  (*itp)->lc() = L;
+	(*itp)->lcBGM() = L;
+      }
       ++itp;
     }
   }

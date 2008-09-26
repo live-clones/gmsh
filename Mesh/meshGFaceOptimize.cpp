@@ -81,6 +81,17 @@ void buidMeshGenerationDataStructures(GFace *gf, std::set<MTri3*, compareTri3Ptr
   for (unsigned int i = 0;i < gf->triangles.size(); i++)
     setLcs(gf->triangles[i], vSizesMap);
 
+  // take care of embedded vertices
+  {
+    std::list<GVertex*> emb_vertx = gf->embeddedVertices();
+    std::list<GVertex*>::iterator itvx = emb_vertx.begin();
+    while(itvx != emb_vertx.end()){
+      MVertex *v = *((*itvx)->mesh_vertices.begin());
+      vSizesMap[v] = std::min(vSizesMap[v],(*itvx)->prescribedMeshSizeAtVertex());      
+      ++itvx;
+    }
+  }
+
   int NUM = 0;
   for (std::map<MVertex*, double>::iterator it = vSizesMap.begin();
        it != vSizesMap.end(); ++it){

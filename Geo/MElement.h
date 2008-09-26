@@ -1403,20 +1403,22 @@ class MTetrahedronN : public MTetrahedron {
  protected:
   std::vector<MVertex *> _vs;
   const short _order;
+  double _disto;
  public:
   MTetrahedronN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, 
 		std::vector<MVertex*> &v, int order, int num=0, int part=0) 
-    : MTetrahedron(v0, v1, v2, v3, num, part) , _vs (v), _order(order)
+    : MTetrahedron(v0, v1, v2, v3, num, part) , _vs (v), _order(order),_disto(-1.e22)
   {
     for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
   }
   MTetrahedronN(std::vector<MVertex*> &v, int order, int num=0, int part=0) 
-    : MTetrahedron(v[0], v[1], v[2], v[3], num, part) , _order(order)
+    : MTetrahedron(v[0], v[1], v[2], v[3], num, part) , _order(order),_disto(-1.e22)
   {
     for(unsigned int i = 4; i < v.size(); i++) _vs.push_back(v[i]);
     for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
   }
   ~MTetrahedronN(){}
+  virtual double distoShapeMeasure();
   virtual int getPolynomialOrder() const { return _order; }
   virtual int getNumVertices() const { return 4 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }

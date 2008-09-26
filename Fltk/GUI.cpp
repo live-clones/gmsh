@@ -2455,7 +2455,7 @@ void GUI::create_option_window()
       mesh_value[3]->align(FL_ALIGN_RIGHT);
       mesh_value[3]->callback(mesh_options_ok_cb);
 
-      mesh_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Use incomplete second order elements");
+      mesh_butt[4] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Use incomplete high order elements");
       mesh_butt[4]->type(FL_TOGGLE_BUTTON);
       mesh_butt[4]->callback(mesh_options_ok_cb);
 
