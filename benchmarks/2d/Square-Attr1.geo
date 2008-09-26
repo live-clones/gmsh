@@ -21,8 +21,8 @@ Field[2] = Threshold;
 Field[2].IField = 1;
 Field[2].LcMin = lc/10;
 Field[2].LcMax = lc;
-Field[2].DistMin = 0.15;
-Field[2].DistMax = 0.3;
+Field[2].DistMin = 0.15/2;
+Field[2].DistMax = 0.3/2;
 
 Background Field = 2;
 

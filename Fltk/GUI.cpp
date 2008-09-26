@@ -4871,7 +4871,7 @@ void GUI::create_geometry_context_window(int num)
       context_geometry_input[4] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z coordinate");
       context_geometry_input[4]->value("0");
       context_geometry_input[5] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Characteristic length");
-      context_geometry_input[5]->value("0.1");
+      context_geometry_input[5]->value("");
       for(i = 2; i < 6; i++) {
         context_geometry_input[i]->align(FL_ALIGN_RIGHT);
       }

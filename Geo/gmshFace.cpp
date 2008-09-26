@@ -190,18 +190,18 @@ GPoint gmshFace::closestPoint(const SPoint3 & qp, const double initialGuess[2]) 
     double XP = qp.x();
     double YP = qp.y();
     double ZP = qp.z();
-    double a = meanPlane.a;
-    double b = meanPlane.b;
-    double c = meanPlane.c;
-    double d = meanPlane.d;
+    //double a = meanPlane.a;
+    //double b = meanPlane.b;
+    //double c = meanPlane.c;
+    //double d = meanPlane.d;
     // X = P +   H N, find y such that
     // a X_1 + b X_2 + c X_3 + d = 0
     // a ( XP + y XN) + b ( YP + y YN) + c ( ZP + y ZN) + d = 0
     // H ( a XN + b YN + c ZN ) = - (a XP + b YP + c ZP + d)    
-    const double H = -(a*XP + b*YP + c *ZP + d)/(a*a + b*b + c*c);
-    const double X = XP + H * a;
-    const double Y = YP + H * b;
-    const double Z = ZP + H * c;
+    //const double H = -(a*XP + b*YP + c *ZP + d)/(a*a + b*b + c*c);
+    //const double X = XP + H * a;
+    //const double Y = YP + H * b;
+    //const double Z = ZP + H * c;
     // now compute parametric coordinates
     double x,y,z,VX[3], VY[3];
     getMeanPlaneData(VX, VY, x, y, z);

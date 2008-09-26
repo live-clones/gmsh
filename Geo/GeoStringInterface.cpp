@@ -197,7 +197,9 @@ void add_point(std::string filename, std::string x, std::string y,
 {
   std::ostringstream sstream;
   sstream << "Point(" << NEWPOINT() << ") = {" << x << ", " << y << ", " 
-	  << z << ", " << lc << "};";
+	  << z ;
+  if(lc.size()) sstream << ", " << lc;
+  sstream << "};";
   add_infile(sstream.str(), filename);
 }
 

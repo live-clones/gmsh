@@ -117,8 +117,8 @@ Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc, double u
 
 Vertex *Create_Vertex(int Num, double u, double v, gmshSurface *surf, double lc)
 {
-  SPoint3 p = surf->point(u,v);
-  Vertex *pV = new Vertex(p.x(),p.y(),p.z(),lc);
+  SPoint3 p = surf->point(u, v);
+  Vertex *pV = new Vertex(p.x(), p.y(), p.z(), lc);
   pV->w = 1.0;
   pV->Num = Num;
   GModel::current()->getGEOInternals()->MaxPointNum = 
