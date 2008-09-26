@@ -322,7 +322,6 @@ static bool recover_medge(BDS_Mesh *m, GEdge *ge, std::set<EdgeToRecover> *e2r,
 
 static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
 {
-  debug = true;
   BDS_GeomEntity CLASS_F (1, 2);
   typedef std::set<MVertex*> v_container;
   v_container all_vertices;
