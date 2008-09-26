@@ -48,9 +48,10 @@ namespace netgen
     sprintf (filename, "netgen.prof");
 #endif
 
-    FILE *prof = fopen(filename,"w");
-    Print (prof);
-    fclose(prof);
+    // MODIFIED FOR GMSH
+    //FILE *prof = fopen(filename,"w");
+    //Print (prof);
+    //fclose(prof);
   }
 
 
