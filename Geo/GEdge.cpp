@@ -66,7 +66,7 @@ void GEdge::resetMeshAttributes()
   meshAttributes.nbPointsTransfinite = 0;
   meshAttributes.typeTransfinite = 0;
   meshAttributes.extrude = 0;
-  meshAttributes.meshSize = 1.e22;
+  meshAttributes.meshSize = MAX_LC;
   meshAttributes.minimumMeshSegments = 1;
 }
 

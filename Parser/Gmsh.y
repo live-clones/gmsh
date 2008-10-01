@@ -1019,8 +1019,7 @@ Shape :
 	double y = CTX.geom.scaling_factor * $6[1];
 	double z = CTX.geom.scaling_factor * $6[2];
 	double lc = CTX.geom.scaling_factor * $6[3];
-	// use MAX_LC if no LC is given
-	if(lc == 0.0) lc = 1.e22;
+	if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
 	Vertex *v;
 	if(!myGmshSurface)
 	  v = Create_Vertex(num, x, y, z, lc, 1.0);

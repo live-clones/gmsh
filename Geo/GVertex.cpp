@@ -48,7 +48,7 @@ std::string GVertex::getAdditionalInfoString()
   std::ostringstream sstream;
   sstream << "{" << x() << "," << y() << "," << z() << "}";
   double lc = prescribedMeshSizeAtVertex();
-  if(lc < 1.e22) sstream << " (cl: " << lc << ")";
+  if(lc < MAX_LC) sstream << " (cl: " << lc << ")";
   return sstream.str();
 }
 

@@ -15,8 +15,6 @@
 
 extern Context_T CTX;
 
-#define MAX_LC 1.e22
-
 // computes the characteristic length of the mesh at a vertex in order
 // to have the geometry captured with accuracy. A parameter called
 // CTX.mesh.min_circ_points tells the minimum number of points per
@@ -112,6 +110,7 @@ static double LC_MVertex_PNTS(GEntity *ge, double U, double V)
     {
       GVertex *gv = (GVertex *)ge;
       double lc = gv->prescribedMeshSizeAtVertex();
+      // FIXME we might want to remove this to make all lc treatment consistent
       if(lc >= MAX_LC) return CTX.lc / 10.;
       return lc;
     }
@@ -124,6 +123,7 @@ static double LC_MVertex_PNTS(GEntity *ge, double U, double V)
       double a = (U - range.low()) / (range.high() - range.low()); 
       double lc = (1 - a) * v1->prescribedMeshSizeAtVertex() +
         (a) * v2->prescribedMeshSizeAtVertex() ;
+      // FIXME we might want to remove this to make all lc treatment consistent
       if(lc >= MAX_LC) return CTX.lc / 10.;
       return lc;
     }
@@ -135,7 +135,7 @@ static double LC_MVertex_PNTS(GEntity *ge, double U, double V)
 // This is the only function that is used by the meshers
 double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double Z)
 {
-  // default lc (mesh size == size of the domain)
+  // default lc (mesh size == size of the model)
   double l1 = CTX.lc;
 
   // lc from points

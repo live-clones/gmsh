@@ -31,8 +31,6 @@
 #include "PViewDataList.h"
 #endif
 
-#define MAX_LC 1.e22
-
 extern Context_T CTX;
 
 class FieldOptionDouble : public FieldOption

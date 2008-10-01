@@ -617,7 +617,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
  	pp->lcBGM() = BGM_MeshSize(ge, u, 0, here->x(), here->y(), here->z());
       }
       else
- 	pp->lcBGM() = 1.e22;      
+ 	pp->lcBGM() = MAX_LC;      
       pp->lc() = pp->lcBGM();
     }
     for(int ip = 0; ip < 4; ip++) delete bb[ip];
@@ -967,7 +967,7 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop  &gel,
          pp->lcBGM() = BGM_MeshSize(ge, u, 0,here->x(), here->y(), here->z());
        }
        else
-         pp->lcBGM() = 1.e22;
+         pp->lcBGM() = MAX_LC;
        
        pp->lc() = pp->lcBGM();
        m->add_geom (ge->tag(), ge->dim());

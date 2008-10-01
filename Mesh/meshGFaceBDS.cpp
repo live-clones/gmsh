@@ -553,7 +553,7 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
         ++it;
       }
       if ((*itp)->g && (*itp)->g->classif_tag > 0){
-	if (!ne) L = 1.e22;
+	if (!ne) L = MAX_LC;
 	if(CTX.mesh.lc_from_points)
 	  (*itp)->lc() = L;
 	(*itp)->lcBGM() = L;
@@ -574,7 +574,7 @@ void gmshRefineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
     int nb_swap = 0;
 
     // split long edges
-    double minL = 1.E22, maxL = 0;
+    double minL = 1.e22, maxL = 0;
     int NN1 = m.edges.size();
     int NN2 = 0;
     std::list<BDS_Edge*>::iterator it = m.edges.begin();

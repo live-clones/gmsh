@@ -1,4 +1,13 @@
-$Id: TODO.txt,v 1.4 2008-08-15 13:31:32 geuzaine Exp $
+$Id: TODO.txt,v 1.5 2008-10-01 07:06:48 geuzaine Exp $
+
+********************************************************************
+
+Add option to Fields to apply them only on certain elementary
+entities. (From Lars)
+
+Add Attractor on surfaces: specfify a mesh size on the boundary of a
+volume, and the elements should get smaller/larger (following e.g. a
+quadratic formula) when you go away from the boundary
 
 ********************************************************************
 

@@ -4512,8 +4512,10 @@ double opt_mesh_scaling_factor(OPT_ARGS_NUM)
 
 double opt_mesh_lc_factor(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
-    CTX.mesh.lc_factor = val;
+  if(action & GMSH_SET){
+    if(val > 0)
+      CTX.mesh.lc_factor = val;
+  }
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI))
     WID->mesh_value[2]->value(CTX.mesh.lc_factor);
