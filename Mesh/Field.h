@@ -6,16 +6,16 @@
 #ifndef _FIELD_H_
 #define _FIELD_H_
 
+#include <string>
 #include <map>
 #include <list>
-#include <string.h>
-#include "Geo.h"
 
 #if !defined(HAVE_NO_POST)
 #include "PView.h"
 #endif
 
 class Field;
+class GEntity;
 
 typedef enum { 
   FIELD_OPTION_DOUBLE = 0,
@@ -37,9 +37,7 @@ class FieldOption {
   virtual ~FieldOption() {}
   virtual FieldOptionType get_type() = 0;
   virtual void get_text_representation(std::string & v_str) = 0;
-  virtual  std::string get_description(){
-    return _help;
-  }
+  virtual std::string get_description(){ return _help; }
   std::string get_type_name(){
     switch(get_type()){
     case FIELD_OPTION_INT: return "integer"; break;
@@ -62,7 +60,7 @@ class Field {
  public:
   int id;
   std::map<std::string, FieldOption *> options;
-  virtual double operator() (double x, double y, double z) = 0;
+  virtual double operator() (double x, double y, double z, GEntity *ge=0) = 0;
   virtual ~Field() {}
   bool update_needed;
   Field();
@@ -70,9 +68,7 @@ class Field {
 #if !defined(HAVE_NO_POST)
   void put_on_view(PView * view, int comp = -1);
 #endif
-  virtual std::string get_description(){
-    return "";
-  }
+  virtual std::string get_description(){ return ""; }
 };
 
 class FieldFactory {

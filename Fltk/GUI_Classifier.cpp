@@ -4,6 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "GUI_Classifier.h"
+#include "Numeric.h"
 #include "Draw.h"
 #include "Options.h"
 #include "Context.h"

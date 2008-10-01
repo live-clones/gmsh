@@ -25,7 +25,7 @@ For a description of all other configuration options, type
 
 ./configure --help
 
-To build Gmsh with Microsoft Visual Studio, follow the intructions in
+To build Gmsh with Microsoft Visual C++, follow the intructions in
 doc/README.msvc.
 
 Gmsh is distributed under the terms of the GNU General Public License,

@@ -17,6 +17,7 @@
 #else
 #include "gmshSurface.h"
 #include "Octree.h"
+#include "SmoothData.h"
 #include "Field.h"
 #include "Generator.h"
 #include "Context.h"
@@ -98,15 +99,15 @@ void GModel::destroy()
     delete *it;
   vertices.clear();
 
-  if(normals) delete normals;
-  normals = 0;
-
   destroyMeshCaches();
 
   MVertex::resetGlobalNumber();
   MElement::resetGlobalNumber();
 
 #if !defined(HAVE_GMSH_EMBEDDED)
+  if(normals) delete normals;
+  normals = 0;
+
   _fields->reset();
   gmshSurface::reset();
 #endif

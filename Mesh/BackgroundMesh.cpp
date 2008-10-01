@@ -153,7 +153,7 @@ double BGM_MeshSize(GEntity *ge, double U, double V, double X, double Y, double 
   FieldManager *fields = GModel::current()->getFields();
   if(fields->background_field > 0){
     Field *f = fields->get(fields->background_field);
-    if(f) l4 = (*f)(X, Y, Z);
+    if(f) l4 = (*f)(X, Y, Z, ge);
   }
 
   // take the minimum, then contrain by lc_min and lc_max
