@@ -16,8 +16,9 @@ LOG=${GMSH}/nightly.log
 WEB_BIN=geuzaine@geuz.org:/home/www/geuz.org/gmsh/bin
 
 gmsh-update:
-	cd ${GMSH} && make clean
-	rm -rf ${LOG} ${GMSH}/Makefile* ${GMSH}/gmsh-*cvs*
+	rm -f ${LOG}
+	rm -f ${GMSH}/Makefile*
+	rm -rf ${GMSH}/gmsh-*cvs*
 	echo "BUILD BEGIN: `date`" > ${LOG}
 	cd ${GMSH} && export CVS_RSH=ssh && cvs update -dPA >> ${LOG} 2>&1
 	cd ${GMSH} && ./configure --enable-universal --disable-fm\
