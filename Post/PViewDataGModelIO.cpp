@@ -3,7 +3,6 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include <string.h>
 #include "Message.h"
 #include "PViewDataGModel.h"
 #include "MVertex.h"

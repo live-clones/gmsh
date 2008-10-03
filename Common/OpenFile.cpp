@@ -306,6 +306,9 @@ int MergeFile(const char *name, int warn_if_missing)
   else if(!strcmp(ext, ".unv") || !strcmp(ext, ".UNV")){
     status = m->readUNV(name);
   }
+  else if(!strcmp(ext, ".vtk") || !strcmp(ext, ".VTK")){
+    status = m->readVTK(name);
+  }
   else if(!strcmp(ext, ".wrl") || !strcmp(ext, ".WRL") || 
           !strcmp(ext, ".vrml") || !strcmp(ext, ".VRML") ||
           !strcmp(ext, ".iv") || !strcmp(ext, ".IV")){
