@@ -946,7 +946,12 @@ class PostViewField : public Field
   OctreePost *octree;
  public:
   int view_index;
+<<<<<<< Field.cpp
+  bool crop_negative_values;
+  double operator() (double x, double y, double z)
+=======
   double operator() (double x, double y, double z, GEntity *ge=0)
+>>>>>>> 1.56
   {
     // FIXME: should test unique view num instead, but that would be slower
     if(view_index < 0 || view_index >= (int)PView::list.size())
@@ -981,7 +986,7 @@ class PostViewField : public Field
 	}
       */
     }
-    if(l <= 0) return MAX_LC;
+    if(l <= 0 && crop_negative_values) return MAX_LC;
     return l;
   }
   const char *get_name()
@@ -998,6 +1003,8 @@ class PostViewField : public Field
     view_index = 0;
     options["IView"] = new FieldOptionInt(view_index, "Post-processing view index",
 					  &update_needed);
+    crop_negative_values=true;
+    options["CropNegativeValues"] = new FieldOptionBool(crop_negative_values,"return LC_MAX instead of a negative value (this option is needed for backward compatibility with the BackgroundMesh option",&update_needed);
   }
   ~PostViewField()
   {
