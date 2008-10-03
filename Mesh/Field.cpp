@@ -11,6 +11,7 @@
 #include <math.h>
 #include <fstream>
 #include <string>
+#include <string.h>
 #include <sstream>
 
 #ifdef HAVE_MATH_EVAL
@@ -946,12 +947,8 @@ class PostViewField : public Field
   OctreePost *octree;
  public:
   int view_index;
-<<<<<<< Field.cpp
   bool crop_negative_values;
-  double operator() (double x, double y, double z)
-=======
   double operator() (double x, double y, double z, GEntity *ge=0)
->>>>>>> 1.56
   {
     // FIXME: should test unique view num instead, but that would be slower
     if(view_index < 0 || view_index >= (int)PView::list.size())
