@@ -217,7 +217,9 @@ class StructuredField : public Field
     text_format = false;
     options["TextFormat"] = new FieldOptionBool(text_format, "True for ASCII input "
 						"files, false for binary files\n"
-            "(4 bite signed integers for n, double precision floating points for v, D and O)",
+						"(4 bite signed integers for n, "
+						"double precision floating points "
+						"for v, D and O)",
 						&update_needed);
     data = 0;
   }
@@ -1000,8 +1002,14 @@ class PostViewField : public Field
     view_index = 0;
     options["IView"] = new FieldOptionInt(view_index, "Post-processing view index",
 					  &update_needed);
-    crop_negative_values=true;
-    options["CropNegativeValues"] = new FieldOptionBool(crop_negative_values,"return LC_MAX instead of a negative value (this option is needed for backward compatibility with the BackgroundMesh option",&update_needed);
+    crop_negative_values = true;
+    options["CropNegativeValues"] = new FieldOptionBool(crop_negative_values, 
+							"return LC_MAX instead of a "
+							"negative value (this option "
+							"is needed for backward "
+							"compatibility with the "
+							"BackgroundMesh option",
+							&update_needed);
   }
   ~PostViewField()
   {

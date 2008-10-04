@@ -6,7 +6,7 @@
 @ftable @code
 @item Attractor
 Compute the distance from the nearest node in a list. It can also be used to compute distance from curves, in this case each curve is replaced by NNodesByEdge equidistant nodes and the distance from those nodes is computed. @*
-The ANN library is used to find the nearest node : http://www.cs.umd.edu/~mount/ANN/ @*
+The ANN library is used to find the nearest node: http://www.cs.umd.edu/~mount/ANN/ @*
 Options:@*
 @table @code
 @item EdgesList
@@ -146,7 +146,7 @@ default value: @code{@{@}}
 @end table
 
 @item MaxEigenHessian
-Compute the maximum eigen value of the Hessian matrix of Field[IField]. Gradients are evaluated by finite differences, eigenvalues are computed using the GSL library.@*
+Compute the maximum eigen value of the Hessian matrix of Field[IField]. Gradients are evaluated by finite differences, eigenvalues are computed using the GSL library.F = max ( eigenvalues ( grad ( grad ( Field[IField] ) ) ) ) @*
 Options:@*
 @table @code
 @item Delta
@@ -215,6 +215,28 @@ Options:@*
 Post-processing view index@*
 type: integer@*
 default value: @code{0}
+@end table
+
+@item Restrict
+Restrict the application of a field to a given list of geometrical curves, surfaces or volumes. @*
+Options:@*
+@table @code
+@item EdgesList
+Curve indices@*
+type: list@*
+default value: @code{@{@}}
+@item FacesList
+Surface indices@*
+type: list@*
+default value: @code{@{@}}
+@item IField
+Field index@*
+type: integer@*
+default value: @code{1}
+@item RegionsList
+Volume indices@*
+type: list@*
+default value: @code{@{@}}
 @end table
 
 @item Structured
