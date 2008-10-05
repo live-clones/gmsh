@@ -76,7 +76,7 @@ Saved in: @code{-}
 
 @item General.TextEditor
 System command to launch a text editor@*
-Default value: @code{"emacs %s &"}@*
+Default value: @code{"open -t %s"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.TmpFileName
@@ -86,7 +86,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.WebBrowser
 System command to launch a web browser@*
-Default value: @code{"firefox %s &"}@*
+Default value: @code{"open %s"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.AlphaBlending
@@ -756,7 +756,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.PolygonOffsetFactor
 Polygon offset factor (offset = factor * DZ + r * units)@*
-Default value: @code{1}@*
+Default value: @code{0.5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.PolygonOffsetUnits

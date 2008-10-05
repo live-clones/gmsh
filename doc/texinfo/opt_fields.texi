@@ -13,6 +13,10 @@ Options:@*
 Indices of curves in the geometric model@*
 type: list@*
 default value: @code{@{@}}
+@item FacesList
+Indices of surfaces in the geometric model (Warning: might give strange results for complex surfaces)@*
+type: list@*
+default value: @code{@{@}}
 @item NNodesByEdge
 Number of nodes used to discetized each curve@*
 type: integer@*
@@ -211,6 +215,10 @@ default value: @code{1}
 Evaluate the post processing view IView.@*
 Options:@*
 @table @code
+@item CropNegativeValues
+return LC_MAX instead of a negative value (this option is needed for backward compatibility with the BackgroundMesh option@*
+type: boolean@*
+default value: @code{1}
 @item IView
 Post-processing view index@*
 type: integer@*
