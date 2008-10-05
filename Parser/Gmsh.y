@@ -43,17 +43,17 @@ char gmsh_yyname[256] = "";
 int  gmsh_yyerrorstate = 0;
 int  gmsh_yyviewindex = 0;
 std::map<std::string, std::vector<double> > gmsh_yysymbols;
-std::map<std::string, std::string > gmsh_yystringsymbols;
 
 // Static parser variables (accessible only in this file)
+static std::map<std::string, std::string > gmsh_yystringsymbols;
 #if !defined(HAVE_NO_POST)
 static PViewDataList *ViewData;
 #endif
+static std::vector<double> ViewCoord;
+static List_T *ViewValueList = 0;
+static int *ViewNumList = 0;
 static ExtrudeParams extr;
 static gmshSurface *myGmshSurface = 0;
-static List_T *ViewValueList = 0;
-static double ViewCoord[105]; // KH: support up to order 4 mappings 
-static int *ViewNumList = 0, ViewCoordIdx = 0;
 #define MAX_RECUR_LOOPS 100
 static int ImbricatedLoop = 0;
 static fpos_t yyposImbricatedLoopsTab[MAX_RECUR_LOOPS];
@@ -290,9 +290,9 @@ Views :
 
 ElementCoords :
     FExpr
-    { ViewCoord[ViewCoordIdx++] = $1; }
+    { ViewCoord.push_back($1); }
   | ElementCoords ',' FExpr
-    { ViewCoord[ViewCoordIdx++] = $3; }
+    { ViewCoord.push_back($3); }
 ;
 
 ElementValues :
@@ -446,7 +446,7 @@ Element :
 	ViewValueList = 0; ViewNumList = 0;
       }
 #endif
-      ViewCoordIdx = 0;
+      ViewCoord.clear();
       Free($1);
     }
     '(' ElementCoords ')'
@@ -454,7 +454,7 @@ Element :
 #if !defined(HAVE_NO_POST)
       if(ViewValueList){
 	for(int i = 0; i < 3; i++)
-	  for(int j = 0; j < ViewCoordIdx / 3; j++) 
+	  for(int j = 0; j < ViewCoord.size() / 3; j++) 
 	    List_Add(ViewValueList, &ViewCoord[3 * j + i]);
       }
 #endif
