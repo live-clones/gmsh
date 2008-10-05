@@ -1117,8 +1117,7 @@ class AttractorField : public Field
   ANNpointArray zeronodes;
   ANNidxArray index;
   ANNdistArray dist;
-  std::list<int> nodes_id;
-  std::list<int> edges_id;
+  std::list<int> nodes_id, edges_id, faces_id;
   int n_nodes_by_edge;
  public:
   AttractorField() : kdtree(0), zeronodes(0)
@@ -1135,6 +1134,11 @@ class AttractorField : public Field
     options["NNodesByEdge"] = new FieldOptionInt(n_nodes_by_edge, "Number of nodes "
 						 "used to discetized each curve", 
 						 &update_needed);
+    options["FacesList"] = new FieldOptionList(faces_id, "Indices of "
+					       "surfaces in the geometric model "
+					       "(Warning: might give strange "
+					       "results for complex surfaces)",
+					       &update_needed);
   }
   ~AttractorField()
   {
@@ -1163,7 +1167,8 @@ class AttractorField : public Field
         annDeallocPts(zeronodes);
         delete kdtree;
       }
-      int totpoints = nodes_id.size() + n_nodes_by_edge * edges_id.size();
+      int totpoints = nodes_id.size() + n_nodes_by_edge * edges_id.size() + 
+	n_nodes_by_edge * n_nodes_by_edge * faces_id.size();
       if(totpoints)
         zeronodes = annAllocPts(totpoints, 4);
       int k = 0;
@@ -1197,17 +1202,56 @@ class AttractorField : public Field
           }
         }
         else {
-          GEdge *ge = GModel::current()->getEdgeByTag(*it);
-          if(ge) {
+          GEdge *e = GModel::current()->getEdgeByTag(*it);
+          if(e) {
             for(int i = 0; i < n_nodes_by_edge; i++) {
               double u = (double)i / (n_nodes_by_edge - 1);
-              Range<double> b = ge->parBounds(0);
+              Range<double> b = e->parBounds(0);
               double t = b.low() + u * (b.high() - b.low());
-              GPoint gp = ge->point(t);
+              GPoint gp = e->point(t);
               zeronodes[k][0] = gp.x();
               zeronodes[k][1] = gp.y();
               zeronodes[k++][2] = gp.z();
             }
+          }
+        }
+      }
+      // This can lead to weird results as we generate attractors over
+      // the whole parametric plane (We should really use a
+      // mesh... but none is available before 1D & 2D meshing. Or we
+      // should provide a better containsParam() implementation.)
+      for(std::list<int>::iterator it = faces_id.begin();
+          it != faces_id.end(); ++it) {
+        Surface *s = FindSurface(*it);
+        if(s) {
+          for(int i = 0; i < n_nodes_by_edge; i++) {
+	    for(int j = 0; j < n_nodes_by_edge; j++) {
+	      double u = (double)i / (n_nodes_by_edge - 1);
+	      double v = (double)j / (n_nodes_by_edge - 1);
+	      Vertex V = InterpolateSurface(s, u, v, 0, 0);
+	      zeronodes[k][0] = V.Pos.X;
+	      zeronodes[k][1] = V.Pos.Y;
+	      zeronodes[k++][2] = V.Pos.Z;
+	    }
+	  }
+        }
+        else {
+          GFace *f = GModel::current()->getFaceByTag(*it);
+          if(f) {
+            for(int i = 0; i < n_nodes_by_edge; i++) {
+	      for(int j = 0; j < n_nodes_by_edge; j++) {
+		double u = (double)i / (n_nodes_by_edge - 1);
+		double v = (double)j / (n_nodes_by_edge - 1);
+		Range<double> b1 = ge->parBounds(0);
+		Range<double> b2 = ge->parBounds(1);
+		double t1 = b1.low() + u * (b1.high() - b1.low());
+		double t2 = b2.low() + v * (b2.high() - b2.low());
+		GPoint gp = f->point(t1, t2);
+		zeronodes[k][0] = gp.x();
+		zeronodes[k][1] = gp.y();
+		zeronodes[k++][2] = gp.z();
+	      }
+	    }
           }
         }
       }

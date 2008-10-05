@@ -1,9 +1,4 @@
-$Id: TODO.txt,v 1.6 2008-10-01 19:18:14 geuzaine Exp $
-
-********************************************************************
-
-Add Attractor field on surfaces (use the surface mesh points as point
-attractors?)
+$Id: TODO.txt,v 1.7 2008-10-05 12:06:58 geuzaine Exp $
 
 ********************************************************************
 
@@ -39,7 +34,8 @@ entity, and sort like in post-processing.
 fix tetgen for non manifold geometries: with a single surface
 connected to a volume and tetgen modifies the volume boundary mesh, we
 get hanging nodes
-Plus we need to fix the 1D mesh in all cases
+
+Also: we need to fix the 1D mesh in all cases!
 
 ********************************************************************
 
@@ -71,6 +67,9 @@ interface GModel in surface creation in the parser
 ********************************************************************
 
 add linear lc progression in 1D transfinite generator
+
+Also: implement easier to understand "bump" function (double
+progression?)
 
 ********************************************************************
 
