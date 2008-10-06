@@ -3,20 +3,19 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _TRANSFORMLATLON_H_
-#define _TRANSFORMLATLON_H_
+#ifndef _LONGITUDELATITUDE_H_
+#define _LONGITUDELATITUDE_H_
 
 #include "Plugin.h"
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterTransformLatLonPlugin();
+  GMSH_Plugin *GMSH_RegisterLongituteLatitudePlugin();
 }
 
-class GMSH_TransformLatLonPlugin : public GMSH_Post_Plugin
+class GMSH_LongituteLatitudePlugin : public GMSH_Post_Plugin
 {
 public:
-  GMSH_TransformLatLonPlugin();
   void getName(char *name) const;
   void getInfos(char *author, char *copyright, char *help_text) const;
   void catchErrorMessage(char *errorMessage) const;

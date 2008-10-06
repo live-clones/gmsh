@@ -37,7 +37,7 @@
 #include "MakeSimplex.h"
 #include "Smooth.h"
 #include "Transform.h"
-#include "TransformLatLon.h"
+#include "LongitudeLatitude.h"
 #include "Triangulate.h"
 #include "Warp.h"
 #include "SphericalRaise.h"
@@ -184,7 +184,7 @@ void GMSH_PluginManager::registerDefaultPlugins()
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
                       ("Transform", GMSH_RegisterTransformPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
-                      ("TransformLatLon", GMSH_RegisterTransformLatLonPlugin()));
+                      ("LongitudeLatitude",GMSH_RegisterLongituteLatitudePlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
                       ("Warp", GMSH_RegisterWarpPlugin()));
     allPlugins.insert(std::pair<const char*, GMSH_Plugin*>
