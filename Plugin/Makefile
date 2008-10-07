@@ -64,10 +64,7 @@ Plugin.o: Plugin.cpp Plugin.h ../Common/Options.h ../Post/ColorTable.h \
   ../Common/Message.h ../Post/PView.h ../Geo/SPoint3.h \
   ../Post/PViewDataList.h ../Post/PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Common/ListUtils.h ../Common/GmshMatrix.h
-PluginManager.o: PluginManager.cpp /usr/include/fltk-1.1/FL/Fl.H \
-  /usr/include/fltk-1.1/FL/Enumerations.H \
-  /usr/include/fltk-1.1/FL/Fl_Export.H \
-  /usr/include/fltk-1.1/FL/filename.H Plugin.h ../Common/Options.h \
+PluginManager.o: PluginManager.cpp Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/ListUtils.h \
@@ -93,8 +90,6 @@ CutPlane.o: CutPlane.cpp CutPlane.h Levelset.h Plugin.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Common/ListUtils.h ../Common/GmshMatrix.h ../Common/Context.h \
   ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h ../Common/GmshUI.h \
-  /usr/include/fltk-1.1/FL/Fl.H /usr/include/fltk-1.1/FL/Enumerations.H \
-  /usr/include/fltk-1.1/FL/Fl_Export.H /usr/include/fltk-1.1/FL/gl.h \
   ../Graphics/Draw.h
 CutSphere.o: CutSphere.cpp CutSphere.h Levelset.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/Message.h \
@@ -102,8 +97,6 @@ CutSphere.o: CutSphere.cpp CutSphere.h Levelset.h Plugin.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Common/ListUtils.h ../Common/GmshMatrix.h ../Common/Context.h \
   ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h ../Common/GmshUI.h \
-  /usr/include/fltk-1.1/FL/Fl.H /usr/include/fltk-1.1/FL/Enumerations.H \
-  /usr/include/fltk-1.1/FL/Fl_Export.H /usr/include/fltk-1.1/FL/gl.h \
   ../Graphics/Draw.h
 CutMap.o: CutMap.cpp CutMap.h Levelset.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
@@ -123,8 +116,6 @@ CutParametric.o: CutParametric.cpp ../Post/OctreePost.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Common/ListUtils.h ../Common/GmshMatrix.h ../Common/Context.h \
   ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h ../Common/GmshUI.h \
-  /usr/include/fltk-1.1/FL/Fl.H /usr/include/fltk-1.1/FL/Enumerations.H \
-  /usr/include/fltk-1.1/FL/Fl_Export.H /usr/include/fltk-1.1/FL/gl.h \
   ../Graphics/Draw.h ../contrib/MathEval/matheval.h
 Lambda2.o: Lambda2.cpp Lambda2.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
@@ -151,20 +142,14 @@ StreamLines.o: StreamLines.cpp StreamLines.h Plugin.h ../Common/Options.h \
   ../Common/GmshMatrix.h ../Post/OctreePost.h ../Common/Octree.h \
   ../Common/OctreeInternals.h ../Common/Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h ../Post/PViewOptions.h ../Post/ColorTable.h \
-  ../Common/GmshUI.h /usr/include/fltk-1.1/FL/Fl.H \
-  /usr/include/fltk-1.1/FL/Enumerations.H \
-  /usr/include/fltk-1.1/FL/Fl_Export.H /usr/include/fltk-1.1/FL/gl.h \
-  ../Graphics/Draw.h
+  ../Common/GmshUI.h ../Graphics/Draw.h
 CutGrid.o: CutGrid.cpp ../Post/OctreePost.h ../Common/Octree.h \
   ../Common/OctreeInternals.h CutGrid.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/ListUtils.h \
   ../Common/GmshMatrix.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h ../Common/GmshUI.h \
-  /usr/include/fltk-1.1/FL/Fl.H /usr/include/fltk-1.1/FL/Enumerations.H \
-  /usr/include/fltk-1.1/FL/Fl_Export.H /usr/include/fltk-1.1/FL/gl.h \
-  ../Graphics/Draw.h
+  ../Mesh/PartitionOptions.h ../Common/GmshUI.h ../Graphics/Draw.h
 Transform.o: Transform.cpp Transform.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
@@ -177,13 +162,17 @@ LongitudeLatitude.o: LongitudeLatitude.cpp LongitudeLatitude.h Plugin.h \
   ../Common/ListUtils.h ../Common/GmshMatrix.h
 Triangulate.o: Triangulate.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
-  ../Geo/SVector3.h ../Geo/GFace.h ../Geo/GEdgeLoop.h ../Geo/Pair.h \
-  ../Geo/GRegion.h ../Geo/discreteFace.h ../Geo/GModel.h \
-  ../Mesh/DivideAndConquer.h ../Common/Message.h ../Geo/MVertex.h \
-  Triangulate.h Plugin.h ../Common/Options.h ../Post/ColorTable.h \
-  ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
-  ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Common/ListUtils.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
+  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
+  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
+  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
+  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/discreteFace.h ../Geo/GModel.h \
+  ../Geo/GFace.h ../Mesh/DivideAndConquer.h ../Common/Message.h \
+  ../Geo/MVertex.h ../Geo/SPoint3.h Triangulate.h Plugin.h \
+  ../Common/Options.h ../Post/ColorTable.h ../Post/PView.h \
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Common/ListUtils.h \
   ../Common/GmshMatrix.h ../Common/Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h
 Warp.o: Warp.cpp Warp.h Plugin.h ../Common/Options.h ../Post/ColorTable.h \
@@ -210,9 +199,13 @@ GSHHS.o: GSHHS.cpp GSHHS.h Plugin.h ../Common/Options.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/ListUtils.h \
   ../Common/GmshMatrix.h ../Mesh/Field.h ../Geo/GModel.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/SVector3.h ../Geo/GFace.h \
-  ../Geo/GEdgeLoop.h ../Geo/Pair.h ../Geo/GRegion.h
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
+  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h
 Extract.o: Extract.cpp Extract.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
@@ -229,9 +222,12 @@ ExtractEdges.o: ExtractEdges.cpp ExtractEdges.h Plugin.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Common/ListUtils.h ../Common/GmshMatrix.h ../Mesh/BDS.h \
-  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SBoundingBox3d.h \
-  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/GVertex.h \
-  ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h
+  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
+  ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/GEntity.h \
+  ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/Pair.h
 MakeSimplex.o: MakeSimplex.cpp MakeSimplex.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
@@ -248,9 +244,13 @@ FieldView.o: FieldView.cpp FieldView.h Plugin.h ../Common/Options.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/ListUtils.h \
   ../Common/GmshMatrix.h ../Mesh/Field.h ../Geo/GModel.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SBoundingBox3d.h ../Geo/GPoint.h \
-  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/SVector3.h ../Geo/GFace.h \
-  ../Geo/GEdgeLoop.h ../Geo/Pair.h ../Geo/GRegion.h
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/GEdge.h \
+  ../Geo/GEntity.h ../Geo/GVertex.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/GFace.h ../Geo/GEntity.h \
+  ../Geo/GPoint.h ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h \
+  ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h \
+  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h
 Integrate.o: Integrate.cpp Integrate.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
@@ -281,52 +281,8 @@ Annotate.o: Annotate.cpp Annotate.h Plugin.h ../Common/Options.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/ListUtils.h \
   ../Common/GmshMatrix.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h ../Common/GmshUI.h \
-  /usr/include/fltk-1.1/FL/Fl.H /usr/include/fltk-1.1/FL/Enumerations.H \
-  /usr/include/fltk-1.1/FL/Fl_Export.H /usr/include/fltk-1.1/FL/gl.h \
-  ../Fltk/GUI.h /usr/include/fltk-1.1/FL/Fl_Window.H \
-  /usr/include/fltk-1.1/FL/Fl_Group.H \
-  /usr/include/fltk-1.1/FL/Fl_Widget.H \
-  /usr/include/fltk-1.1/FL/Fl_Double_Window.H \
-  /usr/include/fltk-1.1/FL/Fl_Window.H /usr/include/fltk-1.1/FL/Fl_Box.H \
-  /usr/include/fltk-1.1/FL/Fl_Menu_Bar.H \
-  /usr/include/fltk-1.1/FL/Fl_Menu_.H \
-  /usr/include/fltk-1.1/FL/Fl_Menu_Item.H \
-  /usr/include/fltk-1.1/FL/Fl_Image.H \
-  /usr/include/fltk-1.1/FL/Fl_Menu_Button.H \
-  /usr/include/fltk-1.1/FL/fl_draw.H /usr/include/fltk-1.1/FL/Fl_Choice.H \
-  /usr/include/fltk-1.1/FL/Fl_Scroll.H \
-  /usr/include/fltk-1.1/FL/Fl_Scrollbar.H \
-  /usr/include/fltk-1.1/FL/Fl_Slider.H \
-  /usr/include/fltk-1.1/FL/Fl_Valuator.H \
-  /usr/include/fltk-1.1/FL/Fl_Tabs.H /usr/include/fltk-1.1/FL/Fl_Button.H \
-  /usr/include/fltk-1.1/FL/Fl_Return_Button.H \
-  /usr/include/fltk-1.1/FL/Fl_Button.H \
-  /usr/include/fltk-1.1/FL/Fl_Repeat_Button.H \
-  /usr/include/fltk-1.1/FL/Fl.H \
-  /usr/include/fltk-1.1/FL/Fl_Light_Button.H \
-  /usr/include/fltk-1.1/FL/Fl_Check_Button.H \
-  /usr/include/fltk-1.1/FL/Fl_Light_Button.H \
-  /usr/include/fltk-1.1/FL/Fl_Input.H \
-  /usr/include/fltk-1.1/FL/Fl_Input_.H \
-  /usr/include/fltk-1.1/FL/Fl_Value_Input.H \
-  /usr/include/fltk-1.1/FL/Fl_Input.H \
-  /usr/include/fltk-1.1/FL/Fl_Output.H \
-  /usr/include/fltk-1.1/FL/Fl_Multiline_Output.H \
-  /usr/include/fltk-1.1/FL/Fl_Output.H \
-  /usr/include/fltk-1.1/FL/Fl_Bitmap.H \
-  /usr/include/fltk-1.1/FL/Fl_Browser.H \
-  /usr/include/fltk-1.1/FL/Fl_Browser_.H \
-  /usr/include/fltk-1.1/FL/Fl_Multi_Browser.H \
-  /usr/include/fltk-1.1/FL/Fl_Browser.H \
-  /usr/include/fltk-1.1/FL/Fl_Hold_Browser.H /usr/include/fltk-1.1/FL/x.H \
-  /usr/include/fltk-1.1/FL/Fl_Color_Chooser.H \
-  /usr/include/fltk-1.1/FL/Fl_Group.H /usr/include/fltk-1.1/FL/fl_ask.H \
-  /usr/include/fltk-1.1/FL/Fl_Tooltip.H \
-  /usr/include/fltk-1.1/FL/Fl_Widget.H \
-  /usr/include/fltk-1.1/FL/Fl_Shared_Image.H \
-  /usr/include/fltk-1.1/FL/Fl_File_Icon.H ../Fltk/Opengl_Window.h \
-  /usr/include/fltk-1.1/FL/Fl_Gl_Window.H ../Fltk/Colorbar_Window.h \
+  ../Mesh/PartitionOptions.h ../Common/GmshUI.h ../Fltk/GUI.h \
+  ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
   ../Fltk/Popup_Button.h ../Fltk/SpherePosition_Widget.h ../Mesh/Field.h \
   ../Graphics/Draw.h
 Remove.o: Remove.cpp Remove.h Plugin.h ../Common/Options.h \
@@ -340,10 +296,7 @@ Probe.o: Probe.cpp Probe.h Plugin.h ../Common/Options.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/ListUtils.h \
   ../Common/GmshMatrix.h ../Common/Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h ../Post/OctreePost.h ../Common/Octree.h \
-  ../Common/OctreeInternals.h ../Common/GmshUI.h \
-  /usr/include/fltk-1.1/FL/Fl.H /usr/include/fltk-1.1/FL/Enumerations.H \
-  /usr/include/fltk-1.1/FL/Fl_Export.H /usr/include/fltk-1.1/FL/gl.h \
-  ../Graphics/Draw.h
+  ../Common/OctreeInternals.h ../Common/GmshUI.h ../Graphics/Draw.h
 HarmonicToTime.o: HarmonicToTime.cpp HarmonicToTime.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/Message.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
