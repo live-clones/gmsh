@@ -650,13 +650,13 @@ int _save_options(const char *name){ return options_dialog(name); }
 int _save_geo(const char *name){ return geo_dialog(name); }
 int _save_cgns(const char *name){ return cgns_write_dialog(name); }
 int _save_unv(const char *name){ return unv_dialog(name); }
-int _save_vtk(const char *name){ return generic_mesh_dialog(name, "VTK Options", FORMAT_VTK); }
-int _save_med(const char *name){ return generic_mesh_dialog(name, "MED Options", FORMAT_MED); }
-int _save_mesh(const char *name){ return generic_mesh_dialog(name, "MESH Options", FORMAT_MESH); }
+int _save_vtk(const char *name){ return generic_mesh_dialog(name, "VTK Options", FORMAT_VTK, true); }
+int _save_med(const char *name){ return generic_mesh_dialog(name, "MED Options", FORMAT_MED, false); }
+int _save_mesh(const char *name){ return generic_mesh_dialog(name, "MESH Options", FORMAT_MESH, false); }
 int _save_bdf(const char *name){ return bdf_dialog(name); }
-int _save_p3d(const char *name){ return generic_mesh_dialog(name, "P3D Options", FORMAT_P3D); }
-int _save_stl(const char *name){ return stl_dialog(name); }
-int _save_vrml(const char *name){ return generic_mesh_dialog(name, "VRML Options", FORMAT_VRML); }
+int _save_p3d(const char *name){ return generic_mesh_dialog(name, "P3D Options", FORMAT_P3D, false); }
+int _save_stl(const char *name){ return generic_mesh_dialog(name, "STL Options", FORMAT_STL, true); }
+int _save_vrml(const char *name){ return generic_mesh_dialog(name, "VRML Options", FORMAT_VRML, false); }
 int _save_eps(const char *name){ return gl2ps_dialog(name, "EPS Options", FORMAT_EPS); }
 int _save_gif(const char *name){ return gif_dialog(name); }
 int _save_jpeg(const char *name){ return jpeg_dialog(name); }

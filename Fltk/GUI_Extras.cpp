@@ -835,60 +835,6 @@ int pos_dialog(const char *name)
   return 0;
 }
 
-// Generic save mesh dialog
-
-int generic_mesh_dialog(const char *name, const char *title, int format)
-{
-  struct _generic_mesh_dialog{
-    Fl_Window *window;
-    Fl_Check_Button *b;
-    Fl_Button *ok, *cancel;
-  };
-  static _generic_mesh_dialog *dialog = NULL;
-
-  const int BH = 2 * GetFontSize() + 1;
-  const int BB = 7 * GetFontSize() + 9;
-  const int WB = 7;
-
-  if(!dialog){
-    dialog = new _generic_mesh_dialog;
-    int h = 3 * WB + 2 * BH, w = 2 * BB + 3 * WB, y = WB;
-    // not a "Dialog_Window" since it is modal 
-    dialog->window = new Fl_Double_Window(w, h);
-    dialog->window->box(GMSH_WINDOW_BOX);
-    dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
-    dialog->b->type(FL_TOGGLE_BUTTON);
-    dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
-    dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
-    dialog->window->set_modal();
-    dialog->window->end();
-    dialog->window->hotspot(dialog->window);
-  }
-  
-  dialog->window->label(title);
-  dialog->b->value(CTX.mesh.save_all ? 1 : 0);
-  dialog->window->show();
-
-  while(dialog->window->shown()){
-    Fl::wait();
-    for (;;) {
-      Fl_Widget* o = Fl::readqueue();
-      if (!o) break;
-      if (o == dialog->ok) {
-        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
-        CreateOutputFile(name, format);
-        dialog->window->hide();
-        return 1;
-      }
-      if (o == dialog->window || o == dialog->cancel){
-        dialog->window->hide();
-        return 0;
-      }
-    }
-  }
-  return 0;
-}
-
 // Save msh dialog
 
 int msh_dialog(const char *name)
@@ -931,7 +877,7 @@ int msh_dialog(const char *name)
   }
   
   dialog->c->value((CTX.mesh.msh_file_version == 1.0) ? 0 : 
-                   CTX.mesh.msh_binary ? 2 : 1);
+                   CTX.mesh.binary ? 2 : 1);
   dialog->b->value(CTX.mesh.save_all ? 1 : 0);
   dialog->window->show();
 
@@ -943,8 +889,8 @@ int msh_dialog(const char *name)
       if (o == dialog->ok) {
         opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI, 
                                   (dialog->c->value() == 0) ? 1. : 2.);
-        opt_mesh_msh_binary(0, GMSH_SET | GMSH_GUI, 
-                            (dialog->c->value() == 2) ? 1 : 0);
+        opt_mesh_binary(0, GMSH_SET | GMSH_GUI, 
+			(dialog->c->value() == 2) ? 1 : 0);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
         CreateOutputFile(name, FORMAT_MSH);
         dialog->window->hide();
@@ -1082,17 +1028,18 @@ int bdf_dialog(const char *name)
   return 0;
 }
 
-// Save stl dialog
+// Generic mesh dialog
 
-int stl_dialog(const char *name)
+int generic_mesh_dialog(const char *name, const char *title, int format,
+			bool binary_support)
 {
-  struct _stl_dialog{
+  struct _generic_mesh_dialog{
     Fl_Window *window;
     Fl_Choice *c;
     Fl_Check_Button *b;
     Fl_Button *ok, *cancel;
   };
-  static _stl_dialog *dialog = NULL;
+  static _generic_mesh_dialog *dialog = NULL;
 
   static Fl_Menu_Item formatmenu[] = {
     {"ASCII", 0, 0, 0},
@@ -1105,10 +1052,10 @@ int stl_dialog(const char *name)
   const int WB = 7;
 
   if(!dialog){
-    dialog = new _stl_dialog;
+    dialog = new _generic_mesh_dialog;
     int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
     // not a "Dialog_Window" since it is modal 
-    dialog->window = new Fl_Double_Window(w, h, "STL Options");
+    dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->c = new Fl_Choice(WB, y, BB + BB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
@@ -1122,7 +1069,12 @@ int stl_dialog(const char *name)
     dialog->window->hotspot(dialog->window);
   }
   
-  dialog->c->value(CTX.mesh.stl_binary ? 1 : 0);
+  dialog->window->label(title);
+  dialog->c->value(CTX.mesh.binary ? 1 : 0);
+  if(binary_support)
+    dialog->c->activate();
+  else
+    dialog->c->deactivate();
   dialog->b->value(CTX.mesh.save_all ? 1 : 0);
   dialog->window->show();
 
@@ -1132,9 +1084,9 @@ int stl_dialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-        opt_mesh_stl_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
+        opt_mesh_binary(0, GMSH_SET | GMSH_GUI, dialog->c->value());
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
-        CreateOutputFile(name, FORMAT_STL);
+        CreateOutputFile(name, format);
         dialog->window->hide();
         return 1;
       }

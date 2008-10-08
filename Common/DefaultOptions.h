@@ -897,6 +897,8 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "BdfFieldFormat" , opt_mesh_bdf_field_format , 1. , 
     "Field format for Nastran BDF files (0=free, 1=small, 2=large)" },
+  { F|O, "Binary" , opt_mesh_binary , 0. , 
+    "Write mesh files in binary format (if possible)" },
 
   { F|O, "C1Continuity" , opt_mesh_c1 , 0. ,
     "Impose C1 continuity to high order meshes (only valid in 2D plane and ElemenOrder = 2)" },
@@ -994,8 +996,6 @@ StringXNumber MeshOptions_Number[] = {
     "Minimum number of points used to mesh a circle" },
   { F|O, "MinimumCurvePoints" , opt_mesh_min_curv_points, 3. ,
     "Minimum number of points used to mesh a (non-straight) curve" },
-  { F|O, "MshBinary" , opt_mesh_msh_binary , 0. , 
-    "Write MSH files in binary format?" },
   { F|O, "MshFileVersion" , opt_mesh_msh_file_version , 2.0 , 
     "Version of the MSH file format to use" },
 
@@ -1080,8 +1080,6 @@ StringXNumber MeshOptions_Number[] = {
     "Number of smoothing steps of internal edges for high order meshes" },
   { F|O, "SmoothNormals" , opt_mesh_smooth_normals , 0. , 
     "Smooth the mesh normals?" },
-  { F|O, "StlBinary" , opt_mesh_stl_binary , 0. , 
-    "Save STL files in binary format?" },
   { F|O, "SurfaceEdges" , opt_mesh_surfaces_edges , 1. , 
     "Display edges of surface mesh?" },
   { F|O, "SurfaceFaces" , opt_mesh_surfaces_faces , 0. , 

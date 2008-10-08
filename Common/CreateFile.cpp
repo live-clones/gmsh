@@ -136,12 +136,12 @@ void CreateOutputFile(const char *filename, int format)
     break;
 
   case FORMAT_MSH:
-    GModel::current()->writeMSH(name, CTX.mesh.msh_file_version, CTX.mesh.msh_binary, 
+    GModel::current()->writeMSH(name, CTX.mesh.msh_file_version, CTX.mesh.binary, 
                                 CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
   case FORMAT_STL:
-    GModel::current()->writeSTL(name, CTX.mesh.stl_binary,
+    GModel::current()->writeSTL(name, CTX.mesh.binary,
                                 CTX.mesh.save_all, CTX.mesh.scaling_factor);
     break;
 
@@ -155,7 +155,7 @@ void CreateOutputFile(const char *filename, int format)
     break;
 
   case FORMAT_VTK:
-    GModel::current()->writeVTK(name, CTX.mesh.msh_binary, CTX.mesh.save_all,
+    GModel::current()->writeVTK(name, CTX.mesh.binary, CTX.mesh.save_all,
                                 CTX.mesh.scaling_factor);
     break;
 

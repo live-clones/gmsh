@@ -300,7 +300,7 @@ void Get_Options(int argc, char *argv[])
           // convert mesh to latest binary format
           if(GModel::current()->getMeshStatus() > 0){
             CTX.mesh.msh_file_version = 2.0;
-            CTX.mesh.msh_binary = 1;
+            CTX.mesh.binary = 1;
             CreateOutputFile(filename, FORMAT_MSH);
           }
           i++;
@@ -475,7 +475,7 @@ void Get_Options(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "bin")) {
         i++;
-        CTX.mesh.stl_binary = CTX.mesh.msh_binary = 1;
+        CTX.mesh.binary = 1;
       }
       else if(!strcmp(argv[i] + 1, "algo")) {
         i++;

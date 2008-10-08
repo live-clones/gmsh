@@ -5066,18 +5066,11 @@ double opt_mesh_msh_file_version(OPT_ARGS_NUM)
   return CTX.mesh.msh_file_version;
 }
 
-double opt_mesh_msh_binary(OPT_ARGS_NUM)
+double opt_mesh_binary(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX.mesh.msh_binary = (int)val;
-  return CTX.mesh.msh_binary;
-}
-
-double opt_mesh_stl_binary(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.mesh.stl_binary = (int)val;
-  return CTX.mesh.stl_binary;
+    CTX.mesh.binary = (int)val;
+  return CTX.mesh.binary;
 }
 
 double opt_mesh_bdf_field_format(OPT_ARGS_NUM)

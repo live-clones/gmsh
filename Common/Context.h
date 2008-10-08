@@ -169,7 +169,7 @@ class Context_T {
     int min_circ_points, min_curv_points;
     double normals, tangents, explode;
     int color_carousel;
-    int save_all, save_groups_of_nodes, stl_binary, msh_binary, bdf_field_format;
+    int save_all, save_groups_of_nodes, binary, bdf_field_format;
     int smooth_normals, reverse_all_normals;
     double angle_smooth_normals;
     double allow_swap_edge_angle;

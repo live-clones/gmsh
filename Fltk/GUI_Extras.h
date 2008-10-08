@@ -22,14 +22,14 @@ int jpeg_dialog(const char *filename);
 int gif_dialog(const char *filename);
 int geo_dialog(const char *filename);
 int generic_bitmap_dialog(const char *filename, const char *title, int format);
-int generic_mesh_dialog(const char *filename, const char *title, int format);
+int generic_mesh_dialog(const char *filename, const char *title, int format,
+			bool binary_supports);
 int gl2ps_dialog(const char *filename, const char *title, int format);
 int options_dialog(const char *filename);
 int pos_dialog(const char *filename);
 int msh_dialog(const char *filename);
 int unv_dialog(const char *filename);
 int bdf_dialog(const char *filename);
-int stl_dialog(const char *filename);
 int latex_dialog(const char *filename);
 int cgns_write_dialog(const char *filename);
 void partition_dialog();

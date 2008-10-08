@@ -1970,14 +1970,15 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
   int numElements = 0, totalNumInt = 0;
   for(unsigned int i = 0; i < entities.size(); i++){
     if(entities[i]->physicals.size() || saveAll){
-      numElements += entities[i]->getNumMeshElements();
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-	if(entities[i]->getMeshElement(j)->getTypeForVTK())
+	if(entities[i]->getMeshElement(j)->getTypeForVTK()){
+	  numElements++;
 	  totalNumInt += entities[i]->getMeshElement(j)->getNumVertices() + 1;
+	}
       }
     }
   }
-
+  
   // print vertex indices in ascii or binary
   fprintf(fp, "CELLS %d %d\n", numElements, totalNumInt);
   for(unsigned int i = 0; i < entities.size(); i++){
