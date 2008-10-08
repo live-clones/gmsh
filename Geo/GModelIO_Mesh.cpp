@@ -2008,8 +2008,117 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
   return 1;
 }
 
-int GModel::readVTK(const std::string &name)
+int GModel::readVTK(const std::string &name, bool bigEndian)
 {
-  Msg::Error("VTK reader is not implemented yet");
+  FILE *fp = fopen(name.c_str(), "rb");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  char buffer[256], buffer2[256];
+
+  fgets(buffer, sizeof(buffer), fp); // version line
+  fgets(buffer, sizeof(buffer), fp); // title
+
+  fscanf(fp, "%s", buffer); // ASCII or BINARY
+  bool binary = false;
+  if(!strcmp(buffer, "BINARY")) binary = true;
+
+  if(fscanf(fp, "%s %s", &buffer, &buffer2) != 2) return 0;
+  if(strcmp(buffer, "DATASET") || strcmp(buffer2, "UNSTRUCTURED_GRID")){
+    Msg::Error("VTK reader can only read unstructured datasets");
+    return 0; 
+  }
+  
+  // read mesh vertices
+  int numVertices;
+  if(fscanf(fp, "%s %d %s\n", &buffer, &numVertices, buffer2) != 3) return 0;
+  if(strcmp(buffer, "POINTS") || strcmp(buffer2, "double")){
+    Msg::Error("VTK reader only accepts point data in double precision");
+    return 0;
+  }
+  if(!numVertices){
+    Msg::Warning("No points in dataset");
+    return 0;
+  }
+  Msg::Info("Reading %d points", numVertices);
+  std::vector<MVertex*> vertices(numVertices);
+  for(int i = 0 ; i < numVertices; i++){
+    double xyz[3];
+    if(binary){
+      if(fread(xyz, sizeof(double), 3, fp) != 3) return 0;
+      if(!bigEndian) SwapBytes((char*)xyz, sizeof(double), 3);
+    }
+    else{
+      if(fscanf(fp, "%lf %lf %lf", &xyz[0], &xyz[1], &xyz[2]) != 3) return 0;
+    }
+    vertices[i] = new MVertex(xyz[0], xyz[1], xyz[2]);
+  }
+  
+  // read mesh elements
+  int numElements, totalNumInt;
+  if(fscanf(fp, "%s %d %d\n", &buffer, &numElements, &totalNumInt) != 3) return 0;
+  if(strcmp(buffer, "CELLS") || !numElements){
+    Msg::Warning("No cells in dataset");
+    return 0;
+  }
+  Msg::Info("Reading %d cells", numElements);
+  std::vector<std::vector<MVertex*> > cells(numElements);
+  for(unsigned int i = 0; i < cells.size(); i++){
+    int numVerts, n[100];
+    if(binary){
+      if(fread(&numVerts, sizeof(int), 1, fp) != 1) return 0;
+      if(!bigEndian) SwapBytes((char*)&numVerts, sizeof(int), 1);
+      if(fread(n, sizeof(int), numVerts, fp) != numVerts) return 0;
+      if(!bigEndian) SwapBytes((char*)n, sizeof(int), numVerts);
+    }
+    else{
+      if(fscanf(fp, "%d", &numVerts) != 1) return 0;
+      for(int j = 0; j < numVerts; j++){
+	if(fscanf(fp, "%d", &n[j]) != 1) return 0;
+      }
+    }
+    for(int j = 0; j < numVerts; j++){
+      if(n[j] >= 0 && n[j] < vertices.size())
+	cells[i].push_back(vertices[n[j]]);
+      else
+	Msg::Error("Bad vertex index");
+    }
+  }
+  if(fscanf(fp, "%s %d\n", &buffer, &numElements) != 2) return 0;
+  if(strcmp(buffer, "CELL_TYPES") || numElements != cells.size()){
+    Msg::Error("No or invalid number of cells types");
+    return 0;
+  }
+  std::map<int, std::vector<MElement*> > elements[7];
+  for(unsigned int i = 0; i < cells.size(); i++){
+    int type;
+    if(binary){
+      if(fread(&type, sizeof(int), 1, fp) != 1) return 0;
+      if(!bigEndian) SwapBytes((char*)&type, sizeof(int), 1);
+    }
+    else{
+      if(fscanf(fp, "%d", &type) != 1) return 0;
+    }
+    switch(type){
+    case 3: elements[0][1].push_back(new MLine(cells[i])); break;
+    case 5: elements[1][1].push_back(new MTriangle(cells[i])); break;
+    case 8: elements[2][1].push_back(new MQuadrangle(cells[i])); break;
+    case 10: elements[3][1].push_back(new MTetrahedron(cells[i])); break;
+    case 12: elements[4][1].push_back(new MHexahedron(cells[i])); break;
+    case 13: elements[5][1].push_back(new MPrism(cells[i])); break;
+    case 14: elements[6][1].push_back(new MPyramid(cells[i])); break;
+    default: 
+      Msg::Error("Unknown type of cell %d", type);
+      break;
+    }
+  }  
+
+  for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
+    _storeElementsInEntities(elements[i]);
+  _associateEntityWithMeshVertices();
+  _storeVerticesInEntities(vertices);
+
   return 0;
 }

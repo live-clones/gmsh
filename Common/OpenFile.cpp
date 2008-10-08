@@ -307,7 +307,7 @@ int MergeFile(const char *name, int warn_if_missing)
     status = m->readUNV(name);
   }
   else if(!strcmp(ext, ".vtk") || !strcmp(ext, ".VTK")){
-    status = m->readVTK(name);
+    status = m->readVTK(name, CTX.big_endian);
   }
   else if(!strcmp(ext, ".wrl") || !strcmp(ext, ".WRL") || 
           !strcmp(ext, ".vrml") || !strcmp(ext, ".VRML") ||
