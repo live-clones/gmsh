@@ -213,7 +213,7 @@ class MElement
   virtual void writeSTL(FILE *fp, bool binary=false, double scalingFactor=1.0);
   virtual void writeVRML(FILE *fp);
   virtual void writeUNV(FILE *fp, int num=0, int elementary=1, int physical=1);
-  virtual void writeVTK(FILE *fp, bool binary=false);
+  virtual void writeVTK(FILE *fp, bool binary=false, bool bigEndian=false);
   virtual void writeMESH(FILE *fp, int elementary=1);
   virtual void writeBDF(FILE *fp, int format=0, int elementary=1);
 
@@ -344,7 +344,7 @@ class MLine : public MElement {
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n){}
   virtual int getTypeForMSH() const { return MSH_LIN_2; }
   virtual int getTypeForUNV() const { return 21; } // linear beam
-  virtual int getTypeForVTK() const { return 3; }
+  //virtual int getTypeForVTK() const { return 3; }
   virtual const char *getStringForPOS() const { return "SL"; }
   virtual const char *getStringForBDF() const { return "CBAR"; }
   virtual void revert() 
@@ -409,7 +409,7 @@ class MLine3 : public MLine {
   }
   virtual int getTypeForMSH() const { return MSH_LIN_3; }
   virtual int getTypeForUNV() const { return 24; } // parabolic beam
-  virtual int getTypeForVTK() const { return 21; }
+  //virtual int getTypeForVTK() const { return 21; }
   virtual const char *getStringForPOS() const { return "SL2"; }
 };
 
@@ -662,7 +662,7 @@ class MTriangle6 : public MTriangle {
   }
   virtual int getTypeForMSH() const { return MSH_TRI_6; }
   virtual int getTypeForUNV() const { return 92; } // thin shell parabolic triangle
-  virtual int getTypeForVTK() const { return 22; }
+  //virtual int getTypeForVTK() const { return 22; }
   virtual const char *getStringForPOS() const { return "ST2"; }
   virtual const char *getStringForBDF() const { return "CTRIA6"; }
   virtual void revert() 
@@ -960,7 +960,7 @@ class MQuadrangle8 : public MQuadrangle {
   }
   virtual int getTypeForMSH() const { return MSH_QUA_8; }
   virtual int getTypeForUNV() const { return 95; } // shell parabolic quadrilateral
-  virtual int getTypeForVTK() const { return 23; }
+  //virtual int getTypeForVTK() const { return 23; }
   virtual const char *getStringForBDF() const { return "CQUAD8"; }
   virtual void revert() 
   {
@@ -1312,7 +1312,7 @@ class MTetrahedron10 : public MTetrahedron {
   }
   virtual int getTypeForMSH() const { return MSH_TET_10; }
   virtual int getTypeForUNV() const { return 118; } // solid parabolic tetrahedron
-  virtual int getTypeForVTK() const { return 24; }
+  //virtual int getTypeForVTK() const { return 24; }
   virtual const char *getStringForPOS() const { return "SS2"; }
   virtual const char *getStringForBDF() const { return "CTETRA"; }
   virtual void revert()
@@ -1817,7 +1817,7 @@ class MHexahedron20 : public MHexahedron {
   }
   virtual int getTypeForMSH() const { return MSH_HEX_20; }
   virtual int getTypeForUNV() const { return 116; } // solid parabolic brick
-  virtual int getTypeForVTK() const { return 25; }
+  //virtual int getTypeForVTK() const { return 25; }
   virtual const char *getStringForBDF() const { return "CHEXA"; }
   virtual void revert()
   {

@@ -1927,14 +1927,8 @@ int GModel::writeP3D(const std::string &name, bool saveAll, double scalingFactor
 }
 
 int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
-                     double scalingFactor)
+                     double scalingFactor, bool bigEndian)
 {
-  Msg::Error("VTK export is experimental:");
-  Msg::Error(" * vertex ordering for second order elements is wrong");
-  Msg::Error(" * binary export crashes paraview on Mac: can somebody test");
-  Msg::Error("   on another platform? I *think* I followed the spec, but");
-  Msg::Error("   I probably missed something...");
-
   FILE *fp = fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
@@ -1963,7 +1957,7 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
   fprintf(fp, "POINTS %d double\n", numVertices);
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) 
-      entities[i]->mesh_vertices[j]->writeVTK(fp, binary, scalingFactor);
+      entities[i]->mesh_vertices[j]->writeVTK(fp, binary, scalingFactor, bigEndian);
   fprintf(fp, "\n");
   
   // loop over all elements we need to save and count vertices
@@ -1985,7 +1979,7 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
     if(entities[i]->physicals.size() || saveAll){
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
 	if(entities[i]->getMeshElement(j)->getTypeForVTK())
-	  entities[i]->getMeshElement(j)->writeVTK(fp, binary);
+	  entities[i]->getMeshElement(j)->writeVTK(fp, binary, bigEndian);
       }
     }
   }
@@ -1998,8 +1992,11 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
 	int type = entities[i]->getMeshElement(j)->getTypeForVTK();
 	if(type){
-	  if(binary) 
+	  if(binary){
+	    // VTK always expects big endian binary data
+	    if(!bigEndian) SwapBytes((char*)&type, sizeof(int), 1);
 	    fwrite(&type, sizeof(int), 1, fp);
+	  }
 	  else
 	    fprintf(fp, "%d\n", type);
 	}

@@ -322,7 +322,8 @@ class GModel
   // VTK format
   int readVTK(const std::string &name);
   int writeVTK(const std::string &name, bool binary=false,
-               bool saveAll=false, double scalingFactor=1.0);
+               bool saveAll=false, double scalingFactor=1.0,
+	       bool bigEndian=false);
 };
 
 #endif

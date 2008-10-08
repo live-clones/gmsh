@@ -10,6 +10,7 @@
 #include "GFace.h"
 #include "FunctionSpace.h"
 #include "Message.h"
+#include "StringUtils.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #include "GmshEmbedded.h"
@@ -747,7 +748,7 @@ void MElement::writeVRML(FILE *fp)
   fprintf(fp, "-1,\n");
 }
 
-void MElement::writeVTK(FILE *fp, bool binary)
+void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
 {
   int type = getTypeForUNV();
   if(!type) return;
@@ -760,6 +761,8 @@ void MElement::writeVTK(FILE *fp, bool binary)
     verts[0] = n;
     for(int i = 0; i < n; i++)
       verts[i + 1] = getVertexVTK(i)->getIndex() - 1;
+    // VTK always expects big endian binary data
+    if(!bigEndian) SwapBytes((char*)verts, sizeof(int), n + 1);
     fwrite(verts, sizeof(int), n + 1, fp);
   }
   else{

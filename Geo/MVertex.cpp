@@ -9,6 +9,7 @@
 #include "GEdge.h"
 #include "GFace.h"
 #include "Message.h"
+#include "StringUtils.h"
 
 int MVertex::_globalNum = 0;
 double MVertexLessThanLexicographic::tolerance = 1.e-6;
@@ -64,12 +65,14 @@ void MVertex::writeUNV(FILE *fp, double scalingFactor)
   fprintf(fp, tmp);
 }
 
-void MVertex::writeVTK(FILE *fp, bool binary, double scalingFactor)
+void MVertex::writeVTK(FILE *fp, bool binary, double scalingFactor, bool bigEndian)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
   if(binary){
     double data[3] = {x() * scalingFactor, y() * scalingFactor, z() * scalingFactor};
+    // VTK always expects big endian binary data
+    if(!bigEndian) SwapBytes((char*)data, sizeof(double), 3);
     fwrite(data, sizeof(double), 3, fp);
   }
   else{
