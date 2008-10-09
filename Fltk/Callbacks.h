@@ -199,6 +199,7 @@ void     geometry_elementary_add_rotate_cb(CALLBACK_ARGS);
 void     geometry_elementary_add_scale_cb(CALLBACK_ARGS);
 void     geometry_elementary_add_symmetry_cb(CALLBACK_ARGS);
 void   geometry_elementary_delete_cb(CALLBACK_ARGS);
+void geometry_elementary_split_cb(CALLBACK_ARGS);
 void   geometry_elementary_translate_cb(CALLBACK_ARGS);
 void   geometry_elementary_rotate_cb(CALLBACK_ARGS);
 void   geometry_elementary_scale_cb(CALLBACK_ARGS);

@@ -277,6 +277,7 @@ bool ProjectPointOnCurve(Curve *c, Vertex *v, Vertex *RES, Vertex *DER);
 bool ProjectPointOnSurface(Surface *s, Vertex &p, double u[2]);
 
 bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shapes);
+bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes);
 
 int recognize_seg(int typ, List_T *liste, int *seg);
 int recognize_loop(List_T *liste, int *loop);

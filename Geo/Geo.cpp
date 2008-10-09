@@ -2948,6 +2948,112 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double u[2])
   return true;
 }
 
+// Split line
+
+static Curve *_create_splitted_curve(Curve *c,List_T *nodes){
+  int  beg, end;
+  List_Read(nodes,0,&beg);
+  List_Read(nodes,List_Nbr(nodes)-1,&end);
+  int id=NEWLINE();
+  Curve *cnew=NULL;
+  switch(c->Typ){
+    case MSH_SEGM_LINE:
+      cnew = Create_Curve(id, c->Typ, 1, nodes, NULL, -1, -1, 0., 1.);
+      break;
+    case MSH_SEGM_SPLN:
+	    cnew = Create_Curve(id, c->Typ, 3, nodes, NULL, -1, -1, 0., 1.);
+      break;
+    case MSH_SEGM_BSPLN:
+      cnew = Create_Curve(id, c->Typ, 2, nodes, NULL, -1, -1, 0., 1.);
+    break;
+    default : //should never reach this point...
+      Msg::Error("Cannot split a curve with type %i.\n",c->Typ);
+      return NULL;
+  }
+	Tree_Add(GModel::current()->getGEOInternals()->Curves, &cnew);
+	CreateReversedCurve(cnew);
+  return cnew;
+}
+
+bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes){
+  Curve *c=FindCurve(line_id);
+  if(!c){
+    Msg::Error("Curve %i does not exists.",line_id);
+    return false;
+  }
+  switch (c->Typ){
+    case MSH_SEGM_LINE:
+    case MSH_SEGM_SPLN:
+    case MSH_SEGM_BSPLN:
+      break;
+    default:
+      Msg::Error("Cannot split curve %i with type %i.",line_id,c->Typ);
+      return false;
+  }
+  std::set<int>v_break;
+  for(int i=0;i<List_Nbr(vertices_id);i++){
+    int id;
+    List_Read(vertices_id,i,&id);
+    v_break.insert((int)id);
+  }
+  bool is_periodic=c->beg==c->end;
+  bool first_periodic=true;
+  bool last_periodic=false;
+  List_T *new_list=List_Create(1,List_Nbr(c->Control_Points)/10,sizeof(int));
+  Vertex *pv;
+  for (int i=0;i<List_Nbr(c->Control_Points);i++){
+    List_Read(c->Control_Points,i,&pv);
+    List_Add(new_list,&pv->Num);
+    if(v_break.find(pv->Num)!=v_break.end() && List_Nbr(new_list)>1){
+      if(last_periodic)
+        break;
+      if(!(is_periodic&&first_periodic)){
+        Curve *cnew=_create_splitted_curve(c,new_list);
+        List_Add(shapes,&cnew);
+      }
+      first_periodic=false;
+      List_Reset(new_list);
+      List_Add(new_list,&pv->Num);
+    }
+    if(i==(List_Nbr(c->Control_Points)-1) && is_periodic && ! first_periodic){
+      i=0;
+      last_periodic=true;
+    }
+  }
+  Curve *cnew=_create_splitted_curve(c,new_list);
+  List_Add(shapes,&cnew);
+  //replace original curve by the new curves in all surfaces
+  //(and for the opposite curve)
+  List_T *rshapes=List_Create(2,1,sizeof(Shape));
+  int N=List_Nbr(shapes);
+  for(int i=0;i<List_Nbr(shapes);i++){
+    Curve *cc,*rcc;
+    List_Read(shapes,N-i-1,&cc);
+    rcc=FindCurve(-cc->Num);
+    List_Add(rshapes,&rcc);
+  }
+  List_T *Surfs = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
+  for(int i = 0; i < List_Nbr(Surfs); i++) {
+    Surface *s;
+    List_Read(Surfs, i, &s);
+    for(int j = 0; j < List_Nbr(s->Generatrices); j++) {
+      Curve *surface_curve;
+      List_Read(s->Generatrices,j,&surface_curve);
+      if(surface_curve->Num==c->Num){
+        List_Remove(s->Generatrices,j);
+        List_Insert_In_List(shapes,j,s->Generatrices);
+      }else if(surface_curve->Num==-c->Num){
+        List_Remove(s->Generatrices,j);
+        List_Insert_In_List(rshapes,j,s->Generatrices);
+      }
+    }
+  }
+  List_Delete(Surfs);
+  DeleteShape(c->Typ,c->Num);
+  List_Delete(new_list);
+  List_Delete(rshapes);
+}
+
 // Intersect a curve with a surface
 
 static void intersectCS(int N, double x[], double res[])

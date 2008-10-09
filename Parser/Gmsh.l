@@ -185,6 +185,7 @@ Sin                     return tSin;
 Sinh                    return tSinh;
 Sphere                  return tSphere;
 Spline                  return tSpline;
+Split                    return tSplit;
 Surface                 return tSurface;
 Symmetry                return tSymmetry;
 Sprintf                 return tSprintf;

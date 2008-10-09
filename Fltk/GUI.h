@@ -74,6 +74,7 @@ extern        Context_Item menu_geometry_elementary_extrude[];
 extern            Context_Item menu_geometry_elementary_extrude_translate[]; 
 extern            Context_Item menu_geometry_elementary_extrude_rotate[]; 
 extern        Context_Item menu_geometry_elementary_delete[]; 
+extern        Context_Item menu_geometry_elementary_split[]; 
 extern    Context_Item menu_geometry_physical[]; 
 extern        Context_Item menu_geometry_physical_add[]; 
 extern Context_Item menu_mesh[]; 

@@ -151,6 +151,7 @@ Context_Item menu_geometry[] = {
       {"Delete",    (Fl_Callback *)geometry_elementary_delete_cb, (void*)0} ,
       {"Translate", (Fl_Callback *)geometry_elementary_translate_cb, (void*)0} ,
       {"Rotate",    (Fl_Callback *)geometry_elementary_rotate_cb, (void*)0} ,
+      {"Split",     (Fl_Callback *)geometry_elementary_split_cb, (void*)0} ,
       {"Scale",     (Fl_Callback *)geometry_elementary_scale_cb, (void*)0} ,
       {"Symmetry",  (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)0} ,
       {"Extrude",   (Fl_Callback *)geometry_elementary_extrude_cb, (void*)0} ,
@@ -220,6 +221,11 @@ Context_Item menu_geometry[] = {
           {"Volume",  (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Volume"} ,
           {0} 
         };  
+        Context_Item menu_geometry_elementary_split[] = {
+          {"0Geometry>Elementary>Split",NULL},
+            {"Line",(Fl_Callback *)geometry_elementary_split_cb,(void*)"Line"},
+            {0}
+        };
         Context_Item menu_geometry_elementary_translate[] = {
           {"0Geometry>Elementary>Translate", NULL} ,
           {"Point",   (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Point"} ,  

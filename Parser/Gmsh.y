@@ -92,7 +92,7 @@ void FixRelativePath(const char *in, char *out);
 %token tPlane tRuled tTransfinite tComplex tPhysical
 %token tUsing tBump tProgression tPlugin
 %token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
-%token tLoop tRecombine tSmoother tDelete tCoherence tIntersect tBoundary
+%token tLoop tRecombine tSmoother tSplit tDelete tCoherence tIntersect tBoundary
 %token tLayers tHole tAlias tAliasWithOptions
 %token tText2D tText3D tInterpolationScheme  tTime tCombine
 %token tBSpline tBezier tNurbs tOrder tKnots
@@ -1565,6 +1565,14 @@ Transform :
       $$ = List_Create(2, 1, sizeof(Shape));
       IntersectCurvesWithSurface($4, (int)$8, $$);
       List_Delete($4);
+    }
+  | tSplit tLine '(' FExpr ')' '{' RecursiveListOfDouble '}' tEND
+    {
+      $$ = List_Create(2, 1, sizeof(Shape*));
+      List_T *tmp=ListOfDouble2ListOfInt($7);
+      List_Delete($7);
+      SplitCurve((int)$4,tmp,$$);
+      List_Delete(tmp);
     }
   | tBoundary '{' MultipleShape '}'
     { 

@@ -122,6 +122,7 @@ static std::string list2string(List_T *list)
   return sstream.str();
 }
 
+
 void delet(List_T *list, std::string filename, std::string what)
 {
   std::ostringstream sstream;
@@ -369,4 +370,9 @@ void protude(List_T *list, std::string filename, std::string what,
 	  << px << ", " << py << ", " << pz << "}, " << angle << "} {\n  "
 	  << what << "{" << list2string(list) << "};\n}";
   add_infile(sstream.str(), filename);
+}
+void split_edge(int edge_id, List_T *vertices,std::string filename){
+  std::ostringstream sstream;
+  sstream<<"Split Line("<<edge_id<<") {"<<list2string(vertices)<<"};";
+  add_infile(sstream.str(), filename,true);
 }

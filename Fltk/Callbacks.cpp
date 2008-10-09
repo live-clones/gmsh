@@ -3095,6 +3095,57 @@ void geometry_elementary_add_new_cb(CALLBACK_ARGS)
   else
     Msg::Error("Unknown entity to create: %s", str.c_str());
 }
+static void _split_selection(){
+  opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  Draw();
+  Msg::StatusBar(3, false, "Select a line to split\n"
+          "[Press 'q' to abort]");
+  std::vector<GVertex*> vertices;
+  std::vector<GEdge*> edges;
+  std::vector<GFace*> faces;
+  std::vector<GRegion*> regions;
+  std::vector<MElement*> elements;
+  GEdge* edge_to_split=NULL;
+  while(1){
+    char ib = SelectEntity(2, vertices, edges, faces, regions, elements);
+    if(ib=='q')
+      break;
+    if(!edges.empty()){
+      edge_to_split=edges[0];
+      HighlightEntity(edges[0]);
+      break;
+    }
+  }
+  Msg::StatusBar(3, false, "");
+  if(edges.empty())
+    return;
+  List_T *List1 = List_Create(5, 5, sizeof(int));
+  Msg::StatusBar(3, false, "Select break points\n"
+          "[Press 'e' to end selection or 'q' to abort]");
+  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  Draw();
+  while(1){
+    char ib = SelectEntity(1, vertices, edges, faces, regions, elements);
+    if(ib=='q')
+      break;
+    if(ib=='e'){
+      split_edge(edge_to_split->tag(),List1,CTX.filename);
+      break;
+    }
+    if(!vertices.empty()){
+      for(int i=0;i<vertices.size();i++){
+        int tag = vertices[i]->tag();
+        int index = List_ISearchSeq(List1, &tag, fcmp_int); 
+        if(index < 0) List_Add(List1, &tag);
+        HighlightEntity(vertices[i]);
+      }
+    }
+  }
+  Msg::StatusBar(3, false, "");
+  WID->reset_visibility();
+  ZeroHighlight();
+  Draw();
+}
 
 static void _action_point_line_surface_volume(int action, int mode, const char *what)
 {
@@ -3305,6 +3356,7 @@ static void _action_point_line_surface_volume(int action, int mode, const char *
         case 9:
           add_recosurf(List1, CTX.filename);
           break;
+
         default:
           Msg::Error("Unknown action on selected entities");
           break;
@@ -3439,6 +3491,15 @@ void geometry_elementary_delete_cb(CALLBACK_ARGS)
     return;
   }
   _action_point_line_surface_volume(6, 0, (const char*)data);
+}
+
+void geometry_elementary_split_cb(CALLBACK_ARGS)
+{
+  if(!data){
+    WID->set_context(menu_geometry_elementary_split, 0);
+    return;
+  }
+  _split_selection();
 }
 
 void geometry_elementary_coherence_cb(CALLBACK_ARGS)

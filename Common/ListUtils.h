@@ -47,6 +47,9 @@ void    List_Copy(List_T *a , List_T *b);
 void    List_Merge(List_T *a , List_T *b);
 List_T *List_CreateFromFile(int n, int incr, int size, FILE *file, int format, int swap);
 void    List_WriteToFile(List_T *liste, FILE *file, int format);
+void    List_Remove (List_T *a, int i);
+//insert a in b before i
+void    List_Insert_In_List (List_T *a, int i, List_T *b);
 
 // for backward compatibility
 List_T *List_CreateFromFileOld(int n, int incr, int size, FILE *file, int format, int swap);
