@@ -174,7 +174,7 @@ int GModel::readMSH(const std::string &name)
         double xyz[3];
         if(!binary){
           if(fscanf(fp, "%d %lf %lf %lf", &num, &xyz[0], &xyz[1], &xyz[2]) != 4)
-	    return 0;
+            return 0;
         }
         else{
           if(fread(&num, sizeof(int), 1, fp) != 1) return 0;
@@ -188,8 +188,8 @@ int GModel::readMSH(const std::string &name)
           Msg::Warning("Skipping duplicate vertex %d", num);
         else
           vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
-	if(numVertices > 100000) 
-	  Msg::ProgressMeter(i + 1, numVertices, "Reading nodes");
+        if(numVertices > 100000) 
+          Msg::ProgressMeter(i + 1, numVertices, "Reading nodes");
       }
       // If the vertex numbering is dense, tranfer the map into a
       // vector to speed up element creation
@@ -247,8 +247,8 @@ int GModel::readMSH(const std::string &name)
           }
           createElementMSH(this, num, type, physical, elementary, partition, 
                            vertices, elements, physicals);
-	  if(numElements > 100000) 
-	    Msg::ProgressMeter(i + 1, numElements, "Reading elements");
+          if(numElements > 100000) 
+            Msg::ProgressMeter(i + 1, numElements, "Reading elements");
         }
       }
       else{
@@ -280,9 +280,9 @@ int GModel::readMSH(const std::string &name)
             }
             createElementMSH(this, num, type, physical, elementary, partition, 
                              vertices, elements, physicals);
-	    if(numElements > 100000) 
-	      Msg::ProgressMeter(numElementsPartial + i + 1, numElements, 
-				 "Reading elements");
+            if(numElements > 100000) 
+              Msg::ProgressMeter(numElementsPartial + i + 1, numElements, 
+                                 "Reading elements");
           }
           delete [] data;
           numElementsPartial += numElms;
@@ -303,7 +303,7 @@ int GModel::readMSH(const std::string &name)
 
     }
     else if(!strncmp(&str[1], "ElementData", 11) ||
-	    !strncmp(&str[1], "ElementNodeData", 15)) {
+            !strncmp(&str[1], "ElementNodeData", 15)) {
 
       // there's some element post-processing data to read later on
       postpro = true;
@@ -514,7 +514,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     writeElementsMSH(fp, (*it)->quadrangles, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
   writeElementHeaderMSH(binary, fp, elements, MSH_TET_4, MSH_TET_10, MSH_TET_20, 
-			MSH_TET_35, MSH_TET_56, MSH_TET_52);
+                        MSH_TET_35, MSH_TET_56, MSH_TET_52);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, (*it)->tetrahedra, saveAll, version, binary, num,
                      (*it)->tag(), (*it)->physicals);
@@ -595,9 +595,9 @@ int GModel::writePOS(const std::string &name, bool printElementary,
   for(unsigned int i = 0; i < entities.size(); i++)
     if(saveAll || entities[i]->physicals.size())
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
-	entities[i]->getMeshElement(j)->writePOS(fp, f[0], f[1], f[2], f[3],
-						 f[4], f[5], scalingFactor, 
-						 entities[i]->tag());
+        entities[i]->getMeshElement(j)->writePOS(fp, f[0], f[1], f[2], f[3],
+                                                 f[4], f[5], scalingFactor, 
+                                                 entities[i]->tag());
   fprintf(fp, "};\n");
 
   fclose(fp);
@@ -1170,10 +1170,10 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
     for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
       MElement *e = entities[i]->getMeshElement(j);
       if(saveAll)
-	e->writeUNV(fp, ++num, entities[i]->tag(), 0);
+        e->writeUNV(fp, ++num, entities[i]->tag(), 0);
       else
-	for(unsigned int k = 0; k < entities[i]->physicals.size(); k++)
-	  e->writeUNV(fp, ++num, entities[i]->tag(), entities[i]->physicals[k]);
+        for(unsigned int k = 0; k < entities[i]->physicals.size(); k++)
+          e->writeUNV(fp, ++num, entities[i]->tag(), entities[i]->physicals[k]);
     }
   }
   fprintf(fp, "%6d\n", -1);
@@ -1189,14 +1189,14 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
       for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
           it != groups[dim].end(); it++){
         std::set<MVertex*> nodes;
-	std::vector<GEntity *> &entities = it->second;
+        std::vector<GEntity *> &entities = it->second;
         for(unsigned int i = 0; i < entities.size(); i++){
-	  for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-	    MElement *e = entities[i]->getMeshElement(j);
-	    for (int k = 0; k < e->getNumVertices(); k++)
-	      nodes.insert(e->getVertex(k));
-	  }
-	}
+          for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+            MElement *e = entities[i]->getMeshElement(j);
+            for (int k = 0; k < e->getNumVertices(); k++)
+              nodes.insert(e->getVertex(k));
+          }
+        }
         fprintf(fp, "%10d%10d%10d%10d%10d%10d%10d%10d\n", 
                 gr, 0, 0, 0, 0, 0, 0, (int)nodes.size());
         fprintf(fp, "PERMANENT GROUP%d\n", gr++);
@@ -1304,9 +1304,9 @@ int GModel::readMESH(const std::string &name)
           int  n[1];
           sscanf(buffer, "%d", &n[0]);
           for(int j = 0; j < 1; j++) n[j]--;
-	  // std::vector<MVertex*> vertices;
-	  // if(!getVertices(1, n, vertexVector, vertices)) return 0;
-	  // corners.push_back(vertices[0]);
+          // std::vector<MVertex*> vertices;
+          // if(!getVertices(1, n, vertexVector, vertices)) return 0;
+          // corners.push_back(vertices[0]);
         }
       }
       else if(!strcmp(str, "Ridges")){
@@ -1319,9 +1319,9 @@ int GModel::readMESH(const std::string &name)
           int  n[1];
           sscanf(buffer, "%d", &n[0]);
           for(int j = 0; j < 1; j++) n[j]--;
-	  // std::vector<MVertex*> vertices;
-	  // if(!getVertices(1, n, vertexVector, vertices)) return 0;
-	  // ridges.push_back(vertices[0]);
+          // std::vector<MVertex*> vertices;
+          // if(!getVertices(1, n, vertexVector, vertices)) return 0;
+          // ridges.push_back(vertices[0]);
         }
       }
       else if(!strcmp(str, "Quadrilaterals")) {
@@ -1667,9 +1667,9 @@ int GModel::readBDF(const std::string &name)
         if(readElementBDF(fp, buffer, 6, -4, num, region, vertices, vertexMap)){
           if(vertices.size() == 10)
             elements[3][region].push_back
-	      (new MTetrahedron10(vertices[0], vertices[1], vertices[2], vertices[3], 
-				  vertices[4], vertices[5], vertices[6], vertices[7], 
-				  vertices[9], vertices[8], num));
+              (new MTetrahedron10(vertices[0], vertices[1], vertices[2], vertices[3], 
+                                  vertices[4], vertices[5], vertices[6], vertices[7], 
+                                  vertices[9], vertices[8], num));
           else
             elements[3][region].push_back(new MTetrahedron(vertices, num));
         }
@@ -1678,12 +1678,12 @@ int GModel::readBDF(const std::string &name)
         if(readElementBDF(fp, buffer, 5, -8, num, region, vertices, vertexMap)){
           if(vertices.size() == 20)
             elements[4][region].push_back
-	      (new MHexahedron20(vertices[0], vertices[1], vertices[2], vertices[3], 
-				 vertices[4], vertices[5], vertices[6], vertices[7], 
-				 vertices[8], vertices[11], vertices[12], vertices[9], 
-				 vertices[13], vertices[10], vertices[14], vertices[15], 
-				 vertices[16], vertices[19], vertices[17], vertices[18], 
-				 num));
+              (new MHexahedron20(vertices[0], vertices[1], vertices[2], vertices[3], 
+                                 vertices[4], vertices[5], vertices[6], vertices[7], 
+                                 vertices[8], vertices[11], vertices[12], vertices[9], 
+                                 vertices[13], vertices[10], vertices[14], vertices[15], 
+                                 vertices[16], vertices[19], vertices[17], vertices[18], 
+                                 num));
           else
             elements[4][region].push_back(new MHexahedron(vertices, num));
         }
@@ -1692,10 +1692,10 @@ int GModel::readBDF(const std::string &name)
         if(readElementBDF(fp, buffer, 6, -6, num, region, vertices, vertexMap)){
           if(vertices.size() == 15)
             elements[5][region].push_back
-	      (new MPrism15(vertices[0], vertices[1], vertices[2], vertices[3],
-			    vertices[4], vertices[5], vertices[6], vertices[8],
-			    vertices[9], vertices[7], vertices[10], vertices[11],
-			    vertices[12], vertices[14], vertices[13], num));
+              (new MPrism15(vertices[0], vertices[1], vertices[2], vertices[3],
+                            vertices[4], vertices[5], vertices[6], vertices[8],
+                            vertices[9], vertices[7], vertices[10], vertices[11],
+                            vertices[12], vertices[14], vertices[13], num));
           else
             elements[5][region].push_back(new MPrism(vertices, num));
         }
@@ -1743,7 +1743,7 @@ int GModel::writeBDF(const std::string &name, int format, bool saveAll,
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
       if(saveAll || entities[i]->physicals.size())
-	entities[i]->getMeshElement(j)->writeBDF(fp, format, entities[i]->tag());
+        entities[i]->getMeshElement(j)->writeBDF(fp, format, entities[i]->tag());
 
   fprintf(fp, "ENDDATA\n");
    
@@ -1965,10 +1965,10 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
   for(unsigned int i = 0; i < entities.size(); i++){
     if(entities[i]->physicals.size() || saveAll){
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-	if(entities[i]->getMeshElement(j)->getTypeForVTK()){
-	  numElements++;
-	  totalNumInt += entities[i]->getMeshElement(j)->getNumVertices() + 1;
-	}
+        if(entities[i]->getMeshElement(j)->getTypeForVTK()){
+          numElements++;
+          totalNumInt += entities[i]->getMeshElement(j)->getNumVertices() + 1;
+        }
       }
     }
   }
@@ -1978,8 +1978,8 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
   for(unsigned int i = 0; i < entities.size(); i++){
     if(entities[i]->physicals.size() || saveAll){
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-	if(entities[i]->getMeshElement(j)->getTypeForVTK())
-	  entities[i]->getMeshElement(j)->writeVTK(fp, binary, bigEndian);
+        if(entities[i]->getMeshElement(j)->getTypeForVTK())
+          entities[i]->getMeshElement(j)->writeVTK(fp, binary, bigEndian);
       }
     }
   }
@@ -1990,16 +1990,16 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
   for(unsigned int i = 0; i < entities.size(); i++){
     if(entities[i]->physicals.size() || saveAll){
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-	int type = entities[i]->getMeshElement(j)->getTypeForVTK();
-	if(type){
-	  if(binary){
-	    // VTK always expects big endian binary data
-	    if(!bigEndian) SwapBytes((char*)&type, sizeof(int), 1);
-	    fwrite(&type, sizeof(int), 1, fp);
-	  }
-	  else
-	    fprintf(fp, "%d\n", type);
-	}
+        int type = entities[i]->getMeshElement(j)->getTypeForVTK();
+        if(type){
+          if(binary){
+            // VTK always expects big endian binary data
+            if(!bigEndian) SwapBytes((char*)&type, sizeof(int), 1);
+            fwrite(&type, sizeof(int), 1, fp);
+          }
+          else
+            fprintf(fp, "%d\n", type);
+        }
       }
     }
   }
@@ -2015,47 +2015,61 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
-
+  
   char buffer[256], buffer2[256];
-
+  
   fgets(buffer, sizeof(buffer), fp); // version line
   fgets(buffer, sizeof(buffer), fp); // title
-
+  
   fscanf(fp, "%s", buffer); // ASCII or BINARY
   bool binary = false;
   if(!strcmp(buffer, "BINARY")) binary = true;
-
+  
   if(fscanf(fp, "%s %s", &buffer, &buffer2) != 2) return 0;
   if(strcmp(buffer, "DATASET") || strcmp(buffer2, "UNSTRUCTURED_GRID")){
     Msg::Error("VTK reader can only read unstructured datasets");
-    return 0; 
+    return 0;
   }
   
   // read mesh vertices
   int numVertices;
   if(fscanf(fp, "%s %d %s\n", &buffer, &numVertices, buffer2) != 3) return 0;
-  if(strcmp(buffer, "POINTS") || strcmp(buffer2, "double")){
-    Msg::Error("VTK reader only accepts point data in double precision");
-    return 0;
-  }
-  if(!numVertices){
+  if(strcmp(buffer, "POINTS") || !numVertices){
     Msg::Warning("No points in dataset");
     return 0;
   }
+  int datasize;
+  if(!strcmp(buffer2, "double"))
+    datasize = sizeof(double);
+  else if(!strcmp(buffer2, "float"))
+    datasize = sizeof(float);
+  else{
+    Msg::Warning("VTK reader only accepts float or double datasets");
+    return 0;
+  }
+
   Msg::Info("Reading %d points", numVertices);
   std::vector<MVertex*> vertices(numVertices);
   for(int i = 0 ; i < numVertices; i++){
     double xyz[3];
     if(binary){
-      if(fread(xyz, sizeof(double), 3, fp) != 3) return 0;
-      if(!bigEndian) SwapBytes((char*)xyz, sizeof(double), 3);
+      if(datasize == sizeof(float)){
+        float f[3];
+        if(fread(f, sizeof(float), 3, fp) != 3) return 0;
+        if(!bigEndian) SwapBytes((char*)f, sizeof(float), 3);
+        for(int j = 0; j < 3; j++) xyz[j] = f[j];
+      }
+      else{
+        if(fread(xyz, sizeof(double), 3, fp) != 3) return 0;
+        if(!bigEndian) SwapBytes((char*)xyz, sizeof(double), 3);
+      }
     }
     else{
       if(fscanf(fp, "%lf %lf %lf", &xyz[0], &xyz[1], &xyz[2]) != 3) return 0;
     }
     vertices[i] = new MVertex(xyz[0], xyz[1], xyz[2]);
   }
-  
+
   // read mesh elements
   int numElements, totalNumInt;
   if(fscanf(fp, "%s %d %d\n", &buffer, &numElements, &totalNumInt) != 3) return 0;
@@ -2076,14 +2090,14 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     else{
       if(fscanf(fp, "%d", &numVerts) != 1) return 0;
       for(int j = 0; j < numVerts; j++){
-	if(fscanf(fp, "%d", &n[j]) != 1) return 0;
+        if(fscanf(fp, "%d", &n[j]) != 1) return 0;
       }
     }
     for(int j = 0; j < numVerts; j++){
       if(n[j] >= 0 && n[j] < vertices.size())
-	cells[i].push_back(vertices[n[j]]);
+        cells[i].push_back(vertices[n[j]]);
       else
-	Msg::Error("Bad vertex index");
+        Msg::Error("Bad vertex index");
     }
   }
   if(fscanf(fp, "%s %d\n", &buffer, &numElements) != 2) return 0;
@@ -2091,7 +2105,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     Msg::Error("No or invalid number of cells types");
     return 0;
   }
-  std::map<int, std::vector<MElement*> > elements[7];
+  std::map<int, std::vector<MElement*> > elements[8];
   for(unsigned int i = 0; i < cells.size(); i++){
     int type;
     if(binary){
@@ -2102,23 +2116,25 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
       if(fscanf(fp, "%d", &type) != 1) return 0;
     }
     switch(type){
-    case 3: elements[0][1].push_back(new MLine(cells[i])); break;
-    case 5: elements[1][1].push_back(new MTriangle(cells[i])); break;
-    case 8: elements[2][1].push_back(new MQuadrangle(cells[i])); break;
-    case 10: elements[3][1].push_back(new MTetrahedron(cells[i])); break;
-    case 12: elements[4][1].push_back(new MHexahedron(cells[i])); break;
-    case 13: elements[5][1].push_back(new MPrism(cells[i])); break;
-    case 14: elements[6][1].push_back(new MPyramid(cells[i])); break;
+    case 1: elements[0][1].push_back(new MPoint(cells[i])); break;
+    case 3: elements[1][1].push_back(new MLine(cells[i])); break;
+    case 5: elements[2][1].push_back(new MTriangle(cells[i])); break;
+    case 9: elements[3][1].push_back(new MQuadrangle(cells[i])); break;
+    case 10: elements[4][1].push_back(new MTetrahedron(cells[i])); break;
+    case 12: elements[5][1].push_back(new MHexahedron(cells[i])); break;
+    case 13: elements[6][1].push_back(new MPrism(cells[i])); break;
+    case 14: elements[7][1].push_back(new MPyramid(cells[i])); break;
     default: 
       Msg::Error("Unknown type of cell %d", type);
       break;
     }
   }  
-
+  
   for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
     _storeElementsInEntities(elements[i]);
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertices);
-
-  return 0;
+  
+  fclose(fp);
+  return 1;
 }

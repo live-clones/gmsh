@@ -282,6 +282,7 @@ class MPoint : public MElement {
   virtual int getNumFacesRep(){ return 0; }
   virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n){}
   virtual int getTypeForMSH() const { return MSH_PNT; }
+  virtual int getTypeForVTK() const { return 1; }
   virtual const char *getStringForPOS() const { return "SP"; }
   virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
   {
@@ -852,7 +853,7 @@ class MQuadrangle : public MElement {
   }
   virtual int getTypeForMSH() const { return MSH_QUA_4; }
   virtual int getTypeForUNV() const { return 94; } // thin shell linear quadrilateral
-  virtual int getTypeForVTK() const { return 8; }
+  virtual int getTypeForVTK() const { return 9; }
   virtual const char *getStringForPOS() const { return "SQ"; }
   virtual const char *getStringForBDF() const { return "CQUAD4"; }
   virtual void revert() 
