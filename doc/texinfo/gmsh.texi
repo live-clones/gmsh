@@ -2114,6 +2114,9 @@ the volume that define the corners of the transfinite interpolation.
 Here is a list of all other mesh commands currently available:
 
 @ftable @code
+@item Coherence Mesh;
+Removes all duplicate mesh vertices.
+
 @item Color @var{color-expression} @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Sets the mesh color of the entities in @var{expression-list} to @var{color-expression}.
 

@@ -252,12 +252,7 @@ void deMeshGEdge::operator() (GEdge *ge)
 {
   if(ge->geomType() == GEntity::DiscreteCurve) return;
 
-  for (unsigned int i = 0; i < ge->mesh_vertices.size(); i++) 
-    delete ge->mesh_vertices[i];
-  ge->mesh_vertices.clear();
-  for (unsigned int i = 0; i < ge->lines.size(); i++) 
-    delete ge->lines[i];
-  ge->lines.clear();
+  ge->deleteMesh();
   ge->deleteVertexArrays();
   ge->model()->destroyMeshCaches();
 }

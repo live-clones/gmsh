@@ -1217,9 +1217,8 @@ class AttractorField : public Field
         }
       }
       // This can lead to weird results as we generate attractors over
-      // the whole parametric plane (We should really use a
-      // mesh... but none is available before 1D & 2D meshing. Or we
-      // should provide a better containsParam() implementation.)
+      // the whole parametric plane (we should really use a mesh,
+      // e.g. a refined STL.)
       for(std::list<int>::iterator it = faces_id.begin();
           it != faces_id.end(); ++it) {
         Surface *s = FindSurface(*it);

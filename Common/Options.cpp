@@ -23,6 +23,7 @@
 #include "PViewData.h"
 #include "adaptiveData.h"
 #include "PluginManager.h"
+#include "Plugin.h"
 #endif
 
 #if defined(HAVE_FLTK)

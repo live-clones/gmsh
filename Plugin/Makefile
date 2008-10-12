@@ -116,7 +116,7 @@ CutParametric.o: CutParametric.cpp ../Post/OctreePost.h \
   ../Post/PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Common/ListUtils.h ../Common/GmshMatrix.h ../Common/Context.h \
   ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h ../Common/GmshUI.h \
-  ../Graphics/Draw.h ../contrib/MathEval/matheval.h
+  ../Graphics/Draw.h
 Lambda2.o: Lambda2.cpp Lambda2.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
@@ -210,7 +210,7 @@ Extract.o: Extract.cpp Extract.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/ListUtils.h \
-  ../Common/GmshMatrix.h ../contrib/MathEval/matheval.h
+  ../Common/GmshMatrix.h
 ExtractElements.o: ExtractElements.cpp ExtractElements.h Plugin.h \
   ../Common/Options.h ../Post/ColorTable.h ../Common/Message.h \
   ../Post/PView.h ../Geo/SPoint3.h ../Post/PViewDataList.h \
@@ -238,7 +238,7 @@ Evaluate.o: Evaluate.cpp Evaluate.h Plugin.h ../Common/Options.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/ListUtils.h \
   ../Common/GmshMatrix.h ../Post/OctreePost.h ../Common/Octree.h \
-  ../Common/OctreeInternals.h ../contrib/MathEval/matheval.h
+  ../Common/OctreeInternals.h
 FieldView.o: FieldView.cpp FieldView.h Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/Message.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \

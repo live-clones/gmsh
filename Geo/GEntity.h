@@ -144,6 +144,9 @@ class GEntity {
 
   virtual ~GEntity();
 
+  // delete the mesh data
+  virtual void deleteMesh(){}
+
   // delete the vertex arrays, used to to draw the mesh efficiently
   void deleteVertexArrays();
 

@@ -425,22 +425,7 @@ void deMeshGRegion::operator() (GRegion *gr)
 {
   if(gr->geomType() == GEntity::DiscreteVolume) return;
 
-  for(unsigned int i = 0; i < gr->mesh_vertices.size(); i++)
-    delete gr->mesh_vertices[i];
-  gr->mesh_vertices.clear();
-  gr->transfinite_vertices.clear();
-  for(unsigned int i = 0; i < gr->tetrahedra.size(); i++)
-    delete gr->tetrahedra[i];
-  gr->tetrahedra.clear();
-  for(unsigned int i = 0; i < gr->hexahedra.size(); i++) 
-    delete gr->hexahedra[i];
-  gr->hexahedra.clear();
-  for(unsigned int i = 0; i < gr->prisms.size(); i++) 
-    delete gr->prisms[i];
-  gr->prisms.clear();
-  for(unsigned int i = 0; i < gr->pyramids.size(); i++)
-    delete gr->pyramids[i];
-  gr->pyramids.clear();
+  gr->deleteMesh();
   gr->deleteVertexArrays();
   gr->model()->destroyMeshCaches();
 }

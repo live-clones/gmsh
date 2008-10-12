@@ -160,20 +160,23 @@ class MElement
   virtual std::string getInfoString();
 
   // get the function space for the element
-  virtual const gmshFunctionSpace* getFunctionSpace(int ord = -1) const 
+  virtual const gmshFunctionSpace* getFunctionSpace(int order=-1) const
   {
-    Msg::Fatal("Function space not implemented for element %s", getStringForPOS());
+    Msg::Error("Function space not implemented for this type of element");
     return 0;
   }
   
-  // return the interpolating nodal shape function associated with
-  // node num, evaluated at point (u,v,w) in parametric coordinates
-  virtual void getShapeFunction(int num, double u, double v, double w, double &s);
+  // return the interpolating nodal shape functions evaluated at point
+  // (u,v,w) in parametric coordinates (if order == -1, use the
+  // polynomial order of the element)
+  virtual void getShapeFunctions(double u, double v, double w, double s[],
+                                 int order=-1);
 
-  // return the gradient of of the nodal shape function associated
-  // with node num, evaluated at point (u,v,w) in parametric
-  // coordinates
-  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]);
+  // return the gradient of of the nodal shape functions evaluated at
+  // point (u,v,w) in parametric coordinates (if order == -1, use the
+  // polynomial order of the element)
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3],
+                                     int order=-1);
   
   // return the Jacobian of the element evaluated at point (u,v,w) in
   // parametric coordinates
@@ -194,16 +197,21 @@ class MElement
 
   // interpolate the given nodal data (resp. its gradient, curl and
   // divergence) at point (u,v,w) in parametric coordinates
-  double interpolate(double val[], double u, double v, double w, int stride=1);
+  double interpolate(double val[], double u, double v, double w, int stride=1, 
+                     int order=-1);
   void interpolateGrad(double val[], double u, double v, double w, double f[3],
-                       int stride=1, double invjac[3][3]=0);
+                       int stride=1, double invjac[3][3]=0, int order=-1);
   void interpolateCurl(double val[], double u, double v, double w, double f[3],
-                       int stride=3);
-  double interpolateDiv(double val[], double u, double v, double w, int stride=3);
+                       int stride=3, int order=-1);
+  double interpolateDiv(double val[], double u, double v, double w, int stride=3,
+                        int order=-1);
 
   // integration routine 
-  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const;
-  
+  virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
+  {
+    Msg::Error("No integration points defined for this type of element");
+  }
+
   // IO routines
   virtual void writeMSH(FILE *fp, double version=1.0, bool binary=false, 
                         int num=0, int elementary=1, int physical=1);
@@ -227,7 +235,7 @@ class MElement
 
   // return the number of vertices, as well as the element name if
   // 'name' != 0
-  static int getInfoMSH(const int typeMSH, const char **const name = 0);
+  static int getInfoMSH(const int typeMSH, const char **const name=0);
 };
 
 class MElementLessThanLexicographic{
@@ -284,13 +292,13 @@ class MPoint : public MElement {
   virtual int getTypeForMSH() const { return MSH_PNT; }
   virtual int getTypeForVTK() const { return 1; }
   virtual const char *getStringForPOS() const { return "SP"; }
-  virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o) 
   {
-    s = 1.;
+    s[0] = 1.;
   }
-  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o) 
   {
-    s[0] = s[1] = s[2] = 0.;
+    s[0][0] = s[0][1] = s[0][2] = 0.;
   }
   virtual bool isInside(double u, double v, double w, double tol=1.e-8)
   {
@@ -859,6 +867,20 @@ class MQuadrangle : public MElement {
   virtual void revert() 
   {
     MVertex *tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
+  }
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o) 
+  {
+    s[0] = (1. - u) * (1. - v) * 0.25;
+    s[1] = (1. + u) * (1. - v) * 0.25;
+    s[2] = (1. + u) * (1. + v) * 0.25;
+    s[3] = (1. - u) * (1. + v) * 0.25;
+  }
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o) 
+  {
+    s[0][0] = -0.25 * (1. - v); s[0][1] = -0.25 * (1. - u); s[0][2] = 0.;
+    s[1][0] =  0.25 * (1. - v); s[1][1] = -0.25 * (1. + u); s[1][2] = 0.;
+    s[2][0] =  0.25 * (1. + v); s[2][1] =  0.25 * (1. + u); s[2][2] = 0.;
+    s[3][0] = -0.25 * (1. + v); s[3][1] =  0.25 * (1. - u); s[3][2] = 0.;
   }
   virtual bool isInside(double u, double v, double w, double tol=1.e-8)
   {
@@ -1492,7 +1514,7 @@ class MTetrahedronN : public MTetrahedron {
     default:
       {
         Msg::Error("Reversion of %d order tetrahedron (type %d) not implemented\n",
-                   _order,getTypeForMSH());
+                   _order, getTypeForMSH());
         break;
       }
     }
@@ -1613,49 +1635,43 @@ class MHexahedron : public MElement {
     tmp = _v[4]; _v[4] = _v[6]; _v[6] = tmp;
   }
   virtual int getVolumeSign();
-  virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o) 
   {
-    switch(num) {
-    case 0  : s = (1. - u) * (1. - v) * (1. - w) * 0.125; break;
-    case 1  : s = (1. + u) * (1. - v) * (1. - w) * 0.125; break;
-    case 2  : s = (1. + u) * (1. + v) * (1. - w) * 0.125; break;
-    case 3  : s = (1. - u) * (1. + v) * (1. - w) * 0.125; break;
-    case 4  : s = (1. - u) * (1. - v) * (1. + w) * 0.125; break;
-    case 5  : s = (1. + u) * (1. - v) * (1. + w) * 0.125; break;
-    case 6  : s = (1. + u) * (1. + v) * (1. + w) * 0.125; break;
-    case 7  : s = (1. - u) * (1. + v) * (1. + w) * 0.125; break;
-    default : s = 0.; break;
-    }
+    s[0] = (1. - u) * (1. - v) * (1. - w) * 0.125;
+    s[1] = (1. + u) * (1. - v) * (1. - w) * 0.125;
+    s[2] = (1. + u) * (1. + v) * (1. - w) * 0.125;
+    s[3] = (1. - u) * (1. + v) * (1. - w) * 0.125;
+    s[4] = (1. - u) * (1. - v) * (1. + w) * 0.125;
+    s[5] = (1. + u) * (1. - v) * (1. + w) * 0.125;
+    s[6] = (1. + u) * (1. + v) * (1. + w) * 0.125;
+    s[7] = (1. - u) * (1. + v) * (1. + w) * 0.125;
   }
-  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o) 
   {
-    switch(num) {
-    case 0  : s[0] = -0.125 * (1. - v) * (1. - w);
-              s[1] = -0.125 * (1. - u) * (1. - w);
-              s[2] = -0.125 * (1. - u) * (1. - v); break;
-    case 1  : s[0] =  0.125 * (1. - v) * (1. - w);
-              s[1] = -0.125 * (1. + u) * (1. - w);
-              s[2] = -0.125 * (1. + u) * (1. - v); break;
-    case 2  : s[0] =  0.125 * (1. + v) * (1. - w);
-              s[1] =  0.125 * (1. + u) * (1. - w);
-              s[2] = -0.125 * (1. + u) * (1. + v); break;
-    case 3  : s[0] = -0.125 * (1. + v) * (1. - w);
-              s[1] =  0.125 * (1. - u) * (1. - w);
-              s[2] = -0.125 * (1. - u) * (1. + v); break;
-    case 4  : s[0] = -0.125 * (1. - v) * (1. + w);
-              s[1] = -0.125 * (1. - u) * (1. + w);
-              s[2] =  0.125 * (1. - u) * (1. - v); break;
-    case 5  : s[0] =  0.125 * (1. - v) * (1. + w);
-              s[1] = -0.125 * (1. + u) * (1. + w);
-              s[2] =  0.125 * (1. + u) * (1. - v); break;
-    case 6  : s[0] =  0.125 * (1. + v) * (1. + w);
-              s[1] =  0.125 * (1. + u) * (1. + w);
-              s[2] =  0.125 * (1. + u) * (1. + v); break;
-    case 7  : s[0] = -0.125 * (1. + v) * (1. + w);
-              s[1] =  0.125 * (1. - u) * (1. + w);
-              s[2] =  0.125 * (1. - u) * (1. + v); break;
-    default : s[0] = s[1] = s[2] = 0.; break;
-    }
+    s[0][0] = -0.125 * (1. - v) * (1. - w);
+    s[0][1] = -0.125 * (1. - u) * (1. - w);
+    s[0][2] = -0.125 * (1. - u) * (1. - v);
+    s[1][0] =  0.125 * (1. - v) * (1. - w);
+    s[1][1] = -0.125 * (1. + u) * (1. - w);
+    s[1][2] = -0.125 * (1. + u) * (1. - v);
+    s[2][0] =  0.125 * (1. + v) * (1. - w);
+    s[2][1] =  0.125 * (1. + u) * (1. - w);
+    s[2][2] = -0.125 * (1. + u) * (1. + v);
+    s[3][0] = -0.125 * (1. + v) * (1. - w);
+    s[3][1] =  0.125 * (1. - u) * (1. - w);
+    s[3][2] = -0.125 * (1. - u) * (1. + v);
+    s[4][0] = -0.125 * (1. - v) * (1. + w);
+    s[4][1] = -0.125 * (1. - u) * (1. + w);
+    s[4][2] =  0.125 * (1. - u) * (1. - v);
+    s[5][0] =  0.125 * (1. - v) * (1. + w);
+    s[5][1] = -0.125 * (1. + u) * (1. + w);
+    s[5][2] =  0.125 * (1. + u) * (1. - v);
+    s[6][0] =  0.125 * (1. + v) * (1. + w);
+    s[6][1] =  0.125 * (1. + u) * (1. + w);
+    s[6][2] =  0.125 * (1. + u) * (1. + v);
+    s[7][0] = -0.125 * (1. + v) * (1. + w);
+    s[7][1] =  0.125 * (1. - u) * (1. + w);
+    s[7][2] =  0.125 * (1. - u) * (1. + v);
   }
   virtual bool isInside(double u, double v, double w, double tol=1.e-8)
   {
@@ -2087,41 +2103,35 @@ class MPrism : public MElement {
     tmp = _v[3]; _v[3] = _v[4]; _v[4] = tmp;
   }
   virtual int getVolumeSign();
-  virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o) 
   {
-    switch(num) {
-    case 0  : s = (1. - u - v) * (1. - w) * 0.5; break;
-    case 1  : s =       u      * (1. - w) * 0.5; break;
-    case 2  : s =           v  * (1. - w) * 0.5; break;
-    case 3  : s = (1. - u - v) * (1. + w) * 0.5; break;
-    case 4  : s =       u      * (1. + w) * 0.5; break;
-    case 5  : s =           v  * (1. + w) * 0.5; break;
-    default : s = 0.; break;
-    }
+    s[0] = (1. - u - v) * (1. - w) * 0.5;
+    s[1] =       u      * (1. - w) * 0.5;
+    s[2] =           v  * (1. - w) * 0.5;
+    s[3] = (1. - u - v) * (1. + w) * 0.5;
+    s[4] =       u      * (1. + w) * 0.5;
+    s[5] =           v  * (1. + w) * 0.5;
   }
-  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o) 
   {
-    switch(num) {
-    case 0  : s[0] = -0.5 * (1. - w)    ; 
-              s[1] = -0.5 * (1. - w)    ;
-              s[2] = -0.5 * (1. - u - v); break;
-    case 1  : s[0] =  0.5 * (1. - w)    ; 
-              s[1] =  0.                ;
-              s[2] = -0.5 * u           ; break;
-    case 2  : s[0] =  0.                ; 
-              s[1] =  0.5 * (1. - w)    ;
-              s[2] = -0.5 * v           ; break;
-    case 3  : s[0] = -0.5 * (1. + w)    ; 
-              s[1] = -0.5 * (1. + w)    ;
-              s[2] =  0.5 * (1. - u - v); break;
-    case 4  : s[0] =  0.5 * (1. + w)    ; 
-              s[1] =  0.                ;
-              s[2] =  0.5 * u           ; break;
-    case 5  : s[0] =  0.                ; 
-              s[1] =  0.5 * (1. + w)    ;
-              s[2] =  0.5 * v           ; break;
-    default : s[0] = s[1] = s[2] = 0.; break;
-    }
+    s[0][0] = -0.5 * (1. - w)    ;
+    s[0][1] = -0.5 * (1. - w)    ;
+    s[0][2] = -0.5 * (1. - u - v);
+    s[1][0] =  0.5 * (1. - w)    ;
+    s[1][1] =  0.                ;
+    s[1][2] = -0.5 * u           ;
+    s[2][0] =  0.                ;
+    s[2][1] =  0.5 * (1. - w)    ;
+    s[2][2] = -0.5 * v           ;
+    s[3][0] = -0.5 * (1. + w)    ;
+    s[3][1] = -0.5 * (1. + w)    ;
+    s[3][2] =  0.5 * (1. - u - v);
+    s[4][0] =  0.5 * (1. + w)    ;
+    s[4][1] =  0.                ;
+    s[4][2] =  0.5 * u           ;
+    s[5][0] =  0.                ;
+    s[5][1] =  0.5 * (1. + w)    ;
+    s[5][2] =  0.5 * v           ;
   }
   virtual bool isInside(double u, double v, double w, double tol=1.e-8)
   {
@@ -2526,47 +2536,41 @@ class MPyramid : public MElement {
     MVertex *tmp = _v[0]; _v[0] = _v[2]; _v[2] = tmp;
   }
   virtual int getVolumeSign();
-  virtual void getShapeFunction(int num, double u, double v, double w, double &s) 
+  virtual void getShapeFunctions(double u, double v, double w, double s[], int o) 
   {
-    double r;
-    if(w != 1. && num != 4) r = u * v * w / (1. - w);
-    else                    r = 0.;
-    switch(num) {
-    case 0  : s = 0.25 * ((1. - u) * (1. - v) - w + r); break;
-    case 1  : s = 0.25 * ((1. + u) * (1. - v) - w - r); break;
-    case 2  : s = 0.25 * ((1. + u) * (1. + v) - w + r); break;
-    case 3  : s = 0.25 * ((1. - u) * (1. + v) - w - r); break;
-    case 4  : s = w; break;
-    default : s = 0.; break;
-    }
+    double r = (w != 1.) ? (u * v * w / (1. - w)) : 0.;
+    s[0] = 0.25 * ((1. - u) * (1. - v) - w + r);
+    s[1] = 0.25 * ((1. + u) * (1. - v) - w - r);
+    s[2] = 0.25 * ((1. + u) * (1. + v) - w + r);
+    s[3] = 0.25 * ((1. - u) * (1. + v) - w - r);
+    s[4] = w;
   }
-  virtual void getGradShapeFunction(int num, double u, double v, double w, double s[3]) 
+  virtual void getGradShapeFunctions(double u, double v, double w, double s[][3], int o) 
   {
-    if(w == 1. && num != 4) {
-      s[0] =  0.25; 
-      s[1] =  0.25;
-      s[2] = -0.25; 
-    }
-    else{
-      switch(num) {
-      case 0  : s[0] = 0.25 * (-(1. - v) + v * w / (1. - w));
-                s[1] = 0.25 * (-(1. - u) + u * w / (1. - w));
-                s[2] = 0.25 * (-1.       + u * v / (1. - w) / (1. - w)); break;
-      case 1  : s[0] = 0.25 * ( (1. - v) + v * w / (1. - w));
-                s[1] = 0.25 * (-(1. + u) + u * w / (1. - w));
-                s[2] = 0.25 * (-1.       + u * v / (1. - w) / (1. - w)); break;
-      case 2  : s[0] = 0.25 * ( (1. + v) + v * w / (1. - w));
-                s[1] = 0.25 * ( (1. + u) + u * w / (1. - w));
-                s[2] = 0.25 * (-1.       + u * v / (1. - w) / (1. - w)); break;
-      case 3  : s[0] = 0.25 * (-(1. + v) + v * w / (1. - w));
-                s[1] = 0.25 * ( (1. - u) + u * w / (1. - w));
-                s[2] = 0.25 * (-1.       + u * v / (1. - w) / (1. - w)); break;
-      case 4  : s[0] = 0.; 
-                s[1] = 0.;
-                s[2] = 1.; break;
-      default : s[0] = s[1] = s[2] = 0.; break;
+    if(w == 1.) {
+      for(int i = 0; i < 4; i++){
+        s[i][0] =  0.25; 
+        s[i][1] =  0.25;
+        s[i][2] = -0.25; 
       }
     }
+    else{
+      s[0][0] = 0.25 * (-(1. - v) + v * w / (1. - w));
+      s[0][1] = 0.25 * (-(1. - u) + u * w / (1. - w));
+      s[0][2] = 0.25 * (-1.       + u * v / (1. - w) / (1. - w));
+      s[1][0] = 0.25 * ( (1. - v) + v * w / (1. - w));
+      s[1][1] = 0.25 * (-(1. + u) + u * w / (1. - w));
+      s[1][2] = 0.25 * (-1.       + u * v / (1. - w) / (1. - w));
+      s[2][0] = 0.25 * ( (1. + v) + v * w / (1. - w));
+      s[2][1] = 0.25 * ( (1. + u) + u * w / (1. - w));
+      s[2][2] = 0.25 * (-1.       + u * v / (1. - w) / (1. - w));
+      s[3][0] = 0.25 * (-(1. + v) + v * w / (1. - w));
+      s[3][1] = 0.25 * ( (1. - u) + u * w / (1. - w));
+      s[3][2] = 0.25 * (-1.       + u * v / (1. - w) / (1. - w));
+    }
+    s[4][0] = 0.; 
+    s[4][1] = 0.;
+    s[4][2] = 1.;
   }
   virtual bool isInside(double u, double v, double w, double tol=1.e-8)
   {

@@ -7,7 +7,9 @@
 #define _PLUGIN_MANAGER_H_
 
 #include <map>
-#include "Plugin.h"
+
+class GMSH_Plugin;
+class GMSH_Solve_Plugin;
 
 struct ltstrpg
 {

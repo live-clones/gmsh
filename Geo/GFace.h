@@ -49,11 +49,15 @@ class GFace : public GEntity
   // outer contour of the face.
   void resolveWires();
 
+ public: // this will become protected or private
+  std::list<GEdgeLoop> edgeLoops;
+
  public:
   GFace(GModel *model, int tag);
   virtual ~GFace();
 
-  std::list<GEdgeLoop> edgeLoops;
+  // delete mesh data
+  virtual void deleteMesh();
 
   // add/delete regions that are bounded by the face
   void addRegion(GRegion *r){ r1 ? r2 = r : r1 = r; }

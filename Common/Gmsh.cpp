@@ -104,7 +104,7 @@ int GmshBatch()
   else if(CTX.batch == -1)
     CreateOutputFile(CTX.output_filename, FORMAT_GEO);
   else if(CTX.batch == -2)
-    GModel::current()->checkMeshCoherence();
+    GModel::current()->checkMeshCoherence(CTX.geom.tolerance);
 
   return 1;
 }

@@ -1838,19 +1838,55 @@ void statistics_update_cb(CALLBACK_ARGS)
 
 void statistics_histogram_cb(CALLBACK_ARGS)
 {
-  const char *name = (const char*)data;
-  int type;
-  if(!strcmp(name, "Gamma"))
-    type = 0;
-  else if(!strcmp(name, "Eta"))
-    type = 1;
-  else if(!strcmp(name, "Rho"))
-    type = 2;
-  else
-    type = 3;
+  std::string name((const char*)data);
+
   std::vector<double> x, y;
-  for(int i = 0; i < 100; i++) y.push_back(WID->quality[type][i]);
-  new PView(name, "# Elements", x, y);
+
+  if(name == "Gamma2D"){
+    for(int i = 0; i < 100; i++) y.push_back(WID->quality[0][i]);
+    new PView("Gamma", "# Elements", x, y);
+  }
+  else if(name == "Eta2D"){
+    for(int i = 0; i < 100; i++) y.push_back(WID->quality[1][i]);
+    new PView("Eta", "# Elements", x, y);
+  }
+  else if(name == "Rho2D"){
+    for(int i = 0; i < 100; i++) y.push_back(WID->quality[2][i]);
+    new PView("Rho", "# Elements", x, y);
+  }
+  else if(name == "Disto2D"){
+    for(int i = 0; i < 100; i++) y.push_back(WID->quality[3][i]);
+    new PView("Disto", "# Elements", x, y);
+  }
+  else{
+    std::vector<GEntity*> entities;
+    GModel::current()->getEntities(entities);
+    std::map<int, std::vector<double> > d;
+    for(unsigned int i = 0; i < entities.size(); i++){
+      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+        MElement *e = entities[i]->getMeshElement(j);
+        if(name == "Gamma3D")
+          d[e->getNum()].push_back(e->gammaShapeMeasure());
+        else if(name == "Eta3D")
+          d[e->getNum()].push_back(e->etaShapeMeasure());
+        else if(name == "Rho3D")
+          d[e->getNum()].push_back(e->rhoShapeMeasure());
+        else
+          d[e->getNum()].push_back(e->distoShapeMeasure());
+      }
+    }
+    name.resize(name.size() - 2);
+    new PView(name, "ElementData", GModel::current(), d);
+    /*
+    GMSH_PluginManager::instance()->setPluginOption("CutPlane", "A", 1.); 
+    GMSH_PluginManager::instance()->setPluginOption("CutPlane", "B", 0.); 
+    GMSH_PluginManager::instance()->setPluginOption("CutPlane", "C", 0.); 
+    GMSH_PluginManager::instance()->setPluginOption("CutPlane", "D", -0.05); 
+    GMSH_PluginManager::instance()->setPluginOption("CutPlane", "iView", 0.); 
+    GMSH_PluginManager::instance()->action("CutPlane", "Run", 0);
+    */
+  }
+
   WID->update_views();
   Draw();
 }

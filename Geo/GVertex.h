@@ -25,6 +25,9 @@ class GVertex : public GEntity
   GVertex(GModel *m, int tag, double ms=MAX_LC);
   virtual ~GVertex();
 
+  // delete mesh data
+  virtual void deleteMesh();
+
   // get/set the coordinates of the vertex
   virtual GPoint point() const = 0;
   virtual double x() const = 0;

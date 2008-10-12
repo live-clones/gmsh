@@ -775,18 +775,18 @@ void getFaceVertices(GFace *gf,
             
             
 	    double X(0),Y(0),Z(0),GUESS[2]={0,0};
-
+            double sf[256] ; incomplete->getShapeFunctions(t1,t2,0,sf);
 	    for (int j=0; j<incomplete->getNumVertices(); j++){
               
-	      double sf ; incomplete->getShapeFunction(j,t1,t2,0,sf);
+
 	      MVertex *vt = incomplete->getVertex(j);
               
-	      X += sf * vt->x();
-	      Y += sf * vt->y();
-	      Z += sf * vt->z();
+	      X += sf[j] * vt->x();
+	      Y += sf[j] * vt->y();
+	      Z += sf[j] * vt->z();
 	      if (reparamOK){
-		GUESS[0] += sf * pts[j][0];
-		GUESS[1] += sf * pts[j][1];
+		GUESS[0] += sf[j] * pts[j][0];
+		GUESS[1] += sf[j] * pts[j][1];
 	      }
 	    }
 	    if (reparamOK){

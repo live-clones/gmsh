@@ -47,17 +47,21 @@ GFace::~GFace()
     ++it;
   }
 
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++)
-    delete mesh_vertices[i];
-
-  for(unsigned int i = 0; i < triangles.size(); i++)
-    delete triangles[i];
-
-  for(unsigned int i = 0; i < quadrangles.size(); i++)
-    delete quadrangles[i];
+  deleteMesh();
 
   if(va_geom_triangles)
     delete va_geom_triangles;
+}
+
+void GFace::deleteMesh()
+{
+  for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
+  mesh_vertices.clear();
+  transfinite_vertices.clear();
+  for(unsigned int i = 0; i < triangles.size(); i++) delete triangles[i];
+  triangles.clear();
+  for(unsigned int i = 0; i < quadrangles.size(); i++) delete quadrangles[i];
+  quadrangles.clear();
 }
 
 unsigned int GFace::getNumMeshElements()

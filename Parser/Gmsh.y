@@ -1895,7 +1895,7 @@ Command :
 	SleepInSeconds($2);
       }
       else if(!strcmp($1, "Remesh")){
-	Msg::Error("Surface remeshing must be reinterfaced");
+	yymsg(0, "Surface remeshing must be reinterfaced");
       }
       else if(!strcmp($1, "Mesh")){
 	int lock = CTX.threads_lock;
@@ -2653,6 +2653,16 @@ Coherence :
     tCoherence tEND
     { 
       ReplaceAllDuplicates();
+    }
+  | tCoherence tSTRING tEND
+    { 
+      if(!strcmp($2, "Geometry"))
+        ReplaceAllDuplicates();
+      else if(!strcmp($2, "Mesh"))
+        GModel::current()->removeDuplicateMeshVertices(CTX.geom.tolerance);
+      else
+        yymsg(0, "Unknown coherence command");
+      Free($2);
     }
 ;
 

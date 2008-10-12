@@ -13,8 +13,6 @@
 #include "SBoundingBox3d.h"
 #include "discreteRegion.h"
 #include "discreteFace.h"
-#include "discreteEdge.h"
-#include "discreteVertex.h"
 #include "StringUtils.h"
 #include "Message.h"
 
@@ -81,21 +79,19 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
     return;
   }
 
-  int dim = e->getDim();
-  int idx;
   switch(e->getNumEdges()){
-  case 0 : idx = 0; break;
-  case 1 : idx = 1; break;
-  case 3 : idx = 2; break;
-  case 4 : idx = 3; break;
-  case 6 : idx = 4; break;
-  case 12 : idx = 5; break;
-  case 9 : idx = 6; break;
-  case 8 : idx = 7; break;
+  case 0 : elements[0][reg].push_back(e); break;
+  case 1 : elements[1][reg].push_back(e); break;
+  case 3 : elements[2][reg].push_back(e); break;
+  case 4 : elements[3][reg].push_back(e); break;
+  case 6 : elements[4][reg].push_back(e); break;
+  case 12 : elements[5][reg].push_back(e); break;
+  case 9 : elements[6][reg].push_back(e); break;
+  case 8 : elements[7][reg].push_back(e); break;
   default : Msg::Error("Wrong number of edges in element"); return;
   }
-  elements[idx][reg].push_back(e);
   
+  int dim = e->getDim();
   if(physical && (!physicals[dim].count(reg) || !physicals[dim][reg].count(physical)))
     physicals[dim][reg][physical] = "unnamed";
   
@@ -606,6 +602,9 @@ int GModel::writePOS(const std::string &name, bool printElementary,
 
 int GModel::readSTL(const std::string &name, double tolerance)
 {
+  // Note: this routine only reads a single "solid" (not sure if the
+  // spec allows to read multiple solids in a single file)
+
   FILE *fp = fopen(name.c_str(), "rb");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
@@ -696,6 +695,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
 
   // create (unique) vertices and triangles
   double lc = norm(SVector3(bbox.max(), bbox.min()));
+  double old_tol = MVertexLessThanLexicographic::tolerance;
   MVertexLessThanLexicographic::tolerance = lc * tolerance;
   std::set<MVertex*, MVertexLessThanLexicographic> vertices;
   for(unsigned int i = 0; i < points.size(); i += 3){
@@ -715,6 +715,8 @@ int GModel::readSTL(const std::string &name, double tolerance)
     }
     face->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
   }
+
+  MVertexLessThanLexicographic::tolerance = old_tol;
 
   fclose(fp);
   return 1;
@@ -923,7 +925,7 @@ int GModel::readVRML(const std::string &name)
     }
   }
 
-  for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
+  for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++) 
     _storeElementsInEntities(elements[i]);
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(allVertexVector);
@@ -1126,7 +1128,7 @@ int GModel::readUNV(const std::string &name)
     }
   }
   
-  for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
+  for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++) 
     _storeElementsInEntities(elements[i]);
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertexMap);
@@ -1357,7 +1359,7 @@ int GModel::readMESH(const std::string &name)
     }
   }
 
-  for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
+  for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++) 
     _storeElementsInEntities(elements[i]);
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertexVector);
@@ -1707,7 +1709,7 @@ int GModel::readBDF(const std::string &name)
     }
   }
   
-  for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
+  for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++) 
     _storeElementsInEntities(elements[i]);
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertexMap);
@@ -2130,7 +2132,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     }
   }  
   
-  for(int i = 0; i < (int)(sizeof(elements)/sizeof(elements[0])); i++) 
+  for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++) 
     _storeElementsInEntities(elements[i]);
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertices);

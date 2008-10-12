@@ -23,7 +23,7 @@ GMSH_API = Geo/GModel.h Geo/GEntity.h Geo/GPoint.h\
            Geo/discreteVertex.h Geo/discreteEdge.h Geo/discreteFace.h Geo/discreteRegion.h\
            Geo/SPoint2.h Geo/SPoint3.h Geo/SVector3.h Geo/SBoundingBox3d.h\
            Geo/Pair.h Geo/Range.h\
-           Post/PView.h Post/PViewData.h Post/PViewDataGModel.h\
+           Post/PView.h Post/PViewData.h Plugin/PluginManager.h\
            Common/VertexArray.h Common/Message.h\
            Common/Gmsh.h Common/GmshDefines.h Common/GmshVersion.h Common/GmshMatrix.h
 

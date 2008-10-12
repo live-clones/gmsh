@@ -10,27 +10,26 @@
 #include "Numeric.h"
 #include "StringUtils.h"
 
-bool PViewDataGModel::addNodalData(int step, double time, int partition, 
-                                   int numComp, const std::vector<double> &nodalData)
+bool PViewDataGModel::addData(GModel *model, std::map<int, std::vector<double> > &data,
+                              int step, double time, int partition)
 {
-  // add empty steps up to the actual step 
-  while(step >= (int)_steps.size())
-    _steps.push_back(new stepData<double>(GModel::current(), numComp));
+  if(data.empty()) return false;
   
-  int numEnt = _steps[step]->getModel()->getNumMeshVertices();
-  if((int)nodalData.size() != numEnt * numComp){
-    Msg::Error("adding nodal data with wrong number of entries (%d != %d)", 
-        nodalData.size(), numEnt);
-    return false;
-  }
+  int numComp = data.begin()->second.size();
+  while(step >= (int)_steps.size())
+    _steps.push_back(new stepData<double>(model, numComp));
   
   _steps[step]->setTime(time);
+  
+  int numEnt = (_type == NodeData) ? model->getNumMeshVertices() : 
+    model->getNumMeshElements();
   _steps[step]->resizeData(numEnt);
   
-  for(int i = 0; i < numEnt; i++){
-    double *d  = _steps[step]->getData(i, true);
+  for(std::map<int, std::vector<double> >::iterator it = data.begin(); 
+      it != data.end(); it++){
+    double *d  = _steps[step]->getData(it->first, true);
     for(int j = 0; j < numComp; j++)
-      d[j] = nodalData[i * numComp + j];
+      d[j] = it->second[j];
   }
   _partitions.insert(partition);
   finalize();

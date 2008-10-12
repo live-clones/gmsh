@@ -29,11 +29,15 @@ GEdge::~GEdge()
   if(v0) v0->delEdge(this);
   if(v1 && v1 != v0) v1->delEdge(this);
 
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++)
-    delete mesh_vertices[i];
+  deleteMesh();
+}
 
-  for(unsigned int i = 0; i < lines.size(); i++)
-    delete lines[i];
+void GEdge::deleteMesh()
+{
+  for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
+  mesh_vertices.clear();
+  for(unsigned int i = 0; i < lines.size(); i++) delete lines[i];
+  lines.clear();
 }
 
 unsigned int GEdge::getNumMeshElements()

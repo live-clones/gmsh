@@ -613,78 +613,6 @@ void GModel::deleteMeshPartitions()
   meshPartitions.clear();
 }
 
-void GModel::checkMeshCoherence()
-{
-  int numEle = getNumMeshElements();
-  if(!numEle) return;
-
-  Msg::Info("Checking mesh coherence (%d elements)", numEle);
-
-  SBoundingBox3d bb = bounds();
-  double lc = bb.empty() ? 1. : norm(SVector3(bb.max(), bb.min()));
-  double tol = CTX.geom.tolerance * lc;
-
-  std::vector<GEntity*> entities;
-  getEntities(entities);
-
-  // check for duplicate mesh vertices
-  {
-    double old_tol = MVertexLessThanLexicographic::tolerance;
-    MVertexLessThanLexicographic::tolerance = tol;
-    std::set<MVertex*, MVertexLessThanLexicographic> pos;
-    int num = 0;
-    for(unsigned int i = 0; i < entities.size(); i++){
-      for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
-	MVertex *v = entities[i]->mesh_vertices[j];
-	std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = pos.find(v);
-	if(it == pos.end()){
-	  pos.insert(v);
-	}
-	else{
-	  Msg::Info("Vertices %d and %d have identical position (%g, %g, %g)",
-		    (*it)->getNum(), v->getNum(), v->x(), v->y(), v->z());
-	  num++;
-	}
-      }
-    }
-    if(num) Msg::Warning("%d duplicate vertices", num);
-    MVertexLessThanLexicographic::tolerance = old_tol;
-  }
-
-  // check for duplicate elements
-  {
-    double old_tol = MElementLessThanLexicographic::tolerance;
-    MElementLessThanLexicographic::tolerance = tol;
-    std::set<MElement*, MElementLessThanLexicographic> pos;
-    int num = 0;
-    for(unsigned int i = 0; i < entities.size(); i++){
-      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-	MElement *e = entities[i]->getMeshElement(j);
-	std::set<MElement*, MElementLessThanLexicographic>::iterator it = pos.find(e);
-	if(it == pos.end()){
-	  pos.insert(e);
-	}
-	else{
-	  std::ostringstream sstream;
-	  sstream << "Element " << e->getNum() << " [ ";
-	  for (int k = 0; k < e->getNumVertices(); k++)
-	    sstream << e->getVertex(k)->getNum() << " ";
-	  sstream << "] on entity " << entities[i]->tag() 
-		  << " has same barycenter as element " << (*it)->getNum() 
-		  << " [ ";
-	  for (int k = 0; k < (*it)->getNumVertices(); k++)
-	    sstream << (*it)->getVertex(k)->getNum() << " ";
-	  sstream << "]";
-	  Msg::Info("%s", sstream.str().c_str());
-	  num++;
-	}
-      }
-    }
-    if(num) Msg::Warning("%d duplicate elements", num);
-    MElementLessThanLexicographic::tolerance = old_tol;
-  }
-}
-
 template<class T>
 static void _addElements(std::vector<T*> &dst, const std::vector<MElement*> &src)
 {
@@ -810,4 +738,155 @@ void GModel::_storeVerticesInEntities(std::vector<MVertex*> &vertices)
         delete v; // we delete all unused vertices
     }
   }
+}
+
+void GModel::checkMeshCoherence(double tolerance)
+{
+  int numEle = getNumMeshElements();
+  if(!numEle) return;
+
+  Msg::Info("Checking mesh coherence (%d elements)", numEle);
+
+  SBoundingBox3d bbox = bounds();
+  double lc = bbox.empty() ? 1. : norm(SVector3(bbox.max(), bbox.min()));
+
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+
+  // check for duplicate mesh vertices
+  {
+    double old_tol = MVertexLessThanLexicographic::tolerance;
+    MVertexLessThanLexicographic::tolerance = tolerance * lc;
+    std::set<MVertex*, MVertexLessThanLexicographic> pos;
+    int num = 0;
+    for(unsigned int i = 0; i < entities.size(); i++){
+      for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+	MVertex *v = entities[i]->mesh_vertices[j];
+	std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = pos.find(v);
+	if(it == pos.end()){
+	  pos.insert(v);
+	}
+	else{
+	  Msg::Info("Vertices %d and %d have identical position (%g, %g, %g)",
+		    (*it)->getNum(), v->getNum(), v->x(), v->y(), v->z());
+	  num++;
+	}
+      }
+    }
+    if(num) Msg::Warning("%d duplicate vertices", num);
+    MVertexLessThanLexicographic::tolerance = old_tol;
+  }
+
+  // check for duplicate elements
+  {
+    double old_tol = MElementLessThanLexicographic::tolerance;
+    MElementLessThanLexicographic::tolerance = tolerance * lc;
+    std::set<MElement*, MElementLessThanLexicographic> pos;
+    int num = 0;
+    for(unsigned int i = 0; i < entities.size(); i++){
+      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+	MElement *e = entities[i]->getMeshElement(j);
+	std::set<MElement*, MElementLessThanLexicographic>::iterator it = pos.find(e);
+	if(it == pos.end()){
+	  pos.insert(e);
+	}
+	else{
+	  std::ostringstream sstream;
+	  sstream << "Element " << e->getNum() << " [ ";
+	  for (int k = 0; k < e->getNumVertices(); k++)
+	    sstream << e->getVertex(k)->getNum() << " ";
+	  sstream << "] on entity " << entities[i]->tag() 
+		  << " has same barycenter as element " << (*it)->getNum() 
+		  << " [ ";
+	  for (int k = 0; k < (*it)->getNumVertices(); k++)
+	    sstream << (*it)->getVertex(k)->getNum() << " ";
+	  sstream << "]";
+	  Msg::Info("%s", sstream.str().c_str());
+	  num++;
+	}
+      }
+    }
+    if(num) Msg::Warning("%d duplicate elements", num);
+    MElementLessThanLexicographic::tolerance = old_tol;
+  }
+}
+
+int GModel::removeDuplicateMeshVertices(double tolerance)
+{
+  SBoundingBox3d bbox = bounds();
+  double lc = bbox.empty() ? 1. : norm(SVector3(bbox.max(), bbox.min()));
+
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+
+  double old_tol = MVertexLessThanLexicographic::tolerance;
+  MVertexLessThanLexicographic::tolerance = tolerance * lc;
+  std::set<MVertex*, MVertexLessThanLexicographic> pos;
+
+  for(unsigned int i = 0; i < entities.size(); i++){
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+      MVertex *v = entities[i]->mesh_vertices[j];
+      MVertex w(v->x(), v->y(), v->z());
+      std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = pos.find(&w);
+      if(it == pos.end())
+        pos.insert(new MVertex(v->x(), v->y(), v->z()));
+    }
+  }
+
+  int diff = getNumMeshVertices() - pos.size();
+  if(!diff){
+    for(std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = pos.begin();
+        it != pos.end(); it++)
+      delete *it;
+    Msg::Info("No duplicate vertices found");
+    return 0;
+  }
+
+  std::map<int, std::vector<MElement*> > elements[8];
+  for(unsigned int i = 0; i < entities.size(); i++){
+    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+      MElement *e = entities[i]->getMeshElement(j);
+      std::vector<MVertex*> verts;
+      for(int k = 0; k < e->getNumVertices(); k++){
+        MVertex *v = e->getVertex(k);
+        std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = pos.find(v);
+        if(it != pos.end())
+          verts.push_back(*it);
+        else
+          Msg::Error("Could not find unique vertex (%g,%g,%g)", v->x(), v->y(), v->z());
+      }
+      MElementFactory factory;
+      MElement *e2 = factory.create(e->getTypeForMSH(), verts, e->getNum(), 
+                                    e->getPartition());
+      switch(e2->getNumEdges()){
+      case 0: elements[0][entities[i]->tag()].push_back(e2); break;
+      case 1: elements[1][entities[i]->tag()].push_back(e2); break;
+      case 3: elements[2][entities[i]->tag()].push_back(e2); break;
+      case 4: elements[3][entities[i]->tag()].push_back(e2); break;
+      case 6: elements[4][entities[i]->tag()].push_back(e2); break;
+      case 12: elements[5][entities[i]->tag()].push_back(e2); break;
+      case 9: elements[6][entities[i]->tag()].push_back(e2); break;
+      case 8: elements[7][entities[i]->tag()].push_back(e2); break;
+      }
+    }
+  }
+
+  for(unsigned int i = 0; i < entities.size(); i++)
+    entities[i]->deleteMesh();
+
+  std::vector<MVertex*> vertices;
+  for(std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = pos.begin();
+      it != pos.end(); it++)
+    vertices.push_back(*it);
+
+  for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++) 
+    _storeElementsInEntities(elements[i]);
+  _associateEntityWithMeshVertices();
+  _storeVerticesInEntities(vertices);
+
+  MVertexLessThanLexicographic::tolerance = old_tol;
+
+  Msg::Info("Removed %d duplicate mesh vertices", diff);
+    
+  return diff;
 }

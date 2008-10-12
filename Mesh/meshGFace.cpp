@@ -1285,13 +1285,7 @@ void deMeshGFace::operator() (GFace *gf)
 {
   if(gf->geomType() == GEntity::DiscreteSurface) return;
 
-  for (unsigned int i=0;i<gf->mesh_vertices.size();i++) delete gf->mesh_vertices[i];
-  gf->mesh_vertices.clear();
-  gf->transfinite_vertices.clear();
-  for (unsigned int i=0;i<gf->triangles.size();i++) delete gf->triangles[i];
-  gf->triangles.clear();
-  for (unsigned int i=0;i<gf->quadrangles.size();i++) delete gf->quadrangles[i];
-  gf->quadrangles.clear();
+  gf->deleteMesh();
   gf->deleteVertexArrays();
   gf->model()->destroyMeshCaches();
 

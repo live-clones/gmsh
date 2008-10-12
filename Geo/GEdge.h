@@ -30,6 +30,9 @@ class GEdge : public GEntity {
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
   virtual ~GEdge();
 
+  // delete mesh data
+  virtual void deleteMesh();
+
   // get the start/end vertices of the edge
   GVertex *getBeginVertex() const { return v0; }
   GVertex *getEndVertex() const { return v1; }

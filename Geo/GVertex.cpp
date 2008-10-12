@@ -16,11 +16,15 @@ GVertex::GVertex(GModel *m, int tag, double ms) : GEntity(m, tag), meshSize(ms)
 
 GVertex::~GVertex()
 {
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++)
-    delete mesh_vertices[i];
+  deleteMesh();
+}
 
-  for(unsigned int i = 0; i < points.size(); i++)
-    delete points[i];
+void GVertex::deleteMesh()
+{
+  for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
+  mesh_vertices.clear();
+  for(unsigned int i = 0; i < points.size(); i++) delete points[i];
+  points.clear();
 }
 
 void GVertex::setPosition(GPoint &p)

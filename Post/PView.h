@@ -7,6 +7,7 @@
 #define _PVIEW_H_
 
 #include <vector>
+#include <map>
 #include <string>
 #include "SPoint3.h"
 
@@ -14,6 +15,7 @@ class PViewData;
 class PViewOptions;
 class VertexArray;
 class smooth_normals;
+class GModel;
 class GMSH_Post_Plugin;
 
 // A post-processing view.
@@ -47,6 +49,13 @@ class PView{
   // construct a new list-based view from a simple 2D dataset
   PView(std::string xname, std::string yname,
         std::vector<double> &x, std::vector<double> &y);
+  // construct a new model-based view from a bunch of data
+  PView(std::string name, std::string type, GModel *model,
+        std::map<int, std::vector<double> > &data, double time=0.);
+  // add a new time step to a given model-based view
+  void addStep(GModel *model, std::map<int, std::vector<double> > &data, 
+               double time=0.);
+
   // default destructor
   ~PView();
 

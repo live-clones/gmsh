@@ -25,6 +25,9 @@ class GRegion : public GEntity {
   GRegion(GModel *model, int tag);
   virtual ~GRegion();
 
+  // delete mesh data
+  virtual void deleteMesh();
+
   // get the dimension of the region (3)
   virtual int dim() const { return 3; }
 

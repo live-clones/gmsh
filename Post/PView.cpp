@@ -6,9 +6,9 @@
 #include <string.h>
 #include <algorithm>
 #include "PView.h"
-#include "PViewOptions.h"
-#include "PViewData.h"
 #include "PViewDataList.h"
+#include "PViewDataGModel.h"
+#include "PViewOptions.h"
 #include "VertexArray.h"
 #include "SmoothData.h"
 #include "adaptiveData.h"
@@ -59,7 +59,6 @@ PView::PView(std::string xname, std::string yname,
 {
   _init();
   PViewDataList *data = new PViewDataList(true);
-  _data = data;
   for(unsigned int i = 0; i < y.size(); i++){
     double d;
     if(x.size() == y.size()){
@@ -78,11 +77,33 @@ PView::PView(std::string xname, std::string yname,
   data->setName(yname);
   data->setFileName(yname + ".pos");
   data->finalize();
-
+  _data = data;
   _options = new PViewOptions(PViewOptions::reference);
   _options->Type = PViewOptions::Plot2DSpace;
   _options->Axes = 2;
   strcpy(_options->AxesLabel[0], xname.c_str());
+}
+
+PView::PView(std::string name, std::string type, 
+             GModel *model, std::map<int, std::vector<double> > &data,
+             double time)
+{
+  _init();
+  PViewDataGModel *d = new PViewDataGModel
+    ((type == "NodeData") ? PViewDataGModel::NodeData : PViewDataGModel::ElementData);
+  d->addData(model, data, 0, time, 1);
+  d->setName(name);
+  d->setFileName(name + ".msh");
+  _data = d;
+  _options = new PViewOptions(PViewOptions::reference);
+}
+
+void PView::addStep(GModel *model, std::map<int, std::vector<double> > &data, 
+                    double time)
+{
+  PViewDataGModel *d = dynamic_cast<PViewDataGModel*>(_data);
+  if(d) d->addData(model, data, d->getNumTimeSteps(), time, 1);
+  else Msg::Error("Cannot only  step data to model-based datasets");
 }
 
 PView::~PView()

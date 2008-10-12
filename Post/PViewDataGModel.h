@@ -175,12 +175,11 @@ class PViewDataGModel : public PViewData {
   // get underlying model
   GModel* getModel(int step){ return _steps[step]->getModel(); }
 
-  // Add some data "on the fly" (data is stored by vertex: if a field
-  // has e.g. 3 components, nodalData contains 3 * N entries with N
-  // being the number of mesh vertices in the model ; nodalData [ iVer
-  // * N + jComp] is the jComp-th component at vertex iVer)
-  bool addNodalData(int step, double time, int partition, 
-		    int numComp, const std::vector<double> &nodalData);
+  // Add some data "on the fly" (data is stored in a map, indexed by
+  // node or element number depending on the type of dataset; all the
+  // vectors are supposed to have the same length)
+  bool addData(GModel *model, std::map<int, std::vector<double> > &data,
+               int step, double time, int partition);
 
   // I/O routines
   bool readMSH(std::string fileName, int fileIndex, FILE *fp, bool binary, 
