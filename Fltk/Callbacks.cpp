@@ -1863,6 +1863,7 @@ void statistics_histogram_cb(CALLBACK_ARGS)
     GModel::current()->getEntities(entities);
     std::map<int, std::vector<double> > d;
     for(unsigned int i = 0; i < entities.size(); i++){
+      if(entities[i]->dim() < 2) continue;
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
         MElement *e = entities[i]->getMeshElement(j);
         if(name == "Gamma3D")
@@ -1877,14 +1878,6 @@ void statistics_histogram_cb(CALLBACK_ARGS)
     }
     name.resize(name.size() - 2);
     new PView(name, "ElementData", GModel::current(), d);
-    /*
-    GMSH_PluginManager::instance()->setPluginOption("CutPlane", "A", 1.); 
-    GMSH_PluginManager::instance()->setPluginOption("CutPlane", "B", 0.); 
-    GMSH_PluginManager::instance()->setPluginOption("CutPlane", "C", 0.); 
-    GMSH_PluginManager::instance()->setPluginOption("CutPlane", "D", -0.05); 
-    GMSH_PluginManager::instance()->setPluginOption("CutPlane", "iView", 0.); 
-    GMSH_PluginManager::instance()->action("CutPlane", "Run", 0);
-    */
   }
 
   WID->update_views();

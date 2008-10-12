@@ -14,13 +14,13 @@
 #include "MEdge.h"
 #include "MFace.h"
 #include "Message.h"
-#include "FunctionSpace.h"
 
 struct IntPt{
   double pt[3];
   double weight;
 };
 
+class gmshFunctionSpace;
 class GFace;
 
 // A mesh element.
@@ -1196,9 +1196,7 @@ class MTetrahedron : public MElement {
   virtual double distoShapeMeasure();
   virtual double etaShapeMeasure();
   void xyz2uvw(double xyz[3], double uvw[3]);
-  
   virtual const gmshFunctionSpace* getFunctionSpace(int=-1) const;
-  
   virtual bool isInside(double u, double v, double w, double tol=1.e-8)
   {
     if(u < (-tol) || v < (-tol) || w < (-tol) || u > ((1. + tol) - v - w))

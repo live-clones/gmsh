@@ -74,7 +74,7 @@ Gmsh.tab.o: Gmsh.tab.cpp ../Common/Message.h ../Common/MallocUtils.h \
   ../Common/CommandLine.h FunctionManager.h ../Common/OS.h \
   ../Common/CreateFile.h ../Mesh/Field.h ../Post/PView.h \
   ../Mesh/BackgroundMesh.h ../Post/PViewDataList.h ../Post/PViewData.h \
-  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/GmshMatrix.h
+  ../Plugin/PluginManager.h
 Gmsh.yy.o: Gmsh.yy.cpp ../Common/Message.h ../Geo/Geo.h \
   ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
   ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \

@@ -80,10 +80,10 @@ Mesh.o: Mesh.cpp ../Common/Message.h ../Common/GmshUI.h ../Geo/GModel.h \
   ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
   ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/FunctionSpace.h ../Common/GmshMatrix.h Draw.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h \
-  ../Common/OS.h gl2ps.h ../Common/VertexArray.h ../Common/SmoothData.h \
-  ../Post/PView.h ../Post/PViewData.h
+  Draw.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/PartitionOptions.h ../Common/OS.h gl2ps.h \
+  ../Common/VertexArray.h ../Common/SmoothData.h ../Post/PView.h \
+  ../Post/PViewData.h
 Geom.o: Geom.cpp ../Common/GmshUI.h Draw.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Common/Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h gl2ps.h ../Common/VertexArray.h \
@@ -113,8 +113,7 @@ SelectBuffer.o: SelectBuffer.cpp ../Common/Message.h ../Common/GmshUI.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Geo/MVertex.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/FunctionSpace.h ../Common/GmshMatrix.h Draw.h \
+  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h Draw.h \
   ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h \
   SelectBuffer.h ../Common/VertexArray.h
 Iso.o: Iso.cpp ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h

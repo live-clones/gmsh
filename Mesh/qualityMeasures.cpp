@@ -8,6 +8,7 @@
 #include "MVertex.h"
 #include "MElement.h"
 #include "Numeric.h"
+#include "FunctionSpace.h"
 #include "Message.h"
 
 double qmTriangle(const BDS_Point *p1, const BDS_Point *p2, const BDS_Point *p3, 
