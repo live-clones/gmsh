@@ -224,12 +224,14 @@ class MElement
   virtual void writeVTK(FILE *fp, bool binary=false, bool bigEndian=false);
   virtual void writeMESH(FILE *fp, int elementary=1);
   virtual void writeBDF(FILE *fp, int format=0, int elementary=1);
-
+  virtual void writeDIFF(FILE *fp, bool binary=false, int physical_property=1);
+ 
   // info for specific IO formats (returning 0 means that the element
   // is not implemented in that format)
   virtual int getTypeForMSH() const { return 0; }
   virtual int getTypeForUNV() const { return 0; }
   virtual int getTypeForVTK() const { return 0; }
+  virtual int getTypeForDIFF() const { return 0; }
   virtual const char *getStringForPOS() const { return 0; }
   virtual const char *getStringForBDF() const { return 0; }
 
@@ -1172,6 +1174,7 @@ class MTetrahedron : public MElement {
   virtual int getTypeForMSH() const { return MSH_TET_4; }
   virtual int getTypeForUNV() const { return 111; } // solid linear tetrahedron
   virtual int getTypeForVTK() const { return 10; }
+  virtual int getTypeForDIFF() const { return MSH_TET_4; }
   virtual const char *getStringForPOS() const { return "SS"; }
   virtual const char *getStringForBDF() const { return "CTETRA"; }
   virtual void revert()
@@ -1334,6 +1337,7 @@ class MTetrahedron10 : public MTetrahedron {
   virtual int getTypeForMSH() const { return MSH_TET_10; }
   virtual int getTypeForUNV() const { return 118; } // solid parabolic tetrahedron
   //virtual int getTypeForVTK() const { return 24; }
+  virtual int getTypeForDIFF() const { return MSH_TET_10; }
   virtual const char *getStringForPOS() const { return "SS2"; }
   virtual const char *getStringForBDF() const { return "CTETRA"; }
   virtual void revert()

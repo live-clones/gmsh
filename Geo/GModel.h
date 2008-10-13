@@ -327,6 +327,10 @@ class GModel
   int writeVTK(const std::string &name, bool binary=false,
                bool saveAll=false, double scalingFactor=1.0,
 	       bool bigEndian=false);
+
+  // DIFFPACK format
+  int writeDIFF(const std::string &name, bool binary=false,
+               bool saveAll=false, double scalingFactor=1.0);
 };
 
 #endif

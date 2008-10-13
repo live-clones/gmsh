@@ -141,6 +141,14 @@ void MVertex::writeBDF(FILE *fp, int format, double scalingFactor)
   }
 }
 
+void MVertex::writeDIFF(FILE *fp, bool binary, double scalingFactor)
+{
+  if(_index < 0) return; // negative index vertices are never saved
+
+  fprintf(fp, " %d ( %25.16E , %25.16E , %25.16E )\n",
+          getIndex(), x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
+}
+
 std::set<MVertex*, MVertexLessThanLexicographic>::iterator 
 MVertex::linearSearch(std::set<MVertex*, MVertexLessThanLexicographic> &pos)
 {

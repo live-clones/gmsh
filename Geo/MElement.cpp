@@ -618,6 +618,76 @@ void MElement::writeBDF(FILE *fp, int format, int elementary)
   }
 }
 
+void MElement::writeDIFF(FILE *fp, bool binary, int physical_property)
+{
+  /*  nbn = 4;
+    if(s->VSUP) {
+      type = TETRAHEDRON_2;
+      nbs = 6;
+      if(s->Volume_Simplexe() < 0) {
+        Vertex *temp;
+        temp = s->V[0]; s->V[0] = s->V[1]; s->V[1] = temp;
+        temp = s->VSUP[1]; s->VSUP[1] = s->VSUP[2]; s->VSUP[2] = temp;
+        temp = s->VSUP[5]; s->VSUP[5] = s->VSUP[3]; s->VSUP[3] = temp;
+      }
+    }
+    else{
+      type = TETRAHEDRON;
+      if(s->Volume_Simplexe() < 0) {
+        Vertex *temp;
+        temp = s->V[0];
+        s->V[0] = s->V[1];
+        s->V[1] = temp;
+      }
+    }
+  fprintf(MSHFILE, "%d %d 2 %d %d",
+            MSH_ELEMENT_NUM++, type, MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : s->iEnt,
+            s->iEnt);
+
+  if(DIFF_PHYSICAL_ORI > 0) {
+    for(i = 0; i < nbn; i++)
+      fprintf(DIFFFILE, " %d", s->V[i]->Num);
+    for(i = 0; i < nbs; i++)
+      fprintf(DIFFFILE, " %d", s->VSUP[i]->Num);
+  }
+  else {
+    for(i = 0; i < nbn; i++)
+      fprintf(DIFFFILE, " %d", s->V[nbn - i - 1]->Num);
+    for(i = 0; i < nbs; i++)
+      fprintf(DIFFFILE, " %d", s->VSUP[nbs - i - 1]->Num);
+  }
+  fprintf(DIFFFILE, "\n");*/
+
+  int type = getTypeForDIFF();
+  if(!type) return;
+  static int first = 1;
+  static int start = 0;
+  if(first){
+    start = getNum() - 1;
+    first = 0;
+  }
+
+  setVolumePositive();
+  int n = getNumVertices();
+  if(binary){
+    int verts[60];
+    verts[0] = n;
+    for(int i = 0; i < n; i++)
+      verts[i + 1] = getVertexVTK(i)->getIndex() - 1;
+    fwrite(verts, sizeof(int), n + 1, fp);
+  }
+  else{
+    if(type == MSH_TET_10)
+      fprintf(fp, "%d %s", getNum() - start, "ElmT10n3D ");
+    else
+      fprintf(fp, "%d %s", getNum() - start, "ElmT4n3D ");
+    fprintf(fp, " %d ", physical_property);
+    for(int i = 0; i < n; i++)
+      fprintf(fp, " %d", getVertexVTK(i)->getIndex() - 1);
+    fprintf(fp, "\n");
+  }
+}
+
 int MElement::getInfoMSH(const int typeMSH, const char **const name)
 {
   switch(typeMSH){

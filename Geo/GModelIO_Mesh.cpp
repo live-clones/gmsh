@@ -2153,3 +2153,113 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   fclose(fp);
   return 1;
 }
+
+int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
+                      double scalingFactor)
+{
+  Msg::Warning("DIFF export is experimental:");
+  Msg::Warning("*   only tetrahedra P1 or P2 are taken into account");
+  Msg::Warning("*   only ASCII output is implemented");
+
+  if(binary) return 0;
+
+  FILE *fp = fopen(name.c_str(), binary ? "wb" : "w");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+  
+  if(noPhysicalGroups()) saveAll = true;
+  int nbP1 = 4; // number of P1 nodes
+  int nbP2 = 6; // number of P2 nodes which are not P1 (edges' midpoints)
+
+  // get the number of vertices and index the vertices in a continuous
+  // sequence
+  int numVertices = indexMeshVertices(saveAll);
+
+  // get all the entities in the model
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+
+  // loop over all elements we need to save
+  int numElements = 0;
+  for(unsigned int i = 0; i < entities.size(); i++){
+    if(entities[i]->physicals.size() || saveAll){
+      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+        if(entities[i]->getMeshElement(j)->getTypeForDIFF())
+          numElements++;
+      }
+    }
+  }
+  fprintf(fp, "\n\n");
+  fprintf(fp, " Finite element mesh (GridFE):\n\n");
+  fprintf(fp, " Number of space dim. =   3\n");
+  fprintf(fp, " Number of elements   =  %d\n", numElements);
+  fprintf(fp, " Number of nodes      =  %d\n\n", numVertices);
+  fprintf(fp, " All elements are of the same type : dpTRUE\n");
+  fprintf(fp, " Max number of nodes in an element: %d \n", nbP1 + nbP2);
+  fprintf(fp, " Only one subdomain el              : dpFALSE\n");
+  fprintf(fp, " Lattice data                     ? 0\n\n\n\n");
+  int nbi = getNumFaces();
+  fprintf(fp, " %d Boundary indicators:  ", getNumFaces());
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+    if(saveAll || (*it)->physicals.size()){
+      fprintf(fp, " %d", (*it)->tag());
+    }
+  } 
+  fprintf(fp, "\n\n\n");
+  fprintf(fp,"  Nodal coordinates and nodal boundary indicators,\n");
+  fprintf(fp,"  the columns contain:\n");
+  fprintf(fp,"   - node number\n");
+  fprintf(fp,"   - coordinates\n");
+  fprintf(fp,"   - no of boundary indicators that are set (ON)\n");
+  fprintf(fp,"   - the boundary indicators that are set (ON) if any.\n");
+  fprintf(fp,"#\n");
+
+  // write mesh vertices
+  fprintf(fp, "%d\n", numVertices);
+  for(unsigned int i = 0; i < entities.size(); i++)
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+      entities[i]->mesh_vertices[j]->writeDIFF(fp, binary, scalingFactor);
+      for(unsigned int k = 0; k < entities[i]->physicals.size(); k++){
+        fprintf(fp," %d %d\n", entities[i]->tag(), entities[i]->physicals[k]);
+      }
+    }
+  /* 
+  for(viter it = firstVertex(); it != lastVertex(); ++it){
+    for(unsigned int j = 0; j < (*it)->mesh_vertices.size(); j++) { 
+      (*it)->mesh_vertices[j]->writeDIFF(fp, binary, scalingFactor);
+      fprintf(fp," %d\n",(*it)->physicals.size());
+    }
+  }
+  */
+  fprintf(fp, "\n");
+  
+  fprintf(fp, "\n");
+  fprintf(fp,     "  Element types and connectivity\n");
+  fprintf(fp,     "  the columns contain:\n");
+  fprintf(fp,     "   - element number\n");
+  fprintf(fp,     "   - element type\n");
+  fprintf(fp,     "   - subdomain number \n");
+  fprintf(fp,     "   - the global node numbers of the nodes in the element.\n");
+  fprintf(fp,     "#\n");
+
+  static int element_number = 0;
+  fprintf(fp, "%d\n", numElements);
+  for(unsigned int i = 0; i < entities.size(); i++){
+    if(entities[i]->physicals.size() || saveAll){
+      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+        int type = entities[i]->getMeshElement(j)->getTypeForDIFF();
+	if(type){
+          element_number++;
+          int physical_property = 1;
+          entities[i]->getMeshElement(j)->writeDIFF(fp, binary, physical_property);
+        }
+      }
+    }
+  }
+  fprintf(fp, "\n");
+  
+  fclose(fp);
+  return 1;
+}

@@ -651,6 +651,7 @@ int _save_geo(const char *name){ return geo_dialog(name); }
 int _save_cgns(const char *name){ return cgns_write_dialog(name); }
 int _save_unv(const char *name){ return unv_dialog(name); }
 int _save_vtk(const char *name){ return generic_mesh_dialog(name, "VTK Options", FORMAT_VTK, true); }
+int _save_diff(const char *name){ return generic_mesh_dialog(name, "DIFFPACK Options", FORMAT_DIFF, true); }
 int _save_med(const char *name){ return generic_mesh_dialog(name, "MED Options", FORMAT_MED, false); }
 int _save_mesh(const char *name){ return generic_mesh_dialog(name, "MESH Options", FORMAT_MESH, false); }
 int _save_bdf(const char *name){ return bdf_dialog(name); }
@@ -681,6 +682,7 @@ int _save_auto(const char *name)
   case FORMAT_MED  : return _save_med(name);
   case FORMAT_MESH : return _save_mesh(name);
   case FORMAT_BDF  : return _save_bdf(name);
+  case FORMAT_DIFF : return _save_diff(name);
   case FORMAT_P3D  : return _save_p3d(name);
   case FORMAT_STL  : return _save_stl(name);
   case FORMAT_VRML : return _save_vrml(name);
@@ -725,6 +727,7 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"CGNS" TT "*.cgns", _save_cgns},
 #endif
     {"I-deas universal mesh" TT "*.unv", _save_unv},
+    {"DIFFPACK 3D mesh" TT "*.diff", _save_diff},
     {"VTK mesh" TT "*.vtk", _save_vtk},
 #if defined(HAVE_MED)
     {"MED file" TT "*.med", _save_med},
