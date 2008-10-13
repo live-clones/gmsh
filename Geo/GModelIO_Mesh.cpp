@@ -602,40 +602,45 @@ int GModel::writePOS(const std::string &name, bool printElementary,
 
 int GModel::readSTL(const std::string &name, double tolerance)
 {
-  // Note: this routine only reads a single "solid" (not sure if the
-  // spec allows to read multiple solids in a single file)
-
   FILE *fp = fopen(name.c_str(), "rb");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
-  // read all facets and store triplets of points
-  std::vector<SPoint3> points;
+  // store triplets of points for each solid found in the file
+  std::vector<std::vector<SPoint3> > points;
   SBoundingBox3d bbox;
 
   // "solid", or binary data header
   char buffer[256];
   fgets(buffer, sizeof(buffer), fp);
-
-  if(!strncmp(buffer, "solid", 5)) { 
+  
+  if(!strncmp(buffer, "solid", 5)){
     // ASCII STL
+    points.resize(1);
     while(!feof(fp)) {
-      // "facet normal x y z", or "endsolid"
+      // "facet normal x y z" or "endsolid"
       if(!fgets(buffer, sizeof(buffer), fp)) break;
-      if(!strncmp(buffer, "endsolid", 8)) break;
-      char s1[256], s2[256];
-      float x, y, z;
-      sscanf(buffer, "%s %s %f %f %f", s1, s2, &x, &y, &z);
+      if(!strncmp(buffer, "endsolid", 8)){
+        // "solid"
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        if(!strncmp(buffer, "solid", 5)){
+          points.resize(points.size() + 1);
+          // "facet normal x y z"
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+        }
+      }
       // "outer loop"
       if(!fgets(buffer, sizeof(buffer), fp)) break;
       // "vertex x y z"
       for(int i = 0; i < 3; i++){
         if(!fgets(buffer, sizeof(buffer), fp)) break;
-        sscanf(buffer, "%s %f %f %f", s1, &x, &y, &z);
+        char s1[256];
+        double x, y, z;
+        if(sscanf(buffer, "%s %lf %lf %lf", s1, &x, &y, &z) != 4) break;
         SPoint3 p(x, y, z);
-        points.push_back(p);
+        points.back().push_back(p);
         bbox += p;
       }
       // "endloop"
@@ -648,8 +653,9 @@ int GModel::readSTL(const std::string &name, double tolerance)
     // Binary STL
     Msg::Info("Mesh is in binary format");
     rewind(fp);
-    char header[80];
-    if(fread(header, sizeof(char), 80, fp)){
+    while(!feof(fp)) {
+      char header[80];
+      if(!fread(header, sizeof(char), 80, fp)) break;
       unsigned int nfacets = 0;
       size_t ret = fread(&nfacets, sizeof(unsigned int), 1, fp);
       bool swap = false;
@@ -659,6 +665,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
         SwapBytes((char*)&nfacets, sizeof(unsigned int), 1);
       }
       if(ret && nfacets){
+        points.resize(points.size() + 1);
         char *data = new char[nfacets * 50 * sizeof(char)];
         ret = fread(data, sizeof(char), nfacets * 50, fp);
         if(ret == nfacets * 50){
@@ -667,7 +674,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
             if(swap) SwapBytes((char*)xyz, sizeof(float), 12);
             for(int j = 0; j < 3; j++){
               SPoint3 p(xyz[3 + 3 * j], xyz[3 + 3 * j + 1], xyz[3 + 3 * j + 2]);
-              points.push_back(p);
+              points.back().push_back(p);
               bbox += p;
             }
           }
@@ -677,43 +684,49 @@ int GModel::readSTL(const std::string &name, double tolerance)
     }
   }
 
-  if(!points.size()){
-    Msg::Error("No facets found in STL file");
-    return 0;
+  std::vector<GFace*> faces;
+  for(unsigned int i = 0; i < points.size(); i++){
+    if(points[i].empty()){
+      Msg::Error("No facets found in STL file for solid %d", i);
+      return 0;
+    }
+    if(points[i].size() % 3){
+      Msg::Error("Wrong number of points (%d) in STL file for solid %d",
+                 points[i].size(), i);
+      return 0;
+    }
+    Msg::Info("%d facets in solid %d", points[i].size() / 3, i);
+    // create face
+    GFace *face = new discreteFace(this, getNumFaces() + 1);
+    faces.push_back(face);
+    add(face);
   }
-  
-  if(points.size() % 3){
-    Msg::Error("Wrong number of points in STL file");
-    return 0;
-  }
-
-  Msg::Info("%d facets", points.size() / 3);
-
-  // create face
-  GFace *face = new discreteFace(this, getNumFaces() + 1);
-  add(face);
 
   // create (unique) vertices and triangles
   double lc = norm(SVector3(bbox.max(), bbox.min()));
   double old_tol = MVertexLessThanLexicographic::tolerance;
   MVertexLessThanLexicographic::tolerance = lc * tolerance;
   std::set<MVertex*, MVertexLessThanLexicographic> vertices;
-  for(unsigned int i = 0; i < points.size(); i += 3){
-    MVertex *v[3];
-    for(int j = 0; j < 3; j++){
-      double x = points[i + j].x(), y = points[i + j].y(), z = points[i + j].z();
-      MVertex w(x, y, z);
-      std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = vertices.find(&w);
-      if(it != vertices.end()) {
-        v[j] = *it;
+  for(unsigned int i = 0; i < points.size(); i ++){
+    for(unsigned int j = 0; j < points[i].size(); j += 3){
+      MVertex *v[3];
+      for(int k = 0; k < 3; k++){
+        double x = points[i][j + k].x();
+        double y = points[i][j + k].y();
+        double z = points[i][j + k].z();
+        MVertex w(x, y, z);
+        std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = vertices.find(&w);
+        if(it != vertices.end()) {
+          v[k] = *it;
+        }
+        else {
+          v[k] = new MVertex(x, y, z, faces[i]);
+          vertices.insert(v[k]);
+          faces[i]->mesh_vertices.push_back(v[k]);
+        }
       }
-      else {
-        v[j] = new MVertex(x, y, z, face);
-        vertices.insert(v[j]);
-        face->mesh_vertices.push_back(v[j]);
-      }
+      faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
     }
-    face->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
   }
 
   MVertexLessThanLexicographic::tolerance = old_tol;

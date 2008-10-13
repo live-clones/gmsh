@@ -123,6 +123,7 @@ void VertexArray::finalize()
     _data3.clear();
   }
   _barycenters.clear();
+  //printf("vert array : %d Mb\n", getMemoryUsage());
 }
 
 class AlphaElement {
@@ -207,4 +208,11 @@ void VertexArray::sort(double x, double y, double z)
   _vertices = sortedVertices;
   _normals = sortedNormals;
   _colors = sortedColors;
+}
+
+int VertexArray::getMemoryUsage()
+{
+  int bytes = _vertices.size() * sizeof(float) + _normals.size() * sizeof(char) +
+    _colors.size() * sizeof(unsigned char);
+  return bytes / 1024 / 1024;
 }
