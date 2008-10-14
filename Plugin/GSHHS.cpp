@@ -38,7 +38,7 @@ class coordinate_lonlat:public coordinate_system{
     ll.setPosition( atan2(xyz.y(),xyz.x()), asin(xyz.z()/r), 0);
   }
 };
-// ************** Longitude Latitude_degrees ***************
+// ************** Longitude Latitude (degrees) ***************
 class coordinate_lonlat_degrees:public coordinate_system{
   coordinate_lonlat cll;
   SPoint3 llradian;
@@ -284,7 +284,7 @@ class GeoEarthImport
   }
 };
 
-/*      $Id: GSHHS.cpp,v 1.15 2008-08-21 07:31:49 geuzaine Exp $
+/*      $Id: GSHHS.cpp,v 1.16 2008-10-14 13:54:49 remacle Exp $
  *
  * PROGRAM:	gshhs.c
  * AUTHOR:	Paul Wessel (pwessel@hawaii.edu)

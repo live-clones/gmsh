@@ -30,6 +30,7 @@
 #if !defined(HAVE_NO_POST)
 #include "OctreePost.h"
 #include "PViewDataList.h"
+#include "MVertex.h"
 #endif
 
 extern Context_T CTX;
@@ -1330,6 +1331,22 @@ Field::Field()
 }
 
 #if !defined(HAVE_NO_POST)
+void Field::put_on_new_view(){
+  std::map<int, std::vector<double> > d;
+  std::vector<GEntity*> entities;
+  GModel::current()->getEntities(entities);
+  for(unsigned int i = 0; i < entities.size(); i++){
+   for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+     MVertex *v = entities[i]->mesh_vertices[j];
+     d[v->getNum()].push_back((*this)(v->x(),v->y(),v->z(),entities[i]));
+   }
+  }
+  std::ostringstream oss;
+  oss<<"Field "<<id;
+  PView *view= new PView(oss.str().c_str(), "NodeData", GModel::current(), d);
+  view->setChanged(true);
+}
+
 void Field::put_on_view(PView * view, int comp)
 {
   PViewDataList *data = dynamic_cast<PViewDataList*>(view->getData());

@@ -3881,16 +3881,12 @@ void GUI::load_field_options()
 void GUI::load_field_view_list()
 {
   field_put_on_view_btn->clear();
-  if(PView::list.size() > 0){
-    field_put_on_view_btn->activate();
-    for(unsigned int i = 0; i < PView::list.size(); i++) {
-      std::ostringstream s;
-      s << "View [" << i << "]";
-      field_put_on_view_btn->add(s.str().c_str());
-    }
-  }
-  else{
-    field_put_on_view_btn->deactivate();
+  field_put_on_view_btn->add("New view");
+  field_put_on_view_btn->activate();
+  for(unsigned int i = 0; i < PView::list.size(); i++) {
+    std::ostringstream s;
+    s << "View [" << i << "]";
+    field_put_on_view_btn->add(s.str().c_str());
   }
 }
 
@@ -3954,8 +3950,7 @@ void GUI::edit_field(Field *f)
   field_options_scroll->end();
   load_field_options();
   field_options_scroll->damage(1);
-  if(PView::list.size() > 0)
-    field_put_on_view_btn->activate();
+  field_put_on_view_btn->activate();
   field_delete_btn->activate();
   load_field_list();
 }

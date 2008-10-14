@@ -67,6 +67,7 @@ class Field {
   virtual const char *get_name() = 0;
 #if !defined(HAVE_NO_POST)
   void put_on_view(PView * view, int comp = -1);
+  void put_on_new_view();
 #endif
   virtual std::string get_description(){ return ""; }
 };

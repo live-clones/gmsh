@@ -4472,11 +4472,15 @@ void view_field_put_on_view_cb(CALLBACK_ARGS)
   Fl_Menu_Button* mb = ((Fl_Menu_Button*)w);
   Field *field = (Field*)WID->field_editor_group->user_data();
   int iView;
-  sscanf(mb->text(), "View [%i]", &iView);
-  if(iView<PView::list.size()){
-    field->put_on_view(PView::list[iView]);
-    Draw();
+  if(sscanf(mb->text(), "View [%i]", &iView)){
+    if(iView<PView::list.size()){
+      field->put_on_view(PView::list[iView]);
+    }
+  }else{
+    field->put_on_new_view();
+    WID->update_views();
   }
+  Draw();
 }
 
 void view_field_select_file_cb(CALLBACK_ARGS){
