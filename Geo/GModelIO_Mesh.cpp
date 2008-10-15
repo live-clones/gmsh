@@ -2201,7 +2201,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   fprintf(fp, " Only one subdomain el              : dpFALSE\n");
   fprintf(fp, " Lattice data                     ? 0\n\n\n\n");
   int nbi = getNumFaces();
-  fprintf(fp, " %d Boundary indicators:  ", getNumFaces());
+  fprintf(fp, " %d Boundary indicators:  ", nbi);
   for(fiter it = firstFace(); it != lastFace(); ++it){
     if(saveAll || (*it)->physicals.size()){
       fprintf(fp, " %d", (*it)->tag());
@@ -2221,18 +2221,15 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
       entities[i]->mesh_vertices[j]->writeDIFF(fp, binary, scalingFactor);
-      for(unsigned int k = 0; k < entities[i]->physicals.size(); k++){
-        fprintf(fp," %d %d\n", entities[i]->tag(), entities[i]->physicals[k]);
+      fprintf(fp," [%d] ",entities[i]->faces().size());
+      std::list<GFace*> lf = entities[i]->faces();
+      std::list<GFace*>::iterator it = lf.begin();
+      for(unsigned int k = 0; k < lf.size(); k++){
+        fprintf(fp," %d ",(*it)->tag());
+        it++;
       }
+      fprintf(fp,"\n");
     }
-  /* 
-  for(viter it = firstVertex(); it != lastVertex(); ++it){
-    for(unsigned int j = 0; j < (*it)->mesh_vertices.size(); j++) { 
-      (*it)->mesh_vertices[j]->writeDIFF(fp, binary, scalingFactor);
-      fprintf(fp," %d\n",(*it)->physicals.size());
-    }
-  }
-  */
   fprintf(fp, "\n");
   
   fprintf(fp, "\n");
@@ -2252,8 +2249,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
         int type = entities[i]->getMeshElement(j)->getTypeForDIFF();
 	if(type){
           element_number++;
-          int physical_property = 1;
-          entities[i]->getMeshElement(j)->writeDIFF(fp, binary, physical_property);
+          entities[i]->getMeshElement(j)->writeDIFF(fp, binary, entities[i]->tag());
         }
       }
     }

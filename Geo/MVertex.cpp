@@ -145,7 +145,7 @@ void MVertex::writeDIFF(FILE *fp, bool binary, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
-  fprintf(fp, " %d ( %25.16E , %25.16E , %25.16E )\n",
+  fprintf(fp, " %d ( %25.16E , %25.16E , %25.16E )",
           getIndex(), x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
 }
 

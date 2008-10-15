@@ -15,6 +15,7 @@
 
 #if defined(HAVE_OCC_MESH_CONSTRAINTS)
 #include "MeshGmsh_Constrain.hxx"
+#include "MeshGmsh_VertexConstrain.hxx"
 #include "MeshGmsh_EdgeConstrain.hxx"
 #endif
 
@@ -573,7 +574,21 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
 #if defined(HAVE_OCC_MESH_CONSTRAINTS)
   MeshGmsh_Constrain *meshConstraints = (MeshGmsh_Constrain*)constraints;
 
-  // treat mesh constraints (if any) on model edges
+  // apply mesh constraints on model vertices
+  MeshGmsh_DataMapOfShapeOfVertexConstrain vertexConstraints;
+  meshConstraints->GetVertexConstrain(vertexConstraints);
+  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it){
+    GVertex *gv = *it;
+    TopoDS_Shape *shape = (TopoDS_Shape*)gv->getNativePtr();
+    if(vertexConstraints.IsBound(*shape)) {
+      Msg::Debug("Applying mesh contraints on vertex %d", gv->tag());
+      const MeshGmsh_VertexConstrain &c(vertexConstraints.Find(*shape));
+      gv->setPrescribedMeshSizeAtVertex(c.GetSize());
+      // TODO embed this vertex in a surface
+    }
+  }
+
+  // apply mesh constraints on model edges
   MeshGmsh_DataMapOfShapeOfEdgeConstrain edgeConstraints;
   meshConstraints->GetEdgeConstrain(edgeConstraints);
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
@@ -629,7 +644,6 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
     }
   }
 #endif
-  
 }
 
 int GModel::importOCCShape(const void *shape, const void *meshConstraints)
