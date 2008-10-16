@@ -2598,6 +2598,7 @@ class MPyramid : public MElement {
   }
   int faces_pyramid(const int face, const int vert) const
   {
+    // only triangular faces
     static const int f[4][3] = {
       {0, 1, 4},
       {3, 0, 4},

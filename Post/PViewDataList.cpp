@@ -309,9 +309,9 @@ void PViewDataList::_setLast(int ele)
     else _setLast(ele - _index[19], 3, 6, 9, 9, TI, NbTI);
   }
   else{ // pyramids
-    if(ele < _index[21]) _setLast(ele - _index[20], 3, 5, 1, 15, SY, NbSY);
-    else if(ele < _index[22]) _setLast(ele - _index[21], 3, 5, 3, 15, VY, NbVY);
-    else _setLast(ele - _index[22], 3, 5, 9, 15, TY, NbTY);
+    if(ele < _index[21]) _setLast(ele - _index[20], 3, 5, 1, 8, SY, NbSY);
+    else if(ele < _index[22]) _setLast(ele - _index[21], 3, 5, 3, 8, VY, NbVY);
+    else _setLast(ele - _index[22], 3, 5, 9, 8, TY, NbTY);
   }
 }
 
