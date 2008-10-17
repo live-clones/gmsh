@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _STRING_UTIL_H_
-#define _STRING_UTIL_H_
+#ifndef _STRING_UTILS_H_
+#define _STRING_UTILS_H_
 
 #include <string.h>
 #include <string>
