@@ -696,8 +696,9 @@ Affectation :
     {
       if(gmsh_yysymbols.count($1))
 	gmsh_yysymbols[$1].clear();
+      gmsh_yysymbols[$1] = std::vector<double>();
       for(int i = 0; i < List_Nbr($5); i++)
-	gmsh_yysymbols[$1].push_back(*(double*)List_Pointer($5, i));
+        gmsh_yysymbols[$1].push_back(*(double*)List_Pointer($5, i));
       Free($1);
       List_Delete($5);
     }
