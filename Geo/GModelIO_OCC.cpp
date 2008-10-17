@@ -579,12 +579,26 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
   meshConstraints->GetVertexConstrain(vertexConstraints);
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it){
     GVertex *gv = *it;
+    if(gv->getNativeType() != GEntity::OpenCascadeModel) continue;
     TopoDS_Shape *shape = (TopoDS_Shape*)gv->getNativePtr();
     if(vertexConstraints.IsBound(*shape)) {
-      Msg::Debug("Applying mesh contraints on vertex %d", gv->tag());
+      Msg::Debug("Found mesh contraints on vertex %d", gv->tag());
       const MeshGmsh_VertexConstrain &c(vertexConstraints.Find(*shape));
-      gv->setPrescribedMeshSizeAtVertex(c.GetSize());
-      // TODO embed this vertex in a surface
+      double lc = c.GetSize();
+      Msg::Debug("... setting mesh size = %g", lc);
+      gv->setPrescribedMeshSizeAtVertex(lc);
+      if(!c.GetFace().IsNull()){
+        TopoDS_Shape shape = c.GetFace();
+        for(GModel::fiter it2 = m->firstFace(); it2 != m->lastFace(); ++it2){
+          GFace *gf = *it2;
+          if(gf->getNativeType() != GEntity::OpenCascadeModel) continue;
+          TopoDS_Shape *shape2 = (TopoDS_Shape*)gf->getNativePtr();
+          if(shape.isSame(*shape2)){
+            Msg::Debug("... embedding in face %g", gf->tag());
+            gf->addEmbeddedVertex(gv);
+          }
+        }
+      }
     }
   }
 
@@ -593,9 +607,10 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
   meshConstraints->GetEdgeConstrain(edgeConstraints);
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
     GEdge *ge = *it;
+    if(ge->getNativeType() != GEntity::OpenCascadeModel) continue;
     TopoDS_Shape *shape = (TopoDS_Shape*)ge->getNativePtr();
     if(edgeConstraints.IsBound(*shape)) {
-      Msg::Debug("Applying mesh contraints on edge %d", ge->tag());
+      Msg::Debug("Found mesh contraints on edge %d", ge->tag());
       const MeshGmsh_EdgeConstrain &c(edgeConstraints.Find(*shape));
       if(c.IsMeshImposed() == Standard_True){
 	TColStd_SequenceOfInteger nodeNum;
@@ -617,8 +632,7 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
 	  bool invert = (nodePar.Value(1) > nodePar.Value(n));
 	  int numbeg = nodeNum.Value(invert ? n : 1);
 	  int numend = nodeNum.Value(invert ? 1 : n);
-	  Msg::Debug("Applying mesh contraints on edge %d: beg=%d end=%d", 
-		     ge->tag(), numbeg, numend);
+	  Msg::Debug("... beg=%d end=%d", numbeg, numend);
 	  ge->getBeginVertex()->mesh_vertices[0]->setNum(numbeg);
 	  ge->getEndVertex()->mesh_vertices[0]->setNum(numend);
 	  // set the mesh on the edge
@@ -626,8 +640,8 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
 	    int num = nodeNum.Value(invert ? n - i + 1 : i);
 	    double u = nodePar.Value(invert ? n - i + 1 : i);
 	    GPoint p = ge->point(u);
-	    Msg::Debug("... adding vertex on edge %d: num=%d u=%g xyz=(%g,%g,%g)",
-		       ge->tag(), num, u, p.x(), p.y(), p.z());
+	    Msg::Debug("... adding mesh vertex num=%d u=%g xyz=(%g,%g,%g)",
+		       num, u, p.x(), p.y(), p.z());
 	    MEdgeVertex *v = new MEdgeVertex(p.x(), p.y(), p.z(), ge, u);
 	    v->setNum(num);
 	    ge->mesh_vertices.push_back(v);

@@ -63,6 +63,10 @@ class GFace : public GEntity
   void addRegion(GRegion *r){ r1 ? r2 = r : r1 = r; }
   void delRegion(GRegion *r){ if(r1 == r) r1 = r2; r2 = 0; }
 
+  // add embedded vertices/edges
+  void addEmbeddedVertex(GVertex *v){ embedded_vertices.push_back(v); }
+  void addEmbeddedEdge(GEdge *e){ embedded_edges.push_back(e); }
+  
   // edge orientations
   virtual std::list<int> orientations() const { return l_dirs; }
 
