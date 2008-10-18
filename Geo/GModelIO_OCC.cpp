@@ -594,7 +594,7 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
           if(gf->getNativeType() != GEntity::OpenCascadeModel) continue;
           TopoDS_Shape *shape2 = (TopoDS_Shape*)gf->getNativePtr();
           if(shape.IsSame(*shape2)){
-            Msg::Debug("... embedding in face %g", gf->tag());
+            Msg::Debug("... embedding in face %d", gf->tag());
             gf->addEmbeddedVertex(gv);
           }
         }
