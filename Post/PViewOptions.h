@@ -96,14 +96,23 @@ class PViewOptions {
   static PViewOptions reference;
   PViewOptions();
   ~PViewOptions();
-  void createGeneralRaise();
-  void destroyGeneralRaise();
+  // return a floating point value in [min, max] corresponding to the
+  // integer iso in [0, numIso - 1]
   double getScaleValue(int iso, int numIso, double min, double max);
+  // return an integer in [0, numIso - 1] corresponding to the
+  // floating point value val in [min, max]
   int getScaleIndex(double val, int numIso, double min, double max, 
                     bool forceLinear=false);
-  unsigned int getColor(int i, int nb);
+  // get color for val in [min, max] (only use numColors if > 0
+  // instead of all available colors)
   unsigned int getColor(double val, double min, double max, 
                         bool forceLinear=false, int numColors=-1);
+  // get i-th color amongst nb (i in [0, nb - 1])
+  unsigned int getColor(int i, int nb);
+  // create/destroy math evaluators for general raise option
+  void createGeneralRaise();
+  void destroyGeneralRaise();
+  // return true if one should not draw elements with numEdges edges
   bool skipElement(int numEdges);
 };
 

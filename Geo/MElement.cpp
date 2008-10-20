@@ -620,44 +620,6 @@ void MElement::writeBDF(FILE *fp, int format, int elementary)
 
 void MElement::writeDIFF(FILE *fp, bool binary, int physical_property)
 {
-  /*  nbn = 4;
-    if(s->VSUP) {
-      type = TETRAHEDRON_2;
-      nbs = 6;
-      if(s->Volume_Simplexe() < 0) {
-        Vertex *temp;
-        temp = s->V[0]; s->V[0] = s->V[1]; s->V[1] = temp;
-        temp = s->VSUP[1]; s->VSUP[1] = s->VSUP[2]; s->VSUP[2] = temp;
-        temp = s->VSUP[5]; s->VSUP[5] = s->VSUP[3]; s->VSUP[3] = temp;
-      }
-    }
-    else{
-      type = TETRAHEDRON;
-      if(s->Volume_Simplexe() < 0) {
-        Vertex *temp;
-        temp = s->V[0];
-        s->V[0] = s->V[1];
-        s->V[1] = temp;
-      }
-    }
-  fprintf(MSHFILE, "%d %d 2 %d %d",
-            MSH_ELEMENT_NUM++, type, MSH_PHYSICAL_NUM ? MSH_PHYSICAL_NUM : s->iEnt,
-            s->iEnt);
-
-  if(DIFF_PHYSICAL_ORI > 0) {
-    for(i = 0; i < nbn; i++)
-      fprintf(DIFFFILE, " %d", s->V[i]->Num);
-    for(i = 0; i < nbs; i++)
-      fprintf(DIFFFILE, " %d", s->VSUP[i]->Num);
-  }
-  else {
-    for(i = 0; i < nbn; i++)
-      fprintf(DIFFFILE, " %d", s->V[nbn - i - 1]->Num);
-    for(i = 0; i < nbs; i++)
-      fprintf(DIFFFILE, " %d", s->VSUP[nbs - i - 1]->Num);
-  }
-  fprintf(DIFFFILE, "\n");*/
-
   int type = getTypeForDIFF();
   if(!type) return;
   static int first = 1;

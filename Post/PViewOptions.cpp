@@ -46,7 +46,6 @@ double PViewOptions::getScaleValue(int iso, int numIso, double min, double max)
   return 0.;
 }
 
-// return index between 0 and (numIso-1)
 int PViewOptions::getScaleIndex(double val, int numIso, double min, double max,
                                 bool forceLinear)
 {
@@ -67,7 +66,6 @@ int PViewOptions::getScaleIndex(double val, int numIso, double min, double max,
   return 0;
 }
 
-// val in [min, max]
 unsigned int PViewOptions::getColor(double val, double min, double max, 
                                     bool forceLinear, int numColors)
 {
@@ -88,7 +86,6 @@ unsigned int PViewOptions::getColor(double val, double min, double max,
   }
 }
 
-// i in [0, nb - 1]
 unsigned int PViewOptions::getColor(int i, int nb)
 {
   int index = (nb == 1) ? CT.size / 2 : 
