@@ -43,7 +43,7 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
       glBegin(GL_QUADS);
       double dv = (opt->TmpMax - opt->TmpMin) / (opt->NbIso ? opt->NbIso : 1);
       double v1 = opt->TmpMin + i * dv;
-      unsigned int col1 = opt->getColor(v1, opt->TmpMin, opt->TmpMax);
+      unsigned int col1 = opt->getColor(v1, opt->TmpMin, opt->TmpMax, true);
       glColor4ubv((GLubyte *) &col1);
       if(horizontal){
         glVertex2d(xmin + i * box, ymin + height);
@@ -54,7 +54,7 @@ static void drawScaleBar(PView *p, double xmin, double ymin, double width,
         glVertex2d(xmin + width, ymin + i * box);
       }
       double v2 = opt->TmpMin + (i + 1) * dv;
-      unsigned int col2 = opt->getColor(v2, opt->TmpMin, opt->TmpMax);
+      unsigned int col2 = opt->getColor(v2, opt->TmpMin, opt->TmpMax, true);
       glColor4ubv((GLubyte *) &col2);
       if(horizontal){
         glVertex2d(xmin + (i + 1) * box, ymin);
