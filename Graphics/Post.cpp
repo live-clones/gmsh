@@ -323,7 +323,9 @@ static void addScalarPoint(PView *p, double xyz[NMAX][3], double val[NMAX][9],
   if(opt->SaturateValues) saturate(1, val, vmin, vmax, i0);
 
   if(val[i0][0] >= vmin && val[i0][0] <= vmax){
-    unsigned int col = opt->getColor(val[i0][0], vmin, vmax);
+    unsigned int col = opt->getColor(val[i0][0], vmin, vmax, false, 
+                                     (opt->IntervalsType == PViewOptions::Discrete) ? 
+                                     opt->NbIso : -1);
     SVector3 n = getPointNormal(p, val[i0][0]);
     p->va_points->add(&xyz[i0][0], &xyz[i0][1], &xyz[i0][2], &n, &col, 0, unique);
   }
@@ -399,7 +401,7 @@ static void addScalarLine(PView *p, double xyz[NMAX][3], double val[NMAX][9],
       double x2[2], y2[2], z2[2], v2[2];
       int nb = CutLine(x, y, z, v, min, max, x2, y2, z2, v2);
       if(nb == 2){
-        unsigned color = opt->getColor(k, opt->NbIso);
+        unsigned int color = opt->getColor(k, opt->NbIso);
         unsigned int col[2] = {color, color};
         SVector3 n[2];
         getLineNormal(p, x2, y2, z2, v2, n, true);
@@ -524,7 +526,7 @@ static void addScalarTriangle(PView *p, double xyz[NMAX][3], double val[NMAX][9]
       double x2[10], y2[10], z2[10], v2[10];
       int nb = CutTriangle(x, y, z, v, min, max, x2, y2, z2, v2);
       if(nb >= 3){
-        unsigned color = opt->getColor(k, opt->NbIso);
+        unsigned int color = opt->getColor(k, opt->NbIso);
         unsigned int col[3] = {color, color, color};
         for(int j = 2; j < nb; j++){
           double x3[3] = {x2[0], x2[j - 1], x2[j]};
@@ -868,7 +870,9 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
     for(int i = 0; i < numNodes; i++){
       double v2 = ComputeScalarRep(numComp2, val2[i]);
       if(v2 >= opt->ExternalMin && v2 <= opt->ExternalMax){
-        unsigned int color = opt->getColor(v2, opt->ExternalMin, opt->ExternalMax);
+        unsigned int color = opt->getColor(v2, opt->ExternalMin, opt->ExternalMax, false,
+                                           (opt->IntervalsType == PViewOptions::Discrete) ? 
+                                           opt->NbIso : -1);
         unsigned int col[2] = {color, color};
         double dxyz[3][2];
         for(int j = 0; j < 3; j++){
@@ -899,7 +903,9 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
     double v2 = ComputeScalarRep(numComp2, d2);
     if(v2 >= opt->ExternalMin * (1. - 1.e-15) &&
        v2 <= opt->ExternalMax * (1. + 1.e-15)){
-      unsigned int color = opt->getColor(v2, opt->ExternalMin, opt->ExternalMax);
+      unsigned int color = opt->getColor(v2, opt->ExternalMin, opt->ExternalMax, false,
+                                         (opt->IntervalsType == PViewOptions::Discrete) ? 
+                                         opt->NbIso : -1);
       unsigned int col[2] = {color, color};
       double dxyz[3][2];
       for(int i = 0; i < 3; i++){

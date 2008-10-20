@@ -102,7 +102,8 @@ class PViewOptions {
   int getScaleIndex(double val, int numIso, double min, double max, 
                     bool forceLinear=false);
   unsigned int getColor(int i, int nb);
-  unsigned int getColor(double val, double min, double max, bool forceLinear=false);
+  unsigned int getColor(double val, double min, double max, 
+                        bool forceLinear=false, int numColors=-1);
   bool skipElement(int numEdges);
 };
 
