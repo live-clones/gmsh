@@ -91,8 +91,8 @@ void FixRelativePath(const char *in, char *out);
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical
 %token tUsing tBump tProgression tPlugin
-%token tRotate tTranslate tSymmetry tDilate tExtrude tDuplicata
-%token tLoop tRecombine tSmoother tSplit tDelete tCoherence tIntersect tBoundary
+%token tRotate tTranslate tSymmetry tDilate tExtrude
+%token tLoop tRecombine tSmoother tSplit tDelete tCoherence tIntersect
 %token tLayers tHole tAlias tAliasWithOptions
 %token tText2D tText3D tInterpolationScheme  tTime tCombine
 %token tBSpline tBezier tNurbs tOrder tKnots
@@ -1550,15 +1550,24 @@ Transform :
       DilatShapes($3[0], $3[1], $3[2], $5, $8);
       $$ = $8;
     }
-  | tDuplicata '{' MultipleShape '}'
+  | tSTRING '{' MultipleShape '}'
     {
       $$ = List_Create(3, 3, sizeof(Shape));
-      for(int i = 0; i < List_Nbr($3); i++){
-	Shape TheShape;
-	List_Read($3, i, &TheShape);
-	CopyShape(TheShape.Type, TheShape.Num, &TheShape.Num);
-	List_Add($$, &TheShape);
+      if(!strcmp($1, "Duplicata")){
+        for(int i = 0; i < List_Nbr($3); i++){
+          Shape TheShape;
+          List_Read($3, i, &TheShape);
+          CopyShape(TheShape.Type, TheShape.Num, &TheShape.Num);
+          List_Add($$, &TheShape);
+        }
       }
+      else if(!strcmp($1, "Boundary")){
+        BoundaryShapes($3, $$);
+      }
+      else{
+        yymsg(0, "Unknown command on multiple shapes: '%s'", $1);
+      }
+      Free($1);
       List_Delete($3);
     }
   | tIntersect tLine '{' RecursiveListOfDouble '}' tSurface '{' FExpr '}' 
@@ -1574,12 +1583,6 @@ Transform :
       List_Delete($7);
       SplitCurve((int)$4,tmp,$$);
       List_Delete(tmp);
-    }
-  | tBoundary '{' MultipleShape '}'
-    { 
-      $$ = List_Create(2, 1, sizeof(Shape));
-      BoundaryShapes($3, $$);
-      List_Delete($3);
     }
 ;
 
