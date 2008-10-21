@@ -27,7 +27,7 @@ class myGmshServer : public GmshServer{
   myGmshServer() : GmshServer() {}
   ~myGmshServer() {}
   int SystemCall(const char *str){ return ::SystemCall(str); }
-  int WaitForData(int socket, int num, double waitint)
+  int NonBlockingWait(int socket, int num, double waitint)
   { 
     // This routine polls the socket at least every 'waitint' seconds and
     // returns 0 if data is available or 1 if there was en error or if the
@@ -175,7 +175,7 @@ int Solver(int num, const char *args)
     if(stop || (num >= 0 && SINFO[num].pid < 0))
       break;
 
-    stop = server->WaitForData(sock, num, 0.1);
+    stop = server->NonBlockingWait(sock, num, 0.1);
 
     if(stop || (num >= 0 && SINFO[num].pid < 0))
       break;
@@ -278,8 +278,7 @@ int Solver(int num, const char *args)
     }
   }
 
-  if(server->StopClient() < 0)
-    Msg::Warning("Impossible to unlink the socket '%s'", sockname.c_str());
+  server->StopClient();
 
   if(num >= 0){
     Msg::StatusBar(2, false, "");

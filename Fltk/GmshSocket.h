@@ -110,10 +110,7 @@ class GmshSocket{
     if(first){
       first = false;
       WSADATA wsaData;
-      int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-      if(iResult != NO_ERROR){
-        // Error: Couldn't initialize Windows sockets...
-      }
+      WSAStartup(MAKEWORD(2, 2), &wsaData);
     }
 #endif
   }
@@ -186,26 +183,9 @@ class GmshClient : public GmshSocket {
     // server before we attempt to connect to it...
     _Sleep(100);
 
-    int portno;
-    char remote[256];
     if(strstr(sockname, "/") || strstr(sockname, "\\") || !strstr(sockname, ":")){
-      // UNIX socket (testing ":" is not enough with Windows paths)
-      portno = -1;
-    }
-    else{
-      // INET socket
-      char *port = strstr(sockname, ":");
-      portno = atoi(port + 1);
-      int remotelen = strlen(sockname) - strlen(port);
-      if(remotelen > 0)
-	strncpy(remote, sockname, remotelen);
-      remote[remotelen] = '\0';
-    }
-    
-    // create socket
-    
-    if(portno < 0){
 #if !defined(WIN32) || defined(__CYGWIN__)
+      // UNIX socket (testing ":" is not enough with Windows paths)
       _sock = socket(PF_UNIX, SOCK_STREAM, 0);
       if(_sock < 0)
 	return -1;  // Error: Couldn't create socket
@@ -220,18 +200,25 @@ class GmshClient : public GmshSocket {
 	_Sleep(100);
       }
 #else
-      // Unix sockets are not available on Windows without Cygwin
-      return -1;
+      return -1; // Unix sockets are not available on Windows
 #endif
     }
     else{
+      // TCP/IP socket
       _sock = socket(AF_INET, SOCK_STREAM, 0);
       if(_sock < 0)
 	return -1; // Error: Couldn't create socket
+      // try to connect socket to host:port
+      char *port = strstr(sockname, ":");
+      int portno = atoi(port + 1);
+      int remotelen = strlen(sockname) - strlen(port);
+      char remote[256];
+      if(remotelen > 0)
+	strncpy(remote, sockname, remotelen);
+      remote[remotelen] = '\0';
       struct hostent *server;
       if(!(server = gethostbyname(remote)))
 	return -3; // Error: No such host
-      // try to connect socket to given name
       struct sockaddr_in addr_in;
       memset((char *) &addr_in, 0, sizeof(addr_in));
       addr_in.sin_family = AF_INET;
@@ -312,12 +299,9 @@ class GmshServer : public GmshSocket{
   GmshServer() : GmshSocket(), _portno(-1) {}
   ~GmshServer(){}
   virtual int SystemCall(const char *str) = 0;
-  virtual int WaitForData(int socket, int num, double waitint) = 0;
+  virtual int NonBlockingWait(int socket, int num, double waitint) = 0;
   int StartClient(const char *command, const char *sockname=0, int maxdelay=4)
   {
-    static int init = 0;
-    static int tmpsock = 0;
-
     int justwait = (!command || !strlen(command));
     _sockname = sockname;
 
@@ -327,26 +311,17 @@ class GmshServer : public GmshSocket{
       return 1;
     }
 
+    int tmpsock;
     if(strstr(_sockname, "/") || strstr(_sockname, "\\") || !strstr(_sockname, ":")){
       // UNIX socket (testing ":" is not enough with Windows paths)
       _portno = -1;
-    }
-    else{
-      // TCP/IP socket
-      const char *port = strstr(_sockname, ":");
-      _portno = atoi(port + 1);
-    }
-
-    if(_portno < 0){
 #if !defined(WIN32) || defined(__CYGWIN__)
       // delete the file if it already exists
       unlink(_sockname);
-
       // create a socket
       tmpsock = socket(PF_UNIX, SOCK_STREAM, 0);
       if(tmpsock < 0)
         return -1;  // Error: Couldn't create socket
-      
       // bind the socket to its name
       struct sockaddr_un addr_un;
       memset((char *) &addr_un, 0, sizeof(addr_un));
@@ -354,7 +329,6 @@ class GmshServer : public GmshSocket{
       addr_un.sun_family = AF_UNIX;
       if(bind(tmpsock, (struct sockaddr *)&addr_un, sizeof(addr_un)) < 0)
         return -2;  // Error: Couldn't bind socket to name
-
       // change permissions on the socket name in case it has to be rm'd later
       chmod(_sockname, 0666);
 #else
@@ -362,30 +336,25 @@ class GmshServer : public GmshSocket{
 #endif
     }
     else{
-      if(init != _portno){
-        // We should be able to use setsockopt to allow reusing the
-        // same address, but I could not make it work... hence this
-        // horrible hack to avoid binding the name multiple times
-        init = _portno;
-       
-        // create a socket
-        tmpsock = socket(AF_INET, SOCK_STREAM, 0);
+      // TCP/IP socket
+      const char *port = strstr(_sockname, ":");
+      _portno = atoi(port + 1);
+      // create a socket
+      tmpsock = socket(AF_INET, SOCK_STREAM, 0);
 #if !defined(WIN32) || defined(__CYGWIN__)
-        if(tmpsock < 0)
+      if(tmpsock < 0)
 #else
-        if(tmpsock == INVALID_SOCKET)
+      if(tmpsock == INVALID_SOCKET)
 #endif
-          return -1;  // Error: Couldn't create socket
-        
-        // bind the socket to its name
-        struct sockaddr_in addr_in;
-        memset((char *) &addr_in, 0, sizeof(addr_in));
-        addr_in.sin_family = AF_INET;
-        addr_in.sin_addr.s_addr = INADDR_ANY;
-        addr_in.sin_port = htons(_portno);
-        if(bind(tmpsock, (struct sockaddr *)&addr_in, sizeof(addr_in)) < 0)
-          return -2;  // Error: Couldn't bind socket to name
-      }
+        return -1;  // Error: Couldn't create socket
+      // bind the socket to its name
+      struct sockaddr_in addr_in;
+      memset((char *) &addr_in, 0, sizeof(addr_in));
+      addr_in.sin_family = AF_INET;
+      addr_in.sin_addr.s_addr = INADDR_ANY;
+      addr_in.sin_port = htons(_portno);
+      if(bind(tmpsock, (struct sockaddr *)&addr_in, sizeof(addr_in)) < 0)
+        return -2;  // Error: Couldn't bind socket to name
     }
 
     if(!justwait)
@@ -398,7 +367,7 @@ class GmshServer : public GmshSocket{
     
     if(justwait){
       // wait indefinitely until we get data
-      if(WaitForData(tmpsock, -1, 0.5))
+      if(NonBlockingWait(tmpsock, -1, 0.5))
         return -6; // not an actual error: we just stopped listening
     }
     else{
@@ -420,7 +389,7 @@ class GmshServer : public GmshSocket{
       len = sizeof(from_un);
       _sock = accept(tmpsock, (struct sockaddr *)&from_un, &len);
 #else
-      _sock = -7; // Unix sockets not available on Windows without Cygwin
+      _sock = -7; // Unix sockets not available on Windows
 #endif
     }
     else{
@@ -430,16 +399,19 @@ class GmshServer : public GmshSocket{
     }
     if(_sock < 0) return -5;  // Error: Socket accept failed
 
+    // close temporary socket
+#if !defined(WIN32) || defined(__CYGWIN__)
+    close(tmpsock);
+#else
+    closesocket(tmpsock);
+#endif
     return _sock;
   }
   int StopClient()
   {
 #if !defined(WIN32) || defined(__CYGWIN__)
-    if(_portno < 0){
-      // UNIX socket
-      if(unlink(_sockname) == -1)
-        return -1;  // Impossible to unlink the socket
-    }
+    if(_portno < 0)
+      unlink(_sockname);
     close(_sock);
 #else
     closesocket(_sock);
