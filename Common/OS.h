@@ -6,12 +6,15 @@
 #ifndef _OS_H_
 #define _OS_H_
 
+#include <string>
+
 double GetTimeInSeconds();
 void SleepInSeconds(double s);
 void GetResources(double *s, long *mem);
 void CheckResources();
 double Cpu();
 int GetProcessId();
+std::string GetHostName();
 int UnlinkFile(const char *name);
 int StatFile(const char *filename);
 int KillProcess(int pid);

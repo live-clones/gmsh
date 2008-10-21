@@ -105,7 +105,8 @@ Field.o: Field.cpp ../Common/Context.h ../Geo/CGNSOptions.h \
   ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h ../Geo/GRegion.h \
   ../Geo/GEntity.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
   ../Common/Message.h ../Post/OctreePost.h ../Common/Octree.h \
-  ../Common/OctreeInternals.h ../Post/PViewDataList.h ../Post/PViewData.h
+  ../Common/OctreeInternals.h ../Post/PViewDataList.h ../Post/PViewData.h \
+  ../Geo/MVertex.h ../Geo/SPoint3.h
 meshGEdge.o: meshGEdge.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \

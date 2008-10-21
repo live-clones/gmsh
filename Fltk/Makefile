@@ -207,9 +207,9 @@ Colorbar_Window.o: Colorbar_Window.cpp ../Common/GmshUI.h GUI.h \
   ../Geo/SPoint3.h ../Common/Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h
 Solvers.o: Solvers.cpp ../Common/Message.h ../Common/StringUtils.h \
-  Solvers.h GmshServer.h ../Common/OpenFile.h ../Common/GmshUI.h GUI.h \
+  Solvers.h GmshSocket.h ../Common/OpenFile.h ../Common/GmshUI.h GUI.h \
   Opengl_Window.h Colorbar_Window.h ../Post/ColorTable.h Popup_Button.h \
   SpherePosition_Widget.h ../Mesh/Field.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Graphics/Draw.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h
+  ../Mesh/PartitionOptions.h ../Common/OS.h

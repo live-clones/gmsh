@@ -8,57 +8,60 @@
 #include "Message.h"
 #include "StringUtils.h"
 #include "Solvers.h"
-#include "GmshServer.h"
+#include "GmshSocket.h"
 #include "OpenFile.h"
 #include "GmshUI.h"
 #include "GUI.h"
 #include "PView.h"
 #include "Draw.h"
 #include "Context.h"
+#include "OS.h"
 
 extern Context_T CTX;
 extern GUI *WID;
 
 SolverInfo SINFO[MAXSOLVERS];
 
-int GmshServer::init = 0;
-int GmshServer::s;
+class myGmshServer : public GmshServer{
+ public:
+  myGmshServer() : GmshServer() {}
+  ~myGmshServer() {}
+  int SystemCall(const char *str){ return ::SystemCall(str); }
+  int WaitForData(int socket, int num, double waitint)
+  { 
+    // This routine polls the socket at least every 'waitint' seconds and
+    // returns 0 if data is available or 1 if there was en error or if the
+    // process was killed. Otherwise it just tends to current GUI events
+    // (this is easier to manage than non-blocking IO, and simpler than
+    // using the "real" solution, i.e., threads. Another possibility would
+    // be to use Fl::add_fd())
+    while(1){
+      if((num >= 0 && SINFO[num].pid < 0) || (num < 0 && !CTX.solver.listen)){
+        // process has been killed or we stopped listening
+        return 1;
+      }
 
-// This routine polls the socket at least every 'waitint' seconds and
-// returns 0 if data is available or 1 if there was en error or if the
-// process was killed. Otherwise it just tends to current GUI events
-// (this is easier to manage than non-blocking IO, and simpler than
-// using the "real" solution, i.e., threads. Another possibility would
-// be to use Fl::add_fd())
+      // check if there is data (call select with a zero timeout to
+      // return immediately, i.e., do polling)
+      int ret = Select(socket, 0);
 
-int WaitForData(int socket, int num, double waitint)
-{
-  while(1){
-    if((num >= 0 && SINFO[num].pid < 0) || (num < 0 && !CTX.solver.listen)){
-      // process has been killed or we stopped listening
-      return 1;
-    }
-
-    // check if there is data (call select with a zero timeout to
-    // return immediately, i.e., do polling)
-    int ret = myselect(socket, 0);
-
-    if(ret == 0){ 
-      // nothing available: wait at most waitint seconds
-      WID->wait(waitint);
-    }
-    else if(ret > 0){ 
-      // data is there
-      return 0;
-    }
-    else{ 
-      // an error happened
-      if(num >= 0)
-        SINFO[num].pid = -1;
-      return 1;
+      if(ret == 0){ 
+        // nothing available: wait at most waitint seconds
+        WID->wait(waitint);
+      }
+      else if(ret > 0){ 
+        // data is there
+        return 0;
+      }
+      else{ 
+        // an error happened
+        if(num >= 0)
+          SINFO[num].pid = -1;
+        return 1;
+      }
     }
   }
-}
+};
 
 // This routine either launches a solver and waits for some answer (if
 // num >= 0), or simply waits for messages (if num < 0)
@@ -69,7 +72,7 @@ int Solver(int num, const char *args)
 
  new_connection:
 
-  GmshServer server(CTX.solver.max_delay);
+  GmshServer *server = new myGmshServer;
 
   if(num >= 0){
     prog = FixWindowsPath(SINFO[num].executable_name);
@@ -78,7 +81,7 @@ int Solver(int num, const char *args)
 #if !defined(WIN32)
       command += " &";
 #endif
-      server.StartClient(command.c_str());
+      server->StartClient(command.c_str(), 0, CTX.solver.max_delay);
       return 1;
     }
   }
@@ -103,6 +106,9 @@ int Solver(int num, const char *args)
   else{
     // TCP/IP socket
     sockname = CTX.solver.socket_name;
+    // if only the port is given, prepend the host name
+    if(sockname.size() && sockname[0] == ':')
+      sockname = GetHostName() + sockname;
   }
 
   if(num >= 0){
@@ -115,7 +121,7 @@ int Solver(int num, const char *args)
 #endif
   }
 
-  int sock = server.StartClient(command.c_str(), sockname.c_str());
+  int sock = server->StartClient(command.c_str(), sockname.c_str(), CTX.solver.max_delay);
 
   if(sock < 0) {
     switch (sock) {
@@ -137,7 +143,7 @@ int Solver(int num, const char *args)
       break;
     case -6:
       Msg::Info("Stopped listening for solver connections");
-      server.StopClient();
+      server->StopClient();
       break;
     case -7:
       Msg::Error("Unix sockets not available on Windows without Cygwin");
@@ -169,15 +175,16 @@ int Solver(int num, const char *args)
     if(stop || (num >= 0 && SINFO[num].pid < 0))
       break;
 
-    stop = WaitForData(sock, num, 0.1);
+    stop = server->WaitForData(sock, num, 0.1);
 
     if(stop || (num >= 0 && SINFO[num].pid < 0))
       break;
 
     int type, length;
-    if(server.ReceiveMessageHeader(&type, &length)){
+    if(server->ReceiveHeader(&type, &length)){
+      double timer = GetTimeInSeconds();
       char *message = new char[length + 1];
-      if(server.ReceiveMessageBody(length, message)){
+      if(server->ReceiveString(length, message)){
         switch (type) {
         case GmshServer::CLIENT_START:
           if(num >= 0)
@@ -236,6 +243,10 @@ int Solver(int num, const char *args)
         case GmshServer::CLIENT_ERROR:
           Msg::Direct(1, "%-8.8s: %s", num >= 0 ? SINFO[num].name : "Client", message);
           break;
+        case GmshServer::CLIENT_SPEED_TEST:
+          Msg::Info("got %d Mb message in %g seconds", strlen(message) / 1024 / 1024,
+                    GetTimeInSeconds() - timer);
+          break;
         default:
           Msg::Warning("Unknown type of message received from %s",
               num >= 0 ? SINFO[num].name : "client");
@@ -267,7 +278,7 @@ int Solver(int num, const char *args)
     }
   }
 
-  if(server.StopClient() < 0)
+  if(server->StopClient() < 0)
     Msg::Warning("Impossible to unlink the socket '%s'", sockname.c_str());
 
   if(num >= 0){
@@ -275,6 +286,7 @@ int Solver(int num, const char *args)
   }
   else{
     Msg::Info("Client disconnected: starting new connection");
+    delete server;
     goto new_connection;
   }
 

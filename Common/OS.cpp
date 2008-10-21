@@ -110,6 +110,13 @@ int GetProcessId()
 #endif
 }
 
+std::string GetHostName()
+{
+  char host[256];
+  gethostname(host, sizeof(host));
+  return std::string(host);
+}
+
 int UnlinkFile(const char *filename)
 {
 #if !defined(WIN32) || defined(__CYGWIN__)
