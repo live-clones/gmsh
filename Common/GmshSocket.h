@@ -242,39 +242,16 @@ class GmshClient : public GmshSocket {
 #endif
     SendString(CLIENT_START, tmp);
   }
-  void Stop()
-  {
-    SendString(CLIENT_STOP, "Goodbye!");
-  }
-  void Info(const char *str)
-  {
-    SendString(CLIENT_INFO, str);
-  }
-  void Warning(const char *str)
-  {
-    SendString(CLIENT_WARNING, str);
-  }
-  void Error(const char *str)
-  {
-    SendString(CLIENT_ERROR, str);
-  }
-  void Progress(const char *str)
-  {
-    SendString(CLIENT_PROGRESS, str);
-  }
-  void View(const char *str) 
-  {
-    // deprecated: use MergeFile(str) instead
-    SendString(CLIENT_MERGE_FILE, str);
-  }
-  void MergeFile(const char *str)
-  {
-    SendString(CLIENT_MERGE_FILE, str);
-  }
-  void ParseString(const char *str)
-  {
-    SendString(CLIENT_PARSE_STRING, str);
-  }
+  void Stop(){ SendString(CLIENT_STOP, "Goodbye!"); }
+  void Info(const char *str){ SendString(CLIENT_INFO, str); }
+  void Warning(const char *str){ SendString(CLIENT_WARNING, str); }
+  void Error(const char *str){ SendString(CLIENT_ERROR, str); }
+  void Progress(const char *str){ SendString(CLIENT_PROGRESS, str); }
+  // deprecated: use MergeFile instead
+  void View(const char *str){ SendString(CLIENT_MERGE_FILE, str); }
+  void MergeFile(const char *str){ SendString(CLIENT_MERGE_FILE, str); }
+  void ParseString(const char *str){ SendString(CLIENT_PARSE_STRING, str); }
+  void SpeedTest(const char *str){ SendString(CLIENT_SPEED_TEST, str); }
   void Option(int num, const char *str)
   {
     if(num < 1) num = 1;
@@ -289,7 +266,6 @@ class GmshClient : public GmshSocket {
     closesocket(_sock);
 #endif
   }
-
 };
 
 class GmshServer : public GmshSocket{

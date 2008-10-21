@@ -19,6 +19,7 @@ SRC = Context.cpp\
       Options.cpp\
       CommandLine.cpp\
       Gmsh.cpp\
+      GmshDaemon.cpp\
       OS.cpp\
       OpenFile.cpp\
       CreateFile.cpp\
@@ -104,8 +105,9 @@ Gmsh.o: Gmsh.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Post/ColorTable.h CommandLine.h OS.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Mesh/Generator.h ../Mesh/Field.h \
   ../Post/PView.h Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h ../Mesh/Partition.h \
+  ../Mesh/PartitionOptions.h ../Mesh/Partition.h GmshDaemon.h \
   ../Plugin/PluginManager.h
+GmshDaemon.o: GmshDaemon.cpp Message.h GmshSocket.h
 OS.o: OS.cpp Message.h
 OpenFile.o: OpenFile.cpp Message.h ../Geo/Geo.h ../Common/GmshDefines.h \
   ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \

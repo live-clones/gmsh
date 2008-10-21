@@ -209,6 +209,14 @@ void Get_Options(int argc, char *argv[])
         CTX.batch = 4;
         i++;
       }
+      else if(!strcmp(argv[i] + 1, "socket")) {
+        i++;        
+        if(argv[i] != NULL)
+          CTX.solver.socket_name = argv[i++];
+        else
+	  Msg::Fatal("Missing string");
+        CTX.batch = 5;
+      }
       else if(!strcmp(argv[i] + 1, "part")) {
         CTX.batchAfterMesh = 1;
         i++;

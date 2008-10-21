@@ -17,6 +17,7 @@
 #include "Field.h"
 #include "Context.h"
 #include "Partition.h"
+#include "GmshDaemon.h"
 
 #if !defined(HAVE_NO_POST)
 #include "PluginManager.h"
@@ -89,7 +90,10 @@ int GmshBatch()
       Msg::Error("Invalid background mesh (no view)");
   }
 #endif
-  if(CTX.batch == 4) {
+  if(CTX.batch == 5) {
+    GmshDaemon(CTX.solver.socket_name);
+  }
+  else if(CTX.batch == 4) {
     AdaptMesh(GModel::current());
     CreateOutputFile(CTX.output_filename, CTX.mesh.format);
   }
