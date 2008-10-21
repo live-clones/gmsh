@@ -1,7 +1,8 @@
-$Id: VERSIONS.txt,v 1.8 2008-10-20 18:40:14 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.9 2008-10-21 16:37:24 geuzaine Exp $
 
-2.2.5: lots of small bug fixes; upgrade Netgen; better STL import;
-builing now requires FLTK >= 1.1.7; added support for Visual C++.
+2.2.5 (xxx): better STL import; upgraded Netgen; gmsh now requires
+FLTK >= 1.1.7; added support for Visual C++; fixed pyramid
+interpolation; lots of small bug fixes.
 
 2.2.4 (Aug 14, 2008): integrated Metis and Chaco mesh partitioners;
 variables can now be deleted in geo files; added support for point
