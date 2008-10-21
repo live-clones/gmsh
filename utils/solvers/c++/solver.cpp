@@ -1,4 +1,4 @@
-// $Id: solver.cpp,v 1.10 2007-09-04 13:47:08 remacle Exp $
+// $Id: solver.cpp,v 1.11 2008-10-21 18:47:41 geuzaine Exp $
 //
 // Copyright (C) 1997-2005 C. Geuzaine, J.-F. Remacle
 //
@@ -43,7 +43,7 @@
 // solver menu.
 
 #include <math.h>
-#include "GmshClient.h"
+#include "GmshSocket.h"
 
 typedef enum { send_options, run_code } action;
 

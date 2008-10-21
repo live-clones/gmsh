@@ -1,4 +1,4 @@
-#include "GmshClient.h"
+#include "GmshSocket.h"
 #include <readline/readline.h>
 #include <readline/history.h>
 
