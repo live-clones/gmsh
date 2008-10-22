@@ -95,7 +95,7 @@ StringXString MeshOptions_String[] = {
 StringXString SolverOptions_String[] = {
   { F|O, "SocketName" , opt_solver_socket_name , 
 #if defined(WIN32) && !defined(__CYGWIN__)
-    ":44122" , // use TCP/IP sockets by default on Windows
+    "localhost:44122" , // use TCP/IP sockets by default on Windows
 #else
     ".gmshsock" , // otherwise use Unix sockets by default
 #endif

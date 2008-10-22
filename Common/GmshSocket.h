@@ -106,12 +106,8 @@ class GmshSocket{
   GmshSocket() : _sock(0), _sockname(0)
   {
 #if defined(WIN32) && !defined(__CYGWIN__)
-    static bool first = true;
-    if(first){
-      first = false;
-      WSADATA wsaData;
-      WSAStartup(MAKEWORD(2, 2), &wsaData);
-    }
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
 #endif
   }
   ~GmshSocket()
@@ -171,6 +167,14 @@ class GmshSocket{
     }
     return 0;
   }
+  void CloseSocket(int s)
+  {
+#if !defined(WIN32) || defined(__CYGWIN__)
+    close(s);
+#else
+    closesocket(s);
+#endif
+  }
 };
 
 class GmshClient : public GmshSocket {
@@ -217,8 +221,10 @@ class GmshClient : public GmshSocket {
 	strncpy(remote, sockname, remotelen);
       remote[remotelen] = '\0';
       struct hostent *server;
-      if(!(server = gethostbyname(remote)))
+      if(!(server = gethostbyname(remote))){
+        CloseSocket(_sock);
 	return -3; // Error: No such host
+      }
       struct sockaddr_in addr_in;
       memset((char *) &addr_in, 0, sizeof(addr_in));
       addr_in.sin_family = AF_INET;
@@ -230,6 +236,7 @@ class GmshClient : public GmshSocket {
 	_Sleep(100);
       }
     }
+    CloseSocket(_sock);
     return -2; // Error: Couldn't connect
   }
   void Start()
@@ -258,14 +265,7 @@ class GmshClient : public GmshSocket {
     if(num > 5) num = 5;
     SendString(CLIENT_OPTION_1 + num - 1, str);
   }
-  void Disconnect()
-  {
-#if !defined(WIN32) || defined(__CYGWIN__)
-    close(_sock);
-#else
-    closesocket(_sock);
-#endif
-  }
+  void Disconnect(){ CloseSocket(_sock); }
 };
 
 class GmshServer : public GmshSocket{
@@ -278,7 +278,7 @@ class GmshServer : public GmshSocket{
   virtual int NonBlockingWait(int socket, int num, double waitint) = 0;
   int StartClient(const char *command, const char *sockname=0, int maxdelay=4)
   {
-    int justwait = (!command || !strlen(command));
+    bool justwait = (!command || !strlen(command));
     _sockname = sockname;
 
     // no socket? launch the command directly
@@ -329,8 +329,10 @@ class GmshServer : public GmshSocket{
       addr_in.sin_family = AF_INET;
       addr_in.sin_addr.s_addr = INADDR_ANY;
       addr_in.sin_port = htons(_portno);
-      if(bind(tmpsock, (struct sockaddr *)&addr_in, sizeof(addr_in)) < 0)
+      if(bind(tmpsock, (struct sockaddr *)&addr_in, sizeof(addr_in)) < 0){
+        CloseSocket(tmpsock);
         return -2;  // Error: Couldn't bind socket to name
+      }
     }
 
     if(!justwait)
@@ -338,19 +340,25 @@ class GmshServer : public GmshSocket{
     
     // listen on socket (queue up to 20 connections before having
     // them automatically rejected)
-    if(listen(tmpsock, 20))
+    if(listen(tmpsock, 20)){
+      CloseSocket(tmpsock);
       return -3;  // Error: Socket listen failed
+    }
     
     if(justwait){
       // wait indefinitely until we get data
-      if(NonBlockingWait(tmpsock, -1, 0.5))
+      if(NonBlockingWait(tmpsock, -1, 0.5)){
+        CloseSocket(tmpsock);
         return -6; // not an actual error: we just stopped listening
+      }
     }
     else{
       // Wait at most maxdelay seconds for data, issue error if no
       // connection in that amount of time
-      if(!Select(tmpsock, maxdelay))
+      if(!Select(tmpsock, maxdelay)){
+        CloseSocket(tmpsock);
         return -4;  // Error: Socket listening timeout
+      }
     }
 
     // accept connection request
@@ -373,14 +381,10 @@ class GmshServer : public GmshSocket{
       len = sizeof(from_in);
       _sock = accept(tmpsock, (struct sockaddr *)&from_in, &len);
     }
-    if(_sock < 0) return -5;  // Error: Socket accept failed
+    CloseSocket(tmpsock);
 
-    // close temporary socket
-#if !defined(WIN32) || defined(__CYGWIN__)
-    close(tmpsock);
-#else
-    closesocket(tmpsock);
-#endif
+    if(_sock < 0)
+      return -5;  // Error: Socket accept failed
     return _sock;
   }
   int StopClient()
@@ -388,10 +392,8 @@ class GmshServer : public GmshSocket{
 #if !defined(WIN32) || defined(__CYGWIN__)
     if(_portno < 0)
       unlink(_sockname);
-    close(_sock);
-#else
-    closesocket(_sock);
 #endif
+    CloseSocket(_sock);
     return 0;
   }
 };  
