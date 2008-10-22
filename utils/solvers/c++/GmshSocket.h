@@ -303,8 +303,10 @@ class GmshServer : public GmshSocket{
       memset((char *) &addr_un, 0, sizeof(addr_un));
       strcpy(addr_un.sun_path, _sockname);
       addr_un.sun_family = AF_UNIX;
-      if(bind(tmpsock, (struct sockaddr *)&addr_un, sizeof(addr_un)) < 0)
+      if(bind(tmpsock, (struct sockaddr *)&addr_un, sizeof(addr_un)) < 0){
+        CloseSocket(tmpsock);
         return -2;  // Error: Couldn't bind socket to name
+      }
       // change permissions on the socket name in case it has to be rm'd later
       chmod(_sockname, 0666);
 #else
