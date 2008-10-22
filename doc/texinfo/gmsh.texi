@@ -3133,6 +3133,42 @@ with the edges).
 @item 19
 13-node second order pyramid (5 nodes associated with the vertices and 8
 with the edges).
+@item 20
+9-node third order incomplete triangle (3 nodes associated with the vertices, 6
+with the edges)
+@item 21
+10-node third order triangle (3 nodes associated with the vertices, 6
+with the edges, 1 with the face)
+@item 22 
+12-node fourth order incomplete triangle (3 nodes associated with the vertices, 9
+with the edges)
+@item 23 
+15-node fourth order triangle (3 nodes associated with the vertices, 9
+with the edges, 3 with the face)
+@item 24 
+15-node fifth order incomplete triangle (3 nodes associated with the vertices, 12
+with the edges)
+@item 25
+21-node fifth order complete triangle (3 nodes associated with the vertices, 12
+with the edges, 6 with the face)
+@item 26
+4-node third order edge (2 nodes associated with the vertices, 2
+internal to the edge)
+@item 27
+5-node fourth order edge (2 nodes associated with the vertices, 3
+internal to the edge)
+@item 28
+6-node fifth order edge (2 nodes associated with the vertices, 4
+internal to the edge)
+@item 29
+20-node third order tetrahedron (4 nodes associated with the vertices,
+12 with the edges, 4 with the faces)
+@item 30
+35-node fourth order tetrahedron (4 nodes associated with the vertices,
+18 with the edges, 12 with the faces, 1 in the volume)
+@item 31
+56-node fifth order tetrahedron (4 nodes associated with the vertices,
+24 with the edges, 24 with the faces, 4 in the volume)
 @end table
 See below for the ordering of the nodes.
 
@@ -3342,27 +3378,27 @@ are defined as follows.
 
 @smallexample
 @group
-Line:                   Line3:
+Line:                   Line3:           Line4:    
                                                 
-0----------1 --> u      0-----2----1
+0----------1 --> u      0-----2----1     0----2----3----1
 
 @end group
 @end smallexample
 
 @smallexample
 @group
-Triangle:               Triangle6:
+Triangle:               Triangle6:          Triangle9/10:          Triangle12/15:
 
-v
-^
-|
-2                       2           
-|`\                     |`\         
-|  `\                   |  `\       
-|    `\                 5    `4     
-|      `\               |      `\   
-|        `\             |        `\ 
-0----------1 --> u      0-----3----1
+v                                                              
+^                                                                   2 
+|                                                                   | \ 
+2                       2                    2                      9   8
+|`\                     |`\                  | \                    |     \ 
+|  `\                   |  `\                7   6                 10 (14)  7
+|    `\                 5    `4              |     \                |         \ 
+|      `\               |      `\            8  (9)  5             11 (12) (13) 6
+|        `\             |        `\          |         \            |             \
+0----------1 --> u      0-----3----1         0---3---4---1          0---3---4---5---1
 
 @end group
 @end smallexample
@@ -3393,8 +3429,8 @@ Tetrahedron:                          Tetrahedron10:
                  .
                ,/
               /
-           2                                     2           
-         ,/|`\                                 ,/|`\         
+           2                                     2                              
+         ,/|`\                                 ,/|`\                          
        ,/  |  `\                             ,/  |  `\       
      ,/    '.   `\                         ,6    '.   `5     
    ,/       |     `\                     ,/       8     `\   
@@ -3478,6 +3514,18 @@ Pyramid:                     Pyramid13:                   Pyramid14:
                        u
 @end group
 @end smallexample
+
+The nodes of a curved element are numbered in the following order:
+@itemize --
+@item the element principal vertices;
+@item the internal nodes for each edge;
+@item the internal nodes for each face;
+@item the volume internal nodes.
+@end itemize
+
+The numbering for face and volume internal nodes is recursive, ie. the
+numbering follows that of the nodes of an embedded face / volume. The
+higher order nodes are assumed to be equispaced on the element.
 
 @c -------------------------------------------------------------------------
 @c Legacy formats
