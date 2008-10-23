@@ -117,13 +117,14 @@ class GmshSocket{
 #endif
   }
   // utility function to wait for some data to read on a socket (if
-  // seconds==0 we check for available data and return immediately,
-  // i.e., we do polling)
-  int Select(int socket, int seconds)
+  // seconds and microseconds == 0 we check for available data and
+  // return immediately, i.e., we do polling). Returns 0 when data is
+  // available.
+  int Select(int socket, int seconds, int microseconds)
   {
     struct timeval tv;
     tv.tv_sec = seconds;
-    tv.tv_usec = 0;
+    tv.tv_usec = microseconds;
     fd_set rfds;
     FD_ZERO(&rfds);
     FD_SET(socket, &rfds);
@@ -239,6 +240,10 @@ class GmshClient : public GmshSocket {
     CloseSocket(_sock);
     return -2; // Error: Couldn't connect
   }
+  int Select(int seconds, int microseconds)
+  {
+    return GmshSocket::Select(_sock, seconds, microseconds);
+  }
   void Start()
   {
     char tmp[256];
@@ -310,7 +315,7 @@ class GmshServer : public GmshSocket{
       // change permissions on the socket name in case it has to be rm'd later
       chmod(_sockname, 0666);
 #else
-      return -7; // Unix sockets not available on Windows without Cygwin
+      return -7; // Unix sockets not available on Windows
 #endif
     }
     else{
@@ -357,7 +362,7 @@ class GmshServer : public GmshSocket{
     else{
       // Wait at most maxdelay seconds for data, issue error if no
       // connection in that amount of time
-      if(!Select(tmpsock, maxdelay)){
+      if(!Select(tmpsock, maxdelay, 0)){
         CloseSocket(tmpsock);
         return -4;  // Error: Socket listening timeout
       }

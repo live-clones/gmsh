@@ -18,19 +18,20 @@ extern Context_T CTX;
 
 // Draw specialization
 
-void SetOpenglContext(void)
+void SetOpenglContext()
 {
   if(!WID) return;
   WID->make_opengl_current();
 }
 
-void Draw(void)
+void Draw()
 {
   if(!WID) return;
   WID->redraw_opengl();
 }
 
-void Draw_String(const char *s, const char *font_name, int font_enum, int font_size, int align)
+void Draw_String(std::string s, const char *font_name, int font_enum, 
+                 int font_size, int align)
 {
   if(CTX.printing && !CTX.print.text) return;
 
@@ -43,7 +44,7 @@ void Draw_String(const char *s, const char *font_name, int font_enum, int font_s
       glGetDoublev(GL_CURRENT_RASTER_POSITION, pos);
       double x[3], w[3] = {pos[0], pos[1], pos[2]};
       gl_font(font_enum, font_size);
-      float width = gl_width(s);
+      float width = gl_width(s.c_str());
       float height = gl_height();
       switch(align){
       case 1: w[0] -= width/2.;                     break; // bottom center
@@ -63,11 +64,11 @@ void Draw_String(const char *s, const char *font_name, int font_enum, int font_s
   
   if(!CTX.printing){
     gl_font(font_enum, font_size);
-    gl_draw(s);
+    gl_draw(s.c_str());
   }
   else{
     if(CTX.print.format == FORMAT_TEX){
-      std::string tmp = SanitizeTeXString(s, CTX.print.tex_as_equation);
+      std::string tmp = SanitizeTeXString(s.c_str(), CTX.print.tex_as_equation);
       int opt;
       switch(align){
       case 1: opt = GL2PS_TEXT_B;   break; // bottom center
@@ -86,31 +87,31 @@ void Draw_String(const char *s, const char *font_name, int font_enum, int font_s
                                       CTX.print.format == FORMAT_EPS ||
                                       CTX.print.format == FORMAT_PDF ||
                                       CTX.print.format == FORMAT_SVG)){
-      gl2psText(s, font_name, font_size);
+      gl2psText(s.c_str(), font_name, font_size);
     }
     else{
       gl_font(font_enum, font_size);
-      gl_draw(s);
+      gl_draw(s.c_str());
     }
   }
 }
 
-void Draw_String(const char *s)
+void Draw_String(std::string s)
 {
   Draw_String(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 0);
 }
 
-void Draw_String_Center(const char *s)
+void Draw_String_Center(std::string s)
 {
   Draw_String(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 1);
 }
 
-void Draw_String_Right(const char *s)
+void Draw_String_Right(std::string s)
 {
   Draw_String(s, CTX.gl_font, CTX.gl_font_enum, CTX.gl_fontsize, 2);
 }
 
-void Draw_String(const char *s, double style)
+void Draw_String(std::string s, double style)
 {
   unsigned int bits = (unsigned int)style;
 

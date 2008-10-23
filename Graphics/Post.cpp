@@ -1138,11 +1138,10 @@ static void drawNumberGlyphs(PView *p, int numNodes, int numComp,
       unsigned int col = opt->getColor(v, vmin, vmax);
       glColor4ubv((GLubyte *) & col);
       glRasterPos3d(pc.x(), pc.y(), pc.z());
-      const char *txt = stringValue(numComp, d, v, opt->Format).c_str();
       if(opt->CenterGlyphs)
-        Draw_String_Center(txt);
+        Draw_String_Center(stringValue(numComp, d, v, opt->Format));
       else
-        Draw_String(txt);
+        Draw_String(stringValue(numComp, d, v, opt->Format));
     }
   }
   else if(opt->GlyphLocation == PViewOptions::Vertex){
@@ -1152,11 +1151,10 @@ static void drawNumberGlyphs(PView *p, int numNodes, int numComp,
         unsigned int col = opt->getColor(v, vmin, vmax);
         glColor4ubv((GLubyte *) & col);
         glRasterPos3d(xyz[i][0], xyz[i][1], xyz[i][2]);
-        const char *txt = stringValue(numComp, val[i], v, opt->Format).c_str();
         if(opt->CenterGlyphs)
-          Draw_String_Center(txt);
+          Draw_String_Center(stringValue(numComp, val[i], v, opt->Format));
         else
-          Draw_String(txt);
+          Draw_String(stringValue(numComp, val[i], v, opt->Format));
       }
     }
   }
@@ -1445,7 +1443,7 @@ class drawPView {
         std::string str;
         data->getString3D(i, opt->TimeStep, str, x, y, z, style);
         glRasterPos3d(x, y, z);
-        Draw_String(str.c_str(), style);
+        Draw_String(str, style);
       }
     }
     

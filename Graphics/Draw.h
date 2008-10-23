@@ -6,6 +6,7 @@
 #ifndef _DRAW_H_
 #define _DRAW_H_
 
+#include <string>
 #include "SBoundingBox3d.h"
 
 #define GMSH_RENDER    1
@@ -30,10 +31,10 @@ void Draw2d();
 void DrawPlugin(void (*draw)());
 void Draw();
 
-void Draw_String(const char *s);
-void Draw_String(const char *s, double style);
-void Draw_String_Center(const char *s);
-void Draw_String_Right(const char *s);
+void Draw_String(std::string);
+void Draw_String(std::string, double style);
+void Draw_String_Center(std::string);
+void Draw_String_Right(std::string);
 void Draw_Geom();
 void Draw_Mesh();
 void Draw_Post();

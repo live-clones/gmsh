@@ -43,10 +43,11 @@ class myGmshServer : public GmshServer{
 
       // check if there is data (call select with a zero timeout to
       // return immediately, i.e., do polling)
-      int ret = Select(socket, 0);
+      int ret = Select(socket, 0, 0);
 
       if(ret == 0){ 
-        // nothing available: wait at most waitint seconds
+        // nothing available: wait at most waitint seconds, and in the
+        // meantime respond to FLTK events
         WID->wait(waitint);
       }
       else if(ret > 0){ 
