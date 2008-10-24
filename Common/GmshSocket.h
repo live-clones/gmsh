@@ -214,7 +214,7 @@ class GmshClient : public GmshSocket {
       if(_sock < 0)
 	return -1; // Error: Couldn't create socket
       // try to connect socket to host:port
-      char *port = strstr(sockname, ":");
+      const char *port = strstr(sockname, ":");
       int portno = atoi(port + 1);
       int remotelen = strlen(sockname) - strlen(port);
       char remote[256];
