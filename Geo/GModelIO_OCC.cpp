@@ -580,21 +580,25 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it){
     GVertex *gv = *it;
     if(gv->getNativeType() != GEntity::OpenCascadeModel) continue;
-    TopoDS_Shape *shape = (TopoDS_Shape*)gv->getNativePtr();
-    if(vertexConstraints.IsBound(*shape)) {
+    TopoDS_Shape *s = (TopoDS_Shape*)gv->getNativePtr();
+    if(vertexConstraints.IsBound(*s)) {
       Msg::Debug("Found mesh contraints on vertex %d", gv->tag());
-      const MeshGmsh_VertexConstrain &c(vertexConstraints.Find(*shape));
+      const MeshGmsh_VertexConstrain &c(vertexConstraints.Find(*s));
+      // characteristic length constraint
       double lc = c.GetSize();
-      Msg::Debug("... setting mesh size = %g", lc);
-      gv->setPrescribedMeshSizeAtVertex(lc);
-      if(!c.GetFace().IsNull()){
+      if(lc >= 0.){
+        Msg::Debug("... setting mesh size = %g", lc);
+        gv->setPrescribedMeshSizeAtVertex(lc);
+      }
+      // embedding constraint
+      if(c.IsEmbedded() && !c.GetFace().IsNull()){
         TopoDS_Shape shape = c.GetFace();
         for(GModel::fiter it2 = m->firstFace(); it2 != m->lastFace(); ++it2){
           GFace *gf = *it2;
           if(gf->getNativeType() != GEntity::OpenCascadeModel) continue;
           TopoDS_Shape *shape2 = (TopoDS_Shape*)gf->getNativePtr();
           if(shape.IsSame(*shape2)){
-            Msg::Debug("... embedding in face %d", gf->tag());
+            Msg::Debug("... embedding vertex in face %d", gf->tag());
             gf->addEmbeddedVertex(gv);
           }
         }
@@ -608,11 +612,12 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
     GEdge *ge = *it;
     if(ge->getNativeType() != GEntity::OpenCascadeModel) continue;
-    TopoDS_Shape *shape = (TopoDS_Shape*)ge->getNativePtr();
-    if(edgeConstraints.IsBound(*shape)) {
+    TopoDS_Shape *s = (TopoDS_Shape*)ge->getNativePtr();
+    if(edgeConstraints.IsBound(*s)) {
       Msg::Debug("Found mesh contraints on edge %d", ge->tag());
-      const MeshGmsh_EdgeConstrain &c(edgeConstraints.Find(*shape));
-      if(c.IsMeshImposed() == Standard_True){
+      const MeshGmsh_EdgeConstrain &c(edgeConstraints.Find(*s));
+      // prescribed mesh constraint
+      if(c.IsMeshImposed()){
 	TColStd_SequenceOfInteger nodeNum;
 	c.GetNodesNumber(nodeNum);
 	TColStd_SequenceOfReal nodePar;
@@ -654,6 +659,19 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
 	    ge->lines.push_back(new MLine(v0, v1));
 	  }
 	}
+      }
+      // embedding constraint
+      if(c.IsEmbedded() && !c.GetFace().IsNull()){
+        TopoDS_Shape shape = c.GetFace();
+        for(GModel::fiter it2 = m->firstFace(); it2 != m->lastFace(); ++it2){
+          GFace *gf = *it2;
+          if(gf->getNativeType() != GEntity::OpenCascadeModel) continue;
+          TopoDS_Shape *shape2 = (TopoDS_Shape*)gf->getNativePtr();
+          if(shape.IsSame(*shape2)){
+            Msg::Debug("... embedding edge in face %d", gf->tag());
+            gf->addEmbeddedEdge(ge);
+          }
+        }
       }
     }
   }

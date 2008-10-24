@@ -20,7 +20,8 @@ with the MacOS port and the tensor display code; Pierre Badel for help
 with the GSL integration; Marc Ume for the original list code; Matt
 Gundry for the Plot3d mesh format; Jozef Vesely for help with the
 Tetgen integration; Koen Hillewaert for high order element mappings
-and other improvements; Jacques Lechelle for the DIFFPACK mesh format.
+and other improvements; Jacques Lechelle for the DIFFPACK mesh format;
+Ruth Sabariego for pyramids.
 
 The AVL tree code (Common/avl.*) and the YUV image code
 (Graphics/gl2yuv.*) are copyright (C) 1988-1993, 1995 The Regents of
@@ -104,8 +105,11 @@ machines for testing Gmsh: Juan Abanto, Olivier Adam, Guillaume
 Alleon, Eric Bechet, Laurent Champaney, Pascal Dupuis, Philippe
 Geuzaine, Johan Gyselinck, Francois Henrotte, Benoit Meys, Nicolas
 Moes, Osamu Nakamura, Chad Schmutzer, Jean-Luc Fl'ejou, Xavier
-Dardenne, Christophe Prud'homme, Sebastien.Clerc, Jose Miguel Pasini,
+Dardenne, Christophe Prud'homme, Sebastien Clerc, Jose Miguel Pasini,
 Philippe Lussou, Jacques Kools, Bayram Yenikaya, Peter Hornby, Krishna
 Mohan Gundu, Christopher Stott, Timmy Schumacher, Carl Osterwisch,
-Bruno Frackowiak, Philip Kelleners, Romuald Conty, Ruth Sabariego,
-Renaud Sizaire, Michel Benhamou, Emilie Marchandise, Tom De Vuyst.
+Bruno Frackowiak, Philip Kelleners, Romuald Conty, Renaud Sizaire,
+Michel Benhamou, Emilie Marchandise, Tom De Vuyst, Kris Van den
+Abeele, Simon Vun, Simon Corbin, Thomas De-Soza, Marcus Drosson,
+Antoine Dechaume, Jose Paulo Moitinho de Almeida, Thomas Pinchard,
+Corrado Chisari, Axel Hackbarth, Peter Wainwright.
