@@ -273,14 +273,14 @@ package-win:
 	cp doc/README.win32 gmsh-${GMSH_VERSION}/README.txt
 	cp doc/LICENSE.txt doc/VERSIONS.txt doc/FAQ.txt doc/CREDITS.txt\
           gmsh-${GMSH_VERSION}
-	cd utils/misc && ./unix2dos.bash ../../gmsh-${GMSH_VERSION}/*.txt
 	cp -R tutorial gmsh-${GMSH_VERSION}
 	cp -R demos gmsh-${GMSH_VERSION}
 	rm -rf gmsh-${GMSH_VERSION}/*/CVS
 	rm -f gmsh-${GMSH_VERSION}/tutorial/t*.msh
 	rm -f gmsh-${GMSH_VERSION}/*/*~
-	cd utils/misc && ./unix2dos.bash ../../gmsh-${GMSH_VERSION}/tutorial/*\
-                                         ../../gmsh-${GMSH_VERSION}/demos/*
+	unix2dos gmsh-${GMSH_VERSION}/*.txt
+	unix2dos gmsh-${GMSH_VERSION}/tutorial/*
+	unix2dos gmsh-${GMSH_VERSION}/demos/*
 	cd gmsh-${GMSH_VERSION} && zip -r gmsh-${GMSH_VERSION}-Windows.zip *
 	mv gmsh-${GMSH_VERSION}/gmsh-${GMSH_VERSION}-Windows.zip .
 

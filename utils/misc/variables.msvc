@@ -8,37 +8,50 @@
 
 ##################################################################
 
-# Specify where gmake is installed
-MAKE=C:\src\gmsh\utils\misc\gmake.exe
+# Define this is you use the native Windows shell
+#
+MAKE=C:/src/gmsh/utils/misc/gmake.exe
+UNAME=WIN32MSVC
+RM=erase
+MV=move
+
+# Define this if you use the bash shell in cygwin
+#
+# Launch compilation with:
+#  cmd.exe /c "vcvars32.bat && make"
+#
+MAKE=make
+UNAME=WIN32
+RM=rm -f
+MV=mv -f
 
 # Change the following to select which version to build:
 ENABLE_GSL=0
-ENABLE_GUI=0
+ENABLE_GUI=1
 ENABLE_PARSER=1
-ENABLE_POSTPRO=0
+ENABLE_POSTPRO=1
 ENABLE_TETGEN=1
-ENABLE_NETGEN=0
-ENABLE_METIS=0
-ENABLE_OCC=0
-ENABLE_MED=0
+ENABLE_NETGEN=1
+ENABLE_METIS=1
+ENABLE_OCC=1
+ENABLE_MED=1
 
 # If you selected ENABLE_GSL, specify where the GSL is installed
-GSL_PREFIX=C:\src\gsl-1.8
+GSL_PREFIX=C:/src/gsl-1.8
 
 # If you selected ENABLE_GUI, specify where FLTK is installed
-FLTK_PREFIX=C:\src\fltk-1.1.9
+FLTK_PREFIX=C:/src/fltk-1.1.9
 
 # If you selected ENABLE_OCC, specify where OpenCASCADE is insalled
-OCC_PREFIX=C:\src\OpenCASCADE6.3.0\ros
+OCC_PREFIX=C:/src/OpenCASCADE6.3.0/ros
 
 # If you selected ENABLE_MED, specify where MED and HDF5 are installed
-MED_PREFIX=C:\src\med-2.3.4
-HDF5_PREFIX=C:\src\hdf5-1.6.6
+MED_PREFIX=C:/src/med-2.3.4
+HDF5_PREFIX=C:/src/hdf5-1.6.6
 
 ##################################################################
 
-# OS and host
-UNAME=WIN32MSVC
+# hostname
 HOSTNAME=localhost
 
 # The names of the C and C++ compilers
@@ -120,7 +133,7 @@ ifeq (${ENABLE_GUI},1)
   GMSH_DIRS+=Graphics Fltk contrib/NativeFileChooser
   FLAGS+=/DHAVE_FLTK /I"${FLTK_PREFIX}" /I"${FLTK_PREFIX}/FL/images"
   FLAGS+=/DHAVE_LIBZ /DHAVE_LIBPNG /DHAVE_LIBJPEG /DHAVE_NATIVE_FILE_CHOOSER
-  GMSH_LIBS+=Fltk/Main.obj lib/*.lib ${FLTK_PREFIX}\lib\fltk*.lib
+  GMSH_LIBS+=Fltk/Main.obj lib/*.lib ${FLTK_PREFIX}/lib/fltk*.lib
   GMSH_LIBS+=glu32.lib opengl32.lib advapi32.lib gdi32.lib user32.lib
   GMSH_LIBS+=shell32.lib ole32.lib comctl32.lib comdlg32.lib ws2_32.lib
   GMSH_LIBS+=Fltk/Win32Icon.res
@@ -147,12 +160,8 @@ OBJEXT=.obj
 LIBEXT=.lib
 EXEEXT=.exe
 
-# File handling commands
-RM=erase
-MV=move
-
 # Installation directories
-prefix="S:\Lib\gmsh"
+prefix="S:/Lib/gmsh"
 exec_prefix=${prefix}
 bindir=${exec_prefix}/bin
 datadir=${datarootdir}
