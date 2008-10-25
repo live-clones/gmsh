@@ -23,9 +23,13 @@
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#if defined(HAVE_NO_SOCKLEN_T)
+typedef int socklen_t;
+#endif
 #else
 #include <winsock.h>
 #include <process.h>
+typedef int socklen_t;
 #endif
 
 class GmshSocket{
@@ -369,15 +373,10 @@ class GmshServer : public GmshSocket{
     }
 
     // accept connection request
-#if defined(HAVE_NO_SOCKLEN_T)
-    int len;
-#else
-    socklen_t len;
-#endif
     if(_portno < 0){
 #if !defined(WIN32) || defined(__CYGWIN__)
       struct sockaddr_un from_un;
-      len = sizeof(from_un);
+      socklen_t len = sizeof(from_un);
       _sock = accept(tmpsock, (struct sockaddr *)&from_un, &len);
 #else
       _sock = -7; // Unix sockets not available on Windows
@@ -385,7 +384,7 @@ class GmshServer : public GmshSocket{
     }
     else{
       struct sockaddr_in from_in;
-      len = sizeof(from_in);
+      socklen_t len = sizeof(from_in);
       _sock = accept(tmpsock, (struct sockaddr *)&from_in, &len);
     }
     CloseSocket(tmpsock);
