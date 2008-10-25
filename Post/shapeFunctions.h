@@ -830,7 +830,6 @@ public:
   inline int getNumGaussPoints(){ return 8; }
   void getGaussPoint(int num, double &u, double &v, double &w, double &weight)
   {
-    //Integration points for old_pyramids
     double u8[8] = {0.2631840555694285,-0.2631840555694285,
 		    0.2631840555694285,-0.2631840555694285,
 		    0.5066163033492386,-0.5066163033492386,
@@ -847,7 +846,6 @@ public:
 		    0.100785882079825,0.100785882079825,
 		    0.232547451253508,0.232547451253508,
 		    0.232547451253508,0.232547451253508};
-
     if(num < 0 || num > 7) return;
     u = u8[num];
     v = v8[num];

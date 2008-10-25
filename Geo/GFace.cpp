@@ -537,15 +537,13 @@ void GFace::XYZtoUV(const double X, const double Y, const double Z,
         V = Vnew;
       }
 
-      //printf("i=%d j=%d err=%g iter=%d err2=%g u=%.16g v=%.16g x=%g y=%g z=%g\n", 
-      //     i, j, err, iter, err2, U, V, X, Y, Z);
-
       if(iter < MaxIter && err <= Precision &&
          Unew <= umax && Vnew <= vmax &&
          Unew >= umin && Vnew >= vmin){
         if (onSurface && err2 > 1.e-4 * CTX.lc)
-          Msg::Warning("Converged for i=%d j=%d (err=%g iter=%d) BUT xyz error = %g in point (%e,%e,%e) on surface %d",
-                       i, j, err, iter, err2,X,Y,Z,tag());
+          Msg::Warning("Converged for i=%d j=%d (err=%g iter=%d) BUT "
+                       "xyz error = %g in point (%e,%e,%e) on surface %d",
+                       i, j, err, iter, err2, X, Y, Z, tag());
         return;
       }
     }

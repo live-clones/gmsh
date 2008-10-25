@@ -547,6 +547,19 @@ Default value: @code{2}
 Default value: @code{-1}
 @end table
 
+@item Plugin(LongitudeLatitude)
+Plugin(LongituteLatitude) Project the view `iView'
+in Longitude-Latitude. If `iView' < 0, the plugin
+is run on the current view.
+
+Plugin(LongituteLatitude) is executed in place.
+
+Numeric options:
+@table @code
+@item iView
+Default value: @code{-1}
+@end table
+
 @item Plugin(MakeSimplex)
 Plugin(MakeSimplex) decomposes all non-
 simplectic elements (quadrangles, prisms,
@@ -805,27 +818,6 @@ Default value: @code{0}
 Default value: @code{0}
 @item iView
 Default value: @code{-1}
-@end table
-
-@item Plugin(TransformLatLon)
-Plugin(TransformLatLon) transforms the homogeneous
-node coordinates (x,y,z,1) of the elements in
-the view `iView' by the matrix
-[`A11' `A12' `A13' `Tx']
-[`A21' `A22' `A23' `Ty']
-[`A31' `A32' `A33' `Tz'].
-If `SwapOrientation' is set, the orientation of the
-elements is reversed. If `iView' < 0, the plugin
-is run on the current view.
-
-Plugin(TransformLatLon) is executed in-place.
-
-Numeric options:
-@table @code
-@item iView
-Default value: @code{-1}
-@item Longitude0
-Default value: @code{0}
 @end table
 
 @item Plugin(Triangulate)

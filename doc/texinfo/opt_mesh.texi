@@ -29,6 +29,11 @@ Field format for Nastran BDF files (0=free, 1=small, 2=large)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Binary
+Write mesh files in binary format (if possible)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.C1Continuity
 Impose C1 continuity to high order meshes (only valid in 2D plane and ElemenOrder = 2)@*
 Default value: @code{0}@*
@@ -254,11 +259,6 @@ Minimum number of points used to mesh a (non-straight) curve@*
 Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MshBinary
-Write MSH files in binary format?@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.MshFileVersion
 Version of the MSH file format to use@*
 Default value: @code{2}@*
@@ -451,11 +451,6 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SmoothNormals
 Smooth the mesh normals?@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.StlBinary
-Save STL files in binary format?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
