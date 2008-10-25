@@ -1,6 +1,6 @@
-$Id: VERSIONS.txt,v 1.10 2008-10-25 07:39:15 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.11 2008-10-25 08:31:30 geuzaine Exp $
 
-2.2.5 (Oct 25, 2008): Gmsh now requires FLTK 1.1.7 or above; various
+2.2.5 (XXX): Gmsh now requires FLTK 1.1.7 or above; various
 small improvements (STL and VTK mesh IO, Netgen upgrade, Visual C++
 support, Fields) and bug fixes (pyramid interpolation, Chaco crashes).
 
