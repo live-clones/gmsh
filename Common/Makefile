@@ -107,7 +107,7 @@ Gmsh.o: Gmsh.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Post/PView.h Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h ../Mesh/Partition.h GmshDaemon.h \
   ../Plugin/PluginManager.h
-GmshDaemon.o: GmshDaemon.cpp Message.h GmshSocket.h
+GmshDaemon.o: GmshDaemon.cpp Message.h OS.h GmshSocket.h
 OS.o: OS.cpp Message.h
 OpenFile.o: OpenFile.cpp Message.h ../Geo/Geo.h ../Common/GmshDefines.h \
   ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
@@ -165,7 +165,8 @@ Visibility.o: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \
   ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
   ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Common/Message.h ../Parser/Parser.h
+  ../Common/Message.h ../Numeric/FunctionSpace.h ../Common/GmshMatrix.h \
+  ../Parser/Parser.h
 Trackball.o: Trackball.cpp Trackball.h
 VertexArray.o: VertexArray.cpp VertexArray.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h Context.h ../Geo/CGNSOptions.h \
