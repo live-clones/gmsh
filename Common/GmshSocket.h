@@ -65,7 +65,7 @@ class GmshSocket{
     int sofar = 0;
     int remaining = bytes;
     do {
-      ssize_t len = send(_sock, buf + sofar, remaining, 0); 
+      int len = send(_sock, buf + sofar, remaining, 0); 
       sofar += len;
       remaining -= len;
     } while(remaining > 0);
