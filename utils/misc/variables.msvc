@@ -128,8 +128,9 @@ ifeq (${ENABLE_GUI},1)
   GMSH_LIBS+=/SUBSYSTEM:WINDOWS
 else
   GMSH_LIBS+=Common/Main.obj lib/*.lib
+  GMSH_LIBS+=ws2_32.lib
   ifeq (${ENABLE_OCC},1)
-    GMSH_LIBS+=advapi32.lib user32.lib ws2_32.lib
+    GMSH_LIBS+=advapi32.lib user32.lib
   endif
 endif
 

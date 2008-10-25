@@ -14,13 +14,13 @@
 #include "MEdge.h"
 #include "MFace.h"
 #include "Message.h"
+#include "FunctionSpace.h"
 
 struct IntPt{
   double pt[3];
   double weight;
 };
 
-class gmshFunctionSpace;
 class GFace;
 
 // A mesh element.
@@ -362,7 +362,7 @@ class MLine : public MElement {
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
   }
-  virtual const gmshFunctionSpace* getFunctionSpace(int=-1) const;
+  virtual const gmshFunctionSpace* getFunctionSpace(int o=-1) const;
   virtual bool isInside(double u, double v, double w, double tol=1.e-8)
   {
     if(u < -(1. + tol) || u > (1. + tol))
@@ -573,7 +573,7 @@ class MTriangle : public MElement {
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
-  virtual const gmshFunctionSpace* getFunctionSpace(int=-1) const;
+  virtual const gmshFunctionSpace* getFunctionSpace(int o=-1) const;
   virtual bool isInside(double u, double v, double w, double tol=1.e-8)
   {
     if(u < (-tol) || v < (-tol) || u > ((1. + tol) - v))
@@ -1199,7 +1199,7 @@ class MTetrahedron : public MElement {
   virtual double distoShapeMeasure();
   virtual double etaShapeMeasure();
   void xyz2uvw(double xyz[3], double uvw[3]);
-  virtual const gmshFunctionSpace* getFunctionSpace(int=-1) const;
+  virtual const gmshFunctionSpace* getFunctionSpace(int o=-1) const;
   virtual bool isInside(double u, double v, double w, double tol=1.e-8)
   {
     if(u < (-tol) || v < (-tol) || w < (-tol) || u > ((1. + tol) - v - w))

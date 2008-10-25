@@ -8,7 +8,6 @@
 #include "MElement.h"
 #include "GEntity.h"
 #include "GFace.h"
-#include "FunctionSpace.h"
 #include "Message.h"
 #include "StringUtils.h"
 
