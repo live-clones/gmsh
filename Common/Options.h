@@ -234,6 +234,7 @@ double opt_general_message_position0(OPT_ARGS_NUM);
 double opt_general_message_position1(OPT_ARGS_NUM);
 double opt_general_message_size0(OPT_ARGS_NUM);
 double opt_general_message_size1(OPT_ARGS_NUM);
+double opt_general_message_auto_scroll(OPT_ARGS_NUM);
 double opt_general_option_position0(OPT_ARGS_NUM);
 double opt_general_option_position1(OPT_ARGS_NUM);
 double opt_general_plugin_position0(OPT_ARGS_NUM);

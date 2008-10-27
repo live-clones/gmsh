@@ -56,8 +56,10 @@ class myGmshServer : public GmshServer{
       }
       else{ 
         // an error happened
-        if(num >= 0)
+        if(num >= 0){
           SINFO[num].pid = -1;
+          SINFO[num].server = 0;
+        }
         return 1;
       }
     }
@@ -165,6 +167,7 @@ int Solver(int num, const char *args)
     for(int i = 0; i < SINFO[num].nboptions; i++)
       SINFO[num].nbval[i] = 0;
     SINFO[num].pid = 0;
+    SINFO[num].server = 0;
   }
 
   Msg::StatusBar(2, false, "Running '%s'", prog.c_str());
@@ -188,13 +191,17 @@ int Solver(int num, const char *args)
       if(server->ReceiveString(length, message)){
         switch (type) {
         case GmshServer::CLIENT_START:
-          if(num >= 0)
+          if(num >= 0){
             SINFO[num].pid = atoi(message);
+            SINFO[num].server = server;
+          }
           break;
         case GmshServer::CLIENT_STOP:
           stop = 1;
-          if(num >= 0)
+          if(num >= 0){
             SINFO[num].pid = -1;
+            SINFO[num].server = 0;
+          }
           break;
         case GmshServer::CLIENT_PROGRESS:
           if(num >= 0)

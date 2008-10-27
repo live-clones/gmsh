@@ -1894,6 +1894,11 @@ void message_cb(CALLBACK_ARGS)
   WID->create_message_window();
 }
 
+void message_auto_scroll_cb(CALLBACK_ARGS)
+{
+  CTX.msg_auto_scroll = WID->msg_butt->value();
+}
+
 void message_copy_cb(CALLBACK_ARGS)
 {
 #define BUFFL 50000

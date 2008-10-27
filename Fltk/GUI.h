@@ -229,6 +229,7 @@ public:
   // message window
   Fl_Window        *msg_window;
   Fl_Browser       *msg_browser;
+  Fl_Check_Button  *msg_butt;
 
   // visibility window
   Fl_Window        *vis_window;

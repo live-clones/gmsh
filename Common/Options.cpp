@@ -2549,6 +2549,17 @@ double opt_general_message_size1(OPT_ARGS_NUM)
   return CTX.msg_size[1];
 }
 
+double opt_general_message_auto_scroll(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.msg_auto_scroll = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->msg_butt->value(CTX.msg_auto_scroll);
+#endif
+  return CTX.msg_auto_scroll;
+}
+
 double opt_general_option_position0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

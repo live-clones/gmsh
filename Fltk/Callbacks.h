@@ -143,6 +143,7 @@ void statistics_histogram_cb(CALLBACK_ARGS);
 // Message Menu
 
 void message_cb(CALLBACK_ARGS);
+void message_auto_scroll_cb(CALLBACK_ARGS);
 void message_copy_cb(CALLBACK_ARGS);
 void message_clear_cb(CALLBACK_ARGS);
 void message_save_cb(CALLBACK_ARGS);

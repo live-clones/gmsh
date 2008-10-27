@@ -8,6 +8,8 @@
 
 #define MAXSOLVERS 5
 
+class GmshServer;
+
 typedef struct{
   char name[256], extension[32], executable_name[256];
   char mesh_name[256], mesh_command[256];
@@ -20,6 +22,7 @@ typedef struct{
   const char *help;
   int client_server, popup_messages, merge_views;
   int pid;
+  GmshServer *server;
 } SolverInfo ;
 
 extern SolverInfo SINFO[MAXSOLVERS] ;

@@ -50,6 +50,7 @@ class Context_T {
   int gl_position[2]; // position of the graphic window on the screen
   int msg_position[2]; // position of the message window on the screen
   int msg_size[2]; // size of the message window on the screen
+  int msg_auto_scroll; // scroll automatically to last message
   int opt_position[2]; // position of the option window on the screen
   int vis_position[2]; // position of the visibility window on the screen
   int clip_position[2]; // position of the clipping planes window on the screen

@@ -508,6 +508,8 @@ int GetFontSize()
 
 // Definition of global shortcuts
 
+#include "GmshSocket.h"
+
 int GUI::global_shortcuts(int event)
 {
   // we only handle shortcuts here
@@ -517,6 +519,15 @@ int GUI::global_shortcuts(int event)
   if(Fl::test_shortcut('0')) {
     geometry_reload_cb(0, 0);
     mod_geometry_cb(0, 0);
+    return 1;
+  }
+  // FIXME TESTING ONLY -- TO REMOVE LATER
+  else if(Fl::test_shortcut(FL_CTRL + 'p')) {
+    Msg::Info("TEST DAEMON!");
+    if(SINFO[2].server){
+      Msg::Info("SENDING COMMAND!");
+      SINFO[2].server->SendString(GmshSocket::CLIENT_INFO, "HEY YOU!");
+    }
     return 1;
   }
   else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F + 1)) {
@@ -4247,6 +4258,11 @@ void GUI::create_message_window(bool redraw_only)
   msg_browser->callback(message_copy_cb);
 
   {
+    msg_butt = new Fl_Check_Button(width - 4 * BB - 4 * WB, height - BH - WB, BB, BH, "Auto scroll");
+    msg_butt->type(FL_TOGGLE_BUTTON);
+    msg_butt->callback(message_auto_scroll_cb);
+  }
+  {
     Fl_Return_Button *o = new Fl_Return_Button(width - 3 * BB - 3 * WB, height - BH - WB, BB, BH, "Clear");
     o->callback(message_clear_cb);
   }
@@ -4259,7 +4275,7 @@ void GUI::create_message_window(bool redraw_only)
     o->callback(cancel_cb, (void *)msg_window);
   }
 
-  msg_window->resizable(new Fl_Box(WB, WB, 100, 10));
+  msg_window->resizable(new Fl_Box(1, 1, 4, 4));
   msg_window->size_range(WB + 100 + 3 * BB + 4 * WB, 100);
 
   msg_window->position(CTX.msg_position[0], CTX.msg_position[1]);
@@ -4269,7 +4285,8 @@ void GUI::create_message_window(bool redraw_only)
 void GUI::add_message(const char *msg)
 {
   msg_browser->add(msg, 0);
-  msg_browser->bottomline(msg_browser->size());
+  if(CTX.msg_auto_scroll)
+    msg_browser->bottomline(msg_browser->size());
 }
 
 void GUI::save_message(const char *filename)

@@ -657,6 +657,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Horizontal position (in pixels) of the upper left corner of the menu window" }, 
   { F|S, "MenuPositionY" , opt_general_menu_position1 , 50. ,
     "Vertical position (in pixels) of the upper left corner of the menu window" }, 
+  { F|S, "MessageAutoScroll" , opt_general_message_auto_scroll , 1. , 
+    "Automatically scroll message window" }, 
   { F|S, "MessagePositionX" , opt_general_message_position0 , 650. , 
     "Horizontal position (in pixels) of the upper left corner of the message window" }, 
   { F|S, "MessagePositionY" , opt_general_message_position1 , 490. , 
