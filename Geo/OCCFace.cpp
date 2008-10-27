@@ -76,7 +76,7 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
 
   ShapeAnalysis::GetFaceUVBounds(_s, umin, umax, vmin, vmax);
   Msg::Debug("OCC Face %d with %d edges bounds (%g,%g)(%g,%g)", 
-      num, l_edges.size(), umin, umax, vmin, vmax);
+             num, l_edges.size(), umin, umax, vmin, vmax);
   // we do that for the projections to converge on the borders of the
   // surface
   const double du = umax - umin;
