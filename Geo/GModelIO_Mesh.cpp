@@ -2191,6 +2191,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
       }
     }
   }
+
   fprintf(fp, "\n\n");
   fprintf(fp, " Finite element mesh (GridFE):\n\n");
   fprintf(fp, " Number of space dim. =   3\n");
@@ -2207,6 +2208,8 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
       fprintf(fp, " %d", (*it)->tag());
     }
   } 
+
+  // write mesh vertices
   fprintf(fp, "\n\n\n");
   fprintf(fp,"  Nodal coordinates and nodal boundary indicators,\n");
   fprintf(fp,"  the columns contain:\n");
@@ -2215,9 +2218,6 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   fprintf(fp,"   - no of boundary indicators that are set (ON)\n");
   fprintf(fp,"   - the boundary indicators that are set (ON) if any.\n");
   fprintf(fp,"#\n");
-
-  // write mesh vertices
-  fprintf(fp, "%d\n", numVertices);
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
       entities[i]->mesh_vertices[j]->writeDIFF(fp, binary, scalingFactor);
@@ -2241,16 +2241,13 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   fprintf(fp,     "   - the global node numbers of the nodes in the element.\n");
   fprintf(fp,     "#\n");
 
-  static int element_number = 0;
-  fprintf(fp, "%d\n", numElements);
+  // write mesh elements
   for(unsigned int i = 0; i < entities.size(); i++){
     if(entities[i]->physicals.size() || saveAll){
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
         int type = entities[i]->getMeshElement(j)->getTypeForDIFF();
-	if(type){
-          element_number++;
+	if(type)
           entities[i]->getMeshElement(j)->writeDIFF(fp, binary, entities[i]->tag());
-        }
       }
     }
   }
