@@ -224,7 +224,7 @@ class MElement
   virtual void writeVTK(FILE *fp, bool binary=false, bool bigEndian=false);
   virtual void writeMESH(FILE *fp, int elementary=1);
   virtual void writeBDF(FILE *fp, int format=0, int elementary=1);
-  virtual void writeDIFF(FILE *fp, bool binary=false, int physical_property=1);
+  virtual void writeDIFF(FILE *fp, int num, bool binary=false, int physical_property=1);
  
   // info for specific IO formats (returning 0 means that the element
   // is not implemented in that format)

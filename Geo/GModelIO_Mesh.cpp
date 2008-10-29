@@ -2157,11 +2157,10 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
 int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
                       double scalingFactor)
 {
-  Msg::Warning("DIFF export is experimental:");
-  Msg::Warning("*   only tetrahedra P1 or P2 are taken into account");
-  Msg::Warning("*   only ASCII output is implemented");
-
-  if(binary) return 0;
+  if(binary){
+    Msg::Error("Binary DIFF output is not implemented");
+    return 0;
+  }
 
   FILE *fp = fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp){
@@ -2170,8 +2169,6 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   }
   
   if(noPhysicalGroups()) saveAll = true;
-  int nbP1 = 4; // number of P1 nodes
-  int nbP2 = 6; // number of P2 nodes which are not P1 (edges' midpoints)
 
   // get the number of vertices and index the vertices in a continuous
   // sequence
@@ -2182,12 +2179,15 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   getEntities(entities);
 
   // loop over all elements we need to save
-  int numElements = 0;
+  int numElements = 0, maxNumNodesPerElement = 0;
   for(unsigned int i = 0; i < entities.size(); i++){
     if(entities[i]->physicals.size() || saveAll){
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-        if(entities[i]->getMeshElement(j)->getTypeForDIFF())
+        MElement *e = entities[i]->getMeshElement(j);
+        if(e->getTypeForDIFF()){
           numElements++;
+          maxNumNodesPerElement = std::max(maxNumNodesPerElement, e->getNumVertices());
+        }
       }
     }
   }
@@ -2198,12 +2198,14 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   fprintf(fp, " Number of elements   =  %d\n", numElements);
   fprintf(fp, " Number of nodes      =  %d\n\n", numVertices);
   fprintf(fp, " All elements are of the same type : dpTRUE\n");
-  fprintf(fp, " Max number of nodes in an element: %d \n", nbP1 + nbP2);
+  fprintf(fp, " Max number of nodes in an element: %d \n", maxNumNodesPerElement);
   fprintf(fp, " Only one subdomain el              : dpFALSE\n");
   fprintf(fp, " Lattice data                     ? 0\n\n\n\n");
   int nbi = getNumFaces();
   fprintf(fp, " %d Boundary indicators:  ", nbi);
   for(fiter it = firstFace(); it != lastFace(); ++it){
+    // Jacques: are you sure about this? "nbi" might not reflect the
+    // number of tags written if saveAll==false...
     if(saveAll || (*it)->physicals.size()){
       fprintf(fp, " %d", (*it)->tag());
     }
@@ -2221,11 +2223,11 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
       entities[i]->mesh_vertices[j]->writeDIFF(fp, binary, scalingFactor);
-      fprintf(fp," [%d] ",entities[i]->faces().size());
+      fprintf(fp, " [%d] ", entities[i]->faces().size());
       std::list<GFace*> lf = entities[i]->faces();
       std::list<GFace*>::iterator it = lf.begin();
       for(unsigned int k = 0; k < lf.size(); k++){
-        fprintf(fp," %d ",(*it)->tag());
+        fprintf(fp," %d ", (*it)->tag());
         it++;
       }
       fprintf(fp,"\n");
@@ -2242,12 +2244,13 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   fprintf(fp,     "#\n");
 
   // write mesh elements
+  int num = 0;
   for(unsigned int i = 0; i < entities.size(); i++){
     if(entities[i]->physicals.size() || saveAll){
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-        int type = entities[i]->getMeshElement(j)->getTypeForDIFF();
-	if(type)
-          entities[i]->getMeshElement(j)->writeDIFF(fp, binary, entities[i]->tag());
+        MElement *e = entities[i]->getMeshElement(j);
+        if(e->getTypeForDIFF())
+          e->writeDIFF(fp, ++num, binary, entities[i]->tag());
       }
     }
   }

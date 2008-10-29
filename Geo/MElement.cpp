@@ -617,16 +617,10 @@ void MElement::writeBDF(FILE *fp, int format, int elementary)
   }
 }
 
-void MElement::writeDIFF(FILE *fp, bool binary, int physical_property)
+void MElement::writeDIFF(FILE *fp, int num, bool binary, int physical_property)
 {
   int type = getTypeForDIFF();
   if(!type) return;
-  static int first = 1;
-  static int start = 0;
-  if(first){
-    start = getNum() - 1;
-    first = 0;
-  }
 
   setVolumePositive();
   int n = getNumVertices();
@@ -639,9 +633,9 @@ void MElement::writeDIFF(FILE *fp, bool binary, int physical_property)
   }
   else{
     if(type == MSH_TET_10)
-      fprintf(fp, "%d %s", getNum() - start, "ElmT10n3D ");
+      fprintf(fp, "%d %s", num, "ElmT10n3D ");
     else
-      fprintf(fp, "%d %s", getNum() - start, "ElmT4n3D ");
+      fprintf(fp, "%d %s", num, "ElmT4n3D ");
     fprintf(fp, " %d ", physical_property);
     for(int i = 0; i < n; i++)
       fprintf(fp, " %d", getVertexVTK(i)->getIndex() - 1);

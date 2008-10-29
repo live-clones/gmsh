@@ -472,6 +472,8 @@ void Get_Options(int argc, char *argv[])
             CTX.mesh.format = FORMAT_P3D;
           else if(!strcmp(argv[i], "cgns"))
             CTX.mesh.format = FORMAT_CGNS;
+          else if(!strcmp(argv[i], "diff"))
+            CTX.mesh.format = FORMAT_DIFF;
           else if(!strcmp(argv[i], "med"))
             CTX.mesh.format = FORMAT_MED;
           else
