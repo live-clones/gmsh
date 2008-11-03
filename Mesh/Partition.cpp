@@ -194,8 +194,8 @@ int PartitionGraph(Graph &graph, PartitionOptions &options)
       }
       if(!ier) graph.short2int();
     }
-    break;
 #endif
+    break;
   case 2:  // Metis
 #ifdef HAVE_METIS
     {
@@ -249,11 +249,10 @@ int PartitionGraph(Graph &graph, PartitionOptions &options)
         for(int n = graph.getNumVertex(); n--;) ++(*p++);
       }
     }
-    break;
 #endif
+    break;
   }
   return ier;
-
 }
 
 
