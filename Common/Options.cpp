@@ -3072,6 +3072,13 @@ double opt_general_draw_bounding_box(OPT_ARGS_NUM)
   return CTX.draw_bbox;
 }
 
+double opt_general_draw_all_models(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.draw_all_models = (int)val;
+  return CTX.draw_all_models;
+}
+
 double opt_general_xmin(OPT_ARGS_NUM)
 {
   return CTX.min[0];

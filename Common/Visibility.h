@@ -56,7 +56,7 @@ class VisPhysical : public Vis {
   std::vector<GEntity*> _list;
  public:
   VisPhysical(int tag, int dim, std::vector<GEntity*> list) 
-    : _tag(tag), _dim(dim), _visible(true), _list(list)  {}
+    : _tag(tag), _dim(dim), _visible(1), _list(list)  {}
   ~VisPhysical(){}
   int getTag() const { return _tag; }
   int getDim() const { return _dim; }
@@ -76,7 +76,7 @@ class VisPartition : public Vis {
   int _tag;
   char _visible;
  public:
-  VisPartition(int tag) : _tag(tag), _visible(true) {}
+  VisPartition(int tag) : _tag(tag), _visible(1) {}
   ~VisPartition(){}
   int getTag() const { return _tag; }
   int getDim() const { return -1; }

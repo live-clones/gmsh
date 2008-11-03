@@ -543,6 +543,8 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|O, "DoubleBuffer" , opt_general_double_buffer , 1. ,
     "Use a double buffered graphic window (on Unix, should be set to 0 when working on a remote host without GLX)" },
+  { F|O, "DrawAllModels" , opt_general_draw_all_models, 0. , 
+    "Draw all loaded models (instead of drawing only the current one)" },
   { F|O, "DrawBoundingBoxes" , opt_general_draw_bounding_box, 0. ,
     "Draw bounding boxes" },
 

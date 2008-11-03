@@ -1462,7 +1462,7 @@ void GUI::create_graphic_window()
   g_status_butt[5] = new Fl_Button(x, glheight + 2, sw, sht, "@-1gmsh_models");
   x += sw;
   g_status_butt[5]->callback(status_xyz1p_cb, (void *)"model");
-  g_status_butt[5]->tooltip("Switch current model");
+  g_status_butt[5]->tooltip("Change current model");
 
   g_status_butt[0] = new Fl_Button(x, glheight + 2, sw, sht, "X");
   x += sw;

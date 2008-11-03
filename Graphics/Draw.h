@@ -35,6 +35,7 @@ void Draw_String(std::string);
 void Draw_String(std::string, double style);
 void Draw_String_Center(std::string);
 void Draw_String_Right(std::string);
+void Draw_Axes();
 void Draw_Geom();
 void Draw_Mesh();
 void Draw_Post();

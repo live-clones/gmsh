@@ -70,7 +70,8 @@ class drawGVertex {
     if(!v->getVisibility()) return;
     if(v->geomType() == GEntity::BoundaryLayerPoint) return;
 
-    if(CTX.render_mode == GMSH_SELECT) {
+    bool select = (CTX.render_mode == GMSH_SELECT && v->model() == GModel::current());
+    if(select) {
       glPushName(0);
       glPushName(v->tag());
     }
@@ -122,7 +123,7 @@ class drawGVertex {
       Draw_String(Num);
     }
     
-    if(CTX.render_mode == GMSH_SELECT) {
+    if(select) {
       glPopName();
       glPopName();
     }
@@ -140,7 +141,8 @@ class drawGEdge {
     if(e->geomType() == GEntity::DiscreteCurve) return;
     if(e->geomType() == GEntity::BoundaryLayerCurve) return;
     
-    if(CTX.render_mode == GMSH_SELECT) {
+    bool select = (CTX.render_mode == GMSH_SELECT && e->model() == GModel::current());
+    if(select) {
       glPushName(1);
       glPushName(e->tag());
     }
@@ -230,7 +232,7 @@ class drawGEdge {
 
     if(CTX.draw_bbox) drawBBox(e);
     
-    if(CTX.render_mode == GMSH_SELECT) {
+    if(select) {
       glPopName();
       glPopName();
     }
@@ -422,8 +424,9 @@ class drawGFace {
     if(!f->getVisibility()) return;
     if(f->geomType() == GEntity::DiscreteSurface) return;
     if(f->geomType() == GEntity::BoundaryLayerSurface) return;
-    
-    if(CTX.render_mode == GMSH_SELECT) {
+
+    bool select = (CTX.render_mode == GMSH_SELECT && f->model() == GModel::current());
+    if(select) {
       glPushName(2);
       glPushName(f->tag());
     }
@@ -447,7 +450,7 @@ class drawGFace {
     
     if(CTX.draw_bbox) drawBBox(f);
     
-    if(CTX.render_mode == GMSH_SELECT) {
+    if(select) {
       glPopName();
       glPopName();
     }
@@ -464,7 +467,8 @@ class drawGRegion {
     if(!r->getVisibility()) return;
     if(r->geomType() == GEntity::DiscreteVolume) return;
     
-    if(CTX.render_mode == GMSH_SELECT) {
+    bool select = (CTX.render_mode == GMSH_SELECT && r->model() == GModel::current());
+    if(select) {
       glPushName(3);
       glPushName(r->tag());
     }
@@ -495,7 +499,7 @@ class drawGRegion {
 
     if(CTX.draw_bbox) drawBBox(r);
 
-    if(CTX.render_mode == GMSH_SELECT) {
+    if(select) {
       glPopName();
       glPopName();
     }
@@ -517,68 +521,24 @@ void Draw_Geom()
     else
       glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 
-  GModel *m = GModel::current();
-
   visContext ctx;
   //double mat[3][3] = {{2, 0, 0}, {0, 1, 0}, {0, 0, 1}};
   //visContextScaled ctx(mat);
 
-  if(CTX.geom.points || CTX.geom.points_num)
-    std::for_each(m->firstVertex(), m->lastVertex(), drawGVertex(&ctx));
-
-  if(CTX.geom.lines || CTX.geom.lines_num || CTX.geom.tangents)
-    std::for_each(m->firstEdge(), m->lastEdge(), drawGEdge(&ctx));
-
-  if(CTX.geom.surfaces || CTX.geom.surfaces_num || CTX.geom.normals)
-    std::for_each(m->firstFace(), m->lastFace(), drawGFace(&ctx));
-
-  if(CTX.geom.volumes || CTX.geom.volumes_num)
-    std::for_each(m->firstRegion(), m->lastRegion(), drawGRegion(&ctx));
-
-  for(int i = 0; i < 6; i++)
-    glDisable((GLenum)(GL_CLIP_PLANE0 + i));
-
-  bool geometryExists = m->getNumVertices() || m->getNumEdges() || 
-    m->getNumFaces() || m->getNumRegions();
-
-  if(geometryExists && (CTX.draw_bbox || !CTX.mesh.draw)) {
-    glColor4ubv((GLubyte *) & CTX.color.fg);
-    glLineWidth(CTX.line_width);
-    gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
-    Draw_Box(CTX.min[0], CTX.min[1], CTX.min[2], 
-             CTX.max[0], CTX.max[1], CTX.max[2]);
-    glColor3d(1.,0.,0.);
-    for(int i = 0; i < 6; i++)
-      if(CTX.clip[i] & 1 || CTX.clip[i] & 2)
-        Draw_PlaneInBoundingBox(CTX.min[0], CTX.min[1], CTX.min[2],
-                                CTX.max[0], CTX.max[1], CTX.max[2],
-                                CTX.clip_plane[i][0], CTX.clip_plane[i][1], 
-                                CTX.clip_plane[i][2], CTX.clip_plane[i][3]);
+  for(unsigned int i = 0; i < GModel::list.size(); i++){
+    GModel *m = GModel::list[i];
+    if(CTX.draw_all_models || m == GModel::current()){
+      if(CTX.geom.points || CTX.geom.points_num)
+        std::for_each(m->firstVertex(), m->lastVertex(), drawGVertex(&ctx));
+      if(CTX.geom.lines || CTX.geom.lines_num || CTX.geom.tangents)
+        std::for_each(m->firstEdge(), m->lastEdge(), drawGEdge(&ctx));
+      if(CTX.geom.surfaces || CTX.geom.surfaces_num || CTX.geom.normals)
+        std::for_each(m->firstFace(), m->lastFace(), drawGFace(&ctx));
+      if(CTX.geom.volumes || CTX.geom.volumes_num)
+        std::for_each(m->firstRegion(), m->lastRegion(), drawGRegion(&ctx));
+    }
   }
   
-  if(CTX.axes){
-    glColor4ubv((GLubyte *) & CTX.color.axes);
-    glLineWidth(CTX.line_width);
-    gl2psLineWidth(CTX.line_width * CTX.print.eps_line_width_factor);
-    if(!CTX.axes_auto_position){
-      Draw_Axes(CTX.axes, CTX.axes_tics, CTX.axes_format, CTX.axes_label, 
-                CTX.axes_position, CTX.axes_mikado);
-    }
-    else if(geometryExists){
-      double bb[6] = {CTX.min[0], CTX.max[0], CTX.min[1], 
-                      CTX.max[1], CTX.min[2], CTX.max[2]};
-      Draw_Axes(CTX.axes, CTX.axes_tics, CTX.axes_format, CTX.axes_label, 
-                bb, CTX.axes_mikado);
-    }
-  }
-
-  if(CTX.draw_rotation_center){
-    glColor4ubv((GLubyte *) & CTX.color.fg);
-    if(CTX.rotation_center_cg)
-      Draw_Sphere(CTX.point_size, CTX.cg[0], CTX.cg[1], CTX.cg[2], CTX.geom.light);
-    else
-      Draw_Sphere(CTX.point_size, CTX.rotation_center[0], CTX.rotation_center[1], 
-                  CTX.rotation_center[2], CTX.geom.light);
-  }
-
+  for(int i = 0; i < 6; i++)
+    glDisable((GLenum)(GL_CLIP_PLANE0 + i));
 }

@@ -100,7 +100,7 @@ MElement *GFace::getMeshElement(unsigned int index)
 void GFace::resetMeshAttributes()
 {
   meshAttributes.recombine = 0;
-  meshAttributes.recombineAngle = 0.;
+  meshAttributes.recombineAngle = 45.;
   meshAttributes.Method = MESH_UNSTRUCTURED;
   meshAttributes.transfiniteArrangement = 0;
   meshAttributes.transfiniteSmoothing = -1;

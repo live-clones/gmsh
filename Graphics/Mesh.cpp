@@ -507,7 +507,9 @@ static void drawArrays(GEntity *e, VertexArray *va, GLint type, bool useNormalAr
 
   // If we want to be enable picking of individual elements we need to
   // draw each one separately
-  if(CTX.render_mode == GMSH_SELECT && CTX.pick_elements) {
+  bool select = (CTX.render_mode == GMSH_SELECT && CTX.pick_elements && 
+                 e->model() == GModel::current());
+  if(select) {
     if(va->getNumElementPointers() == va->getNumVertices()){
       for(int i = 0; i < va->getNumVertices(); i += va->getNumVerticesPerElement()){
         glPushName(va->getNumVerticesPerElement());
@@ -571,7 +573,8 @@ class drawMeshGVertex {
   {  
     if(!v->getVisibility()) return;
     
-    if(CTX.render_mode == GMSH_SELECT) {
+    bool select = (CTX.render_mode == GMSH_SELECT && v->model() == GModel::current());
+    if(select) {
       glPushName(0);
       glPushName(v->tag());
     }
@@ -579,7 +582,7 @@ class drawMeshGVertex {
     if(CTX.mesh.points || CTX.mesh.points_num)
       drawVerticesPerEntity(v);
 
-    if(CTX.render_mode == GMSH_SELECT) {
+    if(select) {
       glPopName();
       glPopName();
     }
@@ -620,8 +623,9 @@ class drawMeshGEdge {
   void operator () (GEdge *e)
   {  
     if(!e->getVisibility()) return;
-    
-    if(CTX.render_mode == GMSH_SELECT) {
+
+    bool select = (CTX.render_mode == GMSH_SELECT && e->model() == GModel::current());    
+    if(select) {
       glPushName(1);
       glPushName(e->tag());
     }
@@ -642,7 +646,7 @@ class drawMeshGEdge {
     if(CTX.mesh.tangents)
       drawTangents(e->lines);
 
-    if(CTX.render_mode == GMSH_SELECT) {
+    if(select) {
       glPopName();
       glPopName();
     }
@@ -713,7 +717,8 @@ class drawMeshGFace {
   {  
     if(!f->getVisibility()) return;
 
-    if(CTX.render_mode == GMSH_SELECT) {
+    bool select = (CTX.render_mode == GMSH_SELECT && f->model() == GModel::current());
+    if(select) {
       glPushName(2);
       glPushName(f->tag());
     }
@@ -751,8 +756,7 @@ class drawMeshGFace {
       if(CTX.mesh.triangles) drawVoronoiDual(f->triangles);
     }
 
-
-    if(CTX.render_mode == GMSH_SELECT) {
+    if(select) {
       glPopName();
       glPopName();
     }
@@ -836,7 +840,8 @@ class drawMeshGRegion {
   {  
     if(!r->getVisibility()) return;
 
-    if(CTX.render_mode == GMSH_SELECT) {
+    bool select = (CTX.render_mode == GMSH_SELECT && r->model() == GModel::current());
+    if(select) {
       glPushName(3);
       glPushName(r->tag());
     }
@@ -878,7 +883,7 @@ class drawMeshGRegion {
       if(CTX.mesh.pyramids) drawBarycentricDual(r->pyramids);
     }
 
-    if(CTX.render_mode == GMSH_SELECT) {
+    if(select) {
       glPopName();
       glPopName();
     }
@@ -890,17 +895,18 @@ class drawMeshGRegion {
 
 void Draw_Mesh()
 {
-  GModel *m = GModel::current();
+  if(!CTX.mesh.draw) return;
 
   // make sure to flag any model-dependent post-processing view as
   // changed if the underlying mesh has, before resetting the changed
   // flag
-  for(unsigned int i = 0; i < PView::list.size(); i++)
-    if(PView::list[i]->getData()->hasModel(m) && CTX.mesh.changed)
-      PView::list[i]->setChanged(true);
-  
-  if(!CTX.mesh.draw) return;
-  
+  for(unsigned int i = 0; i < GModel::list.size(); i++){
+    GModel *m = GModel::list[i];
+    for(unsigned int j = 0; j < PView::list.size(); j++)
+      if(PView::list[j]->getData()->hasModel(m) && CTX.mesh.changed)
+        PView::list[j]->setChanged(true);
+  }
+
   glPointSize(CTX.mesh.point_size);
   gl2psPointSize(CTX.mesh.point_size * CTX.print.eps_point_size_factor);
 
@@ -919,33 +925,40 @@ void Draw_Mesh()
       else
 	glDisable((GLenum)(GL_CLIP_PLANE0 + i));
   }
-  
+
   static bool busy = false;
   if(!busy){
     busy = true;
-    int status = m->getMeshStatus();
-    if(CTX.mesh.changed) {
-      Msg::Debug("Mesh has changed: reinitializing drawing data", CTX.mesh.changed);
-      if(status >= 1 && CTX.mesh.changed & ENT_LINE)
-        std::for_each(m->firstEdge(), m->lastEdge(), initMeshGEdge());
-      if(status >= 2 && CTX.mesh.changed & ENT_SURFACE){
-        if(m->normals) delete m->normals;
-        m->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
-        if(CTX.mesh.smooth_normals)
-          std::for_each(m->firstFace(), m->lastFace(), initSmoothNormalsGFace());
-        std::for_each(m->firstFace(), m->lastFace(), initMeshGFace());
+
+    for(unsigned int i = 0; i < GModel::list.size(); i++){
+      GModel *m = GModel::list[i];
+      if(CTX.draw_all_models || m == GModel::current()){
+        int status = m->getMeshStatus();
+        if(CTX.mesh.changed) {
+          Msg::Debug("Mesh has changed: reinitializing drawing data", CTX.mesh.changed);
+          if(status >= 1 && CTX.mesh.changed & ENT_LINE)
+            std::for_each(m->firstEdge(), m->lastEdge(), initMeshGEdge());
+          if(status >= 2 && CTX.mesh.changed & ENT_SURFACE){
+            if(m->normals) delete m->normals;
+            m->normals = new smooth_normals(CTX.mesh.angle_smooth_normals);
+            if(CTX.mesh.smooth_normals)
+              std::for_each(m->firstFace(), m->lastFace(), initSmoothNormalsGFace());
+            std::for_each(m->firstFace(), m->lastFace(), initMeshGFace());
+          }
+          if(status >= 3 && CTX.mesh.changed & ENT_VOLUME)
+            std::for_each(m->firstRegion(), m->lastRegion(), initMeshGRegion());
+        }
+        if(status >= 0)
+          std::for_each(m->firstVertex(), m->lastVertex(), drawMeshGVertex());
+        if(status >= 1)
+          std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge());
+        if(status >= 2)
+          std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace());
+        if(status >= 3)
+          std::for_each(m->firstRegion(), m->lastRegion(), drawMeshGRegion());
       }
-      if(status >= 3 && CTX.mesh.changed & ENT_VOLUME)
-        std::for_each(m->firstRegion(), m->lastRegion(), initMeshGRegion());
     }
-    if(status >= 0)
-      std::for_each(m->firstVertex(), m->lastVertex(), drawMeshGVertex());
-    if(status >= 1)
-      std::for_each(m->firstEdge(), m->lastEdge(), drawMeshGEdge());
-    if(status >= 2)
-      std::for_each(m->firstFace(), m->lastFace(), drawMeshGFace());
-    if(status >= 3)
-      std::for_each(m->firstRegion(), m->lastRegion(), drawMeshGRegion());
+
     CTX.mesh.changed = 0;
     busy = false;
   }

@@ -123,6 +123,11 @@ void GModel::destroyMeshCaches()
 #endif
 }
 
+bool GModel::empty() const
+{
+  return vertices.empty() && edges.empty() && faces.empty() && regions.empty();
+}
+
 GRegion *GModel::getRegionByTag(int n) const
 {
   GEntity tmp((GModel*)this, n);

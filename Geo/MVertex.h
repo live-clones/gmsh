@@ -42,7 +42,7 @@ class MVertex{
 
  public :
   MVertex(double x, double y, double z, GEntity *ge=0, int num=0) 
-    : _visible(true), _order(1), _x(x), _y(y), _z(z), _ge(ge)
+    : _visible(1), _order(1), _x(x), _y(y), _z(z), _ge(ge)
   {
     if(num){
       _num = num;

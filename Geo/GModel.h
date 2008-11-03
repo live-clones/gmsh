@@ -117,11 +117,14 @@ class GModel
   void setName(std::string name){ modelName = name; }
   std::string getName(){ return modelName; }
 
-  // get the number of regions in this model.
+  // get the number of entities in this model
   int getNumRegions() const { return regions.size(); }
   int getNumFaces() const { return faces.size(); }
   int getNumEdges() const { return edges.size(); }
-  int getNumVertices() const  { return vertices.size(); }
+  int getNumVertices() const { return vertices.size(); }
+
+  // quickly check if the model is empty (contains no entities)
+  bool empty() const;
 
   typedef std::set<GRegion*, GEntityLessThan>::iterator riter;
   typedef std::set<GFace*, GEntityLessThan>::iterator fiter;

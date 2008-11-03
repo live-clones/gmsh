@@ -873,7 +873,7 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
     return 0;
   }
   Msg::Info("%d elements", elements[0][region].size() + 
-      elements[1][region].size() + elements[2][region].size());
+            elements[1][region].size() + elements[2][region].size());
   return 1;
 }
 
@@ -2170,13 +2170,31 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   
   if(noPhysicalGroups()) saveAll = true;
 
-  // get the number of vertices and index the vertices in a continuous
-  // sequence
-  int numVertices = indexMeshVertices(saveAll);
-
   // get all the entities in the model
   std::vector<GEntity*> entities;
   getEntities(entities);
+
+  // get the number of vertices and index the vertices in a continuous
+  // sequence
+  int numVertices = indexMeshVertices(saveAll);
+  std::list<int> vertices_tag[numVertices];
+
+  for(unsigned int i = 0; i < entities.size(); i++){
+    if(entities[i]->physicals.size() || saveAll){
+      std::list<GFace*> lf = entities[i]->faces();
+      std::list<GFace*>::iterator it = lf.begin();
+      for(unsigned int k=0; k < lf.size(); k++){
+        for( unsigned int l=0; l<(*it)->mesh_vertices.size();l++)
+           vertices_tag[(*it)->mesh_vertices[l]->getIndex()-1].push_back((*it)->tag());
+        it++;
+      }
+    }
+  }
+  for(unsigned int i=0;i<numVertices;i++)
+    {
+     vertices_tag[i].unique();
+     vertices_tag[i].sort(); // optional
+    }
 
   // loop over all elements we need to save
   int numElements = 0, maxNumNodesPerElement = 0;
@@ -2211,7 +2229,6 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
     }
   } 
 
-  // write mesh vertices
   fprintf(fp, "\n\n\n");
   fprintf(fp,"  Nodal coordinates and nodal boundary indicators,\n");
   fprintf(fp,"  the columns contain:\n");
@@ -2220,20 +2237,21 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   fprintf(fp,"   - no of boundary indicators that are set (ON)\n");
   fprintf(fp,"   - the boundary indicators that are set (ON) if any.\n");
   fprintf(fp,"#\n");
+
+  // write mesh vertices
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
       entities[i]->mesh_vertices[j]->writeDIFF(fp, binary, scalingFactor);
-      fprintf(fp, " [%d] ", entities[i]->faces().size());
-      std::list<GFace*> lf = entities[i]->faces();
-      std::list<GFace*>::iterator it = lf.begin();
-      for(unsigned int k = 0; k < lf.size(); k++){
-        fprintf(fp," %d ", (*it)->tag());
+      fprintf(fp, " [%d] ", vertices_tag[entities[i]->mesh_vertices[j]->getIndex()-1].size());
+      std::list<int>::iterator it = vertices_tag[entities[i]->mesh_vertices[j]->getIndex()-1].begin();
+      for(unsigned k=0; k < vertices_tag[entities[i]->mesh_vertices[j]->getIndex()-1].size(); k++){
+        fprintf(fp," %d ", (*it));
         it++;
       }
       fprintf(fp,"\n");
     }
-  fprintf(fp, "\n");
   
+  fprintf(fp, "\n");
   fprintf(fp, "\n");
   fprintf(fp,     "  Element types and connectivity\n");
   fprintf(fp,     "  the columns contain:\n");

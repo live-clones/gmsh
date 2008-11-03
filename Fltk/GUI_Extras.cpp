@@ -244,12 +244,20 @@ int perspective_editor()
 
 // Model chooser
 
-static void model_switch(Fl_Widget* w, void* data)
+static void model_switch(Fl_Widget* w, void *data)
 {
   Fl_Select_Browser *b = (Fl_Select_Browser *)w;
-  GModel::current(b->value() - 1);
+  if(b->value()) GModel::current(b->value() - 1);
   if(w->window()) w->window()->hide();
   CTX.mesh.changed = ENT_ALL;
+  // FIXME: need to call WID->reset_visibility();
+  Draw();
+}
+
+static void model_draw_all(Fl_Widget* w, void *data)
+{
+  Fl_Check_Button *b = (Fl_Check_Button*)w;
+  opt_general_draw_all_models(0, GMSH_SET | GMSH_GUI, (int)b->value());
   Draw();
 }
 
@@ -257,18 +265,26 @@ int model_chooser()
 {
   struct _menu{
     Fl_Menu_Window *window;
-    Fl_Select_Browser *browser;
+    Fl_Hold_Browser *browser;
+    Fl_Check_Button *butt;
   };
   static _menu *menu = NULL;
 
+  const int BH = 2 * GetFontSize() + 1;
+  const int WW = 200;
+
   if(!menu){
     menu = new _menu;
-    menu->window = new Fl_Menu_Window(200, 100);
+    menu->window = new Fl_Menu_Window(WW, 6 * BH);
     if(CTX.non_modal_windows) menu->window->set_non_modal();
     menu->window->border(0);
-    menu->browser = new Fl_Select_Browser(0, 0, 200, 100);
+    Fl_Box *l = new Fl_Box(0, 0, WW, BH, "Choose current model:");
+    l->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+    menu->browser = new Fl_Hold_Browser(0, BH, WW, 4 * BH);
     menu->browser->callback(model_switch);
     menu->browser->when(FL_WHEN_RELEASE_ALWAYS);
+    menu->butt = new Fl_Check_Button(0, 5 * BH, WW, BH, "Draw all models");
+    menu->butt->callback(model_draw_all);
     menu->window->end();
   }
 
@@ -278,7 +294,9 @@ int model_chooser()
     char tmp[256];
     sprintf(tmp, "Model %d <<%s>>", i, GModel::list[i]->getName().c_str());
     menu->browser->add(tmp);
+    if(GModel::list[i] == GModel::current()) menu->browser->value(i + 1);
   }
+  menu->butt->value(CTX.draw_all_models);
 
   if(menu->window->non_modal() && !menu->window->shown())
     menu->window->show(); // fix ordering

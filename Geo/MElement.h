@@ -43,8 +43,7 @@ class MElement
   void _getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2, 
                    double *x, double *y, double *z, SVector3 *n);
  public :
-  MElement(int num=0, int part=0) 
-    : _visible(true) 
+  MElement(int num=0, int part=0) : _visible(1) 
   {
     if(num){
       _num = num;

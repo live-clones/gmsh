@@ -55,6 +55,7 @@ void Draw3d()
   InitProjection();
   InitRenderModel();
   InitPosition();
+  Draw_Axes();
   Draw_Geom();
   Draw_Mesh();
   Draw_Post();
