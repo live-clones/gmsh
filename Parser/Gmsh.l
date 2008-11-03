@@ -91,7 +91,6 @@ Atan2                   return tAtan2;
 ArcTan2                 return tAtan2;
 
 Bezier			return tBezier;
-Bump                    return tBump;
 BSpline			return tBSpline;
 BoundingBox             return tBoundingBox;
 
@@ -165,8 +164,6 @@ Physical                return tPhysical;
 Pi                      return tPi;
 Plane                   return tPlane;
 Point                   return tPoint;
-Power                   return tProgression;
-Progression             return tProgression;
 Parametric		return tParametric;
 PolarSphere             return tPolarSphere;
 Printf                  return tPrintf;

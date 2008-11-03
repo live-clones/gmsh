@@ -98,66 +98,64 @@
      tComplex = 314,
      tPhysical = 315,
      tUsing = 316,
-     tBump = 317,
-     tProgression = 318,
-     tPlugin = 319,
-     tRotate = 320,
-     tTranslate = 321,
-     tSymmetry = 322,
-     tDilate = 323,
-     tExtrude = 324,
-     tLoop = 325,
-     tRecombine = 326,
-     tSmoother = 327,
-     tSplit = 328,
-     tDelete = 329,
-     tCoherence = 330,
-     tIntersect = 331,
-     tLayers = 332,
-     tHole = 333,
-     tAlias = 334,
-     tAliasWithOptions = 335,
-     tText2D = 336,
-     tText3D = 337,
-     tInterpolationScheme = 338,
-     tTime = 339,
-     tCombine = 340,
-     tBSpline = 341,
-     tBezier = 342,
-     tNurbs = 343,
-     tOrder = 344,
-     tKnots = 345,
-     tColor = 346,
-     tColorTable = 347,
-     tFor = 348,
-     tIn = 349,
-     tEndFor = 350,
-     tIf = 351,
-     tEndIf = 352,
-     tExit = 353,
-     tField = 354,
-     tReturn = 355,
-     tCall = 356,
-     tFunction = 357,
-     tShow = 358,
-     tHide = 359,
-     tGetValue = 360,
-     tGMSH_MAJOR_VERSION = 361,
-     tGMSH_MINOR_VERSION = 362,
-     tGMSH_PATCH_VERSION = 363,
-     tAFFECTDIVIDE = 364,
-     tAFFECTTIMES = 365,
-     tAFFECTMINUS = 366,
-     tAFFECTPLUS = 367,
-     tOR = 368,
-     tAND = 369,
-     tNOTEQUAL = 370,
-     tEQUAL = 371,
-     tGREATEROREQUAL = 372,
-     tLESSOREQUAL = 373,
-     UNARYPREC = 374,
-     tMINUSMINUS = 375,
-     tPLUSPLUS = 376
+     tPlugin = 317,
+     tRotate = 318,
+     tTranslate = 319,
+     tSymmetry = 320,
+     tDilate = 321,
+     tExtrude = 322,
+     tLoop = 323,
+     tRecombine = 324,
+     tSmoother = 325,
+     tSplit = 326,
+     tDelete = 327,
+     tCoherence = 328,
+     tIntersect = 329,
+     tLayers = 330,
+     tHole = 331,
+     tAlias = 332,
+     tAliasWithOptions = 333,
+     tText2D = 334,
+     tText3D = 335,
+     tInterpolationScheme = 336,
+     tTime = 337,
+     tCombine = 338,
+     tBSpline = 339,
+     tBezier = 340,
+     tNurbs = 341,
+     tOrder = 342,
+     tKnots = 343,
+     tColor = 344,
+     tColorTable = 345,
+     tFor = 346,
+     tIn = 347,
+     tEndFor = 348,
+     tIf = 349,
+     tEndIf = 350,
+     tExit = 351,
+     tField = 352,
+     tReturn = 353,
+     tCall = 354,
+     tFunction = 355,
+     tShow = 356,
+     tHide = 357,
+     tGetValue = 358,
+     tGMSH_MAJOR_VERSION = 359,
+     tGMSH_MINOR_VERSION = 360,
+     tGMSH_PATCH_VERSION = 361,
+     tAFFECTDIVIDE = 362,
+     tAFFECTTIMES = 363,
+     tAFFECTMINUS = 364,
+     tAFFECTPLUS = 365,
+     tOR = 366,
+     tAND = 367,
+     tNOTEQUAL = 368,
+     tEQUAL = 369,
+     tGREATEROREQUAL = 370,
+     tLESSOREQUAL = 371,
+     UNARYPREC = 372,
+     tMINUSMINUS = 373,
+     tPLUSPLUS = 374
    };
 #endif
 /* Tokens.  */
@@ -220,66 +218,64 @@
 #define tComplex 314
 #define tPhysical 315
 #define tUsing 316
-#define tBump 317
-#define tProgression 318
-#define tPlugin 319
-#define tRotate 320
-#define tTranslate 321
-#define tSymmetry 322
-#define tDilate 323
-#define tExtrude 324
-#define tLoop 325
-#define tRecombine 326
-#define tSmoother 327
-#define tSplit 328
-#define tDelete 329
-#define tCoherence 330
-#define tIntersect 331
-#define tLayers 332
-#define tHole 333
-#define tAlias 334
-#define tAliasWithOptions 335
-#define tText2D 336
-#define tText3D 337
-#define tInterpolationScheme 338
-#define tTime 339
-#define tCombine 340
-#define tBSpline 341
-#define tBezier 342
-#define tNurbs 343
-#define tOrder 344
-#define tKnots 345
-#define tColor 346
-#define tColorTable 347
-#define tFor 348
-#define tIn 349
-#define tEndFor 350
-#define tIf 351
-#define tEndIf 352
-#define tExit 353
-#define tField 354
-#define tReturn 355
-#define tCall 356
-#define tFunction 357
-#define tShow 358
-#define tHide 359
-#define tGetValue 360
-#define tGMSH_MAJOR_VERSION 361
-#define tGMSH_MINOR_VERSION 362
-#define tGMSH_PATCH_VERSION 363
-#define tAFFECTDIVIDE 364
-#define tAFFECTTIMES 365
-#define tAFFECTMINUS 366
-#define tAFFECTPLUS 367
-#define tOR 368
-#define tAND 369
-#define tNOTEQUAL 370
-#define tEQUAL 371
-#define tGREATEROREQUAL 372
-#define tLESSOREQUAL 373
-#define UNARYPREC 374
-#define tMINUSMINUS 375
-#define tPLUSPLUS 376
+#define tPlugin 317
+#define tRotate 318
+#define tTranslate 319
+#define tSymmetry 320
+#define tDilate 321
+#define tExtrude 322
+#define tLoop 323
+#define tRecombine 324
+#define tSmoother 325
+#define tSplit 326
+#define tDelete 327
+#define tCoherence 328
+#define tIntersect 329
+#define tLayers 330
+#define tHole 331
+#define tAlias 332
+#define tAliasWithOptions 333
+#define tText2D 334
+#define tText3D 335
+#define tInterpolationScheme 336
+#define tTime 337
+#define tCombine 338
+#define tBSpline 339
+#define tBezier 340
+#define tNurbs 341
+#define tOrder 342
+#define tKnots 343
+#define tColor 344
+#define tColorTable 345
+#define tFor 346
+#define tIn 347
+#define tEndFor 348
+#define tIf 349
+#define tEndIf 350
+#define tExit 351
+#define tField 352
+#define tReturn 353
+#define tCall 354
+#define tFunction 355
+#define tShow 356
+#define tHide 357
+#define tGetValue 358
+#define tGMSH_MAJOR_VERSION 359
+#define tGMSH_MINOR_VERSION 360
+#define tGMSH_PATCH_VERSION 361
+#define tAFFECTDIVIDE 362
+#define tAFFECTTIMES 363
+#define tAFFECTMINUS 364
+#define tAFFECTPLUS 365
+#define tOR 366
+#define tAND 367
+#define tNOTEQUAL 368
+#define tEQUAL 369
+#define tGREATEROREQUAL 370
+#define tLESSOREQUAL 371
+#define UNARYPREC 372
+#define tMINUSMINUS 373
+#define tPLUSPLUS 374
 
 
 
@@ -297,7 +293,7 @@ typedef union YYSTYPE
   List_T *l;
 }
 /* Line 1529 of yacc.c.  */
-#line 301 "Gmsh.tab.hpp"
+#line 297 "Gmsh.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

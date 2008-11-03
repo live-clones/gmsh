@@ -90,7 +90,7 @@ void FixRelativePath(const char *in, char *out);
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
 %token tPlane tRuled tTransfinite tComplex tPhysical
-%token tUsing tBump tProgression tPlugin
+%token tUsing tPlugin
 %token tRotate tTranslate tSymmetry tDilate tExtrude
 %token tLoop tRecombine tSmoother tSplit tDelete tCoherence tIntersect
 %token tLayers tHole tAlias tAliasWithOptions
@@ -101,8 +101,9 @@ void FixRelativePath(const char *in, char *out);
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 
 %type <d> FExpr FExpr_Single 
-%type <v> VExpr VExpr_Single
+%type <v> VExpr VExpr_Single TransfiniteType
 %type <i> NumericAffectation NumericIncrement PhysicalId
+%type <i> TransfiniteArrangement
 %type <u> ColorExpr
 %type <c> StringExpr StringExprVar SendToFile
 %type <l> FExpr_Multi ListOfDouble RecursiveListOfDouble
@@ -2435,124 +2436,114 @@ ExtrudeParameter :
 
 //  T R A N S F I N I T E
 
+TransfiniteType : 
+    {
+      $$[0] = $$[1] = 1.;
+    }
+  | tUsing tSTRING FExpr
+    {
+      if(!strcmp($2, "Progression") || !strcmp($2, "Power"))
+        $$[0] = 1.;
+      else if(!strcmp($2, "Bump"))
+        $$[0] = 2.;
+      else{
+        yymsg(0, "Unknown transfinite mesh type");
+        $$[0] = 1.;
+      }
+      $$[1] = $3;
+      Free($2);
+    }
+;
+
+TransfiniteArrangement : 
+    {
+      $$ = -1; // left
+    }
+  | tSTRING
+    {
+      if(!strcmp($1, "Right"))
+        $$ = 1;
+      else if(!strcmp($1, "Left"))
+        $$ = -1;
+      else // alternated
+        $$ = 0;
+      Free($1);
+    }
+;
+
 Transfinite : 
-    tTransfinite tLine ListOfDouble tAFFECT FExpr tEND
+    tTransfinite tLine ListOfDouble tAFFECT FExpr TransfiniteType tEND
     {
+      int type = (int)$6[0];
+      double coef = fabs($6[1]);
       for(int i = 0; i < List_Nbr($3); i++){
 	double d;
 	List_Read($3, i, &d);
 	int j = (int)fabs(d);
         Curve *c = FindCurve(j);
-	if(!c)
-	  yymsg(1, "Unknown curve %d", j);
-	else{
+	if(c){
 	  c->Method = MESH_TRANSFINITE;
 	  c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
-	  c->typeTransfinite = sign(d);
-	  c->coeffTransfinite = 1.0;
+	  c->typeTransfinite = type * sign(d);
+	  c->coeffTransfinite = coef;
 	}
+        else{
+	  GEdge *ge = GModel::current()->getEdgeByTag(j);
+          if(ge){
+            ge->meshAttributes.Method = MESH_TRANSFINITE;
+            ge->meshAttributes.nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
+            ge->meshAttributes.typeTransfinite = sign(d);
+            ge->meshAttributes.coeffTransfinite = 1.;
+          }
+          else
+	    yymsg(0, "Unknown line %d", j);
+        }
       }
       List_Delete($3);
     }
-  | tTransfinite tLine ListOfDouble tAFFECT FExpr tUsing tProgression FExpr tEND
+  | tTransfinite tSurface '{' FExpr '}' tAFFECT ListOfDouble TransfiniteArrangement tEND
     {
-      for(int i = 0; i < List_Nbr($3); i++){
-	double d;
-	List_Read($3, i, &d);
-	int j = (int)fabs(d);
-        Curve *c = FindCurve(j);
-	if(!c)
-	  yymsg(1, "Unknown curve %d", j);
-	else{
-	  c->Method = MESH_TRANSFINITE;
-	  c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
-	  c->typeTransfinite = sign(d); // Progresion : code 1 ou -1
-	  c->coeffTransfinite = fabs($8);
-	}
+      int k = List_Nbr($7);
+      if(k != 3 && k != 4){
+        yymsg(0, "Wrong definition of Transfinite Surface %d: "
+              "%d points instead of 3 or 4" , (int)$4, k);
       }
-      List_Delete($3);
-    }
-  | tTransfinite tLine ListOfDouble tAFFECT FExpr tUsing tBump FExpr tEND
-    {
-      for(int i = 0; i < List_Nbr($3); i++){
-	double d;
-	List_Read($3, i, &d);
-	int j = (int)fabs(d);
-        Curve *c = FindCurve(j);
-	if(!c)
-	  yymsg(1, "Unknown curve %d", j);
-	else{
-	  c->Method = MESH_TRANSFINITE;
-	  c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
-	  c->typeTransfinite = 2 * sign(d); // Bump : code 2 ou -2
-	  c->coeffTransfinite = fabs($8);
-	}
-      }
-      List_Delete($3);
-    }
-  | tTransfinite tSurface '{' FExpr '}' tAFFECT ListOfDouble tEND
-    {
-      Surface *s = FindSurface((int)$4);
-      if(!s)
-	yymsg(1, "Unknown surface %d", (int)$4);
       else{
-	s->Method = MESH_TRANSFINITE;
-	s->Recombine_Dir = -1;
-	int k = List_Nbr($7);
-	if(k != 3 && k != 4){
-	  yymsg(0, "Wrong definition of Transfinite Surface %d: "
-		"%d points instead of 3 or 4" , (int)$4, k);
-	}
-	else{
+        Surface *s = FindSurface((int)$4);
+        if(s){
+          s->Method = MESH_TRANSFINITE;
+          s->Recombine_Dir = $8;
 	  List_Reset(s->TrsfPoints);
 	  for(int i = 0; i < k; i++){
 	    double d;
 	    List_Read($7, i, &d);
-	    int j = (int)fabs(d);
-	    Vertex *v = FindPoint(j);
-	    if(!v)
-	      yymsg(1, "Unknown point %d", j);
-	    else
+	    Vertex *v = FindPoint((int)fabs(d));
+	    if(v)
 	      List_Add(s->TrsfPoints, &v);
+	    else
+	      yymsg(0, "Unknown point %d", (int)fabs(d));
 	  }
 	}
+        else{
+	  GFace *gf = GModel::current()->getFaceByTag((int)$4);
+          if(gf){
+            gf->meshAttributes.Method = MESH_TRANSFINITE;
+            gf->meshAttributes.transfiniteArrangement = $8;
+            for(int i = 0; i < k; i++){
+              double d;
+              List_Read($7, i, &d);
+              GVertex *gv = GModel::current()->getVertexByTag((int)fabs(d));
+              if(gv)
+                gf->meshAttributes.corners.push_back(gv);
+              else
+                yymsg(0, "Unknown point %d", (int)fabs(d));
+            }
+          }
+          else
+	    yymsg(0, "Unknown surface %d", (int)$4);
+        }
       }
       List_Delete($7);
-    }
-  | tTransfinite tSurface '{' FExpr '}' tAFFECT ListOfDouble tSTRING tEND
-    {
-      Surface *s = FindSurface((int)$4);
-      if(!s)
-	yymsg(1, "Unknown surface %d", (int)$4);
-      else{
-	s->Method = MESH_TRANSFINITE;
-	int k = List_Nbr($7);
-	if(k != 3 && k != 4){
-	  yymsg(0, "Wrong definition of Transfinite Surface %d: "
-		"%d points instead of 3 or 4" , (int)$4, k);
-	}
-	else{
-	  List_Reset(s->TrsfPoints);
-	  if (!strcmp($8, "Right"))
-	    s->Recombine_Dir = 1;
-	  else if (!strcmp($8, "Left"))
-	    s->Recombine_Dir = -1;
-	  else
-	    s->Recombine_Dir = 0;
-	  for(int i = 0; i < k; i++){
-	    double d;
-	    List_Read($7, i, &d);
-	    int j = (int)fabs(d);
-	    Vertex *v = FindPoint(j);
-	    if(!v)
-	      yymsg(1, "Unknown point %d", j);
-	    else
-	      List_Add(s->TrsfPoints, &v);
-	  }
-	}
-      }
-      List_Delete($7);
-      Free($8);
     }
   | tElliptic tSurface '{' FExpr '}' tAFFECT ListOfDouble tEND
     {
@@ -2561,28 +2552,43 @@ Transfinite :
     }
   | tTransfinite tVolume '{' FExpr '}' tAFFECT ListOfDouble tEND
     {
-      Volume *v = FindVolume((int)$4);
-      if(!v)
-	yymsg(1, "Unknown volume %d", (int)$4);
+      int k = List_Nbr($7);
+      if(k != 6 && k != 8){
+        yymsg(0, "Wrong definition of Transfinite Volume %d: "
+              "%d points instead of 6 or 8" , (int)$4, k);
+      }
       else{
-	v->Method = MESH_TRANSFINITE;
-	int k = List_Nbr($7);
-	if(k != 6 && k != 8)
-	  yymsg(0, "Wrong definition of Transfinite Volume %d: "
-		"%d points instead of 6 or 8" , (int)$4, k);
-	else{
+        Volume *v = FindVolume((int)$4);
+        if(v){
+          v->Method = MESH_TRANSFINITE;
 	  List_Reset(v->TrsfPoints);
 	  for(int i = 0; i < k; i++){
 	    double d;
 	    List_Read($7, i, &d);
-	    int j = (int)fabs(d);
-	    Vertex *vert = FindPoint(j);
-	    if(!vert)
-	      yymsg(1, "Unknown point %d", j);
-	    else
+	    Vertex *vert = FindPoint((int)fabs(d));
+	    if(vert)
 	      List_Add(v->TrsfPoints, &vert);
+	    else
+	      yymsg(0, "Unknown point %d", (int)fabs(d));
 	  }
 	}
+        else{
+	  GRegion *gr = GModel::current()->getRegionByTag((int)$4);
+          if(gr){
+            gr->meshAttributes.Method = MESH_TRANSFINITE;
+            for(int i = 0; i < k; i++){
+              double d;
+              List_Read($7, i, &d);
+              GVertex *gv = GModel::current()->getVertexByTag((int)fabs(d));
+              if(gv)
+                gr->meshAttributes.corners.push_back(gv);
+              else
+                yymsg(0, "Unknown point %d", (int)fabs(d));
+            }
+          }
+          else
+            yymsg(0, "Unknown volume %d", (int)$4);
+        }
       }
       List_Delete($7);
     }
@@ -2597,6 +2603,15 @@ Transfinite :
 	  s->Recombine = 1;
 	  s->RecombineAngle = $5;
 	}
+        else{
+	  GFace *gf = GModel::current()->getFaceByTag(j);
+	  if(gf){
+            gf->meshAttributes.recombine = 1;
+            gf->meshAttributes.recombineAngle = $5;
+	  }
+          else
+	    yymsg(1, "Unknown surface %d", j);
+	}
       }
       List_Delete($3);
     }
@@ -2610,6 +2625,13 @@ Transfinite :
 	if(s){
 	  s->Recombine = 1;
         }
+        else{
+	  GFace *gf = GModel::current()->getFaceByTag(j);
+	  if(gf)
+            gf->meshAttributes.recombine = 1;
+          else
+	    yymsg(1, "Unknown surface %d", j);
+        }
       }
       List_Delete($3);
     }
@@ -2620,7 +2642,16 @@ Transfinite :
 	List_Read($3, i, &d);
 	int j = (int)d;
 	Surface *s = FindSurface(j);
-	if(s) s->TransfiniteSmoothing = (int)$5;
+	if(s){
+          s->TransfiniteSmoothing = (int)$5;
+        }
+        else{
+	  GFace *gf = GModel::current()->getFaceByTag(j);
+	  if(gf)
+            gf->meshAttributes.transfiniteSmoothing = (int)$5;
+          else
+	    yymsg(1, "Unknown surface %d", (int)$5);
+        }
       }
       List_Delete($3);
     }
@@ -2633,14 +2664,48 @@ Embedding :
     tPoint '{' RecursiveListOfDouble '}' tIn tSurface '{' FExpr '}' tEND
     { 
       Surface *s = FindSurface((int)$8);
-      if(s)
+      if(s){
 	setSurfaceEmbeddedPoints(s, $3);
+      }
+      else{
+        GFace *gf = GModel::current()->getFaceByTag((int)$8);
+        if(gf){
+          for(int i = 0; i < List_Nbr($3); i++){
+            int iPoint;
+            List_Read($3, i, &iPoint);
+            GVertex *gv = GModel::current()->getVertexByTag(iPoint);
+            if(gv)
+              gf->addEmbeddedVertex(gv);
+            else
+              yymsg(0, "Unknown point %d", iPoint);
+          }
+        }
+        else
+          yymsg(0, "Unknown surface %d", (int)$8);
+      }
     }
   | tLine '{' RecursiveListOfDouble '}' tIn tSurface '{' FExpr '}' tEND
     {
       Surface *s = FindSurface((int)$8);
-      if(s)
+      if(s){
 	setSurfaceEmbeddedCurves(s, $3);
+      }
+      else{
+        GFace *gf = GModel::current()->getFaceByTag((int)$8);
+        if(gf){
+          for(int i = 0; i < List_Nbr($3); i++){
+            int iCurve;
+            List_Read($3, i, &iCurve);
+            GEdge *ge = GModel::current()->getEdgeByTag(iCurve);
+            if(ge)
+              gf->addEmbeddedEdge(ge);
+            else
+              yymsg(0, "Unknown line %d", iCurve);
+          }
+        }
+        else
+          yymsg(0, "Unknown surface %d", (int)$8);
+      }
     }
   | tLine '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
     {
