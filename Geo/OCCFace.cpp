@@ -46,7 +46,14 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
         TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
         int index = emap.FindIndex(edge);
         GEdge *e = m->getEdgeByTag(index);
-        if(e){
+        if(!e){
+          Msg::Error("Unknown edge %d in face %d", index, num);
+        }
+        else if(std::find(embedded_edges.begin(), embedded_edges.end(), e) != 
+                embedded_edges.end()){
+          Msg::Debug("OCC Face %d - Skipping embedded edge in loop", num);
+        }
+        else{
           l_wire.push_back(e);
           Msg::Debug("Edge %d ori %d", e->tag(), edge.Orientation());
           e->addFace(this);
@@ -54,9 +61,6 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
             OCCEdge *occe = (OCCEdge*)e;
             occe->setTrimmed(this);
           }
-        }
-        else{
-          Msg::Error("Unknown edge %d in face %d", index, num);
         }
       }      
 
