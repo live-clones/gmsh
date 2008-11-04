@@ -286,7 +286,7 @@ int MeshTransfiniteSurface(GFace *gf)
   }  
 
   // elliptic smoother (don't apply this by default)
-  if(corners.size() == 4 && gf->geomType() == GEntity::Plane){
+  if(corners.size() == 4){
     int numSmooth = 0;
     if(gf->meshAttributes.transfiniteSmoothing < 0 && CTX.mesh.nb_smoothing > 1)
       numSmooth = CTX.mesh.nb_smoothing;
@@ -295,6 +295,47 @@ int MeshTransfiniteSurface(GFace *gf)
     for (int IT = 0; IT < numSmooth; IT++){
       for(int i = 1; i < L; i++){
         for(int j = 1; j < H; j++){
+
+          // TEST SMOOTHING PARAM COORD : we need to store the param
+          // coord in a separate array, as we need to compute them for
+          // the MEdgeVertices too! -- need to use
+          // reparamOnFace(gf, t)
+          /*
+          double uv[2][9];
+          for(int ii = 0; ii < 2; ii++){
+            tab[i - 1][j - 1]->getParameter(ii, uv[ii][0]);
+            tab[i - 1][j    ]->getParameter(ii, uv[ii][1]);
+            tab[i - 1][j + 1]->getParameter(ii, uv[ii][2]);           
+            tab[i    ][j - 1]->getParameter(ii, uv[ii][3]);
+            tab[i    ][j    ]->getParameter(ii, uv[ii][4]);
+            tab[i    ][j + 1]->getParameter(ii, uv[ii][5]);
+            tab[i + 1][j - 1]->getParameter(ii, uv[ii][6]);
+            tab[i + 1][j    ]->getParameter(ii, uv[ii][7]);
+            tab[i + 1][j + 1]->getParameter(ii, uv[ii][8]);
+          }
+          double alpha = 0.25 * (SQU(uv[0][5] - uv[0][3]) +
+                                 SQU(uv[1][5] - uv[1][3])) ;
+          double gamma = 0.25 * (SQU(uv[0][7] - uv[0][1]) +
+                                 SQU(uv[1][7] - uv[1][1]));
+          double beta = 0.0625 * ((uv[0][7] - uv[0][1]) * (uv[0][5] - uv[0][3]) +
+                                  (uv[1][7] - uv[1][1]) * (uv[1][5] - uv[1][3]));
+
+          double u = 0.5 * (alpha * (uv[0][7] + uv[0][1]) + 
+                            gamma * (uv[0][5] + uv[0][3]) -
+                            2. * beta * (uv[0][8] - uv[0][2] - uv[0][6] + uv[0][0]))
+            / (alpha + gamma);
+          double v = 0.5 * (alpha * (uv[1][7] + uv[1][1]) + 
+                            gamma * (uv[1][5] + uv[1][3]) -
+                            2. * beta * (uv[1][8] - uv[1][2] - uv[1][6] + uv[1][0]))
+            / (alpha + gamma);
+          GPoint p = gf->point(SPoint2(u, v));
+          tab[i][j]->x() = p.x();
+          tab[i][j]->y() = p.y();
+          tab[i][j]->z() = p.z();
+          tab[i][j]->setParameter(0, u);
+          tab[i][j]->setParameter(1, v);
+          */
+
           MVertex *v11 = tab[i - 1][j - 1];
           MVertex *v12 = tab[i - 1][j    ];
           MVertex *v13 = tab[i - 1][j + 1];           
@@ -325,9 +366,19 @@ int MeshTransfiniteSurface(GFace *gf)
                             gamma * (v23->z() + v21->z()) -
                             2. * beta * (v33->z() - v13->z() -
                                          v31->z() + v11->z())) / (alpha + gamma);
+
+          if(IT ==  numSmooth - 1 && gf->geomType() != GEntity::Plane){
+            double init[2] = {0.5, 0.5}; // this is bad
+            GPoint p = gf->closestPoint(v22->point(), init);
+            v22->x() = p.x();
+            v22->y() = p.y();
+            v22->z() = p.z();
+          }
+
         }
       }
     }
+
     // recompute corresponding u,v coordinates (necessary e.g. for 2nd order algo)
     for(int i = 1; i < L; i++){
       for(int j = 1; j < H; j++){
