@@ -43,19 +43,33 @@ int MeshTransfiniteSurface(GFace *gf)
 
   Msg::StatusBar(2, true, "Meshing surface %d (transfinite)", gf->tag());
 
-  std::vector<MVertex*> corners, d_vertices;
-  std::vector<int> indices;
+  std::vector<MVertex*> corners;
 
-  for(unsigned int i = 0; i < gf->meshAttributes.corners.size(); i++)
-    corners.push_back(gf->meshAttributes.corners[i]->mesh_vertices[0]);
-
-  computeEdgeLoops(gf, d_vertices, indices);
+  if(gf->meshAttributes.corners.size()){
+    // corners have been specified explicitly
+    for(unsigned int i = 0; i < gf->meshAttributes.corners.size(); i++)
+      corners.push_back(gf->meshAttributes.corners[i]->mesh_vertices[0]);
+  }
+  else{
+    // try to find the corners automatically
+    std::vector<std::pair<GEdge*, int> > bnd = gf->sortedEdges();
+    for(unsigned int i = 0; i < bnd.size(); i++)
+      if(bnd[i].second > 0)
+        corners.push_back(bnd[i].first->getBeginVertex()->mesh_vertices[0]);
+      else
+        corners.push_back(bnd[i].first->getEndVertex()->mesh_vertices[0]);
+  }
 
   if(corners.size () != 3 && corners.size () != 4){
     Msg::Error("Surface %d is transfinite but has %d corners",
 	       gf->tag(), corners.size());
     return 0;
   }
+
+  std::vector<MVertex*> d_vertices;
+  std::vector<int> indices;
+  computeEdgeLoops(gf, d_vertices, indices);
+
   if(indices.size () != 2){
     Msg::Error("Surface %d is transfinite but has %d holes",
 	       gf->tag(), indices.size() - 2);
