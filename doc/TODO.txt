@@ -1,4 +1,10 @@
-$Id: TODO.txt,v 1.8 2008-10-12 14:57:58 geuzaine Exp $
+$Id: TODO.txt,v 1.9 2008-11-04 18:21:43 geuzaine Exp $
+
+********************************************************************
+
+Introduce keyword "All" or "*" in ListOfShapes so that we can apply an
+operator (e.g Recombine) on all defined entities (instead of doing
+"{1:N}")
 
 ********************************************************************
 

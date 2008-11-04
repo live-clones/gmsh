@@ -285,119 +285,78 @@ int MeshTransfiniteSurface(GFace *gf)
     }
   }  
 
-  // elliptic smoother (don't apply this by default)
-  if(corners.size() == 4){
-    int numSmooth = 0;
-    if(gf->meshAttributes.transfiniteSmoothing < 0 && CTX.mesh.nb_smoothing > 1)
-      numSmooth = CTX.mesh.nb_smoothing;
-    else if(gf->meshAttributes.transfiniteSmoothing > 0)
-      numSmooth = gf->meshAttributes.transfiniteSmoothing;
-    for (int IT = 0; IT < numSmooth; IT++){
-      for(int i = 1; i < L; i++){
-        for(int j = 1; j < H; j++){
+  // should we smooth the meshing using an elliptic smoother?
+  int numSmooth = 0;
+  if(gf->meshAttributes.transfiniteSmoothing < 0 && CTX.mesh.nb_smoothing > 1)
+    numSmooth = CTX.mesh.nb_smoothing;
+  else if(gf->meshAttributes.transfiniteSmoothing > 0)
+    numSmooth = gf->meshAttributes.transfiniteSmoothing;
 
-          // TEST SMOOTHING PARAM COORD : we need to store the param
-          // coord in a separate array, as we need to compute them for
-          // the MEdgeVertices too! -- need to use
-          // reparamOnFace(gf, t)
-          /*
-          double uv[2][9];
-          for(int ii = 0; ii < 2; ii++){
-            tab[i - 1][j - 1]->getParameter(ii, uv[ii][0]);
-            tab[i - 1][j    ]->getParameter(ii, uv[ii][1]);
-            tab[i - 1][j + 1]->getParameter(ii, uv[ii][2]);           
-            tab[i    ][j - 1]->getParameter(ii, uv[ii][3]);
-            tab[i    ][j    ]->getParameter(ii, uv[ii][4]);
-            tab[i    ][j + 1]->getParameter(ii, uv[ii][5]);
-            tab[i + 1][j - 1]->getParameter(ii, uv[ii][6]);
-            tab[i + 1][j    ]->getParameter(ii, uv[ii][7]);
-            tab[i + 1][j + 1]->getParameter(ii, uv[ii][8]);
-          }
-          double alpha = 0.25 * (SQU(uv[0][5] - uv[0][3]) +
-                                 SQU(uv[1][5] - uv[1][3])) ;
-          double gamma = 0.25 * (SQU(uv[0][7] - uv[0][1]) +
-                                 SQU(uv[1][7] - uv[1][1]));
-          double beta = 0.0625 * ((uv[0][7] - uv[0][1]) * (uv[0][5] - uv[0][3]) +
-                                  (uv[1][7] - uv[1][1]) * (uv[1][5] - uv[1][3]));
-
-          double u = 0.5 * (alpha * (uv[0][7] + uv[0][1]) + 
-                            gamma * (uv[0][5] + uv[0][3]) -
-                            2. * beta * (uv[0][8] - uv[0][2] - uv[0][6] + uv[0][0]))
-            / (alpha + gamma);
-          double v = 0.5 * (alpha * (uv[1][7] + uv[1][1]) + 
-                            gamma * (uv[1][5] + uv[1][3]) -
-                            2. * beta * (uv[1][8] - uv[1][2] - uv[1][6] + uv[1][0]))
-            / (alpha + gamma);
-          GPoint p = gf->point(SPoint2(u, v));
-          tab[i][j]->x() = p.x();
-          tab[i][j]->y() = p.y();
-          tab[i][j]->z() = p.z();
-          tab[i][j]->setParameter(0, u);
-          tab[i][j]->setParameter(1, v);
-          */
-
-          MVertex *v11 = tab[i - 1][j - 1];
-          MVertex *v12 = tab[i - 1][j    ];
-          MVertex *v13 = tab[i - 1][j + 1];           
-          MVertex *v21 = tab[i    ][j - 1];
-          MVertex *v22 = tab[i    ][j    ];
-          MVertex *v23 = tab[i    ][j + 1];
-          MVertex *v31 = tab[i + 1][j - 1];
-          MVertex *v32 = tab[i + 1][j    ];
-          MVertex *v33 = tab[i + 1][j + 1];
-          double alpha = 0.25 * (SQU(v23->x() - v21->x()) +
-                                 SQU(v23->y() - v21->y()) +
-                                 SQU(v23->z() - v21->z()));
-          double gamma = 0.25 * (SQU(v32->x() - v12->x()) +
-                                 SQU(v32->y() - v12->y()) +
-                                 SQU(v32->z() - v12->z()));
-          double beta = 0.0625 * ((v32->x() - v12->x()) * (v23->x() - v21->x()) +
-                                  (v32->y() - v12->y()) * (v23->y() - v21->y()) +
-                                  (v32->z() - v12->z()) * (v23->z() - v21->z()));
-          v22->x() = 0.5 * (alpha * (v32->x() + v12->x()) + 
-                            gamma * (v23->x() + v21->x()) -
-                            2. * beta * (v33->x() - v13->x() - 
-                                         v31->x() + v11->x())) / (alpha + gamma);
-          v22->y() = 0.5 * (alpha * (v32->y() + v12->y()) +
-                            gamma * (v23->y() + v21->y()) -
-                            2. * beta * (v33->y() - v13->y() -
-                                         v31->y() + v11->y())) / (alpha + gamma);
-          v22->z() = 0.5 * (alpha * (v32->z() + v12->z()) +
-                            gamma * (v23->z() + v21->z()) -
-                            2. * beta * (v33->z() - v13->z() -
-                                         v31->z() + v11->z())) / (alpha + gamma);
-
-          if(IT ==  numSmooth - 1 && gf->geomType() != GEntity::Plane){
-            double init[2] = {0.5, 0.5}; // this is bad
-            GPoint p = gf->closestPoint(v22->point(), init);
-            v22->x() = p.x();
-            v22->y() = p.y();
-            v22->z() = p.z();
-          }
-
+  if(corners.size() == 4 && numSmooth){
+    std::vector<std::vector<double> > u(L + 1), v(L + 1);
+    for(int i = 0; i <= L; i++){
+      u[i].resize(H + 1);
+      v[i].resize(H + 1);
+    }
+    for(int i = 0; i <= L; i++){
+      for(int j = 0; j <= H; j++){ 
+        int iP1 = N1 + i;
+        int iP2 = N2 + j;
+        int iP3 = N4 - i;
+        int iP4 = (N4 + (N3 - N2) - j) % m_vertices.size();
+        if(j == 0)     { u[i][j] = U[iP1]; v[i][j] = V[iP1]; }
+        else if(i == L){ u[i][j] = U[iP2]; v[i][j] = V[iP2]; }
+        else if(j == H){ u[i][j] = U[iP3]; v[i][j] = V[iP3]; }
+        else if(i == 0){ u[i][j] = U[iP4]; v[i][j] = V[iP4]; }
+        else{
+          tab[i][j]->getParameter(0, u[i][j]);
+          tab[i][j]->getParameter(1, v[i][j]);
         }
       }
     }
-
-    // recompute corresponding u,v coordinates (necessary e.g. for 2nd order algo)
+    for(int IT = 0; IT < numSmooth; IT++){
+      for(int i = 1; i < L; i++){
+        for(int j = 1; j < H; j++){
+          double alpha = 0.25 * (SQU(u[i][j + 1] - u[i][j - 1]) +
+                                 SQU(v[i][j + 1] - v[i][j - 1])) ;
+          double gamma = 0.25 * (SQU(u[i + 1][j] - u[i - 1][j]) +
+                                 SQU(v[i + 1][j] - v[i - 1][j]));
+          double beta = 0.0625 * 
+            ((u[i + 1][j] - u[i - 1][j]) * (u[i][j + 1] - u[i][j - 1]) +
+             (v[i + 1][j] - v[i - 1][j]) * (v[i][j + 1] - v[i][j - 1]));
+          u[i][j] = 0.5 * 
+            (alpha * (u[i + 1][j] + u[i - 1][j]) + 
+             gamma * (u[i][j + 1] + u[i][j - 1]) -
+             2. * beta * (u[i + 1][j + 1] - u[i - 1][j + 1] - 
+                          u[i + 1][j - 1] + u[i - 1][j - 1])) / (alpha + gamma);
+          v[i][j] = 0.5 * 
+            (alpha * (v[i + 1][j] + v[i - 1][j]) + 
+             gamma * (v[i][j + 1] + v[i][j - 1]) -
+             2. * beta * (v[i + 1][j + 1] - v[i - 1][j + 1] - 
+                          v[i + 1][j - 1] + v[i - 1][j - 1])) / (alpha + gamma);
+        }
+      }
+    }
     for(int i = 1; i < L; i++){
       for(int j = 1; j < H; j++){
-        MVertex *v = tab[i][j];
-        SPoint2 param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
-        v->setParameter(0, param[0]);
-        v->setParameter(1, param[1]);
+        GPoint p = gf->point(SPoint2(u[i][j], v[i][j]));
+        tab[i][j]->x() = p.x();
+        tab[i][j]->y() = p.y();
+        tab[i][j]->z() = p.z();
+        tab[i][j]->setParameter(0, u[i][j]);
+        tab[i][j]->setParameter(1, v[i][j]);
       }
     }
   }
 
+  // create elements
   if(corners.size() == 4){ 
-    // create elements
     for(int i = 0; i < L ; i++){
       for(int j = 0; j < H; j++){
-        MVertex *v1 = tab[i    ][j    ];
-        MVertex *v2 = tab[i + 1][j    ];
+        MVertex *v1 = tab[i][j];
+        MVertex *v2 = tab[i + 1][j];
         MVertex *v3 = tab[i + 1][j + 1];
-        MVertex *v4 = tab[i    ][j + 1];
+        MVertex *v4 = tab[i][j + 1];
         if(gf->meshAttributes.recombine)
           gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
         else if(gf->meshAttributes.transfiniteArrangement == 1 ||
@@ -416,17 +375,17 @@ int MeshTransfiniteSurface(GFace *gf)
   }
   else{      
     for(int j = 0; j < H; j++){
-      MVertex *v1 = tab[0    ][0    ];
-      MVertex *v2 = tab[1    ][j    ];
-      MVertex *v3 = tab[1    ][j + 1];
+      MVertex *v1 = tab[0][0];
+      MVertex *v2 = tab[1][j];
+      MVertex *v3 = tab[1][j + 1];
       gf->triangles.push_back(new MTriangle(v1, v2, v3));
     }
     for(int i = 1; i < L ; i++){
       for(int j = 0; j < H; j++){
-        MVertex *v1 = tab[i    ][j    ];
-        MVertex *v2 = tab[i + 1][j    ];
+        MVertex *v1 = tab[i][j];
+        MVertex *v2 = tab[i + 1][j];
         MVertex *v3 = tab[i + 1][j + 1];
-        MVertex *v4 = tab[i    ][j + 1];
+        MVertex *v4 = tab[i][j + 1];
         if(gf->meshAttributes.recombine)
           gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
         else if(gf->meshAttributes.transfiniteArrangement == 1 ||
