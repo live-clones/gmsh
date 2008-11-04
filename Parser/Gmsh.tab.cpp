@@ -6424,8 +6424,8 @@ yyreduce:
           if(ge){
             ge->meshAttributes.Method = MESH_TRANSFINITE;
             ge->meshAttributes.nbPointsTransfinite = ((yyvsp[(5) - (7)].d) > 2) ? (int)(yyvsp[(5) - (7)].d) : 2;
-            ge->meshAttributes.typeTransfinite = sign(d);
-            ge->meshAttributes.coeffTransfinite = 1.;
+            ge->meshAttributes.typeTransfinite = type * sign(d);
+            ge->meshAttributes.coeffTransfinite = coef;
           }
           else
 	    yymsg(0, "Unknown line %d", j);
