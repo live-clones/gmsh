@@ -1,4 +1,4 @@
-Merge "benchmarks/step/tank.brep";
+Merge "tank.brep";
 
 n = 2;
 
