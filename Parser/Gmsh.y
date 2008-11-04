@@ -101,9 +101,9 @@ void FixRelativePath(const char *in, char *out);
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 
 %type <d> FExpr FExpr_Single 
-%type <v> VExpr VExpr_Single TransfiniteType
+%type <v> VExpr VExpr_Single CircleOptions TransfiniteType
 %type <i> NumericAffectation NumericIncrement PhysicalId
-%type <i> TransfiniteArrangement
+%type <i> TransfiniteArrangement RecombineAngle
 %type <u> ColorExpr
 %type <c> StringExpr StringExprVar SendToFile
 %type <l> FExpr_Multi ListOfDouble RecursiveListOfDouble
@@ -1006,6 +1006,16 @@ RuledSurfaceOptions :
     }
 ;
 
+CircleOptions :
+    {
+      for(int i = 0; i < 4; i++) $$[i] = 0.;
+    }
+  | tPlane VExpr
+    {
+      for(int i = 0; i < 4; i++) $$[i] = $2[i];
+    }
+;
+
 Shape :
 
   // Points
@@ -1107,7 +1117,7 @@ Shape :
       $$.Type = MSH_SEGM_SPLN;
       $$.Num = num;
     }
-  | tCircle '(' FExpr ')'  tAFFECT ListOfDouble tEND
+  | tCircle '(' FExpr ')'  tAFFECT ListOfDouble CircleOptions tEND
     {
       int num = (int)$3;
       if(FindCurve(num)){
@@ -1117,41 +1127,27 @@ Shape :
 	List_T *temp = ListOfDouble2ListOfInt($6);
 	Curve *c = Create_Curve(num, MSH_SEGM_CIRC, 2, temp, NULL,
 				-1, -1, 0., 1.);
-	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
-	CreateReversedCurve(c);
-	List_Delete(temp);
-      }
-      List_Delete($6);
-      $$.Type = MSH_SEGM_CIRC;
-      $$.Num = num;
-    }
-  | tCircle '(' FExpr ')'  tAFFECT ListOfDouble tPlane VExpr tEND
-    {
-      int num = (int)$3;
-      if(FindCurve(num)){
-	yymsg(0, "Curve %d already exists", num);
-      }
-      else{
-	List_T *temp = ListOfDouble2ListOfInt($6);
-	Curve *c = Create_Curve(num, MSH_SEGM_CIRC, 2, temp, NULL,
-				-1, -1, 0., 1.);
-	c->Circle.n[0] = $8[0];
-	c->Circle.n[1] = $8[1];
-	c->Circle.n[2] = $8[2];
-	End_Curve(c);
+        if($7[0] || $7[1] || $7[2]){
+          c->Circle.n[0] = $7[0];
+          c->Circle.n[1] = $7[1];
+          c->Circle.n[2] = $7[2];
+          End_Curve(c);
+        }
 	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
 	Curve *rc = CreateReversedCurve(c);
-	rc->Circle.n[0] = $8[0];
-	rc->Circle.n[1] = $8[1];
-	rc->Circle.n[2] = $8[2];
-	End_Curve(rc);
+        if($7[0] || $7[1] || $7[2]){
+          rc->Circle.n[0] = $7[0];
+          rc->Circle.n[1] = $7[1];
+          rc->Circle.n[2] = $7[2];
+          End_Curve(rc);
+        }
 	List_Delete(temp);
       }
       List_Delete($6);
       $$.Type = MSH_SEGM_CIRC;
       $$.Num = num;
     }
-  | tEllipse '(' FExpr ')'  tAFFECT ListOfDouble tEND
+  | tEllipse '(' FExpr ')'  tAFFECT ListOfDouble CircleOptions tEND
     {
       int num = (int)$3;
       if(FindCurve(num)){
@@ -1161,34 +1157,20 @@ Shape :
 	List_T *temp = ListOfDouble2ListOfInt($6);
 	Curve *c = Create_Curve(num, MSH_SEGM_ELLI, 2, temp, NULL,
 				-1, -1, 0., 1.);
-	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
-	CreateReversedCurve(c);
-	List_Delete(temp);
-      }
-      List_Delete($6);
-      $$.Type = MSH_SEGM_ELLI;
-      $$.Num = num;
-    }
-  | tEllipse '(' FExpr ')'  tAFFECT ListOfDouble tPlane VExpr tEND
-    {
-      int num = (int)$3;
-      if(FindCurve(num)){
-	yymsg(0, "Curve %d already exists", num);
-      }
-      else{
-	List_T *temp = ListOfDouble2ListOfInt($6);
-	Curve *c = Create_Curve(num, MSH_SEGM_ELLI, 2, temp, NULL,
-				-1, -1, 0., 1.);
-	c->Circle.n[0] = $8[0];
-	c->Circle.n[1] = $8[1];
-	c->Circle.n[2] = $8[2];
-	End_Curve(c);
+        if($7[0] || $7[1] || $7[2]){
+          c->Circle.n[0] = $7[0];
+          c->Circle.n[1] = $7[1];
+          c->Circle.n[2] = $7[2];
+          End_Curve(c);
+        }
 	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
 	Curve *rc = CreateReversedCurve(c);
-	rc->Circle.n[0] = $8[0];
-	rc->Circle.n[1] = $8[1];
-	rc->Circle.n[2] = $8[2];
-	End_Curve(c);
+        if($7[0] || $7[1] || $7[2]){
+          rc->Circle.n[0] = $7[0];
+          rc->Circle.n[1] = $7[1];
+          rc->Circle.n[2] = $7[2];
+          End_Curve(rc);
+        }
 	List_Delete(temp);
       }
       List_Delete($6);
@@ -2434,7 +2416,7 @@ ExtrudeParameter :
     }
 ;
 
-//  T R A N S F I N I T E
+//  T R A N S F I N I T E ,   R E C O M B I N E   &   S M O O T H I N G
 
 TransfiniteType : 
     {
@@ -2468,6 +2450,16 @@ TransfiniteArrangement :
       else // alternated
         $$ = 0;
       Free($1);
+    }
+;
+
+RecombineAngle : 
+    {
+      $$ = 45;
+    }
+  | tAFFECT FExpr
+    {
+      $$ = $2;
     }
 ;
 
@@ -2592,45 +2584,24 @@ Transfinite :
       }
       List_Delete($7);
     }
-  | tRecombine tSurface ListOfDouble tAFFECT FExpr tEND
+  | tRecombine tSurface ListOfDouble RecombineAngle tEND
     {
       for(int i = 0; i < List_Nbr($3); i++){
 	double d;
 	List_Read($3, i, &d);
-	int j = (int)d;
-	Surface *s = FindSurface(j);
+        Surface *s = FindSurface((int)d);
 	if(s){
 	  s->Recombine = 1;
-	  s->RecombineAngle = $5;
-	}
-        else{
-	  GFace *gf = GModel::current()->getFaceByTag(j);
-	  if(gf){
-            gf->meshAttributes.recombine = 1;
-            gf->meshAttributes.recombineAngle = $5;
-	  }
-          else
-	    yymsg(1, "Unknown surface %d", j);
-	}
-      }
-      List_Delete($3);
-    }
-  | tRecombine tSurface ListOfDouble tEND
-    {
-      for(int i = 0; i < List_Nbr($3); i++){
-	double d;
-	List_Read($3, i, &d);
-	int j = (int)d;
-        Surface *s = FindSurface(j);
-	if(s){
-	  s->Recombine = 1;
+	  s->RecombineAngle = $4;
         }
         else{
-	  GFace *gf = GModel::current()->getFaceByTag(j);
-	  if(gf)
+	  GFace *gf = GModel::current()->getFaceByTag((int)d);
+	  if(gf){
             gf->meshAttributes.recombine = 1;
+            gf->meshAttributes.recombineAngle = $4;
+          }
           else
-	    yymsg(1, "Unknown surface %d", j);
+	    yymsg(1, "Unknown surface %d", (int)d);
         }
       }
       List_Delete($3);
@@ -3052,7 +3023,8 @@ FExpr_Multi :
   | FExpr tDOTS FExpr
     { 
       $$ = List_Create(2, 1, sizeof(double)); 
-      for(double d = $1; ($1 < $3) ? (d <= $3) : (d >= $3); ($1 < $3) ? (d += 1.) : (d -= 1.)) 
+      for(double d = $1; ($1 < $3) ? (d <= $3) : (d >= $3); 
+          ($1 < $3) ? (d += 1.) : (d -= 1.)) 
 	List_Add($$, &d);
     }
   | FExpr tDOTS FExpr tDOTS FExpr
