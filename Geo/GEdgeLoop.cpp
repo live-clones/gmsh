@@ -116,13 +116,3 @@ GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
   }
 }
 
-
-GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire, const std::list<int> &dir)
-{
-  std::list<GEdge*>::const_iterator it = cwire.begin();
-  std::list<int>::const_iterator itdir = dir.begin();
-  for ( ; it != cwire.end() ; ++it,++itdir){
-    loop.push_back(GEdgeSigned(*itdir,*it));
-  }
-}
-

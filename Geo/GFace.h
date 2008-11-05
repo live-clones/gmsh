@@ -73,9 +73,6 @@ class GFace : public GEntity
   // edges that bound the face
   virtual std::list<GEdge*> edges() const { return l_edges; }
 
-  // edges that bound the face, sorted in a loop, with orientation
-  virtual std::vector<std::pair<GEdge*, int> > sortedEdges() const;
-
   // edges that are embedded in the face
   virtual std::list<GEdge*> embeddedEdges() const { return embedded_edges; }
 

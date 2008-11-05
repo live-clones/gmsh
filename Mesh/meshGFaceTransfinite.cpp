@@ -52,12 +52,9 @@ int MeshTransfiniteSurface(GFace *gf)
   }
   else{
     // try to find the corners automatically
-    std::vector<std::pair<GEdge*, int> > bnd = gf->sortedEdges();
-    for(unsigned int i = 0; i < bnd.size(); i++)
-      if(bnd[i].second > 0)
-        corners.push_back(bnd[i].first->getBeginVertex()->mesh_vertices[0]);
-      else
-        corners.push_back(bnd[i].first->getEndVertex()->mesh_vertices[0]);
+    GEdgeLoop el(gf->edges());
+    for(GEdgeLoop::iter it = el.begin(); it != el.end(); it++)
+      corners.push_back(it->getBeginVertex()->mesh_vertices[0]);
   }
 
   if(corners.size () != 3 && corners.size () != 4){

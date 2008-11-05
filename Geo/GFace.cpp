@@ -146,45 +146,6 @@ std::list<GVertex*> GFace::vertices() const
   return ret;
 }
 
-std::vector<std::pair<GEdge*, int> > GFace::sortedEdges() const
-{
-  std::vector<std::pair<GEdge*, int> > sorted;
-
-  if(l_dirs.size() == l_edges.size()){
-    std::vector<std::pair<GEdge*, int> > tmp;
-    std::list<GEdge*>::const_iterator ite = l_edges.begin();
-    std::list<int>::const_iterator itd = l_dirs.begin();
-    while(ite != l_edges.end()){
-      tmp.push_back(std::pair<GEdge*, int>(*ite, *itd));
-      ite++; itd++;
-    }
-    if(tmp.size()){
-      sorted.push_back(tmp.front());
-      tmp.erase(tmp.begin());
-      int check = 0;
-      while(sorted.size() < l_edges.size()){
-        if(++check > l_edges.size()){
-          Msg::Warning("Aborting sorted edge computation");
-          break;
-        }
-        GVertex *v1 = (sorted.back().second > 0) ? sorted.back().first->getEndVertex() : 
-          sorted.back().first->getBeginVertex();
-        for(std::vector<std::pair<GEdge*, int> >::iterator it = tmp.begin(); 
-            it != tmp.end(); it++){
-          GVertex *v2 = (it->second > 0) ? it->first->getBeginVertex() :
-            it->first->getEndVertex();
-          if(v1 == v2){
-            sorted.push_back(*it);
-            tmp.erase(it);
-            break;
-          }
-        }
-      }
-    }
-  }
-  return sorted;
-}
-
 void GFace::setVisibility(char val, bool recursive)
 {
   GEntity::setVisibility(val);
