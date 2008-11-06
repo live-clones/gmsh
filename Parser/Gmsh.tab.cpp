@@ -6435,7 +6435,7 @@ yyreduce:
   case 214:
 #line 2471 "Gmsh.y"
     {
-      (yyval.i) = (yyvsp[(2) - (2)].d);
+      (yyval.i) = (int)(yyvsp[(2) - (2)].d);
     ;}
     break;
 

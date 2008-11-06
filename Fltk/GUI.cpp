@@ -3976,7 +3976,7 @@ void GUI::create_field_window()
   field_window->box(GMSH_WINDOW_BOX);
   int x = WB;
   int y = WB;
-  int w = 1.5 * BB;
+  int w = (int)(1.5 * BB);
   Fl_Menu_Button *new_field_btn = new Fl_Menu_Button(x, y, w, BH, "New");
   FieldManager &fields = *GModel::current()->getFields();
   std::map<std::string, FieldFactory*>::iterator it;
@@ -4023,8 +4023,8 @@ void GUI::create_field_window()
   help_tab->end();
   tabs->end();
   field_editor_group->end();
-  field_window->resizable(new Dummy_Box(1.5 * BB + 2 * WB, BH + 2 * WB, 
-                                        width - 3 * WB - 1.5 * BB, height - 3 * BH - 5 * WB));
+  field_window->resizable(new Dummy_Box((int)(1.5 * BB) + 2 * WB, BH + 2 * WB, 
+                                        width - 3 * WB - (int)(1.5 * BB), height - 3 * BH - 5 * WB));
   field_editor_group->resizable(tabs);
   tabs->resizable(options_tab);
   options_tab->resizable(new Dummy_Box(3 * BB + 4 * WB, BH + 2 * WB,

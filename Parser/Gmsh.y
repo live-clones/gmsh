@@ -2469,7 +2469,7 @@ RecombineAngle :
     }
   | tAFFECT FExpr
     {
-      $$ = $2;
+      $$ = (int)$2;
     }
 ;
 
