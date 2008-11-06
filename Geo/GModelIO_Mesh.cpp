@@ -873,7 +873,7 @@ static int readElementsVRML(FILE *fp, std::vector<MVertex*> &vertexVector, int r
     return 0;
   }
   Msg::Info("%d elements", elements[0][region].size() + 
-            elements[1][region].size() + elements[2][region].size());
+      elements[1][region].size() + elements[2][region].size());
   return 1;
 }
 
@@ -2170,31 +2170,39 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   
   if(noPhysicalGroups()) saveAll = true;
 
-  // get all the entities in the model
-  std::vector<GEntity*> entities;
-  getEntities(entities);
-
   // get the number of vertices and index the vertices in a continuous
   // sequence
   int numVertices = indexMeshVertices(saveAll);
-  std::list<int> vertices_tag[numVertices];
 
-  for(unsigned int i = 0; i < entities.size(); i++){
-    if(entities[i]->physicals.size() || saveAll){
-      std::list<GFace*> lf = entities[i]->faces();
-      std::list<GFace*>::iterator it = lf.begin();
-      for(unsigned int k=0; k < lf.size(); k++){
-        for( unsigned int l=0; l<(*it)->mesh_vertices.size();l++)
-           vertices_tag[(*it)->mesh_vertices[l]->getIndex()-1].push_back((*it)->tag());
-        it++;
+  // tag the vertices according to which surface they belong to (Note
+  // that we use a brute force approach here, so that we can deal with
+  // models with incomplete topology. For example, when we merge 2 STL
+  // triangulations we don't have the boundary information between the
+  // faces, and the vertices would end up categorized on either one.)
+  std::list<int> vertexTags[numVertices], boundaryIndicators;
+  int numBoundaryIndicators = 0;
+  for(riter it = firstRegion(); it != lastRegion(); it++){
+    std::list<GFace*> faces = (*it)->faces();
+    for(std::list<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++){
+      GFace *gf = *itf;
+      boundaryIndicators.push_back(gf->tag());
+      for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
+        MElement *e = gf->getMeshElement(i);
+        for(unsigned int j = 0; j < e->getNumVertices(); j++)
+          vertexTags[e->getVertex(j)->getIndex() - 1].push_back(gf->tag());
       }
     }
   }
-  for(unsigned int i=0;i<numVertices;i++)
-    {
-     vertices_tag[i].unique();
-     vertices_tag[i].sort(); // optional
-    }
+  boundaryIndicators.sort();
+  boundaryIndicators.unique();
+  for(int i = 0; i < numVertices; i++){
+    vertexTags[i].sort();
+    vertexTags[i].unique();
+  }
+
+  // get all the entities in the model
+  std::vector<GEntity*> entities;
+  getEntities(entities);
 
   // loop over all elements we need to save
   int numElements = 0, maxNumNodesPerElement = 0;
@@ -2219,16 +2227,11 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   fprintf(fp, " Max number of nodes in an element: %d \n", maxNumNodesPerElement);
   fprintf(fp, " Only one subdomain el              : dpFALSE\n");
   fprintf(fp, " Lattice data                     ? 0\n\n\n\n");
-  int nbi = getNumFaces();
-  fprintf(fp, " %d Boundary indicators:  ", nbi);
-  for(fiter it = firstFace(); it != lastFace(); ++it){
-    // Jacques: are you sure about this? "nbi" might not reflect the
-    // number of tags written if saveAll==false...
-    if(saveAll || (*it)->physicals.size()){
-      fprintf(fp, " %d", (*it)->tag());
-    }
-  } 
-
+  fprintf(fp, " %d Boundary indicators:  ", boundaryIndicators.size());
+  for(std::list<int>::iterator it = boundaryIndicators.begin();
+      it != boundaryIndicators.end(); it++)
+    fprintf(fp, " %d", *it);
+  
   fprintf(fp, "\n\n\n");
   fprintf(fp,"  Nodal coordinates and nodal boundary indicators,\n");
   fprintf(fp,"  the columns contain:\n");
@@ -2237,19 +2240,19 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   fprintf(fp,"   - no of boundary indicators that are set (ON)\n");
   fprintf(fp,"   - the boundary indicators that are set (ON) if any.\n");
   fprintf(fp,"#\n");
-
+  
   // write mesh vertices
-  for(unsigned int i = 0; i < entities.size(); i++)
+  for(unsigned int i = 0; i < entities.size(); i++){
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
-      entities[i]->mesh_vertices[j]->writeDIFF(fp, binary, scalingFactor);
-      fprintf(fp, " [%d] ", vertices_tag[entities[i]->mesh_vertices[j]->getIndex()-1].size());
-      std::list<int>::iterator it = vertices_tag[entities[i]->mesh_vertices[j]->getIndex()-1].begin();
-      for(unsigned k=0; k < vertices_tag[entities[i]->mesh_vertices[j]->getIndex()-1].size(); k++){
-        fprintf(fp," %d ", (*it));
-        it++;
-      }
+      MVertex *v = entities[i]->mesh_vertices[j];
+      v->writeDIFF(fp, binary, scalingFactor);
+      fprintf(fp, " [%d] ", vertexTags[v->getIndex() - 1].size());
+      for(std::list<int>::iterator it = vertexTags[v->getIndex() - 1].begin();
+          it != vertexTags[v->getIndex() - 1].end(); it++)
+        fprintf(fp," %d ", *it);
       fprintf(fp,"\n");
     }
+  }
   
   fprintf(fp, "\n");
   fprintf(fp, "\n");
