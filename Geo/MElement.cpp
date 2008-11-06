@@ -628,7 +628,7 @@ void MElement::writeDIFF(FILE *fp, int num, bool binary, int physical_property)
     int verts[60];
     verts[0] = n;
     for(int i = 0; i < n; i++)
-      verts[i + 1] = getVertexVTK(i)->getIndex() - 1;
+      verts[i + 1] = getVertexVTK(i)->getIndex();
     fwrite(verts, sizeof(int), n + 1, fp);
   }
   else{
@@ -638,7 +638,7 @@ void MElement::writeDIFF(FILE *fp, int num, bool binary, int physical_property)
       fprintf(fp, "%d %s", num, "ElmT4n3D ");
     fprintf(fp, " %d ", physical_property);
     for(int i = 0; i < n; i++)
-      fprintf(fp, " %d", getVertexVTK(i)->getIndex() - 1);
+      fprintf(fp, " %d", getVertexVTK(i)->getIndex());
     fprintf(fp, "\n");
   }
 }
