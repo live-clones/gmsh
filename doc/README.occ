@@ -7,30 +7,10 @@ How to build OpenCascade 6.3 (OCC) for Gmsh:
 
 - OS/compiler specific stuff:
 
-   * On Windows/MinGW define
-
-     export CC="gcc -DWNT=1 -DWIN32 -DHAVE_NO_DLL"
-     export CXX="g++ -DWNT=1 -DWIN32 -DHAVE_NO_DLL"
-
-     (With cygwin add "-mno-cygwin")
-
-     You'll also need to fix a few things in the source code as you
-     go, depending on the version MinGW and of the bundled g++:
-
-     - remove all pthread tests in ./configure
-     - replace all refs to #include <limits> with #include <limits.h> in
-       <OpenCascade dir>/ros/inc/Standard_values.h
-     - fix "delete RefToCurrentTMSKrnl;" & co calls in OSD_Chronometer.cxx
-     - remove STATUS_FLOAT_MULTIPLE_TRAPS & co switch cases in
-       OSD_Signal_Wnt.cxx
-     - add explicit (void*) cast in Standard_MMgrOpt.cxx
-
-   * With new versions of gcc, you might have to add
-     "-ffriend-injection -fpermissive" to the compiler options (this
-     prevents the "Standard_Transient_Type_ not declared" error),
-     i.e., define
-
-     export CXXFLAGS="${CXXFLAGS} -ffriend-injection -fpermissive"
+   * On Windows, use Visual C++ to compile the libraries, or use the
+     precompiled DLLs directly. (The MinGW compiler used to work with
+     OCC 6.2 but do not anymore with 6.3.)  See README.msvc for
+     instructions on how to compile Gmsh with Visual C++.
 
    * on Mac OS X unfortunately you cannot build universal libs simply
      by using "-arch i386 -arch ppc" (the code depends on
