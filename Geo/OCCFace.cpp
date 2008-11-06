@@ -33,54 +33,43 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num, TopTools_IndexedMapOfShape 
   TopExp_Explorer exp2, exp3;
   for(exp2.Init(s, TopAbs_WIRE); exp2.More(); exp2.Next()){
     TopoDS_Wire wire = TopoDS::Wire(exp2.Current());
-    ShapeAnalysis_Wire check(wire, s, 0.);
-    // only add closed wires (yes, the test is correct: CheckClosed
-    // returns false when the wire is closed)
-    if(check.CheckClosed()){
-      Msg::Debug("OCC Face %d - Skipping open Wire", num);
-    }
-    else{
-      Msg::Debug("OCC Face %d - New Wire", num);
-      std::list<GEdge*> l_wire;
-      for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){          
-        TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
-        int index = emap.FindIndex(edge);
-        GEdge *e = m->getEdgeByTag(index);
-        if(!e){
-          Msg::Error("Unknown edge %d in face %d", index, num);
-        }
-        else if(std::find(embedded_edges.begin(), embedded_edges.end(), e) != 
-                embedded_edges.end()){
-          Msg::Debug("OCC Face %d - Skipping embedded edge in loop", num);
-        }
-        else{
-          l_wire.push_back(e);
-          Msg::Debug("Edge %d ori %d", e->tag(), edge.Orientation());
-          e->addFace(this);
-          if(!e->is3D()){
-            OCCEdge *occe = (OCCEdge*)e;
-            occe->setTrimmed(this);
-          }
-        }
-      }      
-
-      GEdgeLoop el(l_wire);
-      for(GEdgeLoop::citer it = el.begin(); it != el.end(); ++it){
-        l_edges.push_back(it->ge);
-        l_dirs.push_back(it->_sign);
-        if (el.count() == 2){
-          it->ge->meshAttributes.minimumMeshSegments = 
-            std::max(it->ge->meshAttributes.minimumMeshSegments,2);
-        }
-        if (el.count() == 1){
-          it->ge->meshAttributes.minimumMeshSegments = 
-            std::max(it->ge->meshAttributes.minimumMeshSegments,3);
+    Msg::Debug("OCC Face %d - New Wire", num);
+    std::list<GEdge*> l_wire;
+    for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){          
+      TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
+      int index = emap.FindIndex(edge);
+      GEdge *e = m->getEdgeByTag(index);
+      if(!e){
+        Msg::Error("Unknown edge %d in face %d", index, num);
+      }
+      else{
+        l_wire.push_back(e);
+        Msg::Debug("Edge %d ori %d", e->tag(), edge.Orientation());
+        e->addFace(this);
+        if(!e->is3D()){
+          OCCEdge *occe = (OCCEdge*)e;
+          occe->setTrimmed(this);
         }
       }
-      edgeLoops.push_back(el);
+    }      
+    
+    GEdgeLoop el(l_wire);
+    for(GEdgeLoop::citer it = el.begin(); it != el.end(); ++it){
+      l_edges.push_back(it->ge);
+      l_dirs.push_back(it->_sign);
+      if (el.count() == 2){
+        it->ge->meshAttributes.minimumMeshSegments = 
+          std::max(it->ge->meshAttributes.minimumMeshSegments,2);
+      }
+      if (el.count() == 1){
+        it->ge->meshAttributes.minimumMeshSegments = 
+          std::max(it->ge->meshAttributes.minimumMeshSegments,3);
+      }
     }
+    edgeLoops.push_back(el);
   }
-  BRepAdaptor_Surface surface( s );
+
+  BRepAdaptor_Surface surface(s);
   _periodic[0] = surface.IsUPeriodic();
   _periodic[1] = surface.IsVPeriodic();
 

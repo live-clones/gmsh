@@ -93,7 +93,6 @@ using std::iostream;
 #include "ShapeAnalysis_ShapeContents.hxx"
 #include "ShapeAnalysis_CheckSmallFace.hxx"
 #include "ShapeAnalysis_DataMapOfShapeListOfReal.hxx"
-#include "ShapeAnalysis_Wire.hxx"
 #include "BRepAlgoAPI_Fuse.hxx"
 #include "BRepCheck_Analyzer.hxx"
 #include "BRepLib.hxx"

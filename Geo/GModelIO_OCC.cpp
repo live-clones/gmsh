@@ -670,6 +670,9 @@ static void applyOCCMeshConstraints(GModel *m, const void *constraints)
           if(shape.IsSame(*shape2)){
             Msg::Debug("... embedding edge in face %d", gf->tag());
             gf->addEmbeddedEdge(ge);
+            // the surface might have this edge as an open wire: make
+            // sure to remove it
+            gf->delFreeEdge(ge);
           }
         }
       }

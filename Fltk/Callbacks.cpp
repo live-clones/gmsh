@@ -3979,7 +3979,7 @@ static void _add_transfinite(int dim)
           if(ib == 'e') {
             switch (dim) {
             case 2:
-              if(p.size() == 3 + 1 || p.size() == 4 + 1)
+              if(p.size() == 0 + 1 || p.size() == 3 + 1 || p.size() == 4 + 1)
                 add_trsfsurf(p, CTX.filename,
                              WID->context_mesh_choice[1]->text());
               else

@@ -37,6 +37,7 @@ class GEdgeLoop
   inline iter end() { return loop.end(); }
   inline citer begin() const { return loop.begin(); }
   inline citer end() const { return loop.end(); }
+  inline void erase(iter it){ loop.erase(it); }
   int count(GEdge*) const;
   int count() const { return loop.size(); }
 };

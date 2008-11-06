@@ -53,6 +53,35 @@ GFace::~GFace()
     delete va_geom_triangles;
 }
 
+void GFace::delFreeEdge(GEdge *e)
+{ 
+  // delete the edge from the edge list and the orientation list
+  std::list<GEdge*>::iterator ite = l_edges.begin();
+  std::list<int>::iterator itd = l_dirs.begin();
+  while(ite != l_edges.end()){
+    if(e == *ite){
+      Msg::Debug("Erasing edge %d from edge list in face %d", e->tag(), tag());
+      l_edges.erase(ite);
+      if(itd != l_dirs.end()) l_dirs.erase(itd);
+      break;
+    }
+    ite++; 
+    if(itd != l_dirs.end()) itd++;
+  }
+
+  // delete the edge from the edge loops
+  for(std::list<GEdgeLoop>::iterator it = edgeLoops.begin(); 
+      it != edgeLoops.end(); it++){
+    for(GEdgeLoop::iter it2 = it->begin(); it2 != it->end(); it2++){
+      if(e == it2->ge){
+        Msg::Debug("Erasing edge %d from edge loop in face %d", e->tag(), tag());
+        it->erase(it2);
+        break;
+      }
+    }
+  }
+}
+
 void GFace::deleteMesh()
 {
   for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
