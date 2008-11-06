@@ -2994,7 +2994,7 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes){
   for(int i=0;i<List_Nbr(vertices_id);i++){
     int id;
     List_Read(vertices_id,i,&id);
-    v_break.insert((int)id);
+    v_break.insert(id);
   }
   bool is_periodic=c->beg==c->end;
   bool first_periodic=true;
@@ -3020,8 +3020,10 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes){
       last_periodic=true;
     }
   }
-  Curve *cnew=_create_splitted_curve(c,new_list);
-  List_Add(shapes,&cnew);
+  if(List_Nbr(new_list)>1){
+    Curve *cnew=_create_splitted_curve(c,new_list);
+    List_Add(shapes,&cnew);
+  }
   //replace original curve by the new curves in all surfaces
   //(and for the opposite curve)
   List_T *rshapes=List_Create(2,1,sizeof(Shape));
