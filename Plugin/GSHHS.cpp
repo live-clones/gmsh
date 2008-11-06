@@ -202,8 +202,8 @@ class GeoEarthImport
     buff << "IS = news;\n";
     buff << "IFI = newf;\n";
     if(write_polar_sphere){
-      buff << "Point ( IP + " << ip++ << " ) = {0, 0, 0 , lc};\n";
-      buff << "Point ( IP + " << ip++ <<" ) = {0, 0, 6.371e6 , lc};\n";
+      buff << "Point ( IP + " << ip++ << " ) = {0, 0, 0 };\n";
+      buff << "Point ( IP + " << ip++ <<" ) = {0, 0, 6.371e6 };\n";
       buff << "PolarSphere ( IS + " << is++ << " ) = {IP , IP+1};\n";
     }
     *file << buff.str();
@@ -238,7 +238,7 @@ class GeoEarthImport
     if(ip == first_point_in_loop || point.distance(lastpoint) >lc){
       SPoint2 stereo(-point.x() / (1 + point.z()), -point.y() / (1 + point.z()));
       loop_buff << "Point ( IP + " << ip++ << " ) = {" << stereo.
-      x() << ", " << stereo.y() << ", " << 0 << ", lc};\n";
+      x() << ", " << stereo.y() << ", " << 0 << " };\n";
       lastpoint = point;
     }
   }
@@ -284,22 +284,13 @@ class GeoEarthImport
   }
 };
 
-/*      $Id: GSHHS.cpp,v 1.16 2008-10-14 13:54:49 remacle Exp $
+/*	$Id: GSHHS.cpp,v 1.17 2008-11-06 14:02:06 remacle Exp $
  *
- * PROGRAM:	gshhs.c
- * AUTHOR:	Paul Wessel (pwessel@hawaii.edu)
- * CREATED:	JAN. 28, 1996
- * PURPOSE:	To extract ASCII data from binary shoreline data
- *		as described in the 1996 Wessel & Smith JGR Data Analysis Note.
- * VERSION:	1.1 (Byte flipping added)
- *		1.2 18-MAY-1999:
- *		   Explicit binary open for DOS systems
- *		   POSIX.1 compliant
- *		1.3 08-NOV-1999: Released under GNU GPL
- *		1.4 05-SEPT-2000: Made a GMT supplement; FLIP no longer needed
- *		1.5 14-SEPT-2004: Updated to deal with latest GSHHS database (1.3)
+ * Include file defining structures used in gshhs.c
  *
- *	Copyright (c) 1996-2004 by P. Wessel and W. H. F. Smith
+ * Paul Wessel, SOEST
+ *
+ *	Copyright (c) 1996-2008 by P. Wessel and W. H. F. Smith
  *	See COPYING file for copying and redistribution conditions.
  *
  *	This program is free software; you can redistribute it and/or modify
@@ -311,36 +302,49 @@ class GeoEarthImport
  *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *	GNU General Public License for more details.
  *
- *	Contact info: www.soest.hawaii.edu/pwessel */
-/* For byte swapping on little-endian systems (GSHHS is bigendian) */
-#define swabi2(i2) (((i2) >> 8) + (((i2) & 255) << 8))
-#define swabi4(i4) (((i4) >> 24) + (((i4) >> 8) & 65280) + (((i4) & 65280) << 8) + (((i4) & 255) << 24))
-#define _POSIX_SOURCE 1 /* GSHHS code is POSIX compliant */
+ *	Contact info: www.soest.hawaii.edu/pwessel
+ *
+ *	14-SEP-2004.  PW: Version 1.3.  Header is now n * 8 bytes (n = 5)
+ *			  For use with version 1.3 of GSHHS
+ *	2-MAY-2006.  PW: Version 1.4.  Header is now 32 bytes (all int 4)
+ *			  For use with version 1.4 of GSHHS
+ *	31-MAR-2007.  PW: Version 1.5.  no format change
+ *			  For use with version 1.5 of GSHHS
+ *	28-AUG-2007.  PW: Version 1.6.  no format change
+ *			  For use with version 1.6 of GSHHS which now has WDBII
+ *			  borders and rivers.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#ifndef M_PI
-#define M_PI          3.14159265358979323846
-#endif
-#ifndef SEEK_CUR        /* For really ancient systems */
-#define SEEK_CUR 1
-#endif
-  struct GSHHS
-{                               /* Global Self-consistent Hierarchical High-resolution Shorelines */
-  int id;                       /* Unique polygon id number, starting at 0 */
-  int n;                        /* Number of points in this polygon */
-  int level;                    /* 1 land, 2 lake, 3 island_in_lake, 4 pond_in_island_in_lake */
-  int west, east, south, north; /* min/max extent in micro-degrees */
-  int area;                     /* Area of polygon in 1/10 km^2 */
-  int version;                  /* Version of GSHHS polygon (3 is latest and first with this item) */
-  short int greenwich;          /* Greenwich is 1 if Greenwich is crossed */
-  short int source;             /* 0 = CIA WDBII, 1 = WVS */
+
+#define GSHHS_DATA_VERSION	6	/* For v1.5 data set */
+#define GSHHS_PROG_VERSION	"1.9"
+
+#define GSHHS_SCL	1.0e-6	/* COnvert micro-degrees to degrees */
+
+/* For byte swapping on little-endian systems (GSHHS is defined to be bigendian) */
+
+#define swabi4(i4) (((i4) >> 24) + (((i4) >> 8) & 65280) + (((i4) & 65280) << 8) + (((i4) & 255) << 24))
+
+struct GSHHS {	/* Global Self-consistent Hierarchical High-resolution Shorelines */
+	int id;				/* Unique polygon id number, starting at 0 */
+	int n;				/* Number of points in this polygon */
+	int flag;			/* = level + version << 8 + greenwich << 16 + source << 24 */
+	/* flag contains 4 items, one in each byte, as follows:
+	 * low byte:	level = flag & 255: Values: 1 land, 2 lake, 3 island_in_lake, 4 pond_in_island_in_lake
+	 * 2nd byte:	version = (flag >> 8) & 255: Values: Should be 4 for GSHHS version 1.4
+	 * 3rd byte:	greenwich = (flag >> 16) & 255: Values: Greenwich is 1 if Greenwich is crossed
+	 * 4th byte:	source = (flag >> 24) & 255: Values: 0 = CIA WDBII, 1 = WVS
+	 */
+	int west, east, south, north;	/* min/max extent in micro-degrees */
+	int area;			/* Area of polygon in 1/10 km^2 */
 };
 
-struct POINT
-{                               /* Each lon, lat pair is stored in micro-degrees in 4-byte integer format */
-  int x;
-  int y;
+struct	POINT {	/* Each lon, lat pair is stored in micro-degrees in 4-byte integer format */
+	int	x;
+	int	y;
 };
 
 void import_gshhs(FILE * fp, GeoEarthImport & geo_import)
@@ -350,55 +354,57 @@ void import_gshhs(FILE * fp, GeoEarthImport & geo_import)
   int k, max_east = 270000000, n_read, flip;
   struct POINT p;
   struct GSHHS h;
-  while(1) {
-    n_read = fread((void *)&h, (size_t) sizeof(struct GSHHS), (size_t) 1, fp);
-    if(n_read != 1)
-      break;
-    flip = (!(h.level > 0 && h.level < 5));     /* Take as sign that byte-swabbing is needed */
-    if(flip) {
-      h.id = swabi4((unsigned int)h.id);
-      h.n = swabi4((unsigned int)h.n);
-      h.level = swabi4((unsigned int)h.level);
-      h.west = swabi4((unsigned int)h.west);
-      h.east = swabi4((unsigned int)h.east);
-      h.south = swabi4((unsigned int)h.south);
-      h.north = swabi4((unsigned int)h.north);
-      h.area = swabi4((unsigned int)h.area);
-      h.version = swabi4((unsigned int)h.version);
-      h.greenwich = swabi2((unsigned int)h.greenwich);
-      h.source = swabi2((unsigned int)h.source);
-    }
-    w = h.west * 1.0e-6;        /* Convert from microdegrees to degrees */
-    e = h.east * 1.0e-6;
-    s = h.south * 1.0e-6;
-    n = h.north * 1.0e-6;
-    source = (h.source == 1) ? 'W' : 'C';       /* Either WVS or CIA (WDBII) pedigree */
-    if(h.level != 1) {  // Skip data (lake,island,pond)
-      fseek(fp, (long)(h.n * sizeof(struct POINT)), SEEK_CUR);
-      continue;
-    }
-    for(k = 0; k < h.n; k++) {
-      if(fread((void *)&p, (size_t) sizeof(struct POINT), (size_t) 1, fp) !=
-         1) {
-        Msg::Error(
-            "gshhs:  Error reading gshhs file for polygon %d, point %d.\n",
-            h.id, k);
-        return;
+
+
+	n_read = fread ((void *)&h, (size_t)sizeof (struct GSHHS), (size_t)1, fp);
+	int version = (h.flag >> 8) & 255;
+	flip = (version != GSHHS_DATA_VERSION);	/* Take as sign that byte-swabbing is needed */
+	
+	while (n_read == 1 && ! feof(fp)) {
+		if (flip) {
+			h.id = swabi4 ((unsigned int)h.id);
+			h.n  = swabi4 ((unsigned int)h.n);
+			h.west  = swabi4 ((unsigned int)h.west);
+			h.east  = swabi4 ((unsigned int)h.east);
+			h.south = swabi4 ((unsigned int)h.south);
+			h.north = swabi4 ((unsigned int)h.north);
+			h.area  = swabi4 ((unsigned int)h.area);
+			h.flag  = swabi4 ((unsigned int)h.flag);
+		}
+		int level = h.flag & 255;
+		version = (h.flag >> 8) & 255;
+		int greenwich = (h.flag >> 16) & 255;
+		int src = (h.flag >> 24) & 255;
+		w = h.west  * GSHHS_SCL;	/* Convert from microdegrees to degrees */
+		e = h.east  * GSHHS_SCL;
+		s = h.south * GSHHS_SCL;
+		n = h.north * GSHHS_SCL;
+		source = (src == 1) ? 'W' : 'C';	/* Either WVS or CIA (WDBII) pedigree */
+		int line = (h.area) ? 0 : 1;		/* Either Polygon (0) or Line (1) (if no area) */
+    double area = 0.1 * h.area;			/* Now im km^2 */
+
+    if(level != 1) {  // Skip data (lake,island,pond)
+      fseek(fp, (size_t)(h.n * sizeof(struct POINT)), SEEK_CUR);
+    }else{
+      for (k = 0; k < h.n; k++) {
+        if (fread ((void *)&p, (size_t)sizeof(struct POINT), (size_t)1, fp) != 1) {
+          Msg::Error ("gshhs:  Error reading gshhs file.\n");
+          return;
+        }
+        if (flip) {
+          p.x = swabi4 ((unsigned int)p.x);
+          p.y = swabi4 ((unsigned int)p.y);
+        }
+        double lon = p.x * GSHHS_SCL;
+        if (greenwich && p.x > max_east) lon -= 360.0;
+        double lat = p.y * GSHHS_SCL;
+        geo_import.add_point(SPoint3(M_PI/180*lon,M_PI/180*lat,0));
       }
-      if(flip) {
-        p.x = swabi4((unsigned int)p.x);
-        p.y = swabi4((unsigned int)p.y);
-      }
-      //double lat=M_PI / 180*((h.greenwich && p.x > max_east) ? p.x * 1.0e-6 - 360.0 : p.x * 1.0e-6);
-      //double lon= (p.y * 1.0e-6) * M_PI / 180;
-      geo_import.add_point(SPoint3(
-        M_PI / 180*((h.greenwich && p.x > max_east) ? p.x * 1.0e-6 - 360.0
-                                                    : p.x * 1.0e-6),
-        (p.y * 1.0e-6) * M_PI / 180,
-        0));
+      geo_import.end_loop();
     }
-    geo_import.end_loop();
-  }
+		max_east = 180000000;	/* Only Eurasiafrica needs 270 */
+		n_read = fread((void *)&h, (size_t)sizeof (struct GSHHS), (size_t)1, fp);
+	}
   geo_import.end_surface();
   geo_import.end_attractor();
 }
