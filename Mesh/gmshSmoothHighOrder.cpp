@@ -3,7 +3,7 @@
 #include "gmshAssembler.h"
 #include "gmshLaplace.h"
 #include "gmshElasticity.h"
-#include "gmshGmmLinearSystem.h"
+#include "gmshLinearSystemGmm.h"
 #include "GFace.h"
 #include "GRegion.h"
 

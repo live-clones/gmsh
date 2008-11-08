@@ -111,7 +111,7 @@ GFaceCompound.o: GFaceCompound.cpp GFaceCompound.h Geo.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h ../Common/Message.h \
   ../Numeric/FunctionSpace.h ../Common/Octree.h \
-  ../Common/OctreeInternals.h ../Numeric/gmshGmmLinearSystem.h \
+  ../Common/OctreeInternals.h ../Numeric/gmshLinearSystemGmm.h \
   ../Numeric/gmshLinearSystem.h
 GRegion.o: GRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \

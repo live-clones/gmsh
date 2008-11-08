@@ -126,7 +126,7 @@ gmshSmoothHighOrder.o: gmshSmoothHighOrder.cpp gmshSmoothHighOrder.h \
   ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Common/Message.h ../Numeric/FunctionSpace.h \
   ../Numeric/gmshElasticity.h ../Numeric/gmshTermOfFormulation.h \
-  ../Numeric/gmshGmmLinearSystem.h ../Numeric/gmshLinearSystem.h
+  ../Numeric/gmshLinearSystemGmm.h ../Numeric/gmshLinearSystem.h
 meshGEdge.o: meshGEdge.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \

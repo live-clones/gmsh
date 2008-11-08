@@ -2,33 +2,36 @@
 #include "gmshAssembler.h"
 #include "gmshLaplace.h"
 #include "Octree.h"
-#include "gmshGmmLinearSystem.h"
+#include "gmshLinearSystemGmm.h"
 
 static void fixEdgeToValue (GEdge *ed, 
 			    double value,
-			    gmshAssembler &myAssembler){
+			    gmshAssembler &myAssembler)
+{
   myAssembler.fixVertex(ed->getBeginVertex()->mesh_vertices[0],
 			0, 1, value);
   myAssembler.fixVertex(ed->getEndVertex()->mesh_vertices[0],
 			0, 1, value);
-  for (int i=0 ; i< ed->mesh_vertices.size();i++){
+  for (int i = 0 ; i < ed->mesh_vertices.size(); i++){
     myAssembler.fixVertex(ed->mesh_vertices[i],0, 1, value);
   }
 }
 
 static void fixEdgeToValueX (GEdge *ed, 
-			    gmshAssembler &myAssembler){
-  for (int i=0 ; i< ed->lines.size();i++){
-    myAssembler.fixVertex(ed->lines[i]->getVertex(0),0, 1, ed->lines[i]->getVertex(0)->x());
-    myAssembler.fixVertex(ed->lines[i]->getVertex(1),0, 1, ed->lines[i]->getVertex(1)->x());
+			    gmshAssembler &myAssembler)
+{
+  for (int i = 0 ; i < ed->lines.size(); i++){
+    myAssembler.fixVertex(ed->lines[i]->getVertex(0), 0, 1, ed->lines[i]->getVertex(0)->x());
+    myAssembler.fixVertex(ed->lines[i]->getVertex(1), 0, 1, ed->lines[i]->getVertex(1)->x());
   }
 }
 
 static void fixEdgeToValueY (GEdge *ed, 
-			    gmshAssembler &myAssembler){
-  for (int i=0 ; i< ed->lines.size();i++){
-    myAssembler.fixVertex(ed->lines[i]->getVertex(0),0, 1, ed->lines[i]->getVertex(0)->y());
-    myAssembler.fixVertex(ed->lines[i]->getVertex(1),0, 1, ed->lines[i]->getVertex(1)->y());
+			    gmshAssembler &myAssembler)
+{
+  for (int i = 0 ; i < ed->lines.size(); i++){
+    myAssembler.fixVertex(ed->lines[i]->getVertex(0), 0, 1, ed->lines[i]->getVertex(0)->y());
+    myAssembler.fixVertex(ed->lines[i]->getVertex(1), 0, 1, ed->lines[i]->getVertex(1)->y());
   }
 }
 
@@ -44,7 +47,6 @@ void GFaceCompound::getBoundingEdges ()
     }
     return;
   }
-
 
   std::set<GEdge*> _unique;
   std::list<GFace*> :: iterator it = _compound.begin();
@@ -75,7 +77,9 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
   printf("%d %d %d %d \n",_U0.size(),_U1.size(),_V0.size(),_V1.size());
   getBoundingEdges();
 }
-GFaceCompound::~GFaceCompound(){
+
+GFaceCompound::~GFaceCompound()
+{
   if (oct){
     Octree_Delete(oct);
     delete [] _gfct;
@@ -167,7 +171,8 @@ void GFaceCompound::parametrize (bool _isU) const
 
 }
 
-GPoint GFaceCompound::point(double par1, double par2) const {
+GPoint GFaceCompound::point(double par1, double par2) const
+{
   parametrize();
   double U,V;
   MTriangle *t;
@@ -181,12 +186,10 @@ GPoint GFaceCompound::point(double par1, double par2) const {
 
 /*
   computing dX/du and dX/dv
-
-  
-
 */
 
-Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const{
+Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
+{
   parametrize();
   double U,V;
   MTriangle *t;
@@ -197,7 +200,8 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const{
                                   SVector3(jac[1][0],jac[1][1],jac[1][2]));
 } 
 
-static void  GFaceCompoundBB(void *a, double*mmin, double*mmax){
+static void  GFaceCompoundBB(void *a, double*mmin, double*mmax)
+{
   GFaceCompoundTriangle *t = (GFaceCompoundTriangle *)a;
   mmin[0] = std::min(std::min(t->p1.x(),t->p2.x()),t->p3.x());
   mmin[1] = std::min(std::min(t->p1.y(),t->p2.y()),t->p3.y());
@@ -206,14 +210,17 @@ static void  GFaceCompoundBB(void *a, double*mmin, double*mmax){
   mmin[2] = -1;
   mmax[2] = 1;
 }
-static void  GFaceCompoundCentroid(void *a, double*c){
+
+static void  GFaceCompoundCentroid(void *a, double*c)
+{
   GFaceCompoundTriangle *t = (GFaceCompoundTriangle *)a;
   c[0] = (t->p1.x() + t->p2.x() + t->p3.x())/3.0;
   c[1] = (t->p1.y() + t->p2.y() + t->p3.y())/3.0;
   c[2] = 0.0;
 }
 
-static int  GFaceCompoundInEle(void *a, double*c){
+static int  GFaceCompoundInEle(void *a, double*c)
+{
   GFaceCompoundTriangle *t = (GFaceCompoundTriangle *)a;
   double M[2][2],R[2],X[2];
   const double eps = 1.e-6;
@@ -235,10 +242,10 @@ static int  GFaceCompoundInEle(void *a, double*c){
   return 0;
 }
 
-
 void GFaceCompound::getTriangle (double u, double v, 
 				 MTriangle **t, 
-				 double &_u, double &_v)const {
+				 double &_u, double &_v) const
+{
   parametrize();
   
   double uv[3] = {u,v,0};
@@ -262,10 +269,6 @@ void GFaceCompound::getTriangle (double u, double v,
   _v = X[1];
   return;
   
-
-
-
-
 //   std::list<GFace*> :: const_iterator it = _compound.begin();
 //   for ( ; it != _compound.end() ; ++it){
 //     for ( int i=0;i<(*it)->triangles.size() ; ++i){
@@ -301,8 +304,8 @@ void GFaceCompound::getTriangle (double u, double v,
 //   *t = 0;
 }
 
-void GFaceCompound::buildOct() const {
-
+void GFaceCompound::buildOct() const
+{
   SBoundingBox3d bb;
   int count;
   std::list<GFace*> :: const_iterator it = _compound.begin();
@@ -327,7 +330,6 @@ void GFaceCompound::buildOct() const {
   it = _compound.begin();
   count = 0;
 
-  
   FILE * uvx = fopen ("UVX.pos","w");
   FILE * uvy = fopen ("UVY.pos","w");
   FILE * uvz = fopen ("UVZ.pos","w");
