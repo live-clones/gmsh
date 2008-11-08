@@ -1,4 +1,4 @@
-#include <gmsh/MVertex.h>
+#include "MVertex.h"
 #include "gmshAssembler.h"
 #include "gmshLinearSystem.h"
 

@@ -53,7 +53,8 @@ depend:
 Numeric.o: Numeric.cpp ../Common/Message.h Numeric.h NumericEmbedded.h
 NumericEmbedded.o: NumericEmbedded.cpp NumericEmbedded.h \
   ../Common/Message.h
-gmshAssembler.o: gmshAssembler.cpp gmshAssembler.h gmshLinearSystem.h
+gmshAssembler.o: gmshAssembler.cpp ../Geo/MVertex.h ../Geo/SPoint3.h \
+  gmshAssembler.h gmshLinearSystem.h
 gmshTermOfFormulation.o: gmshTermOfFormulation.cpp \
   gmshTermOfFormulation.h ../Common/GmshMatrix.h gmshFunction.h \
   ../Common/Gmsh.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h \
