@@ -87,14 +87,14 @@ public:
 	return lsys->getFromSolution (it->second);
     }
     {
-      std::map<gmshDofKey, std::vector<std::pair<gmshDofKey,double> > >::const_iterator itConstr =
-	constraints.find(key);
+      std::map<gmshDofKey, std::vector<std::pair<gmshDofKey,double> > >::
+        const_iterator itConstr = constraints.find(key);
       if (itConstr != constraints.end()){
 	double val = 0;
-	for (int i=0;i<itConstr->second.size();i++){
+	for (int i = 0; i < itConstr->second.size(); i++){
 	  const gmshDofKey &dofKeyConstr = itConstr->second[i].first;
 	  double      valConstr    = itConstr->second[i].second;
-	  val += getDofValue (dofKeyConstr.v,dofKeyConstr.comp , dofKeyConstr.field)
+	  val += getDofValue(dofKeyConstr.v, dofKeyConstr.comp, dofKeyConstr.field)
 	    * valConstr;
 	}
 	return val;
