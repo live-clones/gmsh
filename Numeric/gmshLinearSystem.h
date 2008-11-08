@@ -1,10 +1,8 @@
 #ifndef _GMSH_LINEAR_SYSTEM_H_
 #define _GMSH_LINEAR_SYSTEM_H_
-/*
-A clas that encapsulate a linear system
-solver interface : building a sparse matrix,
-solving a linear system
-*/
+
+// A class that encapsulates a linear system solver interface :
+// building a sparse matrix, solving a linear system
 
 class gmshLinearSystem {
 public :

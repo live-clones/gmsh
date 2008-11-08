@@ -89,7 +89,7 @@ void FixRelativePath(const char *in, char *out);
 %token tBoundingBox tDraw tToday
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
-%token tPlane tRuled tTransfinite tComplex tPhysical tCompound tBoundary
+%token tPlane tRuled tTransfinite tComplex tPhysical tCompound
 %token tUsing tPlugin
 %token tRotate tTranslate tSymmetry tDilate tExtrude
 %token tLoop tRecombine tSmoother tSplit tDelete tCoherence tIntersect
@@ -1455,7 +1455,7 @@ Shape :
       $$.Num = num;
     }
 
-  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tBoundary '{' RecursiveListOfListOfDouble '}' tEND
+  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tSTRING '{' RecursiveListOfListOfDouble '}' tEND
     {
       int num = (int)$4;
       if(FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE)){
@@ -1478,6 +1478,7 @@ Shape :
 	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
       }
       List_Delete($7);
+      Free($8);
       $$.Type = MSH_PHYSICAL_SURFACE;
       $$.Num = num;
     }

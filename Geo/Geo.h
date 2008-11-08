@@ -52,9 +52,6 @@
 #define MSH_PHYSICAL_SURFACE   502
 #define MSH_PHYSICAL_VOLUME    503
 
-#define MSH_PHYSICAL_SURFACE   502
-
-
 struct Coord{
   double X, Y, Z;
 };

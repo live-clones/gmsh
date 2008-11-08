@@ -2,7 +2,8 @@
 
 extern double inv3x3 (double a[3][3], double a[3][3]);
 
-void gmshElasticityTerm:: elementMatrix ( MElement *e, Double_Matrix & m) const{
+void gmshElasticityTerm::elementMatrix(MElement *e, Double_Matrix & m) const
+{
   int nbNodes = e->getNumVertices();
   int integrationOrder = 2*(e->getPolynomialOrder()-1);
   int npts;

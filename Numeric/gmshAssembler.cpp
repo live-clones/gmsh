@@ -2,9 +2,10 @@
 #include "gmshAssembler.h"
 #include "gmshLinearSystem.h"
 
-void gmshAssembler::assemble ( MVertex *vR , int iCompR, int iFieldR,
-			       MVertex *vC , int iCompC, int iFieldC,
-			       double val){
+void gmshAssembler::assemble(MVertex *vR, int iCompR, int iFieldR,
+                             MVertex *vC, int iCompC, int iFieldC,
+                             double val)
+{
   if (!lsys->isAllocated()){
     lsys->allocate(numbering.size());
   }
@@ -50,8 +51,9 @@ void gmshAssembler::assemble ( MVertex *vR , int iCompR, int iFieldR,
   }
 }
 
-void gmshAssembler::assemble ( MVertex *vR , int iCompR, int iFieldR,
-			       double val ){
+void gmshAssembler::assemble(MVertex *vR, int iCompR, int iFieldR,
+                             double val)
+{
   if (!lsys->isAllocated())lsys->allocate(numbering.size());
   std::map<gmshDofKey, int> :: iterator itR = numbering.find(gmshDofKey(vR,iCompR,iFieldR));
   if (itR != numbering.end()){

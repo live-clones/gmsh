@@ -1,23 +1,24 @@
 #ifndef _GMSH_LINEAR_SYSTEM_GMM_H_
 #define _GMSH_LINEAR_SYSTEM_GMM_H_
-/*
-Interface to GMM++
-*/
-#include "Message.h"
 
-#ifdef HAVE_GMM
+// Interface to GMM++
+
+#include "Message.h"
 #include "gmshLinearSystem.h"
-#include "gmm.h"
+
+#if defined(HAVE_GMM)
+
+#include <gmm.h>
 
 class gmshLinearSystemGmm : public gmshLinearSystem {
   gmm::row_matrix< gmm::wsvector<double> > *_a;
   std::vector<double> *_x;
   std::vector<double> *_b;
 public :
-  gmshLinearSystemGmm () : _a(0),_b(0),_x(0) {
-  }
+  gmshLinearSystemGmm () : _a(0),_b(0),_x(0) {}
   virtual bool isAllocated () const {return _a != 0;}
-  virtual void allocate (int _nbRows){
+  virtual void allocate (int _nbRows)
+  {
     if (_a) delete _a;
     if (_x) delete _x;
     if (_b) delete _b;
@@ -25,34 +26,43 @@ public :
     _b = new  std::vector<double>(_nbRows);
     _x = new  std::vector<double>(_nbRows);    
   }
-  virtual ~gmshLinearSystemGmm (){
+  virtual ~gmshLinearSystemGmm ()
+  {
     delete _a;
     delete _b;
     delete _x;
   }
-  virtual void  addToMatrix    (int _row, int _col, double _val) {
+  virtual void  addToMatrix    (int _row, int _col, double _val) 
+  {
     if (_val != 0.0) (*_a)(_row, _col) += _val;
   }
-  virtual double getFromMatrix (int _row, int _col) const{
+  virtual double getFromMatrix (int _row, int _col) const
+  {
     return (*_a)(_row, _col);
   }
-  virtual void  addToRightHandSide    (int _row, double _val) {
+  virtual void  addToRightHandSide    (int _row, double _val) 
+  {
     if (_val != 0.0) (*_b)[_row]+=_val;
   }
-  virtual double getFromRightHandSide (int _row) const {
+  virtual double getFromRightHandSide (int _row) const 
+  {
     return (*_b)[_row];
   }
-  virtual double getFromSolution (int _row) const {
+  virtual double getFromSolution (int _row) const 
+  {
     return (*_x)[_row];
   }
-  virtual void zeroMatrix () {
+  virtual void zeroMatrix () 
+  {
     gmm::clear(*_a);
   }
-  virtual void zeroRightHandSide () {
+  virtual void zeroRightHandSide () 
+  {
     for (int i=0;i<_b->size();i++)(*_b)[i] = 0;
   }
-  virtual int systemSolve () {
-    //    gmm::ilutp_precond< gmm::row_matrix< gmm::rsvector<double> > > P(*_a, 10,0.);
+  virtual int systemSolve () 
+  {
+    // gmm::ilutp_precond< gmm::row_matrix< gmm::rsvector<double> > > P(*_a, 10,0.);
     gmm::ildltt_precond< gmm::row_matrix< gmm::wsvector<double> > > P(*_a, 2, 1.e-10);
     gmm::iteration iter(1E-8);  // defines an iteration object, with a max residu of 1E-8
     //iter.set_noisy(2);
@@ -60,10 +70,13 @@ public :
     gmm::cg(*_a, *_x, *_b, P, iter);  // execute the CG algorithm
   }
 };
+
 #else
+
 class gmshLinearSystemGmm : public gmshLinearSystem {
 public :
-  gmshGmmSystem (){
+  gmshLinearSystemGmm ()
+  {
     Msg::Error("Gmm++ is not available on this version of gmsh");
   }
   virtual bool isAllocated () const {}

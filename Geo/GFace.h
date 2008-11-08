@@ -138,7 +138,7 @@ class GFace : public GEntity
   // return the first derivate of the face at the parameter location
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const = 0;
 
-  // return the curvature i.e. the divergence of the n$ormal
+  // return the curvature i.e. the divergence of the normal
   virtual double curvature(const SPoint2 &param) const;
 
   // return a type-specific additional information string

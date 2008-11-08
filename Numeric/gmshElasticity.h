@@ -9,10 +9,11 @@
 class gmshElasticityTerm : public gmshNodalFemTerm {
   double _E,_nu;
   int _iField;
-protected:
+ protected:
   virtual int sizeOfR (MElement *e) const {return 3*e->getNumVertices();}
   virtual int sizeOfC (MElement *e) const {return 3*e->getNumVertices();}
-  void getLocalDofR (MElement *e, int iRow, MVertex **vR, int *iCompR, int *iFieldR) const {
+  void getLocalDofR (MElement *e, int iRow, MVertex **vR, int *iCompR, int *iFieldR) const
+  {
     *iCompR = iRow/e->getNumVertices();
     int ithLocalVertex = iRow%e->getNumVertices();
     *vR = e->getVertex (ithLocalVertex);
