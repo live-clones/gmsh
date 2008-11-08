@@ -619,26 +619,19 @@ void MElement::writeBDF(FILE *fp, int format, int elementary)
 
 void MElement::writeDIFF(FILE *fp, int num, bool binary, int physical_property)
 {
-  int type = getTypeForDIFF();
-  if(!type) return;
+  const char *str = getStringForDIFF();
+  if(!str) return;
 
   setVolumePositive();
+
   int n = getNumVertices();
   if(binary){
-    int verts[60];
-    verts[0] = n;
-    for(int i = 0; i < n; i++)
-      verts[i + 1] = getVertexVTK(i)->getIndex();
-    fwrite(verts, sizeof(int), n + 1, fp);
+    // TODO
   }
   else{
-    if(type == MSH_TET_10)
-      fprintf(fp, "%d %s", num, "ElmT10n3D ");
-    else
-      fprintf(fp, "%d %s", num, "ElmT4n3D ");
-    fprintf(fp, " %d ", physical_property);
+    fprintf(fp, "%d %s %d ", num, str, physical_property);
     for(int i = 0; i < n; i++)
-      fprintf(fp, " %d", getVertexVTK(i)->getIndex());
+      fprintf(fp, " %d", getVertexDIFF(i)->getIndex());
     fprintf(fp, "\n");
   }
 }

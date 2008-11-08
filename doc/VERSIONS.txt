@@ -1,4 +1,7 @@
-$Id: VERSIONS.txt,v 1.12 2008-10-25 13:17:32 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.13 2008-11-08 09:45:47 geuzaine Exp $
+
+2.2.6 (?): better transfinite smoothing and automatic corner
+selection; 
 
 2.2.5 (Oct 25, 2008): Gmsh now requires FLTK 1.1.7 or above; various
 small improvements (STL and VTK mesh IO, Netgen upgrade, Visual C++

@@ -2188,8 +2188,11 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
       boundaryIndicators.push_back(gf->tag());
       for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
         MElement *e = gf->getMeshElement(i);
-        for(unsigned int j = 0; j < e->getNumVertices(); j++)
-          vertexTags[e->getVertex(j)->getIndex() - 1].push_back(gf->tag());
+        for(unsigned int j = 0; j < e->getNumVertices(); j++){
+          MVertex *v = e->getVertex(j);
+          if(v->getIndex() > 0)
+            vertexTags[v->getIndex() - 1].push_back(gf->tag());
+        }
       }
     }
   }
@@ -2210,7 +2213,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
     if(entities[i]->physicals.size() || saveAll){
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
         MElement *e = entities[i]->getMeshElement(j);
-        if(e->getTypeForDIFF()){
+        if(e->getStringForDIFF()){
           numElements++;
           maxNumNodesPerElement = std::max(maxNumNodesPerElement, e->getNumVertices());
         }
@@ -2245,12 +2248,14 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   for(unsigned int i = 0; i < entities.size(); i++){
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
       MVertex *v = entities[i]->mesh_vertices[j];
-      v->writeDIFF(fp, binary, scalingFactor);
-      fprintf(fp, " [%d] ", vertexTags[v->getIndex() - 1].size());
-      for(std::list<int>::iterator it = vertexTags[v->getIndex() - 1].begin();
-          it != vertexTags[v->getIndex() - 1].end(); it++)
-        fprintf(fp," %d ", *it);
-      fprintf(fp,"\n");
+      if(v->getIndex() > 0){
+        v->writeDIFF(fp, binary, scalingFactor);
+        fprintf(fp, " [%d] ", vertexTags[v->getIndex() - 1].size());
+        for(std::list<int>::iterator it = vertexTags[v->getIndex() - 1].begin();
+            it != vertexTags[v->getIndex() - 1].end(); it++)
+          fprintf(fp," %d ", *it);
+        fprintf(fp,"\n");
+      }
     }
   }
   
@@ -2270,7 +2275,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
     if(entities[i]->physicals.size() || saveAll){
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
         MElement *e = entities[i]->getMeshElement(j);
-        if(e->getTypeForDIFF())
+        if(e->getStringForDIFF())
           e->writeDIFF(fp, ++num, binary, entities[i]->tag());
       }
     }

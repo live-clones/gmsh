@@ -92,6 +92,10 @@ class MElement
   // get the vertex using MED ordering
   virtual MVertex *getVertexMED(int num){ return getVertex(num); }
 
+  // get the vertex using DIFF ordering (at least for tetrahedra it's
+  // the same as in the MED format)
+  virtual MVertex *getVertexDIFF(int num){ return getVertexMED(num); }
+
   // get the number of vertices associated with edges, faces and
   // volumes (nonzero only for higher order elements)
   virtual int getNumEdgeVertices() const { return 0; }
@@ -230,9 +234,9 @@ class MElement
   virtual int getTypeForMSH() const { return 0; }
   virtual int getTypeForUNV() const { return 0; }
   virtual int getTypeForVTK() const { return 0; }
-  virtual int getTypeForDIFF() const { return 0; }
   virtual const char *getStringForPOS() const { return 0; }
   virtual const char *getStringForBDF() const { return 0; }
+  virtual const char *getStringForDIFF() const { return 0; }
 
   // return the number of vertices, as well as the element name if
   // 'name' != 0
@@ -1133,7 +1137,7 @@ class MTetrahedron : public MElement {
   virtual MVertex *getVertexMED(int num)
   {
     static const int map[4] = {0, 2, 1, 3};
-    return getVertex(map[num]); 
+    return getVertex(map[num]);
   }
   virtual int getNumEdges(){ return 6; }
   virtual MEdge getEdge(int num)
@@ -1173,9 +1177,9 @@ class MTetrahedron : public MElement {
   virtual int getTypeForMSH() const { return MSH_TET_4; }
   virtual int getTypeForUNV() const { return 111; } // solid linear tetrahedron
   virtual int getTypeForVTK() const { return 10; }
-  virtual int getTypeForDIFF() const { return MSH_TET_4; }
   virtual const char *getStringForPOS() const { return "SS"; }
   virtual const char *getStringForBDF() const { return "CTETRA"; }
+  virtual const char *getStringForDIFF() const { return "ElmT4n3D"; }
   virtual void revert()
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
@@ -1336,9 +1340,9 @@ class MTetrahedron10 : public MTetrahedron {
   virtual int getTypeForMSH() const { return MSH_TET_10; }
   virtual int getTypeForUNV() const { return 118; } // solid parabolic tetrahedron
   //virtual int getTypeForVTK() const { return 24; }
-  virtual int getTypeForDIFF() const { return MSH_TET_10; }
   virtual const char *getStringForPOS() const { return "SS2"; }
   virtual const char *getStringForBDF() const { return "CTETRA"; }
+  virtual const char *getStringForDIFF() const { return "ElmT10n3D"; }
   virtual void revert()
   {
     MVertex *tmp;
