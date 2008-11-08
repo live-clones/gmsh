@@ -89,7 +89,7 @@ void FixRelativePath(const char *in, char *out);
 %token tBoundingBox tDraw tToday
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic
-%token tPlane tRuled tTransfinite tComplex tPhysical
+%token tPlane tRuled tTransfinite tComplex tPhysical tCompound tBoundary
 %token tUsing tPlugin
 %token tRotate tTranslate tSymmetry tDilate tExtrude
 %token tLoop tRecombine tSmoother tSplit tDelete tCoherence tIntersect
@@ -1448,6 +1448,33 @@ Shape :
 	List_T *temp = ListOfDouble2ListOfInt($7);
 	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_SURFACE, temp);
 	List_Delete(temp);
+	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
+      }
+      List_Delete($7);
+      $$.Type = MSH_PHYSICAL_SURFACE;
+      $$.Num = num;
+    }
+
+  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tBoundary '{' RecursiveListOfListOfDouble '}' tEND
+    {
+      int num = (int)$4;
+      if(FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE)){
+	yymsg(0, "Physical surface %d already exists", num);
+      }
+      else{
+	List_T *temp = ListOfDouble2ListOfInt($7);
+	List_T *S[4] = {0,0,0,0};
+	for (int i=0;i<List_Nbr($10);i++){
+	  List_T *ll;
+	  List_Read($10,i,&ll);
+	  S[i] = ListOfDouble2ListOfInt(ll);
+	}
+	
+	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_SURFACE, temp, S);
+	List_Delete(temp);
+	for (int i=0;i<List_Nbr($10);i++)
+	  List_Delete(S[i]);
+	
 	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
       }
       List_Delete($7);

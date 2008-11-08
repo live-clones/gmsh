@@ -1278,6 +1278,7 @@ Optional Features:
   --enable-chaco          compile Chaco partitioner (default=yes)
   --enable-tetgen         compile Tetgen if available (default=yes)
   --enable-matheval       compile MathEval if available (default=yes)
+  --enable-gmm            use gmm++ if available (default=yes)
   --enable-osmesa         use OSMesa for offscreen rendering (default=no)
   --enable-cgns           enable CGNS output (default=no)
   --enable-occ            enable OpenCascade support (default=no)
@@ -1913,6 +1914,11 @@ if test "${enable_matheval+set}" = set; then
   enableval=$enable_matheval;
 fi
 
+# Check whether --enable-gmm was given.
+if test "${enable_gmm+set}" = set; then
+  enableval=$enable_gmm;
+fi
+
 # Check whether --enable-osmesa was given.
 if test "${enable_osmesa+set}" = set; then
   enableval=$enable_osmesa;
@@ -1961,6 +1967,7 @@ if test "x$enable_minimal" = "xyes"; then
   enable_netgen=no;
   enable_tetgen=no;
   enable_matheval=no;
+  enable_gmm=no;
   enable_ann=no;
   enable_metis=no;
   enable_chaco=no;
@@ -4466,6 +4473,41 @@ fi
     fi
   fi
 
+    if test "x$enable_gmm" != "xno"; then
+    { echo "$as_me:$LINENO: checking for ./contrib/gmm/gmm.h" >&5
+echo $ECHO_N "checking for ./contrib/gmm/gmm.h... $ECHO_C" >&6; }
+if test "${ac_cv_file___contrib_gmm_gmm_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  test "$cross_compiling" = yes &&
+  { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
+echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
+   { (exit 1); exit 1; }; }
+if test -r "./contrib/gmm/gmm.h"; then
+  ac_cv_file___contrib_gmm_gmm_h=yes
+else
+  ac_cv_file___contrib_gmm_gmm_h=no
+fi
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_file___contrib_gmm_gmm_h" >&5
+echo "${ECHO_T}$ac_cv_file___contrib_gmm_gmm_h" >&6; }
+if test $ac_cv_file___contrib_gmm_gmm_h = yes; then
+  GMM="yes"
+else
+  GMM="no"
+fi
+
+    if test "x${GMM}" = "xyes"; then
+      FLAGS="${FLAGS} -DHAVE_GMM"
+      echo "********************************************************************"
+      echo "  You are building a version of Gmsh that contains the gmm++ mesh"
+      echo "  partitioner. Gmm++ is available under the GNU LGPL."
+      echo "  To disable gmm++, run configure again with the --disable-gmm"
+      echo "  option."
+      echo "********************************************************************"
+    fi
+  fi
+
     if test "x$enable_chaco" != "xno"; then
     { echo "$as_me:$LINENO: checking for ./contrib/Chaco/main/interface.c" >&5
 echo $ECHO_N "checking for ./contrib/Chaco/main/interface.c... $ECHO_C" >&6; }
@@ -4836,6 +4878,7 @@ echo "$as_me: error: Could not find GSL, aborting." >&2;}
    { (exit 1); exit 1; }; }
   fi
 fi
+
 
 if test "x${CGNS_PREFIX}" != "x"; then
   if test "x$enable_cgns" != "xno"; then

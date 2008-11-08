@@ -4,12 +4,14 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "HighOrder.h"
+#include "gmshSmoothHighOrder.h"
 #include "meshGFaceOptimize.h"
 #include "MElement.h"
 #include "Message.h"
 #include "OS.h"
 #include "Numeric.h"
 #include "Context.h"
+#include "GFaceCompound.h"
 #include "GmshMatrix.h"
 #include "FunctionSpace.h"
 
@@ -315,27 +317,103 @@ bool deformElement(MElement *ele,GEntity* ge,const std::set<MVertex*>& blocked) 
   return true;
 }
 
+static void getAllParameters  (MVertex *v, GFace *gf, std::vector<SPoint2> &params){
+  params.clear();
+  if(v->onWhat()->dim() == 0){
+    GVertex *gv = (GVertex*)v->onWhat();
+    std::list<GEdge*> ed = gv->edges();
+    bool seam = false;
+    for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++)
+      if((*it)->isSeam(gf)) {
+	Range<double> range = (*it)->parBounds(0);
+	if (gv == (*it)->getBeginVertex()){
+	  params.push_back((*it)->reparamOnFace(gf, range.low(),-1));
+	  params.push_back((*it)->reparamOnFace(gf, range.low(), 1));
+	}
+	else if (gv == (*it)->getEndVertex()){
+	  params.push_back((*it)->reparamOnFace(gf, range.high(),-1));
+	  params.push_back((*it)->reparamOnFace(gf, range.high(), 1));
+	}
+	else{
+	  printf("Strange !\n");
+	}
+	seam = true;
+      }
+    if (!seam)
+      params.push_back(gv->reparamOnFace(gf, 1));
+  }
+  else if(v->onWhat()->dim() == 1){
+    GEdge *ge = (GEdge*)v->onWhat();
+    double UU;
+    v->getParameter(0, UU);
+    params.push_back(ge->reparamOnFace(gf, UU, 1));
+    if(ge->isSeam(gf))
+      params.push_back(ge->reparamOnFace(gf, UU, -1));
+  }
+  else{
+    double UU, VV;
+    if(v->onWhat() == gf && v->getParameter(0, UU) && v->getParameter(1, VV))
+      params.push_back(SPoint2(UU, VV));
+  }
+}
+
+bool reparamOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1, SPoint2 &param2){
+  std::vector<SPoint2> p1,p2;
+  getAllParameters  (v1,gf,p1);
+  getAllParameters  (v2,gf,p2);
+  if (p1.size() == 1 && p2.size() == 1){
+    param1 = p1[0];
+    param2 = p2[0];
+    return true;
+  }
+  else if (p1.size() == 1 && p2.size() == 2){
+    double d1 = (p1[0].x() - p2[0].x())*(p1[0].x() - p2[0].x())+
+      (p1[0].x() - p2[0].y())*(p1[0].y() - p2[0].y());
+    double d2 = (p1[0].x() - p2[1].x())*(p1[0].x() - p2[1].x())+
+      (p1[0].x() - p2[1].y())*(p1[0].y() - p2[1].y());
+    param1 = p1[0];
+    param2 = d2 < d1 ? p2[1] : p2[0];
+    return true;
+  }  
+  else if (p2.size() == 1 && p1.size() == 2){
+    double d1 = (p2[0].x() - p1[0].x())*(p2[0].x() - p1[0].x())+
+      (p2[0].x() - p1[0].y())*(p2[0].y() - p1[0].y());
+    double d2 = (p2[0].x() - p1[1].x())*(p2[0].x() - p1[1].x())+
+      (p2[0].x() - p1[1].y())*(p2[0].y() - p1[1].y());
+    param1 = d2 < d1 ? p1[1] : p1[0];
+    param2 = p2[0];
+    return true;
+  }  
+  printf("%d %d \n",p1.size(),p2.size());
+  return false;
+}
 
 bool reparamOnFace(MVertex *v, GFace *gf, SPoint2 &param)
 {
+
+  if (gf->geomType() == GEntity::CompoundSurface){
+    GFaceCompound *gfc = (GFaceCompound*) gf;
+    param = gfc->getCoordinates(v);
+    return true;
+  }
+
   if(v->onWhat()->dim() == 0){
     GVertex *gv = (GVertex*)v->onWhat();
 
     // abort if we could be on a seam
-    /*
+    
     std::list<GEdge*> ed = gv->edges();
     for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++)
       if((*it)->isSeam(gf)) return false;
-    */
+    
     param = gv->reparamOnFace(gf, 1);
   }
   else if(v->onWhat()->dim() == 1){
     GEdge *ge = (GEdge*)v->onWhat();
 
     // abort if we are on a seam (todo: try dir=-1 and compare)
-    //    if(ge->isSeam(gf)){
-    //      printf("oops : %d %d\n",ge->tag(),gf->tag());
-      //    }
+    if(ge->isSeam(gf))
+      return false;
 
     double UU;
     v->getParameter(0, UU);
@@ -539,7 +617,8 @@ bool reparamOnEdge(MVertex *v, GEdge *ge, double &param)
 
 void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
                      edgeContainer &edgeVertices, bool linear, int nPts = 1, 
-		     std::map<MVertex*,SVector3> *disp = 0)
+		     gmshHighOrderSmoother *displ2D = 0,
+		     gmshHighOrderSmoother *displ3D = 0)
 {
   for(int i = 0; i < ele->getNumEdges(); i++){
     MEdge edge = ele->getEdge(i);
@@ -590,9 +669,10 @@ void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
         else {
           GPoint pc = ge->point(US[j+1]);
 	  v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, US[j+1]);
-	  if (disp){
+	  if (displ2D){
 	    SPoint3 pc2 = edge.interpolate(t);          
-	    (*disp)[v] = SVector3(pc2.x(),pc2.y(),pc2.z());
+	    displ2D->add(v,SVector3(pc2.x(),pc2.y(),pc2.z()));
+	    displ3D->add(v,SVector3(pc2.x(),pc2.y(),pc2.z()));
 	  }
         }
         temp.push_back(v);
@@ -609,7 +689,8 @@ void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
 
 void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
                      edgeContainer &edgeVertices, bool linear, int nPts = 1, 
-		     std::map<MVertex*,SVector3> *disp = 0)
+		     gmshHighOrderSmoother *displ2D = 0,
+		     gmshHighOrderSmoother *displ3D = 0)
 {
   for(int i = 0; i < ele->getNumEdges(); i++){
     MEdge edge = ele->getEdge(i);    
@@ -627,8 +708,10 @@ void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
       if(!linear && 
          gf->geomType() != GEntity::DiscreteSurface &&
          gf->geomType() != GEntity::BoundaryLayerSurface){
-        reparamOK &= reparamOnFace(v0, gf, p0);
-        reparamOK &= reparamOnFace(v1, gf, p1);
+	
+        reparamOK = reparamOnFace(v0, v1, gf, p0, p1);
+	//        reparamOK &= reparamOnFace(v0, gf, p0);
+	//        reparamOK &= reparamOnFace(v1, gf, p1);
       }
       double US[100], VS[100];
       if(reparamOK && !linear && gf->geomType() != GEntity::DiscreteCurve){
@@ -645,9 +728,9 @@ void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
         else{
           GPoint pc = gf->point(US[j+1], VS[j+1]);
 	  v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, US[j+1], VS[j+1]);
-	  if (disp){
+	  if (displ3D){
 	    SPoint3 pc2 = edge.interpolate(t);          
-	    (*disp)[v] = SVector3(pc2.x(),pc2.y(),pc2.z());
+	    displ3D->add(v,SVector3(pc2.x(),pc2.y(),pc2.z()));
 	  }
         }
         temp.push_back(v);
@@ -668,7 +751,8 @@ void getEdgeVertices(GRegion *gr, MElement *ele,
                      edgeContainer &edgeVertices, 
 		     bool linear, 
 		     int nPts = 1,
-		     std::map<MVertex*,SVector3> *displ = 0)
+		     gmshHighOrderSmoother *displ2D = 0,
+		     gmshHighOrderSmoother *displ3D = 0)
 {
   for(int i = 0; i < ele->getNumEdges(); i++){
     MEdge edge = ele->getEdge(i);
@@ -706,7 +790,8 @@ void getFaceVertices(GFace *gf,
 		     std::vector<MVertex*> &vf,
                      faceContainer &faceVertices, 
 		     bool linear, int nPts = 1,
-		     std::map<MVertex*,SVector3> *displ = 0) {
+		     gmshHighOrderSmoother *displ2D = 0,
+		     gmshHighOrderSmoother *displ3D = 0) {
   
   Double_Matrix points;
   int start = 0;
@@ -801,9 +886,9 @@ void getFaceVertices(GFace *gf,
 	    else{
 	      v = new MVertex(X,Y,Z, gf);
 	    }
-	    if (displ){
+	    if (displ3D){
 	      SPoint3 pc2 = face.interpolate(t1, t2);
-	      (*displ)[v] = SVector3(pc2.x(),pc2.y(),pc2.z());
+	      displ3D->add(v,SVector3(pc2.x(),pc2.y(),pc2.z()));
 	    }	    
           }
           // should be expensive -> induces a new search each time
@@ -1220,13 +1305,14 @@ void getRegionVertices(GRegion *gr,
 
 
 void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear, 
-                  int nbPts = 1, std::map<MVertex*,SVector3> *displ = 0)
+                  int nbPts = 1, gmshHighOrderSmoother *displ2D = 0,
+		  gmshHighOrderSmoother *displ3D = 0)
 {
   std::vector<MLine*> lines2;
   for(unsigned int i = 0; i < ge->lines.size(); i++){
     MLine *l = ge->lines[i];
     std::vector<MVertex*> ve;
-    getEdgeVertices(ge, l, ve, edgeVertices, linear, nbPts, displ);
+    getEdgeVertices(ge, l, ve, edgeVertices, linear, nbPts, displ2D, displ3D);
     if(nbPts == 1)
       lines2.push_back(new MLine3(l->getVertex(0), l->getVertex(1), ve[0]));
     else
@@ -1239,13 +1325,14 @@ void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear,
 
 void setHighOrder(GFace *gf, edgeContainer &edgeVertices, 
                   faceContainer &faceVertices, bool linear, bool incomplete,
-                  int nPts = 1, std::map<MVertex*,SVector3> *displ = 0)
+                  int nPts = 1, gmshHighOrderSmoother *displ2D = 0,
+                  gmshHighOrderSmoother *displ3D = 0)
 {
   std::vector<MTriangle*> triangles2;
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
     MTriangle *t = gf->triangles[i];
     std::vector<MVertex*> ve, vf;
-    getEdgeVertices(gf, t, ve, edgeVertices, linear, nPts,displ);
+    getEdgeVertices(gf, t, ve, edgeVertices, linear, nPts,displ2D,displ3D);
     if(nPts == 1){
       triangles2.push_back
         (new MTriangle6(t->getVertex(0), t->getVertex(1), t->getVertex(2),
@@ -1264,7 +1351,7 @@ void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
 	else{
 	  MTriangleN incpl (t->getVertex(0), t->getVertex(1), t->getVertex(2),
 			    ve, nPts + 1);
-	  getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts,displ);
+	  getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts,displ2D,displ3D);
 	}
         ve.insert(ve.end(), vf.begin(), vf.end());
         triangles2.push_back
@@ -1280,7 +1367,7 @@ void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
   for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
     MQuadrangle *q = gf->quadrangles[i];
     std::vector<MVertex*> ve, vf;
-    getEdgeVertices(gf, q, ve, edgeVertices, linear, nPts,displ);
+    getEdgeVertices(gf, q, ve, edgeVertices, linear, nPts,displ2D,displ3D);
     if(incomplete){
       quadrangles2.push_back
         (new MQuadrangle8(q->getVertex(0), q->getVertex(1), q->getVertex(2),
@@ -1300,7 +1387,8 @@ void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
 
 void setHighOrder(GRegion *gr, edgeContainer &edgeVertices, 
                   faceContainer &faceVertices, bool linear, bool incomplete,
-                  int nPts = 1, std::map<MVertex*,SVector3> *displ = 0)
+                  int nPts = 1, gmshHighOrderSmoother *displ2D = 0,
+                  gmshHighOrderSmoother *displ3D = 0)
 {
   int nbCorr = 0;
   
@@ -1311,7 +1399,7 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
     std::set<MVertex*> blocked;
     
     std::vector<MVertex*> ve,vf,vr;
-    getEdgeVertices(gr, t, ve, blocked,edgeVertices, linear, nPts,displ);
+    getEdgeVertices(gr, t, ve, blocked,edgeVertices, linear, nPts,displ2D, displ3D);
     if (nPts == 1){
       tetrahedra2.push_back
 	(new MTetrahedron10(t->getVertex(0), t->getVertex(1), t->getVertex(2), 
@@ -1363,7 +1451,7 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
     MHexahedron *h = gr->hexahedra[i];
     std::vector<MVertex*> ve, vf;
     std::set<MVertex*> blocked;
-    getEdgeVertices(gr, h, ve, blocked, edgeVertices, linear, nPts,displ);
+    getEdgeVertices(gr, h, ve, blocked, edgeVertices, linear, nPts,displ2D, displ3D);
     if(incomplete){
       hexahedra2.push_back
         (new MHexahedron20(h->getVertex(0), h->getVertex(1), h->getVertex(2), 
@@ -1393,7 +1481,7 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
     MPrism *p = gr->prisms[i];
     std::vector<MVertex*> ve, vf;
     std::set<MVertex*> blocked;
-    getEdgeVertices(gr, p, ve, blocked, edgeVertices, linear, nPts,displ);
+    getEdgeVertices(gr, p, ve, blocked, edgeVertices, linear, nPts,displ2D, displ3D);
     if(incomplete){
       prisms2.push_back
         (new MPrism15(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
@@ -1417,7 +1505,7 @@ void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
     MPyramid *p = gr->pyramids[i];
     std::vector<MVertex*> ve, vf;
     std::set<MVertex*> blocked;
-    getEdgeVertices(gr, p, ve, blocked, edgeVertices, linear, nPts,displ);
+    getEdgeVertices(gr, p, ve, blocked, edgeVertices, linear, nPts,displ2D, displ3D);
     if(incomplete){
       pyramids2.push_back
         (new MPyramid13(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
@@ -1515,41 +1603,14 @@ bool straightLine(std::vector<MVertex*> &l, MVertex *n1, MVertex *n2)
   return true;
 }
 
-static double mesh_functional_distorsion(MTriangle *t, double u, double v)
-{
-  // compute uncurved element jacobian d_u x and d_v x
-  double mat[2][3];  
-  // t->getPrimaryJacobian(0, 0, 0, mat);
-  t->getJacobian(0, 0, 0, mat);
-  
-  double v1[3] = {mat[0][0], mat[0][1], mat[0][2]};
-  double v2[3] = {mat[1][0], mat[1][1], mat[1][2]};
-  double normal1[3];
-  prodve(v1, v2, normal1);
-  double nn = sqrt(SQU(normal1[0]) + SQU(normal1[1]) + SQU(normal1[2]));
-  
-  // compute uncurved element jacobian d_u x and d_v x
-  t->getJacobian(u, v, 0, mat);
-  double v1b[3] = {mat[0][0], mat[0][1], mat[0][2]};
-  double v2b[3] = {mat[1][0], mat[1][1], mat[1][2]};
-  double normal[3];
-  prodve(v1b, v2b, normal);
-  
-  double sign;
-  prosca(normal1, normal, &sign);
-  double det = norm3(normal) * (sign > 0 ? 1. : -1.) / nn;  
-
-  // compute distorsion
-  double dist = std::min(1. / det, det); 
-  return dist;
-}
+extern double mesh_functional_distorsion(MTriangle *t, double u, double v);
 
 void getMinMaxJac (MTriangle *t, double &minJ, double &maxJ)
 {
   double mat[2][3];  
   int n = 3;
-  // t->getPrimaryJacobian(0, 0, 0, mat);
-  t->getJacobian(0, 0, 0, mat);
+  t->getPrimaryJacobian(0, 0, 0, mat);
+   //t->getJacobian(0, 0, 0, mat);
   double v1[3] = {mat[0][0], mat[0][1], mat[0][2]};
   double v2[3] = {mat[1][0], mat[1][1], mat[1][2]};
   double normal1[3], normal[3];
@@ -1989,9 +2050,9 @@ void checkHighOrderTriangles(GModel *m)
 
 void printJacobians(GModel *m, const char *nm)
 {
-  return;
+    return;
 
-  const int n = 15;
+  const int n = 25;
   double D[n][n];
   double X[n][n];
   double Y[n][n];
@@ -2000,37 +2061,52 @@ void printJacobians(GModel *m, const char *nm)
   FILE *f = fopen(nm,"w");
   fprintf(f,"View \"\"{\n");
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
-    for(unsigned int i = 0; i < (*it)->triangles.size(); i++){
-      MTriangle *t = (*it)->triangles[i];
+    for(unsigned int j = 0; j < (*it)->triangles.size(); j++){
+      MTriangle *t = (*it)->triangles[j];
       for(int i = 0; i < n; i++){
         for(int k = 0; k < n - i; k++){
           SPoint3 pt;
           double u = (double)i / (n - 1);
           double v = (double)k / (n - 1);         
           t->pnt(u, v, 0, pt);
-          D[i][k] = mesh_functional_distorsion(t, u, v);
+	  D[i][k] = mesh_functional_distorsion(t, u, v);
           X[i][k] = pt.x();
           Y[i][k] = pt.y();
           Z[i][k] = pt.z();
+	  //	  printf("X[%d][%d] = %g %g\n",i,k,X[i][k],pt.x());
         }
       }
-      for(int i = 0; i < n -1; i++){
+      for(int i= 0; i < n -1; i++){
         for(int k = 0; k < n - i -1; k++){
-          fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%22.15E,%22.15E,%22.15E};\n",
-                  X[i][k],Y[i][k],Z[i][k],
-                  X[i+1][k],Y[i+1][k],Z[i+1][k],
-                  X[i][k+1],Y[i][k+1],Z[i][k+1],
-                  D[i][k],
-                  D[i+1][k],
-                  D[i][k+1]);
+           fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%22.15E,%22.15E,%22.15E};\n",
+                   X[i][k],Y[i][k],Z[i][k],
+                   X[i+1][k],Y[i+1][k],Z[i+1][k],
+                   X[i][k+1],Y[i][k+1],Z[i][k+1],
+                   D[i][k],
+                   D[i+1][k],
+                   D[i][k+1]);
+//           fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%22.15E,%22.15E,%22.15E};\n",
+//                   X[i][k],X[i+1][k],X[i][k+1],
+//                   Y[i][k],Y[i+1][k],Y[i][k+1],
+//                   Z[i][k],Z[i+1][k],Z[i][k+1],
+//                   D[i][k],
+//                   D[i+1][k],
+//                   D[i][k+1]);
           if (i != n-2 && k != n - i -2)
-            fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%22.15E,%22.15E,%22.15E};\n",
-                    X[i+1][k],Y[i+1][k],Z[i+1][k],
-                    X[i+1][k+1],Y[i+1][k+1],Z[i+1][k+1],
-                    X[i][k+1],Y[i][k+1],Z[i][k+1],
-                    D[i+1][k],
-                    D[i+1][k+1],
-                    D[i][k+1]);
+             fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%22.15E,%22.15E,%22.15E};\n",
+                     X[i+1][k],Y[i+1][k],Z[i+1][k],
+                     X[i+1][k+1],Y[i+1][k+1],Z[i+1][k+1],
+                     X[i][k+1],Y[i][k+1],Z[i][k+1],
+                     D[i+1][k],
+                     D[i+1][k+1],
+                     D[i][k+1]);
+//             fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%22.15E,%22.15E,%22.15E};\n",
+//                     X[i+1][k],X[i+1][k+1],X[i][k+1],
+//                     Y[i+1][k],Y[i+1][k+1],Y[i][k+1],
+//                     Z[i+1][k],Z[i+1][k+1],Z[i][k+1],
+//                     D[i+1][k],
+//                     D[i+1][k+1],
+//                     D[i][k+1]);
         }
       }
     }
@@ -2069,37 +2145,44 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   // first, make sure to remove any existsing second order vertices/elements
   SetOrder1(m);    
 
-  std::map<MVertex*,SVector3> *displ = 0; 
+  gmshHighOrderSmoother *displ2D = 0; 
+  gmshHighOrderSmoother *displ3D = 0; 
   if(CTX.mesh.smooth_internal_edges){
-    displ = new std::map<MVertex*,SVector3>;
+    displ2D = new gmshHighOrderSmoother(2);
+    displ3D = new gmshHighOrderSmoother(3);
   }
 
   // then create new second order vertices/elements
   edgeContainer edgeVertices;
   faceContainer faceVertices;
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
-    setHighOrder(*it, edgeVertices, linear, nPts,displ);
+    setHighOrder(*it, edgeVertices, linear, nPts,displ2D,displ3D);
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
-    setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts,displ);
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
-    setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts,displ);
+    setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts,displ2D, displ3D);
 
-  printJacobians(m, "detjIni.pos");  
 
-  if(CTX.mesh.smooth_internal_edges){
-    FILE *fl = fopen("displ.dat","w");
-    std::map<MVertex*,SVector3>::iterator it = displ->begin();
-    fprintf(fl,"%d\n",displ->size());
-    for ( ; it!=displ->end();++it){
-      fprintf(fl,"%6d %22.15E %22.15E %22.15E %22.15E %22.15E %22.15E\n",(it->first)->getNum(),(it->first)->x(),(it->first)->y(),(it->first)->z(),
-	      it->second.x(),it->second.y(),it->second.z());
-    }
-    fclose(fl);
-    delete displ;
+  // now we smooth mesh the internal vertices of the faces
+  // we do that model face by model face
+  if (displ2D){
+    checkHighOrderTriangles(m);
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+      displ2D->smooth(*it);
   }
 
 
-  if(0 && CTX.mesh.smooth_internal_edges){
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+    setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts,displ2D, displ3D);
+
+  printJacobians(m, "detjIni.pos");  
+
+  if(displ2D){    
+    delete displ2D;
+    delete displ3D;
+  }
+
+
+  //  if(0 && CTX.mesh.smooth_internal_edges){
+  if(0){
     checkHighOrderTriangles(m);
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){      
       Msg::Info("Smoothing internal Edges in Surface %d",(*it)->tag());

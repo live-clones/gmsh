@@ -25,6 +25,7 @@
 #include "qualityMeasures.h"
 #include "Field.h"
 #include "OS.h"
+#include "HighOrder.h"
 
 extern Context_T CTX;
 
@@ -337,12 +338,17 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
   while(it != edges.end()){
     if ((*it)->isSeam(gf)) return false;
     if(!(*it)->isMeshDegenerated()){
-      all_vertices.insert((*it)->mesh_vertices.begin(), 
-                          (*it)->mesh_vertices.end());
-      all_vertices.insert((*it)->getBeginVertex()->mesh_vertices.begin(),
-                          (*it)->getBeginVertex()->mesh_vertices.end());
-      all_vertices.insert((*it)->getEndVertex()->mesh_vertices.begin(),
-                          (*it)->getEndVertex()->mesh_vertices.end());
+
+      for (int i=0 ; i< (*it)->lines.size();i++){
+	all_vertices.insert((*it)->lines[i]->getVertex(0));
+	all_vertices.insert((*it)->lines[i]->getVertex(1));
+      }      
+      //      all_vertices.insert((*it)->mesh_vertices.begin(), 
+      //                          (*it)->mesh_vertices.end());
+      //      all_vertices.insert((*it)->getBeginVertex()->mesh_vertices.begin(),
+      //                          (*it)->getBeginVertex()->mesh_vertices.end());
+      //      all_vertices.insert((*it)->getEndVertex()->mesh_vertices.begin(),
+      //                          (*it)->getEndVertex()->mesh_vertices.end());
     }
     ++it;
   }
@@ -384,28 +390,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
   SBoundingBox3d bbox;
   while(itv != all_vertices.end()){
     MVertex *here = *itv;
-    SPoint2 param;
-    if(here->onWhat()->geomType() == GEntity::DiscreteCurve ||
-       here->onWhat()->geomType() == GEntity::BoundaryLayerCurve){
-      param = gf->parFromPoint(SPoint3(here->x(), here->y(), here->z()));
-    }
-    else if(here->onWhat()->dim() == 0){
-      GVertex *gv = (GVertex*)here->onWhat();
-      param = gv->reparamOnFace(gf,1);
-    }
-    else if(here->onWhat()->dim() == 1){
-      GEdge *ge = (GEdge*)here->onWhat();
-      double UU;
-      here->getParameter(0, UU);
-      param = ge->reparamOnFace(gf, UU, 1);
-    }
-    else{
-      double UU, VV;
-      if(here->onWhat() == gf && here->getParameter(0, UU) && here->getParameter(1, VV))
-        param = SPoint2(UU, VV);
-      else
-        param = gf->parFromPoint(SPoint3(here->x(), here->y(), here->z()));
-    }
+    SPoint2 param ; reparamOnFace (here,gf,param);;
     U_[count] = param.x();
     V_[count] = param.y();
     (*itv)->setIndex(count);
@@ -426,6 +411,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
   BDS_Mesh *m = new BDS_Mesh;
   m->scalingU = 1;
   m->scalingV = 1;
+
 
   // Use a divide & conquer type algorithm to create a triangulation.
   // We add to the triangulation a box with 4 points that encloses the
@@ -1332,9 +1318,9 @@ void meshGFace::operator() (GFace *gf)
   // compute loops on the fly (indices indicate start and end points
   // of a loop; loops are not yet oriented)
   Msg::Debug("Computing edge loops");
-  std::vector<MVertex*> points;
-  std::vector<int> indices;
-  computeEdgeLoops(gf, points, indices);
+  //  std::vector<MVertex*> points;
+  //  std::vector<int> indices;
+  //  computeEdgeLoops(gf, points, indices);
 
   Msg::Debug("Generating the mesh");
   if(noseam(gf) || gf->getNativeType() == GEntity::GmshModel || gf->edgeLoops.empty()){

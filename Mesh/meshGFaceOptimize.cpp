@@ -768,3 +768,5 @@ int edgeCollapsePass(double minLC, GFace *gf, std::set<MTri3*,compareTri3Ptr> &a
   printf("A %d %d tris\n", (int)allTris.size(), (int)newTris.size());
   return nbCollapse;
 }
+
+

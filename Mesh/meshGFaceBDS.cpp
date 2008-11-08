@@ -260,6 +260,17 @@ bool edgeSwapTestDelaunay(BDS_Edge *e,GFace *gf)
   return result > 0.;
 }
 
+
+bool edgeSwapTestHighOrder(BDS_Edge *e,GFace *gf)
+{
+  // must evaluate the swap with the perspectve of 
+  // the generation of 2 high order elements 
+  // The rationale is to consider the edges as
+  // exactly matching curves and surfaces 
+}
+
+
+
 bool edgeSwapTestDelaunayAniso(BDS_Edge *e, GFace *gf, std::set<swapquad> &configs)
 {
   BDS_Point *op[2];

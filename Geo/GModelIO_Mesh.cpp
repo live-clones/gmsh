@@ -1248,7 +1248,7 @@ int GModel::readMESH(const std::string &name)
   char str[256];
   int format;
   sscanf(buffer, "%s %d", str, &format);
-  if(format != 1){
+  if(format == 3){
     Msg::Error("Medit mesh import only available for ASCII files");
     return 0;
   }

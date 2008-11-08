@@ -8,6 +8,7 @@
 #include "MVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
+#include "GFaceCompound.h"
 #include "Message.h"
 #include "StringUtils.h"
 
@@ -162,6 +163,14 @@ MVertex::linearSearch(std::set<MVertex*, MVertexLessThanLexicographic> &pos)
 
 void parametricCoordinates(const MVertex *ver, const GFace *gf, double &u, double &v)
 {
+  if (gf->geomType() == GEntity::CompoundSurface){
+    GFaceCompound *gfc = (GFaceCompound*) gf;
+    SPoint2 p = gfc->getCoordinates((MVertex*)ver);
+    u = p.x();
+    v = p.y();
+    return;
+  }
+
   GEntity *ge = ver->onWhat();
   if(ge->dim() == 2){
     ver->getParameter(0, u);

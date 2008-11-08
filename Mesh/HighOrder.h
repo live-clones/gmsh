@@ -11,5 +11,6 @@
 void SetOrder1(GModel *m);
 void SetOrderN(GModel *m, int order, bool linear=true, bool incomplete=false);
 void checkHighOrderTriangles(GModel *m);
+bool reparamOnFace(MVertex *v, GFace *gf, SPoint2 &param);
 
 #endif

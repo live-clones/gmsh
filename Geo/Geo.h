@@ -52,6 +52,9 @@
 #define MSH_PHYSICAL_SURFACE   502
 #define MSH_PHYSICAL_VOLUME    503
 
+#define MSH_PHYSICAL_SURFACE   502
+
+
 struct Coord{
   double X, Y, Z;
 };
@@ -182,6 +185,7 @@ typedef struct{
   int Typ;
   char Visible;
   List_T *Entities;
+  List_T *Boundaries[4];
 }PhysicalGroup;
 
 class GEO_Internals{
@@ -222,7 +226,7 @@ Surface *Create_Surface(int Num, int Typ);
 Volume *Create_Volume(int Num, int Typ);
 EdgeLoop *Create_EdgeLoop(int Num, List_T * intlist);
 SurfaceLoop *Create_SurfaceLoop(int Num, List_T * intlist);
-PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T * intlist);
+PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T * intlist,  List_T *bndlist[4] = 0);
 
 void End_Curve(Curve * c);
 void End_Surface(Surface * s);

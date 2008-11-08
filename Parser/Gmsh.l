@@ -104,6 +104,7 @@ Characteristic          return tCharacteristic;
 Complex                 return tComplex;
 Color                   return tColor;
 ColorTable              return tColorTable;
+Compound                return tCompound;
 Coordinates             return tCoordinates;
 CatmullRom		return tSpline;
 Call                    return tCall;

@@ -92,6 +92,7 @@ SPoint2 OCCEdge::reparamOnFace(GFace *face, double epar, int dir) const
 // True if the edge is a seam for the given face
 bool OCCEdge::isSeam(GFace *face) const
 {
+  if (face->geomType() == GEntity::CompoundSurface)return false; 
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
   BRepAdaptor_Surface surface(*s);
   //  printf("asking if edge %d is a seam of face %d\n",tag(),face->tag());

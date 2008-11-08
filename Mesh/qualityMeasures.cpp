@@ -174,7 +174,7 @@ double qmTet(const double &x1, const double &y1, const double &z1,
 }
 
 
-static double mesh_functional_distorsion(MTriangle *t, double u, double v)
+double mesh_functional_distorsion(MTriangle *t, double u, double v)
 {
   // compute uncurved element jacobian d_u x and d_v x
   double mat[3][3];  
@@ -210,7 +210,7 @@ static double mesh_functional_distorsion(MTriangle *t, double u, double v)
 
 double qmDistorsionOfMapping (MTriangle *e)
 {
-  return 1.0;
+  //  return 1.0;
   if (e->getPolynomialOrder() == 1)return 1.0;
   IntPt *pts;
   int npts;
@@ -223,10 +223,11 @@ double qmDistorsionOfMapping (MTriangle *e)
     const double di  = mesh_functional_distorsion (e,u,v);
     dmin = (i==0)? di : std::min(dmin,di);
   }
-  double p[3][2] = {{0,0},{0,1},{1,0}};
-  for (int i=0;i<3;i++){
-    const double u = p[i][0];
-    const double v = p[i][1];
+  const Double_Matrix& points = e->getFunctionSpace()->points;
+
+  for (int i=0;i<e->getNumPrimaryVertices();i++) {
+    const double u = points(i,0);
+    const double v = points(i,1);
     const double di  = mesh_functional_distorsion (e,u,v);
     dmin = std::min(dmin,di);
   }

@@ -92,6 +92,7 @@ class GEntity {
     SurfaceOfRevolution,
     BoundaryLayerSurface,
     DiscreteSurface,
+    CompoundSurface,
     Volume,
     DiscreteVolume
   };
@@ -130,6 +131,7 @@ class GEntity {
       "Surface of Revolution",
       "Boundary layer surface",
       "Discrete surface",
+      "Compound surface",
       "Volume",
       "Discrete volume"
     };

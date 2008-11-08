@@ -133,19 +133,19 @@ class GFace : public GEntity
   virtual GPoint closestPoint(const SPoint3 & queryPoint, const double initialGuess[2]) const;
 
   // return the normal to the face at the given parameter location
-  virtual SVector3 normal(const SPoint2 &param) const = 0;
+  virtual SVector3 normal(const SPoint2 &param) const;
 
   // return the first derivate of the face at the parameter location
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const = 0;
 
-  // return the curvature i.e. the divergence of the normal
+  // return the curvature i.e. the divergence of the n$ormal
   virtual double curvature(const SPoint2 &param) const;
 
   // return a type-specific additional information string
   virtual std::string getAdditionalInfoString();
 
   // fill the crude representation cross
-  bool buildRepresentationCross();
+  virtual bool buildRepresentationCross();
 
   // build a STL triangulation and fills the vertex array
   // va_geom_triangles

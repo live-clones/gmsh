@@ -611,6 +611,13 @@ bool GFace::containsParam(const SPoint2 &pt) const
     return false;
 }
 
+SVector3 GFace::normal(const SPoint2 &param) const{
+  Pair<SVector3,SVector3> der =   firstDer(param);
+  SVector3 n = crossprod (der.first(),der.second());
+  n.normalize();
+  return n;
+}
+
 bool GFace::buildRepresentationCross()
 {
   if(geomType() != Plane){

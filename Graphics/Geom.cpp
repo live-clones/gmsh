@@ -278,6 +278,7 @@ class drawGFace {
   }
   void _drawParametricGFace(GFace *f)
   {
+    if (f->geomType() == GEntity::CompoundSurface)return;
     Range<double> ubounds = f->parBounds(0);
     Range<double> vbounds = f->parBounds(1);
     const double uav = 0.5 * (ubounds.high() + ubounds.low());
