@@ -71,7 +71,6 @@ public:
   virtual ~GFaceCompound();
   Range<double> parBounds(int i) const{return Range<double>(0, 1);} 
   virtual GPoint point(double par1, double par2) const; 
-  virtual GPoint closestPoint(const SPoint3 & queryPoint, const double initialGuess[2]) const{throw;}
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const; 
   virtual GEntity::GeomType geomType() const {return CompoundSurface;} 
   ModelType getNativeType() const { return GmshModel; }
