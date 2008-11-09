@@ -158,6 +158,9 @@ char *Get_BuildOptions(void)
 #if defined(HAVE_MED)
     strcat(opt, "MED ");
 #endif
+#if defined(HAVE_GMM)
+    strcat(opt, "GMM++ ");
+#endif
     first = 0;
   }
   return opt;

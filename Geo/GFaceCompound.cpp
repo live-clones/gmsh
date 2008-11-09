@@ -325,7 +325,8 @@ void GFaceCompound::buildOct() const
   double ssize[3] = {bb.max().x()-bb.min().x(),
 		     bb.max().y()-bb.min().y(),
 		     bb.max().z()-bb.min().z()};
-  oct = Octree_Create(10,origin,ssize,GFaceCompoundBB,GFaceCompoundCentroid,GFaceCompoundInEle);
+  oct = Octree_Create(10, origin, ssize, GFaceCompoundBB, GFaceCompoundCentroid,
+                      GFaceCompoundInEle);
 
   it = _compound.begin();
   count = 0;

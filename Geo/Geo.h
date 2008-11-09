@@ -223,7 +223,8 @@ Surface *Create_Surface(int Num, int Typ);
 Volume *Create_Volume(int Num, int Typ);
 EdgeLoop *Create_EdgeLoop(int Num, List_T * intlist);
 SurfaceLoop *Create_SurfaceLoop(int Num, List_T * intlist);
-PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T * intlist,  List_T *bndlist[4] = 0);
+PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T * intlist,
+                                    List_T *bndlist[4] = 0);
 
 void End_Curve(Curve * c);
 void End_Surface(Surface * s);

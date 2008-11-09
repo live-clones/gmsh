@@ -51,5 +51,6 @@ void extrude(List_T *list, std::string filename, std::string what, std::string t
 void protude(List_T *list, std::string filename, std::string what, 
              std::string ax, std::string ay, std::string az, 
              std::string px, std::string py, std::string pz, std::string angle);
-void split_edge(int edge_id, List_T *vertices,std::string filename);
+void split_edge(int edge_id, List_T *vertices, std::string filename);
+
 #endif
