@@ -28,6 +28,7 @@
 #include "Field.h"
 #include "GModel.h"
 #include "GeoStringInterface.h"
+#include "StringUtils.h"
 
 #define NB_BUTT_SCROLL 25
 #define NB_HISTORY_MAX 1000
@@ -4808,27 +4809,13 @@ void GUI::create_about_window()
     o->add(buffer);
     sprintf(buffer, "@c@.Build host: %s", Get_GmshBuildHost());
     o->add(buffer);
-    {
-      char str1[1024];
-      strcpy(str1, Get_BuildOptions());
-      unsigned int len = 30;
-      if(strlen(str1) > len){
-        int split;
-        for(split = len - 1; split >= 0; split--){
-          if(str1[split] == ' '){
-            str1[split] = '\0';
-            break;
-          }
-        }
-        sprintf(buffer, "@c@.Build options: %s", str1);
-        o->add(buffer);
-        sprintf(buffer, "@c@.%s", &str1[split+1]);
-        o->add(buffer);
-      }
-      else{
-        sprintf(buffer, "@c@.Options: %s", str1);
-        o->add(buffer);
-      }
+    std::vector<std::string> lines = SplitWhiteSpace(Get_GmshBuildOptions(), 30);
+    for(unsigned int i = 0; i < lines.size(); i++){
+      if(!i)
+        sprintf(buffer, "@c@.Build options: %s", lines[i].c_str());
+      else
+        sprintf(buffer, "@c@.%s", lines[i].c_str());
+      o->add(buffer);
     }
     sprintf(buffer, "@c@.Packaged by: %s", Get_GmshPackager());
     o->add(buffer);

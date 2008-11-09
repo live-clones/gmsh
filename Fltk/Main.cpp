@@ -86,11 +86,11 @@ int main(int argc, char *argv[])
   // Log the following for bug reports
   Msg::Info("-------------------------------------------------------");
   Msg::Info("Gmsh version   : %s", Get_GmshVersion());
-  Msg::Info(gmsh_os);
-  Msg::Info("%s%s", gmsh_options, Get_BuildOptions());
-  Msg::Info(gmsh_date);
-  Msg::Info(gmsh_host);
-  Msg::Info(gmsh_packager);
+  Msg::Info("Build OS       : %s", Get_GmshBuildOS());
+  Msg::Info("Build options  : %s", Get_GmshBuildOptions().c_str());
+  Msg::Info("Build date     : %s", Get_GmshBuildDate());
+  Msg::Info("Build host     : %s", Get_GmshBuildHost());
+  Msg::Info("Packager       : %s", Get_GmshPackager());
   Msg::Info("Home directory : %s", CTX.home_dir);
   Msg::Info("Launch date    : %s", currtime.c_str());
   Msg::Info("Command line   : %s", cmdline.c_str());
