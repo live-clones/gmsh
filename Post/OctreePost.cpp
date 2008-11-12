@@ -222,12 +222,13 @@ OctreePost::OctreePost(PView *v)
 {
   _theViewDataGModel = dynamic_cast<PViewDataGModel*>(_theView->getData());
 
-  if(_theViewDataGModel) return; // the octree is available in the model
+  if(_theViewDataGModel) return; // the octree is already available in the model
 
-  _theViewDataList = dynamic_cast<PViewDataList*>(_theView->getData());
+  // use adaptive data if available
+  _theViewDataList = dynamic_cast<PViewDataList*>(_theView->getData(true));
 
   if(_theViewDataList){
-    SBoundingBox3d bb = v->getData()->getBoundingBox();
+    SBoundingBox3d bb = _theViewDataList->getBoundingBox();
     double min[3] = {bb.min().x(), bb.min().y(), bb.min().z()};
     double size[3] = {bb.max().x() - bb.min().x(),
 		      bb.max().y() - bb.min().y(),
