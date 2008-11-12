@@ -5123,7 +5123,7 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
 #if defined(HAVE_FLTK)
   if(WID && (action & GMSH_GUI)) {
     switch (CTX.mesh.algo2d) {
-    case ALGO_2D_MESHADAPT:
+    case ALGO_2D_FRONTAL:
       WID->mesh_choice[2]->value(0);
       break;
     case ALGO_2D_DELAUNAY:
