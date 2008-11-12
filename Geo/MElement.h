@@ -1033,7 +1033,7 @@ class MQuadrangle9 : public MQuadrangle {
   virtual int getNumVertices() const { return 9; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual int getNumEdgeVertices() const { return 4; }
-  virtual int getNumFaceVertices() const { return 6; }
+  virtual int getNumFaceVertices() const { return 1; }
   virtual int getNumEdgesRep(){ return 8; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
@@ -1450,7 +1450,7 @@ class MTetrahedronN : public MTetrahedron {
   virtual int getPolynomialOrder() const { return _order; }
   virtual int getNumVertices() const { return 4 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
-  virtual int getNumEdgeVertices() const { return 6*(_order - 1); }
+  virtual int getNumEdgeVertices() const { return 6 * (_order - 1); }
   virtual int getNumFaceVertices() const
   {
     return 4 * ((_order - 1) * (_order - 2)) / 2;

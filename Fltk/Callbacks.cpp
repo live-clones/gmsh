@@ -595,6 +595,7 @@ static const char *input_formats =
   "BRep model" TT "*.brep" NN
 #endif
   "I-deas universal mesh" TT "*.unv" NN
+  "Diffpack 3D mesh" TT "*.diff" NN
   "VTK mesh" TT "*.vtk" NN
 #if defined(HAVE_MED)
   "MED file" TT "*.{med,mmed,rmed}" NN
@@ -651,7 +652,7 @@ int _save_geo(const char *name){ return geo_dialog(name); }
 int _save_cgns(const char *name){ return cgns_write_dialog(name); }
 int _save_unv(const char *name){ return unv_dialog(name); }
 int _save_vtk(const char *name){ return generic_mesh_dialog(name, "VTK Options", FORMAT_VTK, true); }
-int _save_diff(const char *name){ return generic_mesh_dialog(name, "DIFFPACK Options", FORMAT_DIFF, true); }
+int _save_diff(const char *name){ return generic_mesh_dialog(name, "Diffpack Options", FORMAT_DIFF, true); }
 int _save_med(const char *name){ return generic_mesh_dialog(name, "MED Options", FORMAT_MED, false); }
 int _save_mesh(const char *name){ return generic_mesh_dialog(name, "MESH Options", FORMAT_MESH, false); }
 int _save_bdf(const char *name){ return bdf_dialog(name); }
@@ -727,7 +728,7 @@ void file_save_as_cb(CALLBACK_ARGS)
     {"CGNS" TT "*.cgns", _save_cgns},
 #endif
     {"I-deas universal mesh" TT "*.unv", _save_unv},
-    {"DIFFPACK 3D mesh" TT "*.diff", _save_diff},
+    {"Diffpack 3D mesh" TT "*.diff", _save_diff},
     {"VTK mesh" TT "*.vtk", _save_vtk},
 #if defined(HAVE_MED)
     {"MED file" TT "*.med", _save_med},

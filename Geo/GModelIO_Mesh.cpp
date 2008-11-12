@@ -2154,6 +2154,225 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   return 1;
 }
 
+int GModel::readDIFF(const std::string &name)
+{
+  FILE *fp = fopen(name.c_str(), "r");
+  if(!fp){
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+// FIXME: todo
+#if 0 
+  char str[256] = "XXX";
+  std::map<int, std::vector<MElement*> > elements[8];
+  std::map<int, std::map<int, std::string> > physicals[4];
+  std::map<int, MVertex*> vertexMap;
+  std::vector<MVertex*> vertexVector;
+ 
+  while(1) {
+
+    while(strstr(str, "Number of space dim. =") == NULL){
+      if(!fgets(str, sizeof(str), fp) || feof(fp))
+        break;
+    }
+    
+    int dim;
+    if(sscanf(str, "%*s %*s %*s %*s %*s %d", &dim) != 1) return 0;
+    Msg::Info("dimension %d", dim); 
+
+    int numElements;
+    if(!fgets(str, sizeof(str), fp) || feof(fp)) return 0;
+    while(strstr(str, "Number of elements   =") == NULL){
+      if(!fgets(str, sizeof(str), fp) || feof(fp))
+        break;
+    }
+    if(sscanf(str, "%*s %*s %*s %*s %d", &numElements) != 1) return 0;
+    Msg::Info("%d elements", numElements); 
+
+    int numVertices;
+    if(!fgets(str, sizeof(str), fp) || feof(fp)) return 0;
+    while(strstr(str, "Number of nodes      =") == NULL){
+      if(!fgets(str, sizeof(str), fp) || feof(fp))
+        break;
+    }
+    if(sscanf(str, "%*s %*s %*s %*s %d", &numVertices) != 1) return 0;
+    Msg::Info("%d vertices", numVertices); 
+
+    int numVerticesPerElement;
+    if(!fgets(str, sizeof(str), fp)||feof(fp)) return 0;
+    while(strstr(str, "Max number of nodes in an element:")==NULL){
+      if(!fgets(str, sizeof(str), fp) || feof(fp))
+        break;
+      }
+    if(sscanf(str, "%*s %*s %*s %*s %*s %*s %*s %d", &numVerticesPerElement) != 1) return 0;
+    Msg::Info("numVerticesPerElement %d",numVerticesPerElement); 
+
+    bool several_subdomains;
+    if(!fgets(str, sizeof(str), fp) || feof(fp)) return 0;
+    while(strstr(str, "Only one subdomain el              :") == NULL){
+      if(!fgets(str, sizeof(str), fp) || feof(fp))
+        break;
+    }
+    if(!strncmp(&str[39], "dpFALSE", 6))
+      several_subdomains = true;
+    else
+      several_subdomains = false;
+    Msg::Info("several_subdomains %x", several_subdomains); 
+    
+    int nbi;
+    int* bi;
+    if(!fgets(str, sizeof(str), fp) || feof(fp)) return 0;
+    while(strstr(str, "Boundary indicators:") == NULL){
+      if(!fgets(str, sizeof(str), fp) || feof(fp))
+        break;
+    }
+    if(sscanf(str, "%d %*s %*s", &nbi) != 1) return 0;
+    Msg::Info("nbi %d", nbi);
+    if(nbi != 0) 
+      bi = new int[nbi];
+    std::string format_read_bi = "%*d %*s %*s";
+    for(int i = 0; i < nbi; i++){
+      if(format_read_bi[format_read_bi.size()-1] == 'd') {
+        format_read_bi[format_read_bi.size()-1] = '*';
+        format_read_bi += "d %d";
+      }
+      else
+        format_read_bi += " %d";
+      if(sscanf(str, format_read_bi.c_str(), bi + i) != 1) return 0;
+      Msg::Info("bi[%d]=%d", i, bi[i]); 
+    }
+    
+    while(str[0] != '#'){
+      if(!fgets(str, sizeof(str), fp) || feof(fp))
+        break;
+    }
+    vertexVector.clear();
+    vertexMap.clear();
+    int minVertex = numVertices + 1, maxVertex = -1;
+    int num;
+    int **elementary;
+    elementary = new int*[numVertices];
+
+    Msg::ResetProgressMeter();
+    for(int i = 0; i < numVertices; i++){
+      elementary[i] = new int[nbi + 1];
+      if(!fgets(str, sizeof(str), fp)) return 0;
+      double xyz[3];
+      if(sscanf(str, "%d ( %lf , %lf , %lf ) [%d]", &num, &xyz[0], &xyz[1], &xyz[2], 
+                &elementary[i][0]) != 5) return 0;
+      minVertex = std::min(minVertex, num);
+      maxVertex = std::max(maxVertex, num);
+      if(vertexMap.count(num))
+        Msg::Warning("Skipping duplicate vertex %d", num);
+      else
+        vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
+      if(numVertices > 100000) 
+        Msg::ProgressMeter(i + 1, numVertices, "Reading nodes");
+      // If the vertex numbering is dense, tranfer the map into a
+      // vector to speed up element creation
+      if((int)vertexMap.size() == numVertices && 
+         ((minVertex == 1 && maxVertex == numVertices) ||
+          (minVertex == 0 && maxVertex == numVertices - 1))){
+        Msg::Info("Vertex numbering is dense");
+        vertexVector.resize(vertexMap.size() + 1);
+        if(minVertex == 1) 
+          vertexVector[0] = 0;
+        else
+          vertexVector[numVertices] = 0;
+        std::map<int, MVertex*>::const_iterator it = vertexMap.begin();
+        for(; it != vertexMap.end(); ++it)
+          vertexVector[it->first] = it->second;
+        vertexMap.clear();
+      }
+      Msg::Info("%d ( %lf , %lf , %lf ) [%d]",i, xyz[0], xyz[1], xyz[2], elementary[i][0]);
+      std::string format_read_bi = "%*d ( %*lf , %*lf , %*lf ) [%*d]";
+      for(int j = 0; j < elementary[i][0]; j++){
+        if(format_read_bi[format_read_bi.size() - 1] == 'd') {
+          format_read_bi[format_read_bi.size() - 1] = '*';
+          format_read_bi += "d %d";
+        }
+        else
+          format_read_bi += " %d";
+        if(sscanf(str, format_read_bi.c_str(), &(elementary[i][j + 1])) != 1) return 0;
+        Msg::Info("elementary[%d][%d]=%d", i + 1, j + 1, elementary[i][j + 1]); 
+      }
+    }
+    while(str[0] != '#'){
+      if(!fgets(str, sizeof(str), fp) || feof(fp))
+        break;
+    }
+    
+    int material[numElements];
+    int ElementsNodes[numElements][numVerticesPerElement];
+    Msg::ResetProgressMeter();
+    for(int i = 1; i <= numElements; i++){
+       if(!fgets(str, sizeof(str), fp)) return 0;
+       int num, type, physical = 0, partition = 0;
+       int indices[60];
+       if(numVerticesPerElement == 10){
+         if(sscanf(str, "%d %*s %d %d %d %d %d %d %d %d %d %d %d", &num, &material[i - 1],
+                   &ElementsNodes[i - 1][1], &ElementsNodes[i - 1][0],
+                   &ElementsNodes[i - 1][2], &ElementsNodes[i - 1][3],
+                   &ElementsNodes[i - 1][4], &ElementsNodes[i - 1][6],
+                   &ElementsNodes[i - 1][5], &ElementsNodes[i - 1][9],
+                   &ElementsNodes[i - 1][7], &ElementsNodes[i - 1][8]) != 12) return 0;
+         Msg::Info("%d %d %d %d %d %d %d %d %d %d %d %d", i, material[i - 1],
+                   ElementsNodes[i - 1][0], ElementsNodes[i - 1][1], ElementsNodes[i - 1][2],
+                   ElementsNodes[i - 1][3], ElementsNodes[i - 1][4], ElementsNodes[i - 1][5],
+                   ElementsNodes[i - 1][6], ElementsNodes[i - 1][7], ElementsNodes[i - 1][8],
+                   ElementsNodes[i - 1][9]);
+         type = MSH_TET_10;
+       }
+       else {
+         if(sscanf(str,"%d %*s %d %d %d %d %d", &num, &material[i - 1], 
+                   &ElementsNodes[i - 1][1], &ElementsNodes[i - 1][0], &ElementsNodes[i - 1][2],
+                   &ElementsNodes[i - 1][3]) != 6) return 0;
+         Msg::Info("%d %d %d %d %d %d", i, material[i - 1], ElementsNodes[i - 1][0],
+                   ElementsNodes[i - 1][1], ElementsNodes[i - 1][2], ElementsNodes[i - 1][3]);
+         type = MSH_TET_4;
+        }
+       for(int j=0;j<numVerticesPerElement;j++)
+         indices[j] = ElementsNodes[i - 1][j];
+       std::vector<MVertex*> vertices;
+       if(vertexVector.size()){
+         if(!getVertices(numVerticesPerElement, indices, vertexVector, vertices)) return 0;
+       }
+       else{
+         if(!getVertices(numVerticesPerElement, indices, vertexMap, vertices)) return 0;
+       }
+       createElementMSH(this, num, type, physical, elementary[i-1][1], partition, 
+                        vertices, elements, physicals); 
+       // trouble if elementary[i-1][0]>1 nodal post-processing needed ?
+       if(numElements > 100000) 
+         Msg::ProgressMeter(i + 1, numElements, "Reading elements");
+    }
+  }
+  
+  // store the elements in their associated elementary entity. If the
+  // entity does not exist, create a new (discrete) one.
+  for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
+    _storeElementsInEntities(elements[i]);
+
+  // associate the correct geometrical entity with each mesh vertex
+  _associateEntityWithMeshVertices();
+
+  // store the vertices in their associated geometrical entity
+  if(vertexVector.size())
+    _storeVerticesInEntities(vertexVector);
+  else
+    _storeVerticesInEntities(vertexMap);
+
+  // store the physical tags
+  for(int i = 0; i < 4; i++)
+    storePhysicalTagsInEntities(this, i, physicals[i]);
+
+#endif
+
+  fclose(fp);
+  return 1;
+}
+
 int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
                       double scalingFactor)
 {

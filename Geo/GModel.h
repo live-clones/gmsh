@@ -332,6 +332,7 @@ class GModel
 	       bool bigEndian=false);
 
   // DIFFPACK format
+  int readDIFF(const std::string &name);
   int writeDIFF(const std::string &name, bool binary=false,
                bool saveAll=false, double scalingFactor=1.0);
 };
