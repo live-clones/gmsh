@@ -1,6 +1,6 @@
 #include "gmshLaplace.h"
 
-extern double inv3x3 (double a[3][3], double a[3][3]);
+extern double inv3x3 (double a[3][3], double b[3][3]);
 
 void gmshLaplaceTerm::elementMatrix(MElement *e, Double_Matrix & m) const
 {
