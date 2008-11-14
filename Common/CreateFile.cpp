@@ -4,7 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
-#include "Message.h"
+#include "GmshMessage.h"
 #include "GModel.h"
 #include "GmshDefines.h"
 #include "StringUtils.h"

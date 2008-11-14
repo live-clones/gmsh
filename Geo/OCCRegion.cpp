@@ -8,7 +8,7 @@
 #include "OCCEdge.h"
 #include "OCCFace.h"
 #include "OCCRegion.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 #if defined(HAVE_OCC)
 

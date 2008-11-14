@@ -9,7 +9,7 @@
 #include "Geo.h"
 #include "GeoInterpolation.h"
 #include "Numeric.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Context.h"
 
 extern Context_T CTX;

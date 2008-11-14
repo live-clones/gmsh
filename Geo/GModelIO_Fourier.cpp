@@ -4,7 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 #include <string>
 #include "GModel.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "fourierVertex.h"
 #include "fourierEdge.h"
 #include "fourierFace.h"

@@ -8,7 +8,7 @@
 #include "GUI.h"
 #include "Gmsh.h"
 #include "GmshUI.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Draw.h"
 #include "Context.h"
 #include "Options.h"

@@ -5,7 +5,7 @@
 
 #include <string.h>
 #include <string>
-#include "Message.h"
+#include "GmshMessage.h"
 #include "StringUtils.h"
 #include "Solvers.h"
 #include "GmshSocket.h"

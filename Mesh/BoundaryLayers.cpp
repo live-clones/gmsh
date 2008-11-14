@@ -9,7 +9,7 @@
 #include "ExtrudeParams.h"
 #include "meshGEdge.h"
 #include "meshGFace.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 template<class T>
 static void addExtrudeNormals(std::vector<T*> &elements, int invert)

@@ -10,7 +10,7 @@
 #include "GFace.h"
 #include "MElement.h"
 #include "GmshDefines.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 #if !defined(HAVE_GMSH_EMBEDDED)
 #include "GaussLegendre1D.h"

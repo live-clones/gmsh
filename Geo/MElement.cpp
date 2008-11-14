@@ -8,7 +8,7 @@
 #include "MElement.h"
 #include "GEntity.h"
 #include "GFace.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "StringUtils.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)

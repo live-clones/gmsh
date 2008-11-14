@@ -13,7 +13,7 @@
 #include <math.h>
 #include <list>
 
-#include "Message.h"
+#include "GmshMessage.h"
 #include "OctreeInternals.h"
 
 using std::list;

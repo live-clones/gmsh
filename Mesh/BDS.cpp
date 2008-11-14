@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include "Numeric.h"
 #include "BDS.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "GFace.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "qualityMeasures.h"

@@ -9,7 +9,7 @@
 #include "GEdge.h"
 #include "GFace.h"
 #include "GFaceCompound.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "StringUtils.h"
 
 int MVertex::_globalNum = 0;

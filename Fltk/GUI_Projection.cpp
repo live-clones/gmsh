@@ -12,7 +12,7 @@
 #include "GUI_Projection.h"
 #include "GUI_Extras.h"
 #include "fourierFace.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 extern Context_T CTX;
 

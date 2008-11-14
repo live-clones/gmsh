@@ -5,7 +5,7 @@
 
 #include <string>
 #include "GModel.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 #if defined(HAVE_MED)
 

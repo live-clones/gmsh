@@ -32,7 +32,7 @@
 #define RUSAGE_CHILDREN -1
 #endif
 
-#include "Message.h"
+#include "GmshMessage.h"
 
 double GetTimeInSeconds()
 {

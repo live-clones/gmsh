@@ -6,7 +6,7 @@
 #include <set>
 #include "GModel.h"
 #include "MElement.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 #if !defined(HAVE_ANN)
 

@@ -8,7 +8,7 @@
 #include "MElement.h"
 #include "ExtrudeParams.h"
 #include "Context.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 extern Context_T CTX;
 

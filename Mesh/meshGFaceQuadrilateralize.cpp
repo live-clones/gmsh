@@ -4,7 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "meshGFaceQuadrilateralize.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Numeric.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGFaceOptimize.h"

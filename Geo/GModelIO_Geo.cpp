@@ -9,7 +9,7 @@
 #include "OpenFile.h"
 #include "Numeric.h"
 #include "ListUtils.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "gmshVertex.h"
 #include "gmshFace.h"
 #include "GFaceCompound.h"

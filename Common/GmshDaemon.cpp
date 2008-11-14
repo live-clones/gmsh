@@ -4,7 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <sstream>
-#include "Message.h"
+#include "GmshMessage.h"
 #include "OS.h"
 #include "GmshSocket.h"
 

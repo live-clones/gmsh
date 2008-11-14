@@ -22,9 +22,9 @@ GMSH_API = Geo/GModel.h Geo/GEntity.h Geo/GPoint.h\
            Geo/MVertex.h Geo/MEdge.h Geo/MFace.h Geo/MElement.h\
            Geo/discreteVertex.h Geo/discreteEdge.h Geo/discreteFace.h Geo/discreteRegion.h\
            Geo/SPoint2.h Geo/SPoint3.h Geo/SVector3.h Geo/SBoundingBox3d.h\
-           Geo/Pair.h Geo/Range.h\
+           Geo/Pair.h Geo/Range.h Numeric/FunctionSpace.h\
            Post/PView.h Post/PViewData.h Plugin/PluginManager.h\
-           Common/VertexArray.h Common/Message.h\
+           Common/VertexArray.h Common/GmshMessage.h\
            Common/Gmsh.h Common/GmshDefines.h Common/GmshVersion.h Common/GmshMatrix.h
 
 GMSH_EMBEDDED = ${GMSH_API} Geo/discrete*.cpp\
@@ -33,7 +33,7 @@ GMSH_EMBEDDED = ${GMSH_API} Geo/discrete*.cpp\
                 Geo/GEdgeLoop.cpp Geo/GFace.cpp Geo/GRegion.cpp\
                 Geo/MElement.cpp Geo/MFace.cpp Geo/MVertex.cpp\
                 Common/StringUtils.{cpp,h}\
-                Numeric/NumericEmbedded.{cpp,h} Numeric/FunctionSpace.{cpp,h}\
+                Numeric/NumericEmbedded.{cpp,h} Numeric/FunctionSpace.cpp\
                 utils/embed/GmshEmbedded.{cpp,h} utils/embed/Makefile
 
 # Main building rules
@@ -116,7 +116,6 @@ uninstall-lib:
 embed:
 	@if [ -r ../getdp/contrib/gmsh/Makefile ]; then \
           rsync -av ${GMSH_EMBEDDED} ../getdp/contrib/gmsh;\
-          rm -f ../getdp/contrib/gmsh/Message.h;\
         fi
 
 # Macintosh-specific rules

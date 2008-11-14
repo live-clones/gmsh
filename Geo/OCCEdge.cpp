@@ -5,7 +5,7 @@
 
 #include <limits>
 #include "GModel.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "OCCEdge.h"
 #include "OCCFace.h"
 #include "Context.h"

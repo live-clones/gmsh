@@ -5,7 +5,7 @@
 
 #include <math.h>
 #include <algorithm>
-#include "Message.h"
+#include "GmshMessage.h"
 #include "GmshUI.h"
 #include "Numeric.h"
 #include "Draw.h"

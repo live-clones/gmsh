@@ -19,7 +19,7 @@
 #include <math.h>
 #include "GFace.h"
 #include "PView.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 class BDS_Edge;
 class BDS_Face;

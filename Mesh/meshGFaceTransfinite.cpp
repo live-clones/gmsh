@@ -11,7 +11,7 @@
 #include "MVertex.h"
 #include "MElement.h"
 #include "Context.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Numeric.h"
 
 #define SQU(a)      ((a)*(a))

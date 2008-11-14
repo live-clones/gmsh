@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 #include "MallocUtils.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 void *Malloc(size_t size)
 {

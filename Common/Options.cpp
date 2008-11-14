@@ -8,7 +8,7 @@
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "GModel.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Draw.h"
 #include "Generator.h"
 #include "Context.h"

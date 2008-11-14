@@ -15,7 +15,7 @@
 // Warning: point positions must be PERTURBED by a small random
 // value to avoid 3 aligned points or 4 cocyclical points!
 
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Numeric.h"
 #include "DivideAndConquer.h"
 #include "MallocUtils.h"

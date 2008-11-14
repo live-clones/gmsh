@@ -5,7 +5,7 @@
 #include <list>
 #include "fourierVertex.h"
 #include "fourierFace.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 #if defined(HAVE_FOURIER_MODEL)
 

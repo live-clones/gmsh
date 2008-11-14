@@ -7,13 +7,7 @@
 #define _GMSH_H_
 
 #include <string>
-
-class GmshMessage{
- public:
-  GmshMessage(){}
-  virtual ~GmshMessage(){}
-  virtual void operator()(std::string level, std::string message){}
-};
+#include "GmshMessage.h"
 
 int GmshInitialize(int argc=0, char **argv=0);
 int GmshSetMessageHandler(GmshMessage *callback);

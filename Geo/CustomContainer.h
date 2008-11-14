@@ -11,7 +11,7 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "Message.h"
+#include "GmshMessage.h"
 
 /*******************************************************************************
  *

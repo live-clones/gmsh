@@ -19,7 +19,7 @@
 #include "MElement.h"
 #include "Context.h"
 #include "GPoint.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Numeric.h"
 #include "BDS.h"
 #include "qualityMeasures.h"

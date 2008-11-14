@@ -10,7 +10,7 @@
 #include "MVertex.h"
 #include "MElement.h"
 #include "Context.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 /*  
   Transfinite volume meshes

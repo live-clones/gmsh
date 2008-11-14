@@ -7,7 +7,7 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "ExtrudeParams.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 static void extrudeMesh(GVertex *from, GEdge *to)
 {

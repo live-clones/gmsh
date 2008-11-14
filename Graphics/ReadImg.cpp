@@ -5,7 +5,7 @@
 
 #include <string.h>
 #include "ReadImg.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "GmshUI.h"
 #include "PView.h"
 #include "PViewDataList.h"

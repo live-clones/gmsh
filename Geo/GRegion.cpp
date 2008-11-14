@@ -8,7 +8,7 @@
 #include "GRegion.h"
 #include "GFace.h"
 #include "MElement.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 GRegion::GRegion(GModel *model, int tag) : GEntity (model, tag)
 {

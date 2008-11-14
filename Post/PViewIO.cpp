@@ -7,7 +7,7 @@
 #include "PViewDataList.h"
 #include "PViewDataGModel.h"
 #include "StringUtils.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 bool PView::readPOS(std::string fileName, int fileIndex)
 {

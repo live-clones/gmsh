@@ -11,7 +11,7 @@
 #include <sstream>
 
 #include "GmshUI.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "MallocUtils.h"
 #include "ListUtils.h"
 #include "StringUtils.h"

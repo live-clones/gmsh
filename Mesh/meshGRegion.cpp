@@ -13,7 +13,7 @@
 #include "GEdge.h"
 #include "gmshRegion.h"
 #include "BDS.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Context.h"
 
 extern Context_T CTX;

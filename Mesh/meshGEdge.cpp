@@ -9,7 +9,7 @@
 #include "MElement.h"
 #include "BackgroundMesh.h"
 #include "Numeric.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Context.h"
 
 #define SQU(a)      ((a)*(a))

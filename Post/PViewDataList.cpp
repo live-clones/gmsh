@@ -6,7 +6,7 @@
 #include "PViewDataList.h"
 #include "Numeric.h"
 #include "SmoothData.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Context.h"
 
 extern Context_T CTX;

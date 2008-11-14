@@ -11,7 +11,7 @@
 #include "MVertex.h"
 #include "MElement.h"
 #include "BackgroundMesh.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 static void setLcsInit(MTriangle *t, std::map<MVertex*, double> &vSizes)
 {

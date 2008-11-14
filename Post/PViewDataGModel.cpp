@@ -6,7 +6,7 @@
 #include "PViewDataGModel.h"
 #include "MElement.h"
 #include "Numeric.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 PViewDataGModel::PViewDataGModel(DataType type) 
   : PViewData(), _min(VAL_INF), _max(-VAL_INF), _type(type)

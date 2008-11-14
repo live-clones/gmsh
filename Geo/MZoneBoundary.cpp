@@ -11,7 +11,7 @@
 #include <limits> // ?
 
 #include "MZoneBoundary.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 //--Types at local scope
 

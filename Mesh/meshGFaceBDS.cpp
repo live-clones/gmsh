@@ -15,7 +15,7 @@
 #include "Context.h"
 #include "GPoint.h"
 #include "GModel.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Numeric.h"
 #include "BDS.h"
 #include "qualityMeasures.h"

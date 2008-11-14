@@ -7,7 +7,7 @@
 #include "ListUtils.h"
 #include "adaptiveData.h"
 #include "Numeric.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 PViewData::PViewData()
   : _dirty(true), _fileIndex(0), _adaptive(0)

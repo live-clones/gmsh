@@ -25,7 +25,7 @@
 #include "Field.h"
 #include "GeoInterpolation.h"
 #include "GModel.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 #if !defined(HAVE_NO_POST)
 #include "OctreePost.h"

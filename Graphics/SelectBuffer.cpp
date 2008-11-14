@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#include "Message.h"
+#include "GmshMessage.h"
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "GModel.h"

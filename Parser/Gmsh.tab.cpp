@@ -328,7 +328,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
-#include "Message.h"
+#include "GmshMessage.h"
 #include "MallocUtils.h"
 #include "ListUtils.h"
 #include "TreeUtils.h"

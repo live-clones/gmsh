@@ -3,17 +3,23 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _MESSAGE_H_
-#define _MESSAGE_H_
+#ifndef _GMSH_MESSAGE_H_
+#define _GMSH_MESSAGE_H_
 
 #include <map>
 #include <string>
 #include <stdarg.h>
 
-class GmshMessage;
+// the external message handler
+class GmshMessage{
+ public:
+  GmshMessage(){}
+  virtual ~GmshMessage(){}
+  virtual void operator()(std::string level, std::string message){}
+};
 
 // a class to manage messages
-class Message {
+class Msg {
  private:
   // current cpu number and total number of cpus
   static int _commRank, _commSize;
@@ -28,7 +34,7 @@ class Message {
   // callback
   static GmshMessage *_callback;
  public:
-  Message() {}
+  Msg() {}
   static void Init(int argc, char **argv);
   static void Exit(int level);
   static int GetCommRank(){ return _commRank; }
@@ -62,7 +68,5 @@ class Message {
   static bool GetBinaryAnswer(const char *question, const char *yes, 
 			      const char *no,  bool defaultval=true);
 };
-
-typedef Message Msg;
 
 #endif

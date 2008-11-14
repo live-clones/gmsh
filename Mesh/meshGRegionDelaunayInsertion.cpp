@@ -11,7 +11,7 @@
 #include "GModel.h"
 #include "GRegion.h"
 #include "Numeric.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include <set>
 #include <map>
 #include <algorithm>

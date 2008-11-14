@@ -6,7 +6,7 @@
 #include <string>
 #include "GmshDefines.h"
 #include "GModel.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "Options.h"

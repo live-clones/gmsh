@@ -11,7 +11,7 @@
 #include "SelectBuffer.h"
 #include "GUI_Projection.h"
 #include "GUI_Extras.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGFaceOptimize.h"
 #include "discreteEdge.h"

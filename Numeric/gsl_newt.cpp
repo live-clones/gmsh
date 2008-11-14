@@ -9,7 +9,7 @@
 
 // This implements a Newton method using the GSL.
 
-#include "Message.h"
+#include "GmshMessage.h"
 
 #if defined(HAVE_GSL)
 

@@ -7,7 +7,7 @@
 #define _SHAPE_FUNCTIONS_H_
 
 #include "Numeric.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 #define ONE     (1. + 1.e-6)
 #define ZERO    (-1.e-6)

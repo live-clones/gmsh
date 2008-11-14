@@ -3,7 +3,7 @@
 
 // Interface to GMM++
 
-#include "Message.h"
+#include "GmshMessage.h"
 #include "gmshLinearSystem.h"
 
 #if defined(HAVE_GMM)

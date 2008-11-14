@@ -4,7 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "GModelIO_OCC.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Context.h"
 #include "OCCVertex.h"
 #include "OCCEdge.h"

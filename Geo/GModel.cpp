@@ -10,7 +10,7 @@
 #include "discreteFace.h"
 #include "discreteEdge.h"
 #include "discreteVertex.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)
 #include "GmshEmbedded.h"

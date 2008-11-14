@@ -7,7 +7,7 @@
 #include <set>
 #include "PViewDataList.h"
 #include "Numeric.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Context.h"
 #include "adaptiveData.h"
 

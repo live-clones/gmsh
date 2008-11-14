@@ -15,7 +15,7 @@
 #include "MallocUtils.h"
 #include "ListUtils.h"
 #include "TreeUtils.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 List_T *List_Create(int n, int incr, int size)
 {

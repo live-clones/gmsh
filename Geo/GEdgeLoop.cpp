@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <functional>
 #include "GEdgeLoop.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 void GEdgeSigned::print() const
 {

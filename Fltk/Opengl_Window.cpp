@@ -5,7 +5,7 @@
 
 #include "GmshUI.h"
 #include "GmshDefines.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Numeric.h"
 #include "Context.h"
 #include "Draw.h"

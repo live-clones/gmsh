@@ -4,7 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include "gmshSurface.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #if defined(HAVE_MATH_EVAL)
 #include "matheval.h"
 #endif

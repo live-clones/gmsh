@@ -4,7 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <string.h>
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Geo.h"
 #include "GModel.h"
 #include "Numeric.h"

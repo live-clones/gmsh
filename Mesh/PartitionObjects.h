@@ -8,7 +8,7 @@
 #include <map>
 #include <vector>
 #include "MElement.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 
 /*******************************************************************************

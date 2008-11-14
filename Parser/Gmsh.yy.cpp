@@ -832,7 +832,7 @@ char *gmsh_yytext;
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Geo.h"
 #include "Gmsh.tab.hpp"
 

@@ -14,7 +14,7 @@
 #include "discreteRegion.h"
 #include "discreteFace.h"
 #include "StringUtils.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 static void storePhysicalTagsInEntities(GModel *m, int dim,
                                         std::map<int, std::map<int, std::string> > &map)

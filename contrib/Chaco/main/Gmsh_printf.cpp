@@ -4,7 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 
 #include <cstring>
-#include "Message.h"
+#include "GmshMessage.h"
 
 // Overload the printf statements in Chaco to write using Msg::Direct in gmsh
 

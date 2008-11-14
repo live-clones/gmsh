@@ -8,7 +8,7 @@
 #include "GVertex.h"
 #include "GFace.h"
 #include "MElement.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 GVertex::GVertex(GModel *m, int tag, double ms) : GEntity(m, tag), meshSize(ms) 
 {

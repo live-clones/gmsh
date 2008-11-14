@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include "Message.h"
+#include "GmshMessage.h"
 
 #define NR_END 1
 #define FREE_ARG char*

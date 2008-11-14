@@ -10,7 +10,7 @@ namespace nglib {
 using namespace netgen;
 
 #include <iostream>
-#include "Message.h"
+#include "GmshMessage.h"
 
 namespace nglib
 {

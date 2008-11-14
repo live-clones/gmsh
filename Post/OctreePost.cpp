@@ -10,7 +10,7 @@
 #include "PViewDataList.h"
 #include "PViewDataGModel.h"
 #include "Numeric.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "shapeFunctions.h"
 #include "GModel.h"
 #include "MElement.h"

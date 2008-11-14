@@ -8,7 +8,7 @@
 #include "OCCVertex.h"
 #include "OCCEdge.h"
 #include "OCCFace.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Numeric.h"
 #include "VertexArray.h"
 #include "Context.h"

@@ -7,7 +7,7 @@
 #include "Gmsh.h"
 #include "GModel.h"
 #include "CommandLine.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Context.h"
 
 extern Context_T CTX;

@@ -13,7 +13,7 @@
 // and Andre Battaiola.
 
 #include <string.h>
-#include "Message.h"
+#include "GmshMessage.h"
 #include "ColorTable.h"
 #include "Context.h"
 #include "Numeric.h"

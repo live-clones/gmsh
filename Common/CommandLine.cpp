@@ -9,7 +9,7 @@
 #include "GmshUI.h"
 #include "GmshDefines.h"
 #include "GmshVersion.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
 #include "Context.h"

@@ -5,7 +5,7 @@
 
 #if defined(HAVE_GSL)
 
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Numeric.h"
 
 #include <gsl/gsl_errno.h>

@@ -5,7 +5,7 @@
 
 #include <string.h>
 #include "PViewOptions.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 #if defined(HAVE_MATH_EVAL)
 #include "matheval.h"

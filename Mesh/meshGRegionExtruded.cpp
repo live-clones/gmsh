@@ -10,7 +10,7 @@
 #include "meshGFace.h"
 #include "meshGRegion.h"
 #include "Context.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 extern Context_T CTX;
 

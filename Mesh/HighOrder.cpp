@@ -7,7 +7,7 @@
 #include "gmshSmoothHighOrder.h"
 #include "meshGFaceOptimize.h"
 #include "MElement.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "OS.h"
 #include "Numeric.h"
 #include "Context.h"

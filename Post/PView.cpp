@@ -12,7 +12,7 @@
 #include "VertexArray.h"
 #include "SmoothData.h"
 #include "adaptiveData.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 int PView::_globalNum = 0;
 std::vector<PView*> PView::list;

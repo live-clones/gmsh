@@ -8,7 +8,7 @@
 #include "GFace.h"
 #include "GEdge.h"
 #include "MElement.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "VertexArray.h"
 
 #if defined(HAVE_GMSH_EMBEDDED)

@@ -6,7 +6,7 @@
 // GModelIO_CGNS.cpp - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
 
 #include "GModel.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "CGNSOptions.h"
 
 #if defined(HAVE_LIBCGNS)

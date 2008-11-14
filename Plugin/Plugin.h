@@ -16,7 +16,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "Options.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "PView.h"
 #include "PViewDataList.h"
 #include "GmshMatrix.h"

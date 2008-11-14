@@ -5,7 +5,7 @@
 
 #include "FunctionSpace.h"
 #include "GmshDefines.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 
 Double_Matrix generate1DMonomials(int order)

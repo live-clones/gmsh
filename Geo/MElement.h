@@ -13,7 +13,7 @@
 #include "MVertex.h"
 #include "MEdge.h"
 #include "MFace.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "FunctionSpace.h"
 
 struct IntPt{

@@ -10,7 +10,7 @@
 #include "meshGFace.h"
 #include "GFace.h"
 #include "Numeric.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include <set>
 #include <map>
 #include <algorithm>

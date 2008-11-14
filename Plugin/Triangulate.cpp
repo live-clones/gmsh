@@ -7,7 +7,7 @@
 #include "GModel.h"
 #include "discreteFace.h"
 #include "DivideAndConquer.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "MVertex.h"
 #include "Triangulate.h"
 #include "Context.h"

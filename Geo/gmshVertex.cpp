@@ -8,7 +8,7 @@
 #include "gmshVertex.h"
 #include "Geo.h"
 #include "GeoInterpolation.h"
-#include "Message.h"
+#include "GmshMessage.h"
 #include "MVertex.h"
 #include "MElement.h"
 

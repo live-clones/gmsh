@@ -7,7 +7,7 @@
 #include "GModel.h"
 #include "gmshRegion.h"
 #include "Geo.h"
-#include "Message.h"
+#include "GmshMessage.h"
 
 gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
   : GRegion(m, volume->Num), v(volume)

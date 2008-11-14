@@ -5,7 +5,7 @@
 
 #include <string.h>
 #include <sstream>
-#include "Message.h"
+#include "GmshMessage.h"
 #include "Numeric.h"
 #include "StringUtils.h"
 #include "Geo.h"
