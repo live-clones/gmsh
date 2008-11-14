@@ -70,7 +70,7 @@ public:
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return 0; }
   SPoint2 getCoordinates (MVertex *v) const { parametrize() ; return coordinates[v]; }
-  virtual bool buildRepresentationCross(){}
+  virtual bool buildRepresentationCross(){ return false; }
 };
 
 #endif

@@ -91,6 +91,11 @@ class Gmsh_Matrix
       for(int j = 0; j < b.size(); j++)
 	b.data[i] += (*this)(i, j) * x(j);
   }
+  inline void blas_dgemm(const Gmsh_Matrix<SCALAR> & x, const Gmsh_Matrix<SCALAR> & b, 
+			 const double c_a = 1.0, const double c_b = 1.0)
+  {
+    // FIXME: not implemented
+  }
   inline void set_all(const double &m) 
   {
     for(int i = 0; i < r * c; i++) data[i] = m;

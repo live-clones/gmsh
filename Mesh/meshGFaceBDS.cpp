@@ -267,8 +267,8 @@ bool edgeSwapTestHighOrder(BDS_Edge *e,GFace *gf)
   // the generation of 2 high order elements 
   // The rationale is to consider the edges as
   // exactly matching curves and surfaces 
+  return false;
 }
-
 
 
 bool edgeSwapTestDelaunayAniso(BDS_Edge *e, GFace *gf, std::set<swapquad> &configs)
