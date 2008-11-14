@@ -668,6 +668,10 @@ bool PViewDataList::combineSpace(nameData &nd)
       Msg::Error("Cannot combine hybrid data");
       return false;
     }
+
+    // copy interpolation from first merged dataset, if any
+    if(!i) _interpolation = l->_interpolation;
+
     // merge elememts
     List_Merge(l->SP, SP); NbSP += l->NbSP; List_Merge(l->VP, VP); NbVP += l->NbVP;
     List_Merge(l->TP, TP); NbTP += l->NbTP; List_Merge(l->SL, SL); NbSL += l->NbSL;
@@ -790,6 +794,7 @@ bool PViewDataList::combineTime(nameData &nd)
   }
   NbT2 = data[0]->NbT2;
   NbT3 = data[0]->NbT3;
+  _interpolation = data[0]->_interpolation;
 
   // merge values for all element types
   for(int i = 0; i < 24; i++){
