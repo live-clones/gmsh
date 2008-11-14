@@ -22,6 +22,12 @@
 extern GUI *WID;
 #endif
 
+#ifdef _MSC_VER
+  #if(_MSC_VER==1310)//NET 2003
+  #define vsnprintf _vsnprintf
+  #endif
+#endif
+
 extern Context_T CTX;
 
 int Message::_commRank = 0;
@@ -71,7 +77,7 @@ void Message::Exit(int level)
 #endif
     exit(level);
   }
-  
+
 #if defined(HAVE_FLTK)
   // if we exit cleanly (level==0) and we are in full GUI mode, save
   // the persistent info to disk
@@ -181,7 +187,7 @@ void Message::Error(const char *fmt, ...)
 #endif
 
   if(CTX.terminal){
-    if(_commSize > 1) 
+    if(_commSize > 1)
       fprintf(stderr, "Error   : [On processor %d] %s\n", _commRank, str);
     else
       fprintf(stderr, "Error   : %s\n", str);
@@ -280,7 +286,7 @@ void Message::Direct(int level, const char *fmt, ...)
       WID->create_message_window();
   }
 #endif
-  
+
   if(CTX.terminal){
     fprintf(stdout, "%s\n", str);
     fflush(stdout);
@@ -337,7 +343,7 @@ void Message::Debug(const char *fmt, ...)
 #endif
 
   if(CTX.terminal){
-    if(_commSize > 1) 
+    if(_commSize > 1)
       fprintf(stdout, "Debug   : [On processor %d] %s\n", _commRank, str);
     else
       fprintf(stdout, "Debug   : %s\n", str);
@@ -392,7 +398,7 @@ void Message::PrintTimers()
 {
   // do a single stdio call!
   std::string str;
-  for(std::map<std::string, double>::iterator it = _timers.begin(); 
+  for(std::map<std::string, double>::iterator it = _timers.begin();
       it != _timers.end(); it++){
     if(it != _timers.begin()) str += ", ";
     char tmp[256];
@@ -402,7 +408,7 @@ void Message::PrintTimers()
   if(!str.size()) return;
 
   if(CTX.terminal){
-    if(_commSize > 1) 
+    if(_commSize > 1)
       fprintf(stdout, "Timers  : [On processor %d] %s\n", _commRank, str.c_str());
     else
       fprintf(stdout, "Timers  : %s\n", str.c_str());
@@ -439,9 +445,9 @@ void Message::PrintErrorCounter(const char *title)
 #endif
 
   if(CTX.terminal){
-    fprintf(stderr, "%s\n%s\n%s\n%s\n%s\n%s\n", (prefix + line).c_str(), 
+    fprintf(stderr, "%s\n%s\n%s\n%s\n%s\n%s\n", (prefix + line).c_str(),
 	    (prefix + title).c_str(), (prefix + warn).c_str(),
-	    (prefix + err).c_str(), (prefix + help).c_str(), 
+	    (prefix + err).c_str(), (prefix + help).c_str(),
 	    (prefix + line).c_str());
     fflush(stderr);
   }
@@ -474,7 +480,7 @@ double Message::GetValue(const char *text, double defaultval)
     return atof(str);
 }
 
-bool Message::GetBinaryAnswer(const char *question, const char *yes, 
+bool Message::GetBinaryAnswer(const char *question, const char *yes,
 			      const char *no, bool defaultval)
 {
   // if a callback is given let's assume we don't want to be bothered
@@ -491,7 +497,7 @@ bool Message::GetBinaryAnswer(const char *question, const char *yes,
 #endif
 
   while(1){
-    printf("%s\n\n[%s] or [%s]? (default=%s) ", question, yes, no, 
+    printf("%s\n\n[%s] or [%s]? (default=%s) ", question, yes, no,
 	   defaultval ? yes : no);
     char str[256];
     char *ret = fgets(str, sizeof(str), stdin);
