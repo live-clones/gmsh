@@ -2398,7 +2398,8 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   // models with incomplete topology. For example, when we merge 2 STL
   // triangulations we don't have the boundary information between the
   // faces, and the vertices would end up categorized on either one.)
-  std::list<int> vertexTags[numVertices], boundaryIndicators;
+  std::vector<std::list<int> > vertexTags(numVertices);
+  std::list<int> boundaryIndicators;
   int numBoundaryIndicators = 0;
   for(riter it = firstRegion(); it != lastRegion(); it++){
     std::list<GFace*> faces = (*it)->faces();
