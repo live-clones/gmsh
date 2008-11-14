@@ -127,14 +127,19 @@ static double F_Lc(GEdge *ge, double t)
 
 static double F_Transfinite(GEdge *ge, double t)
 {
-  double val, r;
+  double length = ge->length();
+  if(length == 0.0){
+    Msg::Error("Zero-length curve in transfinite mesh");
+    return 1.;
+  }
 
   SVector3 der = ge->firstDer(t) ;
   double d = norm(der);
-
   double coef = ge->meshAttributes.coeffTransfinite;
   int type = ge->meshAttributes.typeTransfinite;
   int nbpt = ge->meshAttributes.nbPointsTransfinite;
+
+  double val;
 
   if(coef <= 0.0 || coef == 1.0) {
     // coef < 0 should never happen
@@ -145,12 +150,9 @@ static double F_Transfinite(GEdge *ge, double t)
 
     case 1: // Geometric progression ar^i; Sum of n terms = length = a (r^n-1)/(r-1)
       {
-        if(sign(type) >= 0)
-          r = coef;
-        else
-          r = 1. / coef;
-        double a = ge->length() * (r - 1.) / (pow(r, nbpt - 1.) - 1.);
-        int i = (int)(log(t * ge->length() / a * (r - 1.) + 1.) / log(r));
+        double r = (sign(type) >= 0) ? coef : 1. / coef;
+        double a = length * (r - 1.) / (pow(r, nbpt - 1.) - 1.);
+        int i = (int)(log(t * length / a * (r - 1.) + 1.) / log(r));
         val = d / (a * pow(r, (double)i));
       }
       break;
@@ -159,18 +161,16 @@ static double F_Transfinite(GEdge *ge, double t)
       {
         double a;
         if(coef > 1.0) {
-          a = -4. * sqrt(coef - 1.) *
-            atan2(1., sqrt(coef - 1.)) /
-            ((double)nbpt *  ge->length());
+          a = -4. * sqrt(coef - 1.) * atan2(1., sqrt(coef - 1.)) /
+            ((double)nbpt *  length);
         }
         else {
-          a = 2. * sqrt(1. - coef) *
-            log(fabs((1. + 1. / sqrt(1. - coef))
-                     / (1. - 1. / sqrt(1. - coef))))
-            / ((double)nbpt * ge->length());
+          a = 2. * sqrt(1. - coef) * log(fabs((1. + 1. / sqrt(1. - coef)) /
+                                              (1. - 1. / sqrt(1. - coef))))
+            / ((double)nbpt * length);
         }
-        double b = -a * ge->length() * ge->length() / (4. * (coef - 1.));
-        val = d / (-a * SQU(t * ge->length() - (ge->length()) * 0.5) + b);
+        double b = -a * length * length / (4. * (coef - 1.));
+        val = d / (-a * SQU(t * length - (length) * 0.5) + b);
       }
       break;
       
@@ -288,8 +288,7 @@ void meshGEdge::operator() (GEdge *ge)
     Msg::Debug("Curve %d has a zero length", ge->tag());
 
   // TEST
-  if (length < CTX.mesh.tolerance_edge_length)ge->setTooSmall(true);
-
+  if (length < CTX.mesh.tolerance_edge_length) ge->setTooSmall(true);
 
   // Integrate detJ/lc du 
   double a;

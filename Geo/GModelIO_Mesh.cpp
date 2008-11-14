@@ -2426,13 +2426,20 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   std::vector<GEntity*> entities;
   getEntities(entities);
 
+  // find max dimension of mesh elements we need to save
+  int dim = 0;
+  for(unsigned int i = 0; i < entities.size(); i++)
+    if(entities[i]->physicals.size() || saveAll)
+      for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
+        dim = std::max(dim, entities[i]->getMeshElement(j)->getDim());
+  
   // loop over all elements we need to save
   int numElements = 0, maxNumNodesPerElement = 0;
   for(unsigned int i = 0; i < entities.size(); i++){
     if(entities[i]->physicals.size() || saveAll){
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
         MElement *e = entities[i]->getMeshElement(j);
-        if(e->getStringForDIFF()){
+        if(e->getStringForDIFF() && e->getDim() == dim){
           numElements++;
           maxNumNodesPerElement = std::max(maxNumNodesPerElement, e->getNumVertices());
         }
@@ -2494,7 +2501,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
     if(entities[i]->physicals.size() || saveAll){
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
         MElement *e = entities[i]->getMeshElement(j);
-        if(e->getStringForDIFF())
+        if(e->getStringForDIFF() && e->getDim() == dim)
           e->writeDIFF(fp, ++num, binary, entities[i]->tag());
       }
     }
