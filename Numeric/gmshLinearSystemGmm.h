@@ -79,16 +79,16 @@ public :
   {
     Msg::Error("Gmm++ is not available on this version of gmsh");
   }
-  virtual bool isAllocated () const {}
+  virtual bool isAllocated () const { return false; }
   virtual void allocate (int nbRows) {}
   virtual void  addToMatrix    (int _row, int _col, double val) {}
-  virtual double getFromMatrix (int _row, int _col) const {}
+  virtual double getFromMatrix (int _row, int _col) const { return 0.; }
   virtual void  addToRightHandSide    (int _row, double val) {}
-  virtual double getFromRightHandSide (int _row) const {}
-  virtual double getFromSolution (int _row) const {}
+  virtual double getFromRightHandSide (int _row) const { return 0.; }
+  virtual double getFromSolution (int _row) const { return 0.; }
   virtual void zeroMatrix () {}
   virtual void zeroRightHandSide () {}
-  virtual int systemSolve () {}
+  virtual int systemSolve () { return 0; }
 };
 
 #endif
