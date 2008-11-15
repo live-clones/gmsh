@@ -50,3 +50,6 @@ clean:
 
 depend:
 	true
+
+# DO NOT DELETE THIS LINE
+nglib_addon.o: ../../Common/GmshMessage.h

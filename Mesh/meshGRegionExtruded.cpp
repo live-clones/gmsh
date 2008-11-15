@@ -142,12 +142,18 @@ static void extrudeMesh(GFace *from, GRegion *to,
       }
     }
   }
-  for(unsigned int i = 0; i < from->quadrangles.size(); i++){
-    for(int j = 0; j < ep->mesh.NbLayer; j++) {
-      for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
-        std::vector<MVertex*> verts;
-        if(getExtrudedVertices(from->quadrangles[i], ep, j, k, pos, verts) == 8)
-          createHexPri(verts, to);
+
+  if(from->quadrangles.size() && !ep->mesh.Recombine){
+    Msg::Error("Cannot extrude quadrangles without Recombine");
+  }
+  else{
+    for(unsigned int i = 0; i < from->quadrangles.size(); i++){
+      for(int j = 0; j < ep->mesh.NbLayer; j++) {
+        for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
+          std::vector<MVertex*> verts;
+          if(getExtrudedVertices(from->quadrangles[i], ep, j, k, pos, verts) == 8)
+            createHexPri(verts, to);
+        }
       }
     }
   }
