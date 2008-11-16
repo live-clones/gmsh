@@ -92,9 +92,8 @@ class MElement
   // get the vertex using MED ordering
   virtual MVertex *getVertexMED(int num){ return getVertex(num); }
 
-  // get the vertex using DIFF ordering (at least for tetrahedra it's
-  // the same as in the MED format)
-  virtual MVertex *getVertexDIFF(int num){ return getVertexMED(num); }
+  // get the vertex using DIFF ordering
+  virtual MVertex *getVertexDIFF(int num){ return getVertex(num); }
 
   // get the number of vertices associated with edges, faces and
   // volumes (nonzero only for higher order elements)
@@ -572,6 +571,7 @@ class MTriangle : public MElement {
   virtual int getTypeForVTK() const { return 5; }
   virtual const char *getStringForPOS() const { return "ST"; }
   virtual const char *getStringForBDF() const { return "CTRIA3"; }
+  virtual const char *getStringForDIFF() const { return "ElmT3n2D"; }
   virtual void revert() 
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
@@ -679,6 +679,7 @@ class MTriangle6 : public MTriangle {
   //virtual int getTypeForVTK() const { return 22; }
   virtual const char *getStringForPOS() const { return "ST2"; }
   virtual const char *getStringForBDF() const { return "CTRIA6"; }
+  virtual const char *getStringForDIFF() const { return "ElmT6n2D"; }
   virtual void revert() 
   {
     MVertex *tmp;
@@ -832,6 +833,11 @@ class MQuadrangle : public MElement {
     static const int map[4] = {0, 3, 2, 1};
     return getVertex(map[num]); 
   }
+  virtual MVertex *getVertexDIFF(int num)
+  {
+    static const int map[4] = {0, 1, 3, 2};
+    return getVertex(map[num]); 
+  }
   virtual int getNumEdges(){ return 4; }
   virtual MEdge getEdge(int num)
   {
@@ -869,6 +875,7 @@ class MQuadrangle : public MElement {
   virtual int getTypeForVTK() const { return 9; }
   virtual const char *getStringForPOS() const { return "SQ"; }
   virtual const char *getStringForBDF() const { return "CQUAD4"; }
+  virtual const char *getStringForDIFF() const { return "ElmB4n2D"; }
   virtual void revert() 
   {
     MVertex *tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
@@ -950,6 +957,11 @@ class MQuadrangle8 : public MQuadrangle {
     static const int map[8] = {0, 3, 2, 1, 7, 6, 5, 4};
     return getVertex(map[num]); 
   }
+  virtual MVertex *getVertexDIFF(int num)
+  {
+    static const int map[8] = {0, 1, 3, 2, 4, 7, 5, 6};
+    return getVertex(map[num]); 
+  }
   virtual int getNumEdgeVertices() const { return 4; }
   virtual int getNumEdgesRep(){ return 8; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
@@ -990,6 +1002,7 @@ class MQuadrangle8 : public MQuadrangle {
   virtual int getTypeForUNV() const { return 95; } // shell parabolic quadrilateral
   //virtual int getTypeForVTK() const { return 23; }
   virtual const char *getStringForBDF() const { return "CQUAD8"; }
+  virtual const char *getStringForDIFF() const { return "ElmB8n2D"; }
   virtual void revert() 
   {
     MVertex *tmp;
@@ -1032,8 +1045,13 @@ class MQuadrangle9 : public MQuadrangle {
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 9; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
+  virtual MVertex *getVertexDIFF(int num)
+  {
+    static const int map[9] = {0, 2, 8, 6, 1, 5, 7, 3, 4};
+    return getVertex(map[num]); 
+  }
   virtual int getNumEdgeVertices() const { return 4; }
-  virtual int getNumFaceVertices() const { return 1; }
+  virtual int getNumFaceVertices() const { return 6; }
   virtual int getNumEdgesRep(){ return 8; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 
@@ -1073,6 +1091,7 @@ class MQuadrangle9 : public MQuadrangle {
   }
   virtual int getTypeForMSH() const { return MSH_QUA_9; }
   virtual const char *getStringForPOS() const { return "SQ2"; }
+  virtual const char *getStringForDIFF() const { return "ElmB9n2D"; }
   virtual void revert() 
   {
     MVertex *tmp;
@@ -1288,6 +1307,11 @@ class MTetrahedron10 : public MTetrahedron {
   virtual MVertex *getVertexMED(int num)
   {
     static const int map[10] = {0, 2, 1, 3, 6, 5, 4, 7, 8, 9};
+    return getVertex(map[num]); 
+  }
+  virtual MVertex *getVertexDIFF(int num)
+  {
+    static const int map[10] = {0, 1, 2, 3, 4, 5, 6, 7, 9, 8};
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices() const { return 6; }
@@ -1584,6 +1608,11 @@ class MHexahedron : public MElement {
     static const int map[8] = {0, 3, 2, 1, 4, 7, 6, 5};
     return getVertex(map[num]); 
   }
+  virtual MVertex *getVertexDIFF(int num)
+  {
+    static const int map[8] = {2, 3, 7, 6, 0, 1, 5, 4};
+    return getVertex(map[num]); 
+  }
   virtual int getNumEdges(){ return 12; }
   virtual MEdge getEdge(int num)
   {
@@ -1633,6 +1662,7 @@ class MHexahedron : public MElement {
   virtual int getTypeForVTK() const { return 12; }
   virtual const char *getStringForPOS() const { return "SH"; }
   virtual const char *getStringForBDF() const { return "CHEXA"; }
+  virtual const char *getStringForDIFF() const { return "ElmB8n3D"; }
   virtual void revert()
   {
     MVertex *tmp;
@@ -1779,6 +1809,12 @@ class MHexahedron20 : public MHexahedron {
 				8, 17, 19, 18, 16, 10, 15, 14, 12};
     return getVertex(map[num]); 
   }
+  virtual MVertex *getVertexDIFF(int num)
+  {
+    static const int map[20] = {2, 3, 7, 6, 0, 1, 5, 4, 9, 18, 12, 
+				19, 14, 11, 15, 13, 8, 16, 17, 10};
+    return getVertex(map[num]); 
+  }
   virtual int getNumEdgeVertices() const { return 12; }
   virtual int getNumEdgesRep(){ return 24; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
@@ -1841,6 +1877,7 @@ class MHexahedron20 : public MHexahedron {
   virtual int getTypeForUNV() const { return 116; } // solid parabolic brick
   //virtual int getTypeForVTK() const { return 25; }
   virtual const char *getStringForBDF() const { return "CHEXA"; }
+  virtual const char *getStringForDIFF() const { return "ElmB20n3D"; }
   virtual void revert()
   {
     MVertex *tmp;
@@ -1900,6 +1937,12 @@ class MHexahedron27 : public MHexahedron {
   virtual int getPolynomialOrder() const { return 2; }
   virtual int getNumVertices() const { return 27; }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
+  virtual MVertex *getVertexDIFF(int num)
+  {
+    static const int map[27] = {6, 8, 26, 24, 0, 2, 20, 18, 7, 15, 3, 17, 5, 25, 
+                                23, 21, 1, 9, 11, 19, 16, 4, 12, 14, 22, 10, 13};
+    return getVertex(map[num]); 
+  }
   virtual int getNumEdgeVertices() const { return 12; }
   virtual int getNumFaceVertices() const { return 6; }
   virtual int getNumVolumeVertices() const { return 1; }
@@ -1969,6 +2012,7 @@ class MHexahedron27 : public MHexahedron {
   }
   virtual int getTypeForMSH() const { return MSH_HEX_27; }
   virtual const char *getStringForPOS() const { return "SH2"; }
+  virtual const char *getStringForDIFF() const { return "ElmB27n3D"; }
   virtual void revert()
   {
     MVertex *tmp;
