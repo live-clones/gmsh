@@ -8,6 +8,9 @@ include ../../variables
 default:
 	@cd src && ${MAKE}
 
+cpobj:
+	@cd src && ${MAKE} cpobj
+
 clean:
 	@cd src && ${MAKE} clean
 
