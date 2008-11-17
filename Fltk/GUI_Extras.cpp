@@ -909,12 +909,10 @@ int msh_dialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	int _binary = (dialog->c->value() == 2)? 1 : 0; 
-	int _parametric = (dialog->p->value() == 1)? 1 : 0; 
-	double _version = (dialog->c->value() == 0) ? 1.0 : 2.0 ;
-        opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI,  _version);
-        opt_mesh_binary(0, GMSH_SET | GMSH_GUI,_binary);
+        opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI, (dialog->c->value() == 0) ? 1.0 : 2.0);
+        opt_mesh_binary(0, GMSH_SET | GMSH_GUI, (dialog->c->value() == 2) ? 1 : 0);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
+        opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI, dialog->p->value() ? 1 : 0);
         CreateOutputFile(name, FORMAT_MSH);
         dialog->window->hide();
         return 1;

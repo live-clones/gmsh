@@ -159,8 +159,7 @@ int GModel::readMSH(const std::string &name)
     else if(!strncmp(&str[1], "NO", 2) || !strncmp(&str[1], "Nodes", 5) ||
 	    !strncmp(&str[1], "ParametricNodes", 15)) {
       
-      const bool parametric = ! strncmp(&str[1], "ParametricNodes", 15);
-      
+      const bool parametric = !strncmp(&str[1], "ParametricNodes", 15);
       if(!fgets(str, sizeof(str), fp)) return 0;
       int numVertices;
       if(sscanf(str, "%d", &numVertices) != 1) return 0;
@@ -170,13 +169,9 @@ int GModel::readMSH(const std::string &name)
       vertexMap.clear();
       int minVertex = numVertices + 1, maxVertex = -1;
       for(int i = 0; i < numVertices; i++) {
-        int num;
-        double xyz[3];
-	double uv[2];
-	int iClasDim,iClasTag, typVertex = 3;	
-	
+        int num, iClasDim, iClasTag, typVertex = 3;	
+        double xyz[3], uv[2];
 	MVertex *newVertex = 0;
-
 	if (!parametric){
 	  if(!binary){
 	    if (fscanf(fp, "%d %lf %lf %lf", &num, &xyz[0], &xyz[1], &xyz[2]) != 4)
@@ -192,7 +187,8 @@ int GModel::readMSH(const std::string &name)
 	}
 	else{
 	  if(!binary){	    
-	    if (fscanf(fp, "%d %lf %lf %lf %d %d", &num, &xyz[0], &xyz[1], &xyz[2], &iClasDim, &iClasTag) != 6)
+	    if (fscanf(fp, "%d %lf %lf %lf %d %d", &num, &xyz[0], &xyz[1], &xyz[2],
+                       &iClasDim, &iClasTag) != 6)
 	      return 0;
 	  }
 	  else{
@@ -205,16 +201,15 @@ int GModel::readMSH(const std::string &name)
 	    if(fread(&iClasTag, sizeof(int), 1, fp) != 1) return 0;
 	    if(swap) SwapBytes((char*)&iClasTag, sizeof(int), 1);
 	  }
-	  
 	  if (iClasDim == 0){
-	    GVertex *gv = getVertexByTag ( iClasTag );
-	    if (gv)gv->deleteMesh();
+	    GVertex *gv = getVertexByTag(iClasTag);
+	    if (gv) gv->deleteMesh();
 	    newVertex = new MVertex(xyz[0], xyz[1], xyz[2], gv, num);
 	  }
 	  else if (iClasDim == 1){
-	    GEdge *ge = getEdgeByTag ( iClasTag );
+	    GEdge *ge = getEdgeByTag(iClasTag);
 	    if(!binary){	    
-	      if (fscanf(fp, "%lf", &uv[0]) != 1)return 0;	      
+	      if (fscanf(fp, "%lf", &uv[0]) != 1) return 0;
 	    }
 	    else{
 	      if(fread(uv, sizeof(double), 1, fp) != 1) return 0;
@@ -223,9 +218,9 @@ int GModel::readMSH(const std::string &name)
 	    newVertex = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge, uv[0], -1.0, num);	      
 	  }
 	  else if (iClasDim == 2){
-	    GFace *gf = getFaceByTag ( iClasTag );
+	    GFace *gf = getFaceByTag(iClasTag);
 	    if(!binary){	    
-	      if (fscanf(fp, "%lf %lf", &uv[0], &uv[1]) != 2)return 0;	      
+	      if (fscanf(fp, "%lf %lf", &uv[0], &uv[1]) != 2) return 0;
 	    }
 	    else{
 	      if(fread(uv, sizeof(double), 2, fp) != 2) return 0;
@@ -234,17 +229,15 @@ int GModel::readMSH(const std::string &name)
 	    newVertex = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf, uv[0], uv[1], num);	      
 	  }
 	  else if (iClasDim == 3){
-	    GRegion *gr = getRegionByTag ( iClasTag );
+	    GRegion *gr = getRegionByTag(iClasTag);
 	    newVertex = new MVertex(xyz[0], xyz[1], xyz[2], gr, num);	      
 	  }
 	}
         minVertex = std::min(minVertex, num);
         maxVertex = std::max(maxVertex, num);
-
         if(vertexMap.count(num))
           Msg::Warning("Skipping duplicate vertex %d", num);
 	vertexMap[num] = newVertex;
-
         if(numVertices > 100000) 
           Msg::ProgressMeter(i + 1, numVertices, "Reading nodes");
       }
@@ -264,6 +257,7 @@ int GModel::readMSH(const std::string &name)
           vertexVector[it->first] = it->second;
         vertexMap.clear();
       }
+
     }
     else if(!strncmp(&str[1], "ELM", 3) || !strncmp(&str[1], "Elements", 8)) {
 
@@ -548,7 +542,10 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   if(binary) fprintf(fp, "\n");
 
   if(version >= 2.0){
-    fprintf(fp, "$EndNodes\n");
+    if(saveParametric)
+      fprintf(fp, "$EndParametricNodes\n");
+    else
+      fprintf(fp, "$EndNodes\n");
     fprintf(fp, "$Elements\n");
   }
   else{

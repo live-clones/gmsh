@@ -91,14 +91,13 @@ Generator.o: Generator.cpp ../Common/GmshMessage.h ../Numeric/Numeric.h \
   ../Numeric/FunctionSpace.h ../Common/GmshMatrix.h meshGEdge.h \
   meshGFace.h meshGFaceBDS.h meshGRegion.h BackgroundMesh.h \
   BoundaryLayers.h HighOrder.h ../Post/PView.h ../Post/PViewData.h
-Field.o: Field.cpp ../contrib/MathEval/matheval.h \
-  ../contrib/ANN/include/ANN/ANN.h ../Common/Context.h \
-  ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h Field.h ../Post/PView.h \
-  ../Geo/SPoint3.h ../Geo/GeoInterpolation.h ../Geo/Geo.h \
-  ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
-  ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
-  ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Common/ListUtils.h \
+Field.o: Field.cpp ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/PartitionOptions.h Field.h ../Post/PView.h ../Geo/SPoint3.h \
+  ../Geo/GeoInterpolation.h ../Geo/Geo.h ../Common/GmshDefines.h \
+  ../Geo/gmshSurface.h ../Geo/Pair.h ../Geo/Range.h ../Geo/SPoint2.h \
+  ../Geo/SPoint3.h ../Geo/SVector3.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h ../Common/ListUtils.h \
   ../Common/TreeUtils.h ../Common/avl.h ../Common/ListUtils.h \
   ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
@@ -128,61 +127,7 @@ gmshSmoothHighOrder.o: gmshSmoothHighOrder.cpp gmshSmoothHighOrder.h \
   ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Numeric/FunctionSpace.h ../Numeric/gmshElasticity.h \
   ../Numeric/gmshTermOfFormulation.h ../Numeric/gmshLinearSystemGmm.h \
-  ../Numeric/gmshLinearSystem.h ../contrib/gmm/gmm.h \
-  ../contrib/gmm/gmm_kernel.h ../contrib/gmm/gmm_def.h \
-  ../contrib/gmm/gmm_ref.h ../contrib/gmm/gmm_except.h \
-  ../contrib/gmm/gmm_std.h ../contrib/gmm/gmm_blas.h \
-  ../contrib/gmm/gmm_scaled.h ../contrib/gmm/gmm_def.h \
-  ../contrib/gmm/gmm_transposed.h ../contrib/gmm/gmm_def.h \
-  ../contrib/gmm/gmm_conjugated.h ../contrib/gmm/gmm_def.h \
-  ../contrib/gmm/gmm_real_part.h ../contrib/gmm/gmm_def.h \
-  ../contrib/gmm/gmm_vector.h ../contrib/gmm/gmm_interface.h \
-  ../contrib/gmm/gmm_blas.h ../contrib/gmm/gmm_sub_index.h \
-  ../contrib/gmm/gmm_def.h ../contrib/gmm/gmm_interface.h \
-  ../contrib/gmm/gmm_sub_vector.h ../contrib/gmm/gmm_interface.h \
-  ../contrib/gmm/gmm_sub_index.h ../contrib/gmm/gmm_sub_matrix.h \
-  ../contrib/gmm/gmm_sub_vector.h ../contrib/gmm/gmm_vector_to_matrix.h \
-  ../contrib/gmm/gmm_interface.h ../contrib/gmm/gmm_vector.h \
-  ../contrib/gmm/gmm_matrix.h ../contrib/gmm/gmm_vector.h \
-  ../contrib/gmm/gmm_sub_vector.h ../contrib/gmm/gmm_sub_matrix.h \
-  ../contrib/gmm/gmm_transposed.h ../contrib/gmm/gmm_tri_solve.h \
-  ../contrib/gmm/gmm_interface.h ../contrib/gmm/gmm_blas_interface.h \
-  ../contrib/gmm/gmm_dense_lu.h ../contrib/gmm/gmm_dense_Householder.h \
-  ../contrib/gmm/gmm_kernel.h ../contrib/gmm/gmm_opt.h \
-  ../contrib/gmm/gmm_dense_qr.h ../contrib/gmm/gmm_dense_Householder.h \
-  ../contrib/gmm/gmm_iter_solvers.h ../contrib/gmm/gmm_iter.h \
-  ../contrib/gmm/gmm_kernel.h ../contrib/gmm/gmm_precond_diagonal.h \
-  ../contrib/gmm/gmm_precond.h ../contrib/gmm/gmm_kernel.h \
-  ../contrib/gmm/gmm_precond_ildlt.h ../contrib/gmm/gmm_precond.h \
-  ../contrib/gmm/gmm_precond_ildltt.h ../contrib/gmm/gmm_precond_ilut.h \
-  ../contrib/gmm/gmm_precond.h \
-  ../contrib/gmm/gmm_precond_mr_approx_inverse.h \
-  ../contrib/gmm/gmm_precond.h ../contrib/gmm/gmm_precond_ilu.h \
-  ../contrib/gmm/gmm_precond.h ../contrib/gmm/gmm_precond_ilut.h \
-  ../contrib/gmm/gmm_precond_ilutp.h ../contrib/gmm/gmm_precond_ilut.h \
-  ../contrib/gmm/gmm_solver_cg.h ../contrib/gmm/gmm_kernel.h \
-  ../contrib/gmm/gmm_iter.h ../contrib/gmm/gmm_solver_bicgstab.h \
-  ../contrib/gmm/gmm_kernel.h ../contrib/gmm/gmm_iter.h \
-  ../contrib/gmm/gmm_solver_qmr.h ../contrib/gmm/gmm_kernel.h \
-  ../contrib/gmm/gmm_iter.h ../contrib/gmm/gmm_solver_constrained_cg.h \
-  ../contrib/gmm/gmm_kernel.h ../contrib/gmm/gmm_iter.h \
-  ../contrib/gmm/gmm_solver_Schwarz_additive.h \
-  ../contrib/gmm/gmm_kernel.h ../contrib/gmm/gmm_superlu_interface.h \
-  ../contrib/gmm/gmm_solver_cg.h ../contrib/gmm/gmm_solver_gmres.h \
-  ../contrib/gmm/gmm_kernel.h ../contrib/gmm/gmm_iter.h \
-  ../contrib/gmm/gmm_modified_gram_schmidt.h ../contrib/gmm/gmm_kernel.h \
-  ../contrib/gmm/gmm_solver_bicgstab.h ../contrib/gmm/gmm_solver_qmr.h \
-  ../contrib/gmm/gmm_solver_Newton.h ../contrib/gmm/gmm_kernel.h \
-  ../contrib/gmm/gmm_modified_gram_schmidt.h \
-  ../contrib/gmm/gmm_tri_solve.h ../contrib/gmm/gmm_solver_gmres.h \
-  ../contrib/gmm/gmm_solver_bfgs.h ../contrib/gmm/gmm_kernel.h \
-  ../contrib/gmm/gmm_iter.h ../contrib/gmm/gmm_least_squares_cg.h \
-  ../contrib/gmm/gmm_kernel.h ../contrib/gmm/gmm_iter.h \
-  ../contrib/gmm/gmm_conjugated.h ../contrib/gmm/gmm_condition_number.h \
-  ../contrib/gmm/gmm_dense_qr.h ../contrib/gmm/gmm_inoutput.h \
-  ../contrib/gmm/gmm_kernel.h ../contrib/gmm/gmm_lapack_interface.h \
-  ../contrib/gmm/gmm_superlu_interface.h \
-  ../contrib/gmm/gmm_domain_decomp.h ../contrib/gmm/gmm_kernel.h
+  ../Numeric/gmshLinearSystem.h
 meshGEdge.o: meshGEdge.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
@@ -335,9 +280,7 @@ meshGRegion.o: meshGRegion.cpp meshGRegion.h \
   ../Common/ListUtils.h ../Common/TreeUtils.h ../Common/avl.h \
   ../Common/ListUtils.h ../Geo/SPoint2.h ../Geo/ExtrudeParams.h \
   ../Common/SmoothData.h ../Geo/GRegion.h BDS.h ../Post/PView.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h \
-  ../contrib/Tetgen/tetgen.h ../contrib/Netgen/libsrc/interface/nglib.h \
-  ../contrib/Netgen/nglib_addon.h
+  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h
 meshGRegionDelaunayInsertion.o: meshGRegionDelaunayInsertion.cpp \
   ../Common/OS.h BackgroundMesh.h meshGRegion.h meshGRegionLocalMeshMod.h \
   meshGRegionDelaunayInsertion.h ../Geo/MElement.h \
@@ -394,7 +337,7 @@ meshGRegionCarveHole.o: meshGRegionCarveHole.cpp ../Geo/GModel.h \
   ../Geo/MVertex.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
-  ../Common/GmshMatrix.h ../contrib/ANN/include/ANN/ANN.h
+  ../Common/GmshMatrix.h
 meshGRegionLocalMeshMod.o: meshGRegionLocalMeshMod.cpp \
   meshGRegionLocalMeshMod.h meshGRegionDelaunayInsertion.h \
   ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
@@ -473,61 +416,6 @@ HighOrder.o: HighOrder.cpp HighOrder.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Numeric/FunctionSpace.h \
   ../Numeric/gmshLinearSystemGmm.h ../Numeric/gmshLinearSystem.h \
-  ../contrib/gmm/gmm.h ../contrib/gmm/gmm_kernel.h \
-  ../contrib/gmm/gmm_def.h ../contrib/gmm/gmm_ref.h \
-  ../contrib/gmm/gmm_except.h ../contrib/gmm/gmm_std.h \
-  ../contrib/gmm/gmm_blas.h ../contrib/gmm/gmm_scaled.h \
-  ../contrib/gmm/gmm_def.h ../contrib/gmm/gmm_transposed.h \
-  ../contrib/gmm/gmm_def.h ../contrib/gmm/gmm_conjugated.h \
-  ../contrib/gmm/gmm_def.h ../contrib/gmm/gmm_real_part.h \
-  ../contrib/gmm/gmm_def.h ../contrib/gmm/gmm_vector.h \
-  ../contrib/gmm/gmm_interface.h ../contrib/gmm/gmm_blas.h \
-  ../contrib/gmm/gmm_sub_index.h ../contrib/gmm/gmm_def.h \
-  ../contrib/gmm/gmm_interface.h ../contrib/gmm/gmm_sub_vector.h \
-  ../contrib/gmm/gmm_interface.h ../contrib/gmm/gmm_sub_index.h \
-  ../contrib/gmm/gmm_sub_matrix.h ../contrib/gmm/gmm_sub_vector.h \
-  ../contrib/gmm/gmm_vector_to_matrix.h ../contrib/gmm/gmm_interface.h \
-  ../contrib/gmm/gmm_vector.h ../contrib/gmm/gmm_matrix.h \
-  ../contrib/gmm/gmm_vector.h ../contrib/gmm/gmm_sub_vector.h \
-  ../contrib/gmm/gmm_sub_matrix.h ../contrib/gmm/gmm_transposed.h \
-  ../contrib/gmm/gmm_tri_solve.h ../contrib/gmm/gmm_interface.h \
-  ../contrib/gmm/gmm_blas_interface.h ../contrib/gmm/gmm_dense_lu.h \
-  ../contrib/gmm/gmm_dense_Householder.h ../contrib/gmm/gmm_kernel.h \
-  ../contrib/gmm/gmm_opt.h ../contrib/gmm/gmm_dense_qr.h \
-  ../contrib/gmm/gmm_dense_Householder.h \
-  ../contrib/gmm/gmm_iter_solvers.h ../contrib/gmm/gmm_iter.h \
-  ../contrib/gmm/gmm_kernel.h ../contrib/gmm/gmm_precond_diagonal.h \
-  ../contrib/gmm/gmm_precond.h ../contrib/gmm/gmm_kernel.h \
-  ../contrib/gmm/gmm_precond_ildlt.h ../contrib/gmm/gmm_precond.h \
-  ../contrib/gmm/gmm_precond_ildltt.h ../contrib/gmm/gmm_precond_ilut.h \
-  ../contrib/gmm/gmm_precond.h \
-  ../contrib/gmm/gmm_precond_mr_approx_inverse.h \
-  ../contrib/gmm/gmm_precond.h ../contrib/gmm/gmm_precond_ilu.h \
-  ../contrib/gmm/gmm_precond.h ../contrib/gmm/gmm_precond_ilut.h \
-  ../contrib/gmm/gmm_precond_ilutp.h ../contrib/gmm/gmm_precond_ilut.h \
-  ../contrib/gmm/gmm_solver_cg.h ../contrib/gmm/gmm_kernel.h \
-  ../contrib/gmm/gmm_iter.h ../contrib/gmm/gmm_solver_bicgstab.h \
-  ../contrib/gmm/gmm_kernel.h ../contrib/gmm/gmm_iter.h \
-  ../contrib/gmm/gmm_solver_qmr.h ../contrib/gmm/gmm_kernel.h \
-  ../contrib/gmm/gmm_iter.h ../contrib/gmm/gmm_solver_constrained_cg.h \
-  ../contrib/gmm/gmm_kernel.h ../contrib/gmm/gmm_iter.h \
-  ../contrib/gmm/gmm_solver_Schwarz_additive.h \
-  ../contrib/gmm/gmm_kernel.h ../contrib/gmm/gmm_superlu_interface.h \
-  ../contrib/gmm/gmm_solver_cg.h ../contrib/gmm/gmm_solver_gmres.h \
-  ../contrib/gmm/gmm_kernel.h ../contrib/gmm/gmm_iter.h \
-  ../contrib/gmm/gmm_modified_gram_schmidt.h ../contrib/gmm/gmm_kernel.h \
-  ../contrib/gmm/gmm_solver_bicgstab.h ../contrib/gmm/gmm_solver_qmr.h \
-  ../contrib/gmm/gmm_solver_Newton.h ../contrib/gmm/gmm_kernel.h \
-  ../contrib/gmm/gmm_modified_gram_schmidt.h \
-  ../contrib/gmm/gmm_tri_solve.h ../contrib/gmm/gmm_solver_gmres.h \
-  ../contrib/gmm/gmm_solver_bfgs.h ../contrib/gmm/gmm_kernel.h \
-  ../contrib/gmm/gmm_iter.h ../contrib/gmm/gmm_least_squares_cg.h \
-  ../contrib/gmm/gmm_kernel.h ../contrib/gmm/gmm_iter.h \
-  ../contrib/gmm/gmm_conjugated.h ../contrib/gmm/gmm_condition_number.h \
-  ../contrib/gmm/gmm_dense_qr.h ../contrib/gmm/gmm_inoutput.h \
-  ../contrib/gmm/gmm_kernel.h ../contrib/gmm/gmm_lapack_interface.h \
-  ../contrib/gmm/gmm_superlu_interface.h \
-  ../contrib/gmm/gmm_domain_decomp.h ../contrib/gmm/gmm_kernel.h \
   ../Numeric/gmshAssembler.h ../Numeric/gmshLinearSystem.h \
   meshGFaceOptimize.h meshGFaceDelaunayInsertion.h ../Common/OS.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Common/Context.h \
