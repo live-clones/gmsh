@@ -144,7 +144,7 @@ bool reparamOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1, SPoint2
     param2 = p2[0];
     return true;
   }  
-  printf("%d %d \n",p1.size(),p2.size());
+  //printf("%d %d \n",p1.size(),p2.size());
   return false;
 }
 

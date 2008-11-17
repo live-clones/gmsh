@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
-#include "Message.h"
+#include "GmshMessage.h"
 #include "MallocUtils.h"
 #include "ListUtils.h"
 #include "TreeUtils.h"
@@ -110,7 +110,7 @@ void FixRelativePath(const char *in, char *out);
 %type <l> RecursiveListOfListOfDouble 
 %type <l> ListOfColor RecursiveListOfColor 
 %type <l> ListOfShapes Transform Extrude MultipleShape 
-%type <l> TransfiniteCorners RuledSurfaceOptions
+%type <l> TransfiniteCorners InSphereCenter
 %type <s> Shape
 
 // Operators (with ascending priority): cf. C language
@@ -988,21 +988,19 @@ PhysicalId :
     }
 ;
 
-RuledSurfaceOptions :
+InSphereCenter :
     // nothing
     {
       $$ = 0;
     }
   | tIn tSphere '{' FExpr '}'
     {
-      $$ = List_Create(4, 4, sizeof(double));
+      $$ = List_Create(1, 1, sizeof(Vertex*));
       Vertex *v = FindPoint((int)$4);
       if(!v)
 	yymsg(0, "Unknown point %d", (int)$4);
       else{
-	List_Add($$, &v->Pos.X);
-	List_Add($$, &v->Pos.Y);
-	List_Add($$, &v->Pos.Z);
+	List_Add($$, &v);
       }
     }
 ;
@@ -1314,7 +1312,7 @@ Shape :
       $$.Type = MSH_SURF_PLAN;
       $$.Num = num;
     }
-  | tRuled tSurface '(' FExpr ')' tAFFECT ListOfDouble RuledSurfaceOptions tEND
+  | tRuled tSurface '(' FExpr ')' tAFFECT ListOfDouble InSphereCenter tEND
     {
       int num = (int)$4, type = 0;
       if(FindSurface(num)){
@@ -1345,7 +1343,7 @@ Shape :
 	  setSurfaceGeneratrices(s, temp);
 	  List_Delete(temp);
 	  End_Surface(s);
-	  s->RuledSurfaceOptions = $8;
+	  s->InSphereCenter = $8;
 	  Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
 	}
       }

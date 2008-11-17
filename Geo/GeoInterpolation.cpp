@@ -448,17 +448,14 @@ bool iSRuledSurfaceASphere(Surface *s, SPoint3 &center, double &radius)
   if(s->Typ != MSH_SURF_REGL && s->Typ != MSH_SURF_TRIC)return false;
 
   bool isSphere = true;
-  Vertex *O = 0, OO;
+  Vertex *O = 0;
   Curve *C[4] = {0, 0, 0, 0};
   for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++)
     List_Read(s->Generatrices, i, &C[i]);
 
-  if(List_Nbr(s->RuledSurfaceOptions) == 3) {
+  if(List_Nbr(s->InSphereCenter)) {
     // it's on a sphere: get the center
-    List_Read(s->RuledSurfaceOptions, 0, & ((double *)center)[0]);
-    List_Read(s->RuledSurfaceOptions, 1, & ((double *)center)[1]);
-    List_Read(s->RuledSurfaceOptions, 2, & ((double *)center)[2]);
-    O = &OO;
+    List_Read(s->InSphereCenter, 0, &O);
   }
   else{
     // try to be intelligent (hum)
@@ -499,17 +496,14 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
   for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++)
     List_Read(s->Generatrices, i, &C[i]);
   
-  Vertex *O = 0, OO;
+  Vertex *O = 0;
   bool isSphere = true;
 
   // Ugly hack: "fix" transfinite interpolation if we have a sphere
   // patch
-  if(List_Nbr(s->RuledSurfaceOptions) == 3) {
+  if(List_Nbr(s->InSphereCenter)) {
     // it's on a sphere: get the center
-    List_Read(s->RuledSurfaceOptions, 0, &OO.Pos.X);
-    List_Read(s->RuledSurfaceOptions, 1, &OO.Pos.Y);
-    List_Read(s->RuledSurfaceOptions, 2, &OO.Pos.Z);
-    O = &OO;
+    List_Read(s->InSphereCenter, 0, &O);
   }
   else{
     // try to be intelligent (hum)

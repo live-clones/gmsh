@@ -587,7 +587,7 @@ Surface *Create_Surface(int Num, int Typ)
   pS->Visible = 1;
   pS->Num = Num;
   pS->geometry = 0;
-  pS->RuledSurfaceOptions = 0;
+  pS->InSphereCenter = 0;
 
   GModel::current()->getGEOInternals()->MaxSurfaceNum = 
     std::max(GModel::current()->getGEOInternals()->MaxSurfaceNum, Num);

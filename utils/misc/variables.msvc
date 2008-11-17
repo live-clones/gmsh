@@ -1,41 +1,38 @@
 # This is a pre-filled variables file for building Gmsh with Microsoft
-# Visual C++ (MSVC).
+# Visual C++ (MSVC) 2005 and 2008.
 # 
-# The non-graphical (ENABLE_GUI=0) versions have been succesfully tested 
-# with MSVC 2003, 2005 and 2008.
-#
 # See doc/README.msvc for building instructions.
 
 ##################################################################
 
-# Define this is you use the native Windows shell
-#
-MAKE="E:/src/gmsh/utils/misc/gmake.exe"
-UNAME=WIN32MSVC
-RM=erase
-MV=move
+# Change this if you want to use the MSVC compiler from the bash shell
+# (e.g. in cygwin) instead of using the windows cmd shell. (If you
+# don't have all MSVC variables defined you can use this to compile:
+# 'cmd.exe /c "vcvars32.bat && make"')
+USE_CYGWIN_SHELL=0
 
-# Define this if you use the bash shell in cygwin
-#
-# If you don't have all MSVC variables defined you can use this to compile:
-#
-#  cmd.exe /c "vcvars32.bat && make"
-#
-MAKE=make
-UNAME=WIN32
-RM=rm -f
-MV=mv -f
+ifeq (${USE_CYGWIN_SHELL},0)
+  MAKE="E:/src/gmsh/utils/misc/gmake.exe"
+  UNAME=WIN32MSVC
+  RM=erase
+  MV=move
+else
+  MAKE=make
+  UNAME=WIN32
+  RM=rm -f
+  MV=mv -f
+fi
 
 # Change the following to select which version to build:
 ENABLE_GSL=0
-ENABLE_GUI=1
+ENABLE_GUI=0
 ENABLE_PARSER=1
 ENABLE_POSTPRO=1
 ENABLE_TETGEN=1
-ENABLE_NETGEN=1
-ENABLE_METIS=1
-ENABLE_OCC=1
-ENABLE_MED=1
+ENABLE_NETGEN=0
+ENABLE_METIS=0
+ENABLE_OCC=0
+ENABLE_MED=0
 
 # If you selected ENABLE_GSL, specify where the GSL is installed
 GSL_PREFIX="E:/src/gsl-1.8"
@@ -43,7 +40,7 @@ GSL_PREFIX="E:/src/gsl-1.8"
 # If you selected ENABLE_GUI, specify where FLTK is installed
 FLTK_PREFIX="E:/src/fltk-1.1.9"
 
-# If you selected ENABLE_OCC, specify where OpenCASCADE is insalled
+# If you selected ENABLE_OCC, specify where OpenCASCADE is installed
 OCC_PREFIX="E:/src/OpenCASCADE6.3.0/ros"
 
 # If you selected ENABLE_MED, specify where MED and HDF5 are installed

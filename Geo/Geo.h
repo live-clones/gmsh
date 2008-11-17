@@ -146,7 +146,7 @@ typedef struct{
   List_T *EmbeddedCurves;
   List_T *EmbeddedPoints;
   List_T *TrsfPoints;
-  List_T *RuledSurfaceOptions;
+  List_T *InSphereCenter;
   double plan[3][3];
   double a, b, c, d;
   ExtrudeParams *Extrude;
