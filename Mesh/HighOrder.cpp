@@ -148,12 +148,19 @@ bool reparamOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1, SPoint2
   return false;
 }
 
+// FIXME: this should NOT be in HighOrder.cpp...
 bool reparamOnFace(MVertex *v, GFace *gf, SPoint2 &param)
 {
 
   if (gf->geomType() == GEntity::CompoundSurface){
     GFaceCompound *gfc = (GFaceCompound*) gf;
     param = gfc->getCoordinates(v);
+    return true;
+  }
+
+  if(v->onWhat()->geomType() == GEntity::DiscreteCurve || 	 
+     v->onWhat()->geomType() == GEntity::BoundaryLayerCurve){ 	 
+    param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
     return true;
   }
 
