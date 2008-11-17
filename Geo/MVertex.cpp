@@ -25,69 +25,59 @@ bool MVertexLessThanLexicographic::operator()(const MVertex *v1, const MVertex *
   return false;
 }
 
-void MVertex::writeMSH3(FILE *fp, bool binary, double scalingFactor)
+void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
-  int myDim = onWhat()->dim(); 
-  int myTag = onWhat()->tag(); 
+
+  int myDim = 0, myTag = 0;
+  if(saveParametric && onWhat()){
+    myDim = onWhat()->dim(); 
+    myTag = onWhat()->tag();
+  }
+
   if(!binary){
-    fprintf(fp, "%d %.16g %.16g %.16g %d %d", _index, 
-	    x() * scalingFactor, 
-	    y() * scalingFactor,
-	    z() * scalingFactor,
-	    myDim,myTag);      
+    if(!saveParametric)
+      fprintf(fp, "%d %.16g %.16g %.16g\n", _index, x() * scalingFactor, 
+              y() * scalingFactor, z() * scalingFactor);      
+    else
+      fprintf(fp, "%d %.16g %.16g %.16g %d %d", _index, x() * scalingFactor, 
+              y() * scalingFactor, z() * scalingFactor, myDim, myTag);
   }
   else{
     fwrite(&_index, sizeof(int), 1, fp);
     double data[3] = {x() * scalingFactor, y() * scalingFactor, z() * scalingFactor};
     fwrite(data, sizeof(double), 3, fp);
-    fwrite(&myDim, sizeof(int), 1, fp);
-    fwrite(&myTag, sizeof(int), 1, fp);
-  }
-
-  if (myDim == 1){
-    double _u;
-    getParameter(0,_u);
-    if(!binary)
-      fprintf(fp, " %.16g\n", _u); 	    
-    else
-      fwrite(&_u, sizeof(double), 1, fp);
-  }
-  else if (myDim == 2){
-    double _u,_v;
-    getParameter(0,_u);
-    getParameter(1,_v);
-    if(!binary)
-      fprintf(fp, " %.16g %.16g\n", _u,_v); 	    
-    else{
-      fwrite(&_u, sizeof(double), 1, fp);
-      fwrite(&_v, sizeof(double), 1, fp);
+    if(saveParametric){
+      fwrite(&myDim, sizeof(int), 1, fp);
+      fwrite(&myTag, sizeof(int), 1, fp);
     }
   }
-  else
-    if(!binary)
-      fprintf(fp, "\n"); 	    
-}
 
-
-void MVertex::writeMSH(FILE *fp, bool binary, double scalingFactor)
-{
-  if(_index < 0) return; // negative index vertices are never saved
-
-  if(!binary){
-    fprintf(fp, "%d %.16g %.16g %.16g\n", _index, 
-	    x() * scalingFactor, 
-	    y() * scalingFactor,
-	    z() * scalingFactor);      
+  if(saveParametric){
+    if(myDim == 1){
+      double _u;
+      getParameter(0, _u);
+      if(!binary)
+        fprintf(fp, " %.16g\n", _u); 	    
+      else
+        fwrite(&_u, sizeof(double), 1, fp);
+    }
+    else if (myDim == 2){
+      double _u, _v;
+      getParameter(0, _u);
+      getParameter(1, _v);
+      if(!binary)
+        fprintf(fp, " %.16g %.16g\n", _u, _v);
+      else{
+        fwrite(&_u, sizeof(double), 1, fp);
+        fwrite(&_v, sizeof(double), 1, fp);
+      }
+    }
+    else
+      if(!binary)
+        fprintf(fp, "\n"); 	    
   }
-  else{
-    fwrite(&_index, sizeof(int), 1, fp);
-    double data[3] = {x() * scalingFactor, y() * scalingFactor, z() * scalingFactor};
-    fwrite(data, sizeof(double), 3, fp);
-  }
 }
-
-
 
 void MVertex::writeVRML(FILE *fp, double scalingFactor)
 {

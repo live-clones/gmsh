@@ -533,14 +533,11 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   std::vector<GEntity*> entities;
   getEntities(entities);
   for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
-      if (!saveParametric)
-	entities[i]->mesh_vertices[j]->writeMSH(fp, binary, scalingFactor);
-      else
-	entities[i]->mesh_vertices[j]->writeMSH3(fp, binary, scalingFactor);
-    }
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
+      entities[i]->mesh_vertices[j]->writeMSH(fp, binary, saveParametric, 
+                                              scalingFactor);
   if(binary) fprintf(fp, "\n");
-
+  
   if(version >= 2.0){
     if(saveParametric)
       fprintf(fp, "$EndParametricNodes\n");
