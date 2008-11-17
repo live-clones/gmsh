@@ -103,7 +103,7 @@ static void Print_StringOptions(int num, int level, int diff, int help,
         if(file)
           fprintf(file, "%s\n", tmp);
         else
-          Msg::Direct("%s", tmp);
+          Msg::Direct(tmp);
       }
     }
     i++;

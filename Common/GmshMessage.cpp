@@ -256,7 +256,11 @@ void Msg::Direct(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  Direct(3, str);
+
+  if(strlen(str))
+    Direct(3, str);
+  else
+    Direct(3, " ");
 }
 
 void Msg::Direct(int level, const char *fmt, ...)
