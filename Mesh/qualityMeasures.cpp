@@ -238,11 +238,14 @@ static double mesh_functional_distorsion(MTetrahedron *t, double u, double v, do
 {
   // compute uncurved element jacobian d_u x and d_v x
   double mat[3][3];  
-   const double det1 = t->getPrimaryJacobian(u,v,w, mat);
+  t->getPrimaryJacobian(u,v,w, mat);
   
+  const double det1 = det3x3(mat);
+
    //const double det1 = t->getJacobian(u,v,w,mat);
   // const double det1 = det3x3(mat);
-  const double detN = t->getJacobian(u,v,w,mat);
+  t->getJacobian(u,v,w,mat);
+  const double detN = det3x3(mat);
   // const double detN = det3x3(mat);
 
   //  printf("%g %g %g = %g %g\n",u,v,w,det1,detN);

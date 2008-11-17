@@ -423,7 +423,7 @@ classificationEditor::classificationEditor()
     o->end();
   }
   {
-    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Reverse Engineer Surfaces");
+    Fl_Group *o = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Reparametrize Surfaces");
     reverse_eng = o;
     o->hide();
     o->deactivate();

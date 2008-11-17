@@ -276,7 +276,7 @@ class GModel
   // Gmsh mesh file format
   int readMSH(const std::string &name);
   int writeMSH(const std::string &name, double version=1.0, bool binary=false,
-               bool saveAll=false, double scalingFactor=1.0);
+               bool saveAll=false, bool saveParametric=false, double scalingFactor=1.0);
 
   // Mesh statistics (as Gmsh post-processing views)
   int writePOS(const std::string &name, bool printElementary,

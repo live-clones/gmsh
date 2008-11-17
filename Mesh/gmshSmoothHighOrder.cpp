@@ -7,12 +7,61 @@
 #include "GFace.h"
 #include "GRegion.h"
 
+
+void getDistordedElements ( const std::vector<MElement*>  & v, 
+			    const double & threshold,
+			    std::vector<MElement*>  & d,
+			    double &minD){
+  d.clear();
+  minD = 1;
+  for (int i=0;i<v.size() ; i++){
+    const double disto = v[i]->distoShapeMeasure();
+    if ( disto < threshold)
+      d.push_back(v[i]);
+    minD = std::min(minD,disto);
+  }
+}
+
+void addOneLayer ( const std::vector<MElement*>  & v, 
+		   std::vector<MElement*>  & d ,
+		   std::vector<MElement*>  & layer ){
+  std::set<MVertex*> all;
+  for (int i=0;i<d.size() ; i++){
+    MElement *e = d[i];
+    int n = e->getNumPrimaryVertices();
+    for (int j=0;j<n;j++){
+      all.insert(e->getVertex(j));
+    }
+  }
+
+  layer.clear();
+
+  std::sort(d.begin(), d.end());
+
+  for (int i=0;i<v.size() ; i++){
+    MElement *e = v[i];
+    bool found = std::binary_search(d.begin(), d.end(), e);
+    // element is not yet there
+    if (!found){
+      int n = e->getNumPrimaryVertices();
+      for (int j=0;j<n;j++){
+	MVertex *vert = e->getVertex(j);
+	if (all.find(vert) != all.end()){
+	  layer.push_back(e);
+	  j = n;
+	}
+      }
+    }
+  }
+}
+
+
 void gmshHighOrderSmoother::smooth ( GFace *gf) {
   std::vector<MElement*> v;
 
   v.insert(v.begin(), gf->triangles.begin(),gf->triangles.end());
   v.insert(v.begin(), gf->quadrangles.begin(),gf->quadrangles.end());
-  Msg::Info("Smoothing high order mesh face %d (%d elements)", gf->tag(),
+  Msg::Info("Smoothing high order mesh : model face %d (%d elements)", gf->tag(),
 	    v.size());
   smooth(v);
 }
@@ -21,14 +70,51 @@ void gmshHighOrderSmoother::smooth ( GRegion *gr) {
   v.insert(v.begin(), gr->tetrahedra.begin(),gr->tetrahedra.end());
   v.insert(v.begin(), gr->hexahedra.begin(),gr->hexahedra.end());
   v.insert(v.begin(), gr->prisms.begin(),gr->prisms.end());
+  Msg::Info("Smoothing high order mesh : model region %d (%d elements)", gr->tag(),
+	    v.size());
   smooth(v);
 }
 
-void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & v) {
+void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & all) {
   
+
   gmshLinearSystemGmm *lsys = new gmshLinearSystemGmm;
   gmshAssembler myAssembler(lsys);
   gmshElasticityTerm El(0,1.0,.333,getTag());     
+  
+  std::vector<MElement*> v, layer;
+
+  double minD;
+
+  getDistordedElements ( all, 0.5, v,minD);
+
+  //  printf("%d elements / %d distorted  min Disto = %g\n",all.size(),v.size(), minD);
+
+  if (!v.size())return;
+
+  const int nbLayers = 2;
+  for (int i=0;i<nbLayers;i++){
+    addOneLayer ( all, v, layer);
+    v.insert(v.end(),layer.begin(),layer.end());
+  }
+
+  // 3 -> .4
+  printf("%d elements after adding %d layers\n",v.size(),nbLayers);
+
+  addOneLayer ( all, v, layer);
+
+  //  printf("%d elements in the next layer\n",layer.size());
+
+
+  for (int i=0;i<layer.size() ; i++){
+    for (int j=0;j<layer[i]->getNumVertices(); j++){
+      MVertex *vert = layer[i]->getVertex(j);
+      myAssembler.fixVertex ( vert , 0 , getTag() , 0);
+      myAssembler.fixVertex ( vert , 1 , getTag() , 0);
+      myAssembler.fixVertex ( vert , 2 , getTag() , 0);
+    }
+  }
+  
 
   std::map<MVertex*,SVector3>::iterator it;
   std::map<MVertex*,SVector3> verticesToMove;
@@ -56,8 +142,6 @@ void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & v) {
     }
   }
   
-
-
   // move back high order nodes to their straight sided 
   // location
   for (it = verticesToMove.begin()  ; it != verticesToMove.end() ; ++it){
@@ -78,15 +162,18 @@ void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & v) {
     } 
   }
 
-  Msg::Info("%d vertices FIXED %d NUMBERED", myAssembler.sizeOfF()
-	    , myAssembler.sizeOfR());
+  //  Msg::Info("%d vertices FIXED %d NUMBERED", myAssembler.sizeOfF()
+  //	    , myAssembler.sizeOfR());
 
-  // assembly of the elasticity term on the
-  // set of elements
-  El.addToMatrix(myAssembler,v); 
-  
-  // solve the system
-  lsys->systemSolve();
+  if (myAssembler.sizeOfR()){
+
+    // assembly of the elasticity term on the
+    // set of elements
+    El.addToMatrix(myAssembler,v); 
+    
+    // solve the system
+    lsys->systemSolve();
+  }
 
   // move the nodes that were involved in the process
   // to their new lcation
@@ -98,6 +185,16 @@ void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & v) {
   }
 
   // delete matrices and vectors
+
+  double minD2;
+  getDistordedElements ( v, 0.5, layer,minD2);
+
+  printf("Smooting efficiency %g -> %g\n",minD,minD2);
+
+
   delete lsys;
   
 }
+
+
+

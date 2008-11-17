@@ -22,7 +22,7 @@ class MVertexLessThanLexicographic{
 
 // A mesh vertex.
 class MVertex{
- private:
+ protected:
   // the maximum vertex id number in the mesh
   static int _globalNum;
   // the id number of the vertex (this number is unique and is
@@ -107,6 +107,7 @@ class MVertex{
 
   // IO routines
   void writeMSH(FILE *fp, bool binary=false, double scalingFactor=1.0);
+  void writeMSH3(FILE *fp, bool binary=false, double scalingFactor=1.0);
   void writeVRML(FILE *fp, double scalingFactor=1.0);
   void writeUNV(FILE *fp, double scalingFactor=1.0);
   void writeVTK(FILE *fp, bool binary=false, double scalingFactor=1.0,
@@ -120,8 +121,8 @@ class MEdgeVertex : public MVertex{
  protected:
   double _u, _lc;
  public :
-  MEdgeVertex(double x, double y, double z, GEntity *ge, double u, double lc = -1.0) 
-    : MVertex(x, y, z, ge), _u(u), _lc(lc)
+  MEdgeVertex(double x, double y, double z, GEntity *ge, double u, double lc = -1.0, int num = 0) 
+    : MVertex(x, y, z, ge,num), _u(u), _lc(lc)
   {
   }
   virtual ~MEdgeVertex(){}
@@ -142,8 +143,8 @@ class MFaceVertex : public MVertex{
  protected:
   double _u, _v;
  public :
-  MFaceVertex(double x, double y, double z, GEntity *ge, double u, double v) 
-    : MVertex(x, y, z, ge), _u(u), _v(v)
+  MFaceVertex(double x, double y, double z, GEntity *ge, double u, double v, int num =0) 
+    : MVertex(x, y, z, ge, num), _u(u), _v(v)
   {
   }
   virtual ~MFaceVertex(){}

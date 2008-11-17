@@ -961,7 +961,8 @@ double MTetrahedronN::distoShapeMeasure()
 #if defined(HAVE_GMSH_EMBEDDED)
   return 1.;
 #else
-  if (_disto < -1.e21)_disto = qmDistorsionOfMapping(this);
+  //  if (_disto < -1.e21)
+  _disto = qmDistorsionOfMapping(this);
   return _disto;
 #endif
 }

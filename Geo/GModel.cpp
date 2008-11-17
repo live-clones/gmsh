@@ -684,8 +684,12 @@ template<class T>
 static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &elements)
 {
   for(unsigned int i = 0; i < elements.size(); i++)
-    for(int j = 0; j < elements[i]->getNumVertices(); j++)
-      elements[i]->getVertex(j)->setEntity(ge);
+    for(int j = 0; j < elements[i]->getNumVertices(); j++){
+      if (!elements[i]->getVertex(j)->onWhat() ||
+	  elements[i]->getVertex(j)->onWhat()->dim() > ge->dim()){
+	elements[i]->getVertex(j)->setEntity(ge);
+      }
+    }
 }
 
 void GModel::_associateEntityWithMeshVertices()

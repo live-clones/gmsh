@@ -137,8 +137,8 @@ void GFaceCompound::parametrize (bool _isU) const
       myAssembler.numberVertex(t->getVertex(2),0, 1); 
     }    
   }    
-  printf("%d %d %d %d\n",_U0.size(),_U1.size(),_V0.size(),_V1.size());
-  printf("creating term %d dofs numbered %d fixed\n", myAssembler.sizeOfR(),myAssembler.sizeOfF());
+  //  printf("%d %d %d %d\n",_U0.size(),_U1.size(),_V0.size(),_V1.size());
+  //  printf("creating term %d dofs numbered %d fixed\n", myAssembler.sizeOfR(),myAssembler.sizeOfF());
   gmshLaplaceTerm laplace (model(), 1.0, 1);
   it = _compound.begin();
   for ( ; it != _compound.end() ; ++it){

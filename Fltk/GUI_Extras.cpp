@@ -860,6 +860,7 @@ int msh_dialog(const char *name)
   struct _msh_dialog{
     Fl_Window *window;
     Fl_Check_Button *b;
+    Fl_Check_Button *p;
     Fl_Choice *c;
     Fl_Button *ok, *cancel;
   };
@@ -878,7 +879,7 @@ int msh_dialog(const char *name)
 
   if(!dialog){
     dialog = new _msh_dialog;
-    int h = 3 * WB + 3 * BH, w = 2 * BB + 3 * WB, y = WB;
+    int h = 3 * WB + 4 * BH, w = 2 * BB + 3 * WB, y = WB;
     // not a "Dialog_Window" since it is modal 
     dialog->window = new Fl_Double_Window(w, h, "MSH Options");
     dialog->window->box(GMSH_WINDOW_BOX);
@@ -887,6 +888,8 @@ int msh_dialog(const char *name)
     dialog->c->align(FL_ALIGN_RIGHT);
     dialog->b = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b->type(FL_TOGGLE_BUTTON);
+    dialog->p = new Fl_Check_Button(WB, y, 2 * BB + WB, BH, "Save Parametric Coordinates"); y += BH;
+    dialog->p->type(FL_TOGGLE_BUTTON);
     dialog->ok = new Fl_Return_Button(WB, y + WB, BB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BB, y + WB, BB, BH, "Cancel");
     dialog->window->set_modal();
@@ -897,6 +900,7 @@ int msh_dialog(const char *name)
   dialog->c->value((CTX.mesh.msh_file_version == 1.0) ? 0 : 
                    CTX.mesh.binary ? 2 : 1);
   dialog->b->value(CTX.mesh.save_all ? 1 : 0);
+  dialog->p->value(CTX.mesh.save_parametric ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -905,10 +909,11 @@ int msh_dialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-        opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI, 
-                                  (dialog->c->value() == 0) ? 1. : 2.);
-        opt_mesh_binary(0, GMSH_SET | GMSH_GUI, 
-			(dialog->c->value() == 2) ? 1 : 0);
+	int _binary = (dialog->c->value() == 2)? 1 : 0; 
+	int _parametric = (dialog->p->value() == 1)? 1 : 0; 
+	double _version = (dialog->c->value() == 0) ? 1.0 : 2.0 ;
+        opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI,  _version);
+        opt_mesh_binary(0, GMSH_SET | GMSH_GUI,_binary);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b->value() ? 1 : 0);
         CreateOutputFile(name, FORMAT_MSH);
         dialog->window->hide();

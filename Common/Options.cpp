@@ -5293,6 +5293,14 @@ double opt_mesh_save_all(OPT_ARGS_NUM)
   return CTX.mesh.save_all;
 }
 
+double opt_mesh_save_parametric(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.save_parametric = val ? 1 : 0;
+  return CTX.mesh.save_parametric;
+}
+
+
 double opt_mesh_save_groups_of_nodes(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

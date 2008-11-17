@@ -48,6 +48,7 @@ void Print_Usage(const char *name)
   Msg::Direct("  -format string        Set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh,");
   Msg::Direct("                          bdf, p3d, cgns, med)");
   Msg::Direct("  -bin                  Use binary format when available");  
+  Msg::Direct("  -parametric           Save vertices with their parametric coordinates");  
   Msg::Direct("  -algo string          Select mesh algorithm (de, del2d, frontal, iso, netgen, tetgen)");
   Msg::Direct("  -smooth int           Set number of mesh smoothing steps");
   Msg::Direct("  -optimize[_netgen]    Optimize quality of tetrahedral elements");
@@ -472,6 +473,10 @@ void Get_Options(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "bin")) {
         i++;
         CTX.mesh.binary = 1;
+      }
+      else if(!strcmp(argv[i] + 1, "parametric")) {
+        i++;
+        CTX.mesh.save_parametric = 1;
       }
       else if(!strcmp(argv[i] + 1, "algo")) {
         i++;

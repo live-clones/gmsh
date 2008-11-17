@@ -74,6 +74,7 @@ static void createElementMSH(GModel *m, int num, int type, int physical,
 {
   MElementFactory factory;
   MElement *e = factory.create(type, v, num, part);
+
   if(!e){
     Msg::Error("Unknown type of element %d", type);
     return;
@@ -155,8 +156,11 @@ int GModel::readMSH(const std::string &name)
       }
 
     }
-    else if(!strncmp(&str[1], "NO", 2) || !strncmp(&str[1], "Nodes", 5)) {
-
+    else if(!strncmp(&str[1], "NO", 2) || !strncmp(&str[1], "Nodes", 5) ||
+	    !strncmp(&str[1], "ParametricNodes", 15)) {
+      
+      const bool parametric = ! strncmp(&str[1], "ParametricNodes", 15);
+      
       if(!fgets(str, sizeof(str), fp)) return 0;
       int numVertices;
       if(sscanf(str, "%d", &numVertices) != 1) return 0;
@@ -168,22 +172,79 @@ int GModel::readMSH(const std::string &name)
       for(int i = 0; i < numVertices; i++) {
         int num;
         double xyz[3];
-        if(!binary){
-          if(fscanf(fp, "%d %lf %lf %lf", &num, &xyz[0], &xyz[1], &xyz[2]) != 4)
-            return 0;
-        }
-        else{
-          if(fread(&num, sizeof(int), 1, fp) != 1) return 0;
-          if(swap) SwapBytes((char*)&num, sizeof(int), 1);
-          if(fread(xyz, sizeof(double), 3, fp) != 3) return 0;
-          if(swap) SwapBytes((char*)xyz, sizeof(double), 3);
-        }
+	double uv[2];
+	int iClasDim,iClasTag, typVertex = 3;	
+	
+	MVertex *newVertex = 0;
+
+	if (!parametric){
+	  if(!binary){
+	    if (fscanf(fp, "%d %lf %lf %lf", &num, &xyz[0], &xyz[1], &xyz[2]) != 4)
+	      return 0;	  
+	  }
+	  else{
+	    if(fread(&num, sizeof(int), 1, fp) != 1) return 0;
+	    if(swap) SwapBytes((char*)&num, sizeof(int), 1);
+	    if(fread(xyz, sizeof(double), 3, fp) != 3) return 0;
+	    if(swap) SwapBytes((char*)xyz, sizeof(double), 3);
+	  }
+	  newVertex = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
+	}
+	else{
+	  if(!binary){	    
+	    if (fscanf(fp, "%d %lf %lf %lf %d %d", &num, &xyz[0], &xyz[1], &xyz[2], &iClasDim, &iClasTag) != 6)
+	      return 0;
+	  }
+	  else{
+	    if(fread(&num, sizeof(int), 1, fp) != 1) return 0;
+	    if(swap) SwapBytes((char*)&num, sizeof(int), 1);
+	    if(fread(xyz, sizeof(double), 3, fp) != 3) return 0;
+	    if(swap) SwapBytes((char*)xyz, sizeof(double), 3);
+	    if(fread(&iClasDim, sizeof(int), 1, fp) != 1) return 0;
+	    if(swap) SwapBytes((char*)&iClasDim, sizeof(int), 1);
+	    if(fread(&iClasTag, sizeof(int), 1, fp) != 1) return 0;
+	    if(swap) SwapBytes((char*)&iClasTag, sizeof(int), 1);
+	  }
+	  
+	  if (iClasDim == 0){
+	    GVertex *gv = getVertexByTag ( iClasTag );
+	    if (gv)gv->deleteMesh();
+	    newVertex = new MVertex(xyz[0], xyz[1], xyz[2], gv, num);
+	  }
+	  else if (iClasDim == 1){
+	    GEdge *ge = getEdgeByTag ( iClasTag );
+	    if(!binary){	    
+	      if (fscanf(fp, "%lf", &uv[0]) != 1)return 0;	      
+	    }
+	    else{
+	      if(fread(uv, sizeof(double), 1, fp) != 1) return 0;
+	      if(swap) SwapBytes((char*)uv, sizeof(double), 1);
+	    }
+	    newVertex = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge, uv[0], -1.0, num);	      
+	  }
+	  else if (iClasDim == 2){
+	    GFace *gf = getFaceByTag ( iClasTag );
+	    if(!binary){	    
+	      if (fscanf(fp, "%lf %lf", &uv[0], &uv[1]) != 2)return 0;	      
+	    }
+	    else{
+	      if(fread(uv, sizeof(double), 2, fp) != 2) return 0;
+	      if(swap) SwapBytes((char*)uv, sizeof(double), 2);
+	    }	    
+	    newVertex = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf, uv[0], uv[1], num);	      
+	  }
+	  else if (iClasDim == 3){
+	    GRegion *gr = getRegionByTag ( iClasTag );
+	    newVertex = new MVertex(xyz[0], xyz[1], xyz[2], gr, num);	      
+	  }
+	}
         minVertex = std::min(minVertex, num);
         maxVertex = std::max(maxVertex, num);
+
         if(vertexMap.count(num))
           Msg::Warning("Skipping duplicate vertex %d", num);
-        else
-          vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], 0, num);
+	vertexMap[num] = newVertex;
+
         if(numVertices > 100000) 
           Msg::ProgressMeter(i + 1, numVertices, "Reading nodes");
       }
@@ -203,7 +264,6 @@ int GModel::readMSH(const std::string &name)
           vertexVector[it->first] = it->second;
         vertexMap.clear();
       }
-
     }
     else if(!strncmp(&str[1], "ELM", 3) || !strncmp(&str[1], "Elements", 8)) {
 
@@ -391,7 +451,7 @@ static void writeElementsMSH(FILE *fp, const std::vector<T*> &ele, bool saveAll,
 }
 
 int GModel::writeMSH(const std::string &name, double version, bool binary, 
-                     bool saveAll, double scalingFactor)
+                     bool saveAll, bool saveParametric, double scalingFactor)
 {
   FILE *fp = fopen(name.c_str(), binary ? "wb" : "w");
   if(!fp){
@@ -465,7 +525,11 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
       fprintf(fp, "$EndPhysicalNames\n");
     }
 
-    fprintf(fp, "$Nodes\n");
+    if (saveParametric)
+      fprintf(fp, "$ParametricNodes\n");
+    else
+      fprintf(fp, "$Nodes\n");
+
   }
   else
     fprintf(fp, "$NOD\n");
@@ -475,9 +539,12 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   std::vector<GEntity*> entities;
   getEntities(entities);
   for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++) 
-      entities[i]->mesh_vertices[j]->writeMSH(fp, binary, scalingFactor);
-
+    for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
+      if (!saveParametric)
+	entities[i]->mesh_vertices[j]->writeMSH(fp, binary, scalingFactor);
+      else
+	entities[i]->mesh_vertices[j]->writeMSH3(fp, binary, scalingFactor);
+    }
   if(binary) fprintf(fp, "\n");
 
   if(version >= 2.0){

@@ -22,8 +22,9 @@ class gmshLaplaceTerm : public gmshNodalFemTerm {
  public:
   gmshLaplaceTerm(GModel *gm, double diffusivity = 1.0, int iField = 0) : 
     gmshNodalFemTerm(gm), _diffusivity(diffusivity), _iField(iField){}
-  void elementMatrix(MElement *e, Double_Matrix &m) const;
+  virtual void elementMatrix(MElement *e, Double_Matrix &m) const;
   double getDiffusivity () const { return _diffusivity; }
 };
+
 
 #endif

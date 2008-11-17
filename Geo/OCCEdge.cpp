@@ -30,6 +30,23 @@ OCCEdge::OCCEdge(GModel *model, TopoDS_Edge edge, int num, GVertex *v1, GVertex 
   // build the reverse curve
   c_rev = c;
   c_rev.Reverse();
+
+
+//   if (v0 == v1){
+//     const int JJ = 52;
+//     for (int i=1;i<JJ;i++){
+//       const double t = i/((double) JJ);
+//       const double xi = s0 + (s1-s0) * t; 
+//       GPoint p = point(xi);
+//       MEdgeVertex *v = new MEdgeVertex (p.x(),p.y(),p.z(),this,xi);
+//       mesh_vertices.push_back(v);
+//       meshAttributes.Method = MESH_NONE;
+//       if (i == 1)lines.push_back(new MLine(v1->mesh_vertices[0],v));
+//       else if (i == JJ-1)lines.push_back(new MLine(v,v2->mesh_vertices[0]));
+//       else lines.push_back(new MLine(mesh_vertices[i-1],v));
+//     }
+//   }
+
 }
 
 Range<double> OCCEdge::parBounds(int i) const
