@@ -93,17 +93,17 @@ static void Print_StringOptions(int num, int level, int diff, int help,
 				StringXString s[], const char *prefix, FILE *file)
 {
   int i = 0;
-  char tmp[1024];
   while(s[i].str) {
     if(s[i].level & level) {
       if(!diff || strcmp(s[i].function(num, GMSH_GET, NULL), s[i].def)){
+        char tmp[1024];
         sprintf(tmp, "%s%s = \"%s\";%s%s", prefix,
                 s[i].str, s[i].function(num, GMSH_GET, NULL), 
                 help ? " // " : "", help ? s[i].help : "");
         if(file)
           fprintf(file, "%s\n", tmp);
         else
-          Msg::Direct(tmp);
+          Msg::Direct(3, "%s", tmp);
       }
     }
     i++;

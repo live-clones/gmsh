@@ -257,10 +257,7 @@ void Msg::Direct(const char *fmt, ...)
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
 
-  if(strlen(str))
-    Direct(3, str);
-  else
-    Direct(3, " ");
+  Direct(3, str);
 }
 
 void Msg::Direct(int level, const char *fmt, ...)
@@ -360,13 +357,15 @@ void Msg::ProgressMeter(int n, int N, const char *fmt, ...)
   double percent = 100. * (double)n/(double)N;
 
   if(percent >= _progressMeterCurrent){
-    char str[1024], str2[1024];
+    char str[1024];
     va_list args;
     va_start(args, fmt);
     vsnprintf(str, sizeof(str), fmt, args);
     va_end(args);
 
     if(strlen(fmt)) strcat(str, " ");
+
+    char str2[1024];
     sprintf(str2, "(%d %%)", _progressMeterCurrent);
     strcat(str, str2);
 
