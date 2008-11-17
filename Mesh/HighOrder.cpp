@@ -1711,6 +1711,7 @@ bool smoothInternalEdgesb(GFace *gf, edgeContainer &edgeVertices)
   for(edge2tris::iterator it = e2t.begin(); it != e2t.end(); ++it){
     curvilinearEdgeSwap (gf,edgeVertices,it,e2t);
   }
+  return true;
 }
 
 bool smoothInternalEdges(GFace *gf, edgeContainer &edgeVertices)
