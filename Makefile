@@ -99,7 +99,7 @@ else
 	for %%i in (${GMSH_DIRS}); do ${MAKE} -C %%i
 	${AR} ${ARFLAGS}bin\libGmsh${LIBEXT} lib\*${LIBEXT}
 	erase lib\*${LIBEXT}
-	move bin\libGmsh${LIBEXT} lib
+	move bin\libGmsh${LIBEXT} "lib"
 endif
 
 install-lib: lib
