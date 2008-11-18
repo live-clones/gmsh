@@ -12,7 +12,7 @@ static void fixEdgeToValue (GEdge *ed,
 			0, 1, value);
   myAssembler.fixVertex(ed->getEndVertex()->mesh_vertices[0],
 			0, 1, value);
-  for (int i = 0 ; i < ed->mesh_vertices.size(); i++){
+  for (unsigned int i = 0 ; i < ed->mesh_vertices.size(); i++){
     myAssembler.fixVertex(ed->mesh_vertices[i],0, 1, value);
   }
 }
@@ -20,7 +20,7 @@ static void fixEdgeToValue (GEdge *ed,
 static void fixEdgeToValueX (GEdge *ed, 
 			    gmshAssembler &myAssembler)
 {
-  for (int i = 0 ; i < ed->lines.size(); i++){
+  for (unsigned int i = 0 ; i < ed->lines.size(); i++){
     myAssembler.fixVertex(ed->lines[i]->getVertex(0), 0, 1, ed->lines[i]->getVertex(0)->x());
     myAssembler.fixVertex(ed->lines[i]->getVertex(1), 0, 1, ed->lines[i]->getVertex(1)->x());
   }
@@ -29,7 +29,7 @@ static void fixEdgeToValueX (GEdge *ed,
 static void fixEdgeToValueY (GEdge *ed, 
 			    gmshAssembler &myAssembler)
 {
-  for (int i = 0 ; i < ed->lines.size(); i++){
+  for (unsigned int i = 0 ; i < ed->lines.size(); i++){
     myAssembler.fixVertex(ed->lines[i]->getVertex(0), 0, 1, ed->lines[i]->getVertex(0)->y());
     myAssembler.fixVertex(ed->lines[i]->getVertex(1), 0, 1, ed->lines[i]->getVertex(1)->y());
   }
@@ -74,7 +74,7 @@ GFaceCompound::GFaceCompound(GModel *m, int tag, std::list<GFace*> &compound,
 			     std::list<GEdge*> &V1) :
   GFace(m,tag),_compound(compound),_U0(U0),_U1(U1),_V0(V0),_V1(V1), oct(0)
 {
-  printf("%d %d %d %d \n",_U0.size(),_U1.size(),_V0.size(),_V1.size());
+  //printf("%d %d %d %d \n",_U0.size(),_U1.size(),_V0.size(),_V1.size());
   getBoundingEdges();
 }
 
@@ -130,7 +130,7 @@ void GFaceCompound::parametrize (bool _isU) const
 
   std::list<GFace*> :: const_iterator it = _compound.begin();
   for ( ; it != _compound.end() ; ++it){
-    for ( int i=0;i<(*it)->triangles.size() ; ++i){
+    for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *t = (*it)->triangles[i];
       myAssembler.numberVertex(t->getVertex(0),0, 1);
       myAssembler.numberVertex(t->getVertex(1),0, 1);
@@ -148,10 +148,10 @@ void GFaceCompound::parametrize (bool _isU) const
 
   it = _compound.begin();
   for ( ; it != _compound.end() ; ++it){
-    for ( int i=0;i<(*it)->triangles.size() ; ++i){
+    for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *t = (*it)->triangles[i];
-      double uu[3],vv[3];
-      for (int j=0;j<3;j++){
+      double uu[3], vv[3];
+      for (int j = 0; j < 3; j++){
 	MVertex *v = t->getVertex(j);
 	double value = myAssembler.getDofValue(v,0,1);
 	std::map<MVertex*,SPoint2>::iterator itf = coordinates.find(v);
@@ -160,7 +160,7 @@ void GFaceCompound::parametrize (bool _isU) const
 	  coordinates[v] = p;
 	}
 	else{
-	  if(_isU)itf->second[0]= value;
+	  if(_isU) itf->second[0]= value;
 	  else itf->second[1]= value;
 	  uu[j] = itf->second[0];
 	  vv[j] = itf->second[1];
@@ -174,14 +174,14 @@ void GFaceCompound::parametrize (bool _isU) const
 GPoint GFaceCompound::point(double par1, double par2) const
 {
   parametrize();
-  double U,V;
+  double U, V;
   MTriangle *t;
   getTriangle (par1, par2, &t, U,V);
-  SPoint3 p(0,0,0); 
-  if (!t)return  GPoint(p.x(),p.y(),p.z(),this);
-  t->pnt(U,V,0,p);
-  double par[2] = {par1,par2};
-  return GPoint(p.x(),p.y(),p.z(),this,par);
+  SPoint3 p(0, 0, 0); 
+  if (!t) return GPoint(p.x(), p.y(), p.z(), this);
+  t->pnt(U, V, 0, p);
+  double par[2] = {par1, par2};
+  return GPoint(p.x(), p.y(), p.z(), this, par);
 }
 
 /*
@@ -191,27 +191,27 @@ GPoint GFaceCompound::point(double par1, double par2) const
 Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
 {
   parametrize();
-  double U,V;
+  double U, V;
   MTriangle *t;
-  getTriangle (param.x(), param.y(), &t, U,V);
+  getTriangle(param.x(), param.y(), &t, U,V);
   double jac[3][3];
-  t->getJacobian(U,V,0,jac);
-  return Pair<SVector3, SVector3>(SVector3(jac[0][0],jac[0][1],jac[0][2]),
-                                  SVector3(jac[1][0],jac[1][1],jac[1][2]));
+  t->getJacobian(U, V, 0, jac);
+  return Pair<SVector3, SVector3>(SVector3(jac[0][0], jac[0][1], jac[0][2]),
+                                  SVector3(jac[1][0], jac[1][1], jac[1][2]));
 } 
 
-static void  GFaceCompoundBB(void *a, double*mmin, double*mmax)
+static void GFaceCompoundBB(void *a, double*mmin, double*mmax)
 {
   GFaceCompoundTriangle *t = (GFaceCompoundTriangle *)a;
-  mmin[0] = std::min(std::min(t->p1.x(),t->p2.x()),t->p3.x());
-  mmin[1] = std::min(std::min(t->p1.y(),t->p2.y()),t->p3.y());
-  mmax[0] = std::max(std::max(t->p1.x(),t->p2.x()),t->p3.x());
-  mmax[1] = std::max(std::max(t->p1.y(),t->p2.y()),t->p3.y());
+  mmin[0] = std::min(std::min(t->p1.x(), t->p2.x()), t->p3.x());
+  mmin[1] = std::min(std::min(t->p1.y(), t->p2.y()), t->p3.y());
+  mmax[0] = std::max(std::max(t->p1.x(), t->p2.x()), t->p3.x());
+  mmax[1] = std::max(std::max(t->p1.y(), t->p2.y()), t->p3.y());
   mmin[2] = -1;
   mmax[2] = 1;
 }
 
-static void  GFaceCompoundCentroid(void *a, double*c)
+static void GFaceCompoundCentroid(void *a, double*c)
 {
   GFaceCompoundTriangle *t = (GFaceCompoundTriangle *)a;
   c[0] = (t->p1.x() + t->p2.x() + t->p3.x())/3.0;
@@ -219,7 +219,7 @@ static void  GFaceCompoundCentroid(void *a, double*c)
   c[2] = 0.0;
 }
 
-static int  GFaceCompoundInEle(void *a, double*c)
+static int GFaceCompoundInEle(void *a, double*c)
 {
   GFaceCompoundTriangle *t = (GFaceCompoundTriangle *)a;
   double M[2][2],R[2],X[2];
@@ -234,17 +234,15 @@ static int  GFaceCompoundInEle(void *a, double*c)
   R[0] = (c[0] - p0.x());
   R[1] = (c[1] - p0.y());
   sys2x2(M,R,X);
-  if (X[0] > -eps && 
-      X[1] > -eps && 
-      1.-X[0]-X[1] > -eps){
+  if (X[0] > -eps && X[1] > -eps && 1. - X[0] - X[1] > -eps){
     return 1;
   }
   return 0;
 }
 
-void GFaceCompound::getTriangle (double u, double v, 
-				 MTriangle **t, 
-				 double &_u, double &_v) const
+void GFaceCompound::getTriangle(double u, double v, 
+                                MTriangle **t, 
+                                double &_u, double &_v) const
 {
   parametrize();
   
@@ -254,7 +252,7 @@ void GFaceCompound::getTriangle (double u, double v,
 
   *t = tt->t;
   double M[2][2],X[2],R[2];
-  const double eps = 1.e-6;
+// const double eps = 1.e-6;
   const SPoint2 p0 = tt->p1;
   const SPoint2 p1 = tt->p2;
   const SPoint2 p2 = tt->p3;
@@ -310,7 +308,7 @@ void GFaceCompound::buildOct() const
   int count = 0;
   std::list<GFace*> :: const_iterator it = _compound.begin();
   for ( ; it != _compound.end() ; ++it){
-    for ( int i=0;i<(*it)->triangles.size() ; ++i){
+    for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *t = (*it)->triangles[i];
       for (int j=0;j<3;j++){
 	std::map<MVertex*,SPoint2>::const_iterator itj = 
@@ -344,7 +342,7 @@ void GFaceCompound::buildOct() const
   fprintf(xyzv,"View \"\"{\n");
 
   for ( ; it != _compound.end() ; ++it){
-    for ( int i=0;i<(*it)->triangles.size() ; ++i){
+    for (unsigned int i = 0; i < (*it)->triangles.size(); ++i){
       MTriangle *t = (*it)->triangles[i];
       std::map<MVertex*,SPoint2>::const_iterator it0 = 
 	coordinates.find(t->getVertex(0));

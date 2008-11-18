@@ -20,6 +20,7 @@ protected:
   GModel *_gm;
 public:
   gmshTermOfFormulation(GModel *gm) : _gm(gm) {}
+  virtual ~gmshTermOfFormulation(){}
   virtual void addToMatrix(gmshAssembler&) const = 0;
   virtual void addToRightHandSide(gmshAssembler&) const = 0;
 };

@@ -47,8 +47,8 @@ void gmshNodalFemTerm::addToMatrix (gmshAssembler &lsys) const
 
 void gmshNodalFemTerm::addToMatrix(gmshAssembler &lsys,const std::vector<MElement*> &v) const
 {
-  for (int i=0;i<v.size();i++)
-    addToMatrix (lsys,v[i]);
+  for (unsigned int i = 0; i < v.size(); i++)
+    addToMatrix(lsys, v[i]);
 }
 
 void gmshNodalFemTerm::addToMatrix(gmshAssembler &lsys, 

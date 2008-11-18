@@ -937,8 +937,6 @@ void getFaceVertices(GRegion *gr, MElement *ele,
                               face.getVertex(2),
                               hoEdgeNodes,nPts+1);
 
-        double X(0),Y(0),Z(0);
-        
         for (int k=start;k<points.size1();k++) {
           
           double t1 = points(k,0);
@@ -1612,8 +1610,8 @@ void localHarmonicMapping(GModel *gm,
   myAssembler.fixVertex ( n2 , 0 , 0 , -1.0);
   myAssembler.fixVertex ( n3 , 0 , 0 ,  1.0);
   myAssembler.fixVertex ( n4 , 0 , 0 ,  1.0);
-  for (int i=0;i<e1.size() ; i++) myAssembler.fixVertex ( e1[i] , 0 , 0, -1.0);
-  for (int i=0;i<e3.size() ; i++) myAssembler.fixVertex ( e3[i] , 0 , 0,  1.0);  
+  for (unsigned int i = 0; i < e1.size(); i++) myAssembler.fixVertex(e1[i], 0, 0, -1.0);
+  for (unsigned int i = 0; i < e3.size(); i++) myAssembler.fixVertex(e3[i], 0, 0,  1.0);
   Laplace.addToMatrix(myAssembler,t1); 
   Laplace.addToMatrix(myAssembler,t2);   
   lsys->systemSolve();
@@ -1626,8 +1624,8 @@ void localHarmonicMapping(GModel *gm,
   myAssembler1.fixVertex ( n3 , 0 , 1 , -1.0);
   myAssembler1.fixVertex ( n4 , 0 , 1 ,  1.0);
   myAssembler1.fixVertex ( n1 , 0 , 1 ,  1.0);
-  for (int i=0;i<e2.size() ; i++) myAssembler1.fixVertex ( e2[i] , 0 , 1, -1.0);
-  for (int i=0;i<e4.size() ; i++) myAssembler1.fixVertex ( e4[i] , 0 , 1,  1.0);  
+  for (unsigned int i = 0; i < e2.size(); i++) myAssembler1.fixVertex(e2[i], 0, 1, -1.0);
+  for (unsigned int i = 0; i < e4.size(); i++) myAssembler1.fixVertex(e4[i], 0, 1,  1.0);  
   Laplace1.addToMatrix(myAssembler1,t1); 
   Laplace1.addToMatrix(myAssembler1,t2);   
   lsys1->systemSolve();
@@ -1638,7 +1636,7 @@ void localHarmonicMapping(GModel *gm,
 
   // this can be done by evaluating the 
 
-  for (int i=0;i<e.size() ; i++){
+  for (unsigned int i = 0; i < e.size();  i++){
     MVertex *v = e[i];
     const double U =  myAssembler.getDofValue  (v, 0 ,0);
     const double V =  myAssembler1.getDofValue (v, 0 ,1);
@@ -1660,7 +1658,7 @@ void getParametricCoordnates ( GFace *gf,
 			       std::vector<MVertex*> &e,
 			       std::vector<SPoint2> &param){
   param.clear();
-  for (int i=0;i<e.size();i++){
+  for (unsigned int i = 0; i < e.size(); i++){
     double U,V;
     parametricCoordinates(e[i] , gf, U, V); 
     param.push_back(SPoint2(U,V));

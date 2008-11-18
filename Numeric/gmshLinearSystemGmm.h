@@ -11,11 +11,10 @@
 #include <gmm.h>
 
 class gmshLinearSystemGmm : public gmshLinearSystem {
-  gmm::row_matrix< gmm::wsvector<double> > *_a;
-  std::vector<double> *_x;
-  std::vector<double> *_b;
+  gmm::row_matrix<gmm::wsvector<double> > *_a;
+  std::vector<double> *_b, *_x;
 public :
-  gmshLinearSystemGmm () : _a(0),_b(0),_x(0) {}
+  gmshLinearSystemGmm () : _a(0), _b(0), _x(0) {}
   virtual bool isAllocated () const {return _a != 0;}
   virtual void allocate (int _nbRows)
   {
@@ -58,7 +57,7 @@ public :
   }
   virtual void zeroRightHandSide () 
   {
-    for (int i=0;i<_b->size();i++)(*_b)[i] = 0;
+    for (unsigned int i = 0; i < _b->size(); i++) (*_b)[i] = 0;
   }
   virtual int systemSolve () 
   {
@@ -68,6 +67,7 @@ public :
     //iter.set_noisy(2);
     //gmm::gmres(*_a, *_x, *_b, P, 100, iter);  // execute the GMRES algorithm
     gmm::cg(*_a, *_x, *_b, P, iter);  // execute the CG algorithm
+    return 1;
   }
 };
 

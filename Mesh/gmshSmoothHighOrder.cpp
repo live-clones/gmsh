@@ -14,11 +14,11 @@ void getDistordedElements ( const std::vector<MElement*>  & v,
 			    double &minD){
   d.clear();
   minD = 1;
-  for (int i=0;i<v.size() ; i++){
+  for (unsigned int i = 0; i < v.size(); i++){
     const double disto = v[i]->distoShapeMeasure();
-    if ( disto < threshold)
+    if (disto < threshold)
       d.push_back(v[i]);
-    minD = std::min(minD,disto);
+    minD = std::min(minD, disto);
   }
 }
 
@@ -26,10 +26,10 @@ void addOneLayer ( const std::vector<MElement*>  & v,
 		   std::vector<MElement*>  & d ,
 		   std::vector<MElement*>  & layer ){
   std::set<MVertex*> all;
-  for (int i=0;i<d.size() ; i++){
+  for (unsigned int i = 0; i < d.size(); i++){
     MElement *e = d[i];
     int n = e->getNumPrimaryVertices();
-    for (int j=0;j<n;j++){
+    for (int j = 0; j < n; j++){
       all.insert(e->getVertex(j));
     }
   }
@@ -38,13 +38,13 @@ void addOneLayer ( const std::vector<MElement*>  & v,
 
   std::sort(d.begin(), d.end());
 
-  for (int i=0;i<v.size() ; i++){
+  for (unsigned int i = 0; i < v.size(); i++){
     MElement *e = v[i];
     bool found = std::binary_search(d.begin(), d.end(), e);
     // element is not yet there
     if (!found){
       int n = e->getNumPrimaryVertices();
-      for (int j=0;j<n;j++){
+      for (int j = 0; j < n; j++){
 	MVertex *vert = e->getVertex(j);
 	if (all.find(vert) != all.end()){
 	  layer.push_back(e);
@@ -90,7 +90,7 @@ void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & all) {
 
   //  printf("%d elements / %d distorted  min Disto = %g\n",all.size(),v.size(), minD);
 
-  if (!v.size())return;
+  if (!v.size()) return;
 
   const int nbLayers = 2;
   for (int i=0;i<nbLayers;i++){
@@ -99,19 +99,19 @@ void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & all) {
   }
 
   // 3 -> .4
-  printf("%d elements after adding %d layers\n",v.size(),nbLayers);
+  printf("%d elements after adding %d layers\n", v.size(), nbLayers);
 
-  addOneLayer ( all, v, layer);
+  addOneLayer(all, v, layer);
 
   //  printf("%d elements in the next layer\n",layer.size());
 
 
-  for (int i=0;i<layer.size() ; i++){
-    for (int j=0;j<layer[i]->getNumVertices(); j++){
+  for (unsigned int i = 0; i < layer.size(); i++){
+    for (int j = 0; j < layer[i]->getNumVertices(); j++){
       MVertex *vert = layer[i]->getVertex(j);
-      myAssembler.fixVertex ( vert , 0 , getTag() , 0);
-      myAssembler.fixVertex ( vert , 1 , getTag() , 0);
-      myAssembler.fixVertex ( vert , 2 , getTag() , 0);
+      myAssembler.fixVertex(vert, 0, getTag(), 0);
+      myAssembler.fixVertex(vert, 1, getTag(), 0);
+      myAssembler.fixVertex(vert, 2, getTag(), 0);
     }
   }
   
@@ -121,8 +121,8 @@ void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & all) {
 
   //  printf("%d vertices \n", _displ.size());
 
-  for (int i=0;i<v.size() ; i++){
-    for (int j=0;j<v[i]->getNumVertices(); j++){
+  for (unsigned int i = 0; i < v.size(); i++){
+    for (int j = 0; j < v[i]->getNumVertices(); j++){
       MVertex *vert = v[i]->getVertex(j);
       //      printf("%d %d %d v\n",i,j,v[i]->getNumVertices());
       it = _displ.find(vert);
@@ -151,12 +151,12 @@ void gmshHighOrderSmoother::smooth ( std::vector<MElement*>  & all) {
   }
   
   // number the other DOFs
-  for (int i=0;i<v.size() ; i++){
-    for (int j=0;j<v[i]->getNumVertices(); j++){
+  for (unsigned int i = 0; i < v.size(); i++){
+    for (int j = 0; j < v[i]->getNumVertices(); j++){
       MVertex *vert = v[i]->getVertex(j);
-      myAssembler.numberVertex ( vert , 0 , getTag() );
-      myAssembler.numberVertex ( vert , 1 , getTag() );
-      myAssembler.numberVertex ( vert , 2 , getTag() );
+      myAssembler.numberVertex(vert, 0, getTag());
+      myAssembler.numberVertex(vert, 1, getTag());
+      myAssembler.numberVertex(vert, 2, getTag());
       // gather all vertices that are supposed to move
       verticesToMove[vert] = SVector3(0.0,0.0,0.0);
     } 
