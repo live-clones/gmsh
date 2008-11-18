@@ -3067,6 +3067,7 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
   DeleteShape(c->Typ, c->Num);
   List_Delete(new_list);
   List_Delete(rshapes);
+  return true;
 }
 
 // Intersect a curve with a surface

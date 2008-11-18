@@ -307,7 +307,7 @@ void GFaceCompound::getTriangle (double u, double v,
 void GFaceCompound::buildOct() const
 {
   SBoundingBox3d bb;
-  int count;
+  int count = 0;
   std::list<GFace*> :: const_iterator it = _compound.begin();
   for ( ; it != _compound.end() ; ++it){
     for ( int i=0;i<(*it)->triangles.size() ; ++i){

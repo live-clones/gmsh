@@ -46,6 +46,7 @@ class FieldOption {
     case FIELD_OPTION_PATH: return "path"; break;
     case FIELD_OPTION_STRING: return "string"; break;
     case FIELD_OPTION_LIST: return "list"; break;
+    default: return "unknown";
     }
   }
   virtual void numerical_value(double val) { throw(1); }
