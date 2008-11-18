@@ -5,18 +5,19 @@
 
 ##################################################################
 
-# Change this if you want to use the MSVC compiler from the bash shell
-# (e.g. in cygwin) instead of using the windows cmd shell. (If you
-# don't have all MSVC variables defined you can use this to compile:
-# 'cmd.exe /c "vcvars32.bat && make"')
-USE_CYGWIN_SHELL=0
+# Change this if you want to use a posix shell (e.g. in cygwin) instead 
+# of the windows cmd shell
+USE_WINDOWS_CMD_SHELL=1
 
-ifeq (${USE_CYGWIN_SHELL},0)
+ifeq (${USE_WINDOWS_CMD_SHELL},1)
+  # Change this to match where the gmsh sources are installed
   MAKE="E:/src/gmsh/utils/misc/gmake.exe"
   UNAME=WIN32MSVC
   RM=erase
   MV=move
 else
+  # If you don't have all the MSVC variables defined in your POSIX shell 
+  # you can use this to compile: 'cmd.exe /c "vcvars32.bat && make"'
   MAKE=make
   UNAME=WIN32
   RM=rm -f
