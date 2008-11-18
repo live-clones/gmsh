@@ -304,6 +304,7 @@ Context_Item menu_mesh[] = {
   {"3D",           (Fl_Callback *)mesh_3d_cb} , 
   {"First order",  (Fl_Callback *)mesh_degree_cb, (void*)1 } , 
   {"Second order", (Fl_Callback *)mesh_degree_cb, (void*)2 } , 
+  {"Refine",       (Fl_Callback *)mesh_refine_cb} ,
   {"Optimize",     (Fl_Callback *)mesh_optimize_cb} , 
 #if defined(HAVE_NETGEN)
   {"Optimize (Netgen)", (Fl_Callback *)mesh_optimize_netgen_cb} , 
@@ -4819,8 +4820,8 @@ void GUI::create_about_window()
         sprintf(buffer, "@c@.Build options: %s", lines[i].c_str());
       else
         sprintf(buffer, "@c@.%s", lines[i].c_str());
-      o->add(buffer);
-    }
+        o->add(buffer);
+      }
     sprintf(buffer, "@c@.Packaged by: %s", Get_GmshPackager());
     o->add(buffer);
     o->add(" ");

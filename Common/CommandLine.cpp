@@ -42,6 +42,7 @@ void Print_Usage(const char *name)
   Msg::Direct("  -tol float            Set geometrical tolerance");
   Msg::Direct("Mesh options:");
   Msg::Direct("  -1, -2, -3            Perform 1D, 2D or 3D mesh generation, then exit");
+  Msg::Direct("  -refine               Perform uniform mesh refinement, then exit");
   Msg::Direct("  -part                 Partition after batch mesh generation");
   Msg::Direct("  -saveall              Save all elements (discard physical group definitions)");
   Msg::Direct("  -o file               Specify mesh output file name");
@@ -202,6 +203,10 @@ void Get_Options(int argc, char *argv[])
         else
 	  Msg::Fatal("Missing string");
         CTX.batch = 5;
+      }
+	  else if(!strcmp(argv[i] + 1, "refine")) {
+		  CTX.batch = 6;
+		  i++;
       }
       else if(!strcmp(argv[i] + 1, "part")) {
         CTX.batchAfterMesh = 1;
