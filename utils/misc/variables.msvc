@@ -22,7 +22,7 @@ else
   UNAME=WIN32
   RM=rm -f
   MV=mv -f
-fi
+endif
 
 # Change the following to select which version to build:
 ENABLE_GSL=0
