@@ -161,12 +161,12 @@ LIBEXT=.lib
 EXEEXT=.exe
 
 # Installation directories
-prefix="S:/Lib/gmsh"
+prefix="S:\Lib\gmsh"
 exec_prefix=${prefix}
-bindir=${exec_prefix}/bin
+bindir=${exec_prefix}\bin
 datadir=${datarootdir}
-datarootdir=${prefix}/share
-includedir=${prefix}/include
-libdir=${exec_prefix}/lib
-mandir=${datarootdir}/man
-infodir=${datarootdir}/info
+datarootdir=${prefix}\share
+includedir=${prefix}\include
+libdir=${exec_prefix}\lib
+mandir=${datarootdir}\man
+infodir=${datarootdir}\info

@@ -110,9 +110,11 @@ ifneq (${UNAME},WIN32MSVC)
 	mkdir -p ${libdir}
 	cp -f lib/libGmsh${LIBEXT} ${libdir}/libGmsh${LIBSUFFIX}${LIBEXT}
 else
-	erase ${includedir}\gmsh\*
-	copy ${subst /,\\,${GMSH_API}} ${includedir}\gmsh
-	copy lib\libGmsh${LIBEXT} ${libdir}\libGmsh${LIBSUFFIX}${LIBEXT}
+	if not exist ${includedir}\gmsh mkdir ${includedir}\gmsh
+	if not exist ${libdir} mkdir ${libdir}
+	erase /q ${includedir}\gmsh\*.h
+	for %%i in (${subst /,\,${GMSH_API}}) do copy %%i  ${includedir}\gmsh
+	copy /y lib\libGmsh${LIBEXT} ${libdir}\libGmsh${LIBSUFFIX}${LIBEXT}
 endif
 
 uninstall-lib:
