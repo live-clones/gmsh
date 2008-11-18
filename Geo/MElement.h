@@ -707,25 +707,16 @@ class MTriangle6 : public MTriangle {
 class MTriangleN : public MTriangle {
  protected:
   std::vector<MVertex *> _vs;
-  const short _order;
-  int _orderedIndex(int num)
-  {
-    if(num == 0) return 0;
-    else if(num < _order) return num + 2;
-    else if(num == _order) return 1;
-    else if(num < 2 * _order) return num + 1;
-    else if(num == 2 * _order) return 2;
-    else return num;
-  }
+  const char _order;
  public:
   MTriangleN(MVertex *v0, MVertex *v1, MVertex *v2, 
-             std::vector<MVertex*> &v, int order, int num=0, int part=0) 
-    : MTriangle(v0, v1, v2, num, part) , _vs (v), _order(order)
+             std::vector<MVertex*> &v, char order, int num=0, int part=0) 
+    : MTriangle(v0, v1, v2, num, part), _vs(v), _order(order)
   {
     for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
   }
-  MTriangleN(std::vector<MVertex*> &v, int order, int num=0, int part=0) 
-    : MTriangle(v[0], v[1], v[2], num, part) , _order(order)
+  MTriangleN(std::vector<MVertex*> &v, char order, int num=0, int part=0) 
+    : MTriangle(v[0], v[1], v[2], num, part), _order(order)
   {
     for(unsigned int i = 3; i < v.size(); i++) _vs.push_back(v[i]);
     for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
@@ -1454,16 +1445,16 @@ static int reverseTet34[34] = {0,2,1,3,  // principal vertices
 class MTetrahedronN : public MTetrahedron {
  protected:
   std::vector<MVertex *> _vs;
-  const short _order;
+  const char _order;
   double _disto;
  public:
   MTetrahedronN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, 
-		std::vector<MVertex*> &v, int order, int num=0, int part=0) 
+		std::vector<MVertex*> &v, char order, int num=0, int part=0) 
     : MTetrahedron(v0, v1, v2, v3, num, part) , _vs (v), _order(order),_disto(-1.e22)
   {
     for(unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
   }
-  MTetrahedronN(std::vector<MVertex*> &v, int order, int num=0, int part=0) 
+  MTetrahedronN(std::vector<MVertex*> &v, char order, int num=0, int part=0) 
     : MTetrahedron(v[0], v[1], v[2], v[3], num, part) , _order(order),_disto(-1.e22)
   {
     for(unsigned int i = 4; i < v.size(); i++) _vs.push_back(v[i]);
