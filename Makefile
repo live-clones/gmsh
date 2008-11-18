@@ -103,11 +103,17 @@ else
 endif
 
 install-lib: lib
+ifneq (${UNAME},WIN32MSVC)
 	mkdir -p ${includedir}/gmsh
 	rm -f ${includedir}/gmsh/*
 	cp -f ${GMSH_API} ${includedir}/gmsh
 	mkdir -p ${libdir}
 	cp -f lib/libGmsh${LIBEXT} ${libdir}/libGmsh${LIBSUFFIX}${LIBEXT}
+else
+	erase ${includedir}\gmsh\*
+	copy ${subst /,\\,${GMSH_API}} ${includedir}\gmsh
+	copy lib\libGmsh${LIBEXT} ${libdir}\libGmsh${LIBSUFFIX}${LIBEXT}
+endif
 
 uninstall-lib:
 	rm -rf ${includedir}/gmsh
