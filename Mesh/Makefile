@@ -43,7 +43,8 @@ SRC = Generator.cpp \
         BoundaryLayers.cpp \
         BDS.cpp \
         HighOrder.cpp \
-	Partition.cpp
+	Partition.cpp \
+        Refine.cpp
 
 OBJ = ${SRC:.cpp=${OBJEXT}}
 
@@ -440,3 +441,19 @@ Partition.o: Partition.cpp ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Common/GmshMatrix.h PartitionOptions.h
+Refine.o: Refine.cpp HighOrder.h ../Geo/GModel.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
+  ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
+  ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
+  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/GEdgeLoop.h \
+  ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h ../Geo/Pair.h \
+  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h meshGFaceOptimize.h ../Geo/MElement.h \
+  ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint3.h \
+  ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h \
+  ../Geo/MVertex.h ../Geo/SVector3.h ../Common/GmshMessage.h \
+  ../Numeric/FunctionSpace.h ../Common/GmshMatrix.h \
+  meshGFaceDelaunayInsertion.h ../Common/OS.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h ../Common/Context.h ../Geo/CGNSOptions.h \
+  ../Mesh/PartitionOptions.h
