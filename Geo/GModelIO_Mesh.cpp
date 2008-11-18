@@ -2223,8 +2223,6 @@ int GModel::readDIFF(const std::string &name)
     return 0;
   }
 
-// FIXME: todo
-#if 0
   char str[256] = "XXX";
   std::map<int, std::vector<MElement*> > elements[8];
   std::map<int, std::map<int, std::string> > physicals[4];
@@ -2266,7 +2264,8 @@ int GModel::readDIFF(const std::string &name)
       if(!fgets(str, sizeof(str), fp) || feof(fp))
         break;
       }
-    if(sscanf(str, "%*s %*s %*s %*s %*s %*s %*s %d", &numVerticesPerElement) != 1) return 0;
+    if(sscanf(str, "%*s %*s %*s %*s %*s %*s %*s %d", &numVerticesPerElement) != 1)
+      return 0;
     Msg::Info("numVerticesPerElement %d",numVerticesPerElement); 
 
     bool several_subdomains;
@@ -2347,7 +2346,8 @@ int GModel::readDIFF(const std::string &name)
           vertexVector[it->first] = it->second;
         vertexMap.clear();
       }
-      Msg::Info("%d ( %lf , %lf , %lf ) [%d]",i, xyz[0], xyz[1], xyz[2], elementary[i][0]);
+      Msg::Info("%d ( %lf , %lf , %lf ) [%d]", i, xyz[0], xyz[1], xyz[2], 
+                elementary[i][0]);
       std::string format_read_bi = "%*d ( %*lf , %*lf , %*lf ) [%*d]";
       for(int j = 0; j < elementary[i][0]; j++){
         if(format_read_bi[format_read_bi.size() - 1] == 'd') {
@@ -2356,7 +2356,8 @@ int GModel::readDIFF(const std::string &name)
         }
         else
           format_read_bi += " %d";
-        if(sscanf(str, format_read_bi.c_str(), &(elementary[i][j + 1])) != 1) return 0;
+        if(sscanf(str, format_read_bi.c_str(), &(elementary[i][j + 1])) != 1)
+          return 0;
         Msg::Info("elementary[%d][%d]=%d", i + 1, j + 1, elementary[i][j + 1]); 
       }
     }
@@ -2372,42 +2373,101 @@ int GModel::readDIFF(const std::string &name)
     }
     char eleType[20]="";
     Msg::ResetProgressMeter();
+    std::vector<int> mapping;
     for(int i = 1; i <= numElements; i++){
       if(!fgets(str, sizeof(str), fp)) return 0;
       int num, type, physical = 0, partition = 0;
       int indices[60];
       if(sscanf(str, "%*d %s %d", eleType, &material[i-1])!=2) return 0;
+      int k2; // local number for the element
+      int NoVertices; // number of vertices per element
+      if(eleType=="ElmT3n2D"){ 
+        NoVertices=3;
+        static int map[3]={0, 1, 2}; // identical to gmsh
+        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
+        type= MSH_TRI_3;
+      }
+      else if(eleType=="ElmT6n2D"){ 
+        NoVertices=6;
+        static int map[6]={0, 1, 2, 3, 4, 5}; // identical to gmsh
+        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
+        type= MSH_TRI_6;
+      }
+      else if(eleType=="ElmB4n2D"){ 
+        NoVertices=4;
+        static int map[4]={0, 1, 3, 2}; // local numbering
+        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
+        type= MSH_QUA_4;
+      }
+      else if(eleType=="ElmB8n2D"){ 
+        NoVertices=8;
+        static int map[8]={0, 1, 3, 2, 4, 6, 7, 5}; // local numbering
+        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
+        type= MSH_QUA_8;
+      }
+      else if(eleType=="ElmB9n2D"){ 
+        NoVertices=9;
+        static int map[9]={0, 4, 1, 7, 8, 5, 3, 6, 2}; // local numbering
+        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
+        type= MSH_QUA_9;
+      }
+      else if(eleType=="ElmT4n3D"){
+        NoVertices=4;
+        static int map[4]={0, 1, 2, 3}; // identical to gmsh
+        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
+        type= MSH_TET_4;
+      } 
+      else if(eleType=="ElmT10n3D"){ 
+        NoVertices=10;
+        static int map[10]={1, 0, 2, 3, 4, 6, 5, 9, 7, 8}; // local numbering
+        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
+        type= MSH_TET_10;
+      }
+      else if(eleType=="ElmB8n3D"){
+        NoVertices=8;
+        static int map[8]={4, 5, 0, 1, 7, 6, 3, 2};
+        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
+        type= MSH_HEX_8;
+      } 
+      else if(eleType=="ElmB20n3D"){
+        NoVertices=20;
+        static int map[20]={4, 5, 0, 1, 7, 6, 3, 2, 16, 8, 19, 
+                            13, 15, 12, 14, 17, 18, 9, 11};
+        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
+        type= MSH_HEX_20;
+      } 
+      else if(eleType=="ElmB27n3D"){
+        NoVertices=27;
+        static int map[27]={4, 16, 5, 10, 21, 12, 0, 8, 1, 17, 25, 18, 22, 
+                            26, 23, 9, 20, 11, 7, 19, 6, 15, 24, 14, 3, 13, 2};
+        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
+        type= MSH_HEX_27;
+      } 
+      else
+        return 0;
       std::string format_read_vertices = "%*d %*s %*d";
-      for(int k = 0; k < numVerticesPerElement; k++){
+      for(int k = 0; k < NoVertices; k++){
         if(format_read_vertices[format_read_vertices.size()-2] != '*') {
           format_read_vertices[format_read_vertices.size()-1] = '*';
           format_read_vertices += "d %d";
         } 
         else
           format_read_vertices += " %d";
-        int k2;
-        if(eleType=="ElmT10n3D"){ 
-          static int map[10]={1, 0, 2, 3, 4, 6, 5, 9, 7, 8};
-          k2=map[k];
-          type= MSH_TET_10;
-        }
-        else if(eleType=="ElmT4n3D"){
-          static int map[4]={1, 0, 2, 3};
-          k2=map[k];
-          type= MSH_TET_4;
-        } 
-        else
+        k2=mapping[k];
+        if(sscanf(str, format_read_vertices.c_str(), &ElementsNodes[i-1][k2]) != 1)
           return 0;
-        if(sscanf(str, format_read_vertices.c_str(), &ElementsNodes[i-1][k2]) != 1) return 0;
       }
-      for(int j=0;j<numVerticesPerElement;j++)
+      mapping.clear();
+      for(int j=0;j<NoVertices;j++)
         indices[j] = ElementsNodes[i - 1][j];
       std::vector<MVertex*> vertices;
       if(vertexVector.size()){
-        if(!getVertices(numVerticesPerElement, indices, vertexVector, vertices)) return 0;
+        if(!getVertices(numVerticesPerElement, indices, vertexVector, vertices))
+          return 0;
       }
       else{
-        if(!getVertices(numVerticesPerElement, indices, vertexMap, vertices)) return 0;
+        if(!getVertices(numVerticesPerElement, indices, vertexMap, vertices))
+          return 0;
       }
       createElementMSH(this, num, type, physical, elementary[i-1][1], partition, 
                        vertices, elements, physicals); 
@@ -2434,8 +2494,6 @@ int GModel::readDIFF(const std::string &name)
   // store the physical tags
   for(int i = 0; i < 4; i++)
     storePhysicalTagsInEntities(this, i, physicals[i]);
-
-#endif
 
   fclose(fp);
   return 1;
