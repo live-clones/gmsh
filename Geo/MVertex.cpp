@@ -344,8 +344,7 @@ bool reparamMeshVertexOnFace(MVertex *v, GFace *gf, SPoint2 &param)
     if(v->onWhat() == gf && v->getParameter(0, UU) && v->getParameter(1, VV))
       param = SPoint2(UU, VV);
     else 
-      return false;
-      // param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+      param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
   }
   return true;
 }
