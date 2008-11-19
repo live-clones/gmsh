@@ -814,12 +814,52 @@ const gmshFunctionSpace* MTriangle::getFunctionSpace(int o) const
   return 0;
 }
 
-const int numSubEdges = 12;
+#define NUM_SUB_EDGES (_order)
 
-int MTriangleN::getNumFacesRep(){ return numSubEdges * numSubEdges; }
+int MTriangleN::getNumEdgesRep(){ return 3 * NUM_SUB_EDGES; }
+
+void MTriangleN::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
+{
+  int numSubEdges = NUM_SUB_EDGES;
+
+  n[0] = n[1] = n[2] = getFace(0).normal();
+
+  if (num < numSubEdges){
+    SPoint3 pnt1, pnt2;
+    pnt((double)num / numSubEdges, 0., 0.,pnt1);
+    pnt((double)(num + 1) / numSubEdges, 0., 0, pnt2);
+    x[0] = pnt1.x(); x[1] = pnt2.x();
+    y[0] = pnt1.y(); y[1] = pnt2.y();
+    z[0] = pnt1.z(); z[1] = pnt2.z();
+    return;
+  }  
+  if (num < 2 * numSubEdges){
+    SPoint3 pnt1, pnt2;
+    num -= numSubEdges;
+    pnt(1. - (double)num / numSubEdges, (double)num / numSubEdges, 0, pnt1);
+    pnt(1. - (double)(num + 1) / numSubEdges, (double)(num + 1) / numSubEdges, 0, pnt2);
+    x[0] = pnt1.x(); x[1] = pnt2.x();
+    y[0] = pnt1.y(); y[1] = pnt2.y();
+    z[0] = pnt1.z(); z[1] = pnt2.z();
+    return ;
+  }  
+  {
+    SPoint3 pnt1, pnt2;
+    num -= 2 * numSubEdges;
+    pnt(0, (double)num / numSubEdges, 0,pnt1);
+    pnt(0, (double)(num + 1) / numSubEdges, 0,pnt2);
+    x[0] = pnt1.x(); x[1] = pnt2.x();
+    y[0] = pnt1.y(); y[1] = pnt2.y();
+    z[0] = pnt1.z(); z[1] = pnt2.z();
+  }
+}
+
+int MTriangleN::getNumFacesRep(){ return NUM_SUB_EDGES * NUM_SUB_EDGES; }
 
 void MTriangleN::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
+  int numSubEdges = NUM_SUB_EDGES;
+
   //  on the first layer, we have (numSubEdges-1) * 2 + 1 triangles
   //  on the second layer, we have (numSubEdges-2) * 2 + 1 triangles
   //  on the ith layer, we have (numSubEdges-1-i) * 2 + 1 triangles
@@ -877,42 +917,6 @@ void MTriangleN::getFaceRep(int num, double *x, double *y, double *z, SVector3 *
   x[0] = pnt1.x(); x[1] = pnt2.x(); x[2] = pnt3.x();
   y[0] = pnt1.y(); y[1] = pnt2.y(); y[2] = pnt3.y();
   z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
-}
-
-int MTriangleN::getNumEdgesRep(){ return 3 * numSubEdges; }
-
-void MTriangleN::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-{
-  n[0] = n[1] = n[2] = getFace(0).normal();
-  int N = getNumEdgesRep() / 3;
-  if (num < N){
-    SPoint3 pnt1, pnt2;
-    pnt((double)num / N, 0., 0.,pnt1);
-    pnt((double)(num + 1) / N, 0., 0, pnt2);
-    x[0] = pnt1.x(); x[1] = pnt2.x();
-    y[0] = pnt1.y(); y[1] = pnt2.y();
-    z[0] = pnt1.z(); z[1] = pnt2.z();
-    return;
-  }  
-  if (num < 2 * N){
-    SPoint3 pnt1, pnt2;
-    num -= N;
-    pnt(1. - (double)num / N, (double)num / N, 0, pnt1);
-    pnt(1. - (double)(num + 1) / N, (double)(num + 1) / N, 0, pnt2);
-    x[0] = pnt1.x(); x[1] = pnt2.x();
-    y[0] = pnt1.y(); y[1] = pnt2.y();
-    z[0] = pnt1.z(); z[1] = pnt2.z();
-    return ;
-  }  
-  {
-    SPoint3 pnt1, pnt2;
-    num -= 2 * N;
-    pnt(0, (double)num / N, 0,pnt1);
-    pnt(0, (double)(num + 1) / N, 0,pnt2);
-    x[0] = pnt1.x(); x[1] = pnt2.x();
-    y[0] = pnt1.y(); y[1] = pnt2.y();
-    z[0] = pnt1.z(); z[1] = pnt2.z();
-  }
 }
 
 void MTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts) const
@@ -1033,40 +1037,43 @@ const gmshFunctionSpace* MTetrahedron::getFunctionSpace(int o) const
   return 0;
 }
 
-int MTetrahedronN::getNumEdgesRep(){ return 6 * numSubEdges; }
+int MTetrahedronN::getNumEdgesRep(){ return 6 * NUM_SUB_EDGES; }
 
 void MTetrahedronN::getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
+  int numSubEdges = NUM_SUB_EDGES;
+
   static double pp[4][3] = {{0,0,0},{1,0,0},{0,1,0},{0,0,1}};
   static int ed [6][2] = {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
   int iEdge = num / numSubEdges;
   int iSubEdge = num % numSubEdges;  
 
-  
   int iVertex1 = ed [iEdge][0];
   int iVertex2 = ed [iEdge][1];
-  double t1 = (double) iSubEdge / (double) numSubEdges;
-  double u1 = pp[iVertex1][0] * (1.-t1) + pp[iVertex2][0] * t1;
-  double v1 = pp[iVertex1][1] * (1.-t1) + pp[iVertex2][1] * t1;
-  double w1 = pp[iVertex1][2] * (1.-t1) + pp[iVertex2][2] * t1;
+  double t1 = (double)iSubEdge / (double)numSubEdges;
+  double u1 = pp[iVertex1][0] * (1. - t1) + pp[iVertex2][0] * t1;
+  double v1 = pp[iVertex1][1] * (1. - t1) + pp[iVertex2][1] * t1;
+  double w1 = pp[iVertex1][2] * (1. - t1) + pp[iVertex2][2] * t1;
 
-  double t2 = (double) (iSubEdge+1) / (double) numSubEdges;
-  double u2 = pp[iVertex1][0] * (1.-t2) + pp[iVertex2][0] * t2;
-  double v2 = pp[iVertex1][1] * (1.-t2) + pp[iVertex2][1] * t2;
-  double w2 = pp[iVertex1][2] * (1.-t2) + pp[iVertex2][2] * t2;
+  double t2 = (double)(iSubEdge + 1) / (double)numSubEdges;
+  double u2 = pp[iVertex1][0] * (1. - t2) + pp[iVertex2][0] * t2;
+  double v2 = pp[iVertex1][1] * (1. - t2) + pp[iVertex2][1] * t2;
+  double w2 = pp[iVertex1][2] * (1. - t2) + pp[iVertex2][2] * t2;
 
   SPoint3 pnt1, pnt2;
-  pnt(u1,v1,w1,pnt1);
-  pnt(u2,v2,w2,pnt2);
+  pnt(u1, v1, w1, pnt1);
+  pnt(u2, v2, w2, pnt2);
   x[0] = pnt1.x(); x[1] = pnt2.x(); 
   y[0] = pnt1.y(); y[1] = pnt2.y();
   z[0] = pnt1.z(); z[1] = pnt2.z();
 }
 
-int MTetrahedronN::getNumFacesRep(){ return 4 * numSubEdges * numSubEdges ; }
+int MTetrahedronN::getNumFacesRep(){ return 4 * NUM_SUB_EDGES * NUM_SUB_EDGES; }
 
 void MTetrahedronN::getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
 {
+  int numSubEdges = NUM_SUB_EDGES;
+
   static double pp[4][3] = {{0,0,0},{1,0,0},{0,1,0},{0,0,1}};
   static int fak [4][3] = {{0,1,2},{0,1,3},{0,2,3},{1,2,3}};
   int iFace    = num / (numSubEdges * numSubEdges);

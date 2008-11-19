@@ -250,6 +250,7 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
   if (p1.size() == 1 && p2.size() == 1){
     param1 = p1[0];
     param2 = p2[0];
+    return true;
   }
   else if (p1.size() == 1 && p2.size() == 2){
     double d1 = 
@@ -260,6 +261,7 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
       (p1[0].x() - p2[1].y()) * (p1[0].y() - p2[1].y());
     param1 = p1[0];
     param2 = d2 < d1 ? p2[1] : p2[0];
+    return true;
   }  
   else if (p2.size() == 1 && p1.size() == 2){
     double d1 = 
@@ -270,12 +272,20 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
       (p2[0].x() - p1[1].y()) * (p2[0].y() - p1[1].y());
     param1 = d2 < d1 ? p1[1] : p1[0];
     param2 = p2[0];
+    return true;
   }  
+  else if(p1.size() > 1 && p2.size() > 1){
+    param1 = p1[0];
+    param2 = p2[0];
+    // shout, both vertices are on seams
+    return false;
+  }
   else{
+    // brute force!
     param1 = gf->parFromPoint(SPoint3(v1->x(), v1->y(), v1->z()));
     param2 = gf->parFromPoint(SPoint3(v2->x(), v2->y(), v2->z()));
+    return true;
   }
-  return true;
 }
 
 bool reparamMeshVertexOnFace(MVertex *v, GFace *gf, SPoint2 &param)
@@ -296,7 +306,7 @@ bool reparamMeshVertexOnFace(MVertex *v, GFace *gf, SPoint2 &param)
     GVertex *gv = (GVertex*)v->onWhat();
     param = gv->reparamOnFace(gf, 1);
 
-    // shout if we could be on a seam
+    // shout, we could be on a seam
     std::list<GEdge*> ed = gv->edges();
     for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++)
       if((*it)->isSeam(gf)) return false;
@@ -307,16 +317,19 @@ bool reparamMeshVertexOnFace(MVertex *v, GFace *gf, SPoint2 &param)
     v->getParameter(0, t);
     param = ge->reparamOnFace(gf, t, 1);
 
-    // shout if we are on a seam
+    // shout, we are on a seam
     if(ge->isSeam(gf))
       return false;
   }
   else{
     double uu, vv;
-    if(v->onWhat() == gf && v->getParameter(0, uu) && v->getParameter(1, vv))
+    if(v->onWhat() == gf && v->getParameter(0, uu) && v->getParameter(1, vv)){
       param = SPoint2(uu, vv);
-    else 
+    }
+    else {
+      // brute force!
       param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+    }
   }
   return true;
 }
