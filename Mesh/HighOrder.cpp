@@ -2,6 +2,10 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
+//
+// Contributor(s):
+//   Koen Hillewaert
+//
 
 #include "HighOrder.h"
 #include "gmshSmoothHighOrder.h"
