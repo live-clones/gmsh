@@ -1042,7 +1042,7 @@ class MQuadrangle9 : public MQuadrangle {
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices() const { return 4; }
-  virtual int getNumFaceVertices() const { return 6; }
+  virtual int getNumFaceVertices() const { return 1; }
   virtual int getNumEdgesRep(){ return 8; }
   virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
   { 

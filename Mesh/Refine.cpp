@@ -24,6 +24,9 @@ void Subdivide(GEdge *ge)
     delete l;
   }
   ge->lines = lines2;
+
+  for(unsigned int i = 0; i < ge->mesh_vertices.size(); i++)
+    ge->mesh_vertices[i]->setPolynomialOrder(1);
   ge->deleteVertexArrays();
 }
 
@@ -62,6 +65,9 @@ void Subdivide(GFace *gf)
     delete q;
   }
   gf->quadrangles = quadrangles2;
+
+  for(unsigned int i = 0; i < gf->mesh_vertices.size(); i++)
+    gf->mesh_vertices[i]->setPolynomialOrder(1);
   gf->deleteVertexArrays();
 }
 
@@ -202,6 +208,9 @@ void Subdivide(GRegion *gr)
     delete p;
   }
   gr->pyramids = pyramids2;
+
+  for(unsigned int i = 0; i < gr->mesh_vertices.size(); i++)
+    gr->mesh_vertices[i]->setPolynomialOrder(1);
   gr->deleteVertexArrays();
 }
 
@@ -222,7 +231,7 @@ void Refine(GModel *m, bool linear)
     Subdivide(*it);
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     Subdivide(*it);
-  
+
   double t2 = Cpu();
   Msg::Info("Mesh refinement complete (%g s)", t2 - t1);
   Msg::StatusBar(1, true, "Mesh");

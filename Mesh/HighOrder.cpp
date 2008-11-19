@@ -976,8 +976,6 @@ static void setFirstOrder(GEntity *e, std::vector<T*> &elements)
     std::vector<MVertex*> v1;
     for(int j = 0; j < n; j++)
       v1.push_back(ele->getVertex(j));
-    for(int j = n; j < ele->getNumVertices(); j++)
-      ele->getVertex(j)->setVisibility(-1);
     elements1.push_back(new T(v1));
     delete ele;
   }
@@ -989,7 +987,7 @@ static void removeHighOrderVertices(GEntity *e)
 {
   std::vector<MVertex*> v1;
   for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
-    if(e->mesh_vertices[i]->getVisibility() < 0)
+    if(e->mesh_vertices[i]->getPolynomialOrder() > 1)
       delete e->mesh_vertices[i];
     else
       v1.push_back(e->mesh_vertices[i]);
@@ -999,8 +997,7 @@ static void removeHighOrderVertices(GEntity *e)
 
 void SetOrder1(GModel *m)
 {
-  // replace all elements with first order elements and mark all
-  // unused vertices with a -1 visibility flag
+  // replace all elements with first order elements
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
     setFirstOrder(*it, (*it)->lines);
   }
@@ -1015,7 +1012,7 @@ void SetOrder1(GModel *m)
     setFirstOrder(*it, (*it)->pyramids);
   }
 
-  // remove all vertices with a -1 visibility flag
+  // remove all high order vertices
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
     removeHighOrderVertices(*it);
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
