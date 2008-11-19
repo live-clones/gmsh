@@ -17,6 +17,7 @@
 #include "GFaceCompound.h"
 #include "GmshMatrix.h"
 #include "FunctionSpace.h"
+#include <iostream>
 
 #define SQU(a)      ((a)*(a))
 
@@ -865,6 +866,7 @@ void getFaceVertices(GRegion *gr, MElement *ele,
   
   
   Double_Matrix points;
+	
   int start = 0;
   
   switch (nPts){
@@ -911,7 +913,7 @@ void getFaceVertices(GRegion *gr, MElement *ele,
     else{
       std::vector<MVertex*>& vtcs = faceVertices[face];        
       
-      if(face.getNumVertices() == 3){ // triangles
+      if(face.getNumVertices() == 3 && nPts > 1){ // triangles
 
         // construct incomplete element to take into account curved edges on surface boundaries
 
