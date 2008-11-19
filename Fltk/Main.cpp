@@ -101,8 +101,13 @@ int main(int argc, char *argv[])
 
   // Open project file and merge all other input files
   OpenProject(CTX.filename);
-  for(unsigned int i = 1; i < CTX.files.size(); i++)
-    MergeFile(CTX.files[i].c_str());
+  for(unsigned int i = 1; i < CTX.files.size(); i++){
+    if(CTX.files[i] == "-new")
+      new GModel;
+    else
+      MergeFile(CTX.files[i].c_str());
+  }
+  
   if(CTX.post.combine_time){
     PView::combine(true, 2, CTX.post.combine_remove_orig);
     WID->update_views();

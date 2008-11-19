@@ -196,6 +196,10 @@ void Get_Options(int argc, char *argv[])
         CTX.batch = 4;
         i++;
       }
+      else if(!strcmp(argv[i] + 1, "new")) {
+        CTX.files.push_back("-new");
+        i++;
+      }
       else if(!strcmp(argv[i] + 1, "socket")) {
         i++;        
         if(argv[i] != NULL)
@@ -204,12 +208,12 @@ void Get_Options(int argc, char *argv[])
 	  Msg::Fatal("Missing string");
         CTX.batch = 5;
       }
-	  else if(!strcmp(argv[i] + 1, "refine")) {
-		  CTX.batch = 6;
-		  i++;
+      else if(!strcmp(argv[i] + 1, "refine")) {
+        CTX.batch = 6;
+        i++;
       }
       else if(!strcmp(argv[i] + 1, "part")) {
-        CTX.batchAfterMesh = 1;
+        CTX.batch = 7;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "pid")) {

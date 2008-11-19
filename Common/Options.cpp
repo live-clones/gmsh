@@ -457,7 +457,6 @@ void Init_Options(int num)
 
   // The following defaults cannot be set by the user 
   CTX.batch = 0;
-  CTX.batchAfterMesh = 0;
   CTX.output_filename = NULL;
   CTX.bgm_filename = NULL;
   CTX.lc = 1.0;

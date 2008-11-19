@@ -236,11 +236,18 @@ void SetProjectName(const char *name)
 
 int MergeFile(const char *name, int warn_if_missing)
 {
+  GModel *model = GModel::current();
+  if(!model){
+    Msg::Error("No models exists in which to merge data");
+    return 0;
+  }
+
   // added 'b' for pure Windows programs, since some of these files
   // contain binary data
   FILE *fp = fopen(name, "rb");
   if(!fp){
-    if(warn_if_missing) Msg::Warning("Unable to open file '%s'", name);
+    if(warn_if_missing) 
+      Msg::Warning("Unable to open file '%s'", name);
     return 0;
   }
 
@@ -274,48 +281,39 @@ int MergeFile(const char *name, int warn_if_missing)
 
   CTX.geom.draw = 0; // don't try to draw the model while reading
 
-  GModel *m = GModel::current();
-
-  // FIXME: We need to decide what do do for CAD entities, meshes,
-  // etc.  For meshes we should definitely create one new model per
-  // merge (and reset current() to the previous value after the
-  // merge). This will make multi-step multi-meshes post-pro views
-  // work out of the box.
-  // GModel *m = new GModel;
-
 #if !defined(HAVE_NO_POST)
   int numViewsBefore = PView::list.size();
 #endif
 
   int status = 0;
   if(!strcmp(ext, ".stl") || !strcmp(ext, ".STL")){
-    status = m->readSTL(name, CTX.geom.tolerance);
+    status = model->readSTL(name, CTX.geom.tolerance);
   }
   else if(!strcmp(ext, ".brep") || !strcmp(ext, ".rle") ||
           !strcmp(ext, ".brp") || !strcmp(ext, ".BRP")){
-    status = m->readOCCBREP(std::string(name));
+    status = model->readOCCBREP(std::string(name));
   }
   else if(!strcmp(ext, ".iges") || !strcmp(ext, ".IGES") ||
           !strcmp(ext, ".igs") || !strcmp(ext, ".IGS")){
-    status = m->readOCCIGES(std::string(name));
+    status = model->readOCCIGES(std::string(name));
   }
   else if(!strcmp(ext, ".step") || !strcmp(ext, ".STEP") ||
           !strcmp(ext, ".stp") || !strcmp(ext, ".STP")){
-    status = m->readOCCSTEP(std::string(name));
+    status = model->readOCCSTEP(std::string(name));
   }
   else if(!strcmp(ext, ".unv") || !strcmp(ext, ".UNV")){
-    status = m->readUNV(name);
+    status = model->readUNV(name);
   }
   else if(!strcmp(ext, ".vtk") || !strcmp(ext, ".VTK")){
-    status = m->readVTK(name, CTX.big_endian);
+    status = model->readVTK(name, CTX.big_endian);
   }
   else if(!strcmp(ext, ".wrl") || !strcmp(ext, ".WRL") || 
           !strcmp(ext, ".vrml") || !strcmp(ext, ".VRML") ||
           !strcmp(ext, ".iv") || !strcmp(ext, ".IV")){
-    status = m->readVRML(name);
+    status = model->readVRML(name);
   }
   else if(!strcmp(ext, ".mesh") || !strcmp(ext, ".MESH")){
-    status = m->readMESH(name);
+    status = model->readMESH(name);
   }
   else if(!strcmp(ext, ".med") || !strcmp(ext, ".MED") ||
 	  !strcmp(ext, ".mmed") || !strcmp(ext, ".MMED") ||
@@ -327,13 +325,13 @@ int MergeFile(const char *name, int warn_if_missing)
   }
   else if(!strcmp(ext, ".bdf") || !strcmp(ext, ".BDF") ||
           !strcmp(ext, ".nas") || !strcmp(ext, ".NAS")){
-    status = m->readBDF(name);
+    status = model->readBDF(name);
   }
   else if(!strcmp(ext, ".p3d") || !strcmp(ext, ".P3D")){
-    status = m->readP3D(name);
+    status = model->readP3D(name);
   }
   else if(!strcmp(ext, ".fm") || !strcmp(ext, ".FM")) {
-    status = m->readFourier(name);
+    status = model->readFourier(name);
   }
 #if defined(HAVE_FLTK)
   else if(!strcmp(ext, ".pnm") || !strcmp(ext, ".PNM") ||
@@ -362,7 +360,7 @@ int MergeFile(const char *name, int warn_if_missing)
     if(!strncmp(header, "$PTS", 4) || !strncmp(header, "$NO", 3) || 
        !strncmp(header, "$PARA", 5) || !strncmp(header, "$ELM", 4) ||
        !strncmp(header, "$MeshFormat", 11)) {
-      status = m->readMSH(name);
+      status = model->readMSH(name);
 #if !defined(HAVE_NO_POST)
       if(status > 1) status = PView::readMSH(name);
 #endif
@@ -374,7 +372,7 @@ int MergeFile(const char *name, int warn_if_missing)
     }
 #endif
     else {
-      status = m->readGEO(name);
+      status = model->readGEO(name);
     }
   }
 

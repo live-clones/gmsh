@@ -64,8 +64,8 @@ class Context_T {
   int field_size[2]; // size of the field window on the screen
   int file_chooser_position[2]; // position of the file chooser window on the screen
   int system_menu_bar; // use the system menu bar on MacOS?
-  int batch; // 0=full gfx; -1=just parse; 1,2,3=batch 1D, 2D, 3D mesh 
-  int batchAfterMesh; // 1=partition
+  int batch; // 0=full gfx; -1=write geo; -2=check coherence; 1,2,3=batch mesh; 
+             // 4=adapt; 5=server daemon; 6=refine; 7=partition
   int initial_context; // 0=automatic; 1=geom; 2=mesh; 3=solver; 4=post 
   int nopopup; // never popup dialogs in scripts (use default values instead)
   int non_modal_windows; // make all windows "non modal"

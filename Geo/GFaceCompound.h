@@ -3,11 +3,11 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to <gmsh@geuz.org>.
 
-#ifndef _G_FACECOMPOUND_H_
-#define _G_FACECOMPOUND_H_
+#ifndef _GFACE_COMPOUND_H_
+#define _GFACE_COMPOUND_H_
 
-#include "Geo.h"
 #include "GFace.h"
+#include "GEdge.h"
 
 /*
 A GFaceCompound is a model face that is the compound of model faces.
@@ -23,11 +23,8 @@ consist in a triangulation in the (u,v) space with parameter values at
 nodes.
 
 The compound can therefore be re-meshed using any surface mesh
-generator of gmsh !
+generator of gmsh!
 */
-
-#include "GFace.h"
-#include "GEdge.h"
 
 typedef struct {
   SPoint2 p1, p2, p3;
@@ -55,7 +52,7 @@ class GFaceCompound : public GFace {
   }
   void getBoundingEdges();
   void getTriangle(double u, double v, MTriangle **t, double &_u, double &_v) const;
-public:
+ public:
   GFaceCompound(GModel *m, int tag, 
 		std::list<GFace*> &compound,
 		std::list<GEdge*> &U0,
@@ -69,7 +66,7 @@ public:
   virtual GEntity::GeomType geomType() const { return CompoundSurface; }
   ModelType getNativeType() const { return GmshModel; }
   void * getNativePtr() const { return 0; }
-  SPoint2 getCoordinates (MVertex *v) const { parametrize() ; return coordinates[v]; }
+  SPoint2 getCoordinates(MVertex *v) const { parametrize() ; return coordinates[v]; }
   virtual bool buildRepresentationCross(){ return false; }
 };
 

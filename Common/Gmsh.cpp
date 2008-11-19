@@ -69,6 +69,11 @@ int GmshSetOption(std::string category, std::string name, double value, int inde
   return 0;
 }
 
+int GmshMergeFile(std::string fileName)
+{
+  return MergeFile(fileName.c_str(), 1);
+}
+
 int GmshFinalize()
 {
   return 1;
@@ -79,8 +84,13 @@ int GmshBatch()
   if(!GModel::current()) return 0;
 
   OpenProject(CTX.filename);
-  for(unsigned int i = 1; i < CTX.files.size(); i++)
-    MergeFile(CTX.files[i].c_str());
+  for(unsigned int i = 1; i < CTX.files.size(); i++){
+    if(CTX.files[i] == "-new")
+      new GModel;
+    else
+      MergeFile(CTX.files[i].c_str());
+  }
+
 #if !defined(HAVE_NO_POST)
   if(CTX.bgm_filename) {
     MergeFile(CTX.bgm_filename);
@@ -90,9 +100,9 @@ int GmshBatch()
       Msg::Error("Invalid background mesh (no view)");
   }
 #endif
-  if(CTX.batch == 5) {
+
+  if(CTX.batch == 5)
     GmshDaemon(CTX.solver.socket_name);
-  }
   else if(CTX.batch == 4) {
     AdaptMesh(GModel::current());
     CreateOutputFile(CTX.output_filename, CTX.mesh.format);
@@ -100,8 +110,8 @@ int GmshBatch()
   else if(CTX.batch > 0) {
     GModel::current()->mesh(CTX.batch);
 #if defined(HAVE_CHACO) || defined(HAVE_METIS)
-    if(CTX.batchAfterMesh == 1)
-       PartitionMesh(GModel::current(), CTX.mesh.partition_options);
+    if(CTX.batch == 7)
+      PartitionMesh(GModel::current(), CTX.mesh.partition_options);
 #endif
     CreateOutputFile(CTX.output_filename, CTX.mesh.format);
   }
