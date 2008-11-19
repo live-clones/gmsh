@@ -1,11 +1,14 @@
-#include "gmshTermOfFormulation.h"
-#include "gmshFunction.h"
+// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
 
 #include "Gmsh.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "GmshMatrix.h"
-
+#include "gmshTermOfFormulation.h"
+#include "gmshFunction.h"
 #include "gmshLinearSystem.h"
 #include "gmshAssembler.h"
 

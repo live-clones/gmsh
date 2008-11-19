@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to <gmsh@geuz.org>.
+
 #ifndef _GMSH_LAPLACE_H_
 #define _GMSH_LAPLACE_H_
 
