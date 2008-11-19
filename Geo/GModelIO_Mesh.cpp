@@ -2378,74 +2378,73 @@ int GModel::readDIFF(const std::string &name)
       if(!fgets(str, sizeof(str), fp)) return 0;
       int num = 0, type, physical = 0, partition = 0;
       int indices[60];
-      if(sscanf(str, "%*d %s %d", eleTypec, &material[i-1])!=2) return 0;
-      eleType=std::string(eleTypec);
+      if(sscanf(str, "%*d %s %d", eleTypec, &material[i-1]) != 2) return 0;
+      eleType = std::string(eleTypec);
       int k2; // local number for the element
       int NoVertices; // number of vertices per element
-      if(eleType.compare("ElmT3n2D")==0){ 
-        NoVertices=3;
-        static int map[3]={0, 1, 2}; // identical to gmsh
-        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
-        type= MSH_TRI_3;
+      if(eleType == "ElmT3n2D"){ 
+        NoVertices = 3;
+        static int map[3] = {0, 1, 2}; // identical to gmsh
+        mapping=std::vector<int>(map, map + sizeof(map) / sizeof(int));
+        type = MSH_TRI_3;
       }
-      else if(eleType.compare("ElmT6n2D")==0){ 
-        NoVertices=6;
-        static int map[6]={0, 1, 2, 3, 4, 5}; // identical to gmsh
-        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
-        type= MSH_TRI_6;
+      else if(eleType == "ElmT6n2D"){ 
+        NoVertices = 6;
+        static int map[6] = {0, 1, 2, 3, 4, 5}; // identical to gmsh
+        mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
+        type = MSH_TRI_6;
       }
-      else if(eleType.compare("ElmB4n2D")==0){ 
-        NoVertices=4;
-        static int map[4]={0, 1, 3, 2}; // local numbering
-        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
-        type= MSH_QUA_4;
+      else if(eleType == "ElmB4n2D"){ 
+        NoVertices = 4;
+        static int map[4] = {0, 1, 3, 2}; // local numbering
+        mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
+        type = MSH_QUA_4;
       }
-      else if(eleType.compare("ElmB8n2D")==0){ 
-        NoVertices=8;
-        static int map[8]={0, 1, 3, 2, 4, 6, 7, 5}; // local numbering
-        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
-        type= MSH_QUA_8;
+      else if(eleType == "ElmB8n2D"){ 
+        NoVertices = 8;
+        static int map[8] = {0, 1, 3, 2, 4, 6, 7, 5}; // local numbering
+        mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
+        type = MSH_QUA_8;
       }
-      else if(eleType.compare("ElmB9n2D")==0){ 
-        NoVertices=9;
-        static int map[9]={0, 4, 1, 7, 8, 5, 3, 6, 2}; // local numbering
-        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
-        type= MSH_QUA_9;
+      else if(eleType == "ElmB9n2D"){ 
+        NoVertices = 9;
+        static int map[9] = {0, 4, 1, 7, 8, 5, 3, 6, 2}; // local numbering
+        mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
+        type = MSH_QUA_9;
       }
-      else if(eleType.compare("ElmT4n3D")==0){
-        NoVertices=4;
-        static int map[4]={0, 1, 2, 3}; // identical to gmsh
-        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
-        type= MSH_TET_4;
+      else if(eleType == "ElmT4n3D"){
+        NoVertices = 4;
+        static int map[4] = {0, 1, 2, 3}; // identical to gmsh
+        mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
+        type = MSH_TET_4;
       } 
-      else if(eleType.compare("ElmT10n3D")==0){ 
-        NoVertices=10;
-        static int map[10]={1, 0, 2, 3, 4, 6, 5, 9, 7, 8}; // local numbering
-        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
-        type= MSH_TET_10;
+      else if(eleType == "ElmT10n3D"){ 
+        NoVertices = 10;
+        static int map[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}; // local numbering
+        mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
+        type = MSH_TET_10;
       }
-      else if(eleType.compare("ElmB8n3D")==0){
-        NoVertices=8;
-        static int map[8]={4, 5, 0, 1, 7, 6, 3, 2};
-        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
-        type= MSH_HEX_8;
+      else if(eleType == "ElmB8n3D"){
+        NoVertices = 8;
+        static int map[8] = {4, 5, 0, 1, 7, 6, 3, 2};
+        mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
+        type = MSH_HEX_8;
       } 
-      else if(eleType.compare("ElmB20n3D")==0){
-        NoVertices=20;
-        static int map[20]={4, 5, 0, 1, 7, 6, 3, 2, 16, 8, 19, 13, 15, 12, 14,
-                            17, 18, 9, 11};
-        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
-        type= MSH_HEX_20;
+      else if(eleType == "ElmB20n3D"){
+        NoVertices = 20;
+        static int map[20] = {4, 5, 0, 1, 7, 6, 3, 2, 16, 8, 19, 13, 15, 12, 
+                              14, 17, 18, 9, 11};
+        mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
+        type = MSH_HEX_20;
       } 
-      else if(eleType.compare("ElmB27n3D")==0){
-        NoVertices=27;
-        static int map[27]={4, 16, 5, 10, 21, 12, 0, 8, 1, 17, 25, 18, 22, 
-                            26, 23, 9, 20, 11, 7, 19, 6, 15, 24, 14, 3, 13, 2};
-        mapping=std::vector<int> (map, map + sizeof(map) / sizeof(int) );
-        type= MSH_HEX_27;
+      else if(eleType == "ElmB27n3D"){
+        NoVertices = 27;
+        static int map[27] = {4, 16, 5, 10, 21, 12, 0, 8, 1, 17, 25, 18, 22, 
+                              26, 23, 9, 20, 11, 7, 19, 6, 15, 24, 14, 3, 13, 2};
+        mapping = std::vector<int>(map, map + sizeof(map) / sizeof(int));
+        type = MSH_HEX_27;
       } 
-      else
-      {
+      else{
         return 0;
       }
       std::string format_read_vertices = "%*d %*s %*d";
@@ -2456,12 +2455,12 @@ int GModel::readDIFF(const std::string &name)
         } 
         else
           format_read_vertices += " %d";
-        k2=mapping[k];
+        k2 = mapping[k];
         if(sscanf(str, format_read_vertices.c_str(), &ElementsNodes[i-1][k2]) != 1) 
           return 0;
       }
       mapping.clear();
-      for(int j=0;j<NoVertices;j++)
+      for(int j = 0; j < NoVertices; j++)
         indices[j] = ElementsNodes[i - 1][j];
       std::vector<MVertex*> vertices;
       if(vertexVector.size()){
