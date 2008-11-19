@@ -586,9 +586,17 @@ bool optimizeHighOrderMesh(GFace *gf, edgeContainer &edgeVertices)
   return success;
 }
 
-void getParametricCoordnates ( GFace *gf, 
-			       std::vector<MVertex*> &e,
-			       std::vector<SPoint2> &param)
+static void parametricCoordinates(MVertex *v, GFace *gf, double &uu, double &vv)
+{
+  SPoint2 param;
+  reparamMeshVertexOnFace(v, gf, param);
+  uu = param[0];
+  vv = param[1];
+}
+
+static void getParametricCoordnates ( GFace *gf, 
+                                      std::vector<MVertex*> &e,
+                                      std::vector<SPoint2> &param)
 {
   param.clear();
   for (unsigned int i = 0; i < e.size(); i++){

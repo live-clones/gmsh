@@ -796,10 +796,10 @@ BDS_Mesh *gmsh2BDS(std::list<GFace*> &l)
         if (!p[j]) {
           p[j] = m->add_point(e->getVertex(j)->getNum(), e->getVertex(j)->x(),
                               e->getVertex(j)->y(), e->getVertex(j)->z());
-          double u0, v0;
-          parametricCoordinates(e->getVertex(j), gf, u0, v0);
-          p[j]->u = u0;
-          p[j]->v = v0;
+          SPoint2 param;
+          reparamMeshVertexOnFace(e->getVertex(j), gf, param);
+          p[j]->u = param[0];
+          p[j]->v = param[1];
           m->add_geom(e->getVertex(j)->onWhat()->tag(), 
                       e->getVertex(j)->onWhat()->dim());
           BDS_GeomEntity *g = m->get_geom(e->getVertex(j)->onWhat()->tag(), 

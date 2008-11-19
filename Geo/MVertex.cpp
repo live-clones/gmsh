@@ -199,37 +199,6 @@ MVertex::linearSearch(std::set<MVertex*, MVertexLessThanLexicographic> &pos)
   return pos.end();
 }
 
-void parametricCoordinates(const MVertex *ver, const GFace *gf, double &u, double &v)
-{
-  if (gf->geomType() == GEntity::CompoundSurface){
-    GFaceCompound *gfc = (GFaceCompound*) gf;
-    SPoint2 p = gfc->getCoordinates((MVertex*)ver);
-    u = p.x();
-    v = p.y();
-    return;
-  }
-
-  GEntity *ge = ver->onWhat();
-  if(ge->dim() == 2){
-    ver->getParameter(0, u);
-    ver->getParameter(1, v);      
-  }
-  else if(ge->dim() == 1){
-    double t;
-    ver->getParameter(0, t);
-    GEdge *ged = dynamic_cast<GEdge*>(ge);
-    SPoint2 p = ged->reparamOnFace((GFace*)gf, t, 1);
-    u = p.x();
-    v = p.y();
-  }
-  else{
-    GVertex *gver = dynamic_cast<GVertex*>(ge);
-    SPoint2 p = gver->reparamOnFace((GFace*)gf, 1);
-    u = p.x();
-    v = p.y();
-  }      
-}
-
 static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params)
 {
   params.clear();
@@ -284,19 +253,23 @@ bool reparamMeshVerticesOnFace(MVertex *v1, MVertex *v2, GFace *gf,
     return true;
   }
   else if (p1.size() == 1 && p2.size() == 2){
-    double d1 = (p1[0].x() - p2[0].x())*(p1[0].x() - p2[0].x())+
-      (p1[0].x() - p2[0].y())*(p1[0].y() - p2[0].y());
-    double d2 = (p1[0].x() - p2[1].x())*(p1[0].x() - p2[1].x())+
-      (p1[0].x() - p2[1].y())*(p1[0].y() - p2[1].y());
+    double d1 = 
+      (p1[0].x() - p2[0].x()) * (p1[0].x() - p2[0].x()) +
+      (p1[0].x() - p2[0].y()) * (p1[0].y() - p2[0].y());
+    double d2 = 
+      (p1[0].x() - p2[1].x()) * (p1[0].x() - p2[1].x()) +
+      (p1[0].x() - p2[1].y()) * (p1[0].y() - p2[1].y());
     param1 = p1[0];
     param2 = d2 < d1 ? p2[1] : p2[0];
     return true;
   }  
   else if (p2.size() == 1 && p1.size() == 2){
-    double d1 = (p2[0].x() - p1[0].x())*(p2[0].x() - p1[0].x())+
-      (p2[0].x() - p1[0].y())*(p2[0].y() - p1[0].y());
-    double d2 = (p2[0].x() - p1[1].x())*(p2[0].x() - p1[1].x())+
-      (p2[0].x() - p1[1].y())*(p2[0].y() - p1[1].y());
+    double d1 = 
+      (p2[0].x() - p1[0].x()) * (p2[0].x() - p1[0].x()) +
+      (p2[0].x() - p1[0].y()) * (p2[0].y() - p1[0].y());
+    double d2 = 
+      (p2[0].x() - p1[1].x()) * (p2[0].x() - p1[1].x()) +
+      (p2[0].x() - p1[1].y()) * (p2[0].y() - p1[1].y());
     param1 = d2 < d1 ? p1[1] : p1[0];
     param2 = p2[0];
     return true;
@@ -320,29 +293,27 @@ bool reparamMeshVertexOnFace(MVertex *v, GFace *gf, SPoint2 &param)
 
   if(v->onWhat()->dim() == 0){
     GVertex *gv = (GVertex*)v->onWhat();
+    param = gv->reparamOnFace(gf, 1);
 
     // abort if we could be on a seam
     std::list<GEdge*> ed = gv->edges();
     for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++)
       if((*it)->isSeam(gf)) return false;
-    
-    param = gv->reparamOnFace(gf, 1);
   }
   else if(v->onWhat()->dim() == 1){
     GEdge *ge = (GEdge*)v->onWhat();
+    double t;
+    v->getParameter(0, t);
+    param = ge->reparamOnFace(gf, t, 1);
 
     // abort if we are on a seam (todo: try dir=-1 and compare)
     if(ge->isSeam(gf))
       return false;
-
-    double UU;
-    v->getParameter(0, UU);
-    param = ge->reparamOnFace(gf, UU, 1);
   }
   else{
-    double UU, VV;
-    if(v->onWhat() == gf && v->getParameter(0, UU) && v->getParameter(1, VV))
-      param = SPoint2(UU, VV);
+    double uu, vv;
+    if(v->onWhat() == gf && v->getParameter(0, uu) && v->getParameter(1, vv))
+      param = SPoint2(uu, vv);
     else 
       param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
   }

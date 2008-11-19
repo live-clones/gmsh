@@ -165,7 +165,6 @@ class MFaceVertex : public MVertex{
   }
 };
 
-void parametricCoordinates(const MVertex *ver, const GFace *gf, double &u, double &v);
 bool reparamMeshVerticesOnFace(MVertex *v1, MVertex *v2, GFace *gf, 
                                SPoint2 &param1, SPoint2 &param2);
 bool reparamMeshVertexOnFace(MVertex *v, GFace *gf, SPoint2 &param);

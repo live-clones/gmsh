@@ -98,10 +98,10 @@ void buidMeshGenerationDataStructures(GFace *gf, std::set<MTri3*, compareTri3Ptr
     it->first->setNum(NUM++);
     vSizes.push_back(it->second);
     vSizesBGM.push_back(it->second);
-    double u0, v0;
-    parametricCoordinates(it->first, gf, u0, v0);
-    Us.push_back(u0);
-    Vs.push_back(v0);
+    SPoint2 param;
+    reparamMeshVertexOnFace(it->first, gf, param);
+    Us.push_back(param[0]);
+    Vs.push_back(param[1]);
   }
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
     double lc = 0.3333333333 * (vSizes [gf->triangles[i]->getVertex(0)->getNum()] +
@@ -178,7 +178,10 @@ void parametricCoordinates(MTriangle *t, GFace *gf, double u[3], double v[3])
 {
   for (unsigned int j = 0; j < 3; j++){
     MVertex *ver = t->getVertex(j);
-    parametricCoordinates(ver, gf, u[j], v[j]);
+    SPoint2 param;
+    reparamMeshVertexOnFace(ver, gf, param);
+    u[j] = param[0];
+    v[j] = param[1];
   }
 }
 
