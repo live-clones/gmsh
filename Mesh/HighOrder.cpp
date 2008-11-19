@@ -317,7 +317,7 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
       if(!linear && 
          gf->geomType() != GEntity::DiscreteSurface &&
          gf->geomType() != GEntity::BoundaryLayerSurface){
-        reparamOK = reparamMeshVerticesOnFace(v0, v1, gf, p0, p1);
+        reparamOK = reparamMeshEdgeOnFace(v0, v1, gf, p0, p1);
       }
       double US[100], VS[100];
       if(reparamOK && !linear && gf->geomType() != GEntity::DiscreteSurface){
@@ -336,7 +336,7 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
 	  v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, US[j+1], VS[j+1]);
 	  if (displ3D){
 	    SPoint3 pc2 = edge.interpolate(t);          
-	    displ3D->add(v,SVector3(pc2.x(),pc2.y(),pc2.z()));
+	    displ3D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
 	  }
         }
         temp.push_back(v);

@@ -241,8 +241,8 @@ static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params
   }
 }
 
-bool reparamMeshVerticesOnFace(MVertex *v1, MVertex *v2, GFace *gf, 
-                               SPoint2 &param1, SPoint2 &param2)
+bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, 
+                           SPoint2 &param1, SPoint2 &param2)
 {
   std::vector<SPoint2> p1, p2;
   getAllParameters(v1, gf, p1);
@@ -250,7 +250,6 @@ bool reparamMeshVerticesOnFace(MVertex *v1, MVertex *v2, GFace *gf,
   if (p1.size() == 1 && p2.size() == 1){
     param1 = p1[0];
     param2 = p2[0];
-    return true;
   }
   else if (p1.size() == 1 && p2.size() == 2){
     double d1 = 
@@ -261,7 +260,6 @@ bool reparamMeshVerticesOnFace(MVertex *v1, MVertex *v2, GFace *gf,
       (p1[0].x() - p2[1].y()) * (p1[0].y() - p2[1].y());
     param1 = p1[0];
     param2 = d2 < d1 ? p2[1] : p2[0];
-    return true;
   }  
   else if (p2.size() == 1 && p1.size() == 2){
     double d1 = 
@@ -272,9 +270,12 @@ bool reparamMeshVerticesOnFace(MVertex *v1, MVertex *v2, GFace *gf,
       (p2[0].x() - p1[1].y()) * (p2[0].y() - p1[1].y());
     param1 = d2 < d1 ? p1[1] : p1[0];
     param2 = p2[0];
-    return true;
   }  
-  return false;
+  else{
+    param1 = gf->parFromPoint(SPoint3(v1->x(), v1->y(), v1->z()));
+    param2 = gf->parFromPoint(SPoint3(v2->x(), v2->y(), v2->z()));
+  }
+  return true;
 }
 
 bool reparamMeshVertexOnFace(MVertex *v, GFace *gf, SPoint2 &param)
@@ -295,7 +296,7 @@ bool reparamMeshVertexOnFace(MVertex *v, GFace *gf, SPoint2 &param)
     GVertex *gv = (GVertex*)v->onWhat();
     param = gv->reparamOnFace(gf, 1);
 
-    // abort if we could be on a seam
+    // shout if we could be on a seam
     std::list<GEdge*> ed = gv->edges();
     for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++)
       if((*it)->isSeam(gf)) return false;
@@ -306,7 +307,7 @@ bool reparamMeshVertexOnFace(MVertex *v, GFace *gf, SPoint2 &param)
     v->getParameter(0, t);
     param = ge->reparamOnFace(gf, t, 1);
 
-    // abort if we are on a seam (todo: try dir=-1 and compare)
+    // shout if we are on a seam
     if(ge->isSeam(gf))
       return false;
   }
