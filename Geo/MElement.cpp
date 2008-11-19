@@ -722,7 +722,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
 
 const gmshFunctionSpace* MLine::getFunctionSpace(int o) const
 {
-  int order = o == -1 ? getPolynomialOrder() : o;
+  int order = (o == -1) ? getPolynomialOrder() : o;
   
   switch (order) {
   case 1: return &gmshFunctionSpaces::find(MSH_LIN_2);
