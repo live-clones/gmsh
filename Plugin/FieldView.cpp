@@ -52,7 +52,7 @@ void GMSH_FieldViewPlugin::catchErrorMessage(char *errorMessage) const
 
 PView *GMSH_FieldViewPlugin::execute(PView *v)
 {
-  int comp = (int)FieldViewOptions_Number[0].def;
+  //int comp = (int)FieldViewOptions_Number[0].def;
   int iView = (int)FieldViewOptions_Number[1].def;
   int iField = (int)FieldViewOptions_Number[2].def;
   Field *field = GModel::current()->getFields()->get(iField);

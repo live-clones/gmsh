@@ -3133,7 +3133,9 @@ void geometry_elementary_add_new_cb(CALLBACK_ARGS)
   else
     Msg::Error("Unknown entity to create: %s", str.c_str());
 }
-static void _split_selection(){
+
+static void _split_selection()
+{
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
   Msg::StatusBar(3, false, "Select a line to split\n"
@@ -3143,13 +3145,13 @@ static void _split_selection(){
   std::vector<GFace*> faces;
   std::vector<GRegion*> regions;
   std::vector<MElement*> elements;
-  GEdge* edge_to_split=NULL;
+  GEdge* edge_to_split = NULL;
   while(1){
     char ib = SelectEntity(2, vertices, edges, faces, regions, elements);
-    if(ib=='q')
+    if(ib == 'q')
       break;
     if(!edges.empty()){
-      edge_to_split=edges[0];
+      edge_to_split = edges[0];
       HighlightEntity(edges[0]);
       break;
     }
@@ -3159,19 +3161,19 @@ static void _split_selection(){
     return;
   List_T *List1 = List_Create(5, 5, sizeof(int));
   Msg::StatusBar(3, false, "Select break points\n"
-          "[Press 'e' to end selection or 'q' to abort]");
+                 "[Press 'e' to end selection or 'q' to abort]");
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   Draw();
   while(1){
     char ib = SelectEntity(1, vertices, edges, faces, regions, elements);
-    if(ib=='q')
+    if(ib == 'q')
       break;
-    if(ib=='e'){
-      split_edge(edge_to_split->tag(),List1,CTX.filename);
+    if(ib == 'e'){
+      split_edge(edge_to_split->tag(), List1, CTX.filename);
       break;
     }
     if(!vertices.empty()){
-      for(int i=0;i<vertices.size();i++){
+      for(unsigned int i = 0; i < vertices.size(); i++){
         int tag = vertices[i]->tag();
         int index = List_ISearchSeq(List1, &tag, fcmp_int); 
         if(index < 0) List_Add(List1, &tag);
@@ -4487,10 +4489,11 @@ void view_field_put_on_view_cb(CALLBACK_ARGS)
   Field *field = (Field*)WID->field_editor_group->user_data();
   int iView;
   if(sscanf(mb->text(), "View [%i]", &iView)){
-    if(iView<PView::list.size()){
+    if(iView < (int)PView::list.size()){
       field->put_on_view(PView::list[iView]);
     }
-  }else{
+  }
+  else{
     field->put_on_new_view();
     WID->update_views();
   }

@@ -91,7 +91,7 @@ void SplitFileName(const char *name, char *no_ext, char *ext, char *base)
   }
 }
 
-std::vector<std::string> SplitWhiteSpace(std::string in, int len)
+std::vector<std::string> SplitWhiteSpace(std::string in, unsigned int len)
 {
   std::vector<std::string> out(1);
   for(unsigned int i = 0; i < in.size(); i++){

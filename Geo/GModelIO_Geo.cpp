@@ -137,19 +137,20 @@ int GModel::importGEOInternals()
       int i = 0;
       List_T *bnd;
       std::list<GEdge*> b[4];
-      while(bnd = p->Boundaries[i]){
+      while((bnd = p->Boundaries[i])){
 	if (i > 3)break;
 	for(int j = 0; j < List_Nbr(bnd); j++){
 	  int ie;
-	  List_Read(bnd,j,&ie);
+	  List_Read(bnd, j, &ie);
 	  b[i].push_back(getEdgeByTag(abs(ie)));
 	}
 	i++;
       }
       GFace *gf = getFaceByTag(abs(p->Num));
       if (!gf){
-	GFaceCompound *gf = new GFaceCompound (this,  p->Num , f_compound, b[0], b[1], b[2], b[3]);
-	add (gf);
+	GFaceCompound *gf = new GFaceCompound(this, p->Num, f_compound, 
+                                              b[0], b[1], b[2], b[3]);
+	add(gf);
       }
       else
         gf->resetMeshAttributes();
@@ -161,7 +162,7 @@ int GModel::importGEOInternals()
   Msg::Debug("%d Edges", edges.size());
   Msg::Debug("%d Faces", faces.size());
   Msg::Debug("%d Regions", regions.size());
-  
+
   return 1;
 }
 

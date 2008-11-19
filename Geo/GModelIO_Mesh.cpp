@@ -169,7 +169,7 @@ int GModel::readMSH(const std::string &name)
       vertexMap.clear();
       int minVertex = numVertices + 1, maxVertex = -1;
       for(int i = 0; i < numVertices; i++) {
-        int num, iClasDim, iClasTag, typVertex = 3;	
+        int num, iClasDim, iClasTag;	
         double xyz[3], uv[2];
 	MVertex *newVertex = 0;
 	if (!parametric){
@@ -2101,7 +2101,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   bool binary = false;
   if(!strcmp(buffer, "BINARY")) binary = true;
   
-  if(fscanf(fp, "%s %s", &buffer, &buffer2) != 2) return 0;
+  if(fscanf(fp, "%s %s", buffer, buffer2) != 2) return 0;
   if(strcmp(buffer, "DATASET") || strcmp(buffer2, "UNSTRUCTURED_GRID")){
     Msg::Error("VTK reader can only read unstructured datasets");
     return 0;
@@ -2109,7 +2109,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   
   // read mesh vertices
   int numVertices;
-  if(fscanf(fp, "%s %d %s\n", &buffer, &numVertices, buffer2) != 3) return 0;
+  if(fscanf(fp, "%s %d %s\n", buffer, &numVertices, buffer2) != 3) return 0;
   if(strcmp(buffer, "POINTS") || !numVertices){
     Msg::Warning("No points in dataset");
     return 0;
@@ -2148,7 +2148,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
 
   // read mesh elements
   int numElements, totalNumInt;
-  if(fscanf(fp, "%s %d %d\n", &buffer, &numElements, &totalNumInt) != 3) return 0;
+  if(fscanf(fp, "%s %d %d\n", buffer, &numElements, &totalNumInt) != 3) return 0;
   if(strcmp(buffer, "CELLS") || !numElements){
     Msg::Warning("No cells in dataset");
     return 0;
@@ -2160,7 +2160,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     if(binary){
       if(fread(&numVerts, sizeof(int), 1, fp) != 1) return 0;
       if(!bigEndian) SwapBytes((char*)&numVerts, sizeof(int), 1);
-      if(fread(n, sizeof(int), numVerts, fp) != numVerts) return 0;
+      if((int)fread(n, sizeof(int), numVerts, fp) != numVerts) return 0;
       if(!bigEndian) SwapBytes((char*)n, sizeof(int), numVerts);
     }
     else{
@@ -2170,14 +2170,14 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
       }
     }
     for(int j = 0; j < numVerts; j++){
-      if(n[j] >= 0 && n[j] < vertices.size())
+      if(n[j] >= 0 && n[j] < (int)vertices.size())
         cells[i].push_back(vertices[n[j]]);
       else
         Msg::Error("Bad vertex index");
     }
   }
-  if(fscanf(fp, "%s %d\n", &buffer, &numElements) != 2) return 0;
-  if(strcmp(buffer, "CELL_TYPES") || numElements != cells.size()){
+  if(fscanf(fp, "%s %d\n", buffer, &numElements) != 2) return 0;
+  if(strcmp(buffer, "CELL_TYPES") || numElements != (int)cells.size()){
     Msg::Error("No or invalid number of cells types");
     return 0;
   }
@@ -2310,7 +2310,7 @@ int GModel::readDIFF(const std::string &name)
     vertexVector.clear();
     vertexMap.clear();
     int minVertex = numVertices + 1, maxVertex = -1;
-    int num;
+    int num = 0;
     std::vector<std::vector<int> > elementary(numVertices);
 
     Msg::ResetProgressMeter();
@@ -2376,7 +2376,7 @@ int GModel::readDIFF(const std::string &name)
     std::vector<int> mapping;
     for(int i = 1; i <= numElements; i++){
       if(!fgets(str, sizeof(str), fp)) return 0;
-      int num, type, physical = 0, partition = 0;
+      int num = 0, type, physical = 0, partition = 0;
       int indices[60];
       if(sscanf(str, "%*d %s %d", eleTypec, &material[i-1])!=2) return 0;
       eleType=std::string(eleTypec);
@@ -2529,7 +2529,6 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   // faces, and the vertices would end up categorized on either one.)
   std::vector<std::list<int> > vertexTags(numVertices);
   std::list<int> boundaryIndicators;
-  int numBoundaryIndicators = 0;
   for(riter it = firstRegion(); it != lastRegion(); it++){
     std::list<GFace*> faces = (*it)->faces();
     for(std::list<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++){
@@ -2537,7 +2536,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
       boundaryIndicators.push_back(gf->tag());
       for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
         MElement *e = gf->getMeshElement(i);
-        for(unsigned int j = 0; j < e->getNumVertices(); j++){
+        for(int j = 0; j < e->getNumVertices(); j++){
           MVertex *v = e->getVertex(j);
           if(v->getIndex() > 0)
             vertexTags[v->getIndex() - 1].push_back(gf->tag());
@@ -2586,7 +2585,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   fprintf(fp, " Max number of nodes in an element: %d \n", maxNumNodesPerElement);
   fprintf(fp, " Only one subdomain el              : dpFALSE\n");
   fprintf(fp, " Lattice data                     ? 0\n\n\n\n");
-  fprintf(fp, " %d Boundary indicators:  ", boundaryIndicators.size());
+  fprintf(fp, " %d Boundary indicators:  ", (int)boundaryIndicators.size());
   for(std::list<int>::iterator it = boundaryIndicators.begin();
       it != boundaryIndicators.end(); it++)
     fprintf(fp, " %d", *it);
@@ -2606,7 +2605,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
       MVertex *v = entities[i]->mesh_vertices[j];
       if(v->getIndex() > 0){
         v->writeDIFF(fp, binary, scalingFactor);
-        fprintf(fp, " [%d] ", vertexTags[v->getIndex() - 1].size());
+        fprintf(fp, " [%d] ", (int)vertexTags[v->getIndex() - 1].size());
         for(std::list<int>::iterator it = vertexTags[v->getIndex() - 1].begin();
             it != vertexTags[v->getIndex() - 1].end(); it++)
           fprintf(fp," %d ", *it);

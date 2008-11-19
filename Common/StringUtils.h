@@ -15,6 +15,6 @@ std::string ExtractDoubleQuotedString(const char *str, int len);
 std::string SanitizeTeXString(const char *in, int equation);
 std::string FixWindowsPath(const char *in);
 void SplitFileName(const char *name, char *no_ext, char *ext, char *base);
-std::vector<std::string> SplitWhiteSpace(std::string in, int len);
+std::vector<std::string> SplitWhiteSpace(std::string in, unsigned int len);
 
 #endif

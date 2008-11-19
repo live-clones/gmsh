@@ -43,9 +43,9 @@ FLTK_PREFIX="E:/src/fltk-1.1.9"
 
 # If you selected ENABLE_OCC, specify where OpenCASCADE is installed
 ifneq ($(CASROOT),)
-      OCC_PREFIX="${CASROOT}"
+  OCC_PREFIX="${CASROOT}"
 else
-	OCC_PREFIX="E:/src/OpenCASCADE6.3.0/ros"
+  OCC_PREFIX="E:/src/OpenCASCADE6.3.0/ros"
 endif
 
 # If you selected ENABLE_MED, specify where MED and HDF5 are installed

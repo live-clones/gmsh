@@ -338,8 +338,7 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
   while(it != edges.end()){
     if ((*it)->isSeam(gf)) return false;
     if(!(*it)->isMeshDegenerated()){
-
-      for (int i=0 ; i< (*it)->lines.size();i++){
+      for (unsigned int i = 0; i< (*it)->lines.size(); i++){
 	all_vertices.insert((*it)->lines[i]->getVertex(0));
 	all_vertices.insert((*it)->lines[i]->getVertex(1));
       }      

@@ -388,6 +388,7 @@ int MergeFile(const char *name, int warn_if_missing)
     WID->update_views();
 #endif
 
+  if(!status) Msg::Error("Error loading '%s'", name);
   Msg::StatusBar(2, true, "Read '%s'", name);
   return status;
 }

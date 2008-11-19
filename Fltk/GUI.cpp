@@ -1660,8 +1660,8 @@ void GUI::add_multiline_in_browser(Fl_Browser * o, const char *prefix, const cha
     o->add(" ");
     return;
   }
-  for(unsigned int i = 0; i < strlen(str); i++) {
-    if(i == strlen(str) - 1 || str[i] == '\n' || (wrap > 0 && i-start==wrap)) {
+  for(int i = 0; i < (int)strlen(str); i++) {
+    if(i == (int)strlen(str) - 1 || str[i] == '\n' || (wrap > 0 && i-start==wrap)) {
       if(wrap>0 && i-start == wrap){ //line is longer than wrap
         while(str[i]!=' ' &&i>start) //go back to the previous space
           i--;
@@ -4105,7 +4105,7 @@ void GUI::create_statistics_window()
 
       for(int i = 0; i < 4; i++){
         int ww = 3 * fontsize;
-        Fl_Box *b = new Fl_Box(FL_NO_BOX, width - 3 * ww - 2 * WB, 2 * WB + (13 + i) * BH, ww, BH, "Plot:");
+        new Fl_Box(FL_NO_BOX, width - 3 * ww - 2 * WB, 2 * WB + (13 + i) * BH, ww, BH, "Plot:");
         stat_butt[2 * i] = new Fl_Button(width - 2 * ww - 2 * WB, 2 * WB + (13 + i) * BH, ww, BH, "2D");
         stat_butt[2 * i + 1] = new Fl_Button(width - ww - 2 * WB, 2 * WB + (13 + i) * BH, ww, BH, "3D");
       }

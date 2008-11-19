@@ -16,6 +16,7 @@ extern Context_T CTX;
 class visContext{
  public:
   visContext(){}
+  virtual ~visContext(){}
   virtual void transform(double &x, double &y, double &z){}
 };
 

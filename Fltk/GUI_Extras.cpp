@@ -1745,7 +1745,7 @@ void partition_opt_architecture_cb(Fl_Widget *widget, void *data)
 void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data)
 {
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
-  unsigned val;
+  unsigned val = 0;
   if(widget == dlg->inputNumPartition) {
     val = static_cast<unsigned>(dlg->inputNumPartition->value());
     switch(static_cast<int>(dlg->choiceArchitecture->value())) {

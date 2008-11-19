@@ -3216,7 +3216,8 @@ there are @var{ncomp} values per node (resp. per element), where
 @end table
 
 Below is a small example (a mesh consisting of two quadrangles with an
-associated nodal scalar dataset):
+associated nodal scalar dataset; the comments are not part of the actual
+file!):
 
 @smallexample
 $MeshFormat
