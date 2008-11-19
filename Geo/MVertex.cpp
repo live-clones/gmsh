@@ -6,6 +6,7 @@
 #include <string.h>
 #include <math.h>
 #include "MVertex.h"
+#include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
 #include "GFaceCompound.h"
@@ -227,4 +228,139 @@ void parametricCoordinates(const MVertex *ver, const GFace *gf, double &u, doubl
     u = p.x();
     v = p.y();
   }      
+}
+
+static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params)
+{
+  params.clear();
+  if(v->onWhat()->dim() == 0){
+    GVertex *gv = (GVertex*)v->onWhat();
+    std::list<GEdge*> ed = gv->edges();
+    bool seam = false;
+    for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++){
+      if((*it)->isSeam(gf)) {
+	Range<double> range = (*it)->parBounds(0);
+	if (gv == (*it)->getBeginVertex()){
+	  params.push_back((*it)->reparamOnFace(gf, range.low(),-1));
+	  params.push_back((*it)->reparamOnFace(gf, range.low(), 1));
+	}
+	else if (gv == (*it)->getEndVertex()){
+	  params.push_back((*it)->reparamOnFace(gf, range.high(),-1));
+	  params.push_back((*it)->reparamOnFace(gf, range.high(), 1));
+	}
+	else{
+          Msg::Warning("Strange!");
+	}
+	seam = true;
+      }
+    }
+    if (!seam)
+      params.push_back(gv->reparamOnFace(gf, 1));
+  }
+  else if(v->onWhat()->dim() == 1){
+    GEdge *ge = (GEdge*)v->onWhat();
+    double UU;
+    v->getParameter(0, UU);
+    params.push_back(ge->reparamOnFace(gf, UU, 1));
+    if(ge->isSeam(gf))
+      params.push_back(ge->reparamOnFace(gf, UU, -1));
+  }
+  else{
+    double UU, VV;
+    if(v->onWhat() == gf && v->getParameter(0, UU) && v->getParameter(1, VV))
+      params.push_back(SPoint2(UU, VV));
+  }
+}
+
+bool reparamMeshVerticesOnFace(MVertex *v1, MVertex *v2, GFace *gf, 
+                               SPoint2 &param1, SPoint2 &param2)
+{
+  std::vector<SPoint2> p1, p2;
+  getAllParameters(v1, gf, p1);
+  getAllParameters(v2, gf, p2);
+  if (p1.size() == 1 && p2.size() == 1){
+    param1 = p1[0];
+    param2 = p2[0];
+    return true;
+  }
+  else if (p1.size() == 1 && p2.size() == 2){
+    double d1 = (p1[0].x() - p2[0].x())*(p1[0].x() - p2[0].x())+
+      (p1[0].x() - p2[0].y())*(p1[0].y() - p2[0].y());
+    double d2 = (p1[0].x() - p2[1].x())*(p1[0].x() - p2[1].x())+
+      (p1[0].x() - p2[1].y())*(p1[0].y() - p2[1].y());
+    param1 = p1[0];
+    param2 = d2 < d1 ? p2[1] : p2[0];
+    return true;
+  }  
+  else if (p2.size() == 1 && p1.size() == 2){
+    double d1 = (p2[0].x() - p1[0].x())*(p2[0].x() - p1[0].x())+
+      (p2[0].x() - p1[0].y())*(p2[0].y() - p1[0].y());
+    double d2 = (p2[0].x() - p1[1].x())*(p2[0].x() - p1[1].x())+
+      (p2[0].x() - p1[1].y())*(p2[0].y() - p1[1].y());
+    param1 = d2 < d1 ? p1[1] : p1[0];
+    param2 = p2[0];
+    return true;
+  }  
+  return false;
+}
+
+bool reparamMeshVertexOnFace(MVertex *v, GFace *gf, SPoint2 &param)
+{
+  if (gf->geomType() == GEntity::CompoundSurface){
+    GFaceCompound *gfc = (GFaceCompound*) gf;
+    param = gfc->getCoordinates(v);
+    return true;
+  }
+
+  if(v->onWhat()->geomType() == GEntity::DiscreteCurve || 	 
+     v->onWhat()->geomType() == GEntity::BoundaryLayerCurve){ 	 
+    param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+    return true;
+  }
+
+  if(v->onWhat()->dim() == 0){
+    GVertex *gv = (GVertex*)v->onWhat();
+
+    // abort if we could be on a seam
+    std::list<GEdge*> ed = gv->edges();
+    for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++)
+      if((*it)->isSeam(gf)) return false;
+    
+    param = gv->reparamOnFace(gf, 1);
+  }
+  else if(v->onWhat()->dim() == 1){
+    GEdge *ge = (GEdge*)v->onWhat();
+
+    // abort if we are on a seam (todo: try dir=-1 and compare)
+    if(ge->isSeam(gf))
+      return false;
+
+    double UU;
+    v->getParameter(0, UU);
+    param = ge->reparamOnFace(gf, UU, 1);
+  }
+  else{
+    double UU, VV;
+    if(v->onWhat() == gf && v->getParameter(0, UU) && v->getParameter(1, VV))
+      param = SPoint2(UU, VV);
+    else 
+      return false;
+      // param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
+  }
+  return true;
+}
+
+bool reparamMeshVertexOnEdge(MVertex *v, GEdge *ge, double &param)
+{
+  param = 1.e6;
+  Range<double> bounds = ge->parBounds(0);
+  if(ge->getBeginVertex() && ge->getBeginVertex()->mesh_vertices[0] == v) 
+    param = bounds.low();
+  else if(ge->getEndVertex() && ge->getEndVertex()->mesh_vertices[0] == v) 
+    param = bounds.high();
+  else 
+    v->getParameter(0, param);
+
+  if(param < 1.e6) return true;
+  return false;
 }

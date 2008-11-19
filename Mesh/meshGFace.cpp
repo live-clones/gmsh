@@ -389,7 +389,8 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
   SBoundingBox3d bbox;
   while(itv != all_vertices.end()){
     MVertex *here = *itv;
-    SPoint2 param ; reparamOnFace (here,gf,param);;
+    SPoint2 param;
+    reparamMeshVertexOnFace(here, gf, param);
     U_[count] = param.x();
     V_[count] = param.y();
     (*itv)->setIndex(count);

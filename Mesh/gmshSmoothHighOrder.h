@@ -9,6 +9,7 @@
 #include <map>
 #include <vector>
 #include "SVector3.h"
+
 class MVertex;
 class MElement;
 class GFace;
@@ -28,6 +29,5 @@ public:
   void smooth ( GRegion* );
   int getTag() const {return _tag;}
 };
-
 
 #endif

@@ -14,7 +14,7 @@
 
 void Subdivide(GEdge *ge)
 {
-  std::vector<MLine *> lines2;
+  std::vector<MLine*> lines2;
   for(unsigned int i = 0; i < ge->lines.size(); i++){
     MLine *l = ge->lines[i];
     if(l->getNumVertices() == 3){
@@ -164,13 +164,17 @@ void Subdivide(GRegion *gr)
     if(p->getNumVertices() == 14){
       // BASE
       pyramids2.push_back
-        (new MPyramid(p->getVertex(0), p->getVertex(5), p->getVertex(13), p->getVertex(6), p->getVertex(7)));
+        (new MPyramid(p->getVertex(0), p->getVertex(5), p->getVertex(13), 
+                      p->getVertex(6), p->getVertex(7)));
       pyramids2.push_back
-        (new MPyramid(p->getVertex(5), p->getVertex(1), p->getVertex(8), p->getVertex(13), p->getVertex(9)));
+        (new MPyramid(p->getVertex(5), p->getVertex(1), p->getVertex(8), 
+                      p->getVertex(13), p->getVertex(9)));
       pyramids2.push_back
-        (new MPyramid(p->getVertex(13), p->getVertex(8), p->getVertex(2), p->getVertex(10), p->getVertex(11)));
+        (new MPyramid(p->getVertex(13), p->getVertex(8), p->getVertex(2), 
+                      p->getVertex(10), p->getVertex(11)));
       pyramids2.push_back
-        (new MPyramid(p->getVertex(6), p->getVertex(13), p->getVertex(10), p->getVertex(3), p->getVertex(12)));
+        (new MPyramid(p->getVertex(6), p->getVertex(13), p->getVertex(10),
+                      p->getVertex(3), p->getVertex(12)));
       
       // Split remaining into tets
       // Top
@@ -203,30 +207,19 @@ void Subdivide(GRegion *gr)
 
 void Refine(GModel *m, bool linear)
 {
-  // Refine all edges in a mesh by inserting a point on the midpoint
-  // then recreate edge, face, and region definitions
-  //
-  // If linear is set to true, new vertices are created by linear
-  // interpolation between existing ones. If not, new vertices are
-  // created on the exact geometry, provided that the geometrical
-  // edges/faces are discretized with 1D/2D elements. (I.e., if there
-  // are only 3D elements in the mesh then any new vertices on the
-  // boundary will always be created by linear interpolation, whether
-  // linear is set or not.)
-
   Msg::StatusBar(1, true, "Generating refined mesh ...");
   double t1 = Cpu();
 	
-  // first, set order to 2 to generate vertex positions
+  // Create 2nd order mesh (using "2nd order complete" elements) to
+  // generate vertex positions
   SetOrderN(m, 2, linear, false);
 	
-  // Now subdivide entities to create linear mesh
+  // Subdivide the second order elements to create the refined linear
+  // mesh
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
     Subdivide(*it);
-  
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
     Subdivide(*it);
-  
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     Subdivide(*it);
   

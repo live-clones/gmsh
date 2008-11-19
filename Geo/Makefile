@@ -105,8 +105,8 @@ GFaceCompound.o: GFaceCompound.cpp GFaceCompound.h GFace.h GEntity.h \
   ../Geo/GVertex.h ../Geo/GEdge.h ../Geo/GFace.h ../Geo/GRegion.h \
   ../Geo/GEntity.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
   ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
-  ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
+  ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Numeric/FunctionSpace.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Common/Octree.h \
   ../Common/OctreeInternals.h ../Numeric/gmshLinearSystemGmm.h \
@@ -285,41 +285,41 @@ findLinks.o: findLinks.cpp ../Common/GmshMessage.h GModel.h GVertex.h \
   GEntity.h Range.h SPoint3.h SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h \
   SVector3.h GFace.h GEdgeLoop.h Pair.h GRegion.h ../Common/TreeUtils.h \
   ../Common/avl.h ../Common/ListUtils.h
-MVertex.o: MVertex.cpp MVertex.h SPoint3.h GEdge.h GEntity.h Range.h \
-  SBoundingBox3d.h GVertex.h GPoint.h SPoint2.h SVector3.h GFace.h \
+MVertex.o: MVertex.cpp MVertex.h SPoint2.h SPoint3.h GVertex.h GEntity.h \
+  Range.h SBoundingBox3d.h GPoint.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GFaceCompound.h ../Common/GmshMessage.h \
   ../Common/StringUtils.h
 GaussQuadratureTri.o: GaussQuadratureTri.cpp MElement.h \
-  ../Common/GmshDefines.h MVertex.h SPoint3.h MEdge.h SVector3.h MFace.h \
-  ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
+  ../Common/GmshDefines.h MVertex.h SPoint2.h SPoint3.h MEdge.h \
+  SVector3.h MFace.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Common/GmshMatrix.h GaussLegendreSimplex.h
 GaussQuadratureQuad.o: GaussQuadratureQuad.cpp MElement.h \
-  ../Common/GmshDefines.h MVertex.h SPoint3.h MEdge.h SVector3.h MFace.h \
-  ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
+  ../Common/GmshDefines.h MVertex.h SPoint2.h SPoint3.h MEdge.h \
+  SVector3.h MFace.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Common/GmshMatrix.h GaussLegendreSimplex.h \
   ../Numeric/GaussLegendre1D.h
 GaussQuadratureTet.o: GaussQuadratureTet.cpp MElement.h \
-  ../Common/GmshDefines.h MVertex.h SPoint3.h MEdge.h SVector3.h MFace.h \
-  ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
+  ../Common/GmshDefines.h MVertex.h SPoint2.h SPoint3.h MEdge.h \
+  SVector3.h MFace.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Common/GmshMatrix.h GaussLegendreSimplex.h
 GaussQuadratureHex.o: GaussQuadratureHex.cpp MElement.h \
-  ../Common/GmshDefines.h MVertex.h SPoint3.h MEdge.h SVector3.h MFace.h \
-  ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
+  ../Common/GmshDefines.h MVertex.h SPoint2.h SPoint3.h MEdge.h \
+  SVector3.h MFace.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Common/GmshMatrix.h GaussLegendreSimplex.h \
   ../Numeric/GaussLegendre1D.h
 GaussLegendreSimplex.o: GaussLegendreSimplex.cpp MElement.h \
-  ../Common/GmshDefines.h MVertex.h SPoint3.h MEdge.h SVector3.h MFace.h \
-  ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
+  ../Common/GmshDefines.h MVertex.h SPoint2.h SPoint3.h MEdge.h \
+  SVector3.h MFace.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Common/GmshMatrix.h GaussLegendreSimplex.h \
   ../Numeric/GaussLegendre1D.h
-MFace.o: MFace.cpp MFace.h MVertex.h SPoint3.h SVector3.h \
+MFace.o: MFace.cpp MFace.h MVertex.h SPoint2.h SPoint3.h SVector3.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h ../Common/Context.h \
   ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h
 MElement.o: MElement.cpp MElement.h ../Common/GmshDefines.h MVertex.h \
-  SPoint3.h MEdge.h SVector3.h MFace.h ../Common/GmshMessage.h \
+  SPoint2.h SPoint3.h MEdge.h SVector3.h MFace.h ../Common/GmshMessage.h \
   ../Numeric/FunctionSpace.h ../Common/GmshMatrix.h GEntity.h Range.h \
-  SBoundingBox3d.h GFace.h GPoint.h GEdgeLoop.h GEdge.h GVertex.h \
-  SPoint2.h Pair.h ../Common/StringUtils.h ../Numeric/Numeric.h \
+  SBoundingBox3d.h GFace.h GPoint.h GEdgeLoop.h GEdge.h GVertex.h Pair.h \
+  ../Common/StringUtils.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Numeric/GaussLegendre1D.h \
   ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h \
   ../Mesh/qualityMeasures.h ../Mesh/meshGFaceDelaunayInsertion.h \
