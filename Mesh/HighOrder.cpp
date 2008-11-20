@@ -418,6 +418,7 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
       vf.insert(vf.end(), fIter->second.begin(), fIter->second.end());
     }
     else{
+      std::vector<MVertex*> &vtcs = faceVertices[face];
       SPoint2 pts[20];
       bool reparamOK = true;
       if(!linear && 
@@ -427,8 +428,7 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
 	  reparamOK &= reparamMeshVertexOnFace(incomplete->getVertex(k), gf, pts[k]);
 	}
       }
-      if(face.getNumVertices() == 3){ // triangles
-        std::vector<MVertex*> &vtcs = faceVertices[face];
+      if(face.getNumVertices() == 3 && nPts > 1){ // triangles
         for(int k = start ; k < points.size1() ; k++){
           MVertex *v;
           const double t1 = points(k, 0);
@@ -475,7 +475,6 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
         }
       }
       else if(face.getNumVertices() == 4){ // quadrangles
-        std::vector<MVertex*> &vtcs = faceVertices[face];
         for(int j = 0; j < nPts; j++){
           for(int k = 0; k < nPts; k++){
             MVertex *v;
@@ -508,114 +507,18 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
   }  
 }
 
-static void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &vf,
-                            faceContainer &faceVertices, bool linear, int nPts = 1)
-{
-  Double_Matrix points;
-  int start = 0;
-
-  switch (nPts){
-  case 2 :
-    points = gmshFunctionSpaces::find(MSH_TRI_10).points;
-    start = 9;
-    break;
-  case 3 :
-    points = gmshFunctionSpaces::find(MSH_TRI_15).points;
-    start = 12;
-    break;
-  case 4 :
-    points = gmshFunctionSpaces::find(MSH_TRI_21).points;
-    start = 15;
-    break;
-  default :  
-    // do nothing (e.g. for 2nd order tri faces or for quad faces)
-    break;
-  }
-
-  for(int i = 0; i < ele->getNumFaces(); i++){
-    MFace face = ele->getFace(i);
-    faceContainer::iterator fIter = faceVertices.find(face);
-    if (fIter != faceVertices.end()) {
-      vf.insert(vf.end(), fIter->second.begin(), fIter->second.end());
-    }
-    else{
-      std::vector<MVertex*> &vtcs = faceVertices[face];
-      SPoint2 p0, p1, p2, p3;
-      bool reparamOK = true;
-      if(!linear && 
-         gf->geomType() != GEntity::DiscreteSurface &&
-         gf->geomType() != GEntity::BoundaryLayerSurface){
-        reparamOK &= reparamMeshVertexOnFace(ele->getVertex(0), gf, p0);
-        reparamOK &= reparamMeshVertexOnFace(ele->getVertex(1), gf, p1);
-        reparamOK &= reparamMeshVertexOnFace(ele->getVertex(2), gf, p2);
-        if(face.getNumVertices() == 4)
-          reparamOK &= reparamMeshVertexOnFace(ele->getVertex(3), gf, p3);
-      }
-      if(face.getNumVertices() == 3){ // triangles
-        for(int k = start ; k < points.size1() ; k++){
-          MVertex *v;
-          const double t1 = points(k, 0);
-          const double t2 = points(k, 1);
-          if(!reparamOK || linear || gf->geomType() == GEntity::DiscreteSurface){
-            SPoint3 pc = face.interpolate(t1, t2);
-            v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
-          }
-          else{
-            double uc = (1. - t1 - t2) * p0[0] + t1 * p1[0] + t2 * p2[0];
-            double vc = (1. - t1 - t2) * p0[1] + t1 * p1[1] + t2 * p2[1];
-            GPoint pc = gf->point(uc, vc);
-            v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
-            v->setParameter (0,uc);
-            v->setParameter (1,vc);
-          }
-          vtcs.push_back(v);
-          gf->mesh_vertices.push_back(v);
-          vf.push_back(v);
-        }
-      }
-      else if(face.getNumVertices() == 4){ // quadrangles
-        for(int j = 0; j < nPts; j++){
-          for(int k = 0; k < nPts; k++){
-            MVertex *v;
-            // parameters are between -1 and 1
-            double t1 = 2. * (double)(j + 1) / (nPts + 1) - 1.;
-            double t2 = 2. * (double)(k + 1) / (nPts + 1) - 1.;
-            if(!reparamOK || linear || gf->geomType() == GEntity::DiscreteSurface){
-              SPoint3 pc = face.interpolate(t1, t2);
-              v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
-            }
-            else{
-              double uc = 0.25 * ((1 - t1) * (1 - t2) * p0[0] + 
-                                  (1 + t1) * (1 - t2) * p1[0] + 
-                                  (1 + t1) * (1 + t2) * p2[0] + 
-                                  (1 - t1) * (1 + t2) * p3[0]); 
-              double vc = 0.25 * ((1 - t1) * (1 - t2) * p0[1] + 
-                                  (1 + t1) * (1 - t2) * p1[1] + 
-                                  (1 + t1) * (1 + t2) * p2[1] + 
-                                  (1 - t1) * (1 + t2) * p3[1]); 
-              GPoint pc = gf->point(uc, vc);
-              v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, uc, vc);
-            }
-            vtcs.push_back(v);
-            gf->mesh_vertices.push_back(v);
-            vf.push_back(v);
-          }
-        }
-      }
-    }
-  }
-}
-
 static void reorientTrianglePoints(std::vector<MVertex*> &vtcs, int orientation, 
                                    bool swap)
 {
-  if (vtcs.size() == 1) return;
-  
-  size_t nbPts = vtcs.size();
+  int nbPts = vtcs.size();
 
-  if (nbPts > 3) 
+  if(nbPts <= 1) return;
+
+  if(nbPts > 3){
     Msg::Error("Interior face nodes reorientation not supported for order > 4");
-
+    return;
+  }
+  
   std::vector<MVertex*> tmp(nbPts);
 
   // rotation
@@ -664,19 +567,23 @@ static void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
     MFace face = ele->getFace(i);
     faceContainer::iterator fIter = faceVertices.find(face);
     if (fIter != faceVertices.end()) {
-      int orientation;
-      bool swap;
       std::vector<MVertex*> vtcs = fIter->second;
-      if (fIter->first.computeCorrespondence(face, orientation, swap)) {
-        reorientTrianglePoints(vtcs, orientation, swap);
+      if(face.getNumVertices() == 3 && nPts > 1){ // triangles
+        int orientation;
+        bool swap;
+        if (fIter->first.computeCorrespondence(face, orientation, swap))
+          reorientTrianglePoints(vtcs, orientation, swap);
+        else
+          Msg::Error("Error in face lookup for recuperation of high order face nodes");
+        blocked.insert(vtcs.begin(), vtcs.end());
+        blocked.insert(face.getVertex(0));
+        blocked.insert(face.getVertex(1));
+        blocked.insert(face.getVertex(2));
       }
-      else
-        Msg::Error("Error in face lookup for recuperation of high order face nodes");
+      else if(face.getNumVertices() == 4){ // quadrangles
+        // TODO reorient if more than 1 face vertex
+      }
       vf.insert(vf.end(), vtcs.begin(), vtcs.end());
-      blocked.insert(vtcs.begin(),vtcs.end());
-      blocked.insert(face.getVertex(0));
-      blocked.insert(face.getVertex(1));
-      blocked.insert(face.getVertex(2));
     }
     else{
       std::vector<MVertex*> &vtcs = faceVertices[face];
@@ -803,9 +710,9 @@ static void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
                           ve, nPts + 1));
       }
       else{
-        MTriangleN incpl (t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                          ve, nPts + 1);
-        getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts,displ2D,displ3D);
+        MTriangleN incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2),
+                         ve, nPts + 1);
+        getFaceVertices(gf, &incpl, t, vf, faceVertices, linear, nPts, displ2D, displ3D);
         ve.insert(ve.end(), vf.begin(), vf.end());
         triangles2.push_back
           (new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
@@ -827,7 +734,7 @@ static void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
                           q->getVertex(3), ve[0], ve[1], ve[2], ve[3]));
     }
     else{
-      getFaceVertices(gf, q, vf, faceVertices, linear, nPts);
+      getFaceVertices(gf, q, q, vf, faceVertices, linear, nPts);
       quadrangles2.push_back
         (new MQuadrangle9(q->getVertex(0), q->getVertex(1), q->getVertex(2),
                           q->getVertex(3), ve[0], ve[1], ve[2], ve[3], vf[0]));
@@ -851,7 +758,7 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
     std::set<MVertex*> blocked;
     std::vector<MVertex*> ve, vf, vr;
     getEdgeVertices(gr, t, ve, blocked, edgeVertices, linear, nPts, displ2D, displ3D);
-    if (nPts == 1){
+    if(nPts == 1){
       tetrahedra2.push_back
 	(new MTetrahedron10(t->getVertex(0), t->getVertex(1), t->getVertex(2), 
 			    t->getVertex(3), ve[0], ve[1], ve[2], ve[3], ve[4], ve[5]));
@@ -866,8 +773,8 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
       MTetrahedron* n = new MTetrahedronN(t->getVertex(0), t->getVertex(1), 
                                           t->getVertex(2), t->getVertex(3), ve, nPts + 1);
       if (!mappingIsInvertible(n))
-        Msg::Warning("Found invalid curved volume element (# %d in list) ",i);
-      tetrahedra2.push_back (n);
+        Msg::Warning("Found invalid curved volume element (# %d in list)", i);
+      tetrahedra2.push_back(n);
     }
     delete t;
   }
