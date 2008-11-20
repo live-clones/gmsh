@@ -12,7 +12,7 @@
 #include "GmshMessage.h"
 #include "OS.h"
 
-void Subdivide(GEdge *ge)
+static void Subdivide(GEdge *ge)
 {
   std::vector<MLine*> lines2;
   for(unsigned int i = 0; i < ge->lines.size(); i++){
@@ -30,7 +30,7 @@ void Subdivide(GEdge *ge)
   ge->deleteVertexArrays();
 }
 
-void Subdivide(GFace *gf)
+static void Subdivide(GFace *gf)
 {
   std::vector<MTriangle*> triangles2;
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
@@ -71,7 +71,7 @@ void Subdivide(GFace *gf)
   gf->deleteVertexArrays();
 }
 
-void Subdivide(GRegion *gr)
+static void Subdivide(GRegion *gr)
 {
   std::vector<MTetrahedron*> tetrahedra2;
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
