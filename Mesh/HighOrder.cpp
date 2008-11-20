@@ -85,7 +85,7 @@ static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
   // initialize as equidistant in parameter space
   u[0] = u0;
   double du = (uN - u0) / (N - 1);
-  for (int i = 1 ; i < N ; i++){
+  for (int i = 1; i < N; i++){
     u[i] = u[i - 1] + du;
   }
 
@@ -156,7 +156,7 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
   u[0] = u0;
   v[0] = v0;
   t[0] = 0;
-  for (int i = 1; i < N ; i++){
+  for (int i = 1; i < N; i++){
     t[i] = (double)i / (N - 1);
     SPoint2 p = gf->geodesic(SPoint2(u0, v0), SPoint2(uN, vN), t[i]);
     u[i] = p.x();
@@ -175,10 +175,10 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
   Double_Vector R(M);
   Double_Vector Rp(M);
   
-  int iter = 1 ;
+  int iter = 1;
 
   while (iter < MAX_ITER){
-    iter++ ;
+    iter++;
     myresid(N, gf, u, v, R); 
 
     for (int i = 0; i < M; i++){
@@ -429,7 +429,7 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
 	}
       }
       if(face.getNumVertices() == 3 && nPts > 1){ // tri face
-        for(int k = start ; k < points.size1() ; k++){
+        for(int k = start; k < points.size1(); k++){
           MVertex *v;
           const double t1 = points(k, 0);
           const double t2 = points(k, 1);
@@ -439,7 +439,7 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
           }
           else{
 	    double X(0), Y(0), Z(0), GUESS[2] = {0, 0};
-            double sf[256] ; 
+            double sf[256]; 
             incomplete->getShapeFunctions(t1, t2, 0, sf);
 	    for (int j = 0; j < incomplete->getNumVertices(); j++){
 	      MVertex *vt = incomplete->getVertex(j);
@@ -656,7 +656,7 @@ static void getRegionVertices(GRegion *gr, MElement *incomplete, MElement *ele,
     return;
   }
 
-  for(int k = start ; k < points.size1() ; k++){
+  for(int k = start; k < points.size1(); k++){
     MVertex *v;
     const double t1 = points(k, 0);
     const double t2 = points(k, 1);
@@ -938,8 +938,8 @@ static void checkHighOrderTriangles(GModel *m, std::vector<MElement*> &bad, doub
       if (disto < 0) bad.push_back(t);
     }
   }
-  if (minJGlob > 0) Msg::Info("Worst Element Smoothness %12.5E", minJGlob);
-  else Msg::Warning("Worst Element Smoothness %12.5E", minJGlob);
+  if (minJGlob > 0) Msg::Info("Worst Element Smoothness %g", minJGlob);
+  else Msg::Warning("Worst Element Smoothness %g", minJGlob);
 }
 
 extern double mesh_functional_distorsion(MTriangle *t, double u, double v);
@@ -1017,7 +1017,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
 
   int nPts = order - 1;
 
-  Msg::StatusBar(1, true, "Generating High Order Nodes (q = %d) ...", order);
+  Msg::StatusBar(1, true, "Meshing order %d...", order);
   double t1 = Cpu();
 
   // first, make sure to remove any existsing second order vertices/elements
