@@ -428,7 +428,7 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
 	  reparamOK &= reparamMeshVertexOnFace(incomplete->getVertex(k), gf, pts[k]);
 	}
       }
-      if(face.getNumVertices() == 3 && nPts > 1){ // triangles
+      if(face.getNumVertices() == 3 && nPts > 1){ // tri face
         for(int k = start ; k < points.size1() ; k++){
           MVertex *v;
           const double t1 = points(k, 0);
@@ -474,7 +474,7 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
           vf.push_back(v);
         }
       }
-      else if(face.getNumVertices() == 4){ // quadrangles
+      else if(face.getNumVertices() == 4){ // quad face
         for(int j = 0; j < nPts; j++){
           for(int k = 0; k < nPts; k++){
             MVertex *v;
@@ -568,7 +568,7 @@ static void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
     faceContainer::iterator fIter = faceVertices.find(face);
     if (fIter != faceVertices.end()) {
       std::vector<MVertex*> vtcs = fIter->second;
-      if(face.getNumVertices() == 3 && nPts > 1){ // triangles
+      if(face.getNumVertices() == 3 && nPts > 1){ // tri face
         int orientation;
         bool swap;
         if (fIter->first.computeCorrespondence(face, orientation, swap))
@@ -580,14 +580,14 @@ static void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
         blocked.insert(face.getVertex(1));
         blocked.insert(face.getVertex(2));
       }
-      else if(face.getNumVertices() == 4){ // quadrangles
+      else if(face.getNumVertices() == 4){ // quad face
         // TODO reorient if more than 1 face vertex
       }
       vf.insert(vf.end(), vtcs.begin(), vtcs.end());
     }
     else{
       std::vector<MVertex*> &vtcs = faceVertices[face];
-      if(face.getNumVertices() == 3 && nPts > 1){ // triangles
+      if(face.getNumVertices() == 3 && nPts > 1){ // tri face
         // construct incomplete element to take into account curved
         // edges on surface boundaries
         std::vector<MVertex*> hoEdgeNodes;
@@ -618,7 +618,7 @@ static void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
           vf.push_back(v);
         }         
       }
-      else if(face.getNumVertices() == 4){ // quadrangles
+      else if(face.getNumVertices() == 4){ // quad face
         for(int j = 0; j < nPts; j++){
           for(int k = 0; k < nPts; k++){
             // parameters are between -1 and 1
