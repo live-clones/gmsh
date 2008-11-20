@@ -150,7 +150,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.SurfaceType
-Surface display type (0=cross, 1=wireframe, 2=solid@*
+Surface display type (0=cross, 1=wireframe, 2=solid)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 

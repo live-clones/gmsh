@@ -409,6 +409,11 @@ Ignore Physical definitions and save all elements@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item Mesh.SaveParametric
+Save parametric coordinates of nodes@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
 @item Mesh.SaveGroupsOfNodes
 Save groups of nodes for each physical line and surface (UNV mesh format only)@*
 Default value: @code{0}@*
