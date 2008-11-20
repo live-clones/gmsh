@@ -7,7 +7,6 @@
 //   Koen Hillewaert
 //
 
-#include <iostream>
 #include "HighOrder.h"
 #include "gmshSmoothHighOrder.h"
 #include "MElement.h"
@@ -389,8 +388,8 @@ static void getEdgeVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
 static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele, 
                             std::vector<MVertex*> &vf, faceContainer &faceVertices, 
                             bool linear, int nPts = 1, gmshHighOrderSmoother *displ2D = 0,
-                            gmshHighOrderSmoother *displ3D = 0) {
-  
+                            gmshHighOrderSmoother *displ3D = 0)
+{
   Double_Matrix points;
   int start = 0;
 
@@ -641,7 +640,6 @@ static void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
                             edgeContainer &edgeVertices, bool linear, int nPts = 1)
 {
   Double_Matrix points;
-	
   int start = 0;
   
   switch (nPts){
@@ -1134,7 +1132,6 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
     setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts,
                  displ2D, displ3D);
 
-
   // now we smooth mesh the internal vertices of the faces
   // we do that model face by model face
   std::vector<MElement*> bad;
@@ -1156,13 +1153,12 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
       displ3D->smooth(*it);
   }
 
-  printJacobians(m, "detjIni.pos");  
-
   if(displ2D){    
     delete displ2D;
     delete displ3D;
   }
 
+  printJacobians(m, "detjIni.pos");
   checkHighOrderTriangles(m, bad, worst);
 
   double t2 = Cpu();
