@@ -7,7 +7,7 @@ include variables
 
 GMSH_MAJOR_VERSION = 2
 GMSH_MINOR_VERSION = 2
-GMSH_PATCH_VERSION = 5
+GMSH_PATCH_VERSION = 6
 GMSH_EXTRA_VERSION =
 
 GMSH_VERSION = ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}
@@ -113,7 +113,7 @@ else
 	if not exist ${includedir}\gmsh mkdir ${includedir}\gmsh
 	if not exist ${libdir} mkdir ${libdir}
 	erase /q ${includedir}\gmsh\*.h
-	for %%i in (${subst /,\,${GMSH_API}}) do copy %%i  ${includedir}\gmsh
+	for %%i in (${subst /,\,${GMSH_API}}) do copy %%i ${includedir}\gmsh
 	copy /y lib\libGmsh${LIBEXT} ${libdir}\libGmsh${LIBSUFFIX}${LIBEXT}
 endif
 

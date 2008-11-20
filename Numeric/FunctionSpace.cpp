@@ -11,7 +11,6 @@
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 
-
 Double_Matrix generate1DMonomials(int order)
 {
   Double_Matrix monomials(order + 1, 1);
@@ -115,14 +114,7 @@ Double_Matrix generatePascalSerendipityTetrahedron(int order)
     4 * std::max(0, (order - 2) * (order - 1) / 2);
   Double_Matrix monomials(nbMonomials, 3);
 
-  // order 0
-  
   monomials.set_all(0);
- 
-  monomials(0, 0) = 0;
-  monomials(0, 1) = 0;
-  monomials(0, 2) = 0;
-
   int index = 1;
   for (int p = 1; p < order; p++) {
     for (int i = 0; i < 3; i++) {
@@ -687,13 +679,11 @@ const gmshFunctionSpace &gmshFunctionSpaces::find(int tag)
 
 std::map<std::pair<int,int>, Double_Matrix> gmshFunctionSpaces::injector;
 
-
-const Double_Matrix &gmshFunctionSpaces::findInjector(int tag1,int tag2) {
-
+const Double_Matrix &gmshFunctionSpaces::findInjector(int tag1,int tag2)
+{
   std::pair<int,int> key(tag1,tag2);
   std::map<std::pair<int,int>,Double_Matrix>::const_iterator it = injector.find(key);
   if (it != injector.end()) return it->second;
-  
 
   const gmshFunctionSpace& fs1 = find(tag1);
   const gmshFunctionSpace& fs2 = find(tag2);
@@ -710,5 +700,3 @@ const Double_Matrix &gmshFunctionSpaces::findInjector(int tag1,int tag2) {
   injector.insert(std::make_pair(key,inj));
   return injector[key];
 }
-
-          
