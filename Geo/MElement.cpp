@@ -521,8 +521,7 @@ void MElement::writeVRML(FILE *fp)
 
 void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
 {
-  int type = getTypeForUNV();
-  if(!type) return;
+  if(!getTypeForVTK()) return;
 
   setVolumePositive();
 
