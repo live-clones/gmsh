@@ -286,7 +286,7 @@ void List_Insert_In_List(List_T *a, int i, List_T *b)
     memcpy(List_Pointer_Fast(b, b->n - j - 1), List_Pointer_Fast(b, oldn - j - 1),
            b->size);
   for(int j = 0;j < a->n; j++)
-    memcpy(List_Pointer_Fast(b, oldn + j), List_Pointer_Fast(a, j), b->size);
+    memcpy(List_Pointer_Fast(b, i + j), List_Pointer_Fast(a, j), b->size);
 }
 
 void swap_bytes(char *array, int size, int n)

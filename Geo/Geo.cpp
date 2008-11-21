@@ -3057,9 +3057,11 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
       if(surface_curve->Num == c->Num){
         List_Remove(s->Generatrices, j);
         List_Insert_In_List(shapes, j, s->Generatrices);
+        j+=List_Nbr(shapes)-1;
       }else if(surface_curve->Num == -c->Num){
         List_Remove(s->Generatrices, j);
         List_Insert_In_List(rshapes, j, s->Generatrices);
+        j+=List_Nbr(shapes)-1;
       }
     }
   }
@@ -3067,6 +3069,7 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
   DeleteShape(c->Typ, c->Num);
   List_Delete(new_list);
   List_Delete(rshapes);
+
   return true;
 }
 
