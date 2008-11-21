@@ -216,7 +216,7 @@ static void Subdivide(GRegion *gr)
 
 void RefineMesh(GModel *m, bool linear)
 {
-  Msg::StatusBar(1, true, "Generating refined mesh ...");
+  Msg::StatusBar(1, true, "Refining mesh...");
   double t1 = Cpu();
 	
   // Create 2nd order mesh (using "2nd order complete" elements) to
