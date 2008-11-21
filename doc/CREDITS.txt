@@ -63,9 +63,24 @@ This version of Gmsh may contain code (in the contrib/ANN
 subdirectory) copyright (C) 1997-2005 University of Maryland and Sunil
 Arya and David Mount: check the configuration options.
 
+This version of Gmsh may contain code (in the contrib/Chaco
+subdirectory) written by Bruce Hendrickson and Robert Leland at Sandia
+National Laboratories under US Department of Energy contract
+DE-AC04-76DP00789 and is copyrighted by Sandia Corporation: check the
+configuration options.
+
 This version of Gmsh may contain code (in the contrib/MathEval
 subdirectory) based on GNU libmatheval, copyright (C) 1999, 2002, 2003
 Free Software Foundation, Inc: check the configuration options.
+
+This version of Gmsh may contain code (in the contrib/Metis
+subdirectory) written by George Karypis (karypis at cs.umn.edu),
+copyright (C) 1998, Regents of the University of Minnesota: check the
+configuration options.
+
+This version of Gmsh may contain code (in the
+contrib/NativeFileChooser subdirectory), copyright (C) 2004 by Greg
+Ercolano: check the configuration options.
 
 This version of Gmsh may contain code (in the contrib/Netgen
 subdirectory) copyright (C) 1994-2004, Joachim Sch"oberl: check the
@@ -75,20 +90,9 @@ This version of Gmsh may contain code (in the contrib/Tetgen
 subdirectory) copyright (C) 2002, 2004, 2005, 2006 Hang Si: check the
 configuration options.
 
-This version of Gmsh may contain code (in the contrib/Metis
-subdirectory) written by George Karypis (karypis at cs.umn.edu),
-copyright (C) 1998, Regents of the University of Minnesota: check the
+This version of Gmsh may contain code (in the contrib/gmm
+subdirectory) copyright (C) 2002-2008 Yves Renard: check the
 configuration options.
-
-This version of Gmsh may contain code (in the contrib/Chaco
-subdirectory) written by Bruce Hendrickson and Robert Leland at Sandia
-National Laboratories under US Department of Energy contract
-DE-AC04-76DP00789 and is copyrighted by Sandia Corporation: check the
-configuration options.
-
-This version of Gmsh may contain code (in the
-contrib/NativeFileChooser subdirectory), copyright (C) 2004 by Greg
-Ercolano: check the configuration options.
 
 Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher and
 others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
