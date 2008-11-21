@@ -4606,11 +4606,6 @@ void view_plugin_browser_cb(CALLBACK_ARGS)
   for(int i = 1; i <= WID->plugin_browser->size(); i++)
     ((GMSH_Plugin*)WID->plugin_browser->data(i))->dialogBox->group->hide();
   p->dialogBox->group->show();
-
-  /*if(iView >= 0)
-    WID->plugin_run->activate();
-  else
-    WID->plugin_run->deactivate();*/
 }
 
 void view_plugin_run_cb(CALLBACK_ARGS)
@@ -4641,10 +4636,10 @@ void view_plugin_run_cb(CALLBACK_ARGS)
   }
 
   // run on all selected views
-  bool no_view_selected=true;
+  bool no_view_selected = true;
   for(int i = 1; i <= WID->plugin_view_browser->size(); i++) {
     if(WID->plugin_view_browser->selected(i)) {
-      no_view_selected=false;
+      no_view_selected = false;
       try{
         if(i - 1 >= 0 && i - 1 < (int)PView::list.size())
           p->execute(PView::list[i - 1]);
