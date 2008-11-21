@@ -1070,5 +1070,5 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
 
   double t2 = Cpu();
   Msg::Info("Meshing order %d complete (%g s)", order, t2 - t1);
-  Msg::StatusBar(1, true, "Mesh");
+  Msg::StatusBar(1, false, "Mesh");
 }

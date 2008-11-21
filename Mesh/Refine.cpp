@@ -234,5 +234,5 @@ void RefineMesh(GModel *m, bool linear)
 
   double t2 = Cpu();
   Msg::Info("Mesh refinement complete (%g s)", t2 - t1);
-  Msg::StatusBar(1, true, "Mesh");
+  Msg::StatusBar(1, false, "Mesh");
 }

@@ -316,7 +316,7 @@ static void Mesh1D(GModel *m)
   double t2 = Cpu();
   CTX.mesh_timer[0] = t2 - t1;
   Msg::Info("Mesh 1D complete (%g s)", CTX.mesh_timer[0]);
-  Msg::StatusBar(1, true, "Mesh");
+  Msg::StatusBar(1, false, "Mesh");
 }
 
 static void PrintMesh2dStatistics(GModel *m)
@@ -412,7 +412,7 @@ static void Mesh2D(GModel *m)
   double t2 = Cpu();
   CTX.mesh_timer[1] = t2 - t1;
   Msg::Info("Mesh 2D complete (%g s)", CTX.mesh_timer[1]);
-  Msg::StatusBar(1, true, "Mesh");
+  Msg::StatusBar(1, false, "Mesh");
 
   PrintMesh2dStatistics(m);
 }
@@ -455,7 +455,7 @@ static void Mesh3D(GModel *m)
   double t2 = Cpu();
   CTX.mesh_timer[2] = t2 - t1;
   Msg::Info("Mesh 3D complete (%g s)", CTX.mesh_timer[2]);
-  Msg::StatusBar(1, true, "Mesh");
+  Msg::StatusBar(1, false, "Mesh");
 }
 
 void OptimizeMeshNetgen(GModel *m)
@@ -467,7 +467,7 @@ void OptimizeMeshNetgen(GModel *m)
 
   double t2 = Cpu();
   Msg::Info("Mesh 3D optimization with Netgen complete (%g s)", t2 - t1);
-  Msg::StatusBar(1, true, "Mesh");
+  Msg::StatusBar(1, false, "Mesh");
 }
 
 void OptimizeMesh(GModel *m)
@@ -479,12 +479,12 @@ void OptimizeMesh(GModel *m)
 
   double t2 = Cpu();
   Msg::Info("Mesh 3D optimization complete (%g s)", t2 - t1);
-  Msg::StatusBar(1, true, "Mesh");
+  Msg::StatusBar(1, false, "Mesh");
 }
 
 void AdaptMesh(GModel *m)
 {
-  Msg::StatusBar(1, true, "Adapting the 3D Mesh...");
+  Msg::StatusBar(1, true, "Adapting 3D Mesh...");
   double t1 = Cpu();
 
   if(CTX.threads_lock) {
@@ -507,7 +507,7 @@ void AdaptMesh(GModel *m)
 
   double t2 = Cpu();
   Msg::Info("Mesh Adaptation complete (%g s)", t2 - t1);
-  Msg::StatusBar(1, true, "Mesh");
+  Msg::StatusBar(1, false, "Mesh");
 }
 
 void GenerateMesh(GModel *m, int ask)

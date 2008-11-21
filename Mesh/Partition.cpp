@@ -95,7 +95,7 @@ int PartitionMesh(GModel *const model, PartitionOptions &options)
   Msg::StatusBar(1, true, "Partitioning graph...");
   if(!ier) ier = PartitionGraph(graph, options);
   if(ier) {
-    Msg::StatusBar(1, true, "Mesh");
+    Msg::StatusBar(1, false, "Mesh");
     return 1;
   }
 
@@ -123,9 +123,8 @@ int PartitionMesh(GModel *const model, PartitionOptions &options)
 
   model->recomputeMeshPartitions();
   Msg::Info("Partitioning complete");
-  Msg::StatusBar(1, true, "Mesh");
+  Msg::StatusBar(1, false, "Mesh");
   return 0;
-
 }
 
 
