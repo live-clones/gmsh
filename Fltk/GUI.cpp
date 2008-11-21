@@ -3732,7 +3732,7 @@ void GUI::create_plugin_window(int numview)
   {
     plugin_run = new Fl_Return_Button(width - 2 * BB - 2 * WB, height - BH - WB, BB, BH, "Run");
     plugin_run->callback(view_plugin_run_cb);
-    plugin_run->deactivate();
+    //plugin_run->deactivate();
   }
 
   int L1 = (int)(0.3 * width), L2 = (int)(0.6 * L1);
