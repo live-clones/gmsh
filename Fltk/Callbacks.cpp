@@ -3830,10 +3830,10 @@ void mesh_optimize_cb(CALLBACK_ARGS)
 
 void mesh_refine_cb(CALLBACK_ARGS)
 {
-	Refine(GModel::current(), CTX.mesh.second_order_linear);
-	CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
-	Draw();
-	Msg::StatusBar(2, false, " ");
+  RefineMesh(GModel::current(), CTX.mesh.second_order_linear);
+  CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  Draw();
+  Msg::StatusBar(2, false, " ");
 }
 
 void mesh_optimize_netgen_cb(CALLBACK_ARGS)

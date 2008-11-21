@@ -172,7 +172,15 @@ void Get_Options(int argc, char *argv[])
 
     if(argv[i][0] == '-') {
 
-      if(!strcmp(argv[i] + 1, "")) {
+      if(!strcmp(argv[i] + 1, "socket")) {
+        i++;        
+        if(argv[i] != NULL)
+          CTX.solver.socket_name = argv[i++];
+        else
+	  Msg::Fatal("Missing string");
+        CTX.batch = -3;
+      }
+      else if(!strcmp(argv[i] + 1, "")) {
         CTX.batch = -2;
         i++;
       }
@@ -196,24 +204,16 @@ void Get_Options(int argc, char *argv[])
         CTX.batch = 4;
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "new")) {
-        CTX.files.push_back("-new");
-        i++;
-      }
-      else if(!strcmp(argv[i] + 1, "socket")) {
-        i++;        
-        if(argv[i] != NULL)
-          CTX.solver.socket_name = argv[i++];
-        else
-	  Msg::Fatal("Missing string");
-        CTX.batch = 5;
-      }
       else if(!strcmp(argv[i] + 1, "refine")) {
-        CTX.batch = 6;
+        CTX.batch = 5;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "part")) {
-        CTX.batch = 7;
+        CTX.batch_after_mesh = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "new")) {
+        CTX.files.push_back("-new");
         i++;
       }
       else if(!strcmp(argv[i] + 1, "pid")) {

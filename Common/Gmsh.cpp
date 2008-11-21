@@ -101,24 +101,28 @@ int GmshBatch()
   }
 #endif
 
-  if(CTX.batch == 5)
+  if(CTX.batch == -3){
     GmshDaemon(CTX.solver.socket_name);
-  else if(CTX.batch == 4) {
-    AdaptMesh(GModel::current());
-    CreateOutputFile(CTX.output_filename, CTX.mesh.format);
   }
-  else if(CTX.batch > 0) {
-    GModel::current()->mesh(CTX.batch);
+  else if(CTX.batch == -2){
+    GModel::current()->checkMeshCoherence(CTX.geom.tolerance);
+  }
+  else if(CTX.batch == -1){
+    CreateOutputFile(CTX.output_filename, FORMAT_GEO);
+  }
+  else if(CTX.batch > 0){
+    if(CTX.batch < 4)
+      GModel::current()->mesh(CTX.batch);
+    else if(CTX.batch == 4)
+      AdaptMesh(GModel::current());
+    else if(CTX.batch == 5)
+      RefineMesh(GModel::current());
 #if defined(HAVE_CHACO) || defined(HAVE_METIS)
-    if(CTX.batch == 7)
+    if(CTX.batch_after_mesh == 1)
       PartitionMesh(GModel::current(), CTX.mesh.partition_options);
 #endif
     CreateOutputFile(CTX.output_filename, CTX.mesh.format);
   }
-  else if(CTX.batch == -1)
-    CreateOutputFile(CTX.output_filename, FORMAT_GEO);
-  else if(CTX.batch == -2)
-    GModel::current()->checkMeshCoherence(CTX.geom.tolerance);
 
   return 1;
 }

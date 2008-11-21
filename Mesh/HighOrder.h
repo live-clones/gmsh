@@ -22,6 +22,5 @@ typedef std::map<MFace, std::vector<MVertex*>, Less_Face> faceContainer;
 
 void SetOrder1(GModel *m);
 void SetOrderN(GModel *m, int order, bool linear=true, bool incomplete=false);
-void Refine(GModel *m, bool linear=true);
 
 #endif

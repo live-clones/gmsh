@@ -214,7 +214,7 @@ static void Subdivide(GRegion *gr)
   gr->deleteVertexArrays();
 }
 
-void Refine(GModel *m, bool linear)
+void RefineMesh(GModel *m, bool linear)
 {
   Msg::StatusBar(1, true, "Generating refined mesh ...");
   double t1 = Cpu();

@@ -56,10 +56,9 @@ NumericEmbedded.o: NumericEmbedded.cpp NumericEmbedded.h \
   ../Common/GmshMessage.h
 gmshAssembler.o: gmshAssembler.cpp ../Geo/MVertex.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h gmshAssembler.h gmshLinearSystem.h
-gmshTermOfFormulation.o: gmshTermOfFormulation.cpp \
-  gmshTermOfFormulation.h ../Common/GmshMatrix.h gmshFunction.h \
-  ../Common/Gmsh.h ../Common/GmshMessage.h ../Geo/GModel.h \
-  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+gmshTermOfFormulation.o: gmshTermOfFormulation.cpp ../Common/Gmsh.h \
+  ../Common/GmshMessage.h ../Geo/GModel.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
   ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \
@@ -69,7 +68,8 @@ gmshTermOfFormulation.o: gmshTermOfFormulation.cpp \
   ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
   ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
-  ../Geo/SVector3.h ../Numeric/FunctionSpace.h gmshLinearSystem.h \
+  ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Common/GmshMatrix.h \
+  gmshTermOfFormulation.h gmshFunction.h gmshLinearSystem.h \
   gmshAssembler.h
 gmshLaplace.o: gmshLaplace.cpp gmshLaplace.h gmshTermOfFormulation.h \
   ../Common/GmshMatrix.h ../Common/Gmsh.h ../Common/GmshMessage.h \
