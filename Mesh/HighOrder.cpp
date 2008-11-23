@@ -1003,11 +1003,6 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete)
   //   edges (creating 8-node quads, 20-node hexas, etc., instead of
   //   9-node quads, 27-node hexas, etc.)
 
-#if !defined(HAVE_GSL)
-  Msg::Error("High order mesh generation requires the GSL");
-  return;
-#endif
-
   int nPts = order - 1;
 
   Msg::StatusBar(1, true, "Meshing order %d...", order);

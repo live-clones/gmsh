@@ -1294,7 +1294,6 @@ double smooth_obj(double U, double V, void *data)
 
 void optimize_vertex_position(GFace *GF, BDS_Point *data, double su, double sv)
 {
-#ifdef HAVE_GSL
   if(data->g && data->g->classif_degree <= 1) return;
   smoothVertexData vd;
   vd.p = data;
@@ -1324,7 +1323,6 @@ void optimize_vertex_position(GFace *GF, BDS_Point *data, double su, double sv)
   data->X = gp.x();
   data->Y = gp.y();
   data->Z = gp.z();  
-#endif
 }
 
 bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)

@@ -6,6 +6,8 @@
 #ifndef _GMSH_MATRIX_H_
 #define _GMSH_MATRIX_H_
 
+#include "GmshMessage.h"
+
 template <class SCALAR>
 class Gmsh_Vector
 {
@@ -94,7 +96,7 @@ class Gmsh_Matrix
   inline void blas_dgemm(const Gmsh_Matrix<SCALAR> & x, const Gmsh_Matrix<SCALAR> & b, 
 			 const double c_a = 1.0, const double c_b = 1.0)
   {
-    // FIXME: not implemented
+    Msg::Fatal("Gmsh_Matrix::blas_dgemm is not implemented");
   }
   inline void set_all(const double &m) 
   {
@@ -102,27 +104,27 @@ class Gmsh_Matrix
   }
   inline void lu_solve(const Gmsh_Vector<SCALAR> &rhs, Gmsh_Vector<SCALAR> &result)
   {
-    // FIXME: not implemented
+    Msg::Fatal("Gmsh_Matrix::lu_solve is not implemented");
     result.scale(0);
   }
   Gmsh_Matrix cofactor(int i, int j) const 
   {
-    // FIXME: not implemented
+    Msg::Fatal("Gmsh_Matrix::cofactor is not implemented");
     Gmsh_Matrix cof(size1() - 1, size2() - 1);
     return cof;
   }
   inline void invert()
   {
-    // FIXME: not implemented
+    Msg::Fatal("Gmsh_Matrix::invert is not implemented");
   }
   double determinant() const 
   {
-    // FIXME: not implemented
+    Msg::Fatal("Gmsh_Matrix::determinant is not implemented");
     return 0.;
   }
   inline Gmsh_Matrix touchSubmatrix(int i0, int ni, int j0, int nj) 
   {
-    // FIXME: not implemented
+    Msg::Fatal("Gmsh_Matrix::touchSubmatrix is not implemented");
     Gmsh_Matrix subm(ni, nj);
     return subm;
   }  

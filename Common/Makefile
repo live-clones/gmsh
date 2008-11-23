@@ -77,11 +77,12 @@ Options.o: Options.cpp GmshUI.h GmshDefines.h ../Geo/GModel.h \
   DefaultOptions.h ../Mesh/Field.h ../Post/PView.h \
   ../Mesh/BackgroundMesh.h ../Post/PViewOptions.h ../Post/ColorTable.h \
   ../Post/PViewData.h ../Post/adaptiveData.h ../Common/ListUtils.h \
-  ../Common/GmshMatrix.h ../Plugin/PluginManager.h ../Plugin/Plugin.h \
-  ../Common/Options.h ../Common/GmshMessage.h ../Post/PViewDataList.h \
-  ../Post/PViewData.h ../Fltk/Solvers.h ../Fltk/GUI.h \
-  ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h ../Common/GmshUI.h \
-  ../Fltk/Popup_Button.h ../Fltk/SpherePosition_Widget.h
+  ../Numeric/GmshMatrix.h ../Common/GmshMessage.h \
+  ../Plugin/PluginManager.h ../Plugin/Plugin.h ../Common/Options.h \
+  ../Post/PViewDataList.h ../Post/PViewData.h ../Fltk/Solvers.h \
+  ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
+  ../Common/GmshUI.h ../Fltk/Popup_Button.h \
+  ../Fltk/SpherePosition_Widget.h
 CommandLine.o: CommandLine.cpp GmshUI.h GmshDefines.h GmshVersion.h \
   GmshMessage.h OpenFile.h CommandLine.h Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h Options.h ../Post/ColorTable.h \
@@ -166,7 +167,7 @@ Visibility.o: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \
   ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
-  ../Common/GmshMatrix.h ../Parser/Parser.h
+  ../Numeric/GmshMatrix.h ../Parser/Parser.h
 Trackball.o: Trackball.cpp Trackball.h
 VertexArray.o: VertexArray.cpp VertexArray.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h Context.h ../Geo/CGNSOptions.h \

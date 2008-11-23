@@ -60,7 +60,7 @@ PView.o: PView.cpp PView.h ../Geo/SPoint3.h PViewDataList.h PViewData.h \
   ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h PViewOptions.h ColorTable.h \
   ../Common/VertexArray.h ../Common/SmoothData.h adaptiveData.h \
-  ../Common/GmshMatrix.h ../Common/GmshMessage.h
+  ../Numeric/GmshMatrix.h ../Common/GmshMessage.h
 PViewIO.o: PViewIO.cpp PView.h ../Geo/SPoint3.h PViewDataList.h \
   PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
   ../Common/ListUtils.h PViewDataGModel.h ../Geo/GModel.h \
@@ -74,8 +74,8 @@ PViewIO.o: PViewIO.cpp PView.h ../Geo/SPoint3.h PViewDataList.h \
   ../Common/GmshMessage.h
 PViewData.o: PViewData.cpp PViewData.h ../Geo/SBoundingBox3d.h \
   ../Geo/SPoint3.h ../Common/ListUtils.h adaptiveData.h \
-  ../Common/GmshMatrix.h ../Numeric/Numeric.h \
-  ../Numeric/NumericEmbedded.h ../Common/GmshMessage.h
+  ../Numeric/GmshMatrix.h ../Common/GmshMessage.h ../Numeric/Numeric.h \
+  ../Numeric/NumericEmbedded.h
 PViewDataIO.o: PViewDataIO.cpp ../Common/GmshMessage.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h
@@ -88,7 +88,7 @@ PViewDataListIO.o: PViewDataListIO.cpp PViewDataList.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/ListUtils.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
   ../Common/GmshMessage.h ../Common/Context.h ../Geo/CGNSOptions.h \
-  ../Mesh/PartitionOptions.h adaptiveData.h ../Common/GmshMatrix.h
+  ../Mesh/PartitionOptions.h adaptiveData.h ../Numeric/GmshMatrix.h
 PViewDataGModel.o: PViewDataGModel.cpp PViewDataGModel.h PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
@@ -102,7 +102,7 @@ PViewDataGModel.o: PViewDataGModel.cpp PViewDataGModel.h PViewData.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
-  ../Common/GmshMatrix.h ../Numeric/Numeric.h \
+  ../Numeric/GmshMatrix.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h
 PViewDataGModelIO.o: PViewDataGModelIO.cpp ../Common/GmshMessage.h \
   PViewDataGModel.h PViewData.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
@@ -117,7 +117,7 @@ PViewDataGModelIO.o: PViewDataGModelIO.cpp ../Common/GmshMessage.h \
   ../Geo/SPoint3.h ../Geo/MElement.h ../Common/GmshDefines.h \
   ../Geo/MVertex.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
   ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/FunctionSpace.h ../Common/GmshMatrix.h ../Numeric/Numeric.h \
+  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Common/StringUtils.h
 PViewOptions.o: PViewOptions.cpp PViewOptions.h ColorTable.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/GmshMessage.h
@@ -125,7 +125,7 @@ adaptiveData.o: adaptiveData.cpp ../Plugin/Plugin.h ../Common/Options.h \
   ../Post/ColorTable.h ../Common/GmshMessage.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Common/ListUtils.h \
-  ../Common/GmshMatrix.h adaptiveData.h
+  ../Numeric/GmshMatrix.h adaptiveData.h
 OctreePost.o: OctreePost.cpp ../Common/Octree.h \
   ../Common/OctreeInternals.h OctreePost.h ../Common/ListUtils.h PView.h \
   ../Geo/SPoint3.h PViewDataList.h PViewData.h ../Geo/SBoundingBox3d.h \
@@ -141,7 +141,7 @@ OctreePost.o: OctreePost.cpp ../Common/Octree.h \
   ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
   ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/FunctionSpace.h ../Common/GmshMatrix.h
+  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h
 ColorTable.o: ColorTable.cpp ../Common/GmshMessage.h ColorTable.h \
   ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h
