@@ -354,8 +354,8 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
 }
 
 static void getEdgeVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &ve,
-                            std::set<MVertex*> &blocked, edgeContainer &edgeVertices, 
-                            bool linear, int nPts = 1, gmshHighOrderSmoother *displ2D = 0,
+                            edgeContainer &edgeVertices, bool linear,
+                            int nPts = 1, gmshHighOrderSmoother *displ2D = 0,
                             gmshHighOrderSmoother *displ3D = 0)
 {
   for(int i = 0; i < ele->getNumEdges(); i++){
@@ -366,9 +366,6 @@ static void getEdgeVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
         ve.insert(ve.end(), edgeVertices[p].begin(), edgeVertices[p].end());
       else
         ve.insert(ve.end(), edgeVertices[p].rbegin(), edgeVertices[p].rend());
-      blocked.insert(edgeVertices[p].begin(), edgeVertices[p].end());
-      blocked.insert(edge.getMinVertex());
-      blocked.insert(edge.getMaxVertex());
     }
     else{
       std::vector<MVertex*> temp;
@@ -543,8 +540,8 @@ static void reorientTrianglePoints(std::vector<MVertex*> &vtcs, int orientation,
 // KH: check face orientation wrt element ... 
 
 static void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &vf,
-                            std::set<MVertex*> &blocked, faceContainer &faceVertices,
-                            edgeContainer &edgeVertices, bool linear, int nPts = 1)
+                            faceContainer &faceVertices, edgeContainer &edgeVertices,
+                            bool linear, int nPts = 1)
 {
   Double_Matrix points;
   int start = 0;
@@ -579,10 +576,6 @@ static void getFaceVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
           reorientTrianglePoints(vtcs, orientation, swap);
         else
           Msg::Error("Error in face lookup for recuperation of high order face nodes");
-        blocked.insert(vtcs.begin(), vtcs.end());
-        blocked.insert(face.getVertex(0));
-        blocked.insert(face.getVertex(1));
-        blocked.insert(face.getVertex(2));
       }
       else if(face.getNumVertices() == 4){ // quad face
         // TODO reorient if more than 1 face vertex
@@ -731,7 +724,7 @@ static void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
   for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
     MQuadrangle *q = gf->quadrangles[i];
     std::vector<MVertex*> ve, vf;
-    getEdgeVertices(gf, q, ve, edgeVertices, linear, nPts,displ2D,displ3D);
+    getEdgeVertices(gf, q, ve, edgeVertices, linear, nPts, displ2D, displ3D);
     if(incomplete){
       quadrangles2.push_back
         (new MQuadrangle8(q->getVertex(0), q->getVertex(1), q->getVertex(2),
@@ -759,16 +752,15 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
   std::vector<MTetrahedron*> tetrahedra2;
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
     MTetrahedron *t = gr->tetrahedra[i];
-    std::set<MVertex*> blocked;
     std::vector<MVertex*> ve, vf, vr;
-    getEdgeVertices(gr, t, ve, blocked, edgeVertices, linear, nPts, displ2D, displ3D);
+    getEdgeVertices(gr, t, ve, edgeVertices, linear, nPts, displ2D, displ3D);
     if(nPts == 1){
       tetrahedra2.push_back
 	(new MTetrahedron10(t->getVertex(0), t->getVertex(1), t->getVertex(2), 
 			    t->getVertex(3), ve[0], ve[1], ve[2], ve[3], ve[4], ve[5]));
     }
     else{
-      getFaceVertices(gr, t, vf, blocked, faceVertices, edgeVertices, linear, nPts);
+      getFaceVertices(gr, t, vf, faceVertices, edgeVertices, linear, nPts);
       ve.insert(ve.end(), vf.begin(), vf.end());     
       MTetrahedronN incpl(t->getVertex(0), t->getVertex(1), t->getVertex(2), t->getVertex(3),
                           ve, nPts + 1);
@@ -800,8 +792,7 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
   for(unsigned int i = 0; i < gr->hexahedra.size(); i++){
     MHexahedron *h = gr->hexahedra[i];
     std::vector<MVertex*> ve, vf;
-    std::set<MVertex*> blocked;
-    getEdgeVertices(gr, h, ve, blocked, edgeVertices, linear, nPts,displ2D, displ3D);
+    getEdgeVertices(gr, h, ve, edgeVertices, linear, nPts, displ2D, displ3D);
     if(incomplete){
       hexahedra2.push_back
         (new MHexahedron20(h->getVertex(0), h->getVertex(1), h->getVertex(2), 
@@ -811,7 +802,7 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
                            ve[11]));
     }
     else{
-      getFaceVertices(gr, h, vf, blocked, faceVertices, edgeVertices, linear, nPts);
+      getFaceVertices(gr, h, vf, faceVertices, edgeVertices, linear, nPts);
       SPoint3 pc = h->barycenter();
       MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
       gr->mesh_vertices.push_back(v);
@@ -830,8 +821,7 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
   for(unsigned int i = 0; i < gr->prisms.size(); i++){
     MPrism *p = gr->prisms[i];
     std::vector<MVertex*> ve, vf;
-    std::set<MVertex*> blocked;
-    getEdgeVertices(gr, p, ve, blocked, edgeVertices, linear, nPts,displ2D, displ3D);
+    getEdgeVertices(gr, p, ve, edgeVertices, linear, nPts, displ2D, displ3D);
     if(incomplete){
       prisms2.push_back
         (new MPrism15(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
@@ -839,7 +829,7 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
                       ve[0], ve[1], ve[2], ve[3], ve[4], ve[5], ve[6], ve[7], ve[8]));
     }
     else{
-      getFaceVertices(gr, p, vf, blocked, faceVertices, edgeVertices, linear, nPts);
+      getFaceVertices(gr, p, vf, faceVertices, edgeVertices, linear, nPts);
       prisms2.push_back
         (new MPrism18(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
                       p->getVertex(3), p->getVertex(4), p->getVertex(5), 
@@ -854,8 +844,7 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
   for(unsigned int i = 0; i < gr->pyramids.size(); i++){
     MPyramid *p = gr->pyramids[i];
     std::vector<MVertex*> ve, vf;
-    std::set<MVertex*> blocked;
-    getEdgeVertices(gr, p, ve, blocked, edgeVertices, linear, nPts,displ2D, displ3D);
+    getEdgeVertices(gr, p, ve, edgeVertices, linear, nPts, displ2D, displ3D);
     if(incomplete){
       pyramids2.push_back
         (new MPyramid13(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
@@ -863,7 +852,7 @@ static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
                         ve[3], ve[4], ve[5], ve[6], ve[7]));
     }
     else{
-      getFaceVertices(gr, p, vf, blocked, faceVertices, edgeVertices, linear, nPts);
+      getFaceVertices(gr, p, vf, faceVertices, edgeVertices, linear, nPts);
       pyramids2.push_back
         (new MPyramid14(p->getVertex(0), p->getVertex(1), p->getVertex(2), 
                         p->getVertex(3), p->getVertex(4), ve[0], ve[1], ve[2], 
