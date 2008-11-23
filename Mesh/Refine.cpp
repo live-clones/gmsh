@@ -12,6 +12,17 @@
 #include "GmshMessage.h"
 #include "OS.h"
 
+class MVertexLessParam{
+ public:
+  bool operator()(const MVertex *v1, const MVertex *v2) const
+  {
+    double u1 = 0., u2 = 1.;
+    v1->getParameter(0, u1);
+    v2->getParameter(0, u2);
+    return u1 < u2;
+  }
+};
+
 static void Subdivide(GEdge *ge)
 {
   std::vector<MLine*> lines2;
@@ -25,6 +36,9 @@ static void Subdivide(GEdge *ge)
   }
   ge->lines = lines2;
 
+  // 2nd order meshing destroyed the ordering of the vertices on the edge
+  std::sort(ge->mesh_vertices.begin(), ge->mesh_vertices.end(), 
+            MVertexLessParam());
   for(unsigned int i = 0; i < ge->mesh_vertices.size(); i++)
     ge->mesh_vertices[i]->setPolynomialOrder(1);
   ge->deleteVertexArrays();

@@ -104,10 +104,8 @@ int MeshTransfiniteSurface(GFace *gf)
 
   // get the indices of the interpolation corners as well as the u,v
   // coordinates of all the boundary vertices
-  int iCorner = 0;
-  int N[4] = {0, 0, 0, 0};
-  std::vector<double> U;
-  std::vector<double> V;
+  int iCorner = 0, N[4] = {0, 0, 0, 0};
+  std::vector<double> U, V;
   for(unsigned int i = 0; i < m_vertices.size(); i++){
     MVertex *v = m_vertices[i];
     if(v == corners[0] || v == corners[1] || v == corners[2] || 
@@ -119,38 +117,15 @@ int MeshTransfiniteSurface(GFace *gf)
       }
     }
     SPoint2 param;
-    if(v->onWhat()->dim() == 0){
-      GVertex *gv = (GVertex*)v->onWhat();
-      param = gv->reparamOnFace(gf, 1);
-    }
-    else if(v->onWhat()->dim() == 1){
-      GEdge *ge = (GEdge*)v->onWhat();
-      double UU;
-      v->getParameter(0, UU);
-      param = ge->reparamOnFace(gf, UU, 1);
-    }
-    else{
-      double UU, VV;
-      if(v->onWhat() == gf && v->getParameter(0, UU) && v->getParameter(1, VV))
-        param = SPoint2(UU, VV);
-      else
-        param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()));
-    }
-    U.push_back(param.x());
-    V.push_back(param.y());
+    reparamMeshVertexOnFace(v, gf, param);
+    U.push_back(param[0]);
+    V.push_back(param[1]);
   }
 
-  int N1 = N[0];
-  int N2 = N[1];
-  int N3 = N[2];
-  int N4 = N[3];
-
-  int L = N2 - N1;
-  int H = N3 - N2;
-
+  int N1 = N[0], N2 = N[1], N3 = N[2], N4 = N[3];
+  int L = N2 - N1, H = N3 - N2;
   if(corners.size () == 4){
-    int Lb = N4 - N3;
-    int Hb = m_vertices.size() - N4;
+    int Lb = N4 - N3, Hb = m_vertices.size() - N4;
     if(Lb != L || Hb != H){
       Msg::Error("Surface %d cannot be meshed using the transfinite algo", 
 		 gf->tag());
@@ -166,10 +141,8 @@ int MeshTransfiniteSurface(GFace *gf)
     }      
   }
   
-  std::vector<double> lengths_i;
-  std::vector<double> lengths_j;
-  double L_i = 0;
-  double L_j = 0;
+  std::vector<double> lengths_i, lengths_j;
+  double L_i = 0, L_j = 0;
   lengths_i.push_back(0.);
   lengths_j.push_back(0.);
   for(int i = 0; i < L; i++){
@@ -230,12 +203,8 @@ int MeshTransfiniteSurface(GFace *gf)
     }
   }
 
-  double UC1 = U[N1];
-  double UC2 = U[N2];
-  double UC3 = U[N3];
-  double VC1 = V[N1];
-  double VC2 = V[N2];
-  double VC3 = V[N3];
+  double UC1 = U[N1], UC2 = U[N2], UC3 = U[N3];
+  double VC1 = V[N1], VC2 = V[N2], VC3 = V[N3];
 
   //create points using transfinite interpolation
   if(corners.size() == 4){

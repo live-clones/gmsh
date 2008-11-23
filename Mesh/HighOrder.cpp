@@ -226,6 +226,10 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
                             int nPts = 1, gmshHighOrderSmoother *displ2D = 0,
                             gmshHighOrderSmoother *displ3D = 0)
 {
+  if(ge->geomType() == GEntity::DiscreteCurve ||
+     ge->geomType() == GEntity::BoundaryLayerCurve)
+    linear = true;
+
   for(int i = 0; i < ele->getNumEdges(); i++){
     MEdge edge = ele->getEdge(i);
     std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
@@ -237,42 +241,37 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
     }
     else{
       MVertex *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);            
-      double u0 = 0., u1 = 0.;
+      double u0 = 0., u1 = 0., US[100];
       bool reparamOK = true;
-      if(!linear && ge->geomType() != GEntity::DiscreteCurve &&
-         ge->geomType() != GEntity::BoundaryLayerCurve){
+      if(!linear){
         reparamOK &= reparamMeshVertexOnEdge(v0, ge, u0);
-        if (ge->periodic(0) && v1 == ge->getEndVertex()->mesh_vertices[0]){
-          Range<double> par = ge->parBounds(0);
-          u1 = par.high();
-        }         
+        if(ge->periodic(0) && v1 == ge->getEndVertex()->mesh_vertices[0])
+          u1 = ge->parBounds(0).high();
         else
           reparamOK &= reparamMeshVertexOnEdge(v1, ge, u1);
+        if(reparamOK){
+          double relax = 1.;
+          while (1){
+            if(computeEquidistantParameters(ge, u0, u1, nPts + 2, US, relax)) 
+              break;
+            relax /= 2.0;
+            if(relax < 1.e-2) 
+              break;
+          } 
+          if(relax < 1.e-2)
+            Msg::Warning("Failed to compute equidistant parameters (relax = %g)",
+                         relax);
+        }
       }
-      double US[100];
-      if(reparamOK && !linear && ge->geomType() != GEntity::DiscreteCurve){
-        double relax = 1.;
-        while (1){
-          if(computeEquidistantParameters(ge, u0, u1, nPts + 2, US, relax)) 
-            break;
-          relax /= 2.0;
-          if (relax < 1.e-2) 
-            break;
-        } 
-        if (relax < 1.e-2)
-          Msg::Warning("Failed to compute equidistant parameters (relax = %g)",
-                       relax);
-      }
-      std::vector<MVertex*> temp;      
+      std::vector<MVertex*> temp;
       for(int j = 0; j < nPts; j++){
         const double t = (double)(j + 1)/(nPts + 1);
-        double uc = (1. - t) * u0 + t * u1;
+        double uc = (1. - t) * u0 + t * u1; // can be wrong, that's ok
         MVertex *v;
-        if(!reparamOK || linear || ge->geomType() == GEntity::DiscreteCurve || 
-           uc < u0 || uc > u1){ // need to treat periodic curves properly!
+        if(linear || !reparamOK || uc < u0 || uc > u1){ 
+          // we don't have a (valid) parameter on the curve
           SPoint3 pc = edge.interpolate(t);
           v = new MVertex(pc.x(), pc.y(), pc.z(), ge);
-          v->setParameter(0, t);
         }
         else {
           GPoint pc = ge->point(US[j + 1]);
@@ -284,6 +283,7 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
 	  }
         }
         temp.push_back(v);
+        // this destroys the ordering of the mesh vertices on the edge
         ge->mesh_vertices.push_back(v);
         ve.push_back(v);
       }
@@ -300,6 +300,10 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
                             int nPts = 1, gmshHighOrderSmoother *displ2D = 0,
                             gmshHighOrderSmoother *displ3D = 0)
 {
+  if(gf->geomType() == GEntity::DiscreteSurface ||
+     gf->geomType() == GEntity::BoundaryLayerSurface)
+    linear = true;
+
   for(int i = 0; i < ele->getNumEdges(); i++){
     MEdge edge = ele->getEdge(i);    
     std::pair<MVertex*, MVertex*> p(edge.getMinVertex(), edge.getMaxVertex());
@@ -312,27 +316,26 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
     else{
       MVertex *v0 = edge.getVertex(0), *v1 = edge.getVertex(1);
       SPoint2 p0, p1;
-      bool reparamOK = true;
-      if(!linear && 
-         gf->geomType() != GEntity::DiscreteSurface &&
-         gf->geomType() != GEntity::BoundaryLayerSurface){
-        reparamOK = reparamMeshEdgeOnFace(v0, v1, gf, p0, p1);
-      }
       double US[100], VS[100];
-      if(reparamOK && !linear && gf->geomType() != GEntity::DiscreteSurface){
-        computeEquidistantParameters(gf, p0[0], p1[0], p0[1], p1[1], nPts + 2, US, VS);
+      bool reparamOK = true;
+      if(!linear){
+        reparamOK = reparamMeshEdgeOnFace(v0, v1, gf, p0, p1);
+        if(reparamOK)
+          computeEquidistantParameters(gf, p0[0], p1[0], p0[1], p1[1], nPts + 2,
+                                       US, VS);
       }
       std::vector<MVertex*> temp;
       for(int j = 0; j < nPts; j++){
         const double t = (double)(j + 1) / (nPts + 1);
         MVertex *v;
-        if(!reparamOK || linear || gf->geomType() == GEntity::DiscreteSurface){
+        if(linear || !reparamOK){
+          // we don't have (valid) parameters on the surface
           SPoint3 pc = edge.interpolate(t);
           v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
         }
         else{
-          GPoint pc = gf->point(US[j+1], VS[j+1]);
-	  v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, US[j+1], VS[j+1]);
+          GPoint pc = gf->point(US[j + 1], VS[j + 1]);
+	  v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, US[j + 1], VS[j + 1]);
 	  if (displ3D){
 	    SPoint3 pc2 = edge.interpolate(t);          
 	    displ3D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
@@ -390,6 +393,10 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
                             bool linear, int nPts = 1, gmshHighOrderSmoother *displ2D = 0,
                             gmshHighOrderSmoother *displ3D = 0)
 {
+  if(gf->geomType() == GEntity::DiscreteSurface ||
+     gf->geomType() == GEntity::BoundaryLayerSurface)
+    linear = true;
+
   Double_Matrix points;
   int start = 0;
 
@@ -421,19 +428,16 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
       std::vector<MVertex*> &vtcs = faceVertices[face];
       SPoint2 pts[20];
       bool reparamOK = true;
-      if(!linear && 
-         gf->geomType() != GEntity::DiscreteSurface &&
-         gf->geomType() != GEntity::BoundaryLayerSurface){
-	for (int k = 0; k < incomplete->getNumVertices(); k++){
+      if(!linear){
+	for(int k = 0; k < incomplete->getNumVertices(); k++)
 	  reparamOK &= reparamMeshVertexOnFace(incomplete->getVertex(k), gf, pts[k]);
-	}
       }
       if(face.getNumVertices() == 3 && nPts > 1){ // tri face
         for(int k = start; k < points.size1(); k++){
           MVertex *v;
           const double t1 = points(k, 0);
           const double t2 = points(k, 1);
-          if(linear || gf->geomType() == GEntity::DiscreteSurface){
+          if(linear){
             SPoint3 pc = face.interpolate(t1, t2);
             v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
           }
@@ -463,7 +467,7 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
 	    else{
 	      v = new MVertex(X, Y, Z, gf);
 	    }
-	    if (displ3D){
+	    if(displ3D){
 	      SPoint3 pc2 = face.interpolate(t1, t2);
 	      displ3D->add(v, SVector3(pc2.x(), pc2.y(), pc2.z()));
 	    }	    
@@ -481,7 +485,7 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
             // parameters are between -1 and 1
             double t1 = 2. * (double)(j + 1) / (nPts + 1) - 1.;
             double t2 = 2. * (double)(k + 1) / (nPts + 1) - 1.;
-            if(!reparamOK || linear || gf->geomType() == GEntity::DiscreteSurface){
+            if(linear || !reparamOK){
               SPoint3 pc = face.interpolate(t1, t2);
               v = new MVertex(pc.x(), pc.y(), pc.z(), gf);
             }
@@ -697,7 +701,7 @@ static void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
     MTriangle *t = gf->triangles[i];
     std::vector<MVertex*> ve, vf;
-    getEdgeVertices(gf, t, ve, edgeVertices, linear, nPts,displ2D,displ3D);
+    getEdgeVertices(gf, t, ve, edgeVertices, linear, nPts, displ2D, displ3D);
     if(nPts == 1){
       triangles2.push_back
         (new MTriangle6(t->getVertex(0), t->getVertex(1), t->getVertex(2),
