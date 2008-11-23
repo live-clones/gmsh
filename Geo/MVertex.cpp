@@ -31,9 +31,13 @@ void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric, double scalin
   if(_index < 0) return; // negative index vertices are never saved
 
   int myDim = 0, myTag = 0;
-  if(saveParametric && onWhat()){
-    myDim = onWhat()->dim(); 
-    myTag = onWhat()->tag();
+  if(saveParametric){
+    if(onWhat()){
+      myDim = onWhat()->dim(); 
+      myTag = onWhat()->tag();
+    }
+    else
+      saveParametric = false;
   }
 
   if(!binary){

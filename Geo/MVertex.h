@@ -91,7 +91,7 @@ class MVertex{
   inline void setIndex(int index) { _index = index; }
 
   // get/set ith parameter
-  virtual bool getParameter(int i, double &par) const{ return false; }
+  virtual bool getParameter(int i, double &par) const { par = 0.; return false; }
   virtual bool setParameter(int i, double par){ return false; }
 
   // measure distance to another vertex
@@ -123,21 +123,14 @@ class MEdgeVertex : public MVertex{
  protected:
   double _u, _lc;
  public :
-  MEdgeVertex(double x, double y, double z, GEntity *ge, double u, double lc = -1.0, int num = 0) 
+  MEdgeVertex(double x, double y, double z, GEntity *ge, double u, double lc = -1.0,
+              int num = 0) 
     : MVertex(x, y, z, ge,num), _u(u), _lc(lc)
   {
   }
   virtual ~MEdgeVertex(){}
-  virtual bool getParameter(int i, double &par) const 
-  { 
-    par = _u; 
-    return true; 
-  }
-  virtual bool setParameter(int i, double par)
-  { 
-    _u = par; 
-    return true; 
-  }
+  virtual bool getParameter(int i, double &par) const { par = _u; return true; }
+  virtual bool setParameter(int i, double par){ _u = par; return true; }
   double getLc() const { return _lc; }
 };
 
@@ -145,16 +138,12 @@ class MFaceVertex : public MVertex{
  protected:
   double _u, _v;
  public :
-  MFaceVertex(double x, double y, double z, GEntity *ge, double u, double v, int num =0) 
+  MFaceVertex(double x, double y, double z, GEntity *ge, double u, double v, int num = 0) 
     : MVertex(x, y, z, ge, num), _u(u), _v(v)
   {
   }
   virtual ~MFaceVertex(){}
-  virtual bool getParameter(int i, double &par) const 
-  { 
-    par = (i ? _v : _u);
-    return true; 
-  }
+  virtual bool getParameter(int i, double &par) const { par = (i ? _v : _u); return true; }
   virtual bool setParameter(int i, double par)
   {
     if(!i) 
