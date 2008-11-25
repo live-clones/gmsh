@@ -126,6 +126,7 @@ Vertex *Create_Vertex(int Num, double u, double v, gmshSurface *surf, double lc)
   pV->u = u;
   pV->geometry = surf;
   pV->pntOnGeometry = SPoint2(u,v);
+  surf->is_projection_surface=true;
   return pV;
 }
 
@@ -3069,7 +3070,6 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
   DeleteShape(c->Typ, c->Num);
   List_Delete(new_list);
   List_Delete(rshapes);
-
   return true;
 }
 
