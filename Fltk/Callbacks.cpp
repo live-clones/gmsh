@@ -2337,19 +2337,39 @@ void clip_update_cb(CALLBACK_ARGS)
 {
   if(WID->clip_group[0]->visible()){ // clipping planes
     int idx = WID->clip_choice->value();
-    CTX.clip[idx] = 0;
-    for(int i = 0; i < WID->clip_browser->size(); i++)
-      if(WID->clip_browser->selected(i+1))
-        CTX.clip[idx] += (1<<i);
+    CTX.geom.clip &= ~(1 << idx);
+    CTX.mesh.clip &= ~(1 << idx);
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      PView::list[i]->getOptions()->Clip &= ~(1 << idx);
+    for(int i = 0; i < WID->clip_browser->size(); i++){
+      if(WID->clip_browser->selected(i + 1)){
+        if(i == 0)
+          CTX.geom.clip |= (1 << idx);
+        else if(i == 1)
+          CTX.mesh.clip |= (1 << idx);
+        else if(i - 2 < PView::list.size())
+          PView::list[i - 2]->getOptions()->Clip |= (1 << idx);
+      }
+    }
     for(int i = 0; i < 4; i++)
       CTX.clip_plane[idx][i] = WID->clip_value[i]->value();
   }
   else{ // clipping box
-    for(int idx = 0; idx < 6; idx++){
-      CTX.clip[idx] = 0;
-      for(int i = 0; i < WID->clip_browser->size(); i++)
-        if(WID->clip_browser->selected(i+1))
-          CTX.clip[idx] += (1<<i);
+    CTX.geom.clip = 0;
+    CTX.mesh.clip = 0;
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      PView::list[i]->getOptions()->Clip = 0;
+    for(int i = 0; i < WID->clip_browser->size(); i++){
+      if(WID->clip_browser->selected(i + 1)){
+        for(int idx = 0; idx < 6; idx++){
+          if(i == 0)
+            CTX.geom.clip |= (1 << idx);
+          else if(i == 1)
+            CTX.mesh.clip |= (1 << idx);
+          else if(i - 2 < PView::list.size())
+            PView::list[i - 2]->getOptions()->Clip |= (1 << idx);
+        }
+      }
     }
     double c[3] = {WID->clip_value[4]->value(),
                    WID->clip_value[5]->value(),
@@ -2379,10 +2399,10 @@ void clip_update_cb(CALLBACK_ARGS)
 
   if(CTX.clip_whole_elements || CTX.clip_whole_elements != WID->clip_butt[0]->value()){
     for(int clip = 0; clip < 6; clip++){
-      if(CTX.clip[clip] & 2)
+      if(CTX.mesh.clip)
 	CTX.mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
       for(unsigned int index = 0; index < PView::list.size(); index++)
-	if(CTX.clip[clip] & (1 << (2 + index)))
+	if(PView::list[index]->getOptions()->Clip)
 	  PView::list[index]->setChanged(true);
     }
   }
@@ -2409,8 +2429,12 @@ void clip_invert_cb(CALLBACK_ARGS)
 
 void clip_reset_cb(CALLBACK_ARGS)
 {
+  CTX.geom.clip = 0;
+  CTX.mesh.clip = 0;
+  for(unsigned int index = 0; index < PView::list.size(); index++)
+    PView::list[index]->getOptions()->Clip = 0;
+
   for(int i = 0; i < 6; i++){
-    CTX.clip[i] = 0;
     CTX.clip_plane[i][0] = 1.;
     for(int j = 1; j < 4; j++)
       CTX.clip_plane[i][j] = 0.;

@@ -219,6 +219,11 @@ Center glyphs (arrows, numbers, etc.)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.Clip
+Enable clipping planes? (Plane[i]=2^i, i=0,...,5)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
 @item View.ColormapAlpha
 Colormap alpha channel value (used only if != 1)@*
 Default value: @code{1}@*

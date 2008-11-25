@@ -149,6 +149,11 @@ Compute characteristic lengths from values given at geometry points@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Clip
+Enable clipping planes? (Plane[i]=2^i, i=0,...,5)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
 @item Mesh.ColorCarousel
 Mesh coloring (0=by element type, 1=by elementary entity, 2=by physical entity, 3=by partition)@*
 Default value: @code{1}@*

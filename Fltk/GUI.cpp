@@ -4547,9 +4547,13 @@ void GUI::reset_clip_browser()
   }
   int idx = clip_choice->value();
   clip_browser->deselect();
-  for(int i = 0; i < clip_browser->size(); i++)
-    if(CTX.clip[idx] & (1<<i))
-      clip_browser->select(i+1);
+  for(int i = 0; i < clip_browser->size(); i++){
+    if((i == 0 && CTX.geom.clip & (1 << idx)) ||
+       (i == 1 && CTX.mesh.clip & (1 << idx)) ||
+       (i - 2 < PView::list.size() && 
+        PView::list[i - 2]->getOptions()->Clip & (1 << idx)))
+      clip_browser->select(i + 1);
+  }
   for(int i = 0; i < 4; i++)
     clip_value[i]->value(CTX.clip_plane[idx][i]);
   for(int i = 4; i < 7; i++)

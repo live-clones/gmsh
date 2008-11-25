@@ -179,11 +179,6 @@ Draw background gradient (0=none, 1=vertical, 2=horizontal, 3=radial)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item General.Clip0
-Enable clipping plane 0 (Geometry=2^0, Mesh=2^1, View[i]=2^(2+i))@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
 @item General.Clip0A
 First coefficient in equation for clipping plane 0 (`A' in `AX+BY+CZ+D=0')@*
 Default value: @code{1}@*
@@ -201,11 +196,6 @@ Saved in: @code{-}
 
 @item General.Clip0D
 Fourth coefficient in equation for clipping plane 0 (`D' in `AX+BY+CZ+D=0')@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
-@item General.Clip1
-Enable clipping plane 1 (Geometry=2^0, Mesh=2^1, View[i]=2^(2+i))@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
@@ -229,11 +219,6 @@ Fourth coefficient in equation for clipping plane 1@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item General.Clip2
-Enable clipping plane 2 (Geometry=2^0, Mesh=2^1, View[i]=2^(2+i))@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
 @item General.Clip2A
 First coefficient in equation for clipping plane 2@*
 Default value: @code{1}@*
@@ -251,11 +236,6 @@ Saved in: @code{-}
 
 @item General.Clip2D
 Fourth coefficient in equation for clipping plane 2@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
-@item General.Clip3
-Enable clipping plane 3 (Geometry=2^0, Mesh=2^1, View[i]=2^(2+i))@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
@@ -279,11 +259,6 @@ Fourth coefficient in equation for clipping plane 3@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item General.Clip4
-Enable clipping plane 4 (Geometry=2^0, Mesh=2^1, View[i]=2^(2+i))@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
 @item General.Clip4A
 First coefficient in equation for clipping plane 4@*
 Default value: @code{1}@*
@@ -301,11 +276,6 @@ Saved in: @code{-}
 
 @item General.Clip4D
 Fourth coefficient in equation for clipping plane 4@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
-@item General.Clip5
-Enable clipping plane 5 (Geometry=2^0, Mesh=2^1, View[i]=2^(2+i))@*
 Default value: @code{0}@*
 Saved in: @code{-}
 

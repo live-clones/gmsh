@@ -280,12 +280,13 @@ static double intersectClipPlane(int clip, int numNodes, double xyz[NMAX][3])
   return val;
 }
 
-static bool isElementVisible(int index, int dim, int numNodes, double xyz[NMAX][3])
+static bool isElementVisible(PViewOptions *opt, int dim, int numNodes, 
+                             double xyz[NMAX][3])
 {
   if(!CTX.clip_whole_elements) return true;
   bool hidden = false;
   for(int clip = 0; clip < 6; clip++){
-    if(CTX.clip[clip] & (1 << (2 + index))){
+    if(opt->Clip & (1 << clip)){
       if(dim < 3 && CTX.clip_only_volume){
       }
       else{
@@ -953,7 +954,7 @@ static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
       }
       changeCoordinates(p, ent, i, numNodes, numEdges, numComp, xyz, val);
       int dim = data->getDimension(opt->TimeStep, ent, i);
-      if(!isElementVisible(p->getIndex(), dim, numNodes, xyz)) continue;
+      if(!isElementVisible(opt, dim, numNodes, xyz)) continue;
 
       for(int j = 0; j < numNodes; j++)
         opt->TmpBBox += SPoint3(xyz[j][0], xyz[j][1], xyz[j][2]);
@@ -1243,8 +1244,9 @@ class initPView {
   int _estimateIfClipped(PView *p, int num)
   {
     if(CTX.clip_whole_elements && CTX.clip_only_draw_intersecting_volume){
+      PViewOptions *opt = p->getOptions();
       for(int clip = 0; clip < 6; clip++){
-	if(CTX.clip[clip] & (1 << (2 + p->getIndex())))
+	if(opt->Clip & (1 << clip))
 	  return (int)sqrt((double)num);
       }
     }
@@ -1381,7 +1383,7 @@ class drawPView {
     
     if(!CTX.clip_whole_elements){
       for(int i = 0; i < 6; i++)
-	if(CTX.clip[i] & (1 << (2 + p->getIndex())))
+	if(opt->Clip & (1 << i))
 	  glEnable((GLenum)(GL_CLIP_PLANE0 + i));
 	else
 	  glDisable((GLenum)(GL_CLIP_PLANE0 + i));
@@ -1490,7 +1492,7 @@ class drawPViewBoundingBox {
              bb.max().x(), bb.max().y(), bb.max().z());
     glColor3d(1., 0., 0.);
     for(int i = 0; i < 6; i++)
-      if(CTX.clip[i] & (1 << (2 + p->getIndex())))
+      if(opt->Clip & (1 << i))
         Draw_PlaneInBoundingBox(bb.min().x(), bb.min().y(), bb.min().z(),
                                 bb.max().x(), bb.max().y(), bb.max().z(),
                                 CTX.clip_plane[i][0], CTX.clip_plane[i][1], 

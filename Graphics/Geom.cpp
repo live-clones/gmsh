@@ -518,7 +518,7 @@ void Draw_Geom()
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
   
   for(int i = 0; i < 6; i++)
-    if(CTX.clip[i] & 1) 
+    if(CTX.geom.clip & (1 << i)) 
       glEnable((GLenum)(GL_CLIP_PLANE0 + i));
     else
       glDisable((GLenum)(GL_CLIP_PLANE0 + i));

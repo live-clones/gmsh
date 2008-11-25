@@ -14,6 +14,11 @@ Number of points used to draw a circle/ellipse@*
 Default value: @code{20}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.Clip
+Enable clipping planes? (Plane[i]=2^i, i=0,...,5)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
 @item Geometry.ExtrudeReturnLateralEntities
 Add lateral entities in lists returned by extrusion commands?@*
 Default value: @code{1}@*

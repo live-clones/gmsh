@@ -85,6 +85,7 @@ class PViewOptions {
   void *GenRaise_f[3];
   double TargetError;
   int MaxRecursionLevel;
+  int Clip; // status of clip planes (bit array)
   struct{
     unsigned int point, line, triangle, quadrangle;
     unsigned int tetrahedron, hexahedron, prism, pyramid;

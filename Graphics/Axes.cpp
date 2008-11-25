@@ -29,7 +29,7 @@ void Draw_Axes()
              CTX.max[0], CTX.max[1], CTX.max[2]);
     glColor3d(1.,0.,0.);
     for(int j = 0; j < 6; j++)
-      if(CTX.clip[j] & 1 || CTX.clip[j] & 2)
+      if(CTX.geom.clip & (1 << j) || CTX.mesh.clip & (1 << j))
         Draw_PlaneInBoundingBox(CTX.min[0], CTX.min[1], CTX.min[2],
                                 CTX.max[0], CTX.max[1], CTX.max[2],
                                 CTX.clip_plane[j][0], CTX.clip_plane[j][1], 

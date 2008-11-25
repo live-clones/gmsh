@@ -116,7 +116,7 @@ static bool isElementVisible(MElement *ele)
   if(CTX.clip_whole_elements){
     bool hidden = false;
     for(int clip = 0; clip < 6; clip++){
-      if(CTX.clip[clip] & 2){
+      if(CTX.mesh.clip & (1 << clip)){
 	if(ele->getDim() < 3 && CTX.clip_only_volume){
 	}
 	else{
@@ -772,7 +772,7 @@ class initMeshGRegion {
   {
     if(CTX.clip_whole_elements && CTX.clip_only_draw_intersecting_volume){
       for(int clip = 0; clip < 6; clip++){
-	if(CTX.clip[clip] & 2)
+	if(CTX.mesh.clip & (1 << clip))
 	  return (int)sqrt((double)num);
       }
     }
@@ -920,7 +920,7 @@ void Draw_Mesh()
   
   if(!CTX.clip_whole_elements){
     for(int i = 0; i < 6; i++)
-      if(CTX.clip[i] & 2) 
+      if(CTX.mesh.clip & (1 << i)) 
 	glEnable((GLenum)(GL_CLIP_PLANE0 + i));
       else
 	glDisable((GLenum)(GL_CLIP_PLANE0 + i));

@@ -3492,17 +3492,6 @@ double opt_general_expert_mode(OPT_ARGS_NUM)
   return CTX.expert_mode;
 }
 
-double opt_general_clip0(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.clip[0] = (int)val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->reset_clip_browser();
-#endif
-  return CTX.clip[0];
-}
-
 double opt_general_clip0a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -3545,17 +3534,6 @@ double opt_general_clip0d(OPT_ARGS_NUM)
     WID->reset_clip_browser();
 #endif
   return CTX.clip_plane[0][3];
-}
-
-double opt_general_clip1(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.clip[1] = (int)val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->reset_clip_browser();
-#endif
-  return CTX.clip[1];
 }
 
 double opt_general_clip1a(OPT_ARGS_NUM)
@@ -3602,17 +3580,6 @@ double opt_general_clip1d(OPT_ARGS_NUM)
   return CTX.clip_plane[1][3];
 }
 
-double opt_general_clip2(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.clip[2] = (int)val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->reset_clip_browser();
-#endif
-  return CTX.clip[2];
-}
-
 double opt_general_clip2a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -3655,17 +3622,6 @@ double opt_general_clip2d(OPT_ARGS_NUM)
     WID->reset_clip_browser();
 #endif
   return CTX.clip_plane[2][3];
-}
-
-double opt_general_clip3(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.clip[3] = (int)val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->reset_clip_browser();
-#endif
-  return CTX.clip[3];
 }
 
 double opt_general_clip3a(OPT_ARGS_NUM)
@@ -3712,17 +3668,6 @@ double opt_general_clip3d(OPT_ARGS_NUM)
   return CTX.clip_plane[3][3];
 }
 
-double opt_general_clip4(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.clip[4] = (int)val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->reset_clip_browser();
-#endif
-  return CTX.clip[4];
-}
-
 double opt_general_clip4a(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -3765,17 +3710,6 @@ double opt_general_clip4d(OPT_ARGS_NUM)
     WID->reset_clip_browser();
 #endif
   return CTX.clip_plane[4][3];
-}
-
-double opt_general_clip5(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX.clip[5] = (int)val;
-#if defined(HAVE_FLTK)
-  if(WID && (action & GMSH_GUI))
-    WID->reset_clip_browser();
-#endif
-  return CTX.clip[5];
 }
 
 double opt_general_clip5a(OPT_ARGS_NUM)
@@ -4455,6 +4389,17 @@ double opt_geometry_snap2(OPT_ARGS_NUM)
     WID->context_geometry_value[2]->value(CTX.geom.snap[2]);
 #endif
   return CTX.geom.snap[2];
+}
+
+double opt_geometry_clip(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.geom.clip = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
+  return CTX.geom.clip;
 }
 
 double opt_mesh_optimize(OPT_ARGS_NUM)
@@ -5614,6 +5559,17 @@ double opt_mesh_partition_metis_refine_algorithm(OPT_ARGS_NUM)
       (ival < 1 || ival > 3) ? 3 : ival;
   }
   return CTX.mesh.partition_options.refine_algorithm;
+}
+
+double opt_mesh_clip(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.clip = (int)val;
+#if defined(HAVE_FLTK)
+  if(WID && (action & GMSH_GUI))
+    WID->reset_clip_browser();
+#endif
+  return CTX.mesh.clip;
 }
 
 double opt_solver_max_delay(OPT_ARGS_NUM)
@@ -7847,6 +7803,24 @@ double opt_view_use_stipple(OPT_ARGS_NUM)
   }
 #endif
   return opt->UseStipple;
+#else
+  return 0.;
+#endif
+}
+
+double opt_view_clip(OPT_ARGS_NUM)
+{
+#if !defined(HAVE_NO_POST)
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    opt->Clip = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    WID->reset_clip_browser();
+  }
+#endif
+  return opt->Clip;
 #else
   return 0.;
 #endif

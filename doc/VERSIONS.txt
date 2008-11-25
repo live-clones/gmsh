@@ -1,4 +1,7 @@
-$Id: VERSIONS.txt,v 1.18 2008-11-20 19:12:54 geuzaine Exp $
+$Id: VERSIONS.txt,v 1.19 2008-11-25 17:18:33 geuzaine Exp $
+
+2.2.7 (?): fixed clipping planes when more than 32 views are present
+(replaced General.Clip with {Geometry,Mesh,View}.Clip).
 
 2.2.6 (Nov 21, 2008): better transfinite smoothing and automatic
 corner selection; fixed high order meshing crashes on Windows and

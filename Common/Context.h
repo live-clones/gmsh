@@ -107,7 +107,6 @@ class Context_T {
   double light_position[6][4]; // light sources positions 
   double shine, shine_exponent; // material specular reflection parameters
   int render_mode; // GMSH_RENDER, GMSH_SELECT, GMSH_FEEDBACK 
-  int clip[6]; // status of clip planes (bit arrays)
   double clip_plane[6][4]; // clipping planes 
   int clip_whole_elements, clip_only_draw_intersecting_volume, clip_only_volume; // clip options
   int polygon_offset, polygon_offset_always; // polygon offset control
@@ -146,6 +145,7 @@ class Context_T {
     double tolerance;
     double snap[3];
     int occ_fix_small_edges, occ_fix_small_faces, occ_sew_faces;
+    int clip; // status of clip planes (bit array)
   } geom;
 
   // mesh options 
@@ -179,6 +179,7 @@ class Context_T {
     int zone_definition;
     PartitionOptions partition_options;
     CGNSOptions cgns_options;
+    int clip; // status of clip planes (bit array)
   } mesh;
 
   // post processing options 
