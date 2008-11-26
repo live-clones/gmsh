@@ -1,9 +1,0 @@
-Solver.Name1 = "My C++ Solver";
-Solver.Executable1 = "solver.exe";
-Solver.OptionCommand1 = "-options";
-Solver.FirstOption1 = "My options";
-Solver.FirstButton1 = "Run !";
-Solver.FirstButtonCommand1 = "-run %s";
-Solver.ClientServer1 = 1;
-Solver.MergeViews1 = 1;
-Solver.PopupMessages1 = 1;

@@ -1,9 +1,0 @@
-
-# possible de changer ceci aussi en ligne de commande
-
-$T2H_SPLIT = 'chapter';
-$T2H_SPLIT_INDEX = 1000;
-
-# The following can only be set in the init file
-
-$T2H_INDEX_CHAPTER = 'Concept index';
