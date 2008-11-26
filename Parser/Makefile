@@ -46,14 +46,14 @@ clean:
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	${CXX} -MM ${CFLAGS} ${SRC} \
-	) >Makefile.new
+         ${CXX} -MM ${CFLAGS} ${SRC} | sed 's/.o:/$${OBJEXT}:/g' \
+        ) > Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-Gmsh.tab.o: Gmsh.tab.cpp ../Common/GmshMessage.h ../Common/MallocUtils.h \
+Gmsh.tab${OBJEXT}: Gmsh.tab.cpp ../Common/GmshMessage.h ../Common/MallocUtils.h \
   ../Common/ListUtils.h ../Common/TreeUtils.h ../Common/avl.h \
   ../Common/ListUtils.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
   ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h \
@@ -75,7 +75,7 @@ Gmsh.tab.o: Gmsh.tab.cpp ../Common/GmshMessage.h ../Common/MallocUtils.h \
   ../Common/CreateFile.h ../Mesh/Field.h ../Post/PView.h \
   ../Mesh/BackgroundMesh.h ../Post/PViewDataList.h ../Post/PViewData.h \
   ../Plugin/PluginManager.h
-Gmsh.yy.o: Gmsh.yy.cpp ../Common/GmshMessage.h ../Geo/Geo.h \
+Gmsh.yy${OBJEXT}: Gmsh.yy.cpp ../Common/GmshMessage.h ../Geo/Geo.h \
   ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
   ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
@@ -83,4 +83,4 @@ Gmsh.yy.o: Gmsh.yy.cpp ../Common/GmshMessage.h ../Geo/Geo.h \
   ../Common/TreeUtils.h ../Common/avl.h ../Common/ListUtils.h \
   ../Geo/SPoint2.h ../Geo/ExtrudeParams.h ../Common/SmoothData.h \
   Gmsh.tab.hpp
-FunctionManager.o: FunctionManager.cpp FunctionManager.h
+FunctionManager${OBJEXT}: FunctionManager.cpp FunctionManager.h

@@ -42,21 +42,21 @@ clean:
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	${CXX} -MM ${CFLAGS} ${SRC} \
-	) >Makefile.new
+         ${CXX} -MM ${CFLAGS} ${SRC} | sed 's/.o:/$${OBJEXT}:/g' \
+        ) > Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-matheval.o: matheval.cpp common.h ../../Common/MallocUtils.h matheval.h \
+matheval${OBJEXT}: matheval.cpp common.h ../../Common/MallocUtils.h matheval.h \
   node.h symbol_table.h
-node.o: node.cpp common.h ../../Common/MallocUtils.h node.h \
+node${OBJEXT}: node.cpp common.h ../../Common/MallocUtils.h node.h \
   symbol_table.h
-scanner.yy.o: scanner.yy.cpp common.h ../../Common/MallocUtils.h node.h \
+scanner.yy${OBJEXT}: scanner.yy.cpp common.h ../../Common/MallocUtils.h node.h \
   symbol_table.h parser.tab.hpp
-parser.tab.o: parser.tab.cpp common.h ../../Common/MallocUtils.h node.h \
+parser.tab${OBJEXT}: parser.tab.cpp common.h ../../Common/MallocUtils.h node.h \
   symbol_table.h
-symbol_table.o: symbol_table.cpp common.h ../../Common/MallocUtils.h \
+symbol_table${OBJEXT}: symbol_table.cpp common.h ../../Common/MallocUtils.h \
   symbol_table.h xmath.h
-xmath.o: xmath.cpp xmath.h
+xmath${OBJEXT}: xmath.cpp xmath.h

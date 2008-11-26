@@ -45,43 +45,43 @@ clean:
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	${CXX} -MM ${CFLAGS} ${SRC} \
-	) >Makefile.new
+         ${CXX} -MM ${CFLAGS} ${SRC} | sed 's/.o:/$${OBJEXT}:/g' \
+        ) > Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-ANN.o: ANN.cpp ../include/ANN/ANNx.h ../include/ANN/ANN.h \
+ANN${OBJEXT}: ANN.cpp ../include/ANN/ANNx.h ../include/ANN/ANN.h \
   ../include/ANN/ANNperf.h
-bd_fix_rad_search.o: bd_fix_rad_search.cpp bd_tree.h \
+bd_fix_rad_search${OBJEXT}: bd_fix_rad_search.cpp bd_tree.h \
   ../include/ANN/ANNx.h ../include/ANN/ANN.h kd_tree.h \
   kd_fix_rad_search.h kd_util.h pr_queue_k.h ../include/ANN/ANNperf.h
-bd_pr_search.o: bd_pr_search.cpp bd_tree.h ../include/ANN/ANNx.h \
+bd_pr_search${OBJEXT}: bd_pr_search.cpp bd_tree.h ../include/ANN/ANNx.h \
   ../include/ANN/ANN.h kd_tree.h kd_pr_search.h kd_util.h pr_queue.h \
   ../include/ANN/ANNperf.h pr_queue_k.h
-bd_search.o: bd_search.cpp bd_tree.h ../include/ANN/ANNx.h \
+bd_search${OBJEXT}: bd_search.cpp bd_tree.h ../include/ANN/ANNx.h \
   ../include/ANN/ANN.h kd_tree.h kd_search.h kd_util.h pr_queue_k.h \
   ../include/ANN/ANNperf.h
-bd_tree.o: bd_tree.cpp bd_tree.h ../include/ANN/ANNx.h \
+bd_tree${OBJEXT}: bd_tree.cpp bd_tree.h ../include/ANN/ANNx.h \
   ../include/ANN/ANN.h kd_tree.h kd_util.h kd_split.h \
   ../include/ANN/ANNperf.h
-brute.o: brute.cpp ../include/ANN/ANNx.h ../include/ANN/ANN.h \
+brute${OBJEXT}: brute.cpp ../include/ANN/ANNx.h ../include/ANN/ANN.h \
   pr_queue_k.h ../include/ANN/ANNperf.h
-kd_dump.o: kd_dump.cpp kd_tree.h ../include/ANN/ANNx.h \
+kd_dump${OBJEXT}: kd_dump.cpp kd_tree.h ../include/ANN/ANNx.h \
   ../include/ANN/ANN.h bd_tree.h
-kd_fix_rad_search.o: kd_fix_rad_search.cpp kd_fix_rad_search.h kd_tree.h \
+kd_fix_rad_search${OBJEXT}: kd_fix_rad_search.cpp kd_fix_rad_search.h kd_tree.h \
   ../include/ANN/ANNx.h ../include/ANN/ANN.h kd_util.h pr_queue_k.h \
   ../include/ANN/ANNperf.h
-kd_pr_search.o: kd_pr_search.cpp kd_pr_search.h kd_tree.h \
+kd_pr_search${OBJEXT}: kd_pr_search.cpp kd_pr_search.h kd_tree.h \
   ../include/ANN/ANNx.h ../include/ANN/ANN.h kd_util.h pr_queue.h \
   ../include/ANN/ANNperf.h pr_queue_k.h
-kd_search.o: kd_search.cpp kd_search.h kd_tree.h ../include/ANN/ANNx.h \
+kd_search${OBJEXT}: kd_search.cpp kd_search.h kd_tree.h ../include/ANN/ANNx.h \
   ../include/ANN/ANN.h kd_util.h pr_queue_k.h ../include/ANN/ANNperf.h
-kd_split.o: kd_split.cpp kd_tree.h ../include/ANN/ANNx.h \
+kd_split${OBJEXT}: kd_split.cpp kd_tree.h ../include/ANN/ANNx.h \
   ../include/ANN/ANN.h kd_util.h kd_split.h
-kd_tree.o: kd_tree.cpp kd_tree.h ../include/ANN/ANNx.h \
+kd_tree${OBJEXT}: kd_tree.cpp kd_tree.h ../include/ANN/ANNx.h \
   ../include/ANN/ANN.h kd_split.h kd_util.h ../include/ANN/ANNperf.h
-kd_util.o: kd_util.cpp kd_util.h kd_tree.h ../include/ANN/ANNx.h \
+kd_util${OBJEXT}: kd_util.cpp kd_util.h kd_tree.h ../include/ANN/ANNx.h \
   ../include/ANN/ANN.h ../include/ANN/ANNperf.h
-perf.o: perf.cpp ../include/ANN/ANN.h ../include/ANN/ANNperf.h
+perf${OBJEXT}: perf.cpp ../include/ANN/ANN.h ../include/ANN/ANNperf.h

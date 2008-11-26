@@ -52,4 +52,4 @@ depend:
 	true
 
 # DO NOT DELETE THIS LINE
-nglib_addon.o: ../../Common/GmshMessage.h
+nglib_addon${OBJEXT}: ../../Common/GmshMessage.h

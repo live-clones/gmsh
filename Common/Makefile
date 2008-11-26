@@ -52,18 +52,18 @@ clean:
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	${CXX} -MM -MG ${CFLAGS} ${SRC} \
-	) >Makefile.new
+         ${CXX} -MM ${CFLAGS} ${SRC} | sed 's/.o:/$${OBJEXT}:/g' \
+        ) > Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-Context.o: Context.cpp ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
+Context${OBJEXT}: Context.cpp ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
   Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h Trackball.h
-Octree.o: Octree.cpp Octree.h OctreeInternals.h
-OctreeInternals.o: OctreeInternals.cpp GmshMessage.h OctreeInternals.h
-Options.o: Options.cpp GmshUI.h GmshDefines.h ../Geo/GModel.h \
+Octree${OBJEXT}: Octree.cpp Octree.h OctreeInternals.h
+OctreeInternals${OBJEXT}: OctreeInternals.cpp GmshMessage.h OctreeInternals.h
+Options${OBJEXT}: Options.cpp GmshUI.h GmshDefines.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
   ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
@@ -83,7 +83,7 @@ Options.o: Options.cpp GmshUI.h GmshDefines.h ../Geo/GModel.h \
   ../Fltk/GUI.h ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h \
   ../Common/GmshUI.h ../Fltk/Popup_Button.h \
   ../Fltk/SpherePosition_Widget.h
-CommandLine.o: CommandLine.cpp GmshUI.h GmshDefines.h GmshVersion.h \
+CommandLine${OBJEXT}: CommandLine.cpp GmshUI.h GmshDefines.h GmshVersion.h \
   GmshMessage.h OpenFile.h CommandLine.h Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h Options.h ../Post/ColorTable.h \
   ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h \
@@ -94,7 +94,7 @@ CommandLine.o: CommandLine.cpp GmshUI.h GmshDefines.h GmshVersion.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/Pair.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h CreateFile.h OS.h ../Post/PView.h
-Gmsh.o: Gmsh.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
+Gmsh${OBJEXT}: Gmsh.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
   ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
@@ -108,15 +108,15 @@ Gmsh.o: Gmsh.cpp GmshDefines.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Post/PView.h Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h ../Mesh/Partition.h GmshDaemon.h \
   ../Plugin/PluginManager.h
-GmshMessage.o: GmshMessage.cpp GmshMessage.h Gmsh.h Options.h \
+GmshMessage${OBJEXT}: GmshMessage.cpp GmshMessage.h Gmsh.h Options.h \
   ../Post/ColorTable.h Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h OS.h ../Fltk/GUI.h ../Fltk/Opengl_Window.h \
   ../Fltk/Colorbar_Window.h ../Common/GmshUI.h ../Fltk/Popup_Button.h \
   ../Fltk/SpherePosition_Widget.h ../Mesh/Field.h ../Post/PView.h \
   ../Geo/SPoint3.h ../Fltk/GUI_Extras.h
-GmshDaemon.o: GmshDaemon.cpp GmshMessage.h OS.h GmshSocket.h
-OS.o: OS.cpp GmshMessage.h
-OpenFile.o: OpenFile.cpp GmshMessage.h ../Geo/Geo.h \
+GmshDaemon${OBJEXT}: GmshDaemon.cpp GmshMessage.h OS.h GmshSocket.h
+OS${OBJEXT}: OS.cpp GmshMessage.h
+OpenFile${OBJEXT}: OpenFile.cpp GmshMessage.h ../Geo/Geo.h \
   ../Common/GmshDefines.h ../Geo/gmshSurface.h ../Geo/Pair.h \
   ../Geo/Range.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h \
@@ -137,7 +137,7 @@ OpenFile.o: OpenFile.cpp GmshMessage.h ../Geo/Geo.h \
   ../Fltk/Opengl_Window.h ../Fltk/Colorbar_Window.h ../Common/GmshUI.h \
   ../Post/ColorTable.h ../Fltk/Popup_Button.h \
   ../Fltk/SpherePosition_Widget.h ../Mesh/Field.h
-CreateFile.o: CreateFile.cpp GmshMessage.h ../Geo/GModel.h \
+CreateFile${OBJEXT}: CreateFile.cpp GmshMessage.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
   ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
@@ -154,7 +154,7 @@ CreateFile.o: CreateFile.cpp GmshMessage.h ../Geo/GModel.h \
   ../Graphics/PixelBuffer.h ../Graphics/gl2ppm.h \
   ../Graphics/PixelBuffer.h ../Graphics/gl2yuv.h \
   ../Graphics/PixelBuffer.h
-Visibility.o: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \
+Visibility${OBJEXT}: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
   ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
@@ -168,16 +168,16 @@ Visibility.o: Visibility.cpp Visibility.h GmshDefines.h ../Geo/GVertex.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
   ../Numeric/GmshMatrix.h ../Parser/Parser.h
-Trackball.o: Trackball.cpp Trackball.h
-VertexArray.o: VertexArray.cpp VertexArray.h ../Geo/SVector3.h \
+Trackball${OBJEXT}: Trackball.cpp Trackball.h
+VertexArray${OBJEXT}: VertexArray.cpp VertexArray.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h
-SmoothData.o: SmoothData.cpp SmoothData.h ../Numeric/Numeric.h \
+SmoothData${OBJEXT}: SmoothData.cpp SmoothData.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h
-StringUtils.o: StringUtils.cpp StringUtils.h
-ListUtils.o: ListUtils.cpp MallocUtils.h ListUtils.h TreeUtils.h avl.h \
+StringUtils${OBJEXT}: StringUtils.cpp StringUtils.h
+ListUtils${OBJEXT}: ListUtils.cpp MallocUtils.h ListUtils.h TreeUtils.h avl.h \
   GmshMessage.h
-TreeUtils.o: TreeUtils.cpp MallocUtils.h TreeUtils.h avl.h ListUtils.h
-avl.o: avl.cpp avl.h MallocUtils.h
-MallocUtils.o: MallocUtils.cpp MallocUtils.h GmshMessage.h
+TreeUtils${OBJEXT}: TreeUtils.cpp MallocUtils.h TreeUtils.h avl.h ListUtils.h
+avl${OBJEXT}: avl.cpp avl.h MallocUtils.h
+MallocUtils${OBJEXT}: MallocUtils.cpp MallocUtils.h GmshMessage.h

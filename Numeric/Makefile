@@ -43,20 +43,20 @@ clean:
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	${CXX} -MM ${CFLAGS} ${SRC} \
-	) >Makefile.new
+         ${CXX} -MM ${CFLAGS} ${SRC} | sed 's/.o:/$${OBJEXT}:/g' \
+        ) > Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-Numeric.o: Numeric.cpp ../Common/GmshMessage.h Numeric.h \
+Numeric${OBJEXT}: Numeric.cpp ../Common/GmshMessage.h Numeric.h \
   NumericEmbedded.h
-NumericEmbedded.o: NumericEmbedded.cpp NumericEmbedded.h \
+NumericEmbedded${OBJEXT}: NumericEmbedded.cpp NumericEmbedded.h \
   ../Common/GmshMessage.h
-gmshAssembler.o: gmshAssembler.cpp ../Geo/MVertex.h ../Geo/SPoint2.h \
+gmshAssembler${OBJEXT}: gmshAssembler.cpp ../Geo/MVertex.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h gmshAssembler.h gmshLinearSystem.h
-gmshTermOfFormulation.o: gmshTermOfFormulation.cpp ../Common/Gmsh.h \
+gmshTermOfFormulation${OBJEXT}: gmshTermOfFormulation.cpp ../Common/Gmsh.h \
   ../Common/GmshMessage.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
@@ -71,7 +71,7 @@ gmshTermOfFormulation.o: gmshTermOfFormulation.cpp ../Common/Gmsh.h \
   ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
   GmshMatrix.h gmshTermOfFormulation.h gmshFunction.h gmshLinearSystem.h \
   gmshAssembler.h
-gmshLaplace.o: gmshLaplace.cpp gmshLaplace.h gmshTermOfFormulation.h \
+gmshLaplace${OBJEXT}: gmshLaplace.cpp gmshLaplace.h gmshTermOfFormulation.h \
   ../Numeric/GmshMatrix.h ../Common/GmshMessage.h ../Common/Gmsh.h \
   ../Common/GmshMessage.h ../Geo/GModel.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
@@ -86,7 +86,7 @@ gmshLaplace.o: gmshLaplace.cpp gmshLaplace.h gmshTermOfFormulation.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
   GmshMatrix.h
-gmshElasticity.o: gmshElasticity.cpp gmshElasticity.h \
+gmshElasticity${OBJEXT}: gmshElasticity.cpp gmshElasticity.h \
   gmshTermOfFormulation.h ../Numeric/GmshMatrix.h ../Common/GmshMessage.h \
   ../Common/Gmsh.h ../Common/GmshMessage.h ../Geo/GModel.h \
   ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
@@ -101,13 +101,13 @@ gmshElasticity.o: gmshElasticity.cpp gmshElasticity.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
   GmshMatrix.h
-EigSolve.o: EigSolve.cpp
-FunctionSpace.o: FunctionSpace.cpp FunctionSpace.h GmshMatrix.h \
+EigSolve${OBJEXT}: EigSolve.cpp
+FunctionSpace${OBJEXT}: FunctionSpace.cpp FunctionSpace.h GmshMatrix.h \
   ../Common/GmshMessage.h ../Common/GmshDefines.h
-gmsh_predicates.o: gmsh_predicates.cpp
-gsl_newt.o: gsl_newt.cpp ../Common/GmshMessage.h Numeric.h \
+gmsh_predicates${OBJEXT}: gmsh_predicates.cpp
+gsl_newt${OBJEXT}: gsl_newt.cpp ../Common/GmshMessage.h Numeric.h \
   NumericEmbedded.h
-gsl_min.o: gsl_min.cpp ../Common/GmshMessage.h Numeric.h \
+gsl_min${OBJEXT}: gsl_min.cpp ../Common/GmshMessage.h Numeric.h \
   NumericEmbedded.h
-gsl_brent.o: gsl_brent.cpp ../Common/GmshMessage.h Numeric.h \
+gsl_brent${OBJEXT}: gsl_brent.cpp ../Common/GmshMessage.h Numeric.h \
   NumericEmbedded.h

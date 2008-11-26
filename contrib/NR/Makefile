@@ -42,20 +42,20 @@ clean:
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	${CXX} -MM ${CFLAGS} ${SRC} \
-	) >Makefile.new
+         ${CXX} -MM ${CFLAGS} ${SRC} | sed 's/.o:/$${OBJEXT}:/g' \
+        ) > Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-brent.o: brent.cpp nrutil.h
-dpythag.o: dpythag.cpp nrutil.h
-dsvdcmp.o: dsvdcmp.cpp nrutil.h
-fdjac.o: fdjac.cpp nrutil.h
-fmin.o: fmin.cpp nrutil.h
-lnsrch.o: lnsrch.cpp nrutil.h
-lubksb.o: lubksb.cpp
-ludcmp.o: ludcmp.cpp nrutil.h
-newt.o: newt.cpp nrutil.h
-nrutil.o: nrutil.cpp ../../Common/GmshMessage.h
+brent${OBJEXT}: brent.cpp nrutil.h
+dpythag${OBJEXT}: dpythag.cpp nrutil.h
+dsvdcmp${OBJEXT}: dsvdcmp.cpp nrutil.h
+fdjac${OBJEXT}: fdjac.cpp nrutil.h
+fmin${OBJEXT}: fmin.cpp nrutil.h
+lnsrch${OBJEXT}: lnsrch.cpp nrutil.h
+lubksb${OBJEXT}: lubksb.cpp
+ludcmp${OBJEXT}: ludcmp.cpp nrutil.h
+newt${OBJEXT}: newt.cpp nrutil.h
+nrutil${OBJEXT}: nrutil.cpp ../../Common/GmshMessage.h

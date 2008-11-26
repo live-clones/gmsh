@@ -35,7 +35,7 @@ void gmshAssembler::assemble(MVertex *vR, int iCompR, int iFieldR,
 	    double valConstrC = itConstrC->second[i].second;
 	    assemble(vR, iCompR, iFieldR,
                      dofKeyConstrC.v,dofKeyConstrC.comp, dofKeyConstrC.field,
-                     val*valConstrC);
+                     val * valConstrC);
 	  }
 	}
       }
@@ -50,7 +50,7 @@ void gmshAssembler::assemble(MVertex *vR, int iCompR, int iFieldR,
 	double valConstrR = itConstrR->second[i].second;
 	assemble(dofKeyConstrR.v,dofKeyConstrR.comp, dofKeyConstrR.field,
                  vC, iCompC, iFieldC,
-                 val*valConstrR);
+                 val * valConstrR);
       }
     }
   }

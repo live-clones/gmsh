@@ -31,13 +31,13 @@ clean:
 
 depend:
 	(sed '/^# DO NOT DELETE THIS LINE/q' Makefile && \
-	${CXX} -MM ${CFLAGS} ${SRC} \
-	) >Makefile.new
+         ${CXX} -MM ${CFLAGS} ${SRC} | sed 's/.o:/$${OBJEXT}:/g' \
+        ) > Makefile.new
 	cp Makefile Makefile.bak
 	cp Makefile.new Makefile
 	rm -f Makefile.new
 
 # DO NOT DELETE THIS LINE
-Fl_Native_File_Chooser.o: Fl_Native_File_Chooser.cxx \
+Fl_Native_File_Chooser${OBJEXT}: Fl_Native_File_Chooser.cxx \
   Fl_Native_File_Chooser_MAC.cxx common.cxx FL/Fl_Native_File_Chooser.H \
   FL/Fl_Native_File_Chooser_MAC.H

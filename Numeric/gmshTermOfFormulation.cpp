@@ -34,16 +34,16 @@ void gmshNodalFemTerm::addNeumann(int physical,
 {
 }
 
-void gmshNodalFemTerm::addToMatrix (gmshAssembler &lsys) const
+void gmshNodalFemTerm::addToMatrix(gmshAssembler &lsys) const
 {
   if (_gm->getNumRegions()){
     for(GModel::riter it = _gm->firstRegion(); it != _gm->lastRegion(); ++it){
-      addToMatrix(lsys,*it);
+      addToMatrix(lsys, *it);
     }
   }
   else if(_gm->getNumFaces()){
     for(GModel::fiter it = _gm->firstFace(); it != _gm->lastFace(); ++it){
-      addToMatrix(lsys,*it);
+      addToMatrix(lsys, *it);
     }
   }  
 }
