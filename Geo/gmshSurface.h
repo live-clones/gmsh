@@ -21,13 +21,14 @@ class gmshSurface
 protected:  
   static std::map<int, gmshSurface*> allGmshSurfaces;
 public:
-  bool is_projection_surface;
+  //there are points define in this surface parameterization
+  bool is_parametric_surface;
   virtual ~gmshSurface(){}
   static void reset() 
   {
     std::map<int, gmshSurface*>::iterator it = allGmshSurfaces.begin();
     for (; it != allGmshSurfaces.end(); ++it){
-      if(!it->second->is_projection_surface)
+      if(!it->second->is_parametric_surface)
         delete it->second;
     }
     allGmshSurfaces.clear();
@@ -86,8 +87,7 @@ class gmshPolarSphere : public gmshSurface
 {
   double r;
   SPoint3 o;
-  gmshPolarSphere(double x, double y, double z, double _r) : r(_r), o(x,y,z) {
-  }
+  gmshPolarSphere(double x, double y, double z, double _r);
 public:
   static gmshSurface *NewPolarSphere(int _iSphere, double _x, double _y, double _z, double _r);
   virtual Range<double> parBounds(int i) const 

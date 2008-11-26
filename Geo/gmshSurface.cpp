@@ -79,6 +79,8 @@ gmshSurface *gmshPolarSphere::NewPolarSphere(int iSphere, double x, double y, do
   return sph;
 }
 
+gmshPolarSphere::gmshPolarSphere(double x, double y, double z, double _r) : r(_r), o(x,y,z) {
+}
 SPoint3 gmshPolarSphere::point(double parA, double parB) const
 {
   //stereographic projection from the south pole, origin of the axis
