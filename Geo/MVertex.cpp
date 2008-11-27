@@ -30,6 +30,8 @@ void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric, double scalin
 {
   if(_index < 0) return; // negative index vertices are never saved
 
+  //  printf("tag = %d index %d pos = %g %g %g\n",onWhat()->tag(),_index,x(),y(),z());
+
   int myDim = 0, myTag = 0;
   if(saveParametric){
     if(onWhat()){
@@ -294,7 +296,8 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
 
 bool reparamMeshVertexOnFace(MVertex *v, GFace *gf, SPoint2 &param)
 {
-  if (gf->geomType() == GEntity::CompoundSurface){
+  if (gf->geomType() == GEntity::CompoundSurface &&
+      v->onWhat()->dim() < 2){
     GFaceCompound *gfc = (GFaceCompound*) gf;
     param = gfc->getCoordinates(v);
     return true;

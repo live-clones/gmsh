@@ -641,31 +641,16 @@ class MTriangle6 : public MTriangle {
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices() const { return 3; }
-  virtual int getNumEdgesRep(){ return 6; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int e[6][2] = {
-      {0, 3}, {3, 1},
-      {1, 4}, {4, 2},
-      {2, 5}, {5, 0}
-    }; 
-    _getEdgeRep(getVertex(e[num][0]), getVertex(e[num][1]), x, y, z, n, 0);
-  } 
+  virtual int getNumEdgesRep();
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
     MTriangle::_getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
-  virtual int getNumFacesRep(){ return 4; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
-    static const int f[4][3] = {
-      {0, 3, 5}, {1, 4, 3}, {2, 5, 4}, {3, 4, 5}
-    };
-    _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-                x, y, z, n);
-  }
+  virtual int getNumFacesRep();
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(6);
@@ -1306,38 +1291,19 @@ class MTetrahedron10 : public MTetrahedron {
     return getVertex(map[num]); 
   }
   virtual int getNumEdgeVertices() const { return 6; }
-  virtual int getNumEdgesRep(){ return 12; }
-  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
-    static const int e[12][2] = {
-      {0, 4}, {4, 1},
-      {1, 5}, {5, 2},
-      {2, 6}, {6, 0},
-      {3, 7}, {7, 0},
-      {3, 8}, {8, 2},
-      {3, 9}, {9, 1}
-    };
-    static const int f[12] = {0, 0, 0, 1, 2, 3};
-    _getEdgeRep(getVertex(e[num][0]), getVertex(e[num][1]), x, y, z, n, f[num / 2]);
-  }
+
+  virtual void getEdgeRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumEdgesRep();
+  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n);
+  virtual int getNumFacesRep();
+
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
     MTetrahedron::_getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
-  virtual int getNumFacesRep(){ return 16; }
-  virtual void getFaceRep(int num, double *x, double *y, double *z, SVector3 *n)
-  { 
-    static const int f[16][3] = {
-      {0, 6, 4}, {2, 5, 6}, {1, 4, 5}, {6, 5, 4},
-      {0, 4, 7}, {1, 9, 4}, {3, 7, 9}, {4, 9, 7},
-      {0, 7, 6}, {3, 8, 7}, {2, 6, 8}, {7, 8, 6},
-      {3, 9, 8}, {1, 5, 9}, {2, 8, 5}, {9, 5, 8}
-    };
-    _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-                x, y, z, n);
-  }
+
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(6);

@@ -18,8 +18,11 @@
 class gmshLinearSystemGmm : public gmshLinearSystem {
   gmm::row_matrix<gmm::wsvector<double> > *_a;
   std::vector<double> *_b, *_x;
+  double _prec;
+  int _noisy;
+  int _gmres;
 public :
-  gmshLinearSystemGmm () : _a(0), _b(0), _x(0) {}
+  gmshLinearSystemGmm () : _a(0), _b(0), _x(0), _prec(1.e-8), _noisy(0), _gmres(0) {}
   virtual bool isAllocated () const {return _a != 0;}
   virtual void allocate (int _nbRows)
   {
@@ -64,14 +67,17 @@ public :
   {
     for (unsigned int i = 0; i < _b->size(); i++) (*_b)[i] = 0;
   }
+  void setPrec(double p){_prec=p;}
+  void setNoisy(int n){_noisy=n;}
+  void setGmres(int n){_gmres=n;}
   virtual int systemSolve () 
   {
     // gmm::ilutp_precond< gmm::row_matrix< gmm::rsvector<double> > > P(*_a, 10,0.);
     gmm::ildltt_precond< gmm::row_matrix< gmm::wsvector<double> > > P(*_a, 2, 1.e-10);
-    gmm::iteration iter(1E-8);  // defines an iteration object, with a max residu of 1E-8
-    //iter.set_noisy(2);
-    //gmm::gmres(*_a, *_x, *_b, P, 100, iter);  // execute the GMRES algorithm
-    gmm::cg(*_a, *_x, *_b, P, iter);  // execute the CG algorithm
+    gmm::iteration iter(_prec);  // defines an iteration object, with a max residu of 1E-8
+    iter.set_noisy(_noisy);
+    if (_gmres)gmm::gmres(*_a, *_x, *_b, P, 100, iter);  // execute the GMRES algorithm
+    else gmm::cg(*_a, *_x, *_b, P, iter);  // execute the CG algorithm
     return 1;
   }
 };

@@ -407,7 +407,7 @@ static void Mesh2D(GModel *m)
     }
   }
 
-  gmshCollapseSmallEdges (*m);
+  //  gmshCollapseSmallEdges (*m);
 
   double t2 = Cpu();
   CTX.mesh_timer[1] = t2 - t1;

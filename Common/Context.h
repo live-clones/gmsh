@@ -155,6 +155,7 @@ class Context_T {
     int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms, pyramids;
     int surfaces_edges, surfaces_faces, volumes_edges, volumes_faces;
     int points_num, lines_num, surfaces_num, volumes_num;
+    int num_sub_edges;
     double label_frequency;
     int point_type; // flat or 3D
     double point_size, line_width;

@@ -4443,6 +4443,13 @@ double opt_mesh_normals(OPT_ARGS_NUM)
   return CTX.mesh.normals;
 }
 
+double opt_mesh_num_sub_edges(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX.mesh.num_sub_edges =(int) val;
+  return CTX.mesh.num_sub_edges;
+}
+
 double opt_mesh_tangents(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

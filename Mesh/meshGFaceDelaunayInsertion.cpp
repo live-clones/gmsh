@@ -572,6 +572,9 @@ static void insertAPoint(GFace *gf,
     GPoint p = gf->point(center[0], center[1]);
     // printf("the new point is %g %g\n",p.x(),p.y());
     MVertex *v = new MFaceVertex(p.x(), p.y(), p.z(), gf, center[0], center[1]);
+    
+    //    printf("%g %g -> %g %g %g\n",center[0], center[1],v->x(), v->y(), v->z());
+
     v->setNum(Us.size());
     double lc1 = ((1. - uv[0] - uv[1]) * vSizes[ptin->tri()->getVertex(0)->getNum()] + 
 		  uv[0] * vSizes [ptin->tri()->getVertex(1)->getNum()] + 
@@ -591,8 +594,9 @@ static void insertAPoint(GFace *gf,
       AllTris.insert(worst);		        
       delete v;
     }
-    else 
+    else {
       gf->mesh_vertices.push_back(v);
+    }
   }
   else {
     Msg::Debug("Point %g %g is outside (%g %g , %g %g , %g %g) (metric %g %g %g)",
@@ -652,11 +656,11 @@ void gmshBowyerWatson(GFace *gf)
       circumCenterMetric(worst->tri(), metric, Us, Vs, center, r2);       
       insertAPoint(gf,AllTris.begin(),center,metric,Us,Vs,vSizes,vSizesBGM,AllTris);
     }
-//     if(ITER % 1000== 0){
-//       char name[245];
-//       sprintf(name,"del2d%d-ITER%d.pos",gf->tag(),ITER);
-//       _printTris (name, AllTris, Us,Vs,false);
-//     }
+    //     if(ITER % 10== 0){
+    //       char name[245];
+    //       sprintf(name,"del2d%d-ITER%d.pos",gf->tag(),ITER);
+    //       _printTris (name, AllTris, Us,Vs,false);
+    //     }
   }    
   transferDataStructure(gf, AllTris); 
 }
@@ -794,7 +798,7 @@ void gmshBowyerWatsonFrontal(GFace *gf){
 
   char name[245];
   sprintf(name,"frontal%d.pos",gf->tag());
-  //_printTris (name, AllTris, Us,Vs);
+  _printTris (name, AllTris, Us,Vs);
   transferDataStructure(gf, AllTris); 
 } 
 

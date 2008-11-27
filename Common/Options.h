@@ -421,6 +421,7 @@ double opt_mesh_optimize(OPT_ARGS_NUM);
 double opt_mesh_optimize_netgen(OPT_ARGS_NUM);
 double opt_mesh_refine_steps(OPT_ARGS_NUM);
 double opt_mesh_normals(OPT_ARGS_NUM);
+double opt_mesh_num_sub_edges(OPT_ARGS_NUM);
 double opt_mesh_tangents(OPT_ARGS_NUM);
 double opt_mesh_explode(OPT_ARGS_NUM);
 double opt_mesh_scaling_factor(OPT_ARGS_NUM);

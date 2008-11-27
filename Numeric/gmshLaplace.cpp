@@ -26,6 +26,8 @@ void gmshLaplaceTerm::elementMatrix(MElement *e, Double_Matrix & m) const
     const double w      = GP[i].pt[2];
     const double weight = GP[i].weight;
     const double detJ = e->getJacobian (u,v,w,jac);   
+    SPoint3 p; e->pnt(u,v,w,p);
+    const double _diff = (*_diffusivity)(p.x(),p.y(),p.z());
     inv3x3 ( jac, invjac) ;
     e->getGradShapeFunctions (u,v,w,grads);
     for (int j=0;j<nbNodes;j++){
@@ -37,7 +39,7 @@ void gmshLaplaceTerm::elementMatrix(MElement *e, Double_Matrix & m) const
       for (int k=0;k<=j;k++){
 	m(j,k) += (Grads[j][0]*Grads[k][0]+
 		   Grads[j][1]*Grads[k][1]+
-		   Grads[j][2]*Grads[k][2]) * weight * detJ * _diffusivity*0.5;
+		   Grads[j][2]*Grads[k][2]) * weight * detJ * _diff*0.5;
       }
     }
   }

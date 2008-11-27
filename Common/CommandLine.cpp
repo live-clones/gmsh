@@ -50,6 +50,7 @@ void Print_Usage(const char *name)
   Msg::Direct("                          bdf, p3d, cgns, med)");
   Msg::Direct("  -bin                  Use binary format when available");  
   Msg::Direct("  -parametric           Save vertices with their parametric coordinates");  
+  Msg::Direct("  -numsubedges          Set the number of subdivisions when displaying high order elements");  
   Msg::Direct("  -algo string          Select mesh algorithm (de, del2d, frontal, iso, netgen, tetgen)");
   Msg::Direct("  -smooth int           Set number of mesh smoothing steps");
   Msg::Direct("  -optimize[_netgen]    Optimize quality of tetrahedral elements");
@@ -414,6 +415,13 @@ void Get_Options(int argc, char *argv[])
         i++;
         if(argv[i] != NULL)
           opt_mesh_order(0, GMSH_SET, atof(argv[i++]));
+        else
+	  Msg::Fatal("Missing number");
+      }
+      else if(!strcmp(argv[i] + 1, "numsubedges")) {
+        i++;
+        if(argv[i] != NULL)
+          opt_mesh_num_sub_edges(0, GMSH_SET, atof(argv[i++]));
         else
 	  Msg::Fatal("Missing number");
       }

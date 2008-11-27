@@ -1013,6 +1013,8 @@ StringXNumber MeshOptions_Number[] = {
     "Number of triangles in the current mesh (read-only)" },
   { F|O, "Normals" , opt_mesh_normals , 0.0 ,
     "Display size of normal vectors (in pixels)" }, 
+  { F|O, "NumSubEdges" , opt_mesh_num_sub_edges , 2. ,
+    "Number of edge subdivisions when displaying high order elements" }, 
 
   { F|O, "Optimize" , opt_mesh_optimize , 0. , 
     "Optimize the mesh to improve the quality of tetrahedral elements" },
