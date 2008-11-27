@@ -22,13 +22,13 @@ protected:
   static std::map<int, gmshSurface*> allGmshSurfaces;
 public:
   //there are points define in this surface parameterization
-  bool is_parametric_surface;
+  bool vertex_defined_on_surface;
   virtual ~gmshSurface(){}
   static void reset() 
   {
     std::map<int, gmshSurface*>::iterator it = allGmshSurfaces.begin();
     for (; it != allGmshSurfaces.end(); ++it){
-      if(!it->second->is_parametric_surface)
+      if(!it->second->vertex_defined_on_surface)
         delete it->second;
     }
     allGmshSurfaces.clear();

@@ -126,7 +126,7 @@ Vertex *Create_Vertex(int Num, double u, double v, gmshSurface *surf, double lc)
   pV->u = u;
   pV->geometry = surf;
   pV->pntOnGeometry = SPoint2(u,v);
-  surf->is_parametric_surface=true;
+  surf->vertex_defined_on_surface=true;
   return pV;
 }
 
