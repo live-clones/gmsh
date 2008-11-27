@@ -1999,12 +1999,18 @@ characteristic lengths:
 
 @ftable @code
 @item Characteristic Length @{ @var{expression-list} @} = @var{expression};
-Modifies the characteristic length of the points whose identification
+Modify the characteristic length of the points whose identification
 numbers are listed in @var{expression-list}. The new value is given by
 @var{expression}.
 @item Field[@var{expression}] = @var{string};
+Create a new field (with id number @var{expression}), of type
+@var{string}.
 @item Field[@var{expression}].@var{string} = @var{char-expression} | @var{expression} | @var{expression-list};
+Set the option @var{string} of the @var{expression}-th field.
 @item Background Field = @var{expression};
+Select the @var{expression}-th field as the one used to compute element
+sizes. Only one background field can be given; if you want to combine
+several field, use the @code{Min} or @code{Max} field (see below).
 @end ftable
 
 Here is the list of all available fields with their associated options:
@@ -2088,7 +2094,7 @@ line.
 
 (A deprecated synonym for @code{Progression} is @code{Power}.)
 
-@item Transfinite Surface @{ @var{expression} @} = @{ @var{expression-list} @} < Left | Right | Alternate > ;
+@item Transfinite Surface @{ @var{expression} @} < = @{ @var{expression-list} @} > < Left | Right | Alternate > ;
 Selects the surface @var{expression} to be meshed with the 2D
 transfinite algorithm. The @var{expression-list} should contain the
 identification numbers of three or four points on the boundary of the
