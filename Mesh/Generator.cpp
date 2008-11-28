@@ -408,16 +408,15 @@ static void Mesh2D(GModel *m)
     }
   }
   
-  // look if there a re model faces for which 
-  // full quad algo is set ON
+  // look if there are model faces for which the "full quad" algo is
+  // set ON
   bool fullQuad = false;
   for(GModel::fiter it = m->firstFace() ; it!=m->lastFace(); ++it)
-    if ( CTX.mesh.algo_recombine == 2 && (*it)->quadrangles.size())
+    if(CTX.mesh.algo_recombine == 2 && (*it)->quadrangles.size())
       fullQuad = true;
-  if (fullQuad)RefineMesh(m,false,true);
+  if(fullQuad) RefineMesh(m, false, true);
 
-
-  //  gmshCollapseSmallEdges (*m);
+  // gmshCollapseSmallEdges (*m);
 
   double t2 = Cpu();
   CTX.mesh_timer[1] = t2 - t1;
