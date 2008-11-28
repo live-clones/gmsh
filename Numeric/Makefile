@@ -72,9 +72,9 @@ gmshTermOfFormulation${OBJEXT}: gmshTermOfFormulation.cpp ../Common/Gmsh.h \
   GmshMatrix.h gmshTermOfFormulation.h gmshFunction.h gmshLinearSystem.h \
   gmshAssembler.h
 gmshLaplace${OBJEXT}: gmshLaplace.cpp gmshLaplace.h gmshTermOfFormulation.h \
-  ../Numeric/GmshMatrix.h ../Common/GmshMessage.h ../Common/Gmsh.h \
-  ../Common/GmshMessage.h ../Geo/GModel.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Numeric/GmshMatrix.h ../Common/GmshMessage.h gmshFunction.h \
+  ../Common/Gmsh.h ../Common/GmshMessage.h ../Geo/GModel.h \
+  ../Geo/GVertex.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
   ../Geo/SPoint2.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
   ../Geo/SVector3.h ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h \

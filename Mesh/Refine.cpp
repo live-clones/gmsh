@@ -44,10 +44,10 @@ static void Subdivide(GEdge *ge)
   ge->deleteVertexArrays();
 }
 
-static void Subdivide(GFace *gf,bool splitTrianglesIntoQuads)
+static void Subdivide(GFace *gf, bool splitTrianglesIntoQuads)
 {
 
-  if (! splitTrianglesIntoQuads ){
+  if(!splitTrianglesIntoQuads){
     std::vector<MTriangle*> triangles2;
     for(unsigned int i = 0; i < gf->triangles.size(); i++){
       MTriangle *t = gf->triangles[i];
@@ -86,14 +86,13 @@ static void Subdivide(GFace *gf,bool splitTrianglesIntoQuads)
       MTriangle *t = gf->triangles[i];
       if(t->getNumVertices() == 6){
 	SPoint2 pt, temp;
-	bool reparamOK = true;
-	for(int k = 0; k<6; k++){
+	for(int k = 0; k < 6; k++){
 	  reparamMeshVertexOnFace(t->getVertex(k), gf, temp);
-	  pt[0] += temp[0]/6.;
-	  pt[1] += temp[1]/6.;
+	  pt[0] += temp[0] / 6.;
+	  pt[1] += temp[1] / 6.;
 	}
 	GPoint gp = gf->point(pt);	
-	MFaceVertex *newv = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,pt[0],pt[1]);
+	MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, pt[0], pt[1]);
 	gf->mesh_vertices.push_back(newv);
 	quadrangles2.push_back
 	  (new MQuadrangle(t->getVertex(0), t->getVertex(3), newv, t->getVertex(5)));

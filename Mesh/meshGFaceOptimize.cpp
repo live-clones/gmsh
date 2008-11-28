@@ -26,7 +26,7 @@ static void setLcsInit(MTriangle *t, std::map<MVertex*, double> &vSizes)
   }
 }
 
-static void setLcs(MTriangle *t, std::map<MVertex*,double> &vSizes)
+static void setLcs(MTriangle *t, std::map<MVertex*, double> &vSizes)
 {
   for (int i = 0; i < 3; i++){
     for (int j = i + 1; j < 3; j++){
@@ -44,20 +44,6 @@ static void setLcs(MTriangle *t, std::map<MVertex*,double> &vSizes)
   }
 }
 
-static void setLcs(MLine *t, std::map<MVertex*,double> &vSizes)
-{
-  MVertex *vi = t->getVertex(0);
-  MVertex *vj = t->getVertex(1);
-  double dx = vi->x()-vj->x();
-  double dy = vi->y()-vj->y();
-  double dz = vi->z()-vj->z();
-  double l = sqrt(dx * dx + dy * dy + dz * dz);
-  std::map<MVertex*,double>::iterator iti = vSizes.find(vi);	  
-  std::map<MVertex*,double>::iterator itj = vSizes.find(vj);	  
-  if (iti->second < 0 || iti->second < l) iti->second = l;
-  if (itj->second < 0 || itj->second < l) itj->second = l;
-}
-
 void buidMeshGenerationDataStructures(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
                                       std::vector<double> &vSizes,
                                       std::vector<double> &vSizesBGM,
@@ -69,15 +55,6 @@ void buidMeshGenerationDataStructures(GFace *gf, std::set<MTri3*, compareTri3Ptr
 
   for (unsigned int i = 0;i < gf->triangles.size(); i++)
     setLcsInit(gf->triangles[i], vSizesMap);
-
-//   std::list<GEdge*>::iterator it = edges.begin();
-//   while (it != edges.end()){
-//     GEdge *ge = *it ;
-//     for (int i=0;i<ge->lines.size();i++){
-//       setLcs(ge->lines[i], vSizesMap);      
-//     }
-//     ++it;
-//   }
 
   for (unsigned int i = 0;i < gf->triangles.size(); i++)
     setLcs(gf->triangles[i], vSizesMap);
@@ -111,7 +88,7 @@ void buidMeshGenerationDataStructures(GFace *gf, std::set<MTri3*, compareTri3Ptr
     AllTris.insert(new MTri3(gf->triangles[i], lc));
   }
   gf->triangles.clear();
-  connectTriangles(AllTris );
+  connectTriangles(AllTris);
 }
 
 void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris)
@@ -127,9 +104,9 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris)
     AllTris.erase(AllTris.begin());      
   }
 }
+
 template <class T>
-void buildVertexToElement(std::vector<T*> &eles, 
-			  v2t_cont &adj)
+void buildVertexToElement(std::vector<T*> &eles, v2t_cont &adj)
 {
   for (unsigned int i = 0; i < eles.size(); i++){
     T *t = eles[i];
@@ -148,12 +125,11 @@ void buildVertexToElement(std::vector<T*> &eles,
   }
 }
 
-
-void buildVertexToTriangle(std::vector<MTriangle*> &eles, v2t_cont &adj){
+void buildVertexToTriangle(std::vector<MTriangle*> &eles, v2t_cont &adj)
+{
   adj.clear();
   buildVertexToElement(eles,adj);
 }
-
 
 template <class T>
 void buildEdgeToElement(std::vector<T*> &triangles, e2t_cont &adj)
@@ -186,8 +162,6 @@ void buildEdgeToTriangle(std::vector<MTriangle*> &tris, e2t_cont &adj){
   adj.clear();
   buildEdgeToElement(tris, adj);
 }
-
-
 
 void parametricCoordinates(MElement *t, GFace *gf, double u[4], double v[4])
 {
@@ -232,9 +206,9 @@ void laplaceSmoothing(GFace *gf)
           // have to test validity !
         }
 	if (fact != 0.0){
-	  ver->setParameter(0, cu/fact);
-	  ver->setParameter(1, cv/fact);
-	  GPoint pt = gf->point(SPoint2(cu/fact, cv/fact));
+	  ver->setParameter(0, cu / fact);
+	  ver->setParameter(1, cv / fact);
+	  GPoint pt = gf->point(SPoint2(cu / fact, cv / fact));
 	  ver->x() = pt.x();
 	  ver->y() = pt.y();
 	  ver->z() = pt.z();
@@ -439,7 +413,7 @@ bool gmshEdgeSplit(const double lMax, MTri3 *t1, GFace *gf, int iLocalEdge,
   if (al <= lMax) return false;
 
   MVertex *v3 = t1->tri()->getVertex((iLocalEdge + 1) % 3);
-  MVertex *v4 = 0 ;
+  MVertex *v4 = 0;
   for (int i = 0; i < 3; i++)
     if (t2->tri()->getVertex(i) != v1 && t2->tri()->getVertex(i) != v2)
       v4 = t2->tri()->getVertex(i);
@@ -638,7 +612,7 @@ bool gmshVertexCollapse(const double lMin, MTri3 *t1, GFace *gf,
   MVertex *v;
   std::vector<MTri3*> cavity;
   std::vector<MTri3*> outside;
-  std::vector<MVertex*> ring ;
+  std::vector<MVertex*> ring;
 
   if (!gmshBuildVertexCavity(t1, iLocalVertex, &v, cavity, outside, ring)) return false;
   
@@ -698,7 +672,7 @@ int edgeSwapPass (GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
                   const std::vector<double> &Us, const std::vector<double> &Vs,
                   const std::vector<double> &vSizes, const std::vector<double> &vSizesBGM)
 {
-  typedef std::set<MTri3*, compareTri3Ptr> CONTAINER ;
+  typedef std::set<MTri3*, compareTri3Ptr> CONTAINER;
 
   int nbSwapTot = 0;
   std::set<swapquad> configs;
@@ -734,7 +708,7 @@ int edgeSplitPass(double maxLC, GFace *gf, std::set<MTri3*,compareTri3Ptr> &allT
                   std::vector<double> &Us, std::vector<double> &Vs,
                   std::vector<double> &vSizes, std::vector<double> &vSizesBGM)
 {
-  typedef std::set<MTri3*, compareTri3Ptr> CONTAINER ;
+  typedef std::set<MTri3*, compareTri3Ptr> CONTAINER;
   std::vector<MTri3*> newTris;
 
   int nbSplit = 0;
@@ -766,7 +740,7 @@ int edgeCollapsePass(double minLC, GFace *gf, std::set<MTri3*,compareTri3Ptr> &a
                      std::vector<double> &Us, std::vector<double> &Vs,
                      std::vector<double> &vSizes, std::vector<double> &vSizesBGM)
 {
-  typedef std::set<MTri3*,compareTri3Ptr> CONTAINER ;
+  typedef std::set<MTri3*,compareTri3Ptr> CONTAINER;
   std::vector<MTri3*> newTris;
 
   int nbCollapse = 0;
@@ -795,31 +769,30 @@ int edgeCollapsePass(double minLC, GFace *gf, std::set<MTri3*,compareTri3Ptr> &a
   return nbCollapse;
 }
 
-extern double angle3Points ( MVertex *p1, MVertex *p2, MVertex *p3 );
+extern double angle3Points(MVertex *p1, MVertex *p2, MVertex *p3);
 
 struct recombine_triangle
 {
   MElement *t1, *t2;
   double angle;
-  MVertex *n1,*n2,*n3,*n4;
+  MVertex *n1, *n2, *n3, *n4;
   recombine_triangle(const MEdge &me, MElement *_t1, MElement *_t2)
-    : t1(_t1),t2(_t2)
+    : t1(_t1), t2(_t2)
   {
     n1 = me.getVertex(0);
     n2 = me.getVertex(1);
     
-    if (t1->getVertex (0) != n1 && t1->getVertex (0) != n2)n3 = t1->getVertex(0);
-    else if (t1->getVertex (1) != n1 && t1->getVertex (1) != n2)n3 = t1->getVertex(1);
-    else if (t1->getVertex (2) != n1 && t1->getVertex (2) != n2)n3 = t1->getVertex(2);
-    if (t2->getVertex (0) != n1 && t2->getVertex (0) != n2)n4 = t2->getVertex(0);
-    else if (t2->getVertex (1) != n1 && t2->getVertex (1) != n2)n4 = t2->getVertex(1);
-    else if (t2->getVertex (2) != n1 && t2->getVertex (2) != n2)n4 = t2->getVertex(2);
+    if (t1->getVertex(0) != n1 && t1->getVertex(0) != n2) n3 = t1->getVertex(0);
+    else if (t1->getVertex(1) != n1 && t1->getVertex(1) != n2) n3 = t1->getVertex(1);
+    else if (t1->getVertex(2) != n1 && t1->getVertex(2) != n2) n3 = t1->getVertex(2);
+    if (t2->getVertex(0) != n1 && t2->getVertex(0) != n2) n4 = t2->getVertex(0);
+    else if (t2->getVertex(1) != n1 && t2->getVertex(1) != n2) n4 = t2->getVertex(1);
+    else if (t2->getVertex(2) != n1 && t2->getVertex(2) != n2) n4 = t2->getVertex(2);
 
-    double a1 = 180*angle3Points(n1,n4,n2)/M_PI;
-    double a2 = 180*angle3Points(n4,n2,n3)/M_PI;
-    double a3 = 180*angle3Points(n2,n3,n1)/M_PI;
-    double a4 = 180*angle3Points(n3,n1,n4)/M_PI;
-    //    printf("%g %g %g %g\n",a1,a2,a3,a4);
+    double a1 = 180 * angle3Points(n1, n4, n2) / M_PI;
+    double a2 = 180 * angle3Points(n4, n2, n3) / M_PI;
+    double a3 = 180 * angle3Points(n2, n3, n1) / M_PI;
+    double a4 = 180 * angle3Points(n3, n1, n4) / M_PI;
     angle = fabs(90. - a1);
     angle = std::max(fabs(90. - a2),angle);
     angle = std::max(fabs(90. - a3),angle);
@@ -831,14 +804,10 @@ struct recombine_triangle
   }
 };
 
-
-void gmshQuadrilateralizeAlgoBrutal(GFace *gf){
-}
-
-void _gmshRecombineIntoQuads(GFace *gf)
+static void _gmshRecombineIntoQuads(GFace *gf)
 {
   e2t_cont adj;
-  std::set<MElement*> _touched;
+  std::set<MElement*> touched;
   std::set<recombine_triangle> pairs;
   buildEdgeToElement(gf->triangles, adj);
   e2t_cont::iterator it = adj.begin();
@@ -857,40 +826,50 @@ void _gmshRecombineIntoQuads(GFace *gf)
     if(itp->angle < gf->meshAttributes.recombineAngle){
       MElement *t1 = itp->t1;
       MElement *t2 = itp->t2;
-      if (_touched.find(t1) == _touched.end() &&
-	  _touched.find(t2) == _touched.end()){
-	_touched.insert(t1);
-	_touched.insert(t2);
-	MQuadrangle *q = new MQuadrangle (itp->n1,itp->n3,itp->n2,itp->n4);
+      if (touched.find(t1) == touched.end() &&
+	  touched.find(t2) == touched.end()){
+	touched.insert(t1);
+	touched.insert(t2);
+
+        int orientation = 0;
+        for(int i = 0; i < 3; i++) {
+          if(t1->getVertex(i) == itp->n1) {
+            if(t1->getVertex((i + 1) % 3) == itp->n2)
+              orientation = 1;
+            else
+              orientation = -1;
+            break;
+          }
+        }
+        MQuadrangle *q;
+        if(orientation < 0)
+          q = new MQuadrangle(itp->n1, itp->n3, itp->n2, itp->n4);
+        else
+          q = new MQuadrangle(itp->n1, itp->n4, itp->n2, itp->n3);
 	gf->quadrangles.push_back(q);
       }
     }
     ++itp;
   }
 
-  std::vector<MTriangle*> _newt;
-  for ( int i = 0 ; i<gf->triangles.size();i++){
-    if (_touched.find(gf->triangles[i]) == _touched.end()){
-      _newt.push_back(gf->triangles[i]);
+  std::vector<MTriangle*> triangles2;
+  for (int i = 0; i < gf->triangles.size(); i++){
+    if (touched.find(gf->triangles[i]) == touched.end()){
+      triangles2.push_back(gf->triangles[i]);
     }
     else {
       delete gf->triangles[i];
     }    
   } 
-  gf->triangles = _newt;
-  
+  gf->triangles = triangles2;
 }
 
-void gmshRecombineIntoQuads(GFace *gf){
-  _gmshRecombineIntoQuads (gf);
+void gmshRecombineIntoQuads(GFace *gf)
+{
+  _gmshRecombineIntoQuads(gf);
   laplaceSmoothing(gf);  
-  _gmshRecombineIntoQuads (gf);
+  _gmshRecombineIntoQuads(gf);
   laplaceSmoothing(gf);  
-  _gmshRecombineIntoQuads (gf);
+  _gmshRecombineIntoQuads(gf);
   laplaceSmoothing(gf);  
 }
-
-
-
-
-

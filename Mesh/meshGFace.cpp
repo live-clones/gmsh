@@ -700,9 +700,6 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
     gmshOptimizeMeshBDS(gf, *m, 2);
     gmshRefineMeshBDS (gf,*m, CTX.mesh.refine_steps, false);
     gmshOptimizeMeshBDS(gf, *m, 2);
-    if (gf->meshAttributes.recombine){
-      m->recombineIntoQuads (gf->meshAttributes.recombineAngle,gf);
-    }
   }
 
   computeMeshSizeFieldAccuracy(gf, *m, gf->meshStatistics.efficiency_index,
@@ -750,11 +747,12 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
   // BDS mesh is passed in order not to recompute local coordinates of
   // vertices
   if(AlgoDelaunay2D(gf)){
-    gmshBowyerWatson(gf);
-    for (int i=0;i<CTX.mesh.nb_smoothing;i++)laplaceSmoothing(gf);
-    if (gf->meshAttributes.recombine){
-      gmshRecombineIntoQuads(gf);
-    }
+    if (CTX.mesh.algo2d == ALGO_2D_FRONTAL)
+      gmshBowyerWatsonFrontal(gf);
+    else
+      gmshBowyerWatson(gf);
+    for (int i = 0; i < CTX.mesh.nb_smoothing; i++) 
+      laplaceSmoothing(gf);
   }
   else if (debug){
     char name[256];
@@ -763,11 +761,14 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
     sprintf(name, "param%d.pos", gf->tag());
     outputScalarField(m->triangles, name,1);
   }
-  
+
   // delete the mesh
   delete m;
   delete [] U_;
   delete [] V_;
+
+  if (gf->meshAttributes.recombine)
+    gmshRecombineIntoQuads(gf);
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,
@@ -1233,9 +1234,6 @@ static bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
     gmshOptimizeMeshBDS(gf, *m, 2);
     gmshRefineMeshBDS (gf, *m, -CTX.mesh.refine_steps, false);
     gmshOptimizeMeshBDS(gf, *m, 2, &recover_map);
-    if (gf->meshAttributes.recombine){
-      m->recombineIntoQuads (gf->meshAttributes.recombineAngle, gf);
-    }
     // compute mesh statistics
     computeMeshSizeFieldAccuracy(gf, *m, gf->meshStatistics.efficiency_index,
                                  gf->meshStatistics.longest_edge_length,
@@ -1294,12 +1292,19 @@ static bool gmsh2DMeshGeneratorPeriodic(GFace *gf, bool debug = true)
   }
   
   if (AlgoDelaunay2D(gf)){
-    gmshBowyerWatson(gf);
-    laplaceSmoothing(gf);
+    if (CTX.mesh.algo2d == ALGO_2D_FRONTAL)
+      gmshBowyerWatsonFrontal(gf);
+    else
+      gmshBowyerWatson(gf);
+    for (int i = 0; i < CTX.mesh.nb_smoothing; i++) 
+      laplaceSmoothing(gf);
   }
-
+  
   // delete the mesh  
   delete m;
+
+  if (gf->meshAttributes.recombine)
+    gmshRecombineIntoQuads(gf);
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,

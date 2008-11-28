@@ -471,10 +471,8 @@ public:
   bool split_edge(BDS_Edge *, BDS_Point *);
   bool split_face(BDS_Face *, BDS_Point *);
   bool edge_constraint(BDS_Point *p1, BDS_Point *p2);
-  bool recombine_edge(BDS_Edge *e);
   // Global operators
   void cleanup();
-  void recombineIntoQuads(const double angle, GFace *gf);
 };
 
 void outputScalarField(std::list<BDS_Face*> t, const char *fn, int param, GFace *gf=0);

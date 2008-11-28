@@ -60,86 +60,80 @@ class Gmsh_Matrix
 {
  private:
   int r, c;
-
- public:
   void _back_substitution(int *indx, SCALAR *b)
   {
-    int i,ii=-1,ip,j;
+    int i, ii = -1, ip, j;
     SCALAR sum;
-    
-    for(i=0; i< c; i++){
-      ip=indx[i];
-      sum=b[ip];
-      b[ip]=b[i];
+    for(i = 0; i < c; i++){
+      ip = indx[i];
+      sum = b[ip];
+      b[ip] = b[i];
       if(ii != -1)
-	for(j=ii; j <= i-1; j++) sum -= (*this)(i,j)*b[j];
-      else if (sum) ii=i;
-      b[i]=sum;
+	for(j = ii; j <= i - 1; j++) sum -= (*this)(i, j) * b[j];
+      else if (sum) ii = i;
+      b[i] = sum;
     }
-    for(i=c-1; i>=0; i--){
-      sum=b[i];
-      for(j=i+1;j<c;j++) sum -= (*this)(i,j)*b[j];
-      b[i]=sum/(*this)(i,i);
+    for(i = c - 1; i >= 0; i--){
+      sum = b[i];
+      for(j = i + 1; j < c; j++) sum -= (*this)(i, j) * b[j];
+      b[i] = sum / (*this)(i, i);
     }
   }
-
-
-  bool _lu_decomposition(int *indx , SCALAR & determinant)
+  bool _lu_decomposition(int *indx , SCALAR &determinant)
   {
     if (r != c) 
       Msg::Fatal("Gmsh_Matrix::_lu_decomposition : cannot lu decompose a non-square matrix");
-    int i, imax, j,k;
-    SCALAR big,dum,sum,temp;
-    SCALAR *vv = new SCALAR [c];    
-
-    determinant=1.0;
-    for(i=0; i<c; i++){
-      big=0.0;
-      for(j=0;j<c; j++)
-	if((temp=fabs((*this)(i,j))) > big) big=temp;
-      if(big==0.0) {
+    int i, imax, j, k;
+    SCALAR big, dum, sum, temp;
+    SCALAR *vv = new SCALAR[c];    
+    determinant = 1.0;
+    for(i = 0; i < c; i++){
+      big = 0.0;
+      for(j = 0; j < c; j++)
+	if((temp=fabs((*this)(i, j))) > big) big = temp;
+      if(big == 0.0) {
 	return false;
 	big = 1.e-12;
       }      
-      vv[i]=1.0/big;
+      vv[i] = 1.0 / big;
     }
-    for(j=0; j<c;j++){
-      for(i=0;i<j;i++){
-	sum=(*this)(i,j);
-	for(k=0;k<i;k++) sum -= (*this)(i,k)*(*this)(k,j);
-	(*this)(i,j) = sum;
+    for(j = 0; j < c; j++){
+      for(i = 0; i < j; i++){
+	sum=(*this)(i, j);
+	for(k = 0; k < i; k++) sum -= (*this)(i, k)*(*this)(k, j);
+	(*this)(i, j) = sum;
       }
-      big=0.0;
-      for(i=j; i<c;i++){
-	sum=(*this)(i,j);
-	for(k=0;k<j;k++)
-	  sum -= (*this)(i,k)*(*this)(k,j);
-	(*this)(i,j)=sum;
-	if((dum=vv[i]*fabs(sum)) >= big){
-	  big=dum;
-	  imax=i;
+      big = 0.0;
+      for(i = j; i < c; i++){
+	sum = (*this)(i, j);
+	for(k = 0; k < j; k++)
+	  sum -= (*this)(i, k) * (*this)(k, j);
+	(*this)(i, j) = sum;
+	if((dum = vv[i] * fabs(sum)) >= big){
+	  big = dum;
+	  imax = i;
 	}
       }
       if(j != imax){
-	for(k=0; k <c; k++){
-	  dum=(*this)(imax,k);
-	  (*this)(imax,k)=(*this)(j,k);
-	  (*this)(j,k) = dum;
+	for(k = 0; k < c; k++){
+	  dum = (*this)(imax, k);
+	  (*this)(imax, k) = (*this)(j, k);
+	  (*this)(j, k) = dum;
 	}
 	determinant = -(determinant);
-	vv[imax]=vv[j];
+	vv[imax] = vv[j];
       }
-      indx[j]=imax;
-      if( (*this)(j,j) == 0.0) (*this)(j,j) = 1.e-20;
-      if(j !=c){
-	dum=1.0/((*this)(j,j));
-	for(i=j+1;i<c;i++) (*this)(i,j) *= dum;
+      indx[j] = imax;
+      if((*this)(j, j) == 0.0) (*this)(j, j) = 1.e-20;
+      if(j != c){
+	dum = 1.0 / ((*this)(j, j));
+	for(i = j + 1; i < c; i++) (*this)(i, j) *= dum;
       }
     }
     delete [] vv;
     return true;
   }
-
+ public:
   inline int size1() const { return r; }
   inline int size2() const { return c; }
   SCALAR *data;
@@ -157,7 +151,8 @@ class Gmsh_Matrix
   Gmsh_Matrix & operator=(const Gmsh_Matrix<SCALAR> &other)
   {
     if (this != &other){
-      r = other.r; c=other.c;
+      r = other.r; 
+      c = other.c;
       data = new SCALAR[r * c];
       memcpy(other);
     }
@@ -192,11 +187,11 @@ class Gmsh_Matrix
   inline void blas_dgemm(const Gmsh_Matrix<SCALAR> & x, const Gmsh_Matrix<SCALAR> & b, 
 			 const SCALAR c_a = 1.0, const SCALAR c_b = 1.0)
   {
-    Gmsh_Matrix<SCALAR> temp (x.size1(),b.size2());
-    temp.mult(x,b);
+    Gmsh_Matrix<SCALAR> temp (x.size1(), b.size2());
+    temp.mult(x, b);
     scale(c_b);
     temp.scale(c_a);
-    add (temp);
+    add(temp);
   }
   inline void set_all(const SCALAR &m) 
   {
@@ -204,13 +199,12 @@ class Gmsh_Matrix
   }
   inline void lu_solve(const Gmsh_Vector<SCALAR> &rhs, Gmsh_Vector<SCALAR> &result)
   {
+    int *indx = new int [c];
     SCALAR d;
-    int i,*indx;    
-    indx = new int [c];
-    if (!_lu_decomposition(indx,d))
+    if (!_lu_decomposition(indx, d))
       Msg::Fatal("Singular matrix in Gmsh_Matrix::_lu_decomposition");
-    for(i=0; i < c; i++) result[i] = rhs[i];
-    _back_substitution(indx,result.data);
+    for(int i = 0; i < c; i++) result[i] = rhs[i];
+    _back_substitution(indx, result.data);
     delete [] indx; 
   }
   Gmsh_Matrix cofactor(int i, int j) const 
@@ -218,28 +212,26 @@ class Gmsh_Matrix
     int ni = size1();
     int nj = size2();
     Gmsh_Matrix<SCALAR> cof(ni - 1, nj - 1);
-    for (int I=0;I<ni;I++){
-      for (int J=0;J<nj;J++){
-	if (J!=j && I!=i)
-	  cof (I<i?I:I-1,J<j?J:J-1) = (*this)(I,J);
+    for (int I = 0; I < ni; I++){
+      for (int J = 0; J < nj; J++){
+	if (J != j && I != i)
+	  cof (I < i ? I : I - 1, J < j ? J : J - 1) = (*this)(I, J);
       }
     }
     return cof;
   }
   inline void invert(Gmsh_Matrix& y)
   {
-    SCALAR d,*col;
-    int i,j,*indx;
-    
-    col = new SCALAR [c];
-    indx = new int [c];
-    if (!_lu_decomposition(indx,d))
+    SCALAR *col = new SCALAR[c];
+    int *indx = new int[c];
+    SCALAR d;
+    if (!_lu_decomposition(indx, d))
       Msg::Fatal("Singular matrix in Gmsh_Matrix::_lu_decomposition");
-    for(j=0;j<c;j++){
-      for(i=0; i < c; i++) col[i] = 0.0;
-      col[j]=1.0;
-      _back_substitution(indx,col);
-      for(i=0;i<c;i++) y(i,j)=col[i];
+    for(int j = 0; j < c; j++){
+      for(int i = 0; i < c; i++) col[i] = 0.0;
+      col[j] = 1.0;
+      _back_substitution(indx, col);
+      for(int i = 0; i < c; i++) y(i, j) = col[i];
     }
     delete [] col;
     delete [] indx;
@@ -248,10 +240,10 @@ class Gmsh_Matrix
   {
     Gmsh_Matrix copy = *this;
     SCALAR factor = 1.0;
-    int *indx = new int [c];
-    if (!copy._lu_decomposition(indx, factor))return 0.0;
+    int *indx = new int[c];
+    if (!copy._lu_decomposition(indx, factor)) return 0.0;
     SCALAR det = factor;
-    for (int i=0;i<c;i++)det *= copy(i,i);
+    for (int i = 0; i < c; i++) det *= copy(i, i);
     delete [] indx;
     return det;
   }

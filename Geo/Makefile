@@ -101,9 +101,9 @@ GFaceCompound${OBJEXT}: GFaceCompound.cpp GFaceCompound.h GFace.h GEntity.h \
   GVertex.h SPoint2.h SVector3.h Pair.h ../Numeric/gmshAssembler.h \
   ../Numeric/gmshLinearSystem.h ../Numeric/gmshLaplace.h \
   ../Numeric/gmshTermOfFormulation.h ../Numeric/GmshMatrix.h \
-  ../Common/GmshMessage.h ../Common/Gmsh.h ../Common/GmshMessage.h \
-  ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEdge.h ../Geo/GFace.h \
-  ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
+  ../Common/GmshMessage.h ../Numeric/gmshFunction.h ../Common/Gmsh.h \
+  ../Common/GmshMessage.h ../Geo/GModel.h ../Geo/GVertex.h ../Geo/GEdge.h \
+  ../Geo/GFace.h ../Geo/GRegion.h ../Geo/GEntity.h ../Geo/SPoint3.h \
   ../Geo/SBoundingBox3d.h ../Geo/MElement.h ../Common/GmshDefines.h \
   ../Geo/MVertex.h ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
@@ -111,7 +111,8 @@ GFaceCompound${OBJEXT}: GFaceCompound.cpp GFaceCompound.h GFace.h GEntity.h \
   ../Numeric/GmshMatrix.h ../Numeric/Numeric.h \
   ../Numeric/NumericEmbedded.h ../Common/Octree.h \
   ../Common/OctreeInternals.h ../Numeric/gmshLinearSystemGmm.h \
-  ../Numeric/gmshLinearSystem.h
+  ../Numeric/gmshLinearSystem.h ../Numeric/gmshLinearSystemFull.h \
+  ../Numeric/gmshLinearSystem.h ../Numeric/GmshMatrix.h
 GRegion${OBJEXT}: GRegion.cpp GModel.h GVertex.h GEntity.h Range.h SPoint3.h \
   SBoundingBox3d.h GPoint.h SPoint2.h GEdge.h SVector3.h GFace.h \
   GEdgeLoop.h Pair.h GRegion.h MElement.h ../Common/GmshDefines.h \

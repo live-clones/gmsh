@@ -91,7 +91,8 @@ Generator${OBJEXT}: Generator.cpp ../Common/GmshMessage.h ../Numeric/Numeric.h \
   ../Geo/MVertex.h ../Geo/SVector3.h ../Geo/MFace.h ../Geo/MVertex.h \
   ../Geo/SVector3.h ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h \
   meshGEdge.h meshGFace.h meshGFaceBDS.h meshGRegion.h BackgroundMesh.h \
-  BoundaryLayers.h HighOrder.h ../Post/PView.h ../Post/PViewData.h
+  BoundaryLayers.h HighOrder.h Generator.h ../Post/PView.h \
+  ../Post/PViewData.h
 Field${OBJEXT}: Field.cpp ../Common/Context.h ../Geo/CGNSOptions.h \
   ../Mesh/PartitionOptions.h Field.h ../Post/PView.h ../Geo/SPoint3.h \
   ../Geo/GeoInterpolation.h ../Geo/Geo.h ../Common/GmshDefines.h \
@@ -127,8 +128,8 @@ gmshSmoothHighOrder${OBJEXT}: gmshSmoothHighOrder.cpp HighOrder.h \
   ../Numeric/GmshMatrix.h meshGFaceDelaunayInsertion.h \
   gmshSmoothHighOrder.h ../Numeric/gmshAssembler.h \
   ../Numeric/gmshLinearSystem.h ../Numeric/gmshLaplace.h \
-  ../Numeric/gmshTermOfFormulation.h ../Common/Gmsh.h \
-  ../Common/GmshMessage.h ../Numeric/GmshMatrix.h \
+  ../Numeric/gmshTermOfFormulation.h ../Numeric/gmshFunction.h \
+  ../Common/Gmsh.h ../Common/GmshMessage.h ../Numeric/GmshMatrix.h \
   ../Numeric/gmshElasticity.h ../Numeric/gmshTermOfFormulation.h \
   ../Numeric/GmshMatrix.h ../Numeric/gmshLinearSystemGmm.h \
   ../Numeric/gmshLinearSystem.h ../Common/Context.h ../Geo/CGNSOptions.h \
@@ -227,20 +228,19 @@ meshGFaceBDS${OBJEXT}: meshGFaceBDS.cpp meshGFace.h meshGFaceOptimize.h \
   ../Geo/GEntity.h ../Geo/SPoint3.h ../Geo/SBoundingBox3d.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h BDS.h ../Post/PView.h \
   qualityMeasures.h Field.h ../Common/OS.h
-meshGFaceDelaunayInsertion${OBJEXT}: meshGFaceDelaunayInsertion.cpp BDS.h \
-  ../Geo/GFace.h ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
-  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
-  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
-  ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/SPoint3.h ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h \
-  ../Geo/SVector3.h ../Geo/Pair.h ../Post/PView.h ../Common/GmshMessage.h \
+meshGFaceDelaunayInsertion${OBJEXT}: meshGFaceDelaunayInsertion.cpp \
   BackgroundMesh.h meshGFaceDelaunayInsertion.h ../Geo/MElement.h \
   ../Common/GmshDefines.h ../Geo/MVertex.h ../Geo/SPoint2.h \
   ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
-  ../Numeric/FunctionSpace.h ../Numeric/GmshMatrix.h meshGFaceOptimize.h \
-  meshGFace.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
-  ../Common/Context.h ../Geo/CGNSOptions.h ../Mesh/PartitionOptions.h
+  ../Geo/SPoint3.h ../Geo/MFace.h ../Geo/MVertex.h ../Geo/SVector3.h \
+  ../Common/GmshMessage.h ../Numeric/FunctionSpace.h \
+  ../Numeric/GmshMatrix.h meshGFaceOptimize.h meshGFace.h ../Geo/GFace.h \
+  ../Geo/GEntity.h ../Geo/Range.h ../Geo/SPoint3.h \
+  ../Geo/SBoundingBox3d.h ../Geo/SPoint3.h ../Geo/GPoint.h \
+  ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
+  ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h ../Geo/SVector3.h \
+  ../Geo/Pair.h ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h
 meshGFaceOptimize${OBJEXT}: meshGFaceOptimize.cpp meshGFaceOptimize.h \
   ../Geo/MElement.h ../Common/GmshDefines.h ../Geo/MVertex.h \
   ../Geo/SPoint2.h ../Geo/SPoint3.h ../Geo/MEdge.h ../Geo/MVertex.h \
@@ -252,7 +252,7 @@ meshGFaceOptimize${OBJEXT}: meshGFaceOptimize.cpp meshGFaceOptimize.h \
   ../Geo/GEdgeLoop.h ../Geo/GEdge.h ../Geo/GEntity.h ../Geo/GVertex.h \
   ../Geo/GEntity.h ../Geo/GPoint.h ../Geo/SPoint2.h ../Geo/SVector3.h \
   ../Geo/SPoint3.h ../Geo/SPoint2.h ../Geo/SPoint2.h ../Geo/SVector3.h \
-  ../Geo/Pair.h BackgroundMesh.h
+  ../Geo/Pair.h BackgroundMesh.h Generator.h
 meshGFaceQuadrilateralize${OBJEXT}: meshGFaceQuadrilateralize.cpp \
   meshGFaceQuadrilateralize.h ../Common/GmshMessage.h \
   ../Numeric/Numeric.h ../Numeric/NumericEmbedded.h \
