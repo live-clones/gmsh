@@ -9,6 +9,7 @@
 #include "Numeric.h"
 #include "Octree.h"
 #include "gmshLinearSystemGmm.h"
+#include "gmshLinearSystemFull.h"
 
 class gmshGradientBasedDiffusivity : public gmshFunction
 {
@@ -201,9 +202,13 @@ void GFaceCompound::parametrize (bool _isU, int ITER) const
 {
   Msg::Info("Parametrizing Surface %d coordinate %d (ITER %d)", tag(), _isU, ITER); 
   
+#ifdef HAVE_GMM
   gmshLinearSystemGmm lsys;
   lsys.setPrec(1.e-10);
-  lsys.setNoisy(2);
+  //lsys.setNoisy(2);
+#else
+  gmshLinearSystemFull lsys;
+#endif
   gmshAssembler myAssembler(&lsys);
   gmshGradientBasedDiffusivity diffusivity (coordinates);
   if (ITER > 0) diffusivity.setComponent(_isU);
@@ -212,10 +217,10 @@ void GFaceCompound::parametrize (bool _isU, int ITER) const
     // maps the boundary onto a circle
     std::vector<MVertex*> ordered;
     std::vector<double> coords;  
-    Msg::Info("%d edges on the contour", l_edges.size()); 
-    for (std::list<GEdge*>::const_iterator it = l_edges.begin();
-	 it !=l_edges.end();++it)printf("%d ",(*it)->tag());
-    printf("\n");
+    //    Msg::Info("%d edges on the contour", l_edges.size()); 
+    //    for (std::list<GEdge*>::const_iterator it = l_edges.begin();
+    //	 it !=l_edges.end();++it)printf("%d ",(*it)->tag());
+    //    printf("\n");
     bool success = orderVertices (l_edges, ordered, coords);
     if (!success)throw;
     for (int i=0; i<ordered.size();i++){
@@ -355,7 +360,8 @@ GPoint GFaceCompound::point(double par1, double par2) const
   getTriangle (par1, par2, &lt, U,V);  
   SPoint3 p(0,0,0); 
   if (!lt){
-    printf("coucou\n");
+    Msg::Warning("Re-Parametrized face %d --> point (%g %g) lies outside the domain", tag(), par1,par2); 
+  
     return  GPoint(p.x(),p.y(),p.z(),this);
   }
   p = lt->v1*(1.-U-V) + lt->v2*U + lt->v3*V;

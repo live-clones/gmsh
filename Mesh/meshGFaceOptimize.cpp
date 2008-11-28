@@ -12,6 +12,7 @@
 #include "MElement.h"
 #include "BackgroundMesh.h"
 #include "GmshMessage.h"
+#include "Generator.h"
 
 static void setLcsInit(MTriangle *t, std::map<MVertex*, double> &vSizes)
 {
@@ -126,17 +127,17 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris)
     AllTris.erase(AllTris.begin());      
   }
 }
-
-void buildVertexToTriangle(std::vector<MTriangle*> &triangles, v2t_cont &adj)
+template <class T>
+void buildVertexToElement(std::vector<T*> &eles, 
+			  v2t_cont &adj)
 {
-  adj.clear();
-  for (unsigned int i = 0; i < triangles.size(); i++){
-    MTriangle *t = triangles[i];
-    for (unsigned int j = 0; j < 3; j++){
+  for (unsigned int i = 0; i < eles.size(); i++){
+    T *t = eles[i];
+    for (unsigned int j = 0; j < t->getNumVertices(); j++){
       MVertex *v = t->getVertex(j);
       v2t_cont :: iterator it = adj.find(v);
       if (it == adj.end()){
-        std::vector<MTriangle*> one;
+        std::vector<MElement*> one;
         one.push_back(t);
         adj[v] = one;
       }
@@ -147,23 +148,23 @@ void buildVertexToTriangle(std::vector<MTriangle*> &triangles, v2t_cont &adj)
   }
 }
 
-void buildEdgeToTriangle(GFace *gf, e2t_cont &adj)
-{
-  buildEdgeToTriangle(gf->triangles, adj);
+
+void buildVertexToTriangle(std::vector<MTriangle*> &eles, v2t_cont &adj){
+  adj.clear();
+  buildVertexToElement(eles,adj);
 }
 
-void buildEdgeToTriangle(std::vector<MTriangle*> &triangles, e2t_cont &adj)
+
+template <class T>
+void buildEdgeToElement(std::vector<T*> &triangles, e2t_cont &adj)
 {
-  adj.clear();
   for (unsigned int i = 0; i < triangles.size(); i++){
-    MTriangle *t = triangles[i];
-    for (unsigned int j = 0; j < 3; j++){
-      MVertex *v1 = t->getVertex(j);
-      MVertex *v2 = t->getVertex((j + 1) % 3);
-      MEdge e(v1, v2);
+    T *t = triangles[i];
+    for (unsigned int j = 0; j < t->getNumEdges(); j++){
+      MEdge e = t->getEdge(j);
       e2t_cont::iterator it = adj.find(e);
       if (it == adj.end()){
-        std::pair<MTriangle*, MTriangle*> one = std::make_pair(t, (MTriangle*)0);
+        std::pair<MElement*, MElement*> one = std::make_pair(t, (MElement*)0);
         adj[e] = one;
       }
       else
@@ -174,9 +175,23 @@ void buildEdgeToTriangle(std::vector<MTriangle*> &triangles, e2t_cont &adj)
   }
 }
 
-void parametricCoordinates(MTriangle *t, GFace *gf, double u[3], double v[3])
+void buildEdgeToElement(GFace *gf, e2t_cont &adj)
 {
-  for (unsigned int j = 0; j < 3; j++){
+  adj.clear();
+  buildEdgeToElement(gf->triangles, adj);
+  buildEdgeToElement(gf->quadrangles, adj);
+}
+
+void buildEdgeToTriangle(std::vector<MTriangle*> &tris, e2t_cont &adj){
+  adj.clear();
+  buildEdgeToElement(tris, adj);
+}
+
+
+
+void parametricCoordinates(MElement *t, GFace *gf, double u[4], double v[4])
+{
+  for (unsigned int j = 0; j < t->getNumVertices(); j++){
     MVertex *ver = t->getVertex(j);
     SPoint2 param;
     reparamMeshVertexOnFace(ver, gf, param);
@@ -188,7 +203,8 @@ void parametricCoordinates(MTriangle *t, GFace *gf, double u[3], double v[3])
 void laplaceSmoothing(GFace *gf)
 {
   v2t_cont adj;
-  buildVertexToTriangle(gf->triangles, adj);
+  buildVertexToElement(gf->triangles, adj);
+  buildVertexToElement(gf->quadrangles, adj);
 
   for (int i = 0; i < 5; i++){
     v2t_cont :: iterator it = adj.begin();
@@ -200,22 +216,29 @@ void laplaceSmoothing(GFace *gf)
         double initu,initv;
         ver->getParameter(0, initu);
         ver->getParameter(1, initv);
-        const std::vector<MTriangle*> &lt = it->second;
-        double fact = lt.size() ? 1. / (3. * lt.size()) : 0;
+        const std::vector<MElement*> &lt = it->second;
         double cu = 0, cv = 0;
-        double pu[3], pv[3];
+        double pu[4], pv[4];
+	double fact  = 0.0;
         for (unsigned int i = 0; i < lt.size(); i++){
           parametricCoordinates(lt[i], gf, pu, pv);
-          cu += fact * (pu[0] + pu[1] + pu[2]);
-          cv += fact * (pv[0] + pv[1] + pv[2]);
+          cu += (pu[0] + pu[1] + pu[2]);
+          cv += (pv[0] + pv[1] + pv[2]);
+	  if (lt[i]->getNumVertices() == 4){
+	    cu += pu[3];
+	    cv += pv[3];
+	  }	    
+	  fact += lt[i]->getNumVertices();
           // have to test validity !
         }
-        ver->setParameter(0, cu);
-        ver->setParameter(1, cv);
-        GPoint pt = gf->point(SPoint2(cu, cv));
-        ver->x() = pt.x();
-        ver->y() = pt.y();
-        ver->z() = pt.z();
+	if (fact != 0.0){
+	  ver->setParameter(0, cu/fact);
+	  ver->setParameter(1, cv/fact);
+	  GPoint pt = gf->point(SPoint2(cu/fact, cv/fact));
+	  ver->x() = pt.x();
+	  ver->y() = pt.y();
+	  ver->z() = pt.z();
+	}
       }
       ++it;
     }  
@@ -771,5 +794,103 @@ int edgeCollapsePass(double minLC, GFace *gf, std::set<MTri3*,compareTri3Ptr> &a
   printf("A %d %d tris\n", (int)allTris.size(), (int)newTris.size());
   return nbCollapse;
 }
+
+extern double angle3Points ( MVertex *p1, MVertex *p2, MVertex *p3 );
+
+struct recombine_triangle
+{
+  MElement *t1, *t2;
+  double angle;
+  MVertex *n1,*n2,*n3,*n4;
+  recombine_triangle(const MEdge &me, MElement *_t1, MElement *_t2)
+    : t1(_t1),t2(_t2)
+  {
+    n1 = me.getVertex(0);
+    n2 = me.getVertex(1);
+    
+    if (t1->getVertex (0) != n1 && t1->getVertex (0) != n2)n3 = t1->getVertex(0);
+    else if (t1->getVertex (1) != n1 && t1->getVertex (1) != n2)n3 = t1->getVertex(1);
+    else if (t1->getVertex (2) != n1 && t1->getVertex (2) != n2)n3 = t1->getVertex(2);
+    if (t2->getVertex (0) != n1 && t2->getVertex (0) != n2)n4 = t2->getVertex(0);
+    else if (t2->getVertex (1) != n1 && t2->getVertex (1) != n2)n4 = t2->getVertex(1);
+    else if (t2->getVertex (2) != n1 && t2->getVertex (2) != n2)n4 = t2->getVertex(2);
+
+    double a1 = 180*angle3Points(n1,n4,n2)/M_PI;
+    double a2 = 180*angle3Points(n4,n2,n3)/M_PI;
+    double a3 = 180*angle3Points(n2,n3,n1)/M_PI;
+    double a4 = 180*angle3Points(n3,n1,n4)/M_PI;
+    //    printf("%g %g %g %g\n",a1,a2,a3,a4);
+    angle = fabs(90. - a1);
+    angle = std::max(fabs(90. - a2),angle);
+    angle = std::max(fabs(90. - a3),angle);
+    angle = std::max(fabs(90. - a4),angle);    
+  }
+  bool operator < (const recombine_triangle &other) const
+  {
+    return angle < other.angle;
+  }
+};
+
+
+void gmshQuadrilateralizeAlgoBrutal(GFace *gf){
+}
+
+void _gmshRecombineIntoQuads(GFace *gf)
+{
+  e2t_cont adj;
+  std::set<MElement*> _touched;
+  std::set<recombine_triangle> pairs;
+  buildEdgeToElement(gf->triangles, adj);
+  e2t_cont::iterator it = adj.begin();
+  for ( ; it!= adj.end(); ++it){
+    if (it->second.second && it->second.first->getNumVertices() == 3 &&  
+	it->second.second->getNumVertices() == 3)
+      pairs.insert(recombine_triangle(it->first,
+				      it->second.first,
+				      it->second.second));
+  }
+  bool rec = false;    
+  std::set<recombine_triangle>::iterator itp = pairs.begin();
+  while(itp != pairs.end()){
+    // recombine if difference between max quad angle and right
+    // angle is smaller than tol
+    if(itp->angle < gf->meshAttributes.recombineAngle){
+      MElement *t1 = itp->t1;
+      MElement *t2 = itp->t2;
+      if (_touched.find(t1) == _touched.end() &&
+	  _touched.find(t2) == _touched.end()){
+	_touched.insert(t1);
+	_touched.insert(t2);
+	MQuadrangle *q = new MQuadrangle (itp->n1,itp->n3,itp->n2,itp->n4);
+	gf->quadrangles.push_back(q);
+      }
+    }
+    ++itp;
+  }
+
+  std::vector<MTriangle*> _newt;
+  for ( int i = 0 ; i<gf->triangles.size();i++){
+    if (_touched.find(gf->triangles[i]) == _touched.end()){
+      _newt.push_back(gf->triangles[i]);
+    }
+    else {
+      delete gf->triangles[i];
+    }    
+  } 
+  gf->triangles = _newt;
+  
+}
+
+void gmshRecombineIntoQuads(GFace *gf){
+  _gmshRecombineIntoQuads (gf);
+  laplaceSmoothing(gf);  
+  _gmshRecombineIntoQuads (gf);
+  laplaceSmoothing(gf);  
+  _gmshRecombineIntoQuads (gf);
+  laplaceSmoothing(gf);  
+}
+
+
+
 
 

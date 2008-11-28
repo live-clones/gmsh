@@ -288,7 +288,7 @@ void updateedges_cb(Fl_Widget* w, void* data)
   Draw();   
 }
 
-edge_angle::  edge_angle ( MVertex *_v1, MVertex *_v2, MTriangle *t1, MTriangle *t2)
+edge_angle::  edge_angle ( MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2)
   : v1(_v1), v2(_v2)
 {
   if (!t2) angle = 0;

@@ -42,7 +42,7 @@ class edge_angle
  public :
   MVertex *v1, *v2;
   double angle;
-  edge_angle ( MVertex *_v1, MVertex *_v2, MTriangle *t1, MTriangle *t2);
+  edge_angle ( MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2);
   bool operator < (const edge_angle & other) const
   {
     return other.angle < angle;

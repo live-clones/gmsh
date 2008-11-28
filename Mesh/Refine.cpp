@@ -44,25 +44,28 @@ static void Subdivide(GEdge *ge)
   ge->deleteVertexArrays();
 }
 
-static void Subdivide(GFace *gf)
+static void Subdivide(GFace *gf,bool splitTrianglesIntoQuads)
 {
-  std::vector<MTriangle*> triangles2;
-  for(unsigned int i = 0; i < gf->triangles.size(); i++){
-    MTriangle *t = gf->triangles[i];
-    if(t->getNumVertices() == 6){
-      triangles2.push_back
-        (new MTriangle(t->getVertex(0), t->getVertex(3), t->getVertex(5)));
-      triangles2.push_back
-        (new MTriangle(t->getVertex(3), t->getVertex(4), t->getVertex(5)));
-      triangles2.push_back
-        (new MTriangle(t->getVertex(3), t->getVertex(1), t->getVertex(4)));
-      triangles2.push_back
-        (new MTriangle(t->getVertex(5), t->getVertex(4), t->getVertex(2)));
+
+  if (! splitTrianglesIntoQuads ){
+    std::vector<MTriangle*> triangles2;
+    for(unsigned int i = 0; i < gf->triangles.size(); i++){
+      MTriangle *t = gf->triangles[i];
+      if(t->getNumVertices() == 6){
+	triangles2.push_back
+	  (new MTriangle(t->getVertex(0), t->getVertex(3), t->getVertex(5)));
+	triangles2.push_back
+	  (new MTriangle(t->getVertex(3), t->getVertex(4), t->getVertex(5)));
+	triangles2.push_back
+	  (new MTriangle(t->getVertex(3), t->getVertex(1), t->getVertex(4)));
+	triangles2.push_back
+	  (new MTriangle(t->getVertex(5), t->getVertex(4), t->getVertex(2)));
+      }
+      delete t;
     }
-    delete t;
+    gf->triangles = triangles2;
   }
-  gf->triangles = triangles2;
-  
+
   std::vector<MQuadrangle*> quadrangles2;
   for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
     MQuadrangle *q = gf->quadrangles[i];
@@ -77,6 +80,31 @@ static void Subdivide(GFace *gf)
         (new MQuadrangle(q->getVertex(7), q->getVertex(8), q->getVertex(6), q->getVertex(3)));
     }
     delete q;
+  }
+  if (splitTrianglesIntoQuads){
+    for(unsigned int i = 0; i < gf->triangles.size(); i++){
+      MTriangle *t = gf->triangles[i];
+      if(t->getNumVertices() == 6){
+	SPoint2 pt, temp;
+	bool reparamOK = true;
+	for(int k = 0; k<6; k++){
+	  reparamMeshVertexOnFace(t->getVertex(k), gf, temp);
+	  pt[0] += temp[0]/6.;
+	  pt[1] += temp[1]/6.;
+	}
+	GPoint gp = gf->point(pt);	
+	MFaceVertex *newv = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,pt[0],pt[1]);
+	gf->mesh_vertices.push_back(newv);
+	quadrangles2.push_back
+	  (new MQuadrangle(t->getVertex(0), t->getVertex(3), newv, t->getVertex(5)));
+	quadrangles2.push_back
+	  (new MQuadrangle(t->getVertex(3), t->getVertex(1), t->getVertex(4), newv));
+	quadrangles2.push_back
+	  (new MQuadrangle(t->getVertex(5), newv,t->getVertex(4), t->getVertex(2)));
+	delete t;
+      }
+    }
+    gf->triangles.clear();
   }
   gf->quadrangles = quadrangles2;
 
@@ -228,7 +256,7 @@ static void Subdivide(GRegion *gr)
   gr->deleteVertexArrays();
 }
 
-void RefineMesh(GModel *m, bool linear)
+void RefineMesh(GModel *m, bool linear, bool splitTrianglesIntoQuads)
 {
   Msg::StatusBar(1, true, "Refining mesh...");
   double t1 = Cpu();
@@ -242,7 +270,7 @@ void RefineMesh(GModel *m, bool linear)
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
     Subdivide(*it);
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
-    Subdivide(*it);
+    Subdivide(*it,splitTrianglesIntoQuads);
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     Subdivide(*it);
 

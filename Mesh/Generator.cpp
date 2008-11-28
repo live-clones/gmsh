@@ -17,6 +17,7 @@
 #include "BackgroundMesh.h"
 #include "BoundaryLayers.h"
 #include "HighOrder.h"
+#include "Generator.h"
 
 #if !defined(HAVE_NO_POST)
 #include "PView.h"
@@ -406,6 +407,15 @@ static void Mesh2D(GModel *m)
       if(nIter++ > 10) break;
     }
   }
+  
+  // look if there a re model faces for which 
+  // full quad algo is set ON
+  bool fullQuad = false;
+  for(GModel::fiter it = m->firstFace() ; it!=m->lastFace(); ++it)
+    if ( CTX.mesh.algo_recombine == 2 && (*it)->quadrangles.size())
+      fullQuad = true;
+  if (fullQuad)RefineMesh(m,false,true);
+
 
   //  gmshCollapseSmallEdges (*m);
 

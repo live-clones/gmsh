@@ -540,8 +540,11 @@ Double_Matrix generateLagrangeMonomialCoefficients(const Double_Matrix& monomial
   }
   
   // check for independence
-  
+
+
   double det = Vandermonde.determinant();
+
+  //  printf("coucou2 %g\n",det);
 
   if (det == 0.0){
     Msg::Fatal("Vandermonde matrix has zero determinant!?");
@@ -557,6 +560,8 @@ Double_Matrix generateLagrangeMonomialCoefficients(const Double_Matrix& monomial
       coefficient(i, j) = f * cofactor.determinant() / det;
     }
   }
+  //  printf("coucou3 %g\n",det);
+
 
   Vandermonde.set_all(0.);
   

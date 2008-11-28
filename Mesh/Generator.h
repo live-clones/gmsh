@@ -13,6 +13,6 @@ void AdaptMesh(GModel *m);
 void GenerateMesh(GModel *m, int dimension);
 void OptimizeMesh(GModel *m);
 void OptimizeMeshNetgen(GModel *m);
-void RefineMesh(GModel *m, bool linear=true);
+void RefineMesh(GModel *m, bool linear=true, bool splitTrianglesIntoQuads = false);
 
 #endif

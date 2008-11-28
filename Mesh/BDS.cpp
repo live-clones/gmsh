@@ -1551,6 +1551,3 @@ void BDS_Mesh::recombineIntoQuads(const double angle_limit, GFace *gf)
   }
 }
 
-void FullQuadMesh()
-{
-}

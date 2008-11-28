@@ -14,8 +14,8 @@
 
 class GFace;
 class MVertex;
-typedef std::map<MVertex*, std::vector<MTriangle*> > v2t_cont;
-typedef std::map<MEdge, std::pair<MTriangle*,MTriangle*>, Less_Edge> e2t_cont;
+typedef std::map<MVertex*, std::vector<MElement*> > v2t_cont;
+typedef std::map<MEdge, std::pair<MElement*,MElement*>, Less_Edge> e2t_cont;
 void buildVertexToTriangle(std::vector<MTriangle*> &, v2t_cont &adj);
 void buildEdgeToTriangle(std::vector<MTriangle*> &, e2t_cont &adj);
 void laplaceSmoothing(GFace *gf);
@@ -47,6 +47,7 @@ void buidMeshGenerationDataStructures(GFace *gf, std::set<MTri3*, compareTri3Ptr
                                       std::vector<double> &Us,
                                       std::vector<double> &Vs);
 void transferDataStructure (GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris);
+void gmshRecombineIntoQuads(GFace *gf);
 
 struct swapquad{
   int v[4];

@@ -2442,7 +2442,7 @@ void GUI::create_option_window()
       mesh_choice[5]->align(FL_ALIGN_RIGHT);
       mesh_choice[5]->callback(mesh_options_ok_cb);
       // not reimplemented yet
-      ((Fl_Menu_Item*)mesh_choice[5]->menu())[1].deactivate();
+      //      ((Fl_Menu_Item*)mesh_choice[5]->menu())[1].deactivate();
 
       mesh_value[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Smoothing steps");
       mesh_value[0]->minimum(0);

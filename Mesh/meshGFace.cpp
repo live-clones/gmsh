@@ -752,6 +752,9 @@ static bool gmsh2DMeshGenerator(GFace *gf, int RECUR_ITER, bool debug = true)
   if(AlgoDelaunay2D(gf)){
     gmshBowyerWatson(gf);
     for (int i=0;i<CTX.mesh.nb_smoothing;i++)laplaceSmoothing(gf);
+    if (gf->meshAttributes.recombine){
+      gmshRecombineIntoQuads(gf);
+    }
   }
   else if (debug){
     char name[256];
