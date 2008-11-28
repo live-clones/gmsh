@@ -51,11 +51,11 @@ AC_ARG_WITH(occ-mesh-constraints-prefix,
             [OCC_MESH_CONTRAINTS_PREFIX=$withval])
 AC_ARG_WITH(hdf5-prefix,
             AC_HELP_STRING([--with-hdf5-prefix=PFX],
-                           [prefix where OpenCascade is installed]),
+                           [prefix where HDF5 is installed]),
             [HDF5_PREFIX=$withval])
 AC_ARG_WITH(med-prefix,
             AC_HELP_STRING([--with-med-prefix=PFX],
-                           [prefix where OpenCascade is installed]),
+                           [prefix where MED is installed]),
             [MED_PREFIX=$withval])
 AC_ARG_WITH(fftw3-prefix,
             AC_HELP_STRING([--with-fftw3-prefix=PFX],
@@ -554,28 +554,6 @@ if test "x${GSL}" != "xyes"; then
 fi
 
 
-dnl Check for CGNS
-if test "x${CGNS_PREFIX}" != "x"; then
-  if test "x$enable_cgns" != "xno"; then
-    enable_cgns="yes"
-  fi
-fi
-if test "x$enable_cgns" = "xyes"; then
-  if test "x${CGNS_PREFIX}" != "x"; then
-    LDFLAGS="-L${CGNS_PREFIX}/lib ${LDFLAGS}"
-  fi
-  AC_CHECK_LIB(cgns,main,CGNS="yes",CGNS="no")
-  if test "x${CGNS}" = "xyes"; then
-    if test "x${CGNS_PREFIX}" = "x"; then
-      GMSH_LIBS="${GMSH_LIBS} -lcgns"
-      FLAGS="${FLAGS} -DHAVE_LIBCGNS"
-    else
-      GMSH_LIBS="${GMSH_LIBS} -L${CGNS_PREFIX}/lib -lcgns"
-      FLAGS="${FLAGS} -DHAVE_LIBCGNS -I${CGNS_PREFIX}/include"
-    fi
-  fi
-fi
-
 dnl Check for OpenCascade
 if test "x${OCC_PREFIX}" != "x"; then
   if test "x$enable_occ" != "xno"; then
@@ -623,7 +601,13 @@ if test "x${BLAS_LAPACK_PREFIX}" != "x"; then
   LDFLAGS="-L${BLAS_LAPACK_PREFIX} -L${BLAS_LAPACK_PREFIX}/lib ${LDFLAGS}"
 fi
 AC_CHECK_LIB(blas,dasum,BLAS="yes",BLAS="no")
+if test "x$BLAS" != "xyes"; then
+   AC_CHECK_LIB(blas,dasum_,BLAS="yes",BLAS="no")
+fi
 AC_CHECK_LIB(lapack,dbdsqr,LAPACK="yes",LAPACK="no",-lblas)
+if test "x$BLAS" != "xyes"; then
+   AC_CHECK_LIB(lapack,dbdsqr_,LAPACK="yes",LAPACK="no",-lblas)
+fi
 AC_LANG_POP()
 
 dnl Check for FourierModel
@@ -681,6 +665,28 @@ if test "x${ZLIB}" = "xyes"; then
       LDFLAGS="-L${HDF5_PREFIX}/lib ${LDFLAGS}"
     fi
     AC_CHECK_LIB(hdf5,main,HDF5="yes",HDF5="no")
+  fi
+fi
+
+dnl Check for CGNS
+if test "x${CGNS_PREFIX}" != "x"; then
+  if test "x$enable_cgns" != "xno"; then
+    enable_cgns="yes"
+  fi
+fi
+if test "x$enable_cgns" = "xyes"; then
+  if test "x${CGNS_PREFIX}" != "x"; then
+    LDFLAGS="-L${CGNS_PREFIX}/lib ${LDFLAGS}"
+  fi
+  AC_CHECK_LIB(cgns,main,CGNS="yes",CGNS="no",-lhdf5)
+  if test "x${CGNS}" = "xyes"; then
+    if test "x${CGNS_PREFIX}" = "x"; then
+      GMSH_LIBS="${GMSH_LIBS} -lcgns"
+      FLAGS="${FLAGS} -DHAVE_LIBCGNS"
+    else
+      GMSH_LIBS="${GMSH_LIBS} -L${CGNS_PREFIX}/lib -lcgns"
+      FLAGS="${FLAGS} -DHAVE_LIBCGNS -I${CGNS_PREFIX}/include"
+    fi
   fi
 fi
 
